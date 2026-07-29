@@ -1,0 +1,2355 @@
+{
+ "generated_at": "2026-07-25",
+ "lane": "calibration -- LEVEL calibration audit of eFV",
+ "standard": "docs/EFV_GATE_STANDARD.md (paired bootstrap w/ refit, zero-information control, permutation null, >= 4 independent time splits)",
+ "frame": "forward-chained OOS reproduction of efv_score.run: OLS(FV) anchor + lean ridge + linear output calibration -> rank_war blend -> per-fold rank-preserving quantile display map. Fully-resolved decision years only (6yr window closed by 2025); KM target == resolved target on every row.",
+ "inputs": {
+  "gate": "data/xfv_level_calibration_eval.json",
+  "slices": "data/xfv_level_calibration_slices.json",
+  "dispersion": "data/xfv_pred_dispersion_eval.json"
+ },
+ "labs": [
+  "tools/_sweep_calibration.py",
+  "tools/_sweep_calib_gate.py",
+  "tools/_sweep_calib_slices.py",
+  "tools/_sweep_calib_shrink.py",
+  "tools/_sweep_calib_anchor.py",
+  "tools/_sweep_calib_patchcheck.py"
+ ],
+ "patches": "tools/_sweep_calib_out/calibration_patches.diff (NOT applied)",
+ "structural_facts": {
+  "headline_grade_marginal_is_consensus_by_construction": {
+   "what": "xfv_grade_quantile is a rank-preserving quantile map of rank_war onto the pool's OWN consensus-FV distribution, so per side the served grade multiset EQUALS the consensus-FV multiset.",
+   "served_check_hitters": {
+    "n": 2087,
+    "mean_efv": 37.075,
+    "mean_consensus": 37.047,
+    "sd_efv": 3.736,
+    "sd_consensus": 3.717,
+    "max_abs_quantile_diff_fv": 1.8
+   },
+   "served_check_pitchers": {
+    "n": 2390,
+    "mean_efv": 36.357,
+    "mean_consensus": 36.357,
+    "sd_efv": 2.862,
+    "sd_consensus": 2.858,
+    "max_abs_quantile_diff_fv": 3.0
+   },
+   "implication": "eFV's POOLED level calibration is identically consensus FV's. The model can only REDISTRIBUTE level error across players; it cannot remove it. Any level fix must land in the anchor table or the display map, never in the model. Confirmed numerically: the gate's pooled_bias and cons_pooled_bias agree to machine precision."
+  },
+  "two_grades_on_one_row": {
+   "band_and_surplus_basis": "xfv_grade_quantile (efv_score._reprice_surplus_on_display)",
+   "odds_basis": "xfv_grade_realized (efv_score.run p_bucket_given_fv)",
+   "served_grade_gap_fv": {
+    "n": 4477,
+    "mean": 11.38,
+    "median": 15.0,
+    "p10": -0.1,
+    "p90": 15.0
+   },
+   "p_bust_realized_minus_displayed": {
+    "mean": 0.108,
+    "max": 0.242,
+    "share_gt_0.10": 0.813
+   }
+  },
+  "anchor_has_no_knot_below_fv40": {
+   "fitted_anchors": {
+    "40": 0.19,
+    "45": 0.31,
+    "50": 0.67,
+    "55": 0.98,
+    "60": 1.44,
+    "65": 2.0,
+    "70": 2.52,
+    "80": 3.5
+   },
+   "anchor_calibration_tiers": [
+    40,
+    45,
+    50,
+    55,
+    60,
+    65,
+    70,
+    80
+   ],
+   "served_value_for_every_grade_in_20_40": 0.19,
+   "inverse_map_does_resolve_that_range": "realized_implied_fv re-spreads FV 20-45 as 20 + 25*(war/war45)**_LOWEND_FG_EXP",
+   "round_trip_before_patch": "every grade in [20, 40] maps back to 39.8 FV",
+   "share_of_served_active_board_at_or_below_fv40": 0.8825,
+   "db_cohort_fv35_cell": {
+    "n": 386,
+    "empirical_war_per_yr": 0.04,
+    "boot_ci95": [
+     0.02,
+     0.061
+    ],
+    "served_anchor": 0.19,
+    "source": "empirical_anchors._cohort(prospects.db, 2014, 2020)"
+   },
+   "cohort_weighted_abs_error_war_per_yr": {
+    "served": 0.1536,
+    "plus_35_knot": 0.1458,
+    "inverse_consistent_extension": 0.1431,
+    "config_seed": 0.1865
+   }
+  },
+  "published_curve_is_not_the_served_curve": {
+   "published": "data/value_framework.js fv_to_6yr_avg_war (build_snapshot emits the CONFIG SEED table); rendered by assets/glossary.js _methValuationCurveHTML",
+   "served": "fitted empirical_anchors.anchors",
+   "pct_divergence_published_vs_served": {
+    "<=35": -36.8,
+    "40": 15.8,
+    "45": 22.6,
+    "50": 4.5,
+    "55": -3.1,
+    "60": 0.7,
+    "65": -2.5,
+    "70": 3.2,
+    "80": 8.6
+   },
+   "why_the_freshness_test_misses_it": "test_value_framework_integration only compares the JS to the JSON to build_snapshot()"
+  },
+  "band_lower_bound_is_a_constant": {
+   "mechanism": "within_bucket_cv.bust = 0.0 -> the bust bucket is a POINT MASS at the $0 surplus floor, so the mixture's 10th percentile is exactly 0 whenever p_bust >= 0.10",
+   "served_active_n": 4477,
+   "band_p10_eq_0_share": 0.9984,
+   "band_p10_eq_band_p90_share": 0.2464,
+   "p_bust_ge_0.10_share": 0.996
+  }
+ },
+ "a_reliability_by_grade_tier": {
+  "yardstick": "6 * value_framework.fv_to_6yr_avg_war(displayed grade) vs realized first-6yr summed bWAR; positive bias = realized EXCEEDS the grade's declared meaning",
+  "full_training_pool": {
+   "hit": {
+    "pooled_bias": {
+     "point": -0.3261794392523363,
+     "boot_ci95": [
+      -0.5698,
+      -0.0447
+     ],
+     "zero_info_ci95": [
+      -0.5698,
+      -0.0447
+     ],
+     "perm_null_ci95": [
+      -0.5698,
+      -0.0447
+     ],
+     "time_splits": [
+      0.1746400000000002,
+      -0.6696857142857141,
+      -0.5456551724137928,
+      -0.02248643216080371,
+      -0.5116899408284025
+     ]
+    },
+    "bias_t35": {
+     "point": -0.9431034482758622,
+     "boot_ci95": [
+      -1.1813,
+      -0.4101
+     ],
+     "zero_info_ci95": [
+      -0.531,
+      1.1473
+     ],
+     "perm_null_ci95": [
+      -0.5078,
+      1.1521
+     ],
+     "time_splits": [
+      null,
+      -1.1400000000000001,
+      -1.1783333333333335,
+      -0.7800000000000001,
+      -0.9370909090909092
+     ]
+    },
+    "bias_t40": {
+     "point": -0.8828738853503184,
+     "boot_ci95": [
+      -1.0142,
+      -0.6068
+     ],
+     "zero_info_ci95": [
+      -0.0695,
+      0.7177
+     ],
+     "perm_null_ci95": [
+      -0.0969,
+      0.7291
+     ],
+     "time_splits": [
+      -0.9899833333333332,
+      -1.1549397590361445,
+      -0.7665709401709402,
+      -0.6575711999999998,
+      -1.0379675675675677
+     ]
+    },
+    "bias_t45": {
+     "point": 0.386702127659575,
+     "boot_ci95": [
+      -0.7808,
+      1.6242
+     ],
+     "zero_info_ci95": [
+      -1.1664,
+      0.6967
+     ],
+     "perm_null_ci95": [
+      -1.1589,
+      0.6826
+     ],
+     "time_splits": [
+      4.7056000000000004,
+      1.8451428571428572,
+      -1.30716129032258,
+      0.7959647058823536,
+      -0.4197846153846153
+     ]
+    },
+    "bias_t50": {
+     "point": 2.1807764705882358,
+     "boot_ci95": [
+      0.112,
+      4.3032
+     ],
+     "zero_info_ci95": [
+      -3.3715,
+      -0.9754
+     ],
+     "perm_null_ci95": [
+      -3.3985,
+      -0.9984
+     ],
+     "time_splits": [
+      7.845066666666666,
+      0.9456000000000004,
+      -0.999799999999999,
+      1.787833333333334,
+      2.6647333333333334
+     ]
+    },
+    "bias_t55": {
+     "point": 3.1777777777777785,
+     "boot_ci95": [
+      -0.9045,
+      6.2449
+     ],
+     "zero_info_ci95": [
+      -5.4897,
+      -2.3222
+     ],
+     "perm_null_ci95": [
+      -5.5087,
+      -2.4071
+     ],
+     "time_splits": [
+      null,
+      0.7027000000000007,
+      3.299885714285716,
+      8.178400000000002,
+      3.4423333333333326
+     ]
+    },
+    "bias_t60": {
+     "point": -0.23431428571428453,
+     "boot_ci95": [
+      -4.3008,
+      4.3006
+     ],
+     "zero_info_ci95": [
+      -8.4882,
+      -3.6834
+     ],
+     "perm_null_ci95": [
+      -8.5201,
+      -3.8192
+     ],
+     "time_splits": [
+      null,
+      null,
+      null,
+      null,
+      null
+     ]
+    },
+    "bias_slope_per_fv_pt": {
+     "point": 0.10011414368640481,
+     "boot_ci95": [
+      -0.0358,
+      0.2307
+     ],
+     "zero_info_ci95": [
+      -0.352,
+      -0.1937
+     ],
+     "perm_null_ci95": [
+      -0.3531,
+      -0.1946
+     ],
+     "time_splits": [
+      0.8835049999999999,
+      0.11571879518072294,
+      0.17446418070818082,
+      0.4072440906666667,
+      0.2492309877149877
+     ]
+    }
+   },
+   "pit": {
+    "pooled_bias": {
+     "point": -0.6972498168498169,
+     "boot_ci95": [
+      -0.8713,
+      -0.5068
+     ],
+     "zero_info_ci95": [
+      -0.8713,
+      -0.5068
+     ],
+     "perm_null_ci95": [
+      -0.8713,
+      -0.5068
+     ],
+     "time_splits": [
+      -0.3033288135593223,
+      -0.6401103448275863,
+      -1.0349351851851851,
+      -0.5288639175257732,
+      -0.7520568627450982
+     ]
+    },
+    "bias_t35": {
+     "point": -1.0020224719101125,
+     "boot_ci95": [
+      -1.1411,
+      -0.6287
+     ],
+     "zero_info_ci95": [
+      -0.8524,
+      0.3401
+     ],
+     "perm_null_ci95": [
+      -0.841,
+      0.3991
+     ],
+     "time_splits": [
+      null,
+      null,
+      -1.0244444444444445,
+      -0.6522222222222224,
+      -1.1329629629629632
+     ]
+    },
+    "bias_t40": {
+     "point": -0.8023738053097346,
+     "boot_ci95": [
+      -0.9779,
+      -0.6429
+     ],
+     "zero_info_ci95": [
+      -0.5135,
+      0.0008
+     ],
+     "perm_null_ci95": [
+      -0.5156,
+      -0.0021
+     ],
+     "time_splits": [
+      -0.7791000000000001,
+      -0.7534914285714287,
+      -1.0731626666666667,
+      -0.5269855072463769,
+      -0.8297729729729731
+     ]
+    },
+    "bias_t45": {
+     "point": 0.25662666666666667,
+     "boot_ci95": [
+      -0.5159,
+      1.3963
+     ],
+     "zero_info_ci95": [
+      -1.5741,
+      -0.3322
+     ],
+     "perm_null_ci95": [
+      -1.565,
+      -0.291
+     ],
+     "time_splits": [
+      null,
+      1.1305600000000002,
+      -0.2614777777777776,
+      0.2642285714285713,
+      0.8253279999999998
+     ]
+    },
+    "bias_t50": {
+     "point": -0.19760000000000033,
+     "boot_ci95": [
+      -1.9221,
+      1.5727
+     ],
+     "zero_info_ci95": [
+      -3.7559,
+      -1.9119
+     ],
+     "perm_null_ci95": [
+      -3.827,
+      -1.9609
+     ],
+     "time_splits": [
+      3.245599999999999,
+      null,
+      -2.89184,
+      -0.8938181818181817,
+      0.510057142857142
+     ]
+    },
+    "bias_t55": {
+     "point": -1.964345454545455,
+     "boot_ci95": [
+      -3.8601,
+      1.1487
+     ],
+     "zero_info_ci95": [
+      -5.585,
+      -3.022
+     ],
+     "perm_null_ci95": [
+      -5.6077,
+      -2.9485
+     ],
+     "time_splits": [
+      null,
+      null,
+      -4.2807200000000005,
+      -1.2633599999999996,
+      -2.1328000000000014
+     ]
+    },
+    "bias_t60": {
+     "point": -3.9925599999999997,
+     "boot_ci95": [
+      -7.4865,
+      -1.0772
+     ],
+     "zero_info_ci95": [
+      -9.2668,
+      -4.437
+     ],
+     "perm_null_ci95": [
+      -9.2596,
+      -4.8234
+     ],
+     "time_splits": [
+      null,
+      null,
+      null,
+      null,
+      null
+     ]
+    },
+    "bias_slope_per_fv_pt": {
+     "point": -0.10795902431327581,
+     "boot_ci95": [
+      -0.1979,
+      0.0746
+     ],
+     "zero_info_ci95": [
+      -0.35,
+      -0.1686
+     ],
+     "perm_null_ci95": [
+      -0.3491,
+      -0.1697
+     ],
+     "time_splits": [
+      null,
+      null,
+      -0.1666245688888889,
+      -0.03178216460254719,
+      -0.013196879164879225
+     ]
+    }
+   }
+  },
+  "live_comparable_pool": {
+   "hit": {
+    "lm_pooled_bias": {
+     "point": 1.3022628099173557,
+     "boot_ci95": [
+      0.6441,
+      2.0414
+     ],
+     "zero_info_ci95": [
+      1.5709,
+      3.1644
+     ],
+     "perm_null_ci95": [
+      -1.8913,
+      -0.7898
+     ],
+     "time_splits": [
+      4.015418181818182,
+      0.6662000000000005,
+      2.920313513513514,
+      1.5641365853658542,
+      0.17903902439024383
+     ]
+    },
+    "lm_bias_t40": {
+     "point": 0.010648421052631656,
+     "boot_ci95": [
+      -0.4835,
+      1.2235
+     ],
+     "zero_info_ci95": [
+      2.1206,
+      4.3519
+     ],
+     "perm_null_ci95": [
+      -0.5317,
+      1.2194
+     ],
+     "time_splits": [
+      null,
+      -1.1013142857142855,
+      1.6353333333333333,
+      0.4102060606060608,
+      -0.9133555555555556
+     ]
+    },
+    "lm_bias_t45": {
+     "point": 1.2479120000000004,
+     "boot_ci95": [
+      -0.2679,
+      3.0582
+     ],
+     "zero_info_ci95": [
+      0.233,
+      5.1054
+     ],
+     "perm_null_ci95": [
+      -1.4319,
+      1.166
+     ],
+     "time_splits": [
+      null,
+      1.8451428571428572,
+      0.7386666666666671,
+      1.8306166666666674,
+      -0.1644727272727272
+     ]
+    },
+    "lm_bias_t50": {
+     "point": 3.123676190476191,
+     "boot_ci95": [
+      0.7705,
+      5.3316
+     ],
+     "zero_info_ci95": [
+      -2.4881,
+      3.4513
+     ],
+     "perm_null_ci95": [
+      -3.4449,
+      -0.8428
+     ],
+     "time_splits": [
+      null,
+      0.9456000000000004,
+      null,
+      2.3293454545454555,
+      2.6647333333333334
+     ]
+    },
+    "lm_bias_t55": {
+     "point": 3.838416000000001,
+     "boot_ci95": [
+      -0.2776,
+      7.0889
+     ],
+     "zero_info_ci95": [
+      -5.1111,
+      3.6529
+     ],
+     "perm_null_ci95": [
+      -5.592,
+      -2.2772
+     ],
+     "time_splits": [
+      null,
+      0.7027000000000007,
+      6.651920000000002,
+      8.178400000000002,
+      3.4423333333333326
+     ]
+    },
+    "lm_bias_t60": {
+     "point": -0.23431428571428453,
+     "boot_ci95": [
+      -4.3008,
+      4.3006
+     ],
+     "zero_info_ci95": [
+      -8.1096,
+      1.87
+     ],
+     "perm_null_ci95": [
+      -8.5201,
+      -3.8192
+     ],
+     "time_splits": [
+      null,
+      null,
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   "pit": {
+    "lm_pooled_bias": {
+     "point": 0.0605873605947954,
+     "boot_ci95": [
+      -0.3771,
+      0.5704
+     ],
+     "zero_info_ci95": [
+      0.1421,
+      1.1644
+     ],
+     "perm_null_ci95": [
+      -1.6327,
+      -0.8762
+     ],
+     "time_splits": [
+      0.768439999999999,
+      0.7883230769230769,
+      0.009147826086956546,
+      0.4959493670886076,
+      -0.47670000000000023
+     ]
+    },
+    "lm_bias_t40": {
+     "point": 0.2345109243697478,
+     "boot_ci95": [
+      -0.481,
+      0.9848
+     ],
+     "zero_info_ci95": [
+      0.5145,
+      1.8023
+     ],
+     "perm_null_ci95": [
+      -0.8421,
+      0.1954
+     ],
+     "time_splits": [
+      null,
+      2.17096,
+      0.11777499999999999,
+      1.2326378378378378,
+      -0.737407142857143
+     ]
+    },
+    "lm_bias_t45": {
+     "point": 1.146472131147541,
+     "boot_ci95": [
+      0.0919,
+      2.7066
+     ],
+     "zero_info_ci95": [
+      -1.074,
+      1.6506
+     ],
+     "perm_null_ci95": [
+      -1.6631,
+      -0.1065
+     ],
+     "time_splits": [
+      null,
+      null,
+      1.3443111111111112,
+      0.7547294117647059,
+      1.1600909090909088
+     ]
+    },
+    "lm_bias_t50": {
+     "point": 0.07095999999999959,
+     "boot_ci95": [
+      -2.0332,
+      2.0604
+     ],
+     "zero_info_ci95": [
+      -3.4733,
+      1.2807
+     ],
+     "perm_null_ci95": [
+      -3.8513,
+      -1.6027
+     ],
+     "time_splits": [
+      null,
+      null,
+      -1.2862285714285717,
+      -0.30951111111111107,
+      1.2712666666666659
+     ]
+    },
+    "lm_bias_t55": {
+     "point": -1.813314285714286,
+     "boot_ci95": [
+      -3.9805,
+      0.9842
+     ],
+     "zero_info_ci95": [
+      -5.4049,
+      0.7695
+     ],
+     "perm_null_ci95": [
+      -5.6106,
+      -2.8575
+     ],
+     "time_splits": [
+      null,
+      null,
+      null,
+      -1.2633599999999996,
+      -2.1328000000000014
+     ]
+    },
+    "lm_bias_t60": {
+     "point": -3.9925599999999997,
+     "boot_ci95": [
+      -7.4865,
+      -1.0772
+     ],
+     "zero_info_ci95": [
+      -8.7137,
+      -2.2769
+     ],
+     "perm_null_ci95": [
+      -9.2596,
+      -4.8234
+     ],
+     "time_splits": [
+      null,
+      null,
+      null,
+      null,
+      null
+     ]
+    }
+   }
+  },
+  "shape_verdict": {
+   "hit": "KNEE, not a slope. Below the FV-40 clamp the anchor overstates by ~0.9 WAR (CI-clean, 5/5 folds); at eFV 50 it understates by +2.18 (CI-clean). The fitted bias slope +0.100 per FV point has CI95 [-0.036, 0.231] == NULL.",
+   "pit": "Sign-flipping and mostly null. Below-40 overstatement is CI-clean (-0.80 at t40, 5/5 folds); the top-tier understatement at t60 (-3.99, CI95 [-7.49, -1.08]) is CI-clean but n=5. Bias slope -0.108, CI95 [-0.198, 0.075] == NULL."
+  }
+ },
+ "b_population_conditional": {
+  "scope": "LIVE-COMPARABLE rows only (a MiLB track record present), the population the served board actually contains -- xfv.json meta: eFV abstains on players with no MiLB production",
+  "level": {
+   "hit": {
+    "A": {
+     "n": 29,
+     "bias": {
+      "point": 0.5897517241379315,
+      "boot_ci95": [
+       -0.8951,
+       2.6981
+      ],
+      "n": 29
+     },
+     "coverage": {
+      "point": 0.896551724137931,
+      "boot_ci95": [
+       0.7058,
+       0.9697
+      ],
+      "n": 29
+     },
+     "p_bust_gap": {
+      "point": -0.24617735806124064,
+      "boot_ci95": [
+       -0.4206,
+       -0.0692
+      ],
+      "n": 29
+     }
+    },
+    "A+": {
+     "n": 25,
+     "bias": {
+      "point": 0.5579360000000002,
+      "boot_ci95": [
+       -1.3607,
+       3.0382
+      ],
+      "n": 25
+     },
+     "coverage": {
+      "point": 0.52,
+      "boot_ci95": [
+       0.3333,
+       0.75
+      ],
+      "n": 25
+     },
+     "p_bust_gap": {
+      "point": -0.08356514376727031,
+      "boot_ci95": [
+       -0.2728,
+       0.2266
+      ],
+      "n": 25
+     }
+    },
+    "AA": {
+     "n": 98,
+     "bias": {
+      "point": 1.3535428571428574,
+      "boot_ci95": [
+       0.3492,
+       2.5432
+      ],
+      "n": 98
+     },
+     "coverage": {
+      "point": 0.4897959183673469,
+      "boot_ci95": [
+       0.3839,
+       0.5938
+      ],
+      "n": 98
+     },
+     "p_bust_gap": {
+      "point": 0.019087313269504746,
+      "boot_ci95": [
+       -0.0939,
+       0.1692
+      ],
+      "n": 98
+     }
+    },
+    "AAA": {
+     "n": 75,
+     "bias": {
+      "point": 2.279509333333334,
+      "boot_ci95": [
+       0.8428,
+       3.7557
+      ],
+      "n": 75
+     },
+     "coverage": {
+      "point": 0.28,
+      "boot_ci95": [
+       0.1899,
+       0.4107
+      ],
+      "n": 75
+     },
+     "p_bust_gap": {
+      "point": 0.03385157409276951,
+      "boot_ci95": [
+       -0.0977,
+       0.1977
+      ],
+      "n": 75
+     }
+    }
+   },
+   "pit": {
+    "A": {
+     "n": 19,
+     "bias": {
+      "point": 0.6730105263157895,
+      "boot_ci95": [
+       -1.7565,
+       3.1364
+      ],
+      "n": 19
+     },
+     "coverage": {
+      "point": 0.5789473684210527,
+      "boot_ci95": [
+       0.3571,
+       0.8182
+      ],
+      "n": 19
+     },
+     "p_bust_gap": {
+      "point": -0.1402118728355759,
+      "boot_ci95": [
+       -0.4068,
+       0.0979
+      ],
+      "n": 19
+     }
+    },
+    "A+": {
+     "n": 58,
+     "bias": {
+      "point": -0.012531034482758687,
+      "boot_ci95": [
+       -1.0036,
+       1.0034
+      ],
+      "n": 58
+     },
+     "coverage": {
+      "point": 0.4827586206896552,
+      "boot_ci95": [
+       0.3396,
+       0.6094
+      ],
+      "n": 58
+     },
+     "p_bust_gap": {
+      "point": -0.003912284454617665,
+      "boot_ci95": [
+       -0.1656,
+       0.1836
+      ],
+      "n": 58
+     }
+    },
+    "AA": {
+     "n": 121,
+     "bias": {
+      "point": 0.04452561983471055,
+      "boot_ci95": [
+       -0.5984,
+       0.7927
+      ],
+      "n": 121
+     },
+     "coverage": {
+      "point": 0.47107438016528924,
+      "boot_ci95": [
+       0.3694,
+       0.5476
+      ],
+      "n": 121
+     },
+     "p_bust_gap": {
+      "point": 0.11336313009966437,
+      "boot_ci95": [
+       0.0074,
+       0.2126
+      ],
+      "n": 121
+     }
+    },
+    "AAA": {
+     "n": 65,
+     "bias": {
+      "point": 0.10641230769230753,
+      "boot_ci95": [
+       -0.7571,
+       1.2495
+      ],
+      "n": 65
+     },
+     "coverage": {
+      "point": 0.46153846153846156,
+      "boot_ci95": [
+       0.3276,
+       0.5733
+      ],
+      "n": 65
+     },
+     "p_bust_gap": {
+      "point": 0.20585118718134043,
+      "boot_ci95": [
+       0.0414,
+       0.3414
+      ],
+      "n": 65
+     }
+    }
+   }
+  },
+  "age_band": {
+   "hit": {
+    "19-20": {
+     "n": 54,
+     "bias": {
+      "point": 1.1836222222222226,
+      "boot_ci95": [
+       -0.2059,
+       2.8216
+      ],
+      "n": 54
+     },
+     "coverage": {
+      "point": 0.6666666666666666,
+      "boot_ci95": [
+       0.5,
+       0.7708
+      ],
+      "n": 54
+     },
+     "p_bust_gap": {
+      "point": -0.17020237686187167,
+      "boot_ci95": [
+       -0.2896,
+       0.0482
+      ],
+      "n": 54
+     }
+    },
+    "21-22": {
+     "n": 109,
+     "bias": {
+      "point": 1.6191155963302755,
+      "boot_ci95": [
+       0.5781,
+       2.7077
+      ],
+      "n": 109
+     },
+     "coverage": {
+      "point": 0.47706422018348627,
+      "boot_ci95": [
+       0.3917,
+       0.5888
+      ],
+      "n": 109
+     },
+     "p_bust_gap": {
+      "point": -0.016308356081398023,
+      "boot_ci95": [
+       -0.108,
+       0.1326
+      ],
+      "n": 109
+     }
+    },
+    "23-24": {
+     "n": 63,
+     "bias": {
+      "point": 0.9260952380952384,
+      "boot_ci95": [
+       -0.3681,
+       2.276
+      ],
+      "n": 63
+     },
+     "coverage": {
+      "point": 0.3492063492063492,
+      "boot_ci95": [
+       0.2321,
+       0.4715
+      ],
+      "n": 63
+     },
+     "p_bust_gap": {
+      "point": 0.047313274434247155,
+      "boot_ci95": [
+       -0.1614,
+       0.2347
+      ],
+      "n": 63
+     }
+    }
+   },
+   "pit": {
+    "19-20": {
+     "n": 33,
+     "bias": {
+      "point": -0.684727272727273,
+      "boot_ci95": [
+       -2.2176,
+       0.9809
+      ],
+      "n": 33
+     },
+     "coverage": {
+      "point": 0.6666666666666666,
+      "boot_ci95": [
+       0.4827,
+       0.8148
+      ],
+      "n": 33
+     },
+     "p_bust_gap": {
+      "point": -0.15902082130475648,
+      "boot_ci95": [
+       -0.3221,
+       0.0477
+      ],
+      "n": 33
+     }
+    },
+    "21-22": {
+     "n": 136,
+     "bias": {
+      "point": 0.23580588235294103,
+      "boot_ci95": [
+       -0.4722,
+       1.0506
+      ],
+      "n": 136
+     },
+     "coverage": {
+      "point": 0.47794117647058826,
+      "boot_ci95": [
+       0.3741,
+       0.5503
+      ],
+      "n": 136
+     },
+     "p_bust_gap": {
+      "point": 0.018932991292126333,
+      "boot_ci95": [
+       -0.08,
+       0.119
+      ],
+      "n": 136
+     }
+    },
+    "23-24": {
+     "n": 88,
+     "bias": {
+      "point": 0.00922272727272714,
+      "boot_ci95": [
+       -0.5536,
+       0.6013
+      ],
+      "n": 88
+     },
+     "coverage": {
+      "point": 0.4318181818181818,
+      "boot_ci95": [
+       0.3239,
+       0.5366
+      ],
+      "n": 88
+     },
+     "p_bust_gap": {
+      "point": 0.2449077362292469,
+      "boot_ci95": [
+       0.0954,
+       0.3543
+      ],
+      "n": 88
+     }
+    }
+   }
+  },
+  "acquisition": {
+   "hit": {
+    "IFA": {
+     "n": 82,
+     "bias": {
+      "point": 1.7072243902439026,
+      "boot_ci95": [
+       0.5306,
+       2.9887
+      ],
+      "n": 82
+     },
+     "coverage": {
+      "point": 0.5365853658536586,
+      "boot_ci95": [
+       0.4204,
+       0.6447
+      ],
+      "n": 82
+     },
+     "p_bust_gap": {
+      "point": -0.003442948193850437,
+      "boot_ci95": [
+       -0.1263,
+       0.1407
+      ],
+      "n": 82
+     }
+    },
+    "college": {
+     "n": 61,
+     "bias": {
+      "point": 1.7495606557377053,
+      "boot_ci95": [
+       0.3678,
+       3.2064
+      ],
+      "n": 61
+     },
+     "coverage": {
+      "point": 0.4918032786885246,
+      "boot_ci95": [
+       0.3499,
+       0.6034
+      ],
+      "n": 61
+     },
+     "p_bust_gap": {
+      "point": -0.061099878570338606,
+      "boot_ci95": [
+       -0.2031,
+       0.1221
+      ],
+      "n": 61
+     }
+    },
+    "HS": {
+     "n": 98,
+     "bias": {
+      "point": 0.5614204081632657,
+      "boot_ci95": [
+       -0.3433,
+       1.5773
+      ],
+      "n": 98
+     },
+     "coverage": {
+      "point": 0.4897959183673469,
+      "boot_ci95": [
+       0.398,
+       0.6075
+      ],
+      "n": 98
+     },
+     "p_bust_gap": {
+      "point": -0.04187583930475408,
+      "boot_ci95": [
+       -0.1637,
+       0.1087
+      ],
+      "n": 98
+     }
+    }
+   },
+   "pit": {
+    "IFA": {
+     "n": 93,
+     "bias": {
+      "point": -0.6580731182795699,
+      "boot_ci95": [
+       -1.2939,
+       0.0649
+      ],
+      "n": 93
+     },
+     "coverage": {
+      "point": 0.40860215053763443,
+      "boot_ci95": [
+       0.3043,
+       0.51
+      ],
+      "n": 93
+     },
+     "p_bust_gap": {
+      "point": -0.048310140369999366,
+      "boot_ci95": [
+       -0.1596,
+       0.0768
+      ],
+      "n": 93
+     }
+    },
+    "college": {
+     "n": 70,
+     "bias": {
+      "point": 0.657342857142857,
+      "boot_ci95": [
+       -0.4087,
+       1.9461
+      ],
+      "n": 70
+     },
+     "coverage": {
+      "point": 0.42857142857142855,
+      "boot_ci95": [
+       0.3034,
+       0.5417
+      ],
+      "n": 70
+     },
+     "p_bust_gap": {
+      "point": 0.14532402363237606,
+      "boot_ci95": [
+       0.0031,
+       0.2739
+      ],
+      "n": 70
+     }
+    },
+    "HS": {
+     "n": 106,
+     "bias": {
+      "point": 0.29702641509433947,
+      "boot_ci95": [
+       -0.4551,
+       1.0621
+      ],
+      "n": 106
+     },
+     "coverage": {
+      "point": 0.6037735849056604,
+      "boot_ci95": [
+       0.49,
+       0.681
+      ],
+      "n": 106
+     },
+     "p_bust_gap": {
+      "point": 0.15234424534709423,
+      "boot_ci95": [
+       0.0242,
+       0.2543
+      ],
+      "n": 106
+     }
+    }
+   }
+  },
+  "control_caveat": "The zero-information control permutes the grade over the WHOLE fold pool, so on a SUBSET (live-comparable / level / age / acq) it also destroys the subset-grade association and is an upper reference, not a matched twin. The paired bootstrap CI is the operative gate on every slice statistic."
+ },
+ "c_outcome_odds": {
+  "bust_definition_primary": "realized first-6yr summed bWAR < 0.5 -- the repo's own operative threshold (efv_model._SF_BUST_WAR; empirical_anchors counts realized_war/6 < 0.5/6)",
+  "bust_definition_literal": "config buckets.bust band '<0.5' read as a 6-season average (< 3.0 summed). The config calls these per-SEASON projected TALENT bands normalized to 600 PA / 200 IP, which no realized accumulation reproduces exactly -- the band labels and the reconciliation target are on different scales.",
+  "marginal": {
+   "hit": {
+    "p_bust_gap": {
+     "point": -0.09452681685754116,
+     "boot_ci95": [
+      -0.1467,
+      -0.0506
+     ],
+     "zero_info_ci95": [
+      -0.1467,
+      -0.0506
+     ],
+     "perm_null_ci95": [
+      -0.1467,
+      -0.0506
+     ],
+     "time_splits": [
+      -0.025705342457120084,
+      -0.11043697194770041,
+      -0.11295047955045523,
+      -0.11263045599899735,
+      -0.082383392006804
+     ]
+    },
+    "p_bust_gap_literal": {
+     "point": -0.14926646972803526,
+     "boot_ci95": [
+      -0.2011,
+      -0.1067
+     ],
+     "zero_info_ci95": [
+      -0.2011,
+      -0.1067
+     ],
+     "perm_null_ci95": [
+      -0.2011,
+      -0.1067
+     ],
+     "time_splits": [
+      -0.08886323719396216,
+      -0.1818655433762718,
+      -0.15892749104470805,
+      -0.17293196353668583,
+      -0.12380351034999926
+     ]
+    },
+    "lm_p_bust_gap": {
+     "point": -0.03351446540050229,
+     "boot_ci95": [
+      -0.114,
+      0.08
+     ],
+     "zero_info_ci95": [
+      0.1522,
+      0.2974
+     ],
+     "perm_null_ci95": [
+      -0.4484,
+      -0.2343
+     ],
+     "time_splits": [
+      0.03218512524637489,
+      -0.2539043296146123,
+      0.24514540246438704,
+      -0.020337701218487825,
+      -0.10061092082267842
+     ]
+    },
+    "lm_p_bust_gap_literal": {
+     "point": -0.17814256457405603,
+     "boot_ci95": [
+      -0.2527,
+      -0.0658
+     ],
+     "zero_info_ci95": [
+      0.0098,
+      0.1547
+     ],
+     "perm_null_ci95": [
+      -0.4989,
+      -0.29
+     ],
+     "time_splits": [
+      -0.24054214748089786,
+      -0.4205709962812789,
+      0.02892918624817087,
+      -0.166679164633122,
+      -0.18597677448121497
+     ]
+    }
+   },
+   "pit": {
+    "p_bust_gap": {
+     "point": -0.04995435919711222,
+     "boot_ci95": [
+      -0.1106,
+      -0.0068
+     ],
+     "zero_info_ci95": [
+      -0.1106,
+      -0.0068
+     ],
+     "perm_null_ci95": [
+      -0.1106,
+      -0.0068
+     ],
+     "time_splits": [
+      -0.026676715996732048,
+      -0.13484649585889374,
+      -0.1516064953024313,
+      0.029539107733474235,
+      0.00482006632320775
+     ]
+    },
+    "p_bust_gap_literal": {
+     "point": -0.12443543367818677,
+     "boot_ci95": [
+      -0.1849,
+      -0.0837
+     ],
+     "zero_info_ci95": [
+      -0.1849,
+      -0.0837
+     ],
+     "perm_null_ci95": [
+      -0.1849,
+      -0.0837
+     ],
+     "time_splits": [
+      -0.1283716312509693,
+      -0.18082350735314656,
+      -0.20253242122835724,
+      -0.06324439742116494,
+      -0.07361130622581191
+     ]
+    },
+    "lm_p_bust_gap": {
+     "point": 0.0811462029986928,
+     "boot_ci95": [
+      0.0053,
+      0.1497
+     ],
+     "zero_info_ci95": [
+      0.155,
+      0.2908
+     ],
+     "perm_null_ci95": [
+      -0.2554,
+      -0.105
+     ],
+     "time_splits": [
+      -0.010930277848812231,
+      -0.06099622793133286,
+      0.02530467308111939,
+      0.2133601613842228,
+      0.05096357037283372
+     ]
+    },
+    "lm_p_bust_gap_literal": {
+     "point": -0.09357498659238528,
+     "boot_ci95": [
+      -0.1627,
+      -0.0338
+     ],
+     "zero_info_ci95": [
+      -0.0117,
+      0.1112
+     ],
+     "perm_null_ci95": [
+      -0.3262,
+      -0.1873
+     ],
+     "time_splits": [
+      -0.11093027784881221,
+      -0.2148423817774867,
+      -0.19208663126670666,
+      -0.0018297120334986872,
+      -0.08792531851605512
+     ]
+    }
+   }
+  },
+  "by_displayed_tier": {
+   "hit": {
+    "pbust_gap_t40": {
+     "point": -0.04924404304025065,
+     "boot_ci95": [
+      -0.1283,
+      0.0077
+     ],
+     "zero_info_ci95": [
+      -0.1554,
+      -0.0389
+     ],
+     "perm_null_ci95": [
+      -0.0218,
+      0.1151
+     ],
+     "time_splits": [
+      -0.0383391902035104,
+      -0.07738070476851666,
+      0.01959404121330277,
+      -0.07035244695609721,
+      -0.10147798694544197
+     ]
+    },
+    "pbust_gap_t45": {
+     "point": -0.29035228802200846,
+     "boot_ci95": [
+      -0.4229,
+      -0.1841
+     ],
+     "zero_info_ci95": [
+      -0.2086,
+      0.002
+     ],
+     "perm_null_ci95": [
+      -0.5538,
+      -0.3292
+     ],
+     "time_splits": [
+      0.11044161574510852,
+      -0.22452440322984454,
+      -0.4518154479387621,
+      -0.2693213665275275,
+      -0.273247188086793
+     ]
+    },
+    "pbust_gap_t50": {
+     "point": -0.2512561517299202,
+     "boot_ci95": [
+      -0.3959,
+      -0.0886
+     ],
+     "zero_info_ci95": [
+      -0.2378,
+      0.0476
+     ],
+     "perm_null_ci95": [
+      -0.7846,
+      -0.5268
+     ],
+     "time_splits": [
+      -0.10711605293656555,
+      -0.3285496895423104,
+      -0.538006517424465,
+      -0.3012092012781387,
+      -0.08522463240625935
+     ]
+    },
+    "pbust_gap_t55": {
+     "point": -0.2470520389263428,
+     "boot_ci95": [
+      -0.4331,
+      0.022
+     ],
+     "zero_info_ci95": [
+      -0.2833,
+      0.1119
+     ],
+     "perm_null_ci95": [
+      -0.9069,
+      -0.5216
+     ],
+     "time_splits": [
+      null,
+      -0.3365779917406345,
+      -0.3585413741640444,
+      -0.14880200860058107,
+      -0.1218776021573974
+     ]
+    },
+    "pbust_gap_t60": {
+     "point": -0.12845856186921095,
+     "boot_ci95": [
+      -0.3714,
+      0.0302
+     ],
+     "zero_info_ci95": [
+      -0.3752,
+      0.2175
+     ],
+     "perm_null_ci95": [
+      -0.9837,
+      -0.5446
+     ],
+     "time_splits": [
+      null,
+      null,
+      null,
+      null,
+      null
+     ]
+    }
+   },
+   "pit": {
+    "pbust_gap_t40": {
+     "point": -0.03421383236744491,
+     "boot_ci95": [
+      -0.1217,
+      0.0193
+     ],
+     "zero_info_ci95": [
+      -0.1219,
+      -0.0026
+     ],
+     "perm_null_ci95": [
+      -0.05,
+      0.0912
+     ],
+     "time_splits": [
+      -0.044360172520094054,
+      -0.10506667147794979,
+      -0.1025996017008618,
+      0.04674688339559552,
+      0.011002690309155128
+     ]
+    },
+    "pbust_gap_t45": {
+     "point": -0.17125620350439713,
+     "boot_ci95": [
+      -0.2685,
+      -0.0249
+     ],
+     "zero_info_ci95": [
+      -0.1612,
+      0.0304
+     ],
+     "perm_null_ci95": [
+      -0.4566,
+      -0.2398
+     ],
+     "time_splits": [
+      null,
+      -0.4673501669926297,
+      -0.25283664294926794,
+      -0.21557042786154157,
+      0.013265698590637198
+     ]
+    },
+    "pbust_gap_t50": {
+     "point": -0.13926255623003414,
+     "boot_ci95": [
+      -0.345,
+      -0.0187
+     ],
+     "zero_info_ci95": [
+      -0.2037,
+      0.0834
+     ],
+     "perm_null_ci95": [
+      -0.6454,
+      -0.3812
+     ],
+     "time_splits": [
+      0.06760714094995984,
+      null,
+      -0.46581913083845544,
+      -0.0005402739635991805,
+      0.0302717558566018
+     ]
+    },
+    "pbust_gap_t55": {
+     "point": -0.2543316052848868,
+     "boot_ci95": [
+      -0.4578,
+      0.0097
+     ],
+     "zero_info_ci95": [
+      -0.2476,
+      0.1406
+     ],
+     "perm_null_ci95": [
+      -0.8266,
+      -0.4797
+     ],
+     "time_splits": [
+      null,
+      null,
+      -0.4400888666418016,
+      0.20174477531729734,
+      -0.42877022047237556
+     ]
+    },
+    "pbust_gap_t60": {
+     "point": -0.3212308570324388,
+     "boot_ci95": [
+      -0.7298,
+      0.0836
+     ],
+     "zero_info_ci95": [
+      -0.3555,
+      0.4301
+     ],
+     "perm_null_ci95": [
+      -0.94,
+      -0.3167
+     ],
+     "time_splits": [
+      null,
+      null,
+      null,
+      null,
+      null
+     ]
+    }
+   }
+  }
+ },
+ "d_interval_calibration": {
+  "object": "the served band_p10_mm / band_p90_mm are $M percentiles of the bucket mixture at the DISPLAYED grade. Tested in WAR units where truth exists: bucket ~ p_bucket_given_fv(g); per-bucket per-season level = buckets.midpoint_war * vf._war_scale_for(g, role) (the engine's own reconciliation scalar, so the mixture mean equals 6*fv_to_6yr_avg_war(g) exactly); WAR | bucket ~ mean-preserving Gamma at within_bucket_cv; bust = point mass at 0. Nominal coverage 0.80.",
+  "marginal_vs_conditional": {
+   "hit": {
+    "coverage_marginal": {
+     "point": 0.7850467289719626,
+     "boot_ci95": [
+      0.7552,
+      0.8162
+     ],
+     "zero_info_ci95": [
+      0.7124,
+      0.7761
+     ],
+     "perm_null_ci95": [
+      0.7127,
+      0.7772
+     ],
+     "time_splits": [
+      0.7789473684210526,
+      0.75,
+      0.8160919540229885,
+      0.7638190954773869,
+      0.8047337278106509
+     ]
+    },
+    "coverage_has_milb": {
+     "point": 0.5041322314049587,
+     "boot_ci95": [
+      0.437,
+      0.5727
+     ],
+     "zero_info_ci95": [
+      0.3655,
+      0.4886
+     ],
+     "perm_null_ci95": [
+      0.6624,
+      0.7773
+     ],
+     "time_splits": [
+      0.7272727272727273,
+      0.43333333333333335,
+      0.35135135135135137,
+      0.4634146341463415,
+      0.6097560975609756
+     ]
+    },
+    "coverage_no_milb": {
+     "point": 0.9191321499013807,
+     "boot_ci95": [
+      0.8953,
+      0.9431
+     ],
+     "zero_info_ci95": [
+      0.87,
+      0.9221
+     ],
+     "perm_null_ci95": [
+      0.7166,
+      0.7934
+     ],
+     "time_splits": [
+      0.7857142857142857,
+      0.8658536585365854,
+      0.9416058394160584,
+      0.9743589743589743,
+      0.9885057471264368
+     ]
+    },
+    "coverage_cond_spread": {
+     "point": 0.41499991849642204,
+     "boot_ci95": [
+      0.3423,
+      0.4864
+     ],
+     "zero_info_ci95": [
+      0.4045,
+      0.5371
+     ],
+     "perm_null_ci95": [
+      -0.0326,
+      0.1043
+     ],
+     "time_splits": [
+      0.058441558441558406,
+      0.432520325203252,
+      0.5902544880647069,
+      0.5109443402126328,
+      0.3787496495654612
+     ]
+    },
+    "coverage_A": {
+     "point": 0.896551724137931,
+     "boot_ci95": [
+      0.7058,
+      0.9697
+     ],
+     "zero_info_ci95": [
+      0.56,
+      0.88
+     ],
+     "perm_null_ci95": [
+      0.5294,
+      0.8667
+     ],
+     "time_splits": [
+      null,
+      null,
+      null,
+      0.8888888888888888,
+      1
+     ]
+    },
+    "coverage_A+": {
+     "point": 0.52,
+     "boot_ci95": [
+      0.3333,
+      0.75
+     ],
+     "zero_info_ci95": [
+      0.3124,
+      0.7143
+     ],
+     "perm_null_ci95": [
+      0.5714,
+      0.9091
+     ],
+     "time_splits": [
+      null,
+      0.5,
+      null,
+      null,
+      0.5454545454545454
+     ]
+    },
+    "coverage_AA": {
+     "point": 0.4897959183673469,
+     "boot_ci95": [
+      0.3839,
+      0.5938
+     ],
+     "zero_info_ci95": [
+      0.3125,
+      0.5
+     ],
+     "perm_null_ci95": [
+      0.6224,
+      0.8068
+     ],
+     "time_splits": [
+      0.6666666666666666,
+      0.375,
+      0.42857142857142855,
+      0.4411764705882353,
+      0.6071428571428571
+     ]
+    },
+    "coverage_AAA": {
+     "point": 0.28,
+     "boot_ci95": [
+      0.1899,
+      0.4107
+     ],
+     "zero_info_ci95": [
+      0.1282,
+      0.3143
+     ],
+     "perm_null_ci95": [
+      0.6104,
+      0.8143
+     ],
+     "time_splits": [
+      null,
+      null,
+      0.17647058823529413,
+      0.2903225806451613,
+      0.30434782608695654
+     ]
+    },
+    "lm_miss_low": {
+     "point": 0.256198347107438,
+     "boot_ci95": [
+      0.2054,
+      0.3109
+     ],
+     "zero_info_ci95": [
+      0.2058,
+      0.3103
+     ],
+     "perm_null_ci95": [
+      0.134,
+      0.2275
+     ],
+     "time_splits": [
+      0,
+      0.3333333333333333,
+      0.2702702702702703,
+      0.2804878048780488,
+      0.23170731707317074
+     ]
+    },
+    "lm_miss_high": {
+     "point": 0.2396694214876033,
+     "boot_ci95": [
+      0.1833,
+      0.2943
+     ],
+     "zero_info_ci95": [
+      0.2586,
+      0.373
+     ],
+     "perm_null_ci95": [
+      0.0625,
+      0.136
+     ],
+     "time_splits": [
+      0.2727272727272727,
+      0.23333333333333334,
+      0.3783783783783784,
+      0.25609756097560976,
+      0.15853658536585366
+     ]
+    }
+   },
+   "pit": {
+    "coverage_marginal": {
+     "point": 0.7826617826617827,
+     "boot_ci95": [
+      0.7506,
+      0.8098
+     ],
+     "zero_info_ci95": [
+      0.7297,
+      0.7902
+     ],
+     "perm_null_ci95": [
+      0.729,
+      0.7899
+     ],
+     "time_splits": [
+      0.7711864406779662,
+      0.7586206896551724,
+      0.8842592592592593,
+      0.7938144329896907,
+      0.6813725490196079
+     ]
+    },
+    "coverage_has_milb": {
+     "point": 0.49070631970260226,
+     "boot_ci95": [
+      0.4195,
+      0.5433
+     ],
+     "zero_info_ci95": [
+      0.3711,
+      0.4887
+     ],
+     "perm_null_ci95": [
+      0.6884,
+      0.7917
+     ],
+     "time_splits": [
+      0.7,
+      0.4230769230769231,
+      0.6086956521739131,
+      0.5189873417721519,
+      0.4166666666666667
+     ]
+    },
+    "coverage_no_milb": {
+     "point": 0.9254545454545454,
+     "boot_ci95": [
+      0.9057,
+      0.9498
+     ],
+     "zero_info_ci95": [
+      0.8989,
+      0.9439
+     ],
+     "perm_null_ci95": [
+      0.7334,
+      0.8053
+     ],
+     "time_splits": [
+      0.7777777777777778,
+      0.9016393442622951,
+      0.9588235294117647,
+      0.9826086956521739,
+      0.9791666666666666
+     ]
+    },
+    "coverage_cond_spread": {
+     "point": 0.43474822575194316,
+     "boot_ci95": [
+      0.3791,
+      0.5109
+     ],
+     "zero_info_ci95": [
+      0.4288,
+      0.5557
+     ],
+     "perm_null_ci95": [
+      -0.0362,
+      0.0947
+     ],
+     "time_splits": [
+      0.07777777777777783,
+      0.478562421185372,
+      0.35012787723785166,
+      0.463621353880022,
+      0.5625
+     ]
+    },
+    "coverage_A": {
+     "point": 0.5789473684210527,
+     "boot_ci95": [
+      0.3571,
+      0.8182
+     ],
+     "zero_info_ci95": [
+      0.3571,
+      0.8
+     ],
+     "perm_null_ci95": [
+      0.5455,
+      0.9413
+     ],
+     "time_splits": [
+      null,
+      0.2,
+      1,
+      null,
+      0.8
+     ]
+    },
+    "coverage_A+": {
+     "point": 0.4827586206896552,
+     "boot_ci95": [
+      0.3396,
+      0.6094
+     ],
+     "zero_info_ci95": [
+      0.3182,
+      0.579
+     ],
+     "perm_null_ci95": [
+      0.6429,
+      0.8667
+     ],
+     "time_splits": [
+      null,
+      0.5555555555555556,
+      0.5454545454545454,
+      0.5,
+      0.4117647058823529
+     ]
+    },
+    "coverage_AA": {
+     "point": 0.47107438016528924,
+     "boot_ci95": [
+      0.3694,
+      0.5476
+     ],
+     "zero_info_ci95": [
+      0.312,
+      0.4874
+     ],
+     "perm_null_ci95": [
+      0.6587,
+      0.8198
+     ],
+     "time_splits": [
+      1,
+      0.3333333333333333,
+      0.5416666666666666,
+      0.4857142857142857,
+      0.3958333333333333
+     ]
+    },
+    "coverage_AAA": {
+     "point": 0.46153846153846156,
+     "boot_ci95": [
+      0.3276,
+      0.5733
+     ],
+     "zero_info_ci95": [
+      0.25,
+      0.4918
+     ],
+     "perm_null_ci95": [
+      0.6029,
+      0.8236
+     ],
+     "time_splits": [
+      null,
+      null,
+      0.6,
+      0.55,
+      0.3611111111111111
+     ]
+    },
+    "lm_miss_low": {
+     "point": 0.379182156133829,
+     "boot_ci95": [
+      0.3199,
+      0.4378
+     ],
+     "zero_info_ci95": [
+      0.3209,
+      0.4398
+     ],
+     "perm_null_ci95": [
+      0.1472,
+      0.2425
+     ],
+     "time_splits": [
+      0.2,
+      0.46153846153846156,
+      0.2608695652173913,
+      0.3037974683544304,
+      0.48148148148148145
+     ]
+    },
+    "lm_miss_high": {
+     "point": 0.13011152416356878,
+     "boot_ci95": [
+      0.0985,
+      0.1849
+     ],
+     "zero_info_ci95": [
+      0.1429,
+      0.2358
+     ],
+     "perm_null_ci95": [
+      0.0366,
+      0.0945
+     ],
+     "time_splits": [
+      0.1,
+      0.11538461538461539,
+      0.13043478260869565,
+      0.17721518987341772,
+      0.10185185185185185
+     ]
+    }
+   }
+  },
+  "zero_mass_below_zero_war": {
+   "note": "the mixture assigns probability 0 to a negative first-6yr WAR; the bust bucket is pinned at exactly 0",
+   "realized_negative_share_live_comparable": {
+    "hit": 0.248,
+    "pit": 0.379
+   },
+   "realized_negative_share_full_pool": {
+    "hit": 0.127,
+    "pit": 0.16
+   }
+  }
+ },
+ "e_prediction_dispersion": {
+  "statistic": "OLS slope of realized first-6yr WAR on the OOS prediction; 1.0 == calibrated in level, < 1.0 == over-dispersed",
+  "model_leg_xfv_war": {
+   "hit": {
+    "point": 0.6540189595838437,
+    "boot_ci95": [
+     0.3624,
+     0.7637
+    ],
+    "zero_info_ci95": [
+     -0.0697,
+     0.0922
+    ],
+    "time_splits": [
+     0.6719126171656542,
+     0.5466720604736651,
+     0.7354556464832908,
+     0.7548346398544364,
+     0.5481318701832539
+    ]
+   },
+   "pit": {
+    "point": 0.5867810168160604,
+    "boot_ci95": [
+     0.2326,
+     0.721
+    ],
+    "zero_info_ci95": [
+     -0.0874,
+     0.1241
+    ],
+    "time_splits": [
+     0.9252260546827042,
+     0.20531864926140087,
+     0.8213453781169454,
+     0.3406034230421358,
+     0.5330543127040474
+    ]
+   }
+  },
+  "model_leg_live_comparable": {
+   "hit": {
+    "point": 0.6180982516774791,
+    "boot_ci95": [
+     0.2407,
+     0.7528
+    ],
+    "zero_info_ci95": [
+     -0.1934,
+     0.2486
+    ],
+    "time_splits": [
+     null,
+     0.5666452136994604,
+     0.8198356863753044,
+     0.7172795079887114,
+     0.5687975670193999
+    ]
+   },
+   "pit": {
+    "point": 0.372379244734443,
+    "boot_ci95": [
+     0.041,
+     0.5021
+    ],
+    "zero_info_ci95": [
+     -0.1898,
+     0.3509
+    ],
+    "time_splits": [
+     null,
+     -0.10594447670026186,
+     0.23123341021299204,
+     0.13977840763647928,
+     0.5074062328275628
+    ]
+   }
+  },
+  "consensus_leg": {
+   "hit": {
+    "point": 0.921038035946412,
+    "boot_ci95": [
+     0.72,
+     1.1734
+    ],
+    "zero_info_ci95": [
+     0.72,
+     1.1734
+    ],
+    "time_splits": [
+     1.0850940317433149,
+     0.852052072729031,
+     1.072322713828975,
+     0.9114847158264371,
+     0.7415392435543721
+    ]
+   },
+   "pit": {
+    "point": 1.1920205601877742,
+    "boot_ci95": [
+     0.8541,
+     1.5404
+    ],
+    "zero_info_ci95": [
+     0.8541,
+     1.5404
+    ],
+    "time_splits": [
+     2.099129998850291,
+     2.065150652724539,
+     1.232941760855108,
+     0.7697308572993616,
+     0.8018741682509641
+    ]
+   }
+  },
+  "blend_rank_war": {
+   "hit": {
+    "point": 0.7371302954177875,
+    "boot_ci95": [
+     0.4784,
+     0.8745
+    ],
+    "zero_info_ci95": [
+     0.4784,
+     0.8745
+    ],
+    "perm_null_ci95": [
+     -0.0791,
+     0.1041
+    ],
+    "time_splits": [
+     0.7714900385104854,
+     0.6328309050777705,
+     0.8512568918010717,
+     0.8123072329001315,
+     0.6079130466091437
+    ]
+   },
+   "pit": {
+    "point": 0.869456528154441,
+    "boot_ci95": [
+     0.5054,
+     1.0581
+    ],
+    "zero_info_ci95": [
+     0.5054,
+     1.0581
+    ],
+    "perm_null_ci95": [
+     -0.1198,
+     0.1637
+    ],
+    "time_splits": [
+     1.338163309173929,
+     0.7329346261098432,
+     1.0836349722539134,
+     0.5405648150340165,
+     0.6718222529812599
+    ]
+   }
+  }
+ }
+}

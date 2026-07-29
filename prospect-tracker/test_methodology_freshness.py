@@ -57,6 +57,37 @@ MODEL_GLOSSARY = {
     "stuff_plus_external": ["stuff_grade_plus"],
     "stuff_plus_aaa": ["stuff_plus_aaa"],
     "swing_plus_external": ["swing_plus"],
+    # Will's-metrics program 2026-07-23 (docs/wills-2026-07-23/GATES.md): loss ledgers
+    # are internal; shipped display surfaces map to their glossary entries.
+    "fa_pt_risk": "internal",              # W1/W1-B loss ledger (IL-history PT risk, era-transfer FAIL)
+    "xfv_park_line": "internal",           # W2 loss ledger (park-neutralized eFV rates, clause M FAIL)
+    "pal_stuff_xrv": ["stuff_plus_aaa"],   # W3: per-type aStuff+ sidecar + PAL pitch-add ranking (display)
+    "college_stuff_translation": "internal",  # W4 loss ledger (college stuff+ K% covariate FAIL)
+    "collegesavant_stuff": ["collegesavant_stuff_plus"],  # W4 governance of the shipped display lineage
+    "advancement_pace": ["advancement_pace_plus"],        # W5 descriptive display (contract: never a model input)
+    # eFV holistic program 2026-07-24 (docs/efv-2026-07-24/GATES.md):
+    "efv_scoreboard": ["xfv"],             # eFV accountability scoreboard (source-comparison panel)
+    "xfv_platoon": "internal",             # W-PLATOON loss ledger (platoon splits FAIL both sides)
+    "xfv_wrc": "internal",                 # W-WRC/W-SB loss ledger (in-house wRC+ no ship)
+    "xfv_tbs2": "internal",                # W-TBS2 loss ledger (tiebreaker stack FAIL)
+    "xfv_ungraded_disc": "internal",       # W-DISC loss ledger (coverage-starved)
+    "xfv_role_arg": "internal",            # W-SURPLUS S3 audit-only
+    "eta_hazard_lite": ["eta"],            # W-SURPLUS S2 (PASS, gated OFF this cycle)
+    "aaa_physics_screen": ["stuff_plus_aaa"],  # W-SCREEN physics forward screen + sidecar
+    # eFV accuracy / true-to-model program 2026-07-24b (docs/efv-2026-07-24/GATES-ACCURACY.md):
+    "xfv_lambda_reselect": ["xfv"],        # blend-weight re-select SHIP (hit 0.85, +Spearman/AUC)
+    "xfv_weight_recal": "internal",        # attribute-weight/alpha re-open (no ship)
+    "xfv_cap_sweep": "internal",           # input-cap sweep (caps are safety, not compression)
+    "xfv_statcast_overlay_uncapped": ["xfv"],  # uncapped live overlay SHIP default-ON
+    "xfv_ungraded_recal": ["xfv_ungraded"],    # provisional de-cap SHIP true-to-model
+    # Wave G site-wide true-to-model sweep 2026-07-24b (GATES-ACCURACY C2/C3):
+    "plus_metric_recal": ["krp_plus"],     # KRP+ de-clamp SHIP; family already true-to-model
+    "c3_pal_fa_recal": "internal",         # PAL/FA audit, zero ships (measured on real gates)
+    "c3_proj_trans_recal": ["single_a_equivalent"],  # translation band de-cap SHIP
+    # Round 2 2026-07-24e:
+    "xfv_injury_history": "internal",   # injury-history overlay ledger (coverage-starved)
+    "xfv_peak_war": "internal",         # peak-WAR target measurement ledger (keep cumulative)
+    "xfv_bughunt2": "internal",         # bug hunt r2 + scoreboard intl_bat dedup fix
     "spotlights_movement": ["spotlights", "spotlight_age_cap"],
     "org_tendencies": ["org_tendencies"],
     "team_win_projections": ["mlb_projections"],
@@ -83,7 +114,7 @@ MODEL_GLOSSARY = {
     # REM+ = the /mlbstats/ Bullpen Leaderboards reliever metric; its glossary entry
     # (and the Bullpen+ / gmLI / WPA companions) documents the methodology.
     "rem_plus": ["rem_plus", "bullpen_plus"],
-    # PAL = the /pal/ Pitcher Alchemy Lab role-conversion screen; documented by its
+    # PAL = the /pal/ Alchemy Lab role-conversion screen; documented by its
     # FIT-score + conversion-model glossary entries.
     "pal_conversion": ["pal_conversion", "rp_sp_fit", "sp_rp_fit"],
     # Holistic pass 3 (2026-07-01) model-dev artifacts, rendered nowhere:
@@ -92,6 +123,24 @@ MODEL_GLOSSARY = {
     "xfv_isotonic_calibration": "internal",
     "sc_plus_component_diagnostic": "internal",
     "surplus_sensitivity_diagnostic": "internal",
+    # --- 2026-07-25 ---
+    # Positional ladder = the empirically recovered positional-adjustment table
+    # (n=9,101 player-seasons, R2 0.982) that replaced the unsourced folklore one.
+    # It is a CONSTANTS table consumed by prospect_def_value, the projection
+    # pos_adj_prior and the eFV defensive prior rather than a surface of its own,
+    # and it is rendered for the reader in the /pal/ Position Fit ladder view,
+    # which is documented by the PAL conversion entry.
+    "positional_ladder": ["pal_conversion", "def_home_chip"],
+    # eFV board side scale (W-SIDESCALE) = the per-side affine that puts a hitter
+    # grade and a pitcher grade of the same number on the same realized-outcome
+    # scale. It changes the DISPLAYED eFV, so the eFV entry documents it.
+    "efv_board_side_scale": ["xfv"],
+    # Projection calibration map = the internal recalibration seam of the MLB
+    # projection engine; the projections entry documents the engine it calibrates.
+    "proj_calibration_map": ["mlb_projections"],
+    # eFV surrogate label = research lane, NO-SHIP on both sides (deprecated row,
+    # loss ledger). Wired into no surface, so there is nothing to document.
+    "xfv_surrogate_label": "internal",
     # X-D1 gmLI deployment-context metric: gate passed and wired 2026-07-02
     # (bullpen_export join + /mlbstats/ column); documented by its glossary
     # entry.
@@ -252,6 +301,52 @@ MODEL_GLOSSARY = {
     "fa_market_feature_arms": "internal",
     "fa_market_supply_population": "internal",  # serve-side input alignment (wave-2 ship, 2026-07-16)
     "fa_market_class_age_anchor": "internal",   # serve-side input alignment (wave-2 ship, 2026-07-16)
+    # 2026-07-23 program: S-XLINE Statcast measurement upgrade SHIPS live inside
+    # the eFV pipeline (covered AAA 2023+ actives), so its methodology rides the
+    # xfv glossary entry like the other live eFV layers.
+    "xfv_statcast_line": ["xfv"],
+    # S-XLINE-2/3/4 gate ledgers (2026-07-23), all rendered nowhere: the
+    # sub-AAA feeds-proxy V0 STOP (yardstick mismatch, superseded by line3),
+    # the S-XLINE-3 V0'-pass / primary-M-A-NULL run (AUX passes recorded as
+    # inputs to S-XLINE-4), and the S-XLINE-4 incremental arms (whiff-K +
+    # FB-velo overlay-ELIGIBLE per the registered ship rule; overlay not
+    # implemented, nothing served changed).
+    "xfv_statcast_line2": "internal",
+    "xfv_statcast_line3": "internal",
+    "xfv_statcast_line4": "internal",
+    # S-XLINE-4 overlay (2026-07-23): implemented, FAILED its registered
+    # post-flip 2-FV served ceiling (structural: fringe quantile-grid step is
+    # 2.7 FV), reverted same day - defaults OFF, chip never renders, so no
+    # user-facing methodology surface. Ledger in the line4 eval artifact.
+    "xfv_statcast_overlay": "internal",
+    # 2026-07-23 loss ledgers + diagnostics, all rendered nowhere: the
+    # pwoba_xwoba_blend keep-alive re-gate (zero new resolved pairs, next
+    # window 2026-11-15), the BT-1 bat-tracking hitter lane (both arms NULL),
+    # the fantasy streamer-score arm sweep (no arm ships; join bug flagged to
+    # the owner), the IFA bonus pedigree curve (7-tier LOCO gate FAIL; its one
+    # robust structure later shipped as ifa_step_prior under a NEW gate),
+    # and the provisional-penalty / ungraded-cap calibration diagnostic.
+    "pwoba_blend_regate": "internal",
+    "bat_tracking_hitters": "internal",
+    "fantasy_startscore": "internal",
+    "ifa_pedigree": "internal",
+    # P1 V2 (2026-07-23): V1 FAILED same-day (committed loss in the same GATES
+    # file); the V2 re-registration (bounded upward-only pull + bucket-mixture
+    # baseline) passed all five clauses and SHIPS live inside the eFV
+    # provisional path (run_backgrade + score_history), so its methodology
+    # rides the xfv glossary entry like the other live eFV layers. The IFA
+    # >= $1M step arm wired the same day under its own frozen gate rides it
+    # too (it is a branch of the same served prior).
+    "xfv_provisional_prior": ["xfv"],
+    "ifa_step_prior": ["xfv"],
+    "provisional_calibration": "internal",
+    # F-SIDE-FIX (2026-07-23, owner-authorized fairness-fix attempt under the
+    # queued G1-as-NO-HARM re-registration): loss ledger - the capped top-band
+    # joint recalibration fixes pit over-representation (F1a) but fails the
+    # equal-slot gap clause F1b (pit tail has no realized-WAR gradient, the
+    # TOP-QUANT root cause). Defaults OFF, hook dead-by-default, rendered
+    # nowhere.
+    "xfv_side_fairness_fix": "internal",
 }
 
 

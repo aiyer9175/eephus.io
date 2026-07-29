@@ -201,6 +201,25 @@ LAB_EVAL_FRESH_DAYS = 30
 COLLEGESAVANT_MAX_TEAMS = 40
 
 
+def _vintage_years_by_key(timeseries) -> dict[str, int]:
+    """F2 vintage-guard input for stats.bulk_resolve_ids: {player_key: last
+    list year} for NON-ACTIVE identities (inactive busts + graduates). A
+    dormant record re-resolved against the current PlayerIndex can bind a
+    same-name kid whose first pro season postdates the record's entire list
+    era (the luke_jackson class); the guard rejects those candidates.
+    Actives are exempt: their lists are current, and the guard could misfire
+    on a legitimately rehabbing recent signee."""
+    out: dict[str, int] = {}
+    for p in timeseries:
+        if p.status == "active":
+            continue
+        yrs = [int(pt.snapshot_date[:4]) for pt in (p.points or [])
+               if pt.snapshot_date and str(pt.snapshot_date)[:4].isdigit()]
+        if yrs:
+            out[p.player_key] = max(yrs)
+    return out
+
+
 def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
     """True if a career_stats row is younger than max_age_days."""
     if not fetched_at:
@@ -537,6 +556,24 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("ifa export crashed in rebuild_only — continuing")
 
+    # Merged-identity report (the "Jesus Flores" class): two humans whose
+    # names normalize to the same slug fused onto one player_key. Pure
+    # detection over the just-written sidecars + a READ-ONLY read of
+    # player_photos; it never writes to prospects.db and never re-keys
+    # anything. Writes data/identity_collisions.json so the defect is
+    # visible on every build instead of being found by a reader.
+    # Best-effort; a failure must not abort the run.
+    try:
+        from identity_audit import build as _build_identity_audit
+        _ident = _build_identity_audit(path=out_dir / "identity_collisions.json")
+        log.info("identity audit (rebuild): %d critical keys (%d active), "
+                 "%d frankenstein records",
+                 _ident["summary"]["critical_player_keys"],
+                 _ident["summary"]["critical_active_player_keys"],
+                 _ident["summary"]["frankenstein_records"])
+    except Exception:
+        log.exception("identity audit crashed in rebuild_only — continuing")
+
     # CollegeSavant -> Single-A translation. Re-fits the matched-pair factors
     # against the just-refreshed Single-A statlines and rebuilds the per-player
     # sidecar (CS player pages) + the PROSPX draft bridge. Reads CollegeSavant's
@@ -581,6 +618,22 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
                  len(_mt["fits"]))
     except Exception:
         log.exception("milb_translation crashed in rebuild_only - continuing")
+
+    # Advancement Pace+ (W5, descriptive display ONLY - contract forbids any model
+    # consumer) + defensive-home sidecar (W7). Both read caches/DB already refreshed
+    # above and are compare-before-write. Best-effort.
+    try:
+        import advancement_pace_export
+        advancement_pace_export.run()
+        log.info("advancement_pace_export: refreshed data/advancement_pace.json")
+    except Exception:
+        log.exception("advancement_pace_export crashed in rebuild_only - continuing")
+    try:
+        import def_home_export
+        def_home_export.run()
+        log.info("def_home_export: refreshed data/def_home.json")
+    except Exception:
+        log.exception("def_home_export crashed in rebuild_only - continuing")
 
     # eFV PROXY — faster-resolving leading indicator (pre-debut profile -> first-MLB Statcast
     # quality), forward-validated on recent debut cohorts. Separate artifact, NOT eFV; pulls
@@ -759,6 +812,34 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:
                 log.exception("mlb_pipeline daily capture crashed — continuing")
 
+        # --- d0b-ii. MLB Pipeline per-team Top 30 boards (daily) ----------
+        # Same staleness fix as d0b, one tier down: the monthly backfill
+        # freezes each org's Top 30 at the {y}-01-22 preseason release, so
+        # the ~800 prospects who sit in a team Top 30 but not the Live Top
+        # 100 carry a January-vintage Pipeline grade all season. This capture
+        # re-scrapes the 30 current /prospects/{year}/{slug} pages and
+        # re-stamps the SAME per-team label with today's date (upsert bumps
+        # snapshot_date in place) so consensus reads the current vintage. A
+        # parse-health gate (>= 25 orgs, >= 20 players each) refuses a
+        # degraded scrape. Never aborts the run.
+        with _step("d0b-ii. MLB Pipeline per-team Top 30 capture", log):
+            try:
+                from scrapers import run_mlb_pipeline_org_live
+                _po = run_mlb_pipeline_org_live()
+                if _po.get("orgs"):
+                    log.info("mlb_pipeline: daily org Top-30 %d players across "
+                             "%d orgs @ %s",
+                             _po["orgs"]["n_players"], _po["orgs"]["n_orgs"],
+                             _po["orgs"]["snap_date"])
+                elif _po.get("health"):
+                    log.error("mlb_pipeline: org Top-30 health gate refused, "
+                              "skipped: %s", _po["health"])
+                else:
+                    log.error("mlb_pipeline: org Top-30 capture failed: %s",
+                              _po.get("error"))
+            except Exception:
+                log.exception("mlb_pipeline daily org capture crashed - continuing")
+
         # --- 1. Player set from existing snapshots (no scrape). -----------
         # --- d0. MLBAM-anchored prospect discovery —————————————————————————
         # Pulls qualified current-season performers at each MiLB level from
@@ -769,12 +850,29 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # here rather than waiting for a publication cycle.
         with _step("d0. MLBAM prospect discovery (unranked actives)", log):
             try:
-                from mlbam_ingest import ingest_unranked_active_prospects
+                from mlbam_ingest import (ingest_unranked_active_prospects,
+                                          refresh_performance_anchors)
                 _mlbam_summary = ingest_unranked_active_prospects(season=season)
                 _mlbam_total = sum(_mlbam_summary.values())
                 if _mlbam_total:
                     log.info("mlbam_ingest: added %d new unranked prospects %s",
                              _mlbam_total, _mlbam_summary)
+                # d0a. RE-DATE the anchors of players discovered on an EARLIER
+                # run who still qualify this season. The discovery pass above
+                # skips every already-known player, so before this step an
+                # auto-tracked player's anchor date was written once and never
+                # again: measured 2026-07-25, all 2,760 performance_ingest rows
+                # sat at snapshot_date 2026-01-01 (min == max). That matters
+                # because efv_dataset._stale_anchor_discount decays a model
+                # anchor older than 18 months toward a -10 FV terminal at 30
+                # months, so a permanently frozen stamp would have dragged the
+                # whole cohort from FV 35 to FV 25 starting 2027-07 -- a
+                # "dropped off the lists" event that never happened. Re-stamped
+                # ONLY while the player still appears in the qualifying leaders,
+                # and never for a player who has a real published anchor.
+                _refresh = refresh_performance_anchors(season=season)
+                log.info("mlbam_ingest: re-dated %d synthetic anchors %s",
+                         _refresh.get("refreshed", 0), _refresh)
             except Exception:
                 log.exception("mlbam_ingest: discovery step failed — continuing")
 
@@ -788,6 +886,7 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             prospects = [(p.player_key, p.player_name, p.position) for p in timeseries]
             ids_by_key, _bds, player_index = bulk_resolve_ids(
                 prospects, season=season, force_rebuild_index=no_cache,
+                last_list_year_by_key=_vintage_years_by_key(timeseries),
             )
 
         # (d3 "Team affiliations" was cut 2026-07-14: its team_affil result
@@ -1162,6 +1261,26 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     _export_fa()
                 except Exception:
                     log.exception("daily: FA refresh failed — continuing")
+        else:
+            # --- 10b. FA re-export off the FRESH projections (year-round). ----
+            # ORDERING REPAIR 2026-07-25. fa_fit.team_baselines now reads
+            # team_outlook out of data/mlb_projections.json (T1.0), but the
+            # monthly step 6 exports the FA sidecars BEFORE the projections are
+            # rebuilt: monthly 6b is a documented SKIP because d9b re-bakes
+            # projections post-eFV-regen, and d9b runs in this daily tail, i.e.
+            # AFTER step 6. Outside the Nov-Mar window nothing re-exported FA
+            # afterwards, so baseSrc advertised "mlb_projections" while baseWins
+            # carried the PREVIOUS run's outlook (measured: 0 of 30 clubs equal,
+            # mean |delta| 1.483 wins). Attributing a number to a source it does
+            # not equal is worse than the old honest fallback. Re-exporting here
+            # costs one cached export and makes the attribution true. Inside the
+            # window d10 above already runs after d9b and covers this.
+            with _step("d10b. FA re-export off fresh projections", log):
+                try:
+                    from fa_export import export_all as _export_fa
+                    _export_fa()
+                except Exception:
+                    log.exception("daily: FA re-export failed — continuing")
 
         finish_run(run_id, new_snapshots=0, stat_lines=0,
                    notes=f"DAILY: {n_il} on IL, {n_debuts} debuts, {n_trades} new trades")
@@ -1623,6 +1742,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 all_prospects_for_resolve,
                 season=season,
                 force_rebuild_index=force_refetch,
+                last_list_year_by_key=_vintage_years_by_key(timeseries),
             )
             # overwrite=True because these dates are tied to a freshly-resolved
             # MLBAM ID; any pre-existing date in the DB may correspond to a
@@ -1785,6 +1905,91 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.exception("il_history update failed — continuing")
                 log.info("IL: %d prospects currently on IL",
                          sum(1 for v in il_updates.values() if v))
+
+        # --- 2b.viii-2b.xii External data-source ingests ------------------
+        # Five standalone, disk-cached, fail-soft ingests that each land a
+        # data/*.json sidecar for the model/consensus layer (that wiring lives
+        # elsewhere; this block only fetches + lands the data). Every module is
+        # already internally fail-soft (a layout / network failure keeps the
+        # prior on-disk cache and returns without raising), and each step is
+        # ADDITIONALLY wrapped here + individually skippable via its own
+        # EEPHUS_SKIP_* env gate so a flaky source can be disabled without a
+        # code change. None of these feed any other step in THIS run.
+
+        # 2b.viii Tommy John surgery list (community sheet CSV) ->
+        # data/tj_surgery.json. Entry: tj_surgery.run().
+        if os.environ.get("EEPHUS_SKIP_TJ_SURGERY") == "1":
+            log.info("2b.viii SKIP: EEPHUS_SKIP_TJ_SURGERY=1 (Tommy John surgery ingest)")
+        else:
+            with _step("2b.viii. Tommy John surgery list ingest", log):
+                try:
+                    import tj_surgery
+                    _tj_surg = tj_surgery.run()
+                    log.info("tj_surgery: landed %d players / %d surgeries",
+                             _tj_surg.get("n_players", 0), _tj_surg.get("n_rows", 0))
+                except Exception:
+                    log.exception("tj_surgery ingest failed - continuing")
+
+        # 2b.ix Official MLB draft slot/bonus keyed by MLBAM id ->
+        # data/draft_bonus_slot.json. Entry: draft_bonus.build() (there is no
+        # run(); build lands the JSON). --force bypasses the per-year cache.
+        if os.environ.get("EEPHUS_SKIP_DRAFT_BONUS") == "1":
+            log.info("2b.ix SKIP: EEPHUS_SKIP_DRAFT_BONUS=1 (draft slot/bonus ingest)")
+        else:
+            with _step("2b.ix. MLB draft slot/bonus ingest", log):
+                try:
+                    import draft_bonus
+                    _db_records, _db_report = draft_bonus.build(use_cache=not force_refetch)
+                    log.info("draft_bonus: %d unique MLBAM ids (%d with bonus) across %s",
+                             _db_report.get("unique_mlbam", 0),
+                             _db_report.get("records_with_bonus", 0),
+                             _db_report.get("years_landed", []))
+                except Exception:
+                    log.exception("draft_bonus ingest failed - continuing")
+
+        # 2b.x Ballpark metadata from the StatsAPI /venues endpoint ->
+        # data/venue_meta.json. Entry: venue_meta.build().
+        if os.environ.get("EEPHUS_SKIP_VENUE_META") == "1":
+            log.info("2b.x SKIP: EEPHUS_SKIP_VENUE_META=1 (ballpark metadata ingest)")
+        else:
+            with _step("2b.x. Ballpark venue metadata ingest", log):
+                try:
+                    import venue_meta
+                    _venues = venue_meta.build()
+                    log.info("venue_meta: landed %d venues", len(_venues))
+                except Exception:
+                    log.exception("venue_meta ingest failed - continuing")
+
+        # 2b.xi Amateur / winter / independent league season stats ->
+        # data/amateur_leagues.json. Entry: amateur_leagues.build() (warm_cache
+        # only primes caches; build lands the keyed JSON).
+        if os.environ.get("EEPHUS_SKIP_AMATEUR_LEAGUES") == "1":
+            log.info("2b.xi SKIP: EEPHUS_SKIP_AMATEUR_LEAGUES=1 (amateur/winter/indy stats ingest)")
+        else:
+            with _step("2b.xi. Amateur/winter/indy league stats ingest", log):
+                try:
+                    import amateur_leagues
+                    _amateur = amateur_leagues.build()
+                    log.info("amateur_leagues: landed %d players / %d season lines",
+                             len(_amateur), sum(len(v) for v in _amateur.values()))
+                except Exception:
+                    log.exception("amateur_leagues ingest failed - continuing")
+
+        # 2b.xii MLB Pipeline point-in-time Top-100 vintages ->
+        # data/pipeline_vintages.json. Entry: pipeline_vintage.build() (there is
+        # no run(); build lands the JSON).
+        if os.environ.get("EEPHUS_SKIP_PIPELINE_VINTAGE") == "1":
+            log.info("2b.xii SKIP: EEPHUS_SKIP_PIPELINE_VINTAGE=1 (Pipeline vintage ingest)")
+        else:
+            with _step("2b.xii. MLB Pipeline vintage boards ingest", log):
+                try:
+                    import pipeline_vintage
+                    _vint = pipeline_vintage.build()
+                    log.info("pipeline_vintage: landed %d vintage years (mlbam fill %.1f%%)",
+                             len(_vint.get("years", [])),
+                             100 * _vint.get("mlbam_fill_rate", 0.0))
+                except Exception:
+                    log.exception("pipeline_vintage ingest failed - continuing")
 
         # --- 2c. Affiliate roster map. ~6 HTTP calls (one per sport level)
         # returns every MLB + MiLB team with its parent_org_id, which lets
@@ -2716,6 +2921,19 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             log.info("ifa pipeline: exported %d signings", n_ifa)
         except Exception:
             log.exception("ifa export crashed — continuing")
+        # Merged-identity report. See the rebuild_only copy of this block
+        # for the full rationale; detection only, no DB writes, no re-keying.
+        try:
+            from identity_audit import build as _build_identity_audit
+            _ident = _build_identity_audit(
+                path=out_dir / "identity_collisions.json")
+            log.info("identity audit: %d critical keys (%d active), "
+                     "%d frankenstein records",
+                     _ident["summary"]["critical_player_keys"],
+                     _ident["summary"]["critical_active_player_keys"],
+                     _ident["summary"]["frankenstein_records"])
+        except Exception:
+            log.exception("identity audit crashed — continuing")
         _STEP_TIMES.append(("5. Export timeseries.json + summary", time.monotonic() - _step_5_start))
 
         # OOM: free the monthly whole-universe caches HERE, right after the
@@ -2979,18 +3197,18 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("leverage leaderboards export failed - continuing")
 
-        # --- 6b5. Pitcher Alchemy Lab (the /pal/ surface) ---------------
+        # --- 6b5. Alchemy Lab (the /pal/ surface) ---------------
         # RP<->SP role-conversion candidate scores + a validated conversion
         # history. Arsenal/velocity from bulk Statcast, platoon from StatsAPI
         # splits, role from the season leaderboard; reuses the REM+ model for the
         # relief projection. Additive; never aborts.
-        with _step("6b5. Pitcher Alchemy Lab (pal.json)", log):
+        with _step("6b5. Alchemy Lab (pal.json)", log):
             try:
                 from pal_export import export as _export_pal
                 _pal_n = _export_pal(log=log.info)
                 log.info("pal: %d conversion candidates scored", _pal_n)
             except Exception:
-                log.exception("pitcher alchemy lab export failed - continuing")
+                log.exception("alchemy lab export failed - continuing")
 
         # --- 6b6. Fantasy Tools (the /fantasy/ surface) -----------------
         # ROS fantasy projections (reuse the FA/Projections engine) scored in the

@@ -1,0 +1,71 @@
+{
+ "generated_at": "2026-07-23",
+ "experiment": "S-XLINE-2 (docs/efv-2026-07-23/GATES.md)",
+ "tool": "tools/efv_statcast_line2_lab.py",
+ "registration_echo": {
+  "source": "docs/efv-2026-07-23/GATES.md :: 'S-XLINE-2 gate registration - 2026-07-23'",
+  "seed": 20260723,
+  "bootstrap_reps": 2000,
+  "clauses": {
+   "V0": "feeds xwoba_est vs Savant xwOBA on AAA same-season overlap (>= 25 BBE / >= 100 PA): Spearman >= 0.7 or STOP; report r, rho, bias, slope",
+   "M-A": "PRIMARY: A-ball season pairs (Y in 2023-2025 -> Y+1, z within destination pool, >= 150 PA both legs, >= 25 tracked BBE in Y): blend50 of the xwoba_est-implied gap into the actual line must predict next-season wOBA better than the actual line; lo95 > 0",
+   "M-CPX": "SECONDARY: same design at CPX; honest NULL closes it",
+   "AUX-1": "hit p90 EV level-relative at A vs next-season wOBA z; lo95 > 0 or NULL",
+   "AUX-2": "hit whiff/swing-miss (zone_metrics) at A vs next-season K% and wOBA z",
+   "AUX-3": "pit fastball velo (feeds) at A vs next-season K% against",
+   "selection_bias": "same-band covered vs uncovered next-season outcome gap + CI, mandatory per arm; big gap => confounded, do not ship",
+   "ship_rule": "V0 + M-A pass -> feeds-based gap source in efv_statcast_line, W=0.5, caps .050/.050/.100, A/CPX 2023+, default-OFF flags, then the S-XLINE in-matrix clauses before any flip; AUX passes inform future registrations only"
+  }
+ },
+ "v0": {
+  "clause": "V0",
+  "season": 2026,
+  "level": "AAA",
+  "n_feed_side": 540,
+  "n_savant_side": 495,
+  "n_matched": 365,
+  "spearman": 0.6365,
+  "pearson": 0.6895,
+  "mean_bias_feed_minus_savant": 0.0424,
+  "ols_slope_savant_on_feed": 0.5411,
+  "ols_intercept": 0.122,
+  "bar": 0.7,
+  "verdict": "STOP",
+  "note": "feeds xwoba_est is the module's contact-only estimate (xwOBAcon scale, incl. its profile adjustment); Savant xwoba is full xwOBA (includes K/BB), so a level bias is expected and reported; the registered gate is the rank agreement (Spearman)",
+  "v0_2025_leg": "skipped - stored rows are 2026-only; AAA 2025 would be a ~2,200-feed backfill (registration: only 'without a huge fetch')",
+  "diagnostics_descriptive": {
+   "note": "descriptive ledger diagnostics; the registered gate statistic is the >= 25 BBE Spearman above",
+   "rho_bbe_ge_40": {
+    "n": 364,
+    "rho": 0.6373
+   },
+   "rho_bbe_ge_75": {
+    "n": 341,
+    "rho": 0.6227
+   },
+   "rho_bbe_ge_100": {
+    "n": 307,
+    "rho": 0.6292
+   },
+   "rho_raw_pre_adjustment": 0.614,
+   "rho_vs_savant_xslg": 0.7141,
+   "rho_residual_vs_savant_k_percent": 0.4721,
+   "rho_residual_vs_savant_bb_percent": 0.3205,
+   "reading": "agreement does NOT rise with more BBE (structural, not noise); the feed estimate clears 0.70 against the contact-flavored Savant xSLG; the residual vs full xwOBA loads on Savant K% and BB% - i.e. the failure is the contact-only-vs-full-xwOBA quantity mismatch, not a broken EV/LA surface. A future registration would need a like-for-like V0 quantity (K/BB-completed reconstruction or xSLG-family gap) re-registered BEFORE any re-run; nothing proceeds in this one."
+  },
+  "ts": "2026-07-23T15:05:44"
+ },
+ "not_run_per_v0_stop": {
+  "backfill": "A (sport 14) + CPX (sport 16) hitter feeds 2023-2025 NOT fetched (registered scope, gated behind V0)",
+  "arms": [
+   "M-A (primary)",
+   "M-CPX (secondary)",
+   "AUX-1 p90 EV",
+   "AUX-2 whiff",
+   "AUX-3 pit FB velo",
+   "selection-bias falsification"
+  ]
+ },
+ "keep_alive": "revival requires a NEW pre-registered V0 on a like-for-like quantity: either (a) complete the feeds estimate to full-xwOBA scale with the stat line's K/BB before comparing, or (b) gate on an xSLG-family agreement (measured 0.714 here, descriptive). The EV/LA surface itself looks usable; the registered proxy quantity was the wrong yardstick. No arm may be run under THIS registration.",
+ "verdict": "V0 STOP - in-house feeds xwoba_est proxy below the 0.70 rank-agreement bar vs Savant xwOBA; no backfill run, arms not executed. This artifact is the V0 loss ledger."
+}

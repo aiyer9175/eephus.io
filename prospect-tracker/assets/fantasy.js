@@ -14,7 +14,7 @@
 (function () {
   "use strict";
   var DATA_URL = "/data/fantasy.json";
-  var S = { data: null, system: "fgp", section: "streamers", byId: {} };
+  var S = { data: null, system: "fgp", section: "streamers", byId: {}, streamerDay: null };
   // player_links map (mlbam -> merged-card key), resolved once at boot so
   // nameLink can build hrefs synchronously (mirrors mlbstats.js / pal.js).
   var LINKS = null;
@@ -118,40 +118,80 @@
       '</th><th>IP</th><th>K</th><th>ERA</th><th>WHIP</th><th>' + (isRp ? "Saves" : "QS") + '</th><th>' +
       (isRp ? "REM+" : "SEM+") + "</th></tr></thead><tbody>" + rows + "</tbody></table>";
   }
+  function streamerDayLabel(d) {
+    // "2026-07-23" -> "Thu 7/23". Parse the parts locally (a bare ISO string
+    // through new Date() is treated as UTC and can shift a day).
+    var p = String(d || "").split("-");
+    if (p.length !== 3) return esc(d);
+    var dt = new Date(+p[0], +p[1] - 1, +p[2]);
+    var wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dt.getDay()];
+    return wd + " " + (+p[1]) + "/" + (+p[2]);
+  }
   function tableStreamers(list) {
-    var rows = (list || []).slice(0, 120).map(function (st, i) {
+    // Group by date BEFORE any slice so one busy slate cannot starve later days;
+    // each day is capped independently. One day renders at a time (date pills).
+    var byDay = {}, days = [];
+    (list || []).forEach(function (st) {
+      var d = st.date || "";
+      if (!byDay[d]) { byDay[d] = []; days.push(d); }
+      byDay[d].push(st);
+    });
+    days.sort();
+    if (!days.length) return '<div class="fantasy-note">Probables are not posted for the streamer window yet - check back once lineups firm up.</div>';
+    if (!S.streamerDay || days.indexOf(S.streamerDay) < 0) S.streamerDay = days[0];
+    var pills = days.map(function (d) {
+      var on = d === S.streamerDay;
+      return '<button type="button" class="ff-daypill' + (on ? " active" : "") + '" data-streamerday="' + esc(d) +
+        '" role="tab" aria-selected="' + (on ? "true" : "false") + '">' + streamerDayLabel(d) + "</button>";
+    }).join("");
+    var rows = (byDay[S.streamerDay] || []).slice(0, 40).map(function (st, i) {
       var p = S.byId[st.mlbam] || {}, s = p.skill || {};
       return '<tr><td class="ff-rk">' + (i + 1) + '</td><td>' + esc(st.date) + '</td><td class="ff-nm">' +
         nameLink(st.mlbam, st.name) + " " + teamLogo(st.team) + '</td><td>@ ' + esc(st.opp_org) +
         " (Off+ " + num(st.opp_off, 0) + ')</td><td class="ff-sc">' + num(st.per_start_fgp, 1) + "</td><td>" +
         (s.sem_plus != null ? num(s.sem_plus, 0) : "-") + "</td><td>" + esc(st.venue || "") + "</td></tr>";
     }).join("");
-    return '<div class="fantasy-note">Every announced probable start over the next 3 days, ranked by matchup-adjusted expected points (weaker opposing offense ranks higher). Scored in FanGraphs Points; switch formats above to re-rank the ROS boards.</div>' +
+    return '<div class="fantasy-note">Every announced probable start over the next 3 days, ranked by matchup-adjusted expected points (weaker opposing offense ranks higher). Pick a day below. Scored in FanGraphs Points; switch formats above to re-rank the ROS boards.</div>' +
+      '<div class="ff-daypills" role="tablist" aria-label="Streamer day">' + pills + "</div>" +
       '<table class="fantasy-table"><thead><tr><th>#</th><th>Date</th><th>Pitcher</th><th>Opponent</th><th>Exp pts</th><th>SEM+</th><th>Park</th></tr></thead><tbody>' + rows + "</tbody></table>";
   }
   function tableTwoStart(list) {
-    if (!list || !list.length) return '<div class="fantasy-note">No two-start pitchers detected in the current window yet - MLB announces probables ~5 days out, so this fills in as the scoring week firms up.</div>';
+    if (!list || !list.length) return '<div class="fantasy-note">No two-start pitchers detected or projectable in the current window yet - check back once probables post for the scoring week.</div>';
     var rows = list.slice(0, 60).map(function (t, i) {
-      var legs = (t.legs || []).map(function (l) { return "@" + esc(l.opp_org) + " (" + num(l.exp_fgp, 0) + ")"; }).join(" · ");
+      var legs = (t.legs || []).map(function (l) {
+        var leg = "@" + esc(l.opp_org) + " (" + num(l.exp_fgp, 0) + ")";
+        return l.projected ? '<span class="ff-proj">' + leg + " (proj)</span>" : leg;
+      }).join(" · ");
       return '<tr><td class="ff-rk">' + (i + 1) + '</td><td class="ff-nm">' + nameLink(t.mlbam, t.name) + " " + teamLogo(t.team) +
         '</td><td>' + esc(t.n_starts) + '</td><td class="ff-sc">' + num(t.total_fgp, 1) + "</td><td>" + legs + "</td></tr>";
     }).join("");
-    return '<table class="fantasy-table"><thead><tr><th>#</th><th>Pitcher</th><th>Starts</th><th>Total pts</th><th>Matchups</th></tr></thead><tbody>' + rows + "</tbody></table>";
+    return '<div class="fantasy-note">Pitchers lined up for two starts this scoring week. MLB posts probables only ~5 days out, so the second start is projected from the team schedule on normal rest and marked (proj) until it is announced.</div>' +
+      '<table class="fantasy-table"><thead><tr><th>#</th><th>Pitcher</th><th>Starts</th><th>Total pts</th><th>Matchups</th></tr></thead><tbody>' + rows + "</tbody></table>";
   }
   function renderBuySell() {
     function col(ids, label, cls) {
       var rows = (ids || []).slice(0, 30).map(function (m) {
         var p = S.byId[m]; if (!p) return "";
         var s = p.skill || {}, isHit = p.side === "hit", gap = isHit ? s.luck_gap : s.luck;
+        // Mechanics-trend chip (W6, display context only): baked server-side
+        // from per-season Swing+ when the latest-vs-prior move is >= 5 points.
+        // Never part of the buy/sell ranking - the sort is luck-only.
+        var mt = p.swing_trend, chip = "";
+        if (mt && mt.delta != null) {
+          var md = (mt.delta > 0 ? "+" : "") + num(mt.delta, 0);
+          chip = ' <span class="ff-mech ' + (mt.delta > 0 ? "ff-mech-up" : "ff-mech-down") +
+            '" title="Mechanics trend: per-season Swing+ (Will Cahoon) moved ' + md + " from " +
+            esc(mt.from) + " to " + esc(mt.to) + '. Context only - never part of this ranking.">mech trend ' + md + "</span>";
+        }
         // Hitter luck_gap is a plus-stat (0 decimals); pitcher luck is in wOBA
         // points (~0.03), so render 3 decimals or it collapses to "0".
-        return "<tr><td class=\"ff-nm\">" + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) + "</td><td>" + esc(p.pos || "") +
+        return "<tr><td class=\"ff-nm\">" + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) + chip + "</td><td>" + esc(p.pos || "") +
           '</td><td class="ff-sc ' + cls + '">' + (gap > 0 ? "+" : "") + num(gap, isHit ? 0 : 3) + "</td></tr>";
       }).join("");
       return '<div class="fantasy-half"><h3>' + label + '</h3><table class="fantasy-table"><thead><tr><th>Player</th><th>Pos</th><th>Luck gap</th></tr></thead><tbody>' + rows + "</tbody></table></div>";
     }
     var sec = S.data.sections || {};
-    return '<div class="fantasy-note">Regression candidates from our expected-stat gaps (hitters: xHEM+ − HEM+; pitchers: xERA/xwOBA vs actual). A positive gap means the player has been UNLUCKY and is due to improve (buy); negative means overperforming (sell).</div>' +
+    return '<div class="fantasy-note">Regression candidates from our expected-stat gaps (hitters: xHEM+ − HEM+; pitchers: xERA/xwOBA vs actual). A positive gap means the player has been UNLUCKY and is due to improve (buy); negative means overperforming (sell). A mech trend chip flags a 5+ point move in per-season Swing+ (Will Cahoon) - swing-mechanics context only, never part of the ranking.</div>' +
       '<div class="fantasy-cols">' + col(sec.buy_low, "Buy-Low (unlucky)", "ff-pos") + col(sec.sell_high, "Sell-High (overperforming)", "ff-neg") + "</div>";
   }
   function renderClosers() {
@@ -215,6 +255,14 @@
       default: html = tableStreamers(sec.daily_streamers);
     }
     root.innerHTML = html;
+    // Streamer day pills live inside the freshly rendered section, so their
+    // click handlers rebind on every render (same lifecycle as renderSelector).
+    root.querySelectorAll(".ff-daypill").forEach(function (b) {
+      b.addEventListener("click", function () {
+        S.streamerDay = b.getAttribute("data-streamerday");
+        renderSection();
+      });
+    });
     if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(root);
   }
 
@@ -319,6 +367,10 @@
     ".fantasy-table td.ff-rk{color:var(--text-tertiary)}",
     ".fantasy-table td.ff-sc{font-weight:700}",
     ".ff-pos{color:var(--accent-green,#3a9)}.ff-neg{color:var(--accent-red,#c55)}",
+    ".ff-daypills{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}",
+    ".ff-daypill{font:600 12px/1 var(--font-retro,monospace);padding:6px 11px;border-radius:6px;border:1px solid var(--border-subtle,#3a3a3a);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer}",
+    ".ff-daypill.active{background:var(--accent-cyan,#2a7);color:#fff;border-color:transparent}",
+    ".ff-proj{color:var(--text-tertiary);font-style:italic}",
     ".fantasy-note{font-size:12.5px;color:var(--text-secondary);background:var(--bg-secondary);border:1px solid var(--border-subtle,#333);border-radius:8px;padding:9px 12px;margin:8px 0}",
     ".fantasy-cols{display:flex;gap:16px;flex-wrap:wrap}.fantasy-half{flex:1;min-width:280px}",
     ".fantasy-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}",
@@ -332,7 +384,10 @@
     ".fantasy-name-link{color:var(--accent-cyan,#2a7);text-decoration:none}.fantasy-name-link:hover{text-decoration:underline}",
     ".ff-tier{font:600 10px/1 var(--font-retro,monospace);color:var(--text-secondary);background:var(--bg-secondary);border:1px solid var(--border-subtle,#333);border-radius:4px;padding:2px 6px;white-space:nowrap}",
     ".ff-tier.ff-tier-elite{color:#fff;background:var(--accent-green,#3a9);border-color:transparent}",
-    ".ff-tier.ff-tier-one{color:var(--accent-cyan,#2a7);border-color:var(--accent-cyan,#2a7)}"
+    ".ff-tier.ff-tier-one{color:var(--accent-cyan,#2a7);border-color:var(--accent-cyan,#2a7)}",
+    ".ff-mech{font:600 10px/1 var(--font-retro,monospace);border:1px solid var(--border-subtle,#333);border-radius:4px;padding:2px 5px;white-space:nowrap;cursor:help}",
+    ".ff-mech.ff-mech-up{color:var(--accent-green,#3a9);border-color:var(--accent-green,#3a9)}",
+    ".ff-mech.ff-mech-down{color:var(--accent-red,#c55);border-color:var(--accent-red,#c55)}"
   ].join("");
   document.head.appendChild(css);
 })();

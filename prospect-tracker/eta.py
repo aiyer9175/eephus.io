@@ -191,6 +191,13 @@ class ETAResult:
     #     years rounds to a year out)
     # None when ETA itself is None (insufficient signal).
     eta_half: str | None = None      # "early" | "late" | None
+    # S2 eta-hazard-lite (2026-07-24 cycle, W-SURPLUS S2): years shaved off
+    # the final travel time because the player was ALREADY 40-man-selected
+    # at the snapshot (historical selection dates reconstructed from the
+    # .cache/mlb_transactions SE "selected the contract" events). 0.0 unless
+    # the caller passed fortyman_adj (default None = OFF, byte-identical).
+    # Appended LAST so existing field order is untouched.
+    fortyman_adj_applied: float = 0.0
 
 
 def _org_promotion_phase_weight(phase: str, org_tendency: dict | None) -> float:
@@ -239,6 +246,7 @@ def estimate_eta(
     statcast_plus: int | None = None,
     base_years: dict[str, float] | None = None,
     level_bias_adj: dict[str, float] | None = None,
+    fortyman_adj: float | None = None,
 ) -> ETAResult:
     """
     Return an ETAResult for the given prospect attributes.
@@ -260,6 +268,14 @@ def estimate_eta(
         Override for the per-level base travel-time table — used by
         eta_backtest.py to score candidate recalibrations through the
         EXACT live code path. None → the module BASE_YEARS.
+    fortyman_adj : float | None
+        S2 eta-hazard-lite (W-SURPLUS S2, 2026-07-24 cycle; DEFAULT-OFF).
+        Years to shave off the FINAL travel time because the player was
+        already 40-man-selected at the snapshot (selection dates come from
+        the .cache/mlb_transactions SE events; the magnitude is fitted
+        forward-chained by the S2 lab, never hardcoded here). None (the
+        default) = no adjustment, output byte-identical to the pre-hook
+        code path. Applied after level_bias_adj, floored at 0.
     """
     today_year = date.today().year
 
@@ -598,6 +614,13 @@ def estimate_eta(
     # last so it corrects the FINAL travel time, not an intermediate term.
     if level_bias_adj and current_level:
         total = max(0.0, total - float(level_bias_adj.get(current_level, 0.0)))
+    # S2 eta-hazard-lite 40-man selection shave (DEFAULT-OFF: fires only when
+    # the caller passes a fitted fortyman_adj; applied last, like the bias
+    # shave, so it corrects the FINAL travel time).
+    _fortyman_applied = 0.0
+    if fortyman_adj is not None:
+        _fortyman_applied = min(float(fortyman_adj), total)
+        total = max(0.0, total - float(fortyman_adj))
     eta_year = today_year + round(total)
 
     if signals >= 3:
@@ -683,4 +706,5 @@ def estimate_eta(
         org_promo_h2_rate=(org_promotion_tendency or {}).get("h2_rate"),
         org_promo_weight=round(org_weight, 2),
         eta_half=eta_half,
+        fortyman_adj_applied=round(_fortyman_applied, 2),
     )

@@ -21,6 +21,7 @@ fa
 fantasy
 forums
 glossary
+history
 mlbstats
 news
 pal

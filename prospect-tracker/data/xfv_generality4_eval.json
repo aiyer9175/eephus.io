@@ -1,0 +1,1007 @@
+{
+ "premium_recenter": [
+  {
+   "name": "premium recenter, all strata, lam=0.25",
+   "lam": 0.25,
+   "delta": -0.0097,
+   "ci95": [
+    -0.018,
+    -0.0013
+   ],
+   "control": -0.0086,
+   "control_p95": -0.006,
+   "folds_improved": 0,
+   "n_folds": 10,
+   "base_rho": 0.3242,
+   "cand_rho": 0.3145,
+   "verdict": "HARMFUL"
+  },
+  {
+   "name": "premium recenter, all strata, lam=0.5",
+   "lam": 0.5,
+   "delta": -0.0141,
+   "ci95": [
+    -0.0252,
+    -0.0036
+   ],
+   "control": -0.0128,
+   "control_p95": -0.0096,
+   "folds_improved": 0,
+   "n_folds": 10,
+   "base_rho": 0.3242,
+   "cand_rho": 0.3102,
+   "verdict": "HARMFUL"
+  },
+  {
+   "name": "premium recenter, all strata, lam=1.0",
+   "lam": 1.0,
+   "delta": -0.0462,
+   "ci95": [
+    -0.076,
+    -0.0197
+   ],
+   "control": -0.0473,
+   "control_p95": -0.0382,
+   "folds_improved": 0,
+   "n_folds": 10,
+   "base_rho": 0.3242,
+   "cand_rho": 0.2781,
+   "verdict": "HARMFUL"
+  },
+  {
+   "name": "premium recenter, old-for-level only, lam=1.0",
+   "lam": 1.0,
+   "delta": -0.0144,
+   "ci95": [
+    -0.0387,
+    0.0044
+   ],
+   "control": -0.0141,
+   "control_p95": -0.0091,
+   "folds_improved": 4,
+   "n_folds": 10,
+   "base_rho": 0.3242,
+   "cand_rho": 0.3099,
+   "verdict": "MEASURED NULL"
+  },
+  {
+   "name": "premium recenter, old + lowProd only, lam=1.0",
+   "lam": 1.0,
+   "delta": 0.0039,
+   "ci95": [
+    -0.0072,
+    0.0127
+   ],
+   "control": 0.0048,
+   "control_p95": 0.0064,
+   "folds_improved": 5,
+   "n_folds": 10,
+   "base_rho": 0.3242,
+   "cand_rho": 0.3282,
+   "verdict": "MEASURED NULL"
+  },
+  {
+   "name": "premium recenter, AAA/old/lowProd only (the Bradfield cell), lam=1.0",
+   "lam": 1.0,
+   "delta": 0.0013,
+   "ci95": [
+    -0.0044,
+    0.0064
+   ],
+   "control": 0.0014,
+   "control_p95": 0.0023,
+   "folds_improved": 5,
+   "n_folds": 10,
+   "base_rho": 0.3242,
+   "cand_rho": 0.3255,
+   "verdict": "MEASURED NULL"
+  }
+ ],
+ "class_sizes": {
+  "profile_n": 100,
+  "profile_top300": 3,
+  "profile_top100": 1,
+  "profile": [
+   {
+    "key": "enrique_bradfield_jr",
+    "slot": 95,
+    "served": 50.97,
+    "consensus": 45.6,
+    "premium": 5.37,
+    "age": 24.0,
+    "ops_rel": -0.12333073593073583
+   },
+   {
+    "key": "max_anderson",
+    "slot": 240,
+    "served": 46.21,
+    "consensus": 43.1,
+    "premium": 3.11,
+    "age": 24.0,
+    "ops_rel": -0.01182608695652175
+   },
+   {
+    "key": "ethan_odonnell",
+    "slot": 271,
+    "served": 45.79,
+    "consensus": 41.1,
+    "premium": 4.69,
+    "age": 24.0,
+    "ops_rel": -0.0589215277777778
+   },
+   {
+    "key": "josh_kasevich",
+    "slot": 334,
+    "served": 44.34,
+    "consensus": 40.6,
+    "premium": 3.74,
+    "age": 25.0,
+    "ops_rel": -0.013736933045356345
+   },
+   {
+    "key": "nathan_martorella",
+    "slot": 336,
+    "served": 44.34,
+    "consensus": 43.0,
+    "premium": 1.34,
+    "age": 25.0,
+    "ops_rel": -0.16939615384615384
+   },
+   {
+    "key": "rj_schreck",
+    "slot": 581,
+    "served": 38.54,
+    "consensus": 40.6,
+    "premium": -2.06,
+    "age": 25.0,
+    "ops_rel": -0.08700358422939067
+   },
+   {
+    "key": "homer_bush_jr",
+    "slot": 627,
+    "served": 37.81,
+    "consensus": 38.1,
+    "premium": -0.29,
+    "age": 24.0,
+    "ops_rel": -0.20552651757188503
+   },
+   {
+    "key": "ben_ross",
+    "slot": 704,
+    "served": 36.05,
+    "consensus": 38.1,
+    "premium": -2.05,
+    "age": 25.0,
+    "ops_rel": -0.013575438596491343
+   },
+   {
+    "key": "christian_franklin",
+    "slot": 795,
+    "served": 34.29,
+    "consensus": 38.1,
+    "premium": -3.81,
+    "age": 26.0,
+    "ops_rel": -0.01259366515837113
+   },
+   {
+    "key": "colton_ledbetter",
+    "slot": 802,
+    "served": 34.18,
+    "consensus": 38.0,
+    "premium": -3.82,
+    "age": 24.0,
+    "ops_rel": -0.10928571428571433
+   },
+   {
+    "key": "kristian_robinson",
+    "slot": 817,
+    "served": 33.98,
+    "consensus": 40.5,
+    "premium": -6.52,
+    "age": 25.0,
+    "ops_rel": -0.019571717171717247
+   },
+   {
+    "key": "jack_hurley",
+    "slot": 834,
+    "served": 33.56,
+    "consensus": 38.0,
+    "premium": -4.44,
+    "age": 24.0,
+    "ops_rel": -0.02574767441860473
+   },
+   {
+    "key": "andrew_pinckney",
+    "slot": 950,
+    "served": 32.01,
+    "consensus": 36.3,
+    "premium": -4.29,
+    "age": 25.0,
+    "ops_rel": -0.005424999999999985
+   },
+   {
+    "key": "matthew_etzel",
+    "slot": 997,
+    "served": 31.28,
+    "consensus": 35.7,
+    "premium": -4.42,
+    "age": 24.0,
+    "ops_rel": -0.0174828125000001
+   },
+   {
+    "key": "gavin_cross",
+    "slot": 1049,
+    "served": 29.83,
+    "consensus": 38.1,
+    "premium": -8.27,
+    "age": 25.0,
+    "ops_rel": -0.08072820512820504
+   },
+   {
+    "key": "brock_wilken",
+    "slot": 1185,
+    "served": 27.03,
+    "consensus": 38.1,
+    "premium": -11.07,
+    "age": 24.0,
+    "ops_rel": -0.10210253164556972
+   },
+   {
+    "key": "aaron_zavala",
+    "slot": 2976,
+    "served": 20.0,
+    "consensus": 38.0,
+    "premium": -18.0,
+    "age": 26.0,
+    "ops_rel": -0.06506041666666675
+   },
+   {
+    "key": "adam_zebrowski",
+    "slot": 2987,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 25.0,
+    "ops_rel": -0.02905000000000004
+   },
+   {
+    "key": "andrew_navigato",
+    "slot": 3053,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 28.0,
+    "ops_rel": -0.12038717948717953
+   },
+   {
+    "key": "andrew_pintar",
+    "slot": 3054,
+    "served": 20.0,
+    "consensus": 35.5,
+    "premium": -15.5,
+    "age": 25.0,
+    "ops_rel": -0.016500000000000015
+   },
+   {
+    "key": "anthony_vilar",
+    "slot": 3094,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.16496228070175434
+   },
+   {
+    "key": "austin_gauthier",
+    "slot": 3113,
+    "served": 20.0,
+    "consensus": 35.5,
+    "premium": -15.5,
+    "age": 27.0,
+    "ops_rel": -0.028232704402515702
+   },
+   {
+    "key": "braiden_ward",
+    "slot": 3146,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.08713119533527695
+   },
+   {
+    "key": "brett_auerbach",
+    "slot": 3173,
+    "served": 20.0,
+    "consensus": 35.5,
+    "premium": -15.5,
+    "age": 26.0,
+    "ops_rel": -0.05037979797979791
+   },
+   {
+    "key": "brock_rodden",
+    "slot": 3177,
+    "served": 20.0,
+    "consensus": 35.6,
+    "premium": -15.6,
+    "age": 26.0,
+    "ops_rel": -0.0856262626262626
+   },
+   {
+    "key": "brody_moore",
+    "slot": 3181,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 25.0,
+    "ops_rel": -0.14836378600823044
+   },
+   {
+    "key": "caden_connor",
+    "slot": 3198,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 25.0,
+    "ops_rel": -0.07154444444444455
+   },
+   {
+    "key": "caleb_ricketts",
+    "slot": 3208,
+    "served": 20.0,
+    "consensus": 36.1,
+    "premium": -16.1,
+    "age": 26.0,
+    "ops_rel": -0.21217777777777783
+   },
+   {
+    "key": "carlos_mendoza",
+    "slot": 3244,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 26.0,
+    "ops_rel": -0.081089972899729
+   },
+   {
+    "key": "christian_cairo__sa3010028",
+    "slot": 3277,
+    "served": 20.0,
+    "consensus": 40.0,
+    "premium": -20.0,
+    "age": 25.0,
+    "ops_rel": -0.0750843267108168
+   },
+   {
+    "key": "colby_halter",
+    "slot": 3293,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 24.0,
+    "ops_rel": -0.10310136986301373
+   },
+   {
+    "key": "colin_barber",
+    "slot": 3301,
+    "served": 20.0,
+    "consensus": 35.5,
+    "premium": -15.5,
+    "age": 24.0,
+    "ops_rel": -0.11419560439560442
+   },
+   {
+    "key": "colin_davis",
+    "slot": 3303,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.03107175572519092
+   },
+   {
+    "key": "cooper_johnson",
+    "slot": 3317,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 28.0,
+    "ops_rel": -0.1793691029900332
+   },
+   {
+    "key": "damiano_palmegiani",
+    "slot": 3337,
+    "served": 20.0,
+    "consensus": 38.0,
+    "premium": -18.0,
+    "age": 25.0,
+    "ops_rel": -0.11805437788018432
+   },
+   {
+    "key": "dayan_frias",
+    "slot": 3377,
+    "served": 20.0,
+    "consensus": 40.0,
+    "premium": -20.0,
+    "age": 24.0,
+    "ops_rel": -0.13572659176029975
+   },
+   {
+    "key": "dayne_leonard",
+    "slot": 3378,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 26.0,
+    "ops_rel": -0.07428000000000001
+   },
+   {
+    "key": "dayson_croes",
+    "slot": 3380,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 26.0,
+    "ops_rel": -0.02959411764705886
+   },
+   {
+    "key": "dominic_pitelli",
+    "slot": 3413,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 24.0,
+    "ops_rel": -0.15654025974025976
+   },
+   {
+    "key": "drew_swift",
+    "slot": 3421,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.06249948186528495
+   },
+   {
+    "key": "dru_baker",
+    "slot": 3422,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 26.0,
+    "ops_rel": -0.07471418918918916
+   },
+   {
+    "key": "dustin_dickerson",
+    "slot": 3424,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 25.0,
+    "ops_rel": -0.10834687500000004
+   },
+   {
+    "key": "eddys_leonard",
+    "slot": 3439,
+    "served": 20.0,
+    "consensus": 38.0,
+    "premium": -18.0,
+    "age": 25.0,
+    "ops_rel": -0.026126315789473744
+   },
+   {
+    "key": "elih_marrero",
+    "slot": 3469,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 29.0,
+    "ops_rel": -0.027209090909090947
+   },
+   {
+    "key": "ernesto_martinez_jr",
+    "slot": 3499,
+    "served": 20.0,
+    "consensus": 40.0,
+    "premium": -20.0,
+    "age": 27.0,
+    "ops_rel": -0.0650598930481283
+   },
+   {
+    "key": "ethan_murray",
+    "slot": 3510,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 26.0,
+    "ops_rel": -0.07396028368794325
+   },
+   {
+    "key": "francisco_urbaez",
+    "slot": 3537,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 28.0,
+    "ops_rel": -0.07688571428571428
+   },
+   {
+    "key": "griffin_lockwoodpowell",
+    "slot": 3591,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 28.0,
+    "ops_rel": -0.059396491228070177
+   },
+   {
+    "key": "hogan_windish",
+    "slot": 3619,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.09156190476190479
+   },
+   {
+    "key": "hudson_haskin",
+    "slot": 3620,
+    "served": 20.0,
+    "consensus": 35.5,
+    "premium": -15.5,
+    "age": 26.0,
+    "ops_rel": -0.10745454545454548
+   },
+   {
+    "key": "ivan_melendez",
+    "slot": 3640,
+    "served": 20.0,
+    "consensus": 38.0,
+    "premium": -18.0,
+    "age": 26.0,
+    "ops_rel": -0.054400000000000004
+   },
+   {
+    "key": "jacob_berry",
+    "slot": 3660,
+    "served": 20.0,
+    "consensus": 38.0,
+    "premium": -18.0,
+    "age": 25.0,
+    "ops_rel": -0.05516647727272729
+   },
+   {
+    "key": "jake_holton",
+    "slot": 3673,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 28.0,
+    "ops_rel": -0.07020335195530726
+   },
+   {
+    "key": "jared_dickey",
+    "slot": 3689,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 24.0,
+    "ops_rel": -0.11337534246575345
+   },
+   {
+    "key": "jared_serna",
+    "slot": 3690,
+    "served": 20.0,
+    "consensus": 38.0,
+    "premium": -18.0,
+    "age": 24.0,
+    "ops_rel": -0.1181844660194175
+   },
+   {
+    "key": "jason_matthews",
+    "slot": 3696,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 29.0,
+    "ops_rel": -0.06758260869565218
+   },
+   {
+    "key": "jax_biggers",
+    "slot": 3703,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 29.0,
+    "ops_rel": -0.15214245283018873
+   },
+   {
+    "key": "jean_walters",
+    "slot": 3714,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 24.0,
+    "ops_rel": -0.0629320754716981
+   },
+   {
+    "key": "jesus_bastidas",
+    "slot": 3729,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.09791078431372552
+   },
+   {
+    "key": "joe_lampe",
+    "slot": 3757,
+    "served": 20.0,
+    "consensus": 40.0,
+    "premium": -20.0,
+    "age": 25.0,
+    "ops_rel": -0.07127663551401871
+   },
+   {
+    "key": "johnny_olmstead",
+    "slot": 3781,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 25.0,
+    "ops_rel": -0.12074887218045108
+   },
+   {
+    "key": "jose_cordova",
+    "slot": 3819,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 26.0,
+    "ops_rel": -0.07267021276595752
+   },
+   {
+    "key": "josh_rivera",
+    "slot": 3845,
+    "served": 20.0,
+    "consensus": 35.5,
+    "premium": -15.5,
+    "age": 25.0,
+    "ops_rel": -0.15956756756756757
+   },
+   {
+    "key": "jud_fabian",
+    "slot": 3885,
+    "served": 20.0,
+    "consensus": 35.5,
+    "premium": -15.5,
+    "age": 25.0,
+    "ops_rel": -0.09657558139534891
+   },
+   {
+    "key": "kellen_strahm",
+    "slot": 3914,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 29.0,
+    "ops_rel": -0.09720522388059706
+   },
+   {
+    "key": "luke_ritter",
+    "slot": 4014,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 29.0,
+    "ops_rel": -0.18588928571428576
+   },
+   {
+    "key": "marcos_castanon",
+    "slot": 4045,
+    "served": 20.0,
+    "consensus": 35.5,
+    "premium": -15.5,
+    "age": 27.0,
+    "ops_rel": -0.10143888888888891
+   },
+   {
+    "key": "mario_camilletti",
+    "slot": 4049,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.07728813559322031
+   },
+   {
+    "key": "matt_oneill",
+    "slot": 4063,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 28.0,
+    "ops_rel": -0.010044047619047682
+   },
+   {
+    "key": "matt_rudick",
+    "slot": 4064,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.019598319327731123
+   },
+   {
+    "key": "max_burt",
+    "slot": 4073,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 29.0,
+    "ops_rel": -0.09675
+   },
+   {
+    "key": "michael_turner",
+    "slot": 4088,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.04639493670886082
+   },
+   {
+    "key": "mike_jarvis",
+    "slot": 4097,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 28.0,
+    "ops_rel": -0.16961690140845073
+   },
+   {
+    "key": "nathan_hickey",
+    "slot": 4115,
+    "served": 20.0,
+    "consensus": 41.0,
+    "premium": -21.0,
+    "age": 26.0,
+    "ops_rel": -0.07512233009708742
+   },
+   {
+    "key": "nic_kent",
+    "slot": 4122,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 26.0,
+    "ops_rel": -0.04872408759124087
+   },
+   {
+    "key": "nick_cimillo",
+    "slot": 4124,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 26.0,
+    "ops_rel": -0.05555696202531642
+   },
+   {
+    "key": "noah_cardenas",
+    "slot": 4141,
+    "served": 20.0,
+    "consensus": 35.5,
+    "premium": -15.5,
+    "age": 26.0,
+    "ops_rel": -0.12260456431535274
+   },
+   {
+    "key": "peyton_wilson",
+    "slot": 4176,
+    "served": 20.0,
+    "consensus": 38.0,
+    "premium": -18.0,
+    "age": 26.0,
+    "ops_rel": -0.09582134831460674
+   },
+   {
+    "key": "phillip_glasser",
+    "slot": 4177,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 26.0,
+    "ops_rel": -0.0949770491803279
+   },
+   {
+    "key": "ramon_mendoza",
+    "slot": 4192,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 25.0,
+    "ops_rel": -0.011600000000000048
+   },
+   {
+    "key": "ramon_rodriguez",
+    "slot": 4193,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.09774653465346536
+   },
+   {
+    "key": "riley_tirotta",
+    "slot": 4219,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.12470806451612904
+   },
+   {
+    "key": "robert_moore",
+    "slot": 4225,
+    "served": 20.0,
+    "consensus": 35.5,
+    "premium": -15.5,
+    "age": 24.0,
+    "ops_rel": -0.0437922509225092
+   },
+   {
+    "key": "romeo_sanabria",
+    "slot": 4237,
+    "served": 20.0,
+    "consensus": 35.6,
+    "premium": -15.6,
+    "age": 24.0,
+    "ops_rel": -0.16540000000000002
+   },
+   {
+    "key": "ryan_galanie",
+    "slot": 4256,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 26.0,
+    "ops_rel": -0.0073760517799353
+   },
+   {
+    "key": "ryan_mccarty",
+    "slot": 4259,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.08373939393939396
+   },
+   {
+    "key": "ryan_nicholson",
+    "slot": 4262,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 25.0,
+    "ops_rel": -0.06047175572519084
+   },
+   {
+    "key": "shawn_ross",
+    "slot": 4312,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 26.0,
+    "ops_rel": -0.11725783132530125
+   },
+   {
+    "key": "silas_ardoin",
+    "slot": 4314,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 25.0,
+    "ops_rel": -0.17179469026548674
+   },
+   {
+    "key": "spencer_packard",
+    "slot": 4319,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 28.0,
+    "ops_rel": -0.07375238095238094
+   },
+   {
+    "key": "tanner_schobel",
+    "slot": 4331,
+    "served": 20.0,
+    "consensus": 35.5,
+    "premium": -15.5,
+    "age": 25.0,
+    "ops_rel": -0.13411908127208483
+   },
+   {
+    "key": "tatem_levins",
+    "slot": 4334,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.059296774193548375
+   },
+   {
+    "key": "thomas_gavello",
+    "slot": 4342,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 25.0,
+    "ops_rel": -0.11912481203007523
+   },
+   {
+    "key": "tommy_sacco_jr",
+    "slot": 4353,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.16016603773584898
+   },
+   {
+    "key": "tony_santa_maria",
+    "slot": 4355,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 24.0,
+    "ops_rel": -0.06840000000000002
+   },
+   {
+    "key": "turner_hill",
+    "slot": 4371,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 27.0,
+    "ops_rel": -0.0001710144927536993
+   },
+   {
+    "key": "wes_clarke",
+    "slot": 4400,
+    "served": 20.0,
+    "consensus": 35.7,
+    "premium": -15.7,
+    "age": 25.0,
+    "ops_rel": -0.04965775862068967
+   },
+   {
+    "key": "william_simoneit",
+    "slot": 4410,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 29.0,
+    "ops_rel": -0.02685138121546963
+   },
+   {
+    "key": "willy_vasquez",
+    "slot": 4413,
+    "served": 20.0,
+    "consensus": 38.0,
+    "premium": -18.0,
+    "age": 24.0,
+    "ops_rel": -0.09723495145631073
+   },
+   {
+    "key": "zach_humphreys",
+    "slot": 4473,
+    "served": 20.0,
+    "consensus": 35.0,
+    "premium": -15.0,
+    "age": 28.0,
+    "ops_rel": -0.07986382978723397
+   }
+  ]
+ }
+}

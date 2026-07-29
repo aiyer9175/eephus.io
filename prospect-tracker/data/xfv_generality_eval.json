@@ -1,0 +1,4524 @@
+{
+ "survivorship": {
+  "HITTERS": {
+   "bust_retention": 0.3144,
+   "debut_retention": 0.6876,
+   "bust_share_resolved": 0.551,
+   "bust_share_has_milb": 0.3594,
+   "by_cohort": [
+    {
+     "cohort": 2012,
+     "bust_retention": 0.0,
+     "n_bust": 1,
+     "debut_retention": 0.0,
+     "n_debut": 25,
+     "true_bust_share": 0.0385,
+     "observed_bust_share": 0.0
+    },
+    {
+     "cohort": 2013,
+     "bust_retention": 0.0,
+     "n_bust": 48,
+     "debut_retention": 0.0,
+     "n_debut": 55,
+     "true_bust_share": 0.466,
+     "observed_bust_share": 0.0
+    },
+    {
+     "cohort": 2014,
+     "bust_retention": 0.0,
+     "n_bust": 16,
+     "debut_retention": 0.0,
+     "n_debut": 48,
+     "true_bust_share": 0.25,
+     "observed_bust_share": 0.0
+    },
+    {
+     "cohort": 2015,
+     "bust_retention": 0.0,
+     "n_bust": 56,
+     "debut_retention": 0.0484,
+     "n_debut": 62,
+     "true_bust_share": 0.4746,
+     "observed_bust_share": 0.0
+    },
+    {
+     "cohort": 2016,
+     "bust_retention": 0.0303,
+     "n_bust": 66,
+     "debut_retention": 0.2821,
+     "n_debut": 39,
+     "true_bust_share": 0.6286,
+     "observed_bust_share": 0.1538
+    },
+    {
+     "cohort": 2017,
+     "bust_retention": 0.0231,
+     "n_bust": 130,
+     "debut_retention": 0.6087,
+     "n_debut": 46,
+     "true_bust_share": 0.7386,
+     "observed_bust_share": 0.0968
+    },
+    {
+     "cohort": 2018,
+     "bust_retention": 0.1102,
+     "n_bust": 127,
+     "debut_retention": 0.7727,
+     "n_debut": 44,
+     "true_bust_share": 0.7427,
+     "observed_bust_share": 0.2917
+    },
+    {
+     "cohort": 2019,
+     "bust_retention": 0.2273,
+     "n_bust": 110,
+     "debut_retention": 0.9444,
+     "n_debut": 72,
+     "true_bust_share": 0.6044,
+     "observed_bust_share": 0.2688
+    },
+    {
+     "cohort": 2020,
+     "bust_retention": 0.2642,
+     "n_bust": 53,
+     "debut_retention": 0.9667,
+     "n_debut": 60,
+     "true_bust_share": 0.469,
+     "observed_bust_share": 0.1944
+    },
+    {
+     "cohort": 2021,
+     "bust_retention": 0.4113,
+     "n_bust": 124,
+     "debut_retention": 0.9589,
+     "n_debut": 73,
+     "true_bust_share": 0.6294,
+     "observed_bust_share": 0.4215
+    },
+    {
+     "cohort": 2022,
+     "bust_retention": 0.6645,
+     "n_bust": 155,
+     "debut_retention": 0.9921,
+     "n_debut": 127,
+     "true_bust_share": 0.5496,
+     "observed_bust_share": 0.4498
+    },
+    {
+     "cohort": 2023,
+     "bust_retention": 0.755,
+     "n_bust": 151,
+     "debut_retention": 0.9892,
+     "n_debut": 93,
+     "true_bust_share": 0.6189,
+     "observed_bust_share": 0.5534
+    },
+    {
+     "cohort": 2024,
+     "bust_retention": 0.0,
+     "n_bust": 0,
+     "debut_retention": 1.0,
+     "n_debut": 91,
+     "true_bust_share": 0.0,
+     "observed_bust_share": 0.0
+    }
+   ],
+   "censored_rate_has_milb": 0.4157
+  },
+  "PITCHERS": {
+   "bust_retention": 0.2252,
+   "debut_retention": 0.7064,
+   "bust_share_resolved": 0.5068,
+   "bust_share_has_milb": 0.2467,
+   "by_cohort": [
+    {
+     "cohort": 2012,
+     "bust_retention": 0.0,
+     "n_bust": 3,
+     "debut_retention": 0.0,
+     "n_debut": 30,
+     "true_bust_share": 0.0909,
+     "observed_bust_share": 0.0
+    },
+    {
+     "cohort": 2013,
+     "bust_retention": 0.0,
+     "n_bust": 36,
+     "debut_retention": 0.0,
+     "n_debut": 53,
+     "true_bust_share": 0.4045,
+     "observed_bust_share": 0.0
+    },
+    {
+     "cohort": 2014,
+     "bust_retention": 0.0,
+     "n_bust": 23,
+     "debut_retention": 0.0,
+     "n_debut": 53,
+     "true_bust_share": 0.3026,
+     "observed_bust_share": 0.0
+    },
+    {
+     "cohort": 2015,
+     "bust_retention": 0.0,
+     "n_bust": 69,
+     "debut_retention": 0.0417,
+     "n_debut": 72,
+     "true_bust_share": 0.4894,
+     "observed_bust_share": 0.0
+    },
+    {
+     "cohort": 2016,
+     "bust_retention": 0.0351,
+     "n_bust": 57,
+     "debut_retention": 0.2041,
+     "n_debut": 49,
+     "true_bust_share": 0.5377,
+     "observed_bust_share": 0.1667
+    },
+    {
+     "cohort": 2017,
+     "bust_retention": 0.0307,
+     "n_bust": 163,
+     "debut_retention": 0.8,
+     "n_debut": 30,
+     "true_bust_share": 0.8446,
+     "observed_bust_share": 0.1724
+    },
+    {
+     "cohort": 2018,
+     "bust_retention": 0.0678,
+     "n_bust": 118,
+     "debut_retention": 0.7736,
+     "n_debut": 53,
+     "true_bust_share": 0.6901,
+     "observed_bust_share": 0.1633
+    },
+    {
+     "cohort": 2019,
+     "bust_retention": 0.08,
+     "n_bust": 100,
+     "debut_retention": 0.9342,
+     "n_debut": 76,
+     "true_bust_share": 0.5682,
+     "observed_bust_share": 0.1013
+    },
+    {
+     "cohort": 2020,
+     "bust_retention": 0.1957,
+     "n_bust": 46,
+     "debut_retention": 0.9623,
+     "n_debut": 106,
+     "true_bust_share": 0.3026,
+     "observed_bust_share": 0.0811
+    },
+    {
+     "cohort": 2021,
+     "bust_retention": 0.2846,
+     "n_bust": 123,
+     "debut_retention": 0.9615,
+     "n_debut": 104,
+     "true_bust_share": 0.5419,
+     "observed_bust_share": 0.2593
+    },
+    {
+     "cohort": 2022,
+     "bust_retention": 0.5308,
+     "n_bust": 130,
+     "debut_retention": 0.9901,
+     "n_debut": 101,
+     "true_bust_share": 0.5628,
+     "observed_bust_share": 0.4083
+    },
+    {
+     "cohort": 2023,
+     "bust_retention": 0.6475,
+     "n_bust": 139,
+     "debut_retention": 0.9921,
+     "n_debut": 127,
+     "true_bust_share": 0.5226,
+     "observed_bust_share": 0.4167
+    },
+    {
+     "cohort": 2024,
+     "bust_retention": 0.0,
+     "n_bust": 0,
+     "debut_retention": 0.9748,
+     "n_debut": 119,
+     "true_bust_share": 0.0,
+     "observed_bust_share": 0.0
+    }
+   ],
+   "censored_rate_has_milb": 0.4804
+  }
+ },
+ "board_rows": 4477,
+ "per_side": {
+  "HIT": {
+   "n_active_stratifiable": 1961,
+   "n_active": 2087,
+   "gap_sd": 12.825,
+   "gap_mean": -10.443,
+   "perm_sd_mean": 10.294,
+   "perm_sd_p95": 10.633,
+   "perm_verdict": "REAL: the stratum surface carries information the permuted twin does not",
+   "n_gap_ci_excludes_zero": 1310,
+   "cuts": {
+    "AAA": {
+     "age": [
+      23.0,
+      24.0
+     ],
+     "prod": [
+      -0.05415496688741719,
+      0.02930855018587363
+     ],
+     "n": 244
+    },
+    "A+": {
+     "age": [
+      20.0,
+      22.0
+     ],
+     "prod": [
+      0.007464163822525604,
+      0.08060000000000007
+     ],
+     "n": 133
+    },
+    "AA": {
+     "age": [
+      21.0,
+      23.0
+     ],
+     "prod": [
+      0.016437499999999914,
+      0.08181818181818179
+     ],
+     "n": 304
+    },
+    "A": {
+     "age": [
+      20.0,
+      21.0
+     ],
+     "prod": [
+      -0.02231182795698927,
+      0.052994750656167926
+     ],
+     "n": 121
+    },
+    "CPX": {
+     "age": [
+      18.0,
+      18.0
+     ],
+     "prod": [
+      -0.030858974358974348,
+      0.0714049079754601
+     ],
+     "n": 105
+    }
+   },
+   "strata": [
+    {
+     "stratum": "A/old/highProd",
+     "n": 22,
+     "mean_war6": 1.053,
+     "implied_fv": 39.12,
+     "implied_fv_ipw": 36.4,
+     "implied_fv_2021plus": 27.58
+    },
+    {
+     "stratum": "A/old/lowProd",
+     "n": 11,
+     "mean_war6": 0.54,
+     "implied_fv": 34.14,
+     "implied_fv_ipw": 30.27,
+     "implied_fv_2021plus": 27.95
+    },
+    {
+     "stratum": "A/old/midProd",
+     "n": 13,
+     "mean_war6": 0.865,
+     "implied_fv": 37.48,
+     "implied_fv_ipw": 29.25,
+     "implied_fv_2021plus": 32.15
+    },
+    {
+     "stratum": "A/onTime/highProd",
+     "n": 12,
+     "mean_war6": 2.04,
+     "implied_fv": 45.25,
+     "implied_fv_ipw": 45.12,
+     "implied_fv_2021plus": 34.89
+    },
+    {
+     "stratum": "A/onTime/lowProd",
+     "n": 10,
+     "mean_war6": 0.562,
+     "implied_fv": 34.38,
+     "implied_fv_ipw": 30.18,
+     "implied_fv_2021plus": 28.18
+    },
+    {
+     "stratum": "A/onTime/midProd",
+     "n": 14,
+     "mean_war6": 0.475,
+     "implied_fv": 33.35,
+     "implied_fv_ipw": 28.63,
+     "implied_fv_2021plus": 28.18
+    },
+    {
+     "stratum": "A/young/lowProd",
+     "n": 19,
+     "mean_war6": 0.413,
+     "implied_fv": 32.56,
+     "implied_fv_ipw": 26.77,
+     "implied_fv_2021plus": 27.32
+    },
+    {
+     "stratum": "A/young/midProd",
+     "n": 13,
+     "mean_war6": 0.463,
+     "implied_fv": 33.22,
+     "implied_fv_ipw": 28.18,
+     "implied_fv_2021plus": 26.91
+    },
+    {
+     "stratum": "A+/old/highProd",
+     "n": 19,
+     "mean_war6": 1.939,
+     "implied_fv": 45.12,
+     "implied_fv_ipw": 45.64,
+     "implied_fv_2021plus": 44.68
+    },
+    {
+     "stratum": "A+/old/lowProd",
+     "n": 15,
+     "mean_war6": 1.692,
+     "implied_fv": 43.63,
+     "implied_fv_ipw": 44.94,
+     "implied_fv_2021plus": 42.13
+    },
+    {
+     "stratum": "A+/old/midProd",
+     "n": 20,
+     "mean_war6": 1.198,
+     "implied_fv": 40.26,
+     "implied_fv_ipw": 40.41,
+     "implied_fv_2021plus": 40.15
+    },
+    {
+     "stratum": "A+/onTime/highProd",
+     "n": 20,
+     "mean_war6": 3.633,
+     "implied_fv": 48.82,
+     "implied_fv_ipw": 52.47,
+     "implied_fv_2021plus": 47.25
+    },
+    {
+     "stratum": "A+/onTime/lowProd",
+     "n": 26,
+     "mean_war6": 1.281,
+     "implied_fv": 40.86,
+     "implied_fv_ipw": 41.11,
+     "implied_fv_2021plus": 39.36
+    },
+    {
+     "stratum": "A+/onTime/midProd",
+     "n": 19,
+     "mean_war6": 3.143,
+     "implied_fv": 47.75,
+     "implied_fv_ipw": 47.79,
+     "implied_fv_2021plus": 48.04
+    },
+    {
+     "stratum": "AA/old/highProd",
+     "n": 43,
+     "mean_war6": 3.25,
+     "implied_fv": 48.0,
+     "implied_fv_ipw": 48.0,
+     "implied_fv_2021plus": 47.29
+    },
+    {
+     "stratum": "AA/old/lowProd",
+     "n": 37,
+     "mean_war6": 1.736,
+     "implied_fv": 43.92,
+     "implied_fv_ipw": 43.19,
+     "implied_fv_2021plus": 43.67
+    },
+    {
+     "stratum": "AA/old/midProd",
+     "n": 41,
+     "mean_war6": 1.595,
+     "implied_fv": 43.03,
+     "implied_fv_ipw": 43.06,
+     "implied_fv_2021plus": 44.25
+    },
+    {
+     "stratum": "AA/onTime/highProd",
+     "n": 43,
+     "mean_war6": 4.059,
+     "implied_fv": 49.77,
+     "implied_fv_ipw": 51.38,
+     "implied_fv_2021plus": 49.67
+    },
+    {
+     "stratum": "AA/onTime/lowProd",
+     "n": 53,
+     "mean_war6": 2.74,
+     "implied_fv": 46.77,
+     "implied_fv_ipw": 46.22,
+     "implied_fv_2021plus": 44.97
+    },
+    {
+     "stratum": "AA/onTime/midProd",
+     "n": 50,
+     "mean_war6": 3.027,
+     "implied_fv": 47.49,
+     "implied_fv_ipw": 47.75,
+     "implied_fv_2021plus": 46.38
+    },
+    {
+     "stratum": "AA/young/highProd",
+     "n": 16,
+     "mean_war6": 8.002,
+     "implied_fv": 58.39,
+     "implied_fv_ipw": 63.85,
+     "implied_fv_2021plus": 52.29
+    },
+    {
+     "stratum": "AA/young/lowProd",
+     "n": 11,
+     "mean_war6": 3.484,
+     "implied_fv": 48.54,
+     "implied_fv_ipw": 49.1,
+     "implied_fv_2021plus": 46.25
+    },
+    {
+     "stratum": "AA/young/midProd",
+     "n": 10,
+     "mean_war6": 6.255,
+     "implied_fv": 55.28,
+     "implied_fv_ipw": 56.59,
+     "implied_fv_2021plus": 54.58
+    },
+    {
+     "stratum": "AAA/old/highProd",
+     "n": 31,
+     "mean_war6": 2.441,
+     "implied_fv": 46.25,
+     "implied_fv_ipw": 46.25,
+     "implied_fv_2021plus": 44.22
+    },
+    {
+     "stratum": "AAA/old/lowProd",
+     "n": 38,
+     "mean_war6": 1.283,
+     "implied_fv": 40.89,
+     "implied_fv_ipw": 41.0,
+     "implied_fv_2021plus": 38.02
+    },
+    {
+     "stratum": "AAA/old/midProd",
+     "n": 42,
+     "mean_war6": 1.766,
+     "implied_fv": 44.1,
+     "implied_fv_ipw": 44.16,
+     "implied_fv_2021plus": 41.85
+    },
+    {
+     "stratum": "AAA/onTime/highProd",
+     "n": 23,
+     "mean_war6": 4.887,
+     "implied_fv": 51.95,
+     "implied_fv_ipw": 52.0,
+     "implied_fv_2021plus": 50.76
+    },
+    {
+     "stratum": "AAA/onTime/lowProd",
+     "n": 17,
+     "mean_war6": 3.259,
+     "implied_fv": 48.04,
+     "implied_fv_ipw": 48.2,
+     "implied_fv_2021plus": 44.8
+    },
+    {
+     "stratum": "AAA/onTime/midProd",
+     "n": 18,
+     "mean_war6": 2.271,
+     "implied_fv": 45.75,
+     "implied_fv_ipw": 45.8,
+     "implied_fv_2021plus": 42.43
+    },
+    {
+     "stratum": "AAA/young/highProd",
+     "n": 28,
+     "mean_war6": 6.719,
+     "implied_fv": 56.25,
+     "implied_fv_ipw": 56.54,
+     "implied_fv_2021plus": 48.61
+    },
+    {
+     "stratum": "AAA/young/lowProd",
+     "n": 26,
+     "mean_war6": 2.394,
+     "implied_fv": 46.14,
+     "implied_fv_ipw": 46.25,
+     "implied_fv_2021plus": 43.38
+    },
+    {
+     "stratum": "AAA/young/midProd",
+     "n": 21,
+     "mean_war6": 4.464,
+     "implied_fv": 50.84,
+     "implied_fv_ipw": 51.91,
+     "implied_fv_2021plus": 48.75
+    },
+    {
+     "stratum": "CPX/old/highProd",
+     "n": 26,
+     "mean_war6": -0.013,
+     "implied_fv": 20.0,
+     "implied_fv_ipw": 20.0,
+     "implied_fv_2021plus": 20.0
+    },
+    {
+     "stratum": "CPX/old/lowProd",
+     "n": 25,
+     "mean_war6": -0.002,
+     "implied_fv": 20.0,
+     "implied_fv_ipw": 20.0,
+     "implied_fv_2021plus": 20.0
+    },
+    {
+     "stratum": "CPX/old/midProd",
+     "n": 22,
+     "mean_war6": -0.002,
+     "implied_fv": 20.0,
+     "implied_fv_ipw": 20.0,
+     "implied_fv_2021plus": 20.0
+    },
+    {
+     "stratum": "CPX/young/highProd",
+     "n": 9,
+     "mean_war6": -0.003,
+     "implied_fv": 20.0,
+     "implied_fv_ipw": 20.0,
+     "implied_fv_2021plus": 20.0
+    },
+    {
+     "stratum": "CPX/young/lowProd",
+     "n": 10,
+     "mean_war6": -0.003,
+     "implied_fv": 20.0,
+     "implied_fv_ipw": 20.0,
+     "implied_fv_2021plus": 20.0
+    },
+    {
+     "stratum": "CPX/young/midProd",
+     "n": 13,
+     "mean_war6": -0.002,
+     "implied_fv": 20.0,
+     "implied_fv_ipw": 20.0,
+     "implied_fv_2021plus": 20.0
+    }
+   ]
+  },
+  "PIT": {
+   "n_active_stratifiable": 2270,
+   "n_active": 2390,
+   "gap_sd": 8.085,
+   "gap_mean": -12.704,
+   "perm_sd_mean": 8.619,
+   "perm_sd_p95": 9.168,
+   "perm_verdict": "NULL: a zero-information stratum surface manufactures the same spread",
+   "n_gap_ci_excludes_zero": 1962,
+   "cuts": {
+    "A+": {
+     "age": [
+      22.0,
+      23.0
+     ],
+     "prod": [
+      -0.28356846473029074,
+      0.46248407643312084
+     ],
+     "n": 169
+    },
+    "AAA": {
+     "age": [
+      23.0,
+      24.0
+     ],
+     "prod": [
+      -0.23923076923076886,
+      0.7221804511278196
+     ],
+     "n": 229
+    },
+    "A": {
+     "age": [
+      20.0,
+      22.0
+     ],
+     "prod": [
+      -0.3304312114989732,
+      0.538688524590164
+     ],
+     "n": 100
+    },
+    "AA": {
+     "age": [
+      22.0,
+      23.0
+     ],
+     "prod": [
+      -0.4007476635514016,
+      0.6520087336244542
+     ],
+     "n": 380
+    },
+    "CPX": {
+     "age": [
+      18.0,
+      20.0
+     ],
+     "prod": [
+      -0.33053763440860223,
+      1.2947368421052632
+     ],
+     "n": 42
+    }
+   },
+   "strata": [
+    {
+     "stratum": "A/old/highProd",
+     "n": 13,
+     "mean_war6": 1.509,
+     "implied_fv": 42.47,
+     "implied_fv_ipw": 38.06,
+     "implied_fv_2021plus": 40.75
+    },
+    {
+     "stratum": "A/old/lowProd",
+     "n": 11,
+     "mean_war6": 1.362,
+     "implied_fv": 41.43,
+     "implied_fv_ipw": 39.4,
+     "implied_fv_2021plus": 33.29
+    },
+    {
+     "stratum": "A/old/midProd",
+     "n": 10,
+     "mean_war6": 0.569,
+     "implied_fv": 34.49,
+     "implied_fv_ipw": 28.84,
+     "implied_fv_2021plus": 32.08
+    },
+    {
+     "stratum": "A/onTime/highProd",
+     "n": 16,
+     "mean_war6": 1.637,
+     "implied_fv": 43.29,
+     "implied_fv_ipw": 34.08,
+     "implied_fv_2021plus": 34.94
+    },
+    {
+     "stratum": "A/onTime/lowProd",
+     "n": 13,
+     "mean_war6": 0.538,
+     "implied_fv": 34.14,
+     "implied_fv_ipw": 26.32,
+     "implied_fv_2021plus": 32.22
+    },
+    {
+     "stratum": "A/onTime/midProd",
+     "n": 16,
+     "mean_war6": 1.03,
+     "implied_fv": 38.91,
+     "implied_fv_ipw": 30.69,
+     "implied_fv_2021plus": 38.62
+    },
+    {
+     "stratum": "A/young/lowProd",
+     "n": 9,
+     "mean_war6": 0.717,
+     "implied_fv": 36.05,
+     "implied_fv_ipw": 26.32,
+     "implied_fv_2021plus": 33.97
+    },
+    {
+     "stratum": "A+/old/highProd",
+     "n": 23,
+     "mean_war6": 1.162,
+     "implied_fv": 39.95,
+     "implied_fv_ipw": 39.32,
+     "implied_fv_2021plus": 37.12
+    },
+    {
+     "stratum": "A+/old/lowProd",
+     "n": 26,
+     "mean_war6": 0.788,
+     "implied_fv": 36.79,
+     "implied_fv_ipw": 35.74,
+     "implied_fv_2021plus": 31.33
+    },
+    {
+     "stratum": "A+/old/midProd",
+     "n": 21,
+     "mean_war6": 0.946,
+     "implied_fv": 38.19,
+     "implied_fv_ipw": 36.5,
+     "implied_fv_2021plus": 37.16
+    },
+    {
+     "stratum": "A+/onTime/highProd",
+     "n": 18,
+     "mean_war6": 1.227,
+     "implied_fv": 40.45,
+     "implied_fv_ipw": 38.24,
+     "implied_fv_2021plus": 38.91
+    },
+    {
+     "stratum": "A+/onTime/lowProd",
+     "n": 12,
+     "mean_war6": 1.106,
+     "implied_fv": 39.52,
+     "implied_fv_ipw": 39.12,
+     "implied_fv_2021plus": 38.37
+    },
+    {
+     "stratum": "A+/onTime/midProd",
+     "n": 15,
+     "mean_war6": 0.896,
+     "implied_fv": 37.75,
+     "implied_fv_ipw": 33.91,
+     "implied_fv_2021plus": 34.83
+    },
+    {
+     "stratum": "A+/young/highProd",
+     "n": 16,
+     "mean_war6": 1.023,
+     "implied_fv": 38.87,
+     "implied_fv_ipw": 38.83,
+     "implied_fv_2021plus": 34.55
+    },
+    {
+     "stratum": "A+/young/lowProd",
+     "n": 18,
+     "mean_war6": 1.101,
+     "implied_fv": 39.48,
+     "implied_fv_ipw": 46.93,
+     "implied_fv_2021plus": 25.64
+    },
+    {
+     "stratum": "A+/young/midProd",
+     "n": 20,
+     "mean_war6": 2.538,
+     "implied_fv": 46.33,
+     "implied_fv_ipw": 48.78,
+     "implied_fv_2021plus": 35.16
+    },
+    {
+     "stratum": "AA/old/highProd",
+     "n": 77,
+     "mean_war6": 1.609,
+     "implied_fv": 43.12,
+     "implied_fv_ipw": 41.99,
+     "implied_fv_2021plus": 42.77
+    },
+    {
+     "stratum": "AA/old/lowProd",
+     "n": 75,
+     "mean_war6": 0.989,
+     "implied_fv": 38.58,
+     "implied_fv_ipw": 35.69,
+     "implied_fv_2021plus": 39.16
+    },
+    {
+     "stratum": "AA/old/midProd",
+     "n": 76,
+     "mean_war6": 1.495,
+     "implied_fv": 42.37,
+     "implied_fv_ipw": 40.67,
+     "implied_fv_2021plus": 41.89
+    },
+    {
+     "stratum": "AA/onTime/highProd",
+     "n": 32,
+     "mean_war6": 2.558,
+     "implied_fv": 46.41,
+     "implied_fv_ipw": 46.68,
+     "implied_fv_2021plus": 42.06
+    },
+    {
+     "stratum": "AA/onTime/lowProd",
+     "n": 24,
+     "mean_war6": 1.359,
+     "implied_fv": 41.43,
+     "implied_fv_ipw": 35.37,
+     "implied_fv_2021plus": 40.37
+    },
+    {
+     "stratum": "AA/onTime/midProd",
+     "n": 30,
+     "mean_war6": 1.846,
+     "implied_fv": 44.59,
+     "implied_fv_ipw": 43.98,
+     "implied_fv_2021plus": 43.95
+    },
+    {
+     "stratum": "AA/young/highProd",
+     "n": 18,
+     "mean_war6": 3.212,
+     "implied_fv": 47.86,
+     "implied_fv_ipw": 56.01,
+     "implied_fv_2021plus": 45.25
+    },
+    {
+     "stratum": "AA/young/lowProd",
+     "n": 27,
+     "mean_war6": 2.703,
+     "implied_fv": 46.75,
+     "implied_fv_ipw": 44.91,
+     "implied_fv_2021plus": 47.25
+    },
+    {
+     "stratum": "AA/young/midProd",
+     "n": 21,
+     "mean_war6": 2.334,
+     "implied_fv": 45.89,
+     "implied_fv_ipw": 47.81,
+     "implied_fv_2021plus": 43.73
+    },
+    {
+     "stratum": "AAA/old/highProd",
+     "n": 46,
+     "mean_war6": 1.663,
+     "implied_fv": 43.48,
+     "implied_fv_ipw": 42.93,
+     "implied_fv_2021plus": 41.64
+    },
+    {
+     "stratum": "AAA/old/lowProd",
+     "n": 45,
+     "mean_war6": 0.439,
+     "implied_fv": 32.9,
+     "implied_fv_ipw": 32.29,
+     "implied_fv_2021plus": 33.09
+    },
+    {
+     "stratum": "AAA/old/midProd",
+     "n": 43,
+     "mean_war6": 1.25,
+     "implied_fv": 40.63,
+     "implied_fv_ipw": 40.34,
+     "implied_fv_2021plus": 41.36
+    },
+    {
+     "stratum": "AAA/onTime/highProd",
+     "n": 15,
+     "mean_war6": 1.463,
+     "implied_fv": 42.16,
+     "implied_fv_ipw": 42.3,
+     "implied_fv_2021plus": 38.11
+    },
+    {
+     "stratum": "AAA/onTime/lowProd",
+     "n": 17,
+     "mean_war6": 1.647,
+     "implied_fv": 43.35,
+     "implied_fv_ipw": 43.38,
+     "implied_fv_2021plus": 41.33
+    },
+    {
+     "stratum": "AAA/onTime/midProd",
+     "n": 20,
+     "mean_war6": 1.236,
+     "implied_fv": 40.52,
+     "implied_fv_ipw": 40.6,
+     "implied_fv_2021plus": 40.26
+    },
+    {
+     "stratum": "AAA/young/highProd",
+     "n": 16,
+     "mean_war6": 1.666,
+     "implied_fv": 43.48,
+     "implied_fv_ipw": 46.75,
+     "implied_fv_2021plus": 43.12
+    },
+    {
+     "stratum": "AAA/young/lowProd",
+     "n": 14,
+     "mean_war6": 2.253,
+     "implied_fv": 45.75,
+     "implied_fv_ipw": 45.76,
+     "implied_fv_2021plus": 42.03
+    },
+    {
+     "stratum": "AAA/young/midProd",
+     "n": 13,
+     "mean_war6": 3.052,
+     "implied_fv": 47.59,
+     "implied_fv_ipw": 47.75,
+     "implied_fv_2021plus": 46.75
+    },
+    {
+     "stratum": "CPX/onTime/lowProd",
+     "n": 8,
+     "mean_war6": 0.246,
+     "implied_fv": 29.91,
+     "implied_fv_ipw": 23.85,
+     "implied_fv_2021plus": 31.02
+    },
+    {
+     "stratum": "CPX/onTime/midProd",
+     "n": 9,
+     "mean_war6": 0.313,
+     "implied_fv": 31.1,
+     "implied_fv_ipw": 25.06,
+     "implied_fv_2021plus": 32.08
+    }
+   ]
+  }
+ },
+ "crosstabs": [
+  {
+   "dim": "level",
+   "value": "CPX",
+   "n": 1217,
+   "mean_gap": -3.358,
+   "median_gap": 0.0,
+   "frac_over": 0.1274,
+   "frac_gap_ge_10": 0.0698
+  },
+  {
+   "dim": "level",
+   "value": "AAA",
+   "n": 362,
+   "mean_gap": -12.755,
+   "median_gap": -12.829,
+   "frac_over": 0.1602,
+   "frac_gap_ge_10": 0.0138
+  },
+  {
+   "dim": "level",
+   "value": "A",
+   "n": 910,
+   "mean_gap": -13.883,
+   "median_gap": -14.377,
+   "frac_over": 0.1022,
+   "frac_gap_ge_10": 0.022
+  },
+  {
+   "dim": "level",
+   "value": "A+",
+   "n": 906,
+   "mean_gap": -15.611,
+   "median_gap": -18.124,
+   "frac_over": 0.1038,
+   "frac_gap_ge_10": 0.0143
+  },
+  {
+   "dim": "level",
+   "value": "AA",
+   "n": 836,
+   "mean_gap": -16.549,
+   "median_gap": -18.509,
+   "frac_over": 0.0873,
+   "frac_gap_ge_10": 0.006
+  },
+  {
+   "dim": "age-for-level",
+   "value": "young",
+   "n": 535,
+   "mean_gap": -3.555,
+   "median_gap": 0.0,
+   "frac_over": 0.2785,
+   "frac_gap_ge_10": 0.0991
+  },
+  {
+   "dim": "age-for-level",
+   "value": "onTime",
+   "n": 903,
+   "mean_gap": -11.776,
+   "median_gap": -11.028,
+   "frac_over": 0.1307,
+   "frac_gap_ge_10": 0.0155
+  },
+  {
+   "dim": "age-for-level",
+   "value": "old",
+   "n": 2793,
+   "mean_gap": -13.169,
+   "median_gap": -16.715,
+   "frac_over": 0.0738,
+   "frac_gap_ge_10": 0.0218
+  },
+  {
+   "dim": "production-for-level",
+   "value": "highProd",
+   "n": 1045,
+   "mean_gap": -9.3,
+   "median_gap": -10.787,
+   "frac_over": 0.178,
+   "frac_gap_ge_10": 0.0526
+  },
+  {
+   "dim": "production-for-level",
+   "value": "midProd",
+   "n": 1177,
+   "mean_gap": -9.483,
+   "median_gap": -11.028,
+   "frac_over": 0.1478,
+   "frac_gap_ge_10": 0.0416
+  },
+  {
+   "dim": "production-for-level",
+   "value": "lowProd",
+   "n": 2009,
+   "mean_gap": -14.154,
+   "median_gap": -15.978,
+   "frac_over": 0.0562,
+   "frac_gap_ge_10": 0.0119
+  },
+  {
+   "dim": "level x age",
+   "value": "CPX/young",
+   "n": 236,
+   "mean_gap": 0.272,
+   "median_gap": 0.0,
+   "frac_over": 0.1822,
+   "frac_gap_ge_10": 0.1229
+  },
+  {
+   "dim": "level x age",
+   "value": "CPX/old",
+   "n": 695,
+   "mean_gap": -2.427,
+   "median_gap": 0.0,
+   "frac_over": 0.1223,
+   "frac_gap_ge_10": 0.0734
+  },
+  {
+   "dim": "level x age",
+   "value": "AA/young",
+   "n": 29,
+   "mean_gap": -3.171,
+   "median_gap": 0.246,
+   "frac_over": 0.5172,
+   "frac_gap_ge_10": 0.069
+  },
+  {
+   "dim": "level x age",
+   "value": "A/young",
+   "n": 136,
+   "mean_gap": -5.818,
+   "median_gap": -12.564,
+   "frac_over": 0.3382,
+   "frac_gap_ge_10": 0.1029
+  },
+  {
+   "dim": "level x age",
+   "value": "AAA/young",
+   "n": 33,
+   "mean_gap": -6.424,
+   "median_gap": -1.32,
+   "frac_over": 0.4545,
+   "frac_gap_ge_10": 0.0303
+  },
+  {
+   "dim": "level x age",
+   "value": "AAA/onTime",
+   "n": 40,
+   "mean_gap": -8.39,
+   "median_gap": -4.7,
+   "frac_over": 0.35,
+   "frac_gap_ge_10": 0.025
+  },
+  {
+   "dim": "level x age",
+   "value": "CPX/onTime",
+   "n": 286,
+   "mean_gap": -8.618,
+   "median_gap": -9.841,
+   "frac_over": 0.0944,
+   "frac_gap_ge_10": 0.0175
+  },
+  {
+   "dim": "level x age",
+   "value": "A+/young",
+   "n": 101,
+   "mean_gap": -8.623,
+   "median_gap": -10.175,
+   "frac_over": 0.297,
+   "frac_gap_ge_10": 0.0693
+  },
+  {
+   "dim": "level x age",
+   "value": "A/onTime",
+   "n": 247,
+   "mean_gap": -12.844,
+   "median_gap": -14.074,
+   "frac_over": 0.0972,
+   "frac_gap_ge_10": 0.0121
+  },
+  {
+   "dim": "level x age",
+   "value": "AA/onTime",
+   "n": 119,
+   "mean_gap": -13.211,
+   "median_gap": -15.065,
+   "frac_over": 0.1681,
+   "frac_gap_ge_10": 0.0084
+  },
+  {
+   "dim": "level x age",
+   "value": "AAA/old",
+   "n": 289,
+   "mean_gap": -14.082,
+   "median_gap": -12.829,
+   "frac_over": 0.1003,
+   "frac_gap_ge_10": 0.0104
+  },
+  {
+   "dim": "level x age",
+   "value": "A+/onTime",
+   "n": 211,
+   "mean_gap": -14.638,
+   "median_gap": -19.451,
+   "frac_over": 0.1564,
+   "frac_gap_ge_10": 0.019
+  },
+  {
+   "dim": "level x age",
+   "value": "A/old",
+   "n": 527,
+   "mean_gap": -16.452,
+   "median_gap": -19.119,
+   "frac_over": 0.0436,
+   "frac_gap_ge_10": 0.0057
+  },
+  {
+   "dim": "level x age",
+   "value": "A+/old",
+   "n": 594,
+   "mean_gap": -17.145,
+   "median_gap": -18.124,
+   "frac_over": 0.0522,
+   "frac_gap_ge_10": 0.0034
+  },
+  {
+   "dim": "level x age",
+   "value": "AA/old",
+   "n": 688,
+   "mean_gap": -17.69,
+   "median_gap": -18.509,
+   "frac_over": 0.0552,
+   "frac_gap_ge_10": 0.0029
+  },
+  {
+   "dim": "side",
+   "value": "HIT",
+   "n": 1961,
+   "mean_gap": -10.443,
+   "median_gap": -13.351,
+   "frac_over": 0.1265,
+   "frac_gap_ge_10": 0.0505
+  },
+  {
+   "dim": "side",
+   "value": "PIT",
+   "n": 2270,
+   "mean_gap": -12.704,
+   "median_gap": -13.097,
+   "frac_over": 0.0991,
+   "frac_gap_ge_10": 0.0128
+  },
+  {
+   "dim": "position",
+   "value": "SP",
+   "n": 433,
+   "mean_gap": -6.139,
+   "median_gap": -5.632,
+   "frac_over": 0.3326,
+   "frac_gap_ge_10": 0.0554
+  },
+  {
+   "dim": "position",
+   "value": "SS",
+   "n": 279,
+   "mean_gap": -6.859,
+   "median_gap": -3.963,
+   "frac_over": 0.2437,
+   "frac_gap_ge_10": 0.1147
+  },
+  {
+   "dim": "position",
+   "value": "CF",
+   "n": 263,
+   "mean_gap": -7.17,
+   "median_gap": -1.826,
+   "frac_over": 0.2053,
+   "frac_gap_ge_10": 0.0798
+  },
+  {
+   "dim": "position",
+   "value": "RF",
+   "n": 190,
+   "mean_gap": -9.083,
+   "median_gap": -10.076,
+   "frac_over": 0.1316,
+   "frac_gap_ge_10": 0.0526
+  },
+  {
+   "dim": "position",
+   "value": "2B",
+   "n": 230,
+   "mean_gap": -10.551,
+   "median_gap": -13.224,
+   "frac_over": 0.0957,
+   "frac_gap_ge_10": 0.0391
+  },
+  {
+   "dim": "position",
+   "value": "SIRP",
+   "n": 229,
+   "mean_gap": -10.68,
+   "median_gap": -12.829,
+   "frac_over": 0.1528,
+   "frac_gap_ge_10": 0.0087
+  },
+  {
+   "dim": "position",
+   "value": "3B",
+   "n": 222,
+   "mean_gap": -10.729,
+   "median_gap": -13.224,
+   "frac_over": 0.1036,
+   "frac_gap_ge_10": 0.036
+  },
+  {
+   "dim": "position",
+   "value": "MIRP",
+   "n": 47,
+   "mean_gap": -11.011,
+   "median_gap": -12.829,
+   "frac_over": 0.1064,
+   "frac_gap_ge_10": 0.0213
+  },
+  {
+   "dim": "position",
+   "value": "LF",
+   "n": 166,
+   "mean_gap": -12.104,
+   "median_gap": -14.304,
+   "frac_over": 0.0723,
+   "frac_gap_ge_10": 0.0361
+  },
+  {
+   "dim": "position",
+   "value": "C",
+   "n": 308,
+   "mean_gap": -12.922,
+   "median_gap": -15.762,
+   "frac_over": 0.0747,
+   "frac_gap_ge_10": 0.0195
+  },
+  {
+   "dim": "position",
+   "value": "RHP",
+   "n": 59,
+   "mean_gap": -13.26,
+   "median_gap": -15.978,
+   "frac_over": 0.1356,
+   "frac_gap_ge_10": 0.0169
+  },
+  {
+   "dim": "position",
+   "value": "1B",
+   "n": 204,
+   "mean_gap": -13.593,
+   "median_gap": -18.076,
+   "frac_over": 0.0539,
+   "frac_gap_ge_10": 0.0147
+  },
+  {
+   "dim": "position",
+   "value": "OF",
+   "n": 58,
+   "mean_gap": -14.167,
+   "median_gap": -18.302,
+   "frac_over": 0.1207,
+   "frac_gap_ge_10": 0.0172
+  },
+  {
+   "dim": "position",
+   "value": "P",
+   "n": 1484,
+   "mean_gap": -14.96,
+   "median_gap": -14.422,
+   "frac_over": 0.0209,
+   "frac_gap_ge_10": 0.0007
+  },
+  {
+   "dim": "position",
+   "value": "DH",
+   "n": 35,
+   "mean_gap": -16.289,
+   "median_gap": -19.119,
+   "frac_over": 0.0,
+   "frac_gap_ge_10": 0.0
+  },
+  {
+   "dim": "acquisition",
+   "value": "HS/draft",
+   "n": 421,
+   "mean_gap": -9.562,
+   "median_gap": -12.077,
+   "frac_over": 0.2423,
+   "frac_gap_ge_10": 0.0546
+  },
+  {
+   "dim": "acquisition",
+   "value": "IFA",
+   "n": 2450,
+   "mean_gap": -10.151,
+   "median_gap": -12.077,
+   "frac_over": 0.0976,
+   "frac_gap_ge_10": 0.0384
+  },
+  {
+   "dim": "acquisition",
+   "value": "college",
+   "n": 1341,
+   "mean_gap": -15.012,
+   "median_gap": -18.273,
+   "frac_over": 0.0984,
+   "frac_gap_ge_10": 0.0082
+  },
+  {
+   "dim": "n consensus sources",
+   "value": "4 src",
+   "n": 25,
+   "mean_gap": 7.479,
+   "median_gap": 5.778,
+   "frac_over": 0.92,
+   "frac_gap_ge_10": 0.2
+  },
+  {
+   "dim": "n consensus sources",
+   "value": "5 src",
+   "n": 53,
+   "mean_gap": 7.149,
+   "median_gap": 6.172,
+   "frac_over": 0.9057,
+   "frac_gap_ge_10": 0.283
+  },
+  {
+   "dim": "n consensus sources",
+   "value": "3 src",
+   "n": 60,
+   "mean_gap": 3.257,
+   "median_gap": 3.742,
+   "frac_over": 0.75,
+   "frac_gap_ge_10": 0.1667
+  },
+  {
+   "dim": "n consensus sources",
+   "value": "2 src",
+   "n": 947,
+   "mean_gap": -7.473,
+   "median_gap": -7.325,
+   "frac_over": 0.2629,
+   "frac_gap_ge_10": 0.0866
+  },
+  {
+   "dim": "n consensus sources",
+   "value": "1 src",
+   "n": 3146,
+   "mean_gap": -13.668,
+   "median_gap": -14.422,
+   "frac_over": 0.0343,
+   "frac_gap_ge_10": 0.0051
+  },
+  {
+   "dim": "board region",
+   "value": "top100",
+   "n": 91,
+   "mean_gap": 8.963,
+   "median_gap": 6.994,
+   "frac_over": 0.9451,
+   "frac_gap_ge_10": 0.3187
+  },
+  {
+   "dim": "board region",
+   "value": "101-300",
+   "n": 166,
+   "mean_gap": 6.241,
+   "median_gap": 4.415,
+   "frac_over": 0.8133,
+   "frac_gap_ge_10": 0.2108
+  },
+  {
+   "dim": "board region",
+   "value": "301-1000",
+   "n": 586,
+   "mean_gap": -0.827,
+   "median_gap": -2.362,
+   "frac_over": 0.3976,
+   "frac_gap_ge_10": 0.1075
+  },
+  {
+   "dim": "board region",
+   "value": "1000+",
+   "n": 3388,
+   "mean_gap": -14.96,
+   "median_gap": -16.715,
+   "frac_over": 0.0056,
+   "frac_gap_ge_10": 0.0003
+  }
+ ],
+ "board_costs": [
+  {
+   "label": "FULL REPLACEMENT served -> implied",
+   "n_regraded": 4231,
+   "n_board": 4477,
+   "median_abs_rank_move": 893,
+   "mean_abs_rank_move": 1249.94,
+   "median_abs_rank_move_top100": 65.0,
+   "top100_slots_changed": 49,
+   "top100_drop_out": [
+    {
+     "key": "kade_anderson",
+     "from": 8,
+     "to": 191
+    },
+    {
+     "key": "mike_sirota",
+     "from": 12,
+     "to": 176
+    },
+    {
+     "key": "seth_hernandez",
+     "from": 17,
+     "to": 2073
+    },
+    {
+     "key": "josuar_gonzalez",
+     "from": 18,
+     "to": 4225
+    },
+    {
+     "key": "caden_bodine",
+     "from": 20,
+     "to": 233
+    },
+    {
+     "key": "ryan_sloan",
+     "from": 25,
+     "to": 392
+    },
+    {
+     "key": "jojo_parker",
+     "from": 28,
+     "to": 363
+    },
+    {
+     "key": "kevin_alvarez",
+     "from": 29,
+     "to": 368
+    },
+    {
+     "key": "roldy_brito",
+     "from": 33,
+     "to": 374
+    },
+    {
+     "key": "murf_gray",
+     "from": 35,
+     "to": 475
+    },
+    {
+     "key": "kaelen_culpepper",
+     "from": 40,
+     "to": 399
+    },
+    {
+     "key": "charles_davalan",
+     "from": 42,
+     "to": 438
+    },
+    {
+     "key": "juneiker_caceres",
+     "from": 50,
+     "to": 366
+    },
+    {
+     "key": "devin_fitzgerald",
+     "from": 53,
+     "to": 110
+    },
+    {
+     "key": "aaron_walton",
+     "from": 56,
+     "to": 431
+    },
+    {
+     "key": "hayden_alvarez",
+     "from": 58,
+     "to": 358
+    },
+    {
+     "key": "luis_hernandez",
+     "from": 59,
+     "to": 4283
+    },
+    {
+     "key": "steele_hall",
+     "from": 62,
+     "to": 4415
+    },
+    {
+     "key": "angeibel_gomez",
+     "from": 63,
+     "to": 3903
+    },
+    {
+     "key": "xavier_neyens",
+     "from": 64,
+     "to": 381
+    },
+    {
+     "key": "christian_zazueta",
+     "from": 65,
+     "to": 190
+    },
+    {
+     "key": "francisco_renteria",
+     "from": 67,
+     "to": 4090
+    },
+    {
+     "key": "kayson_cunningham",
+     "from": 68,
+     "to": 1573
+    },
+    {
+     "key": "billy_carlson",
+     "from": 70,
+     "to": 3011
+    },
+    {
+     "key": "aiva_arquette",
+     "from": 71,
+     "to": 261
+    },
+    {
+     "key": "josh_hammond",
+     "from": 72,
+     "to": 364
+    },
+    {
+     "key": "kane_kepley",
+     "from": 73,
+     "to": 465
+    },
+    {
+     "key": "gage_wood",
+     "from": 75,
+     "to": 497
+    },
+    {
+     "key": "taitn_gray",
+     "from": 77,
+     "to": 377
+    },
+    {
+     "key": "ike_irish",
+     "from": 78,
+     "to": 451
+    },
+    {
+     "key": "hagen_smith",
+     "from": 79,
+     "to": 227
+    },
+    {
+     "key": "thomas_white",
+     "from": 80,
+     "to": 228
+    },
+    {
+     "key": "elian_pena",
+     "from": 81,
+     "to": 3020
+    },
+    {
+     "key": "josue_briceno",
+     "from": 82,
+     "to": 1996
+    },
+    {
+     "key": "carlos_lagrange",
+     "from": 83,
+     "to": 1643
+    },
+    {
+     "key": "dax_kilby",
+     "from": 84,
+     "to": 4008
+    },
+    {
+     "key": "kendry_chourio",
+     "from": 86,
+     "to": 2068
+    },
+    {
+     "key": "jett_williams",
+     "from": 87,
+     "to": 362
+    },
+    {
+     "key": "eduardo_tait",
+     "from": 88,
+     "to": 306
+    },
+    {
+     "key": "joshua_baez",
+     "from": 89,
+     "to": 398
+    }
+   ],
+   "top100_come_in": [
+    {
+     "key": "leo_bernal",
+     "from": 130,
+     "to": 11
+    },
+    {
+     "key": "luke_adams",
+     "from": 239,
+     "to": 12
+    },
+    {
+     "key": "william_bergolla",
+     "from": 289,
+     "to": 14
+    },
+    {
+     "key": "angel_ortiz",
+     "from": 3074,
+     "to": 24
+    },
+    {
+     "key": "emmanuel_rodriguez",
+     "from": 213,
+     "to": 26
+    },
+    {
+     "key": "gage_miller",
+     "from": 460,
+     "to": 27
+    },
+    {
+     "key": "jay_harry",
+     "from": 744,
+     "to": 29
+    },
+    {
+     "key": "kemp_alderman",
+     "from": 188,
+     "to": 30
+    },
+    {
+     "key": "hector_rodriguez",
+     "from": 128,
+     "to": 33
+    },
+    {
+     "key": "hendry_mendez",
+     "from": 165,
+     "to": 34
+    },
+    {
+     "key": "mikey_romero",
+     "from": 670,
+     "to": 37
+    },
+    {
+     "key": "braylon_payne",
+     "from": 163,
+     "to": 40
+    },
+    {
+     "key": "jacob_lombard",
+     "from": 102,
+     "to": 46
+    },
+    {
+     "key": "chris_hacopian",
+     "from": 108,
+     "to": 47
+    },
+    {
+     "key": "jared_grindlinger",
+     "from": 110,
+     "to": 48
+    },
+    {
+     "key": "justin_lebron",
+     "from": 112,
+     "to": 49
+    },
+    {
+     "key": "ryder_helfrick",
+     "from": 113,
+     "to": 50
+    },
+    {
+     "key": "trevor_condon",
+     "from": 114,
+     "to": 51
+    },
+    {
+     "key": "alfonsin_rosario",
+     "from": 406,
+     "to": 53
+    },
+    {
+     "key": "brandon_compton",
+     "from": 321,
+     "to": 55
+    },
+    {
+     "key": "brooks_brannon",
+     "from": 676,
+     "to": 56
+    },
+    {
+     "key": "bryan_rincon",
+     "from": 1025,
+     "to": 57
+    },
+    {
+     "key": "devin_taylor",
+     "from": 164,
+     "to": 60
+    },
+    {
+     "key": "diego_velasquez",
+     "from": 3403,
+     "to": 61
+    },
+    {
+     "key": "ethan_anderson",
+     "from": 468,
+     "to": 62
+    },
+    {
+     "key": "jesus_baez",
+     "from": 353,
+     "to": 64
+    },
+    {
+     "key": "johanfran_garcia",
+     "from": 3767,
+     "to": 65
+    },
+    {
+     "key": "josiah_ragsdale",
+     "from": 150,
+     "to": 67
+    },
+    {
+     "key": "raudi_rodriguez",
+     "from": 796,
+     "to": 70
+    },
+    {
+     "key": "will_bush",
+     "from": 822,
+     "to": 71
+    },
+    {
+     "key": "wonbin_cho",
+     "from": 4416,
+     "to": 72
+    },
+    {
+     "key": "xavier_isaac",
+     "from": 551,
+     "to": 73
+    },
+    {
+     "key": "chase_harlan",
+     "from": 562,
+     "to": 75
+    },
+    {
+     "key": "enddy_azocar",
+     "from": 184,
+     "to": 77
+    },
+    {
+     "key": "owen_carey",
+     "from": 527,
+     "to": 80
+    },
+    {
+     "key": "axiel_plaz",
+     "from": 320,
+     "to": 82
+    },
+    {
+     "key": "blake_mitchell",
+     "from": 106,
+     "to": 83
+    },
+    {
+     "key": "carlos_caro",
+     "from": 3232,
+     "to": 85
+    },
+    {
+     "key": "carlos_virahonda",
+     "from": 413,
+     "to": 86
+    },
+    {
+     "key": "carter_johnson",
+     "from": 3253,
+     "to": 87
+    }
+   ]
+  },
+  {
+   "label": "STRATUM RECENTER (offset only)",
+   "n_regraded": 4231,
+   "n_board": 4477,
+   "median_abs_rank_move": 693,
+   "mean_abs_rank_move": 967.84,
+   "median_abs_rank_move_top100": 170.5,
+   "top100_slots_changed": 70,
+   "top100_drop_out": [
+    {
+     "key": "jesus_made",
+     "from": 1,
+     "to": 178
+    },
+    {
+     "key": "eli_willits",
+     "from": 5,
+     "to": 217
+    },
+    {
+     "key": "max_clark",
+     "from": 6,
+     "to": 146
+    },
+    {
+     "key": "walker_jenkins",
+     "from": 7,
+     "to": 175
+    },
+    {
+     "key": "kade_anderson",
+     "from": 8,
+     "to": 283
+    },
+    {
+     "key": "rainiel_rodriguez",
+     "from": 9,
+     "to": 313
+    },
+    {
+     "key": "theo_gillen",
+     "from": 13,
+     "to": 171
+    },
+    {
+     "key": "luis_pena",
+     "from": 14,
+     "to": 189
+    },
+    {
+     "key": "sebastian_walcott",
+     "from": 15,
+     "to": 206
+    },
+    {
+     "key": "ethan_salas",
+     "from": 16,
+     "to": 385
+    },
+    {
+     "key": "seth_hernandez",
+     "from": 17,
+     "to": 378
+    },
+    {
+     "key": "josuar_gonzalez",
+     "from": 18,
+     "to": 311
+    },
+    {
+     "key": "alfredo_duno",
+     "from": 19,
+     "to": 241
+    },
+    {
+     "key": "josiah_hartshorn",
+     "from": 21,
+     "to": 377
+    },
+    {
+     "key": "caleb_bonemer",
+     "from": 22,
+     "to": 260
+    },
+    {
+     "key": "eric_booth_jr",
+     "from": 26,
+     "to": 251
+    },
+    {
+     "key": "jojo_parker",
+     "from": 28,
+     "to": 148
+    },
+    {
+     "key": "kevin_alvarez",
+     "from": 29,
+     "to": 149
+    },
+    {
+     "key": "ralphy_velazquez",
+     "from": 30,
+     "to": 309
+    },
+    {
+     "key": "michael_arroyo",
+     "from": 32,
+     "to": 133
+    },
+    {
+     "key": "roldy_brito",
+     "from": 33,
+     "to": 159
+    },
+    {
+     "key": "tyler_bell",
+     "from": 34,
+     "to": 267
+    },
+    {
+     "key": "edward_florentino",
+     "from": 38,
+     "to": 315
+    },
+    {
+     "key": "angel_genao",
+     "from": 39,
+     "to": 353
+    },
+    {
+     "key": "kaelen_culpepper",
+     "from": 40,
+     "to": 248
+    },
+    {
+     "key": "tate_southisene",
+     "from": 41,
+     "to": 322
+    },
+    {
+     "key": "emil_morales",
+     "from": 44,
+     "to": 463
+    },
+    {
+     "key": "grady_emerson",
+     "from": 45,
+     "to": 287
+    },
+    {
+     "key": "justin_gonzales",
+     "from": 46,
+     "to": 464
+    },
+    {
+     "key": "vahn_lackey",
+     "from": 47,
+     "to": 288
+    },
+    {
+     "key": "jefferson_rojas",
+     "from": 49,
+     "to": 118
+    },
+    {
+     "key": "juneiker_caceres",
+     "from": 50,
+     "to": 193
+    },
+    {
+     "key": "aidan_miller",
+     "from": 51,
+     "to": 122
+    },
+    {
+     "key": "arjun_nimmala",
+     "from": 52,
+     "to": 348
+    },
+    {
+     "key": "jhonny_level",
+     "from": 54,
+     "to": 349
+    },
+    {
+     "key": "jackson_flora",
+     "from": 57,
+     "to": 312
+    },
+    {
+     "key": "hayden_alvarez",
+     "from": 58,
+     "to": 199
+    },
+    {
+     "key": "luis_hernandez",
+     "from": 59,
+     "to": 553
+    },
+    {
+     "key": "cam_cannarella",
+     "from": 60,
+     "to": 130
+    },
+    {
+     "key": "drew_burress",
+     "from": 61,
+     "to": 327
+    }
+   ],
+   "top100_come_in": [
+    {
+     "key": "dillon_lewis",
+     "from": 109,
+     "to": 7
+    },
+    {
+     "key": "brayden_taylor",
+     "from": 118,
+     "to": 9
+    },
+    {
+     "key": "owen_ayers",
+     "from": 131,
+     "to": 10
+    },
+    {
+     "key": "bo_davidson",
+     "from": 140,
+     "to": 12
+    },
+    {
+     "key": "mitch_voit",
+     "from": 166,
+     "to": 21
+    },
+    {
+     "key": "nate_george",
+     "from": 167,
+     "to": 22
+    },
+    {
+     "key": "starlyn_caba",
+     "from": 168,
+     "to": 23
+    },
+    {
+     "key": "welbyn_francisca",
+     "from": 170,
+     "to": 24
+    },
+    {
+     "key": "tavian_josenberger",
+     "from": 315,
+     "to": 25
+    },
+    {
+     "key": "walker_janek",
+     "from": 319,
+     "to": 26
+    },
+    {
+     "key": "austin_overn",
+     "from": 212,
+     "to": 27
+    },
+    {
+     "key": "aroon_escobar",
+     "from": 158,
+     "to": 29
+    },
+    {
+     "key": "tyson_lewis",
+     "from": 234,
+     "to": 30
+    },
+    {
+     "key": "dylan_dreiling",
+     "from": 262,
+     "to": 33
+    },
+    {
+     "key": "parks_harber",
+     "from": 275,
+     "to": 34
+    },
+    {
+     "key": "luis_de_leon",
+     "from": 116,
+     "to": 35
+    },
+    {
+     "key": "john_gil",
+     "from": 155,
+     "to": 36
+    },
+    {
+     "key": "hyunseok_jang",
+     "from": 281,
+     "to": 38
+    },
+    {
+     "key": "aj_russell",
+     "from": 133,
+     "to": 39
+    },
+    {
+     "key": "jacob_reimer",
+     "from": 214,
+     "to": 40
+    },
+    {
+     "key": "blake_burke",
+     "from": 302,
+     "to": 41
+    },
+    {
+     "key": "roc_riggio",
+     "from": 310,
+     "to": 42
+    },
+    {
+     "key": "jurrangelo_cijntje",
+     "from": 126,
+     "to": 44
+    },
+    {
+     "key": "ethan_odonnell",
+     "from": 271,
+     "to": 45
+    },
+    {
+     "key": "kellon_lindsey",
+     "from": 273,
+     "to": 46
+    },
+    {
+     "key": "dante_nori",
+     "from": 237,
+     "to": 47
+    },
+    {
+     "key": "wehiwa_aloy",
+     "from": 169,
+     "to": 49
+    },
+    {
+     "key": "adam_serwinowski",
+     "from": 202,
+     "to": 50
+    },
+    {
+     "key": "jonathan_santucci",
+     "from": 142,
+     "to": 51
+    },
+    {
+     "key": "emilien_pitre",
+     "from": 332,
+     "to": 52
+    },
+    {
+     "key": "max_anderson",
+     "from": 240,
+     "to": 53
+    },
+    {
+     "key": "dylan_jordan",
+     "from": 249,
+     "to": 54
+    },
+    {
+     "key": "carson_roccaforte",
+     "from": 356,
+     "to": 55
+    },
+    {
+     "key": "jace_laviolette",
+     "from": 209,
+     "to": 56
+    },
+    {
+     "key": "jacob_kmatz",
+     "from": 156,
+     "to": 57
+    },
+    {
+     "key": "luke_hill",
+     "from": 291,
+     "to": 58
+    },
+    {
+     "key": "duce_gourson",
+     "from": 298,
+     "to": 59
+    },
+    {
+     "key": "jd_dix",
+     "from": 259,
+     "to": 60
+    },
+    {
+     "key": "dillon_head",
+     "from": 378,
+     "to": 61
+    },
+    {
+     "key": "nathan_martorella",
+     "from": 336,
+     "to": 62
+    }
+   ]
+  },
+  {
+   "label": "HALF RECENTER (50% shrunk offset)",
+   "n_regraded": 4231,
+   "n_board": 4477,
+   "median_abs_rank_move": 579,
+   "mean_abs_rank_move": 830.91,
+   "median_abs_rank_move_top100": 46.5,
+   "top100_slots_changed": 38,
+   "top100_drop_out": [
+    {
+     "key": "josiah_hartshorn",
+     "from": 21,
+     "to": 110
+    },
+    {
+     "key": "edward_florentino",
+     "from": 38,
+     "to": 114
+    },
+    {
+     "key": "angel_genao",
+     "from": 39,
+     "to": 128
+    },
+    {
+     "key": "tate_southisene",
+     "from": 41,
+     "to": 120
+    },
+    {
+     "key": "emil_morales",
+     "from": 44,
+     "to": 179
+    },
+    {
+     "key": "grady_emerson",
+     "from": 45,
+     "to": 103
+    },
+    {
+     "key": "justin_gonzales",
+     "from": 46,
+     "to": 180
+    },
+    {
+     "key": "vahn_lackey",
+     "from": 47,
+     "to": 104
+    },
+    {
+     "key": "arjun_nimmala",
+     "from": 52,
+     "to": 139
+    },
+    {
+     "key": "jhonny_level",
+     "from": 54,
+     "to": 140
+    },
+    {
+     "key": "jackson_flora",
+     "from": 57,
+     "to": 126
+    },
+    {
+     "key": "luis_hernandez",
+     "from": 59,
+     "to": 220
+    },
+    {
+     "key": "drew_burress",
+     "from": 61,
+     "to": 136
+    },
+    {
+     "key": "steele_hall",
+     "from": 62,
+     "to": 199
+    },
+    {
+     "key": "angeibel_gomez",
+     "from": 63,
+     "to": 237
+    },
+    {
+     "key": "christian_zazueta",
+     "from": 65,
+     "to": 229
+    },
+    {
+     "key": "francisco_renteria",
+     "from": 67,
+     "to": 254
+    },
+    {
+     "key": "aj_gracia",
+     "from": 69,
+     "to": 175
+    },
+    {
+     "key": "billy_carlson",
+     "from": 70,
+     "to": 138
+    },
+    {
+     "key": "josh_hammond",
+     "from": 72,
+     "to": 121
+    },
+    {
+     "key": "nathan_flewelling",
+     "from": 74,
+     "to": 259
+    },
+    {
+     "key": "lazaro_montes",
+     "from": 76,
+     "to": 217
+    },
+    {
+     "key": "taitn_gray",
+     "from": 77,
+     "to": 132
+    },
+    {
+     "key": "hagen_smith",
+     "from": 79,
+     "to": 285
+    },
+    {
+     "key": "thomas_white",
+     "from": 80,
+     "to": 286
+    },
+    {
+     "key": "elian_pena",
+     "from": 81,
+     "to": 173
+    },
+    {
+     "key": "carlos_lagrange",
+     "from": 83,
+     "to": 244
+    },
+    {
+     "key": "dax_kilby",
+     "from": 84,
+     "to": 240
+    },
+    {
+     "key": "kendry_chourio",
+     "from": 86,
+     "to": 308
+    },
+    {
+     "key": "eduardo_tait",
+     "from": 88,
+     "to": 124
+    },
+    {
+     "key": "joshua_baez",
+     "from": 89,
+     "to": 205
+    },
+    {
+     "key": "anthony_eyanson",
+     "from": 90,
+     "to": 310
+    },
+    {
+     "key": "cooper_flemming",
+     "from": 92,
+     "to": 174
+    },
+    {
+     "key": "ramon_marquez",
+     "from": 93,
+     "to": 316
+    },
+    {
+     "key": "zion_rose",
+     "from": 96,
+     "to": 239
+    },
+    {
+     "key": "tyler_bremner",
+     "from": 97,
+     "to": 119
+    },
+    {
+     "key": "caden_scarborough",
+     "from": 98,
+     "to": 333
+    },
+    {
+     "key": "andrew_fischer",
+     "from": 100,
+     "to": 146
+    }
+   ],
+   "top100_come_in": [
+    {
+     "key": "dillon_lewis",
+     "from": 109,
+     "to": 25
+    },
+    {
+     "key": "brayden_taylor",
+     "from": 118,
+     "to": 27
+    },
+    {
+     "key": "owen_ayers",
+     "from": 131,
+     "to": 33
+    },
+    {
+     "key": "bo_davidson",
+     "from": 140,
+     "to": 35
+    },
+    {
+     "key": "mitch_voit",
+     "from": 166,
+     "to": 45
+    },
+    {
+     "key": "nate_george",
+     "from": 167,
+     "to": 46
+    },
+    {
+     "key": "starlyn_caba",
+     "from": 168,
+     "to": 47
+    },
+    {
+     "key": "welbyn_francisca",
+     "from": 170,
+     "to": 48
+    },
+    {
+     "key": "luis_de_leon",
+     "from": 116,
+     "to": 49
+    },
+    {
+     "key": "aj_russell",
+     "from": 133,
+     "to": 55
+    },
+    {
+     "key": "jurrangelo_cijntje",
+     "from": 126,
+     "to": 57
+    },
+    {
+     "key": "aroon_escobar",
+     "from": 158,
+     "to": 58
+    },
+    {
+     "key": "john_gil",
+     "from": 155,
+     "to": 60
+    },
+    {
+     "key": "austin_overn",
+     "from": 212,
+     "to": 62
+    },
+    {
+     "key": "jonathan_santucci",
+     "from": 142,
+     "to": 63
+    },
+    {
+     "key": "tyson_lewis",
+     "from": 234,
+     "to": 67
+    },
+    {
+     "key": "luke_stevenson",
+     "from": 103,
+     "to": 69
+    },
+    {
+     "key": "brody_hopkins",
+     "from": 121,
+     "to": 70
+    },
+    {
+     "key": "wehiwa_aloy",
+     "from": 169,
+     "to": 73
+    },
+    {
+     "key": "tavian_josenberger",
+     "from": 315,
+     "to": 75
+    },
+    {
+     "key": "dylan_dreiling",
+     "from": 262,
+     "to": 76
+    },
+    {
+     "key": "walker_janek",
+     "from": 319,
+     "to": 77
+    },
+    {
+     "key": "blake_mitchell",
+     "from": 106,
+     "to": 78
+    },
+    {
+     "key": "jacob_kmatz",
+     "from": 156,
+     "to": 79
+    },
+    {
+     "key": "jacob_reimer",
+     "from": 214,
+     "to": 80
+    },
+    {
+     "key": "parks_harber",
+     "from": 275,
+     "to": 82
+    },
+    {
+     "key": "cam_caminiti",
+     "from": 136,
+     "to": 84
+    },
+    {
+     "key": "adam_serwinowski",
+     "from": 202,
+     "to": 85
+    },
+    {
+     "key": "ramon_ramirez",
+     "from": 120,
+     "to": 86
+    },
+    {
+     "key": "nelson_rada",
+     "from": 117,
+     "to": 87
+    },
+    {
+     "key": "braylon_doughty",
+     "from": 122,
+     "to": 89
+    },
+    {
+     "key": "hyunseok_jang",
+     "from": 281,
+     "to": 91
+    },
+    {
+     "key": "tyson_hardin",
+     "from": 127,
+     "to": 93
+    },
+    {
+     "key": "dante_nori",
+     "from": 237,
+     "to": 96
+    },
+    {
+     "key": "jace_laviolette",
+     "from": 209,
+     "to": 97
+    },
+    {
+     "key": "ben_hess",
+     "from": 186,
+     "to": 98
+    },
+    {
+     "key": "ethan_odonnell",
+     "from": 271,
+     "to": 99
+    },
+    {
+     "key": "kellon_lindsey",
+     "from": 273,
+     "to": 100
+    }
+   ]
+  },
+  {
+   "label": "OLD-FOR-LEVEL ONLY recenter (the narrow fix)",
+   "n_regraded": 2793,
+   "n_board": 4477,
+   "median_abs_rank_move": 682,
+   "mean_abs_rank_move": 947.56,
+   "median_abs_rank_move_top100": 145.0,
+   "top100_slots_changed": 78,
+   "top100_drop_out": [
+    {
+     "key": "sebastian_walcott",
+     "from": 15,
+     "to": 111
+    },
+    {
+     "key": "ethan_salas",
+     "from": 16,
+     "to": 119
+    },
+    {
+     "key": "seth_hernandez",
+     "from": 17,
+     "to": 124
+    },
+    {
+     "key": "josuar_gonzalez",
+     "from": 18,
+     "to": 213
+    },
+    {
+     "key": "alfredo_duno",
+     "from": 19,
+     "to": 134
+    },
+    {
+     "key": "caden_bodine",
+     "from": 20,
+     "to": 141
+    },
+    {
+     "key": "josiah_hartshorn",
+     "from": 21,
+     "to": 142
+    },
+    {
+     "key": "caleb_bonemer",
+     "from": 22,
+     "to": 143
+    },
+    {
+     "key": "bryce_rainer",
+     "from": 23,
+     "to": 147
+    },
+    {
+     "key": "eric_hartman",
+     "from": 24,
+     "to": 150
+    },
+    {
+     "key": "ryan_sloan",
+     "from": 25,
+     "to": 153
+    },
+    {
+     "key": "eric_booth_jr",
+     "from": 26,
+     "to": 156
+    },
+    {
+     "key": "felnin_celesten",
+     "from": 27,
+     "to": 157
+    },
+    {
+     "key": "jojo_parker",
+     "from": 28,
+     "to": 158
+    },
+    {
+     "key": "kevin_alvarez",
+     "from": 29,
+     "to": 159
+    },
+    {
+     "key": "ralphy_velazquez",
+     "from": 30,
+     "to": 160
+    },
+    {
+     "key": "marek_houston",
+     "from": 31,
+     "to": 166
+    },
+    {
+     "key": "michael_arroyo",
+     "from": 32,
+     "to": 167
+    },
+    {
+     "key": "roldy_brito",
+     "from": 33,
+     "to": 168
+    },
+    {
+     "key": "tyler_bell",
+     "from": 34,
+     "to": 169
+    },
+    {
+     "key": "zyhir_hope",
+     "from": 36,
+     "to": 174
+    },
+    {
+     "key": "demetrio_crisantes",
+     "from": 37,
+     "to": 177
+    },
+    {
+     "key": "edward_florentino",
+     "from": 38,
+     "to": 178
+    },
+    {
+     "key": "angel_genao",
+     "from": 39,
+     "to": 183
+    },
+    {
+     "key": "kaelen_culpepper",
+     "from": 40,
+     "to": 184
+    },
+    {
+     "key": "tate_southisene",
+     "from": 41,
+     "to": 185
+    },
+    {
+     "key": "charlie_condon",
+     "from": 43,
+     "to": 188
+    },
+    {
+     "key": "emil_morales",
+     "from": 44,
+     "to": 189
+    },
+    {
+     "key": "grady_emerson",
+     "from": 45,
+     "to": 190
+    },
+    {
+     "key": "justin_gonzales",
+     "from": 46,
+     "to": 191
+    },
+    {
+     "key": "vahn_lackey",
+     "from": 47,
+     "to": 192
+    },
+    {
+     "key": "eduardo_quintero",
+     "from": 48,
+     "to": 196
+    },
+    {
+     "key": "jefferson_rojas",
+     "from": 49,
+     "to": 205
+    },
+    {
+     "key": "juneiker_caceres",
+     "from": 50,
+     "to": 206
+    },
+    {
+     "key": "aidan_miller",
+     "from": 51,
+     "to": 208
+    },
+    {
+     "key": "arjun_nimmala",
+     "from": 52,
+     "to": 209
+    },
+    {
+     "key": "devin_fitzgerald",
+     "from": 53,
+     "to": 210
+    },
+    {
+     "key": "jhonny_level",
+     "from": 54,
+     "to": 211
+    },
+    {
+     "key": "jonny_farmelo",
+     "from": 55,
+     "to": 212
+    },
+    {
+     "key": "jackson_flora",
+     "from": 57,
+     "to": 214
+    }
+   ],
+   "top100_come_in": [
+    {
+     "key": "dillon_lewis",
+     "from": 109,
+     "to": 5
+    },
+    {
+     "key": "brayden_taylor",
+     "from": 118,
+     "to": 7
+    },
+    {
+     "key": "owen_ayers",
+     "from": 131,
+     "to": 8
+    },
+    {
+     "key": "bo_davidson",
+     "from": 140,
+     "to": 10
+    },
+    {
+     "key": "tavian_josenberger",
+     "from": 315,
+     "to": 14
+    },
+    {
+     "key": "walker_janek",
+     "from": 319,
+     "to": 15
+    },
+    {
+     "key": "austin_overn",
+     "from": 212,
+     "to": 16
+    },
+    {
+     "key": "dylan_dreiling",
+     "from": 262,
+     "to": 17
+    },
+    {
+     "key": "parks_harber",
+     "from": 275,
+     "to": 18
+    },
+    {
+     "key": "luis_de_leon",
+     "from": 116,
+     "to": 19
+    },
+    {
+     "key": "hyunseok_jang",
+     "from": 281,
+     "to": 20
+    },
+    {
+     "key": "aj_russell",
+     "from": 133,
+     "to": 21
+    },
+    {
+     "key": "blake_burke",
+     "from": 302,
+     "to": 22
+    },
+    {
+     "key": "roc_riggio",
+     "from": 310,
+     "to": 23
+    },
+    {
+     "key": "jurrangelo_cijntje",
+     "from": 126,
+     "to": 24
+    },
+    {
+     "key": "ethan_odonnell",
+     "from": 271,
+     "to": 25
+    },
+    {
+     "key": "wehiwa_aloy",
+     "from": 169,
+     "to": 26
+    },
+    {
+     "key": "jonathan_santucci",
+     "from": 142,
+     "to": 27
+    },
+    {
+     "key": "emilien_pitre",
+     "from": 332,
+     "to": 28
+    },
+    {
+     "key": "max_anderson",
+     "from": 240,
+     "to": 30
+    },
+    {
+     "key": "carson_roccaforte",
+     "from": 356,
+     "to": 32
+    },
+    {
+     "key": "jace_laviolette",
+     "from": 209,
+     "to": 34
+    },
+    {
+     "key": "jacob_kmatz",
+     "from": 156,
+     "to": 35
+    },
+    {
+     "key": "duce_gourson",
+     "from": 298,
+     "to": 36
+    },
+    {
+     "key": "nathan_martorella",
+     "from": 336,
+     "to": 37
+    },
+    {
+     "key": "ben_hess",
+     "from": 186,
+     "to": 38
+    },
+    {
+     "key": "eli_serrano_iii",
+     "from": 489,
+     "to": 39
+    },
+    {
+     "key": "payton_green",
+     "from": 338,
+     "to": 40
+    },
+    {
+     "key": "jason_schiavone",
+     "from": 344,
+     "to": 41
+    },
+    {
+     "key": "brody_hopkins",
+     "from": 121,
+     "to": 42
+    },
+    {
+     "key": "trevor_cohen",
+     "from": 277,
+     "to": 43
+    },
+    {
+     "key": "jonathon_long",
+     "from": 307,
+     "to": 44
+    },
+    {
+     "key": "bryce_mayer",
+     "from": 172,
+     "to": 45
+    },
+    {
+     "key": "alex_lodise",
+     "from": 264,
+     "to": 46
+    },
+    {
+     "key": "henry_lalane",
+     "from": 225,
+     "to": 47
+    },
+    {
+     "key": "miguel_mendez",
+     "from": 195,
+     "to": 49
+    },
+    {
+     "key": "dakota_jordan",
+     "from": 269,
+     "to": 50
+    },
+    {
+     "key": "dean_curley",
+     "from": 270,
+     "to": 51
+    },
+    {
+     "key": "brandon_butterworth",
+     "from": 420,
+     "to": 52
+    },
+    {
+     "key": "josh_kasevich",
+     "from": 334,
+     "to": 53
+    }
+   ]
+  }
+ ],
+ "worst_over_50": [
+  {
+   "key": "josuar_gonzalez",
+   "slot": 18,
+   "served": 57.81,
+   "implied": 20.0,
+   "gap": 37.81,
+   "gap_ipw": 37.81,
+   "consensus": 52.1,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    37.81,
+    37.81
+   ]
+  },
+  {
+   "key": "luis_hernandez",
+   "slot": 59,
+   "served": 54.39,
+   "implied": 20.0,
+   "gap": 34.39,
+   "gap_ipw": 34.39,
+   "consensus": 49.4,
+   "stratum": "CPX/young/highProd",
+   "ci95": [
+    34.39,
+    34.39
+   ]
+  },
+  {
+   "key": "steele_hall",
+   "slot": 62,
+   "served": 53.87,
+   "implied": 20.0,
+   "gap": 33.87,
+   "gap_ipw": 33.87,
+   "consensus": 48.1,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    33.87,
+    33.87
+   ]
+  },
+  {
+   "key": "angeibel_gomez",
+   "slot": 63,
+   "served": 53.77,
+   "implied": 20.0,
+   "gap": 33.77,
+   "gap_ipw": 33.77,
+   "consensus": 48.1,
+   "stratum": "CPX/young/highProd",
+   "ci95": [
+    33.77,
+    33.77
+   ]
+  },
+  {
+   "key": "francisco_renteria",
+   "slot": 67,
+   "served": 53.46,
+   "implied": 20.0,
+   "gap": 33.46,
+   "gap_ipw": 33.46,
+   "consensus": 48.1,
+   "stratum": "CPX/young/highProd",
+   "ci95": [
+    33.46,
+    33.46
+   ]
+  },
+  {
+   "key": "dax_kilby",
+   "slot": 84,
+   "served": 51.8,
+   "implied": 20.0,
+   "gap": 31.8,
+   "gap_ipw": 31.8,
+   "consensus": 49.4,
+   "stratum": "CPX/old/lowProd",
+   "ci95": [
+    31.8,
+    31.8
+   ]
+  },
+  {
+   "key": "cristian_arguelles",
+   "slot": 107,
+   "served": 50.14,
+   "implied": 20.0,
+   "gap": 30.14,
+   "gap_ipw": 30.14,
+   "consensus": 43.8,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    30.14,
+    30.14
+   ]
+  },
+  {
+   "key": "cris_rodriguez",
+   "slot": 119,
+   "served": 49.83,
+   "implied": 20.0,
+   "gap": 29.83,
+   "gap_ipw": 29.83,
+   "consensus": 45.6,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    29.83,
+    29.83
+   ]
+  },
+  {
+   "key": "cristopher_polanco",
+   "slot": 147,
+   "served": 48.49,
+   "implied": 20.0,
+   "gap": 28.49,
+   "gap_ipw": 28.49,
+   "consensus": 45.5,
+   "stratum": "CPX/old/midProd",
+   "ci95": [
+    28.49,
+    28.49
+   ]
+  },
+  {
+   "key": "johenssy_colome",
+   "slot": 159,
+   "served": 47.97,
+   "implied": 20.0,
+   "gap": 27.97,
+   "gap_ipw": 27.97,
+   "consensus": 45.6,
+   "stratum": "CPX/young/midProd",
+   "ci95": [
+    27.97,
+    27.97
+   ]
+  },
+  {
+   "key": "albert_fermin",
+   "slot": 183,
+   "served": 47.55,
+   "implied": 20.0,
+   "gap": 27.55,
+   "gap_ipw": 27.55,
+   "consensus": 43.1,
+   "stratum": "CPX/young/highProd",
+   "ci95": [
+    27.55,
+    27.55
+   ]
+  },
+  {
+   "key": "franklin_rojas",
+   "slot": 191,
+   "served": 47.24,
+   "implied": 20.0,
+   "gap": 27.24,
+   "gap_ipw": 27.24,
+   "consensus": 45.5,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    27.24,
+    27.24
+   ]
+  },
+  {
+   "key": "dorian_soto",
+   "slot": 208,
+   "served": 46.93,
+   "implied": 20.0,
+   "gap": 26.93,
+   "gap_ipw": 26.93,
+   "consensus": 45.6,
+   "stratum": "CPX/old/lowProd",
+   "ci95": [
+    26.93,
+    26.93
+   ]
+  },
+  {
+   "key": "victor_valdez",
+   "slot": 210,
+   "served": 46.83,
+   "implied": 20.0,
+   "gap": 26.83,
+   "gap_ipw": 26.83,
+   "consensus": 43.1,
+   "stratum": "CPX/young/highProd",
+   "ci95": [
+    26.83,
+    26.83
+   ]
+  },
+  {
+   "key": "wandy_asigen",
+   "slot": 228,
+   "served": 46.52,
+   "implied": 20.0,
+   "gap": 26.52,
+   "gap_ipw": 26.52,
+   "consensus": 43.1,
+   "stratum": "CPX/young/midProd",
+   "ci95": [
+    26.52,
+    26.52
+   ]
+  },
+  {
+   "key": "jirvin_morillo",
+   "slot": 238,
+   "served": 46.21,
+   "implied": 20.0,
+   "gap": 26.21,
+   "gap_ipw": 26.21,
+   "consensus": 40.6,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    26.21,
+    26.21
+   ]
+  },
+  {
+   "key": "jhomnardo_reyes",
+   "slot": 272,
+   "served": 45.79,
+   "implied": 20.0,
+   "gap": 25.79,
+   "gap_ipw": 25.79,
+   "consensus": 42.5,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    25.79,
+    25.79
+   ]
+  },
+  {
+   "key": "juan_parra",
+   "slot": 284,
+   "served": 45.58,
+   "implied": 20.0,
+   "gap": 25.58,
+   "gap_ipw": 25.58,
+   "consensus": 41.3,
+   "stratum": "CPX/young/highProd",
+   "ci95": [
+    25.58,
+    25.58
+   ]
+  },
+  {
+   "key": "leonardo_pineda",
+   "slot": 287,
+   "served": 45.48,
+   "implied": 20.0,
+   "gap": 25.48,
+   "gap_ipw": 25.48,
+   "consensus": 45.5,
+   "stratum": "CPX/old/lowProd",
+   "ci95": [
+    25.48,
+    25.48
+   ]
+  },
+  {
+   "key": "daiber_de_los_santos",
+   "slot": 292,
+   "served": 45.17,
+   "implied": 20.0,
+   "gap": 25.17,
+   "gap_ipw": 25.17,
+   "consensus": 43.0,
+   "stratum": "CPX/old/midProd",
+   "ci95": [
+    25.17,
+    25.17
+   ]
+  },
+  {
+   "key": "emanuel_luna",
+   "slot": 293,
+   "served": 45.17,
+   "implied": 20.0,
+   "gap": 25.17,
+   "gap_ipw": 25.17,
+   "consensus": 40.6,
+   "stratum": "CPX/young/highProd",
+   "ci95": [
+    25.17,
+    25.17
+   ]
+  },
+  {
+   "key": "seongjun_kim__sa3069132",
+   "slot": 313,
+   "served": 44.86,
+   "implied": 20.0,
+   "gap": 24.86,
+   "gap_ipw": 24.86,
+   "consensus": 41.2,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    24.86,
+    24.86
+   ]
+  },
+  {
+   "key": "raymer_medina",
+   "slot": 309,
+   "served": 44.86,
+   "implied": 20.0,
+   "gap": 24.86,
+   "gap_ipw": 24.86,
+   "consensus": 43.0,
+   "stratum": "CPX/old/midProd",
+   "ci95": [
+    24.86,
+    24.86
+   ]
+  },
+  {
+   "key": "juan_rijo",
+   "slot": 323,
+   "served": 44.65,
+   "implied": 20.0,
+   "gap": 24.65,
+   "gap_ipw": 24.65,
+   "consensus": 40.6,
+   "stratum": "CPX/young/highProd",
+   "ci95": [
+    24.65,
+    24.65
+   ]
+  },
+  {
+   "key": "andres_arias",
+   "slot": 325,
+   "served": 44.55,
+   "implied": 20.0,
+   "gap": 24.55,
+   "gap_ipw": 24.55,
+   "consensus": 43.0,
+   "stratum": "CPX/old/midProd",
+   "ci95": [
+    24.55,
+    24.55
+   ]
+  },
+  {
+   "key": "jeancer_custodio",
+   "slot": 333,
+   "served": 44.34,
+   "implied": 20.0,
+   "gap": 24.34,
+   "gap_ipw": 24.34,
+   "consensus": 45.6,
+   "stratum": "CPX/young/lowProd",
+   "ci95": [
+    24.34,
+    24.34
+   ]
+  },
+  {
+   "key": "angel_nunez",
+   "slot": 339,
+   "served": 44.24,
+   "implied": 20.0,
+   "gap": 24.24,
+   "gap_ipw": 24.24,
+   "consensus": 40.6,
+   "stratum": "CPX/young/highProd",
+   "ci95": [
+    24.24,
+    24.24
+   ]
+  },
+  {
+   "key": "nick_becker",
+   "slot": 379,
+   "served": 43.41,
+   "implied": 20.0,
+   "gap": 23.41,
+   "gap_ipw": 23.41,
+   "consensus": 40.6,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    23.41,
+    23.41
+   ]
+  },
+  {
+   "key": "wilton_guerrero_jr",
+   "slot": 388,
+   "served": 43.1,
+   "implied": 20.0,
+   "gap": 23.1,
+   "gap_ipw": 23.1,
+   "consensus": 40.6,
+   "stratum": "CPX/young/midProd",
+   "ci95": [
+    23.1,
+    23.1
+   ]
+  },
+  {
+   "key": "rayner_arias",
+   "slot": 394,
+   "served": 42.99,
+   "implied": 20.0,
+   "gap": 22.99,
+   "gap_ipw": 22.99,
+   "consensus": 43.0,
+   "stratum": "CPX/old/midProd",
+   "ci95": [
+    22.99,
+    22.99
+   ]
+  },
+  {
+   "key": "liberts_aponte",
+   "slot": 400,
+   "served": 42.79,
+   "implied": 20.0,
+   "gap": 22.79,
+   "gap_ipw": 22.79,
+   "consensus": 40.6,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    22.79,
+    22.79
+   ]
+  },
+  {
+   "key": "fabricio_blanco",
+   "slot": 407,
+   "served": 42.68,
+   "implied": 20.0,
+   "gap": 22.68,
+   "gap_ipw": 22.68,
+   "consensus": 40.6,
+   "stratum": "CPX/young/midProd",
+   "ci95": [
+    22.68,
+    22.68
+   ]
+  },
+  {
+   "key": "josh_owens",
+   "slot": 411,
+   "served": 42.58,
+   "implied": 20.0,
+   "gap": 22.58,
+   "gap_ipw": 22.58,
+   "consensus": 41.2,
+   "stratum": "CPX/old/midProd",
+   "ci95": [
+    22.58,
+    22.58
+   ]
+  },
+  {
+   "key": "jemone_nuel",
+   "slot": 434,
+   "served": 42.06,
+   "implied": 20.0,
+   "gap": 22.06,
+   "gap_ipw": 22.06,
+   "consensus": 40.0,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    22.06,
+    22.06
+   ]
+  },
+  {
+   "key": "angel_de_los_santos",
+   "slot": 441,
+   "served": 41.85,
+   "implied": 20.0,
+   "gap": 21.85,
+   "gap_ipw": 21.85,
+   "consensus": 40.0,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    21.85,
+    21.85
+   ]
+  },
+  {
+   "key": "yorger_bautista",
+   "slot": 453,
+   "served": 41.65,
+   "implied": 20.0,
+   "gap": 21.65,
+   "gap_ipw": 21.65,
+   "consensus": 40.6,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    21.65,
+    21.65
+   ]
+  },
+  {
+   "key": "djean_macares",
+   "slot": 459,
+   "served": 41.34,
+   "implied": 20.0,
+   "gap": 21.34,
+   "gap_ipw": 21.34,
+   "consensus": 40.5,
+   "stratum": "CPX/old/midProd",
+   "ci95": [
+    21.34,
+    21.34
+   ]
+  },
+  {
+   "key": "joswa_lugo",
+   "slot": 504,
+   "served": 40.2,
+   "implied": 20.0,
+   "gap": 20.2,
+   "gap_ipw": 20.2,
+   "consensus": 40.6,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    20.2,
+    20.2
+   ]
+  },
+  {
+   "key": "billy_carlson",
+   "slot": 70,
+   "served": 53.05,
+   "implied": 33.22,
+   "gap": 19.82,
+   "gap_ipw": 24.86,
+   "consensus": 48.0,
+   "stratum": "A/young/midProd",
+   "ci95": [
+    15.25,
+    25.59
+   ]
+  },
+  {
+   "key": "elian_rosario",
+   "slot": 521,
+   "served": 39.68,
+   "implied": 20.0,
+   "gap": 19.68,
+   "gap_ipw": 19.68,
+   "consensus": 40.6,
+   "stratum": "CPX/young/highProd",
+   "ci95": [
+    19.68,
+    19.68
+   ]
+  },
+  {
+   "key": "daniel_rodriguez",
+   "slot": 532,
+   "served": 39.47,
+   "implied": 20.0,
+   "gap": 19.47,
+   "gap_ipw": 19.47,
+   "consensus": 38.1,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    19.47,
+    19.47
+   ]
+  },
+  {
+   "key": "jared_thomas",
+   "slot": 537,
+   "served": 39.37,
+   "implied": 20.0,
+   "gap": 19.37,
+   "gap_ipw": 19.37,
+   "consensus": 43.1,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    19.37,
+    19.37
+   ]
+  },
+  {
+   "key": "marconi_german",
+   "slot": 543,
+   "served": 39.26,
+   "implied": 20.0,
+   "gap": 19.26,
+   "gap_ipw": 19.26,
+   "consensus": 38.1,
+   "stratum": "CPX/old/highProd",
+   "ci95": [
+    19.26,
+    19.26
+   ]
+  },
+  {
+   "key": "seth_hernandez",
+   "slot": 17,
+   "served": 58.06,
+   "implied": 38.87,
+   "gap": 19.19,
+   "gap_ipw": 19.23,
+   "consensus": 58.8,
+   "stratum": "A+/young/highProd",
+   "ci95": [
+    14.94,
+    24.34
+   ]
+  },
+  {
+   "key": "elian_pena",
+   "slot": 81,
+   "served": 52.01,
+   "implied": 33.22,
+   "gap": 18.79,
+   "gap_ipw": 23.83,
+   "consensus": 48.1,
+   "stratum": "A/young/midProd",
+   "ci95": [
+    14.21,
+    24.56
+   ]
+  },
+  {
+   "key": "diego_tornes",
+   "slot": 578,
+   "served": 38.54,
+   "implied": 20.0,
+   "gap": 18.54,
+   "gap_ipw": 18.54,
+   "consensus": 40.6,
+   "stratum": "CPX/young/lowProd",
+   "ci95": [
+    18.54,
+    18.54
+   ]
+  },
+  {
+   "key": "reyli_mariano",
+   "slot": 580,
+   "served": 38.54,
+   "implied": 20.0,
+   "gap": 18.54,
+   "gap_ipw": 18.54,
+   "consensus": 40.0,
+   "stratum": "CPX/old/midProd",
+   "ci95": [
+    18.54,
+    18.54
+   ]
+  },
+  {
+   "key": "enmanuel_merlo",
+   "slot": 604,
+   "served": 38.23,
+   "implied": 20.0,
+   "gap": 18.23,
+   "gap_ipw": 18.23,
+   "consensus": 40.6,
+   "stratum": "CPX/young/midProd",
+   "ci95": [
+    18.23,
+    18.23
+   ]
+  },
+  {
+   "key": "miguel_caraballo",
+   "slot": 609,
+   "served": 38.12,
+   "implied": 20.0,
+   "gap": 18.12,
+   "gap_ipw": 18.12,
+   "consensus": 40.0,
+   "stratum": "CPX/young/midProd",
+   "ci95": [
+    18.12,
+    18.12
+   ]
+  },
+  {
+   "key": "haritzon_castillo",
+   "slot": 619,
+   "served": 37.92,
+   "implied": 20.0,
+   "gap": 17.92,
+   "gap_ipw": 17.92,
+   "consensus": 40.5,
+   "stratum": "CPX/old/lowProd",
+   "ci95": [
+    17.92,
+    17.92
+   ]
+  }
+ ],
+ "worst_under_50": [
+  {
+   "key": "angel_ortiz",
+   "slot": 3074,
+   "served": 20.0,
+   "implied": 51.95,
+   "gap": -31.95,
+   "gap_ipw": -32.0,
+   "consensus": 35.0,
+   "stratum": "AAA/onTime/highProd",
+   "ci95": [
+    -37.27,
+    -26.55
+   ]
+  },
+  {
+   "key": "wonbin_cho",
+   "slot": 4416,
+   "served": 20.0,
+   "implied": 49.77,
+   "gap": -29.77,
+   "gap_ipw": -31.38,
+   "consensus": 35.5,
+   "stratum": "AA/onTime/highProd",
+   "ci95": [
+    -34.75,
+    -26.25
+   ]
+  },
+  {
+   "key": "diego_velasquez",
+   "slot": 3403,
+   "served": 20.0,
+   "implied": 49.77,
+   "gap": -29.77,
+   "gap_ipw": -31.38,
+   "consensus": 35.5,
+   "stratum": "AA/onTime/highProd",
+   "ci95": [
+    -34.75,
+    -26.25
+   ]
+  },
+  {
+   "key": "johanfran_garcia",
+   "slot": 3767,
+   "served": 20.0,
+   "implied": 49.77,
+   "gap": -29.77,
+   "gap_ipw": -31.38,
+   "consensus": 36.3,
+   "stratum": "AA/onTime/highProd",
+   "ci95": [
+    -34.75,
+    -26.25
+   ]
+  },
+  {
+   "key": "carter_johnson",
+   "slot": 3253,
+   "served": 20.0,
+   "implied": 48.82,
+   "gap": -28.82,
+   "gap_ipw": -32.47,
+   "consensus": 35.5,
+   "stratum": "A+/onTime/highProd",
+   "ci95": [
+    -35.23,
+    -21.64
+   ]
+  },
+  {
+   "key": "roynier_hernandez",
+   "slot": 4250,
+   "served": 20.0,
+   "implied": 48.82,
+   "gap": -28.82,
+   "gap_ipw": -32.47,
+   "consensus": 35.0,
+   "stratum": "A+/onTime/highProd",
+   "ci95": [
+    -35.23,
+    -21.64
+   ]
+  },
+  {
+   "key": "carlos_caro",
+   "slot": 3232,
+   "served": 20.0,
+   "implied": 48.82,
+   "gap": -28.82,
+   "gap_ipw": -32.47,
+   "consensus": 35.0,
+   "stratum": "A+/onTime/highProd",
+   "ci95": [
+    -35.23,
+    -21.64
+   ]
+  },
+  {
+   "key": "tony_blanco_jr",
+   "slot": 4354,
+   "served": 20.0,
+   "implied": 48.82,
+   "gap": -28.82,
+   "gap_ipw": -32.47,
+   "consensus": 38.8,
+   "stratum": "A+/onTime/highProd",
+   "ci95": [
+    -35.23,
+    -21.64
+   ]
+  },
+  {
+   "key": "eric_bitonti",
+   "slot": 3492,
+   "served": 20.0,
+   "implied": 48.82,
+   "gap": -28.82,
+   "gap_ipw": -32.47,
+   "consensus": 35.6,
+   "stratum": "A+/onTime/highProd",
+   "ci95": [
+    -35.23,
+    -21.64
+   ]
+  },
+  {
+   "key": "ronny_hernandez",
+   "slot": 4241,
+   "served": 20.0,
+   "implied": 48.82,
+   "gap": -28.82,
+   "gap_ipw": -32.47,
+   "consensus": 35.0,
+   "stratum": "A+/onTime/highProd",
+   "ci95": [
+    -35.23,
+    -21.64
+   ]
+  },
+  {
+   "key": "nico_perez",
+   "slot": 4137,
+   "served": 20.0,
+   "implied": 48.82,
+   "gap": -28.82,
+   "gap_ipw": -32.47,
+   "consensus": 35.0,
+   "stratum": "A+/onTime/highProd",
+   "ci95": [
+    -35.23,
+    -21.64
+   ]
+  },
+  {
+   "key": "jose_escobar",
+   "slot": 3822,
+   "served": 20.0,
+   "implied": 48.82,
+   "gap": -28.82,
+   "gap_ipw": -32.47,
+   "consensus": 35.6,
+   "stratum": "A+/onTime/highProd",
+   "ci95": [
+    -35.23,
+    -21.64
+   ]
+  },
+  {
+   "key": "nehomar_ochoa_jr",
+   "slot": 4118,
+   "served": 20.0,
+   "implied": 48.82,
+   "gap": -28.82,
+   "gap_ipw": -32.47,
+   "consensus": 35.7,
+   "stratum": "A+/onTime/highProd",
+   "ci95": [
+    -35.23,
+    -21.64
+   ]
+  },
+  {
+   "key": "kevin_verde",
+   "slot": 3935,
+   "served": 20.0,
+   "implied": 48.54,
+   "gap": -28.54,
+   "gap_ipw": -29.1,
+   "consensus": 35.0,
+   "stratum": "AA/young/lowProd",
+   "ci95": [
+    -32.42,
+    -25.45
+   ]
+  },
+  {
+   "key": "noah_miller",
+   "slot": 4144,
+   "served": 20.0,
+   "implied": 48.04,
+   "gap": -28.04,
+   "gap_ipw": -28.2,
+   "consensus": 38.1,
+   "stratum": "AAA/onTime/lowProd",
+   "ci95": [
+    -32.02,
+    -25.21
+   ]
+  },
+  {
+   "key": "allan_castro",
+   "slot": 3040,
+   "served": 20.0,
+   "implied": 48.04,
+   "gap": -28.04,
+   "gap_ipw": -28.2,
+   "consensus": 35.6,
+   "stratum": "AAA/onTime/lowProd",
+   "ci95": [
+    -32.02,
+    -25.21
+   ]
+  },
+  {
+   "key": "aeverson_arteaga",
+   "slot": 2997,
+   "served": 20.0,
+   "implied": 48.04,
+   "gap": -28.04,
+   "gap_ipw": -28.2,
+   "consensus": 35.5,
+   "stratum": "AAA/onTime/lowProd",
+   "ci95": [
+    -32.02,
+    -25.21
+   ]
+  },
+  {
+   "key": "eduardo_garcia",
+   "slot": 3444,
+   "served": 20.0,
+   "implied": 48.04,
+   "gap": -28.04,
+   "gap_ipw": -28.2,
+   "consensus": 35.4,
+   "stratum": "AAA/onTime/lowProd",
+   "ci95": [
+    -32.02,
+    -25.21
+   ]
+  },
+  {
+   "key": "jeremy_rivas",
+   "slot": 3724,
+   "served": 20.0,
+   "implied": 48.04,
+   "gap": -28.04,
+   "gap_ipw": -28.2,
+   "consensus": 35.0,
+   "stratum": "AAA/onTime/lowProd",
+   "ci95": [
+    -32.02,
+    -25.21
+   ]
+  },
+  {
+   "key": "christian_cerda",
+   "slot": 3278,
+   "served": 20.0,
+   "implied": 48.04,
+   "gap": -28.04,
+   "gap_ipw": -28.2,
+   "consensus": 38.0,
+   "stratum": "AAA/onTime/lowProd",
+   "ci95": [
+    -32.02,
+    -25.21
+   ]
+  },
+  {
+   "key": "maxwell_romero_jr",
+   "slot": 4077,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "gavin_conticello",
+   "slot": 3563,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 38.1,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "kalai_rosario",
+   "slot": 3905,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 38.1,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "zach_kokoska",
+   "slot": 4474,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "matthew_wood",
+   "slot": 4071,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.4,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "peyton_graham",
+   "slot": 4173,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 38.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "lonnie_white_jr",
+   "slot": 3974,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.6,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "jake_fox",
+   "slot": 3672,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.5,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "jay_allen_ii",
+   "slot": 3704,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.6,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "david_mccabe",
+   "slot": 3370,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.5,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "charlie_pagliarini",
+   "slot": 3266,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "ricardo_olivar",
+   "slot": 4210,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.5,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "eddie_micheletti_jr",
+   "slot": 3435,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "cole_conn",
+   "slot": 3297,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "darrien_miller",
+   "slot": 3361,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "connor_charping",
+   "slot": 3313,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "nick_goodwin",
+   "slot": 4126,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "jack_pineda",
+   "slot": 3653,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "casey_yamauchi",
+   "slot": 3256,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "jorge_burgos",
+   "slot": 3801,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "trevor_austin",
+   "slot": 4361,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "kenny_piper",
+   "slot": 3924,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "junior_franco",
+   "slot": 3891,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "austin_murr",
+   "slot": 3115,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "jace_avina",
+   "slot": 3643,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 36.3,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "chris_meyers",
+   "slot": 3273,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "colton_becker",
+   "slot": 3308,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "jack_odowd",
+   "slot": 3651,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "garrett_martin",
+   "slot": 3560,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  },
+  {
+   "key": "andy_garriola",
+   "slot": 3058,
+   "served": 20.0,
+   "implied": 48.0,
+   "gap": -28.0,
+   "gap_ipw": -28.0,
+   "consensus": 35.0,
+   "stratum": "AA/old/highProd",
+   "ci95": [
+    -30.93,
+    -25.25
+   ]
+  }
+ ]
+}

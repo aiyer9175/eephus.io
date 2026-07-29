@@ -40,6 +40,21 @@ VERDICT 2026-06-29 (data/prospect_def_value_eval.json):
     first-6yr-WAR target: the binding constraint is the TARGET, not measurement quality.
   * The real lane for this signal is the defense-IS-WAR surfaces (MLB Projections / farm
     / display), NOT the eFV ranker.
+
+LADDER ADOPTION 2026-07-25 (data/positional_ladder_eval.json). POS_ADJ below is now the
+EMPIRICALLY RECOVERED Baseball-Reference ladder, not the folklore round numbers. The
+provenance and the gate live on the POS_ADJ block itself, which is the ONE definition of
+the ladder in this codebase. Scope of the swap, measured not assumed:
+  * def_value / prospect_def_value.json move (mean |delta| 1.443 runs, 86.9% of the 382
+    graduated comps change rank order) but the predictive gain is a NULL (+0.0028
+    Spearman, CI95 [-0.0096, +0.0154], permutation band 0.0166).
+  * data/def_home.json is BIT-IDENTICAL under the swap: 0 of 2,478 records differ. The
+    chip reads p_hold and def_home_entropy, which come from the migration matrix and
+    never touch POS_ADJ. No served number on any surface moves.
+  * proj_ml and eFV are NOT consumers. proj_ml's pos_adj_prior is bWAR runs_position
+    read straight off data/mlb_def_history.json (it is already the realized quantity
+    this ladder recovers), and neither efv_model feature list carries a defensive
+    feature at all.
 """
 from __future__ import annotations
 
@@ -50,9 +65,85 @@ from pathlib import Path
 
 DATA = Path(__file__).parent / "data"
 
-# Standard positional adjustments (runs / 162), the league convention.
-POS_ADJ = {"C": 12.5, "SS": 7.5, "CF": 2.5, "2B": 2.5, "3B": 2.5,
-           "RF": -7.5, "LF": -7.5, "1B": -12.5, "DH": -17.5, "P": 0.0}
+# ---------------------------------------------------------------------------
+# THE POSITIONAL LADDER -- THE ONE COPY. Do not redefine it anywhere else.
+# ---------------------------------------------------------------------------
+# Positional adjustment in runs per 650 PA (~ runs per 162 games). These are not a
+# convention or a rule of thumb: they are the constants Baseball-Reference actually
+# applies, RECOVERED by inverting bWAR's own construction --
+#
+#     runs_position x 650 / PA  ~  Sum_pos (innings share at pos) x ladder[pos]
+#
+# solved by SVD least squares with no intercept over data/mlb_def_history.json joined
+# to the StatsAPI per-position innings splits.
+#
+#   fit date   2026-07-25          n          9,101 player-seasons (1,872 players)
+#   window     2000-2026           filter     >= 200 PA in the season
+#   R2         0.9821              resid MAE  0.675 runs/650PA
+#   CI95       +/- 0.05 runs per slot (2,000-draw bootstrap; +/- 0.10 clustered by player)
+#
+# GATE (docs/EFV_GATE_STANDARD.md), see data/positional_ladder_eval.json:
+#   * Out-of-split accuracy at reproducing bWAR's positional adjustment beats the
+#     retired folklore table in 4 of 4 independent era splits: MAE 0.48 runs/650PA
+#     better, paired-bootstrap CI95 [0.458, 0.503] with train AND test resampled and
+#     the ladder refit on every draw, P(better) = 1.000.
+#   * Zero-information control (row-permuted share matrix, refit): -5.02 runs, i.e.
+#     catastrophically worse, so the protocol does discriminate.
+#   * Null band under H0 "the folklore SHAPE is correct" (parametric bootstrap,
+#     resampled residuals): p95 = 0.000 runs. All nine slots clear it, C and 1B by
+#     22-31x.
+#   * The LEVEL of any such table is a convention, not an estimable quantity (every
+#     row of innings shares sums to 1, so adding a constant to all nine slots is
+#     unidentified). Only the SHAPE above was gated. The folklore table also sat
+#     1.369 runs low in level; that is corrected here as a side effect.
+#
+# WHAT THE SWAP DID NOT BUY. Adopting this ladder does NOT measurably improve
+# def_value's accuracy at predicting realized MLB defensive value: +0.0028 Spearman
+# on n=382 graduated prospects, CI95 [-0.0096, +0.0154], below its own permutation
+# band of 0.0166. That is a NULL and is ledgered as one. The ladder is adopted on
+# CORRECTNESS, not on lift: a table fitted to n=9,101 with +/-0.05 CIs replaces
+# round numbers that were wrong by up to 3.05 runs in shape against the very bWAR
+# constants this site's WAR is denominated in.
+#
+# KNOWN LIMITS, do not overclaim:
+#   * SPECIFICATION uncertainty beats sampling uncertainty here by 7x. DH carries no
+#     fielding innings so its exposure must be imputed, and the choice renormalises
+#     every other rung. This fit uses DH games x 8.5 innings; imputing DH as the
+#     residual (PA x 1.9799 innings/PA minus fielded innings) instead yields C 10.56,
+#     SS 8.89, 2B 4.65, DH -13.76. Head to head on the same 9,101 rows the shipped
+#     spec wins out of sample by 0.037 runs/650PA, CI95 [0.027, 0.047], but it LOSES
+#     on the 2019-2026 universal-DH era (OOS MAE 1.043 vs 0.969). Refit on the
+#     residual spec if the DH rung ever becomes load bearing for a modern read.
+#   * Era drift is real and larger than the CIs. Per-era refits move C by 1.32 runs
+#     (10.40 in 2000-2006 vs 11.72 in 2019-2026) and 2B by 1.03; the pooled ladder is
+#     a 27-year average, not a 2026 read.
+#   * Sensitive to the PA filter: refitting at >= 400 PA moves C to 10.60 and LF to
+#     -6.06 (~0.4 runs). PA-weighting the >= 200 PA fit moves nothing (max 0.19).
+#
+# DO NOT ADD A SECOND LADDER. positional_fit.py (untracked, another lane) refits this
+# same ladder from the same two feeds on every run, under the residual-DH spec, and so
+# already disagrees with these constants by up to 0.35 runs. That needs one owner: see
+# duplicate_ladders_found in data/positional_ladder_eval.json.
+POS_ADJ = {"C": 10.91, "SS": 8.76, "2B": 4.51, "CF": 3.53, "3B": 3.36,
+           "LF": -6.47, "RF": -6.41, "1B": -8.53, "DH": -14.04, "P": 0.0}
+
+# Machine-readable provenance so an eval artifact never has to restate it.
+POS_ADJ_PROVENANCE = {
+    "source": "SVD least-squares inversion of Baseball-Reference runs_position",
+    "inputs": ["data/mlb_def_history.json", ".cache/statsapi_field/fld_*.json"],
+    "fit_date": "2026-07-25", "n_player_seasons": 9101, "n_players": 1872,
+    "seasons": [2000, 2026], "min_pa": 200, "r2": 0.9821,
+    "resid_mae_runs_per_650pa": 0.675, "coef_ci95_halfwidth_runs": 0.05,
+    "units": "runs per 650 PA", "eval": "data/positional_ladder_eval.json",
+}
+
+# RETIRED 2026-07-25. The unsourced round-number table this module used from its
+# first commit until the gate above. Kept ONLY so the ledger and the recon tools have
+# a name for it; it is not read by any code path. Wrong by up to 3.05 runs in shape
+# (C over-credited 3.05, 1B under-credited 2.51, DH under-credited 2.00, 2B
+# under-credited 0.55) plus a 1.369-run level offset.
+POS_ADJ_FOLKLORE_RETIRED = {"C": 12.5, "SS": 7.5, "CF": 2.5, "2B": 2.5, "3B": 2.5,
+                            "RF": -7.5, "LF": -7.5, "1B": -12.5, "DH": -17.5, "P": 0.0}
 POSITIONS = ("C", "SS", "2B", "3B", "CF", "LF", "RF", "1B", "DH")
 PREMIUM = ("C", "SS", "CF")            # the true up-the-middle premium
 UP_MIDDLE = ("C", "SS", "2B", "CF")    # broader up-the-middle (matches the model's up_mid_share)
@@ -250,7 +341,13 @@ def build(out_path: Path | None = None) -> dict:
 
 def _realized_pos_value() -> dict[int, float]:
     """mlbam -> realized MLB positional value = innings-weighted POS_ADJ of actual MLB
-    usage (data/mlb_fielding_positions.json). The ground truth def_value must predict."""
+    usage (data/mlb_fielding_positions.json). The ground truth def_value must predict.
+
+    Reads the canonical POS_ADJ, same as def_value(), so validate() compares like with
+    like. That also makes validate() CIRCULAR in the ladder: it cannot adjudicate one
+    ladder against another, because both sides move together. The non-circular test of
+    the ladder swap (realized bWAR runs_position per 650 PA as the target) is in
+    data/positional_ladder_eval.json and came back a null."""
     try:
         pl = json.loads((DATA / "mlb_fielding_positions.json").read_text(encoding="utf-8"))["players"]
     except (OSError, ValueError, KeyError):

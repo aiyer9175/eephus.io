@@ -960,35 +960,36 @@ function _wireCsShare(pitcher, pct) {
   const btn = app.querySelector("#cs-share");
   if (!btn) return;
   btn.addEventListener("click", () => {
-    if (!window.EEPHUS_GFX && !window.EEPHUS_HUB) return;
-    const rows = activePitcherMetrics()
-      .filter((m) => pitcher[m.key] != null)
-      .slice(0, 8)
-      .map((m) => [m.label, `${formatMetric(pitcher[m.key], m.fmt)}  (${pct && pct[m.key] != null ? pct[m.key] : "-"})`]);
-    const cardOpts = {
+    if (!window.EEPHUS_HUB) return;   // openCard lives on the hub
+    // Declarative since GFX slice 4: the "leaderboard-subject" template owns
+    // the layout (stat-tile rail + one percentile section); this site only
+    // supplies the data, formatted with this module's own formatMetric.
+    // Shared wrapper (DE-DUP 2026-07-23): prefers the Generate GFX modal,
+    // falls back to the legacy direct shareCard download.
+    window.EEPHUS_HUB.openCard({
+      template: "leaderboard-subject",
+      data: {
+        stats: [
+          pitcher.stuff_plus != null ? { label: "Stuff+", value: formatMetric(pitcher.stuff_plus, "number") } : null,
+          pitcher.avg_fastball_velo != null ? { label: "FB velo", value: formatMetric(pitcher.avg_fastball_velo, "mph") } : null,
+          pitcher.xwoba_against != null ? { label: "xwOBA agn", value: formatMetric(pitcher.xwoba_against, "decimal") } : null,
+        ].filter(Boolean),
+        poolSize: state.pitchers.length,
+        poolNoun: "pitchers",
+        percentiles: activePitcherMetrics()
+          .filter((m) => pitcher[m.key] != null)
+          .map((m) => ({ label: m.label, value: formatMetric(pitcher[m.key], m.fmt),
+            pct: pct && pct[m.key] != null ? pct[m.key] : "-" })),
+      },
       module: "CollegeSavant",
       accentToken: "--accent-red",
       name: displayName(pitcher.pitcher_name),
       meta: `${formatTeamName(pitcher.team)} · ${pitcher.year} · college pitcher`,
       headshotURL: TEAM_LOGOS.has(pitcher.team) ? `logos/${pitcher.team}.png` : null,
-      tiles: [
-        pitcher.stuff_plus != null ? { label: "Stuff+", value: formatMetric(pitcher.stuff_plus, "number") } : null,
-        pitcher.avg_fastball_velo != null ? { label: "FB velo", value: formatMetric(pitcher.avg_fastball_velo, "mph") } : null,
-        pitcher.xwoba_against != null ? { label: "xwOBA agn", value: formatMetric(pitcher.xwoba_against, "decimal") } : null,
-      ].filter(Boolean),
-      sections: [{ title: `Percentiles · vs ${state.pitchers.length} qualified pitchers`, rows }],
       url: `eephus.io/collegesavant/pitcher_index.html#/player/${pitcher.year}/${pitcher.slug}`,
       filename: `eephus-collegesavant-${pitcher.slug}.png`,
       caption: "college percentiles vs the qualified pool · CollegeSavant by Joseph Gillis",
-    };
-    // Open the shared Generate GFX modal (format / theme / accent controls);
-    // fall back to the legacy direct download if the GFX module didn't load.
-    if (window.EEPHUS_GFX) {
-      window.EEPHUS_GFX.open({ kind: "card", module: cardOpts.module, accentToken: cardOpts.accentToken,
-        title: cardOpts.name, filenameBase: cardOpts.filename.replace(/\.png$/, ""), card: cardOpts });
-    } else if (window.EEPHUS_HUB) {
-      window.EEPHUS_HUB.shareCard(cardOpts);
-    }
+    });
   });
 }
 

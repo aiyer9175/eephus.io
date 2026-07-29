@@ -1,0 +1,68 @@
+{
+  "counts": {
+    "ts": 4477,
+    "deb": 2673,
+    "ina": 2409,
+    "ts_keys": 4477,
+    "deb_keys": 2673,
+    "ina_keys": 2409
+  },
+  "overlaps": {
+    "ts&deb": 0,
+    "ts&ina": 0,
+    "deb&ina": 0,
+    "union": 9559
+  },
+  "debut_flags": {
+    "ts": {
+      "n": 4477,
+      "with_debut_date": 0,
+      "with_career_war": 0
+    },
+    "deb": {
+      "n": 2673,
+      "with_debut_date": 2673,
+      "with_career_war": 2533
+    },
+    "ina": {
+      "n": 2409,
+      "with_debut_date": 0,
+      "with_career_war": 0
+    }
+  },
+  "efv_matrix_provenance": {
+    "hit": {
+      "n_rows": 1927,
+      "kinds": {
+        "debuted": 845,
+        "bust": 1082
+      },
+      "bust_in_inactive": 1082,
+      "bust_in_ts": 0,
+      "bust_in_debuts": 0,
+      "bust_orphan": 0,
+      "debuted_in_debuts": 845,
+      "debuted_in_ina": 0,
+      "debuted_in_ts": 0,
+      "bust_censored_nonzero": 0,
+      "bust_recent": 45
+    },
+    "pit": {
+      "n_rows": 2065,
+      "kinds": {
+        "debuted": 981,
+        "bust": 1084
+      },
+      "bust_in_inactive": 1084,
+      "bust_in_ts": 0,
+      "bust_in_debuts": 0,
+      "bust_orphan": 0,
+      "debuted_in_debuts": 981,
+      "debuted_in_ina": 0,
+      "debuted_in_ts": 0,
+      "bust_censored_nonzero": 0,
+      "bust_recent": 76
+    },
+    "combined_bust_keys": 2166
+  }
+}

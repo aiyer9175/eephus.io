@@ -1,0 +1,127 @@
+{
+ "generated_at": "2026-07-24",
+ "lane": "L4 PART A - bug hunt round 2 (adversarial invariant sweep)",
+ "registration": "docs/efv-2026-07-24/GATES-ROUND2.md L4 (bughunt-2 + disagreements; descriptive, no gate)",
+ "scope": "fresh eyes on the 2026-07-24 wave changes: A1 lambda 0.85, A3 reliability K=50/40 rebuild, A4 uncapped overlay default-ON, B1 linearmap-v5 surplus, C1/C2 cap removals, Wave-H KRP decouple/winsorize, W-FSIDE default-ON",
+ "verdict": "NO CONFIRMED SERVED-NUMBER DEFECT. All 6 reproduced-number invariants hold. Two P2 observations (measurement + cold-build asymmetry), neither a served defect.",
+ "checks": [
+  {
+   "check": "calibration_enabled_monotone_linear",
+   "pass": true,
+   "severity_if_fail": "P0",
+   "detail": {
+    "version": "linearmap-v5-todaypriced-2026-07-24",
+    "method": "isotonic",
+    "enabled": true,
+    "x_mm": [
+     0.0,
+     1.677,
+     20.0,
+     60.0,
+     400.0
+    ],
+    "y_mm": [
+     0.0,
+     0.0,
+     25.33,
+     80.63,
+     550.68
+    ],
+    "above_floor_slope_range": [
+     1.3824,
+     1.3825
+    ],
+    "note": "v5 knots collinear above floor knee -> a single linear map floored at 0; monotone -> percentiles commute"
+   }
+  },
+  {
+   "check": "surplus_no_double_calibration",
+   "pass": true,
+   "severity_if_fail": "P0",
+   "detail": {
+    "active_rows_checked": 4458,
+    "mismatches": 0,
+    "examples": [],
+    "note": "served surplus_mm equals vf.surplus_value_mm(display_grade) exactly -> the efv_score _cal_mm seam applies calibration ONCE (no double-application)"
+   }
+  },
+  {
+   "check": "consensus_surplus_on_v5_basis",
+   "pass": true,
+   "severity_if_fail": "P1",
+   "detail": {
+    "rows_checked": 4458,
+    "mismatches": 0,
+    "examples": [],
+    "note": "eFV surplus_mm and consensus_surplus_mm share the v5-calibrated basis -> the xfv_share_of_consensus ratio is like-for-like"
+   }
+  },
+  {
+   "check": "overlay_bounded_and_noop_off_path",
+   "pass": true,
+   "severity_if_fail": "P1",
+   "detail": {
+    "delta_cap_fv": 12.0,
+    "max_lean_hit": 2.16,
+    "max_lean_pit": 2.35,
+    "covered_hit": 412,
+    "covered_pit": 234,
+    "note": "A4 uncapped overlay: max real lean far below the numerical-safety bound; uncovered rows return None (byte-identical off-path). run_live only -> the forward-chained eval never sees the overlay (no leak)."
+   }
+  },
+  {
+   "check": "served_ranges_sane",
+   "pass": true,
+   "severity_if_fail": "P1",
+   "detail": {
+    "grade_quantile_min_max": [
+     35.0,
+     65.0
+    ],
+    "grade_realized_min_max": [
+     20.0,
+     75.6
+    ],
+    "krp_min_max": [
+     27.6,
+     150.5
+    ],
+    "negative_surplus_rows": 0,
+    "band_p10_gt_p90_rows": 0,
+    "note": "C1 provisional de-cap + C2/Wave-H KRP de-clamp/winsorize keep every served grade in [20,80], surplus >= 0, band monotone"
+   }
+  },
+  {
+   "check": "lambda_shipped_values",
+   "pass": true,
+   "severity_if_fail": "P1",
+   "detail": {
+    "hit": 0.85,
+    "pit": 0.54,
+    "note": "A1 hit override 0.85 (bypasses WAG/rank_calibration); pit stays dynamic in band"
+   }
+  }
+ ],
+ "n_checks": 6,
+ "n_fail": 0,
+ "observations": [
+  {
+   "id": "OBS-1",
+   "severity": "P2",
+   "area": "measurement (scoreboard/source_backtest)",
+   "summary": "_archetype_accuracy scores pooled_common (source_backtest.py:527, flattened player-YEARS) with NO per-player dedup, while _xfv_vs_consensus_detail (line 359) DOES dedup 'to ONE row per player: the LATEST pre-debut read'. The archetype AUC therefore counts a stable player once per base year (intl_bat ~2.4x inflated), so a close head-to-head cell can flip sign vs the leakage-clean per-player read. This is the 'intl_bat AUC weak cell' that seeds the experiment queue (weak_cells).",
+   "impact": "descriptive only (no gate, no served number); can misdirect the queue",
+   "repro": "PART B archetype_auc_pooled_vs_dedup: intl_bat eFV vs cons AUC flips 0.7109/0.7074 (pooled, eFV wins) -> 0.7252/0.7398 (dedup n=92, eFV loses)",
+   "proposed_fix": "dedup pooled_common to latest pre-debut per player before _archetype_accuracy (mirror _xfv_vs_consensus_detail); or disclose n_unique"
+  },
+  {
+   "id": "OBS-2",
+   "severity": "P2",
+   "area": "efv_score._apply_side_fairness_fix (live)",
+   "summary": "the live joint top-band fairness fix reads the SIBLING side's LIVE scored artifact (scored_live_path(other)); regen order is hit-before-pit, so the hit run consumes the PRIOR cycle's pit live board (1-cycle stale) while the pit run consumes the fresh hit board. On a COLD build (no prior sibling artifact) the hit side no-ops entirely while pit applies the fix (verified: forcing the sibling file absent logs 'inputs unavailable -- per-side map kept').",
+   "impact": "bounded by SFF_MOVE_CAP_FV=3.0 and self-correcting across regens; documented in the docstring. Not a served defect, but an asymmetry worth a cold-build guard.",
+   "repro": "run_live('hit') with scored_live_path('pit') absent -> _apply_side_fairness_fix returns 0 (no-op); run_live('pit') then applies the joint fix reading fresh hit",
+   "proposed_fix": "optional: on a missing sibling LIVE artifact, fall back to the sibling RESOLVED pool for the joint band so a cold build is symmetric"
+  }
+ ]
+}

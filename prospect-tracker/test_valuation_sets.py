@@ -123,7 +123,11 @@ def test_clemens_default_applies_and_context_restores():
     with vf.valuation_set("prospx_current"):
         assert vf.active_valuation_set() == "prospx_current"
         assert int(vf._config()["service_time"]["control_years"]) == 6
-        assert vf.surplus_value_mm(50.0, False) == pytest.approx(17.7, abs=0.1)
+        # Re-stamped 2026-07-24b: LANE B1 linearmap-v5 surplus recalibration (accuracy
+        # re-fit superseding the same-day v4) set the base-identity FV50 priced value to
+        # 28.2 (v3 17.7 -> v4 31.6 -> v5 28.2). The prospx_current tier grid was re-captured
+        # in the same change. Deliberate engine-moved tripwire firing on an intended move.
+        assert vf.surplus_value_mm(50.0, False) == pytest.approx(28.2, abs=0.1)
     assert vf.active_valuation_set() == "clemens_2026"
     assert vf.surplus_value_mm(50.0, False) == pytest.approx(base_50, abs=0.01)
     assert vf._config()["_valuation_set"] == "clemens_2026"

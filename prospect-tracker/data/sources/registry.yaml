@@ -1,0 +1,298 @@
+# eFV data-source registry - verified 2026-07-24
+# Every endpoint below was hit LIVE this session (curl / urllib), with a recorded
+# HTTP status + content-type + byte size and a saved sample payload under
+# data/sources/samples/. No endpoint is reconstructed from memory. Scores per the
+# runbook rubric (scripts/score_sources.py); ranking metric = weighted_score / eng_days.
+# Sample payloads are LOCAL EVIDENCE ONLY (not in the publish allowlist).
+
+meta:
+  generated_at: 2026-07-24
+  spine: mlbam_id
+  already_ingested: [statsapi, milb_history, baseball_savant, fangraphs_csv_manual,
+                     tjstats, mlb_pipeline_boards, spotrac, ncaa_college_stats]
+  samples_dir: data/sources/samples/
+
+verified:
+
+  - id: tj_surgery_list
+    name: Tommy John Surgery List (community DB, @MLBPlayerAnalys)
+    url: https://docs.google.com/spreadsheets/d/1gQujXQQGOVNaiuwSN680Hq-FDVsCwvN-3AazykOBON0
+    tier: I
+    access: public
+    method: bulk_download   # google-sheets CSV export
+    endpoints:
+      - {url: ".../export?format=csv", http_status: 200, content_type: "text/csv", byte_size: 390947, sample_path: data/sources/samples/tj_list_export_01.csv}
+    grain: surgery_event      # player x surgery-date
+    coverage: {levels: "MLB 694 / College 477 / AA 267 / AAA 262 / A 258 / Rk 238 / A+ 226 / HS 218", seasons: "1974-2026", n_players_est: 2511}
+    join_key: "mlbamid (NATIVE) -> spine; 2696/2711 = 99% fill"
+    match_rate_est: 0.99
+    robots_txt: "docs.google.com Crawl-delay:1; Allow /spreadsheet export path"
+    tos_url: "Google ToS; sheet publicly shared by author (donation-supported, intends reuse)"
+    legal_risk: low
+    eng_days_est: 1.0
+    scores: {ortho: 5, efv: 3, history: 5, coverage: 3, stability: 3, grain: 2, vintage: 4, freshness: 3}
+    weighted_score: 3.76
+    score_per_eng_day: 3.76
+    notes: >
+      The only deep-history injury source with a native mlbam join. Un-starves the
+      2026-07-24 eFV injury-history ledger (which found StatsAPI IL history begins only
+      2026-06 -> resolved-cohort coverage ~0). Measured this session: 92 resolved pitcher
+      rows gain a pre-decision TJ signal (vs 0 from IL). Conditional signal is REAL
+      (z~+2.59 on FV-residual WAR) but survivorship-POSITIVE (post-TJ debutants overperform
+      their grade) -> needs a censored full-pool eval before it becomes a risk feature.
+
+  - id: mlb_pipeline_graphql
+    name: MLB Pipeline vintage boards (open GraphQL)
+    url: https://data-graph.mlb.com/graphql
+    tier: C
+    access: public          # open, unauthenticated GraphQL (introspection disabled)
+    method: json_xhr
+    endpoints:
+      - {url: "https://data-graph.mlb.com/graphql  (getPlayerRankingsFromSelection slug:sel-pr-2021-top100)", http_status: 200, content_type: application/json, byte_size: 24264, sample_path: data/sources/samples/mlbpipeline_07_vintage2021.json}
+      - {url: "https://www.mlb.com/milb/prospects (Apollo SSR Top100)", http_status: 200, content_type: text/html, byte_size: 1620205, sample_path: data/sources/samples/mlbpipeline_03_milbprospects.html}
+    grain: player_list_season   # rank + eta + pos + mlbam (tool-grade subfields still lazy/hidden)
+    coverage: {lists: "Top100 (live) + team Top30 + draft + intl", seasons: "2011-2026 (appConfig.yearsSupported)", n_players_est: 3000+}
+    join_key: "Person.id (MLBAM) -> spine"
+    match_rate_est: 0.99
+    vintage_available: native   # slug sel-pr-YYYY-top100; 2021 + 2026 verified live
+    training_eligible: true
+    robots_txt: "mlb.com robots does NOT disallow /prospects or /milb; statsapi robots 404"
+    tos_url: "https://www.mlb.com/official-information/terms-of-use"
+    legal_risk: ambiguous       # open endpoint but MLBAM ToS + undocumented (could lock)
+    eng_days_est: 1.5
+    scores: {ortho: 2, efv: 4, history: 5, coverage: 4, stability: 3, grain: 2, vintage: 5, freshness: 4}
+    weighted_score: 3.60
+    score_per_eng_day: 1.82
+    notes: >
+      Same GRADES we already ingest, but the new capability is NATIVE POINT-IN-TIME
+      VINTAGES 2011-2026 keyed on mlbam. That is what makes historical Pipeline grades
+      training-eligible without leakage, and it enables the section-3b grader-calibration
+      (fit each outlet's bias/precision vs realized WAR). Methodology = in-person pro
+      scouting -> error-independent from FanGraphs' data-blend. Gap: tool-grade subfield
+      names (PlayerEntityGrades) hidden by disabled introspection, ~0.5d XHR capture.
+
+  - id: draft_statsapi
+    name: MLB StatsAPI Draft (official slot + signing bonus)
+    url: https://statsapi.mlb.com/api/v1/draft/{year}
+    tier: D+H
+    access: public
+    method: json_xhr
+    endpoints:
+      - {url: "/api/v1/draft/2024", http_status: 200, content_type: application/json, byte_size: 1270002, sample_path: data/sources/samples/draft_2024_01.json}
+      - {url: "/api/v1/draft/prospects/2024", http_status: 200, content_type: application/json, byte_size: 4514429, sample_path: data/sources/samples/draft_prospects_2024_02.json}
+    grain: draft_pick          # round, overall, team, pickValue(slot), signingBonus, person
+    coverage: {seasons: "picks 1965+; signingBonus+pickValue 2017+ (2016=0/1216, 2017=1214/1215)", n_est: "615-1240 picks/yr"}
+    join_key: "person.id (MLBAM) -> spine"
+    match_rate_est: 1.0
+    robots_txt: "none (statsapi robots 404)"
+    tos_url: "http://gdx.mlb.com/components/copyright.txt (MLBAM; non-commercial/non-bulk)"
+    legal_risk: low   # same accepted risk as the StatsAPI we already run on
+    eng_days_est: 1.0
+    scores: {ortho: 2, efv: 3, history: 5, coverage: 5, stability: 5, grain: 2, vintage: 3, freshness: 3}
+    weighted_score: 3.54
+    score_per_eng_day: 3.54
+    notes: >
+      Official slot (pickValue) + actual signingBonus fills the matrix's thin draft cover
+      (bonus_usd 28%, pick_overall 40%). Absorbs the separate slot-value candidate. eFV
+      benefit is gated by the SAME id-resolution wall on the 2011-2016 rows, and pick/bonus
+      were flagged noisy in the lean feature sweep -> modest expected lift.
+
+  - id: statsapi_sport22_college
+    name: StatsAPI sportId 22 - College + Cape Cod + Appalachian (MLBAM-native amateur)
+    url: https://statsapi.mlb.com/api/v1/stats?stats=season&group=hitting&sportId=22&season=2025
+    tier: E
+    access: public
+    method: json_xhr
+    endpoints:
+      - {url: "/api/v1/teams?sportId=22&season=2025", http_status: 200, content_type: application/json, byte_size: 212730, sample_path: data/sources/samples/e3_statsapi_ccbl_teams2025.json}
+      - {url: "/api/v1/stats?...sportId=22&season=2025", http_status: 200, content_type: application/json, byte_size: 19894, sample_path: data/sources/samples/e3_statsapi_sport22_hitting2025.json}
+    grain: player_season       # PBP via game feeds
+    coverage: {leagues: "NCAA D1(107,322tm)+Cape Cod(565)+Appalachian(120)+Draft League(5536)", seasons: "2018-2026 (2013 empty)", n_est: "1.4-4.5k hitters/season"}
+    join_key: "playerId (MLBAM native) for MLB-tracked players"
+    match_rate_est: 1.0        # for tracked players; deep non-prospect roster players uncovered (COVERAGE ceiling, not join)
+    robots_txt: "none (statsapi)"
+    tos_url: "gdx copyright"
+    legal_risk: low
+    eng_days_est: 2.5
+    scores: {ortho: 3, efv: 3, history: 4, coverage: 4, stability: 5, grain: 2, vintage: 3, freshness: 4}
+    weighted_score: 3.48
+    score_per_eng_day: 1.24
+    notes: >
+      The only source that hands amateur players a free MLBAM id. Supersedes henrygd/
+      ncaa.com/college_stats for JOIN quality (those are name-only, ~60-80%). Feeds
+      CollegeSavant + a real prior for recent draftees (otherwise ~50 pro PA).
+
+  - id: statsapi_venues_meta
+    name: StatsAPI /venues (elevation, lat-lon, azimuth, dimensions)
+    url: https://statsapi.mlb.com/api/v1/venues?hydrate=location,fieldInfo,timezone&sportId=11
+    tier: F
+    access: public
+    method: json_xhr
+    endpoints:
+      - {url: "/api/v1/venues?hydrate=location,fieldInfo,timezone&sportId=11", http_status: 200, content_type: application/json, byte_size: 17283, sample_path: data/sources/samples/f7_statsapi_venues_loc.json}
+    grain: venue_static
+    coverage: {levels: "MLB + all MiLB (per sportId)", seasons: "current config", n_est: "200+ parks"}
+    join_key: "venueId -> teams/games (already linked)"
+    match_rate_est: 1.0
+    robots_txt: none
+    tos_url: "gdx copyright"
+    legal_risk: low
+    eng_days_est: 1.0
+    scores: {ortho: 4, efv: 2, history: 3, coverage: 5, stability: 5, grain: 1, vintage: 2, freshness: 2}
+    weighted_score: 3.19
+    score_per_eng_day: 3.19
+    notes: >
+      Physical drivers (elevation 460ft, dimensions, roof, azimuth) behind our self-built
+      milb_park_factors.json. Does NOT provide weather (needs a lat/lon-keyed weather API).
+
+  - id: pitchiq_prospecttilt
+    name: ProspectTilt PitchIQ (Filth+/Stuff+ MiLB pitch-quality model)
+    url: https://pitchiq.prospecttilt.com  (api.prospecttilt.com)
+    tier: B
+    access: public
+    method: bulk_download
+    endpoints:
+      - {url: "https://api.prospecttilt.com/pitcher_leaderboard.json", http_status: 200, content_type: application/json, byte_size: 8337982, sample_path: data/sources/samples/pitchiq_pitcher_leaderboard.json}
+      - {url: "https://api.prospecttilt.com/complex_leaderboard.json", http_status: 200, content_type: application/json, byte_size: 392348, sample_path: data/sources/samples/pitchiq_complex_leaderboard.json}
+      - {url: "https://api.prospecttilt.com/graduates.json", http_status: 200, content_type: application/json, byte_size: 137431, sample_path: data/sources/samples/pitchiq_graduates.json}
+    grain: player_season       # + pitch detail endpoints
+    coverage: {levels: "AAA/AA/A+/A/Complex/DSL", seasons: "current-season snapshot (2026); history NOT probed", n_est: "~4105 pit + ~3300 hit"}
+    join_key: "pitcher_id/batter_id -> MLBAM"
+    match_rate_est: 0.92
+    robots_txt: "User-agent:* Allow:/"
+    tos_url: none located
+    legal_risk: ambiguous      # free+robots-clean but MLB-derived minors Statcast + growing brand
+    eng_days_est: 1.5
+    scores: {ortho: 4, efv: 3, history: 2, coverage: 4, stability: 2, grain: 3, vintage: 2, freshness: 5}
+    weighted_score: 3.07
+    score_per_eng_day: 1.13
+    notes: >
+      Model OUTPUTS (Filth+/Stuff+/xwOBA) are the orthogonal add; raw EV/IVB overlap Savant
+      minors. graduates.json = retrospective milb_filth for 281 graduated arms (a ready
+      MiLB-model -> MLB-outcome link). Current-season-only snapshot limits TRAINING use;
+      matches the prior PAL-xRV coverage-starved finding (revival ~2028). Courtesy-contact
+      + attribution advised.
+
+  - id: prospect_savant
+    name: Prospect Savant (MiLB Statcast percentiles + bat-tracking)
+    url: https://prospectsavant.com  (oriolebird.pythonanywhere.com)
+    tier: A
+    access: public
+    method: json_xhr
+    endpoints:
+      - {url: ".../leaders/hitters/AAA/2026/10/0/1000", http_status: 200, content_type: application/json, byte_size: 3645217, sample_path: data/sources/samples/ps_leaders_leaders_hitters_AAA_2026_10_0_1000.json}
+      - {url: ".../leaders/hitters/AAA/2023/10/0/1000", http_status: 200, content_type: application/json, byte_size: 4087727, sample_path: data/sources/samples/ps_leaders_AAA_2023.json}
+    grain: player_season       # 165 fields incl percentiles + bat-tracking
+    coverage: {levels: "AAA batted-ball (AA/A+ no batted-ball); + AFL + Spring-Training", seasons: "2023-2026 (AAA Hawk-Eye starts 2023)", n_est: "~756 AAA hitters/season"}
+    join_key: "MLBAMId (explicit) + MinorMasterId(FG)"
+    match_rate_est: 1.0
+    robots_txt: "User-agent:* Disallow: (empty = allow all)"
+    tos_url: none located
+    legal_risk: ambiguous      # MLB-owned Hawk-Eye source; fragile single PythonAnywhere host
+    eng_days_est: 2.5
+    scores: {ortho: 3, efv: 3, history: 2, coverage: 3, stability: 2, grain: 4, vintage: 2, freshness: 5}
+    weighted_score: 2.82
+    score_per_eng_day: 0.68
+    notes: >
+      Heaviest overlap with already-ingested Savant minors (same Hawk-Eye, AAA-only batted
+      ball). Incremental value = pre-baked percentiles + bat-tracking + unique AFL/Spring
+      splits. 2023+ only -> label-horizon-trapped for training; an inference-side add.
+
+  - id: statsapi_sport17_23_leagues
+    name: StatsAPI winter (17) + independent/LMB (23) leagues
+    url: https://statsapi.mlb.com/api/v1/stats?stats=season&group=hitting&sportId=17&season=2025&playerPool=all
+    tier: D+G
+    access: public
+    method: json_xhr
+    endpoints:
+      - {url: "/api/v1/stats?...sportId=17&season=2025", http_status: 200, content_type: application/json, byte_size: 6525, sample_path: data/sources/samples/g_statsapi_winter_hitting2025.json}
+      - {url: "/api/v1/stats?...leagueId=125&season=2025 (LMB)", http_status: 200, content_type: application/json, byte_size: 3441, sample_path: data/sources/samples/g_statsapi_lmb_hitting2025.json}
+    grain: player_season
+    coverage: {leagues: "AFL(119)+LVBP+LIDOM+Mex Pacific+Caribbean Series (17); LMB(125)+Frontier+partner (23)", seasons: "2024-2025 verified", n_est: "~950 winter / ~450 LMB hitters (all pool)"}
+    join_key: "playerId (MLBAM native for affiliated players)"
+    match_rate_est: 0.95
+    robots_txt: none
+    tos_url: "gdx copyright"
+    legal_risk: low
+    eng_days_est: 2.0
+    scores: {ortho: 3, efv: 2, history: 3, coverage: 3, stability: 5, grain: 2, vintage: 3, freshness: 3}
+    weighted_score: 2.94
+    score_per_eng_day: 1.34
+    notes: >
+      AFL is MLB's flagship prospect showcase; Caribbean winter = extra reps for prospects.
+      The honest answer to "foreign winter ball" - an un-pulled sportId, no scrape needed.
+
+  - id: statsapi_abs_challenge
+    name: StatsAPI ABS challenge events (2026 game feed reviewDetails)
+    url: https://statsapi.mlb.com/api/v1/game/{gamePk}/playByPlay
+    tier: F
+    access: public
+    method: json_xhr
+    endpoints:
+      - {url: "/api/v1/game/824855/playByPlay", http_status: 200, content_type: application/json, byte_size: 611643, sample_path: data/sources/samples/f6_statsapi_pbp_2026.json}
+    grain: pitch_event         # reviewDetails on challenged called pitches
+    coverage: {levels: "MLB 2026; MiLB(AAA) ran ABS 2023-2025", seasons: "2026 verified", n_est: n/a}
+    join_key: "reviewDetails.player.id (MLBAM) + gamePk"
+    match_rate_est: 1.0
+    robots_txt: none
+    tos_url: "gdx copyright"
+    legal_risk: low
+    eng_days_est: 3.5
+    scores: {ortho: 5, efv: 2, history: 2, coverage: 2, stability: 4, grain: 5, vintage: 3, freshness: 5}
+    weighted_score: 3.27
+    score_per_eng_day: 0.76
+    notes: >
+      Genuinely new per-pitch signal (challenge/overturn rate = framing / zone discipline).
+      reviewType code "MJ" observed on 3 sampled events - VALIDATE semantics across more
+      games before trusting as the sole ABS filter. Savant has no ABS leaderboard yet.
+
+  - id: awards_statsapi
+    name: StatsAPI Awards + recipients
+    url: https://statsapi.mlb.com/api/v1/awards
+    tier: D
+    access: public
+    method: json_xhr
+    endpoints:
+      - {url: "/api/v1/awards", http_status: 200, content_type: application/json, byte_size: 94646, sample_path: data/sources/samples/awards_list_04.json}
+      - {url: "/api/v1/awards/MLBROY/recipients", http_status: 200, content_type: application/json, byte_size: 822, sample_path: data/sources/samples/awards_roy_recipients_05.json}
+    grain: award_recipient
+    coverage: {seasons: "to 1911-era", n_est: "682 award types"}
+    join_key: "player.id (MLBAM)"
+    match_rate_est: 0.95
+    robots_txt: none
+    tos_url: "gdx copyright"
+    legal_risk: low
+    eng_days_est: 1.0
+    scores: {ortho: 2, efv: 1, history: 5, coverage: 3, stability: 5, grain: 2, vintage: 3, freshness: 3}
+    weighted_score: 2.92
+    score_per_eng_day: 2.92
+    notes: >
+      High ratio but WEAK for eFV - accolades are downstream of WAR (the eFV label itself).
+      MiLB awards could be a thin pedigree feature. Not shortlisted.
+
+# Re-confirmed already-ingested (live checks passed):
+already_ingested_confirmed:
+  - {id: baseball_savant_minors, http_status: 200, note: "CSV /statcast-search-minors/csv works as repo already calls it; AAA 2023+"}
+  - {id: statsapi_core, note: "sportId map (2946B), draft, transactions, IL, rosters all live 200"}
+  - {id: henrygd_ncaa_api, http_status: 200, note: "works but name-only join (~60-80%) -> inferior to sportId 22"}
+  - {id: wayback_machine, http_status: 200, note: "vintage mechanism proven; recovers DATA only for SSR pages (FG snapshot = empty shell)"}
+
+rejected:
+  - {id: pitchprofiler, tier: B, reason: "PAID Patreon + /api/scouting 401 + robots ai-train=no + Disallow ClaudeBot", legal_risk: high, sample: pp_scouting_levels_01.json}
+  - {id: fangraphs_board, tier: C, reason: "Cloudflare 403 on board HTML AND JSON api (curl+WebFetch both); manual CSV drops only", legal_risk: medium, sample: fangraphs_01_theboard.html}
+  - {id: prospects_live, tier: C, reason: "Ghost API works + dated tool grades, BUT robots ai-train=no + Disallow GPTBot/Google-Extended/meta = express reservation of rights -> LICENSE only", legal_risk: high, sample: prospectslive_04_posthtml.json}
+  - {id: baseball_america, tier: C, reason: "PAID + Cloudflare 403; deepest vintage grade archive -> best LICENSING target, do not scrape", legal_risk: high, sample: baseballamerica_01_top100.html}
+  - {id: the_athletic_klaw, tier: C, reason: "PAID metered (nytimes.com/athletic); Keith Law = independent voice -> licensing only", legal_risk: high, sample: theathletic_01_page.html}
+  - {id: fangraphs_stuffplus, tier: B, reason: "Cloudflare 403 + Stuff+/PitchingBot are MLB-only (no MiLB signal)", legal_risk: medium, sample: fg_stuff_01.json}
+  - {id: statsapi_npb_kbo, tier: G, reason: "sportId 31/32 EXIST but /stats returns totalSplits 0 (listed-but-unserved)"}
+  - {id: openbiomechanics, tier: I, reason: "repo live+downloadable but subjects ANONYMIZED (no mlbam/name) = unjoinable; reference only", sample: obm_metadata_11.csv}
+  - {id: bbref_register, tier: E+G, reason: "broadest foreign/amateur coverage BUT Sports-Reference ToS bars scraping/bulk + no mlbam id", legal_risk: high, sample: e_bbref_ccbl2025.html}
+  - {id: perfect_game, tier: E, reason: "showcase TrackMan gated (PAID); no mlbam id for HS", legal_risk: medium, sample: e4_perfectgame_rankings.html}
+  - {id: prep_baseball_report, tier: E, reason: "PBR Plus paid; public surface = articles only; no mlbam id", legal_risk: medium, sample: e4_pbr_home.html}
+  - {id: ncaa_com_stats, tier: E, reason: "robots Disallows ClaudeBot/anthropic-ai/Scrapy(/); henrygd returns same as JSON; sportId 22 superior", legal_risk: medium, sample: e2_ncaacom_robots.txt}
+  - {id: pointstreak_ccbl, tier: E, reason: "DEAD - 301 redirects to stacksports marketing homepage; Cape Cod covered by sportId 22"}
+  - {id: bdfed_stitch, tier: D, reason: "live 200 but SAME data as statsapi /stats (throughput-only, zero new info)", sample: stitch_player_hitting_01.json}
+  - {id: people_roster_mechanics, tier: D, reason: "only 40-man boolean is new; options-remaining + Rule-5 clock NOT exposed by StatsAPI at all", sample: people_hydrate_677594_03.json}
+  - {id: draft_pick_trades, tier: H, reason: "no structured feed; picks appear only as free text in /transactions description (already ingested)"}
+  - {id: savant_park_factors_milb, tier: F, reason: "MLB-only, no MiLB toggle; overlaps existing MLB park handling", sample: f5_savant_park_factors.html}
+  - {id: cpbl_taiwan, tier: G, reason: "no StatsAPI sportId; official site not verified live this session -> recorded as a GAP, not an endpoint"}

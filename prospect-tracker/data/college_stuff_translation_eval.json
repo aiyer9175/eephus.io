@@ -1,0 +1,65 @@
+{
+ "generated_at": "2026-07-23",
+ "artifact": "college_stuff_translation",
+ "experiment": {
+  "registration": "docs/wills-2026-07-23/GATES.md section W4 COL-XRV",
+  "mechanism": "usage-weighted college stuff+ (pitch_count weights, same-season (pitcher_id, year) join, non-null rows only) as an additional covariate in the pitcher college -> Single-A K% translation; matched-pairs LOO, incumbent shrinkage convention (slope * n/(n+SLOPE_SHRINK_K), K=20)",
+  "flag": "EEPHUS_COL_XRV (default OFF; OFF path byte-identical, verified)",
+  "seed": 20260723,
+  "bootstrap_reps": 2000,
+  "one_attempt": true
+ },
+ "coverage": {
+  "matched_pairs_total": 257,
+  "matched_pairs_with_stuff_coverage": 257,
+  "stop_d_bar": 40
+ },
+ "clauses": {
+  "STOP-D": {
+   "bar": "covered pairs >= 40",
+   "measured": 257,
+   "result": "CLEAR"
+  },
+  "K1": {
+   "bar": "LOO K% MAE (augmented) < LOO K% MAE (stat-line-only), identical covered pairs, strict",
+   "mae_stat_line_only": 4.3916,
+   "mae_with_stuff_covariate": 4.4157,
+   "improvement": -0.0242,
+   "pairs_scored": 257,
+   "result": "FAIL"
+  },
+  "K2": {
+   "bar": "bootstrap lo95 of per-pair improvement > 0 (2000 reps, seed 20260723, pair resampling)",
+   "lo95": -0.0556,
+   "result": "FAIL"
+  }
+ },
+ "verdict": "FAIL",
+ "fitted_on_all_covered_pairs": {
+  "augmented": {
+   "x1_mean": 24.051,
+   "x2_mean": 107.757,
+   "y_mean": 24.564,
+   "b1": 0.1365,
+   "b2": -0.0176,
+   "ols_b1": 0.1472,
+   "ols_b2": -0.019,
+   "band_sd": 5.52,
+   "n": 257
+  },
+  "stat_line_only_same_subset": {
+   "x_mean": 24.051,
+   "y_mean": 24.564,
+   "slope": 0.1285,
+   "ols_slope": 0.1385,
+   "band_sd": 5.528,
+   "r2": 0.037,
+   "n": 257
+  },
+  "production_pit_k_context": "production pit_k is fit on ALL matched pairs (n=257); the gate subset refit is the apples-to-apples baseline"
+ },
+ "loss_ledger": {
+  "story": "The covariate did not clear the frozen bars on the identical covered-pair set (K1 improvement -0.0242, K2 lo95 -0.0556). College stuff+ describes pitch quality, but on this sample it does not add K%-translation signal beyond the college K% line itself. Mechanism stays default-OFF behind EEPHUS_COL_XRV.",
+  "keep_alive": "Re-gate at next draft-class resolution (2025/2026 tracked classes reaching first pro A/A+ exposure)."
+ }
+}

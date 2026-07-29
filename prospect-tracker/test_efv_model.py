@@ -38,8 +38,17 @@ def test_fallback_and_clamp_constants_are_pinned():
 
 @pytest.fixture
 def fresh_lambda_cache(monkeypatch):
-    """Swap in an empty cache so blend_lambda recomputes (auto-restored after)."""
+    """Swap in an empty cache so blend_lambda recomputes (auto-restored after).
+
+    Also clears _BLEND_LAMBDA_RESELECT. That override short-circuits the whole
+    WAG/rank-gate/fallback ladder (efv_model.blend_lambda returns it immediately), so
+    with an override set this fixture could not actually make blend_lambda "recompute"
+    and the three ladder tests below were silently testing nothing. They were FAILING
+    from the moment the A1 re-select shipped a hit override; test_hard_fallback_on_error
+    only passed because that override happened to equal the fallback constant. The
+    override itself is pinned separately by test_reselect_override_wins below."""
     monkeypatch.setattr(em, "_WAG_LAMBDA_CACHE", {})
+    monkeypatch.setattr(em, "_BLEND_LAMBDA_RESELECT", {"hit": None, "pit": None})
 
 
 @pytest.mark.parametrize("wag", [
@@ -74,6 +83,34 @@ def test_hard_fallback_on_error(monkeypatch, fresh_lambda_cache):
     assert em.blend_lambda("hit") == em._BLEND_LAMBDA_FALLBACK["hit"] == 0.85
     monkeypatch.setattr(em, "_WAG_LAMBDA_CACHE", {})
     assert em.blend_lambda("pit") == em._BLEND_LAMBDA_FALLBACK["pit"] == 0.80
+
+
+def test_reselect_override_wins(monkeypatch):
+    """The _BLEND_LAMBDA_RESELECT override short-circuits the WAG/rank/fallback ladder.
+
+    Pins the mechanism the A1 re-select ship (and the 2026-07-24 churn trade) rides on:
+    when a side has an override, blend_lambda returns it regardless of what WAG or the
+    rank gate say, and regardless of a calibration error. A side set to None falls
+    through to the normal ladder."""
+    monkeypatch.setattr(em, "_WAG_LAMBDA_CACHE", {})
+    monkeypatch.setattr(em, "_BLEND_LAMBDA_RESELECT", {"hit": 0.70, "pit": None})
+    monkeypatch.setattr(em, "wag_calibration",
+                        lambda side: {"spearman": 0.90, "n": 9999, "lambda": 0.42})
+    monkeypatch.setattr(em, "rank_calibration", lambda side: {"lambda": 0.62})
+    assert em.blend_lambda("hit") == 0.70, "override must win over WAG and the rank gate"
+    assert em.blend_lambda("pit") == 0.42, "None must fall through to the normal ladder"
+
+
+def test_shipped_lambda_is_inside_its_measured_floor():
+    """The shipped hit lambda is a CHURN trade, not an accuracy claim.
+
+    docs/EFV_GATE_STANDARD.md: the minimum detectable effect for a lambda shift is
+    0.0076 pooled rho (hit). Both the A1 raise to 0.85 (+0.0048) and the 2026-07-24
+    return to 0.70 (-0.00049) are inside that floor, so neither is an accuracy move and
+    the constant must not be re-litigated on sub-floor rho evidence."""
+    assert em._BLEND_LAMBDA_RESELECT["hit"] == 0.70
+    lo, hi = em._BLEND_LAMBDA_CLAMP
+    assert lo <= em._BLEND_LAMBDA_RESELECT["hit"] <= hi
 
 
 def test_shipped_lambda_respects_clamp_both_sides():

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://pitchprofiler-umami.onrender.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.mlbstatic.com https://img.mlbstatic.com https://baseballsavant.mlb.com https://images.ctfassets.net; font-src 'self' data:; connect-src 'self' https://statsapi.mlb.com https://*.mlbpitchprofiler.com https://*.onrender.com https://*.ingest.us.sentry.io https://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+    />
+
+    <!-- Global Open Graph (static, shared across all pages) -->
+    <meta property="og:title" content="PitchProfiler — Your Personal Front Office from Anywhere" />
+    <meta property="og:description" content="Advanced MLB pitching analytics: Stuff+, Location+, and Pitching+ models, pitch arsenals, movement profiles, and leaderboards." />
+    <meta property="og:url" content="https://mlbpitchprofiler.com/" />
+    <meta property="og:image" content="https://mlbpitchprofiler.com/og-image.png" />
+    <meta property="og:image:alt" content="PitchProfiler MLB pitching analytics dashboard" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PitchProfiler" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Global Twitter Card (static, shared across all pages) -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PitchProfiler — Your Personal Front Office from Anywhere" />
+    <meta name="twitter:description" content="Advanced MLB pitching analytics: Stuff+, Location+, and Pitching+ models, pitch arsenals, movement profiles, and leaderboards." />
+    <meta name="twitter:image" content="https://mlbpitchprofiler.com/og-image.png" />
+    <meta name="twitter:image:alt" content="PitchProfiler MLB pitching analytics dashboard" />
+
+    <!-- Preconnect to external image CDN for faster image loads -->
+    <link rel="preconnect" href="https://img.mlbstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://img.mlbstatic.com" />
+    <link rel="dns-prefetch" href="https://midfield.mlbstatic.com" />
+    <!-- Preload logo used in navbar -->
+    <link rel="preload" href="/logo_small.webp" as="image" type="image/webp" />
+    <!-- Preload Geist font for fast text rendering -->
+    <link rel="preload" href="/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- Default canonical — overridden per-route by SEOHead after JS renders -->
+    <link rel="canonical" href="https://mlbpitchprofiler.com/" />
+    <title>Your Personal Front Office from Anywhere | PitchProfiler</title>
+
+    <!-- Organization JSON-LD (site-wide structured data) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "PitchProfiler",
+      "url": "https://mlbpitchprofiler.com",
+      "logo": "https://mlbpitchprofiler.com/logo_small.webp",
+      "sameAs": [
+        "https://x.com/pitchprofiler",
+        "https://bsky.app/profile/mlbpitchprofiler.com",
+        "https://instagram.com/pitchprofiler",
+        "https://www.tiktok.com/@pitchprofiler",
+        "https://www.patreon.com/mlbpitchprofiler",
+        "https://linkedin.com/in/jeremymaschino"
+      ]
+    }
+    </script>
+    <script type="module" crossorigin src="/assets/index-CZI2pqcZ.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-react-Bc4kpPqv.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-query-j5cw32df.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-utils-HTNzwwKC.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-CdhNvqqm.css">
+      <meta name="description" content="Grade any pitcher like a front office. PitchProfiler delivers game-by-game breakdowns, pitch visualizations, and scouting tools across every level of professional baseball." />
+    <meta property="og:title" content="Your Personal Front Office from Anywhere | PitchProfiler" />
+    <meta property="og:description" content="Grade any pitcher like a front office. PitchProfiler delivers game-by-game breakdowns, pitch visualizations, and scouting tools across every level of professional baseball." />
+    <meta property="og:url" content="https://mlbpitchprofiler.com/" />
+    <meta name="twitter:title" content="Your Personal Front Office from Anywhere | PitchProfiler" />
+    <meta name="twitter:description" content="Grade any pitcher like a front office. PitchProfiler delivers game-by-game breakdowns, pitch visualizations, and scouting tools across every level of professional baseball." />
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

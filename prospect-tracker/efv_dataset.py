@@ -51,6 +51,16 @@ import milb_history as mh
 import storage
 from prospect_path import _spearman   # reuse the house hand-rolled rank corr
 
+try:
+    import efv_statcast_line as _xline   # S-XLINE AAA measurement upgrade (flag-gated)
+except ImportError:                      # never let the optional layer break the build
+    _xline = None
+
+try:
+    import efv_park_line as _parkline    # W2 PARK-LINE MiLB park neutralization (flag-gated)
+except ImportError:                      # never let the optional layer break the build
+    _parkline = None
+
 log = logging.getLogger(__name__)
 
 # --- E-STALE (2026-07-14): serve-time anchor-staleness decay -----------------
@@ -226,8 +236,13 @@ def _prior_features(rec, pt, side: str = "hit") -> dict:
 # AAA cameo with a fluky .98 OBP) collapses to ~0 instead of reading as elite; a full
 # season is barely touched. Without this, cameos produced absurd grades (a 37-FV org bat
 # read 53 eFV off a few AAA PA). K is roughly a quarter-season of exposure.
-_K_REL_PA = 100.0
-_K_REL_BF = 80.0
+# A3 shrink loosen (owner-authorized 2026-07-24c, coordinated rebuild): reliability shrink
+# K 100/80 -> 50/40 to trust MiLB rates more. Sweep found all 4 accuracy deltas non-negative
+# (hit dSp +0.0005/dAUC +0.0008; pit dSp +0.0034/dAUC +0.0002), CI-neutral. This is a
+# matrix-rebuild change: the lambda (A1) + alpha/weights (A2) were re-selected on the rebuilt
+# matrix in the same coordinated pass. data/xfv_cap_sweep_eval.json.
+_K_REL_PA = 50.0
+_K_REL_BF = 40.0
 
 # Static per-group level-median-ish priors, used ONLY when neither the
 # contemporaneous nor the prior-season same-level norm exists (e.g. a brand-new
@@ -286,19 +301,45 @@ def _season_rates(row, norms, side: str):
     }
 
 
-def _milb_features(mlbam, decision_year, birth_date, side: str = "hit"):
+def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
+                   annotate: bool = False, cutoff: str | None = None):
     """Translated production from the MiLB ladder strictly before the decision year
     (StatsAPI; season-and-level norms are contemporaneous = leakage-safe). Returns the
     FINAL pre-decision season's rates (the current-state read) PLUS multi-season PEAK
     production + season count (a fuller read than one snapshot -- a player who posted an
     elite K-BB% two levels ago carries that signal). Mirrors prospect_path._features +
-    a clean age-rel-level."""
+    a clean age-rel-level.
+
+    annotate=True (LIVE builds only) additionally surfaces the S-XLINE measurement
+    annotation for the FINAL season row as base["xline_note"] (what the Statcast
+    blend applied, efv_statcast_line.maybe_adjust_row). Display metadata only --
+    efv_model._vec reads named feature keys, so the note never enters the model;
+    training builds keep annotate=False so the labeled matrices stay byte-identical."""
     if not mlbam:
         return None
     group = "pitching" if side == "pit" else "hitting"
     minpa = 60 if side == "pit" else 50
     seasons = []
-    for season in range(decision_year - 1, 2013, -1):
+    # AS-OF REPAIR (2026-07-24, docs/EFV_FRONTIER_AUDIT.md). The loop must start at the
+    # last MiLB season that had actually ENDED as of the decision date. `decision_year - 1`
+    # is correct for DEBUTED rows (cutoff = the debut date) but wrong for BUSTS, whose
+    # decision_year is last_list_year + 1 -- that admitted the SAME year as the final list
+    # point. Measured on the shipped matrices: 582 bust rows (344 hit / 238 pit) did this,
+    # 100% with a cutoff before October (33% / 25% before April, i.e. a season that had not
+    # been played at all). Because a bust's label is 0 and the contaminating season is his
+    # washout year, row timing became a label proxy: P(bust | milb_season == cutoff year)
+    # was 95.6%. MiLB regular seasons end in September, so season Y is only readable once
+    # the decision date is at/after Oct 1 of Y. min() keeps this STRICTLY subtractive -- it
+    # can only remove leaked seasons, never add ones the old code did not already allow, so
+    # every clean (debuted) row is byte-identical.
+    first_season = decision_year - 1
+    if cutoff:
+        try:
+            _cy, _cm = int(str(cutoff)[:4]), int(str(cutoff)[5:7])
+            first_season = min(first_season, _cy if _cm >= 10 else _cy - 1)
+        except (ValueError, IndexError):
+            pass
+    for season in range(first_season, 2013, -1):
         rows = [r for r in (mh.player_index(season, group).get(int(mlbam)) or [])
                 if r.get("level") != "MLB"]
         if not rows:
@@ -331,7 +372,22 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit"):
             level = max(present, key=_lv_exp)
             row = mh.level_row(rows, level, group)
         norms = _resolved_norms(season, level, group)
+        # S-XLINE (docs/efv-2026-07-23/GATES.md): AAA 2023+ rows may get a Statcast
+        # expected-stat blend before the level-relative conversion; uncovered rows
+        # and disabled flags return the row object unchanged (byte-identical path).
+        if _xline is not None:
+            row = _xline.maybe_adjust_row(row, mlbam, season, level, side)
+        # W2 PARK-LINE (docs/wills-2026-07-23/GATES.md): 2021+ seasons with a
+        # dominant affiliate and a mapped venue factor may get a park
+        # neutralization before the level-relative conversion; uncovered rows
+        # and disabled flags return the row object unchanged (byte-identical).
+        if _parkline is not None:
+            row = _parkline.maybe_adjust_row(row, mlbam, season, level, side)
         rates = _season_rates(row, norms, side)
+        if annotate and row.get("_xline_note"):
+            # S-XLINE annotation rides the season dict (local) so the final
+            # season's note can surface on the returned base below.
+            rates["_xline_note"] = row["_xline_note"]
         # Age-for-level uses the integer StatsAPI "baseball age" (age at the season's July 1).
         # Decimal precision from birth_date was tested for the model and slightly HURT OOS rank
         # (debuted 0.3308 -> 0.3291): the standard baseball age is the cleaner basis here. The
@@ -368,6 +424,10 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit"):
     keep = ("k_rel", "bb_rel", "era_rel", "rates_missing") if side == "pit" \
         else ("k_rel", "bb_rel", "iso_rel", "obp_rel", "ops_rel", "rates_missing")
     base.update({k: final[k] for k in keep})
+    if annotate and final.get("_xline_note"):
+        # Measurement note for the CURRENT (final) season only: what S-XLINE
+        # applied to the line the grade actually reads. Annotation, not a factor.
+        base["xline_note"] = final["_xline_note"]
 
     # Multi-season PEAK across exposure-qualified seasons (best sustained production,
     # not just the latest line). Direction = the productive extreme of each rate.
@@ -494,6 +554,30 @@ def _load_terminal_dates(player_keys: set[str]) -> dict[str, str]:
     return term
 
 
+# --- F1 bust-loop guard (audit 2026-07-24): MLB exposure disqualifies a bust --
+_MLB_EXPOSED_MEMO: set[int] | None = None
+
+
+def _mlb_exposed_ids() -> set[int]:
+    """mlbam ids carrying ANY MLB (sport-1) stat line in the local StatsAPI
+    caches, 2014-present (fetch=False keeps this offline-safe; the caches are
+    warmed by the pipeline). The bust pool must never contain these ids: an
+    inactive.json record with debut_date=None but real MLB exposure
+    (adolis_garcia 3,378 PA, kodai_senga 1,390 BF, ...) is an upstream
+    debut-detector miss, not a never-MLB 0-WAR bust."""
+    global _MLB_EXPOSED_MEMO
+    if _MLB_EXPOSED_MEMO is None:
+        ids: set[int] = set()
+        for season in range(2014, CURRENT_SEASON + 1):
+            for group in ("hitting", "pitching"):
+                for r in mh.season_splits(1, season, group, fetch=False):
+                    m = r.get("mlbam")
+                    if m:
+                        ids.add(int(m))
+        _MLB_EXPOSED_MEMO = ids
+    return _MLB_EXPOSED_MEMO
+
+
 def _cohort_flags(method, year, birth_date) -> tuple[float, float]:
     """Acquisition-cohort indicators used as model features. is_ifa = signed as an
     international free agent; is_college = drafted out of college (age>=21 in the draft
@@ -540,7 +624,8 @@ def build_matrix(side: str = "hit"):
     acct = {"debuted_seen": 0, "debuted_hitter": 0, "debuted_no_pre_fv": 0,
             "debuted_no_war": 0, "debuted_kept": 0,
             "bust_seen": 0, "bust_hitter": 0, "bust_no_fv": 0, "bust_kept": 0,
-            "bust_recent_flagged": 0}
+            "bust_recent_flagged": 0,
+            "bust_mlb_exposure_rerouted": 0, "bust_mlb_exposure_dropped": 0}
     rows = []
 
     # --- debuted ---
@@ -590,7 +675,7 @@ def build_matrix(side: str = "hit"):
                "mlbam_id": mlbam, "birth_date": rec.get("birth_date"),
                "position": rec.get("position")}
         row.update(_prior_features(rec, pt, side))
-        row["milb"] = _milb_features(mlbam, dy, rec.get("birth_date"), side)
+        row["milb"] = _milb_features(mlbam, dy, rec.get("birth_date"), side, cutoff=dd)
         # AUDIT FIX 2026-07-14: distinguish "no pro track record" from "data
         # cannot exist" - the StatsAPI cache floor is 2014 and the 2011-2015
         # backfills mostly lack mlbam ids, so 100% of 2011-2014 debut rows
@@ -603,6 +688,8 @@ def build_matrix(side: str = "hit"):
         rows.append(row)
 
     # --- busts (never reached MLB) ---
+    mlb_ids = _mlb_exposed_ids()
+    debuted_keys = {r["player_key"] for r in rows}
     for rec in inact:
         acct["bust_seen"] += 1
         pk = rec.get("player_key")
@@ -611,6 +698,51 @@ def build_matrix(side: str = "hit"):
         if not _side_match(rec, side):
             continue
         acct["bust_hitter"] += 1
+        # F1 bust-loop guard (audit 2026-07-24): a record whose mlbam id has
+        # real MLB (sport-1) stat lines, or whose player_key already carries
+        # career_war seasons, is NOT a never-MLB bust - the hardcoded 0.0
+        # label below would train a full-weight bust label against an actual
+        # MLB career (adolis_garcia: 3,378 MLB PA trained as a 0-WAR bust).
+        # Honest repair: when career_war holds the player's real seasons and
+        # the debut year is trainable, route through the debuted machinery
+        # with the REAL first-6yr label (cutoff = Jan 1 of the debut year,
+        # strictly pre-outcome; a debut cannot predate the first list point,
+        # which screens career_war name collisions). Otherwise exclude from
+        # training with an accounting counter - never a fabricated label.
+        mlbam = rec.get("mlbam_id")
+        cw_seasons = cw.get(pk)
+        if (mlbam and int(mlbam) in mlb_ids) or cw_seasons:
+            dy = min(cw_seasons) if cw_seasons else None
+            first_list = min((p["snapshot_date"][:4]
+                              for p in (rec.get("points") or [])
+                              if p.get("snapshot_date")), default=None)
+            if (dy is not None and dy in DEBUT_YEARS and pk not in debuted_keys
+                    and first_list and first_list.isdigit()
+                    and dy >= int(first_list)):
+                cutoff = f"{dy}-01-01"    # true debut date unknown: anchor pre-debut-season
+                rpt = _asof_point(rec, cutoff)
+                if rpt is not None and _f(rpt.get("consensus_fv_raw")) is not None:
+                    t_res, t_cens, cflag, w, n_obs = _label_6yr(cw_seasons, dy)
+                    row = {"player_key": pk, "kind": "debuted", "debut_year": dy,
+                           "is_pitcher": is_pit, "cutoff": cutoff,
+                           "target_resolved": t_res, "target_censored": t_cens,
+                           "censored": cflag, "weight": w, "observed_seasons": n_obs,
+                           "mlbam_id": mlbam, "birth_date": rec.get("birth_date"),
+                           "position": rec.get("position"),
+                           "rerouted_from_bust": True}
+                    row.update(_prior_features(rec, rpt, side))
+                    row["milb"] = _milb_features(mlbam, dy, rec.get("birth_date"),
+                                                side, cutoff=cutoff)
+                    if row["milb"] is None and (dy <= 2015 or not mlbam):
+                        row["milb_unavailable"] = True
+                    acct["bust_mlb_exposure_rerouted"] += 1
+                    debuted_keys.add(pk)
+                    rows.append(row)
+                    continue
+            acct["bust_mlb_exposure_dropped"] += 1
+            log.warning("bust_mlb_exposure: %s (mlbam %s) has MLB exposure - "
+                        "excluded from the bust pool", pk, mlbam)
+            continue
         pt = _asof_point(rec, None)
         if pt is None or _f(pt.get("consensus_fv_raw")) is None:
             acct["bust_no_fv"] += 1
@@ -629,7 +761,8 @@ def build_matrix(side: str = "hit"):
                "position": rec.get("position")}
         row.update(_prior_features(rec, pt, side))
         dec_year = (int(last_date[:4]) + 1) if last_date[:4].isdigit() else CURRENT_SEASON
-        row["milb"] = _milb_features(rec.get("mlbam_id"), dec_year, rec.get("birth_date"), side)
+        row["milb"] = _milb_features(rec.get("mlbam_id"), dec_year,
+                                     rec.get("birth_date"), side, cutoff=cutoff)
         # same availability distinction as the debuted loop
         if row["milb"] is None and (dec_year <= 2015 or not rec.get("mlbam_id")):
             row["milb_unavailable"] = True
@@ -737,7 +870,8 @@ def build_live_matrix(side: str = "hit"):
         # current year. (Training stays strictly pre-outcome.) Without this, a 2026 breakout
         # like Arias's .990 OPS was ignored and stale 2025 stats drove the grade.
         row["milb"] = _milb_features(rec.get("mlbam_id"), CURRENT_SEASON + 1,
-                                     rec.get("birth_date"), side)
+                                     rec.get("birth_date"), side,
+                                     annotate=True)   # S-XLINE note, live only
         rows.append(row)
         acct["live_kept"] += 1
 

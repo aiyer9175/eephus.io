@@ -1,9 +1,6 @@
 {
- "generated_at": "2026-07-16T18:50:23Z",
+ "generated_at": "2026-07-25T17:01:40Z",
  "vintage_max_base_year": 2023,
- "weights": {
-  "fangraphs": 0.9355,
-  "mlb_pipeline": 1.0645
- },
- "note": "relative vote weights (1.0 = equal); sources absent here vote at 1.0"
+ "weights": {},
+ "note": "relative vote weights (1.0 = equal); sources absent here vote at 1.0. REVERTED TO EQUAL 2026-07-25: the previous weights {\"fangraphs\": 0.9363, \"mlb_pipeline\": 1.0637} were unearned - forward-chained A/B measured d_rho -0.0012 against an MDE95 of 0.0068 (inside the permutation null) and a NEGATIVE debut AUC whose CI excluded zero. Only 2 of 8 outlets have resolvable outcome history and their precisions are indistinguishable, so there is nothing to weight on. The ship gate in source_backtest.py now requires a gain larger than the test can resolve, so this file will not be re-shipped on noise."
 }

@@ -42,3 +42,9 @@ prospect_def_value.json
 # wire_fv_first_seen.json: build_site read-modify-write ledger kept in
 # local data/; no page fetches it.
 wire_fv_first_seen.json
+# identity_collisions.json: the merged-identity report (identity_audit.py).
+# An internal ops ledger naming players whose records fuse two humans; no
+# page fetches it, and it is not a model eval artifact. Read by
+# test_identity_collisions.py and by whoever works the repair queue.
+identity_collisions.json
+positional_fit.json

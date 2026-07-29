@@ -102,12 +102,40 @@ RECAL_MODE = "off"
 LAB_TJ_PERMUTE_SEED = 0
 NOISE_FEATURES = 0
 NOISE_SEED = 0
+#   BAND_SCALE_GUAR     player-specific log-guarantee band width (T1.2).
+#                       MEASURED NULL, DEFAULT OFF 2026-07-25. Forward-chained
+#                       Gate-2 chain (9 winters, n=1,199), paired bootstrap
+#                       B=200 resampling the whole corpus with a refit per
+#                       draw, ridge 3.0 on the variance step:
+#                         pinball avg   flat 0.17094 scale 0.17087
+#                                       delta -0.00007, CI95 [-.00314,+.00284],
+#                                       P(improves) 0.545, MDE95 0.00288
+#                         cond-cov RMSE delta -0.00019, MDE95 0.01264
+#                         coverage      delta -0.00610, MDE95 0.01875
+#                       and the ZERO-INFORMATION CONTROL (same estimator on a
+#                       row-permuted residual column, same draws) moves the
+#                       pinball by +0.00053 with a null band of
+#                       [-0.00153, +0.00269] that CONTAINS the candidate's
+#                       delta outright. The control scores as well as the
+#                       candidate, so there is no result: the signing corpus
+#                       does not support a conditional variance function.
+#                       The knob and the code stay for re-gating at a larger
+#                       corpus; the flat band it would replace is left shipped.
+#                       (The WAR-side band, which does clear its floor, is a
+#                       SEPARATE model and IS shipped - see fa_bands.)
+#   BAND_PERMUTE_SEED   zero-information control: fit the variance function on
+#                       a row-permuted residual column. Must return a flat
+#                       sigma. Lab only.
+BAND_SCALE_GUAR = False                     # measured null 2026-07-25 (T1.2)
+BAND_PERMUTE_SEED = 0
+BAND_RIDGE_GUAR = 3.0
 
 _LAB_DEFAULTS = {
     "POS_GROUP_MODE": "v1", "COMPS_STRICT_PRIOR": True, "DESTALE_MODE": "series",
     "DESTALE_FIXED": 0.0, "RIDGE_YEARS": 0.0, "RIDGE_GUAR": 0.0,
     "AAV_CONSISTENT": False, "RECAL_MODE": "off", "LAB_TJ_PERMUTE_SEED": 0,
     "NOISE_FEATURES": 0, "NOISE_SEED": 0,
+    "BAND_SCALE_GUAR": False, "BAND_PERMUTE_SEED": 0, "BAND_RIDGE_GUAR": 3.0,
 }
 
 
@@ -233,6 +261,59 @@ def _band_bucket(side: str, pt_y1: float) -> str:
     return f"{side}:{'hi' if pt_y1 >= lo else 'lo'}"
 
 
+@lru_cache(maxsize=1)
+def _gate1_band_scale() -> dict | None:
+    """The T1.2 location-scale WAR band (data/fa_gate1_eval.json band_scale).
+
+    None when the artifact predates T1.2 or the fit declined, in which case
+    every caller falls back to the four bucket quantiles. Fallback is the
+    documented behaviour, not an error path."""
+    try:
+        d = json.loads((Path(__file__).parent / "data" / "fa_gate1_eval.json")
+                       .read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    m = d.get("band_scale")
+    return m if isinstance(m, dict) and m.get("gamma") else None
+
+
+def _war_band_offsets(hist: list[dict], side: str, class_year: int,
+                      war1: float, expo: float, age: int | None) -> dict | None:
+    """{'q10','q90'} additive year-1 WAR offsets for THIS player.
+
+    Same additive shape the bucket bands had, so the aging machinery
+    downstream is untouched and the band change is the only change. Returns
+    None when the scale model is absent, and the caller uses the buckets.
+
+    The two covariates that are not on the projection object are recovered
+    from the same history the projection was built on:
+      thin   platform-season exposure under 180 PA/BF (the shipped
+             thin-platform disclosure threshold at full-season pace)
+      tj_n   Tommy John count STRICTLY BEFORE the class year (ex-ante by
+             tj_surgery's own cutoff semantics)"""
+    model = _gate1_band_scale()
+    if model is None:
+        return None
+    import fa_bands
+    platform = next((h for h in hist if h.get("season") == class_year - 1), None)
+    vol = (platform.get("pa" if side == "hit" else "bf") or 0) if platform else 0
+    thin = 1.0 if (platform is None or vol < 180.0) else 0.0
+    tj_n = 0.0
+    mlbam = next((h.get("mlbam") for h in hist if h.get("mlbam")), None)
+    if mlbam:
+        try:
+            import tj_surgery
+            tj_n = float(tj_surgery.tj_features(
+                mlbam, f"{class_year}-01-01",
+                _tj_store()).get("tj_count_pre") or 0)
+        except Exception:                               # noqa: BLE001
+            tj_n = 0.0
+    z = fa_bands.war_z(side, war1, expo, age, thin, tj_n,
+                       float(model.get("age_mean", 29.0)))
+    o = fa_bands.offsets(model, z, side, (0.10, 0.90))
+    return {"q10": o[0.10], "q90": o[0.90]} if o else None
+
+
 def _ml_active() -> bool:
     cfg = (fa_class.get_config().get("projection") or {}).get("ml") or {}
     if not cfg.get("enabled"):
@@ -292,12 +373,22 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
            # projections board; WAR pricing stays on the war_rate decay
            # path above. Inherited into out_ml via {**out}.
            "rates_by_year": fp.rate_path(proj, side, curves, league)}
-    q = _gate1_band_quantiles().get(_band_bucket(side, expo))
+    # T1.2 - PLAYER-SPECIFIC band width. The four reliability buckets stay as
+    # the documented fallback (they are what ships when the fitted scale model
+    # is absent from the Gate-1 artifact), but where the fit exists the year-1
+    # band is a continuous function of age, side, projected value, exposure,
+    # platform thinness and prior TJ count rather than a two-bit step.
+    q = _war_band_offsets(hist, side, class_year, war1, expo, age)
+    band_src = "scale"
+    if q is None:
+        q = _gate1_band_quantiles().get(_band_bucket(side, expo))
+        band_src = "bucket"
     if q:
         p10 = _decay_path(war1 + q["q10"], expo, side, decay_role, a, curves)
         p90 = _decay_path(war1 + q["q90"], expo, side, decay_role, a, curves)
         out["war_by_year_p10"] = [round(w, 2) for w in p10]
         out["war_by_year_p90"] = [round(w, 2) for w in p90]
+        out["band_source"] = band_src
     if use_ml is False or (use_ml is None and not _ml_active() and ml_models is None):
         return out
     import proj_ml
@@ -495,6 +586,50 @@ def rational_value_usd(war_by_year: list[float], class_year: int,
     return int(total)
 
 
+def expected_rational_value_usd(path: dict, years: int, class_year: int,
+                                dpw_usd: float, infl: float | None = None) -> int:
+    """T1.4 - the EXPECTATION of the tier-priced value, not the tier price of
+    the expectation.
+
+    ``rational_value_usd`` above evaluates the tier curve at the mean path.
+    value_framework.tiered_war_value_usd's own docstring says "never call on
+    an averaged WAR". MEASURED, not assumed: that curve is convex below ~1.2
+    WAR, mildly CONCAVE from 1.2 to 2.52, and exactly LINEAR above 2.52 (see
+    fa_mc's module docstring for the differenced profile), so the correction
+    is large and positive exactly where free-agent seasons live and nil at
+    the top of the market. Measured in dollars against realized tier-priced
+    WAR on
+    449 forward-chained Gate-2 signings (2018-2022, terms fully realized,
+    tools/_fa_jensen.py):
+
+        signed bias   naive -$3.219M/signing -> corrected -$0.509M
+        |bias| delta  -$2.400M, CI95 [-2.974, -0.489], MDE95 $1.256M,
+                      P(improves) 0.9925 over B=400 paired draws
+        level         mean $7.699M -> $10.409M (+35.2%) vs realized $10.918M
+        MAE           $9.747M -> $11.082M, i.e. WORSE (+1.343, CI95
+                      [0.961, 1.708]) - correcting a level bias on noisy
+                      per-row bands raises dispersion. Reported, not hidden.
+
+    MANDATORY CONTROL (band WIDTHS permuted across players, point paths held
+    fixed): |bias| delta -$2.465M, band [-3.193, -0.256], which CONTAINS the
+    real effect. The Jensen correction is real; its size is driven by the
+    AVERAGE width, not by any player's own width. Stated plainly: this fixes
+    a level error, it does not demonstrate that player-specific widths matter
+    for the level.
+
+    Falls back to the shipped point pricing when the path carries no band
+    (nothing to integrate over)."""
+    p10 = path.get("war_by_year_p10")
+    p90 = path.get("war_by_year_p90")
+    mean_path = path.get("war_by_year") or []
+    if not p10 or not p90:
+        return rational_value_usd(mean_path[:years], class_year, dpw_usd, infl)
+    import fa_mc
+    return fa_mc.expected_tier_value_usd(
+        mean_path, p10, p90, years, class_year, dpw_usd,
+        _dpw_inflation() if infl is None else float(infl), _discount_rate())
+
+
 def deferral_npv_usd(schedule: list[dict] | None, guarantee_usd: int) -> dict:
     """Sticker vs NPV guarantee. ``schedule`` rows: {year_offset, amount_usd}
     (from data/deferrals.json / fa_overrides when available). Without
@@ -599,22 +734,123 @@ def enter_probability_v2(pred: dict, fa_type: str | None,
     first live shakedown."""
     if not option_price_usd or not pred:
         return None
-    point = pred.get("proj_aav_usd")
-    p10 = pred.get("proj_aav_p10_usd")
-    p90 = pred.get("proj_aav_p90_usd")
-    if not point or not p10 or not p90 or p90 <= p10:
-        return None
     z = 1.2816
+    # ---- T1.5 BASIS REPAIR ------------------------------------------------
+    # The strike and the market number have to be the same KIND of quantity.
+    #
+    #   club_option / player_option   the strike is ONE season's salary, so
+    #                                 proj_aav is the coherent comparison.
+    #   opt_out                       the strike is the REMAINING GUARANTEE the
+    #                                 player walks away from, so it must be
+    #                                 compared to the remaining MULTI-YEAR
+    #                                 market value, not to one season's AAV.
+    #
+    # Comparing a remaining-guarantee strike to a single season's AAV made
+    # every opt-out look impossibly expensive to exercise: P(Bo Bichette opts
+    # out) served as 0.009 because a multi-year number was being read as if it
+    # were an annual one. The repair prices the opt-out against the projected
+    # guarantee over the term the model itself predicts.
+    if fa_type == "opt_out":
+        point = pred.get("proj_guarantee_usd")
+        lo = pred.get("proj_guarantee_p10_usd")
+        hi = pred.get("proj_guarantee_p90_usd")
+        method = "band_priced_opt_out_remaining_guarantee"
+    else:
+        point = pred.get("proj_aav_usd")
+        lo = pred.get("proj_aav_p10_usd")
+        hi = pred.get("proj_aav_p90_usd")
+        method = None
+    if not point or not lo or not hi or hi <= lo:
+        return None
     mu = math.log(point)
-    sigma = max(0.05, (math.log(p90) - math.log(p10)) / (2 * z))
+    sigma = max(0.05, (math.log(hi) - math.log(lo)) / (2 * z))
     # standard normal CDF via erf
     zscore = (math.log(option_price_usd) - mu) / sigma
     cdf = 0.5 * (1.0 + math.erf(zscore / math.sqrt(2)))
-    if fa_type in ("opt_out", "player_option"):
+    if fa_type == "opt_out":
+        return {"enter_prob": round(1.0 - cdf, 3), "method": method}
+    if fa_type == "player_option":
         return {"enter_prob": round(1.0 - cdf, 3), "method": "band_priced_player_side"}
     if fa_type == "club_option":
         return {"enter_prob": round(cdf, 3), "method": "band_priced_club_side"}
     return None
+
+
+# ============================================================================
+# T1.5 - options priced as CONTINGENT CLAIMS on the shipped band
+# ============================================================================
+
+def option_value_usd(pred: dict, fa_type: str | None,
+                     option_price_usd: float | None) -> dict | None:
+    """What the option is WORTH, in dollars, to the side that holds it.
+
+    The board already knew whether an option existed and what its strike was;
+    it never priced one. Every option is a claim on the same log-normal the
+    band defines (mu = log point estimate, sigma from the P10-P90 span over
+    2z), so the closed-form Black-Scholes-style expectations apply directly
+    with zero extra machinery:
+
+      club option    the TEAM holds a call on the player's market at the
+                     strike: it exercises when the market S exceeds the strike
+                     K, so the team's claim is E[max(S - K, 0)].
+      player option  the PLAYER holds a put: he stays at K when the market is
+                     below it, so the TEAM IS SHORT E[max(K - S, 0)].
+      opt_out        a player call on his own re-rating: he walks when the
+                     remaining market beats the remaining guarantee, so the
+                     team is short E[max(S - K, 0)] on the remaining-guarantee
+                     basis (see the units repair in enter_probability_v2).
+
+    ``held_by`` and the SIGN of ``team_value_usd`` are both returned because
+    the sign is the entire editorial point: a player option is a liability the
+    board used to render as a neutral flag.
+
+    MUTUAL OPTIONS ARE NOT PRICED HERE, on purpose. A mutual option needs the
+    club to want S > K and the player to want S < K in the same instant, which
+    cannot both be true, so its rational value is ~0 and its exercise rate
+    should be ~0. That prediction is testable against data/fa_archive.json and
+    is tested in test_fa_options.py."""
+    if not option_price_usd or not pred or fa_type not in (
+            "club_option", "player_option", "opt_out"):
+        return None
+    if fa_type == "opt_out":
+        point = pred.get("proj_guarantee_usd")
+        lo, hi = (pred.get("proj_guarantee_p10_usd"),
+                  pred.get("proj_guarantee_p90_usd"))
+        basis = "remaining_guarantee"
+    else:
+        point = pred.get("proj_aav_usd")
+        lo, hi = pred.get("proj_aav_p10_usd"), pred.get("proj_aav_p90_usd")
+        basis = "annual_salary"
+    if not point or not lo or not hi or hi <= lo:
+        return None
+    z = 1.2816
+    K = float(option_price_usd)
+    sigma = max(0.05, (math.log(hi) - math.log(lo)) / (2 * z))
+    # Log-normal with median `point`. E[S] = point * exp(sigma^2/2).
+    mu = math.log(point)
+    d1 = (mu - math.log(K)) / sigma + sigma
+    d2 = d1 - sigma
+    ES = math.exp(mu + 0.5 * sigma * sigma)
+
+    def _phi(x):
+        return 0.5 * (1.0 + math.erf(x / math.sqrt(2)))
+
+    call = ES * _phi(d1) - K * _phi(d2)          # E[max(S-K,0)]
+    put = K * _phi(-d2) - ES * _phi(-d1)         # E[max(K-S,0)]
+    if fa_type == "club_option":
+        return {"kind": "call", "held_by": "team", "basis": basis,
+                "strike_usd": int(K), "sigma": round(sigma, 4),
+                "option_value_usd": int(call), "team_value_usd": int(call),
+                "p_exercise": round(_phi(d2), 3)}
+    if fa_type == "player_option":
+        return {"kind": "put", "held_by": "player", "basis": basis,
+                "strike_usd": int(K), "sigma": round(sigma, 4),
+                "option_value_usd": int(put), "team_value_usd": -int(put),
+                "p_exercise": round(_phi(-d2), 3)}
+    return {"kind": "call", "held_by": "player", "basis": basis,
+            "strike_usd": int(K), "sigma": round(sigma, 4),
+            "option_value_usd": int(call), "team_value_usd": -int(call),
+            "p_exercise": round(_phi(d2), 3)}
 
 
 def opt_out_scenarios(war_by_year: list[float], opt_out_after: int,
@@ -1091,10 +1327,58 @@ class MarketModel:
         # residual pools for empirical bands (log-NPV-guarantee + years)
         self.resid_log_guar = []
         self.resid_years = []
+        _bz, _bg = [], []
         for s in rows:
             py, pg = self._point(s)
             self.resid_years.append(s["years"] - py)
             self.resid_log_guar.append(math.log(_npv_of(s)) - math.log(max(pg, 1)))
+            _bz.append(self._guar_band_z(s, py, pg))
+            _bg.append(_pos_group(s.get("position")))
+        # T1.2 - PLAYER-SPECIFIC guarantee band. The unconditional residual
+        # quantiles above gave every free agent in baseball the SAME relative
+        # uncertainty: measured on the served 2027 class, projGuarP90 /
+        # projGuarP10 = 9.6495 for all 221 priced members to six significant
+        # figures. The location-scale fit makes the width a function of the
+        # player; None (a thin corpus, an early fold) keeps the flat band.
+        self.band = None
+        if BAND_SCALE_GUAR:
+            try:
+                import fa_bands
+                self.band = fa_bands.fit(
+                    _bz, self.resid_log_guar, _bg,
+                    names=fa_bands.GUAR_Z_NAMES, age_mean=self._band_age_mean,
+                    permute_seed=(BAND_PERMUTE_SEED or None),
+                    # LOG-DOLLAR residuals need their own sigma guard: the WAR
+                    # default (0.05, 10.0) allows a p90/p10 of 1.2e11.
+                    sigma_clip=fa_bands.SIGMA_CLIP_LOG_USD,
+                    # The signing corpus is n=1,199 pooled with train folds
+                    # from ~100 rows. Shrinking gamma toward its intercept
+                    # shrinks sigma toward the flat band it replaces, which is
+                    # the right null to shrink to.
+                    ridge=BAND_RIDGE_GUAR,
+                    min_rows=250, min_group=120)
+            except Exception:                   # noqa: BLE001 - fail to flat
+                log.warning("fa_market: guarantee band fit failed; flat band")
+                self.band = None
+
+    @property
+    def _band_age_mean(self) -> float:
+        ages = [s["_age"] for s in self.train_pool if s.get("_age")]
+        return statistics.mean(ages) if ages else 30.0
+
+    def _guar_band_z(self, s: dict, years: float, guar: float) -> list[float]:
+        """The restricted z for the log-guarantee band (see fa_bands.guar_z).
+        ``years``/``guar`` are the model's OWN point prediction for the row,
+        so the width is conditioned on what the board is about to publish -
+        the decision-relevant conditioning, the same reasoning _fit_recal
+        documents for the level correction."""
+        import fa_bands
+        tj = _x_tj_feats(s)
+        return fa_bands.guar_z(_pos_group(s.get("position")),
+                               math.log(max(guar, 1.0)), years, s.get("_age"),
+                               1.0 if s.get("qo") else 0.0,
+                               (tj[0] + tj[1]),        # 0, 1 or 2 prior TJs
+                               self._band_age_mean)
 
     def _supply_z(self, s: dict) -> float:
         c = (self.supply_by_year.get(s["class_year"]) or
@@ -1227,9 +1511,22 @@ class MarketModel:
         if qy:
             out["proj_years_p10"] = max(1, int(round(years_f + qy[0])))
             out["proj_years_p90"] = int(round(years_f + qy[-1]))
+        band = getattr(self, "band", None)
+        if band is not None:
+            import fa_bands
+            z = self._guar_band_z(s, years_f, guar)
+            o = fa_bands.offsets(band, z, _pos_group(s.get("position")),
+                                 (0.10, 0.90))
+            if o:
+                out["proj_guarantee_p10_usd"] = int(guar * math.exp(o[0.10]))
+                out["proj_guarantee_p90_usd"] = int(guar * math.exp(o[0.90]))
+                out["band_source"] = "scale"
+                qg = None                       # the flat band is superseded
         if qg:
             out["proj_guarantee_p10_usd"] = int(guar * math.exp(qg[0]))
             out["proj_guarantee_p90_usd"] = int(guar * math.exp(qg[-1]))
+            out["band_source"] = "flat"
+        if "proj_guarantee_p10_usd" in out:
             # projAAV bands ride the guarantee band at the point-estimate term —
             # both framings (per-year price AND total value/length) carry
             # P10/P50/P90, per the module's distributions-not-points rule.
@@ -1256,8 +1553,27 @@ class MarketModel:
 # Phase 2 recalibration (NPV deferral-adjusted basis + the NPV $/WAR
 # series): the corpus now runs p33=75, median=110, p67=159 — edges moved
 # from 85/185 accordingly.
-VERDICT_VALUE_MIN = 160     # Deal+ >= 160 -> "value"   (corpus top tercile)
-VERDICT_OVERPAY_MAX = 75    # Deal+ <  75  -> "overpay" (corpus bottom tercile)
+#
+# T1.4 RE-DERIVATION (2026-07-25, SAME change as the convexity correction).
+# The edges are corpus terciles by construction, so a level shift makes them
+# stale by construction too. Re-cut on the enriched corpus (n=1,300 signings
+# with bands, forward-chained ex-ante $/WAR per winter):
+#
+#   pricing            p33     median   p67     mean
+#   value-of-the-mean   72.2   104.7    149.3   163.5   (shipped edges 75/160)
+#   mean-of-the-value  108.8   152.2    222.9   267.0
+#
+# Verdict counts on the 1,300-row corpus:
+#   old edges 75/160 on OLD pricing   overpay 451 / market 452 / value 397
+#   old edges 75/160 on NEW pricing   overpay 249 / market 431 / value 620
+#   new edges 109/223 on NEW pricing  overpay 433 / market 433 / value 434
+#
+# Leaving the old edges in place would have moved 202 of 1,300 historical
+# contracts (15.5%) into a different verdict overnight for no reason other
+# than the arithmetic fix, i.e. the site would have looked like it changed its
+# mind about a sixth of every winter it has ever graded.
+VERDICT_VALUE_MIN = 223     # Deal+ >= 223 -> "value"   (corpus top tercile)
+VERDICT_OVERPAY_MAX = 109   # Deal+ <  109 -> "overpay" (corpus bottom tercile)
 
 
 def deal_verdict(deal_plus: float | None) -> str | None:

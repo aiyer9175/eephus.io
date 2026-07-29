@@ -94,6 +94,73 @@ def _rmse(pairs: list[tuple[float, float]]) -> float | None:
     return math.sqrt(sum((p - a) ** 2 for p, a in pairs) / len(pairs))
 
 
+def _fit_band_scale(panel: list[dict]) -> dict:
+    """Fit the T1.2 location-scale band on the Gate-1 residual panel and
+    grade it, IN SAMPLE for the diagnostics and out of fold for the verdict.
+
+    The out-of-fold verdict is not recomputed here (that is the lab's job and
+    it is expensive); what is written is the fitted model the serve path
+    consumes plus the honest served-side dispersion and the conditional
+    coverage table. Returns {} when the panel is too thin, in which case the
+    serve path keeps the four-bucket bands."""
+    if not panel:
+        return {}
+    import fa_bands
+    ages = [r["age"] for r in panel if r["age"] is not None]
+    age_mean = statistics.mean(ages) if ages else 29.0
+    Z = [fa_bands.war_z(r["side"], r["pred"], r["expo"], r["age"],
+                        r["thin"], r["tj_n"], age_mean) for r in panel]
+    model = fa_bands.fit(Z, [r["resid"] for r in panel],
+                         [r["side"] for r in panel],
+                         names=fa_bands.WAR_Z_NAMES, age_mean=age_mean)
+    if model is None:
+        return {}
+    out = {"band_scale": model,
+           "band_scale_widths": fa_bands.width_summary(
+               model, [(z, r["side"]) for z, r in zip(Z, panel)])}
+    # ZERO-INFORMATION CONTROL, written into the artifact next to the model:
+    # the identical estimator on a row-permuted residual column must return a
+    # flat sigma. If sigma_sd here is not ~0, the fit is reading noise.
+    ctl = fa_bands.fit(Z, [r["resid"] for r in panel],
+                       [r["side"] for r in panel],
+                       names=fa_bands.WAR_Z_NAMES, age_mean=age_mean,
+                       permute_seed=1)
+    if ctl:
+        out["band_scale_permuted_control"] = {
+            "sigma_mean": round(ctl["sigma_mean"], 5),
+            "sigma_sd": round(ctl["sigma_sd"], 5),
+            "note": ("row-permuted residuals: sigma_sd must collapse toward 0. "
+                     "Compare against band_scale.sigma_sd.")}
+    # Conditional coverage of the fitted bands, which is the test the pooled
+    # P10-P90 hit rate cannot do (it reads 0.79996 against nominal 0.80 and is
+    # uninformative about whether the bands are calibrated anywhere).
+    try:
+        import fa_calibration as fc
+        rows = []
+        for z, r in zip(Z, panel):
+            o = fa_bands.offsets(model, z, r["side"], (0.10, 0.90))
+            if o:
+                rows.append({"y": r["resid"], "q": {0.10: o[0.10], 0.90: o[0.90]},
+                             "pred": r["pred"], "age": r["age"] or age_mean,
+                             "expo": r["expo"], "tj": "tj" if r["tj_n"] else "none"})
+        if rows:
+            out["band_scale_conditional_coverage"] = {
+                "marginal": fc.coverage(rows),
+                "by_pred_decile": fc.conditional_coverage(
+                    rows, lambda r: r["pred"], n_bins=10),
+                "by_age": fc.conditional_coverage(
+                    rows, lambda r: ("<25" if r["age"] < 25 else "25-29"
+                                     if r["age"] < 30 else "30-34"
+                                     if r["age"] < 35 else "35+")),
+                "by_expo_decile": fc.conditional_coverage(
+                    rows, lambda r: r["expo"], n_bins=10),
+                "by_prior_tj": fc.conditional_coverage(rows, lambda r: r["tj"]),
+            }
+    except Exception:                                   # noqa: BLE001
+        log.warning("band_scale conditional coverage failed - continuing")
+    return out
+
+
 def run_projection_gate(persist: bool = True) -> dict:
     cfg = fp._pcfg()
     corpus = fp.build_corpus()
@@ -110,6 +177,16 @@ def run_projection_gate(persist: bool = True) -> dict:
 
     # rolling residual store for band sigmas: bucket -> [residuals]
     resid: dict[str, list[float]] = defaultdict(list)
+    # T1.2 - the SAME residuals with their covariates attached, so the band
+    # width can be a continuous function of the player instead of a two-bit
+    # bucket. Collected here rather than in a second pass because this loop
+    # is already the point-in-time one.
+    panel: list[dict] = []
+    try:
+        import tj_surgery
+        _tj_store = tj_surgery._load_store()
+    except Exception:                      # noqa: BLE001 - fail soft to tj_n 0
+        tj_surgery, _tj_store = None, {}
 
     def _bucket(side: str, expo_proj: float) -> str:
         lo = 350 if side == "hit" else 250
@@ -163,6 +240,29 @@ def run_projection_gate(persist: bool = True) -> dict:
                             season_stats["cov_hits"] += 1
                         season_stats["cov_n"] += 1
                     new_resid[bk].append(act_war - war_pred)
+                    # 2020 is a 60-game season: realized WAR is compressed by
+                    # ~2.7x, so its residuals are a different scale entirely
+                    # and would distort a fitted variance function. The gate's
+                    # own target list already excludes it; the panel does too.
+                    if target != 2020:
+                        platform = seasons.get(target - 1)
+                        vol = ((platform.get("pa" if side == "hit" else "bf") or 0)
+                               if platform else 0)
+                        tj_n = 0.0
+                        if tj_surgery is not None:
+                            try:
+                                tj_n = float(tj_surgery.tj_features(
+                                    mlbam, f"{target}-01-01",
+                                    _tj_store).get("tj_count_pre") or 0)
+                            except Exception:            # noqa: BLE001
+                                tj_n = 0.0
+                        panel.append({
+                            "season": target, "side": side,
+                            "pred": float(war_pred), "resid": act_war - war_pred,
+                            "age": float(age) if age else None,
+                            "expo": float(proj["pt_proj"]),
+                            "thin": 1.0 if (platform is None or vol < 180.0) else 0.0,
+                            "tj_n": tj_n})
                 # rate pool (target exposure gate)
                 min_expo = min_pa if side == "hit" else min_bf
                 if actual_row and act["expo"] >= min_expo and base.get(rate_key) is not None:
@@ -218,6 +318,13 @@ def run_projection_gate(persist: bool = True) -> dict:
                                 "n": len(v)}
                            for bk, v in resid.items() if len(v) >= 50},
     }
+    # ---- T1.2: player-specific band width -------------------------------
+    # Fitted on the SAME pooled residual panel band_quantiles is cut from, so
+    # the two are alternative readings of one dataset and band_quantiles stays
+    # as the documented fallback. Measured lift and its floor live in
+    # fa_bands' module docstring; the conditional-coverage table below is the
+    # evidence that a marginal 0.79996 could never have produced.
+    summary.update(_fit_band_scale(panel))
     gates = {
         "war": summary["pooled"]["war"]["mae_model"] < summary["pooled"]["war"]["mae_base"],
         "wrc_plus": summary["pooled"]["wrc_plus"]["mae_model"] < summary["pooled"]["wrc_plus"]["mae_base"],

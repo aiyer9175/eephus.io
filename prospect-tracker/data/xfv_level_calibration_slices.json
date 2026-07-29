@@ -1,0 +1,1864 @@
+{
+ "generated_at": "2026-07-25",
+ "lane": "calibration -- population-conditional level calibration",
+ "scope": "LIVE-COMPARABLE rows only (a MiLB track record present), the population the served board actually contains -- xfv.json meta: eFV abstains on players with no MiLB production",
+ "folds": [
+  2016,
+  2017,
+  2018,
+  2019,
+  2020
+ ],
+ "lambda": {
+  "hit": 0.7,
+  "pit": 0.52
+ },
+ "lambda_source": "data/xfv.json meta.live_lambda",
+ "bust_threshold": 0.5,
+ "bootstrap": {
+  "B": 2000,
+  "seed": 7,
+  "scheme": "resample whole side pool (train AND test), refit per draw"
+ },
+ "point": {
+  "hit": {
+   "level_A_n": 29,
+   "level_A_bias": 0.5897517241379315,
+   "level_A_cov": 0.896551724137931,
+   "level_A_pbustgap": -0.24617735806124064,
+   "level_A+_n": 25,
+   "level_A+_bias": 0.5579360000000002,
+   "level_A+_cov": 0.52,
+   "level_A+_pbustgap": -0.08356514376727031,
+   "level_AA_n": 98,
+   "level_AA_bias": 1.3535428571428574,
+   "level_AA_cov": 0.4897959183673469,
+   "level_AA_pbustgap": 0.019087313269504746,
+   "level_AAA_n": 75,
+   "level_AAA_bias": 2.279509333333334,
+   "level_AAA_cov": 0.28,
+   "level_AAA_pbustgap": 0.03385157409276951,
+   "age_<19_n": 12,
+   "age_<19_bias": 0.8020000000000005,
+   "age_<19_cov": 0.9166666666666666,
+   "age_<19_pbustgap": -0.09456390534194925,
+   "age_19-20_n": 54,
+   "age_19-20_bias": 1.1836222222222226,
+   "age_19-20_cov": 0.6666666666666666,
+   "age_19-20_pbustgap": -0.17020237686187167,
+   "age_21-22_n": 109,
+   "age_21-22_bias": 1.6191155963302755,
+   "age_21-22_cov": 0.47706422018348627,
+   "age_21-22_pbustgap": -0.016308356081398023,
+   "age_23-24_n": 63,
+   "age_23-24_bias": 0.9260952380952384,
+   "age_23-24_cov": 0.3492063492063492,
+   "age_23-24_pbustgap": 0.047313274434247155,
+   "age_25+_bias": null,
+   "age_25+_cov": null,
+   "age_25+_pbustgap": null,
+   "age_25+_n": 4,
+   "acq_IFA_n": 82,
+   "acq_IFA_bias": 1.7072243902439026,
+   "acq_IFA_cov": 0.5365853658536586,
+   "acq_IFA_pbustgap": -0.003442948193850437,
+   "acq_college_n": 61,
+   "acq_college_bias": 1.7495606557377053,
+   "acq_college_cov": 0.4918032786885246,
+   "acq_college_pbustgap": -0.061099878570338606,
+   "acq_HS_n": 98,
+   "acq_HS_bias": 0.5614204081632657,
+   "acq_HS_cov": 0.4897959183673469,
+   "acq_HS_pbustgap": -0.04187583930475408,
+   "acq_unknown_bias": null,
+   "acq_unknown_cov": null,
+   "acq_unknown_pbustgap": null,
+   "acq_unknown_n": 1
+  },
+  "pit": {
+   "level_A_n": 19,
+   "level_A_bias": 0.6730105263157895,
+   "level_A_cov": 0.5789473684210527,
+   "level_A_pbustgap": -0.1402118728355759,
+   "level_A+_n": 58,
+   "level_A+_bias": -0.012531034482758687,
+   "level_A+_cov": 0.4827586206896552,
+   "level_A+_pbustgap": -0.003912284454617665,
+   "level_AA_n": 121,
+   "level_AA_bias": 0.04452561983471055,
+   "level_AA_cov": 0.47107438016528924,
+   "level_AA_pbustgap": 0.11336313009966437,
+   "level_AAA_n": 65,
+   "level_AAA_bias": 0.10641230769230753,
+   "level_AAA_cov": 0.46153846153846156,
+   "level_AAA_pbustgap": 0.20585118718134043,
+   "age_<19_bias": null,
+   "age_<19_cov": null,
+   "age_<19_pbustgap": null,
+   "age_<19_n": 2,
+   "age_19-20_n": 33,
+   "age_19-20_bias": -0.684727272727273,
+   "age_19-20_cov": 0.6666666666666666,
+   "age_19-20_pbustgap": -0.15902082130475648,
+   "age_21-22_n": 136,
+   "age_21-22_bias": 0.23580588235294103,
+   "age_21-22_cov": 0.47794117647058826,
+   "age_21-22_pbustgap": 0.018932991292126333,
+   "age_23-24_n": 88,
+   "age_23-24_bias": 0.00922272727272714,
+   "age_23-24_cov": 0.4318181818181818,
+   "age_23-24_pbustgap": 0.2449077362292469,
+   "age_25+_n": 10,
+   "age_25+_bias": 0.8292399999999998,
+   "age_25+_cov": 0.5,
+   "age_25+_pbustgap": 0.3556779748875647,
+   "acq_IFA_n": 93,
+   "acq_IFA_bias": -0.6580731182795699,
+   "acq_IFA_cov": 0.40860215053763443,
+   "acq_IFA_pbustgap": -0.048310140369999366,
+   "acq_college_n": 70,
+   "acq_college_bias": 0.657342857142857,
+   "acq_college_cov": 0.42857142857142855,
+   "acq_college_pbustgap": 0.14532402363237606,
+   "acq_HS_n": 106,
+   "acq_HS_bias": 0.29702641509433947,
+   "acq_HS_cov": 0.6037735849056604,
+   "acq_HS_pbustgap": 0.15234424534709423,
+   "acq_unknown_bias": null,
+   "acq_unknown_cov": null,
+   "acq_unknown_pbustgap": null,
+   "acq_unknown_n": 0
+  }
+ },
+ "per_fold": {
+  "hit": {
+   "2016": {
+    "level_A_bias": null,
+    "level_A_cov": null,
+    "level_A_pbustgap": null,
+    "level_A_n": 3,
+    "level_A+_bias": null,
+    "level_A+_cov": null,
+    "level_A+_pbustgap": null,
+    "level_A+_n": 2,
+    "level_AA_bias": null,
+    "level_AA_cov": null,
+    "level_AA_pbustgap": null,
+    "level_AA_n": 6,
+    "level_AAA_bias": null,
+    "level_AAA_cov": null,
+    "level_AAA_pbustgap": null,
+    "level_AAA_n": 0,
+    "age_<19_bias": null,
+    "age_<19_cov": null,
+    "age_<19_pbustgap": null,
+    "age_<19_n": 0,
+    "age_19-20_bias": null,
+    "age_19-20_cov": null,
+    "age_19-20_pbustgap": null,
+    "age_19-20_n": 6,
+    "age_21-22_bias": null,
+    "age_21-22_cov": null,
+    "age_21-22_pbustgap": null,
+    "age_21-22_n": 5,
+    "age_23-24_bias": null,
+    "age_23-24_cov": null,
+    "age_23-24_pbustgap": null,
+    "age_23-24_n": 0,
+    "age_25+_bias": null,
+    "age_25+_cov": null,
+    "age_25+_pbustgap": null,
+    "age_25+_n": 0,
+    "acq_IFA_bias": null,
+    "acq_IFA_cov": null,
+    "acq_IFA_pbustgap": null,
+    "acq_IFA_n": 4,
+    "acq_college_bias": null,
+    "acq_college_cov": null,
+    "acq_college_pbustgap": null,
+    "acq_college_n": 0,
+    "acq_HS_bias": null,
+    "acq_HS_cov": null,
+    "acq_HS_pbustgap": null,
+    "acq_HS_n": 7,
+    "acq_unknown_bias": null,
+    "acq_unknown_cov": null,
+    "acq_unknown_pbustgap": null,
+    "acq_unknown_n": 0
+   },
+   "2017": {
+    "level_A_bias": null,
+    "level_A_cov": null,
+    "level_A_pbustgap": null,
+    "level_A_n": 3,
+    "level_A+_bias": null,
+    "level_A+_cov": null,
+    "level_A+_pbustgap": null,
+    "level_A+_n": 6,
+    "level_AA_n": 16,
+    "level_AA_bias": -0.5517249999999996,
+    "level_AA_cov": 0.375,
+    "level_AA_pbustgap": -0.309544274742574,
+    "level_AAA_bias": null,
+    "level_AAA_cov": null,
+    "level_AAA_pbustgap": null,
+    "level_AAA_n": 4,
+    "age_<19_bias": null,
+    "age_<19_cov": null,
+    "age_<19_pbustgap": null,
+    "age_<19_n": 0,
+    "age_19-20_n": 14,
+    "age_19-20_bias": 1.2077428571428577,
+    "age_19-20_cov": 0.5714285714285714,
+    "age_19-20_pbustgap": -0.277918404747995,
+    "age_21-22_n": 16,
+    "age_21-22_bias": 0.19235000000000027,
+    "age_21-22_cov": 0.3125,
+    "age_21-22_pbustgap": -0.23289201387290237,
+    "age_23-24_bias": null,
+    "age_23-24_cov": null,
+    "age_23-24_pbustgap": null,
+    "age_23-24_n": 0,
+    "age_25+_bias": null,
+    "age_25+_cov": null,
+    "age_25+_pbustgap": null,
+    "age_25+_n": 0,
+    "acq_IFA_n": 13,
+    "acq_IFA_bias": 0.11729230769230815,
+    "acq_IFA_cov": 0.46153846153846156,
+    "acq_IFA_pbustgap": -0.28696061033014153,
+    "acq_college_bias": null,
+    "acq_college_cov": null,
+    "acq_college_pbustgap": null,
+    "acq_college_n": 4,
+    "acq_HS_n": 13,
+    "acq_HS_bias": 0.020092307692308076,
+    "acq_HS_cov": 0.38461538461538464,
+    "acq_HS_pbustgap": -0.35965086240928357,
+    "acq_unknown_bias": null,
+    "acq_unknown_cov": null,
+    "acq_unknown_pbustgap": null,
+    "acq_unknown_n": 0
+   },
+   "2018": {
+    "level_A_bias": null,
+    "level_A_cov": null,
+    "level_A_pbustgap": null,
+    "level_A_n": 2,
+    "level_A+_bias": null,
+    "level_A+_cov": null,
+    "level_A+_pbustgap": null,
+    "level_A+_n": 2,
+    "level_AA_n": 14,
+    "level_AA_bias": 3.9857428571428577,
+    "level_AA_cov": 0.42857142857142855,
+    "level_AA_pbustgap": 0.5442940942307197,
+    "level_AAA_n": 17,
+    "level_AAA_bias": 1.7839529411764714,
+    "level_AAA_cov": 0.17647058823529413,
+    "level_AAA_pbustgap": 0.03315961925955424,
+    "age_<19_bias": null,
+    "age_<19_cov": null,
+    "age_<19_pbustgap": null,
+    "age_<19_n": 2,
+    "age_19-20_bias": null,
+    "age_19-20_cov": null,
+    "age_19-20_pbustgap": null,
+    "age_19-20_n": 5,
+    "age_21-22_n": 25,
+    "age_21-22_bias": 2.4408480000000004,
+    "age_21-22_cov": 0.32,
+    "age_21-22_pbustgap": 0.37159459371733644,
+    "age_23-24_bias": null,
+    "age_23-24_cov": null,
+    "age_23-24_pbustgap": null,
+    "age_23-24_n": 5,
+    "age_25+_bias": null,
+    "age_25+_cov": null,
+    "age_25+_pbustgap": null,
+    "age_25+_n": 0,
+    "acq_IFA_n": 11,
+    "acq_IFA_bias": 3.544981818181819,
+    "acq_IFA_cov": 0.36363636363636365,
+    "acq_IFA_pbustgap": 0.20496291165702812,
+    "acq_college_bias": null,
+    "acq_college_cov": null,
+    "acq_college_pbustgap": null,
+    "acq_college_n": 6,
+    "acq_HS_n": 19,
+    "acq_HS_bias": 1.5587157894736847,
+    "acq_HS_cov": 0.42105263157894735,
+    "acq_HS_pbustgap": 0.2520056459606374,
+    "acq_unknown_bias": null,
+    "acq_unknown_cov": null,
+    "acq_unknown_pbustgap": null,
+    "acq_unknown_n": 1
+   },
+   "2019": {
+    "level_A_n": 9,
+    "level_A_bias": -0.11391111111111075,
+    "level_A_cov": 0.8888888888888888,
+    "level_A_pbustgap": -0.3874513580969956,
+    "level_A+_bias": null,
+    "level_A+_cov": null,
+    "level_A+_pbustgap": null,
+    "level_A+_n": 4,
+    "level_AA_n": 34,
+    "level_AA_bias": 1.0227764705882356,
+    "level_AA_cov": 0.4411764705882353,
+    "level_AA_pbustgap": 0.04371295298430422,
+    "level_AAA_n": 31,
+    "level_AAA_bias": 3.1701677419354843,
+    "level_AAA_cov": 0.2903225806451613,
+    "level_AAA_pbustgap": 0.030258777042343143,
+    "age_<19_bias": null,
+    "age_<19_cov": null,
+    "age_<19_pbustgap": null,
+    "age_<19_n": 3,
+    "age_19-20_n": 9,
+    "age_19-20_bias": 1.2648,
+    "age_19-20_cov": 0.7777777777777778,
+    "age_19-20_pbustgap": -0.287231467539961,
+    "age_21-22_n": 31,
+    "age_21-22_bias": 1.6289935483870974,
+    "age_21-22_cov": 0.5161290322580645,
+    "age_21-22_pbustgap": -0.059682080663090886,
+    "age_23-24_n": 39,
+    "age_23-24_bias": 1.7926256410256416,
+    "age_23-24_cov": 0.3076923076923077,
+    "age_23-24_pbustgap": 0.08787750774157,
+    "age_25+_bias": null,
+    "age_25+_cov": null,
+    "age_25+_pbustgap": null,
+    "age_25+_n": 0,
+    "acq_IFA_n": 19,
+    "acq_IFA_bias": 2.9598736842105264,
+    "acq_IFA_cov": 0.5789473684210527,
+    "acq_IFA_pbustgap": 0.1778536931222895,
+    "acq_college_n": 29,
+    "acq_college_bias": 2.3840827586206905,
+    "acq_college_cov": 0.4482758620689655,
+    "acq_college_pbustgap": -0.08269912209878183,
+    "acq_HS_n": 34,
+    "acq_HS_bias": 0.08480000000000043,
+    "acq_HS_cov": 0.4117647058823529,
+    "acq_HS_pbustgap": -0.07790109201102446,
+    "acq_unknown_bias": null,
+    "acq_unknown_cov": null,
+    "acq_unknown_pbustgap": null,
+    "acq_unknown_n": 0
+   },
+   "2020": {
+    "level_A_n": 12,
+    "level_A_bias": -0.8117333333333334,
+    "level_A_cov": 1,
+    "level_A_pbustgap": -0.20171299179390356,
+    "level_A+_n": 11,
+    "level_A+_bias": -1.5138545454545456,
+    "level_A+_cov": 0.5454545454545454,
+    "level_A+_pbustgap": -0.3220690993410548,
+    "level_AA_n": 28,
+    "level_AA_bias": 1.2711142857142856,
+    "level_AA_cov": 0.6071428571428571,
+    "level_AA_pbustgap": -0.07684910003495904,
+    "level_AAA_n": 23,
+    "level_AAA_bias": 0.6374260869565216,
+    "level_AAA_cov": 0.30434782608695654,
+    "level_AAA_pbustgap": 0.017683398969471686,
+    "age_<19_bias": null,
+    "age_<19_cov": null,
+    "age_<19_pbustgap": null,
+    "age_<19_n": 7,
+    "age_19-20_n": 20,
+    "age_19-20_bias": -0.31088000000000005,
+    "age_19-20_cov": 0.65,
+    "age_19-20_pbustgap": -0.16528743623680692,
+    "age_21-22_n": 32,
+    "age_21-22_bias": 0.9067875,
+    "age_21-22_cov": 0.625,
+    "age_21-22_pbustgap": -0.15397572504045248,
+    "age_23-24_n": 19,
+    "age_23-24_bias": -0.36111578947368433,
+    "age_23-24_cov": 0.47368421052631576,
+    "age_23-24_pbustgap": -0.026296867794956102,
+    "age_25+_bias": null,
+    "age_25+_cov": null,
+    "age_25+_pbustgap": null,
+    "age_25+_n": 4,
+    "acq_IFA_n": 35,
+    "acq_IFA_bias": 1.038582857142857,
+    "acq_IFA_cov": 0.5714285714285714,
+    "acq_IFA_pbustgap": -0.07517240808567016,
+    "acq_college_n": 22,
+    "acq_college_bias": -0.30198181818181824,
+    "acq_college_cov": 0.6363636363636364,
+    "acq_college_pbustgap": -0.18829872405328685,
+    "acq_HS_n": 25,
+    "acq_HS_bias": -0.6010240000000001,
+    "acq_HS_cov": 0.64,
+    "acq_HS_pbustgap": -0.059059571811554634,
+    "acq_unknown_bias": null,
+    "acq_unknown_cov": null,
+    "acq_unknown_pbustgap": null,
+    "acq_unknown_n": 0
+   }
+  },
+  "pit": {
+   "2016": {
+    "level_A_bias": null,
+    "level_A_cov": null,
+    "level_A_pbustgap": null,
+    "level_A_n": 1,
+    "level_A+_bias": null,
+    "level_A+_cov": null,
+    "level_A+_pbustgap": null,
+    "level_A+_n": 3,
+    "level_AA_bias": null,
+    "level_AA_cov": null,
+    "level_AA_pbustgap": null,
+    "level_AA_n": 5,
+    "level_AAA_bias": null,
+    "level_AAA_cov": null,
+    "level_AAA_pbustgap": null,
+    "level_AAA_n": 1,
+    "age_<19_bias": null,
+    "age_<19_cov": null,
+    "age_<19_pbustgap": null,
+    "age_<19_n": 1,
+    "age_19-20_bias": null,
+    "age_19-20_cov": null,
+    "age_19-20_pbustgap": null,
+    "age_19-20_n": 4,
+    "age_21-22_bias": null,
+    "age_21-22_cov": null,
+    "age_21-22_pbustgap": null,
+    "age_21-22_n": 5,
+    "age_23-24_bias": null,
+    "age_23-24_cov": null,
+    "age_23-24_pbustgap": null,
+    "age_23-24_n": 0,
+    "age_25+_bias": null,
+    "age_25+_cov": null,
+    "age_25+_pbustgap": null,
+    "age_25+_n": 0,
+    "acq_IFA_bias": null,
+    "acq_IFA_cov": null,
+    "acq_IFA_pbustgap": null,
+    "acq_IFA_n": 5,
+    "acq_college_bias": null,
+    "acq_college_cov": null,
+    "acq_college_pbustgap": null,
+    "acq_college_n": 0,
+    "acq_HS_bias": null,
+    "acq_HS_cov": null,
+    "acq_HS_pbustgap": null,
+    "acq_HS_n": 5,
+    "acq_unknown_bias": null,
+    "acq_unknown_cov": null,
+    "acq_unknown_pbustgap": null,
+    "acq_unknown_n": 0
+   },
+   "2017": {
+    "level_A_bias": null,
+    "level_A_cov": null,
+    "level_A_pbustgap": null,
+    "level_A_n": 5,
+    "level_A+_n": 9,
+    "level_A+_bias": 1.6758222222222223,
+    "level_A+_cov": 0.5555555555555556,
+    "level_A+_pbustgap": 0.12790818035424623,
+    "level_AA_n": 9,
+    "level_AA_bias": -1.7659111111111114,
+    "level_AA_cov": 0.3333333333333333,
+    "level_AA_pbustgap": -0.4038080079205749,
+    "level_AAA_bias": null,
+    "level_AAA_cov": null,
+    "level_AAA_pbustgap": null,
+    "level_AAA_n": 3,
+    "age_<19_bias": null,
+    "age_<19_cov": null,
+    "age_<19_pbustgap": null,
+    "age_<19_n": 0,
+    "age_19-20_bias": null,
+    "age_19-20_cov": null,
+    "age_19-20_pbustgap": null,
+    "age_19-20_n": 4,
+    "age_21-22_n": 22,
+    "age_21-22_bias": 0.49059999999999987,
+    "age_21-22_cov": 0.45454545454545453,
+    "age_21-22_pbustgap": -0.02881103532345275,
+    "age_23-24_bias": null,
+    "age_23-24_cov": null,
+    "age_23-24_pbustgap": null,
+    "age_23-24_n": 0,
+    "age_25+_bias": null,
+    "age_25+_cov": null,
+    "age_25+_pbustgap": null,
+    "age_25+_n": 0,
+    "acq_IFA_n": 14,
+    "acq_IFA_bias": -1.2246285714285714,
+    "acq_IFA_cov": 0.2857142857142857,
+    "acq_IFA_pbustgap": -0.37360092407927065,
+    "acq_college_bias": null,
+    "acq_college_cov": null,
+    "acq_college_pbustgap": null,
+    "acq_college_n": 1,
+    "acq_HS_n": 11,
+    "acq_HS_bias": 3.525563636363636,
+    "acq_HS_cov": 0.5454545454545454,
+    "acq_HS_pbustgap": 0.3328097722489458,
+    "acq_unknown_bias": null,
+    "acq_unknown_cov": null,
+    "acq_unknown_pbustgap": null,
+    "acq_unknown_n": 0
+   },
+   "2018": {
+    "level_A_bias": null,
+    "level_A_cov": null,
+    "level_A_pbustgap": null,
+    "level_A_n": 5,
+    "level_A+_n": 11,
+    "level_A+_bias": 0.8004363636363636,
+    "level_A+_cov": 0.5454545454545454,
+    "level_A+_pbustgap": 0.08120247382811341,
+    "level_AA_n": 24,
+    "level_AA_bias": 0.3124166666666667,
+    "level_AA_cov": 0.5416666666666666,
+    "level_AA_pbustgap": 0.06817971052867766,
+    "level_AAA_bias": null,
+    "level_AAA_cov": null,
+    "level_AAA_pbustgap": null,
+    "level_AAA_n": 5,
+    "age_<19_bias": null,
+    "age_<19_cov": null,
+    "age_<19_pbustgap": null,
+    "age_<19_n": 0,
+    "age_19-20_n": 9,
+    "age_19-20_bias": -2.1197777777777778,
+    "age_19-20_cov": 0.8888888888888888,
+    "age_19-20_pbustgap": -0.3958797931618879,
+    "age_21-22_n": 31,
+    "age_21-22_bias": 0.7384129032258064,
+    "age_21-22_cov": 0.4838709677419355,
+    "age_21-22_pbustgap": 0.036693629229818225,
+    "age_23-24_bias": null,
+    "age_23-24_cov": null,
+    "age_23-24_pbustgap": null,
+    "age_23-24_n": 6,
+    "age_25+_bias": null,
+    "age_25+_cov": null,
+    "age_25+_pbustgap": null,
+    "age_25+_n": 0,
+    "acq_IFA_n": 16,
+    "acq_IFA_bias": 0.5270000000000001,
+    "acq_IFA_cov": 0.5,
+    "acq_IFA_pbustgap": -0.03369600669133255,
+    "acq_college_bias": null,
+    "acq_college_cov": null,
+    "acq_college_pbustgap": null,
+    "acq_college_n": 5,
+    "acq_HS_n": 25,
+    "acq_HS_bias": -1.0512000000000001,
+    "acq_HS_cov": 0.72,
+    "acq_HS_pbustgap": 0.01348617844884159,
+    "acq_unknown_bias": null,
+    "acq_unknown_cov": null,
+    "acq_unknown_pbustgap": null,
+    "acq_unknown_n": 0
+   },
+   "2019": {
+    "level_A_bias": null,
+    "level_A_cov": null,
+    "level_A_pbustgap": null,
+    "level_A_n": 3,
+    "level_A+_n": 18,
+    "level_A+_bias": -0.9474666666666666,
+    "level_A+_cov": 0.5,
+    "level_A+_pbustgap": 0.02314594523389013,
+    "level_AA_n": 35,
+    "level_AA_bias": 0.38619428571428566,
+    "level_AA_cov": 0.4857142857142857,
+    "level_AA_pbustgap": 0.2780876782298461,
+    "level_AAA_n": 20,
+    "level_AAA_bias": 1.74576,
+    "level_AAA_cov": 0.55,
+    "level_AAA_pbustgap": 0.34726283685510434,
+    "age_<19_bias": null,
+    "age_<19_cov": null,
+    "age_<19_pbustgap": null,
+    "age_<19_n": 1,
+    "age_19-20_n": 10,
+    "age_19-20_bias": 0.2682400000000002,
+    "age_19-20_cov": 0.8,
+    "age_19-20_pbustgap": 0.21725137864490834,
+    "age_21-22_n": 40,
+    "age_21-22_bias": 0.10918999999999994,
+    "age_21-22_cov": 0.525,
+    "age_21-22_pbustgap": 0.07601002257116052,
+    "age_23-24_n": 28,
+    "age_23-24_bias": 1.2004714285714286,
+    "age_23-24_cov": 0.39285714285714285,
+    "age_23-24_pbustgap": 0.4380692873471293,
+    "age_25+_bias": null,
+    "age_25+_cov": null,
+    "age_25+_pbustgap": null,
+    "age_25+_n": 0,
+    "acq_IFA_n": 26,
+    "acq_IFA_bias": -0.3416307692307692,
+    "acq_IFA_cov": 0.6153846153846154,
+    "acq_IFA_pbustgap": 0.17892184620498097,
+    "acq_college_n": 21,
+    "acq_college_bias": 1.0113333333333334,
+    "acq_college_cov": 0.2857142857142857,
+    "acq_college_pbustgap": 0.12804212130166492,
+    "acq_HS_n": 32,
+    "acq_HS_bias": 0.8382624999999999,
+    "acq_HS_cov": 0.59375,
+    "acq_HS_pbustgap": 0.29733125627153567,
+    "acq_unknown_bias": null,
+    "acq_unknown_cov": null,
+    "acq_unknown_pbustgap": null,
+    "acq_unknown_n": 0
+   },
+   "2020": {
+    "level_A_bias": null,
+    "level_A_cov": null,
+    "level_A_pbustgap": null,
+    "level_A_n": 5,
+    "level_A+_n": 17,
+    "level_A+_bias": -0.8688705882352944,
+    "level_A+_cov": 0.4117647058823529,
+    "level_A+_pbustgap": -0.17214967156966243,
+    "level_AA_n": 48,
+    "level_AA_bias": -0.05833333333333361,
+    "level_AA_cov": 0.3958333333333333,
+    "level_AA_pbustgap": 0.11390575515355261,
+    "level_AAA_n": 36,
+    "level_AAA_bias": -0.7197000000000002,
+    "level_AAA_cov": 0.3611111111111111,
+    "level_AAA_pbustgap": 0.1311177819950381,
+    "age_<19_bias": null,
+    "age_<19_cov": null,
+    "age_<19_pbustgap": null,
+    "age_<19_n": 0,
+    "age_19-20_bias": null,
+    "age_19-20_cov": null,
+    "age_19-20_pbustgap": null,
+    "age_19-20_n": 6,
+    "age_21-22_n": 38,
+    "age_21-22_bias": -0.25490526315789497,
+    "age_21-22_cov": 0.39473684210526316,
+    "age_21-22_pbustgap": -0.0384957564626176,
+    "age_23-24_n": 54,
+    "age_23-24_bias": -0.5446222222222225,
+    "age_23-24_cov": 0.4074074074074074,
+    "age_23-24_pbustgap": 0.10549092867388876,
+    "age_25+_n": 10,
+    "age_25+_bias": 0.8292399999999998,
+    "age_25+_cov": 0.5,
+    "age_25+_pbustgap": 0.3556779748875647,
+    "acq_IFA_n": 32,
+    "acq_IFA_bias": -1.3372375000000003,
+    "acq_IFA_cov": 0.21875,
+    "acq_IFA_pbustgap": -0.09013333049012184,
+    "acq_college_n": 43,
+    "acq_college_bias": 0.17784186046511596,
+    "acq_college_cov": 0.4883720930232558,
+    "acq_college_pbustgap": 0.14265574379541524,
+    "acq_HS_n": 33,
+    "acq_HS_bias": -0.49512727272727297,
+    "acq_HS_cov": 0.5151515151515151,
+    "acq_HS_pbustgap": 0.06830712705294206,
+    "acq_unknown_bias": null,
+    "acq_unknown_cov": null,
+    "acq_unknown_pbustgap": null,
+    "acq_unknown_n": 0
+   }
+  }
+ },
+ "boot_ci95": {
+  "hit": {
+   "level_A_n": [
+    19.0,
+    40.0
+   ],
+   "level_A_bias": [
+    -0.8951,
+    2.6981
+   ],
+   "level_A_cov": [
+    0.7058,
+    0.9697
+   ],
+   "level_A_pbustgap": [
+    -0.4206,
+    -0.0692
+   ],
+   "level_A+_n": [
+    16.0,
+    35.0
+   ],
+   "level_A+_bias": [
+    -1.3607,
+    3.0382
+   ],
+   "level_A+_cov": [
+    0.3333,
+    0.75
+   ],
+   "level_A+_pbustgap": [
+    -0.2728,
+    0.2266
+   ],
+   "level_AA_n": [
+    81.0,
+    116.0
+   ],
+   "level_AA_bias": [
+    0.3492,
+    2.5432
+   ],
+   "level_AA_cov": [
+    0.3839,
+    0.5938
+   ],
+   "level_AA_pbustgap": [
+    -0.0939,
+    0.1692
+   ],
+   "level_AAA_n": [
+    58.0,
+    92.0
+   ],
+   "level_AAA_bias": [
+    0.8428,
+    3.7557
+   ],
+   "level_AAA_cov": [
+    0.1899,
+    0.4107
+   ],
+   "level_AAA_pbustgap": [
+    -0.0977,
+    0.1977
+   ],
+   "age_<19_n": [
+    6.0,
+    19.0
+   ],
+   "age_<19_bias": [
+    -1.2569,
+    4.9871
+   ],
+   "age_<19_cov": [
+    0.75,
+    1.0
+   ],
+   "age_<19_pbustgap": [
+    -0.4895,
+    -0.0015
+   ],
+   "age_19-20_n": [
+    40.0,
+    69.0
+   ],
+   "age_19-20_bias": [
+    -0.2059,
+    2.8216
+   ],
+   "age_19-20_cov": [
+    0.5,
+    0.7708
+   ],
+   "age_19-20_pbustgap": [
+    -0.2896,
+    0.0482
+   ],
+   "age_21-22_n": [
+    90.0,
+    130.0
+   ],
+   "age_21-22_bias": [
+    0.5781,
+    2.7077
+   ],
+   "age_21-22_cov": [
+    0.3917,
+    0.5888
+   ],
+   "age_21-22_pbustgap": [
+    -0.108,
+    0.1326
+   ],
+   "age_23-24_n": [
+    48.0,
+    78.0
+   ],
+   "age_23-24_bias": [
+    -0.3681,
+    2.276
+   ],
+   "age_23-24_cov": [
+    0.2321,
+    0.4715
+   ],
+   "age_23-24_pbustgap": [
+    -0.1614,
+    0.2347
+   ],
+   "age_25+_bias": [
+    -1.4583,
+    4.2623
+   ],
+   "age_25+_cov": [
+    0.0,
+    0.5
+   ],
+   "age_25+_pbustgap": [
+    -0.3527,
+    0.6112
+   ],
+   "age_25+_n": [
+    1.0,
+    8.0
+   ],
+   "acq_IFA_n": [
+    64.0,
+    99.0
+   ],
+   "acq_IFA_bias": [
+    0.5306,
+    2.9887
+   ],
+   "acq_IFA_cov": [
+    0.4204,
+    0.6447
+   ],
+   "acq_IFA_pbustgap": [
+    -0.1263,
+    0.1407
+   ],
+   "acq_college_n": [
+    46.0,
+    77.0
+   ],
+   "acq_college_bias": [
+    0.3678,
+    3.2064
+   ],
+   "acq_college_cov": [
+    0.3499,
+    0.6034
+   ],
+   "acq_college_pbustgap": [
+    -0.2031,
+    0.1221
+   ],
+   "acq_HS_n": [
+    80.0,
+    117.0
+   ],
+   "acq_HS_bias": [
+    -0.3433,
+    1.5773
+   ],
+   "acq_HS_cov": [
+    0.398,
+    0.6075
+   ],
+   "acq_HS_pbustgap": [
+    -0.1637,
+    0.1087
+   ],
+   "acq_unknown_bias": null,
+   "acq_unknown_cov": null,
+   "acq_unknown_pbustgap": null,
+   "acq_unknown_n": [
+    0.0,
+    3.0
+   ]
+  },
+  "pit": {
+   "level_A_n": [
+    11.0,
+    27.0
+   ],
+   "level_A_bias": [
+    -1.7565,
+    3.1364
+   ],
+   "level_A_cov": [
+    0.3571,
+    0.8182
+   ],
+   "level_A_pbustgap": [
+    -0.4068,
+    0.0979
+   ],
+   "level_A+_n": [
+    44.0,
+    73.0
+   ],
+   "level_A+_bias": [
+    -1.0036,
+    1.0034
+   ],
+   "level_A+_cov": [
+    0.3396,
+    0.6094
+   ],
+   "level_A+_pbustgap": [
+    -0.1656,
+    0.1836
+   ],
+   "level_AA_n": [
+    101.0,
+    142.0
+   ],
+   "level_AA_bias": [
+    -0.5984,
+    0.7927
+   ],
+   "level_AA_cov": [
+    0.3694,
+    0.5476
+   ],
+   "level_AA_pbustgap": [
+    0.0074,
+    0.2126
+   ],
+   "level_AAA_n": [
+    50.0,
+    81.0
+   ],
+   "level_AAA_bias": [
+    -0.7571,
+    1.2495
+   ],
+   "level_AAA_cov": [
+    0.3276,
+    0.5733
+   ],
+   "level_AAA_pbustgap": [
+    0.0414,
+    0.3414
+   ],
+   "age_<19_bias": null,
+   "age_<19_cov": null,
+   "age_<19_pbustgap": null,
+   "age_<19_n": [
+    0.0,
+    5.0
+   ],
+   "age_19-20_n": [
+    23.0,
+    44.0
+   ],
+   "age_19-20_bias": [
+    -2.2176,
+    0.9809
+   ],
+   "age_19-20_cov": [
+    0.4827,
+    0.8148
+   ],
+   "age_19-20_pbustgap": [
+    -0.3221,
+    0.0477
+   ],
+   "age_21-22_n": [
+    113.0,
+    159.0
+   ],
+   "age_21-22_bias": [
+    -0.4722,
+    1.0506
+   ],
+   "age_21-22_cov": [
+    0.3741,
+    0.5503
+   ],
+   "age_21-22_pbustgap": [
+    -0.08,
+    0.119
+   ],
+   "age_23-24_n": [
+    70.0,
+    106.0
+   ],
+   "age_23-24_bias": [
+    -0.5536,
+    0.6013
+   ],
+   "age_23-24_cov": [
+    0.3239,
+    0.5366
+   ],
+   "age_23-24_pbustgap": [
+    0.0954,
+    0.3543
+   ],
+   "age_25+_bias": [
+    -1.3065,
+    3.9366
+   ],
+   "age_25+_cov": [
+    0.2143,
+    0.7857
+   ],
+   "age_25+_pbustgap": [
+    -0.0176,
+    0.6503
+   ],
+   "age_25+_n": [
+    4.0,
+    17.0
+   ],
+   "acq_IFA_n": [
+    75.0,
+    112.0
+   ],
+   "acq_IFA_bias": [
+    -1.2939,
+    0.0649
+   ],
+   "acq_IFA_cov": [
+    0.3043,
+    0.51
+   ],
+   "acq_IFA_pbustgap": [
+    -0.1596,
+    0.0768
+   ],
+   "acq_college_n": [
+    54.0,
+    86.0
+   ],
+   "acq_college_bias": [
+    -0.4087,
+    1.9461
+   ],
+   "acq_college_cov": [
+    0.3034,
+    0.5417
+   ],
+   "acq_college_pbustgap": [
+    0.0031,
+    0.2739
+   ],
+   "acq_HS_n": [
+    86.0,
+    125.025
+   ],
+   "acq_HS_bias": [
+    -0.4551,
+    1.0621
+   ],
+   "acq_HS_cov": [
+    0.49,
+    0.681
+   ],
+   "acq_HS_pbustgap": [
+    0.0242,
+    0.2543
+   ],
+   "acq_unknown_bias": null,
+   "acq_unknown_cov": null,
+   "acq_unknown_pbustgap": null,
+   "acq_unknown_n": [
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "zero_info_control_permuted_grade_ci95": {
+  "hit": {
+   "level_A_n": [
+    19.0,
+    40.0
+   ],
+   "level_A_bias": [
+    -0.8142,
+    4.0345
+   ],
+   "level_A_cov": [
+    0.56,
+    0.88
+   ],
+   "level_A_pbustgap": [
+    -0.2579,
+    0.1652
+   ],
+   "level_A+_n": [
+    16.0,
+    35.0
+   ],
+   "level_A+_bias": [
+    -0.7391,
+    4.393
+   ],
+   "level_A+_cov": [
+    0.3124,
+    0.7143
+   ],
+   "level_A+_pbustgap": [
+    -0.0085,
+    0.4851
+   ],
+   "level_AA_n": [
+    81.0,
+    116.0
+   ],
+   "level_AA_bias": [
+    1.3036,
+    3.8631
+   ],
+   "level_AA_cov": [
+    0.3125,
+    0.5
+   ],
+   "level_AA_pbustgap": [
+    0.1834,
+    0.4188
+   ],
+   "level_AAA_n": [
+    58.0,
+    92.0
+   ],
+   "level_AAA_bias": [
+    2.0943,
+    5.4266
+   ],
+   "level_AAA_cov": [
+    0.1282,
+    0.3143
+   ],
+   "level_AAA_pbustgap": [
+    0.1955,
+    0.4596
+   ],
+   "age_<19_n": [
+    6.0,
+    19.0
+   ],
+   "age_<19_bias": [
+    -2.4626,
+    5.7865
+   ],
+   "age_<19_cov": [
+    0.6923,
+    1.0
+   ],
+   "age_<19_pbustgap": [
+    -0.4511,
+    0.0448
+   ],
+   "age_19-20_n": [
+    40.0,
+    69.0
+   ],
+   "age_19-20_bias": [
+    2.0286,
+    6.0687
+   ],
+   "age_19-20_cov": [
+    0.3279,
+    0.5893
+   ],
+   "age_19-20_pbustgap": [
+    0.1213,
+    0.4594
+   ],
+   "age_21-22_n": [
+    90.0,
+    130.0
+   ],
+   "age_21-22_bias": [
+    1.3594,
+    3.7931
+   ],
+   "age_21-22_cov": [
+    0.322,
+    0.5043
+   ],
+   "age_21-22_pbustgap": [
+    0.1657,
+    0.3807
+   ],
+   "age_23-24_n": [
+    48.0,
+    78.0
+   ],
+   "age_23-24_bias": [
+    -0.3646,
+    2.4722
+   ],
+   "age_23-24_cov": [
+    0.2254,
+    0.463
+   ],
+   "age_23-24_pbustgap": [
+    0.0116,
+    0.3182
+   ],
+   "age_25+_bias": [
+    -2.2397,
+    3.5661
+   ],
+   "age_25+_cov": [
+    0.0,
+    0.5938
+   ],
+   "age_25+_pbustgap": [
+    -0.2093,
+    0.5843
+   ],
+   "age_25+_n": [
+    1.0,
+    8.0
+   ],
+   "acq_IFA_n": [
+    64.0,
+    99.0
+   ],
+   "acq_IFA_bias": [
+    1.5086,
+    4.5409
+   ],
+   "acq_IFA_cov": [
+    0.3099,
+    0.5238
+   ],
+   "acq_IFA_pbustgap": [
+    0.0911,
+    0.3617
+   ],
+   "acq_college_n": [
+    46.0,
+    77.0
+   ],
+   "acq_college_bias": [
+    1.0792,
+    4.2245
+   ],
+   "acq_college_cov": [
+    0.3333,
+    0.5849
+   ],
+   "acq_college_pbustgap": [
+    0.1214,
+    0.4166
+   ],
+   "acq_HS_n": [
+    80.0,
+    117.0
+   ],
+   "acq_HS_bias": [
+    0.3509,
+    2.7127
+   ],
+   "acq_HS_cov": [
+    0.3255,
+    0.5213
+   ],
+   "acq_HS_pbustgap": [
+    0.0666,
+    0.3023
+   ],
+   "acq_unknown_bias": null,
+   "acq_unknown_cov": null,
+   "acq_unknown_pbustgap": null,
+   "acq_unknown_n": [
+    0.0,
+    3.0
+   ]
+  },
+  "pit": {
+   "level_A_n": [
+    11.0,
+    27.0
+   ],
+   "level_A_bias": [
+    -1.2299,
+    3.6978
+   ],
+   "level_A_cov": [
+    0.3571,
+    0.8
+   ],
+   "level_A_pbustgap": [
+    -0.1967,
+    0.278
+   ],
+   "level_A+_n": [
+    44.0,
+    73.0
+   ],
+   "level_A+_bias": [
+    -0.4789,
+    1.6931
+   ],
+   "level_A+_cov": [
+    0.3182,
+    0.579
+   ],
+   "level_A+_pbustgap": [
+    0.074,
+    0.3502
+   ],
+   "level_AA_n": [
+    101.0,
+    142.0
+   ],
+   "level_AA_bias": [
+    0.0074,
+    1.5181
+   ],
+   "level_AA_cov": [
+    0.312,
+    0.4874
+   ],
+   "level_AA_pbustgap": [
+    0.166,
+    0.3685
+   ],
+   "level_AAA_n": [
+    50.0,
+    81.0
+   ],
+   "level_AAA_bias": [
+    -0.4492,
+    1.6561
+   ],
+   "level_AAA_cov": [
+    0.25,
+    0.4918
+   ],
+   "level_AAA_pbustgap": [
+    0.1165,
+    0.3811
+   ],
+   "age_<19_bias": null,
+   "age_<19_cov": null,
+   "age_<19_pbustgap": null,
+   "age_<19_n": [
+    0.0,
+    5.0
+   ],
+   "age_19-20_n": [
+    23.0,
+    44.0
+   ],
+   "age_19-20_bias": [
+    -0.1974,
+    3.2989
+   ],
+   "age_19-20_cov": [
+    0.3438,
+    0.6876
+   ],
+   "age_19-20_pbustgap": [
+    0.0934,
+    0.4795
+   ],
+   "age_21-22_n": [
+    113.0,
+    159.0
+   ],
+   "age_21-22_bias": [
+    0.1506,
+    1.7585
+   ],
+   "age_21-22_cov": [
+    0.3206,
+    0.4891
+   ],
+   "age_21-22_pbustgap": [
+    0.1074,
+    0.2996
+   ],
+   "age_23-24_n": [
+    70.0,
+    106.0
+   ],
+   "age_23-24_bias": [
+    -0.7767,
+    0.4881
+   ],
+   "age_23-24_cov": [
+    0.321,
+    0.5313
+   ],
+   "age_23-24_pbustgap": [
+    0.1137,
+    0.3375
+   ],
+   "age_25+_bias": [
+    -1.8611,
+    3.6879
+   ],
+   "age_25+_cov": [
+    0.2,
+    0.7829
+   ],
+   "age_25+_pbustgap": [
+    -0.0983,
+    0.5545
+   ],
+   "age_25+_n": [
+    4.0,
+    17.0
+   ],
+   "acq_IFA_n": [
+    75.0,
+    112.0
+   ],
+   "acq_IFA_bias": [
+    -0.7394,
+    0.7711
+   ],
+   "acq_IFA_cov": [
+    0.2872,
+    0.4819
+   ],
+   "acq_IFA_pbustgap": [
+    0.028,
+    0.2445
+   ],
+   "acq_college_n": [
+    54.0,
+    86.0
+   ],
+   "acq_college_bias": [
+    0.0764,
+    2.4861
+   ],
+   "acq_college_cov": [
+    0.2666,
+    0.5075
+   ],
+   "acq_college_pbustgap": [
+    0.1453,
+    0.3955
+   ],
+   "acq_HS_n": [
+    86.0,
+    125.025
+   ],
+   "acq_HS_bias": [
+    0.0436,
+    1.7232
+   ],
+   "acq_HS_cov": [
+    0.4047,
+    0.5941
+   ],
+   "acq_HS_pbustgap": [
+    0.1627,
+    0.3783
+   ],
+   "acq_unknown_bias": null,
+   "acq_unknown_cov": null,
+   "acq_unknown_pbustgap": null,
+   "acq_unknown_n": [
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "permutation_null_permuted_outcome_ci95": {
+  "hit": {
+   "level_A_n": [
+    19.0,
+    40.0
+   ],
+   "level_A_bias": [
+    -2.585,
+    0.8951
+   ],
+   "level_A_cov": [
+    0.5294,
+    0.8667
+   ],
+   "level_A_pbustgap": [
+    -0.4998,
+    -0.05
+   ],
+   "level_A+_n": [
+    16.0,
+    35.0
+   ],
+   "level_A+_bias": [
+    -2.9259,
+    0.8195
+   ],
+   "level_A+_cov": [
+    0.5714,
+    0.9091
+   ],
+   "level_A+_pbustgap": [
+    -0.6076,
+    -0.0993
+   ],
+   "level_AA_n": [
+    81.0,
+    116.0
+   ],
+   "level_AA_bias": [
+    -2.3737,
+    -0.504
+   ],
+   "level_AA_cov": [
+    0.6224,
+    0.8068
+   ],
+   "level_AA_pbustgap": [
+    -0.5152,
+    -0.2104
+   ],
+   "level_AAA_n": [
+    58.0,
+    92.0
+   ],
+   "level_AAA_bias": [
+    -2.8227,
+    -0.5322
+   ],
+   "level_AAA_cov": [
+    0.6104,
+    0.8143
+   ],
+   "level_AAA_pbustgap": [
+    -0.5387,
+    -0.2222
+   ],
+   "age_<19_n": [
+    6.0,
+    19.0
+   ],
+   "age_<19_bias": [
+    -2.1427,
+    2.6189
+   ],
+   "age_<19_cov": [
+    0.5,
+    1.0
+   ],
+   "age_<19_pbustgap": [
+    -0.5193,
+    0.302
+   ],
+   "age_19-20_n": [
+    40.0,
+    69.0
+   ],
+   "age_19-20_bias": [
+    -4.5149,
+    -1.6708
+   ],
+   "age_19-20_cov": [
+    0.4693,
+    0.75
+   ],
+   "age_19-20_pbustgap": [
+    -0.6793,
+    -0.3144
+   ],
+   "age_21-22_n": [
+    90.0,
+    130.0
+   ],
+   "age_21-22_bias": [
+    -2.0671,
+    -0.3726
+   ],
+   "age_21-22_cov": [
+    0.6697,
+    0.8302
+   ],
+   "age_21-22_pbustgap": [
+    -0.4994,
+    -0.2269
+   ],
+   "age_23-24_n": [
+    48.0,
+    78.0
+   ],
+   "age_23-24_bias": [
+    -1.4452,
+    1.0045
+   ],
+   "age_23-24_cov": [
+    0.629,
+    0.8621
+   ],
+   "age_23-24_pbustgap": [
+    -0.435,
+    -0.0319
+   ],
+   "age_25+_bias": [
+    -1.3066,
+    2.6752
+   ],
+   "age_25+_cov": [
+    0.4583,
+    1.0
+   ],
+   "age_25+_pbustgap": [
+    -0.4519,
+    0.3015
+   ],
+   "age_25+_n": [
+    1.0,
+    8.0
+   ],
+   "acq_IFA_n": [
+    64.0,
+    99.0
+   ],
+   "acq_IFA_bias": [
+    -2.659,
+    -0.598
+   ],
+   "acq_IFA_cov": [
+    0.6173,
+    0.8134
+   ],
+   "acq_IFA_pbustgap": [
+    -0.467,
+    -0.1721
+   ],
+   "acq_college_n": [
+    46.0,
+    77.0
+   ],
+   "acq_college_bias": [
+    -2.2994,
+    0.1869
+   ],
+   "acq_college_cov": [
+    0.6216,
+    0.8475
+   ],
+   "acq_college_pbustgap": [
+    -0.5948,
+    -0.2367
+   ],
+   "acq_HS_n": [
+    80.0,
+    117.0
+   ],
+   "acq_HS_bias": [
+    -2.0811,
+    -0.1552
+   ],
+   "acq_HS_cov": [
+    0.6274,
+    0.8039
+   ],
+   "acq_HS_pbustgap": [
+    -0.4624,
+    -0.162
+   ],
+   "acq_unknown_bias": null,
+   "acq_unknown_cov": null,
+   "acq_unknown_pbustgap": null,
+   "acq_unknown_n": [
+    0.0,
+    3.0
+   ]
+  },
+  "pit": {
+   "level_A_n": [
+    11.0,
+    27.0
+   ],
+   "level_A_bias": [
+    -2.6223,
+    0.6781
+   ],
+   "level_A_cov": [
+    0.5455,
+    0.9413
+   ],
+   "level_A_pbustgap": [
+    -0.511,
+    0.0135
+   ],
+   "level_A+_n": [
+    44.0,
+    73.0
+   ],
+   "level_A+_bias": [
+    -2.057,
+    -0.3147
+   ],
+   "level_A+_cov": [
+    0.6429,
+    0.8667
+   ],
+   "level_A+_pbustgap": [
+    -0.4245,
+    -0.0565
+   ],
+   "level_AA_n": [
+    101.0,
+    142.0
+   ],
+   "level_AA_bias": [
+    -1.9535,
+    -0.7907
+   ],
+   "level_AA_cov": [
+    0.6587,
+    0.8198
+   ],
+   "level_AA_pbustgap": [
+    -0.2982,
+    -0.0939
+   ],
+   "level_AAA_n": [
+    50.0,
+    81.0
+   ],
+   "level_AAA_bias": [
+    -1.8061,
+    -0.1927
+   ],
+   "level_AAA_cov": [
+    0.6029,
+    0.8236
+   ],
+   "level_AAA_pbustgap": [
+    -0.2295,
+    0.0866
+   ],
+   "age_<19_bias": null,
+   "age_<19_cov": null,
+   "age_<19_pbustgap": null,
+   "age_<19_n": [
+    0.0,
+    5.0
+   ],
+   "age_19-20_n": [
+    23.0,
+    44.0
+   ],
+   "age_19-20_bias": [
+    -4.0737,
+    -1.3584
+   ],
+   "age_19-20_cov": [
+    0.64,
+    0.9259
+   ],
+   "age_19-20_pbustgap": [
+    -0.6773,
+    -0.2606
+   ],
+   "age_21-22_n": [
+    113.0,
+    159.0
+   ],
+   "age_21-22_bias": [
+    -1.8933,
+    -0.758
+   ],
+   "age_21-22_cov": [
+    0.6818,
+    0.8296
+   ],
+   "age_21-22_pbustgap": [
+    -0.3409,
+    -0.1327
+   ],
+   "age_23-24_n": [
+    70.0,
+    106.0
+   ],
+   "age_23-24_bias": [
+    -1.0759,
+    0.0914
+   ],
+   "age_23-24_cov": [
+    0.617,
+    0.8109
+   ],
+   "age_23-24_pbustgap": [
+    -0.1311,
+    0.1184
+   ],
+   "age_25+_bias": [
+    -1.4568,
+    1.5045
+   ],
+   "age_25+_cov": [
+    0.3636,
+    0.9167
+   ],
+   "age_25+_pbustgap": [
+    -0.217,
+    0.3586
+   ],
+   "age_25+_n": [
+    4.0,
+    17.0
+   ],
+   "acq_IFA_n": [
+    75.0,
+    112.0
+   ],
+   "acq_IFA_bias": [
+    -1.9702,
+    -0.5853
+   ],
+   "acq_IFA_cov": [
+    0.6552,
+    0.8387
+   ],
+   "acq_IFA_pbustgap": [
+    -0.3436,
+    -0.0985
+   ],
+   "acq_college_n": [
+    54.0,
+    86.0
+   ],
+   "acq_college_bias": [
+    -1.9254,
+    -0.373
+   ],
+   "acq_college_cov": [
+    0.5961,
+    0.8118
+   ],
+   "acq_college_pbustgap": [
+    -0.2677,
+    0.0088
+   ],
+   "acq_HS_n": [
+    86.0,
+    125.025
+   ],
+   "acq_HS_bias": [
+    -1.8677,
+    -0.569
+   ],
+   "acq_HS_cov": [
+    0.6778,
+    0.8429
+   ],
+   "acq_HS_pbustgap": [
+    -0.2877,
+    -0.0671
+   ],
+   "acq_unknown_bias": null,
+   "acq_unknown_cov": null,
+   "acq_unknown_pbustgap": null,
+   "acq_unknown_n": [
+    0.0,
+    0.0
+   ]
+  }
+ }
+}

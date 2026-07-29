@@ -39,16 +39,21 @@ def test_rational_value_is_npv_not_sticker():
 
 
 def test_deal_verdict_bands():
-    """Verdict edges sit on the corpus terciles — Phase-2 recalibration on
-    the NPV deferral-adjusted basis: 75 / 160 (was 85 / 185 on sticker).
-    Value above, overpay below, market between; None passes through."""
+    """Verdict edges sit on the corpus terciles. T1.4 re-derivation
+    (2026-07-25, same change as the convexity correction): 109 / 223, from
+    corpus terciles under the mean-of-the-value pricing (n=1,300; p33 108.8,
+    p67 222.9). Was 75 / 160 under value-of-the-mean, and leaving those in
+    place would have re-graded 202 of 1,300 historical contracts on
+    arithmetic alone. Value above, overpay below, market between; None
+    passes through."""
     assert fm.deal_verdict(None) is None
-    assert fm.deal_verdict(300) == "value"
-    assert fm.deal_verdict(160) == "value"
-    assert fm.deal_verdict(159) == "market"
-    assert fm.deal_verdict(75) == "market"
-    assert fm.deal_verdict(74) == "overpay"
+    assert fm.deal_verdict(400) == "value"
+    assert fm.deal_verdict(fm.VERDICT_VALUE_MIN) == "value"
+    assert fm.deal_verdict(fm.VERDICT_VALUE_MIN - 1) == "market"
+    assert fm.deal_verdict(fm.VERDICT_OVERPAY_MAX) == "market"
+    assert fm.deal_verdict(fm.VERDICT_OVERPAY_MAX - 1) == "overpay"
     assert fm.deal_verdict(0) == "overpay"
+    assert fm.VERDICT_OVERPAY_MAX < fm.VERDICT_VALUE_MIN
 
 
 def test_deferral_npv_and_coverage():

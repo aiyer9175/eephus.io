@@ -1,0 +1,86 @@
+{
+ "SERVED": {
+  "n_folds": 10,
+  "base_rho": 0.3242,
+  "cand_rho": 0.2432,
+  "delta": -0.081,
+  "ci95": [
+   -0.1241,
+   -0.0429
+  ],
+  "control_delta": -0.0334,
+  "control_p5": -0.052,
+  "control_p95": -0.0179,
+  "per_fold": [
+   -0.0736,
+   -0.1786,
+   -0.0416,
+   -0.0096,
+   -0.0908,
+   -0.1366,
+   -0.1484,
+   -0.0547,
+   -0.0555,
+   -0.0211
+  ],
+  "folds_improved": 0,
+  "verdict": "HARMFUL"
+ },
+ "POOLED": {
+  "n_folds": 10,
+  "base_rho": 0.2896,
+  "cand_rho": 0.248,
+  "delta": -0.0416,
+  "ci95": [
+   -0.0659,
+   -0.0206
+  ],
+  "control_delta": -0.0211,
+  "control_p5": -0.0303,
+  "control_p95": -0.0092,
+  "per_fold": [
+   -0.0319,
+   -0.057,
+   -0.0187,
+   -0.0384,
+   -0.0539,
+   -0.0226,
+   -0.1226,
+   -0.0041,
+   -0.0395,
+   -0.0274
+  ],
+  "folds_improved": 0,
+  "verdict": "HARMFUL"
+ },
+ "OLD-for-level strata only": {
+  "delta": -0.0441,
+  "ci95": [
+   -0.0729,
+   -0.0108
+  ],
+  "folds_improved": 1,
+  "n_folds": 10,
+  "verdict": "HARMFUL"
+ },
+ "OLD + below-median production only": {
+  "delta": -0.0209,
+  "ci95": [
+   -0.0384,
+   -0.0005
+  ],
+  "folds_improved": 2,
+  "n_folds": 10,
+  "verdict": "HARMFUL"
+ },
+ "Triple-A OLD + lowProd only (the Bradfield cell)": {
+  "delta": -0.0096,
+  "ci95": [
+   -0.0192,
+   0.0016
+  ],
+  "folds_improved": 1,
+  "n_folds": 10,
+  "verdict": "MEASURED NULL"
+ }
+}

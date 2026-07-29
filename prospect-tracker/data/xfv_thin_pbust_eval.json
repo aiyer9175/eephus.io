@@ -1,0 +1,874 @@
+{
+ "generated_at": "2026-07-25",
+ "model": "eFV provisional p_bust, thin-sample population conditional",
+ "owner_authorization": "amends the standing 'p_bucket / p_bust are NEVER touched' invariant to 'NEVER touched EXCEPT by the thin-sample conditional'; scope is efv_ungraded provisional rows only",
+ "defect": {
+  "statement": "served p_bust came from vf.p_bucket_given_fv, a curve fitted on the Clemens published-list population (source-graded prospects with a pro track record) and keyed on the GRADE alone, then applied unchanged to a provisional grade fitted off as little as 80 plate appearances of DSL production",
+  "served_example": {
+   "player": "an 87-PA DSL bat at provisional grade 44.9",
+   "p_bust_before": 0.51,
+   "p_bust_after": 0.884,
+   "p_bust_on_the_pre_cap_deployed_build": 0.201
+  }
+ },
+ "population": {
+  "definition": "source-ungraded as of the cohort season, never MLB-exposed at or before it, primary-level exposure at or above the served grade floor (80 PA / 90 BF), primary level on the DSL..AAA ladder",
+  "cohort_seasons": [
+   2015,
+   2016,
+   2017,
+   2018
+  ],
+  "n_player_seasons": 19812,
+  "why_these_seasons": "8 to 11 seasons of realized outcome; 97.8% of eventual DSL/CPX debuts occur within 8 seasons of the cohort season (measured on this cohort). The MiLB feature cache floors at 2014, which caps the earliest usable cohort at 2015",
+  "sensitivity_2019": "same sign and a larger gap on the still-censored 2019 cohort"
+ },
+ "label": {
+  "bust": "first-6-MLB-season summed bWAR < 3.0 (Clemens bucket 0, under 0.5 WAR/season)",
+  "never_reached_mlb": "bust with certainty, no WAR join needed",
+  "unknown_rows": "reached MLB but absent from career_war. PRIMARY rule: bust when first-6-season MLB PA/BF is under 300. VALIDATED not assumed: of 1,144 cohort rows with a KNOWN first-6yr WAR, 0 of the 487 under 300 PA/BF reached 3.0 WAR (highest 1.58; still 0 of 639 at a 500 threshold). Unknowns at or above 300 PA/BF stay labelled NON-bust although 63.9% of the KNOWN rows above 300 are busts, so the fitted curve is a LOWER bound on the true bust rate",
+  "bracketing_variants_all_pass": [
+   "all unknowns non-bust",
+   "all unknowns bust"
+  ]
+ },
+ "historical_hit_rate_with_n": {
+  "ungraded DSL hitters, provisional grade >= 35": {
+   "n": 87,
+   "observed_bust": 0.881
+  },
+  "ungraded DSL pitchers, provisional grade >= 35": {
+   "n": 314,
+   "observed_bust": 0.99
+  },
+  "ungraded DSL hitters, all grades": {
+   "n": 2236,
+   "observed_bust": 0.992
+  },
+  "ungraded DSL pitchers, all grades": {
+   "n": 2167,
+   "observed_bust": 0.992
+  },
+  "grade >= 35 pooled, observed vs served": {
+   "primary_2015_2018/hit/grade>=35/conservative": {
+    "n": 778,
+    "observed": 0.8072,
+    "incumbent": 0.7145
+   },
+   "primary_2015_2018/hit/grade>=35/pt_rule": {
+    "n": 778,
+    "observed": 0.8805,
+    "incumbent": 0.7145
+   },
+   "primary_2015_2018/hit/grade>=35/upper": {
+    "n": 778,
+    "observed": 0.9216,
+    "incumbent": 0.7145
+   },
+   "primary_2015_2018/pit/grade>=35/conservative": {
+    "n": 745,
+    "observed": 0.9101,
+    "incumbent": 0.8088
+   },
+   "primary_2015_2018/pit/grade>=35/pt_rule": {
+    "n": 745,
+    "observed": 0.9396,
+    "incumbent": 0.8088
+   },
+   "primary_2015_2018/pit/grade>=35/upper": {
+    "n": 745,
+    "observed": 0.9651,
+    "incumbent": 0.8088
+   },
+   "sensitivity_2019_censored/hit/grade>=35/conservative": {
+    "n": 154,
+    "observed": 0.8636,
+    "incumbent": 0.7251
+   },
+   "sensitivity_2019_censored/hit/grade>=35/pt_rule": {
+    "n": 154,
+    "observed": 0.9416,
+    "incumbent": 0.7251
+   },
+   "sensitivity_2019_censored/hit/grade>=35/upper": {
+    "n": 154,
+    "observed": 0.9675,
+    "incumbent": 0.7251
+   },
+   "sensitivity_2019_censored/pit/grade>=35/conservative": {
+    "n": 186,
+    "observed": 0.9624,
+    "incumbent": 0.8082
+   },
+   "sensitivity_2019_censored/pit/grade>=35/pt_rule": {
+    "n": 186,
+    "observed": 0.9839,
+    "incumbent": 0.8082
+   },
+   "sensitivity_2019_censored/pit/grade>=35/upper": {
+    "n": 186,
+    "observed": 0.9892,
+    "incumbent": 0.8082
+   }
+  }
+ },
+ "gates": {
+  "standard": "docs/EFV_GATE_STANDARD.md",
+  "protocol": "B = 400 paired bootstrap draws resampling the TRAIN matrix AND the TEST cohort, refitting the provisional ridge on every draw; leave-one-cohort-year-out folds over 4 independent cohort years",
+  "G1_defect_grade_ge35": {
+   "hit": {
+    "mean": 0.16907,
+    "lo95": 0.12755,
+    "hi95": 0.20427,
+    "n": 400
+   },
+   "pit": {
+    "mean": 0.13027,
+    "lo95": 0.09388,
+    "hi95": 0.15027,
+    "n": 400
+   }
+  },
+  "G2_G3_logloss": {
+   "incumbent": {
+    "mean": 0.15446,
+    "lo95": 0.14694,
+    "hi95": 0.16367,
+    "n": 400
+   },
+   "headA": {
+    "mean": 0.14429,
+    "lo95": 0.13625,
+    "hi95": 0.15275,
+    "n": 400
+   },
+   "headD": {
+    "mean": 0.13656,
+    "lo95": 0.12877,
+    "hi95": 0.14439,
+    "n": 400
+   },
+   "constant": {
+    "mean": 0.15298,
+    "lo95": 0.14494,
+    "hi95": 0.16146,
+    "n": 400
+   },
+   "perm_grade": {
+    "mean": 0.1469,
+    "lo95": 0.13969,
+    "hi95": 0.15524,
+    "n": 400
+   },
+   "perm_level": {
+    "mean": 0.14465,
+    "lo95": 0.13644,
+    "hi95": 0.15308,
+    "n": 400
+   }
+  },
+  "G2_G3_brier": {
+   "incumbent": {
+    "mean": 0.03644,
+    "lo95": 0.03409,
+    "hi95": 0.03897,
+    "n": 400
+   },
+   "headA": {
+    "mean": 0.03361,
+    "lo95": 0.03142,
+    "hi95": 0.03592,
+    "n": 400
+   },
+   "headD": {
+    "mean": 0.03285,
+    "lo95": 0.03075,
+    "hi95": 0.03503,
+    "n": 400
+   },
+   "constant": {
+    "mean": 0.03414,
+    "lo95": 0.03192,
+    "hi95": 0.03655,
+    "n": 400
+   },
+   "perm_grade": {
+    "mean": 0.03373,
+    "lo95": 0.03153,
+    "hi95": 0.03607,
+    "n": 400
+   },
+   "perm_level": {
+    "mean": 0.03364,
+    "lo95": 0.03146,
+    "hi95": 0.03597,
+    "n": 400
+   }
+  },
+  "deltas_positive_means_first_is_worse": {
+   "incumbent - headD": {
+    "mean": 0.0179,
+    "lo95": 0.01227,
+    "hi95": 0.02487,
+    "P(>0)": 1.0
+   },
+   "incumbent - headA": {
+    "mean": 0.01017,
+    "lo95": 0.00517,
+    "hi95": 0.01582,
+    "P(>0)": 1.0
+   },
+   "headA - headD": {
+    "mean": 0.00773,
+    "lo95": 0.00567,
+    "hi95": 0.00981,
+    "P(>0)": 1.0
+   },
+   "constant - headD": {
+    "mean": 0.01642,
+    "lo95": 0.0133,
+    "hi95": 0.01928,
+    "P(>0)": 1.0
+   },
+   "perm_grade - headD": {
+    "mean": 0.01034,
+    "lo95": 0.00793,
+    "hi95": 0.01286,
+    "P(>0)": 1.0
+   },
+   "perm_level - headD": {
+    "mean": 0.00809,
+    "lo95": 0.00601,
+    "hi95": 0.01029,
+    "P(>0)": 1.0
+   },
+   "incumbent - constant": {
+    "mean": 0.00148,
+    "lo95": -0.00459,
+    "hi95": 0.00785,
+    "P(>0)": 0.695
+   },
+   "incumbent - perm_grade": {
+    "mean": 0.00756,
+    "lo95": 0.00119,
+    "hi95": 0.01405,
+    "P(>0)": 0.9925
+   },
+   "incumbent - perm_level": {
+    "mean": 0.00981,
+    "lo95": 0.00482,
+    "hi95": 0.01533,
+    "P(>0)": 1.0
+   }
+  },
+  "G4_label_permutation_null": {
+   "p50": -0.00041,
+   "p95": -7e-05,
+   "p99": 7e-05,
+   "n": 500
+  },
+  "G5_monotone_in_grade_within_level": true,
+  "verdict": "ALL PASS"
+ },
+ "head": {
+  "hit": {
+   "a": 4.251112,
+   "b_grade": -0.14875,
+   "level_offsets": {
+    "DSL": 0.0,
+    "CPX": -0.929576,
+    "A": -1.182609,
+    "A+": -1.659829,
+    "AA": -1.502044,
+    "AAA": -0.246737
+   },
+   "n": 9762,
+   "n_bust": 9484,
+   "monotone_in_grade_within_level": true
+  },
+  "pit": {
+   "a": 5.083222,
+   "b_grade": -0.169809,
+   "level_offsets": {
+    "DSL": 0.0,
+    "CPX": -1.372043,
+    "A": -2.116888,
+    "A+": -2.594148,
+    "AA": -3.266335,
+    "AAA": -2.662682
+   },
+   "n": 10050,
+   "n_bust": 9617,
+   "monotone_in_grade_within_level": true
+  }
+ },
+ "oof_calibration": {
+  "hit": {
+   "by_grade_band": {
+    "20-30": {
+     "n": 7751,
+     "observed": 0.9861,
+     "incumbent": 0.9774,
+     "headD_oof": 0.9855
+    },
+    "30-35": {
+     "n": 1233,
+     "observed": 0.9376,
+     "incumbent": 0.904,
+     "headD_oof": 0.9481
+    },
+    "40-45": {
+     "n": 158,
+     "observed": 0.8354,
+     "incumbent": 0.6321,
+     "headD_oof": 0.8226
+    },
+    "45+": {
+     "n": 107,
+     "observed": 0.8131,
+     "incumbent": 0.4191,
+     "headD_oof": 0.743
+    },
+    "35-40": {
+     "n": 513,
+     "observed": 0.9084,
+     "incumbent": 0.8015,
+     "headD_oof": 0.9025
+    }
+   },
+   "by_level": {
+    "A+": {
+     "n": 1075,
+     "observed": 0.9535,
+     "incumbent": 0.9557,
+     "headD_oof": 0.9541
+    },
+    "A": {
+     "n": 2265,
+     "observed": 0.9709,
+     "incumbent": 0.9573,
+     "headD_oof": 0.9716
+    },
+    "AA": {
+     "n": 890,
+     "observed": 0.9382,
+     "incumbent": 0.9278,
+     "headD_oof": 0.9375
+    },
+    "AAA": {
+     "n": 965,
+     "observed": 0.9606,
+     "incumbent": 0.8628,
+     "headD_oof": 0.9555
+    },
+    "CPX": {
+     "n": 2331,
+     "observed": 0.9781,
+     "incumbent": 0.9596,
+     "headD_oof": 0.9782
+    },
+    "DSL": {
+     "n": 2236,
+     "observed": 0.9919,
+     "incumbent": 0.964,
+     "headD_oof": 0.9917
+    }
+   }
+  },
+  "pit": {
+   "by_grade_band": {
+    "20-30": {
+     "n": 6231,
+     "observed": 0.9673,
+     "incumbent": 0.9519,
+     "headD_oof": 0.9666
+    },
+    "30-35": {
+     "n": 3074,
+     "observed": 0.9401,
+     "incumbent": 0.8941,
+     "headD_oof": 0.9463
+    },
+    "35-40": {
+     "n": 745,
+     "observed": 0.9396,
+     "incumbent": 0.8088,
+     "headD_oof": 0.9179
+    }
+   },
+   "by_level": {
+    "A+": {
+     "n": 1215,
+     "observed": 0.9424,
+     "incumbent": 0.9409,
+     "headD_oof": 0.9434
+    },
+    "A": {
+     "n": 2338,
+     "observed": 0.9555,
+     "incumbent": 0.9297,
+     "headD_oof": 0.956
+    },
+    "AA": {
+     "n": 958,
+     "observed": 0.8904,
+     "incumbent": 0.9384,
+     "headD_oof": 0.8911
+    },
+    "AAA": {
+     "n": 1122,
+     "observed": 0.9314,
+     "incumbent": 0.9344,
+     "headD_oof": 0.9283
+    },
+    "CPX": {
+     "n": 2250,
+     "observed": 0.9738,
+     "incumbent": 0.9173,
+     "headD_oof": 0.9736
+    },
+    "DSL": {
+     "n": 2167,
+     "observed": 0.9917,
+     "incumbent": 0.9018,
+     "headD_oof": 0.9915
+    }
+   }
+  }
+ },
+ "conservative_label_run": {
+  "note": "the same battery under the strictly-conservative labeling (every unknown a NON-bust)",
+  "G1": {
+   "hit": {
+    "mean": 0.09277,
+    "lo95": 0.04755,
+    "hi95": 0.13729,
+    "n": 400
+   },
+   "pit": {
+    "mean": 0.09903,
+    "lo95": 0.05876,
+    "hi95": 0.12714,
+    "n": 400
+   }
+  },
+  "deltas": {
+   "incumbent - headD": {
+    "mean": 0.0291,
+    "lo95": 0.02401,
+    "hi95": 0.03535,
+    "P(>0)": 1.0
+   },
+   "incumbent - headA": {
+    "mean": 0.00561,
+    "lo95": 0.00173,
+    "hi95": 0.0104,
+    "P(>0)": 1.0
+   },
+   "headA - headD": {
+    "mean": 0.02349,
+    "lo95": 0.02018,
+    "hi95": 0.02702,
+    "P(>0)": 1.0
+   },
+   "constant - headD": {
+    "mean": 0.03501,
+    "lo95": 0.03073,
+    "hi95": 0.03913,
+    "P(>0)": 1.0
+   },
+   "perm_grade - headD": {
+    "mean": 0.0125,
+    "lo95": 0.00961,
+    "hi95": 0.01536,
+    "P(>0)": 1.0
+   },
+   "perm_level - headD": {
+    "mean": 0.02383,
+    "lo95": 0.02048,
+    "hi95": 0.02745,
+    "P(>0)": 1.0
+   },
+   "incumbent - constant": {
+    "mean": -0.00591,
+    "lo95": -0.01217,
+    "hi95": 0.00053,
+    "P(>0)": 0.03
+   },
+   "incumbent - perm_grade": {
+    "mean": 0.0166,
+    "lo95": 0.01016,
+    "hi95": 0.02427,
+    "P(>0)": 1.0
+   },
+   "incumbent - perm_level": {
+    "mean": 0.00527,
+    "lo95": 0.00146,
+    "hi95": 0.01015,
+    "P(>0)": 1.0
+   }
+  }
+ },
+ "rejected_variants": {
+  "linear level_rank term (head B)": "beat the incumbent out of fold but is misspecified: the realized level-to-bust relation is NOT monotone (ungraded AAA is org filler and busts more than ungraded AA), so a linear term forces AAA below AA exactly where it moves served numbers most. Rejected in favour of categorical levels",
+  "grade-only (head A)": {
+   "oof_logloss_vs_headD": {
+    "mean": 0.00773,
+    "lo95": 0.00567,
+    "hi95": 0.00981,
+    "P(>0)": 1.0
+   },
+   "note": "real but dominated; level carries information the grade does not"
+  },
+  "covariate-free population offset (constant)": "a measured NULL against the incumbent (+0.0015 CI95 [-0.0046, 0.0079], P = 0.695). This is the ablation that killed BUCKET-AGE-HEAD; here it fails, so none of the gain is population recalibration",
+  "grade-clipping variants C36..C44": {
+   "hit": {
+    "A": {
+     "folds": [
+      0.20874,
+      0.2043,
+      0.20367,
+      0.18277
+     ],
+     "mean": 0.19987
+    },
+    "B": {
+     "folds": [
+      0.21211,
+      0.20227,
+      0.19831,
+      0.1715
+     ],
+     "mean": 0.19605
+    },
+    "C36": {
+     "folds": [
+      0.20486,
+      0.20252,
+      0.20215,
+      0.1833
+     ],
+     "mean": 0.19821
+    },
+    "C38": {
+     "folds": [
+      0.2053,
+      0.20282,
+      0.20232,
+      0.18299
+     ],
+     "mean": 0.19836
+    },
+    "C40": {
+     "folds": [
+      0.20569,
+      0.20316,
+      0.2026,
+      0.18292
+     ],
+     "mean": 0.19859
+    },
+    "C42": {
+     "folds": [
+      0.20633,
+      0.20349,
+      0.20275,
+      0.18276
+     ],
+     "mean": 0.19883
+    },
+    "C44": {
+     "folds": [
+      0.20735,
+      0.20384,
+      0.20299,
+      0.18271
+     ],
+     "mean": 0.19922
+    },
+    "incumbent": {
+     "folds": [
+      0.21269,
+      0.2083,
+      0.20941,
+      0.18592
+     ],
+     "mean": 0.20408
+    },
+    "constant": {
+     "folds": [
+      0.23618,
+      0.23035,
+      0.22034,
+      0.19971
+     ],
+     "mean": 0.22164
+    },
+    "permuted_A": {
+     "folds": [
+      0.23626,
+      0.23032,
+      0.22027,
+      0.19967
+     ],
+     "mean": 0.22163
+    },
+    "nested_C": {
+     "folds": [
+      0.21211,
+      0.20227,
+      0.19831,
+      0.1833
+     ],
+     "mean": 0.199
+    },
+    "nested_picks": [
+     "B",
+     "B",
+     "B",
+     "C36"
+    ]
+   },
+   "pit": {
+    "A": {
+     "folds": [
+      0.33483,
+      0.3205,
+      0.27918,
+      0.24758
+     ],
+     "mean": 0.29552
+    },
+    "B": {
+     "folds": [
+      0.31303,
+      0.29208,
+      0.25635,
+      0.20784
+     ],
+     "mean": 0.26732
+    },
+    "C36": {
+     "folds": [
+      0.33478,
+      0.3203,
+      0.27903,
+      0.24752
+     ],
+     "mean": 0.29541
+    },
+    "C38": {
+     "folds": [
+      0.33483,
+      0.3205,
+      0.27918,
+      0.24758
+     ],
+     "mean": 0.29552
+    },
+    "C40": {
+     "folds": [
+      0.33483,
+      0.3205,
+      0.27918,
+      0.24758
+     ],
+     "mean": 0.29552
+    },
+    "C42": {
+     "folds": [
+      0.33483,
+      0.3205,
+      0.27918,
+      0.24758
+     ],
+     "mean": 0.29552
+    },
+    "C44": {
+     "folds": [
+      0.33483,
+      0.3205,
+      0.27918,
+      0.24758
+     ],
+     "mean": 0.29552
+    },
+    "incumbent": {
+     "folds": [
+      0.33952,
+      0.32603,
+      0.28595,
+      0.25192
+     ],
+     "mean": 0.30085
+    },
+    "constant": {
+     "folds": [
+      0.33906,
+      0.32423,
+      0.28077,
+      0.24509
+     ],
+     "mean": 0.29729
+    },
+    "permuted_A": {
+     "folds": [
+      0.3393,
+      0.32423,
+      0.28075,
+      0.24501
+     ],
+     "mean": 0.29732
+    },
+    "nested_C": {
+     "folds": [
+      0.31303,
+      0.29208,
+      0.25635,
+      0.20784
+     ],
+     "mean": 0.26732
+    },
+    "nested_picks": [
+     "B",
+     "B",
+     "B",
+     "B"
+    ]
+   }
+  }
+ },
+ "served_blast_radius": {
+  "artifact": "data/xfv_ungraded.json",
+  "cards_total": 3419,
+  "cards_with_p_bust_changed": 3320,
+  "raised": 2963,
+  "lowered": 357,
+  "delta_quantiles": {
+   "0.0": -0.135,
+   "0.05": -0.005,
+   "0.25": 0.002,
+   "0.5": 0.014,
+   "0.75": 0.043,
+   "0.95": 0.068,
+   "1.0": 0.374
+  },
+  "count_by_magnitude": {
+   ">=0.02": 1585,
+   ">=0.05": 720,
+   ">=0.1": 65,
+   ">=0.2": 5,
+   ">=0.3": 1
+  },
+  "largest_moves": [
+   {
+    "name": "Jesus Flores",
+    "side": "H",
+    "level": "DSL",
+    "grade": 44.9,
+    "before": 0.51,
+    "after": 0.884,
+    "delta": 0.374
+   },
+   {
+    "name": "Juan Duran",
+    "side": "H",
+    "level": "DSL",
+    "grade": 41.7,
+    "before": 0.645,
+    "after": 0.925,
+    "delta": 0.28
+   },
+   {
+    "name": "Douglas Veliz",
+    "side": "H",
+    "level": "DSL",
+    "grade": 41.6,
+    "before": 0.649,
+    "after": 0.926,
+    "delta": 0.277
+   },
+   {
+    "name": "Poly Ojeda",
+    "side": "H",
+    "level": "DSL",
+    "grade": 40.7,
+    "before": 0.684,
+    "after": 0.935,
+    "delta": 0.251
+   },
+   {
+    "name": "Gilbert Ramirez",
+    "side": "H",
+    "level": "DSL",
+    "grade": 40.4,
+    "before": 0.696,
+    "after": 0.937,
+    "delta": 0.241
+   },
+   {
+    "name": "Yilmar Samudio",
+    "side": "P",
+    "level": "DSL",
+    "grade": 37.2,
+    "before": 0.786,
+    "after": 0.979,
+    "delta": 0.193
+   },
+   {
+    "name": "Albert Ortiz",
+    "side": "P",
+    "level": "DSL",
+    "grade": 37.1,
+    "before": 0.788,
+    "after": 0.98,
+    "delta": 0.192
+   },
+   {
+    "name": "Yobal Rodriguez",
+    "side": "P",
+    "level": "DSL",
+    "grade": 37.1,
+    "before": 0.788,
+    "after": 0.98,
+    "delta": 0.192
+   },
+   {
+    "name": "Maikel Rodriguez",
+    "side": "P",
+    "level": "DSL",
+    "grade": 36.9,
+    "before": 0.794,
+    "after": 0.98,
+    "delta": 0.186
+   },
+   {
+    "name": "Pablo Medina",
+    "side": "P",
+    "level": "DSL",
+    "grade": 36.9,
+    "before": 0.794,
+    "after": 0.98,
+    "delta": 0.186
+   }
+  ],
+  "unchanged_elsewhere": "xfv_grade and surplus_mm are byte-identical on all 3,419 rows",
+  "served_clamp": {
+   "range": [
+    0.02,
+    0.99
+   ],
+   "rows_at_ceiling": 1984,
+   "why": "the card rounds to whole percent, so a value at or above 0.995 would print P(bust) 100% and claim a certainty no model has. 0.99 also sits BELOW the measured DSL cell rate (0.992 on both sides, n = 2,236 / 2,167), so the clamp can only make a served row look SAFER than the cohort was"
+  },
+  "consumers": "storage._load_ungraded_by_org reads only xfv_grade, so farm depth / top-end pools are unaffected. New row fields p_bust_basis and p_bust_low_confidence are available for the product surfaces"
+ },
+ "limits": [
+  "serves p_bust and p_bucket only; surplus dollars stay on the engine grade-anchored path",
+  "hitter 45+ band still under-called out of fold (0.743 against 0.813 observed, n = 107); the live provisional maximum is 44.9 so that band is nearly empty in production",
+  "MiLB feature history floors at 2014, so early cohort rows see 1 to 2 prior seasons; that matters for n_milb_seasons at the upper levels, not for the 17-to-19-year-old DSL/CPX population the defect lives in",
+  "the provisional ridge is fitted on the full labeled matrix rather than forward-chained (decision_year < cohort year leaves n = 3 to 163 rows). The bias direction is conservative against the claim: label leakage makes the grade look MORE discriminating, so the residual bust rate measured at high grades is an understatement",
+  "rows whose level does not resolve to the ladder keep the incumbent odds and are flagged p_bust_low_confidence; 0 such rows in the current build"
+ ],
+ "lab": "tools/pbust_thin/ (cohort.py, score.py, gate.py, gate2.py, gate3.py, gate5.py)"
+}

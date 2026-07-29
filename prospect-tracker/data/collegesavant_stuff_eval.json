@@ -1,0 +1,145 @@
+{
+ "generated_at": "2026-07-23",
+ "artifact": "collegesavant_stuff_eval",
+ "kind": "governance validation record (registry ledger, NOT a gate)",
+ "experiment": {
+  "registration": "docs/wills-2026-07-23/GATES.md section W4 COL-XRV",
+  "clause": "Governance (unconditional): registry row + eval artifact for the shipped CollegeSavant stuff_plus lineage; fixes a standing-rule violation (model-audit-program) that predates this program.",
+  "seed": 20260723
+ },
+ "lineage": {
+  "surface": "collegesavant/pitcher_index.html (Stuff+ column, per-pitch pages)",
+  "payloads": [
+   "collegesavant/pitcher_pitch_data_2024.js",
+   "collegesavant/pitcher_pitch_data_2025.js",
+   "collegesavant/pitcher_pitch_data_2026.js",
+   "collegesavant/pitcher_data.js"
+  ],
+  "provenance": "Vendored college TrackMan xRV-family model (Will's CollegeSavant build); per-pitch-type xRV models scored on 7 TrackMan kinematic features, mapped to a 100-anchored ratio scale. Static payloads; no in-tree trainer regenerates them.",
+  "model_features": [
+   "RelSpeed",
+   "InducedVertBreak",
+   "HorzBreak",
+   "RelHeight",
+   "Extension",
+   "SpinRate",
+   "HorzRelAngle / VAA (vintage-dependent)"
+  ]
+ },
+ "scale_convention": {
+  "statement": "100 anchors league-average expected run value; 0 anchors the worst observed college xRV. NOT a z-score scale: the measured payload SD is far wider than 10 and the distribution is left-skewed with a long tail toward 0.",
+  "collision_warning": [
+   "THREE different Stuff+ scales exist in this tree and must NEVER be mixed on one surface:",
+   "(1) CollegeSavant stuff_plus (these payloads): college TrackMan xRV ratio scale, 100 = college league-average xRV, 0 = worst observed; measured SD ~23-24 per season (see per_season_coverage).",
+   "(2) Will's 2026 formula-anchored vintage (NCAA 26 Averages S+.csv + xRV models/): same formula family, DIFFERENT model fit; verified stuff+ = 100*(worst_xrv - xrv)/(worst_xrv - league_average_xrv).",
+   "(3) Platform aStuff+ (stuff_plus_aaa.py, data/stuff_plus_aaa.json): LightGBM delta_run_exp on AAA Statcast, scaled 100 + 10z vs the qualified AAA pool. A 130 here is elite; a 130 CollegeSavant stuff_plus is barely plus."
+  ]
+ },
+ "per_season_coverage": {
+  "2024": {
+   "rows": 20396,
+   "pitchers": 4472,
+   "pitch_types": [
+    "ChangeUp",
+    "Curveball",
+    "Cutter",
+    "Fastball",
+    "Sinker",
+    "Slider",
+    "Splitter"
+   ],
+   "rows_with_stuff_plus": 15310,
+   "rows_null_stuff_plus": 5086,
+   "stuff_plus_distribution": {
+    "mean": 100.61,
+    "sd": 24.35,
+    "usage_weighted_mean": 100.32,
+    "p5": 59.0,
+    "p25": 84.5,
+    "p50": 103.0,
+    "p75": 114.6,
+    "p95": 142.0,
+    "min": 3.4,
+    "max": 185.4
+   }
+  },
+  "2025": {
+   "rows": 825,
+   "pitchers": 199,
+   "pitch_types": [
+    "ChangeUp",
+    "Curveball",
+    "Cutter",
+    "Fastball",
+    "Sinker",
+    "Slider",
+    "Splitter",
+    "Sweeper"
+   ],
+   "rows_with_stuff_plus": 695,
+   "rows_null_stuff_plus": 130,
+   "stuff_plus_distribution": {
+    "mean": 102.74,
+    "sd": 23.39,
+    "usage_weighted_mean": 102.05,
+    "p5": 58.1,
+    "p25": 89.3,
+    "p50": 105.6,
+    "p75": 115.8,
+    "p95": 141.4,
+    "min": 27.5,
+    "max": 166.9
+   }
+  },
+  "2026": {
+   "rows": 3367,
+   "pitchers": 842,
+   "pitch_types": [
+    "ChangeUp",
+    "Curveball",
+    "Cutter",
+    "Fastball",
+    "Sinker",
+    "Slider",
+    "Splitter",
+    "Sweeper"
+   ],
+   "rows_with_stuff_plus": 2186,
+   "rows_null_stuff_plus": 1181,
+   "stuff_plus_distribution": {
+    "mean": 104.81,
+    "sd": 24.37,
+    "usage_weighted_mean": 104.29,
+    "p5": 61.8,
+    "p25": 89.7,
+    "p50": 106.0,
+    "p75": 118.3,
+    "p95": 148.0,
+    "min": 6.2,
+    "max": 183.2
+   }
+  }
+ },
+ "agreement_with_wills_vintage": {
+  "csv": "NCAA 26 Averages S+.csv",
+  "join_key": "pitcher_id x pitch_type",
+  "expected_r_recorded_a_priori": 0.959,
+  "overlapping_rows": 1472,
+  "pearson_r_measured": 0.9594,
+  "will_formula_verified": {
+   "formula": "stuff+ = 100 * (worst_xrv - xrv) / (worst_xrv - league_average_xrv)",
+   "league_average_xrv": 0.0010127280665394418,
+   "worst_xrv": 0.057846106588840485,
+   "rows_checked": 2852,
+   "max_abs_deviation": 0.0
+  }
+ },
+ "forward_checks": {
+  "matched_pairs_total": 257,
+  "matched_pairs_with_stuff": 257,
+  "corr_usageweighted_stuff_vs_first_pro_A_kpct": -0.0048,
+  "corr_usageweighted_stuff_vs_college_kpct": 0.232,
+  "note": "First pro exposure = earliest qualifying A/A+ season, >= 20 IP, stored-BF K% (the college_translation.load_single_a gate)."
+ },
+ "reading": "Descriptive record. The shipped lineage is internally consistent with Will's 2026 vintage at the pitch level (r measured above) and its scale anchors are documented; predictive value against pro outcomes is measured separately by the W4 gate ledger (data/college_stuff_translation_eval.json)."
+}

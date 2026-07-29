@@ -1,0 +1,193 @@
+SWEEP LANE: calibration -- exact patches. Nothing here has been applied.
+Artifacts: data/xfv_level_calibration_eval.json, data/xfv_level_calibration_slices.json,
+           data/xfv_pred_dispersion_eval.json, data/xfv_level_calibration_report.json
+Labs:      tools/_sweep_calib_gate.py, _sweep_calib_slices.py, _sweep_calib_shrink.py,
+           _sweep_calib_anchor.py, _sweep_calib_patchcheck.py, _sweep_calibration.py
+
+=============================================================================
+PATCH A -- value_framework.py: fv_to_6yr_avg_war has no knot below FV 40, so it
+returns ONE value for the whole 20-40 range. CORRECTNESS. Verified zero movement
+at or above FV 40 (tools/_sweep_calib_patchcheck.py: 0 of 162 grade x side cells
+moved; expected_surplus_usd unchanged everywhere, the FV<=40 dollar anchor owns
+that region).
+=============================================================================
+--- a/value_framework.py
++++ b/value_framework.py
+@@
+ def fv_to_6yr_avg_war(fv: float | None) -> float | None:
+-    """Monotone (piecewise-linear) interpolation of the config anchor mapping FV
+-    to the six-year AVERAGE annual WAR. Clamps outside the anchor range."""
++    """Monotone (piecewise-linear) interpolation of the config anchor mapping FV
++    to the six-year AVERAGE annual WAR. Clamps ABOVE the anchor range; BELOW the
++    lowest knot it extends with the concave low-end curve `realized_implied_fv`
++    already uses, so the forward map and the inverse map agree there.
++
++    LOW-END EXTENSION (calibration sweep 2026-07-25, data/xfv_level_calibration_eval.json).
++    The fitted empirical anchors start at FV 40 (`anchor_calibration.tiers` has no
++    sub-40 entry), so the plain clamp returned ONE value for the entire 20-40
++    range: 88.3% of the served eFV board (data/xfv.json, 4477 active rows) and
++    every sub-40 farm member summed by farm_grade_backtest.py:165. Meanwhile
++    `realized_implied_fv` DOES resolve that range, re-spreading it as
++    fv = 20 + 25*(war/war45)**_LOWEND_FG_EXP, so the two halves of one contract
++    disagreed by up to 20 FV points (every grade in [20, 40] round-tripped back
++    to 39.8). Inverting that same curve and pinning it to the lowest anchor knot
++    makes them mutual inverses (round-trip error <= 0.20 FV) and changes NOTHING
++    at or above the lowest knot. Measured support: the DB cohort empirical_anchors
++    itself fits on has an FV-35 cell, n=386, at 0.040 WAR/yr (bootstrap CI95
++    [0.020, 0.061]) against the clamp's 0.19; the extension returns 0.100 there.
++    Cohort-weighted |anchor - empirical| over tiers <= 60 improves 0.1536 ->
++    0.1431 WAR/yr.
++    """
+     if fv is None:
+         return None
+     try:
+         f = float(fv)
+     except (TypeError, ValueError):
+         return None
+     if not math.isfinite(f):
+         return None
+     # Prefer the EMPIRICAL anchors re-derived from resolved cohorts (continuous
+     # calibration, written to the fit file by --fit); fall back to the config seed.
+     cal = _config().get("anchor_calibration", {})
+     fitted_anchors = (_fitted().get("empirical_anchors") or {}).get("anchors") if cal.get("use_empirical") else None
+     anchor = fitted_anchors or _config()["fv_to_6yr_avg_war"]
+     pts = sorted((float(k), float(v)) for k, v in anchor.items())
+     if f <= pts[0][0]:
+-        return pts[0][1]
++        x0, y0 = pts[0]
++        if f <= 20.0:
++            return 0.0                       # the 20-80 grade floor: no expected value
++        if x0 <= 20.0:
++            return y0                        # knot already at the floor: nothing to extend
++        return y0 * ((f - 20.0) / (x0 - 20.0)) ** (1.0 / _LOWEND_FG_EXP)
+     if f >= pts[-1][0]:
+         return pts[-1][1]
+
+Tests to re-run: test_value_framework.py test_empirical_anchors.py
+test_config_base_verification.py test_bayes.py test_farm_grades.py
+test_valuation_curve_surface.py test_value_framework_integration.py
+(all pinned FVs are >= 40, where the patch is a no-op).
+
+=============================================================================
+PATCH B -- value_framework.py: build_snapshot publishes the config SEED anchor
+table while the engine serves the FITTED empirical anchors. /glossary/ therefore
+draws a valuation curve the site does not price with. CORRECTNESS.
+Divergence (published vs served): FV<=35 -36.8%, FV40 +15.8%, FV45 +22.6%,
+FV50 +4.5%, FV80 +8.6%. The existing freshness test only compares the JS to the
+JSON to build_snapshot, so it can never catch this.
+=============================================================================
+--- a/value_framework.py
++++ b/value_framework.py
+@@ build_snapshot()
+-        "fv_to_6yr_avg_war": {str(k): float(v) for k, v in cfg["fv_to_6yr_avg_war"].items()},
++        # Publish the anchors the engine ACTUALLY reads (fitted empirical anchors
++        # when anchor_calibration.use_empirical is on), not the config seed --
++        # /glossary/ _methValuationCurveHTML renders this table as "the" FV->WAR
++        # curve. Seed retained beside it for provenance.
++        "fv_to_6yr_avg_war": {
++            str(g): round(float(fv_to_6yr_avg_war(g)), 4)
++            for g in (20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80)
++        },
++        "fv_to_6yr_avg_war_seed": {str(k): float(v) for k, v in cfg["fv_to_6yr_avg_war"].items()},
+
+After applying: `python value_framework.py --emit-snapshots` (regenerates
+data/value_framework.json + data/value_framework.js), then re-run
+test_value_framework_integration.py. Note assets/glossary.js:1102 carries a
+hard-coded fallback table ({40:1, 45:1.5, ...}) that is wrong by 3-5x; it only
+fires when the payload is missing, but it should be corrected or dropped in the
+same pass.
+
+=============================================================================
+PATCH C -- value_framework_config.yaml: the empirical-anchor fit throws away a
+measured FV-35 cell (n=386) because the tier list starts at 40. Complementary to
+PATCH A (A extends below the lowest knot; C gives the fit a real knot at 35).
+=============================================================================
+--- a/value_framework_config.yaml
++++ b/value_framework_config.yaml
+@@ anchor_calibration
+-  tiers: [40, 45, 50, 55, 60, 65, 70, 80]
++  # 35 restored 2026-07-25 (calibration sweep): the resolved DB cohort has an
++  # FV-35 cell of n=386 at 0.040 WAR/yr, and the config seed table has always
++  # carried a 35 knot (0.12). Dropping 35 from this list is what left the fitted
++  # anchors with no knot below 40 and forced fv_to_6yr_avg_war to clamp the whole
++  # 20-40 range -- 88.3% of the served board -- to one value.
++  tiers: [35, 40, 45, 50, 55, 60, 65, 70, 80]
+
+Re-fit required: `python value_framework.py --fit`. Expected new 35 anchor =
+0.5*0.040 + 0.5*public_reference(0.20) = 0.12 (monotonicity leaves 40+ untouched).
+
+=============================================================================
+PATCH D -- efv_score.py (OWNED BY ANOTHER LANE -- lead applies): the served row's
+surplus FAN is priced on the DISPLAYED grade while the fan's own bust mass is
+copied from the REALIZED grade. Measured on data/xfv.json: displayed minus
+realized grade is +11.38 FV on average (median +15.0), and p_bust(realized) -
+p_bust(displayed) is +0.108 on average, exceeding 0.10 on 81.3% of the 4477
+active rows. The fan and its stated bust probability describe different players.
+The ROW-level p_bust (the validated star/bust odds) is deliberately left on the
+realized grade; only the fan's internal copy is corrected.
+=============================================================================
+--- a/efv_score.py
++++ b/efv_score.py
+@@ _reprice_surplus_on_display()
+     if s.get("dist") is not None:
+-        # Surplus fan follows the displayed grade; keep the realized p_bust already on the row.
++        # Surplus fan follows the displayed grade -- including its OWN bust mass,
++        # which is the $0 atom of THIS fan. Copying the realized-grade p_bust in
++        # here described a different player: displayed minus realized is +11.4 FV
++        # on average and the two bust probabilities differ by > 0.10 on 81% of the
++        # served board (calibration sweep 2026-07-25). The ROW-level s["p_bust"]
++        # stays on the realized grade (the validated star/bust odds); this is the
++        # fan's internal consistency only.
+         # mean maps through apply_calibration exactly as surplus_value_mm calibrates its mean.
+         s["dist"] = {"p10_mm": _r1(_cq(pq.get("p10"))), "p25_mm": _r1(_cq(pq.get("p25"))),
+                      "p50_mm": _r1(_cq(pq.get("p50"))), "p75_mm": _r1(_cq(pq.get("p75"))),
+                      "p90_mm": _r1(_cq(pq.get("p90"))), "mean_mm": _r1(_cq(dq.get("mean"))),
+-                     "p_bust": s.get("p_bust")}
++                     "p_bust": (round(float(dq["p_bust"]), 3)
++                                if dq.get("p_bust") is not None else s.get("p_bust"))}
+
+=============================================================================
+PATCH E -- value_framework.py: band_p10_mm is a constant. within_bucket_cv.bust
+= 0.0 makes the bust bucket a point mass at the $0 floor, so the 10th percentile
+of the mixture is exactly 0 whenever p_bust >= 0.10 -- true for 99.60% of served
+active rows. Measured: band_p10_mm == 0.0 on 4470 of 4477 (99.84%), and
+band_p10_mm == band_p90_mm (a zero-width "band") on 1103 (24.64%).
+This patch adds a non-degenerate companion; it does NOT change any existing key.
+GATED: serving it is a display-contract decision for the owner.
+=============================================================================
+--- a/value_framework.py
++++ b/value_framework.py
+@@ _dist_output()
+     cutoff = float(np.quantile(sv_mm, dq))
+     worst = sv_mm[sv_mm <= cutoff]
+     downside = float(worst.mean()) if worst.size else float(sv_mm.min())
+     mean_mm = round(float(mean_mm), 2)
++    # NON-DEGENERATE COMPANION BAND. The bust bucket is a point mass at the $0
++    # floor (within_bucket_cv.bust = 0.0), so the unconditional p10 is exactly 0
++    # for every prospect with p_bust >= 0.10 -- 99.6% of the served eFV board. The
++    # conditional-on-not-busting percentiles carry the player-specific spread the
++    # unconditional lower bound cannot; read them WITH p_bust, never instead of it.
++    live = sv_mm[sv_mm > 0.0]
++    pcts_nb = ({f"p{int(pp)}": round(float(np.percentile(live, pp)), 2) for pp in pct_list}
++               if live.size >= 10 else None)
+     return {
+         "mean": mean_mm,
+         "percentiles": pcts,
++        "percentiles_if_not_bust": pcts_nb,
+         "p_bust": round(float(p_bust), 4),
+
+=============================================================================
+NOT PATCHED -- registered as measured defects with a ship gate still to run.
+=============================================================================
+G1  p_bust is understated by 0.14-0.29 in the eFV 45-50 tiers on both sides
+    (CI95 excludes 0, outside the zero-information band), while the MARGINAL
+    number reads calibrated (-0.03 hit / +0.08 pit on the live-comparable pool).
+    A recalibration of the ordered-logit cutpoints on resolved eFV cohorts moves
+    served odds and needs its own gate.
+G2  The served 80% outcome band achieves 0.50 coverage on the population the
+    board actually contains and 0.92 on the no-track-record mass it does not
+    serve; marginal coverage is nominal (0.785 / 0.783). Widening the mixture
+    moves every served band and needs its own gate.
+G3  xfv_war_6yr is over-dispersed out of fold (see data/xfv_pred_dispersion_eval.json).
+    A shrinkage correction is rank-preserving -- it cannot move the board or
+    served surplus, only xfv_war_6yr / xfv_grade_realized / p_bucket / p_bust.

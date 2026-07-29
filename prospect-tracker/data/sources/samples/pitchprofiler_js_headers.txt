@@ -1,0 +1,20 @@
+HTTP/1.1 200 OK
+Date: Fri, 24 Jul 2026 17:50:26 GMT
+Content-Type: application/javascript
+Transfer-Encoding: chunked
+Connection: keep-alive
+cache-control: public, max-age=31536000, immutable
+cf-cache-status: HIT
+last-modified: Fri, 24 Jul 2026 00:05:58 UTC
+permissions-policy: camera=(), microphone=(), geolocation=(), payment=()
+referrer-policy: strict-origin-when-cross-origin
+rndr-id: ec3007f9-48ed-4697
+Server: cloudflare
+vary: Accept-Encoding
+vary: Accept-Encoding
+x-content-type-options: nosniff
+x-frame-options: DENY
+etag: W/"a87d4350c5f4ffddf6d1e4e15297cea6"
+CF-RAY: a204c4669ff0de99-EWR
+alt-svc: h3=":443"; ma=86400
+

@@ -205,17 +205,9 @@ function _tmTotal(side) {
 // real model uncertainty, so a sub-$5M edge is not a meaningful "winner."
 const BALANCED_THRESHOLD_MM = 5;
 
-// Open the shared Generate GFX modal for a one-subject (card) export; fall back
-// to the legacy direct download if the module didn't load. (Same wrapper the
-// fa.js / projections.js card chips use.)
-function _openCard(opts) {
-  if (window.EEPHUS_GFX) {
-    window.EEPHUS_GFX.open({ kind: "card", module: opts.module, accentToken: opts.accentToken,
-      title: opts.name, filenameBase: (opts.filename || "eephus-card").replace(/\.png$/, ""), card: opts });
-  } else if (window.EEPHUS_HUB) {
-    window.EEPHUS_HUB.shareCard(opts);
-  }
-}
+// One-subject card exports go through EEPHUS_HUB.openCard (the shared wrapper -
+// DE-DUP 2026-07-23; it prefers the GFX modal, falls back to the direct
+// shareCard download).
 
 function renderTradeMachine() {
   const el = document.getElementById("trade-machine");
@@ -232,7 +224,7 @@ function renderTradeMachine() {
         <a class="fa-player-link tm-name" href="${x.kind === "prospect" ? `/prospx/#player=${encodeURIComponent(x.key)}` : `/projections/#player=${encodeURIComponent(x.key)}`}">${escapeHtml(x.name)}</a>
         <span class="tm-sub">${escapeHtml(x.pos || "")}</span>
         ${g ? `<span class="tm-grade-chip" style="color:${gc};border-color:${gc};" title="Trade Value Grade ${g} (contract-adjusted surplus)">${g}</span>` : ""}
-        <span class="tm-val" style="color:${_tmValColor(x.mm)};">${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm).toFixed(1)}M</span>
+        <span class="tm-val" style="color:${_tmValColor(x.mm)};">${(x.mm || 0) >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M</span>
         <button class="tm-x" data-tm-remove="${side}:${i}" title="Remove">×</button>
       </div>`;
     }).join("");
@@ -324,40 +316,42 @@ function renderTradeMachine() {
   const copyB = el.querySelector("[data-tm-copy]");
   if (copyB) copyB.onclick = () => {
     const fmt = side => _TM[side].map(x =>
-      ` ${x.name} (${[x.pos, x.org].filter(Boolean).join(", ")}${x.org || x.pos ? ", " : ""}${x.kind === "prospect" ? "prospect" : "MLB"}) ${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm).toFixed(1)}M`
+      ` ${x.name} (${[x.pos, x.org].filter(Boolean).join(", ")}${x.org || x.pos ? ", " : ""}${x.kind === "prospect" ? "prospect" : "MLB"}) ${(x.mm || 0) >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M`
     ).join("\n");
     const text = `=== Trade Machine (eephus.io) ===\n\nSide A receives:\n${fmt("a") || "  (none)"}\n  Total: $${dA.toFixed(1)}M\n\nSide B receives:\n${fmt("b") || "  (none)"}\n  Total: $${dB.toFixed(1)}M\n\nGap: $${Math.abs(dA - dB).toFixed(1)}M`;
     const done = () => { copyB.textContent = "Copied!"; setTimeout(() => { copyB.textContent = "Copy as text"; }, 1300); };
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => prompt("Copy this trade:", text));
     else prompt("Copy this trade:", text);
   };
-  // Shareable deal card (only wired when both sides carry an asset). Two sections
-  // list each side's assets "name - $M"; four tiles carry the totals, gap, and
-  // verdict; the caption is the grader's verdict line.
+  // Shareable deal card (only wired when both sides carry an asset).
+  // Declarative since GFX slice 4: the "deal" template owns the layout (four
+  // totals/gap/verdict tiles + one "receives" section per side); this site
+  // only supplies each asset's data. Each asset row carries its Trade Value
+  // Grade letter (the same _tbGrade the live UI chips show).
   const gfxB = el.querySelector("[data-tm-gfx]");
   if (gfxB) gfxB.onclick = () => {
-    const asset = x => [String(x.name || "?"),
-      `${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M`,
-      (x.mm || 0) >= 0 ? undefined : "var(--down)"];
+    const asset = x => ({
+      name: x.name,
+      grade: _tbGrade(x.mm),
+      value: `${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M`,
+      neg: !((x.mm || 0) >= 0),
+    });
     const vWord = vClass === "is-warn" ? "Hesitate"
       : vClass === "is-bad" ? (pct >= 70 ? "Lopsided" : "Reject")
       : "Fair";
-    _openCard({
+    window.EEPHUS_HUB.openCard({
+      template: "deal",
+      data: {
+        sideA: { total: `$${dA.toFixed(1)}M`, assets: _TM.a.map(asset) },
+        sideB: { total: `$${dB.toFixed(1)}M`, assets: _TM.b.map(asset) },
+        gap: `$${diff.toFixed(1)}M`,
+        verdict: vWord,
+      },
       module: "Trade Machine",
       accentToken: "--accent-cyan",
       name: "Trade Evaluation",
       meta: "one currency · prospect eFV surplus + MLB contract surplus",
       sub: `verdict: ${vWord.toUpperCase()}`,
-      tiles: [
-        { label: "Side A", value: `$${dA.toFixed(1)}M` },
-        { label: "Side B", value: `$${dB.toFixed(1)}M` },
-        { label: "Gap", value: `$${diff.toFixed(1)}M` },
-        { label: "Verdict", value: vWord },
-      ],
-      sections: [
-        { title: "Side A receives", rows: _TM.a.map(asset) },
-        { title: "Side B receives", rows: _TM.b.map(asset) },
-      ],
       url: "eephus.io/trademachine",
       filename: "eephus-trademachine-deal.png",
       caption: vText,

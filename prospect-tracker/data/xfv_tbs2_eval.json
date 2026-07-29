@@ -1,0 +1,151 @@
+{
+ "lane": "W-TBS2",
+ "registration": "docs/efv-2026-07-24/GATES.md W-TBS2 (Phase 4b)",
+ "generated_by": "tools/efv_tbs2_lab.py",
+ "seed": 20260724,
+ "bootstrap_reps": 2000,
+ "universe": {
+  "n_resolved_rows": 3038,
+  "by_side": {
+   "hit": 1500,
+   "pit": 1538
+  },
+  "by_kind": {
+   "debuted": 993,
+   "bust": 2045
+  },
+  "drops": {
+   "censored_or_unflagged": 833
+  }
+ },
+ "tie_groups": {
+  "n_eligible": 33,
+  "n_players_in_eligible": 3036,
+  "skipped": {
+   "singleton": 2
+  },
+  "size_distribution": {
+   "2": 4,
+   "4": 2,
+   "6": 3,
+   "8": 2,
+   "9": 1,
+   "10": 3,
+   "23": 2,
+   "24": 1,
+   "33": 1,
+   "38": 1,
+   "46": 2,
+   "60": 1,
+   "68": 1,
+   "90": 1,
+   "117": 1,
+   "186": 1,
+   "223": 1,
+   "235": 1,
+   "263": 1,
+   "418": 1,
+   "452": 1,
+   "602": 1
+  }
+ },
+ "stack_coverage": {
+  "proxy_resolved_players": 0,
+  "star_resolved_players": 3038,
+  "stuff_resolved_pitchers": 207,
+  "n_resolved_pitchers": 1538
+ },
+ "pair_decision_share": {
+  "undecided": 254187,
+  "stuff": 1702,
+  "star": 237207
+ },
+ "pooled": {
+  "incumbent_tbs": 0.016,
+  "incumbent_tbs_efv_only_sensitivity": 0.0461,
+  "challenger_stack": 0.0732,
+  "challenger_star_only_ablation": 0.0627
+ },
+ "gate": {
+  "bar": "delta lo95 > 0 vs incumbent TBS ordering",
+  "delta_point": 0.0572,
+  "delta_lo95": -0.0008,
+  "delta_hi95": 0.1458,
+  "pass": false
+ },
+ "sensitivity_vs_efv_only_incumbent": {
+  "delta_point": 0.0271,
+  "delta_lo95": -0.0167,
+  "delta_hi95": 0.0836
+ },
+ "sensitivity_star_only_clean_vs_incumbent": {
+  "note": "look-ahead-free challenger: star odds alone (drops contaminated aStuff+ and the always-abstaining proxy) vs incumbent TBS.",
+  "delta_point": 0.0467,
+  "delta_lo95": -0.0002,
+  "delta_hi95": 0.1258
+ },
+ "examples": [
+  {
+   "tie_grade": "40.0",
+   "group_n": 602,
+   "incumbent_top": "ben_leeper",
+   "incumbent_top_realized_war6": 0.0,
+   "challenger_promotes": "diego_rincones",
+   "promoted_realized_war6": 0.0,
+   "promoted_star_odds": 0.003,
+   "incumbent_top_star_odds": 0.001,
+   "promotion_gain_war": 0.0
+  },
+  {
+   "tie_grade": "45.0",
+   "group_n": 452,
+   "incumbent_top": "luis_garcia__23735",
+   "incumbent_top_realized_war6": 4.76,
+   "challenger_promotes": "billy_mckinney",
+   "promoted_realized_war6": -0.06,
+   "promoted_star_odds": 0.021,
+   "incumbent_top_star_odds": 0.003,
+   "promotion_gain_war": -4.82
+  },
+  {
+   "tie_grade": "35.0",
+   "group_n": 418,
+   "incumbent_top": "anthony_garcia",
+   "incumbent_top_realized_war6": 0.0,
+   "challenger_promotes": "wyatt_olds",
+   "promoted_realized_war6": 0.0,
+   "promoted_star_odds": 0.0,
+   "incumbent_top_star_odds": 0.0,
+   "promotion_gain_war": 0.0
+  },
+  {
+   "tie_grade": "37.7",
+   "group_n": 263,
+   "incumbent_top": "jake_gatewood",
+   "incumbent_top_realized_war6": 0.0,
+   "challenger_promotes": "tanner_burns",
+   "promoted_realized_war6": 0.0,
+   "promoted_star_odds": 0.0,
+   "incumbent_top_star_odds": 0.0,
+   "promotion_gain_war": 0.0
+  },
+  {
+   "tie_grade": "41.7",
+   "group_n": 235,
+   "incumbent_top": "emmanuel_clase",
+   "incumbent_top_realized_war6": 11.52,
+   "challenger_promotes": "ezequiel_pagan",
+   "promoted_realized_war6": 0.0,
+   "promoted_star_odds": 0.006,
+   "incumbent_top_star_odds": 0.002,
+   "promotion_gain_war": -11.52
+  }
+ ],
+ "notes": [
+  "xfv_proxy has zero live coverage on resolved cohorts (proxy cohort years 2024-2026); stack level 1 abstains for every pair and the stack is effectively star odds then aStuff+.",
+  "aStuff+ (data/stuff_plus_aaa.json) is measured on AAA 2023-2026 pitches, which is AFTER the as-of-prospect cutoff for resolved players; any stuff-decided pair carries look-ahead. Share of pairs it decides is reported above.",
+  "Incumbent TBS reproduced from as-of-prospect fields under the frontend renormalize-over-present-weights contract; live-only inputs (RPS+, SC+, statline Stuff+, age tier, movement, health/breakout multipliers, plus flag) drop out for all rows identically. tool_composite is an approximation of served tools.composite_overall from matrix tool grades.",
+  "AP+ never enters (registered constraint)."
+ ],
+ "verdict": "FAIL. Registered gate delta +0.0572, lo95 -0.0008 vs bar lo95 > 0 -> marginal miss = FAIL per registration; no ship, no prospx wiring. The miss is robust: the look-ahead-free star-only challenger also misses (delta +0.0467, lo95 -0.0002); against the stronger eFV-only incumbent the challenger fails clearly (delta +0.0271, lo95 -0.0167). One attempt spent."
+}

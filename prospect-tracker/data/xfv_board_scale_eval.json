@@ -1,0 +1,368 @@
+{
+ "line": "W-SIDESCALE per-side affine outcome calibration of the eFV board grade",
+ "module": "efv_board_scale.py",
+ "standard": "docs/EFV_GATE_STANDARD.md",
+ "statistic": "gap@55 = calibrated hit grade - calibrated pit grade at raw 55 (gauge-invariant; negative = pitchers lifted)",
+ "fit_band": [
+  45.0,
+  59.0
+ ],
+ "band_n": {
+  "hit": 518,
+  "pit": 403
+ },
+ "outcome": "realized_war_6yr (first-6yr summed bWAR, KM-censored target)",
+ "fit_pool": "data/xfv_scored.json + data/xfv_scored_pitcher.json, cohorts 2011-2024",
+ "shipped_enabled": true,
+ "shipped_coeffs": {
+  "hit": [
+   -2.603487,
+   1.036284
+  ],
+  "pit": [
+   -0.57938,
+   1.03247
+  ]
+ },
+ "outcome_functionals": {
+  "identity_war": {
+   "point_gap55": -1.87,
+   "paired_bootstrap": {
+    "b": 2000,
+    "refit_per_draw": true,
+    "mean": -1.86,
+    "ci90": [
+     -5.15,
+     1.31
+    ],
+    "sd": 1.99,
+    "resolves_ci_excludes_zero": false
+   },
+   "zero_information_control": {
+    "description": "side label permuted within the draw",
+    "mean": 0.01,
+    "ci90": [
+     -2.72,
+     2.69
+    ],
+    "candidate_inside_control_band": true
+   },
+   "permutation_null": {
+    "ci90": [
+     -2.72,
+     2.6
+    ],
+    "p_two_sided": 0.259
+   },
+   "time_splits": {
+    "blocks": [
+     {
+      "block": "2013-2015",
+      "n": 244,
+      "gap55": 1.34
+     },
+     {
+      "block": "2016-2017",
+      "n": 110,
+      "gap55": -8.31
+     },
+     {
+      "block": "2018-2019",
+      "n": 126,
+      "gap55": -2.47
+     },
+     {
+      "block": "2020-2021",
+      "n": 128,
+      "gap55": 4.21
+     },
+     {
+      "block": "2022-2024",
+      "n": 252,
+      "gap55": -8.82
+     }
+    ],
+    "cross_split_mean": -2.81,
+    "sign_agreement_negative": "3/5"
+   },
+   "verdict": "NULL"
+  },
+  "sqrt_war": {
+   "point_gap55": -2.57,
+   "paired_bootstrap": {
+    "b": 2000,
+    "refit_per_draw": true,
+    "mean": -2.62,
+    "ci90": [
+     -5.3,
+     -0.16
+    ],
+    "sd": 1.55,
+    "resolves_ci_excludes_zero": true
+   },
+   "zero_information_control": {
+    "description": "side label permuted within the draw",
+    "mean": 0.01,
+    "ci90": [
+     -2.25,
+     2.21
+    ],
+    "candidate_inside_control_band": false
+   },
+   "permutation_null": {
+    "ci90": [
+     -2.2,
+     2.18
+    ],
+    "p_two_sided": 0.0495
+   },
+   "time_splits": {
+    "blocks": [
+     {
+      "block": "2013-2015",
+      "n": 244,
+      "gap55": -1.36
+     },
+     {
+      "block": "2016-2017",
+      "n": 110,
+      "gap55": -9.71
+     },
+     {
+      "block": "2018-2019",
+      "n": 126,
+      "gap55": -1.68
+     },
+     {
+      "block": "2020-2021",
+      "n": 128,
+      "gap55": 3.14
+     },
+     {
+      "block": "2022-2024",
+      "n": 252,
+      "gap55": -6.03
+     }
+    ],
+    "cross_split_mean": -3.13,
+    "sign_agreement_negative": "4/5"
+   },
+   "verdict": "RESOLVES"
+  },
+  "p_war_ge_3": {
+   "point_gap55": -2.76,
+   "paired_bootstrap": {
+    "b": 2000,
+    "refit_per_draw": true,
+    "mean": -2.78,
+    "ci90": [
+     -5.41,
+     -0.33
+    ],
+    "sd": 1.58,
+    "resolves_ci_excludes_zero": true
+   },
+   "zero_information_control": {
+    "description": "side label permuted within the draw",
+    "mean": 0.02,
+    "ci90": [
+     -2.18,
+     2.18
+    ],
+    "candidate_inside_control_band": false
+   },
+   "permutation_null": {
+    "ci90": [
+     -2.24,
+     2.25
+    ],
+    "p_two_sided": 0.035
+   },
+   "time_splits": {
+    "blocks": [
+     {
+      "block": "2013-2015",
+      "n": 244,
+      "gap55": -4.64
+     },
+     {
+      "block": "2016-2017",
+      "n": 110,
+      "gap55": -12.12
+     },
+     {
+      "block": "2018-2019",
+      "n": 126,
+      "gap55": -2.26
+     },
+     {
+      "block": "2020-2021",
+      "n": 128,
+      "gap55": 1.34
+     },
+     {
+      "block": "2022-2024",
+      "n": 252,
+      "gap55": -0.44
+     }
+    ],
+    "cross_split_mean": -3.62,
+    "sign_agreement_negative": "4/5"
+   },
+   "verdict": "RESOLVES"
+  }
+ },
+ "board_effect": {
+  "off": {
+   "top_n_side_mix_active_board": {
+    "top10": {
+     "H": 10,
+     "P": 0,
+     "pit_share": 0.0
+    },
+    "top25": {
+     "H": 24,
+     "P": 1,
+     "pit_share": 0.04
+    },
+    "top50": {
+     "H": 47,
+     "P": 3,
+     "pit_share": 0.06
+    },
+    "top100": {
+     "H": 91,
+     "P": 9,
+     "pit_share": 0.09
+    }
+   },
+   "top_n_side_mix_all_rows": {
+    "top10": {
+     "H": 10,
+     "P": 0,
+     "pit_share": 0.0
+    },
+    "top25": {
+     "H": 25,
+     "P": 0,
+     "pit_share": 0.0
+    },
+    "top50": {
+     "H": 50,
+     "P": 0,
+     "pit_share": 0.0
+    },
+    "top100": {
+     "H": 100,
+     "P": 0,
+     "pit_share": 0.0
+    }
+   },
+   "display_inversions_in_board_order": 0,
+   "max_served_move_fv": 0.0,
+   "named": {
+    "seth_hernandez": {
+     "grade": 56.8,
+     "rank": 29
+    },
+    "ryan_sloan": {
+     "grade": 55.3,
+     "rank": 50
+    },
+    "franklin_arias": {
+     "grade": 64.1,
+     "rank": 3
+    },
+    "leo_de_vries": {
+     "grade": 64.2,
+     "rank": 2
+    },
+    "jesus_made": {
+     "grade": 64.5,
+     "rank": 1
+    }
+   }
+  },
+  "on": {
+   "top_n_side_mix_active_board": {
+    "top10": {
+     "H": 9,
+     "P": 1,
+     "pit_share": 0.1
+    },
+    "top25": {
+     "H": 22,
+     "P": 3,
+     "pit_share": 0.12
+    },
+    "top50": {
+     "H": 47,
+     "P": 3,
+     "pit_share": 0.06
+    },
+    "top100": {
+     "H": 84,
+     "P": 16,
+     "pit_share": 0.16
+    }
+   },
+   "top_n_side_mix_all_rows": {
+    "top10": {
+     "H": 10,
+     "P": 0,
+     "pit_share": 0.0
+    },
+    "top25": {
+     "H": 25,
+     "P": 0,
+     "pit_share": 0.0
+    },
+    "top50": {
+     "H": 50,
+     "P": 0,
+     "pit_share": 0.0
+    },
+    "top100": {
+     "H": 99,
+     "P": 1,
+     "pit_share": 0.01
+    }
+   },
+   "display_inversions_in_board_order": 0,
+   "max_served_move_fv": 1.8,
+   "named": {
+    "seth_hernandez": {
+     "grade": 58.1,
+     "rank": 17
+    },
+    "ryan_sloan": {
+     "grade": 56.5,
+     "rank": 25
+    },
+    "franklin_arias": {
+     "grade": 63.8,
+     "rank": 3
+    },
+    "leo_de_vries": {
+     "grade": 63.9,
+     "rank": 2
+    },
+    "jesus_made": {
+     "grade": 64.2,
+     "rank": 1
+    }
+   }
+  }
+ },
+ "fside_reference": {
+  "source": "data/xfv_side_fairness_eval.json (efv_model F-SIDE, measurement-only)",
+  "note": "F-SIDE ranks the joint board by the RETIRED per-side quantile display grade, a basis the board stopped serving 2026-07-25, so it no longer measures the served board. Its rank_war frame is the calibration-honest reference for the top-25 pitcher share.",
+  "top25_pit_share_display_frame": 0.37,
+  "top25_pit_share_rank_war_frame": 0.1,
+  "top25_hit_minus_pit": 4.03,
+  "ci90": [
+   1.56,
+   6.4
+  ]
+ }
+}

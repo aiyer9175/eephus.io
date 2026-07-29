@@ -1,0 +1,272 @@
+{
+ "generated_at": "2026-07-23T17:57:33Z",
+ "model": "fantasy_startscore",
+ "protocol": {
+  "preregistered": "2026-07-23 (header of tools/fantasy_startscore_lab.py, frozen before results)",
+  "target": "fantasy_export._start_score per-start streamer score",
+  "primary_metric": "mean within-date Spearman rho, dates with >= 8 pool starts",
+  "secondary_metrics": [
+   "pooled Spearman",
+   "top-decile precision (k=ceil(n/10) per date)"
+  ],
+  "split": "fit <= 2026-06-15 < holdout (2026 calendar)",
+  "bootstrap": {
+   "seed": 20260723,
+   "reps": 2000,
+   "cluster": "date"
+  },
+  "ship_bar": "holdout mean-date-rho delta vs B0 with lo95 > 0",
+  "arms": {
+   "J": "join repair (canonical->lb alias)",
+   "A": "offense multiplier strength grid (0.0, 0.5, 1.0, 1.5)",
+   "B": "opponent K% term, beta grid (0.25, 0.5, 1.0)",
+   "C": "park runs-index term, gamma grid (0.5, 1.0)"
+  },
+  "caveats": [
+   "base term = today's ROS fpts_fgp/gs (mild lookahead, identical in every arm incl. baseline)",
+   "2026 offense_plus is the season-to-date artifact (shared lookahead)",
+   "pool = current fantasy.json SPs (survivorship in early-season starts)"
+  ]
+ },
+ "join_bug": {
+  "confirmed_in_production": true,
+  "mismatched_codes": {
+   "ARI": "AZ",
+   "CHW": "CWS",
+   "KCR": "KC",
+   "SDP": "SD",
+   "SFG": "SF",
+   "TBR": "TB",
+   "WSN": "WSH"
+  },
+  "detail": "fantasy_schedule org codes (canonical_org) never match the hitter_leaderboards team codes for 7 orgs; _start_score's teams_ctx lookup misses and those opponents score at offense_plus=100 (verified: baked daily_streamers rows)",
+  "affected_starts_2026": 625,
+  "affected_share_2026": 0.231
+ },
+ "dataset": {
+  "season": 2026,
+  "n_starts": 2709,
+  "n_dates": 118,
+  "n_fit_dates": 83,
+  "n_holdout_dates": 35,
+  "n_pitchers": 201
+ },
+ "fit_grids": {
+  "A": [
+   {
+    "param": 0.0,
+    "fit_mean_date_rho": 0.29
+   },
+   {
+    "param": 0.5,
+    "fit_mean_date_rho": 0.3007
+   },
+   {
+    "param": 1.0,
+    "fit_mean_date_rho": 0.3089
+   },
+   {
+    "param": 1.5,
+    "fit_mean_date_rho": 0.3112
+   }
+  ],
+  "B": [
+   {
+    "param": 0.25,
+    "fit_mean_date_rho": 0.3116
+   },
+   {
+    "param": 0.5,
+    "fit_mean_date_rho": 0.3086
+   },
+   {
+    "param": 1.0,
+    "fit_mean_date_rho": 0.2897
+   }
+  ],
+  "C": [
+   {
+    "param": 0.5,
+    "fit_mean_date_rho": 0.3026
+   },
+   {
+    "param": 1.0,
+    "fit_mean_date_rho": 0.2964
+   }
+  ]
+ },
+ "results_2026": {
+  "B0": {
+   "label": "incumbent (production join)",
+   "param": null,
+   "fit_mean_date_rho": 0.2946,
+   "holdout_mean_date_rho": 0.2692,
+   "full_mean_date_rho": 0.2872,
+   "pooled_rho": 0.3018,
+   "top_decile_precision": 0.2437
+  },
+  "J": {
+   "label": "join repair only",
+   "param": null,
+   "fit_mean_date_rho": 0.3089,
+   "holdout_mean_date_rho": 0.2688,
+   "full_mean_date_rho": 0.2973,
+   "pooled_rho": 0.3075,
+   "top_decile_precision": 0.2468,
+   "holdout_boot_vs_B0": {
+    "n_dates": 33,
+    "delta": -0.0004,
+    "lo95": -0.0158,
+    "hi95": 0.0149
+   }
+  },
+  "A": {
+   "label": "A best (param=1.5)",
+   "param": 1.5,
+   "fit_mean_date_rho": 0.3112,
+   "holdout_mean_date_rho": 0.2583,
+   "full_mean_date_rho": 0.2959,
+   "pooled_rho": 0.3061,
+   "top_decile_precision": 0.2405,
+   "holdout_boot_vs_B0": {
+    "n_dates": 33,
+    "delta": -0.011,
+    "lo95": -0.0301,
+    "hi95": 0.0091
+   },
+   "holdout_boot_vs_J": {
+    "n_dates": 33,
+    "delta": -0.0105,
+    "lo95": -0.0197,
+    "hi95": -0.0019
+   }
+  },
+  "B": {
+   "label": "B best (param=0.25)",
+   "param": 0.25,
+   "fit_mean_date_rho": 0.3116,
+   "holdout_mean_date_rho": 0.2767,
+   "full_mean_date_rho": 0.3015,
+   "pooled_rho": 0.3096,
+   "top_decile_precision": 0.2532,
+   "holdout_boot_vs_B0": {
+    "n_dates": 33,
+    "delta": 0.0075,
+    "lo95": -0.007,
+    "hi95": 0.0223
+   },
+   "holdout_boot_vs_J": {
+    "n_dates": 33,
+    "delta": 0.0079,
+    "lo95": -0.0054,
+    "hi95": 0.0227
+   }
+  },
+  "C": {
+   "label": "C best (param=0.5)",
+   "param": 0.5,
+   "fit_mean_date_rho": 0.3026,
+   "holdout_mean_date_rho": 0.275,
+   "full_mean_date_rho": 0.2946,
+   "pooled_rho": 0.3079,
+   "top_decile_precision": 0.2405,
+   "holdout_boot_vs_B0": {
+    "n_dates": 33,
+    "delta": 0.0058,
+    "lo95": -0.0142,
+    "hi95": 0.0261
+   },
+   "holdout_boot_vs_J": {
+    "n_dates": 33,
+    "delta": 0.0062,
+    "lo95": -0.0093,
+    "hi95": 0.0219
+   }
+  }
+ },
+ "verdicts": {
+  "J": {
+   "ships": false,
+   "holdout_delta_vs_B0": -0.0004,
+   "lo95": -0.0158,
+   "hi95": 0.0149
+  },
+  "A": {
+   "ships": false,
+   "holdout_delta_vs_B0": -0.011,
+   "lo95": -0.0301,
+   "hi95": 0.0091
+  },
+  "B": {
+   "ships": false,
+   "holdout_delta_vs_B0": 0.0075,
+   "lo95": -0.007,
+   "hi95": 0.0223
+  },
+  "C": {
+   "ships": false,
+   "holdout_delta_vs_B0": 0.0058,
+   "lo95": -0.0142,
+   "hi95": 0.0261
+  }
+ },
+ "winner": null,
+ "conclusions": [
+  "NULL RESULT on the pre-registered ship bar: no arm's holdout mean-date-rho delta vs the production-exact baseline B0 clears lo95 > 0. The incumbent per-start score stands.",
+  "The opponent-offense multiplier at its CURRENT strength is VALIDATED, not flat: s=0 (no multiplier) is the worst fit-window variant (0.29 vs 0.3089 at s=1.0) and the worst 2025 full-season variant; raising strength to s=1.5 is significantly WORSE than s=1.0 on holdout (A vs J: -0.0105 [-0.0197, -0.0019]). Keep the strength exactly as is.",
+  "JOIN BUG (correctness, not performance): 625 of 2709 2026 starts (23%) scored against a silently neutralized opponent (offense_plus forced to 100 by the org-code mismatch); the 7 affected teams currently span offense_plus 94-105. The repair (arm J) gained +0.0143 fit-window rho but was metric-neutral in the 5-week holdout (-0.0004), so it does NOT ship on the performance bar; recommended anyway on bug grounds - it feeds the validated multiplier the data it was designed to read.",
+  "Opponent K% (beta=0.25) is the most promising UNPROVEN candidate: holdout 0.0075 vs B0 [-0.007, 0.0223], same-sign tiny gain in the 2025 full-season grid. Re-test at season end with a longer holdout before considering.",
+  "Park term: flat (fit-window below J, holdout CI spans 0). No action."
+ ],
+ "supplement_2025": {
+  "n_starts": 4135,
+  "n_pitchers": 205,
+  "note": "skill base = own 2025 season FGP/start (shared across arms); offense proxy = 100*(R/PA)/lg; observational only",
+  "strength_grid": [
+   {
+    "s": 0.0,
+    "mean_date_rho": 0.3061,
+    "pooled_rho": 0.3236,
+    "top_decile_precision": 0.293
+   },
+   {
+    "s": 0.5,
+    "mean_date_rho": 0.3182,
+    "pooled_rho": 0.3336,
+    "top_decile_precision": 0.3135
+   },
+   {
+    "s": 1.0,
+    "mean_date_rho": 0.3216,
+    "pooled_rho": 0.3377,
+    "top_decile_precision": 0.3094
+   },
+   {
+    "s": 1.5,
+    "mean_date_rho": 0.3201,
+    "pooled_rho": 0.3367,
+    "top_decile_precision": 0.3053
+   }
+  ],
+  "k_grid": [
+   {
+    "beta": 0.25,
+    "mean_date_rho": 0.3224,
+    "pooled_rho": 0.3377,
+    "top_decile_precision": 0.3176
+   },
+   {
+    "beta": 0.5,
+    "mean_date_rho": 0.3227,
+    "pooled_rho": 0.3362,
+    "top_decile_precision": 0.3238
+   },
+   {
+    "beta": 1.0,
+    "mean_date_rho": 0.3129,
+    "pooled_rho": 0.3293,
+    "top_decile_precision": 0.3238
+   }
+  ]
+ }
+}

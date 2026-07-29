@@ -1,0 +1,8 @@
+{
+  "url": "https://docs.google.com/spreadsheets/d/1gQujXQQGOVNaiuwSN680Hq-FDVsCwvN-3AazykOBON0/export?format=csv",
+  "http_status": 200,
+  "bytes": 390947,
+  "content_type": "text/csv; charset=utf-8",
+  "fetched_at": "2026-07-24T18:30:14",
+  "note": "row1=donations banner; row2=real header"
+}

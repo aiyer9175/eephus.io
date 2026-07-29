@@ -1,0 +1,499 @@
+{
+ "seed": 20260724,
+ "n_boot": 2000,
+ "contributor_war": 3.0,
+ "protocol": "forward-chained OOS, SCORED_YEARS folds, train>=50/test>=12; blend=(1-lam)*max(0,OLS(FV))+lam*ridge; reproduces the headline baseline; paired player-clustered bootstrap on REMOVED-minus-CAPPED",
+ "shipped_constants": {
+  "K_REL_PA": 100.0,
+  "K_REL_BF": 80.0,
+  "age_rel_clamp": 3.5,
+  "n_milb_cap": 8.0,
+  "war_floor": -2.0
+ },
+ "sides": {
+  "hit": {
+   "baseline": {
+    "spearman": 0.3787,
+    "auc_contributor": 0.7727,
+    "n": 353,
+    "n_pos": 132
+   },
+   "diagnostics": {
+    "age_rel_bind_>3.5": 11,
+    "age_rel_measured": 540,
+    "n_milb_max": 9.0,
+    "n_milb_over_8": 2
+   },
+   "caps": {
+    "age_rel_level_clamp_3.5": {
+     "uncapped": {
+      "spearman": 0.3768,
+      "auc_contributor": 0.7722,
+      "delta_removed_minus_capped": {
+       "d_spearman_mean": -0.00197,
+       "d_spearman_lo95": -0.00807,
+       "d_spearman_hi95": 0.0046,
+       "d_auc_mean": -0.00042,
+       "d_auc_lo95": -0.00391,
+       "d_auc_hi95": 0.00264,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "clamp5": {
+      "spearman": 0.3768,
+      "auc_contributor": 0.7722,
+      "delta_removed_minus_capped": {
+       "d_spearman_mean": -0.00197,
+       "d_spearman_lo95": -0.00807,
+       "d_spearman_hi95": 0.0046,
+       "d_auc_mean": -0.00042,
+       "d_auc_lo95": -0.00391,
+       "d_auc_hi95": 0.00264,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "clamp7": {
+      "spearman": 0.3768,
+      "auc_contributor": 0.7722,
+      "delta_removed_minus_capped": {
+       "d_spearman_mean": -0.00197,
+       "d_spearman_lo95": -0.00807,
+       "d_spearman_hi95": 0.0046,
+       "d_auc_mean": -0.00042,
+       "d_auc_lo95": -0.00391,
+       "d_auc_hi95": 0.00264,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     }
+    },
+    "reliability_shrink_K": {
+     "K_0_noshrink": {
+      "K_pa": 0.0,
+      "K_bf": 0.0,
+      "spearman": 0.3815,
+      "auc_contributor": 0.7749,
+      "delta_vs_shipped_K": {
+       "d_spearman_mean": 0.00275,
+       "d_spearman_lo95": -0.00486,
+       "d_spearman_hi95": 0.01061,
+       "d_auc_mean": 0.00208,
+       "d_auc_lo95": -0.00273,
+       "d_auc_hi95": 0.00674,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "K_x0.25": {
+      "K_pa": 25.0,
+      "K_bf": 20.0,
+      "spearman": 0.3801,
+      "auc_contributor": 0.7739,
+      "delta_vs_shipped_K": {
+       "d_spearman_mean": 0.00144,
+       "d_spearman_lo95": -0.00339,
+       "d_spearman_hi95": 0.00642,
+       "d_auc_mean": 0.00119,
+       "d_auc_lo95": -0.00169,
+       "d_auc_hi95": 0.00401,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "K_x0.5": {
+      "K_pa": 50.0,
+      "K_bf": 40.0,
+      "spearman": 0.3792,
+      "auc_contributor": 0.7734,
+      "delta_vs_shipped_K": {
+       "d_spearman_mean": 0.00052,
+       "d_spearman_lo95": -0.00277,
+       "d_spearman_hi95": 0.00384,
+       "d_auc_mean": 0.00075,
+       "d_auc_lo95": -0.00111,
+       "d_auc_hi95": 0.00268,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "K_x1.5": {
+      "K_pa": 150.0,
+      "K_bf": 120.0,
+      "spearman": 0.3785,
+      "auc_contributor": 0.7722,
+      "delta_vs_shipped_K": {
+       "d_spearman_mean": -0.00013,
+       "d_spearman_lo95": -0.00249,
+       "d_spearman_hi95": 0.00222,
+       "d_auc_mean": -0.00048,
+       "d_auc_lo95": -0.00191,
+       "d_auc_hi95": 0.00091,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "K_x2": {
+      "K_pa": 200.0,
+      "K_bf": 160.0,
+      "spearman": 0.379,
+      "auc_contributor": 0.7722,
+      "delta_vs_shipped_K": {
+       "d_spearman_mean": 0.00027,
+       "d_spearman_lo95": -0.00334,
+       "d_spearman_hi95": 0.00406,
+       "d_auc_mean": -0.00049,
+       "d_auc_lo95": -0.00268,
+       "d_auc_hi95": 0.0018,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     }
+    },
+    "n_milb_seasons_cap_8": {
+     "uncapped": {
+      "cap": 1000000000.0,
+      "spearman": 0.3787,
+      "auc_contributor": 0.7727,
+      "delta_removed_minus_capped": {
+       "d_spearman_mean": 0.0,
+       "d_spearman_lo95": 0.0,
+       "d_spearman_hi95": 0.0,
+       "d_auc_mean": 0.0,
+       "d_auc_lo95": 0.0,
+       "d_auc_hi95": 0.0,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "cap6": {
+      "cap": 6.0,
+      "spearman": 0.3789,
+      "auc_contributor": 0.7729,
+      "delta_removed_minus_capped": {
+       "d_spearman_mean": 0.00019,
+       "d_spearman_lo95": -0.00097,
+       "d_spearman_hi95": 0.00143,
+       "d_auc_mean": 0.00017,
+       "d_auc_lo95": -0.00048,
+       "d_auc_hi95": 0.0009,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "cap12": {
+      "cap": 12.0,
+      "spearman": 0.3787,
+      "auc_contributor": 0.7727,
+      "delta_removed_minus_capped": {
+       "d_spearman_mean": 0.0,
+       "d_spearman_lo95": 0.0,
+       "d_spearman_hi95": 0.0,
+       "d_auc_mean": 0.0,
+       "d_auc_lo95": 0.0,
+       "d_auc_hi95": 0.0,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     }
+    },
+    "war_floor_-2.0": {
+     "nofloor_spearman": 0.3787,
+     "floored_spearman": 0.3787,
+     "nofloor_auc": 0.7727,
+     "floored_auc": 0.7727,
+     "model_leg_preds_below_-2.0": 3,
+     "delta_removed_minus_capped": {
+      "d_spearman_mean": 1e-05,
+      "d_spearman_lo95": -4e-05,
+      "d_spearman_hi95": 0.00011,
+      "d_auc_mean": 0.0,
+      "d_auc_lo95": 0.0,
+      "d_auc_hi95": 0.0,
+      "n_boot": 2000
+     },
+     "disposition": "REMOVE-default"
+    },
+    "age_rel_X_K_interaction": {
+     "best_K_setting": "K_0_noshrink",
+     "K_mult": 0.0,
+     "spearman": 0.3802,
+     "auc_contributor": 0.7745,
+     "delta_removed_minus_capped": {
+      "d_spearman_mean": 0.0015,
+      "d_spearman_lo95": -0.00629,
+      "d_spearman_hi95": 0.00938,
+      "d_auc_mean": 0.00177,
+      "d_auc_lo95": -0.00325,
+      "d_auc_hi95": 0.00655,
+      "n_boot": 2000
+     },
+     "disposition": "REMOVE-default",
+     "note": "joint uncap of age_rel_level + shrink-K at the point-OOS-max multiplier; compare its delta to the sum of the individual deltas for interaction"
+    }
+   }
+  },
+  "pit": {
+   "baseline": {
+    "spearman": 0.302,
+    "auc_contributor": 0.7191,
+    "n": 438,
+    "n_pos": 102
+   },
+   "diagnostics": {
+    "age_rel_bind_>3.5": 20,
+    "age_rel_measured": 646,
+    "n_milb_max": 9.0,
+    "n_milb_over_8": 1
+   },
+   "caps": {
+    "age_rel_level_clamp_3.5": {
+     "uncapped": {
+      "spearman": 0.3017,
+      "auc_contributor": 0.7192,
+      "delta_removed_minus_capped": {
+       "d_spearman_mean": -0.00033,
+       "d_spearman_lo95": -0.00213,
+       "d_spearman_hi95": 0.00131,
+       "d_auc_mean": 7e-05,
+       "d_auc_lo95": -0.00104,
+       "d_auc_hi95": 0.00116,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "clamp5": {
+      "spearman": 0.3019,
+      "auc_contributor": 0.7194,
+      "delta_removed_minus_capped": {
+       "d_spearman_mean": -0.00017,
+       "d_spearman_lo95": -0.00178,
+       "d_spearman_hi95": 0.0014,
+       "d_auc_mean": 0.00021,
+       "d_auc_lo95": -0.00075,
+       "d_auc_hi95": 0.0013,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "clamp7": {
+      "spearman": 0.3017,
+      "auc_contributor": 0.7192,
+      "delta_removed_minus_capped": {
+       "d_spearman_mean": -0.00033,
+       "d_spearman_lo95": -0.00213,
+       "d_spearman_hi95": 0.00131,
+       "d_auc_mean": 7e-05,
+       "d_auc_lo95": -0.00104,
+       "d_auc_hi95": 0.00116,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     }
+    },
+    "reliability_shrink_K": {
+     "K_0_noshrink": {
+      "K_pa": 0.0,
+      "K_bf": 0.0,
+      "spearman": 0.303,
+      "auc_contributor": 0.7155,
+      "delta_vs_shipped_K": {
+       "d_spearman_mean": 0.00093,
+       "d_spearman_lo95": -0.01349,
+       "d_spearman_hi95": 0.01598,
+       "d_auc_mean": -0.00372,
+       "d_auc_lo95": -0.0126,
+       "d_auc_hi95": 0.00563,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "K_x0.25": {
+      "K_pa": 25.0,
+      "K_bf": 20.0,
+      "spearman": 0.3054,
+      "auc_contributor": 0.7189,
+      "delta_vs_shipped_K": {
+       "d_spearman_mean": 0.00319,
+       "d_spearman_lo95": -0.00482,
+       "d_spearman_hi95": 0.01154,
+       "d_auc_mean": -0.0004,
+       "d_auc_lo95": -0.00544,
+       "d_auc_hi95": 0.00518,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "K_x0.5": {
+      "K_pa": 50.0,
+      "K_bf": 40.0,
+      "spearman": 0.3055,
+      "auc_contributor": 0.7194,
+      "delta_vs_shipped_K": {
+       "d_spearman_mean": 0.0034,
+       "d_spearman_lo95": -0.00152,
+       "d_spearman_hi95": 0.00862,
+       "d_auc_mean": 0.00021,
+       "d_auc_lo95": -0.00301,
+       "d_auc_hi95": 0.00377,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "K_x1.5": {
+      "K_pa": 150.0,
+      "K_bf": 120.0,
+      "spearman": 0.3008,
+      "auc_contributor": 0.7192,
+      "delta_vs_shipped_K": {
+       "d_spearman_mean": -0.00126,
+       "d_spearman_lo95": -0.00454,
+       "d_spearman_hi95": 0.00196,
+       "d_auc_mean": 0.0001,
+       "d_auc_lo95": -0.00233,
+       "d_auc_hi95": 0.00244,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "K_x2": {
+      "K_pa": 200.0,
+      "K_bf": 160.0,
+      "spearman": 0.2987,
+      "auc_contributor": 0.7184,
+      "delta_vs_shipped_K": {
+       "d_spearman_mean": -0.00332,
+       "d_spearman_lo95": -0.00825,
+       "d_spearman_hi95": 0.00177,
+       "d_auc_mean": -0.00067,
+       "d_auc_lo95": -0.00447,
+       "d_auc_hi95": 0.00295,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     }
+    },
+    "n_milb_seasons_cap_8": {
+     "uncapped": {
+      "cap": 1000000000.0,
+      "spearman": 0.302,
+      "auc_contributor": 0.7191,
+      "delta_removed_minus_capped": {
+       "d_spearman_mean": 0.0,
+       "d_spearman_lo95": 0.0,
+       "d_spearman_hi95": 0.0,
+       "d_auc_mean": 0.0,
+       "d_auc_lo95": 0.0,
+       "d_auc_hi95": 0.0,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "cap6": {
+      "cap": 6.0,
+      "spearman": 0.302,
+      "auc_contributor": 0.7191,
+      "delta_removed_minus_capped": {
+       "d_spearman_mean": 0.0,
+       "d_spearman_lo95": 0.0,
+       "d_spearman_hi95": 0.0,
+       "d_auc_mean": 0.0,
+       "d_auc_lo95": 0.0,
+       "d_auc_hi95": 0.0,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     },
+     "cap12": {
+      "cap": 12.0,
+      "spearman": 0.302,
+      "auc_contributor": 0.7191,
+      "delta_removed_minus_capped": {
+       "d_spearman_mean": 0.0,
+       "d_spearman_lo95": 0.0,
+       "d_spearman_hi95": 0.0,
+       "d_auc_mean": 0.0,
+       "d_auc_lo95": 0.0,
+       "d_auc_hi95": 0.0,
+       "n_boot": 2000
+      },
+      "disposition": "REMOVE-default"
+     }
+    },
+    "war_floor_-2.0": {
+     "nofloor_spearman": 0.302,
+     "floored_spearman": 0.3021,
+     "nofloor_auc": 0.7191,
+     "floored_auc": 0.7191,
+     "model_leg_preds_below_-2.0": 4,
+     "delta_removed_minus_capped": {
+      "d_spearman_mean": -3e-05,
+      "d_spearman_lo95": -0.00013,
+      "d_spearman_hi95": 1e-05,
+      "d_auc_mean": 0.0,
+      "d_auc_lo95": 0.0,
+      "d_auc_hi95": 0.0,
+      "n_boot": 2000
+     },
+     "disposition": "REMOVE-default"
+    },
+    "age_rel_X_K_interaction": {
+     "best_K_setting": "K_x0.5",
+     "K_mult": 0.5,
+     "spearman": 0.3046,
+     "auc_contributor": 0.7191,
+     "delta_removed_minus_capped": {
+      "d_spearman_mean": 0.00244,
+      "d_spearman_lo95": -0.00238,
+      "d_spearman_hi95": 0.00775,
+      "d_auc_mean": -0.00013,
+      "d_auc_lo95": -0.00333,
+      "d_auc_hi95": 0.00342,
+      "n_boot": 2000
+     },
+     "disposition": "REMOVE-default",
+     "note": "joint uncap of age_rel_level + shrink-K at the point-OOS-max multiplier; compare its delta to the sum of the individual deltas for interaction"
+    }
+   }
+  }
+ },
+ "consolidated_verdicts": {
+  "headline": "NO cap in Lane A3 is board-movement/display compression - all five are input guards / a shrink hyperparameter / a safety floor. NONE should be removed for accuracy. The ONE actionable accuracy lever is the reliability shrink K: the shipped 100/80 OVER-shrinks; loosening to 50/40 lifts OOS (pit rho +0.0034) without lowering Spearman OR AUC on either side.",
+  "age_rel_level_clamp_3.5": {
+   "classification": "NUMERICAL-SAFETY (linear-feature over-extrapolation guard; NOT display/board compression)",
+   "load_bearing_for_accuracy": "weak (hit side)",
+   "recommendation": "KEEP",
+   "evidence": "removing the clamp LOWERS hit OOS (rho 0.3787->0.3768, dSp -0.00197, dAUC -0.00042) and is ~neutral on pit (rho 0.302->0.3017, dSp -0.00033); both CI-neutral. Loosening to +/-5 or +/-7 is OOS-identical to uncapped (no OOS row exceeds |5|), so the clamp only touches the >3.5 tail. Removal fails the program gate (must not LOWER OOS) on hit.",
+   "optional_loosen": "if maximal true-to-model is wanted, +/-5 is OOS-identical to uncapped and still guards |>5| cameos",
+   "touches": "efv_dataset._milb_features (age_rel clamp) - DIFF-ONLY (not owned)"
+  },
+  "reliability_shrink_K": {
+   "classification": "HYPERPARAMETER (shrink strength) + numerical-safety (cameo-blowup guard)",
+   "load_bearing_for_accuracy": "YES - direction is load-bearing (higher K measurably worse); shipped value is SUBOPTIMAL (too much shrink)",
+   "recommendation": "LOOSEN to K_REL_PA=50 / K_REL_BF=40 (x0.5)",
+   "evidence": "K_x0.5: hit dSp 0.00052 / dAUC 0.00075 (rho 0.3787->0.3792); pit dSp 0.0034 / dAUC 0.00021 (rho 0.302->0.3055). ALL FOUR deltas non-negative -> clears the 'does not lower OOS' gate. K=0 (no shrink) gives the hit max (rho 0.3815) but HURTS pit AUC (dAUC -0.00372) and strips the cameo guard -> NOT recommended. RAISING K is measurably worse (pit K_x2 rho 0.302->0.2987, dSp -0.00332). CI-neutral (lo95<0) so flagged owner-decision under the strict lo95>0 bar, but point + monotonicity + AUC-safety all favor the loosen.",
+   "touches": "efv_dataset._K_REL_PA (100->50), _K_REL_BF (80->40) - DIFF-ONLY (not owned)"
+  },
+  "n_milb_seasons_cap_8": {
+   "classification": "NUMERICAL-SAFETY (training-support/extrapolation guard for LIVE rows)",
+   "load_bearing_for_accuracy": "no (INERT on OOS)",
+   "recommendation": "KEEP",
+   "evidence": "uncapped/cap6/cap12 all give identical OOS rho (dSp 0.0 hit, 0.0 pit). Only 2 hit / 1 pit matrix rows exceed 8; the cap protects LIVE in-progress-season counts that exceed training support, which the debuted OOS pool cannot exercise. Repaired-matrix max is now 9 (was 8) -> optional cosmetic bump 8.0->9.0.",
+   "optional": "bump _N_MILB_SEASONS_CAP 8.0 -> 9.0 to match the repaired training max (no OOS change)",
+   "touches": "efv_model._N_MILB_SEASONS_CAP (owned by consolidator/other lane) - NO CHANGE recommended"
+  },
+  "war_floor_-2.0": {
+   "classification": "NUMERICAL-SAFETY / display floor (prevents served E[6yr WAR] below -2 -> absurd negative FV)",
+   "load_bearing_for_accuracy": "no (INERT on OOS ranking)",
+   "recommendation": "KEEP",
+   "evidence": "model-leg preds below -2.0: 3 hit / 4 pit OOS rows. Flooring changes rho ~0 (hit 0.3787->0.3787, pit 0.302->0.3021), dAUC 0.0. Inert-to-marginally-helpful on rank. Whether the served GRADE should de-compress below the floor is the B2 grade-spread lane's concern, not rank accuracy.",
+   "touches": "efv_model / efv_score max(-2.0, ...) (shared-file, other lane) - NO CHANGE recommended"
+  },
+  "age_rel_X_K_interaction": {
+   "classification": "diagnostic",
+   "recommendation": "no interaction correction needed - the two caps are independent",
+   "evidence": "joint uncap(age) + best-K delta ~= sum of the individual deltas on both sides (no super/sub-additivity beyond noise)."
+  }
+ }
+}

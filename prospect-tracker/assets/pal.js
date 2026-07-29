@@ -4,7 +4,7 @@
  * Written by Noah J. Dengler (@ARKNDJL), 2026 */
 
 // =============================================================================
-// eephus.io - Pitcher Alchemy Lab (PAL)
+// eephus.io - Alchemy Lab (PAL)
 // =============================================================================
 // Renders data/pal.json (pal_export.py) into three sections:
 //   rp2sp   - relievers who profile as starters (RP->SP FIT, arsenal depth,
@@ -24,11 +24,22 @@
   var DATA_URL = "/data/pal.json";
   var DATA = null;
   var LOAD_ERROR = false;    // fetch failed / non-OK (distinct from "not exported yet")
-  var section = "rp2sp";     // rp2sp | sp2rp | history
+  var section = "rp2sp";     // rp2sp | sp2rp | posfit | history | pitchadd | platoon | prospects
   var historyView = "table"; // table | mix
   var sortKey = "fit";
   var sortAsc = false;
   var openRow = null;
+
+  // ---- Position Fit (hitters) ----------------------------------------------
+  // The hitter half of the lab. Payload is the SLIM view of the positional-fit
+  // model that build_site.py bakes (data/positional_fit_ui.json); the full
+  // artifact carries per-player evidence logs and never ships. Loaded lazily
+  // the first time the section is opened so the pitcher sections stay light.
+  var POSFIT_URL = "/data/positional_fit_ui.json";
+  var PF = null;
+  var PF_ERROR = false;
+  var PF_LOADING = false;
+  var posfitView = "misplaced";  // misplaced | down | board | ladder
 
   var FASTBALLS = { FF: 1, SI: 1, FC: 1, FT: 1 };
   var COMP_LABELS = {
@@ -68,7 +79,7 @@
   function loadLinks() {
     fetch("/data/player_links.json", { cache: "no-cache" })
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) { LINKS = j || {}; if (DATA) render(); })
+      .then(function (j) { LINKS = j || {}; if (DATA || PF) render(); })
       .catch(function () { LINKS = {}; });
   }
   function playerHref(mlbam) {
@@ -377,24 +388,26 @@
         { t: fInt(r.n_pitches) },
         { t: fPct(fbPct(r)) },
         { t: veloText(r) },
+        { t: (r.components && r.components.command != null) ? fInt(r.components.command) : "-" },
       ] };
     });
     return {
-      kind: "board", module: "Pitcher Alchemy Lab", accentToken: "--accent-cyan",
-      title: "Pitcher Alchemy Lab · RP→SP Candidates",
+      kind: "board", module: "Alchemy Lab", accentToken: "--accent-cyan",
+      title: "Alchemy Lab · RP→SP Candidates",
       subtitle: (DATA && DATA.season ? "Season " + DATA.season + " · " : "")
         + rows.length + " relievers who profile as starters",
       url: "eephus.io/pal", filenameBase: "pal-rp2sp-candidates",
       caption: "a candidate screen, not a forecast · RP→SP ranking is a structural screen (not backtest-validated)",
       board: { defaultCount: 25, counts: [10, 25, 50],
-        legend: "FIT 0-100 = RP→SP conversion screen", columns: [
+        legend: "FIT 0-100 = RP→SP conversion screen · Command = component score 0-100", columns: [
           { label: "#", frac: 0.05 },
-          { label: "Player", frac: 0.26 },
-          { label: "FIT", frac: 0.10 },
-          { label: "Tier", frac: 0.19 },
-          { label: "Arsenal", frac: 0.10, wideOnly: true },
-          { label: "FB%", frac: 0.10, wideOnly: true },
-          { label: "velo→SP", frac: 0.20 },
+          { label: "Player", frac: 0.24 },
+          { label: "FIT", frac: 0.09 },
+          { label: "Tier", frac: 0.16 },
+          { label: "Arsenal", frac: 0.09, wideOnly: true },
+          { label: "FB%", frac: 0.09, wideOnly: true },
+          { label: "velo→SP", frac: 0.18 },
+          { label: "Command", frac: 0.10, wideOnly: true },
         ], rows: brows },
     };
   }
@@ -409,11 +422,12 @@
         { t: fPct(r.best_whiff) },
         { t: veloText(r) },
         { t: fInt(r.proj_relief_rem_plus) },
+        { t: fPct(r.bb_pct) },
       ] };
     });
     return {
-      kind: "board", module: "Pitcher Alchemy Lab", accentToken: "--accent-cyan",
-      title: "Pitcher Alchemy Lab · SP→RP Candidates",
+      kind: "board", module: "Alchemy Lab", accentToken: "--accent-cyan",
+      title: "Alchemy Lab · SP→RP Candidates",
       subtitle: (DATA && DATA.season ? "Season " + DATA.season + " · " : "")
         + rows.length + " starters whose stuff would play up in relief",
       url: "eephus.io/pal", filenameBase: "pal-sp2rp-candidates",
@@ -421,12 +435,13 @@
       board: { defaultCount: 25, counts: [10, 25, 50],
         legend: "FIT 0-100 = SP→RP relief-upside screen (gated by conversion need)", columns: [
           { label: "#", frac: 0.05 },
-          { label: "Player", frac: 0.28 },
-          { label: "FIT", frac: 0.11 },
-          { label: "SP ERA", frac: 0.12 },
-          { label: "Putaway whiff", frac: 0.14, wideOnly: true },
-          { label: "velo→RP", frac: 0.18, wideOnly: true },
-          { label: "proj REM+", frac: 0.12 },
+          { label: "Player", frac: 0.26 },
+          { label: "FIT", frac: 0.10 },
+          { label: "SP ERA", frac: 0.11 },
+          { label: "Putaway whiff", frac: 0.13, wideOnly: true },
+          { label: "velo→RP", frac: 0.16, wideOnly: true },
+          { label: "proj REM+", frac: 0.11 },
+          { label: "BB%", frac: 0.08, wideOnly: true },
         ], rows: brows },
     };
   }
@@ -656,16 +671,281 @@
     return note + '<div class="pal-mix-grid">' + cards + "</div>";
   }
 
+  // ---- Position Fit: which hitters are worth more runs somewhere else -------
+  // Value per 650 PA at position p = bat + fielding(p) + positional adjustment.
+  // The bat is position-independent, so it cancels out of any comparison BETWEEN
+  // positions: only fielding + the ladder decide where a hitter belongs. Every
+  // number rendered here is copied off the model artifact; the section adds no
+  // arithmetic of its own beyond formatting.
+  var POS_ORDER = ["C", "SS", "2B", "CF", "3B", "LF", "RF", "1B", "DH"];
+
+  // Thousands separator, so a four-digit COUNT never reads as a season year
+  // ("2,023 player-seasons", not "2023 player-seasons").
+  function fThou(v) {
+    var n = num(v);
+    return n == null ? "-" : Math.round(n).toLocaleString("en-US");
+  }
+  function pfSigned(v, dp) {
+    var n = num(v);
+    if (n == null) return "-";
+    return (n > 0 ? "+" : "") + n.toFixed(dp == null ? 1 : dp);
+  }
+  // A gain is only worth reading against its own standard error. The model
+  // reports gain_se per player; show it, never hide it.
+  function pfGainCell(g, se) {
+    var n = num(g);
+    if (n == null) return "-";
+    var cls = n >= 3 ? "pal-hit" : n <= -3 ? "pal-miss" : "";
+    return '<span class="' + cls + '">' + pfSigned(n) + "</span>"
+      + (se == null ? "" : '<span class="proj-dim"> &plusmn;' + f1(se) + "</span>");
+  }
+  function pfMoveCell(r) {
+    if (!r.best || r.best === r.pos) return '<span class="proj-dim">stays at ' + esc(r.pos || "-") + "</span>";
+    return esc(r.pos) + ' <span class="proj-dim">&rarr;</span> <strong>' + esc(r.best) + "</strong>";
+  }
+  // Per-player defensive value at every feasible position, as bars relative to
+  // the best one. This is the whole model for one player on one screen.
+  function pfWhyPanel(r) {
+    var by = r.byPos || {};
+    var keys = Object.keys(by).sort(function (a, b) { return (by[b] || 0) - (by[a] || 0); });
+    if (!keys.length) return '<td colspan="20"><div class="pal-why"><div class="mlbstats-note">No per-position breakdown for this player.</div></div></td>';
+    var hi = by[keys[0]], lo = by[keys[keys.length - 1]];
+    var span = Math.max(1e-6, hi - lo);
+    var bars = keys.map(function (k) {
+      var v = by[k];
+      var mark = k === r.pos ? " (current)" : k === r.best ? " (best)" : "";
+      return '<div class="pal-ars-row"><span class="pal-ars-pitch">' + esc(k) + "</span>"
+        + bar((v - lo) / span * 100)
+        + '<span class="pal-ars-meta">' + pfSigned(v) + esc(mark) + "</span></div>";
+    }).join("");
+    var dem = (r.demPos && r.demGain != null)
+      ? '<div class="mlbstats-note" style="margin:2px 0 8px">Moving DOWN the spectrum to ' + esc(r.demPos)
+        + " is worth " + pfSigned(r.demGain) + " runs per 650 PA (&plusmn;" + f1(r.demSe) + "): "
+        + pfSigned(r.demPlayer) + " of that is this player's own glove, " + pfSigned(r.demLeague)
+        + " is the league-wide constant every hitter making that move gets. Read the player part when the total sits near the flag line.</div>"
+      : "";
+    return '<td colspan="20"><div class="pal-why"><div class="pal-why-grid">'
+      + '<div><h4>Defensive value by position</h4>'
+      + '<div class="mlbstats-note" style="margin:2px 0 8px">Runs per 650 PA, fielding plus the positional adjustment. The bat is the same everywhere and is left out.</div>'
+      + bars + "</div>"
+      + '<div><h4>The read</h4>' + dem
+      + '<div class="mlbstats-note" style="margin:2px 0">Glove ' + pfSigned(r.gloveZ, 2)
+      + " standard units (&plusmn;" + f2(r.gloveZSe) + " after shrink), worth " + pfSigned(r.gloveRuns)
+      + " runs per 650 PA at " + esc(r.pos || "-") + ". Bat " + pfSigned(r.bat)
+      + " runs per 650 PA versus an average hitter: it does not move the position choice, it decides whether the bottom of the spectrum is still a job.</div>"
+      + "</div></div></div></td>";
+  }
+
+  var POSFIT_COLS = [
+    { key: "rank", label: "#", kind: "rank" },
+    { key: "name", label: "Hitter", kind: "name", sortable: false },
+    { key: "pos", label: "Now", cell: function (r) { return esc(r.pos || "-"); } },
+    { key: "pa", label: "PA", cell: function (r) { return fInt(r.pa); } },
+    { key: "move", label: "Best fit", sortable: false, cell: pfMoveCell },
+    { key: "gain", label: "Gain (runs/650)", desc: true, cell: function (r) { return pfGainCell(r.gain, r.gainSe); } },
+    { key: "demPos", label: "Move down to", sortable: false, cell: function (r) { return r.demPos ? esc(r.demPos) : '<span class="proj-dim">-</span>'; } },
+    { key: "demGain", label: "Demotion gain", desc: true, cell: function (r) { return pfGainCell(r.demGain, r.demSe); } },
+    { key: "gloveZ", label: "Glove z", desc: true, cell: function (r) { return pfSigned(r.gloveZ, 2); } },
+    { key: "bat", label: "Bat (runs/650)", desc: true, cell: function (r) { return pfSigned(r.bat); } },
+  ];
+
+  function pfSortedRows(rows) {
+    var col = null;
+    POSFIT_COLS.forEach(function (c) { if (c.key === sortKey) col = c; });
+    var key = (col && !col.kind) ? col.key : "gain";
+    var out = rows.slice();
+    out.sort(function (a, b) {
+      var x = num(a[key]), y = num(b[key]);
+      if (x == null && y == null) return 0;
+      if (x == null) return 1;          // missing always sinks
+      if (y == null) return -1;
+      return sortAsc ? x - y : y - x;
+    });
+    return out;
+  }
+
+  function pfTable(rows) {
+    var head = "<thead><tr>";
+    POSFIT_COLS.forEach(function (c) {
+      var sortable = c.kind !== "rank" && c.kind !== "name" && c.sortable !== false;
+      var sorted = c.key === sortKey ? " is-sorted" : "";
+      var attrs = sortable
+        ? ' data-col="' + c.key + '" tabindex="0" role="button" aria-sort="'
+          + (c.key === sortKey ? (sortAsc ? "ascending" : "descending") : "none") + '"'
+        : "";
+      head += '<th class="mlbstats-col-' + c.key + sorted + '"' + attrs + '>' + esc(c.label) + "</th>";
+    });
+    head += "</tr></thead>";
+    var body = "<tbody>";
+    rows.forEach(function (r, i) {
+      var open = (openRow === r.mlbam);
+      body += "<tr" + (open ? ' class="is-open"' : "") + ' data-open="' + r.mlbam
+        + '" tabindex="0" aria-expanded="' + (open ? "true" : "false") + '">';
+      POSFIT_COLS.forEach(function (c) {
+        if (c.kind === "rank") { body += "<td>" + (i + 1) + "</td>"; return; }
+        if (c.kind === "name") {
+          body += '<td class="mlbstats-name pal-expand">' + logo(r.team) + nameLink(r.name, r.mlbam)
+            + '<span class="proj-dim"> ' + esc(r.team || "") + "</span>"
+            + (r.misplaced ? ' <span class="pal-flag pal-flag--good">MISPLACED</span>' : "")
+            + (r.demoted ? ' <span class="pal-flag pal-flag--warn">MOVE DOWN</span>' : "") + "</td>";
+          return;
+        }
+        body += "<td>" + c.cell(r) + "</td>";
+      });
+      body += "</tr>";
+      if (open) body += '<tr class="pal-why-tr">' + pfWhyPanel(r) + "</tr>";
+    });
+    body += "</tbody>";
+    return '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>";
+  }
+
+  // The fitted ladder against the folklore table it replaces. This is the piece
+  // of the model with the tightest evidence (R2 0.9779 on 9,101 player-seasons)
+  // and it is worth showing on its own.
+  function pfLadder() {
+    var L = (PF && PF.ladder) || {};
+    var vals = L.values || {}, ci = L.ci95 || {}, folk = L.folklore || {};
+    var rows = POS_ORDER.filter(function (p) { return vals[p] != null; }).map(function (p) {
+      var d = (folk[p] != null) ? vals[p] - folk[p] : null;
+      var c = ci[p];
+      return "<tr><td><strong>" + esc(p) + "</strong></td>"
+        + "<td>" + pfSigned(vals[p], 2) + "</td>"
+        + "<td>" + (c ? '<span class="proj-dim">' + pfSigned(c[0], 2) + " to " + pfSigned(c[1], 2) + "</span>" : "-") + "</td>"
+        + "<td>" + (folk[p] != null ? pfSigned(folk[p], 1) : "-") + "</td>"
+        + "<td>" + (d == null ? "-" : '<span class="' + (Math.abs(d) >= 1.5 ? "pal-hit" : "") + '">' + pfSigned(d, 2) + "</span>") + "</td></tr>";
+    }).join("");
+    var note = '<div class="mlbstats-note">The positional adjustment, re-estimated from Baseball-Reference&rsquo;s own '
+      + "construction rather than taken from the folklore table: least squares of positional runs per 650 PA on innings "
+      + "shares, no intercept, " + fThou(L.nPlayerSeasons) + " player-seasons from " + esc((L.seasons || [])[0])
+      + " to " + esc((L.seasons || [])[1]) + " at " + fInt(L.minPa) + "+ PA. R&sup2; " + (L.r2 == null ? "-" : f1(L.r2 * 100) + "%")
+      + ", residual SD " + f2(L.residSd) + " runs. The folklore column is the table everyone quotes; the difference column is "
+      + "where it is wrong.</div>";
+    return note + '<div class="mlbstats-scroll"><table class="mlbstats-table">'
+      + "<thead><tr><th>Pos</th><th>Fitted (runs/650)</th><th>95% CI</th><th>Folklore</th><th>Difference</th></tr></thead>"
+      + "<tbody>" + rows + "</tbody></table></div>" + pfMethod();
+  }
+
+  // Honest accounting. Two DIFFERENT questions were measured and they got two
+  // different answers; both are printed, and the failing one is not softened.
+  function pfMethod() {
+    var A = (PF && PF.accuracy) || {}, D = (PF && PF.demotionNull) || {};
+    var mae = A.mae || {}, adv = (A.advantage || {}).carry_over || {}, auc = D.auc || {};
+    var ci = adv.ci95 || [];
+    var pass = '<div class="pal-mix-card"><h4><span>What the model does predict</span>'
+      + '<span class="pal-dir pal-dir--pass">VALIDATED</span></h4>'
+      + '<div class="mlbstats-note" style="margin:4px 0">The SIZE of a move. Out of sample on '
+      + fInt(A.nConversions) + " real position changes (" + fInt(A.minInningsEachSide)
+      + "+ innings on each side), mean absolute error " + f2(mae.model) + " runs per 650 PA against "
+      + f2(mae.carry_over) + " for carrying the old rate over, " + f2(mae.league_avg) + " for league average and "
+      + f2(mae.permuted) + " for a row-permuted twin of the same column. The paired advantage over carry-over is "
+      + f2(adv.mean) + " runs, 95% CI " + f2(ci[0]) + " to " + f2(ci[1]) + ", against a permutation null band of "
+      + f2(A.permNull95) + ". Positive in " + esc(A.seasonAdvantagePositiveIn || "-") + " season splits.</div></div>";
+    var fail = '<div class="pal-mix-card"><h4><span>What it does NOT predict</span>'
+      + '<span class="pal-dir pal-dir--null">MEASURED NULL</span></h4>'
+      + '<div class="mlbstats-note" style="margin:4px 0">WHICH players clubs actually demote. Scored on '
+      + fThou(D.nScored) + " player-seasons (" + fPct(D.baseRate) + " of them moved down the next year), the model ranks "
+      + "demotions at AUC " + f2(auc.model) + ". A coin flip is 0.50, the permutation band on AUC minus a half is "
+      + f2(D.permNull95) + ", and RAW single-season OAA on its own ranks them at " + f2(auc.raw_oaa)
+      + " - better than the model. Read this list as valuation, not as prediction: it says what a move would be WORTH, "
+      + "not that anyone is about to make it.</div></div>";
+    var up = D.promotionSide || {};
+    var nuance = (up.auc_model_up != null)
+      ? '<div class="pal-mix-card"><h4><span>The asymmetry</span></h4>'
+        + '<div class="mlbstats-note" style="margin:4px 0">The same score ranks moves UP the spectrum at AUC '
+        + f2(up.auc_model_up) + " over " + fInt(up.n_moved_up) + " promotions, against " + f2(up.auc_control_up)
+        + " for its zero-information control. A promotion needs a good glove AND an open job, and the glove part is "
+        + "clearly readable; a demotion is a club decision driven by things this model never sees.</div></div>"
+      : "";
+    var caveats = ((PF && PF.caveats) || []).map(function (c) {
+      return "<li>" + esc(c) + "</li>";
+    }).join("");
+    var oos = ((PF && PF.outOfScope) || []).join(", ");
+    return '<div class="pal-mix-grid" style="margin-top:14px">' + pass + fail + nuance + "</div>"
+      + (caveats ? '<details class="fa-valmap" style="margin-top:12px"><summary>Limits the model states about itself</summary>'
+        + '<ul class="mlbstats-note" style="margin:8px 0 0 18px;list-style:disc">' + caveats + "</ul>"
+        + (oos ? '<div class="mlbstats-note" style="margin-top:8px">Out of scope: ' + esc(oos)
+          + ". Savant publishes no OAA at catcher in any season, so catchers are carried in the payload "
+          + "and never offered a move; pitchers are not scored at all.</div>" : "")
+        + "</details>" : "");
+  }
+
+  function renderPosFit() {
+    if (PF_ERROR) {
+      return '<div class="mlbstats-empty pal-load-error" role="alert">The position-fit model failed to load. '
+        + 'Refresh to retry. <button type="button" class="chip" id="pf-retry">Retry</button></div>';
+    }
+    if (!PF) return empty("Loading the position-fit model…");
+    var all = PF.rows || [];
+    if (!all.length) return empty("No qualified hitters in the position-fit model yet.");
+    var tabs = [["misplaced", "Misplaced hitters"], ["down", "Move down the spectrum"],
+                ["board", "Every qualified hitter"], ["ladder", "The positional ladder"]]
+      .map(function (t) {
+        return '<button type="button" class="mlbstats-tab' + (posfitView === t[0] ? " active" : "")
+          + '" data-pfview="' + t[0] + '" role="tab" aria-selected="' + (posfitView === t[0]) + '">'
+          + esc(t[1]) + "</button>";
+      }).join("");
+    var nav = '<div class="mlbstats-tabs" role="tablist" aria-label="Position Fit views">' + tabs + "</div>";
+    if (posfitView === "ladder") return nav + pfLadder();
+
+    var rows = posfitView === "misplaced" ? all.filter(function (r) { return r.misplaced; })
+      : posfitView === "down" ? all.filter(function (r) { return r.demoted; })
+      : all;
+    var fr = PF.flagRule || {};
+    var lead = posfitView === "misplaced"
+      ? "Hitters whose best defensive home is not where they are playing. Flagged at " + f1(fr.min_gain_runs_per_650)
+        + "+ runs per 650 PA of gain AND at least " + f1(fr.min_sigma)
+        + " standard error of it, so a big number with a big error bar does not make the list. "
+        + fInt(PF.nFlagged) + " of " + fInt(PF.nQualified) + " qualified hitters."
+      : posfitView === "down"
+      ? "The Arozarena question: hitters who would GAIN runs by moving down the defensive spectrum, "
+        + "the corner outfielder who belongs at first base or designated hitter. " + fInt(PF.nFlaggedDemotion)
+        + " qualified hitters clear the same bar on a downward move. Part of every corner-outfield-to-first-base "
+        + "gain is a league-wide constant rather than anything about the player; the expanded row splits the two."
+      : "Every qualified hitter the model scores, sorted by the gain at his best position. Click any row for the "
+        + "per-position breakdown. Qualification is " + fInt(fr.headline_min_pa) + "+ PA and "
+        + fInt(fr.headline_min_innings) + "+ defensive innings.";
+    var note = '<div class="mlbstats-note">' + esc(lead)
+      + " Runs per 650 PA, " + esc(PF.season || "") + " season. Value identity: " + esc(PF.valueIdentity || "")
+      + ". The gain says what a move would be worth, NOT that a club is about to make it - the prediction side of "
+      + "that question measured as a null and is written up under The positional ladder.</div>";
+    if (!rows.length) return nav + note + empty("No hitters clear the flag in this view.");
+    return nav + note + pfTable(pfSortedRows(rows));
+  }
+
+  function loadPosFit() {
+    if (PF || PF_LOADING) return;
+    PF_LOADING = true;
+    PF_ERROR = false;
+    fetch(POSFIT_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { PF = j; PF_LOADING = false; render(); })
+      .catch(function () { PF = null; PF_LOADING = false; PF_ERROR = true; render(); });
+  }
+
   // ---- shell ----------------------------------------------------------------
   function render() {
     var root = document.getElementById("pal-app-root");
     if (!root) return;
+    // Position Fit rides its own payload, so it must not wait on pal.json (and
+    // must still paint if the pitcher sidecar is missing).
+    if (section === "posfit") {
+      root.innerHTML = renderPosFit();
+      var pfBanner = document.getElementById("pal-banner");
+      if (pfBanner) pfBanner.innerHTML = PF
+        ? '<div class="mlbstats-note">Season ' + esc(PF.season || "") + " &middot; " + esc(PF.model || "")
+          + " &middot; a valuation, not a prediction: the conversion matrix is validated out of sample for the SIZE "
+          + "of a move, and predicting which players get moved down measured as a null.</div>"
+        : "";
+      bindTable(root);
+      wireGlossary(root);
+      return;
+    }
     if (!DATA) {
       root.innerHTML = LOAD_ERROR
         ? '<div class="mlbstats-empty pal-load-error" role="alert">Data failed to load. Refresh to retry; '
           + 'if it persists the nightly build is mid-run. '
           + '<button type="button" class="chip" id="pal-retry">Retry</button></div>'
-        : empty("The Pitcher Alchemy Lab conversion models are being computed from Statcast. Check back shortly.");
+        : empty("The Alchemy Lab conversion models are being computed from Statcast. Check back shortly.");
       var retry = document.getElementById("pal-retry");
       if (retry) retry.addEventListener("click", function () {
         root.innerHTML = empty("Loading…");
@@ -711,7 +991,8 @@
     root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
       function sortBy() {
         var key = th.getAttribute("data-col");
-        var cols = (section === "sp2rp") ? SP_COLS : (section === "history") ? HISTORY_COLS : RP_COLS;
+        var cols = (section === "sp2rp") ? SP_COLS : (section === "history") ? HISTORY_COLS
+          : (section === "posfit") ? POSFIT_COLS : RP_COLS;
         var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
         if (!col || col.kind === "rank" || col.kind === "name" || col.sortable === false) return;
         if (sortKey === key) sortAsc = !sortAsc;
@@ -735,6 +1016,16 @@
     root.querySelectorAll("[data-histview]").forEach(function (b) {
       b.addEventListener("click", function () { historyView = b.getAttribute("data-histview"); render(); });
     });
+    root.querySelectorAll("[data-pfview]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        posfitView = b.getAttribute("data-pfview");
+        openRow = null;
+        try { history.replaceState(null, "", "#posfit=" + posfitView); } catch (e) { /* hash optional */ }
+        render();
+      });
+    });
+    var pfRetry = root.querySelector("#pf-retry");
+    if (pfRetry) pfRetry.addEventListener("click", function () { PF_ERROR = false; render(); loadPosFit(); });
     // Generate GFX chips - build the spec from the CURRENT sort at click time so
     // the graphic matches the on-screen order (fa.js/projections.js pattern).
     var rpGfx = root.querySelector("#pal-rp2sp-gfx");
@@ -750,8 +1041,11 @@
   function setSection(s) {
     section = s;
     openRow = null;
-    // History defaults to year-desc (recency); the candidate tables to FIT-desc.
-    sortKey = (s === "history") ? "year" : "fit"; sortAsc = false;
+    // History defaults to year-desc (recency); the candidate tables to FIT-desc;
+    // Position Fit to the gain at the best position, biggest first.
+    sortKey = (s === "history") ? "year" : (s === "posfit") ? "gain" : "fit";
+    sortAsc = false;
+    if (s === "posfit") loadPosFit();
     document.querySelectorAll("[data-palsection]").forEach(function (x) {
       var on = x.getAttribute("data-palsection") === s;
       x.classList.toggle("active", on);
@@ -770,8 +1064,11 @@
   }
 
   function readHash() {
-    var m = /^#(rp2sp|sp2rp|history|pitchadd|platoon|prospects)/.exec(location.hash || "");
+    var h = location.hash || "";
+    var m = /^#(rp2sp|sp2rp|posfit|history|pitchadd|platoon|prospects)/.exec(h);
     if (m) setSection(m[1]);
+    var v = /^#posfit=(misplaced|down|board|ladder)/.exec(h);
+    if (v) { setSection("posfit"); posfitView = v[1]; }
   }
 
   // Loader with a visible failure mode: a non-OK response or a network error

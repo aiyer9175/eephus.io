@@ -3,7 +3,7 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""Pitcher Alchemy Lab - the role-conversion model core (pure, no network).
+"""Alchemy Lab - the role-conversion model core (pure, no network).
 
 Two transparent 0-100 candidate scores plus the conversion-history detection and
 labeling. The design is deliberately a SCREEN, not a success-probability model:
@@ -118,6 +118,12 @@ class PalArm:
     rem_plus: Optional[int] = None      # current reliever REM+ (relievers only)
     was_starter: Optional[bool] = None  # started in a prior MLB season (re-conversion ease)
     prospx_role: Optional[str] = None   # PROSPX prospect-era role, when known (SP/RP/...)
+    # W3 PAL-XRV (default None = incumbent path): per-pitch-type AAA aStuff+
+    # rows {pitch_type: {stuff_plus, n_pitches}} from data/stuff_plus_aaa.json.
+    # Attached by the assembly layer (pal_export) ONLY when EEPHUS_PAL_XRV is
+    # set AND the pitcher clears the recent-AAA coverage gate; this module
+    # stays pure (behavior is a function of the arm alone).
+    aaa_by_type: Optional[dict] = None
 
 
 # --------------------------------------------------------------------------- #
@@ -213,6 +219,53 @@ def platoon_neutrality_score(ops_vl: Optional[float], ops_vr: Optional[float]) -
     return _clamp(100.0 * (1.0 - _clamp(abs(ops_vl - ops_vr) / 0.25, 0.0, 1.0)))
 
 
+# --------------------------------------------------------------------------- #
+# W3 PAL-XRV (docs/wills-2026-07-23/GATES.md section W3): per-pitch-type AAA
+# aStuff+ blended into the stuff reads. Registered constants - never retuned.
+# --------------------------------------------------------------------------- #
+PAL_XRV_MIN_PITCHES = 100   # recent-AAA pitch floor (current or prior season)
+PAL_XRV_W = 0.5             # registered 50/50 blend (est_woba read vs aStuff+)
+
+
+def astuff_composite(by_type: Optional[dict]) -> Optional[float]:
+    """Usage-weighted per-pitch-type aStuff+ composite on the 100+10z scale.
+    Weights are the pitcher's OWN per-type AAA pitch counts (his actual usage
+    mix at AAA), not the MLB arsenal usage. None without coverage."""
+    if not by_type:
+        return None
+    num = den = 0.0
+    for row in by_type.values():
+        sp = _num((row or {}).get("stuff_plus"))
+        n = _num((row or {}).get("n_pitches")) or 0.0
+        if sp is None or n <= 0:
+            continue
+        num += n * sp
+        den += n
+    return (num / den) if den else None
+
+
+def astuff_to_quality(composite: float) -> float:
+    """Map the aStuff+ 100+10z scale onto the 0-100 stuff-quality band that
+    stuff_quality_score emits (est_woba 0.400 -> 0, 0.280 -> 100, linear).
+    Mapping: aStuff+ 100 (pool mean) -> 50 (band midpoint), 2.5 band points
+    per aStuff+ point, so +-2z spans the full band (80 -> 0, 120 -> 100).
+    An a-priori convention mapping - never retuned after seeing gate data."""
+    return _clamp(50.0 + 2.5 * (composite - 100.0))
+
+
+def stuff_read(arm: "PalArm") -> float:
+    """The stuff read shared by BOTH fit scores (stuff_quality in RP->SP FIT,
+    stuff_upside in SP->RP FIT): the incumbent arsenal est_woba read, blended
+    PAL_XRV_W/(1-PAL_XRV_W) with the usage-weighted per-type aStuff+ composite
+    when (and only when) the assembly layer attached AAA coverage to the arm.
+    Arms without coverage take the incumbent path byte-identically (clause P3)."""
+    base = stuff_quality_score(overall_est_woba(arm))
+    comp = astuff_composite(getattr(arm, "aaa_by_type", None))
+    if comp is None:
+        return base
+    return PAL_XRV_W * base + (1.0 - PAL_XRV_W) * astuff_to_quality(comp)
+
+
 def _blend(weights: dict, comps: dict) -> float:
     """Weighted mean over the components that are present (renormalized)."""
     num = den = 0.0
@@ -270,7 +323,7 @@ def rp_sp_fit(arm: PalArm) -> dict:
         "arsenal_depth": arsenal_depth_score(npi),
         "command": command_score(arm.bb_pct),
         "fb_reliance_inv": fb_reliance_inv(fb),
-        "stuff_quality": stuff_quality_score(overall_est_woba(arm)),
+        "stuff_quality": stuff_read(arm),      # W3: aStuff+ blend when covered
         "platoon_neutrality": plat,
         "survivability": survivability_score(overall_hard_hit(arm)),
     }
@@ -332,7 +385,7 @@ def rp_sp_fit_v2(arm: PalArm, usage: Optional[dict] = None) -> dict:
         "arsenal_depth": arsenal_depth_score(npi),
         "command": command_score(arm.bb_pct),
         "fb_reliance_inv": fb_reliance_inv(fb),
-        "stuff_quality": stuff_quality_score(overall_est_woba(arm)),
+        "stuff_quality": stuff_read(arm),      # W3: aStuff+ blend when covered
         "platoon_neutrality": plat,
         "survivability": survivability_score(overall_hard_hit(arm)),
         "stamina_usage": stamina_usage_score(usage.get("multi_inning_share"),
@@ -450,7 +503,7 @@ def sp_rp_fit(arm: PalArm) -> dict:
     rotation spot - so a great starter scores low even with elite stuff."""
     npi = n_pitches(arm)
     upside_comps = {
-        "stuff_upside": stuff_quality_score(overall_est_woba(arm)),
+        "stuff_upside": stuff_read(arm),       # W3: aStuff+ blend when covered
         "putaway": putaway_score(best_whiff(arm)),
         "velo_leverage": _clamp(((arm.fb_velo or 93.0) - 90.0) / (101.0 - 90.0) * 100.0),
         "tto_leakage": _clamp(100.0 - 0.7 * arsenal_depth_score(npi)
@@ -572,6 +625,7 @@ def detect_conversions(by_pid: dict, last_closed_season: Optional[int] = None) -
 # detect_conversions drops the pair (both sides must be a clean SP/RP). These
 # gates surface the switch anyway, as an always-PENDING event.
 IN_PROGRESS_MIN_GS = 5          # current-season starts to call an RP->SP in progress
+IN_PROGRESS_MIN_IP_PER_G = 2.5  # innings per APPEARANCE gate: openers/multi-inning RPs sit <= ~1.2 IP/G, genuine RP->SP converts >= ~3.0
 IN_PROGRESS_MIN_RELIEF = 0.50   # current-season relief-appearance share for SP->RP
 
 
@@ -614,7 +668,8 @@ def detect_in_progress_conversions(by_pid: dict, current_season: int) -> list:
             continue
         relief_share = (g_cur - gs_cur) / g_cur if g_cur else 0.0
         direction = None
-        if prior_role == "RP" and gs_cur >= IN_PROGRESS_MIN_GS:
+        if (prior_role == "RP" and gs_cur >= IN_PROGRESS_MIN_GS
+                and g_cur > 0 and (ip_cur / g_cur) >= IN_PROGRESS_MIN_IP_PER_G):
             direction = "RP->SP"
         elif prior_role == "SP" and gs_cur < g_cur and relief_share >= IN_PROGRESS_MIN_RELIEF:
             direction = "SP->RP"
@@ -691,11 +746,56 @@ def _families(arm: PalArm, min_usage: float = 0.05) -> set:
     return fams
 
 
-def recommend_pitch(arm: PalArm) -> Optional[dict]:
+# W3 ARM-2 (display upgrade): rank the family-hole adds by LEAGUE-MEAN per-type
+# xRV (meta.league_xrv_by_type in data/stuff_plus_aaa.json; mean predicted
+# delta_run_exp, LOWER = better for the pitcher) instead of the fixed
+# BR-before-OFF rule order. Candidate types per family are an a-priori list of
+# learnable pitches; a league mean is only trusted at >= XRV_MIN_LEAGUE_N
+# pitches. Output shape/keys are UNCHANGED (same {add, target, reason,
+# priority} objects, better ordering); league_xrv=None reproduces the
+# incumbent rule order byte-identically (the default-OFF path).
+XRV_PITCH_NAMES = {"SL": "Slider", "ST": "Sweeper", "CU": "Curveball",
+                   "KC": "Knuckle-curve", "CH": "Changeup", "FS": "Splitter"}
+XRV_FAMILY_CANDIDATES = {"BR": ("SL", "ST", "CU", "KC"), "OFF": ("CH", "FS")}
+XRV_MIN_LEAGUE_N = 500
+
+
+def _best_xrv_type(fam: str, league_xrv: dict):
+    """(pitch_type, mean_pred_rv) of the family's best league-mean type, or
+    None when no candidate type has a trusted league mean."""
+    best = None
+    for pt in XRV_FAMILY_CANDIDATES.get(fam, ()):
+        row = league_xrv.get(pt) or {}
+        rv = _num(row.get("mean_pred_rv"))
+        if rv is None or (_num(row.get("n_pitches")) or 0) < XRV_MIN_LEAGUE_N:
+            continue
+        if best is None or rv < best[1]:          # lower RV = better pitch
+            best = (pt, rv)
+    return best
+
+
+def _hole_rec(fam: str, pitch_name: str, weak_hand, big_split: bool) -> dict:
+    """The family-hole recommendation object (same shape as the fixed rules)."""
+    low = pitch_name.lower()
+    if fam == "BR":
+        return {"add": pitch_name, "target": weak_hand,
+                "reason": f"No reliable breaking ball. A {low} is the swing-and-miss weapon he needs to "
+                          "turn a lineup over a second and third time.", "priority": "high"}
+    tail = (f" and neutralize {weak_hand}" if big_split else "")
+    return {"add": pitch_name, "target": weak_hand,
+            "reason": f"No offspeed pitch. A {low} would give him a third look{tail} - the classic "
+                      "weapon against opposite-handed hitters over multiple times through.",
+            "priority": "high" if big_split else "medium"}
+
+
+def recommend_pitch(arm: PalArm, league_xrv: Optional[dict] = None) -> Optional[dict]:
     """The pitch this arm most needs to add to survive a lineup as a starter,
     from its arsenal hole and platoon weakness. A rule model (the empty-slot x
     platoon-hole lookup), not a projection - returns None when the arsenal is
-    already deep enough."""
+    already deep enough. With `league_xrv` (W3 ARM-2, meta.league_xrv_by_type
+    from the AAA aStuff+ sidecar) the family holes are ranked by league-mean
+    per-type xRV instead of the fixed BR-then-OFF order; without it the
+    incumbent rule order runs unchanged."""
     fams = _families(arm)
     npi = n_pitches(arm)
     # which hand does he struggle against, and how badly (OPS-against gap)?
@@ -705,6 +805,18 @@ def recommend_pitch(arm: PalArm) -> Optional[dict]:
         weak_hand = "RHB" if arm.ops_vr > arm.ops_vl else "LHB"
     big_split = split is not None and split >= 0.12
 
+    holes = [f for f in ("BR", "OFF") if f not in fams]
+    if holes and league_xrv:
+        ranked = []
+        for fam in holes:
+            best = _best_xrv_type(fam, league_xrv)
+            if best is not None:
+                ranked.append((best[1], fam, XRV_PITCH_NAMES[best[0]]))
+        if ranked:
+            ranked.sort()                         # lowest mean RV first = best add
+            _rv, fam, name = ranked[0]
+            return _hole_rec(fam, name, weak_hand, big_split)
+        # no trusted league mean for any hole -> fall through to the rule order
     if "BR" not in fams:
         return {"add": "Slider", "target": weak_hand,
                 "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to "

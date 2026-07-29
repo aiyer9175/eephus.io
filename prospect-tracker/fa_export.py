@@ -381,10 +381,23 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                     if v2 is not None:
                         m["enterProb"] = v2["enter_prob"]
                         m["enterProbSrc"] = v2["method"]
+                    # T1.5 - the option, priced as a contingent claim on the
+                    # band rather than served as a bare flag. The SIGN is the
+                    # point: a player option is a liability the team is SHORT.
+                    optv = fm.option_value_usd(pred, row.get("fa_type"),
+                                               row.get("option_price_usd"))
+                    if optv:
+                        m["optValue"] = optv["option_value_usd"]
+                        m["optTeamValue"] = optv["team_value_usd"]
+                        m["optKind"] = optv["kind"]
+                        m["optHeldBy"] = optv["held_by"]
+                        m["optBasis"] = optv["basis"]
                     yrs = pred["proj_years"]
                     guar = pred["proj_guarantee_usd"]
-                    rational = fm.rational_value_usd(path["war_by_year"][:yrs], class_year,
-                                                     dpw, infl=destale)
+                    # T1.4 - the EXPECTATION of the convex tier price over the
+                    # shipped band, not the tier price of the mean path.
+                    rational = fm.expected_rational_value_usd(
+                        path, yrs, class_year, dpw, infl=destale)
                     deal_plus = round(100 * rational / max(guar, 1))
                     # Probability buckets: floor/ceiling WAR paths (Gate-1
                     # empirical quantiles decayed along the aging curves)
@@ -404,14 +417,51 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                     all_fits = fa_fit.fit_scores(s, pred, class_year, top_n=30)
                     fits = all_fits[:3]
                     full_fits.append((m, all_fits))
+                    # T1.3 - the TOTAL comes from a correlated-path Monte
+                    # Carlo, not from adding the per-year quantiles. Adding
+                    # quantiles is only valid under comonotonicity (a player
+                    # who lands at his P10 in year 1 landing at his P10 every
+                    # remaining year); the measured horizon residual Spearman
+                    # is 0.4455 / 0.3594 / 0.3090 / 0.2571 at lags 1-4.
+                    mc = None
+                    if p10_path and p90_path and yrs >= 1:
+                        try:
+                            import fa_mc
+                            mc = fa_mc.path_quantiles(fa_mc.simulate(
+                                path["war_by_year"], p10_path, p90_path, yrs,
+                                draws=fa_mc.N_DRAWS))
+                        except Exception:                    # noqa: BLE001
+                            log.warning("fa mc failed for %s - falling back "
+                                        "to the quantile sum", row.get("player_key"))
+                            mc = None
                     m.update(_clean({
                         "warY1": path["war_y1"],
                         "warPath": path["war_by_year"][:max(yrs, 5)],
                         "warPathP10": p10_path[:max(yrs, 5)] if p10_path else None,
                         "warPathP90": p90_path[:max(yrs, 5)] if p90_path else None,
                         "warTotal": round(sum(path["war_by_year"][:yrs]), 1),
-                        "warTotalP10": round(sum(p10_path[:yrs]), 1) if p10_path else None,
-                        "warTotalP90": round(sum(p90_path[:yrs]), 1) if p90_path else None,
+                        "warTotalP10": (round(mc["p10"], 1) if mc else
+                                        (round(sum(p10_path[:yrs]), 1) if p10_path else None)),
+                        "warTotalP90": (round(mc["p90"], 1) if mc else
+                                        (round(sum(p90_path[:yrs]), 1) if p90_path else None)),
+                        # The superseded COMONOTONE total, served alongside so
+                        # the Accountability surface can show both. It is not
+                        # decoration: measured on 3,913 held 5-year paths the
+                        # quantile sum COVERS BETTER (0.647 vs 0.386 against a
+                        # nominal 0.80) despite being the invalid aggregation,
+                        # because it was compensating for per-year marginals
+                        # that are themselves far too narrow conditional on the
+                        # player appearing (survived coverage 0.367). Both
+                        # numbers are published rather than one being quietly
+                        # chosen. See fa_mc for the full ledger.
+                        "warTotalP10Comon": (round(sum(p10_path[:yrs]), 1)
+                                             if p10_path else None),
+                        "warTotalP90Comon": (round(sum(p90_path[:yrs]), 1)
+                                             if p90_path else None),
+                        # Functionals a quantile sum cannot express at all.
+                        "warCvar10": round(mc["cvar10"], 1) if mc else None,
+                        "pAnyStar": round(mc["p_any_star"], 3) if mc else None,
+                        "totalSrc": "mc_copula" if mc else "quantile_sum",
                         "projYears": yrs,
                         "projYearsP10": pred.get("proj_years_p10"),
                         "projYearsP90": pred.get("proj_years_p90"),
@@ -636,6 +686,24 @@ def _source_freshness() -> dict:
     return out
 
 
+def _qo_tax_block(class_year: int) -> dict:
+    """{payor_tier: qo_tax_usd(...)} for the class winter. Best-effort: a
+    missing or unmapped tier drops out rather than failing the export."""
+    out = {}
+    as_of = f"{class_year - 1}-12-15"
+    try:
+        tiers = sorted(fa_cba.qo_compensation(as_of)["signing_team_forfeits"])
+    except Exception:                                       # noqa: BLE001
+        log.warning("qo tax block: compensation matrix unavailable")
+        return {}
+    for tier in tiers:
+        try:
+            out[tier] = fm.qo_tax_usd(tier, as_of)
+        except Exception:                                   # noqa: BLE001
+            log.warning("qo tax block: tier %s failed - skipping", tier)
+    return out
+
+
 def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
     def _gate(path: str):
         try:
@@ -669,6 +737,11 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
             "maxGuar": b.get("max_guarantee_usd"), "n100m": b.get("n_100m"),
             "recentSpend": b.get("recent_spend_usd"),
             "baseWins": w.get("baseline_wins"),
+            # WHERE the baseline came from: "mlb_projections" (the same
+            # team_outlook the /projections/ surface serves) or
+            # "contracted_core" (the documented fallback). The surface must
+            # not describe an outlook win total as a contracted-core number.
+            "baseSrc": w.get("baseline_source"),
             "blocked": blocked or None,
         })
     try:
@@ -683,6 +756,16 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
                 "carry_forward": thr["carry_forward"],
                 "regime": thr.get("regime"),
                 "unverified_records": len(fa_cba.unverified_records())},
+        # T1.5 - qo_tax_usd was DEAD CODE: fully implemented, tested, and
+        # never called anywhere in the serve path. WIRED rather than deleted,
+        # because the pick forfeiture is a real cost that changes who can
+        # rationally sign a QO'd free agent and the module already prices it
+        # off the platform's own realized draft-slot curve. It is served PER
+        # PAYOR TIER instead of per member for a reason a reader can check:
+        # the tax is a property of the SIGNING TEAM, and before a signing
+        # there is no signing team. The board can apply the right tier once
+        # a destination is known.
+        "qo_tax_by_payor_tier": _qo_tax_block(class_year),
         "dpw_series": dpw_series,
         "gate1": _gate("fa_gate1_eval.json"),
         "gate2": _gate("fa_gate2_eval.json"),

@@ -91,3 +91,33 @@ def test_enter_probability_v2_directionality():
     # mutual/conditional types and missing bands pass through to v1
     assert fm.enter_probability_v2(pred, "mutual_option", 20_000_000) is None
     assert fm.enter_probability_v2({}, "player_option", 20_000_000) is None
+
+
+def test_gate_scores_the_weights_that_actually_ship():
+    """The team-fit gate must score the SHIPPED weight vector, not a stale copy.
+
+    REGRESSION GUARD, 2026-07-25. fa_fit_backtest.LIVE_WEIGHTS was a hard-coded
+    literal labelled "(fa_config fit.weights)" that had silently diverged from it:
+    it carried the retired hand_v2 mix {need .31, window .19, afford .22, park .04,
+    behavior .24} while fa_config.fit.weights read {need .40, window .05, afford .05,
+    park .05, behavior .45}. Every `live_analog` number and all four registered
+    verdicts therefore described a model that never shipped, and the registered
+    verdict live_analog_beats_behavior_only=False flipped to TRUE once the gate
+    scored the real thing (shipped MRR 0.1673 vs hand_v2 0.1418, n=1,173, shipped
+    better in 7 of 9 winters).
+
+    LIVE_WEIGHTS now reads fa_config, so the two cannot drift apart. This test fails
+    if anyone re-hardcodes it."""
+    import yaml
+    from pathlib import Path
+
+    import fa_fit_backtest as fbt
+
+    cfg = yaml.safe_load(
+        (Path(__file__).parent / "fa_config.yaml").read_text(encoding="utf-8"))
+    shipped = {k: float(v) for k, v in cfg["fit"]["weights"].items()}
+    assert fbt.LIVE_WEIGHTS == shipped, (
+        f"gate weights {fbt.LIVE_WEIGHTS} != shipped fa_config.fit.weights {shipped}; "
+        f"the gate is scoring a model that does not ship")
+    assert abs(sum(fbt.LIVE_WEIGHTS.values()) - 1.0) < 1e-9
+    assert set(fbt.LIVE_WEIGHTS) == set(fbt.FEATS)

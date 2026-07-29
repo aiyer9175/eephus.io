@@ -1,0 +1,25 @@
+{
+ "side": "pit",
+ "n_test": 180,
+ "arms": {
+  "A_KM_baseline": [
+   0.073,
+   0.1218,
+   2.562
+  ],
+  "B_surrogate": [
+   0.0802,
+   0.1246,
+   2.525
+  ],
+  "C_oracle": [
+   0.2174,
+   0.226,
+   2.547
+  ]
+ },
+ "recent_win": true,
+ "recovers_oracle": false,
+ "map_n": 216,
+ "resid_var3": 4.8573659573510755
+}

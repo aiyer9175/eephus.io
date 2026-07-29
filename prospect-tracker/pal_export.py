@@ -3,7 +3,7 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""Pitcher Alchemy Lab - the sidecar export (data/pal.json).
+"""Alchemy Lab - the sidecar export (data/pal.json).
 
 Assembles the role-conversion board from reachable, mostly-bulk sources
 (FanGraphs is 403-blocked, so no Stuff+/role-split scrapes):
@@ -35,6 +35,7 @@ import concurrent.futures as cf
 import functools
 import json
 import logging
+import os
 import statistics
 import sys
 from datetime import date
@@ -284,6 +285,45 @@ def _mlb_service_keys(by_pid: dict, links: dict) -> set:
     return keys
 
 
+# --------------------------------------------------------------------------- #
+# W3 PAL-XRV (docs/wills-2026-07-23/GATES.md section W3) - default OFF:
+#   EEPHUS_PAL_XRV       ARM-1: per-type AAA aStuff+ blended into the stuff
+#                        reads (pal_conversion.stuff_read) for covered arms.
+#   EEPHUS_PAL_XRV_RECO  ARM-2: pitch-add family holes ranked by league-mean
+#                        per-type xRV (display only; independent of ARM-1 so
+#                        the recommender can ship under COVERAGE-STARVED).
+# --------------------------------------------------------------------------- #
+AAA_STUFF_PATH = DATA_DIR / "stuff_plus_aaa.json"
+
+
+@functools.lru_cache(maxsize=1)
+def _load_aaa_stuff():
+    """(players, league_xrv_by_type) from the AAA aStuff+ sidecar; ({}, {})
+    best-effort - a missing/old sidecar degrades to the incumbent paths."""
+    try:
+        d = json.loads(AAA_STUFF_PATH.read_text(encoding="utf-8"))
+        return (d.get("players") or {},
+                (d.get("meta") or {}).get("league_xrv_by_type") or {})
+    except Exception as e:                                     # noqa: BLE001
+        _log.warning("stuff_plus_aaa sidecar unavailable: %s", e)
+        return {}, {}
+
+
+def aaa_coverage(players: dict, mlbam: int, season: int) -> Optional[dict]:
+    """The W3 coverage gate: the pitcher's AAA aStuff+ by_type rows, ONLY when
+    his sidecar season is the scored season or the prior one with >=
+    pal_conversion.PAL_XRV_MIN_PITCHES pitches. None otherwise (the arm stays
+    on the incumbent stuff read byte-identically - clause P3)."""
+    row = (players or {}).get(str(mlbam))
+    if not row or not row.get("by_type"):
+        return None
+    if row.get("season") not in (season, season - 1):
+        return None
+    if (row.get("n_pitches") or 0) < pc.PAL_XRV_MIN_PITCHES:
+        return None
+    return row["by_type"]
+
+
 def _prospect_role(pos: Optional[str]) -> Optional[str]:
     pos = (pos or "").upper()
     if "SP" in pos:
@@ -462,6 +502,12 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     prospects = load_prospect_pitchers(exclude_keys=served)
     prospx_role_map = {p["player_key"]: _prospect_role(p.get("position")) for p in prospects}
 
+    # W3 PAL-XRV flags (default OFF -> both paths byte-identical to incumbent)
+    xrv_on = bool(os.environ.get("EEPHUS_PAL_XRV"))
+    xrv_reco_on = bool(os.environ.get("EEPHUS_PAL_XRV_RECO"))
+    aaa_players, league_xrv = (_load_aaa_stuff() if (xrv_on or xrv_reco_on)
+                               else ({}, {}))
+
     def _prospx_role_for(mlbam):
         lk = links.get(mlbam)
         return prospx_role_map.get(lk.get("prospx")) if lk and lk.get("prospx") else None
@@ -475,6 +521,8 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         arm.p_throws = pitch_hand.get(arm.mlbam)
         arm.was_starter = _was_starter(by_pid, arm.mlbam, season)
         arm.prospx_role = _prospx_role_for(arm.mlbam)
+        if xrv_on:      # W3 ARM-1: covered arms blend the per-type aStuff+ read
+            arm.aaa_by_type = aaa_coverage(aaa_players, arm.mlbam, season)
         rp = pc.reverse_platoon(arm)
         if rp:
             platoon_rows.append({"mlbam": arm.mlbam, "name": arm.name, "team": arm.team,
@@ -482,7 +530,8 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         if arm.role == "RP" and arm.arsenal:
             fit = pc.rp_sp_fit(arm)
             row = _cand_row(arm, fit, "rp2sp")
-            row["pitch_add"] = pc.recommend_pitch(arm)
+            row["pitch_add"] = pc.recommend_pitch(
+                arm, league_xrv if xrv_reco_on else None)   # W3 ARM-2
             row["reverse_platoon"] = rp
             rp2sp.append(row)
         elif arm.role == "SP" and arm.arsenal:
@@ -514,6 +563,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
             # (T1-6): throwing hand + the +3.0 starter-pedigree nudge.
             pre_arm.p_throws = hand_all.get(pre_arm.mlbam)
             pre_arm.was_starter = _was_starter(by_pid, pre_arm.mlbam, py)
+            if xrv_on:  # W3: backtested scores carry the SAME inputs the live
+                # board scores do (the T1-6 parity principle)
+                pre_arm.aaa_by_type = aaa_coverage(aaa_players, pre_arm.mlbam, py)
             if pre_arm.arsenal:
                 fit = (pc.rp_sp_fit(pre_arm) if e["direction"] == "RP->SP"
                        else pc.sp_rp_fit(pre_arm))

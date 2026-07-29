@@ -115,6 +115,9 @@ from scrapers import Snapshot
 # collapsed onto a 40 tier regardless of what the source actually said.
 # At k=1.5 a 1-source FV gets ~45% raw weight; 2-source ~70% — moves
 # the marginal cases off 40 without affecting well-covered prospects.
+# INERT since 2026-05. These three drive apply_shrinkage / compute_prior_mean_fv,
+# which build_timeseries no longer calls; they are defaults on dead keyword args.
+# Changing them changes NOTHING on the board. The live knob is SINGLE_SOURCE_K below.
 DEFAULT_SHRINKAGE_K = 1.5
 DEFAULT_N_FULL = 4
 FALLBACK_PRIOR_FV = 45.0
@@ -227,6 +230,35 @@ def _dedupe_source_aliases(day_snaps: list[Snapshot]) -> list[Snapshot]:
         # Canonical outlet missing — keep the alias but relabel it so
         # downstream code treats it as the canonical source.
         out.append(_dc_replace(s, source=target))
+    return out
+
+
+def _alias_grade_sources(day_snaps: list[Snapshot]) -> dict:
+    """{(player_key, canonical_source): originating_alias_source} for exactly the
+    rows _dedupe_source_aliases RELABELS (alias present, canonical absent).
+
+    Why this exists (2026-07-25). _dedupe_source_aliases runs FIRST, so by the time
+    grade normalization is applied below it only ever sees `mlb_pipeline` and the
+    (mlb_pipeline_international, *, year) cells of the remapper are unreachable by
+    construction. Collapsing to one editorial VOICE is right for vote counting; it
+    is wrong for SCALE. Measured on the same players in the same cycle, Pipeline's
+    International Top 50 runs +7.279 FV [+6.438, +8.075] hotter than that outlet's
+    own main lists (n 147), so an intl-only prospect was being de-biased with the
+    main list's -3.70 offset instead of the intl list's -11.89: a ~8 FV
+    under-correction landing entirely on IFA-only prospects. Symptom on the live
+    board: in the 2026 cycle the intl-ONLY cohort (the players who did NOT make an
+    org top-30) was served +2.18 FV ABOVE the cohort that did, from the same
+    outlet's grades. This map re-attaches the originating list for normalization
+    only; vote counting, per_source and the single-source pull are untouched."""
+    if not day_snaps or not SOURCE_ALIASES:
+        return {}
+    present = {s.source for s in day_snaps}
+    out: dict = {}
+    for s in day_snaps:
+        target = SOURCE_ALIASES.get(s.source)
+        if target is None or target in present:
+            continue
+        out[(s.player_key, target)] = s.source
     return out
 
 
@@ -487,7 +519,10 @@ def compute_consensus_point(
 
     # Collapse multi-list outlets (Pipeline Top 100 + Pipeline
     # International, etc.) into one canonical source per outlet before
-    # any aggregation logic runs — see _dedupe_source_aliases.
+    # any aggregation logic runs — see _dedupe_source_aliases. Capture which rows
+    # get RELABELED first, so grade normalization can still price them against the
+    # list they were actually published on (see _alias_grade_sources).
+    _alias_grade_src = _alias_grade_sources(day_snaps)
     day_snaps = _dedupe_source_aliases(day_snaps)
 
     explicit_fvs: list[float] = []
@@ -525,7 +560,8 @@ def compute_consensus_point(
         if grade_norm is not None and base_fv is not None:
             try:
                 _yr = int(str(s.snapshot_date)[:4])
-                _nm = grade_norm(base_fv, s.source, s.position, _yr)
+                _gsrc = _alias_grade_src.get((s.player_key, s.source), s.source)
+                _nm = grade_norm(base_fv, _gsrc, s.position, _yr)
                 if _nm is not None:
                     base_fv = _nm
             except (TypeError, ValueError):
@@ -948,6 +984,12 @@ def _latest_meta(snaps: list[Snapshot]) -> tuple[str, str | None, str | None]:
                 non_fg_pos,
                 next((s.org for s in snaps_sorted if s.org), None),
             )
+    # NB: FG's MIRP/SIRP role projections get a usage correction (rule
+    # D: current-season MiLB GS-share >= 0.50, IP/G >= 3.0, IP >= 20
+    # flips the label to SP) downstream at the storage export seam via
+    # role_usage.usage_position_override. It cannot happen here:
+    # Snapshot/PlayerTimeseries carry no mlbam id, and consensus.py
+    # cannot import storage (storage imports consensus).
     fg_pos = next((s.position for s in snaps_sorted
                    if s.source == "fangraphs" and s.position), None)
     any_pos = next((s.position for s in snaps_sorted if s.position), None)
@@ -1040,8 +1082,7 @@ def build_timeseries(
     single_source_k: float = SINGLE_SOURCE_K,
     normalize: bool = False,
 ) -> list[PlayerTimeseries]:
-    """Build per-player FV time-series with forward-filled sources and
-    Bayesian shrinkage applied to every point.
+    """Build per-player FV time-series with forward-filled sources.
 
     Forward-fill: at each event date, the consensus aggregates the latest
     snapshot from every source that has ever graded the player up to that
@@ -1049,10 +1090,29 @@ def build_timeseries(
     Intl snaps on 5/19 produce a 5/19 point that averages BOTH grades, not
     just the most recent single source.
 
-    Shrinkage: after the raw points are built, the population prior mean
-    is computed from each player's latest pre-shrinkage value and applied
-    uniformly across every point. Pass `prior_mean_fv` to override the
-    auto-computed prior (e.g. for unit tests).
+    SHRINKAGE — read this before tuning anything. `shrinkage_k`,
+    `shrinkage_n_full` and `prior_mean_fv` are INERT. They are kept only so
+    pre-2026-05 callers still import; the body never reads them, and neither
+    apply_shrinkage nor compute_prior_mean_fv is wired in (see the note above
+    the `for p in result:` loop at the end of this function, where the
+    population prior was removed in 2026-05). This docstring previously
+    claimed the population prior was "applied uniformly across every point",
+    which is false and cost a later audit real time.
+
+    The ONE live shrinkage is `single_source_k` (SINGLE_SOURCE_K = 0.5, pulling
+    toward SINGLE_SOURCE_PRIOR = FV 35), applied inside compute_consensus_point
+    when the player has exactly one explicit-FV instance across all history.
+    Measured 2026-07-25: that pull fires on 2,818 of 4,477 active players with a
+    published FV (62.9% of the live board) but on only 56 of 5,347 rows (1.0%)
+    of the 2017-2023 resolved backtest window, because attrition drops exactly
+    the thinly-covered players it exists to discipline. A k sweep on that window
+    is therefore near-powerless: over k in [0.25, 0.75] the mean cross-year
+    Spearman against realized WAR moves by <= 0.0006 and raising k to 1.0/2.0
+    sits inside a zero-information placebo band (p95 |d_rho| 0.0021). Turning
+    the pull OFF (k=0) is the only resolvable move and it is a WASH -
+    d_rho -0.0045 [-0.0077, -0.0016] but d_auc +0.0048 [+0.0026, +0.0077], the
+    two metrics disagreeing in sign. Leave both constants alone until the
+    backtest universe stops dropping non-debuts.
     """
     snapshots = [_canonicalize_player_snapshot(s) for s in snapshots]
     # Grade normalization (adopted 2026-07): build the quantile-mapping remapper ONCE
@@ -1062,7 +1122,7 @@ def build_timeseries(
     if normalize:
         try:
             from grade_normalization import build_remapper
-            grade_norm = build_remapper()
+            grade_norm = build_remapper(aliases=SOURCE_ALIASES)
         except Exception:
             grade_norm = None   # degrade to the raw scale rather than crash the build
     # v14 — drop-off detection runs ONCE across the full snapshot pool so

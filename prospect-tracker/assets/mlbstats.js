@@ -49,7 +49,7 @@
     var hist = chart("histogram", rems, { height: 108, min: 55, max: 175, highlightAbove: 120,
       refs: [{ at: 100, label: "avg" }], aria: "REM+ distribution" });
     var pts = qual.filter(function (r) { return r.gmli != null; }).map(function (r) {
-      return { x: r.rem_plus, y: r.gmli, label: r.name + "  REM+ " + r.rem_plus + "  gmLI " + r.gmli,
+      return { x: r.rem_plus, y: r.gmli, label: r.name + "  REM+ " + fInt(r.rem_plus) + "  gmLI " + f2(r.gmli),
                color: r.rem_plus >= 115 ? null : "var(--text-tertiary)" };
     });
     var sc = chart("scatter", pts, { height: 250, xLabel: "REM+ (skill) →", yLabel: "↑ gmLI (leverage)",
@@ -61,7 +61,7 @@
     // samples make FIP-vs-contact-quality gaps larger.
     var xpts = qual.filter(function (r) { return r.xrem_plus != null; }).map(function (r) {
       return { x: r.rem_plus, y: r.xrem_plus,
-               label: r.name + "  REM+ " + r.rem_plus + "  xREM+ " + r.xrem_plus,
+               label: r.name + "  REM+ " + fInt(r.rem_plus) + "  xREM+ " + fInt(r.xrem_plus),
                color: r.rem_plus >= 115 ? null : "var(--text-tertiary)" };
     });
     var xsc = xpts.length >= 12
@@ -987,7 +987,7 @@
     var hist = chart("histogram", sems, { height: 108, min: 55, max: 175, highlightAbove: 120,
       refs: [{ at: 100, label: "avg" }], aria: "SEM+ distribution" });
     var pts = qual.filter(function (r) { return r.ip_per_gs != null; }).map(function (r) {
-      return { x: r.sem_plus, y: r.ip_per_gs, label: r.name + "  SEM+ " + r.sem_plus + "  IP/GS " + f1(r.ip_per_gs),
+      return { x: r.sem_plus, y: r.ip_per_gs, label: r.name + "  SEM+ " + fInt(r.sem_plus) + "  IP/GS " + f1(r.ip_per_gs),
                color: r.sem_plus >= 115 ? null : "var(--text-tertiary)" };
     });
     var sc = chart("scatter", pts, { height: 250, xLabel: "SEM+ (skill) →", yLabel: "↑ IP/GS (durability)",
@@ -997,7 +997,7 @@
     // (regression candidates); above = deserving better.
     var xpts = qual.filter(function (r) { return r.xsem_plus != null; }).map(function (r) {
       return { x: r.sem_plus, y: r.xsem_plus,
-               label: r.name + "  SEM+ " + r.sem_plus + "  xSEM+ " + r.xsem_plus,
+               label: r.name + "  SEM+ " + fInt(r.sem_plus) + "  xSEM+ " + fInt(r.xsem_plus),
                color: r.sem_plus >= 115 ? null : "var(--text-tertiary)" };
     });
     var xsc = xpts.length >= 12
@@ -1425,7 +1425,7 @@
     var hist = chart("histogram", hems, { height: 108, min: 55, max: 175, highlightAbove: 130,
       refs: [{ at: 100, label: "avg" }], aria: "HEM+ distribution" });
     var pts = qual.filter(function (r) { return r.pa != null; }).map(function (r) {
-      return { x: r.hem_plus, y: r.pa, label: r.name + "  HEM+ " + r.hem_plus + "  PA " + r.pa,
+      return { x: r.hem_plus, y: r.pa, label: r.name + "  HEM+ " + fInt(r.hem_plus) + "  PA " + fInt(r.pa),
                color: r.hem_plus >= 130 ? null : "var(--text-tertiary)" };
     });
     var sc = chart("scatter", pts, { height: 250, xLabel: "HEM+ (skill) →", yLabel: "↑ PA (volume)",
@@ -1436,7 +1436,7 @@
     // season is outrunning the projection (sell-highs / luck candidates).
     var ppts = qual.filter(function (r) { return r.pwoba != null; }).map(function (r) {
       return { x: r.hem_plus, y: r.pwoba,
-               label: r.name + "  HEM+ " + r.hem_plus + "  pWOBA " + r.pwoba.toFixed(3),
+               label: r.name + "  HEM+ " + fInt(r.hem_plus) + "  pWOBA " + f3(r.pwoba),
                color: r.hem_plus >= 130 ? null : "var(--text-tertiary)" };
     });
     var psc = ppts.length >= 12
@@ -2022,6 +2022,8 @@
           { t: fInt(r.rem_plus_3yr) },
           { t: fPct(r.k_bb_pct) },
           { t: f2(r.gmli) },
+          { t: f2(r.era) },
+          { t: f1(r.ip) },
         ] };
       });
       return spec("MLB Stats · REM+ Leaders",
@@ -2029,12 +2031,14 @@
         "mlbstats-rem-leaders",
         "REM+ = FIP-based, sample-shrunk run-prevention skill - leverage rides separate columns",
         { defaultCount: 25, counts: [10, 25, 50], legend: "REM+ 100 = average reliever", columns: [
-          { label: "#", frac: 0.06 },
-          { label: "Player", frac: 0.42 },
-          { label: "REM+", frac: 0.14 },
-          { label: "REM+ 3yr", frac: 0.13, wideOnly: true },
-          { label: "K-BB%", frac: 0.13 },
-          { label: "gmLI", frac: 0.12, wideOnly: true },
+          { label: "#", frac: 0.05 },
+          { label: "Player", frac: 0.33 },
+          { label: "REM+", frac: 0.11 },
+          { label: "REM+ 3yr", frac: 0.11, wideOnly: true },
+          { label: "K-BB%", frac: 0.11 },
+          { label: "gmLI", frac: 0.11, wideOnly: true },
+          { label: "ERA", frac: 0.09, wideOnly: true },
+          { label: "IP", frac: 0.09, wideOnly: true },
         ], rows: relRows });
     }
 
@@ -2069,6 +2073,9 @@
           { t: fInt(r.sem_plus), c: "accent" },
           { t: fInt(r.sem_plus_3yr) },
           { t: fPct(r.k_bb_pct) },
+          { t: f2(r.era) },
+          { t: f1(r.ip) },
+          { t: fInt(r.gs) },
         ] };
       });
       return spec("MLB Stats · SEM+ Leaders",
@@ -2076,11 +2083,14 @@
         "mlbstats-sem-leaders",
         "SEM+ = FIP-based, sample-shrunk starter run-prevention skill - durability kept separate",
         { defaultCount: 25, counts: [10, 25, 50], legend: "SEM+ 100 = average starter", columns: [
-          { label: "#", frac: 0.06 },
-          { label: "Player", frac: 0.44 },
-          { label: "SEM+", frac: 0.17 },
-          { label: "SEM+ 3yr", frac: 0.16, wideOnly: true },
-          { label: "K-BB%", frac: 0.17 },
+          { label: "#", frac: 0.05 },
+          { label: "Player", frac: 0.33 },
+          { label: "SEM+", frac: 0.12 },
+          { label: "SEM+ 3yr", frac: 0.12, wideOnly: true },
+          { label: "K-BB%", frac: 0.12 },
+          { label: "ERA", frac: 0.09, wideOnly: true },
+          { label: "IP", frac: 0.09, wideOnly: true },
+          { label: "GS", frac: 0.08, wideOnly: true },
         ], rows: spRows });
     }
 
@@ -2092,6 +2102,8 @@
           { t: fInt(r.hem_plus), c: "accent" },
           { t: fInt(r.hem_plus_3yr) },
           { t: f3(r.woba) },
+          { t: fInt(r.pa) },
+          { t: f3(r.ops) },
         ] };
       });
       return spec("MLB Stats · HEM+ Leaders",
@@ -2099,11 +2111,13 @@
         "mlbstats-hem-leaders",
         "HEM+ = sample-shrunk wOBA on a league-relative scale - volume + slash kept separate",
         { defaultCount: 25, counts: [10, 25, 50], legend: "HEM+ 100 = average hitter", columns: [
-          { label: "#", frac: 0.06 },
-          { label: "Player", frac: 0.44 },
-          { label: "HEM+", frac: 0.17 },
-          { label: "HEM+ 3yr", frac: 0.16, wideOnly: true },
-          { label: "wOBA", frac: 0.17 },
+          { label: "#", frac: 0.05 },
+          { label: "Player", frac: 0.35 },
+          { label: "HEM+", frac: 0.12 },
+          { label: "HEM+ 3yr", frac: 0.12, wideOnly: true },
+          { label: "wOBA", frac: 0.12 },
+          { label: "PA", frac: 0.08, wideOnly: true },
+          { label: "OPS", frac: 0.10, wideOnly: true },
         ], rows: hitRows });
     }
 

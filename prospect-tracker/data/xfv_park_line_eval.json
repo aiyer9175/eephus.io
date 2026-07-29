@@ -1,0 +1,440 @@
+{
+ "generated_at": "2026-07-23",
+ "experiment": {
+  "name": "W2 PARK-LINE: in-house MiLB park factors + measurement blend into eFV rates",
+  "registration": "docs/wills-2026-07-23/GATES.md section W2",
+  "tool": "tools/park_line_lab.py",
+  "seed": 20260723,
+  "bootstrap_reps": 2000,
+  "flags": {
+   "EEPHUS_PARKLINE_HIT": "default OFF",
+   "EEPHUS_PARKLINE_PIT": "default OFF"
+  },
+  "factor_artifact": "data/milb_park_factors.json"
+ },
+ "stop_d": {
+  "bar": "run-PF coverage >= 0.9 of observed team-seasons; endpoint sub-phases must not fail",
+  "measured": {
+   "observed_team_seasons": 1211,
+   "covered_run_pf": 1211,
+   "covered_hr_pf": 1083,
+   "coverage_run_pf": 1.0,
+   "bar": 0.9,
+   "pass": true
+  }
+ },
+ "clause_m_measurement": {
+  "hit": {
+   "metric": "OPS",
+   "n_pairs": 7527,
+   "n_players": 3606,
+   "excluded_no_pf": 0,
+   "rho_raw": 0.2816,
+   "rho_neut": 0.2821,
+   "delta": 0.0005,
+   "boot": {
+    "reps": 2000,
+    "seed": 20260723,
+    "clustering": "player (mlbam)",
+    "lo95": -0.0011,
+    "hi95": 0.0021,
+    "p_gt0": 0.7155
+   },
+   "bar": "delta lo95 > 0",
+   "pass": false
+  },
+  "pit": {
+   "metric": "ERA",
+   "n_pairs": 3073,
+   "n_players": 1863,
+   "excluded_no_pf": 0,
+   "rho_raw": 0.1232,
+   "rho_neut": 0.1211,
+   "delta": -0.0021,
+   "boot": {
+    "reps": 2000,
+    "seed": 20260723,
+    "clustering": "player (mlbam)",
+    "lo95": -0.0051,
+    "hi95": 0.0008,
+    "p_gt0": 0.074
+   },
+   "bar": "delta lo95 > 0",
+   "pass": false
+  }
+ },
+ "sides": {
+  "hit": {
+   "side": "hit",
+   "clause_1_invariance": {
+    "off_byte_identical_to_committed": true,
+    "uncovered_row_violations": 0,
+    "n_changed_rows": 606,
+    "n_rows": 1945,
+    "pass": true
+   },
+   "clause_2_no_harm": {
+    "off_pooled_rho": 0.3787,
+    "on_pooled_rho": 0.3785,
+    "delta": -0.0002,
+    "bar": -0.003,
+    "pass": true
+   },
+   "clause_3_bounded_pull": {
+    "clamps_in_code": {
+     "run_pf": [
+      0.9,
+      1.1
+     ],
+     "hr_pf": [
+      0.8,
+      1.25
+     ]
+    },
+    "registered": {
+     "run_pf": [
+      0.9,
+      1.1
+     ],
+     "hr_pf": [
+      0.8,
+      1.25
+     ]
+    },
+    "clamps_match": true,
+    "era_ratio_bounds_implied": [
+     0.9524,
+     1.0526
+    ],
+    "hit_rate_ratio_bounds_implied": [
+     0.9759,
+     1.026
+    ],
+    "max_abs_feature_delta": {
+     "iso_rel": 0.00644,
+     "obp_rel": 0.00869,
+     "ops_rel": 0.01897,
+     "peak_iso_rel": 0.00581,
+     "peak_obp_rel": 0.0095,
+     "peak_ops_rel": 0.01776,
+     "prod_trend": 0.03134
+    },
+    "pass": true
+   },
+   "changed_rows_sample": [
+    {
+     "player_key": "dustin_harris",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "iso_rel": 0.00136,
+      "obp_rel": 0.00311,
+      "ops_rel": 0.00662,
+      "peak_iso_rel": 0.00083,
+      "peak_obp_rel": 0.00128,
+      "peak_ops_rel": 0.00324,
+      "prod_trend": 0.00662
+     }
+    },
+    {
+     "player_key": "kevin_alcantara",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "iso_rel": -0.00071,
+      "obp_rel": -0.00135,
+      "ops_rel": -0.00318,
+      "prod_trend": -0.00318
+     }
+    },
+    {
+     "player_key": "nick_yorke",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "iso_rel": -0.00083,
+      "obp_rel": -0.00173,
+      "ops_rel": -0.00388,
+      "peak_iso_rel": -0.00027,
+      "peak_obp_rel": -0.00047,
+      "peak_ops_rel": -0.00112,
+      "prod_trend": -0.00276
+     }
+    },
+    {
+     "player_key": "brandon_lockridge",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "iso_rel": 0.00065,
+      "obp_rel": 0.00313,
+      "ops_rel": 0.00614,
+      "peak_iso_rel": 0.0011,
+      "peak_obp_rel": 0.00184,
+      "peak_ops_rel": 0.00452,
+      "prod_trend": 0.00614
+     }
+    },
+    {
+     "player_key": "thomas_saggese",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "iso_rel": -0.00012,
+      "obp_rel": -0.00024,
+      "ops_rel": -0.00054,
+      "peak_iso_rel": 0.00135,
+      "peak_obp_rel": 0.00121,
+      "peak_ops_rel": 0.0012,
+      "prod_trend": -0.00598
+     }
+    },
+    {
+     "player_key": "javier_sanoja",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "iso_rel": 0.00075,
+      "obp_rel": 0.0029,
+      "ops_rel": 0.00604,
+      "peak_iso_rel": -0.0,
+      "peak_obp_rel": 0.0029,
+      "peak_ops_rel": 0.00604,
+      "prod_trend": 0.00605
+     }
+    },
+    {
+     "player_key": "dashawn_keirsey_jr",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "iso_rel": -0.00044,
+      "obp_rel": -0.00166,
+      "ops_rel": -0.00325,
+      "peak_iso_rel": 0.00174,
+      "prod_trend": -0.00325
+     }
+    },
+    {
+     "player_key": "sandro_fabian",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "iso_rel": 0.00201,
+      "obp_rel": 0.003,
+      "ops_rel": 0.00756,
+      "prod_trend": 0.00756
+     }
+    },
+    {
+     "player_key": "michael_helman",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "iso_rel": -0.00092,
+      "obp_rel": -0.00136,
+      "ops_rel": -0.00339,
+      "peak_iso_rel": 0.00212,
+      "prod_trend": -0.00339
+     }
+    },
+    {
+     "player_key": "logan_driscoll",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "iso_rel": -0.00081,
+      "obp_rel": -0.00189,
+      "ops_rel": -0.00418,
+      "prod_trend": -0.00418
+     }
+    },
+    {
+     "player_key": "darren_baker",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "iso_rel": -0.00015,
+      "obp_rel": -0.00077,
+      "ops_rel": -0.00152,
+      "peak_iso_rel": -0.00019,
+      "peak_obp_rel": 0.00272,
+      "peak_ops_rel": -0.00187,
+      "prod_trend": 0.00035
+     }
+    },
+    {
+     "player_key": "dylan_crews",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "iso_rel": 0.00025,
+      "obp_rel": 0.00113,
+      "ops_rel": 0.00212,
+      "peak_iso_rel": 0.00025,
+      "peak_obp_rel": 0.00113,
+      "peak_ops_rel": 0.00212
+     }
+    }
+   ]
+  },
+  "pit": {
+   "side": "pit",
+   "clause_1_invariance": {
+    "off_byte_identical_to_committed": true,
+    "uncovered_row_violations": 0,
+    "n_changed_rows": 536,
+    "n_rows": 2096,
+    "pass": true
+   },
+   "clause_2_no_harm": {
+    "off_pooled_rho": 0.302,
+    "on_pooled_rho": 0.3029,
+    "delta": 0.0009,
+    "bar": -0.003,
+    "pass": true
+   },
+   "clause_3_bounded_pull": {
+    "clamps_in_code": {
+     "run_pf": [
+      0.9,
+      1.1
+     ],
+     "hr_pf": [
+      0.8,
+      1.25
+     ]
+    },
+    "registered": {
+     "run_pf": [
+      0.9,
+      1.1
+     ],
+     "hr_pf": [
+      0.8,
+      1.25
+     ]
+    },
+    "clamps_match": true,
+    "era_ratio_bounds_implied": [
+     0.9524,
+     1.0526
+    ],
+    "hit_rate_ratio_bounds_implied": [
+     0.9759,
+     1.026
+    ],
+    "max_abs_feature_delta": {
+     "era_rel": 0.33996
+    },
+    "pass": true
+   },
+   "changed_rows_sample": [
+    {
+     "player_key": "trevor_mcdonald",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "era_rel": 0.00447
+     }
+    },
+    {
+     "player_key": "mike_burrows",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "era_rel": 0.00695
+     }
+    },
+    {
+     "player_key": "marc_church",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "era_rel": 0.05679
+     }
+    },
+    {
+     "player_key": "jackson_jobe",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "era_rel": 0.08859
+     }
+    },
+    {
+     "player_key": "edgardo_henriquez",
+     "kind": "debuted",
+     "milb_season": 2022,
+     "deltas": {
+      "era_rel": -0.01846
+     }
+    },
+    {
+     "player_key": "kumar_rocker",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "era_rel": 0.00946
+     }
+    },
+    {
+     "player_key": "sean_burke",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "era_rel": -0.21788
+     }
+    },
+    {
+     "player_key": "richard_fitts",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "era_rel": 0.04813
+     }
+    },
+    {
+     "player_key": "seth_johnson",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "era_rel": 0.01408
+     }
+    },
+    {
+     "player_key": "lake_bachar",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "era_rel": 0.08632
+     }
+    },
+    {
+     "player_key": "luis_guerrero",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "era_rel": -0.01552
+     }
+    },
+    {
+     "player_key": "jaden_hill",
+     "kind": "debuted",
+     "milb_season": 2023,
+     "deltas": {
+      "era_rel": -0.32983
+     }
+    }
+   ]
+  }
+ },
+ "verdict": {
+  "hit": "M-FAIL-DISPLAY-CANDIDATE",
+  "pit": "M-FAIL-DISPLAY-CANDIDATE"
+ },
+ "loss_ledger": {
+  "mechanism_story": "The in-house factor table itself built cleanly (coverage 1.0) - the failure mode, where present, is the measurement clause: a half-weighted, sqrt-damped one-park correction on a single MiLB season is small relative to season-to-season rate noise, promotion level changes, and league re-centering, which the eFV pipeline already handles via contemporaneous level norms. Neutralizing the current-season rate must ADD forward signal on top of that machinery to clear the bar.",
+  "display_only_ship": "Registered fallback (GATES.md W2): on M FAIL with a clean factor build, data/milb_park_factors.json ships DISPLAY-ONLY as a product option (changes no served model number)."
+ }
+}

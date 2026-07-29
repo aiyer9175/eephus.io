@@ -145,6 +145,19 @@ _BLEND_LAMBDA_FALLBACK = {"hit": 0.85, "pit": 0.80}
 _BLEND_LAMBDA_CLAMP = (0.35, 0.90)
 _WAG_LAMBDA_CACHE: dict[str, float] = {}
 
+# A1 lambda re-select ship (see blend_lambda): hit accuracy-max blend weight 0.85 (was the
+# 0.70 rank_calibration band ceiling); pit keeps the dynamic rank-gate value (None = no override).
+#
+# CHURN TRADE (2026-07-24, docs/EFV_FRONTIER_AUDIT.md): hit 0.85 -> 0.70. This is NOT an
+# accuracy claim in either direction. The A1 ship that raised it to 0.85 was measured at
+# +0.0048 pooled rho against a re-measured minimum detectable effect of 0.0076 for a
+# lambda shift (0.63x of its own floor), i.e. it was never resolvable; the re-measured cost
+# of going back to 0.70 is -0.00049 (CI95 [-0.0045,+0.0070]), equally unresolvable. What IS
+# measurable is stability: the lower weight cuts run-to-run movement of the displayed eFV
+# grade by 6.0%, because the consensus leg is far more stable across refits than the model
+# leg. Non-inferiority + product trade, taken deliberately. Revert = set this back to 0.85.
+_BLEND_LAMBDA_RESELECT: dict[str, float | None] = {"hit": 0.70, "pit": None}
+
 # WAG sizes the blend ONLY when its predicted-edge -> realized-WAG regression is meaningful.
 # When that regression is non-significant (|spearman| below this / too few rows), its slope is
 # noise and would shrink the blend to a rank-SUBOPTIMAL weight. Pitchers already land here (WAG
@@ -343,6 +356,21 @@ def blend_lambda(side: str) -> float:
     are non-significant on WAG (pitchers spearman ~0.001, hitters ~0.066, both CIs straddle 0),
     so both defer to the rank gate. Falls back to the hand-set value on any error."""
     if side not in _WAG_LAMBDA_CACHE:
+        # A1 LAMBDA RE-SELECT (2026-07-24b; data/xfv_lambda_reselect_eval.json). Re-opened on
+        # the wave-B REPAIRED matrices (the 2026-07-14 band raise was retracted on CORRUPTED
+        # labels). Forward-chained sweep [0.50,1.00]: hit pooled OOS Spearman + contributor AUC
+        # + star AUC + within-tier ALL rise monotonically past the old [0.50,0.70]
+        # rank_calibration band -> that band was a BOARD-MOVEMENT cap, not accuracy-load-bearing.
+        # The significance-bar-clearing accuracy-max (player-clustered bootstrap seed 20260724 /
+        # 2000 reps: one-sided-95 lower bound > 0 on BOTH pooled rho AND contributor AUC) is 0.85
+        # (d_rho +0.0048 lo +0.0001 P0.952; d_cAUC +0.0031 lo +0.0003; leakage-free nested
+        # forward-chain agrees). Pit stays dynamic (~0.61): its pooled curve is a flat noise
+        # plateau AND every higher lambda LOWERS contributor/star AUC, so no accuracy-justified
+        # move (the owner rule is ship only if OOS does not drop).
+        ov = _BLEND_LAMBDA_RESELECT.get(side)
+        if ov is not None:
+            _WAG_LAMBDA_CACHE[side] = ov
+            return _WAG_LAMBDA_CACHE[side]
         try:
             wc = wag_calibration(side)
             rho = wc.get("spearman")

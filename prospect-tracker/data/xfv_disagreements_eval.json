@@ -1,0 +1,537 @@
+{
+ "generated_at": "2026-07-24",
+ "lane": "L4 PART B - biggest-disagreements deep-dive",
+ "registration": "docs/efv-2026-07-24/GATES-ROUND2.md L4 (bughunt-2 + disagreements; descriptive, no gate)",
+ "ship_metric": "efv_lab_runner forward-chained (SCORED_YEARS 2020-2023, floors 50/12): pooled Spearman + contributor AUC (>=3 WAR) + star AUC (>=10 WAR); baseline hit 0.3834/0.7762, pit 0.303/0.7197",
+ "owner_bar": "A1 bar: player-clustered bootstrap, one-sided-95 lower bound > 0 on BOTH pooled rho AND contributor AUC",
+ "disagreement_characterization": {
+  "n_common_playeryears": 4234,
+  "n_dedup_players": 640,
+  "archetype_auc_pooled_vs_dedup": {
+   "pooled_playeryears": {
+    "intl_arm": {
+     "n": 259,
+     "efv_auc": 0.66,
+     "cons_auc": 0.5764,
+     "efv_sp": 0.26,
+     "cons_sp": 0.1102,
+     "efv_wins_auc": true
+    },
+    "college_arm": {
+     "n": 530,
+     "efv_auc": 0.7585,
+     "cons_auc": 0.7574,
+     "efv_sp": 0.3615,
+     "cons_sp": 0.3299,
+     "efv_wins_auc": true
+    },
+    "intl_bat": {
+     "n": 353,
+     "efv_auc": 0.7199,
+     "cons_auc": 0.714,
+     "efv_sp": 0.3304,
+     "cons_sp": 0.3186,
+     "efv_wins_auc": true
+    },
+    "hs_arm": {
+     "n": 305,
+     "efv_auc": 0.752,
+     "cons_auc": 0.7723,
+     "efv_sp": 0.3645,
+     "cons_sp": 0.3612,
+     "efv_wins_auc": false
+    },
+    "college_bat": {
+     "n": 341,
+     "efv_auc": 0.7345,
+     "cons_auc": 0.6734,
+     "efv_sp": 0.3863,
+     "cons_sp": 0.28,
+     "efv_wins_auc": true
+    },
+    "hs_bat": {
+     "n": 412,
+     "efv_auc": 0.7918,
+     "cons_auc": 0.7593,
+     "efv_sp": 0.4785,
+     "cons_sp": 0.3883,
+     "efv_wins_auc": true
+    }
+   },
+   "dedup_per_player": {
+    "intl_arm": {
+     "n": 77,
+     "efv_auc": 0.6763,
+     "cons_auc": 0.6301,
+     "efv_sp": 0.2158,
+     "cons_sp": 0.0394,
+     "efv_wins_auc": true
+    },
+    "college_arm": {
+     "n": 180,
+     "efv_auc": 0.7664,
+     "cons_auc": 0.7783,
+     "efv_sp": 0.4253,
+     "cons_sp": 0.3587,
+     "efv_wins_auc": false
+    },
+    "intl_bat": {
+     "n": 92,
+     "efv_auc": 0.7302,
+     "cons_auc": 0.7411,
+     "efv_sp": 0.3544,
+     "cons_sp": 0.3629,
+     "efv_wins_auc": false
+    },
+    "hs_arm": {
+     "n": 74,
+     "efv_auc": 0.7063,
+     "cons_auc": 0.6925,
+     "efv_sp": 0.3129,
+     "cons_sp": 0.2507,
+     "efv_wins_auc": true
+    },
+    "college_bat": {
+     "n": 116,
+     "efv_auc": 0.7246,
+     "cons_auc": 0.696,
+     "efv_sp": 0.372,
+     "cons_sp": 0.3084,
+     "efv_wins_auc": true
+    },
+    "hs_bat": {
+     "n": 101,
+     "efv_auc": 0.8036,
+     "cons_auc": 0.8138,
+     "efv_sp": 0.4925,
+     "cons_sp": 0.5356,
+     "efv_wins_auc": false
+    }
+   },
+   "note": "OBS-1: the scoreboard's _archetype_accuracy uses pooled player-years (no dedup); a leakage-clean per-player read flips several close AUC cells. intl_bat in particular is within-noise, not a robust eFV loss."
+  },
+  "biggest_disagreements": {
+   "n": 187,
+   "right_share": 0.551,
+   "by_direction": {
+    "higher": {
+     "wrong": 33,
+     "n": 91,
+     "wrong_rate": 0.363
+    },
+    "lower": {
+     "wrong": 51,
+     "n": 96,
+     "wrong_rate": 0.531
+    }
+   },
+   "by_archetype": {
+    "college_arm": {
+     "wrong": 26,
+     "n": 59,
+     "wrong_rate": 0.441
+    },
+    "college_bat": {
+     "wrong": 15,
+     "n": 35,
+     "wrong_rate": 0.429
+    },
+    "intl_arm": {
+     "wrong": 8,
+     "n": 25,
+     "wrong_rate": 0.32
+    },
+    "hs_arm": {
+     "wrong": 12,
+     "n": 25,
+     "wrong_rate": 0.48
+    },
+    "hs_bat": {
+     "wrong": 15,
+     "n": 25,
+     "wrong_rate": 0.6
+    },
+    "intl_bat": {
+     "wrong": 8,
+     "n": 18,
+     "wrong_rate": 0.444
+    }
+   },
+   "biggest_efv_wrong": [
+    {
+     "name": "Sam Bachman",
+     "arch": "college_arm",
+     "cons": 45.3,
+     "xfv": 40.0,
+     "war": 0.6,
+     "dir": "lower",
+     "disagree": 0.4475743348982786,
+     "xfv_right": false
+    },
+    {
+     "name": "Cal Stevenson",
+     "arch": "college_bat",
+     "cons": 37.7,
+     "xfv": 42.7,
+     "war": -0.5,
+     "dir": "higher",
+     "disagree": 0.4444444444444444,
+     "xfv_right": false
+    },
+    {
+     "name": "Jake Alu",
+     "arch": "college_bat",
+     "cons": 40.0,
+     "xfv": 45.0,
+     "war": -0.1,
+     "dir": "higher",
+     "disagree": 0.3990610328638498,
+     "xfv_right": false
+    },
+    {
+     "name": "Angel Perdomo",
+     "arch": "intl_arm",
+     "cons": 40.3,
+     "xfv": 37.7,
+     "war": -0.0,
+     "dir": "lower",
+     "disagree": 0.36776212832550864,
+     "xfv_right": false
+    },
+    {
+     "name": "Jonathan Bowlan",
+     "arch": "college_arm",
+     "cons": 42.7,
+     "xfv": 40.0,
+     "war": 0.8,
+     "dir": "lower",
+     "disagree": 0.36619718309859156,
+     "xfv_right": false
+    },
+    {
+     "name": "Orion Kerkering",
+     "arch": "college_arm",
+     "cons": 42.7,
+     "xfv": 40.0,
+     "war": 4.0,
+     "dir": "lower",
+     "disagree": 0.3646322378716745,
+     "xfv_right": false
+    },
+    {
+     "name": "Hagen Danner",
+     "arch": "hs_arm",
+     "cons": 42.7,
+     "xfv": 40.0,
+     "war": 0.0,
+     "dir": "lower",
+     "disagree": 0.3615023474178404,
+     "xfv_right": false
+    },
+    {
+     "name": "Jackson Wolf",
+     "arch": "college_arm",
+     "cons": 42.7,
+     "xfv": 40.0,
+     "war": -0.0,
+     "dir": "lower",
+     "disagree": 0.3583724569640062,
+     "xfv_right": false
+    },
+    {
+     "name": "Buddy Kennedy",
+     "arch": "hs_bat",
+     "cons": 40.0,
+     "xfv": 45.0,
+     "war": -0.7,
+     "dir": "higher",
+     "disagree": 0.34115805946791866,
+     "xfv_right": false
+    },
+    {
+     "name": "Chris Murphy",
+     "arch": "college_arm",
+     "cons": 42.7,
+     "xfv": 40.0,
+     "war": 0.7,
+     "dir": "lower",
+     "disagree": 0.3302034428794992,
+     "xfv_right": false
+    },
+    {
+     "name": "Randy V\u00e1squez",
+     "arch": "intl_arm",
+     "cons": 42.7,
+     "xfv": 40.0,
+     "war": 3.8,
+     "dir": "lower",
+     "disagree": 0.3302034428794992,
+     "xfv_right": false
+    },
+    {
+     "name": "J.P. Mart\u00ednez",
+     "arch": "intl_bat",
+     "cons": 42.3,
+     "xfv": 40.0,
+     "war": -0.1,
+     "dir": "lower",
+     "disagree": 0.3192488262910798,
+     "xfv_right": false
+    }
+   ],
+   "biggest_efv_right": [
+    {
+     "name": "Luis Ortiz",
+     "arch": "intl_arm",
+     "cons": 37.7,
+     "xfv": 47.7,
+     "war": 4.2,
+     "dir": "higher",
+     "disagree": 0.6463223787167449,
+     "xfv_right": true
+    },
+    {
+     "name": "Jeremiah Estrada",
+     "arch": "hs_arm",
+     "cons": 37.7,
+     "xfv": 44.7,
+     "war": 2.6,
+     "dir": "higher",
+     "disagree": 0.5023474178403755,
+     "xfv_right": true
+    },
+    {
+     "name": "Alfonso Rivas III",
+     "arch": "college_bat",
+     "cons": 37.7,
+     "xfv": 42.7,
+     "war": 0.8,
+     "dir": "higher",
+     "disagree": 0.433489827856025,
+     "xfv_right": true
+    },
+    {
+     "name": "Jake McCarthy",
+     "arch": "college_bat",
+     "cons": 37.7,
+     "xfv": 42.7,
+     "war": 5.7,
+     "dir": "higher",
+     "disagree": 0.431924882629108,
+     "xfv_right": true
+    },
+    {
+     "name": "Zach McKinstry",
+     "arch": "college_bat",
+     "cons": 40.0,
+     "xfv": 47.7,
+     "war": 4.4,
+     "dir": "higher",
+     "disagree": 0.40688575899843504,
+     "xfv_right": true
+    },
+    {
+     "name": "Curtis Terry",
+     "arch": "hs_bat",
+     "cons": 40.3,
+     "xfv": 37.7,
+     "war": -0.7,
+     "dir": "lower",
+     "disagree": 0.39749608763693267,
+     "xfv_right": true
+    },
+    {
+     "name": "Wil Crowe",
+     "arch": "college_arm",
+     "cons": 42.3,
+     "xfv": 37.7,
+     "war": -0.6,
+     "dir": "lower",
+     "disagree": 0.3943661971830986,
+     "xfv_right": true
+    },
+    {
+     "name": "Cade Marlowe",
+     "arch": "college_bat",
+     "cons": 37.7,
+     "xfv": 40.3,
+     "war": 1.1,
+     "dir": "higher",
+     "disagree": 0.3865414710485133,
+     "xfv_right": true
+    }
+   ]
+  }
+ },
+ "interventions": {
+  "hit": {
+   "n": 353,
+   "lambda": 0.85,
+   "baseline": {
+    "rho": 0.3834,
+    "aucC": 0.7762,
+    "aucS": 0.8167
+   },
+   "tests": [
+    {
+     "id": "downshrink_0.2",
+     "d_rho": -0.0007,
+     "d_aucC": -0.0003,
+     "d_aucS": -0.0012
+    },
+    {
+     "id": "downshrink_0.35",
+     "d_rho": -0.001,
+     "d_aucC": -0.0001,
+     "d_aucS": -0.0019
+    },
+    {
+     "id": "downshrink_0.5",
+     "d_rho": -0.0024,
+     "d_aucC": -0.0007,
+     "d_aucS": -0.0028
+    },
+    {
+     "id": "ifa_lam_0.5",
+     "d_rho": 0.0004,
+     "d_aucC": 0.0004,
+     "d_aucS": -0.0014
+    },
+    {
+     "id": "ifa_lam_0.35",
+     "d_rho": -0.0013,
+     "d_aucC": -0.0005,
+     "d_aucS": -0.0036
+    },
+    {
+     "id": "ifa_lam_0.2",
+     "d_rho": -0.0019,
+     "d_aucC": -0.0005,
+     "d_aucS": -0.0047
+    },
+    {
+     "id": "upamplify_0.05",
+     "d_rho": 0.0006,
+     "d_aucC": 0.0008,
+     "d_aucS": 0.0003
+    },
+    {
+     "id": "upamplify_0.1",
+     "d_rho": 0.0011,
+     "d_aucC": 0.0012,
+     "d_aucS": 0.0013
+    },
+    {
+     "id": "upamplify_0.15",
+     "d_rho": 0.0019,
+     "d_aucC": 0.0018,
+     "d_aucS": 0.0017
+    }
+   ],
+   "bootstrap_upamplify_0.15": {
+    "d_rho": {
+     "lo95": -0.0024,
+     "p_gt_0": 0.776
+    },
+    "d_aucC": {
+     "lo95": -0.0005,
+     "p_gt_0": 0.902
+    },
+    "d_aucS": {
+     "lo95": -0.0011,
+     "p_gt_0": 0.835
+    }
+   }
+  },
+  "pit": {
+   "n": 438,
+   "lambda": 0.54,
+   "baseline": {
+    "rho": 0.303,
+    "aucC": 0.7197,
+    "aucS": 0.848
+   },
+   "tests": [
+    {
+     "id": "downshrink_0.2",
+     "d_rho": -0.0025,
+     "d_aucC": -0.0007,
+     "d_aucS": -0.0017
+    },
+    {
+     "id": "downshrink_0.35",
+     "d_rho": -0.0038,
+     "d_aucC": -0.0011,
+     "d_aucS": -0.0027
+    },
+    {
+     "id": "downshrink_0.5",
+     "d_rho": -0.0048,
+     "d_aucC": -0.0007,
+     "d_aucS": -0.0038
+    },
+    {
+     "id": "ifa_lam_0.5",
+     "d_rho": -0.0004,
+     "d_aucC": -0.0003,
+     "d_aucS": -0.0003
+    },
+    {
+     "id": "ifa_lam_0.35",
+     "d_rho": -0.0048,
+     "d_aucC": -0.0023,
+     "d_aucS": 0.0004
+    },
+    {
+     "id": "ifa_lam_0.2",
+     "d_rho": -0.0096,
+     "d_aucC": -0.0043,
+     "d_aucS": 0.0019
+    },
+    {
+     "id": "upamplify_0.05",
+     "d_rho": 0.0011,
+     "d_aucC": -0.0001,
+     "d_aucS": -0.0002
+    },
+    {
+     "id": "upamplify_0.1",
+     "d_rho": 0.0018,
+     "d_aucC": -0.0006,
+     "d_aucS": -0.0015
+    },
+    {
+     "id": "upamplify_0.15",
+     "d_rho": 0.0016,
+     "d_aucC": -0.0009,
+     "d_aucS": -0.0018
+    }
+   ]
+  }
+ },
+ "positive_point_candidates": [
+  {
+   "side": "hit",
+   "id": "upamplify_0.05",
+   "d_rho": 0.0006,
+   "d_aucC": 0.0008,
+   "d_aucS": 0.0003
+  },
+  {
+   "side": "hit",
+   "id": "upamplify_0.1",
+   "d_rho": 0.0011,
+   "d_aucC": 0.0012,
+   "d_aucS": 0.0013
+  },
+  {
+   "side": "hit",
+   "id": "upamplify_0.15",
+   "d_rho": 0.0019,
+   "d_aucC": 0.0018,
+   "d_aucS": 0.0017
+  }
+ ],
+ "hit_upamplify_bootstrap_clears_owner_bar": false,
+ "verdict": "NO SHIP. The biggest-miss gap is irreducible variance on the ship metric. (a) asymmetric downgrade-shrink LOSES pooled on both sides (the over-fade is not exploitable); (b) IFA-cohort lambda reduction LOSES (eFV already beats consensus on the IFA cohort forward-chain - the scoreboard 'intl_bat loss' is a pooled-player-year artifact, OBS-1); (c) hit upgrade-amplify has a positive POINT estimate (+0.0019 rho / +0.0018 aucC) but FAILS the A1 bootstrap bar (lo95 < 0, P(>0) 0.78/0.90). eFV is right on ~55% of its biggest disagreements and the wrong ones cannot be identified ex ante without losing the right ones."
+}

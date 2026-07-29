@@ -72,11 +72,39 @@ ORGS = ("ARI", "ATH", "ATL", "BAL", "BOS", "CHC", "CHW", "CIN", "CLE", "COL",
         "PHI", "PIT", "SDP", "SEA", "SFG", "STL", "TBR", "TEX", "TOR", "WSN")
 _STANDINGS_URL = ("https://statsapi.mlb.com/api/v1/standings"
                   "?leagueId=103,104&season={season}&standingsTypes=regularSeason")
-# Live composite weights (fa_config fit.weights) mapped onto the reduced
-# features: need->need_proxy, window->leverage, afford->space, park->park,
-# behavior->will-spend blend.
-LIVE_WEIGHTS = {"need": 0.31, "window": 0.19, "afford": 0.22,
-                "park": 0.04, "behavior": 0.24}
+# Live composite weights mapped onto the reduced features: need->need_proxy,
+# window->leverage, afford->space, park->park, behavior->will-spend blend.
+#
+# READ FROM fa_config, NOT HARD-CODED (fixed 2026-07-25). The literal that used to
+# sit here, {need .31, window .19, afford .22, park .04, behavior .24}, was labelled
+# "(fa_config fit.weights)" but was the RETIRED hand_v2 vector; fa_config.fit.weights
+# has read {need .40, window .05, afford .05, park .05, behavior .45} since the
+# shipped_balanced vector was chosen in this backtest's own ship_decision. So the
+# gate, and all four of its registered verdicts, described a model that never shipped.
+# Measured on the identical forward chain (n=1,173): hand_v2 MRR 0.1418 / top1 0.0341
+# / top5 0.1807 versus shipped 0.1673 / 0.0520 / 0.2293, and shipped beats hand_v2 in
+# 7 of 9 winters. The registered verdict live_analog_beats_behavior_only=False FLIPS
+# TO TRUE once the gate scores what ships: cluster bootstrap over signings (B=2,000,
+# signing as the independent unit) gives shipped over behavior_only +0.0147 MRR,
+# CI95 [+0.0061, +0.0235], P=0.999, against MDE95 0.0126 and a within-signing
+# permutation null of 0.1355.
+# Reading from config means the two cannot drift apart again silently.
+def _live_weights() -> dict:
+    try:
+        import fa_config
+        w = (getattr(fa_config, "CONFIG", None) or {}).get("fit", {}).get("weights")
+        if isinstance(w, dict) and w:
+            return {k: float(w[k]) for k in ("need", "window", "afford", "park", "behavior")}
+    except Exception:                                    # noqa: BLE001 -- fail-soft
+        pass
+    import yaml
+    from pathlib import Path
+    cfg = yaml.safe_load((Path(__file__).parent / "fa_config.yaml").read_text(encoding="utf-8"))
+    w = cfg["fit"]["weights"]
+    return {k: float(w[k]) for k in ("need", "window", "afford", "park", "behavior")}
+
+
+LIVE_WEIGHTS = _live_weights()
 FEATS = ("need", "window", "afford", "park", "behavior")
 
 

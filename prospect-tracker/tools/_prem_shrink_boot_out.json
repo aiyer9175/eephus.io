@@ -1,0 +1,401 @@
+{
+ "B": 600,
+ "draws_ok": 600,
+ "side": "hit",
+ "lam_global": 0.7,
+ "protocol": "player-level paired bootstrap of the FULL pool (debuted+bust); ridge + consensus OLS + inner-forward-chain stratum lambdas refit on every draw; arms share each resample",
+ "arms": {
+  "HIER:k=25": {
+   "rho_pooled": {
+    "mean": 0.00043,
+    "ci95": [
+     -0.0131,
+     0.0163
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_served": {
+    "mean": 0.00043,
+    "ci95": [
+     -0.0133,
+     0.0164
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "t45": {
+    "mean": 0.03851,
+    "ci95": [
+     -0.0577,
+     0.1649
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_target": {
+    "mean": -0.00148,
+    "ci95": [
+     -0.0438,
+     0.0353
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "auc_pooled": {
+    "mean": 0.00248,
+    "ci95": [
+     -0.00641,
+     0.01261
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "auc_served": {
+    "mean": 0.00343,
+    "ci95": [
+     -0.00851,
+     0.01809
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   }
+  },
+  "HIER:k=50": {
+   "rho_pooled": {
+    "mean": 0.00074,
+    "ci95": [
+     -0.0093,
+     0.0131
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_served": {
+    "mean": 0.00073,
+    "ci95": [
+     -0.0091,
+     0.0127
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "t45": {
+    "mean": 0.03127,
+    "ci95": [
+     -0.0513,
+     0.1236
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_target": {
+    "mean": -0.00097,
+    "ci95": [
+     -0.036,
+     0.0219
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "auc_pooled": {
+    "mean": 0.00192,
+    "ci95": [
+     -0.00463,
+     0.0095
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "auc_served": {
+    "mean": 0.00255,
+    "ci95": [
+     -0.00623,
+     0.01287
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   }
+  },
+  "GATE:dip=0.5": {
+   "rho_pooled": {
+    "mean": 0.00021,
+    "ci95": [
+     -0.008,
+     0.0109
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_served": {
+    "mean": 0.0002,
+    "ci95": [
+     -0.0084,
+     0.0108
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "t45": {
+    "mean": 0.01678,
+    "ci95": [
+     -0.0475,
+     0.1092
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_target": {
+    "mean": -0.00098,
+    "ci95": [
+     -0.0392,
+     0.0205
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "auc_pooled": {
+    "mean": 0.00195,
+    "ci95": [
+     -0.00473,
+     0.00963
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "auc_served": {
+    "mean": 0.00235,
+    "ci95": [
+     -0.00506,
+     0.01315
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   }
+  },
+  "GATE:dip=1.0": {
+   "rho_pooled": {
+    "mean": -0.00199,
+    "ci95": [
+     -0.0204,
+     0.0186
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_served": {
+    "mean": -0.00209,
+    "ci95": [
+     -0.0205,
+     0.0188
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "t45": {
+    "mean": 0.0132,
+    "ci95": [
+     -0.1151,
+     0.2094
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_target": {
+    "mean": -0.00161,
+    "ci95": [
+     -0.061,
+     0.0296
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "auc_pooled": {
+    "mean": 0.00298,
+    "ci95": [
+     -0.01154,
+     0.01988
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "auc_served": {
+    "mean": 0.00354,
+    "ci95": [
+     -0.01349,
+     0.02707
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   }
+  },
+  "GLOB:0.50": {
+   "rho_pooled": {
+    "mean": 6e-05,
+    "ci95": [
+     -0.0104,
+     0.0124
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_served": {
+    "mean": 0.00024,
+    "ci95": [
+     -0.0102,
+     0.0128
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "t45": {
+    "mean": 0.04767,
+    "ci95": [
+     -0.0012,
+     0.1149
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_target": {
+    "mean": -0.02629,
+    "ci95": [
+     -0.1479,
+     0.0759
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "auc_pooled": {
+    "mean": 0.019,
+    "ci95": [
+     0.00369,
+     0.03853
+    ],
+    "verdict": "POSITIVE",
+    "n_draws": 600
+   },
+   "auc_served": {
+    "mean": 0.0189,
+    "ci95": [
+     -0.00092,
+     0.04399
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   }
+  },
+  "GLOB:0.80": {
+   "rho_pooled": {
+    "mean": -0.00098,
+    "ci95": [
+     -0.0073,
+     0.0045
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_served": {
+    "mean": -0.00103,
+    "ci95": [
+     -0.0074,
+     0.0047
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "t45": {
+    "mean": -0.01844,
+    "ci95": [
+     -0.0494,
+     0.0075
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_target": {
+    "mean": 0.01177,
+    "ci95": [
+     -0.0527,
+     0.0836
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "auc_pooled": {
+    "mean": -0.00852,
+    "ci95": [
+     -0.0167,
+     -0.00206
+    ],
+    "verdict": "NEGATIVE",
+    "n_draws": 600
+   },
+   "auc_served": {
+    "mean": -0.00862,
+    "ci95": [
+     -0.01975,
+     -0.00022
+    ],
+    "verdict": "NEGATIVE",
+    "n_draws": 600
+   }
+  },
+  "RAND(control)": {
+   "rho_pooled": {
+    "mean": -0.00087,
+    "ci95": [
+     -0.0108,
+     0.0092
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_served": {
+    "mean": -0.00083,
+    "ci95": [
+     -0.0108,
+     0.009
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "t45": {
+    "mean": 0.00765,
+    "ci95": [
+     -0.047,
+     0.072
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "rho_target": {
+    "mean": -0.00954,
+    "ci95": [
+     -0.1406,
+     0.1082
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "auc_pooled": {
+    "mean": 0.00282,
+    "ci95": [
+     -0.00389,
+     0.01228
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   },
+   "auc_served": {
+    "mean": 0.00485,
+    "ci95": [
+     -0.00733,
+     0.02163
+    ],
+    "verdict": "NULL",
+    "n_draws": 600
+   }
+  }
+ }
+}

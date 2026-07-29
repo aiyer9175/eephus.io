@@ -177,7 +177,7 @@ _ROUTE_NOTES = {
     "fa/index.html": "Free Agency module shell",
     "projections/index.html": "MLB Projections (+ #player= pages, Team Outlook)",
     "mlbstats/index.html": "MLB Stats: Bullpen Leaderboards / REM+",
-    "pal/index.html": "Pitcher Alchemy Lab",
+    "pal/index.html": "Alchemy Lab",
     "trademachine/index.html": "Trade Machine (Bayesian trade board + one-currency deal evaluator)",
     "fantasy/index.html": "Fantasy: ROS rankings + daily streamers, multi-format (Ottoneu) scoring",
     "glossary/index.html": "Unified glossary + methodology / model accountability",

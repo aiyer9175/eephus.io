@@ -174,6 +174,19 @@ rsync -a --delete \
   --exclude='*' \
   "$APP/" "$WEBROOT/"
 
+# Publish-time comment strip (2026-07-23): the SHIPPED prospx page drops its
+# dev comments (~630KB raw / ~265KB gz at introduction) while the SOURCE
+# prospx/index.html keeps them - the tool only ever touches the webroot copy,
+# AFTER the rsync and BEFORE the precompress so the .gz twin is built from
+# the stripped file. Conservative by construction (tokenizer; own-line //
+# + /* */ + <!-- --> only, strings/regex/styles untouched, Copyright kept)
+# and fail-OPEN: a strip failure ships the commented copy rather than
+# blocking the nightly (the tool writes atomically, so a failure never
+# leaves a half-stripped page).
+echo "--- strip prospx comments -> $WEBROOT/prospx/index.html"
+python "$APP/tools/strip_prospx_comments.py" "$WEBROOT/prospx/index.html" --in-place \
+  || echo "!!! prospx comment strip failed - shipping the commented copy"
+
 # Precompress text assets so nginx (gzip_static on; see deploy/README.md)
 # serves .gz next to the original with zero per-request CPU. The boot JSON
 # compresses ~8-10x, which is most of the page-weight win on slow links.

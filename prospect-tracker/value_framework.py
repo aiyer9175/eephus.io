@@ -253,6 +253,12 @@ def _reset_caches() -> None:
     _bayes_theta_draws.cache_clear()
     _fv_war_scale.cache_clear()
     _prime_war_scale.cache_clear()
+    # bughunt F6 (2026-07-23): _pchip_bucket_interpolators reads the active
+    # set's config too but was only cleared by _reset_derived_caches - a
+    # valuation-set switch could leak a stale PCHIP fallback across sets.
+    # Latent today (the fitted file commits proportional_odds for both roles,
+    # so the PCHIP fallback is unused), armed by any fitted-file change.
+    _pchip_bucket_interpolators.cache_clear()
 
 
 def _reset_derived_caches() -> None:

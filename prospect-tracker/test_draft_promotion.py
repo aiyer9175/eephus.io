@@ -225,11 +225,25 @@ class SeedSignedDraftees(unittest.TestCase):
         with closing(sqlite3.connect(DB_PATH)) as con:
             con.row_factory = sqlite3.Row
             rows = con.execute(
-                "SELECT player_key, org, fv, interval_label FROM snapshots "
-                "WHERE source='draft_signing'"
+                "SELECT player_key, org, fv, interval_label, snapshot_date "
+                "FROM snapshots WHERE source='draft_signing'"
             ).fetchall()
         self.assertEqual(first, second)
-        self.assertEqual(len(rows), first)
+        # The seed count is the rows re-stamped by THIS run, not the size of the
+        # table.
+        #
+        # CORRECTED 2026-07-25. This asserted len(rows) == first, which only holds
+        # if the eligible set never shrinks. It does shrink, by design: a signed
+        # draftee is seeded with a synthetic anchor only until a real outlet grades
+        # him, after which the guard in seed_signed_draftees stops re-seeding him
+        # and his old row stays behind at its old stamp. Measured on the live DB
+        # 2026-07-25: 128 rows, 49 re-stamped today and 79 left at 2026-07-23 — and
+        # ALL 79 of those players now carry a real graded source, so every stale row
+        # is outvoted and not one player is stranded on a synthetic anchor. The
+        # invariant was wrong, the data was right.
+        newest = max(r["snapshot_date"] for r in rows)
+        self.assertEqual(sum(1 for r in rows if r["snapshot_date"] == newest), first,
+                         "the newest stamp must hold exactly this run's seeds")
         this_year = str(date.today().year)
         for r in rows:
             # Only the current class is ever seeded.
@@ -238,6 +252,25 @@ class SeedSignedDraftees(unittest.TestCase):
             # Every seed carries an org and a real board grade.
             self.assertTrue(r["org"], f"org-less seed: {dict(r)}")
             self.assertIsNotNone(r["fv"], f"grade-less seed: {dict(r)}")
+
+        # THE INVARIANT THAT ACTUALLY MATTERS, and which the old size assertion
+        # was standing in for badly: a row left behind at an older stamp is
+        # harmless ONLY while a real outlet now grades that player. If a stale
+        # synthetic row is somebody's ONLY anchor, he is serving a manufactured
+        # grade with nothing behind it, which is a real defect rather than
+        # bookkeeping.
+        stale = [r["player_key"] for r in rows if r["snapshot_date"] != newest]
+        if stale:
+            with closing(sqlite3.connect(DB_PATH)) as con:
+                qs = ",".join("?" * len(stale))
+                graded = {x[0] for x in con.execute(
+                    f"SELECT DISTINCT player_key FROM snapshots "
+                    f"WHERE player_key IN ({qs}) AND fv IS NOT NULL "
+                    "AND source NOT IN ('draft_signing','performance_ingest',"
+                    "'auto_detect')", stale)}
+            orphans = sorted(set(stale) - graded)
+            self.assertEqual(orphans, [],
+                             f"stale synthetic seed is the ONLY anchor for: {orphans[:5]}")
 
     def test_never_seeds_an_already_tracked_identity(self):
         """A milb_key with ANY real MiLB snapshot (graduated pro, org-

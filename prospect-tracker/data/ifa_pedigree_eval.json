@@ -1,0 +1,191 @@
+{
+ "generated_at": "2026-07-23",
+ "experiment": "IFA bonus -> expected-WAR pedigree curve (P1 companion)",
+ "protocol": {
+  "pre_registered": "2026-07-23, in the tools/ifa_pedigree_lab.py header BEFORE fitting; seed 20260723",
+  "cohort": "Spotrac IFA tracker classes 2012-2017 (row-year), bonus_usd > 0, deduped earliest-class-first",
+  "outcome": "summed bWAR (war_daily bat+pitch, platform basis) over calendar seasons sign+2..sign+8; never-MLB = 0 (real); window end <= 2025 so 2017 is the last class",
+  "window_choice": "calendar-anchored (not debut-anchored) so busts are real zeros; IFA sign at 16-17, debut +4..+7, so +2..+8 spans the plausible early-MLB years",
+  "curve": "7 pre-registered bonus tiers (50k/100k/250k/500k/1M/2M/inf), per-tier weighted mean -> increasing weighted PAVA (mirror of the draft slot curve fit)",
+  "gate": "leave-one-class-out by signing year; pooled held-out Spearman > 0 AND bootstrap lo95 > 0 (10k resamples); raw log10(bonus) pooled rho reported as the bins-add-nothing null"
+ },
+ "why_not_the_db_cohort": {
+  "ifa_rows_with_bonus": 1072,
+  "with_bonus_and_resolvable_class": 11,
+  "note": "bonus coverage is the 2021+ Spotrac scrape window; resolvable outcomes are pre-2018 classes; the intersection cannot support a binned fit, hence the direct Spotrac 2012-2017 cohort"
+ },
+ "accounting": {
+  "rows_parsed": 3507,
+  "bonus_rows_2012_2017": 1537,
+  "matched": 271,
+  "zero_unmatched": 1258,
+  "dropped_ambiguous": 7,
+  "dropped_name_miss": 1,
+  "qa_checked": 184,
+  "qa_disagree": 0
+ },
+ "qa_disagreements_sample": [],
+ "n_by_class": {
+  "2012": {
+   "n": 189,
+   "matched": 39,
+   "mean_bonus": 314925,
+   "pct_nonzero_war": 17.5,
+   "mean_war_window": 0.126
+  },
+  "2013": {
+   "n": 204,
+   "matched": 39,
+   "mean_bonus": 348160,
+   "pct_nonzero_war": 16.7,
+   "mean_war_window": 0.357
+  },
+  "2014": {
+   "n": 248,
+   "matched": 41,
+   "mean_bonus": 530852,
+   "pct_nonzero_war": 15.7,
+   "mean_war_window": 0.245
+  },
+  "2015": {
+   "n": 218,
+   "matched": 54,
+   "mean_bonus": 618458,
+   "pct_nonzero_war": 22.0,
+   "mean_war_window": 0.486
+  },
+  "2016": {
+   "n": 295,
+   "matched": 50,
+   "mean_bonus": 485574,
+   "pct_nonzero_war": 14.2,
+   "mean_war_window": 0.271
+  },
+  "2017": {
+   "n": 375,
+   "matched": 48,
+   "mean_bonus": 368566,
+   "pct_nonzero_war": 11.2,
+   "mean_war_window": 0.408
+  }
+ },
+ "curve": {
+  "realized_window_by_tier": {
+   "<=50k": {
+    "n": 249,
+    "mean_war": 0.344
+   },
+   "50-100k": {
+    "n": 201,
+    "mean_war": 0.294
+   },
+   "100-250k": {
+    "n": 464,
+    "mean_war": 0.083
+   },
+   "250-500k": {
+    "n": 339,
+    "mean_war": 0.139
+   },
+   "500k-1M": {
+    "n": 156,
+    "mean_war": 0.139
+   },
+   "1-2M": {
+    "n": 79,
+    "mean_war": 1.681
+   },
+   ">2M": {
+    "n": 41,
+    "mean_war": 2.726
+   }
+  },
+  "fitted_window_by_tier": {
+   "<=50k": 0.179,
+   "50-100k": 0.179,
+   "100-250k": 0.179,
+   "250-500k": 0.179,
+   "500k-1M": 0.179,
+   "1-2M": 1.681,
+   ">2M": 2.726
+  },
+  "fitted_first6_by_tier": {
+   "<=50k": 0.317,
+   "50-100k": 0.317,
+   "100-250k": 0.317,
+   "250-500k": 0.317,
+   "500k-1M": 0.317,
+   "1-2M": 2.077,
+   ">2M": 2.581
+  },
+  "fitted_first6_2012_2014_only": {
+   "<=50k": 0.413,
+   "50-100k": 0.413,
+   "100-250k": 0.413,
+   "250-500k": 0.413,
+   "500k-1M": 0.413,
+   "1-2M": 1.398,
+   ">2M": 2.034
+  }
+ },
+ "validation": {
+  "pooled_n": 1529,
+  "pooled_spearman_binned": 0.0299,
+  "bootstrap_ci95_binned": [
+   -0.0286,
+   0.085
+  ],
+  "pooled_spearman_raw_logbonus": -0.0225,
+  "bootstrap_ci95_raw": [
+   -0.0831,
+   0.0361
+  ],
+  "per_class_heldout_rho": {
+   "2012": 0.0472,
+   "2013": 0.0559,
+   "2014": 0.0499,
+   "2015": 0.0576,
+   "2016": 0.1156,
+   "2017": 0.051
+  },
+  "bins_lose_rank_info_vs_raw": false,
+  "sensitivity": {
+   "precap_2012_2016_pooled_rho": 0.0357,
+   "hardcap_2017_fold_rho": 0.051,
+   "cuba_pooled_rho": 0.0201,
+   "cuba_n": 54,
+   "noncuba_pooled_rho": 0.0164,
+   "posted_pro_excluded_pooled_rho": 0.0277,
+   "posted_pro_excluded_n": 1514
+  },
+  "top_tier_lift_diagnostic": {
+   "mean_war_ge_1m": 1.717,
+   "n_ge_1m": 142,
+   "mean_war_lt_1m": 0.182,
+   "n_lt_1m": 1387,
+   "diff": 1.535,
+   "diff_ci95": [
+    0.653,
+    2.62
+   ]
+  }
+ },
+ "caveats": [
+  "Spotrac lists only part of each class (skewed to larger bonuses); the curve is E[WAR | bonus, tracker-listed]. The unlisted mass is small-bonus and near-uniformly 0 WAR, so tail tiers read optimistic if extrapolated to unlisted signees.",
+  "Signing age is not observed; older (mostly Cuban) signees share tiers with 16-17 amateurs. Cuba split reported in sensitivity.",
+  "Name-based outcome matching can miss (false zeros); bounded by the career_war rescue + QA pass for tracked players.",
+  "first6 basis is right-censored for late debuts of the 2016-17 classes (a 2017 signee debuting 2023 shows 3 of 6 seasons); the 2012-2014-only refit is the censoring check. Conservative-at-top is the safe direction for a prior.",
+  "Every outcome window contains COVID-2020 (no 2020 MiLB season, shortened MLB season).",
+  "Hard-cap bonus pools arrived July 2017; the 2017 fold doubles as the era-shift sensitivity. 2018+ classes resolve from 2027 on; refit then.",
+  "Posted NPB/KBO professionals signed under the bonus pool sit in the cohort (Ohtani 2017 is the single largest outcome); the posted-pro-excluded sensitivity removes Japan/South Korea/Taiwan rows. They are not amateur pedigree."
+ ],
+ "verdict": "FAIL",
+ "finding": [
+  "Gate verdict: FAIL (pooled LOO rho positive but bootstrap lo95 crosses 0).",
+  "Raw log-bonus is NOT a ranker of IFA outcomes on these classes (pooled rho -0.023): below $1M the realized tier means are flat-to-inverted (the $10-50k tier OUTPERFORMS the $100-250k tier: Acuna $100k, Kirk $30k, Rafaela $10k, Framber $10k...). The isotonic bins beat raw by pooling that non-monotone middle flat.",
+  "The one robust structure is the >= $1M step: mean window WAR 1.7 (n=142) vs 0.18 (n=1387) below, diff CI95 excludes 0. A future arm could price an IFA prior for >= $1M bonuses ONLY, but that is a NEW experiment and needs its own pre-registration, not a post-hoc rescue of this one.",
+  "All 6 per-class held-out rhos are individually positive (0.05-0.12), consistent with a weak real signal that the pre-registered pooled bootstrap correctly refuses to certify.",
+  "Consequence for P1: the efv_score IFA branch KEEPS its consensus-only behavior ('no WAR from a bonus alone' stands, now with evidence). No curve artifact, no integration diff emitted."
+ ],
+ "proposed_integration": "not emitted (gate failed)"
+}

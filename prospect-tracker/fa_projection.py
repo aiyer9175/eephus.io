@@ -755,11 +755,19 @@ def _pit_ip_age_enabled() -> bool:
 # ============================================================================
 # P-TJPT: pitcher playing time discounted for a RECENT Tommy John surgery
 # ============================================================================
-# Registered 2026-07-24 (FA lane). Env flag EEPHUS_PT_TJ ("1" = on) is read at
-# CALL time; with the flag unset the projection path is byte-identical to the
-# pre-hook engine. DEFAULT OFF: the arm passes its gate but it moves every
-# pitcher projection on the site (FA, /projections/, /fantasy/, the
-# leaderboards), which is a wider blast radius than this lane owns.
+# Registered 2026-07-24 (FA lane). Env flag EEPHUS_PT_TJ ("1"/"0") is read at
+# CALL time and overrides the default either way; set it to "0" for a
+# byte-identical pre-hook projection path.
+#
+# DEFAULT ON as of 2026-07-25, OWNER-DIRECTED ("implement whatever makes the
+# models as accurate as possible"). It shipped OFF only because the blast
+# radius (every pitcher projection on the site: FA, /projections/, /fantasy/,
+# the leaderboards) was wider than the originating lane owned, NOT because the
+# evidence was weak -- see the corrected control block below, where the coded
+# arm clears its zero-information band by 8.39x on 11/12 forward-chained folds.
+# GOLDEN RESTAMP OWED: ~11 pitchers per season league-wide get pt_proj and
+# ip_proj multiplied by PT_TJ_MULT (215 fires across 20 seasons, 135 inside the
+# 12 scored folds), which reaches war_from_projection and every surface above.
 #
 # WHY: playing time is currently a two-season exposure Marcel plus an age
 # delta and nothing else -- durability is not a variable anywhere in the
@@ -785,21 +793,30 @@ def _pit_ip_age_enabled() -> bool:
 #   arm (multiplier fit ex-ante on strictly prior seasons, lt24 only):
 #     playing-time MAE (BF)  170.702 -> 169.039  (-1.663), 11/12 folds better
 #     pitcher WAR MAE         0.8876 ->  0.8825  (-0.0051), 10/12 folds better
-#   controls, ALL-BUCKET form (the fuller arm; measured under P-IPAGE ON):
-#     paired bootstrap, resample the pool by season + refit every draw, B=400
-#       PT  pooled delta -1.7284 CI95 [-2.9559, -0.3914] P(improves) 0.998
-#       PT  TJ slice     -6.0317 CI95 [-10.411, -1.3482] P(improves) 0.998
-#       WAR pooled       -0.0051 CI95 [-0.0085, -0.0017] P(improves) 1.000
-#       WAR TJ slice     -0.0178 CI95 [-0.0300, -0.0059] P(improves) 1.000
-#     zero-information control (bucket labels row-permuted within season, 40 draws)
-#       PT  pooled null95 [-1.0959, +0.8168] max|d| 1.3460
-#       PT  TJ slice null95 [-3.8273, +2.8523] max|d| 4.7006
-#       WAR pooled null95 [-0.0028, +0.0020] max|d| 0.0040
-#       WAR TJ slice null95 [-0.0097, +0.0070] max|d| 0.0139
-#   So PT clears its null band comfortably (1.36x the largest null excursion
-#   pooled, 1.36x on the slice); pooled WAR clears it by 1.28x. Read the PT
-#   number as the result and the WAR number as a consistent-sign follow-on,
-#   not as a second independent win.
+#   controls FOR THE CODED ARM (lt24 only -- this is what the flag turns on;
+#   tools/_src_out/tj_lt24_confirm.log, independent re-measurement 2026-07-25):
+#     paired bootstrap, resample the pool by season + refit every draw
+#       PT  pooled delta -1.6375 CI95 [-2.4416, -0.8515] P(improves) 1.000
+#       PT  TJ slice   -70.6638 CI95 [-106.10, -38.51]   P(improves) 1.000
+#     zero-information control (bucket labels row-permuted within season)
+#       PT  pooled   null95 [-0.1458, +0.1889] max|d| 0.1983
+#       PT  TJ slice null95 [-6.3056, +8.1714] max|d| 8.5773
+#     -> SNR 8.39x on both, 11/12 forward-chained folds better.
+#
+#   CORRECTED 2026-07-25. This block previously quoted the ALL-BUCKET control
+#   band (pooled max|d| 1.3460) and concluded "clears comfortably, 1.36x" --
+#   but the all-bucket arm is NOT the one the flag codes. Permuting five bucket
+#   labels admits far more null excursion than permuting one, so borrowing its
+#   band UNDERSTATED the coded arm's signal-to-noise by ~6x (1.36x vs 8.39x)
+#   and made a decisive result read as marginal. The all-bucket numbers, kept
+#   for the record: PT pooled -1.7284 CI95 [-2.9559, -0.3914], TJ slice
+#   -6.0317 CI95 [-10.411, -1.3482], null95 max|d| 1.3460 / 4.7006.
+#   Match the control to the arm you actually ship.
+#
+#   WAR follow-on (all-bucket form, measured under P-IPAGE ON): pooled -0.0051
+#   CI95 [-0.0085, -0.0017] P 1.000 against null95 max|d| 0.0040 (1.28x); TJ
+#   slice -0.0178 CI95 [-0.0300, -0.0059] against max|d| 0.0139. Read PT as the
+#   result and WAR as a consistent-sign follow-on, not a second independent win.
 #
 #   MARKET-SIDE COMPANION RESULT (NULL, ledgered): the same TJ features added
 #   to fa_market's log-guarantee stage are a measured null -- Gate-2 pooled
@@ -814,7 +831,7 @@ def _pit_ip_age_enabled() -> bool:
 #
 # The multiplier is applied to BOTH pt_proj (BF) and ip_proj so it reaches
 # war_from_projection regardless of the P-IPAGE flag's state.
-PT_TJ_DEFAULT = False                       # central flip lives here
+PT_TJ_DEFAULT = True                        # central flip lives here
 PT_TJ_RECENT_MONTHS = 24
 PT_TJ_MULT = 0.606                          # fit on 2006-2025, shrunk k=30
 

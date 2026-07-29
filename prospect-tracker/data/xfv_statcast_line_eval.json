@@ -1,0 +1,474 @@
+{
+ "generated_at": "2026-07-23",
+ "experiment": "S-XLINE (docs/efv-2026-07-23/GATES.md)",
+ "tool": "tools/efv_statcast_line_lab.py",
+ "clause_m_measurement": {
+  "hit": {
+   "delta_rho": 0.0253,
+   "ci95": [
+    0.0046,
+    0.0449
+   ],
+   "p_gt0": 0.991,
+   "n_pairs": 776,
+   "verdict": "PASS"
+  },
+  "pit": {
+   "delta_rho_xslg_arm": 0.0511,
+   "ci95": [
+    0.0115,
+    0.0907
+   ],
+   "p_gt0": 0.996,
+   "n_pairs": 491,
+   "verdict": "PASS"
+  }
+ },
+ "sides": {
+  "hit": {
+   "side": "hit",
+   "off_pooled_rho": 0.3786,
+   "on_pooled_rho": 0.3786,
+   "clause1_invariance": {
+    "violations": 0,
+    "pass": true
+   },
+   "clause2_no_harm": {
+    "delta": 0.0,
+    "bar": -0.003,
+    "pass": true
+   },
+   "clause3_bounded_pull": {
+    "max_abs_delta_by_key": {
+     "iso_rel": 0.0309,
+     "obp_rel": 0.0215,
+     "ops_rel": 0.0632,
+     "peak_ops_rel": 0.0548,
+     "peak_obp_rel": 0.0183
+    },
+    "violations": [],
+    "pass": true,
+    "n_changed_rows": 66
+   },
+   "changed_rows_sample": [
+    {
+     "player_key": "dustin_harris",
+     "deltas": {
+      "iso_rel": -0.0186,
+      "obp_rel": -0.0163,
+      "ops_rel": -0.0534
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "brandon_lockridge",
+     "deltas": {
+      "iso_rel": -0.002,
+      "obp_rel": -0.0139,
+      "ops_rel": -0.0319
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "dashawn_keirsey_jr",
+     "deltas": {
+      "iso_rel": -0.0018,
+      "obp_rel": -0.0066,
+      "ops_rel": -0.0166
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "sandro_fabian",
+     "deltas": {
+      "iso_rel": -0.022,
+      "obp_rel": -0.017,
+      "ops_rel": -0.0584
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "michael_helman",
+     "deltas": {
+      "iso_rel": -0.0135,
+      "obp_rel": -0.0135,
+      "ops_rel": -0.0406
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "darren_baker",
+     "deltas": {
+      "iso_rel": -0.0045,
+      "obp_rel": -0.0151,
+      "ops_rel": -0.0368
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "tyler_gentry",
+     "deltas": {
+      "iso_rel": -0.0089,
+      "obp_rel": -0.0094,
+      "ops_rel": -0.0315
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "shay_whitcomb",
+     "deltas": {
+      "iso_rel": -0.0044,
+      "obp_rel": 0.0004,
+      "ops_rel": -0.0036
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "niko_kavadas",
+     "deltas": {
+      "iso_rel": 0.001,
+      "obp_rel": -0.0026,
+      "ops_rel": -0.0046,
+      "peak_ops_rel": -0.0046
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "andres_chaparro",
+     "deltas": {
+      "iso_rel": -0.0223,
+      "obp_rel": -0.0124,
+      "ops_rel": -0.0497
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "adrian_del_castillo",
+     "deltas": {
+      "iso_rel": 0.0009,
+      "obp_rel": -0.0132,
+      "ops_rel": -0.0276
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "pedro_leon",
+     "deltas": {
+      "iso_rel": -0.0064,
+      "obp_rel": -0.0136,
+      "ops_rel": -0.0361
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    }
+   ],
+   "verdict": "PASS"
+  },
+  "pit": {
+   "side": "pit",
+   "off_pooled_rho": 0.298,
+   "on_pooled_rho": 0.298,
+   "clause1_invariance": {
+    "violations": 0,
+    "pass": true
+   },
+   "clause2_no_harm": {
+    "delta": 0.0,
+    "bar": -0.003,
+    "pass": true
+   },
+   "clause3_bounded_pull": {
+    "max_abs_delta_by_key": {
+     "era_rel": 0.6673
+    },
+    "violations": [],
+    "pass": true,
+    "n_changed_rows": 68
+   },
+   "changed_rows_sample": [
+    {
+     "player_key": "marc_church",
+     "deltas": {
+      "era_rel": -0.0332
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "sean_burke",
+     "deltas": {
+      "era_rel": -0.2668
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "jeff_criswell",
+     "deltas": {
+      "era_rel": -0.6651
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "michael_mcgreevy",
+     "deltas": {
+      "era_rel": -0.2217
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "will_warren",
+     "deltas": {
+      "era_rel": -0.1182
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "joey_cantillo",
+     "deltas": {
+      "era_rel": -0.3004
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "chayce_mcdermott",
+     "deltas": {
+      "era_rel": 0.0619
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "sean_reynolds",
+     "deltas": {
+      "era_rel": -0.3057
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "daniel_robert",
+     "deltas": {
+      "era_rel": 0.0753
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "eric_orze",
+     "deltas": {
+      "era_rel": -0.1443
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "tyler_phillips",
+     "deltas": {
+      "era_rel": -0.1411
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    },
+    {
+     "player_key": "tanner_gordon",
+     "deltas": {
+      "era_rel": -0.0931
+     },
+     "debut_year": 2024,
+     "kind": "debuted"
+    }
+   ],
+   "verdict": "PASS"
+  }
+ },
+ "overall": {
+  "hit": "PASS",
+  "pit": "PASS"
+ },
+ "amendment_2026_07_24": {
+  "generated_at": "2026-07-24",
+  "experiment": "W-XLINE-W + W-XISO (docs/efv-2026-07-24/GATES.md, Phase 1a/1c)",
+  "tool": "tools/efv_statcast_line_lab.py::run_w0724",
+  "mechanism_flags": {
+   "W_XLINE_W": "efv_statcast_line._w_hit(); env EEPHUS_XLINE_WHIT; default W_HIT=0.5",
+   "W_XISO": "efv_statcast_line._xiso_on() + D_CAP_ISO; env EEPHUS_XLINE_XISO; default XISO_HIT_DEFAULT=False"
+  },
+  "measurement_clauses": {
+   "protocol": {
+    "source": "Savant AAA batter aggregates, seasons 2023/2024/2025, pa>=100 (arkmetric_forward_eval.savant_rows, fetch=False)",
+    "target": "next-season AAA OPS/ISO, level_row largest-exposure AAA line, pa>=150 (milb_history)",
+    "blend": "capped within-Savant de-luck, identical caps/algebra to efv_statcast_line.maybe_adjust_row",
+    "bootstrap": "player-clustered percentile, 2000 reps, seed 20260724",
+    "canonical_minpa": 150,
+    "robustness_minpa_sweep": [
+     150,
+     175,
+     200
+    ],
+    "recorded_shipped_hit": {
+     "delta_rho": 0.0253,
+     "n_pairs": 776,
+     "ci95": [
+      0.0046,
+      0.0449
+     ]
+    },
+    "reconstruction_note": "exact shipped driver script not in-tree; reconstructed from the module docstring + clause_m block; recorded n=776 vs ~808 here is 2025->2026 live-season fill drift"
+   },
+   "minpa_sweep": {
+    "150": {
+     "w05_delta": {
+      "delta_rho": 0.0268,
+      "lo95": 0.0088,
+      "hi95": 0.0451,
+      "p_gt0": 0.996,
+      "n_pairs": 808,
+      "n_players": 525
+     },
+     "w07_delta": {
+      "delta_rho": 0.0323,
+      "lo95": 0.0056,
+      "hi95": 0.0584,
+      "p_gt0": 0.991,
+      "n_pairs": 808,
+      "n_players": 525
+     },
+     "xiso_delta": {
+      "delta_rho": 0.0308,
+      "lo95": 0.0154,
+      "hi95": 0.0462,
+      "p_gt0": 1.0,
+      "n_pairs": 808,
+      "n_players": 525
+     },
+     "xiso_w_hit": 0.5
+    },
+    "175": {
+     "w05_delta": {
+      "delta_rho": 0.0282,
+      "lo95": 0.0079,
+      "hi95": 0.0486,
+      "p_gt0": 0.996,
+      "n_pairs": 751,
+      "n_players": 501
+     },
+     "w07_delta": {
+      "delta_rho": 0.0335,
+      "lo95": 0.0037,
+      "hi95": 0.062,
+      "p_gt0": 0.987,
+      "n_pairs": 751,
+      "n_players": 501
+     },
+     "xiso_delta": {
+      "delta_rho": 0.032,
+      "lo95": 0.0159,
+      "hi95": 0.0481,
+      "p_gt0": 1.0,
+      "n_pairs": 751,
+      "n_players": 501
+     },
+     "xiso_w_hit": 0.5
+    },
+    "200": {
+     "w05_delta": {
+      "delta_rho": 0.0301,
+      "lo95": 0.0075,
+      "hi95": 0.0521,
+      "p_gt0": 0.996,
+      "n_pairs": 676,
+      "n_players": 462
+     },
+     "w07_delta": {
+      "delta_rho": 0.0364,
+      "lo95": 0.0033,
+      "hi95": 0.0674,
+      "p_gt0": 0.987,
+      "n_pairs": 676,
+      "n_players": 462
+     },
+     "xiso_delta": {
+      "delta_rho": 0.0348,
+      "lo95": 0.0173,
+      "hi95": 0.0514,
+      "p_gt0": 1.0,
+      "n_pairs": 676,
+      "n_players": 462
+     },
+     "xiso_w_hit": 0.5
+    }
+   },
+   "W_XLINE_W_M_prime": {
+    "point_0_5": 0.0268,
+    "point_0_7": 0.0323,
+    "w07_lo95": 0.0056,
+    "w07_p_gt0": 0.991,
+    "n_pairs": 808,
+    "clause_lo95_gt0": true,
+    "clause_point07_ge_point05": true,
+    "verdict": "PASS"
+   },
+   "W_XISO_M": {
+    "delta_rho": 0.0308,
+    "lo95": 0.0154,
+    "p_gt0": 1.0,
+    "n_pairs": 808,
+    "w_hit_used": 0.5,
+    "verdict": "PASS"
+   }
+  },
+  "in_matrix_clauses": {
+   "isolation": "hit matrix/report redirected to scratch; committed data/xfv_hitter_matrix.json never written",
+   "baseline": {
+    "pooled_oos": 0.3787,
+    "equals_committed_matrix": true
+   },
+   "W_XLINE_W": {
+    "pooled_oos": 0.3787,
+    "no_harm_delta": 0.0,
+    "bar": -0.003,
+    "no_harm_pass": true,
+    "invariance": {
+     "changed_rows": 66,
+     "uncovered_violations": 0,
+     "missing": 0,
+     "pass": true
+    }
+   },
+   "W_XISO": {
+    "pooled_oos": 0.3787,
+    "no_harm_delta": 0.0,
+    "bar": -0.003,
+    "no_harm_pass": true,
+    "invariance": {
+     "changed_rows": 65,
+     "uncovered_violations": 0,
+     "missing": 0,
+     "pass": true
+    }
+   },
+   "pit_side": "untouched by both arms (hit-branch only); no-harm holds by construction, not rebuilt"
+  },
+  "verdicts": {
+   "W_XLINE_W": "PASS",
+   "W_XISO": "PASS"
+  },
+  "ship_rule": "both PASS -> wave-D flips W_HIT=0.7 + XISO_HIT_DEFAULT=True, then ONE combined post-flip battery (3.0 FV ceiling vs a single pre-flip snapshot) + regen. Flips NOT applied here."
+ }
+}

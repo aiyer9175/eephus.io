@@ -19,10 +19,17 @@ every score decomposable in the UI:
             displacement gap, so only the prospect kind carries an extra
             multiplier — a prospect isn't on the contracted roster, so the
             gap can't see him.
-  WINDOW    marginal playoff leverage at the team's 2027 baseline
-            (replacement floor + projected WAR of players signed through
-            the season): the 85-win team gains far more from +4 WAR than
+  WINDOW    marginal playoff leverage at the team's projected win total
+            for the contract season, read from the SAME artifact the
+            /projections/ surface serves (data/mlb_projections.json
+            team_outlook): the 85-win team gains far more from +4 WAR than
             the 70-win team. Fixed documented logistic (not fitted, v1).
+            The v1 baseline rebuilt its own win total out of contracted
+            WAR plus a flat roster-fill stand-in and disagreed with
+            /projections/ by a mean 5.60 wins (max 10.0) as used, and by
+            6.85 before the roster-fill stand-in is added - see
+            team_baselines. The contracted-core form survives as the
+            documented fallback when the artifact is absent or partial.
   AFFORD    CAN the team fit the price: CBT-basis payroll vs the
             rule-versioned threshold (Spotrac's own tax-space number when
             present). Habitual taxpayers who keep spending get a documented
@@ -259,26 +266,99 @@ def needs_matrix(class_year: int) -> dict[str, dict[str, dict]]:
     return out
 
 
-@lru_cache(maxsize=2)
-def team_baselines(class_year: int) -> dict[str, dict]:
-    """{org: {war_committed, baseline_wins}} — replacement floor + the
-    projected WAR of everyone signed through the season."""
-    cfg = _fit_cfg()
-    out = {}
-    for org, roster in _contracted_projections(class_year).items():
-        war = sum(max(0.0, r["war_proj"]) for r in roster)
-        out[org] = {"war_committed": round(war, 1),
-                    "baseline_wins": round(cfg["replacement_wins"] + war, 1)}
+@lru_cache(maxsize=1)
+def _outlook_wins(class_year: int) -> dict[str, float]:
+    """{org: projected wins in ``class_year``} read from the /projections/
+    module's committed artifact (data/mlb_projections.json team_outlook).
+
+    Returns {} on ANY defect (missing file, unparseable, no team_outlook, a
+    club count other than 30, or no byYear row for the season) so the caller
+    can fall back deterministically. Never partially fills: a 22-club read
+    would silently give 8 clubs a different baseline definition than the
+    other 22, which is exactly the cross-page contradiction this replaces."""
+    import json
+    from pathlib import Path
+    try:
+        d = json.loads((Path(__file__).parent / "data" / "mlb_projections.json")
+                       .read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("fa_fit: mlb_projections.json unavailable — "
+                    "team baselines fall back to the contracted core")
+        return {}
+    out: dict[str, float] = {}
+    for t in (d.get("team_outlook") or []):
+        org = t.get("team")
+        if not org:
+            continue
+        for by in (t.get("byYear") or []):
+            if by.get("season") == class_year and by.get("wins") is not None:
+                out[org] = float(by["wins"])
+                break
+    if len(out) != 30:
+        log.warning("fa_fit: team_outlook covers %d clubs for %d (need 30) — "
+                    "team baselines fall back to the contracted core",
+                    len(out), class_year)
+        return {}
     return out
 
 
-def win_leverage(wins: float) -> float:
+@lru_cache(maxsize=2)
+def team_baselines(class_year: int) -> dict[str, dict]:
+    """{org: {war_committed, baseline_wins, fill_wins, baseline_source}}.
+
+    ``baseline_wins`` is the club's projected win total for the contract
+    season, read from the SAME artifact /projections/ serves
+    (data/mlb_projections.json team_outlook). The FA module used to rebuild
+    its own baseline out of contracted-player WAR plus a flat
+    ``roster_fill_wins`` stand-in for the arb/pre-arb slots it cannot see.
+    Measured 2026-07-25 on the committed artifacts for 2027, comparing the
+    number ``win_leverage`` actually consumed (replacement 47.7 + contracted
+    WAR + fill 12) against team_outlook: mean |delta| 5.60 wins, signed mean
+    +5.15, sd 3.23, max 10.0 (COL 81.3 vs 71.3), and the 30 club totals
+    summed to 2584.4 where a league season sums to 2430.0 by construction.
+    Two pages of the same site published different win projections for the
+    same club, and the FA side invented 154.4 league wins that do not exist.
+    Against the BARE baseline_wins (before the fill is added) the gap runs
+    the other way: mean |delta| 6.85, signed -6.85, max 16.1.
+
+    ``fill_wins`` is what ``win_leverage`` must still add: 0 on the outlook
+    source (a full win total is already a full win total) and the configured
+    ``roster_fill_wins`` on the fallback, where the baseline genuinely
+    excludes the unsigned slots. FALLBACK: any defect in the artifact
+    (absent, unparseable, or not covering all 30 clubs for the season) drops
+    the whole module back to the contracted-core construction, flagged in
+    ``baseline_source`` so the discrepancy is visible rather than silent."""
+    cfg = _fit_cfg()
+    fill = float((cfg.get("win_curve") or {}).get("roster_fill_wins", 0))
+    wins = _outlook_wins(class_year)
+    out = {}
+    for org, roster in _contracted_projections(class_year).items():
+        war = sum(max(0.0, r["war_proj"]) for r in roster)
+        row = {"war_committed": round(war, 1)}
+        if org in wins:
+            row["baseline_wins"] = round(wins[org], 1)
+            row["fill_wins"] = 0.0
+            row["baseline_source"] = "mlb_projections"
+        else:
+            row["baseline_wins"] = round(cfg["replacement_wins"] + war, 1)
+            row["fill_wins"] = fill
+            row["baseline_source"] = "contracted_core"
+        out[org] = row
+    return out
+
+
+def win_leverage(wins: float, fill_wins: float | None = None) -> float:
     """Marginal playoff leverage at a talent level: P×(1−P) of the fixed
-    documented logistic, normalized to peak 1.0 at the curve center."""
+    documented logistic, normalized to peak 1.0 at the curve center.
+
+    ``fill_wins`` is added to ``wins`` before the curve: the contracted-core
+    baseline excludes the arb/pre-arb slots a club will fill anyway, so it
+    needs the configured stand-in. A full projected win total does not, and
+    passes 0. None keeps the configured default (the historical signature)."""
     import math
     wc = _fit_cfg()["win_curve"]
-    w = wins + float(wc.get("roster_fill_wins", 0))
-    p = 1.0 / (1.0 + math.exp(-(w - wc["center"]) / wc["scale"]))
+    f = float(wc.get("roster_fill_wins", 0)) if fill_wins is None else float(fill_wins)
+    p = 1.0 / (1.0 + math.exp(-((wins + f) - wc["center"]) / wc["scale"]))
     return 4.0 * p * (1.0 - p)
 
 
@@ -387,8 +467,11 @@ def fit_scores(player: dict, market_pred: dict, class_year: int,
                       + [{"player_name": b["player_name"], "kind": "mlb",
                           "war_proj": b.get("war_proj")}
                          for b in (cell.get("mlb_blockers") or [])])
-        base = bases.get(org) or {"baseline_wins": cfg["replacement_wins"]}
-        window = win_leverage(base["baseline_wins"] + war1 / 2.0)
+        base = bases.get(org) or {"baseline_wins": cfg["replacement_wins"],
+                                  "fill_wins": None,
+                                  "baseline_source": "replacement_floor"}
+        window = win_leverage(base["baseline_wins"] + war1 / 2.0,
+                              base.get("fill_wins"))
         a = afford.get(org) or {}
         b = priors.get(org) or {}
         aav = market_pred.get("proj_aav_usd") or 10_000_000
@@ -416,7 +499,8 @@ def fit_scores(player: dict, market_pred: dict, class_year: int,
                          "blocked_by": blocked_by,
                          "outgoing": cell.get("outgoing") or []},
                 "window": {"score": round(window, 3),
-                           "baseline_wins": base.get("baseline_wins")},
+                           "baseline_wins": base.get("baseline_wins"),
+                           "baseline_source": base.get("baseline_source")},
                 "afford": {"score": round(afford_score, 3),
                            "space_usd": space,
                            "tax_payroll_usd": a.get("tax_payroll_usd"),

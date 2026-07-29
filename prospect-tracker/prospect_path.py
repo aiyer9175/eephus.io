@@ -273,16 +273,33 @@ def _fit_ridge(train: list[dict], keys: list[str]) -> dict | None:
     # the contiguous last-fifth: the eFV matrix is kind-blocked + year-descending, so the
     # last fifth was systematically the oldest bust rows, tuning alpha on a degenerate
     # slice. The fixed seed keeps the fit deterministic (golden-fingerprint stable).
+    # DETERMINISM HYGIENE (2026-07-24, docs/EFV_FRONTIER_AUDIT.md): 5-FOLD CV over the same
+    # seeded permutation, instead of scoring alpha on a single 20% slice. The old single
+    # holdout judged every alpha on ~1/5 of the pool, so the selection was one unlucky
+    # partition away from flipping; the measured rho surface is flat over alpha 0.1-100
+    # (span 0.0004 against a 0.0025 selector null band), which is exactly the regime where
+    # a low-n selector chatters without any accuracy consequence. Averaging the weighted
+    # MAE over all five folds uses every row for both fitting and scoring and removes that
+    # chatter. NOT an accuracy change: alpha resolves to the same value at production n,
+    # so served numbers are unchanged (verified). Same seed -> still golden-stable.
     order = np.random.default_rng(_RIDGE_HOLDOUT_SEED).permutation(n)
-    k = max(1, n // 5)
-    ho, tri = order[:k], order[k:]
-    b_tr = _wmean(tri)
+    folds = np.array_split(order, 5)
     best = None
     for alpha in _ALPHAS:
-        w = _wridge(tri, alpha, b_tr)
-        pred = Xs[ho] @ w + b_tr
-        mae = (float(np.average(np.abs(pred - y[ho]), weights=wts[ho]))
-               if wts[ho].sum() > 0 else float(np.abs(pred - y[ho]).mean()))
+        err_sum, w_sum = 0.0, 0.0
+        for i in range(len(folds)):
+            ho = folds[i]
+            tri = np.concatenate([folds[j] for j in range(len(folds)) if j != i])
+            if len(ho) == 0 or len(tri) == 0:
+                continue
+            b_tr = _wmean(tri)
+            pred = Xs[ho] @ _wridge(tri, alpha, b_tr) + b_tr
+            ww = wts[ho]
+            if ww.sum() > 0:
+                err_sum += float(np.sum(np.abs(pred - y[ho]) * ww)); w_sum += float(ww.sum())
+            else:
+                err_sum += float(np.sum(np.abs(pred - y[ho]))); w_sum += float(len(ho))
+        mae = (err_sum / w_sum) if w_sum > 0 else float("inf")
         if best is None or mae < best[0]:
             best = (mae, alpha)
     alpha = best[1]

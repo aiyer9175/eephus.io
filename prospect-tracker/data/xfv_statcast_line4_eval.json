@@ -1,0 +1,326 @@
+{
+ "generated_at": "2026-07-23",
+ "experiment": "S-XLINE-4 (docs/efv-2026-07-23/GATES.md)",
+ "tool": "tools/efv_statcast_line2_lab.py (inc command)",
+ "registration_echo": {
+  "source": "docs/efv-2026-07-23/GATES.md :: 'S-XLINE-4 gate registration - 2026-07-23 (pre-registered; incremental arms on the AUX winners)'",
+  "seed": 20260723,
+  "bootstrap_reps": 2000,
+  "clauses": {
+   "baseline": "per arm: cross-fitted ridge (5-fold, by player) on the CURRENT-season stat-line inputs eFV consumes (hitters: wOBA-proxy z, K%, BB%, ISO z, age-for-level; pitchers: K%a, BB%a, ERA z, age-for-level), predicting the arm's outcome (hitters: next-season wOBA z; pitchers: next-season K%a z)",
+   "INC-1": "AUX-1 p90 EV z vs the hitter baseline residual; lo95 > 0 proceeds",
+   "INC-2": "AUX-2 whiff share vs the hitter baseline residual (sign: negative helps wOBA; and separately vs the next-K% residual, sign positive)",
+   "INC-3": "AUX-3 FB velo vs the pitcher baseline residual; lo95 > 0 proceeds",
+   "age_interaction": "descriptive, not verdict-bearing: incremental rho by age-for-level half (younger vs older), each arm",
+   "ship_rule": "an INC pass makes the signal ELIGIBLE for a bounded live overlay on A/CPX prospects (magnitude bounded so no served grade moves more than 2 FV, default-OFF flag, post-flip check vs a fresh baseline snapshot with the 2-FV ceiling, registry row provisional, chip copy in the eFV explainer); INC fail = recorded NULL, signal stays display-only"
+  }
+ },
+ "upstream": {
+  "s_xline3_artifact": "data/xfv_statcast_line3_eval.json",
+  "aux_verdicts": {
+   "AUX_1_p90ev": "PASS",
+   "AUX_2_whiff": "PASS",
+   "AUX_3_fb_velo": "PASS"
+  },
+  "selection_bias_carryover": "the S-XLINE-3 selection-bias falsifications on these exact covered pools were clean (no confounded flags); INC re-uses those pools"
+ },
+ "datasets": {
+  "hitter_pairs": {
+   "n": 788,
+   "skipped": {
+    "no_outcome_row": 382,
+    "feature_incomplete": 0
+   }
+  },
+  "pitcher_pairs": {
+   "n": 699,
+   "skipped": {
+    "no_outcome_row": 541,
+    "feature_incomplete": 0
+   }
+  },
+  "note": "A-ball 2023-2025 -> Y+1, >= 150 PA / >= 150 BF both legs, outcome z within the destination (max-exposure level, season) pool; 2025->2026 outcome leg is 2026 season-to-date"
+ },
+ "baselines": {
+  "hit_next_woba_z": {
+   "n": 788,
+   "outcome": "out_woba_z",
+   "features": [
+    "woba_proxy_z",
+    "k_pct",
+    "bb_pct",
+    "iso_z",
+    "age_for_level"
+   ],
+   "ridge_lambda": 1.0,
+   "folds": 5,
+   "fold_scheme": "player-id folds, rng permutation seed 20260723",
+   "oof_spearman_vs_outcome": 0.308,
+   "training_universe": "FULL stat-line-eligible A-ball pair universe (covered and uncovered), the strongest stat-line baseline"
+  },
+  "hit_next_k_z": {
+   "n": 788,
+   "outcome": "out_k_z",
+   "features": [
+    "woba_proxy_z",
+    "k_pct",
+    "bb_pct",
+    "iso_z",
+    "age_for_level"
+   ],
+   "ridge_lambda": 1.0,
+   "folds": 5,
+   "fold_scheme": "player-id folds, rng permutation seed 20260723",
+   "oof_spearman_vs_outcome": 0.7005,
+   "training_universe": "FULL stat-line-eligible A-ball pair universe (covered and uncovered), the strongest stat-line baseline"
+  },
+  "pit_next_k_z": {
+   "n": 699,
+   "outcome": "out_k_z",
+   "features": [
+    "k_pct_a",
+    "bb_pct_a",
+    "era_z",
+    "age_for_level"
+   ],
+   "ridge_lambda": 1.0,
+   "folds": 5,
+   "fold_scheme": "player-id folds, rng permutation seed 20260723",
+   "oof_spearman_vs_outcome": 0.4212,
+   "training_universe": "FULL stat-line-eligible A-ball pair universe (covered and uncovered), the strongest stat-line baseline"
+  }
+ },
+ "arms": {
+  "INC_1_p90ev": {
+   "n": 247,
+   "rho": 0.0579,
+   "ci95": [
+    -0.0725,
+    0.1821
+   ],
+   "p_gt0": 0.809,
+   "expected_sign": "positive",
+   "bar": "lo95 > 0",
+   "pass": false,
+   "verdict": "NULL"
+  },
+  "INC_2_whiff": {
+   "vs_woba_residual": {
+    "n": 788,
+    "rho": -0.0266,
+    "ci95": [
+     -0.092,
+     0.0422
+    ],
+    "p_gt0": 0.222,
+    "expected_sign": "negative",
+    "bar": "hi95 < 0",
+    "pass": false
+   },
+   "vs_k_residual": {
+    "n": 788,
+    "rho": 0.0965,
+    "ci95": [
+     0.0277,
+     0.1604
+    ],
+    "p_gt0": 0.995,
+    "expected_sign": "positive",
+    "bar": "lo95 > 0",
+    "pass": true
+   },
+   "eligible_channels": [
+    "k_residual"
+   ],
+   "verdict": "PASS",
+   "verdict_rule": "the registration lists two directional channels (negative vs the wOBA residual; positive vs the next-K% residual); the arm PASSES if a channel clears its bar, and overlay eligibility extends only to the channel(s) that cleared"
+  },
+  "INC_3_fb_velo": {
+   "n": 227,
+   "rho": 0.1423,
+   "ci95": [
+    0.0196,
+    0.2704
+   ],
+   "p_gt0": 0.9915,
+   "expected_sign": "positive",
+   "bar": "lo95 > 0",
+   "pass": true,
+   "verdict": "PASS"
+  }
+ },
+ "age_interaction": {
+  "INC_1_p90ev": {
+   "median_age_for_level": 20.0,
+   "younger_le_median": {
+    "n": 129,
+    "rho": 0.033
+   },
+   "older_gt_median": {
+    "n": 118,
+    "rho": 0.0958
+   },
+   "note": "descriptive, not verdict-bearing (registered); rho = Spearman(signal z, baseline residual) within the half"
+  },
+  "INC_2_whiff_vs_woba_residual": {
+   "median_age_for_level": 20.0,
+   "younger_le_median": {
+    "n": 413,
+    "rho": 0.0033
+   },
+   "older_gt_median": {
+    "n": 375,
+    "rho": -0.0616
+   },
+   "note": "descriptive, not verdict-bearing (registered); rho = Spearman(signal z, baseline residual) within the half"
+  },
+  "INC_2_whiff_vs_k_residual": {
+   "median_age_for_level": 20.0,
+   "younger_le_median": {
+    "n": 413,
+    "rho": 0.0688
+   },
+   "older_gt_median": {
+    "n": 375,
+    "rho": 0.124
+   },
+   "note": "descriptive, not verdict-bearing (registered); rho = Spearman(signal z, baseline residual) within the half"
+  },
+  "INC_3_fb_velo": {
+   "median_age_for_level": 22.0,
+   "younger_le_median": {
+    "n": 162,
+    "rho": 0.1189
+   },
+   "older_gt_median": {
+    "n": 65,
+    "rho": 0.148
+   },
+   "note": "descriptive, not verdict-bearing (registered); rho = Spearman(signal z, baseline residual) within the half"
+  }
+ },
+ "conventions": {
+  "signals": "identical per-season z construction to the S-XLINE-3 AUX arms (p90 EV: >= 25 BBE covered pool; whiff share: >= 100 pitches seen; FB velo: >= 50 tracked FB)",
+  "incremental_statistic": "Spearman(signal z, out-of-fold baseline residual) on the signal-covered rows",
+  "bootstrap": "percentile, 2000 reps, seed 20260723, resampling rows with residuals held fixed from the single cross-fit (the player-fold cross-fit is the leakage guard)",
+  "age_for_level": "StatsAPI seasonal age on the A-ball row; every row in a pool is at the same level, so age IS age-for-level within the pool"
+ },
+ "caveats": [
+  "the baseline trains on the FULL stat-line-eligible universe, not just covered rows - the strongest stat-line baseline, biasing against a false INC pass",
+  "A-level batted-ball/pitch tracking is park-dependent for INC-1/INC-3 (S-XLINE-3 selection-bias reads were clean on these pools)",
+  "2026 destination lines are season-to-date (partial season)",
+  "ridge lambda 1.0 is an a-priori default on standardized features, not tuned against any arm result"
+ ],
+ "verdicts": {
+  "INC_1_p90ev": "NULL",
+  "INC_2_whiff": "PASS",
+  "INC_3_fb_velo": "PASS"
+ },
+ "overlay_eligible_signals": [
+  "whiff_share (hitters, k_residual channel)",
+  "fb_velo (pitchers, next-K%a channel)"
+ ],
+ "next_step_if_pass": "bounded live overlay on A/CPX prospects per the registered ship rule (2-FV ceiling, default-OFF flag, post-flip check, registry row provisional, chip copy); an in-matrix feature ship stays impossible until A-ball-covered cohorts resolve",
+ "nothing_ships_from_this_run": true,
+ "overlay": {
+  "implemented_at": "2026-07-23",
+  "modules": [
+   "efv_statcast_overlay.py",
+   "statcast_alevel_export.py",
+   "efv_score.run_live hook (model leg, live only)"
+  ],
+  "signals_sidecar": "data/statcast_alevel_signals.json",
+  "baked_counts": {
+   "hit_A": 317,
+   "hit_CPX": 137,
+   "pit_A": 90,
+   "pit_CPX": 59,
+   "total": 603
+  },
+  "frozen_coefficients": {
+   "hit_whiff_on_k": {
+    "slope": 0.887083,
+    "intercept": 0.013667,
+    "n": 788,
+    "resid_sd": 0.471241,
+    "r": 0.8717
+   },
+   "pit_velo_on_ka": {
+    "slope": 0.218195,
+    "intercept": -0.009135,
+    "n": 227,
+    "resid_sd": 0.967167,
+    "r": 0.2194
+   },
+   "fit": "OLS signal_z ~ current-K z on the exact INC pair populations (A-ball 2023-2025, lab accumulators); frozen 2026-07-23, serve time never refits"
+  },
+  "mechanism": "delta_fv = clamp(0.6 * direction * residual_z, +-2.0) on the run_live MODEL leg (priced through the blend's consensus-OLS FV->WAR slope); hitters direction -1 (whiff residual = unpaid K risk), pitchers +1 (velo residual = unpaid K upside); chip 'A-ball Statcast lean'",
+  "battery": {
+   "off_invariance": {
+    "verdict": "PASS",
+    "detail": "flags OFF regen_all with the hook live: data/xfv.json byte-identical, sha256 ef04e91a before/after"
+   },
+   "post_flip_ceiling": {
+    "verdict": "FAIL",
+    "active_quantile_movers": 103,
+    "direction_split": {
+     "up": 53,
+     "down": 50,
+     "up_pct": 51.5
+    },
+    "max_abs_move_fv": 5.0,
+    "breaches_gt_2fv": 22,
+    "top_movers": [
+     [
+      "evan_estevez",
+      5.0
+     ],
+     [
+      "brayan_cortesia",
+      -2.7
+     ],
+     [
+      "ilan_fernandez",
+      -2.7
+     ],
+     [
+      "queni_pineda",
+      -2.7
+     ],
+     [
+      "arturo_flores",
+      -2.7
+     ],
+     [
+      "estevan_moreno",
+      -2.7
+     ],
+     [
+      "jase_mitchell",
+      2.7
+     ],
+     [
+      "connor_rasmussen",
+      2.7
+     ],
+     [
+      "angel_arredondo",
+      2.7
+     ],
+     [
+      "michael_carico",
+      2.7
+     ]
+    ],
+    "realized_grade_max_abs_move": 12.8,
+    "live_coverage_nonzero": {
+     "hit": 400,
+     "pit": 134
+    }
+   },
+   "structural_reading": "the served headline is a rank-preserving quantile map onto the live consensus-FV distribution; in the fringe region the step between adjacent display values is 2.7 FV (35.0 <-> 37.7), so ANY rank-moving overlay breaches the registered 2.0 ceiling - a display-layer structural blocker, not a magnitude to tune"
+  },
+  "verdict": "post-flip FAIL per the registered clause -> flip REVERTED (data/xfv.json byte-identical to baseline, verified), defaults stay OFF; implementation retained as a dead-by-default dial with OFF=identity pinned by test_statcast_overlay.py",
+  "keep_alive": "revival requires a NEW registration with a ceiling defined on a surface the mechanism can bound (display-space clamp vs a no-overlay shadow ranking, or a rank-displacement bound), registered BEFORE any re-run"
+ }
+}

@@ -31,6 +31,7 @@ import html
 import json
 import math
 import re
+import sqlite3
 import unicodedata
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -139,7 +140,7 @@ NAV_ITEMS = [
         ("fa",          "Free Agency", "/fa/"),
         ("projections", "Projections", "/projections/"),
         ("mlbstats",    "MLB Stats",   "/mlbstats/"),
-        ("pal",         "Pitcher Alchemy Lab", "/pal/"),
+        ("pal",         "Alchemy Lab", "/pal/"),
         ("trademachine", "Trade Machine", "/trademachine/"),
         ("fantasy",     "Fantasy", "/fantasy/"),
     ]},
@@ -281,7 +282,7 @@ MODULE_STAGE = {
     "fa": ("β", "MLB Free Agency is in beta - newly launched; numbers may shift as the model matures"),
     "projections": ("β", "MLB Projections is in beta - newly launched; numbers may shift as the model matures"),
     "mlbstats": ("β", "MLB Stats is in beta - newly launched; metrics may shift as the models mature"),
-    "pal": ("β", "Pitcher Alchemy Lab is in beta - newly launched; the conversion models are provisional"),
+    "pal": ("β", "Alchemy Lab is in beta - newly launched; the conversion models are provisional"),
     "fantasy": ("β", "Fantasy is in beta - newly launched; ROS projections may shift as the models mature"),
     "forums": ("β", "Forums is in beta - newly launched"),
 }
@@ -755,7 +756,8 @@ ORG_NAMES = {
 # fallback for any player eFV abstains on (no MiLB track record => absent from
 # by_player). Loaded once at module import - missing/corrupt file => empty map,
 # so the homepage behaves EXACTLY as before. Since the 2026-07-06 quantile flip
-# the DISPLAYED eFV site-wide is `xfv_grade_quantile` (the model ranking on the
+# the DISPLAYED eFV site-wide is `xfv_grade` (RAW, as of the 2026-07-25 unification;
+# it was `xfv_grade_quantile` between 2026-07-06 and then) (the model ranking on the
 # 20-80 consensus scale; the grade surplus is priced on) - prefer it here so the
 # homepage Top Prospects grade matches the PROSPX board and /projections/, with
 # the realized grade, then the raw grade, as legacy fallbacks.
@@ -764,14 +766,31 @@ def _load_xfv_grades() -> dict:
         doc = json.loads((DATA_DIR / "xfv.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
+    try:
+        from efv_board_scale import board_value as _scale
+    except Exception:                                       # pragma: no cover
+        def _scale(rec):
+            return (rec or {}).get("xfv_grade")
     out = {}
     for key, rec in (doc.get("by_player") or {}).items():
         rec = rec or {}
-        g = rec.get("xfv_grade_quantile")
+        # BASIS REPAIR 2026-07-25. The board was unified on xfv_grade (one number
+        # for display, sort and overall_rank - see storage.BOARD_GRADE_FIELD and
+        # prospx efvBoardValue), so reading xfv_grade_quantile FIRST here made the
+        # homepage Top Prospects module disagree with the board it is supposed to
+        # mirror: same player, different FV. Precedence now matches the board exactly.
+        # Do not reorder these without changing BOARD_GRADE_FIELD too.
+        #
+        # W-SIDESCALE 2026-07-25: the board SCALE is owned by efv_board_scale, not by
+        # this reader. board_value() re-derives from `xfv_grade_model_raw` when the
+        # artifact has been stamped, so the homepage grade equals the prospx board
+        # grade for the same player under either state of the flag, and there is no
+        # second copy of the coefficients here to drift.
+        g = _scale(rec)
         if g is None:
             g = rec.get("xfv_grade_realized")
         if g is None:
-            g = rec.get("xfv_grade")
+            g = rec.get("xfv_grade_quantile")
         if isinstance(g, (int, float)):
             out[key] = float(g)
     return out
@@ -1345,11 +1364,21 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
 _EVENT_CAT = {"debut": "debut", "trade": "trade", "promo": "move", "demo": "move",
               "il": "il", "up": "fv", "down": "fv", "signing": "signing"}
 
-def _feed_day_header(dt: str) -> str:
+def _feed_day_header(dt: str, gfx: bool = False) -> str:
     """One thin date header row that deep-links into Time Machine at that date
-    (the full board as of that day). Shared by the homepage feed + /news/."""
+    (the full board as of that day). Shared by the homepage feed + /news/.
+    gfx=True (the /news/ page only) adds a per-date Generate GFX chip that
+    renders THAT day's items - all of them - as a shareable card (the
+    data-gfx-date delegation in _NEWS_GFX_JS wires it to the shared engine)."""
     ts = f"{dt[5:7]}/{dt[8:10]}" if len(dt) >= 10 else dt
+    btn = ""
+    if gfx and len(dt) >= 10:
+        md = f"{int(dt[5:7])}/{int(dt[8:10])}"
+        btn = (f'<button class="chip egfx-chip egfx-day-chip" type="button" data-gfx-date="{dt}" '
+               f'title="Generate a shareable graphic of every news item from {dt}">'
+               f'<span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>GFX {md}</button>')
     return (f'<div class="feed-day"><span class="feed-day-date">{ts}</span>'
+            f'{btn}'
             f'<a class="feed-day-tm" href="/prospx/#tab=timemachine&tm={dt}" '
             f'title="Time Machine - the full board as of {dt}">Time Machine →</a></div>')
 
@@ -1434,19 +1463,25 @@ def _ticker_html(events: list, n: int = 14) -> str:
         items = ['<span><span class="glyph">◆</span> PROSPX - live prospect wire</span>']
     return " ".join(items * 2)  # duplicated for seamless scroll
 
-def _news_feed_html(events: list, pmap: dict | None = None, window_days: int = 30,
-                    max_items: int = 500, min_items: int = 60) -> str:
-    """Day-grouped feed for the standalone /news/ page: a richer row than the
-    homepage sidebar (name + scouting line + current-FV chip), windowed to
-    recent activity and tagged with data-cat so the filter chips can show/hide
-    by category. Each day is wrapped in a .news-day block so a filtered-empty
-    day hides cleanly. Falls back to the most-recent `min_items` when the window
-    is sparse (off-season). `pmap` resolves player_key -> record for the detail."""
+def _news_recent_events(events: list, window_days: int = 30,
+                        max_items: int = 500, min_items: int = 60) -> list:
+    """The /news/ page's event window: recent activity, falling back to the
+    most-recent `min_items` when the window is sparse (off-season). Shared by
+    the rendered feed and the Generate GFX data blob so the graphic always
+    digests exactly the feed the reader is looking at."""
     cutoff = (date.today() - timedelta(days=window_days)).isoformat()
     recent = [e for e in events if e[0] >= cutoff]
     if len(recent) < min_items:
         recent = events[:min_items]
-    recent = recent[:max_items]
+    return recent[:max_items]
+
+def _news_feed_html(events: list, pmap: dict | None = None) -> str:
+    """Day-grouped feed for the standalone /news/ page: a richer row than the
+    homepage sidebar (name + scouting line + current-FV chip), windowed to
+    recent activity and tagged with data-cat so the filter chips can show/hide
+    by category. Each day is wrapped in a .news-day block so a filtered-empty
+    day hides cleanly. `pmap` resolves player_key -> record for the detail."""
+    recent = _news_recent_events(events)
     out = []
     last_day = None
     open_day = False
@@ -1456,7 +1491,7 @@ def _news_feed_html(events: list, pmap: dict | None = None, window_days: int = 3
                 out.append("</div>")
             last_day = dt
             out.append('<div class="news-day">')
-            out.append(_feed_day_header(dt))
+            out.append(_feed_day_header(dt, gfx=True))
             open_day = True
         out.append(_news_item_html(typ, glyph, text, key, org, name, val,
                                    _EVENT_CAT.get(typ, ""), pmap))
@@ -1497,6 +1532,120 @@ _NEWS_FILTER_JS = """<script>
 })();
 </script>"""
 
+# Server-rendered "Generate GFX" chip - mirrors EEPHUS_GFX.chipHTML() (the
+# engine loads deferred, so the static page ships the chip itself and the
+# inline wire-up below just listens for the click).
+def _gfx_chip_html(chip_id: str) -> str:
+    return (f'<button class="chip egfx-chip" id="{chip_id}" type="button" '
+            'title="Generate a shareable graphic (theme-aware, multiple formats)">'
+            '<span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>')
+
+def _news_gfx_blob(recent: list, pmap: dict, max_events: int | None = None) -> str:
+    """The /news/ Generate GFX data model: the current feed's events as a
+    compact JSON list of {date, typ, glyph, name, pos, org, val, mlbam?,
+    pctx?, logo?}, embedded as an inert application/json script the digest
+    AND per-date specs read client-side. Carries the SAME windowed list the
+    rendered feed shows (the per-date card contract: every item from that
+    date, nothing silently dropped), so no cap beyond the feed's own window.
+    mlbam + pctx let the client rebuild the resolved headshot URL (the
+    _headshot_url chain: pctx '67'/'milb' = the real photo context; absent =
+    the generic-overlay form); logo is the org's ESPN CDN logo slug."""
+    items = []
+    for dt, typ, glyph, text, key, org, name, val in (
+            recent if max_events is None else recent[:max_events]):
+        p = pmap.get(key) or {}
+        it = {"date": dt, "typ": typ, "glyph": glyph,
+              "name": name or text, "pos": p.get("position") or "",
+              "org": org or "", "val": val}
+        mlbam = p.get("mlbam_id")
+        if mlbam:
+            it["mlbam"] = mlbam
+            ctx = _PHOTO_CTX.get(str(mlbam))
+            if ctx in ("67", "milb"):
+                it["pctx"] = ctx
+        if org and org in ESPN_SLUGS:
+            it["logo"] = ESPN_SLUGS[org]
+        items.append(it)
+    blob = json.dumps(items, ensure_ascii=False, separators=(",", ":"))
+    # "</" would terminate the script element mid-blob; the JSON-safe escape keeps it inert.
+    return ('<script type="application/json" id="news-gfx-data">'
+            + blob.replace("</", "<\\/") + "</script>")
+
+# Inline wire-up for the /news/ Generate GFX affordances: the header chip
+# builds the whole-digest board spec; each date header's "GFX m/d" chip builds
+# a per-date card spec (kind:"newsday") that renders EVERY item from that date
+# with headshots + team logos. Both read the embedded data blob and hand off
+# to the shared EEPHUS_GFX engine (same modal the FA / Projections surfaces
+# use). Twitter-card 1200px width; the per-date card grows taller as needed.
+_NEWS_GFX_JS = """<script>
+(function(){
+  var el=document.getElementById('news-gfx-data'),evs=[];
+  try{evs=JSON.parse(el?el.textContent:'[]')||[];}catch(e){}
+  var TYPE={debut:'Debut',trade:'Trade',promo:'Promo',demo:'Demo',il:'IL',
+            up:'FV up',down:'FV down',signing:'Signing'};
+  var CLR={up:'pos',down:'neg',il:'neg',debut:'accent'};
+  var CDN='https://img.mlbstatic.com/mlb-photos/image/upload/';
+  function shotURL(e){
+    if(!e.mlbam)return null;
+    if(e.pctx)return CDN+'w_96,q_auto:best/v1/people/'+e.mlbam+'/headshot/'+e.pctx+'/current';
+    return CDN+'d_people:generic:headshot:67:current.png/w_96,q_auto:best/v1/people/'+e.mlbam+'/headshot/67/current';
+  }
+  function logoURL(e){
+    return e.logo?'https://a.espncdn.com/i/teamlogos/mlb/500/'+e.logo+'.png':null;
+  }
+  function mdOf(d){return d.length>=10?(+d.slice(5,7))+'/'+(+d.slice(8,10)):d;}
+  function _newsDigestSpec(){
+    var rows=evs.map(function(e){
+      var sub=[e.pos,e.org].filter(Boolean).join(' - ');
+      return {cells:[
+        {t:mdOf(String(e.date||''))},
+        {t:TYPE[e.typ]||e.typ||''},
+        {t:e.name||'',sub:sub},
+        {t:(e.glyph?e.glyph+' ':'')+(e.val||''),c:CLR[e.typ]}
+      ]};
+    });
+    var now=new Date();
+    var mon=now.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    var iso=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+
+            String(now.getDate()).padStart(2,'0');
+    return {kind:'board',module:'Prospect News',accentToken:'--accent-lilac',
+      title:'Prospect News - '+mon,
+      subtitle:evs.length+' moves - debuts, trades, promos, FV',
+      url:'eephus.io/news',filenameBase:'prospect-news-'+iso,format:'twitter',
+      board:{defaultCount:25,counts:[10,25,50],columns:[
+        {label:'Date',frac:0.10},
+        {label:'Type',frac:0.15},
+        {label:'Player',frac:0.45},
+        {label:'Event',frac:0.30}
+      ],rows:rows}};
+  }
+  function _newsDaySpec(day){
+    var items=evs.filter(function(e){return String(e.date||'').slice(0,10)===day;})
+      .map(function(e){
+        return {name:e.name||'',sub:[e.pos,e.org].filter(Boolean).join(' - '),
+                type:TYPE[e.typ]||e.typ||'',
+                val:(e.glyph?e.glyph+' ':'')+(e.val||''),c:CLR[e.typ]||null,
+                shot:shotURL(e),logo:logoURL(e)};
+      });
+    var dt=new Date(day+'T12:00:00');
+    var lbl=isNaN(+dt)?day:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    return {kind:'newsday',module:'Prospect News',accentToken:'--accent-lilac',
+      title:'Prospect News - '+lbl,dateLabel:lbl,
+      subtitle:items.length+(items.length===1?' update':' updates')+' - every move from this date',
+      url:'eephus.io/news',filenameBase:'prospect-news-'+day,items:items};
+  }
+  var chip=document.getElementById('news-gfx-chip');
+  if(chip)chip.addEventListener('click',function(){
+    if(window.EEPHUS_GFX)window.EEPHUS_GFX.open(_newsDigestSpec());
+  });
+  var feed=document.getElementById('news-feed');
+  if(feed)feed.addEventListener('click',function(ev){
+    var b=ev.target.closest('[data-gfx-date]');
+    if(b&&window.EEPHUS_GFX)window.EEPHUS_GFX.open(_newsDaySpec(b.getAttribute('data-gfx-date')));
+  });
+})();
+</script>"""
+
 def build_news(data: dict | None = None) -> str:
     """/news/ - the expanded Prospect News page: the full recent event feed
     (debuts, trades, promotions/demotions, IL, FV grade changes, FA signings),
@@ -1516,6 +1665,7 @@ def build_news(data: dict | None = None) -> str:
         if g.get("player_key") and g["player_key"] not in pmap:
             pmap[g["player_key"]] = g
     feed = _news_feed_html(events, pmap)
+    recent = _news_recent_events(events)
     chip_defs = [("all", "All"), ("debut", "Debuts"), ("trade", "Trades"),
                  ("move", "Moves"), ("il", "IL"), ("fv", "FV"), ("signing", "Signings")]
     chips = "".join(
@@ -1525,7 +1675,8 @@ def build_news(data: dict | None = None) -> str:
     body = (
         '<div class="news-app">'
         '<div class="section-head"><h1>Prospect News</h1>'
-        '<span class="section-sub">the full recent prospect wire - filterable by event type</span></div>'
+        '<span class="section-sub">the full recent prospect wire - filterable by event type</span>'
+        f'{_gfx_chip_html("news-gfx-chip")}</div>'
         '<p class="news-intro">Every move on the board - prospect debuts, trades, promotions and '
         'demotions, IL placements, genuine FV grade changes, and Free Agency signings - newest first. '
         'The homepage shows the latest dozen; this is the full recent feed (last ~30 days), with each '
@@ -1534,7 +1685,17 @@ def build_news(data: dict | None = None) -> str:
         f'<div class="filter-bar" id="news-filter-bar"><span class="filter-label">Filter</span>{chips}</div>'
         f'<div class="sb-feed news-feed" id="news-feed">{feed}</div>'
         '</div>'
+        # Page-scoped sizing for the per-date GFX chips (site.css owns the base
+        # .chip/.egfx-chip look; this only shrinks them into the thin day rows).
+        '<style>.news-feed .feed-day{gap:10px;}'
+        '.news-app .news-feed button.chip.egfx-day-chip{margin-left:auto;font-size:10px;'
+        'padding:2px 8px;line-height:1.5;}</style>'
+        + _news_gfx_blob(recent, pmap)
         + _NEWS_FILTER_JS
+        + _NEWS_GFX_JS
+        # Shared Generate GFX engine (same two-script injection as /fa/).
+        + f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        + f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
     )
     return page("Prospect News - eephus.io", "news", body,
                 "The full recent eephus.io prospect wire: debuts, trades, promotions, IL moves, "
@@ -1697,6 +1858,40 @@ def _otd_date(d: "date") -> str:
     return f"{d.month}/{d.day}/{d.strftime('%y')}"
 
 
+def _otd_debut_row(g: dict, d: "date", data_cat: str = "") -> str:
+    """One debut-anniversary row (shared by the homepage This Day module and
+    the full /history/ page). Shows the org the player DEBUTED with, not where
+    they play now - this is a history row. WAG sits LEFT of the FV chip so
+    every row's FV chip lines up in the same right-hand column."""
+    nm = html.escape(g.get("player_name") or "")
+    pos = g.get("position") or ""
+    logo = _team_logo(_debut_org(g), "otd-logo")
+    cat = f' data-cat="{data_cat}"' if data_cat else ""
+    return (
+        f'<a class="otd-row" href="{_player_href(g.get("player_key"))}"{cat}>'
+        f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
+        f'<span class="otd-body">{logo} <strong>{nm}</strong> debuted{(" · " + html.escape(pos)) if pos else ""}</span>'
+        f'{_wag_badge(g)}{_fv_pill(g)}</a>'
+    )
+
+
+def _otd_trade_row(p: dict, tr: dict, d: "date", data_cat: str = "") -> str:
+    """One trade-anniversary row (shared by the homepage module and /history/):
+    the trade's from->to org logos, point-in-time."""
+    nm = html.escape(p.get("player_name") or "")
+    pos = p.get("position") or ""
+    logos = (f'{_team_logo(tr.get("from_org"), "otd-logo")}'
+             f'<span class="otd-arrow">→</span>'
+             f'{_team_logo(tr.get("to_org"), "otd-logo")}')
+    cat = f' data-cat="{data_cat}"' if data_cat else ""
+    return (
+        f'<a class="otd-row otd-trade" href="{_player_href(p.get("player_key"))}"{cat}>'
+        f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
+        f'<span class="otd-body">{logos} <strong>{nm}</strong>{(" · " + html.escape(pos)) if pos else ""} traded</span>'
+        f'{_fv_pill(p)}</a>'
+    )
+
+
 def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> str:
     """'This day in prospect history' - graduates who debuted on (or within a
     few days of) today's calendar date in past seasons, plus prospect trades
@@ -1745,24 +1940,7 @@ def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> 
         cands.append((prox, -float(prom), d, g))
     cands.sort(key=lambda c: c[:2])
 
-    rows = []
-    for _, _, d, g in cands[:n]:
-        nm = html.escape(g.get("player_name") or "")
-        pos = g.get("position") or ""
-        # The org shown is the one the player DEBUTED with, not where they play
-        # now (history module) - rendered as a logo, leading the row like the
-        # other homepage modules. The year lives in the compact date stamp, so
-        # there's no separate "Ny ago" tag.
-        org_then = _debut_org(g)
-        logo = _team_logo(org_then, "otd-logo")
-        rows.append(
-            f'<a class="otd-row" href="{_player_href(g.get("player_key"))}">'
-            f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
-            f'<span class="otd-body">{logo} <strong>{nm}</strong> debuted{(" · " + html.escape(pos)) if pos else ""}</span>'
-            # WAG sits LEFT of the FV chip so every row's FV chip lines up in
-            # the same right-hand column (trade rows have no WAG, FV-only).
-            f'{_wag_badge(g)}{_fv_pill(g)}</a>'
-        )
+    rows = [_otd_debut_row(g, d) for _, _, d, g in cands[:n]]
 
     # ---- Trades on this day ----
     # Aggregate prospect trades across the active board (timeseries) + graduates,
@@ -1793,23 +1971,10 @@ def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> 
             trade_cands.append((prox, -float(fv), d, p, tr))
     trade_cands.sort(key=lambda c: c[:2])
 
-    trade_rows = []
-    for _, _, d, p, tr in trade_cands[:n]:
-        nm = html.escape(p.get("player_name") or "")
-        pos = p.get("position") or ""
-        logos = (f'{_team_logo(tr.get("from_org"), "otd-logo")}'
-                 f'<span class="otd-arrow">→</span>'
-                 f'{_team_logo(tr.get("to_org"), "otd-logo")}')
-        trade_rows.append(
-            f'<a class="otd-row otd-trade" href="{_player_href(p.get("player_key"))}">'
-            f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
-            f'<span class="otd-body">{logos} <strong>{nm}</strong>{(" · " + html.escape(pos)) if pos else ""} traded</span>'
-            f'{_fv_pill(p)}</a>'
-        )
+    trade_rows = [_otd_trade_row(p, tr, d) for _, _, d, p, tr in trade_cands[:n]]
 
     if not rows and not trade_rows:
         return ""
-    lead_date = (cands[0][2] if cands else trade_cands[0][2])
     trades_block = (
         f'<div class="otd-subhead">Trades on this day</div>{"".join(trade_rows)}'
         if trade_rows else ""
@@ -1817,10 +1982,291 @@ def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> 
     return (
         '<section class="home-module otd-module">'
         '<div class="kicker"><h2>Today in Prospect History</h2>'
-        f'<a class="see-all" href="/prospx/#tab=timemachine&tm={lead_date.isoformat()}">Time Machine →</a></div>'
+        '<a class="see-all" href="/history/">See all →</a></div>'
         + "".join(rows) + trades_block +
         '</section>'
     )
+
+# --------------------------------------------------------------------------- #
+# /history/ - the full Today in Prospect History page (generalizes the
+# homepage This Day module: every exact-date match, plus the prospects.db
+# transaction + IL ledgers the homepage never reads).
+# --------------------------------------------------------------------------- #
+
+# Transaction codes surfaced on /history/ (MLB StatsAPI type_code values):
+# SGN = signed (draft/int'l), SFA = signed as a free agent, DFA = declared
+# free agency, TR = trade. Verbs are per-row row copy.
+_HIST_TX_CODES = ("SGN", "TR", "DFA", "SFA")
+_HIST_TX_VERBS = {"SGN": "signed", "SFA": "signed as a free agent",
+                  "DFA": "declared free agency", "TR": "traded"}
+
+# One-pass, once-per-build cache of the prospects.db history ledgers grouped
+# by calendar date. ~175k dated transaction events across 7,471 payloads
+# group in ~0.3s; il_history is tiny. Module-level so a rebuild that calls
+# build_this_day() more than once (tests) never re-reads the DB.
+_HIST_DB_CACHE: tuple[dict, dict] | None = None
+
+def _load_history_db() -> tuple[dict, dict]:
+    """Group prospects.db player_transactions (SGN/TR/DFA/SFA only) and
+    il_history by MM-DD. STRICTLY read-only (file:...?mode=ro) - the build
+    must never write the pipeline's DB. Returns
+    ({mmdd: [(iso_date, code, player_key, team_name), ...]},
+     {mmdd: [(iso_since, player_key, il_type), ...]}); empty dicts when the
+    DB is absent (cold checkouts / CI without a seeded DB)."""
+    global _HIST_DB_CACHE
+    if _HIST_DB_CACHE is not None:
+        return _HIST_DB_CACHE
+    tx: dict[str, list] = {}
+    il: dict[str, list] = {}
+    db = ROOT / "prospects.db"
+    if db.exists():
+        try:
+            con = sqlite3.connect(f"file:{db.as_posix()}?mode=ro", uri=True)
+            try:
+                seen: set = set()
+                for key, pj in con.execute(
+                        "SELECT player_key, payload_json FROM player_transactions"):
+                    try:
+                        events = json.loads(pj) or []
+                    except ValueError:
+                        continue
+                    for t in events:
+                        code = t.get("type_code")
+                        if code not in _HIST_TX_CODES:
+                            continue
+                        dt = str(t.get("date") or "")
+                        if len(dt) < 10:
+                            continue
+                        sig = (key, dt[:10], code)
+                        if sig in seen:
+                            continue
+                        seen.add(sig)
+                        team = t.get("to_team_name") or t.get("from_team_name") or ""
+                        tx.setdefault(dt[5:10], []).append((dt[:10], code, key, team))
+                seen.clear()
+                for key, since, il_type in con.execute(
+                        "SELECT player_key, since, il_type FROM il_history"):
+                    s = str(since or "")
+                    if len(s) < 10 or (key, s[:10]) in seen:
+                        continue
+                    seen.add((key, s[:10]))
+                    il.setdefault(s[5:10], []).append((s[:10], key, il_type or ""))
+            finally:
+                con.close()
+        except sqlite3.Error:
+            pass
+    _HIST_DB_CACHE = (tx, il)
+    return _HIST_DB_CACHE
+
+def _org_from_team_name(team: str | None) -> str | None:
+    """MLB club abbreviation from a transaction's full team name ("Seattle
+    Mariners" -> SEA) via nickname suffix match; None for minor-league
+    affiliates / foreign clubs (they get no big-league logo, correctly)."""
+    if not team:
+        return None
+    for abbr, nick in ORG_NAMES.items():
+        if team.endswith(nick):
+            return abbr
+    return None
+
+def _name_from_key(key: str) -> str:
+    """Readable fallback name for a DB player_key with no board/graduate
+    record ("travis_kuhn" -> "Travis Kuhn"; the "__noid" disambiguator and
+    friends are dropped)."""
+    base = (key or "").split("__")[0]
+    return base.replace("_", " ").title()
+
+# /history/ category filter - same tiny dependency-free idiom as the /news/
+# chips (_NEWS_FILTER_JS): toggle .otd-row visibility by data-cat, hide any
+# section left with no visible rows.
+_HIST_FILTER_JS = """<script>
+(function(){
+  var bar=document.getElementById('hist-filter-bar'),wrap=document.getElementById('hist-sections');
+  if(!bar||!wrap)return;
+  var empty=null;
+  bar.addEventListener('click',function(e){
+    var b=e.target.closest('[data-hist-filter]');if(!b)return;
+    var f=b.getAttribute('data-hist-filter');
+    bar.querySelectorAll('[data-hist-filter]').forEach(function(x){x.classList.toggle('active',x===b);});
+    var shown=0;
+    wrap.querySelectorAll('.hist-section').forEach(function(sec){
+      var any=false;
+      sec.querySelectorAll('.otd-row').forEach(function(it){
+        var show=(f==='all')||it.getAttribute('data-cat')===f;
+        it.style.display=show?'':'none';if(show){any=true;shown++;}
+      });
+      sec.style.display=any?'':'none';
+    });
+    if(!empty){
+      empty=document.createElement('div');
+      empty.className='news-empty';
+      empty.style.cssText='padding:2rem 1rem;text-align:center;color:var(--text-tertiary,#888);';
+      wrap.appendChild(empty);
+    }
+    if(shown===0){empty.textContent='No items in this category.';empty.style.display='';}
+    else{empty.style.display='none';}
+  });
+})();
+</script>"""
+
+def build_this_day(data: dict | None = None) -> str:
+    """/history/ - Today in Prospect History as a full page: every debut
+    anniversary and prospect trade landing on today's exact calendar date
+    (past seasons only), plus the prospects.db transaction ledger (signings /
+    free agency, 2019+) and IL placements (2017+) for the same MM-DD.
+
+    Big eFV moves are DELIBERATELY not a section: data/xfv_history.json dates
+    grade changes at model snapshot re-runs (over half of all |delta| >= 3
+    steps share one monthly restamp date), so a calendar-day match would
+    misstate when the move actually happened. Revisit if the history ever
+    carries first-seen event dates."""
+    data = data or load_site_data() or {}
+    players = data.get("players") or []
+    graduates = data.get("graduates") or []
+    today = date.today()
+    mmdd = f"{today.month:02d}-{today.day:02d}"
+    mon_d = f"{today.strftime('%B')} {today.day}"
+
+    # player_key -> record; active board wins ties, graduates fill the rest
+    # (same dedupe the news page + homepage trades use).
+    pmap: dict = {}
+    for p in players:
+        if p.get("player_key"):
+            pmap[p["player_key"]] = p
+    for g in graduates:
+        if g.get("player_key") and g["player_key"] not in pmap:
+            pmap[g["player_key"]] = g
+
+    def _is_anniv(d: "date") -> bool:
+        # Exact calendar date, past seasons only (the full page never uses the
+        # homepage's near-date padding - "on this day" means this day here).
+        return d.year < today.year and (d.month, d.day) == (today.month, today.day)
+
+    # ---- Debut anniversaries (every exact match, prominence-ordered) -------
+    debut_cands = []
+    for g in graduates:
+        try:
+            d = date.fromisoformat(str(g.get("debut_date") or "")[:10])
+        except ValueError:
+            continue
+        if not _is_anniv(d):
+            continue
+        prom = g.get("fv_close") or ((g.get("debuted_value") or {}).get("wag") or {}).get("regressed_wag") or 0
+        debut_cands.append((-float(prom), d, g))
+    debut_cands.sort(key=lambda c: c[0])
+    debut_rows = [_otd_debut_row(g, d, data_cat="debut") for _, d, g in debut_cands]
+
+    # ---- Trades on this day (exact-dated mlb_api rows only) ----------------
+    trade_cands = []
+    for p in pmap.values():
+        for tr in (p.get("trades") or []):
+            if tr.get("source") != "mlb_api":
+                continue
+            try:
+                d = date.fromisoformat(str(tr.get("trade_date") or "")[:10])
+            except ValueError:
+                continue
+            if _is_anniv(d):
+                trade_cands.append((-float(p.get("fv_close") or 0), d, p, tr))
+    trade_cands.sort(key=lambda c: c[0])
+    trade_rows = [_otd_trade_row(p, tr, d, data_cat="trade") for _, d, p, tr in trade_cands]
+
+    # ---- Transaction ledger (SGN / SFA / DFA / TR) -------------------------
+    tx_all, il_all = _load_history_db()
+    tx_today = [t for t in tx_all.get(mmdd, []) if int(t[0][:4]) < today.year]
+    # Known board/graduate players first (FV-ranked), then the rest of the
+    # ledger newest-first; capped - July draft-signing anniversaries alone can
+    # run to hundreds of rows.
+    tx_today.sort(key=lambda t: t[0], reverse=True)
+    tx_today.sort(key=lambda t: (0, -(_primary_fv(pmap[t[2]]) or 0)) if t[2] in pmap else (1, 0))
+    TX_CAP = 40
+    tx_rows = []
+    for dt, code, key, team in tx_today[:TX_CAP]:
+        p = pmap.get(key)
+        nm = html.escape((p or {}).get("player_name") or _name_from_key(key))
+        pos = (p or {}).get("position") or ""
+        d = date.fromisoformat(dt)
+        verb = _HIST_TX_VERBS.get(code, "moved")
+        logo = _team_logo(_org_from_team_name(team), "otd-logo")
+        cat = "trade" if code == "TR" else "signing"
+        inner = (f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
+                 f'<span class="otd-body">{logo} <strong>{nm}</strong> {verb}'
+                 f'{(" · " + html.escape(pos)) if pos else ""}</span>')
+        if p:
+            tx_rows.append(f'<a class="otd-row" href="{_player_href(key)}" data-cat="{cat}">{inner}{_fv_pill(p)}</a>')
+        else:
+            tx_rows.append(f'<div class="otd-row" data-cat="{cat}">{inner}</div>')
+    if len(tx_today) > TX_CAP:
+        tx_rows.append(
+            '<div class="otd-more" style="margin:8px 4px;font-family:var(--font-retro-mono);'
+            'font-size:11px;color:var(--text-tertiary);">'
+            f'+ {len(tx_today) - TX_CAP} more transactions on {html.escape(mon_d)} in the ledger</div>')
+
+    # ---- IL on this day ----------------------------------------------------
+    il_today = [t for t in il_all.get(mmdd, []) if int(t[0][:4]) < today.year]
+    il_today.sort(key=lambda t: t[0], reverse=True)
+    il_rows = []
+    for dt, key, il_type in il_today:
+        p = pmap.get(key)
+        nm = html.escape((p or {}).get("player_name") or _name_from_key(key))
+        pos = (p or {}).get("position") or ""
+        d = date.fromisoformat(dt)
+        label = f"{il_type} IL".strip() if il_type else "IL"
+        inner = (f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
+                 f'<span class="otd-body">✚ <strong>{nm}</strong> placed on the {html.escape(label)}'
+                 f'{(" · " + html.escape(pos)) if pos else ""}</span>')
+        if p:
+            il_rows.append(f'<a class="otd-row" href="{_player_href(key)}" data-cat="il">{inner}{_fv_pill(p)}</a>')
+        else:
+            il_rows.append(f'<div class="otd-row" data-cat="il">{inner}</div>')
+
+    # ---- assemble ----------------------------------------------------------
+    def _section(title: str, rows: list) -> str:
+        if not rows:
+            return ""
+        return ('<section class="home-module otd-module hist-section">'
+                f'<div class="kicker"><h2>{html.escape(title)}</h2></div>'
+                + "".join(rows) + '</section>')
+
+    sections = (
+        _section("Debut anniversaries", debut_rows)
+        + _section("Trades on this day", trade_rows)
+        + _section("Signings & free agency on this day", tx_rows)
+        + _section("IL on this day", il_rows)
+    )
+    if not sections:
+        sections = ('<p class="news-intro">No tracked prospect history lands on '
+                    f'{html.escape(mon_d)} yet. Check back tomorrow.</p>')
+
+    chip_defs = [("all", "All"), ("debut", "Debuts"), ("trade", "Trades"),
+                 ("signing", "Signings"), ("il", "IL")]
+    chips = "".join(
+        f'<button class="chip{" active" if c == "all" else ""}" '
+        f'data-hist-filter="{c}">{html.escape(lbl)}</button>'
+        for c, lbl in chip_defs)
+
+    body = (
+        '<div class="news-app hist-app">'
+        f'<div class="section-head"><h1>Today in Prospect History - {html.escape(mon_d)}</h1>'
+        '<span class="section-sub">debut anniversaries, trades, signings &amp; IL moves on this calendar date</span></div>'
+        f'<p class="news-intro">Everything the tracker knows about {html.escape(mon_d)} across past '
+        'seasons: MLB debut anniversaries from the graduate pool (with each player\'s WAG - how the '
+        'career has run against the grade), prospect trades on this exact date, signings and '
+        'free-agency moves from the transaction ledger (2019 to present), and injured-list '
+        'placements (2017 to present). Exact calendar-date matches only. The homepage module shows '
+        'a five-row taste; this page is the whole day.</p>'
+        f'<div class="filter-bar" id="hist-filter-bar"><span class="filter-label">Filter</span>{chips}</div>'
+        f'<div id="hist-sections" style="max-width:760px;">{sections}</div>'
+        '<p class="news-intro" style="font-size:11px;">Why no "big eFV moves" section: the model\'s '
+        'grade history stamps changes at snapshot re-run dates, not the day the change actually '
+        'happened, so a calendar-day anniversary there would mislead.</p>'
+        '</div>'
+        + _HIST_FILTER_JS
+    )
+    return page("Today in Prospect History - eephus.io", "", body,
+                "Today in prospect history on eephus.io: MLB debut anniversaries, prospect trades, "
+                "signings, and IL moves that happened on this calendar date in past seasons.",
+                url=f"{SITE_ORIGIN}/history/")
 
 def _date_callout() -> str:
     """Date-aware countdown when the MLB Draft or Int'l signing period is near.
@@ -1951,7 +2397,7 @@ def _cross_module_strip() -> str:
                           'top relievers by REM+', rows))
     except (OSError, ValueError, KeyError):
         pass
-    # Pitcher Alchemy Lab - top RP->SP conversion candidates by FIT score
+    # Alchemy Lab - top RP->SP conversion candidates by FIT score
     try:
         pal = _cached_data_json("pal.json")
         top = sorted((c for c in pal.get("rp2sp") or [] if c.get("fit") is not None),
@@ -1963,7 +2409,7 @@ def _cross_module_strip() -> str:
             f'<span class="xmod-val">{round(c["fit"])} FIT</span></a>'
             for c in top)
         if rows:
-            cards.append(('⚗ Pitcher Alchemy Lab', '/pal/',
+            cards.append(('⚗ Alchemy Lab', '/pal/',
                           'top reliever-to-starter conversion candidates', rows))
     except (OSError, ValueError, KeyError):
         pass
@@ -1974,6 +2420,42 @@ def _cross_module_strip() -> str:
         for title, href, sub, rows in cards)
     return (f'<div class="xmod-strip"><div class="xmod-eyebrow">Across eephus.io</div>'
             f'<div class="xmod-grid">{body}</div></div>')
+
+
+_HOME_DRAWER_JS = '''<script>
+/* Homepage sidebar drawer (<=900px): the hamburger in .sb-brand opens the
+   search + module list + wire feed; Esc / outside click close it; resizing
+   back to desktop resets the state. Desktop widths ignore all of this
+   (the .home-nav-toggle is display:none above 900px). */
+(function () {
+  "use strict";
+  var sb = document.getElementById("home-sidebar");
+  var btn = sb ? sb.querySelector(".home-nav-toggle") : null;
+  if (!sb || !btn) return;
+  function set(open) {
+    if (open) sb.setAttribute("data-nav-open", "");
+    else sb.removeAttribute("data-nav-open");
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    btn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+  }
+  btn.addEventListener("click", function () { set(!sb.hasAttribute("data-nav-open")); });
+  document.addEventListener("click", function (e) {
+    if (sb.hasAttribute("data-nav-open") && !sb.contains(e.target)) set(false);
+  });
+  document.addEventListener("keydown", function (e) {
+    if ((e.key === "Escape" || e.key === "Esc") && sb.hasAttribute("data-nav-open")) {
+      set(false);
+      btn.focus();
+    }
+  });
+  var mq = window.matchMedia ? window.matchMedia("(max-width: 900px)") : null;
+  if (mq) {
+    var onmq = function () { if (!mq.matches) set(false); };
+    if (mq.addEventListener) mq.addEventListener("change", onmq);
+    else if (mq.addListener) mq.addListener(onmq);
+  }
+})();
+</script>'''
 
 
 def build_home(articles: list[dict], data: dict | None = None) -> str:
@@ -2026,9 +2508,16 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     spotlight = _spotlight_html(players)
     search = ('<input class="sb-search" type="search" placeholder="Search prospects…" aria-label="Search prospects" '
               "onkeydown=\"if(event.key==='Enter'&&this.value.trim()){location.href='/prospx/#q='+encodeURIComponent(this.value.trim());}\">")
+    # Mobile drawer (<=900px): the homepage does not load eephus-nav.js, so the
+    # sidebar carries its own hamburger + inline wiring; site.css collapses
+    # everything but .sb-brand until [data-nav-open]. Desktop is unaffected
+    # (.home-nav-toggle is display:none above 900px).
+    drawer_btn = ('<button type="button" class="home-nav-toggle" '
+                  'aria-controls="home-sidebar" aria-expanded="false" '
+                  'aria-label="Open menu">☰</button>')
     sidebar = (
-        '<aside class="home-sidebar">'
-        f'<div class="sb-brand"><a class="wm" href="/">{eephus_merged_wordmark("sb", tag="span")}</a>{THEME_BTN}</div>'
+        '<aside class="home-sidebar" id="home-sidebar">'
+        f'<div class="sb-brand"><a class="wm" href="/">{eephus_merged_wordmark("sb", tag="span")}</a>{THEME_BTN}{drawer_btn}</div>'
         # eephus.io - account entry point for the homepage (page_home has no
         # .eephus-nav top bar). refreshNav() in eephus-ui.js injects the Sign-in /
         # avatar control into any .eephus-nav-controls, including this sidebar slot.
@@ -2041,6 +2530,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         f'{spotlight}'
         f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{prospx_ball_logo("sbgrp", 14)}PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
         '</aside>'
+        + _HOME_DRAWER_JS
     )
 
     # ---- top wire ticker ----
@@ -2449,27 +2939,35 @@ def build_mlbstats() -> str:
                 url=f"{SITE_ORIGIN}/mlbstats/")
 
 def build_pal() -> str:
-    """The /pal/ Pitcher Alchemy Lab - role-conversion evaluation for MLB
-    pitchers. Three sections: RP->SP Candidates (which relievers profile as
+    """The /pal/ Alchemy Lab - role-conversion evaluation for MLB players.
+    Both halves of the surface now ship. Pitcher role conversion:
+    RP->SP Candidates (which relievers profile as
     starters), SP->RP Candidates (which starters would shine in relief), and
     Conversion History (an archive of past SP<->RP switches that doubles as
     the model's backtest set, plus pitch-mix changes). Backtest evidence is
     per direction: SP->RP validated, RP->SP structural screen only.
+    Hitter positional conversion: Position Fit (which hitters are worth more
+    runs at a different position), from the positional_fit.py conversion model.
     Static shell + assets/pal.js, which fetches the pal_export.py sidecar
-    (data/pal.json). Reuses the arsenal / velocity / platoon Statcast data, the
-    validated REM+ model, and PROSPX prospect role history. Styles ride the
-    .fa-app block plus the .mlbstats-app / .pal-app extensions in site.css."""
+    (data/pal.json) plus the slim positional-fit view built here
+    (data/positional_fit_ui.json - the full artifact never ships). Reuses the
+    arsenal / velocity / platoon Statcast data, the validated REM+ model, and
+    PROSPX prospect role history. Styles ride the .fa-app block plus the
+    .mlbstats-app / .pal-app extensions in site.css."""
     body = (
         '<div class="fa-app mlbstats-app pal-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Pitcher Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">β beta</span></h1></div>'
-        '<span class="section-sub">Turning relievers into starters and starters into relievers. Which arms profile '
-        'for the other role, plus the history of the conversions that worked and the ones that did not. The backtest '
-        'grades each direction on its own: the starter-to-relief signal is validated, the reliever-to-starter list '
-        'is a structural screen.</span></div>'
+        f'<h1>Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">β beta</span></h1></div>'
+        '<span class="section-sub">Players in the wrong job. Which relievers profile as starters and which starters '
+        'would shine in relief, which hitters are worth more runs at a different position, plus the history of the '
+        'conversions that worked and the ones that did not. The backtest grades each lane on its own: the '
+        'starter-to-relief signal is validated, the reliever-to-starter list is a structural screen, and the '
+        'position-conversion matrix is validated for the SIZE of a move but not for guessing which players clubs '
+        'actually move.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="PAL sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-palsection="rp2sp" role="tab" aria-selected="true">RP&rarr;SP Candidates</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-palsection="sp2rp" role="tab" aria-selected="false">SP&rarr;RP Candidates</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-palsection="posfit" role="tab" aria-selected="false">Position Fit</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-palsection="history" role="tab" aria-selected="false">Conversion History</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-palsection="pitchadd" role="tab" aria-selected="false">Pitch-Add Lab</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-palsection="platoon" role="tab" aria-selected="false">Reverse-Platoon Radar</button>'
@@ -2484,10 +2982,11 @@ def build_pal() -> str:
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/pal.js?v={_PAL_VER}" defer></script>'
     )
-    return page("Pitcher Alchemy Lab - eephus.io", "pal", body,
-                "Pitcher Alchemy Lab: which MLB relievers profile as starters and which starters would shine in "
-                "relief, with a backtested history of past role conversions. Arsenal depth, command, platoon splits, "
-                "and role-adjusted velocity, computed from Statcast.",
+    return page("Alchemy Lab - eephus.io", "pal", body,
+                "Alchemy Lab: which MLB relievers profile as starters, which starters would shine in relief, "
+                "and which hitters are worth more runs at a different position, with a backtested history of past "
+                "role conversions. Arsenal depth, command, platoon splits, role-adjusted velocity and a fitted "
+                "positional ladder, computed from Statcast.",
                 url=f"{SITE_ORIGIN}/pal/")
 
 def build_fantasy() -> str:
@@ -2588,6 +3087,11 @@ def build_glossary() -> str:
         '<div id="source-comparison-body" style="display:none;"></div>'
         '<div id="glossary-rows"></div>'
         '</div>'
+        # Shared GFX engine (hub + gfx, the FA / news inject pattern): powers
+        # the Source Comparison "Generate GFX" share card. Loaded BEFORE
+        # glossary.js so window.EEPHUS_GFX exists when the view renders.
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         '<script src="/data/value_framework.js" defer></script>'
         f'<script src="/assets/glossary.js?v={_GLAPP_VER}" defer></script>'
     )
@@ -2710,7 +3214,7 @@ def build_team() -> str:
                 'stroke-width="2" stroke-linecap="round"><path d="M5 20v-7"/><path d="M12 20V5"/>'
                 '<path d="M19 20v-10"/></g><path d="M3 20h18" fill="none" stroke="currentColor" '
                 'stroke-width="1.4" stroke-linecap="round"/></svg>')
-    # Pitcher Alchemy Lab: an Erlenmeyer flask.
+    # Alchemy Lab: an Erlenmeyer flask.
     _M_ALCHEMY = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6l-4.4 8.4a2 2 0 0 0 '
                   '1.8 2.9h9.2a2 2 0 0 0 1.8-2.9L14 9V3" fill="none" stroke="currentColor" '
                   'stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>'
@@ -2984,7 +3488,7 @@ def build_404() -> str:
         '<p>Try the <a href="/">homepage</a>, or jump straight into a module: '
         '<a href="/prospx/">PROSPX</a> · <a href="/collegesavant/">CollegeSavant</a> · '
         '<a href="/fa/">Free Agency</a> · <a href="/projections/">Projections</a> · '
-        '<a href="/mlbstats/">MLB Stats</a> · <a href="/pal/">Pitcher Alchemy Lab</a> · '
+        '<a href="/mlbstats/">MLB Stats</a> · <a href="/pal/">Alchemy Lab</a> · '
         '<a href="/glossary/">Glossary</a>.</p>'
         '<p>Looking for a player? Press <strong>Ctrl+K</strong> (⌘K on Mac) anywhere on the '
         'site and type a name.</p>'
@@ -3015,6 +3519,7 @@ def build_sitemap(articles: list[dict]) -> str:
     pages = [
         ("/", "daily", "1.0"),
         ("/news/", "daily", "0.8"),
+        ("/history/", "daily", "0.6"),
         ("/prospx/", "daily", "1.0"),
         ("/collegesavant/", "weekly", "0.8"),
         ("/collegesavant/pitcher_index.html", "weekly", "0.7"),
@@ -3064,6 +3569,283 @@ def build_teams_redirect() -> str:
 """
 
 # --------------------------------------------------------------------------- #
+# Derived BROWSER payloads
+# --------------------------------------------------------------------------- #
+# Some model artifacts are far too heavy (or too internal) to hand a browser.
+# data/positional_fit.json is 580KB of per-player evidence rows and is pinned
+# in deploy/data_exclude.txt (it never reaches the webroot), and swing_plus.json
+# is a model input rather than a served payload. These builders bake the SLIM,
+# display-only slice each surface actually needs into its own data/*.json, which
+# ships normally. Nothing is recomputed here: every number is copied straight
+# off the model artifact, and anything the artifact does not carry is simply
+# absent rather than filled in.
+# --------------------------------------------------------------------------- #
+
+def _team_by_mlbam() -> dict:
+    """{mlbam: team} from the cross-module identity map (player_links.json).
+    The positional-fit artifact carries no team; the links map is the same
+    join every module already uses to cross-link a player."""
+    links = _cached_data_json("player_links.json")
+    out = {}
+    for row in (links.get("byMlbam") or {}).values():
+        try:
+            mid = int(row.get("mlbam"))
+        except (TypeError, ValueError):
+            continue
+        if row.get("team"):
+            out[mid] = row["team"]
+    return out
+
+
+def build_positional_fit_payload() -> dict | None:
+    """Slim, display-only view of data/positional_fit.json for the Alchemy Lab
+    Position Fit section.
+
+    Carries the fitted ladder (with its CI and the folklore ladder it replaces),
+    the out-of-sample conversion accuracy, the DEMOTION-PREDICTION NULL, and one
+    row per qualified hitter. The full artifact keeps the per-player evidence
+    logs and the unqualified rows; none of that is served."""
+    src = _cached_data_json("positional_fit.json")
+    if not src or not src.get("players"):
+        return None
+    teams = _team_by_mlbam()
+    fit = src.get("fit") or {}
+    ladder = fit.get("ladder") or {}
+    conv = src.get("conversion_accuracy") or {}
+    val = src.get("validation") or {}
+
+    def _display_name(raw: str | None) -> str:
+        """The artifact stores BRef-style "Last, First"; every other surface on
+        the site prints "First Last"."""
+        if not raw or "," not in raw:
+            return raw or ""
+        last, _, first = raw.partition(",")
+        return f"{first.strip()} {last.strip()}".strip()
+
+    def _row(p: dict) -> dict:
+        pos_totals = {k: v.get("def_total") for k, v in (p.get("by_position") or {}).items()
+                      if v.get("feasible") and v.get("def_total") is not None}
+        row = {
+            "mlbam": p.get("mlbam"),
+            "name": _display_name(p.get("name")),
+            "age": p.get("age"),
+            "pa": p.get("pa"),
+            "pos": p.get("current_pos"),
+            "best": p.get("best_pos"),
+            "gain": p.get("gain_runs_per_650"),
+            "gainSe": p.get("gain_se"),
+            "demPos": p.get("demotion_pos"),
+            "demGain": p.get("demotion_gain"),
+            "demSe": p.get("demotion_se"),
+            "demPlayer": p.get("demotion_gain_player_part"),
+            "demLeague": p.get("demotion_gain_league_part"),
+            "gloveZ": p.get("glove_z"),
+            "gloveZSe": p.get("glove_z_se"),
+            "gloveRuns": p.get("glove_runs_per_650_at_current"),
+            "bat": p.get("bat_runs_per_650"),
+            "misplaced": bool(p.get("flagged_misplaced")),
+            "demoted": bool(p.get("flagged_demotion")),
+            "byPos": pos_totals,
+        }
+        if p.get("mlbam") in teams:
+            row["team"] = teams[p["mlbam"]]
+        return {k: v for k, v in row.items() if v is not None}
+
+    rows = [_row(p) for p in src["players"]
+            if p.get("qualified") and not p.get("c_out_of_scope")
+            and p.get("current_pos") and p.get("gain_runs_per_650") is not None]
+    rows.sort(key=lambda r: -(r.get("gain") or 0))
+    return {
+        "generated_at": src.get("generated_at"),
+        "model": src.get("model"),
+        "season": src.get("target_season"),
+        "valueIdentity": src.get("value_identity"),
+        "nPlayers": src.get("n_players"),
+        "nQualified": src.get("n_qualified"),
+        "nFlagged": src.get("n_flagged"),
+        "nFlaggedDemotion": src.get("n_flagged_demotion"),
+        "flagRule": src.get("flag_rule"),
+        "outOfScope": src.get("out_of_scope"),
+        "sources": src.get("sources"),
+        "caveats": src.get("caveats"),
+        "ladder": {
+            "units": ladder.get("units"),
+            "method": ladder.get("method"),
+            "values": ladder.get("values"),
+            "ci95": ladder.get("ci95"),
+            "folklore": ladder.get("folklore_ladder"),
+            "r2": ladder.get("r2"),
+            "residSd": ladder.get("resid_sd"),
+            "nPlayerSeasons": ladder.get("n_player_seasons"),
+            "seasons": ladder.get("seasons"),
+            "minPa": ladder.get("min_pa"),
+        },
+        "accuracy": {
+            "nConversions": conv.get("n_conversions"),
+            "minInningsEachSide": conv.get("min_innings_each_side"),
+            "mae": conv.get("mae"),
+            "rmse": conv.get("rmse"),
+            "corr": conv.get("corr_with_actual"),
+            "advantage": conv.get("mae_advantage_over"),
+            "permNull95": conv.get("perm_null95_mae_advantage"),
+            "nTimeSplits": conv.get("n_time_splits"),
+            "seasonAdvantageMean": conv.get("season_advantage_mean"),
+            "seasonAdvantagePositiveIn": conv.get("season_advantage_positive_in"),
+        },
+        "demotionNull": {
+            "nScored": val.get("n_scored"),
+            "nMovedDown": val.get("n_moved_down"),
+            "baseRate": val.get("base_rate_moved_down"),
+            "auc": val.get("auc"),
+            "modelMinus": val.get("model_minus"),
+            "permNull95": val.get("perm_null95_auc_minus_half"),
+            "nTimeSplits": val.get("n_time_splits"),
+            "seasonAucMean": val.get("season_auc_mean"),
+            "seasonAucSd": val.get("season_auc_sd"),
+            "flagRule": val.get("flag_rule"),
+            "flagRuleControl": val.get("flag_rule_control"),
+            "destinationTop1": val.get("destination_top1"),
+            "promotionSide": val.get("promotion_side"),
+            "labelDefinition": val.get("label_definition"),
+        },
+        "rows": rows,
+    }
+
+
+# Bat-speed delta. swing_plus.json is a model input (per-season Swing+ from MLB
+# bat tracking, 2024+). Only players with BOTH of the last two tracked seasons
+# have a computable year-over-year delta - everyone else gets an explicit
+# no-data state on the card rather than a chip implying coverage we don't have.
+# The alert cut is the 10th percentile of the MEASURED delta distribution in
+# this same population (a distributional flag, not a validated predictor), so
+# no threshold is hand-set here.
+_SWING_MIN_N = 180          # the swing_plus low_n convention (partial tracking)
+
+
+def build_swing_delta_payload() -> dict | None:
+    src = _cached_data_json("swing_plus.json")
+    players = (src or {}).get("players") or {}
+    if not players:
+        return None
+    seasons: set[int] = set()
+    for row in players.values():
+        for y in (row.get("seasons") or {}):
+            try:
+                seasons.add(int(y))
+            except (TypeError, ValueError):
+                pass
+    if len(seasons) < 2:
+        return None
+    latest, prior = sorted(seasons)[-1], sorted(seasons)[-2]
+    out, deltas = {}, []
+    n_latest_only = 0
+    for mlbam, row in players.items():
+        ss = row.get("seasons") or {}
+        a, b = ss.get(str(prior)), ss.get(str(latest))
+        if not b or b.get("swing_plus") is None:
+            continue
+        if not a or a.get("swing_plus") is None:
+            n_latest_only += 1
+            continue
+        d = round(float(b["swing_plus"]) - float(a["swing_plus"]), 1)
+        deltas.append(d)
+        out[str(mlbam)] = {
+            "d": d,
+            "prior": round(float(a["swing_plus"]), 1),
+            "latest": round(float(b["swing_plus"]), 1),
+            "nPrior": a.get("n_swings"),
+            "nLatest": b.get("n_swings"),
+            "lowN": bool((a.get("n_swings") or 0) < _SWING_MIN_N
+                         or (b.get("n_swings") or 0) < _SWING_MIN_N),
+        }
+    if len(deltas) < 30:
+        return None
+    ds = sorted(deltas)
+
+    def _pct(q: float) -> float:
+        i = q * (len(ds) - 1)
+        lo, hi = int(math.floor(i)), int(math.ceil(i))
+        return round(ds[lo] + (ds[hi] - ds[lo]) * (i - lo), 2)
+
+    return {
+        "generated_at": src.get("generated_at"),
+        "model": src.get("model"),
+        "priorSeason": prior,
+        "latestSeason": latest,
+        "minSwings": _SWING_MIN_N,
+        "n": len(out),
+        "nLatestOnly": n_latest_only,
+        "nScored": src.get("n_scored"),
+        "dist": {"p10": _pct(0.10), "p25": _pct(0.25), "p50": _pct(0.50),
+                 "p75": _pct(0.75), "p90": _pct(0.90),
+                 "mean": round(sum(ds) / len(ds), 2)},
+        "players": out,
+    }
+
+
+# Current-season MLB stat line, keyed by MLBAM, for the modules whose rows carry
+# no stats of their own (the FA class board is a market payload). Every field is
+# lifted verbatim from a shipped leaderboard; nothing is recomputed. NOTE what is
+# NOT here: this site computes no wRC+ and no xFIP, so neither is served - HEM+
+# (offense-rate index) and FIP/ERA are the numbers that actually exist.
+def build_current_lines_payload() -> dict | None:
+    hit = _cached_data_json("hitter_leaderboards.json")
+    sp = _cached_data_json("starter_leaderboards.json")
+    rp = _cached_data_json("bullpen_leaderboards.json")
+    if not (hit.get("hitters") or sp.get("starters")):
+        return None
+    out: dict[str, dict] = {}
+    for h in (hit.get("hitters") or []):
+        if h.get("mlbam") is None:
+            continue
+        out[str(h["mlbam"])] = _clean_line({
+            "side": "hit", "team": h.get("team"), "bats": h.get("bats"),
+            "pa": h.get("pa"), "hr": h.get("hr"), "sb": h.get("sb"),
+            "avg": h.get("avg"), "obp": h.get("obp"), "slg": h.get("slg"),
+            "ops": h.get("ops"), "woba": h.get("woba_raw"),
+            "hem": h.get("hem_plus"), "xhem": h.get("xhem_plus"),
+            "tier": h.get("tier"), "qual": h.get("qualified"),
+        })
+    for s in (sp.get("starters") or []):
+        if s.get("mlbam") is None:
+            continue
+        out[str(s["mlbam"])] = _clean_line({
+            "side": "sp", "team": s.get("team"), "role": s.get("role"),
+            "ip": s.get("ip"), "gs": s.get("gs"), "era": s.get("era"),
+            "fip": s.get("fip"), "kPct": s.get("k_pct"), "bbPct": s.get("bb_pct"),
+            "sem": s.get("sem_plus"), "xsem": s.get("xsem_plus"),
+            "qual": s.get("qualified"),
+        })
+    for r in (rp.get("relievers") or []):
+        if r.get("mlbam") is None or str(r["mlbam"]) in out:
+            continue
+        out[str(r["mlbam"])] = _clean_line({
+            "side": "rp", "team": r.get("team"), "role": r.get("role"),
+            "ip": r.get("ip"), "era": r.get("era"), "fip": r.get("fip"),
+            "kPct": r.get("k_pct"), "bbPct": r.get("bb_pct"),
+            "rem": r.get("rem_plus"), "gmli": r.get("gmli"),
+            "qual": r.get("qualified"),
+        })
+    if not out:
+        return None
+    return {
+        "generated_at": datetime.now().strftime("%Y-%m-%d"),
+        "season": hit.get("season") or sp.get("season"),
+        "asOf": hit.get("as_of") or sp.get("as_of"),
+        "note": ("Current-season MLB lines lifted verbatim from the eephus.io "
+                 "leaderboards. This site computes no wRC+ and no xFIP, so "
+                 "neither is served: HEM+ is the offense-rate index and "
+                 "FIP / SEM+ / REM+ are the run-prevention numbers."),
+        "n": len(out),
+        "players": out,
+    }
+
+
+def _clean_line(d: dict) -> dict:
+    return {k: v for k, v in d.items() if v is not None}
+
+
+# --------------------------------------------------------------------------- #
 def _write(rel: str, content: str) -> None:
     path = ROOT / rel
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -3081,6 +3863,7 @@ def main() -> None:
 
     _write("index.html", build_home(articles, data))
     _write("news/index.html", build_news(data))
+    _write("history/index.html", build_this_day(data))
     _write("articles/index.html", build_articles_index(articles))
     for a in articles:
         _write(f"articles/{a['slug']}/index.html", build_article_page(a))
@@ -3099,6 +3882,18 @@ def main() -> None:
     _write("404.html", build_404())
     _write("robots.txt", build_robots())
     _write("sitemap.xml", build_sitemap(articles))
+
+    # Derived browser payloads (slim, display-only slices of heavier or
+    # non-shipping model artifacts). Absent source => the file is left exactly
+    # as it was, and the surface paints its own empty state.
+    for rel, builder in (("data/positional_fit_ui.json", build_positional_fit_payload),
+                         ("data/swing_delta.json", build_swing_delta_payload),
+                         ("data/mlb_current_lines.json", build_current_lines_payload)):
+        payload = builder()
+        if payload:
+            _write(rel, json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+        else:
+            print(f"  skipped {rel} (source artifact missing or too thin)")
     print(f"done - {len(articles)} article(s).")
 
 if __name__ == "__main__":

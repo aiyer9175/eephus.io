@@ -1,0 +1,850 @@
+{
+ "generated_at": "2026-07-23",
+ "seed": 20260723,
+ "protocol": {
+  "q1": "Backgrade resolved pools (debuted + bust, postdebut-anchor rows excluded). Outcome basis: first-6-seasons bWAR window rebuilt from debuts.json per-season WAR (bust = 0); slices vary the window/era handling. Estimator A fits E[WAR|display grade] = exp(a + b*(g-45)) per pool via bin-weighted log-linear LS and reports the offset d with provisional(g) ~ graded(g-d). Estimator B grid-searches the display penalty delta maximizing cross-pool pair concordance of adjusted-grade order vs realized-WAR order (the board penalty's actual job), restricted to the operative band grade <= 50 where live provisional players exist. Bootstrap: row resampling within pool, seed 20260723.",
+  "q2": "Forward-chained no-FV refit on the labeled matrix (train decision-year < Y, score Y, 2020-2024) using efv_ungraded's own fit/clip/grade functions; cap-bind = uncapped linear grade above the KNEE. Outcomes: consensus FV at cutoff (the real grade) + the censoring-adjusted 6yr WAR target. Live read: 2026-06-23 vintage joined to since-graded/debuted players."
+ },
+ "shipped_constants": {
+  "_PROV_RANK_PENALTY": {
+   "value": 4,
+   "file_line": "prospx/index.html:31243"
+  },
+  "_GRADE_MAP_hit": {
+   "KNEE": 43.0,
+   "CEIL": 49.0,
+   "file_line": "efv_ungraded.py:90"
+  },
+  "_GRADE_MAP_pit": {
+   "KNEE": 34.0,
+   "CEIL": 38.0,
+   "file_line": "efv_ungraded.py:96"
+  }
+ },
+ "findings": {
+  "penalty": [
+   "At equal display grade, provisional (consensus-only, prior-anchored) rows forecast materially less realized WAR than production-informed eFV rows through the operative band: curve-match d_mean 6.5 (CI95 [4.3, 8.9]) on the all-rows slice, 5.8 (CI95 [3.3, 8.6]) on the fully-resolved slice; d at grade 42.5 runs 4.3-7.4 across every bust-inclusive slice.",
+   "Rank-optimal display penalty (the constant's actual job): all-rows operative band argmax 3.75, plateau [2.75, 4.5], and concordance at the shipped 4 equals the best value to 4 decimals; fully-resolved slice prefers more (8.0, boot CI95 [2.5, 8.2]). The shipped 4 sits inside every bootstrap CI; no slice supports LOWERING it.",
+   "The entire deficit is bust composition: debuted-only same-era rows show d ~5.5-7.4 mid-band (era-overlap slice) but the all-era debuted-only slice flips to ~-1 because recent graded debuts are WAR-window censored. The handicap is real but its size is era-entangled.",
+   "d(g) declines with grade (provisional slope is steeper): d ~1.7-2.7 by grade 50, negative by 55. A FLAT penalty over-penalizes the top of the band, but live provisional grades cap at ~48 and mass sits 20-38, so flat-4 is fine in practice."
+  ],
+  "ungraded_caps": [
+   "HIT: of 236 forward-chained cap-bind hitters (uncapped grade > KNEE 43), 45.3% later carried a real consensus grade above CEIL 49 and mean realized 6yr WAR was 4.5 - but that share is carried ENTIRELY by elite-consensus players the live ungraded model never sees. The honest analog (cap-bind with consensus <= 45) realized mean 0.92 WAR (grade-implied ~30) and 0% earned a real grade above 49. CEIL 49 is already generous for the live population; raising it has no empirical support.",
+   "PIT: cap-bind arms' fringe analog (consensus <= 40) realized mean 0.53 WAR (grade-implied ~27), 8.4% at the CEIL-38-implied WAR level. The 81% share-above-ceil is MECHANICALLY inflated (sources grade listed arms 40+ by quantization, above CEIL 38 by construction) and must not be read as the cap being too low. KNEE 34 / CEIL 38 already sits at-or-above what the proxy outcomes imply.",
+   "Ordering above the knee carries real signal on both sides (Spearman uncapped-grade vs realized within cap-bind: hit 0.251, pit 0.218), which validates the SOFT order-preserving ceiling design over a hard cap.",
+   "Live resolution (one month, 06-23 vintage): 9 resolutions, 9/9 resolved at or above their provisional grade, none cap-bound. Too small to move a constant; re-run after the next grading cycles."
+  ]
+ },
+ "proposals": [
+  {
+   "constant": "_PROV_RANK_PENALTY",
+   "file_line": "prospx/index.html:31243",
+   "old": 4,
+   "new": 4,
+   "change": "KEEP - do not change",
+   "rationale": "Empirical rank-optimal penalty 3.75 (plateau 2.75-4.5) on the all-rows slice with concordance at 4 indistinguishable from best; curve-match mid-band handicap 4.3-7.4; every CI contains 4. The fully-resolved slice would support raising toward 6-8, but the pool-mapping caveat (measured on consensus-only rows, applied to production-only ungraded rows) plus 9/9 live resolutions landing at-or-above the provisional grade argue against acting on that today. If ever revised, the direction is UP (5-6), never down."
+  },
+  {
+   "constant": "_GRADE_MAP hit KNEE/CEIL",
+   "file_line": "efv_ungraded.py:90",
+   "old": {
+    "KNEE": 43.0,
+    "CEIL": 49.0
+   },
+   "new": {
+    "KNEE": 43.0,
+    "CEIL": 49.0
+   },
+   "change": "KEEP - do not change",
+   "rationale": "The only cohort that would justify raising CEIL (cap-bind rows that beat 49) is elite-consensus players invisible to the live model; the fringe-consensus analog realized like FV ~30 with 0% above 49. Lowering is not supported either: above-knee ordering signal is real (Spearman 0.251) and the soft ceiling preserves it; the 06-23-vintage live joins resolved at-or-above grade."
+  },
+  {
+   "constant": "_GRADE_MAP pit KNEE/CEIL",
+   "file_line": "efv_ungraded.py:96",
+   "old": {
+    "KNEE": 34.0,
+    "CEIL": 38.0
+   },
+   "new": {
+    "KNEE": 34.0,
+    "CEIL": 38.0
+   },
+   "change": "KEEP - do not change",
+   "rationale": "Fringe cap-bind arms realized mean 0.53 WAR (grade-implied ~27); the nominal 81% above-ceil share is a grading-floor quantization artifact, not evidence. The 2026-07 de-rate (38->34 knee) already moved this constant in the direction the outcomes support; going lower would compress a band that still orders outcomes (Spearman 0.218)."
+  }
+ ],
+ "caveats": [
+  "POOL MAPPING (the big one): the measurable resolved pool defines provisional as consensus-anchored with NO production features (backgrade xfv_provisional, prior disabled so grade = consensus-implied); the live board's penalized players are the REVERSE deficit (production-only, no consensus, from xfv_ungraded). The estimated d transfers only under the assumption that a one-legged grade degrades similarly whichever leg is missing. No resolved cohort of true production-only grades exists yet; the live join is 1 month old.",
+  "ERA CONFOUND: provisional debuted rows are mostly 2011-2016 debuts, graded rows 2019-2026 (the flag is largely a MiLB-feature-coverage artifact); bust rows carry no date at all, so bust-era mix is uncontrolled. The era-overlap slice controls debut era for debuted rows only.",
+  "EXPOSURE CENSORING: 6yr WAR windows are complete only for debuts <= 2021. The all-rows slice deflates recent (mostly graded) debuts, biasing d DOWNWARD; the debuted-only all-era slice flips sign for exactly this reason. The resolved slice removes it at the cost of an older era mix.",
+  "BUST SELECTION: kind=bust means dropped from tracking; a recent 'bust' can still debut later but is scored 0 here (both pools).",
+  "Q2 PROXY SELECTION: matrix rows are all GRADED players - a favorably-selected stand-in for scout-passed-over live ungraded players. Even the fringe-consensus subsets were listed by at least one source. True live-population outcomes are likely WORSE than every proxy number here.",
+  "PIT ABOVE-CEIL SHARE: sources grade listed pitchers at 40+ (quantized), which exceeds CEIL 38 by construction; share_real_grade_above_ceil is mechanically ~1 for any listed arm and is reported for completeness only.",
+  "Outcome basis is bWAR (site-wide owner rule); target_censored on the matrix side includes the censoring-adjusted tail for open windows."
+ ],
+ "q1_penalty": {
+  "pool_note": "P = xfv_provisional backgrade rows (prior-anchored: consensus-only, no MiLB features at the anchor snapshot; efv_provisional_prior.enabled is false so the grade is pure consensus-implied). G = production-informed eFV rows. kind in {debuted, bust}; xfv_postdebut_anchor excluded; bust outcome = 0 WAR.",
+  "n_debuted_dropped_no_war_join": 85,
+  "slices": {
+   "war6_all": {
+    "n_prov": 2303,
+    "n_graded": 2237,
+    "curve_match": {
+     "a_prov": -0.7341944599923284,
+     "b_prov": 0.25147633327212743,
+     "a_graded": -0.014048935779203736,
+     "b_graded": 0.16312538231520884,
+     "d_at_grade": {
+      "40.0": 7.122743637483501,
+      "42.5": 5.768709248368674,
+      "45.0": 4.414674859253847,
+      "50.0": 1.7066060810241925,
+      "55.0": -1.001462697205462
+     },
+     "d_mean_operative": 6.459209708084205
+    },
+    "curve_match_boot": {
+     "nboot": 2000,
+     "boot_failures": 0,
+     "d_mean_operative_ci95": [
+      4.321836645618936,
+      8.863628311320113
+     ],
+     "d_at_42.5_ci95": [
+      3.8610441999323992,
+      7.884674018427812
+     ]
+    },
+    "rank_optimal_operative_band": {
+     "delta_argmax": 3.75,
+     "delta_plateau": [
+      2.75,
+      4.5
+     ],
+     "concordance_at_best": 0.5619781726754698,
+     "concordance_at_0": 0.5537880566061841,
+     "concordance_at_shipped_4": 0.5619656278566285,
+     "n_prov": 2135,
+     "n_graded": 1925,
+     "boot": {
+      "nboot": 400,
+      "pair_subsample": 200000,
+      "failures": 0,
+      "delta_argmax_ci95": [
+       0.7437500000000004,
+       7.756249999999994
+      ],
+      "delta_argmax_boot_median": 4.0
+     }
+    },
+    "rank_optimal_full": {
+     "delta_argmax": 3.25,
+     "delta_plateau": [
+      2.5,
+      4.25
+     ],
+     "concordance_at_best": 0.6139110228710692,
+     "concordance_at_0": 0.6080751473763217,
+     "concordance_at_shipped_4": 0.6136867652758997,
+     "n_prov": 2303,
+     "n_graded": 2237,
+     "boot": {
+      "nboot": 400,
+      "pair_subsample": 200000,
+      "failures": 0,
+      "delta_argmax_ci95": [
+       0.25,
+       6.018749999999983
+      ],
+      "delta_argmax_boot_median": 2.75
+     }
+    },
+    "binned": [
+     {
+      "bin": [
+       35,
+       37.5
+      ],
+      "graded": {
+       "n": 455,
+       "mean_war": 0.14,
+       "share_pos": 0.149
+      },
+      "prov": {
+       "n": 256,
+       "mean_war": 0.01,
+       "share_pos": 0.016
+      }
+     },
+     {
+      "bin": [
+       37.5,
+       40
+      ],
+      "graded": {
+       "n": 222,
+       "mean_war": 0.22,
+       "share_pos": 0.216
+      },
+      "prov": {
+       "n": 273,
+       "mean_war": 0.0,
+       "share_pos": 0.015
+      }
+     },
+     {
+      "bin": [
+       40,
+       42.5
+      ],
+      "graded": {
+       "n": 639,
+       "mean_war": 0.55,
+       "share_pos": 0.321
+      },
+      "prov": {
+       "n": 780,
+       "mean_war": 0.14,
+       "share_pos": 0.064
+      }
+     },
+     {
+      "bin": [
+       42.5,
+       45
+      ],
+      "graded": {
+       "n": 238,
+       "mean_war": 0.92,
+       "share_pos": 0.454
+      },
+      "prov": {
+       "n": 345,
+       "mean_war": 0.36,
+       "share_pos": 0.142
+      }
+     },
+     {
+      "bin": [
+       45,
+       47.5
+      ],
+      "graded": {
+       "n": 224,
+       "mean_war": 1.5,
+       "share_pos": 0.567
+      },
+      "prov": {
+       "n": 257,
+       "mean_war": 0.68,
+       "share_pos": 0.214
+      }
+     },
+     {
+      "bin": [
+       47.5,
+       50
+      ],
+      "graded": {
+       "n": 70,
+       "mean_war": 2.85,
+       "share_pos": 0.671
+      },
+      "prov": {
+       "n": 120,
+       "mean_war": 2.86,
+       "share_pos": 0.433
+      }
+     },
+     {
+      "bin": [
+       50,
+       52.5
+      ],
+      "graded": {
+       "n": 167,
+       "mean_war": 3.26,
+       "share_pos": 0.731
+      },
+      "prov": {
+       "n": 123,
+       "mean_war": 1.81,
+       "share_pos": 0.439
+      }
+     },
+     {
+      "bin": [
+       52.5,
+       55
+      ],
+      "graded": {
+       "n": 52,
+       "mean_war": 4.47,
+       "share_pos": 0.827
+      },
+      "prov": {
+       "n": 60,
+       "mean_war": 5.94,
+       "share_pos": 0.7
+      }
+     },
+     {
+      "bin": [
+       55,
+       60
+      ],
+      "graded": {
+       "n": 116,
+       "mean_war": 5.92,
+       "share_pos": 0.828
+      },
+      "prov": {
+       "n": 71,
+       "mean_war": 6.64,
+       "share_pos": 0.69
+      }
+     },
+     {
+      "bin": [
+       60,
+       70
+      ],
+      "graded": {
+       "n": 54,
+       "mean_war": 9.86,
+       "share_pos": 0.926
+      },
+      "prov": {
+       "n": 18,
+       "mean_war": 13.64,
+       "share_pos": 0.889
+      }
+     }
+    ]
+   },
+   "war6_resolved": {
+    "n_prov": 2279,
+    "n_graded": 1212,
+    "curve_match": {
+     "a_prov": -0.7382289994892496,
+     "b_prov": 0.2555524836802671,
+     "a_graded": 0.09799032413973609,
+     "b_graded": 0.18777943710724113,
+     "d_at_grade": {
+      "40.0": 6.257791452548785,
+      "42.5": 5.35549555134315,
+      "45.0": 4.453199650137515,
+      "50.0": 2.648607847726245,
+      "55.0": 0.8440160453149754
+     },
+     "d_mean_operative": 5.818534883922178
+    },
+    "curve_match_boot": {
+     "nboot": 2000,
+     "boot_failures": 0,
+     "d_mean_operative_ci95": [
+      3.2718814006695665,
+      8.580131359182547
+     ],
+     "d_at_42.5_ci95": [
+      3.0421474072562766,
+      7.753713165679866
+     ]
+    },
+    "rank_optimal_operative_band": {
+     "delta_argmax": 8.0,
+     "delta_plateau": [
+      7.5,
+      8.0
+     ],
+     "concordance_at_best": 0.5947162299044237,
+     "concordance_at_0": 0.5624880905817814,
+     "concordance_at_shipped_4": 0.5852388402483176,
+     "n_prov": 2117,
+     "n_graded": 1070,
+     "boot": {
+      "nboot": 400,
+      "pair_subsample": 200000,
+      "failures": 0,
+      "delta_argmax_ci95": [
+       2.5,
+       8.25
+      ],
+      "delta_argmax_boot_median": 7.5
+     }
+    },
+    "rank_optimal_full": {
+     "delta_argmax": 5.5,
+     "delta_plateau": [
+      5.25,
+      8.0
+     ],
+     "concordance_at_best": 0.6422559994856818,
+     "concordance_at_0": 0.6194301545216544,
+     "concordance_at_shipped_4": 0.6358960743951702,
+     "n_prov": 2279,
+     "n_graded": 1212,
+     "boot": {
+      "nboot": 400,
+      "pair_subsample": 200000,
+      "failures": 0,
+      "delta_argmax_ci95": [
+       2.5,
+       8.25
+      ],
+      "delta_argmax_boot_median": 7.5
+     }
+    },
+    "binned": [
+     {
+      "bin": [
+       35,
+       37.5
+      ],
+      "graded": {
+       "n": 331,
+       "mean_war": 0.1,
+       "share_pos": 0.057
+      },
+      "prov": {
+       "n": 255,
+       "mean_war": 0.0,
+       "share_pos": 0.012
+      }
+     },
+     {
+      "bin": [
+       37.5,
+       40
+      ],
+      "graded": {
+       "n": 137,
+       "mean_war": 0.22,
+       "share_pos": 0.131
+      },
+      "prov": {
+       "n": 273,
+       "mean_war": 0.0,
+       "share_pos": 0.015
+      }
+     },
+     {
+      "bin": [
+       40,
+       42.5
+      ],
+      "graded": {
+       "n": 343,
+       "mean_war": 0.6,
+       "share_pos": 0.207
+      },
+      "prov": {
+       "n": 772,
+       "mean_war": 0.15,
+       "share_pos": 0.062
+      }
+     },
+     {
+      "bin": [
+       42.5,
+       45
+      ],
+      "graded": {
+       "n": 108,
+       "mean_war": 1.45,
+       "share_pos": 0.407
+      },
+      "prov": {
+       "n": 341,
+       "mean_war": 0.35,
+       "share_pos": 0.132
+      }
+     },
+     {
+      "bin": [
+       45,
+       47.5
+      ],
+      "graded": {
+       "n": 86,
+       "mean_war": 2.19,
+       "share_pos": 0.535
+      },
+      "prov": {
+       "n": 254,
+       "mean_war": 0.67,
+       "share_pos": 0.205
+      }
+     },
+     {
+      "bin": [
+       47.5,
+       50
+      ],
+      "graded": {
+       "n": 31,
+       "mean_war": 4.28,
+       "share_pos": 0.806
+      },
+      "prov": {
+       "n": 118,
+       "mean_war": 2.86,
+       "share_pos": 0.432
+      }
+     },
+     {
+      "bin": [
+       50,
+       52.5
+      ],
+      "graded": {
+       "n": 65,
+       "mean_war": 4.79,
+       "share_pos": 0.769
+      },
+      "prov": {
+       "n": 120,
+       "mean_war": 1.81,
+       "share_pos": 0.425
+      }
+     },
+     {
+      "bin": [
+       52.5,
+       55
+      ],
+      "graded": {
+       "n": 21,
+       "mean_war": 7.42,
+       "share_pos": 0.905
+      },
+      "prov": {
+       "n": 60,
+       "mean_war": 5.94,
+       "share_pos": 0.7
+      }
+     },
+     {
+      "bin": [
+       55,
+       60
+      ],
+      "graded": {
+       "n": 62,
+       "mean_war": 7.69,
+       "share_pos": 0.79
+      },
+      "prov": {
+       "n": 69,
+       "mean_war": 6.77,
+       "share_pos": 0.696
+      }
+     },
+     {
+      "bin": [
+       60,
+       70
+      ],
+      "graded": {
+       "n": 28,
+       "mean_war": 10.49,
+       "share_pos": 0.893
+      },
+      "prov": {
+       "n": 17,
+       "mean_war": 14.45,
+       "share_pos": 0.941
+      }
+     }
+    ]
+   },
+   "war6_debuted_only": {
+    "n_prov": 676,
+    "n_graded": 1575,
+    "curve_match": {
+     "a_prov": 0.4262049015072916,
+     "b_prov": 0.1284899418370326,
+     "a_graded": 0.2969636042648263,
+     "b_graded": 0.12217346551689554,
+     "d_at_grade": {
+      "40.0": -0.7993463656662384,
+      "42.5": -0.9285985787677723,
+      "45.0": -1.057850791869306,
+      "50.0": -1.3163552180723737,
+      "55.0": -1.5748596442754415
+     },
+     "d_mean_operative": -1.02099179573769
+    }
+   },
+   "war6_era_overlap": {
+    "n_prov": 370,
+    "n_graded": 781,
+    "curve_match": {
+     "a_prov": 0.10333618481301336,
+     "b_prov": 0.18782044390366687,
+     "a_graded": 0.6943526903631978,
+     "b_graded": 0.10714430871291693,
+     "d_at_grade": {
+      "40.0": 9.28091462299064,
+      "42.5": 7.398496971510102,
+      "45.0": 5.516079320029564,
+      "50.0": 1.7512440170684873,
+      "55.0": -2.013591285892589
+     },
+     "d_mean_operative": 7.108266633913412
+    }
+   },
+   "career_war_naive": {
+    "n_prov": 2303,
+    "n_graded": 2237,
+    "curve_match": {
+     "a_prov": -0.38994261851855966,
+     "b_prov": 0.26763949279043997,
+     "a_graded": 0.10209644237571355,
+     "b_graded": 0.17069735759196553,
+     "d_at_grade": {
+      "40.0": 5.722113983870009,
+      "42.5": 4.302318496610554,
+      "45.0": 2.8825230093510994,
+      "50.0": 0.04293203483218946,
+      "55.0": -2.7966589396867203
+     },
+     "d_mean_operative": 5.026354344249245
+    }
+   }
+  }
+ },
+ "q2_ungraded_caps": {
+  "matrix_fc": {
+   "hit": {
+    "grade_map": {
+     "BASE": 27.0,
+     "SLOPE": 3.8,
+     "FLOOR": 20.0,
+     "KNEE": 43.0,
+     "CEIL": 49.0,
+     "SOFT": 4.0
+    },
+    "war_at_knee": 4.21,
+    "war_at_ceil": 5.79,
+    "n_scored_fc": 753,
+    "n_cap_bind": 236,
+    "cap_bind": {
+     "n": 236,
+     "mean_realized_war6_basis": 4.5,
+     "median_realized_war6_basis": 1.24,
+     "share_real_grade_above_ceil": 0.453,
+     "share_real_grade_above_knee": 0.669,
+     "share_realized_ge_war_at_ceil": 0.28,
+     "share_realized_ge_war_at_knee": 0.347,
+     "grade_implied_by_mean_realized": 44.1
+    },
+    "cap_bind_fringe_cons_le45": {
+     "n": 103,
+     "mean_realized_war6_basis": 0.92,
+     "median_realized_war6_basis": 0.0,
+     "share_real_grade_above_ceil": 0.0,
+     "share_real_grade_above_knee": 0.243,
+     "share_realized_ge_war_at_ceil": 0.049,
+     "share_realized_ge_war_at_knee": 0.117,
+     "grade_implied_by_mean_realized": 30.5
+    },
+    "cap_bind_fringe_cons_le40": {
+     "n": 43,
+     "mean_realized_war6_basis": 0.94,
+     "median_realized_war6_basis": 0.0,
+     "share_real_grade_above_ceil": 0.0,
+     "share_real_grade_above_knee": 0.0,
+     "share_realized_ge_war_at_ceil": 0.07,
+     "share_realized_ge_war_at_knee": 0.14,
+     "grade_implied_by_mean_realized": 30.6
+    },
+    "spearman_g_lin_vs_realized_within_cap_bind": 0.251,
+    "mean_realized_by_uncapped_bin": {
+     "knee_to_knee5": {
+      "n": 84,
+      "mean_realized": 2.84
+     },
+     "knee5_to_knee10": {
+      "n": 56,
+      "mean_realized": 3.56
+     },
+     "knee10_plus": {
+      "n": 96,
+      "mean_realized": 6.49
+     }
+    },
+    "graded_consensus_anchors_same_pool": {
+     "40": {
+      "n": 215,
+      "mean_realized": 0.57
+     },
+     "45": {
+      "n": 69,
+      "mean_realized": 1.31
+     },
+     "50": {
+      "n": 21,
+      "mean_realized": 4.24
+     },
+     "55": {
+      "n": 20,
+      "mean_realized": 5.31
+     }
+    }
+   },
+   "pit": {
+    "grade_map": {
+     "BASE": 25.0,
+     "SLOPE": 4.5,
+     "FLOOR": 20.0,
+     "KNEE": 34.0,
+     "CEIL": 38.0,
+     "SOFT": 2.5
+    },
+    "war_at_knee": 2.0,
+    "war_at_ceil": 2.89,
+    "n_scored_fc": 765,
+    "n_cap_bind": 331,
+    "cap_bind": {
+     "n": 331,
+     "mean_realized_war6_basis": 1.79,
+     "median_realized_war6_basis": 0.12,
+     "share_real_grade_above_ceil": 0.81,
+     "share_real_grade_above_knee": 1.0,
+     "share_realized_ge_war_at_ceil": 0.221,
+     "share_realized_ge_war_at_knee": 0.269,
+     "grade_implied_by_mean_realized": 33.0
+    },
+    "cap_bind_fringe_cons_le45": {
+     "n": 222,
+     "mean_realized_war6_basis": 0.69,
+     "median_realized_war6_basis": 0.0,
+     "share_real_grade_above_ceil": 0.716,
+     "share_real_grade_above_knee": 1.0,
+     "share_realized_ge_war_at_ceil": 0.113,
+     "share_realized_ge_war_at_knee": 0.167,
+     "grade_implied_by_mean_realized": 28.1
+    },
+    "cap_bind_fringe_cons_le40": {
+     "n": 179,
+     "mean_realized_war6_basis": 0.53,
+     "median_realized_war6_basis": 0.0,
+     "share_real_grade_above_ceil": 0.648,
+     "share_real_grade_above_knee": 1.0,
+     "share_realized_ge_war_at_ceil": 0.084,
+     "share_realized_ge_war_at_knee": 0.134,
+     "grade_implied_by_mean_realized": 27.4
+    },
+    "spearman_g_lin_vs_realized_within_cap_bind": 0.218,
+    "mean_realized_by_uncapped_bin": {
+     "knee_to_knee5": {
+      "n": 173,
+      "mean_realized": 1.22
+     },
+     "knee5_to_knee10": {
+      "n": 104,
+      "mean_realized": 1.77
+     },
+     "knee10_plus": {
+      "n": 54,
+      "mean_realized": 3.63
+     }
+    },
+    "graded_consensus_anchors_same_pool": {
+     "40": {
+      "n": 293,
+      "mean_realized": 0.76
+     },
+     "45": {
+      "n": 35,
+      "mean_realized": 0.86
+     },
+     "50": {
+      "n": 21,
+      "mean_realized": 3.44
+     },
+     "55": {
+      "n": 18,
+      "mean_realized": 4.02
+     }
+    }
+   }
+  },
+  "live_resolution": {
+   "available": true,
+   "vintage": "2026-06-23 (f6dc2c8)",
+   "window_days": 30,
+   "n_resolved": 9,
+   "n_resolved_at_or_above_prov_grade": 9,
+   "newly_graded": [
+    {
+     "name": "Jacob Kmatz",
+     "side": "P",
+     "prov_grade": 40.0,
+     "first_real_grade": 41.67,
+     "date": "2026-06-26"
+    },
+    {
+     "name": "Deinys Gonzalez",
+     "side": "H",
+     "prov_grade": 28.0,
+     "first_real_grade": 35.0,
+     "date": "2026-06-26"
+    },
+    {
+     "name": "Alvaro Mejias",
+     "side": "P",
+     "prov_grade": 29.8,
+     "first_real_grade": 35.0,
+     "date": "2026-06-26"
+    },
+    {
+     "name": "Emmanuel Hernandez",
+     "side": "P",
+     "prov_grade": 35.7,
+     "first_real_grade": 38.33,
+     "date": "2026-06-26"
+    }
+   ],
+   "debuted": [
+    {
+     "name": "Eliezer Alfonzo",
+     "side": "H",
+     "prov_grade": 20.0,
+     "debut_date": "2026-07-05",
+     "fv_close": 35.0
+    },
+    {
+     "name": "Dan Hammer",
+     "side": "P",
+     "prov_grade": 24.6,
+     "debut_date": "2026-07-14",
+     "fv_close": 35.0
+    },
+    {
+     "name": "Ben Malgeri",
+     "side": "H",
+     "prov_grade": 31.4,
+     "debut_date": "2026-06-23",
+     "fv_close": 35.0
+    },
+    {
+     "name": "Matt Seelinger",
+     "side": "P",
+     "prov_grade": 33.3,
+     "debut_date": "2026-07-07",
+     "fv_close": 35.0
+    },
+    {
+     "name": "Woo-Suk Go",
+     "side": "P",
+     "prov_grade": 30.7,
+     "debut_date": "2026-07-09",
+     "fv_close": 35.0
+    }
+   ],
+   "note": "one month of live resolution only; the 06-23 vintage used HARD caps 43/40 (pre-soft-ceiling), so cap-bind live resolution is not yet observable - re-run this join after the next grading cycles"
+  }
+ }
+}

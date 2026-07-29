@@ -1,0 +1,255 @@
+{
+ "lane": "W-SURPLUS S2 eta-hazard-lite (2026-07-24 cycle)",
+ "registration": "docs/efv-2026-07-24/GATES.md W-SURPLUS S2",
+ "generated_at": "2026-07-24",
+ "frozen_constants": {
+  "cap": 1.0,
+  "shrink_k": 10,
+  "min_n": 8,
+  "stop_d_floor": 0.6,
+  "overdue_guardrail": 120
+ },
+ "substrate": {
+  "tx_files": 139,
+  "selection_events_indexed": 3730
+ },
+ "accounting": {
+  "listed": 8988,
+  "excluded_post_debut": 619,
+  "excluded_no_bio": 0,
+  "no_level_age_fallback": 3522,
+  "level_from_statsapi": 3263,
+  "level_from_career_stats": 1584,
+  "debuted": 4132,
+  "censored_active": 2177,
+  "washed_out": 743,
+  "overdue": 857
+ },
+ "coverage": {
+  "debuted_rows": 4132,
+  "with_mlbam": 4057,
+  "with_selection_le_debut": 3865,
+  "share": 0.9354
+ },
+ "flags": {
+  "on40_rows": 735,
+  "on40_debuted": 718,
+  "on40_censored_active": 16,
+  "flag_source_mix": {
+   "debuts": 639,
+   "photos": 96
+  }
+ },
+ "shaves_by_vintage": {
+  "2018": {},
+  "2019": {
+   "_pooled": 0.8913043478260869,
+   "AAA": 0.0,
+   "A+": 1.0,
+   "AA": 0.7222222222222222
+  },
+  "2020": {
+   "_pooled": 0.9489795918367347,
+   "AA": 0.8780487804878049,
+   "A": 0.8888888888888888,
+   "A+": 1.0,
+   "AAA": 0.0
+  },
+  "2021": {
+   "_pooled": 0.9694189602446484,
+   "AA": 0.927007299270073,
+   "A": 1.0,
+   "A+": 1.0,
+   "AAA": 0.0
+  },
+  "2022": {
+   "_pooled": 0.9782135076252724,
+   "AA": 0.9494949494949495,
+   "A": 1.0,
+   "A+": 1.0,
+   "AAA": 0.9310344827586207
+  },
+  "2023": {
+   "_pooled": 0.9833333333333333,
+   "AA": 0.957983193277311,
+   "A": 1.0,
+   "A+": 1.0,
+   "AAA": 0.9541284403669725
+  }
+ },
+ "pooled_debuted": {
+  "champion": {
+   "n": 4132,
+   "mae": 1.423,
+   "bias": 1.005,
+   "within_1y": 0.587,
+   "exact": 0.217
+  },
+  "candidate": {
+   "n": 4132,
+   "mae": 1.34,
+   "bias": 0.892,
+   "within_1y": 0.62,
+   "exact": 0.242
+  }
+ },
+ "on40_slice_debuted": {
+  "champion": {
+   "n": 525,
+   "mae": 1.655,
+   "bias": 1.53,
+   "within_1y": 0.49,
+   "exact": 0.164
+  },
+  "candidate": {
+   "n": 525,
+   "mae": 0.998,
+   "bias": 0.636,
+   "within_1y": 0.747,
+   "exact": 0.364
+  }
+ },
+ "overdue_guardrail": {
+  "champion": 857,
+  "candidate": 859,
+  "delta": 2,
+  "bar_abs": 120,
+  "pass": true,
+  "disclosure": "censored actives flag only via player_photos mlbam; see flag_source_mix"
+ },
+ "bars": {
+  "pooled_mae_improves": {
+   "champion": 1.423,
+   "candidate": 1.34,
+   "pass": true
+  },
+  "pooled_within_1y_improves": {
+   "champion": 0.587,
+   "candidate": 0.62,
+   "pass": true
+  },
+  "overdue_within_120": {
+   "delta": 2,
+   "pass": true
+  }
+ },
+ "verdict": "PASS",
+ "shippable_full_window_shave": {
+  "_pooled": 0.9862637362637363,
+  "AA": 0.9653979238754326,
+  "A": 1.0,
+  "A+": 1.0,
+  "AAA": 0.9637681159420289
+ },
+ "example_movers": [
+  {
+   "player_key": "abner_uribe",
+   "vintage": 2023,
+   "level": "AA",
+   "fv": 45.0,
+   "champion_pred": 2024,
+   "candidate_pred": 2023,
+   "actual": 2023
+  },
+  {
+   "player_key": "adam_oller",
+   "vintage": 2022,
+   "level": "AAA",
+   "fv": 40.0,
+   "champion_pred": 2023,
+   "candidate_pred": 2022,
+   "actual": 2022
+  },
+  {
+   "player_key": "adonis_medina",
+   "vintage": 2019,
+   "level": "A+",
+   "fv": 52.5,
+   "champion_pred": 2022,
+   "candidate_pred": 2021,
+   "actual": 2020
+  },
+  {
+   "player_key": "adonis_medina",
+   "vintage": 2020,
+   "level": "AA",
+   "fv": 45.0,
+   "champion_pred": 2022,
+   "candidate_pred": 2021,
+   "actual": 2020
+  },
+  {
+   "player_key": "aj_alexy",
+   "vintage": 2021,
+   "level": "A+",
+   "fv": 42.5,
+   "champion_pred": 2024,
+   "candidate_pred": 2023,
+   "actual": 2021
+  },
+  {
+   "player_key": "alan_rangel",
+   "vintage": 2022,
+   "level": "AA",
+   "fv": 40.0,
+   "champion_pred": 2025,
+   "candidate_pred": 2024,
+   "actual": 2025
+  },
+  {
+   "player_key": "alan_rangel",
+   "vintage": 2023,
+   "level": "AAA",
+   "fv": 40.0,
+   "champion_pred": 2025,
+   "candidate_pred": 2024,
+   "actual": 2025
+  },
+  {
+   "player_key": "albert_abreu",
+   "vintage": 2019,
+   "level": "AA",
+   "fv": 47.5,
+   "champion_pred": 2020,
+   "candidate_pred": 2019,
+   "actual": 2020
+  },
+  {
+   "player_key": "albert_abreu",
+   "vintage": 2020,
+   "level": "AA",
+   "fv": 45.0,
+   "champion_pred": 2022,
+   "candidate_pred": 2021,
+   "actual": 2020
+  },
+  {
+   "player_key": "alberto_rodriguez",
+   "vintage": 2022,
+   "level": "A+",
+   "fv": 42.5,
+   "champion_pred": 2025,
+   "candidate_pred": 2024,
+   "actual": 2023
+  },
+  {
+   "player_key": "alberto_rodriguez",
+   "vintage": 2023,
+   "level": "A+",
+   "fv": 45.0,
+   "champion_pred": 2026,
+   "candidate_pred": 2025,
+   "actual": 2023
+  },
+  {
+   "player_key": "alec_bettinger",
+   "vintage": 2021,
+   "level": "AA",
+   "fv": 37.5,
+   "champion_pred": 2024,
+   "candidate_pred": 2023,
+   "actual": 2021
+  }
+ ],
+ "default_state": "OFF (eta.py fortyman_adj=None; live wiring is wave-D)"
+}

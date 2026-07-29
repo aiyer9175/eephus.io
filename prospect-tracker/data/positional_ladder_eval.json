@@ -1,0 +1,311 @@
+{
+ "model": "positional_ladder",
+ "owner_surface": "prospect_def_value.POS_ADJ (the one ladder in the codebase)",
+ "generated_at": "2026-07-25",
+ "standard": "docs/EFV_GATE_STANDARD.md",
+ "question": "Replace the unsourced folklore positional-adjustment table with the ladder recovered from Baseball-Reference's own runs_position?",
+ "fit": {
+  "method": "SVD least squares, no intercept: runs_position*650/PA ~ sum_pos (innings share) * ladder[pos]",
+  "inputs": [
+   "data/mlb_def_history.json",
+   ".cache/statsapi_field/fld_*.json"
+  ],
+  "n_player_seasons": 9101,
+  "n_players": 1872,
+  "seasons": [
+   2000,
+   2026
+  ],
+  "min_pa": 200,
+  "r2": 0.9821,
+  "resid_mae_runs_per_650pa": 0.6752,
+  "ladder": {
+   "C": 10.906,
+   "1B": -8.5332,
+   "2B": 4.5073,
+   "3B": 3.3631,
+   "SS": 8.7611,
+   "LF": -6.4677,
+   "CF": 3.5266,
+   "RF": -6.4061,
+   "DH": -14.0411
+  },
+  "coef_ci95_bootstrap_2000draws": {
+   "C": [
+    10.855,
+    10.958
+   ],
+   "1B": [
+    -8.593,
+    -8.472
+   ],
+   "2B": [
+    4.461,
+    4.554
+   ],
+   "3B": [
+    3.321,
+    3.407
+   ],
+   "SS": [
+    8.706,
+    8.819
+   ],
+   "LF": [
+    -6.542,
+    -6.389
+   ],
+   "CF": [
+    3.476,
+    3.579
+   ],
+   "RF": [
+    -6.482,
+    -6.333
+   ],
+   "DH": [
+    -14.156,
+    -13.933
+   ]
+  },
+  "coef_ci95_clustered_by_player": "half-width ~0.10 runs (500 draws)",
+  "solver_note": "the prior recon table used Gaussian elimination on the normal equations, which on this ill-conditioned share matrix loses accuracy: R2 0.9817 vs 0.9821 for SVD, coefficients off by up to 0.35 runs (C). The SVD solution ships.",
+  "dh_specification": {
+   "issue": "DH carries no fielding innings, so its exposure must be imputed, and the imputation moves EVERY rung (the shares renormalise). Two live specs existed in the tree and disagreed by up to 0.35 runs on C, 7x the sampling CI.",
+   "spec_shipped": "DH exposure = (StatsAPI DH games) x 8.5 innings",
+   "spec_alternative": "DH exposure = residual, max(0, PA x inn_per_pa - fielded innings), inn_per_pa = 1.9799 (median over >= 400 PA seasons). This is what positional_fit.py uses and it reproduces exactly: C 10.56, SS 8.89, 2B 4.65, CF 3.63, 3B 3.28, LF -6.47, RF -6.45, 1B -8.60, DH -13.76.",
+   "head_to_head": {
+    "protocol": "same 9,101 rows, same y, same solver; only the DH column differs. 4-era OOS MAE.",
+    "in_sample_r2": {
+     "shipped_games_x_8.5": 0.9821,
+     "alternative_residual": 0.9779
+    },
+    "oos_mae_mean": {
+     "shipped_games_x_8.5": 0.714,
+     "alternative_residual": 0.7514
+    },
+    "dmae_paired_bootstrap": {
+     "mean": 0.037,
+     "ci95": [
+      0.0271,
+      0.047
+     ],
+     "p_shipped_better": 1.0
+    },
+    "verdict": "shipped spec CLEARS, but by only 0.037 runs/650PA",
+    "caveat": "the win is NOT uniform across eras: the residual spec is better on 2019-2026 (OOS MAE 0.969 vs 1.043), the universal-DH era. If the DH rung is ever load bearing for a modern-day read, refit on the residual spec and re-gate."
+   }
+  }
+ },
+ "identification": {
+  "note": "every row of innings shares sums to 1, so adding a constant to all nine slots is unidentified: the LEVEL of a positional-adjustment table is a convention, not an estimable quantity. Only the SHAPE is gated.",
+  "folklore_level_offset_runs": 1.3692,
+  "invalid_null_rejected": "a permutation null that shuffles y is INVALID here -- on random labels a refit 9-parameter model trivially beats any fixed non-zero vector, so that null (p95 2.534) sits ABOVE the observed effect by construction. A parametric null that resamples UNCENTERED folklore residuals is also invalid (it re-injects the level error as bias: p95 ~1.45 runs for all nine slots identically, the signature of a contaminated null)."
+ },
+ "gate_shape": {
+  "emp_shape": {
+   "C": 11.393,
+   "1B": -8.046,
+   "2B": 4.994,
+   "3B": 3.85,
+   "SS": 9.248,
+   "LF": -5.981,
+   "CF": 4.014,
+   "RF": -5.919,
+   "DH": -13.554
+  },
+  "folklore_shape": {
+   "C": 14.444,
+   "1B": -10.556,
+   "2B": 4.444,
+   "3B": 4.444,
+   "SS": 9.444,
+   "LF": -5.556,
+   "CF": 4.444,
+   "RF": -5.556,
+   "DH": -15.556
+  },
+  "shape_diff": {
+   "C": -3.051,
+   "1B": 2.509,
+   "2B": 0.55,
+   "3B": -0.594,
+   "SS": -0.196,
+   "LF": -0.425,
+   "CF": -0.431,
+   "RF": -0.363,
+   "DH": 2.002
+  },
+  "shape_diff_ci95_paired_bootstrap": {
+   "C": [
+    -3.101,
+    -3.001
+   ],
+   "1B": [
+    2.451,
+    2.567
+   ],
+   "2B": [
+    0.503,
+    0.595
+   ],
+   "3B": [
+    -0.636,
+    -0.552
+   ],
+   "SS": [
+    -0.249,
+    -0.142
+   ],
+   "LF": [
+    -0.501,
+    -0.355
+   ],
+   "CF": [
+    -0.48,
+    -0.379
+   ],
+   "RF": [
+    -0.434,
+    -0.3
+   ],
+   "DH": [
+    1.896,
+    2.105
+   ]
+  },
+  "h0_null_p95_folklore_shape_true": {
+   "C": 0.097,
+   "1B": 0.11,
+   "2B": 0.109,
+   "3B": 0.109,
+   "SS": 0.108,
+   "LF": 0.123,
+   "CF": 0.106,
+   "RF": 0.115,
+   "DH": 0.172
+  },
+  "verdict": "all 9 slots CLEAR their H0 band; C 31.4x, 1B 22.9x, DH 11.6x, SS smallest at 1.8x"
+ },
+ "gate_accuracy_4splits": {
+  "protocol": "fit on the other three eras, score the held-out era; eras 2000-2006 / 2007-2012 / 2013-2018 / 2019-2026",
+  "baseline": "folklore + c* (level-corrected, so the claim is shape-only)",
+  "dmae_runs_per_650pa_mean": 0.4819,
+  "dmae_paired_bootstrap_ci95": [
+   0.4577,
+   0.5028
+  ],
+  "p_empirical_better": 1.0,
+  "splits_positive": "4/4",
+  "zero_information_control_ci95": [
+   -5.1195,
+   -4.9224
+  ],
+  "h0_null_p95": -0.0002,
+  "verdict": "CLEARS. Control at -5.02 runs confirms the protocol discriminates.",
+  "vs_uncorrected_folklore": {
+   "dmae_mean": 1.0604,
+   "ci95": [
+    1.0335,
+    1.0859
+   ]
+  }
+ },
+ "consumers": {
+  "prospect_def_value.def_value": {
+   "status": "THE ONLY consumer of POS_ADJ",
+   "effect": "def_value moves: mean |delta| 1.443 runs, rank order changes for 86.9% of 382 graduated comps",
+   "predictive_gate": {
+    "target": "realized bWAR career runs_position per 650 PA (non-circular; def_value never sees it)",
+    "n": 382,
+    "rho_folklore": 0.7415,
+    "rho_empirical": 0.7439,
+    "delta": 0.0024,
+    "delta_ci95_paired_bootstrap_refit": [
+     -0.0096,
+     0.0154
+    ],
+    "zero_information_control_ci95": [
+     -1.4142,
+     -0.0837
+    ],
+    "permutation_null_abs_p95": 0.0166,
+    "split_mean_delta_4_debut_eras": 0.0038,
+    "splits_positive": "2/4",
+    "verdict": "NULL. +0.0028 sits inside its CI and below its own 0.0166 permutation band."
+   },
+   "decision": "ADOPTED ON CORRECTNESS, NOT LIFT. An n=9,101 fit with +/-0.05 CIs replaces round numbers wrong by up to 3.05 runs in shape; the accuracy claim is explicitly a null."
+  },
+  "def_home_export -> data/def_home.json": {
+   "status": "imports def_value() but reads only p_hold + def_home_entropy",
+   "effect": "BIT-IDENTICAL under the swap: 0 of 2478 records differ, meta identical",
+   "decision": "no change, no restamp"
+  },
+  "proj_ml.pos_adj_prior (MLB Projections / FA WAR paths)": {
+   "status": "NOT A CONSUMER. pos_adj_prior = bWAR runs_position off data/mlb_def_history.json, i.e. the OBSERVED quantity this ladder recovers. proj_ml.py contains no reference to POS_ADJ, prospect_def_value, or def_value.",
+   "decision": "nothing to swap; anti-footgun comment added at proj_ml.py DEF_FEATURE_CANDIDATES"
+  },
+  "eFV": {
+   "status": "NOT A CONSUMER. efv_model._FEATURES_HIT (14) and _FEATURES_PIT (8) carry no defensive feature; def_value was rejected from eFV 2026-06-29 (data/prospect_def_value_eval.json).",
+   "decision": "no measurement possible and none needed; the eFV MDE of ~0.017 pooled rho is moot when the feature is absent"
+  },
+  "prospx/index.html _RPS_POSITION_MULTIPLIERS": {
+   "status": "A SECOND, SERVED LADDER. Hand-written multipliers derived by rule of thumb from the folklore table; RPS+ is a served number. Lead owns *.html so this lane did not touch it.",
+   "measured_proposal": "served multiplier ~ 1.01855 + 0.005536 * group-mean runs (R2 0.983 against the current 8 values). Re-deriving on the empirical ladder moves DH +0.021, COF +0.013, OF +0.011, INF +0.010, MI +0.005, CI +0.004, C -0.001, CF -0.002.",
+   "decision": "FLAGGED, NOT CHANGED. Adopting it WOULD move served RPS+ and WOULD require a golden restamp."
+  }
+ },
+ "specification_sensitivity": {
+  "pa_weighted_fit": {
+   "C": 10.818,
+   "1B": -8.441,
+   "2B": 4.413,
+   "3B": 3.326,
+   "SS": 8.612,
+   "LF": -6.278,
+   "CF": 3.547,
+   "RF": -6.225,
+   "DH": -13.933
+  },
+  "max_shift_vs_unweighted_runs": 0.19,
+  "min_pa_100": {
+   "n": 11830,
+   "r2": 0.9727
+  },
+  "min_pa_400": {
+   "n": 5274,
+   "r2": 0.9905
+  },
+  "min_pa_400_shift": "C 10.60, LF -6.06 (~0.4 runs from the shipped >=200 PA fit)",
+  "era_drift_range_runs": {
+   "C": 1.317,
+   "1B": 0.524,
+   "2B": 1.033,
+   "3B": 0.919,
+   "SS": 0.882,
+   "LF": 0.561,
+   "CF": 0.985,
+   "RF": 0.342,
+   "DH": 1.006
+  },
+  "caveat": "era drift (C 1.32 runs, 2B 1.03) EXCEEDS the sampling CIs; the shipped ladder is a 2000-2026 average, not a 2026 read"
+ },
+ "served_impact": "NONE. A/B on the identical rebuilt artifact and DB with the ladder as the ONLY difference: data/def_home.json is byte-identical, 0 of 2,478 records differ, meta identical. Verified twice (before and after the artifact rebuild). NO GOLDEN RESTAMP REQUIRED. The one path by which the retired table still reaches a served number is prospx/index.html _RPS_POSITION_MULTIPLIERS -> RPS+, which this lane may not edit; changing THAT would require a restamp.",
+ "artifact_regeneration": {
+  "rebuilt": "data/prospect_def_value.json (882 -> 918 rows)",
+  "backup": "scratchpad prospect_def_value.BACKUP.json and def_home.BACKUP.json under the session temp dir; prospects.db was never written to by this lane",
+  "def_value_delta_on_827_shared_ids": {
+   "mean_abs_runs": 1.508,
+   "max_abs_runs": 5.896
+  },
+  "row_growth_cause": "xfv_hitter_matrix drift since the 2026-06-29 build, NOT the ladder",
+  "p_vectors_unchanged": "818 of 827 shared ids; POS_ADJ does not enter the migration matrix",
+  "deploy": "deploy-excluded (deploy/data_exclude.txt), so this rebuild reaches no page"
+ },
+ "duplicate_ladders_found": {
+  "prospect_def_value.POS_ADJ": "CANONICAL after this lane. Constants + provenance in one block.",
+  "positional_fit.py::_fit_ladder": "UNTRACKED in-flight work (git status ??) that refits the same ladder from the same two feeds on every run and carries the folklore table as a reference field. Not this lane's file, NOT edited. Its ladder is the residual-DH spec above and differs from the shipped constants by up to 0.35 runs (C). ACTION FOR THE LEAD: pick one owner. Either prospect_def_value reads data/positional_fit.json, or positional_fit imports prospect_def_value.POS_ADJ. Two independently refitted ladders WILL drift apart.",
+  "tools/_recon_defense.py::POS_ADJ_STD": "a deliberate copy of the RETIRED folklore table, used only as the recon comparison baseline. Left alone: that is its purpose. Now named by prospect_def_value.POS_ADJ_FOLKLORE_RETIRED.",
+  "prospx/index.html::_RPS_POSITION_MULTIPLIERS": "see consumers; served, lead-owned, not touched."
+ }
+}

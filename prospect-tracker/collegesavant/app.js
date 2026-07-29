@@ -1052,35 +1052,42 @@ function renderPlayer(player) {
   const shareBtn = app.querySelector("#cs-share");
   if (shareBtn) {
     shareBtn.addEventListener("click", () => {
-      if (!window.EEPHUS_GFX && !window.EEPHUS_HUB) return;
-      const rows = METRICS
-        .filter((m) => player[m.key] != null)
-        .slice(0, 8)
-        .map((m) => [m.label, `${formatMetric(player[m.key], m.fmt)}  (${pct && pct[m.key] != null ? pct[m.key] : "-"})`]);
-      const cardOpts = {
+      if (!window.EEPHUS_HUB) return;   // openCard lives on the hub
+      const csPlus = state.csPlus && state.csPlus.get(player.slug);
+      // Declarative since GFX slice 4: the "leaderboard-subject" template owns
+      // the layout (stat-tile rail + one percentile section); this site only
+      // supplies the data, formatted with this module's own formatMetric.
+      // Shared wrapper (DE-DUP 2026-07-23): prefers the Generate GFX modal,
+      // falls back to the legacy direct shareCard download.
+      window.EEPHUS_HUB.openCard({
+        template: "leaderboard-subject",
+        data: {
+          // Six-tile rail (the drawCard cap): headline contact quality + the
+          // discipline pair + the CS+ Arkmetric, each only when present.
+          stats: [
+            player.xwoba != null ? { label: "xwOBA", value: formatMetric(player.xwoba, "decimal") } : null,
+            player.average_exit_velocity != null ? { label: "Avg EV", value: formatMetric(player.average_exit_velocity, "mph") } : null,
+            player.barrel_pct != null ? { label: "Barrel%", value: formatMetric(player.barrel_pct, "pct") } : null,
+            player.hard_hit_pct != null ? { label: "HardHit%", value: formatMetric(player.hard_hit_pct, "pct") } : null,
+            player.chase_pct != null ? { label: "Chase%", value: formatMetric(player.chase_pct, "pct") } : null,
+            Number.isFinite(csPlus) ? { label: "CS+", value: String(Math.round(csPlus)) } : null,
+          ].filter(Boolean),
+          poolSize: state.players.length,
+          poolNoun: "hitters",
+          percentiles: METRICS
+            .filter((m) => player[m.key] != null)
+            .map((m) => ({ label: m.label, value: formatMetric(player[m.key], m.fmt),
+              pct: pct && pct[m.key] != null ? pct[m.key] : "-" })),
+        },
         module: "CollegeSavant",
         accentToken: "--accent-red",
         name: displayName(player.hitter_name),
         meta: `${formatTeamName(player.team) || player.teamLabel || ""} · ${player.year} · college hitter`,
         headshotURL: TEAM_LOGOS[player.team] || null,
-        tiles: [
-          player.xwoba != null ? { label: "xwOBA", value: formatMetric(player.xwoba, "decimal") } : null,
-          player.average_exit_velocity != null ? { label: "Avg EV", value: formatMetric(player.average_exit_velocity, "mph") } : null,
-          player.barrel_pct != null ? { label: "Barrel%", value: formatMetric(player.barrel_pct, "pct") } : null,
-        ].filter(Boolean),
-        sections: [{ title: `Percentiles · vs ${state.players.length} qualified hitters`, rows }],
         url: `eephus.io/collegesavant/#/player/${player.year}/${player.slug}`,
         filename: `eephus-collegesavant-${player.slug}.png`,
         caption: "college percentiles vs the qualified pool · CollegeSavant by Joseph Gillis",
-      };
-      // Open the shared Generate GFX modal (format / theme / accent controls);
-      // fall back to the legacy direct download if the GFX module didn't load.
-      if (window.EEPHUS_GFX) {
-        window.EEPHUS_GFX.open({ kind: "card", module: cardOpts.module, accentToken: cardOpts.accentToken,
-          title: cardOpts.name, filenameBase: cardOpts.filename.replace(/\.png$/, ""), card: cardOpts });
-      } else if (window.EEPHUS_HUB) {
-        window.EEPHUS_HUB.shareCard(cardOpts);
-      }
+      });
     });
   }
 }

@@ -3,7 +3,7 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""py_mini_racer smoke test for assets/pal.js (Pitcher Alchemy Lab).
+"""py_mini_racer smoke test for assets/pal.js (Alchemy Lab).
 
 Stubs the DOM + a synchronous fetch so init() renders each section, then asserts
 real content (candidate tables, the need-gated SP->RP verdict, the backtest

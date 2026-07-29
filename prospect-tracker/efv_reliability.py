@@ -79,7 +79,7 @@ def _oof_rows(side: str) -> list[dict]:
     # function only; _realized_bucket keeps its own module-level divisor.
     from efv_dataset import matrix_path, TARGET_SEASONS
     from efv_model import _prep, _feature_spec
-    from efv_score import _age_at
+    from efv_score import _age_at, _grade_map_age
     from prospect_path import _fit_ridge, _predict, _fit_linear_calibration
 
     is_pit = side == "pit"
@@ -110,8 +110,13 @@ def _oof_rows(side: str) -> list[dict]:
             # the SHIPPED 6yr-window grade (efv_score.run/run_live/run_backgrade all
             # pass it); omitting it defaulted to control_years=7 and the diagnostic
             # described a bucket distribution the site never shows (2026-07-19 fix).
+            # Age placement via _grade_map_age (bughunt F5, 2026-07-23): mirror the
+            # scorer - `age` is measured at the debut year, so eta_to_debut = 0.0;
+            # the raw pre-debut age placed the inversion's curve at debut_age =
+            # age - 6, a curve the site never prices.
             pos = src.get("position")
-            grade = vf.realized_implied_fv(xfv_war, is_pit, age=age, position=pos,
+            _gm_age = _grade_map_age(age, 0.0)
+            grade = vf.realized_implied_fv(xfv_war, is_pit, age=_gm_age, position=pos,
                                            exposure_seasons=TARGET_SEASONS)
             if grade is None:
                 continue

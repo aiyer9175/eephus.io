@@ -1,0 +1,3122 @@
+{
+ "n_stratifiable": 4231,
+ "n_cpx": 1217,
+ "n_floor": 1481,
+ "n_clean": 2033,
+ "board_mean_raw_gap": -12.024,
+ "stratum_offsets": [
+  {
+   "side": "HIT",
+   "stratum": "A/young/midProd",
+   "n_active": 16,
+   "mean_served": 42.695,
+   "centered_offset": 21.268,
+   "lo": 14.959,
+   "hi": 27.509,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "AA/young/midProd",
+   "n_active": 3,
+   "mean_served": 60.852,
+   "centered_offset": 17.673,
+   "lo": 12.546,
+   "hi": 23.368,
+   "resolvable": true
+  },
+  {
+   "side": "PIT",
+   "stratum": "A+/young/highProd",
+   "n_active": 18,
+   "mean_served": 44.058,
+   "centered_offset": 16.956,
+   "lo": 10.731,
+   "hi": 23.324,
+   "resolvable": true
+  },
+  {
+   "side": "PIT",
+   "stratum": "AAA/onTime/highProd",
+   "n_active": 2,
+   "mean_served": 47.017,
+   "centered_offset": 16.94,
+   "lo": 11.629,
+   "hi": 24.067,
+   "resolvable": true
+  },
+  {
+   "side": "PIT",
+   "stratum": "AAA/young/midProd",
+   "n_active": 2,
+   "mean_served": 52.077,
+   "centered_offset": 16.571,
+   "lo": 10.539,
+   "hi": 24.38,
+   "resolvable": true
+  },
+  {
+   "side": "PIT",
+   "stratum": "AA/young/highProd",
+   "n_active": 4,
+   "mean_served": 52.748,
+   "centered_offset": 16.425,
+   "lo": 10.749,
+   "hi": 21.869,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "A+/young/highProd",
+   "n_active": 6,
+   "mean_served": 54.979,
+   "centered_offset": 16.073,
+   "lo": 8.718,
+   "hi": 23.343,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "A/young/highProd",
+   "n_active": 23,
+   "mean_served": 48.472,
+   "centered_offset": 16.014,
+   "lo": 5.761,
+   "hi": 28.916,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "A+/young/lowProd",
+   "n_active": 2,
+   "mean_served": 50.351,
+   "centered_offset": 15.72,
+   "lo": 11.682,
+   "hi": 20.632,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "A/young/lowProd",
+   "n_active": 14,
+   "mean_served": 35.561,
+   "centered_offset": 14.783,
+   "lo": 8.754,
+   "hi": 20.646,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "AAA/onTime/midProd",
+   "n_active": 6,
+   "mean_served": 48.658,
+   "centered_offset": 14.766,
+   "lo": 9.729,
+   "hi": 21.267,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "A/onTime/midProd",
+   "n_active": 9,
+   "mean_served": 36.384,
+   "centered_offset": 14.748,
+   "lo": 9.224,
+   "hi": 19.976,
+   "resolvable": true
+  },
+  {
+   "side": "PIT",
+   "stratum": "AAA/onTime/midProd",
+   "n_active": 6,
+   "mean_served": 42.406,
+   "centered_offset": 14.411,
+   "lo": 2.967,
+   "hi": 27.016,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "AAA/young/midProd",
+   "n_active": 8,
+   "mean_served": 52.514,
+   "centered_offset": 13.195,
+   "lo": 5.743,
+   "hi": 19.71,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "A+/young/midProd",
+   "n_active": 7,
+   "mean_served": 50.069,
+   "centered_offset": 12.823,
+   "lo": 5.093,
+   "hi": 20.749,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "AA/young/highProd",
+   "n_active": 7,
+   "mean_served": 59.322,
+   "centered_offset": 12.815,
+   "lo": 6.89,
+   "hi": 18.997,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "A+/old/midProd",
+   "n_active": 12,
+   "mean_served": 40.713,
+   "centered_offset": 12.223,
+   "lo": 5.827,
+   "hi": 18.796,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "A/old/lowProd",
+   "n_active": 4,
+   "mean_served": 34.21,
+   "centered_offset": 11.69,
+   "lo": 1.965,
+   "hi": 22.299,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "A/onTime/lowProd",
+   "n_active": 2,
+   "mean_served": 33.356,
+   "centered_offset": 10.604,
+   "lo": 3.16,
+   "hi": 17.836,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "AAA/young/lowProd",
+   "n_active": 6,
+   "mean_served": 44.547,
+   "centered_offset": 10.239,
+   "lo": 3.749,
+   "hi": 17.23,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "AA/young/lowProd",
+   "n_active": 2,
+   "mean_served": 46.413,
+   "centered_offset": 9.268,
+   "lo": -1.662,
+   "hi": 20.072,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "AAA/old/lowProd",
+   "n_active": 8,
+   "mean_served": 38.563,
+   "centered_offset": 9.197,
+   "lo": 2.166,
+   "hi": 16.841,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "A+/onTime/lowProd",
+   "n_active": 11,
+   "mean_served": 38.264,
+   "centered_offset": 9.032,
+   "lo": 1.916,
+   "hi": 15.939,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "A/old/midProd",
+   "n_active": 5,
+   "mean_served": 34.537,
+   "centered_offset": 8.855,
+   "lo": 0.197,
+   "hi": 17.884,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "AA/onTime/highProd",
+   "n_active": 20,
+   "mean_served": 46.858,
+   "centered_offset": 8.558,
+   "lo": 2.722,
+   "hi": 14.528,
+   "resolvable": true
+  },
+  {
+   "side": "PIT",
+   "stratum": "A/young/midProd",
+   "n_active": 4,
+   "mean_served": 34.189,
+   "centered_offset": 8.362,
+   "lo": -1.839,
+   "hi": 16.959,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "A+/onTime/highProd",
+   "n_active": 19,
+   "mean_served": 45.262,
+   "centered_offset": 8.248,
+   "lo": 0.372,
+   "hi": 16.856,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "A/old/highProd",
+   "n_active": 15,
+   "mean_served": 34.523,
+   "centered_offset": 7.614,
+   "lo": -1.612,
+   "hi": 17.945,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "A+/old/highProd",
+   "n_active": 25,
+   "mean_served": 39.859,
+   "centered_offset": 7.196,
+   "lo": 1.337,
+   "hi": 13.805,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "AAA/young/highProd",
+   "n_active": 5,
+   "mean_served": 51.304,
+   "centered_offset": 7.137,
+   "lo": 0.112,
+   "hi": 14.459,
+   "resolvable": true
+  },
+  {
+   "side": "HIT",
+   "stratum": "AAA/onTime/highProd",
+   "n_active": 6,
+   "mean_served": 46.257,
+   "centered_offset": 5.976,
+   "lo": -2.369,
+   "hi": 13.878,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AA/young/midProd",
+   "n_active": 7,
+   "mean_served": 39.731,
+   "centered_offset": 5.599,
+   "lo": -4.205,
+   "hi": 14.721,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AA/onTime/midProd",
+   "n_active": 11,
+   "mean_served": 37.265,
+   "centered_offset": 5.151,
+   "lo": -2.556,
+   "hi": 13.376,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "AA/onTime/lowProd",
+   "n_active": 15,
+   "mean_served": 40.022,
+   "centered_offset": 4.791,
+   "lo": -0.16,
+   "hi": 9.652,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "AA/onTime/midProd",
+   "n_active": 19,
+   "mean_served": 40.626,
+   "centered_offset": 4.705,
+   "lo": -0.235,
+   "hi": 9.895,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "AAA/old/midProd",
+   "n_active": 13,
+   "mean_served": 36.13,
+   "centered_offset": 3.995,
+   "lo": -0.928,
+   "hi": 9.4,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A+/onTime/midProd",
+   "n_active": 17,
+   "mean_served": 30.079,
+   "centered_offset": 3.947,
+   "lo": -2.25,
+   "hi": 10.559,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A/young/highProd",
+   "n_active": 9,
+   "mean_served": 29.913,
+   "centered_offset": 3.931,
+   "lo": -4.263,
+   "hi": 12.594,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A+/onTime/highProd",
+   "n_active": 29,
+   "mean_served": 30.968,
+   "centered_offset": 2.945,
+   "lo": -5.419,
+   "hi": 13.125,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AAA/old/lowProd",
+   "n_active": 93,
+   "mean_served": 23.797,
+   "centered_offset": 2.888,
+   "lo": -2.433,
+   "hi": 9.951,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AAA/onTime/lowProd",
+   "n_active": 11,
+   "mean_served": 34.037,
+   "centered_offset": 2.698,
+   "lo": -4.571,
+   "hi": 10.382,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "A/onTime/highProd",
+   "n_active": 9,
+   "mean_served": 34.875,
+   "centered_offset": 2.374,
+   "lo": -4.838,
+   "hi": 11.945,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "A+/onTime/midProd",
+   "n_active": 12,
+   "mean_served": 38.243,
+   "centered_offset": 2.338,
+   "lo": -6.881,
+   "hi": 11.677,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "AA/old/lowProd",
+   "n_active": 16,
+   "mean_served": 34.275,
+   "centered_offset": 2.277,
+   "lo": -2.563,
+   "hi": 7.871,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AA/onTime/highProd",
+   "n_active": 4,
+   "mean_served": 37.08,
+   "centered_offset": 2.219,
+   "lo": -10.411,
+   "hi": 13.438,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "AA/old/midProd",
+   "n_active": 20,
+   "mean_served": 33.164,
+   "centered_offset": 2.109,
+   "lo": -3.505,
+   "hi": 8.123,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "AA/old/highProd",
+   "n_active": 30,
+   "mean_served": 38.354,
+   "centered_offset": 1.954,
+   "lo": -2.807,
+   "hi": 6.661,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AAA/young/lowProd",
+   "n_active": 7,
+   "mean_served": 35.454,
+   "centered_offset": 1.597,
+   "lo": -7.819,
+   "hi": 12.129,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AAA/old/highProd",
+   "n_active": 29,
+   "mean_served": 31.769,
+   "centered_offset": 0.436,
+   "lo": -5.344,
+   "hi": 7.057,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A/onTime/lowProd",
+   "n_active": 86,
+   "mean_served": 22.856,
+   "centered_offset": 0.4,
+   "lo": -3.655,
+   "hi": 4.703,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "A+/old/lowProd",
+   "n_active": 6,
+   "mean_served": 32.008,
+   "centered_offset": 0.339,
+   "lo": -6.688,
+   "hi": 6.953,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AA/young/lowProd",
+   "n_active": 5,
+   "mean_served": 35.0,
+   "centered_offset": 0.222,
+   "lo": -12.739,
+   "hi": 12.398,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A/young/lowProd",
+   "n_active": 17,
+   "mean_served": 24.522,
+   "centered_offset": 0.115,
+   "lo": -5.232,
+   "hi": 6.04,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A/old/midProd",
+   "n_active": 59,
+   "mean_served": 22.733,
+   "centered_offset": 0.034,
+   "lo": -4.694,
+   "hi": 4.507,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "AAA/onTime/lowProd",
+   "n_active": 1,
+   "mean_served": 36.464,
+   "centered_offset": -0.018,
+   "lo": -4.325,
+   "hi": 3.592,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A/onTime/midProd",
+   "n_active": 32,
+   "mean_served": 26.949,
+   "centered_offset": -0.145,
+   "lo": -7.037,
+   "hi": 7.657,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A+/old/highProd",
+   "n_active": 82,
+   "mean_served": 26.86,
+   "centered_offset": -1.05,
+   "lo": -7.15,
+   "hi": 6.398,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A+/young/midProd",
+   "n_active": 15,
+   "mean_served": 33.265,
+   "centered_offset": -1.116,
+   "lo": -8.326,
+   "hi": 6.571,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AAA/old/midProd",
+   "n_active": 47,
+   "mean_served": 27.708,
+   "centered_offset": -1.141,
+   "lo": -6.469,
+   "hi": 4.457,
+   "resolvable": false
+  },
+  {
+   "side": "HIT",
+   "stratum": "AAA/old/highProd",
+   "n_active": 4,
+   "mean_served": 32.06,
+   "centered_offset": -2.282,
+   "lo": -7.77,
+   "hi": 4.02,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A+/old/midProd",
+   "n_active": 71,
+   "mean_served": 23.5,
+   "centered_offset": -2.607,
+   "lo": -9.22,
+   "hi": 4.864,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A+/young/lowProd",
+   "n_active": 52,
+   "mean_served": 24.442,
+   "centered_offset": -2.784,
+   "lo": -10.061,
+   "hi": 6.275,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AA/old/highProd",
+   "n_active": 81,
+   "mean_served": 28.267,
+   "centered_offset": -3.031,
+   "lo": -7.249,
+   "hi": 1.919,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A+/onTime/lowProd",
+   "n_active": 51,
+   "mean_served": 24.046,
+   "centered_offset": -3.106,
+   "lo": -10.487,
+   "hi": 4.96,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AA/old/lowProd",
+   "n_active": 211,
+   "mean_served": 23.376,
+   "centered_offset": -3.438,
+   "lo": -7.671,
+   "hi": 1.212,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A/old/highProd",
+   "n_active": 87,
+   "mean_served": 26.539,
+   "centered_offset": -3.466,
+   "lo": -9.218,
+   "hi": 3.848,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AA/old/midProd",
+   "n_active": 108,
+   "mean_served": 26.759,
+   "centered_offset": -3.762,
+   "lo": -8.08,
+   "hi": 1.307,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A+/old/lowProd",
+   "n_active": 173,
+   "mean_served": 21.118,
+   "centered_offset": -3.875,
+   "lo": -9.109,
+   "hi": 1.052,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A/onTime/highProd",
+   "n_active": 25,
+   "mean_served": 25.592,
+   "centered_offset": -5.152,
+   "lo": -11.198,
+   "hi": 3.445,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AA/onTime/lowProd",
+   "n_active": 20,
+   "mean_served": 24.045,
+   "centered_offset": -5.568,
+   "lo": -11.405,
+   "hi": 1.117,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "A/old/lowProd",
+   "n_active": 171,
+   "mean_served": 21.747,
+   "centered_offset": -6.786,
+   "lo": -13.569,
+   "hi": 1.087,
+   "resolvable": false
+  },
+  {
+   "side": "PIT",
+   "stratum": "AAA/young/highProd",
+   "n_active": 1,
+   "mean_served": 20.07,
+   "centered_offset": -11.232,
+   "lo": -15.569,
+   "hi": -4.809,
+   "resolvable": true
+  }
+ ],
+ "n_over_served_strata": 27,
+ "n_rows_over_served_strata": 250,
+ "n_under_served_strata": 1,
+ "n_rows_under_served_strata": 1,
+ "crosstabs": [
+  {
+   "dim": "level",
+   "value": "AAA",
+   "n": 255,
+   "mean_gap": 3.437,
+   "median_gap": -0.488,
+   "frac_over": 0.4902,
+   "frac_gap_ge_10": 0.2784
+  },
+  {
+   "dim": "level",
+   "value": "A+",
+   "n": 608,
+   "mean_gap": 0.063,
+   "median_gap": -4.691,
+   "frac_over": 0.3454,
+   "frac_gap_ge_10": 0.1793
+  },
+  {
+   "dim": "level",
+   "value": "A",
+   "n": 587,
+   "mean_gap": -0.626,
+   "median_gap": -2.398,
+   "frac_over": 0.3254,
+   "frac_gap_ge_10": 0.1857
+  },
+  {
+   "dim": "level",
+   "value": "AA",
+   "n": 583,
+   "mean_gap": -0.938,
+   "median_gap": -6.485,
+   "frac_over": 0.3877,
+   "frac_gap_ge_10": 0.1647
+  },
+  {
+   "dim": "age-for-level",
+   "value": "young",
+   "n": 240,
+   "mean_gap": 7.658,
+   "median_gap": 10.246,
+   "frac_over": 0.6708,
+   "frac_gap_ge_10": 0.5042
+  },
+  {
+   "dim": "age-for-level",
+   "value": "onTime",
+   "n": 423,
+   "mean_gap": 2.25,
+   "median_gap": -2.05,
+   "frac_over": 0.461,
+   "frac_gap_ge_10": 0.2671
+  },
+  {
+   "dim": "age-for-level",
+   "value": "old",
+   "n": 1370,
+   "mean_gap": -2.036,
+   "median_gap": -4.691,
+   "frac_over": 0.2891,
+   "frac_gap_ge_10": 0.1102
+  },
+  {
+   "dim": "production-for-level",
+   "value": "highProd",
+   "n": 540,
+   "mean_gap": 1.899,
+   "median_gap": 1.047,
+   "frac_over": 0.5333,
+   "frac_gap_ge_10": 0.2648
+  },
+  {
+   "dim": "production-for-level",
+   "value": "midProd",
+   "n": 509,
+   "mean_gap": 1.852,
+   "median_gap": -1.557,
+   "frac_over": 0.4774,
+   "frac_gap_ge_10": 0.2593
+  },
+  {
+   "dim": "production-for-level",
+   "value": "lowProd",
+   "n": 984,
+   "mean_gap": -2.0,
+   "median_gap": -4.691,
+   "frac_over": 0.2246,
+   "frac_gap_ge_10": 0.1118
+  },
+  {
+   "dim": "level x age",
+   "value": "A/young",
+   "n": 83,
+   "mean_gap": 11.63,
+   "median_gap": 15.161,
+   "frac_over": 0.759,
+   "frac_gap_ge_10": 0.6024
+  },
+  {
+   "dim": "level x age",
+   "value": "AA/young",
+   "n": 28,
+   "mean_gap": 9.759,
+   "median_gap": 12.761,
+   "frac_over": 0.8571,
+   "frac_gap_ge_10": 0.6786
+  },
+  {
+   "dim": "level x age",
+   "value": "AAA/onTime",
+   "n": 32,
+   "mean_gap": 8.596,
+   "median_gap": 10.737,
+   "frac_over": 0.8125,
+   "frac_gap_ge_10": 0.5312
+  },
+  {
+   "dim": "level x age",
+   "value": "AAA/young",
+   "n": 29,
+   "mean_gap": 8.32,
+   "median_gap": 12.087,
+   "frac_over": 0.7586,
+   "frac_gap_ge_10": 0.5862
+  },
+  {
+   "dim": "level x age",
+   "value": "A+/young",
+   "n": 100,
+   "mean_gap": 3.579,
+   "median_gap": 1.975,
+   "frac_over": 0.52,
+   "frac_gap_ge_10": 0.35
+  },
+  {
+   "dim": "level x age",
+   "value": "AA/onTime",
+   "n": 89,
+   "mean_gap": 3.534,
+   "median_gap": 5.449,
+   "frac_over": 0.6067,
+   "frac_gap_ge_10": 0.3258
+  },
+  {
+   "dim": "level x age",
+   "value": "A+/onTime",
+   "n": 139,
+   "mean_gap": 1.917,
+   "median_gap": -1.127,
+   "frac_over": 0.4748,
+   "frac_gap_ge_10": 0.2662
+  },
+  {
+   "dim": "level x age",
+   "value": "AAA/old",
+   "n": 194,
+   "mean_gap": 1.856,
+   "median_gap": -0.805,
+   "frac_over": 0.3969,
+   "frac_gap_ge_10": 0.1907
+  },
+  {
+   "dim": "level x age",
+   "value": "A/onTime",
+   "n": 163,
+   "mean_gap": 0.588,
+   "median_gap": -2.05,
+   "frac_over": 0.3006,
+   "frac_gap_ge_10": 0.184
+  },
+  {
+   "dim": "level x age",
+   "value": "A+/old",
+   "n": 369,
+   "mean_gap": -1.589,
+   "median_gap": -4.691,
+   "frac_over": 0.2493,
+   "frac_gap_ge_10": 0.1003
+  },
+  {
+   "dim": "level x age",
+   "value": "AA/old",
+   "n": 466,
+   "mean_gap": -2.435,
+   "median_gap": -6.485,
+   "frac_over": 0.3176,
+   "frac_gap_ge_10": 0.103
+  },
+  {
+   "dim": "level x age",
+   "value": "A/old",
+   "n": 341,
+   "mean_gap": -4.19,
+   "median_gap": -9.339,
+   "frac_over": 0.2317,
+   "frac_gap_ge_10": 0.085
+  },
+  {
+   "dim": "side",
+   "value": "HIT",
+   "n": 386,
+   "mean_gap": 8.37,
+   "median_gap": 9.189,
+   "frac_over": 0.7876,
+   "frac_gap_ge_10": 0.4819
+  },
+  {
+   "dim": "side",
+   "value": "PIT",
+   "n": 1647,
+   "mean_gap": -1.962,
+   "median_gap": -4.691,
+   "frac_over": 0.272,
+   "frac_gap_ge_10": 0.1208
+  },
+  {
+   "dim": "position",
+   "value": "CF",
+   "n": 81,
+   "mean_gap": 10.166,
+   "median_gap": 10.74,
+   "frac_over": 0.8519,
+   "frac_gap_ge_10": 0.5556
+  },
+  {
+   "dim": "position",
+   "value": "SS",
+   "n": 72,
+   "mean_gap": 10.13,
+   "median_gap": 12.201,
+   "frac_over": 0.7778,
+   "frac_gap_ge_10": 0.5694
+  },
+  {
+   "dim": "position",
+   "value": "RF",
+   "n": 35,
+   "mean_gap": 9.942,
+   "median_gap": 10.704,
+   "frac_over": 0.8857,
+   "frac_gap_ge_10": 0.5429
+  },
+  {
+   "dim": "position",
+   "value": "2B",
+   "n": 39,
+   "mean_gap": 8.656,
+   "median_gap": 10.303,
+   "frac_over": 0.8205,
+   "frac_gap_ge_10": 0.5128
+  },
+  {
+   "dim": "position",
+   "value": "3B",
+   "n": 43,
+   "mean_gap": 7.309,
+   "median_gap": 6.083,
+   "frac_over": 0.7674,
+   "frac_gap_ge_10": 0.4419
+  },
+  {
+   "dim": "position",
+   "value": "C",
+   "n": 46,
+   "mean_gap": 7.124,
+   "median_gap": 8.499,
+   "frac_over": 0.8261,
+   "frac_gap_ge_10": 0.413
+  },
+  {
+   "dim": "position",
+   "value": "SP",
+   "n": 381,
+   "mean_gap": 5.419,
+   "median_gap": 6.092,
+   "frac_over": 0.6115,
+   "frac_gap_ge_10": 0.3806
+  },
+  {
+   "dim": "position",
+   "value": "1B",
+   "n": 33,
+   "mean_gap": 3.832,
+   "median_gap": 1.98,
+   "frac_over": 0.5758,
+   "frac_gap_ge_10": 0.2727
+  },
+  {
+   "dim": "position",
+   "value": "MIRP",
+   "n": 42,
+   "mean_gap": 0.924,
+   "median_gap": -0.805,
+   "frac_over": 0.4524,
+   "frac_gap_ge_10": 0.1667
+  },
+  {
+   "dim": "position",
+   "value": "SIRP",
+   "n": 208,
+   "mean_gap": 0.631,
+   "median_gap": -0.805,
+   "frac_over": 0.4423,
+   "frac_gap_ge_10": 0.1731
+  },
+  {
+   "dim": "position",
+   "value": "RHP",
+   "n": 50,
+   "mean_gap": -2.785,
+   "median_gap": -5.903,
+   "frac_over": 0.26,
+   "frac_gap_ge_10": 0.1
+  },
+  {
+   "dim": "position",
+   "value": "P",
+   "n": 953,
+   "mean_gap": -5.543,
+   "median_gap": -6.485,
+   "frac_over": 0.0913,
+   "frac_gap_ge_10": 0.0052
+  },
+  {
+   "dim": "acquisition",
+   "value": "HS/draft",
+   "n": 249,
+   "mean_gap": 5.239,
+   "median_gap": 5.182,
+   "frac_over": 0.5944,
+   "frac_gap_ge_10": 0.3896
+  },
+  {
+   "dim": "acquisition",
+   "value": "college",
+   "n": 957,
+   "mean_gap": -0.417,
+   "median_gap": -3.287,
+   "frac_over": 0.3626,
+   "frac_gap_ge_10": 0.1651
+  },
+  {
+   "dim": "acquisition",
+   "value": "IFA",
+   "n": 822,
+   "mean_gap": -1.064,
+   "median_gap": -4.691,
+   "frac_over": 0.3127,
+   "frac_gap_ge_10": 0.1582
+  },
+  {
+   "dim": "n consensus sources",
+   "value": "5 src",
+   "n": 52,
+   "mean_gap": 18.583,
+   "median_gap": 17.937,
+   "frac_over": 1.0,
+   "frac_gap_ge_10": 0.9615
+  },
+  {
+   "dim": "n consensus sources",
+   "value": "4 src",
+   "n": 23,
+   "mean_gap": 17.275,
+   "median_gap": 17.661,
+   "frac_over": 1.0,
+   "frac_gap_ge_10": 1.0
+  },
+  {
+   "dim": "n consensus sources",
+   "value": "3 src",
+   "n": 56,
+   "mean_gap": 14.933,
+   "median_gap": 15.439,
+   "frac_over": 1.0,
+   "frac_gap_ge_10": 0.8036
+  },
+  {
+   "dim": "n consensus sources",
+   "value": "2 src",
+   "n": 596,
+   "mean_gap": 5.52,
+   "median_gap": 6.162,
+   "frac_over": 0.6779,
+   "frac_gap_ge_10": 0.3423
+  },
+  {
+   "dim": "n consensus sources",
+   "value": "1 src",
+   "n": 1306,
+   "mean_gap": -4.203,
+   "median_gap": -6.1,
+   "frac_over": 0.1662,
+   "frac_gap_ge_10": 0.0482
+  },
+  {
+   "dim": "board region",
+   "value": "top100",
+   "n": 85,
+   "mean_gap": 19.207,
+   "median_gap": 18.408,
+   "frac_over": 1.0,
+   "frac_gap_ge_10": 0.9882
+  },
+  {
+   "dim": "board region",
+   "value": "101-300",
+   "n": 146,
+   "mean_gap": 15.838,
+   "median_gap": 15.35,
+   "frac_over": 1.0,
+   "frac_gap_ge_10": 0.9384
+  },
+  {
+   "dim": "board region",
+   "value": "301-1000",
+   "n": 465,
+   "mean_gap": 8.409,
+   "median_gap": 7.854,
+   "frac_over": 0.9505,
+   "frac_gap_ge_10": 0.3527
+  },
+  {
+   "dim": "board region",
+   "value": "1000+",
+   "n": 1337,
+   "mean_gap": -5.875,
+   "median_gap": -6.485,
+   "frac_over": 0.0591,
+   "frac_gap_ge_10": 0.0
+  }
+ ],
+ "board_costs": [
+  {
+   "label": "STRATUM RECENTER, clean set",
+   "n_regraded": 2033,
+   "n_board": 4477,
+   "median_abs_rank_move": 281,
+   "mean_abs_rank_move": 458.4,
+   "median_abs_rank_move_top100": 125.0,
+   "top100_slots_changed": 65,
+   "top100_drop_out": [
+    {
+     "key": "jesus_made",
+     "from": 1,
+     "to": 127
+    },
+    {
+     "key": "eli_willits",
+     "from": 5,
+     "to": 169
+    },
+    {
+     "key": "walker_jenkins",
+     "from": 7,
+     "to": 124
+    },
+    {
+     "key": "kade_anderson",
+     "from": 8,
+     "to": 261
+    },
+    {
+     "key": "rainiel_rodriguez",
+     "from": 9,
+     "to": 291
+    },
+    {
+     "key": "theo_gillen",
+     "from": 13,
+     "to": 115
+    },
+    {
+     "key": "luis_pena",
+     "from": 14,
+     "to": 140
+    },
+    {
+     "key": "sebastian_walcott",
+     "from": 15,
+     "to": 161
+    },
+    {
+     "key": "ethan_salas",
+     "from": 16,
+     "to": 384
+    },
+    {
+     "key": "seth_hernandez",
+     "from": 17,
+     "to": 377
+    },
+    {
+     "key": "alfredo_duno",
+     "from": 19,
+     "to": 208
+    },
+    {
+     "key": "josiah_hartshorn",
+     "from": 21,
+     "to": 376
+    },
+    {
+     "key": "caleb_bonemer",
+     "from": 22,
+     "to": 226
+    },
+    {
+     "key": "jojo_parker",
+     "from": 28,
+     "to": 326
+    },
+    {
+     "key": "kevin_alvarez",
+     "from": 29,
+     "to": 327
+    },
+    {
+     "key": "ralphy_velazquez",
+     "from": 30,
+     "to": 283
+    },
+    {
+     "key": "marek_houston",
+     "from": 31,
+     "to": 128
+    },
+    {
+     "key": "roldy_brito",
+     "from": 33,
+     "to": 349
+    },
+    {
+     "key": "zyhir_hope",
+     "from": 36,
+     "to": 139
+    },
+    {
+     "key": "demetrio_crisantes",
+     "from": 37,
+     "to": 142
+    },
+    {
+     "key": "edward_florentino",
+     "from": 38,
+     "to": 295
+    },
+    {
+     "key": "angel_genao",
+     "from": 39,
+     "to": 343
+    },
+    {
+     "key": "kaelen_culpepper",
+     "from": 40,
+     "to": 404
+    },
+    {
+     "key": "tate_southisene",
+     "from": 41,
+     "to": 300
+    },
+    {
+     "key": "emil_morales",
+     "from": 44,
+     "to": 468
+    },
+    {
+     "key": "justin_gonzales",
+     "from": 46,
+     "to": 469
+    },
+    {
+     "key": "eduardo_quintero",
+     "from": 48,
+     "to": 132
+    },
+    {
+     "key": "jefferson_rojas",
+     "from": 49,
+     "to": 165
+    },
+    {
+     "key": "juneiker_caceres",
+     "from": 50,
+     "to": 400
+    },
+    {
+     "key": "aidan_miller",
+     "from": 51,
+     "to": 170
+    },
+    {
+     "key": "arjun_nimmala",
+     "from": 52,
+     "to": 338
+    },
+    {
+     "key": "devin_fitzgerald",
+     "from": 53,
+     "to": 202
+    },
+    {
+     "key": "jhonny_level",
+     "from": 54,
+     "to": 340
+    },
+    {
+     "key": "jonny_farmelo",
+     "from": 55,
+     "to": 150
+    },
+    {
+     "key": "hayden_alvarez",
+     "from": 58,
+     "to": 416
+    },
+    {
+     "key": "cam_cannarella",
+     "from": 60,
+     "to": 183
+    },
+    {
+     "key": "xavier_neyens",
+     "from": 64,
+     "to": 449
+    },
+    {
+     "key": "christian_zazueta",
+     "from": 65,
+     "to": 576
+    },
+    {
+     "key": "josh_adamczewski",
+     "from": 66,
+     "to": 213
+    },
+    {
+     "key": "kayson_cunningham",
+     "from": 68,
+     "to": 230
+    }
+   ],
+   "top100_come_in": [
+    {
+     "key": "luis_de_leon",
+     "from": 116,
+     "to": 14
+    },
+    {
+     "key": "hyunseok_jang",
+     "from": 281,
+     "to": 16
+    },
+    {
+     "key": "aj_russell",
+     "from": 133,
+     "to": 17
+    },
+    {
+     "key": "jurrangelo_cijntje",
+     "from": 126,
+     "to": 20
+    },
+    {
+     "key": "adam_serwinowski",
+     "from": 202,
+     "to": 21
+    },
+    {
+     "key": "jonathan_santucci",
+     "from": 142,
+     "to": 22
+    },
+    {
+     "key": "dylan_jordan",
+     "from": 249,
+     "to": 24
+    },
+    {
+     "key": "jacob_kmatz",
+     "from": 156,
+     "to": 26
+    },
+    {
+     "key": "ben_hess",
+     "from": 186,
+     "to": 27
+    },
+    {
+     "key": "ben_jacobs",
+     "from": 189,
+     "to": 31
+    },
+    {
+     "key": "brody_hopkins",
+     "from": 121,
+     "to": 32
+    },
+    {
+     "key": "jacob_lombard",
+     "from": 102,
+     "to": 34
+    },
+    {
+     "key": "kyson_witherspoon",
+     "from": 180,
+     "to": 36
+    },
+    {
+     "key": "bryce_mayer",
+     "from": 172,
+     "to": 37
+    },
+    {
+     "key": "henry_lalane",
+     "from": 225,
+     "to": 38
+    },
+    {
+     "key": "miguel_mendez",
+     "from": 195,
+     "to": 39
+    },
+    {
+     "key": "cam_caminiti",
+     "from": 136,
+     "to": 40
+    },
+    {
+     "key": "cristian_arguelles",
+     "from": 107,
+     "to": 41
+    },
+    {
+     "key": "chris_hacopian",
+     "from": 108,
+     "to": 42
+    },
+    {
+     "key": "jared_grindlinger",
+     "from": 110,
+     "to": 43
+    },
+    {
+     "key": "justin_lebron",
+     "from": 112,
+     "to": 44
+    },
+    {
+     "key": "ryder_helfrick",
+     "from": 113,
+     "to": 45
+    },
+    {
+     "key": "trevor_condon",
+     "from": 114,
+     "to": 46
+    },
+    {
+     "key": "michael_lombardi",
+     "from": 261,
+     "to": 47
+    },
+    {
+     "key": "micah_ashman",
+     "from": 200,
+     "to": 48
+    },
+    {
+     "key": "cris_rodriguez",
+     "from": 119,
+     "to": 49
+    },
+    {
+     "key": "brandon_clarke",
+     "from": 435,
+     "to": 50
+    },
+    {
+     "key": "braylon_doughty",
+     "from": 122,
+     "to": 51
+    },
+    {
+     "key": "caden_favors",
+     "from": 245,
+     "to": 52
+    },
+    {
+     "key": "tyson_hardin",
+     "from": 127,
+     "to": 53
+    },
+    {
+     "key": "daniel_eagen",
+     "from": 260,
+     "to": 54
+    },
+    {
+     "key": "dasan_hill",
+     "from": 248,
+     "to": 55
+    },
+    {
+     "key": "josh_knoth",
+     "from": 255,
+     "to": 56
+    },
+    {
+     "key": "tucker_musgrove",
+     "from": 236,
+     "to": 57
+    },
+    {
+     "key": "keyner_martinez",
+     "from": 138,
+     "to": 58
+    },
+    {
+     "key": "allen_facundo",
+     "from": 242,
+     "to": 59
+    },
+    {
+     "key": "ty_johnson",
+     "from": 139,
+     "to": 62
+    },
+    {
+     "key": "alexander_alberto",
+     "from": 266,
+     "to": 63
+    },
+    {
+     "key": "david_shields",
+     "from": 177,
+     "to": 64
+    },
+    {
+     "key": "johnny_slawinski",
+     "from": 146,
+     "to": 66
+    }
+   ]
+  },
+  {
+   "label": "HALF RECENTER, clean set",
+   "n_regraded": 2033,
+   "n_board": 4477,
+   "median_abs_rank_move": 251,
+   "mean_abs_rank_move": 383.09,
+   "median_abs_rank_move_top100": 34.5,
+   "top100_slots_changed": 31,
+   "top100_drop_out": [
+    {
+     "key": "angel_genao",
+     "from": 39,
+     "to": 105
+    },
+    {
+     "key": "kaelen_culpepper",
+     "from": 40,
+     "to": 120
+    },
+    {
+     "key": "emil_morales",
+     "from": 44,
+     "to": 148
+    },
+    {
+     "key": "justin_gonzales",
+     "from": 46,
+     "to": 149
+    },
+    {
+     "key": "juneiker_caceres",
+     "from": 50,
+     "to": 136
+    },
+    {
+     "key": "arjun_nimmala",
+     "from": 52,
+     "to": 111
+    },
+    {
+     "key": "jhonny_level",
+     "from": 54,
+     "to": 112
+    },
+    {
+     "key": "hayden_alvarez",
+     "from": 58,
+     "to": 143
+    },
+    {
+     "key": "xavier_neyens",
+     "from": 64,
+     "to": 169
+    },
+    {
+     "key": "christian_zazueta",
+     "from": 65,
+     "to": 212
+    },
+    {
+     "key": "billy_carlson",
+     "from": 70,
+     "to": 349
+    },
+    {
+     "key": "josh_hammond",
+     "from": 72,
+     "to": 197
+    },
+    {
+     "key": "nathan_flewelling",
+     "from": 74,
+     "to": 244
+    },
+    {
+     "key": "lazaro_montes",
+     "from": 76,
+     "to": 198
+    },
+    {
+     "key": "taitn_gray",
+     "from": 77,
+     "to": 209
+    },
+    {
+     "key": "hagen_smith",
+     "from": 79,
+     "to": 274
+    },
+    {
+     "key": "thomas_white",
+     "from": 80,
+     "to": 275
+    },
+    {
+     "key": "elian_pena",
+     "from": 81,
+     "to": 403
+    },
+    {
+     "key": "josue_briceno",
+     "from": 82,
+     "to": 108
+    },
+    {
+     "key": "carlos_lagrange",
+     "from": 83,
+     "to": 223
+    },
+    {
+     "key": "kendry_chourio",
+     "from": 86,
+     "to": 317
+    },
+    {
+     "key": "jett_williams",
+     "from": 87,
+     "to": 170
+    },
+    {
+     "key": "eduardo_tait",
+     "from": 88,
+     "to": 303
+    },
+    {
+     "key": "joshua_baez",
+     "from": 89,
+     "to": 268
+    },
+    {
+     "key": "anthony_eyanson",
+     "from": 90,
+     "to": 321
+    },
+    {
+     "key": "cooper_flemming",
+     "from": 92,
+     "to": 263
+    },
+    {
+     "key": "ramon_marquez",
+     "from": 93,
+     "to": 331
+    },
+    {
+     "key": "gavin_kilen",
+     "from": 94,
+     "to": 221
+    },
+    {
+     "key": "enrique_bradfield_jr",
+     "from": 95,
+     "to": 182
+    },
+    {
+     "key": "caden_scarborough",
+     "from": 98,
+     "to": 351
+    },
+    {
+     "key": "andrew_fischer",
+     "from": 100,
+     "to": 183
+    }
+   ],
+   "top100_come_in": [
+    {
+     "key": "luis_de_leon",
+     "from": 116,
+     "to": 35
+    },
+    {
+     "key": "aj_russell",
+     "from": 133,
+     "to": 39
+    },
+    {
+     "key": "jurrangelo_cijntje",
+     "from": 126,
+     "to": 41
+    },
+    {
+     "key": "jacob_lombard",
+     "from": 102,
+     "to": 49
+    },
+    {
+     "key": "jonathan_santucci",
+     "from": 142,
+     "to": 50
+    },
+    {
+     "key": "brody_hopkins",
+     "from": 121,
+     "to": 55
+    },
+    {
+     "key": "cristian_arguelles",
+     "from": 107,
+     "to": 57
+    },
+    {
+     "key": "chris_hacopian",
+     "from": 108,
+     "to": 59
+    },
+    {
+     "key": "jared_grindlinger",
+     "from": 110,
+     "to": 60
+    },
+    {
+     "key": "justin_lebron",
+     "from": 112,
+     "to": 61
+    },
+    {
+     "key": "ryder_helfrick",
+     "from": 113,
+     "to": 62
+    },
+    {
+     "key": "trevor_condon",
+     "from": 114,
+     "to": 63
+    },
+    {
+     "key": "jacob_kmatz",
+     "from": 156,
+     "to": 64
+    },
+    {
+     "key": "cris_rodriguez",
+     "from": 119,
+     "to": 65
+    },
+    {
+     "key": "cam_caminiti",
+     "from": 136,
+     "to": 67
+    },
+    {
+     "key": "adam_serwinowski",
+     "from": 202,
+     "to": 68
+    },
+    {
+     "key": "braylon_doughty",
+     "from": 122,
+     "to": 71
+    },
+    {
+     "key": "hyunseok_jang",
+     "from": 281,
+     "to": 73
+    },
+    {
+     "key": "tyson_hardin",
+     "from": 127,
+     "to": 75
+    },
+    {
+     "key": "ben_hess",
+     "from": 186,
+     "to": 78
+    },
+    {
+     "key": "bryce_mayer",
+     "from": 172,
+     "to": 79
+    },
+    {
+     "key": "kyson_witherspoon",
+     "from": 180,
+     "to": 80
+    },
+    {
+     "key": "ben_jacobs",
+     "from": 189,
+     "to": 83
+    },
+    {
+     "key": "keyner_martinez",
+     "from": 138,
+     "to": 84
+    },
+    {
+     "key": "dylan_jordan",
+     "from": 249,
+     "to": 85
+    },
+    {
+     "key": "ty_johnson",
+     "from": 139,
+     "to": 88
+    },
+    {
+     "key": "dillon_lewis",
+     "from": 109,
+     "to": 89
+    },
+    {
+     "key": "michael_forret",
+     "from": 124,
+     "to": 91
+    },
+    {
+     "key": "miguel_mendez",
+     "from": 195,
+     "to": 92
+    },
+    {
+     "key": "brayden_taylor",
+     "from": 118,
+     "to": 97
+    },
+    {
+     "key": "johnny_slawinski",
+     "from": 146,
+     "to": 99
+    }
+   ]
+  },
+  {
+   "label": "RESOLVABLE STRATA ONLY (CI95 excludes 0)",
+   "n_regraded": 251,
+   "n_board": 4477,
+   "median_abs_rank_move": 35,
+   "mean_abs_rank_move": 92.89,
+   "median_abs_rank_move_top100": 131.0,
+   "top100_slots_changed": 61,
+   "top100_drop_out": [
+    {
+     "key": "jesus_made",
+     "from": 1,
+     "to": 130
+    },
+    {
+     "key": "eli_willits",
+     "from": 5,
+     "to": 185
+    },
+    {
+     "key": "walker_jenkins",
+     "from": 7,
+     "to": 129
+    },
+    {
+     "key": "kade_anderson",
+     "from": 8,
+     "to": 269
+    },
+    {
+     "key": "rainiel_rodriguez",
+     "from": 9,
+     "to": 297
+    },
+    {
+     "key": "theo_gillen",
+     "from": 13,
+     "to": 115
+    },
+    {
+     "key": "luis_pena",
+     "from": 14,
+     "to": 143
+    },
+    {
+     "key": "sebastian_walcott",
+     "from": 15,
+     "to": 178
+    },
+    {
+     "key": "ethan_salas",
+     "from": 16,
+     "to": 364
+    },
+    {
+     "key": "seth_hernandez",
+     "from": 17,
+     "to": 361
+    },
+    {
+     "key": "alfredo_duno",
+     "from": 19,
+     "to": 217
+    },
+    {
+     "key": "josiah_hartshorn",
+     "from": 21,
+     "to": 360
+    },
+    {
+     "key": "caleb_bonemer",
+     "from": 22,
+     "to": 237
+    },
+    {
+     "key": "jojo_parker",
+     "from": 28,
+     "to": 321
+    },
+    {
+     "key": "kevin_alvarez",
+     "from": 29,
+     "to": 322
+    },
+    {
+     "key": "ralphy_velazquez",
+     "from": 30,
+     "to": 294
+    },
+    {
+     "key": "marek_houston",
+     "from": 31,
+     "to": 131
+    },
+    {
+     "key": "roldy_brito",
+     "from": 33,
+     "to": 340
+    },
+    {
+     "key": "zyhir_hope",
+     "from": 36,
+     "to": 142
+    },
+    {
+     "key": "demetrio_crisantes",
+     "from": 37,
+     "to": 144
+    },
+    {
+     "key": "edward_florentino",
+     "from": 38,
+     "to": 300
+    },
+    {
+     "key": "angel_genao",
+     "from": 39,
+     "to": 339
+    },
+    {
+     "key": "kaelen_culpepper",
+     "from": 40,
+     "to": 383
+    },
+    {
+     "key": "tate_southisene",
+     "from": 41,
+     "to": 303
+    },
+    {
+     "key": "emil_morales",
+     "from": 44,
+     "to": 449
+    },
+    {
+     "key": "justin_gonzales",
+     "from": 46,
+     "to": 450
+    },
+    {
+     "key": "eduardo_quintero",
+     "from": 48,
+     "to": 134
+    },
+    {
+     "key": "jefferson_rojas",
+     "from": 49,
+     "to": 182
+    },
+    {
+     "key": "juneiker_caceres",
+     "from": 50,
+     "to": 379
+    },
+    {
+     "key": "aidan_miller",
+     "from": 51,
+     "to": 186
+    },
+    {
+     "key": "arjun_nimmala",
+     "from": 52,
+     "to": 335
+    },
+    {
+     "key": "jhonny_level",
+     "from": 54,
+     "to": 337
+    },
+    {
+     "key": "jonny_farmelo",
+     "from": 55,
+     "to": 164
+    },
+    {
+     "key": "hayden_alvarez",
+     "from": 58,
+     "to": 393
+    },
+    {
+     "key": "cam_cannarella",
+     "from": 60,
+     "to": 193
+    },
+    {
+     "key": "xavier_neyens",
+     "from": 64,
+     "to": 422
+    },
+    {
+     "key": "christian_zazueta",
+     "from": 65,
+     "to": 555
+    },
+    {
+     "key": "josh_adamczewski",
+     "from": 66,
+     "to": 221
+    },
+    {
+     "key": "kayson_cunningham",
+     "from": 68,
+     "to": 241
+    },
+    {
+     "key": "billy_carlson",
+     "from": 70,
+     "to": 892
+    }
+   ],
+   "top100_come_in": [
+    {
+     "key": "jacob_lombard",
+     "from": 102,
+     "to": 32
+    },
+    {
+     "key": "cristian_arguelles",
+     "from": 107,
+     "to": 33
+    },
+    {
+     "key": "chris_hacopian",
+     "from": 108,
+     "to": 34
+    },
+    {
+     "key": "dillon_lewis",
+     "from": 109,
+     "to": 35
+    },
+    {
+     "key": "jared_grindlinger",
+     "from": 110,
+     "to": 36
+    },
+    {
+     "key": "justin_lebron",
+     "from": 112,
+     "to": 37
+    },
+    {
+     "key": "ryder_helfrick",
+     "from": 113,
+     "to": 38
+    },
+    {
+     "key": "trevor_condon",
+     "from": 114,
+     "to": 39
+    },
+    {
+     "key": "luis_de_leon",
+     "from": 116,
+     "to": 40
+    },
+    {
+     "key": "brayden_taylor",
+     "from": 118,
+     "to": 41
+    },
+    {
+     "key": "cris_rodriguez",
+     "from": 119,
+     "to": 42
+    },
+    {
+     "key": "brody_hopkins",
+     "from": 121,
+     "to": 43
+    },
+    {
+     "key": "braylon_doughty",
+     "from": 122,
+     "to": 44
+    },
+    {
+     "key": "joseph_dzierwa",
+     "from": 123,
+     "to": 45
+    },
+    {
+     "key": "michael_forret",
+     "from": 124,
+     "to": 46
+    },
+    {
+     "key": "caden_hunter",
+     "from": 125,
+     "to": 47
+    },
+    {
+     "key": "jurrangelo_cijntje",
+     "from": 126,
+     "to": 48
+    },
+    {
+     "key": "tyson_hardin",
+     "from": 127,
+     "to": 49
+    },
+    {
+     "key": "owen_ayers",
+     "from": 131,
+     "to": 50
+    },
+    {
+     "key": "aj_russell",
+     "from": 133,
+     "to": 51
+    },
+    {
+     "key": "jaxon_wiggins",
+     "from": 134,
+     "to": 52
+    },
+    {
+     "key": "karson_milbrandt",
+     "from": 135,
+     "to": 53
+    },
+    {
+     "key": "cam_caminiti",
+     "from": 136,
+     "to": 54
+    },
+    {
+     "key": "riley_quick",
+     "from": 137,
+     "to": 55
+    },
+    {
+     "key": "keyner_martinez",
+     "from": 138,
+     "to": 56
+    },
+    {
+     "key": "ty_johnson",
+     "from": 139,
+     "to": 57
+    },
+    {
+     "key": "bo_davidson",
+     "from": 140,
+     "to": 58
+    },
+    {
+     "key": "jaison_chourio",
+     "from": 141,
+     "to": 59
+    },
+    {
+     "key": "jonathan_santucci",
+     "from": 142,
+     "to": 60
+    },
+    {
+     "key": "reinold_navarro",
+     "from": 144,
+     "to": 61
+    },
+    {
+     "key": "johnny_slawinski",
+     "from": 146,
+     "to": 64
+    },
+    {
+     "key": "cristopher_polanco",
+     "from": 147,
+     "to": 65
+    },
+    {
+     "key": "jamie_arnold",
+     "from": 152,
+     "to": 68
+    },
+    {
+     "key": "quinn_mathews",
+     "from": 154,
+     "to": 69
+    },
+    {
+     "key": "jacob_kmatz",
+     "from": 156,
+     "to": 71
+    },
+    {
+     "key": "angel_jimenez",
+     "from": 157,
+     "to": 72
+    },
+    {
+     "key": "aroon_escobar",
+     "from": 158,
+     "to": 73
+    },
+    {
+     "key": "johenssy_colome",
+     "from": 159,
+     "to": 74
+    },
+    {
+     "key": "jarlin_susana",
+     "from": 161,
+     "to": 75
+    },
+    {
+     "key": "moises_chace",
+     "from": 162,
+     "to": 76
+    }
+   ]
+  }
+ ],
+ "over50": [
+  {
+   "key": "billy_carlson",
+   "slot": 70,
+   "served": 53.05,
+   "implied": 33.22,
+   "cgap": 31.85,
+   "stratum": "A/young/midProd"
+  },
+  {
+   "key": "seth_hernandez",
+   "slot": 17,
+   "served": 58.06,
+   "implied": 38.87,
+   "cgap": 31.22,
+   "stratum": "A+/young/highProd"
+  },
+  {
+   "key": "elian_pena",
+   "slot": 81,
+   "served": 52.01,
+   "implied": 33.22,
+   "cgap": 30.81,
+   "stratum": "A/young/midProd"
+  },
+  {
+   "key": "jordan_yost",
+   "slot": 111,
+   "served": 50.04,
+   "implied": 33.22,
+   "cgap": 28.84,
+   "stratum": "A/young/midProd"
+  },
+  {
+   "key": "jaxon_wiggins",
+   "slot": 134,
+   "served": 49.29,
+   "implied": 32.9,
+   "cgap": 28.41,
+   "stratum": "AAA/old/lowProd"
+  },
+  {
+   "key": "johan_de_los_santos",
+   "slot": 171,
+   "served": 47.76,
+   "implied": 32.56,
+   "cgap": 27.22,
+   "stratum": "A/young/lowProd"
+  },
+  {
+   "key": "alexander_frias",
+   "slot": 148,
+   "served": 48.38,
+   "implied": 33.22,
+   "cgap": 27.18,
+   "stratum": "A/young/midProd"
+  },
+  {
+   "key": "ethan_conrad",
+   "slot": 149,
+   "served": 48.38,
+   "implied": 34.14,
+   "cgap": 26.26,
+   "stratum": "A/old/lowProd"
+  },
+  {
+   "key": "angel_jimenez",
+   "slot": 157,
+   "served": 48.05,
+   "implied": 34.49,
+   "cgap": 25.58,
+   "stratum": "A/old/midProd"
+  },
+  {
+   "key": "gavin_fien",
+   "slot": 231,
+   "served": 46.41,
+   "implied": 33.22,
+   "cgap": 25.21,
+   "stratum": "A/young/midProd"
+  },
+  {
+   "key": "tyler_bremner",
+   "slot": 97,
+   "served": 50.94,
+   "implied": 37.75,
+   "cgap": 25.21,
+   "stratum": "A+/onTime/midProd"
+  },
+  {
+   "key": "josue_briceno",
+   "slot": 82,
+   "served": 52.01,
+   "implied": 39.12,
+   "cgap": 24.91,
+   "stratum": "A/old/highProd"
+  },
+  {
+   "key": "kendry_chourio",
+   "slot": 86,
+   "served": 51.66,
+   "implied": 38.87,
+   "cgap": 24.82,
+   "stratum": "A+/young/highProd"
+  },
+  {
+   "key": "kayson_cunningham",
+   "slot": 68,
+   "served": 53.46,
+   "implied": 40.86,
+   "cgap": 24.63,
+   "stratum": "A+/onTime/lowProd"
+  },
+  {
+   "key": "ramon_marquez",
+   "slot": 93,
+   "served": 51.25,
+   "implied": 38.87,
+   "cgap": 24.4,
+   "stratum": "A+/young/highProd"
+  },
+  {
+   "key": "charlee_soto",
+   "slot": 229,
+   "served": 46.5,
+   "implied": 34.14,
+   "cgap": 24.38,
+   "stratum": "A/onTime/lowProd"
+  },
+  {
+   "key": "kade_anderson",
+   "slot": 8,
+   "served": 60.13,
+   "implied": 47.86,
+   "cgap": 24.29,
+   "stratum": "AA/young/highProd"
+  },
+  {
+   "key": "malachi_witherspoon",
+   "slot": 235,
+   "served": 46.4,
+   "implied": 34.14,
+   "cgap": 24.28,
+   "stratum": "A/onTime/lowProd"
+  },
+  {
+   "key": "luis_arana",
+   "slot": 324,
+   "served": 44.65,
+   "implied": 32.56,
+   "cgap": 24.11,
+   "stratum": "A/young/lowProd"
+  },
+  {
+   "key": "caden_scarborough",
+   "slot": 98,
+   "served": 50.84,
+   "implied": 38.87,
+   "cgap": 23.99,
+   "stratum": "A+/young/highProd"
+  },
+  {
+   "key": "mike_sirota",
+   "slot": 12,
+   "served": 59.78,
+   "implied": 48.0,
+   "cgap": 23.8,
+   "stratum": "AA/old/highProd"
+  },
+  {
+   "key": "blaine_bullard",
+   "slot": 301,
+   "served": 44.86,
+   "implied": 33.22,
+   "cgap": 23.66,
+   "stratum": "A/young/midProd"
+  },
+  {
+   "key": "riley_quick",
+   "slot": 137,
+   "served": 49.19,
+   "implied": 37.75,
+   "cgap": 23.45,
+   "stratum": "A+/onTime/midProd"
+  },
+  {
+   "key": "carlos_lagrange",
+   "slot": 83,
+   "served": 51.87,
+   "implied": 40.52,
+   "cgap": 23.37,
+   "stratum": "AAA/onTime/midProd"
+  },
+  {
+   "key": "eli_willits",
+   "slot": 5,
+   "served": 61.85,
+   "implied": 50.67,
+   "cgap": 23.21,
+   "stratum": "A+/young/highProd"
+  },
+  {
+   "key": "johnny_king",
+   "slot": 115,
+   "served": 50.01,
+   "implied": 38.87,
+   "cgap": 23.16,
+   "stratum": "A+/young/highProd"
+  },
+  {
+   "key": "braden_nett",
+   "slot": 352,
+   "served": 44.02,
+   "implied": 32.9,
+   "cgap": 23.15,
+   "stratum": "AAA/old/lowProd"
+  },
+  {
+   "key": "jurrangelo_cijntje",
+   "slot": 126,
+   "served": 49.6,
+   "implied": 38.58,
+   "cgap": 23.04,
+   "stratum": "AA/old/lowProd"
+  },
+  {
+   "key": "reinold_navarro",
+   "slot": 144,
+   "served": 48.77,
+   "implied": 37.8,
+   "cgap": 23.0,
+   "stratum": "A/young/highProd"
+  },
+  {
+   "key": "gavin_kilen",
+   "slot": 94,
+   "served": 51.18,
+   "implied": 40.26,
+   "cgap": 22.94,
+   "stratum": "A+/old/midProd"
+  },
+  {
+   "key": "max_clark",
+   "slot": 6,
+   "served": 61.54,
+   "implied": 50.84,
+   "cgap": 22.72,
+   "stratum": "AAA/young/midProd"
+  },
+  {
+   "key": "ryan_sloan",
+   "slot": 25,
+   "served": 56.52,
+   "implied": 45.89,
+   "cgap": 22.65,
+   "stratum": "AA/young/midProd"
+  },
+  {
+   "key": "murf_gray",
+   "slot": 35,
+   "served": 55.53,
+   "implied": 45.12,
+   "cgap": 22.44,
+   "stratum": "A+/old/highProd"
+  },
+  {
+   "key": "nolan_perry",
+   "slot": 99,
+   "served": 50.84,
+   "implied": 40.45,
+   "cgap": 22.41,
+   "stratum": "A+/onTime/highProd"
+  },
+  {
+   "key": "gabriel_davalillo",
+   "slot": 375,
+   "served": 43.51,
+   "implied": 33.22,
+   "cgap": 22.31,
+   "stratum": "A/young/midProd"
+  },
+  {
+   "key": "shotaro_morii",
+   "slot": 380,
+   "served": 43.41,
+   "implied": 33.22,
+   "cgap": 22.21,
+   "stratum": "A/young/midProd"
+  },
+  {
+   "key": "keyner_martinez",
+   "slot": 138,
+   "served": 49.08,
+   "implied": 38.91,
+   "cgap": 22.19,
+   "stratum": "A/onTime/midProd"
+  },
+  {
+   "key": "humberto_cruz",
+   "slot": 250,
+   "served": 46.19,
+   "implied": 36.05,
+   "cgap": 22.17,
+   "stratum": "A/young/lowProd"
+  },
+  {
+   "key": "luis_pena",
+   "slot": 14,
+   "served": 59.26,
+   "implied": 49.13,
+   "cgap": 22.16,
+   "stratum": "A+/young/midProd"
+  },
+  {
+   "key": "kevin_alvarez",
+   "slot": 29,
+   "served": 56.26,
+   "implied": 46.14,
+   "cgap": 22.14,
+   "stratum": "A/young/highProd"
+  },
+  {
+   "key": "jojo_parker",
+   "slot": 28,
+   "served": 56.26,
+   "implied": 46.14,
+   "cgap": 22.14,
+   "stratum": "A/young/highProd"
+  },
+  {
+   "key": "enrique_bradfield_jr",
+   "slot": 95,
+   "served": 50.97,
+   "implied": 40.89,
+   "cgap": 22.1,
+   "stratum": "AAA/old/lowProd"
+  },
+  {
+   "key": "josue_de_paula",
+   "slot": 11,
+   "served": 59.78,
+   "implied": 49.77,
+   "cgap": 22.03,
+   "stratum": "AA/onTime/highProd"
+  },
+  {
+   "key": "charles_davalan",
+   "slot": 42,
+   "served": 55.12,
+   "implied": 45.12,
+   "cgap": 22.02,
+   "stratum": "A+/old/highProd"
+  },
+  {
+   "key": "liam_doyle",
+   "slot": 91,
+   "served": 51.35,
+   "implied": 41.43,
+   "cgap": 21.94,
+   "stratum": "AA/onTime/lowProd"
+  },
+  {
+   "key": "gabriel_rodriguez",
+   "slot": 414,
+   "served": 42.47,
+   "implied": 32.56,
+   "cgap": 21.94,
+   "stratum": "A/young/lowProd"
+  },
+  {
+   "key": "travis_sykora",
+   "slot": 145,
+   "served": 48.77,
+   "implied": 38.87,
+   "cgap": 21.92,
+   "stratum": "A+/young/highProd"
+  },
+  {
+   "key": "juan_valera",
+   "slot": 143,
+   "served": 48.77,
+   "implied": 38.87,
+   "cgap": 21.92,
+   "stratum": "A+/young/highProd"
+  },
+  {
+   "key": "caden_bodine",
+   "slot": 20,
+   "served": 57.19,
+   "implied": 47.49,
+   "cgap": 21.72,
+   "stratum": "AA/onTime/midProd"
+  },
+  {
+   "key": "roldy_brito",
+   "slot": 33,
+   "served": 55.74,
+   "implied": 46.14,
+   "cgap": 21.62,
+   "stratum": "A/young/highProd"
+  }
+ ],
+ "under50": [
+  {
+   "key": "junior_sanchez",
+   "slot": 2307,
+   "served": 20.07,
+   "implied": 46.75,
+   "cgap": -14.66,
+   "stratum": "AA/young/lowProd"
+  },
+  {
+   "key": "anthony_flores",
+   "slot": 1457,
+   "served": 20.07,
+   "implied": 46.75,
+   "cgap": -14.66,
+   "stratum": "AA/young/lowProd"
+  },
+  {
+   "key": "eybersson_polanco",
+   "slot": 1888,
+   "served": 20.07,
+   "implied": 46.41,
+   "cgap": -14.32,
+   "stratum": "AA/onTime/highProd"
+  },
+  {
+   "key": "luis_serna",
+   "slot": 2433,
+   "served": 20.07,
+   "implied": 46.33,
+   "cgap": -14.24,
+   "stratum": "A+/young/midProd"
+  },
+  {
+   "key": "franyer_herrera",
+   "slot": 1915,
+   "served": 20.07,
+   "implied": 46.33,
+   "cgap": -14.24,
+   "stratum": "A+/young/midProd"
+  },
+  {
+   "key": "nazier_mule",
+   "slot": 2561,
+   "served": 20.07,
+   "implied": 46.33,
+   "cgap": -14.24,
+   "stratum": "A+/young/midProd"
+  },
+  {
+   "key": "juan_bello",
+   "slot": 2289,
+   "served": 20.07,
+   "implied": 46.33,
+   "cgap": -14.24,
+   "stratum": "A+/young/midProd"
+  },
+  {
+   "key": "zachary_redner",
+   "slot": 2964,
+   "served": 20.07,
+   "implied": 46.33,
+   "cgap": -14.24,
+   "stratum": "A+/young/midProd"
+  },
+  {
+   "key": "jacob_zibin",
+   "slot": 2070,
+   "served": 20.07,
+   "implied": 46.33,
+   "cgap": -14.24,
+   "stratum": "A+/young/midProd"
+  },
+  {
+   "key": "augusto_mendieta",
+   "slot": 1475,
+   "served": 20.07,
+   "implied": 45.89,
+   "cgap": -13.8,
+   "stratum": "AA/young/midProd"
+  },
+  {
+   "key": "garrett_baumann",
+   "slot": 1933,
+   "served": 20.07,
+   "implied": 45.75,
+   "cgap": -13.66,
+   "stratum": "AAA/young/lowProd"
+  },
+  {
+   "key": "mason_albright",
+   "slot": 2485,
+   "served": 20.07,
+   "implied": 45.75,
+   "cgap": -13.66,
+   "stratum": "AAA/young/lowProd"
+  },
+  {
+   "key": "coby_morales",
+   "slot": 1309,
+   "served": 22.89,
+   "implied": 48.0,
+   "cgap": -13.09,
+   "stratum": "AA/old/highProd"
+  },
+  {
+   "key": "luis_gutierrez",
+   "slot": 2425,
+   "served": 20.07,
+   "implied": 44.59,
+   "cgap": -12.49,
+   "stratum": "AA/onTime/midProd"
+  },
+  {
+   "key": "isaac_lyon",
+   "slot": 2027,
+   "served": 20.07,
+   "implied": 44.59,
+   "cgap": -12.49,
+   "stratum": "AA/onTime/midProd"
+  },
+  {
+   "key": "ian_petrutz",
+   "slot": 1327,
+   "served": 21.02,
+   "implied": 45.12,
+   "cgap": -12.07,
+   "stratum": "A+/old/highProd"
+  },
+  {
+   "key": "carter_graham",
+   "slot": 1283,
+   "served": 23.93,
+   "implied": 48.0,
+   "cgap": -12.05,
+   "stratum": "AA/old/highProd"
+  },
+  {
+   "key": "jake_gelof",
+   "slot": 1272,
+   "served": 24.34,
+   "implied": 48.0,
+   "cgap": -11.64,
+   "stratum": "AA/old/highProd"
+  },
+  {
+   "key": "ryan_burrowes",
+   "slot": 1276,
+   "served": 24.13,
+   "implied": 47.75,
+   "cgap": -11.59,
+   "stratum": "A+/onTime/midProd"
+  },
+  {
+   "key": "andy_perez",
+   "slot": 1282,
+   "served": 23.93,
+   "implied": 47.49,
+   "cgap": -11.55,
+   "stratum": "AA/onTime/midProd"
+  },
+  {
+   "key": "yaqui_rivera",
+   "slot": 2916,
+   "served": 20.07,
+   "implied": 43.48,
+   "cgap": -11.38,
+   "stratum": "AAA/young/highProd"
+  },
+  {
+   "key": "oscar_rayo",
+   "slot": 2602,
+   "served": 20.07,
+   "implied": 43.48,
+   "cgap": -11.38,
+   "stratum": "AAA/old/highProd"
+  },
+  {
+   "key": "connor_wietgrefe",
+   "slot": 1692,
+   "served": 20.07,
+   "implied": 43.48,
+   "cgap": -11.38,
+   "stratum": "AAA/old/highProd"
+  },
+  {
+   "key": "alexander_cornielle",
+   "slot": 1396,
+   "served": 20.07,
+   "implied": 43.48,
+   "cgap": -11.38,
+   "stratum": "AAA/old/highProd"
+  },
+  {
+   "key": "evan_shawver",
+   "slot": 1883,
+   "served": 20.07,
+   "implied": 43.48,
+   "cgap": -11.38,
+   "stratum": "AAA/old/highProd"
+  },
+  {
+   "key": "josh_hendrickson",
+   "slot": 2272,
+   "served": 20.07,
+   "implied": 43.48,
+   "cgap": -11.38,
+   "stratum": "AAA/old/highProd"
+  },
+  {
+   "key": "zach_messinger",
+   "slot": 2961,
+   "served": 20.07,
+   "implied": 43.48,
+   "cgap": -11.38,
+   "stratum": "AAA/old/highProd"
+  },
+  {
+   "key": "troy_watson",
+   "slot": 2835,
+   "served": 20.07,
+   "implied": 43.48,
+   "cgap": -11.38,
+   "stratum": "AAA/old/highProd"
+  },
+  {
+   "key": "alejandro_hidalgo",
+   "slot": 1382,
+   "served": 20.07,
+   "implied": 43.35,
+   "cgap": -11.25,
+   "stratum": "AAA/onTime/lowProd"
+  },
+  {
+   "key": "brandt_thompson",
+   "slot": 1531,
+   "served": 20.07,
+   "implied": 43.35,
+   "cgap": -11.25,
+   "stratum": "AAA/onTime/lowProd"
+  },
+  {
+   "key": "jason_reitz",
+   "slot": 2117,
+   "served": 20.07,
+   "implied": 43.29,
+   "cgap": -11.19,
+   "stratum": "A/onTime/highProd"
+  },
+  {
+   "key": "jose_bello",
+   "slot": 2232,
+   "served": 20.07,
+   "implied": 43.29,
+   "cgap": -11.19,
+   "stratum": "A/onTime/highProd"
+  },
+  {
+   "key": "marco_barrios",
+   "slot": 2471,
+   "served": 20.07,
+   "implied": 43.29,
+   "cgap": -11.19,
+   "stratum": "A/onTime/highProd"
+  },
+  {
+   "key": "reed_moring",
+   "slot": 2661,
+   "served": 20.07,
+   "implied": 43.29,
+   "cgap": -11.19,
+   "stratum": "A/onTime/highProd"
+  },
+  {
+   "key": "michael_hilker",
+   "slot": 2519,
+   "served": 20.07,
+   "implied": 43.29,
+   "cgap": -11.19,
+   "stratum": "A/onTime/highProd"
+  },
+  {
+   "key": "adolfo_oviedo",
+   "slot": 1351,
+   "served": 20.07,
+   "implied": 43.29,
+   "cgap": -11.19,
+   "stratum": "A/onTime/highProd"
+  },
+  {
+   "key": "nelfy_ynfante",
+   "slot": 2564,
+   "served": 20.07,
+   "implied": 43.29,
+   "cgap": -11.19,
+   "stratum": "A/onTime/highProd"
+  },
+  {
+   "key": "jose_guzman",
+   "slot": 2247,
+   "served": 20.07,
+   "implied": 43.29,
+   "cgap": -11.19,
+   "stratum": "A/onTime/highProd"
+  },
+  {
+   "key": "cesar_aquino",
+   "slot": 1621,
+   "served": 20.07,
+   "implied": 43.29,
+   "cgap": -11.19,
+   "stratum": "A/onTime/highProd"
+  },
+  {
+   "key": "ryan_mcdonagh",
+   "slot": 2732,
+   "served": 20.07,
+   "implied": 43.29,
+   "cgap": -11.19,
+   "stratum": "A/onTime/highProd"
+  },
+  {
+   "key": "barrett_morgan",
+   "slot": 1489,
+   "served": 20.07,
+   "implied": 43.29,
+   "cgap": -11.19,
+   "stratum": "A/onTime/highProd"
+  },
+  {
+   "key": "barrett_kent",
+   "slot": 1488,
+   "served": 20.07,
+   "implied": 43.29,
+   "cgap": -11.19,
+   "stratum": "A/onTime/highProd"
+  },
+  {
+   "key": "javi_torres",
+   "slot": 2121,
+   "served": 20.07,
+   "implied": 43.29,
+   "cgap": -11.19,
+   "stratum": "A/onTime/highProd"
+  },
+  {
+   "key": "blake_aita",
+   "slot": 1508,
+   "served": 20.07,
+   "implied": 43.12,
+   "cgap": -11.03,
+   "stratum": "AA/old/highProd"
+  },
+  {
+   "key": "cole_hertzler",
+   "slot": 1675,
+   "served": 20.07,
+   "implied": 43.12,
+   "cgap": -11.03,
+   "stratum": "AA/old/highProd"
+  },
+  {
+   "key": "jackson_finley",
+   "slot": 2053,
+   "served": 20.07,
+   "implied": 43.12,
+   "cgap": -11.03,
+   "stratum": "AA/old/highProd"
+  },
+  {
+   "key": "dustin_saenz",
+   "slot": 1805,
+   "served": 20.07,
+   "implied": 43.12,
+   "cgap": -11.03,
+   "stratum": "AA/old/highProd"
+  },
+  {
+   "key": "marcelo_perez",
+   "slot": 2470,
+   "served": 20.07,
+   "implied": 43.12,
+   "cgap": -11.03,
+   "stratum": "AA/old/highProd"
+  },
+  {
+   "key": "ben_shields",
+   "slot": 1499,
+   "served": 20.07,
+   "implied": 43.12,
+   "cgap": -11.03,
+   "stratum": "AA/old/highProd"
+  },
+  {
+   "key": "elison_joseph",
+   "slot": 1834,
+   "served": 20.07,
+   "implied": 43.12,
+   "cgap": -11.03,
+   "stratum": "AA/old/highProd"
+  }
+ ]
+}

@@ -1,0 +1,566 @@
+{
+ "generated_at": "2026-07-23",
+ "registration": "docs/efv-2026-07-24/GATES.md W-SCREEN (Phase 3b): one shot, survivor bar lo95 > 0, 2000 player-clustered reps, seed 20260724, marginal = FAIL; survivors feed W-OVERLAY-R with coefficients frozen here",
+ "one_shot": {
+  "attempted_at": "2026-07-24T01:20:20.630612+00:00",
+  "note": "single attempt; the lab refuses to rerun over this artifact"
+ },
+ "frozen_protocol": {
+  "mapping": {
+   "k_pct": [
+    "velo",
+    "ivb",
+    "spin",
+    "vaa",
+    "vaaoe",
+    "velo_adj_ivb"
+   ],
+   "era_inv": [
+    "hb_abs",
+    "ext",
+    "rel_ht",
+    "arm_angle",
+    "mix_entropy",
+    "stuff_spread"
+   ]
+  },
+  "orientation": "outcomes higher-is-better (K% raw, ERA negated); features natural units, NO sign flips; negative rho fails regardless of magnitude",
+  "residualization": "OLS residual of feature AND outcome on the feature-season astuff_pool (data/aaa_physics.json, shipped stuff_plus_aaa bundle, served-json agreement max_abs_diff 0.0); refit in every bootstrap replicate",
+  "sample": "consecutive AAA pairs 2023->2024 + 2024->2025; >= 100 sidecar pitches both seasons; next-season AAA >= 40 IP",
+  "outcome_source": ".cache/milb_stats/pitching_11_{year}.json (statsapi sportId 11 aggregates via milb_history.py); K% = SO/BF; ERA = 9*sum(era*ip/9)/sum(ip) over era-bearing rows; IP thirds notation parsed",
+  "bootstrap": "2000 reps, cluster = mlbam, percentile CI, numpy default_rng(20260724) fresh per candidate",
+  "vaa": "formula = vaa.py calculate_vaa (y0 50ft, plate 17/12); pitcher-season mean over all computable pitches; vaaoe = residual on pooled OLS(plate_z, release_pos_z) fit over feature-row pitches; landing bar >= 70 pct rows with >= 50 computable pitches"
+ },
+ "sample": {
+  "n_rows": 397,
+  "n_pitchers": 320,
+  "pairs": {
+   "2023->2024": 212,
+   "2024->2025": 185
+  }
+ },
+ "vaa_status": {
+  "criterion": ">= 70% of feature pitcher-seasons with >= 50 VAA-computable cached pitches",
+  "n_rows": 397,
+  "n_covered": 397,
+  "coverage": 1.0,
+  "status": "landed",
+  "vaaoe_fit": {
+   "intercept": -5.5318,
+   "plate_z": 1.4549,
+   "rel_ht": -0.7459,
+   "n_pitches": 418414,
+   "fit_pool": "all VAA-computable pitches of the screen feature pitcher-seasons"
+  }
+ },
+ "candidates": {
+  "velo": {
+   "outcome": "k_pct",
+   "n": 397,
+   "n_clusters": 320,
+   "rho": 0.1283,
+   "lo95": 0.0289,
+   "hi95": 0.2297,
+   "n_reps_effective": 2000,
+   "verdict": "PASS",
+   "resid_fit_on_astuff": {
+    "intercept": 82.009237,
+    "slope": 0.059033
+   },
+   "resid_sd": 2.427761,
+   "feat_mean": 87.806045,
+   "feat_sd": 2.459396
+  },
+  "ivb": {
+   "outcome": "k_pct",
+   "n": 397,
+   "n_clusters": 320,
+   "rho": -0.0262,
+   "lo95": -0.1326,
+   "hi95": 0.0772,
+   "n_reps_effective": 2000,
+   "verdict": "FAIL",
+   "resid_fit_on_astuff": {
+    "intercept": 4.114301,
+    "slope": 0.030688
+   },
+   "resid_sd": 2.847363,
+   "feat_mean": 7.127708,
+   "feat_sd": 2.85469
+  },
+  "spin": {
+   "outcome": "k_pct",
+   "n": 397,
+   "n_clusters": 320,
+   "rho": 0.152,
+   "lo95": 0.048,
+   "hi95": 0.2504,
+   "n_reps_effective": 2000,
+   "verdict": "PASS",
+   "resid_fit_on_astuff": {
+    "intercept": 1373.561934,
+    "slope": 8.341022
+   },
+   "resid_sd": 152.466194,
+   "feat_mean": 2192.61461,
+   "feat_sd": 162.272775
+  },
+  "hb_abs": {
+   "outcome": "era_inv",
+   "n": 397,
+   "n_clusters": 320,
+   "rho": -0.0453,
+   "lo95": -0.1545,
+   "hi95": 0.0669,
+   "n_reps_effective": 2000,
+   "verdict": "FAIL",
+   "resid_fit_on_astuff": {
+    "intercept": 6.161917,
+    "slope": 0.028859
+   },
+   "resid_sd": 2.59897,
+   "feat_mean": 8.995718,
+   "feat_sd": 2.606069
+  },
+  "ext": {
+   "outcome": "era_inv",
+   "n": 397,
+   "n_clusters": 320,
+   "rho": 0.0482,
+   "lo95": -0.052,
+   "hi95": 0.1481,
+   "n_reps_effective": 2000,
+   "verdict": "FAIL",
+   "resid_fit_on_astuff": {
+    "intercept": 5.757126,
+    "slope": 0.005419
+   },
+   "resid_sd": 0.370483,
+   "feat_mean": 6.28927,
+   "feat_sd": 0.372237
+  },
+  "rel_ht": {
+   "outcome": "era_inv",
+   "n": 397,
+   "n_clusters": 320,
+   "rho": -0.0146,
+   "lo95": -0.1137,
+   "hi95": 0.0836,
+   "n_reps_effective": 2000,
+   "verdict": "FAIL",
+   "resid_fit_on_astuff": {
+    "intercept": 6.67654,
+    "slope": -0.009012
+   },
+   "resid_sd": 0.442889,
+   "feat_mean": 5.791562,
+   "feat_sd": 0.446938
+  },
+  "arm_angle": {
+   "outcome": "era_inv",
+   "n": 397,
+   "n_clusters": 320,
+   "rho": -0.0144,
+   "lo95": -0.1113,
+   "hi95": 0.0891,
+   "n_reps_effective": 2000,
+   "verdict": "FAIL",
+   "resid_fit_on_astuff": {
+    "intercept": 48.83752,
+    "slope": -0.105747
+   },
+   "resid_sd": 11.524684,
+   "feat_mean": 38.453652,
+   "feat_sd": 11.546187
+  },
+  "mix_entropy": {
+   "outcome": "era_inv",
+   "n": 397,
+   "n_clusters": 320,
+   "rho": 0.0537,
+   "lo95": -0.0551,
+   "hi95": 0.1656,
+   "n_reps_effective": 2000,
+   "verdict": "FAIL",
+   "resid_fit_on_astuff": {
+    "intercept": 3.656015,
+    "slope": -0.018335
+   },
+   "resid_sd": 0.299242,
+   "feat_mean": 1.855554,
+   "feat_sd": 0.323203
+  },
+  "stuff_spread": {
+   "outcome": "era_inv",
+   "n": 397,
+   "n_clusters": 320,
+   "rho": -0.042,
+   "lo95": -0.1514,
+   "hi95": 0.0679,
+   "n_reps_effective": 2000,
+   "verdict": "FAIL",
+   "resid_fit_on_astuff": {
+    "intercept": -1.341737,
+    "slope": 0.05994
+   },
+   "resid_sd": 2.047399,
+   "feat_mean": 4.544081,
+   "feat_sd": 2.08596
+  },
+  "velo_adj_ivb": {
+   "outcome": "k_pct",
+   "n": 397,
+   "n_clusters": 320,
+   "rho": -0.0664,
+   "lo95": -0.1733,
+   "hi95": 0.0412,
+   "n_reps_effective": 2000,
+   "verdict": "FAIL",
+   "resid_fit_on_astuff": {
+    "intercept": -0.869467,
+    "slope": 0.011976
+   },
+   "resid_sd": 2.767423,
+   "feat_mean": 0.306549,
+   "feat_sd": 2.768573
+  },
+  "vaa": {
+   "outcome": "k_pct",
+   "n": 397,
+   "n_clusters": 320,
+   "rho": 0.1239,
+   "lo95": 0.0272,
+   "hi95": 0.2212,
+   "n_reps_effective": 2000,
+   "verdict": "PASS",
+   "resid_fit_on_astuff": {
+    "intercept": -8.39087,
+    "slope": 0.018699
+   },
+   "resid_sd": 0.557132,
+   "feat_mean": -6.554716,
+   "feat_sd": 0.570883
+  },
+  "vaaoe": {
+   "outcome": "k_pct",
+   "n": 397,
+   "n_clusters": 320,
+   "rho": 0.0533,
+   "lo95": -0.0483,
+   "hi95": 0.1544,
+   "n_reps_effective": 2000,
+   "verdict": "FAIL",
+   "resid_fit_on_astuff": {
+    "intercept": -0.79178,
+    "slope": 0.008236
+   },
+   "resid_sd": 0.328559,
+   "feat_mean": 0.016944,
+   "feat_sd": 0.333107
+  }
+ },
+ "survivors": {
+  "velo": {
+   "outcome": "k_pct",
+   "n": 397,
+   "rho": 0.1283,
+   "lo95": 0.0289,
+   "hi95": 0.2297,
+   "resid_fit_on_astuff": {
+    "intercept": 82.009237,
+    "slope": 0.059033
+   },
+   "resid_sd": 2.427761,
+   "feat_mean": 87.806045,
+   "feat_sd": 2.459396
+  },
+  "spin": {
+   "outcome": "k_pct",
+   "n": 397,
+   "rho": 0.152,
+   "lo95": 0.048,
+   "hi95": 0.2504,
+   "resid_fit_on_astuff": {
+    "intercept": 1373.561934,
+    "slope": 8.341022
+   },
+   "resid_sd": 152.466194,
+   "feat_mean": 2192.61461,
+   "feat_sd": 162.272775
+  },
+  "vaa": {
+   "outcome": "k_pct",
+   "n": 397,
+   "rho": 0.1239,
+   "lo95": 0.0272,
+   "hi95": 0.2212,
+   "resid_fit_on_astuff": {
+    "intercept": -8.39087,
+    "slope": 0.018699
+   },
+   "resid_sd": 0.557132,
+   "feat_mean": -6.554716,
+   "feat_sd": 0.570883
+  }
+ },
+ "sub_aaa": {
+  "registration": "docs/efv-2026-07-24/GATES.md W-SCREEN-SUB (owner addendum 2026-07-23): A/CPX physics from cached StatsAPI feeds, tracked parks only, one shot, lo95 > 0, 2000 player-clustered reps seed 20260724; survivors feed W-OVERLAY-R coverage-gated to tracked-park players",
+  "one_shot": {
+   "attempted_at": "2026-07-24T01:20:49.200893+00:00",
+   "note": "single attempt; the lab refuses a rerun while this block exists"
+  },
+  "frozen_protocol": {
+   "mapping": {
+    "k_pct": [
+     "velo",
+     "ivb",
+     "spin",
+     "vaa",
+     "vaaoe"
+    ],
+    "era_inv": [
+     "hb_abs",
+     "rel_ht",
+     "mix_entropy"
+    ]
+   },
+   "orientation": "outcomes higher-is-better (K% raw, ERA negated); features natural units, no sign flips",
+   "field_sources": "velo=startSpeed; ivb=breaks.breakVerticalInduced (Savant IVB convention); hb_abs=|breaks.breakHorizontal|; spin=breaks.spinRate; rel_ht=coordinates.z0; tracked pitch = startSpeed AND vY0 present; untracked parks = absence, never imputed",
+   "residualizer": "line-4 frozen stat-line ridge (lambda 1.0, 5 player folds, fold permutation seed 20260723, features k_pct_a/bb_pct_a/era_z/age_for_level from the feature-season max-BF A/CPX stat line, BF >= 150), trained on the FULL stat-line-eligible pair universe predicting the candidate family's raw outcome; feature AND outcome OLS-residualized on the out-of-fold yhat; bootstrap refits OLS only (yhat fixed, the line-4 leakage guard)",
+   "sample": "A/CPX pairs 2023->2024 + 2024->2025; >= 150 tracked feed pitches both seasons (feature = pooled sports 14+16; season-2 = any cached sport); next-season pooled MiLB >= 40 IP (sports 11-16 milb_stats)",
+   "outcome_source": ".cache/milb_stats/pitching_{sport}_{year}.json pooled across sports 11/12/13/14/15/16 (promotion-proof destination); K% = SO/BF; ERA = 9*sum(era*ip/9)/sum(ip); IP thirds notation parsed",
+   "bootstrap": "2000 reps, cluster = mlbam, percentile CI, numpy default_rng(20260724) fresh per candidate",
+   "vaa": "formula = vaa.py calculate_vaa, y0 = per-pitch coordinates.y0 else 50; vaaoe = residual on pooled OLS(pZ, z0) via accumulated normal equations; landing bar >= 70 pct rows with >= 50 computable pitches"
+  },
+  "extraction": {
+   "finished_at": "2026-07-24T01:08:01.374102+00:00",
+   "feeds_cached": 17304,
+   "feeds_walked": 17304,
+   "stopped_reason": "complete",
+   "elapsed_s": 371.6,
+   "in_scope_games": {
+    "14_2023": 1952,
+    "16_2023": 866,
+    "12_2024": 1,
+    "14_2024": 1945,
+    "16_2024": 875,
+    "14_2025": 1948,
+    "16_2025": 878
+   },
+   "parse_errors": 0,
+   "pitcher_season_sport_keys": 6694
+  },
+  "coverage": {
+   "qualifying_universe": 719,
+   "screen_rows": 60,
+   "covered_fraction": 0.0834,
+   "dropped_feed_floors": 659
+  },
+  "sample": {
+   "n_rows": 60,
+   "n_pitchers": 60,
+   "pairs": {
+    "2023->2024": 25,
+    "2024->2025": 35
+   }
+  },
+  "vaa_status": {
+   "criterion": ">= 70% of screen rows with >= 50 VAA-computable pitches",
+   "n_rows": 60,
+   "n_covered": 60,
+   "coverage": 1.0,
+   "status": "landed",
+   "vaaoe_fit": {
+    "intercept": -1.4707,
+    "plate_z": 1.4912,
+    "rel_ht_z0": -1.4981,
+    "n_pitches": 47342,
+    "fit_pool": "all VAA-computable pitches of the covered screen feature rows"
+   }
+  },
+  "candidates": {
+   "velo": {
+    "outcome": "k_pct",
+    "n": 60,
+    "n_clusters": 60,
+    "ridge_universe_n": 719,
+    "ridge_oof_spearman_vs_outcome": 0.3337,
+    "rho": 0.1615,
+    "lo95": -0.1336,
+    "hi95": 0.4348,
+    "n_reps_effective": 2000,
+    "verdict": "FAIL",
+    "resid_fit_on_yhat": {
+     "intercept": 81.289275,
+     "slope": 27.054742
+    },
+    "resid_sd": 2.121753,
+    "feat_mean": 87.55416,
+    "feat_sd": 2.188963
+   },
+   "ivb": {
+    "outcome": "k_pct",
+    "n": 60,
+    "n_clusters": 60,
+    "ridge_universe_n": 719,
+    "ridge_oof_spearman_vs_outcome": 0.3337,
+    "rho": 0.3016,
+    "lo95": 0.026,
+    "hi95": 0.5341,
+    "n_reps_effective": 2000,
+    "verdict": "PASS",
+    "resid_fit_on_yhat": {
+     "intercept": 10.271228,
+     "slope": -6.194923
+    },
+    "resid_sd": 2.431901,
+    "feat_mean": 8.836711,
+    "feat_sd": 2.435022
+   },
+   "hb_abs": {
+    "outcome": "era_inv",
+    "n": 60,
+    "n_clusters": 60,
+    "ridge_universe_n": 719,
+    "ridge_oof_spearman_vs_outcome": -0.0106,
+    "rho": -0.0458,
+    "lo95": -0.3531,
+    "hi95": 0.269,
+    "n_reps_effective": 2000,
+    "verdict": "FAIL",
+    "resid_fit_on_yhat": {
+     "intercept": 10.45259,
+     "slope": 0.127265
+    },
+    "resid_sd": 1.989957,
+    "feat_mean": 9.914396,
+    "feat_sd": 1.990151
+   },
+   "spin": {
+    "outcome": "k_pct",
+    "n": 60,
+    "n_clusters": 60,
+    "ridge_universe_n": 719,
+    "ridge_oof_spearman_vs_outcome": 0.3337,
+    "rho": -0.0036,
+    "lo95": -0.2882,
+    "hi95": 0.2695,
+    "n_reps_effective": 2000,
+    "verdict": "FAIL",
+    "resid_fit_on_yhat": {
+     "intercept": 1903.602855,
+     "slope": 1447.833937
+    },
+    "resid_sd": 123.217332,
+    "feat_mean": 2238.868058,
+    "feat_sd": 126.539457
+   },
+   "rel_ht": {
+    "outcome": "era_inv",
+    "n": 60,
+    "n_clusters": 60,
+    "ridge_universe_n": 719,
+    "ridge_oof_spearman_vs_outcome": -0.0106,
+    "rho": 0.0772,
+    "lo95": -0.1983,
+    "hi95": 0.3324,
+    "n_reps_effective": 2000,
+    "verdict": "FAIL",
+    "resid_fit_on_yhat": {
+     "intercept": 5.220896,
+     "slope": -0.086018
+    },
+    "resid_sd": 0.329402,
+    "feat_mean": 5.584662,
+    "feat_sd": 0.329936
+   },
+   "mix_entropy": {
+    "outcome": "era_inv",
+    "n": 60,
+    "n_clusters": 60,
+    "ridge_universe_n": 719,
+    "ridge_oof_spearman_vs_outcome": -0.0106,
+    "rho": -0.1542,
+    "lo95": -0.3961,
+    "hi95": 0.1297,
+    "n_reps_effective": 2000,
+    "verdict": "FAIL",
+    "resid_fit_on_yhat": {
+     "intercept": 3.149798,
+     "slope": 0.319473
+    },
+    "resid_sd": 0.340208,
+    "feat_mean": 1.79877,
+    "feat_sd": 0.347277
+   },
+   "vaa": {
+    "outcome": "k_pct",
+    "n": 60,
+    "n_clusters": 60,
+    "ridge_universe_n": 719,
+    "ridge_oof_spearman_vs_outcome": 0.3337,
+    "rho": 0.3354,
+    "lo95": 0.0753,
+    "hi95": 0.5622,
+    "n_reps_effective": 2000,
+    "verdict": "PASS",
+    "resid_fit_on_yhat": {
+     "intercept": -6.925554,
+     "slope": 2.924461
+    },
+    "resid_sd": 0.495236,
+    "feat_mean": -6.248357,
+    "feat_sd": 0.498642
+   },
+   "vaaoe": {
+    "outcome": "k_pct",
+    "n": 60,
+    "n_clusters": 60,
+    "ridge_universe_n": 719,
+    "ridge_oof_spearman_vs_outcome": 0.3337,
+    "rho": 0.188,
+    "lo95": -0.0984,
+    "hi95": 0.4407,
+    "n_reps_effective": 2000,
+    "verdict": "FAIL",
+    "resid_fit_on_yhat": {
+     "intercept": -0.174033,
+     "slope": 0.790018
+    },
+    "resid_sd": 0.330231,
+    "feat_mean": 0.008906,
+    "feat_sd": 0.330605
+   }
+  },
+  "survivors": {
+   "ivb": {
+    "outcome": "k_pct",
+    "n": 60,
+    "rho": 0.3016,
+    "lo95": 0.026,
+    "hi95": 0.5341,
+    "resid_fit_on_yhat": {
+     "intercept": 10.271228,
+     "slope": -6.194923
+    },
+    "resid_sd": 2.431901,
+    "feat_mean": 8.836711,
+    "feat_sd": 2.435022
+   },
+   "vaa": {
+    "outcome": "k_pct",
+    "n": 60,
+    "rho": 0.3354,
+    "lo95": 0.0753,
+    "hi95": 0.5622,
+    "resid_fit_on_yhat": {
+     "intercept": -6.925554,
+     "slope": 2.924461
+    },
+    "resid_sd": 0.495236,
+    "feat_mean": -6.248357,
+    "feat_sd": 0.498642
+   }
+  }
+ }
+}

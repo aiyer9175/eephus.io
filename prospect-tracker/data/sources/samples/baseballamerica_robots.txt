@@ -1,0 +1,33 @@
+User-agent: *
+
+## Disallow specific paths
+Disallow: /wp/wp-admin/*
+Disallow: /wp/wp-login.php
+Disallow: /wp/wp-includes/*
+Disallow: /wp/wp-content/*
+Disallow: /trackback
+Disallow: /feed
+Disallow: */comments
+Disallow: ?replytocom*
+Disallow: */comments-page-*
+Disallow: */trackback
+Disallow: */feed
+Disallow: */comments
+
+## Explicitly disallow team and player archive pages queries
+Disallow: /teams/?*
+Disallow: /players/?*
+## And translated versions of same
+Disallow: /es/teams/?*
+Disallow: /es/players/?*
+
+## Allow specific paths
+Allow: /wp/wp-admin/admin-ajax.php
+Allow: /wp/wp-content/cache/*
+Allow: /wp/wp-content/uploads/*
+Allow: /wp/wp-content/themes/*
+Allow: /wp/wp-content/plugins/*
+Allow: /wp/wp-includes/js/*
+Allow: /wp/wp-includes/css/*
+
+Sitemap: https://www.baseballamerica.com/wp-sitemap.xml

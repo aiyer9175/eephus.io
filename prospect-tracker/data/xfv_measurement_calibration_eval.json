@@ -1,0 +1,865 @@
+{
+ "generated_by": "tools/efv_peak_war_lab.py",
+ "registration": "docs/efv-2026-07-24/GATES-ROUND2.md L3 (Part A measurement calibration)",
+ "clemens_2026_basis": {
+  "valuation_set": "clemens_2026",
+  "weight": "discounted realized first-6 WAR $ (value_framework.tiered_war_value_usd, per-season floored at $0, 7% discount to debut)",
+  "metrics": "NDCG (gain=surplus), top-quintile/decile surplus capture, surplus-weighted Spearman"
+ },
+ "sides": {
+  "hit": {
+   "accuracy_vs_ground_truths": {
+    "full_pool": {
+     "n": 353,
+     "cumulative": {
+      "spearman": {
+       "efv": 0.3834,
+       "consensus": 0.332,
+       "delta": 0.0514
+      },
+      "auc_contributor": {
+       "efv": 0.7762,
+       "consensus": 0.7446,
+       "n_pos": 132,
+       "thr": 3.0
+      },
+      "auc_star": {
+       "efv": 0.8167,
+       "consensus": 0.7956,
+       "n_pos": 49,
+       "thr": 10.0
+      }
+     },
+     "peak1": {
+      "spearman": {
+       "efv": 0.5251,
+       "consensus": 0.461,
+       "delta": 0.0641
+      },
+      "auc_contributor": {
+       "efv": 0.7814,
+       "consensus": 0.7409,
+       "n_pos": 119,
+       "thr": 2.0
+      },
+      "auc_star": {
+       "efv": 0.8636,
+       "consensus": 0.8228,
+       "n_pos": 24,
+       "thr": 5.0
+      }
+     },
+     "peak3": {
+      "spearman": {
+       "efv": 0.476,
+       "consensus": 0.4089,
+       "delta": 0.0671
+      },
+      "auc_contributor": {
+       "efv": 0.7734,
+       "consensus": 0.7433,
+       "n_pos": 58,
+       "thr": 6.0
+      },
+      "auc_star": {
+       "efv": 0.8703,
+       "consensus": 0.8443,
+       "n_pos": 18,
+       "thr": 12.0
+      }
+     }
+    },
+    "resolved_only": {
+     "n": 59,
+     "cumulative": {
+      "spearman": {
+       "efv": 0.3759,
+       "consensus": 0.3341,
+       "delta": 0.0418
+      },
+      "auc_contributor": {
+       "efv": 0.7718,
+       "consensus": 0.7424,
+       "n_pos": 25,
+       "thr": 3.0
+      },
+      "auc_star": {
+       "efv": 0.7111,
+       "consensus": 0.7178,
+       "n_pos": 9,
+       "thr": 10.0
+      }
+     },
+     "peak1": {
+      "spearman": {
+       "efv": 0.4514,
+       "consensus": 0.3956,
+       "delta": 0.0558
+      },
+      "auc_contributor": {
+       "efv": 0.7114,
+       "consensus": 0.6757,
+       "n_pos": 23,
+       "thr": 2.0
+      },
+      "auc_star": {
+       "efv": 0.7143,
+       "consensus": 0.5923,
+       "n_pos": 3,
+       "thr": 5.0
+      }
+     },
+     "peak3": {
+      "spearman": {
+       "efv": 0.4373,
+       "consensus": 0.382,
+       "delta": 0.0553
+      },
+      "auc_contributor": {
+       "efv": 0.6312,
+       "consensus": 0.6126,
+       "n_pos": 12,
+       "thr": 6.0
+      },
+      "auc_star": {
+       "efv": 0.756,
+       "consensus": 0.6875,
+       "n_pos": 3,
+       "thr": 12.0
+      }
+     }
+    }
+   },
+   "surplus_weighted": {
+    "n": 353,
+    "total_surplus_musd": 10993.7,
+    "surplus_gini_note": "gain = discounted realized first-6 WAR $ under clemens_2026",
+    "ndcg_all": {
+     "efv": 0.8169,
+     "consensus": 0.8298,
+     "win": false,
+     "margin": -0.0129
+    },
+    "ndcg_top20": {
+     "efv": 0.6226,
+     "consensus": 0.6022,
+     "win": true,
+     "margin": 0.0204
+    },
+    "ndcg_top10": {
+     "efv": 0.5615,
+     "consensus": 0.5884,
+     "win": false,
+     "margin": -0.0269
+    },
+    "capture_top20pct": {
+     "efv": 0.4811,
+     "consensus": 0.4271,
+     "ideal": 0.7294,
+     "win": true,
+     "margin": 0.054
+    },
+    "capture_top10pct": {
+     "efv": 0.2788,
+     "consensus": 0.273,
+     "ideal": 0.4972,
+     "win": true,
+     "margin": 0.0058
+    },
+    "weighted_spearman": {
+     "efv": 0.4675,
+     "consensus": 0.4154,
+     "win": true,
+     "margin": 0.0521
+    }
+   },
+   "disagreements": {
+    "n": 40,
+    "cumulative": {
+     "efv_closer": 18,
+     "cons_closer": 17,
+     "efv_win_rate": 0.514
+    },
+    "peak1": {
+     "efv_closer": 16,
+     "cons_closer": 19,
+     "efv_win_rate": 0.457
+    },
+    "peak3": {
+     "efv_closer": 18,
+     "cons_closer": 17,
+     "efv_win_rate": 0.514
+    },
+    "receipts": [
+     {
+      "pk": "nolan_schanuel",
+      "fv": 45.0,
+      "year": 2023,
+      "blend": 9.91,
+      "cons": 2.8,
+      "disagreement": 7.11,
+      "cumul": 5.68,
+      "peak1": 1.65,
+      "peak3": 4.41,
+      "surplus_musd": 22.0
+     },
+     {
+      "pk": "carlos_perez",
+      "fv": 45.0,
+      "year": 2022,
+      "blend": -0.39,
+      "cons": 2.91,
+      "disagreement": -3.3,
+      "cumul": -0.36,
+      "peak1": 0.0,
+      "peak3": -0.01,
+      "surplus_musd": 0.0
+     },
+     {
+      "pk": "trevor_larnach",
+      "fv": 57.66,
+      "year": 2021,
+      "blend": 11.8,
+      "cons": 8.5,
+      "disagreement": 3.3,
+      "cumul": 3.9,
+      "peak1": 1.67,
+      "peak3": 3.12,
+      "surplus_musd": 24.1
+     },
+     {
+      "pk": "daniel_johnson",
+      "fv": 42.34,
+      "year": 2020,
+      "blend": 4.7,
+      "cons": 1.47,
+      "disagreement": 3.24,
+      "cumul": -0.21,
+      "peak1": 0.26,
+      "peak3": 0.23,
+      "surplus_musd": 1.3
+     },
+     {
+      "pk": "wade_meckler",
+      "fv": 45.0,
+      "year": 2023,
+      "blend": 5.86,
+      "cons": 2.8,
+      "disagreement": 3.06,
+      "cumul": -0.02,
+      "peak1": 0.88,
+      "peak3": 0.88,
+      "surplus_musd": 0.0
+     },
+     {
+      "pk": "zach_mckinstry",
+      "fv": 40.0,
+      "year": 2020,
+      "blend": 3.37,
+      "cons": 0.35,
+      "disagreement": 3.02,
+      "cumul": 4.57,
+      "peak1": 2.92,
+      "peak3": 4.91,
+      "surplus_musd": 43.4
+     },
+     {
+      "pk": "yohel_pozo",
+      "fv": 35.0,
+      "year": 2021,
+      "blend": -2.97,
+      "cons": 0.0,
+      "disagreement": -2.97,
+      "cumul": 0.16,
+      "peak1": 0.22,
+      "peak3": 0.22,
+      "surplus_musd": 1.2
+     },
+     {
+      "pk": "sal_frelick",
+      "fv": 52.66,
+      "year": 2023,
+      "blend": 9.37,
+      "cons": 6.41,
+      "disagreement": 2.96,
+      "cumul": 12.5,
+      "peak1": 2.92,
+      "peak3": 6.25,
+      "surplus_musd": 69.8
+     },
+     {
+      "pk": "steven_kwan",
+      "fv": 47.34,
+      "year": 2022,
+      "blend": 6.84,
+      "cons": 3.91,
+      "disagreement": 2.93,
+      "cumul": 24.95,
+      "peak1": 5.67,
+      "peak3": 12.83,
+      "surplus_musd": 207.5
+     },
+     {
+      "pk": "brent_rooker",
+      "fv": 40.0,
+      "year": 2020,
+      "blend": 3.25,
+      "cons": 0.35,
+      "disagreement": 2.9,
+      "cumul": 8.27,
+      "peak1": 5.55,
+      "peak3": 9.35,
+      "surplus_musd": 88.6
+     },
+     {
+      "pk": "taylor_walls",
+      "fv": 47.34,
+      "year": 2021,
+      "blend": 6.7,
+      "cons": 3.81,
+      "disagreement": 2.88,
+      "cumul": 11.88,
+      "peak1": 2.54,
+      "peak3": 6.29,
+      "surplus_musd": 100.2
+     },
+     {
+      "pk": "dylan_carlson",
+      "fv": 57.66,
+      "year": 2020,
+      "blend": 11.56,
+      "cons": 8.77,
+      "disagreement": 2.8,
+      "cumul": 3.7,
+      "peak1": 3.18,
+      "peak3": 5.47,
+      "surplus_musd": 59.8
+     },
+     {
+      "pk": "jake_mccarthy",
+      "fv": 37.66,
+      "year": 2021,
+      "blend": 2.73,
+      "cons": 0.0,
+      "disagreement": 2.73,
+      "cumul": 5.14,
+      "peak1": 2.43,
+      "peak3": 4.49,
+      "surplus_musd": 48.4
+     },
+     {
+      "pk": "mario_feliciano",
+      "fv": 45.0,
+      "year": 2021,
+      "blend": 5.48,
+      "cons": 2.75,
+      "disagreement": 2.73,
+      "cumul": 0.07,
+      "peak1": 0.03,
+      "peak3": 0.06,
+      "surplus_musd": 0.4
+     },
+     {
+      "pk": "mickey_moniak",
+      "fv": 42.34,
+      "year": 2020,
+      "blend": 4.18,
+      "cons": 1.47,
+      "disagreement": 2.71,
+      "cumul": 0.32,
+      "peak1": 2.19,
+      "peak3": 1.53,
+      "surplus_musd": 22.7
+     },
+     {
+      "pk": "ji_hwan_bae",
+      "fv": 45.0,
+      "year": 2022,
+      "blend": 5.57,
+      "cons": 2.91,
+      "disagreement": 2.65,
+      "cumul": -1.11,
+      "peak1": 0.49,
+      "peak3": -0.34,
+      "surplus_musd": 3.4
+     },
+     {
+      "pk": "richie_palacios",
+      "fv": 42.66,
+      "year": 2022,
+      "blend": 4.55,
+      "cons": 1.92,
+      "disagreement": 2.63,
+      "cumul": 3.24,
+      "peak1": 1.8,
+      "peak3": 2.35,
+      "surplus_musd": 19.0
+     },
+     {
+      "pk": "leody_taveras",
+      "fv": 47.66,
+      "year": 2020,
+      "blend": 6.58,
+      "cons": 4.0,
+      "disagreement": 2.58,
+      "cumul": 4.7,
+      "peak1": 2.94,
+      "peak3": 4.16,
+      "surplus_musd": 51.0
+     },
+     {
+      "pk": "pavin_smith",
+      "fv": 40.0,
+      "year": 2020,
+      "blend": 2.92,
+      "cons": 0.35,
+      "disagreement": 2.57,
+      "cumul": 0.82,
+      "peak1": 0.64,
+      "peak3": 0.55,
+      "surplus_musd": 9.6
+     },
+     {
+      "pk": "colton_cowser",
+      "fv": 52.98,
+      "year": 2023,
+      "blend": 9.02,
+      "cons": 6.56,
+      "disagreement": 2.46,
+      "cumul": 6.38,
+      "peak1": 2.83,
+      "peak3": 4.68,
+      "surplus_musd": 43.0
+     }
+    ]
+   }
+  },
+  "pit": {
+   "accuracy_vs_ground_truths": {
+    "full_pool": {
+     "n": 438,
+     "cumulative": {
+      "spearman": {
+       "efv": 0.303,
+       "consensus": 0.2638,
+       "delta": 0.0392
+      },
+      "auc_contributor": {
+       "efv": 0.7197,
+       "consensus": 0.7102,
+       "n_pos": 102,
+       "thr": 3.0
+      },
+      "auc_star": {
+       "efv": 0.848,
+       "consensus": 0.8242,
+       "n_pos": 24,
+       "thr": 10.0
+      }
+     },
+     "peak1": {
+      "spearman": {
+       "efv": 0.3734,
+       "consensus": 0.3516,
+       "delta": 0.0218
+      },
+      "auc_contributor": {
+       "efv": 0.7558,
+       "consensus": 0.7502,
+       "n_pos": 82,
+       "thr": 2.0
+      },
+      "auc_star": {
+       "efv": 0.8026,
+       "consensus": 0.7797,
+       "n_pos": 8,
+       "thr": 5.0
+      }
+     },
+     "peak3": {
+      "spearman": {
+       "efv": 0.3289,
+       "consensus": 0.3011,
+       "delta": 0.0278
+      },
+      "auc_contributor": {
+       "efv": 0.7909,
+       "consensus": 0.7722,
+       "n_pos": 31,
+       "thr": 6.0
+      },
+      "auc_star": {
+       "efv": 0.617,
+       "consensus": 0.5172,
+       "n_pos": 2,
+       "thr": 12.0
+      }
+     }
+    },
+    "resolved_only": {
+     "n": 104,
+     "cumulative": {
+      "spearman": {
+       "efv": 0.2383,
+       "consensus": 0.2136,
+       "delta": 0.0247
+      },
+      "auc_contributor": {
+       "efv": 0.8187,
+       "consensus": 0.8092,
+       "n_pos": 21,
+       "thr": 3.0
+      },
+      "auc_star": {
+       "efv": 0.7677,
+       "consensus": 0.7657,
+       "n_pos": 5,
+       "thr": 10.0
+      }
+     },
+     "peak1": {
+      "spearman": {
+       "efv": 0.38,
+       "consensus": 0.3994,
+       "delta": -0.0194
+      },
+      "auc_contributor": {
+       "efv": 0.8249,
+       "consensus": 0.8159,
+       "n_pos": 18,
+       "thr": 2.0
+      },
+      "auc_star": {
+       "efv": 0.8185,
+       "consensus": 0.7904,
+       "n_pos": 3,
+       "thr": 5.0
+      }
+     },
+     "peak3": {
+      "spearman": {
+       "efv": 0.291,
+       "consensus": 0.2914,
+       "delta": -0.0004
+      },
+      "auc_contributor": {
+       "efv": 0.7214,
+       "consensus": 0.7194,
+       "n_pos": 8,
+       "thr": 6.0
+      },
+      "auc_star": {
+       "efv": 0.9612,
+       "consensus": 0.9175,
+       "n_pos": 1,
+       "thr": 12.0
+      }
+     }
+    }
+   },
+   "surplus_weighted": {
+    "n": 438,
+    "total_surplus_musd": 7238.1,
+    "surplus_gini_note": "gain = discounted realized first-6 WAR $ under clemens_2026",
+    "ndcg_all": {
+     "efv": 0.7062,
+     "consensus": 0.7103,
+     "win": false,
+     "margin": -0.0041
+    },
+    "ndcg_top20": {
+     "efv": 0.4794,
+     "consensus": 0.4968,
+     "win": false,
+     "margin": -0.0174
+    },
+    "ndcg_top10": {
+     "efv": 0.3884,
+     "consensus": 0.3783,
+     "win": true,
+     "margin": 0.0101
+    },
+    "capture_top20pct": {
+     "efv": 0.4656,
+     "consensus": 0.4789,
+     "ideal": 0.7691,
+     "win": false,
+     "margin": -0.0133
+    },
+    "capture_top10pct": {
+     "efv": 0.2691,
+     "consensus": 0.2517,
+     "ideal": 0.552,
+     "win": true,
+     "margin": 0.0174
+    },
+    "weighted_spearman": {
+     "efv": 0.3685,
+     "consensus": 0.3503,
+     "win": true,
+     "margin": 0.0182
+    }
+   },
+   "disagreements": {
+    "n": 40,
+    "cumulative": {
+     "efv_closer": 19,
+     "cons_closer": 13,
+     "efv_win_rate": 0.594
+    },
+    "peak1": {
+     "efv_closer": 17,
+     "cons_closer": 15,
+     "efv_win_rate": 0.531
+    },
+    "peak3": {
+     "efv_closer": 20,
+     "cons_closer": 12,
+     "efv_win_rate": 0.625
+    },
+    "receipts": [
+     {
+      "pk": "cole_waites",
+      "fv": 35.0,
+      "year": 2022,
+      "blend": 2.54,
+      "cons": 0.0,
+      "disagreement": 2.54,
+      "cumul": -0.1,
+      "peak1": 0.11,
+      "peak3": -0.02,
+      "surplus_musd": 0.8
+     },
+     {
+      "pk": "zach_jackson",
+      "fv": 42.66,
+      "year": 2022,
+      "blend": 4.03,
+      "cons": 1.61,
+      "disagreement": 2.42,
+      "cumul": 2.38,
+      "peak1": 0.92,
+      "peak3": 1.59,
+      "surplus_musd": 11.5
+     },
+     {
+      "pk": "jeremiah_estrada",
+      "fv": 37.66,
+      "year": 2022,
+      "blend": 2.17,
+      "cons": 0.43,
+      "disagreement": 1.74,
+      "cumul": 3.39,
+      "peak1": 1.23,
+      "peak3": 2.64,
+      "surplus_musd": 17.0
+     },
+     {
+      "pk": "grayson_rodriguez",
+      "fv": 57.66,
+      "year": 2023,
+      "blend": 6.86,
+      "cons": 5.28,
+      "disagreement": 1.58,
+      "cumul": 5.04,
+      "peak1": 1.62,
+      "peak3": 2.52,
+      "surplus_musd": 20.4
+     },
+     {
+      "pk": "nick_lodolo",
+      "fv": 55.32,
+      "year": 2022,
+      "blend": 6.17,
+      "cons": 4.59,
+      "disagreement": 1.57,
+      "cumul": 12.69,
+      "peak1": 4.69,
+      "peak3": 7.86,
+      "surplus_musd": 95.7
+     },
+     {
+      "pk": "kyle_funkhouser",
+      "fv": 37.66,
+      "year": 2020,
+      "blend": -1.48,
+      "cons": 0.06,
+      "disagreement": -1.54,
+      "cumul": 0.71,
+      "peak1": 0.98,
+      "peak3": 0.98,
+      "surplus_musd": 7.2
+     },
+     {
+      "pk": "yohan_ramirez",
+      "fv": 35.0,
+      "year": 2020,
+      "blend": -1.53,
+      "cons": 0.0,
+      "disagreement": -1.53,
+      "cumul": -0.59,
+      "peak1": 0.49,
+      "peak3": 0.98,
+      "surplus_musd": 6.6
+     },
+     {
+      "pk": "bailey_ober",
+      "fv": 40.0,
+      "year": 2021,
+      "blend": 2.29,
+      "cons": 0.79,
+      "disagreement": 1.5,
+      "cumul": 10.99,
+      "peak1": 3.04,
+      "peak3": 6.97,
+      "surplus_musd": 92.2
+     },
+     {
+      "pk": "tarik_skubal",
+      "fv": 52.66,
+      "year": 2020,
+      "blend": 5.52,
+      "cons": 4.04,
+      "disagreement": 1.48,
+      "cumul": 18.08,
+      "peak1": 6.66,
+      "peak3": 15.01,
+      "surplus_musd": 174.7
+     },
+     {
+      "pk": "cody_morris",
+      "fv": 40.0,
+      "year": 2022,
+      "blend": 2.43,
+      "cons": 0.98,
+      "disagreement": 1.44,
+      "cumul": 0.48,
+      "peak1": 0.42,
+      "peak3": 0.32,
+      "surplus_musd": 2.9
+     },
+     {
+      "pk": "brandon_waddell",
+      "fv": 40.0,
+      "year": 2020,
+      "blend": -0.67,
+      "cons": 0.68,
+      "disagreement": -1.35,
+      "cumul": 0.13,
+      "peak1": 0.4,
+      "peak3": 0.4,
+      "surplus_musd": 2.3
+     },
+     {
+      "pk": "ben_braymer",
+      "fv": 37.66,
+      "year": 2020,
+      "blend": -1.28,
+      "cons": 0.06,
+      "disagreement": -1.34,
+      "cumul": 0.4,
+      "peak1": 0.4,
+      "peak3": 0.4,
+      "surplus_musd": 2.8
+     },
+     {
+      "pk": "luis_frias",
+      "fv": 47.66,
+      "year": 2021,
+      "blend": 4.02,
+      "cons": 2.71,
+      "disagreement": 1.31,
+      "cumul": -1.72,
+      "peak1": 0.29,
+      "peak3": -0.49,
+      "surplus_musd": 2.4
+     },
+     {
+      "pk": "joe_ryan",
+      "fv": 52.98,
+      "year": 2021,
+      "blend": 5.35,
+      "cons": 4.04,
+      "disagreement": 1.3,
+      "cumul": 13.45,
+      "peak1": 4.51,
+      "peak3": 9.17,
+      "surplus_musd": 117.7
+     },
+     {
+      "pk": "jesus_cruz",
+      "fv": 35.0,
+      "year": 2020,
+      "blend": -1.27,
+      "cons": 0.0,
+      "disagreement": -1.27,
+      "cumul": -0.21,
+      "peak1": 0.0,
+      "peak3": 0.0,
+      "surplus_musd": 0.0
+     },
+     {
+      "pk": "gavin_stone",
+      "fv": 52.66,
+      "year": 2023,
+      "blend": 5.32,
+      "cons": 4.09,
+      "disagreement": 1.23,
+      "cumul": 1.96,
+      "peak1": 2.11,
+      "peak3": 2.44,
+      "surplus_musd": 23.6
+     },
+     {
+      "pk": "ethan_small",
+      "fv": 42.34,
+      "year": 2022,
+      "blend": 0.32,
+      "cons": 1.54,
+      "disagreement": -1.21,
+      "cumul": -0.48,
+      "peak1": 0.0,
+      "peak3": -0.08,
+      "surplus_musd": 0.0
+     },
+     {
+      "pk": "ron_marinaccio",
+      "fv": 40.0,
+      "year": 2022,
+      "blend": 2.19,
+      "cons": 0.98,
+      "disagreement": 1.2,
+      "cumul": 3.1,
+      "peak1": 1.21,
+      "peak3": 1.74,
+      "surplus_musd": 15.4
+     },
+     {
+      "pk": "jose_lopez",
+      "fv": 40.0,
+      "year": 2023,
+      "blend": 2.25,
+      "cons": 1.07,
+      "disagreement": 1.17,
+      "cumul": 0.04,
+      "peak1": 0.02,
+      "peak3": 0.02,
+      "surplus_musd": 0.1
+     },
+     {
+      "pk": "brailyn_marquez",
+      "fv": 52.66,
+      "year": 2020,
+      "blend": 5.2,
+      "cons": 4.04,
+      "disagreement": 1.16,
+      "cumul": -0.15,
+      "peak1": 0.0,
+      "peak3": 0.0,
+      "surplus_musd": 0.0
+     }
+    ]
+   }
+  }
+ }
+}

@@ -638,6 +638,28 @@ def _safe_float(val: Any, default: float | None = None) -> float | None:
         return default
 
 
+def _eta_years_to_debut(eta) -> float | None:
+    """Years from now to projected debut (bughunt F2, 2026-07-23). The
+    timeseries payload carries `eta` as a DICT ({year, half, ...}) on every
+    prospect row - _safe_float(dict) returned None, so _resolve_timing fell to
+    default_eta_years=0.0 and every posterior priced debut-NOW (masked today by
+    the eFV surplus overwrite on the trade board; latent-P0 on any coverage
+    gap). Mirrors storage._eta_years_from: year - current year, late half adds
+    0.5, floored at 0. A bare number passes through; None/unresolvable -> None
+    (engine default), matching the consensus writer's behavior."""
+    if eta is None:
+        return None
+    if isinstance(eta, dict):
+        yr = _safe_float(eta.get("year"))
+        if yr is None:
+            return None
+        yrs = yr - float(date.today().year)
+        if str(eta.get("half") or "") == "late":
+            yrs += 0.5
+        return max(0.0, yrs)
+    return _safe_float(eta)
+
+
 def skills_authenticity(statline: dict | None,
                         statcast: dict | None,
                         is_pitcher: bool,
@@ -2696,7 +2718,9 @@ def bayesian_trade_value(
     status      = player.get("status", "active")
     fv          = _safe_float(player.get("fv_close"))
     age         = _safe_float(player.get("age"))
-    eta         = _safe_float(player.get("eta"))
+    # bughunt F2: eta arrives as the timeseries ETA DICT - derive years-to-debut
+    # from it (see _eta_years_to_debut) instead of _safe_float(dict) -> None -> 0.0.
+    eta         = _eta_years_to_debut(player.get("eta"))
     statline    = player.get("statline") or {}
     statcast    = player.get("statcast_metrics") or {}
     recent_games = (statcast or {}).get("recent_games") or []

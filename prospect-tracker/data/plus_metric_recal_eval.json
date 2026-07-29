@@ -1,0 +1,193 @@
+{
+  "lane": "C2 plus-metric true-to-model audit",
+  "generated_by": "tools/plus_metric_recal_lab.py",
+  "principle": "a served metric should equal its model's raw output; remove clamps whose only effect is compressing the tail; keep numerical-safety guards",
+  "classification_rule": {
+    "1_display_compression": "REMOVE (default)",
+    "2_accuracy_load_bearing": "KEEP with OOS evidence",
+    "3_numerical_safety": "KEEP (div-by-zero / NaN / domain guard)"
+  },
+  "metrics": {
+    "KRP+": {
+      "source": "efv_score.run_live line ~1420",
+      "clamps_found": [
+        {
+          "clamp": "min(160.0, max(40.0, 100 + 10*z))",
+          "classification": "1_display_compression",
+          "disposition": "REMOVE",
+          "evidence": "clamp binds and compresses the tail on live pool; monotone -> Spearman(true,clamped)=1.0 so forward-validation invariant; KRP+ is a display pill, not fed downstream, so unbounded display is safe",
+          "empirical": {
+            "pool_n": 2255,
+            "x_era_k_mu": 0.002269,
+            "x_era_k_sd": 0.032576,
+            "true_min": 40.0,
+            "true_max": 189.1,
+            "n_bind_below_40": 1,
+            "n_bind_above_160": 3,
+            "n_bind_total": 4,
+            "served_range": [
+              40.0,
+              160.0
+            ],
+            "max_tail_compression_pts": 29.1,
+            "spearman_true_vs_clamped": 1.0,
+            "discordant_pairs_distinct_served": 0,
+            "monotone_no_reorder": true,
+            "rank_invariant_up_to_boundary_ties": true,
+            "invariance_note": "weakly-monotone clamp: zero reordering; unclamping only breaks the artificial 40/160 boundary ties, refining (not changing) rank -> any forward-validation Spearman is invariant",
+            "zero_quadrant_point_mass_n": 835,
+            "zero_quadrant_krp_display": 99.3,
+            "decompressed_players": [
+              {
+                "player_key": "yohanfer_santana",
+                "served_krp": 40.0,
+                "true_krp": 40.0,
+                "delta": -0.0
+              },
+              {
+                "player_key": "martires_polanco",
+                "served_krp": 160.0,
+                "true_krp": 161.7,
+                "delta": 1.7
+              },
+              {
+                "player_key": "seth_clausen",
+                "served_krp": 160.0,
+                "true_krp": 167.6,
+                "delta": 7.6
+              },
+              {
+                "player_key": "kade_anderson",
+                "served_krp": 160.0,
+                "true_krp": 189.1,
+                "delta": 29.1
+              }
+            ]
+          }
+        },
+        {
+          "clamp": "len(krp_raw) >= 2 and sd > 0",
+          "classification": "3_numerical_safety",
+          "disposition": "KEEP",
+          "evidence": "divide-by-zero / degenerate-pool guard on the z standardization"
+        }
+      ],
+      "x_era_k_zero_quadrant": {
+        "source": "efv_model._x_era_k lines 454-455",
+        "classification": "2_accuracy_load_bearing + owner-directed",
+        "disposition": "FLAG FOR OWNER DECISION (do not unilaterally reverse)",
+        "note": "the zeroed value is a SHARED eFV model feature (owner chose zero over flip: the flip's large negatives worsen the measured eFV cost). Its display consequence is a point mass of 835 double-bad pitchers at KRP+ 99.3 (near-average), which is not true-to-model for a DISPLAY pill. See report tradeoff options A/B/C."
+      }
+    },
+    "REM+": {
+      "source": "rem_plus.rem_plus",
+      "clamps_found": [
+        {
+          "clamp": "none on the served ratio (100 * mean_fip / f, raw preserved in rem_plus_raw)",
+          "classification": "n/a",
+          "disposition": "ALREADY TRUE-TO-MODEL"
+        }
+      ],
+      "fip_skill_floor": {
+        "clamp": "max(fip, 1.0)",
+        "classification": "3_numerical_safety",
+        "disposition": "KEEP",
+        "evidence": {
+          "n": 449,
+          "min_fip_served": 2.03,
+          "n_at_floor": 0,
+          "binds": false
+        }
+      }
+    },
+    "RIV+": {
+      "source": "rem_plus.score_riv_plus",
+      "clamps_found": [
+        {
+          "clamp": "none (100 + 10*z, raw in riv_plus_raw)",
+          "classification": "n/a",
+          "disposition": "ALREADY TRUE-TO-MODEL"
+        }
+      ]
+    },
+    "SEM+": {
+      "source": "sem_plus.sem_plus",
+      "clamps_found": [
+        {
+          "clamp": "none on the served ratio (raw preserved in sem_plus_raw)",
+          "classification": "n/a",
+          "disposition": "ALREADY TRUE-TO-MODEL"
+        },
+        {
+          "clamp": "gb_adjust factor max(0.6, min(1.4, ...)) in fip_skill",
+          "classification": "3_numerical_safety (domain guard on HR-scaling factor)",
+          "disposition": "KEEP / OUT-OF-SERVED-SCOPE",
+          "evidence": "inside the default-OFF gb_adjust=False backtest branch (X-S3 candidate that did NOT win); starter_export calls score_pool without gb_adjust so this never touches a served value"
+        }
+      ],
+      "fip_skill_floor": {
+        "clamp": "max(fip, 1.0)",
+        "classification": "3_numerical_safety",
+        "disposition": "KEEP",
+        "evidence": {
+          "n": 221,
+          "min_fip_served": 2.54,
+          "n_at_floor": 0,
+          "binds": false
+        }
+      }
+    },
+    "HEM+": {
+      "source": "hem_plus.hem_plus",
+      "clamps_found": [
+        {
+          "clamp": "none (100 + HEM_SPREAD_GAIN*(ratio-100); HEM_SPREAD_GAIN=2.28 is a MONOTONE spread WIDENING, i.e. de-compression, not a clamp; raw in hem_plus_raw)",
+          "classification": "n/a",
+          "disposition": "ALREADY TRUE-TO-MODEL (spread widens the tail)"
+        }
+      ]
+    },
+    "xREM+": {
+      "source": "bullpen_export._join_xrem_plus",
+      "clamps_found": [
+        {
+          "clamp": "none (100 * pool / est_woba; only the est_woba<=0 domain guard + min-PA filter)",
+          "classification": "3_numerical_safety (est_woba<=0 guard)",
+          "disposition": "ALREADY TRUE-TO-MODEL"
+        }
+      ]
+    },
+    "xSEM+": {
+      "source": "starter_export._join_xsem_plus",
+      "clamps_found": [
+        {
+          "clamp": "none (100 * pool / est_woba; est_woba<=0 guard + min-PA)",
+          "classification": "3_numerical_safety (est_woba<=0 guard)",
+          "disposition": "ALREADY TRUE-TO-MODEL"
+        }
+      ]
+    }
+  },
+  "summary": {
+    "removable_compression_clamps": [
+      "KRP+ 40-160"
+    ],
+    "owner_decision_flag": [
+      "KRP+ x_era_k zero-quadrant zeroing (display point mass)"
+    ],
+    "already_true_to_model": [
+      "REM+",
+      "RIV+",
+      "SEM+",
+      "HEM+",
+      "xREM+",
+      "xSEM+"
+    ],
+    "safety_guards_kept": [
+      "FIP floor max(fip,1.0) (never binds)",
+      "KRP+ len>=2 & sd>0",
+      "xREM+/xSEM+ est_woba<=0",
+      "SEM+ gb_adjust factor band (not served)"
+    ]
+  }
+}

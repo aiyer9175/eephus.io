@@ -1,0 +1,303 @@
+{
+ "lane": "B1 surplus calibration -> accuracy (MAE + slope->1.0, not coverage)",
+ "generated_at": "2026-07-24",
+ "seed": 20260724,
+ "n_boot": 2000,
+ "draws": 500,
+ "resolved_pool_n": 2236,
+ "accounting": {
+  "listed": 3368,
+  "scored": 2964,
+  "scored_busts": 1382,
+  "excluded_no_war": 0,
+  "censored_active": 286,
+  "excluded_post_debut_listing": 118,
+  "excluded_no_bio": 0,
+  "resolved": 2236
+ },
+ "objective": "minimize held-out MAE AND drive held-out slope -> 1.0 (LOyO by listing year)",
+ "v4_baseline_method": "isotonic_binned (np.interp clip clamps pred>last-knot)",
+ "methods_pooled": {
+  "iso": {
+   "kind": "iso",
+   "floor": 0.0,
+   "n": 2236,
+   "slope": 1.103643897932565,
+   "mae": 14.212811151071383,
+   "rmse": 26.776635047791068,
+   "bias": -0.48560889258632667,
+   "cov": 0.8644901610017889
+  },
+  "iso_tail": {
+   "kind": "iso_tail",
+   "floor": 0.0,
+   "n": 2236,
+   "slope": 1.012220947526094,
+   "mae": 14.14381355403781,
+   "rmse": 26.279102925675215,
+   "bias": -0.83602080242773,
+   "cov": 0.8604651162790697
+  },
+  "linear": {
+   "kind": "linear",
+   "floor": 0.0,
+   "n": 2236,
+   "slope": 0.9793391293643504,
+   "mae": 13.959031058741843,
+   "rmse": 26.294964740640147,
+   "bias": -0.09931354505789705,
+   "cov": 0.8676207513416816
+  },
+  "linear0": {
+   "kind": "linear0",
+   "floor": 0.0,
+   "n": 2236,
+   "slope": 0.9944719892429736,
+   "mae": 13.76777403990849,
+   "rmse": 26.26772024924173,
+   "bias": -0.3201544577174956,
+   "cov": 0.8676207513416816
+  }
+ },
+ "per_side": {
+  "hit_iso": {
+   "kind": "iso",
+   "floor": 0.0,
+   "n": 1163,
+   "slope": 0.9779575178486384,
+   "mae": 17.750862663038745,
+   "rmse": 31.61046873835001,
+   "bias": -1.2631858280562815,
+   "cov": 0.8650042992261393
+  },
+  "hit_linear0": {
+   "kind": "linear0",
+   "floor": 0.0,
+   "n": 1163,
+   "slope": 0.9917947638978385,
+   "mae": 16.971180129983992,
+   "rmse": 30.95460971911126,
+   "bias": -0.39364115828477664,
+   "cov": 0.8675838349097162
+  },
+  "pit_iso": {
+   "kind": "iso",
+   "floor": 0.0,
+   "n": 1073,
+   "slope": 0.8237081376417634,
+   "mae": 11.093503372002797,
+   "rmse": 20.447178511000075,
+   "bias": -1.2739188138145618,
+   "cov": 0.8219944082013048
+  },
+  "pit_linear0": {
+   "kind": "linear0",
+   "floor": 0.0,
+   "n": 1073,
+   "slope": 0.9809461897305176,
+   "mae": 10.315571167845016,
+   "rmse": 19.894495006176214,
+   "bias": -0.14131692502672258,
+   "cov": 0.8471575023299162
+  }
+ },
+ "floor_sweep": {
+  "0.0": {
+   "slope": 0.9944719892429736,
+   "mae": 13.76777403990849
+  },
+  "0.5": {
+   "slope": 0.9989559038793654,
+   "mae": 13.825882655733238
+  },
+  "1.0": {
+   "slope": 1.0055327238001246,
+   "mae": 13.920449930091243
+  },
+  "2.0": {
+   "slope": 1.0197821407470105,
+   "mae": 14.13644880276603
+  }
+ },
+ "bootstrap_lin0_vs_v4": {
+  "reps": 2000,
+  "iso_slope_mean": 1.0439062927275131,
+  "iso_slope_ci": [
+   0.9097035062208932,
+   1.1968356185058546
+  ],
+  "iso_mae_mean": 14.36784882215123,
+  "iso_mae_ci": [
+   12.214097877436313,
+   16.6402622489763
+  ],
+  "lin0_slope_mean": 0.9866760623085438,
+  "lin0_slope_ci": [
+   0.9405550141687165,
+   1.0209970362120007
+  ],
+  "lin0_mae_mean": 13.77544314768968,
+  "lin0_mae_ci": [
+   11.779510229242922,
+   15.835136062145903
+  ],
+  "delta_absslope_mean": -0.049413635518692746,
+  "p_lin0_slope_closer": 0.8035,
+  "delta_mae_mean": -0.5924056744615468,
+  "p_lin0_mae_lower": 0.983,
+  "delta_mae_ci": [
+   -1.1803881409269308,
+   -0.06468377736232925
+  ]
+ },
+ "cap_tests": {
+  "baseline": {
+   "raw_slope": 1.3824906534874435,
+   "lin0_slope": 0.9944719892429736,
+   "lin0_mae": 13.76777403990849,
+   "pred_min": 1.3163093034701212,
+   "pred_max": 111.27665542579379
+  },
+  "remove_bucket_zero_floor": {
+   "raw_slope": 1.3938045494231068,
+   "lin0_slope": 0.9885273070950719,
+   "lin0_mae": 13.571972812243569,
+   "pred_min": 0.0
+  },
+  "remove_convex_tier": {
+   "raw_slope": 1.1372295683150833,
+   "lin0_slope": 1.0176065605679965,
+   "lin0_mae": 14.248301809377756
+  },
+  "raw_pred_zero_floor_binds_n": 0
+ },
+ "ship": {
+  "curve": "linear-floored-at-0 (expressed as isotonic knots)",
+  "slope": 1.3824906534874435,
+  "intercept_mm": -2.3185511546692723,
+  "zero_cross": 1.6770826976808424,
+  "x_mm": [
+   0.0,
+   1.677,
+   20.0,
+   60.0,
+   400.0
+  ],
+  "y_mm": [
+   0.0,
+   0.0,
+   25.33,
+   80.63,
+   550.68
+  ],
+  "max_abs_knot_err_over_0_205": 0.0012606975980062884
+ },
+ "served_grid_v4_vs_new": [
+  {
+   "side": "HIT",
+   "fv": 40,
+   "raw_mm": 2.0,
+   "v4_mm": 2.3,
+   "new_mm": 0.4,
+   "pct_chg": -80.3
+  },
+  {
+   "side": "HIT",
+   "fv": 45,
+   "raw_mm": 9.2,
+   "v4_mm": 9.5,
+   "new_mm": 10.3,
+   "pct_chg": 9.0
+  },
+  {
+   "side": "HIT",
+   "fv": 50,
+   "raw_mm": 23.1,
+   "v4_mm": 33.1,
+   "new_mm": 29.7,
+   "pct_chg": -10.5
+  },
+  {
+   "side": "HIT",
+   "fv": 55,
+   "raw_mm": 36.4,
+   "v4_mm": 49.5,
+   "new_mm": 48.0,
+   "pct_chg": -3.0
+  },
+  {
+   "side": "HIT",
+   "fv": 60,
+   "raw_mm": 61.7,
+   "v4_mm": 80.5,
+   "new_mm": 83.0,
+   "pct_chg": 3.0
+  },
+  {
+   "side": "HIT",
+   "fv": 65,
+   "raw_mm": 100.0,
+   "v4_mm": 127.5,
+   "new_mm": 135.9,
+   "pct_chg": 6.6
+  },
+  {
+   "side": "PIT",
+   "fv": 40,
+   "raw_mm": 1.8,
+   "v4_mm": 2.2,
+   "new_mm": 0.2,
+   "pct_chg": -92.1
+  },
+  {
+   "side": "PIT",
+   "fv": 45,
+   "raw_mm": 7.9,
+   "v4_mm": 8.9,
+   "new_mm": 8.6,
+   "pct_chg": -2.8
+  },
+  {
+   "side": "PIT",
+   "fv": 50,
+   "raw_mm": 20.6,
+   "v4_mm": 29.6,
+   "new_mm": 26.1,
+   "pct_chg": -11.7
+  },
+  {
+   "side": "PIT",
+   "fv": 55,
+   "raw_mm": 33.0,
+   "v4_mm": 45.4,
+   "new_mm": 43.4,
+   "pct_chg": -4.4
+  },
+  {
+   "side": "PIT",
+   "fv": 60,
+   "raw_mm": 57.8,
+   "v4_mm": 75.7,
+   "new_mm": 77.5,
+   "pct_chg": 2.4
+  },
+  {
+   "side": "PIT",
+   "fv": 65,
+   "raw_mm": 95.0,
+   "v4_mm": 121.3,
+   "new_mm": 129.0,
+   "pct_chg": 6.3
+  }
+ ],
+ "verdict": "SHIP linear0",
+ "notes": [
+  "v4 method isotonic_binned CLIPS every pred above its last fitted knot to a flat value (high-end compression); v4 config patches it with an ad-hoc tail knot 140->176.55.",
+  "linear0 has no high-end clamp; held-out slope 0.9945 (vs v4 1.1036) and MAE 13.77 (vs 14.21).",
+  "convex tier-curve is ACCURACY-LOAD-BEARING (flat pricing worsens held-out MAE) -> KEEP.",
+  "calibration-output $0 floor is ACCURACY-LOAD-BEARING (linear0 beats un-floored linear) -> KEEP.",
+  "raw-prediction $0 floor (max(0,base) in expected_surplus_usd) never binds (min pred 1.32) -> non-load-bearing/safety.",
+  "per-bucket $0 surplus_floor_usd removal is marginal/within-noise + changes raw scale + touches shared path -> deferred, not shipped in B1.",
+  "realized_implied_fv low-end FG spread is the GRADE map, NOT in the surplus $ path; monotone -> Spearman-invariant; defer to lane B2."
+ ]
+}

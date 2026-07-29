@@ -1,0 +1,41 @@
+{
+  "captured": "2026-07-24T22:38:54Z",
+  "endpoint": "POST https://data-graph.mlb.com/graphql",
+  "auth": "none (open, unauthenticated)",
+  "samples": {
+    "pipeline_vintage_2021_with_grades.json": {
+      "slug": "sel-pr-2021-top100",
+      "http_status": 200,
+      "bytes": 18128,
+      "note": "grades present for a subset (e.g. #1 Wander Franco 677551 Hit/Power/Run/Arm/Field/Overall)"
+    },
+    "pipeline_vintage_2026_with_grades.json": {
+      "slug": "sel-pr-2026-top100",
+      "http_status": 200,
+      "bytes": 15243,
+      "note": "grades null on this host for 2022-2026 vintages; rank/pos/eta/id full"
+    }
+  },
+  "grade_schema_cracked": {
+    "path": "playerEntity.gradesHitting / playerEntity.gradesPitching -> [PlayerEntityGrades{key value}]",
+    "hitting_keys": [
+      "Hit",
+      "Power",
+      "Run",
+      "Arm",
+      "Field",
+      "Overall"
+    ],
+    "pitching_keys": [
+      "Fastball",
+      "Curveball",
+      "Slider",
+      "Changeup",
+      "Control",
+      "Overall"
+    ],
+    "overall_is": "Future Value (FV)",
+    "value_type": "string 20-80, coerced to int",
+    "coverage": "populated for 2015-2021 vintages (subset per year); null for 2022-2026 on this host"
+  }
+}

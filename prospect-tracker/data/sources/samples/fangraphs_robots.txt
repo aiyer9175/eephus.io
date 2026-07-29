@@ -1,0 +1,22 @@
+# robots.txt for http://www.fangraphs.com/
+
+User-agent: *
+Disallow: /fantasyleaders.aspx
+Disallow: /fantasyminorleaders.aspx
+Disallow: /thegame/tgleaders.aspx
+Disallow: /thttest/
+Disallow: /blogstest/
+Disallow: /plustest/
+Disallow: /blank-page.aspx
+Disallow: /statss-legacy.aspx
+Disallow: /graphs-legacy.aspx
+Disallow: /pitchfxg-legacy.aspx
+Disallow: /statsplits-legacy.aspx
+Disallow: /splitstool-legacy.aspx
+Disallow: /pitchfx-legacy.aspx
+Disallow: /statsd-legacy.aspx
+Disallow: /statsp-legacy.aspx
+Disallow: /comparison-legacy.aspx
+Disallow: /spraycharts-legacy.aspx
+Disallow: /zonegrid-legacy.aspx
+

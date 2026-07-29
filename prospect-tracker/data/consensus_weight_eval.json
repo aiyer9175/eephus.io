@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-16T18:50:23Z",
+ "generated_at": "2026-07-28T17:01:13Z",
  "vintage_rule": "weights for board-year Y use base years <= Y - 3 only",
  "per_year": [
   {
@@ -7,16 +7,16 @@
    "n": 662,
    "weights_vintage_max_base": 2017,
    "weights": {
-    "fangraphs": 0.8363,
-    "mlb_pipeline": 1.1637
+    "fangraphs": 0.8338,
+    "mlb_pipeline": 1.1662
    },
    "equal": {
-    "spearman": 0.2536,
-    "auc": 0.702
+    "spearman": 0.2522,
+    "auc": 0.704
    },
    "weighted": {
-    "spearman": 0.2563,
-    "auc": 0.704
+    "spearman": 0.2549,
+    "auc": 0.706
    }
   },
   {
@@ -24,73 +24,73 @@
    "n": 686,
    "weights_vintage_max_base": 2018,
    "weights": {
-    "fangraphs": 0.8602,
-    "mlb_pipeline": 1.1398
+    "fangraphs": 0.8593,
+    "mlb_pipeline": 1.1407
    },
    "equal": {
-    "spearman": 0.3163,
+    "spearman": 0.3157,
     "auc": 0.7466
    },
    "weighted": {
-    "spearman": 0.3174,
+    "spearman": 0.3162,
     "auc": 0.7477
    }
   },
   {
    "year": 2022,
-   "n": 731,
+   "n": 728,
    "weights_vintage_max_base": 2019,
    "weights": {
-    "fangraphs": 0.8775,
-    "mlb_pipeline": 1.1225
+    "fangraphs": 0.8762,
+    "mlb_pipeline": 1.1238
    },
    "equal": {
-    "spearman": 0.2937,
-    "auc": 0.7341
+    "spearman": 0.2889,
+    "auc": 0.7349
    },
    "weighted": {
-    "spearman": 0.302,
-    "auc": 0.7377
+    "spearman": 0.2969,
+    "auc": 0.7388
    }
   },
   {
    "year": 2023,
-   "n": 787,
+   "n": 782,
    "weights_vintage_max_base": 2020,
    "weights": {
-    "fangraphs": 0.8966,
-    "mlb_pipeline": 1.1034
+    "fangraphs": 0.8952,
+    "mlb_pipeline": 1.1048
    },
    "equal": {
-    "spearman": 0.2618,
-    "auc": 0.7374
+    "spearman": 0.2513,
+    "auc": 0.7391
    },
    "weighted": {
-    "spearman": 0.2536,
-    "auc": 0.7327
+    "spearman": 0.242,
+    "auc": 0.7344
    }
   }
  ],
  "pooled": {
-  "pooled_n": 2866,
+  "pooled_n": 2858,
   "equal": {
-   "spearman": 0.2769,
-   "auc": 0.7306
+   "spearman": 0.2728,
+   "auc": 0.7316
   },
   "weighted": {
-   "spearman": 0.278,
-   "auc": 0.7379
+   "spearman": 0.2737,
+   "auc": 0.7387
   }
  },
- "ship": true,
+ "ship": false,
  "live_weights": {
-  "fangraphs": 0.9355,
-  "mlb_pipeline": 1.0645
+  "fangraphs": 0.9377,
+  "mlb_pipeline": 1.0623
  },
  "live_weights_vintage_max_base": 2023,
  "notes": [
   "two-source A/B: only FanGraphs + MLB Pipeline have resolvable multi-year history; all other sources stay at weight 1.0 (equal) in the live blend \u2014 new sources are never punished for being new",
   "weights shrunk toward equal with k=150 pseudo-n, clamped (0.6, 1.5)",
-  "ship rule: weighted >= equal on BOTH pooled Spearman and AUC; loss means equal-weight retains"
+  "ship rule (hardened 2026-07-25): weighted must beat equal by more than the gate can RESOLVE on BOTH metrics (d_rho >= 0.0068 = the measured MDE95, d_auc >= 0.0052); anything smaller is inside the noise floor and equal-weight retains"
  ]
 }

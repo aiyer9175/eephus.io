@@ -24,8 +24,15 @@ Flow:
   3. For any player who meets the qualifier threshold and is NOT yet in our DB,
      call storage.upsert_unranked_active_player() with:
        - provisional_fv = 35 (below-threshold; strong performance moves it)
-       - source_label   = 'performance_ingest' (excluded from consensus FV)
+       - source_label   = 'performance_ingest' (a SYNTHETIC constant, not a
+         grade: grade_normalization._SYNTHETIC_SOURCES passes it through raw
+         and never quantile-maps it. NOTE it is NOT excluded from consensus:
+         data/source_weights.json is {} so it votes at 1.0 like any outlet,
+         and for a player no publication has ever graded it IS the whole
+         consensus. See .cache/anchor_probe/PATCH_consensus_synthetic_anchor.md)
   4. Return a count of new entries so the pipeline can log what was added.
+  5. refresh_performance_anchors() re-dates the anchors of players discovered
+     on an earlier run who still qualify, so the stamp cannot freeze.
 """
 
 from __future__ import annotations
@@ -105,6 +112,52 @@ def _canonical_key(name: str) -> str:
         return re.sub(r"\s+", "_", s)
 
 
+def _durable_key_to_mlbam() -> dict[str, int]:
+    """{player_key: mlbam_id} from player_photos — the durable binding used
+    to detect name-slug collisions between distinct MLBAM identities."""
+    out: dict[str, int] = {}
+    try:
+        from storage import load_mlbam_player_keys
+        for mid, key in load_mlbam_player_keys().items():
+            try:
+                out[key] = int(mid)
+            except (TypeError, ValueError):
+                continue
+    except Exception as exc:
+        log.debug("mlbam_ingest: durable key map unavailable: %s", exc)
+    return out
+
+
+def _collision_safe_key(key: str, mlbam_id: int,
+                        durable_by_key: dict[str, int]) -> str:
+    """Return the key this MLBAM identity's rows should live under.
+
+    Two different humans can share a name slug (the 2026 DSL Giants signee
+    Jose Valdez, mlbam 838649, collides with the retired Tigers RHP Jose A.
+    Valdez — both -> "jose_a_valdez"). Known splits come from
+    scrapers._SPLIT_KEYS; beyond those, fork a discriminated key whenever
+    the slug is already durably bound (player_photos) to a DIFFERENT mlbam,
+    so the newcomer is ingested as his own record instead of being silently
+    skipped or merged onto the incumbent."""
+    try:
+        from scrapers import split_key_for_mlbam
+        split = split_key_for_mlbam(key, mlbam_id)
+        if split:
+            return split
+    except Exception:
+        pass
+    durable = durable_by_key.get(key)
+    if durable is not None and int(mlbam_id) != durable:
+        forked = f"{key}_{mlbam_id}"
+        log.warning(
+            "mlbam_ingest: name-slug collision — %r is durably bound to "
+            "mlbam %s; ingesting id %s under %r",
+            key, durable, mlbam_id, forked,
+        )
+        return forked
+    return key
+
+
 def _fetch_stat_leaders(sport_id: int, group: str, season: int,
                         min_pa_ip: float) -> list[dict]:
     """Fetch per-player stats from the MLB Stats API for a given sport / group.
@@ -163,10 +216,59 @@ def _fetch_stat_leaders(sport_id: int, group: str, season: int,
                 "player_name": name,
                 "position":    pos,
                 "team_abbr":   abbr,
+                "team_id":     team.get("id"),
                 "birth_date":  bdate[:10] if bdate else None,
                 "sample":      sample,
             })
     return results
+
+
+# --- affiliate -> parent org, from the API instead of a 3-letter guess -------
+# _abbr_to_org's last resort is `clean[:3]`, which turns an affiliate name into
+# a fake org code: Erie -> "ERI", Reading -> "REA", Wilmington -> "WIL". Measured
+# 2026-07-25: 1,360 of the 2,575 auto-tracked players carried an affiliate string
+# in players.org instead of an MLB org. StatsAPI publishes the real mapping
+# (`parentOrgName` on every one of the 201 affiliate teams, verified live
+# HTTP 200), so resolve by team_id first and keep the keyword table as fallback.
+_PARENT_ORG_CACHE: dict[int, str] = {}
+
+
+def _parent_org_by_team_id(season: int) -> dict[int, str]:
+    """{affiliate team_id: canonical MLB org code} for every MiLB affiliate."""
+    global _PARENT_ORG_CACHE
+    if _PARENT_ORG_CACHE:
+        return _PARENT_ORG_CACHE
+    sport_ids = ",".join(str(v) for v in _SPORT_IDS.values())
+    data = _api_get("https://statsapi.mlb.com/api/v1/teams",
+                    {"sportIds": sport_ids, "season": season,
+                     "fields": "teams,id,parentOrgName,parentOrgId"})
+    if not data:
+        return {}
+    try:
+        from trades import canonical_org
+    except ImportError:
+        canonical_org = lambda t: t  # noqa: E731
+    out: dict[int, str] = {}
+    for t in (data.get("teams") or []):
+        tid, parent = t.get("id"), t.get("parentOrgName")
+        if not tid or not parent:
+            continue
+        code = canonical_org(parent)
+        if code:
+            out[int(tid)] = code
+    _PARENT_ORG_CACHE = out
+    log.info("mlbam_ingest: resolved %d affiliate -> parent org mappings", len(out))
+    return out
+
+
+def _org_for_entry(entry: dict, season: int) -> str:
+    """Parent MLB org for one leaders row. API mapping first, keyword fallback."""
+    tid = entry.get("team_id")
+    if tid:
+        org = _parent_org_by_team_id(season).get(int(tid))
+        if org:
+            return org
+    return _abbr_to_org(entry.get("team_abbr") or "")
 
 
 def _abbr_to_org(abbr: str) -> str:
@@ -210,6 +312,105 @@ def _abbr_to_org(abbr: str) -> str:
     return clean[:3] if len(clean) >= 3 else abbr[:3].upper()
 
 
+def _synthetic_only_keys() -> set[str]:
+    """player_keys whose ONLY explicit-FV snapshot source is the synthetic
+    performance_ingest stamp (i.e. no publication has ever graded them).
+
+    Only these may be re-stamped by the refresh pass. A player who has a real
+    anchor must NOT get a freshened synthetic vote: the real source's own
+    cadence (and its staleness) is the honest signal there."""
+    from storage import connect
+    with connect() as con:
+        rows = con.execute(
+            """SELECT player_key,
+                      SUM(CASE WHEN source = 'performance_ingest' THEN 1 ELSE 0 END) AS synth,
+                      SUM(CASE WHEN source NOT IN ('performance_ingest', 'draft_signing',
+                                                   'auto_detect') THEN 1 ELSE 0 END)  AS real
+                 FROM snapshots
+                WHERE fv IS NOT NULL
+             GROUP BY player_key"""
+        ).fetchall()
+    return {r[0] for r in rows if r[1] and not r[2]}
+
+
+def refresh_performance_anchors(season: int | None = None,
+                                *,
+                                levels: list[str] | None = None,
+                                min_pa: int = _MIN_PA,
+                                min_ip: float = _MIN_IP,
+                                as_of: str | None = None,
+                                dry_run: bool = False) -> dict[str, int]:
+    """Re-date the performance_ingest anchor of ALREADY-tracked players who
+    still qualify this season.
+
+    ROOT CAUSE this closes: `ingest_unranked_active_prospects` skips every
+    player already in the DB (`if pid in known_ids or key in known_keys:
+    continue`), so `upsert_unranked_active_player` is only ever called on the
+    run that FIRST discovers a player. Combined with the old
+    `snap_date = f"{season}-01-01"`, an auto-tracked player's anchor date was
+    written exactly once and never moved again. Measured 2026-07-25: all
+    2,760 performance_ingest rows sat at snapshot_date 2026-01-01, min == max.
+
+    Why the date matters: efv_dataset._stale_anchor_discount decays the model
+    anchor of any row whose as-of date is > 18 months old, to a terminal of
+    -10 FV at 30 months. A permanently frozen 2026-01-01 stamp therefore drags
+    the entire auto-tracked cohort from FV 35 to FV 25 starting 2027-07 and
+    fully by 2028-07, describing a "dropped off the lists" event that never
+    happened.
+
+    The refresh re-asserts the claim the stamp actually encodes ("this player
+    is registered and producing at a qualifying level") only while it is still
+    TRUE: a player who stops appearing in the qualifying leaders stops being
+    re-stamped and correctly decays. It never creates a player and never
+    touches a player who has a real published anchor.
+    """
+    from storage import upsert_unranked_active_player
+
+    season = season or date.today().year
+    levels = levels or list(_SPORT_IDS.keys())
+    eligible = _synthetic_only_keys()
+    key_by_mlbam = {v: k for k, v in _durable_key_to_mlbam().items()}
+    stamp = as_of or date.today().isoformat()
+
+    out = {"qualified": 0, "refreshed": 0, "skipped_real_anchor": 0,
+           "skipped_untracked": 0}
+    seen: set[str] = set()          # a player promoted mid-season qualifies at
+                                    # two levels; count him once
+    for level in levels:
+        sport_id = _SPORT_IDS.get(level)
+        if not sport_id:
+            continue
+        for group, floor in (("hitting", min_pa), ("pitching", min_ip)):
+            for entry in _fetch_stat_leaders(sport_id, group, season, floor):
+                out["qualified"] += 1
+                key = key_by_mlbam.get(entry["mlbam_id"])
+                if not key:
+                    out["skipped_untracked"] += 1
+                    continue
+                if key not in eligible:
+                    out["skipped_real_anchor"] += 1
+                    continue
+                if key in seen:
+                    continue
+                seen.add(key)
+                if not dry_run:
+                    upsert_unranked_active_player(
+                        player_key   = key,
+                        player_name  = entry["player_name"],
+                        position     = entry["position"],
+                        org          = _org_for_entry(entry, season),
+                        birth_date   = entry["birth_date"],
+                        mlbam_id     = entry["mlbam_id"],
+                        season       = season,
+                        provisional_fv = 35.0,
+                        source_label = "performance_ingest",
+                        as_of        = stamp,
+                    )
+                out["refreshed"] += 1
+    log.info("mlbam_ingest.refresh_performance_anchors(%s): %s", season, out)
+    return out
+
+
 def ingest_unranked_active_prospects(
     season: int | None = None,
     *,
@@ -233,6 +434,7 @@ def ingest_unranked_active_prospects(
     levels    = levels or list(_SPORT_IDS.keys())
     known_ids = _load_existing_mlbam_ids()
     known_keys = _existing_player_keys()
+    durable_by_key = _durable_key_to_mlbam()
     summary: dict[str, int] = {}
 
     for level in levels:
@@ -250,12 +452,16 @@ def ingest_unranked_active_prospects(
             for entry in leaders:
                 pid  = entry["mlbam_id"]
                 name = entry["player_name"]
-                key  = _canonical_key(name)
+                # Slug-collision guard: a NEW mlbam whose name-slug collides
+                # with an already-tracked DIFFERENT player gets a
+                # discriminated key instead of being skipped (or merged).
+                key  = _collision_safe_key(_canonical_key(name), pid,
+                                           durable_by_key)
 
                 if pid in known_ids or key in known_keys:
                     continue  # already tracked
 
-                org = _abbr_to_org(entry["team_abbr"])
+                org = _org_for_entry(entry, season)
                 pos = entry["position"]
                 bdate = entry["birth_date"]
 

@@ -1,0 +1,318 @@
+{
+ "generated_at": "2026-07-23",
+ "experiment": {
+  "registration": "docs/wills-2026-07-23/GATES.md",
+  "section": "W1 PT-RISK: injury-history playing-time adjustment in fa_projection PT",
+  "seed": 20260723,
+  "bootstrap_reps": 2000,
+  "flag": "EEPHUS_PT_RISK",
+  "sidecar": "data/pt_risk_adjust.json",
+  "lab": "tools/pt_risk_lab.py",
+  "dev_bases": [
+   2019,
+   2021
+  ],
+  "holdout_bases": [
+   2022,
+   2023,
+   2024
+  ],
+  "train_first": 2017
+ },
+ "a_priori_choices": [
+  "2020 excluded as a TARGET in training and scoring (60-game realized PA vs a full-season Marcel prediction is degenerate by construction; mirrors proj_eval's deliberate COVID gap in its default bases), so dev pool = {2019, 2021}; 2020 kept as a FEATURE season",
+  "ridge alpha 1.0 on z-standardized features, NO intercept: mean-zero redistribution, no global recalibration (frozen feature list carries no constant)",
+  "MLB-team transactions only (sportId=1 team ids); placement = 'placed' + injured/disabled list; activation = activated/reinstated/returned + injured/disabled list; transfers continue the stint",
+  "stint closes at earliest of next activation / next placement / placement-season window end (Apr 1 - Oct 1; 2020: Jul 23 - Sep 28); days = window overlap; stint counts to placement year",
+  "career features sum all observed seasons < B (substrate floor 2015); hook coverage rule: mlbam + age known and target_season - 1 >= 2016",
+  "row universe mirrors proj_eval (hist in B-1..B-3, age row, non-None projection); absent season B = 0 realized PA / IP / WAR; war_actual built exactly as proj_eval builds it",
+  "ON path scored through the shipped hook (EEPHUS_PT_RISK=1 with point-in-time blocks installed in fa_projection._pt_risk_state)",
+  "h1 WAR pred = round(max(0, war_from_projection), 2), the champion _decay_path t=0 cell"
+ ],
+ "data_phase": {
+  "source": "statsapi /api/v1/transactions 2015-01 .. 2026-07, monthly ranges, cached .cache/mlb_transactions/",
+  "per_year_placements": {
+   "2015": 516,
+   "2016": 548,
+   "2017": 694,
+   "2018": 730,
+   "2019": 723,
+   "2020": 530,
+   "2021": 1478,
+   "2022": 1021,
+   "2023": 875,
+   "2024": 822,
+   "2025": 850,
+   "2026": 642
+  },
+  "stints_2016_2025": 8271,
+  "stop_d_bar": 15000,
+  "players_with_stints": 2685,
+  "stop_d": {
+   "bar": "reconstructed MLB IL stints 2016-2025 >= 15000 and per-year counts plausible vs the registered ~1500-2500/yr scale",
+   "measured_stints_2016_2025": 8271,
+   "pass": false,
+   "reconstruction_bug_check": "faithful, not a parsing hole: across 2015-2026 only 1 MLB SC transaction has an empty description and 0 injured/disabled-list rows match no verb (placed/activated/reinstated/returned/transferred). Per-year counts track published MLB IL records closely (2017 ~700 placements in the first 10-day-IL season vs 694 here; 2018 ~737 vs 730), so the registered ~1500-2500/yr plausibility scale overestimated true MLB IL volume (~550-900/yr pre-COVID, ~850-1500/yr 2021-2025)."
+  }
+ },
+ "arms": {
+  "ARM-H": {
+   "side": "hit",
+   "clauses": {
+    "C1": {
+     "bar": "pooled dev PT MAE strictly improves AND pooled holdout PT MAE strictly improves AND player-clustered bootstrap lo95 of the dev improvement > 0 (2000 reps, seed 20260723)",
+     "measured": null,
+     "status": "NOT-RUN (registered STOP-D halt before any model was built)"
+    },
+    "C2": {
+     "bar": "proj_eval-protocol h1 WAR MAE ON not worse than OFF by more than +0.005 on dev AND holdout",
+     "measured": null,
+     "status": "NOT-RUN (registered STOP-D halt before any model was built)"
+    },
+    "C3": {
+     "bar": "|pt_adj| clamped at 150 PA (hit) / 60 IP-equivalent (pit), a priori",
+     "measured": null,
+     "status": "NOT-RUN; the clamp constants are nonetheless hard-coded in the shipped hook (fa_projection.PT_RISK_CLAMP)"
+    },
+    "C4": {
+     "bar": "pt_proj floors at 0; projected league PT sum moves < 2 percent",
+     "measured": null,
+     "status": "NOT-RUN (registered STOP-D halt before any model was built)"
+    }
+   },
+   "verdict": "STOP-D"
+  },
+  "ARM-P": {
+   "side": "pit",
+   "clauses": {
+    "C1": {
+     "bar": "pooled dev PT MAE strictly improves AND pooled holdout PT MAE strictly improves AND player-clustered bootstrap lo95 of the dev improvement > 0 (2000 reps, seed 20260723)",
+     "measured": null,
+     "status": "NOT-RUN (registered STOP-D halt before any model was built)"
+    },
+    "C2": {
+     "bar": "proj_eval-protocol h1 WAR MAE ON not worse than OFF by more than +0.005 on dev AND holdout",
+     "measured": null,
+     "status": "NOT-RUN (registered STOP-D halt before any model was built)"
+    },
+    "C3": {
+     "bar": "|pt_adj| clamped at 150 PA (hit) / 60 IP-equivalent (pit), a priori",
+     "measured": null,
+     "status": "NOT-RUN; the clamp constants are nonetheless hard-coded in the shipped hook (fa_projection.PT_RISK_CLAMP)"
+    },
+    "C4": {
+     "bar": "pt_proj floors at 0; projected league PT sum moves < 2 percent",
+     "measured": null,
+     "status": "NOT-RUN (registered STOP-D halt before any model was built)"
+    }
+   },
+   "verdict": "STOP-D"
+  }
+ },
+ "verdict": {
+  "ARM-H": "STOP-D",
+  "ARM-P": "STOP-D"
+ },
+ "mechanism_state": {
+  "hook": "fa_projection.project_player carries the EEPHUS_PT_RISK hook (default OFF, read at call time); with the flag unset the engine is byte-identical (verified on a 50-player sample, hit + pit, base 2024: OFF path AND flag-on-without-sidecar both byte-identical to the pre-edit engine)",
+  "sidecar": "data/pt_risk_adjust.json NOT written (registered: coefficients are fit only on a PASS); the hook no-ops without it"
+ },
+ "join": {
+  "method": "corpus rows carry mlbam natively (StatsAPI player ids); transactions person.id is the same mlbam space; direct integer join, no crosswalk needed",
+  "note": "join verified viable before the halt: 2685 distinct persons carry reconstructed MLB IL stints"
+ },
+ "loss_ledger": {
+  "story": "Data-blocked, not mechanism-refuted. The transactions substrate itself is sound (139 monthly files cached, IL placement/activation pairing clean, per-year counts match published MLB IL records), but the reconstruction yields 8271-scale stints for 2016-2025 against the registered 15000 floor because the registered plausibility scale overestimated real MLB IL volume. Per the frozen one-attempt rule the bar is not retuned after seeing data; the lane halts before any ridge fit, the dev and holdout bases stay untouched, and the hook ships guarded to no-op.",
+  "keep_alive": "Registered in GATES.md W1: re-gate at extended IL history (2027), or with the OD-roster backfill. The cached .cache/mlb_transactions/ substrate and tools/pt_risk_lab.py gate machinery are reusable as-is; a future registration can set its stint floor from the now-measured true scale."
+ },
+ "w1b": {
+  "generated_at": "2026-07-23",
+  "amendment": "docs/wills-2026-07-23/GATES.md section 'W1-B amendment': STOP-D floor re-derived from the PUBLISHED IL-record scale to 6000 stints 2016-2025 with per-year band 450-2600 (2021 COVID-IL era allowed high). C1-C4, the frozen feature list, arms, seeds, clamps, and the dev/holdout split are IDENTICAL to the W1 registration; the C-clauses never ran under W1 and run ONCE here.",
+  "stop_d": {
+   "bar": "reconstructed MLB IL stints 2016-2025 >= 6000 AND per-year placement counts in [450, 2600]",
+   "measured_stints_2016_2025": 8271,
+   "per_year_2016_2025": {
+    "2016": 548,
+    "2017": 694,
+    "2018": 730,
+    "2019": 723,
+    "2020": 530,
+    "2021": 1478,
+    "2022": 1021,
+    "2023": 875,
+    "2024": 822,
+    "2025": 850
+   },
+   "floor_pass": true,
+   "band_pass": true,
+   "pass": true
+  },
+  "ship_rule": "per W1 (unchanged): finalize fits the sidecar coefficients through 2025 for PASS sides only; the flag flip, served-artifact regens, and the registry row fa_pt_risk are executed centrally by the consolidator, never by this lane",
+  "join": {
+   "method": "corpus rows carry mlbam natively (StatsAPI player ids); transactions person.id is the same mlbam space; direct integer join, no crosswalk needed",
+   "il_feature_coverage_note": "share of scored rows with any nonzero IL-history feature"
+  },
+  "arms": {
+   "ARM-H": {
+    "last_chain_block": {
+     "coef": [
+      12.583901,
+      21.55306,
+      -9.001699,
+      16.743051,
+      -16.579453,
+      -21.409976
+     ],
+     "mu": [
+      18.674794,
+      0.412171,
+      69.959877,
+      1.510079,
+      29.663467,
+      544.696679
+     ],
+     "sigma": [
+      42.967759,
+      0.763195,
+      100.589559,
+      1.986406,
+      4.083244,
+      1252.570815
+     ],
+     "n_train": 5209
+    },
+    "side": "hit",
+    "unit": "PA",
+    "n_dev": 1702,
+    "n_holdout": 2697,
+    "il_feature_coverage": 0.6367,
+    "clauses": {
+     "C1": {
+      "bar": "dev PA MAE strictly improves AND holdout PA MAE strictly improves AND dev bootstrap lo95 > 0",
+      "dev_mae_off": 164.02,
+      "dev_mae_on": 161.1789,
+      "dev_improvement": 2.8411,
+      "holdout_mae_off": 161.7503,
+      "holdout_mae_on": 164.9069,
+      "holdout_improvement": -3.1565,
+      "boot_lo95_dev": 1.394,
+      "pass": false
+     },
+     "C2": {
+      "bar": "h1 WAR MAE ON-minus-OFF <= +0.005 on dev AND holdout (absent = 0)",
+      "dev_war_mae_off": 0.8625,
+      "dev_war_mae_on": 0.8564,
+      "dev_delta": -0.006,
+      "holdout_war_mae_off": 0.7761,
+      "holdout_war_mae_on": 0.7882,
+      "holdout_delta": 0.012,
+      "pass": false
+     },
+     "C3": {
+      "bar": "|adj| clamped at 150.0 PA in code (a priori)",
+      "clamp": 150.0,
+      "max_abs_adj_observed": 150.0,
+      "pass": true
+     },
+     "C4": {
+      "bar": "pt floors at 0 AND pooled projected league PT sum drift < 0.02",
+      "min_pt_on": 0.0,
+      "drift_pooled": 0.03477,
+      "drift_dev": 0.01398,
+      "drift_holdout": 0.047,
+      "pass": false
+     }
+    },
+    "verdict": "FAIL"
+   },
+   "ARM-P": {
+    "last_chain_block": {
+     "coef": [
+      -12.356966,
+      2.405865,
+      3.450796,
+      -1.127677,
+      0.90037,
+      10.467656
+     ],
+     "mu": [
+      24.483518,
+      0.426427,
+      90.490251,
+      1.512554,
+      29.743302,
+      718.510871
+     ],
+     "sigma": [
+      50.555609,
+      0.736753,
+      122.439333,
+      1.91564,
+      3.878652,
+      1489.520928
+     ],
+     "n_train": 7129
+    },
+    "side": "pit",
+    "unit": "IP",
+    "n_dev": 2366,
+    "n_holdout": 3914,
+    "il_feature_coverage": 0.668,
+    "clauses": {
+     "C1": {
+      "bar": "dev IP MAE strictly improves AND holdout IP MAE strictly improves AND dev bootstrap lo95 > 0",
+      "dev_mae_off": 32.1582,
+      "dev_mae_on": 32.1415,
+      "dev_improvement": 0.0166,
+      "holdout_mae_off": 31.5623,
+      "holdout_mae_on": 32.6268,
+      "holdout_improvement": -1.0645,
+      "boot_lo95_dev": -0.1633,
+      "pass": false
+     },
+     "C2": {
+      "bar": "h1 WAR MAE ON-minus-OFF <= +0.005 on dev AND holdout (absent = 0)",
+      "dev_war_mae_off": 0.5494,
+      "dev_war_mae_on": 0.5539,
+      "dev_delta": 0.0045,
+      "holdout_war_mae_off": 0.5103,
+      "holdout_war_mae_on": 0.5236,
+      "holdout_delta": 0.0133,
+      "pass": false
+     },
+     "C3": {
+      "bar": "|adj| clamped at 60.0 IP in code (a priori)",
+      "clamp": 60.0,
+      "max_abs_adj_observed": 33.86,
+      "pass": true
+     },
+     "C4": {
+      "bar": "pt floors at 0 AND pooled projected league PT sum drift < 0.02",
+      "min_pt_on": 29.8,
+      "drift_pooled": 0.02745,
+      "drift_dev": 0.00324,
+      "drift_holdout": 0.04179,
+      "pass": false
+     }
+    },
+    "verdict": "FAIL"
+   }
+  },
+  "verdict": {
+   "ARM-H": "FAIL",
+   "ARM-P": "FAIL"
+  },
+  "reading": {
+   "story": "ARM-H: dev PA MAE 164.02 -> 161.1789 (lo95 1.394), holdout 161.7503 -> 164.9069; WAR h1 delta dev -0.006 / holdout 0.012; verdict FAIL. ARM-P: dev IP MAE 32.1582 -> 32.1415 (lo95 -0.1633), holdout 31.5623 -> 32.6268; WAR h1 delta dev 0.0045 / holdout 0.0133; verdict FAIL.",
+   "mechanism": "IL history redistributes projected PT from injury-prone to durable players (mean-zero ridge, no global shift); the incumbent Marcel PT already shrinks toward recent exposure, so the arm only wins where injury history adds signal BEYOND depressed prior-season playing time itself."
+  },
+  "mechanism_state": {
+   "flag": "EEPHUS_PT_RISK stays default OFF (PT_RISK_DEFAULT = False); no central flip is requested",
+   "sidecar": "data/pt_risk_adjust.json NOT written (finalize is PASS-sides-only and no side passed); the shipped hook remains a verified no-op"
+  },
+  "loss_ledger": {
+   "story": "Mechanism-refuted at the registered bars, not data-blocked: the amended STOP-D cleared (8271 stints 2016-2025, every year inside the 450-2600 band) and the C-clauses ran ONCE on the frozen protocol. The hitter dev-side signal is real (dev PA MAE -2.84, player-clustered lo95 +1.39) but does not transfer: holdout PA MAE degrades by 3.16 (2022-2024), holdout h1 WAR MAE degrades +0.012 vs the +0.005 bar, and the mean-zero-at-fit ridge stops being mean-zero out of population (pooled PT drift 3.5 percent vs the 2 percent C4 bar; holdout drift 4.7 percent). Pitchers show the same holdout reversal with no dev signal to begin with (dev improvement 0.017 IP, lo95 -0.16). Reading: post-2021 IL usage runs roughly 40 percent above the pre-COVID training seasons the forward chains fit on, so coefficients learned there add net PT in 2022-2024 instead of redistributing it. Marginal = FAIL stands; nothing was retuned after gate data was seen.",
+   "keep_alive": "Unchanged from W1: re-gate at extended IL history (2027) or with the OD-roster backfill. Ledgered for any FUTURE registration (not applied here): the measured failure mode is an IL-regime shift between train and apply eras, so a fresh registration should pre-commit an era-matched training window or per-era feature standardization."
+  }
+ }
+}

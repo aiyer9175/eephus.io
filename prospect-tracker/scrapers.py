@@ -482,6 +482,38 @@ _CANONICAL_KEYS: dict[str, str] = {
 }
 
 
+# The OPPOSITE direction of _CANONICAL_KEYS: two DIFFERENT humans whose
+# names normalize to the same slug. Keyed by (colliding slug, mlbam_id of
+# the newcomer) -> the discriminated key the newcomer's rows live under.
+# Consulted wherever a player key is resolved WITH an MLBAM id in hand
+# (stats.resolve_mlbam_id / stats.bulk_resolve_ids cache bindings,
+# mlbam_ingest discovery). Name-only resolution keeps the plain slug,
+# which stays with the incumbent identity.
+_SPLIT_KEYS: dict[tuple[str, int], str] = {
+    # The 2026 DSL Giants OF signee Jose Valdez (mlbam 838649, b. 2009)
+    # collides with the retired Tigers RHP Jose A. Valdez (MLB debut
+    # 2015) — both slug to "jose_a_valdez". The retiree keeps the plain
+    # slug (his Pipeline 2014-2016 snapshots + bbref career_war live
+    # there); the signee's rows live under the split key.
+    ("jose_a_valdez", 838649): "jose_valdez_sfg",
+}
+
+
+def split_key_for_mlbam(player_key: str, mlbam_id) -> str | None:
+    """Return the discriminated key for (slug, mlbam_id) when this MLBAM id
+    is a known slug-collision newcomer (see _SPLIT_KEYS), else None.
+
+    `player_key` is collapsed through canonical_player_key first so
+    alternate spellings of the colliding slug hit the map too."""
+    if mlbam_id is None:
+        return None
+    try:
+        mid = int(mlbam_id)
+    except (TypeError, ValueError):
+        return None
+    return _SPLIT_KEYS.get((canonical_player_key(player_key), mid))
+
+
 def _parse_fv(raw) -> float | None:
     """Accepts '70', '55+', '50/55' (PV/FV), 70 (int/float). Returns float.
 
@@ -1936,6 +1968,90 @@ def validate_pipeline_live_board(rows: list[Snapshot]) -> list[str]:
     if placeholder > 2:
         problems.append(f"top100: {placeholder} unresolved player names")
     return problems
+
+
+def validate_pipeline_org_boards(org_rows: dict[str, list[Snapshot]]) -> list[str]:
+    """Health gate for the daily per-team Top-30 capture, the sibling of
+    validate_pipeline_live_board. Refuse to re-stamp the org boards if the
+    parse comes back degraded, so a silent MLB.com redesign surfaces loudly
+    instead of freezing every team board at a near-empty scrape. Requires at
+    least 25 of the ~30 orgs to return >= 20 players each. Returns
+    human-readable problems (empty = healthy)."""
+    MIN_HEALTHY_ORGS = 25
+    MIN_PLAYERS_PER_ORG = 20
+    problems: list[str] = []
+    healthy = [slug for slug, rows in org_rows.items()
+               if len(rows) >= MIN_PLAYERS_PER_ORG]
+    if len(healthy) < MIN_HEALTHY_ORGS:
+        thin = sorted((len(rows), slug) for slug, rows in org_rows.items())
+        problems.append(
+            f"org top30: only {len(healthy)}/{len(org_rows)} orgs returned "
+            f">= {MIN_PLAYERS_PER_ORG} players (need {MIN_HEALTHY_ORGS}); "
+            "thinnest: " + ", ".join(f"{slug}={n}" for n, slug in thin[:6]))
+    return problems
+
+
+def run_mlb_pipeline_org_live(snap_date: str | None = None) -> dict:
+    """Daily LIVE capture of MLB Pipeline's 30 per-team Top-30 boards
+    (step d0b, right after run_mlb_pipeline_live).
+
+    The monthly backfill (MLB_PIPELINE_ORG_INTERVALS) writes each org's board
+    to ONE fixed preseason interval ("MLB Pipeline {y} {Team} Top 30", snap
+    {y}-01-22). Pipeline re-ranks and re-grades the org boards through the
+    season (graduations, FV moves, and the whole current-year draft class
+    joining post-signing), but that single frozen January point never moves.
+    So consensus reads a stale preseason vintage for the ~800 prospects who
+    sit in a team Top 30 but not the daily-fresh Live Top 100.
+
+    This capture re-scrapes the current /prospects/{year}/{slug} pages and
+    re-stamps the SAME per-team label with TODAY's date: insert_snapshots'
+    (source, interval_label, player_key) conflict key upserts the January row
+    in place, bumping snapshot_date to today, so consensus reads the current
+    vintage. force is left False so the 24h current-year cache TTL governs --
+    one fetch per page per day, cache-hit on same-day re-runs (polite pacing).
+
+    A parse-health gate (validate_pipeline_org_boards) refuses to write if the
+    boards come back degraded, so an MLB.com redesign can't silently freeze
+    every org at a near-empty scrape.
+
+    Returns {"orgs": {...}} on ingest, {"health": [problems]} when the gate
+    refuses, {"error": "..."} on a fatal failure."""
+    from storage import insert_snapshots
+
+    snap_date = snap_date or date.today().isoformat()
+    year = int(snap_date[:4])
+
+    org_rows: dict[str, list[Snapshot]] = {}
+    all_rows: list[Snapshot] = []
+    errors: dict[str, str] = {}
+    for slug in MLB_PIPELINE_ORG_SLUGS:
+        url = f"https://www.mlb.com/prospects/{year}/{slug}"
+        label = f"MLB Pipeline {year} {_slug_to_label(slug)} Top 30"
+        cache_key = f"mlb_pipeline_{year}_org_{slug.replace('-', '_')}"
+        try:
+            rows = scrape_mlb_pipeline(url, label, snap_date, year,
+                                       cache_key=cache_key)
+        except Exception as e:                                # noqa: BLE001
+            log.warning("mlb_pipeline org live %s crashed: %s", slug, e)
+            errors[slug] = str(e)
+            org_rows[slug] = []
+            continue
+        org_rows[slug] = rows
+        all_rows.extend(rows)
+
+    problems = validate_pipeline_org_boards(org_rows)
+    if problems:
+        if errors:
+            problems.append(f"fetch/parse errors: {errors}")
+        return {"health": problems}
+
+    n = insert_snapshots(all_rows)
+    n_orgs = sum(1 for rows in org_rows.values() if rows)
+    log.info("mlb_pipeline org live: %d players across %d orgs ingested @ %s",
+             len(all_rows), n_orgs, snap_date)
+    return {"orgs": {"n_players": len(all_rows), "n_orgs": n_orgs,
+                     "n_upserts": n, "snap_date": snap_date,
+                     "errors": errors}}
 
 
 def run_mlb_pipeline_live(snap_date: str | None = None) -> dict:

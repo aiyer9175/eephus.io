@@ -1,0 +1,70 @@
+{
+  "model": "eFV injury-history durability overlay (L2, docs/efv-2026-07-24/GATES-ROUND2.md)",
+  "generated": "2026-07-24",
+  "owner_directive": "Improve the eFV injury penalty to truly use injury HISTORY/severity (currently _injury_factor fires only on il_on).",
+  "verdict": "COVERAGE-STARVED / LEDGER. No trained feature (resolved-cohort IL coverage ~0). No production ship. A bounded, default-OFF live overlay (EEPHUS_INJURY_HISTORY) is delivered as a ready-to-enable owner scaffold; it changes nothing while OFF. Revival trigger dated below.",
+  "il_history_source": {
+    "table": "il_history",
+    "rows_total": 1240,
+    "distinct_players": 1185,
+    "by_since_year": {"2017": 5, "2018": 8, "2019": 9, "2021": 11, "2022": 26, "2023": 30, "2024": 42, "2025": 105, "2026": 1004},
+    "by_il_type": {"7-day": 712, "60-day": 394, "full-season": 80, "15-day": 33, "10-day": 21},
+    "stints_with_activated_seen": 218,
+    "note": "IL tracking effectively began 2026-06 (placed_seen >= 2026-06-06); 993/1240 stints have since>=2026. Pre-2026 since-dates are a thin survivorship residue (stints still active/observable at first scrape)."
+  },
+  "step1_ground_truth": {
+    "trained_feature_coverage_resolved_cohort": {
+      "description": "il_stints_pre = IL stints strictly before the decision cutoff, already emitted (efv_dataset._injury_features) but INERT (not in _FEATURES_HIT/_FEATURES_PIT). For a trainable feature the resolved (debuted) cohort must carry pre-cutoff IL history.",
+      "hitter_debuted_rows": 845,
+      "hitter_debuted_with_il_pre": 2,
+      "pitcher_debuted_rows": 981,
+      "pitcher_debuted_with_il_pre": 0,
+      "matrix_rows_with_il_pre_by_cutoff_year_hit": {"<=2017": 0, "2018": 1, "2019": 1, "2020": 0, "2021": 0, "2022": 1, "2023": 0, "2024": 1, "2025": 1, "2026": 4},
+      "conclusion": "A TRAINED durability feature is IMPOSSIBLE. The forward-chained eval cohort (cutoff pre-2024, SCORED_YEARS 2020-2023) has ~0 pre-cutoff IL history. il_stints_pre stays emitted-but-inert (correct). This matches the 2026-06 tracking-start note in memory."
+    },
+    "cross_section_confounded": {
+      "description": "il_history joined to career_war (realized MLB WAR), contemporaneous. This is what the LIVE overlay mostly keys on (993/1240 stints are 2026).",
+      "matched_players": 273,
+      "war_per_yr_severe_ge1": 0.517,
+      "war_per_yr_severe_eq0": 0.225,
+      "war_per_yr_major_ge1": 0.554,
+      "war_per_yr_major_eq0": 0.285,
+      "conclusion": "WRONG-SIGNED. Severe (60-day/full-season) and major (TJ/shoulder) IL players show HIGHER realized WAR/yr, not lower. This is a selection artifact: a 60-day IL requires 40-man / MLB status, so severe-IL players are disproportionately established (higher-WAR) MLB players. Not usable as a durability penalty."
+    },
+    "forward_test_causally_valid": {
+      "description": "Pre-2026 IL history (since<2026) -> realized 2026 WAR, among career_war players with a 2026 season. History strictly precedes outcome.",
+      "has_pre2026_il_n": 21,
+      "has_pre2026_il_mean_2026war": 0.297,
+      "no_pre2026_il_n": 1134,
+      "no_pre2026_il_mean_2026war": 0.511,
+      "diff": -0.214,
+      "permutation_p_one_sided": 0.181,
+      "severe_pre2026_n": 5,
+      "severe_pre2026_mean_2026war": 0.120,
+      "conclusion": "CORRECTLY-SIGNED but statistically NULL and tiny (n=21, p=0.18; severe n=5). The 'no history' group is mostly UNOBSERVED (not confirmed healthy) since tracking began 2026-06, so even this contrast is weak. Directionally supports the owner hypothesis; nowhere near a shippable, bounded, signed-correct signal."
+    },
+    "repeat_injury_variation": {
+      "stint_count_distribution_all_il_players": {"1": 1133, "2": 49, "3": 3},
+      "repeat_ge2_matched_to_career_war": 0,
+      "conclusion": "The repeat-injury signal the owner asked for (multiple TJ / >=2 stints) has ZERO players matched to realized-WAR outcomes, and 96% of all IL players have exactly one recorded stint. No repeat-injury effect is measurable in this data."
+    }
+  },
+  "step2_decision": {
+    "trained_feature": "NOT BUILT (coverage ~0 on resolved cohort). il_stints_pre remains emitted-but-inert.",
+    "live_overlay": "DELIVERED as a bounded, default-OFF diff (EEPHUS_INJURY_HISTORY). Ships nothing: flag OFF => factor 1.0 => no change to any served grade/rank/surplus and no served-artifact regen. It is an owner-explicit scaffold, mirroring _age_factor/_role_factor (owner-directed policy dials the debuted-only eval cannot support), but MORE conservative (default-OFF, not default-ON) precisely because the ground truth is coverage-starved and the cross-section is wrong-signed.",
+    "overlay_spec": {
+      "flag": "EEPHUS_INJURY_HISTORY (default OFF)",
+      "fires_when": "flag ON AND player NOT currently on IL (il_on handled by existing _injury_factor, untouched) AND clearly-high-history: major-injury flag (TJ/UCL/elbow/shoulder/labrum) OR a severe stint (60-day/full-season) OR >=2 stints. A single minor 7/10/15-day stint does NOT fire (respects the 2026-07-17 healthy-player directive).",
+      "bounds_a_priori": "floor 0.85; tiers 0.85 (repeat major) / 0.90 (single major, >=2 severe, or >=3 stints) / 0.95 (single severe or 2 stints). Bounds are a-priori, NOT fit to data (the data cannot fit them).",
+      "live_blast_radius_if_enabled": {"hitters": 10, "pitchers": 10, "factor_range": [0.90, 0.95], "floor_0.85_reached": 0},
+      "surfaced_as": "'Injury history' factor chip (distinct from the active 'Injury penalty' il_on chip)."
+    }
+  },
+  "revival_trigger": "Re-run this ground-truth study when the 2026-tracked IL cohort matures into resolved outcomes, i.e. when prospects with 2026 IL stints debut and accrue first-6yr WAR (~2028-2030), OR when il_history back-population reaches >=100 pre-cutoff stints on the resolved debuted cohort (currently 2 hit / 0 pit). At that point re-test both (a) the trained il_stints_pre / il_severe_pre feature under the OOS bar and (b) the overlay sign on a real forward cohort; flip EEPHUS_INJURY_HISTORY default only on a signed-correct, significant pass.",
+  "files": {
+    "artifact": "data/xfv_injury_history_eval.json",
+    "overlay_code": "efv_score.py (_injury_history_factor + wiring at the live-adjust block) - delivered as unified diff, default OFF",
+    "severity_plumbing": "efv_dataset.py (_load_sidecars + _injury_features add il_severe_pre/il_major_pre) - delivered as unified diff, inert keys",
+    "existing_untouched": "efv_score.py _injury_factor (il_on penalty) is NOT modified per directive"
+  }
+}

@@ -1,0 +1,170 @@
+{
+ "candidate": "amateur",
+ "B": 500,
+ "hit": {
+  "pool_n": 1882,
+  "cols": [
+   "am_seasons",
+   "am_known"
+  ],
+  "coverage_full": "230/1882 (12.2%)",
+  "coverage_test": "132",
+  "base": {
+   "n": 795,
+   "spearman": 0.2863,
+   "t45": 0.2359,
+   "per_year": {
+    "2020": 0.3274,
+    "2021": 0.1662,
+    "2022": 0.3457,
+    "2023": 0.2871
+   },
+   "block_rho": 0.2533
+  },
+  "cand": {
+   "n": 795,
+   "spearman": 0.2866,
+   "t45": 0.2342,
+   "per_year": {
+    "2020": 0.3274,
+    "2021": 0.1662,
+    "2022": 0.3457,
+    "2023": 0.2883
+   },
+   "block_rho": 0.2538
+  },
+  "delta_pooled": 0.0003,
+  "delta_block": 0.0005,
+  "delta_t45": -0.0017,
+  "per_fold_delta": {
+   "2020": 0.0,
+   "2021": 0.0,
+   "2022": 0.0,
+   "2023": 0.0012
+  },
+  "control_permuted": {
+   "pooled_mean": -0.00023,
+   "pooled_null95": [
+    -0.002,
+    0.0013
+   ],
+   "pooled_max_abs": 0.002,
+   "block_mean": 6e-05,
+   "block_null95": [
+    -0.0014,
+    0.0024
+   ],
+   "seeds": 20
+  },
+  "paired_boot_pooled": {
+   "mean": -0.00015,
+   "sd": 0.00409,
+   "ci95": [
+    -0.0093,
+    0.0084
+   ],
+   "p_gt0": 0.49,
+   "B": 500
+  },
+  "paired_boot_block": {
+   "mean": -0.00037,
+   "sd": 0.00353,
+   "ci95": [
+    -0.0088,
+    0.0063
+   ],
+   "p_gt0": 0.466,
+   "B": 500
+  },
+  "verdict": {
+   "pooled_floor": 0.017,
+   "block_floor": 0.0149,
+   "pooled_frac_of_floor": 0.018,
+   "block_frac_of_floor": 0.034,
+   "call": "NULL (below floor)"
+  }
+ },
+ "pit": {
+  "pool_n": 1989,
+  "cols": [
+   "am_seasons",
+   "am_known"
+  ],
+  "coverage_full": "182/1989 (9.2%)",
+  "coverage_test": "93",
+  "base": {
+   "n": 837,
+   "spearman": 0.2572,
+   "t45": 0.1405,
+   "per_year": {
+    "2020": 0.1777,
+    "2021": 0.1945,
+    "2022": 0.3597,
+    "2023": 0.282
+   },
+   "block_rho": 0.2557
+  },
+  "cand": {
+   "n": 837,
+   "spearman": 0.2567,
+   "t45": 0.1451,
+   "per_year": {
+    "2020": 0.1777,
+    "2021": 0.1945,
+    "2022": 0.3597,
+    "2023": 0.2848
+   },
+   "block_rho": 0.2559
+  },
+  "delta_pooled": -0.0005,
+  "delta_block": 0.0002,
+  "delta_t45": 0.0046,
+  "per_fold_delta": {
+   "2020": 0.0,
+   "2021": 0.0,
+   "2022": 0.0,
+   "2023": 0.0028
+  },
+  "control_permuted": {
+   "pooled_mean": -0.00014,
+   "pooled_null95": [
+    -0.0022,
+    0.0021
+   ],
+   "pooled_max_abs": 0.0022,
+   "block_mean": 0.00013,
+   "block_null95": [
+    -0.0025,
+    0.0022
+   ],
+   "seeds": 20
+  },
+  "paired_boot_pooled": {
+   "mean": -0.00168,
+   "sd": 0.00485,
+   "ci95": [
+    -0.0134,
+    0.0065
+   ],
+   "p_gt0": 0.368,
+   "B": 500
+  },
+  "paired_boot_block": {
+   "mean": -0.00067,
+   "sd": 0.00467,
+   "ci95": [
+    -0.0108,
+    0.0081
+   ],
+   "p_gt0": 0.456,
+   "B": 500
+  },
+  "verdict": {
+   "pooled_floor": 0.016,
+   "block_floor": 0.0149,
+   "pooled_frac_of_floor": 0.031,
+   "block_frac_of_floor": 0.013,
+   "call": "NULL (below floor)"
+  }
+ }
+}

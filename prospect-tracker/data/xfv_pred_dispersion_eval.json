@@ -1,0 +1,282 @@
+{
+ "generated_at": "2026-07-25",
+ "lane": "calibration -- OOS dispersion of xfv_war_6yr",
+ "statistic": "OLS slope of realized first-6yr WAR on the OOS prediction; 1.0 == calibrated in level, < 1.0 == over-dispersed",
+ "folds": [
+  2016,
+  2017,
+  2018,
+  2019,
+  2020
+ ],
+ "bootstrap": {
+  "B": 2000,
+  "seed": 7
+ },
+ "point": {
+  "hit": {
+   "slope_xfv_war": 0.6540189595838437,
+   "slope_cons_war": 0.921038035946412,
+   "lm_slope_xfv_war": 0.6180982516774791,
+   "lm_slope_cons_war": 0.8840189000989759,
+   "n": 749,
+   "lm_n": 242
+  },
+  "pit": {
+   "slope_xfv_war": 0.5867810168160604,
+   "slope_cons_war": 1.1920205601877742,
+   "lm_slope_xfv_war": 0.372379244734443,
+   "lm_slope_cons_war": 0.9735812409725667,
+   "n": 819,
+   "lm_n": 269
+  }
+ },
+ "per_fold": {
+  "hit": {
+   "2016": {
+    "slope_xfv_war": 0.6719126171656542,
+    "slope_cons_war": 1.0850940317433149,
+    "lm_slope_xfv_war": null,
+    "lm_slope_cons_war": null,
+    "n": 95,
+    "lm_n": 11
+   },
+   "2017": {
+    "slope_xfv_war": 0.5466720604736651,
+    "slope_cons_war": 0.852052072729031,
+    "lm_slope_xfv_war": 0.5666452136994604,
+    "lm_slope_cons_war": 0.8786462298412812,
+    "n": 112,
+    "lm_n": 30
+   },
+   "2018": {
+    "slope_xfv_war": 0.7354556464832908,
+    "slope_cons_war": 1.072322713828975,
+    "lm_slope_xfv_war": 0.8198356863753044,
+    "lm_slope_cons_war": 1.4214947481699474,
+    "n": 174,
+    "lm_n": 37
+   },
+   "2019": {
+    "slope_xfv_war": 0.7548346398544364,
+    "slope_cons_war": 0.9114847158264371,
+    "lm_slope_xfv_war": 0.7172795079887114,
+    "lm_slope_cons_war": 0.8218930321873434,
+    "n": 199,
+    "lm_n": 82
+   },
+   "2020": {
+    "slope_xfv_war": 0.5481318701832539,
+    "slope_cons_war": 0.7415392435543721,
+    "lm_slope_xfv_war": 0.5687975670193999,
+    "lm_slope_cons_war": 0.6847701362572975,
+    "n": 169,
+    "lm_n": 82
+   }
+  },
+  "pit": {
+   "2016": {
+    "slope_xfv_war": 0.9252260546827042,
+    "slope_cons_war": 2.099129998850291,
+    "lm_slope_xfv_war": null,
+    "lm_slope_cons_war": null,
+    "n": 118,
+    "lm_n": 10
+   },
+   "2017": {
+    "slope_xfv_war": 0.20531864926140087,
+    "slope_cons_war": 2.065150652724539,
+    "lm_slope_xfv_war": -0.10594447670026186,
+    "lm_slope_cons_war": 2.2177874944722333,
+    "n": 87,
+    "lm_n": 26
+   },
+   "2018": {
+    "slope_xfv_war": 0.8213453781169454,
+    "slope_cons_war": 1.232941760855108,
+    "lm_slope_xfv_war": 0.23123341021299204,
+    "lm_slope_cons_war": 0.7358013813319696,
+    "n": 216,
+    "lm_n": 46
+   },
+   "2019": {
+    "slope_xfv_war": 0.3406034230421358,
+    "slope_cons_war": 0.7697308572993616,
+    "lm_slope_xfv_war": 0.13977840763647928,
+    "lm_slope_cons_war": 0.49720144598916327,
+    "n": 194,
+    "lm_n": 79
+   },
+   "2020": {
+    "slope_xfv_war": 0.5330543127040474,
+    "slope_cons_war": 0.8018741682509641,
+    "lm_slope_xfv_war": 0.5074062328275628,
+    "lm_slope_cons_war": 0.7546841025830339,
+    "n": 204,
+    "lm_n": 108
+   }
+  }
+ },
+ "boot_ci95": {
+  "hit": {
+   "slope_xfv_war": [
+    0.3624,
+    0.7637
+   ],
+   "slope_cons_war": [
+    0.72,
+    1.1734
+   ],
+   "lm_slope_xfv_war": [
+    0.2407,
+    0.7528
+   ],
+   "lm_slope_cons_war": [
+    0.6499,
+    1.1537
+   ],
+   "n": [
+    706.0,
+    793.0
+   ],
+   "lm_n": [
+    213.0,
+    269.025
+   ]
+  },
+  "pit": {
+   "slope_xfv_war": [
+    0.2326,
+    0.721
+   ],
+   "slope_cons_war": [
+    0.8541,
+    1.5404
+   ],
+   "lm_slope_xfv_war": [
+    0.041,
+    0.5021
+   ],
+   "lm_slope_cons_war": [
+    0.6224,
+    1.4304
+   ],
+   "n": [
+    776.0,
+    860.0
+   ],
+   "lm_n": [
+    239.0,
+    300.0
+   ]
+  }
+ },
+ "zero_info_control_permuted_prediction_ci95": {
+  "hit": {
+   "slope_xfv_war": [
+    -0.0697,
+    0.0922
+   ],
+   "slope_cons_war": [
+    0.72,
+    1.1734
+   ],
+   "lm_slope_xfv_war": [
+    -0.1934,
+    0.2486
+   ],
+   "lm_slope_cons_war": [
+    0.6499,
+    1.1537
+   ],
+   "n": [
+    706.0,
+    793.0
+   ],
+   "lm_n": [
+    213.0,
+    269.025
+   ]
+  },
+  "pit": {
+   "slope_xfv_war": [
+    -0.0874,
+    0.1241
+   ],
+   "slope_cons_war": [
+    0.8541,
+    1.5404
+   ],
+   "lm_slope_xfv_war": [
+    -0.1898,
+    0.3509
+   ],
+   "lm_slope_cons_war": [
+    0.6224,
+    1.4304
+   ],
+   "n": [
+    776.0,
+    860.0
+   ],
+   "lm_n": [
+    239.0,
+    300.0
+   ]
+  }
+ },
+ "permutation_null_permuted_outcome_ci95": {
+  "hit": {
+   "slope_xfv_war": [
+    -0.072,
+    0.093
+   ],
+   "slope_cons_war": [
+    -0.1078,
+    0.1252
+   ],
+   "lm_slope_xfv_war": [
+    -0.0935,
+    0.1175
+   ],
+   "lm_slope_cons_war": [
+    -0.1327,
+    0.1556
+   ],
+   "n": [
+    706.0,
+    793.0
+   ],
+   "lm_n": [
+    213.0,
+    269.025
+   ]
+  },
+  "pit": {
+   "slope_xfv_war": [
+    -0.0916,
+    0.126
+   ],
+   "slope_cons_war": [
+    -0.1507,
+    0.2215
+   ],
+   "lm_slope_xfv_war": [
+    -0.1111,
+    0.1461
+   ],
+   "lm_slope_cons_war": [
+    -0.2037,
+    0.2883
+   ],
+   "n": [
+    776.0,
+    860.0
+   ],
+   "lm_n": [
+    239.0,
+    300.0
+   ]
+  }
+ }
+}

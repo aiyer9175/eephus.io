@@ -1,0 +1,1049 @@
+{
+ "generated_at": "2026-07-23",
+ "note": "P1 provisional-prior gate V2 - see docs/efv-provisional-prior/GATES.md (V2 re-registration 2026-07-23, frozen before this run)",
+ "vintage_caveat": "PRELIMINARY unless run at the canonical matrix vintage",
+ "registration": {
+  "formula": "prior = cons_war + w * clip(slot_war - max(cons_war, 6*expected_six_year_avg_war(cons_fv)), 0, pull_cap_war)",
+  "pull_cap_war": 1.9,
+  "derivation": "min over sides of d*(5.0 FV)/(lam*w_max): hit 1.226/(0.70*0.75)=2.335, pit 0.7435/(0.52*0.75)=1.906 -> frozen 1.9 (GATES.md V2)"
+ },
+ "sides": {
+  "hit": {
+   "n_provisional": 185,
+   "n_moved_up": 14,
+   "n_no_pick_checked": 812,
+   "top_moves": [
+    {
+     "player_key": "kyler_murray",
+     "pick": 9,
+     "bonus_usd": 4660000,
+     "consensus_fv": 47.66,
+     "grade_off": 45.3,
+     "grade_on": 48.6,
+     "delta": 3.3
+    },
+    {
+     "player_key": "nolan_schanuel",
+     "pick": 11,
+     "bonus_usd": 5253000,
+     "consensus_fv": 45.0,
+     "grade_off": 42.7,
+     "grade_on": 45.0,
+     "delta": 2.3
+    },
+    {
+     "player_key": "cameron_cannon",
+     "pick": 43,
+     "bonus_usd": 1300000,
+     "consensus_fv": 35.0,
+     "grade_off": 37.7,
+     "grade_on": 40.0,
+     "delta": 2.3
+    },
+    {
+     "player_key": "jeren_kendall",
+     "pick": 23,
+     "bonus_usd": 2897500,
+     "consensus_fv": 37.66,
+     "grade_off": 37.7,
+     "grade_on": 40.0,
+     "delta": 2.3
+    },
+    {
+     "player_key": "kevin_merrell",
+     "pick": 33,
+     "bonus_usd": 1800000,
+     "consensus_fv": 37.66,
+     "grade_off": 37.7,
+     "grade_on": 40.0,
+     "delta": 2.3
+    },
+    {
+     "player_key": "dj_davis",
+     "pick": 17,
+     "bonus_usd": null,
+     "consensus_fv": 45.0,
+     "grade_off": 42.7,
+     "grade_on": 45.0,
+     "delta": 2.3
+    },
+    {
+     "player_key": "samuel_infante",
+     "pick": 71,
+     "bonus_usd": 1000000,
+     "consensus_fv": 35.0,
+     "grade_off": 37.7,
+     "grade_on": 38.3,
+     "delta": 0.6
+    },
+    {
+     "player_key": "quentin_holmes",
+     "pick": 64,
+     "bonus_usd": 988970,
+     "consensus_fv": 37.66,
+     "grade_off": 37.7,
+     "grade_on": 38.3,
+     "delta": 0.6
+    },
+    {
+     "player_key": "brady_mcconnell",
+     "pick": 44,
+     "bonus_usd": 2222500,
+     "consensus_fv": 42.66,
+     "grade_off": 42.3,
+     "grade_on": 42.7,
+     "delta": 0.4
+    },
+    {
+     "player_key": "kyle_holder",
+     "pick": 30,
+     "bonus_usd": null,
+     "consensus_fv": 42.66,
+     "grade_off": 42.3,
+     "grade_on": 42.7,
+     "delta": 0.4
+    }
+   ],
+   "max_abs_delta": 3.3
+  },
+  "pit": {
+   "n_provisional": 173,
+   "n_moved_up": 15,
+   "n_no_pick_checked": 926,
+   "top_moves": [
+    {
+     "player_key": "ryan_jensen",
+     "pick": 27,
+     "bonus_usd": 2000000,
+     "consensus_fv": 37.66,
+     "grade_off": 35.0,
+     "grade_on": 40.0,
+     "delta": 5.0
+    },
+    {
+     "player_key": "mason_denaburg",
+     "pick": 27,
+     "bonus_usd": 3000000,
+     "consensus_fv": 37.66,
+     "grade_off": 35.0,
+     "grade_on": 40.0,
+     "delta": 5.0
+    },
+    {
+     "player_key": "brennan_malone",
+     "pick": 33,
+     "bonus_usd": 2202200,
+     "consensus_fv": 37.66,
+     "grade_off": 35.0,
+     "grade_on": 40.0,
+     "delta": 5.0
+    },
+    {
+     "player_key": "reid_detmers",
+     "pick": 10,
+     "bonus_usd": 4670000,
+     "consensus_fv": 55.32,
+     "grade_off": 53.07,
+     "grade_on": 57.14,
+     "delta": 4.07
+    },
+    {
+     "player_key": "asa_lacy",
+     "pick": 4,
+     "bonus_usd": 6670000,
+     "consensus_fv": 40.32,
+     "grade_off": 40.0,
+     "grade_on": 42.7,
+     "delta": 2.7
+    },
+    {
+     "player_key": "griffin_roberts",
+     "pick": 43,
+     "bonus_usd": 1664200,
+     "consensus_fv": 37.66,
+     "grade_off": 35.0,
+     "grade_on": 37.7,
+     "delta": 2.7
+    },
+    {
+     "player_key": "caden_lemons",
+     "pick": 46,
+     "bonus_usd": 1450000,
+     "consensus_fv": 37.66,
+     "grade_off": 35.0,
+     "grade_on": 37.7,
+     "delta": 2.7
+    },
+    {
+     "player_key": "kohl_stewart",
+     "pick": 4,
+     "bonus_usd": null,
+     "consensus_fv": 42.34,
+     "grade_off": 42.7,
+     "grade_on": 45.0,
+     "delta": 2.3
+    },
+    {
+     "player_key": "justin_lange",
+     "pick": 34,
+     "bonus_usd": 2000000,
+     "consensus_fv": 42.98,
+     "grade_off": 42.7,
+     "grade_on": 45.0,
+     "delta": 2.3
+    },
+    {
+     "player_key": "rhett_lowder",
+     "pick": 7,
+     "bonus_usd": 5700000,
+     "consensus_fv": 52.66,
+     "grade_off": 52.1,
+     "grade_on": 53.29,
+     "delta": 1.19
+    }
+   ],
+   "max_abs_delta": 5.0
+  }
+ },
+ "clauses": {
+  "1_flagship_untouched": {
+   "pass": true,
+   "measured": {
+    "checked_at": "2026-07-23",
+    "sides": {
+     "hit": {
+      "identical": true,
+      "bytes": 18212
+     },
+     "pit": {
+      "identical": true,
+      "bytes": 18194
+     }
+    },
+    "identical": true
+   },
+   "reason": "provisional rows are not in the forward-chained eval pool"
+  },
+  "2_monotonic_in_pedigree": {
+   "pass": true,
+   "operationalization": "pedigree partial order within exact consensus FV (V2 registration)",
+   "violations": []
+  },
+  "3_bounded_pull": {
+   "pass": true,
+   "max_fv": 5.0
+  },
+  "4_directional": {
+   "pass": true,
+   "named_movers_up": true,
+   "lowped_riser_bound": 2.0,
+   "lowped_max_delta": 0.6,
+   "moved_up": 29,
+   "of": 358
+  },
+  "5_distribution_sanity": {
+   "pass": true,
+   "n55_off": 2,
+   "n55_on": 3,
+   "crossers": [
+    {
+     "player_key": "reid_detmers",
+     "pick": 10,
+     "grade_off": 53.07,
+     "grade_on": 57.14
+    }
+   ],
+   "top2_round_picks_in_cohort": 63
+  },
+  "ifa_sub1m_invariance": {
+   "pass": true,
+   "moved": [],
+   "note": "no-pick provisional rows must be bit-identical (step not wired in this run)"
+  }
+ },
+ "live_movers": [
+  {
+   "player_key": "roch_cholowsky",
+   "side": "hit",
+   "method": "draft",
+   "consensus_fv": 57.58,
+   "pick": 1,
+   "bonus_usd": 10350000,
+   "grade_off": 56.1,
+   "grade_on": 58.01,
+   "delta": 1.91
+  },
+  {
+   "player_key": "aj_gracia",
+   "side": "hit",
+   "method": "draft",
+   "consensus_fv": 46.7,
+   "pick": 9,
+   "bonus_usd": 3997500,
+   "grade_off": 45.0,
+   "grade_on": 47.3,
+   "delta": 2.3
+  },
+  {
+   "player_key": "fabricio_blanco",
+   "side": "hit",
+   "method": "international_fa",
+   "consensus_fv": 42.66,
+   "pick": null,
+   "bonus_usd": 1000000,
+   "grade_off": 42.3,
+   "grade_on": 42.7,
+   "delta": 0.4,
+   "ifa_step_candidate_grade": 42.7,
+   "ifa_step_war_used": 1.917
+  },
+  {
+   "player_key": "jose_luis_acevedo",
+   "side": "hit",
+   "method": "international_fa",
+   "consensus_fv": 40.0,
+   "pick": null,
+   "bonus_usd": 2300000,
+   "grade_off": 40.0,
+   "grade_on": 40.0,
+   "delta": 0.0,
+   "ifa_step_candidate_grade": 40.0,
+   "ifa_step_war_used": 1.917
+  }
+ ],
+ "verdict": "PASS (clauses 2-5; clause 1 verified separately via --clause1)",
+ "v3": {
+  "generated_at": "2026-07-23",
+  "registration": "docs/efv-provisional-prior/GATES.md, V3 registration (2026-07-23, owner directive: the Grady Emerson case; frozen before this run; one attempt per arm)",
+  "seed": 20260723,
+  "n_boot": 2000,
+  "bootstrap": "player-clustered (one substrate row per player; row resample), numpy default_rng(20260723), 2000 reps",
+  "flags": {
+   "ARM-A": "EEPHUS_P1_SLOT_TRUST",
+   "ARM-B": "EEPHUS_P1_DSPLUS",
+   "ARM-C": "both"
+  },
+  "approximations": [
+   "identity: _provisional_prior_war only sees (pick_overall, bonus_usd); live lookups key on that pair; a missing-bonus key resolves to the CURRENT class's unsigned pick; cross-class keys with disagreeing values are dropped (rows unchanged).",
+   "served-quantile step: implied move read through the frozen current-pool rank_war -> display map (_build_grade_map), the same approximation the V2 cap derivation used; no artifact regenerated.",
+   "backtest slot-trust: the current-class/unsigned guard is a live-targeting restriction; resolved rows are imputed wherever bonus is missing AND slot_usd is known (every resolved draftee was a current-class unsigned pick when this branch would have scored them).",
+   "DSplus basis: rank-consensus DS+ (draft_stock_plus_pre_college for the live class via the export payload; per-class recompute from backfilled pre-draft draft_snapshots for 2018+), i.e. BEFORE the college +-6 boost, one basis for live + historical."
+  ],
+  "substrate": {
+   "n": 804,
+   "n_by_side": {
+    "hit": 431,
+    "pit": 373
+   },
+   "outcome_window": "draft_year+1 .. draft_year+7 bWAR sum (career_war; no row = 0), the recorded V2-era backtest protocol",
+   "n_missing_bonus": 276,
+   "n_slot_imputable": 2,
+   "dsplus_covered_n": 294,
+   "dsplus_covered_by_class": {
+    "2018": 137,
+    "2019": 157
+   },
+   "rho_v2_baseline": 0.1671
+  },
+  "live_cohort": {
+   "n_served_active_provisional": 264,
+   "n_scoreable": 264
+  },
+  "arms": {
+   "ARM-A": {
+    "flag": "EEPHUS_P1_SLOT_TRUST",
+    "pooled_delta_vs_v2": {
+     "n": 804,
+     "delta_point": -0.00045,
+     "delta_boot_mean": -0.000448,
+     "ci95": [
+      -0.001258,
+      0.0
+     ],
+     "p_gt0": 0.0
+    },
+    "pooled_bar": "lo95 >= -0.005 (no-harm)",
+    "n_rows_changed_backtest": 2,
+    "a1": {
+     "pass": true,
+     "n": 804,
+     "delta_point": -0.00045,
+     "delta_boot_mean": -0.000448,
+     "ci95": [
+      -0.001258,
+      0.0
+     ],
+     "p_gt0": 0.0,
+     "note": "only 2 resolved rows are slot-imputable (draft_results carries no slot dollars before 2017); the bar is no-harm and the read is near-null by construction, honest per registration"
+    },
+    "a2_battery": {
+     "n_scored": 264,
+     "n_movers": 10,
+     "max_delta_fv": 2.3,
+     "ceiling_fv": 3.0,
+     "all_upward": true,
+     "movers_restricted_ok": true,
+     "no_pick_rows_moved": [],
+     "pass": true,
+     "movers": [
+      {
+       "player_key": "gio_rojas",
+       "acq_year": 2026,
+       "pick": 16,
+       "bonus_usd": null,
+       "consensus_fv": 41.67,
+       "grade_off": 42.7,
+       "grade_on": 45.0,
+       "delta": 2.3,
+       "missing_bonus": true,
+       "dsplus": null
+      },
+      {
+       "player_key": "liam_peterson",
+       "acq_year": 2026,
+       "pick": 19,
+       "bonus_usd": null,
+       "consensus_fv": 41.67,
+       "grade_off": 42.7,
+       "grade_on": 45.0,
+       "delta": 2.3,
+       "missing_bonus": true,
+       "dsplus": null
+      },
+      {
+       "player_key": "tyler_spangler",
+       "acq_year": 2026,
+       "pick": 36,
+       "bonus_usd": null,
+       "consensus_fv": 38.33,
+       "grade_off": 37.7,
+       "grade_on": 40.0,
+       "delta": 2.3,
+       "missing_bonus": true,
+       "dsplus": null
+      },
+      {
+       "player_key": "grady_emerson",
+       "acq_year": 2026,
+       "pick": 2,
+       "bonus_usd": null,
+       "consensus_fv": 48.33,
+       "grade_off": 48.6,
+       "grade_on": 50.2,
+       "delta": 1.6,
+       "missing_bonus": true,
+       "dsplus": null
+      },
+      {
+       "player_key": "sawyer_strosnider",
+       "acq_year": 2026,
+       "pick": 66,
+       "bonus_usd": null,
+       "consensus_fv": 38.33,
+       "grade_off": 37.7,
+       "grade_on": 38.3,
+       "delta": 0.6,
+       "missing_bonus": true,
+       "dsplus": null
+      },
+      {
+       "player_key": "elliot_lascelles",
+       "acq_year": 2026,
+       "pick": 60,
+       "bonus_usd": null,
+       "consensus_fv": 35.0,
+       "grade_off": 37.7,
+       "grade_on": 38.3,
+       "delta": 0.6,
+       "missing_bonus": true,
+       "dsplus": null
+      },
+      {
+       "player_key": "tyson_leblanc",
+       "acq_year": 2026,
+       "pick": 61,
+       "bonus_usd": null,
+       "consensus_fv": 35.0,
+       "grade_off": 37.7,
+       "grade_on": 38.3,
+       "delta": 0.6,
+       "missing_bonus": true,
+       "dsplus": null
+      },
+      {
+       "player_key": "chris_rembert",
+       "acq_year": 2026,
+       "pick": 51,
+       "bonus_usd": null,
+       "consensus_fv": 38.33,
+       "grade_off": 37.7,
+       "grade_on": 38.3,
+       "delta": 0.6,
+       "missing_bonus": true,
+       "dsplus": null
+      },
+      {
+       "player_key": "logan_hughes",
+       "acq_year": 2026,
+       "pick": 17,
+       "bonus_usd": null,
+       "consensus_fv": 41.67,
+       "grade_off": 42.3,
+       "grade_on": 42.7,
+       "delta": 0.4,
+       "missing_bonus": true,
+       "dsplus": null
+      },
+      {
+       "player_key": "connor_comeau",
+       "acq_year": 2026,
+       "pick": 54,
+       "bonus_usd": null,
+       "consensus_fv": 41.67,
+       "grade_off": 40.07,
+       "grade_on": 40.3,
+       "delta": 0.23,
+       "missing_bonus": true,
+       "dsplus": null
+      }
+     ],
+     "mover_acq_years": [
+      2026
+     ]
+    },
+    "a3_off_identity": {
+     "pass": true,
+     "backtest_rows_checked": 804,
+     "live_rows_checked": 209,
+     "mismatches": [],
+     "note": "flags unset: new code vs frozen committed-V2 replica, exact float equality"
+    },
+    "verdict": "PASS"
+   },
+   "ARM-B": {
+    "flag": "EEPHUS_P1_DSPLUS",
+    "pooled_delta_vs_v2": {
+     "n": 804,
+     "delta_point": -0.000208,
+     "delta_boot_mean": -0.000204,
+     "ci95": [
+      -0.001136,
+      0.000513
+     ],
+     "p_gt0": 0.328
+    },
+    "pooled_bar": "lo95 >= -0.005 (no-harm)",
+    "b1": {
+     "covered_delta_vs_v2": {
+      "n": 294,
+      "delta_point": -0.001645,
+      "delta_boot_mean": -0.001596,
+      "ci95": [
+       -0.00774,
+       0.002976
+      ],
+      "p_gt0": 0.294
+     },
+     "covered_bar": "lo95 > 0 (gain, strict)",
+     "covered_n": 294,
+     "n_covered_rows_changed": 113,
+     "pooled_delta_vs_v2": {
+      "n": 804,
+      "delta_point": -0.000208,
+      "delta_boot_mean": -0.000204,
+      "ci95": [
+       -0.001136,
+       0.000513
+      ],
+      "p_gt0": 0.328
+     },
+     "pooled_bar": "lo95 >= -0.005",
+     "pass": false
+    },
+    "b2_grid": {
+     "pass": true,
+     "violations": [],
+     "grid": "picks (2,20,50,120) x DSplus (85..140) x FV (40,45,55) x bonus (None, $2M) x both sides"
+    },
+    "b3_battery": {
+     "n_scored": 264,
+     "n_movers": 16,
+     "max_delta_fv": 2.3,
+     "ceiling_fv": 3.0,
+     "all_upward": true,
+     "movers_restricted_ok": true,
+     "no_pick_rows_moved": [],
+     "pass": true,
+     "movers": [
+      {
+       "player_key": "gio_rojas",
+       "acq_year": 2026,
+       "pick": 16,
+       "bonus_usd": null,
+       "consensus_fv": 41.67,
+       "grade_off": 42.7,
+       "grade_on": 45.0,
+       "delta": 2.3,
+       "missing_bonus": true,
+       "dsplus": 128
+      },
+      {
+       "player_key": "liam_peterson",
+       "acq_year": 2026,
+       "pick": 19,
+       "bonus_usd": null,
+       "consensus_fv": 41.67,
+       "grade_off": 42.7,
+       "grade_on": 45.0,
+       "delta": 2.3,
+       "missing_bonus": true,
+       "dsplus": 127
+      },
+      {
+       "player_key": "tyler_spangler",
+       "acq_year": 2026,
+       "pick": 36,
+       "bonus_usd": null,
+       "consensus_fv": 38.33,
+       "grade_off": 37.7,
+       "grade_on": 40.0,
+       "delta": 2.3,
+       "missing_bonus": true,
+       "dsplus": 119
+      },
+      {
+       "player_key": "rocco_maniscalco",
+       "acq_year": 2026,
+       "pick": 50,
+       "bonus_usd": 3200000,
+       "consensus_fv": 41.67,
+       "grade_off": 40.3,
+       "grade_on": 41.7,
+       "delta": 1.4,
+       "missing_bonus": false,
+       "dsplus": 118
+      },
+      {
+       "player_key": "grady_emerson",
+       "acq_year": 2026,
+       "pick": 2,
+       "bonus_usd": null,
+       "consensus_fv": 48.33,
+       "grade_off": 48.6,
+       "grade_on": 49.78,
+       "delta": 1.18,
+       "missing_bonus": true,
+       "dsplus": 130
+      },
+      {
+       "player_key": "jacob_lombard",
+       "acq_year": 2026,
+       "pick": 14,
+       "bonus_usd": 5000000,
+       "consensus_fv": 47.58,
+       "grade_off": 47.3,
+       "grade_on": 48.0,
+       "delta": 0.7,
+       "missing_bonus": false,
+       "dsplus": 129
+      },
+      {
+       "player_key": "sawyer_strosnider",
+       "acq_year": 2026,
+       "pick": 66,
+       "bonus_usd": null,
+       "consensus_fv": 38.33,
+       "grade_off": 37.7,
+       "grade_on": 38.3,
+       "delta": 0.6,
+       "missing_bonus": true,
+       "dsplus": 123
+      },
+      {
+       "player_key": "chris_rembert",
+       "acq_year": 2026,
+       "pick": 51,
+       "bonus_usd": null,
+       "consensus_fv": 38.33,
+       "grade_off": 37.7,
+       "grade_on": 38.3,
+       "delta": 0.6,
+       "missing_bonus": true,
+       "dsplus": 118
+      },
+      {
+       "player_key": "logan_hughes",
+       "acq_year": 2026,
+       "pick": 17,
+       "bonus_usd": null,
+       "consensus_fv": 41.67,
+       "grade_off": 42.3,
+       "grade_on": 42.7,
+       "delta": 0.4,
+       "missing_bonus": true,
+       "dsplus": 119
+      },
+      {
+       "player_key": "taj_marchand",
+       "acq_year": 2026,
+       "pick": 33,
+       "bonus_usd": 2547500,
+       "consensus_fv": 45.0,
+       "grade_off": 42.7,
+       "grade_on": 43.0,
+       "delta": 0.3,
+       "missing_bonus": false,
+       "dsplus": 117
+      },
+      {
+       "player_key": "connor_comeau",
+       "acq_year": 2026,
+       "pick": 54,
+       "bonus_usd": null,
+       "consensus_fv": 41.67,
+       "grade_off": 40.07,
+       "grade_on": 40.3,
+       "delta": 0.23,
+       "missing_bonus": true,
+       "dsplus": 121
+      },
+      {
+       "player_key": "zion_rose",
+       "acq_year": 2026,
+       "pick": 6,
+       "bonus_usd": 5809575,
+       "consensus_fv": 45.0,
+       "grade_off": 45.0,
+       "grade_on": 45.19,
+       "delta": 0.19,
+       "missing_bonus": false,
+       "dsplus": 124
+      },
+      {
+       "player_key": "roch_cholowsky",
+       "acq_year": 2026,
+       "pick": 1,
+       "bonus_usd": 10350000,
+       "consensus_fv": 57.58,
+       "grade_off": 58.0,
+       "grade_on": 58.1,
+       "delta": 0.1,
+       "missing_bonus": false,
+       "dsplus": 130
+      },
+      {
+       "player_key": "tyler_bell",
+       "acq_year": 2026,
+       "pick": 10,
+       "bonus_usd": 5997500,
+       "consensus_fv": 49.12,
+       "grade_off": 50.25,
+       "grade_on": 50.3,
+       "delta": 0.05,
+       "missing_bonus": false,
+       "dsplus": 127
+      },
+      {
+       "player_key": "jackson_flora",
+       "acq_year": 2026,
+       "pick": 4,
+       "bonus_usd": 7997500,
+       "consensus_fv": 51.7,
+       "grade_off": 53.06,
+       "grade_on": 53.1,
+       "delta": 0.03,
+       "missing_bonus": false,
+       "dsplus": 129
+      }
+     ],
+     "mover_acq_years": [
+      2026
+     ]
+    },
+    "b4_off_identity": {
+     "pass": true,
+     "backtest_rows_checked": 804,
+     "live_rows_checked": 209,
+     "mismatches": [],
+     "note": "flags unset: new code vs frozen committed-V2 replica, exact float equality"
+    },
+    "verdict": "FAIL"
+   },
+   "ARM-C": {
+    "flag": "EEPHUS_P1_SLOT_TRUST + EEPHUS_P1_DSPLUS",
+    "pooled_delta_vs_v2": {
+     "n": 804,
+     "delta_point": -0.000273,
+     "delta_boot_mean": -0.00027,
+     "ci95": [
+      -0.001278,
+      0.000495
+     ],
+     "p_gt0": 0.2885
+    },
+    "pooled_bar": "lo95 >= -0.005 (no-harm)",
+    "b1": {
+     "covered_delta_vs_v2": {
+      "n": 294,
+      "delta_point": -0.001896,
+      "delta_boot_mean": -0.001848,
+      "ci95": [
+       -0.008471,
+       0.002881
+      ],
+      "p_gt0": 0.2775
+     },
+     "covered_bar": "lo95 > 0 (gain, strict)",
+     "covered_n": 294,
+     "n_covered_rows_changed": 113,
+     "pooled_delta_vs_v2": {
+      "n": 804,
+      "delta_point": -0.000273,
+      "delta_boot_mean": -0.00027,
+      "ci95": [
+       -0.001278,
+       0.000495
+      ],
+      "p_gt0": 0.2885
+     },
+     "pooled_bar": "lo95 >= -0.005",
+     "pass": false
+    },
+    "b2_grid": {
+     "pass": true,
+     "violations": [],
+     "grid": "picks (2,20,50,120) x DSplus (85..140) x FV (40,45,55) x bonus (None, $2M) x both sides"
+    },
+    "b3_battery": {
+     "n_scored": 264,
+     "n_movers": 23,
+     "max_delta_fv": 2.3,
+     "ceiling_fv": 3.0,
+     "all_upward": true,
+     "movers_restricted_ok": true,
+     "no_pick_rows_moved": [],
+     "pass": true,
+     "movers": [
+      {
+       "player_key": "gio_rojas",
+       "acq_year": 2026,
+       "pick": 16,
+       "bonus_usd": null,
+       "consensus_fv": 41.67,
+       "grade_off": 42.7,
+       "grade_on": 45.0,
+       "delta": 2.3,
+       "missing_bonus": true,
+       "dsplus": 128
+      },
+      {
+       "player_key": "liam_peterson",
+       "acq_year": 2026,
+       "pick": 19,
+       "bonus_usd": null,
+       "consensus_fv": 41.67,
+       "grade_off": 42.7,
+       "grade_on": 45.0,
+       "delta": 2.3,
+       "missing_bonus": true,
+       "dsplus": 127
+      },
+      {
+       "player_key": "tyler_spangler",
+       "acq_year": 2026,
+       "pick": 36,
+       "bonus_usd": null,
+       "consensus_fv": 38.33,
+       "grade_off": 37.7,
+       "grade_on": 40.0,
+       "delta": 2.3,
+       "missing_bonus": true,
+       "dsplus": 119
+      },
+      {
+       "player_key": "grady_emerson",
+       "acq_year": 2026,
+       "pick": 2,
+       "bonus_usd": null,
+       "consensus_fv": 48.33,
+       "grade_off": 48.6,
+       "grade_on": 50.2,
+       "delta": 1.6,
+       "missing_bonus": true,
+       "dsplus": 130
+      },
+      {
+       "player_key": "bo_lowrance",
+       "acq_year": 2026,
+       "pick": 40,
+       "bonus_usd": null,
+       "consensus_fv": 41.67,
+       "grade_off": 40.3,
+       "grade_on": 41.7,
+       "delta": 1.4,
+       "missing_bonus": true,
+       "dsplus": 126
+      },
+      {
+       "player_key": "aiden_ruiz",
+       "acq_year": 2026,
+       "pick": 44,
+       "bonus_usd": null,
+       "consensus_fv": 41.67,
+       "grade_off": 40.3,
+       "grade_on": 41.7,
+       "delta": 1.4,
+       "missing_bonus": true,
+       "dsplus": 123
+      },
+      {
+       "player_key": "ty_head",
+       "acq_year": 2026,
+       "pick": 46,
+       "bonus_usd": null,
+       "consensus_fv": 41.67,
+       "grade_off": 40.3,
+       "grade_on": 41.7,
+       "delta": 1.4,
+       "missing_bonus": true,
+       "dsplus": 121
+      },
+      {
+       "player_key": "rocco_maniscalco",
+       "acq_year": 2026,
+       "pick": 50,
+       "bonus_usd": 3200000,
+       "consensus_fv": 41.67,
+       "grade_off": 40.3,
+       "grade_on": 41.7,
+       "delta": 1.4,
+       "missing_bonus": false,
+       "dsplus": 118
+      },
+      {
+       "player_key": "jacob_lombard",
+       "acq_year": 2026,
+       "pick": 14,
+       "bonus_usd": 5000000,
+       "consensus_fv": 47.58,
+       "grade_off": 47.3,
+       "grade_on": 48.0,
+       "delta": 0.7,
+       "missing_bonus": false,
+       "dsplus": 129
+      },
+      {
+       "player_key": "logan_schmidt",
+       "acq_year": 2026,
+       "pick": 59,
+       "bonus_usd": null,
+       "consensus_fv": 38.33,
+       "grade_off": 37.7,
+       "grade_on": 38.3,
+       "delta": 0.6,
+       "missing_bonus": true,
+       "dsplus": 119
+      },
+      {
+       "player_key": "sawyer_strosnider",
+       "acq_year": 2026,
+       "pick": 66,
+       "bonus_usd": null,
+       "consensus_fv": 38.33,
+       "grade_off": 37.7,
+       "grade_on": 38.3,
+       "delta": 0.6,
+       "missing_bonus": true,
+       "dsplus": 123
+      },
+      {
+       "player_key": "elliot_lascelles",
+       "acq_year": 2026,
+       "pick": 60,
+       "bonus_usd": null,
+       "consensus_fv": 35.0,
+       "grade_off": 37.7,
+       "grade_on": 38.3,
+       "delta": 0.6,
+       "missing_bonus": true,
+       "dsplus": 89
+      },
+      {
+       "player_key": "tyson_leblanc",
+       "acq_year": 2026,
+       "pick": 61,
+       "bonus_usd": null,
+       "consensus_fv": 35.0,
+       "grade_off": 37.7,
+       "grade_on": 38.3,
+       "delta": 0.6,
+       "missing_bonus": true,
+       "dsplus": 103
+      },
+      {
+       "player_key": "wes_mendes",
+       "acq_year": 2026,
+       "pick": 57,
+       "bonus_usd": null,
+       "consensus_fv": 38.33,
+       "grade_off": 37.7,
+       "grade_on": 38.3,
+       "delta": 0.6,
+       "missing_bonus": true,
+       "dsplus": 118
+      },
+      {
+       "player_key": "chris_rembert",
+       "acq_year": 2026,
+       "pick": 51,
+       "bonus_usd": null,
+       "consensus_fv": 38.33,
+       "grade_off": 37.7,
+       "grade_on": 38.3,
+       "delta": 0.6,
+       "missing_bonus": true,
+       "dsplus": 118
+      }
+     ],
+     "mover_acq_years": [
+      2026
+     ]
+    },
+    "b4_off_identity": {
+     "pass": true,
+     "backtest_rows_checked": 804,
+     "live_rows_checked": 209,
+     "mismatches": [],
+     "note": "flags unset: new code vs frozen committed-V2 replica, exact float equality"
+    },
+    "verdict": "FAIL"
+   }
+  },
+  "named_example_grady_emerson": {
+   "context": "2026 pick 2 TBR, slot_usd 10507000, bonus NULL, signed 0, consensus 48.3, served quantile 48.6, V2 credit 0.844",
+   "ARM-A": {
+    "served_quantile": 48.6,
+    "grade_off": 48.6,
+    "grade_on": 50.2,
+    "delta": 1.6
+   },
+   "ARM-B": {
+    "served_quantile": 48.6,
+    "grade_off": 48.6,
+    "grade_on": 49.78,
+    "delta": 1.18
+   },
+   "ARM-C": {
+    "served_quantile": 48.6,
+    "grade_off": 48.6,
+    "grade_on": 50.2,
+    "delta": 1.6
+   }
+  },
+  "verdict": {
+   "ARM-A": "PASS",
+   "ARM-B": "FAIL",
+   "ARM-C": "FAIL"
+  }
+ }
+}

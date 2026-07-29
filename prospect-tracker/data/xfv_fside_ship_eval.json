@@ -1,0 +1,755 @@
+{
+ "generated_at": "2026-07-24",
+ "eval_line": "W-FSIDE-SHIP - owner-authorized fairness re-registration of the efv_score F-SIDE-FIX joint top-band display recalibration (fresh run, repaired 2026-07-24 vintage)",
+ "registration": "docs/efv-2026-07-24/GATES.md 'W-FSIDE-SHIP'",
+ "mechanism_reconciliation": "Under test: (a) efv_score F-SIDE-FIX hook (SIDE_FAIRNESS_FIX_DEFAULT / SFF_KNEE_RAW 52.5 / SFF_MOVE_CAP_FV 3.0 / joint_band_recal / _apply_side_fairness_fix, flag EEPHUS_SIDE_FAIRNESS_FIX) - the only implementation wired default-OFF in efv_score today. Context: (b) the 2026-07-15 ARM-2 joint-display-map candidate; its patch code is gone (session scratchpad) and was re-derived AS (a) on 2026-07-23, so (a) is the surviving faithful form of (b).",
+ "protocol": {
+  "frame": "F-SIDE full_pool_km, forward-chained folds 2020-2023 (tools.efv_side_fairness_fix_lab.build_frame - drives the production efv_score functions; fold refits asserted bit-for-bit vs efv_model._sf_fwd_chain)",
+  "mechanism": {
+   "knee_raw": 52.5,
+   "move_cap_fv": 3.0,
+   "production_code": "efv_score.joint_band_recal + _sff_crosswalk_curve/_sff_expected_war + _apply_side_fairness_fix"
+  },
+  "seed": 20260724,
+  "bootstrap_reps": 2000,
+  "baselines": "SAME-RUN incumbent on the repaired matrices; ledgered historical numbers are context only",
+  "matrix_hashes": {
+   "xfv_hitter_matrix.json": "2e01085c896a",
+   "xfv_pitcher_matrix.json": "8eeb086b5894"
+  },
+  "lambdas": {
+   "hit": 0.7,
+   "pit": 0.61
+  },
+  "lambda_source": "data/xfv.json meta.live_lambda",
+  "folds": [
+   2020,
+   2021,
+   2022,
+   2023
+  ],
+  "n_hit": 795,
+  "n_pit": 837,
+  "n_refit_rank_war_verified": 1632
+ },
+ "gates": {
+  "G1_noharm": {
+   "rho_incumbent": 0.2619,
+   "rho_candidate": 0.2615,
+   "gap": -0.0004,
+   "gap_lo95": -0.0014,
+   "gap_ci90": [
+    -0.0014,
+    0.0006
+   ],
+   "p_gap_gt_0": 0.237,
+   "reps": 2000,
+   "seed": 20260724,
+   "bar_lo95": -0.005,
+   "pass": true
+  },
+  "G2_fairness": {
+   "gap_incumbent_mean_diff_seed7": 4.07,
+   "gap_candidate_mean_diff_seed7": 3.85,
+   "gap_median_incumbent": 2.83,
+   "gap_median_candidate": 2.48,
+   "gap_candidate_boot_seed20260724": {
+    "mean_diff": 3.85,
+    "mean_ci90": [
+     1.62,
+     6.1
+    ],
+    "mean_se": 1.367,
+    "median_diff": 2.48,
+    "median_ci90": [
+     0.2,
+     5.36
+    ],
+    "median_se": 1.634,
+    "p_hit_gt_pit": 0.998
+   },
+   "share_incumbent": 0.37,
+   "share_candidate": 0.21,
+   "share_deserved_raw_rank_war": 0.12,
+   "g2a_gap_shrinks": true,
+   "g2b_share_toward_deserved": true,
+   "top25_incumbent_cell": {
+    "n_hit": 63,
+    "n_pit": 37,
+    "pit_share": 0.37,
+    "hit": {
+     "n": 63,
+     "mean_war": 9.16,
+     "median_war": 6.4,
+     "contrib_rate": 0.746,
+     "star_rate": 0.429,
+     "bust_rate": 0.19
+    },
+    "pit": {
+     "n": 37,
+     "mean_war": 5.09,
+     "median_war": 3.56,
+     "contrib_rate": 0.541,
+     "star_rate": 0.216,
+     "bust_rate": 0.216
+    },
+    "boot": {
+     "mean_diff": 4.07,
+     "mean_ci90": [
+      1.64,
+      6.46
+     ],
+     "mean_se": 1.455,
+     "median_diff": 2.83,
+     "median_ci90": [
+      0.51,
+      7.83
+     ],
+     "median_se": 2.177,
+     "p_hit_gt_pit": 0.997
+    }
+   },
+   "top25_candidate_cell": {
+    "n_hit": 79,
+    "n_pit": 21,
+    "pit_share": 0.21,
+    "hit": {
+     "n": 79,
+     "mean_war": 8.6,
+     "median_war": 6.4,
+     "contrib_rate": 0.734,
+     "star_rate": 0.392,
+     "bust_rate": 0.215
+    },
+    "pit": {
+     "n": 21,
+     "mean_war": 4.75,
+     "median_war": 3.91,
+     "contrib_rate": 0.619,
+     "star_rate": 0.143,
+     "bust_rate": 0.19
+    },
+    "boot": {
+     "mean_diff": 3.85,
+     "mean_ci90": [
+      1.54,
+      6.12
+     ],
+     "mean_se": 1.4,
+     "median_diff": 2.48,
+     "median_ci90": [
+      0.01,
+      5.2
+     ],
+     "median_se": 1.622,
+     "p_hit_gt_pit": 0.997
+    }
+   },
+   "pass": true
+  },
+  "G3_midboard": {
+   "rho_incumbent": 0.2445,
+   "rho_candidate": 0.2445,
+   "delta": 0.0,
+   "bar": -0.003,
+   "rho_candidate_on_incumbent_membership": 0.2445,
+   "n_incumbent": 600,
+   "n_candidate": 600,
+   "membership": "per-fold joint ranks 51-200 under each respective display ranking, pooled across folds",
+   "pass": true
+  }
+ },
+ "frame_invariants": {
+  "below_knee_identity_violations": 0,
+  "max_abs_move_fv": 3.0,
+  "mechanism_cap": 3.0,
+  "n_rows": 1632,
+  "n_changed": 68
+ },
+ "weak_cells_descriptive": {
+  "note": "scoreboard weak cells are rank_war-based and unchanged by construction; these are the display-space analogues on the eval frame (descriptive, no gate)",
+  "pit_fv_tier_50_display": {
+   "n": 10,
+   "incumbent": 0.7946,
+   "candidate": 0.7946
+  },
+  "pit_by_fold_display": {
+   "2020": {
+    "n": 204,
+    "incumbent": 0.185,
+    "candidate": 0.1854
+   },
+   "2021": {
+    "n": 152,
+    "incumbent": 0.2306,
+    "candidate": 0.2302
+   },
+   "2022": {
+    "n": 224,
+    "incumbent": 0.3601,
+    "candidate": 0.3602
+   },
+   "2023": {
+    "n": 257,
+    "incumbent": 0.2515,
+    "candidate": 0.252
+   }
+  },
+  "pit_pooled_display": {
+   "n": 837,
+   "incumbent": 0.2543,
+   "candidate": 0.2544
+  }
+ },
+ "per_fold_top25_pit_share": {
+  "2020": {
+   "inc_pit_share": 0.28,
+   "cand_pit_share": 0.16
+  },
+  "2021": {
+   "inc_pit_share": 0.48,
+   "cand_pit_share": 0.48
+  },
+  "2022": {
+   "inc_pit_share": 0.48,
+   "cand_pit_share": 0.08
+  },
+  "2023": {
+   "inc_pit_share": 0.24,
+   "cand_pit_share": 0.12
+  }
+ },
+ "top_movers": [
+  {
+   "pk": "dylan_carlson",
+   "side": "hit",
+   "year": 2020,
+   "disp": 60.0,
+   "disp_cand": 63.0,
+   "war": 3.7
+  },
+  {
+   "pk": "casey_mize",
+   "side": "pit",
+   "year": 2020,
+   "disp": 65.3,
+   "disp_cand": 62.3,
+   "war": 4.73
+  },
+  {
+   "pk": "luis_patino",
+   "side": "pit",
+   "year": 2020,
+   "disp": 57.3,
+   "disp_cand": 54.3,
+   "war": -0.41
+  },
+  {
+   "pk": "dl_hall",
+   "side": "pit",
+   "year": 2022,
+   "disp": 57.7,
+   "disp_cand": 60.7,
+   "war": 0.68
+  },
+  {
+   "pk": "hunter_greene",
+   "side": "pit",
+   "year": 2022,
+   "disp": 57.7,
+   "disp_cand": 54.7,
+   "war": 19.73
+  },
+  {
+   "pk": "kyle_harrison",
+   "side": "pit",
+   "year": 2023,
+   "disp": 57.7,
+   "disp_cand": 54.7,
+   "war": 2.9
+  },
+  {
+   "pk": "eury_perez",
+   "side": "pit",
+   "year": 2023,
+   "disp": 57.7,
+   "disp_cand": 54.7,
+   "war": 7.62
+  },
+  {
+   "pk": "oswald_peraza",
+   "side": "hit",
+   "year": 2022,
+   "disp": 52.7,
+   "disp_cand": 55.3,
+   "war": -1.22
+  },
+  {
+   "pk": "brett_baty",
+   "side": "hit",
+   "year": 2022,
+   "disp": 52.7,
+   "disp_cand": 55.3,
+   "war": 3.52
+  },
+  {
+   "pk": "nick_pratto",
+   "side": "hit",
+   "year": 2022,
+   "disp": 52.7,
+   "disp_cand": 55.3,
+   "war": -2.4
+  },
+  {
+   "pk": "vinnie_pasquantino",
+   "side": "hit",
+   "year": 2022,
+   "disp": 52.7,
+   "disp_cand": 55.3,
+   "war": 7.61
+  },
+  {
+   "pk": "royce_lewis",
+   "side": "hit",
+   "year": 2022,
+   "disp": 52.7,
+   "disp_cand": 55.3,
+   "war": 6.01
+  },
+  {
+   "pk": "jose_miranda",
+   "side": "hit",
+   "year": 2022,
+   "disp": 52.7,
+   "disp_cand": 55.3,
+   "war": 3.06
+  },
+  {
+   "pk": "bryson_stott",
+   "side": "hit",
+   "year": 2022,
+   "disp": 52.7,
+   "disp_cand": 55.3,
+   "war": 15.06
+  },
+  {
+   "pk": "hunter_brown",
+   "side": "pit",
+   "year": 2022,
+   "disp": 55.3,
+   "disp_cand": 52.7,
+   "war": 14.41
+  },
+  {
+   "pk": "ken_waldichuk",
+   "side": "pit",
+   "year": 2022,
+   "disp": 55.3,
+   "disp_cand": 52.7,
+   "war": 0.56
+  },
+  {
+   "pk": "cade_cavalli",
+   "side": "pit",
+   "year": 2022,
+   "disp": 55.3,
+   "disp_cand": 52.7,
+   "war": -0.04
+  },
+  {
+   "pk": "max_meyer",
+   "side": "pit",
+   "year": 2022,
+   "disp": 55.3,
+   "disp_cand": 52.7,
+   "war": -0.49
+  },
+  {
+   "pk": "brayan_bello",
+   "side": "pit",
+   "year": 2022,
+   "disp": 55.3,
+   "disp_cand": 52.7,
+   "war": 10.35
+  },
+  {
+   "pk": "matthew_liberatore",
+   "side": "pit",
+   "year": 2022,
+   "disp": 55.3,
+   "disp_cand": 52.7,
+   "war": 0.6
+  }
+ ],
+ "served_battery": {
+  "checked_at": "2026-07-24",
+  "path": "efv_score.run_live in-process, scored_live_path redirected to the session scratchpad (tree untouched); xfv_grade_display IS served xfv_grade_quantile (efv_export.py line 44)",
+  "n_rows_joint": 4205,
+  "determinism_off_runs_identical": true,
+  "G4_flag_off_bit_identity": {
+   "pass": true,
+   "off_equals_nohook": true
+  },
+  "n_movers": 31,
+  "max_abs_move_fv": 3.0,
+  "move_cap": 4.0,
+  "move_cap_pass": true,
+  "max_mover_joint_rank_off": 37,
+  "max_mover_joint_rank_worst_case_ties": 42,
+  "confined_top50_pass": true,
+  "confined_top50_worst_case_ties_pass": true,
+  "below_knee_movers": 0,
+  "rankwar_pbucket_pbust_grade_identity_violations": 0,
+  "served_top25_pit_share": {
+   "off": 0.28,
+   "on": 0.16
+  },
+  "mover_log": [
+   {
+    "pk": "kade_anderson",
+    "side": "pit",
+    "disp_off": 62.0,
+    "disp_on": 59.0,
+    "move": -3.0,
+    "joint_rank_off": 4,
+    "rank_ties_worst": 5,
+    "surplus_off": 84.9,
+    "surplus_on": 57.6
+   },
+   {
+    "pk": "seth_hernandez",
+    "side": "pit",
+    "disp_off": 62.0,
+    "disp_on": 59.0,
+    "move": -3.0,
+    "joint_rank_off": 5,
+    "rank_ties_worst": 5,
+    "surplus_off": 76.8,
+    "surplus_on": 51.5
+   },
+   {
+    "pk": "ryan_sloan",
+    "side": "pit",
+    "disp_off": 61.1,
+    "disp_on": 58.1,
+    "move": -3.0,
+    "joint_rank_off": 6,
+    "rank_ties_worst": 6,
+    "surplus_off": 70.4,
+    "surplus_on": 47.4
+   },
+   {
+    "pk": "max_clark",
+    "side": "hit",
+    "disp_off": 61.0,
+    "disp_on": 62.0,
+    "move": 1.0,
+    "joint_rank_off": 7,
+    "rank_ties_worst": 7,
+    "surplus_off": 72.9,
+    "surplus_on": 82.0
+   },
+   {
+    "pk": "eli_willits",
+    "side": "hit",
+    "disp_off": 59.0,
+    "disp_on": 62.0,
+    "move": 3.0,
+    "joint_rank_off": 8,
+    "rank_ties_worst": 10,
+    "surplus_off": 55.6,
+    "surplus_on": 79.3
+   },
+   {
+    "pk": "walker_jenkins",
+    "side": "hit",
+    "disp_off": 59.0,
+    "disp_on": 61.1,
+    "move": 2.1,
+    "joint_rank_off": 9,
+    "rank_ties_worst": 10,
+    "surplus_off": 57.6,
+    "surplus_on": 73.4
+   },
+   {
+    "pk": "george_lombard_jr",
+    "side": "hit",
+    "disp_off": 59.0,
+    "disp_on": 61.0,
+    "move": 2.0,
+    "joint_rank_off": 10,
+    "rank_ties_worst": 10,
+    "surplus_off": 57.8,
+    "surplus_on": 73.1
+   },
+   {
+    "pk": "josue_de_paula",
+    "side": "hit",
+    "disp_off": 58.1,
+    "disp_on": 59.0,
+    "move": 0.9,
+    "joint_rank_off": 11,
+    "rank_ties_worst": 12,
+    "surplus_off": 51.8,
+    "surplus_on": 57.8
+   },
+   {
+    "pk": "rainiel_rodriguez",
+    "side": "hit",
+    "disp_off": 58.1,
+    "disp_on": 59.0,
+    "move": 0.9,
+    "joint_rank_off": 12,
+    "rank_ties_worst": 12,
+    "surplus_off": 52.0,
+    "surplus_on": 58.0
+   },
+   {
+    "pk": "mike_sirota",
+    "side": "hit",
+    "disp_off": 57.0,
+    "disp_on": 59.0,
+    "move": 2.0,
+    "joint_rank_off": 13,
+    "rank_ties_worst": 13,
+    "surplus_off": 46.7,
+    "surplus_on": 59.6
+   },
+   {
+    "pk": "ethan_salas",
+    "side": "hit",
+    "disp_off": 56.1,
+    "disp_on": 58.1,
+    "move": 2.0,
+    "joint_rank_off": 14,
+    "rank_ties_worst": 15,
+    "surplus_off": 39.8,
+    "surplus_on": 52.0
+   },
+   {
+    "pk": "luis_pena",
+    "side": "hit",
+    "disp_off": 56.1,
+    "disp_on": 58.1,
+    "move": 2.0,
+    "joint_rank_off": 15,
+    "rank_ties_worst": 15,
+    "surplus_off": 38.1,
+    "surplus_on": 49.9
+   },
+   {
+    "pk": "theo_gillen",
+    "side": "hit",
+    "disp_off": 56.0,
+    "disp_on": 57.0,
+    "move": 1.0,
+    "joint_rank_off": 16,
+    "rank_ties_worst": 16,
+    "surplus_off": 39.4,
+    "surplus_on": 45.3
+   },
+   {
+    "pk": "nolan_perry",
+    "side": "pit",
+    "disp_off": 55.9,
+    "disp_on": 55.0,
+    "move": -0.9,
+    "joint_rank_off": 17,
+    "rank_ties_worst": 17,
+    "surplus_off": 31.7,
+    "surplus_on": 26.4
+   },
+   {
+    "pk": "sebastian_walcott",
+    "side": "hit",
+    "disp_off": 55.1,
+    "disp_on": 56.1,
+    "move": 1.0,
+    "joint_rank_off": 18,
+    "rank_ties_worst": 18,
+    "surplus_off": 34.2,
+    "surplus_on": 39.9
+   },
+   {
+    "pk": "josuar_gonzalez",
+    "side": "hit",
+    "disp_off": 55.0,
+    "disp_on": 55.1,
+    "move": 0.1,
+    "joint_rank_off": 19,
+    "rank_ties_worst": 20,
+    "surplus_off": 29.5,
+    "surplus_on": 29.8
+   },
+   {
+    "pk": "christian_zazueta",
+    "side": "pit",
+    "disp_off": 54.0,
+    "disp_on": 52.7,
+    "move": -1.3,
+    "joint_rank_off": 23,
+    "rank_ties_worst": 23,
+    "surplus_off": 28.2,
+    "surplus_on": 23.8
+   },
+   {
+    "pk": "thomas_white",
+    "side": "pit",
+    "disp_off": 53.4,
+    "disp_on": 52.7,
+    "move": -0.7,
+    "joint_rank_off": 24,
+    "rank_ties_worst": 25,
+    "surplus_off": 26.2,
+    "surplus_on": 23.8
+   },
+   {
+    "pk": "gage_wood",
+    "side": "pit",
+    "disp_off": 53.4,
+    "disp_on": 52.7,
+    "move": -0.7,
+    "joint_rank_off": 25,
+    "rank_ties_worst": 25,
+    "surplus_off": 27.1,
+    "surplus_on": 24.6
+   },
+   {
+    "pk": "bryce_rainer",
+    "side": "hit",
+    "disp_off": 53.1,
+    "disp_on": 54.0,
+    "move": 0.9,
+    "joint_rank_off": 26,
+    "rank_ties_worst": 27,
+    "surplus_off": 25.9,
+    "surplus_on": 28.9
+   },
+   {
+    "pk": "kendry_chourio",
+    "side": "pit",
+    "disp_off": 53.1,
+    "disp_on": 52.7,
+    "move": -0.4,
+    "joint_rank_off": 27,
+    "rank_ties_worst": 27,
+    "surplus_off": 20.9,
+    "surplus_on": 19.8
+   },
+   {
+    "pk": "josiah_hartshorn",
+    "side": "hit",
+    "disp_off": 53.0,
+    "disp_on": 53.4,
+    "move": 0.4,
+    "joint_rank_off": 28,
+    "rank_ties_worst": 30,
+    "surplus_off": 25.7,
+    "surplus_on": 27.0
+   },
+   {
+    "pk": "hagen_smith",
+    "side": "pit",
+    "disp_off": 53.0,
+    "disp_on": 52.6,
+    "move": -0.4,
+    "joint_rank_off": 29,
+    "rank_ties_worst": 30,
+    "surplus_off": 26.4,
+    "surplus_on": 25.0
+   },
+   {
+    "pk": "anthony_eyanson",
+    "side": "pit",
+    "disp_off": 53.0,
+    "disp_on": 52.6,
+    "move": -0.4,
+    "joint_rank_off": 30,
+    "rank_ties_worst": 30,
+    "surplus_off": 24.8,
+    "surplus_on": 23.5
+   },
+   {
+    "pk": "caleb_bonemer",
+    "side": "hit",
+    "disp_off": 52.7,
+    "disp_on": 53.4,
+    "move": 0.7,
+    "joint_rank_off": 31,
+    "rank_ties_worst": 35,
+    "surplus_off": 25.9,
+    "surplus_on": 28.3
+   },
+   {
+    "pk": "eric_hartman",
+    "side": "hit",
+    "disp_off": 52.7,
+    "disp_on": 53.1,
+    "move": 0.4,
+    "joint_rank_off": 32,
+    "rank_ties_worst": 35,
+    "surplus_off": 24.7,
+    "surplus_on": 26.0
+   },
+   {
+    "pk": "ralphy_velazquez",
+    "side": "hit",
+    "disp_off": 52.7,
+    "disp_on": 53.1,
+    "move": 0.4,
+    "joint_rank_off": 33,
+    "rank_ties_worst": 35,
+    "surplus_off": 25.9,
+    "surplus_on": 27.2
+   },
+   {
+    "pk": "felnin_celesten",
+    "side": "hit",
+    "disp_off": 52.7,
+    "disp_on": 53.0,
+    "move": 0.3,
+    "joint_rank_off": 34,
+    "rank_ties_worst": 35,
+    "surplus_off": 25.9,
+    "surplus_on": 26.9
+   },
+   {
+    "pk": "roldy_brito",
+    "side": "hit",
+    "disp_off": 52.7,
+    "disp_on": 53.0,
+    "move": 0.3,
+    "joint_rank_off": 35,
+    "rank_ties_worst": 35,
+    "surplus_off": 22.3,
+    "surplus_on": 23.2
+   },
+   {
+    "pk": "demetrio_crisantes",
+    "side": "hit",
+    "disp_off": 52.6,
+    "disp_on": 53.0,
+    "move": 0.4,
+    "joint_rank_off": 36,
+    "rank_ties_worst": 42,
+    "surplus_off": 25.9,
+    "surplus_on": 27.2
+   },
+   {
+    "pk": "kevin_alvarez",
+    "side": "hit",
+    "disp_off": 52.6,
+    "disp_on": 52.7,
+    "move": 0.1,
+    "joint_rank_off": 37,
+    "rank_ties_worst": 42,
+    "surplus_off": 22.1,
+    "surplus_on": 22.4
+   }
+  ]
+ },
+ "all_pass": true,
+ "verdict": "ALL-PASS - ship authorized: wave-D consolidator flips SIDE_FAIRNESS_FIX_DEFAULT to True (wiring diff in the lane report), regens served artifacts, runs the post-flip served battery vs a pre-flip data/xfv.json snapshot, restamps registry row xfv_side_fairness_fix under this registration.",
+ "prior_attempt_context": "The 2026-07-23 F-SIDE-FIX registration FAILED its F1b clause at the pre-repair vintage (cand 4.15 vs inc 4.07; data/xfv_side_fairness_fix_eval.json is that loss ledger; its one attempt is spent). W-FSIDE-SHIP is the NEW owner-authorized registration its keep-alive contemplated, run fresh ONCE at the wave-B repaired 2026-07-24 vintage, where the same-run incumbent gap is 4.07 and the candidate gap is 3.85 (shrinks). Within-tail selection remains outcome-arbitrary at the player level (fold 2022: dl_hall promoted +3.0 realized 0.68; hunter_greene demoted -3.0 realized 19.73) - the aggregate top-25 gap and share are what this registration gates, per the owner framing.",
+ "lambda_note": "Frame lambdas read from served data/xfv.json meta.live_lambda (hit 0.7 / pit 0.61); incumbent and candidate share identical lambdas so every gate is internally paired."
+}
