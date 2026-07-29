@@ -151,3 +151,53 @@ def test_gate1_artifact_committed_and_passing():
     assert row["gates"]["war"] and row["gates"]["wrc_plus"] and row["gates"]["fip"]
     assert 0.75 <= row["coverage_p10_p90"] <= 0.85
     assert row["pooled"]["war"]["n"] > 15000          # real population, not a toy slice
+
+
+def test_corpus_cache_invalidates_on_data_age_not_calendar_year(tmp_path, monkeypatch):
+    """P-CTTL regression guard. The old accept condition was
+    `cached['last'] >= date.today().year`, permanently true inside a season,
+    so the corpus pickle never expired: a 2026-07-24 payload was built on a
+    2026 season frozen 31 days earlier (season_fraction 0.484 vs 0.639).
+    A source file newer than the pickle, or a pickle older than the TTL, must
+    now report the cache as stale; a completed-season-only corpus must not."""
+    from datetime import date
+    import os
+    import fa_projection as fp
+
+    cur = date.today().year
+    corpus_p = tmp_path / "fa_corpus.pkl"
+    corpus_p.write_bytes(b"x")
+    monkeypatch.setattr(fp, "CORPUS_CACHE", corpus_p)
+    monkeypatch.setattr(fp, "CACHE_DIR", tmp_path)
+    cached = {"first": 2000, "last": cur}
+
+    # no source files, pickle brand new -> accept
+    assert fp._corpus_stale_reason(cached, cur) is None
+    # a corpus that carries NO in-progress season never expires
+    assert fp._corpus_stale_reason({"first": 2000, "last": cur - 1}, cur - 1) is None
+    # a SOURCE newer than the pickle -> stale
+    src = tmp_path / f"fa_statsapi_hitting_{cur}.json"
+    src.write_text("{}", encoding="utf-8")
+    os.utime(src, (corpus_p.stat().st_mtime + 600,) * 2)
+    assert "newer than corpus" in (fp._corpus_stale_reason(cached, cur) or "")
+    # pickle older than the TTL -> stale even with no newer source
+    old = corpus_p.stat().st_mtime - (fp.CORPUS_TTL_DAYS + 1) * 86400
+    os.utime(corpus_p, (old, old))
+    os.utime(src, (old - 600,) * 2)
+    assert "d old" in (fp._corpus_stale_reason(cached, cur) or "")
+
+
+def test_fitted_models_no_cache_does_not_write_the_shared_cache(tmp_path, monkeypatch):
+    """P-FITCACHE regression guard. The fits cache key is
+    (max_season, corpus.first, corpus.last) and knows nothing about the rows,
+    so use_cache=False callers passing a MODIFIED corpus (bootstrap resample,
+    league-variant arm) were overwriting the production fits for every other
+    consumer. use_cache=False must be read-nothing AND write-nothing."""
+    import fa_projection as fp
+
+    corpus = fp.build_corpus()
+    monkeypatch.setattr(fp, "CACHE_DIR", tmp_path)
+    fp.fitted_models(corpus, corpus["last"] - 4, use_cache=False)
+    assert list(tmp_path.glob("fa_fits_*.pkl")) == []
+    fp.fitted_models(corpus, corpus["last"] - 4, use_cache=True)
+    assert list(tmp_path.glob("fa_fits_*.pkl"))

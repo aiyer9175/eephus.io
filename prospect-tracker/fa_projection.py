@@ -36,7 +36,9 @@ from __future__ import annotations
 import json
 import logging
 import math
+import os
 import pickle
+import time
 from collections import defaultdict
 from pathlib import Path
 
@@ -108,6 +110,50 @@ def _war_age_maps() -> tuple[dict, dict]:
     return war, age
 
 
+# ============================================================================
+# P-CTTL: corpus cache invalidation on DATA age, not calendar year
+# ============================================================================
+# The old accept condition was `cached["last"] >= date.today().year`, which is
+# permanently true from January onward: within a season the pickle NEVER
+# expired. Measured 2026-07-24: a corpus frozen 2026-06-23 (88,517 league PA,
+# season_fraction 0.484) was serving a payload stamped the same day, against a
+# StatsAPI source cache that had been refetched that morning. Everything keyed
+# on corpus['last'] (fitted_models, the proj_ml frame cache) inherited the
+# freeze, and the in-progress reliability blend over-weighted the prior season
+# by ~22 points of weight for every veteran. Two triggers, both cheap:
+#   1. a SOURCE file for the in-progress season is newer than the pickle
+#   2. the pickle is older than CORPUS_TTL_DAYS while an in-progress season is
+#      in it (catches a source refetched in place with an unchanged mtime)
+# Completed-season-only corpora (last < current year) never expire: their
+# inputs are final apart from bWAR revisions, which the annual rollover picks
+# up anyway.
+CORPUS_TTL_DAYS = 3
+
+
+def _corpus_stale_reason(cached: dict, last: int) -> str | None:
+    """Why the cached corpus must be rebuilt, or None to accept it."""
+    from datetime import date
+    if last < date.today().year:
+        return None                              # no in-progress season in it
+    try:
+        c_mtime = CORPUS_CACHE.stat().st_mtime
+    except OSError:
+        return None
+    newest = 0.0
+    for group in ("hitting", "pitching"):
+        p = CACHE_DIR / f"fa_statsapi_{group}_{last}.json"
+        try:
+            newest = max(newest, p.stat().st_mtime)
+        except OSError:
+            continue
+    if newest > c_mtime:
+        return f"source {last} newer than corpus ({newest - c_mtime:.0f}s)"
+    age_days = (time.time() - c_mtime) / 86400.0
+    if age_days > CORPUS_TTL_DAYS:
+        return f"in-progress season {last}, corpus {age_days:.1f}d old"
+    return None
+
+
 def build_corpus(first_season: int | None = None, last_season: int | None = None,
                  force: bool = False) -> dict:
     """{"hit": [rows], "pit": [rows], "league": {season: {...}}}.
@@ -121,12 +167,38 @@ def build_corpus(first_season: int | None = None, last_season: int | None = None
     cfg = _pcfg()
     first = first_season or int(cfg["corpus_first_season"])
     last = last_season or date.today().year
+    cached = None
     if CORPUS_CACHE.exists() and not force:
         with open(CORPUS_CACHE, "rb") as fh:
             cached = pickle.load(fh)
         if cached.get("first") == first and cached.get("last") >= last - 0:
+            reason = _corpus_stale_reason(cached, last)
+            if reason is None:
+                return cached
+            log.info("fa corpus cache stale (%s) - rebuilding", reason)
+        else:
+            cached = None
+    try:
+        war_map, age_map = _war_age_maps()
+    except Exception as e:                       # noqa: BLE001 - fail-soft
+        # P-CTTL: the staleness rebuild must never be able to take a surface
+        # DOWN that a stale-but-usable pickle would have served. Any source
+        # failure (pybaseball / network) falls back to the cached corpus.
+        if cached is not None:
+            log.warning("fa corpus rebuild failed (%s) — serving the STALE cache", e)
             return cached
-    war_map, age_map = _war_age_maps()
+        raise
+    # P-CTTL guard: _war_age_maps is fail-SOFT (a bwar fetch failure logs and
+    # returns an EMPTY map), so without this a network blip would pickle a corpus
+    # with war=None on every row — silently zeroing the WAR map, the war_rate
+    # aging curves and every projection. Refuse to overwrite a good cache with
+    # a WAR-less one.
+    if cached is not None and len(war_map) < 0.5 * sum(
+            1 for r in cached.get("hit", []) + cached.get("pit", [])
+            if r.get("war") is not None):
+        log.warning("fa corpus rebuild produced a degenerate WAR map (%d keys) — "
+                    "serving the STALE cache", len(war_map))
+        return cached
     raw = fa_sources.fetch_statsapi_season_range(first, last)
     hit_rows: list[dict] = []
     pit_rows: list[dict] = []
@@ -149,8 +221,25 @@ def build_corpus(first_season: int | None = None, last_season: int | None = None
                          ("bb", bb), ("so", so), ("hbp", hbp), ("sf", sf), ("r", _f(st.get("runs")))):
                 tot[k] += v
             pos = ((s.get("position") or {}).get("abbreviation") or "").upper()
+            # P-LGPIT (MEASURED NON-SHIP, 2026-07-24 projections lane). The
+            # accumulation above deliberately runs BEFORE this `continue`, so the
+            # league denominators include PITCHERS BATTING for every
+            # pre-universal-DH season (K% +0.0058 in 2015/2019/2021 vs +0.00001 in
+            # 2023 - a fake step that accounts for 76% of the observed 2021->2022
+            # league K% drop). That IS a distortion, and removing it was tested as
+            # a proper arm. It LOST, resolvably: over 7 forward-chained bases
+            # (2014-2021 ex-2020, 90 paired bootstrap draws, curves + WAR map refit
+            # per draw PER VARIANT) taking pitchers out of the denominators cost
+            # hitter h1 MAE +0.0191 (CI95 [+0.0174, +0.0207] against a 0.0018 noise
+            # floor) and moved hitter h1 bias +0.0289 -> +0.0745. The narrower
+            # variant that fixes only the Marcel REGRESSION TARGETS and keeps the
+            # all-batters wOBA/r_pa wRAA baseline still cost +0.0145 (hit h1).
+            # Mechanism: the too-high league K% is an unintended DEFLATOR that has
+            # been offsetting a structural hitter over-projection, so the league
+            # means and the hitter level have to be re-fitted TOGETHER. Do not
+            # "clean up" this ordering on its own.
             if pos == "P":
-                continue                       # pitchers batting: exclude from hitter corpus
+                continue                       # pitchers batting: exclude from the hitter CORPUS
             babip_den = ab - so - hr + sf
             key = (int(mlbam), season) if mlbam else None
             hit_rows.append({
@@ -256,9 +345,17 @@ def fitted_models(corpus: dict, max_season: int, use_cache: bool = True) -> tupl
             return pickle.load(fh)
     curves = fit_aging_curves(corpus, max_season=max_season, write=False)
     war_map = fit_war_map(corpus, max_season=max_season)
-    CACHE_DIR.mkdir(exist_ok=True)
-    with open(cache, "wb") as fh:
-        pickle.dump((curves, war_map), fh)
+    # P-FITCACHE: use_cache=False must not WRITE either. The cache key is
+    # (max_season, corpus.first, corpus.last) and carries nothing about the
+    # ROWS, so a caller that passes a modified corpus - a bootstrap resample, a
+    # league-variant arm, an ablation - was silently overwriting the production
+    # fits for every other consumer, and the next reader picked them up. That is
+    # how a measurement harness can corrupt the served model. proj_ml's frame
+    # cache already guards its write the same way (proj_ml.py `if use_cache`).
+    if use_cache:
+        CACHE_DIR.mkdir(exist_ok=True)
+        with open(cache, "wb") as fh:
+            pickle.dump((curves, war_map), fh)
     return curves, war_map
 
 
@@ -548,6 +645,204 @@ def season_fraction(league: dict, season: int) -> float:
     return max(0.05, min(1.0, cur / prev))
 
 
+# ============================================================================
+# W1 PT-RISK: injury-history playing-time adjustment (gated, DEFAULT OFF)
+# ============================================================================
+# Registered 2026-07-23 (docs/wills-2026-07-23/GATES.md section W1). Env flag
+# EEPHUS_PT_RISK ("1" = on) is read at CALL time; with the flag unset the
+# projection path is byte-identical to the pre-hook engine. The sidecar
+# data/pt_risk_adjust.json carries per-side frozen ridge blocks (coef, mu,
+# sigma on the FROZEN feature list, fit by tools/pt_risk_lab.py) plus the
+# per-player IL season table reconstructed from the league transactions log.
+# Uncovered rows (no mlbam, no age, target season before the transactions
+# substrate, side not enabled, sidecar absent) no-op exactly.
+
+PT_RISK_DEFAULT = False                     # central flip lives here
+_PT_RISK_PATH = Path(__file__).parent / "data" / "pt_risk_adjust.json"
+PT_RISK_FEATURES = ("il_days_prior1", "il_stints_prior1", "career_il_days",
+                    "career_il_stints", "age", "age_x_il_days_prior1")
+PT_RISK_CLAMP = {"hit": 150.0, "pit": 60.0}  # a-priori bounds: PA / IP-equiv
+PT_RISK_MIN_FEATURE_SEASON = 2016            # transactions substrate floor
+_pt_risk_state: dict | None = None
+_pt_risk_loaded = False
+
+
+def _pt_risk_enabled() -> bool:
+    env = os.environ.get("EEPHUS_PT_RISK")
+    if env is not None:
+        return env.strip() == "1"
+    return PT_RISK_DEFAULT
+
+
+def _pt_risk_load() -> dict | None:
+    """Sidecar loader (memoized). Absent/corrupt sidecar -> None -> no-op."""
+    global _pt_risk_state, _pt_risk_loaded
+    if _pt_risk_loaded:
+        return _pt_risk_state
+    _pt_risk_loaded = True
+    try:
+        raw = json.loads(_PT_RISK_PATH.read_text(encoding="utf-8"))
+        il = {int(p): {int(y): (float(v[0]), int(v[1])) for y, v in yrs.items()}
+              for p, yrs in (raw.get("il") or {}).items()}
+        _pt_risk_state = {"hit": raw.get("hit"), "pit": raw.get("pit"), "il": il}
+    except (OSError, ValueError, TypeError, AttributeError):
+        _pt_risk_state = None
+    return _pt_risk_state
+
+
+def pt_risk_features(il_seasons: dict, target_season: int, age: int) -> list[float]:
+    """FROZEN feature vector (order = PT_RISK_FEATURES) from completed-season
+    IL history STRICTLY before target_season. il_seasons maps
+    season -> (il_days, il_stints)."""
+    d1, s1 = il_seasons.get(target_season - 1, (0.0, 0))
+    cd = cs = 0.0
+    for s, (d, n) in il_seasons.items():
+        if s < target_season:
+            cd += d
+            cs += n
+    return [float(d1), float(s1), cd, cs, float(age), float(age) * float(d1)]
+
+
+def pt_risk_apply(block: dict, feats: list[float]) -> float:
+    """Standardize with the block's frozen mu/sigma, dot the ridge coef (no
+    intercept: the adjustment is mean-zero over the fit population, a pure
+    redistribution), clamp at the a-priori bound stored in the block."""
+    z = [(f - m) / s if s > 1e-9 else 0.0
+         for f, m, s in zip(feats, block["mu"], block["sigma"])]
+    adj = sum(c * v for c, v in zip(block["coef"], z))
+    cap = float(block["clamp"])
+    return max(-cap, min(cap, adj))
+
+
+def _pt_risk_adjustment(mlbam, side: str, target_season: int, age) -> float | None:
+    """Clamped PT adjustment (PA for hitters, IP-equivalent for pitchers) or
+    None when the row is uncovered."""
+    if not mlbam or not age or target_season - 1 < PT_RISK_MIN_FEATURE_SEASON:
+        return None
+    state = _pt_risk_load()
+    if not state:
+        return None
+    block = state.get(side)
+    if not block or not block.get("enabled"):
+        return None
+    feats = pt_risk_features(state["il"].get(int(mlbam)) or {}, target_season, age)
+    return pt_risk_apply(block, feats)
+
+
+# ============================================================================
+# P-IPAGE: pitcher ip_proj follows the AGED BF exposure (gated arm)
+# ============================================================================
+# SHIPPED 2026-07-24 after the paired-bootstrap gate below. Dev (7 forward-
+# chained bases 2014-2021 ex-2020, 135 draws, refit per draw): pitcher h1 MAE
+# 0.5565 -> 0.5295, paired delta -0.0224 CI95 [-0.0302, -0.0134], P(improve)
+# 1.000, against a permuted-age placebo of -0.0032 (7x) and a noise floor
+# (1.96 sd) of 0.0079; pitcher h1 bias +0.0529 -> +0.0056. TOUCHED-ONCE HOLDOUT
+# (bases 2022-2024, 45 draws): pitcher h1 -0.0305, CI95 [-0.0375, -0.0233],
+# P 1.000, bias +0.0477 -> -0.0007; pitcher all-horizon -0.0124 CI95
+# [-0.0181, -0.0053]. Out-year (h3-h5) MAE moves +0.005 to +0.009 with CIs
+# straddling zero - NULL, disclosed - while the LEVEL bias improves at every
+# horizon (h5 pit -0.0855 -> -0.0702).
+PIT_IP_AGE_DEFAULT = True                   # central flip lives here
+
+
+def _pit_ip_age_enabled() -> bool:
+    env = os.environ.get("EEPHUS_PIT_IP_AGE")
+    if env is not None:
+        return env.strip() == "1"
+    return PIT_IP_AGE_DEFAULT
+
+
+# ============================================================================
+# P-TJPT: pitcher playing time discounted for a RECENT Tommy John surgery
+# ============================================================================
+# Registered 2026-07-24 (FA lane). Env flag EEPHUS_PT_TJ ("1" = on) is read at
+# CALL time; with the flag unset the projection path is byte-identical to the
+# pre-hook engine. DEFAULT OFF: the arm passes its gate but it moves every
+# pitcher projection on the site (FA, /projections/, /fantasy/, the
+# leaderboards), which is a wider blast radius than this lane owns.
+#
+# WHY: playing time is currently a two-season exposure Marcel plus an age
+# delta and nothing else -- durability is not a variable anywhere in the
+# stack, and data/tj_surgery.json had ZERO consumers in it.
+#
+# DESIGN THAT DOES NOT CONDITION ON SURVIVAL (the trap the standing ledger
+# flags for this source): every pitcher with >= 100 BF in season t-1 is
+# projected for t, and a pitcher who never appears in t scores actual BF = 0.
+# Attrition is IN the label, so the estimate is not a returnee-only read.
+# tj_surgery.tj_features counts only surgeries STRICTLY BEFORE the target
+# year, so the feature is ex-ante at every fold.
+#
+# MEASURED (tools/_fa_tj_gate.py, tools/_fa_tj_war.py; n = 9,505 pitcher
+# seasons 2006-2025, 5,839 scored over 12 forward-chained folds 2014-2025):
+#   descriptive, as-of bucket        n     survive   actualBF / projectedBF
+#     no TJ                        7188      0.859        0.721
+#     TJ, last surgery  <24 months  215      0.521        0.477  (median 0.030)
+#     TJ, 24-48 months              508      0.852        0.790
+#     TJ, 48-96 months              955      0.857        0.735
+#     TJ, 96+ months                639      0.806        0.673
+#   The whole effect is RECENCY, not "ever": "TJ ever" is 0.706 vs 0.721.
+#
+#   arm (multiplier fit ex-ante on strictly prior seasons, lt24 only):
+#     playing-time MAE (BF)  170.702 -> 169.039  (-1.663), 11/12 folds better
+#     pitcher WAR MAE         0.8876 ->  0.8825  (-0.0051), 10/12 folds better
+#   controls, ALL-BUCKET form (the fuller arm; measured under P-IPAGE ON):
+#     paired bootstrap, resample the pool by season + refit every draw, B=400
+#       PT  pooled delta -1.7284 CI95 [-2.9559, -0.3914] P(improves) 0.998
+#       PT  TJ slice     -6.0317 CI95 [-10.411, -1.3482] P(improves) 0.998
+#       WAR pooled       -0.0051 CI95 [-0.0085, -0.0017] P(improves) 1.000
+#       WAR TJ slice     -0.0178 CI95 [-0.0300, -0.0059] P(improves) 1.000
+#     zero-information control (bucket labels row-permuted within season, 40 draws)
+#       PT  pooled null95 [-1.0959, +0.8168] max|d| 1.3460
+#       PT  TJ slice null95 [-3.8273, +2.8523] max|d| 4.7006
+#       WAR pooled null95 [-0.0028, +0.0020] max|d| 0.0040
+#       WAR TJ slice null95 [-0.0097, +0.0070] max|d| 0.0139
+#   So PT clears its null band comfortably (1.36x the largest null excursion
+#   pooled, 1.36x on the slice); pooled WAR clears it by 1.28x. Read the PT
+#   number as the result and the WAR number as a consistent-sign follow-on,
+#   not as a second independent win.
+#
+#   MARKET-SIDE COMPANION RESULT (NULL, ledgered): the same TJ features added
+#   to fa_market's log-guarantee stage are a measured null -- Gate-2 pooled
+#   guarantee MAE delta +0.0094, sd 0.0357, CI95 [-0.0487, +0.0914],
+#   P(improves) 0.390, against its own row-permuted zero-information control
+#   at +0.0003 sd 0.0389. The mechanism is visible in the corpus: the 65 FA
+#   pitcher signings with a TJ inside 24 months already carry a median
+#   projected WAR of 0.35 vs 0.62 for the no-TJ group and a median guarantee
+#   of $2.0M vs $5.0M, so the durability information is ALREADY in war_y1 by
+#   the time the market stage sees it. Durability belongs in the projection,
+#   not in the price.
+#
+# The multiplier is applied to BOTH pt_proj (BF) and ip_proj so it reaches
+# war_from_projection regardless of the P-IPAGE flag's state.
+PT_TJ_DEFAULT = False                       # central flip lives here
+PT_TJ_RECENT_MONTHS = 24
+PT_TJ_MULT = 0.606                          # fit on 2006-2025, shrunk k=30
+
+
+def _pt_tj_enabled() -> bool:
+    env = os.environ.get("EEPHUS_PT_TJ")
+    if env is not None:
+        return env.strip() == "1"
+    return PT_TJ_DEFAULT
+
+
+def pt_tj_multiplier(mlbam, target_season: int) -> float:
+    """Exposure multiplier for a pitcher whose most recent Tommy John
+    surgery is inside PT_TJ_RECENT_MONTHS of the target season. 1.0 for
+    everyone else, and 1.0 fail-soft when the ledger is unavailable."""
+    if not mlbam:
+        return 1.0
+    try:
+        import tj_surgery
+        f = tj_surgery.tj_features(mlbam, str(target_season))
+    except Exception:                                  # noqa: BLE001 -- fail-soft
+        return 1.0
+    mo = f.get("months_since_last_tj_pre")
+    if f.get("tj_pre") and mo is not None and mo < PT_TJ_RECENT_MONTHS:
+        return PT_TJ_MULT
+    return 1.0
+
+
 def project_player(history: list[dict], side: str, target_season: int,
                    curves: dict, league: dict, age: int | None,
                    role: str | None = None,
@@ -630,7 +925,44 @@ def project_player(history: list[dict], side: str, target_season: int,
         out["ip_proj"] = round(ip, 1)
     if age:
         pt += curve_delta(curves, side, role, "pt", age)
+    # W1 PT-RISK (gated, default OFF): injury-history PT adjustment from the
+    # frozen-coefficient sidecar. Hitters adjust in PA; pitchers in
+    # IP-equivalents (the engine's BF proxy is 4.3 * IP), keeping ip_proj and
+    # the pt/ip pairing the FIP algebra below consumes consistent.
+    if _pt_risk_enabled():
+        _adj = _pt_risk_adjustment(hist[0].get("mlbam"), side, target_season, age)
+        if _adj is not None:
+            if side == "hit":
+                pt += _adj
+            else:
+                pt += _adj * 4.3
+                out["ip_proj"] = round(max(0.0, ip + _adj), 1)
     out["pt_proj"] = max(0.0, round(pt, 1))
+    # P-IPAGE (2026-07-24 projections lane): PITCHER PT AGING NEVER REACHED WAR.
+    # ip_proj was stamped ABOVE the `pt += curve_delta(...,"pt",age)` line, so the
+    # fitted pt curve (which is fit on BF deltas - see fit_aging_curves' expo_key)
+    # aged the BF exposure while ip_proj kept the un-aged Marcel value. Downstream:
+    #   * war_from_projection reads ONLY ip_proj -> the whole pt decline was discarded
+    #   * the FIP algebra below divides the AGED pt by the UN-AGED ip, so an older
+    #     pitcher's smaller BF produced a LOWER (better) FIP - backwards
+    #   * fm._decay_path's rate = war1/pt_proj*250 paired a war1 built on one exposure
+    #     with a different exposure
+    # rate_path's own docstring already asserts the invariant this restores
+    # ("pt_proj = 4.3 * ip_proj" at year 1). Hitters were never affected (pt_proj
+    # feeds PA/600 directly). Env-gated for the paired-bootstrap arm; the flag is
+    # read at CALL time so the OFF path is byte-identical to the pre-fix engine.
+    if side != "hit" and _pit_ip_age_enabled():
+        out["ip_proj"] = round(out["pt_proj"] / 4.3, 1)
+    # P-TJPT (gated, default OFF): recent-Tommy-John exposure haircut. Applied
+    # to BOTH pt_proj and ip_proj so it reaches war_from_projection whatever
+    # state P-IPAGE is in, and applied AFTER P-IPAGE so the two stay paired.
+    # See the P-TJPT header for the gate evidence.
+    if side != "hit" and _pt_tj_enabled():
+        _m = pt_tj_multiplier(hist[0].get("mlbam"), target_season)
+        if _m != 1.0:
+            out["pt_proj"] = max(0.0, round(out["pt_proj"] * _m, 1))
+            out["ip_proj"] = max(0.0, round(out.get("ip_proj", 0.0) * _m, 1))
+            out["pt_tj_mult"] = _m
     # ---- composites ----------------------------------------------------------
     if side == "hit":
         out.update(_assemble_hitter(out, league, target_season))

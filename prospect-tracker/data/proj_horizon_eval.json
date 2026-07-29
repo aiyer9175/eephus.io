@@ -10,83 +10,83 @@
  "horizons": {
   "1": {
    "n": 8053,
-   "mae": 0.6598,
-   "bias": 0.0127,
+   "mae": 0.647,
+   "bias": -0.0073,
    "n_star": 201,
-   "mae_star": 2.0287,
-   "bias_star": -0.7419,
-   "tail_pred_ge3": 126,
+   "mae_star": 2.0276,
+   "bias_star": -0.8206,
+   "tail_pred_ge3": 111,
    "tail_act_ge3": 499,
-   "tail_ratio": 0.253,
-   "coverage": 0.638,
-   "coverage_survived": 0.4094,
+   "tail_ratio": 0.222,
+   "coverage": 0.6562,
+   "coverage_survived": 0.4204,
    "n_survived": 4719,
-   "pinball_q10": 0.1564,
-   "pinball_q90": 0.2263
+   "pinball_q10": 0.154,
+   "pinball_q90": 0.2244
   },
   "2": {
    "n": 8053,
-   "mae": 0.5573,
-   "bias": 0.042,
+   "mae": 0.5553,
+   "bias": 0.0398,
    "n_star": 201,
-   "mae_star": 1.7274,
-   "bias_star": 0.1405,
-   "tail_pred_ge3": 97,
+   "mae_star": 1.7252,
+   "bias_star": 0.0707,
+   "tail_pred_ge3": 94,
    "tail_act_ge3": 328,
-   "tail_ratio": 0.296,
-   "coverage": 0.7059,
-   "coverage_survived": 0.4098,
+   "tail_ratio": 0.287,
+   "coverage": 0.7154,
+   "coverage_survived": 0.4179,
    "n_survived": 3838,
-   "pinball_q10": 0.1221,
-   "pinball_q90": 0.2059
+   "pinball_q10": 0.1211,
+   "pinball_q90": 0.2048
   },
   "3": {
    "n": 8053,
-   "mae": 0.4837,
-   "bias": -0.0005,
+   "mae": 0.4891,
+   "bias": 0.0066,
    "n_star": 201,
-   "mae_star": 1.8529,
-   "bias_star": 0.0487,
-   "tail_pred_ge3": 66,
+   "mae_star": 1.8364,
+   "bias_star": -0.0119,
+   "tail_pred_ge3": 67,
    "tail_act_ge3": 306,
-   "tail_ratio": 0.216,
-   "coverage": 0.7462,
-   "coverage_survived": 0.3931,
+   "tail_ratio": 0.219,
+   "coverage": 0.7523,
+   "coverage_survived": 0.4032,
    "n_survived": 3264,
-   "pinball_q10": 0.1026,
-   "pinball_q90": 0.1893
+   "pinball_q10": 0.102,
+   "pinball_q90": 0.189
   },
   "4": {
    "n": 8053,
-   "mae": 0.4106,
-   "bias": -0.0216,
+   "mae": 0.4173,
+   "bias": -0.0102,
    "n_star": 201,
-   "mae_star": 1.7839,
-   "bias_star": -0.1304,
-   "tail_pred_ge3": 47,
+   "mae_star": 1.7716,
+   "bias_star": -0.1811,
+   "tail_pred_ge3": 48,
    "tail_act_ge3": 257,
-   "tail_ratio": 0.183,
-   "coverage": 0.7774,
-   "coverage_survived": 0.3607,
+   "tail_ratio": 0.187,
+   "coverage": 0.7823,
+   "coverage_survived": 0.3725,
    "n_survived": 2714,
-   "pinball_q10": 0.0849,
-   "pinball_q90": 0.1716
+   "pinball_q10": 0.0846,
+   "pinball_q90": 0.1707
   },
   "5": {
    "n": 8053,
-   "mae": 0.3793,
-   "bias": -0.0816,
+   "mae": 0.3854,
+   "bias": -0.0694,
    "n_star": 201,
-   "mae_star": 1.816,
-   "bias_star": -0.6382,
-   "tail_pred_ge3": 35,
+   "mae_star": 1.8194,
+   "bias_star": -0.6814,
+   "tail_pred_ge3": 36,
    "tail_act_ge3": 283,
-   "tail_ratio": 0.124,
-   "coverage": 0.7982,
-   "coverage_survived": 0.3111,
+   "tail_ratio": 0.127,
+   "coverage": 0.8024,
+   "coverage_survived": 0.3245,
    "n_survived": 2308,
    "pinball_q10": 0.0792,
-   "pinball_q90": 0.1711
+   "pinball_q90": 0.1704
   }
  },
  "challenger_blocks": {
@@ -808,6 +808,208 @@
     "new_mae": 1.8501
    },
    "verdict": "REJECTED 2026-06-29 (loss, not shipped): a STAR-SLICE-ONLY additional lift toward a dedicated mean head, lambda fit forward-chained under a star-MAE +0.02 guard. The dev fit lands on ~zero lift (h1-h4 lam=0, h5 lam=0.25) and the holdout shows NO change (star bias -0.635 unchanged, star MAE 1.850 unchanged, pooled unchanged). The shipped global mean blend already lifts stars to the implied mean; any further mean-head lift that stays within the MAE guard buys no bias improvement -- the blend is already at the MAE-constrained optimum. tools/star_mean_head_backtest.py."
+  },
+  "star_slice_mean_head": {
+   "registered": "docs/efv-2026-07-24/GATES.md W-STAR",
+   "dev_bases": [
+    2017,
+    2018,
+    2019,
+    2021
+   ],
+   "holdout_bases": [
+    2022,
+    2023,
+    2024
+   ],
+   "mechanism": "star rows: _point target implied-mean -> mean head (shipped MEAN_LAM + STAR_LAM, lift-only + top-up); non-star rows: champion unchanged",
+   "clauses": {
+    "A_star_bias_improves": {
+     "dev": false,
+     "holdout": true
+    },
+    "B_pooled_mae_tol": {
+     "tol": 0.005,
+     "dev": true,
+     "holdout": true
+    }
+   },
+   "dev": {
+    "pooled": {
+     "n": 40265,
+     "champ_mae": 0.466,
+     "new_mae": 0.4682,
+     "mae_delta": 0.0022
+    },
+    "star": {
+     "n": 1005,
+     "champ_bias": 0.0649,
+     "new_bias": 0.2755,
+     "champ_mae": 1.8399,
+     "new_mae": 1.9283
+    },
+    "star_per_h": {
+     "1": {
+      "n_star": 201,
+      "champ_bias": 0.0023,
+      "new_bias": 0.2082,
+      "champ_mae": 1.8329,
+      "new_mae": 1.8732
+     },
+     "2": {
+      "n_star": 201,
+      "champ_bias": 0.627,
+      "new_bias": 0.8391,
+      "champ_mae": 1.8573,
+      "new_mae": 2.0005
+     },
+     "3": {
+      "n_star": 201,
+      "champ_bias": 0.3676,
+      "new_bias": 0.6021,
+      "champ_mae": 1.8804,
+      "new_mae": 1.9735
+     },
+     "4": {
+      "n_star": 201,
+      "champ_bias": 0.0276,
+      "new_bias": 0.1327,
+      "champ_mae": 1.8214,
+      "new_mae": 1.8639
+     },
+     "5": {
+      "n_star": 201,
+      "champ_bias": -0.7,
+      "new_bias": -0.4044,
+      "champ_mae": 1.8073,
+      "new_mae": 1.9306
+     }
+    }
+   },
+   "holdout": {
+    "pooled": {
+     "n": 19610,
+     "champ_mae": 0.5069,
+     "new_mae": 0.5086,
+     "mae_delta": 0.0016
+    },
+    "star": {
+     "n": 661,
+     "champ_bias": -0.6351,
+     "new_bias": -0.2956,
+     "champ_mae": 1.8501,
+     "new_mae": 1.8986
+    },
+    "star_per_h": {
+     "1": {
+      "n_star": 214,
+      "champ_bias": -0.6489,
+      "new_bias": -0.2014,
+      "champ_mae": 1.9588,
+      "new_mae": 1.9371
+     },
+     "2": {
+      "n_star": 214,
+      "champ_bias": -0.4537,
+      "new_bias": -0.1819,
+      "champ_mae": 1.8097,
+      "new_mae": 1.9049
+     },
+     "3": {
+      "n_star": 154,
+      "champ_bias": -0.4961,
+      "new_bias": -0.1187,
+      "champ_mae": 1.7003,
+      "new_mae": 1.8046
+     },
+     "4": {
+      "n_star": 79,
+      "champ_bias": -1.3601,
+      "new_bias": -1.2035,
+      "champ_mae": 1.9576,
+      "new_mae": 1.9605
+     }
+    }
+   },
+   "holdout_bootstrap_reported_only": {
+    "reps": 2000,
+    "seed": 20260724,
+    "star_bias_delta_ci95": [
+     0.2923,
+     0.3919
+    ],
+    "pooled_mae_delta_ci95": [
+     -0.0009,
+     0.0038
+    ]
+   },
+   "examples_holdout_star": [
+    {
+     "mlbam": 660271,
+     "side": "pit",
+     "base": 2024,
+     "champ": 2.692,
+     "new": 5.748,
+     "actual": 9.04
+    },
+    {
+     "mlbam": 660271,
+     "side": "hit",
+     "base": 2024,
+     "champ": 6.111,
+     "new": 8.884,
+     "actual": 9.04
+    },
+    {
+     "mlbam": 642715,
+     "side": "hit",
+     "base": 2022,
+     "champ": 2.248,
+     "new": 4.386,
+     "actual": 4.29
+    },
+    {
+     "mlbam": 605483,
+     "side": "pit",
+     "base": 2024,
+     "champ": 2.301,
+     "new": 4.38,
+     "actual": 1.41
+    },
+    {
+     "mlbam": 641482,
+     "side": "pit",
+     "base": 2023,
+     "champ": 1.517,
+     "new": 3.551,
+     "actual": 2.41
+    },
+    {
+     "mlbam": 434378,
+     "side": "pit",
+     "base": 2023,
+     "champ": 2.6,
+     "new": 4.475,
+     "actual": 3.54
+    },
+    {
+     "mlbam": 641482,
+     "side": "pit",
+     "base": 2023,
+     "champ": 2.556,
+     "new": 4.345,
+     "actual": 0.45
+    },
+    {
+     "mlbam": 621043,
+     "side": "hit",
+     "base": 2022,
+     "champ": 2.818,
+     "new": 4.579,
+     "actual": 5.32
+    }
+   ],
+   "verdict": "FAIL 2026-07-24 (W-STAR, one attempt, frozen thresholds in tools/mean_head_backtest.py header): star-slice-only mean-head recenter (target swap, shipped lambdas, all horizons; non-star rows untouched). Clause A |star bias| improves: dev 0.0649 -> 0.2755 (FAIL), holdout -0.6351 -> -0.2956 (ok). Clause B pooled MAE within +0.005: dev 0.466 -> 0.4682 (ok), holdout 0.5069 -> 0.5086 (ok). Prior art: distinct from challenger_blocks.star_mean_head (additional fitted-lambda top-up, 2026-06-29); this arm is the target-swap variant that ledger named unexplored. Live seam: proj_ml.predict_path EEPHUS_STAR_MEAN_HEAD (default OFF, OFF path byte-identical, inert on quantile-only bundles)."
   }
  }
 }

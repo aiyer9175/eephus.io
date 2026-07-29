@@ -178,7 +178,20 @@ def _apply_proj_override(path: dict, pv: dict, class_year: int,
     if first_season is None:
         return False
     start = class_year - first_season
-    war = pv.get("war") or []
+    # BASIS (2026-07-24 FA lane) -- this used to read pv["war"], proj_ml's q50
+    # QUANTILE head, and splice it into a stack whose pricer
+    # (rational_value_usd through the convex tier curve) and whose every
+    # market feature (war_y1, log_rational, prime_war) are calibrated on
+    # champion MEAN paths. Measured on the served payloads: mlb_projections
+    # year-1 league sum is 602.8 WAR on `war` vs 984.4 on `warChamp`; across
+    # the 212 players the 2027 class shares with it, in the SAME season,
+    # fa_class's own champion warY1 sums to 191.4 and warChamp[0] to 191.4
+    # (ratio 1.000) while war[0] sums to 90.7 (ratio 0.474). The q50 head is
+    # also unfloored, which is why 72 of the served 2028 members carried a
+    # negative season in warPath and 176 in warPathP10 while
+    # tiered_war_value_usd() truncates negatives at 0 -- warTotal and
+    # rational then described different paths on the same row.
+    war = pv.get("warChamp") or pv.get("war") or []
     if start < 0 or start >= len(war):
         return False
     new = war[start:]
@@ -198,17 +211,34 @@ def _apply_proj_override(path: dict, pv: dict, class_year: int,
         seq = (src or [])[start:]
         if not seq or not isinstance(cur, list):
             return
+        seq = [max(0.0, float(v)) for v in seq]   # fm._decay_path floors at 0
         cur[:len(seq)] = seq
         ratio = _decay_ratio(seq)
         last = seq[-1]
         for i in range(len(seq), len(cur)):
-            last = round(last * ratio, 2)
+            last = round(max(0.0, last * ratio), 2)
             cur[i] = last
 
-    _overlay("war_by_year", war)        # mean path (always present)
+    _overlay("war_by_year", war)        # champion MEAN path
     path["war_y1"] = new[0]
-    _overlay("war_by_year_p10", pv.get("warP10"))
-    _overlay("war_by_year_p90", pv.get("warP90"))
+    # Bands: proj_ml's quantile heads are cut around its OWN q50, so their
+    # absolute spread is transferred onto the champion mean rather than
+    # spliced raw (a raw splice puts p90 below the mean wherever champ >
+    # q90). Floored at 0 like fm._decay_path, then clamped so the invariant
+    # p10 <= mean <= p90 holds on every served season.
+    q50 = pv.get("war") or []
+    for key, src in (("war_by_year_p10", pv.get("warP10")),
+                     ("war_by_year_p90", pv.get("warP90"))):
+        if src and q50 and len(src) == len(q50) == len(war):
+            _overlay(key, [w + (q - m) for w, q, m in zip(war, src, q50)])
+        else:
+            _overlay(key, src)
+    lo, hi = path.get("war_by_year_p10"), path.get("war_by_year_p90")
+    for t, w in enumerate(path["war_by_year"]):
+        if isinstance(lo, list) and t < len(lo):
+            lo[t] = round(min(lo[t], w), 2)
+        if isinstance(hi, list) and t < len(hi):
+            hi[t] = round(max(hi[t], w), 2)
     path["war_total"] = round(sum(path["war_by_year"]), 2)
     return True
 
@@ -247,6 +277,13 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         model.supply_by_year[class_year] = fm._supply(
             [{"class_year": class_year, "position": p.get("position")} for p in cls], class_year)
     dpw = fm.winter_dpw(dpw_series, class_year)
+    # The rate this winter carries dollars forward at. Estimated from the
+    # module's OWN realized $/WAR series over the training winters (see
+    # fm._destale_rate) instead of borrowing value_framework's
+    # dollars_per_war_inflation, which is 0.0 in production for a
+    # prospect-side reason and silently made three separate FA mechanisms
+    # no-ops (comps de-staling, rational-value escalation, the $/WAR carry).
+    destale = fm._destale_rate(dpw_series, class_year)
 
     overrides = _load_overrides()
     proj = _load_mlb_projections()   # future-class WAR override source
@@ -346,16 +383,19 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                         m["enterProbSrc"] = v2["method"]
                     yrs = pred["proj_years"]
                     guar = pred["proj_guarantee_usd"]
-                    rational = fm.rational_value_usd(path["war_by_year"][:yrs], class_year, dpw)
+                    rational = fm.rational_value_usd(path["war_by_year"][:yrs], class_year,
+                                                     dpw, infl=destale)
                     deal_plus = round(100 * rational / max(guar, 1))
                     # Probability buckets: floor/ceiling WAR paths (Gate-1
                     # empirical quantiles decayed along the aging curves)
                     # price to floor/ceiling rational value -> surplus range.
                     p10_path = path.get("war_by_year_p10")
                     p90_path = path.get("war_by_year_p90")
-                    rational_p10 = (fm.rational_value_usd(p10_path[:yrs], class_year, dpw)
+                    rational_p10 = (fm.rational_value_usd(p10_path[:yrs], class_year,
+                                                          dpw, infl=destale)
                                     if p10_path else None)
-                    rational_p90 = (fm.rational_value_usd(p90_path[:yrs], class_year, dpw)
+                    rational_p90 = (fm.rational_value_usd(p90_path[:yrs], class_year,
+                                                          dpw, infl=destale)
                                     if p90_path else None)
                     comps = fm.comps_for(s, enriched, k=3)
                     # Full 30-org fit vector: top-3 rides the member row (the
@@ -441,7 +481,11 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         "generated_at": date.today().isoformat(),
         "class_year": class_year,
         "dpw_usd": int(dpw),
-        "dpw_infl": fm._dpw_inflation(),
+        # The rate the module ACTUALLY carries dollars forward at. This used
+        # to publish value_framework's dollars_per_war_inflation, which is 0.0
+        # in production, while assets/fa.js printed "escalating 5%/yr" from its
+        # own default -- the served page and the served number disagreed.
+        "dpw_infl": round(destale, 4),
         "cba_carry_forward": bool(thr.get("carry_forward")),
         "n_members": len(members), "n_projected": n_proj,
         "n_signed": sum(1 for m in members if m.get("status") == "signed"),

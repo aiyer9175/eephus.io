@@ -265,9 +265,20 @@ def ledger_for_signing(signing: dict, war_seasons: dict[str, float] | None,
     """Realized surplus to date for one completed/elapsed signing.
 
     realized = Σ_{covered, elapsed seasons} WAR(s) × $/WAR(s)
-    paid     = guarantee × elapsed/total years   (level annual proration —
-               class pages don't expose deferral schedules; documented)
+    paid     = NPV guarantee × elapsed/total years   (level annual
+               proration of the DEFERRAL-ADJUSTED guarantee)
     surplus  = realized − paid
+
+    BASIS (2026-07-24 FA lane): this used to prorate the STICKER
+    ``guarantee_usd`` while the class page, the $/WAR series and Gate 2 all
+    speak deferral-adjusted NPV, so the archive and the board reported the
+    same contract in two different currencies. Measured on Ohtani: sticker
+    $700.0M, NPV at the platform rate $274.8M; two elapsed years of ten
+    prorated to $140.0M sticker vs $55.0M NPV, understating realized
+    surplus by ~$85M in the same direction for every deferred deal on the
+    board. ``npv_guarantee_usd`` falls back to the sticker where no
+    schedule is on file, which is the module-wide convention
+    (fa_market.deferral_npv_usd), so an undeferred row is unchanged.
 
     None for minor-league deals and signings with no elapsed seasons yet.
     Missing WAR for an elapsed season counts as 0 produced — the player
@@ -291,7 +302,8 @@ def ledger_for_signing(signing: dict, war_seasons: dict[str, float] | None,
         w = float(war_seasons.get(str(s), 0.0) or 0.0)
         war_total += w
         realized_usd += w * dollars_per_war_for_season(s, cur)
-    paid_usd = signing["guarantee_usd"] * (len(elapsed) / years)
+    basis_usd = float(signing.get("npv_guarantee_usd") or signing["guarantee_usd"])
+    paid_usd = basis_usd * (len(elapsed) / years)
     return {
         "elapsed_years": len(elapsed),
         "total_years": years,
@@ -300,7 +312,9 @@ def ledger_for_signing(signing: dict, war_seasons: dict[str, float] | None,
         "paid_to_date_usd": int(paid_usd),
         "surplus_to_date_usd": int(realized_usd - paid_usd),
         "complete": len(elapsed) == years,
-        "method": "level_proration_backcast_dpw_v1",
+        "deferral_adjusted": bool(signing.get("npv_guarantee_usd")
+                                  and signing["npv_guarantee_usd"] != signing["guarantee_usd"]),
+        "method": "level_proration_backcast_dpw_v2_npv",
     }
 
 

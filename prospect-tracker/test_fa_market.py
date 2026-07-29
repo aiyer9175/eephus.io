@@ -75,13 +75,37 @@ def test_deferral_npv_and_coverage():
 
 
 def test_winter_dpw_methods():
-    """flat5 is the measured winner (data/dpw_forecast_eval.json) and the
-    default; the fitted candidates stay implemented + callable."""
+    """flat-carry is the measured winner (data/dpw_forecast_eval.json) and
+    the default SHAPE: the most recent PRIOR winter escalated one year. The
+    RATE is the module's own de-staling estimate (fm._destale_rate on the
+    supplied series), not value_framework's dollars_per_war_inflation --
+    that knob is 0.0 in production for a prospect-side reason and silently
+    made this carry a no-op (measured 2026-07-24: winter_dpw(2027) ==
+    winter_dpw(2028) == winter_dpw(2026), byte-identical). The fitted trend
+    candidates stay implemented + callable."""
     series = {2020: 10e6, 2021: 11e6, 2022: 12e6, 2023: 13e6, 2024: 14e6}
+    rate = fm._destale_rate(series, 2025)
+    assert 0.08 < rate < 0.09                       # log-linear on 10 -> 14 over 4y
     flat = fm.winter_dpw(series, 2025)
-    assert flat == pytest.approx(14e6 * 1.05)
+    assert flat == pytest.approx(14e6 * (1 + rate))
     trend = fm._fit_log_trend(series, with_cbt=False)(2025)
     assert 13e6 < trend < 17e6
+
+
+def test_destale_rate_is_ex_ante_and_bounded():
+    """The de-staling rate is estimated from the winters it is GIVEN, so a
+    caller that hands it a train-only series gets an ex-ante rate. Fewer
+    than four winters falls back to the configured knob."""
+    grow = {2020: 10e6, 2021: 11e6, 2022: 12e6, 2023: 13e6, 2024: 14e6}
+    # winters AFTER the class year never enter the estimate
+    assert fm._destale_rate(grow, 2023) == fm._destale_rate(
+        {y: v for y, v in grow.items() if y <= 2023}, 2023)
+    assert fm._destale_rate(grow, 2023) != fm._destale_rate(grow, 2025)
+    assert fm._destale_rate({2023: 10e6, 2024: 11e6}, 2025) == fm._dpw_inflation()
+    fall = {2020: 14e6, 2021: 13e6, 2022: 12e6, 2023: 11e6, 2024: 10e6}
+    assert fm._destale_rate(fall, 2025) == 0.0      # never de-stales backwards
+    spike = {2020: 1e6, 2021: 5e6, 2022: 20e6, 2023: 60e6, 2024: 200e6}
+    assert fm._destale_rate(spike, 2025) == 0.12    # clamped
 
 
 def test_deferral_npv_discounts_schedule():
