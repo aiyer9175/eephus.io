@@ -71,14 +71,73 @@ it is exactly the layer the killed `dpw-reconcile-surplus-recal` workflow was se
 before the surplus map. Defect B is therefore direct evidence that the anchors refit belongs
 IN scope for the surplus window, not deferred.
 
-## How A and B relate
+## Defect C - two thirds of the board is priced at exactly zero dollars
+
+Measured 2026-07-29 on the served `data/xfv.json` (9,318 rows), by displayed grade tier:
+
+| tier | n | rows at $0 | share |
+|---|---|---|---|
+| 20 | 4,369 | 4,369 | 100.0% |
+| 25 | 238 | 238 | 100.0% |
+| 30 | 558 | 558 | 100.0% |
+| 35 | 982 | 873 | **88.9%** |
+| 40 | 1,261 | 326 | **25.9%** |
+| 45 | 876 | 20 | 2.3% |
+| 50+ | 1,034 | 0 | 0.0% |
+| **all** | **9,318** | **6,384** | **68.5%** |
+
+`test_value_framework::test_calibration_layer_is_real_fit_and_monotone` asserts
+`ys[0] > 0` with the comment "the v1 per-player fit zeroed every FV35-40 prospect, never
+again". The shipped v5 knots are `y_mm: [0.0, 0.0, 25.33, 80.63, 550.68]`, so `ys[0]` is
+0.0 and the guard fires. **That test is not stale. It is correctly detecting a recurrence
+of the exact defect it was written to prevent**, and the table above is the evidence:
+88.9% of FV35 and 25.9% of FV40 now serve exactly $0.
+
+Why this happened, and why it is the same object as A and B: the model over-disperses
+(A), so 3,821 rows carry a negative predicted 6-year WAR; a negative WAR produces a
+negative raw surplus; the v5 floor clamps every one of those to exactly $0. The anchor
+defect (B) compounds it by over-stating what an FV40 is worth in WAR, which is the tier
+where the floor starts biting.
+
+The v5 provenance defends the floor as "accuracy-load-bearing", and it is, on MAE. But
+MAE on a right-skewed target is minimized by predicting the mode, and the mode of prospect
+outcomes is zero. Surplus is an EXPECTED value, and the expectation of a lottery ticket is
+not zero just because its median is. Flooring at zero optimizes the reported error metric
+by discarding the economic content of the bottom two thirds of the board, which is also
+precisely the population the platform exists to differentiate.
+
+Two further notes on the same block:
+- `method: isotonic` (`value_framework_config.yaml:528`) dispatches the knot interpolator,
+  which CLAMPS above the last knot: any raw surplus over $400M pins to $550.68M rather
+  than continuing the line. Latent today (max served surplus is $80.2M) but it is the same
+  clamp defect v5 was written to remove, merely relocated.
+- The version string `linearmap-v5-todaypriced-2026-07-24` matches neither sanctioned
+  prefix (`isotonic-real-`, `linear-real-`), which is why two synthetic-calibration guards
+  fire. Renaming it while the bottom block is degenerate would paper over Defect C, so the
+  rename waits for the refit rather than being taken as a quick green.
+
+### Added to the pre-registered gates
+
+The Phase 5 refit must additionally restore a NON-DEGENERATE bottom block: a materially
+reduced share of exactly-$0 rows at FV35 and FV40, with the value at the bottom knot
+strictly positive, and `ys[0] > 0` satisfied honestly rather than by widening the test.
+If the refit cannot achieve that while holding held-out slope near 1.0, the correct
+outcome is an explicit owner decision about which property to keep, recorded as a loss
+ledger, not a silently retained floor.
+
+## How A, B and C relate
 
 They are distinct layers and must not be conflated. A is the model's predicted WAR
-(`xfv_war_6yr`). B is the config's declared WAR meaning of a displayed grade. Surplus consumes
-both: the board grade comes from model output through the board scale, and dollars come from the
-grade through the anchor curve and then the surplus map. A mis-level in either propagates to
-dollars, which is why the FV40 cell and the negative-WAR tail both end up mispricing the 77
-percent of the board that sits at FV40-45.
+(`xfv_war_6yr`). B is the config's declared WAR meaning of a displayed grade. C is the surplus
+map that turns a grade into dollars. Surplus consumes all three in sequence, so a mis-level
+anywhere propagates: the over-dispersed prediction pushes the bottom tail negative, the anchor
+mis-states what the tier is worth in WAR, and the floor then collapses the result to exactly
+zero. That chain is why the FV35-40 band, which is most of the board, is simultaneously the
+worst-calibrated tier and the one priced at nothing.
+
+Repair order follows the chain, and it is not optional. Refitting the surplus map while the
+prediction still runs negative would only fit a new floor onto a broken input, which is the
+same error shape as the 2026-07-14 lambda retraction.
 
 ## Pre-registered repair and gates
 
