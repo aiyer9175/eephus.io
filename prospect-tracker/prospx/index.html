@@ -31308,6 +31308,356 @@ function alevelSignalPanel(p) {
       </div>
     </div>`;
 }
+// ----- A-ball whiff / FB-velo CARD PILLS (same sidecar, raw measurement) ----
+// Companion to alevelSignalPanel above, and a DIFFERENT read. The panel only
+// fires when the residual-vs-K fit clears +/-0.75; these pills show the raw
+// TRACKED measurement for every covered player (~603 in by_mlbam; the hitter
+// whiff-on-K call code was fit on n=788), so a reader can see the underlying
+// number rather than only the derived lean.
+//
+// DISPLAY ONLY, and deliberately so. The S-XLINE-4 grade overlay was NO-SHIP
+// (the rank-space ceiling problem), so nothing here feeds a grade, a rank, a
+// surplus dollar, or the TBS composite. The pill labels carry the level so
+// "A" / "CPX" is never mistaken for an upper-minors or MLB measurement, and
+// the tooltips say outright that this is a low-minors measurement signal and
+// not a grade input.
+//
+// Fail-soft contract: renders "" when the sidecar is absent, still in flight,
+// missing this player, or missing the specific metric. Never throws.
+function alevelSignalPillsHTML(p) {
+  if (!p) return "";
+  ensureAlevelSignals();                 // lazy-load, same cache as the panel
+  const r = _alevelSigFor(p);
+  if (!r) return "";                     // not covered -> no pills at all
+  const lvlTag  = r.level === "CPX" ? "CPX" : "A";
+  const lvlWord = r.level === "CPX" ? "complex level" : "Single-A";
+  const ctx = [
+    r.season != null ? String(r.season) : null,
+    r.n_pitches != null ? `${r.n_pitches} tracked pitches` : null,
+  ].filter(Boolean).join(", ");
+  const ctxTail = ctx ? ` (${ctx})` : "";
+  const note = " This is a low-minors tracked-measurement signal shown for context only: it is NOT an input to the FV, the eFV grade, the rank, or the surplus value.";
+  // z is signed the same way in the sidecar for both sides, but "good" flips:
+  // low whiff is good for a hitter, high velo is good for a pitcher.
+  const zCls = (z, higherIsBetter) => {
+    if (z == null || !isFinite(z)) return "is-neutral";
+    const good = higherIsBetter ? z : -z;
+    return good >= 1 ? "is-pos" : good <= -1 ? "is-neg" : "is-neutral";
+  };
+  const zTail = z => (z != null && isFinite(z))
+    ? ` Pool z ${z > 0 ? "+" : ""}${Number(z).toFixed(2)} against the ${lvlWord} ${r.season != null ? r.season + " " : ""}signal-qualified group.`
+    : "";
+  const out = [];
+  if (r.side === "pit") {
+    const v = r.fb_velo;
+    if (v != null && isFinite(v)) {
+      out.push(`<span class="rps-plus-pill ${zCls(r.velo_z, true)}" title="${escapeHtml(
+        `${lvlTag} FB velo ${Number(v).toFixed(1)} mph: his average tracked fastball velocity at ${lvlWord}${ctxTail}.${zTail(r.velo_z)}${note}`
+      )}">${lvlTag} FB ${Number(v).toFixed(1)}</span>`);
+    }
+  } else {
+    const w = r.whiff_share;
+    if (w != null && isFinite(w)) {
+      out.push(`<span class="rps-plus-pill ${zCls(r.whiff_z, false)}" title="${escapeHtml(
+        `${lvlTag} whiff ${(Number(w) * 100).toFixed(1)}%: swings and misses per swing on tracked pitches at ${lvlWord}${ctxTail}.${zTail(r.whiff_z)}${note}`
+      )}">${lvlTag} Whiff ${(Number(w) * 100).toFixed(1)}%</span>`);
+    }
+  }
+  return out.join("");
+}
+// ===== Per-source grade normalization readout ==============================
+// Consensus FV is NOT the average of the published grades. Each source's FV is
+// first quantile-mapped onto the FanGraphs scale (consensus.py, grade_norm,
+// applied BEFORE the vote and before the dropped-off shrink) so a chronically
+// hot or cold grader is de-biased, and the weighted mean is taken over those
+// NORMALIZED values. That is why a player published at 45/50/50 can carry a
+// consensus of 51, which readers have repeatedly read as an arithmetic bug
+// (the Ferris case). These helpers let the per-source rows show the whole
+// chain - published grade, normalized grade, vote weight - so the number is
+// legible instead of surprising.
+//
+// The normalized per-source value is only displayable when the payload carries
+// it; the key name is owned upstream, so probe the plausible ones and say
+// "not in this payload" rather than guessing or back-solving a number.
+function _normalizedFvOf(info) {
+  if (!info || typeof info !== "object") return null;
+  for (const k of ["fv_normalized", "fv_norm", "fv_for_consensus",
+                   "fv_consensus_input", "fv_scaled"]) {
+    const v = info[k];
+    if (v != null && isFinite(v)) return Number(v);
+  }
+  return null;
+}
+// Relative vote weights (data/source_weights.json). Currently an intentionally
+// EMPTY map - the weights were reverted to equal on 2026-07-25 because the
+// forward-chained A/B landed inside its permutation null - so the honest
+// display for every source today is "1.00 (equal vote)". Lazy, fail-soft.
+let _SRC_WEIGHTS = null, _SRC_WEIGHTS_LOADING = false;
+function ensureSourceWeights() {
+  if (_SRC_WEIGHTS !== null || _SRC_WEIGHTS_LOADING) return;
+  _SRC_WEIGHTS_LOADING = true;
+  fetch("/data/source_weights.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _SRC_WEIGHTS = (j && j.weights && typeof j.weights === "object") ? j.weights : {};
+      scheduleRender();
+    })
+    .catch(() => { _SRC_WEIGHTS = {}; });
+}
+function _srcWeightText(src) {
+  ensureSourceWeights();
+  if (_SRC_WEIGHTS === null) return null;          // still in flight
+  const w = _SRC_WEIGHTS[src];
+  if (w != null && isFinite(w)) return `${Number(w).toFixed(2)}`;
+  return "1.00 (equal vote)";                      // absent from the map = 1.0
+}
+// One tooltip line per source: published grade, normalized grade, weight.
+function _perSourceGradeTip(src, info, label) {
+  if (!info) return "";
+  const bits = [];
+  const pub = info.fv_published;
+  bits.push(pub != null && isFinite(pub)
+    ? `published ${Number.isInteger(pub) ? pub : Number(pub).toFixed(1)}${info.fv_plus && _fvQualifiesForPlus(pub) ? "+" : ""}`
+    : "published grade: none (rank only)");
+  const norm = _normalizedFvOf(info);
+  bits.push(norm != null
+    ? `normalized ${Number(norm).toFixed(1)}`
+    : "normalized grade not in this payload");
+  const w = _srcWeightText(src);
+  if (w) bits.push(`weight ${w}`);
+  if (info.rank != null) bits.push(`rank #${info.rank}`);
+  if (info.dropped_off === true && info.fv_adjusted != null && isFinite(info.fv_adjusted)) {
+    bits.push(`dropped off this cycle, shrunk to ${Number(info.fv_adjusted).toFixed(1)} before the vote`);
+  }
+  const explain = norm != null
+    ? " Consensus averages the NORMALIZED column, not the published one, so it can land outside the published range."
+    : " Consensus averages each source's quantile-normalized grade, not the published one, so it can land outside the published range.";
+  return `${label}: ${bits.join(" · ")}.${explain}`;
+}
+// ===== Archetype comps panel (data/archetype_comps.json) ===================
+// Renders the productized archetype strata as COMPS AND CONTEXT: "players who
+// looked like this resolved to N WAR on average." Display only. Nothing in
+// here touches an FV, an eFV grade, a rank, a surplus dollar, or the TBS
+// composite; the archetype search was measured to have no out-of-sample value
+// against the shipped model, so it is not a correction to anything.
+//
+// HONESTY CONTRACT - READ BEFORE EDITING.
+// The upstream artifact ships a `health_warning` string claiming that "every
+// one of these strata has an out-of-fold residual against the shipped eFV
+// model that is statistically zero." THAT CLAIM IS FALSE and this panel must
+// never render it. Audited over the 3,957-stratum descriptive table, 477
+// strata (12.05%) carry |t| >= 2 and 124 carry |t| >= 3, with a max |t| of
+// 4.91. So a per-comp reliability read is mandatory: we consume the producing
+// module's per-stratum flag when it is present, fall back to |oof_resid_t| >= 2
+// when it is not, and say "unknown" when neither exists. A flagged stratum is
+// labelled as flagged, and NO comp is ever described as "validated" - a clean
+// residual means "no measurable miss here", which is not the same as evidence.
+//
+// Defensive by construction: the sidecar may not exist at all when this page
+// is served. Absent file, empty file, unknown key layout, missing player, or a
+// malformed comp row all resolve to "" (no panel, no empty shell, no throw).
+let _ARCH_COMPS = null, _ARCH_COMPS_LOADING = false;
+function ensureArchetypeComps() {
+  if (_ARCH_COMPS !== null || _ARCH_COMPS_LOADING) return;
+  _ARCH_COMPS_LOADING = true;
+  fetch("/data/archetype_comps.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _ARCH_COMPS = (j && typeof j === "object") ? j : {};
+      scheduleRender();                  // first paint can beat this fetch
+    })
+    .catch(() => { _ARCH_COMPS = {}; });  // absent sidecar is a normal state
+}
+// The producing module owns its own key layout; probe the plausible ones
+// rather than hard-coding one and rendering nothing if it picked another.
+function _archCompsIndex() {
+  const j = _ARCH_COMPS;
+  if (!j || typeof j !== "object") return null;
+  for (const k of ["by_mlbam", "by_player_key", "by_key", "players", "by_player"]) {
+    if (j[k] && typeof j[k] === "object") return { map: j[k], keyName: k };
+  }
+  return null;
+}
+function _archCompsFor(p) {
+  if (!p) return null;
+  const idx = _archCompsIndex();
+  if (!idx) return null;
+  const mid = p.mlbam_id || (p.career_war || {}).mlbam_id;
+  const cands = [];
+  if (idx.keyName === "by_mlbam") { if (mid) cands.push(String(mid)); }
+  else { if (p.player_key) cands.push(String(p.player_key)); if (mid) cands.push(String(mid)); }
+  let hit = null;
+  for (const c of cands) { if (idx.map[c] != null) { hit = idx.map[c]; break; } }
+  if (hit == null) return null;
+  // Entry may be a bare list of comps or a wrapper carrying one.
+  if (Array.isArray(hit)) return hit;
+  for (const k of ["comps", "archetypes", "strata", "rows"]) {
+    if (Array.isArray(hit[k])) return hit[k];
+  }
+  return null;
+}
+// Reliability resolution. Prefers the producing module's explicit flag; the
+// |t| >= 2 fallback exists so this panel is never silently over-confident when
+// the flag is missing or renamed.
+function _archReliability(c) {
+  if (!c || typeof c !== "object") return { state: "unknown", basis: null, t: null };
+  const t = (c.oof_resid_t != null && isFinite(c.oof_resid_t)) ? Math.abs(Number(c.oof_resid_t)) : null;
+  for (const k of ["reliable", "is_reliable", "residual_clean", "oof_clean"]) {
+    if (typeof c[k] === "boolean") return { state: c[k] ? "clean" : "flagged", basis: "flag", t };
+  }
+  for (const k of ["reliability", "reliability_flag", "residual_flag", "flag"]) {
+    const v = c[k];
+    if (typeof v === "string" && v) {
+      const s = v.toLowerCase();
+      if (/^(reliable|clean|ok|pass|green|good)/.test(s)) return { state: "clean", basis: "flag", t };
+      if (/^(unreliable|flagged|suspect|fail|red|amber|warn|caution)/.test(s)) return { state: "flagged", basis: "flag", t };
+      return { state: "unknown", basis: "flag", t };
+    }
+    if (typeof v === "boolean") return { state: v ? "clean" : "flagged", basis: "flag", t };
+  }
+  if (t != null) return { state: t >= 2 ? "flagged" : "clean", basis: "derived", t };
+  return { state: "unknown", basis: null, t: null };
+}
+const _ARCH_DIM_LABEL = {
+  age_rel_level: "age vs level", ops_rel: "OPS vs level", iso_rel: "ISO vs level",
+  k_rel: "K% vs level", bb_rel: "BB% vs level", obp_rel: "OBP vs level",
+  peak_ops_rel: "peak OPS vs level", peak_k_rel: "peak K% vs level",
+  prod_trend: "production trend", fv_trend: "FV trend", n_milb_seasons: "MiLB seasons",
+  n_sources: "sources", pos_group: "position", pos_fine: "position",
+  acq: "acquired", level: "level", age: "age", fv: "FV", pick: "draft round",
+  bonus: "bonus", il_any_pre: "injury list", tool_hit: "hit tool",
+  tool_game_pwr: "game power", tool_raw_pwr: "raw power", tool_speed: "speed",
+  tool_field: "field", tool_throw: "arm",
+};
+// Value codes are rendered without asserting a DIRECTION we have not verified.
+// The tertile codes stay "tertile 1/2/3" rather than "bottom/top third": the
+// producing module owns that ordering, and for a rate like k_rel the high
+// tertile is the bad end, so a guessed gloss could invert the meaning.
+const _ARCH_VAL_LABEL = {
+  VYNG: "very young", YNG: "young", ONTIME: "on time", OLD: "old",
+  PLUS: "plus", AVG: "average", BLW: "below", BURNER: "burner",
+  T1: "tertile 1", T2: "tertile 2", T3: "tertile 3",
+  ABOVE: "above", BELOW: "below", NOIL: "no IL stint",
+  IFA: "international", HS: "high school", COL: "college",
+  SRC1: "1 source", SRC2: "2 sources",
+  "FV50+": "50+", FV45: "45", FV40: "40", "FV35-": "35 or below",
+  S1: "1", "S2-3": "2-3", "S4+": "4+",
+};
+function _archPrettyId(id) {
+  if (!id) return "";
+  return String(id).split("|").map(part => {
+    const eq = part.indexOf("=");
+    if (eq < 0) return part.replace(/_/g, " ");
+    const k = part.slice(0, eq), v = part.slice(eq + 1);
+    const kl = _ARCH_DIM_LABEL[k] || k.replace(/_/g, " ");
+    const vl = _ARCH_VAL_LABEL[v] || v;
+    return `${kl} ${vl}`;
+  }).join(" · ");
+}
+function archetypeCompPanel(p) {
+  if (!p) return "";
+  ensureArchetypeComps();                // lazy-load on the first detail card
+  const comps = _archCompsFor(p);
+  if (!comps || !comps.length) return "";
+  const j = _ARCH_COMPS || {};
+  const f1 = v => (v != null && isFinite(v)) ? Number(v).toFixed(1) : null;
+  const pct = v => (v != null && isFinite(v)) ? `${(Number(v) * 100).toFixed(0)}%` : null;
+  let nClean = 0, nFlagged = 0, nUnknown = 0;
+  const rows = comps.map(c => {
+    if (!c || typeof c !== "object") return "";
+    const rel = _archReliability(c);
+    if (rel.state === "clean") nClean++;
+    else if (rel.state === "flagged") nFlagged++;
+    else nUnknown++;
+    const name = c.label || c.name || _archPrettyId(c.id) || "unnamed stratum";
+    const n = (c.n_complete != null ? c.n_complete : c.n);
+    const war = f1(c.mean_war);
+    const ci = Array.isArray(c.war_ci95) && c.war_ci95.length === 2
+      ? `${f1(c.war_ci95[0])} to ${f1(c.war_ci95[1])}` : null;
+    const bust = pct(c.bust_rate_le_0p5 != null ? c.bust_rate_le_0p5 : c.bust_rate);
+    const tTxt = rel.t != null ? rel.t.toFixed(2) : "not reported";
+    let chipCls, chipTxt, chipTip;
+    if (rel.state === "flagged") {
+      chipCls = "is-neg"; chipTxt = "residual flagged";
+      chipTip = `This stratum's out-of-fold residual against the shipped eFV model is NOT statistically zero (|t| ${tTxt}${rel.basis === "derived" ? ", derived from the reported t because the sidecar carried no flag" : ""}). Read it as a description of who else looked like this, not as a checked or corrected expectation. It does not move his grade.`;
+    } else if (rel.state === "clean") {
+      chipCls = "is-neutral"; chipTxt = "residual clean";
+      chipTip = `This stratum's out-of-fold residual against the shipped eFV model is inside the noise band (|t| ${tTxt}${rel.basis === "derived" ? ", derived from the reported t because the sidecar carried no flag" : ""}). That means no measurable miss here. It is NOT a validation of the comp and it does not move his grade.`;
+    } else {
+      chipCls = "is-null"; chipTxt = "reliability unknown";
+      chipTip = "The sidecar carried no reliability flag and no out-of-fold residual for this stratum, so its accuracy against the shipped model is unmeasured. Treat it as an unchecked comp.";
+    }
+    const stats = [
+      n != null ? `n ${n}` : null,
+      war != null ? `mean ${war} WAR` : null,
+      ci ? `95% CI ${ci}` : null,
+      bust ? `bust ${bust}` : null,
+    ].filter(Boolean).join(" · ");
+    const priced = c.already_priced === true
+      ? ` <span class="rps-plus-pill is-null" title="${escapeHtml("The shipped model already prices this pattern, so the comp is not new information about him.")}">already priced</span>`
+      : "";
+    return `<div style="padding:6px 0;border-bottom:1px solid var(--border-light);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;">
+        <div style="font-size:12px;color:var(--text-primary);min-width:0;">${escapeHtml(name)}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0;">
+          <span class="rps-plus-pill ${chipCls}" title="${escapeHtml(chipTip)}">${escapeHtml(chipTxt)}</span>${priced}
+        </div>
+      </div>
+      ${stats ? `<div style="font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;margin-top:2px;">${escapeHtml(stats)}</div>` : ""}
+    </div>`;
+  }).filter(Boolean).join("");
+  if (!rows) return "";
+  // Audit line. Prefer counts the producing module published; otherwise
+  // compute them over whatever strata table the sidecar carries; otherwise
+  // state the caveat qualitatively rather than inventing numbers.
+  const summary = j.reliability_summary || j.residual_audit || null;
+  let auditTxt = "";
+  const _sN = summary && (summary.n_strata != null ? summary.n_strata : summary.n);
+  const _s2 = summary && (summary.n_flagged_t2 != null ? summary.n_flagged_t2 : summary.n_flagged);
+  const _s3 = summary && summary.n_flagged_t3;
+  const _sMax = summary && (summary.max_abs_t != null ? summary.max_abs_t : summary.max_t);
+  const _grp = n => Number(n).toLocaleString("en-US");
+  if (_sN != null && _s2 != null) {
+    auditTxt = `${_grp(_s2)} of ${_grp(_sN)} strata (${((_s2 / _sN) * 100).toFixed(2)}%) carry |t| >= 2`
+      + (_s3 != null ? `, ${_grp(_s3)} carry |t| >= 3` : "")
+      + (_sMax != null && isFinite(_sMax) ? `, max ${Number(_sMax).toFixed(2)}` : "") + ".";
+  } else {
+    const all = Array.isArray(j.archetypes) ? j.archetypes
+              : Array.isArray(j.strata) ? j.strata : null;
+    if (all && all.length) {
+      let n2 = 0, n3 = 0, mx = 0;
+      for (const a of all) {
+        const t = (a && a.oof_resid_t != null && isFinite(a.oof_resid_t)) ? Math.abs(Number(a.oof_resid_t)) : null;
+        if (t == null) continue;
+        if (t >= 2) n2++;
+        if (t >= 3) n3++;
+        if (t > mx) mx = t;
+      }
+      if (n2 > 0) {
+        auditTxt = `${_grp(n2)} of ${_grp(all.length)} strata (${((n2 / all.length) * 100).toFixed(2)}%) carry |t| >= 2, ${_grp(n3)} carry |t| >= 3, max ${mx.toFixed(2)}.`;
+      }
+    }
+  }
+  const mix = [
+    nFlagged ? `${nFlagged} flagged` : null,
+    nClean ? `${nClean} clean` : null,
+    nUnknown ? `${nUnknown} unmeasured` : null,
+  ].filter(Boolean).join(" · ");
+  // Deliberately does NOT print j.health_warning: see the honesty contract at
+  // the top of this section. The artifact's own blanket "every stratum's
+  // residual is statistically zero" line is not true and would mislead.
+  const caveat = "Comps and context only. These strata never move an FV, an eFV grade, a rank, or a surplus dollar. A per-stratum residual is not uniformly zero across the archetype table"
+    + (auditTxt ? ": " + auditTxt : ", so each row carries its own reliability read.")
+    + " Rows marked flagged are not reliable against the shipped model; rows marked clean showed no measurable miss, which is not the same as being validated.";
+  return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:10px 14px;margin-bottom:12px;background:var(--bg-secondary);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Archetype comps</div>
+        <div style="font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${escapeHtml(mix)}</div>
+      </div>
+      <div style="margin-top:6px;">${rows}</div>
+      <div style="font-size:10px;color:var(--text-tertiary);margin-top:7px;line-height:1.45;">${escapeHtml(caveat)}</div>
+    </div>`;
+}
 // ===== Advancement Pace+ panel (data/advancement_pace.json) ================
 // W5 AP+ - DESCRIPTIVE DISPLAY ONLY (docs/wills-2026-07-23/GATES.md product
 // wave). Peer-adjusted minor-league ladder pace for HITTERS: 100 = typical
@@ -41633,14 +41983,23 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
       // v28 - Suppress "+" suffix when the source's own FV > 50.
       const fvShown = `${fvNum}${v.fv_plus && _fvQualifiesForPlus(v.fv_published) ? "+" : ""}`;
       const rk = v.rank != null ? ` (#${v.rank})` : "";
-      return `${lbl} ${fvShown}${rk}`;
+      // Published grade first, then the quantile-normalized value the vote is
+      // actually taken over, when the payload carries it. Only appended when
+      // the two differ, so unaffected sources stay compact.
+      const nv = (typeof _normalizedFvOf === "function") ? _normalizedFvOf(v) : null;
+      const nrm = (nv != null && Math.abs(nv - v.fv_published) >= 0.05)
+        ? ` [norm ${nv.toFixed(1)}]` : "";
+      return `${lbl} ${fvShown}${nrm}${rk}`;
     });
     const rankParts = rankOnly.map(([src, v]) => `${SOURCE_LABELS[src] || src} #${v.rank}`);
     const sources = [...parts, ...rankParts].join(" · ");
     const spreadTail = (pt.fv_spread != null && withFv.length >= 2)
-      ? `\nspread ${Math.round(pt.fv_spread)} across ${withFv.length} sources`
+      ? `\nspread ${Math.round(pt.fv_spread)} across ${withFv.length} normalized source grades`
       : "";
-    return `${head}\n── ${sources}${spreadTail}`;
+    const normNote = parts.length
+      ? "\nconsensus averages the quantile-normalized grades, not the published ones"
+      : "";
+    return `${head}\n── ${sources}${spreadTail}${normNote}`;
   };
 
   // Per-segment Catmull-Rom Bezier curves with shared tangents at
@@ -47371,10 +47730,22 @@ function renderPlayerDetail(key) {
       const rankCell = rank != null
         ? `<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-tertiary);font-size:10px;">#${rank}</span>`
         : "";
-      return `<tr>
+      // Published vs NORMALIZED. The badge shows what the source actually
+      // published; the tooltip adds the quantile-normalized value that the
+      // consensus vote is taken over, plus this source's vote weight, so the
+      // 45/50/50 -> consensus 51 arithmetic is legible instead of looking
+      // like a bug. Display only: it reads the payload and computes nothing.
+      const gradeTip = escapeHtml(_perSourceGradeTip(src, info, lbl));
+      // Normalized value inline next to the badge when the payload carries
+      // it, so the reader does not have to hover to see the two numbers.
+      const normVal = _normalizedFvOf(info);
+      const normCell = (normVal != null && fvNum != null && Math.abs(normVal - fvNum) >= 0.05)
+        ? `<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-tertiary);font-size:10px;margin-right:5px;" title="${gradeTip}">norm ${normVal.toFixed(1)}</span>`
+        : "";
+      return `<tr title="${gradeTip}">
         <td style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 6px 3px 0;border-bottom:1px solid var(--border-light);">${escapeHtml(lbl)}${sourceLinkHtml(src, p, srIds, lbl)}</td>
         <td style="padding:3px 6px;border-bottom:1px solid var(--border-light);text-align:right;">${rankCell}</td>
-        <td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;">${fvCell}</td>
+        <td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;white-space:nowrap;">${normCell}${fvCell}</td>
       </tr>`;
     }).join("");
     const explicitFvSources = entries.filter(([, v]) => v.fv_published != null).length;
@@ -47399,10 +47770,37 @@ function renderPlayerDetail(key) {
           driftLine = `<div style="font-size:var(--fs-xs);color:var(--text-tertiary);margin-top:2px;font-family:var(--font-sans);letter-spacing:0.02em;">${escapeHtml(hiLab)} ${fvCeil(highEntry[1].fv_published)} high · ${escapeHtml(loLab)} ${fvCeil(lowEntry[1].fv_published)} low</div>`;
         }
       }
+      // fv_min / fv_max / sigma come off `explicit_fvs` in consensus.py, which
+      // holds the NORMALIZED grades - not the published ones in the rows
+      // below. Saying so is the whole point of this pass: an unlabeled
+      // "Range" next to a published-grade table is exactly the read that
+      // made consensus 51 look wrong under a published 45/50/50.
+      const _rangeTip = escapeHtml("Range of the QUANTILE-NORMALIZED source grades, which is what the consensus vote averages. It can differ from the range of the published grades listed below.");
+      // The published-vs-normalized MEAN pair, when the payload lets the two
+      // be compared honestly. avg_fv IS the weighted mean of the normalized
+      // grades (consensus.py builds it off `explicit_fvs`); the published mean
+      // is arithmetic on the fv_published values in the rows below. Only shown
+      // when avg_fv_n matches the number of published grades on screen, so the
+      // two means are always over the same set of sources - otherwise the
+      // comparison would be between different populations and would mislead.
+      let meanLine = "";
+      const _pubFvs = sortedFvEntries
+        .map(([, v]) => v.fv_published)
+        .filter(v => v != null && isFinite(v));
+      if (latestPt.avg_fv != null && isFinite(latestPt.avg_fv)
+          && _pubFvs.length >= 2 && latestPt.avg_fv_n === _pubFvs.length) {
+        const pubMean = _pubFvs.reduce((a, b) => a + b, 0) / _pubFvs.length;
+        const gap = Number(latestPt.avg_fv) - pubMean;
+        const _meanTip = escapeHtml(`Published mean ${pubMean.toFixed(2)} is the plain average of the ${_pubFvs.length} grades listed below. Normalized mean ${Number(latestPt.avg_fv).toFixed(2)} is what consensus actually averages, after each source's grade is quantile-mapped onto the FanGraphs scale to de-bias a chronically hot or cold grader. The ${gap >= 0 ? "+" : ""}${gap.toFixed(2)} difference is that de-biasing, not an arithmetic error, and it is why the consensus can sit outside the published range.`);
+        meanLine = `<div style="font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;margin-top:2px;" title="${_meanTip}">
+          published mean ${pubMean.toFixed(2)} · normalized mean ${Number(latestPt.avg_fv).toFixed(2)} (${gap >= 0 ? "+" : ""}${gap.toFixed(2)})
+        </div>`;
+      }
       disagreementLine = `<div style="margin-bottom:6px;">
-        <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">
-          Range ${fvCeil(latestPt.fv_min)}-${fvCeil(latestPt.fv_max)}${sigma}${wide}
+        <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;" title="${_rangeTip}">
+          Normalized range ${fvCeil(latestPt.fv_min)}-${fvCeil(latestPt.fv_max)}${sigma}${wide}
         </div>
+        ${meanLine}
         ${driftLine}
       </div>`;
     } else if (_fvTotalInstances(p) === 1) {
@@ -47424,10 +47822,11 @@ function renderPlayerDetail(key) {
         <thead><tr style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;">
           <th style="text-align:left;padding-bottom:4px;">Source</th>
           <th style="text-align:right;padding-bottom:4px;">Rank</th>
-          <th style="text-align:right;padding-bottom:4px;">FV</th>
+          <th style="text-align:right;padding-bottom:4px;" title="${escapeHtml("FV as PUBLISHED by that source. Hover a row for the quantile-normalized grade the consensus vote is actually taken over, and the source's vote weight.")}">FV</th>
         </tr></thead>
         <tbody>${sourceRows}</tbody>
-      </table>`;
+      </table>
+      <div style="font-size:10px;color:var(--text-tertiary);margin-top:5px;line-height:1.45;">${escapeHtml("Consensus is the weighted mean of each source's QUANTILE-NORMALIZED grade, not of the published grades above, so it can sit outside the published range. Hover a row for published vs normalized vs weight.")}</div>`;
 
     // Tools panel -------------------------------------------------------
     const toolEntries = entries.filter(([, v]) => v && v.tools && Object.keys(v.tools).length);
@@ -48173,8 +48572,24 @@ function renderPlayerDetail(key) {
   const aaaStatcastHtml = (typeof aaaStatcastPanel === "function") ? aaaStatcastPanel(p) : "";  // AAA Statcast contact-quality pills (hitters)
   const alevelSignalHtml = (typeof alevelSignalPanel === "function") ? alevelSignalPanel(p) : "";  // A-ball Statcast signal pill (S-XLINE-4, display-only)
   const apPaceHtml = (typeof apPacePanel === "function") ? apPacePanel(p) : "";  // Advancement Pace+ ladder-pace panel (W5, descriptive display only, hitters)
+  // Archetype comps panel is BUILT BUT DELIBERATELY UNWIRED (2026-07-29). It was
+  // written against an assumed per-player index (by_mlbam / by_player_key / ...) that
+  // data/archetype_comps.json does not have and cannot have: the artifact is COLUMNAR
+  // STRATA (3,957 facet combinations in `rows`, with `cols` and interned `tokens`), not
+  // per-player records. Joining a player to a stratum needs a facet classifier in the
+  // client (age band, level, production tercile), which is a feature, not a key rename.
+  // Verified inert before unwiring: the reader returned null and the panel returned ""
+  // for 100% of players, so this removes nothing a reader was seeing.
+  // It is not surfaced because the evidence does not justify building that classifier:
+  // the sweep behind the artifact returned NO SHIP under nested cross-validation
+  // (lift negative, selection bias 88 to 234%), its own health_warning is factually
+  // false (it claims every stratum's out-of-fold residual is statistically zero; 477 of
+  // 3,957 carry |t| >= 2), and its generating script does not exist so it cannot be
+  // reproduced or audited. The export stays as an honest, reliability-flagged data
+  // asset. Ledgered in docs/efv-2026-07-29/GATED_CANDIDATES.md.
+  const archetypeHtml = "";
   const defHomeHtml = (typeof defHomeChip === "function") ? defHomeChip(p) : "";  // Defensive home stay-probability chip (W7, risk context only)
-  const overviewHtml = [summaryGridHtml, efvCardHtml, efvProxyHtml, palFitHtml, aaaStatcastHtml, alevelSignalHtml, apPaceHtml, defHomeHtml, valuationHtml, chartSection, playerNewsSection, scoutReportsOnOverview, sourceSection, noteSection]
+  const overviewHtml = [summaryGridHtml, efvCardHtml, efvProxyHtml, palFitHtml, aaaStatcastHtml, alevelSignalHtml, apPaceHtml, archetypeHtml, defHomeHtml, valuationHtml, chartSection, playerNewsSection, scoutReportsOnOverview, sourceSection, noteSection]
     .filter(Boolean).join("");
   // v30.8 - Recent gameLogs viz. Reads p.statcast_metrics.recent_games
   // (populated by the per-player MLB Stats API gameLog pass). When
@@ -52442,6 +52857,12 @@ function scoutRatesHTML(p) {
     stuffPlusPillHTML(p),
     aaaStuffPlusPillHTML(p),
     krpPlusPillHTML(p),
+    // A-ball / complex tracked whiff + FB-velo measurement pills. Display
+    // only (S-XLINE-4 was NO-SHIP as a grade overlay); returns "" whenever
+    // the sidecar is absent or the player is not in it, so the row never
+    // grows an empty slot. Placed after the "+" family and before the
+    // valuation pills so the measurement reads sit with the other rates.
+    (typeof alevelSignalPillsHTML === "function") ? alevelSignalPillsHTML(p) : "",
     milbProjHTML(p),
     tradeValuePillHTML(p),
   ].filter(Boolean).join("");

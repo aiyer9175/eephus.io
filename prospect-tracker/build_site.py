@@ -68,6 +68,8 @@ _HUB_VER = _asset_ver("assets/eephus-hub.js")
 _GFX_VER = _asset_ver("assets/eephus-gfx.js")
 _FANTASY_VER = _asset_ver("assets/fantasy.js")
 _EXPORT_VER = _asset_ver("assets/eephus-export.js")
+_PARKS_VER = _asset_ver("assets/parks.js")
+_PARKS_CSS_VER = _asset_ver("assets/parks.css")
 
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
 # page. OPTIONAL by design: assets/eephus-config.js is git-ignored and absent on
@@ -241,6 +243,7 @@ def _footer() -> str:
     links = (
         f'<a href="/team/">About</a>'
         f'<a href="/news/">Prospect News</a>'
+        f'<a href="/parks/">Park Factors</a>'
         f'<a href="/sources/">Data Sources</a>'
         f'<a href="/glossary/">Glossary</a>'
         f'<a href="/report/">Report a bug</a>'
@@ -285,6 +288,7 @@ MODULE_STAGE = {
     "pal": ("β", "Alchemy Lab is in beta - newly launched; the conversion models are provisional"),
     "fantasy": ("β", "Fantasy is in beta - newly launched; ROS projections may shift as the models mature"),
     "forums": ("β", "Forums is in beta - newly launched"),
+    "parks": ("β", "MiLB Park Factors is in beta - newly launched; the factors are a measured artifact, the surface is new"),
 }
 
 # Dev byline - the same "Created by" signature PROSPX renders above its
@@ -2413,6 +2417,32 @@ def _cross_module_strip() -> str:
                           'top reliever-to-starter conversion candidates', rows))
     except (OSError, ValueError, KeyError):
         pass
+    # MiLB Park Factors - the most offense-inflating venues on the current
+    # 3-season window (display-only context; no model reads these).
+    try:
+        pf = _cached_data_json("milb_park_factors.json")
+        venues = pf.get("venues") or []
+        year = max((int(y) for v in venues for y in (v.get("window_run_pf") or {})),
+                   default=None)
+        # venue_id -> the level its clubs played at in that window
+        lvl_of: dict = {}
+        for t in pf.get("team_seasons") or []:
+            if year is not None and year - 2 <= t.get("season", 0) <= year:
+                lvl_of.setdefault(t.get("venue_id"), t.get("level"))
+        rated = [(v, (v.get("window_run_pf") or {}).get(str(year))) for v in venues]
+        top = sorted(((v, f) for v, f in rated if f is not None),
+                     key=lambda vf: -vf[1])[:3]
+        rows = "".join(
+            f'<a class="xmod-row" href="/parks/">'
+            f'<span class="xmod-name">{html.escape(v.get("venue_name") or "")}</span>'
+            f'<span class="xmod-sub">{html.escape(lvl_of.get(v.get("venue_id")) or "")}</span>'
+            f'<span class="xmod-val">{f:.2f} run PF</span></a>'
+            for v, f in top)
+        if rows:
+            cards.append(('◊ Park Factors', '/parks/',
+                          f'MiLB venues that add the most offense ({year} window)', rows))
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
     body = "".join(
         f'<div class="xmod-card"><div class="xmod-head"><span class="xmod-title">{title}</span>'
         f'<a class="xmod-link" href="{href}">open →</a></div>'
@@ -3033,6 +3063,56 @@ def build_fantasy() -> str:
                 "buy-low/sell-high regression candidates, and a closer depth grid.",
                 url=f"{SITE_ORIGIN}/fantasy/")
 
+def build_parks() -> str:
+    """The /parks/ MiLB Park Factors module - the venue context board.
+
+    Static shell + assets/parks.js, which fetches data/milb_park_factors.json
+    (tools/park_line_lab.py): 202 venues across sports 11/12/13/14/16, run and
+    home-run factors per venue-season plus the vintage-safe 3-season window,
+    joined client-side to the club-season rows that carry level / league /
+    affiliate / home-game counts.
+
+    DISPLAY ONLY. Nothing on this page feeds a model. The experiment that built
+    the table (efv_park_line.py) is flag-gated off under a registered fail
+    verdict, and the Method section says that on the page rather than burying
+    it. The board also shows the UNCLAMPED factors; the clamps in the artifact
+    belong to that disabled model path, not to the display.
+
+    Not in NAV_ITEMS on purpose: the nav definition is mirrored by three
+    hand-maintained static copies (prospx + the two CollegeSavant pages) that
+    test_collegesavant_nav_in_sync pins, so a nav row lands with those copies.
+    Discovery meanwhile rides the footer link, the homepage Across-eephus.io
+    strip, and sitemap.xml."""
+    body = (
+        '<div class="fa-app mlbstats-app parks-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>MiLB Park Factors <span class="eephus-beta" title="{html.escape(MODULE_STAGE["parks"][1])}">β beta</span></h1></div>'
+        '<span class="section-sub">Where a minor-league stat line was earned. Run and home-run park '
+        'factors for every affiliated venue from Triple-A down through the complex and Dominican '
+        'leagues, built from home-versus-road scoring, centered on the league-season and shrunk toward '
+        'neutral by sample. Amarillo runs a 1.21 run factor and a 1.43 home-run factor; Arkansas runs '
+        '0.84. Two hitters with the same slash line did not do the same thing.</span></div>'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Park Factors sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-parksection="board" role="tab" aria-selected="true">Venue Board</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-parksection="leagues" role="tab" aria-selected="false">League Spread</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-parksection="method" role="tab" aria-selected="false">Method &amp; Sample</button>'
+        '</div>'
+        '<div id="parks-section" class="mlbstats-section">'
+        '<div id="parks-banner"></div>'
+        '<div id="parks-app-root"></div>'
+        '</div>'
+        '</div>'
+        f'<link rel="stylesheet" href="/assets/parks.css?v={_PARKS_CSS_VER}">'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/parks.js?v={_PARKS_VER}" defer></script>'
+    )
+    return page("MiLB Park Factors - eephus.io", "parks", body,
+                "Minor-league park factors for every affiliated venue: run and home-run factors by "
+                "season and on a vintage-safe three-season window, with the level, affiliate and "
+                "home-game sample behind each one. Built from home-versus-road scoring, league-centered "
+                "and sample-shrunk. Display only, no model reads them.",
+                url=f"{SITE_ORIGIN}/parks/")
+
 def build_glossary() -> str:
     """The /glossary/ unified Glossary & Methodology module - the canonical
     definition layer's page. Static shell + assets/glossary.js; definitions
@@ -3529,6 +3609,7 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/pal/", "daily", "0.8"),
         ("/trademachine/", "daily", "0.8"),
         ("/fantasy/", "daily", "0.8"),
+        ("/parks/", "weekly", "0.6"),
         ("/articles/", "weekly", "0.7"),
         ("/forums/", "daily", "0.6"),
         ("/glossary/", "weekly", "0.7"),
@@ -3874,6 +3955,7 @@ def main() -> None:
     _write("pal/index.html", build_pal())
     _write("trademachine/index.html", build_trademachine())
     _write("fantasy/index.html", build_fantasy())
+    _write("parks/index.html", build_parks())
     _write("glossary/index.html", build_glossary())
     _write("teams/index.html", build_teams_redirect())
     _write("team/index.html", build_team())

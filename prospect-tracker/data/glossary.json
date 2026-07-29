@@ -1527,14 +1527,15 @@
       "aliases": [],
       "priority": 8,
       "definition": "The site-computed FV; an accuracy-weighted mean of all source publications with single-instance shrinkage.",
-      "methodology": "For every snapshot, the consensus FV is an accuracy-weighted mean of explicit FVs published by any tracked source. When only one source has ever published the player (across their entire history, not just the latest snapshot), the consensus is Bayesian-pulled 1/3 toward FV 35 to reflect single-observation uncertainty. The pull lifts as soon as a second grade lands, even from the same source. Phase 4 (2026-06): the blend is ACCURACY-WEIGHTED - relative vote weights from each source's measured track record on resolved common-set cohorts (vintage-disciplined: a board year uses only track-record seasons at least three years old, so nothing the weights read is newer than the board itself), shrunk hard toward equal (k=150) and clamped [0.6, 1.5]. Current weights: MLB Pipeline 1.07, FanGraphs 0.93 - the resolved cohorts measured Pipeline slightly ahead, the opposite of the popular prior; sources without resolved history vote at 1.0. Shipped only after the weighted blend beat equal-weight on both pooled Spearman and AUC in the A/B (data/consensus_weight_eval.json); disagreement metrics stay unweighted. The amateur draft board stays equal-weight: its own source backtest did not clear the ship gate, so no draft source outvotes another there. Cross-source normalization (2026-07): before the blend, each source's grade is quantile-mapped onto the FanGraphs scale on the players both grade, so a materially hot or cold outlet is de-biased by the shape of its whole distribution rather than assumed to share the FanGraphs scale; the per-source grades shown on the card are unchanged, only the consensus scale is.",
+      "methodology": "For every snapshot, the consensus FV is a mean of the explicit FVs published by any tracked source, taken after each source's grade is put on a common scale. When only one source has ever published the player (across their entire history, not just the latest snapshot), the consensus is Bayesian-pulled 1/3 toward FV 35 to reflect single-observation uncertainty. The pull lifts as soon as a second grade lands, even from the same source. Cross-source normalization (2026-07): before the blend, each source's grade is quantile-mapped onto the FanGraphs scale on the players both grade, so a materially hot or cold outlet is de-biased by the shape of its whole distribution rather than assumed to share the FanGraphs scale; the per-source grades shown on the card are unchanged, only the consensus scale is. Source weighting is EQUAL as of 2026-07-25. Accuracy weights (vintage-disciplined relative vote weights from each source's track record on resolved common-set cohorts, shrunk toward equal at k=150 and clamped [0.6, 1.5]) shipped in 2026-06 and were REVERTED on a hardened re-measurement: equal reads 0.2728 pooled Spearman / 0.7316 AUC against the weighted candidate's 0.2737 / 0.7387 on n=2,858, a gap smaller than the 0.0068 Spearman / 0.0052 AUC the test can resolve, so the A/B ships nothing (data/consensus_weight_eval.json, ship = False). Only two of eight outlets have resolvable outcome history and their measured precisions are indistinguishable, so every source now votes 1.0 and data/source_weights.json carries an empty weight map. The amateur draft board was already equal-weight for the same reason: its own source backtest never cleared the ship gate. Disagreement metrics were never weighted. The blend still beats the best single source, which is the claim the registry verdict rests on (data/source_backtest.json).",
       "seeAlso": [
         "fv",
         "shrinkage",
-        "wide_spread"
+        "wide_spread",
+        "normalized_source_grade"
       ],
-      "formula": "consensus FV = accuracy-weighted mean(latest explicit FV from each tracked source)\nsingle-source case: shrunk = (n_obs · src_FV + k · prior_FV) / (n_obs + k)",
-      "example": "A prospect carrying 60/62/65 grades across five sources lands at an accuracy-weighted consensus of about 62, with the 60-65 spread (stddev 2.4) shown as the Wide Spread marker when it stretches. A rank-implied FV that reads higher than the published grades is a gap the Source Comparison tab surfaces.",
+      "formula": "consensus FV = ceil( mean(scale-normalized latest explicit FV from each tracked source) ), clamped 20-80\nsingle-source case: shrunk = (n_obs · src_FV + k · prior_FV) / (n_obs + k)",
+      "example": "A prospect carrying 60/62/65 grades across five sources lands at a normalized consensus of about 62, with the 60-65 spread (stddev 2.4) shown as the Wide Spread marker when it stretches. A rank-implied FV that reads higher than the published grades is a gap the Source Comparison tab surfaces. When the consensus sits outside the range of the printed grades, the normalized-source-grade entry explains why.",
       "shelf": "ark",
       "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
     },
@@ -6132,6 +6133,113 @@
       ],
       "shelf": "industry",
       "origin": "Industry metric. External model lineage built by Will Cahoon for CollegeSavant (college TrackMan xRV family); eephus.io vendors the already-scored payloads and displays them, and does not fit or re-derive the model. Registered for governance 2026-07-23 (data/collegesavant_stuff_eval.json)."
+    },
+    {
+      "id": "statcast_alevel_signal",
+      "term": "A-ball Tracked Signal (Whiff, FB Velo)",
+      "category": "statcast",
+      "module": [
+        "prospx"
+      ],
+      "aliases": [
+        "A-ball Statcast lean",
+        "A/CPX tracked signal",
+        "Whiff signal",
+        "FB velo signal",
+        "Whiff residual",
+        "Velo residual"
+      ],
+      "priority": 21,
+      "definition": "Card pill for A-ball and complex-level prospects: the player's whiff share (hitters) or four-seam velocity (pitchers), and the part of that signal his own strikeout rate does not already explain. Display context. It is not a grade, not a projection, and it applies no adjustment of its own.",
+      "methodology": "Coverage is the tracked bake in data/statcast_alevel_signals.json: 635 player-seasons whose current level is A or CPX with at least 100 pitches of signal exposure (330 A hitters, 144 complex hitters, 96 A pitchers, 65 complex pitchers), 2026 only. A player outside that set has no pill.\n\nEach signal is z-scored inside its own side-level-season qualified pool, then regressed on the same player's current strikeout z with coefficients FROZEN on the 2023-2025 lab populations and never refit at serve time: hitters whiff_z on k_z, slope 0.887, intercept 0.014, r 0.872, n 788; pitchers velo_z on k_a_z, slope 0.218, intercept -0.009, r 0.219, n 227. The pill reads the RESIDUAL, so a positive hitter residual is swing-and-miss the strikeout rate has not charged for yet, and a positive pitcher residual is velocity the strikeout rate has not converted yet.\n\nWhat the residual is worth was measured, once, as an incremental Spearman against the out-of-fold residual of a cross-fitted stat-line ridge: whiff on next-season K% +0.0965, CI95 [+0.0277, +0.1604]; FB velo on next-season K%-allowed +0.1423, CI95 [+0.0196, +0.2704] (data/xfv_statcast_line4_eval.json). The same pass read NULL on the hitter wOBA channel, -0.0266 with a CI95 that crosses zero. So the whiff residual is STRIKEOUT information and nothing wider; read it as bat-to-ball risk, not as a general hitting verdict.\n\nLimits worth holding onto: one live season, no resolved out-of-sample fold, and a forward correlation rather than a backtest against realized WAR. Registered provisional (model_id statcast_alevel_display). Whether the same residual also leans the served eFV grade is a separate registered decision (model_id xfv_statcast_overlay_uncapped), not something this pill does.",
+      "formula": "residual_z = signal_z - (slope x strikeout_z + intercept), coefficients frozen 2026-07-23; hitters signal = whiff share, pitchers signal = four-seam velocity.",
+      "example": "A Single-A hitter at 35.2% whiff sits at whiff_z +1.17 with a K% z of +1.08, so his residual is +0.20: the contact problem is about what his strikeout rate already says. The same whiff share on a hitter striking out at pool average reads +1.15, and that gap is the case the pill exists to surface.",
+      "seeAlso": [
+        "whiff_pct",
+        "k_pct",
+        "statcast_plus",
+        "xfv"
+      ],
+      "shelf": "ark",
+      "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. The inputs are MLB Statcast and zone tracking; the residualization against the stat line and its frozen coefficients are ours."
+    },
+    {
+      "id": "archetype_comps",
+      "term": "Archetype comps",
+      "category": "scouting",
+      "module": [
+        "prospx"
+      ],
+      "aliases": [
+        "Archetype comps",
+        "Archetype comp",
+        "Archetype panel",
+        "Comp archetype"
+      ],
+      "priority": 62,
+      "definition": "Historical strata a prospect falls into (age for level, level, level-relative production and so on) with what those groups actually realized. DESCRIPTIVE ONLY. The predictive version of this object was tested and failed, so nothing here corrects, adjusts or forecasts a grade.",
+      "methodology": "Population: hitters with a MiLB track record and a decision year of 2016-2024, 904 rows. Every WAR and bust number is computed on the 527 whose six-year window has actually closed, which in practice means decision years 2016-2020. Baseline is 1.90 mean WAR and a 76.7% bust rate at or below 0.5 WAR; a stratum is only interesting against that baseline. A stratum is one to three axis cuts intersected, and 3,957 clear the reporting floor of 25 complete-window players. Each reports n, mean and median realized WAR, a 95% interval on the mean, and the bust rate. Read that as a description of who has been in the box, not as a forecast for the player standing in it. Hitters only; there is no pitcher table. 130 strata carry a zero-width interval because every closed member realized the same WAR (in practice 0.0, none reached the majors): that is a degenerate interval, not a precise one.\n\nWhy it is not a model. Nested cross-validation put stratum selection inside the fold, and the effect did not survive it. On the hitter side every arm's rank-correlation delta against the shipped eFV blend is inside its own null band (-0.0106 to +0.0082, no interval clean of zero) against the 0.017 the gate standard sets. Between 45 and 141 percent of the in-fold selected effect is selection bias: inner-fold effects of 0.86 to 1.85 WAR collapse to -0.60 to +0.50 out of fold, and the row-permuted zero-information control arms invert outright. Selection is unstable on top of that, with eight nested folds picking eight different top strata (mean pairwise axis Jaccard 0.135).\n\nWhat is and is not auditable. Stratum MEMBERSHIP is reproducible and is re-checked on every build: all 3,957 ids and resolved-row counts match the pre-registered outcome-blind enumeration exactly. The outcome columns are not. The script that produced them (tools/_comb_sweep_desc.py) is absent from the tree and nothing else writes that file, so mean WAR, median WAR, bust rate and the residual t are carried as a frozen quote of a 2026-07-25 measurement rather than a statistic anyone can regenerate. The strata are honest; the numbers attached to them are unverifiable.\n\nThe reliability tag. The source artifact's own health_warning claims every stratum has a statistically zero out-of-fold residual against the shipped eFV model. That is FALSE and it is not carried forward: 477 of 3,957 strata sit at |t| >= 2 where about 180 are expected under a true null, 124 at |t| >= 3 against about 11 expected, max 4.91. Each stratum instead ships a tag from its own t. PRICED (3,193) means the comps and the grade agree. WATCH (687) means nominally off-model but not surviving Benjamini-Hochberg at q = 0.05 across all 3,957 tests, so it is unverified rather than a finding. OFF-MODEL (77) survives that correction at |t| >= 3.30 and means the comps and the grade DISAGREE, with neither authoritative. Read the off-model tier carefully: 76 of the 77 carry a negative residual and 43 busted at a 100 percent rate, because WAR floors near zero for a player who never debuts, so any positive expectation on a young low-grade group is guaranteed a one-sided residual there. That is the outcome scale bottoming out, not a correctable eFV defect. Registered unvalidated with no eval artifact (model_id archetype_comps); the failed model lane is registered separately as archetype_search.",
+      "example": "The stratum 'very young for level, above-average level-relative OPS' shows 26 closed-window players, mean 11.7 WAR, CI95 [8.6, 14.9]. That is what those 26 did. It is not a projection for the 27th, and no eFV grade moves because of it.",
+      "seeAlso": [
+        "xfv",
+        "fv",
+        "advancement_pace_plus"
+      ],
+      "shelf": "ark",
+      "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. Built from the 2026-07-25 combinatorial archetype sweep (tools/_comb_sweep.py family) and registered as a descriptive surface rather than a model."
+    },
+    {
+      "id": "milb_park_factor",
+      "term": "MiLB Park Factor (Run PF / HR PF)",
+      "category": "general-stat",
+      "module": [
+        "platform"
+      ],
+      "aliases": [
+        "MiLB Park Factor",
+        "Park factor",
+        "Run PF",
+        "HR PF"
+      ],
+      "priority": 46,
+      "definition": "In-house run and home-run park factors for 201 minor league venues, 2021 forward. 1.00 is neutral for that venue's league and season; 1.10 means the park played about 10% more runs than its league-season baseline. The displayed number is a trailing three-season window and it is not clamped. Reference context only: no grade, rank or dollar on this site is park-adjusted.",
+      "methodology": "Team-season factor = (home runs scored plus allowed per game) / (road runs scored plus allowed per game), from StatsAPI final scores, regular season only. Each team-season is centered on the unweighted league-season mean ratio, then shrunk toward 1.00 empirical-Bayes style with K_G = 70 home games, so a short or lopsided schedule pulls back to neutral instead of reading as a park. A venue takes its modal home team; a venue-season is the home-game-weighted mean of the team-seasons played there; the three-season window uses only seasons at or before the season being read, so a historical row never sees its own future.\n\nCoverage: 1,211 team-seasons from Triple-A down through the rookie complexes and the Dominican Summer League, 969 venue-seasons, HR factor on 930 of them. 2026 is in season, so its numbers mix a partial schedule with the 2024-2025 window legs.\n\nWhy the WINDOW and not the season. Single-season factors are not stable enough to publish: venue-level year-over-year Spearman on the run factor runs 0.353 to 0.479 across the five season pairs, under the 0.50 bar the park registration set. An independent split-half of the multi-season aggregate (2021/2023/2025 against 2022/2024/2026, no shared season) reads 0.735 on runs and 0.760 on HR. So the trailing window ships and the single season does not.\n\nWhy it is NOT clamped. The source method block carries application clamps of [0.90, 1.10] run and [0.80, 1.25] HR. Those are a safety rail for a frozen model formula, not a statement about a ballpark, and that model path is switched off. Clamping the display would move 13 venues on runs and 17 on HR and would turn Hodgetown's measured 1.209 into 1.100, so the measured value ships and the bounds travel alongside as context. Two other honest omissions: HR factor feeds no formula anywhere (ISO and SLG neutralize through the run factor), and StatsAPI venue 401 'TBD' is excluded from the table because it is the unlabeled-DSL bucket, not a ballpark, and pools 133 team-seasons against itself so its factor is 1.00 by construction.\n\nModel status, stated plainly: the eFV lane that would have park-neutralized MiLB stat lines with this table FAILED its registered gate (hitters +0.0005 with lo95 -0.0011, pitchers -0.0021 with lo95 -0.0051) and stays gated OFF. The table is real and face-valid; the correction built on it was measured and did not earn a ship. Registry rows: milb_park_factors (the table and its display surface) and xfv_park_line (the failed correction).",
+      "formula": "run_pf = shrink( (home RS+RA per game) / (road RS+RA per game) / league-season mean, K_G = 70 ); venue-season = home-game-weighted mean over its team-seasons.",
+      "example": "Hodgetown in Amarillo reads 1.209 run / 1.428 HR and Dickey-Stephens Park in North Little Rock reads 0.840 run / 0.751 HR. Both are Double-A. The same raw slash line means different things in those two boxes, which is the entire use of the table.",
+      "seeAlso": [
+        "ops_plus",
+        "iso_plus",
+        "xfv"
+      ],
+      "shelf": "ark",
+      "origin": "Park factor is a shared industry concept; this table is an in-house build from StatsAPI schedule scores by Noah J. Dengler, original to eephus.io. No external park-factor source is used."
+    },
+    {
+      "id": "normalized_source_grade",
+      "term": "Normalized source grade",
+      "category": "methodology",
+      "module": [
+        "platform"
+      ],
+      "aliases": [
+        "Normalized source grade",
+        "Normalized grade",
+        "Scale normalization",
+        "Cross-source normalization"
+      ],
+      "priority": 9,
+      "definition": "Every source's published FV is quantile-mapped onto one common scale before it is averaged, and the result is rounded UP. That is why the consensus can sit above or below the arithmetic mean of the grades printed on the card. The per-source grades shown are always the raw published ones.",
+      "methodology": "Three steps sit between the grades on the card and the consensus number.\n\n1. NORMALIZE. Each source's grade distribution is quantile-mapped onto the FanGraphs scale using only the players both graded, per role per cycle, so a source that only covers the top of the board is not called hot for skipping the low tiers. A source that grades hot maps DOWN and a source that grades cold maps UP. Direction is measured per cycle, never assumed: the 2026 hitter cycle maps MLB Pipeline and ESPN down by a median 5 FV against FanGraphs and Pipeline International down by 10, while Just Baseball and tjstats map flat. The reference source maps to itself.\n\n2. AVERAGE. The normalized grades are averaged. Weighting is EQUAL as of 2026-07-25: accuracy weights shipped in 2026-06 and were reverted when the hardened re-measurement put the weighted arm inside the noise floor. A player only one source has ever graded is pulled one third toward FV 35 until a second grade lands.\n\n3. DISPLAY. The result is clamped to 20-80 and rounded UP to a whole grade, the site-wide rule for FV and tool grades. A raw 50.05 prints 51.\n\nSo the printed grades are not the inputs and their average is not the output. The gap is mapping first, the single-source pull second, and the round-up rule last, and the round-up alone is worth up to a full grade. Registered as model_id grade_normalization (provisional, data/grade_normalization_eval.json); the map is refit each cycle and recomputation is deterministic.",
+      "formula": "consensus FV = ceil( mean( map_source(published FV) ) ), clamped 20-80; single-source case shrunk = (n_obs x src_FV + k x 35) / (n_obs + k).",
+      "example": "Three sources print 45, 50 and 50 and a reader averages 48.3. The model never sees those three numbers. It sees each grade after its own scale map, averages those, and prints the ceiling: a mapped mean of 50.05 displays as 51. Nothing about the card's per-source column changes.",
+      "seeAlso": [
+        "consensus_fv",
+        "fv",
+        "single_source_mark",
+        "shrinkage"
+      ],
+      "shelf": "ark",
+      "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. Paired quantile map of each source's grade distribution onto the reference source, fit on the same-player overlap."
     }
   ]
 }

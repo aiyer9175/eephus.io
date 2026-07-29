@@ -82,6 +82,30 @@ LEVEL_BIAS_ADJ: dict[str, float] = {
     "AAA": 0.5, "AA": 0.5, "A+": 0.5, "A": 0.5, "CPX": 0.5, "DSL": 0.5,
 }
 
+# S2 eta-hazard-lite 40-man shave (W-SURPLUS S2, PASSED its gate 2026-07-24, held OFF that
+# cycle, re-verified and flipped 2026-07-29). A player already on the 40-man is closer to
+# the majors than his level alone implies, and the heuristic did not know it.
+#
+# These values are the PRODUCTION-frame forward-chained refit, NOT
+# data/eta_hazard_eval.json:shippable_full_window_shave. The distinction is load-bearing:
+# the lab's champion runs estimate_eta WITHOUT LEVEL_BIAS_ADJ while production runs it WITH,
+# so the artifact's table was fitted against a model production does not run. AAA is 0.0 on
+# purpose. Once the 0.5 level-bias shave above is applied, the median AAA 40-man residual is
+# exactly 0 and the mechanism correctly asks for nothing; shipping the artifact's 0.964 would
+# apply a SECOND shave to the 32 of 54 live rows that no longer need one.
+#
+# A and A+ sit at the a-priori CAP of 1.0 in every vintage against median residuals of 2.0,
+# so their magnitude is a conservative BOUND rather than an estimate.
+#
+# Correcting the frame shrinks the measured effect 43% (d MAE -0.084 -> -0.048) and cleans it
+# up at the same time: the zero-information twin falls from 30-40% of the effect to 10-14%.
+# Bootstrap CI95 [-0.0529, -0.0256] on MAE and [+0.0116, +0.0253] on within-1yr, both
+# P=1.000, permutation p=0.000, 5 of 5 folds agreeing.
+#
+# Passed by storage.py ONLY for rows whose roster_status carries on_40_man; every other row
+# passes None and is byte-identical.
+FORTYMAN_ADJ: dict[str, float] = {"AAA": 0.0, "AA": 0.97, "A+": 1.0, "A": 1.0}
+
 # v38 — Item-4 ETA rebalance: shift weight from current level onto age.
 # The level base is modestly de-weighted (×0.90 — a ~10% compression of the
 # level term, so two players at different levels sit a touch closer and the

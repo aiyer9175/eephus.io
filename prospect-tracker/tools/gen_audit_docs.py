@@ -180,6 +180,7 @@ _ROUTE_NOTES = {
     "pal/index.html": "Alchemy Lab",
     "trademachine/index.html": "Trade Machine (Bayesian trade board + one-currency deal evaluator)",
     "fantasy/index.html": "Fantasy: ROS rankings + daily streamers, multi-format (Ottoneu) scoring",
+    "parks/index.html": "MiLB Park Factors reference table (display only; the eFV park-line lane stays gated off)",
     "glossary/index.html": "Unified glossary + methodology / model accountability",
     "teams/index.html": "redirect stub: the old Teams module now lives in /projections/ Team Outlook",
     "team/index.html": "Developers page (content/team.json)",

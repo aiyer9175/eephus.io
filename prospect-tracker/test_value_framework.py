@@ -635,3 +635,58 @@ def test_parallel_lines_diagnostic_recorded() -> None:
     for role in ("hitter", "pitcher"):
         assert "passed" in diag[role]
         assert "spread" in diag[role]
+
+
+# Positions the served board actually assigns. The reliever tags matter here: the
+# position-blind monotonicity test above passes because position=None never routes
+# through the reliever branch of the low-tier anchor.
+_MONO_POSITIONS = [None, "SP", "RP", "SIRP", "MIRP", "CL", "C", "SS", "OF", "1B"]
+
+
+@pytest.mark.parametrize("position", _MONO_POSITIONS)
+@pytest.mark.parametrize("is_pit", [False, True])
+def test_expected_sv_monotonic_in_fv_by_position(is_pit: bool, position) -> None:
+    """Surplus must not FALL as the grade RISES, for every position the board serves.
+
+    Added 2026-07-29. test_expected_sv_monotonic_in_fv above prices at position=None and
+    therefore never exercises the reliever branch of the low-tier anchor, which is how a
+    live monotonicity defect has been shipping undetected: for RP / SIRP / MIRP / CL the
+    published Edwards anchor at cutover_fv ($1.8000M) EXCEEDS the pipeline value at
+    bridge_to ($1.6680M), so the bridge interpolates DOWNHILL and price falls with grade.
+    First violation is between exactly FV40 and FV40.5. The surplus calibration's zero
+    floor masks it on the served number, which is why no display surface caught it either.
+
+    The four reliever combinations are a KNOWN, REGISTERED defect, so they are asserted in
+    the inverse direction rather than committed red: the test demands that they still fail.
+    That makes this a self-updating tripwire. It is green today, and the moment someone
+    repairs the bridge it FAILS and tells them to move the combination into the healthy set
+    and close the ledger entry, which is what should happen. Do not neutralize it by dropping
+    the reliever positions or by pricing at position=None; the fix belongs in
+    value_framework's bridge branch and needs its own gate, because it moves reliever dollars
+    below FV45.
+    Ledger: docs/efv-2026-07-29/DEFECT_C_LOSS_LEDGER.md and GATED_CANDIDATES.md.
+    """
+    first_violation = None
+    fv = 20.0
+    prev = None
+    while fv <= 70.0 + 1e-9:
+        v = vf.expected_surplus_usd(fv, is_pit, position=position)
+        v = 0.0 if v is None else float(v)
+        if prev is not None and v < prev - 1e-6 and first_violation is None:
+            first_violation = (round(fv - 0.5, 1), round(fv, 1), prev, v)
+        prev = v
+        fv += 0.5
+
+    known_inverted = is_pit and position in {"RP", "SIRP", "MIRP", "CL"}
+    if known_inverted:
+        assert first_violation is not None, (
+            f"the reliever bridge inversion looks REPAIRED for position={position!r}: "
+            f"the price ladder is now monotone where it was not. That is good news. Move "
+            f"this position out of the known_inverted set in this test and close the entry "
+            f"in docs/efv-2026-07-29/GATED_CANDIDATES.md.")
+    else:
+        assert first_violation is None, (
+            f"surplus FELL as grade rose for position={position!r} is_pitcher={is_pit}: "
+            f"FV {first_violation[0]} -> {first_violation[1]} gave "
+            f"{first_violation[2]} -> {first_violation[3]}"
+            if first_violation else "")

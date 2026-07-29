@@ -7487,7 +7487,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     birth_dates = load_birth_dates()
     from stats import compute_age_decimal
     from age_level import score_age_vs_level
-    from eta import estimate_eta, LEVEL_BIAS_ADJ as ETA_LEVEL_BIAS_ADJ
+    from eta import (estimate_eta, LEVEL_BIAS_ADJ as ETA_LEVEL_BIAS_ADJ,
+                     FORTYMAN_ADJ as ETA_FORTYMAN_ADJ)
     from trades import canonical_org
     from level_norms import (
         compute_level_norms,
@@ -8858,6 +8859,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # heuristic ran ~1yr LATE on debuted players; LEVEL_BIAS_ADJ pulls
             # minor-level ETAs earlier (eta_backtest MAE 1.44->1.23).
             level_bias_adj=ETA_LEVEL_BIAS_ADJ,
+            # S2 eta-hazard-lite (flipped 2026-07-29): a player already on the
+            # 40-man is nearer the majors than his level alone implies. Only
+            # 40-man rows get a shave; everyone else passes None and is
+            # byte-identical. See eta.FORTYMAN_ADJ for why the table is the
+            # production-frame refit and why AAA is deliberately 0.0.
+            fortyman_adj=(ETA_FORTYMAN_ADJ.get(level)
+                          if rs.get("on_40_man") else None),
         )
         # Performance-vs-level-median enrichment. wRC+/xFIP aren't on the
         # MLB Stats API, so we compute their conceptual cousins from the

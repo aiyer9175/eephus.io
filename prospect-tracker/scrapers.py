@@ -462,8 +462,13 @@ def canonical_player_key(player_key: str) -> str:
 
 # Maps alternate player_keys to their canonical form so different source
 # spellings of the same player collapse to one DB key.
-# key = what normalize_key() would produce for the alternate spelling
+# key = what normalize_key() would produce for the alternate spelling, OR an
+#       ingest-minted suffix fork of the canonical key (see the oliveto note)
 # value = canonical key (typically matches the MLB API / most common spelling)
+#
+# Applied in storage.load_all_snapshots() on EVERY snapshot read, which is the
+# path consensus.build_timeseries consumes, so an entry here is durable even if
+# an ingest re-mints the alternate key into the snapshots table.
 _CANONICAL_KEYS: dict[str, str] = {
     "leodalis_de_vries": "leo_de_vries",
     # Josuar Gonzalez (SFG SS) has appeared under three spellings across
@@ -479,6 +484,22 @@ _CANONICAL_KEYS: dict[str, str] = {
     # which otherwise creates a headshot-less duplicate card.
     "george_lombard": "george_lombard_jr",
     "leonardo_bernal": "leo_bernal",
+    # Michael Oliveto (DET C, mlbam 834672, b.2007-02-03). ONE human who was
+    # spread across THREE keys, the inverse of the _SPLIT_KEYS cases below.
+    # fangraphs_csv._canonical_owners() scores the FanGraphs PIDs seen for a
+    # slug by (cycle_count, max_fv). Oliveto appeared once with pid None (the
+    # 2025-07-31 board, before he had a FanGraphs minor-league page) and once
+    # with pid "sa3069256" (2026-02-12): a 1-1 tie on both terms. The None
+    # entry sorted first, canonical_pid came back None, and the
+    # "__all_noid__" sentinel suffixed EVERY row, so neither snapshot kept
+    # the bare key. A later cycle that saw only "sa3069256" had nothing to
+    # tie against and wrote the bare key.
+    # Proof they are one human: the "2026tradedeadline" snapshot sitting on
+    # the BARE key carries _extras.fg_player_id_str == "sa3069256".
+    # Merged into the bare key by tools/repair_michael_oliveto_merge.py;
+    # these entries stop a future CSV drop from re-fracturing him.
+    "michael_oliveto__noid": "michael_oliveto",
+    "michael_oliveto__sa3069256": "michael_oliveto",
 }
 
 

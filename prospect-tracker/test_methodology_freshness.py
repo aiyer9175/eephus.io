@@ -29,7 +29,10 @@ MODEL_GLOSSARY = {
     "prospect_greeks": ["prospect_greeks"],
     "star_odds": ["star_odds"],
     "upgrade_option": ["opt_pct"],   # Tier 2 grade-option layer; surfaced as the PROSPX OPT% column
-    "grade_normalization": ["consensus_fv"],  # Tier 2 cross-source scale map; now shapes the live consensus_fv scale
+    # Tier 2 cross-source scale map; shapes the live consensus_fv scale. The
+    # normalized_source_grade entry (2026-07-29) is the reader-facing version:
+    # why a consensus can land outside the range of the grades on the card.
+    "grade_normalization": ["consensus_fv", "normalized_source_grade"],
     "fa_projection_marcel": ["fa_projection_engine"],
     "fa_war_paths_decay": ["fa_projection_engine"],
     "proj_def_prior": "internal",   # a hit feature of fa_war_paths_decay; gate-artifact row
@@ -45,7 +48,7 @@ MODEL_GLOSSARY = {
     "prospect_surplus": ["surplus_value"],
     "fv_to_war_anchors": ["fv_to_war_table"],
     "wag": ["wag", "warwag"],
-    "consensus_fv": ["consensus_fv"],
+    "consensus_fv": ["consensus_fv", "normalized_source_grade"],
     "draft_consensus_weight": "internal",
     "source_track_record": ["single_source_mark"],
     "eta": ["eta"],
@@ -60,7 +63,10 @@ MODEL_GLOSSARY = {
     # Will's-metrics program 2026-07-23 (docs/wills-2026-07-23/GATES.md): loss ledgers
     # are internal; shipped display surfaces map to their glossary entries.
     "fa_pt_risk": "internal",              # W1/W1-B loss ledger (IL-history PT risk, era-transfer FAIL)
-    "xfv_park_line": "internal",           # W2 loss ledger (park-neutralized eFV rates, clause M FAIL)
+    # W2 loss ledger (park-neutralized eFV rates, clause M FAIL). No longer
+    # internal: the park-factor entry it now maps to is where a reader is told
+    # the table exists AND that the correction built on it did not earn a ship.
+    "xfv_park_line": ["milb_park_factor"],
     "pal_stuff_xrv": ["stuff_plus_aaa"],   # W3: per-type aStuff+ sidecar + PAL pitch-add ranking (display)
     "college_stuff_translation": "internal",  # W4 loss ledger (college stuff+ K% covariate FAIL)
     "collegesavant_stuff": ["collegesavant_stuff_plus"],  # W4 governance of the shipped display lineage
@@ -78,7 +84,9 @@ MODEL_GLOSSARY = {
     "xfv_lambda_reselect": ["xfv"],        # blend-weight re-select SHIP (hit 0.85, +Spearman/AUC)
     "xfv_weight_recal": "internal",        # attribute-weight/alpha re-open (no ship)
     "xfv_cap_sweep": "internal",           # input-cap sweep (caps are safety, not compression)
-    "xfv_statcast_overlay_uncapped": ["xfv"],  # uncapped live overlay SHIP default-ON
+    # uncapped live overlay SHIP default-ON; the eFV entry covers the grade
+    # effect, the A-ball signal entry covers the input the reader can see.
+    "xfv_statcast_overlay_uncapped": ["xfv", "statcast_alevel_signal"],
     "xfv_ungraded_recal": ["xfv_ungraded"],    # provisional de-cap SHIP true-to-model
     # Wave G site-wide true-to-model sweep 2026-07-24b (GATES-ACCURACY C2/C3):
     "plus_metric_recal": ["krp_plus"],     # KRP+ de-clamp SHIP; family already true-to-model
@@ -207,7 +215,10 @@ MODEL_GLOSSARY = {
     # band replacement (rejected, bands dropped), MiLB park factors
     # (infeasible), ERA-shrink unification (keep two values).
     "war_total_band_calibration": "internal",
-    "milb_park_factors": "internal",
+    # milb_park_factors stopped being internal on 2026-07-29: the 202-venue table
+    # is now a reader-facing reference surface, so it documents through the park
+    # factor entry (which also states that the eFV correction built on it failed).
+    "milb_park_factors": ["milb_park_factor"],
     "era_shrink_unification": "internal",
     # E-ISO4: the final eFV bucket-calibration attempt (joint side-symmetric
     # map); rejected, closes the line, loss ledger, rendered nowhere.
@@ -327,7 +338,9 @@ MODEL_GLOSSARY = {
     # implemented, nothing served changed).
     "xfv_statcast_line2": "internal",
     "xfv_statcast_line3": "internal",
-    "xfv_statcast_line4": "internal",
+    # line4 stopped being internal on 2026-07-29: its two INC reads are the
+    # measurement a reader is shown next to the A-ball whiff / FB-velo pills.
+    "xfv_statcast_line4": ["statcast_alevel_signal"],
     # S-XLINE-4 overlay (2026-07-23): implemented, FAILED its registered
     # post-flip 2-FV served ceiling (structural: fringe quantile-grid step is
     # 2.7 FV), reverted same day - defaults OFF, chip never renders, so no
@@ -384,6 +397,19 @@ MODEL_GLOSSARY = {
     "pd_plus": ["pd_plus"],
     "stf_plus": ["stf_plus"],
     "fv_stuff_plus": ["stuff_grade_plus"],
+    # --- 2026-07-29 display surfaces. All three are DISPLAY decisions, and each
+    # one's glossary entry states in its own text how far the evidence goes.
+    # A-ball / complex whiff + FB-velo pills: provisional, the two INC reads are
+    # a forward correlation against a stat-line residual, not an outcome gate.
+    "statcast_alevel_display": ["statcast_alevel_signal"],
+    # Archetype comp panel: unvalidated with NO eval artifact, deliberately. The
+    # entry carries the three caveats (search with no multiplicity correction,
+    # a false health_warning in the source artifact, a missing generator).
+    "archetype_comps": ["archetype_comps"],
+    # The model lane behind that panel: measured, failed, deprecated. It maps to
+    # the same entry because that entry is where the failure is written down for
+    # a reader, which is the whole point of documenting a loss beside its display.
+    "archetype_search": ["archetype_comps"],
 }
 
 
