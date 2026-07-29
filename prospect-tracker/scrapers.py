@@ -496,6 +496,14 @@ _SPLIT_KEYS: dict[tuple[str, int], str] = {
     # slug (his Pipeline 2014-2016 snapshots + bbref career_war live
     # there); the signee's rows live under the split key.
     ("jose_a_valdez", 838649): "jose_valdez_sfg",
+    # The Angels OF Carlos Castillo (mlbam 837825, b. 2008-09-15)
+    # collides with the Pirates RHP Carlos Castillo (mlbam 807962,
+    # b. 2006-02-04) - both slug to "carlos_castillo". The pitcher is the
+    # incumbent (FanGraphs SP/PIT snapshots 2024-02-14 and 2024-08-01,
+    # the A+ PIT career line, the milb headshot); the outfielder arrived
+    # on the 2026-07-23 trade-deadline board and lives under the split
+    # key. Found by test_identity_collisions on 2026-07-29.
+    ("carlos_castillo", 837825): "carlos_castillo_laa",
 }
 
 
