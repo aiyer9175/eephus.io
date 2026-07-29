@@ -537,11 +537,13 @@ _BREAKOUT_WINDOW_DAYS = 180          # 6 months
 _BREAKOUT_WINDOW_MIN_UPDATES = 4     # at least 4 consensus points
 _BREAKOUT_FV_UPGRADE_THRESHOLD = 5.0
 _BREAKOUT_TOOL_VELOCITY_THRESHOLD = 3.0  # avg tool grade improvement
-# v15 — Loosen hitter RPS+ gate from 120 → 110 (was producing zero hitter
-# breakouts league-wide). 110 ≈ 1 stdev above cohort mean; still exclusive
-# but allows truly-emerging bats through. Also accept a strong wRC+ proxy
-# for graduated-statline hitters (≥130 wRC+).
-_BREAKOUT_HITTER_RPS_PLUS_GATE = 110
+# RETIRED 2026-07-29 (kept as a tombstone, deliberately not deleted so a
+# future reader does not re-add the gate): _BREAKOUT_HITTER_RPS_PLUS_GATE = 110
+# fed a `statline.rps_plus` leg of the breakout perf gate. That leg was a
+# dead read (nothing writes rps_plus into a timeseries statline; 0 of 4,505
+# players carry the field) and was removed. Re-adding an RPS+ gate here
+# requires a producer for statline.rps_plus FIRST.
+# v15: hitter wRC+ proxy for graduated-statline hitters (>=130 wRC+).
 _BREAKOUT_HITTER_WRC_PLUS_GATE = 130
 _BREAKOUT_PITCHER_STF_PLUS_GATE = 105
 _BREAKOUT_PITCHER_FIP_MINUS_GATE = 90
@@ -682,11 +684,9 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
                           or saberm.get("is_pitcher"))
     if age is not None:
         if not is_pitcher_ctx and age <= _BREAKOUT_STAT_HITTER_MAX_AGE:
-            # v17 — Accept either wRC+ (MLB-experienced cohort) OR RPS+
-            # (active-prospect cohort) as the hitter stat-only signal.
-            # wRC+ is only on graduates/MLB-experienced players; RPS+ is
-            # the equivalent metric on active MiLB prospects. RPS+ gate
-            # mirrors the wRC+ gate's percentile (130 ≈ +2σ on each).
+            # v17: wRC+ (MLB-experienced cohort) is the first hitter
+            # stat-only signal. wRC+ lives on graduates / MLB-experienced
+            # players only.
             wrc = saberm.get("wrc_plus")
             try:
                 if wrc is not None and float(wrc) >= _BREAKOUT_STAT_WRC_PLUS_GATE:
@@ -700,23 +700,24 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
                     }
             except (TypeError, ValueError):
                 pass
-            rps = statline.get("rps_plus")
-            try:
-                if rps is not None and float(rps) >= _BREAKOUT_STAT_WRC_PLUS_GATE:
-                    return {
-                        "flag": True,
-                        "reason": "stats",
-                        "perf_gate": "rps_plus",
-                        "fv_upgrade": None,
-                        "tool_velocity": None,
-                        "window_anchor_date": None,
-                    }
-            except (TypeError, ValueError):
-                pass
-            # v17 — Active-prospect MiLB hitters mostly don't have wRC+
-            # OR RPS+ populated; their level-anchored equivalent is
-            # `statline.ops_plus_level` (100 = level mean). Accept ≥130
-            # at the same gate threshold for the stat-only breakout path.
+            # DEAD-READ REMOVED 2026-07-29: a `statline.rps_plus` leg used to sit
+            # here at the wRC+ threshold. `statline` NEVER carries `rps_plus`:
+            # the only producers are draft_export.py and overseas_export.py, and
+            # both stamp it at the TOP LEVEL of their own payloads (draft board /
+            # overseas board), not into the timeseries statline this function
+            # reads. Verified against the served artifact: `statline.rps_plus` is
+            # present on 0 of 4,505 players in data/timeseries.json. The branch
+            # was unreachable, so removing it is behaviour-identical. It is NOT
+            # repointed at ops_plus_level because the ops_plus_level leg already
+            # sits directly below at its OWN calibrated threshold
+            # (_BREAKOUT_STAT_OPS_PLUS_LEVEL_GATE); repointing would have added a
+            # second, looser gate on the same field and changed which players
+            # earn a Breakout badge.
+            # v17: Active-prospect MiLB hitters mostly don't carry wRC+;
+            # their level-anchored equivalent is `statline.ops_plus_level`
+            # (100 = level mean). Threshold is _BREAKOUT_STAT_OPS_PLUS_LEVEL_GATE
+            # (150), set higher than the wRC+ gate because level-anchored stats
+            # compress harder; see the constant's own comment.
             ops_plus = statline.get("ops_plus_level")
             try:
                 if ops_plus is not None and float(ops_plus) >= _BREAKOUT_STAT_OPS_PLUS_LEVEL_GATE:
@@ -844,20 +845,22 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
     if not (fv_signal or tool_signal or upside_signal):
         return None
 
-    # Performance gate — check hitter RPS+, then pitcher stf_plus_periph
+    # Performance gate: check hitter wRC+, then pitcher stf_plus_periph
     # or fip_minus. Two-way passes if either side passes. `statline` and
     # `saberm` already defined above for the stat-only gate path.
+    #
+    # DEAD-READ REMOVED 2026-07-29: a `statline.rps_plus` leg (gated at
+    # _BREAKOUT_HITTER_RPS_PLUS_GATE) used to run first here. Same finding as the
+    # stat-only path above: nothing writes `rps_plus` into a timeseries statline
+    # (draft_export.py / overseas_export.py stamp it top-level on their OWN
+    # payloads), so the field is present on 0 of 4,505 players in the served
+    # data/timeseries.json and the leg could never fire. Removal is
+    # behaviour-identical: all 32 currently-flagged breakouts pass on
+    # stf_plus_periph (29) or statcast_plus (3).
     perf_gate_passed = None
 
-    rps = statline.get("rps_plus")
-    try:
-        if rps is not None and float(rps) >= _BREAKOUT_HITTER_RPS_PLUS_GATE:
-            perf_gate_passed = "rps_plus"
-    except (TypeError, ValueError):
-        pass
-
-    # v15 — wRC+ alternative for hitters (graduates / MLB-experienced
-    # prospects who carry wRC+ in sabermetrics rather than RPS+).
+    # v15: wRC+ leg for hitters (graduates / MLB-experienced prospects
+    # who carry wRC+ in sabermetrics).
     if perf_gate_passed is None:
         wrc = saberm.get("wrc_plus")
         try:
@@ -6925,6 +6928,21 @@ def _stretch_composite(score: float, mean: float = 100.0,
     Pairs with `_letter_grade`: stretch increases the composite distance
     between farms, then the steeper percentile cutoffs convert that into
     an F at the bottom and a more selective A at the top.
+
+    CALL SITES AND WHY THEY DO NOT COMPOUND (documented 2026-07-29).
+    Four sites apply this: per-tool DvM+ (1.35), per-bucket per-tool DvM+
+    (1.35), farm_score (1.20) and farm_score_by_window (1.20). The per-tool
+    values do flow toward farm_score, but every path from them to farm_score
+    passes through `_zscore_to_100`, an affine re-standardization across the
+    30 orgs, and z-scoring annihilates any affine map applied to its input.
+    So 1.35 and 1.20 act on DISJOINT display surfaces; they never multiply,
+    and there is no 1.62x net widening on the DvM+ axis. Measured published
+    spread on the served 30-org run: per-tool DvM+ sd 11.2-12.6, ToolDvM+
+    composite sd 2.9, farm_score sd 6.4. None of those is the nominal 10
+    points per sigma; each site now states its own scale next to the call.
+    The one place a stretch is NOT purely presentational is the per-bucket
+    pass, whose stretched output enters `_blend_dvm_3way` alongside unstretched
+    FV and Statcast legs; that is documented at that call site.
     """
     if score is None:
         return score
@@ -8855,9 +8873,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             norms_perf = (level_norms.get(lvl) or {}).get("perf") or {} if lvl else {}
             try:
                 if sl_out.get("is_pitcher"):
-                    era = float(sl_out.get("era")) if sl_out.get("era") else None
+                    # `is None` (not truthiness): a genuine 0.00 ERA is a REAL
+                    # value, not a missing one. The old guard
+                    # (`if era and avg_era and era > 0`) dropped every scoreless
+                    # pitcher, and the drop cascaded: no era_minus_level means no
+                    # level_plus_pct, which means no computeRelProd and therefore
+                    # no RPS+ pill on the card. Same rule the acq_draft leaf spec
+                    # states further down this function. avg_era keeps a
+                    # truthiness guard because it is a DIVISOR (0 would raise).
+                    era = _safe_float(sl_out.get("era"))
                     avg_era = norms_perf.get("avg_era")
-                    if era and avg_era and era > 0:
+                    if era is not None and era >= 0 and avg_era:
                         # Empirical-Bayes shrinkage toward the level mean by
                         # sample size before indexing — a few-IP line no longer
                         # reads as an extreme ERA-. K_IP (ERA stabilization,
@@ -8875,10 +8901,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     if stf_periph is not None:
                         sl_out["stf_plus_periph"] = stf_periph
                 else:
-                    ops_str = sl_out.get("ops")
-                    ops = float(ops_str) if ops_str else None
+                    # Same `is None` rule as the ERA branch above: a genuine
+                    # .000 OPS is a real (bad) line, not a missing one, and it
+                    # must still index to an ops_plus_level / level_plus_pct.
+                    ops = _safe_float(sl_out.get("ops"))
                     avg_ops = norms_perf.get("avg_ops")
-                    if ops and avg_ops and avg_ops > 0:
+                    if ops is not None and ops >= 0 and avg_ops and avg_ops > 0:
                         # Empirical-Bayes shrinkage toward the level mean by
                         # sample size before indexing — a 4-AB line no longer
                         # reads OPS+ 374. K_AB (OPS stabilization, AB units):
@@ -8900,9 +8928,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             _norms_perf = (level_norms.get(_lvl) or {}).get("perf") or {} if _lvl else {}
             try:
                 if _rr.get("is_pitcher"):
-                    _era = float(_rr.get("era")) if _rr.get("era") and _rr.get("era") != "—" else None
+                    # Same `is None` rule as the headline statline above. Kept in
+                    # lockstep deliberately: if the per-season row used the old
+                    # truthiness guard a scoreless pitcher would show an ERA- chip
+                    # on his headline line and NO chip on the per-season row for
+                    # the same outing, which is a silent divergence between two
+                    # display surfaces of one number.
+                    _era = _safe_float(_rr.get("era"))
                     _avg_era = _norms_perf.get("avg_era")
-                    if _era and _avg_era and _era > 0:
+                    if _era is not None and _era >= 0 and _avg_era:
                         # Same empirical-Bayes shrink toward the level mean as the
                         # headline statline (storage.py ~L8473). Without it, a
                         # few-IP per-season row re-enabled the extreme ERA- the
@@ -8911,9 +8945,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                         _era_adj = (_ip * _era + K_IP * _avg_era) / (_ip + K_IP)
                         _rr["era_minus_level"] = round(_era_adj / _avg_era * 100)
                 else:
-                    _ops = float(_rr.get("ops")) if _rr.get("ops") and _rr.get("ops") != "—" else None
+                    # `is None`, matching the headline statline (see above).
+                    _ops = _safe_float(_rr.get("ops"))
                     _avg_ops = _norms_perf.get("avg_ops")
-                    if _ops and _avg_ops and _avg_ops > 0:
+                    if _ops is not None and _ops >= 0 and _avg_ops and _avg_ops > 0:
                         # Same empirical-Bayes shrink as the headline statline
                         # (storage.py ~L8494): a 4-AB line no longer reads
                         # OPS+ 374. K_AB has the provenance.
@@ -10292,11 +10327,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         else:
             _mu, _sd = _g_mu, _g_sd
         _tier_stats[_t] = (_mu, _sd)
+    # TRUE-TO-MODEL 2026-07-29: the published $DvM+ is the raw 100 + 10z, with no
+    # display clamp. A `max(40, min(160, ...))` used to sit here; it is the same
+    # display-compression class the C2 lane removed from KRP+ (precedent +
+    # classification rule: data/plus_metric_recal_eval.json), and the owner has
+    # chosen full true-to-model, so a prospect whose development trajectory really
+    # is 6 sigma below his FV tier now reads as such instead of being parked on the
+    # floor next to everyone else down there. The clamp was NOT rank-preserving:
+    # it collapsed a whole tail into one displayed value.
     _dollar_dvm_by_key: dict[str, float] = {}
     for _k, _traj in _ddvm_raw_by_key.items():
         _mu, _sd = _tier_stats.get(_ddvm_tier_by_key[_k], (_g_mu, _g_sd))
         _z = (_traj - _mu) / (_sd or 1.0)
-        _dollar_dvm_by_key[_k] = round(max(40.0, min(160.0, 100.0 + 10.0 * _z)), 1)
+        _dollar_dvm_by_key[_k] = round(100.0 + 10.0 * _z, 1)
 
     org_map: dict[str, dict] = {}
     for idx, p in enumerate(actives):
@@ -11807,6 +11850,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # widens the spread so a 60→80 PowerDvM+ jump is worth
                 # more than a 40→60 jump, matching the user's
                 # exponential-FV-value ask.
+                #
+                # SCALE OF RECORD (documented 2026-07-29, see _stretch_composite
+                # for the full chain). This chip is NOT on the nominal
+                # "100-anchored, +10 = 1 sigma" DvM+ scale that the rest of this
+                # file describes. Two things move it, in this order:
+                #   1. the z above is computed from the SHRUNK value against the
+                #      UNSHRUNK pool sd, so |z| < 1 sigma of the pool by design;
+                #   2. the 1.35 stretch then widens what is left.
+                # Measured on the served 30-org run the two roughly cancel to
+                # ~11.2-12.6 published points per sigma per tool group (not 10,
+                # not 13.5). Deliberate presentation, not a bug, but the number
+                # is stated here so nobody reads a per-tool DvM+ gap as if it
+                # were on the 10-point scale.
                 raw = 100 + 10 * z
                 stretched = _stretch_composite(raw)
                 _entry["tool_dev"]["per_tool_dvm_plus"][grp_name] = int(round(stretched))
@@ -11851,6 +11907,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     weight = n / (n + _DVM_SHRINK_K) if n > 0 else 0.0
                     shrunk_v = weight * v + (1 - weight) * mu_b
                     z_b = (shrunk_v - mu_b) / sd_b
+                    # Same 1.35 stretch, same scale caveat as the org-wide pass
+                    # above (shrink-then-z compresses, stretch re-widens; net is
+                    # neither 10 nor 13.5 points per sigma).
+                    #
+                    # NOT PURELY PRESENTATIONAL HERE: unlike the org-wide chip,
+                    # these per-bucket values are consumed downstream, by
+                    # _bucket_tool_dvm_plus -> _blend_dvm_3way, where the tool leg
+                    # is mixed with an FV leg and an SC leg that were NOT
+                    # stretched. Mixing a wider-scaled leg into a fixed-weight
+                    # blend raises that leg's effective influence in proportion to
+                    # the stretch. The v7 note above justifies the DISPLAY
+                    # widening only and says nothing about the blend, so intent
+                    # could not be established and nothing was changed here; this
+                    # comment exists so the next reader does not mistake the
+                    # blend-weight side effect for a deliberate weighting choice.
                     raw_b = 100 + 10 * z_b
                     stretched_b = _stretch_composite(raw_b)
                     _entry["tool_dev"]["per_tool_dvm_plus_by_bucket"] \
@@ -11861,6 +11932,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # that develop the tools that MATTER for a position over ones that pad
     # the average with off-position gains. The internal storage key stays
     # `tools_dvm_plus`; the front-end label is "ToolDvM+".
+    #
+    # SCALE OF RECORD (documented 2026-07-29): this composite is a WEIGHTED MEAN
+    # of legs that each already sit at ~12 published points per sigma, and a
+    # weighted mean of imperfectly-correlated legs has a much smaller sd than its
+    # legs do. Measured on the served 30-org run the composite's own sd is 2.9
+    # points (full range 94 to 107) while every leg it averages spans roughly
+    # 11 to 13. So ToolDvM+ is NOT on the "+10 = 1 sigma" DvM+ scale its name and
+    # its 100 anchor imply; it is roughly 2.9 points per sigma, i.e. COMPRESSED,
+    # which is the opposite direction from the 1.35 stretch applied to its inputs.
+    # The two effects do not compound into one net widening. Left as-is on the
+    # conservative rule (documented, not changed): re-standardizing this composite
+    # the way the farm tiebreaker now is would move every displayed ToolDvM+
+    # number and its rank ordering is already correct, so it is a presentation
+    # decision for the owner, not a correctness fix. See also _stretch_composite.
     _composite_vals: list[tuple[str, int | None]] = []
     for entry in org_summary:
         td = entry["tool_dev"]
@@ -13499,6 +13584,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Anchored at mean=100 because each main-grade score lives on
         # the DvM+-style 100-anchored scale (each branch z-rescaled to
         # mean=100 across the 30 orgs).
+        #
+        # DOES NOT COMPOUND WITH THE 1.35 PER-TOOL STRETCH (checked 2026-07-29).
+        # The stretched per-tool DvM+ values do reach this composite, but only
+        # through LEAF_SPECS -> _zscore_to_100, which re-standardizes each leaf
+        # sub-input across the 30 orgs. z-scoring is invariant to any affine map,
+        # so the 1.35 is erased at the leaf boundary and cannot multiply with the
+        # 1.20 here; the "1.35 x 1.20 = 1.62x net widening" reading is wrong.
+        # (What the 1.35 DOES survive into is the per-bucket blend weight inside
+        # _blend_dvm_3way, which is upstream of the leaf; see the note there.)
+        # Measured on the served 30-org run: leaf score_100 sd ~9.5 (as designed,
+        # ~10), farm_score sd 6.4, i.e. this composite is COMPRESSED relative to
+        # its leaves by the parent-averaging even after the 1.20 stretch.
         entry["farm_score"] = _stretch_composite(round(composite, 1), factor=1.20)
         # Back-compat: legacy field names (acquisitions_score,
         # transactions_score) resolve to the merged Acquisition Strategy
@@ -13509,7 +13606,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # ── v40 — Continuous TIEBREAKER score ─────────────────────────────────
     # Differentiates farms that land on the same letter grade (coarse grades
     # collapse real value gaps). A normalized z-blend across the 30 orgs of the
-    # three value dimensions, anchored DvM+-style (100 + 10·z):
+    # three value dimensions, anchored DvM+-style (100 + 10 * z_blend, where
+    # z_blend is the weighted blend RE-STANDARDIZED by its own measured pool sd;
+    # see the `_tb_sd` block below for why the raw weighted sum is not unit-sd):
     #   • total surplus      0.40 — aggregate risk-adjusted controlled value ($)
     #   • 6yDvM+             0.25 — the indexed view of the same controlled value
     #   • raw graduate WAR   0.35 — REALIZED MLB production (not WAG) over the grad pool
@@ -13532,12 +13631,35 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # and displayed input read the same 7y value so the label and the number can't disagree
     # (was labeled/displayed as "6y" while the z-score used 7y).
     _TB_W = {"surplus": 0.40, "dvm7y": 0.25, "grad_war": 0.35}
+    _tb_blends = [
+        (_TB_W["surplus"] * _surp_z[i] + _TB_W["dvm7y"] * _dvm_z[i]
+         + _TB_W["grad_war"] * _gwar_z[i])
+        for i in range(len(org_summary))
+    ]
+    # RE-STANDARDIZE the blend before mapping onto the 100 + 10z display scale.
+    # Each leg is a unit-variance z, but a WEIGHTED SUM of unit z's only has
+    # sd = 1 when the weights are an orthonormal combination, which these are
+    # not: surplus and 7yDvM+ are the dollar and indexed views of one
+    # controlled-value concept (measured pool correlation +0.52 on the current
+    # 30-org run), and the weights sum to 1.0 rather than their squares. The
+    # measured blend sd is ~0.70, so the un-restandardized score moved only
+    # ~7.0 points per blend-sigma while the "100 + 10z" label promised 10.
+    # Dividing by the pool's own measured sd is a positive-scalar map, so the
+    # org ORDER is bit-for-bit identical; only the display width changes. Same
+    # pattern as _join_fwdhem_plus in hitter_export.py (the house precedent).
+    # `blend_sd` ships on the payload so the number and its scale can never
+    # diverge silently.
+    _tb_mu = sum(_tb_blends) / len(_tb_blends) if _tb_blends else 0.0
+    _tb_sd = (
+        (sum((b - _tb_mu) ** 2 for b in _tb_blends) / len(_tb_blends)) ** 0.5
+        if len(_tb_blends) > 1 else 0.0
+    ) or 1.0
     for i, entry in enumerate(org_summary):
-        _blend = (_TB_W["surplus"] * _surp_z[i] + _TB_W["dvm7y"] * _dvm_z[i]
-                  + _TB_W["grad_war"] * _gwar_z[i])
+        _blend = _tb_blends[i]
         entry["farm_tiebreaker"] = {
-            "score": round(100 + 10 * _blend, 1),
+            "score": round(100 + 10 * (_blend / _tb_sd), 1),
             "weights": _TB_W,
+            "blend_sd": round(_tb_sd, 4),
             "components": {
                 "surplus_z":  round(_surp_z[i], 2),
                 "dvm7y_z":    round(_dvm_z[i], 2),
@@ -13551,8 +13673,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         }
     # Continuous "true rank" 1-30 by the tiebreaker score (finer than the letter
     # grade); the letter grade still comes from farm_score's rank bucket below.
-    _tb_order = sorted(range(len(org_summary)),
-                       key=lambda i: -(org_summary[i]["farm_tiebreaker"]["score"]))
+    # Sorted on the UNROUNDED blend, not on the 1-decimal published score. Two
+    # orgs whose scores collide only after display rounding (e.g. 101.26 and
+    # 101.31 both printing 101.3) used to be ordered by their position in
+    # org_summary, which is arbitrary; now the underlying value decides. This
+    # also makes the rank invariant to the display scale, so the blend
+    # re-standardization above provably cannot move an org's rank.
+    _tb_order = sorted(range(len(org_summary)), key=lambda i: -_tb_blends[i])
     for _r, _i in enumerate(_tb_order, start=1):
         org_summary[_i]["farm_tiebreaker"]["rank"] = _r
 
@@ -14101,6 +14228,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     + _w_dev  * (dev_parent  if dev_parent  is not None else 100.0)
                     + _w_fin  * (entry.get("financial_score") if entry.get("financial_score") is not None else 100.0)
                     + _w_prod * (prod_parent if prod_parent is not None else 100.0))
+            # Same 1.20 as the canonical farm_score, and the same non-compounding
+            # note applies: every leaf reaching `comp` came through
+            # _zscore_to_100, so the upstream 1.35 per-tool stretch is already
+            # erased and cannot multiply with this factor. See _stretch_composite.
             fs = _stretch_composite(round(comp, 1), factor=1.20)
             entry["farm_score_by_window"][win] = fs
             farm_scores_w.append(fs)

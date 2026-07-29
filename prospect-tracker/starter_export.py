@@ -96,16 +96,24 @@ def _backtest() -> dict:
     }
 
 
-def _join_sem_plus_3yr(starters: list[dict]) -> int:
+def _join_sem_plus_3yr(starters: list[dict]) -> dict:
     """Stamp sem_plus_3yr / percentile / tag from the multi-year artifact
     (tools/sem_plus_lab.py). Companion SKILL column; missing artifact or
-    unmatched player -> fields absent, column renders blank. Returns rows
-    stamped."""
+    unmatched player -> fields absent, column renders blank.
+
+    VINTAGE, NOT PIPELINE OUTPUT (mirrors bullpen_export._join_rem_plus_3yr):
+    the values are read VERBATIM from a FROZEN lab artifact, so a row can show a
+    same-day 1-year SEM+ beside a 3-year SEM+ frozen weeks earlier, and a
+    starter who entered the pool after the lab ran is blank. Returns the
+    artifact's vintage block so the payload can carry it and the frontend can
+    disclose it instead of the divergence being silent."""
+    meta = {"source": MULTIYR_PATH.name, "n_stamped": 0, "available": False}
     try:
-        pv = json.loads(MULTIYR_PATH.read_text(encoding="utf-8"))["proposed_values"]
+        art = json.loads(MULTIYR_PATH.read_text(encoding="utf-8"))
+        pv = art["proposed_values"]
         players = pv["players"]
     except (OSError, ValueError, KeyError):
-        return 0
+        return meta
     n = 0
     for s in starters:
         p = players.get(str(s.get("mlbam") or ""))
@@ -116,7 +124,19 @@ def _join_sem_plus_3yr(starters: list[dict]) -> int:
         s["sem_plus_3yr_tag"] = p.get("tag")
         if s["sem_plus_3yr"] is not None:
             n += 1
-    return n
+    meta.update({
+        "available": True,
+        "n_stamped": n,
+        "generated_at": art.get("generated_at"),
+        "season": pv.get("season"),
+        "window": pv.get("window"),
+        "n_in_artifact": len(players),
+        "note": ("3-year SEM+ is FROZEN lab output read verbatim from "
+                 f"{MULTIYR_PATH.name}, not recomputed by this run. It is as of "
+                 "generated_at, NOT as of this board's as_of date, and starters "
+                 "who joined the pool after that date have no value."),
+    })
+    return meta
 
 
 _XSEM_MIN_PA = 150.0   # min Savant batters-faced for a stable xwOBA-allowed read (starters face more)
@@ -185,9 +205,10 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         log(f"  starters: no pitching data for {season} (source blocked or empty); skipping")
         return 0
     scored = sem_plus.score_pool(build_starters(rows))
-    n_s3 = _join_sem_plus_3yr(scored["starters"])
-    if n_s3:
-        log(f"  starters: 3-year SEM+ joined for {n_s3} starters")
+    s3_meta = _join_sem_plus_3yr(scored["starters"])
+    if s3_meta.get("n_stamped"):
+        log(f"  starters: 3-year SEM+ joined for {s3_meta['n_stamped']} starters "
+            f"(frozen lab vintage {s3_meta.get('generated_at')})")
     n_xs = _join_xsem_plus(scored["starters"], season)
     if n_xs:
         log(f"  starters: xSEM+ (Savant deserved run prevention) joined for {n_xs} starters")
@@ -195,6 +216,8 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     payload = {
         "generated_at": today, "season": season, "as_of": today,
         "verdict": _verdict(), "backtest": _backtest(),
+        # Vintage of the FROZEN 3-year SEM+ column (see _join_sem_plus_3yr).
+        "multiyear": s3_meta,
         "pool": scored["pool"], "starters": scored["starters"], "teams": scored["teams"],
     }
     n = len(scored["starters"])

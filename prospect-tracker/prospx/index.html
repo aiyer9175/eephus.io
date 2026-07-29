@@ -9792,10 +9792,10 @@
           <button class="chip"        data-lb-stat="hr"      title="Home runs">HR</button>
           <button class="chip"        data-lb-stat="sb"      title="Stolen bases">SB</button>
           <button class="chip" data-lb-stat="hit_level_plus" title="OPS vs level mean - surfaces hitters whose OPS is great BECAUSE the level is hard">OPS+ lvl</button>
-          <button class="chip" data-lb-stat="rps_plus" title="RPS+ - level-anchored rate performance score (100 = mean, +10 = +1σ). Hitters only.">RPS+</button>
+          <button class="chip" data-lb-stat="rps_plus" title="RPS+ - level-anchored rate performance score, re-anchored to the player's age x position-group cohort. 100 = cohort mean; it is a RATIO index like wRC+, so +10 means 10% above the cohort mean, not one standard deviation. Hitters only.">RPS+</button>
           <button class="chip" data-lb-stat="iso_plus" title="ISO+ - isolated power indexed to level-average ISO (100 = league-average power). Hitters only.">ISO+</button>
-          <button class="chip" data-lb-stat="pow_plus" title="POW+ - power index: ISO+ & HR-rate + Statcast hard-hit/barrel + Power grade (100 = average). Hitters only.">POW+</button>
-          <button class="chip" data-lb-stat="pd_plus" title="PD+ - plate-discipline index: BB%−K% vs level + Pitch-Selection grade (100 = average). Hitters only.">PD+</button>
+          <button class="chip" data-lb-stat="pow_plus" title="POW+ - power index: ISO+ (the performance axis, HR-rate retired as collinear) + Statcast hard-hit/barrel + Power grade (100 = average). Hitters only.">POW+</button>
+          <button class="chip" data-lb-stat="pd_plus" title="PD+ - plate-discipline index: BB%−K% vs level (100 = level average, 10 points = 1 std-dev of the differential) blended 70/30 with the Pitch-Selection grade. Hitters only.">PD+</button>
           <button class="chip" data-lb-stat="sc_plus" title="SC+ - Statcast composite (contact quality) indexed to pool average. Hitters only.">SC+</button>
           <button class="chip" data-lb-stat="dvm_plus" title="$DvM+ - surplus-development index (100 = FV-tier average).">$DvM+</button>
           <button class="chip"        data-lb-stat="era"     title="Earned-run average (lower is better)">ERA</button>
@@ -9805,7 +9805,7 @@
           <button class="chip" data-lb-stat="pitcher_bb_pct" title="Pitcher BB% - walks as % of batters faced (lower is better)">BB%</button>
           <button class="chip"        data-lb-stat="hr_per_9" title="Home runs allowed per 9 (lower is better)">HR/9</button>
           <button class="chip"        data-lb-stat="pit_level_plus" title="ERA- vs level mean (100 = level-average; lower is better)">ERA- lvl</button>
-          <button class="chip" data-lb-stat="pstuff_plus" title="pStuff+ - peripheral run prevention from per-batter K% and BB% plus HR/9, indexed to the level mean (100 = average peripherals, +10 = +1σ). Pitchers only.">pStuff+</button>
+          <button class="chip" data-lb-stat="pstuff_plus" title="pStuff+ - peripheral run prevention from per-batter K% and BB% plus HR/9, z-scored against the level mean and weighted 0.55 / 0.30 / 0.15 (100 = average peripherals, +10 = +1σ on each input rate). Same formula the server bakes onto the detail page. Pitchers only.">pStuff+</button>
           <button class="chip" data-lb-stat="krp_plus" title="KRP+ - K-backed run prevention: a below-level ERA an above-level strikeout rate supports (100 = pool average, +10 = +1σ). Pitchers only.">KRP+</button>
         </div>
 
@@ -11144,12 +11144,36 @@ function _tiebreakerScoreRaw(p, opts) {
     // ACTIVE MiLB TBS - performance (RPS+ rate-vs-level + SC+ tracked-data
     // composite, both "+" metrics) is now weighted alongside the Tool
     // composite rather than well below it; Stuff+ adds pitcher arsenal signal.
-    const rps = (p.statline && p.statline.rps_plus) ?? null;
+    // 2026-07-29 correctness fix: this read `p.statline.rps_plus`, a field the
+    // exporter populates for 0 of 4,505 active players. It always resolved
+    // null, the part was filtered out and the remaining weights renormalized,
+    // so the "perf up (was 0.16)" reweight below was a NO-OP on the entire
+    // active board. Repointed at getRpsPlus(), the RPS+ that actually exists:
+    // it is computed client-side from the same payload (OPS+ vs level for
+    // hitters, ERA- vs level for pitchers, plus the age-vs-level adjustment,
+    // re-anchored to the player's age x position-group cohort) and is the SAME
+    // number the RPS+ pill and the RPS+ leaderboard already display. Covers
+    // 3,642 of 4,505 rows (1,724 hitters + 1,918 pitchers) vs 0 before.
+    // The baked field stays first in the chain so a future export that fills
+    // it in wins; it is not a silent second definition.
+    const rps = (typeof _rpsPlusValue === "function") ? _rpsPlusValue(p) : null;
     const sc  = getStatcastPlus(p);
     const stf = _stuffPlusTBS(p);
     parts = [
       [_tbsNorm(tool, 40, 70),   0.24],   // was 0.26
-      [_tbsNorm(rps,  80, 130),  0.22],   // perf ↑ (was 0.16)
+      // RPS+ term REMOVED 2026-07-29, and removing it is a TRUE NO-OP.
+      // It read statline.rps_plus, populated for 0 of 4,505 players, so it always
+      // resolved null, was filtered out, and the surviving weights renormalized. The
+      // "perf up (was 0.16)" note described a reweight that never happened on a single
+      // active row. The display surfaces above now read the live browser RPS+, but
+      // pointing THIS at the live value would make a dormant 0.22 weight suddenly bind,
+      // which moves TBS, and TBS is the sole tie-arbiter in fvCmpDesc AND feeds
+      // _tbsSurplusMult. That is a rank and dollar change, not a correctness fix, so it
+      // does not ride along here. Two things must be settled before it can be revived:
+      // the band is wrong for this metric (active RPS+ is a RATIO index with sd about
+      // 20, so _tbsNorm(v, 80, 130) saturates roughly 23% of rows, 15% at the floor and
+      // 7% at the ceiling, contributing no discrimination), and a revival moves served
+      // ordering so it needs a gate. Registered as a candidate, not shipped.
       [_tbsNorm(sc,   80, 130),  0.20],   // perf ↑ (was 0.16)
       [_tbsNorm(tmax, 40, 70),   0.10],
       [_tbsNorm(stf,  80, 130),  0.08],
@@ -11362,12 +11386,25 @@ function fvBadgeBreakoutClass(player) {
 function fvBadgeBreakoutMarkHTML(player) {
   if (!fvBadgeBreakoutClass(player)) return "";
   const meta = player.breakout_meta || {};
+  // 2026-07-29: this two-branch chain claimed "tool grades up N on average" for EVERY
+  // reason that was not "fv", so the 18 of 27 breakout players carrying reason "upside"
+  // or "stats" were shown a tool-velocity claim that is not why they were flagged, with
+  // an "?" where the number should be. Each reason now states its own basis, and an
+  // unrecognised reason says nothing specific rather than asserting the wrong one.
   const why = meta.reason === "fv"
     ? `FV upgraded ${meta.fv_upgrade > 0 ? "+" : ""}${meta.fv_upgrade ?? "?"} grade points over the window`
-    : `tool grades up ${meta.tool_velocity > 0 ? "+" : ""}${meta.tool_velocity ?? "?"} on average over the window`;
-  const gate = meta.perf_gate === "rps_plus" ? "RPS+ ≥ 120"
-             : meta.perf_gate === "stf_plus_periph" ? "Peripheral Stuff+ ≥ 105"
-             : meta.perf_gate === "fip_minus" ? "FIP- ≤ 90"
+    : meta.reason === "tools"
+    ? `tool grades up ${meta.tool_velocity > 0 ? "+" : ""}${meta.tool_velocity ?? "?"} on average over the window`
+    : meta.reason === "stats"
+    ? "performance cleared the breakout gate this season"
+    : "flagged by the breakout screen over the window";
+  // Gate labels 2026-07-29: these now name the gates storage.build_spotlights actually
+  // emits, with the thresholds it actually uses. The removed rps_plus branch read a
+  // field populated for 0 of 4,505 players and advertised a 120 cut that no gate used.
+  const gate = meta.perf_gate === "wrc_plus" ? "wRC+ ≥ 130"
+             : meta.perf_gate === "ops_plus_level" ? "OPS+ vs level ≥ 150"
+             : meta.perf_gate === "stf_plus_periph" ? "Peripheral Stuff+ ≥ 115"
+             : meta.perf_gate === "statcast_plus" ? "SC+ ≥ 130"
              : "performance gate";
   return `<span class="fv-breakout-mark" title="Breakout - ${why}, plus ${gate} this season.">★</span>`;
 }
@@ -16378,7 +16415,10 @@ function _prospectDetailSidebarCards(p, activeTab) {
     const signals = [
       sp != null ? { key: "SC+", value: sp, valColor: sp >= 105 ? "var(--up)" : sp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
       swp != null ? { key: "Swing+", value: Math.round(swp), valColor: swp >= 105 ? "var(--up)" : swp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
-      sl.rps_plus != null ? { key: "RPS+", value: sl.rps_plus, valColor: sl.rps_plus >= 110 ? "var(--up)" : sl.rps_plus <= 90 ? "var(--down)" : "var(--text-primary)" } : null,
+      // 2026-07-29: was `sl.rps_plus`, populated for 0 of 4,505 players, so this
+      // chip never rendered. Reads the live RPS+ (_rpsPlusValue) instead - the
+      // same number the RPS+ pill and the RPS+ leaderboard show.
+      ((rpsChip) => rpsChip != null ? { key: "RPS+", value: rpsChip, valColor: rpsChip >= 110 ? "var(--up)" : rpsChip <= 90 ? "var(--down)" : "var(--text-primary)" } : null)(_rpsPlusValue(p)),
       isPit && sl.stf_plus_periph != null ? { key: "pStuff+", value: sl.stf_plus_periph } : null,
       !isPit && sl.ops_plus_level != null ? { key: "OPS+ lvl", value: sl.ops_plus_level } : null,
       isPit && sl.era_minus_level != null ? { key: "ERA-", value: sl.era_minus_level } : null,
@@ -18310,7 +18350,7 @@ const CHART_AXES = {
     { key: "age",            label: "Age",                getter: p => p.age,                                fmt: v => v.toFixed(1) },
     { key: "fv",             label: "Consensus FV",       getter: p => (p.points && p.points.length) ? p.points[p.points.length-1].consensus_fv_raw : null, fmt: v => fvCeil(v).toString() },
     { key: "overall_rank",   label: "Overall rank",       getter: p => p.overall_rank,                       fmt: v => "#" + v },
-    { key: "rps_plus",       label: "RPS+",               getter: p => (p.statline && (p.statline.rps_plus ?? p.statline.ops_plus_level)), fmt: v => formatMetric(v, 'plus') },   // v-audit: rps_plus is unpopulated for actives; fall back to the level-relative OPS+ index (the actual relative-performance metric for the active pool)
+    { key: "rps_plus",       label: "RPS+",               getter: p => _rpsPlusValue(p), fmt: v => formatMetric(v, 'plus') },   // 2026-07-29: this axis used to substitute ops_plus_level when the (always-empty) baked rps_plus was missing, i.e. an axis LABELLED RPS+ that plotted a different metric than the RPS+ pill. Now on the one shared RPS+ (_rpsPlusValue), which also covers pitchers.
     { key: "tool",           label: "Tool",               getter: p => p.tool,                               fmt: v => fvCeil(v).toString() },
     { key: "height_in",      label: "Height (in)",        getter: p => _getPhysicalProfile(p).height_in,  fmt: v => v.toFixed(0) + '"' },
     { key: "weight",         label: "Weight (lb)",        getter: p => _getPhysicalProfile(p).weight_lb, fmt: v => v.toFixed(0) + "lb" },
@@ -32158,8 +32198,10 @@ function getStatcastPlus(p) {
   }
   if (!zs.length) return null;
   const avgZ = zs.reduce((s, v) => s + v, 0) / zs.length;
-  // Anchor at 100; each σ moves 15 points (wRC+/OPS+ family scaling).
-  return Math.round(100 + avgZ * 10);   // v-audit finding 6: 10 pts/σ, harmonized with RPS+/DvM+/Stf+
+  // Anchor at 100; each σ moves 10 points (the house "+" convention shared by
+  // RPS+ / DvM+ / pStuff+ / CS+). The comment used to say 15 points, one line
+  // above code that has multiplied by 10 since v-audit finding 6.
+  return Math.round(100 + avgZ * 10);
 }
 
 // v29 - Pool-wide stats for the physical-profile (HT/WT/BMI) chips.
@@ -36260,9 +36302,15 @@ function _buildDetailChipRibbon(p) {
       bits.push(`<span class="prior-season-tag" style="font-size:10px;">${escapeHtml(String(sl.season))}</span>`);
     }
     // RPS+ pill (sub-MLB only - MLB has wRC+).
-    if (sl.level !== "MLB" && sl.rps_plus != null) {
-      const c = sl.rps_plus >= 110 ? "var(--up)" : sl.rps_plus <= 90 ? "var(--down)" : "var(--text-secondary)";
-      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="Runs-Per-Sample+ (level-relative; 100 = level mean)">RPS+ ${sl.rps_plus}</span>`);
+    // 2026-07-29: was `sl.rps_plus`, populated for 0 of 4,505 players, so this
+    // pill never rendered. Reads the live RPS+ (_rpsPlusValue) instead - the
+    // same number the RPS+ pill and the RPS+ leaderboard show. Its inputs
+    // (OPS+ lvl / ERA-) are the adjacent chips below; RPS+ adds the
+    // age-vs-level adjustment and the age x position-group re-anchoring.
+    const _rpsPill = sl.level !== "MLB" ? _rpsPlusValue(p) : null;
+    if (_rpsPill != null) {
+      const c = _rpsPill >= 110 ? "var(--up)" : _rpsPill <= 90 ? "var(--down)" : "var(--text-secondary)";
+      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="RPS+ (Rate Performance Score) ${_rpsPill} · level-relative production (OPS+ vs level for hitters, ERA- vs level for pitchers) plus the age-vs-level adjustment, re-anchored to the mean prospect in the same age x position-group cohort. 100 = cohort mean.">RPS+ ${_rpsPill}</span>`);
     }
     if (isPit && sl.era_minus_level != null) {
       const v = Math.round(sl.era_minus_level);
@@ -51725,6 +51773,20 @@ function getRpsPlus(p) {
   return _rpsPlusCache.byKey.get(p.player_key) || null;
 }
 
+// THE single RPS+ number for any surface that wants a bare integer (chips,
+// pills, the tiebreaker). Prefers a server-baked `statline.rps_plus` if a
+// future export ever populates it (it is populated for 0 of 4,505 players
+// today), then falls back to the client-computed cohort RPS+ that the RPS+
+// pill and the RPS+ leaderboard already display. Added 2026-07-29 so the
+// chip surfaces stop reading only the dead baked field and silently
+// rendering nothing. Null when the player has no qualifying sample.
+function _rpsPlusValue(p) {
+  const baked = p && p.statline ? p.statline.rps_plus : null;
+  if (baked != null && isFinite(Number(baked))) return Number(baked);
+  const row = getRpsPlus(p);
+  return (row && row.plus != null && isFinite(row.plus)) ? row.plus : null;
+}
+
 // MLB-level players don't have level-relative stats (ops_plus_level /
 // era_minus_level are MiLB-only - storage.py:_serialize skips them when
 // the statline is MLB), so RPS+ resolves to null and the pill would
@@ -51884,25 +51946,9 @@ function _blendPlus(rawPlus, toolPlus, wRaw = 0.7) {
   };
 }
 
-// 3-way "+" blend (raw performance / Statcast / scouting tool), each already
-// on the 100-anchored scale. Weights renormalize over whichever components are
-// present, so a prospect missing Statcast (most non-AAA arms/bats) or a tool
-// grade still gets a comparable reading from what's available. Returns
-// {value, raw, statcast, tool} for tooltip transparency; null when all absent.
-function _blendPlus3(rawPlus, scPlus, toolPlus, wRaw, wSc, wTool) {
-  const parts = [[rawPlus, wRaw], [scPlus, wSc], [toolPlus, wTool]];
-  let sum = 0, wsum = 0;
-  for (const [v, w] of parts) {
-    if (v != null && isFinite(v)) { sum += v * w; wsum += w; }
-  }
-  if (wsum === 0) return null;
-  return {
-    value:    _clampPlus(sum / wsum),
-    raw:      (rawPlus  != null && isFinite(rawPlus))  ? _clampPlus(rawPlus)  : null,
-    statcast: (scPlus   != null && isFinite(scPlus))   ? _clampPlus(scPlus)   : null,
-    tool:     (toolPlus != null && isFinite(toolPlus)) ? _clampPlus(toolPlus) : null,
-  };
-}
+// (2026-07-29: the fixed-weight 3-way blend `_blendPlus3` is DELETED. It had no
+// callers left after POW+/HIT+ moved to _blendPlus3Rel below, and leaving it in
+// place kept a second, sample-blind definition of the same blend on the page.)
 
 // ── Arkmetric audit v1 - precision upgrades for the ratio "+" metrics ─────────
 // Stat-specific stabilization points (PA/AB-equivalent at which the rate is ~50%
@@ -51925,8 +51971,9 @@ function _ebShrinkPlus(rawPlus, n, k) {
 // (full base weight, always available); the stat and Statcast OBSERVATIONS are
 // down-weighted by their own sample reliability, so a thin-sample prospect leans
 // on the scouting prior and a full-season one leans on observed performance +
-// tracked data. Replaces the fixed-weight _blendPlus3 (which gave a 40-PA hot
-// streak the same weight as a full season). Same return shape + a reliability %.
+// tracked data. Replaced the earlier fixed-weight 3-way blend (which gave a
+// 40-PA hot streak the same weight as a full season, and is now deleted).
+// Same return shape + a reliability %.
 function _blendPlus3Rel(statPlus, statRel, scPlus, scRel, toolPlus, wStat, wSc, wTool) {
   const clamp01 = r => Math.max(0, Math.min(1, r == null ? 1 : r));
   const parts = [
@@ -52003,8 +52050,9 @@ function _pwrToolGrade(grades) {
 // on the same "100 = league-average, +1pt = 1% better" paradigm as wRC+/ERA+.
 // The baseline (perf.avg_iso) is read from the SAME DATA.level_norms source
 // every other "+" metric uses (same season/level cohort). Pure rescaling of
-// ISO - NO scouting-tool blend (that is POW+'s job; ISO+ feeds POW+ as its
-// stat component, see _powerPlusRaw). Hitters only; 40-game volume gate +
+// ISO - NO scouting-tool blend (that is POW+'s job; the UN-shrunk _isoPlusRaw
+// below is what feeds POW+ as its stat component, see computePowerPlus).
+// Hitters only; 40-game volume gate +
 // a positive level baseline. Null when inputs/baseline are missing.
 // v44 - Sample gates for the level-relative "+" metrics. Below PROVISIONAL the
 // metric is suppressed entirely (too noisy); in the [PROVISIONAL, MIN) band it
@@ -52046,49 +52094,19 @@ function isoPlusPillHTML(p) {
     "iso_plus", _plusProvisional(p));
 }
 
-// Raw power index - ISO + HR-rate vs the player's level average. 100 =
-// level-average power. Hitters only; 40-game volume gate. Null when the
-// gate fails or inputs are missing (the blend then leans on the tool).
-function _powerPlusRaw(p) {
-  const sl = p && p.statline; if (!sl || sl.is_pitcher) return null;
-  if ((Number(sl.games) || 0) < PLUS_PROVISIONAL_GAMES) return null;
-  const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
-  if (perf.avg_iso == null) return null;
-  // ISO+ IS the isolated-power component (100 = level-avg ISO) - item-1 metric
-  // wired in directly so POW+ and the standalone ISO+ pill never diverge.
-  const isoP = computeIsoPlus(p);
-  // HR-rate vs level on the same 100-anchored scale (HR-rate+). Prefer HR/PA;
-  // most rows carry games not PA, so fall back to a HR/G normalization.
-  let hrPlus = null;
-  const hr = Number(sl.hr) || 0;
-  const games = Number(sl.games) || 0;
-  if (sl.pa != null && Number(sl.pa) > 0) {
-    const playerRate = hr / Number(sl.pa);
-    const leagueRate = (perf.avg_iso || 0.130) * 0.18;   // league HR/PA ≈ 0.18 × level ISO
-    if (leagueRate > 0) hrPlus = 100 * playerRate / leagueRate;
-  } else if (games > 0) {
-    const playerRate = hr / games;
-    const leagueRate = (perf.avg_iso || 0.130) * 0.72;   // league HR/G ≈ 0.72 × level ISO
-    if (leagueRate > 0) hrPlus = 100 * playerRate / leagueRate;
-  }
-  // Raw power index = 60% ISO+ / 40% HR-rate+ (ISO is the more stable
-  // single-season power signal). Falls back to whichever component exists.
-  if (isoP != null && hrPlus != null) return _clampPlus(0.6 * isoP + 0.4 * hrPlus);
-  if (isoP != null)   return _clampPlus(isoP);
-  if (hrPlus != null) return _clampPlus(hrPlus);
-  return null;
-}
-
 // POW+ - RELIABILITY-WEIGHTED blend (audit v1). Base importances 0.45 perf /
 //   0.25 Statcast / 0.30 power tool, but the perf and Statcast OBSERVATIONS are
 //   down-weighted by their own sample reliability, so a thin-sample prospect
 //   leans on the scouting prior and a full-season one leans on observed batted-
 //   ball performance.
-// COLLINEARITY FIX: the performance signal is ISO+ ALONE. The old _powerPlusRaw
-//   stacked ISO+ and HR-rate+ additively, but they correlate r=0.91 across active
-// hitters - summing them double-counted one latent power trait and inflated the
-//   reading. ISO+ is the more stable single-season power rate, so it carries the
-//   performance axis on its own.
+// COLLINEARITY FIX: the performance signal is ISO+ ALONE. An earlier raw-power
+//   index stacked ISO+ and an HR-rate+ term additively, but they correlate
+//   r=0.91 across active hitters - summing them double-counted one latent power
+//   trait and inflated the reading. ISO+ is the more stable single-season power
+//   rate, so it carries the performance axis on its own. (2026-07-29: that
+//   retired helper, _powerPlusRaw, is DELETED rather than left dead - it still
+//   carried the retired 0.18 HR/PA and 0.72 HR/G constants, so anyone reading
+//   it would believe POW+ still stacks ISO+ and HR-rate+. It does not.)
 function computePowerPlus(p) {
   if (!p || !p.statline || p.statline.is_pitcher) return null;
   const sl = p.statline; const grades = (p.tools && p.tools.grades) || {};
@@ -52102,9 +52120,57 @@ function computePowerPlus(p) {
   return _blendPlus3Rel(statPlus, statRel, scPlus, scRel, toolPlus, 0.45, 0.25, 0.30);
 }
 
-// Raw plate-discipline index - additive shift on the BB% − K% differential
-// vs the level average. 100 = league-average discipline. Hitters only;
-// 40-game gate.
+// Per-level standard deviation of the BB% − K% differential, measured over the
+// SAME active pool the page is showing. Built lazily on first use and cached
+// (same pattern as _rpsPlusCache / _scPool). Levels with a thin cohort fall back
+// to the pooled all-level sigma; a payload too small to produce either (e.g. a
+// synthetic test fixture) falls back to PD_SIGMA_FALLBACK, the pooled sd
+// observed on the live board. Only hitters past the provisional games gate are
+// counted, so the sigma describes the same population the metric is shown for.
+const PD_SIGMA_MIN_N = 30;
+const PD_SIGMA_FALLBACK = 9.0;      // percentage points; pooled sd on the live board
+let _pdSigmaCache = null;
+function _pdSigmas() {
+  if (_pdSigmaCache) return _pdSigmaCache;
+  const byLevel = new Map();
+  const all = [];
+  for (const q of (DATA.players || [])) {
+    const s = q && q.statline;
+    if (!s || s.is_pitcher || !s.level) continue;
+    if ((Number(s.games) || 0) < PLUS_PROVISIONAL_GAMES) continue;
+    if (s.bb_pct == null || s.k_pct == null) continue;
+    const diff = Number(s.bb_pct) - Number(s.k_pct);
+    if (!isFinite(diff)) continue;
+    if (!byLevel.has(s.level)) byLevel.set(s.level, []);
+    byLevel.get(s.level).push(diff);
+    all.push(diff);
+  }
+  const sd = arr => {
+    if (arr.length < PD_SIGMA_MIN_N) return null;
+    const m = arr.reduce((a, b) => a + b, 0) / arr.length;
+    const v = arr.reduce((a, b) => a + (b - m) * (b - m), 0) / arr.length;
+    return v > 0 ? Math.sqrt(v) : null;
+  };
+  const levels = new Map();
+  for (const [lvl, arr] of byLevel) { const s = sd(arr); if (s) levels.set(lvl, s); }
+  const built = { levels, pooled: sd(all) || PD_SIGMA_FALLBACK };
+  // Only memoize once the pool is actually populated, so a call that lands
+  // before DATA.players is in hand cannot freeze the fallback sigma in place.
+  if (all.length) _pdSigmaCache = built;
+  return built;
+}
+
+// Raw plate-discipline index - the BB% − K% differential vs the level average,
+// expressed on the HOUSE "+" convention: 100 + 10z, so 10 points = one standard
+// deviation of that differential among hitters at the same level. Hitters only;
+// provisional games gate.
+// 2026-07-29 correctness fix: this used to return 100 + (playerDiff − levelDiff)
+// with both terms in PERCENTAGE POINTS, so one PD+ point meant "1pp of BB−K
+// differential" - neither 0.1 sigma (the house convention) nor 1% of a baseline
+// (the wRC+ convention), while being blended 70/30 against _toolToPlus, which
+// is on the ratio-ish grade scale. The two halves of PD+ were literally in
+// different units. The level sigma is 7.5pp (AAA) to 9.9pp (CPX), so the old
+// number was also not comparable across levels.
 function _disciplinePlusRaw(p) {
   const sl = p && p.statline; if (!sl || sl.is_pitcher) return null;
   if ((Number(sl.games) || 0) < PLUS_PROVISIONAL_GAMES) return null;
@@ -52112,12 +52178,16 @@ function _disciplinePlusRaw(p) {
   if (sl.bb_pct == null || sl.k_pct == null || perf.avg_bb_pct == null || perf.avg_k_pct == null) return null;
   const playerDiff = Number(sl.bb_pct) - Number(sl.k_pct);
   const levelDiff  = perf.avg_bb_pct - perf.avg_k_pct;
-  return _clampPlus(100 + (playerDiff - levelDiff));
+  const sig = _pdSigmas();
+  const sigma = sig.levels.get(sl.level) || sig.pooled;
+  if (!(sigma > 0)) return null;
+  return _clampPlus(100 + 10 * (playerDiff - levelDiff) / sigma);
 }
 
 // PD+ - 70% raw BB%−K% index / 30% Pitch-Selection (PSel) tool grade.
 // PSel is FanGraphs' plate-discipline tool (FG maps "plate discipline" →
-// pitch_sel), so it is the natural scouting input for discipline.
+// pitch_sel), so it is the natural scouting input for discipline. Both halves
+// are now 100-anchored indexes, so the blend no longer mixes units.
 function computeDisciplinePlus(p) {
   if (!p || !p.statline || p.statline.is_pitcher) return null;
   const grades = (p.tools && p.tools.grades) || {};
@@ -52179,23 +52249,57 @@ function computeHittingPlus(p) {
   return _blendPlus3Rel(statPlus, statRel, scPlus, scRel, toolPlus, 0.45, 0.25, 0.30);
 }
 
-// Pitcher Stuff+ (STF+) - composite of K/9, BB/9, HR/9 normalized
-// against the level mean. The level_norms doesn't carry stddev, so we
-// approximate σ = 0.15 * mean (rule of thumb), giving 1 standard
-// deviation ≈ 10 points. Pitchers only; 20-IP gate.
+// pStuff+ (peripheral pitcher index, formerly STF+). ONE definition, shared
+// with the server: storage._compute_peripheral_stf_plus bakes this exact number
+// onto every pitcher statline as `stf_plus_periph`, and this function is the
+// client mirror of that SAME formula, so the leaderboard, the pill, the detail
+// chip, the hover card and the breakout gate can no longer disagree.
+//
+//   pStuff+ = 100 + 10 * (0.55*zK - 0.30*zBB - 0.15*zHR9) / (sum of present weights)
+//
+// on the PER-BATTER K% / BB% rates (workload-neutral: a starter and a reliever
+// compare on the same footing, unlike K/9 which over-rewards short outings)
+// plus HR/9. Each z uses the level's EMPIRICAL sigma (level_norms perf.std_*,
+// populated at n >= 30) and falls back to the 0.15 * mean rule of thumb only
+// where the norms block carries no stdev. Gate mirrors the server: below 20 IP
+// AND below 30 batters faced.
+//
+// 2026-07-29 correctness fix: this used to be an UNWEIGHTED SUM of three
+// per-9 z-scores with sigma hardcoded at 0.15 * mean, i.e. a different metric
+// shipping under the same name on a ~17-points-per-sigma scale. On the current
+// payload that variant pinned 251 of 1,748 qualified pitchers at the 0 floor
+// and had a pool sd of 53.6 points; the shared definition has a pool sd of 6.1.
 function computeStuffPlus(p) {
   const sl = p && p.statline; if (!sl || !sl.is_pitcher) return null;
-  if ((Number(sl.ip) || 0) < 20) return null;
+  // Prefer the SERVER-BAKED value when the payload carries it: identical
+  // formula, one source of truth, zero rounding drift between surfaces.
+  if (sl.stf_plus_periph != null && isFinite(Number(sl.stf_plus_periph))) {
+    return _clampPlus(Number(sl.stf_plus_periph));
+  }
+  const ip = Number(sl.ip) || 0;
+  const bf = Number(sl.tbf != null ? sl.tbf : sl.batters_faced) || 0;
+  if (ip < 20 && bf < 30) return null;
   const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
-  const k = Number(sl.k_per_9),  bk = perf.avg_k_per_9;
-  const w = Number(sl.bb_per_9), bw = perf.avg_bb_per_9;
-  const h = Number(sl.hr_per_9), bh = perf.avg_hr_per_9;
-  if (!isFinite(k) || !isFinite(w) || bk == null || bw == null) return null;
-  const z = (val, mean) => mean > 0 ? (val - mean) / (0.15 * mean) : 0;
-  const zk = z(k, bk);                              // higher K/9 = better
-  const zw = z(w, bw);                              // higher BB/9 = worse
-  const zh = bh != null && isFinite(h) ? z(h, bh) : 0;  // higher HR/9 = worse
-  return _clampPlus(100 + 10 * (zk - zw - zh));
+  const z = (valKey, muKey, stdKey, invert) => {
+    const raw = sl[valKey], mu = Number(perf[muKey]);
+    if (raw == null || perf[muKey] == null) return null;
+    const v = Number(raw);
+    if (!isFinite(v) || !isFinite(mu) || mu === 0) return null;
+    const emp = Number(perf[stdKey]);
+    const sigma = (perf[stdKey] != null && isFinite(emp) && emp > 0) ? emp : 0.15 * mu;
+    if (!(sigma > 0)) return null;
+    const zz = (v - mu) / sigma;
+    return invert ? -zz : zz;                       // walks + homers: less is better
+  };
+  const parts = [
+    [0.55, z("k_pct",    "avg_pitcher_k_pct",  "std_pitcher_k_pct",  false)],
+    [0.30, z("bb_pct",   "avg_pitcher_bb_pct", "std_pitcher_bb_pct", true)],
+    [0.15, z("hr_per_9", "avg_hr_per_9",       "std_hr_per_9",       true)],
+  ].filter(part => part[1] != null && isFinite(part[1]));
+  if (!parts.length) return null;
+  const wsum = parts.reduce((a, part) => a + part[0], 0);
+  const composite = parts.reduce((a, part) => a + part[0] * part[1], 0) / wsum;
+  return _clampPlus(100 + 10 * composite);
 }
 
 // Sur+ (formerly SUR+) - Cleveland-derived expected MLB surplus value
@@ -52265,21 +52369,21 @@ function powerPlusPillHTML(p) {
   const b = computePowerPlus(p);
   if (b == null) return ""; // hitters only - silently omit for pitchers
   return _plusPill("POW+", b.value, _plusClass,
-    `POW+ ${b.value} · 45% ISO+ & HR-rate vs ${p.statline.level || "level"} mean / 25% Statcast hard-hit & barrel / 30% Power grade (100 = league-average power)${_blendTip(b)}`,
+    `POW+ ${b.value} · 45% ISO+ vs ${p.statline.level || "level"} mean (HR-rate retired: it correlated r=0.91 with ISO+ and double-counted) / 25% Statcast hard-hit & barrel / 30% Power grade (100 = league-average power)${_blendTip(b)}`,
     "pwr_plus", _plusProvisional(p));
 }
 function disciplinePlusPillHTML(p) {
   const b = computeDisciplinePlus(p);
   if (b == null) return "";
   return _plusPill("PD+", b.value, _plusClass,
-    `PD+ ${b.value} · BB%−K% differential vs ${p.statline.level || "level"} mean blended with the Pitch-Selection (PSel) tool grade (100 = league-average plate discipline)${_blendTip(b)}`,
+    `PD+ ${b.value} · BB%−K% differential vs the ${p.statline.level || "level"} mean, scaled so 10 points = 1 standard deviation of that differential among same-level hitters, then blended 70/30 with the Pitch-Selection (PSel) tool grade (100 = league-average plate discipline)${_blendTip(b)}`,
     "pd_plus", _plusProvisional(p));
 }
 function stuffPlusPillHTML(p) {
   const v = computeStuffPlus(p);
   if (v == null) return "";
   return _plusPill("pStuff+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
-    `pStuff+ ${v} · K/9 + BB/9 + HR/9 normalized to ${p.statline.level || "level"} mean (100 = league-average peripherals, 10 pts ≈ 1 std-dev). Renamed from STF+.`,
+    `pStuff+ ${v} · weighted z-composite of K% (0.55), BB% (0.30, inverted) and HR/9 (0.15, inverted) vs the ${p.statline.level || "level"} mean, using the level's empirical stdev where one is on file (100 = league-average peripherals; 10 points = 1 std-dev ON EACH INPUT RATE, so the composite's own spread is tighter than any single component). Same formula the server bakes into the detail chip. Renamed from STF+.`,
     "stf_plus");
 }
 function aaaStuffPlusPillHTML(p) {

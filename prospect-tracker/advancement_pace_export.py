@@ -49,10 +49,16 @@ Method (mirrors the vendored spec, adapted honestly to platform data):
              dummies for entry-age bucket (<=17/18/19-20/21-22/23+), era
              (2015-16/2017-19/2021+), position group (C/MIF/CIF/OF/UT/UNK),
              pathway (draft_hs/draft_college/intl_amateur/undrafted_other)
-  score      AP+ = 100 + 10 * z * m/(m+1), m = meaningful assignments;
-             display clip 70-130; percentile within experience-year
-             scoreable pool; tiers Insufficient (score suppressed) / Early /
-             Developing / Established
+  score      AP+ = 100 + 10 * z * m/(m+1), m = meaningful assignments.
+             Published under TWO keys that must never be confused:
+             ap_plus is the MODEL value (uncapped) and ap_plus_display
+             is that value clipped to 70-130 for display only. The
+             clamp used to be written back over the plain ap_plus name,
+             so the model number was discarded at export and 21 of
+             3,069 published rows read exactly 130.0.
+             Percentile within experience-year scoreable pool; tiers
+             Insufficient (score suppressed) / Early / Developing /
+             Established
 
 Documented divergences from the source build (recorded in meta.divergences):
   - entry cohorts 2015+ (source: 2009+), guard year 2014 (source: 2008)
@@ -531,7 +537,7 @@ def run(persist: bool = True) -> dict:
             "player_key": mlbam2key.get(mid),
             "name": names.get(mid, ""),
             "ap_tier": tier,
-            "ap_plus": None, "ap_percentile": None,
+            "ap_plus": None, "ap_plus_display": None, "ap_percentile": None,
             "ap_experience_year": None, "ap_meaningful_assignments": None,
             "ap_starting_level": p["starting_level"],
             "ap_current_level": None,
@@ -547,7 +553,14 @@ def run(persist: bool = True) -> dict:
         }
         if last is not None and tier != "Insufficient":
             rec.update({
-                "ap_plus": round(last["ap_plus_display"], 1),
+                # ap_plus is the MODEL value (uncapped). It used to carry the
+                # 70-130 clamped DISPLAY value under this plain name, which
+                # discarded the model number entirely and pinned 21 of 3,069
+                # published rows at exactly 130.0 - the same defect class that
+                # was removed from KRP+. Both are emitted now, each under a name
+                # that says which it is; consumers must pick deliberately.
+                "ap_plus": round(last["ap_plus"], 1),
+                "ap_plus_display": round(last["ap_plus_display"], 1),
                 "ap_percentile": last["ap_percentile"],
                 "ap_experience_year": last["experience_year"],
                 "ap_meaningful_assignments": last["meaningful_assignments"],
@@ -576,7 +589,14 @@ def run(persist: bool = True) -> dict:
                            "sportId 16 grain; NOT the eFV level_rank scale",
             "scale": "100 = typical peer-adjusted ladder pace for a "
                      "comparable path; 110 is one standard unit faster; "
-                     "display capped 70-130; never percentage language",
+                     "never percentage language",
+            "value_keys": {
+                "ap_plus": "MODEL value, uncapped (100 + 10 * shrunk z)",
+                "ap_plus_display": f"ap_plus clipped to {DISPLAY_CAP[0]:.0f}-"
+                                   f"{DISPLAY_CAP[1]:.0f} for display only",
+                "note": "the clamp is a display convention, so it rides its "
+                        "own key; ap_plus is never the clamped number",
+            },
             "panel": "hitters, entry cohorts 2015+ from "
                      ".cache/milb_stats hitting files 2014-2026; 2014 is "
                      "the left-censor guard year",
@@ -615,6 +635,7 @@ def run(persist: bool = True) -> dict:
             latest[r["mlbam"]] = r
     lat_rows = list(latest.values())
     disp = np.array([r["ap_plus_display"] for r in lat_rows])
+    modl = np.array([r["ap_plus"] for r in lat_rows])
 
     def _margin(col):
         agg: dict[str, list] = {}
@@ -658,6 +679,19 @@ def run(persist: bool = True) -> dict:
             "p50": round(float(np.percentile(disp, 50)), 1),
             "p75": round(float(np.percentile(disp, 75)), 1),
             "p95": round(float(np.percentile(disp, 95)), 1),
+            "n_at_low_clip": int((disp <= DISPLAY_CAP[0]).sum()),
+            "n_at_high_clip": int((disp >= DISPLAY_CAP[1]).sum()),
+        },
+        # The UNCAPPED model distribution beside the clipped display one, so
+        # the size of the display convention is measurable instead of implied.
+        "distribution_ap_plus_model_latest": {
+            "mean": round(float(modl.mean()), 2),
+            "sd": round(float(modl.std(ddof=1)), 2),
+            "min": round(float(modl.min()), 1),
+            "max": round(float(modl.max()), 1),
+            "p5": round(float(np.percentile(modl, 5)), 1),
+            "p50": round(float(np.percentile(modl, 50)), 1),
+            "p95": round(float(np.percentile(modl, 95)), 1),
         },
         "margin_flatness_fit_pool": {
             "note": "joint-OLS residual means are exactly zero per included "

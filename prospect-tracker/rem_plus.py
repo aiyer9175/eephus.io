@@ -273,14 +273,16 @@ def score_riv_plus(relievers: list[Reliever]) -> None:
     """Stamp RIV+ (realized-impact index) onto each reliever, in place. Pool-
     standardized WPA-primary composite: 100 + RIV_SCALE * z, where z is the
     weighted average of the standardized WPA and standardized SD-MD (weights
-    renormalized when only one is present). Only relievers with WPA get a value
-    (leverage feed present); the rest stay None and render blank. Standardized
-    over the arms with WPA in THIS pool so 100 = average deployed value."""
+    renormalized when only one is present), RE-STANDARDIZED on the blend's own
+    pool spread. Only relievers with WPA get a value (leverage feed present);
+    the rest stay None and render blank. Standardized over the arms with WPA in
+    THIS pool so 100 = average deployed value."""
     arms = [r for r in relievers if _num(r.wpa) is not None]
     if len(arms) < 10:
         return
     mu_w, sd_w = _mean_std([r.wpa for r in arms])
     mu_s, sd_s = _mean_std([((r.sd or 0.0) - (r.md or 0.0)) for r in arms])
+    blended: list[tuple[Reliever, float]] = []
     for r in arms:
         parts = []
         if sd_w:
@@ -289,9 +291,21 @@ def score_riv_plus(relievers: list[Reliever]) -> None:
             parts.append((RIV_W_SDMD, (((r.sd or 0.0) - (r.md or 0.0)) - mu_s) / sd_s))
         if not parts:
             continue
-        z = sum(w * v for w, v in parts) / sum(w for w, _ in parts)
-        r.riv_plus_raw = z
-        r.riv_plus = int(round(100.0 + RIV_SCALE * z))
+        blended.append((r, sum(w * v for w, v in parts) / sum(w for w, _ in parts)))
+    # A 0.70/0.30 weighted average of two CORRELATED unit-z legs has pool sd < 1
+    # (only perfectly correlated legs would keep sd 1), so mapping it straight
+    # through 100 + 10*z advertises 10 points per sigma while delivering fewer.
+    # Re-standardize the composite on its OWN pool location/spread before the
+    # scale map - the same treatment hitter_export._join_fwdhem_plus applies to
+    # its 0.7/0.3 blend. Both steps are monotone, so the RIV+ ordering (and the
+    # X-R3 year-to-year rho recorded in data/riv_plus_eval.json) is unchanged;
+    # only the width of the served distribution changes.
+    mu_b, sd_b = _mean_std([z for _, z in blended])
+    if not sd_b:
+        return
+    for r, z in blended:
+        r.riv_plus_raw = (z - mu_b) / sd_b
+        r.riv_plus = int(round(100.0 + RIV_SCALE * r.riv_plus_raw))
 
 
 def assign_roles(team_relievers: list[Reliever]) -> None:
@@ -340,7 +354,17 @@ def team_bullpen(team: str, relievers: list[Reliever]) -> dict:
     """Team bullpen aggregates. Bullpen+ is RELIEF-IP-weighted REM+ (talent of
     the innings thrown), keeping leverage OUT of the quality number - the same
     two-number philosophy as REM+. leverage_deploy_plus is the IP*gmLI-weighted
-    companion (how much leverage those innings carried)."""
+    companion (how much leverage those innings carried).
+
+    Lev Deploy+ is computed over the arms that ACTUALLY have a gmLI feed. It
+    used to impute gmLI = 1.0 for arms with none, which meant a pen with zero
+    leverage coverage (an empty or failed winProbability walk) returned a number
+    numerically IDENTICAL to bullpen_plus while the UI presented it as an
+    independent deployment reading. Now: no covered innings -> the value is None
+    (renders blank) instead of silently echoing Bullpen+, and
+    leverage_deploy_cov reports the share of relief innings the number is
+    actually built from so partial coverage is disclosable rather than
+    invisible."""
     scored = [r for r in relievers if r.rem_plus is not None and r.ip > 0]
     out = {"team": team, "n_relievers": len(scored)}
     if not scored:
@@ -356,10 +380,14 @@ def team_bullpen(team: str, relievers: list[Reliever]) -> dict:
         return (num / den) if den else None
 
     bp = _wmean(lambda r: r.ip)
-    ld = _wmean(lambda r: r.ip * (r.gmli if r.gmli is not None else 1.0))
+    ld = _wmean(lambda r: (r.ip * r.gmli) if r.gmli is not None else 0.0)
+    total_ip = sum(r.ip for r in scored)
+    lev_ip = sum(r.ip for r in scored if r.gmli is not None)
     out["bullpen_plus"] = None if bp is None else int(round(bp))
     out["bullpen_plus_raw"] = bp
     out["leverage_deploy_plus"] = None if ld is None else int(round(ld))
+    out["leverage_deploy_cov"] = round(lev_ip / total_ip, 3) if total_ip else 0.0
+    out["leverage_deploy_n"] = sum(1 for r in scored if r.gmli is not None)
     out["relief_ip"] = round(sum(r.ip for r in scored), 1)
     out["n_above_avg"] = sum(1 for r in scored if r.rem_plus >= 100)
     out["team_wpa"] = _sum_opt(r.wpa for r in scored)

@@ -1931,6 +1931,24 @@ def _exposure_weighted_career_war(
     return total_war / total_weight, total_weight, weights
 
 
+def _stuff_or_league_avg(pitch: dict) -> float:
+    """tjStuff+ for one pitch row, defaulting to the 100 league anchor ONLY when
+    the value is genuinely absent.
+
+    `is None`, not `or`: tjStuff+ is an indexed metric whose scale reaches 0, and
+    a pitch graded 0.0 is the WORST possible offering, not a missing reading. The
+    prior `(pitch.get("avg_stuff_plus") or 100.0)` promoted that pitch to exactly
+    league average, which is the largest possible error the guard could make.
+    """
+    v = (pitch or {}).get("avg_stuff_plus")
+    if v is None:
+        return 100.0
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 100.0
+
+
 def _pitcher_stuff_summary(player: dict) -> dict:
     """Summarize pitch-level Stuff+ where available."""
     pm = ((player.get("statcast_metrics") or {}).get("pitch_movement") or {})
@@ -1939,11 +1957,11 @@ def _pitcher_stuff_summary(player: dict) -> dict:
         return {"has_data": False, "primary_stuff_plus": None, "weighted_stuff_plus": None}
     primary = max(pitches, key=lambda p: p.get("usage_pct") or 0, default={})
     total_usage = sum(p.get("usage_pct") or 0 for p in pitches) or 1.0
-    weighted = sum((p.get("avg_stuff_plus") or 100.0) * (p.get("usage_pct") or 0)
+    weighted = sum(_stuff_or_league_avg(p) * (p.get("usage_pct") or 0)
                    for p in pitches) / total_usage
     return {
         "has_data": True,
-        "primary_stuff_plus": round(float(primary.get("avg_stuff_plus") or 100.0), 1),
+        "primary_stuff_plus": round(_stuff_or_league_avg(primary), 1),
         "weighted_stuff_plus": round(float(weighted), 1),
     }
 

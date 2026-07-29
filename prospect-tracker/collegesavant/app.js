@@ -139,7 +139,14 @@ function computeCSPlus(players) {
     }
     if (!groupZ.length) { out.set(player.slug, null); continue; }
     const avgZ = groupZ.reduce((a, b) => a + b, 0) / groupZ.length;
-    out.set(player.slug, Math.round(Math.max(40, Math.min(160, 100 + 10 * avgZ))));
+    // 2026-07-29: the 40 / 160 clamp is REMOVED. It was display compression -
+    // an outlier that computed 168 was shown as 160, so the printed CS+ stopped
+    // being the model's number without saying so (the same class of defect the
+    // KRP+ clamp removal fixed). Full true-to-model per the owner. No row in
+    // either shipped payload reached a bound (hitters span 80.3-118.7 in 2024
+    // and 85.6-111.7 in 2025), so no displayed value changes today; what
+    // changes is that a future outlier will print its real index.
+    out.set(player.slug, Math.round(100 + 10 * avgZ));
   }
   return out;
 }

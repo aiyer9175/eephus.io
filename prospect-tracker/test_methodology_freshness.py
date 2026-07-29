@@ -361,6 +361,29 @@ MODEL_GLOSSARY = {
     # TOP-QUANT root cause). Defaults OFF, hook dead-by-default, rendered
     # nowhere.
     "xfv_side_fairness_fix": "internal",
+    # --- 2026-07-29 display-index registration -----------------------------
+    # The standing rule says every shipped model carries a registry row. These
+    # rows close a long-standing gap for the user-facing plus-metrics: they are
+    # DISPLAY INDICES rather than predictive models, so each is registered
+    # 'unvalidated' with no eval artifact, and each points at the glossary
+    # entry that carries its scale convention. The cross-family scale table
+    # lives in docs/efv-2026-07-29/ARKMETRIC_SCALE_CONVENTIONS.md.
+    "krp_plus": ["krp_plus"],                 # 100+10z, display pill decoupled from the eFV model feature
+    "dvm_plus_org": ["dvm_plus"],             # org development index by window (incl. 6yDvM+ and the FVDvM+ bucket view)
+    "dvm_plus_tools": ["tools_dvm_plus", "tool_specific_dvm_plus"],
+    "dvm_plus_dollar": ["fin_dollar_dvm", "dvm_plus"],  # FV-tier-anchored, clamped 40-160 (the family's odd scale)
+    "cs_plus": ["cs_plus"],                   # college cohort 100+10z, computed client-side
+    "rps_plus": ["rps_plus"],                 # three variants under one name, all disclosed in the entry
+    "tool_plus": ["tiebreaker_score"],        # not rendered directly; a draft/overseas TBS input term
+    "draft_stock_plus": ["draft_stock_plus"],
+    "tbs_prospect": ["tiebreaker_score"],
+    "tbs_farm": ["farm_tiebreaker"],
+    "iso_plus": ["iso_plus"],
+    "pwr_plus": ["pwr_plus"],
+    "hit_plus": ["hit_plus"],
+    "pd_plus": ["pd_plus"],
+    "stf_plus": ["stf_plus"],
+    "fv_stuff_plus": ["stuff_grade_plus"],
 }
 
 

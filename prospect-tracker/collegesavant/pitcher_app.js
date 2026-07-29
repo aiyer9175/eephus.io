@@ -449,7 +449,14 @@ function computeCSPlus(pitchers) {
     }
     if (!groupZ.length) { out.set(pitcher.slug, null); continue; }
     const avgZ = groupZ.reduce((a, b) => a + b, 0) / groupZ.length;
-    out.set(pitcher.slug, Math.round(Math.max(40, Math.min(160, 100 + 10 * avgZ))));
+    // 2026-07-29: the 40 / 160 clamp is REMOVED. It was display compression -
+    // an outlier that computed 168 was shown as 160, so the printed CS+ stopped
+    // being the model's number without saying so (the same class of defect the
+    // KRP+ clamp removal fixed). Full true-to-model per the owner. No pitcher in
+    // any shipped payload year reached a bound (2024 spans 65.2-123.3, 2025
+    // 84.7-140.2, 2026 66.8-122.2), so no displayed value changes today; what
+    // changes is that a future outlier will print its real index.
+    out.set(pitcher.slug, Math.round(100 + 10 * avgZ));
   }
   return out;
 }
