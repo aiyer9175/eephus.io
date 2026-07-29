@@ -72,6 +72,23 @@ _NOFV_HIT = ["obp_rel", "ops_rel", "k_rel", "peak_k_rel", "peak_obp_rel",
 _NOFV_PIT = ["k_rel", "peak_k_rel", "bb_rel", "era_rel", "x_era_k",
              "age_rel_level", "n_milb_seasons"]
 
+# Declared monotone direction per provisional key (sign audit 2026-07-25). These sets
+# used to be bare key lists, so nothing stated what any of them was supposed to do and
+# the audit had to inherit the flagship declaration, which is how peak_obp_rel /
+# iso_rel / era_rel shipped with no stated intent at all and n_milb_seasons shipped
+# claiming +1 while fitting -1.0063. 0 = NO DIRECTIONAL CLAIM. Pinned by
+# test_efv_sign_declarations.py; audit function in efv_sign_audit.audit_provisional.
+_NOFV_MONO = {
+    "obp_rel": +1, "peak_obp_rel": +1, "ops_rel": +1, "iso_rel": +1,
+    "bb_rel": -1, "era_rel": -1, "x_era_k": +1,
+    "age_rel_level": -1, "level_rank": +1,
+    # n_milb_seasons: fitted -1.0063 (hit) / -0.1643 (pit) against the flagship's
+    # inherited +1, and the marginal is -0.0075 on the provisional pool, so the
+    # "track record" reading is not true even unconditionally here. Conditional on
+    # level_rank + age_rel_level it prices seasons USED to reach the level.
+    "n_milb_seasons": 0,
+}
+
 # Conventional grade map with a SOFT ceiling: grade = BASE + SLOPE*war_pred, floored at
 # FLOOR, then compressed above KNEE toward CEIL: g' = KNEE + (CEIL-KNEE)*(1-exp(-(g-KNEE)/SOFT)).
 # Spec-calibrated (owner: "low, 20-30 for most, breakouts higher") + validated to match
@@ -313,7 +330,12 @@ _FACTOR_LABELS = {
     "obp_rel": "On-base vs level", "ops_rel": "OPS vs level", "k_rel": "Contact (K%) vs level",
     "bb_rel": "Walk rate vs level", "iso_rel": "Power (ISO) vs level", "era_rel": "ERA vs level",
     "age_rel_level": "Age for level", "level_rank": "Level reached", "x_era_k": "Run prevention x K",
-    "peak_k_rel": "Peak K rate", "peak_obp_rel": "Peak on-base", "n_milb_seasons": "Track record",
+    "peak_k_rel": "Peak K rate", "peak_obp_rel": "Peak on-base",
+    # see efv_score._FACTOR_LABELS: the provisional weight is -1.0063 (hit) /
+    # -0.1643 (pit), so "Track record" rendered UP on 619 of 969 hitter and 615 of
+    # 983 pitcher cards precisely BECAUSE those players have little track record.
+    # Mean magnitude 1.300 on hitters (third-largest driver in that model).
+    "n_milb_seasons": "Seasons used to reach level",
 }
 
 _PIT_POS = ("P", "RHP", "LHP", "SP", "RP", "SIRP", "MIRP")

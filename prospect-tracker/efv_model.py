@@ -60,10 +60,36 @@ SCORED_YEARS = (2020, 2021, 2022, 2023)
 _FEATURES_HIT = [
     ("fv",             +1),   # consensus_fv_raw -- the dominant, regularized prior
     ("obp_rel",        +1),   # Phase-1: strongest hitter edge BEYOND FV (on-base skill)
-    ("k_rel",          -1),   # contact: more whiffs worse (under-priced by scouts)
+    # k_rel declared 0 = NO DIRECTIONAL CLAIM (sign audit 2026-07-25, owner bug
+    # "why is Arias punished for contact when he has great contact?"). The theory
+    # (-1, more whiffs worse) is true MARGINALLY: weighted corr with realized WAR
+    # -0.0884. It is FALSE conditionally: the served ridge fits +0.1874, unregularized
+    # OLS +0.2446, and the sign survives every conditioning tried, +0.0996 with
+    # peak_k_rel removed, +0.2508 refit on production-bearing rows only, positive in
+    # 8 of the 9 informative forward-chained folds. It is a genuine SUPPRESSOR
+    # (conditional on FV + tools + the on-base/OPS block, residual contact reads as
+    # a slap-hitter tell), not a collinear split: MERGING k_rel with peak_k_rel into
+    # one z-mean column still fits POSITIVE (+0.0595, 9/11 folds).
+    # Dropping it is a measured NULL: pooled forward-chained rho +0.00715 (0.42x the
+    # 0.017 MDE95), paired-bootstrap CI95 [-0.0051, +0.0179], and the row-permuted
+    # zero-information control scores +0.00718, identical to the candidate, i.e. no
+    # result. So it STAYS; only the declaration was wrong.
+    # Ledger: data/xfv_sign_audit.json, data/xfv_sign_merge_gate.json.
+    ("k_rel",           0),
     ("peak_k_rel",     -1),   # best-season contact (multi-season peak); helps OOS
     ("age_rel_level",  -1),   # younger-for-level better
-    ("n_milb_seasons", +1),   # MiLB seasons before the read -- track record/persistence (OOS +.010)
+    # n_milb_seasons declared 0 (sign audit 2026-07-25). "Track record/persistence"
+    # (+1) is true MARGINALLY (+0.0946) and FALSE conditionally: served ridge
+    # -0.2324, unregularized OLS -0.5051, -0.2368 with milb_missing removed, -0.3231
+    # on production-bearing rows only, negative in 7 of the 9 informative folds. The
+    # conditional meaning is inverted by construction, since holding level_rank and
+    # age fixed, more MiLB seasons means MORE seasons used to reach the same level.
+    # SUPPRESSOR, keep: dropping is a NULL (+0.00426 = 0.25x the 0.017 floor, CI95
+    # [-0.0097, +0.0182], zero-information control +0.00386 = the same number).
+    # NOTE the display consequence, fixed in patch 4: this weight put a
+    # "Track-record depth DOWN" chip on 1,882 of the 1,886 live hitter cards that
+    # show it (99.8%), mean magnitude 0.362.
+    ("n_milb_seasons",  0),
     ("tool_hit",       +1),   # best single tool for WAR
     ("tool_speed",     +1),   # athletic up-side / defensive value
     # milb_missing: indicator that the production block is IMPUTED (no pre-decision MiLB
@@ -71,7 +97,15 @@ _FEATURES_HIT = [
     # (blend 0.339->0.362, FV-45 tier 0.012->0.093) -- the model needs to tell imputed-zero
     # production from average production, which is exactly the thin-record fringe cohort the
     # old kitchen-sink rejection (milb_missing BUNDLED with n_sources/pick) hid.
-    ("milb_missing",   -1),
+    ("milb_missing",    0),   # declared 0 (sign audit 2026-07-25): served fit is
+                              # +0.0397 against a declared -1. Marginal -0.0302 agrees
+                              # with the old declaration, so this is a suppressor by the
+                              # letter, but the weight is at the noise scale and the
+                              # feature is INERT in the served fit; dropping it moves
+                              # pooled forward-chained rho by -0.00022 (0.013x the 0.017
+                              # floor), the smallest effect measured anywhere in the set.
+                              # Kept (gate standard section 6: do not remove on sub-floor
+                              # evidence); the claim is what goes.
     # Acquisition-cohort indicators -- the ridge re-centers each cohort's intercept, lifting
     # cross-tier ordering in EVERY tier (sweep: stacks with milb_missing to blend 0.367).
     ("is_ifa",          0),
@@ -122,7 +156,37 @@ _FEATURES_PIT = [
     # data/xfv_age_feature_eval.json): pit age-only pooled +0.0019 (sub-bar)
     # but wm +0.0114 / t45 +0.0117, no metric down; the debuted-only eval
     # cannot see the never-debut org-arm risk this targets.
-    ("age",            -1),
+    # age declared 0 for PITCHERS (sign audit 2026-07-25, owner bug "Ryan Sloan, 20 in
+    # Double-A, is PENALIZED for age"). Adjudicated under the full EFV_GATE_STANDARD:
+    #   fitted sign   served ridge +0.0589 against a declared -1. Marginal -0.0543, so
+    #                 the theory is true unconditionally and false conditional on FV +
+    #                 K/BB + tool_fb (the consensus anchor already prices young arms).
+    #   stability     NOT a stable wrong sign and NOT chatter, a monotone DRIFT with
+    #                 sample size: fold weights -0.060 / -0.059 / -0.759 / -0.452 /
+    #                 -0.182 / -0.082 / -0.061 / +0.047 / +0.050 across train<2016..2024
+    #                 (the 2014/2015 folds are degenerate, pre-StatsAPI rows make every
+    #                 production column constant, and are excluded rather than counted
+    #                 as disagreement). The two LARGEST folds (n=1473, n=1730) and the
+    #                 full pool all fit it non-negative. "Negative in 9 of 11 folds" is
+    #                 a small-and-old-data artifact.
+    #   drop gate     pooled forward-chained rho over 11 splits: +0.00377 for dropping =
+    #                 0.236x the 0.016 pit MDE95. Paired bootstrap (B=2000, resampling
+    #                 TRAIN and TEST with a refit per draw) CI95 [-0.0089, +0.0175],
+    #                 P(drop helps) 0.68. Zero-information control (the same column
+    #                 row-permuted, kept in the set) +0.00252, so two thirds of the
+    #                 "gain" is reproduced by destroying the column's information
+    #                 without removing it. Permutation null p 0.382. Dropping is a NULL,
+    #                 helps in only 4 of 11 folds, and gate standard section 6 forbids
+    #                 removing on sub-floor evidence -> KEEP.
+    #   merge gate    merging age with age_rel_level into one z-mean column does NOT
+    #                 restore the declared direction (merged weight +0.0471, positive in
+    #                 3 of 11 folds) and is itself a null (-0.00588 = 0.37x floor,
+    #                 CI95 [-0.0231, +0.0167]) -> rejected as a remedy.
+    # This is a CORRECTNESS fix, not an accuracy claim: no rank gain is claimed and none
+    # is required. The hitter-side ("age", -1) above is untouched and correct
+    # (served -0.0619, negative in all 9 informative folds).
+    # Ledger: data/xfv_sign_audit.json, data/xfv_sign_merge_gate.json.
+    ("age",             0),
     # NOTE: pitcher cohort interactions (ifa_x_era / col_x_k / fb_x_k) were tested + REVERTED
     # 2026-06-24. They lifted OOS rank only marginally (blend 0.269->0.285, "marginally above
     # noise" per the sweep) AND col_x_k = is_college*k_rel is a SPARSE column (nonzero only for
