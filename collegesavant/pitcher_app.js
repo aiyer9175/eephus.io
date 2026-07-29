@@ -371,7 +371,7 @@ function init() {
     state.allPitchers = (window.PITCHER_DATA || []).map(normalizePitcher);
     state.allPitches = (window.PITCHER_PITCH_DATA || []).map(normalizePitchRow);
     state.availableYears = [...new Set(state.allPitchers.map((pitcher) => pitcher.year))].sort((a, b) => b - a);
-    state.year = state.availableYears.includes(2025) ? 2025 : (state.availableYears[0] || 2026);
+    state.year = state.availableYears[0] || 2026;
     setActiveYear(yearFromHash(window.location.hash) || state.year);
     window.addEventListener("hashchange", render);
     render();
@@ -994,7 +994,7 @@ function profileSummaryText() {
 }
 
 function hasPitchByPitchOutcomes(year) {
-  return year === 2024 || year === 2025;
+  return year === 2024 || year === 2025 || year === 2026;
 }
 
 function pitchKey(pitch) {
