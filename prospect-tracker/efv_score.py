@@ -47,6 +47,37 @@ except Exception:  # pragma: no cover - optional sidecar module
     _xoverlay = None
 
 
+# P1 V2 clause-2 baseline floor. See the ANCHOR DECOUPLING note in
+# _provisional_prior_war._ref_war. The sub-45 empirical anchors were amended on
+# 2026-07-29 (0.19 WAR/yr flat -> measured 0.019 at FV35 / 0.086 at FV40), which drags
+# vf.expected_six_year_avg_war down with it via _war_scale_for. P1 V2 was gated on the
+# pre-amendment scale, so its baseline is pinned here rather than inheriting a change it
+# was never re-gated against. These are the pre-amendment WAR/yr values on the shipped
+# anchor grid; the table is deliberately explicit rather than a call into the config, so
+# that a future --fit cannot move it silently.
+_P1_BASELINE_ANCHOR_FLOOR = True
+_P1_LEGACY_ANCHOR_WAR_PER_YR = 0.19   # the pre-2026-07-29 constant across FV 20..40
+
+
+def _p1_legacy_mix6(cons_fv: float, is_pitcher: bool) -> float:
+    """The P1 V2 mixture baseline as it stood BEFORE the sub-45 anchor amendment.
+
+    Reproduces vf.expected_six_year_avg_war(cons_fv, is_pitcher) * 6 under the legacy
+    flat 0.19 WAR/yr anchor, by rescaling the CURRENT bucket mixture by the ratio of the
+    legacy anchor to the amended one. Returns 0.0 if anything is unavailable, which
+    degrades this floor to a no-op rather than inventing a number.
+    """
+    try:
+        import value_framework as _vf
+        m = _vf.expected_six_year_avg_war(float(cons_fv), bool(is_pitcher))
+        cur = _vf.fv_to_6yr_avg_war(float(cons_fv))
+    except (TypeError, ValueError, AttributeError):
+        return 0.0
+    if m is None or not cur or cur <= 0:
+        return 0.0
+    return float(m) * (_P1_LEGACY_ANCHOR_WAR_PER_YR / float(cur)) * 6.0
+
+
 def _provisional_prior_war(cons_war: float, pick_overall, bonus_usd,
                            cons_fv=None, is_pitcher=None,
                            acq_year=None) -> tuple[float, list]:
@@ -281,7 +312,26 @@ def _provisional_prior_war(cons_war: float, pick_overall, bonus_usd,
             m = None
         if m is None:
             return float(cons_war)
-        return max(float(cons_war), float(m) * TARGET_SEASONS)
+        mix6 = float(m) * TARGET_SEASONS
+        # ANCHOR DECOUPLING 2026-07-29. expected_six_year_avg_war scales by
+        # value_framework._war_scale_for, which is pinned to fv_to_6yr_avg_war, so the
+        # sub-45 anchor amendment shipped the same day (empirical_anchors 20/25/30/35/40)
+        # drags this baseline down with it. That is legitimate for the ANCHOR - the old
+        # 0.19 WAR/yr constant really did over-state FV35-40 by 2x to 10x - but it is NOT
+        # legitimate here: this baseline is the P1 V2 clause-2 fix, gated and shipped on
+        # the OLD scale precisely to stop a zero-floored cons_war letting pick-110s ride
+        # the slot curve (the V1 defect-B cell, FV 37.66 hitter, slot 0.776, baseline
+        # ~1.17). On the amended anchors that baseline falls to about 0.33 and the defect
+        # returns: test_efv_levers::test_p1_mixture_baseline_kills_tiny_slot_pull flipped
+        # from a 0.0 pull to 0.2046.
+        # Rather than ship an ungated move to served draftee grades as a side effect of a
+        # different change, the baseline holds its gated floor. P1 V2 owns this number and
+        # only a P1 re-gate may move it.
+        # OWED: re-run the P1 V2 battery against the amended anchors and either adopt the
+        # lower baseline with fresh clause-2/3/4 evidence or make this floor permanent.
+        if _P1_BASELINE_ANCHOR_FLOOR and cons_fv is not None and float(cons_fv) < 45.0:
+            mix6 = max(mix6, _p1_legacy_mix6(float(cons_fv), bool(is_pitcher)))
+        return max(float(cons_war), mix6)
 
     def _clamp(prior):
         return max(float(cfg.get("war_floor", -2.0)),
