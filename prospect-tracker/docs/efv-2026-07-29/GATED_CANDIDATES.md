@@ -176,3 +176,43 @@ battery, not a reordering.
 
 **Do not** resolve this by relaxing the `< 45.0` bound. The bound is not the problem; the
 anchor doing nothing is the problem, and the bound is the only thing currently reporting it.
+
+## C6. The Edwards bridge is INVERTED for relievers (registered 2026-07-30)
+
+**Registration defect first: `DEFECT_C_LOSS_LEDGER.md:144` states this candidate is
+"Registered in `docs/efv-2026-07-29/GATED_CANDIDATES.md`". It was not.** This file contained
+only C1 through C5 and zero occurrences of "reliever", "bridge" or "inversion", despite being
+the newer of the two files. So the one candidate the ledger explicitly handed off to this
+document was the one candidate that never arrived. Filed here to close that gap; the finding
+and every number below are the 2026-07-29 session's, not new measurement.
+
+**The defect.** Below `cutover_fv` the surplus engine returns a fixed published Edwards dollar
+anchor, and it bridges up to the pipeline value at `bridge_to_fv`. For RP / SIRP / MIRP / CL
+the anchor at cutover is ABOVE the pipeline value at bridge_to, so **surplus FALLS as grade
+RISES**: anchor $1.8000M at cutover against pipeline $1.6680M at bridge_to, with the same
+inversion at every timing (1.5722/1.5621, 1.8000/1.7884, 1.3732/1.3644). First violation
+lands between exactly FV40 and FV40.5. **4 of 20 role-by-position curves are non-monotone at
+HEAD.**
+
+**Why nobody noticed.** Two reasons, both worth keeping.
+1. The v5 zero floor is the ONLY thing hiding it. 68.5% of the board prices at exactly $0, so
+   the inverted segment is almost entirely underwater and invisible on served rows.
+2. `test_value_framework::test_expected_sv_monotonic_in_fv` was POSITION-BLIND: it priced at
+   `position=None`, so a four-curve monotonicity defect shipped under a passing monotonicity
+   test. A position-parametrized companion now exists as a SELF-UPDATING tripwire that asserts
+   the four known-bad curves STILL fail, so it is green today and fails the moment someone
+   fixes the underlying defect. Whoever fixes this must remove that tripwire in the same
+   commit.
+
+**What was tried and reverted.** A `lo = min(lo, hi)` clamp. MEASURED: it did NOT remove the
+step, because the step is anchor-branch-at-40 against bridge-at-40.5 rather than a
+within-branch ordering problem. Reverted.
+
+**Why it is gated.** Any real fix moves reliever dollars below FV45. That is a served-dollar
+change on every reliever prospect on the board, so it needs its own blast-radius battery and
+a surplus-side gate, not a monotonicity patch.
+
+**Interaction to respect.** Do not attempt this jointly with the sub-cutover anchor work in
+`DEFECT_C_LOSS_LEDGER.md` (68.5% of the board at $0, anchor branch owning 6,336 of 6,384 zero
+rows). Both live in the same branch of the same function, both are open, and the surplus map
+refit and C-prime have ALREADY been measured and REFUTED there. Sequence them deliberately.

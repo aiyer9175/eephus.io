@@ -4589,6 +4589,39 @@ BOARD_RANK_BASIS_EPOCH = "2026-07-25"   # STRICTLY-AFTER gate: see load_rank_his
 # the epoch exists to prevent. The comparison is now strictly-after, so a same-day pre-flip row is
 # excluded and the first post-flip snapshot is the first row the movement engine can ever see.
 
+# ── BASIS FINGERPRINT (A3, added 2026-07-30) ────────────────────────────────
+# BOARD_RANK_BASIS_EPOCH above is hand-maintained, and NOTHING forced it to be bumped
+# when the basis actually moved. It was not bumped on 2026-07-29 when efv_board_scale
+# was disabled, and the board duly re-ranked: the served top-100 pitcher count went 16
+# -> 8 and four arms moved 39->148 / 8->15 / 12->50 / 48->143 with zero grade changes,
+# which the movement engine then published as real player movement (Seth Hernandez's
+# card reads "down 33, confidence high" for a change no player caused).
+#
+# This fingerprint names every input that defines the board ORDERING. The suite pins it
+# (test_board_basis_coherence), so changing any of them fails until the epoch is bumped
+# and the fingerprint restamped in the SAME commit. It is a coordination device, not a
+# calculation: it never touches a served number.
+BOARD_BASIS_FINGERPRINT = "xfv_grade|scale=off"
+
+
+def board_basis_fingerprint() -> str:
+    """Identity of the board ordering: which field is the board number, and whether the
+    per-side outcome scale is applied on top of it (and if so, which coefficients).
+
+    Deliberately cheap and import-safe: efv_board_scale is imported lazily here exactly
+    as it is in _board_grade, so importing storage never hard-depends on it."""
+    try:
+        import efv_board_scale as _bs
+        if _bs.enabled():
+            coeffs = ",".join(f"{s}:{a:.6f}/{b:.6f}"
+                              for s, (a, b) in sorted(_bs.COEFFS.items()))
+            scale = f"on[{coeffs}]"
+        else:
+            scale = "off"
+    except Exception:
+        scale = "unavailable"
+    return f"{BOARD_GRADE_FIELD}|scale={scale}"
+
 
 # ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /
 # movement metrics (owner directive). Reads the PRIOR run's committed data/xfv.json
