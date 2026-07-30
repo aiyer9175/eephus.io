@@ -32,7 +32,9 @@ from typing import Optional
 
 import hem_plus
 from hem_plus import Hitter
-from bullpen_export import _team_abbrev_map, _num
+from bullpen_export import (_team_abbrev_map, _num, score_war_rate,
+                            join_war_rate_3yr, WAR_RATE_POOL_MIN_PA,
+                            WAR_RATE_DISPLAY_MIN_PA)
 import fa_sources
 
 _log = logging.getLogger(__name__)
@@ -327,6 +329,38 @@ def _join_pwoba(hitters: list[dict], season: int) -> int:
     return len(stamped)
 
 
+def _join_war_pa_plus(hitters: list[dict], season: int) -> dict:
+    """HITTER-anchored WAR/PA+: 100 = the average hitter's BATTING bWAR per plate
+    appearance, on the 100 + 10z scale (convention 3, ten points per pool sigma,
+    NOT the HEM+ ratio scale that the columns around it use).
+
+    Batting bWAR only. The reader is a whole-player value rate, not a rate skill:
+    unlike HEM+, which is offensive rate alone, WAR/PA+ carries fielding,
+    baserunning and the positional adjustment, which is exactly why it is noisier
+    and why it sits behind a 100-PA display gate.
+
+    TWO-WAY PLAYERS need no discount here. The bWAR reader keeps the batting and
+    pitching sides on separate keys, so a two-way player's BATTING WAR is divided
+    by his plate appearances on this board while his PITCHING WAR is divided by
+    his innings on a pitcher board. Two indexes, two denominators, both correct;
+    he legitimately appears on both boards. proj_export.TWO_WAY_PIT_PTH_FACTOR
+    exists for a display path where one denominator has to carry both sides, and
+    it does not apply.
+
+    Best-effort: bWAR unavailable or degenerate -> nothing stamped, column blank."""
+    return score_war_rate(
+        hitters, season, side="bat", denom_key="pa",
+        pool_min=WAR_RATE_POOL_MIN_PA, display_min=WAR_RATE_DISPLAY_MIN_PA,
+        out_key="war_pa_plus", anchor="hitters with 50+ PA")
+
+
+def _join_war_pa_plus_3yr(hitters: list[dict]) -> dict:
+    """Frozen trailing-window WAR/PA+ on the hitter block of
+    data/war_rate_plus_multiyear_eval.json. Vintage, not pipeline output: see
+    bullpen_export.join_war_rate_3yr for the full disclosure contract."""
+    return join_war_rate_3yr(hitters, "hit", "war_pa_plus_3yr", "hitters")
+
+
 def _verdict() -> str:
     try:
         j = json.loads(EVAL_PATH.read_text(encoding="utf-8"))
@@ -418,12 +452,26 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     n_pw = _join_pwoba(scored["hitters"], season)
     if n_pw:
         log(f"  hitters: pWOBA (FA-engine projected next-season wOBA) joined for {n_pw} hitters")
+    wr_meta = _join_war_pa_plus(scored["hitters"], season)
+    if wr_meta.get("available"):
+        log(f"  hitters: WAR/PA+ joined for {wr_meta['n_stamped']} hitters "
+            f"(pool {wr_meta['pool_n']})")
+    elif wr_meta.get("refused"):
+        log(f"  hitters: WAR/PA+ refused ({wr_meta['refused']})")
+    wr3_meta = _join_war_pa_plus_3yr(scored["hitters"])
+    if wr3_meta.get("n_stamped"):
+        log(f"  hitters: 3-year WAR/PA+ joined for {wr3_meta['n_stamped']} hitters "
+            f"(frozen lab vintage {wr3_meta.get('generated_at')})")
 
     payload = {
         "generated_at": today, "season": season, "as_of": today,
         "verdict": _verdict(), "backtest": _backtest(),
         # Vintage of the FROZEN 3-year HEM+ column (see _join_hem_plus_3yr).
         "multiyear": h3_meta,
+        # WAR/PA+ scale block (anchor pool + measured pool parameters) and the
+        # vintage of its FROZEN 3-year companion.
+        "war_rate": wr_meta,
+        "multiyear_war_rate": wr3_meta,
         "pool": scored["pool"], "hitters": scored["hitters"], "teams": scored["teams"],
     }
     n = len(scored["hitters"])

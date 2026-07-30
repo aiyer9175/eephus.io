@@ -31,8 +31,11 @@ from typing import Optional
 
 import sem_plus
 from sem_plus import Starter
-# reuse the reliever board's StatsAPI loader (season pitching)
-from bullpen_export import load_season_pitching, ip_to_float, _num
+# reuse the reliever board's StatsAPI loader (season pitching) and the shared
+# WAR-rate machinery (bullpen_export is the base of the /mlbstats/ export chain)
+from bullpen_export import (load_season_pitching, ip_to_float, _num,
+                            score_war_rate, join_war_rate_3yr,
+                            WAR_RATE_POOL_MIN_IP, WAR_RATE_DISPLAY_MIN_SP_IP)
 
 _log = logging.getLogger(__name__)
 
@@ -192,6 +195,33 @@ def _join_xsem_plus(starters: list[dict], season: int) -> int:
     return n
 
 
+def _join_war_ip_plus(starters: list[dict], season: int) -> dict:
+    """STARTER-anchored WAR/IP+: 100 = the average starter's pitching bWAR per
+    inning, on the 100 + 10z scale (convention 3, ten points per pool sigma).
+
+    Deliberately a SEPARATE metric from the reliever-anchored WAR/IP+ in
+    bullpen_export, exactly as SEM+ and REM+ are separate rather than one pooled
+    pitcher index. A starter and a reliever do not sit in one WAR-per-inning
+    population: relievers bank more WAR per inning at the same talent because
+    they pitch in shorter bursts, so pooling them would rank every setup man
+    above every number-three starter (ARKMETRIC_SCALE_CONVENTIONS.md:77). The
+    anchor pool is named in the column title and in the glossary entry.
+
+    Best-effort: bWAR unavailable or degenerate -> nothing stamped, column
+    blank."""
+    return score_war_rate(
+        starters, season, side="pit", denom_key="ip",
+        pool_min=WAR_RATE_POOL_MIN_IP, display_min=WAR_RATE_DISPLAY_MIN_SP_IP,
+        out_key="war_ip_plus", anchor="starters with 20+ IP")
+
+
+def _join_war_ip_plus_3yr(starters: list[dict]) -> dict:
+    """Frozen trailing-window WAR/IP+ on the starter block of
+    data/war_rate_plus_multiyear_eval.json. Vintage, not pipeline output: see
+    bullpen_export.join_war_rate_3yr for the full disclosure contract."""
+    return join_war_rate_3yr(starters, "sp", "war_ip_plus_3yr", "starters")
+
+
 def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
            write: bool = True, log=print, today: Optional[str] = None) -> int:
     """Build data/starter_leaderboards.json and return the starter count."""
@@ -212,12 +242,26 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     n_xs = _join_xsem_plus(scored["starters"], season)
     if n_xs:
         log(f"  starters: xSEM+ (Savant deserved run prevention) joined for {n_xs} starters")
+    wr_meta = _join_war_ip_plus(scored["starters"], season)
+    if wr_meta.get("available"):
+        log(f"  starters: WAR/IP+ (starter-anchored) joined for "
+            f"{wr_meta['n_stamped']} starters (pool {wr_meta['pool_n']})")
+    elif wr_meta.get("refused"):
+        log(f"  starters: WAR/IP+ refused ({wr_meta['refused']})")
+    wr3_meta = _join_war_ip_plus_3yr(scored["starters"])
+    if wr3_meta.get("n_stamped"):
+        log(f"  starters: 3-year WAR/IP+ joined for {wr3_meta['n_stamped']} starters "
+            f"(frozen lab vintage {wr3_meta.get('generated_at')})")
 
     payload = {
         "generated_at": today, "season": season, "as_of": today,
         "verdict": _verdict(), "backtest": _backtest(),
         # Vintage of the FROZEN 3-year SEM+ column (see _join_sem_plus_3yr).
         "multiyear": s3_meta,
+        # WAR/IP+ scale block (starter anchor pool + measured pool parameters)
+        # and the vintage of its FROZEN 3-year companion.
+        "war_rate": wr_meta,
+        "multiyear_war_rate": wr3_meta,
         "pool": scored["pool"], "starters": scored["starters"], "teams": scored["teams"],
     }
     n = len(scored["starters"])

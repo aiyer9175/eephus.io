@@ -1,5 +1,5 @@
 {
-  "version": "2026-07-15",
+  "version": "2026-07-29",
   "groups": {
     "scouting": "Prospect Grades & Scouting",
     "definition": "Prospect Grades & Scouting",
@@ -5160,6 +5160,151 @@
         "hem_plus",
         "sem_plus_3yr",
         "rem_plus_3yr"
+      ],
+      "shelf": "ark",
+      "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+    },
+    {
+      "id": "war_pa_plus",
+      "term": "WAR/PA+",
+      "category": "custom-index",
+      "module": [
+        "mlbstats"
+      ],
+      "aliases": [
+        "WAR/PA+",
+        "WAR per PA",
+        "WAR rate (hitters)",
+        "war rate plus"
+      ],
+      "priority": 23,
+      "definition": "How much total value a hitter banked per trip to the plate, on a 100-anchored scale where ten points is one standard deviation of the hitter pool. Batting bWAR divided by plate appearances. It answers a different question from HEM+: HEM+ is offensive rate alone, while WAR/PA+ carries fielding, baserunning and the positional adjustment, so a good defender at a hard position can sit well above his HEM+ and a designated hitter well below it. Needs 100 plate appearances to show.",
+      "methodology": "Anchored at 100 with ten points per standard deviation of the anchor pool, which is hitters with 50 or more plate appearances. That is a different ruler from the HEM+ / SEM+ / REM+ columns beside it: those are ratios to the pool average, where a point is about one percent. Ten WAR-rate points is one full standard deviation, so 120 is a top-2.5-percent season and 80 is a bottom-2.5-percent one. A ratio index cannot be built here at all, because the league average WAR per plate appearance is a hair above zero and individual values go negative, so dividing by the pool average would flip sign and blow up. Ten points per standard deviation is the only honest scale for a signed near-zero-mean rate.\n\nTwo volume floors, doing two different jobs. Everyone at or above the pool floor sets the pool average and spread; only players at or above 100 plate appearances get a published value, so a brief hot stretch cannot print a number. The value is not shrunk toward the average and not clamped at either end, so what you read is what the player actually banked, including the tail. Right at the display gate the sample is still small, which is why the default board view also applies its usual qualified filter.\n\nSource: Baseball-Reference WAR (bWAR), the site-wide WAR standard, with the batting and pitching sides read from separate keys so the two are never summed onto one number. Two-way players are handled by keeping the two sides of bWAR apart rather than by any discount factor. Batting WAR is divided by plate appearances on the hitter board and pitching WAR by innings on a pitcher board, so a two-way player carries two different indexes on two different boards and both are correct.\n\nForward-checked out of sample, and it lost. Over 2012-2025 (excluding 2020) and 3845 year-to-year pairs, WAR/PA+ predicts next season's WAR rate at a Spearman correlation of 0.3711, while plain season bWAR with no rate at all predicts the same thing at 0.4058. It is not noise: a zero-information control on the same pairs scores 0.0011, so the number carries real signal about the player. It simply does not forecast better than the plainest alternative, because a season of playing time is itself a talent signal that a per-trip rate throws away. So this is registered as a descriptive display index with no validated verdict and no eval artifact attached, rather than dressed up with a backtest it did not pass. Read it as what a player banked, not as a forecast. Measurement ledger: data/war_rate_plus_eval.json.",
+      "seeAlso": [
+        "war_pa_plus_3yr",
+        "hem_plus",
+        "war",
+        "war_ip_plus_sp",
+        "war_ip_plus_rp"
+      ],
+      "shelf": "ark",
+      "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+    },
+    {
+      "id": "war_pa_plus_3yr",
+      "term": "WAR/PA+ (3yr)",
+      "category": "custom-index",
+      "module": [
+        "mlbstats"
+      ],
+      "aliases": [
+        "WAR/PA+ 3yr",
+        "three-year WAR/PA+",
+        "trailing WAR/PA+"
+      ],
+      "priority": 24,
+      "definition": "A hitter's WAR/PA+ over the trailing three seasons, weighted by plate appearances. Steadier than one season, because a WAR rate carries fielding and baserunning on top of the bat and all three bounce around in a single year. Same 100-anchored, ten-points-per-standard-deviation scale as WAR/PA+.",
+      "methodology": "The plate-appearance-weighted mean of the player's single-season WAR/PA+ across the trailing three seasons, so a partial current season counts for what it is worth and the fuller prior seasons carry more. Established means two or more seasons and 600 plate appearances in the window; below that the value is marked provisional with a star.\n\nThis column is a FROZEN vintage, not a live number. The values are read verbatim from data/war_rate_plus_multiyear_eval.json and are never recomputed when the board is built, so a row can show a same-day one-year value beside a three-year value frozen weeks earlier, and a player who entered the pool after that file was generated is simply blank. The board payload carries the generation date so the gap is visible rather than silent.\n\nForward-checked: over 3845 pairs the three-year read predicts next season's WAR rate at a Spearman correlation of 0.4022 against 0.3711 for a single season on the same players, with the paired gap confidence floor above zero, so more sample really is a steadier read.",
+      "seeAlso": [
+        "war_pa_plus",
+        "hem_plus_3yr",
+        "war_ip_plus_sp_3yr",
+        "war_ip_plus_rp_3yr"
+      ],
+      "shelf": "ark",
+      "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+    },
+    {
+      "id": "war_ip_plus_sp",
+      "term": "WAR/IP+ (starter pool)",
+      "category": "custom-index",
+      "module": [
+        "mlbstats"
+      ],
+      "aliases": [
+        "WAR/IP+",
+        "WAR per IP",
+        "WAR rate (starters)"
+      ],
+      "priority": 23,
+      "definition": "How much value a starting pitcher banked per inning, on a 100-anchored scale where ten points is one standard deviation of the STARTER pool. Pitching bWAR divided by innings pitched, anchored on starters only. It reads run prevention and workload together, where SEM+ is run-prevention rate alone. It does not compare with the reliever board's WAR/IP+: relievers bank more WAR per inning than starters of equal talent, so the two boards are anchored on separate pools and are never pooled into one ranking. Needs 40 innings to show.",
+      "methodology": "Anchored at 100 with ten points per standard deviation of the anchor pool, which is starters with 20 or more innings. That is a different ruler from the HEM+ / SEM+ / REM+ columns beside it: those are ratios to the pool average, where a point is about one percent. Ten WAR-rate points is one full standard deviation, so 120 is a top-2.5-percent season and 80 is a bottom-2.5-percent one. A ratio index cannot be built here at all, because the league average WAR per inning is a hair above zero and individual values go negative, so dividing by the pool average would flip sign and blow up. Ten points per standard deviation is the only honest scale for a signed near-zero-mean rate.\n\nTwo volume floors, doing two different jobs. Everyone at or above the pool floor sets the pool average and spread; only players at or above 40 innings get a published value, so a brief hot stretch cannot print a number. The value is not shrunk toward the average and not clamped at either end, so what you read is what the player actually banked, including the tail. Right at the display gate the sample is still small, which is why the default board view also applies its usual qualified filter.\n\nSource: Baseball-Reference WAR (bWAR), the site-wide WAR standard, with the batting and pitching sides read from separate keys so the two are never summed onto one number. Two-way players are handled by keeping the two sides of bWAR apart rather than by any discount factor. Batting WAR is divided by plate appearances on the hitter board and pitching WAR by innings on a pitcher board, so a two-way player carries two different indexes on two different boards and both are correct.\n\nForward-checked out of sample, and it lost. Over 2012-2025 (excluding 2020) and 1396 year-to-year pairs, starter WAR/IP+ predicts next season's WAR rate at a Spearman correlation of 0.2688, while plain season bWAR with no rate at all predicts the same thing at 0.2799. It is not noise: a zero-information control on the same pairs scores 0.0502, so the number carries real signal about the player. It simply does not forecast better than the plainest alternative, because a season of playing time is itself a talent signal that a per-trip rate throws away. So this is registered as a descriptive display index with no validated verdict and no eval artifact attached, rather than dressed up with a backtest it did not pass. Read it as what a player banked, not as a forecast. Measurement ledger: data/war_rate_plus_eval.json.",
+      "seeAlso": [
+        "war_ip_plus_sp_3yr",
+        "war_ip_plus_rp",
+        "sem_plus",
+        "war",
+        "war_pa_plus"
+      ],
+      "shelf": "ark",
+      "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+    },
+    {
+      "id": "war_ip_plus_sp_3yr",
+      "term": "WAR/IP+ (starter pool, 3yr)",
+      "category": "custom-index",
+      "module": [
+        "mlbstats"
+      ],
+      "aliases": [
+        "WAR/IP+ 3yr (starters)",
+        "three-year starter WAR/IP+"
+      ],
+      "priority": 24,
+      "definition": "A starter's WAR/IP+ over the trailing three seasons, weighted by innings. Same starter-anchored, ten-points-per-standard-deviation scale as WAR/IP+, over a longer window.",
+      "methodology": "The innings-weighted mean of the player's single-season starter WAR/IP+ across the trailing three seasons, so a partial current season counts for what it is worth and the fuller prior seasons carry more. Established means two or more seasons and 120 innings in the window; below that the value is marked provisional with a star.\n\nThis column is a FROZEN vintage, not a live number. The values are read verbatim from data/war_rate_plus_multiyear_eval.json and are never recomputed when the board is built, so a row can show a same-day one-year value beside a three-year value frozen weeks earlier, and a player who entered the pool after that file was generated is simply blank. The board payload carries the generation date so the gap is visible rather than silent.\n\nForward-checked and unresolved: over 1396 pairs the three-year read predicts next season's WAR rate at a Spearman correlation of 0.2965 against 0.2688 for a single season on the same players, and the paired gap does not clear zero. It is offered as a longer window on the same scale, not as a better forecast.",
+      "seeAlso": [
+        "war_ip_plus_sp",
+        "sem_plus_3yr",
+        "war_ip_plus_rp_3yr",
+        "war_pa_plus_3yr"
+      ],
+      "shelf": "ark",
+      "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+    },
+    {
+      "id": "war_ip_plus_rp",
+      "term": "WAR/IP+ (reliever pool)",
+      "category": "custom-index",
+      "module": [
+        "mlbstats"
+      ],
+      "aliases": [
+        "WAR/IP+ (relievers)",
+        "WAR rate (relievers)"
+      ],
+      "priority": 23,
+      "definition": "How much value a reliever banked per inning, on a 100-anchored scale where ten points is one standard deviation of the RELIEVER pool. Pitching bWAR divided by innings pitched, anchored on relievers only. It does not compare with the starter board's WAR/IP+: a reliever banks more WAR per inning than a starter of equal talent, so the two boards are anchored on separate pools and are never pooled into one ranking. Unlike REM+ it is not leverage-blind by construction, because bWAR carries the runs a pitcher actually prevented; the gmLI and WPA columns still hold the deployment story on their own. Needs 30 innings to show.",
+      "methodology": "Anchored at 100 with ten points per standard deviation of the anchor pool, which is relievers with 20 or more innings. That is a different ruler from the HEM+ / SEM+ / REM+ columns beside it: those are ratios to the pool average, where a point is about one percent. Ten WAR-rate points is one full standard deviation, so 120 is a top-2.5-percent season and 80 is a bottom-2.5-percent one. A ratio index cannot be built here at all, because the league average WAR per inning is a hair above zero and individual values go negative, so dividing by the pool average would flip sign and blow up. Ten points per standard deviation is the only honest scale for a signed near-zero-mean rate.\n\nTwo volume floors, doing two different jobs. Everyone at or above the pool floor sets the pool average and spread; only players at or above 30 innings get a published value, so a brief hot stretch cannot print a number. The value is not shrunk toward the average and not clamped at either end, so what you read is what the player actually banked, including the tail. Right at the display gate the sample is still small, which is why the default board view also applies its usual qualified filter.\n\nSource: Baseball-Reference WAR (bWAR), the site-wide WAR standard, with the batting and pitching sides read from separate keys so the two are never summed onto one number. Two-way players are handled by keeping the two sides of bWAR apart rather than by any discount factor. Batting WAR is divided by plate appearances on the hitter board and pitching WAR by innings on a pitcher board, so a two-way player carries two different indexes on two different boards and both are correct.\n\nForward-checked out of sample, and it lost. Over 2012-2025 (excluding 2020) and 1621 year-to-year pairs, reliever WAR/IP+ predicts next season's WAR rate at a Spearman correlation of 0.0886, while plain season bWAR with no rate at all predicts the same thing at 0.0899. It is not noise: a zero-information control on the same pairs scores -0.0065, so the number carries real signal about the player. It simply does not forecast better than the plainest alternative, because a season of playing time is itself a talent signal that a per-trip rate throws away. So this is registered as a descriptive display index with no validated verdict and no eval artifact attached, rather than dressed up with a backtest it did not pass. Read it as what a player banked, not as a forecast. Measurement ledger: data/war_rate_plus_eval.json.",
+      "seeAlso": [
+        "war_ip_plus_rp_3yr",
+        "war_ip_plus_sp",
+        "rem_plus",
+        "riv_plus",
+        "war"
+      ],
+      "shelf": "ark",
+      "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+    },
+    {
+      "id": "war_ip_plus_rp_3yr",
+      "term": "WAR/IP+ (reliever pool, 3yr)",
+      "category": "custom-index",
+      "module": [
+        "mlbstats"
+      ],
+      "aliases": [
+        "WAR/IP+ 3yr (relievers)",
+        "three-year reliever WAR/IP+"
+      ],
+      "priority": 24,
+      "definition": "A reliever's WAR/IP+ over the trailing three seasons, weighted by innings. Same reliever-anchored, ten-points-per-standard-deviation scale as WAR/IP+, over a longer window.",
+      "methodology": "The innings-weighted mean of the player's single-season reliever WAR/IP+ across the trailing three seasons, so a partial current season counts for what it is worth and the fuller prior seasons carry more. Established means two or more seasons and 40 innings in the window; below that the value is marked provisional with a star.\n\nThis column is a FROZEN vintage, not a live number. The values are read verbatim from data/war_rate_plus_multiyear_eval.json and are never recomputed when the board is built, so a row can show a same-day one-year value beside a three-year value frozen weeks earlier, and a player who entered the pool after that file was generated is simply blank. The board payload carries the generation date so the gap is visible rather than silent.\n\nForward-checked: over 1621 pairs the three-year read predicts next season's WAR rate at a Spearman correlation of 0.1335 against 0.0886 for a single season on the same players, with the paired gap confidence floor above zero, so more sample really is a steadier read.",
+      "seeAlso": [
+        "war_ip_plus_rp",
+        "rem_plus_3yr",
+        "war_ip_plus_sp_3yr",
+        "war_pa_plus_3yr"
       ],
       "shelf": "ark",
       "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."

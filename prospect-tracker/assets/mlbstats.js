@@ -185,6 +185,25 @@
         var col = v >= 0.02 ? "var(--up)" : v <= -0.02 ? "var(--down)" : "var(--text-tertiary)";
         return '<span style="color:' + col + ';font-variant-numeric:tabular-nums;">' + (v > 0 ? "+" : "") + v.toFixed(3) + "</span>";
       } },
+    // Reliever-anchored WAR/IP+. Separate metric from the starter board's
+    // WAR/IP+ (same field name, different payload, different anchor pool): a
+    // reliever banks more WAR per inning than a starter of equal talent, so the
+    // two are never pooled. remCell, not hemCell: 100 + 10z has SD exactly 10.
+    { key: "war_ip_plus", label: "WAR/IP+", term: "war_ip_plus_rp", num: true, desc: true, isRem: true,
+      title: "Pitching bWAR per inning, indexed over RELIEVERS with 20+ IP: 100 is the average reliever and every 10 points is one standard deviation of that pool. Anchored on relievers only, so it is not comparable with the starter board's WAR/IP+. Needs 30 IP to show.",
+      get: function (r) { return r.war_ip_plus; },
+      cell: function (r) { return r.war_ip_plus == null ? "" : remCell(r.war_ip_plus); } },
+    { key: "war_ip_plus_3yr", label: "WAR/IP+ 3yr", term: "war_ip_plus_rp_3yr", num: true, desc: true, isRem: true,
+      get: function (r) { return r.war_ip_plus_3yr; },
+      cell: function (r) {
+        if (r.war_ip_plus_3yr == null) return "";
+        var s = remCell(r.war_ip_plus_3yr);
+        if (r.war_ip_plus_3yr_pct != null) s += '<span class="proj-dim"> p' + fInt(r.war_ip_plus_3yr_pct) + "</span>";
+        if (r.war_ip_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 40 IP in the trailing window">*</span>';
+        return s;
+      } },
+    { key: "war", label: "bWAR", term: "war", fmt: f1, num: true,
+      title: "Pitching bWAR this season, the numerator of WAR/IP+ (shown so the rate is checkable against the IP column)" },
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "g", label: "G", fmt: fInt, num: true },
     { key: "k_pct", label: "K%", fmt: fPct, num: true },
@@ -213,6 +232,9 @@
   // fields, not the trailing-window ones. Reuse the same column objects so the
   // history board renders and sorts identically, dropping the columns whose data
   // (rem_plus_3yr, gmli_3yr, wpa_li) does not exist in a history row.
+  // This one is an ALLOW-list (the starter/hitter boards use drop-lists), so a
+  // new current-only column such as WAR/IP+ or WAR/IP+ 3yr is excluded from the
+  // history board by simply not being listed here.
   var REL_HISTORY_KEYS = { name: 1, rem_plus: 1, riv_plus: 1, ip: 1, g: 1, k_pct: 1,
     bb_pct: 1, k_bb_pct: 1, fip: 1, swstr_pct: 1, era: 1, gmli: 1, wpa: 1, sd_md: 1 };
   var REL_HISTORY_COLS = REL_COLS.filter(function (c) { return REL_HISTORY_KEYS[c.key]; });
@@ -448,7 +470,10 @@
           var note = '<div class="mlbstats-note">' + rows.length + " relievers. "
             + gloss("REM+", "rem_plus") + " is pure run-prevention skill (100 = average reliever); "
             + gloss("RIV+", "riv_plus") + " is realized leverage-weighted value, and "
-            + "gmLI / WPA / WPA-LI / SD-MD are the leverage context, kept separate.</div>";
+            + "gmLI / WPA / WPA-LI / SD-MD are the leverage context, kept separate. "
+            + gloss("WAR/IP+", "war_ip_plus_rp")
+            + " is banked value per inning, anchored on RELIEVERS only, so it does not compare with the"
+            + " starter board's column of the same name; 10 of its points is one standard deviation.</div>";
           return remExplainer() + scorecard() + relieverViz() + note
             + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort) + "</div>";
         })()
@@ -785,6 +810,26 @@
         var col = v >= 0.02 ? "var(--up)" : v <= -0.02 ? "var(--down)" : "var(--text-tertiary)";
         return '<span style="color:' + col + ';font-variant-numeric:tabular-nums;">' + (v > 0 ? "+" : "") + v.toFixed(3) + "</span>";
       } },
+    // Starter-anchored WAR/IP+. The reliever board ships a reliever-anchored
+    // WAR/IP+ under the same field name in its own payload; the two are separate
+    // metrics on separate pools and are never pooled into one column (a reliever
+    // banks more WAR per inning than a starter of equal talent). Both ride
+    // remCell: 100 + 10z has SD exactly 10, which is what remClass bands for.
+    { key: "war_ip_plus", label: "WAR/IP+", term: "war_ip_plus_sp", num: true, desc: true, isRem: true,
+      title: "Pitching bWAR per inning, indexed over STARTERS with 20+ IP: 100 is the average starter and every 10 points is one standard deviation of that pool. Anchored on starters only, so it is not comparable with the reliever board's WAR/IP+. Needs 40 IP to show.",
+      get: function (r) { return r.war_ip_plus; },
+      cell: function (r) { return r.war_ip_plus == null ? "" : remCell(r.war_ip_plus); } },
+    { key: "war_ip_plus_3yr", label: "WAR/IP+ 3yr", term: "war_ip_plus_sp_3yr", num: true, desc: true, isRem: true,
+      get: function (r) { return r.war_ip_plus_3yr; },
+      cell: function (r) {
+        if (r.war_ip_plus_3yr == null) return "";
+        var s = remCell(r.war_ip_plus_3yr);
+        if (r.war_ip_plus_3yr_pct != null) s += '<span class="proj-dim"> p' + fInt(r.war_ip_plus_3yr_pct) + "</span>";
+        if (r.war_ip_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 120 IP in the trailing window">*</span>';
+        return s;
+      } },
+    { key: "war", label: "bWAR", term: "war", fmt: f1, num: true,
+      title: "Pitching bWAR this season, the numerator of WAR/IP+ (shown so the rate is checkable against the IP column)" },
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "gs", label: "GS", fmt: fInt, num: true },
     { key: "ip_per_gs", label: "IP/GS", fmt: f1, num: true, title: "Average start length (innings per game started)" },
@@ -800,7 +845,8 @@
   // Past-season history rows carry the season-level fields but not the
   // trailing-window SEM+ 3yr. Reuse the same column objects so the history board
   // renders and sorts identically, dropping the column its rows lack.
-  var STARTER_HISTORY_DROP = { sem_plus_3yr: 1, xsem_plus: 1, luck: 1 };
+  var STARTER_HISTORY_DROP = { sem_plus_3yr: 1, xsem_plus: 1, luck: 1,
+    war_ip_plus: 1, war_ip_plus_3yr: 1, war: 1 };
   var STARTER_HISTORY_COLS = STARTER_COLS.filter(function (c) { return !STARTER_HISTORY_DROP[c.key]; });
 
   var STARTER_TEAM_COLS = [
@@ -925,7 +971,10 @@
       ? (function () {
           var note = '<div class="mlbstats-note">' + rows.length + " starters. "
             + gloss("SEM+", "sem_plus") + " is pure run-prevention skill (100 = average qualified starter); "
-            + "the durability columns (IP, GS, IP/GS) are context, kept separate from the skill number.</div>";
+            + "the durability columns (IP, GS, IP/GS) are context, kept separate from the skill number. "
+            + gloss("WAR/IP+", "war_ip_plus_sp")
+            + " is banked value per inning, anchored on STARTERS only, so it does not compare with the"
+            + " reliever board's column of the same name; 10 of its points is one standard deviation.</div>";
           return semExplainer() + starterScorecard() + note
             + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_COLS, starterSort) + "</div>";
         })()
@@ -1231,6 +1280,27 @@
         var col = v >= 13 ? "var(--up)" : v <= -13 ? "var(--down)" : "var(--text-tertiary)";
         return '<span style="color:' + col + ';font-variant-numeric:tabular-nums;">' + (v > 0 ? "+" : "") + fInt(v) + "</span>";
       } },
+    // WAR/PA+ rides remCell, NOT hemCell, and that is deliberate. The HEM+
+    // family around it is a ratio index widened to wRC+ width (SD about 16), so
+    // hemCell bands at 112/130. WAR/PA+ is 100 + 10z, so its SD is exactly 10 by
+    // construction and the +-2-sigma read is 80/120, which is what remClass
+    // bands at. Recoloring it with hemCell would call a 1.2-sigma hitter
+    // average. Do not "fix" this to match the neighbouring columns.
+    { key: "war_pa_plus", label: "WAR/PA+", term: "war_pa_plus", num: true, desc: true, isRem: true,
+      title: "Batting bWAR per plate appearance, indexed over hitters with 50+ PA: 100 is average and every 10 points is one standard deviation of that pool (not the wRC+-width scale HEM+ uses). Whole-player batting value per trip, so it carries fielding, baserunning and the positional adjustment, which HEM+ deliberately leaves out. Needs 100 PA to show.",
+      get: function (r) { return r.war_pa_plus; },
+      cell: function (r) { return r.war_pa_plus == null ? "" : remCell(r.war_pa_plus); } },
+    { key: "war_pa_plus_3yr", label: "WAR/PA+ 3yr", term: "war_pa_plus_3yr", num: true, desc: true, isRem: true,
+      get: function (r) { return r.war_pa_plus_3yr; },
+      cell: function (r) {
+        if (r.war_pa_plus_3yr == null) return "";
+        var s = remCell(r.war_pa_plus_3yr);
+        if (r.war_pa_plus_3yr_pct != null) s += '<span class="proj-dim"> p' + fInt(r.war_pa_plus_3yr_pct) + "</span>";
+        if (r.war_pa_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 600 PA in the trailing window">*</span>';
+        return s;
+      } },
+    { key: "war", label: "bWAR", term: "war", fmt: f1, num: true,
+      title: "Batting bWAR this season, the numerator of WAR/PA+ (shown so the rate is checkable against the PA column)" },
     { key: "pa", label: "PA", fmt: fInt, num: true },
     { key: "hr", label: "HR", fmt: fInt, num: true },
     { key: "sb", label: "SB", fmt: fInt, num: true },
@@ -1248,7 +1318,11 @@
   // History rows carry the season fields but not the trailing-window HEM+ 3yr,
   // the current-season Savant xHEM+ / xHEM+ Blend / Luck joins, or the
   // current-projection-only pWOBA column (a past board has no "next season").
-  var HITTER_HISTORY_DROP = { hem_plus_3yr: 1, xhem_plus: 1, fwdhem_plus: 1, luck_gap: 1, pwoba: 1 };
+  // The WAR-rate columns are joined only on the live board (the history export
+  // carries no bWAR join), so they drop out of a past-season board rather than
+  // rendering as a blank column.
+  var HITTER_HISTORY_DROP = { hem_plus_3yr: 1, xhem_plus: 1, fwdhem_plus: 1, luck_gap: 1, pwoba: 1,
+    war_pa_plus: 1, war_pa_plus_3yr: 1, war: 1 };
   var HITTER_HISTORY_COLS = HITTER_COLS.filter(function (c) { return !HITTER_HISTORY_DROP[c.key]; });
   // A past board can only sort on columns it shows; if the shared key is a
   // current-only column (HEM+ 3yr), fall back to the HEM+ default.
@@ -1368,7 +1442,11 @@
       ? (function () {
           var note = '<div class="mlbstats-note">' + rows.length + " hitters. "
             + gloss("HEM+", "hem_plus") + " is pure offensive-rate skill (100 = average qualified hitter); "
-            + "the volume (PA, HR, SB) and slash columns are context, kept separate from the skill number.</div>";
+            + "the volume (PA, HR, SB) and slash columns are context, kept separate from the skill number. "
+            + gloss("WAR/PA+", "war_pa_plus")
+            + " is a different question and a different ruler: total batting value per plate appearance,"
+            + " fielding and baserunning included, and 10 of its points is one standard deviation rather"
+            + " than the wider spread HEM+ reads on.</div>";
           return hemExplainer() + hitterScorecard() + note
             + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_COLS, hitterSort) + "</div>";
         })()

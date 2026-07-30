@@ -1,0 +1,904 @@
+{
+ "generated_at": "2026-07-29",
+ "experiment": "WAR-RATE-1",
+ "model": "war_pa_plus / war_ip_plus",
+ "seed": 20260729,
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v2",
+  "v1": {
+   "target": "next-season WAR rate (raw, pooled across seasons)",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "next-season WAR rate (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "conventions": {
+  "scale": "100 + 10z (ARKMETRIC_SCALE_CONVENTIONS convention 3)",
+  "war_source": "bWAR, batting and pitching sides kept SEPARATE (mlb_player_export._war_daily shape); never a summed side",
+  "denominators": "PA for hitters, IP for pitchers",
+  "anchor_pools": "three, never pooled: hitters, starters (GS/G >= 0.50), relievers. A starter-anchored and a reliever-anchored value never share a column.",
+  "floors": {
+   "pool_min_pa": 50.0,
+   "display_min_pa": 100.0,
+   "pool_min_ip": 20.0,
+   "display_min_sp_ip": 40.0,
+   "display_min_rp_ip": 30.0
+  },
+  "shrink": "NONE (pre-registered; arm S measured and reported per pool)",
+  "clamp": "none (true-to-model policy)",
+  "excluded": "2020",
+  "predictors": "unrounded index values; display rounding never enters the gate",
+  "imputation": "NONE. A pair missing any arm's value is dropped from every arm."
+ },
+ "pools": {
+  "hit": {
+   "n_forward_pairs": 3845,
+   "pred_seasons": [
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2021,
+    2022,
+    2023,
+    2024
+   ],
+   "out_seasons": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2022,
+    2023,
+    2024,
+    2025
+   ],
+   "results_by_convention": {
+    "v1": {
+     "rho_primary": 0.3715,
+     "rho_baselines": {
+      "plus_shrunk": 0.3858,
+      "rate": 0.3714,
+      "war_total": 0.4058,
+      "ops_plus": 0.2409,
+      "placebo": 0.0011
+     },
+     "gap_ci_primary_minus_baseline": {
+      "plus_shrunk": {
+       "mean": -0.0143,
+       "lo95": -0.019,
+       "hi95": -0.0097
+      },
+      "rate": {
+       "mean": 0.0001,
+       "lo95": -0.0009,
+       "hi95": 0.001
+      },
+      "war_total": {
+       "mean": -0.0345,
+       "lo95": -0.0466,
+       "hi95": -0.0224
+      },
+      "ops_plus": {
+       "mean": 0.1302,
+       "lo95": 0.109,
+       "hi95": 0.1523
+      },
+      "placebo": {
+       "mean": 0.3707,
+       "lo95": 0.3294,
+       "hi95": 0.4123
+      }
+     },
+     "arm_S_shrunk": {
+      "rho": 0.3858,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.0143,
+       "lo95": 0.0097,
+       "hi95": 0.019
+      }
+     }
+    },
+    "v2": {
+     "rho_primary": 0.3711,
+     "rho_baselines": {
+      "plus_shrunk": 0.3859,
+      "rate": 0.3713,
+      "war_total": 0.4058,
+      "ops_plus": 0.2405,
+      "placebo": 0.0011
+     },
+     "gap_ci_primary_minus_baseline": {
+      "plus_shrunk": {
+       "mean": -0.0148,
+       "lo95": -0.0195,
+       "hi95": -0.01
+      },
+      "rate": {
+       "mean": -0.0002,
+       "lo95": -0.001,
+       "hi95": 0.0007
+      },
+      "war_total": {
+       "mean": -0.0348,
+       "lo95": -0.0479,
+       "hi95": -0.0223
+      },
+      "ops_plus": {
+       "mean": 0.1305,
+       "lo95": 0.1017,
+       "hi95": 0.158
+      },
+      "placebo": {
+       "mean": 0.3696,
+       "lo95": 0.3183,
+       "hi95": 0.4196
+      }
+     },
+     "arm_S_shrunk": {
+      "rho": 0.3859,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.0148,
+       "lo95": 0.01,
+       "hi95": 0.0195
+      }
+     },
+     "cluster": {
+      "n_pairs": 3845,
+      "n_players": 1072,
+      "max_pairs_per_player": 11,
+      "mean_pairs_per_player": 3.59,
+      "n_strata_first_pred_season": 11
+     }
+    }
+   },
+   "g3b_volume_control": {
+    "post_hoc": true,
+    "rho_with_predictor_denominator": {
+     "plus": 0.3777,
+     "plus_shrunk": 0.3792,
+     "war_total": 0.6514
+    },
+    "by_predictor_volume_tercile": {
+     "low": {
+      "n": 1287,
+      "denominator_range": [
+       100.0,
+       329.0
+      ],
+      "rho_unshrunk": 0.1468,
+      "rho_shrunk": 0.1466,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": -0.0005,
+       "lo95": -0.0095,
+       "hi95": 0.0084
+      }
+     },
+     "mid": {
+      "n": 1282,
+      "denominator_range": [
+       330.0,
+       532.0
+      ],
+      "rho_unshrunk": 0.3355,
+      "rho_shrunk": 0.337,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.0014,
+       "lo95": -0.0011,
+       "hi95": 0.0038
+      }
+     },
+     "high": {
+      "n": 1276,
+      "denominator_range": [
+       533.0,
+       753.0
+      ],
+      "rho_unshrunk": 0.4932,
+      "rho_shrunk": 0.4961,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.0029,
+       "lo95": 0.0014,
+       "hi95": 0.0045
+      }
+     }
+    }
+   },
+   "verdict": {
+    "convention": "v2",
+    "g1_sanity_vs_placebo": {
+     "pass": true,
+     "gap": {
+      "mean": 0.3696,
+      "lo95": 0.3183,
+      "hi95": 0.4196
+     }
+    },
+    "g2_ship_vs_best_baseline": {
+     "pass": false,
+     "best_baseline": "war_total",
+     "baseline_set": [
+      "ops_plus",
+      "rate",
+      "war_total"
+     ],
+     "rho_primary": 0.3711,
+     "rho_baseline": 0.4058,
+     "gap": {
+      "mean": -0.0348,
+      "lo95": -0.0479,
+      "hi95": -0.0223
+     }
+    },
+    "g3_shrink": {
+     "pre_registered_rule_fired": true,
+     "gap_shrunk_minus_unshrunk": {
+      "mean": 0.0148,
+      "lo95": 0.01,
+      "hi95": 0.0195
+     },
+     "rho_shrunk": 0.3859,
+     "rho_unshrunk": 0.3711
+    },
+    "status": "unvalidated_display_index"
+   },
+   "window_gate": {
+    "n_forward_pairs": 3845,
+    "window_years": 3,
+    "results_by_convention": {
+     "v1": {
+      "rho_window": 0.4026,
+      "rho_one_season": 0.3715,
+      "gap_ci_window_minus_one": {
+       "mean": 0.031,
+       "lo95": 0.013,
+       "hi95": 0.0492
+      }
+     },
+     "v2": {
+      "rho_window": 0.4022,
+      "rho_one_season": 0.3711,
+      "gap_ci_window_minus_one": {
+       "mean": 0.0309,
+       "lo95": 0.0116,
+       "hi95": 0.0506
+      }
+     }
+    },
+    "g4_window_beats_one_season": {
+     "pass": true,
+     "convention": "v2"
+    },
+    "contributing_season_floor": "display gate (100), not the pool floor"
+   },
+   "live_season_scale_check": {
+    "season": 2026,
+    "advertised_points_per_sigma": 10.0,
+    "anchor_pool_n": 470,
+    "anchor_pool_plus_mean": 100.0,
+    "measured_points_per_anchor_pool_sigma": 10.0,
+    "displayed_n": 398,
+    "displayed_plus_mean": 101.24,
+    "measured_points_per_displayed_sigma": 8.86,
+    "note": "measured_points_per_anchor_pool_sigma must equal 10: the index is a single leg z-scored against this pool's own mu/sd, so there is nothing to re-standardize. The displayed subset is narrower because the display gate removes the noisy low-volume tail, which is selection, not a denominator defect."
+   },
+   "shrink_ruling": {
+    "shipped": "unshrunk",
+    "pre_registered_rule_fired": true,
+    "pooled_gap": {
+     "mean": 0.0148,
+     "lo95": 0.01,
+     "hi95": 0.0195
+    },
+    "within_volume_tercile_gap_means": {
+     "low": -0.0005,
+     "mid": 0.0014,
+     "high": 0.0029
+    },
+    "terciles_clearing_zero": [
+     "high"
+    ],
+    "post_hoc_control": true,
+    "g2_failed_so_no_forward_claim_is_shipped": true,
+    "owner_call": "OPEN. The pre-registered rule as written says ship shrunk on this pool, and the ship is unshrunk on the four reasons in shrink_ruling.__doc__. Registered here as a measured candidate rather than acted on silently."
+   }
+  },
+  "SP": {
+   "n_forward_pairs": 1396,
+   "pred_seasons": [
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2021,
+    2022,
+    2023,
+    2024
+   ],
+   "out_seasons": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2022,
+    2023,
+    2024,
+    2025
+   ],
+   "results_by_convention": {
+    "v1": {
+     "rho_primary": 0.2654,
+     "rho_baselines": {
+      "plus_shrunk": 0.2707,
+      "rate": 0.2712,
+      "war_total": 0.2777,
+      "ra9_inv": 0.2351,
+      "placebo": 0.0511
+     },
+     "gap_ci_primary_minus_baseline": {
+      "plus_shrunk": {
+       "mean": -0.0052,
+       "lo95": -0.0123,
+       "hi95": 0.0017
+      },
+      "rate": {
+       "mean": -0.0057,
+       "lo95": -0.0109,
+       "hi95": -0.0004
+      },
+      "war_total": {
+       "mean": -0.0121,
+       "lo95": -0.0312,
+       "hi95": 0.0077
+      },
+      "ra9_inv": {
+       "mean": 0.0304,
+       "lo95": 0.0073,
+       "hi95": 0.0541
+      },
+      "placebo": {
+       "mean": 0.2134,
+       "lo95": 0.1359,
+       "hi95": 0.2852
+      }
+     },
+     "arm_S_shrunk": {
+      "rho": 0.2707,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.0052,
+       "lo95": -0.0017,
+       "hi95": 0.0123
+      }
+     }
+    },
+    "v2": {
+     "rho_primary": 0.2688,
+     "rho_baselines": {
+      "plus_shrunk": 0.2744,
+      "rate": 0.2702,
+      "war_total": 0.2799,
+      "ra9_inv": 0.2412,
+      "placebo": 0.0502
+     },
+     "gap_ci_primary_minus_baseline": {
+      "plus_shrunk": {
+       "mean": -0.0056,
+       "lo95": -0.0131,
+       "hi95": 0.0014
+      },
+      "rate": {
+       "mean": -0.0013,
+       "lo95": -0.0063,
+       "hi95": 0.0036
+      },
+      "war_total": {
+       "mean": -0.0113,
+       "lo95": -0.0307,
+       "hi95": 0.0082
+      },
+      "ra9_inv": {
+       "mean": 0.0272,
+       "lo95": 0.0047,
+       "hi95": 0.0492
+      },
+      "placebo": {
+       "mean": 0.2169,
+       "lo95": 0.1365,
+       "hi95": 0.2992
+      }
+     },
+     "arm_S_shrunk": {
+      "rho": 0.2744,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.0056,
+       "lo95": -0.0014,
+       "hi95": 0.0131
+      }
+     },
+     "cluster": {
+      "n_pairs": 1396,
+      "n_players": 448,
+      "max_pairs_per_player": 11,
+      "mean_pairs_per_player": 3.12,
+      "n_strata_first_pred_season": 11
+     }
+    }
+   },
+   "g3b_volume_control": {
+    "post_hoc": true,
+    "rho_with_predictor_denominator": {
+     "plus": 0.3447,
+     "plus_shrunk": 0.3556,
+     "war_total": 0.5853
+    },
+    "by_predictor_volume_tercile": {
+     "low": {
+      "n": 468,
+      "denominator_range": [
+       40.0,
+       127.7
+      ],
+      "rho_unshrunk": 0.1475,
+      "rho_shrunk": 0.1519,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.0045,
+       "lo95": -0.0083,
+       "hi95": 0.0169
+      }
+     },
+     "mid": {
+      "n": 464,
+      "denominator_range": [
+       128.0,
+       176.3
+      ],
+      "rho_unshrunk": 0.2372,
+      "rho_shrunk": 0.2377,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.0006,
+       "lo95": -0.0044,
+       "hi95": 0.0059
+      }
+     },
+     "high": {
+      "n": 464,
+      "denominator_range": [
+       176.7,
+       248.3
+      ],
+      "rho_unshrunk": 0.3667,
+      "rho_shrunk": 0.3694,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.0026,
+       "lo95": -0.0025,
+       "hi95": 0.0079
+      }
+     }
+    }
+   },
+   "verdict": {
+    "convention": "v2",
+    "g1_sanity_vs_placebo": {
+     "pass": true,
+     "gap": {
+      "mean": 0.2169,
+      "lo95": 0.1365,
+      "hi95": 0.2992
+     }
+    },
+    "g2_ship_vs_best_baseline": {
+     "pass": false,
+     "best_baseline": "war_total",
+     "baseline_set": [
+      "ra9_inv",
+      "rate",
+      "war_total"
+     ],
+     "rho_primary": 0.2688,
+     "rho_baseline": 0.2799,
+     "gap": {
+      "mean": -0.0113,
+      "lo95": -0.0307,
+      "hi95": 0.0082
+     }
+    },
+    "g3_shrink": {
+     "pre_registered_rule_fired": false,
+     "gap_shrunk_minus_unshrunk": {
+      "mean": 0.0056,
+      "lo95": -0.0014,
+      "hi95": 0.0131
+     },
+     "rho_shrunk": 0.2744,
+     "rho_unshrunk": 0.2688
+    },
+    "status": "unvalidated_display_index"
+   },
+   "window_gate": {
+    "n_forward_pairs": 1396,
+    "window_years": 3,
+    "results_by_convention": {
+     "v1": {
+      "rho_window": 0.2953,
+      "rho_one_season": 0.2654,
+      "gap_ci_window_minus_one": {
+       "mean": 0.0296,
+       "lo95": -0.0036,
+       "hi95": 0.0636
+      }
+     },
+     "v2": {
+      "rho_window": 0.2965,
+      "rho_one_season": 0.2688,
+      "gap_ci_window_minus_one": {
+       "mean": 0.0282,
+       "lo95": -0.0076,
+       "hi95": 0.0633
+      }
+     }
+    },
+    "g4_window_beats_one_season": {
+     "pass": false,
+     "convention": "v2"
+    },
+    "contributing_season_floor": "display gate (40), not the pool floor"
+   },
+   "live_season_scale_check": {
+    "season": 2026,
+    "advertised_points_per_sigma": 10.0,
+    "anchor_pool_n": 185,
+    "anchor_pool_plus_mean": 100.0,
+    "measured_points_per_anchor_pool_sigma": 10.0,
+    "displayed_n": 161,
+    "displayed_plus_mean": 101.16,
+    "measured_points_per_displayed_sigma": 9.18,
+    "note": "measured_points_per_anchor_pool_sigma must equal 10: the index is a single leg z-scored against this pool's own mu/sd, so there is nothing to re-standardize. The displayed subset is narrower because the display gate removes the noisy low-volume tail, which is selection, not a denominator defect."
+   },
+   "shrink_ruling": {
+    "shipped": "unshrunk",
+    "pre_registered_rule_fired": false,
+    "pooled_gap": {
+     "mean": 0.0056,
+     "lo95": -0.0014,
+     "hi95": 0.0131
+    },
+    "within_volume_tercile_gap_means": {
+     "low": 0.0045,
+     "mid": 0.0006,
+     "high": 0.0026
+    },
+    "terciles_clearing_zero": [],
+    "post_hoc_control": true,
+    "g2_failed_so_no_forward_claim_is_shipped": true,
+    "owner_call": "NONE. The pre-registered rule did not fire on this pool, so the unshrunk default stands with nothing to override."
+   }
+  },
+  "RP": {
+   "n_forward_pairs": 1621,
+   "pred_seasons": [
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2021,
+    2022,
+    2023,
+    2024
+   ],
+   "out_seasons": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2022,
+    2023,
+    2024,
+    2025
+   ],
+   "results_by_convention": {
+    "v1": {
+     "rho_primary": 0.0877,
+     "rho_baselines": {
+      "plus_shrunk": 0.0921,
+      "rate": 0.0902,
+      "war_total": 0.0922,
+      "ra9_inv": 0.0741,
+      "placebo": -0.0061
+     },
+     "gap_ci_primary_minus_baseline": {
+      "plus_shrunk": {
+       "mean": -0.0044,
+       "lo95": -0.0082,
+       "hi95": -0.0003
+      },
+      "rate": {
+       "mean": -0.0025,
+       "lo95": -0.0059,
+       "hi95": 0.001
+      },
+      "war_total": {
+       "mean": -0.0046,
+       "lo95": -0.018,
+       "hi95": 0.0088
+      },
+      "ra9_inv": {
+       "mean": 0.0137,
+       "lo95": -0.0052,
+       "hi95": 0.0324
+      },
+      "placebo": {
+       "mean": 0.0934,
+       "lo95": 0.027,
+       "hi95": 0.1655
+      }
+     },
+     "arm_S_shrunk": {
+      "rho": 0.0921,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.0044,
+       "lo95": 0.0003,
+       "hi95": 0.0082
+      }
+     }
+    },
+    "v2": {
+     "rho_primary": 0.0886,
+     "rho_baselines": {
+      "plus_shrunk": 0.0927,
+      "rate": 0.0881,
+      "war_total": 0.0899,
+      "ra9_inv": 0.064,
+      "placebo": -0.0065
+     },
+     "gap_ci_primary_minus_baseline": {
+      "plus_shrunk": {
+       "mean": -0.0041,
+       "lo95": -0.008,
+       "hi95": -0.0002
+      },
+      "rate": {
+       "mean": 0.0005,
+       "lo95": -0.0028,
+       "hi95": 0.0041
+      },
+      "war_total": {
+       "mean": -0.0013,
+       "lo95": -0.0145,
+       "hi95": 0.0121
+      },
+      "ra9_inv": {
+       "mean": 0.0245,
+       "lo95": 0.0056,
+       "hi95": 0.0442
+      },
+      "placebo": {
+       "mean": 0.0945,
+       "lo95": 0.0233,
+       "hi95": 0.1633
+      }
+     },
+     "arm_S_shrunk": {
+      "rho": 0.0927,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.0041,
+       "lo95": 0.0002,
+       "hi95": 0.008
+      }
+     },
+     "cluster": {
+      "n_pairs": 1621,
+      "n_players": 646,
+      "max_pairs_per_player": 11,
+      "mean_pairs_per_player": 2.51,
+      "n_strata_first_pred_season": 11
+     }
+    }
+   },
+   "g3b_volume_control": {
+    "post_hoc": true,
+    "rho_with_predictor_denominator": {
+     "plus": 0.2454,
+     "plus_shrunk": 0.27,
+     "war_total": 0.4347
+    },
+    "by_predictor_volume_tercile": {
+     "low": {
+      "n": 544,
+      "denominator_range": [
+       30.0,
+       53.0
+      ],
+      "rho_unshrunk": -0.0038,
+      "rho_shrunk": -0.0005,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.0034,
+       "lo95": -0.0015,
+       "hi95": 0.0086
+      }
+     },
+     "mid": {
+      "n": 555,
+      "denominator_range": [
+       53.3,
+       65.0
+      ],
+      "rho_unshrunk": 0.0876,
+      "rho_shrunk": 0.0887,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.001,
+       "lo95": -0.0015,
+       "hi95": 0.0036
+      }
+     },
+     "high": {
+      "n": 522,
+      "denominator_range": [
+       65.3,
+       137.7
+      ],
+      "rho_unshrunk": 0.1825,
+      "rho_shrunk": 0.1857,
+      "gap_ci_shrunk_minus_unshrunk": {
+       "mean": 0.0031,
+       "lo95": -0.0009,
+       "hi95": 0.0072
+      }
+     }
+    }
+   },
+   "verdict": {
+    "convention": "v2",
+    "g1_sanity_vs_placebo": {
+     "pass": true,
+     "gap": {
+      "mean": 0.0945,
+      "lo95": 0.0233,
+      "hi95": 0.1633
+     }
+    },
+    "g2_ship_vs_best_baseline": {
+     "pass": false,
+     "best_baseline": "war_total",
+     "baseline_set": [
+      "ra9_inv",
+      "rate",
+      "war_total"
+     ],
+     "rho_primary": 0.0886,
+     "rho_baseline": 0.0899,
+     "gap": {
+      "mean": -0.0013,
+      "lo95": -0.0145,
+      "hi95": 0.0121
+     }
+    },
+    "g3_shrink": {
+     "pre_registered_rule_fired": true,
+     "gap_shrunk_minus_unshrunk": {
+      "mean": 0.0041,
+      "lo95": 0.0002,
+      "hi95": 0.008
+     },
+     "rho_shrunk": 0.0927,
+     "rho_unshrunk": 0.0886
+    },
+    "status": "unvalidated_display_index"
+   },
+   "window_gate": {
+    "n_forward_pairs": 1621,
+    "window_years": 3,
+    "results_by_convention": {
+     "v1": {
+      "rho_window": 0.131,
+      "rho_one_season": 0.0877,
+      "gap_ci_window_minus_one": {
+       "mean": 0.0433,
+       "lo95": 0.0099,
+       "hi95": 0.0769
+      }
+     },
+     "v2": {
+      "rho_window": 0.1335,
+      "rho_one_season": 0.0886,
+      "gap_ci_window_minus_one": {
+       "mean": 0.0444,
+       "lo95": 0.0117,
+       "hi95": 0.0759
+      }
+     }
+    },
+    "g4_window_beats_one_season": {
+     "pass": true,
+     "convention": "v2"
+    },
+    "contributing_season_floor": "display gate (30), not the pool floor"
+   },
+   "live_season_scale_check": {
+    "season": 2026,
+    "advertised_points_per_sigma": 10.0,
+    "anchor_pool_n": 261,
+    "anchor_pool_plus_mean": 100.0,
+    "measured_points_per_anchor_pool_sigma": 10.0,
+    "displayed_n": 203,
+    "displayed_plus_mean": 100.86,
+    "measured_points_per_displayed_sigma": 9.79,
+    "note": "measured_points_per_anchor_pool_sigma must equal 10: the index is a single leg z-scored against this pool's own mu/sd, so there is nothing to re-standardize. The displayed subset is narrower because the display gate removes the noisy low-volume tail, which is selection, not a denominator defect."
+   },
+   "shrink_ruling": {
+    "shipped": "unshrunk",
+    "pre_registered_rule_fired": true,
+    "pooled_gap": {
+     "mean": 0.0041,
+     "lo95": 0.0002,
+     "hi95": 0.008
+    },
+    "within_volume_tercile_gap_means": {
+     "low": 0.0034,
+     "mid": 0.001,
+     "high": 0.0031
+    },
+    "terciles_clearing_zero": [],
+    "post_hoc_control": true,
+    "g2_failed_so_no_forward_claim_is_shipped": true,
+    "owner_call": "OPEN. The pre-registered rule as written says ship shrunk on this pool, and the ship is unshrunk on the four reasons in shrink_ruling.__doc__. Registered here as a measured candidate rather than acted on silently."
+   }
+  }
+ },
+ "verdict": {
+  "g1_beats_zero_information_control_by_pool": {
+   "hit": true,
+   "SP": true,
+   "RP": true
+  },
+  "g2_by_pool": {
+   "hit": false,
+   "SP": false,
+   "RP": false
+  },
+  "g3_shrink_rule_fired_by_pool": {
+   "hit": true,
+   "SP": false,
+   "RP": true
+  },
+  "g4_window_by_pool": {
+   "hit": true,
+   "SP": false,
+   "RP": true
+  },
+  "shrink_decision": "UNSHRUNK on every pool. The pre-registered arm-S rule FIRED on ['hit', 'RP'] and is being overridden, not ignored: see pools[*].shrink_ruling for the argument and the open owner call.",
+  "summary": "NO PASS on the ship gate. WAR/PA+ and WAR/IP+ carry real signal (they beat a zero-information control on all three pools) but they do NOT forward-predict the next season's WAR rate better than plain season bWAR, which is the simplest baseline in the set. G2 {'hit': False, 'SP': False, 'RP': False}. They ship as UNVALIDATED DISPLAY INDEXES with eval_artifact null, which is the sanctioned path for a descriptive index. This artifact is the measurement ledger, cited on the registry rows. The mechanism is worth stating plainly: a season of playing time is itself a talent signal, and a per-trip rate throws it away."
+ },
+ "runtime_seconds": 799.1,
+ "restamped_at": "2026-07-29",
+ "restamp_note": "Window gate (G4) re-measured 2026-07-29 after the trailing-window definition was tightened so a contributing season must clear the DISPLAY gate rather than the pool floor. The single-season arms (G1, G2, arm S, the volume control) do not read the window and are unchanged from their original measurement. Arm S was also removed from G2's baseline set, where the pre-registration never put it."
+}
