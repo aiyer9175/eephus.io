@@ -4,9 +4,9 @@
 Source: `data/model_registry.json` via `model_registry.load()`. Freshness columns
 (artifact age / stale) are the registry's own stamps, written by
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
-stamped as of **2026-07-30**. `validate()` at generation time: **1 problem(s)** (listed below).
+stamped as of **2026-07-30**. `validate()` at generation time: **clean**.
 
-**194 models.** Verdicts: validated: 34, provisional: 73, unvalidated: 26, deprecated: 60.
+**194 models.** Verdicts: validated: 34, provisional: 73, unvalidated: 26, deprecated: 61.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -203,13 +203,9 @@ stamped as of **2026-07-30**. `validate()` at generation time: **1 problem(s)** 
 | `position_observed` | SERVED as position_observed on the exported player payloa... | nothing forward. Descriptive: the position a prospect has actually PLAYED the most in the minors (most games, DH/PH/PR excluded... | argmax games over non-DH positions in the StatsAPI career fielding census, ex... | the served FanGraphs projection (consensus._latest_meta) | disagreement rate against the served projection (descriptive), plus the per-c... | **unvalidated** | - | - | - |
 | `pitcher_role_usage` | role_usage.usage_position_override at the storage.py expo... | whether a pitching prospect is really a starter or a reliever, from current-season MiLB games started rather than from the FanG... | usage_role: SP when GS-share >= 0.50 AND IP/G >= 3.0 AND IP >= 20; RP when IP... | the FanGraphs SP/MIRP/SIRP forward-projection | flip counts per direction and the resulting change in efv_score._RP_DESIGNATI... | **unvalidated** | - | - | - |
 | `xfv_odds_grade_basis` | p_bucket / p_bust / sv_distribution at the three efv_scor... | whether a prospect's first six MLB seasons resolve as a BUST (total bWAR / 6 < 0.5 WAR per season, the shipped event from tools... | THE PIN: p_bucket_given_fv keyed to realized_implied_fv(xfv_war, is_pit, age,... | TWO. (1) THE RE-KEY: the same curve keyed to outcome_implied_fv(xfv_war), the... | Brier, log loss, ECE, calibration slope/intercept, Murphy reliability/resolut... | **provisional** | `data/odds_grade_basis_eval.json` | - | - |
-| `xfv_odds_recalibration_ship` | NOTHING. This row records a NULL. The candidate was efv_o... | whether a prospect's first six MLB seasons resolve as a BUST (total bWAR / 6 < 0.5 WAR per season; value_framework_config.yaml... | the INCUMBENT served p_bust, p_bucket_given_fv(realized_implied_fv(xfv_war, i... | TWO, and the candidate had to beat BOTH (owner's pre-registered criterion). (... | Brier and log loss (primary), plus ECE, calibration slope/intercept, Murphy r... | **rejected** | `data/xfv_odds_recalibration_ship_eval.json` | - | - |
+| `xfv_odds_recalibration_ship` | NOTHING. This row records a NULL. The candidate was efv_o... | whether a prospect's first six MLB seasons resolve as a BUST (total bWAR / 6 < 0.5 WAR per season; value_framework_config.yaml... | the INCUMBENT served p_bust, p_bucket_given_fv(realized_implied_fv(xfv_war, i... | TWO, and the candidate had to beat BOTH (owner's pre-registered criterion). (... | Brier and log loss (primary), plus ECE, calibration slope/intercept, Murphy r... | **deprecated** | `data/xfv_odds_recalibration_ship_eval.json` | - | - |
 
 Stored problems at last refresh: none.
-
-Live `validate()` problems:
-
-- xfv_odds_recalibration_ship: bad verdict 'rejected'
 
 Verdict semantics (from `model_registry.py`): validated = committed forward
 backtest beats the stated baseline; provisional = partially measured;
