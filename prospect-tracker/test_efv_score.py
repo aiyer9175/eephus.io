@@ -2,8 +2,8 @@
 """eFV production seam (efv_score.py) unit tests.
 
 Pins the flagship grade's three load-bearing invariants:
-  1. the realized-implied-FV mapping efv_score uses is monotone in E[6yr WAR]
-     (higher projected WAR never yields a lower grade -> the OOS rank edge holds);
+  1. the grade mapping efv_score uses is monotone in E[6yr WAR] (higher projected WAR
+     never yields a lower grade -> the OOS rank edge holds);
   2. the eFV display grade rounds to NEAREST 0.1 -- the deliberate exception to the
      site's grades-round-UP (ceiling) rule;
   3. the live injury + Statcast+ tilt factors are bounded (Statcast at +/-18%), so an
@@ -23,24 +23,51 @@ DATA = Path(efv_score.__file__).parent / "data"
 
 
 # --------------------------------------------------------------------------
-# 1. Monotonicity of the realized-implied-FV mapping efv_score scores through
+# 1. Monotonicity of the grade mapping efv_score scores through
 # --------------------------------------------------------------------------
-# efv_score does: xfv_grade = vf.realized_implied_fv(xfv_war, is_pit, age=, position=).
+# efv_score does: xfv_grade = vf.outcome_implied_fv(xfv_war) -- the inverse of the
+# pooled empirical outcome curve (2026-07-30; it was vf.realized_implied_fv before).
 # We drive that EXACT seam (efv_score.vf) so the test tracks whatever function the
 # production module actually calls, not a hand-picked stand-in.
-@pytest.mark.parametrize("is_pit", [False, True])
-@pytest.mark.parametrize("age,pos", [(None, None), (21.0, "SS"), (26.0, "RP")])
-def test_grade_is_monotone_in_expected_war(is_pit, age, pos):
-    riv = efv_score.vf.realized_implied_fv
-    wars = [-3.0, -1.0, 0.0, 0.5, 1.0, 2.0, 4.0, 7.0, 12.0, 20.0, 35.0]
-    grades = [riv(w, is_pit, age=age, position=pos) for w in wars]
+WARS = [-3.0, -1.0, 0.0, 0.5, 1.0, 2.0, 4.0, 7.0, 12.0, 20.0, 35.0]
+
+
+def test_board_grade_is_monotone_in_expected_war():
+    oiv = efv_score.vf.outcome_implied_fv
+    grades = [oiv(w) for w in WARS]
     assert all(g is not None for g in grades), "seam returned None for a real WAR input"
     # non-decreasing: a higher projected WAR is NEVER graded lower (ties allowed at floor/cap)
     for lo, hi in zip(grades, grades[1:]):
         assert hi >= lo - 1e-9, f"grade dropped as WAR rose: {lo} -> {hi}"
+    # STRICTLY increasing off the clamps, which the retired map was NOT: its age and
+    # position arguments made two rows with the same predicted WAR grade differently, and
+    # the live board carried 86 hit / 52 pit within-side order violations because of it.
+    # The board number is now a pure function of predicted WAR, so surplus's reliance on
+    # the per-side rank quantile is safe by construction, not by measurement.
+    interior = [(w, g) for w, g in zip(WARS, grades) if 20.0 < g < 80.0]
+    for (w0, g0), (w1, g1) in zip(interior, interior[1:]):
+        assert g1 > g0, f"grade did not strictly rise from WAR {w0} to {w1}"
     # and the mapping actually moves (not a constant) across the range
     assert grades[-1] > grades[0]
     # clamped to the 20-80 grade scale
+    assert all(20.0 - 1e-9 <= g <= 80.0 + 1e-9 for g in grades)
+    # a non-positive prediction reads exactly the FV20 floor, same as the retired map, so
+    # the floor population does not move when the basis does
+    assert oiv(0.0) == 20.0 and oiv(-5.0) == 20.0
+
+
+@pytest.mark.parametrize("is_pit", [False, True])
+@pytest.mark.parametrize("age,pos", [(None, None), (21.0, "SS"), (26.0, "RP")])
+def test_odds_grade_is_monotone_in_expected_war(is_pit, age, pos):
+    """The retired map still runs, on purpose: it keys p_bucket / p_bust, which were
+    ground-truthed on it. Its monotonicity is still load-bearing for the odds, so it is
+    still pinned -- it just is not the board number any more."""
+    riv = efv_score.vf.realized_implied_fv
+    grades = [riv(w, is_pit, age=age, position=pos) for w in WARS]
+    assert all(g is not None for g in grades), "seam returned None for a real WAR input"
+    for lo, hi in zip(grades, grades[1:]):
+        assert hi >= lo - 1e-9, f"grade dropped as WAR rose: {lo} -> {hi}"
+    assert grades[-1] > grades[0]
     assert all(20.0 - 1e-9 <= g <= 80.0 + 1e-9 for g in grades)
 
 
@@ -51,14 +78,14 @@ def test_grade_is_monotone_in_expected_war(is_pit, age, pos):
 # That is round-to-nearest, NOT math.ceil -- the documented eFV exception to the
 # site-wide "grades display the ceiling" rule.
 def test_display_grade_rounds_to_nearest_not_up():
-    riv = efv_score.vf.realized_implied_fv
-    raw = riv(1.0, False)                       # lands at ~37.64 (a clean non-integer)
+    oiv = efv_score.vf.outcome_implied_fv
+    raw = oiv(2.0)                              # lands at ~44.535 (a clean non-integer)
     assert raw is not None and abs(raw - round(raw)) > 0.05, "need a fractional raw grade"
     efv_display = round(raw, 1)                 # the convention efv_score applies
     # rounds to the nearest tenth -- here DOWN, which the ceiling rule could never do
-    assert efv_display == pytest.approx(37.6, abs=1e-9)
+    assert efv_display == pytest.approx(44.5, abs=1e-9)
     assert efv_display < raw                    # rounded down -> definitively not a ceiling
-    assert efv_display != math.ceil(raw)        # grades-round-UP would give 38; eFV does not
+    assert efv_display != math.ceil(raw)        # grades-round-UP would give 45; eFV does not
 
 
 def test_committed_grades_carry_the_round_to_nearest_signature():

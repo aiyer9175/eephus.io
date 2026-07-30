@@ -4581,13 +4581,24 @@ BOARD_GRADE_FIELD = "xfv_grade"
 # to a post-epoch rank would report the one-time re-rank as real player movement.
 # Every reader of metric_snapshots.overall_rank filters on this date; rank
 # movement and the rank-trend arrow read empty until post-epoch history accrues.
-BOARD_RANK_BASIS_EPOCH = "2026-07-25"   # STRICTLY-AFTER gate: see load_rank_history.
+BOARD_RANK_BASIS_EPOCH = "2026-07-30"   # STRICTLY-AFTER gate: see load_rank_history.
 # F1 repair 2026-07-25: metric_snapshots already holds 4,467 rows STAMPED 2026-07-25 that were
 # ranked on the RETIRED quantile basis (they were written before the flip landed the same day).
 # A ">=" gate let those through, so the first post-flip export would have published 1,185 phantom
 # rank moves (36 inside the new top 100, max 3,178 spots) as real player movement - precisely what
 # the epoch exists to prevent. The comparison is now strictly-after, so a same-day pre-flip row is
 # excluded and the first post-flip snapshot is the first row the movement engine can ever see.
+#
+# 2026-07-30 BUMP (LANE-P2, the pooled outcome refit). xfv_grade stopped being the inverse of
+# value_framework's own forward map and became the inverse of the EMPIRICAL pooled outcome
+# curve (vf.outcome_implied_fv / data/fv_outcome_curves_pooled.json). The FIELD did not move
+# and the scale flag did not move, so the 07-25 fingerprint would not have noticed -- which
+# is exactly why the fingerprint below now names the curve hash as well. Measured re-rank on
+# identical inputs: 1,060 of 4,264 board rows change rank, median |move| 4, max |move| 27,
+# top-100 membership 100 held / 0 entered / 0 left, top-25 2 in / 2 out. Small next to the
+# 07-25 flip (median 417, max ~3.5k), but not zero, and the eFV delta is the owner's primary
+# movement signal, so it is an epoch. Blast radius, byte-identity proof and the movement
+# question: docs/efv-2026-07-30/POOLED_OUTCOME_REFIT.md.
 
 # ── BASIS FINGERPRINT (A3, added 2026-07-30) ────────────────────────────────
 # BOARD_RANK_BASIS_EPOCH above is hand-maintained, and NOTHING forced it to be bumped
@@ -4601,15 +4612,29 @@ BOARD_RANK_BASIS_EPOCH = "2026-07-25"   # STRICTLY-AFTER gate: see load_rank_his
 # (test_board_basis_coherence), so changing any of them fails until the epoch is bumped
 # and the fingerprint restamped in the SAME commit. It is a coordination device, not a
 # calculation: it never touches a served number.
-BOARD_BASIS_FINGERPRINT = "xfv_grade|scale=off"
+#
+# EXTENDED 2026-07-30 (LANE-P2) with the GRADE MAP. The first version named the field and
+# the side-scale flag only, which was enough for the two defects it was built from -- both
+# were flips of one of those two things. It was NOT enough for this one: the pooled outcome
+# refit re-ranked 1,051 board rows while leaving BOTH named inputs identical, so the
+# fingerprint would have reported "no change" through a real re-rank. The board number is
+# the inverse of a fitted curve, so the CURVE is part of the board's identity; the third
+# term is that curve's content hash (value_framework.outcome_curve_identity, a SHA-1 over
+# the knot/value pairs). Refit the curve, change the prior, change the pool -- the hash
+# moves, the suite fails, and a human decides whether the board really did re-rank.
+BOARD_BASIS_FINGERPRINT = "xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
 
 
 def board_basis_fingerprint() -> str:
-    """Identity of the board ordering: which field is the board number, and whether the
-    per-side outcome scale is applied on top of it (and if so, which coefficients).
+    """Identity of the board ordering: which field is the board number, whether the
+    per-side outcome scale is applied on top of it (and if so, which coefficients), and
+    WHICH FITTED CURVE the grade itself inverts.
 
-    Deliberately cheap and import-safe: efv_board_scale is imported lazily here exactly
-    as it is in _board_grade, so importing storage never hard-depends on it."""
+    Deliberately cheap and import-safe: efv_board_scale and value_framework are imported
+    lazily here exactly as efv_board_scale is in _board_grade, so importing storage never
+    hard-depends on either. Every term degrades to a literal 'unavailable' rather than
+    raising -- a coordination device must never be the thing that takes the site down; it
+    just has to differ from the pin, which 'unavailable' does."""
     try:
         import efv_board_scale as _bs
         if _bs.enabled():
@@ -4620,7 +4645,12 @@ def board_basis_fingerprint() -> str:
             scale = "off"
     except Exception:
         scale = "unavailable"
-    return f"{BOARD_GRADE_FIELD}|scale={scale}"
+    try:
+        import value_framework as _vf
+        grademap = f"outcome_pooled@{_vf.outcome_curve_identity()}"
+    except Exception:
+        grademap = "unavailable"
+    return f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}"
 
 
 # ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /
@@ -4639,6 +4669,51 @@ def _load_xfv_join() -> tuple[dict, dict]:
         except Exception:
             return {}
     return _read("xfv.json"), _read("xfv_history.json")
+
+
+def xfv_history_basis() -> str | None:
+    """The board basis data/xfv_history.json was BUILT on, or None if it is unstamped.
+
+    efv_score.score_history stamps it (2026-07-30). An unstamped file is by definition
+    pre-stamp, i.e. the retired per-side quantile series, and is treated as foreign."""
+    base = Path(__file__).parent / "data"
+    try:
+        doc = json.loads((base / "xfv_history.json").read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    b = doc.get("basis") if isinstance(doc, dict) else None
+    return str(b) if b else None
+
+
+def xfv_history_is_on_board_basis() -> bool:
+    """THE MOVEMENT-SUPPRESSION GATE for the eFV delta (A2 / Phase 3.2, 2026-07-30).
+
+    BOARD_RANK_BASIS_EPOCH's strictly-after gate in load_rank_history covers the RANK
+    movement signal, because rank history lives in metric_snapshots as append-only rows
+    that can be dated and filtered. It does NOT cover the owner's PRIMARY movement signal,
+    the eFV delta: movement.xfv_movement reads data/xfv_history.json, which
+    efv_score.score_history REBUILDS in full on every run and which carries no per-point
+    basis. Nothing in the epoch machinery can see that file, so bumping the epoch alone
+    would have left the eFV delta unguarded through this grade-scale change -- the same
+    hole that let the 2026-07-29 re-rank reach Seth Hernandez's card as real movement.
+
+    The gate: publish the eFV-delta override only when the series on disk was built on the
+    basis the board is serving right now. The two go out of step for exactly the runs
+    between a basis change landing in code and the next production regen writing a series
+    on it -- the one-run lag _load_xfv_join documents. In that window the eFV override is
+    withheld and movement falls back to compute_genuine_movement's consensus same-source
+    step, which is the documented fallback for a player with no eFV series at all, not a
+    new code path. It clears itself: the next regen stamps the current basis and the
+    override returns.
+
+    SCOPE, stated because the narrower choice was deliberate. This gates the MOVEMENT
+    override only. The $DvM+ appreciation RATE also reads the series (via _xfv_series) and
+    is NOT gated: it is a within-series first-point-to-last-point rate, so a foreign-basis
+    series still gives it an internally consistent number, and withholding it would swing
+    $DvM+ for the whole board for one run to fix a coherence problem that predates this
+    change. Registered as an owner call in POOLED_OUTCOME_REFIT.md, not silently taken."""
+    b = xfv_history_basis()
+    return bool(b) and b == board_basis_fingerprint()
 
 
 def _load_ungraded_by_org() -> dict[str, list[dict]]:
@@ -7310,6 +7385,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # See _load_xfv_join for the one-run-lag rationale. Closures fall back to consensus FV
     # wherever eFV abstains, so nothing goes null.
     _xfv_by_key, _xfv_hist_by_key = _load_xfv_join()
+    # Is the eFV series on disk on the basis the board is serving? Resolved ONCE (it reads
+    # a file and a fingerprint) and consumed by the movement override below. False across a
+    # grade-scale transition, which is the one-run suppression window.
+    _xfv_hist_ok = xfv_history_is_on_board_basis()
+    if not _xfv_hist_ok:
+        log.warning("eFV history basis %r != board basis %r - eFV-delta movement suppressed "
+                    "for this run; movement falls back to the consensus same-source step",
+                    xfv_history_basis(), board_basis_fingerprint())
 
     # W-SIDESCALE: the board grade SCALE lives in efv_board_scale, resolved once here
     # (not per player) so _board_grade stays a cheap closure. Falls back to reading
@@ -9709,7 +9792,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # headline move (direction/delta/basis/endpoints) with the eFV "since last real
             # change" step; keep the consensus perf/skills drivers as supporting context.
             # Falls back to the consensus same-source step when eFV has no history.
-            _xm = xfv_movement(_xfv_series(p.player_key))
+            # BASIS GATE (2026-07-30): and also when the series on disk was built on a
+            # different board basis than the one being served, which is a grade-scale
+            # transition publishing itself as player movement. See
+            # storage.xfv_history_is_on_board_basis for why the BOARD_RANK_BASIS_EPOCH gate
+            # cannot reach this signal. Resolved once per export, not per player.
+            _xm = xfv_movement(_xfv_series(p.player_key)) if _xfv_hist_ok else None
             if _xm:
                 _stock.update(_xm)
             payload["stock"] = _stock

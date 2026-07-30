@@ -352,24 +352,65 @@ _GOLDEN_XFV_ROWCOUNT = 9268
 
 
 def test_efv_grade_map_inverts_on_model_window():
-    # The eFV grade map (realized_implied_fv) must invert on the MODEL's own target
-    # window (efv_dataset.TARGET_SEASONS = 6 seasons), NOT the global clemens
-    # control_years (=7). The two were coupled once and a control_years flip for
-    # valuation silently deflated top-end eFV grades. Guard: every grade-map call in
-    # efv_score passes exposure_seasons=TARGET_SEASONS so it can't happen again.
+    # The eFV grade map must invert on the MODEL's own target window
+    # (efv_dataset.TARGET_SEASONS = 6 seasons), NOT the global clemens control_years
+    # (=7). The two were coupled once and a control_years flip for valuation silently
+    # deflated top-end eFV grades. Guard: every grade-map call in efv_score passes
+    # exposure_seasons=TARGET_SEASONS so it can't happen again.
+    #
+    # 2026-07-30: efv_score now calls TWO maps per row and this pins both.
+    #   vf.outcome_implied_fv  -> xfv_grade, THE board number (pooled outcome curve)
+    #   vf.realized_implied_fv -> _odds_grade, which keeps p_bucket / p_bust on the
+    #                             basis they were ground-truthed on
+    # outcome_implied_fv RAISES on a window other than 6 rather than rescaling (its
+    # curve is defined on the 6-season label), so the source pin and the runtime guard
+    # now say the same thing from both ends.
     import re
     import efv_dataset
+    import value_framework as vf
     assert efv_dataset.TARGET_SEASONS == 6
     src = (Path(efv_export.__file__).parent / "efv_score.py").read_text(encoding="utf-8")
-    calls = re.findall(r"realized_implied_fv\((.*?)\)", src, re.DOTALL)
-    # Real grade-map calls carry the side arg (a comma); the docstring example
-    # `realized_implied_fv(xfv_war)` has none -> excluded.
-    grade_calls = [c for c in calls if ("xfv_war" in c or "model_war" in c) and "," in c]
-    assert grade_calls, "no realized_implied_fv grade-map calls found in efv_score.py"
-    for c in grade_calls:
-        assert "exposure_seasons=TARGET_SEASONS" in c, (
-            "an eFV grade-map call is missing exposure_seasons=TARGET_SEASONS "
-            "(a control_years flip would silently re-deflate top-end grades): " + " ".join(c.split())[:90])
+    for fn in ("realized_implied_fv", "outcome_implied_fv"):
+        calls = re.findall(re.escape(fn) + r"\((.*?)\)", src, re.DOTALL)
+        # Real grade-map calls carry a second arg (a comma); the docstring examples
+        # `realized_implied_fv(xfv_war)` / `outcome_implied_fv(xfv_war)` have none.
+        grade_calls = [c for c in calls
+                       if ("xfv_war" in c or "model_war" in c) and "," in c]
+        assert grade_calls, f"no {fn} grade-map calls found in efv_score.py"
+        for c in grade_calls:
+            assert "exposure_seasons=TARGET_SEASONS" in c, (
+                f"an eFV grade-map call ({fn}) is missing exposure_seasons=TARGET_SEASONS "
+                f"(a control_years flip would silently re-deflate top-end grades): "
+                + " ".join(c.split())[:90])
+    # The runtime end of the same guard: the outcome curve IS the 6-season window, so
+    # asking it for another one is a category error and must fail loudly, not rescale.
+    with pytest.raises(ValueError):
+        vf.outcome_implied_fv(5.0, exposure_seasons=7)
+
+
+def test_board_grade_comes_from_the_outcome_curve_not_the_valuation_core():
+    """xfv_grade is the inverse of the EMPIRICAL pooled outcome curve, and every
+    efv_score path that writes that field must use the SAME map.
+
+    The defect class: data/xfv.json carries active, debuted and bust rows in one file
+    under one field name, so a path left on the retired realized_implied_fv map would
+    put part of the board on a second grade basis with nothing to detect it -- the same
+    shape as the A2 history defect. Source-pinned because the three writers live in
+    three functions (run / run_live / run_backgrade) and a fourth (score_history)."""
+    import re
+    src = (Path(efv_export.__file__).parent / "efv_score.py").read_text(encoding="utf-8")
+    # every assignment to xfv_grade (not xfv_grade_display / _quantile / _realized)
+    assigns = re.findall(r"^\s*xfv_grade = (.+)$", src, re.MULTILINE)
+    assert len(assigns) >= 3, f"expected the three scoring paths, found {len(assigns)}"
+    for a in assigns:
+        assert "outcome_implied_fv" in a, (
+            "an efv_score path assigns xfv_grade from something other than "
+            f"vf.outcome_implied_fv: {a.strip()[:90]}")
+    # score_history grades through the same map (Phase 3.2 repoint) so the FV-history
+    # tail and the board are one number.
+    assert "grade = vf.outcome_implied_fv(model_war" in src, (
+        "score_history is not on the board grade map; the eFV history series would be "
+        "on a third basis again (see test_board_basis_coherence)")
 
 
 def test_efv_reliability_grade_map_inverts_on_model_window():

@@ -7,12 +7,25 @@ reusing the existing value_framework engine end to end.
 
 Pipeline per player:
   features -> ridge E[6yr summed bWAR] -> linear calibration (scale) = xfv_war
-          -> vf.realized_implied_fv(xfv_war)            = xfv_grade (20-80)
-          -> vf.p_bucket_given_fv(xfv_grade)            = 5-bucket distribution
-          -> vf.expected_surplus_usd(xfv_grade, ...)    = surplus $ (engine-calibrated)
-          -> vf.sv_distribution(xfv_grade, ...)         = uncertainty band
+          -> vf.outcome_implied_fv(xfv_war)             = xfv_grade (20-80, THE board number)
+          -> vf.realized_implied_fv(xfv_war)            = _odds_grade (retired map, odds only)
+          -> vf.p_bucket_given_fv(_odds_grade)          = 5-bucket distribution
+          -> vf.expected_surplus_usd(_odds_grade, ...)  = surplus $ (engine-calibrated)
+          -> vf.sv_distribution(_odds_grade, ...)       = uncertainty band
+          -> rank_war quantile map                      = xfv_grade_display, and the
+                                                          surplus RE-PRICE that overwrites
+                                                          the dollars above
 
-xfv_grade is monotone in xfv_war (realized_implied_fv is monotone), which is monotone
+TWO GRADE MAPS, on purpose (LANE-P2, 2026-07-30). xfv_grade is now the inverse of the
+EMPIRICAL pooled outcome curve (data/fv_outcome_curves_pooled.json): grade G means "the
+industry FV whose realized first-6yr outcome distribution matches our prediction". The
+outcome ODDS keep the retired realized_implied_fv basis because they are validated
+probabilities and nothing in this commit measured a re-key. The consequence to hold in
+your head when reading a row: xfv_grade and p_bust are answers to two different questions
+and are not two views of one number. docs/efv-2026-07-30/POOLED_OUTCOME_REFIT.md 1.3.
+
+xfv_grade is monotone in xfv_war (outcome_implied_fv is a strictly increasing curve's
+inverse), which is monotone
 in the model prediction -> xfv_grade inherits the model's rank edge over consensus FV
 (see data/xfv_eval.json). The surplus reuses the engine's own isotonic calibration,
 applied ONCE at this seam (vf.apply_calibration on the raw expected_surplus_usd /
@@ -1156,31 +1169,39 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         dyear = src.get("debut_year") or 2020
         age = _age_at(src.get("birth_date"), dyear)
         _price_ctx[pk] = age
-        # Invert the WAR->grade map on the model's OWN window (6 seasons, the model
-        # target), NOT the global clemens control_years=7. A control_years flip for
-        # valuation had silently re-pointed this denominator to 7 seasons, deflating
-        # top-end grades (an elite prospect's 6yr-WAR prediction was priced against a
-        # 7yr FV curve). Monotone -> rank-preserving, so the OOS eval is unchanged.
-        # Age placement via _grade_map_age (bughunt F5): `age` here is measured at
-        # the debut year (dyear), so eta_to_debut = 0.0.
+        # OUTCOME-ANCHORED GRADE (LANE-P2, 2026-07-30). xfv_grade is the inverse of the
+        # EMPIRICAL pooled curve E[first-6yr bWAR | consensus FV] (3,037 resolved rows,
+        # Clemens-shrunk where thin), not the inverse of this valuation core's own forward
+        # map. See vf.outcome_implied_fv and docs/efv-2026-07-30/POOLED_OUTCOME_REFIT.md.
+        # The window is the model's OWN 6 seasons, never the clemens control_years=7 (a
+        # valuation-side flip had silently re-pointed that denominator and deflated the top
+        # end); the curve is DEFINED on the 6-season label, so the argument is now checked
+        # rather than merely passed.
         _gm_age = _grade_map_age(age, 0.0)
-        xfv_grade = vf.realized_implied_fv(xfv_war, is_pit, age=_gm_age, position=pos,
-                                           exposure_seasons=TARGET_SEASONS)
+        xfv_grade = vf.outcome_implied_fv(xfv_war, exposure_seasons=TARGET_SEASONS)
+        # ODDS BASIS, deliberately NOT re-keyed. p_bucket / p_bust and the dollar seam stay
+        # on the retired realized-implied grade: they are validated, ground-truthed
+        # probabilities and re-keying them onto the outcome scale is a change nothing in
+        # this commit measured. Same rule _reprice_surplus_on_display already states for
+        # the display re-price. Registered as a follow-up, with the counterfactual
+        # magnitude measured, in POOLED_OUTCOME_REFIT.md section 1.3.
+        _odds_grade = vf.realized_implied_fv(xfv_war, is_pit, age=_gm_age, position=pos,
+                                             exposure_seasons=TARGET_SEASONS)
         cons_fv = src.get("consensus_fv_raw")
-        if xfv_grade is None or cons_fv is None:
+        if xfv_grade is None or _odds_grade is None or cons_fv is None:
             continue
         cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else xfv_war
         rank_war = (1 - lam) * cons_war + lam * xfv_war   # guarded blend -> headline rank
         _rank_exact[pk] = rank_war                        # unrounded, for the display-map sort
-        probs = vf.p_bucket_given_fv(xfv_grade, is_pit) or []
+        probs = vf.p_bucket_given_fv(_odds_grade, is_pit) or []
         # bughunt F1: raw engine dollars pass through the engine's isotonic
         # calibration at this seam (_cal_mm; consensus at its own grade), so the
         # eFV and consensus columns share one pricing basis.
-        xfv_surplus = vf.expected_surplus_usd(xfv_grade, is_pit, pos, age=age, eta_years=1.0)
+        xfv_surplus = vf.expected_surplus_usd(_odds_grade, is_pit, pos, age=age, eta_years=1.0)
         cons_surplus = vf.expected_surplus_usd(cons_fv, is_pit, pos, age=age, eta_years=1.0)
-        dist = vf.sv_distribution(xfv_grade, is_pit, pos) or {}
+        dist = vf.sv_distribution(_odds_grade, is_pit, pos) or {}
         pcts = dist.get("percentiles") or {}
-        _cx = lambda v: _cal_mm(v, xfv_grade, is_pit)
+        _cx = lambda v: _cal_mm(v, _odds_grade, is_pit)
         scored.append({
             "player_key": pk, "kind": src["kind"], "position": pos,
             "consensus_fv": round(cons_fv, 1),
@@ -1319,8 +1340,13 @@ def history_path():
 
 
 def _build_grade_map(side: str):
-    """Monotone rank_war -> display-grade lookup from the current live scored pool, so the
-    historical eFV grades land on the SAME 20-80 scale as the current board grade."""
+    """Monotone rank_war -> DISPLAY-grade lookup from the current live scored pool.
+
+    Sole consumer since the 2026-07-30 A2 repoint: run_backgrade, which needs a
+    xfv_grade_display for graduate / bust rows that never went through run_live's own
+    quantile map. score_history used to read it too and no longer does -- it grades through
+    the board map now, because this map produces the QUANTILE scale and the board does
+    not."""
     try:
         scored = json.loads(scored_live_path(side).read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -1366,10 +1392,22 @@ def score_history(persist: bool = True) -> dict:
     """Backfill an eFV value at EACH historical board snapshot so the FV-history chart can
     plot eFV over time (not just consensus). For every points[] entry we re-score the as-of
     features (that snapshot's per-source FV + tools + production as-of that year) with the
-    shipped model and map onto the live grade scale. Honest caveat: this is today's model
-    scoring old snapshots (a retrospective), not the grade we would have shown then. Writes
-    data/xfv_history.json = {by_player: {key: [{d, x, c}]}}. Run after run_live (reuses its
-    scored pool for the grade scale)."""
+    shipped model and grade it through THE BOARD'S OWN map (vf.outcome_implied_fv). Honest
+    caveat: this is today's model scoring old snapshots (a retrospective), not the grade we
+    would have shown then. Writes data/xfv_history.json =
+    {basis, basis_epoch, generated_at, by_player: {key: [{d, x, c}]}}.
+
+    A2 REPOINT 2026-07-30: this used to map the guarded blend through run_live's per-side
+    QUANTILE display map, which is not the number the board serves -- see the block at the
+    grading line. It no longer reads the live scored pool at all, so it no longer has to run
+    after run_live for its scale (it still runs after it in regen_all for ordering).
+
+    The artifact is fully REBUILT on every run, never appended, so a basis change rebases
+    every point at once and there is no within-series discontinuity to suppress. What DOES
+    need suppressing is the window between a code flip and the next production regen, when
+    the file on disk is on the previous basis while the board is on the new one; the `basis`
+    stamp written below is what lets storage.xfv_history_is_on_board_basis detect that and
+    withhold the eFV-delta movement override for that run."""
     from efv_dataset import (_prior_features, _milb_features, _load_sidecars, _cohort_flags,
                              _injury_features, _side_match, _f, CURRENT_SEASON)
     ts_path = DATA_DIR / "timeseries.json"
@@ -1377,8 +1415,6 @@ def score_history(persist: bool = True) -> dict:
         return {"players": 0}
     players = (json.loads(ts_path.read_text(encoding="utf-8")).get("players")) or []
     fit = {s: _fit_production(s) for s in ("hit", "pit")}
-    lam = {s: blend_lambda(s) for s in ("hit", "pit")}
-    gmap = {s: _build_grade_map(s) for s in ("hit", "pit")}
     acq, il = _load_sidecars({p.get("player_key") for p in players if p.get("player_key")})
 
     out = {}
@@ -1424,13 +1460,31 @@ def score_history(persist: bool = True) -> dict:
                 row, cons_war,
                 lambda: max(-2.0, a + b * _predict(ridge, _vec(row, side))),
                 is_pitcher=(side == "pit"))
-            # DISPLAYED (20-80 quantile-scale) grade at this snapshot: guarded blend ->
-            # live grade map, the same transform behind the headline since the 2026-07-06
-            # quantile flip -- so the eFV-history chart is on ONE scale with the badge (no
-            # scale discontinuity at the live point; the pre-flip realized line sat ~5-9
-            # grades below the displayed number).
-            rank_war = (1 - lam[side]) * cons_war + lam[side] * model_war
-            grade = _map_grade(gmap[side], rank_war)
+            # A2 REPOINT, 2026-07-30 (Phase 3.2). The grade at each snapshot is now the
+            # BOARD's own transform -- vf.outcome_implied_fv on that snapshot's model WAR,
+            # the identical function run_live uses for xfv_grade -- instead of the guarded
+            # blend mapped through the retired per-side quantile scale.
+            #
+            # The defect this closes: the series was on a THIRD basis. The board serves
+            # storage.BOARD_GRADE_FIELD (raw xfv_grade) and this built xfv_grade_display
+            # (the rank_war quantile), so 1,504 of 1,568 players with history had a tail
+            # that disagreed with the number on their own card (franklin_arias 58.1 vs
+            # 64.2, jesus_made 59.0 vs 64.6). It rides in THIS commit precisely because the
+            # pooled outcome refit re-scales the board grade anyway: one restamp and one
+            # movement-suppression window instead of two.
+            #
+            # What still separates the tail from the live board, honestly: run_live applies
+            # the injury / age / Statcast / reliever-ceiling tilts and the S-XLINE lean to
+            # xfv_war before grading, and this path has never had as-of values for any of
+            # them. So a TILTED player's last history point sits a little under his board
+            # grade. That is a tilt gap, not a basis gap, and it is the same gap the
+            # quantile version carried; closing it needs as-of tilt inputs, which do not
+            # exist. Measured residual in POOLED_OUTCOME_REFIT.md section 2.6.
+            #
+            # rank_war is deliberately NOT the argument here. The board grade is a function
+            # of the MODEL's WAR, not of the consensus-guarded blend; grading history off
+            # the blend is what put it on a different scale in the first place.
+            grade = vf.outcome_implied_fv(model_war, exposure_seasons=TARGET_SEASONS)
             if grade is None:
                 continue
             series.append({"d": pt["snapshot_date"], "x": round(grade, 1), "c": round(cons_fv, 1)})
@@ -1438,8 +1492,17 @@ def score_history(persist: bool = True) -> dict:
             out[pk] = series
 
     if persist:
-        history_path().write_text(json.dumps({"by_player": out}, separators=(",", ":")),
-                                  encoding="utf-8")
+        # BASIS STAMP. storage.xfv_history_is_on_board_basis reads it and withholds the
+        # eFV-delta movement override while the series belongs to a different board basis
+        # than the one being served -- the suppression the BOARD_RANK_BASIS_EPOCH gate on
+        # metric_snapshots structurally cannot provide, because it cannot see this file.
+        # Written on the artifact rather than inferred, so a stale file is self-describing.
+        import storage as _st
+        history_path().write_text(json.dumps(
+            {"basis": _st.board_basis_fingerprint(),
+             "basis_epoch": _st.BOARD_RANK_BASIS_EPOCH,
+             "generated_at": date.today().isoformat(),
+             "by_player": out}, separators=(",", ":")), encoding="utf-8")
         log.info("wrote %s (%d players)", history_path(), len(out))
     return {"players": len(out)}
 
@@ -1610,25 +1673,25 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         # consensus-surplus writer, so the two adjacent columns agree on debut timing.
         eta = float(eta) if eta is not None else PROSPECT_ETA_FALLBACK_YEARS
         _price_ctx[r["player_key"]] = (age, eta)
-        # Invert the WAR->grade map on the model's OWN window (6 seasons, the model
-        # target), NOT the global clemens control_years=7. A control_years flip for
-        # valuation had silently re-pointed this denominator to 7 seasons, deflating
-        # top-end grades (an elite prospect's 6yr-WAR prediction was priced against a
-        # 7yr FV curve). Monotone -> rank-preserving, so the OOS eval is unchanged.
-        # Age placement via _grade_map_age (bughunt F5): `age` is the CURRENT age,
-        # so eta_to_debut = the row's real/fallback ETA.
+        # OUTCOME-ANCHORED GRADE + PINNED ODDS BASIS -- see run() for the full statement.
+        # This is THE board number (storage.BOARD_GRADE_FIELD): the inverse of the pooled
+        # empirical curve E[first-6yr bWAR | consensus FV]. The board re-ranked when this
+        # landed, which is why BOARD_RANK_BASIS_EPOCH is 2026-07-30 and why the fingerprint
+        # names the curve hash. Nothing priced in dollars moves: surplus re-prices off
+        # xfv_grade_display below, which reads rank_war and never this field.
         _gm_age = _grade_map_age(age, eta)
-        xfv_grade = vf.realized_implied_fv(xfv_war, is_pit, age=_gm_age, position=pos,
-                                           exposure_seasons=TARGET_SEASONS)
-        if xfv_grade is None:
+        xfv_grade = vf.outcome_implied_fv(xfv_war, exposure_seasons=TARGET_SEASONS)
+        _odds_grade = vf.realized_implied_fv(xfv_war, is_pit, age=_gm_age, position=pos,
+                                             exposure_seasons=TARGET_SEASONS)
+        if xfv_grade is None or _odds_grade is None:
             continue
-        probs = vf.p_bucket_given_fv(xfv_grade, is_pit) or []
+        probs = vf.p_bucket_given_fv(_odds_grade, is_pit) or []
         # bughunt F1: raw engine dollars pass through the engine's isotonic
         # calibration at this seam (_cal_mm; percentiles pointwise - monotone).
-        xfv_surplus = vf.expected_surplus_usd(xfv_grade, is_pit, pos, age=age, eta_years=eta)
-        dist = vf.sv_distribution(xfv_grade, is_pit, pos, age=age, eta_years=eta) or {}
+        xfv_surplus = vf.expected_surplus_usd(_odds_grade, is_pit, pos, age=age, eta_years=eta)
+        dist = vf.sv_distribution(_odds_grade, is_pit, pos, age=age, eta_years=eta) or {}
         pcts = dist.get("percentiles") or {}
-        _cx = lambda v, _g=xfv_grade: _cal_mm(v, _g, is_pit)
+        _cx = lambda v, _g=_odds_grade: _cal_mm(v, _g, is_pit)
         def _mm(v):
             return round(float(v), 1) if v is not None else None
         # AUDIT FIX 2026-07-14: gate KRP+ on actual exposure, not the product's
@@ -1960,27 +2023,24 @@ def run_backgrade(persist: bool = True) -> dict:
             _eta_src = (rec.get("surplus") or {}).get("eta_years")
             eta = float(_eta_src) if _eta_src is not None else PROSPECT_ETA_FALLBACK_YEARS
         pos = rec.get("position")
-        # Invert the WAR->grade map on the model's OWN window (6 seasons, the model
-        # target), NOT the global clemens control_years=7. A control_years flip for
-        # valuation had silently re-pointed this denominator to 7 seasons, deflating
-        # top-end grades (an elite prospect's 6yr-WAR prediction was priced against a
-        # 7yr FV curve). Monotone -> rank-preserving, so the OOS eval is unchanged.
-        # Age placement via _grade_map_age (bughunt F5): a graduate's age is
-        # measured at the debut season (eta_to_debut 0.0; the 0.5 pricing eta is
-        # a discount convention, not time-to-debut); active/bust rows carry the
-        # CURRENT age, so eta_to_debut = the row's real/fallback ETA.
+        # OUTCOME-ANCHORED GRADE + PINNED ODDS BASIS -- see run() for the full statement.
+        # The backgrade path flips WITH the other two on purpose: data/xfv.json carries
+        # active, debuted and bust rows in ONE file under ONE field name, so leaving
+        # graduates on the retired map would manufacture exactly the third-basis defect
+        # (A2) that this same commit closes for the history series.
         _gm_age = _grade_map_age(age, 0.0 if kind == "debuted" else eta)
-        xfv_grade = vf.realized_implied_fv(xfv_war, is_pit, age=_gm_age, position=pos,
-                                           exposure_seasons=TARGET_SEASONS)
-        if xfv_grade is None:
+        xfv_grade = vf.outcome_implied_fv(xfv_war, exposure_seasons=TARGET_SEASONS)
+        _odds_grade = vf.realized_implied_fv(xfv_war, is_pit, age=_gm_age, position=pos,
+                                             exposure_seasons=TARGET_SEASONS)
+        if xfv_grade is None or _odds_grade is None:
             continue
-        probs = vf.p_bucket_given_fv(xfv_grade, is_pit) or []
+        probs = vf.p_bucket_given_fv(_odds_grade, is_pit) or []
         # bughunt F1: raw engine dollars pass through the engine's isotonic
         # calibration at this seam (_cal_mm; percentiles pointwise - monotone).
-        surplus = vf.expected_surplus_usd(xfv_grade, is_pit, pos, age=age, eta_years=eta)
-        dist = vf.sv_distribution(xfv_grade, is_pit, pos, age=age, eta_years=eta) or {}
+        surplus = vf.expected_surplus_usd(_odds_grade, is_pit, pos, age=age, eta_years=eta)
+        dist = vf.sv_distribution(_odds_grade, is_pit, pos, age=age, eta_years=eta) or {}
         pcts = dist.get("percentiles") or {}
-        _cx = lambda v, _g=xfv_grade: _cal_mm(v, _g, is_pit)
+        _cx = lambda v, _g=_odds_grade: _cal_mm(v, _g, is_pit)
         entry = {
             "player_key": pk, "side": side, "kind": kind, "position": pos,
             **({"xfv_postdebut_anchor": True} if postdebut_anchor else {}),

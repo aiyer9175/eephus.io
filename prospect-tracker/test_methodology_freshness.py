@@ -83,6 +83,14 @@ MODEL_GLOSSARY = {
     # industry bake-off. Not shipped, rendered nowhere, changes no served number; the
     # reader-facing glossary entry belongs to the Phase-2 grade re-scale, not here.
     "fv_outcome_curves": "internal",
+    # LANE-P2 Phase 2: the SHIPPED grade map. xfv_grade is now the inverse of the pooled
+    # empirical outcome curve, so grade G means "the industry FV whose realized outcome
+    # distribution matches our prediction" rather than "the FV our valuation core expects
+    # this WAR from". That is live eFV scoring behaviour a reader sees on every card, so
+    # it documents to the xfv entry - and that entry's wording is OWED an update to match
+    # (see docs/efv-2026-07-30/POOLED_OUTCOME_REFIT.md; data/glossary.json is another
+    # lane's file this cycle).
+    "fv_outcome_pooled_grade": ["xfv"],
     "xfv_tbs2": "internal",                # W-TBS2 loss ledger (tiebreaker stack FAIL)
     "xfv_ungraded_disc": "internal",       # W-DISC loss ledger (coverage-starved)
     "xfv_role_arg": "internal",            # W-SURPLUS S3 audit-only

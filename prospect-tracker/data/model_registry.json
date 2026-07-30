@@ -694,7 +694,7 @@
    "notes": "DOWNGRADED 2026-07-15 (T1-6 repaired harness, any-direction-fails rule; registry enum has no unvalidated-with-artifact rung so the row stays provisional with this note as the authority): RP->SP FAILS its gate (rho vs war_delta -0.2062, sign-wrong, n=25) and its FIT should not be read as validated; SP->RP PASSES (rho +0.2916, gap lo95 +0.0745 vs best baseline, n=61). DOWNGRADED 2026-07-15 by the T1-6 repaired backtest (tools/pal_backtest_lab.py; zero model-weight changes - the harness was repaired, then the pre-registered gate ran). Repairs: TRUE pre-season scoring (year-1 bug dropped all 18 gap-2 events, 12-13 labeled), pedigree/p_throws set on backtest arms (the +3.0 nudge existed live but not in evaluated scores), per-direction evaluation (the two 0-100 scales were never poolable), continuous war_delta wired as the primary outcome (computed but unused since ship), held labels IP-gated (>=20 IP b+1) + 2025-pending excluded + 2019/2020-censor aware. GATE RESULT: SP->RP PASSES (rho_fit 0.2916 vs best baseline K-BB% -0.097, gap lo95 +0.0745, n=61) - the need-gated demotion screen carries real signal vs naive quality reads. RP->SP FAILS (rho_fit -0.2062 vs best baseline -ERA 0.1023, gap lo95 -0.7517, n=25) - on continuous WAR outcome the promotion FIT is directionally WRONG on this tiny, selection-biased sample (held-label read stays weakly positive at 0.134, n=13, but the gate is war_delta). Per the pre-registered rule (any direction failing downgrades), the row is DOWNGRADED: keep /pal/ as an explicitly-labeled SCREEN; the RP->SP backtest chip must not imply validation. Legacy pooled rho recomputed 0.288 (n=44) - matches pal.json's live stamp; the registered 0.223 was stale data drift, and the metric itself is retired to a reporting field. Data self-computed from bulk Statcast + StatsAPI (FanGraphs 403-blocked). Harness pal_conversion.py / pal_export.py / tools/pal_backtest_lab.py.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "xfv_isotonic_calibration",
@@ -932,7 +932,7 @@
    "notes": "SHIPPED 2026-07 (Wave B1) as the realized-VALUE companion to REM+, the two-number design the owner asked for: REM+ stays pure skill (leverage held out), RIV+ carries the leverage-weighted impact. Pre-registered X-R3 checks both PASSED on the forward-chained pool (2018-2025 ex-2020): (1) RIV+ is materially LESS repeatable year over year than REM+ (riv_plus Y->Y+1 Spearman 0.209 vs REM+ 0.352), which is exactly why leverage stays OUT of the REM+ skill scale and rides here instead; (2) RIV+ aligns with what teams pay RP free agents BETTER than REM+ (rho vs AAV 0.576 vs 0.508, 271 matched signings), so it captures deployed value. Provisional because it is a descriptive realized-value index, not a forward prediction (WPA already encodes the leverage a reliever was given; gmLI is shown as context, never added as free credit). Computed live in rem_plus.score_riv_plus over the scored pool; harness tools/rem_plus_lab.py.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "rem_plus_3yr",
@@ -946,7 +946,7 @@
    "notes": "SHIPPED 2026-07 (Wave B1, X-R2) as a companion display column to single-season REM+ (same pure-skill scale, longer window). Forward-chained OOS (2018-2025 ex-2020): 3-year REM+ forward-predicts next-year RA9 at rho 0.2366 vs single-season REM+ 0.2316 on the SAME 668 arms; the point estimate favors 3yr but the same-set bootstrap gap CI includes 0 (lo95 -0.043), so per the pre-registered rule it ships PROVISIONAL with the r published. Its value proposition is stability, not sharper prediction: single reliever seasons are noisy (split-half REM+ only ~0.34 at 100-150 BF), so a 3-year IP-weighted window is a steadier talent estimate that forward-predicts at least as well. Joined into bullpen_leaderboards.json by MLBAM from the proposed_values block (bullpen_export._join_rem_plus_3yr), like gmli_3yr. Arms need 2+ seasons and 40+ IP for an established tag. Harness tools/rem_plus_lab.py. H-5 (2026-07-05): relabeled as a STEADINESS companion, not a more predictive column. The multi-year eval gate FAILED (3yr forward Spearman does not separably beat the 1yr number; gap 95% interval runs negative), so the glossary + column now frame it as a stability read, not a stronger forecast. Stays provisional.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "rem_plus_swstr",
@@ -960,7 +960,7 @@
    "notes": "REJECTED at its pre-registered gate (Wave B1, X-R1), the owner's central 'make REM+ more than a FIP proxy' ask tested directly and honestly. Hypothesis: shrinking K% toward a SwStr%-implied expected-K prior (SwStr% stabilizes ~50 pitches, faster than K% ~70 BF) beats shrinking toward the pool mean and improves forward run-prevention prediction. bref SwStr% confirmed available for all backtest seasons. RESULT: candidate forward rho 0.2277 vs incumbent 0.2246 on 1036 pairs, gap CI lo95 -0.0066 (< 0) - a wash within noise. The incumbent already regresses K% by sample size; at reliever volumes the observed K% is a strong enough K estimate that a SwStr prior adds no out-of-sample forward signal. NO SHIP: the FIP-based REM+ skill core stays unchanged, REM+ published numbers unchanged. SwStr% still rides as a displayed peripheral. Do not retry without a pitch-level CSW%/xwOBAcon feed. Loss ledger data/rem_plus_swstr_eval.json; harness tools/rem_plus_lab.py.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "sem_plus",
@@ -974,7 +974,7 @@
    "notes": "SHIPPED 2026-07 (Wave B2, X-S1), the starter analog of REM+. Forward-chained OOS 2018-2025 (ex-2020, 702 Y->Y+1 pairs): SEM+ predicts next-year RA9 at rho 0.3923 vs raw FIP 0.358, ERA 0.2612; bootstrap CI on the rho gap beats ERA (lo95 +0.081) and edges its raw-FIP parent (lo95 +0.019), so the empirical-Bayes shrinkage + starter-pool anchoring earn their place. Forward predictiveness is materially higher than REM+ (0.24) because starters carry larger, more stable single-season samples. X-S3 'more than FIP' test REJECTED: a ground-ball-adjusted HR expectation (groundOutsToAirouts) scored 0.3905 vs plain 0.3923, gap lo95 -0.0086, so plain FIP stays (starter samples are large enough that observed HR rate is already a strong estimate; loss ledger inside the same artifact). Durability (IP, GS, average start length) is shown as CONTEXT, never in the skill number; quality starts / times-through-order are not in the StatsAPI season feed. Data from the StatsAPI season pitching leaderboard (FanGraphs 403-blocked); no leverage walk (starters are not leverage-deployed). Harness tools/sem_plus_lab.py; core sem_plus.py (reuses the validated rem_plus FIP machinery). X-S4 (Statcast xwOBA-allowed) TESTED + REJECTED 2026-07-06: over 6 Savant year-pairs (592 starter pairs), xwOBA-allowed forward-predicts next-year RA9 at rho 0.377 vs FIP 0.382 (a 0.5x/0.5x blend 0.384, gap vs FIP lo95 -0.053, CI spans 0), so contact-quality-allowed is redundant with what FIP already strips out; the FIP core stays. (Unlike hitters, where xwOBA strips the batter own BABIP luck and DID beat actual wOBA -> shipped xHEM+.) HARNESS-V2 RESTAMP 2026-07-15: the shipped n=702 VALIDATED verdict included 111 mid-2026 partial targets; corrected n=592 is STILL VALIDATED and stronger (rho 0.4167 v1 / 0.4200 v2). Zero gate flips across the 8-family restamp (see results_by_convention in each artifact).",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14,
+   "artifact_age_days": 15,
    "card": {
     "n": 592,
     "window": "2018-2024 ex-2020, forward pairs, complete outcome seasons only (harness v2 restamp)",
@@ -1000,7 +1000,7 @@
    "notes": "SHIPPED 2026-07 (Wave B2, X-S2) as a companion display column to single-season SEM+ (same skill scale, longer window). Forward-chained OOS (2018-2025 ex-2020, 457 arms): 3-year SEM+ forward-predicts next-year RA9 at rho 0.4141 vs single-season SEM+ 0.3922 on the same set; the point estimate favors 3yr (+0.022, a larger gain than the reliever 3yr case) but the same-set bootstrap gap CI includes 0 (lo95 -0.0257), so per the pre-registered rule it ships PROVISIONAL with the r published. Value is a steadier talent estimate. Joined into starter_leaderboards.json by MLBAM from proposed_values (starter_export._join_sem_plus_3yr), like gmli_3yr. Arms need 2+ seasons and 120+ IP for an established tag. Harness tools/sem_plus_lab.py. H-5 (2026-07-05): relabeled as a STEADINESS companion, not a more predictive column. The multi-year eval gate FAILED (3yr forward Spearman does not separably beat the 1yr number; gap 95% interval runs negative), so the glossary + column now frame it as a stability read, not a stronger forecast. Stays provisional.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "hem_plus",
@@ -1014,7 +1014,7 @@
    "notes": "SHIPPED 2026-07-05, the hitter analog of REM+/SEM+. Each wOBA component (unintentional walks, HBP, singles, doubles, triples, HR) is empirical-Bayes-shrunk toward the hitter pool by its own reliability constant (walks fast, extra-base hits slow), recombined with the FanGraphs wOBA linear weights, and re-anchored so the pool average scores 100; HEM+ = 100 * shrunk wOBA / pool wOBA (a ratio-to-league index, the wRC+/OPS+ family, NOT a z-score). Forward-chained OOS 2012-2024 (ex-2020, 3372 Y->Y+1 pairs): HEM+ predicts next-year wOBA at rho 0.4123 vs raw wOBA 0.4089, OPS 0.411, AVG 0.2348; bootstrap CI on the rho gap decisively beats AVG (lo95 +0.145) and holds even-or-ahead of its raw-wOBA parent (lo95 -0.009 >= -0.01), so the component shrinkage + hitter-pool anchoring earn their place. Volume (PA), baserunning (SB), and the slash line are shown as CONTEXT, never in the skill number. Data from the cached StatsAPI season hitting leaderboard (fa_sources). Harness tools/hem_plus_lab.py; core hem_plus.py (reuses the validated rem_plus shrink machinery).",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14,
+   "artifact_age_days": 15,
    "card": {
     "n": 3372,
     "window": "2012-2024 ex-2020, forward pairs",
@@ -1040,7 +1040,7 @@
    "notes": "SHIPPED 2026-07-05 (X-H2) as a companion column to single-season HEM+ (same skill scale, longer window). Forward-chained OOS (2012-2024 ex-2020, 2382 hitter pairs): 3-year HEM+ forward-predicts next-year wOBA at rho 0.4548 vs single-season HEM+ 0.4275 on the same set; the bootstrap same-set gap CI clears zero (lo95 +0.0062), so it ships VALIDATED (stronger than the SEM+ 3yr case, which was provisional -- hitters carry larger, steadier PA samples). Joined into hitter_leaderboards.json by MLBAM from proposed_values (hitter_export._join_hem_plus_3yr), like sem_plus_3yr. Hitters need 2+ seasons and 600+ PA over the trailing 2024-2026 window for an established tag. Harness tools/hem_plus_lab.py.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14,
+   "artifact_age_days": 15,
    "card": {
     "n": 2382,
     "window": "2012-2024 ex-2020, forward pairs",
@@ -1066,7 +1066,7 @@
    "notes": "SHIPPED 2026-07-05 (X-H3) as a deserved-offense companion to HEM+. Forward-chained OOS over 8 year-pairs 2016-2025 (ex-2020, 1871 pairs): Savant xwOBA predicts next-year wOBA at rho 0.4543 vs actual wOBA 0.4108; the bootstrap gap CI clears zero (lo95 +0.0173), so xwOBA is decisively the more forward-stable talent signal and xHEM+ earns its place. It is a COMPANION, not a replacement: Savant is MLB-only + min-BBE gated, so xHEM+ stamps only tracked hitters with a real sample (min 100 Savant PA -- a 1-PA player who homered is not 'deserving' a 244). No further shrink (xwOBA is already de-luck'd). Luck = xHEM+ - HEM+: positive = under-performing his contact (room to bounce back), negative = over-performing (due to regress). Joined in hitter_export._join_xhem_plus from mlb_player_export._savant. Harness tools/xhem_plus_lab.py.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14,
+   "artifact_age_days": 15,
    "card": {
     "n": 1871,
     "window": "2016-2025 ex-2020, forward pairs",
@@ -1351,7 +1351,7 @@
    "notes": "LOSS LEDGER. Point rho 0.4876 beat both incumbents (+0.0110 vs stronger) but lo95 -0.0148; multi-year pooling carries the signal, the xwOBA+decay increment is noise at this n. Do not retry without more outcome years.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "rem_sem_3yr_decay",
@@ -1365,7 +1365,7 @@
    "notes": "LOSS LEDGER. RP: decay==flat (secondary lo95 -0.0051); SP: 3yr never significantly beats 1yr (primary lo95 -0.0128). KEEP-ALIVE recorded: extended-window RP evidence (d0.8 vs 1yr lo95 +0.0018 at n=1405) suggests the existing flat rem_plus_3yr provisional may clear validated under its own pre-registered re-gate.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "xfv_side_fairness",
@@ -1393,7 +1393,7 @@
    "notes": "LOSS LEDGER, clean fail: pit composite -0.0012 (P=0.503) vs required +0.0035; clauses b-e all passed. M4's keep-alive cell (+0.0082) evaporated via the 2026-07-14 label repair, not the lambda re-selection (frozen-lambda decomposition -0.0032). The alpha-criterion line (M4 + this) is now FULLY CLOSED. Seed 20260715, 2000 reps.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "xfv_promo_watch",
@@ -1407,7 +1407,7 @@
    "notes": "Zero output change; editorial_eval registration pattern. Tags: C-RP 21, C-KBB 32, deep-consensus 3, strict-quantile 36. GRADE-GATE reading disclosed in-artifact (xfv_grade >= 45 count-pinned vs quantile n=36; both adjudicable). Deploy-excluded via data_exclude.txt.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "fwdhem_plus",
@@ -1421,7 +1421,7 @@
    "notes": "SHIPPED 2026-07-15 (X-H5, wave-3 T1-3) as the forward companion to xHEM+. Forward-chained OOS on the X-H3 pair set (2016-2025 ex-2020, 1871 pairs): the blend predicts next-year wOBA at rho 0.4658 vs xwOBA-alone 0.4543 (HEM core alone 0.4147); paired bootstrap gap CI mean +0.0114, lo95 +0.0038 under the pre-registered v1 convention. pass_under_v2 = FALSE (clustered season-stratified bootstrap on the within-outcome-season z target reads the gap as mean +0.0015, lo95 -0.0069): the v1 gate was pre-declared and STANDS per the harness-v2 interpretation rules, but the v2 read is carried in the artifact for the next re-baseline. The competing decayed-multiyear candidate (X-H4, xhem_multiyear_decay) FAILED its gate, so this single-season blend is the declared incumbent forward column. Production join: hitter_export._join_fwdhem_plus (unrounded hem_plus_raw off the scored Hitter objects; blend re-standardized over the joined pool and mapped onto the pool's own HEM+ mean/sd, monotone, so the shipped ordering IS the validated ordering). Same Savant gating as xHEM+ (MLB-only, min 100 Savant PA); companion column, not population-complete. Harness tools/xhem_plus_lab.py (X-H5 arm).",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14,
+   "artifact_age_days": 15,
    "card": {
     "n": 1871,
     "window": "2016-2025 ex-2020, forward pairs",
@@ -1447,7 +1447,7 @@
    "notes": "LOSS LEDGER. SEM+ tuning cleared decisively (K_HR axis monotone, winner m=3 x K_HR=2000 +0.0223) but holdout failed (lo95 -0.0147, v2 -0.0169); REM+ winner actively reverts OOS (-0.0064). Honest revisit path is 2026+ holdout seasons.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "phem_marcel_lite",
@@ -1461,7 +1461,7 @@
    "notes": "SHIP EXECUTED 2026-07-15 (owner display decision: 'Display pWOBA'): the gate was won by the EXISTING fa_projection engine (0.5189 vs best incumbent 0.4939, lo95 +0.0010, pass_under_v2 true, 918 OOS pairs) so the ship is a re-anchor - hitter_export._join_pwoba computes projected next-season wOBA per tracked hitter from the cached point-in-time engine (mirrors proj_export._veteran_rows; MIN_PA 100). Pitcher leg FAILED (lo95 -0.0133) and stays a loss ledger. 2026-07-15b loss ledgers: (a) xwOBA output-blend on woba_proj (data/xwoba_projection_blend_eval.json) point +0.0092 but lo95 -0.0014 -> NO-SHIP, knife-edge refused; keep-alive: re-gate at extended n. (b) EV/barrel residual arm (data/pwoba_ev_arm_eval.json, statcast caches backfilled 2016-2023) REGRESSES (lo95 -0.017) -> EV-on-pWOBA lane closed; consistent with the 2026-06-23 proj_ml EV rejection.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "pal_gamelog_lanes",
@@ -1475,7 +1475,7 @@
    "notes": "pal_gamelogs.py ships as infrastructure (sportId=1 game-log walk, .cache/pal_gamelogs, 733 games cached). Lane B stamina lane FAILED (sign-check -0.0013; candidate code stays in pal_conversion as gated candidate-only, nothing live calls it). RP->SP stays sign-wrong on the expanded set (-0.1736) - the downgrade stands. Lane C census (89 strict attempts, ~85% audit precision) feeds nothing.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "velo_decline",
@@ -1489,7 +1489,7 @@
    "notes": "LOSS LEDGER. REM+ directionally positive (+0.0063) but never separable from zero (lo95 -0.0026); SEM+ directionally NEGATIVE (-0.0059, v2 borderline significantly worse). Loss-subset decline is real (next RA9 4.81 vs 4.65) and velo-not-age (counterfactual inert) - just insufficient. Velo decline stays a display peripheral. Lab: tools/velo_decline_lab.py.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "fbhr_csw_priors",
@@ -1503,7 +1503,7 @@
    "notes": "LOSS LEDGER x2. X-R5 xFIP-lite: gap mean NEGATIVE (-0.0025, lo95 -0.0228) - conditioning the HR target on shrunk FB rate does not transfer to the REM+ architecture; the named rem_plus.py deferral is CLOSED. X-R1b: +0.0055 mean but lo95 -0.0045, and the mechanism read is decisive (rho(xK_multi, K% Y+1)=0.417 vs raw K% 0.537) - the K-PRIOR LANE IS CLOSED PERMANENTLY per the pre-registered consequence (SwStr X-R1 + CSW X-R1b both dead; no third whiff-proxy retry). Infrastructure shipped: tools/win_prob_walker.py (per-pitcher-season fb/csw/tto table off .cache/win_prob) + tools/offline_leverage.py (leverage rebuilt offline from cached payloads - kills the live-fetch trap). Lab: tools/fbhr_csw_labs.py.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "park_shrink_targets",
@@ -1517,7 +1517,7 @@
    "notes": "LOSS LEDGER. 0/15 cells positive (3 models x 3 s x 2 conventions; best +0.0001). Extreme-park SEM+ cell significantly NEGATIVE (-0.0236) - the prior hurts most where it should help most. Mechanism: targets are raw next-season RA9/wOBA and players mostly KEEP their park, so the park-inflected component of the incumbent is itself predictive; park-adjusting the prior removes real signal. Park-shrink-target thread CLOSED against raw targets.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "hem_age_layer",
@@ -1531,7 +1531,7 @@
    "notes": "LOSS LEDGER by DOMINANCE. The age signal is real (hinge ~-0.72 HEM+ pts/yr over 30; beats HEM+ everywhere, v2 lo95 +0.0022; stacks on xwOBA) but v1 clause 2 fails vs pooled raw wOBA AND the FA-engine projection DOMINATES the candidate by ~7 rho points (0.5284 vs 0.4585) - convergent with phem_marcel_lite: aging belongs to the projection layer (fa_projection), not the descriptive + indexes. Pitchers 6/6 grid FAIL. Rejected fourth entry for docs/aging-curves.md.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "xfv_role_ceiling",
@@ -2091,6 +2091,20 @@
    "eval_artifact": "data/fv_outcome_curves.json",
    "verdict": "provisional",
    "notes": "NOT SHIPPED and changes no served number: this lane fits the curves and runs the bake-off, Phase 2 owns the grade re-scale. Pre-registration docs/efv-2026-07-30/FV_OUTCOME_CURVES_GATE.md, written before the first fit; five deviations from it are recorded in the artifact's deviations_from_pre_registration block, all of them repairs to the shrinkage/monotonization rule rather than findings. Pool 1,500 hit / 1,537 pit uncensored resolved rows, x = consensus_fv verified identical to matrix consensus_fv_raw and PRE-DEBUT (efv_dataset._asof_point keeps snapshot_date strictly < the debut cutoff), y = realized_war_6yr verified identical to target_censored, the label efv_score scores; censoring sensitivity carried as a second curve set on all rows weighted by observed_seasons/6. WHAT THE BAKE-OFF MEASURED. The four talent-frame (Quantity A) candidates lose decisively and by construction, exactly as FANGRAPHS_FV_FRAMEWORK D5 predicts: raw held-out MAE hit/pit McDaniel 4.61/4.43 and primer 3.06/2.99 and fv_to_prime_war 3.87/3.68 against per-side curves 1.57/1.15, all six folds. Among the three bust-inclusive candidates the differences are INSIDE the gate standard's MAE floor: per-side vs Clemens 2026 -0.037 hit / -0.026 pit, per-side vs the shipped fv_to_6yr_avg_war +0.091 hit / +0.004 pit. The one contest that clears its floor is calibration SLOPE against the shipped map on hitters: per-side 1.001 vs shipped 1.453, delta |slope-1| -0.452 CI90 [-0.519,-0.114], zero excluded. THE SIDE SPLIT ITSELF IS A MEASURED NULL. Against a side-label-permuted zero-information control the per-side curve is +0.043 MAE hit (worse) and -0.007 pit, both inside the MDE, and its slope advantage CI90 straddles zero on both sides ([-0.039,+0.031] hit, [-0.084,+0.080] pit). Against a pooled refit of our own data it is +0.065 hit / -0.058 pit, again inside the MDE. So the measured win belongs to REFITTING THE CURVE ON RESOLVED OUTCOMES, not to splitting the sides; the side split is a product decision the resolved cohorts cannot adjudicate at current n, which is the same conclusion CROSS_SIDE_WAR_FINDING.md reached about the top of the board. Pitcher knots at FV >= 60 rest on 11 pool rows and are 83-100 pct prior, so the pitcher top end IS the Clemens table and must be described as such. Counterfactual Phase-2 inputs (report only): the ten named players move -5.5 to -0.3 FV, and the implied top-100 pitcher count goes 6 -> 17 under the per-side inversion but 6 -> 8 under a pooled one, which localizes the whole cross-side effect in the split. Within-side monotonicity holds exactly (0 order violations on 2,104 hit / 2,416 pit live rows), so a Phase-2 ship would leave per-side rank quantiles and therefore surplus pricing untouched. Lab tools/fv_outcome_curves_lab.py.",
+   "last_checked": "2026-07-30",
+   "stale": false,
+   "artifact_age_days": 0
+  },
+  {
+   "model_id": "fv_outcome_pooled_grade",
+   "surface": "THE eFV grade (xfv_grade) and therefore the joint board ordering, site-wide - SHIPPED 2026-07-30; docs/efv-2026-07-30/POOLED_OUTCOME_REFIT.md",
+   "predicts": "the industry-scale FV whose realized first-6yr bWAR distribution matches the model's predicted WAR6 for a player",
+   "champion": "inversion of the POOLED (side-neutral) empirical outcome curve E[first-6yr total bWAR | consensus FV], fit on 3,037 resolved uncensored rows by weighted PAVA isotonic regression shrunk toward the Clemens 2026 per-side prior (50/50 averaged) at K=30 pseudo-rows, re-monotonized strictly increasing, with the FV20-35 sub-floor knots produced by the production concave re-spread (value_framework._LOWEND_FG_EXP = 0.45)",
+   "baseline": "the shipped side-neutral inversion value_framework.realized_implied_fv, which inverts the valuation core's OWN forward expected-WAR map rather than a measured outcome curve",
+   "metric": "held-out (forward-chained by decision year, 6 folds) calibration slope of realized on implied, per side, from the Phase-1 bake-off; head-to-head by paired player-clustered bootstrap against the EFV_GATE_STANDARD MAE MDE95",
+   "eval_artifact": "data/fv_outcome_curves_pooled.json",
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07-30, owner-decided, and it CHANGES A SERVED NUMBER. The gate is the one contest in the whole Phase-1 bake-off that cleared its floor with a CI excluding zero: refitting the WAR-to-grade map on RESOLVED OUTCOMES beats the shipped anchor on hitter calibration slope, 1.001 vs 1.453, d |slope-1| -0.452 CI90 [-0.519,-0.114] (data/fv_outcome_curves.json, head_to_head raw|hit|empirical_perside_vs_shipped_anchor). POOLED, NOT PER SIDE: Phase 1's own pre-registered reject criteria fired on the split. Against a side-label-PERMUTED zero-information control the per-side curve is +0.043 MAE WORSE on hitters and -0.007 on pitchers, both inside the MAE MDE95, and its slope advantage CI90 straddles zero on both sides; against a pooled refit it is +0.065 hit / -0.058 pit, also inside the MDE. The entire top-100 pitcher move 6 -> 17 came from that null component (a pooled curve reproduces the incumbent board at 6 -> 8), so the split does not ship and the measured win - refitting on outcomes at all - does. BLAST RADIUS, measured by a full before/after re-score of all three efv_score paths on identical inputs (the OLD arm is efv_score's own source with the three grade-map lines substituted back, loaded and run in the SAME process as the new one so the live nightly pipeline cannot churn the inputs between them): SURPLUS IS BYTE-IDENTICAL, 0 differing (row, field) pairs across surplus_mm / band_p10_mm / band_p90_mm / consensus_surplus_mm / the six dist dollar fields on all 13,201 rows, because surplus re-prices off xfv_grade_display which reads rank_war and never this grade. The OUTCOME ODDS are byte-identical too, 0 differing pairs on p_bust and all five p_bucket keys, because they are deliberately PINNED to the retired realized_implied_fv map (_odds_grade) rather than re-keyed - they are ground-truthed probabilities and re-keying them is a change nothing here measured; the counterfactual magnitude of re-keying is recorded in the gate doc as an owner call. EXACTLY TWO FIELDS MOVE: xfv_grade and xfv_minus_consensus. On the live board 457 of 1,971 hit rows and 726 of 2,293 pit rows change grade, mean signed +0.52 hit / +1.84 pit, mean |dFV| 0.94 / 1.92, max 10.7 / 10.8. Board ranks: 1,060 of 4,264 rows move, median |move| 4, max 27, top-100 membership 100 held / 0 entered / 0 left, top-25 2 in / 2 out - two orders of magnitude smaller than the 2026-07-25 basis flip (median 417, max ~3.5k). Top-N side mix unchanged on identical inputs at EVERY cut (top100 12P both ways); the counterfactual on the served artifact reproduces Phase 1's pooled column EXACTLY (10H/0P, 24H/1P, 47H/3P, 92H/8P), which is how we know the persisted curve is the fit the owner approved. DIRECTION, stated because it contradicts the plan that ordered it: the re-scale does not lift pitchers, it deflates the hitter top end and lifts the low end of both sides. Named players all fall: jesus_made 64.8 -> 60.8, franklin_arias 64.2 -> 60.3, luis_hernandez 54.9 -> 50.3, seth_hernandez 56.3 -> 52.2, caden_hunter 48.7 -> 47.7 (the plan predicted ~50-51 for him). The largest movers are the opposite end, near-zero-WAR arms going 26.7 -> 37.5, because the sub-floor re-spread now anchors on the curve's FV35 value (0.069 WAR) instead of its FV45 value (~2.2). SIDE EFFECT WORTH THE SHIP ON ITS OWN: the grade is now a pure function of predicted WAR, so within-side order violations of xfv_grade against xfv_war_6yr go 86 hit / 52 pit (live) and 254 / 159 (resolved) to ZERO - the retired map's age and position arguments were graded two equal predictions differently. NOT OUTCOME-CALIBRATED BELOW ~FV 45: the pool has no row under consensus FV 34.9, the measured curve spans only 0.07 to 2.27 WAR across FV 35-45, and 71 pct of live board rows sit under the data floor. The FV 57.5-and-up knots are 57-97 pct Clemens prior on 8/23/2/12/2/1 rows and are the published table, not our measurement (Phase 1 C4 carries over). Coordinated ship: storage.BOARD_RANK_BASIS_EPOCH 2026-07-25 -> 2026-07-30, BOARD_BASIS_FINGERPRINT extended to name the curve's content hash (the incumbent fingerprint named only the field and the side-scale flag and would NOT have noticed this re-rank), PINNED_MIX deliberately not re-recorded because the flip does not breach its band. Lab tools/fv_outcome_curve_pooled.py, which imports tools/fv_outcome_curves_lab.py rather than re-implementing the fit.",
    "last_checked": "2026-07-30"
   },
   {
@@ -2133,7 +2147,7 @@
    "notes": "COVERAGE-STARVED 2026-07-24: features exist only for 2023+ feeds; all covered rows are 2024 debuts outside the training window (decision_year<=2023 needed), so the ridge gives them exact zero weight -> forced delta 0.0; the 36 covered test rows also have target_censored 0.0. Extraction + frozen features reusable; revival ~2027 when 2025-debut rows enter training.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 5
+   "artifact_age_days": 6
   },
   {
    "model_id": "xfv_role_arg",
@@ -2189,7 +2203,7 @@
    "notes": "SHIPPED 2026-07-24b: the [0.50,0.70] band was a board-movement cap on repaired labels; hit 0.85 lifts pooled Spearman 0.3787->0.3835 (+0.0048 lo95 +0.0001) and contributor AUC 0.7727->0.7758 (+0.0031 lo95 +0.0003), scoreboard-confirmed. Pit held 0.61 (raising it lowered AUC). The single biggest eFV accuracy gain of the program. (Wave H rebuilt-matrix re-select artifact data/xfv_surplus_recal_eval.json) (Wave H rebuilt-matrix re-select artifact data/xfv_wave_h_eval.json)",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 5
+   "artifact_age_days": 6
   },
   {
    "model_id": "xfv_weight_recal",
@@ -2203,7 +2217,7 @@
    "notes": "NO SHIP 2026-07-24b: alpha auto-select survives; iso_rel/peak_iso_rel/kbb fail on repaired labels too (upholds the power-overpricing correction - not a label artifact). Weight audit surfaced: hit n_milb_seasons fits NEGATIVE (-0.36) despite documented +1 direction - flagged for a future feature-direction gate.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 5
+   "artifact_age_days": 6
   },
   {
    "model_id": "xfv_cap_sweep",
@@ -2217,7 +2231,7 @@
    "notes": "2026-07-24b: honest answer - NONE of the eFV input caps are board-movement compression; they are input guards / a shrink hyperparameter / a safety floor. Removing the age_rel_level +-3.5 clamp LOWERS hit OOS (load-bearing). The one accuracy lever = LOOSEN reliability shrink K 100/80->50/40 (trust rates more; all 4 deltas non-negative, CI-neutral) but it is matrix-rebuild-coupled to A1/A2 - DEFERRED, not shipped this pass. Wave H 2026-07-24d (owner decision queue): reliability shrink K loosened 100/80->50/40 (matrices rebuilt; scoreboard no regression - hit held 0.3834/AUC up, pit gained 0.303); n_milb_seasons KEPT (neg ridge weight is collinear work not corruption); lambda re-confirmed hit 0.85/pit 0.54. KRP+ display decoupled from the zeroed model feature (pill true-signed, eFV grades byte-identical) + era_rel display-winsorized +-6.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 5
+   "artifact_age_days": 6
   },
   {
    "model_id": "xfv_statcast_overlay_uncapped",
@@ -2231,7 +2245,7 @@
    "notes": "SHIPPED 2026-07-24b: the W-OVERLAY-R signals failed only on the removed display ceiling. Uncapped, default ON for 405 hit + 228 pit covered players; live board moves up to 5.0 FV / 325 ranks (the display ceiling, not DELTA_CAP, was load-bearing). run_live only - resolved OOS Spearman/AUC unaffected. Uncovered players byte-identical. Supersedes the deprecated xfv_statcast_overlay row.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 5
+   "artifact_age_days": 6
   },
   {
    "model_id": "xfv_ungraded_recal",
@@ -2245,7 +2259,7 @@
    "notes": "SHIPPED 2026-07-24b (owner: same for provisional grades): OOS-invariant by construction (harness scores raw war, not the grade); top de-compresses hit 48->50.3, pit 37.7->40.1. Honest note: the soft cap was INFLATING grades just above the knee (slope 1.5/1.6), so 39 mid-band grades correctly tick down while the tail de-compresses - true-to-model both directions.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 5
+   "artifact_age_days": 6
   },
   {
    "model_id": "plus_metric_recal",
@@ -2273,7 +2287,7 @@
    "notes": "2026-07-24b: ZERO ships. Every PAL/FA clamp is numerical/domain safety, a bounded-by-construction screen definition, or accuracy-load-bearing measured on the real gate (FA Gate-2 reproduced byte-identical baseline; a de-clamp did not improve it). Confirms A3/B1: FA/eFV input caps are guards, not eFV-style tail compression.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 5
+   "artifact_age_days": 6
   },
   {
    "model_id": "c3_proj_trans_recal",
@@ -2371,7 +2385,7 @@
    "notes": "SHIPPED 2026-07-25. Fit n=9,101 player-seasons / 1,872 players, R2 0.9821, residual MAE 0.675 runs per 650 PA; coefficient CI95 half-width ~0.10 runs clustered by player. ACCURACY GATE: held-out dMAE 0.4819 runs per 650 PA (paired-bootstrap CI95 [0.4577, 0.5028]), 4/4 splits positive, p_empirical_better 1.0, against a zero-information control at CI95 [-5.12, -4.92] that confirms the protocol discriminates. SHAPE GATE: all 9 slots clear their H0 band (C 31.4x, 1B 22.9x, DH 11.6x, SS smallest at 1.8x); shipped ladder C +10.91 / SS +8.76 / CF +3.53 / 2B +4.51 / 3B +3.36 / LF -6.47 / RF -6.41 / 1B -8.53 / DH -14.04. IDENTIFICATION: innings shares sum to 1, so the LEVEL of the ladder is unidentified and only the SHAPE is a claim; a permutation null that shuffles y is INVALID here (a refit 9-parameter model trivially beats a fixed table on random labels) and was rejected as a gate. SERVED IMPACT: NONE -- A/B with the ladder as the only difference leaves data/def_home.json byte-identical across all 2,478 records, so NO GOLDEN RESTAMP is required. The justification is CORRECTNESS (a measured table replacing folklore), not a rank gain. CAVEAT recorded in the artifact: era drift (C 1.32 runs, 2B 1.03) EXCEEDS the sampling CIs, so the shipped ladder is a 2000-2026 average rather than a current-era table. Specification sensitivity: PA-weighted fit shifts <=0.19 runs; min_pa 400 shifts ~0.4 runs.",
    "last_checked": "2026-07-30",
    "stale": false,
-   "artifact_age_days": 4
+   "artifact_age_days": 5
   },
   {
    "model_id": "efv_board_side_scale",
@@ -2772,7 +2786,9 @@
    "eval_artifact": "data/tool_grade_tables.json",
    "verdict": "provisional",
    "notes": "MASTER PLAN 2026-07-30 PHASE 4 (LANE-TOOLS). Gates pre-registered in docs/efv-2026-07-30/TOOL_GRADE_TABLES.md section 1 BEFORE the first table was fitted. Verdict is `provisional` in the registry's own sense (measured, but descriptive-only correlation): these are measurement tables, not a forecaster, and nothing forward was gated. HEADLINE: our measured tool curves are FLATTER than every published table at every tool in both contexts; measured SD per 10 grade points is 0.84-0.97 for fastball velocity and only 0.43-0.67 for the hitting tools, so the FanGraphs 10-points-is-one-SD claim survives only where we measure the quantity precisely (the ratio is a lower bound; per-player sampling noise inflates the denominator). AUDIT CELLS: fastball velocity confirms Baseball America and refutes the FanGraphs 2014 column as stale (our SP 50 = 93.0 mph, BA 93, FG 90-91; BA exact at 50/55/65, FG cold by 1.6-2.5 at all four auditable cells). Game power disagrees with BA at 55 in all three frames and at 60 in two of three (the age-26 60 cell has n=24 and a CI too wide to separate) by 4.9-9.3 HR while agreeing with FanGraphs at both, and reverses at 40/50 where BA is closer: BA's home-run-era recentring over-corrected at the top. Hit tool: FanGraphs and BA agree with each other (framework doc X4 control holds) and both are hot above 50. Smith W2's stolen-base table survives at 50 and 60; his UZR/150 and Fld/3 tables are hot (a 50 field grade measures -0.25 runs, not +1.5, which vindicates Smith's own flagged qualified-population caveat); his SP and RP control tables are too steep above 50. Published adjustments tested at matched grade: the 1 mph left-hander deduction CONFIRMED at 1.19 mph, the 1-2 mph reliever addition measures only 0.59 mph and is reported as a lower bound because our role split is realized MLB usage. NO MEASUREMENT (findings, not gaps): throw/arm, pitch_sel, bat_ctrl (the Savant minors bat_speed column is empty in every row), delivery, athl, frame; speed is proxy-only because no sprint speed, 60-yard or home-to-first time exists anywhere in the tree, so both published speed tables (seconds) are unauditable. Context handled within player: AAA minus MLB exit velocity is -0.06 mph (CI -0.23 to +0.12, n 422), so the upper-minors EV table reads on the MLB scale directly; every other quantity carries a measured offset on its row. INVENTIONS, each pre-registered: INV-1 measurement-implied tool grade PASSES on 9 of 13 tool-context cells and fails 4 on flag rate because compressed bands make the inverse ill-conditioned; INV-2 per-source drift index finds MLB Pipeline's tool grades run hot vs FanGraphs' on EVERY tool in both contexts on paired players (fb -3.35, hit -2.54, speed -2.50, field -2.33, game_pwr -1.47 grade points in the MLB context, fb -3.89 and hit -3.69 in the upper minors, every CI excluding zero), and Baseball America is NOT COMPUTABLE because BA contributes zero tool grades across the whole 2011-2026 snapshot history; INV-3 per-tool grade aging is descriptive and list-retention confounded (contact and command grades decay, power grades rise). NONE of the three is wired into consensus weighting or eFV scoring; each needs its own accuracy gate. Lab tools/tool_grade_tables_lab.py (offline, read-only, --write to regenerate).",
-   "last_checked": "2026-07-30"
+   "last_checked": "2026-07-30",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "position_observed",
