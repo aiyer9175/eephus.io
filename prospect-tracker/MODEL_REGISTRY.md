@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-30**. `validate()` at generation time: **clean**.
 
-**189 models.** Verdicts: validated: 34, provisional: 71, unvalidated: 24, deprecated: 60.
+**191 models.** Verdicts: validated: 34, provisional: 71, unvalidated: 26, deprecated: 60.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -199,6 +199,8 @@ stamped as of **2026-07-30**. `validate()` at generation time: **clean**.
 | `war_ip_plus_rp` | /mlbstats/ Bullpen Leaderboards, WAR/IP+ column (reliever... | nothing forward; DESCRIPTIVE DISPLAY INDEX. Pitching bWAR banked per inning, indexed 100 + 10z over RELIEVERS with 20+ IP | war_ip_plus v1, RELIEVER pool anchor (unshrunk, 100 + 10z, no clamp) | plain season bWAR, the same rate left unstandardized, and negated runs allowe... | forward-chained Spearman Y->Y+1 WAR/IP on same-role pairs, player-clustered s... | **unvalidated** | - | - | - |
 | `war_rate_plus_3yr` | /mlbstats/ WAR/PA+ 3yr and WAR/IP+ 3yr companion columns... | nothing forward on the starter pool; a steadier read of the same descriptive index over a trailing 3-season denominator-weighte... | denominator-weighted trailing-3-season mean of the single-season WAR-rate index | the single-season index on the SAME pair set, against next season's WAR rate | forward-chained Spearman Y->Y+1 WAR rate, 3yr vs 1yr same-set, player-cluster... | **unvalidated** | - | - | - |
 | `tool_grade_tables` | none served. Derived reference tables only: docs/efv-2026... | nothing forward. Descriptive: the empirical distribution of a MEASURED outcome (exit velocity, hard-hit and barrel rates, home... | per-grade median with p25/p75 and a 2000-resample player-clustered bootstrap... | the published industry tables themselves: FanGraphs S3 2014 objective table,... | per tool: player-grain Spearman of measurement on unrounded grade with bootst... | **provisional** | `data/tool_grade_tables.json` | - | - |
+| `position_observed` | none served yet. fielding_positions.observed_position / o... | nothing forward. Descriptive: the position a prospect has actually PLAYED the most in the minors (most games, DH/PH/PR excluded... | argmax games over non-DH positions in the StatsAPI career fielding census, ex... | the served FanGraphs projection (consensus._latest_meta) | disagreement rate against the served projection, descriptive only | **unvalidated** | - | - | - |
+| `pitcher_role_usage` | role_usage.usage_position_override at the storage.py expo... | whether a pitching prospect is really a starter or a reliever, from current-season MiLB games started rather than from the FanG... | usage_role: SP when GS-share >= 0.50 AND IP/G >= 3.0 AND IP >= 20; RP when IP... | the FanGraphs SP/MIRP/SIRP forward-projection | flip counts per direction and the resulting change in efv_score._RP_DESIGNATI... | **unvalidated** | - | - | - |
 
 Stored problems at last refresh: none.
 

@@ -449,6 +449,19 @@ MODEL_GLOSSARY = {
     # the three inventions is ever wired into a display or a weight, that lane
     # ships its own glossary entry and this line changes with it.
     "tool_grade_tables": "internal",
+    # --- position + role assignment (2026-07-30, master plan Phase 5).
+    # Both "internal" because neither is served: position_observed is a pure
+    # resolver nothing reads yet (wiring it needs storage.py), and the
+    # generalized both-directions half of pitcher_role_usage is default-OFF.
+    # Nothing on the site changed, so there is no term for a reader to look up.
+    # The shipped half of pitcher_role_usage (rule D, relief label + starter
+    # usage -> SP) has always been an invisible label correction rather than a
+    # published number. Methodology text is
+    # docs/efv-2026-07-30/POSITION_ROLE_GATE.md. When a consumer starts reading
+    # position_observed, or the both-directions flag is switched on, that lane
+    # ships the glossary entry and changes these two lines with it.
+    "position_observed": "internal",
+    "pitcher_role_usage": "internal",
 }
 
 

@@ -71,6 +71,105 @@ def versa_positions(by_pos: dict[str, dict],
     return [pos for pos, _ in qual]
 
 
+# Defensive spectrum, hardest first. Used ONLY as the last tie-break in
+# observed_position: when two positions are level on games AND on starts,
+# the harder one is the meaningful assignment (industry convention, and the
+# one the scarcity model prices). Stating the order makes the resolver
+# deterministic; the shipped versa sort breaks its ties on dict-insertion
+# order, which is whatever the StatsAPI happened to return.
+_SPECTRUM = ["C", "SS", "CF", "2B", "3B", "RF", "LF", "1B", "OF", "IF", "P"]
+_SPECTRUM_RANK = {pos: i for i, pos in enumerate(_SPECTRUM)}
+
+
+def observed_position_detail(by_pos: dict[str, dict],
+                             min_games: int = VERSA_MIN_GAMES,
+                             min_starts: int = VERSA_MIN_STARTS) -> dict | None:
+    """Most-played NON-DH position from a game-data `by_pos` map, with detail.
+
+    The owner ask ("hitter position should be based on what position they've
+    played the most in the minors") answered from the fielding census rather
+    than from a scouting projection. Returns
+    ``{"pos", "g", "gs", "share", "tie", "qualified"}`` where `share` is the
+    position's fraction of the player's non-DH fielding games, `tie` flags that
+    the top position was decided by a tie-break rather than won outright on
+    games, and `qualified` records that the top position cleared the exposure
+    floor.
+
+    Rules, all pre-registered in docs/efv-2026-07-30/POSITION_ROLE_GATE.md:
+
+    * DH / PH / PR are never eligible (`_NON_FIELD`, same set versa uses). A
+      player whose largest bucket is DH resolves to his largest FIELDING
+      bucket; a player with nothing but DH/PH/PR resolves to None.
+    * Exposure floor: the winner must clear `>= min_games` games OR
+      `>= min_starts` starts - the SAME thresholds versa already qualifies on,
+      so no new tunable enters the system. Below that this returns None rather
+      than naming a position off three cameo games.
+    * Ties break deterministically on (games, starts, defensive spectrum,
+      name), never on dict order.
+
+    Returns None for an empty / all-DH / below-floor map. Never raises on
+    malformed counts (non-numeric entries read as 0).
+    """
+    if not by_pos:
+        return None
+
+    def _n(v) -> int:
+        try:
+            return int(v or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    cands = [(pos, _n(v.get("g")), _n(v.get("gs")))
+             for pos, v in by_pos.items()
+             if pos and pos not in _NON_FIELD]
+    cands = [c for c in cands if c[1] > 0 or c[2] > 0]
+    if not cands:
+        return None
+    total_g = sum(c[1] for c in cands)
+    cands.sort(key=lambda c: (-c[1], -c[2],
+                              _SPECTRUM_RANK.get(c[0], len(_SPECTRUM)), c[0]))
+    pos, g, gs = cands[0]
+    tie = len(cands) > 1 and cands[1][1] == g
+    qualified = g >= min_games or gs >= min_starts
+    if not qualified:
+        return None
+    return {"pos": pos, "g": g, "gs": gs,
+            "share": round(g / total_g, 4) if total_g else 0.0,
+            "tie": bool(tie), "qualified": True}
+
+
+def observed_position(by_pos: dict[str, dict],
+                      min_games: int = VERSA_MIN_GAMES,
+                      min_starts: int = VERSA_MIN_STARTS) -> str | None:
+    """Most-played non-DH position, or None. Thin wrapper on
+    observed_position_detail - see that docstring for every rule."""
+    d = observed_position_detail(by_pos, min_games, min_starts)
+    return d["pos"] if d else None
+
+
+def load_observed_positions(path: str | Path = "data/positions_played.json",
+                            min_games: int = VERSA_MIN_GAMES,
+                            min_starts: int = VERSA_MIN_STARTS) -> dict[str, str]:
+    """{player_key: observed_position} over the whole sidecar.
+
+    Players whose census is empty, all-DH, or below the exposure floor are
+    OMITTED (not mapped to None), so a caller's `.get(key)` returns None for
+    "no observation" whichever way the player got there. Missing or malformed
+    file yields an empty map: this must never be able to break an export.
+    """
+    try:
+        doc = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    out: dict[str, str] = {}
+    for pk, rec in (doc.get("players") or {}).items():
+        pos = observed_position((rec or {}).get("by_pos") or {},
+                                min_games, min_starts)
+        if pos:
+            out[pk] = pos
+    return out
+
+
 def build_positions_played(players: list[dict],
                            out_path: str | Path = "data/positions_played.json",
                            throttle: float = 0.05,

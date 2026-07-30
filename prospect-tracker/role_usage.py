@@ -36,6 +36,52 @@ IP_MIN = 20.0
 # tokens all live in this set (e.g. "MIRP/SIRP") qualify too.
 _RELIEF_ROLE_TOKENS = {"MIRP", "SIRP"}
 
+# --- Rule D generalized (Phase 5.2, DEFAULT OFF) ---------------------------
+# The owner ask is that GAMES STARTED decide starter-vs-reliever, which is
+# rule D running in BOTH directions rather than only RP -> SP. The reverse
+# direction is not symmetric with the forward one and must not be shipped as
+# if it were:
+#
+#   * "GS-share >= 0.50 AND IP/G >= 3.0 AND IP >= 20" was validated as a
+#     SUFFICIENT condition for "this arm is really a starter". Its NEGATION is
+#     not a validated sufficient condition for "this arm is really a
+#     reliever" - it also catches every swingman, every rehabbing starter on
+#     a pitch count, and every tandem-rotation arm.
+#   * So the reverse direction gets its own, deliberately STRICTER test, with
+#     an UNADJUDICATED BAND between the two. GS-share in (0.25, 0.50), or a
+#     reliever's GS-share paired with a starter's IP/G, returns None: usage
+#     declines to rule and the FanGraphs designation stands.
+#
+# The opener guard survives unchanged and now runs the direction it always
+# implied: an opener (high GS-share, ~1.1 IP/G) fails the SP test, and at
+# GS-share <= 0.25 passes the RP test, which is the correct answer for an
+# opener. Between 0.25 and 0.50 he keeps his published label.
+RP_GS_SHARE_MAX = 0.25
+
+# Labels the reverse direction may overwrite. Split three ways because the
+# blast radius differs per group (see docs/efv-2026-07-30/POSITION_ROLE_GATE.md):
+#   _STARTER_ROLE_TOKENS  SP -> RP puts a row INTO efv_score._RP_DESIGNATIONS.
+#   _ROLELESS_PITCHER_TOKENS  a handedness-only or bare-P label carries no role
+#                         at all, so usage is strictly more information than
+#                         what is there now - but P -> RP still enters the RP set.
+_STARTER_ROLE_TOKENS = {"SP"}
+_ROLELESS_PITCHER_TOKENS = {"P", "RHP", "LHP"}
+
+# The label emitted when usage says reliever. Generic "RP" rather than a
+# guessed SIRP/MIRP split: choosing between single- and multi-inning would need
+# an IP/G cut nobody has validated, and "RP" is already a member of
+# efv_score._RP_DESIGNATIONS, so the downstream semantics are exact.
+_RP_LABEL = "RP"
+
+# MASTER SWITCH, default False. With it off, usage_position_override behaves
+# EXACTLY as shipped rule D (RP -> SP only) and this module changes no served
+# number. Turning it on moves board output: rows entering _RP_DESIGNATIONS
+# become eligible for efv_score._role_factor's reliever-ceiling haircut, which
+# per plan ground rule 4 requires a storage.BOARD_RANK_BASIS_EPOCH bump, a
+# BOARD_BASIS_FINGERPRINT restamp and a PINNED_MIX update in the same commit.
+# That is an owner call with an epoch bump attached, not a default.
+USAGE_ROLE_BOTH_DIRECTIONS = False
+
 
 def starter_by_usage(g, gs, ip) -> bool:
     """Rule D: is this season line starter-shaped?
@@ -57,6 +103,44 @@ def starter_by_usage(g, gs, ip) -> bool:
     if g_f <= 0 or ip_f < IP_MIN:
         return False
     return (gs_f / g_f) >= GS_SHARE_MIN and (ip_f / g_f) >= IP_PER_G_MIN
+
+
+def reliever_by_usage(g, gs, ip) -> bool:
+    """The reverse of rule D: is this season line UNAMBIGUOUSLY relief-shaped?
+
+    True only when IP >= IP_MIN (20) AND GS-share <= RP_GS_SHARE_MAX (0.25)
+    AND IP/G < IP_PER_G_MIN (3.0). Both share and length must agree, so a
+    long-relief swingman (few starts, 3+ IP an outing) and a tandem starter
+    (starts a third of the time) are NOT called relievers - they fall in the
+    unadjudicated band and keep their published label.
+
+    Deliberately NOT the negation of starter_by_usage. Missing or non-numeric
+    inputs return False (never flip on bad data).
+    """
+    try:
+        g_f = float(g)
+        gs_f = float(gs)
+        ip_f = float(ip)
+    except (TypeError, ValueError):
+        return False
+    if g_f <= 0 or ip_f < IP_MIN:
+        return False
+    return (gs_f / g_f) <= RP_GS_SHARE_MAX and (ip_f / g_f) < IP_PER_G_MIN
+
+
+def usage_role(g, gs, ip) -> str | None:
+    """"SP" / "RP" / None - what the usage line alone says the role is.
+
+    None is a first-class answer meaning "usage declines to rule": no line, too
+    few innings, or a shape inside the unadjudicated swingman band. Callers
+    fall back to the published designation on None; they must never read it as
+    a reliever.
+    """
+    if starter_by_usage(g, gs, ip):
+        return "SP"
+    if reliever_by_usage(g, gs, ip):
+        return _RP_LABEL
+    return None
 
 
 def _ip_outs(ip) -> int:
@@ -123,24 +207,55 @@ def current_season_pitching(mlbam, season) -> dict | None:
     return {"g": g, "gs": gs, "ip": round(outs / 3.0, 2)}
 
 
-def usage_position_override(position, mlbam, season):
+def usage_position_override(position, mlbam, season, both_directions=None):
     """Rule D applied to a consensus position label.
 
-    Returns "SP" when `position` is a relief-role label (MIRP / SIRP /
-    a slash-combo of the two, case-insensitive) AND the player's
-    current-season MiLB usage is starter-shaped per starter_by_usage.
-    Every other case (non-relief label, missing mlbam, uncached season,
-    reliever-shaped usage) returns the input unchanged. Defensive by
-    construction: no data ever flips a label.
+    DEFAULT (both_directions falsy): returns "SP" when `position` is a
+    relief-role label (MIRP / SIRP / a slash-combo of the two,
+    case-insensitive) AND the player's current-season MiLB usage is
+    starter-shaped per starter_by_usage. Every other case (non-relief
+    label, missing mlbam, uncached season, reliever-shaped usage)
+    returns the input unchanged. Defensive by construction: no data ever
+    flips a label.
+
+    BOTH-DIRECTIONS (Phase 5.2, `both_directions=True` or the module
+    switch USAGE_ROLE_BOTH_DIRECTIONS): usage becomes the PRIMARY role
+    source for pitchers, per the owner ask that games started decide
+    starter-vs-reliever. On top of the default behaviour it also
+    overwrites an "SP" label with "RP" on unambiguously relief-shaped
+    usage, and resolves the role-less pitcher labels ("P", "RHP", "LHP")
+    in either direction. The published designation remains the fallback
+    for every row usage_role declines to rule on.
+
+    DEFAULT OFF. The reverse direction moves board output - an "RP"
+    label is a member of efv_score._RP_DESIGNATIONS and therefore
+    eligible for the reliever-ceiling haircut - so switching it on is an
+    owner call carrying a BOARD_RANK_BASIS_EPOCH bump. Blast radius
+    measured in docs/efv-2026-07-30/POSITION_ROLE_GATE.md.
     """
+    if both_directions is None:
+        both_directions = USAGE_ROLE_BOTH_DIRECTIONS
     if not position or mlbam is None:
         return position
     tokens = [t.strip().upper() for t in str(position).split("/") if t.strip()]
-    if not tokens or not set(tokens) <= _RELIEF_ROLE_TOKENS:
+    if not tokens:
+        return position
+    tokset = set(tokens)
+    is_relief = tokset <= _RELIEF_ROLE_TOKENS
+    reversible = bool(both_directions) and (
+        tokset <= _STARTER_ROLE_TOKENS or tokset <= _ROLELESS_PITCHER_TOKENS)
+    if not is_relief and not reversible:
         return position
     line = current_season_pitching(mlbam, season)
     if not line:
         return position
-    if starter_by_usage(line.get("g"), line.get("gs"), line.get("ip")):
-        return "SP"
-    return position
+    role = usage_role(line.get("g"), line.get("gs"), line.get("ip"))
+    if role is None:
+        return position
+    if is_relief:
+        # Shipped rule D: relief label, starter usage -> SP. Relief usage
+        # on a relief label is a confirmation, not a change.
+        return "SP" if role == "SP" else position
+    if role == "SP" and tokset <= _STARTER_ROLE_TOKENS:
+        return position          # already SP, nothing to say
+    return role
