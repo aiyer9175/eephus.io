@@ -79,6 +79,10 @@ MODEL_GLOSSARY = {
     # and no additive re-basing can change a gap between two players graded by the
     # same source set). Loss ledger, nothing user-facing to document.
     "xfv_gradenorm_basis": "internal",
+    # LANE-CURVES Phase 1 measurement artifact: per-side FV -> outcome curves + the
+    # industry bake-off. Not shipped, rendered nowhere, changes no served number; the
+    # reader-facing glossary entry belongs to the Phase-2 grade re-scale, not here.
+    "fv_outcome_curves": "internal",
     "xfv_tbs2": "internal",                # W-TBS2 loss ledger (tiebreaker stack FAIL)
     "xfv_ungraded_disc": "internal",       # W-DISC loss ledger (coverage-starved)
     "xfv_role_arg": "internal",            # W-SURPLUS S3 audit-only
@@ -436,6 +440,15 @@ MODEL_GLOSSARY = {
     # vintage artifact with three blocks.
     "war_rate_plus_3yr": ["war_pa_plus_3yr", "war_ip_plus_sp_3yr",
                           "war_ip_plus_rp_3yr"],
+    # --- derived tool-grade measurement tables (2026-07-30, master plan Phase 4).
+    # "internal" by construction: the row documents a REFERENCE TABLE, not a
+    # served number. Nothing on the site reads data/tool_grade_tables.json, so
+    # there is no glossary term for a reader to look up; the reader-facing
+    # write-up is the Phase 6 explainer, built FROM this artifact, and the
+    # methodology text is docs/efv-2026-07-30/TOOL_GRADE_TABLES.md. If any of
+    # the three inventions is ever wired into a display or a weight, that lane
+    # ships its own glossary entry and this line changes with it.
+    "tool_grade_tables": "internal",
 }
 
 
