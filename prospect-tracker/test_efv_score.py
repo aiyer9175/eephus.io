@@ -102,6 +102,90 @@ def test_injury_factor_bounds():
         assert 0.5 <= efv_score._injury_factor(r) <= 1.0
 
 
+def test_injury_factor_short_il_is_days_aware():
+    """B1 (2026-07-30) companion to test_injury_factor_bounds.
+
+    The MiLB 7-day IL is the default landing spot for ANY minor-league injury, so
+    the designation carries no severity information and used to price at the same
+    0.90 as an unclassified serious one. Measured case: seth_hernandez, il_type
+    '7-day', FOUR trailing IL days, one stint -> 0.90 -> -1.25 FV -> 18 board spots.
+    """
+    def f(**kw):
+        return efv_score._injury_factor({"il_on": 1, **kw})
+
+    # 1. A handful of IL days cannot cost anywhere near 10% of projected WAR.
+    #    The measured seth_hernandez row: 4 days, 1 stint on the 7-day IL.
+    assert f(il_type="7-day", il_days_12mo=4.0, il_stints_12mo=1.0) > 0.97
+    # 2. ... but a genuinely long absence still does. The mild ramp saturates at
+    #    the INCUMBENT flat value, so nothing at or past the saturation point moved.
+    assert f(il_type="7-day", il_days_12mo=efv_score._IL_MILD_FULL_DAYS,
+             il_stints_12mo=1.0) == pytest.approx(efv_score._IL_MILD_FLOOR, abs=1e-9)
+    assert f(il_type="7-day", il_days_12mo=200.0, il_stints_12mo=1.0) == \
+        pytest.approx(round(efv_score._IL_MILD_FLOOR * 0.82, 3), abs=1e-9)
+    # 3. Monotone non-increasing in days missed, and never outside the band.
+    prev = 1.0
+    for d in range(0, 400, 5):
+        v = f(il_type="7-day", il_days_12mo=float(d), il_stints_12mo=1.0)
+        assert 0.5 <= v <= 1.0
+        assert v <= prev + 1e-9, f"factor rose as days rose at {d}"
+        prev = v
+    # 4. The severity types are NOT days-scaled (the type is informative there),
+    #    and the MiLB full-season IL has its own branch instead of falling through
+    #    to the mild one -- otherwise a season-ending injury with few accumulated
+    #    days would be RELIEVED. Its value is an open owner decision, so all this
+    #    pins is that it is never milder than the mild floor.
+    assert f(il_type="60-day", il_days_12mo=1.0) == pytest.approx(0.70, abs=1e-9)
+    assert f(il_type="60-day", il_days_12mo=45.0) == pytest.approx(0.70, abs=1e-9)
+    assert f(il_type="full-season", il_days_12mo=7.0) <= efv_score._IL_MILD_FLOOR + 1e-9
+    # 5. An ACTIVE stint with zero trailing days AND zero trailing stints is a
+    #    placement older than the 12-month window (the LONGEST absences on the
+    #    board, 29 live rows), not a fresh one -- it must not get the day-0 pass.
+    assert f(il_type="7-day", il_days_12mo=0.0, il_stints_12mo=0.0) == \
+        pytest.approx(efv_score._IL_MILD_FLOOR, abs=1e-9)
+    # ... while a player placed TODAY carries a stint and IS at day 0.
+    assert f(il_type="7-day", il_days_12mo=0.0, il_stints_12mo=1.0) == \
+        pytest.approx(efv_score._IL_MILD_DAY0, abs=1e-9)
+    # 6. The two standing owner directives are untouched by the days-awareness.
+    assert efv_score._injury_factor({"il_on": 0, "il_type": "7-day",
+                                     "il_days_12mo": 118.0}) == 1.0   # healthy = no penalty
+    assert efv_score._injury_factor({"is_post_tj": True}) == 1.0       # post-TJ status alone
+
+
+def test_injury_factor_matches_the_committed_live_board():
+    """The 30 (type, days, stints) shapes that the shipped live matrices actually
+    carry stay inside the band, and the ONLY direction B1 can move a live row is UP:
+    every combination is at least as forgiving as the retired flat dispatch."""
+    def retired(r):
+        t = str(r.get("il_type") or "").lower()
+        f = 0.70 if "60" in t else (0.82 if ("15" in t or "10" in t) else 0.90)
+        days = float(r.get("il_days_12mo") or 0.0)
+        if days >= 120:
+            f *= 0.82
+        elif days >= 60:
+            f *= 0.90
+        if float(r.get("il_stints_12mo") or 0.0) >= 3:
+            f *= 0.92
+        return round(max(0.5, f), 3)
+
+    seen = set()
+    for fn in ("xfv_live_hitter_matrix.json", "xfv_live_pitcher_matrix.json"):
+        p = DATA / fn
+        if not p.exists():                       # matrices are build artifacts
+            pytest.skip(f"{fn} not built")
+        for r in json.loads(p.read_text(encoding="utf-8")):
+            if not r.get("il_on"):
+                assert efv_score._injury_factor(r) == 1.0
+                continue
+            new, old = efv_score._injury_factor(r), retired(r)
+            assert 0.5 <= new <= 1.0
+            assert new >= old - 1e-9, (
+                f"B1 made a live row HARSHER: {r.get('il_type')} "
+                f"{r.get('il_days_12mo')}d {r.get('il_stints_12mo')}st {old} -> {new}")
+            seen.add(str(r.get("il_type")))
+    # the live board only ever produces these three designations
+    assert seen <= {"7-day", "60-day", "full-season"}, seen
+
+
 @pytest.mark.parametrize("side", ["hit", "pit"])
 def test_statcast_factor_bounded_pm18pct(side):
     # SC+ is a 100-centered index; extreme values on either side clamp to +/-18%

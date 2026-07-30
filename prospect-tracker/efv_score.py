@@ -558,6 +558,37 @@ def _age_at(birth_date, year):
         return None
 
 
+# ---------------------------------------------------------------------------
+# Live prospect-age ramp (C3, 2026-07-30)
+# ---------------------------------------------------------------------------
+# The ONSET is the owner's policy dial (master plan D2). It is a named constant so
+# that changing the policy is a one-line edit with a measured table behind it, and
+# it is DEFAULTED TO THE INCUMBENT 25.0, so this commit is output-neutral: at 25.0
+# the ramp below is arithmetically identical to the retired hard gate.
+#
+# The slope and floor are deliberately HELD FIXED while the onset moves, so the dial
+# has exactly one meaning ("how early does age start costing a prospect"). Measured
+# board effect of each candidate onset is tabled in docs/efv-2026-07-30/EFV_LANE_GATES.md.
+# Do not pick an onset here from an accuracy metric: the debuted-only eval pool is
+# survivorship-censored against the never-debut old-prospect class this ramp exists to
+# price, which is why it shipped owner-directed rather than fitted in the first place.
+_AGE_PENALTY_ONSET = 25.0    # OWNER DIAL (D2). Candidates measured: 22.0 / 23.0 / 24.0 / 25.0
+_AGE_PENALTY_PER_YR = 0.10   # haircut per year past the onset
+_AGE_PENALTY_FLOOR = 0.75    # reached at onset + 2.5 yr
+
+
+def _age_ramp(age, onset: float = None, per_yr: float = None, floor: float = None) -> float:
+    """Continuous, monotone non-increasing age haircut. 1.0 at and below the onset,
+    then -per_yr per year, floored. Pure function of age so the gate lab can sweep the
+    onset without touching the module state."""
+    if age is None:
+        return 1.0
+    onset = _AGE_PENALTY_ONSET if onset is None else onset
+    per_yr = _AGE_PENALTY_PER_YR if per_yr is None else per_yr
+    floor = _AGE_PENALTY_FLOOR if floor is None else floor
+    return round(max(floor, min(1.0, 1.0 - per_yr * (float(age) - onset))), 3)
+
+
 def _age_factor(r) -> float:
     """Owner-directed live prospect-age penalty (2026-07-14, the Andrew Moore
     directive: a 26.9yo AA reliever must not rank top-100). A multiplicative
@@ -568,17 +599,21 @@ def _age_factor(r) -> float:
     coefficient is honest but small because the debuted-only training pool is
     survivorship-censored - the 26yo org arms who never got a shot are not in
     it, so the data cannot support the penalty the owner (correctly) wants
-    priced. Ramp: 1.0 through age 25, -0.10/yr after, floored at 0.75
-    (age 27.5+). Transparent via the "Prospect age penalty" factor chip."""
+    priced. Ramp: 1.0 through _AGE_PENALTY_ONSET, -_AGE_PENALTY_PER_YR/yr after,
+    floored at _AGE_PENALTY_FLOOR. Transparent via the "Prospect age penalty" chip."""
     age = r.get("age_now")
     if age is None:
         age = (r.get("milb") or {}).get("age")
-    if age is None or float(age) <= 25.0:
-        return 1.0
-    return round(max(0.75, 1.0 - 0.10 * (float(age) - 25.0)), 3)
+    return _age_ramp(age)
 
 
 _RP_DESIGNATIONS = {"SIRP", "MIRP", "RP", "CL"}
+# Reliever-ceiling ramp (C3). Derived, not tuned: with the shared -0.10/yr slope, the
+# offset that makes the ramp pass through the retired staircase's tier midpoints
+# (25.5 -> 0.80, 26.5 -> 0.70) is -1.5 yr from the age-penalty onset. Floor 0.70 is
+# the retired staircase's own floor.
+_ROLE_RAMP_OFFSET_YR = -1.5
+_ROLE_PENALTY_FLOOR = 0.70
 
 
 def _role_factor(r, model_war: float) -> float:
@@ -598,16 +633,79 @@ def _role_factor(r, model_war: float) -> float:
     dial, not an accuracy claim; forward-adjudicated by the F-WATCH C-RP
     cohort kill rule (data/xfv_promo_watch.json) and bounded by the F-SIDE S4
     anti-blanket-penalty gate (mid-board pitcher outperformance must not
-    flip)."""
+    flip).
+
+    C3 2026-07-30: the retired form was a STAIRCASE - 1.0 below 25.0, then a flat
+    0.80 on [25, 26) and 0.70 above - so it stepped TWENTY points of projected WAR at
+    exactly age 25.0 and another ten at 26.0. Two arms an hour apart in birth date
+    could land two tiers apart. It is now the same ramp as _age_factor: same
+    -_AGE_PENALTY_PER_YR/yr slope, moving with the same owner onset dial, offset by
+    _ROLE_RAMP_OFFSET_YR so it passes through the retired staircase's own tier
+    MIDPOINTS - (25.5, 0.80) and (26.5, 0.70) - which is what keeps each tier's
+    central tendency where the owner directive put it instead of re-tuning the policy
+    under cover of a shape fix. Floor stays 0.70.
+
+    Blast radius, measured on the live board before the change: the staircase bound
+    only 7 rows, all at grade <= 42.6 and none inside the top 300, so this is a
+    correctness fix on a tiny population, not a re-pricing of the bullpen."""
     pos = str(r.get("position") or "").upper()
     if pos not in _RP_DESIGNATIONS or model_war < 1.5:
         return 1.0
     age = r.get("age_now")
     if age is None:
         age = (r.get("milb") or {}).get("age")
-    if age is None or float(age) < 25.0:
-        return 1.0
-    return 0.70 if float(age) >= 26.0 else 0.80
+    return _age_ramp(age, onset=_AGE_PENALTY_ONSET + _ROLE_RAMP_OFFSET_YR,
+                     floor=_ROLE_PENALTY_FLOOR)
+
+
+# ---------------------------------------------------------------------------
+# Live IL severity dispatch (B1, 2026-07-30)
+# ---------------------------------------------------------------------------
+# MiLB carries only TWO IL designations, and neither maps onto MLB's:
+#   "7-day"       the DEFAULT landing spot for ANY minor-league injury, a jammed
+#                 thumb and a torn UCL alike. It is a roster mechanic, not a
+#                 severity read, and it is 62% of the live board's IL rows.
+#   "full-season" out for the year.
+# MLB uses 10-day / 15-day / 60-day. The pre-2026-07-30 dispatch was
+# "60" -> 0.70, "15"/"10" -> 0.82, ELSE -> 0.90, which shipped two live defects:
+#   1. a 7-day stint priced at 0.90, i.e. IDENTICALLY to an unclassified serious
+#      injury. Measured: seth_hernandez, il_type "7-day", FOUR trailing IL days,
+#      one stint -> 0.90 -> -1.25 FV -> 18 board spots.
+#   2. the MiLB FULL-SEASON IL also fell to that else-branch at 0.90, so a
+#      season-ending injury was priced MILDER than an MLB 60-day stint.
+# The dispatch below keeps a type-based severity wherever the type is informative,
+# and prices the UNINFORMATIVE types (7-day, plus anything unrecognized) on DAYS
+# ACTUALLY MISSED: a ramp from _IL_MILD_DAY0 at day 0 to _IL_MILD_FLOOR (the old
+# flat else-value) once the absence is real. The ramp SATURATES at
+# _IL_MILD_FULL_DAYS, strictly below the 60/120-day chronicity modifiers, so days
+# are never counted twice -- every row those modifiers can reach is already
+# pinned at the floor, exactly where the old code put it.
+_IL_MILD_DAY0 = 0.99        # active short/unclassified stint, nothing missed yet
+_IL_MILD_FLOOR = 0.90       # ... and once a month is gone (the old flat else-value)
+_IL_MILD_FULL_DAYS = 30.0   # a-priori: one month of a ~5-month MiLB season
+_IL_SEVERE = 0.70           # MLB 60-day IL (unchanged)
+_IL_MODERATE = 0.82         # MLB 15-day / 10-day IL (unchanged)
+# OPEN OWNER DECISION (B1b, registered in docs/efv-2026-07-30/EFV_LANE_GATES.md).
+# "full-season" now has its OWN branch, because leaving it in the days-aware else
+# would RELIEVE season-ending injuries that have not yet accumulated trailing days
+# (a full-season row at 7 days would read 0.97) -- a new defect, worse than the one
+# B1 fixes. On severity it belongs with the 60-day stint at _IL_SEVERE: out for the
+# year cannot be milder than out for two months. But moving it there is a 0.15-0.20
+# factor cut on 64 live rows, which is board movement the owner has not authorized,
+# so the default is pinned to the INCUMBENT value and this commit's only served
+# movement is the authorized short-IL relief. Measured effect of the _IL_SEVERE
+# setting is tabled in the gate doc; flip only on the owner's call.
+_IL_FULL_SEASON = _IL_MILD_FLOOR
+_IL_SEVERE_TYPES = ("60",)              # 60-day IL
+_IL_MODERATE_TYPES = ("15", "10")       # MLB 15-day / 10-day IL
+_IL_FULL_SEASON_TYPES = ("full-season", "full season")   # MiLB full-season IL
+
+
+def _il_mild_factor(days: float) -> float:
+    """Days-scaled haircut for an IL type that carries no severity information.
+    Linear from _IL_MILD_DAY0 (day 0) to _IL_MILD_FLOOR (_IL_MILD_FULL_DAYS+)."""
+    frac = min(1.0, max(0.0, days) / _IL_MILD_FULL_DAYS)
+    return _IL_MILD_DAY0 - (_IL_MILD_DAY0 - _IL_MILD_FLOOR) * frac
 
 
 def _injury_factor(r) -> float:
@@ -627,17 +725,40 @@ def _injury_factor(r) -> float:
     (Josue Briceno: back from a 60-day stint, but ~108 trailing IL days held a
     x0.90 haircut on his card the day he returned). Trailing IL days/stints now
     only DEEPEN the haircut while the player is actually on the IL; the moment
-    il_on clears, the penalty clears with it."""
+    il_on clears, the penalty clears with it.
+
+    B1 2026-07-30: the type dispatch is now DAYS-AWARE for the IL designations that
+    carry no severity information (the MiLB 7-day, and anything unrecognized), and
+    the MiLB full-season IL is classified as severe instead of falling to the mild
+    else-branch. See the _IL_* block above for the mechanism and the measured case."""
     if not r.get("il_on"):
         return 1.0
     t = str(r.get("il_type") or "").lower()
-    f = 0.70 if "60" in t else (0.82 if ("15" in t or "10" in t) else 0.90)
     days = float(r.get("il_days_12mo") or 0.0)
+    stints = float(r.get("il_stints_12mo") or 0.0)
+    # An ACTIVE stint contributing ZERO trailing days AND ZERO trailing stints can
+    # only mean the placement predates the 12-month window: storage._health_profile
+    # counts open stints with their elapsed days, so the only way an on-IL player
+    # scores 0/0 is a `since` older than the 365-day cutoff (measured: 29 live rows,
+    # placed 2025-03 to 2025-07 and still on the IL). Those are the LONGEST absences
+    # on the board and a naive days ramp would hand them a free pass, so the mild
+    # branch reads them at the saturated floor. A player placed TODAY has stints=1,
+    # days=0 and is correctly treated as day 0. `days` itself is left alone so the
+    # 60/120-day chronicity modifiers keep their exact prior behaviour on these rows.
+    mild_days = days if (days > 0.0 or stints > 0.0) else _IL_MILD_FULL_DAYS
+    if any(k in t for k in _IL_SEVERE_TYPES):
+        f = _IL_SEVERE
+    elif any(k in t for k in _IL_FULL_SEASON_TYPES):
+        f = _IL_FULL_SEASON
+    elif any(k in t for k in _IL_MODERATE_TYPES):
+        f = _IL_MODERATE
+    else:
+        f = _il_mild_factor(mild_days)
     if days >= 120:
         f *= 0.82
     elif days >= 60:
         f *= 0.90
-    if float(r.get("il_stints_12mo") or 0.0) >= 3:
+    if stints >= 3:
         f *= 0.92
     return round(max(0.5, f), 3)
 
@@ -1743,10 +1864,62 @@ def run_backgrade(persist: bool = True) -> dict:
                 cons_fv=cons_fv, is_pitcher=is_pit,
                 acq_year=a_sc.get("year"))
         rank_war = (1 - lam[side]) * cons_war + lam[side] * xfv_war
+        # ── LIVE-OVERLAY COVERAGE ON THIS PATH (B2, audited 2026-07-30) ──────────
+        # This path used to apply _injury_factor and nothing else, which read as a
+        # coverage gap because the live path stacks inj * statcast * age * role plus
+        # the S-XLINE lean and the side-fairness display fix. Audited row by row:
+        #
+        #  * AGE + ROLE are wired below. Both are OWNER DIRECTIVES about ACTIVE
+        #    prospects ("a 26.9yo AA reliever must not rank top-100"), and this path
+        #    serves 257 active board rows that run_live abstains on (no pro track
+        #    record) - 10 of them inside the served top 100. Leaving the directives
+        #    off here left exactly the Andrew Moore hole open on the one cohort the
+        #    model cannot see. They were previously unreachable rather than
+        #    deliberately exempt: _age_factor reads age_now / milb.age and this row
+        #    carries neither, the same dead-code shape the 2026-07-14 IL fix closed.
+        #    MEASURED BLAST RADIUS: ZERO. Of the 257 active rows, 8 have a resolvable
+        #    age at all and none is over 25.0, and none is RP-designated at 25+, so
+        #    every factor is exactly 1.0 and every served grade/rank/dollar is
+        #    byte-identical. This wires a directive shut, it does not move the board.
+        #  * DEBUTED / BUST rows (4,811 of 5,068) stay exempt BY DESIGN, not by
+        #    omission. Both penalties are documented LIVE-board-only ("never the
+        #    resolved eval"), and these rows are anchored at a historical snapshot
+        #    whose age is the age AT THAT SEASON - taxing a 2016 graduate's as-of-2015
+        #    grade with a 2026 age penalty would be a category error.
+        #  * The STATCAST tilt and the S-XLINE lean stay exempt: both price a
+        #    MODEL-leg production signal, and 2,525 of these rows (1,279 pitchers)
+        #    are prior-anchored with no MiLB block at all, so there is no model leg
+        #    to tilt - the tilt would land on a consensus/draft-slot anchor instead.
+        #    Measured: exactly ONE of the 257 active rows carries a statcast_plus,
+        #    tilt 1.007, which cannot move a 0.1-rounded grade. Declined, not
+        #    overlooked; overlay level-reliability is separately re-gated in B4.
+        #  * SIDE-FAIRNESS stays exempt because it reassigns a per-side SCORED
+        #    POOL's top-band display-value multiset, and this path has no pool of its
+        #    own: it maps onto run_live's grade scale (_build_grade_map), which the
+        #    fix has ALREADY been applied to. Running it again would double-apply.
+        #  * TOP-100 ELIGIBILITY is deliberately NOT restricted. The alternative
+        #    considered was excluding this path from the top 100; measured, that
+        #    deletes 10 of the served top 100 - roch_cholowsky #4, eric_booth_jr #25,
+        #    tyler_bell #32, grady_emerson #46, vahn_lackey #47, drew_burress #62,
+        #    aj_gracia #71, jackson_flora #77, zion_rose #89, jacob_lombard #92 -
+        #    i.e. the entire top of the 2026 draft class, whose only defect is not
+        #    having played a pro game yet. A no-track-record row is already flagged
+        #    xfv_provisional for every consumer that wants to treat it differently.
         inj = _injury_factor(row) if kind == "active" else 1.0   # graduate prospect-era IL is moot
-        if inj < 1.0:
-            factors.insert(0, {"label": "Injury penalty", "dir": "down", "mag": round((1 - inj) * 6, 2)})
-            xfv_war = _apply_war_tilt(xfv_war, inj)         # sign-aware (negative-war safe)
+        agef = rolef = 1.0
+        if kind == "active":
+            _prow = {"age_now": rec.get("age_now") or _age_at(rec.get("birth_date"), CURRENT_SEASON),
+                     "position": rec.get("position")}
+            agef = _age_factor(_prow)
+            rolef = _role_factor(_prow, xfv_war)
+        for _pf, _plabel in ((inj, "Injury penalty"), (agef, "Prospect age penalty"),
+                             (rolef, "Reliever ceiling")):
+            if _pf < 1.0:
+                factors.insert(0, {"label": _plabel, "dir": "down",
+                                   "mag": round((1 - _pf) * 6, 2)})
+        _pen = inj * agef * rolef
+        if _pen != 1.0:
+            xfv_war = _apply_war_tilt(xfv_war, _pen)        # sign-aware (negative-war safe)
             # Tilt the model term only, then rebuild the blend (see the live path
             # above): the consensus anchor must not also be haircut.
             rank_war = (1 - lam[side]) * cons_war + lam[side] * xfv_war

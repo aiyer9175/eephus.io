@@ -538,13 +538,24 @@ def test_asof_point_bust_uses_final_point():
 def test_role_factor_semantics():
     """Owner-directed reliever-ceiling overlay (2026-07-15, second Moore
     directive): fires ONLY on RP-designated (SIRP/MIRP/RP/CL, never generic P
-    or SP) arms age 25+ whose MODEL war is enthusiastic (>= 1.5); bounded
-    0.80/0.70, monotone in age. A policy dial, not a fitted parameter - this
-    pin keeps its scope from silently widening."""
+    or SP) arms whose MODEL war is enthusiastic (>= 1.5); bounded below by 0.70,
+    monotone in age. A policy dial, not a fitted parameter - this pin keeps its
+    scope from silently widening.
+
+    UPDATED 2026-07-30 (C3): the age term was a STAIRCASE (1.0 below 25.0, a flat
+    0.80 on [25, 26), 0.70 above), so it stepped twenty points of projected WAR at
+    exactly 25.0. It is now a continuous ramp through the retired staircase's own tier
+    MIDPOINTS - (25.5, 0.80) and (26.5, 0.70) - which is why the two age assertions
+    below moved: the SCOPE and the FLOOR are unchanged, the cliff is gone. Shape detail
+    and the 12-row measured blast radius: test_efv_age_pipeline.py and
+    docs/efv-2026-07-30/EFV_LANE_GATES.md."""
     from efv_score import _role_factor
     assert _role_factor({"position": "SIRP", "age_now": 26.9}, 3.5) == 0.70
-    assert _role_factor({"position": "MIRP", "age_now": 25.4}, 3.5) == 0.80
-    assert _role_factor({"position": "SIRP", "age_now": 24.9}, 3.5) == 1.0   # young: exempt
+    assert _role_factor({"position": "MIRP", "age_now": 26.5}, 3.5) == 0.70   # floor knot
+    assert _role_factor({"position": "MIRP", "age_now": 25.5}, 3.5) == 0.80   # midpoint knot
+    # the ramp starts 1.5 yr before the retired 25.0 step instead of dropping 0.20 at it
+    assert _role_factor({"position": "SIRP", "age_now": 23.5}, 3.5) == 1.0   # young: exempt
+    assert _role_factor({"position": "SIRP", "age_now": 24.9}, 3.5) == 0.86
     assert _role_factor({"position": "SIRP", "age_now": 26.9}, 1.2) == 1.0   # no model enthusiasm
     assert _role_factor({"position": "P", "age_now": 26.9}, 3.5) == 1.0     # generic P: exempt
     assert _role_factor({"position": "SP", "age_now": 26.9}, 3.5) == 1.0

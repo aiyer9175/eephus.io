@@ -116,6 +116,61 @@ FORTYMAN_ADJ: dict[str, float] = {"AAA": 0.0, "AA": 0.97, "A+": 1.0, "A": 1.0}
 # The young-floor still guards against absurd over-compression.
 _LEVEL_BASE_WEIGHT = 0.90
 
+# ── C3 2026-07-30: continuous age-for-level ETA adjustment (DEFAULT OFF) ──────
+# The shipped age_adj is a nine-tier STAIRCASE on the integer part of
+# `diff = age - level_median`, so it jumps 0.35 to 0.40 yr of projected ETA at every
+# integer boundary: diff -0.99 and diff -1.00 are a hundredth of a year apart in age
+# and 0.40 yr apart in forecast ETA. The knot table below is the SAME function
+# evaluated at those boundaries, linearly interpolated between them and clamped past
+# +/-4, so the staircase's value at every boundary is preserved exactly and only the
+# interior is smoothed. The one deliberate difference is the dead zone: the staircase
+# returns a flat 0.0 across the whole open interval (-1, +1), the ramp passes through
+# (0, 0) instead, so a 0.7-yr-old-for-level prospect gets 0.245 yr of ETA rather than
+# nothing.
+#
+# DEFAULT OFF and the gate is OWED, not passed. ETA is a forecast with censored
+# outcomes, so its arbiter is eta_backtest.py's KM/censoring-aware protocol, which needs
+# a resolved-cohort rebuild this lane is not permitted to run. Flipping this flag without
+# that backtest would ship an unmeasured change to every ETA on the site.
+# Registered in docs/efv-2026-07-30/EFV_LANE_GATES.md as arm C3-ETA (gate OWED).
+AGE_ADJ_CONTINUOUS = False
+# (diff, age_adj) knots == the shipped staircase evaluated at its own tier boundaries.
+_AGE_ADJ_KNOTS: tuple[tuple[float, float], ...] = (
+    (-4.0, -1.50), (-3.0, -1.15), (-2.0, -0.80), (-1.0, -0.40), (0.0, 0.0),
+    (1.0, +0.35), (2.0, +0.70), (3.0, +1.00), (4.0, +1.25),
+)
+
+
+def age_adj_for_diff(diff: float) -> float:
+    """Age-for-level ETA adjustment. Staircase (shipped) or, with
+    AGE_ADJ_CONTINUOUS, the linear interpolation of the same knots."""
+    if not AGE_ADJ_CONTINUOUS:
+        if diff <= -4.0:
+            return -1.50
+        if diff <= -3.0:
+            return -1.15
+        if diff <= -2.0:
+            return -0.80
+        if diff <= -1.0:
+            return -0.40
+        if diff >= 4.0:
+            return +1.25
+        if diff >= 3.0:
+            return +1.00
+        if diff >= 2.0:
+            return +0.70
+        if diff >= 1.0:
+            return +0.35
+        return 0.0
+    if diff <= _AGE_ADJ_KNOTS[0][0]:
+        return _AGE_ADJ_KNOTS[0][1]
+    if diff >= _AGE_ADJ_KNOTS[-1][0]:
+        return _AGE_ADJ_KNOTS[-1][1]
+    for (x0, y0), (x1, y1) in zip(_AGE_ADJ_KNOTS, _AGE_ADJ_KNOTS[1:]):
+        if x0 <= diff <= x1:
+            return round(y0 + (y1 - y0) * (diff - x0) / (x1 - x0), 4)
+    return 0.0
+
 # ── Static fallback expected ages — only used when the caller does not
 # supply empirical numbers from level_norms (e.g. unit tests).
 EXPECTED_AGES: dict[str, float] = {
@@ -410,22 +465,11 @@ def estimate_eta(
         # strongly WITHIN a level tier (paired with the de-weighted level base
         # above). A 19yo at A+ (diff ≈ −3 → −1.15) now projects ~1.9y earlier
         # than a 24yo at A+ (diff ≈ +2 → +0.70), vs ~1.25y under the old tiers.
-        if diff <= -4.0:
-            age_adj = -1.50   # 4+ years young-for-level: aggressive fast-track
-        elif diff <= -3.0:
-            age_adj = -1.15   # 3+ years young-for-level: elite fast-track
-        elif diff <= -2.0:
-            age_adj = -0.80
-        elif diff <= -1.0:
-            age_adj = -0.40
-        elif diff >= 4.0:
-            age_adj = +1.25   # 4+ years old-for-level: deep org filler
-        elif diff >= 3.0:
-            age_adj = +1.00   # 3+ years old-for-level: organizational filler
-        elif diff >= 2.0:
-            age_adj = +0.70
-        elif diff >= 1.0:
-            age_adj = +0.35
+        # Tier table + the default-OFF continuous variant live in age_adj_for_diff
+        # (C3, 2026-07-30). Byte-identical while AGE_ADJ_CONTINUOUS is False.
+        #   4+ yr young-for-level -1.50 (aggressive fast-track) .. 3+ yr -1.15
+        #   (elite fast-track) .. 3+ yr OLD +1.00 (org filler) .. 4+ yr +1.25.
+        age_adj = age_adj_for_diff(diff)
         signals += 1
 
     # ── FV adjustment ──────────────────────────────────────────────────────

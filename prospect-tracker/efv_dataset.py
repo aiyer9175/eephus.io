@@ -117,8 +117,91 @@ CURRENT_SEASON = 2026
 _LEVEL_RANK = {"DSL": 0, "CPX": 1, "A": 2, "A+": 3, "AA": 4, "AAA": 5}
 # contemporaneous-ish typical age by level (leakage-free static prior for age-rel-level;
 # the modeling pass refines this with frozen empirical level-season medians).
+#
+# C2 2026-07-30 - MEASURED AND NOT REPLACED (registered null, see
+# docs/efv-2026-07-30/EFV_LANE_GATES.md and data/xfv_agepipe_eval.json).
+# The empirical prospect-filtered DECIMAL medians were built for the first time
+# (tools/_c_agenorms.py, 32,616 qualified prospect-season-level rows 2014-2026, the same
+# >=50 PA / >=60 BF exposure gate _milb_features applies) and they are 0.10 to 1.86 yr
+# OLDER than this table: DSL 18.10, CPX 19.58, A 21.45, A+ 22.77, AA 24.08, AAA 25.86.
+# So the site ("young for AAA") and the model ("exactly neutral") really do tell opposite
+# stories, and this table is the younger of the two. Swapping it in is nonetheless a NULL
+# on every cut (forward-chained pooled rho over 8 splits: hit +0.0005, pit -0.0019 against
+# MDE95 0.017 / 0.016; on SCORED_YEARS pit -0.0075; per-fold 5/8 positive both sides; and
+# the pit side is NEGATIVE where it matters most), so under the gate standard it does not
+# ship and the static prior stands. The measured table is published as the reconciliation
+# reference for the DISPLAY tables (eta.EXPECTED_AGES, level_norms) rather than being
+# forced into the model on sub-floor evidence. Do not swap it without a new gate.
 _TYPICAL_LEVEL_AGE = {"DSL": 18.0, "CPX": 19.0, "A": 20.0, "A+": 21.0,
                       "AA": 22.5, "AAA": 24.0}
+# C1 guard: the decimal season-midpoint age and the integer StatsAPI baseball age can
+# only differ by less than one year by construction (the latter is the floor of the
+# former), so a wider gap is a DATA CONFLICT -- a birth_date bound to the wrong player.
+# Past this, keep the feed's own age. 1.05 leaves room for the 1dp rounding.
+AGE_CONFLICT_MAX_YR = 1.05
+
+
+def _resolve_season_age(row_age, birth_date, season):
+    """C1 2026-07-30 (the owner's decimal-ages ask). The age the model reads for a
+    MiLB season row: the DECIMAL season-midpoint age from birth_date, with the integer
+    StatsAPI "baseball age" as the fallback. That is the REVERSE of the old precedence,
+    where the decimal branch was gated behind `if age is None` and was therefore DEAD --
+    measured, the model saw an integer age on 4,260 of 4,260 live rows.
+
+    A CORRECTNESS change, not an accuracy claim, and the ship note says so. The StatsAPI
+    baseball age is floor(age at June 30), so the floor loses a mean 0.52 yr and, worse,
+    loses a DIFFERENT amount by birth month: a July-born player is flattered by up to
+    0.91 yr against a June-born one at the same true age. It also manufactures a fake
+    neutral -- an integer age meeting an integer level norm put 17.6% of live rows
+    (752 of 4,260) at age_rel_level EXACTLY 0.0. The measured accuracy effect is a NULL on
+    every cut and the zero-information control (integer age + a row-permuted fractional
+    part) scores the same, so no rank gain is claimed: forward-chained pooled rho over 8
+    splits moves hit +0.0003 / pit +0.0016 against MDE95 0.017 / 0.016, control
+    +0.0005 / +0.0017. Ledger: data/xfv_agepipe_eval.json, tools/_c_agepipe_lab.py,
+    docs/efv-2026-07-30/EFV_LANE_GATES.md.
+
+    CONFLICT GUARD: the two ages can only differ by under a year by construction, so a
+    larger gap means one of the two inputs is wrong -- almost always a birth_date bound to
+    the wrong player by identity resolution (measured: 4 labeled-matrix rows, e.g. a
+    luis_gonzalez carrying birth_date 2005-07-15 against a StatsAPI age of 23 in 2019, a
+    9.0 yr gap; ZERO live rows). eFV must not start trusting a bad birth date over the
+    feed's own age, so a gap past AGE_CONFLICT_MAX_YR keeps the StatsAPI integer.
+    """
+    age = _f(row_age)
+    if not birth_date:
+        return age
+    try:
+        b = date.fromisoformat(str(birth_date)[:10])
+    except (TypeError, ValueError):
+        return age
+    dec_age = round((date(int(season), 6, 30) - b).days / 365.25, 1)
+    if age is None or abs(dec_age - age) <= AGE_CONFLICT_MAX_YR:
+        return dec_age
+    return age
+
+# age_rel_level bound. The HARD clip is a genuine asymmetry on the live board: measured
+# 2026-07-30, 489 rows (123 hit / 366 pit) sit pinned at exactly +3.5 against FOUR at
+# -3.5, so in practice the cap is protection for old-for-level org filler and almost
+# never touches a young-for-level prospect. AGE_REL_SOFT replaces the clip with a
+# tanh saturation over the SAME effective range (odd, monotone, derivative 1 at 0, so
+# small age gaps are untouched and only the extremes bend, spreading the 489 pinned rows
+# by severity instead of collapsing them onto one value).
+# DEFAULT OFF: measured under the full gate as a NULL (forward-chained pooled rho over 8
+# splits hit +0.0063 / pit +0.0014 against MDE95 0.017 / 0.016, and the hit number is one
+# fold carrying +0.0426 with 4 of 8 folds negative). The gate standard does not license
+# shipping a feature-shape change on sub-floor evidence, so the dial exists, is tested,
+# and is off. data/xfv_agepipe_eval.json, docs/efv-2026-07-30/EFV_LANE_GATES.md.
+AGE_REL_CAP = 3.5
+AGE_REL_SOFT = False
+
+
+def _age_rel_bound(x: float) -> float:
+    """Bound age_rel_level to +/-AGE_REL_CAP: hard clip (shipped) or, with
+    AGE_REL_SOFT, a same-range smooth saturation."""
+    if AGE_REL_SOFT:
+        import math
+        return AGE_REL_CAP * math.tanh(x / AGE_REL_CAP)
+    return max(-AGE_REL_CAP, min(AGE_REL_CAP, x))
 
 _HIT_TOOLS = ("hit", "game_pwr", "raw_pwr", "speed", "field", "throw")
 _PIT_TOOLS = ("fb", "sl", "cb", "ch", "cmd")
@@ -388,17 +471,7 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
             # S-XLINE annotation rides the season dict (local) so the final
             # season's note can surface on the returned base below.
             rates["_xline_note"] = row["_xline_note"]
-        # Age-for-level uses the integer StatsAPI "baseball age" (age at the season's July 1).
-        # Decimal precision from birth_date was tested for the model and slightly HURT OOS rank
-        # (debuted 0.3308 -> 0.3291): the standard baseball age is the cleaner basis here. The
-        # user-facing CURRENT age is shown as a decimal site-wide (a separate, display concern).
-        age = _f(row.get("age"))
-        if age is None and birth_date:
-            try:
-                b = date.fromisoformat(birth_date[:10])
-                age = round((date(season, 6, 30) - b).days / 365.25, 1)
-            except ValueError:
-                age = None
+        age = _resolve_season_age(row.get("age"), birth_date, season)
         rates.update({"season": season, "level": level,
                       "level_rank": float(_LEVEL_RANK[level]), "age": age})
         seasons.append(rates)
@@ -407,11 +480,12 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
 
     final = seasons[0]                 # most recent (descending loop)
     level, age = final["level"], final["age"]
-    # age-relative-to-level, CAPPED to +/-3.5: the model term is linear, so an extreme
-    # (a 19-yo cup-of-coffee in AAA -> -5) would over-extrapolate the young-for-level boost.
+    # age-relative-to-level, bounded to +/-AGE_REL_CAP: the model term is linear, so an
+    # extreme (a 19-yo cup-of-coffee in AAA -> -5) would over-extrapolate the
+    # young-for-level boost.
     age_rel = (age - _TYPICAL_LEVEL_AGE[level]) if age is not None else None
     if age_rel is not None:
-        age_rel = max(-3.5, min(3.5, age_rel))
+        age_rel = _age_rel_bound(age_rel)
     base = {
         "milb_season": final["season"], "milb_level": level,
         "level_rank": final["level_rank"],

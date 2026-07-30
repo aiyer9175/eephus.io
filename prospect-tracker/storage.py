@@ -10572,7 +10572,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             m["stock_flat"] += 1
         if avl.tier == "very-young":
             m["very_young_count"] += 1
-        elif avl.tier == "very-old":
+        elif avl.tier == "too-old":
+            # 2026-07-30: was "very-old", a tier age_level has NEVER emitted (its
+            # vocabulary is very-young / young / neutral / old / too-old, declared at
+            # age_level.py:73). So this branch was unreachable, very_old_count was
+            # permanently 0, and the Readiness net below - (very_young - very_old) /
+            # actives - could only ever be POSITIVE. Every org's readiness signal was
+            # measuring half of a two-sided statistic. "too-old" (diff >= +2.0) is the
+            # correct mirror of "very-young" (diff <= -2.0).
             m["very_old_count"] += 1
 
         # Tool Quality accumulator — composite_overall (raw 20-80
