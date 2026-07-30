@@ -126,6 +126,11 @@ MODEL_GLOSSARY = {
     "xfv_pred_dispersion": "internal",    # Defect A ledger: OOS WAR over-dispersion
     "xfv_level_calibration": "internal",  # Defect B ledger: grade-to-WAR anchor bias
     "xfv_odds_dispersion": "internal",    # p_bust dispersion candidate, patch INERT
+    # 2026-07-30 LANE-ODDS: which grade map p_bust should be keyed to after the
+    # board moved to outcome_implied_fv. A measurement lane that adjudicated the
+    # _odds_grade pin and shipped NOTHING; keeping the pin means no reader-facing
+    # number moved, so it has no glossary surface of its own.
+    "xfv_odds_grade_basis": "internal",   # re-key vs the pin: measured NULL, pin kept
     "xfv_generality": "internal",         # stratum-generality audit, shipped nothing
     "am_crossmodel_agelevel": "internal", # cross-model age-for-level null
     # thin-sample p_bust DID ship and moves a number readers see on provisional
