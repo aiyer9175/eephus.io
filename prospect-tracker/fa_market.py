@@ -1679,7 +1679,18 @@ VERDICT_OVERPAY_MAX = 109   # Deal+ <  109 -> "overpay" (corpus bottom tercile)
 # "cheap against the whole market" to "cheap for its position group". That is a
 # product decision, not an accuracy one, and there is no gate that can settle
 # it. The machinery is here, measured, and one constant away.
-VERDICT_BAND_MODE = "pooled"        # "pooled" (shipped) | "group"
+# OWNER DECISION TAKEN 2026-07-30: "group". The owner was shown the measured table
+# above (SP 44/31/26, RP 55/28/17, C 36/25/38, POS 35/29/36 against a 33/33/33 design)
+# and the disclosure that roughly half the reliever effect is a true market property
+# rather than a model defect, and chose per-group bands anyway, on the ground that
+# "value" should mean cheap FOR ITS POSITION GROUP. This changes what a published
+# verdict MEANS on 256 of 1,300 historical corpus rows (19.7%).
+# PREREQUISITE, do not remove: every deal_verdict call site must pass `position`.
+# fa_export.py:479 did not, and _pos_group(None) is "POS", so flipping this constant
+# alone would have banded every pitcher against hitter edges - strictly worse than
+# pooled. That call site is fixed; test_fa_market and test_fa_tier1 pin the POOLED
+# edges explicitly via the mode, so they stay honest under either setting.
+VERDICT_BAND_MODE = "group"         # "pooled" | "group" (shipped 2026-07-30, owner)
 # Terciles of Deal+ at the ACTUAL price, per _pos_group, on the 1,300-signing
 # forward-chained corpus. Regenerate whenever the pricing basis moves.
 VERDICT_GROUP_EDGES = {"SP": (86, 182), "RP": (65, 146),

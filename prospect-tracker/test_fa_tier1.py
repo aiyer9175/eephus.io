@@ -252,10 +252,17 @@ def test_bandless_path_falls_back_to_point_pricing():
     assert a == b
 
 
-def test_verdict_edges_were_re_derived_with_the_pricing_change():
+def test_verdict_edges_were_re_derived_with_the_pricing_change(monkeypatch):
     """Corpus terciles under the NEW pricing were p33 108.8 / p67 222.9
     (n=1,300). Leaving the old 75/160 would have re-graded 202 of 1,300
-    historical contracts on arithmetic alone."""
+    historical contracts on arithmetic alone.
+
+    The POOLED constants remain live even after the 2026-07-30 owner flip to
+    per-group bands: they are still the fallback for an unknown position group and
+    still the number the methodology page quotes, so they keep their pin. The mode
+    is forced here so this test measures the arithmetic it is named for rather than
+    whichever banding mode happens to ship."""
+    monkeypatch.setattr(fm, "VERDICT_BAND_MODE", "pooled")
     assert fm.VERDICT_OVERPAY_MAX == 109
     assert fm.VERDICT_VALUE_MIN == 223
     assert fm.deal_verdict(108) == "overpay"

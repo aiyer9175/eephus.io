@@ -38,14 +38,22 @@ def test_rational_value_is_npv_not_sticker():
     assert three > 3 * one
 
 
-def test_deal_verdict_bands():
+def test_deal_verdict_bands(monkeypatch):
     """Verdict edges sit on the corpus terciles. T1.4 re-derivation
     (2026-07-25, same change as the convexity correction): 109 / 223, from
     corpus terciles under the mean-of-the-value pricing (n=1,300; p33 108.8,
     p67 222.9). Was 75 / 160 under value-of-the-mean, and leaving those in
     place would have re-graded 202 of 1,300 historical contracts on
     arithmetic alone. Value above, overpay below, market between; None
-    passes through."""
+    passes through.
+
+    MODE-EXPLICIT since 2026-07-30: this test pins the POOLED band arithmetic, so
+    it forces that mode rather than inheriting whichever one ships. Under the
+    now-shipped "group" mode a bare deal_verdict(223) falls to the POS edges
+    (103/237) and reads "market", which would make these assertions fail for a
+    reason that has nothing to do with the arithmetic they exist to protect.
+    Group-mode behaviour is covered by test_deal_verdict_group_bands below."""
+    monkeypatch.setattr(fm, "VERDICT_BAND_MODE", "pooled")
     assert fm.deal_verdict(None) is None
     assert fm.deal_verdict(400) == "value"
     assert fm.deal_verdict(fm.VERDICT_VALUE_MIN) == "value"
@@ -54,6 +62,33 @@ def test_deal_verdict_bands():
     assert fm.deal_verdict(fm.VERDICT_OVERPAY_MAX - 1) == "overpay"
     assert fm.deal_verdict(0) == "overpay"
     assert fm.VERDICT_OVERPAY_MAX < fm.VERDICT_VALUE_MIN
+
+
+def test_deal_verdict_group_bands():
+    """Per-group bands (owner decision 2026-07-30, VERDICT_BAND_MODE = "group").
+
+    The point of the mode is that the SAME Deal+ earns different verdicts by
+    position group, because Deal+ is value over price and a short deal for a
+    sub-1-WAR reliever prices most of its guarantee against very little projected
+    value by construction. 150 is a reliever "value" and a hitter "market"."""
+    assert fm.VERDICT_BAND_MODE == "group", "owner-decided mode changed; re-read the block in fa_market"
+    # RP (65, 146), SP (86, 182), POS (103, 237), C (101, 243).
+    assert fm.deal_verdict(150, "RP") == "value"      # >= RP hi 146
+    assert fm.deal_verdict(150, "SP") == "market"     # inside SP 86-182
+    assert fm.deal_verdict(150, "CF") == "market"     # inside POS 103-237
+    assert fm.deal_verdict(70, "RP") == "market"      # inside RP 65-146
+    assert fm.deal_verdict(60, "RP") == "overpay"     # < RP lo 65
+    assert fm.deal_verdict(95, "SP") == "market"      # inside SP 86-182
+    assert fm.deal_verdict(80, "SP") == "overpay"     # < SP lo 86
+    # 95 is an SP "market" and a POS "overpay": the whole point of the mode.
+    assert fm.deal_verdict(95, "1B") == "overpay"     # < POS lo 103
+    # Every group's edges must be ordered, and every group must be reachable.
+    for grp, (lo, hi) in fm.VERDICT_GROUP_EDGES.items():
+        assert lo < hi, f"{grp} edges inverted"
+    # THE PREREQUISITE THIS MODE DEPENDS ON: a missing position must not silently
+    # become a pitcher band. _pos_group(None) is "POS", so an omitted position
+    # bands a pitcher against hitter edges - the defect fixed at fa_export.py:479.
+    assert fm._pos_group(None) == "POS"
 
 
 def test_deferral_npv_and_coverage():

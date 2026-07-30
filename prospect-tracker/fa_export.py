@@ -476,7 +476,15 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                         "surplusP10": (rational_p10 - guar) if rational_p10 is not None else None,
                         "surplusP90": (rational_p90 - guar) if rational_p90 is not None else None,
                         "dealPlus": deal_plus,
-                        "verdict": fm.deal_verdict(deal_plus),
+                        # POSITION IS REQUIRED, not optional (2026-07-30). Under
+                        # fa_market.VERDICT_BAND_MODE == "group" the edges are keyed by
+                        # _pos_group, and _pos_group(None) returns "POS" - so omitting
+                        # the position here silently banded EVERY pitcher on the board
+                        # against HITTER edges (103/237 instead of SP 86/182, RP 65/146).
+                        # That is worse than pooled banding, not better. The mode is a
+                        # one-constant flip in fa_market but it is only correct with
+                        # this argument present.
+                        "verdict": fm.deal_verdict(deal_plus, row.get("position")),
                         "comps": [_clean({"name": c["player_name"], "yr": c["class_year"],
                                           "to": c.get("to_team"), "years": c.get("years"),
                                           "guar": c.get("guarantee_usd")}) for c in comps],
