@@ -436,12 +436,29 @@ def reverse_platoon(arm: PalArm) -> Optional[dict]:
 # --------------------------------------------------------------------------- #
 PROSPECT_TOOL_KEYS = ("fb", "sl", "cb", "ch", "ct")
 
+# The SWING band on starter_shape: at or above SHAPE_SP_MIN the shape reads as a
+# starter, below SHAPE_RP_MAX as a reliever, and between them as a swing. Named
+# (they were inline literals) because the /pal/ watch now stages on the DISTANCE
+# past these boundaries, so the band width is load-bearing rather than cosmetic.
+SHAPE_SP_MIN = 60.0
+SHAPE_RP_MAX = 40.0
+SHAPE_SWING_BAND = SHAPE_SP_MIN - SHAPE_RP_MAX      # 20.0
+
 
 def prospect_role_fit(tools: dict, position: Optional[str]) -> dict:
     """A SHAPE-ONLY role lean for a prospect pitcher from 20-80 scout tool grades
     (no MiLB tracking, so no stuff physics). Flags starter-labeled prospects who
     profile as relievers (thin arsenal / poor command) and reliever-labeled
-    prospects who could start (deep arsenal + command)."""
+    prospects who could start (deep arsenal + command).
+
+    `mismatch` stays a plain BOOL (three test files and the prospx chip read it by
+    identity / truthiness). The new `mismatch_margin` carries the SEVERITY: how far
+    past its lean boundary the shape sits, in shape points, or None when there is no
+    mismatch. It is the only continuous quantity this shape-only read produces, so it
+    is what the /pal/ watch ranks and stages on. Note it is heavily QUANTIZED: the
+    arsenal-depth term is a four-value step table, so the whole pool carries only
+    about two dozen distinct shapes and a threshold moves rows in clumps.
+    """
     tools = tools or {}
     grades = [tools.get(k) for k in PROSPECT_TOOL_KEYS if tools.get(k) is not None]
     depth = sum(1 for g in grades if g is not None and g >= 55)   # above-average pitches
@@ -451,11 +468,20 @@ def prospect_role_fit(tools: dict, position: Optional[str]) -> dict:
     starter_shape = round(0.60 * depth_s + 0.40 * cmd_s, 1)
     pos = (position or "").upper()
     role = "SP" if "SP" in pos else ("RP" if ("RP" in pos or "IRP" in pos or "CL" in pos) else "SWING")
-    lean = "SP" if starter_shape >= 60 else ("RP" if starter_shape < 40 else "SWING")
+    lean = ("SP" if starter_shape >= SHAPE_SP_MIN
+            else ("RP" if starter_shape < SHAPE_RP_MAX else "SWING"))
+    mismatch = role in ("SP", "RP") and lean in ("SP", "RP") and role != lean
+    if not mismatch:
+        margin = None
+    elif lean == "RP":
+        margin = round(SHAPE_RP_MAX - starter_shape, 1)
+    else:
+        margin = round(starter_shape - SHAPE_SP_MIN, 1)
     return {
         "starter_shape": starter_shape, "arsenal_depth": depth, "cmd": cmd,
         "role": role, "lean": lean,
-        "mismatch": (role in ("SP", "RP") and lean in ("SP", "RP") and role != lean),
+        "mismatch": mismatch,
+        "mismatch_margin": margin,
     }
 
 

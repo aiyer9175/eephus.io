@@ -48,11 +48,55 @@ def test_prospect_watch_carries_player_key_join():
         assert w["starter_shape"] is not None
 
 
-def test_prospect_watch_sorted_by_fv_desc_and_capped():
-    watch = pal_export.build_prospect_watch([_DEEP_RP, _THIN_SP])
-    fvs = [w.get("fv") or 0 for w in watch]
-    assert fvs == sorted(fvs, reverse=True)      # Thin SP (50) before Deep RP (45)
+def test_prospect_watch_ranked_by_severity_then_fv_and_capped():
+    # 2026-07-30 owner decision: the watch is STAGED, so it ranks by mismatch
+    # SEVERITY (shape points past the swing band) and only uses FV as the tiebreak.
+    # Deep RP is shape 100 -> 40 points past the SP boundary; Thin SP is shape 27 ->
+    # 13 points past the RP boundary. Severity therefore puts Deep RP first even
+    # though Thin SP carries the higher FV. This deliberately replaces the old
+    # FV-desc pin.
+    watch = pal_export.build_prospect_watch([_THIN_SP, _DEEP_RP])
+    assert [w["player_key"] for w in watch] == ["deep-rp-1", "thin-sp-1"]
+    margins = [w["mismatch_margin"] for w in watch]
+    assert margins == sorted(margins, reverse=True)
     assert len(pal_export.build_prospect_watch([_DEEP_RP, _THIN_SP], cap=1)) == 1
+
+
+def test_prospect_watch_severity_threshold_stages_the_list():
+    # A mismatch INSIDE the margin is held off the staged list but kept in the
+    # unbounded set, which is what the prospx card chip joins against. This is the
+    # "do not silently truncate" property.
+    # shape 37.0 -> leans RP, but only 3.0 points past the boundary
+    marginal = {"player_key": "marginal-1", "name": "Marginal", "org": "SEA",
+                "position": "SP", "fv": 50, "tools": {"fb": 60, "sl": 60, "cmd": 45}}
+    rf = __import__("pal_conversion").prospect_role_fit(marginal["tools"], "SP")
+    assert rf["mismatch"] is True and 0 < rf["mismatch_margin"] < pal_export.PROSPECT_WATCH_MARGIN_MIN
+
+    pool = [_THIN_SP, _DEEP_RP, marginal]
+    staged = pal_export.build_prospect_watch(pool)
+    full = pal_export.build_prospect_watch_all(pool)
+    assert "marginal-1" not in {w["player_key"] for w in staged}
+    assert "marginal-1" in {w["player_key"] for w in full}
+
+    rule = pal_export.prospect_watch_rule(full, staged)
+    assert rule["n_mismatches"] == 3
+    assert rule["n_qualified"] == 2
+    assert rule["n_shown"] == 2
+    assert rule["n_below_margin"] == 1
+    assert rule["cap_binding"] is False
+    # every bound the copy states has to be readable off the payload
+    for k in ("fv_min", "margin_min", "cap", "n_mismatches", "n_qualified", "n_shown",
+              "n_below_margin", "n_over_cap", "best_margin_below_threshold"):
+        assert k in rule
+
+
+def test_prospect_watch_cap_is_reported_when_it_binds():
+    pool = [_THIN_SP, _DEEP_RP]
+    staged = pal_export.build_prospect_watch(pool, cap=1)
+    rule = pal_export.prospect_watch_rule(pool and pal_export.build_prospect_watch_all(pool),
+                                          staged, cap=1)
+    assert rule["cap_binding"] is True
+    assert rule["n_over_cap"] == 1
 
 
 def test_prospect_watch_tolerates_missing_player_key():

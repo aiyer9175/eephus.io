@@ -643,11 +643,27 @@
   function renderProspects() {
     var rows = (DATA && DATA.prospect_watch) || [];
     if (!rows.length) return empty("No prospect role-mismatches yet.");
+    // The bound is STATED, never silent: every number below comes from the payload's
+    // own prospect_watch_rule, so the copy cannot claim a threshold the export is not
+    // applying. Degrades to the old wording on a payload built before the rule shipped.
+    var rule = (DATA && DATA.prospect_watch_rule) || null;
+    var bound = "";
+    if (rule) {
+      bound = " Ranked by how far past the swing band the shape sits, and staged: only the "
+        + esc(rule.n_qualified) + " of " + esc(rule.n_mismatches) + " mismatches at least "
+        + f1(rule.margin_min) + " shape points past the boundary are listed"
+        + (rule.cap_binding ? (", top " + esc(rule.cap) + " shown") : "")
+        + ". The other " + esc(rule.n_below_margin) + " sit inside that margin"
+        + (rule.best_margin_below_threshold != null
+           ? " (the closest is " + f1(rule.best_margin_below_threshold) + " points past)" : "")
+        + " and are kept in the payload rather than dropped.";
+    }
     var note = '<div class="mlbstats-note">Prospect pitchers whose SCOUTED role may not fit their arsenal shape ('
       + gloss("arsenal depth", "arsenal_depth") + " + command, from 20-80 scout grades). A scouted starter with a thin "
       + "arsenal profiles as a reliever; a reliever with a deep arsenal could start. Shape-only: there is no pitch tracking "
       + "at the minors, so this reads role fit from tool grades, not stuff. " + esc(DATA.n_prospects || "")
-      + " prospect pitchers scanned. A descriptive shape screen, not a separately backtested model.</div>";
+      + " prospect pitchers scanned." + bound
+      + " A descriptive shape screen, not a separately backtested model.</div>";
     function toolBars(tools) {
       tools = tools || {};
       return ["fb", "sl", "cb", "ch", "ct", "cmd"].filter(function (k) { return tools[k] != null; }).map(function (k) {
@@ -664,7 +680,8 @@
         + '<span class="proj-dim"> ' + esc(p.org || "") + "</span></span>"
         + '<span class="pal-dir' + dirClass(pdir) + '">' + arrow + "</span></h4>"
         + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position) + " &middot; FV " + fCeil(p.fv)
-        + " &middot; shape " + f1(p.starter_shape) + " &middot; " + esc(p.arsenal_depth) + " plus pitches</div>"
+        + " &middot; shape " + f1(p.starter_shape) + " &middot; " + esc(p.arsenal_depth) + " plus pitches"
+        + (p.mismatch_margin != null ? " &middot; " + f1(p.mismatch_margin) + " past the band" : "") + "</div>"
         + '<div style="margin:6px 0;font-size:11px;color:var(--text-secondary)">' + esc(msg) + "</div>"
         + toolBars(p.tools) + "</div>";
     }).join("");

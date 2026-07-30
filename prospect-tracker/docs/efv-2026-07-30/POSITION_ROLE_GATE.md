@@ -751,3 +751,189 @@ WITHOUT the fingerprint change, neither gate would have fired for it.
    model-graded players who carry no published grade at all, that is a deliberate product
    decision about the ungraded floor, not something a fabricated FanGraphs-scale vote should
    be doing by accident.
+
+---
+
+# PART 4. The PAL role-mismatch watch, staged (LANE-PAL-STAGE, 2026-07-30)
+
+Owner decision on 3.5 follow-up 4: **stage the role-mismatch watch behind a threshold.
+Rank by mismatch severity and surface a bounded top slice, and/or require a second
+confirming signal. Keep the full set in the payload. Do not silently truncate: whatever
+bound you choose must be visible in the data and stated in the copy.**
+
+Files changed: `pal_conversion.py`, `pal_export.py`, `assets/pal.js`, `prospx/index.html`,
+`test_pal_export_prospect_watch.py`.
+
+## 4.0 FIRST: the 1,247 does not reach this surface, and 3.1 overstated it
+
+Section 3.1 recorded "1,247 prospects that were invisible to the role-mismatch watch become
+eligible for it in one step" off the `_prospect_role` recount SP 487 -> 863, RP 310 ->
+1,181, SWING 1,619 -> 372. Those three pairs sum to 2,416, which is the SERVED PITCHER POOL
+(2,422 rows), not the PAL prospect pool. The consequence for the watch was inferred from
+that recount rather than measured on the watch's own pool, and measured, it is wrong twice.
+
+**(1) `pal_export` never sees the override at all.** `role_usage.usage_position_override` is
+applied in exactly one place, `storage.export_timeseries_json:7635-7652`, where it MUTATES
+`p.position` in place on the timeseries objects storage built. `pal_export` builds its own:
+`load_prospect_pitchers` calls `consensus.build_timeseries(load_all_snapshots())` fresh and
+reads `p.position` off those objects. Nothing shares state. Measured on the real pool:
+
+| | pal_export's pool today |
+|---|---|
+| prospect pitchers with tool grades | 1,849 |
+| `_prospect_role` split | SP 543 / RP 650 / SWING 656 |
+| raw position labels | SP 542, SIRP 517, RHP 487, LHP 164, MIRP 133, other 6 |
+
+`SWING` here is 656, not 1,619. The flip's SWING collapse is a fact about the served board,
+not about this surface.
+
+**(2) Even if the override did reach it, the growth is bounded by the TOOL-GRADE gate.**
+`load_prospect_pitchers` drops any pitcher with no 20-80 tool grades (`if not tools:
+continue`), and most of the rows the flip relabels are exactly the un-scouted arms that have
+none. Applying `usage_position_override` directly to the same pool (1,127 of 1,849 mlbam ids
+resolvable through `player_links.byKey`, the `player_photos` binding and the statline
+payload) changes **226 position labels** and moves the eligible mismatch set from **123 to
+143**, direction SP->RP 136 and RP->SP 7. At full id coverage the honest estimate is roughly
+150 to 165. It is not 1,368.
+
+So the emergency is not real. **The defect is, and it is a different one.**
+
+## 4.1 The defect that IS real, and why this ships anyway
+
+`build_prospect_watch(prospects, cap: int = 150)`. The cap was a bare default argument. It
+was never written into `data/pal.json`, never named in the `/pal/` copy, and `assets/pal.js`
+`renderProspects` maps the entire list with no slice of its own. The committed payload holds
+121 entries.
+
+That is a silent truncation waiting to happen at 150, on a list already at 123, and it is
+precisely the thing the owner's decision prohibits. Three further reasons to stage now
+rather than when it bites:
+
+1. The list had **no severity ranking at all**. It sorted by FV, so the arm 31 shape points
+   past its boundary sorted below an arm 1 point past it with a higher grade. The owner
+   asked for severity ranking on its own terms.
+2. The owed reconciliation in 3.5 follow-up 3 (`prospx displayPosition` vs
+   `position_observed` vs the storage override) will eventually route one consistent
+   position label through every consumer, and PAL is one of them. The staging should be in
+   place before that lands, not after.
+3. 99 of 121 committed entries sit at FV <= 44. A list that long, that flat and that
+   bottom-heavy is a list nobody reads.
+
+## 4.2 The design
+
+**Severity.** `pal_conversion.prospect_role_fit` now emits `mismatch_margin`: the distance
+past the lean boundary, in `starter_shape` points, or `None` when there is no mismatch.
+`mismatch` stays a plain `bool` (three test files assert it by identity and the prospx chip
+reads it by truthiness, so a numeric severity there would have silently dropped a 0). The
+two boundaries are named rather than inline: `SHAPE_SP_MIN = 60.0`, `SHAPE_RP_MAX = 40.0`,
+`SHAPE_SWING_BAND = 20.0`.
+
+`mismatch_margin` is the ONLY continuous quantity this shape-only read produces, and it is
+heavily quantized: the arsenal-depth term is a four-value step table, so the whole pool
+carries about two dozen distinct shapes and any threshold moves rows in clumps. That is
+stated in the docstring rather than discovered later.
+
+**The threshold: `PROSPECT_WATCH_MARGIN_MIN = 10.0`.** The SWING band is [40, 60], twenty
+points wide, centred on 50. The threshold asks a flagged arm to sit at least HALF THAT BAND
+past its own boundary: shape <= 30 for a scouted starter that profiles in relief, or >= 70
+for a reliever that could start. It is read off the band the model already defines, in the
+`SFF_MOVE_CAP_FV` tradition of a round a-priori bound rather than a number fitted to a
+metric. **Nothing here is backtested and the threshold is not a backtested severity**, which
+is why the copy still calls the whole surface a descriptive screen.
+
+**The cap: `PROSPECT_WATCH_CAP = 60`**, adopting `spotlights.TOP_N = 60`, the platform's
+existing bounded-list convention. It does NOT bind today (68 qualify with the override
+applied, 56 without, both under 60 in the no-override state that actually ships). A bound
+that does not bind is still worth declaring, because the payload reports whether it bound
+and the copy says so when it does.
+
+**The FV floor** is unchanged at 40 and is now a named constant
+(`PROSPECT_WATCH_FV_MIN`) rather than an inline literal.
+
+**Ranking** is `(-margin, -fv, name)`. Severity first, FV as tiebreak, name as a stable
+third key, because the quantization makes ties the norm and without it the served order
+followed pool order.
+
+## 4.3 WHY THERE IS NO SECOND CONFIRMING SIGNAL
+
+The decision offered "and/or require a second confirming signal". There is no admissible
+one, and that is a finding rather than an omission:
+
+* **MiLB usage** (`role_usage.current_season_pitching`, cache-only, `GS_SHARE_MIN 0.50` /
+  `IP_PER_G_MIN 3.0`) is the obvious candidate and is **CIRCULAR for exactly the population
+  that motivated the staging**. Those rows' position labels were themselves derived from
+  that usage line by `usage_position_override`; confirming a usage-derived role with usage
+  is confirming a number with itself. It is independent only for rows whose label came from
+  the FanGraphs projection, which is the population that did not need staging.
+* **AAA aStuff+** (`data/stuff_plus_aaa.json`, already loadable in `export()`) IS genuinely
+  independent, being physics rather than labels. It is AAA-only, and this watch is
+  bottom-heavy at FV <= 44, so coverage on the flagged arms is near zero. It is also behind
+  a default-off env flag.
+* **`arsenal_depth` and `cmd`** are the two INPUTS to `starter_shape`. Neither is
+  independent of the severity being staged.
+
+There is no pitch tracking at the minors, which `prospect_role_fit`'s docstring and the
+`/pal/` copy have both said since the surface shipped. A severity threshold on the one
+continuous quantity the model produces is therefore the honest design, and the absence of a
+confirmer is recorded rather than papered over with a correlated one.
+
+## 4.4 The resulting list, and what falls just outside
+
+Measured on `pal_export`'s real pool. Both states are given because the no-override column
+is what ships and the override column is what the owed reconciliation would produce.
+
+| | no override (ships today) | with the override applied |
+|---|---|---|
+| pool scanned | 1,849 | 1,849 |
+| mismatches at FV >= 40 (`prospect_watch_all`) | **123** | 143 |
+| qualify at margin >= 10 | **56** | 68 |
+| shown after the cap of 60 | **56** | 60, cap BINDING, 8 over |
+| held below the margin | **67** | 75 |
+| closest one held back | margin 8.0 | margin 8.0 |
+
+The committed `data/pal.json` holds 121 rather than 123; it was written at 09:07 today and
+the DB has moved since. The next export writes the staged numbers.
+
+**What falls just outside, precisely.** The margin histogram has a natural cliff exactly
+where the threshold sits: 7 rows at margin 8.0, then 2 at 10.0 and 23 at 11.0. Dropping the
+threshold to 8.0 would add those 7 (56 -> 63); dropping it to 6.0 would add 14 more
+(-> 77); raising it to 12.0 would cut to 31. The chosen bound sits in the gap between the
+8-clump and the 10/11-clump, which is a property of the quantization and not something the
+threshold was tuned to produce: 10.0 was fixed as half the band before the histogram was
+looked at.
+
+## 4.5 Visibility, which is the part the decision was really about
+
+`data/pal.json` gains two keys:
+
+* **`prospect_watch_all`** - every mismatch at FV >= 40, unbounded and severity-ranked. The
+  full set is kept, not dropped.
+* **`prospect_watch_rule`** - `fv_min`, `margin_min`, `cap`, `n_mismatches`, `n_qualified`,
+  `n_shown`, `n_below_margin`, `n_over_cap`, `cap_binding`,
+  `best_margin_below_threshold`, and a prose `basis`.
+
+The `/pal/` copy is generated FROM `prospect_watch_rule`, so the surface cannot state a
+bound the export is not applying: it names how many of how many are listed, the threshold in
+shape points, the cap when it binds, how many sit inside the margin, and how close the
+closest one is. Each card also shows its own `N past the band`. The builder log line reports
+the same numbers and flags a binding cap.
+
+**The prospx pitcher-card chip is deliberately NOT staged.** `prospx/index.html`'s
+`ensurePalFit` now indexes `prospect_watch_all || prospect_watch`, so a player whose
+mismatch is inside the margin keeps their own role-conversion read on their own card. The
+threshold bounds the /pal/ LIST, which is a browse surface; it does not withhold a player's
+own read from their page. The fallback keeps the chip working against payloads built before
+this shipped.
+
+## 4.6 What is NOT done
+
+* **`_prospect_role` at `pal_export.py:327` is a second, independent copy of the same
+  substring logic** (it returns `None` where `prospect_role_fit` returns `"SWING"`), feeding
+  `prospx_role_map` and the `prospect_sp` pedigree nudge in `rp_sp_fit`. It is untouched
+  here. Two copies of a role parser in one module is a defect, but de-duplicating it moves
+  the `rp_sp_fit` fit scores, which is a different blast radius and a different gate.
+* **The position-seam reconciliation** (3.5 follow-up 3) is not attempted. This lane
+  MEASURED that `pal_export` and `storage` disagree about the same player's position and
+  recorded the size of it; deciding that PAL should see the override is a product call with
+  its own radius, and the staging is now in place either way.
+* **Nothing here is backtested**, including the threshold. The surface says so.

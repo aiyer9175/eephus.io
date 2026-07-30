@@ -402,24 +402,109 @@ def _build_rem_pool(rows_2026: list, arsenal, velo, platoon) -> rem_plus.Pool:
     return rem_plus.build_pool(pool)
 
 
-def build_prospect_watch(prospects: list, cap: int = 150) -> list:
-    """The /pal/ prospect conversion watch: the role MISMATCHES worth a look (a
-    scouted starter that profiles as a reliever, or vice versa), gated to real
-    prospects (FV >= 40) and capped. Shape-only (scout tools, no MiLB stuff physics).
+# --------------------------------------------------------------------------- #
+# prospect role-mismatch watch: the staging bound (2026-07-30, owner decision)
+# --------------------------------------------------------------------------- #
+# The watch used to be "every mismatch at FV >= 40, sorted by FV, capped at 150",
+# with the cap a bare default argument that was never written into data/pal.json and
+# never named in the copy. That is a SILENT truncation, and the list sits at 123
+# today: one source, or the owed position-seam reconciliation below, puts it through
+# the cap without anybody being told.
+#
+# It is now STAGED: ranked by mismatch SEVERITY, floored at a severity threshold, and
+# bounded by a named cap, with all three numbers emitted into the payload and stated
+# in the /pal/ copy. The unbounded set stays in the payload under `prospect_watch_all`
+# for anyone who wants it (and it is what the prospx pitcher-card chip joins against,
+# so no player loses their chip to the staging).
+#
+# WHY 10.0, and why it is not tuned. `starter_shape`'s SWING band is
+# [SHAPE_RP_MAX, SHAPE_SP_MIN] = [40, 60], twenty points wide, centred on 50. The
+# threshold asks a flagged arm to sit at least HALF THAT BAND past its own boundary,
+# i.e. shape <= 30 for a starter that profiles in relief, or >= 70 for a reliever that
+# could start. That is a structural bound read off the band the model already defines,
+# in the SFF_MOVE_CAP_FV tradition of a round a-priori bound rather than a number
+# fitted to a metric. It is NOT a backtested severity: nothing here is backtested,
+# which is why the copy calls the whole surface a descriptive screen.
+#
+# WHY NO SECOND CONFIRMING SIGNAL. The owner's decision offered "and/or require a
+# second confirming signal". There is no admissible one:
+#   * MiLB USAGE (role_usage.current_season_pitching) is CIRCULAR for exactly the
+#     population that motivated the staging. Those rows' position labels were
+#     themselves derived from that usage line by usage_position_override, so usage
+#     would confirm itself.
+#   * AAA aStuff+ is genuinely independent, but it is AAA-only and this watch is
+#     bottom-heavy (99 of 123 entries at FV <= 44), so coverage on the flagged arms is
+#     near zero. It is also behind a default-off env flag.
+#   * arsenal_depth and cmd are the two INPUTS to starter_shape, so neither is
+#     independent of the severity being staged.
+# A severity threshold on the one continuous quantity the model produces is therefore
+# the honest design, and the absence of a confirmer is recorded rather than papered
+# over with a correlated one.
+PROSPECT_WATCH_FV_MIN = 40.0        # pre-existing product floor, now named
+PROSPECT_WATCH_MARGIN_MIN = 10.0    # half the 20-point SWING band (pc.SHAPE_SWING_BAND)
+PROSPECT_WATCH_CAP = 60             # bounded slice; spotlights.TOP_N precedent
 
-    Each entry carries `player_key` so a consumer (prospx pitcher cards) can join
-    the role-fit read back onto its own prospect board by the canonical prospect
-    key -- the reason this is a named helper rather than an inline loop."""
+
+def build_prospect_watch_all(prospects: list) -> list:
+    """EVERY role mismatch at or above the FV floor, ranked by severity. No cap.
+
+    This is the unbounded set the payload keeps under `prospect_watch_all`, and it is
+    what the prospx pitcher-card chip joins against, so staging the /pal/ list does not
+    silently strip a player's role-conversion read off their card."""
     watch = []
     for p in prospects:
         rf = pc.prospect_role_fit(p.get("tools"), p.get("position"))
-        if not rf["mismatch"] or (p.get("fv") or 0) < 40:
+        if not rf["mismatch"] or (p.get("fv") or 0) < PROSPECT_WATCH_FV_MIN:
             continue
         watch.append({"player_key": p.get("player_key"), "name": p["name"],
                       "org": p.get("org"), "position": p.get("position"),
                       "fv": p.get("fv"), "tools": p.get("tools"), **rf})
-    watch.sort(key=lambda x: -(x.get("fv") or 0))
+    # Severity first (the owner's ranking), FV as the tiebreak, name as the stable
+    # third key: starter_shape is quantized hard enough that ties are the norm, and
+    # without a deterministic third key the served order would follow pool order.
+    watch.sort(key=lambda x: (-(x.get("mismatch_margin") or 0.0),
+                              -(x.get("fv") or 0), x.get("name") or ""))
+    return watch
+
+
+def build_prospect_watch(prospects: list, cap: int = PROSPECT_WATCH_CAP,
+                         margin_min: float = PROSPECT_WATCH_MARGIN_MIN) -> list:
+    """The /pal/ prospect conversion watch: the role MISMATCHES worth a look (a
+    scouted starter that profiles as a reliever, or vice versa), gated to real
+    prospects (FV >= PROSPECT_WATCH_FV_MIN), STAGED at a severity threshold and
+    bounded by a visible cap. Shape-only (scout tools, no MiLB stuff physics).
+
+    Each entry carries `player_key` so a consumer (prospx pitcher cards) can join
+    the role-fit read back onto its own prospect board by the canonical prospect
+    key -- the reason this is a named helper rather than an inline loop."""
+    full = build_prospect_watch_all(prospects)
+    watch = [w for w in full if (w.get("mismatch_margin") or 0.0) >= margin_min]
     return watch[:cap]
+
+
+def prospect_watch_rule(full: list, watch: list,
+                        margin_min: float = PROSPECT_WATCH_MARGIN_MIN,
+                        cap: int = PROSPECT_WATCH_CAP) -> dict:
+    """The bound, made visible in the payload. Every number the /pal/ copy states
+    comes from here, so the surface can never claim a bound it is not applying."""
+    qualified = [w for w in full if (w.get("mismatch_margin") or 0.0) >= margin_min]
+    just_outside = [w for w in full if (w.get("mismatch_margin") or 0.0) < margin_min]
+    best_outside = max((w.get("mismatch_margin") or 0.0) for w in just_outside) if just_outside else None
+    return {
+        "fv_min": PROSPECT_WATCH_FV_MIN,
+        "margin_min": margin_min,
+        "cap": cap,
+        "n_mismatches": len(full),
+        "n_qualified": len(qualified),
+        "n_shown": len(watch),
+        "n_below_margin": len(just_outside),
+        "n_over_cap": max(0, len(qualified) - len(watch)),
+        "cap_binding": len(qualified) > len(watch),
+        "best_margin_below_threshold": best_outside,
+        "basis": ("severity = shape points past the SWING band "
+                  f"[{pc.SHAPE_RP_MAX:.0f}, {pc.SHAPE_SP_MIN:.0f}]; threshold is half "
+                  "the band width, an a-priori structural bound, not a fitted one"),
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -655,10 +740,14 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
 
     # prospect conversion watch (shape-only, no MiLB stuff physics): the role
     # MISMATCHES worth a look (a scouted starter that profiles as a reliever, or
-    # vice versa), gated to real prospects (FV >= 40) and capped. Each entry now
-    # carries player_key so prospx can cross-link the role-fit read onto its
-    # pitcher cards (see build_prospect_watch).
+    # vice versa), gated to real prospects (FV >= 40), STAGED at a severity
+    # threshold and bounded by a visible cap. Each entry carries player_key so
+    # prospx can cross-link the role-fit read onto its pitcher cards -- and the
+    # chip joins `prospect_watch_all`, the unbounded set, so the staging bounds
+    # the /pal/ LIST without stripping anybody's card (see build_prospect_watch).
+    prospect_watch_all = build_prospect_watch_all(prospects)
     prospect_watch = build_prospect_watch(prospects)
+    watch_rule = prospect_watch_rule(prospect_watch_all, prospect_watch)
 
     payload = {
         "generated_at": today, "season": season,
@@ -668,13 +757,18 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         "pitch_add": pitch_add,
         "reverse_platoon": platoon_rows,
         "prospect_watch": prospect_watch,
+        "prospect_watch_all": prospect_watch_all,
+        "prospect_watch_rule": watch_rule,
         "n_prospects": len(prospects),
         "backtest": backtest,
         "verdict": _verdict(),
     }
 
     log(f"  pal: {len(rp2sp)} RP->SP, {len(sp2rp)} SP->RP, {len(events)} conversions, "
-        f"{len(prospect_watch)} prospect pitchers, {len(platoon_rows)} platoon rows; "
+        f"{watch_rule['n_shown']}/{watch_rule['n_mismatches']} prospect role-mismatches "
+        f"shown (margin >= {watch_rule['margin_min']}, cap {watch_rule['cap']}"
+        f"{', BINDING' if watch_rule['cap_binding'] else ''}), "
+        f"{len(platoon_rows)} platoon rows; "
         f"backtest rho={backtest['spearman_prefit_vs_held']} (n={backtest['n_labeled']})")
     if write:
         out_path.parent.mkdir(parents=True, exist_ok=True)

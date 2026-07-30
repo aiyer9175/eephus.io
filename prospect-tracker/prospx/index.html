@@ -31160,7 +31160,11 @@ function ensurePalFit() {
     .then(r => (r.ok ? r.json() : null))
     .then(j => {
       const byKey = {}, byNameOrg = {};
-      const watch = (j && j.prospect_watch) || [];
+      // The UNBOUNDED set: /pal/'s own list is staged behind a severity threshold and
+      // a cap (pal_export.PROSPECT_WATCH_MARGIN_MIN / _CAP), but a player's own card
+      // should still show their role-conversion read. Falls back to the staged list on
+      // any payload built before prospect_watch_all shipped.
+      const watch = (j && (j.prospect_watch_all || j.prospect_watch)) || [];
       for (const w of watch) {
         if (!w) continue;
         if (w.player_key) byKey[w.player_key] = w;
