@@ -130,16 +130,30 @@ def run(persist: bool = True) -> dict:
             # to compare them against.
             "live_lambda": {"hit": round(blend_lambda("hit"), 4),
                             "pit": round(blend_lambda("pit"), 4)},
-            "grade_scale": "xfv_grade_quantile is the DISPLAYED grade site-wide: the model's "
-                           "outcome-grounded ranking mapped onto the familiar 20-80 consensus "
-                           "scale, and the grade surplus_mm is priced on (owner: eFV + eFV "
-                           "surplus consistent everywhere, matching /projections/). xfv_grade / "
-                           "xfv_grade_realized is the honest pure-model grade -- "
-                           "realized_implied_fv(E[6yr WAR]), deflated -- kept as a secondary "
-                           "reference; the outcome distribution p_bucket / p_bust stays on it "
-                           "(validated star/bust odds). Live board players carry kind=active + a "
-                           "surplus dist; they require a pro track record (eFV abstains on "
-                           "players with no MiLB production).",
+            # RESTAMPED 2026-07-30. This string was stale on BOTH of its claims: it still
+            # called xfv_grade_quantile the site-wide displayed grade (retired 2026-07-25,
+            # when storage.BOARD_GRADE_FIELD moved to raw xfv_grade), and it described
+            # xfv_grade through realized_implied_fv (retired 2026-07-30 by the pooled
+            # outcome refit). A grade that changes meaning without its documentation
+            # following is the exact drift this program spent the session correcting.
+            "grade_scale": "xfv_grade is THE board number: the displayed grade, the sort key "
+                           "and the basis of overall_rank (storage.BOARD_GRADE_FIELD). Since "
+                           "2026-07-30 it is value_framework.outcome_implied_fv(E[6yr WAR]) -- "
+                           "the inverse of the POOLED empirical outcome curve fitted on resolved "
+                           "cohorts (data/fv_outcome_curves_pooled.json), so a grade states the "
+                           "FV whose measured first-six-year bWAR matches this prediction. It is "
+                           "a pure function of predicted WAR: unlike the retired map it takes no "
+                           "age or position, so two rows with equal predictions grade equally. "
+                           "Below about FV45 the curve is flat and the sub-floor knots are a "
+                           "shape-preserving re-spread, so a sub-45 grade is NOT outcome-"
+                           "calibrated and must not be read as one. xfv_grade_quantile is the "
+                           "RETIRED per-side quantile map onto the consensus distribution; it is "
+                           "no longer displayed but surplus_mm is still priced through it, which "
+                           "is why the refit moved zero dollars. p_bucket / p_bust stay on the "
+                           "retired realized_implied_fv map on purpose (they were ground-truthed "
+                           "on it and a re-key has not been measured). Live board players carry "
+                           "kind=active + a surplus dist; they require a pro track record (eFV "
+                           "abstains on players with no MiLB production).",
             "eval": {"hitter": "data/xfv_eval.json", "pitcher": "data/xfv_eval_pitcher.json",
                      "tools": "data/xfv_tools.json"},
             "status": "provisional",
