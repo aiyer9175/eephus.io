@@ -79,6 +79,16 @@ MODEL_GLOSSARY = {
     # and no additive re-basing can change a gap between two players graded by the
     # same source set). Loss ledger, nothing user-facing to document.
     "xfv_gradenorm_basis": "internal",
+    # 2026-07-30 coherence lane, both NO-SHIP measurement ledgers, nothing rendered.
+    # xfv_provisional_grade_map: re-pointing the provisional engine onto the outcome
+    # curve fires 3 of 6 stop conditions (the soft cap's FV constants stop being WAR
+    # constants; 48.5% of the pool has non-positive predicted WAR and all of it collapses
+    # to exactly FV20, deleting the org-filler ladder).
+    # xfv_odds_index_basis: the consensus-vs-model index mismatch is REAL (2.7x dispersion)
+    # but re-indexing is a null, because the binding defect is a 35-point base-rate gap
+    # between a published-list table and the eFV matrix, not the units.
+    "xfv_provisional_grade_map": "internal",
+    "xfv_odds_index_basis": "internal",
     # LANE-CURVES Phase 1 measurement artifact: per-side FV -> outcome curves + the
     # industry bake-off. Not shipped, rendered nowhere, changes no served number; the
     # reader-facing glossary entry belongs to the Phase-2 grade re-scale, not here.
