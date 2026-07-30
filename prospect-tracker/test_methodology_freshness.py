@@ -75,6 +75,10 @@ MODEL_GLOSSARY = {
     "efv_scoreboard": ["xfv"],             # eFV accountability scoreboard (source-comparison panel)
     "xfv_platoon": "internal",             # W-PLATOON loss ledger (platoon splits FAIL both sides)
     "xfv_wrc": "internal",                 # W-WRC/W-SB loss ledger (in-house wRC+ no ship)
+    # consensus-basis counterfactual; normalization STAYS ON (turning it off is worse,
+    # and no additive re-basing can change a gap between two players graded by the
+    # same source set). Loss ledger, nothing user-facing to document.
+    "xfv_gradenorm_basis": "internal",
     "xfv_tbs2": "internal",                # W-TBS2 loss ledger (tiebreaker stack FAIL)
     "xfv_ungraded_disc": "internal",       # W-DISC loss ledger (coverage-starved)
     "xfv_role_arg": "internal",            # W-SURPLUS S3 audit-only
@@ -410,6 +414,23 @@ MODEL_GLOSSARY = {
     # the same entry because that entry is where the failure is written down for
     # a reader, which is the whole point of documenting a loss beside its display.
     "archetype_search": ["archetype_comps"],
+    # --- WAR/PA+ and WAR/IP+ (2026-07-29 Arkmetric lane, master plan Phase G).
+    # Descriptive display indexes: the forward gate was run and LOST to plain
+    # season bWAR on all three pools, so every row is honestly `unvalidated` with
+    # a null eval artifact and the ledger cited in its notes. Each maps to its own
+    # glossary entry plus the trailing-window companion, because the entry text is
+    # where a reader is told both what the number means AND that it is not a
+    # forecast. The two WAR/IP+ entries are SEPARATE by design: the starter board
+    # and the reliever board carry the same column title over two different anchor
+    # pools, and the values are not comparable
+    # (docs/efv-2026-07-29/ARKMETRIC_SCALE_CONVENTIONS.md:77).
+    "war_pa_plus": ["war_pa_plus", "war_pa_plus_3yr"],
+    "war_ip_plus_sp": ["war_ip_plus_sp", "war_ip_plus_sp_3yr"],
+    "war_ip_plus_rp": ["war_ip_plus_rp", "war_ip_plus_rp_3yr"],
+    # The trailing-window companion family across all three boards, one frozen
+    # vintage artifact with three blocks.
+    "war_rate_plus_3yr": ["war_pa_plus_3yr", "war_ip_plus_sp_3yr",
+                          "war_ip_plus_rp_3yr"],
 }
 
 
