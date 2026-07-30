@@ -57,3 +57,10 @@ comps.json
 # lane. Its own header reads "DATA ASSET - NOT A MODEL INPUT"; the lane was a
 # measured null on all 5 conditions and no page fetches it.
 milb_pitch_rates.json
+# positions_played_seasons.json (1.0 MB) + fielding_census_ids.json (0.2 MB):
+# the as-of-aware fielding census and its census-scoped player_key -> mlbam
+# binding (docs/efv-2026-07-30/POSITION_CENSUS_ASOF.md). Model-side inputs
+# keyed by MLBAM id; no page fetches either, and the versa chip keeps reading
+# data/positions_played.json, which still ships.
+positions_played_seasons.json
+fielding_census_ids.json
