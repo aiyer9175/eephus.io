@@ -223,3 +223,236 @@ bucket table.
 # PART 2. Results
 
 *(Appended after the measurement. Everything above this line was on disk first.)*
+
+Artifact: `data/odds_index_basis_eval.json`. Lab runtime 363.5s, B = 1000 paired bootstrap
+draws with a full refit of the ridge, the linear calibration, the consensus OLS, the
+consensus-scale quantile map and the forward-chained Platt maps on every draw; B = 1000
+permutation draws.
+
+## 2.0 VERDICT: THE MISMATCH IS REAL. FIXING IT IS A NULL. DO NOT RE-INDEX.
+
+The owner asked two questions and they have different answers.
+
+**Is it a mismatch? YES**, on two counts, both quantified in 1.1 and neither disputed by the
+measurement: a 2.70x / 2.26x dispersion gap with the mean 5 to 6 FV low, and a fitted support
+of [45, 60] that excludes 72% to 78% of the rows on every scale.
+
+**Does fixing it fix the forecast? NO.** The candidate fails the owner's pre-registered ship
+criterion on both required cuts, for two different reasons:
+
+* **pooled: FAILS, with the CI excluding zero in the WRONG direction.** QNT vs the flat
+  constant, Brier d = **-0.02083** (bootstrap mean -0.02287, CI95 [-0.03974, -0.00716],
+  P(candidate better) = 0.001); log loss d = **-0.06599** (CI95 [-0.11610, -0.03014],
+  P = 0.001). Climatology is decisively better.
+* **pooled_served: FAILS on the interval.** Brier d = +0.03538 (CI95 [-0.00727, +0.06996],
+  P = 0.932); log loss d = +0.06322 (CI95 [-0.04710, +0.15074], P = 0.831). The point
+  estimates favour the candidate; neither interval excludes zero.
+
+**And the decisive diagnostic settles the attribution.** On the primary frame the table read
+at its NATIVE consensus-FV index also loses to the flat constant (Brier d = -0.01399 CI95
+[-0.02778, +0.00035]; log loss d = -0.04465 CI95 [-0.07921, -0.00875], P = 0.006). Fed exactly
+the units it was fitted on, on exactly the population production serves, the curve is beaten by
+a number that knows nothing but the base rate. **The index is exonerated. The population is
+convicted.**
+
+One result does NOT collapse and is registered rather than shipped: the consensus-scale keying
+carries genuinely MORE information than the incumbent keying, and that survives recalibration
+(2.5). The units question was worth asking; it is just not what is wrong with the served odds.
+
+## 2.1 Provenance: both baselines reproduce exactly
+
+Before any verdict. This lab rebuilds the incumbent and the recalibrated arm from scratch and
+lands on the predecessor lanes' published numbers:
+
+| arm | this lab, pooled | predecessor | source |
+|---|---|---|---|
+| INC Brier / log loss | 0.14080 / 0.46089 | 0.14080 / 0.46088 | `ODDS_GRADE_BASIS_GATE.md` 2.2 |
+| CAL Brier / log loss | 0.11308 / 0.37864 | 0.11308 / 0.37864 | `ODDS_RECALIBRATION_SHIP_GATE.md` 2.3 |
+
+Frame identity is exact too: 923 hit / 1,002 pit resolved out-of-fold rows, bust base rates
+0.8397 / 0.8782, 516 served-comparable. The replication of the served scoring chain is correct
+and the three baselines are the same objects the owner named.
+
+**One declared difference.** `CAL` here is a per-fold Platt map fitted on the whole side's
+out-of-fold rows and then read on each cut, where `ODDS_RECALIBRATION_SHIP_GATE.md` fitted it
+WITHIN the served cut. On `pooled_served` that makes this lane's CAL slightly stronger
+(0.19545 / 0.61283 against that gate's 0.20277 / 0.63595). CAL is a baseline, so a stronger
+baseline is conservative for the candidate and does not flatter it. `CONST` IS fitted within
+the cut, exactly as pre-registered.
+
+## 2.2 The arms
+
+**Pooled** (n = 1,925, base rate 0.8597)
+
+| arm | Brier | log loss | ECE | reliability | resolution | mean p - obs | AUC |
+|---|---|---|---|---|---|---|---|
+| INC | 0.14080 | 0.46089 | 0.1747 | 0.0483 | 0.0273 | -0.1533 | 0.7967 |
+| CAL | 0.11308 | 0.37864 | 0.0678 | 0.0113 | 0.0178 | -0.0366 | 0.7675 |
+| **CONST** | **0.12902** | **0.41980** | 0.1384 | 0.0221 | 0.0146 | -0.1384 | 0.7679 |
+| **QNT** | 0.14985 | 0.48580 | 0.2411 | 0.0609 | **0.0311** | **-0.2411** | **0.8289** |
+| QWAR | 0.15186 | 0.49475 | 0.2445 | 0.0626 | 0.0302 | -0.2445 | 0.8171 |
+| **NAT** | 0.14301 | 0.46446 | 0.2296 | 0.0541 | 0.0301 | -0.2296 | 0.8338 |
+| QNT_P | **0.10305** | **0.34118** | 0.0518 | 0.0065 | 0.0211 | -0.0326 | 0.8063 |
+
+**Served-comparable** (n = 516, base rate 0.6822)
+
+| arm | Brier | log loss | ECE | reliability | resolution | mean p - obs | AUC |
+|---|---|---|---|---|---|---|---|
+| INC | 0.23196 | 0.73794 | 0.2096 | 0.0535 | 0.0392 | -0.1414 | 0.7386 |
+| CAL | 0.19545 | 0.61283 | 0.1009 | 0.0134 | 0.0347 | +0.0971 | 0.7293 |
+| **CONST** | **0.23738** | **0.66899** | 0.1383 | 0.0287 | 0.0097 | -0.1107 | 0.5073 |
+| **QNT** | 0.20199 | 0.60577 | 0.1605 | 0.0287 | 0.0427 | -0.1605 | 0.7646 |
+| QWAR | 0.21646 | 0.64926 | 0.1807 | 0.0379 | 0.0381 | -0.1788 | 0.7432 |
+| **NAT** | **0.18082** | **0.54754** | 0.1303 | 0.0183 | **0.0546** | -0.1303 | **0.7996** |
+| QNT_P | 0.19273 | 0.58522 | 0.1255 | 0.0192 | 0.0401 | +0.1004 | 0.7560 |
+
+## 2.3 The gate, scored
+
+`d = metric(baseline) - metric(candidate)`. POSITIVE means the candidate is better. The
+bootstrap is the paired, player-clustered, refit-every-draw one (B = 1000).
+
+| cut | comparison | metric | point d | bootstrap CI95 | P(cand) | permutation null band95 |
+|---|---|---|---|---|---|---|
+| **pooled** | **QNT vs CONST** | **Brier** | **-0.02083** | **[-0.03974, -0.00716]** | **0.001** | [-0.05860, -0.04848] |
+| **pooled** | **QNT vs CONST** | **log loss** | **-0.06599** | **[-0.11610, -0.03014]** | **0.001** | [-0.16547, -0.13867] |
+| **pooled_served** | **QNT vs CONST** | **Brier** | +0.03538 | **[-0.00727, +0.06996]** | 0.932 | [-0.06003, -0.02529] |
+| **pooled_served** | **QNT vs CONST** | **log loss** | +0.06322 | **[-0.04710, +0.15074]** | 0.831 | [-0.18381, -0.09391] |
+| hit | QNT vs CONST | Brier | -0.01960 | [-0.04035, -0.00099] | 0.016 | [-0.07151, -0.05484] |
+| pit | QNT vs CONST | Brier | -0.02197 | [-0.04646, -0.00660] | 0.003 | [-0.04904, -0.03570] |
+| hit_served | QNT vs CONST | Brier | +0.04032 | [-0.00935, +0.08504] | 0.954 | [-0.08763, -0.03204] |
+| pit_served | QNT vs CONST | Brier | +0.03095 | [-0.02880, +0.06907] | 0.796 | [-0.03794, -0.00053] |
+
+**Criteria 1 to 3 FAIL.** The pooled cut fails outright with the interval excluding zero on the
+constant's side; the served cut fails the interval requirement on both metrics. Under the
+pre-registered rule that is a NULL, and 1.6 says the recommendation is to stop.
+
+**The permutation control clears the candidate of the RE-KEY's failure mode, and this is worth
+stating precisely because it is the one thing that separates this result from the basis gate's.**
+`ODDS_GRADE_BASIS_GATE.md` 2.6 found the re-key's apparent wins were SMALLER than what a
+forecast with the same marginal and no label information would deliver. QNT is not that: every
+observed delta above sits on the correct side of its own null band. QNT is a real forecast that
+loses to a constant on level, not a phantom that wins by being flat.
+
+`QWAR`, the same construction on pure model WAR instead of the consensus-guarded `rank_war`, is
+uniformly slightly worse than QNT (pooled Brier 0.15186 against 0.14985; served 0.21646 against
+0.20199). The consensus information in `rank_war` helps; the units change is not doing the work
+by itself.
+
+## 2.4 The decisive diagnostic: NAT, and what it proves
+
+NAT is `p_bucket_given_fv` evaluated at the row's own `consensus_fv_raw` - the table read at
+exactly the index it was fitted on. It is not shippable (it contains no model), and that is the
+point: it isolates the INDEX from the POPULATION.
+
+| cut | comparison | metric | point d | bootstrap CI95 | P | permutation null band95 |
+|---|---|---|---|---|---|---|
+| **pooled** | NAT vs CONST | Brier | **-0.01399** | [-0.02778, +0.00035] | 0.028 | [-0.04887, -0.03868] |
+| **pooled** | NAT vs CONST | log loss | **-0.04465** | **[-0.07921, -0.00875]** | 0.006 | [-0.12867, -0.10385] |
+| **pooled_served** | NAT vs CONST | Brier | **+0.05656** | **[+0.02281, +0.08929]** | **1.000** | [-0.04546, -0.01225] |
+| **pooled_served** | NAT vs CONST | log loss | **+0.12145** | **[+0.04692, +0.19895]** | **0.999** | [-0.12785, -0.04650] |
+
+Read the two rows together. **On the full resolved cohort, the curve fed its own units loses to
+climatology on both proper scores.** On the served-comparable subset - rows with a real MiLB
+track record, the population `run_live` abstains down to and the one that most resembles a
+published prospect list - **the same curve, same units, beats climatology decisively, with the
+CI excluding zero and the observed far above its own null band.**
+
+That is the whole finding. The table is not broken and its index is not the binding defect.
+It is a model of a PUBLISHED-LIST population (Clemens 2025: 51% to 53% bust at FV 45) being
+scored on the whole eFV cohort matrix (84% to 88% bust). No change of argument can move a
+forecast across a base-rate gap of thirty-five points, which is why re-indexing moves the level
+the wrong way and why the 2026-07-25 recalibration moved only the level.
+
+`ODDS_GRADE_BASIS_GATE.md` 2.11(c) named this population problem while costing a refit. This
+lane measures it directly and promotes it from a caveat to the answer.
+
+## 2.5 What DOES survive: the consensus-scale keying carries more information
+
+Not a ship. Reported because it is true and because 1.6 rule 4 required the test.
+
+The level-shift trap asks whether the candidate's difference from the incumbent survives an
+out-of-fold monotone recalibration of both. **It does, and it goes the candidate's way:**
+
+| cut | metric | QNT_P vs CAL, point d | bootstrap CI95 | P | permutation null band95 |
+|---|---|---|---|---|---|
+| pooled | Brier | +0.01003 | **[+0.00300, +0.02144]** | 0.997 | [-0.00229, +0.00245] |
+| pooled | log loss | +0.03746 | **[+0.01717, +0.07518]** | 0.999 | [+0.01008, +0.03200] |
+| hit | Brier | +0.01779 | [+0.00443, +0.03535] | 0.999 | [+0.00025, +0.00747] |
+| pit | Brier | +0.00288 | [-0.00420, +0.01644] | 0.842 | [-0.00692, -0.00174] |
+
+Three independent readings agree that this is information and not level:
+
+1. **Discrimination is higher.** Pooled AUC 0.8289 (QNT) against 0.7967 (INC); on the served cut
+   0.7646 against 0.7386. Contrast the re-key, whose AUC was identical to the incumbent's to
+   three decimals - that is exactly what told the basis gate its candidate was pure level.
+2. **Murphy resolution is higher.** 0.0311 against 0.0273 pooled; 0.0427 against 0.0392 served.
+3. **After recalibrating both arms out of fold the gap persists**, with the CI excluding zero
+   and the observed above its null band, on the pooled cut and on hitters. It is a null on
+   pitchers.
+
+So the consensus-scale grade is a BETTER-ORDERED key than the retired realized-implied grade.
+Its raw form is nonetheless worse, because its level is worse: calibration-in-the-large goes
+-0.1533 (INC) to -0.2411 (QNT), since the consensus-scale grade is higher on average (pooled
+mean 42.28 against 36.30) and the table returns a lower p_bust at a higher grade, on a curve
+that is already fifteen points too low.
+
+**This is registered, not recommended.** Acting on it would mean shipping QNT plus a
+recalibration, and the recalibration half is `ODDS_RECALIBRATION_SHIP_GATE.md`'s measured NULL
+against a base rate. A better-ordered key stacked on a link that cannot beat climatology is not
+a served improvement, and this lane will not assemble one out of two components that each
+failed their own gate.
+
+## 2.6 The support problem, which re-indexing makes slightly worse
+
+Share of rows below the fit's own recorded support of FV 45, pooled:
+
+| argument | mean | sd | share below 45 |
+|---|---|---|---|
+| INC (`realized_implied_fv`) | 36.30 | 12.87 | 0.717 |
+| QNT (consensus-scale quantile) | 42.28 | 5.78 | 0.761 |
+| QWAR | 42.42 | 6.14 | 0.763 |
+| NAT (`consensus_fv_raw`) | 41.87 | 5.10 | 0.779 |
+
+Re-indexing fixes the DISPERSION (sd 12.87 to 5.78, essentially matching the consensus marginal
+of 5.66 / 4.50 in 1.1) and does nothing at all for the SUPPORT: about three quarters of rows sit
+outside [45, 60] on every scale, and the better-matched the scale, the slightly higher that
+share. Every served p_bust on those rows is an ordered-logit extrapolation, and no re-argument
+changes that.
+
+## 2.7 Per split (gate standard 2.4)
+
+Pooled, `d = metric(CONST) - metric(candidate)`, all seven folds:
+
+| fold | n | base rate | QNT d_Brier | QNT d_logloss | NAT d_Brier |
+|---|---|---|---|---|---|
+| 2014 | 185 | 0.789 | -0.0057 | -0.0509 | +0.0017 |
+| 2015 | 173 | 0.734 | +0.0246 | +0.0588 | +0.0257 |
+| 2016 | 213 | 0.845 | +0.0023 | -0.0050 | +0.0051 |
+| 2017 | 199 | 0.900 | -0.0032 | -0.0284 | +0.0146 |
+| 2018 | 389 | 0.918 | **-0.0719** | **-0.1792** | -0.0654 |
+| 2019 | 393 | 0.863 | -0.0408 | -0.1201 | -0.0328 |
+| 2020 | 373 | 0.877 | +0.0022 | -0.0112 | +0.0071 |
+
+Only three of seven folds favour the candidate on Brier, and the two heaviest losses are the
+two largest folds, which are also the two with the highest bust base rates (0.918 and 0.863).
+That is the level story again: the higher the fold's true bust rate, the worse a forecast that
+systematically under-predicts bust does against a constant that does not.
+
+## 2.8 What should actually happen
+
+1. **DO NOT RE-INDEX.** The candidate fails its pre-registered criterion on both required cuts.
+   `xfv_odds_index_basis` registers as `deprecated`.
+2. **The units mismatch is real and should be DOCUMENTED at the seam rather than repaired.**
+   `efv_score.py:1188-1196` and `value_framework.p_bucket_given_fv`'s docstring should say what
+   1.1 establishes: the curve is fitted on 678 / 437 published-list rows over consensus FV
+   [45, 60], production reads it at an inverted model prediction 5 to 6 FV lower with 2.3x to
+   2.7x the dispersion, and roughly three quarters of served rows are extrapolations. That is a
+   documentation change, not a model change, and it belongs to whoever next edits that seam.
+3. **The binding defect is the POPULATION, and it now has a measurement.** The same curve, same
+   units, beats a flat base rate on the served-comparable cut and loses to it on the full
+   cohort. Any real repair has to either restrict the odds to the population the curve fits or
+   fit a second, seam-scoped curve on ours - and `ODDS_GRADE_BASIS_GATE.md` 2.11(c) has already
+   established that our cohort cannot support the top two cutpoints (pitcher `good` n = 11,
+   `star` n = 2). That is a data problem, not a modelling choice, and it should be named as one.
+4. **Do not stack QNT on the recalibration.** Both halves failed their own gates. 2.5 is a
+   registered observation about ordering, not a build instruction.

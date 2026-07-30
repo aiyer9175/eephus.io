@@ -268,3 +268,284 @@ create. `bullpen_export.py`, `rem_plus.py`, `proj_export.py`, `efv_model.py` and
 # PART 2. Results
 
 *(Appended after the measurement. Everything above this line was on disk first.)*
+
+Artifact: `data/provisional_grade_map_eval.json`. Lab runtime 0.5s (the candidates are closed
+forms on a 3,404-row served artifact; no fit, no bootstrap, nothing under `data/` rewritten).
+
+## 2.0 VERDICT: NO SHIP. KEEP the bespoke map, and register the three-map split.
+
+Three of the six pre-registered STOP conditions fire, each on its own evidence:
+
+| # | condition | result |
+|---|---|---|
+| 1 | the cap cannot be carried without re-tuning | **FIRES.** Neither branch is a no-op on its own stated intent (2.2) |
+| 2 | the module's documented calibration is broken | **FIRES.** V1 makes the median un-scouted org PITCHER a 40.5 FV; the spec is "median ~24, 87% at or under 30" (2.3) |
+| 3 | the change moves against this population's own outcome evidence | **FIRES.** The served-versus-empirical bust gap on the cohort G1 measured goes from +0.12/+0.13 to +0.43/+0.45 (2.6) |
+| 4 | the pin does not hold | not reached: no code shipped, and both candidates are `xfv_grade`-only by construction |
+| 5 | the row set changes | **PASS.** 3,404 of 3,404 rows carry a grade under both candidates |
+| 6 | within-side order is not preserved | **PASS, and it corrects a suspicion** (2.7) |
+
+**The coherence complaint the owner raised is real, and this lane does not dismiss it.** It is
+re-registered, sharper than before, with the client-board and farm-score numbers that make it
+concrete (2.4, 2.5). What the measurement says is that `vf.outcome_implied_fv` is the wrong
+instrument for closing it, because the provisional pool lives almost entirely in the region
+that map's own documentation disclaims.
+
+## 2.1 The measurement is a pure map effect, and here is the check
+
+Both candidates are computed from each served row's stored `xfv_war_6yr`, so every delta uses
+one WAR value. Re-deriving the INCUMBENT grade the same way reproduces the served
+`data/xfv_ungraded.json` value **exactly on 3,174 of 3,404 rows, with a maximum disagreement
+of 0.1 FV** on the remaining 230. Every one of those is the 2dp storage of `xfv_war_6yr`
+crossing a 1dp grade rounding boundary. The reconstruction is faithful.
+
+Pool as measured: 3,404 rows, 1,317 hit / 2,087 pit, 511 of them carrying the cameo sub-floor
+cap.
+
+## 2.2 STOP 1: the cap, and why "leave it alone" was the destructive option
+
+`tools/provisional_grade_map_lab._verify_v1_algebra` checks the claim in 1.3 numerically on a
+0.01-WAR grid from -2 to +12 on both sides: **max |dFV| = 0.000000**. Capping in WAR space and
+reading through the incumbent affine map reproduces `efv_ungraded._grade` identically. So V1's
+cap is not an approximation of the incumbent cap; it IS the incumbent cap, in the other
+variable.
+
+Where each constant binds, measured:
+
+| constant | FV | binds at predicted WAR, INCUMBENT | binds at predicted WAR, OUTCOME map |
+|---|---|---|---|
+| hit KNEE | 43.0 | 4.2105 | 1.1253 |
+| hit CEIL | 49.0 | 5.7895 | 4.6984 |
+| hit sub-floor | 30.0 | 0.7895 | 0.0281 |
+| pit KNEE | 34.0 | 2.0000 | **0.0610** |
+| pit CEIL | 38.0 | 2.8889 | **0.1756** |
+| pit sub-floor | 30.0 | 1.1111 | 0.0281 |
+
+Rows sitting ABOVE the soft-cap knee, which is the direct census of what the cap does:
+
+| branch | hit | pit | share of the pitcher pool |
+|---|---|---|---|
+| incumbent | 5 | 176 | 8.4% |
+| **V0** (FV constants kept) | 142 | **1,416** | **67.9%** |
+| V1 (WAR translation) | 5 | 176 | 8.4% |
+
+**V0 turns a bound that touches 8% of pitchers into one that touches 68% of them**, and the
+result is visible in the distribution: the V0 pitcher pool has max 38.0, p90 37.9 and p99 38.0.
+Nine hundred and eighty arms pile against a four-FV wall. That is not the cap doing what it
+did; it is a different instrument wearing the same constants.
+
+V1 preserves the cap's action exactly and pays for it at the other end: its hitter maximum is
+**49.5**, above the CEIL 49 the 2026-07-25 restoration used as the graded path's own asymptote,
+and a cameo row capped at "org filler" would print **FV 40.9 (hit) / 42.9 (pit)** instead of 30.
+
+So the fork in 1.3 is confirmed by measurement and neither side of it is free. **STOP 1 fires.**
+
+## 2.3 STOP 2: what a provisional grade would come to mean
+
+`efv_ungraded`'s docstring states the calibration this map was validated against: *"MOST land
+20-30 (org filler), only genuine production breakouts reach 35-43"*, *"a true 45+ would have
+been graded"*, *"hitters median ~23 / 77% <= 30; pitchers median ~24 / 87% <= 30"*.
+
+Pooled (3,404 rows):
+
+| | median | share <= 30 | n >= 35 | n >= 40 | n >= 45 | n at the FV20 floor |
+|---|---|---|---|---|---|---|
+| incumbent | 25.7 | **0.923** | 71 | 8 | 1 | 716 |
+| V0 | 30.0 | 0.641 | 1,185 | 151 | 32 | 1,650 |
+| V1 | 33.9 | **0.491** | 1,696 | 1,340 | 62 | 1,650 |
+
+Per side, which is where it is worst:
+
+| side | branch | median | share <= 30 | n >= 40 | n >= 45 | n at floor 20 |
+|---|---|---|---|---|---|---|
+| hit | incumbent | 20.6 | 0.918 | 8 | 1 | 618 |
+| hit | V0 | 20.0 | 0.836 | 151 | 32 | 1,019 |
+| hit | V1 | 20.0 | 0.779 | 226 | 23 | 1,019 |
+| pit | incumbent | 27.4 | 0.926 | 0 | 0 | 98 |
+| pit | V0 | 30.0 | 0.518 | 0 | 0 | 631 |
+| pit | **V1** | **40.5** | **0.309** | **1,114** | **39** | 631 |
+
+**Under V1 the median un-scouted organizational pitcher is a 40.5 FV and 1,114 of 2,087 of them
+are 40 or better, up from zero.** Under V0 the pitcher pool's median is 30.0 and only 51.8%
+sit at or under 30 against a documented 87%. Both branches break the module's own words.
+**STOP 2 fires.**
+
+**The mechanism, and it is the single most important sentence in this document.** The
+provisional pool is **48.5% non-positive predicted WAR** (1,650 of 3,404), and
+`vf.outcome_implied_fv` returns **exactly 20.0** for every one of them. The bespoke linear map
+exists to spread that range - a hitter at -1.5 WAR reads 21.3, at -0.5 reads 25.1, at 0.0 reads
+27.0 - which is the org-filler ladder the module was commissioned to provide. Re-pointing
+deletes the ladder and replaces it with a single point, then piles everything with any positive
+prediction at 37-43. The served distribution stops being a distribution and becomes two spikes.
+That is not a defect in the outcome curve; it is the curve's own documented behaviour below its
+data floor (`value_framework.py:2813-2820`), applied to a population that is essentially
+entirely below that floor.
+
+## 2.4 Blast radius
+
+| branch | side | rows | moved | up / down | mean dFV | mean abs dFV | max abs dFV |
+|---|---|---|---|---|---|---|---|
+| V0 | hit | 1,317 | 624 (47.4%) | 218 / 406 | +0.73 | 2.71 | 12.3 |
+| V0 | pit | 2,087 | 1,553 (74.4%) | 1,020 / 533 | +3.63 | 5.16 | 11.6 |
+| V0 | **all** | 3,404 | **2,177 (64.0%)** | 1,238 / 939 | **+2.50** | **4.21** | 12.3 |
+| V1 | hit | 1,317 | 699 (53.1%) | 293 / 406 | +1.42 | 3.39 | 12.3 |
+| V1 | pit | 2,087 | 1,989 (**95.3%**) | 1,456 / 533 | **+7.98** | 9.52 | 13.7 |
+| V1 | **all** | 3,404 | **2,688 (79.0%)** | 1,749 / 939 | **+5.44** | **7.15** | 13.7 |
+
+**The FV45 line.** Crossings are **31 up / 0 down (V0)** and **61 up / 0 down (V1)**; the pool
+goes from **one** row at or above 45 to 32 / 62. What that line gates, enumerated from the
+consumers rather than assumed: the client FV colour band (`fv-45`), the card rarity "shine"
+tier (`card-rarity-shine`), the rarity-tier bucket the starfield linkage reads, and - the one
+with real weight - `storage.FV_POINTS`, where the 40-to-45 step is **1.0 to 3.5 points**, a
+3.5x jump. Sixty-one un-scouted players crossing into the shine tier and the 3.5-point band is
+a served consequence, not a rounding artifact.
+
+## 2.5 The two orderings the coherence argument rests on
+
+**The farm depth/top-end pool** (`storage._top_end_points` / `_depth_points` over
+`entry["prospects"] + _prov_by_org[org]`, ranked on `_eff_grade` = `xfv_grade`):
+
+| | incumbent | V0 | V1 |
+|---|---|---|---|
+| orgs whose points change | - | **30 of 30** | **30 of 30** |
+| league total top-end + depth points | 3,488.49 | 3,861.07 (**+10.7%**) | 4,412.57 (**+26.5%**) |
+| provisional rows inside an org scored top 25 | 82 | **281** | **434** |
+
+**The client-side joint board** (`prospx.buildEfvRankMap`: 4,520 graded ACTIVE rows plus 3,404
+provisional rows, sorted together on the single `xfv_grade` field; pool 7,924):
+
+| | V0 | V1 |
+|---|---|---|
+| graded rows whose joint rank moves | 4,348 of 4,520 | 4,393 of 4,520 |
+| graded median / max abs rank move | 934 / 1,131 | 934 / 1,643 |
+| top 10 / 25 / 50 / 100 membership | held, 0 in 0 out at every cut | held, 0 in 0 out at every cut |
+| top 300 membership | 281 held, 19 in, 19 out | 276 held, 24 in, 24 out |
+| provisional rows inside the top 300 | 1 -> 20 | 1 -> 25 |
+| provisional rows inside the top 1,000 | 123 -> 388 | 123 -> 614 |
+
+Two readings, both needed. The marquee end is untouched - no provisional row reaches the top
+100 under any branch, and the top 100 is identical. But **a graded prospect's board rank would
+move by a median of 934 places** because of a change to players he is not being compared
+against on merit. That is the cost of the coherence repair, and it is paid by the graded board.
+
+## 2.6 STOP 3: the direction of the change, against this population's own outcomes
+
+This is the one measurement in the lane that is about accuracy rather than coherence, and it is
+the reason the verdict is not simply "coherent but ugly".
+
+The thin-sample lane rebuilt a 19,812-row historical cohort matched to the SERVED provisional
+population and measured its realized bust rate **as a function of this module's own grade**.
+Its G1 gate: at provisional grade >= 35 the empirical bust rate exceeds what the
+graded-population curve served by **+0.169 CI95 [0.128, 0.204] (hit)** and **+0.130 CI95
+[0.094, 0.150] (pit)**, positive on all eight side-by-cohort-year cells. Observed rates:
+**0.881 (hit) / 0.940 (pit)**.
+
+What the candidates do to exactly that cohort (the 71 served rows at incumbent grade >= 35):
+
+| side | n | mean grade | `p_bucket_given_fv` p_bust | gap vs the MEASURED rate |
+|---|---|---|---|---|
+| hit | 29 | 38.17 -> **46.33** (V1) | 0.760 -> **0.448** | +0.121 -> **+0.433** |
+| pit | 42 | 36.24 -> **45.51** (V1) | 0.810 -> **0.488** | +0.130 -> **+0.452** |
+
+V0 is the same story on hitters (46.24, p_bust 0.452) and milder on pitchers only because the
+FV-constant cap crushes them into the 38 wall (37.98, p_bust 0.764).
+
+And if the thin head were re-argued rather than pinned - which is what a naive re-point would do
+silently - its served p_bust on that cohort would fall from **0.914 to 0.784 (hit)** and from
+**0.952 to 0.836 (pit)**, in both cases away from the measured 0.881 / 0.940.
+
+**A grade that the platform has already measured to be too generous for this population would
+become about ten FV more generous.** That is the direction the evidence forbids.
+**STOP 3 fires.**
+
+## 2.7 STOP 6 passes, and it corrects something the raw count suggested
+
+The naive census reports 70 (V0) / 68 (V1) within-side order violations against predicted WAR -
+and **69 under the INCUMBENT map**. Excluding the 511 cameo-capped rows, the count is **0 under
+all three arms**. Every violation is the `min(grade, 30.0)` cameo cap, which is deliberately
+non-monotone in WAR and has always been so. Both maps are strictly increasing exactly as
+documented, and the ordering claim is confirmed rather than merely assumed. The 69 pre-existing
+violations are a property of the cameo cap worth knowing about; they are not caused by, and are
+not a reason to reject, a re-point.
+
+## 2.8 The seven orphans, and the honest split
+
+`KEEP` / `V0` / `V1` at the predicted WAR `ORPHAN_ROUTING.md` 3 replayed:
+
+| player | predicted WAR | KEEP | V0 | V1 | flagship grade it replaced |
+|---|---|---|---|---|---|
+| `easton_shelton` | 3.505 | 40.3 | 47.1 | **47.6** | 40.8 |
+| `braylon_whitaker` | 2.161 | 35.2 | 45.2 | **44.8** | 35.0 |
+| `jacob_friend` | 2.144 | 35.1 | 45.2 | **44.8** | **43.5** |
+| `michael_martinez` | 2.099 | 35.0 | 45.1 | **44.7** | 40.6 |
+| `jake_cunningham` | 1.715 | 33.5 | 44.4 | **44.0** | 41.2 |
+| `mason_guerra` | -0.200 | 26.2 | **20.0** | **20.0** | 37.5 |
+| `jose_meza` | -1.464 | 21.4 | **20.0** | **20.0** | 21.6 |
+
+**The owner's case player is real and the re-point does close his gap.** `jacob_friend` reads
+35.1 today against the 43.5 he carried on the flagship board; under either branch he reads 44.8,
+which is what `vf.outcome_implied_fv` says about 2.144 predicted WAR. On that single row the
+re-point is exactly the right answer.
+
+**And the same change makes `mason_guerra` worse, not better.** He carried 37.5 on the flagship
+board, reads 26.2 on the provisional map today, and would read **20.0** after a re-point,
+because his predicted WAR is -0.200 and the outcome map has one value for the whole negative
+range. Five of the seven improve; two are pushed to the floor and lose their only
+differentiation. That split is the 48.5% of the pool in 2.3, in miniature.
+
+## 2.9 The epoch / fingerprint questions, answered with the code path
+
+**Q1. Does a provisional grade change move any GRADED player server-side `overall_rank`? NO,
+and it is structural rather than incidental.** `overall_rank_by_key` is built at
+`storage.py:10379-10388` by enumerating `actives`, a list of `PlayerTimeseries` objects sorted
+by `_active_key`. A provisional player has no consensus point, so `build_timeseries` emits him
+with `points == []` and `export_timeseries_json:10016` routes him to `inactives` before any
+other gate (`ORPHAN_ROUTING.md` 1.3). He can never be in `actives`. `_board_grade`, the sort
+value, reads `_xfv_by_key` - `data/xfv.json` - and never `xfv_ungraded.json`. So
+`metric_snapshots.overall_rank`, the rank-movement chip and the rank-trend arrow are all
+untouched, and **`BOARD_RANK_BASIS_EPOCH` would NOT need to move for a provisional-map change.**
+
+**Q2. Is the client-side joint ordering covered by anything? NO.** `_EFV_RANK` is built in the
+browser from the two artifacts (`buildEfvRankMap`), and `prospx/index.html:45705` calls it "the
+canonical board rank". No server epoch reaches it. 2.5 measures what a re-point would do to it:
+a median 934-place move for 4,348 of 4,520 graded rows.
+
+**Q3. Would a re-point create a phantom MOVE there? Probably not, and here is why the answer is
+"probably".** `getEfvRankDelta` ranks the same joint pool a second time on ~30-day-old grades
+via `efvPrevGrade`. For a provisional row that reads `_xfv_entry.xfv_history`, which
+`efv_ungraded.build` regenerates through the SAME `_grade` call in the same run
+(`efv_ungraded.py:713-732`). So both the current and the previous joint ranking would be
+re-spread together and a graded player DELTA should be roughly preserved even though his rank
+moves ~934. The residual risk is the one-run lag: if `xfv_ungraded.json` were regenerated while
+a graded player `xfv_history` was not, the two sides of the delta would move asymmetrically
+for one run. That is not measured here because no code shipped, and it would be a required
+measurement for any future attempt.
+
+**Q4. Should `BOARD_BASIS_FINGERPRINT` name the provisional scale? YES, and it currently does
+not.** `storage.board_basis_fingerprint()` (storage.py:4650-4685) names the board grade field,
+the per-side board scale and `outcome_pooled@<curve hash>` - the FLAGSHIP grade map only. The
+client joint board is an ordering that provisional grades enter, so a change to the provisional
+scale is a board-ordering change that the fingerprint would not notice, which is precisely the
+failure class the fingerprint exists to prevent. **This is a real gap and it exists today,
+independent of this lane verdict.** It is registered here as a follow-up rather than fixed,
+because adding a term to the fingerprint changes the fingerprint, which suppresses the
+eFV-delta movement signal for a run (`storage.xfv_history_is_on_board_basis`) - a served
+consequence that should not be taken as a side effect of a no-ship.
+
+## 2.10 What should happen instead
+
+1. **KEEP the bespoke map. Register the three-map split permanently**, with 1.0's correction:
+   the platform has three maps of predicted WAR, not two, and the provisional one is a
+   deliberately-calibrated scale rather than a leftover.
+2. **The coherence defect is real and is now sized.** If it is to be closed, the instrument has
+   to be one that has display granularity below FV 45, because that is where 92% of the
+   provisional pool lives and where `outcome_implied_fv` has none by its own documentation. The
+   shape of a fix that could work: re-anchor the bespoke map BASE and SLOPE so it agrees with
+   `outcome_implied_fv` in the region where both are defined (roughly 1.5 to 5 predicted WAR)
+   while keeping a monotone spread below it. That is a re-calibration with its own gate and its
+   own owner call, not a re-point, and it must be scored against
+   `data/xfv_thin_pbust_eval.json`'s realized outcomes rather than against coherence alone.
+3. **Fix the fingerprint gap in 2.9 Q4 on its own schedule**, with the one-run movement
+   suppression it implies priced in advance.
+4. **Do not re-open V0.** It is dominated: it breaks the module calibration AND destroys the
+   cap meaning, where V1 at least preserves the cap exactly.
