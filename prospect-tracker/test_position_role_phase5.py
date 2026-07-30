@@ -15,8 +15,19 @@ pre-registered in docs/efv-2026-07-30/POSITION_ROLE_GATE.md:
   * role_usage.usage_role / reliever_by_usage / the both-directions
     usage_position_override - games started as the primary pitcher role
     source, the opener guard in BOTH directions, the deliberately
-    unadjudicated swingman band, and the DEFAULT-OFF switch (the shipped
-    RP -> SP behaviour must be byte-identical with the flag off).
+    unadjudicated swingman band, and the switch (SHIPPED ON 2026-07-30;
+    the retired one-direction contract stays reachable via
+    both_directions=False and is pinned so the regression argument the
+    flip was granted on remains executable).
+
+Extended 2026-07-30 (LANE-SHIP) with TestObservedPositionConsumers: which
+consumers read the OBSERVATION and which deliberately stay on the
+PROJECTION. Both halves are pinned, including the REFUSAL - the
+disagreement is signed, so repointing positional scarcity would pay 318
+players for a premium position the industry says they will not hold. The
+two default-OFF flips are pinned off AND proved to be exact no-ops in that
+state, because "gated" only means something if the gate holds the old
+behaviour byte-for-byte.
 
 No network, no cache, no DB: every usage line is passed in or mocked.
 """
@@ -343,6 +354,82 @@ class TestSpectrumTable(unittest.TestCase):
         missing = codes - set(fp._SPECTRUM_RANK)
         self.assertEqual(missing, set(),
                          f"positions with no spectrum rank: {sorted(missing)}")
+
+
+class TestObservedPositionConsumers(unittest.TestCase):
+    """Which consumers read the OBSERVATION and which stay on the PROJECTION.
+
+    The split is the whole decision, so it is pinned rather than left to a comment.
+    The two flips that are default-OFF are pinned OFF *and* proved to be exact no-ops
+    in that state, because "gated" is only meaningful if the gate actually holds the
+    old behaviour byte-for-byte.
+    """
+
+    def test_pos_premium_flip_is_off_and_is_a_no_op_while_off(self):
+        import efv_model as EM
+        self.assertFalse(EM.POS_PREMIUM_USES_OBSERVED)
+        rows = [{"player_key": "x", "position": "3B"},
+                {"player_key": "x", "position": "SS"},
+                {"player_key": "x", "position": None},
+                {"player_key": "x", "position": "SS/2B"}]
+        with mock.patch.object(EM, "_observed_pos_map",
+                               return_value={"x": "SS"}):
+            for r in rows:
+                for side in ("hit", "pit"):
+                    self.assertEqual(EM._pos_premium_for_row(r, side),
+                                     EM._pos_premium(r["position"], side))
+
+    def test_pos_premium_flip_reads_the_observation_when_on(self):
+        import efv_model as EM
+        r = {"player_key": "x", "position": "3B"}      # projected 3B, observed SS
+        with mock.patch.object(EM, "POS_PREMIUM_USES_OBSERVED", True), \
+                mock.patch.object(EM, "_observed_pos_map", return_value={"x": "SS"}):
+            self.assertEqual(EM._pos_premium_for_row(r, "hit"), 1.0)
+            self.assertEqual(EM._pos_premium(r["position"], "hit"), 0.0)
+            # Pitchers are never repointed - the census has no pitcher rows and
+            # the pitcher branch is a role question, not a position one.
+            self.assertEqual(EM._pos_premium_for_row({"player_key": "x",
+                                                      "position": "RP"}, "pit"), 0.0)
+            # No observation -> the listed position, not a null.
+            self.assertEqual(EM._pos_premium_for_row({"player_key": "zzz",
+                                                      "position": "SS"}, "hit"), 1.0)
+
+    def test_def_value_flip_is_off(self):
+        """prospect_def_value is the one flip with a LEAKAGE blocker, not just a
+        coverage one: its `position` is documented as the AS-OF-DECISION label and
+        positions_played.json is a career-to-date census, so the observation contains
+        games played after the decision the model is scored on predicting."""
+        import prospect_def_value as pdv
+        self.assertFalse(pdv.DEF_VALUE_USES_OBSERVED)
+
+    def test_catcher_tool_weighting_reads_the_observation(self):
+        """The ONE backend consumer flipped ON. _compute_tool_composites only asks
+        "is this a catcher", to decide whether the D-Tool weights drop speed and bump
+        field. A man who has caught 400 games is a catcher for that purpose."""
+        import storage
+        self.assertEqual(storage._position_bucket("C"), "C")
+        self.assertEqual(storage._position_bucket("1B"), "IF")
+        grades = {"field": 60.0, "throw": 55.0, "speed": 30.0}
+        as_c = storage._compute_tool_composites(grades, False, position_bucket="C")
+        as_if = storage._compute_tool_composites(grades, False, position_bucket="IF")
+        self.assertIsNotNone(as_c["composite_def"])
+        self.assertNotEqual(as_c["composite_def"], as_if["composite_def"],
+                            "the catcher bucket must actually change the D-Tool "
+                            "weights, or flipping its input is decorative")
+
+    def test_the_projection_consumers_are_still_on_the_projection(self):
+        """Guard the half of the decision that is a REFUSAL. The disagreement is
+        SIGNED - FanGraphs projects a move DOWN the spectrum 318 times against 184
+        up - so repointing the market-scarcity multiplier would pay 318 players for a
+        premium position the industry says they will not hold."""
+        import value_framework as vf
+        # position_multiplier is the scarcity hook and it must keep taking a
+        # position STRING from the caller (the payload's projected `position`),
+        # with no observation lookup of its own.
+        import inspect
+        src = inspect.getsource(vf.position_multiplier)
+        self.assertNotIn("observed", src)
+        self.assertNotIn("positions_played", src)
 
 
 if __name__ == "__main__":

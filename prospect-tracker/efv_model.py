@@ -497,6 +497,64 @@ def _decision_year(r) -> int:
 
 _MID_POS = ("C", "SS", "2B", "CF")
 
+# ── pos_prem on the OBSERVED position: BUILT, MEASURED, DEFAULT OFF (2026-07-30) ──
+# The owner asked for this feature to read what the player HAS PLAYED rather than what
+# FanGraphs projects, and the argument is good on its face: the feature is asking "was
+# he good enough to stay up the middle", which is an observation, not a forecast.
+#
+# It does not ship on, and the reason is a coverage split, not a preference:
+#
+#   data/positions_played.json is built by fielding_positions.build_positions_played,
+#   whose __main__ filters to players with NO debut_date. It is a PRE-DEBUT census.
+#   Measured against the eFV hitter training matrix (1,927 rows):
+#
+#       covered by the observation ....  613 / 1,927   31.8%
+#         of the BUST rows ...........  570 / 1,082   52.7%
+#         of the DEBUTED rows ........   43 /   845    5.1%
+#       covered on the LIVE scoring pool  1,956 / 2,104  93.0%
+#
+#   So a fallback-to-projection flip would define the feature ONE way on 93% of the
+#   rows the model SCORES and the OTHER way on 68% of the rows it TRAINS on - and the
+#   train-side split is almost perfectly aligned with the LABEL (95% of debuted rows
+#   fall back, 47% of busts do). A feature whose DEFINITION correlates with the target
+#   is the shape of a leak, and the ridge would happily learn it. That is a worse
+#   defect than the one the flip fixes.
+#
+# What it would do if turned on today, measured on the current tree:
+#   * training pool: 116 of the 613 covered rows change value (69 gain the premium,
+#     47 lose it)
+#   * live pool: 327 of 1,956 covered rows change (232 gain, 95 lose - the same
+#     down-spectrum skew the projection carries, 2.4:1 here)
+#   * 10 rows inside the served TOP 100 change the feature (caleb_bonemer rank 22,
+#     kevin_alvarez 26, jojo_parker 30, edward_florentino 34, charles_davalan 35,
+#     josue_briceno 65, josh_adamczewski 67, francisco_renteria 70, elian_pena 81,
+#     emmanuel_rodriguez 87) and 29 inside the top 300
+#
+# Ten top-100 rows is more than a handful, so per the owner's own rule this lands
+# behind a flag with a registry row rather than silently. UNBLOCKING IT is a data job,
+# not a modelling one: rebuild positions_played.json WITHOUT the pre-debut filter so
+# the training pool is covered, then re-run the eFV accuracy gate
+# (docs/EFV_GATE_STANDARD.md) on the refit. Until then this is unmeasurable, not
+# merely unmeasured.
+POS_PREMIUM_USES_OBSERVED = False
+
+_OBSERVED_POS_CACHE: dict | None = None
+
+
+def _observed_pos_map() -> dict:
+    """{player_key: observed position}, loaded once. Empty on any failure - a missing
+    sidecar must degrade to the projection, never raise inside feature extraction."""
+    global _OBSERVED_POS_CACHE
+    if _OBSERVED_POS_CACHE is None:
+        try:
+            from pathlib import Path as _P
+            import fielding_positions as _fp
+            _OBSERVED_POS_CACHE = _fp.load_observed_positions(
+                _P(__file__).parent / "data" / "positions_played.json")
+        except Exception:
+            _OBSERVED_POS_CACHE = {}
+    return _OBSERVED_POS_CACHE
+
 
 def _pos_premium(pos, side: str) -> float:
     """Up-the-middle defensive premium (hitters: C/SS/2B/CF); starters over relievers
@@ -507,6 +565,17 @@ def _pos_premium(pos, side: str) -> float:
     if side == "pit":
         return 0.0 if "RP" in p or p == "RP" else 1.0
     return 1.0 if any(x in p for x in _MID_POS) else 0.0
+
+
+def _pos_premium_for_row(r, side: str) -> float:
+    """_pos_premium with the row in hand, so the observed position can be used when
+    POS_PREMIUM_USES_OBSERVED is on. Falls back to the row's listed position wherever
+    there is no observation. Identical to _pos_premium(r['position'], side) with the
+    flag off - see the block above for why it is off."""
+    pos = r.get("position")
+    if POS_PREMIUM_USES_OBSERVED and side != "pit":
+        pos = _observed_pos_map().get(r.get("player_key")) or pos
+    return _pos_premium(pos, side)
 
 
 def _x_era_k(era_rel: float, k_rel: float) -> float:
@@ -593,7 +662,7 @@ def _vec(r, side: str = "hit") -> dict:
         "milb_missing": milb_missing,
         "n_milb_seasons": min(g(m.get("n_milb_seasons")), _N_MILB_SEASONS_CAP),
         "prod_trend": g(m.get("prod_trend")),
-        "pos_prem": _pos_premium(r.get("position"), side),
+        "pos_prem": _pos_premium_for_row(r, side),
         "pick_overall": float(pick) if pick is not None else 250.0,
         "pick_missing": 0.0 if pick is not None else 1.0,
         "bonus_log": math.log1p(float(bonus)) if bonus else 0.0,

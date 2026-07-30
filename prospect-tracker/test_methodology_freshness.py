@@ -458,16 +458,17 @@ MODEL_GLOSSARY = {
     # ships its own glossary entry and this line changes with it.
     "tool_grade_tables": "internal",
     # --- position + role assignment (2026-07-30, master plan Phase 5).
-    # Both "internal" because neither is served: position_observed is a pure
-    # resolver nothing reads yet (wiring it needs storage.py), and the
-    # generalized both-directions half of pitcher_role_usage is default-OFF.
-    # Nothing on the site changed, so there is no term for a reader to look up.
-    # The shipped half of pitcher_role_usage (rule D, relief label + starter
-    # usage -> SP) has always been an invisible label correction rather than a
-    # published number. Methodology text is
-    # docs/efv-2026-07-30/POSITION_ROLE_GATE.md. When a consumer starts reading
-    # position_observed, or the both-directions flag is switched on, that lane
-    # ships the glossary entry and changes these two lines with it.
+    # BOTH SHIPPED 2026-07-30 (owner decision): position_observed is now a served
+    # payload field with live consumers, and pitcher_role_usage runs in both
+    # directions. They stay "internal" anyway, and the reason is the same for both:
+    # neither is a NUMBER a reader looks up. They are POSITION STRINGS - "SS", "RP" -
+    # that feed cohorts, weights and role gates. The glossary is a dictionary of
+    # metrics; adding "SS" to it would not answer any question a reader has.
+    # What a reader could reasonably ask is why the card says 3B while the peer pool
+    # says SS, and that belongs on the card as a labelled secondary line, not in the
+    # glossary. Methodology text: docs/efv-2026-07-30/POSITION_ROLE_GATE.md.
+    # If either ever becomes a displayed INDEX (say a "spectrum move" score), it
+    # ships a glossary entry and this line changes with it.
     "position_observed": "internal",
     "pitcher_role_usage": "internal",
 }

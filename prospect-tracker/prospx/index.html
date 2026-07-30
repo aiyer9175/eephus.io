@@ -15206,6 +15206,27 @@ function positionBucket(pos) {
   return null;
 }
 
+// COHORT position (2026-07-30, owner decision). `p.position` is the FanGraphs
+// forward-PROJECTION: where the industry thinks a prospect ends up. `p.position_observed`
+// is what he has actually been playing in the minors, most games at a non-DH slot
+// (storage publishes it from data/positions_played.json; omitted when there is no
+// qualifying observation, and always omitted for pitchers).
+//
+// Use this ONLY where the question is "who else has done this", never where it is
+// "what will he be worth". Cohorts, peer pools and comp lists are observed questions:
+// an exact string match on a forecast builds cohorts of players who never shared a
+// field. Positional scarcity dollars, the org depth chart, farm positional need, the
+// board filters and the position pill all stay on the PROJECTION on purpose - the
+// disagreement is signed (FanGraphs projects a move DOWN the spectrum 318 times against
+// 184 up), so pricing the observation would pay 318 players a premium-position premium
+// the industry says they will not hold.
+//
+// Degrades to the projection whenever the field is absent, so this is a no-op on any
+// payload built before the field shipped.
+function cohortPosition(p) {
+  return (p && (p.position_observed || p.position)) || null;
+}
+
 // Coarse → fine match: "INF" still wants to include 2B/SS/3B players,
 // "OF" still wants CF/LF/RF. Pitcher rollups: "P" matches every pitcher
 // bucket (back-compat), "RP" matches SIRP + MIRP + bare-RP. SP / SIRP /
@@ -15309,6 +15330,16 @@ function getFilteredActives() {
   // players who have never played the outfield). One-time per player, only once the
   // fielding sidecar has loaded; mutates the shared record so the fix is consistent
   // across the board, filters, grouping, and the detail page.
+  //
+  // OWED RECONCILIATION (2026-07-30, deliberately NOT changed here). This is an
+  // OF-only, undocumented, client-side version of the same question the backend now
+  // answers explicitly as `position_observed` - and because it OVERWRITES p.position
+  // in place before every filter, cohort, depth chart and scarcity multiplier runs,
+  // the frontend and the backend can disagree about the same player's position today.
+  // The right end state is a named field, not an in-place overwrite. Recorded in
+  // docs/efv-2026-07-30/POSITION_ROLE_GATE.md; it is its own change with its own
+  // blast radius (it moves the board FILTERS, which the observation flip deliberately
+  // does not).
   if (_POS_PLAYED) {
     for (const p of pool) {
       if (p && !p._gdPosChecked) {
@@ -16371,7 +16402,10 @@ function _prospectDetailSidebarCards(p, activeTab) {
   if (!p) return [];
   const isPit = !!(p.statline && p.statline.is_pitcher);
   const fv = p.fv_close != null ? p.fv_close : null;
-  const pos = positionBucket(p.position) || "?";
+  // OBSERVED position (cohortPosition): these sidebar pools are "who else is doing
+  // this at this level", which is a question about games played, not about a
+  // projection. See cohortPosition for the split.
+  const pos = positionBucket(cohortPosition(p)) || "?";
   // Helper - peer pool: same org, similar FV ±5, exclude self.
   const _peers = (filterFn, maxRows = 5) => {
     const pool = (DATA.players || []).filter(q =>
@@ -16381,7 +16415,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
   const _samePosLevel = q => {
     const slQ = q.statline || {};
     const slP = p.statline || {};
-    return positionBucket(q.position) === pos
+    return positionBucket(cohortPosition(q)) === pos
         && slQ.level === slP.level;
   };
   // Org card (always present) - quick jump to the prospect's org farm
@@ -16405,7 +16439,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
       .map(r => ({
         key: r.q.player_key,
         name: r.q.player_name,
-        tag: `${positionBucket(r.q.position)} · ${(r.q.statline || {}).level || " - "}`,
+        tag: `${positionBucket(cohortPosition(r.q))} · ${(r.q.statline || {}).level || " - "}`,
         value: `SC+ ${r.sp}`,
       }));
     const sl = p.statline || {};
@@ -16432,7 +16466,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
   }
   if (activeTab === "scouting" || activeTab === "tools") {
     // Scouting tab - top 5 toolsiest same-pos peers + source agreement.
-    const peers = _peers(q => positionBucket(q.position) === pos)
+    const peers = _peers(q => positionBucket(cohortPosition(q)) === pos)
       .map(q => ({ q, tc: (q.tools || {}).composite_overall }))
       .filter(r => r.tc != null)
       .sort((a, b) => b.tc - a.tc)
@@ -16440,7 +16474,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
       .map(r => ({
         key: r.q.player_key,
         name: r.q.player_name,
-        tag: `${positionBucket(r.q.position)}`,
+        tag: `${positionBucket(cohortPosition(r.q))}`,
         value: `Tool ${Math.round(r.tc)}`,
       }));
     const pts = p.points || [];
@@ -16622,6 +16656,13 @@ function _draftDetailSidebarCards(p, cls, activeTab) {
           }))
       : [];
     // Same-position peers in the class - independent of tool.
+    // NOT repointed to cohortPosition (2026-07-30). This is the DRAFT-CLASS peer
+    // cohort: `classProspects` are amateurs, so data/positions_played.json has no
+    // MiLB fielding census for them and the observation is absent by construction.
+    // Flipping it would be a no-op on the pool it serves. Separately, and left
+    // alone deliberately because it is a different change: `pos` here is a RAW
+    // position string, so this equality already misses a compound label ("SS/2B"
+    // never equals "SS"). Recorded in docs/efv-2026-07-30/POSITION_ROLE_GATE.md.
     const posPeers = classProspects
       .filter(q => q.position === pos)
       .sort((a, b) => (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0))
@@ -19816,12 +19857,14 @@ function _radarToolsFor(p){
   const getT = k => { const v = grades[k]; if (v != null && !isNaN(v)) return Number(v); const lv = ltc[k]; return (lv != null && !isNaN(lv)) ? Number(lv) : null; };
   return keys.map(([lab, k]) => ({ label: lab, value: getT(k) }));
 }
+// OBSERVED position (2026-07-30): a tool-comparison cohort is "whose glove and bat
+// are being measured against the same job", which is an observed question.
 function _toolCompCandidates(p){
-  const bucket = positionBucket(p.position);
+  const bucket = positionBucket(cohortPosition(p));
   const myFv = p.fv_close_raw != null ? p.fv_close_raw : p.fv_close;
   if (bucket == null || myFv == null) return [];
   return (DATA.players || [])
-    .filter(q => q.player_key !== p.player_key && positionBucket(q.position) === bucket
+    .filter(q => q.player_key !== p.player_key && positionBucket(cohortPosition(q)) === bucket
       && q.tools && q.tools.grades && q.fv_close != null)
     .map(q => ({ q, d: Math.abs((q.fv_close_raw != null ? q.fv_close_raw : q.fv_close) - myFv) }))
     .sort((a, b) => a.d - b.d).slice(0, 4).map(x => x.q);
@@ -48263,7 +48306,7 @@ function renderPlayerDetail(key) {
   // reader can scan how the same archetype is graded around the league.
   // Hidden when no matches; same compact-row idiom as sameFarmSection.
   const similarProspectsSection = (() => {
-    const myBucket = positionBucket(p.position);
+    const myBucket = positionBucket(cohortPosition(p));
     const myFv = p.fv_close_raw != null ? p.fv_close_raw : p.fv_close;
     if (myBucket == null || myFv == null || p.age == null) return "";
     const myIsPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP)$/.test(String(p.position || "").split("/")[0].toUpperCase());
@@ -48333,7 +48376,7 @@ function renderPlayerDetail(key) {
 
     const candidates = (DATA.players || [])
       .filter(t => t.player_key !== p.player_key)
-      .filter(t => positionBucket(t.position) === myBucket)
+      .filter(t => positionBucket(cohortPosition(t)) === myBucket)
       .filter(t => (t.fv_close_raw != null || t.fv_close != null) && t.age != null);
     if (!candidates.length) return "";
     const ranked = candidates
@@ -52115,8 +52158,13 @@ const _RPS_POSITION_MULTIPLIERS = {
   DH:  0.92,
   P:   1.00,
 };
+// OBSERVED position (2026-07-30, owner decision). RPS+ compares a player to peers
+// at his position on MEASURED production, so both the normalization cell and the
+// positional-difficulty multiplier must key on where the production HAPPENED, not on
+// where a scout thinks he ends up. Degrades to the projection when there is no
+// observation (every pitcher, and any hitter under the versa exposure floor).
 function _rpsPositionMultiplier(p) {
-  const g = _rpsPositionGroup(p && p.position);
+  const g = _rpsPositionGroup(cohortPosition(p));
   if (!g) return 1.00;
   return _RPS_POSITION_MULTIPLIERS[g] || 1.00;
 }
@@ -52135,7 +52183,7 @@ function _buildRpsPlusCache() {
     if (r == null) continue;
     const ageB = _rpsAgeBucket(p.age);
     if (ageB == null) continue;
-    const group = _rpsPositionGroup(p.position) || "?";
+    const group = _rpsPositionGroup(cohortPosition(p)) || "?";
     const key = `${ageB}::${group}`;
     playerRps.push({ key: p.player_key, bucket: key, ageBucket: ageB,
                      group, raw: r.score, posMult: _rpsPositionMultiplier(p) });

@@ -7407,6 +7407,29 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     source_events_by_key = load_source_events()
     player_news_by_key = load_player_news()
 
+    # ── OBSERVED position (2026-07-30, owner decision). The served `position` string comes
+    # from consensus._latest_meta, which prefers FanGraphs because FG FORWARD-PROJECTS where
+    # a prospect ends up rather than reporting today's roster slot. That stays: measured over
+    # 1,957 comparable rows, FG projects a move DOWN the defensive spectrum 318 times against
+    # 184 up (24.3% hard disagreement, 1.73:1 skew), so repointing `position` would hand 318
+    # players a premium-position label the industry says they will not hold - and the
+    # positional scarcity dollars, the org depth chart and the farm positional need all price
+    # exactly that. This is the SECOND field: what he has actually been playing in the minors,
+    # most games at a non-DH position, from data/positions_played.json.
+    #
+    # It is a MiLB observation, not a display position, and it is DELIBERATELY absent rather
+    # than guessed: fielding_positions.load_observed_positions omits any player whose census is
+    # empty, all-DH, or under the shipped versa exposure floor, and pitchers are absent by
+    # construction. Coverage on the current build: 1,956 of 2,104 served non-pitcher rows.
+    # Graduates carry a FROZEN pre-debut census (the builder filters to players with no
+    # debut_date), which is why nothing downstream of a debut reads this.
+    try:
+        from fielding_positions import load_observed_positions as _load_obs_pos
+        _observed_pos = _load_obs_pos(Path(__file__).parent / "data" / "positions_played.json")
+    except Exception:
+        log.debug("export: observed-position sidecar unavailable", exc_info=True)
+        _observed_pos = {}
+
     # ── eFV join (one-run lag): the site's PRIMARY grade replaces consensus FV across the
     # farm / DvM+ / movement metrics. Loaded once here so every consumer below (the per-player
     # movement `stock`, the $DvM+ pre-pass, the org dev-FV history) reads one consistent value.
@@ -9149,7 +9172,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # position bucket (catcher vs non-catcher) both feed the Tool /
         # D-Tool composite math, so consolidate once and pass through.
         _player_extras = _extract_player_extras(latest_point)
-        _pos_bucket = _position_bucket(p.position)
+        # OBSERVATION, not projection (2026-07-30 owner decision). The ONLY thing
+        # this bucket decides in _compute_tool_composites is whether the D-Tool
+        # weights drop speed and bump field, i.e. "is this man a catcher". A player
+        # who has caught 400 minor-league games IS a catcher for the purpose of
+        # weighting his defensive tools, whatever the long-term projection says he
+        # becomes. Falls back to the projection wherever there is no observation
+        # (pitchers, and 148 served non-pitcher rows under the exposure floor), so
+        # coverage never regresses.
+        #
+        # Blast radius, measured on the 2026-07-30 tree: 156 covered rows change
+        # bucket, of which 44 cross the catcher boundary - the only crossing that
+        # changes a weight - and only 9 of those 44 have a composite_def to move at
+        # all (the rest carry no graded defensive tools). Best-ranked is
+        # josue_briceno (served 1B, observed C, rank 65), the case this was raised
+        # on. composite_def is a DISPLAY composite: it feeds the D-Tool pill and the
+        # green/red tool flag and nothing else - not the board grade, not surplus -
+        # so this is not board movement.
+        _pos_bucket = _position_bucket(_observed_pos.get(p.player_key) or p.position)
         # v47 - Top-100 pedigree flag; set from the tool-history labels
         # below (tools.history itself is no longer shipped) and baked on
         # the player payload for bayes_trade_value._has_top100_pedigree.
@@ -9789,6 +9829,30 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # flag and keeps the walk only as a fallback for pre-v47 artifacts.
         if _top100_pedigree:
             payload["top100_pedigree"] = True
+
+        # ── position_observed (2026-07-30, owner decision). The most-played non-DH
+        # MiLB position, published BESIDE `position` and never instead of it. See the
+        # sidecar load at the top of this function for why `position` stays on the
+        # FanGraphs forward-projection.
+        #
+        # OMITTED, not null, when there is no observation - 148 served non-pitcher
+        # rows plus every pitcher. A reader's `.get("position_observed")` returns None
+        # either way, and omitting keeps ~2,500 null keys out of the payload.
+        #
+        # This field is now the intended input for the consumers that are asking an
+        # OBSERVED question ("who else has played this position at this age", "is this
+        # man a catcher") rather than a forecast one ("what will he be worth on the
+        # trade market"). Backend consumers already repointed: the D-Tool catcher
+        # weighting above. Still on the projection ON PURPOSE: positional scarcity
+        # dollars, the org depth chart, farm positional need, and `position` itself.
+        # The frontend cohorts (archetype comps, similar prospects, peer percentile,
+        # RPS+ cell) are owed follow-ups recorded in
+        # docs/efv-2026-07-30/POSITION_ROLE_GATE.md - including the reconciliation of
+        # prospx displayPosition(), which today MUTATES p.position in place from this
+        # same sidecar for outfield slots and so can already disagree with the backend.
+        _obs_pos = _observed_pos.get(p.player_key)
+        if _obs_pos:
+            payload["position_observed"] = _obs_pos
 
         # Boom / Bust label — graduates only. Computed post-payload-build
         # since _compute_boom_bust reads career_war + career_stats fields

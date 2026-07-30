@@ -307,12 +307,56 @@ def _up_mid_share_map() -> dict[str, float]:
     return out
 
 
+# ── def_value on the OBSERVED position: BUILT, MEASURED, DEFAULT OFF (2026-07-30) ────
+# The owner asked for this to read the observed position, and the argument for it is the
+# best one in the whole position sweep: def_home PREDICTS the spectrum move, and feeding
+# it the FanGraphs projection is close to feeding the model its own answer.
+#
+# It does not ship on, for two measured reasons, and the FIRST one is disqualifying:
+#
+# 1. LEAKAGE. The docstring above is explicit that `position` here is the AS-OF-DECISION
+#    listed position, dated at the scouting snapshot - that is what makes this model
+#    "leakage-safe" and what its out-of-split win over FanGraphs' fFld grade rests on.
+#    data/positions_played.json is a CAREER-TO-DATE census. For any historical row it
+#    contains games played AFTER the decision date, i.e. part of the very migration the
+#    model is scored on predicting. Swapping it in would not improve the model, it would
+#    invalidate its evaluation.
+#
+# 2. COVERAGE, and it is the wrong coverage. fielding_positions' builder filters to
+#    players with NO debut_date, so the census is pre-debut-only. Of the 1,927 hitter
+#    matrix rows, 613 (31.8%) carry an observation - but only 43 of the 845 DEBUTED rows
+#    (5.1%) do, and debuted rows ARE the ground-truth pool for
+#    data/positional_ladder_eval.json (realized MLB positional value). The flip would
+#    change 225 of the 613 covered rows' milb_vector while being unmeasurable on 95% of
+#    the pool that could tell you whether it helped.
+#
+# Note the contrast, because it is the reason this module already uses the census
+# correctly: _up_mid_share_map reads the SAME file as a present-day QUALITY MULTIPLIER
+# for current prospects, which is a legitimate as-of-today read. It is the POSITION
+# VECTOR - the thing that has to be dated - that cannot come from a career-to-date file.
+#
+# UNBLOCKING IT needs an AS-OF census (per-season fielding splits truncated at the
+# decision date), not just the graduate rebuild efv_model's flag is waiting on. That is
+# a data build, and it is the honest prerequisite.
+DEF_VALUE_USES_OBSERVED = False
+
+
+def _observed_pos_map() -> dict:
+    """{player_key: observed position} from the versa census. Empty on failure."""
+    try:
+        import fielding_positions as _fp
+        return _fp.load_observed_positions(DATA / "positions_played.json")
+    except Exception:                                                # noqa: BLE001
+        return {}
+
+
 def build(out_path: Path | None = None) -> dict:
     """Emit data/prospect_def_value.json keyed by mlbam: {def_value, def_home_entropy,
     p_<pos>}. Built from the eFV hitter matrix's AS-OF-DECISION listed position + age +
     BMI (draft_players frame) + the current up-mid-share quality multiplier."""
     rows = json.loads((DATA / "xfv_hitter_matrix.json").read_text(encoding="utf-8"))
     ums = _up_mid_share_map()
+    obs = _observed_pos_map() if DEF_VALUE_USES_OBSERVED else {}
     fm = frame_map()
     out, n_bmi = {}, 0
     for r in rows:
@@ -330,7 +374,10 @@ def build(out_path: Path | None = None) -> dict:
         bmi = (fm.get(pk) or {}).get("bmi")
         if bmi is not None:
             n_bmi += 1
-        dv = def_value(r.get("position"), age, ums.get(pk), bmi)
+        # DEF_VALUE_USES_OBSERVED is False, so `obs` is empty and this is exactly
+        # `def_value(r["position"], ...)`. See the flag block for the leakage and
+        # coverage findings that keep it that way.
+        dv = def_value(obs.get(pk) or r.get("position"), age, ums.get(pk), bmi)
         dv["player_key"] = pk
         out[str(mlbam)] = dv
     path = out_path or (DATA / "prospect_def_value.json")

@@ -465,3 +465,289 @@ repeated claim that repointing `position` would move consensus grades through
 7. **Consider splitting the emitted RP label** into SIRP/MIRP by IP per appearance if the
    flag is ever turned on. Deliberately not done: the cut is unvalidated and generic `RP` is
    already exact for every downstream role gate.
+
+---
+
+# PART 3. Owner decisions, executed (LANE-SHIP, 2026-07-30)
+
+PART 1 and PART 2 above are LANE-P5's pre-registration and measurement. Three owner
+decisions were taken on those findings and executed here. Every number below was
+RE-MEASURED on the tree as it stood at execution time; the nightly box regen had moved the
+artifacts since PART 2 was written, and where a number changed it is called out.
+
+Files changed: `role_usage.py`, `storage.py`, `source_articles.py`, `efv_model.py`,
+`prospect_def_value.py`, `prospx/index.html`, `data/model_registry.json` and tests.
+
+## 3.1 DECISION 1 - both-direction pitcher roles are ON
+
+`role_usage.USAGE_ROLE_BOTH_DIRECTIONS = True`.
+
+**Regression on the shipped direction: still EXACT.** Shipped rule D and the generalized
+rule flip the same 103 relief-labelled arms to SP, zero disagreements. The
+`both_directions=False` path is byte-identical to what was live and is now pinned
+explicitly in two test files rather than implied by a default.
+
+**Ship mechanics, same commit.** `storage.BOARD_RANK_BASIS_EPOCH` was already 2026-07-30
+(the pooled outcome refit set it earlier the same day), so the DATE did not need to move
+and the reason for this second board input was recorded on it instead. The FINGERPRINT did
+move: `storage.board_basis_fingerprint()` gained a `roles=` term fed by the new
+`role_usage.role_resolution_mode()`, and `BOARD_BASIS_FINGERPRINT` is restamped to
+
+    xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb|roles=usage_both
+
+This is the THIRD instance of the lesson `test_board_basis_coherence` was written for. The
+flip moved 1,269 labels and 871 `_RP_DESIGNATIONS` memberships while leaving all three
+existing fingerprint terms identical - so without the new term the fingerprint would once
+again have reported "no change" through a real board input flipping.
+
+`PINNED_MIX` is deliberately NOT re-recorded. It pins the top-N pitcher share, and no
+flipped row is inside the board top 300, so the statistic provably cannot move on this
+input. Re-pinning on a change that did not move the statistic would only lose the reading.
+
+**Numbers as measured on the ship tree** (PART 2's figures in brackets where they moved):
+
+| quantity | measured |
+|---|---|
+| served non-graduate pitcher rows | 2,422 |
+| with a 2026 MiLB cache line | 2,210 [2,207] |
+| usage verdict SP / RP / unadjudicated | 705 / 1,034 / 471 [468] |
+| total label changes | 1,269 |
+| rows ENTERING `_RP_DESIGNATIONS` | 871 (849 role-less, 22 from SP) |
+| rows gaining SP | 398 |
+| of the 871, triggering `_role_factor` | **3** |
+| of the 871, inside the board top 300 | **0** (best rank 304) |
+
+Flip table: `P -> RP` 830, `P -> SP` 362, `RHP -> SP` 26, `SP -> RP` 22, `RHP -> RP` 17,
+`LHP -> SP` 10, `LHP -> RP` 2. Identical to PART 2.
+
+The 3 triggers, with their ranks on the CURRENT board (PART 2's ranks in brackets):
+
+| player | flip | age | WAR | eFV | rank | 2026 line | grade-move upper bound |
+|---|---|---|---|---|---|---|---|
+| `tink_hence` | SP -> RP | 24.0 | 2.01 | 45.3 | 304 [305] | 19 G / 3 GS / 20.3 IP | -0.17 FV |
+| `nick_frasso` | SP -> RP | 27.8 | 1.50 | 42.1 | 418 [483] | 25 G / 1 GS / 29.3 IP | -0.79 FV |
+| `joe_glassey` | P -> RP | 25.0 | 1.50 | 42.1 | 419 [459] | 23 G / 0 GS / 29.3 IP | -0.40 FV |
+
+The upper bound is deliberately conservative: it inverts the FULL blended `xfv_war_6yr`
+through the pooled outcome curve after the ramp factor, whereas `_role_factor` multiplies
+only the MODEL leg. The true move is smaller than the number shown.
+
+### Second-order radius, measured not assumed
+
+* **PAL `_prospect_role`: 1,269 rows reclassified.** SP 487 -> 863, RP 310 -> 1,181,
+  SWING 1,619 -> 372. `pal_conversion.prospect_role_fit` only emits a `mismatch` when the
+  role is SP or RP, so **1,247 prospects that were invisible to the role-mismatch watch
+  become eligible for it in one step.** This is a product change of its own size. It is
+  FLAGGED, not gated - the flag that would gate it is the same one the owner decided - and
+  it is the single largest downstream consequence of Decision 1.
+* **`spotlights.py` RP-age-23 disqualifier: NULL.** 546 rows newly meet the gate
+  (RP-labelled and age >= 23). **Zero of them clear the FV >= 45 floor that sits in front
+  of it**, so no spotlight changes. PART 2 reported the exposure (830 rows) but not the
+  interaction with the FV floor; measured, the interaction kills it entirely.
+* **`value_framework` relief paths: 871 rows enter, 5 dollars move.** All 871 enter
+  `is_reliever_position` and move `_roster_group` to "RP", so `relief_war_haircut` (0.5)
+  and the `_pitcher_rp_by_bucket` all-relief vector now apply to them. But priced at their
+  served grades, only **5 rows change surplus at all** - the rest price at $0 on both
+  sides, which is the $0-heavy board the eFV defect ledger already documents. Worst:
+  `tink_hence` $9.24MM -> $2.03MM, `nick_frasso` $4.61MM -> $1.74MM, `seth_clausen`
+  $3.99MM -> $1.71MM, `joe_glassey` $3.67MM -> $1.72MM, `nicolo_pinazzi`
+  $1.78MM -> $1.68MM. Mean -$2.88MM over the 5.
+* **`grpo_prospect._POS_BUCKET`: an improvement.** `P` is bucket 5 (starter) and `RP` is
+  bucket 6 (relief). 830 `P -> RP` flips move off the starter bucket and onto the relief
+  bucket another lane added the same day. Not a regression.
+
+## 3.2 DECISION 2 - `baseballamerica_statcast_by_age` no longer carries an FV
+
+`source_articles.py` now emits that snapshot with `fv=None`. The row survives (identity,
+position, org, active status, and the statcast event payload) - it just stops voting.
+
+**Nothing is served differently until the next production ingest.** The 41 rows in
+`prospects.db` still read 40.0 today; `insert_snapshots` is an UPSERT with
+`fv = excluded.fv`, and the drop file `data/2026-06-03_statcast_byage.txt` is re-parsed on
+every run, so the next ingest writes `fv=NULL` over them. No DB surgery was needed and none
+was done. That also gives the owner a window to revert before anything is served.
+
+**Method.** The full real path: `consensus.build_timeseries(load_all_snapshots(),
+normalize=ADOPT_NORMALIZED_CONSENSUS)` over all 51,180 snapshots, run twice - once as the
+DB stands, once with the 41 rows' `fv` set to `None` - comparing every player's LATEST
+consensus point.
+
+| statistic | before -> after |
+|---|---|
+| players whose latest consensus point moves | **34** |
+| collateral movement on players outside the source | **0** |
+| `avg_fv` delta | mean +0.497, median +0.210, range -2.500 .. +2.710, 27 up / 7 down |
+| served `consensus_fv` delta | mean +0.324, 13 up / 6 down / 15 unchanged |
+| best movers | `alexander_frias`, `james_tibbs_iii` 46 -> 49 |
+
+### The owner's "all movement should be upward" premise is REFUTED, three ways
+
+The decision brief predicted only upward movement, on the theory that the fabrication
+DILUTED real grades. It did that on most players, but not all, and the exceptions are the
+same defect seen from the other side. All three are arguments FOR the removal.
+
+1. **On 7 of the 41 the invented FV 40 was ABOVE the player's real grades.** It was
+   INFLATING them. `hyun_seung_lee`, `juan_villavicencio` and `richard_matic` all carry a
+   real FV 35 and were being served 38; `jesus_pinto` 38.1 -> 36.3. Removing a fabricated
+   grade that was too HIGH correctly moves a player down.
+2. **Two players move UP on `avg_fv` and DOWN on served consensus.** `jason_schiavone` and
+   `luke_hill` both go 40.64 -> 41.28 pre-shrinkage but 41 -> 40 served, because losing the
+   fake vote takes them from 2 explicit-FV instances to 1 and re-arms the single-instance
+   shrinkage pull toward FV 35 (`consensus.SINGLE_SOURCE_K`). The fabricated grade had been
+   buying them a second opinion that did not exist - a second, unreported effect of the same
+   defect, on `avg_fv_n` rather than on `avg_fv`.
+3. **NOT PREDICTED BY THE AUDIT: 7 players leave the board entirely.** `braylon_whitaker`,
+   `easton_shelton`, `jacob_friend`, `jake_cunningham`, `jose_meza`, `mason_guerra`,
+   `michael_martinez` have **exactly one snapshot in the entire database - this one.** They
+   are on the served board today only because we graded them ourselves. With no FV and no
+   rank they produce no consensus point and drop out of the timeseries. Ranks 373 / 458 /
+   473 / 483 / 638 / 759 / 1,383 - **none inside the top 300**, so nothing above rank 373
+   re-ranks. Their snapshot row survives with `fv NULL`, so they stay in `players` with
+   identity, org, position and active status; what they lose is a grade nobody ever gave
+   them. `jacob_friend` is the one worth a second look: our own eFV grades him 43.5, and
+   that grade disappears with him.
+
+### Dangling references: none
+
+`grade_normalization` selects `WHERE fv IS NOT NULL` and its `_mappable` guard already
+refuses constant distributions, so the source drops out of normalization exactly the way
+`baseballamerica` (100 rows, rank, zero FV) already does. It is NOT in `_SYNTHETIC_SOURCES`,
+not in `data/source_weights.json`, and a repo-wide search finds it in no other `.py`,
+`.html` or `.js` file. `data/grade_normalization_eval.json` and
+`reports/grade_normalization.md` carry a stale row that regenerates itself.
+`performance_ingest` was NOT touched.
+
+## 3.3 DECISION 3 - `position_observed` published, safe consumers flipped
+
+### Published
+
+`storage.py` loads `fielding_positions.load_observed_positions()` once in the export and
+emits `position_observed` on the player payload. **Omitted, not nulled**, when there is no
+observation - `.get()` returns `None` either way and omitting keeps ~2,500 null keys out of
+the payload. Coverage: 1,956 of 2,104 served non-pitcher rows (93.0%).
+
+### Flipped to the observation
+
+| consumer | file | measured blast radius |
+|---|---|---|
+| D-Tool catcher weighting | `storage._compute_tool_composites` input | 156 covered rows change bucket; **44 cross the catcher boundary** (the only crossing that changes a weight); only **9** of those 44 have a `composite_def` to move at all. Best-ranked `josue_briceno` (served 1B, observed C, rank 65). `composite_def` is display-only - D-Tool pill and tool flag - not a board input. |
+| detail-page peer pools | `prospx` `_prospectDetailSidebarCards` | display cohorts, no board effect |
+| tool-comparison radar cohort | `prospx` `_toolCompCandidates` | display cohort |
+| similar-prospects cohort | `prospx` `renderPlayerDetail` | display cohort |
+| RPS+ cohort cell + positional multiplier | `prospx` `_rpsPositionGroup` / `_rpsPositionMultiplier` | **425 of 1,957 covered rows change position group; 424 change the multiplier**, deltas -0.11 .. +0.16; **13 inside the served top 100** (`josiah_hartshorn` 20, `caleb_bonemer` 22, `kevin_alvarez` 26, `roldy_brito` 29, `jojo_parker` 30, `edward_florentino` 34, `charles_davalan` 35, `josue_briceno` 65, `josh_adamczewski` 67, `francisco_renteria` 70, `jett_williams` 79, `elian_pena` 81, `emmanuel_rodriguez` 87). RPS+ is computed client-side and does NOT enter `overall_rank`. |
+
+All frontend flips go through one new helper, `cohortPosition(p)`, which returns
+`p.position_observed || p.position`. It degrades to the projection on any payload built
+before the field shipped, so the frontend change is a no-op until the next export.
+
+### Kept on the projection, on purpose
+
+Positional scarcity dollars, the org depth chart, farm positional need, the board filters,
+the position pill, and the payload's primary `position`. The reason is measured and is the
+whole finding of PART 2: the disagreement is SIGNED. FanGraphs projects a move DOWN the
+defensive spectrum 318 times against 184 up, so repointing scarcity would pay 318 players a
+premium-position premium the industry says they will not hold. A test now pins this refusal
+(`test_the_projection_consumers_are_still_on_the_projection`).
+
+### GATED DEFAULT-OFF, and why - one root cause, two flags
+
+`efv_model.POS_PREMIUM_USES_OBSERVED = False` and
+`prospect_def_value.DEF_VALUE_USES_OBSERVED = False`. Both are built, both are exact no-ops
+while off (pinned by test), both are registered.
+
+**The root cause is a COVERAGE SPLIT that is aligned with the LABEL.**
+`fielding_positions.build_positions_played`'s `__main__` filters to players with no
+`debut_date`, so the census is PRE-DEBUT ONLY:
+
+| pool | rows with an observation |
+|---|---|
+| live eFV scoring pool (served hitters) | 1,956 / 2,104 = **93.0%** |
+| eFV hitter TRAINING matrix | 613 / 1,927 = **31.8%** |
+| ... of its BUST rows | 570 / 1,082 = 52.7% |
+| ... of its DEBUTED rows | 43 / 845 = **5.1%** |
+
+A fallback-to-projection flip would therefore define the feature one way on 93% of the rows
+the model SCORES and the other way on 68% of the rows it TRAINS on - and the training split
+is almost perfectly aligned with the target (95% of debuted rows fall back, 47% of busts
+do). A feature whose DEFINITION correlates with the label is the shape of a leak, and a
+ridge will learn it. That is a worse defect than the one the flip fixes.
+
+`prospect_def_value` has a SECOND, independently disqualifying reason: its `position` is
+documented as the AS-OF-DECISION label dated at the scouting snapshot, and that is what
+makes the model leakage-safe and what its out-of-split win over FanGraphs' fFld grade rests
+on. `positions_played.json` is CAREER-TO-DATE, so for a historical row it contains games
+played AFTER the decision - part of the very migration the model is scored on predicting.
+Note the contrast that shows the module already uses the census correctly:
+`_up_mid_share_map` reads the SAME file as a present-day QUALITY MULTIPLIER, which is a
+legitimate as-of-today read. It is the POSITION VECTOR, the thing that has to be dated, that
+cannot come from a career-to-date file.
+
+**What each would do if switched on today:**
+
+* `_pos_premium`: 116 of 613 covered training rows change (69 gain the premium, 47 lose it);
+  327 of 1,956 live rows change (232 gain, 95 lose - the same down-spectrum skew, 2.4:1
+  here); **10 rows inside the served top 100** change the feature - `caleb_bonemer` 22,
+  `kevin_alvarez` 26, `jojo_parker` 30, `edward_florentino` 34, `charles_davalan` 35,
+  `josue_briceno` 65, `josh_adamczewski` 67, `francisco_renteria` 70, `elian_pena` 81,
+  `emmanuel_rodriguez` 87 - and 29 inside the top 300. Ten top-100 rows is more than a
+  handful, which is the owner's own gating threshold, independent of the leak argument.
+* `def_value`: 225 of 613 covered hitter-matrix rows change `milb_vector`, and the change
+  would be unmeasurable on 95% of the eval pool that could say whether it helped.
+
+**Unblocking these is a DATA build, not a modelling call.** `pos_prem` needs
+`positions_played.json` rebuilt WITHOUT the pre-debut filter. `def_value` needs an AS-OF
+census (per-season fielding splits truncated at the decision date), which is strictly more
+work. Then the eFV accuracy gate and the ladder eval respectively.
+
+### Not flipped, with reasons
+
+* **Draft-class same-position peers** (`_draftDetailSidebarCards`). `classProspects` are
+  amateurs, so the MiLB fielding census has nothing for them and the flip would be a no-op
+  on the pool it serves. Left alone. Latent defect noted in place while there: that cohort
+  compares a RAW position string for equality, so it already misses any compound label
+  ("SS/2B" never equals "SS"). Separate change, separate blast radius.
+* **`storage._pos_bucket_v2`** (the DvM+ / SC+ display-index cells). PART 2 recommends the
+  observation and the argument is the same as RPS+, but the owner's decision did not name it
+  and those indices carry clamps and registry rows another lane is actively sweeping. Owed.
+
+## 3.4 A note on movement suppression across all three decisions
+
+Decisions 1 and 2 both move served grades on the next regen (3 rows through the reliever
+ceiling, 34 through consensus). Neither is player movement, and the two suppression
+mechanisms happen to cover both for one run:
+
+* the RANK signal is gated by `BOARD_RANK_BASIS_EPOCH`'s strictly-after filter, already at
+  2026-07-30;
+* the eFV-delta signal is gated by `xfv_history_is_on_board_basis()`, which compares the
+  artifact's stamp against `board_basis_fingerprint()`. Extending the fingerprint with the
+  `roles=` term automatically invalidates the stamp, so the override stays suppressed until
+  a production regen writes a series on the new basis.
+
+That is the suppression working, not an accident to rely on. If the role flip had shipped
+WITHOUT the fingerprint change, neither gate would have fired for it.
+
+## 3.5 Owed follow-ups after this lane
+
+1. **Rebuild `data/positions_played.json` without the pre-debut filter**, then re-run the
+   eFV gate with `POS_PREMIUM_USES_OBSERVED = True`. This is the single blocker on the most
+   interesting flip in the sweep.
+2. **Build an AS-OF fielding census** (per-season splits truncated at the decision date)
+   before `DEF_VALUE_USES_OBSERVED` can be evaluated at all.
+3. **Reconcile `prospx` `displayPosition()`** with `position_observed`. It still MUTATES
+   `p.position` in place, OF-only, before every filter, cohort, depth chart and scarcity
+   multiplier runs, which means the frontend and the backend can disagree about the same
+   player's position today. A pointer comment was added at the mutation site; the fix is its
+   own change, and note that it moves the board FILTERS, which the observation flip
+   deliberately does not.
+4. **Decide on the PAL role-mismatch population**: 1,247 prospects became newly eligible for
+   the role-mismatch watch in one step (3.1). Nobody has looked at what that surface now
+   shows.
+5. **`_pos_bucket_v2`** (DvM+ / SC+ buckets) - observation or projection.
+6. **Consider splitting the emitted `RP` label** into SIRP/MIRP by IP per appearance now
+   that the both-directions flag is on. Still deliberately not done: the cut is unvalidated
+   and generic `RP` is already exact for every downstream role gate.
+7. **The 7 board departures** from 3.2 are worth an owner look, `jacob_friend` in particular
+   (our own eFV grades him 43.5 and that row disappears with him). If we want to keep
+   model-graded players who carry no published grade at all, that is a deliberate product
+   decision about the ungraded floor, not something a fabricated FanGraphs-scale vote should
+   be doing by accident.
