@@ -68,19 +68,42 @@ def _retired_age_gate(age):
     return round(max(0.75, 1.0 - 0.10 * (float(age) - 25.0)), 3)
 
 
-def test_age_ramp_default_is_the_retired_hard_gate_exactly():
-    """The shipping commit must be OUTPUT-NEUTRAL: the onset is a policy dial for the
-    owner (master plan D2) and the default is the incumbent."""
-    assert es._AGE_PENALTY_ONSET == pytest.approx(25.0)
+def test_age_ramp_mechanism_reproduces_the_retired_hard_gate_at_onset_25():
+    """The ramp MECHANISM must be a faithful generalisation of the retired hard gate:
+    evaluated AT the incumbent onset it reproduces it exactly, to 1e-12, at every age.
+
+    This is the check that matters and it outlives any particular dial setting. It was
+    originally written as an output-neutrality pin on the default, which conflated two
+    different claims: 'the mechanism is faithful' and 'the owner has not moved the dial
+    yet'. The owner moved the dial on 2026-07-30 (see the next test), so the two claims
+    are now separated."""
     assert es._AGE_PENALTY_PER_YR == pytest.approx(0.10)
     assert es._AGE_PENALTY_FLOOR == pytest.approx(0.75)
     a = 14.0
     while a <= 40.0001:
-        assert es._age_factor({"age_now": a}) == pytest.approx(_retired_age_gate(a),
-                                                               abs=1e-12), f"age {a}"
+        assert es._age_ramp(a, onset=25.0) == pytest.approx(_retired_age_gate(a),
+                                                            abs=1e-12), f"age {a}"
         a += 0.05
     assert es._age_factor({"age_now": None}) == 1.0
     assert es._age_factor({}) == 1.0
+
+
+def test_age_onset_is_the_owner_decided_value():
+    """OWNER DECISION 2026-07-30 (master plan D2): onset 23.0.
+
+    Chosen from a measured table (22.0 / 23.0 / 24.0 / 25.0) to move a 24.7-year-old
+    repeating AAA on a .664 OPS out of the top 100, which the retired hard gate at
+    exactly 25.0 taxed at nothing. 22.0 was rejected because it costs two pitchers out
+    of the top 100 (366 of the 489 rows pinned at the age_rel_level cap are pitchers,
+    so an early onset taxes the side the rest of the program is trying not to
+    under-rate). If this value changes again it is a POLICY change and wants a
+    measured table and an owner decision, not a quiet edit."""
+    assert es._AGE_PENALTY_ONSET == pytest.approx(23.0)
+    # The decision's whole purpose: a 24.7-year-old now pays, and pays the ramp rather
+    # than a cliff.
+    assert es._age_factor({"age_now": 22.9}) == pytest.approx(1.0)
+    assert es._age_factor({"age_now": 24.7}) == pytest.approx(0.83, abs=1e-9)
+    assert es._age_factor({"age_now": 25.5}) == pytest.approx(0.75, abs=1e-9)
 
 
 def test_age_ramp_is_continuous_monotone_and_floored():

@@ -572,7 +572,16 @@ def _age_at(birth_date, year):
 # Do not pick an onset here from an accuracy metric: the debuted-only eval pool is
 # survivorship-censored against the never-debut old-prospect class this ramp exists to
 # price, which is why it shipped owner-directed rather than fitted in the first place.
-_AGE_PENALTY_ONSET = 25.0    # OWNER DIAL (D2). Candidates measured: 22.0 / 23.0 / 24.0 / 25.0
+# OWNER DECISION TAKEN 2026-07-30: onset 23.0. The owner was shown the measured table
+# (22.0 / 23.0 / 24.0 / 25.0) and chose 23.0 to move enrique_bradfield_jr out of the
+# top 100 - a 24.7-year-old repeating AAA on a .664 OPS who paid NOTHING under the old
+# hard gate at exactly 25.0, and who sits at the top-100 EDGE under onset 24.0. The
+# owner was also shown that onset 22.0 would cost two pitchers out of the top 100,
+# because 366 of the 489 rows pinned at the age_rel_level cap are pitchers, so an early
+# onset taxes exactly the side the rest of this program is trying not to under-rate.
+# This is a POLICY dial, not a fitted parameter: see the note above on why the
+# debuted-only eval pool cannot adjudicate it.
+_AGE_PENALTY_ONSET = 23.0    # OWNER DIAL (D2), chosen 2026-07-30. Measured: 22.0/23.0/24.0/25.0
 _AGE_PENALTY_PER_YR = 0.10   # haircut per year past the onset
 _AGE_PENALTY_FLOOR = 0.75    # reached at onset + 2.5 yr
 
@@ -613,6 +622,12 @@ _RP_DESIGNATIONS = {"SIRP", "MIRP", "RP", "CL"}
 # (25.5 -> 0.80, 26.5 -> 0.70) is -1.5 yr from the age-penalty onset. Floor 0.70 is
 # the retired staircase's own floor.
 _ROLE_RAMP_OFFSET_YR = -1.5
+# FROZEN, not derived from the live age dial (decoupled 2026-07-30 - see _role_factor).
+# 25.0 is the reliever-ceiling directive's OWN onset (2026-07-15, "RP-designated AND
+# age >= 25 AND model_war >= 1.5"), not the prospect-age dial's current setting. The
+# two were briefly the same number and briefly shared a constant; they are different
+# policies and only coincidentally agreed.
+_ROLE_RAMP_ONSET = 25.0 + _ROLE_RAMP_OFFSET_YR      # 23.5
 _ROLE_PENALTY_FLOOR = 0.70
 
 
@@ -638,12 +653,20 @@ def _role_factor(r, model_war: float) -> float:
     C3 2026-07-30: the retired form was a STAIRCASE - 1.0 below 25.0, then a flat
     0.80 on [25, 26) and 0.70 above - so it stepped TWENTY points of projected WAR at
     exactly age 25.0 and another ten at 26.0. Two arms an hour apart in birth date
-    could land two tiers apart. It is now the same ramp as _age_factor: same
-    -_AGE_PENALTY_PER_YR/yr slope, moving with the same owner onset dial, offset by
-    _ROLE_RAMP_OFFSET_YR so it passes through the retired staircase's own tier
-    MIDPOINTS - (25.5, 0.80) and (26.5, 0.70) - which is what keeps each tier's
-    central tendency where the owner directive put it instead of re-tuning the policy
-    under cover of a shape fix. Floor stays 0.70.
+    could land two tiers apart. It is now the same SHAPE as _age_factor: same
+    -_AGE_PENALTY_PER_YR/yr slope, onset _ROLE_RAMP_ONSET, so it passes through the
+    retired staircase's own tier MIDPOINTS - (25.5, 0.80) and (26.5, 0.70) - which is
+    what keeps each tier's central tendency where the owner directive put it instead of
+    re-tuning the policy under cover of a shape fix. Floor stays 0.70.
+
+    DECOUPLED 2026-07-30. This ramp used to derive its onset from
+    _AGE_PENALTY_ONSET + _ROLE_RAMP_OFFSET_YR, i.e. it MOVED WITH the prospect-age
+    dial. When the owner moved that dial to 23.0 - a decision taken about a
+    24.7-year-old HITTER repeating AAA - the coupling silently dragged the reliever
+    ceiling's onset from 23.5 to 21.5, taxing 22-year-old relief prospects under a
+    directive that was written about arms at 25 and up. Two different owner directives
+    with two different rationales must not share one dial. The offset survives as the
+    DERIVATION of the frozen constant (25.0 - 1.5 = 23.5), not as a live link.
 
     Blast radius, measured on the live board before the change: the staircase bound
     only 7 rows, all at grade <= 42.6 and none inside the top 300, so this is a
@@ -654,8 +677,7 @@ def _role_factor(r, model_war: float) -> float:
     age = r.get("age_now")
     if age is None:
         age = (r.get("milb") or {}).get("age")
-    return _age_ramp(age, onset=_AGE_PENALTY_ONSET + _ROLE_RAMP_OFFSET_YR,
-                     floor=_ROLE_PENALTY_FLOOR)
+    return _age_ramp(age, onset=_ROLE_RAMP_ONSET, floor=_ROLE_PENALTY_FLOOR)
 
 
 # ---------------------------------------------------------------------------
@@ -685,17 +707,17 @@ _IL_MILD_FLOOR = 0.90       # ... and once a month is gone (the old flat else-va
 _IL_MILD_FULL_DAYS = 30.0   # a-priori: one month of a ~5-month MiLB season
 _IL_SEVERE = 0.70           # MLB 60-day IL (unchanged)
 _IL_MODERATE = 0.82         # MLB 15-day / 10-day IL (unchanged)
-# OPEN OWNER DECISION (B1b, registered in docs/efv-2026-07-30/EFV_LANE_GATES.md).
-# "full-season" now has its OWN branch, because leaving it in the days-aware else
-# would RELIEVE season-ending injuries that have not yet accumulated trailing days
-# (a full-season row at 7 days would read 0.97) -- a new defect, worse than the one
-# B1 fixes. On severity it belongs with the 60-day stint at _IL_SEVERE: out for the
-# year cannot be milder than out for two months. But moving it there is a 0.15-0.20
-# factor cut on 64 live rows, which is board movement the owner has not authorized,
-# so the default is pinned to the INCUMBENT value and this commit's only served
-# movement is the authorized short-IL relief. Measured effect of the _IL_SEVERE
-# setting is tabled in the gate doc; flip only on the owner's call.
-_IL_FULL_SEASON = _IL_MILD_FLOOR
+# OWNER DECISION TAKEN 2026-07-30 (B1b, registered in docs/efv-2026-07-30/EFV_LANE_GATES.md).
+# "full-season" has its OWN branch, because leaving it in the days-aware else would
+# RELIEVE season-ending injuries that have not yet accumulated trailing days (a
+# full-season row at 7 days would read 0.97) -- a new defect, worse than the one B1
+# fixes. On severity it belongs with the 60-day stint: out for the year cannot be
+# milder than out for two months. The lane measured that setting, recommended it, and
+# PINNED the incumbent pending authorization; the owner has now authorized it.
+# Measured when the lane tabled it: 64 factors down, 21 grades (max -2.3 FV), 674
+# ranks, NO top-100 churn. This is a POLICY decision about what an injury means, not a
+# fitted accuracy claim, and it ships as one.
+_IL_FULL_SEASON = _IL_SEVERE
 _IL_SEVERE_TYPES = ("60",)              # 60-day IL
 _IL_MODERATE_TYPES = ("15", "10")       # MLB 15-day / 10-day IL
 _IL_FULL_SEASON_TYPES = ("full-season", "full season")   # MiLB full-season IL

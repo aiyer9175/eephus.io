@@ -132,11 +132,25 @@ def test_injury_factor_short_il_is_days_aware():
     # 4. The severity types are NOT days-scaled (the type is informative there),
     #    and the MiLB full-season IL has its own branch instead of falling through
     #    to the mild one -- otherwise a season-ending injury with few accumulated
-    #    days would be RELIEVED. Its value is an open owner decision, so all this
-    #    pins is that it is never milder than the mild floor.
+    #    days would be RELIEVED.
+    #    OWNER DECISION 2026-07-30 (B1b): full-season prices AT the 60-day severity,
+    #    on the ground that out for the year cannot be milder than out for two months.
+    #    It was pinned to the incumbent 0.90 pending authorization; that is now taken,
+    #    so this pins the decided value rather than a one-sided bound.
     assert f(il_type="60-day", il_days_12mo=1.0) == pytest.approx(0.70, abs=1e-9)
     assert f(il_type="60-day", il_days_12mo=45.0) == pytest.approx(0.70, abs=1e-9)
-    assert f(il_type="full-season", il_days_12mo=7.0) <= efv_score._IL_MILD_FLOOR + 1e-9
+    assert efv_score._IL_FULL_SEASON == pytest.approx(efv_score._IL_SEVERE, abs=1e-12)
+    assert f(il_type="full-season", il_days_12mo=7.0) == pytest.approx(0.70, abs=1e-9)
+    # ... and it must behave exactly like the 60-day type across the whole day range,
+    # including the chronicity modifiers, rather than merely sharing its base value.
+    # Measured: the base holds flat to 0.70 through 45 days, then the >=60 and >=120
+    # day modifiers bite (0.63 at 60, 0.574 at 120+). A season-ending injury is never
+    # RELIEVED by having few accrued days, which is the defect this branch exists for.
+    for _d in (0.0, 7.0, 45.0, 60.0, 120.0, 200.0):
+        assert f(il_type="full-season", il_days_12mo=_d) == \
+            pytest.approx(f(il_type="60-day", il_days_12mo=_d), abs=1e-9), f"days {_d}"
+    assert f(il_type="full-season", il_days_12mo=0.0) == pytest.approx(0.70, abs=1e-9)
+    assert f(il_type="full-season", il_days_12mo=120.0) == pytest.approx(0.574, abs=1e-3)
     # 5. An ACTIVE stint with zero trailing days AND zero trailing stints is a
     #    placement older than the 12-month window (the LONGEST absences on the
     #    board, 29 live rows), not a fresh one -- it must not get the day-0 pass.
@@ -152,9 +166,15 @@ def test_injury_factor_short_il_is_days_aware():
 
 
 def test_injury_factor_matches_the_committed_live_board():
-    """The 30 (type, days, stints) shapes that the shipped live matrices actually
-    carry stay inside the band, and the ONLY direction B1 can move a live row is UP:
-    every combination is at least as forgiving as the retired flat dispatch."""
+    """The (type, days, stints) shapes the shipped live matrices actually carry stay
+    inside the band, and B1's SHORT-IL relief only ever moves a live row UP.
+
+    B1b EXCEPTION, owner decision 2026-07-30: full-season rows move DOWN on purpose
+    (0.90 -> 0.70, the 60-day severity), because a season-ending injury cannot be
+    milder than a two-month one. That is the whole content of the decision, so it is
+    carved out explicitly here rather than weakening the no-harsher invariant for every
+    type - the invariant is what proves the short-IL fix is a pure relief, and it stays
+    strict for the 7-day and unclassified rows it was written about."""
     def retired(r):
         t = str(r.get("il_type") or "").lower()
         f = 0.70 if "60" in t else (0.82 if ("15" in t or "10" in t) else 0.90)
@@ -178,9 +198,18 @@ def test_injury_factor_matches_the_committed_live_board():
                 continue
             new, old = efv_score._injury_factor(r), retired(r)
             assert 0.5 <= new <= 1.0
-            assert new >= old - 1e-9, (
-                f"B1 made a live row HARSHER: {r.get('il_type')} "
-                f"{r.get('il_days_12mo')}d {r.get('il_stints_12mo')}st {old} -> {new}")
+            t = str(r.get("il_type") or "").lower()
+            if any(k in t for k in efv_score._IL_FULL_SEASON_TYPES):
+                # B1b: deliberately harsher, and it must land exactly on the severity
+                # value rather than drifting somewhere between the two policies.
+                assert new <= old + 1e-9, "full-season should not be RELIEVED"
+                assert new == pytest.approx(retired({**r, "il_type": "60-day"}),
+                                            abs=1e-9), (
+                    f"full-season must price as 60-day: {r.get('il_days_12mo')}d -> {new}")
+            else:
+                assert new >= old - 1e-9, (
+                    f"B1 made a live row HARSHER: {r.get('il_type')} "
+                    f"{r.get('il_days_12mo')}d {r.get('il_stints_12mo')}st {old} -> {new}")
             seen.add(str(r.get("il_type")))
     # the live board only ever produces these three designations
     assert seen <= {"7-day", "60-day", "full-season"}, seen
