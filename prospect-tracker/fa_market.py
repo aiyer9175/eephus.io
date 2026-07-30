@@ -91,14 +91,53 @@ POS_GROUPS = ("SP", "RP", "C", "POS")
 #                       at (years_f) instead of the display-rounded term.
 #   POS_GROUP_MODE      "v1" == the shipped 4 buckets. "v2" splits POS into
 #                       premium (SS/2B/3B/CF) and corner (1B/LF/RF/DH).
+#   RECAL_MODE          level recalibration of the guarantee, estimated on an
+#                       INNER forward chain over the training winters only
+#                       (see _fit_recal). "off" == shipped. "shift" is an
+#                       intercept-only level move. "fit" is the log-log line.
+#                       "fit_group" fits that line PER _pos_group with a
+#                       pooled fallback for thin groups - the minimal-surface
+#                       correction for the measured side asymmetry (E1: the
+#                       board under-prices hitters by $7.52M and pitchers by
+#                       $4.02M, so one pooled slope cannot fix both).
 POS_GROUP_MODE = "v1"
 COMPS_STRICT_PRIOR = True                   # SHIPPED 2026-07-24 (correctness)
 DESTALE_MODE = "series"                     # SHIPPED 2026-07-24 (correctness)
 DESTALE_FIXED = 0.0
 RIDGE_YEARS = 0.0
 RIDGE_GUAR = 0.0
-AAV_CONSISTENT = False
-RECAL_MODE = "off"
+AAV_CONSISTENT = False                      # measured NULL/loss twice - see E5b
+# SHIPPED 2026-07-30 at "shift" (intercept-only level move), owner program
+# Phase E5. Gate 2, 9 forward-chained winters, n=1,199, criteria pre-registered
+# in docs/efv-2026-07-30/FA_LANE_GATES.md E5a
+# (data/fa_market_feature_lab_wave3_eval.json):
+#   pooled guarantee MAE  9.9174 -> 10.0391, delta +0.1336, sd 0.654,
+#                         CI95 [-0.382, +0.649], MDE95 0.427 -> a NULL, and
+#                         also inside the 0.16 $M corpus floor from the
+#                         2026-07-24 paired bootstrap (see the rate_line block)
+#   pooled aav MAE        3.0450 -> 3.1090, delta +0.061, MDE95 0.091 -> NULL
+#   pooled years MAE      unchanged (the recal touches only the guarantee)
+#   megadeal slice        81.54 -> 79.34 (IMPROVES)
+#   LEVEL, conditioned on the PREDICTION (the criterion; conditioning on the
+#   actual is regression to the mean by construction and _fit_recal's own
+#   docstring says so). Guarantee bias by PREDICTED-guarantee tier, $M:
+#       tier        <10     10-20    20-50    >=50    mean|bias|
+#       shipped    -2.81    -9.64   -21.32  -22.52     14.07
+#       "shift"    -2.11    -6.27   -15.04   -3.70      6.78
+#   Every tier was under-priced and every tier stays under-priced after the
+#   correction, i.e. it does not overshoot. Per pos group the bias also shrinks
+#   toward zero everywhere: SP -4.88 -> -1.47, RP -3.43 -> -2.76, C -3.17 ->
+#   -2.49, POS -8.47 -> -5.63.
+# "fit" (the full log-log line) and "fit_group" both FAIL: they push guarantee
+# MAE to 10.46 / 10.72, break the mega slice, and OVERSHOOT the top tier
+# (+10.51 / +14.95 $M bias at >=$50M). The 2026-07-24 ledger predicted exactly
+# this - recalibration and de-staling are SUBSTITUTES for the same mechanism and
+# stacking a slope on top of DESTALE_MODE="series" over-corrects. The
+# intercept-only form is the part that survives that argument.
+# CALIBRATION SHIP ON BIAS: the MAE movement is a measured null in both
+# directions and must not be cited as an accuracy win.
+# GOLDEN RESTAMP OWED: every served FA price rises by the constant exp(a).
+RECAL_MODE = "shift"
 LAB_TJ_PERMUTE_SEED = 0
 NOISE_FEATURES = 0
 NOISE_SEED = 0
@@ -133,7 +172,9 @@ BAND_RIDGE_GUAR = 3.0
 _LAB_DEFAULTS = {
     "POS_GROUP_MODE": "v1", "COMPS_STRICT_PRIOR": True, "DESTALE_MODE": "series",
     "DESTALE_FIXED": 0.0, "RIDGE_YEARS": 0.0, "RIDGE_GUAR": 0.0,
-    "AAV_CONSISTENT": False, "RECAL_MODE": "off", "LAB_TJ_PERMUTE_SEED": 0,
+    # MUST track the shipped defaults above - LAB_RESET() restores the CHAMPION,
+    # so a stale entry here makes every future lab score the wrong baseline.
+    "AAV_CONSISTENT": False, "RECAL_MODE": "shift", "LAB_TJ_PERMUTE_SEED": 0,
     "NOISE_FEATURES": 0, "NOISE_SEED": 0,
     "BAND_SCALE_GUAR": False, "BAND_PERMUTE_SEED": 0, "BAND_RIDGE_GUAR": 3.0,
 }
@@ -1250,14 +1291,21 @@ def _fit_recal(train: list[dict], dpw_series: dict[int, float]):
     the same discipline the outer gate uses.
 
     Returns (a, b) for log(guar_corrected) = a + b*log(guar_raw), or None
-    when the inner chain has too little material to fit."""
+    when the inner chain has too little material to fit.
+
+    RECAL_MODE "fit_group" instead returns {pos_group: (a, b), "_pooled":
+    (a, b)}: the same estimator per position group, with the pooled line
+    standing in for any group whose inner chain holds fewer than
+    _RECAL_MIN_ROWS rows. One pooled slope cannot correct both sides at once
+    (E1 measured the board under-pricing hitters by $7.52M against pitchers'
+    $4.02M), and per-group is the smallest surface that can."""
     global _recal_depth
     if _recal_depth or len(train) < _RECAL_MIN_ROWS:
         return None
     years = sorted({s["class_year"] for s in train})
     if len(years) < 5:
         return None
-    X, Y = [], []
+    X, Y, G = [], [], []
     _recal_depth = 1                       # inner models must not recurse
     try:
         for W in years[4:]:
@@ -1271,6 +1319,7 @@ def _fit_recal(train: list[dict], dpw_series: dict[int, float]):
                 if g > 0:
                     X.append(math.log(g))
                     Y.append(math.log(_npv_of(s)))
+                    G.append(_pos_group(s.get("position")))
     except Exception:                       # noqa: BLE001 -- fail-soft to no-op
         log.warning("fa_market: recalibration inner chain failed; no-op")
         return None
@@ -1280,6 +1329,25 @@ def _fit_recal(train: list[dict], dpw_series: dict[int, float]):
         return None
     if RECAL_MODE == "shift":              # intercept only (level, no slope)
         return (statistics.mean(y - x for x, y in zip(X, Y)), 1.0)
+    pooled = _recal_line(X, Y)
+    if RECAL_MODE != "fit_group" or pooled is None:
+        return pooled
+    out: dict = {"_pooled": pooled}
+    for g in sorted(set(G)):
+        xs = [x for x, gg in zip(X, G) if gg == g]
+        ys = [y for y, gg in zip(Y, G) if gg == g]
+        if len(xs) < _RECAL_MIN_ROWS:
+            continue                       # thin group keeps the pooled line
+        line = _recal_line(xs, ys)
+        if line is not None:
+            out[g] = line
+    return out
+
+
+def _recal_line(X: list[float], Y: list[float]) -> tuple[float, float] | None:
+    """OLS of log(actual) on log(predicted) with the a-priori slope bound."""
+    if len(X) < 2:
+        return None
     mx, my = statistics.mean(X), statistics.mean(Y)
     den = sum((x - mx) ** 2 for x in X)
     if den <= 0:
@@ -1485,6 +1553,8 @@ class MarketModel:
         # Level recalibration LAST: the clamp and the mega blend are part of
         # what is being calibrated, so the correction has to sit outside them.
         rc = getattr(self, "recal", None)
+        if isinstance(rc, dict):           # RECAL_MODE "fit_group"
+            rc = rc.get(_pos_group(s.get("position"))) or rc.get("_pooled")
         if rc and guar > 0:
             guar = math.exp(rc[0] + rc[1] * math.log(guar))
         return years, guar
@@ -1575,13 +1645,60 @@ class MarketModel:
 VERDICT_VALUE_MIN = 223     # Deal+ >= 223 -> "value"   (corpus top tercile)
 VERDICT_OVERPAY_MAX = 109   # Deal+ <  109 -> "overpay" (corpus bottom tercile)
 
+# ============================================================================
+# E6 (2026-07-30): per-position-group verdict bands. OWNER DECISION, DEFAULT OFF
+# ============================================================================
+# THE MEASURED PROBLEM. Pooled terciles only deliver a third each PER GROUP if
+# Deal+ has the same distribution in every group, and it does not. Deal+ is
+# rational_value / price, and a short deal for a sub-1-WAR reliever prices most
+# of its guarantee against very little projected value by construction. On the
+# 1,300-signing corpus at the ACTUAL price (the basis the edges were cut on),
+# under the code shipped 2026-07-30:
+#
+#   group   n     overpay  market  value    edges that WOULD give 33/33/33
+#   SP     297      44%     31%     26%     86 / 182
+#   RP     450      55%     28%     17%     65 / 146
+#   C      102      36%     25%     38%    101 / 243
+#   POS    451      35%     29%     36%    103 / 237
+#   ALL   1300      44%     29%     27%     85 / 189
+#
+# So the owner's "the board thinks every pitcher is an overpay" is REAL but it
+# is mostly a RELIEVER effect, and roughly half of it is a true property of the
+# market (relievers really do get paid more per projected WAR) rather than a
+# model defect. On the SERVED 2027 board the split runs RP 65% overpay / 0%
+# value against POS 26% / 17%.
+#
+# NOTE the ALL row: the pooled edges no longer deliver 33/33/33 either (44/29/27)
+# because the pricing basis moved under them - the same staleness-by-construction
+# the T1.4 block above documents. Re-cutting the POOLED edges to 85/189 is a
+# separate, smaller decision than going per-group.
+#
+# WHY THIS IS NOT SHIPPED ON MY OWN AUTHORITY: re-banding moves published
+# verdicts on historical contracts (256 of 1,300 corpus rows, 19.7%, change
+# verdict under the per-group edges) and it changes what "value" MEANS - from
+# "cheap against the whole market" to "cheap for its position group". That is a
+# product decision, not an accuracy one, and there is no gate that can settle
+# it. The machinery is here, measured, and one constant away.
+VERDICT_BAND_MODE = "pooled"        # "pooled" (shipped) | "group"
+# Terciles of Deal+ at the ACTUAL price, per _pos_group, on the 1,300-signing
+# forward-chained corpus. Regenerate whenever the pricing basis moves.
+VERDICT_GROUP_EDGES = {"SP": (86, 182), "RP": (65, 146),
+                       "C": (101, 243), "POS": (103, 237)}
 
-def deal_verdict(deal_plus: float | None) -> str | None:
+
+def deal_verdict(deal_plus: float | None, position: str | None = None) -> str | None:
+    """Verdict for a Deal+ value. ``position`` is only consulted when
+    VERDICT_BAND_MODE is "group"; with the shipped "pooled" mode the result is
+    byte-identical to the historical single-argument behaviour, so no caller has
+    to change until the owner picks a mode."""
     if deal_plus is None:
         return None
-    if deal_plus >= VERDICT_VALUE_MIN:
+    lo, hi = VERDICT_OVERPAY_MAX, VERDICT_VALUE_MIN
+    if VERDICT_BAND_MODE == "group":
+        lo, hi = VERDICT_GROUP_EDGES.get(_pos_group(position), (lo, hi))
+    if deal_plus >= hi:
         return "value"
-    if deal_plus < VERDICT_OVERPAY_MAX:
+    if deal_plus < lo:
         return "overpay"
     return "market"
 

@@ -94,6 +94,47 @@ def _rmse(pairs: list[tuple[float, float]]) -> float | None:
     return math.sqrt(sum((p - a) ** 2 for p, a in pairs) / len(pairs))
 
 
+def _bias(pairs: list[tuple[float, float]]) -> float | None:
+    """Signed mean error (pred - actual). MAE alone cannot tell a side
+    correction which way to move; every sliced metric reports this too."""
+    if not pairs:
+        return None
+    return sum(p - a for p, a in pairs) / len(pairs)
+
+
+def _cell(pairs: list[tuple[float, float]], base: list[tuple[float, float]] | None = None) -> dict:
+    """One reported slice: MAE + signed bias + levels, for model (and baseline).
+    `bias_model` is mean(pred - actual): positive means the cell is OVER-stated."""
+    n = len(pairs)
+    out = {"mae_model": _mae(pairs), "bias_model": _bias(pairs), "n": n,
+           "mean_pred": (sum(p for p, _ in pairs) / n) if n else None,
+           "mean_actual": (sum(a for _, a in pairs) / n) if n else None}
+    if base is not None:
+        out["mae_base"] = _mae(base)
+        out["bias_base"] = _bias(base)
+    return out
+
+
+# E1 (2026-07-30): Gate 1 reports WAR per SIDE as well as pooled. The owner's
+# "overprojecting pitchers" read has to be tested against a measured per-side
+# level, and MAE alone is sign-blind.
+# Headline metrics stay EXACTLY these four: the Model Accountability surface
+# renders Object.entries(gate1.pooled) verbatim (assets/fa.js:1131), so a slice
+# added here would become a served table row. Slices live in `pooled_by_side`.
+GATE1_HEADLINE = ("war", "wrc_plus", "fip", "war30")
+# `*:act_ge4` are the star-compression DIAGNOSTIC cells (E2). They condition on
+# the ACTUAL, so regression to the mean guarantees a negative bias there and the
+# cell can never be a ship criterion on its own - it is read only as "how much
+# of the star tail does the map reach", against the pooled MAE as the gate.
+# `expo:*` are the E3 playing-time cells: PROJECTED exposure vs ACTUAL, scored
+# only where the target season exists with real exposure (a player who never
+# appears has actual 0, which is an attendance fact, not a playing-time miss).
+# Hitters in PA, pitchers in BF. This is the 456-vs-511 cell.
+GATE1_SLICES = ("war:hit", "war:pit", "war:hit:act_ge4", "war:pit:act_ge4",
+                "expo:hit", "expo:pit")
+GATE1_METRICS = GATE1_HEADLINE + GATE1_SLICES
+
+
 def _fit_band_scale(panel: list[dict]) -> dict:
     """Fit the T1.2 location-scale band on the Gate-1 residual panel and
     grade it, IN SAMPLE for the diagnostics and out of fold for the verdict.
@@ -193,16 +234,15 @@ def run_projection_gate(persist: bool = True) -> dict:
         return f"{side}:{'hi' if expo_proj >= lo else 'lo'}"
 
     per_season: list[dict] = []
-    pooled = {"war": {"m": [], "b": []}, "wrc_plus": {"m": [], "b": []},
-              "fip": {"m": [], "b": []}, "war30": {"m": [], "b": []}}
+    pooled = {k: {"m": [], "b": []} for k in GATE1_METRICS}
     coverage_hits = coverage_n = 0
 
     for target in WARMUP_TARGETS + targets:
         is_warmup = target in WARMUP_TARGETS
         curves, war_map = fp.fitted_models(corpus, target - 1)
-        season_stats = {"war": {"m": [], "b": []}, "wrc_plus": {"m": [], "b": []},
-                        "fip": {"m": [], "b": []}, "war30": {"m": [], "b": []},
-                        "cov_hits": 0, "cov_n": 0}
+        season_stats: dict = {k: {"m": [], "b": []} for k in GATE1_METRICS}
+        season_stats["cov_hits"] = 0
+        season_stats["cov_n"] = 0
         new_resid: dict[str, list[float]] = defaultdict(list)
         for side in ("hit", "pit"):
             rate_key = "wrc_plus" if side == "hit" else "fip"
@@ -224,6 +264,11 @@ def run_projection_gate(persist: bool = True) -> dict:
                 if base["war"] is not None:
                     season_stats["war"]["m"].append((war_pred, act_war))
                     season_stats["war"]["b"].append((base["war"], act_war))
+                    season_stats[f"war:{side}"]["m"].append((war_pred, act_war))
+                    season_stats[f"war:{side}"]["b"].append((base["war"], act_war))
+                    if act_war >= 4.0:
+                        season_stats[f"war:{side}:act_ge4"]["m"].append((war_pred, act_war))
+                        season_stats[f"war:{side}:act_ge4"]["b"].append((base["war"], act_war))
                     if age and age >= 30:
                         season_stats["war30"]["m"].append((war_pred, act_war))
                         season_stats["war30"]["b"].append((base["war"], act_war))
@@ -263,6 +308,10 @@ def run_projection_gate(persist: bool = True) -> dict:
                             "expo": float(proj["pt_proj"]),
                             "thin": 1.0 if (platform is None or vol < 180.0) else 0.0,
                             "tj_n": tj_n})
+                # E3 exposure cell: projected vs actual playing time
+                if actual_row and (act["expo"] or 0) > 0:
+                    season_stats[f"expo:{side}"]["m"].append(
+                        (float(proj["pt_proj"]), float(act["expo"])))
                 # rate pool (target exposure gate)
                 min_expo = min_pa if side == "hit" else min_bf
                 if actual_row and act["expo"] >= min_expo and base.get(rate_key) is not None:
@@ -276,10 +325,15 @@ def run_projection_gate(persist: bool = True) -> dict:
         if is_warmup:
             continue
         row = {"season": target}
-        for k in ("war", "wrc_plus", "fip", "war30"):
-            row[f"{k}_mae_model"] = _mae(season_stats[k]["m"])
-            row[f"{k}_mae_base"] = _mae(season_stats[k]["b"])
-            row[f"{k}_n"] = len(season_stats[k]["m"])
+        for k in GATE1_METRICS:
+            if k in GATE1_HEADLINE:
+                row[f"{k}_mae_model"] = _mae(season_stats[k]["m"])
+                row[f"{k}_mae_base"] = _mae(season_stats[k]["b"])
+                row[f"{k}_n"] = len(season_stats[k]["m"])
+            elif ":act_ge4" not in k:    # per-side: MAE + signed level per season
+                row[f"{k}_mae_model"] = _mae(season_stats[k]["m"])
+                row[f"{k}_bias_model"] = _bias(season_stats[k]["m"])
+                row[f"{k}_n"] = len(season_stats[k]["m"])
             pooled[k]["m"].extend(season_stats[k]["m"])
             pooled[k]["b"].extend(season_stats[k]["b"])
         row["coverage"] = (season_stats["cov_hits"] / season_stats["cov_n"]
@@ -298,9 +352,15 @@ def run_projection_gate(persist: bool = True) -> dict:
     summary = {
         "model_version": MODEL_VERSION,
         "targets": targets,
-        "pooled": {k: {"mae_model": _mae(v["m"]), "mae_base": _mae(v["b"]),
-                       "rmse_model": _rmse(v["m"]), "rmse_base": _rmse(v["b"]),
-                       "n": len(v["m"])} for k, v in pooled.items()},
+        "pooled": {k: {"mae_model": _mae(pooled[k]["m"]), "mae_base": _mae(pooled[k]["b"]),
+                       "bias_model": _bias(pooled[k]["m"]), "bias_base": _bias(pooled[k]["b"]),
+                       "rmse_model": _rmse(pooled[k]["m"]), "rmse_base": _rmse(pooled[k]["b"]),
+                       "n": len(pooled[k]["m"])} for k in GATE1_HEADLINE},
+        # E1 (2026-07-30): per-side WAR MAE **and signed bias**, plus the E2
+        # star-compression diagnostic. Kept out of `pooled` on purpose (see
+        # GATE1_HEADLINE) so the served accountability table is unchanged.
+        "pooled_by_side": {k: _cell(pooled[k]["m"], pooled[k]["b"])
+                           for k in GATE1_SLICES},
         "coverage_p10_p90": coverage,
         "per_season": per_season,
         "notes": [
@@ -382,10 +442,18 @@ GATE2_WARMUP_THROUGH = 2017          # train-only winters; scoring starts after
 GATE2_MODEL_VERSION = "fa_mkt_v2"
 
 
-def run_market_gate(persist: bool = True, challenger: bool = False) -> dict:
+def run_market_gate(persist: bool = True, challenger: bool = False,
+                    persist_dpw: bool = True) -> dict:
     """Gate 2. ``challenger=True`` additionally scores the WS-2f LightGBM
     challenger (fa_market_ml.MarketModelML) on the same folds — identical
-    train/test rows, identical comps baseline, identical NPV targets."""
+    train/test rows, identical comps baseline, identical NPV targets.
+
+    ``persist_dpw=False`` writes the EVAL ARTIFACT ONLY and leaves
+    data/fa_dpw_series.json alone. That coupling is this module's single biggest
+    write hazard: fa_dpw_series.json is the $/WAR level the ENTIRE valuation
+    engine prices against, and until 2026-07-30 there was no way to refresh the
+    published gate verdict after a model change without also rewriting it. The
+    default keeps the historical behaviour, so no existing caller changes."""
     import fa_market as fm
     enriched = fm.enriched_signings(2015, 2026)
     test_years = sorted({s["class_year"] for s in enriched
@@ -393,6 +461,10 @@ def run_market_gate(persist: bool = True, challenger: bool = False) -> dict:
     pooled = {"guarantee": {"m": [], "b": []}, "aav": {"m": [], "b": []},
               "years": {"m": [], "b": []}, "mega_guarantee": {"m": [], "b": []}}
     pooled_ch = {k: [] for k in pooled}
+    # E1 (2026-07-30): per-pos-group and per-side price slices with SIGNED bias.
+    # Deliberately NOT merged into `pooled` - assets/fa.js:1131 renders
+    # Object.entries(gate2.pooled) as the served accountability table.
+    grouped: dict[str, dict[str, list]] = defaultdict(lambda: {"m": [], "b": []})
     per_winter: list[dict] = []
     misses: list[dict] = []
     infl = fm._dpw_inflation()
@@ -445,6 +517,28 @@ def run_market_gate(persist: bool = True, challenger: bool = False) -> dict:
             wstats["aav"]["b"].append((b_aav / 1e6, act_a / 1e6))
             wstats["years"]["m"].append((float(pred["proj_years"]), act_y))
             wstats["years"]["b"].append((b_years, act_y))
+            # --- E1 slices: pos group, side, and actual-guarantee tier -------
+            _g = fm._pos_group(s.get("position"))
+            _side = "pit" if _g in ("SP", "RP") else "hit"
+            # Two tier conditionings, and the difference matters. `tier:` bins on
+            # the ACTUAL guarantee, which forces a negative bias at the top and a
+            # positive one at the bottom by regression to the mean - it is a
+            # DESCRIPTIVE cell, never a calibration criterion. `ptier:` bins on
+            # the PREDICTED guarantee, which is the decision-relevant
+            # conditioning ("when the board says $15M, what do they get") and the
+            # one fa_market._fit_recal's own docstring is estimated against.
+            _tier = ("lt10" if act_g < 10e6 else "10to20" if act_g < 20e6
+                     else "20to50" if act_g < 50e6 else "ge50")
+            _pg = pred["proj_guarantee_usd"]
+            _ptier = ("lt10" if _pg < 10e6 else "10to20" if _pg < 20e6
+                      else "20to50" if _pg < 50e6 else "ge50")
+            for _sl in (_g, _side, f"tier:{_tier}", f"ptier:{_ptier}"):
+                grouped[f"guarantee:{_sl}"]["m"].append((pred["proj_guarantee_usd"] / 1e6, act_g / 1e6))
+                grouped[f"guarantee:{_sl}"]["b"].append((b_guar / 1e6, act_g / 1e6))
+                grouped[f"aav:{_sl}"]["m"].append((pred["proj_aav_usd"] / 1e6, act_a / 1e6))
+                grouped[f"aav:{_sl}"]["b"].append((b_aav / 1e6, act_a / 1e6))
+                grouped[f"years:{_sl}"]["m"].append((float(pred["proj_years"]), act_y))
+                grouped[f"years:{_sl}"]["b"].append((b_years, act_y))
             actual_aav_mm = round(act_a / 1e6, 1)
             pred_aav_mm = round(pred["proj_aav_usd"] / 1e6, 1)
             misses.append({"player": s["player_name"], "winter": W,
@@ -474,6 +568,10 @@ def run_market_gate(persist: bool = True, challenger: bool = False) -> dict:
         "test_winters": test_years,
         "pooled": {k: {"mae_model": _mae(v["m"]), "mae_base": _mae(v["b"]),
                        "n": len(v["m"])} for k, v in pooled.items()},
+        # E1 (2026-07-30): MAE *and signed bias* per pos group / side / actual
+        # guarantee tier. bias_model > 0 means the board OVER-prices that cell.
+        "pooled_by_pos_group": {k: _cell(v["m"], v["b"])
+                                for k, v in sorted(grouped.items())},
         "per_winter": per_winter,
         "biggest_misses": misses[:12],
         "biggest_misses_years": sorted(misses, key=lambda m: -abs(m["err_years"]))[:12],
@@ -517,6 +615,9 @@ def run_market_gate(persist: bool = True, challenger: bool = False) -> dict:
         from pathlib import Path as _Path
         (_Path(__file__).parent / "data" / "fa_gate2_eval.json").write_text(
             _json.dumps(summary, indent=1), encoding="utf-8")
+    if persist and persist_dpw:
+        import json as _json
+        from pathlib import Path as _Path
         # The estimated per-winter $/WAR series (FULL corpus — the ledger is
         # retrospective and may see every winter's own implied rate). This
         # REPLACES fa_class's v1 framework backcast, as the plan promised.

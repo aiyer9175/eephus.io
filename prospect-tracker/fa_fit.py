@@ -67,6 +67,50 @@ log = logging.getLogger(__name__)
 
 POSITIONS = ("C", "1B", "2B", "SS", "3B", "LF", "CF", "RF", "DH", "SP", "RP")
 _SAVANT_CLUB_OVERRIDES = {"D-backs": "ARI", "Diamondbacks": "ARI"}
+# The 30 MLB clubs. Needed because a club can legitimately have ZERO qualifying
+# roster rows, and a club that vanishes from the needs matrix vanishes from every
+# player's 30-club fit vector (the measured MIA-has-no-baseWins defect).
+ORGS = ("ARI", "ATH", "ATL", "BAL", "BOS", "CHC", "CHW", "CIN", "CLE", "COL",
+        "DET", "HOU", "KCR", "LAA", "LAD", "MIA", "MIL", "MIN", "NYM", "NYY",
+        "PHI", "PIT", "SDP", "SEA", "SFG", "STL", "TBR", "TEX", "TOR", "WSN")
+
+# ============================================================================
+# F1-F4 (2026-07-30): the fits v4 repairs. Central flip lives here.
+# ============================================================================
+# Registered under the owner program's Phase F. Criteria and the measured
+# before/after are in docs/efv-2026-07-30/FA_LANE_GATES.md section F.
+#
+# WHAT WAS BROKEN (all measured on the served 2027 board, 228 members):
+#   * LAD was the #1 fit for 154 of 228 members (68%); only 6 clubs were ever
+#     #1 and only 12 of 30 ever appeared in a top-3; the median #1-vs-#2 gap was
+#     0.0180, i.e. the ordering was noise.
+#   * SFG was #1 for 85% of pitchers projecting >= 1.0 WAR and top-3 for 100%.
+#   * The need roster read ONLY Spotrac contracts signed through the class year,
+#     so every arb and pre-arb player was invisible.
+#   * win_leverage is symmetric bubble-proximity, so a 0%-playoff club scored
+#     3.6x a club already locked into the postseason.
+#   * behavior's max-guarantee term is min(...,1)-clipped, which pins it at 1.0
+#     for almost every player and turns a player-conditional term into a club
+#     constant - which is exactly how one club ends up atop every list.
+FIT_ROSTER_SOURCE = "projected"     # "projected" (v4) | "spotrac" (v3 fallback)
+FIT_WINDOW_MODE = "playoff"         # "playoff" (v4) | "leverage" (v3)
+FIT_BEHAVIOR_MODE = "percentile"    # "percentile" (v4) | "clipped" (v3)
+# Weight on the level term (are they actually in the race) against the marginal
+# term (does a win change their odds). 0.6 is the SMALLEST level weight that
+# makes assertion A3 hold arithmetically for every possible input pair: a
+# 0%-playoff club maxes at 1-LEVEL=0.40 while a 90% club floors at 0.6*0.9=0.54.
+FIT_WINDOW_LEVEL_W = 0.6
+# F2b. How `need` scales. "saturation" is v3: min(1, war_gap / 4.0), which caps a
+# sub-2-WAR player's cross-club need spread at a fraction of what the club-level
+# components spread by, so behavior decides the ranking for most of the class and
+# one club takes every low-need player (measured: LAD #1 for 68% of members, and
+# 79% once F1-F4 landed). "share" asks the question the component is actually for -
+# what FRACTION of what this player brings is new at this club - which gives every
+# player a full 0-1 spread across the 30 clubs, not only stars.
+# NEED_MIN_WAR keeps a 0.3-WAR player from scoring a perfect need on the strength
+# of a 0.3-WAR gap, so the component stays comparable ACROSS players too.
+NEED_MODE = "share"                 # "share" (v4) | "saturation" (v3)
+NEED_MIN_WAR = 1.0
 
 
 def _fit_cfg() -> dict:
@@ -178,6 +222,151 @@ def _contracted_projections(class_year: int) -> dict[str, list[dict]]:
 
 
 @lru_cache(maxsize=2)
+def _org_and_pos_by_mlbam(season: int) -> dict[int, tuple[str, str]]:
+    """{mlbam: (org, position abbreviation)} from the 40-man rosters StatsAPI
+    already caches for /projections/ (same _fetch keys proj_export uses, so this
+    adds no new network dependency and rides the existing 24h TTL).
+
+    This exists because data/mlb_projections.json carries `team` ONLY on rows
+    that joined a Spotrac contract: all 361 arb/pre-arb (`thru` is None) rows
+    have team=None, so the artifact alone cannot say which club controls Jazz
+    Chisholm Jr. The 40-man roster is the missing org key, and it also supplies a
+    real position for the 149 rows whose projection `pos` is the generic "H".
+    Returns {} on ANY defect so the caller can fall back deterministically."""
+    import json
+    try:
+        from scrapers import _fetch
+    except Exception:                                       # noqa: BLE001
+        return {}
+    fr = _fetch(f"https://statsapi.mlb.com/api/v1/teams?sportId=1&season={season}",
+                f"statsapi_teams_{season}", accept_json=True)
+    if fr.status != 200 or not fr.body:
+        log.warning("fa_fit: statsapi teams %d unavailable", season)
+        return {}
+    try:
+        teams = json.loads(fr.body).get("teams") or []
+    except (ValueError, TypeError):
+        return {}
+    out: dict[int, tuple[str, str]] = {}
+    n_orgs = 0
+    for t in teams:
+        tid, name = t.get("id"), t.get("name")
+        org = canonical_org(name or "")
+        if not tid or not org or len(org) > 3:
+            continue
+        rr = _fetch("https://statsapi.mlb.com/api/v1/teams/"
+                    f"{tid}/roster?rosterType=40Man&season={season}",
+                    f"statsapi_roster_40man_{tid}_{season}", accept_json=True)
+        if rr.status != 200 or not rr.body:
+            continue
+        try:
+            roster = json.loads(rr.body).get("roster") or []
+        except (ValueError, TypeError):
+            continue
+        n_orgs += 1
+        for p in roster:
+            pid = (p.get("person") or {}).get("id")
+            if pid:
+                out[int(pid)] = (org, ((p.get("position") or {})
+                                       .get("abbreviation") or ""))
+    if n_orgs != 30:
+        log.warning("fa_fit: 40-man rosters covered %d clubs for %d (need 30)",
+                    n_orgs, season)
+        return {}
+    return out
+
+
+_GENERIC_POS = {"", "H", "P", "TWP", "INF", "IF", "MI", "UT", "UTIL"}
+
+
+@lru_cache(maxsize=2)
+def _projected_roster(class_year: int) -> dict[str, list[dict]]:
+    """F1. {org: [{name, position, war_proj, control_kind}]} for ``class_year``,
+    read from the SAME artifact /projections/ serves
+    (data/mlb_projections.json) instead of a live Spotrac scrape.
+
+    WHO COUNTS AS ON THE ROSTER for the contract season:
+      contract   a vet row with `thru` >= class_year (what v3 saw)
+      control    a vet row with `thru` is None - arb and pre-arb, club-controlled
+                 and therefore on the roster, which v3 could not see at all
+      prospect   a prospect row with `eta` <= class_year
+    ORG comes from the row's own `team` where present and from the cached 40-man
+    roster otherwise (see _org_and_pos_by_mlbam - the arb/pre-arb rows carry no
+    team). POSITION comes from the row's `pos` when it is a real position and
+    from the 40-man abbreviation when it is generic ("H").
+    WAR is warY1Champ (the champion path) where present, else war[0], matching
+    what _contracted_projections computed with fp.war_from_projection.
+
+    Returns {} on ANY defect (missing/unparseable artifact, fewer than 30 orgs
+    represented) so team_baselines/needs_matrix can fall back to the Spotrac
+    construction with `roster_source` flagged, mirroring the baseline_source
+    pattern in team_baselines."""
+    import json
+    from pathlib import Path
+    try:
+        d = json.loads((Path(__file__).parent / "data" / "mlb_projections.json")
+                       .read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("fa_fit: mlb_projections.json unavailable - projected roster "
+                    "falls back to the Spotrac contract scrape")
+        return {}
+    idx = _org_and_pos_by_mlbam(class_year - 1)
+    out: dict[str, list[dict]] = defaultdict(list)
+    n_no_org = 0
+    for r in d.get("vets") or []:
+        thru = r.get("thru")
+        if thru is not None and int(thru) < class_year:
+            continue                        # contract expires before the season
+        mlbam = r.get("mlbam")
+        ext = idx.get(int(mlbam)) if mlbam else None
+        org = r.get("team") or (ext[0] if ext else None)
+        if not org:
+            n_no_org += 1
+            continue
+        raw = (r.get("pos") or "").upper().strip()
+        if raw in _GENERIC_POS or not raw:
+            raw = (ext[1] if ext else "") or raw
+        war = r.get("warY1Champ")
+        if war is None:
+            arr = r.get("war") or []
+            war = arr[0] if arr else None
+        if war is None:
+            continue
+        out[org].append({"name": r.get("name"), "position": _position_norm(raw),
+                         "war_proj": round(float(war), 2),
+                         "control_kind": "contract" if thru is not None else "control"})
+    for p in d.get("prospects") or []:
+        eta, org = p.get("eta"), p.get("team")
+        if not org or eta is None or int(eta) > class_year:
+            continue
+        arr = p.get("war") or []
+        if not arr:
+            continue
+        out[org].append({"name": p.get("name"),
+                         "position": _position_norm(p.get("pos")),
+                         "war_proj": round(float(arr[0]), 2),
+                         "control_kind": "prospect"})
+    if len(out) < 30:
+        log.warning("fa_fit: projected roster covered %d orgs (need 30) - "
+                    "falling back to the Spotrac scrape", len(out))
+        return {}
+    log.info("fa_fit projected roster %d: %d orgs, %d rows, %d rows without an "
+             "org key", class_year, len(out), sum(len(v) for v in out.values()),
+             n_no_org)
+    return dict(out)
+
+
+def _rosters(class_year: int) -> tuple[dict[str, list[dict]], str]:
+    """(rosters, source). The projected roster is PRIMARY; the Spotrac
+    contract scrape is the flagged fallback."""
+    if FIT_ROSTER_SOURCE == "projected":
+        proj = _projected_roster(class_year)
+        if proj:
+            return proj, "mlb_projections"
+    return _contracted_projections(class_year), "spotrac_contracts"
+
+
+@lru_cache(maxsize=2)
 def _blockers(class_year: int) -> dict[tuple[str, str], list[dict]]:
     """{(org, position): [prospect blockers]} from the EXISTING platform
     export — read-only, existing FV grid (>= blocker_fv_min), near ETA."""
@@ -222,17 +411,22 @@ def needs_matrix(class_year: int) -> dict[str, dict[str, dict]]:
     WHO is doing the blocking, not just that it's blocked."""
     cfg = _fit_cfg()
     inc_block = float(cfg.get("incumbent_block_war", 2.5))
-    rosters = _contracted_projections(class_year)
+    rosters, roster_source = _rosters(class_year)
     blockers = _blockers(class_year)
     outgoing: dict[tuple[str, str], list[str]] = defaultdict(list)
     for p in storage.load_fa_class_players(class_year).values():
         if p.get("from_team"):
             outgoing[(p["from_team"], _position_norm(p.get("position")))].append(p["player_name"])
     out: dict[str, dict[str, dict]] = {}
-    # Org universe = clubs with a contracted roster (exactly the 30 MLB
-    # teams). from_team rides foreign postings too (Woo Jin An → "KOR"),
-    # and a posting league must not get a needs page of its own.
-    orgs = set(rosters)
+    # F2 SILENT-DROP FIX. The org universe is the 30 MLB CLUBS, not "clubs that
+    # happen to have a qualifying roster row". fit_scores iterates needs.items(),
+    # so a club absent here is absent from every player's 30-club fit vector - the
+    # measured MIA-has-no-baseWins defect. A club with an empty roster is scored
+    # explicitly at maximum need instead, which is the truthful reading.
+    # from_team rides foreign postings too (Woo Jin An -> "KOR"), and a posting
+    # league must not get a needs page of its own, so the union is intersected
+    # with the club list rather than taken raw.
+    orgs = set(ORGS) | (set(rosters) & set(ORGS))
     for org in sorted(orgs):
         out[org] = {}
         roster = rosters.get(org, [])
@@ -244,7 +438,21 @@ def needs_matrix(class_year: int) -> dict[str, dict[str, dict]]:
             # position player displaces the incumbent starter; a reliever
             # the back of the pen. unit_war (the sum) stays for context.
             slot = {"SP": 4, "RP": 2}.get(pos, 0)
-            displaced = inc[slot]["war_proj"] if len(inc) > slot else 0.0
+            # F2 SLOT RULE. v3 read `inc[slot] if len(inc) > slot else 0.0`, which
+            # handed MAXIMUM need to any club with <= 4 contracted starters - and
+            # since the v3 roster could not see arb/pre-arb arms, that was most of
+            # the league (SFG's 5th-starter slot scored 0.00 while its real SP5
+            # projects 0.26). With the projected roster the slot is usually filled;
+            # when it still is not, fall back to the WEAKEST player actually at the
+            # position rather than asserting zero, because a club with four
+            # starters does have a fifth arm, just not a good one. A position with
+            # nobody at all keeps 0.0 - that one really is empty.
+            displaced = (inc[slot]["war_proj"] if len(inc) > slot
+                         else (inc[-1]["war_proj"] if inc else 0.0))
+            # How much of the displacement depth actually exists. 1.0 means the
+            # slot itself is populated; below 1.0 means "thin" - and the UI can
+            # now tell "thin because young and cheap" from "empty".
+            completeness = min(1.0, len(inc) / float(slot + 1))
             # MLB incumbent blocker: the player the signing would actually
             # DISPLACE (the starter at the slot, the 5th starter, the back
             # of the pen) when he himself projects as a real producer. An
@@ -262,6 +470,11 @@ def needs_matrix(class_year: int) -> dict[str, dict[str, dict]]:
                 "blockers": blockers.get((org, pos), []),
                 "mlb_blockers": mlb_blockers,
                 "outgoing": outgoing.get((org, pos), []),
+                "roster_completeness": round(completeness, 2),
+                "n_at_position": len(inc),
+                "n_controlled": sum(1 for r in inc
+                                    if r.get("control_kind") in ("control", "prospect")),
+                "roster_source": roster_source,
             }
     return out
 
@@ -331,10 +544,14 @@ def team_baselines(class_year: int) -> dict[str, dict]:
     cfg = _fit_cfg()
     fill = float((cfg.get("win_curve") or {}).get("roster_fill_wins", 0))
     wins = _outlook_wins(class_year)
+    rosters, roster_source = _rosters(class_year)
     out = {}
-    for org, roster in _contracted_projections(class_year).items():
+    # F2: every club gets a row, including one with an empty roster.
+    for org in ORGS:
+        roster = rosters.get(org) or []
         war = sum(max(0.0, r["war_proj"]) for r in roster)
-        row = {"war_committed": round(war, 1)}
+        row = {"war_committed": round(war, 1), "roster_source": roster_source,
+               "n_roster": len(roster)}
         if org in wins:
             row["baseline_wins"] = round(wins[org], 1)
             row["fill_wins"] = 0.0
@@ -345,6 +562,78 @@ def team_baselines(class_year: int) -> dict[str, dict]:
             row["baseline_source"] = "contracted_core"
         out[org] = row
     return out
+
+
+@lru_cache(maxsize=1)
+def _playoff_pct_now(class_year: int) -> dict[str, float]:
+    """{org: current-season playoffPct} from data/mlb_projections.json
+    team_outlook[].current.playoffPct. REPORTED as a cross-check, not consumed:
+    it is the IN-PROGRESS season's probability, not the contract season's, and
+    the artifact is currently missing the whole `current` block for one club
+    (ARI reads null as of 2026-07-29), which is a defect in that artifact rather
+    than something this module should paper over."""
+    import json
+    from pathlib import Path
+    try:
+        d = json.loads((Path(__file__).parent / "data" / "mlb_projections.json")
+                       .read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    out: dict[str, float] = {}
+    for t in (d.get("team_outlook") or []):
+        org = t.get("team")
+        p = (t.get("current") or {}).get("playoffPct")
+        if org and p is not None:
+            out[org] = float(p)
+    return out
+
+
+def playoff_prob(wins: float, fill_wins: float | None = None) -> float:
+    """P(postseason) at a talent level, from the SAME documented logistic
+    win_leverage differentiates. This is the level term; win_leverage is its
+    marginal term. One curve, one input, all 30 clubs, no imputation."""
+    import math
+    wc = _fit_cfg()["win_curve"]
+    f = float(wc.get("roster_fill_wins", 0)) if fill_wins is None else float(fill_wins)
+    return 1.0 / (1.0 + math.exp(-((wins + f) - wc["center"]) / wc["scale"]))
+
+
+def contention(org: str, class_year: int, wins: float,
+               fill_wins: float | None = None) -> dict:
+    """F3. The window component: MARGINAL playoff leverage blended with the
+    LEVEL of postseason probability at the club's projected win total for the
+    contract season.
+
+    v3 used the marginal term alone. Leverage is 4p(1-p), symmetric about the
+    curve center, so a club with no chance and a club already locked in both
+    score low while a bubble club scores 1.0 - and the measured consequence was a
+    0%-playoff Giants scoring 0.624 against a locked-in Dodgers' 0.175, which is
+    the wrong answer to the question a free agent is asking. The window is not
+    "how close is this club to a coin flip"; it is "does this club win because of
+    me", and that needs the level as well as the derivative.
+
+    WHY NOT team_outlook[].current.playoffPct, which the plan named: it is the
+    IN-PROGRESS season's probability, not the contract season's, and the artifact
+    is missing the entire `current` block for one club right now. Deriving the
+    level from the club's own PROJECTED CLASS-YEAR wins through the curve the
+    module already documents keeps one definition for all 30 clubs, uses the
+    right season, and imputes nothing. The served playoffPct is attached to the
+    component output as a cross-check so the two can be compared on the surface.
+
+    FIT_WINDOW_LEVEL_W = 0.6 is chosen so the ordering constraint holds for EVERY
+    possible input pair, not on average: a 0%-playoff club can reach at most
+    1 - 0.6 = 0.40 while a 90% club cannot fall below 0.6 * 0.9 = 0.54."""
+    lev = win_leverage(wins, fill_wins)
+    if FIT_WINDOW_MODE != "playoff":
+        return {"score": round(lev, 3), "leverage": round(lev, 3),
+                "playoff_prob": None, "window_source": "leverage_v3"}
+    p = playoff_prob(wins, fill_wins)
+    w = FIT_WINDOW_LEVEL_W
+    served = _playoff_pct_now(class_year).get(org)
+    return {"score": round((1.0 - w) * lev + w * p, 3),
+            "leverage": round(lev, 3), "playoff_prob": round(p, 3),
+            "playoff_pct_now": round(served, 3) if served is not None else None,
+            "window_source": "playoff_blend_v4"}
 
 
 def win_leverage(wins: float, fill_wins: float | None = None) -> float:
@@ -405,7 +694,8 @@ def behavior_priors() -> dict[str, dict]:
     last_winter = max((y for (_k, y) in signings), default=0)
     out: dict[str, dict] = defaultdict(lambda: {"max_guarantee_usd": 0,
                                                 "n_100m": 0, "total_spend_usd": 0,
-                                                "recent_spend_usd": 0})
+                                                "recent_spend_usd": 0,
+                                                "guarantees": []})
     for (_k, y), s in signings.items():
         team, g = s.get("to_team"), s.get("guarantee_usd") or 0
         if not team or not s.get("mlb_deal"):
@@ -413,11 +703,39 @@ def behavior_priors() -> dict[str, dict]:
         b = out[team]
         b["max_guarantee_usd"] = max(b["max_guarantee_usd"], g)
         b["total_spend_usd"] += g
+        # F4: the club's OWN guarantee distribution. behavior's will-spend term
+        # needs to answer "has this club ever routinely gone THIS big", which a
+        # single max cannot, and a sorted list can.
+        b["guarantees"].append(g)
         if y >= last_winter - 2:
             b["recent_spend_usd"] += g
         if g >= 100_000_000:
             b["n_100m"] += 1
+    for b in out.values():
+        b["guarantees"].sort()
     return dict(out)
+
+
+def _spend_reach(prior: dict, guar: float) -> float:
+    """F4. Share of the club's OWN historical MLB-deal guarantees that are at
+    least as large as this price - "how routine is a deal this size here".
+
+    Replaces `min(1.0, max_guarantee / price) ** 0.5`, whose clip pinned it at
+    1.0 for nearly every player (any club that has ever signed a $100M deal is at
+    the cap for every sub-$100M free agent), turning the highest-weighted
+    component into a per-club CONSTANT that took at most three distinct values
+    across all 223 members. That constant is the mechanism behind
+    Dodgers-for-everyone: with behavior at weight 0.45 and no player dependence,
+    the club with the richest history wins almost every list before need is
+    consulted. The share form is monotone decreasing in price, never saturates,
+    and is 0 for a club that has genuinely never gone there."""
+    gs = prior.get("guarantees") or []
+    if not gs:
+        return 0.0
+    if FIT_BEHAVIOR_MODE != "percentile":
+        return min(1.0, (prior.get("max_guarantee_usd") or 0) / max(guar, 1)) ** 0.5
+    import bisect
+    return (len(gs) - bisect.bisect_left(gs, guar)) / float(len(gs))
 
 
 # ============================================================================
@@ -460,8 +778,11 @@ def fit_scores(player: dict, market_pred: dict, class_year: int,
         # continuously THROUGH the gap, so they're listed but not
         # double-counted.
         prospect_blocked = bool(cell.get("blockers"))
-        need = (min(1.0, gap / cfg["need_war_saturation"])
-                * (float(cfg.get("prospect_block_multiplier", 0.5)) if prospect_blocked else 1.0))
+        need_base = (min(1.0, gap / max(war1, NEED_MIN_WAR))
+                     if NEED_MODE == "share"
+                     else min(1.0, gap / cfg["need_war_saturation"]))
+        need = need_base * (float(cfg.get("prospect_block_multiplier", 0.5))
+                            if prospect_blocked else 1.0)
         blocked_by = ([{"player_name": b["player_name"], "kind": "prospect"}
                        for b in (cell.get("blockers") or [])]
                       + [{"player_name": b["player_name"], "kind": "mlb",
@@ -470,8 +791,9 @@ def fit_scores(player: dict, market_pred: dict, class_year: int,
         base = bases.get(org) or {"baseline_wins": cfg["replacement_wins"],
                                   "fill_wins": None,
                                   "baseline_source": "replacement_floor"}
-        window = win_leverage(base["baseline_wins"] + war1 / 2.0,
-                              base.get("fill_wins"))
+        win = contention(org, class_year, base["baseline_wins"] + war1 / 2.0,
+                         base.get("fill_wins"))
+        window = win["score"]
         a = afford.get(org) or {}
         b = priors.get(org) or {}
         aav = market_pred.get("proj_aav_usd") or 10_000_000
@@ -484,7 +806,7 @@ def fit_scores(player: dict, market_pred: dict, class_year: int,
             afford_score = max(afford_score, float(cfg.get("taxpayer_afford_floor", 0.4)))
         park = park_component(player, org, class_year - 1)
         guar = market_pred.get("proj_guarantee_usd") or 20_000_000
-        scale = min(1.0, (b.get("max_guarantee_usd") or 0) / max(guar, 1)) ** 0.5
+        scale = _spend_reach(b, float(guar))
         recent = min(1.0, (b.get("recent_spend_usd") or 0) / max_recent)
         rich = min(1.0, (b.get("n_100m") or 0) / 5.0)
         behavior = bw["max_guar"] * scale + bw["recent"] * recent + bw["rich"] * rich
@@ -496,9 +818,13 @@ def fit_scores(player: dict, market_pred: dict, class_year: int,
                 "need": {"score": round(need, 3), "war_gap": round(gap, 2),
                          "displaced_war": cell.get("displaced_war"),
                          "unit_war": cell.get("unit_war"),
+                         "roster_completeness": cell.get("roster_completeness"),
+                         "n_at_position": cell.get("n_at_position"),
+                         "n_controlled": cell.get("n_controlled"),
+                         "roster_source": cell.get("roster_source"),
                          "blocked_by": blocked_by,
                          "outgoing": cell.get("outgoing") or []},
-                "window": {"score": round(window, 3),
+                "window": {**win,
                            "baseline_wins": base.get("baseline_wins"),
                            "baseline_source": base.get("baseline_source")},
                 "afford": {"score": round(afford_score, 3),

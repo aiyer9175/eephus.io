@@ -98,6 +98,11 @@ MODEL_GLOSSARY = {
     "c3_proj_trans_recal": ["single_a_equivalent"],  # translation band de-cap SHIP
     # Round 2 2026-07-24e:
     "xfv_injury_history": "internal",   # injury-history overlay ledger (coverage-starved)
+    # 2026-07-30 age-pipeline and IL-severity work. Both are live scoring behaviour of
+    # the eFV model rather than surfaces of their own, so they document through the eFV
+    # entry exactly as xfv_role_ceiling does.
+    "efv_age_pipeline": ["xfv"],
+    "efv_il_severity": ["xfv"],
     "xfv_peak_war": "internal",         # peak-WAR target measurement ledger (keep cumulative)
     "xfv_bughunt2": "internal",         # bug hunt r2 + scoreboard intl_bat dedup fix
     # 2026-07-25 calibration/diagnostic lanes, registered 2026-07-29. All are

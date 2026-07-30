@@ -7,7 +7,7 @@
 
 Architecture (per the approved plan): COMPONENTS FIRST, COMPOSITES SECOND.
 Component rates (K%, BB%, ISO, BABIP, HR rate for hitters; K%, BB%, HR/BF
-for pitchers) are Marcel-weighted (5/4/3), regressed to the league mean
+for pitchers) are Marcel-weighted [5, 3, 2], regressed to the league mean
 with component-specific stabilization points, and aged with delta-method
 curves fitted from the corpus (survivorship-corrected, era-adjusted, by
 role group). Composites are assembled from components: wOBA -> wRC+
@@ -860,6 +860,261 @@ def pt_tj_multiplier(mlbam, target_season: int) -> float:
     return 1.0
 
 
+# ============================================================================
+# F-REALWAR: realized-bWAR RESIDUAL channel in the WAR reconstruction (gated)
+# ============================================================================
+# Registered 2026-07-30 (FA lane, master plan Phase E2). Env flag
+# EEPHUS_FA_REALWAR ("1"/"0") is read at CALL time and overrides the default
+# either way; "0" gives a byte-identical pre-hook path. Criteria are
+# pre-registered in docs/efv-2026-07-30/FA_LANE_GATES.md section E2.
+#
+# WHY. war_from_projection's only positional term is a catcher dummy
+# (fit_war_map, documented as a v1 simplification in this module's docstring:
+# "defense/baserunning are not separately projected - the fitted WAR map + the
+# uncertainty bands absorb them"). Its target is bWAR, which INCLUDES defense
+# and positional value, so a persistently good defender at a premium position
+# is persistently ABOVE the map and the map cannot say so. E1 measured the
+# consequence on the forward-chained Gate-1 panel: for the 424 hitter-seasons
+# that actually produced >= 4 bWAR the map predicts a mean 2.34 against 5.56
+# actual, and the naive 5/4/3 carry-forward baseline beats the model outright
+# in that cell (MAE 2.37 vs 3.23) - the star tail is where the model LOSES.
+#
+# WHAT THIS IS NOT. The owner's instinct ("use the 3-year WAR") in its literal
+# form - blend map-WAR with a realized-WAR rate - DOUBLE COUNTS: realized WAR
+# contains the same offensive rate signal that already flows through the map's
+# wRAA term. What is added here is the RESIDUAL rate: for each of the player's
+# up-to-three prior seasons, the map's OWN prediction for that season is
+# reconstructed from the map's own features and subtracted from realized bWAR.
+# Because the map is a pooled least-squares fit, that residual is orthogonal to
+# its features by construction on average, so the channel can only carry what
+# the map does not represent. Any PLAYER-LEVEL persistence in it is defense,
+# baserunning and positional value.
+#
+# CAVEATS, stated up front: realized bWAR is noisier than a rate and it is
+# survivor-tinged (a season only exists if the player played it). Both are
+# handled by shrinking on effective exposure rather than by trusting the
+# residual, and by capping it a priori.
+#
+# SHIPPED 2026-07-30, DEFAULT ON. Gate 1, 10 forward-chained targets 2015-2025
+# ex-2020, n=20,721, paired on the folds (data/fa_projection_lab_eval.json):
+#   pooled WAR MAE  0.61572 -> 0.60087, delta -0.01496,
+#                   CI95 [-0.01814, -0.01178], MDE95 0.00270, 10/10 folds
+#   hitters         0.75957 -> 0.72509   pitchers 0.50884 -> 0.50857
+#   wRC+ / FIP      byte-identical (the channel touches only the WAR map)
+#   coverage        0.79919 -> 0.79890 (band 0.75-0.85), hard gates stay True
+#   >=4-bWAR hitter cell: mean predicted 2.336 -> 2.658 against 5.556 actual,
+#                   cell MAE 3.235 -> 2.922. STILL WORSE than the naive
+#                   5/4/3 carry-forward there (2.373): the star tail remains
+#                   this engine's weakest region and this arm narrows the gap
+#                   without closing it. Disclosed, not hidden.
+# ZERO-INFORMATION CONTROL: the same residual column PERMUTED across players
+# within each target season (identical marginal distribution, identical shrink,
+# no player linkage) moves pooled WAR MAE by +0.01379 - it DEGRADES the model on
+# 0 of 10 folds while the candidate improves on 10 of 10. The information is
+# player-specific. NOTE the pre-registered clause was written in the
+# |delta_candidate| >= 3*|delta_control| magnitude form, which assumes a control
+# that could accidentally help; that literal form reads False here purely
+# because the control's delta has the OPPOSITE SIGN. Both readings are recorded
+# in the artifact (`control_literal_3x_form`) and the discrepancy is written up
+# in docs/efv-2026-07-30/FA_LANE_GATES.md rather than quietly resolved.
+# SENSITIVITY on the shrink constant (reported, not shopped - the primary values
+# below were fixed a priori): K x0.5 -> -0.01533, K x1.0 -> -0.01496,
+# K x2.0 -> -0.01135. Monotone, no cliff, and the primary sits on the plateau.
+# GOLDEN RESTAMP OWED: this reaches war_from_projection, so every surface built
+# on it moves - /fa/ prices, /projections/ vets/prospects/team_outlook,
+# fa_fit's contracted-roster projections, and data/fa_class.json.
+REALWAR_DEFAULT = True                      # central flip lives here
+# Stabilization for the residual rate, in effective PA (hitters) / IP
+# (pitchers). PRE-REGISTERED PRIMARY VALUES, chosen a priori, not swept for
+# the ship decision: ~2 full seasons of exposure, the standard public anchor
+# for a defense-scale signal. The grid {0.5x, 1x, 2x} is reported as
+# sensitivity only.
+REALWAR_K = {"hit": 1200.0, "pit": 400.0}
+# A-priori bound on the residual rate (WAR per 600 PA / per 100 IP). +-2.5 is
+# about the full observed range of season defensive value; it stops a 50-PA
+# fluke from moving a projection.
+REALWAR_CAP = {"hit": 2.5, "pit": 2.5}
+# Lab hooks for the pre-registered ZERO-INFORMATION CONTROL. COLLECT records
+# (id, target_season, rate, n_eff) per scored row; OVERRIDE replaces the
+# computed rate with a value the lab supplies, which is how the permuted-column
+# control is run without duplicating the gate loop. Both are None in
+# production and neither is read when the arm is off.
+REALWAR_COLLECT: list | None = None
+REALWAR_OVERRIDE: dict | None = None
+
+
+def _realwar_enabled() -> bool:
+    env = os.environ.get("EEPHUS_FA_REALWAR")
+    if env is not None:
+        return env.strip() == "1"
+    return REALWAR_DEFAULT
+
+
+# ============================================================================
+# F-PTFIT: playing-time coefficients FITTED, plus an established-workload
+# channel (gated arm; master plan Phase E3)
+# ============================================================================
+# Registered 2026-07-30. Env flag EEPHUS_FA_PTFIT in {"off","hit","both"},
+# read at CALL time; "off" is byte-identical to the shipped path.
+#
+# THE DEFECT. The shipped PT model is a hand-set two-season Marcel
+# (fa_config.yaml playing_time: hitters 0.5*PA1 + 0.1*PA2 + 200), which cannot
+# reach 700 PA at any input and which measured a mean projPA of 456 against 511
+# actual. It also has no way to tell "395 PA of decline" from "395 PA because
+# he missed six weeks".
+#
+# THE ARM. Refit the same linear form by least squares AND add the
+# established-workload channel the plan asks for:
+#   expo_t ~ b0 + b1*expo_{t-1} + b2*expo_{t-2} + b3*max(0, max3 - expo_{t-1})
+# The b3 term is the bounce-back: how much of a drop below the player's own
+# three-season peak comes back next season. Pitchers are fit PER ROLE because
+# the shipped model already has a role-dependent intercept and SP/RP innings
+# distributions do not share one.
+#
+# NO LOOKAHEAD. Coefficients are fit on corpus seasons <= 2014, STRICTLY before
+# Gate 1's first scored target (2015), so a single fixed vector is ex-ante for
+# every one of the ten folds and no per-fold cache surgery is needed. The
+# full-corpus fit is reported beside it as a stability check; the two agree to
+# ~0.04 on b1 and disagree only on b3, which the <=2014 fit sets LOWER (the
+# conservative direction).
+#
+# WHAT THE FIT SAYS, and it is not what the plan expected: on the corpus the
+# refit LOWERS the hitter ceiling (579 PA at 700/700 inputs, vs the shipped
+# form's 620). It moves weight onto the most recent season (b1 0.71 vs 0.50),
+# empties the second (b2 ~0), and cuts the intercept (90 vs 200). Fitted PT MAE
+# on the <=2014 population: hitters 127.4 vs the shipped form's 143.0 (a real
+# gain); SP 48.7 vs 48.3 (the shipped form is already BETTER); RP 21.4 vs 22.3.
+# So the hitter arm and the pitcher arm are separate questions and are gated
+# separately ("hit" vs "both"). The 620-ceiling complaint is about a
+# CONDITIONAL population (established regulars); a linear refit on the whole
+# corpus answers it by lowering the ceiling, which is information.
+#
+# SHIPPED 2026-07-30 at mode "hit" (data/fa_projection_lab_eval.json):
+#   pooled WAR MAE  0.61572 -> 0.59684, delta -0.01889,
+#                   CI95 [-0.02399, -0.01378], MDE95 0.00434, 10/10 folds
+#   hitters         0.75957 -> 0.71526   pitchers unchanged by construction
+#   wRC+ / FIP      byte-identical; coverage 0.7978; hard gates stay True
+#   projected PA    mean 364.0 -> 299.1 against 312.7 actual: the level error
+#                   falls from +51.3 to -13.6. The SHIPPED model was
+#                   OVER-projecting exposure on the gate panel, the opposite
+#                   sign to the FA-class measurement (456 vs 511) that motivated
+#                   this arm, and both are true: intercept 200 inflates
+#                   part-timers while slope 0.50 deflates regulars. The refit
+#                   (intercept 90, slope 0.71) corrects both ends at once, which
+#                   is why the WAR gain is this large.
+#   "both" (pitchers too) FAILED its pre-registered not-worse clause on pooled
+#                   FIP MAE and is NOT shipped - consistent with the offline
+#                   finding that the shipped hand-set form already beats the
+#                   refit on SP innings (48.3 vs 48.7 MAE).
+# P3' GUARD (pre-registered): the in-progress reliability blend - the Lindor
+# protection at the top of project_player - must stay a FLOOR. Direct assertion
+# on the real path over every hitter with >=600 established PA and a partial
+# following season: 6 cases, 0 regressed, mean pt lift +132.8 PA. Intact.
+# COMBINED with F-REALWAR (the pre-registered combined-winner rule): pooled WAR
+# MAE 0.61572 -> 0.58318, delta -0.03263, CI95 [-0.03884, -0.02643],
+# MDE95 0.00527, 10/10 folds; hitters 0.75957 -> 0.68360 (delta -0.07573,
+# MDE95 0.01074), pitchers -0.00039 (a null, as expected).
+PT_FIT_DEFAULT = "hit"                      # central flip lives here
+PT_FIT_COEF = {                             # OLS on corpus seasons <= 2014
+    "hit": [90.4588, 0.7112, -0.0131, 0.1563],      # n=6,953
+    "pit_SP": [73.2245, 0.4724, 0.0211, -0.0005],   # n=2,523
+    "pit_RP": [26.3709, 0.3594, -0.0017, 0.0157],   # n=4,089
+}
+
+
+def _pt_fit_mode() -> str:
+    env = os.environ.get("EEPHUS_FA_PTFIT")
+    return env.strip() if env is not None else PT_FIT_DEFAULT
+
+
+# ============================================================================
+# F-MARCEL: the [5,3,2] vs 5/4/3 doc/config mismatch (gated arm; Phase E4a)
+# ============================================================================
+# fa_config.yaml ships marcel_weights [5,3,2]; this module's own docstring and
+# fa_backtest's naive baseline both say 5/4/3. One of them is wrong and the
+# question is decided by measurement, not by editing whichever is easier.
+# EEPHUS_FA_MARCEL="5,4,3" overrides the config at call time.
+#
+# RESOLVED 2026-07-30 BY MEASUREMENT, and the CONFIG won. Gate 1, identical
+# folds (data/fa_projection_lab_eval.json arm `marcel_543`): moving to [5,4,3]
+# makes pooled WAR MAE WORSE, 0.61572 -> 0.61911, delta +0.00339, CI95
+# [+0.00285, +0.00393], MDE95 0.00046, and it loses on 10 of 10 folds while
+# also degrading pitcher WAR (0.50884 -> 0.51437), wRC+ (20.070 -> 20.149) and
+# FIP (0.72109 -> 0.72434). This is a measured LOSS, not a null, so [5,3,2]
+# stands and THIS MODULE'S DOCSTRING was the wrong artifact - it has been
+# corrected to [5, 3, 2].
+# fa_backtest._baseline keeps 5/4/3 deliberately: it is the NAIVE COMPARATOR
+# (the classic Marcel carry-forward the model must beat), a different object
+# from the model's own component weights, and its docstring says so.
+def _marcel_weights() -> list[float]:
+    env = os.environ.get("EEPHUS_FA_MARCEL")
+    if env:
+        return [float(x) for x in env.split(",")]
+    return list(_pcfg()["marcel_weights"])
+
+
+def _realwar_map_features(h: dict, side: str, league: dict) -> list[float] | None:
+    """The WAR map's OWN feature row for a COMPLETED season, built exactly as
+    fit_war_map builds it (same exposure floors, same league anchors, same
+    wRAA construction). None when the season cannot be reconstructed."""
+    lg = league.get(h["season"]) or {}
+    if side == "hit":
+        pa = h.get("pa") or 0
+        if pa < 50 or not lg.get("woba"):
+            return None
+        woba = _assemble_hitter({**h, "babip": h.get("babip") or lg.get("babip")},
+                                league, h["season"] + 1)["woba_proj"]
+        wraa_pa = (woba - lg["woba"]) / _pcfg()["assembly"]["woba_scale"]
+        pa6 = pa / 600.0
+        return [1.0, pa6, wraa_pa * pa6 * 600.0 / 10.0,
+                (1.0 if h.get("role") == "C" else 0.0) * pa6]
+    ip = h.get("ip") or 0
+    if ip < 20 or not lg.get("lg_fip") or h.get("fip") is None:
+        return None
+    ip100 = ip / 100.0
+    return [1.0, ip100, (lg["lg_fip"] - h["fip"]) * ip100,
+            (1.0 if h.get("role") == "SP" else 0.0) * ip100]
+
+
+def realwar_residual(proj: dict, side: str, war_map: dict) -> tuple[float, float]:
+    """(shrunk residual rate, effective exposure) for one projection.
+
+    Rate units are bWAR per 600 PA (hitters) / per 100 IP (pitchers). The
+    per-season residuals are combined with the SAME Marcel recency weights the
+    component rates use, exposure-weighted, then shrunk on effective exposure
+    toward 0 (no signal) rather than toward a league mean - the residual's
+    population mean is already ~0 by the map's construction."""
+    rows = proj.get("_rw") or []
+    if not rows:
+        return 0.0, 0.0
+    coef = (war_map.get(side) or {}).get("coef")
+    if not coef:
+        return 0.0, 0.0
+    w = _marcel_weights()
+    unit = 600.0 if side == "hit" else 100.0
+    season0 = proj.get("season") or 0
+    num = den = 0.0
+    for r in rows:
+        lag = season0 - r["s"]
+        if not 1 <= lag <= 3 or r["war"] is None or (r["expo"] or 0) <= 0:
+            continue
+        wl = float(w[lag - 1]) / float(w[0])
+        hat = sum(c * x for c, x in zip(coef, r["x"]))
+        rate = (r["war"] - hat) / (r["expo"] / unit)
+        num += wl * r["expo"] * rate
+        den += wl * r["expo"]
+    if den <= 0:
+        return 0.0, 0.0
+    rate = num / den
+    if REALWAR_OVERRIDE is not None:            # zero-information control
+        rate = float(REALWAR_OVERRIDE.get((proj.get("_rw_id"), season0), 0.0))
+    cap = REALWAR_CAP[side]
+    rate = max(-cap, min(cap, rate))
+    if REALWAR_COLLECT is not None:
+        REALWAR_COLLECT.append((proj.get("_rw_id"), season0, rate, den))
+    return rate * (den / (den + REALWAR_K[side])), den
+
+
 def project_player(history: list[dict], side: str, target_season: int,
                    curves: dict, league: dict, age: int | None,
                    role: str | None = None,
@@ -869,7 +1124,7 @@ def project_player(history: list[dict], side: str, target_season: int,
     assembled composites (wRC+/FIP) + playing time — WAR attaches later
     via the fitted map. None when no usable history exists."""
     cfg = _pcfg()
-    weights = cfg["marcel_weights"]
+    weights = _marcel_weights()
     expo_key = "pa" if side == "hit" else "bf"
     hist = sorted([h for h in history if 0 < target_season - h["season"] <= 3],
                   key=lambda h: -h["season"])
@@ -931,13 +1186,32 @@ def project_player(history: list[dict], side: str, target_season: int,
     pt_cfg = cfg["playing_time"]["hit" if side == "hit" else "pit"]
     e1 = next((_pt_expo(h, expo_key) for h in hist if h["season"] == target_season - 1), 0)
     e2 = next((_pt_expo(h, expo_key) for h in hist if h["season"] == target_season - 2), 0)
+    _ptmode = _pt_fit_mode()
+
+    def _bounce(vals: list[float]) -> float:
+        """How far the platform season sits below the player's own 3-season
+        peak - the established-workload channel (F-PTFIT)."""
+        return max(0.0, max(vals) - vals[0])
+
     if side == "hit":
-        pt = pt_cfg["w1"] * e1 + pt_cfg["w2"] * e2 + pt_cfg["base_pa"]
+        if _ptmode in ("hit", "both"):
+            e3 = next((_pt_expo(h, expo_key) for h in hist
+                       if h["season"] == target_season - 3), 0)
+            b = PT_FIT_COEF["hit"]
+            pt = b[0] + b[1] * e1 + b[2] * e2 + b[3] * _bounce([e1, e2, e3])
+        else:
+            pt = pt_cfg["w1"] * e1 + pt_cfg["w2"] * e2 + pt_cfg["base_pa"]
     else:
         base_ip = pt_cfg["base_ip_sp"] if role == "SP" else pt_cfg["base_ip_rp"]
         ip1 = next((_pt_expo(h, "ip") for h in hist if h["season"] == target_season - 1), 0)
         ip2 = next((_pt_expo(h, "ip") for h in hist if h["season"] == target_season - 2), 0)
-        ip = pt_cfg["w1"] * ip1 + pt_cfg["w2"] * ip2 + base_ip
+        if _ptmode == "both":
+            ip3 = next((_pt_expo(h, "ip") for h in hist
+                        if h["season"] == target_season - 3), 0)
+            b = PT_FIT_COEF["pit_SP" if role == "SP" else "pit_RP"]
+            ip = b[0] + b[1] * ip1 + b[2] * ip2 + b[3] * _bounce([ip1, ip2, ip3])
+        else:
+            ip = pt_cfg["w1"] * ip1 + pt_cfg["w2"] * ip2 + base_ip
         pt = ip * 4.3                                          # BF ≈ 4.3 / IP
         out["ip_proj"] = round(ip, 1)
     if age:
@@ -980,6 +1254,21 @@ def project_player(history: list[dict], side: str, target_season: int,
             out["pt_proj"] = max(0.0, round(out["pt_proj"] * _m, 1))
             out["ip_proj"] = max(0.0, round(out.get("ip_proj", 0.0) * _m, 1))
             out["pt_tj_mult"] = _m
+    # F-REALWAR: stash the map's own feature rows for the COMPLETED history
+    # seasons so war_from_projection (which owns war_map) can reconstruct the
+    # map's prediction for each and take the residual. Only numbers are stored,
+    # and only when the arm is on, so the OFF path is byte-identical.
+    if _realwar_enabled():
+        rw = []
+        for h in hist:
+            x = _realwar_map_features(h, side, league)
+            if x is None:
+                continue
+            rw.append({"s": h["season"], "war": h.get("war"),
+                       "expo": (h.get("pa") if side == "hit" else h.get("ip")) or 0,
+                       "x": x})
+        out["_rw"] = rw
+        out["_rw_id"] = hist[0].get("mlbam")
     # ---- composites ----------------------------------------------------------
     if side == "hit":
         out.update(_assemble_hitter(out, league, target_season))
@@ -1128,9 +1417,20 @@ def war_from_projection(proj: dict, side: str, war_map: dict, league: dict,
         c = war_map["hit"]["coef"]
         pa6 = proj["pt_proj"] / 600.0
         wraa10 = proj["wraa_pa"] * proj["pt_proj"] / 10.0
-        return c[0] + c[1] * pa6 + c[2] * wraa10 + c[3] * (1.0 if proj["role"] == "C" else 0.0) * pa6
-    c = war_map["pit"]["coef"]
-    lg_fip = _league_recent(league, target_season, "lg_fip") or 4.1
-    ip100 = proj.get("ip_proj", 0.0) / 100.0
-    return (c[0] + c[1] * ip100 + c[2] * (lg_fip - proj["fip_proj"]) * ip100
-            + c[3] * (1.0 if proj["role"] == "SP" else 0.0) * ip100)
+        war = (c[0] + c[1] * pa6 + c[2] * wraa10
+               + c[3] * (1.0 if proj["role"] == "C" else 0.0) * pa6)
+        expo6 = pa6
+    else:
+        c = war_map["pit"]["coef"]
+        lg_fip = _league_recent(league, target_season, "lg_fip") or 4.1
+        ip100 = proj.get("ip_proj", 0.0) / 100.0
+        war = (c[0] + c[1] * ip100 + c[2] * (lg_fip - proj["fip_proj"]) * ip100
+               + c[3] * (1.0 if proj["role"] == "SP" else 0.0) * ip100)
+        expo6 = ip100
+    # F-REALWAR (gated): the part of realized bWAR the map structurally cannot
+    # represent - defense, baserunning, positional value - carried forward as a
+    # shrunk per-exposure rate and applied at the PROJECTED exposure.
+    if _realwar_enabled():
+        rate, _n = realwar_residual(proj, side, war_map)
+        war += rate * expo6
+    return war

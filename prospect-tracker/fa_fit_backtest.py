@@ -234,6 +234,17 @@ def _leverage(wins: int | None) -> float:
     return 4.0 * p * (1.0 - p)
 
 
+def _reach(b: dict, guar: float) -> float:
+    """The gate's mirror of fa_fit._spend_reach: share of the club's own PRIOR
+    guarantees at least this large. Strictly ex-ante - `guars` only ever holds
+    signings from winters before the test winter."""
+    import bisect
+    gs = b.get("guars") or []
+    if not gs:
+        return 0.0
+    return (len(gs) - bisect.bisect_left(gs, guar)) / float(len(gs))
+
+
 def _park_score(pf: dict, org: str, is_pitcher: bool) -> float:
     f = pf.get(org)
     if not f:
@@ -258,17 +269,21 @@ def build_rows() -> list[dict]:
         prior = [s for s in enriched if s["class_year"] < Y]
         if len({s["class_year"] for s in prior}) < 3 or not by_winter.get(Y):
             continue
-        beh: dict[str, dict] = defaultdict(lambda: {"max": 0, "n100": 0, "recent": 0})
+        beh: dict[str, dict] = defaultdict(lambda: {"max": 0, "n100": 0,
+                                                   "recent": 0, "guars": []})
         for s in prior:
             t = s.get("to_team")
             if t not in ORGS:
                 continue
             g = fm._npv_of(s)
             beh[t]["max"] = max(beh[t]["max"], g)
+            beh[t]["guars"].append(g)
             if g >= 100_000_000:
                 beh[t]["n100"] += 1
             if s["class_year"] >= Y - 3:
                 beh[t]["recent"] += g
+        for v in beh.values():
+            v["guars"].sort()
         max_recent = max((b["recent"] for b in beh.values()), default=1) or 1
         pay = team_payroll_state(Y - 1)
         wins = standings_wins(Y - 1)
@@ -293,7 +308,8 @@ def build_rows() -> list[dict]:
             grp = fm._pos_group(s.get("position"))
             is_pit = grp in ("SP", "RP")
             for org in ORGS:
-                b = beh.get(org) or {"max": 0, "n100": 0, "recent": 0}
+                b = beh.get(org) or {"max": 0, "n100": 0, "recent": 0,
+                                     "guars": []}
                 tax = (pay.get(org) or {}).get("tax_payroll_usd")
                 space = (thr - tax) if tax else None
                 afford = (max(0.0, min(1.0, space / (aav * 2.0)))
@@ -305,9 +321,19 @@ def build_rows() -> list[dict]:
                     "window": _leverage(wins.get(org)),
                     "afford": afford,
                     "park": _park_score(park_cache[Y - 1], org, is_pit),
-                    "behavior": (0.5 * min(1.0, b["max"] / max(npv, 1)) ** 0.5
+                    # SCORE WHAT SHIPS (the standing lesson of
+                    # test_gate_scores_the_weights_that_actually_ship): the live
+                    # will-spend term is fa_fit._spend_reach, which as of
+                    # 2026-07-30 is the SHARE of the club's own historical
+                    # guarantees at least this large, not the min(...,1)-clipped
+                    # max-guarantee ratio. The clipped form is retained here under
+                    # BEHAVIOR_MODE so the two can be compared on one chain.
+                    "behavior": (0.5 * _reach(b, npv)
                                  + 0.3 * min(1.0, b["recent"] / max_recent)
                                  + 0.2 * min(1.0, b["n100"] / 5.0)),
+                    "behavior_clipped": (0.5 * min(1.0, b["max"] / max(npv, 1)) ** 0.5
+                                         + 0.3 * min(1.0, b["recent"] / max_recent)
+                                         + 0.2 * min(1.0, b["n100"] / 5.0)),
                     "incumbent": 1.0 if s.get("from_team") == org else 0.0,
                 })
     return rows
@@ -345,6 +371,106 @@ def _fit_logit(train_rows: list[dict], feats: tuple) -> list[float] | None:
     m = LogisticRegression(C=1.0, max_iter=1000, random_state=7)
     m.fit(X, y)
     return [float(c) for c in m.coef_[0]]
+
+
+# ============================================================================
+# CONCENTRATION TRIPWIRE (registered 2026-07-30, owner program Phase F5)
+# ============================================================================
+# MRR and top-k cannot see the failure the owner actually reported. A fit engine
+# that ranks the Dodgers first for 154 of 228 free agents scores FINE on signing
+# prediction (the Dodgers do sign a lot of people) while being worthless as a
+# product, and the same is true of the Giants topping every pitcher's list. The
+# metrics below are the ones that would have caught both, measured on the LIVE
+# 30-club fit vector for every member of the served class.
+#
+# THE FIFTH METRIC IS MIS-SPECIFIED AND IS REPORTED, NOT GATED. `max share of #1
+# fits within one side` cannot be satisfied by any correct additive composite:
+# within a position group the need ordering is a property of the 30 CLUBS, not of
+# the player, so whichever club is genuinely thinnest at a position tops every
+# player at that position. As of 2026-07-30 SFG's 5th-starter slot projects 0.00
+# WAR against a next-thinnest 0.03 and a league median near 0.85 - the club
+# ordering is now a real continuous spread rather than the v3 pathology (where
+# arb/pre-arb arms were invisible and the slot rule handed maximum need to any
+# club with <= 4 contracted starters). Keeping the number visible is right;
+# gating on it would only invite tuning until a true signal is hidden.
+CONCENTRATION_GATE = {
+    "max_top1_share": 0.25,          # no club may be #1 for more than a quarter
+    "min_distinct_top1": 12,         # at least 12 clubs must be someone's #1
+    "min_distinct_top3": 20,         # at least 20 clubs must appear in a top-3
+    "min_median_gap": 0.015,         # the ordering must not get FLATTER
+}
+
+
+def concentration_gate(class_year: int | None = None) -> dict:
+    """Measure the fit-vector concentration on the served class. Read-only, and
+    fail-soft: returns {"available": False} when the class artifact is absent so
+    the gate run never depends on it."""
+    import json
+    import statistics
+    from collections import Counter
+    try:
+        import fa_fit
+        d = json.loads((DATA_DIR / "fa_class.json").read_text(encoding="utf-8"))
+    except Exception:                                       # noqa: BLE001
+        return {"available": False,
+                "note": "data/fa_class.json unavailable - concentration unmeasured"}
+    cy = class_year or d["class_year"]
+    first: Counter = Counter()
+    top3: Counter = Counter()
+    gaps: list[float] = []
+    by_side: dict[str, Counter] = {"hit": Counter(), "pit": Counter()}
+    n = 0
+    for m in d.get("members") or []:
+        player = {"position": m.get("pos"), "bat_throw": m.get("bt"),
+                  "from_team": m.get("from"),
+                  "_war_path": {"war_y1": m.get("warY1")}}
+        pred = {"proj_guarantee_usd": m.get("projGuar"),
+                "proj_aav_usd": m.get("projAav")}
+        try:
+            rows = fa_fit.fit_scores(player, pred, cy, top_n=30)
+        except Exception:                                   # noqa: BLE001
+            continue
+        if not rows:
+            continue
+        n += 1
+        first[rows[0]["org"]] += 1
+        for r in rows[:3]:
+            top3[r["org"]] += 1
+        if len(rows) > 1:
+            gaps.append(rows[0]["fit"] - rows[1]["fit"])
+        grp = fm._pos_group(m.get("pos"))
+        by_side["pit" if grp in ("SP", "RP") else "hit"][rows[0]["org"]] += 1
+        if len(rows) != 30:
+            return {"available": True, "n_members": n, "assertion_A1_all_30": False,
+                    "note": f"fit vector for {m.get('key')} had {len(rows)} clubs, "
+                            "not 30 - the silent-drop defect is back"}
+    if not n:
+        return {"available": False, "note": "no scorable members"}
+    top1 = first.most_common(1)[0]
+    measured = {
+        "n_members": n,
+        "assertion_A1_all_30": True,
+        "max_top1_share": round(top1[1] / n, 4),
+        "max_top1_club": top1[0],
+        "distinct_top1": len(first),
+        "distinct_top3": len(top3),
+        "median_gap": round(statistics.median(gaps), 4) if gaps else None,
+        "top1_counts": dict(first.most_common()),
+        "per_side_max_top1_share_REPORTED_NOT_GATED": {
+            s: (round(c.most_common(1)[0][1] / sum(c.values()), 4)
+                if c else None) for s, c in by_side.items()},
+        "per_side_top1_club": {s: (c.most_common(1)[0][0] if c else None)
+                               for s, c in by_side.items()},
+    }
+    measured["gate"] = {
+        "max_top1_share": measured["max_top1_share"] <= CONCENTRATION_GATE["max_top1_share"],
+        "distinct_top1": measured["distinct_top1"] >= CONCENTRATION_GATE["min_distinct_top1"],
+        "distinct_top3": measured["distinct_top3"] >= CONCENTRATION_GATE["min_distinct_top3"],
+        "median_gap": (measured["median_gap"] or 0) >= CONCENTRATION_GATE["min_median_gap"],
+    }
+    measured["pass"] = all(measured["gate"].values())
+    measured["thresholds"] = dict(CONCENTRATION_GATE)
+    return measured
 
 
 def run_fit_gate(persist: bool = True) -> dict:
@@ -405,6 +531,45 @@ def run_fit_gate(persist: bool = True) -> dict:
         tot = sum(pos)
         if tot > 0:
             candidate = {f: round(c / tot, 3) for f, c in zip(FEATS, pos)}
+    # ------------------------------------------------------------------
+    # weight_mix_comparison + ship_decision: COMPUTED, not hand-added.
+    # ------------------------------------------------------------------
+    # These two keys are asserted by test_fa_fit_gate.py
+    # ::test_shipped_weights_match_gate3_decision and were, until 2026-07-30,
+    # present only in the committed artifact and produced by NO code - so any
+    # `persist=True` re-run silently deleted them and broke the pin. They are
+    # derived here from the same pooled groups every other row uses, so the
+    # artifact regenerates faithfully and the pin cannot go stale again.
+    MIXES = {
+        "hand_v2": {"need": 0.31, "window": 0.19, "afford": 0.22,
+                    "park": 0.04, "behavior": 0.24},
+        "shipped_balanced": dict(LIVE_WEIGHTS),
+    }
+    if candidate:
+        MIXES["fitted_logistic"] = candidate
+    weight_mix = {}
+    for name, wv in MIXES.items():
+        weight_mix[name] = {
+            "weights": {k: round(v, 3) for k, v in wv.items()},
+            **{k: v for k, v in _rank_metrics(
+                pooled_groups["live_analog"],
+                lambda r, _w=wv: sum(_w[f] * r[f] for f in FEATS)).items()
+                if k in ("mrr", "top1", "top3", "top5")},
+        }
+    weight_mix["behavior_only"] = {k: v for k, v in results["behavior_only"].items()
+                                   if k in ("mrr", "top1", "top3", "top5")}
+    ship_decision = (
+        "shipped weights are read from fa_config.fit.weights and scored here "
+        "verbatim (LIVE_WEIGHTS). The mix comparison below is computed on the "
+        "identical forward chain, so it can never drift from what ships. The "
+        "shipped mix is kept player-discriminative on purpose: a "
+        "behavior-dominated composite is nearly player-INDEPENDENT and put one "
+        "club atop every pitcher's fit list (the measured Giants/Dodgers failure "
+        "pattern). Need is the only player-specific signal, and the 2026-07-30 "
+        "fits-v4 pass re-weighted toward it after the concentration tripwire "
+        "below measured the failure directly. Differences among the top mixes "
+        "are within noise and are disclosed as such.")
+
     verdicts = {
         "live_analog_beats_random": results["live_analog"]["top5"] > 5 / 30,
         "live_analog_beats_payroll_only":
@@ -420,6 +585,9 @@ def run_fit_gate(persist: bool = True) -> dict:
         "test_winters": winters,
         "results": results,
         "verdicts": verdicts,
+        "weight_mix_comparison": weight_mix,
+        "ship_decision": ship_decision,
+        "concentration": concentration_gate(),
         "fitted_transfer_weight_candidate": candidate,
         "fitted_transfer_coefs_final_winter": transfer_coefs_last,
         "notes": [
@@ -427,6 +595,7 @@ def run_fit_gate(persist: bool = True) -> dict:
             "deal-size context (NPV) is identical across all 30 candidate clubs per signing — conditions the ranking, cannot leak the winner",
             "incumbency (re-signing gravity) is real and ex-ante but absent from the live composite — fitted_full shows its ceiling",
             "mystery-team realism: top-5 is the headline metric; top-1 on 30 clubs is genuinely hard",
+            "CONCENTRATION TRIPWIRE (registered 2026-07-30): MRR/top-k are blind to a fit vector that ranks the SAME club first for everyone - a model can score well on signing prediction while being useless as a product. The concentration block measures that directly on the served class.",
         ],
     }
     if persist:
