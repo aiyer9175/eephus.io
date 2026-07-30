@@ -596,6 +596,37 @@ def evaluate(persist: bool = True) -> dict:
     return out
 
 
+def flagship_owns(roster_player: dict) -> bool:
+    """Does the FLAGSHIP eFV board own this roster row, or does the provisional path?
+
+    THE PARTITION, stated once (2026-07-30). `fv_raw` on a rosters_by_org.json row is
+    the latest consensus point's `consensus_fv_raw` (run_monthly stamps it from the
+    timeseries, and it is None whenever the player has no consensus point at all).
+    `consensus.compute_consensus_point` returns None unless the player has at least one
+    explicit FV or one non-org-list rank. So:
+
+        has a scout grade  ->  consensus point  ->  fv_raw set  ->  FLAGSHIP board
+        no scout grade     ->  no point         ->  fv_raw None ->  PROVISIONAL pool
+
+    The two are complements, so every rostered non-MLB player with usable MiLB
+    production lands in exactly one of them. That is a general rule and it predates
+    this note; it is named here because it was not obvious enough to survive being
+    tested.
+
+    WHY IT IS NAMED NOW. Removing `baseballamerica_statcast_by_age`'s fabricated FV 40
+    dropped seven players off the served board (`braylon_whitaker`, `easton_shelton`,
+    `jacob_friend`, `jake_cunningham`, `jose_meza`, `mason_guerra`,
+    `michael_martinez`): that snapshot was their ONLY row in the database, so with no
+    FV they produce no consensus point. They did not fall through a hole. The
+    fabricated grade had been holding them on the WRONG side of this partition, and
+    with it gone they route here, which is where a player with a track record and no
+    scout grade belongs. Nothing had to change for that to happen; what was missing
+    was a test saying so. See docs/efv-2026-07-30/POSITION_ROLE_GATE.md 3.2 and
+    ORPHAN_ROUTING.md.
+    """
+    return (roster_player or {}).get("fv_raw") is not None
+
+
 def build(persist: bool = True) -> dict:
     """Score every UNGRADED roster player (data/rosters_by_org.json: fv_raw is None) that has
     real MiLB production, on the no-FV production model + capped grade map. Writes
@@ -616,7 +647,7 @@ def build(persist: bool = True) -> dict:
             if level == "MLB" or not isinstance(players, list):
                 continue
             for p in players:
-                if p.get("fv_raw") is not None:           # already source-graded -> flagship owns it
+                if flagship_owns(p):        # already source-graded -> flagship owns it
                     continue
                 mid = p.get("mlbam_id")
                 if not mid:
