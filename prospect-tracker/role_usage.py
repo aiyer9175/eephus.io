@@ -73,14 +73,46 @@ _ROLELESS_PITCHER_TOKENS = {"P", "RHP", "LHP"}
 # efv_score._RP_DESIGNATIONS, so the downstream semantics are exact.
 _RP_LABEL = "RP"
 
-# MASTER SWITCH, default False. With it off, usage_position_override behaves
-# EXACTLY as shipped rule D (RP -> SP only) and this module changes no served
-# number. Turning it on moves board output: rows entering _RP_DESIGNATIONS
-# become eligible for efv_score._role_factor's reliever-ceiling haircut, which
-# per plan ground rule 4 requires a storage.BOARD_RANK_BASIS_EPOCH bump, a
-# BOARD_BASIS_FINGERPRINT restamp and a PINNED_MIX update in the same commit.
-# That is an owner call with an epoch bump attached, not a default.
-USAGE_ROLE_BOTH_DIRECTIONS = False
+# MASTER SWITCH. With it OFF, usage_position_override behaves EXACTLY as shipped
+# rule D (RP -> SP only) and this module changes no served number.
+#
+# TURNED ON 2026-07-30 by OWNER DECISION, with the ship mechanics attached in the
+# same commit (storage.BOARD_RANK_BASIS_EPOCH 2026-07-30, and the board basis
+# fingerprint EXTENDED to name this switch - see storage.board_basis_fingerprint;
+# role resolution is now a board-ordering input, and a fingerprint only guards what
+# it names).
+#
+# Blast radius RE-MEASURED on the 2026-07-30 tree before the flip (not inherited
+# from the pre-registration; the nightly regen had moved the artifacts). Full record
+# in docs/efv-2026-07-30/POSITION_ROLE_GATE.md PART 3:
+#   * regression on the shipped direction: the same 103 arms flip, zero disagreements
+#   * 1,269 label changes; 871 rows ENTER efv_score._RP_DESIGNATIONS, 398 gain SP
+#   * of those 871, exactly 3 trigger the reliever ceiling (tink_hence, nick_frasso,
+#     joe_glassey) and ZERO sit inside the board top 300 (best rank 304)
+#   * 5 rows change surplus dollars at all (the rest price at $0 either way)
+#   * 0 spotlights change: 546 rows newly meet the RP-age-23 disqualifier and every
+#     one of them already failed the FV>=45 floor that gate sits behind
+# The one genuinely consequential row is Tink Hence (19 G / 3 GS / 20.3 IP), and the
+# flip is TRUE of him.
+USAGE_ROLE_BOTH_DIRECTIONS = True
+
+
+def role_resolution_mode() -> str:
+    """Short identity of how pitcher roles are resolved, for the board-basis
+    fingerprint (storage.board_basis_fingerprint).
+
+    The role string decides membership of efv_score._RP_DESIGNATIONS, which gates
+    the reliever-ceiling haircut on the model WAR leg, which is the board number.
+    So the RESOLUTION MODE is part of the board's identity in exactly the way the
+    grade field, the side scale and the outcome curve already are. Naming it here
+    means flipping the switch back, or widening the reversible-label set, fails the
+    coherence test until a human bumps the epoch - which is the whole point of a
+    fingerprint that only guards what it names.
+
+    Deliberately a MODE name and not a hash of the thresholds: the thresholds are
+    already pinned by test_role_usage / test_position_role_phase5, and a threshold
+    tweak that moves no label should not force an epoch bump."""
+    return "usage_both" if USAGE_ROLE_BOTH_DIRECTIONS else "usage_rp_to_sp"
 
 
 def starter_by_usage(g, gs, ip) -> bool:
@@ -227,11 +259,13 @@ def usage_position_override(position, mlbam, season, both_directions=None):
     in either direction. The published designation remains the fallback
     for every row usage_role declines to rule on.
 
-    DEFAULT OFF. The reverse direction moves board output - an "RP"
-    label is a member of efv_score._RP_DESIGNATIONS and therefore
-    eligible for the reliever-ceiling haircut - so switching it on is an
-    owner call carrying a BOARD_RANK_BASIS_EPOCH bump. Blast radius
-    measured in docs/efv-2026-07-30/POSITION_ROLE_GATE.md.
+    ON since 2026-07-30 (owner decision). The reverse direction moves
+    board output - an "RP" label is a member of
+    efv_score._RP_DESIGNATIONS and therefore eligible for the
+    reliever-ceiling haircut - so the flip shipped with a
+    BOARD_RANK_BASIS_EPOCH bump and a board-basis fingerprint that NAMES
+    the role-resolution mode. Blast radius measured in
+    docs/efv-2026-07-30/POSITION_ROLE_GATE.md.
     """
     if both_directions is None:
         both_directions = USAGE_ROLE_BOTH_DIRECTIONS

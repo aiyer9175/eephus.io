@@ -196,26 +196,53 @@ class TestUsageRole(unittest.TestCase):
 
 
 class TestBothDirectionsOverride(unittest.TestCase):
-    """The flag is DEFAULT OFF; with it off nothing may change."""
+    """The flag shipped ON 2026-07-30 (owner decision). Both states are pinned:
+    the DEFAULT (on) because that is what is served, and the explicit
+    both_directions=False path because that is the retired rule D and it must stay
+    byte-identical for the regression argument the flip was granted on."""
 
     def _line(self, g, gs, ip):
         return mock.patch.object(role_usage, "current_season_pitching",
                                  return_value={"g": g, "gs": gs, "ip": ip})
 
-    def test_module_default_is_off(self):
-        self.assertFalse(role_usage.USAGE_ROLE_BOTH_DIRECTIONS)
+    def test_module_default_is_on_and_the_fingerprint_names_it(self):
+        """The switch is a BOARD-ORDERING input, so the board basis fingerprint has
+        to name it. Pinned together here because that coupling is the only thing
+        stopping the switch from being flipped back silently: role mode decides
+        efv_score._RP_DESIGNATIONS membership, which gates the reliever ceiling."""
+        import storage
+        self.assertTrue(role_usage.USAGE_ROLE_BOTH_DIRECTIONS)
+        self.assertEqual(role_usage.role_resolution_mode(), "usage_both")
+        self.assertIn("roles=usage_both", storage.board_basis_fingerprint())
+        self.assertIn("roles=", storage.BOARD_BASIS_FINGERPRINT)
 
-    def test_flag_off_preserves_shipped_behaviour(self):
+    def test_explicit_flag_off_still_reproduces_shipped_rule_d(self):
         with self._line(21, 0, 27.0):     # unambiguous reliever usage
-            # SP is untouched with the flag off - this is the shipped
-            # contract and the reason the reverse direction is gated.
-            self.assertEqual(usage_position_override("SP", 700001, 2026), "SP")
-            self.assertEqual(usage_position_override("P", 700001, 2026), "P")
-            self.assertEqual(usage_position_override("RHP", 700001, 2026), "RHP")
+            # The retired one-direction contract, kept reachable and pinned: this
+            # is the exact behaviour the "same 103 arms, zero disagreements"
+            # regression check was run against.
+            for lbl in ("SP", "P", "RHP"):
+                self.assertEqual(
+                    usage_position_override(lbl, 700001, 2026,
+                                            both_directions=False), lbl)
         with self._line(19, 19, 87.0):    # starter usage
-            # RP -> SP still fires with the flag off.
-            self.assertEqual(usage_position_override("MIRP", 700002, 2026), "SP")
-            self.assertEqual(usage_position_override("SIRP", 700002, 2026), "SP")
+            # RP -> SP fires in BOTH modes - that direction never changed.
+            self.assertEqual(
+                usage_position_override("MIRP", 700002, 2026,
+                                        both_directions=False), "SP")
+            self.assertEqual(
+                usage_position_override("SIRP", 700002, 2026,
+                                        both_directions=False), "SP")
+
+    def test_module_default_now_runs_both_directions(self):
+        """No both_directions argument: the caller gets the module switch, which
+        is what storage's export pre-pass does."""
+        with self._line(21, 0, 27.0):
+            self.assertEqual(usage_position_override("SP", 700012, 2026), "RP")
+            self.assertEqual(usage_position_override("P", 700012, 2026), "RP")
+        with self._line(19, 19, 87.0):
+            self.assertEqual(usage_position_override("P", 700013, 2026), "SP")
+            self.assertEqual(usage_position_override("MIRP", 700013, 2026), "SP")
 
     def test_flag_on_flips_sp_to_rp_on_reliever_usage(self):
         with self._line(21, 0, 27.0):

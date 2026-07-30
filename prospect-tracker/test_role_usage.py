@@ -80,18 +80,29 @@ class TestUsagePositionOverride(unittest.TestCase):
             self.assertEqual(usage_position_override("MIRP", 700002, 2026), "MIRP")
             self.assertEqual(usage_position_override("SIRP", 700002, 2026), "SIRP")
 
-    def test_sp_input_passes_through_without_cache_read(self):
-        # A non-relief label must return unchanged and never even read
-        # the cache.
+    def test_non_role_label_passes_through_without_cache_read(self):
+        # A label usage may never adjudicate must return unchanged and never
+        # even read the cache. NARROWED 2026-07-30: "SP" and "RHP" used to be
+        # in this list, and stopped being when USAGE_ROLE_BOTH_DIRECTIONS
+        # shipped ON - usage now rules on them in both directions, so they DO
+        # read the cache. What survives is the real invariant: a hitter label,
+        # and a compound carrying a non-role token, are never touched and never
+        # cost a cache read. The retired one-direction contract for SP/RHP is
+        # pinned explicitly in test_position_role_phase5.
         with mock.patch.object(
             role_usage, "current_season_pitching",
-            side_effect=AssertionError("cache read for a non-relief label"),
+            side_effect=AssertionError("cache read for a non-role label"),
         ):
-            self.assertEqual(usage_position_override("SP", 700003, 2026), "SP")
             self.assertEqual(usage_position_override("SS", 700003, 2026), "SS")
-            self.assertEqual(usage_position_override("RHP", 700003, 2026), "RHP")
             # Mixed compound with a non-relief token stays untouched.
             self.assertEqual(usage_position_override("SP/MIRP", 700003, 2026), "SP/MIRP")
+            # And the retired behaviour is still reachable byte-for-byte.
+            self.assertEqual(
+                usage_position_override("SP", 700003, 2026,
+                                        both_directions=False), "SP")
+            self.assertEqual(
+                usage_position_override("RHP", 700003, 2026,
+                                        both_directions=False), "RHP")
 
     def test_missing_usage_data_stays(self):
         with mock.patch.object(

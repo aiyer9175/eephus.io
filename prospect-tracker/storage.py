@@ -4599,6 +4599,17 @@ BOARD_RANK_BASIS_EPOCH = "2026-07-30"   # STRICTLY-AFTER gate: see load_rank_his
 # 07-25 flip (median 417, max ~3.5k), but not zero, and the eFV delta is the owner's primary
 # movement signal, so it is an epoch. Blast radius, byte-identity proof and the movement
 # question: docs/efv-2026-07-30/POOLED_OUTCOME_REFIT.md.
+#
+# 2026-07-30, SECOND board input on the same date (LANE-SHIP, the pitcher role flip).
+# role_usage.USAGE_ROLE_BOTH_DIRECTIONS -> True lets MiLB usage overwrite a published
+# pitcher label in both directions; 871 rows enter efv_score._RP_DESIGNATIONS and become
+# eligible for the reliever-ceiling haircut. The DATE does not need to move (it is already
+# 2026-07-30 and this lands the same day), but the FINGERPRINT does, and it is extended
+# below with a roles= term for exactly the reason the grademap term was added. Measured
+# re-rank exposure: of the 871, ZERO sit inside the board top 300 (best rank 304) and only
+# 3 clear the ceiling's age+WAR trigger, upper-bounded at 0.8 FV of grade movement each,
+# so PINNED_MIX in test_board_basis_coherence is NOT re-recorded - the top-100 side mix
+# provably cannot move on this input. docs/efv-2026-07-30/POSITION_ROLE_GATE.md PART 3.
 
 # ── BASIS FINGERPRINT (A3, added 2026-07-30) ────────────────────────────────
 # BOARD_RANK_BASIS_EPOCH above is hand-maintained, and NOTHING forced it to be bumped
@@ -4622,19 +4633,31 @@ BOARD_RANK_BASIS_EPOCH = "2026-07-30"   # STRICTLY-AFTER gate: see load_rank_his
 # term is that curve's content hash (value_framework.outcome_curve_identity, a SHA-1 over
 # the knot/value pairs). Refit the curve, change the prior, change the pool -- the hash
 # moves, the suite fails, and a human decides whether the board really did re-rank.
-BOARD_BASIS_FINGERPRINT = "xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
+#
+# EXTENDED AGAIN 2026-07-30 (LANE-SHIP) with the PITCHER ROLE-RESOLUTION MODE. Same
+# lesson, third instance: role_usage.USAGE_ROLE_BOTH_DIRECTIONS decides whether MiLB
+# usage may overwrite a published pitcher label in BOTH directions, and an "RP" label
+# is what puts a row in efv_score._RP_DESIGNATIONS, which is what exposes its model WAR
+# leg to the reliever-ceiling haircut, which is the board number. Turning that switch
+# on moved 1,269 labels and 871 RP-set memberships while leaving all three existing
+# fingerprint terms identical -- i.e. the fingerprint would again have reported "no
+# change" through a real board input flipping. Role mode is a board-ordering input, so
+# it is named.
+BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
+                           "|roles=usage_both")
 
 
 def board_basis_fingerprint() -> str:
     """Identity of the board ordering: which field is the board number, whether the
-    per-side outcome scale is applied on top of it (and if so, which coefficients), and
-    WHICH FITTED CURVE the grade itself inverts.
+    per-side outcome scale is applied on top of it (and if so, which coefficients),
+    WHICH FITTED CURVE the grade itself inverts, and HOW PITCHER ROLES ARE RESOLVED.
 
-    Deliberately cheap and import-safe: efv_board_scale and value_framework are imported
-    lazily here exactly as efv_board_scale is in _board_grade, so importing storage never
-    hard-depends on either. Every term degrades to a literal 'unavailable' rather than
-    raising -- a coordination device must never be the thing that takes the site down; it
-    just has to differ from the pin, which 'unavailable' does."""
+    Deliberately cheap and import-safe: efv_board_scale, value_framework and role_usage
+    are imported lazily here exactly as efv_board_scale is in _board_grade, so importing
+    storage never hard-depends on any of them. Every term degrades to a literal
+    'unavailable' rather than raising -- a coordination device must never be the thing
+    that takes the site down; it just has to differ from the pin, which 'unavailable'
+    does."""
     try:
         import efv_board_scale as _bs
         if _bs.enabled():
@@ -4650,7 +4673,12 @@ def board_basis_fingerprint() -> str:
         grademap = f"outcome_pooled@{_vf.outcome_curve_identity()}"
     except Exception:
         grademap = "unavailable"
-    return f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}"
+    try:
+        import role_usage as _ru
+        roles = _ru.role_resolution_mode()
+    except Exception:
+        roles = "unavailable"
+    return f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}|roles={roles}"
 
 
 # ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /
