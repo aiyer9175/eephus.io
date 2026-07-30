@@ -147,7 +147,55 @@ _FEATURES_PIT = [
     ("peak_k_rel",     +1),   # multi-season PEAK K-rate -- the lever that flipped pitchers
     ("k_rel",          +1),   # final-season K-rate (Phase-1 top adder)
     ("bb_rel",         -1),   # walk rate -- completes the K-BB% edge (helps OOS; cmd does NOT)
-    ("age_rel_level",  -1),
+    # age_rel_level declared 0 for PITCHERS (sign audit 2026-07-30). Same latent class
+    # and the same block as the pitcher `age` correction below, one matrix rebuild later.
+    #   what moved   the 2026-07-25 audit measured served -0.0076, BELOW the audit's own
+    #                NOISE_W 0.02 floor, so the -1 declaration was surviving on a weight
+    #                that asserted nothing. On the 2026-07-30 pitcher matrix (n 1988) the
+    #                served ridge fits +0.0418 and the contradiction surfaces.
+    #   why it moved PRE-REGISTERED, not a surprise. C1 decimal ages (2026-07-29) un-flattened
+    #                the 752 of 4,260 rows that integer-meets-integer had pinned at
+    #                age_rel_level exactly 0.0; that ship's own warning reads "several of the
+    #                largest upward moves are PITCHERS WHO GOT OLDER, because decimalization
+    #                gives the inverted pitcher `age` coefficient finer resolution ... do not
+    #                rebuild the pitcher matrix expecting neutrality." This is that rebuild.
+    #   fitted sign  marginal (weighted Pearson) -0.069, so "younger for level is better" is
+    #                true UNCONDITIONALLY and false conditional on FV + K/BB + tool_fb -> a
+    #                SUPPRESSOR by efv_sign_audit's classification, i.e. the DECLARATION is
+    #                what is wrong. Unregularized OLS partial is also positive, +0.0657.
+    #   not a split  removing the collinear partner `age` does NOT snap the sign back: it goes
+    #                MORE positive, +0.0916 (+0.0272 on the 07-25 matrix). So this is an
+    #                independent conditional effect, not a collinear split of one age signal.
+    #   what it is   the cleanest read on WHAT conditions it: the SAME column on the SAME side
+    #                of the SAME matrix fits -0.5943 in the efv_ungraded provisional pit set,
+    #                which carries no `fv` anchor, and +0.0418 here, which does. Age-for-level
+    #                is a real negative until the consensus grade is in the model; after that
+    #                the residual is a scout-already-knew term, not a youth bonus.
+    #   stability    7 of 9 informative folds now positive and only 2 of 9 agree with -1 (was
+    #                3 of 9 positive, 6 of 9 agreeing). fold w mean +0.042, min -0.445,
+    #                max +0.359. Never a stable negative; now not even a fold majority.
+    #   drop gate    2026-07-30, the pit-`age` protocol: pooled forward-chained rho over 11
+    #                splits, dropping = -0.00249, i.e. dropping HURTS and is 0.156x the 0.016
+    #                pit MDE95. Paired bootstrap B=2000 (resampling TRAIN and TEST, refit per
+    #                draw) CI95 [-0.0121, +0.0136], P(drop helps) 0.47, helps in 4 of 11 folds.
+    #                Zero-information control -0.00302, permutation null p 0.439. NULL, and
+    #                gate standard section 6 forbids removing on sub-floor evidence -> KEEP.
+    #   merge gate   already adjudicated 2026-07-25 (data/xfv_sign_merge_gate.json,
+    #                "pit:age+age_rel_level"): merging the pair into one z-mean column fits
+    #                +0.0471, so it does NOT restore the declared direction, and the merge is
+    #                itself a null (-0.00588 = 0.368x floor, CI95 [-0.0231, +0.0167])
+    #                -> rejected as a remedy.
+    #   consistency  `age`, the other member of this same pitcher age block, was corrected to 0
+    #                on 2026-07-25/29 for exactly this reason. Declaring "younger for level is
+    #                better" while declining to declare "younger is better", on the same side
+    #                out of the same block, is not a position this module can hold.
+    # CORRECTNESS only, no accuracy claim and none required: the declaration binds only
+    # _fit_lgbm_mono's monotone_constraints (the eval-only challenger), never the shipped
+    # ridge, so no served number moves. The HITTER-side ("age_rel_level", -1) above is
+    # untouched and correct (served -0.1361, marginal -0.2154).
+    # Ledger: data/xfv_sign_audit.json (predates the decimal-age rebuild; the fresh figures
+    # above are quoted inline), data/xfv_sign_merge_gate.json.
+    ("age_rel_level",   0),
     ("x_era_k",        +1),   # (-era_rel)*k_rel: run-prevention x missing-bats interaction.
                               # Feature re-test 2026-06-22: genuine OOS lift (debuted-km
                               # 0.274->0.282, blend +0.0074, sane cal); era_rel alone fails.

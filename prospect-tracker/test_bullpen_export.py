@@ -18,6 +18,7 @@ from pathlib import Path
 import pytest
 
 import bullpen_export as be
+import rem_plus
 
 ROOT = Path(__file__).parent
 DATA = ROOT / "data" / "bullpen_leaderboards.json"
@@ -83,7 +84,40 @@ def test_data_contract():
         assert k in r0, f"reliever missing {k}"
     # REM+ is a sane index and the board is REM+-sorted descending
     rems = [r["rem_plus"] for r in d["relievers"] if r["rem_plus"] is not None]
-    assert all(40 <= x <= 200 for x in rems), (min(rems), max(rems))
+    # REM+ is a RATIO index (100 * pool_mean_FIP / player_FIP, the ERA+/wRC+
+    # family), NOT a z-score, so it has no upper bound: an arm whose shrunk skill
+    # FIP is half the pool mean scores 200 honestly. The ONLY structural ceiling
+    # is rem_plus.fip_skill's max(fip, 1.0) numerical floor.
+    #
+    # This bound was 40..200 until 2026-07-30, when Mason Miller (SD, closer)
+    # crossed it at 203. That is a real number, not a scale break:
+    #   - the anchor did not move (pool ERA 3.92 -> 3.91, pool mean FIP
+    #     3.89 -> 3.88, pool n 291 -> 296) and rem_plus.py is unchanged;
+    #   - he is qualified, not a small sample: 45.7 IP, 172 TBF, 44 G, K% 49.4,
+    #     BB% 8.7, ZERO homers, ERA 0.79, SwStr% 21.0, shrunk FIP 1.92;
+    #   - three independent estimators agree he is the outlier: 3yr REM+ 156
+    #     (100th pct), xREM+ 172 off xwOBA-against .177, WAR/IP+ 126.
+    # Compressing him back under 200 would be a display clamp, which is banned
+    # (tools/plus_metric_recal_lab.py records REM+ as "none on the served ratio
+    # ... ALREADY TRUE-TO-MODEL"), so the CONTRACT widens instead.
+    ceiling = 100.0 * d["pool"]["mean_fip"] / 1.0   # the fip_skill floor of 1.0
+    assert all(0 < x <= ceiling for x in rems), (min(rems), max(rems), ceiling)
+    # ...and here is the invariant the 40..200 band was really groping for, which
+    # an honest 203 passes and every scale break fails. build_pool anchors on the
+    # IP-weighted mean of the shrunk skill FIP, so the pool average scores exactly
+    # 100 by construction; in REM+ units that is the IP-weighted HARMONIC mean
+    # over the pool-contributing arms (TBF >= rem_plus.POOL_MIN_TBF). A z-score
+    # remap, a doubled constant, or a lost pool re-normalization all move it by
+    # tens. Tolerance 1.0 absorbs the served int rounding (measured 100.01).
+    pool_rows = [r for r in d["relievers"]
+                 if r.get("rem_plus") and (r.get("tbf") or 0) >= rem_plus.POOL_MIN_TBF
+                 and (r.get("ip") or 0) > 0]
+    assert len(pool_rows) == d["pool"]["n"], (len(pool_rows), d["pool"]["n"])
+    anchor = (sum(r["ip"] for r in pool_rows)
+              / sum(r["ip"] / r["rem_plus"] for r in pool_rows))
+    assert abs(anchor - 100.0) < 1.0, (
+        f"REM+ pool anchor is {anchor:.2f}, not 100 - the pool re-normalization "
+        "in rem_plus.build_pool is broken or the scale is no longer a ratio index")
     assert rems == sorted(rems, reverse=True), "board not sorted by REM+ desc"
     t0 = d["teams"][0]
     for k in ("team", "bullpen_plus", "n_relievers", "depth"):

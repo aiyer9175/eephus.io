@@ -147,7 +147,14 @@ _EXPECTED_HIT = [
 ]
 _EXPECTED_PIT = [
     ("fv", +1), ("peak_k_rel", +1), ("k_rel", +1), ("bb_rel", -1),
-    ("age_rel_level", -1), ("x_era_k", +1), ("tool_fb", +1),
+    # age_rel_level: declaration corrected to 0 on 2026-07-30, the other half of the
+    # pitcher age block below. The 07-25 audit measured it at -0.0076, under the audit's
+    # own 0.02 noise floor, so the -1 survived on a weight that asserted nothing; the
+    # decimal-age matrix rebuild moved it to +0.0418 and surfaced the contradiction.
+    # Marginal -0.069, and dropping the partner `age` pushes it MORE positive (+0.0916),
+    # so it is a suppressor and not a collinear split. Dropping is a measured NULL
+    # (-0.00249, 0.16x the pit MDE95). The feature stays; the claim goes.
+    ("age_rel_level", 0), ("x_era_k", +1), ("tool_fb", +1),
     # age: shipped 2026-07-14 owner-directed, declaration corrected to 0 on
     # 2026-07-25 (served ridge fits +0.0589 against the old -1; dropping it is a
     # measured NULL at 0.24x the pit MDE95). The feature stays; the claim goes.
