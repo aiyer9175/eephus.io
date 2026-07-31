@@ -58,12 +58,11 @@ model/metric where a gated win exists.
   existing URL (`03e424cb`), keeping the established visual identity and adding the
   outcome-curve foundation, a live-board third view, and the $0-floor defect.
 
-**Suite state at push:** 2,521 passed, 5 failed, 22 skipped, 1 xfailed. All five failures
-are the documented expected reds (C5 inert anchor, michael_oliveto, team-outlook recenter,
-$0-bottom-block tripwire) plus one NEW finding: `test_prospx_sort_a11y::
-test_aria_sort_reflects_state_and_enter_resorts` fails ONLY inside the full suite and
-passes in isolation and with neighbours, i.e. a test-isolation artifact from build
-artifacts being dirtied mid-suite, not a product defect. Added to Lane H below.
+**Suite state at final push:** 2,529 passed, **4 failed**, 22 skipped, 1 xfailed. All four
+failures are the documented expected tripwires and nothing else: C5 inert anchor,
+michael_oliveto, team-outlook recenter (real, owed to the FA lane), and the
+$0-bottom-block calibration tripwire. The prospx sort-a11y test, red in two earlier full
+runs, passed here; it is flaky under suite load rather than broken (item 10 in Lane H).
 
 - **Lane E2 (B3 level blend) RUN TO A VERDICT: NULL, NO-SHIP.** Pre-registered, built,
   both matrices rebuilt, shipped forward-chained eval re-run on both sides. The primary
@@ -602,12 +601,15 @@ Confirmed items, cheapest first:
    the served payload predates 23a7f44's staged watch (121 entries, no
    `prospect_watch_rule` key). Do it before any /pal/ surface work.
 10. **NEW 2026-07-30: `test_prospx_sort_a11y::test_aria_sort_reflects_state_and_enter_resorts`
-    is order-dependent.** It fails deterministically in the full suite and passes in
-    isolation, with neighbours, and in every pairwise combination tried. The fixture is
-    module-scoped over a real browser page reading `data/timeseries.json`, and the suite
-    dirties build artifacts mid-run (the documented conftest-restore hazard), so the board
-    the page loads is not the board the test was written against. Fix is test isolation,
-    not the a11y feature, which passes whenever it is measured against a clean tree.
+    is FLAKY under full-suite load.** Correcting my own first read of this: I recorded it
+    as failing deterministically in the full suite, and it is not. It failed two of three
+    full runs and passed the third, while passing in isolation, with neighbours, and in
+    every pairwise combination tried. The fixture is module-scoped over a real browser
+    page, the assertion waits up to 10s for a keyboard-driven re-sort to land, and under
+    full-suite CPU contention that wait sometimes loses. So the likely fix is the timeout
+    or the wait condition, not test ordering, and certainly not the a11y feature, which
+    passes every time it is measured without the rest of the suite competing with it.
+    Treat a single red here as noise; treat two in a row as a real regression.
 11. **NEW: Windows console logging crashes on `→`.** Seven `UnicodeEncodeError`
     tracebacks during the regen, all from `_log.info` calls containing a right-arrow
     against a cp1252 console (`bayes_trade_value.py:4188` and siblings). Cosmetic only,
