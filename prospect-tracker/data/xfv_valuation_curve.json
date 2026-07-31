@@ -1,5 +1,5 @@
 {
-"generated_at": "2026-07-28",
+"generated_at": "2026-07-30",
 "valuation_set": "clemens_2026",
 "war_window": "7yr control window (published ctrl_war basis)",
 "star_def": {
@@ -19,13 +19,13 @@
 "model": {
 "surplus_mm": 0.0,
 "surplus_mm_raw": 1.3,
-"expected_war": 1.33,
-"star_odds": 0.0017
+"expected_war": 0.37,
+"star_odds": 0.0
 },
 "live": {
-"n": 1728,
+"n": 1730,
 "surplus_mm_median": 0.0,
-"war6_median": -1.06,
+"war6_median": -1.03,
 "p_star_median": 0.0
 }
 },
@@ -39,14 +39,14 @@
 "model": {
 "surplus_mm": 0.4,
 "surplus_mm_raw": 2.0,
-"expected_war": 1.33,
-"star_odds": 0.0006
+"expected_war": 0.6,
+"star_odds": 0.0
 },
 "live": {
-"n": 204,
+"n": 201,
 "surplus_mm_median": 1.0,
-"war6_median": 1.46,
-"p_star_median": 0.006
+"war6_median": 1.43,
+"p_star_median": 0.007
 }
 },
 "40+": {
@@ -59,13 +59,13 @@
 "model": {
 "surplus_mm": 5.4,
 "surplus_mm_raw": 5.6,
-"expected_war": 1.75,
-"star_odds": 0.0007
+"expected_war": 1.39,
+"star_odds": 0.0001
 },
 "live": {
-"n": 44,
-"surplus_mm_median": 5.8,
-"war6_median": 2.79,
+"n": 47,
+"surplus_mm_median": 5.9,
+"war6_median": 2.78,
 "p_star_median": 0.015
 }
 },
@@ -83,10 +83,10 @@
 "star_odds": 0.0006
 },
 "live": {
-"n": 34,
-"surplus_mm_median": 10.0,
-"war6_median": 3.84,
-"p_star_median": 0.0235
+"n": 39,
+"surplus_mm_median": 10.4,
+"war6_median": 4.09,
+"p_star_median": 0.025
 }
 },
 "45+": {
@@ -103,10 +103,10 @@
 "star_odds": 0.0029
 },
 "live": {
-"n": 33,
-"surplus_mm_median": 18.8,
-"war6_median": 4.93,
-"p_star_median": 0.038
+"n": 28,
+"surplus_mm_median": 19.1,
+"war6_median": 5.25,
+"p_star_median": 0.044
 }
 },
 "50": {
@@ -125,7 +125,7 @@
 "live": {
 "n": 42,
 "surplus_mm_median": 26.4,
-"war6_median": 6.39,
+"war6_median": 6.4,
 "p_star_median": 0.066
 }
 },
@@ -145,7 +145,7 @@
 "live": {
 "n": 11,
 "surplus_mm_median": 46.5,
-"war6_median": 8.64,
+"war6_median": 8.62,
 "p_star_median": 0.133
 }
 },
@@ -165,8 +165,8 @@
 "live": {
 "n": 6,
 "surplus_mm_median": 64.9,
-"war6_median": 10.98,
-"p_star_median": 0.213
+"war6_median": 10.95,
+"p_star_median": 0.2105
 }
 },
 "65": {
@@ -215,13 +215,13 @@
 "model": {
 "surplus_mm": 0.0,
 "surplus_mm_raw": 1.2,
-"expected_war": 1.33,
-"star_odds": 0.0006
+"expected_war": 0.37,
+"star_odds": 0.0
 },
 "live": {
-"n": 2083,
+"n": 2097,
 "surplus_mm_median": 0.0,
-"war6_median": -0.52,
+"war6_median": -0.42,
 "p_star_median": 0.0
 }
 },
@@ -235,13 +235,13 @@
 "model": {
 "surplus_mm": 0.2,
 "surplus_mm_raw": 1.8,
-"expected_war": 1.33,
-"star_odds": 0.0002
+"expected_war": 0.6,
+"star_odds": 0.0
 },
 "live": {
-"n": 199,
+"n": 198,
 "surplus_mm_median": 0.0,
-"war6_median": 1.0,
+"war6_median": 1.04,
 "p_star_median": 0.001
 }
 },
@@ -255,13 +255,13 @@
 "model": {
 "surplus_mm": 3.1,
 "surplus_mm_raw": 3.9,
-"expected_war": 1.75,
-"star_odds": 0.0002
+"expected_war": 1.39,
+"star_odds": 0.0001
 },
 "live": {
 "n": 50,
-"surplus_mm_median": 5.8,
-"war6_median": 2.05,
+"surplus_mm_median": 5.9,
+"war6_median": 2.08,
 "p_star_median": 0.003
 }
 },
@@ -280,8 +280,8 @@
 },
 "live": {
 "n": 36,
-"surplus_mm_median": 10.1,
-"war6_median": 2.6,
+"surplus_mm_median": 9.4,
+"war6_median": 2.57,
 "p_star_median": 0.004
 }
 },
@@ -300,8 +300,8 @@
 },
 "live": {
 "n": 12,
-"surplus_mm_median": 17.3,
-"war6_median": 3.29,
+"surplus_mm_median": 17.0,
+"war6_median": 3.23,
 "p_star_median": 0.005
 }
 },
@@ -320,9 +320,9 @@
 },
 "live": {
 "n": 18,
-"surplus_mm_median": 26.0,
-"war6_median": 4.08,
-"p_star_median": 0.0065
+"surplus_mm_median": 26.7,
+"war6_median": 4.04,
+"p_star_median": 0.006
 }
 },
 "55": {

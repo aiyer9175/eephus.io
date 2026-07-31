@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-28",
+ "generated_at": "2026-07-30",
  "hit_rules": {
   "riser": {
    "fv_delta": 5.0,
@@ -18,25 +18,25 @@
   30,
   60
  ],
- "flags_logged": 3681,
- "flags_matured": 1517,
- "flags_pending": 2164,
+ "flags_logged": 3849,
+ "flags_matured": 1712,
+ "flags_pending": 2137,
  "by_flag_type": {
   "faller": {
-   "matured_cohorts": 15,
+   "matured_cohorts": 17,
    "horizons": {
     "h30": {
-     "n": 426,
-     "hit_rate": 0.0094,
+     "n": 474,
+     "hit_rate": 0.0127,
      "ci": [
-      0.0037,
-      0.0239
+      0.0058,
+      0.0273
      ],
-     "control_n": 2130,
+     "control_n": 2370,
      "control_rate": 0.0,
      "control_ci": [
       0.0,
-      0.0018
+      0.0016
      ],
      "clears_control": true
     },
@@ -63,20 +63,20 @@
    }
   },
   "rebound": {
-   "matured_cohorts": 15,
+   "matured_cohorts": 17,
    "horizons": {
     "h30": {
-     "n": 160,
+     "n": 186,
      "hit_rate": 0.0,
      "ci": [
       0.0,
-      0.0234
+      0.0202
      ],
-     "control_n": 793,
-     "control_rate": 0.0252,
+     "control_n": 919,
+     "control_rate": 0.0239,
      "control_ci": [
-      0.0164,
-      0.0386
+      0.0159,
+      0.036
      ],
      "clears_control": false
     },
@@ -103,20 +103,20 @@
    }
   },
   "riser": {
-   "matured_cohorts": 15,
+   "matured_cohorts": 17,
    "horizons": {
     "h30": {
-     "n": 931,
-     "hit_rate": 0.0462,
+     "n": 1052,
+     "hit_rate": 0.0475,
      "ci": [
-      0.0345,
-      0.0616
+      0.0362,
+      0.0621
      ],
-     "control_n": 4634,
-     "control_rate": 0.0211,
+     "control_n": 5219,
+     "control_rate": 0.0215,
      "control_ci": [
-      0.0174,
-      0.0257
+      0.0179,
+      0.0258
      ],
      "clears_control": true
     },

@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-28",
+ "generated_at": "2026-07-30",
  "experiment": "star-odds-calibration",
  "model": "star_odds (P>=2 control seasons of >=4 WAR; mixture Poisson-binomial)",
  "seed": null,
@@ -18,22 +18,22 @@
       "tier": "35+",
       "fv": 37.5,
       "published": 0.004,
-      "model": 0.0017,
-      "abs_dev": 0.0023
+      "model": 0.0,
+      "abs_dev": 0.004
      },
      {
       "tier": "40",
       "fv": 40.0,
       "published": 0.008,
-      "model": 0.0006,
-      "abs_dev": 0.0074
+      "model": 0.0,
+      "abs_dev": 0.008
      },
      {
       "tier": "40+",
       "fv": 42.5,
       "published": 0.018,
-      "model": 0.0007,
-      "abs_dev": 0.0173
+      "model": 0.0001,
+      "abs_dev": 0.0179
      },
      {
       "tier": "45",
@@ -86,7 +86,7 @@
      }
     ],
     "max_abs_dev": 0.5472,
-    "mean_abs_dev": 0.1462
+    "mean_abs_dev": 0.1464
    },
    "pitcher": {
     "tiers": [
@@ -94,22 +94,22 @@
       "tier": "35+",
       "fv": 37.5,
       "published": 0.004,
-      "model": 0.0006,
-      "abs_dev": 0.0034
+      "model": 0.0,
+      "abs_dev": 0.004
      },
      {
       "tier": "40",
       "fv": 40.0,
       "published": 0.004,
-      "model": 0.0002,
-      "abs_dev": 0.0038
+      "model": 0.0,
+      "abs_dev": 0.004
      },
      {
       "tier": "40+",
       "fv": 42.5,
       "published": 0.01,
-      "model": 0.0002,
-      "abs_dev": 0.0098
+      "model": 0.0001,
+      "abs_dev": 0.0099
      },
      {
       "tier": "45",
@@ -162,7 +162,7 @@
      }
     ],
     "max_abs_dev": 0.6439,
-    "mean_abs_dev": 0.1313
+    "mean_abs_dev": 0.1314
    }
   }
  },
@@ -357,13 +357,13 @@
      "surplus_max_pct_dev": 1.0,
      "surplus_mean_pct_dev": 0.3555,
      "star_max_abs_dev": 0.5472,
-     "star_mean_abs_dev": 0.1462
+     "star_mean_abs_dev": 0.1464
     },
     "post": {
      "surplus_max_pct_dev": 1.0,
      "surplus_mean_pct_dev": 0.3589,
      "star_max_abs_dev": 0.5121,
-     "star_mean_abs_dev": 0.1387
+     "star_mean_abs_dev": 0.1391
     }
    },
    "pitcher": {
@@ -372,13 +372,13 @@
      "surplus_max_pct_dev": 1.0,
      "surplus_mean_pct_dev": 0.3998,
      "star_max_abs_dev": 0.6439,
-     "star_mean_abs_dev": 0.1313
+     "star_mean_abs_dev": 0.1314
     },
     "post": {
      "surplus_max_pct_dev": 1.0,
      "surplus_mean_pct_dev": 0.3562,
      "star_max_abs_dev": 0.5157,
-     "star_mean_abs_dev": 0.1057
+     "star_mean_abs_dev": 0.1059
     }
    }
   }

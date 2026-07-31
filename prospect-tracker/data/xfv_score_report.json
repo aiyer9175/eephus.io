@@ -1,17 +1,17 @@
 {
- "generated_at": "2026-07-28",
+ "generated_at": "2026-07-30",
  "scope": "HITTERS",
  "n_scored": 1882,
  "calibration_scale": {
-  "a": 0.037,
-  "b": 1.041
+  "a": 0.036,
+  "b": 1.042
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 0.73,
+  "mean_abs_delta": 0.72,
   "max_up": 5.8,
   "max_down": -3.8,
-  "share_within_2_grades": 0.877
+  "share_within_2_grades": 0.876
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
@@ -20,35 +20,21 @@
   "max_down": -20.9
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.1353,
+  "spearman_adj_vs_consensus_miss": 0.0947,
   "n": 463,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 16877.8,
+  "xfv": 16864.3,
   "consensus": 16321.5
  },
  "example_up_adjustments": [
   {
    "player_key": "adam_haseley",
    "consensus_fv": 45.4,
-   "xfv_grade": 53.6,
-   "delta": 8.2,
+   "xfv_grade": 53.7,
+   "delta": 8.3,
    "realized_war_6yr": 1.54
-  },
-  {
-   "player_key": "nathaniel_lowe",
-   "consensus_fv": 45.4,
-   "xfv_grade": 53.3,
-   "delta": 7.9,
-   "realized_war_6yr": 12.3
-  },
-  {
-   "player_key": "austin_hays",
-   "consensus_fv": 45.4,
-   "xfv_grade": 53.3,
-   "delta": 7.9,
-   "realized_war_6yr": 7.33
   },
   {
    "player_key": "zach_mckinstry",
@@ -68,8 +54,22 @@
    "player_key": "nick_solak",
    "consensus_fv": 47.9,
    "xfv_grade": 55.7,
-   "delta": 7.7,
+   "delta": 7.8,
    "realized_war_6yr": 0.46
+  },
+  {
+   "player_key": "tommy_edman",
+   "consensus_fv": 40.4,
+   "xfv_grade": 48.2,
+   "delta": 7.8,
+   "realized_war_6yr": 18.03
+  },
+  {
+   "player_key": "austin_hays",
+   "consensus_fv": 45.4,
+   "xfv_grade": 53.0,
+   "delta": 7.7,
+   "realized_war_6yr": 7.33
   }
  ],
  "example_down_adjustments": [

@@ -1,5 +1,5 @@
 {
-"generated_at": "2026-07-29",
+"generated_at": "2026-07-30",
 "artifact": "data/advancement_pace.json",
 "kind": "descriptive QC only - no predictive claim is made or permitted anywhere for this statistic",
 "methodology_version": "1.0.0-eephus",
@@ -17,7 +17,7 @@
 "n_at_high_clip": 27
 },
 "distribution_ap_plus_model_latest": {
-"mean": 99.27,
+"mean": 99.28,
 "sd": 7.78,
 "min": 63.1,
 "max": 163.1,
@@ -29,7 +29,7 @@
 "note": "joint-OLS residual means are exactly zero per included margin by construction; the per-experience-year SD scaling that builds z can move a margin mean up to about a point on this panel (residual sign correlating with experience year inside a margin)",
 "era": {
 "2015-16": {
-"mean_ap_plus": 99.78,
+"mean_ap_plus": 99.79,
 "n": 5893
 },
 "2017-19": {
