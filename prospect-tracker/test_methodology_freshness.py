@@ -469,6 +469,9 @@ MODEL_GLOSSARY = {
     "xfv_level_blend": "internal",
     # E1 repeat-level candidate: measured, default off, nothing served.
     "xfv_repeat_level": "internal",
+    # Lane A measurement feeds: ingests with no served number yet.
+    "savant_arm_strength": "internal",
+    "savant_sprint": "internal",
     "war_pa_plus": ["war_pa_plus", "war_pa_plus_adj", "war_pa_plus_3yr"],
     "war_ip_plus_sp": ["war_ip_plus_sp", "war_ip_plus_sp_adj",
                        "war_ip_plus_sp_3yr"],

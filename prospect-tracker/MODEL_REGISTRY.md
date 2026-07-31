@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-30**. `validate()` at generation time: **clean**.
 
-**198 models.** Verdicts: validated: 34, provisional: 73, unvalidated: 26, deprecated: 65.
+**200 models.** Verdicts: validated: 34, provisional: 73, unvalidated: 28, deprecated: 65.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -208,6 +208,8 @@ stamped as of **2026-07-30**. `validate()` at generation time: **clean**.
 | `xfv_odds_index_basis` | NOTHING. This row records a NULL. The candidate was evalu... | whether a prospect's first six MLB seasons resolve as a BUST (total bWAR / 6 < 0.5 WAR per season; value_framework_config.yaml... | the INCUMBENT served p_bust, p_bucket_given_fv(realized_implied_fv(xfv_war, i... | THREE, per the owner's criterion, and the candidate had to beat the third: th... | Brier and log loss (primary), plus ECE, calibration slope/intercept, calibrat... | **deprecated** | `data/odds_index_basis_eval.json` | 0 | no |
 | `xfv_level_blend` | none served. Candidate only, DEFAULT OFF (efv_dataset.LEV... | first-6yr bWAR, via a multi-level exposure blend of the MiLB production features replacing the winner-take-all level selection... | shipped winner-take-all selection (highest level clearing the 50 PA / 60 BF f... | the same, i.e. the incumbent; scored on the shipped forward-chained efv_model... | pooled OOS Spearman, debuted_km, blend arm, forward-chained; MDE95 0.017 hit... | **deprecated** | `data/xfv_level_blend_eval.json` | 0 | no |
 | `xfv_repeat_level` | none served. Candidate only, DEFAULT OFF (efv_model.E1_RE... | first-6yr bWAR; adds seasons_at_level (consecutive seasons on the current level) to the eFV ridge. | the shipped feature set without it | same; scored on the shipped forward-chained efv_model.run protocol on rebuilt... | pooled OOS Spearman, debuted_km, blend arm; MDE95 0.017 hit / 0.016 pit; plus... | **deprecated** | `data/xfv_repeat_level_eval.json` | 0 | no |
+| `savant_arm_strength` | none served yet. Ingest only: data/savant_arm.json. | nothing. MEASUREMENT FEED: per (player, season, position-thrown-from) average and max throw velocity from the Savant arm-streng... | the feed itself | n/a | coverage; 795 players, 2020-2026 | **unvalidated** | - | - | - |
+| `savant_sprint` | none served yet. Ingest only: data/savant_sprint.json. | nothing. MEASUREMENT FEED: per (player, season) sprint speed in ft/s from the Savant leaderboard, 2015+. | the feed itself | n/a | coverage; 1,603 players, 2015-2026 | **unvalidated** | - | - | - |
 
 Stored problems at last refresh: none.
 
