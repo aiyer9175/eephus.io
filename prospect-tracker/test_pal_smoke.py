@@ -160,3 +160,57 @@ def test_null_payload_still_reads_as_not_exported():
     html = ctx.eval("__html['pal-app-root'] || ''")
     assert "being computed" in html
     assert "Data failed to load" not in html
+
+
+# ---------------------------------------------------------------------------
+# Per-position defensive history (owner ask 1, 2026-07-30)
+# ---------------------------------------------------------------------------
+
+def test_position_history_is_served_with_its_trust_column():
+    """The evidence log was computed and deliberately not served. It is served
+    now because ask 1 wanted "which position has he performed best at" -- but it
+    is only answerable next to the sample-size read, so `rel` ships with it or
+    not at all. Forty innings in right field and nine hundred at first are not
+    comparable readings of a player even though both print an OAA."""
+    import json
+    from pathlib import Path
+    p = Path(__file__).parent / "data" / "positional_fit_ui.json"
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    withhist = [r for r in doc["rows"] if r.get("hist")]
+    assert withhist, "no player carries a position history"
+    for r in withhist[:40]:
+        for e in r["hist"]:
+            assert {"season", "pos", "inn", "z"} <= set(e), e
+            assert "rel" in e, "history row shipped without its trust column"
+            if e["rel"] is not None:
+                assert 0.0 < e["rel"] <= 1.0, e
+
+
+def test_history_trust_tracks_the_fitted_stabilization_constants():
+    """`rel` must be innings/(innings + k_inn) using the model's OWN fitted
+    per-position constants, not a constant. Centre field stabilizes at 632
+    innings and first base at 2,539, so the same innings must NOT yield the same
+    trust at both."""
+    import json
+    from pathlib import Path
+    root = Path(__file__).parent
+    ui = json.loads((root / "data" / "positional_fit_ui.json").read_text(encoding="utf-8"))
+    sig = json.loads((root / "data" / "positional_fit.json").read_text(encoding="utf-8"))["fit"]["signal"]
+    checked = 0
+    for r in ui["rows"]:
+        for e in (r.get("hist") or []):
+            k = (sig.get(e["pos"]) or {}).get("k_inn")
+            if not k or e["rel"] is None:
+                continue
+            assert abs(e["rel"] - e["inn"] / (e["inn"] + k)) < 1e-3, (e, k)
+            checked += 1
+    assert checked > 50, f"only {checked} history rows verified"
+
+
+def test_history_renders_with_the_trust_column_labelled():
+    """A trust number nobody explains is worse than none: the panel has to say
+    what it means, or a reader will compare z columns across positions."""
+    js = (__import__("pathlib").Path(__file__).parent / "assets" / "pal.js").read_text(encoding="utf-8")
+    assert "function pfHistory" in js
+    assert "Where he has played" in js
+    assert "stabilization constant" in js

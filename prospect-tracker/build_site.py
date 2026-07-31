@@ -3703,6 +3703,33 @@ def build_positional_fit_payload() -> dict | None:
         last, _, first = raw.partition(",")
         return f"{first.strip()} {last.strip()}".strip()
 
+    def _pos_history(p: dict, fit: dict) -> list[dict]:
+        """Per (season, position) defensive line plus its reliability weight.
+
+        Collapses the model's own evidence log to what a reader needs: how much he
+        played there, what the glove did, and HOW MUCH TO TRUST IT. The last one is
+        the part that was missing, and without it the other two mislead: 40 innings
+        in right field and 900 at first are not comparable readings of a player even
+        though both print an OAA.
+        """
+        sig = (fit.get("signal") or {})
+        out = []
+        for e in (p.get("evidence") or []):
+            pos = e.get("pos")
+            inn = e.get("inn") or 0.0
+            k = ((sig.get(pos) or {}).get("k_inn") or 0.0)
+            out.append({
+                "season": e.get("season"), "pos": pos, "inn": inn,
+                "oaa": e.get("oaa"), "frp": e.get("frp"),
+                "z": e.get("z_read"),
+                # None rather than a fabricated 0 when the position has no fitted
+                # constant (catchers, and anything Savant does not cover).
+                "rel": round(inn / (inn + k), 3) if k > 0 and inn > 0 else None,
+            })
+        # newest first, then by exposure, so the most informative line leads
+        out.sort(key=lambda r: (-(r["season"] or 0), -(r["inn"] or 0)))
+        return out
+
     def _row(p: dict) -> dict:
         pos_totals = {k: v.get("def_total") for k, v in (p.get("by_position") or {}).items()
                       if v.get("feasible") and v.get("def_total") is not None}
@@ -3727,6 +3754,21 @@ def build_positional_fit_payload() -> dict | None:
             "misplaced": bool(p.get("flagged_misplaced")),
             "demoted": bool(p.get("flagged_demotion")),
             "byPos": pos_totals,
+            # Per-position defensive HISTORY, newly served 2026-07-30 (owner ask 1:
+            # "check their OAA/DRS at specific positions they've played to see which
+            # position they've performed best at, while also calibrating this for
+            # sample size"). The evidence log was already computed and deliberately
+            # not served; the missing half was the sample-size read, which is what
+            # makes the comparison legitimate.
+            #
+            # `rel` is that read: innings/(innings + k_inn) for the position, using
+            # the per-position stabilization constants the model already FITTED
+            # (fit.signal.k_inn, 632 innings at CF through 2,539 at 1B). Identical
+            # raw OAA means very different things at the two ends of that range, so
+            # a reader comparing a player's spots without it would be comparing
+            # confidence as if it were performance. 1.0 means a fully stabilized
+            # read; 0.2 means treat the number as a rumour.
+            "hist": _pos_history(p, fit),
         }
         if p.get("mlbam") in teams:
             row["team"] = teams[p["mlbam"]]

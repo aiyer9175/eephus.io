@@ -750,7 +750,40 @@
       + " standard units (&plusmn;" + f2(r.gloveZSe) + " after shrink), worth " + pfSigned(r.gloveRuns)
       + " runs per 650 PA at " + esc(r.pos || "-") + ". Bat " + pfSigned(r.bat)
       + " runs per 650 PA versus an average hitter: it does not move the position choice, it decides whether the bottom of the spectrum is still a job.</div>"
-      + "</div></div></div></td>";
+      + "</div></div>" + pfHistory(r) + "</div></td>";
+  }
+
+  // Where he has actually PLAYED, and how much each reading is worth. The model
+  // already used this evidence to fit the glove read above; showing it answers a
+  // different question, which is "which spot has he been best at", and it is only
+  // answerable alongside the trust column. Forty innings in right field and nine
+  // hundred at first are not comparable readings even though both print an OAA,
+  // and `rel` is what says so: innings/(innings + the position's own fitted
+  // stabilization constant), which runs from 632 innings at centre field to 2,539
+  // at first base. A high number is a settled read; a low one is a rumour.
+  function pfHistory(r) {
+    var h = r.hist || [];
+    if (!h.length) return "";
+    var rows = h.map(function (e) {
+      var rel = e.rel == null ? "-" : Math.round(e.rel * 100) + "%";
+      var relCls = e.rel == null ? "proj-dim" : e.rel >= 0.4 ? "" : "proj-dim";
+      return "<tr><td>" + esc(String(e.season || "")) + "</td>"
+        + "<td><strong>" + esc(e.pos || "-") + "</strong></td>"
+        + "<td>" + fInt(e.inn) + "</td>"
+        + "<td>" + (e.oaa == null ? "-" : pfSigned(e.oaa, 0)) + "</td>"
+        + "<td>" + (e.frp == null ? "-" : pfSigned(e.frp, 0)) + "</td>"
+        + "<td>" + (e.z == null ? "-" : pfSigned(e.z, 2)) + "</td>"
+        + '<td class="' + relCls + '">' + rel + "</td></tr>";
+    }).join("");
+    return '<div style="margin-top:10px;"><h4>Where he has played</h4>'
+      + '<div class="mlbstats-note" style="margin:2px 0 6px">Per season and position. '
+      + "OAA and FRP are what the glove did; z is that rate against the position's own "
+      + "difficulty, in standard units. Trust is innings against the position's fitted "
+      + "stabilization constant, so the same OAA counts for more at centre field than at "
+      + "first base. Read the z column next to the trust column, never alone.</div>"
+      + '<div class="mlbstats-scroll"><table class="detail-table"><thead><tr>'
+      + "<th>Season</th><th>Pos</th><th>Inn</th><th>OAA</th><th>FRP</th><th>z</th><th>Trust</th>"
+      + "</tr></thead><tbody>" + rows + "</tbody></table></div></div>";
   }
 
   var POSFIT_COLS = [
