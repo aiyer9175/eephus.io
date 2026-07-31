@@ -158,6 +158,17 @@ runs, passed here; it is flaky under suite load rather than broken (item 10 in L
   LATENT (the 412 served pitchers in that band price 0.0 rising to 8.1), so it is a
   landmine in the pricing function, not a live board defect. Repair it WITH the anchor.
 
+- **C6 REPAIRED AND CLOSED (2026-07-31).** The reliever Edwards-bridge inversion, open
+  since 2026-07-30. Cause: the bridge interpolates anchor-at-cutover to PIPELINE-at-
+  bridge_to and assumed the pipeline end sits higher; for relievers it is $1.668M against
+  a $1.800M anchor, so it ran downhill. Fixed with a monotonicity FLOOR (no branch prices
+  below what the anchor says a worse player is worth), deliberately not an anchor change,
+  so the sub-cutover lane stays separable. Full sweep FV 20-65 at 0.05 steps, six roles:
+  **zero violations**. Blast radius relievers FV40.05-45 only, max raw lift $0.132M,
+  snapshot diff confined to `sv_curve.reliever`, 10 of 121 points. Caught by the
+  self-updating tripwire that asserted the defect still existed; `known_inverted` is now
+  empty. Ledger entry closed in `GATED_CANDIDATES.md`.
+
 **NOT STARTED:** Phase D (the wRC+ display program), the sprint-based outfield range
 indicator, the odds cohort rebuild's fit, and the zero-floor Arm 2 build. Every model
 lane in this program has been run to a verdict.
