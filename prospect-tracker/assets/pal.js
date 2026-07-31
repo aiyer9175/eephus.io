@@ -716,6 +716,51 @@
     return '<span class="' + cls + '">' + pfSigned(n) + "</span>"
       + (se == null ? "" : '<span class="proj-dim"> &plusmn;' + f1(se) + "</span>");
   }
+  // Rng+ (legs): sprint speed as a range read, on OUTFIELD destinations only.
+  // The producer decides which positions qualify (payload rngMeta.shipPositions)
+  // and bakes every number, including the per-destination percentile. Nothing is
+  // computed here, and no position not on the whitelist ever shows a meter: at
+  // shortstop the measured correlation between sprint and OAA is -0.020 and at
+  // third base -0.004, so a speed meter there would be a picture of nothing.
+  function pfRngShips(pos) {
+    var m = (PF && PF.rngMeta) || null;
+    return !!(m && m.shipPositions && m.shipPositions.indexOf(pos) >= 0);
+  }
+  function pfRng(r, pos) {
+    if (!pfRngShips(pos)) return "";
+    var g = r.rng;
+    if (!g || g.plus == null) return "";
+    var pct = g.pct && g.pct[pos] != null ? g.pct[pos] : null;
+    var meta = (PF && PF.rngMeta) || {};
+    var pool = (meta.pools && meta.pools[pos]) || null;
+    var season = (meta.anchor && meta.anchor.season) || null;
+    var stale = season && g.season && g.season !== season;
+    var tip = "Rng+ " + g.plus + ": sprint speed " + g.fts + " ft/s on the 100 + 10z scale, "
+      + "so ten points is one standard deviation of the league."
+      + (pct != null && pool
+          ? " That is the " + pct + ordSuffix(pct) + " percentile among "
+            + pool.n + " " + pos + " incumbents (400+ innings, trailing three seasons)."
+          : "")
+      + " Measured against outfield range, not asserted: sprint speed tracks OAA per 1000 "
+      + "innings at " + pos + " with r " + fmtR(meta.r && meta.r[pos]) + ". It reads the "
+      + "outfield only. At third and short, speed and range come apart completely, so the "
+      + "meter is not shown there."
+      + (stale ? " Read from his " + g.season + " season; he has no " + season + " tracking yet." : "")
+      + " Display only: sprint speed is not a model input, because OAA already contains the legs.";
+    return ' <span class="pal-rng" title="' + esc(tip) + '">Rng+ ' + g.plus
+      + (pct != null ? ' <span class="proj-dim">' + pct + ordSuffix(pct) + " pct</span>" : "")
+      + (stale ? ' <span class="proj-dim">(' + g.season + ")</span>" : "") + "</span>";
+  }
+  function ordSuffix(n) {
+    var t = n % 100;
+    if (t >= 11 && t <= 13) return "th";
+    return ["th", "st", "nd", "rd"][n % 10] || "th";
+  }
+  function fmtR(o) {
+    if (!o || o.r == null) return "a measured positive value";
+    return "+" + Number(o.r).toFixed(2)
+      + (o.ci95 ? " (95% CI +" + Number(o.ci95[0]).toFixed(2) + " to +" + Number(o.ci95[1]).toFixed(2) + ")" : "");
+  }
   function pfMoveCell(r) {
     if (!r.best || r.best === r.pos) return '<span class="proj-dim">stays at ' + esc(r.pos || "-") + "</span>";
     return esc(r.pos) + ' <span class="proj-dim">&rarr;</span> <strong>' + esc(r.best) + "</strong>";
@@ -733,7 +778,7 @@
       var mark = k === r.pos ? " (current)" : k === r.best ? " (best)" : "";
       return '<div class="pal-ars-row"><span class="pal-ars-pitch">' + esc(k) + "</span>"
         + bar((v - lo) / span * 100)
-        + '<span class="pal-ars-meta">' + pfSigned(v) + esc(mark) + "</span></div>";
+        + '<span class="pal-ars-meta">' + pfSigned(v) + esc(mark) + pfRng(r, k) + "</span></div>";
     }).join("");
     var dem = (r.demPos && r.demGain != null)
       ? '<div class="mlbstats-note" style="margin:2px 0 8px">Moving DOWN the spectrum to ' + esc(r.demPos)

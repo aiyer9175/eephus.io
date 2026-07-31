@@ -1758,6 +1758,11 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .pal-ars-row .pal-ars-pitch { color: var(--text-secondary); }
 .pal-ars-row .pal-bar > span { background: var(--accent-cyan); }
 .pal-ars-row .pal-ars-meta { color: var(--text-tertiary); white-space: nowrap; }
+/* Rng+ (legs), outfield destinations only. Cued as a measured read rather than a
+   model output, so it sits in the muted mono family beside the runs figure. */
+.pal-rng { font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .03em;
+  border: 1px solid var(--border); padding: 0 5px; margin-left: 6px;
+  color: var(--text-secondary); white-space: nowrap; cursor: help; }
 /* direction + outcome badges (Conversion History) */
 .pal-dir { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .03em;
   border: 1px solid var(--border); padding: 1px 6px; color: var(--text-secondary); white-space: nowrap; }

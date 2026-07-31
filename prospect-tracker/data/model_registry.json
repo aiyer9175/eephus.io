@@ -2914,15 +2914,17 @@
   },
   {
    "model_id": "savant_sprint",
-   "surface": "none served yet. Ingest only: data/savant_sprint.json.",
-   "predicts": "nothing. MEASUREMENT FEED: per (player, season) sprint speed in ft/s from the Savant leaderboard, 2015+.",
-   "champion": "the feed itself",
-   "baseline": "n/a",
-   "metric": "coverage; 1,603 players, 2015-2026",
-   "eval_artifact": null,
-   "verdict": "unvalidated",
-   "notes": "SHIPPED 2026-07-30 for Lane A (owner ask 1). Unlike arm strength this one DOES discriminate position: 2025 medians run C 26.1, 1B 26.4, 3B 27.0, 2B/LF/RF 27.8, SS 27.9, CF 28.9, a spread of 2.75 ft/s against a pooled sd of 1.35, ratio 2.03 against context-adjusted arm's 0.51. Four times the discrimination, a monotone ladder in the expected order, and no throw-context confound because a sprint is a sprint wherever the player stands. It is therefore the indicator the outfield half of ask 1 should be built on, gated on its own terms. See docs/efv-2026-07-30/CONVERSION_ARM_GATE_VERDICT.md.",
-   "last_checked": "2026-07-30"
+   "surface": "Alchemy Lab Position Fit panel: Rng+ (legs) plus the per-destination percentile, rendered on LF and CF destination bars only. Display only, no model consumes it.",
+   "predicts": "range at an OUTFIELD destination, read as OAA per 1000 innings at the position played",
+   "champion": "sprint speed (ft/s) as a descriptive range read, Arkmetric convention 3 (100 + 10z) on the current-season MLB position-player pool",
+   "baseline": "no range read at all, which is what the panel showed before, plus the transported prior-position glove as the alternative instrument",
+   "metric": "Pearson r against OAA per 1000 innings at the position played (>=400 innings, 2016-2026), per position, with Fisher CI95; ship rule is CI lower bound ABOVE +0.15 AND a pure-corner subgroup clearing zero",
+   "eval_artifact": "data/sprint_range_eval.json",
+   "verdict": "validated",
+   "notes": "SHIPPED 2026-07-31 as Rng+ (legs), display only, gate at docs/efv-2026-07-30/SPRINT_RANGE_GATE.md. THE FINDING IS THE RESTRICTION. Against OAA per 1000 innings at the position played: CF r=+0.428 CI [+0.342,+0.507] n=378, LF +0.416 [+0.323,+0.501] n=331, but SS -0.020 [-0.122,+0.083] and 3B -0.004 [-0.108,+0.100]. Sprint speed predicts outfield range and measures a flat zero on the dirt, so the meter renders on LF and CF destinations ONLY; a speed read on a shortstop row would show a reader a measured nothing. RIGHT FIELD IS EXCLUDED despite clearing the headline bar (+0.269 [+0.167,+0.365]): its PURE-CORNER subgroup, right fielders with under 100 career CF innings, is r=+0.075 [-0.111,+0.256] and cannot clear zero, so the RF signal is carried by displaced centre fielders and the column would be telling corner-only right fielders something never measured on players like them. LF survives the identical test at +0.359 [+0.163,+0.528] n=89 and is not restriction-of-range (pure-corner sprint sd 0.79 vs 0.97 for all LF). THIS IS THE SURVIVING HALF OF OWNER ASK 1: the arm half was NO-SHIPPED because within the same player in the same season throwing from two spots the outfield reads +7.46 mph over infield on 102 pairs, so 3.69 of the apparent 5.1 mph 3B-vs-2B gap is throw CONTEXT and the context-adjusted infield spread is 1.94 mph against a within-position sd of 3.80. TWO ERRORS CAUGHT BEFORE SHIPPING, both recorded in the gate: (1) the first measurement used data/positional_fit.json (464 rows), which is excluded at deploy/data_exclude.txt:50 and NEVER SERVED; on the real served file (positional_fit_ui.json, 235 rows) coverage is 100% not 99.6%, the Rng+ floor is 80 not 62, 0.0% not 2.4% of rows fall below 80, and there are ZERO catchers, so a prescribed catcher suppression would have been a no-op. (2) The whitelist rule was written as 'CI excludes +0.15', which is also satisfied by a CI lying entirely BELOW +0.15 and therefore literally ADMITS 3B and SS while rejecting 1B; the shipped and tested rule is LOWER BOUND ABOVE +0.15. NOTHING ENTERS THE MODEL: positional_fit.py has no sprint term and does not import the feed (asserted by test_pal_smoke.py source inspection), because OAA already contains the legs and a sprint feature would double-count, the same argument that rejected the arm feature. NOT SHIPPED: any runs-denominated quote (the OF slope is era-unstable, +3.141 OAA/1000inn per ft/s on 2016-2021 against +2.331 on 2022-2026, a 26% swing) and the prospect grade bridge (no MiLB tracking exists anywhere, so a prospect could only get a translation and only 40.2% of active non-pitchers carry a Speed grade). 203 of 235 served rows render a meter; all 203 carry a read.",
+   "last_checked": "2026-07-31",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "xfv_odds_cohort",

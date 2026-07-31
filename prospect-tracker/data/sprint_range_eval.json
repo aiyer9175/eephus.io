@@ -1,0 +1,111 @@
+{
+ "generated_at": "2026-07-31",
+ "model_id": "savant_sprint",
+ "indicator": "Rng+ (legs)",
+ "verdict": "SHIPPED, display only, LF and CF destinations",
+ "gate": "docs/efv-2026-07-30/SPRINT_RANGE_GATE.md",
+ "outcome": "OAA per 1000 innings at the position played, >=400 innings, 2016-2026",
+ "ship_rule": "CI lower bound ABOVE +0.15, AND a pure-corner subgroup clearing zero. The bound is deliberately not phrased as 'CI excludes +0.15': a CI lying entirely BELOW +0.15 also excludes it, which would admit SS (-0.020) and 3B (-0.004).",
+ "per_position": {
+  "1B": {
+   "n": 360,
+   "r": 0.0806,
+   "ci95": [
+    -0.0229,
+    0.1825
+   ],
+   "ships": false
+  },
+  "2B": {
+   "n": 348,
+   "r": 0.2046,
+   "ci95": [
+    0.1016,
+    0.3032
+   ],
+   "ships": false
+  },
+  "3B": {
+   "n": 356,
+   "r": -0.004,
+   "ci95": [
+    -0.1079,
+    0.0999
+   ],
+   "ships": false
+  },
+  "SS": {
+   "n": 366,
+   "r": -0.0196,
+   "ci95": [
+    -0.1219,
+    0.0831
+   ],
+   "ships": false
+  },
+  "LF": {
+   "n": 331,
+   "r": 0.4161,
+   "ci95": [
+    0.3228,
+    0.5014
+   ],
+   "pure_corner": {
+    "n": 89,
+    "r": 0.3591,
+    "ci95": [
+     0.1631,
+     0.5279
+    ],
+    "definition": "under 100 career CF innings"
+   },
+   "ships": true
+  },
+  "CF": {
+   "n": 378,
+   "r": 0.4279,
+   "ci95": [
+    0.3418,
+    0.5069
+   ],
+   "ships": true
+  },
+  "RF": {
+   "n": 336,
+   "r": 0.2688,
+   "ci95": [
+    0.1666,
+    0.3653
+   ],
+   "pure_corner": {
+    "n": 113,
+    "r": 0.0752,
+    "ci95": [
+     -0.111,
+     0.2564
+    ],
+    "definition": "under 100 career CF innings"
+   },
+   "ships": false,
+   "excluded_because": "pure-corner subgroup CI does not clear zero"
+  }
+ },
+ "whitelist": [
+  "LF",
+  "CF"
+ ],
+ "served_board": {
+  "file": "data/positional_fit_ui.json",
+  "note": "the 464-row data/positional_fit.json is excluded at deploy/data_exclude.txt:50 and never reaches a browser; all display figures are measured on the served file",
+  "rows": 235,
+  "with_read": 235,
+  "coverage_pct": 100.0,
+  "rows_rendering_a_meter": 203
+ },
+ "model_isolation": "positional_fit.py has no sprint term and does not import the feed; OAA already contains the legs, so a sprint feature would double-count. Asserted by test_pal_smoke.py source inspection.",
+ "not_shipped": {
+  "runs_denominated_quote": "OF slope is era-unstable: +3.141 OAA/1000inn per ft/s on 2016-2021 vs +2.331 on 2022-2026, a 26% swing",
+  "prospect_bridge": "no MiLB tracking exists (DEFENSIVE_SOURCE_PROBE.md); a prospect could only get a grade translation, never a measurement, and only 40.2% carry a Speed grade",
+  "right_field": "pure-corner subgroup cannot clear zero"
+ }
+}
