@@ -65,8 +65,23 @@ test_aria_sort_reflects_state_and_enter_resorts` fails ONLY inside the full suit
 passes in isolation and with neighbours, i.e. a test-isolation artifact from build
 artifacts being dirtied mid-suite, not a product defect. Added to Lane H below.
 
+- **Lane E2 (B3 level blend) RUN TO A VERDICT: NULL, NO-SHIP.** Pre-registered, built,
+  both matrices rebuilt, shipped forward-chained eval re-run on both sides. The primary
+  metric REGRESSES: hit 0.3900 -> 0.3818, pit 0.3060 -> 0.2898, both at or inside MDE95.
+  Fails pre-registered no-ship condition 1. The defect it targeted is real and measured
+  (151 of 701 multi-level hitters and 149 of 790 pitchers scored on a level carrying LESS
+  exposure than one discarded; ~100k PA/BF discarded) and the mechanism verifiably
+  repairs it, but it does not predict better. Code retained DEFAULT OFF as a registered
+  candidate; loss ledger `data/xfv_level_blend_eval.json`, registry row
+  `xfv_level_blend`, verdict doc `docs/efv-2026-07-30/B3_LEVEL_BLEND_GATE.md`.
+  **Consequence: the Arias cliff is now documented ACCEPTED behaviour, not a pending
+  fix.** He drops when he clears 50 AAA PA. The pre-registered follow-up (a different
+  experiment with a different gate) is to keep the highest-level read and add the lower
+  level as a SEPARATE feature rather than averaging them, on the hypothesis that the
+  level a player HOLDS is itself signal because promotion is the org's revealed judgement.
+
 **NOT STARTED:** Lanes A (conversion engine build), B (MLB frontend uplift), D (tool-grade
-weighting), E (B3 level blend, repeat-level feature), F (pitcher FV50). These are the
+weighting), E1 (repeat-level feature for Taylor), F (pitcher FV50). These are the
 multi-day gated engineering lanes; the plan below is their specification.
 
 ---
