@@ -125,9 +125,23 @@ runs, passed here; it is flaky under suite load rather than broken (item 10 in L
   computed value. 6,351 of 9,334 rows now read "under floor" instead of a false-precision
   $0. The pricing repair is Arm 2 and the calibration tripwire stays red by design.
 
-**NOT STARTED:** Lane A (conversion engine build), Lane D (tool-grade weighting), Phase D
-(the wRC+ display program), and the two commissioned lanes' measurement halves. Every
-model lane in this program has been run to a verdict.
+- **Lane A (ask 1) MEASURED TO A SPLIT VERDICT.** Both feeds SHIP:
+  `savant_arm_strength.py` (795 players, 2020+, coverage probed) and `savant_sprint.py`
+  (1,603, 2015+). **The arm GATE does NOT ship**, on the pre-registered no-ship condition.
+  Cross-sectionally 3B throws 5.1 mph harder than 2B, which looks like the owner's
+  hypothesis confirmed; but within the SAME player in the SAME season throwing from two
+  spots, **3.69 of those 5.1 mph is throw context** (OF reads +7.46 over IF on 102 pairs,
+  98% same direction). Context-adjusted, the infield spread collapses from 8.30 mph to
+  **1.94** against a within-position sd of **3.80**. So position barely selects on arm,
+  and **3B minus SS is +0.50 mph**: arm is essentially never the binding constraint
+  inside the infield. **Sprint speed IS the working instrument** (spread/sd 2.03 vs
+  adjusted arm's 0.51, monotone ladder, CF 28.9 clearly separated) and is where the
+  outfield half of the ask should be built. Verdict doc
+  `CONVERSION_ARM_GATE_VERDICT.md`; design `CONVERSION_ARM_GATE.md`.
+
+**NOT STARTED:** Lane D (tool-grade weighting), Phase D (the wRC+ display program), the
+sprint-based outfield range indicator, and the measurement halves of the two commissioned
+lanes. Every model lane in this program has been run to a verdict.
 
 ---
 
