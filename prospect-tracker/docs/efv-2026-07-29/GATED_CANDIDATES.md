@@ -177,7 +177,33 @@ battery, not a reordering.
 **Do not** resolve this by relaxing the `< 45.0` bound. The bound is not the problem; the
 anchor doing nothing is the problem, and the bound is the only thing currently reporting it.
 
-## C6. The Edwards bridge is INVERTED for relievers (registered 2026-07-30)
+## C6. The Edwards bridge is INVERTED for relievers (registered 2026-07-30) - CLOSED 2026-07-31
+
+> **CLOSED. REPAIRED 2026-07-31.** `value_framework.expected_surplus_usd` now carries a
+> monotonicity floor: no pricing branch may value a player below what the low-tier anchor
+> already says a WORSE player is worth. Full sweep FV 20.0 to 65.0 at 0.05 steps across
+> six roles returns **zero monotonicity violations**, and the four reliever positions have
+> been promoted out of the `known_inverted` set in
+> `test_value_framework::test_expected_sv_monotonic_in_fv_by_position`, which is the
+> self-updating tripwire that caught the repair and issued the instruction to do this.
+>
+> **The defect was wider than this entry recorded.** It is described below as first
+> violating "between exactly FV40 and FV40.5". Re-measured on 2026-07-31 it runs the WHOLE
+> bridge: RP raw surplus falls monotonically from $1.800M at FV40 to $1.694M at FV44, and
+> because the calibration then subtracts a constant the effect compounds, so a FV44.5
+> reliever priced **28 times LOWER** than a FV40 one ($0.006M against $0.170M).
+>
+> Blast radius of the fix: relievers between FV40.05 and FV45 only, maximum raw lift
+> $0.132M, hitters and starters byte-identical because their pipeline never dips under the
+> anchor. It does NOT touch the anchor itself, which remains the separate sub-cutover lane
+> in `docs/efv-2026-07-30/ZERO_FLOOR_PRICING_GATE.md`; that gate required C6 be repaired
+> with or before the anchor work, and this satisfies it.
+>
+> Point 1 below ("the v5 zero floor is the ONLY thing hiding it") still stands and is now
+> the reason this was safe to fix first: the inversion was latent rather than live, so the
+> repair moves almost nothing on the served board while removing the landmine that lifting
+> the floor would have detonated.
+
 
 **Registration defect first: `DEFECT_C_LOSS_LEDGER.md:144` states this candidate is
 "Registered in `docs/efv-2026-07-29/GATED_CANDIDATES.md`". It was not.** This file contained

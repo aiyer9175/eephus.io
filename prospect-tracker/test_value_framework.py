@@ -697,15 +697,20 @@ def test_expected_sv_monotonic_in_fv_by_position(is_pit: bool, position) -> None
     First violation is between exactly FV40 and FV40.5. The surplus calibration's zero
     floor masks it on the served number, which is why no display surface caught it either.
 
-    The four reliever combinations are a KNOWN, REGISTERED defect, so they are asserted in
-    the inverse direction rather than committed red: the test demands that they still fail.
-    That makes this a self-updating tripwire. It is green today, and the moment someone
-    repairs the bridge it FAILS and tells them to move the combination into the healthy set
-    and close the ledger entry, which is what should happen. Do not neutralize it by dropping
-    the reliever positions or by pricing at position=None; the fix belongs in
-    value_framework's bridge branch and needs its own gate, because it moves reliever dollars
-    below FV45.
-    Ledger: docs/efv-2026-07-29/DEFECT_C_LOSS_LEDGER.md and GATED_CANDIDATES.md.
+    REPAIRED 2026-07-31, and this tripwire is what caught the repair. The four reliever
+    combinations used to be asserted in the INVERSE direction (the test demanded they still
+    fail), so that fixing the bridge would break the test and tell whoever did it to promote
+    the positions and close the ledger. That is exactly what happened, and the instruction is
+    now carried out: every position is in the healthy set, and the assertion below is a plain
+    monotonicity requirement for all ten.
+
+    The fix is a monotonicity floor in value_framework.expected_surplus_usd: no pricing
+    branch may value a player below what the low-tier anchor already says a WORSE player is
+    worth. It does not touch the anchor itself, which is the separate sub-cutover lane. The
+    measured effect is confined to relievers between FV40.05 and FV45, a maximum raw lift of
+    $0.132M, and it removes an inversion that compounded through the calibration into a FV44.5
+    reliever pricing 28x LOWER than a FV40 one.
+    Ledger: docs/efv-2026-07-29/DEFECT_C_LOSS_LEDGER.md and GATED_CANDIDATES.md (C6, closed).
     """
     first_violation = None
     fv = 20.0
@@ -718,19 +723,14 @@ def test_expected_sv_monotonic_in_fv_by_position(is_pit: bool, position) -> None
         prev = v
         fv += 0.5
 
-    known_inverted = is_pit and position in {"RP", "SIRP", "MIRP", "CL"}
-    if known_inverted:
-        assert first_violation is not None, (
-            f"the reliever bridge inversion looks REPAIRED for position={position!r}: "
-            f"the price ladder is now monotone where it was not. That is good news. Move "
-            f"this position out of the known_inverted set in this test and close the entry "
-            f"in docs/efv-2026-07-29/GATED_CANDIDATES.md.")
-    else:
-        assert first_violation is None, (
-            f"surplus FELL as grade rose for position={position!r} is_pitcher={is_pit}: "
-            f"FV {first_violation[0]} -> {first_violation[1]} gave "
-            f"{first_violation[2]} -> {first_violation[3]}"
-            if first_violation else "")
+    # No known-inverted set any more: C6 was the last one and it is closed. If a reliever
+    # position starts failing here again, the monotonicity floor in expected_surplus_usd has
+    # been removed or bypassed, not merely drifted.
+    assert first_violation is None, (
+        f"surplus FELL as grade rose for position={position!r} is_pitcher={is_pit}: "
+        f"FV {first_violation[0]} -> {first_violation[1]} gave "
+        f"{first_violation[2]} -> {first_violation[3]}"
+        if first_violation else "")
 
 
 # ---------------------------------------------------------------------------

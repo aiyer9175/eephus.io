@@ -1481,6 +1481,28 @@ def expected_surplus_usd(fv: float | None, is_pitcher: bool, position: str | Non
     else:
         svs = _effective_bucket_sv(is_pitcher, position, da, ee, _war_scale_for(f, role))
         base = _pipeline_surplus_from_svs(f, is_pitcher, svs)
+    # C6 MONOTONICITY FLOOR (2026-07-31, docs/efv-2026-07-30/ZERO_FLOOR_PRICING_GATE.md).
+    # A better grade must never be worth less money inside a role.
+    #
+    # The bridge above interpolates from the anchor at `cutover` to the PIPELINE value at
+    # `bridge_to`, which silently assumes the pipeline endpoint sits ABOVE the anchor. For
+    # hitters it does ($2.000M at FV40 to $9.160M at FV45). For RELIEVERS it does not: the
+    # bullpen-capped pipeline returns $1.668M at FV45 against a $1.800M anchor at FV40, so
+    # the bridge dutifully interpolates DOWNWARD and surplus falls as grade rises. Measured
+    # before this fix: RP raw ran 1.800 at FV40 down to 1.694 at FV44, and because the
+    # calibration then subtracts a constant the served effect compounded to a FV44.5
+    # reliever pricing 28x LOWER than a FV40 one. This is C6 in GATED_CANDIDATES.md, which
+    # described it as an FV40-to-40.5 artifact; it actually spans the whole bridge.
+    #
+    # The floor is the anchor's own reading at this grade (capped at the cutover, since the
+    # anchor is only defined below it). It says: no pricing path may value a player below
+    # what the low-tier anchor already says a WORSE player is worth. Hitters are untouched
+    # because their pipeline never dips under it.
+    #
+    # This is deliberately NOT the sub-cutover re-anchoring work, which the gate requires
+    # be kept separate: nothing here moves the anchor, it only stops other branches
+    # undercutting it.
+    base = max(base, _lowtier_anchor_usd(min(f, cutover), role, ee))
     if apply_position_mult:
         base *= position_multiplier(position)  # 1.0 unless market_scarcity enabled
     return max(0.0, base)
