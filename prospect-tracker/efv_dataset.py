@@ -351,14 +351,22 @@ def _resolved_norms(season, level, group):
     return n
 
 
-def _season_rates(row, norms, side: str):
+def _season_rates(row, norms, side: str, shrink: bool = True):
     """Level-relative rate block + exposure (pa/bf) for one MiLB season, SAMPLE-SHRUNK.
     Side-specific: hitters k/bb/obp/iso vs level median; pitchers k/bb/era vs level median.
-    Norms are season-and-level-specific (contemporaneous) so this is leakage-safe."""
+    Norms are season-and-level-specific (contemporaneous) so this is leakage-safe.
+
+    shrink=False returns the RAW level-relative deviations with the reliability weight
+    left OFF (w = 1). Only the B3 multi-level blend uses this, and it uses it because
+    the shrink must be applied ONCE on the season's TOTAL exposure rather than once per
+    level: weighting already-shrunk per-level rates would shrink twice and pull a
+    full-season multi-level line toward the level mean harder than a single-level line
+    of the same total size. Callers that take raw deviations own re-applying the weight.
+    """
     if side == "pit":
         bf = _f(row.get("bf")) or 0.0
         so, bb, era = _f(row.get("so")), _f(row.get("bb")), _f(row.get("era"))
-        w = bf / (bf + _K_REL_BF) if bf else 0.0
+        w = (bf / (bf + _K_REL_BF) if bf else 0.0) if shrink else 1.0
         return {
             "k_rel": w * (((so / bf) - (norms.get("k_pct") or 0.0)) if so is not None and bf else 0.0),
             "bb_rel": w * (((bb / bf) - (norms.get("bb_pct") or 0.0)) if bb is not None and bf else 0.0),
@@ -369,7 +377,7 @@ def _season_rates(row, norms, side: str):
     so, bb = _f(row.get("so")), _f(row.get("bb"))
     slg, avg, obp, ops = _f(row.get("slg")), _f(row.get("avg")), _f(row.get("obp")), _f(row.get("ops"))
     iso = (slg - avg) if slg is not None and avg is not None else None
-    w = pa / (pa + _K_REL_PA) if pa else 0.0
+    w = (pa / (pa + _K_REL_PA) if pa else 0.0) if shrink else 1.0
     return {
         "k_rel": w * (((so / pa) - (norms.get("k_pct") or 0.0)) if so is not None and pa else 0.0),
         "bb_rel": w * (((bb / pa) - (norms.get("bb_pct") or 0.0)) if bb is not None and pa else 0.0),
@@ -382,6 +390,56 @@ def _season_rates(row, norms, side: str):
         "ops_rel": w * ((ops - (norms.get("ops") or 0.0)) if ops is not None and norms.get("ops") else 0.0),
         "exposure": pa, "rates_missing": 0.0 if pa else 1.0,
     }
+
+
+# B3 multi-level blend (docs/efv-2026-07-30/B3_LEVEL_BLEND_GATE.md). DEFAULT OFF:
+# flipping it rebuilds both matrices and moves the board, so it ships only on the
+# pre-registered gate, and until then this module is byte-identical with it off.
+#
+# What it fixes: the level selection below walks DOWN from the highest level and stops
+# at the first clearing the exposure floor, so exposure acts as a GATE and never as a
+# WEIGHT. Measured on the 2026-07-30 live board, 151 of 701 multi-level hitters (22%)
+# and 149 of 790 pitchers (19%) are scored on a level carrying LESS exposure than one
+# being discarded, and ~100k plate appearances / batters faced are thrown away.
+#
+# The two arms are separate because they have very different blast radii. RATES blends
+# the production signal, which is the accuracy claim. ANCHOR re-keys level_rank and
+# age_rel_level onto the most-exposed level, which is a board-ordering change and is
+# gated on its own.
+LEVEL_BLEND_RATES = False
+LEVEL_BLEND_ANCHOR_MOST_EXPOSED = False
+# A level must clear this to join the blend at all, so a 3-PA cameo cannot drag a real
+# season's rates. Deliberately far below the selection floor: the whole point is that
+# a sub-floor level still carries information, it just should not dominate.
+LEVEL_BLEND_MIN_EXPOSURE = 10.0
+
+
+def _blend_level_rates(per_level: list[tuple[float, dict]], side: str) -> dict:
+    """Exposure-weighted mean of RAW level-relative deviations, then ONE reliability
+    shrink on the season's TOTAL exposure.
+
+    per_level is [(exposure, raw_rates_dict)] with raw_rates_dict from
+    _season_rates(..., shrink=False). Returns the same keys _season_rates returns, so
+    the caller can drop it in where a single-level block would have gone.
+
+    Shrinking once on the total is the whole design. Applying the per-level weight and
+    then averaging would penalise a 200+150 PA split against a 350 PA single-level
+    season of identical quality, which is the opposite of the defect being repaired.
+    """
+    keys = ("k_rel", "bb_rel", "era_rel") if side == "pit" \
+        else ("k_rel", "bb_rel", "iso_rel", "obp_rel", "ops_rel")
+    total = sum(e for e, _r in per_level)
+    if total <= 0:
+        return dict(per_level[0][1]) if per_level else {}
+    out = {}
+    for k in keys:
+        out[k] = sum(e * (r.get(k) or 0.0) for e, r in per_level) / total
+    w = total / (total + (_K_REL_BF if side == "pit" else _K_REL_PA))
+    for k in keys:
+        out[k] *= w
+    out["exposure"] = total
+    out["rates_missing"] = 0.0 if total else 1.0
+    return out
 
 
 def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
@@ -454,6 +512,17 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
                 return (_f(lr.get("bf")) if side == "pit" else _f(lr.get("pa"))) or 0.0
             level = max(present, key=_lv_exp)
             row = mh.level_row(rows, level, group)
+        elif LEVEL_BLEND_ANCHOR_MOST_EXPOSED and len(present) > 1:
+            # B3 ANCHOR arm: re-key the level features onto where the player actually
+            # played most, not merely the highest rung he cleared the floor at. Gated
+            # separately from the RATES arm because this is what moves board ORDER:
+            # level_rank and age_rel_level are not exposure-shrunk, so a 51-PA A+ stint
+            # currently sets them as if the player were established there.
+            def _lv_exp2(lv):
+                lr = mh.level_row(rows, lv, group)
+                return (_f(lr.get("bf")) if side == "pit" else _f(lr.get("pa"))) or 0.0
+            level = max(present, key=_lv_exp2)
+            row = mh.level_row(rows, level, group)
         norms = _resolved_norms(season, level, group)
         # S-XLINE (docs/efv-2026-07-23/GATES.md): AAA 2023+ rows may get a Statcast
         # expected-stat blend before the level-relative conversion; uncovered rows
@@ -467,6 +536,28 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
         if _parkline is not None:
             row = _parkline.maybe_adjust_row(row, mlbam, season, level, side)
         rates = _season_rates(row, norms, side)
+        # B3: blend the season's OTHER levels into the rate block. `level` (and so
+        # level_rank / age_rel_level) stays where the selection put it unless the
+        # ANCHOR arm is also on, so the two arms can be gated independently.
+        if LEVEL_BLEND_RATES and len(present) > 1:
+            per_level = []
+            for lv in present:
+                lr = mh.level_row(rows, lv, group)
+                e = (_f(lr.get("bf")) if side == "pit" else _f(lr.get("pa"))) or 0.0
+                if e < LEVEL_BLEND_MIN_EXPOSURE:
+                    continue
+                if _xline is not None:
+                    lr = _xline.maybe_adjust_row(lr, mlbam, season, lv, side)
+                if _parkline is not None:
+                    lr = _parkline.maybe_adjust_row(lr, mlbam, season, lv, side)
+                per_level.append(
+                    (e, _season_rates(lr, _resolved_norms(season, lv, group), side,
+                                      shrink=False)))
+            if len(per_level) > 1:
+                blended = _blend_level_rates(per_level, side)
+                if annotate and rates.get("_xline_note"):
+                    blended["_xline_note"] = rates["_xline_note"]
+                rates = blended
         if annotate and row.get("_xline_note"):
             # S-XLINE annotation rides the season dict (local) so the final
             # season's note can surface on the returned base below.
