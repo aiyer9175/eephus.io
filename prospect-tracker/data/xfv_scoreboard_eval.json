@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-24",
+ "generated_at": "2026-07-30",
  "registration": "docs/efv-2026-07-24/GATES.md section G-SCORE (Phase 0a, no gate)",
  "regen_cmd": "python tools/efv_scoreboard.py",
  "purpose": "G-SCORE scoreboard: the eFV track record in one artifact, every cell = eFV vs the consensus baseline on identical rows, win/loss marked. Descriptive; the weak_cells list feeds the experiment queue (the 2026-07-24 gate file).",
@@ -17,100 +17,100 @@
    "pooled": {
     "spearman": {
      "n": 353,
-     "efv": 0.3834,
-     "consensus": 0.332,
+     "efv": 0.3882,
+     "consensus": 0.3522,
      "win": true,
-     "margin": 0.0514
+     "margin": 0.036
     },
     "auc_contributor": {
      "n": 353,
-     "efv": 0.7762,
-     "consensus": 0.7446,
+     "efv": 0.7768,
+     "consensus": 0.7556,
      "win": true,
-     "margin": 0.0316,
+     "margin": 0.0212,
      "n_pos": 132
     },
     "auc_star": {
      "n": 353,
-     "efv": 0.8167,
-     "consensus": 0.7956,
+     "efv": 0.8275,
+     "consensus": 0.8087,
      "win": true,
-     "margin": 0.0211,
+     "margin": 0.0188,
      "n_pos": 49
     }
    },
    "by_fv_tier": {
     "40": {
-     "n": 116,
-     "efv": 0.1884,
-     "consensus": -0.1057,
+     "n": 140,
+     "efv": 0.1262,
+     "consensus": -0.0355,
      "win": true,
-     "margin": 0.2941
+     "margin": 0.1617
     },
     "45": {
-     "n": 95,
-     "efv": 0.1037,
-     "consensus": 0.0418,
-     "win": true,
-     "margin": 0.0619
+     "n": 75,
+     "efv": 0.2792,
+     "consensus": 0.343,
+     "win": false,
+     "margin": -0.0638
     },
     "50": {
-     "n": 42,
-     "efv": 0.387,
-     "consensus": -0.0724,
+     "n": 70,
+     "efv": 0.2845,
+     "consensus": 0.1529,
      "win": true,
-     "margin": 0.4594
+     "margin": 0.1316
     },
     "55": {
-     "n": 57,
-     "efv": 0.2794,
-     "consensus": -0.0637,
-     "win": true,
-     "margin": 0.3431
+     "n": 22,
+     "efv": 0.3213,
+     "consensus": 0.3906,
+     "win": false,
+     "margin": -0.0693
     },
     "60": {
-     "n": 21,
-     "efv": -0.1714,
-     "consensus": -0.1393,
-     "win": false,
-     "margin": -0.0321
+     "n": 15,
+     "efv": 0.4,
+     "consensus": 0.214,
+     "win": true,
+     "margin": 0.186
     }
    },
    "t45": {
-    "n": 95,
-    "efv": 0.1037,
-    "consensus": 0.0418,
-    "win": true,
-    "margin": 0.0619
+    "n": 75,
+    "efv": 0.2792,
+    "consensus": 0.343,
+    "win": false,
+    "margin": -0.0638
    },
    "wm": {
-    "n": 331,
-    "efv": 0.1821,
-    "consensus": -0.054,
+    "n": 322,
+    "efv": 0.2223,
+    "consensus": 0.1344,
     "win": true,
-    "margin": 0.2362
+    "margin": 0.088
    },
    "by_cohort": {
     "ifa": {
      "n": 104,
-     "efv": 0.318,
-     "consensus": 0.2886,
+     "efv": 0.305,
+     "consensus": 0.3048,
      "win": true,
-     "margin": 0.0294
+     "margin": 0.0002
     },
     "college": {
      "n": 131,
-     "efv": 0.3672,
-     "consensus": 0.2838,
+     "efv": 0.3436,
+     "consensus": 0.3011,
      "win": true,
-     "margin": 0.0834
+     "margin": 0.0425
     },
     "hs": {
      "n": 113,
-     "efv": 0.4569,
-     "consensus": 0.4577,
+     "efv": 0.4756,
+     "consensus": 0.4947,
      "win": false,
-     "margin": -0.0008
+     "margin": -0.0191
     },
     "other": {
      "n": 5,
@@ -125,51 +125,51 @@
     "<=2018": {
      "spearman": {
       "n": 129,
-      "efv": 0.4532,
-      "consensus": 0.4932,
-      "win": false,
-      "margin": -0.04
+      "efv": 0.4904,
+      "consensus": 0.4897,
+      "win": true,
+      "margin": 0.0007
      },
      "auc_contributor": {
       "n": 129,
-      "efv": 0.7483,
-      "consensus": 0.7857,
-      "win": false,
-      "margin": -0.0374,
+      "efv": 0.7813,
+      "consensus": 0.7806,
+      "win": true,
+      "margin": 0.0008,
       "n_pos": 45
      }
     },
     "2019-2021": {
      "spearman": {
       "n": 205,
-      "efv": 0.3193,
-      "consensus": 0.2661,
+      "efv": 0.3532,
+      "consensus": 0.3087,
       "win": true,
-      "margin": 0.0532
+      "margin": 0.0445
      },
      "auc_contributor": {
       "n": 205,
-      "efv": 0.7142,
-      "consensus": 0.687,
+      "efv": 0.7262,
+      "consensus": 0.7064,
       "win": true,
-      "margin": 0.0272,
+      "margin": 0.0198,
       "n_pos": 79
      }
     },
     "2022-2023": {
      "spearman": {
       "n": 220,
-      "efv": 0.4223,
-      "consensus": 0.3761,
+      "efv": 0.4299,
+      "consensus": 0.3981,
       "win": true,
-      "margin": 0.0462
+      "margin": 0.0318
      },
      "auc_contributor": {
       "n": 220,
-      "efv": 0.7921,
-      "consensus": 0.7663,
+      "efv": 0.7939,
+      "consensus": 0.7762,
       "win": true,
-      "margin": 0.0258,
+      "margin": 0.0177,
       "n_pos": 84
      }
     }
@@ -179,93 +179,100 @@
    "pooled": {
     "spearman": {
      "n": 438,
-     "efv": 0.303,
-     "consensus": 0.2638,
+     "efv": 0.306,
+     "consensus": 0.2671,
      "win": true,
-     "margin": 0.0392
+     "margin": 0.0389
     },
     "auc_contributor": {
      "n": 438,
-     "efv": 0.7197,
-     "consensus": 0.7102,
+     "efv": 0.7187,
+     "consensus": 0.7023,
      "win": true,
-     "margin": 0.0095,
+     "margin": 0.0164,
      "n_pos": 102
     },
     "auc_star": {
      "n": 438,
-     "efv": 0.848,
-     "consensus": 0.8242,
+     "efv": 0.8552,
+     "consensus": 0.8371,
      "win": true,
-     "margin": 0.0239,
+     "margin": 0.0181,
      "n_pos": 24
     }
    },
    "by_fv_tier": {
-    "40": {
-     "n": 263,
-     "efv": 0.185,
-     "consensus": 0.093,
+    "35": {
+     "n": 79,
+     "efv": 0.0214,
+     "consensus": -0.1469,
      "win": true,
-     "margin": 0.092
+     "margin": 0.1683
+    },
+    "40": {
+     "n": 238,
+     "efv": 0.1541,
+     "consensus": 0.0518,
+     "win": true,
+     "margin": 0.1023
     },
     "45": {
-     "n": 49,
-     "efv": 0.222,
-     "consensus": 0.0624,
-     "win": true,
-     "margin": 0.1596
+     "n": 60,
+     "efv": 0.0683,
+     "consensus": 0.0916,
+     "win": false,
+     "margin": -0.0233
     },
     "50": {
-     "n": 40,
-     "efv": 0.1697,
-     "consensus": 0.3123,
-     "win": false,
-     "margin": -0.1426
+     "n": 41,
+     "efv": 0.2405,
+     "consensus": 0.0824,
+     "win": true,
+     "margin": 0.1581
     },
     "55": {
-     "n": 35,
-     "efv": -0.1838,
-     "consensus": -0.4198,
+     "n": 17,
+     "efv": -0.1348,
+     "consensus": -0.2653,
      "win": true,
-     "margin": 0.236
+     "margin": 0.1305
     }
    },
    "t45": {
-    "n": 49,
-    "efv": 0.222,
-    "consensus": 0.0624,
-    "win": true,
-    "margin": 0.1596
+    "n": 60,
+    "efv": 0.0683,
+    "consensus": 0.0916,
+    "win": false,
+    "margin": -0.0233
    },
    "wm": {
-    "n": 387,
-    "efv": 0.1547,
-    "consensus": 0.0654,
+    "n": 435,
+    "efv": 0.115,
+    "consensus": 0.0117,
     "win": true,
-    "margin": 0.0893
+    "margin": 0.1033
    },
    "by_cohort": {
     "ifa": {
      "n": 107,
-     "efv": 0.286,
-     "consensus": 0.1943,
+     "efv": 0.2908,
+     "consensus": 0.1982,
      "win": true,
-     "margin": 0.0917
+     "margin": 0.0926
     },
     "college": {
      "n": 230,
-     "efv": 0.3179,
-     "consensus": 0.2831,
+     "efv": 0.299,
+     "consensus": 0.2707,
      "win": true,
-     "margin": 0.0348
+     "margin": 0.0283
     },
     "hs": {
      "n": 97,
-     "efv": 0.307,
-     "consensus": 0.3003,
+     "efv": 0.3482,
+     "consensus": 0.3272,
      "win": true,
-     "margin": 0.0067
+     "margin": 0.021
     },
     "other": {
      "n": 4,
@@ -280,51 +287,51 @@
     "<=2018": {
      "spearman": {
       "n": 132,
-      "efv": 0.2998,
-      "consensus": 0.3364,
+      "efv": 0.2855,
+      "consensus": 0.35,
       "win": false,
-      "margin": -0.0366
+      "margin": -0.0645
      },
      "auc_contributor": {
       "n": 132,
-      "efv": 0.7753,
-      "consensus": 0.783,
+      "efv": 0.7504,
+      "consensus": 0.7845,
       "win": false,
-      "margin": -0.0077,
+      "margin": -0.0341,
       "n_pos": 40
      }
     },
     "2019-2021": {
      "spearman": {
       "n": 286,
-      "efv": 0.1626,
-      "consensus": 0.1863,
-      "win": false,
-      "margin": -0.0237
+      "efv": 0.18,
+      "consensus": 0.1755,
+      "win": true,
+      "margin": 0.0045
      },
      "auc_contributor": {
       "n": 286,
-      "efv": 0.6792,
-      "consensus": 0.6992,
-      "win": false,
-      "margin": -0.0201,
+      "efv": 0.6943,
+      "consensus": 0.6923,
+      "win": true,
+      "margin": 0.002,
       "n_pos": 69
      }
     },
     "2022-2023": {
      "spearman": {
       "n": 228,
-      "efv": 0.3911,
-      "consensus": 0.3136,
+      "efv": 0.3937,
+      "consensus": 0.331,
       "win": true,
-      "margin": 0.0775
+      "margin": 0.0627
      },
      "auc_contributor": {
       "n": 228,
-      "efv": 0.7194,
-      "consensus": 0.6921,
+      "efv": 0.7127,
+      "consensus": 0.6915,
       "win": true,
-      "margin": 0.0273,
+      "margin": 0.0212,
       "n_pos": 56
      }
     }
@@ -333,57 +340,57 @@
  },
  "head_to_head": {
   "protocol": "common resolved set (players every scored source graded that preseason); eFV enters with its forward-chained OOS grade, never an in-sample fit",
-  "common_n": 4234,
+  "common_n": 4235,
   "vs": {
    "prospx_consensus": {
     "label": "PROSPX consensus",
     "spearman": {
      "n": 2200,
-     "efv": 0.3711,
-     "consensus": 0.2839,
+     "efv": 0.384,
+     "consensus": 0.283,
      "win": true,
-     "margin": 0.0872
+     "margin": 0.101
     },
     "auc_contributor": {
      "n": 2200,
-     "efv": 0.7508,
-     "consensus": 0.7273,
+     "efv": 0.7572,
+     "consensus": 0.7316,
      "win": true,
-     "margin": 0.0235
+     "margin": 0.0256
     }
    },
    "fangraphs": {
     "label": "FanGraphs",
     "spearman": {
      "n": 2200,
-     "efv": 0.3711,
-     "consensus": 0.2469,
+     "efv": 0.384,
+     "consensus": 0.2483,
      "win": true,
-     "margin": 0.1242
+     "margin": 0.1357
     },
     "auc_contributor": {
      "n": 2200,
-     "efv": 0.7508,
-     "consensus": 0.7018,
+     "efv": 0.7572,
+     "consensus": 0.7024,
      "win": true,
-     "margin": 0.049
+     "margin": 0.0548
     }
    },
    "mlb_pipeline": {
     "label": "MLB Pipeline",
     "spearman": {
      "n": 2200,
-     "efv": 0.3711,
-     "consensus": 0.2819,
+     "efv": 0.384,
+     "consensus": 0.2818,
      "win": true,
-     "margin": 0.0892
+     "margin": 0.1022
     },
     "auc_contributor": {
      "n": 2200,
-     "efv": 0.7508,
-     "consensus": 0.7198,
+     "efv": 0.7572,
+     "consensus": 0.7206,
      "win": true,
-     "margin": 0.031
+     "margin": 0.0366
     }
    }
   },
@@ -391,115 +398,115 @@
    {
     "archetype": "hs_bat",
     "label": "HS bats",
-    "n": 521,
+    "n": 137,
     "spearman": {
-     "n": 521,
-     "efv": 0.4835,
-     "consensus": 0.3101,
+     "n": 137,
+     "efv": 0.5409,
+     "consensus": 0.3793,
      "win": true,
-     "margin": 0.1734
+     "margin": 0.1616
     },
     "auc_contributor": {
-     "n": 521,
-     "efv": 0.7911,
-     "consensus": 0.7363,
+     "n": 137,
+     "efv": 0.818,
+     "consensus": 0.7783,
      "win": true,
-     "margin": 0.0548
+     "margin": 0.0397
     }
    },
    {
     "archetype": "hs_arm",
     "label": "HS arms",
-    "n": 435,
+    "n": 114,
     "spearman": {
-     "n": 435,
-     "efv": 0.3596,
-     "consensus": 0.304,
+     "n": 114,
+     "efv": 0.3743,
+     "consensus": 0.2693,
      "win": true,
-     "margin": 0.0556
+     "margin": 0.105
     },
     "auc_contributor": {
-     "n": 435,
-     "efv": 0.712,
-     "consensus": 0.7296,
-     "win": false,
-     "margin": -0.0176
+     "n": 114,
+     "efv": 0.7077,
+     "consensus": 0.7064,
+     "win": true,
+     "margin": 0.0013
     }
    },
    {
     "archetype": "college_bat",
     "label": "College bats",
-    "n": 232,
+    "n": 80,
     "spearman": {
-     "n": 232,
-     "efv": 0.301,
-     "consensus": 0.2783,
+     "n": 80,
+     "efv": 0.3067,
+     "consensus": 0.2655,
      "win": true,
-     "margin": 0.0227
+     "margin": 0.0412
     },
     "auc_contributor": {
-     "n": 232,
-     "efv": 0.7043,
-     "consensus": 0.6733,
-     "win": true,
-     "margin": 0.031
+     "n": 80,
+     "efv": 0.6802,
+     "consensus": 0.6849,
+     "win": false,
+     "margin": -0.0047
     }
    },
    {
     "archetype": "college_arm",
     "label": "College arms",
-    "n": 400,
+    "n": 140,
     "spearman": {
-     "n": 400,
-     "efv": 0.3577,
-     "consensus": 0.2475,
+     "n": 140,
+     "efv": 0.3903,
+     "consensus": 0.267,
      "win": true,
-     "margin": 0.1102
+     "margin": 0.1233
     },
     "auc_contributor": {
-     "n": 400,
-     "efv": 0.7734,
-     "consensus": 0.7095,
+     "n": 140,
+     "efv": 0.7606,
+     "consensus": 0.73,
      "win": true,
-     "margin": 0.0639
+     "margin": 0.0306
     }
    },
    {
     "archetype": "intl_bat",
     "label": "Int'l bats",
-    "n": 353,
+    "n": 92,
     "spearman": {
-     "n": 353,
-     "efv": 0.3299,
-     "consensus": 0.3211,
+     "n": 92,
+     "efv": 0.3837,
+     "consensus": 0.3689,
      "win": true,
-     "margin": 0.0088
+     "margin": 0.0148
     },
     "auc_contributor": {
-     "n": 353,
-     "efv": 0.7125,
-     "consensus": 0.778,
+     "n": 92,
+     "efv": 0.7378,
+     "consensus": 0.8211,
      "win": false,
-     "margin": -0.0655
+     "margin": -0.0833
     }
    },
    {
     "archetype": "intl_arm",
     "label": "Int'l arms",
-    "n": 259,
+    "n": 77,
     "spearman": {
-     "n": 259,
-     "efv": 0.2799,
-     "consensus": 0.1742,
+     "n": 77,
+     "efv": 0.2855,
+     "consensus": 0.1879,
      "win": true,
-     "margin": 0.1057
+     "margin": 0.0976
     },
     "auc_contributor": {
-     "n": 259,
-     "efv": 0.7004,
-     "consensus": 0.6531,
+     "n": 77,
+     "efv": 0.7726,
+     "consensus": 0.72,
      "win": true,
-     "margin": 0.0473
+     "margin": 0.0526
     }
    }
   ]
@@ -509,24 +516,24 @@
   "pool_n": 1632,
   "top20": {
    "n": 1632,
-   "efv": 0.7054,
-   "consensus": 0.7012,
-   "win": true,
-   "margin": 0.0042
+   "efv": 0.6985,
+   "consensus": 0.7039,
+   "win": false,
+   "margin": -0.0054
   },
   "curve_area": {
    "n": 1632,
-   "efv": 0.8223,
-   "consensus": 0.8058,
+   "efv": 0.8243,
+   "consensus": 0.8121,
    "win": true,
-   "margin": 0.0165
+   "margin": 0.0122
   }
  },
  "disagreement_receipts": {
   "protocol": "resolved players where eFV and consensus placed the player >= 15 percentile points apart, pre-debut vintage grades only; 'right' = whose placement sat closer to the realized-WAR placement",
   "n_pool": 773,
-  "n_disagreements": 245,
-  "efv_right_share": 0.571,
+  "n_disagreements": 148,
+  "efv_right_share": 0.642,
   "win": true,
   "biggest": [
    {
@@ -538,23 +545,9 @@
    },
    {
     "name": "Jeremiah Estrada",
-    "consensus_fv": 37.7,
+    "consensus_fv": 37.4,
     "war": 2.6,
     "dir": "higher",
-    "xfv_right": true
-   },
-   {
-    "name": "Alfonso Rivas III",
-    "consensus_fv": 37.7,
-    "war": 0.8,
-    "dir": "higher",
-    "xfv_right": true
-   },
-   {
-    "name": "Cody Ponce",
-    "consensus_fv": 42.3,
-    "war": -0.6,
-    "dir": "lower",
     "xfv_right": true
    },
    {
@@ -565,24 +558,38 @@
     "xfv_right": true
    },
    {
-    "name": "Wil Crowe",
-    "consensus_fv": 42.3,
-    "war": -0.6,
+    "name": "Troy Stokes Jr.",
+    "consensus_fv": 40.4,
+    "war": 0.0,
     "dir": "lower",
-    "xfv_right": true
+    "xfv_right": false
    },
    {
-    "name": "Anthony Castro",
-    "consensus_fv": 40.0,
-    "war": -0.7,
-    "dir": "lower",
-    "xfv_right": true
-   },
-   {
-    "name": "Jake Alu",
-    "consensus_fv": 40.0,
-    "war": -0.1,
+    "name": "Zack Kelly",
+    "consensus_fv": 35.0,
+    "war": 0.5,
     "dir": "higher",
+    "xfv_right": true
+   },
+   {
+    "name": "Bailey Ober",
+    "consensus_fv": 37.9,
+    "war": 10.1,
+    "dir": "higher",
+    "xfv_right": true
+   },
+   {
+    "name": "Connor Wong",
+    "consensus_fv": 37.9,
+    "war": 4.6,
+    "dir": "higher",
+    "xfv_right": true
+   },
+   {
+    "name": "JoJo Romero",
+    "consensus_fv": 40.1,
+    "war": 3.3,
+    "dir": "lower",
     "xfv_right": false
    }
   ]
@@ -591,117 +598,117 @@
   {
    "side": "hit",
    "artifact": "data/xfv_eval.json",
-   "artifact_generated_at": "2026-07-15",
-   "artifact_blend_spearman": 0.3787,
+   "artifact_generated_at": "2026-07-24",
+   "artifact_blend_spearman": 0.3791,
    "artifact_consensus_spearman": 0.332,
-   "same_run_blend_spearman": 0.3834,
-   "same_run_consensus_spearman": 0.332,
-   "blend_drift": 0.0047
+   "same_run_blend_spearman": 0.3882,
+   "same_run_consensus_spearman": 0.3522,
+   "blend_drift": 0.0091
   },
   {
    "side": "pit",
    "artifact": "data/xfv_eval_pitcher.json",
-   "artifact_generated_at": "2026-07-15",
-   "artifact_blend_spearman": 0.302,
+   "artifact_generated_at": "2026-07-24",
+   "artifact_blend_spearman": 0.3056,
    "artifact_consensus_spearman": 0.2638,
-   "same_run_blend_spearman": 0.303,
-   "same_run_consensus_spearman": 0.2638,
-   "blend_drift": 0.001
+   "same_run_blend_spearman": 0.306,
+   "same_run_consensus_spearman": 0.2671,
+   "blend_drift": 0.0004
   }
  ],
  "source_backtest_freshness": {
   "reran": false,
-  "artifact_generated_at": "2026-07-24T16:33:43Z",
+  "artifact_generated_at": "2026-07-30T13:07:42Z",
   "rule": "reused (fresh within 7 days)"
  },
  "weak_cells": [
   {
-   "cell": "hit.fv_tier.60",
+   "cell": "hit.fv_tier.45",
    "metric": "spearman",
-   "n": 21,
-   "efv": -0.1714,
-   "consensus": -0.1393,
-   "margin": -0.0321
+   "n": 75,
+   "efv": 0.2792,
+   "consensus": 0.343,
+   "margin": -0.0638
+  },
+  {
+   "cell": "hit.fv_tier.55",
+   "metric": "spearman",
+   "n": 22,
+   "efv": 0.3213,
+   "consensus": 0.3906,
+   "margin": -0.0693
   },
   {
    "cell": "hit.cohort.hs",
    "metric": "spearman",
    "n": 113,
-   "efv": 0.4569,
-   "consensus": 0.4577,
-   "margin": -0.0008
+   "efv": 0.4756,
+   "consensus": 0.4947,
+   "margin": -0.0191
   },
   {
-   "cell": "hit.era.<=2018",
+   "cell": "hit.t45",
    "metric": "spearman",
-   "n": 129,
-   "efv": 0.4532,
-   "consensus": 0.4932,
-   "margin": -0.04
+   "n": 75,
+   "efv": 0.2792,
+   "consensus": 0.343,
+   "margin": -0.0638
   },
   {
-   "cell": "hit.era.<=2018",
-   "metric": "auc_contributor",
-   "n": 129,
-   "efv": 0.7483,
-   "consensus": 0.7857,
-   "margin": -0.0374
-  },
-  {
-   "cell": "pit.fv_tier.50",
+   "cell": "pit.fv_tier.45",
    "metric": "spearman",
-   "n": 40,
-   "efv": 0.1697,
-   "consensus": 0.3123,
-   "margin": -0.1426
+   "n": 60,
+   "efv": 0.0683,
+   "consensus": 0.0916,
+   "margin": -0.0233
   },
   {
    "cell": "pit.era.<=2018",
    "metric": "spearman",
    "n": 132,
-   "efv": 0.2998,
-   "consensus": 0.3364,
-   "margin": -0.0366
+   "efv": 0.2855,
+   "consensus": 0.35,
+   "margin": -0.0645
   },
   {
    "cell": "pit.era.<=2018",
    "metric": "auc_contributor",
    "n": 132,
-   "efv": 0.7753,
-   "consensus": 0.783,
-   "margin": -0.0077
+   "efv": 0.7504,
+   "consensus": 0.7845,
+   "margin": -0.0341
   },
   {
-   "cell": "pit.era.2019-2021",
+   "cell": "pit.t45",
    "metric": "spearman",
-   "n": 286,
-   "efv": 0.1626,
-   "consensus": 0.1863,
-   "margin": -0.0237
+   "n": 60,
+   "efv": 0.0683,
+   "consensus": 0.0916,
+   "margin": -0.0233
   },
   {
-   "cell": "pit.era.2019-2021",
+   "cell": "head_to_head.archetype.college_bat",
    "metric": "auc_contributor",
-   "n": 286,
-   "efv": 0.6792,
-   "consensus": 0.6992,
-   "margin": -0.0201
-  },
-  {
-   "cell": "head_to_head.archetype.hs_arm",
-   "metric": "auc_contributor",
-   "n": 435,
-   "efv": 0.712,
-   "consensus": 0.7296,
-   "margin": -0.0176
+   "n": 80,
+   "efv": 0.6802,
+   "consensus": 0.6849,
+   "margin": -0.0047
   },
   {
    "cell": "head_to_head.archetype.intl_bat",
    "metric": "auc_contributor",
-   "n": 353,
-   "efv": 0.7125,
-   "consensus": 0.778,
-   "margin": -0.0655
+   "n": 92,
+   "efv": 0.7378,
+   "consensus": 0.8211,
+   "margin": -0.0833
+  },
+  {
+   "cell": "capture.top20",
+   "metric": "war_capture",
+   "n": 1632,
+   "efv": 0.6985,
+   "consensus": 0.7039,
+   "margin": -0.0054
   }
  ],
  "weak_cells_note": "every cell above with win=false, verbatim; these drive the experiment queue, they are not smoothed away"
