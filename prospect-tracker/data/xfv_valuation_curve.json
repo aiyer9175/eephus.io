@@ -23,9 +23,9 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 1730,
+"n": 1725,
 "surplus_mm_median": 0.0,
-"war6_median": -1.03,
+"war6_median": -1.05,
 "p_star_median": 0.0
 }
 },
@@ -43,10 +43,10 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 201,
+"n": 199,
 "surplus_mm_median": 1.0,
-"war6_median": 1.43,
-"p_star_median": 0.007
+"war6_median": 1.42,
+"p_star_median": 0.006
 }
 },
 "40+": {
@@ -63,10 +63,10 @@
 "star_odds": 0.0001
 },
 "live": {
-"n": 47,
-"surplus_mm_median": 5.9,
-"war6_median": 2.78,
-"p_star_median": 0.015
+"n": 46,
+"surplus_mm_median": 6.0,
+"war6_median": 2.83,
+"p_star_median": 0.016
 }
 },
 "45": {
@@ -83,10 +83,10 @@
 "star_odds": 0.0006
 },
 "live": {
-"n": 39,
-"surplus_mm_median": 10.4,
-"war6_median": 4.09,
-"p_star_median": 0.025
+"n": 32,
+"surplus_mm_median": 10.9,
+"war6_median": 3.96,
+"p_star_median": 0.024
 }
 },
 "45+": {
@@ -103,10 +103,10 @@
 "star_odds": 0.0029
 },
 "live": {
-"n": 28,
-"surplus_mm_median": 19.1,
-"war6_median": 5.25,
-"p_star_median": 0.044
+"n": 34,
+"surplus_mm_median": 18.8,
+"war6_median": 5.02,
+"p_star_median": 0.041
 }
 },
 "50": {
@@ -123,10 +123,10 @@
 "star_odds": 0.0066
 },
 "live": {
-"n": 42,
-"surplus_mm_median": 26.4,
-"war6_median": 6.4,
-"p_star_median": 0.066
+"n": 44,
+"surplus_mm_median": 26.9,
+"war6_median": 6.29,
+"p_star_median": 0.065
 }
 },
 "55": {
@@ -145,8 +145,8 @@
 "live": {
 "n": 11,
 "surplus_mm_median": 46.5,
-"war6_median": 8.62,
-"p_star_median": 0.133
+"war6_median": 8.26,
+"p_star_median": 0.123
 }
 },
 "60": {
@@ -165,8 +165,8 @@
 "live": {
 "n": 6,
 "surplus_mm_median": 64.9,
-"war6_median": 10.95,
-"p_star_median": 0.2105
+"war6_median": 10.91,
+"p_star_median": 0.2075
 }
 },
 "65": {
@@ -221,7 +221,7 @@
 "live": {
 "n": 2097,
 "surplus_mm_median": 0.0,
-"war6_median": -0.42,
+"war6_median": -0.45,
 "p_star_median": 0.0
 }
 },
@@ -239,9 +239,9 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 198,
+"n": 197,
 "surplus_mm_median": 0.0,
-"war6_median": 1.04,
+"war6_median": 0.93,
 "p_star_median": 0.001
 }
 },
@@ -259,9 +259,9 @@
 "star_odds": 0.0001
 },
 "live": {
-"n": 50,
-"surplus_mm_median": 5.9,
-"war6_median": 2.08,
+"n": 49,
+"surplus_mm_median": 5.8,
+"war6_median": 1.98,
 "p_star_median": 0.003
 }
 },
@@ -279,9 +279,9 @@
 "star_odds": 0.0003
 },
 "live": {
-"n": 36,
-"surplus_mm_median": 9.4,
-"war6_median": 2.57,
+"n": 37,
+"surplus_mm_median": 9.8,
+"war6_median": 2.48,
 "p_star_median": 0.004
 }
 },
@@ -300,8 +300,8 @@
 },
 "live": {
 "n": 12,
-"surplus_mm_median": 17.0,
-"war6_median": 3.23,
+"surplus_mm_median": 19.3,
+"war6_median": 3.24,
 "p_star_median": 0.005
 }
 },
@@ -319,9 +319,9 @@
 "star_odds": 0.0028
 },
 "live": {
-"n": 18,
-"surplus_mm_median": 26.7,
-"war6_median": 4.04,
+"n": 19,
+"surplus_mm_median": 27.6,
+"war6_median": 4.01,
 "p_star_median": 0.006
 }
 },

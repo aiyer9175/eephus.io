@@ -3,73 +3,73 @@
  "scope": "HITTERS",
  "n_scored": 1882,
  "calibration_scale": {
-  "a": 0.036,
-  "b": 1.042
+  "a": 0.035,
+  "b": 1.043
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
   "mean_abs_delta": 0.72,
   "max_up": 5.8,
   "max_down": -3.8,
-  "share_within_2_grades": 0.876
+  "share_within_2_grades": 0.878
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 7.37,
-  "max_up": 9.8,
+  "mean_abs_delta": 6.03,
+  "max_up": 7.7,
   "max_down": -20.9
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.0947,
+  "spearman_adj_vs_consensus_miss": 0.0627,
   "n": 463,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 16864.3,
+  "xfv": 16831.8,
   "consensus": 16321.5
  },
  "example_up_adjustments": [
   {
-   "player_key": "adam_haseley",
-   "consensus_fv": 45.4,
-   "xfv_grade": 53.7,
-   "delta": 8.3,
-   "realized_war_6yr": 1.54
-  },
-  {
    "player_key": "zach_mckinstry",
    "consensus_fv": 40.5,
-   "xfv_grade": 48.3,
-   "delta": 7.8,
+   "xfv_grade": 47.6,
+   "delta": 7.1,
    "realized_war_6yr": 4.57
-  },
-  {
-   "player_key": "nick_madrigal",
-   "consensus_fv": 53.0,
-   "xfv_grade": 60.8,
-   "delta": 7.8,
-   "realized_war_6yr": 3.15
-  },
-  {
-   "player_key": "nick_solak",
-   "consensus_fv": 47.9,
-   "xfv_grade": 55.7,
-   "delta": 7.8,
-   "realized_war_6yr": 0.46
   },
   {
    "player_key": "tommy_edman",
    "consensus_fv": 40.4,
-   "xfv_grade": 48.2,
-   "delta": 7.8,
+   "xfv_grade": 47.4,
+   "delta": 7.0,
    "realized_war_6yr": 18.03
   },
   {
-   "player_key": "austin_hays",
-   "consensus_fv": 45.4,
-   "xfv_grade": 53.0,
-   "delta": 7.7,
-   "realized_war_6yr": 7.33
+   "player_key": "brent_rooker",
+   "consensus_fv": 40.5,
+   "xfv_grade": 46.7,
+   "delta": 6.2,
+   "realized_war_6yr": 8.27
+  },
+  {
+   "player_key": "jake_alu",
+   "consensus_fv": 37.9,
+   "xfv_grade": 44.0,
+   "delta": 6.1,
+   "realized_war_6yr": -0.11
+  },
+  {
+   "player_key": "andrew_young",
+   "consensus_fv": 38.0,
+   "xfv_grade": 44.0,
+   "delta": 6.1,
+   "realized_war_6yr": -0.86
+  },
+  {
+   "player_key": "ty_france",
+   "consensus_fv": 38.3,
+   "xfv_grade": 43.8,
+   "delta": 5.5,
+   "realized_war_6yr": 8.14
   }
  ],
  "example_down_adjustments": [

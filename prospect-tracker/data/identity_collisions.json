@@ -1,8 +1,8 @@
 {
- "generated_at": "2026-07-30T13:14:56Z",
+ "generated_at": "2026-07-31T01:05:09Z",
  "summary": {
   "board_rows": 9603,
-  "active_board_rows": 4520,
+  "active_board_rows": 4513,
   "roster_rows": 10608,
   "colliding_slugs": 196,
   "critical_player_keys": 16,
@@ -18,7 +18,7 @@
   "c5_birthdate_conflicts": 0,
   "c6_org_splits": 0,
   "frankenstein_records": 0,
-  "unassigned_null_id_rows": 251
+  "unassigned_null_id_rows": 250
  },
  "critical_player_keys": [
   "aaron_brown",

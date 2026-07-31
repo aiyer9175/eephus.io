@@ -9,7 +9,7 @@
   "debuted_no_pre_fv": 130,
   "debuted_no_war": 35,
   "debuted_kept": 981,
-  "bust_seen": 2407,
+  "bust_seen": 2414,
   "bust_hitter": 1160,
   "bust_no_fv": 47,
   "bust_kept": 1082,
@@ -36,8 +36,8 @@
   "fv_stddev": "926/2063",
   "tool_hit": "0/2063",
   "tool_game_pwr": "0/2063",
-  "pick_overall": "849/2063",
-  "bonus_usd": "635/2063"
+  "pick_overall": "848/2063",
+  "bonus_usd": "572/2063"
  },
  "milb_feature_coverage": {
   "level_rank": "941/2063",

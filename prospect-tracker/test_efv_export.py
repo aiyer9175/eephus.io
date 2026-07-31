@@ -338,7 +338,25 @@ def test_committed_artifact_headline_alias_contract():
 #   next box regen, and at that point the new hash should be recorded here together with the
 #   S2 and anchor ships as its cause. Under EEPHUS_DEPLOY_RUN=1 this test shape-checks
 #   instead of hashing, so the deploy gate is not blocked meanwhile.
-_GOLDEN_XFV_SHA256 = "e975a35d4f79e5c0dbe0793fcab44960253f9c9650efec13de59528741c0b711"
+# 2026-07-30 RESTAMP - the owed restamp above, taken. This is the production regen the
+#   2026-07-29 entry was waiting for, run per docs/efv-2026-07-30/REGEN_AND_PUSH_RUNBOOK.md
+#   and stamped from THAT output before pytest ever touched the tree (a mid-suite test
+#   regenerates data/xfv.json under fixtures, and stamping from that records a fixture state
+#   as production truth). What moved, and why the hash had to change:
+#   (1) The POOLED OUTCOME GRADE MAP (c4adead). xfv_grade is now
+#       value_framework.outcome_implied_fv(predicted WAR6), the inverse of the empirical
+#       FV-to-outcome curve, replacing the side-neutral realized_implied_fv. Grades carry a
+#       new MEANING, not just new values.
+#   (2) The age-penalty onset at 23.0 (owner dial D2) reaching served output for the first
+#       time, plus the usage-based pitcher roles and position_observed work.
+#   (3) The fabricated baseballamerica_statcast_by_age FV removed at the source: 41 rows
+#       re-ingested with fv IS NULL, so that invented 40.0 no longer votes in consensus.
+#   Board effect, verified against the paired capture in POOLED_OUTCOME_REFIT.md: arias
+#   60.4 rank 2, brayden_taylor 48.2 rank 125 and enrique_bradfield_jr 48.2 rank 127 (both
+#   out of the top 100, which was the point of the age dial), top-100 side mix 92H/8P inside
+#   its band, history basis flipped onto the board basis so the eFV-delta movement signal
+#   un-suppresses. Rowcount 9268 -> 9324.
+_GOLDEN_XFV_SHA256 = "4f791d2f2123905fdd792fecbdadc800308924120e377812b98d57af1af19f8a"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
