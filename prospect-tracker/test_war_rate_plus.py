@@ -115,16 +115,28 @@ def test_adj_pulls_thin_samples_toward_average(monkeypatch):
 
 def test_raw_column_still_reproduces_the_rate_on_the_row(monkeypatch):
     """The reason _adj got its own NAME rather than replacing the column: the raw
-    index must stay checkable from the row's own war and denominator against
-    pool_mean_rate. The adjusted one deliberately does not."""
+    index must stay checkable from the row's own war and denominator against the
+    published pool_mean_rate / pool_sd_rate. The adjusted one deliberately does
+    not reproduce anything on the row, which is exactly why it is a new column.
+
+    The check is approximate, and its error bound is not slack: TWO display
+    roundings sit between the row and the identity. The served `war` is rounded
+    to one decimal, so the recomputed rate can be off by up to 0.05 WAR over the
+    denominator (10 * 0.05 / (denom * pool_sd) index points), and `*_raw` is
+    itself rounded to one decimal (another 0.05). The bound is derived from both
+    rather than hardcoded, so if a rounding convention or the scale ever changes
+    the bound moves with it instead of silently going slack."""
     n = 40
     rows = [{"mlbam": 1000 + i, "pa": 400.0 + i} for i in range(n)]
     bat = {1000 + i: 1.0 + i * 0.05 for i in range(n)}
     _patch_war(monkeypatch, _war_map(2026, bat=bat))
     meta = he._join_war_pa_plus(rows, 2026)
-    r = rows[7]
-    expect = 100.0 + 10.0 * ((r["war"] / r["pa"]) - meta["pool_mean_rate"]) / meta["pool_sd_rate"]
-    assert abs(r["war_pa_plus_raw"] - expect) < 0.15, (r["war_pa_plus_raw"], expect)
+    for r in rows:
+        expect = (100.0 + 10.0 * ((r["war"] / r["pa"]) - meta["pool_mean_rate"])
+                  / meta["pool_sd_rate"])
+        bound = 10.0 * 0.05 / (r["pa"] * meta["pool_sd_rate"]) + 0.05
+        assert abs(r["war_pa_plus_raw"] - expect) <= bound, (
+            r["mlbam"], r["war_pa_plus_raw"], expect, bound)
 
 
 def test_one_year_percentile_chip_is_midrank_over_served_rows(monkeypatch):
