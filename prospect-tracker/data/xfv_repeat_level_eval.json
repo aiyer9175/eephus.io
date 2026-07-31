@@ -1,0 +1,115 @@
+{
+ "generated_at": "2026-07-30",
+ "experiment": "E1 repeat-level feature (seasons_at_level) added to the eFV ridge",
+ "pre_registration": "docs/efv-2026-07-30/E1_REPEAT_LEVEL_GATE.md",
+ "verdict": "SPLIT. Hitter arm NO SHIP (gain 0.19x MDE95 and the fitted sign is the OPPOSITE of theory, so it would RAISE the player it was built to lower). Pitcher arm CANDIDATE, default off, OWNER CALL (real and control-surviving on every instrument but 0.79x MDE95 on the primary).",
+ "primary_metric": "pooled OOS Spearman, debuted_km, blend arm, forward-chained",
+ "mde95": {
+  "hit": 0.017,
+  "pit": 0.016
+ },
+ "results": {
+  "hit": {
+   "debuted_km": {
+    "off": 0.3882,
+    "on": 0.3915,
+    "delta": 0.0033,
+    "x_floor": 0.19
+   },
+   "debuted_resolved": {
+    "off": 0.3345,
+    "on": 0.3385,
+    "delta": 0.004
+   },
+   "full_pool_km": {
+    "off": 0.2859,
+    "on": 0.2877,
+    "delta": 0.0018
+   },
+   "folds_improved": "3/4",
+   "auc": {
+    "contributor": {
+     "off": 0.7768,
+     "on": 0.7789
+    },
+    "star": {
+     "off": 0.8275,
+     "on": 0.8257
+    }
+   }
+  },
+  "pit": {
+   "debuted_km": {
+    "off": 0.306,
+    "on": 0.3187,
+    "delta": 0.0127,
+    "x_floor": 0.79
+   },
+   "debuted_resolved": {
+    "off": 0.2432,
+    "on": 0.245,
+    "delta": 0.0018
+   },
+   "full_pool_km": {
+    "off": 0.256,
+    "on": 0.261,
+    "delta": 0.005
+   },
+   "folds_improved": "3/4",
+   "auc": {
+    "contributor": {
+     "off": 0.7187,
+     "on": 0.7228
+    },
+    "star": {
+     "off": 0.8552,
+     "on": 0.8611
+    }
+   }
+  }
+ },
+ "zero_information_control": {
+  "method": "feature redrawn from the observed marginal under 3 seeds, link to row broken",
+  "hit_debuted_km": {
+   "real": 0.0033,
+   "control_mean": -0.0005,
+   "control_range": [
+    -0.0015,
+    0.0005
+   ]
+  },
+  "pit_debuted_km": {
+   "real": 0.0127,
+   "control_mean": -0.003,
+   "control_range": [
+    -0.0085,
+    0.0005
+   ]
+  },
+  "reading": "the real feature beats every control on both primaries, so the signal exists; the SIZE is what fails"
+ },
+ "fitted_sign": {
+  "declared": -1,
+  "hit": {
+   "weight": 0.0945,
+   "verdict": "DISAGREES with theory"
+  },
+  "pit": {
+   "weight": -0.1072,
+   "verdict": "AGREES; 4th largest weight in the pitcher model"
+  },
+  "interpretation": "Conditional on level, age and production, a hitter who has sat at a level for years is one the system kept on the board, which reads positive. Third documented case of a declared sign inverting conditionally, after k_rel and n_milb_seasons."
+ },
+ "consequence_for_the_motivating_case": {
+  "player": "brayden_taylor",
+  "seasons_at_level": 3.0,
+  "modal": 1.0,
+  "effect_on_predicted_war": 0.189,
+  "direction": "UP",
+  "note": "The feature built to encode 'a third year at AA after a collapse is a warning' would RAISE him. The data does not support the model learning this on the hitter side, which is why the shipped instrument for that ask is the age-penalty POLICY overlay rather than a fitted feature."
+ },
+ "flags": {
+  "efv_model.E1_REPEAT_LEVEL": false
+ },
+ "if_ever_shipped": "matrix-rebuild-coupled: BOARD_RANK_BASIS_EPOCH + BOARD_BASIS_FINGERPRINT + PINNED_MIX move together, and test_efv_sign_declarations must cover seasons_at_level (-1 for pit only)."
+}

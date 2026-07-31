@@ -2873,6 +2873,18 @@
    "verdict": "deprecated",
    "notes": "NO SHIP 2026-07-30. Pre-registered in docs/efv-2026-07-30/B3_LEVEL_BLEND_GATE.md BEFORE any fit; the PRIMARY metric regressed on BOTH sides (hit 0.3900 -> 0.3818, pit 0.3060 -> 0.2898), which is pre-registered no-ship condition 1. Deltas sit at or inside MDE95, so this is a null leaning negative rather than a proven loss. The four mandatory controls were not run: they test whether a GAIN is real and there is no gain. The targeted defect is real and measured (151 of 701 multi-level hitters and 149 of 790 pitchers are scored on a level carrying LESS exposure than one discarded; ~100k PA/BF thrown away), and the mechanism verifiably repairs it (mlbam 821041 ops_rel -0.0375 -> +0.1423 on 51 A+ PA vs 378 discarded at A). It simply does not predict better. Leading hypothesis: the level a player HOLDS is itself signal, since promotion is the org's revealed judgement, which winner-take-all reads and exposure-weighting dilutes; the pre-registered follow-up is to keep the highest-level read and add the lower level as a SEPARATE feature. Code retained default-off. Matrices restored and verified byte-identical after the experiment. Do NOT ship this to move any individual player: it loses on the metric the board is scored by.",
    "last_checked": "2026-07-30"
+  },
+  {
+   "model_id": "xfv_repeat_level",
+   "surface": "none served. Candidate only, DEFAULT OFF (efv_model.E1_REPEAT_LEVEL).",
+   "predicts": "first-6yr bWAR; adds seasons_at_level (consecutive seasons on the current level) to the eFV ridge.",
+   "champion": "the shipped feature set without it",
+   "baseline": "same; scored on the shipped forward-chained efv_model.run protocol on rebuilt matrices",
+   "metric": "pooled OOS Spearman, debuted_km, blend arm; MDE95 0.017 hit / 0.016 pit; plus full-pool AUC and a 3-seed zero-information control",
+   "eval_artifact": "data/xfv_repeat_level_eval.json",
+   "verdict": "deprecated",
+   "notes": "NOT SHIPPED (verdict 'deprecated' = measured and not shipped; the pitcher arm remains a LIVE OWNER CALL, see below). SPLIT VERDICT 2026-07-30, docs/efv-2026-07-30/E1_REPEAT_LEVEL_GATE.md. The feature is genuinely new information: taylor and arias have identical n_milb_seasons (4.0) and opposite seasons_at_level (3.0 vs 1.0). All six cuts positive, 3/4 forward-chained folds on each side, and the real feature beats all three zero-information controls on both primaries, so the signal is real. But hit +0.0033 is 0.19x its floor and pit +0.0127 is 0.79x, so neither resolves to the bar. THE FINDING: the fitted sign SPLITS. Pitchers -0.1072 (agrees with theory, 4th largest weight); hitters +0.0945 (DISAGREES). Conditional on level/age/production a hitter who has sat at a level is one the system kept on the board. Consequence: the feature would move brayden_taylor UP by ~0.19 predicted WAR, the opposite of what it was built for, which is direct evidence that the model cannot learn the old-repeating-prospect penalty from a survivorship-censored debuted-only pool and why that ask ships as an age POLICY overlay instead. Hitter arm NO SHIP. Pitcher arm is a live owner call.",
+   "last_checked": "2026-07-30"
   }
  ],
  "problems": []
