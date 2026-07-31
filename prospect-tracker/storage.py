@@ -4643,8 +4643,13 @@ BOARD_RANK_BASIS_EPOCH = "2026-07-30"   # STRICTLY-AFTER gate: see load_rank_his
 # fingerprint terms identical -- i.e. the fingerprint would again have reported "no
 # change" through a real board input flipping. Role mode is a board-ordering input, so
 # it is named.
+# 2026-07-30 (second restamp today): the E1 repeat-level ship added seasons_at_level to
+# the PITCHER feature set, which moves every pitcher's model WAR and therefore the board
+# order, while leaving all four prior terms identical. That is the same failure mode the
+# roles note above describes, one layer deeper, so the feature spec itself is now hashed
+# into the fingerprint and named here.
 BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
-                           "|roles=usage_both")
+                           "|roles=usage_both|feats=dbb1bc2a")
 
 
 def board_basis_fingerprint() -> str:
@@ -4678,7 +4683,24 @@ def board_basis_fingerprint() -> str:
         roles = _ru.role_resolution_mode()
     except Exception:
         roles = "unavailable"
-    return f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}|roles={roles}"
+    # FEATURE-SET term, added 2026-07-30. Until now this device could not see a MODEL
+    # change at all: it encoded the grade field, the display scale, the grade map and the
+    # role resolver, so shipping a new eFV feature moved every pitcher's grade and the
+    # board order while the fingerprint stayed byte-identical to its pin. The E1
+    # repeat-level ship is exactly that case and is what exposed it. Hashing the declared
+    # feature specs makes any future add, removal or sign re-declaration trip the
+    # coordination check the way a grade-map change already does.
+    try:
+        import hashlib as _hashlib
+        import efv_model as _em
+        _spec = "".join(f"{s}:" + ",".join(f"{k}{m:+d}" for k, m in
+                                           (_em._FEATURES_HIT if s == "hit" else _em._FEATURES_PIT))
+                        for s in ("hit", "pit"))
+        feats = _hashlib.sha256(_spec.encode()).hexdigest()[:8]
+    except Exception:
+        feats = "unavailable"
+    return (f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}|roles={roles}"
+            f"|feats={feats}")
 
 
 # ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /

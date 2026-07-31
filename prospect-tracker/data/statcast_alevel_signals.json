@@ -49,26 +49,26 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.352,
-"whiff_z": 1.1682,
+"whiff_share": 0.349,
+"whiff_z": 1.1278,
 "k_z": 1.0374,
-"n_pitches": 711
+"n_pitches": 724
 },
 "683332": {
 "level": "A",
 "season": 2026,
 "side": "pit",
-"fb_velo": 92.81,
-"velo_z": -0.225,
+"fb_velo": 92.71,
+"velo_z": -0.2855,
 "k_a_z": 0.7466,
-"n_pitches": 1119
+"n_pitches": 1212
 },
 "689052": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.278,
-"whiff_z": 0.1278,
+"whiff_z": 0.1267,
 "k_z": -0.1646,
 "n_pitches": 684
 },
@@ -77,7 +77,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.3,
-"velo_z": 0.6971,
+"velo_z": 0.6997,
 "k_a_z": -1.6637,
 "n_pitches": 613
 },
@@ -85,17 +85,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.211,
-"whiff_z": -0.8143,
+"whiff_share": 0.214,
+"whiff_z": -0.7757,
 "k_z": -0.8862,
-"n_pitches": 1022
+"n_pitches": 1041
 },
 "692031": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.352,
-"whiff_z": 1.1682,
+"whiff_z": 1.1701,
 "k_z": 1.5716,
 "n_pitches": 955
 },
@@ -104,7 +104,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.187,
-"whiff_z": -1.1517,
+"whiff_z": -1.1564,
 "k_z": -0.8453,
 "n_pitches": 1161
 },
@@ -113,7 +113,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.47,
-"velo_z": -0.4354,
+"velo_z": -0.4342,
 "k_a_z": -1.3577,
 "n_pitches": 671
 },
@@ -122,25 +122,25 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.271,
-"whiff_z": 0.0293,
+"whiff_z": 0.028,
 "k_z": -0.3673,
-"n_pitches": 1554
+"n_pitches": 1579
 },
 "692391": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 96.1,
-"velo_z": 1.8111,
+"velo_z": 1.815,
 "k_a_z": -1.2136,
-"n_pitches": 568
+"n_pitches": 574
 },
 "692591": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.233,
-"whiff_z": -0.5049,
+"whiff_z": -0.5078,
 "k_z": -0.4987,
 "n_pitches": 1041
 },
@@ -149,16 +149,16 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.297,
-"whiff_z": 0.3949,
+"whiff_z": 0.3946,
 "k_z": -0.0428,
-"n_pitches": 1380
+"n_pitches": 1396
 },
 "694223": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.329,
-"whiff_z": 0.8448,
+"whiff_z": 0.8458,
 "k_z": 0.4291,
 "n_pitches": 738
 },
@@ -167,7 +167,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.259,
-"whiff_z": -0.1394,
+"whiff_z": -0.1412,
 "k_z": -0.1188,
 "n_pitches": 757
 },
@@ -175,17 +175,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.275,
-"whiff_z": 0.0856,
+"whiff_share": 0.273,
+"whiff_z": 0.0562,
 "k_z": 0.0112,
-"n_pitches": 1082
+"n_pitches": 1105
 },
 "695301": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.264,
-"whiff_z": -0.0691,
+"whiff_z": -0.0707,
 "k_z": -0.148,
 "n_pitches": 739
 },
@@ -203,7 +203,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.337,
-"whiff_z": 0.9573,
+"whiff_z": 0.9586,
 "k_z": 0.619,
 "n_pitches": 1117
 },
@@ -212,16 +212,16 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.224,
-"whiff_z": -0.6315,
+"whiff_z": -0.6347,
 "k_z": -0.3569,
-"n_pitches": 1577
+"n_pitches": 1606
 },
 "695659": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.374,
-"whiff_z": 1.4775,
+"whiff_z": 1.4803,
 "k_z": 1.5372,
 "n_pitches": 802
 },
@@ -230,7 +230,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.81,
-"velo_z": -0.225,
+"velo_z": -0.2235,
 "k_a_z": -0.6296,
 "n_pitches": 602
 },
@@ -239,7 +239,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.313,
-"whiff_z": 0.6198,
+"whiff_z": 0.6202,
 "k_z": 1.5039,
 "n_pitches": 653
 },
@@ -248,7 +248,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.44,
-"velo_z": 0.1649,
+"velo_z": 0.1669,
 "k_a_z": -0.31,
 "n_pitches": 702
 },
@@ -257,7 +257,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.144,
-"whiff_z": -1.7563,
+"whiff_z": -1.7626,
 "k_z": -2.4095,
 "n_pitches": 639
 },
@@ -275,7 +275,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.295,
-"whiff_z": 0.3668,
+"whiff_z": 0.3664,
 "k_z": 0.2026,
 "n_pitches": 881
 },
@@ -284,7 +284,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.211,
-"whiff_z": -0.8143,
+"whiff_z": -0.818,
 "k_z": -1.4175,
 "n_pitches": 1146
 },
@@ -293,7 +293,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 90.89,
-"velo_z": -1.4132,
+"velo_z": -1.4131,
 "k_a_z": -0.984,
 "n_pitches": 733
 },
@@ -301,17 +301,17 @@
 "level": "A",
 "season": 2026,
 "side": "pit",
-"fb_velo": 95.18,
-"velo_z": 1.2417,
+"fb_velo": 95.2,
+"velo_z": 1.2574,
 "k_a_z": -0.8288,
-"n_pitches": 677
+"n_pitches": 709
 },
 "700429": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 91.25,
-"velo_z": -1.1904,
+"velo_z": -1.1901,
 "k_a_z": -0.1617,
 "n_pitches": 663
 },
@@ -320,7 +320,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.87,
-"velo_z": 0.431,
+"velo_z": 0.4333,
 "k_a_z": 1.5913,
 "n_pitches": 851
 },
@@ -328,17 +328,17 @@
 "level": "A",
 "season": 2026,
 "side": "pit",
-"fb_velo": 92.21,
-"velo_z": -0.5963,
+"fb_velo": 92.25,
+"velo_z": -0.5705,
 "k_a_z": -0.5985,
-"n_pitches": 670
+"n_pitches": 698
 },
 "701136": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.31,
-"whiff_z": 0.5777,
+"whiff_z": 0.5779,
 "k_z": -0.141,
 "n_pitches": 920
 },
@@ -347,7 +347,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.302,
-"whiff_z": 0.4652,
+"whiff_z": 0.4651,
 "k_z": 0.202,
 "n_pitches": 1218
 },
@@ -356,7 +356,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.272,
-"whiff_z": 0.0434,
+"whiff_z": 0.0421,
 "k_z": -0.1227,
 "n_pitches": 598
 },
@@ -364,26 +364,26 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.302,
-"whiff_z": 0.4652,
+"whiff_share": 0.301,
+"whiff_z": 0.451,
 "k_z": -0.0533,
-"n_pitches": 1238
+"n_pitches": 1250
 },
 "701361": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.06,
-"velo_z": 0.5486,
+"velo_z": 0.551,
 "k_a_z": 0.7786,
-"n_pitches": 825
+"n_pitches": 880
 },
 "701368": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.43,
-"velo_z": -0.4601,
+"velo_z": -0.4589,
 "k_a_z": 1.0941,
 "n_pitches": 782
 },
@@ -392,7 +392,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.113,
-"whiff_z": -2.1921,
+"whiff_z": -2.1997,
 "k_z": -2.245,
 "n_pitches": 1291
 },
@@ -401,7 +401,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 96.7,
-"velo_z": 2.1824,
+"velo_z": 2.1868,
 "k_a_z": -0.6876,
 "n_pitches": 650
 },
@@ -410,7 +410,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.321,
-"whiff_z": 0.7323,
+"whiff_z": 0.733,
 "k_z": 0.5943,
 "n_pitches": 795
 },
@@ -419,25 +419,25 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 91.3,
-"velo_z": -1.1594,
+"velo_z": -1.1591,
 "k_a_z": 0.0261,
-"n_pitches": 480
+"n_pitches": 552
 },
 "701520": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.308,
-"whiff_z": 0.5495,
+"whiff_share": 0.31,
+"whiff_z": 0.5779,
 "k_z": 0.5468,
-"n_pitches": 1377
+"n_pitches": 1397
 },
 "701706": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 97.39,
-"velo_z": 2.6094,
+"velo_z": 2.6143,
 "k_a_z": 0.1845,
 "n_pitches": 624
 },
@@ -446,16 +446,16 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.25,
-"whiff_z": -0.2659,
+"whiff_z": -0.2681,
 "k_z": -0.1893,
-"n_pitches": 1515
+"n_pitches": 1539
 },
 "701820": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.31,
-"whiff_z": 0.5777,
+"whiff_z": 0.5779,
 "k_z": 0.1232,
 "n_pitches": 767
 },
@@ -464,7 +464,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.291,
-"whiff_z": 0.3105,
+"whiff_z": 0.31,
 "k_z": 0.2711,
 "n_pitches": 696
 },
@@ -473,7 +473,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.58,
-"velo_z": 0.8704,
+"velo_z": 0.8732,
 "k_a_z": 1.9822,
 "n_pitches": 909
 },
@@ -482,7 +482,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.299,
-"whiff_z": 0.423,
+"whiff_z": 0.4228,
 "k_z": 0.5161,
 "n_pitches": 712
 },
@@ -491,7 +491,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.255,
-"whiff_z": -0.1956,
+"whiff_z": -0.1976,
 "k_z": -0.059,
 "n_pitches": 803
 },
@@ -500,16 +500,16 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.351,
-"whiff_z": 1.1541,
+"whiff_z": 1.156,
 "k_z": 1.056,
-"n_pitches": 968
+"n_pitches": 983
 },
 "702522": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.236,
-"whiff_z": -0.4628,
+"whiff_z": -0.4655,
 "k_z": -0.3953,
 "n_pitches": 1427
 },
@@ -518,7 +518,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.193,
-"whiff_z": -1.0673,
+"whiff_z": -1.0718,
 "k_z": -1.0104,
 "n_pitches": 689
 },
@@ -527,7 +527,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.302,
-"whiff_z": 0.4652,
+"whiff_z": 0.4651,
 "k_z": 0.13,
 "n_pitches": 1162
 },
@@ -536,7 +536,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.53,
-"velo_z": 0.8395,
+"velo_z": 0.8422,
 "k_a_z": -0.5666,
 "n_pitches": 608
 },
@@ -545,7 +545,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.23,
-"whiff_z": -0.5471,
+"whiff_z": -0.5501,
 "k_z": -0.8556,
 "n_pitches": 892
 },
@@ -554,7 +554,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.253,
-"whiff_z": -0.2237,
+"whiff_z": -0.2258,
 "k_z": 0.0119,
 "n_pitches": 796
 },
@@ -563,7 +563,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.294,
-"whiff_z": 0.3527,
+"whiff_z": 0.3523,
 "k_z": 0.0945,
 "n_pitches": 1400
 },
@@ -581,7 +581,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.29,
-"whiff_z": 0.2965,
+"whiff_z": 0.2959,
 "k_z": -0.0797,
 "n_pitches": 571
 },
@@ -589,46 +589,46 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.34,
-"whiff_z": 0.9995,
+"whiff_share": 0.339,
+"whiff_z": 0.9868,
 "k_z": 0.152,
-"n_pitches": 813
+"n_pitches": 822
 },
 "703158": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.283,
-"whiff_z": 0.1981,
+"whiff_share": 0.285,
+"whiff_z": 0.2254,
 "k_z": 0.5578,
-"n_pitches": 1267
+"n_pitches": 1294
 },
 "703159": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.348,
-"whiff_z": 1.1119,
+"whiff_share": 0.349,
+"whiff_z": 1.1278,
 "k_z": 1.1858,
-"n_pitches": 909
+"n_pitches": 923
 },
 "703192": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.275,
-"whiff_z": 0.0856,
+"whiff_z": 0.0844,
 "k_z": -0.3393,
-"n_pitches": 1306
+"n_pitches": 1323
 },
 "703200": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.183,
-"whiff_z": -1.2079,
+"whiff_share": 0.18,
+"whiff_z": -1.2551,
 "k_z": -1.3022,
-"n_pitches": 635
+"n_pitches": 642
 },
 "703415": {
 "level": "CPX",
@@ -643,26 +643,26 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.21,
-"whiff_z": -0.8283,
+"whiff_share": 0.205,
+"whiff_z": -0.9026,
 "k_z": -1.0201,
-"n_pitches": 1192
+"n_pitches": 1215
 },
 "703563": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.339,
-"whiff_z": 0.9854,
+"whiff_z": 0.9868,
 "k_z": 0.3117,
-"n_pitches": 1145
+"n_pitches": 1161
 },
 "703603": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.391,
-"whiff_z": 1.7165,
+"whiff_z": 1.72,
 "k_z": 1.501,
 "n_pitches": 953
 },
@@ -671,7 +671,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.415,
-"whiff_z": 2.0539,
+"whiff_z": 2.0584,
 "k_z": 1.4827,
 "n_pitches": 1080
 },
@@ -680,7 +680,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.247,
-"whiff_z": -0.3081,
+"whiff_z": -0.3104,
 "k_z": -0.223,
 "n_pitches": 745
 },
@@ -689,7 +689,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.155,
-"whiff_z": -1.6016,
+"whiff_z": -1.6076,
 "k_z": -1.7947,
 "n_pitches": 657
 },
@@ -698,7 +698,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.298,
-"whiff_z": 0.4089,
+"whiff_z": 0.4087,
 "k_z": 0.2842,
 "n_pitches": 1241
 },
@@ -707,7 +707,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.66,
-"velo_z": -0.3178,
+"velo_z": -0.3164,
 "k_a_z": -0.4975,
 "n_pitches": 386
 },
@@ -725,7 +725,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.329,
-"whiff_z": 0.8448,
+"whiff_z": 0.8458,
 "k_z": 0.6126,
 "n_pitches": 923
 },
@@ -733,35 +733,35 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.179,
-"whiff_z": -1.2642,
+"whiff_share": 0.173,
+"whiff_z": -1.3538,
 "k_z": -1.5748,
-"n_pitches": 1126
+"n_pitches": 1160
 },
 "800182": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.287,
-"whiff_z": 0.2543,
+"whiff_share": 0.285,
+"whiff_z": 0.2254,
 "k_z": -0.4281,
-"n_pitches": 1228
+"n_pitches": 1245
 },
 "800197": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.341,
-"whiff_z": 1.0135,
+"whiff_z": 1.015,
 "k_z": 0.6346,
-"n_pitches": 899
+"n_pitches": 923
 },
 "800201": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.261,
-"whiff_z": -0.1113,
+"whiff_z": -0.113,
 "k_z": -0.1646,
 "n_pitches": 1077
 },
@@ -769,35 +769,35 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.211,
-"whiff_z": -0.8143,
+"whiff_share": 0.212,
+"whiff_z": -0.8039,
 "k_z": -0.9617,
-"n_pitches": 1601
+"n_pitches": 1619
 },
 "800204": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.266,
-"whiff_z": -0.041,
+"whiff_share": 0.269,
+"whiff_z": -0.0002,
 "k_z": 0.0927,
-"n_pitches": 1121
+"n_pitches": 1136
 },
 "800246": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.205,
-"whiff_z": -0.8986,
+"whiff_z": -0.9026,
 "k_z": -0.2032,
-"n_pitches": 1178
+"n_pitches": 1193
 },
 "800254": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.261,
-"whiff_z": -0.1113,
+"whiff_z": -0.113,
 "k_z": -0.5064,
 "n_pitches": 756
 },
@@ -805,17 +805,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.337,
-"whiff_z": 0.9573,
+"whiff_share": 0.332,
+"whiff_z": 0.8881,
 "k_z": 0.6104,
-"n_pitches": 1214
+"n_pitches": 1228
 },
 "800276": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.216,
-"whiff_z": -0.744,
+"whiff_z": -0.7475,
 "k_z": -0.1257,
 "n_pitches": 1139
 },
@@ -823,17 +823,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.194,
-"whiff_z": -1.0533,
+"whiff_share": 0.196,
+"whiff_z": -1.0295,
 "k_z": -1.7243,
-"n_pitches": 687
+"n_pitches": 704
 },
 "800295": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.03,
-"velo_z": 0.53,
+"velo_z": 0.5324,
 "k_a_z": 0.2129,
 "n_pitches": 600
 },
@@ -842,25 +842,25 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.294,
-"whiff_z": 0.3527,
+"whiff_z": 0.3523,
 "k_z": -0.4643,
-"n_pitches": 1402
+"n_pitches": 1421
 },
 "800316": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.234,
-"whiff_z": -0.4909,
+"whiff_share": 0.24,
+"whiff_z": -0.4091,
 "k_z": -0.6464,
-"n_pitches": 809
+"n_pitches": 830
 },
 "800348": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.406,
-"whiff_z": 1.9274,
+"whiff_z": 1.9315,
 "k_z": 1.5486,
 "n_pitches": 984
 },
@@ -869,7 +869,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.18,
-"whiff_z": -1.2501,
+"whiff_z": -1.2551,
 "k_z": -1.5412,
 "n_pitches": 1054
 },
@@ -878,7 +878,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.267,
-"whiff_z": -0.0269,
+"whiff_z": -0.0284,
 "k_z": -0.4882,
 "n_pitches": 671
 },
@@ -887,7 +887,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.302,
-"whiff_z": 0.4652,
+"whiff_z": 0.4651,
 "k_z": -0.2564,
 "n_pitches": 748
 },
@@ -896,7 +896,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.253,
-"whiff_z": -0.2237,
+"whiff_z": -0.2258,
 "k_z": -0.0145,
 "n_pitches": 1065
 },
@@ -905,7 +905,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.93,
-"velo_z": -0.1507,
+"velo_z": -0.1491,
 "k_a_z": -1.2057,
 "n_pitches": 596
 },
@@ -914,7 +914,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.193,
-"whiff_z": -1.0673,
+"whiff_z": -1.0718,
 "k_z": -1.155,
 "n_pitches": 855
 },
@@ -922,17 +922,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.272,
-"whiff_z": 0.0434,
+"whiff_share": 0.271,
+"whiff_z": 0.028,
 "k_z": -0.4227,
-"n_pitches": 972
+"n_pitches": 987
 },
 "800452": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.3,
-"velo_z": 0.0783,
+"velo_z": 0.0801,
 "k_a_z": 0.7842,
 "n_pitches": 509
 },
@@ -949,17 +949,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.332,
-"whiff_z": 0.887,
+"whiff_share": 0.333,
+"whiff_z": 0.9022,
 "k_z": 0.4567,
-"n_pitches": 1149
+"n_pitches": 1166
 },
 "800540": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.162,
-"whiff_z": -1.5032,
+"whiff_z": -1.5089,
 "k_z": -1.8131,
 "n_pitches": 949
 },
@@ -968,16 +968,16 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.199,
-"whiff_z": -0.983,
+"whiff_z": -0.9872,
 "k_z": 0.2314,
-"n_pitches": 729
+"n_pitches": 745
 },
 "800840": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.257,
-"whiff_z": -0.1675,
+"whiff_z": -0.1694,
 "k_z": -0.0145,
 "n_pitches": 1144
 },
@@ -986,7 +986,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.381,
-"whiff_z": 1.5759,
+"whiff_z": 1.579,
 "k_z": 1.789,
 "n_pitches": 685
 },
@@ -995,7 +995,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 91.2,
-"velo_z": -1.2213,
+"velo_z": -1.2211,
 "k_a_z": -1.0358,
 "n_pitches": 740
 },
@@ -1004,7 +1004,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.19,
-"velo_z": 0.0102,
+"velo_z": 0.012,
 "k_a_z": 1.6091,
 "n_pitches": 1123
 },
@@ -1022,7 +1022,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.3,
-"velo_z": 0.6971,
+"velo_z": 0.6997,
 "k_a_z": -0.9409,
 "n_pitches": 1055
 },
@@ -1031,7 +1031,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.176,
-"whiff_z": -1.3064,
+"whiff_z": -1.3115,
 "k_z": -1.1821,
 "n_pitches": 1178
 },
@@ -1039,17 +1039,17 @@
 "level": "A",
 "season": 2026,
 "side": "pit",
-"fb_velo": 91.0,
-"velo_z": -1.3451,
+"fb_velo": 91.1,
+"velo_z": -1.283,
 "k_a_z": -0.7068,
-"n_pitches": 599
+"n_pitches": 642
 },
 "801686": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.251,
-"whiff_z": -0.2519,
+"whiff_z": -0.254,
 "k_z": 0.3712,
 "n_pitches": 990
 },
@@ -1058,7 +1058,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.301,
-"whiff_z": 0.4511,
+"whiff_z": 0.451,
 "k_z": 0.5988,
 "n_pitches": 1423
 },
@@ -1067,16 +1067,16 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.364,
-"whiff_z": 1.3369,
+"whiff_z": 1.3393,
 "k_z": 1.5869,
-"n_pitches": 680
+"n_pitches": 700
 },
 "802082": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.279,
-"whiff_z": 0.1418,
+"whiff_z": 0.1408,
 "k_z": -0.1504,
 "n_pitches": 558
 },
@@ -1085,7 +1085,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 89.67,
-"velo_z": -2.1682,
+"velo_z": -2.1691,
 "k_a_z": -1.393,
 "n_pitches": 573
 },
@@ -1094,7 +1094,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.39,
-"velo_z": 0.7528,
+"velo_z": 0.7555,
 "k_a_z": -0.0249,
 "n_pitches": 578
 },
@@ -1102,17 +1102,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.187,
-"whiff_z": -1.1517,
+"whiff_share": 0.186,
+"whiff_z": -1.1705,
 "k_z": -0.8743,
-"n_pitches": 1464
+"n_pitches": 1477
 },
 "802412": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 95.49,
-"velo_z": 1.4336,
+"velo_z": 1.4371,
 "k_a_z": 0.4214,
 "n_pitches": 955
 },
@@ -1121,9 +1121,9 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.184,
-"whiff_z": -1.1939,
+"whiff_z": -1.1987,
 "k_z": -0.4882,
-"n_pitches": 692
+"n_pitches": 717
 },
 "802508": {
 "level": "CPX",
@@ -1139,34 +1139,34 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.218,
-"whiff_z": -0.7158,
+"whiff_z": -0.7193,
 "k_z": -0.4692,
-"n_pitches": 1255
+"n_pitches": 1285
 },
 "803067": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.209,
-"whiff_z": -0.8424,
+"whiff_z": -0.8462,
 "k_z": -0.9865,
-"n_pitches": 717
+"n_pitches": 730
 },
 "803102": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.338,
-"whiff_z": 0.9713,
+"whiff_share": 0.34,
+"whiff_z": 1.0009,
 "k_z": 1.1057,
-"n_pitches": 1324
+"n_pitches": 1351
 },
 "803241": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.183,
-"whiff_z": -1.2079,
+"whiff_z": -1.2128,
 "k_z": -1.613,
 "n_pitches": 583
 },
@@ -1175,34 +1175,34 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.4,
-"whiff_z": 1.8431,
+"whiff_z": 1.8469,
 "k_z": 1.1076,
-"n_pitches": 1115
+"n_pitches": 1131
 },
 "803426": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.201,
-"whiff_z": -0.9549,
+"whiff_share": 0.202,
+"whiff_z": -0.9449,
 "k_z": -0.3395,
-"n_pitches": 765
+"n_pitches": 786
 },
 "803723": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.176,
-"whiff_z": -1.3064,
+"whiff_share": 0.181,
+"whiff_z": -1.241,
 "k_z": -1.3659,
-"n_pitches": 1060
+"n_pitches": 1082
 },
 "803811": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.263,
-"whiff_z": -0.0831,
+"whiff_z": -0.0848,
 "k_z": 0.1045,
 "n_pitches": 641
 },
@@ -1210,17 +1210,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.252,
-"whiff_z": -0.2378,
+"whiff_share": 0.258,
+"whiff_z": -0.1553,
 "k_z": -0.312,
-"n_pitches": 1241
+"n_pitches": 1256
 },
 "804613": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.32,
-"velo_z": 0.0907,
+"velo_z": 0.0925,
 "k_a_z": -1.6617,
 "n_pitches": 623
 },
@@ -1229,7 +1229,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.52,
-"velo_z": 0.2144,
+"velo_z": 0.2164,
 "k_a_z": -0.3713,
 "n_pitches": 406
 },
@@ -1238,7 +1238,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.31,
-"whiff_z": 0.5777,
+"whiff_z": 0.5779,
 "k_z": 1.0314,
 "n_pitches": 896
 },
@@ -1247,7 +1247,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 90.1,
-"velo_z": -1.902,
+"velo_z": -1.9026,
 "k_a_z": 0.2657,
 "n_pitches": 969
 },
@@ -1256,16 +1256,16 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.213,
-"whiff_z": -0.7861,
+"whiff_z": -0.7898,
 "k_z": -1.1012,
-"n_pitches": 1271
+"n_pitches": 1294
 },
 "804892": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 90.25,
-"velo_z": -1.8092,
+"velo_z": -1.8097,
 "k_a_z": 0.1723,
 "n_pitches": 1255
 },
@@ -1274,7 +1274,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.142,
-"whiff_z": -1.7844,
+"whiff_z": -1.7908,
 "k_z": -1.5487,
 "n_pitches": 1062
 },
@@ -1283,7 +1283,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.348,
-"whiff_z": 1.1119,
+"whiff_z": 1.1137,
 "k_z": 0.4996,
 "n_pitches": 1382
 },
@@ -1292,7 +1292,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.204,
-"whiff_z": -0.9127,
+"whiff_z": -0.9167,
 "k_z": -0.3549,
 "n_pitches": 768
 },
@@ -1301,7 +1301,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.19,
-"velo_z": 0.0102,
+"velo_z": 0.012,
 "k_a_z": 0.1007,
 "n_pitches": 578
 },
@@ -1310,7 +1310,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.7,
-"velo_z": -0.293,
+"velo_z": -0.2916,
 "k_a_z": -0.2829,
 "n_pitches": 768
 },
@@ -1318,10 +1318,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.32,
-"whiff_z": 0.7183,
+"whiff_share": 0.313,
+"whiff_z": 0.6202,
 "k_z": 0.6043,
-"n_pitches": 631
+"n_pitches": 662
 },
 "805063": {
 "level": "CPX",
@@ -1336,17 +1336,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.247,
-"whiff_z": -0.3081,
+"whiff_share": 0.249,
+"whiff_z": -0.2822,
 "k_z": -0.1188,
-"n_pitches": 926
+"n_pitches": 935
 },
 "805207": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.114,
-"whiff_z": -2.1781,
+"whiff_z": -2.1856,
 "k_z": -2.8417,
 "n_pitches": 460
 },
@@ -1354,17 +1354,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.284,
-"whiff_z": 0.2121,
+"whiff_share": 0.285,
+"whiff_z": 0.2254,
 "k_z": 0.3402,
-"n_pitches": 1331
+"n_pitches": 1355
 },
 "805371": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.252,
-"whiff_z": -0.2378,
+"whiff_z": -0.2399,
 "k_z": -0.2896,
 "n_pitches": 1078
 },
@@ -1372,26 +1372,26 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.252,
-"whiff_z": -0.2378,
+"whiff_share": 0.254,
+"whiff_z": -0.2117,
 "k_z": -0.377,
-"n_pitches": 750
+"n_pitches": 769
 },
 "805550": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.226,
-"whiff_z": -0.6034,
+"whiff_share": 0.229,
+"whiff_z": -0.5642,
 "k_z": -0.3138,
-"n_pitches": 1442
+"n_pitches": 1469
 },
 "805590": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.134,
-"whiff_z": -1.8969,
+"whiff_z": -1.9036,
 "k_z": -0.9207,
 "n_pitches": 815
 },
@@ -1400,7 +1400,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.79,
-"velo_z": 1.0004,
+"velo_z": 1.0033,
 "k_a_z": 0.4154,
 "n_pitches": 771
 },
@@ -1409,7 +1409,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.9,
-"velo_z": -0.1693,
+"velo_z": -0.1677,
 "k_a_z": 2.5243,
 "n_pitches": 633
 },
@@ -1418,7 +1418,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.279,
-"whiff_z": 0.1418,
+"whiff_z": 0.1408,
 "k_z": -0.3519,
 "n_pitches": 1069
 },
@@ -1427,7 +1427,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.173,
-"whiff_z": -1.3485,
+"whiff_z": -1.3538,
 "k_z": -1.4481,
 "n_pitches": 1287
 },
@@ -1436,7 +1436,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.336,
-"whiff_z": 0.9432,
+"whiff_z": 0.9445,
 "k_z": 0.7911,
 "n_pitches": 1256
 },
@@ -1444,17 +1444,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.228,
-"whiff_z": -0.5752,
+"whiff_share": 0.226,
+"whiff_z": -0.6065,
 "k_z": -0.6545,
-"n_pitches": 686
+"n_pitches": 693
 },
 "806120": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.312,
-"whiff_z": 0.6058,
+"whiff_z": 0.6061,
 "k_z": 1.1485,
 "n_pitches": 1462
 },
@@ -1463,7 +1463,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.282,
-"whiff_z": 0.184,
+"whiff_z": 0.1831,
 "k_z": 0.2314,
 "n_pitches": 710
 },
@@ -1472,7 +1472,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.337,
-"whiff_z": 0.9573,
+"whiff_z": 0.9586,
 "k_z": 1.6087,
 "n_pitches": 846
 },
@@ -1481,7 +1481,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.234,
-"whiff_z": -0.4909,
+"whiff_z": -0.4937,
 "k_z": 0.1805,
 "n_pitches": 1487
 },
@@ -1490,7 +1490,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.217,
-"whiff_z": -0.7299,
+"whiff_z": -0.7334,
 "k_z": -0.289,
 "n_pitches": 1250
 },
@@ -1499,16 +1499,16 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.416,
-"whiff_z": 2.068,
+"whiff_z": 2.0725,
 "k_z": 1.2824,
-"n_pitches": 1567
+"n_pitches": 1592
 },
 "806244": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.4,
-"velo_z": 0.1402,
+"velo_z": 0.1421,
 "k_a_z": -0.1672,
 "n_pitches": 529
 },
@@ -1517,7 +1517,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.292,
-"whiff_z": 0.3246,
+"whiff_z": 0.3241,
 "k_z": 0.59,
 "n_pitches": 1119
 },
@@ -1526,7 +1526,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.57,
-"velo_z": -0.3735,
+"velo_z": -0.3722,
 "k_a_z": -0.2276,
 "n_pitches": 869
 },
@@ -1535,7 +1535,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.331,
-"whiff_z": 0.8729,
+"whiff_z": 0.874,
 "k_z": 0.6346,
 "n_pitches": 760
 },
@@ -1544,7 +1544,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 91.76,
-"velo_z": -0.8747,
+"velo_z": -0.8741,
 "k_a_z": -1.4317,
 "n_pitches": 334
 },
@@ -1553,7 +1553,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.63,
-"velo_z": 0.2825,
+"velo_z": 0.2846,
 "k_a_z": -0.6302,
 "n_pitches": 702
 },
@@ -1562,7 +1562,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 91.97,
-"velo_z": -0.7448,
+"velo_z": -0.744,
 "k_a_z": -0.3341,
 "n_pitches": 835
 },
@@ -1571,7 +1571,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.183,
-"whiff_z": -1.2079,
+"whiff_z": -1.2128,
 "k_z": -0.2947,
 "n_pitches": 1198
 },
@@ -1598,7 +1598,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.329,
-"whiff_z": 0.8448,
+"whiff_z": 0.8458,
 "k_z": 0.5282,
 "n_pitches": 1123
 },
@@ -1606,35 +1606,35 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.23,
-"whiff_z": -0.5471,
+"whiff_share": 0.231,
+"whiff_z": -0.536,
 "k_z": -0.6758,
-"n_pitches": 1436
+"n_pitches": 1455
 },
 "806961": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.317,
-"whiff_z": 0.6761,
+"whiff_share": 0.313,
+"whiff_z": 0.6202,
 "k_z": 0.4038,
-"n_pitches": 1135
+"n_pitches": 1142
 },
 "806963": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.328,
-"whiff_z": 0.8307,
+"whiff_z": 0.8317,
 "k_z": 0.3605,
-"n_pitches": 949
+"n_pitches": 965
 },
 "806967": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.354,
-"whiff_z": 1.1963,
+"whiff_z": 1.1983,
 "k_z": 0.8178,
 "n_pitches": 823
 },
@@ -1642,26 +1642,26 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.503,
-"whiff_z": 3.2912,
+"whiff_share": 0.504,
+"whiff_z": 3.3133,
 "k_z": 2.8425,
-"n_pitches": 742
+"n_pitches": 757
 },
 "806984": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.34,
-"whiff_z": 0.9995,
+"whiff_z": 1.0009,
 "k_z": 0.7394,
-"n_pitches": 1090
+"n_pitches": 1126
 },
 "806993": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.318,
-"whiff_z": 0.6901,
+"whiff_z": 0.6907,
 "k_z": 0.8508,
 "n_pitches": 1161
 },
@@ -1669,17 +1669,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.214,
-"whiff_z": -0.7721,
+"whiff_share": 0.213,
+"whiff_z": -0.7898,
 "k_z": -1.5775,
-"n_pitches": 1359
+"n_pitches": 1384
 },
 "806995": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.315,
-"whiff_z": 0.648,
+"whiff_z": 0.6484,
 "k_z": -0.1816,
 "n_pitches": 1251
 },
@@ -1688,7 +1688,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.432,
-"whiff_z": 2.293,
+"whiff_z": 2.2981,
 "k_z": 2.9233,
 "n_pitches": 792
 },
@@ -1696,17 +1696,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.34,
-"whiff_z": 0.9995,
+"whiff_share": 0.338,
+"whiff_z": 0.9727,
 "k_z": 0.6802,
-"n_pitches": 623
+"n_pitches": 637
 },
 "807002": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.65,
-"velo_z": -0.324,
+"velo_z": -0.3226,
 "k_a_z": -0.5844,
 "n_pitches": 1049
 },
@@ -1724,7 +1724,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.192,
-"whiff_z": -1.0814,
+"whiff_z": -1.0859,
 "k_z": -0.4183,
 "n_pitches": 645
 },
@@ -1741,26 +1741,26 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.229,
-"whiff_z": -0.5612,
+"whiff_share": 0.228,
+"whiff_z": -0.5783,
 "k_z": 0.4225,
-"n_pitches": 1056
+"n_pitches": 1074
 },
 "807239": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.24,
-"whiff_z": -0.4065,
+"whiff_z": -0.4091,
 "k_z": -0.0728,
-"n_pitches": 1428
+"n_pitches": 1446
 },
 "807256": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.087,
-"whiff_z": -2.5577,
+"whiff_z": -2.5663,
 "k_z": -2.5804,
 "n_pitches": 543
 },
@@ -1769,7 +1769,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.238,
-"whiff_z": -0.4346,
+"whiff_z": -0.4373,
 "k_z": -0.2379,
 "n_pitches": 874
 },
@@ -1778,7 +1778,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.328,
-"whiff_z": 0.8307,
+"whiff_z": 0.8317,
 "k_z": 0.3453,
 "n_pitches": 953
 },
@@ -1787,7 +1787,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.5,
-"velo_z": 0.2021,
+"velo_z": 0.204,
 "k_a_z": 0.2633,
 "n_pitches": 669
 },
@@ -1796,7 +1796,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.55,
-"velo_z": -0.3859,
+"velo_z": -0.3846,
 "k_a_z": -0.8085,
 "n_pitches": 319
 },
@@ -1823,9 +1823,9 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.22,
-"whiff_z": -0.6877,
+"whiff_z": -0.6911,
 "k_z": -0.7543,
-"n_pitches": 1460
+"n_pitches": 1493
 },
 "807966": {
 "level": "CPX",
@@ -1868,7 +1868,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.85,
-"velo_z": 1.0375,
+"velo_z": 1.0405,
 "k_a_z": 1.7617,
 "n_pitches": 627
 },
@@ -1877,7 +1877,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.284,
-"whiff_z": 0.2121,
+"whiff_z": 0.2113,
 "k_z": 0.1559,
 "n_pitches": 1015
 },
@@ -1886,7 +1886,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.221,
-"whiff_z": -0.6737,
+"whiff_z": -0.677,
 "k_z": -0.8145,
 "n_pitches": 791
 },
@@ -1895,9 +1895,9 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.329,
-"whiff_z": 0.8448,
+"whiff_z": 0.8458,
 "k_z": 0.6043,
-"n_pitches": 671
+"n_pitches": 685
 },
 "808028": {
 "level": "CPX",
@@ -1922,7 +1922,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.257,
-"whiff_z": -0.1675,
+"whiff_z": -0.1694,
 "k_z": -0.2379,
 "n_pitches": 893
 },
@@ -1930,19 +1930,19 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.24,
-"whiff_z": -0.4065,
+"whiff_share": 0.243,
+"whiff_z": -0.3668,
 "k_z": -0.297,
-"n_pitches": 915
+"n_pitches": 928
 },
 "808067": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.301,
-"whiff_z": 0.4511,
+"whiff_share": 0.297,
+"whiff_z": 0.3946,
 "k_z": 0.4097,
-"n_pitches": 1084
+"n_pitches": 1108
 },
 "808079": {
 "level": "CPX",
@@ -1967,7 +1967,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.283,
-"whiff_z": 0.1981,
+"whiff_z": 0.1972,
 "k_z": 0.8932,
 "n_pitches": 677
 },
@@ -1984,10 +1984,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.272,
-"whiff_z": 0.0434,
+"whiff_share": 0.273,
+"whiff_z": 0.0562,
 "k_z": 0.5643,
-"n_pitches": 1306
+"n_pitches": 1317
 },
 "808116": {
 "level": "CPX",
@@ -2003,7 +2003,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.223,
-"whiff_z": -0.6455,
+"whiff_z": -0.6488,
 "k_z": -0.8422,
 "n_pitches": 580
 },
@@ -2012,7 +2012,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.394,
-"whiff_z": 1.7587,
+"whiff_z": 1.7623,
 "k_z": 1.8266,
 "n_pitches": 769
 },
@@ -2030,7 +2030,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.25,
-"whiff_z": -0.2659,
+"whiff_z": -0.2681,
 "k_z": 0.136,
 "n_pitches": 1115
 },
@@ -2047,10 +2047,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.251,
-"whiff_z": -0.2519,
+"whiff_share": 0.253,
+"whiff_z": -0.2258,
 "k_z": -0.2792,
-"n_pitches": 1135
+"n_pitches": 1148
 },
 "808155": {
 "level": "CPX",
@@ -2075,7 +2075,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.299,
-"whiff_z": 0.423,
+"whiff_z": 0.4228,
 "k_z": 0.7185,
 "n_pitches": 1007
 },
@@ -2083,17 +2083,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.38,
-"whiff_z": 1.5619,
+"whiff_share": 0.382,
+"whiff_z": 1.5931,
 "k_z": 1.4315,
-"n_pitches": 740
+"n_pitches": 748
 },
 "808220": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.315,
-"whiff_z": 0.648,
+"whiff_z": 0.6484,
 "k_z": 0.8123,
 "n_pitches": 685
 },
@@ -2102,7 +2102,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.267,
-"whiff_z": -0.0269,
+"whiff_z": -0.0284,
 "k_z": -0.4147,
 "n_pitches": 609
 },
@@ -2111,7 +2111,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.187,
-"whiff_z": -1.1517,
+"whiff_z": -1.1564,
 "k_z": -1.5707,
 "n_pitches": 943
 },
@@ -2120,18 +2120,18 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.2,
-"whiff_z": -0.9689,
+"whiff_z": -0.9731,
 "k_z": -0.4284,
-"n_pitches": 1165
+"n_pitches": 1198
 },
 "808245": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.303,
-"whiff_z": 0.4792,
+"whiff_share": 0.3,
+"whiff_z": 0.4369,
 "k_z": 0.5541,
-"n_pitches": 1133
+"n_pitches": 1153
 },
 "808264": {
 "level": "CPX",
@@ -2146,53 +2146,53 @@
 "level": "A",
 "season": 2026,
 "side": "pit",
-"fb_velo": 94.77,
-"velo_z": 0.988,
+"fb_velo": 94.8,
+"velo_z": 1.0095,
 "k_a_z": 0.03,
-"n_pitches": 755
+"n_pitches": 794
 },
 "808277": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.124,
-"whiff_z": -2.0375,
+"whiff_share": 0.127,
+"whiff_z": -2.0023,
 "k_z": -1.6448,
-"n_pitches": 608
+"n_pitches": 615
 },
 "808282": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.292,
-"whiff_z": 0.3246,
+"whiff_share": 0.295,
+"whiff_z": 0.3664,
 "k_z": 0.3979,
-"n_pitches": 547
+"n_pitches": 561
 },
 "808285": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.194,
-"whiff_z": -1.0533,
+"whiff_share": 0.193,
+"whiff_z": -1.0718,
 "k_z": -1.276,
-"n_pitches": 1344
+"n_pitches": 1363
 },
 "808286": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.259,
-"whiff_z": -0.1394,
+"whiff_z": -0.1412,
 "k_z": 0.7796,
-"n_pitches": 875
+"n_pitches": 910
 },
 "808288": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.236,
-"whiff_z": -0.4628,
+"whiff_z": -0.4655,
 "k_z": -0.5344,
 "n_pitches": 944
 },
@@ -2201,25 +2201,25 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.272,
-"whiff_z": 0.0434,
+"whiff_z": 0.0421,
 "k_z": -0.0372,
-"n_pitches": 1244
+"n_pitches": 1249
 },
 "808297": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.353,
-"whiff_z": 1.1822,
+"whiff_share": 0.352,
+"whiff_z": 1.1701,
 "k_z": 0.9578,
-"n_pitches": 1266
+"n_pitches": 1299
 },
 "808302": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.232,
-"whiff_z": -0.519,
+"whiff_z": -0.5219,
 "k_z": -0.1376,
 "n_pitches": 567
 },
@@ -2228,16 +2228,16 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.28,
-"whiff_z": 0.1559,
+"whiff_z": 0.1549,
 "k_z": -1.14,
-"n_pitches": 1075
+"n_pitches": 1095
 },
 "808338": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.285,
-"whiff_z": 0.2262,
+"whiff_z": 0.2254,
 "k_z": -0.1142,
 "n_pitches": 976
 },
@@ -2255,7 +2255,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.123,
-"whiff_z": -2.0515,
+"whiff_z": -2.0587,
 "k_z": -2.5769,
 "n_pitches": 907
 },
@@ -2272,10 +2272,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.323,
-"whiff_z": 0.7604,
+"whiff_share": 0.322,
+"whiff_z": 0.7471,
 "k_z": 0.6352,
-"n_pitches": 1238
+"n_pitches": 1257
 },
 "808393": {
 "level": "CPX",
@@ -2291,7 +2291,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.238,
-"whiff_z": -0.4346,
+"whiff_z": -0.4373,
 "k_z": 0.313,
 "n_pitches": 574
 },
@@ -2300,7 +2300,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.7,
-"velo_z": 0.3258,
+"velo_z": 0.328,
 "k_a_z": 3.0637,
 "n_pitches": 587
 },
@@ -2308,10 +2308,10 @@
 "level": "A",
 "season": 2026,
 "side": "pit",
-"fb_velo": 94.29,
-"velo_z": 0.6909,
+"fb_velo": 94.2,
+"velo_z": 0.6378,
 "k_a_z": -0.015,
-"n_pitches": 1136
+"n_pitches": 1212
 },
 "808511": {
 "level": "CPX",
@@ -2327,9 +2327,9 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.336,
-"whiff_z": 0.9432,
+"whiff_z": 0.9445,
 "k_z": 0.9636,
-"n_pitches": 1594
+"n_pitches": 1606
 },
 "808537": {
 "level": "CPX",
@@ -2344,17 +2344,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.2,
-"whiff_z": -0.9689,
+"whiff_share": 0.205,
+"whiff_z": -0.9026,
 "k_z": -1.4213,
-"n_pitches": 867
+"n_pitches": 897
 },
 "808684": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.37,
-"whiff_z": 1.4213,
+"whiff_z": 1.4239,
 "k_z": 0.961,
 "n_pitches": 1050
 },
@@ -2372,25 +2372,25 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.307,
-"whiff_z": 0.5355,
+"whiff_z": 0.5356,
 "k_z": 0.8514,
-"n_pitches": 764
+"n_pitches": 770
 },
 "808696": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.163,
-"whiff_z": -1.4891,
+"whiff_share": 0.162,
+"whiff_z": -1.5089,
 "k_z": -2.1835,
-"n_pitches": 972
+"n_pitches": 986
 },
 "808903": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.088,
-"whiff_z": -2.5436,
+"whiff_z": -2.5522,
 "k_z": -2.031,
 "n_pitches": 639
 },
@@ -2399,7 +2399,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.195,
-"whiff_z": -1.0392,
+"whiff_z": -1.0436,
 "k_z": -0.865,
 "n_pitches": 651
 },
@@ -2408,7 +2408,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.06,
-"velo_z": -0.6891,
+"velo_z": -0.6882,
 "k_a_z": -0.4363,
 "n_pitches": 691
 },
@@ -2416,35 +2416,35 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.314,
-"whiff_z": 0.6339,
+"whiff_share": 0.315,
+"whiff_z": 0.6484,
 "k_z": 0.4359,
-"n_pitches": 748
+"n_pitches": 759
 },
 "809397": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.31,
-"whiff_z": 0.5777,
+"whiff_share": 0.308,
+"whiff_z": 0.5497,
 "k_z": 0.5689,
-"n_pitches": 800
+"n_pitches": 817
 },
 "809686": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.274,
-"whiff_z": 0.0715,
+"whiff_share": 0.282,
+"whiff_z": 0.1831,
 "k_z": 0.2219,
-"n_pitches": 1168
+"n_pitches": 1184
 },
 "809720": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.251,
-"whiff_z": -0.2519,
+"whiff_z": -0.254,
 "k_z": -0.4034,
 "n_pitches": 870
 },
@@ -2452,17 +2452,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.342,
-"whiff_z": 1.0276,
+"whiff_share": 0.338,
+"whiff_z": 0.9727,
 "k_z": 0.5514,
-"n_pitches": 774
+"n_pitches": 790
 },
 "809826": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.38,
-"velo_z": -0.4911,
+"velo_z": -0.4899,
 "k_a_z": 0.1827,
 "n_pitches": 1324
 },
@@ -2471,7 +2471,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.274,
-"whiff_z": 0.0715,
+"whiff_z": 0.0703,
 "k_z": 0.3656,
 "n_pitches": 1016
 },
@@ -2489,16 +2489,16 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 90.0,
-"velo_z": -1.9639,
+"velo_z": -1.9646,
 "k_a_z": -0.9664,
-"n_pitches": 592
+"n_pitches": 607
 },
 "811172": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 90.1,
-"velo_z": -1.902,
+"velo_z": -1.9026,
 "k_a_z": 0.8153,
 "n_pitches": 1017
 },
@@ -2506,19 +2506,19 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.151,
-"whiff_z": -1.6578,
+"whiff_share": 0.162,
+"whiff_z": -1.5089,
 "k_z": -0.9288,
-"n_pitches": 782
+"n_pitches": 798
 },
 "811602": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.213,
-"whiff_z": -0.7861,
+"whiff_share": 0.215,
+"whiff_z": -0.7616,
 "k_z": -1.0924,
-"n_pitches": 524
+"n_pitches": 535
 },
 "811625": {
 "level": "CPX",
@@ -2533,44 +2533,44 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.295,
-"whiff_z": 0.3668,
+"whiff_share": 0.293,
+"whiff_z": 0.3382,
 "k_z": 0.521,
-"n_pitches": 602
+"n_pitches": 619
 },
 "811716": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.35,
-"whiff_z": 1.1401,
+"whiff_share": 0.348,
+"whiff_z": 1.1137,
 "k_z": 1.9324,
-"n_pitches": 1259
+"n_pitches": 1279
 },
 "811718": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.256,
-"whiff_z": -0.1816,
+"whiff_share": 0.255,
+"whiff_z": -0.1976,
 "k_z": -0.2682,
-"n_pitches": 1157
+"n_pitches": 1173
 },
 "811764": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.284,
-"whiff_z": 0.2121,
+"whiff_z": 0.2113,
 "k_z": 0.3103,
-"n_pitches": 777
+"n_pitches": 800
 },
 "811963": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.92,
-"velo_z": 0.462,
+"velo_z": 0.4643,
 "k_a_z": -0.1946,
 "n_pitches": 577
 },
@@ -2579,7 +2579,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.97,
-"velo_z": 1.1118,
+"velo_z": 1.1149,
 "k_a_z": -0.7727,
 "n_pitches": 460
 },
@@ -2587,10 +2587,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.294,
-"whiff_z": 0.3527,
+"whiff_share": 0.289,
+"whiff_z": 0.2818,
 "k_z": 0.2566,
-"n_pitches": 768
+"n_pitches": 786
 },
 "812161": {
 "level": "CPX",
@@ -2606,7 +2606,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.256,
-"whiff_z": -0.1816,
+"whiff_z": -0.1835,
 "k_z": 0.0401,
 "n_pitches": 639
 },
@@ -2624,7 +2624,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.251,
-"whiff_z": -0.2519,
+"whiff_z": -0.254,
 "k_z": -0.0015,
 "n_pitches": 864
 },
@@ -2633,16 +2633,16 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.36,
-"whiff_z": 1.2807,
+"whiff_z": 1.2829,
 "k_z": 1.2707,
-"n_pitches": 1403
+"n_pitches": 1421
 },
 "813620": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.39,
-"whiff_z": 1.7025,
+"whiff_z": 1.7059,
 "k_z": 1.5816,
 "n_pitches": 1329
 },
@@ -2650,17 +2650,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.188,
-"whiff_z": -1.1376,
+"whiff_share": 0.186,
+"whiff_z": -1.1705,
 "k_z": -0.6605,
-"n_pitches": 1326
+"n_pitches": 1334
 },
 "813958": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 96.3,
-"velo_z": 1.9348,
+"velo_z": 1.9389,
 "k_a_z": 0.8404,
 "n_pitches": 406
 },
@@ -2668,10 +2668,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.299,
-"whiff_z": 0.423,
+"whiff_share": 0.302,
+"whiff_z": 0.4651,
 "k_z": -0.0042,
-"n_pitches": 1187
+"n_pitches": 1202
 },
 "814229": {
 "level": "CPX",
@@ -2687,7 +2687,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.61,
-"velo_z": 0.889,
+"velo_z": 0.8918,
 "k_a_z": 0.6521,
 "n_pitches": 760
 },
@@ -2695,26 +2695,26 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.396,
-"whiff_z": 1.7868,
+"whiff_share": 0.399,
+"whiff_z": 1.8328,
 "k_z": 1.0516,
-"n_pitches": 1477
+"n_pitches": 1492
 },
 "814297": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.153,
-"whiff_z": -1.6297,
+"whiff_z": -1.6358,
 "k_z": -1.4248,
-"n_pitches": 1218
+"n_pitches": 1240
 },
 "814346": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.82,
-"velo_z": 1.0189,
+"velo_z": 1.0219,
 "k_a_z": 0.2105,
 "n_pitches": 659
 },
@@ -2723,16 +2723,16 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 95.2,
-"velo_z": 1.2541,
+"velo_z": 1.2574,
 "k_a_z": 0.3562,
-"n_pitches": 1025
+"n_pitches": 1105
 },
 "814452": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.187,
-"whiff_z": -1.1517,
+"whiff_z": -1.1564,
 "k_z": -1.3949,
 "n_pitches": 669
 },
@@ -2740,17 +2740,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.436,
-"whiff_z": 2.3492,
+"whiff_share": 0.43,
+"whiff_z": 2.2699,
 "k_z": 1.9165,
-"n_pitches": 768
+"n_pitches": 787
 },
 "814514": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.32,
-"whiff_z": 0.7183,
+"whiff_z": 0.7189,
 "k_z": 0.0003,
 "n_pitches": 904
 },
@@ -2759,7 +2759,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.65,
-"velo_z": 0.2949,
+"velo_z": 0.297,
 "k_a_z": 0.4652,
 "n_pitches": 197
 },
@@ -2786,7 +2786,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.18,
-"whiff_z": -1.2501,
+"whiff_z": -1.2551,
 "k_z": -1.2874,
 "n_pitches": 966
 },
@@ -2795,9 +2795,9 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.299,
-"whiff_z": 0.423,
+"whiff_z": 0.4228,
 "k_z": 0.7129,
-"n_pitches": 1118
+"n_pitches": 1143
 },
 "814811": {
 "level": "CPX",
@@ -2812,10 +2812,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.308,
-"whiff_z": 0.5495,
+"whiff_share": 0.315,
+"whiff_z": 0.6484,
 "k_z": -0.1081,
-"n_pitches": 1285
+"n_pitches": 1309
 },
 "814973": {
 "level": "CPX",
@@ -2830,17 +2830,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.351,
-"whiff_z": 1.1541,
+"whiff_share": 0.348,
+"whiff_z": 1.1137,
 "k_z": 0.7242,
-"n_pitches": 1300
+"n_pitches": 1308
 },
 "815184": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.15,
-"velo_z": -0.0145,
+"velo_z": -0.0128,
 "k_a_z": 0.3146,
 "n_pitches": 778
 },
@@ -2848,17 +2848,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.243,
-"whiff_z": -0.3643,
+"whiff_share": 0.246,
+"whiff_z": -0.3245,
 "k_z": 0.1316,
-"n_pitches": 1027
+"n_pitches": 1046
 },
 "815220": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.308,
-"whiff_z": 0.5495,
+"whiff_z": 0.5497,
 "k_z": 0.5597,
 "n_pitches": 986
 },
@@ -2866,44 +2866,44 @@
 "level": "A",
 "season": 2026,
 "side": "pit",
-"fb_velo": 95.54,
-"velo_z": 1.4645,
+"fb_velo": 95.51,
+"velo_z": 1.4494,
 "k_a_z": 1.6561,
-"n_pitches": 704
+"n_pitches": 736
 },
 "815380": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.302,
-"whiff_z": 0.4652,
+"whiff_z": 0.4651,
 "k_z": 0.4796,
-"n_pitches": 1614
+"n_pitches": 1638
 },
 "815438": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.185,
-"whiff_z": -1.1798,
+"whiff_share": 0.186,
+"whiff_z": -1.1705,
 "k_z": -1.2765,
-"n_pitches": 536
+"n_pitches": 555
 },
 "815528": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.355,
-"whiff_z": 1.2104,
+"whiff_z": 1.2124,
 "k_z": 1.0431,
-"n_pitches": 779
+"n_pitches": 778
 },
 "815535": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.416,
-"whiff_z": 2.068,
+"whiff_z": 2.0725,
 "k_z": 2.8397,
 "n_pitches": 942
 },
@@ -2912,7 +2912,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.155,
-"whiff_z": -1.6016,
+"whiff_z": -1.6076,
 "k_z": -0.6298,
 "n_pitches": 626
 },
@@ -2921,7 +2921,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.85,
-"velo_z": -0.2002,
+"velo_z": -0.1987,
 "k_a_z": 0.5717,
 "n_pitches": 1268
 },
@@ -2939,7 +2939,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.296,
-"whiff_z": 0.3808,
+"whiff_z": 0.3805,
 "k_z": 1.2148,
 "n_pitches": 678
 },
@@ -2947,17 +2947,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.25,
-"whiff_z": -0.2659,
+"whiff_share": 0.254,
+"whiff_z": -0.2117,
 "k_z": -0.4786,
-"n_pitches": 1069
+"n_pitches": 1096
 },
 "815617": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.156,
-"whiff_z": -1.5875,
+"whiff_z": -1.5935,
 "k_z": -0.8251,
 "n_pitches": 881
 },
@@ -2966,7 +2966,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.343,
-"whiff_z": 1.0416,
+"whiff_z": 1.0432,
 "k_z": 1.2311,
 "n_pitches": 900
 },
@@ -2974,37 +2974,37 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.314,
-"whiff_z": 0.6339,
+"whiff_share": 0.313,
+"whiff_z": 0.6202,
 "k_z": 1.204,
-"n_pitches": 1463
+"n_pitches": 1479
 },
 "815665": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.311,
-"whiff_z": 0.5917,
+"whiff_share": 0.314,
+"whiff_z": 0.6343,
 "k_z": 1.1681,
-"n_pitches": 1075
+"n_pitches": 1101
 },
 "815704": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 95.4,
-"velo_z": 1.3779,
+"velo_z": 1.3813,
 "k_a_z": 0.6077,
-"n_pitches": 789
+"n_pitches": 828
 },
 "815723": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.336,
-"whiff_z": 0.9432,
+"whiff_share": 0.34,
+"whiff_z": 1.0009,
 "k_z": 0.1045,
-"n_pitches": 804
+"n_pitches": 822
 },
 "815777": {
 "level": "CPX",
@@ -3020,7 +3020,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.277,
-"whiff_z": 0.1137,
+"whiff_z": 0.1126,
 "k_z": 0.5648,
 "n_pitches": 632
 },
@@ -3029,7 +3029,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.273,
-"whiff_z": 0.0575,
+"whiff_z": 0.0562,
 "k_z": -0.711,
 "n_pitches": 1003
 },
@@ -3038,7 +3038,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.267,
-"whiff_z": -0.0269,
+"whiff_z": -0.0284,
 "k_z": 0.5263,
 "n_pitches": 1149
 },
@@ -3046,44 +3046,44 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.195,
-"whiff_z": -1.0392,
+"whiff_share": 0.199,
+"whiff_z": -0.9872,
 "k_z": -0.15,
-"n_pitches": 836
+"n_pitches": 865
 },
 "815816": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.229,
-"whiff_z": -0.5612,
+"whiff_z": -0.5642,
 "k_z": -0.5552,
-"n_pitches": 1680
+"n_pitches": 1698
 },
 "815818": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.261,
-"whiff_z": -0.1113,
+"whiff_share": 0.258,
+"whiff_z": -0.1553,
 "k_z": 0.3982,
-"n_pitches": 1059
+"n_pitches": 1077
 },
 "815819": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.26,
-"whiff_z": -0.1253,
+"whiff_z": -0.1271,
 "k_z": 0.3401,
-"n_pitches": 1507
+"n_pitches": 1525
 },
 "815824": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.171,
-"whiff_z": -1.3766,
+"whiff_z": -1.382,
 "k_z": -1.2594,
 "n_pitches": 724
 },
@@ -3091,26 +3091,26 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.344,
-"whiff_z": 1.0557,
+"whiff_share": 0.342,
+"whiff_z": 1.0291,
 "k_z": 1.3863,
-"n_pitches": 1579
+"n_pitches": 1606
 },
 "815830": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.234,
-"whiff_z": -0.4909,
+"whiff_share": 0.235,
+"whiff_z": -0.4796,
 "k_z": -0.7996,
-"n_pitches": 689
+"n_pitches": 703
 },
 "815832": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.299,
-"whiff_z": 0.423,
+"whiff_z": 0.4228,
 "k_z": 0.8271,
 "n_pitches": 1435
 },
@@ -3118,37 +3118,37 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.42,
-"whiff_z": 2.1242,
+"whiff_share": 0.422,
+"whiff_z": 2.1571,
 "k_z": 2.8476,
-"n_pitches": 1460
+"n_pitches": 1476
 },
 "815843": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.211,
-"whiff_z": -0.8143,
+"whiff_share": 0.209,
+"whiff_z": -0.8462,
 "k_z": -0.5036,
-"n_pitches": 1435
+"n_pitches": 1448
 },
 "815877": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.341,
-"whiff_z": 1.0135,
+"whiff_share": 0.34,
+"whiff_z": 1.0009,
 "k_z": 0.8708,
-"n_pitches": 1319
+"n_pitches": 1335
 },
 "815889": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.297,
-"whiff_z": 0.3949,
+"whiff_share": 0.293,
+"whiff_z": 0.3382,
 "k_z": 0.1959,
-"n_pitches": 1614
+"n_pitches": 1639
 },
 "815890": {
 "level": "CPX",
@@ -3182,7 +3182,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.314,
-"whiff_z": 0.6339,
+"whiff_z": 0.6343,
 "k_z": 0.8668,
 "n_pitches": 1316
 },
@@ -3200,7 +3200,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.311,
-"whiff_z": 0.5917,
+"whiff_z": 0.592,
 "k_z": 0.2804,
 "n_pitches": 668
 },
@@ -3209,7 +3209,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.182,
-"whiff_z": -1.222,
+"whiff_z": -1.2269,
 "k_z": -1.4054,
 "n_pitches": 677
 },
@@ -3226,46 +3226,46 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.251,
-"whiff_z": -0.2519,
+"whiff_share": 0.252,
+"whiff_z": -0.2399,
 "k_z": -0.3765,
-"n_pitches": 1381
+"n_pitches": 1393
 },
 "815903": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.242,
-"whiff_z": -0.3784,
+"whiff_share": 0.247,
+"whiff_z": -0.3104,
 "k_z": -0.6603,
-"n_pitches": 692
+"n_pitches": 706
 },
 "815909": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.214,
-"whiff_z": -0.7721,
+"whiff_share": 0.22,
+"whiff_z": -0.6911,
 "k_z": -0.312,
-"n_pitches": 682
+"n_pitches": 697
 },
 "815911": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.387,
-"whiff_z": 1.6603,
+"whiff_share": 0.384,
+"whiff_z": 1.6213,
 "k_z": 1.8378,
-"n_pitches": 1350
+"n_pitches": 1362
 },
 "815913": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.316,
-"whiff_z": 0.662,
+"whiff_z": 0.6625,
 "k_z": 1.3972,
-"n_pitches": 1133
+"n_pitches": 1161
 },
 "815914": {
 "level": "CPX",
@@ -3299,7 +3299,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.197,
-"whiff_z": -1.0111,
+"whiff_z": -1.0154,
 "k_z": -1.0725,
 "n_pitches": 780
 },
@@ -3307,10 +3307,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.165,
-"whiff_z": -1.461,
+"whiff_share": 0.162,
+"whiff_z": -1.5089,
 "k_z": -1.4673,
-"n_pitches": 1650
+"n_pitches": 1682
 },
 "815933": {
 "level": "CPX",
@@ -3325,19 +3325,19 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.198,
-"whiff_z": -0.997,
+"whiff_share": 0.211,
+"whiff_z": -0.818,
 "k_z": -0.4651,
-"n_pitches": 656
+"n_pitches": 673
 },
 "815983": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.285,
-"whiff_z": 0.2262,
+"whiff_share": 0.284,
+"whiff_z": 0.2113,
 "k_z": 0.306,
-"n_pitches": 1402
+"n_pitches": 1419
 },
 "816085": {
 "level": "CPX",
@@ -3353,7 +3353,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.238,
-"whiff_z": -0.4346,
+"whiff_z": -0.4373,
 "k_z": -0.4203,
 "n_pitches": 1003
 },
@@ -3362,7 +3362,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.24,
-"whiff_z": -0.4065,
+"whiff_z": -0.4091,
 "k_z": -0.1368,
 "n_pitches": 957
 },
@@ -3371,7 +3371,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.31,
-"whiff_z": 0.5777,
+"whiff_z": 0.5779,
 "k_z": 0.5305,
 "n_pitches": 1047
 },
@@ -3380,7 +3380,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 91.4,
-"velo_z": -1.0975,
+"velo_z": -1.0971,
 "k_a_z": -0.3135,
 "n_pitches": 1122
 },
@@ -3398,9 +3398,9 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.338,
-"whiff_z": 0.9713,
+"whiff_z": 0.9727,
 "k_z": 0.7885,
-"n_pitches": 1474
+"n_pitches": 1498
 },
 "816207": {
 "level": "CPX",
@@ -3425,7 +3425,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.292,
-"whiff_z": 0.3246,
+"whiff_z": 0.3241,
 "k_z": 0.4838,
 "n_pitches": 677
 },
@@ -3433,10 +3433,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.307,
-"whiff_z": 0.5355,
+"whiff_share": 0.31,
+"whiff_z": 0.5779,
 "k_z": -0.2714,
-"n_pitches": 868
+"n_pitches": 887
 },
 "820853": {
 "level": "CPX",
@@ -3461,7 +3461,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.97,
-"velo_z": 0.4929,
+"velo_z": 0.4953,
 "k_a_z": -1.4912,
 "n_pitches": 657
 },
@@ -3479,7 +3479,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.0,
-"velo_z": -0.7262,
+"velo_z": -0.7254,
 "k_a_z": -1.3728,
 "n_pitches": 542
 },
@@ -3524,9 +3524,9 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.224,
-"whiff_z": -0.6315,
+"whiff_z": -0.6347,
 "k_z": -0.51,
-"n_pitches": 1705
+"n_pitches": 1722
 },
 "820996": {
 "level": "CPX",
@@ -3560,7 +3560,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.227,
-"whiff_z": -0.5893,
+"whiff_z": -0.5924,
 "k_z": -1.0247,
 "n_pitches": 1290
 },
@@ -3622,10 +3622,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.314,
-"whiff_z": 0.6339,
+"whiff_share": 0.313,
+"whiff_z": 0.6202,
 "k_z": 0.519,
-"n_pitches": 862
+"n_pitches": 869
 },
 "821113": {
 "level": "CPX",
@@ -3641,7 +3641,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 96.1,
-"velo_z": 1.8111,
+"velo_z": 1.815,
 "k_a_z": 2.8876,
 "n_pitches": 1191
 },
@@ -3649,19 +3649,19 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.227,
-"whiff_z": -0.5893,
+"whiff_share": 0.229,
+"whiff_z": -0.5642,
 "k_z": -1.2446,
-"n_pitches": 1075
+"n_pitches": 1085
 },
 "821136": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.251,
-"whiff_z": -0.2519,
+"whiff_share": 0.249,
+"whiff_z": -0.2822,
 "k_z": -0.6876,
-"n_pitches": 1594
+"n_pitches": 1614
 },
 "821138": {
 "level": "CPX",
@@ -3676,10 +3676,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.256,
-"whiff_z": -0.1816,
+"whiff_share": 0.253,
+"whiff_z": -0.2258,
 "k_z": -0.3821,
-"n_pitches": 1068
+"n_pitches": 1080
 },
 "821142": {
 "level": "CPX",
@@ -3712,17 +3712,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.324,
-"whiff_z": 0.7745,
+"whiff_share": 0.322,
+"whiff_z": 0.7471,
 "k_z": 0.6155,
-"n_pitches": 1371
+"n_pitches": 1383
 },
 "821150": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.267,
-"whiff_z": -0.0269,
+"whiff_z": -0.0284,
 "k_z": -0.2843,
 "n_pitches": 652
 },
@@ -3730,10 +3730,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.117,
-"whiff_z": -2.1359,
+"whiff_share": 0.116,
+"whiff_z": -2.1574,
 "k_z": -2.1842,
-"n_pitches": 1147
+"n_pitches": 1162
 },
 "821156": {
 "level": "CPX",
@@ -3757,26 +3757,26 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.236,
-"whiff_z": -0.4628,
+"whiff_share": 0.233,
+"whiff_z": -0.5078,
 "k_z": -0.5078,
-"n_pitches": 1112
+"n_pitches": 1133
 },
 "821180": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.315,
-"whiff_z": 0.648,
+"whiff_share": 0.316,
+"whiff_z": 0.6625,
 "k_z": 0.0116,
-"n_pitches": 904
+"n_pitches": 914
 },
 "821181": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.113,
-"whiff_z": -2.1921,
+"whiff_z": -2.1997,
 "k_z": -2.036,
 "n_pitches": 867
 },
@@ -3784,10 +3784,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.201,
-"whiff_z": -0.9549,
+"whiff_share": 0.2,
+"whiff_z": -0.9731,
 "k_z": -1.1408,
-"n_pitches": 1336
+"n_pitches": 1362
 },
 "821197": {
 "level": "CPX",
@@ -3802,28 +3802,28 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.223,
-"whiff_z": -0.6455,
+"whiff_share": 0.225,
+"whiff_z": -0.6206,
 "k_z": -1.1421,
-"n_pitches": 640
+"n_pitches": 658
 },
 "821237": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.388,
-"whiff_z": 1.6743,
+"whiff_share": 0.387,
+"whiff_z": 1.6636,
 "k_z": 1.5178,
-"n_pitches": 533
+"n_pitches": 550
 },
 "821238": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.196,
-"whiff_z": -1.0252,
+"whiff_share": 0.195,
+"whiff_z": -1.0436,
 "k_z": -1.0698,
-"n_pitches": 952
+"n_pitches": 965
 },
 "821240": {
 "level": "CPX",
@@ -3856,35 +3856,35 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.391,
-"whiff_z": 1.7165,
+"whiff_share": 0.389,
+"whiff_z": 1.6918,
 "k_z": 2.2349,
-"n_pitches": 1468
+"n_pitches": 1493
 },
 "821348": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.294,
-"whiff_z": 0.3527,
+"whiff_z": 0.3523,
 "k_z": 0.9411,
-"n_pitches": 727
+"n_pitches": 747
 },
 "821379": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.261,
-"whiff_z": -0.1113,
+"whiff_z": -0.113,
 "k_z": -0.7588,
-"n_pitches": 1136
+"n_pitches": 1155
 },
 "821380": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.384,
-"whiff_z": 1.6181,
+"whiff_z": 1.6213,
 "k_z": 1.9718,
 "n_pitches": 1318
 },
@@ -3920,7 +3920,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.242,
-"whiff_z": -0.3784,
+"whiff_z": -0.3809,
 "k_z": -0.0434,
 "n_pitches": 1121
 },
@@ -3937,10 +3937,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.293,
-"whiff_z": 0.3386,
+"whiff_share": 0.292,
+"whiff_z": 0.3241,
 "k_z": 0.3709,
-"n_pitches": 713
+"n_pitches": 727
 },
 "821620": {
 "level": "CPX",
@@ -3982,10 +3982,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.224,
-"whiff_z": -0.6315,
+"whiff_share": 0.22,
+"whiff_z": -0.6911,
 "k_z": -0.5586,
-"n_pitches": 576
+"n_pitches": 591
 },
 "821688": {
 "level": "CPX",
@@ -4054,10 +4054,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.345,
-"whiff_z": 1.0698,
+"whiff_share": 0.347,
+"whiff_z": 1.0996,
 "k_z": 1.6315,
-"n_pitches": 707
+"n_pitches": 725
 },
 "821763": {
 "level": "CPX",
@@ -4073,7 +4073,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.216,
-"whiff_z": -0.744,
+"whiff_z": -0.7475,
 "k_z": -0.4591,
 "n_pitches": 1189
 },
@@ -4100,7 +4100,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.06,
-"velo_z": -0.0702,
+"velo_z": -0.0686,
 "k_a_z": -1.1702,
 "n_pitches": 860
 },
@@ -4117,26 +4117,26 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.359,
-"whiff_z": 1.2666,
+"whiff_share": 0.356,
+"whiff_z": 1.2265,
 "k_z": 1.4855,
-"n_pitches": 1264
+"n_pitches": 1284
 },
 "822531": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.334,
-"whiff_z": 0.9151,
+"whiff_share": 0.339,
+"whiff_z": 0.9868,
 "k_z": 1.2899,
-"n_pitches": 977
+"n_pitches": 999
 },
 "822676": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.261,
-"whiff_z": -0.1113,
+"whiff_z": -0.113,
 "k_z": 0.2412,
 "n_pitches": 1696
 },
@@ -4154,7 +4154,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.207,
-"whiff_z": -0.8705,
+"whiff_z": -0.8744,
 "k_z": -0.7702,
 "n_pitches": 600
 },
@@ -4163,7 +4163,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.9,
-"velo_z": -0.1693,
+"velo_z": -0.1677,
 "k_a_z": 0.3334,
 "n_pitches": 589
 },
@@ -4172,7 +4172,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.37,
-"velo_z": 0.7405,
+"velo_z": 0.7431,
 "k_a_z": 1.297,
 "n_pitches": 820
 },
@@ -4181,7 +4181,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.0,
-"velo_z": -0.7262,
+"velo_z": -0.7254,
 "k_a_z": 1.5513,
 "n_pitches": 1070
 },
@@ -4189,10 +4189,10 @@
 "level": "A",
 "season": 2026,
 "side": "pit",
-"fb_velo": 90.24,
-"velo_z": -1.8154,
+"fb_velo": 90.17,
+"velo_z": -1.8593,
 "k_a_z": -0.8787,
-"n_pitches": 584
+"n_pitches": 602
 },
 "823208": {
 "level": "CPX",
@@ -4208,16 +4208,16 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.94,
-"velo_z": 1.0932,
+"velo_z": 1.0963,
 "k_a_z": 0.7367,
-"n_pitches": 629
+"n_pitches": 654
 },
 "823242": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.95,
-"velo_z": -0.1383,
+"velo_z": -0.1367,
 "k_a_z": 0.7715,
 "n_pitches": 642
 },
@@ -4226,7 +4226,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 91.82,
-"velo_z": -0.8376,
+"velo_z": -0.8369,
 "k_a_z": -0.652,
 "n_pitches": 897
 },
@@ -4235,7 +4235,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.202,
-"whiff_z": -0.9408,
+"whiff_z": -0.9449,
 "k_z": -0.7676,
 "n_pitches": 1246
 },
@@ -4252,26 +4252,26 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.247,
-"whiff_z": -0.3081,
+"whiff_share": 0.248,
+"whiff_z": -0.2963,
 "k_z": 0.2014,
-"n_pitches": 1519
+"n_pitches": 1537
 },
 "823770": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.237,
-"whiff_z": -0.4487,
+"whiff_share": 0.235,
+"whiff_z": -0.4796,
 "k_z": -0.586,
-"n_pitches": 1202
+"n_pitches": 1219
 },
 "823779": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.161,
-"whiff_z": -1.5172,
+"whiff_z": -1.523,
 "k_z": -1.8447,
 "n_pitches": 1154
 },
@@ -4280,7 +4280,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.5,
-"velo_z": -0.4168,
+"velo_z": -0.4156,
 "k_a_z": -0.6715,
 "n_pitches": 941
 },
@@ -4289,7 +4289,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.59,
-"velo_z": -0.3611,
+"velo_z": -0.3598,
 "k_a_z": 0.2424,
 "n_pitches": 674
 },
@@ -4298,7 +4298,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.265,
-"whiff_z": -0.055,
+"whiff_z": -0.0566,
 "k_z": -0.4323,
 "n_pitches": 778
 },
@@ -4307,7 +4307,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.03,
-"velo_z": -0.0888,
+"velo_z": -0.0872,
 "k_a_z": -0.9564,
 "n_pitches": 721
 },
@@ -4343,7 +4343,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.252,
-"whiff_z": -0.2378,
+"whiff_z": -0.2399,
 "k_z": 0.4543,
 "n_pitches": 693
 },
@@ -4361,7 +4361,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.294,
-"whiff_z": 0.3527,
+"whiff_z": 0.3523,
 "k_z": -0.3239,
 "n_pitches": 730
 },
@@ -4369,10 +4369,10 @@
 "level": "A",
 "season": 2026,
 "side": "pit",
-"fb_velo": 92.58,
-"velo_z": -0.3673,
+"fb_velo": 92.51,
+"velo_z": -0.4094,
 "k_a_z": -0.2121,
-"n_pitches": 483
+"n_pitches": 502
 },
 "825268": {
 "level": "CPX",
@@ -4387,19 +4387,19 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.207,
-"whiff_z": -0.8705,
+"whiff_share": 0.209,
+"whiff_z": -0.8462,
 "k_z": -0.9869,
-"n_pitches": 1221
+"n_pitches": 1231
 },
 "825646": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.341,
-"whiff_z": 1.0135,
+"whiff_share": 0.339,
+"whiff_z": 0.9868,
 "k_z": 0.3702,
-"n_pitches": 1150
+"n_pitches": 1179
 },
 "825968": {
 "level": "CPX",
@@ -4415,7 +4415,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.247,
-"whiff_z": -0.3081,
+"whiff_z": -0.3104,
 "k_z": -0.3386,
 "n_pitches": 865
 },
@@ -4450,17 +4450,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.481,
-"whiff_z": 2.9819,
+"whiff_share": 0.477,
+"whiff_z": 2.9326,
 "k_z": 2.5676,
-"n_pitches": 873
+"n_pitches": 886
 },
 "827265": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.09,
-"velo_z": -0.6705,
+"velo_z": -0.6696,
 "k_a_z": 1.9237,
 "n_pitches": 1200
 },
@@ -4469,7 +4469,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.113,
-"whiff_z": -2.1921,
+"whiff_z": -2.1997,
 "k_z": -1.5733,
 "n_pitches": 952
 },
@@ -4478,7 +4478,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.476,
-"whiff_z": 2.9116,
+"whiff_z": 2.9185,
 "k_z": 2.8095,
 "n_pitches": 835
 },
@@ -4504,17 +4504,17 @@
 "level": "A",
 "season": 2026,
 "side": "pit",
-"fb_velo": 95.8,
-"velo_z": 1.6254,
+"fb_velo": 95.63,
+"velo_z": 1.5238,
 "k_a_z": 0.0835,
-"n_pitches": 917
+"n_pitches": 997
 },
 "827448": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.31,
-"velo_z": 0.0845,
+"velo_z": 0.0863,
 "k_a_z": -0.102,
 "n_pitches": 911
 },
@@ -4531,17 +4531,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.279,
-"whiff_z": 0.1418,
+"whiff_share": 0.275,
+"whiff_z": 0.0844,
 "k_z": 0.5832,
-"n_pitches": 841
+"n_pitches": 857
 },
 "827521": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.49,
-"velo_z": -0.423,
+"velo_z": -0.4218,
 "k_a_z": 1.0987,
 "n_pitches": 635
 },
@@ -4550,7 +4550,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.69,
-"velo_z": 0.3196,
+"velo_z": 0.3218,
 "k_a_z": -0.8622,
 "n_pitches": 710
 },
@@ -4559,7 +4559,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.316,
-"whiff_z": 0.662,
+"whiff_z": 0.6625,
 "k_z": 0.6155,
 "n_pitches": 646
 },
@@ -4568,7 +4568,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.9,
-"velo_z": 0.4496,
+"velo_z": 0.4519,
 "k_a_z": -1.2752,
 "n_pitches": 574
 },
@@ -4577,7 +4577,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.252,
-"whiff_z": -0.2378,
+"whiff_z": -0.2399,
 "k_z": 0.2739,
 "n_pitches": 1269
 },
@@ -4586,7 +4586,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.246,
-"whiff_z": -0.3222,
+"whiff_z": -0.3245,
 "k_z": 0.0742,
 "n_pitches": 1417
 },
@@ -4622,9 +4622,9 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.212,
-"whiff_z": -0.8002,
+"whiff_z": -0.8039,
 "k_z": 0.0201,
-"n_pitches": 1618
+"n_pitches": 1641
 },
 "828116": {
 "level": "CPX",
@@ -4649,9 +4649,9 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.316,
-"whiff_z": 0.662,
+"whiff_z": 0.6625,
 "k_z": 1.1488,
-"n_pitches": 1169
+"n_pitches": 1198
 },
 "828230": {
 "level": "CPX",
@@ -4666,17 +4666,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.204,
-"whiff_z": -0.9127,
+"whiff_share": 0.202,
+"whiff_z": -0.9449,
 "k_z": -1.2551,
-"n_pitches": 1443
+"n_pitches": 1459
 },
 "828262": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.227,
-"whiff_z": -0.5893,
+"whiff_z": -0.5924,
 "k_z": -0.1119,
 "n_pitches": 1527
 },
@@ -4684,44 +4684,44 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.099,
-"whiff_z": -2.389,
+"whiff_share": 0.096,
+"whiff_z": -2.4394,
 "k_z": -2.3176,
-"n_pitches": 622
+"n_pitches": 643
 },
 "828489": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.369,
-"whiff_z": 1.4072,
+"whiff_share": 0.372,
+"whiff_z": 1.4521,
 "k_z": 1.2858,
-"n_pitches": 1087
+"n_pitches": 1103
 },
 "828519": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.147,
-"whiff_z": -1.7141,
+"whiff_z": -1.7203,
 "k_z": -1.3585,
-"n_pitches": 1305
+"n_pitches": 1327
 },
 "828557": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.279,
-"whiff_z": 0.1418,
+"whiff_share": 0.276,
+"whiff_z": 0.0985,
 "k_z": 0.3451,
-"n_pitches": 1447
+"n_pitches": 1473
 },
 "828589": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.198,
-"whiff_z": -0.997,
+"whiff_z": -1.0013,
 "k_z": -0.5501,
 "n_pitches": 1228
 },
@@ -4730,18 +4730,18 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.29,
-"whiff_z": 0.2965,
+"whiff_z": 0.2959,
 "k_z": 0.2161,
-"n_pitches": 1536
+"n_pitches": 1558
 },
 "828685": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.234,
-"whiff_z": -0.4909,
+"whiff_share": 0.241,
+"whiff_z": -0.395,
 "k_z": -0.2762,
-"n_pitches": 800
+"n_pitches": 804
 },
 "828713": {
 "level": "CPX",
@@ -4756,10 +4756,10 @@
 "level": "A",
 "season": 2026,
 "side": "pit",
-"fb_velo": 94.0,
-"velo_z": 0.5115,
+"fb_velo": 94.02,
+"velo_z": 0.5262,
 "k_a_z": -0.9453,
-"n_pitches": 890
+"n_pitches": 920
 },
 "828903": {
 "level": "CPX",
@@ -4784,16 +4784,16 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.197,
-"whiff_z": -1.0111,
+"whiff_z": -1.0154,
 "k_z": -0.6465,
-"n_pitches": 1492
+"n_pitches": 1507
 },
 "829035": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.261,
-"whiff_z": -0.1113,
+"whiff_z": -0.113,
 "k_z": 0.2566,
 "n_pitches": 741
 },
@@ -4802,9 +4802,9 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.183,
-"whiff_z": -1.2079,
+"whiff_z": -1.2128,
 "k_z": -1.0193,
-"n_pitches": 1278
+"n_pitches": 1294
 },
 "829038": {
 "level": "CPX",
@@ -4855,19 +4855,19 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.26,
-"whiff_z": -0.1253,
+"whiff_share": 0.259,
+"whiff_z": -0.1412,
 "k_z": 0.2886,
-"n_pitches": 1393
+"n_pitches": 1416
 },
 "829058": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.309,
-"whiff_z": 0.5636,
+"whiff_z": 0.5638,
 "k_z": 0.3574,
-"n_pitches": 1256
+"n_pitches": 1275
 },
 "829062": {
 "level": "CPX",
@@ -5009,7 +5009,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.406,
-"whiff_z": 1.9274,
+"whiff_z": 1.9315,
 "k_z": 1.8602,
 "n_pitches": 1118
 },
@@ -5063,7 +5063,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.247,
-"whiff_z": -0.3081,
+"whiff_z": -0.3104,
 "k_z": 0.208,
 "n_pitches": 1339
 },
@@ -5071,10 +5071,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.332,
-"whiff_z": 0.887,
+"whiff_share": 0.336,
+"whiff_z": 0.9445,
 "k_z": 0.7219,
-"n_pitches": 571
+"n_pitches": 584
 },
 "829681": {
 "level": "CPX",
@@ -5206,10 +5206,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.248,
-"whiff_z": -0.294,
+"whiff_share": 0.245,
+"whiff_z": -0.3386,
 "k_z": -0.6561,
-"n_pitches": 636
+"n_pitches": 658
 },
 "829868": {
 "level": "CPX",
@@ -5278,10 +5278,10 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.279,
-"whiff_z": 0.1418,
+"whiff_share": 0.283,
+"whiff_z": 0.1972,
 "k_z": 0.2068,
-"n_pitches": 653
+"n_pitches": 669
 },
 "829949": {
 "level": "CPX",
@@ -5369,7 +5369,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.66,
-"velo_z": -0.3178,
+"velo_z": -0.3164,
 "k_a_z": 0.1589,
 "n_pitches": 488
 },
@@ -5378,7 +5378,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 90.7,
-"velo_z": -1.5307,
+"velo_z": -1.5309,
 "k_a_z": 0.3586,
 "n_pitches": 651
 },
@@ -5387,7 +5387,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 91.1,
-"velo_z": -1.2832,
+"velo_z": -1.283,
 "k_a_z": 1.7593,
 "n_pitches": 459
 },
@@ -5441,7 +5441,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.355,
-"whiff_z": 1.2104,
+"whiff_z": 1.2124,
 "k_z": 1.1249,
 "n_pitches": 738
 },
@@ -5476,17 +5476,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.19,
-"whiff_z": -1.1095,
+"whiff_share": 0.191,
+"whiff_z": -1.1,
 "k_z": -0.5464,
-"n_pitches": 635
+"n_pitches": 657
 },
 "832044": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 93.8,
-"velo_z": 0.3877,
+"velo_z": 0.3899,
 "k_a_z": -1.1778,
 "n_pitches": 423
 },
@@ -5504,7 +5504,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.191,
-"whiff_z": -1.0955,
+"whiff_z": -1.1,
 "k_z": -1.3949,
 "n_pitches": 1083
 },
@@ -5513,7 +5513,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 91.98,
-"velo_z": -0.7386,
+"velo_z": -0.7378,
 "k_a_z": -1.5234,
 "n_pitches": 645
 },
@@ -5539,26 +5539,26 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.354,
-"whiff_z": 1.1963,
+"whiff_share": 0.351,
+"whiff_z": 1.156,
 "k_z": 0.9597,
-"n_pitches": 1199
+"n_pitches": 1214
 },
 "833376": {
 "level": "A",
 "season": 2026,
 "side": "pit",
-"fb_velo": 96.48,
-"velo_z": 2.0462,
+"fb_velo": 96.52,
+"velo_z": 2.0753,
 "k_a_z": -0.3394,
-"n_pitches": 595
+"n_pitches": 621
 },
 "833381": {
 "level": "A",
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.302,
-"whiff_z": 0.4652,
+"whiff_z": 0.4651,
 "k_z": 0.3544,
 "n_pitches": 729
 },
@@ -5567,7 +5567,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.197,
-"whiff_z": -1.0111,
+"whiff_z": -1.0154,
 "k_z": -0.9112,
 "n_pitches": 1215
 },
@@ -5585,7 +5585,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.196,
-"whiff_z": -1.0252,
+"whiff_z": -1.0295,
 "k_z": -0.6795,
 "n_pitches": 1025
 },
@@ -5603,7 +5603,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 91.98,
-"velo_z": -0.7386,
+"velo_z": -0.7378,
 "k_a_z": -0.4853,
 "n_pitches": 840
 },
@@ -5611,19 +5611,19 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.301,
-"whiff_z": 0.4511,
+"whiff_share": 0.305,
+"whiff_z": 0.5074,
 "k_z": 0.1829,
-"n_pitches": 903
+"n_pitches": 928
 },
 "834408": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.296,
-"whiff_z": 0.3808,
+"whiff_share": 0.293,
+"whiff_z": 0.3382,
 "k_z": 0.5567,
-"n_pitches": 1179
+"n_pitches": 1207
 },
 "834597": {
 "level": "CPX",
@@ -5657,7 +5657,7 @@
 "season": 2026,
 "side": "hit",
 "whiff_share": 0.143,
-"whiff_z": -1.7703,
+"whiff_z": -1.7767,
 "k_z": -1.7181,
 "n_pitches": 632
 },
@@ -5684,7 +5684,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 91.13,
-"velo_z": -1.2646,
+"velo_z": -1.2644,
 "k_a_z": -0.3033,
 "n_pitches": 551
 },
@@ -5693,7 +5693,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.13,
-"velo_z": -0.6458,
+"velo_z": -0.6448,
 "k_a_z": -0.7771,
 "n_pitches": 723
 },
@@ -5702,7 +5702,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 91.8,
-"velo_z": -0.85,
+"velo_z": -0.8493,
 "k_a_z": 0.5087,
 "n_pitches": 783
 },
@@ -5737,17 +5737,17 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.24,
-"whiff_z": -0.4065,
+"whiff_share": 0.241,
+"whiff_z": -0.395,
 "k_z": 0.1189,
-"n_pitches": 978
+"n_pitches": 998
 },
 "835657": {
 "level": "A",
 "season": 2026,
 "side": "pit",
 "fb_velo": 94.2,
-"velo_z": 0.6353,
+"velo_z": 0.6378,
 "k_a_z": 0.0992,
 "n_pitches": 601
 },
@@ -5782,19 +5782,19 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.364,
-"whiff_z": 1.3369,
+"whiff_share": 0.367,
+"whiff_z": 1.3816,
 "k_z": 1.0476,
-"n_pitches": 1016
+"n_pitches": 1030
 },
 "836061": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.308,
-"whiff_z": 0.5495,
+"whiff_share": 0.307,
+"whiff_z": 0.5356,
 "k_z": 0.4904,
-"n_pitches": 1104
+"n_pitches": 1118
 },
 "836090": {
 "level": "CPX",
@@ -5809,19 +5809,19 @@
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.302,
-"whiff_z": 0.4652,
+"whiff_share": 0.301,
+"whiff_z": 0.451,
 "k_z": 0.7753,
-"n_pitches": 1357
+"n_pitches": 1372
 },
 "836173": {
 "level": "A",
 "season": 2026,
 "side": "hit",
-"whiff_share": 0.268,
-"whiff_z": -0.0128,
+"whiff_share": 0.272,
+"whiff_z": 0.0421,
 "k_z": -0.0205,
-"n_pitches": 1194
+"n_pitches": 1207
 },
 "836567": {
 "level": "CPX",
@@ -5846,7 +5846,7 @@
 "season": 2026,
 "side": "pit",
 "fb_velo": 92.9,
-"velo_z": -0.1693,
+"velo_z": -0.1677,
 "k_a_z": 0.6959,
 "n_pitches": 540
 }

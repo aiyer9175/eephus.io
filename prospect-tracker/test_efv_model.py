@@ -159,6 +159,17 @@ _EXPECTED_PIT = [
     # 2026-07-25 (served ridge fits +0.0589 against the old -1; dropping it is a
     # measured NULL at 0.24x the pit MDE95). The feature stays; the claim goes.
     ("age", 0),
+    # seasons_at_level: SHIPPED PITCHERS ONLY 2026-07-30 (owner decision on the E1 gate,
+    # docs/efv-2026-07-30/E1_REPEAT_LEVEL_GATE.md). Consecutive seasons on the current
+    # level, the first feature in the set that can see a STALL rather than a snapshot.
+    # Sign -1 CONFIRMED, fitted -0.1072 and the 4th largest weight. It ships INSIDE the
+    # generic MDE95 (0.79x) on the strength of the feature-specific permutation null:
+    # 0 of 30 draws from the true marginal beat the real +0.0127, null sd 0.0030,
+    # p=0.032. Deliberately absent from _EXPECTED_HIT: on hitters the same column fits
+    # +0.0945 and permutes to p=0.375, so that arm is closed on both an inverted sign
+    # and noise. If this list and the hitter list ever "look asymmetric", that is the
+    # measurement, not an oversight.
+    ("seasons_at_level", -1),
 ]
 
 

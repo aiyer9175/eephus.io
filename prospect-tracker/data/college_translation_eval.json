@@ -7,112 +7,112 @@
  "factors": {
   "hit_k": {
    "x_mean": 18.437,
-   "y_mean": 25.488,
-   "slope": 0.4897,
-   "ols_slope": 0.5372,
-   "band_sd": 7.024,
-   "r2": 0.238,
+   "y_mean": 25.784,
+   "slope": 0.4624,
+   "ols_slope": 0.5073,
+   "band_sd": 7.716,
+   "r2": 0.188,
    "n": 206,
    "loo": {
-    "mae": 5.443,
-    "p10_p90_coverage": 0.816,
+    "mae": 5.71,
+    "p10_p90_coverage": 0.85,
     "target_coverage": 0.8,
     "n": 206
    }
   },
   "hit_bb": {
    "x_mean": 12.356,
-   "y_mean": 12.694,
-   "slope": 0.223,
-   "ols_slope": 0.2447,
-   "band_sd": 4.704,
-   "r2": 0.054,
+   "y_mean": 12.472,
+   "slope": 0.2658,
+   "ols_slope": 0.2916,
+   "band_sd": 4.721,
+   "r2": 0.075,
    "n": 206,
    "loo": {
-    "mae": 3.605,
-    "p10_p90_coverage": 0.811,
+    "mae": 3.581,
+    "p10_p90_coverage": 0.82,
     "target_coverage": 0.8,
     "n": 206
    }
   },
   "hit_ops": {
    "x_mean": 0.389,
-   "y_mean": 0.718,
-   "slope": 0.6186,
-   "ols_slope": 0.6787,
-   "band_sd": 0.165,
-   "r2": 0.05,
+   "y_mean": 0.728,
+   "slope": 0.2758,
+   "ols_slope": 0.3026,
+   "band_sd": 0.189,
+   "r2": 0.008,
    "n": 206,
    "loo": {
-    "mae": 0.121,
-    "p10_p90_coverage": 0.854,
+    "mae": 0.123,
+    "p10_p90_coverage": 0.913,
     "target_coverage": 0.8,
     "n": 206
    }
   },
   "pit_k": {
-   "x_mean": 24.166,
-   "y_mean": 24.49,
-   "slope": 0.129,
-   "ols_slope": 0.1391,
-   "band_sd": 5.429,
-   "r2": 0.039,
-   "n": 256,
+   "x_mean": 24.161,
+   "y_mean": 24.314,
+   "slope": 0.1308,
+   "ols_slope": 0.1411,
+   "band_sd": 5.388,
+   "r2": 0.04,
+   "n": 253,
    "loo": {
-    "mae": 4.369,
-    "p10_p90_coverage": 0.762,
+    "mae": 4.322,
+    "p10_p90_coverage": 0.767,
     "target_coverage": 0.8,
-    "n": 256
+    "n": 253
    }
   },
   "pit_bb": {
-   "x_mean": 10.849,
-   "y_mean": 11.441,
-   "slope": 0.2264,
-   "ols_slope": 0.2441,
-   "band_sd": 3.983,
-   "r2": 0.1,
-   "n": 256,
+   "x_mean": 10.812,
+   "y_mean": 11.396,
+   "slope": 0.2132,
+   "ols_slope": 0.2301,
+   "band_sd": 3.954,
+   "r2": 0.09,
+   "n": 253,
    "loo": {
-    "mae": 3.14,
-    "p10_p90_coverage": 0.797,
+    "mae": 3.119,
+    "p10_p90_coverage": 0.798,
     "target_coverage": 0.8,
-    "n": 256
+    "n": 253
    }
   },
   "box_k": {
-   "x_mean": 17.213,
-   "y_mean": 25.008,
-   "slope": 0.5614,
-   "ols_slope": 0.8568,
-   "band_sd": 6.02,
-   "r2": 0.407,
-   "n": 38,
+   "x_mean": 17.327,
+   "y_mean": 24.9,
+   "slope": 0.542,
+   "ols_slope": 0.8349,
+   "band_sd": 6.643,
+   "r2": 0.348,
+   "n": 37,
    "loo": {
-    "mae": 4.989,
-    "p10_p90_coverage": 0.684,
+    "mae": 5.444,
+    "p10_p90_coverage": 0.73,
     "target_coverage": 0.8,
-    "n": 38
+    "n": 37
    }
   },
   "box_bb": {
-   "x_mean": 13.116,
-   "y_mean": 11.766,
-   "slope": 0.3467,
-   "ols_slope": 0.5292,
-   "band_sd": 4.788,
-   "r2": 0.129,
-   "n": 38,
+   "x_mean": 13.057,
+   "y_mean": 11.724,
+   "slope": 0.3529,
+   "ols_slope": 0.5436,
+   "band_sd": 4.787,
+   "r2": 0.138,
+   "n": 37,
    "loo": {
-    "mae": 3.943,
-    "p10_p90_coverage": 0.711,
+    "mae": 4.037,
+    "p10_p90_coverage": 0.73,
     "target_coverage": 0.8,
-    "n": 38
+    "n": 37
    }
   }
  },
  "matched_pairs": {
   "hitters_with_single_a": 206,
-  "pitchers_with_single_a": 256
+  "pitchers_with_single_a": 253
  }
 }

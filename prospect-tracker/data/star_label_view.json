@@ -10,7 +10,7 @@
  "source": "REAL realized MLB WAR: prospects.db career_war (per-season bWAR) joined to data/debuts.json debut years. No synthesized outcomes.",
  "control_note": "No true MLB service-time field exists; 'control seasons' is the debut+0..+6 proxy (existing efv_dataset convention). Windows with debut_year > 2019 are not fully resolved through 2025 (window_resolved=false) and may undercount stars.",
  "counts": {
-  "n_players": 2533,
+  "n_players": 2534,
   "n_star_window": 98,
   "n_star_career": 110,
   "n_window_resolved": 1080,
@@ -44479,6 +44479,42 @@
     [
      2021,
      -0.15
+    ]
+   ],
+   "n_seasons_ge4_window": 0,
+   "n_seasons_ge4_career": 0,
+   "star": false,
+   "star_career": false,
+   "window_resolved": false
+  },
+  {
+   "player_key": "luis_garcia__23735",
+   "name": "Luis Garcia",
+   "debut_year": 2020,
+   "control_window": [
+    2020,
+    2026
+   ],
+   "control_seasons": [
+    [
+     2020,
+     0.33
+    ],
+    [
+     2021,
+     2.53
+    ],
+    [
+     2022,
+     1.23
+    ],
+    [
+     2023,
+     0.52
+    ],
+    [
+     2025,
+     0.15
     ]
    ],
    "n_seasons_ge4_window": 0,
