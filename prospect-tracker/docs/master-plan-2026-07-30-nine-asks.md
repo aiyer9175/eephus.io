@@ -690,16 +690,16 @@ Confirmed items, cheapest first:
 9. `data/pal.json` schema refresh: still OWED. Phase 0 did not re-run `pal_export`, so
    the served payload predates 23a7f44's staged watch (121 entries, no
    `prospect_watch_rule` key). Do it before any /pal/ surface work.
-10. **NEW 2026-07-30: `test_prospx_sort_a11y::test_aria_sort_reflects_state_and_enter_resorts`
-    is FLAKY under full-suite load.** Correcting my own first read of this: I recorded it
-    as failing deterministically in the full suite, and it is not. It failed two of three
-    full runs and passed the third, while passing in isolation, with neighbours, and in
-    every pairwise combination tried. The fixture is module-scoped over a real browser
-    page, the assertion waits up to 10s for a keyboard-driven re-sort to land, and under
-    full-suite CPU contention that wait sometimes loses. So the likely fix is the timeout
-    or the wait condition, not test ordering, and certainly not the a11y feature, which
-    passes every time it is measured without the rest of the suite competing with it.
-    Treat a single red here as noise; treat two in a row as a real regression.
+10. **`test_prospx_sort_a11y::test_aria_sort_reflects_state_and_enter_resorts` is a COLD-LOAD
+    TIMEOUT, diagnosis refined twice.** First recorded as deterministic in the full suite,
+    then as flaky under suite load. Neither is right. Measured 2026-07-31: it fails on the
+    FIRST run after `prospx/index.html` is edited and passes on an immediate re-run of the
+    same command, in isolation, with nothing else running. The fixture serves a 54,000-line
+    page to a real browser and the assertion waits 10s for a keyboard-driven re-sort; a cold
+    first parse of that file exceeds it. So the fix is the timeout or a warm-up load, not
+    test ordering and not the a11y feature, which passes every time the page is already warm.
+    Treat a single red here after touching prospx as expected; treat two consecutive reds on
+    an unchanged tree as real.
 11. **NEW: Windows console logging crashes on `→`.** Seven `UnicodeEncodeError`
     tracebacks during the regen, all from `_log.info` calls containing a right-arrow
     against a cp1252 console (`bayes_trade_value.py:4188` and siblings). Cosmetic only,
