@@ -243,6 +243,34 @@ _FEATURES_PIT = [
     # 50 on col_x_k alone). Bare indicators don't help pitchers (0.267 < 0.269). A ranking gain
     # that wrecks absolute-grade robustness is not a clean gain -> reverted. (Hitter cohort
     # indicators stay -- bounded 0/1, robust +0.030 gain.)
+    #
+    # seasons_at_level: consecutive seasons on the CURRENT level (1 = arrived this year).
+    # SHIPPED PITCHERS ONLY, 2026-07-30, owner decision on the E1 gate
+    # (docs/efv-2026-07-30/E1_REPEAT_LEVEL_GATE.md, ledger data/xfv_repeat_level_eval.json).
+    #   what it adds  nothing else in the set sees a STALL. Only the final pre-decision
+    #                 season's rates enter, so an arm repeating a level after a bad year read
+    #                 identically to one who just arrived and is pitching well. It is NOT
+    #                 n_milb_seasons, which counts total seasons anywhere and is a declared
+    #                 suppressor for the opposite reason (more seasons = more seasons spent
+    #                 REACHING the level). Cleanest demonstration: taylor and arias share
+    #                 n_milb_seasons 4.0 and differ 3.0 vs 1.0 here.
+    #   evidence      pooled OOS blend Spearman 0.3060 -> 0.3187 (+0.0127), 3 of 4
+    #                 forward-chained folds, BOTH full-pool AUC labels up (contributor
+    #                 +0.0041, star +0.0059).
+    #   why it ships  inside the generic MDE95 (0.79x) but PASSES the feature-specific
+    #                 permutation null: 0 of 30 draws from the true marginal with the row
+    #                 link broken matched or beat it, null sd 0.0030, p=0.032, ~4.2 sd out.
+    #                 That is the bar this codebase set for itself after the pitcher-label
+    #                 lane (null band + permutation p, docs/PITCHER_LABEL_LEDGER.md). The two
+    #                 tests answer different questions and do not conflict: permutation says
+    #                 the signal is real, MDE95 says the magnitude is imprecise.
+    #   sign          -1 CONFIRMED for pitchers, fitted -0.1072 and the 4th largest weight in
+    #                 the model. HITTERS ARE EXCLUDED ON PURPOSE: the same column fits +0.0945
+    #                 there (a hitter who has sat at a level is one the system KEPT on the
+    #                 board) and its permutation p is 0.375, so that arm is closed on an
+    #                 inverted sign AND on noise. Do not "restore symmetry" by adding it to
+    #                 _FEATURES_HIT.
+    ("seasons_at_level", -1),
 ]
 
 
@@ -290,19 +318,8 @@ _CONTRIB_WAR = 3.0
 _STAR_WAR = 10.0
 
 
-# E1 repeat-level candidate (docs/efv-2026-07-30/E1_REPEAT_LEVEL_GATE.md). DEFAULT OFF:
-# adding a feature rebuilds both matrices and moves the board, so it ships only on the
-# pre-registered gate. Declared -1 as the THEORY (a stall is bad news), which the sign
-# audit will confirm or refute; this codebase has caught itself declaring the wrong sign
-# twice already (k_rel, n_milb_seasons), so the declaration is a hypothesis, not a claim.
-E1_REPEAT_LEVEL = False
-_E1_FEATURE = ("seasons_at_level", -1)
-
-
 def _feature_spec(side: str):
     feats = _FEATURES_PIT if side == "pit" else _FEATURES_HIT
-    if E1_REPEAT_LEVEL:
-        feats = feats + [_E1_FEATURE]
     return [k for k, _ in feats], [m for _, m in feats]
 
 

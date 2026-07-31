@@ -1,15 +1,15 @@
 {
- "generated_at": "2026-07-31T01:05:09Z",
+ "generated_at": "2026-07-31T03:27:00Z",
  "summary": {
-  "board_rows": 9603,
-  "active_board_rows": 4513,
-  "roster_rows": 10608,
-  "colliding_slugs": 196,
+  "board_rows": 9613,
+  "active_board_rows": 4523,
+  "roster_rows": 10624,
+  "colliding_slugs": 197,
   "critical_player_keys": 16,
   "critical_active_player_keys": 0,
   "c1_shared_key": 0,
   "c1_unattributed": 9,
-  "c1_shadowed": 144,
+  "c1_shadowed": 145,
   "c1_split": 5,
   "c1_untracked": 38,
   "c2_double_bound": 0,
@@ -18,7 +18,7 @@
   "c5_birthdate_conflicts": 0,
   "c6_org_splits": 0,
   "frankenstein_records": 0,
-  "unassigned_null_id_rows": 250
+  "unassigned_null_id_rows": 251
  },
  "critical_player_keys": [
   "aaron_brown",
@@ -1524,6 +1524,15 @@
    "mlbam_ids": [
     800439,
     839502
+   ]
+  },
+  {
+   "slug": "osmar_torrealba",
+   "board_key": "osmar_torrealba",
+   "n_humans": 2,
+   "mlbam_ids": [
+    821091,
+    837807
    ]
   },
   {

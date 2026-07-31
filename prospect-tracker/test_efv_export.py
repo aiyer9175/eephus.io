@@ -356,7 +356,17 @@ def test_committed_artifact_headline_alias_contract():
 #   out of the top 100, which was the point of the age dial), top-100 side mix 92H/8P inside
 #   its band, history basis flipped onto the board basis so the eFV-delta movement signal
 #   un-suppresses. Rowcount 9268 -> 9324.
-_GOLDEN_XFV_SHA256 = "4f791d2f2123905fdd792fecbdadc800308924120e377812b98d57af1af19f8a"
+# 2026-07-30b RESTAMP: the E1 repeat-level ship (seasons_at_level added to the PITCHER
+#   feature set only, owner decision on docs/efv-2026-07-30/E1_REPEAT_LEVEL_GATE.md).
+#   Every pitcher's model WAR moves, so the grade and the board order move with it;
+#   hitters are byte-stable by construction because the feature is excluded there.
+#   Shipped inside the generic MDE95 on the strength of the feature-specific permutation
+#   null (0 of 30 draws beat the real +0.0127, p=0.032). Coordination in the same commit:
+#   the board fingerprint now HASHES THE FEATURE SPEC, because until today it could not
+#   see a model change at all -- scale, grade map and role mode were all it knew, so a
+#   new feature moved the whole board while the fingerprint reported "no change".
+#   Rowcount 9324 -> 9334.
+_GOLDEN_XFV_SHA256 = "e397554e462e833a87b218b8cc6fe6d77ca96fdf6a96287af86719f67d1c8ca8"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire

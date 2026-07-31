@@ -18,9 +18,9 @@
   30,
   60
  ],
- "flags_logged": 3849,
+ "flags_logged": 3856,
  "flags_matured": 1712,
- "flags_pending": 2137,
+ "flags_pending": 2144,
  "by_flag_type": {
   "faller": {
    "matured_cohorts": 17,
