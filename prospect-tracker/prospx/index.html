@@ -35536,10 +35536,14 @@ function makeSurplusCell(p) {
   const ciText = isEfv ? "" : svCiText(s);
   const consSv = isEfv && xf && xf.consensus_surplus_mm != null ? xf.consensus_surplus_mm : null;
   const tip = belowFloor
-    ? "Below the pricing floor. The surplus engine cannot resolve a value this "
-      + "small: everything under about $1.7M of raw surplus is clamped to zero by "
-      + "the calibration layer, which is where roughly two thirds of the board "
-      + "sits. Read the rank rather than the dollar figure here. Open the player "
+    ? "Below the pricing floor. Everything under about $1.7M of raw surplus is "
+      + "clamped to exactly zero by the calibration layer, which is where roughly "
+      + "two thirds of the board sits, so this is a limit rather than a valuation. "
+      + "Treat it as unpriced, not as worthless: backtested, the lowest predicted "
+      + "band realised about $4.4M on average, because a tier full of long shots "
+      + "has a positive expectation even when its median outcome is negative. The "
+      + "ordering down here carries little information either, so do not read the "
+      + "neighbouring ranks as a finer version of the same answer. Open the player "
       + "for the distribution."
     : `${isEfv ? "eFV" : "Consensus"} expected surplus ${fmtSvMM(s.value_mm)}`
     + (consSv != null ? ` (consensus FV surplus ${fmtSvMM(consSv)})` : "")
