@@ -187,3 +187,81 @@ misdirected. Candidate (c), a small positive constant floor, remains the weakest
 now clearly unnecessary given (a) has a mechanical target.
 
 Do not start it without C6 in the same lane.
+
+---
+
+# M4 (2026-07-31): the backtest contradicts this document's own premise
+
+Section 3 above says "the live median first-6yr WAR in that tier is negative, so *these
+players are worth about nothing* is defensible, and what is not defensible is the
+mechanism". **The real-data backtest says the level is wrong too, and in the opposite
+direction from the one that would excuse the floor.**
+
+From `data/surplus_backtest_real.json` (registry `prospect_surplus`, verdict validated,
+2,958 resolved players from 2017-2019 listings, RAW pre-calibration predictions):
+
+| predicted bin | model says | realized | model minus realized |
+|---|---|---|---|
+| **0 (lowest)** | **$1.75M** | **$4.36M** | **-$2.61M** |
+| 1 | 1.79 | 1.48 | +0.31 |
+| 2 | 4.87 | 0.57 | +4.30 |
+| ... | | | |
+| 7 (highest) | 31.57 | 18.23 | +13.34 |
+
+And by grade tier:
+
+| tier | n | bias | MAE | Spearman |
+|---|---|---|---|---|
+| **40-45** | **2,503** | **-3.14** | 9.44 | **0.020** |
+| 50 | 317 | -9.86 | 22.96 | 0.058 |
+| 55 | 99 | -15.74 | 30.85 | 0.217 |
+| 60+ | 39 | -26.26 | 41.11 | 0.257 |
+
+Three things follow, and they reshape the lane.
+
+**1. The bottom is UNDER-predicted before the clamp, not over-predicted.** The lowest bin
+realizes $4.36M against a $1.75M prediction. The calibration then maps that $1.75M to
+exactly $0. So the floor does not shave a generous estimate down to a defensible zero; it
+takes an estimate that was already $2.61M too LOW and removes the rest. The
+lottery-ticket structure of the bottom tier is why: a median that is negative and an
+expectation that is clearly positive are not in conflict, and surplus prices the
+expectation.
+
+**2. The error changes SIGN across the curve, so a single linear calibration cannot be
+right everywhere.** The model under-predicts bin 0 and over-predicts bins 2 through 7.
+The shipped map is one line, `max(0, 1.382491*raw - 2.318551)`, whose negative intercept
+is doing real work at the top and doing damage at the bottom. That is the actual
+diagnosis, and it explains why BOTH previous repairs failed: the surplus map refit and
+C-prime each tried to move one global object to fix a sign-changing error.
+
+**3. But Spearman is 0.020 in the 40-45 tier**, which is 85% of the backtested pool. The
+model has essentially NO ordering information down there. That weakens one of Arm 1's
+arguments (the floor "destroys ordering") - there is little order to destroy - and it
+sharpens the target: **this lane is about LEVEL, not rank.** A repair should be judged on
+bias and MAE, not on restoring an ordering that was never there.
+
+## What this changes about the plan
+
+Candidate (a), re-anchoring so the sub-40 range clears the cross, now has evidence behind
+it rather than just a mechanism: the bottom is under-priced by $2.61M in the lowest bin
+and by $3.14M across the 40-45 tier, so moving it UP is directionally correct on the
+metric the gate scores.
+
+Candidate (b) is upgraded rather than dismissed. "Re-fit the calibration" was the wrong
+framing; the right one is **the calibration must stop being a single line**, because the
+sign of the error it is correcting flips. The committed knots are already isotonic in
+shape (`x=[0, 1.677, 20, 60, 400]`), so the fix may be as narrow as refusing to fit
+`y[0]=y[1]=0` and letting the bottom knot carry the positive value the backtest measures.
+
+Candidate (c), a small positive constant floor, is now clearly wrong: the measured value
+at the bottom is not a token, it is $4.36M.
+
+## Still not built, and why
+
+The backtest scores RAW predictions by design, to avoid circularity. So it can gate an
+ANCHOR change directly but cannot by itself gate a CALIBRATION change, which is the
+candidate the evidence now favours. Closing that needs the open P0 from
+`EFV_GATE_STANDARD.md` section 4 first: the calibration was fit on RAW per-source median
+FV while production prices the NORMALIZED consensus, so a re-fit today would be fitted on
+a frame the site does not serve. That P0 is the true prerequisite, and it should be
+closed before the fit rather than discovered during it.
