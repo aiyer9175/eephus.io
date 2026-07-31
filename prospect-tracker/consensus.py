@@ -11,11 +11,17 @@ Anchored to the FanGraphs scouting primer:
 
 Design (v5)
 -----------
-Sources that publish an explicit 20-80 FV grade are combined into an
-accuracy-weighted mean. Weights load from data/source_weights.json (shrunk
-toward equal from the resolved-outcome backtest) and default to 1.0 - one
-equal vote - unless that file overrides a source; today only FanGraphs (0.939)
-and MLB Pipeline (1.061) differ from equal, every other source votes at 1.0.
+Sources that publish an explicit 20-80 FV grade are combined into a mean that
+CAN be accuracy-weighted but today is not. Weights load from
+data/source_weights.json (shrunk toward equal from the resolved-outcome
+backtest) and default to 1.0, one equal vote. That file is currently EMPTY and
+every source votes at 1.0: the previous FanGraphs 0.939 / MLB Pipeline 1.061
+pair was reverted 2026-07-25 as unearned, because the forward-chained A/B
+measured d_rho -0.0012 against an MDE95 of 0.0068, i.e. nothing to weight on.
+The ship gate in source_backtest.py now demands a gain larger than the test can
+resolve. (The same question was measured again at the TOOL level on 2026-07-31
+and refused for a different reason, non-replication:
+docs/efv-2026-07-30/TOOL_NORMALIZATION_VERDICT.md.)
 Sources that publish an explicit FV grade:
 
   * FanGraphs            (Eric Longenhagen + team)
