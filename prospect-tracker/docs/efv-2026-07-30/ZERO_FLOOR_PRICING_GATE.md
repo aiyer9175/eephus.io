@@ -265,3 +265,93 @@ candidate the evidence now favours. Closing that needs the open P0 from
 FV while production prices the NORMALIZED consensus, so a re-fit today would be fitted on
 a frame the site does not serve. That P0 is the true prerequisite, and it should be
 closed before the fit rather than discovered during it.
+
+---
+
+# M5 (2026-07-31): P0 CLOSED. The calibration's intercept has the wrong SIGN for the frame it is applied to.
+
+This is the root cause of the $0 floor. It is not the anchor, and it is not that the
+bottom tier is worth nothing.
+
+## What the P0 said, and what closing it took
+
+`EFV_GATE_STANDARD.md` section 4 records an open P0: the surplus calibration was fit on
+RAW per-source median FV while production prices the NORMALIZED consensus, so "treat
+surplus DOLLARS as provisional". Closing it needed one thing the harness already
+supports: `surplus_backtest_real` carries BOTH scales and switches on `FV_SCALE`, and its
+default had already been moved to `normalized`. **The committed artifact predated that
+switch** (`fv_scale: null`, generated 2026-06-12), so every number quoted from it,
+including the ones in M4 above, was measured on the frame production does NOT serve.
+
+Regenerated on the production frame:
+
+| | RAW (what the calibration was fit on) | NORMALIZED (what production serves) |
+|---|---|---|
+| n | 2,958 | 2,964 |
+| **bias** | **-4.586** | **+2.521** |
+| MAE | 12.019 | **11.577** |
+| Spearman | 0.117 | **0.150** |
+
+`bias = mean(realized - predicted)` (`backtest.py:288-292`), so **positive means the model
+UNDER-predicts.** The sign flips between the two frames. And the production frame is not
+merely different, it is BETTER: MAE improves and Spearman improves, so this is the frame
+the model should have been scored on all along.
+
+## The consequence, and it is not subtle
+
+On the production frame the model under-predicts in **every one of the eight bins**:
+
+| bin | predicted | realized | realized - predicted |
+|---|---|---|---|
+| 0 | 1.12 | 2.74 | **+1.62** |
+| 1 | 1.47 | 3.78 | +2.31 |
+| 2 | 1.65 | 3.15 | +1.50 |
+| 3 | 2.00 | 2.67 | +0.67 |
+| 4 | 2.38 | 2.76 | +0.38 |
+| 5 | 4.39 | 8.42 | +4.03 |
+| 6 | 7.82 | 12.91 | +5.09 |
+| 7 | 22.30 | 26.87 | +4.57 |
+
+The shipped calibration is `max(0, 1.382491*raw - 2.318551)`. It **subtracts $2.32M** from
+a model that is already too low everywhere. Applying it bin by bin:
+
+| | mean absolute error across bins |
+|---|---|
+| uncalibrated | **2.52** |
+| after the shipped calibration | **3.05** |
+
+**The calibration actively HURTS on the frame production serves**, and it does its worst
+damage exactly where the floor lives: bins 0, 1 and 2 are all clamped to zero, turning a
+-1.62 error into -2.74, a -2.31 into -3.78, and a -1.50 into -3.15.
+
+Fit fresh on the production frame, the correct correction has slope 1.239 and intercept
+**+1.233**. **Positive.** The shipped intercept is -2.319. The calibration is not
+mis-tuned, it is pointed the wrong way, because it was fit where the model over-predicted
+(raw bias -4.59) and is applied where the model under-predicts (normalized bias +2.52).
+
+## What this does to the candidate list
+
+- **(a) re-anchor: NO LONGER THE RIGHT FIX.** The anchor is not the problem. Moving it
+  would paper over a calibration that is subtracting when it should be adding.
+- **(b) re-fit the calibration: THIS IS THE FIX**, and it is now a one-variable change
+  with a measured target. Re-fit on the normalized frame and the intercept changes sign,
+  which lifts the entire bottom of the board off the floor as a CONSEQUENCE rather than
+  as an intervention.
+- **(c) token positive floor: dead.** Already ruled out in M4 and now doubly so.
+
+The tripwire `test_value_framework::test_calibration_layer_is_real_fit_and_monotone` says
+`ys[0] is 0.0, so every raw surplus under the map's zero-cross prices at exactly $0`. On
+a correctly-framed fit `ys[0]` should not be 0 at all.
+
+## What is still required before shipping the re-fit
+
+1. The regenerated artifact changes a REGISTRY-VALIDATED row (`prospect_surplus`). Its
+   notes must record the frame change, because the numbers a reader compares against have
+   moved.
+2. The re-fit itself must clear the gate in section 5 above: held-out MAE, four controls,
+   monotonicity (now guaranteed by the C6 floor), and a reported blast radius. It should
+   beat 11.577, not the stale 12.019.
+3. `linearmap-v5-todaypriced-2026-07-24` is captured in
+   `config/valuation_sets/prospx_current.yaml`; a re-fit re-freezes that capture and
+   restamps every dollar on the board, so it needs a regen and an owner heads-up. This is
+   the single largest served-number change any lane in this program has proposed.
