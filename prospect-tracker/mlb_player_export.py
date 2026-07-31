@@ -558,6 +558,11 @@ def build_payload() -> dict:
         if sw and (not p["isPit"] or p.get("twoWay")):
             p["swingPlus"] = sw["swing_plus"]
             p["swingN"] = sw["n_swings"]
+            # W6 display-only: per-season Swing+ slices for the card trend
+            # line (same filter + shrink, grouped by season; low_n = under
+            # the model's 180-swing floor). Never a model input.
+            if sw.get("seasons"):
+                p["swingPlusSeasons"] = sw["seasons"]
         # In-house AAA Stuff+ - recent graduates only (the ex-PROSPX origin
         # gate keeps a vet's rehab-stint AAA pitches off his page).
         st = aaa_stuff.get(str(mlbam))
@@ -578,7 +583,7 @@ def build_payload() -> dict:
         "notes": [
             "career: MLB season lines (StatsAPI) + per-season bWAR (war_daily)",
             "statcast: Savant leaderboard percentiles within the season's qualified pool; pitcher contact metrics invert (suppression = good)",
-            "swing_plus: Will Cahoon's model, MLB bat tracking 2024+ only",
+            "swing_plus: Will Cahoon's model, MLB bat tracking 2024+ only; swingPlusSeasons = per-season slices (low_n under 180 swings)",
             "aaa_stuff_plus: in-house AAA pitch-quality model (stuff_plus_aaa.py), ex-PROSPX pitchers' latest tracked AAA season",
             "skills: HEM+ (hitters), REM+/RIV+/SEM+ (pitchers) from the MLB Stats leaderboards, joined by MLBAM",
             "scout: latest published report blurb (capped) + consensus tool grades, ex-PROSPX players only",

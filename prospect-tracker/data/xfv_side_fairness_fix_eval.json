@@ -1,0 +1,557 @@
+{
+ "generated_at": "2026-07-23",
+ "eval_line": "F-SIDE-FIX - ARM-2-style top-band joint display recalibration (owner-authorized fairness fix, G1 re-registered as NO-HARM)",
+ "registration": "docs/efv-2026-07-23/GATES.md 'F-SIDE-FIX gate registration'",
+ "protocol": {
+  "frame": "F-SIDE full_pool_km, forward-chained folds 2020-2023",
+  "mechanism": {
+   "knee_raw": 52.5,
+   "move_cap_fv": 3.0,
+   "order": "ARM-2 expected-WAR crosswalk (per-fold train-fit PAVA), ties rank_war -> hit -> within-side index",
+   "reassignment": "band's own display-value multiset",
+   "production_code": "efv_score.joint_band_recal + _sff_crosswalk_curve/_sff_expected_war"
+  },
+  "seed": 20260723,
+  "bootstrap_reps": 2000,
+  "lambdas": {
+   "hit": 0.7,
+   "pit": 0.52
+  },
+  "lambda_source": "data/xfv.json meta.live_lambda",
+  "folds": [
+   2020,
+   2021,
+   2022,
+   2023
+  ],
+  "n_hit": 804,
+  "n_pit": 846,
+  "n_refit_rank_war_verified": 1650,
+  "matrix_snapshot": {
+   "xfv_hitter_matrix.json": "3723f110b8b3",
+   "xfv_live_hitter_matrix.json": "a77f744d6573",
+   "xfv_live_pitcher_matrix.json": "c28cd892b162",
+   "xfv_pitcher_matrix.json": "44277c0b24ea"
+  }
+ },
+ "gates": {
+  "G1_noharm": {
+   "rho_incumbent": 0.2644,
+   "rho_candidate": 0.264,
+   "gap": -0.0004,
+   "gap_boot_mean": -0.0004,
+   "gap_lo95": -0.0015,
+   "gap_ci90": [
+    -0.0015,
+    0.0006
+   ],
+   "p_gap_gt_0": 0.225,
+   "reps": 2000,
+   "seed": 20260723,
+   "pass": true,
+   "bar": -0.005
+  },
+  "F1a_top25_share": {
+   "share_incumbent": 0.37,
+   "share_raw_rank_war": 0.11,
+   "share_candidate": 0.2,
+   "max_allowed_share": 0.283,
+   "registered_reference_bar": 0.283,
+   "pass": true
+  },
+  "F1b_top25_gap": {
+   "incumbent_mean_diff_seed7": 4.07,
+   "candidate_mean_diff_seed7": 4.15,
+   "candidate_boot_seed20260723": {
+    "mean_diff": 4.15,
+    "mean_ci90": [
+     1.88,
+     6.4
+    ],
+    "mean_se": 1.359,
+    "median_diff": 2.65,
+    "median_ci90": [
+     0.23,
+     5.24
+    ],
+    "median_se": 1.573,
+    "p_hit_gt_pit": 1.0
+   },
+   "pass": false
+  },
+  "S1_no_widening": {
+   "max_allowed_mean_diff": 5.53,
+   "max_allowed_median_diff": 5.01,
+   "candidate_mean_diff": 4.15,
+   "candidate_median_diff": 2.65,
+   "pass": true
+  },
+  "S2_hit_no_harm": {
+   "rank_war_untouched": true,
+   "hit_display_spearman_incumbent": 0.2757,
+   "hit_display_spearman_candidate": 0.2742,
+   "registered_blend_floor": 0.3785,
+   "note": "the blend rho gate quantity is a function of rank_war only; rank_war is byte-identical (asserted vs _sf_fwd_chain refit), so S2 is unchanged by construction",
+   "pass": true
+  },
+  "S4a_rankwar_cells": {
+   "note": "rank_war-frame bands and equal-FV cells are functions of rank_war / fv / war only - all carried untouched (asserted by the refit identity check + disp_cand-as-new-key design)",
+   "cells_registered": {
+    "rank_war_051-100_mean_diff": -1.27,
+    "rank_war_101-200_mean_diff": -0.57,
+    "equal_fv40_mean_diff": -0.21
+   },
+   "pass": true
+  },
+  "S4b_display_midband_restamp": {
+   "cells": {
+    "051-100": {
+     "incumbent": {
+      "n_hit": 117,
+      "n_pit": 83,
+      "pit_share": 0.415,
+      "hit": {
+       "n": 117,
+       "mean_war": 2.28,
+       "median_war": 0.23,
+       "contrib_rate": 0.308,
+       "star_rate": 0.068,
+       "bust_rate": 0.521
+      },
+      "pit": {
+       "n": 83,
+       "mean_war": 2.73,
+       "median_war": 1.07,
+       "contrib_rate": 0.337,
+       "star_rate": 0.096,
+       "bust_rate": 0.422
+      },
+      "boot": {
+       "mean_diff": -0.46,
+       "mean_ci90": [
+        -1.41,
+        0.58
+       ],
+       "mean_se": 0.606,
+       "median_diff": -0.84,
+       "median_ci90": [
+        -1.78,
+        0.18
+       ],
+       "median_se": 0.574,
+       "p_hit_gt_pit": 0.245
+      }
+     },
+     "candidate": {
+      "n_hit": 117,
+      "n_pit": 83,
+      "pit_share": 0.415,
+      "hit": {
+       "n": 117,
+       "mean_war": 2.28,
+       "median_war": 0.23,
+       "contrib_rate": 0.308,
+       "star_rate": 0.068,
+       "bust_rate": 0.521
+      },
+      "pit": {
+       "n": 83,
+       "mean_war": 2.73,
+       "median_war": 1.07,
+       "contrib_rate": 0.337,
+       "star_rate": 0.096,
+       "bust_rate": 0.422
+      },
+      "boot": {
+       "mean_diff": -0.46,
+       "mean_ci90": [
+        -1.41,
+        0.58
+       ],
+       "mean_se": 0.606,
+       "median_diff": -0.84,
+       "median_ci90": [
+        -1.78,
+        0.18
+       ],
+       "median_se": 0.574,
+       "p_hit_gt_pit": 0.245
+      }
+     },
+     "max_allowed_cand_mean_diff": 0.15,
+     "pass": true
+    },
+    "101-200": {
+     "incumbent": {
+      "n_hit": 260,
+      "n_pit": 140,
+      "pit_share": 0.35,
+      "hit": {
+       "n": 260,
+       "mean_war": 0.33,
+       "median_war": 0.0,
+       "contrib_rate": 0.046,
+       "star_rate": 0.008,
+       "bust_rate": 0.892
+      },
+      "pit": {
+       "n": 140,
+       "mean_war": 0.87,
+       "median_war": 0.0,
+       "contrib_rate": 0.129,
+       "star_rate": 0.021,
+       "bust_rate": 0.707
+      },
+      "boot": {
+       "mean_diff": -0.54,
+       "mean_ci90": [
+        -0.96,
+        -0.13
+       ],
+       "mean_se": 0.25,
+       "median_diff": 0.0,
+       "median_ci90": [
+        0.0,
+        0.0
+       ],
+       "median_se": 0.005,
+       "p_hit_gt_pit": 0.011
+      }
+     },
+     "candidate": {
+      "n_hit": 260,
+      "n_pit": 140,
+      "pit_share": 0.35,
+      "hit": {
+       "n": 260,
+       "mean_war": 0.33,
+       "median_war": 0.0,
+       "contrib_rate": 0.046,
+       "star_rate": 0.008,
+       "bust_rate": 0.892
+      },
+      "pit": {
+       "n": 140,
+       "mean_war": 0.87,
+       "median_war": 0.0,
+       "contrib_rate": 0.129,
+       "star_rate": 0.021,
+       "bust_rate": 0.707
+      },
+      "boot": {
+       "mean_diff": -0.54,
+       "mean_ci90": [
+        -0.96,
+        -0.13
+       ],
+       "mean_se": 0.25,
+       "median_diff": 0.0,
+       "median_ci90": [
+        0.0,
+        0.0
+       ],
+       "median_se": 0.005,
+       "p_hit_gt_pit": 0.011
+      }
+     },
+     "max_allowed_cand_mean_diff": -0.29,
+     "pass": true
+    }
+   },
+   "pass": true
+  },
+  "invariants": {
+   "I1_below_knee_identity": {
+    "n_below": 1512,
+    "violations": 0,
+    "pass": true
+   },
+   "I2_within_side_monotone": {
+    "violations": 0,
+    "tie_pairs_new_inversions": 0,
+    "note": "strict rank_war pairs + tie-parity vs incumbent; see lab-defect record in source",
+    "pass": true
+   },
+   "I3_move_cap": {
+    "max_abs_move": 3.0,
+    "cap": 3.0,
+    "pass": true
+   }
+  }
+ },
+ "eval_frame_summary": {
+  "n_rows": 1650,
+  "n_band_changed": 69,
+  "top25_incumbent": {
+   "n_hit": 63,
+   "n_pit": 37,
+   "pit_share": 0.37,
+   "hit": {
+    "n": 63,
+    "mean_war": 9.16,
+    "median_war": 6.4,
+    "contrib_rate": 0.746,
+    "star_rate": 0.429,
+    "bust_rate": 0.19
+   },
+   "pit": {
+    "n": 37,
+    "mean_war": 5.09,
+    "median_war": 3.56,
+    "contrib_rate": 0.541,
+    "star_rate": 0.216,
+    "bust_rate": 0.216
+   },
+   "boot": {
+    "mean_diff": 4.07,
+    "mean_ci90": [
+     1.64,
+     6.46
+    ],
+    "mean_se": 1.455,
+    "median_diff": 2.83,
+    "median_ci90": [
+     0.51,
+     7.83
+    ],
+    "median_se": 2.177,
+    "p_hit_gt_pit": 0.997
+   }
+  },
+  "top25_candidate": {
+   "n_hit": 80,
+   "n_pit": 20,
+   "pit_share": 0.2,
+   "hit": {
+    "n": 80,
+    "mean_war": 8.5,
+    "median_war": 6.39,
+    "contrib_rate": 0.725,
+    "star_rate": 0.388,
+    "bust_rate": 0.212
+   },
+   "pit": {
+    "n": 20,
+    "mean_war": 4.35,
+    "median_war": 3.74,
+    "contrib_rate": 0.6,
+    "star_rate": 0.1,
+    "bust_rate": 0.2
+   },
+   "boot": {
+    "mean_diff": 4.15,
+    "mean_ci90": [
+     1.89,
+     6.39
+    ],
+    "mean_se": 1.363,
+    "median_diff": 2.65,
+    "median_ci90": [
+     0.29,
+     5.16
+    ],
+    "median_se": 1.531,
+    "p_hit_gt_pit": 0.999
+   }
+  },
+  "top25_candidate_boot_seed20260723": {
+   "mean_diff": 4.15,
+   "mean_ci90": [
+    1.88,
+    6.4
+   ],
+   "mean_se": 1.359,
+   "median_diff": 2.65,
+   "median_ci90": [
+    0.23,
+    5.24
+   ],
+   "median_se": 1.573,
+   "p_hit_gt_pit": 1.0
+  },
+  "top25_raw_rank_war_share": 0.11,
+  "per_fold_top25_pit_share": {
+   "2020": {
+    "inc_pit_share": 0.28,
+    "cand_pit_share": 0.16
+   },
+   "2021": {
+    "inc_pit_share": 0.48,
+    "cand_pit_share": 0.48
+   },
+   "2022": {
+    "inc_pit_share": 0.48,
+    "cand_pit_share": 0.04
+   },
+   "2023": {
+    "inc_pit_share": 0.24,
+    "cand_pit_share": 0.12
+   }
+  },
+  "top_movers": [
+   {
+    "pk": "dylan_carlson",
+    "side": "hit",
+    "year": 2020,
+    "disp": 60.0,
+    "disp_cand": 63.0,
+    "war": 3.7
+   },
+   {
+    "pk": "casey_mize",
+    "side": "pit",
+    "year": 2020,
+    "disp": 65.3,
+    "disp_cand": 62.3,
+    "war": 4.73
+   },
+   {
+    "pk": "luis_patino",
+    "side": "pit",
+    "year": 2020,
+    "disp": 57.3,
+    "disp_cand": 54.3,
+    "war": -0.41
+   },
+   {
+    "pk": "dl_hall",
+    "side": "pit",
+    "year": 2022,
+    "disp": 57.7,
+    "disp_cand": 60.7,
+    "war": 0.68
+   },
+   {
+    "pk": "nick_lodolo",
+    "side": "pit",
+    "year": 2022,
+    "disp": 57.7,
+    "disp_cand": 54.7,
+    "war": 12.69
+   },
+   {
+    "pk": "matt_brash",
+    "side": "pit",
+    "year": 2022,
+    "disp": 57.7,
+    "disp_cand": 54.7,
+    "war": 3.62
+   },
+   {
+    "pk": "hunter_greene",
+    "side": "pit",
+    "year": 2022,
+    "disp": 57.7,
+    "disp_cand": 54.7,
+    "war": 19.73
+   },
+   {
+    "pk": "kyle_harrison",
+    "side": "pit",
+    "year": 2023,
+    "disp": 57.7,
+    "disp_cand": 54.7,
+    "war": 2.9
+   },
+   {
+    "pk": "eury_perez",
+    "side": "pit",
+    "year": 2023,
+    "disp": 57.7,
+    "disp_cand": 54.7,
+    "war": 7.62
+   },
+   {
+    "pk": "oswald_peraza",
+    "side": "hit",
+    "year": 2022,
+    "disp": 52.7,
+    "disp_cand": 55.3,
+    "war": -1.22
+   },
+   {
+    "pk": "brett_baty",
+    "side": "hit",
+    "year": 2022,
+    "disp": 52.7,
+    "disp_cand": 55.3,
+    "war": 3.52
+   },
+   {
+    "pk": "nick_pratto",
+    "side": "hit",
+    "year": 2022,
+    "disp": 52.7,
+    "disp_cand": 55.3,
+    "war": -2.4
+   },
+   {
+    "pk": "vinnie_pasquantino",
+    "side": "hit",
+    "year": 2022,
+    "disp": 52.7,
+    "disp_cand": 55.3,
+    "war": 7.61
+   },
+   {
+    "pk": "liover_peguero",
+    "side": "hit",
+    "year": 2022,
+    "disp": 52.7,
+    "disp_cand": 55.3,
+    "war": -0.54
+   },
+   {
+    "pk": "royce_lewis",
+    "side": "hit",
+    "year": 2022,
+    "disp": 52.7,
+    "disp_cand": 55.3,
+    "war": 6.01
+   },
+   {
+    "pk": "jose_miranda",
+    "side": "hit",
+    "year": 2022,
+    "disp": 52.7,
+    "disp_cand": 55.3,
+    "war": 3.06
+   },
+   {
+    "pk": "bryson_stott",
+    "side": "hit",
+    "year": 2022,
+    "disp": 52.7,
+    "disp_cand": 55.3,
+    "war": 15.06
+   },
+   {
+    "pk": "hunter_brown",
+    "side": "pit",
+    "year": 2022,
+    "disp": 55.3,
+    "disp_cand": 52.7,
+    "war": 14.41
+   },
+   {
+    "pk": "ken_waldichuk",
+    "side": "pit",
+    "year": 2022,
+    "disp": 55.3,
+    "disp_cand": 52.7,
+    "war": 0.56
+   },
+   {
+    "pk": "cade_cavalli",
+    "side": "pit",
+    "year": 2022,
+    "disp": 55.3,
+    "disp_cand": 52.7,
+    "war": -0.04
+   }
+  ]
+ },
+ "verdict": "FAIL - defaults stay OFF; this artifact is the loss ledger",
+ "all_pass": false,
+ "reading": "The capped top-band recalibration reliably fixes the OVER-REPRESENTATION channel (top-25 pit share 0.37 -> 0.20, 65% of the display-vs-raw excess closed; G1' pooled Spearman unharmed at gap -0.0004 lo95 -0.0015) but does NOT move the EQUAL-SLOT realized gap (F1b 4.15 vs 4.07): the pitcher display tail carries no realized-WAR gradient (the TOP-QUANT finding), so WHICH pitchers survive in the top band is outcome-arbitrary, while the hitters promoted from just below the cut dilute the hit-side mean. The gap metric at the top slots is structurally insensitive to any within-tail selection at this data resolution. Keep-alive: resolved 2024+ cohorts (a pit tail with gradient), or a NEW owner registration whose primary efficacy metric is the over-representation channel this mechanism demonstrably fixes."
+}

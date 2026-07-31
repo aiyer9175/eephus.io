@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Disallow query parameters on blog URLs to prevent spam/parameter pollution
+# Blog articles don't use query parameters; canonical version is without params
+Disallow: /*?*
+
+# Explicitly allow static resources
+Allow: /css/
+Allow: /js/
+Allow: /images/
+Allow: /passets/
+
+# Disallow admin areas
+Disallow: /login/
+Disallow: /api/admin/
+Disallow: /admin/
+
+# Disallow sync scripts
+Disallow: /sync_scripts/
+
+# Sitemap
+Sitemap: https://www.prepbaseballreport.com/sitemap.xml

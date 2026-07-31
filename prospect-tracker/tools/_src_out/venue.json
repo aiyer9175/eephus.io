@@ -1,0 +1,158 @@
+{
+ "pf_venues": 202,
+ "venue_meta_n": 228,
+ "joined": 188,
+ "joined_with_elev": 5,
+ "joined_with_dims": 136,
+ "venue_meta_elev_by_level": {
+  "MLB": "33/59",
+  "AA": "0/31",
+  "A": "0/22",
+  "CPX": "0/58",
+  "AAA": "1/28",
+  "A+": "0/30"
+ },
+ "venue_meta_dims_by_level": {
+  "MLB": "59/59",
+  "AA": "30/31",
+  "A": "22/22",
+  "CPX": "4/58",
+  "AAA": "28/28",
+  "A+": "29/30"
+ },
+ "n_rated_joined_venues": 150,
+ "rpf_spread": {
+  "sd": 0.0473,
+  "min": 0.8617,
+  "max": 1.1965
+ },
+ "roof_variation": {
+  "0.0": 150
+ },
+ "geometry_vs_rpf": {
+  "elev": {
+   "n": 5,
+   "rho": null
+  },
+  "cf": {
+   "n": 125,
+   "rho": -0.0705
+  },
+  "ll": {
+   "n": 125,
+   "rho": -0.018
+  },
+  "rl": {
+   "n": 125,
+   "rho": -0.0319
+  },
+  "lc": {
+   "n": 65,
+   "rho": -0.0281
+  },
+  "rc": {
+   "n": 64,
+   "rho": 0.1593
+  },
+  "roof": {
+   "n": 150,
+   "rho": null
+  },
+  "az": {
+   "n": 5,
+   "rho": null
+  },
+  "cap": {
+   "n": 120,
+   "rho": 0.0674
+  }
+ },
+ "geometry_vs_hpf": {
+  "elev": {
+   "n": 5,
+   "rho": null
+  },
+  "cf": {
+   "n": 125,
+   "rho": -0.1175
+  },
+  "ll": {
+   "n": 125,
+   "rho": -0.0901
+  },
+  "rl": {
+   "n": 125,
+   "rho": -0.1
+  },
+  "lc": {
+   "n": 65,
+   "rho": -0.1144
+  },
+  "rc": {
+   "n": 64,
+   "rho": 0.0392
+  },
+  "roof": {
+   "n": 150,
+   "rho": null
+  },
+  "az": {
+   "n": 5,
+   "rho": null
+  },
+  "cap": {
+   "n": 120,
+   "rho": -0.0419
+  }
+ },
+ "perm_null_rpf": {
+  "elev": {
+   "n": 5,
+   "skip": "too few"
+  },
+  "cf": {
+   "n": 125,
+   "obs_abs": 0.0705,
+   "null_p95_abs": 0.178,
+   "p": 0.446
+  },
+  "cap": {
+   "n": 120,
+   "obs_abs": 0.0674,
+   "null_p95_abs": 0.1805,
+   "p": 0.4715
+  },
+  "ll": {
+   "n": 125,
+   "obs_abs": 0.018,
+   "null_p95_abs": 0.1766,
+   "p": 0.846
+  }
+ },
+ "perm_null_hpf": {
+  "elev": {
+   "n": 5,
+   "skip": "too few"
+  },
+  "cf": {
+   "n": 125,
+   "obs_abs": 0.1175,
+   "null_p95_abs": 0.1774,
+   "p": 0.1925
+  },
+  "cap": {
+   "n": 120,
+   "obs_abs": 0.0419,
+   "null_p95_abs": 0.18,
+   "p": 0.653
+  },
+  "ll": {
+   "n": 125,
+   "obs_abs": 0.0901,
+   "null_p95_abs": 0.1745,
+   "p": 0.3135
+  }
+ },
+ "efv_hit_milb_season_ge2021": "524/1882 (27.8%)",
+ "efv_pit_milb_season_ge2021": "492/1989 (24.7%)"
+}

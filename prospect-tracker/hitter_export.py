@@ -32,7 +32,9 @@ from typing import Optional
 
 import hem_plus
 from hem_plus import Hitter
-from bullpen_export import _team_abbrev_map, _num
+from bullpen_export import (_team_abbrev_map, _num, score_war_rate,
+                            join_war_rate_3yr, WAR_RATE_POOL_MIN_PA,
+                            WAR_RATE_DISPLAY_MIN_PA)
 import fa_sources
 
 _log = logging.getLogger(__name__)
@@ -45,14 +47,24 @@ MULTIYR_PATH = DATA_DIR / "hem_plus_multiyear_eval.json"
 HISTORY_SEASONS = [2021, 2022, 2023, 2024, 2025]
 
 
-def _join_hem_plus_3yr(hitters: list[dict]) -> int:
+def _join_hem_plus_3yr(hitters: list[dict]) -> dict:
     """Stamp hem_plus_3yr / percentile / tag from the multi-year artifact
     (tools/hem_plus_lab.py). Companion SKILL column; missing artifact or unmatched
-    player -> fields absent, column renders blank. Returns rows stamped."""
+    player -> fields absent, column renders blank.
+
+    VINTAGE, NOT PIPELINE OUTPUT (mirrors bullpen_export._join_rem_plus_3yr):
+    the values are read VERBATIM from a FROZEN lab artifact, so a row can show a
+    same-day 1-year HEM+ beside a 3-year HEM+ frozen weeks earlier, and a hitter
+    who entered the pool after the lab ran is blank. Returns the artifact's
+    vintage block so the payload can carry it and the frontend can disclose it
+    instead of the divergence being silent."""
+    meta = {"source": MULTIYR_PATH.name, "n_stamped": 0, "available": False}
     try:
-        players = json.loads(MULTIYR_PATH.read_text(encoding="utf-8"))["proposed_values"]["players"]
+        art = json.loads(MULTIYR_PATH.read_text(encoding="utf-8"))
+        pv = art["proposed_values"]
+        players = pv["players"]
     except (OSError, ValueError, KeyError):
-        return 0
+        return meta
     n = 0
     for h in hitters:
         p = players.get(str(h.get("mlbam") or ""))
@@ -63,7 +75,19 @@ def _join_hem_plus_3yr(hitters: list[dict]) -> int:
         h["hem_plus_3yr_tag"] = p.get("tag")
         if h["hem_plus_3yr"] is not None:
             n += 1
-    return n
+    meta.update({
+        "available": True,
+        "n_stamped": n,
+        "generated_at": art.get("generated_at"),
+        "season": pv.get("season"),
+        "window": pv.get("window"),
+        "n_in_artifact": len(players),
+        "note": ("3-year HEM+ is FROZEN lab output read verbatim from "
+                 f"{MULTIYR_PATH.name}, not recomputed by this run. It is as of "
+                 "generated_at, NOT as of this board's as_of date, and hitters "
+                 "who joined the pool after that date have no value."),
+    })
+    return meta
 
 
 @functools.lru_cache(maxsize=1)
@@ -305,6 +329,38 @@ def _join_pwoba(hitters: list[dict], season: int) -> int:
     return len(stamped)
 
 
+def _join_war_pa_plus(hitters: list[dict], season: int) -> dict:
+    """HITTER-anchored WAR/PA+: 100 = the average hitter's BATTING bWAR per plate
+    appearance, on the 100 + 10z scale (convention 3, ten points per pool sigma,
+    NOT the HEM+ ratio scale that the columns around it use).
+
+    Batting bWAR only. The reader is a whole-player value rate, not a rate skill:
+    unlike HEM+, which is offensive rate alone, WAR/PA+ carries fielding,
+    baserunning and the positional adjustment, which is exactly why it is noisier
+    and why it sits behind a 100-PA display gate.
+
+    TWO-WAY PLAYERS need no discount here. The bWAR reader keeps the batting and
+    pitching sides on separate keys, so a two-way player's BATTING WAR is divided
+    by his plate appearances on this board while his PITCHING WAR is divided by
+    his innings on a pitcher board. Two indexes, two denominators, both correct;
+    he legitimately appears on both boards. proj_export.TWO_WAY_PIT_PTH_FACTOR
+    exists for a display path where one denominator has to carry both sides, and
+    it does not apply.
+
+    Best-effort: bWAR unavailable or degenerate -> nothing stamped, column blank."""
+    return score_war_rate(
+        hitters, season, side="bat", denom_key="pa",
+        pool_min=WAR_RATE_POOL_MIN_PA, display_min=WAR_RATE_DISPLAY_MIN_PA,
+        out_key="war_pa_plus", anchor="hitters with 50+ PA")
+
+
+def _join_war_pa_plus_3yr(hitters: list[dict]) -> dict:
+    """Frozen trailing-window WAR/PA+ on the hitter block of
+    data/war_rate_plus_multiyear_eval.json. Vintage, not pipeline output: see
+    bullpen_export.join_war_rate_3yr for the full disclosure contract."""
+    return join_war_rate_3yr(hitters, "hit", "war_pa_plus_3yr", "hitters")
+
+
 def _verdict() -> str:
     try:
         j = json.loads(EVAL_PATH.read_text(encoding="utf-8"))
@@ -379,9 +435,10 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
                 n_bs += 1
         log(f"  hitters: bat side stamped for {n_bs} hitters")
     scored = hem_plus.score_pool(hitters)
-    n_h3 = _join_hem_plus_3yr(scored["hitters"])
-    if n_h3:
-        log(f"  hitters: 3-year HEM+ joined for {n_h3} hitters")
+    h3_meta = _join_hem_plus_3yr(scored["hitters"])
+    if h3_meta.get("n_stamped"):
+        log(f"  hitters: 3-year HEM+ joined for {h3_meta['n_stamped']} hitters "
+            f"(frozen lab vintage {h3_meta.get('generated_at')})")
     n_xh = _join_xhem_plus(scored["hitters"], season)
     if n_xh:
         log(f"  hitters: xHEM+ (Savant deserved offense) joined for {n_xh} hitters")
@@ -395,10 +452,26 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     n_pw = _join_pwoba(scored["hitters"], season)
     if n_pw:
         log(f"  hitters: pWOBA (FA-engine projected next-season wOBA) joined for {n_pw} hitters")
+    wr_meta = _join_war_pa_plus(scored["hitters"], season)
+    if wr_meta.get("available"):
+        log(f"  hitters: WAR/PA+ joined for {wr_meta['n_stamped']} hitters "
+            f"(pool {wr_meta['pool_n']})")
+    elif wr_meta.get("refused"):
+        log(f"  hitters: WAR/PA+ refused ({wr_meta['refused']})")
+    wr3_meta = _join_war_pa_plus_3yr(scored["hitters"])
+    if wr3_meta.get("n_stamped"):
+        log(f"  hitters: 3-year WAR/PA+ joined for {wr3_meta['n_stamped']} hitters "
+            f"(frozen lab vintage {wr3_meta.get('generated_at')})")
 
     payload = {
         "generated_at": today, "season": season, "as_of": today,
         "verdict": _verdict(), "backtest": _backtest(),
+        # Vintage of the FROZEN 3-year HEM+ column (see _join_hem_plus_3yr).
+        "multiyear": h3_meta,
+        # WAR/PA+ scale block (anchor pool + measured pool parameters) and the
+        # vintage of its FROZEN 3-year companion.
+        "war_rate": wr_meta,
+        "multiyear_war_rate": wr3_meta,
         "pool": scored["pool"], "hitters": scored["hitters"], "teams": scored["teams"],
     }
     n = len(scored["hitters"])

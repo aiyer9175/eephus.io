@@ -1,0 +1,90 @@
+ODDS LANE -- EXACT PATCH (NOT APPLIED; efv_score.py is under the live-file constraint)
+
+New file efv_odds_calibration.py is already written to the tree and is INERT: nothing
+imports it. The three hunks below wire it in. All three seams are structurally identical
+(`probs = vf.p_bucket_given_fv(xfv_grade, is_pit) or []`, then p_bust stamped off
+`dist["p_bust"]`). The change is: recalibrate `probs` in place, and stamp p_bust from
+`probs[0]` instead of from `dist`, so p_bucket and p_bust cannot drift apart.
+
+Blast radius: p_bust + p_bucket ONLY. xfv_grade, xfv_grade_display, rank_war and every
+dollar figure are computed independently of `probs` (surplus comes from
+vf.expected_surplus_usd / vf.sv_distribution keyed on the grade), so no rank, no grade
+and no dollar value changes. The map is strictly monotone, so board order is invariant.
+
+--- a/efv_score.py
++++ b/efv_score.py
+@@ -30,6 +30,7 @@ (import block, alongside the existing `import value_framework as vf`)
+ import value_framework as vf
++import efv_odds_calibration as _odds_cal
+
+
+HUNK 1 -- run(), the labeled-matrix scoring pass (currently line 942)
+
+@@ -942,7 +942,11 @@
+         probs = vf.p_bucket_given_fv(xfv_grade, is_pit) or []
++        # ODDS DISPERSION CALIBRATION (2026-07-25). p_bucket_given_fv is fitted on the
++        # CONSENSUS-FV scale (sd 6.57) and read here at the realized-implied grade
++        # (sd 15.54) -- 2.4x too wide, so its log-odds are 2.7x too steep. Monotone
++        # Platt correction; ranks, grades and dollars are untouched. See
++        # efv_odds_calibration.py and data/xfv_odds_dispersion_eval.json.
++        probs = _odds_cal.recalibrate_bucket(probs, is_pit,
++                                             provisional=not src.get("milb"))
+
+@@ -965,7 +969,7 @@
+-            "p_bust": round(dist.get("p_bust"), 3) if dist.get("p_bust") is not None else None,
++            "p_bust": round(probs[0], 3) if probs else None,
+
+
+HUNK 2 -- run_live(), the active board (currently line 1392)
+
+@@ -1392,7 +1392,9 @@
+         probs = vf.p_bucket_given_fv(xfv_grade, is_pit) or []
++        # ODDS DISPERSION CALIBRATION -- see HUNK 1.
++        probs = _odds_cal.recalibrate_bucket(probs, is_pit,
++                                             provisional=not row.get("milb"))
+
+@@ -1432,8 +1434,8 @@
+                      "p90_mm": _mm(_cx(pcts.get("p90"))), "mean_mm": _mm(_cx(dist.get("mean"))),
+-                     "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None},
++                     "p_bust": round(probs[0], 3) if probs else None},
+             "band_p10_mm": _mm(_cx(pcts.get("p10"))),
+             "band_p90_mm": _mm(_cx(pcts.get("p90"))),
+-            "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None,
++            "p_bust": round(probs[0], 3) if probs else None,
+
+
+HUNK 3 -- run_backgrade(), graduates + busts + non-board actives (currently line 1692)
+
+@@ -1692,7 +1692,9 @@
+         probs = vf.p_bucket_given_fv(xfv_grade, is_pit) or []
++        # ODDS DISPERSION CALIBRATION -- see HUNK 1.
++        probs = _odds_cal.recalibrate_bucket(probs, is_pit,
++                                             provisional=not row.get("milb"))
+
+@@ -1712,8 +1714,8 @@
+                      "p90_mm": _mm(_cx(pcts.get("p90"))), "mean_mm": _mm(_cx(dist.get("mean"))),
+-                     "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None},
++                     "p_bust": round(probs[0], 3) if probs else None},
+             "band_p10_mm": _mm(_cx(pcts.get("p10"))), "band_p90_mm": _mm(_cx(pcts.get("p90"))),
+-            "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None,
++            "p_bust": round(probs[0], 3) if probs else None,
+
+
+NOT PATCHED, DELIBERATELY
+-------------------------
+* _reprice_surplus_on_display() needs NO change: it already re-serves
+  `"p_bust": s.get("p_bust")` into dist, so it inherits the corrected value.
+* value_framework.sv_distribution / _dist_output are NOT touched. Every non-eFV consumer
+  (trade machine, /projections/, FA) reads p_bust at a CONSENSUS FV grade, where the
+  same curve shows a flat +0.11..+0.17 level gap and NO slope error -- this slope map is
+  the wrong instrument there and would be extrapolation.
+* efv_ungraded.py is NOT touched. Its provisional rows are the concurrent thin-sample
+  lane's scope (data/xfv_thin_pbust_eval.json) and are excluded by the `provisional=`
+  guard above, so the two lanes compose without stacking.
+
+DOC SYNC REQUIRED ON SHIP (owner-authorized invariant text, currently amended once)
+  efv_score.py:646, 653, 716, 719 -- the "p_bucket / p_bust are NEVER touched EXCEPT BY
+  THE THIN-SAMPLE CONDITIONAL" invariant becomes "... EXCEPT BY THE THIN-SAMPLE
+  CONDITIONAL AND THE ODDS DISPERSION CALIBRATION".
+  Plus a MODEL_REGISTRY.md row + data/model_registry.json entry (both under the live-file
+  constraint this session).

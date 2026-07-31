@@ -1,0 +1,114 @@
+{
+ "generated_at": "2026-07-24",
+ "experiment": "G-BUGS adversarial bug hunt (docs/efv-2026-07-24/GATES.md section G-BUGS)",
+ "method": "3 read-only finder fronts (feeds/score/surplus) + adversarial refuter per front; only CONFIRMED (independently reproduced) defects fixed in wave B; every number reproduced byte-exact by the refuter",
+ "verdict": "12 confirmed defects (2 P0 served-number, 6 P1 correctness, rest P2/P3); all fixed in wave B except noted residuals; zero refutations",
+ "fronts": {
+  "feeds": {
+   "F1": {
+    "sev": "P1",
+    "title": "MLB-career players training as 0-WAR busts at full weight",
+    "detail": "~20 inactive.json records (adolis_garcia 3378 PA, senga, yoshida, blanco...) had debut_date=None so they entered the bust pool with a hardcoded 0.0 label at weight 1.0",
+    "fix": "efv_dataset bust-loop guard _mlb_exposed_ids excludes them (reroute arm present, 0 eligible today - no career_war rows); 20 dropped (7 hit/13 pit)",
+    "status": "FIXED",
+    "residual": "luke_jackson/raul_alcantara stay 0-WAR pending correct ids"
+   },
+   "F2": {
+    "sev": "P1",
+    "title": "24 wrong-player mlbam resolutions attaching wrong ladders/labels",
+    "detail": "joe_jr_gray=Connor Joe, william_jr_bergolla=William Contreras, austin_wood=Gage Wood, luke_jackson=born-2004 kid, etc.",
+    "fix": "stats.vintage_guard_rejects (COVID-2020 exempt) + repair script nulled 24 mlbam+birth_date (19 inactive + 5 debuts), no ids guessed",
+    "status": "FIXED",
+    "residual": "DB players.birth_date still stale for 24 keys (owner --apply decision)"
+   },
+   "F3_feeds": {
+    "sev": "P0",
+    "title": "P1 V3 slot-trust key collision leaked into 5 served backgrade numbers",
+    "detail": "185 historical NULL-bonus acquisitions share (pick,bonus) keys with current-class picks; dj_davis served rank_war 3.159 with a fabricated pedigree factor",
+    "fix": "_provisional_prior_war ARM-A gated on acq_year==CURRENT_SEASON; 5 rows revert to flag-OFF on regen (dj_davis pedigree 1.21->0.54)",
+    "status": "FIXED"
+   },
+   "F4": {
+    "sev": "P1",
+    "title": "milb_missing flag ~half-contaminated by F1/F2 rows",
+    "detail": "the flag's 'untracked bust' semantic was polluted by mis-id and MLB-exposed rows",
+    "fix": "verified in-memory post F1/F2: hit 13->5, pit 32->20; remaining rows are clean untracked/foreign-pro/COVID-draft",
+    "status": "VERIFIED"
+   }
+  },
+  "score": {
+   "age_label": {
+    "sev": "P1",
+    "title": "raw key 'age' rendered as a factor chip on 54.2% of live cards",
+    "fix": "_FACTOR_LABELS gains 'age':'Age'",
+    "status": "FIXED"
+   },
+   "tie_group": {
+    "sev": "P2",
+    "title": "quantile display map insertion-order tie-break (3 pitchers tied at rank_war 0.140 shown 2.4 FV apart)",
+    "fix": "sort UNROUNDED rank_war + (rank_war, player_key) stable tiebreak; 318 hit + 532 pit tie groups",
+    "status": "FIXED"
+   },
+   "n_active": {
+    "sev": "P2",
+    "title": "meta.n_active undercounts kind==active by 264",
+    "fix": "count merged active rows; promo_watch _passes excludes provisional",
+    "status": "FIXED"
+   },
+   "krp_zero_quadrant": {
+    "sev": "P2",
+    "title": "KRP+ 99.3 point mass on 833 zeroed double-bad-quadrant rows",
+    "detail": "owner-directed x_era_k zeroing, design-inherited",
+    "status": "NOTED (design)"
+   },
+   "doc_drift": {
+    "sev": "P2",
+    "title": "3 stale docstrings/comments (P1V3 defaults, xfv_minus_consensus headline, prospx sum-of-factors)",
+    "fix": "all 3 corrected",
+    "status": "FIXED"
+   }
+  },
+  "surplus": {
+   "F1": {
+    "sev": "P0",
+    "title": "eFV surplus dollars skipped the isotonic calibration layer site-wide despite the module claiming otherwise",
+    "detail": "max_clark served 65.5 vs calibrated 72.9; jesus_made headline below its own CI floor; trade board mixed raw prospects with calibrated vets",
+    "fix": "efv_score prices through vf.apply_calibration at the reprice seam + 3 initial pricings; band/dist pointwise; backtest stays raw",
+    "status": "FIXED (every prospect surplus moved to calibrated basis)"
+   },
+   "F2": {
+    "sev": "P1",
+    "title": "eta_years never reached two pricing paths",
+    "detail": "run_backgrade blanket eta=1.0 on 2553 non-debuted rows; bayes_trade_value swallowed the eta dict to None->0.0 (debut-now pricing, masked by coverage)",
+    "fix": "run_backgrade reads surplus.eta_years; bayes derives eta-years from the dict; shared fallback 1.0",
+    "status": "FIXED"
+   },
+   "F3": {
+    "sev": "P2",
+    "title": "divergent eta fallbacks for 237 no-ETA rows",
+    "fix": "shared PROSPECT_ETA_FALLBACK_YEARS constant",
+    "status": "FIXED"
+   },
+   "F4": {
+    "sev": "P2",
+    "title": "valuation-curve monitor conflated 3 bases (could not see its own drift)",
+    "fix": "like-for-like calibrated column + surplus_basis note",
+    "status": "FIXED"
+   },
+   "F5": {
+    "sev": "P3",
+    "title": "grade-map age placement off by one window (debut_age=age-6 not expected-debut-age)",
+    "fix": "age = current_age + eta + TARGET_SEASONS at 4 sites; jesus_made 65.2->64.9",
+    "status": "FIXED"
+   },
+   "F6": {
+    "sev": "P3",
+    "title": "latent basis/cache issues (farm-Value fallback, share-of-consensus, _pchip cache, $0.0 truthiness)",
+    "fix": "cheap latents fixed; storage ts dist raw-percentile-next-to-calibrated left for a follow-up",
+    "status": "PARTIAL",
+    "residual": "storage _build_surplus_payload dist block still raw next to calibrated value_mm/ci"
+   }
+  }
+ },
+ "regen": "central regen 2026-07-24 verified mover profile to the decimal (max_clark 65.5->72.9, jesus_made 88.2->102.1, aj_russell 4.7->2.3, fabricio_blanco 5.4->2.1, dj_davis pedigree gone); meta.n_active 4187->4451; scoreboard rerun hit .373/pit .302 stable"
+}

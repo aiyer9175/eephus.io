@@ -253,6 +253,12 @@ def _reset_caches() -> None:
     _bayes_theta_draws.cache_clear()
     _fv_war_scale.cache_clear()
     _prime_war_scale.cache_clear()
+    # bughunt F6 (2026-07-23): _pchip_bucket_interpolators reads the active
+    # set's config too but was only cleared by _reset_derived_caches - a
+    # valuation-set switch could leak a stale PCHIP fallback across sets.
+    # Latent today (the fitted file commits proportional_odds for both roles,
+    # so the PCHIP fallback is unused), armed by any fitted-file change.
+    _pchip_bucket_interpolators.cache_clear()
 
 
 def _reset_derived_caches() -> None:
@@ -2781,6 +2787,116 @@ def realized_implied_fv(realized_war, is_pitcher: bool, *, exposure_seasons=None
         else:
             hi = mid
     return 0.5 * (lo + hi)
+
+
+# ── OUTCOME-ANCHORED GRADE MAP (LANE-P2, 2026-07-30) ────────────────────────
+# `realized_implied_fv` above inverts THIS MODULE'S OWN forward map: the FV whose
+# FV-implied expected control-window WAR equals the prediction. That is a statement about
+# our valuation core, not about what prospects at a grade actually did. The map below
+# inverts the EMPIRICAL one instead: E[first-6yr total bWAR | consensus FV], fit on 3,037
+# resolved uncensored cohort rows and shrunk toward the Clemens 2026 published table where
+# the cells are thin. Grade G now means "the industry FV whose realized outcome
+# distribution matches our prediction for this player".
+#
+# Why the pooled (side-neutral) curve and not the per-side pair the plan sketched: Phase 1
+# fit both and its own pre-registered reject criteria fired on the split. Against a
+# side-label-PERMUTED zero-information control the per-side curve is +0.043 MAE WORSE on
+# hitters and -0.007 on pitchers, both inside the gate standard's MAE MDE95, and its
+# calibration-slope advantage has a CI90 straddling zero on both sides. The entire
+# top-100 pitcher move (6 -> 17) came from that null component; a pooled curve reproduces
+# the incumbent board at 6 -> 8. What DID clear its floor is refitting on resolved
+# outcomes at all: hitter calibration slope 1.001 against the shipped map's 1.453,
+# d |slope-1| -0.452 CI90 [-0.519, -0.114], zero excluded. That result is available
+# without the split, so the split does not ship. Full record:
+# docs/efv-2026-07-30/FV_OUTCOME_CURVES_GATE.md and POOLED_OUTCOME_REFIT.md.
+#
+# NOT OUTCOME-CALIBRATED BELOW ~FV 45, and this is not a caveat to bury. The pool has no
+# row under consensus FV 34.9 and the measured curve is nearly flat under 45 (0.069 total
+# WAR at FV35, 0.453 at FV40), so inverting it there is a near-vertical jump and carries no
+# display granularity of its own. 71% of live board rows sit below that data floor. The
+# artifact's three sub-floor knots are therefore the SAME concave re-spread this module
+# already applied (`_LOWEND_FG_EXP`, the FanGraphs-shaped 20-45 ladder), which makes
+# keeping the incumbent low-end behaviour a no-op against the curve rather than a departure
+# from it. A grade under about 45 is a display re-spread. Never present it as calibrated.
+_OUTCOME_CURVE_PATH = _HERE / "data" / "fv_outcome_curves_pooled.json"
+
+
+class OutcomeCurveError(RuntimeError):
+    """The board's grade scale is unavailable. Deliberately fatal rather than a silent
+    fallback to `realized_implied_fv`: a missing artifact would otherwise re-rank the whole
+    board onto the retired basis with no signal that it had happened, which is the exact
+    failure class storage.board_basis_fingerprint exists to make impossible."""
+
+
+@lru_cache(maxsize=1)
+def _outcome_curve() -> dict:
+    """{'knots': [...], 'value': [...], 'hash': str} for the pooled outcome curve."""
+    try:
+        doc = json.loads(_OUTCOME_CURVE_PATH.read_text(encoding="utf-8"))
+        c = doc["curve"]
+        ks = [float(k) for k in c["knots"]]
+        vs = [float(v) for v in c["value"]]
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        raise OutcomeCurveError(
+            f"cannot read the pooled outcome curve at {_OUTCOME_CURVE_PATH}: {exc}. "
+            f"Rebuild it with `python tools/fv_outcome_curve_pooled.py`.") from exc
+    if len(ks) < 2 or len(ks) != len(vs):
+        raise OutcomeCurveError(f"malformed outcome curve: {len(ks)} knots, {len(vs)} values")
+    if any(b <= a for a, b in zip(vs, vs[1:])):
+        # Strict monotonicity is what makes the inverse single-valued; the fitter forces a
+        # +0.01 WAR minimum per knot step precisely so this can be asserted here.
+        raise OutcomeCurveError("outcome curve is not strictly increasing; inverse is a set")
+    return {"knots": ks, "value": vs, "hash": str(doc.get("curve_hash") or "")}
+
+
+def outcome_curve_identity() -> str:
+    """Short identity of the shipped grade scale, for storage.board_basis_fingerprint.
+    Returns 'unavailable' rather than raising: the fingerprint is a coordination device and
+    must never be the thing that takes the site down."""
+    try:
+        return _outcome_curve()["hash"] or "nohash"
+    except Exception:
+        return "unavailable"
+
+
+def outcome_implied_fv(predicted_war, *, exposure_seasons: int = 6) -> float | None:
+    """The industry-scale FV whose EMPIRICAL first-6yr outcome mean equals `predicted_war`.
+
+    Side-neutral, age-neutral and position-neutral by construction: the curve is indexed on
+    consensus FV alone, so this is a pure monotone function of predicted WAR. That is what
+    makes the ship safe -- within a side the eFV ordering, the per-side rank-quantile
+    display map and therefore SURPLUS PRICING are untouched (surplus re-prices off
+    xfv_grade_display, which reads rank_war, never this grade).
+
+    Clamps to [20, 80]. A non-positive prediction reads exactly 20.0, matching what
+    `realized_implied_fv` did at the same input, so the FV20 floor population does not move.
+
+    `exposure_seasons` exists to make the window explicit at every call site rather than
+    implicit in a default: the curve IS the six-season-from-debut window (the label
+    efv_score trains on), and asking for any other window is a category error, not a
+    rescale. See the block comment above for what this map is and is not calibrated for."""
+    if predicted_war is None:
+        return None
+    if int(exposure_seasons) != 6:
+        raise ValueError(
+            f"outcome_implied_fv is defined on the 6-season window only (got "
+            f"{exposure_seasons}); the curve's label is first-6yr total bWAR")
+    try:
+        war = float(predicted_war)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(war):
+        return None
+    c = _outcome_curve()
+    ks, vs = c["knots"], c["value"]
+    if war <= vs[0]:
+        return ks[0]
+    if war >= vs[-1]:
+        return ks[-1]
+    for (k0, v0), (k1, v1) in zip(zip(ks, vs), zip(ks[1:], vs[1:])):
+        if v0 <= war <= v1:
+            return k0 + (k1 - k0) * ((war - v0) / (v1 - v0))
+    return ks[-1]
 
 
 def _fv_tier_index(fv: float, edges) -> int:

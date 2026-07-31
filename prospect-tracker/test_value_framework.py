@@ -59,19 +59,41 @@ def test_calibration_layer_is_real_fit_and_monotone() -> None:
     cal = vf._config()["calibration"]
     assert cal["enabled"] is True
     assert cal["method"] == "isotonic"
-    assert cal["version"].startswith("isotonic-real-")
+    # Both sanctioned real-fit prefixes are accepted, matching the already-broader guard in
+    # test_backtest::test_calibration_config_never_ships_synthetic. The purpose of this
+    # assertion is "never ship a SYNTHETIC calibration", and v5 is a real linear fit
+    # expressed through the isotonic interpolator, so pinning "isotonic-real-" alone was
+    # rejecting a legitimate fit on its name. That mattered more than it looks: this
+    # assertion sits ABOVE the ys[0] > 0 check below, so a naming mismatch here MASKED the
+    # degeneracy tripwire entirely and it never ran. (2026-07-29)
+    assert cal["version"].startswith(("isotonic-real-", "linear-real-")), cal["version"]
     xs, ys = cal["isotonic"]["x_mm"], cal["isotonic"]["y_mm"]
-    # v3 (binned PAVA) carries ~9 knots - equal-count bin means plus the
-    # documented elite-tail extension - so the old >=10 proxy for "real
-    # fit" is now the provenance strings + monotonicity + shape pins.
-    assert len(xs) == len(ys) >= 8
+    # The old >= 8 knot count was a v3-era proxy for "a real fit rather than a hand-drawn
+    # curve", from when the champion was a 9-knot binned PAVA. v5 is a floored LINEAR map and
+    # needs only enough knots to express one (zero block, zero-cross, two interior, tail), so
+    # the count proxy now rejects the shipped champion for being the right shape. The real
+    # evidence of a real fit is the provenance plus monotonicity plus the shape pins below.
+    assert len(xs) == len(ys) >= 3
     assert xs == sorted(xs) and ys == sorted(ys)
     assert "REAL-data fit" in cal["fit_provenance"]
-    assert "leave-one-year-out" in cal["fit_provenance"]
+    # v5 records its leave-one-year-out validation as "LOyO"; accept either spelling.
+    assert ("leave-one-year-out" in cal["fit_provenance"]
+            or "LOyO" in cal["fit_provenance"])
     # v2/v3 decisions stay pinned: the bottom block is POSITIVE (the v1
     # per-player fit zeroed every FV35-40 prospect - never again) and the
     # map is non-degenerate (top >> bottom).
-    assert ys[0] > 0, "degenerate $0 bottom block returned"
+    # THIS IS THE LIVE TRIPWIRE AND IT IS EXPECTED TO FAIL. Do not "fix" it by widening.
+    # ys[0] is 0.0 under v5 and 6,384 of 9,318 served rows price at exactly $0, including
+    # 88.9% of FV35 and 25.9% of FV40. That is the v1 defect this assertion was written to
+    # prevent, recurring. Root cause and the refuted repair attempt are in
+    # docs/efv-2026-07-29/DEFECT_C_LOSS_LEDGER.md: expected_surplus_usd returns a FIXED
+    # published Edwards anchor below cutover_fv and the v5 map, fit on pipeline predictions,
+    # is applied to it anyway. Until the bottom block is repaired this test stays red on this
+    # line, which is the correct state for a guard whose defect is live.
+    assert ys[0] > 0, (
+        "degenerate $0 bottom block returned: ys[0] is 0.0, so every raw surplus under the "
+        "map's zero-cross prices at exactly $0. See docs/efv-2026-07-29/"
+        "DEFECT_C_LOSS_LEDGER.md; this is a known live defect, not a stale assertion.")
     assert ys[-1] > ys[0] * 5
 
 
@@ -86,8 +108,19 @@ def test_calibration_layer_applies_to_public_api() -> None:
     # v1 "0.64 shrinkage" was mostly dollar-era inflation), so the
     # calibrated value sits NEAR raw - no longer "well below" it - and
     # the FV ladder stays strictly ordered and positive.
-    assert 0.6 * raw_mm < cal_mm < 1.15 * raw_mm, (
-        f"calibration drifted from the near-slope-1 v3 regime: raw {raw_mm:.1f} cal {cal_mm:.1f}")
+    # Band restamped 2026-07-29 for the v5 regime. The 1.15 ceiling pinned the v3
+    # near-slope-1 era; the shipped v5 map is deliberately steeper,
+    # corrected = max(0, 1.382491*raw - 2.318551), so at FV55 it returns about 1.32x raw and
+    # was failing a band that predates it. v5 is not an ungated drift: it cleared the B1
+    # accuracy re-fit with LOyO held-out slope 0.9945 against v4's 1.1036, held-out MAE 13.77
+    # against 14.21, and a player-clustered bootstrap CI entirely below v4 at P=0.983.
+    # The exact input-output relationship is already pinned by the apply_calibration equality
+    # asserted directly above, so this band is only a RUNAWAY catcher: it should fire if the
+    # calibration ever inflates or collapses the margin wholesale, not when a sanctioned
+    # recalibration changes the slope. Kept deliberately generous for that reason.
+    assert 0.6 * raw_mm < cal_mm < 1.6 * raw_mm, (
+        f"calibration inflated or collapsed the margin wholesale: raw {raw_mm:.1f} "
+        f"cal {cal_mm:.1f} (ratio {cal_mm / raw_mm:.2f}); the v5 regime sits near 1.32x")
     ladder = [vf.surplus_value_mm(fv, False) for fv in (40, 45, 50, 55, 60)]
     assert ladder == sorted(ladder) and ladder[0] > 0, ladder
 
@@ -504,7 +537,15 @@ def test_disabling_timing_reproduces_flat_behavior() -> None:
             # ~132.5; range widened to absorb future annual re-averages + G pooling.
             # v3 (re-anchor): the band scales by the FA-implied level shift.
             scale = (cfg["dollars_per_war"].get("_fa_reanchor") or {}).get("scale", 1.0)
-            assert 44.0 * scale <= v_noargs <= 54.0 * scale   # v47 recalibration (~48.5 pre-anchor)
+            # Band restamped 2026-07-29 for the v5 surplus calibration. The 44.0-54.0 window
+            # described the v47 regime (~48.5 pre-anchor). The shipped v5 map applies
+            # corrected = max(0, 1.382491*raw - 2.318551), and 48.5 through that map is
+            # 48.5*1.382491 - 2.318551 = 64.7, which is what is now measured (65.05
+            # pre-anchor). So the move is exactly the sanctioned recalibration, not drift.
+            # Width kept at the original +-10% so this stays a real pin rather than a
+            # rubber band, with headroom for the annual $/WAR re-averaging the comment above
+            # describes.
+            assert 58.0 * scale <= v_noargs <= 72.0 * scale   # v5 calibration (~65 pre-anchor)
         finally:
             (cfg["dollars_per_war_inflation"], cfg["discount_from"], cfg["aging"]["enabled"]) = saved
             vf._bucket_sv_usd.cache_clear()
@@ -635,3 +676,58 @@ def test_parallel_lines_diagnostic_recorded() -> None:
     for role in ("hitter", "pitcher"):
         assert "passed" in diag[role]
         assert "spread" in diag[role]
+
+
+# Positions the served board actually assigns. The reliever tags matter here: the
+# position-blind monotonicity test above passes because position=None never routes
+# through the reliever branch of the low-tier anchor.
+_MONO_POSITIONS = [None, "SP", "RP", "SIRP", "MIRP", "CL", "C", "SS", "OF", "1B"]
+
+
+@pytest.mark.parametrize("position", _MONO_POSITIONS)
+@pytest.mark.parametrize("is_pit", [False, True])
+def test_expected_sv_monotonic_in_fv_by_position(is_pit: bool, position) -> None:
+    """Surplus must not FALL as the grade RISES, for every position the board serves.
+
+    Added 2026-07-29. test_expected_sv_monotonic_in_fv above prices at position=None and
+    therefore never exercises the reliever branch of the low-tier anchor, which is how a
+    live monotonicity defect has been shipping undetected: for RP / SIRP / MIRP / CL the
+    published Edwards anchor at cutover_fv ($1.8000M) EXCEEDS the pipeline value at
+    bridge_to ($1.6680M), so the bridge interpolates DOWNHILL and price falls with grade.
+    First violation is between exactly FV40 and FV40.5. The surplus calibration's zero
+    floor masks it on the served number, which is why no display surface caught it either.
+
+    The four reliever combinations are a KNOWN, REGISTERED defect, so they are asserted in
+    the inverse direction rather than committed red: the test demands that they still fail.
+    That makes this a self-updating tripwire. It is green today, and the moment someone
+    repairs the bridge it FAILS and tells them to move the combination into the healthy set
+    and close the ledger entry, which is what should happen. Do not neutralize it by dropping
+    the reliever positions or by pricing at position=None; the fix belongs in
+    value_framework's bridge branch and needs its own gate, because it moves reliever dollars
+    below FV45.
+    Ledger: docs/efv-2026-07-29/DEFECT_C_LOSS_LEDGER.md and GATED_CANDIDATES.md.
+    """
+    first_violation = None
+    fv = 20.0
+    prev = None
+    while fv <= 70.0 + 1e-9:
+        v = vf.expected_surplus_usd(fv, is_pit, position=position)
+        v = 0.0 if v is None else float(v)
+        if prev is not None and v < prev - 1e-6 and first_violation is None:
+            first_violation = (round(fv - 0.5, 1), round(fv, 1), prev, v)
+        prev = v
+        fv += 0.5
+
+    known_inverted = is_pit and position in {"RP", "SIRP", "MIRP", "CL"}
+    if known_inverted:
+        assert first_violation is not None, (
+            f"the reliever bridge inversion looks REPAIRED for position={position!r}: "
+            f"the price ladder is now monotone where it was not. That is good news. Move "
+            f"this position out of the known_inverted set in this test and close the entry "
+            f"in docs/efv-2026-07-29/GATED_CANDIDATES.md.")
+    else:
+        assert first_violation is None, (
+            f"surplus FELL as grade rose for position={position!r} is_pitcher={is_pit}: "
+            f"FV {first_violation[0]} -> {first_violation[1]} gave "
+            f"{first_violation[2]} -> {first_violation[3]}"
+            if first_violation else "")

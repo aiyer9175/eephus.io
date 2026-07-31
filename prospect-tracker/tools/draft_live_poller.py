@@ -183,7 +183,9 @@ def build_draft_live(year: int, force: bool = True, board_path=None,
     return the artifact dict. Writes it to out_path when out_path is given.
 
     STRICTLY READ-ONLY toward site state: touches only out_path on disk."""
-    if now_iso is None:
+    if not now_iso:
+        # Falsy covers None AND "" so the artifact can never ship an empty
+        # generated_at stamp, whatever the caller passes.
         now_iso = datetime.datetime.now().isoformat()
     if board_path is None:
         board_path = _DEFAULT_BOARD

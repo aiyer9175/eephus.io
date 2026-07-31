@@ -17,7 +17,7 @@ fetch strings.
 | 4 | `fa` | Free Agency | `/fa/` | MLB Modules |
 | 5 | `projections` | Projections | `/projections/` | MLB Modules |
 | 6 | `mlbstats` | MLB Stats | `/mlbstats/` | MLB Modules |
-| 7 | `pal` | Pitcher Alchemy Lab | `/pal/` | MLB Modules |
+| 7 | `pal` | Alchemy Lab | `/pal/` | MLB Modules |
 | 8 | `trademachine` | Trade Machine | `/trademachine/` | MLB Modules |
 | 9 | `fantasy` | Fantasy | `/fantasy/` | MLB Modules |
 | 10 | `articles` | Articles | `/articles/` | - |
@@ -55,16 +55,18 @@ column below lists only what the surface's own module app fetches.
 |---|---|---|---|---|
 | `/` | `build_site.build_home()` | server-rendered | - | Home: brand hero + module cards + wire/ticker |
 | `/news/` | `build_site.build_news()` | server-rendered | - | News feed page (de-noised event wire) |
+| `/history/` | `build_site.build_this_day()` | server-rendered | - |  |
 | `/articles/` | `build_site.build_articles_index()` | server-rendered | - | article card grid, newest first |
 | `/articles/<slug>/` | `build_site.build_article_page()` | server-rendered | - | one page per content/articles/*.md |
 | `/forums/` | `build_site.build_forums_index()` | server-rendered | - | account/forum shell; Supabase-backed, inert without assets/eephus-config.js |
-| `/fa/` | `build_site.build_fa()` | `assets/fa.js` | `fa_archive.json`, `fa_class.json`, `fa_meta.json`, `glossary.json`, `player_links.json` | Free Agency module shell |
-| `/projections/` | `build_site.build_projections()` | `assets/projections.js` | `bullpen_leaderboards.json`, `mlb_fielding_positions.json`, `mlb_player_detail.json`, `mlb_projections.json`, `model_registry.json`, `proj_horizon_eval.json`, `prospect_path_eval.json`, `starter_leaderboards.json`, `team_outlook_eval.json` | MLB Projections (+ #player= pages, Team Outlook) |
+| `/fa/` | `build_site.build_fa()` | `assets/fa.js` | `fa_archive.json`, `fa_class.json`, `fa_meta.json`, `glossary.json`, `mlb_current_lines.json`, `player_links.json` | Free Agency module shell |
+| `/projections/` | `build_site.build_projections()` | `assets/projections.js` | `bullpen_leaderboards.json`, `mlb_fielding_positions.json`, `mlb_player_detail.json`, `mlb_projections.json`, `model_registry.json`, `proj_horizon_eval.json`, `prospect_path_eval.json`, `starter_leaderboards.json`, `swing_delta.json`, `team_outlook_eval.json` | MLB Projections (+ #player= pages, Team Outlook) |
 | `/mlbstats/` | `build_site.build_mlbstats()` | `assets/mlbstats.js` | `bullpen_history.json`, `bullpen_leaderboards.json`, `hitter_history.json`, `hitter_leaderboards.json`, `leverage_history.json`, `leverage_leaderboards.json`, `starter_history.json`, `starter_leaderboards.json` | MLB Stats: Bullpen Leaderboards / REM+ |
-| `/pal/` | `build_site.build_pal()` | `assets/pal.js` | `pal.json`, `player_links.json` | Pitcher Alchemy Lab |
+| `/pal/` | `build_site.build_pal()` | `assets/pal.js` | `pal.json`, `player_links.json`, `positional_fit_ui.json` | Alchemy Lab |
 | `/trademachine/` | `build_site.build_trademachine()` | `assets/trademachine.js` | `grpo_public.json`, `grpo_scores.json`, `mlb_player_detail.json`, `trade_machine_eval.json`, `trade_values.json` | Trade Machine (Bayesian trade board + one-currency deal evaluator) |
 | `/fantasy/` | `build_site.build_fantasy()` | `assets/fantasy.js` | `fantasy.json` | Fantasy: ROS rankings + daily streamers, multi-format (Ottoneu) scoring |
-| `/glossary/` | `build_site.build_glossary()` | `assets/glossary.js` | `glossary.json`, `model_registry.json`, `source_backtest.json`, `xfv_reliability.json` | Unified glossary + methodology / model accountability |
+| `/parks/` | `build_site.build_parks()` | `assets/parks.js` | `milb_park_factors.json`, `xfv_park_line_eval.json` | MiLB Park Factors reference table (display only; the eFV park-line lane stays gated off) |
+| `/glossary/` | `build_site.build_glossary()` | `assets/glossary.js` | `glossary.json`, `model_registry.json`, `source_backtest.json`, `xfv_provisional_prior_eval.json`, `xfv_reliability.json`, `xfv_scoreboard_eval.json`, `xfv_statcast_line_eval.json`, `xfv_valuation_curve.json` | Unified glossary + methodology / model accountability |
 | `/teams/` | `build_site.build_teams_redirect()` | server-rendered | - | redirect stub: the old Teams module now lives in /projections/ Team Outlook |
 | `/team/` | `build_site.build_team()` | server-rendered | - | Developers page (content/team.json) |
 | `/sources/` | `build_site.build_sources()` | server-rendered | - | data-source credits page |
@@ -77,7 +79,7 @@ column below lists only what the surface's own module app fetches.
 
 | route | file | client app | data payloads consumed | notes |
 |---|---|---|---|---|
-| `/prospx/` | `prospx/index.html` | inline single-file app | `collegesavant_milb_equiv.json`, `country_demographics.json`, `debuts.json`, `debuts_lite.json`, `draft_live.json`, `draft_timeseries.json`, `eta_eval.json`, `glossary.json`, `grpo_public.json`, `grpo_scores.json`, `ifa_timeseries.json`, `inactive.json`, `leaderboard_gamelogs.json`, `milb_translation.json`, `mlb_fielding_positions.json`, `mlb_player_detail.json`, `org_tendencies.json`, `overseas_timeseries.json`, `pal.json`, `photo_ctx.json`, `pitch_plots.json`, `player_links.json`, `player_news.json`, `positions_played.json`, `rosters_by_org.json`, `scout_reports.json`, `source_backtest.json`, `star_odds_eval.json`, `state_demographics.json`, `stuff_plus_aaa.json`, `swing_plus.json`, `timeseries.json`, `trade_machine_eval.json`, `trade_values.json`, `xfv.json`, `xfv_eval.json`, `xfv_eval_pitcher.json`, `xfv_history.json`, `xfv_isotonic_eval.json`, `xfv_proxy_eval.json`, `xfv_reliability.json`, `xfv_ungraded.json` | prospect board, farm systems, draft, IFA, overseas, time machine; nav wired by hand |
+| `/prospx/` | `prospx/index.html` | inline single-file app | `advancement_pace.json`, `archetype_comps.json`, `collegesavant_milb_equiv.json`, `country_demographics.json`, `debuts.json`, `debuts_lite.json`, `def_home.json`, `draft_live.json`, `draft_timeseries.json`, `eta_eval.json`, `glossary.json`, `grpo_public.json`, `grpo_scores.json`, `ifa_timeseries.json`, `inactive.json`, `leaderboard_gamelogs.json`, `milb_translation.json`, `mlb_fielding_positions.json`, `mlb_player_detail.json`, `org_tendencies.json`, `overseas_timeseries.json`, `pal.json`, `photo_ctx.json`, `pitch_plots.json`, `player_links.json`, `player_news.json`, `positions_played.json`, `rosters_by_org.json`, `scout_reports.json`, `source_backtest.json`, `source_weights.json`, `star_odds_eval.json`, `statcast_aaa_hitters.json`, `statcast_alevel_signals.json`, `state_demographics.json`, `stuff_plus_aaa.json`, `swing_plus.json`, `timeseries.json`, `trade_machine_eval.json`, `trade_values.json`, `xfv.json`, `xfv_eval.json`, `xfv_eval_pitcher.json`, `xfv_history.json`, `xfv_isotonic_eval.json`, `xfv_proxy_eval.json`, `xfv_reliability.json`, `xfv_ungraded.json` | prospect board, farm systems, draft, IFA, overseas, time machine; nav wired by hand |
 | `/collegesavant/` | `collegesavant/index.html` | `collegesavant/app.js` | data embedded as JS modules (`data.js`, `hitter_year_data.js`, `team_names.js`), no JSON fetch | hitter app + college-to-pro translation; nav wired by hand |
 | `/collegesavant/pitcher_index.html` | `collegesavant/pitcher_index.html` | `collegesavant/pitcher_app.js` | data embedded as JS modules (`pitcher_data.js`, `pitch_shape_data_*.js`, `team_names.js`), no JSON fetch | pitcher app; nav wired by hand |
 

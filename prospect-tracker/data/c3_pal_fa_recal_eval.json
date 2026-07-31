@@ -1,0 +1,695 @@
+{
+ "generated_at": "2026-07-24",
+ "lane": "C3a PAL + FA true-to-model clamp/floor audit",
+ "lab": "tools/c3_pal_fa_recal_lab.py",
+ "classification_rule": "docs/efv-2026-07-24/GATES-ACCURACY.md: (1) board-movement/display compression -> REMOVE; (2) accuracy-load-bearing -> KEEP w/ evidence; (3) numerical/domain safety -> KEEP. Default REMOVE.",
+ "classifications": [
+  {
+   "surface": "PAL",
+   "file": "pal_conversion.py",
+   "clamp": "_clamp(x,0,100) on the component ramps (command_score, stuff_quality_score, putaway_score, survivability_score, fb_reliance_inv, platoon_neutrality_score, astuff_to_quality, starter_need_score, prospect_role_fit cmd_s, sp_rp velo_leverage/tto_leakage)",
+   "line": "77,189,195,201,207,213,219,253,450,483,508,509",
+   "class": "3-DOMAIN (bounded-by-construction screen scale)",
+   "disposition": "KEEP",
+   "why": "Each component is DEFINED as a saturating linear ramp between two chosen calibration anchors -- there is no unbounded 'raw model z' underneath (unlike KRP+). The clamp IS the model output. The module is an explicit 0-100 SCREEN; a component >100 or <0 breaks the published 0-100 contract and the FIT's 0-100 semantics. The tail saturation is an intentional anchor (bb 0.05 == elite for the screen), not a compression artifact. The surface's own gate is rank-based on ~25 selected events with rho already sign-wrong, so it cannot authorize a de-clamp; the Monte-Carlo shows de-clamping is rank-~invariant (no board-movement win) -- REMOVE would only forfeit the contract for nothing."
+  },
+  {
+   "surface": "PAL",
+   "file": "pal_conversion.py",
+   "clamp": "outer _clamp on fb_reliance_inv / platoon_neutrality (inner fraction already bounds to [0,1]) and min(MAX_VELO_DELTA,...) in velo_delta (shape already clamped to [0,1])",
+   "line": "195,219,289",
+   "class": "3-DOMAIN (REDUNDANT / no-op)",
+   "disposition": "KEEP (cosmetic; removal is byte-identical, not shipped)",
+   "why": "These outer bounds never bind given the inner [0,1] clamp / shape clamp already present; removing them changes nothing. Pure belt-and-suspenders, left in place."
+  },
+  {
+   "surface": "PAL",
+   "file": "pal_conversion.py",
+   "clamp": "velo_delta MAX_VELO_DELTA=2.2 + shape clamp; project_velo",
+   "line": "51,288-290",
+   "class": "3-DOMAIN (modeled physical range, DISPLAY-only)",
+   "disposition": "KEEP",
+   "why": "velo_delta is a Clemens-grounded physical projection (+-1.0 mph central, scaled to 2.2 for pure-power/thin-arsenal arms); 2.2 is the TOP of the literature range, hit exactly at shape=1. It is a model parameter, not a compression cap on a z, and it is DISPLAY-only (proj_velo, never a scored FIT input)."
+  },
+  {
+   "surface": "PAL",
+   "file": "pal_conversion.py",
+   "clamp": "PEDIGREE_NUDGE min(100.0, fit + 3.0)",
+   "line": "315,335,338,397,400",
+   "class": "3-DOMAIN (FIT is 0-100)",
+   "disposition": "KEEP",
+   "why": "Domain bound on the published 0-100 FIT; binds only for fit>97. The nudge itself is a modeled additive, not a clamp."
+  },
+  {
+   "surface": "PAL",
+   "file": "pal_conversion.py",
+   "clamp": "sp_rp_fit need-gate factor 0.30 + 0.70*(need/100)",
+   "line": "514",
+   "class": "STRUCTURAL / accuracy-design (NOT a compression clamp)",
+   "disposition": "KEEP",
+   "why": "The need-gate is the definition of SP->RP FIT ('a good starter is worth more than a good reliever'). The 0.30 floor is not tail compression -- REMOVING it makes the gate MORE aggressive (dominant starters -> 0), the opposite of de-compression. Retuning it is a model change, not a true-to-model de-clamp; the SP->RP direction is already downgraded, so there is no evidence base to retune. Untouched."
+  },
+  {
+   "surface": "PAL",
+   "file": "pal_conversion.py",
+   "clamp": "project_relief_rem_plus k=min(0.60,...); bb=max(0.0,...)",
+   "line": "541-542",
+   "class": "3-DOMAIN (rate bounds, DISPLAY-only REM+ projection)",
+   "disposition": "KEEP",
+   "why": "0.60 K% is a sanity ceiling (no pitcher whiffs 60% of PA); BB%>=0 is a rate floor. Display-only relief REM+ projection, never a FIT input."
+  },
+  {
+   "surface": "PAL",
+   "file": "pal_conversion.py",
+   "clamp": "arsenal_depth_score / prospect depth_s step lookups (n>=4 -> 100)",
+   "line": "183,449",
+   "class": "STRUCTURAL (discrete signal, not a clamp)",
+   "disposition": "KEEP",
+   "why": "A discrete arsenal-depth lookup, the role-structural signal; 100 for 4+ pitches is a natural ceiling (depth cannot exceed the arsenal)."
+  },
+  {
+   "surface": "FA",
+   "file": "fa_market.py",
+   "clamp": "_point years cap: min(max(years,1.0), 15.0)",
+   "line": "893",
+   "class": "MEASURED on Gate 2 (see fa.variants)",
+   "disposition": "KEEP (15) unless the sweep shows a raise is not-worse",
+   "why": "Lower bound 1.0 is domain (a contract is >=1 yr). Upper bound 15 is the modern record term (Soto), already gate-raised 13->15. Predicting >15 yrs is pure extrapolation with ZERO training support (no contract exceeds 15 yrs). True-to-model would let the log-OLS print its raw term, so the years cap IS a served-vs-raw divergence -- the sweep adjudicates it on Gate 2 (pooled years/guarantee/aav + mega)."
+  },
+  {
+   "surface": "FA",
+   "file": "fa_market.py",
+   "clamp": "_point comps-envelope guard: guar in [comps/2.5, comps*2.5]",
+   "line": "905",
+   "class": "MEASURED on Gate 2 (see fa.variants)",
+   "disposition": "KEEP (load-bearing) unless the sweep shows loosening not-worse",
+   "why": "The documented extrapolation backstop: unregularized/edge OLS blew up at megadeal extremes (Soto at $9M; 2019 over-explosions). Removing it risks re-breaking those; the sweep measures whether loosening/removing the 2.5x band worsens pooled guarantee/mega MAE."
+  },
+  {
+   "surface": "FA",
+   "file": "fa_market.py",
+   "clamp": "_point megadeal comps-blend alpha (cap 1.0) + mega_anchor",
+   "line": "920-926",
+   "class": "2-CALIBRATION (documented monotone forward-chained evidence)",
+   "disposition": "KEEP",
+   "why": "Not a compression clamp: a smooth log-space blend toward the comps anchor as comps scale enters $50M-$400M+, with recorded monotone mega MAE (0.85:84.3 ... 1.00:80.1) and pooled improvement. Calibration, kept."
+  },
+  {
+   "surface": "FA",
+   "file": "fa_market.py",
+   "clamp": "_decay_path WAR value floor max(0.0, rate*e/per); PT floor max(0,e)",
+   "line": "118",
+   "class": "MEASURED on Gate 2 (WAR) + 3-DOMAIN (PT)",
+   "disposition": "KEEP",
+   "why": "PT>=0 is domain (no negative playing time). WAR value floored at 0 is the correct economic model for pricing production (a team benches/releases a sub-replacement season rather than pay negative) -- the sweep confirms unflooring does not help Gate 2."
+  },
+  {
+   "surface": "FA",
+   "file": "fa_market.py",
+   "clamp": "enter_probability_v2 sigma=max(0.05, span/2z); erf-CDF",
+   "line": "503",
+   "class": "3-NUMERICAL SAFETY",
+   "disposition": "KEEP",
+   "why": "sigma floor prevents a degenerate/zero-width log-normal (div-by-zero); the enter_prob itself is a CDF, naturally in [0,1] -- already true-to-model (no output clamp)."
+  },
+  {
+   "surface": "FA",
+   "file": "fa_market.py",
+   "clamp": "_log_rational units=max(disc_war,0.25); _prime_war max(0,30-age)*max(0,war_y1)",
+   "line": "877,882",
+   "class": "3-NUMERICAL/DOMAIN (log guard + feature domain)",
+   "disposition": "KEEP",
+   "why": "0.25 floors the log-rational argument off <=0 (log domain) for a near-zero-WAR player; prime-years and WAR floored at 0 are feature-domain bounds. Both are OLS feature inputs, not served metrics."
+  },
+  {
+   "surface": "FA",
+   "file": "fa_market.py",
+   "clamp": "predict years=min(max(years,1),..); max(years,1) aav divisors; deal_verdict terciles 160/75",
+   "line": "893,937,948-949,970-971",
+   "class": "3-DOMAIN (years>=1, div-guard) + classification bins",
+   "disposition": "KEEP",
+   "why": "years>=1 and max(years,1) divisors are domain/div-by-zero guards. The deal_verdict 160/75 are empirical corpus TERCILE bins for a verdict STRING (a label boundary), not a clamp on the underlying Deal+."
+  },
+  {
+   "surface": "FA",
+   "file": "fa_projection.py",
+   "clamp": "season_fraction max(0.05, min(1.0, cur/prev))",
+   "line": "549",
+   "class": "3-NUMERICAL/DOMAIN",
+   "disposition": "KEEP",
+   "why": "Elapsed fraction is in (0,1]; the 0.05 floor prevents early-season div-by-tiny blowup, the 1.0 ceiling is definitional."
+  },
+  {
+   "surface": "FA",
+   "file": "fa_projection.py",
+   "clamp": "project_player rate floors max(0.0,rate)/pt; rate_path fip max(1.0); _assemble_hitter max(0,...); pt_risk clamp +-150/60",
+   "line": "675,730,780,791,805,807,811,568,618",
+   "class": "3-DOMAIN (rates/counts >=0; FIP>=1; a-priori PT bound)",
+   "disposition": "KEEP",
+   "why": "Component rates, PA/IP, hit counts cannot be negative; FIP<1 is non-physical (display). PT_RISK_CLAMP is an a-priori bound on a mean-zero injury redistribution and is default-OFF. All domain safety, none are z-compression."
+  },
+  {
+   "surface": "FA",
+   "file": "fa_projection.py",
+   "clamp": "curve_delta nearest-supported-age lookup",
+   "line": "459",
+   "class": "3-DOMAIN (curve-support guard)",
+   "disposition": "KEEP",
+   "why": "Uses the nearest fitted age when the requested age is outside curve support (thin cohorts have holes) -- a support guard, not a metric compression."
+  }
+ ],
+ "fa": {
+  "baseline": {
+   "pooled": {
+    "guarantee": {
+     "mae": 10.094295025020852,
+     "base": 11.223747022518765,
+     "n": 1199
+    },
+    "aav": {
+     "mae": 3.0083766695740177,
+     "base": 3.340007430551239,
+     "n": 1199
+    },
+    "years": {
+     "mae": 0.44203502919099247,
+     "base": 0.4970809007506255,
+     "n": 1199
+    },
+    "mega_guarantee": {
+     "mae": 87.90505832000001,
+     "base": 98.3035713,
+     "n": 50
+    }
+   },
+   "gates": {
+    "guarantee": true,
+    "aav": true,
+    "years": true
+   },
+   "pass": true
+  },
+  "variants": {
+   "years_cap_15_baseline": {
+    "years_cap": 15.0,
+    "comps_band": 2.5,
+    "unfloor_war": false,
+    "pooled": {
+     "guarantee": {
+      "mae": 10.094295025020852,
+      "base": 11.223747022518765,
+      "n": 1199
+     },
+     "aav": {
+      "mae": 3.0083766695740177,
+      "base": 3.340007430551239,
+      "n": 1199
+     },
+     "years": {
+      "mae": 0.44203502919099247,
+      "base": 0.4970809007506255,
+      "n": 1199
+     },
+     "mega_guarantee": {
+      "mae": 87.90505832000001,
+      "base": 98.3035713,
+      "n": 50
+     }
+    },
+    "gates": {
+     "guarantee": true,
+     "aav": true,
+     "years": true
+    },
+    "pass": true,
+    "delta_vs_base": {
+     "guarantee": 0.0,
+     "aav": 0.0,
+     "years": 0.0,
+     "mega_guarantee": 0.0
+    }
+   },
+   "years_cap_16": {
+    "years_cap": 16.0,
+    "comps_band": 2.5,
+    "unfloor_war": false,
+    "pooled": {
+     "guarantee": {
+      "mae": 10.061545851542952,
+      "base": 11.223747022518765,
+      "n": 1199
+     },
+     "aav": {
+      "mae": 3.009028356813384,
+      "base": 3.340007430551239,
+      "n": 1199
+     },
+     "years": {
+      "mae": 0.4445371142618849,
+      "base": 0.4970809007506255,
+      "n": 1199
+     },
+     "mega_guarantee": {
+      "mae": 87.11973314000001,
+      "base": 98.3035713,
+      "n": 50
+     }
+    },
+    "gates": {
+     "guarantee": true,
+     "aav": true,
+     "years": true
+    },
+    "pass": true,
+    "delta_vs_base": {
+     "guarantee": -0.0327,
+     "aav": 0.0007,
+     "years": 0.0025,
+     "mega_guarantee": -0.7853
+    }
+   },
+   "years_cap_18": {
+    "years_cap": 18.0,
+    "comps_band": 2.5,
+    "unfloor_war": false,
+    "pooled": {
+     "guarantee": {
+      "mae": 9.997304178482068,
+      "base": 11.223747022518765,
+      "n": 1199
+     },
+     "aav": {
+      "mae": 3.010184316780023,
+      "base": 3.340007430551239,
+      "n": 1199
+     },
+     "years": {
+      "mae": 0.44954128440366975,
+      "base": 0.4970809007506255,
+      "n": 1199
+     },
+     "mega_guarantee": {
+      "mae": 85.57921782,
+      "base": 98.3035713,
+      "n": 50
+     }
+    },
+    "gates": {
+     "guarantee": true,
+     "aav": true,
+     "years": true
+    },
+    "pass": true,
+    "delta_vs_base": {
+     "guarantee": -0.097,
+     "aav": 0.0018,
+     "years": 0.0075,
+     "mega_guarantee": -2.3258
+    }
+   },
+   "years_cap_20": {
+    "years_cap": 20.0,
+    "comps_band": 2.5,
+    "unfloor_war": false,
+    "pooled": {
+     "guarantee": {
+      "mae": 9.934544729774814,
+      "base": 11.223747022518765,
+      "n": 1199
+     },
+     "aav": {
+      "mae": 3.0111831950118826,
+      "base": 3.340007430551239,
+      "n": 1199
+     },
+     "years": {
+      "mae": 0.45454545454545453,
+      "base": 0.4970809007506255,
+      "n": 1199
+     },
+     "mega_guarantee": {
+      "mae": 84.07424624,
+      "base": 98.3035713,
+      "n": 50
+     }
+    },
+    "gates": {
+     "guarantee": true,
+     "aav": true,
+     "years": true
+    },
+    "pass": true,
+    "delta_vs_base": {
+     "guarantee": -0.1598,
+     "aav": 0.0028,
+     "years": 0.0125,
+     "mega_guarantee": -3.8308
+    }
+   },
+   "years_cap_removed": {
+    "years_cap": 1000000000.0,
+    "comps_band": 2.5,
+    "unfloor_war": false,
+    "pooled": {
+     "guarantee": {
+      "mae": 9.825548651376147,
+      "base": 11.223747022518765,
+      "n": 1199
+     },
+     "aav": {
+      "mae": 3.01552031844808,
+      "base": 3.340007430551239,
+      "n": 1199
+     },
+     "years": {
+      "mae": 0.4954128440366973,
+      "base": 0.4970809007506255,
+      "n": 1199
+     },
+     "mega_guarantee": {
+      "mae": 81.46052028,
+      "base": 98.3035713,
+      "n": 50
+     }
+    },
+    "gates": {
+     "guarantee": true,
+     "aav": true,
+     "years": true
+    },
+    "pass": true,
+    "delta_vs_base": {
+     "guarantee": -0.2687,
+     "aav": 0.0071,
+     "years": 0.0534,
+     "mega_guarantee": -6.4445
+    }
+   },
+   "comps_band_2.5_baseline": {
+    "years_cap": 15.0,
+    "comps_band": 2.5,
+    "unfloor_war": false,
+    "pooled": {
+     "guarantee": {
+      "mae": 10.094295025020852,
+      "base": 11.223747022518765,
+      "n": 1199
+     },
+     "aav": {
+      "mae": 3.0083766695740177,
+      "base": 3.340007430551239,
+      "n": 1199
+     },
+     "years": {
+      "mae": 0.44203502919099247,
+      "base": 0.4970809007506255,
+      "n": 1199
+     },
+     "mega_guarantee": {
+      "mae": 87.90505832000001,
+      "base": 98.3035713,
+      "n": 50
+     }
+    },
+    "gates": {
+     "guarantee": true,
+     "aav": true,
+     "years": true
+    },
+    "pass": true,
+    "delta_vs_base": {
+     "guarantee": 0.0,
+     "aav": 0.0,
+     "years": 0.0,
+     "mega_guarantee": 0.0
+    }
+   },
+   "comps_band_3.0": {
+    "years_cap": 15.0,
+    "comps_band": 3.0,
+    "unfloor_war": false,
+    "pooled": {
+     "guarantee": {
+      "mae": 10.112554537948292,
+      "base": 11.223747022518765,
+      "n": 1199
+     },
+     "aav": {
+      "mae": 2.9956827304580878,
+      "base": 3.340007430551239,
+      "n": 1199
+     },
+     "years": {
+      "mae": 0.44203502919099247,
+      "base": 0.4970809007506255,
+      "n": 1199
+     },
+     "mega_guarantee": {
+      "mae": 88.60350006,
+      "base": 98.3035713,
+      "n": 50
+     }
+    },
+    "gates": {
+     "guarantee": true,
+     "aav": true,
+     "years": true
+    },
+    "pass": true,
+    "delta_vs_base": {
+     "guarantee": 0.0183,
+     "aav": -0.0127,
+     "years": 0.0,
+     "mega_guarantee": 0.6984
+    }
+   },
+   "comps_band_4.0": {
+    "years_cap": 15.0,
+    "comps_band": 4.0,
+    "unfloor_war": false,
+    "pooled": {
+     "guarantee": {
+      "mae": 10.184290170141784,
+      "base": 11.223747022518765,
+      "n": 1199
+     },
+     "aav": {
+      "mae": 2.996940050724977,
+      "base": 3.340007430551239,
+      "n": 1199
+     },
+     "years": {
+      "mae": 0.44203502919099247,
+      "base": 0.4970809007506255,
+      "n": 1199
+     },
+     "mega_guarantee": {
+      "mae": 89.80188044,
+      "base": 98.3035713,
+      "n": 50
+     }
+    },
+    "gates": {
+     "guarantee": true,
+     "aav": true,
+     "years": true
+    },
+    "pass": true,
+    "delta_vs_base": {
+     "guarantee": 0.09,
+     "aav": -0.0114,
+     "years": 0.0,
+     "mega_guarantee": 1.8968
+    }
+   },
+   "comps_band_10.0": {
+    "years_cap": 15.0,
+    "comps_band": 10.0,
+    "unfloor_war": false,
+    "pooled": {
+     "guarantee": {
+      "mae": 10.305260054211844,
+      "base": 11.223747022518765,
+      "n": 1199
+     },
+     "aav": {
+      "mae": 3.004882830541491,
+      "base": 3.340007430551239,
+      "n": 1199
+     },
+     "years": {
+      "mae": 0.44203502919099247,
+      "base": 0.4970809007506255,
+      "n": 1199
+     },
+     "mega_guarantee": {
+      "mae": 92.4172053,
+      "base": 98.3035713,
+      "n": 50
+     }
+    },
+    "gates": {
+     "guarantee": true,
+     "aav": true,
+     "years": true
+    },
+    "pass": true,
+    "delta_vs_base": {
+     "guarantee": 0.211,
+     "aav": -0.0035,
+     "years": 0.0,
+     "mega_guarantee": 4.5121
+    }
+   },
+   "comps_band_removed": {
+    "years_cap": 15.0,
+    "comps_band": 1000000000.0,
+    "unfloor_war": false,
+    "pooled": {
+     "guarantee": {
+      "mae": 10.347549652210175,
+      "base": 11.223747022518765,
+      "n": 1199
+     },
+     "aav": {
+      "mae": 3.007702137463926,
+      "base": 3.340007430551239,
+      "n": 1199
+     },
+     "years": {
+      "mae": 0.44203502919099247,
+      "base": 0.4970809007506255,
+      "n": 1199
+     },
+     "mega_guarantee": {
+      "mae": 93.43130986,
+      "base": 98.3035713,
+      "n": 50
+     }
+    },
+    "gates": {
+     "guarantee": true,
+     "aav": true,
+     "years": true
+    },
+    "pass": true,
+    "delta_vs_base": {
+     "guarantee": 0.2533,
+     "aav": -0.0007,
+     "years": 0.0,
+     "mega_guarantee": 5.5263
+    }
+   },
+   "war_floor_removed": {
+    "years_cap": 15.0,
+    "comps_band": 2.5,
+    "unfloor_war": true,
+    "pooled": {
+     "guarantee": {
+      "mae": 10.124556633027524,
+      "base": 11.217166538782319,
+      "n": 1199
+     },
+     "aav": {
+      "mae": 3.011417125787529,
+      "base": 3.338347714120881,
+      "n": 1199
+     },
+     "years": {
+      "mae": 0.4470391993327773,
+      "base": 0.4962468723936614,
+      "n": 1199
+     },
+     "mega_guarantee": {
+      "mae": 88.26824280000001,
+      "base": 98.3035713,
+      "n": 50
+     }
+    },
+    "gates": {
+     "guarantee": true,
+     "aav": true,
+     "years": true
+    },
+    "pass": true,
+    "delta_vs_base": {
+     "guarantee": 0.0303,
+     "aav": 0.003,
+     "years": 0.005,
+     "mega_guarantee": 0.3632
+    }
+   }
+  }
+ },
+ "pal": {
+  "reps": 4000,
+  "seed": 20260724,
+  "per_direction": {
+   "RP->SP": {
+    "n_pool": 4000,
+    "spearman_clamped_vs_declamped_fit": 0.9907,
+    "n_fit_moved_ge_0.1": 2665,
+    "share_fit_moved": 0.666,
+    "max_abs_fit_move": 16.3,
+    "mean_abs_fit_move": 2.721,
+    "clamped_fit_range": [
+     13.8,
+     96.8
+    ],
+    "declamped_fit_range": [
+     6.1,
+     110.3
+    ]
+   },
+   "SP->RP": {
+    "n_pool": 4000,
+    "spearman_clamped_vs_declamped_fit": 0.9863,
+    "n_fit_moved_ge_0.1": 2937,
+    "share_fit_moved": 0.734,
+    "max_abs_fit_move": 31.1,
+    "mean_abs_fit_move": 1.764,
+    "clamped_fit_range": [
+     10.2,
+     84.9
+    ],
+    "declamped_fit_range": [
+     1.4,
+     100.1
+    ]
+   }
+  },
+  "component_clamp_bind_rate": {
+   "command": {
+    "n_bind": 737,
+    "rate": 0.184
+   },
+   "stuff_quality": {
+    "n_bind": 312,
+    "rate": 0.078
+   },
+   "putaway": {
+    "n_bind": 1648,
+    "rate": 0.412
+   },
+   "survivability": {
+    "n_bind": 121,
+    "rate": 0.03
+   },
+   "platoon_neutrality": {
+    "n_bind": 75,
+    "rate": 0.019
+   },
+   "starter_need": {
+    "n_bind": 240,
+    "rate": 0.06
+   }
+  }
+ },
+ "findings": [
+  "FA years upper cap (15): KEEP. Removing it is a TRADE-OFF, not a clean de-compression -- guarantee MAE -0.269 and mega -6.44 IMPROVE, but years MAE +0.053 and aav +0.007 WORSEN, because no real contract exceeds 15 yrs (the raw OLS term is out-of-support above 15). The served term should not exceed the all-time record; the guarantee gain is the guar-stage benefiting from an extrapolated years feature (a coupling artifact) -- flagged as a future DECOUPLING experiment, not a true-to-model de-clamp. Ready-to-flip constant MAX_PRED_YEARS provided (default 15, behavior-preserving).",
+  "FA comps-envelope guard (2.5x): KEEP -- ACCURACY-LOAD-BEARING (measured). Loosening monotonically worsens guarantee (removed +0.253) and mega (+5.53); independently confirms the documented megadeal-blowup backstop.",
+  "FA _decay_path WAR>=0 floor: KEEP -- removing it worsens ALL Gate-2 metrics (guar +0.030, aav +0.003, years +0.005, mega +0.36); the 0 floor is the correct economic model (bench/release a sub-replacement season, never pay negative).",
+  "PAL 0-100 component clamps: KEEP -- de-clamping (linear ramp extension) is rank-~invariant (rho clamped-vs-declamped RP->SP 0.9907, SP->RP 0.9863) so it buys NO board-movement, while breaking the published 0-100 SCREEN contract (declamped RP->SP FIT range [6.1, 110.3]). The gate is rank-based on ~25 sign-wrong events -- powerless to authorize a de-clamp. No true-to-model win.",
+  "NET C3a: no PAL/FA clamp is a removable board-movement/display-compression cap. Every one is numerical/domain safety, a bounded-screen definition, or accuracy-load-bearing (measured on the surface's own gate). Zero ships."
+ ]
+}

@@ -9,7 +9,8 @@ TWO NUMBERS, NEVER CONFLATED:
 
   RATIONAL VALUE — what the projected production is worth: NPV of the
   aging-decayed, playing-time-weighted WAR path x escalated $/WAR, at the
-  platform's 9% discount rate (the same rate PROSPX surplus uses — the QO
+  platform's configured discount rate (value_framework discount_rate, 0.07
+  in production - the same rate PROSPX surplus uses; the QO
   pick tax literally subtracts one from the other, so the two must share
   an NPV currency).
 
@@ -64,12 +65,138 @@ GATE2_PATH = Path(__file__).parent / "data" / "fa_gate2_eval.json"
 
 POS_GROUPS = ("SP", "RP", "C", "POS")
 
+# ============================================================================
+# Gate-2 arm knobs (2026-07-24 FA lane)
+# ============================================================================
+# Every knob below defaults to the SHIPPED behaviour, so importing this
+# module changes nothing. tools/_fa_lab.py flips them on identical
+# forward-chained folds under docs/EFV_GATE_STANDARD.md; an arm ships by
+# changing its default here in the same change as the refreshed evidence.
+#
+#   COMPS_STRICT_PRIOR  comps_for restricted to STRICTLY prior winters (its
+#                       own docstring's contract). False == the shipped `<=`,
+#                       which lets a training row see its own winter's
+#                       contracts while no serve row ever can.
+#   DESTALE_MODE        how a historical dollar figure is carried forward to
+#                       the class winter. "vf" == the shipped read of
+#                       value_framework's dollars_per_war_inflation (which is
+#                       0.0 in production, i.e. no de-staling at all).
+#                       "series" derives the rate from the realized $/WAR
+#                       series of the TRAIN winters only (ex-ante by
+#                       construction). "fixed" uses DESTALE_FIXED.
+#   RIDGE_YEARS/GUAR    ridge strength for the two OLS stages. _ols has had a
+#                       standardized-ridge branch since the megadeal blowups
+#                       but no production call ever passed a value.
+#   AAV_CONSISTENT      price proj_aav off the term the guarantee was priced
+#                       at (years_f) instead of the display-rounded term.
+#   POS_GROUP_MODE      "v1" == the shipped 4 buckets. "v2" splits POS into
+#                       premium (SS/2B/3B/CF) and corner (1B/LF/RF/DH).
+#   RECAL_MODE          level recalibration of the guarantee, estimated on an
+#                       INNER forward chain over the training winters only
+#                       (see _fit_recal). "off" == shipped. "shift" is an
+#                       intercept-only level move. "fit" is the log-log line.
+#                       "fit_group" fits that line PER _pos_group with a
+#                       pooled fallback for thin groups - the minimal-surface
+#                       correction for the measured side asymmetry (E1: the
+#                       board under-prices hitters by $7.52M and pitchers by
+#                       $4.02M, so one pooled slope cannot fix both).
+POS_GROUP_MODE = "v1"
+COMPS_STRICT_PRIOR = True                   # SHIPPED 2026-07-24 (correctness)
+DESTALE_MODE = "series"                     # SHIPPED 2026-07-24 (correctness)
+DESTALE_FIXED = 0.0
+RIDGE_YEARS = 0.0
+RIDGE_GUAR = 0.0
+AAV_CONSISTENT = False                      # measured NULL/loss twice - see E5b
+# SHIPPED 2026-07-30 at "shift" (intercept-only level move), owner program
+# Phase E5. Gate 2, 9 forward-chained winters, n=1,199, criteria pre-registered
+# in docs/efv-2026-07-30/FA_LANE_GATES.md E5a
+# (data/fa_market_feature_lab_wave3_eval.json):
+#   pooled guarantee MAE  9.9174 -> 10.0391, delta +0.1336, sd 0.654,
+#                         CI95 [-0.382, +0.649], MDE95 0.427 -> a NULL, and
+#                         also inside the 0.16 $M corpus floor from the
+#                         2026-07-24 paired bootstrap (see the rate_line block)
+#   pooled aav MAE        3.0450 -> 3.1090, delta +0.061, MDE95 0.091 -> NULL
+#   pooled years MAE      unchanged (the recal touches only the guarantee)
+#   megadeal slice        81.54 -> 79.34 (IMPROVES)
+#   LEVEL, conditioned on the PREDICTION (the criterion; conditioning on the
+#   actual is regression to the mean by construction and _fit_recal's own
+#   docstring says so). Guarantee bias by PREDICTED-guarantee tier, $M:
+#       tier        <10     10-20    20-50    >=50    mean|bias|
+#       shipped    -2.81    -9.64   -21.32  -22.52     14.07
+#       "shift"    -2.11    -6.27   -15.04   -3.70      6.78
+#   Every tier was under-priced and every tier stays under-priced after the
+#   correction, i.e. it does not overshoot. Per pos group the bias also shrinks
+#   toward zero everywhere: SP -4.88 -> -1.47, RP -3.43 -> -2.76, C -3.17 ->
+#   -2.49, POS -8.47 -> -5.63.
+# "fit" (the full log-log line) and "fit_group" both FAIL: they push guarantee
+# MAE to 10.46 / 10.72, break the mega slice, and OVERSHOOT the top tier
+# (+10.51 / +14.95 $M bias at >=$50M). The 2026-07-24 ledger predicted exactly
+# this - recalibration and de-staling are SUBSTITUTES for the same mechanism and
+# stacking a slope on top of DESTALE_MODE="series" over-corrects. The
+# intercept-only form is the part that survives that argument.
+# CALIBRATION SHIP ON BIAS: the MAE movement is a measured null in both
+# directions and must not be cited as an accuracy win.
+# GOLDEN RESTAMP OWED: every served FA price rises by the constant exp(a).
+RECAL_MODE = "shift"
+LAB_TJ_PERMUTE_SEED = 0
+NOISE_FEATURES = 0
+NOISE_SEED = 0
+#   BAND_SCALE_GUAR     player-specific log-guarantee band width (T1.2).
+#                       MEASURED NULL, DEFAULT OFF 2026-07-25. Forward-chained
+#                       Gate-2 chain (9 winters, n=1,199), paired bootstrap
+#                       B=200 resampling the whole corpus with a refit per
+#                       draw, ridge 3.0 on the variance step:
+#                         pinball avg   flat 0.17094 scale 0.17087
+#                                       delta -0.00007, CI95 [-.00314,+.00284],
+#                                       P(improves) 0.545, MDE95 0.00288
+#                         cond-cov RMSE delta -0.00019, MDE95 0.01264
+#                         coverage      delta -0.00610, MDE95 0.01875
+#                       and the ZERO-INFORMATION CONTROL (same estimator on a
+#                       row-permuted residual column, same draws) moves the
+#                       pinball by +0.00053 with a null band of
+#                       [-0.00153, +0.00269] that CONTAINS the candidate's
+#                       delta outright. The control scores as well as the
+#                       candidate, so there is no result: the signing corpus
+#                       does not support a conditional variance function.
+#                       The knob and the code stay for re-gating at a larger
+#                       corpus; the flat band it would replace is left shipped.
+#                       (The WAR-side band, which does clear its floor, is a
+#                       SEPARATE model and IS shipped - see fa_bands.)
+#   BAND_PERMUTE_SEED   zero-information control: fit the variance function on
+#                       a row-permuted residual column. Must return a flat
+#                       sigma. Lab only.
+BAND_SCALE_GUAR = False                     # measured null 2026-07-25 (T1.2)
+BAND_PERMUTE_SEED = 0
+BAND_RIDGE_GUAR = 3.0
+
+_LAB_DEFAULTS = {
+    "POS_GROUP_MODE": "v1", "COMPS_STRICT_PRIOR": True, "DESTALE_MODE": "series",
+    "DESTALE_FIXED": 0.0, "RIDGE_YEARS": 0.0, "RIDGE_GUAR": 0.0,
+    # MUST track the shipped defaults above - LAB_RESET() restores the CHAMPION,
+    # so a stale entry here makes every future lab score the wrong baseline.
+    "AAV_CONSISTENT": False, "RECAL_MODE": "shift", "LAB_TJ_PERMUTE_SEED": 0,
+    "NOISE_FEATURES": 0, "NOISE_SEED": 0,
+    "BAND_SCALE_GUAR": False, "BAND_PERMUTE_SEED": 0, "BAND_RIDGE_GUAR": 3.0,
+}
+
+
+def LAB_RESET() -> None:
+    """Restore every arm knob to its shipped default (lab hygiene)."""
+    g = globals()
+    for k, v in _LAB_DEFAULTS.items():
+        g[k] = v
+    X_FEATURES.clear()
+    X_FEATURES.update(_X_FEATURE_DEFAULTS)
+
 
 def _npv_of(s: dict) -> float:
     """Deferral-adjusted guarantee for a signing row (falls back to the
     sticker where no schedule is on file — see deferral_npv_usd's
     convention note)."""
     return float(s.get("npv_guarantee_usd") or s["guarantee_usd"])
+
+
+_POS_PREMIUM = {"SS", "2B", "3B", "CF", "IF", "MI", "OF"}
 
 
 def _pos_group(position: str | None) -> str:
@@ -80,6 +207,8 @@ def _pos_group(position: str | None) -> str:
         return "RP"
     if head == "C":
         return "C"
+    if POS_GROUP_MODE == "v2":
+        return "POSP" if head in _POS_PREMIUM else "POSC"
     return "POS"
 
 
@@ -89,6 +218,41 @@ def _discount_rate() -> float:
 
 def _dpw_inflation() -> float:
     return float(_vf_config().get("dollars_per_war_inflation", 0.05))
+
+
+def _destale_rate(dpw_series: dict[int, float] | None = None,
+                  class_year: int | None = None) -> float:
+    """The rate at which a historical dollar figure is carried forward to
+    the class winter.
+
+    The shipped path ("vf") reads value_framework's
+    ``dollars_per_war_inflation``. That knob is 0.0 in production for a
+    reason that belongs to the PROSPECT side (its $/WAR block is a trailing
+    3-year average re-averaged annually, so forward escalation would
+    double-count) — but the FA module borrows it for three unrelated jobs:
+    de-staling a comp, escalating rational value, and carrying $/WAR
+    forward a winter. At 0.0 a 2015 contract enters a 2027 player's comps
+    anchor in 2015 nominal dollars.
+
+    "series" estimates the rate from the module's OWN realized $/WAR series
+    over the winters supplied — which, at every call site that matters, is
+    the TRAIN-ONLY series, so the estimate is ex-ante by construction."""
+    mode = DESTALE_MODE
+    if mode == "fixed":
+        return float(DESTALE_FIXED)
+    if mode == "series" and dpw_series:
+        yrs = sorted(y for y in dpw_series
+                     if class_year is None or y <= class_year)
+        if len(yrs) >= 4:
+            # log-linear least squares slope -> compounded annual rate
+            n = float(len(yrs))
+            mx = sum(yrs) / n
+            my = sum(math.log(dpw_series[y]) for y in yrs) / n
+            num = sum((y - mx) * (math.log(dpw_series[y]) - my) for y in yrs)
+            den = sum((y - mx) ** 2 for y in yrs)
+            if den > 0:
+                return max(0.0, min(0.12, math.exp(num / den) - 1.0))
+    return _dpw_inflation()
 
 
 # ============================================================================
@@ -136,6 +300,59 @@ def _gate1_band_quantiles() -> dict:
 def _band_bucket(side: str, pt_y1: float) -> str:
     lo = 350 if side == "hit" else 250
     return f"{side}:{'hi' if pt_y1 >= lo else 'lo'}"
+
+
+@lru_cache(maxsize=1)
+def _gate1_band_scale() -> dict | None:
+    """The T1.2 location-scale WAR band (data/fa_gate1_eval.json band_scale).
+
+    None when the artifact predates T1.2 or the fit declined, in which case
+    every caller falls back to the four bucket quantiles. Fallback is the
+    documented behaviour, not an error path."""
+    try:
+        d = json.loads((Path(__file__).parent / "data" / "fa_gate1_eval.json")
+                       .read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    m = d.get("band_scale")
+    return m if isinstance(m, dict) and m.get("gamma") else None
+
+
+def _war_band_offsets(hist: list[dict], side: str, class_year: int,
+                      war1: float, expo: float, age: int | None) -> dict | None:
+    """{'q10','q90'} additive year-1 WAR offsets for THIS player.
+
+    Same additive shape the bucket bands had, so the aging machinery
+    downstream is untouched and the band change is the only change. Returns
+    None when the scale model is absent, and the caller uses the buckets.
+
+    The two covariates that are not on the projection object are recovered
+    from the same history the projection was built on:
+      thin   platform-season exposure under 180 PA/BF (the shipped
+             thin-platform disclosure threshold at full-season pace)
+      tj_n   Tommy John count STRICTLY BEFORE the class year (ex-ante by
+             tj_surgery's own cutoff semantics)"""
+    model = _gate1_band_scale()
+    if model is None:
+        return None
+    import fa_bands
+    platform = next((h for h in hist if h.get("season") == class_year - 1), None)
+    vol = (platform.get("pa" if side == "hit" else "bf") or 0) if platform else 0
+    thin = 1.0 if (platform is None or vol < 180.0) else 0.0
+    tj_n = 0.0
+    mlbam = next((h.get("mlbam") for h in hist if h.get("mlbam")), None)
+    if mlbam:
+        try:
+            import tj_surgery
+            tj_n = float(tj_surgery.tj_features(
+                mlbam, f"{class_year}-01-01",
+                _tj_store()).get("tj_count_pre") or 0)
+        except Exception:                               # noqa: BLE001
+            tj_n = 0.0
+    z = fa_bands.war_z(side, war1, expo, age, thin, tj_n,
+                       float(model.get("age_mean", 29.0)))
+    o = fa_bands.offsets(model, z, side, (0.10, 0.90))
+    return {"q10": o[0.10], "q90": o[0.90]} if o else None
 
 
 def _ml_active() -> bool:
@@ -197,12 +414,22 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
            # projections board; WAR pricing stays on the war_rate decay
            # path above. Inherited into out_ml via {**out}.
            "rates_by_year": fp.rate_path(proj, side, curves, league)}
-    q = _gate1_band_quantiles().get(_band_bucket(side, expo))
+    # T1.2 - PLAYER-SPECIFIC band width. The four reliability buckets stay as
+    # the documented fallback (they are what ships when the fitted scale model
+    # is absent from the Gate-1 artifact), but where the fit exists the year-1
+    # band is a continuous function of age, side, projected value, exposure,
+    # platform thinness and prior TJ count rather than a two-bit step.
+    q = _war_band_offsets(hist, side, class_year, war1, expo, age)
+    band_src = "scale"
+    if q is None:
+        q = _gate1_band_quantiles().get(_band_bucket(side, expo))
+        band_src = "bucket"
     if q:
         p10 = _decay_path(war1 + q["q10"], expo, side, decay_role, a, curves)
         p90 = _decay_path(war1 + q["q90"], expo, side, decay_role, a, curves)
         out["war_by_year_p10"] = [round(w, 2) for w in p10]
         out["war_by_year_p90"] = [round(w, 2) for w in p90]
+        out["band_source"] = band_src
     if use_ml is False or (use_ml is None and not _ml_active() and ml_models is None):
         return out
     import proj_ml
@@ -346,9 +573,19 @@ def winter_dpw(dpw_series: dict[int, float], class_year: int) -> float:
         # de/escalate to class_year, rather than today's flat $/WAR -- which, with the
         # fa_implied re-anchor on, is the trailing 2024-26 signings-implied rate and is
         # anachronistic for an early class. Fall to the flat rate only if truly empty.
-        if dpw_series:
-            y0 = min(dpw_series)
-            return dpw_series[y0] * ((1 + _dpw_inflation()) ** (class_year - y0))
+        #
+        # The class year is EXCLUDED from the anchor candidates (2026-07-24 FA
+        # lane). It used to be included, so the earliest training winter got a
+        # log(dpw) feature computed from its OWN realized signings -- measured:
+        # winter_dpw(2015) returned $9,185,919, byte-identical to
+        # dpw_series[2015]. A feature this module documents as strictly ex-ante
+        # was in-fit for the 96 rows of the first winter. Gate-2 test rows were
+        # never affected (they always have prior winters); the damage was to the
+        # fitted coefficients.
+        cands = {y: v for y, v in dpw_series.items() if y != class_year}
+        if cands:
+            y0 = min(cands, key=lambda y: (abs(y - class_year), y))
+            return cands[y0] * ((1 + _destale_rate(cands, class_year)) ** (class_year - y0))
         return fa_class._flat_dpw_usd()
     method = _dpw_forecast_method()
     if method in ("trend", "trend_cbt") and len(prior) >= 4:
@@ -357,7 +594,7 @@ def winter_dpw(dpw_series: dict[int, float], class_year: int) -> float:
         except Exception:                                   # noqa: BLE001 — fall back, never abort
             log.warning("dpw forecast %s failed — flat5 fallback", method)
     y = max(prior)
-    return prior[y] * ((1 + _dpw_inflation()) ** (class_year - y))
+    return prior[y] * ((1 + _destale_rate(prior, class_year)) ** (class_year - y))
 
 
 # ============================================================================
@@ -365,10 +602,11 @@ def winter_dpw(dpw_series: dict[int, float], class_year: int) -> float:
 # ============================================================================
 
 def rational_value_usd(war_by_year: list[float], class_year: int,
-                       dpw_usd: float) -> int:
+                       dpw_usd: float, infl: float | None = None) -> int:
     """NPV of the projected production: Σ_t PV(value(war_t) × level_t),
     $/WAR escalating at the configured inflation, discounted at the
-    platform 9%.
+    the platform's configured rate (value_framework discount_rate, 0.07 in
+    production).
 
     v2 — CONVEX season pricing. The v1 flat rate priced a 1-WAR season and
     the third win of a 3-WAR season identically, so the entire bottom of
@@ -381,12 +619,56 @@ def rational_value_usd(war_by_year: list[float], class_year: int,
     ex-ante FA $/WAR. One convex shape, two modules, one source of truth."""
     from value_framework import tiered_war_value_usd
     r = _discount_rate()
-    infl = _dpw_inflation()
+    infl = _dpw_inflation() if infl is None else float(infl)
     level = dpw_usd / float(_vf_config()["dollars_per_war"]["flat"])
     total = 0.0
     for t, w in enumerate(war_by_year):
         total += (tiered_war_value_usd(w) * level * ((1 + infl) ** t)) / ((1 + r) ** t)
     return int(total)
+
+
+def expected_rational_value_usd(path: dict, years: int, class_year: int,
+                                dpw_usd: float, infl: float | None = None) -> int:
+    """T1.4 - the EXPECTATION of the tier-priced value, not the tier price of
+    the expectation.
+
+    ``rational_value_usd`` above evaluates the tier curve at the mean path.
+    value_framework.tiered_war_value_usd's own docstring says "never call on
+    an averaged WAR". MEASURED, not assumed: that curve is convex below ~1.2
+    WAR, mildly CONCAVE from 1.2 to 2.52, and exactly LINEAR above 2.52 (see
+    fa_mc's module docstring for the differenced profile), so the correction
+    is large and positive exactly where free-agent seasons live and nil at
+    the top of the market. Measured in dollars against realized tier-priced
+    WAR on
+    449 forward-chained Gate-2 signings (2018-2022, terms fully realized,
+    tools/_fa_jensen.py):
+
+        signed bias   naive -$3.219M/signing -> corrected -$0.509M
+        |bias| delta  -$2.400M, CI95 [-2.974, -0.489], MDE95 $1.256M,
+                      P(improves) 0.9925 over B=400 paired draws
+        level         mean $7.699M -> $10.409M (+35.2%) vs realized $10.918M
+        MAE           $9.747M -> $11.082M, i.e. WORSE (+1.343, CI95
+                      [0.961, 1.708]) - correcting a level bias on noisy
+                      per-row bands raises dispersion. Reported, not hidden.
+
+    MANDATORY CONTROL (band WIDTHS permuted across players, point paths held
+    fixed): |bias| delta -$2.465M, band [-3.193, -0.256], which CONTAINS the
+    real effect. The Jensen correction is real; its size is driven by the
+    AVERAGE width, not by any player's own width. Stated plainly: this fixes
+    a level error, it does not demonstrate that player-specific widths matter
+    for the level.
+
+    Falls back to the shipped point pricing when the path carries no band
+    (nothing to integrate over)."""
+    p10 = path.get("war_by_year_p10")
+    p90 = path.get("war_by_year_p90")
+    mean_path = path.get("war_by_year") or []
+    if not p10 or not p90:
+        return rational_value_usd(mean_path[:years], class_year, dpw_usd, infl)
+    import fa_mc
+    return fa_mc.expected_tier_value_usd(
+        mean_path, p10, p90, years, class_year, dpw_usd,
+        _dpw_inflation() if infl is None else float(infl), _discount_rate())
 
 
 def deferral_npv_usd(schedule: list[dict] | None, guarantee_usd: int) -> dict:
@@ -493,22 +775,123 @@ def enter_probability_v2(pred: dict, fa_type: str | None,
     first live shakedown."""
     if not option_price_usd or not pred:
         return None
-    point = pred.get("proj_aav_usd")
-    p10 = pred.get("proj_aav_p10_usd")
-    p90 = pred.get("proj_aav_p90_usd")
-    if not point or not p10 or not p90 or p90 <= p10:
-        return None
     z = 1.2816
+    # ---- T1.5 BASIS REPAIR ------------------------------------------------
+    # The strike and the market number have to be the same KIND of quantity.
+    #
+    #   club_option / player_option   the strike is ONE season's salary, so
+    #                                 proj_aav is the coherent comparison.
+    #   opt_out                       the strike is the REMAINING GUARANTEE the
+    #                                 player walks away from, so it must be
+    #                                 compared to the remaining MULTI-YEAR
+    #                                 market value, not to one season's AAV.
+    #
+    # Comparing a remaining-guarantee strike to a single season's AAV made
+    # every opt-out look impossibly expensive to exercise: P(Bo Bichette opts
+    # out) served as 0.009 because a multi-year number was being read as if it
+    # were an annual one. The repair prices the opt-out against the projected
+    # guarantee over the term the model itself predicts.
+    if fa_type == "opt_out":
+        point = pred.get("proj_guarantee_usd")
+        lo = pred.get("proj_guarantee_p10_usd")
+        hi = pred.get("proj_guarantee_p90_usd")
+        method = "band_priced_opt_out_remaining_guarantee"
+    else:
+        point = pred.get("proj_aav_usd")
+        lo = pred.get("proj_aav_p10_usd")
+        hi = pred.get("proj_aav_p90_usd")
+        method = None
+    if not point or not lo or not hi or hi <= lo:
+        return None
     mu = math.log(point)
-    sigma = max(0.05, (math.log(p90) - math.log(p10)) / (2 * z))
+    sigma = max(0.05, (math.log(hi) - math.log(lo)) / (2 * z))
     # standard normal CDF via erf
     zscore = (math.log(option_price_usd) - mu) / sigma
     cdf = 0.5 * (1.0 + math.erf(zscore / math.sqrt(2)))
-    if fa_type in ("opt_out", "player_option"):
+    if fa_type == "opt_out":
+        return {"enter_prob": round(1.0 - cdf, 3), "method": method}
+    if fa_type == "player_option":
         return {"enter_prob": round(1.0 - cdf, 3), "method": "band_priced_player_side"}
     if fa_type == "club_option":
         return {"enter_prob": round(cdf, 3), "method": "band_priced_club_side"}
     return None
+
+
+# ============================================================================
+# T1.5 - options priced as CONTINGENT CLAIMS on the shipped band
+# ============================================================================
+
+def option_value_usd(pred: dict, fa_type: str | None,
+                     option_price_usd: float | None) -> dict | None:
+    """What the option is WORTH, in dollars, to the side that holds it.
+
+    The board already knew whether an option existed and what its strike was;
+    it never priced one. Every option is a claim on the same log-normal the
+    band defines (mu = log point estimate, sigma from the P10-P90 span over
+    2z), so the closed-form Black-Scholes-style expectations apply directly
+    with zero extra machinery:
+
+      club option    the TEAM holds a call on the player's market at the
+                     strike: it exercises when the market S exceeds the strike
+                     K, so the team's claim is E[max(S - K, 0)].
+      player option  the PLAYER holds a put: he stays at K when the market is
+                     below it, so the TEAM IS SHORT E[max(K - S, 0)].
+      opt_out        a player call on his own re-rating: he walks when the
+                     remaining market beats the remaining guarantee, so the
+                     team is short E[max(S - K, 0)] on the remaining-guarantee
+                     basis (see the units repair in enter_probability_v2).
+
+    ``held_by`` and the SIGN of ``team_value_usd`` are both returned because
+    the sign is the entire editorial point: a player option is a liability the
+    board used to render as a neutral flag.
+
+    MUTUAL OPTIONS ARE NOT PRICED HERE, on purpose. A mutual option needs the
+    club to want S > K and the player to want S < K in the same instant, which
+    cannot both be true, so its rational value is ~0 and its exercise rate
+    should be ~0. That prediction is testable against data/fa_archive.json and
+    is tested in test_fa_options.py."""
+    if not option_price_usd or not pred or fa_type not in (
+            "club_option", "player_option", "opt_out"):
+        return None
+    if fa_type == "opt_out":
+        point = pred.get("proj_guarantee_usd")
+        lo, hi = (pred.get("proj_guarantee_p10_usd"),
+                  pred.get("proj_guarantee_p90_usd"))
+        basis = "remaining_guarantee"
+    else:
+        point = pred.get("proj_aav_usd")
+        lo, hi = pred.get("proj_aav_p10_usd"), pred.get("proj_aav_p90_usd")
+        basis = "annual_salary"
+    if not point or not lo or not hi or hi <= lo:
+        return None
+    z = 1.2816
+    K = float(option_price_usd)
+    sigma = max(0.05, (math.log(hi) - math.log(lo)) / (2 * z))
+    # Log-normal with median `point`. E[S] = point * exp(sigma^2/2).
+    mu = math.log(point)
+    d1 = (mu - math.log(K)) / sigma + sigma
+    d2 = d1 - sigma
+    ES = math.exp(mu + 0.5 * sigma * sigma)
+
+    def _phi(x):
+        return 0.5 * (1.0 + math.erf(x / math.sqrt(2)))
+
+    call = ES * _phi(d1) - K * _phi(d2)          # E[max(S-K,0)]
+    put = K * _phi(-d2) - ES * _phi(-d1)         # E[max(K-S,0)]
+    if fa_type == "club_option":
+        return {"kind": "call", "held_by": "team", "basis": basis,
+                "strike_usd": int(K), "sigma": round(sigma, 4),
+                "option_value_usd": int(call), "team_value_usd": int(call),
+                "p_exercise": round(_phi(d2), 3)}
+    if fa_type == "player_option":
+        return {"kind": "put", "held_by": "player", "basis": basis,
+                "strike_usd": int(K), "sigma": round(sigma, 4),
+                "option_value_usd": int(put), "team_value_usd": -int(put),
+                "p_exercise": round(_phi(-d2), 3)}
+    return {"kind": "call", "held_by": "player", "basis": basis,
+            "strike_usd": int(K), "sigma": round(sigma, 4),
+            "option_value_usd": int(call), "team_value_usd": -int(call),
+            "p_exercise": round(_phi(d2), 3)}
 
 
 def opt_out_scenarios(war_by_year: list[float], opt_out_after: int,
@@ -661,7 +1044,23 @@ def qo_tax_usd(payor_tier: str, as_of) -> dict:
 #               row lacked an age. Training ages are ALREADY anchored, so the
 #               live divergence is a train/serve skew.
 X_FEATURES = {"rate_line": True, "regime": False, "age_pos": False, "qo_tier": False,
-              "supply_pop": True, "age_anchor": True}
+              "supply_pop": True, "age_anchor": True, "tj": False,
+              "noise": False}
+# RE-GATE 2026-07-24 (FA lane), under docs/EFV_GATE_STANDARD.md. The shipped
+# `rate_line` arm was decided on a SINGLE fixed-dataset delta (guarantee MAE
+# 10.0943 with it vs 10.1593 without). Re-measured with a paired bootstrap
+# that resamples the whole corpus and refits the forward chain on every draw
+# (B=200), turning rate_line OFF moves the pooled guarantee MAE by
+#   +0.0146 $M, sd 0.0816, CI95 [-0.1232, +0.1978], P(improves) 0.440
+# against pure-noise placebo columns on the same draws
+#   one random column, seed 3: +0.0128 sd 0.0198
+#   one random column, seed 7: +0.0009 sd 0.0224
+# i.e. the shipped feature is indistinguishable from a column of noise on
+# the headline metric; its MDE95 is ~0.16 $M and it shipped at 0.065. It is
+# LEFT ON (removing it is equally unresolvable, and it does carry a small
+# edge on AAV: +0.0472 when removed, CI95 [-0.0093, +0.1138], P 0.065), but
+# it must not be cited as a measured win. `tj` and `noise` are lab arms.
+_X_FEATURE_DEFAULTS = dict(X_FEATURES)
 
 
 def _x_rate_feats(s: dict) -> list[float]:
@@ -676,6 +1075,83 @@ def _x_rate_feats(s: dict) -> list[float]:
     fip = r0.get("fip")
     fip_q = max(0.0, 5.5 - float(fip)) if fip is not None else 0.0
     return [woba, fip_q]
+
+
+_TJ_STORE: dict | None = None
+
+
+def _tj_store() -> dict:
+    """data/tj_surgery.json, loaded once. Fail-soft: an empty store makes
+    every TJ feature 0, i.e. the arm degrades to the champion."""
+    global _TJ_STORE
+    if _TJ_STORE is None:
+        try:
+            import tj_surgery
+            _TJ_STORE = tj_surgery._load_store()
+        except Exception:                       # noqa: BLE001 — fail-soft
+            log.warning("fa_market: tj_surgery store unavailable")
+            _TJ_STORE = {}
+    return _TJ_STORE
+
+
+def _x_tj_feats(s: dict) -> list[float]:
+    """As-of Tommy John durability, PITCHERS ONLY (all three terms are 0
+    for a bat, so they are pitcher-specific coefficients and cannot move a
+    position player's price).
+
+    tj_surgery.tj_features counts only surgeries STRICTLY BEFORE the class
+    year, so the read is ex-ante at every fold.
+      tj_pre     ever
+      tj_revis   two or more (the revision cases)
+      tj_recent  linear recency ramp, 1.0 at the surgery -> 0 at 60 months
+
+    SURVIVORSHIP WARNING: the corpus is signed free agents, i.e. arms that
+    came back. A TJ coefficient fit here prices the market's DISCOUNT on a
+    returnee, not the surgery's true cost."""
+    g = _pos_group(s.get("position"))
+    if g not in ("SP", "RP"):
+        return [0.0, 0.0, 0.0]
+    mlbam = s.get("mlbam_id") or s.get("mlbam")
+    if not mlbam:
+        return [0.0, 0.0, 0.0]
+    if LAB_TJ_PERMUTE_SEED:
+        # zero-information control: same marginal, wrong player.
+        import random
+        keys = _tj_permute_keys()
+        if keys:
+            r = random.Random(f"{LAB_TJ_PERMUTE_SEED}:{mlbam}")
+            mlbam = keys[r.randrange(len(keys))]
+    try:
+        import tj_surgery
+        f = tj_surgery.tj_features(mlbam, str(s["class_year"]), _tj_store())
+    except Exception:                           # noqa: BLE001 — fail-soft
+        return [0.0, 0.0, 0.0]
+    pre = float(f.get("tj_pre") or 0)
+    cnt = float(f.get("tj_count_pre") or 0)
+    mo = f.get("months_since_last_tj_pre")
+    rec = max(0.0, 1.0 - float(mo) / 60.0) if (pre and mo is not None) else 0.0
+    return [pre, 1.0 if cnt >= 2 else 0.0, rec]
+
+
+@lru_cache(maxsize=1)
+def _tj_permute_keys() -> tuple:
+    return tuple(_tj_store().keys())
+
+
+def _x_noise_feats(s: dict) -> list[float]:
+    """A ZERO-INFORMATION placebo column: a deterministic pseudo-random
+    draw keyed on player identity. Any arm that adds k features must be
+    read against the placebo's measured movement at the same k, not
+    against 0 -- adding a parameter to an unregularized OLS moves the
+    forward-chained MAE all by itself."""
+    import hashlib
+    n = int(NOISE_FEATURES)
+    if n <= 0:
+        return []
+    ident = f"{NOISE_SEED}:{s.get('player_key') or s.get('player_name')}"
+    h = hashlib.blake2b(ident.encode(), digest_size=8 * n).digest()
+    return [(int.from_bytes(h[8 * i:8 * i + 8], "big") / 2 ** 64) * 2.0 - 1.0
+            for i in range(n)]
 
 
 def _features_years(s: dict, comps_my: float, comps_my75: float | None = None) -> list[float]:
@@ -748,6 +1224,10 @@ def _features_guar(s: dict, years: float, dpw_usd: float, supply: float,
         # QO x quality: the qualifying-offer stars own the top-of-market
         # misses; a flat QO dummy can't separate them from mid-tier QOs.
         out += [(1.0 if s.get("qo") else 0.0) * max(0.0, w1)]
+    if X_FEATURES["tj"]:
+        out += _x_tj_feats(s)
+    if X_FEATURES["noise"]:
+        out += _x_noise_feats(s)
     return out
 
 
@@ -787,6 +1267,96 @@ def _supply(signings: list[dict], class_year: int) -> dict[str, float]:
     return counts
 
 
+_RECAL_MIN_ROWS = 200
+_recal_depth = 0
+
+
+def _fit_recal(train: list[dict], dpw_series: dict[int, float]):
+    """NESTED-CV level recalibration for the guarantee.
+
+    Measured OOS mis-calibration of the shipped model, conditioned on the
+    PREDICTION (the decision-relevant conditioning; conditioning on the
+    actual is regression to the mean by construction). Forward-chained
+    2018-2026, n=1199:
+
+        predicted-guarantee decile  1    2    3    4    5    6    7    8    9   10
+        median actual / median pred .86  .88  .86 1.12  .98 1.08 1.45 1.35 1.31 1.57
+        mean log(actual/pred)      +.12 +.01 +.00 +.12 +.03 +.13 +.21 +.19 +.24 +.17
+
+    Every decile is non-negative and the top four run 1.3-1.6x: the board
+    systematically under-prices what it says a player is worth, worst
+    exactly where the dollars are. In-sample residuals cannot see this (the
+    OLS zeroes them by construction), so the correction is estimated by an
+    INNER forward chain over the training winters only -- strictly ex-ante,
+    the same discipline the outer gate uses.
+
+    Returns (a, b) for log(guar_corrected) = a + b*log(guar_raw), or None
+    when the inner chain has too little material to fit.
+
+    RECAL_MODE "fit_group" instead returns {pos_group: (a, b), "_pooled":
+    (a, b)}: the same estimator per position group, with the pooled line
+    standing in for any group whose inner chain holds fewer than
+    _RECAL_MIN_ROWS rows. One pooled slope cannot correct both sides at once
+    (E1 measured the board under-pricing hitters by $7.52M against pitchers'
+    $4.02M), and per-group is the smallest surface that can."""
+    global _recal_depth
+    if _recal_depth or len(train) < _RECAL_MIN_ROWS:
+        return None
+    years = sorted({s["class_year"] for s in train})
+    if len(years) < 5:
+        return None
+    X, Y, G = [], [], []
+    _recal_depth = 1                       # inner models must not recurse
+    try:
+        for W in years[4:]:
+            tr = [s for s in train if s["class_year"] < W]
+            te = [s for s in train if s["class_year"] == W]
+            if len(tr) < 100 or not te:
+                continue
+            inner = MarketModel(tr, dollars_per_war_by_winter(tr))
+            for s in te:
+                _, g = inner._point(s)
+                if g > 0:
+                    X.append(math.log(g))
+                    Y.append(math.log(_npv_of(s)))
+                    G.append(_pos_group(s.get("position")))
+    except Exception:                       # noqa: BLE001 -- fail-soft to no-op
+        log.warning("fa_market: recalibration inner chain failed; no-op")
+        return None
+    finally:
+        _recal_depth = 0
+    if len(X) < _RECAL_MIN_ROWS:
+        return None
+    if RECAL_MODE == "shift":              # intercept only (level, no slope)
+        return (statistics.mean(y - x for x, y in zip(X, Y)), 1.0)
+    pooled = _recal_line(X, Y)
+    if RECAL_MODE != "fit_group" or pooled is None:
+        return pooled
+    out: dict = {"_pooled": pooled}
+    for g in sorted(set(G)):
+        xs = [x for x, gg in zip(X, G) if gg == g]
+        ys = [y for y, gg in zip(Y, G) if gg == g]
+        if len(xs) < _RECAL_MIN_ROWS:
+            continue                       # thin group keeps the pooled line
+        line = _recal_line(xs, ys)
+        if line is not None:
+            out[g] = line
+    return out
+
+
+def _recal_line(X: list[float], Y: list[float]) -> tuple[float, float] | None:
+    """OLS of log(actual) on log(predicted) with the a-priori slope bound."""
+    if len(X) < 2:
+        return None
+    mx, my = statistics.mean(X), statistics.mean(Y)
+    den = sum((x - mx) ** 2 for x in X)
+    if den <= 0:
+        return None
+    b = sum((x - mx) * (y - my) for x, y in zip(X, Y)) / den
+    b = max(0.75, min(1.35, b))            # a-priori sanity bound on the slope
+    return (my - b * mx, b)
+
+
 class MarketModel:
     """Fit on training winters; predict any signing row enriched with
     _war_path/_age. Transparent: coefficients exposed on the instance."""
@@ -802,9 +1372,10 @@ class MarketModel:
                 and s.get("guarantee_usd")]
         self.train_pool = rows
         self._comps_my_cache: dict[tuple, tuple[float, float, float, float]] = {}
+        self.destale = _destale_rate(dpw_series, max(dpw_series) if dpw_series else None)
         self.coef_years = _ols(
             [_features_years(s, (_cs := self._comps_stats(s))[0], _cs[3]) for s in rows],
-            [math.log(float(s["years"])) for s in rows])
+            [math.log(float(s["years"])) for s in rows], ridge=RIDGE_YEARS)
         Xg, yg = [], []
         for s in rows:
             dpw = winter_dpw(dpw_series, s["class_year"])
@@ -816,15 +1387,66 @@ class MarketModel:
             # model learns the present liability, not the press-release
             # sticker (Ohtani's $700M trains as ~$197M at the platform rate).
             yg.append(math.log(_npv_of(s)))
-        self.coef_guar = _ols(Xg, yg)
+        self.coef_guar = _ols(Xg, yg, ridge=RIDGE_GUAR)
         self.n_train = len(rows)
+        self.recal = None
+        if RECAL_MODE != "off":
+            self.recal = _fit_recal(rows, dpw_series)
         # residual pools for empirical bands (log-NPV-guarantee + years)
         self.resid_log_guar = []
         self.resid_years = []
+        _bz, _bg = [], []
         for s in rows:
             py, pg = self._point(s)
             self.resid_years.append(s["years"] - py)
             self.resid_log_guar.append(math.log(_npv_of(s)) - math.log(max(pg, 1)))
+            _bz.append(self._guar_band_z(s, py, pg))
+            _bg.append(_pos_group(s.get("position")))
+        # T1.2 - PLAYER-SPECIFIC guarantee band. The unconditional residual
+        # quantiles above gave every free agent in baseball the SAME relative
+        # uncertainty: measured on the served 2027 class, projGuarP90 /
+        # projGuarP10 = 9.6495 for all 221 priced members to six significant
+        # figures. The location-scale fit makes the width a function of the
+        # player; None (a thin corpus, an early fold) keeps the flat band.
+        self.band = None
+        if BAND_SCALE_GUAR:
+            try:
+                import fa_bands
+                self.band = fa_bands.fit(
+                    _bz, self.resid_log_guar, _bg,
+                    names=fa_bands.GUAR_Z_NAMES, age_mean=self._band_age_mean,
+                    permute_seed=(BAND_PERMUTE_SEED or None),
+                    # LOG-DOLLAR residuals need their own sigma guard: the WAR
+                    # default (0.05, 10.0) allows a p90/p10 of 1.2e11.
+                    sigma_clip=fa_bands.SIGMA_CLIP_LOG_USD,
+                    # The signing corpus is n=1,199 pooled with train folds
+                    # from ~100 rows. Shrinking gamma toward its intercept
+                    # shrinks sigma toward the flat band it replaces, which is
+                    # the right null to shrink to.
+                    ridge=BAND_RIDGE_GUAR,
+                    min_rows=250, min_group=120)
+            except Exception:                   # noqa: BLE001 - fail to flat
+                log.warning("fa_market: guarantee band fit failed; flat band")
+                self.band = None
+
+    @property
+    def _band_age_mean(self) -> float:
+        ages = [s["_age"] for s in self.train_pool if s.get("_age")]
+        return statistics.mean(ages) if ages else 30.0
+
+    def _guar_band_z(self, s: dict, years: float, guar: float) -> list[float]:
+        """The restricted z for the log-guarantee band (see fa_bands.guar_z).
+        ``years``/``guar`` are the model's OWN point prediction for the row,
+        so the width is conditioned on what the board is about to publish -
+        the decision-relevant conditioning, the same reasoning _fit_recal
+        documents for the level correction."""
+        import fa_bands
+        tj = _x_tj_feats(s)
+        return fa_bands.guar_z(_pos_group(s.get("position")),
+                               math.log(max(guar, 1.0)), years, s.get("_age"),
+                               1.0 if s.get("qo") else 0.0,
+                               (tj[0] + tj[1]),        # 0, 1 or 2 prior TJs
+                               self._band_age_mean)
 
     def _supply_z(self, s: dict) -> float:
         c = (self.supply_by_year.get(s["class_year"]) or
@@ -849,7 +1471,9 @@ class MarketModel:
                 yrs = sorted(c["years"] for c in cs)
                 my = statistics.median(yrs)
                 my75 = yrs[min(len(yrs) - 1, int(round(0.75 * (len(yrs) - 1))))]
-                infl = _dpw_inflation()
+                infl = getattr(self, "destale", None)
+                if infl is None:
+                    infl = _dpw_inflation()
                 # comps anchor on the NPV basis too — the anchor and the
                 # target must speak the same currency.
                 mg = statistics.median(
@@ -881,10 +1505,12 @@ class MarketModel:
     def _prime_war(s: dict) -> float:
         return max(0.0, 30.0 - s["_age"]) * max(0.0, s["_war_path"]["war_y1"])
 
-    def _point(self, s: dict) -> tuple[float, float]:
+    def _point(self, s: dict, years_override: float | None = None) -> tuple[float, float]:
         _cs = self._comps_stats(s)
         fy = _features_years(s, _cs[0], _cs[3])
         years = math.exp(float(sum(c * x for c, x in zip(self.coef_years, fy))))
+        if years_override is not None:
+            years = float(years_override)
         # FA mega-deal tail (2026-06-25): the 13-yr cap structurally truncated
         # record terms (Soto 15 -> 13, $765M deal -> $520M pred). Raised to 15,
         # the modern record length; only the OLS-predicted 13+ players (the
@@ -924,29 +1550,59 @@ class MarketModel:
                 mega_anchor = max(comps_guar, comps_aav * years)
                 guar = math.exp((1 - alpha) * math.log(max(guar, 1.0))
                                 + alpha * math.log(mega_anchor))
+        # Level recalibration LAST: the clamp and the mega blend are part of
+        # what is being calibrated, so the correction has to sit outside them.
+        rc = getattr(self, "recal", None)
+        if isinstance(rc, dict):           # RECAL_MODE "fit_group"
+            rc = rc.get(_pos_group(s.get("position"))) or rc.get("_pooled")
+        if rc and guar > 0:
+            guar = math.exp(rc[0] + rc[1] * math.log(guar))
         return years, guar
 
     def predict(self, s: dict) -> dict:
         years_f, guar = self._point(s)
         years = int(round(years_f))
+        if AAV_CONSISTENT == "reprice" and years >= 1 and abs(years - years_f) > 1e-9:
+            # The guarantee was priced at the CONTINUOUS term but the board
+            # shows an integer one, so proj_aav divided a 1.5-year price by a
+            # 1-year term (measured: 1,006 of 1,528 corpus rows distorted
+            # >10%). Re-price the guarantee AT the displayed term instead --
+            # the alternative (divide by years_f) leaves the displayed
+            # guarantee and the displayed term describing different deals.
+            guar = self._point(s, years_override=float(years))[1]
         qy = statistics.quantiles(self.resid_years, n=10) if len(self.resid_years) >= 50 else None
         qg = statistics.quantiles(self.resid_log_guar, n=10) if len(self.resid_log_guar) >= 50 else None
         out = {
             "proj_years": max(1, years),
             "proj_guarantee_usd": int(guar),
-            "proj_aav_usd": int(guar / max(years, 1)),
+            "proj_aav_usd": int(guar / (max(years_f, 1.0) if AAV_CONSISTENT
+                                        else max(years, 1))),
         }
         if qy:
             out["proj_years_p10"] = max(1, int(round(years_f + qy[0])))
             out["proj_years_p90"] = int(round(years_f + qy[-1]))
+        band = getattr(self, "band", None)
+        if band is not None:
+            import fa_bands
+            z = self._guar_band_z(s, years_f, guar)
+            o = fa_bands.offsets(band, z, _pos_group(s.get("position")),
+                                 (0.10, 0.90))
+            if o:
+                out["proj_guarantee_p10_usd"] = int(guar * math.exp(o[0.10]))
+                out["proj_guarantee_p90_usd"] = int(guar * math.exp(o[0.90]))
+                out["band_source"] = "scale"
+                qg = None                       # the flat band is superseded
         if qg:
             out["proj_guarantee_p10_usd"] = int(guar * math.exp(qg[0]))
             out["proj_guarantee_p90_usd"] = int(guar * math.exp(qg[-1]))
+            out["band_source"] = "flat"
+        if "proj_guarantee_p10_usd" in out:
             # projAAV bands ride the guarantee band at the point-estimate term —
             # both framings (per-year price AND total value/length) carry
             # P10/P50/P90, per the module's distributions-not-points rule.
-            out["proj_aav_p10_usd"] = int(out["proj_guarantee_p10_usd"] / max(years, 1))
-            out["proj_aav_p90_usd"] = int(out["proj_guarantee_p90_usd"] / max(years, 1))
+            _den = max(years_f, 1.0) if AAV_CONSISTENT else max(years, 1)
+            out["proj_aav_p10_usd"] = int(out["proj_guarantee_p10_usd"] / _den)
+            out["proj_aav_p90_usd"] = int(out["proj_guarantee_p90_usd"] / _den)
         return out
 
 
@@ -967,26 +1623,113 @@ class MarketModel:
 # Phase 2 recalibration (NPV deferral-adjusted basis + the NPV $/WAR
 # series): the corpus now runs p33=75, median=110, p67=159 — edges moved
 # from 85/185 accordingly.
-VERDICT_VALUE_MIN = 160     # Deal+ >= 160 -> "value"   (corpus top tercile)
-VERDICT_OVERPAY_MAX = 75    # Deal+ <  75  -> "overpay" (corpus bottom tercile)
+#
+# T1.4 RE-DERIVATION (2026-07-25, SAME change as the convexity correction).
+# The edges are corpus terciles by construction, so a level shift makes them
+# stale by construction too. Re-cut on the enriched corpus (n=1,300 signings
+# with bands, forward-chained ex-ante $/WAR per winter):
+#
+#   pricing            p33     median   p67     mean
+#   value-of-the-mean   72.2   104.7    149.3   163.5   (shipped edges 75/160)
+#   mean-of-the-value  108.8   152.2    222.9   267.0
+#
+# Verdict counts on the 1,300-row corpus:
+#   old edges 75/160 on OLD pricing   overpay 451 / market 452 / value 397
+#   old edges 75/160 on NEW pricing   overpay 249 / market 431 / value 620
+#   new edges 109/223 on NEW pricing  overpay 433 / market 433 / value 434
+#
+# Leaving the old edges in place would have moved 202 of 1,300 historical
+# contracts (15.5%) into a different verdict overnight for no reason other
+# than the arithmetic fix, i.e. the site would have looked like it changed its
+# mind about a sixth of every winter it has ever graded.
+VERDICT_VALUE_MIN = 223     # Deal+ >= 223 -> "value"   (corpus top tercile)
+VERDICT_OVERPAY_MAX = 109   # Deal+ <  109 -> "overpay" (corpus bottom tercile)
+
+# ============================================================================
+# E6 (2026-07-30): per-position-group verdict bands. OWNER DECISION, DEFAULT OFF
+# ============================================================================
+# THE MEASURED PROBLEM. Pooled terciles only deliver a third each PER GROUP if
+# Deal+ has the same distribution in every group, and it does not. Deal+ is
+# rational_value / price, and a short deal for a sub-1-WAR reliever prices most
+# of its guarantee against very little projected value by construction. On the
+# 1,300-signing corpus at the ACTUAL price (the basis the edges were cut on),
+# under the code shipped 2026-07-30:
+#
+#   group   n     overpay  market  value    edges that WOULD give 33/33/33
+#   SP     297      44%     31%     26%     86 / 182
+#   RP     450      55%     28%     17%     65 / 146
+#   C      102      36%     25%     38%    101 / 243
+#   POS    451      35%     29%     36%    103 / 237
+#   ALL   1300      44%     29%     27%     85 / 189
+#
+# So the owner's "the board thinks every pitcher is an overpay" is REAL but it
+# is mostly a RELIEVER effect, and roughly half of it is a true property of the
+# market (relievers really do get paid more per projected WAR) rather than a
+# model defect. On the SERVED 2027 board the split runs RP 65% overpay / 0%
+# value against POS 26% / 17%.
+#
+# NOTE the ALL row: the pooled edges no longer deliver 33/33/33 either (44/29/27)
+# because the pricing basis moved under them - the same staleness-by-construction
+# the T1.4 block above documents. Re-cutting the POOLED edges to 85/189 is a
+# separate, smaller decision than going per-group.
+#
+# WHY THIS IS NOT SHIPPED ON MY OWN AUTHORITY: re-banding moves published
+# verdicts on historical contracts (256 of 1,300 corpus rows, 19.7%, change
+# verdict under the per-group edges) and it changes what "value" MEANS - from
+# "cheap against the whole market" to "cheap for its position group". That is a
+# product decision, not an accuracy one, and there is no gate that can settle
+# it. The machinery is here, measured, and one constant away.
+# OWNER DECISION TAKEN 2026-07-30: "group". The owner was shown the measured table
+# above (SP 44/31/26, RP 55/28/17, C 36/25/38, POS 35/29/36 against a 33/33/33 design)
+# and the disclosure that roughly half the reliever effect is a true market property
+# rather than a model defect, and chose per-group bands anyway, on the ground that
+# "value" should mean cheap FOR ITS POSITION GROUP. This changes what a published
+# verdict MEANS on 256 of 1,300 historical corpus rows (19.7%).
+# PREREQUISITE, do not remove: every deal_verdict call site must pass `position`.
+# fa_export.py:479 did not, and _pos_group(None) is "POS", so flipping this constant
+# alone would have banded every pitcher against hitter edges - strictly worse than
+# pooled. That call site is fixed; test_fa_market and test_fa_tier1 pin the POOLED
+# edges explicitly via the mode, so they stay honest under either setting.
+VERDICT_BAND_MODE = "group"         # "pooled" | "group" (shipped 2026-07-30, owner)
+# Terciles of Deal+ at the ACTUAL price, per _pos_group, on the 1,300-signing
+# forward-chained corpus. Regenerate whenever the pricing basis moves.
+VERDICT_GROUP_EDGES = {"SP": (86, 182), "RP": (65, 146),
+                       "C": (101, 243), "POS": (103, 237)}
 
 
-def deal_verdict(deal_plus: float | None) -> str | None:
+def deal_verdict(deal_plus: float | None, position: str | None = None) -> str | None:
+    """Verdict for a Deal+ value. ``position`` is only consulted when
+    VERDICT_BAND_MODE is "group"; with the shipped "pooled" mode the result is
+    byte-identical to the historical single-argument behaviour, so no caller has
+    to change until the owner picks a mode."""
     if deal_plus is None:
         return None
-    if deal_plus >= VERDICT_VALUE_MIN:
+    lo, hi = VERDICT_OVERPAY_MAX, VERDICT_VALUE_MIN
+    if VERDICT_BAND_MODE == "group":
+        lo, hi = VERDICT_GROUP_EDGES.get(_pos_group(position), (lo, hi))
+    if deal_plus >= hi:
         return "value"
-    if deal_plus < VERDICT_OVERPAY_MAX:
+    if deal_plus < lo:
         return "overpay"
     return "market"
 
 
 def comps_for(s: dict, pool: list[dict], k: int = 5) -> list[dict]:
     """Nearest real historical contracts: same position group, distance in
-    (age, projected year-1 WAR) z-units, prior winters only."""
+    (age, projected year-1 WAR) z-units, prior winters only.
+
+    COMPS_STRICT_PRIOR (default True since 2026-07-24) enforces the "prior
+    winters only" half of that sentence. It used to read `<=`, so a TRAINING
+    row saw its own winter's contracts while no serve row ever can: measured,
+    1,100 of 1,995 comps drawn for the first 400 training rows (55.1%) were
+    contemporaneous, and the comps anchor shifted a median $0.000M but up to
+    $+80.0M / $-39.0M on 326 of 1,432 rows. Gate 2's reported number was
+    never affected (its train list is strictly prior winters already); the
+    damage was to the fitted coefficients and to the live board."""
     g = _pos_group(s.get("position"))
     cands = [c for c in pool if c is not s and c.get("_war_path")
-             and c["class_year"] <= s["class_year"]
+             and (c["class_year"] < s["class_year"] if COMPS_STRICT_PRIOR
+                  else c["class_year"] <= s["class_year"])
              and _pos_group(c.get("position")) == g and c.get("guarantee_usd")]
     if not cands:
         return []

@@ -1,0 +1,112 @@
+{
+ "mean_blend": {
+  "1": 1.0,
+  "2": 1.0,
+  "3": 1.0,
+  "4": 0.5,
+  "5": 0.5
+ },
+ "star_blend": {
+  "1": 0.0,
+  "2": 0.0,
+  "3": 0.0,
+  "4": 0.0,
+  "5": 1.0
+ },
+ "sides": {
+  "hit": {
+   "1": {
+    "lam_mean": 1.0,
+    "lam_star": 0.0,
+    "n_star": 1026,
+    "mean_ship_minus_intended": 0.0,
+    "max_abs_diff": 0.0,
+    "pct_stage2_pulls_down": 0.0,
+    "pct_down_after_stage1_refused": 0.0
+   },
+   "2": {
+    "lam_mean": 1.0,
+    "lam_star": 0.0,
+    "n_star": 1026,
+    "mean_ship_minus_intended": 0.0,
+    "max_abs_diff": 0.0,
+    "pct_stage2_pulls_down": 0.0,
+    "pct_down_after_stage1_refused": 0.0
+   },
+   "3": {
+    "lam_mean": 1.0,
+    "lam_star": 0.0,
+    "n_star": 1026,
+    "mean_ship_minus_intended": 0.0,
+    "max_abs_diff": 0.0,
+    "pct_stage2_pulls_down": 0.0,
+    "pct_down_after_stage1_refused": 0.0
+   },
+   "4": {
+    "lam_mean": 0.5,
+    "lam_star": 0.0,
+    "n_star": 1026,
+    "mean_ship_minus_intended": 0.0,
+    "max_abs_diff": 0.0,
+    "pct_stage2_pulls_down": 0.0,
+    "pct_down_after_stage1_refused": 0.0
+   },
+   "5": {
+    "lam_mean": 0.5,
+    "lam_star": 1.0,
+    "n_star": 1026,
+    "mean_ship_minus_intended": -0.13005974405551804,
+    "max_abs_diff": 1.1460377920107314,
+    "pct_stage2_pulls_down": 44.05458089668616,
+    "pct_down_after_stage1_refused": 44.05458089668616
+   }
+  },
+  "pit": {
+   "1": {
+    "lam_mean": 1.0,
+    "lam_star": 0.0,
+    "n_star": 503,
+    "mean_ship_minus_intended": 0.0,
+    "max_abs_diff": 0.0,
+    "pct_stage2_pulls_down": 0.0,
+    "pct_down_after_stage1_refused": 0.0
+   },
+   "2": {
+    "lam_mean": 1.0,
+    "lam_star": 0.0,
+    "n_star": 503,
+    "mean_ship_minus_intended": 0.0,
+    "max_abs_diff": 0.0,
+    "pct_stage2_pulls_down": 0.0,
+    "pct_down_after_stage1_refused": 0.0
+   },
+   "3": {
+    "lam_mean": 1.0,
+    "lam_star": 0.0,
+    "n_star": 503,
+    "mean_ship_minus_intended": 0.0,
+    "max_abs_diff": 0.0,
+    "pct_stage2_pulls_down": 0.0,
+    "pct_down_after_stage1_refused": 0.0
+   },
+   "4": {
+    "lam_mean": 0.5,
+    "lam_star": 0.0,
+    "n_star": 503,
+    "mean_ship_minus_intended": 0.0,
+    "max_abs_diff": 0.0,
+    "pct_stage2_pulls_down": 0.0,
+    "pct_down_after_stage1_refused": 0.0
+   },
+   "5": {
+    "lam_mean": 0.5,
+    "lam_star": 1.0,
+    "n_star": 503,
+    "mean_ship_minus_intended": -0.014064806824048204,
+    "max_abs_diff": 1.010703500133531,
+    "pct_stage2_pulls_down": 19.284294234592444,
+    "pct_down_after_stage1_refused": 19.284294234592444
+   }
+  }
+ }
+}

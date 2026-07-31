@@ -215,6 +215,35 @@ def score_pool(pool: dict[int, str], fetch: bool = True,
             "n_swings": int(row.n_swings),
             "name": pool.get(mid, ""),
         }
+    # Per-season Swing+ slices (W6, DISPLAY-ONLY): the SAME competitive-swing
+    # filter and the SAME k=360 reliability shrink, grouped by season instead
+    # of pooled. Deliberate display-only choice: seasons under the model's
+    # min_swings floor (180) are still SCORED but flagged low_n true rather
+    # than dropped - 2024 bat tracking has partial coverage and dropping the
+    # season would blank a card's trend line. The shrink already pulls thin
+    # seasons hard toward 100, so a low_n slice reads conservatively. Nothing
+    # downstream scores on these slices; the pooled swing_plus above is the
+    # served number and is computed first, untouched, from the same swings.
+    orig_min = model.min_swings
+    try:
+        model.min_swings = 2        # season floor off; n=1 lacks a std anyway
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            sboard = model.score_pitch_level(pitches, group_by=["season"])
+    finally:
+        model.min_swings = orig_min
+    for row in sboard.itertuples(index=False):
+        mid = str(int(row.batter))
+        if mid not in out:
+            continue                # season slices only for pooled-scored bats
+        sl = {"swing_plus": round(float(row.swing_plus), 1),
+              "n_swings": int(row.n_swings)}
+        if sl["n_swings"] < orig_min:
+            sl["low_n"] = True
+        out[mid].setdefault("seasons", {})[str(int(row.season))] = sl
+    for rec in out.values():
+        if "seasons" in rec:
+            rec["seasons"] = dict(sorted(rec["seasons"].items()))
     return {"players": out, "n_scored": len(out), "n_player_seasons": fetched,
             **knobs}
 

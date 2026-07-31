@@ -1,0 +1,618 @@
+{
+ "model": "fa_mkt_v2 + fa_proj_v1 (FA lane pass, 2026-07-24)",
+ "standard": "docs/EFV_GATE_STANDARD.md",
+ "harness": "tools/_fa_lab.py (Gate-2 replica), tools/_fa_tj_gate.py, tools/_fa_tj_war.py, tools/_fa_calib2.py",
+ "replica_check": {
+  "note": "the lab reproduces the committed data/fa_gate2_eval.json byte for byte before any arm",
+  "guarantee_mae": 10.094295025020852,
+  "aav_mae": 3.0083766695740177,
+  "years_mae": 0.44203502919099247,
+  "mega_mae": 87.90505832,
+  "n": 1199
+ },
+ "noise_floor": {
+  "method": "paired bootstrap resampling the WHOLE signing corpus stratified by winter, refitting the full 9-winter forward chain for the champion AND the candidate on every draw",
+  "B": 200,
+  "units": "USD millions of pooled guarantee MAE",
+  "sd_of_paired_delta": {
+   "one_extra_noise_column": 0.02,
+   "three_extra_noise_columns": 0.035,
+   "two_feature_flip_rate_line": 0.082,
+   "comps_selection_change": 0.12,
+   "market_level_change_destaling": 0.165,
+   "ridge_on_both_stages": 0.271,
+   "position_bucket_resplit": 0.415
+  },
+  "mde95_note": "MDE95 is roughly 2x the sd in the row that matches the arm's kind. Every arm this lane tested at the FEATURE scale is therefore unresolvable below ~0.07 $M, and every LEVEL arm below ~0.33 $M.",
+  "headline_finding": "the committed Gate-2 comparison is a SINGLE fixed-dataset point estimate. Its sampling sd is 5-10x the size of the deltas that shipped against it."
+ },
+ "regate_of_a_shipped_feature": {
+  "arm": "rate_line (shipped 2026-07-15)",
+  "committed_evidence": "single fixed dataset, guarantee MAE 10.0943 with vs 10.1593 without (delta -0.065)",
+  "remeasured_removing_it": {
+   "guarantee_mae_delta": 0.0146,
+   "sd": 0.0816,
+   "ci95": [
+    -0.1232,
+    0.1978
+   ],
+   "p_improves": 0.44
+  },
+  "placebo_same_draws": {
+   "one_noise_column_seed3": {
+    "delta": 0.0128,
+    "sd": 0.0198
+   },
+   "one_noise_column_seed7": {
+    "delta": 0.0009,
+    "sd": 0.0224
+   }
+  },
+  "aav_mae_delta_removing_it": {
+   "delta": 0.0472,
+   "ci95": [
+    -0.0093,
+    0.1138
+   ],
+   "p_improves": 0.065
+  },
+  "verdict": "NULL on the headline metric. Indistinguishable from a column of noise. Left ON (removing it is equally unresolvable and it carries a small AAV edge), but it must not be cited as a measured win."
+ },
+ "shipped": [
+  {
+   "id": "BUG-1 warChamp basis",
+   "file": "fa_export.py::_apply_proj_override",
+   "kind": "unit mismatch, product-visible",
+   "before": {
+    "overlay_source": "mlb_projections war[] (proj_ml q50 quantile head)",
+    "mlb_projections_year1_league_sum_war": 602.8,
+    "mlb_projections_year1_league_sum_warChamp": 984.4,
+    "same_212_players_same_season_2027": {
+     "fa_class_champion_warY1_sum": 191.4,
+     "war0_sum": 90.7,
+     "war0_ratio": 0.474,
+     "warChamp0_sum": 191.4,
+     "warChamp0_ratio": 1.0
+    },
+    "fa_class_2028": {
+     "priced": 181,
+     "dealplus_p10_p50_p90": [
+      0,
+      28,
+      166
+     ],
+     "verdicts": {
+      "overpay": 111,
+      "market": 49,
+      "value": 21
+     },
+     "members_with_negative_warPath_season": 72,
+     "members_with_negative_warPathP10_season": 176
+    },
+    "fa_class_2029": {
+     "priced": 128,
+     "dealplus_p10_p50_p90": [
+      0,
+      24,
+      172
+     ],
+     "verdicts": {
+      "overpay": 81,
+      "market": 32,
+      "value": 15
+     },
+     "members_with_negative_warPath_season": 44,
+     "members_with_negative_warPathP10_season": 126
+    }
+   },
+   "after": {
+    "overlay_source": "mlb_projections warChamp[] (champion MEAN), floored at 0, bands re-centered on the mean and clamped p10 <= mean <= p90",
+    "fa_class_2028": {
+     "priced": 181,
+     "dealplus_p10_p50_p90": [
+      39,
+      126,
+      181
+     ],
+     "verdicts": {
+      "market": 105,
+      "value": 43,
+      "overpay": 33
+     },
+     "members_with_negative_warPath_season": 0,
+     "members_with_negative_warPathP10_season": 0,
+     "rows_where_mean_exceeds_p90": 0
+    },
+    "fa_class_2029": {
+     "priced": 133,
+     "dealplus_p10_p50_p90": [
+      11,
+      118,
+      175
+     ],
+     "verdicts": {
+      "market": 73,
+      "value": 30,
+      "overpay": 30
+     },
+     "members_with_negative_warPath_season": 0,
+     "members_with_negative_warPathP10_season": 0,
+     "rows_where_mean_exceeds_p90": 0
+    }
+   },
+   "reference": "the 2027 class, which does NOT use the overlay, has a Deal+ median of 119 and a 154/36/31 verdict split. 2028 moved from a median of 28 to 126.",
+   "gate": "no gate covers future classes. The basis proof (warChamp reproduces the FA champion at ratio 1.000, war at 0.474) is a unit identity, not a fitted claim."
+  },
+  {
+   "id": "BUG-7 archive ledger currency",
+   "file": "fa_class.py::ledger_for_signing",
+   "before": "paid_to_date prorated the STICKER guarantee while the class page, the $/WAR series and Gate 2 all speak deferral-adjusted NPV",
+   "after": "prorates npv_guarantee_usd, falling back to the sticker where no schedule is on file",
+   "measured": {
+    "deferred_rows_in_corpus": 6,
+    "aggregate_paid_to_date_sticker_musd": 865.4,
+    "aggregate_paid_to_date_npv_musd": 570.5,
+    "aggregate_understatement_of_realized_surplus_musd": 294.9,
+    "per_row_musd": {
+     "Shohei Ohtani": 85.0,
+     "Max Scherzer": 69.6,
+     "Stephen Strasburg": 53.5,
+     "Chris Davis": 44.6,
+     "Freddie Freeman": 31.1,
+     "Blake Snell": 11.0
+    }
+   }
+  },
+  {
+   "id": "BUG-8 self-referential winter $/WAR",
+   "file": "fa_market.py::winter_dpw",
+   "before": "with no PRIOR winter the anchor was min(dpw_series), which for the earliest training winter IS that winter: winter_dpw(2015) returned 9185919, byte-identical to dpw_series[2015]. 96 training rows carried a log(dpw) feature computed from their own targets.",
+   "after": "the class year is excluded from the anchor candidates; winter_dpw(2015) = 10272648 (2016 de-escalated)",
+   "measured_cost": {
+    "guarantee_mae_delta": 0.0553,
+    "note": "a correctness fix that costs accuracy on the fixed dataset. It sits inside the level-arm bootstrap sd of 0.165, and every non-self-referential anchor variant costs something (nearest-excluding +0.0553, platform-flat +0.0865): the leak was helping because it handed the earliest winter its own true level."
+   },
+   "verdict": "shipped anyway. A feature the module documents as strictly ex-ante must not read its own targets."
+  },
+  {
+   "id": "BUG-3 comps look-ahead",
+   "file": "fa_market.py::comps_for, COMPS_STRICT_PRIOR now True",
+   "before": "`c[class_year] <= s[class_year]` let a TRAINING row see its own winter's contracts while no serve row ever can. 1100 of 1995 comps drawn for the first 400 training rows (55.1%) were contemporaneous; the anchor shifted a median 0.0 but up to +80.0M / -39.0M on 326 of 1432 rows.",
+   "after": "strictly prior winters, matching the function's own docstring and the serve path",
+   "measured": {
+    "guarantee_mae_delta": -0.0489,
+    "sd": 0.1198,
+    "ci95": [
+     -0.3141,
+     0.1654
+    ],
+    "p_improves": 0.677,
+    "B": 300
+   },
+   "verdict": "accuracy effect is a NULL. Shipped as correctness."
+  },
+  {
+   "id": "BUG-2 dead de-staling knob",
+   "file": "fa_market.py::_destale_rate, DESTALE_MODE now 'series'",
+   "before": {
+    "note": "the module borrowed value_framework's dollars_per_war_inflation for three unrelated jobs (comps de-staling, rational-value escalation, the $/WAR forward carry). It is 0.0 in production for a PROSPECT-side reason, so all three were no-ops while fa_config said dpw_forecast: flat5, the docstrings said 5%/yr and assets/fa.js printed 'escalating 5%/yr'.",
+    "winter_dpw_2027": 13419596,
+    "winter_dpw_2028": 13419596,
+    "destale_factor_applied_to_a_2015_comp_in_a_2027_anchor": 1.0,
+    "factor_the_realized_series_implies": 1.461
+   },
+   "after": {
+    "rate_source": "log-linear least squares on the module's OWN realized $/WAR series over the winters supplied, clamped to [0, 0.12]; every call site is handed a TRAIN-ONLY series, so the estimate is ex-ante by construction",
+    "per_fold_rate": {
+     "2018": 0.0,
+     "2019": 0.0,
+     "2020": 0.0,
+     "2021": 0.0,
+     "2022": 0.0123,
+     "2023": 0.0341,
+     "2024": 0.0455,
+     "2025": 0.0412,
+     "2026": 0.045,
+     "2027": 0.0442
+    }
+   },
+   "measured": {
+    "point_estimate_fixed_dataset": {
+     "guarantee_mae_delta": -0.2503,
+     "mega_mae_delta": -8.51
+    },
+    "paired_bootstrap": {
+     "guarantee_mae_delta": -0.08,
+     "sd": 0.165,
+     "ci95": [
+      -0.425,
+      0.2257
+     ],
+     "p_improves": 0.675,
+     "mega_mae_delta": -4.8773,
+     "mega_ci95": [
+      -11.427,
+      1.3024
+     ],
+     "mega_p_improves": 0.945,
+     "B": 200
+    }
+   },
+   "mechanism_evidence": {
+    "dose_response_fixed_dataset_guarantee_mae_delta": {
+     "-0.06": 0.4455,
+     "-0.04": 0.2963,
+     "-0.02": 0.1568,
+     "0.00": 0.0,
+     "+0.01": -0.0843,
+     "+0.02": -0.1567,
+     "+0.03": -0.2294,
+     "+0.04": -0.3076,
+     "+0.05": -0.3593,
+     "+0.06": -0.3471,
+     "+0.08": -0.2024,
+     "+0.10": 0.0664
+    },
+    "sign_flipped_control_bootstrap": {
+     "rate": -0.04,
+     "guarantee_mae_delta": 0.1455,
+     "p_improves": 0.14,
+     "mega_mae_delta": 5.5743,
+     "mega_ci95": [
+      0.1279,
+      11.2616
+     ],
+     "mega_p_improves": 0.02
+    },
+    "note": "smooth single-peaked dose response with an interior optimum near +0.05, and the sign-flipped control's mega CI EXCLUDES zero in the harmful direction. The mechanism is real; its size on the pooled metric is not resolvable at n=1199 over 9 winters."
+   },
+   "verdict": "SHIPPED AS A CORRECTNESS REPAIR, ACCURACY EFFECT REPORTED AS A NULL. The code now does what its config, its docstrings and the served page all already claimed."
+  }
+ ],
+ "combined_shipped_state": {
+  "note": "all four shipped fixes together, same forward-chained folds, n=1199",
+  "before_committed_artifact": {
+   "guarantee_mae": 10.0943,
+   "comps_baseline": 11.2237,
+   "bias": -6.207,
+   "aav_mae": 3.0084,
+   "years_mae": 0.442,
+   "mega_mae": 87.91
+  },
+  "after": {
+   "guarantee_mae": 9.7649,
+   "comps_baseline": 11.1597,
+   "bias": -5.756,
+   "aav_mae": 3.0247,
+   "years_mae": 0.4345,
+   "mega_mae": 80.35
+  },
+  "honesty_note": "the -0.329 guarantee delta and the -7.56 mega delta are INSIDE the level-arm bootstrap sd (0.165 and 3.29). Do not cite this as an accuracy improvement. It is four correctness repairs whose net measured accuracy effect is a null."
+ },
+ "gated_arm_not_shipped": {
+  "id": "P-TJPT",
+  "file": "fa_projection.py, EEPHUS_PT_TJ / PT_TJ_DEFAULT=False",
+  "claim": "a Tommy John surgery inside 24 months is a large playing-time signal that the PT model cannot see",
+  "design": "every pitcher with >= 100 BF in season t-1 is projected for t; a pitcher who never appears in t scores actual BF = 0, so ATTRITION IS IN THE LABEL and the estimate is not a returnee-only read. tj_features counts only surgeries strictly before the target year.",
+  "descriptive": {
+   "n_pitcher_seasons": 9505,
+   "seasons": "2006-2025",
+   "buckets": {
+    "none": {
+     "n": 7188,
+     "survive": 0.859,
+     "actualBF_over_projBF_mean": 0.721
+    },
+    "tj_lt24": {
+     "n": 215,
+     "survive": 0.521,
+     "actualBF_over_projBF_mean": 0.477,
+     "median": 0.03
+    },
+    "tj_24_48": {
+     "n": 508,
+     "survive": 0.852,
+     "actualBF_over_projBF_mean": 0.79
+    },
+    "tj_48_96": {
+     "n": 955,
+     "survive": 0.857,
+     "actualBF_over_projBF_mean": 0.735
+    },
+    "tj_96p": {
+     "n": 639,
+     "survive": 0.806,
+     "actualBF_over_projBF_mean": 0.673
+    }
+   },
+   "note": "the whole effect is RECENCY. 'TJ ever' is 0.706 vs 0.721 for never."
+  },
+  "arm_lt24_only": {
+   "pt_mae_bf": [
+    170.702,
+    169.039
+   ],
+   "pt_folds_improved": "11/12",
+   "war_mae": [
+    0.8876,
+    0.8825
+   ],
+   "war_folds_improved": "10/12"
+  },
+  "arm_all_buckets_paired_bootstrap_B400": {
+   "pt_pooled": {
+    "delta": -1.7284,
+    "ci95": [
+     -2.9559,
+     -0.3914
+    ],
+    "p_improves": 0.998
+   },
+   "pt_tj_slice": {
+    "delta": -6.0317,
+    "ci95": [
+     -10.4106,
+     -1.3482
+    ],
+    "p_improves": 0.998
+   },
+   "war_pooled": {
+    "delta": -0.0051,
+    "ci95": [
+     -0.0085,
+     -0.0017
+    ],
+    "p_improves": 1.0
+   },
+   "war_tj_slice": {
+    "delta": -0.0178,
+    "ci95": [
+     -0.03,
+     -0.0059
+    ],
+    "p_improves": 1.0
+   }
+  },
+  "zero_information_control_40_draws": {
+   "description": "bucket labels row-permuted WITHIN season (identical marginal per fold)",
+   "pt_pooled_null95": [
+    -1.0959,
+    0.8168
+   ],
+   "pt_pooled_max_abs": 1.346,
+   "pt_tj_slice_null95": [
+    -3.8273,
+    2.8523
+   ],
+   "pt_tj_slice_max_abs": 4.7006,
+   "war_pooled_null95": [
+    -0.0028,
+    0.002
+   ],
+   "war_pooled_max_abs": 0.004,
+   "war_tj_slice_null95": [
+    -0.0097,
+    0.007
+   ],
+   "war_tj_slice_max_abs": 0.0139
+  },
+  "verdict": "PASSES. PT clears its null band by 1.36x the largest null excursion, pooled WAR by 1.28x, and both bootstrap CIs exclude zero over 12 forward-chained folds. Left DEFAULT OFF because it moves every pitcher projection on the site, which is a wider blast radius than this lane owns. Recommend the lead flip PT_TJ_DEFAULT with a golden restamp."
+ },
+ "nulls_and_losses": [
+  {
+   "id": "O7 TJ in the market model",
+   "metric": "guarantee MAE",
+   "delta": 0.0094,
+   "sd": 0.0357,
+   "ci95": [
+    -0.0487,
+    0.0914
+   ],
+   "p_improves": 0.39,
+   "zero_information_control": {
+    "delta": 0.0003,
+    "sd": 0.0389
+   },
+   "verdict": "NULL. The control scores identically.",
+   "explanation": "the information is already upstream: the 65 FA pitcher signings with a TJ inside 24 months carry a median projected WAR of 0.35 vs 0.62 for the no-TJ group and a median guarantee of $2.0M vs $5.0M. Durability belongs in the projection, not in the price."
+  },
+  {
+   "id": "O6 wire the ridge",
+   "arm": "ridge 0.3 on both stages",
+   "delta": -0.0441,
+   "sd": 0.2709,
+   "ci95": [
+    -0.5129,
+    0.4621
+   ],
+   "p_improves": 0.555,
+   "sweep_fixed_dataset": {
+    "0.1": -0.0139,
+    "0.3": 0.1032,
+    "1.0": 0.4618,
+    "3.0": 1.8714
+   },
+   "verdict": "NULL at 0.1-0.3 and a clear LOSS above. The comps envelope is already doing the job the ridge was written for."
+  },
+  {
+   "id": "O5 split the POS bucket",
+   "arm": "{C, POS-premium, POS-corner, SP, RP}",
+   "delta": 0.2944,
+   "sd": 0.415,
+   "ci95": [
+    -0.5254,
+    1.2137
+   ],
+   "p_improves": 0.25,
+   "verdict": "NULL, and consistently the wrong sign. Splitting the bucket thins every comps neighbourhood."
+  },
+  {
+   "id": "BUG-4 / O9 AAV rounding repair",
+   "measured_defect": "1006 of 1528 corpus rows have >10% AAV distortion, mean 16.7%",
+   "arm_divide_by_years_f": {
+    "aav_mae_fixed_dataset": [
+     3.0084,
+     3.0751
+    ]
+   },
+   "arm_reprice_at_rounded_term": {
+    "aav_mae_delta": 0.1141,
+    "sd": 0.0718,
+    "ci95": [
+     -0.0298,
+     0.2454
+    ],
+    "p_improves": 0.055,
+    "guarantee_mae_delta": 0.0542
+   },
+   "verdict": "the defect is real but BOTH repairs measurably regress. The gate's own AAV target is actual_guarantee / actual_INTEGER_years, so the rounded denominator is the matched basis and the distortion is what makes the metric look good. NOT SHIPPED; the knob and the evidence stay in the module."
+  },
+  {
+   "id": "level recalibration (nested-CV)",
+   "measured_miscalibration_conditioned_on_the_prediction": {
+    "predicted_guarantee_decile_median_actual_over_median_pred": [
+     0.86,
+     0.88,
+     0.86,
+     1.12,
+     0.98,
+     1.08,
+     1.45,
+     1.35,
+     1.31,
+     1.57
+    ],
+    "mean_log_actual_over_pred": [
+     0.119,
+     0.011,
+     0.004,
+     0.122,
+     0.031,
+     0.127,
+     0.214,
+     0.188,
+     0.243,
+     0.174
+    ],
+    "log_log_line": "log(actual) = +0.0649 + 1.0376 * log(pred), residual sd 0.911",
+    "note": "every decile is non-negative and the top four run 1.3-1.6x. The board systematically under-prices what it says a player is worth, worst exactly where the dollars are."
+   },
+   "arm_intercept_only": {
+    "guarantee_mae_delta": -0.0898,
+    "sd": 0.2429,
+    "ci95": [
+     -0.5035,
+     0.4253
+    ],
+    "p_improves": 0.685,
+    "mega_mae_delta": -8.2626,
+    "mega_p_improves": 0.97,
+    "aav_mae_delta": 0.0888
+   },
+   "arm_full_line": {
+    "guarantee_mae_fixed_dataset": [
+     10.1496,
+     10.2207
+    ]
+   },
+   "stacked_with_destaling": {
+    "guarantee_mae_fixed_dataset": [
+     9.9017,
+     10.0799
+    ]
+   },
+   "verdict": "NOT SHIPPED. It and de-staling are SUBSTITUTES for the same mechanism (a model trained on an older, cheaper market), and stacking them over-corrects. De-staling wins on MAE, does not cost AAV, and treats the cause rather than the symptom."
+  }
+ ],
+ "unfixed_and_why": [
+  {
+   "id": "W5 fit concentration",
+   "note": "LAD is the #1 fit for 59.7% of the 2027 class and 17 of 30 orgs never appear in anyone's top 3. Gate 3's own artifact measures the ceiling (fitted_full with incumbency MRR 0.2700 vs the shipped composite's 0.167). Re-signing gravity is the fix and it is a fa_fit change, out of scope for this pass."
+  },
+  {
+   "id": "W10 deferral ledger",
+   "note": "all 26 entries in data/deferrals.json still carry a *-unverified verify_status. Every NPV target Gate 2 trains on, and the numerator of the whole $/WAR series, rests on unverified public reporting. BUG-7's repair makes the archive speak the same currency; it does not verify the currency."
+  },
+  {
+   "id": "BUG-5 corpus staleness",
+   "note": "already repaired by the projections lane's P-CTTL before this pass landed. Verified: season_fraction(2026) reads 0.6388 against the 0.4839 the recon measured."
+  },
+  {
+   "id": "W8 supply out of training support",
+   "note": "the 2027 aligned class counts (RP 77, POS 74) still sit above the training maximum of 59, multiplying every reliever's predicted guarantee by exp(0.0595 * 2.78) = 1.180 from pure extrapolation. Not addressed: the fix is either a clamp or dropping the feature, and both are level arms that this n cannot resolve."
+  }
+ ],
+ "serve_side_consequence": {
+  "note": "THE MAIN RISK OF THIS PASS. The de-staling repair moves every served FA dollar figure. Measured in memory on the 2027 class board (nothing written), pre-lane defaults vs shipped:",
+  "n_priced_compared": 221,
+  "winter_dpw_musd": [
+   14.84,
+   15.54
+  ],
+  "served_dpw_infl": [
+   0.0,
+   0.0473
+  ],
+  "projGuar_ratio_after_over_before": {
+   "median": 1.005,
+   "mean": 1.047
+  },
+  "rational_ratio_after_over_before": {
+   "median": 1.047,
+   "mean": 0.972
+  },
+  "dealplus_p10_p50_p90": [
+   [
+    62,
+    119,
+    172
+   ],
+   [
+    26,
+    101,
+    198
+   ]
+  ],
+  "verdicts": [
+   {
+    "market": 154,
+    "value": 36,
+    "overpay": 31
+   },
+   {
+    "market": 98,
+    "overpay": 68,
+    "value": 55
+   }
+  ],
+  "reading": "the median member barely moves (projGuar ratio 1.005). The movement is concentrated at the top of the market, where the comps anchor and the mega blend live, which is exactly where de-staling a 2015 dollar into a 2027 anchor should matter. The verdict split moves TOWARD the corpus terciles the bands were cut on (44/31/25 percent vs 70/16/14 before, against a 33/33/33 design), which is an argument in favour. But this is a large serve-side move on the back of a NULL accuracy measurement, and the reviewer should treat it as such.",
+  "one_line_revert": "fa_market.DESTALE_MODE = 'vf' (and COMPS_STRICT_PRIOR = False) restores the pre-lane serve numbers exactly; both are module-level knobs with the _LAB_DEFAULTS mirror.",
+  "largest_movers_projguar": [
+   [
+    "Tarik Skubal",
+    "6yr $186.5M D+126",
+    "7yr $243.0M D+111"
+   ],
+   [
+    "Drew Rasmussen",
+    "3yr $98.0M D+82",
+    "3yr $138.0M D+63"
+   ],
+   [
+    "Joe Ryan",
+    "4yr $109.2M D+95",
+    "3yr $144.2M D+71"
+   ],
+   [
+    "David Peterson",
+    "3yr $61.0M D+79",
+    "3yr $76.9M D+68"
+   ],
+   [
+    "William Contreras",
+    "4yr $68.8M D+246",
+    "4yr $79.7M D+236"
+   ]
+  ]
+ }
+}

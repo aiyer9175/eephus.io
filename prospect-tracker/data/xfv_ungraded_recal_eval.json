@@ -1,0 +1,543 @@
+{
+ "lane": "C1 provisional de-cap (efv_ungraded true-to-model)",
+ "generated_at": "2026-07-24",
+ "flag": "efv_ungraded.UNCAPPED_GRADE (default False; consolidator flips True)",
+ "grade_map": {
+  "hit": {
+   "BASE": 27.0,
+   "SLOPE": 3.8,
+   "FLOOR": 20.0,
+   "KNEE": 43.0,
+   "CEIL": 49.0,
+   "SOFT": 4.0
+  },
+  "pit": {
+   "BASE": 25.0,
+   "SLOPE": 4.5,
+   "FLOOR": 20.0,
+   "KNEE": 34.0,
+   "CEIL": 38.0,
+   "SOFT": 2.5
+  }
+ },
+ "served_distribution": {
+  "hit": {
+   "capped": {
+    "n": 1331,
+    "median": 23.5,
+    "mean": 24.98,
+    "p75": 29.4,
+    "p90": 30.7,
+    "p95": 35.4,
+    "p99": 41.2,
+    "max": 48.0,
+    "share_le_30": 0.8866,
+    "n_ge_35": 71,
+    "n_ge_40": 19,
+    "n_ge_45": 7,
+    "n_ge_50": 0
+   },
+   "decapped": {
+    "n": 1331,
+    "median": 23.5,
+    "mean": 24.98,
+    "p75": 29.4,
+    "p90": 30.7,
+    "p95": 35.4,
+    "p99": 41.2,
+    "max": 50.3,
+    "share_le_30": 0.8866,
+    "n_ge_35": 71,
+    "n_ge_40": 19,
+    "n_ge_45": 6,
+    "n_ge_50": 1
+   }
+  },
+  "pit": {
+   "capped": {
+    "n": 2091,
+    "median": 27.7,
+    "mean": 26.96,
+    "p75": 30.0,
+    "p90": 30.0,
+    "p95": 31.2,
+    "p99": 36.3,
+    "max": 37.7,
+    "share_le_30": 0.935,
+    "n_ge_35": 39,
+    "n_ge_40": 0,
+    "n_ge_45": 0,
+    "n_ge_50": 0
+   },
+   "decapped": {
+    "n": 2091,
+    "median": 27.7,
+    "mean": 26.97,
+    "p75": 30.0,
+    "p90": 30.0,
+    "p95": 31.2,
+    "p99": 36.2,
+    "max": 40.1,
+    "share_le_30": 0.935,
+    "n_ge_35": 36,
+    "n_ge_40": 1,
+    "n_ge_45": 0,
+    "n_ge_50": 0
+   }
+  },
+  "all": {
+   "capped": {
+    "n": 3422,
+    "median": 26.6,
+    "mean": 26.19,
+    "p75": 30.0,
+    "p90": 30.0,
+    "p95": 32.8,
+    "p99": 37.6,
+    "max": 48.0,
+    "share_le_30": 0.9161,
+    "n_ge_35": 110,
+    "n_ge_40": 19,
+    "n_ge_45": 7,
+    "n_ge_50": 0
+   },
+   "decapped": {
+    "n": 3422,
+    "median": 26.6,
+    "mean": 26.2,
+    "p75": 30.0,
+    "p90": 30.0,
+    "p95": 32.8,
+    "p99": 38.0,
+    "max": 50.3,
+    "share_le_30": 0.9161,
+    "n_ge_35": 107,
+    "n_ge_40": 20,
+    "n_ge_45": 6,
+    "n_ge_50": 1
+   }
+  }
+ },
+ "decompression": {
+  "n_players_total": 3422,
+  "n_grades_changed": 57,
+  "n_up": 18,
+  "n_down": 39,
+  "n_same": 3365,
+  "share_changed": 0.0167,
+  "softcap_initial_slope": {
+   "hit": 1.5,
+   "pit": 1.6
+  },
+  "note": "the soft cap is an S-curve with initial slope (CEIL-KNEE)/SOFT > 1 (hit 1.5, pit 1.6): it INFLATES grades just above the knee (hit>43 / pit>34 raw) and compresses only the far tail. Raw-linear de-cap removes both -> mid-band un-inflates (ticks down), genuine top un-compresses off the ceiling (max hit 48.0->50.3, max pit 37.7->40.1). Net at the extreme: de-compression, which is the owner's ask (a Primera-class breakout grades to true model value)."
+ },
+ "top_risers": [
+  {
+   "name": "Albert Ortiz",
+   "org": "MIA",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 20.0,
+   "war_pred": 3.36,
+   "grade_capped": 37.7,
+   "grade_decapped": 40.1,
+   "delta": 2.4
+  },
+  {
+   "name": "Jesus Flores",
+   "org": "TEX",
+   "level": "DSL",
+   "side": "H",
+   "position": "C",
+   "age": 17.7,
+   "war_pred": 6.14,
+   "grade_capped": 48.0,
+   "grade_decapped": 50.3,
+   "delta": 2.3
+  },
+  {
+   "name": "Yobal Rodriguez",
+   "org": "CHW",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 18.5,
+   "war_pred": 3.28,
+   "grade_capped": 37.6,
+   "grade_decapped": 39.8,
+   "delta": 2.2
+  },
+  {
+   "name": "Maikel Rodriguez",
+   "org": "MIA",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 19.9,
+   "war_pred": 3.23,
+   "grade_capped": 37.6,
+   "grade_decapped": 39.5,
+   "delta": 1.9
+  },
+  {
+   "name": "Poly Ojeda",
+   "org": "NYY",
+   "level": "DSL",
+   "side": "H",
+   "position": "C",
+   "age": 17.7,
+   "war_pred": 5.92,
+   "grade_capped": 47.8,
+   "grade_decapped": 49.5,
+   "delta": 1.7
+  },
+  {
+   "name": "Pablo Medina",
+   "org": "NYM",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 19.8,
+   "war_pred": 3.07,
+   "grade_capped": 37.4,
+   "grade_decapped": 38.8,
+   "delta": 1.4
+  },
+  {
+   "name": "Jose Gonzalez",
+   "org": "CHC",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 17.9,
+   "war_pred": 3.02,
+   "grade_capped": 37.4,
+   "grade_decapped": 38.6,
+   "delta": 1.2
+  },
+  {
+   "name": "Ralph Sierra",
+   "org": "TBR",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 18.1,
+   "war_pred": 2.98,
+   "grade_capped": 37.3,
+   "grade_decapped": 38.4,
+   "delta": 1.1
+  },
+  {
+   "name": "Sebastian Lopez",
+   "org": "CHC",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 18.7,
+   "war_pred": 2.95,
+   "grade_capped": 37.3,
+   "grade_decapped": 38.3,
+   "delta": 1.0
+  },
+  {
+   "name": "Juan Duran",
+   "org": "WSN",
+   "level": "DSL",
+   "side": "H",
+   "position": "OF",
+   "age": 17.0,
+   "war_pred": 5.56,
+   "grade_capped": 47.3,
+   "grade_decapped": 48.1,
+   "delta": 0.8
+  },
+  {
+   "name": "Rey Pacheco",
+   "org": "MIN",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 19.5,
+   "war_pred": 2.89,
+   "grade_capped": 37.2,
+   "grade_decapped": 38.0,
+   "delta": 0.8
+  },
+  {
+   "name": "Manuel Rodriguez",
+   "org": "MIL",
+   "level": "AA",
+   "side": "P",
+   "position": "P",
+   "age": 21.0,
+   "war_pred": 2.86,
+   "grade_capped": 37.1,
+   "grade_decapped": 37.9,
+   "delta": 0.8
+  },
+  {
+   "name": "Juan Medina",
+   "org": "TEX",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 19.8,
+   "war_pred": 2.88,
+   "grade_capped": 37.2,
+   "grade_decapped": 37.9,
+   "delta": 0.7
+  },
+  {
+   "name": "Victor Duarte",
+   "org": "ATL",
+   "level": "CPX",
+   "side": "P",
+   "position": "P",
+   "age": 18.5,
+   "war_pred": 2.85,
+   "grade_capped": 37.1,
+   "grade_decapped": 37.8,
+   "delta": 0.7
+  },
+  {
+   "name": "Reiver Camacho",
+   "org": "COL",
+   "level": "CPX",
+   "side": "P",
+   "position": "P",
+   "age": 19.3,
+   "war_pred": 2.83,
+   "grade_capped": 37.1,
+   "grade_decapped": 37.7,
+   "delta": 0.6
+  },
+  {
+   "name": "Jose De La Rosa",
+   "org": "SFG",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 18.9,
+   "war_pred": 2.77,
+   "grade_capped": 37.0,
+   "grade_decapped": 37.5,
+   "delta": 0.5
+  },
+  {
+   "name": "Cesar Acosta",
+   "org": "NYY",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 19.9,
+   "war_pred": 2.71,
+   "grade_capped": 36.9,
+   "grade_decapped": 37.2,
+   "delta": 0.3
+  },
+  {
+   "name": "David Hernandez",
+   "org": "PHI",
+   "level": "CPX",
+   "side": "P",
+   "position": "P",
+   "age": 19.2,
+   "war_pred": 2.62,
+   "grade_capped": 36.7,
+   "grade_decapped": 36.8,
+   "delta": 0.1
+  }
+ ],
+ "top_fallers": [
+  {
+   "name": "Luis De Leon",
+   "org": "HOU",
+   "level": "CPX",
+   "side": "H",
+   "position": "C",
+   "age": 19.5,
+   "war_pred": 4.72,
+   "grade_capped": 45.3,
+   "grade_decapped": 44.9,
+   "delta": -0.4
+  },
+  {
+   "name": "Melky Ventura",
+   "org": "COL",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 18.7,
+   "war_pred": 2.27,
+   "grade_capped": 35.6,
+   "grade_decapped": 35.2,
+   "delta": -0.4
+  },
+  {
+   "name": "Miguel Cordero",
+   "org": "MIN",
+   "level": "CPX",
+   "side": "P",
+   "position": "P",
+   "age": 19.9,
+   "war_pred": 2.19,
+   "grade_capped": 35.2,
+   "grade_decapped": 34.8,
+   "delta": -0.4
+  },
+  {
+   "name": "Manuel Bolivar",
+   "org": "DET",
+   "level": "DSL",
+   "side": "H",
+   "position": "C",
+   "age": 17.9,
+   "war_pred": 4.42,
+   "grade_capped": 44.1,
+   "grade_decapped": 43.8,
+   "delta": -0.3
+  },
+  {
+   "name": "Robinson Martinez",
+   "org": "TBR",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 18.6,
+   "war_pred": 2.43,
+   "grade_capped": 36.2,
+   "grade_decapped": 35.9,
+   "delta": -0.3
+  },
+  {
+   "name": "Dayner Matos",
+   "org": "ATL",
+   "level": "CPX",
+   "side": "P",
+   "position": "P",
+   "age": 22.3,
+   "war_pred": 2.35,
+   "grade_capped": 35.9,
+   "grade_decapped": 35.6,
+   "delta": -0.3
+  },
+  {
+   "name": "Alexander Diaz",
+   "org": "BAL",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 18.5,
+   "war_pred": 2.35,
+   "grade_capped": 35.9,
+   "grade_decapped": 35.6,
+   "delta": -0.3
+  },
+  {
+   "name": "Keywill Cedeno",
+   "org": "COL",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 21.5,
+   "war_pred": 2.36,
+   "grade_capped": 35.9,
+   "grade_decapped": 35.6,
+   "delta": -0.3
+  },
+  {
+   "name": "Jhoan Espinoza",
+   "org": "COL",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 18.7,
+   "war_pred": 2.34,
+   "grade_capped": 35.8,
+   "grade_decapped": 35.5,
+   "delta": -0.3
+  },
+  {
+   "name": "Eliezer Lucena",
+   "org": "MIN",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 18.6,
+   "war_pred": 2.31,
+   "grade_capped": 35.7,
+   "grade_decapped": 35.4,
+   "delta": -0.3
+  },
+  {
+   "name": "Rafeli Moronta",
+   "org": "STL",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 16.9,
+   "war_pred": 2.28,
+   "grade_capped": 35.6,
+   "grade_decapped": 35.3,
+   "delta": -0.3
+  },
+  {
+   "name": "Brian Tiburcio",
+   "org": "COL",
+   "level": "DSL",
+   "side": "P",
+   "position": "P",
+   "age": 18.3,
+   "war_pred": 2.27,
+   "grade_capped": 35.5,
+   "grade_decapped": 35.2,
+   "delta": -0.3
+  }
+ ],
+ "oos_invariance": {
+  "harness": "efv_ungraded.evaluate / data/xfv_ungraded_eval.json (scores _war, not _grade)",
+  "spearman_flag_off": {
+   "hit": {
+    "low_minors_age_le21": 0.2425,
+    "all_levels": 0.2992
+   },
+   "hit_n": {
+    "low_minors_age_le21": 103,
+    "all_levels": 608
+   },
+   "pit": {
+    "low_minors_age_le21": 0.0853,
+    "all_levels": 0.1836
+   },
+   "pit_n": {
+    "low_minors_age_le21": 62,
+    "all_levels": 616
+   }
+  },
+  "spearman_flag_on": {
+   "hit": {
+    "low_minors_age_le21": 0.2425,
+    "all_levels": 0.2992
+   },
+   "hit_n": {
+    "low_minors_age_le21": 103,
+    "all_levels": 608
+   },
+   "pit": {
+    "low_minors_age_le21": 0.0853,
+    "all_levels": 0.1836
+   },
+   "pit_n": {
+    "low_minors_age_le21": 62,
+    "all_levels": 616
+   }
+  },
+  "identical": true,
+  "grade_order_preserved_hit": true,
+  "grade_order_preserved_pit": true,
+  "spearman_capped_vs_decapped": 1.0
+ },
+ "verdict": "DE-CAP SHIPS: low-minors OOS Spearman is invariant (harness scores _war; grade order preserved both sides) AND the served grade distribution de-compresses -- breakout provisionals grade to true model value off the ceiling. Pure de-compression, no accuracy cost.",
+ "bar_met": true
+}

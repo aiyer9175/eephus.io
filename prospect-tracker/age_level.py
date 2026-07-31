@@ -29,6 +29,29 @@ Tier bucketing (unchanged):
     diff <   0.5   neutral      "age-appropriate"
     diff <   2.0   old          "old for level"
     diff >=  2.0   too-old      "too old for level"
+
+C3 audit 2026-07-30 - the 5 tiers stay a STAIRCASE, deliberately, and here is why
+(recorded so the next continuity pass does not re-open it):
+
+  * The NUMBER is already continuous, and the number is what every SCORING consumer
+    reads. `diff` feeds $DvM+'s trajectory term (storage: age_term = -diff), the GRPO
+    `age_vs_level` feature, and bayes_trade_value.age_for_level_buffer
+    (years_young * 0.30, capped) - all of them linear in diff, none of them tier-aware.
+  * Nothing in the BOARD ORDERING reads a tier. The board tie-break (`storage._tbs_proxy`)
+    is tool composite + Statcast+ + the '+' upside flag + an IL drag; it never touches
+    age-for-level, so the "TBS staircase reorders the board" hypothesis is false and
+    measured board movement from this file is exactly zero rows.
+  * The tiers are a DISPLAY LABEL (plus two org counters and the spotlight riser/faller
+    gate), and a label must agree with the number printed beside it. `diff` is rounded to
+    1dp for display, so bucketing the UNROUNDED value would put "-2.0 / young for level"
+    on 155 of 4,254 live cards - trading a phantom problem for a visible contradiction.
+    Bucketing the rounded value is the correct choice for a label, not an oversight.
+
+Real defect found next door and NOT fixable here: storage.py's org rollup tests
+`avl.tier == "very-old"`, a tier this module never emits (it emits "too-old"), so
+`very_old_count` is permanently 0 and the farm Readiness net (very_young - very_old) is
+one-sided. Reported to the storage owner; fixing it from this side by renaming the tier
+would break every other consumer of the documented tier vocabulary.
 """
 
 from __future__ import annotations

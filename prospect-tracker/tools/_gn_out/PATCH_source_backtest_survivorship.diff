@@ -1,0 +1,56 @@
+--- a/source_backtest.py
++++ b/source_backtest.py
+@@ -32,10 +32,11 @@
+   • METRICS — Spearman rank correlation (grade vs realized WAR — ordering
+     skill) and ROC AUC (grade discriminating "became a contributor"). Both are
+     nonparametric and robust to the FV→WAR scale being nonlinear.
+
+-Reads the exported data/timeseries.json (active) + data/debuts.json
+-(graduated) — the same per-snapshot consensus + per-source FVs + outcome WAR
+-the site shows — and writes data/source_backtest.json for the Methodology tab.
++Reads the exported data/timeseries.json (active) + data/debuts.json
++(graduated) + data/inactive.json (aged-out / released, never reached MLB):
++the same per-snapshot consensus + per-source FVs + outcome WAR the site shows.
++Writes data/source_backtest.json for the Methodology tab.
+ """
+@@ -119,16 +120,29 @@
+ def _load_universe(data_dir: Path = DATA_DIR) -> list[dict]:
+-    """Active prospects + graduated players, each carrying points[] history
+-    and (for graduates) career_war. Together they are the full graded universe.
+-    """
++    """Active prospects + graduated players + the aged-out/released pool, each
++    carrying points[] history and (for graduates) career_war.
++
++    SURVIVORSHIP FIX (2026-07-25). inactive.json used to be omitted, so the
++    "full graded universe" was actives + graduates only: a player who was
++    graded, then released or aged out WITHOUT debuting was in NEITHER file and
++    silently left the cohort. The three exported slices are DISJOINT (measured:
++    ts 4,477 / debuts 2,673 / inactive 2,409, pairwise intersection 0), so the
++    omission dropped 2,409 players outright - 846 of them graded on at least one
++    scored preseason common set. Because every dropped player is by definition a
++    NON-debut, the retained cohorts read as near-perfect: MLB-Pipeline-graded
++    preseason debut rate was 1.000 (2015), 0.995 (2017), 0.985 (2019) against a
++    true 0.534 / 0.452 / 0.660 once the pool is restored. That is exactly the
++    bias this module's COHORTS note promises not to have, and it inflated every
++    published debut_rate / mean_war / contributor_rate tier cell.
++    The restored pool is genuinely RESOLVED failure, not still-developing
++    prospects: only 2.6% were last listed in 2024+, median age now 27.8, 71.8%
++    are 26 or older. (eFV is NOT affected - efv_dataset.build_matrix already
++    builds its training universe from debuts.json + inactive.json.)
++    """
+     players: list[dict] = []
+     ts_path = data_dir / "timeseries.json"
+     if ts_path.exists():
+         ts = json.loads(ts_path.read_text(encoding="utf-8"))
+         players.extend(ts.get("players") or [])
+-    deb_path = data_dir / "debuts.json"
+-    if deb_path.exists():
+-        d = json.loads(deb_path.read_text(encoding="utf-8"))
+-        players.extend(d if isinstance(d, list) else (d.get("players") or []))
++    for slice_name in ("debuts.json", "inactive.json"):
++        p = data_dir / slice_name
++        if not p.exists():
++            continue
++        d = json.loads(p.read_text(encoding="utf-8"))
++        players.extend(d if isinstance(d, list) else (d.get("players") or []))
+     return players

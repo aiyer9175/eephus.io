@@ -1,0 +1,195 @@
+{
+ "pick_conflicts": [
+  {
+   "side": "hit",
+   "player_key": "josh_smith__sa3009923",
+   "mlbam_id": 669701,
+   "matrix_pick": 1135,
+   "statsapi_pick": 67,
+   "draft_year": 2019,
+   "round": 2,
+   "decision_year": 2022,
+   "kind": "debuted"
+  },
+  {
+   "side": "pit",
+   "player_key": "garrett_crochet__27463",
+   "mlbam_id": 676979,
+   "matrix_pick": 1014,
+   "statsapi_pick": 11,
+   "draft_year": 2020,
+   "round": 1,
+   "decision_year": 2020,
+   "kind": "debuted"
+  },
+  {
+   "side": "pit",
+   "player_key": "hayden_wesneski__27581",
+   "mlbam_id": 669713,
+   "matrix_pick": 990,
+   "statsapi_pick": 195,
+   "draft_year": 2019,
+   "round": 6,
+   "decision_year": 2022,
+   "kind": "debuted"
+  },
+  {
+   "side": "hit",
+   "player_key": "tim_borden",
+   "mlbam_id": 680874,
+   "matrix_pick": 1123,
+   "statsapi_pick": 493,
+   "draft_year": 2022,
+   "round": 16,
+   "decision_year": 2023,
+   "kind": "bust"
+  },
+  {
+   "side": "pit",
+   "player_key": "colton_eastman__sa3008312",
+   "mlbam_id": 663678,
+   "matrix_pick": 590,
+   "statsapi_pick": 107,
+   "draft_year": 2018,
+   "round": 4,
+   "decision_year": 2019,
+   "kind": "bust"
+  },
+  {
+   "side": "hit",
+   "player_key": "zach_daniels",
+   "mlbam_id": 671113,
+   "matrix_pick": 562,
+   "statsapi_pick": 131,
+   "draft_year": 2020,
+   "round": 4,
+   "decision_year": 2024,
+   "kind": "bust"
+  },
+  {
+   "side": "hit",
+   "player_key": "brock_jones",
+   "mlbam_id": 677342,
+   "matrix_pick": 482,
+   "statsapi_pick": 65,
+   "draft_year": 2022,
+   "round": 2,
+   "decision_year": 2024,
+   "kind": "bust"
+  },
+  {
+   "side": "pit",
+   "player_key": "jc_flowers__sa3011493",
+   "mlbam_id": 669001,
+   "matrix_pick": 528,
+   "statsapi_pick": 124,
+   "draft_year": 2019,
+   "round": 4,
+   "decision_year": 2024,
+   "kind": "bust"
+  },
+  {
+   "side": "pit",
+   "player_key": "logan_allen",
+   "mlbam_id": 671106,
+   "matrix_pick": 428,
+   "statsapi_pick": 56,
+   "draft_year": 2020,
+   "round": 2,
+   "decision_year": 2023,
+   "kind": "debuted"
+  },
+  {
+   "side": "pit",
+   "player_key": "cade_smith",
+   "mlbam_id": 671922,
+   "matrix_pick": 192,
+   "statsapi_pick": 466,
+   "draft_year": 2017,
+   "round": 16,
+   "decision_year": 2024,
+   "kind": "debuted"
+  },
+  {
+   "side": "pit",
+   "player_key": "ryan_smith",
+   "mlbam_id": 823193,
+   "matrix_pick": 541,
+   "statsapi_pick": 283,
+   "draft_year": 2024,
+   "round": 9,
+   "decision_year": 2023,
+   "kind": "bust"
+  },
+  {
+   "side": "pit",
+   "player_key": "luis_guerrero",
+   "mlbam_id": 692285,
+   "matrix_pick": 256,
+   "statsapi_pick": 496,
+   "draft_year": 2021,
+   "round": 17,
+   "decision_year": 2024,
+   "kind": "debuted"
+  },
+  {
+   "side": "pit",
+   "player_key": "jacob_webb",
+   "mlbam_id": 701288,
+   "matrix_pick": 568,
+   "statsapi_pick": 406,
+   "draft_year": 2021,
+   "round": 14,
+   "decision_year": 2024,
+   "kind": "bust"
+  }
+ ],
+ "bonus_conflicts": [
+  {
+   "side": "hit",
+   "player_key": "brock_jones",
+   "mlbam_id": 677342,
+   "matrix_bonus": 550000.0,
+   "statsapi_bonus": 1077600.0,
+   "draft_year": 2022
+  },
+  {
+   "side": "hit",
+   "player_key": "zach_daniels",
+   "mlbam_id": 671113,
+   "matrix_bonus": 125000.0,
+   "statsapi_bonus": 400000.0,
+   "draft_year": 2020
+  },
+  {
+   "side": "pit",
+   "player_key": "luis_guerrero",
+   "mlbam_id": 692285,
+   "matrix_bonus": 150000.0,
+   "statsapi_bonus": 125000.0,
+   "draft_year": 2021
+  },
+  {
+   "side": "pit",
+   "player_key": "logan_allen",
+   "mlbam_id": 671106,
+   "matrix_bonus": 125000.0,
+   "statsapi_bonus": 1125000.0,
+   "draft_year": 2020
+  },
+  {
+   "side": "pit",
+   "player_key": "ryan_smith",
+   "mlbam_id": 823193,
+   "matrix_bonus": 3000.0,
+   "statsapi_bonus": 177500.0,
+   "draft_year": 2024
+  }
+ ],
+ "summary": {
+  "source_covered_rows": 895,
+  "pick_conflicts": 13,
+  "bonus_conflicts": 5,
+  "pick_conflict_rate": 1.45
+ }
+}

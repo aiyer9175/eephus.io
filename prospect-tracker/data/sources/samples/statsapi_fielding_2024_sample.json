@@ -1,0 +1,1270 @@
+{
+ "copyright": "Copyright 2026 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+ "stats": [
+  {
+   "type": {
+    "displayName": "season"
+   },
+   "group": {
+    "displayName": "fielding"
+   },
+   "totalSplits": 2645,
+   "exemptions": [],
+   "splits": [
+    {
+     "season": "2024",
+     "stat": {
+      "age": 25,
+      "gamesPlayed": 25,
+      "gamesStarted": 25,
+      "assists": 8,
+      "putOuts": 6,
+      "errors": 0,
+      "chances": 14,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.56",
+      "rangeFactorPer9Inn": "0.91",
+      "innings": "138.0",
+      "games": 25,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 113,
+      "name": "Cincinnati Reds",
+      "link": "/api/v1/teams/113"
+     },
+     "player": {
+      "id": 671096,
+      "fullName": "Andrew Abbott",
+      "link": "/api/v1/people/671096",
+      "firstName": "Andrew",
+      "lastName": "Abbott"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "1",
+      "name": "Pitcher",
+      "type": "Pitcher",
+      "abbreviation": "P"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 27,
+      "gamesPlayed": 78,
+      "gamesStarted": 0,
+      "assists": 3,
+      "putOuts": 5,
+      "errors": 0,
+      "chances": 8,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.10",
+      "rangeFactorPer9Inn": "0.92",
+      "innings": "78.1",
+      "games": 78,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 117,
+      "name": "Houston Astros",
+      "link": "/api/v1/teams/117"
+     },
+     "player": {
+      "id": 650556,
+      "fullName": "Bryan Abreu",
+      "link": "/api/v1/people/650556",
+      "firstName": "Bryan",
+      "lastName": "Abreu"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "1",
+      "name": "Pitcher",
+      "type": "Pitcher",
+      "abbreviation": "P"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 25,
+      "gamesPlayed": 5,
+      "gamesStarted": 4,
+      "assists": 0,
+      "putOuts": 9,
+      "errors": 0,
+      "chances": 9,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "1.80",
+      "rangeFactorPer9Inn": "2.19",
+      "innings": "37.0",
+      "games": 5,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 111,
+      "name": "Boston Red Sox",
+      "link": "/api/v1/teams/111"
+     },
+     "player": {
+      "id": 677800,
+      "fullName": "Wilyer Abreu",
+      "link": "/api/v1/people/677800",
+      "firstName": "Wilyer",
+      "lastName": "Abreu"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "7",
+      "name": "Outfielder",
+      "type": "Outfielder",
+      "abbreviation": "LF"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 25,
+      "gamesPlayed": 1,
+      "gamesStarted": 0,
+      "assists": 0,
+      "putOuts": 1,
+      "errors": 0,
+      "chances": 1,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "1.00",
+      "rangeFactorPer9Inn": "4.50",
+      "innings": "2.0",
+      "games": 1,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 111,
+      "name": "Boston Red Sox",
+      "link": "/api/v1/teams/111"
+     },
+     "player": {
+      "id": 677800,
+      "fullName": "Wilyer Abreu",
+      "link": "/api/v1/people/677800",
+      "firstName": "Wilyer",
+      "lastName": "Abreu"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "8",
+      "name": "Outfielder",
+      "type": "Outfielder",
+      "abbreviation": "CF"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 22,
+      "gamesPlayed": 1,
+      "gamesStarted": 0,
+      "assists": 2,
+      "putOuts": 0,
+      "errors": 0,
+      "chances": 2,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "2.00",
+      "rangeFactorPer9Inn": "3.00",
+      "innings": "6.0",
+      "games": 1,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 121,
+      "name": "New York Mets",
+      "link": "/api/v1/teams/121"
+     },
+     "player": {
+      "id": 682668,
+      "fullName": "Luisangel Acu\u00f1a",
+      "link": "/api/v1/people/682668",
+      "firstName": "Luisangel",
+      "lastName": "Acu\u00f1a"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "4",
+      "name": "Second Base",
+      "type": "Infielder",
+      "abbreviation": "2B"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 32,
+      "gamesPlayed": 74,
+      "gamesStarted": 0,
+      "assists": 7,
+      "putOuts": 4,
+      "errors": 0,
+      "chances": 11,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.15",
+      "rangeFactorPer9Inn": "1.36",
+      "innings": "73.2",
+      "games": 74,
+      "doublePlays": 1,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 135,
+      "name": "San Diego Padres",
+      "link": "/api/v1/teams/135"
+     },
+     "player": {
+      "id": 592094,
+      "fullName": "Jason Adam",
+      "link": "/api/v1/people/592094",
+      "firstName": "Jason",
+      "lastName": "Adam"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 2,
+     "rank": 1,
+     "position": {
+      "code": "1",
+      "name": "Pitcher",
+      "type": "Pitcher",
+      "abbreviation": "P"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 33,
+      "gamesPlayed": 56,
+      "gamesStarted": 0,
+      "assists": 2,
+      "putOuts": 2,
+      "errors": 0,
+      "chances": 4,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.07",
+      "rangeFactorPer9Inn": "0.88",
+      "innings": "41.1",
+      "games": 56,
+      "doublePlays": 1,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 133,
+      "name": "Oakland Athletics",
+      "link": "/api/v1/teams/133"
+     },
+     "player": {
+      "id": 613534,
+      "fullName": "Austin Adams",
+      "link": "/api/v1/people/613534",
+      "firstName": "Austin",
+      "lastName": "Adams"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "1",
+      "name": "Pitcher",
+      "type": "Pitcher",
+      "abbreviation": "P"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 24,
+      "gamesPlayed": 4,
+      "gamesStarted": 4,
+      "assists": 0,
+      "putOuts": 14,
+      "errors": 0,
+      "chances": 14,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "3.50",
+      "rangeFactorPer9Inn": "3.23",
+      "innings": "39.0",
+      "games": 4,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 108,
+      "name": "Los Angeles Angels",
+      "link": "/api/v1/teams/108"
+     },
+     "player": {
+      "id": 677941,
+      "fullName": "Jordyn Adams",
+      "link": "/api/v1/people/677941",
+      "firstName": "Jordyn",
+      "lastName": "Adams"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "8",
+      "name": "Outfielder",
+      "type": "Outfielder",
+      "abbreviation": "CF"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 25,
+      "gamesPlayed": 4,
+      "gamesStarted": 4,
+      "assists": 0,
+      "putOuts": 6,
+      "errors": 0,
+      "chances": 6,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "1.50",
+      "rangeFactorPer9Inn": "1.59",
+      "innings": "34.0",
+      "games": 4,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 108,
+      "name": "Los Angeles Angels",
+      "link": "/api/v1/teams/108"
+     },
+     "player": {
+      "id": 666176,
+      "fullName": "Jo Adell",
+      "link": "/api/v1/people/666176",
+      "firstName": "Jo",
+      "lastName": "Adell"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "8",
+      "name": "Outfielder",
+      "type": "Outfielder",
+      "abbreviation": "CF"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 25,
+      "gamesPlayed": 8,
+      "gamesStarted": 1,
+      "assists": 4,
+      "putOuts": 2,
+      "errors": 0,
+      "chances": 6,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.75",
+      "rangeFactorPer9Inn": "5.40",
+      "innings": "10.2",
+      "games": 8,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 120,
+      "name": "Washington Nationals",
+      "link": "/api/v1/teams/120"
+     },
+     "player": {
+      "id": 672851,
+      "fullName": "Joan Adon",
+      "link": "/api/v1/people/672851",
+      "firstName": "Joan",
+      "lastName": "Adon"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "1",
+      "name": "Pitcher",
+      "type": "Pitcher",
+      "abbreviation": "P"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 34,
+      "gamesPlayed": 2,
+      "gamesStarted": 2,
+      "assists": 5,
+      "putOuts": 1,
+      "errors": 0,
+      "chances": 6,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "3.00",
+      "rangeFactorPer9Inn": "3.00",
+      "innings": "18.0",
+      "games": 2,
+      "doublePlays": 1,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 108,
+      "name": "Los Angeles Angels",
+      "link": "/api/v1/teams/108"
+     },
+     "player": {
+      "id": 501303,
+      "fullName": "Ehire Adrianza",
+      "link": "/api/v1/people/501303",
+      "firstName": "Ehire",
+      "lastName": "Adrianza"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "4",
+      "name": "Second Base",
+      "type": "Infielder",
+      "abbreviation": "2B"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 34,
+      "gamesPlayed": 6,
+      "gamesStarted": 4,
+      "assists": 7,
+      "putOuts": 1,
+      "errors": 0,
+      "chances": 8,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "1.33",
+      "rangeFactorPer9Inn": "1.71",
+      "innings": "42.0",
+      "games": 6,
+      "doublePlays": 1,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 108,
+      "name": "Los Angeles Angels",
+      "link": "/api/v1/teams/108"
+     },
+     "player": {
+      "id": 501303,
+      "fullName": "Ehire Adrianza",
+      "link": "/api/v1/people/501303",
+      "firstName": "Ehire",
+      "lastName": "Adrianza"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "5",
+      "name": "Third Base",
+      "type": "Infielder",
+      "abbreviation": "3B"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 23,
+      "gamesPlayed": 7,
+      "gamesStarted": 7,
+      "assists": 4,
+      "putOuts": 2,
+      "errors": 0,
+      "chances": 6,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.86",
+      "rangeFactorPer9Inn": "1.74",
+      "innings": "31.2",
+      "games": 7,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 113,
+      "name": "Cincinnati Reds",
+      "link": "/api/v1/teams/113"
+     },
+     "player": {
+      "id": 687924,
+      "fullName": "Julian Aguiar",
+      "link": "/api/v1/people/687924",
+      "firstName": "Julian",
+      "lastName": "Aguiar"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "1",
+      "name": "Pitcher",
+      "type": "Pitcher",
+      "abbreviation": "P"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 34,
+      "gamesPlayed": 1,
+      "gamesStarted": 1,
+      "assists": 3,
+      "putOuts": 2,
+      "errors": 0,
+      "chances": 5,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "5.00",
+      "rangeFactorPer9Inn": "5.00",
+      "innings": "9.0",
+      "games": 1,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 135,
+      "name": "San Diego Padres",
+      "link": "/api/v1/teams/135"
+     },
+     "player": {
+      "id": 605113,
+      "fullName": "Nick Ahmed",
+      "link": "/api/v1/people/605113",
+      "firstName": "Nick",
+      "lastName": "Ahmed"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "4",
+      "name": "Second Base",
+      "type": "Infielder",
+      "abbreviation": "2B"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 29,
+      "gamesPlayed": 66,
+      "gamesStarted": 0,
+      "assists": 7,
+      "putOuts": 0,
+      "errors": 0,
+      "chances": 7,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.11",
+      "rangeFactorPer9Inn": "0.81",
+      "innings": "78.2",
+      "games": 66,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 110,
+      "name": "Baltimore Orioles",
+      "link": "/api/v1/teams/110"
+     },
+     "player": {
+      "id": 669211,
+      "fullName": "Keegan Akin",
+      "link": "/api/v1/people/669211",
+      "firstName": "Keegan",
+      "lastName": "Akin"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "1",
+      "name": "Pitcher",
+      "type": "Pitcher",
+      "abbreviation": "P"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 28,
+      "gamesPlayed": 54,
+      "gamesStarted": 0,
+      "assists": 6,
+      "putOuts": 4,
+      "errors": 0,
+      "chances": 10,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.19",
+      "rangeFactorPer9Inn": "1.55",
+      "innings": "58.1",
+      "games": 54,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 142,
+      "name": "Minnesota Twins",
+      "link": "/api/v1/teams/142"
+     },
+     "player": {
+      "id": 660896,
+      "fullName": "Jorge Alcala",
+      "link": "/api/v1/people/660896",
+      "firstName": "Jorge",
+      "lastName": "Alcala"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "1",
+      "name": "Pitcher",
+      "type": "Pitcher",
+      "abbreviation": "P"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 21,
+      "gamesPlayed": 3,
+      "gamesStarted": 3,
+      "assists": 0,
+      "putOuts": 2,
+      "errors": 0,
+      "chances": 2,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.67",
+      "rangeFactorPer9Inn": "0.69",
+      "innings": "26.0",
+      "games": 3,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 112,
+      "name": "Chicago Cubs",
+      "link": "/api/v1/teams/112"
+     },
+     "player": {
+      "id": 682634,
+      "fullName": "Kevin Alc\u00e1ntara",
+      "link": "/api/v1/people/682634",
+      "firstName": "Kevin",
+      "lastName": "Alcantara"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "9",
+      "name": "Outfielder",
+      "type": "Outfielder",
+      "abbreviation": "RF"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 27,
+      "gamesPlayed": 3,
+      "gamesStarted": 3,
+      "assists": 3,
+      "putOuts": 1,
+      "errors": 0,
+      "chances": 4,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "1.33",
+      "rangeFactorPer9Inn": "1.44",
+      "innings": "25.0",
+      "games": 3,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 118,
+      "name": "Kansas City Royals",
+      "link": "/api/v1/teams/118"
+     },
+     "player": {
+      "id": 680769,
+      "fullName": "CJ Alexander",
+      "link": "/api/v1/people/680769",
+      "firstName": "CJ",
+      "lastName": "Alexander"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "5",
+      "name": "Third Base",
+      "type": "Infielder",
+      "abbreviation": "3B"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 34,
+      "gamesPlayed": 45,
+      "gamesStarted": 0,
+      "assists": 7,
+      "putOuts": 1,
+      "errors": 0,
+      "chances": 8,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.18",
+      "rangeFactorPer9Inn": "1.89",
+      "innings": "38.2",
+      "games": 45,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 133,
+      "name": "Oakland Athletics",
+      "link": "/api/v1/teams/133"
+     },
+     "player": {
+      "id": 518397,
+      "fullName": "Scott Alexander",
+      "link": "/api/v1/people/518397",
+      "firstName": "Scott",
+      "lastName": "Alexander"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "1",
+      "name": "Pitcher",
+      "type": "Pitcher",
+      "abbreviation": "P"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 26,
+      "gamesPlayed": 7,
+      "gamesStarted": 4,
+      "assists": 3,
+      "putOuts": 2,
+      "errors": 0,
+      "chances": 5,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.71",
+      "rangeFactorPer9Inn": "1.67",
+      "innings": "27.0",
+      "games": 7,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 143,
+      "name": "Philadelphia Phillies",
+      "link": "/api/v1/teams/143"
+     },
+     "player": {
+      "id": 663465,
+      "fullName": "Kolby Allard",
+      "link": "/api/v1/people/663465",
+      "firstName": "Kolby",
+      "lastName": "Allard"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "1",
+      "name": "Pitcher",
+      "type": "Pitcher",
+      "abbreviation": "P"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 27,
+      "gamesPlayed": 12,
+      "gamesStarted": 0,
+      "assists": 4,
+      "putOuts": 2,
+      "errors": 0,
+      "chances": 6,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.50",
+      "rangeFactorPer9Inn": "1.93",
+      "innings": "28.0",
+      "games": 12,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 109,
+      "name": "Arizona Diamondbacks",
+      "link": "/api/v1/teams/109"
+     },
+     "player": {
+      "id": 663531,
+      "fullName": "Logan Allen",
+      "link": "/api/v1/people/663531",
+      "firstName": "Logan",
+      "lastName": "Allen"
+     },
+     "league": {
+      "id": 104,
+      "name": "NL",
+      "link": "/api/v1/league/104"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "1",
+      "name": "Pitcher",
+      "type": "Pitcher",
+      "abbreviation": "P"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 25,
+      "gamesPlayed": 20,
+      "gamesStarted": 20,
+      "assists": 10,
+      "putOuts": 4,
+      "errors": 0,
+      "chances": 14,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.70",
+      "rangeFactorPer9Inn": "1.30",
+      "innings": "97.1",
+      "games": 20,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 114,
+      "name": "Cleveland Guardians",
+      "link": "/api/v1/teams/114"
+     },
+     "player": {
+      "id": 671106,
+      "fullName": "Logan Allen",
+      "link": "/api/v1/people/671106",
+      "firstName": "Logan",
+      "lastName": "Allen"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "1",
+      "name": "Pitcher",
+      "type": "Pitcher",
+      "abbreviation": "P"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 25,
+      "gamesPlayed": 2,
+      "gamesStarted": 0,
+      "assists": 2,
+      "putOuts": 0,
+      "errors": 0,
+      "chances": 2,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "1.00",
+      "rangeFactorPer9Inn": "9.00",
+      "innings": "2.0",
+      "games": 2,
+      "doublePlays": 1,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 133,
+      "name": "Oakland Athletics",
+      "link": "/api/v1/teams/133"
+     },
+     "player": {
+      "id": 669397,
+      "fullName": "Nick Allen",
+      "link": "/api/v1/people/669397",
+      "firstName": "Nick",
+      "lastName": "Allen"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "4",
+      "name": "Second Base",
+      "type": "Infielder",
+      "abbreviation": "2B"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 25,
+      "gamesPlayed": 5,
+      "gamesStarted": 3,
+      "assists": 6,
+      "putOuts": 4,
+      "errors": 0,
+      "chances": 10,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "2.00",
+      "rangeFactorPer9Inn": "3.10",
+      "innings": "29.0",
+      "games": 5,
+      "doublePlays": 1,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 133,
+      "name": "Oakland Athletics",
+      "link": "/api/v1/teams/133"
+     },
+     "player": {
+      "id": 669397,
+      "fullName": "Nick Allen",
+      "link": "/api/v1/people/669397",
+      "firstName": "Nick",
+      "lastName": "Allen"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "5",
+      "name": "Third Base",
+      "type": "Infielder",
+      "abbreviation": "3B"
+     }
+    },
+    {
+     "season": "2024",
+     "stat": {
+      "age": 31,
+      "gamesPlayed": 5,
+      "gamesStarted": 1,
+      "assists": 1,
+      "putOuts": 1,
+      "errors": 0,
+      "chances": 2,
+      "fielding": "1.000",
+      "rangeFactorPerGame": "0.40",
+      "rangeFactorPer9Inn": "6.00",
+      "innings": "3.2",
+      "games": 5,
+      "doublePlays": 0,
+      "triplePlays": 0,
+      "throwingErrors": 0
+     },
+     "team": {
+      "id": 118,
+      "name": "Kansas City Royals",
+      "link": "/api/v1/teams/118"
+     },
+     "player": {
+      "id": 656186,
+      "fullName": "Dan Altavilla",
+      "link": "/api/v1/people/656186",
+      "firstName": "Dan",
+      "lastName": "Altavilla"
+     },
+     "league": {
+      "id": 103,
+      "name": "AL",
+      "link": "/api/v1/league/103"
+     },
+     "sport": {
+      "id": 1,
+      "link": "/api/v1/sports/1",
+      "abbreviation": "MLB"
+     },
+     "numTeams": 1,
+     "rank": 1,
+     "position": {
+      "code": "1",
+      "name": "Pitcher",
+      "type": "Pitcher",
+      "abbreviation": "P"
+     }
+    }
+   ],
+   "splitsTiedWithOffset": [],
+   "splitsTiedWithLimit": [],
+   "playerPool": "ALL"
+  }
+ ]
+}

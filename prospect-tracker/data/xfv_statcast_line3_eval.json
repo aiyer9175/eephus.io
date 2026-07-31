@@ -1,0 +1,335 @@
+{
+ "generated_at": "2026-07-23",
+ "experiment": "S-XLINE-3 (docs/efv-2026-07-23/GATES.md)",
+ "tool": "tools/efv_statcast_line2_lab.py",
+ "registration_echo": {
+  "source": "docs/efv-2026-07-23/GATES.md :: 'S-XLINE-3 gate registration - 2026-07-23 (pre-registered; supersedes S-XLINE-2's V0 quantity ONLY)'",
+  "seed": 20260723,
+  "bootstrap_reps": 2000,
+  "clauses": {
+   "V0'": "xwoba_est_full (frozen completion) vs Savant FULL xwOBA on AAA 2026 both-source players (>= 25 tracked BBE feed-side / >= 100 PA Savant-side): Spearman >= 0.7 or STOP; report r, rho, bias, slope",
+   "M-A": "PRIMARY: A-ball season pairs (Y in 2023-2025 -> Y+1, z within destination pool, >= 150 PA both legs, >= 25 tracked BBE in Y): blend50 of the capped gap (xwoba_est_full - line wOBA proxy, cap +-0.05) into the actual line must predict next-season wOBA better than the actual line; lo95 > 0",
+   "M-CPX": "SECONDARY: same design at CPX; honest NULL closes it",
+   "AUX-1": "hit p90 EV level-relative at A vs next-season wOBA z; lo95 > 0 or NULL",
+   "AUX-2": "hit whiff/swing-miss (zone_metrics) at A vs next-season K% and wOBA z",
+   "AUX-3": "pit fastball velo (feeds) at A vs next-season K% against",
+   "selection_bias": "same-band covered vs uncovered next-season outcome gap + CI, mandatory per arm; big gap => confounded, do not ship",
+   "ship_rule": "V0' + M-A pass -> feeds-based gap source in efv_statcast_line, W=0.5, caps .050/.050/.100, A/CPX 2023+, default-OFF flags, then the S-XLINE in-matrix clauses (invariance, no-harm >= -0.003, bounded pull, post-flip max served move <= 3 FV) before any flip; AUX passes inform future registrations only"
+  },
+  "frozen_completion_formula": {
+   "quantity": "xwoba_est_full = (0.69*BB + 0.72*HBP' + xw_con*BIP') / PA",
+   "weights_source": "hem_plus.py W_UBB/W_HBP (FanGraphs family, mirrors fa_config assembly.woba_weights); identical constants to this lab's woba_proxy()",
+   "xw_con": "feed contact_quality.xwoba_est (contact-only, xwOBAcon scale, incl. the module's profile adjustment)",
+   "event_algebra": {
+    "H": "avg * ab",
+    "HBP'": "max(0, obp*pa - H - bb) - reconstructed, absorbs the OBP denominator error (SF/SH/CI); identical to woba_proxy()",
+    "BIP'": "max(0, pa - bb - HBP' - so) - contact-ending PA incl. SF (Savant values SF batted balls) and SH (tiny overcount)",
+    "denominator": "pa (same as woba_proxy, so the M-A gap cancels the BB/HBP/K channels by construction)"
+   },
+   "edge_handling": {
+    "ibb": "not in milb_history lean rows -> total BB at 0.69",
+    "sf": "not stored -> stays inside BIP' and pa",
+    "hbp": "not stored -> reconstructed, floored at 0",
+    "exclusions": "pa < 1, ab < 1, or missing avg/obp -> no estimate"
+   },
+   "frozen": "in the lab header BEFORE V0' ran (S-XLINE-3 registration)"
+  }
+ },
+ "v0_full": {
+  "clause": "V0' (S-XLINE-3)",
+  "season": 2026,
+  "level": "AAA",
+  "n_feed_side": 540,
+  "n_savant_side": 495,
+  "n_matched_feed_savant": 365,
+  "n_lost_at_stat_line_join": 0,
+  "n_matched": 365,
+  "spearman": 0.7796,
+  "pearson": 0.8003,
+  "mean_bias_full_est_minus_savant": 0.006,
+  "ols_slope_savant_on_full_est": 0.8409,
+  "ols_intercept": 0.0452,
+  "bar": 0.7,
+  "verdict": "PASS",
+  "frozen_completion_formula": {
+   "quantity": "xwoba_est_full = (0.69*BB + 0.72*HBP' + xw_con*BIP') / PA",
+   "weights_source": "hem_plus.py W_UBB/W_HBP (FanGraphs family, mirrors fa_config assembly.woba_weights); identical constants to this lab's woba_proxy()",
+   "xw_con": "feed contact_quality.xwoba_est (contact-only, xwOBAcon scale, incl. the module's profile adjustment)",
+   "event_algebra": {
+    "H": "avg * ab",
+    "HBP'": "max(0, obp*pa - H - bb) - reconstructed, absorbs the OBP denominator error (SF/SH/CI); identical to woba_proxy()",
+    "BIP'": "max(0, pa - bb - HBP' - so) - contact-ending PA incl. SF (Savant values SF batted balls) and SH (tiny overcount)",
+    "denominator": "pa (same as woba_proxy, so the M-A gap cancels the BB/HBP/K channels by construction)"
+   },
+   "edge_handling": {
+    "ibb": "not in milb_history lean rows -> total BB at 0.69",
+    "sf": "not stored -> stays inside BIP' and pa",
+    "hbp": "not stored -> reconstructed, floored at 0",
+    "exclusions": "pa < 1, ab < 1, or missing avg/obp -> no estimate"
+   },
+   "frozen": "in the lab header BEFORE V0' ran (S-XLINE-3 registration)"
+  },
+  "note": "xwoba_est_full completes the contact-only feed estimate to full-xwOBA scale with the AAA stat line's actual BB/HBP'/SO accounting (header formula, frozen before this ran); the registered gate is the rank agreement (Spearman) vs Savant full xwOBA on the V0-2 population",
+  "ts": "2026-07-23T15:18:14",
+  "diagnostics_descriptive": {
+   "note": "descriptive ledger diagnostics; the registered gate statistic is the >= 25 BBE Spearman above",
+   "rho_bbe_ge_40": {
+    "n": 364,
+    "rho": 0.7814
+   },
+   "rho_bbe_ge_75": {
+    "n": 341,
+    "rho": 0.7745
+   },
+   "rho_bbe_ge_100": {
+    "n": 307,
+    "rho": 0.7588
+   },
+   "rho_contact_only_same_subset": 0.6365,
+   "rho_residual_vs_savant_k_percent": -0.3055,
+   "rho_residual_vs_savant_bb_percent": -0.0826,
+   "rho_line_k_vs_savant_k": 0.9697
+  }
+ },
+ "backfill_accounting": {
+  "A_2023": {
+   "hitter_targets": 395,
+   "unique_games": 1952,
+   "feeds_processed": 1952,
+   "feeds_fetched_fresh": 1952,
+   "feed_errors": 0,
+   "feeds_with_contact": 542,
+   "players_with_any_feed_rows": 395,
+   "players_25plus_bbe": 128,
+   "bbe_total_25plus": 19430,
+   "pitchers_with_fb_rows": 444
+  },
+  "CPX_2023": {
+   "hitter_targets": 118,
+   "unique_games": 866,
+   "feeds_processed": 866,
+   "feeds_fetched_fresh": 866,
+   "feed_errors": 0,
+   "feeds_with_contact": 8,
+   "players_with_any_feed_rows": 118,
+   "players_25plus_bbe": 0,
+   "bbe_total_25plus": 0,
+   "pitchers_with_fb_rows": 64
+  },
+  "A_2024": {
+   "hitter_targets": 389,
+   "unique_games": 1945,
+   "feeds_processed": 1945,
+   "feeds_fetched_fresh": 1945,
+   "feed_errors": 0,
+   "feeds_with_contact": 579,
+   "players_with_any_feed_rows": 389,
+   "players_25plus_bbe": 120,
+   "bbe_total_25plus": 18850,
+   "pitchers_with_fb_rows": 442
+  },
+  "CPX_2024": {
+   "hitter_targets": 160,
+   "unique_games": 875,
+   "feeds_processed": 875,
+   "feeds_fetched_fresh": 875,
+   "feed_errors": 0,
+   "feeds_with_contact": 17,
+   "players_with_any_feed_rows": 160,
+   "players_25plus_bbe": 0,
+   "bbe_total_25plus": 0,
+   "pitchers_with_fb_rows": 103
+  },
+  "A_2025": {
+   "hitter_targets": 386,
+   "unique_games": 1948,
+   "feeds_processed": 1948,
+   "feeds_fetched_fresh": 1948,
+   "feed_errors": 0,
+   "feeds_with_contact": 577,
+   "players_with_any_feed_rows": 386,
+   "players_25plus_bbe": 126,
+   "bbe_total_25plus": 20601,
+   "pitchers_with_fb_rows": 481
+  },
+  "CPX_2025": {
+   "hitter_targets": 167,
+   "unique_games": 878,
+   "feeds_processed": 878,
+   "feeds_fetched_fresh": 878,
+   "feed_errors": 0,
+   "feeds_with_contact": 54,
+   "players_with_any_feed_rows": 167,
+   "players_25plus_bbe": 4,
+   "bbe_total_25plus": 105,
+   "pitchers_with_fb_rows": 266
+  }
+ },
+ "conventions": {
+  "outcome": "next-season wOBA proxy (see woba_proxy docstring: pa, ab, avg, obp, slg, bb, hr; triples folded into doubles; HBP reconstructed from OBP), z within the destination (max-exposure level, season) pool, >= 150 PA both legs; 2025->2026 outcome leg is 2026 season-to-date",
+  "gap": "gap_full = xwoba_est_full (FROZEN header completion of the feed contact estimate with the level row's actual BB/HBP'/SO accounting) minus the same row's woba_proxy (identical linear weights, so the BB/HBP/K channels cancel exactly); gap_line = clamp(gap_full, +-0.05); blend = line proxy + 0.5 * gap_line (z with the pool's own mean/sd, mirroring efv_statcast_line's additive hitter form)",
+  "bootstrap": "percentile, 2000 reps, seed 20260723, paired for the M arms (delta rho), plain for AUX rho"
+ },
+ "arms": {
+  "M_A_primary": {
+   "level": "A",
+   "per_season": {
+    "2023": {
+     "targets": 395,
+     "covered": 128,
+     "pairs_both_legs": 81,
+     "covered_bbe_total": 19430
+    },
+    "2024": {
+     "targets": 389,
+     "covered": 120,
+     "pairs_both_legs": 84,
+     "covered_bbe_total": 18850
+    },
+    "2025": {
+     "targets": 386,
+     "covered": 126,
+     "pairs_both_legs": 82,
+     "covered_bbe_total": 20601
+    }
+   },
+   "n_pairs": 247,
+   "rho_actual_line": 0.1839,
+   "rho_blend50": 0.1804,
+   "delta_rho": -0.0035,
+   "ci95": [
+    -0.0502,
+    0.044
+   ],
+   "p_gt0": 0.4315,
+   "gap_line_stats": {
+    "mean": -0.0151,
+    "sd": 0.0259,
+    "max_abs": 0.05,
+    "capped_at": 0.05
+   },
+   "verdict": "NULL"
+  },
+  "M_CPX_secondary": {
+   "level": "CPX",
+   "per_season": {
+    "2023": {
+     "targets": 118,
+     "covered": 0,
+     "pairs_both_legs": 0,
+     "covered_bbe_total": 0
+    },
+    "2024": {
+     "targets": 160,
+     "covered": 0,
+     "pairs_both_legs": 0,
+     "covered_bbe_total": 0
+    },
+    "2025": {
+     "targets": 167,
+     "covered": 4,
+     "pairs_both_legs": 4,
+     "covered_bbe_total": 105
+    }
+   },
+   "n_pairs": 4,
+   "verdict": "UNTRAINABLE",
+   "note": "only 4 covered season pairs"
+  },
+  "AUX_1_p90ev": {
+   "n": 247,
+   "rho": 0.1312,
+   "ci95": [
+    0.0041,
+    0.2498
+   ],
+   "p_gt0": 0.978,
+   "verdict": "PASS",
+   "note": "z of p90_ev within (A, season) covered pool vs next-season wOBA z; AAA early-window read was ANTI-correlated, this is the registered honest test at the younger level"
+  },
+  "AUX_2_whiff": {
+   "n": 788,
+   "vs_next_k_pct": {
+    "rho": 0.6567,
+    "ci95": [
+     0.6112,
+     0.6959
+    ],
+    "expected_direction": "positive",
+    "pass_direction": true
+   },
+   "vs_next_woba": {
+    "rho": -0.1083,
+    "ci95": [
+     -0.1754,
+     -0.0401
+    ],
+    "expected_direction": "negative",
+    "pass_direction": true
+   },
+   "verdict": "PASS",
+   "note": "whiff share = WHIFF_CODES/SWING_CODES over all pitches seen (>= 100 pitches, zone_metrics qualification); call codes need no tracking hardware so coverage is near-full; registered gate direction is vs next-season K%"
+  },
+  "AUX_3_fb_velo": {
+   "n": 227,
+   "rho": 0.2485,
+   "ci95": [
+    0.1248,
+    0.3724
+   ],
+   "p_gt0": 1.0,
+   "verdict": "PASS",
+   "note": "avg FB velo (codes ['FA', 'FF', 'FT', 'SI']), >= 50 tracked FB, z within (A, season) covered pool vs next-season K%-against z (max-BF destination row, >= 150 BF both legs); pitcher rows came free from the hitter-cohort feed set (same games), so no extra fetch was needed"
+  }
+ },
+ "selection_bias": {
+  "selection_bias_A": {
+   "n_universe": 788,
+   "n_covered": 247,
+   "n_uncovered": 541,
+   "gap_covered_minus_uncovered_z": 0.0908,
+   "ci95": [
+    -0.065,
+    0.2342
+   ],
+   "confounded_flag": false,
+   "design": "per-season quintile bands of the current-line z among the stat-line-eligible universe; covered-count-weighted mean of within-band outcome-z gaps; percentile bootstrap, 2000 reps"
+  },
+  "selection_bias_AUX2": {
+   "n_universe": 788,
+   "n_covered": 788,
+   "n_uncovered": 0,
+   "gap_covered_minus_uncovered_z": null,
+   "ci95": null,
+   "confounded_flag": false,
+   "design": "per-season quintile bands of the current-line z among the stat-line-eligible universe; covered-count-weighted mean of within-band outcome-z gaps; percentile bootstrap, 2000 reps"
+  },
+  "selection_bias_AUX3": {
+   "n_universe": 699,
+   "n_covered": 227,
+   "n_uncovered": 472,
+   "gap_covered_minus_uncovered_z": 0.0992,
+   "ci95": [
+    -0.0534,
+    0.256
+   ],
+   "confounded_flag": false,
+   "design": "per-season quintile bands of the current-line z among the stat-line-eligible universe; covered-count-weighted mean of within-band outcome-z gaps; percentile bootstrap, 2000 reps"
+  }
+ },
+ "caveats": [
+  "A-level batted-ball tracking is park-dependent (FSL Hawk-Eye parks dominate coverage); the selection-bias falsification is the registered guard for exactly this",
+  "CPX registered as likely underpowered; an honest NULL closes it without touching the A-ball verdict",
+  "2026 destination lines are season-to-date (partial season)",
+  "feeds xwoba_est is contact-only and carries the module's profile adjustment; V0' validated the rank agreement of its K/BB-completed form vs Savant full xwOBA (the S-XLINE-3 amendment)",
+  "any constant xwOBAcon-scale offset in the feed estimate enters the gap only through the slowly-varying contact share; within-pool z + rank statistics absorb it (V0' bias/slope recorded)"
+ ],
+ "nothing_ships_from_this_run": true,
+ "verdicts": {
+  "M_A_primary": "NULL",
+  "M_CPX_secondary": "UNTRAINABLE",
+  "AUX_1_p90ev": "PASS",
+  "AUX_2_whiff": "PASS",
+  "AUX_3_fb_velo": "PASS"
+ }
+}

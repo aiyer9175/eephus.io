@@ -1,0 +1,199 @@
+{
+ "hit": {
+  "n": 19038,
+  "const": [
+   "profile_pwr",
+   "profile_fin"
+  ],
+  "pairs_ge_090": [
+   [
+    0.9959,
+    "age",
+    "age_sq"
+   ],
+   [
+    0.9906,
+    "war_l1",
+    "age_x_war"
+   ],
+   [
+    0.9898,
+    "champ_h4",
+    "champ_h5"
+   ],
+   [
+    0.9893,
+    "champ_h3",
+    "champ_h4"
+   ],
+   [
+    0.9882,
+    "champ_h2",
+    "champ_h3"
+   ],
+   [
+    0.9868,
+    "champ_h1",
+    "champ_h2"
+   ],
+   [
+    0.9599,
+    "champ_h3",
+    "champ_h5"
+   ],
+   [
+    0.9567,
+    "champ_h2",
+    "champ_h4"
+   ],
+   [
+    0.9565,
+    "m_iso",
+    "m_hr_pa"
+   ],
+   [
+    0.9519,
+    "champ_h1",
+    "champ_h3"
+   ],
+   [
+    0.91,
+    "champ_h2",
+    "champ_h5"
+   ],
+   [
+    0.9098,
+    "rel_iso",
+    "rel_hr_pa"
+   ],
+   [
+    0.9011,
+    "champ_h1",
+    "champ_h4"
+   ]
+  ],
+  "r2_on_rest": {
+   "age": 0.9951,
+   "age_sq": 0.9948,
+   "war_l1": 0.9923,
+   "war_l2": 0.7982,
+   "war_l3": 0.7717,
+   "war_l1_missing": 0.6154,
+   "war_l2_missing": 0.375,
+   "war_l3_missing": 0.4889,
+   "age_x_war": 0.9914,
+   "war_max3": 0.9261,
+   "star_l1": 0.5795,
+   "established": 0.6363,
+   "expo_l1": 1.0,
+   "expo_l2": 1.0,
+   "expo_l3": 0.748,
+   "expo_trend": 1.0,
+   "season_idx": 0.6547,
+   "role_flag": 0.4182,
+   "m_k_pct": 0.745,
+   "rel_k_pct": 0.4568,
+   "m_bb_pct": 0.5893,
+   "rel_bb_pct": 0.3608,
+   "m_iso": 0.9617,
+   "rel_iso": 0.9089,
+   "m_babip": 0.4853,
+   "rel_babip": 0.2945,
+   "m_hr_pa": 0.9593,
+   "rel_hr_pa": 0.8886,
+   "xiso_l1": 0.8179,
+   "xiso_gap_l1": 0.2824,
+   "xiso_missing": 0.8448,
+   "pos_adj_prior": 0.4482,
+   "champ_h1": 0.9981,
+   "champ_h2": 0.9995,
+   "champ_h3": 0.9996,
+   "champ_h4": 0.9995,
+   "champ_h5": 0.9972
+  }
+ },
+ "pit": {
+  "n": 22997,
+  "const": [],
+  "pairs_ge_090": [
+   [
+    0.9957,
+    "age",
+    "age_sq"
+   ],
+   [
+    0.989,
+    "war_l1",
+    "age_x_war"
+   ],
+   [
+    0.979,
+    "champ_h3",
+    "champ_h4"
+   ],
+   [
+    0.9787,
+    "champ_h2",
+    "champ_h3"
+   ],
+   [
+    0.9746,
+    "champ_h4",
+    "champ_h5"
+   ],
+   [
+    0.9731,
+    "champ_h1",
+    "champ_h2"
+   ],
+   [
+    0.9254,
+    "champ_h2",
+    "champ_h4"
+   ],
+   [
+    0.9191,
+    "champ_h3",
+    "champ_h5"
+   ],
+   [
+    0.9171,
+    "champ_h1",
+    "champ_h3"
+   ]
+  ],
+  "r2_on_rest": {
+   "age": 0.9935,
+   "age_sq": 0.9932,
+   "war_l1": 0.9859,
+   "war_l2": 0.7263,
+   "war_l3": 0.7074,
+   "war_l1_missing": 0.4909,
+   "war_l2_missing": 0.3457,
+   "war_l3_missing": 0.4494,
+   "age_x_war": 0.9841,
+   "war_max3": 0.902,
+   "star_l1": 0.4863,
+   "established": 0.5518,
+   "expo_l1": 1.0,
+   "expo_l2": 1.0,
+   "expo_l3": 0.7139,
+   "expo_trend": 1.0,
+   "season_idx": 0.6506,
+   "role_flag": 0.6643,
+   "profile_pwr": 0.4876,
+   "profile_fin": 0.4292,
+   "m_k_pct": 0.8391,
+   "rel_k_pct": 0.4998,
+   "m_bb_pct": 0.4399,
+   "rel_bb_pct": 0.3387,
+   "m_hr_bf": 0.4283,
+   "rel_hr_bf": 0.1829,
+   "champ_h1": 0.9839,
+   "champ_h2": 0.9957,
+   "champ_h3": 0.9969,
+   "champ_h4": 0.9959,
+   "champ_h5": 0.9802
+  }
+ }
+}

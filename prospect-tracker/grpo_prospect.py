@@ -108,8 +108,33 @@ _POS_BUCKET = {
     "2B": 3, "3B": 3,
     "LF": 4, "RF": 4, "1B": 4, "OF": 4, "DH": 4,
     "SP": 5, "RHP": 5, "LHP": 5, "P": 5,
-    "RP": 6, "CL": 6,
+    # SIRP / MIRP added 2026-07-30. They are the site's primary relief designations
+    # (FanGraphs publishes them, not bare "RP") and they were MISSING, so the
+    # `.get(pos, 4)` fallback below fed 310 relief prospects to the policy in bucket 4,
+    # the LF/RF/1B/OF/DH corner-BAT bucket. A reliever scored as a corner bat is the
+    # worst available miss in this map: bucket 4 is the low-defensive-value hitter slot.
+    "RP": 6, "CL": 6, "SIRP": 6, "MIRP": 6,
 }
+# Multi-position labels ("SS/3B", "C/1B") and two-way ("TWP") also fell through to the
+# corner-bat default. Resolve on the FIRST listed slot, which is how every other consumer
+# reads these, and fall back to a NEUTRAL bucket rather than a hitter one so an unknown
+# label can never be silently priced as a specific kind of player.
+_POS_BUCKET_DEFAULT = 3          # neutral infield slot, not the corner-bat bucket
+
+
+def _pos_bucket(pos) -> int:
+    """Bucket index for a position label, tolerant of the compound and relief forms the
+    live board actually carries. Measured 2026-07-30: 356 of the served rows used a label
+    absent from _POS_BUCKET, 310 of them relief designations."""
+    if not pos:
+        return _POS_BUCKET_DEFAULT
+    p = str(pos).strip().upper()
+    if p in _POS_BUCKET:
+        return _POS_BUCKET[p]
+    if p == "TWP":               # two-way: score on the bat, which is the longer career
+        return _POS_BUCKET_DEFAULT
+    head = p.split("/")[0].strip()
+    return _POS_BUCKET.get(head, _POS_BUCKET_DEFAULT)
 # Approximate level baselines for relative features
 _LEVEL_BASELINES = {
     # (k_pct, bb_pct, avg_ev)
@@ -194,7 +219,7 @@ def extract_features(player: dict, level_norms: dict | None = None) -> dict:
         "age":           age,
         "age_vs_level":  avl_diff,
         "level_idx":     _LEVEL_IDX.get(level, 0),
-        "pos_bucket":    _POS_BUCKET.get(pos, 4),
+        "pos_bucket":    _pos_bucket(pos),
         "fv":            fv,
         "k_pct":         k_pct,
         "k_pct_rel":     k_rel,

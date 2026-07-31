@@ -464,6 +464,10 @@
   background: transparent; color: var(--accent-gold); border: 1px solid var(--accent-gold);
   display: inline-flex; align-items: center; justify-content: center;
 }
+/* Phone hamburger (injected by eephus-nav.js). Hidden at every width above
+   640px - desktop keeps the one-line strip untouched; the <=640px block near
+   the end of the nav section shows + styles it. */
+.eephus-nav .eephus-nav-toggle { display: none; }
 
 /* ---- hero (Home) ---- */
 .hero { padding: 56px 0 36px; border-bottom: 3px double var(--border); margin-bottom: 32px; }
@@ -517,7 +521,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .section-head--byline .section-head-titles { display: flex; flex-direction: column; min-width: 0; }
 .section-head--byline .section-head-titles .build-banner { margin: 0 0 6px; }
 .section-head--byline .section-sub { max-width: 78ch; }
-/* Lead Developer & Creator credit badge (MLB Stats + Pitcher Alchemy Lab). */
+/* Lead Developer & Creator credit badge (MLB Stats + Alchemy Lab). */
 .lead-dev-badge { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
   text-decoration: none; font-family: var(--font-retro-mono); font-size: 10.5px; letter-spacing: .03em;
   margin: 9px 0 2px; padding: 4px 10px; border: 1px solid var(--accent-gold);
@@ -728,27 +732,80 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 
 /* ---- mobile ---- */
-/* Phone exception to the one-line rule (the old width:100% + flex:1 rules
-   here predated it and blew the nowrap bar past the viewport on every
-   page). Brand + controls share the top line; the LINK strip drops to its
-   own full-width swipe row beneath. The failure the one-line rule fixed
-   was the CONTROLS landing on a cramped second row - they stay up top. */
+/* Phone treatment: the old full-width swipe strip hid half the links with no
+   affordance, so <=640px now runs the hamburger pattern instead. Brand +
+   controls + the eephus-nav.js-injected toggle share ONE ~60px top line; the
+   LINK strip is hidden until [data-nav-open] (set by the toggle) shows it as
+   a full-width vertical panel. Desktop (>640px) is untouched. */
 @media (max-width: 640px) {
-  .eephus-nav { flex-wrap: wrap; gap: 8px; row-gap: 4px; padding: 10px 1rem; }
-  .eephus-nav .eephus-links { order: 3; flex: 1 1 100%; margin-left: 0; }
-  .eephus-nav .eephus-links a { padding: 10px 12px; }
+  .eephus-nav { flex-wrap: wrap; gap: 8px; row-gap: 0; padding: 8px 1rem; }
+  .eephus-nav .eephus-links {
+    display: none;
+    order: 3; flex: 1 1 100%; margin-left: 0;
+  }
+  .eephus-nav[data-nav-open] .eephus-links {
+    display: block;
+    overflow-x: visible;
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+    padding: 4px 0 6px;
+  }
+  .eephus-nav[data-nav-open] .eephus-links a {
+    display: flex; align-items: center;
+    min-height: 44px; padding: 10px 12px;
+    border-left: none; border-top: 1px solid var(--border-light);
+  }
+  .eephus-nav[data-nav-open] .eephus-links a:first-of-type { border-top: none; }
+  /* Active-link underline: pin it to the label's left edge in the panel
+     (the full-width variant reads as a stray rule under empty space). */
+  .eephus-nav[data-nav-open] .eephus-links a.is-active::after {
+    left: 12px; right: auto; width: 44px; bottom: 6px;
+  }
+  /* "MLB Modules" group renders INLINE inside the open panel: static menu,
+     no shadow, indented under its summary. The fixed-position placement in
+     eephus-nav.js is desktop-only (it no-ops at <=640px). */
+  .eephus-nav .eephus-nav-group { display: block; }
+  .eephus-nav .eephus-nav-group > summary {
+    min-height: 44px; display: flex; align-items: center;
+    border-left: none; border-top: 1px solid var(--border-light);
+    padding: 10px 12px;
+  }
+  .eephus-nav .eephus-nav-menu {
+    position: static; min-width: 0; box-shadow: none;
+    border: none; border-left: 2px solid var(--border);
+    margin: 0 0 4px 14px; padding: 0;
+  }
+  .eephus-nav .eephus-nav-menu a { min-height: 44px; display: flex; align-items: center; }
   .eephus-nav .eephus-nav-controls { margin-left: auto; }
-  /* Touch targets: keep the mobile controls at ~40px (>= recommended tap size)
-     rather than shrinking below the 38px desktop height. */
-  .eephus-nav .eephus-nav-ctrl { padding: 0 10px; min-height: 40px; }
+  /* Touch targets: every top-bar control (search / watchlist / theme) and
+     the hamburger meet the 44px minimum tap size. */
+  .eephus-nav .eephus-nav-ctrl { padding: 0 10px; min-height: 44px; min-width: 44px; justify-content: center; }
+  .eephus-nav .eephus-nav-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; flex: none;
+    font-size: 18px; line-height: 1; cursor: pointer;
+    color: var(--text-primary); background: transparent;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+  }
+  .eephus-nav[data-nav-open] .eephus-nav-toggle {
+    background: var(--bg-tertiary); border-color: var(--text-tertiary);
+  }
   .eephus-wrap { padding: 0 1rem 3rem; }
   .hero { padding: 36px 0 24px; }
   /* Module masthead: stack the title block above the description on phones so
      the title isn't crushed into a ~80px column beside the italic subtitle
-     (e.g. "MLB Projections" wrapping to "MLB / Projec…"). Full width each. */
-  .section-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+     (e.g. "MLB Projections" wrapping to "MLB / Projec…"). Full width each.
+     The subtitle clamps to 2 lines (full text rides the title attr, set by
+     eephus-nav.js) and the banner sheds some vertical padding. */
+  .section-head { flex-direction: column; align-items: flex-start; gap: 4px; padding: 8px 2px; margin: 18px 0 16px; }
   .section-head--byline { align-items: flex-start; }
-  .section-head .section-sub { font-size: .8rem; }
+  .section-head .section-sub {
+    font-size: .8rem;
+    display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  /* Chip/filter-row swipe treatment lives at the END of this sheet (it must
+     out-cascade the base .filter-bar / .mlbstats-sectionnav rules below). */
 }
 
 /* ===========================================================================
@@ -848,6 +905,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 
 /* sidebar brand + search + nav */
 .sb-brand { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+/* Homepage drawer hamburger (markup lives in index.html's .sb-brand). Hidden
+   on desktop; the <=900px block below shows it and collapses the sidebar. */
+.home-nav-toggle { display: none; }
 /* Sidebar brand = the merged arc-wordmark at 20px (the arc IS the flourish - 
    the old iridescent underline is gone with it). */
 .sb-brand .wm { font-family: var(--font-retro-mono); font-weight: 700; font-size: 20px; letter-spacing: .03em; color: var(--text-primary); text-decoration: none; }
@@ -1263,7 +1323,28 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* ---- responsive ---- */
 @media (max-width: 900px) {
   .home-shell { grid-template-columns: 1fr; }
-  .home-sidebar { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--border); }
+  /* Sidebar collapses to a compact brand bar (wordmark + theme + hamburger);
+     search, the module list, and the wire feed all live in the drawer that
+     [data-nav-open] reveals (wired by the small inline script in index.html).
+     Keeps the pre-content chrome to ~100px instead of ~1800px of stacked rail. */
+  .home-sidebar {
+    position: static; max-height: none; border-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+  }
+  .home-sidebar:not([data-nav-open]) > :not(.sb-brand) { display: none; }
+  .home-sidebar[data-nav-open] { padding-bottom: 28px; }
+  .home-sidebar .sb-brand { margin-bottom: 0; justify-content: flex-start; }
+  .home-sidebar[data-nav-open] .sb-brand { margin-bottom: 14px; }
+  .home-sidebar .sb-brand .home-theme-toggle { margin-left: auto; min-height: 44px; min-width: 44px; }
+  .home-nav-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; flex: none;
+    font-size: 18px; line-height: 1; cursor: pointer;
+    color: var(--text-primary); background: transparent;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+  }
+  .home-sidebar[data-nav-open] .home-nav-toggle { background: var(--bg-tertiary); }
   .home-main { padding: 0 16px 40px; }
   .module-cols, .lead-story, .secondary-stories { grid-template-columns: 1fr; }
   .teaser-row { grid-template-columns: minmax(0, 1fr); }
@@ -1426,6 +1507,12 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   .state-message.is-loading::before { animation-duration: 2.4s !important; animation-iteration-count: infinite !important; }
 }
 .fa-app .fa-thin { color: var(--accent-gold); cursor: help; }
+/* Handedness token on the class board (B:L bat side / T:R throwing hand). Small,
+   monospaced and helpable - it is a scanning aid, not a headline number. */
+.fa-app .fa-hand { font-family: var(--font-mono); letter-spacing: .02em; cursor: help; }
+/* Current-season line on the FA player card: the tiles read left-to-right like
+   a stat line rather than right-aligned like the hero's market tiles. */
+.fa-app .fa-current-tiles { justify-content: flex-start; margin: 6px 0 4px; }
 .fa-app .fa-stale { color: var(--accent-red); font-weight: 700; }
 .fa-app .fa-sources { margin: 2px 0 8px; font-size: 11px; color: var(--text-tertiary); }
 .fa-app .fa-player-link { color: var(--text-primary); text-decoration: none; border-bottom: 1px dotted var(--border); }
@@ -1638,7 +1725,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   font-family: var(--font-retro-mono); font-size: 9px; text-transform: uppercase;
   letter-spacing: .05em; color: var(--text-tertiary); }
 .bp-slot--bench { opacity: .72; }
-/* ---- Pitcher Alchemy Lab (/pal/) - reuses .mlbstats-* tables ------------- */
+/* ---- Alchemy Lab (/pal/) - reuses .mlbstats-* tables ------------- */
 .pal-fit { font-weight: 700; cursor: help; font-variant-numeric: tabular-nums; }
 .pal-hi { color: var(--accent-cyan); }
 .pal-good { color: var(--accent-green); }
@@ -1681,6 +1768,10 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
    cyan), SP->RP is the muted salvage direction (orange). */
 .pal-dir--rp2sp { color: var(--accent-cyan); border-color: var(--accent-cyan); }
 .pal-dir--sp2rp { color: var(--accent-orange); border-color: var(--accent-orange); opacity: .85; }
+/* evidence chips on the Position Fit accounting cards: what the model was
+   measured to do (pass) vs the question it measured as a null. */
+.pal-dir--pass { color: var(--accent-green); border-color: var(--accent-green); }
+.pal-dir--null { color: var(--accent-orange); border-color: var(--accent-orange); }
 /* conversion candidate TIER titles (under the FIT number in the candidate table) */
 .pal-tier { font-family: var(--font-retro-mono); font-size: 8.5px; font-weight: 700; letter-spacing: .02em;
   text-transform: uppercase; margin-top: 3px; white-space: nowrap; color: var(--text-tertiary); }
@@ -2306,6 +2397,34 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   letter-spacing: .09em; text-transform: uppercase; color: var(--text-tertiary);
 }
 .mlbp-tile-val { font-family: var(--font-mono); font-size: 18px; font-weight: 800; }
+/* W6 per-season Swing+ trend tile: season slices read smaller than a
+   headline number so the tile stays compact ("24: 103 / 25: 108 / 26: 112") */
+.mlbp-tile-val .mlbp-swing-seasons { font-size: 12.5px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+/* Bat-speed change strip under the MLB player hero. Three states: a plain
+   observed change, an alert when the change sits in the bottom decile of the
+   measured distribution, and an explicit no-data state for the (many) hitters
+   with no comparable pair of tracked seasons. */
+.mlbp-batspeed {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  border: 1px solid var(--border); border-left-width: 3px;
+  padding: 7px 11px; margin: 12px 0 0; cursor: help;
+  font-size: 11px; color: var(--text-secondary);
+}
+.mlbp-batspeed-label {
+  font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+  font-weight: 700; color: var(--text-tertiary);
+}
+.mlbp-batspeed-val { font-family: var(--font-mono); font-size: 15px; font-weight: 800; color: var(--text-primary); }
+.mlbp-batspeed-why { color: var(--text-tertiary); }
+.mlbp-batspeed.is-alert { border-left-color: var(--accent-orange); }
+.mlbp-batspeed.is-alert .mlbp-batspeed-val { color: var(--accent-orange); }
+.mlbp-batspeed-flag {
+  font-family: var(--font-retro-mono); font-size: 8.5px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+  border: 1px solid var(--accent-orange); color: var(--accent-orange); padding: 1px 6px;
+}
+.mlbp-batspeed.is-nodata { border-left-color: var(--border); }
+.mlbp-batspeed.is-nodata .mlbp-batspeed-val { color: var(--text-tertiary); font-size: 13px; font-weight: 700; }
 .mlbp-tile-chip {
   font-family: var(--font-mono); font-size: 11px; font-weight: 700;
   border: 1px solid var(--border); padding: 2px 8px; margin-left: 8px;
@@ -2434,4 +2553,34 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .fa-row-headshot {
   width: 24px; height: 24px; object-fit: cover; display: block;
   border: 1px solid var(--border); background: var(--bg-tertiary);
+}
+
+/* ---- phone chip rows + fantasy tables (<=640px) ----
+   Sits at the END of the sheet on purpose: the base .filter-bar /
+   .mlbstats-sectionnav rules above share its specificity, so source order
+   is what lets flex-wrap:nowrap win here. One swipeable line with a REAL
+   affordance - a thin scrollbar plus a trailing fade hinting at more
+   content off-screen. Filter bars only; never board/sticky ancestors. */
+@media (max-width: 640px) {
+  .news-app .filter-bar, .gl-app .filter-bar, .mlbstats-sectionnav {
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    padding-bottom: 4px;
+  }
+  .news-app .filter-bar::-webkit-scrollbar,
+  .gl-app .filter-bar::-webkit-scrollbar,
+  .mlbstats-sectionnav::-webkit-scrollbar { height: 4px; display: block; }
+  .news-app .filter-bar::-webkit-scrollbar-thumb,
+  .gl-app .filter-bar::-webkit-scrollbar-thumb,
+  .mlbstats-sectionnav::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .news-app .filter-bar > *, .gl-app .filter-bar > *, .mlbstats-sectionnav > * { flex: none; }
+  /* Fantasy leaderboard tables (styles injected at runtime by fantasy.js)
+     run wider than a phone; scroll each inside its own box so the DOCUMENT
+     never pans sideways. table.-qualified to outrank the injected rule. */
+  table.fantasy-table {
+    display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    white-space: nowrap; max-width: 100%;
+  }
 }

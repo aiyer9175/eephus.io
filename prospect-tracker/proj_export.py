@@ -105,6 +105,21 @@ def _display_names() -> dict[int, str]:
     return {k: v for k, v in out.items() if v}
 
 
+# P-POSVAL: the Spotrac contract join copied ct["position"] onto the public row
+# unvalidated, so malformed scrape rows shipped fielding-code strings as a
+# position ("35" for Christopher Morel, "37" for Santiago Espinal on the
+# 2026-07-24 payload - both with aav 0, i.e. the whole contract row was junk).
+# Whitelist the vocabulary the surface actually renders; anything else leaves
+# the engine's own role token in place instead of overwriting it with noise.
+_VALID_POS = {"C", "1B", "2B", "3B", "SS", "LF", "CF", "RF", "OF", "DH", "IF",
+              "INF", "SP", "RP", "P", "LHP", "RHP", "SIRP", "MIRP", "CL",
+              "TWP", "UT", "UTIL"}
+
+
+def _valid_pos(pos) -> bool:
+    return isinstance(pos, str) and pos.strip().upper() in _VALID_POS
+
+
 def _season_value_usd(war: float, t: int, dpw_level: float) -> float:
     """One projected season priced on the platform's convex tier curve at
     the winter's ex-ante $/WAR level, escalated t seasons out."""
@@ -162,8 +177,8 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         """Stamp the contract-dependent fields (pos/team/thru/aav/sur/surNpv) onto a
         built row. Shared by the inline (unambiguous) join and the post-loop
         collision-winner award so both paths price identically."""
-        if not m.get("twoWay") and ct.get("position"):
-            m["pos"] = ct["position"]
+        if not m.get("twoWay") and _valid_pos(ct.get("position")):
+            m["pos"] = ct["position"].strip().upper()
         if ct.get("team_code"):
             m["team"] = ct["team_code"]
         sal = {int(y): int(v) for y, v in (ct.get("salary_by_year") or {}).items()}
@@ -424,7 +439,17 @@ def _prospect_rows(dpw: float) -> list[dict]:
         if not probs:
             continue
         age = p.get("age")
-        debut_age = (float(age) + max(0, int(eta) - (FIRST_SEASON - 1))) if age else None
+        # P-ETACLAMP: anchor the trajectory to the SHIPPED eta, not the raw one.
+        # The row ships eta_yr = max(eta, FIRST_SEASON) and both the board
+        # (assets/projections.js warAt) and the team roll-up offset the path by
+        # that shipped value - but debut_age was computed from the RAW eta, so
+        # every prospect whose eta had already passed (98 of 232 on the
+        # 2026-07-24 payload, 42%) got a trajectory shaped for a debut at their
+        # CURRENT age and then rendered one calendar year later. Aging, scaling
+        # and the surplus eta_years term (which already used the clamped value)
+        # now agree.
+        eta_shipped = max(int(eta), FIRST_SEASON)
+        debut_age = (float(age) + max(0, eta_shipped - (FIRST_SEASON - 1))) if age else None
         scale = vf._war_scale_for(float(price_fv), role)
         paths = [vf._bucket_season_wars(role, i, reliever, debut_age, scale)
                  for i in range(len(_BUCKET_ORDER))]
@@ -446,7 +471,21 @@ def _prospect_rows(dpw: float) -> list[dict]:
             return len(probs) - 1
 
         lo_b, hi_b = _q_bucket(0.10), _q_bucket(0.90)
-        eta_yr = max(int(eta), FIRST_SEASON)
+        eta_yr = eta_shipped
+        # P-PWINDOW: the prospect war[] arrays are ETA-ALIGNED (index 0 = the
+        # debut season) while the veteran arrays are CALENDAR-aligned at
+        # FIRST_SEASON, so `sum(path[:HORIZON])` is NOT "the same HORIZON window
+        # as the veteran rows" its comment claimed - for a 2031-ETA prospect it
+        # summed 2031-2035 and labelled it a 2027-2031 total. Measured on the
+        # 2026-07-24 payload: 79 prospects with eta>2027 shipped 155.2 total WAR
+        # against 101.7 actually inside the window (1.53x). The board already
+        # windows correctly in JS (warShown); the PAYLOAD field did not, and
+        # mlb_player_export / fa_export / bayes_trade_value read it directly.
+        _in_win = max(0, HORIZON - (eta_yr - FIRST_SEASON))
+
+        def _wtot(series):
+            return round(sum(series[:_in_win]), 1)
+
         sv = vf.surplus_value_mm(float(price_fv), is_pit, pos, age=age,
                                  eta_years=max(0.0, eta_yr - (FIRST_SEASON - 1)))
         # PRIME/TALENT display path (warPTH) + headline peak: reconciled to the
@@ -463,20 +502,20 @@ def _prospect_rows(dpw: float) -> list[dict]:
             "war": [round(w, 2) for w in mean_path],
             "warP10": [round(w, 2) for w in paths[lo_b]],
             "warP90": [round(w, 2) for w in paths[hi_b]],
-            # Totals sum the SAME HORIZON window as the veteran rows (the war
-            # arrays themselves keep the full control window for the card path);
-            # summing the prospect's 7-season control window against the vets'
-            # 5-season totals made every same-column comparison prospect-inflated.
-            "warTotal": round(sum(mean_path[:HORIZON]), 1),
-            "warTotalP10": round(sum(paths[lo_b][:HORIZON]), 1),
-            "warTotalP90": round(sum(paths[hi_b][:HORIZON]), 1),
+            # Totals sum the SAME CALENDAR window as the veteran rows: the war
+            # arrays are ETA-aligned, so the in-window count is HORIZON minus the
+            # seasons before debut (see P-PWINDOW above). The arrays themselves
+            # keep the full control window for the card path.
+            "warTotal": _wtot(mean_path),
+            "warTotalP10": _wtot(paths[lo_b]),
+            "warTotalP90": _wtot(paths[hi_b]),
             # Prime/talent display path (not used for $): board WAR cells.
             "warPTH": [round(w, 2) for w in prime["mean"]] if prime else None,
             "warPTHP10": [round(w, 2) for w in prime["p10"]] if prime else None,
             "warPTHP90": [round(w, 2) for w in prime["p90"]] if prime else None,
-            "warTotalPTH": round(sum(prime["mean"][:HORIZON]), 1) if prime else None,
-            "warTotalPTHP10": round(sum(prime["p10"][:HORIZON]), 1) if prime else None,
-            "warTotalPTHP90": round(sum(prime["p90"][:HORIZON]), 1) if prime else None,
+            "warTotalPTH": _wtot(prime["mean"]) if prime else None,
+            "warTotalPTHP10": _wtot(prime["p10"]) if prime else None,
+            "warTotalPTHP90": _wtot(prime["p90"]) if prime else None,
             "warPeak": prime["peak"] if prime else None,
             "bucketLo": _BUCKET_ORDER[lo_b], "bucketHi": _BUCKET_ORDER[hi_b],
             "pBust": round(probs[0], 3),

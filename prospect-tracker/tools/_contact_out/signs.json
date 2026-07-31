@@ -1,0 +1,424 @@
+{
+  "hit": {
+    "fv": {
+      "declared": 1,
+      "full_window_w": 2.453,
+      "fold_w": {
+        "2020": 2.597,
+        "2021": 2.445,
+        "2022": 2.427,
+        "2023": 2.551,
+        "2024": 2.47
+      },
+      "boot_mean": 2.441,
+      "boot_sd": 0.233,
+      "boot_ci95": [
+        2.007,
+        2.855
+      ],
+      "P(sign agrees with declared)": 1.0,
+      "CONTRADICTS": false
+    },
+    "obp_rel": {
+      "declared": 1,
+      "full_window_w": 0.012,
+      "fold_w": {
+        "2020": -0.018,
+        "2021": 0.07,
+        "2022": 0.05,
+        "2023": -0.015,
+        "2024": 0.044
+      },
+      "boot_mean": 0.021,
+      "boot_sd": 0.136,
+      "boot_ci95": [
+        -0.239,
+        0.261
+      ],
+      "P(sign agrees with declared)": 0.57,
+      "CONTRADICTS": false
+    },
+    "k_rel": {
+      "declared": -1,
+      "full_window_w": 0.229,
+      "fold_w": {
+        "2020": 0.377,
+        "2021": 0.341,
+        "2022": 0.357,
+        "2023": 0.271,
+        "2024": 0.264
+      },
+      "boot_mean": 0.229,
+      "boot_sd": 0.132,
+      "boot_ci95": [
+        -0.042,
+        0.512
+      ],
+      "P(sign agrees with declared)": 0.043,
+      "CONTRADICTS": true
+    },
+    "peak_k_rel": {
+      "declared": -1,
+      "full_window_w": -0.16,
+      "fold_w": {
+        "2020": -0.423,
+        "2021": -0.318,
+        "2022": -0.309,
+        "2023": -0.239,
+        "2024": -0.201
+      },
+      "boot_mean": -0.168,
+      "boot_sd": 0.139,
+      "boot_ci95": [
+        -0.448,
+        0.091
+      ],
+      "P(sign agrees with declared)": 0.88,
+      "CONTRADICTS": false
+    },
+    "age_rel_level": {
+      "declared": -1,
+      "full_window_w": -0.197,
+      "fold_w": {
+        "2020": -0.316,
+        "2021": -0.308,
+        "2022": -0.226,
+        "2023": -0.213,
+        "2024": -0.222
+      },
+      "boot_mean": -0.199,
+      "boot_sd": 0.161,
+      "boot_ci95": [
+        -0.529,
+        0.088
+      ],
+      "P(sign agrees with declared)": 0.9,
+      "CONTRADICTS": false
+    },
+    "n_milb_seasons": {
+      "declared": 1,
+      "full_window_w": -0.169,
+      "fold_w": {
+        "2020": -0.235,
+        "2021": -0.169,
+        "2022": -0.27,
+        "2023": -0.344,
+        "2024": -0.221
+      },
+      "boot_mean": -0.173,
+      "boot_sd": 0.138,
+      "boot_ci95": [
+        -0.465,
+        0.082
+      ],
+      "P(sign agrees with declared)": 0.113,
+      "CONTRADICTS": true
+    },
+    "tool_hit": {
+      "declared": 1,
+      "full_window_w": 0.305,
+      "fold_w": {
+        "2020": 0.225,
+        "2021": 0.36,
+        "2022": 0.314,
+        "2023": 0.352,
+        "2024": 0.342
+      },
+      "boot_mean": 0.306,
+      "boot_sd": 0.119,
+      "boot_ci95": [
+        0.087,
+        0.554
+      ],
+      "P(sign agrees with declared)": 0.993,
+      "CONTRADICTS": false
+    },
+    "tool_speed": {
+      "declared": 1,
+      "full_window_w": 0.207,
+      "fold_w": {
+        "2020": 0.168,
+        "2021": 0.106,
+        "2022": 0.145,
+        "2023": 0.195,
+        "2024": 0.229
+      },
+      "boot_mean": 0.199,
+      "boot_sd": 0.065,
+      "boot_ci95": [
+        0.076,
+        0.323
+      ],
+      "P(sign agrees with declared)": 1.0,
+      "CONTRADICTS": false
+    },
+    "milb_missing": {
+      "declared": -1,
+      "full_window_w": 0.05,
+      "fold_w": {
+        "2020": 0.036,
+        "2021": 0.006,
+        "2022": 0.09,
+        "2023": 0.088,
+        "2024": 0.083
+      },
+      "boot_mean": 0.053,
+      "boot_sd": 0.057,
+      "boot_ci95": [
+        -0.047,
+        0.171
+      ],
+      "P(sign agrees with declared)": 0.187,
+      "CONTRADICTS": true
+    },
+    "is_ifa": {
+      "declared": 0,
+      "full_window_w": -0.049,
+      "fold_w": {
+        "2020": -0.102,
+        "2021": -0.007,
+        "2022": 0.036,
+        "2023": 0.002,
+        "2024": -0.039
+      },
+      "boot_mean": -0.051,
+      "boot_sd": 0.071,
+      "boot_ci95": [
+        -0.193,
+        0.076
+      ],
+      "P(sign agrees with declared)": null,
+      "CONTRADICTS": false
+    },
+    "is_college": {
+      "declared": 0,
+      "full_window_w": 0.223,
+      "fold_w": {
+        "2020": 0.231,
+        "2021": 0.123,
+        "2022": 0.215,
+        "2023": 0.244,
+        "2024": 0.256
+      },
+      "boot_mean": 0.216,
+      "boot_sd": 0.102,
+      "boot_ci95": [
+        0.011,
+        0.41
+      ],
+      "P(sign agrees with declared)": null,
+      "CONTRADICTS": false
+    },
+    "ops_rel": {
+      "declared": 1,
+      "full_window_w": 0.263,
+      "fold_w": {
+        "2020": 0.266,
+        "2021": 0.274,
+        "2022": 0.186,
+        "2023": 0.27,
+        "2024": 0.218
+      },
+      "boot_mean": 0.263,
+      "boot_sd": 0.147,
+      "boot_ci95": [
+        0.007,
+        0.58
+      ],
+      "P(sign agrees with declared)": 0.98,
+      "CONTRADICTS": false
+    },
+    "age": {
+      "declared": -1,
+      "full_window_w": -0.058,
+      "fold_w": {
+        "2020": -0.208,
+        "2021": -0.049,
+        "2022": -0.06,
+        "2023": -0.092,
+        "2024": -0.054
+      },
+      "boot_mean": -0.061,
+      "boot_sd": 0.095,
+      "boot_ci95": [
+        -0.243,
+        0.131
+      ],
+      "P(sign agrees with declared)": 0.72,
+      "CONTRADICTS": false
+    },
+    "level_rank": {
+      "declared": 1,
+      "full_window_w": 0.473,
+      "fold_w": {
+        "2020": 0.431,
+        "2021": 0.405,
+        "2022": 0.556,
+        "2023": 0.584,
+        "2024": 0.533
+      },
+      "boot_mean": 0.479,
+      "boot_sd": 0.149,
+      "boot_ci95": [
+        0.202,
+        0.787
+      ],
+      "P(sign agrees with declared)": 1.0,
+      "CONTRADICTS": false
+    }
+  },
+  "pit": {
+    "fv": {
+      "declared": 1,
+      "full_window_w": 1.257,
+      "fold_w": {
+        "2020": 1.324,
+        "2021": 1.285,
+        "2022": 1.258,
+        "2023": 1.262,
+        "2024": 1.256
+      },
+      "boot_mean": 1.264,
+      "boot_sd": 0.126,
+      "boot_ci95": [
+        1.035,
+        1.52
+      ],
+      "P(sign agrees with declared)": 1.0,
+      "CONTRADICTS": false
+    },
+    "peak_k_rel": {
+      "declared": 1,
+      "full_window_w": 0.235,
+      "fold_w": {
+        "2020": 0.142,
+        "2021": 0.118,
+        "2022": 0.192,
+        "2023": 0.288,
+        "2024": 0.261
+      },
+      "boot_mean": 0.229,
+      "boot_sd": 0.07,
+      "boot_ci95": [
+        0.096,
+        0.37
+      ],
+      "P(sign agrees with declared)": 1.0,
+      "CONTRADICTS": false
+    },
+    "k_rel": {
+      "declared": 1,
+      "full_window_w": 0.152,
+      "fold_w": {
+        "2020": 0.214,
+        "2021": 0.266,
+        "2022": 0.192,
+        "2023": 0.144,
+        "2024": 0.176
+      },
+      "boot_mean": 0.15,
+      "boot_sd": 0.082,
+      "boot_ci95": [
+        -0.003,
+        0.304
+      ],
+      "P(sign agrees with declared)": 0.973,
+      "CONTRADICTS": false
+    },
+    "bb_rel": {
+      "declared": -1,
+      "full_window_w": -0.077,
+      "fold_w": {
+        "2020": -0.241,
+        "2021": -0.095,
+        "2022": -0.118,
+        "2023": -0.118,
+        "2024": -0.103
+      },
+      "boot_mean": -0.078,
+      "boot_sd": 0.061,
+      "boot_ci95": [
+        -0.194,
+        0.043
+      ],
+      "P(sign agrees with declared)": 0.89,
+      "CONTRADICTS": false
+    },
+    "age_rel_level": {
+      "declared": -1,
+      "full_window_w": -0.023,
+      "fold_w": {
+        "2020": -0.028,
+        "2021": -0.038,
+        "2022": 0.01,
+        "2023": -0.069,
+        "2024": -0.049
+      },
+      "boot_mean": -0.014,
+      "boot_sd": 0.092,
+      "boot_ci95": [
+        -0.199,
+        0.186
+      ],
+      "P(sign agrees with declared)": 0.563,
+      "CONTRADICTS": false
+    },
+    "x_era_k": {
+      "declared": 1,
+      "full_window_w": 0.096,
+      "fold_w": {
+        "2020": 0.11,
+        "2021": 0.176,
+        "2022": 0.249,
+        "2023": 0.233,
+        "2024": 0.152
+      },
+      "boot_mean": 0.085,
+      "boot_sd": 0.075,
+      "boot_ci95": [
+        -0.042,
+        0.232
+      ],
+      "P(sign agrees with declared)": 0.897,
+      "CONTRADICTS": false
+    },
+    "tool_fb": {
+      "declared": 1,
+      "full_window_w": 0.092,
+      "fold_w": {
+        "2020": 0.153,
+        "2021": 0.05,
+        "2022": 0.036,
+        "2023": 0.066,
+        "2024": 0.08
+      },
+      "boot_mean": 0.092,
+      "boot_sd": 0.069,
+      "boot_ci95": [
+        -0.038,
+        0.222
+      ],
+      "P(sign agrees with declared)": 0.91,
+      "CONTRADICTS": false
+    },
+    "age": {
+      "declared": -1,
+      "full_window_w": 0.021,
+      "fold_w": {
+        "2020": -0.274,
+        "2021": -0.19,
+        "2022": -0.138,
+        "2023": -0.002,
+        "2024": 0.006
+      },
+      "boot_mean": 0.017,
+      "boot_sd": 0.063,
+      "boot_ci95": [
+        -0.108,
+        0.144
+      ],
+      "P(sign agrees with declared)": 0.387,
+      "CONTRADICTS": true
+    }
+  }
+}

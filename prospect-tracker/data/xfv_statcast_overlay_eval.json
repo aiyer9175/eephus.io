@@ -1,0 +1,368 @@
+{
+ "generated_at": "2026-07-24",
+ "registration": "docs/efv-2026-07-24/GATES.md W-OVERLAY-R (Phase 3c): 4.0 FV / 40 board-rank ceiling vs a same-run no-overlay shadow ranking, owner-amended 2026-07-23; one attempt, breach = revert + record",
+ "one_shot": {
+  "attempted_at": "2026-07-24T04:47:58.482381+00:00",
+  "note": "single attempt; the lab refuses a rerun while this block exists"
+ },
+ "frozen_header": "see tools/efv_overlay_r_lab.py module docstring (legs, sub-AAA exclusion, board-rank definition, floors; frozen before this run)",
+ "coverage": {
+  "hit": {
+   "n_rows": 2079,
+   "whiff": 411,
+   "fb_velo_a": 0,
+   "velo_aaa": 0,
+   "spin_aaa": 0,
+   "vaa_aaa": 0,
+   "any_leg": 411
+  },
+  "pit": {
+   "n_rows": 2376,
+   "whiff": 0,
+   "fb_velo_a": 135,
+   "velo_aaa": 93,
+   "spin_aaa": 93,
+   "vaa_aaa": 0,
+   "any_leg": 228
+  }
+ },
+ "battery": {
+  "protocol": "efv_score.run_live in-process, scored_live_path scratch-patched (no served artifact regen), env flags OFF('0')/ON('1') both sides; board rank = pooled (-xfv_grade_quantile, -xfv_war_6yr, player_key)",
+  "n_players": 4205,
+  "n_covered": 633,
+  "n_movers_display": 3547,
+  "max_abs_fv_move": 5.0,
+  "max_abs_rank_move": 963,
+  "ceiling": {
+   "fv": 4.0,
+   "rank": 40
+  },
+  "movers_top": [
+   {
+    "player_key": "evan_estevez",
+    "side": "hit",
+    "q_off": 35.0,
+    "q_on": 40.0,
+    "dq": 5.0,
+    "rank_off": 1829,
+    "rank_on": 866,
+    "drank": 963,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": 2.0
+   },
+   {
+    "player_key": "queni_pineda",
+    "side": "hit",
+    "q_off": 37.7,
+    "q_on": 35.0,
+    "dq": -2.7,
+    "rank_off": 1337,
+    "rank_on": 2234,
+    "drank": -897,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": -0.92
+   },
+   {
+    "player_key": "jase_mitchell",
+    "side": "hit",
+    "q_off": 35.0,
+    "q_on": 37.7,
+    "dq": 2.7,
+    "rank_off": 1904,
+    "rank_on": 1292,
+    "drank": 612,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": 0.8
+   },
+   {
+    "player_key": "gustavo_baptista",
+    "side": "hit",
+    "q_off": 35.0,
+    "q_on": 37.7,
+    "dq": 2.7,
+    "rank_off": 1888,
+    "rank_on": 1315,
+    "drank": 573,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": 0.61
+   },
+   {
+    "player_key": "brayan_cortesia",
+    "side": "hit",
+    "q_off": 37.7,
+    "q_on": 35.0,
+    "dq": -2.7,
+    "rank_off": 1326,
+    "rank_on": 1874,
+    "drank": -548,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": -0.51
+   },
+   {
+    "player_key": "ilan_fernandez",
+    "side": "hit",
+    "q_off": 37.7,
+    "q_on": 35.0,
+    "dq": -2.7,
+    "rank_off": 1349,
+    "rank_on": 1889,
+    "drank": -540,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": -0.4
+   },
+   {
+    "player_key": "estevan_moreno",
+    "side": "hit",
+    "q_off": 37.7,
+    "q_on": 35.0,
+    "dq": -2.7,
+    "rank_off": 1312,
+    "rank_on": 1798,
+    "drank": -486,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": -0.45
+   },
+   {
+    "player_key": "juan_tomas",
+    "side": "hit",
+    "q_off": 35.0,
+    "q_on": 37.7,
+    "dq": 2.7,
+    "rank_off": 1803,
+    "rank_on": 1344,
+    "drank": 459,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": 0.27
+   },
+   {
+    "player_key": "connor_rasmussen",
+    "side": "hit",
+    "q_off": 35.0,
+    "q_on": 37.7,
+    "dq": 2.7,
+    "rank_off": 1739,
+    "rank_on": 1298,
+    "drank": 441,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": 0.45
+   },
+   {
+    "player_key": "ben_abeldt",
+    "side": "pit",
+    "q_off": 37.7,
+    "q_on": 35.0,
+    "dq": -2.7,
+    "rank_off": 1150,
+    "rank_on": 1578,
+    "drank": -428,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": -2.0,
+    "legs": [
+     {
+      "leg": "fb_velo_a",
+      "z": -3.939,
+      "n_pitches": 183
+     }
+    ]
+   },
+   {
+    "player_key": "brendan_tunink",
+    "side": "hit",
+    "q_off": 35.0,
+    "q_on": 37.7,
+    "dq": 2.7,
+    "rank_off": 1719,
+    "rank_on": 1332,
+    "drank": 387,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": 0.23
+   },
+   {
+    "player_key": "angel_arredondo",
+    "side": "hit",
+    "q_off": 35.0,
+    "q_on": 37.7,
+    "dq": 2.7,
+    "rank_off": 1715,
+    "rank_on": 1331,
+    "drank": 384,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": 0.23
+   },
+   {
+    "player_key": "arturo_flores",
+    "side": "hit",
+    "q_off": 37.7,
+    "q_on": 35.0,
+    "dq": -2.7,
+    "rank_off": 1319,
+    "rank_on": 1697,
+    "drank": -378,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": -0.24
+   },
+   {
+    "player_key": "denis_samudio",
+    "side": "pit",
+    "q_off": 37.7,
+    "q_on": 35.0,
+    "dq": -2.7,
+    "rank_off": 1136,
+    "rank_on": 1424,
+    "drank": -288,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": -0.98,
+    "legs": [
+     {
+      "leg": "fb_velo_a",
+      "z": -1.636,
+      "n_pitches": 383
+     }
+    ]
+   },
+   {
+    "player_key": "ian_bedell",
+    "side": "pit",
+    "q_off": 35.0,
+    "q_on": 37.7,
+    "dq": 2.7,
+    "rank_off": 1547,
+    "rank_on": 1282,
+    "drank": 265,
+    "covered": true,
+    "chip": "AAA physics lean",
+    "delta_fv_model_leg": 0.13,
+    "legs": [
+     {
+      "leg": "velo_aaa",
+      "z": 0.17,
+      "n_pitches": 432
+     },
+     {
+      "leg": "spin_aaa",
+      "z": 0.263,
+      "n_pitches": 432
+     }
+    ]
+   },
+   {
+    "player_key": "blake_holub",
+    "side": "pit",
+    "q_off": 35.0,
+    "q_on": 37.7,
+    "dq": 2.7,
+    "rank_off": 1376,
+    "rank_on": 1132,
+    "drank": 244,
+    "covered": true,
+    "chip": "AAA physics lean",
+    "delta_fv_model_leg": 0.51,
+    "legs": [
+     {
+      "leg": "velo_aaa",
+      "z": 1.339,
+      "n_pitches": 548
+     },
+     {
+      "leg": "spin_aaa",
+      "z": 0.355,
+      "n_pitches": 548
+     }
+    ]
+   },
+   {
+    "player_key": "kyle_amendt",
+    "side": "pit",
+    "q_off": 37.7,
+    "q_on": 35.0,
+    "dq": -2.7,
+    "rank_off": 1151,
+    "rank_on": 1377,
+    "drank": -226,
+    "covered": true,
+    "chip": "AAA physics lean",
+    "delta_fv_model_leg": -0.34,
+    "legs": [
+     {
+      "leg": "velo_aaa",
+      "z": -0.221,
+      "n_pitches": 543
+     },
+     {
+      "leg": "spin_aaa",
+      "z": -0.912,
+      "n_pitches": 543
+     }
+    ]
+   },
+   {
+    "player_key": "michael_carico",
+    "side": "hit",
+    "q_off": 35.0,
+    "q_on": 37.6,
+    "dq": 2.6,
+    "rank_off": 1882,
+    "rank_on": 1366,
+    "drank": 516,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": 0.36
+   },
+   {
+    "player_key": "eddie_king_jr",
+    "side": "hit",
+    "q_off": 35.0,
+    "q_on": 37.6,
+    "dq": 2.6,
+    "rank_off": 1766,
+    "rank_on": 1365,
+    "drank": 401,
+    "covered": true,
+    "chip": "A-ball Statcast lean",
+    "delta_fv_model_leg": 0.2
+   },
+   {
+    "player_key": "hunter_fitzgerald",
+    "side": "hit",
+    "q_off": 37.6,
+    "q_on": 35.0,
+    "dq": -2.6,
+    "rank_off": 1369,
+    "rank_on": 1703,
+    "drank": -334,
+    "covered": false,
+    "chip": null
+   }
+  ]
+ },
+ "clauses": {
+  "1_off_identity": {
+   "pass": true,
+   "evidence": "test_statcast_overlay.py 10/10 green post-extension (defaults OFF, OFF=identity, clamp, signs, gates, frozen-coefficient load); battery OFF arm ran with explicit '0'"
+  },
+  "2_covered_only": {
+   "pass": true,
+   "uncovered_rows_moved": []
+  },
+  "3_ceiling_battery": {
+   "pass": false,
+   "max_abs_fv_move": 5.0,
+   "max_abs_rank_move": 963
+  }
+ },
+ "verdict": "FAIL - ceiling breached or uncovered movement; defaults stay OFF, loss ledgered"
+}

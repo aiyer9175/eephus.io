@@ -1065,24 +1065,12 @@ def fetch_statcast_metrics_for_player(
     if not contact and not pitch_movement:
         return None
     level_splits: list[dict] = []
-    # v32 — 5th OOM in this area (parent process, pass 3/3, dying at ~5500/6749
-    # despite the v24 fetched_logs_by_key trim not moving the death point at
-    # all across two runs). Root cause: for a single-level player — the
-    # common case — this loop re-ran _finalize_contact/_finalize_pitch on
-    # the exact same points already aggregated above, allocating a second,
-    # near-identical set of point dicts (up to PITCH_PLOT_LIMIT=900 pitch
-    # points + 450 contact locs) per player. Reuse the aggregate's already-
-    # computed dicts instead of recomputing when there's only one level.
-    _single_level = len(per_level) == 1
     for level, bucket in sorted(per_level.items()):
-        if _single_level:
-            split_contact, split_pitch_movement, split_pitch_plot = contact, pitch_movement, pitch_plot
-        else:
-            split_contact = _finalize_contact(bucket["contact_rows"], is_pitcher=is_pitcher)
-            split_pitch_movement, split_pitch_plot = (
-                _finalize_pitch(bucket["pitch_points"], bucket["outings"])
-                if is_pitcher else ({}, {})
-            )
+        split_contact = _finalize_contact(bucket["contact_rows"], is_pitcher=is_pitcher)
+        split_pitch_movement, split_pitch_plot = (
+            _finalize_pitch(bucket["pitch_points"], bucket["outings"])
+            if is_pitcher else ({}, {})
+        )
         if not split_contact and not split_pitch_movement:
             continue
         level_splits.append({
@@ -1160,31 +1148,10 @@ def fetch_statcast_metrics_for_players(
     # ============================================================
 
     # ---- PASS 1: game logs per player (parallel, cached) ----
-    # v24 — 4th OOM in this area, this time confirmed as the PARENT process
-    # (nightly-build.sh: "Killed python run_monthly.py", not a spawned worker
-    # — v23's pool-recycling fix targets worker creep and can't help here).
-    # fetched_logs_by_key holds one entry per player×game (190K+ on a full
-    # run with the real seed DB) for the ENTIRE duration of pass 2 AND pass
-    # 3, but tracing every read of a split across this whole function (pass
-    # 2's dedup, pass 3's level filter) shows only 3 fields are ever used:
-    # game.gamePk, date, _level. Everything else in a raw MLB Stats API
-    # gameLog split — full batting/pitching stat lines, team/venue info — is
-    # dead weight sitting in the parent's memory the whole time. Trimmed here
-    # rather than in _game_logs() itself, since other callers (pal_gamelogs.py,
-    # vaa.py) need the full stat line from that function.
-    def _slim_split(split: dict) -> dict:
-        return {
-            "game": {"gamePk": (split.get("game") or {}).get("gamePk")},
-            "date": split.get("date"),
-            "_level": split.get("_level"),
-        }
     fetched_logs_by_key: dict[str, list[dict]] = {}
     _p1_start = _time.monotonic()
     if logs_by_key is not None:
-        fetched_logs_by_key = {
-            key: [_slim_split(s) for s in (logs_by_key.get(key) or [])]
-            for key, *_ in targets
-        }
+        fetched_logs_by_key = {key: list(logs_by_key.get(key) or []) for key, *_ in targets}
         _log.info("statcast pass 1/3: using preloaded game logs for %d players",
                   len(targets))
     else:
@@ -1193,7 +1160,7 @@ def fetch_statcast_metrics_for_players(
         def _fetch_logs(item):
             key, _name, mlbam, _level, is_p = item
             try:
-                return key, [_slim_split(s) for s in _game_logs(int(mlbam), season, is_pitcher=is_p)]
+                return key, _game_logs(int(mlbam), season, is_pitcher=is_p)
             except Exception as e:
                 _log.debug("statcast logs failed for %s: %s", key, e)
                 return key, []
@@ -1283,61 +1250,40 @@ def fetch_statcast_metrics_for_players(
     # import — confirmed true for run_monthly.py (see bottom of that file).
     _p3_workers = min(max_workers, os.cpu_count() or 4)
     _p3_ctx = multiprocessing.get_context("spawn")
-    # v23 — Batched, with the pool recreated between batches (~3rd OOM on this
-    # step, confirmed via dmesg this time: kernel oom-killer, anon-rss ~5.1GiB
-    # on a 5.8GiB box). Root cause isn't a single retained object this time —
-    # a ProcessPoolExecutor's workers are long-lived and reused across every
-    # submitted task, and CPython's allocator doesn't reliably hand freed
-    # memory back to the OS between tasks. Each fetch_statcast_metrics_for_player
-    # call can transiently hold thousands of per-pitch/per-contact dicts for a
-    # player with a genuine multi-year career (now visible with the real seed
-    # DB installed — this run processed 190K+ player×game lookups, far more
-    # than any prior cold-rebuild attempt), and across ~6700+ players per run
-    # that per-worker creep was enough to exhaust RAM. Recreating the pool
-    # every _P3_BATCH_SIZE tasks forces fresh worker processes periodically,
-    # resetting the creep — the Python 3.11+ equivalent is
-    # ProcessPoolExecutor's max_tasks_per_child, unavailable on this box's
-    # Python 3.10, hence doing it by hand.
-    _P3_BATCH_SIZE = 750
-    _p3_errors = 0
-    for _batch_start in range(0, len(targets), _P3_BATCH_SIZE):
-        _batch = targets[_batch_start:_batch_start + _P3_BATCH_SIZE]
-        with concurrent.futures.ProcessPoolExecutor(max_workers=_p3_workers, mp_context=_p3_ctx) as ex:
-            future_to_key = {
-                ex.submit(
-                    fetch_statcast_metrics_for_player,
-                    key, name, mlbam, season, level, is_pitcher,
-                    None,  # v20 — no in-memory feed_cache; falls back to the disk
-                           # cache pass 2 just warmed (see _fetch_feed above).
-                    fetched_logs_by_key.get(key),
-                ): key
-                for key, name, mlbam, level, is_pitcher in _batch
-            }
-            for fut in concurrent.futures.as_completed(future_to_key):
-                key = future_to_key[fut]
-                try:
-                    row = fut.result()
-                except Exception as _exc:
-                    # AUDIT 2026-07-18 (A8): under the spawn ProcessPoolExecutor a single
-                    # dead worker marks the pool broken and raises BrokenProcessPool on
-                    # EVERY pending future; swallowing them silently staled hundreds of
-                    # rows inside a run that still logged success. Log so a pool break or
-                    # a per-player fetch failure is visible at production log level. The
-                    # v23 batching above also caps the blast radius of any one break to
-                    # the current batch (<= _P3_BATCH_SIZE players) instead of the whole
-                    # 6700+-player run.
-                    row = None
-                    _p3_errors += 1
-                    if _p3_errors <= 5 or _p3_errors % 200 == 0:
-                        _log.warning("statcast pass 3/3: worker failed for %s (%d errors so far): %s",
-                                     key, _p3_errors, _exc)
-                if row:
-                    out[key] = row
-                _p3_done += 1
-                if _p3_done % 500 == 0 or _p3_done == len(targets):
-                    _log.info("statcast pass 3/3: %d/%d processed (%d with data, %.0fs elapsed)",
-                              _p3_done, len(targets), len(out), _time.monotonic() - _p3_start)
-    if _p3_errors:
-        _log.warning("statcast pass 3/3: %d/%d workers failed (rows left stale this run)",
-                     _p3_errors, len(targets))
+    with concurrent.futures.ProcessPoolExecutor(max_workers=_p3_workers, mp_context=_p3_ctx) as ex:
+        future_to_key = {
+            ex.submit(
+                fetch_statcast_metrics_for_player,
+                key, name, mlbam, season, level, is_pitcher,
+                None,  # v20 — no in-memory feed_cache; falls back to the disk
+                       # cache pass 2 just warmed (see _fetch_feed above).
+                fetched_logs_by_key.get(key),
+            ): key
+            for key, name, mlbam, level, is_pitcher in targets
+        }
+        _p3_errors = 0
+        for fut in concurrent.futures.as_completed(future_to_key):
+            key = future_to_key[fut]
+            try:
+                row = fut.result()
+            except Exception as _exc:
+                # AUDIT 2026-07-18 (A8): under the spawn ProcessPoolExecutor a single
+                # dead worker marks the pool broken and raises BrokenProcessPool on
+                # EVERY pending future; swallowing them silently staled hundreds of
+                # rows inside a run that still logged success. Log so a pool break or
+                # a per-player fetch failure is visible at production log level.
+                row = None
+                _p3_errors += 1
+                if _p3_errors <= 5 or _p3_errors % 200 == 0:
+                    _log.warning("statcast pass 3/3: worker failed for %s (%d errors so far): %s",
+                                 key, _p3_errors, _exc)
+            if row:
+                out[key] = row
+            _p3_done += 1
+            if _p3_done % 500 == 0 or _p3_done == len(targets):
+                _log.info("statcast pass 3/3: %d/%d processed (%d with data, %.0fs elapsed)",
+                          _p3_done, len(targets), len(out), _time.monotonic() - _p3_start)
+        if _p3_errors:
+            _log.warning("statcast pass 3/3: %d/%d workers failed (rows left stale this run)",
+                         _p3_errors, len(targets))
     return out

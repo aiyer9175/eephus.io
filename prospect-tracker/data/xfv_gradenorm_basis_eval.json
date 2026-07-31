@@ -1,0 +1,797 @@
+{
+ "generated": "2026-07-30",
+ "question": "does consensus.ADOPT_NORMALIZED_CONSENSUS True->False (grade normalization OFF) improve eFV out-of-sample accuracy?",
+ "pre_registration": "docs/efv-2026-07-30/ARIAS_COUNTERFACTUAL_GATE.md",
+ "gate_standard": "docs/EFV_GATE_STANDARD.md",
+ "seed": 20260730,
+ "n_boot": 2000,
+ "n_perm": 2000,
+ "ship_floors_pooled_spearman": {
+  "hit": 0.017,
+  "pit": 0.016
+ },
+ "protocol": "shipped forward-chained OOS (tools/efv_lab_runner.py): SCORED_YEARS folds, train>=50/test>=12, blend=(1-lam)*max(0,OLS(FV))+lam*ridge, lam=efv_model.blend_lambda(side), target_censored, matrix weights",
+ "counterfactual_construction": "consensus.build_timeseries(storage.load_all_snapshots(), normalize=False) run IN MEMORY -- the shipped code path, not a re-implementation. consensus_fv_raw is then substituted into both channels it feeds: the `fv` ridge column and the consensus OLS leg. Verified complete: neither fv_trend nor consensus_fv_pre_shrinkage appears in efv_model._feature_spec on either side, so no other feature carries the consensus basis.",
+ "replication_fidelity": {
+  "hit": {
+   "n_rows": 1927,
+   "n_within_0.01": 1919,
+   "frac_within_0.01": 0.99585,
+   "n_unmatched_key": 0,
+   "max_abs_dev": 0.01
+  },
+  "pit": {
+   "n_rows": 2063,
+   "n_within_0.01": 2059,
+   "frac_within_0.01": 0.99806,
+   "n_unmatched_key": 0,
+   "max_abs_dev": 0.01
+  }
+ },
+ "arms": {
+  "ON": "shipped normalized consensus (baseline)",
+  "OFF": "candidate -- normalize=False consensus",
+  "ZI_CTRL": "zero-information control -- ON consensus row-permuted WITHIN decision-year strata (marginal preserved, information destroyed)",
+  "RANKID": "diagnostic rank-identical twin -- the OFF marginal placed on the ON rank order (isolates reordering from scale)"
+ },
+ "lever_1_k_shrink": {
+  "lever": "efv_dataset._K_REL_PA 50->100 / _K_REL_BF 40->80 (reliability shrink K)",
+  "status": "ALREADY ANSWERED - NOT RE-RUN",
+  "source_artifact": "data/xfv_cap_sweep_eval.json",
+  "cited_cell": "sides.{hit,pit}.caps.reliability_shrink_K.K_x0.5",
+  "cell_meaning": "that artifact was generated when K=100/80 was shipped, so its K_x0.5 cell IS today's shipped K=50/40; the recorded deltas are (K50 minus K100)",
+  "hit": {
+   "d_spearman": 0.00052,
+   "ci95": [
+    -0.00277,
+    0.00384
+   ],
+   "d_auc": 0.00075
+  },
+  "pit": {
+   "d_spearman": 0.0034,
+   "ci95": [
+    -0.00152,
+    0.00862
+   ],
+   "d_auc": 0.00021
+  },
+  "reverting_to_K100": "reverses the sign of both deltas",
+  "verdict": "NULL in both directions under docs/EFV_GATE_STANDARD.md section 1 (incremental floor 0.017 hit / 0.016 pit; even the loosest lambda-class floor is 0.0076 hit / 0.005 pit). Both CIs straddle zero. CLOSED without a re-run."
+ },
+ "sides": {
+  "hit": {
+   "lam": 0.7,
+   "n_pool_debuted": 845,
+   "protocol_equivalence": {
+    "pure_python_ON_rho": 0.3892,
+    "numpy_twin_ON_rho": 0.389207,
+    "abs_diff": 6.6e-06,
+    "pure_python_OFF_rho": 0.3856,
+    "note": "the numpy fit is only used for the 2000-draw refit bootstrap and the permutation band; every point estimate is reproduced by the shipped pure-Python fit"
+   },
+   "point_estimates_debuted_pool": {
+    "ON": {
+     "n": 353,
+     "spearman": 0.38921,
+     "auc_debut_full_pool": null
+    },
+    "OFF": {
+     "n": 353,
+     "spearman": 0.38561,
+     "auc_debut_full_pool": null,
+     "d_spearman_point": -0.0036
+    },
+    "ZI_CTRL": {
+     "n": 353,
+     "spearman": 0.35415,
+     "auc_debut_full_pool": null,
+     "d_spearman_point": -0.03506
+    },
+    "SHIFT_CTRL": {
+     "n": 353,
+     "spearman": 0.38623,
+     "auc_debut_full_pool": null,
+     "d_spearman_point": -0.00298
+    },
+    "RANKID": {
+     "n": 353,
+     "spearman": 0.38856,
+     "auc_debut_full_pool": null,
+     "d_spearman_point": -0.00065
+    }
+   },
+   "full_pool_auc": {
+    "ON": {
+     "n": 795,
+     "auc_debut": 0.86115,
+     "spearman": 0.28571,
+     "n_debuted": 353
+    },
+    "OFF": {
+     "n": 795,
+     "auc_debut": 0.86817,
+     "spearman": 0.27699,
+     "n_debuted": 353,
+     "d_auc_point": 0.00702,
+     "d_spearman_point": -0.00872
+    },
+    "ZI_CTRL": {
+     "n": 795,
+     "auc_debut": 0.70086,
+     "spearman": 0.22251,
+     "n_debuted": 353,
+     "d_auc_point": -0.16029,
+     "d_spearman_point": -0.0632
+    },
+    "SHIFT_CTRL": {
+     "n": 795,
+     "auc_debut": 0.86507,
+     "spearman": 0.28316,
+     "n_debuted": 353,
+     "d_auc_point": 0.00392,
+     "d_spearman_point": -0.00255
+    },
+    "RANKID": {
+     "n": 795,
+     "auc_debut": 0.85779,
+     "spearman": 0.28237,
+     "n_debuted": 353,
+     "d_auc_point": -0.00336,
+     "d_spearman_point": -0.00334
+    }
+   },
+   "per_split_deltas": {
+    "2018": {
+     "n_test": 44,
+     "ON": 0.48333,
+     "OFF": 0.49101,
+     "ZI_CTRL": 0.24414,
+     "SHIFT_CTRL": 0.49653,
+     "RANKID": 0.51089,
+     "d_OFF": 0.00768,
+     "d_ZI_CTRL": -0.23919,
+     "d_SHIFT_CTRL": 0.0132,
+     "d_RANKID": 0.02756
+    },
+    "2019": {
+     "n_test": 72,
+     "ON": 0.39554,
+     "OFF": 0.37995,
+     "ZI_CTRL": 0.34498,
+     "SHIFT_CTRL": 0.37745,
+     "RANKID": 0.38419,
+     "d_OFF": -0.0156,
+     "d_ZI_CTRL": -0.05057,
+     "d_SHIFT_CTRL": -0.01809,
+     "d_RANKID": -0.01135
+    },
+    "2020": {
+     "n_test": 59,
+     "ON": 0.33043,
+     "OFF": 0.35016,
+     "ZI_CTRL": 0.28084,
+     "SHIFT_CTRL": 0.34908,
+     "RANKID": 0.35384,
+     "d_OFF": 0.01973,
+     "d_ZI_CTRL": -0.04959,
+     "d_SHIFT_CTRL": 0.01864,
+     "d_RANKID": 0.02341
+    },
+    "2021": {
+     "n_test": 74,
+     "ON": 0.25275,
+     "OFF": 0.2243,
+     "ZI_CTRL": 0.33208,
+     "SHIFT_CTRL": 0.23826,
+     "RANKID": 0.2385,
+     "d_OFF": -0.02845,
+     "d_ZI_CTRL": 0.07934,
+     "d_SHIFT_CTRL": -0.01448,
+     "d_RANKID": -0.01425
+    },
+    "2022": {
+     "n_test": 127,
+     "ON": 0.55759,
+     "OFF": 0.54759,
+     "ZI_CTRL": 0.4635,
+     "SHIFT_CTRL": 0.55533,
+     "RANKID": 0.55064,
+     "d_OFF": -0.01,
+     "d_ZI_CTRL": -0.0941,
+     "d_SHIFT_CTRL": -0.00226,
+     "d_RANKID": -0.00695
+    },
+    "2023": {
+     "n_test": 93,
+     "ON": 0.24768,
+     "OFF": 0.24136,
+     "ZI_CTRL": 0.25167,
+     "SHIFT_CTRL": 0.22964,
+     "RANKID": 0.25056,
+     "d_OFF": -0.00632,
+     "d_ZI_CTRL": 0.00399,
+     "d_SHIFT_CTRL": -0.01803,
+     "d_RANKID": 0.00289
+    },
+    "2024": {
+     "n_test": 91,
+     "ON": 0.15078,
+     "OFF": 0.15494,
+     "ZI_CTRL": 0.09992,
+     "SHIFT_CTRL": 0.15837,
+     "RANKID": 0.14898,
+     "d_OFF": 0.00416,
+     "d_ZI_CTRL": -0.05086,
+     "d_SHIFT_CTRL": 0.00759,
+     "d_RANKID": -0.0018
+    }
+   },
+   "per_split_mean_d_OFF": -0.00411,
+   "bootstrap_paired_refit": {
+    "OFF": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.00465,
+     "d_spearman_lo95": -0.01726,
+     "d_spearman_hi95": 0.00749,
+     "d_spearman_lo90_one_sided": -0.01491,
+     "p_improves": 0.2125,
+     "d_auc_mean": null,
+     "d_auc_lo95": null,
+     "d_auc_hi95": null
+    },
+    "ZI_CTRL": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.04194,
+     "d_spearman_lo95": -0.10653,
+     "d_spearman_hi95": 0.0198,
+     "d_spearman_lo90_one_sided": -0.09756,
+     "p_improves": 0.09,
+     "d_auc_mean": null,
+     "d_auc_lo95": null,
+     "d_auc_hi95": null
+    },
+    "SHIFT_CTRL": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.0056,
+     "d_spearman_lo95": -0.0187,
+     "d_spearman_hi95": 0.00631,
+     "d_spearman_lo90_one_sided": -0.01661,
+     "p_improves": 0.1865,
+     "d_auc_mean": null,
+     "d_auc_lo95": null,
+     "d_auc_hi95": null
+    },
+    "RANKID": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.00209,
+     "d_spearman_lo95": -0.01283,
+     "d_spearman_hi95": 0.00994,
+     "d_spearman_lo90_one_sided": -0.01058,
+     "p_improves": 0.324,
+     "d_auc_mean": null,
+     "d_auc_lo95": null,
+     "d_auc_hi95": null
+    }
+   },
+   "bootstrap_paired_refit_full_pool": {
+    "OFF": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.00847,
+     "d_spearman_lo95": -0.01866,
+     "d_spearman_hi95": 0.00177,
+     "d_spearman_lo90_one_sided": -0.01707,
+     "p_improves": 0.0525,
+     "d_auc_mean": 0.00768,
+     "d_auc_lo95": -0.0005,
+     "d_auc_hi95": 0.01723
+    },
+    "ZI_CTRL": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.05642,
+     "d_spearman_lo95": -0.11872,
+     "d_spearman_hi95": 0.00057,
+     "d_spearman_lo90_one_sided": -0.10738,
+     "p_improves": 0.028,
+     "d_auc_mean": -0.15052,
+     "d_auc_lo95": -0.19814,
+     "d_auc_hi95": -0.11146
+    },
+    "SHIFT_CTRL": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.0023,
+     "d_spearman_lo95": -0.0148,
+     "d_spearman_hi95": 0.00943,
+     "d_spearman_lo90_one_sided": -0.01251,
+     "p_improves": 0.356,
+     "d_auc_mean": 0.00429,
+     "d_auc_lo95": -0.0047,
+     "d_auc_hi95": 0.01382
+    },
+    "RANKID": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.00367,
+     "d_spearman_lo95": -0.01151,
+     "d_spearman_hi95": 0.00477,
+     "d_spearman_lo90_one_sided": -0.01038,
+     "p_improves": 0.1645,
+     "d_auc_mean": -0.00199,
+     "d_auc_lo95": -0.00927,
+     "d_auc_hi95": 0.00624
+    }
+   },
+   "permutation_null": {
+    "n_perm": 2000,
+    "mean": -0.04068,
+    "lo95": -0.05808,
+    "hi95": -0.02639,
+    "p95_abs": 0.05348,
+    "observed_delta": -0.0036,
+    "p_two_sided": 0.9995
+   },
+   "floor": 0.017,
+   "clears_ship_criterion": false
+  },
+  "pit": {
+   "lam": 0.54,
+   "n_pool_debuted": 981,
+   "protocol_equivalence": {
+    "pure_python_ON_rho": 0.3077,
+    "numpy_twin_ON_rho": 0.307662,
+    "abs_diff": 3.819e-05,
+    "pure_python_OFF_rho": 0.2886,
+    "note": "the numpy fit is only used for the 2000-draw refit bootstrap and the permutation band; every point estimate is reproduced by the shipped pure-Python fit"
+   },
+   "point_estimates_debuted_pool": {
+    "ON": {
+     "n": 438,
+     "spearman": 0.30766,
+     "auc_debut_full_pool": null
+    },
+    "OFF": {
+     "n": 438,
+     "spearman": 0.28858,
+     "auc_debut_full_pool": null,
+     "d_spearman_point": -0.01908
+    },
+    "ZI_CTRL": {
+     "n": 438,
+     "spearman": 0.21666,
+     "auc_debut_full_pool": null,
+     "d_spearman_point": -0.091
+    },
+    "SHIFT_CTRL": {
+     "n": 438,
+     "spearman": 0.31758,
+     "auc_debut_full_pool": null,
+     "d_spearman_point": 0.00992
+    },
+    "RANKID": {
+     "n": 438,
+     "spearman": 0.30132,
+     "auc_debut_full_pool": null,
+     "d_spearman_point": -0.00634
+    }
+   },
+   "full_pool_auc": {
+    "ON": {
+     "n": 837,
+     "auc_debut": 0.77719,
+     "spearman": 0.25622,
+     "n_debuted": 438
+    },
+    "OFF": {
+     "n": 837,
+     "auc_debut": 0.7899,
+     "spearman": 0.23858,
+     "n_debuted": 438,
+     "d_auc_point": 0.01271,
+     "d_spearman_point": -0.01764
+    },
+    "ZI_CTRL": {
+     "n": 837,
+     "auc_debut": 0.56951,
+     "spearman": 0.1963,
+     "n_debuted": 438,
+     "d_auc_point": -0.20768,
+     "d_spearman_point": -0.05992
+    },
+    "SHIFT_CTRL": {
+     "n": 837,
+     "auc_debut": 0.76372,
+     "spearman": 0.25012,
+     "n_debuted": 438,
+     "d_auc_point": -0.01347,
+     "d_spearman_point": -0.0061
+    },
+    "RANKID": {
+     "n": 837,
+     "auc_debut": 0.77319,
+     "spearman": 0.25112,
+     "n_debuted": 438,
+     "d_auc_point": -0.004,
+     "d_spearman_point": -0.0051
+    }
+   },
+   "per_split_deltas": {
+    "2018": {
+     "n_test": 53,
+     "ON": 0.27574,
+     "OFF": 0.27373,
+     "ZI_CTRL": 0.15063,
+     "SHIFT_CTRL": 0.2157,
+     "RANKID": 0.24655,
+     "d_OFF": -0.00202,
+     "d_ZI_CTRL": -0.12511,
+     "d_SHIFT_CTRL": -0.06004,
+     "d_RANKID": -0.02919
+    },
+    "2019": {
+     "n_test": 76,
+     "ON": 0.08334,
+     "OFF": 0.08574,
+     "ZI_CTRL": 0.08741,
+     "SHIFT_CTRL": 0.06716,
+     "RANKID": 0.08511,
+     "d_OFF": 0.00241,
+     "d_ZI_CTRL": 0.00407,
+     "d_SHIFT_CTRL": -0.01617,
+     "d_RANKID": 0.00178
+    },
+    "2020": {
+     "n_test": 104,
+     "ON": 0.24308,
+     "OFF": 0.19396,
+     "ZI_CTRL": 0.04233,
+     "SHIFT_CTRL": 0.24423,
+     "RANKID": 0.24527,
+     "d_OFF": -0.04912,
+     "d_ZI_CTRL": -0.20075,
+     "d_SHIFT_CTRL": 0.00115,
+     "d_RANKID": 0.00219
+    },
+    "2021": {
+     "n_test": 106,
+     "ON": 0.1753,
+     "OFF": 0.15035,
+     "ZI_CTRL": 0.15025,
+     "SHIFT_CTRL": 0.20432,
+     "RANKID": 0.17309,
+     "d_OFF": -0.02495,
+     "d_ZI_CTRL": -0.02506,
+     "d_SHIFT_CTRL": 0.02902,
+     "d_RANKID": -0.00222
+    },
+    "2022": {
+     "n_test": 101,
+     "ON": 0.41315,
+     "OFF": 0.39571,
+     "ZI_CTRL": 0.36024,
+     "SHIFT_CTRL": 0.42275,
+     "RANKID": 0.40646,
+     "d_OFF": -0.01744,
+     "d_ZI_CTRL": -0.05291,
+     "d_SHIFT_CTRL": 0.0096,
+     "d_RANKID": -0.00669
+    },
+    "2023": {
+     "n_test": 127,
+     "ON": 0.37958,
+     "OFF": 0.39012,
+     "ZI_CTRL": 0.29962,
+     "SHIFT_CTRL": 0.39477,
+     "RANKID": 0.38027,
+     "d_OFF": 0.01054,
+     "d_ZI_CTRL": -0.07996,
+     "d_SHIFT_CTRL": 0.0152,
+     "d_RANKID": 0.00069
+    },
+    "2024": {
+     "n_test": 119,
+     "ON": 0.04981,
+     "OFF": 0.0341,
+     "ZI_CTRL": -0.07324,
+     "SHIFT_CTRL": 0.05358,
+     "RANKID": 0.04508,
+     "d_OFF": -0.01571,
+     "d_ZI_CTRL": -0.12304,
+     "d_SHIFT_CTRL": 0.00377,
+     "d_RANKID": -0.00473
+    }
+   },
+   "per_split_mean_d_OFF": -0.01376,
+   "bootstrap_paired_refit": {
+    "OFF": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.01754,
+     "d_spearman_lo95": -0.04344,
+     "d_spearman_hi95": 0.00764,
+     "d_spearman_lo90_one_sided": -0.03779,
+     "p_improves": 0.0775,
+     "d_auc_mean": null,
+     "d_auc_lo95": null,
+     "d_auc_hi95": null
+    },
+    "ZI_CTRL": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.11014,
+     "d_spearman_lo95": -0.20429,
+     "d_spearman_hi95": -0.0285,
+     "d_spearman_lo90_one_sided": -0.18638,
+     "p_improves": 0.006,
+     "d_auc_mean": null,
+     "d_auc_lo95": null,
+     "d_auc_hi95": null
+    },
+    "SHIFT_CTRL": {
+     "n_boot": 2000,
+     "d_spearman_mean": 0.00913,
+     "d_spearman_lo95": -0.01336,
+     "d_spearman_hi95": 0.03127,
+     "d_spearman_lo90_one_sided": -0.00987,
+     "p_improves": 0.7985,
+     "d_auc_mean": null,
+     "d_auc_lo95": null,
+     "d_auc_hi95": null
+    },
+    "RANKID": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.00448,
+     "d_spearman_lo95": -0.01753,
+     "d_spearman_hi95": 0.00822,
+     "d_spearman_lo90_one_sided": -0.01544,
+     "p_improves": 0.242,
+     "d_auc_mean": null,
+     "d_auc_lo95": null,
+     "d_auc_hi95": null
+    }
+   },
+   "bootstrap_paired_refit_full_pool": {
+    "OFF": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.01746,
+     "d_spearman_lo95": -0.03638,
+     "d_spearman_hi95": 0.00066,
+     "d_spearman_lo90_one_sided": -0.03275,
+     "p_improves": 0.03,
+     "d_auc_mean": 0.01131,
+     "d_auc_lo95": -0.00032,
+     "d_auc_hi95": 0.02398
+    },
+    "ZI_CTRL": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.07506,
+     "d_spearman_lo95": -0.14458,
+     "d_spearman_hi95": -0.00675,
+     "d_spearman_lo90_one_sided": -0.13083,
+     "p_improves": 0.0145,
+     "d_auc_mean": -0.19936,
+     "d_auc_lo95": -0.25622,
+     "d_auc_hi95": -0.14838
+    },
+    "SHIFT_CTRL": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.00686,
+     "d_spearman_lo95": -0.02611,
+     "d_spearman_hi95": 0.01311,
+     "d_spearman_lo90_one_sided": -0.02319,
+     "p_improves": 0.239,
+     "d_auc_mean": -0.01612,
+     "d_auc_lo95": -0.02978,
+     "d_auc_hi95": -0.00296
+    },
+    "RANKID": {
+     "n_boot": 2000,
+     "d_spearman_mean": -0.00586,
+     "d_spearman_lo95": -0.01709,
+     "d_spearman_hi95": 0.00445,
+     "d_spearman_lo90_one_sided": -0.01497,
+     "p_improves": 0.134,
+     "d_auc_mean": -0.00278,
+     "d_auc_lo95": -0.01267,
+     "d_auc_hi95": 0.0082
+    }
+   },
+   "permutation_null": {
+    "n_perm": 2000,
+    "mean": -0.10643,
+    "lo95": -0.13531,
+    "hi95": -0.08327,
+    "p95_abs": 0.12955,
+    "observed_delta": -0.01908,
+    "p_two_sided": 1.0
+   },
+   "floor": 0.016,
+   "clears_ship_criterion": false
+  }
+ },
+ "block_rho_both_sides_pooled": {
+  "ON": 0.33619,
+  "OFF": 0.3224,
+  "ZI_CTRL": 0.27572,
+  "SHIFT_CTRL": 0.34143,
+  "RANKID": 0.33521,
+  "d_OFF": -0.01379,
+  "d_ZI_CTRL": -0.06047,
+  "d_SHIFT_CTRL": 0.00524,
+  "d_RANKID": -0.00098,
+  "mde95": 0.0149,
+  "blocks": "(side x cohort-year)",
+  "bootstrap": {
+   "OFF": {
+    "n_boot": 2000,
+    "d_block_rho_mean": -0.01222,
+    "d_block_rho_lo95": -0.0301,
+    "d_block_rho_hi95": 0.00319,
+    "p_improves": 0.0675
+   },
+   "ZI_CTRL": {
+    "n_boot": 2000,
+    "d_block_rho_mean": -0.07172,
+    "d_block_rho_lo95": -0.12887,
+    "d_block_rho_hi95": -0.01735,
+    "p_improves": 0.004
+   },
+   "SHIFT_CTRL": {
+    "n_boot": 2000,
+    "d_block_rho_mean": 0.0033,
+    "d_block_rho_lo95": -0.01255,
+    "d_block_rho_hi95": 0.01865,
+    "p_improves": 0.6585
+   },
+   "RANKID": {
+    "n_boot": 2000,
+    "d_block_rho_mean": -0.00203,
+    "d_block_rho_lo95": -0.01241,
+    "d_block_rho_hi95": 0.00837,
+    "p_improves": 0.3415
+   }
+  }
+ },
+ "arias_consensus_input_effect": {
+  "n_live_active_hitters": 2101,
+  "note": "CONSENSUS-INPUT effect only. efv_score.run_live was NOT re-run; no board rank is claimed. The board ranks on storage.BOARD_GRADE_FIELD (xfv_grade), which is a blend of this consensus input and the model leg.",
+  "shift_all_live_hitters": {
+   "mean_off_minus_on": 0.779,
+   "sd": 1.203,
+   "min": 0.0,
+   "max": 7.93,
+   "frac_unchanged": 0.6464
+  },
+  "players": {
+   "franklin_arias": {
+    "consensus_on": 58.1,
+    "consensus_off": 60.0,
+    "delta": 1.9,
+    "rank_by_consensus_on": 3,
+    "rank_by_consensus_off": 3,
+    "pctile_by_consensus_on": 99.905,
+    "pctile_by_consensus_off": 99.905,
+    "served_xfv_grade": 64.2
+   },
+   "jesus_made": {
+    "consensus_on": 60.1,
+    "consensus_off": 62.0,
+    "delta": 1.9,
+    "rank_by_consensus_on": 1,
+    "rank_by_consensus_off": 1,
+    "pctile_by_consensus_on": 100.0,
+    "pctile_by_consensus_off": 100.0,
+    "served_xfv_grade": 64.6
+   }
+  },
+  "arias_minus_made_consensus": {
+   "on": -2.0,
+   "off": -2.0,
+   "gap_change": 0.0
+  },
+  "source_mechanics": {
+   "mechanism": "grade_normalization._apply_offset(fv) = clamp(fv - (mean(source_paired) - mean(fangraphs_paired))) -- a pure per-(source, role, cycle) ADDITIVE offset, order-preserving by construction. consensus is the (equal-weight, per data/source_weights.json which was reverted to empty on 2026-07-25) mean of the per-source values. Therefore two multi-source players with the IDENTICAL contributing source set have an IDENTICAL consensus shift and an INVARIANT gap: turning normalization off cannot reorder them.",
+   "franklin_arias": {
+    "position": "SS",
+    "asof": "2026-07-29",
+    "consensus_on": 58.1,
+    "n_fv_sources": 5,
+    "per_source": {
+     "espn": {
+      "fv_published": 60.0,
+      "normalized": 57.86,
+      "offset": -2.14,
+      "snapshot_date": "2026-05-22"
+     },
+     "fangraphs": {
+      "fv_published": 60.0,
+      "normalized": 60.0,
+      "offset": 0.0,
+      "snapshot_date": "2026-07-23"
+     },
+     "just_baseball": {
+      "fv_published": 60.0,
+      "normalized": 58.49,
+      "offset": -1.51,
+      "snapshot_date": "2026-06-04"
+     },
+     "mlb_pipeline": {
+      "fv_published": 60.0,
+      "normalized": 56.28,
+      "offset": -3.72,
+      "snapshot_date": "2026-07-29"
+     },
+     "tjstats": {
+      "fv_published": 60.0,
+      "normalized": 57.88,
+      "offset": -2.12,
+      "snapshot_date": "2026-07-29"
+     }
+    },
+    "shrinkage_weight": 1.0
+   },
+   "jesus_made": {
+    "position": "SS",
+    "asof": "2026-07-29",
+    "consensus_on": 60.1,
+    "n_fv_sources": 5,
+    "per_source": {
+     "espn": {
+      "fv_published": 60.0,
+      "normalized": 57.86,
+      "offset": -2.14,
+      "snapshot_date": "2026-05-22"
+     },
+     "fangraphs": {
+      "fv_published": 65.0,
+      "normalized": 65.0,
+      "offset": 0.0,
+      "snapshot_date": "2026-07-23"
+     },
+     "just_baseball": {
+      "fv_published": 60.0,
+      "normalized": 58.49,
+      "offset": -1.51,
+      "snapshot_date": "2026-06-04"
+     },
+     "mlb_pipeline": {
+      "fv_published": 65.0,
+      "normalized": 61.28,
+      "offset": -3.72,
+      "snapshot_date": "2026-07-29"
+     },
+     "tjstats": {
+      "fv_published": 60.0,
+      "normalized": 57.88,
+      "offset": -2.12,
+      "snapshot_date": "2026-07-29"
+     }
+    },
+    "shrinkage_weight": 1.0
+   },
+   "same_source_set": true
+  }
+ },
+ "verdict": {
+  "ship": false,
+  "label": "NULL / NO-SHIP",
+  "hit_clears": false,
+  "pit_clears": false
+ },
+ "runtime_sec": 1642.3,
+ "candidate_vs_scaled_control_contrast": {
+  "what": "the decision-relevant control read: the real re-basing (OFF) against a RANDOM re-basing of identical magnitude (SHIFT_CTRL = ON plus the (OFF-ON) shift permuted within decision-year strata). If the real re-basing carries information the contrast is positive; it is not.",
+  "hit": {
+   "contrast": "OFF minus SHIFT_CTRL",
+   "n_boot": 2000,
+   "d_spearman_mean": 0.0008,
+   "d_spearman_lo95": -0.01383,
+   "d_spearman_hi95": 0.01641,
+   "p_candidate_better": 0.5395
+  },
+  "pit": {
+   "contrast": "OFF minus SHIFT_CTRL",
+   "n_boot": 2000,
+   "d_spearman_mean": -0.02771,
+   "d_spearman_lo95": -0.06147,
+   "d_spearman_hi95": 0.00538,
+   "p_candidate_better": 0.0455
+  }
+ }
+}

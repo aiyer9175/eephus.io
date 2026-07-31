@@ -1632,6 +1632,36 @@
       background: var(--iridescent);
       border-radius: 2px;
     }
+    /* Phone (<=640px, canonical --bp-mobile): the 13-tab strip collapses
+       behind a disclosure button that names the CURRENT section (same
+       accordion pattern as the Filters toggle); expanding it reveals the
+       existing wrap grid. Desktop keeps the always-visible strip. NO new
+       overflow anywhere - the bar stays a plain sticky flex container so
+       nested sticky headers (.farm-header etc.) keep working. */
+    .section-tabs-toggle { display: none; }
+    @media (max-width: 640px) {
+      .section-tabs { flex-wrap: wrap; }
+      .section-tabs-toggle {
+        display: inline-flex; align-items: center; gap: 8px;
+        flex: 1 1 auto; min-height: 44px; min-width: 0;
+        padding: 4px 10px;
+        font-family: var(--font-sans); font-size: 12px; font-weight: 700;
+        letter-spacing: 0.04em; text-align: left;
+        color: var(--text-primary); background: transparent;
+        border: none; cursor: pointer;
+      }
+      .section-tabs-toggle .section-tabs-toggle-label {
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      .section-tabs-toggle .filter-toggle-arrow { margin-left: auto; }
+      .section-tabs-toggle[aria-expanded="true"] .filter-toggle-arrow { transform: rotate(180deg); }
+      .section-tabs:not(.is-open) .section-tabs-scroll { display: none; }
+      .section-tabs.is-open .section-tabs-scroll {
+        flex: 1 1 100%;
+        border-top: 1px solid var(--border-light);
+        padding-top: 3px; margin-top: 3px;
+      }
+    }
 
     /* === Player rows (active) =====================================
        Each row renders as a baseball-card-style strip: paper background,
@@ -8537,7 +8567,7 @@
         <a href="/fa/" role="menuitem">Free Agency</a>
         <a href="/projections/" role="menuitem">Projections</a>
         <a href="/mlbstats/" role="menuitem">MLB Stats</a>
-        <a href="/pal/" role="menuitem">Pitcher Alchemy Lab</a>
+        <a href="/pal/" role="menuitem">Alchemy Lab</a>
         <a href="/trademachine/" role="menuitem">Trade Machine</a>
         <a href="/fantasy/" role="menuitem">Fantasy</a>
       </div>
@@ -8747,7 +8777,15 @@
          scan). Active list remains the headline; Farm Systems + Spotlights
          + transactional pages first; Leaderboards/Graduates/Glossary/Watchlist
          are tool tabs on the right. -->
-    <div class="section-tabs-scroll">
+    <!-- Phone-only disclosure: shows the current section name; tapping it
+         expands the full tab grid below. Hidden on desktop via CSS. -->
+    <button class="section-tabs-toggle" id="section-tabs-toggle" type="button"
+            aria-expanded="false" aria-controls="section-tabs-scroll"
+            title="Show / hide the PROSPX section tabs">
+      <span class="section-tabs-toggle-label" id="section-tabs-toggle-label">MiLB Prospects</span>
+      <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
+    </button>
+    <div class="section-tabs-scroll" id="section-tabs-scroll">
     <button class="section-tab active" data-section="active">MiLB Prospects</button>
     <button class="section-tab" data-section="spotlights">Spotlights</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
@@ -9754,10 +9792,10 @@
           <button class="chip"        data-lb-stat="hr"      title="Home runs">HR</button>
           <button class="chip"        data-lb-stat="sb"      title="Stolen bases">SB</button>
           <button class="chip" data-lb-stat="hit_level_plus" title="OPS vs level mean - surfaces hitters whose OPS is great BECAUSE the level is hard">OPS+ lvl</button>
-          <button class="chip" data-lb-stat="rps_plus" title="RPS+ - level-anchored rate performance score (100 = mean, +10 = +1σ). Hitters only.">RPS+</button>
+          <button class="chip" data-lb-stat="rps_plus" title="RPS+ - level-anchored rate performance score, re-anchored to the player's age x position-group cohort. 100 = cohort mean; it is a RATIO index like wRC+, so +10 means 10% above the cohort mean, not one standard deviation. Hitters only.">RPS+</button>
           <button class="chip" data-lb-stat="iso_plus" title="ISO+ - isolated power indexed to level-average ISO (100 = league-average power). Hitters only.">ISO+</button>
-          <button class="chip" data-lb-stat="pow_plus" title="POW+ - power index: ISO+ & HR-rate + Statcast hard-hit/barrel + Power grade (100 = average). Hitters only.">POW+</button>
-          <button class="chip" data-lb-stat="pd_plus" title="PD+ - plate-discipline index: BB%−K% vs level + Pitch-Selection grade (100 = average). Hitters only.">PD+</button>
+          <button class="chip" data-lb-stat="pow_plus" title="POW+ - power index: ISO+ (the performance axis, HR-rate retired as collinear) + Statcast hard-hit/barrel + Power grade (100 = average). Hitters only.">POW+</button>
+          <button class="chip" data-lb-stat="pd_plus" title="PD+ - plate-discipline index: BB%−K% vs level (100 = level average, 10 points = 1 std-dev of the differential) blended 70/30 with the Pitch-Selection grade. Hitters only.">PD+</button>
           <button class="chip" data-lb-stat="sc_plus" title="SC+ - Statcast composite (contact quality) indexed to pool average. Hitters only.">SC+</button>
           <button class="chip" data-lb-stat="dvm_plus" title="$DvM+ - surplus-development index (100 = FV-tier average).">$DvM+</button>
           <button class="chip"        data-lb-stat="era"     title="Earned-run average (lower is better)">ERA</button>
@@ -9767,7 +9805,7 @@
           <button class="chip" data-lb-stat="pitcher_bb_pct" title="Pitcher BB% - walks as % of batters faced (lower is better)">BB%</button>
           <button class="chip"        data-lb-stat="hr_per_9" title="Home runs allowed per 9 (lower is better)">HR/9</button>
           <button class="chip"        data-lb-stat="pit_level_plus" title="ERA- vs level mean (100 = level-average; lower is better)">ERA- lvl</button>
-          <button class="chip" data-lb-stat="pstuff_plus" title="pStuff+ - peripheral run prevention from per-batter K% and BB% plus HR/9, indexed to the level mean (100 = average peripherals, +10 = +1σ). Pitchers only.">pStuff+</button>
+          <button class="chip" data-lb-stat="pstuff_plus" title="pStuff+ - peripheral run prevention from per-batter K% and BB% plus HR/9, z-scored against the level mean and weighted 0.55 / 0.30 / 0.15 (100 = average peripherals, +10 = +1σ on each input rate). Same formula the server bakes onto the detail page. Pitchers only.">pStuff+</button>
           <button class="chip" data-lb-stat="krp_plus" title="KRP+ - K-backed run prevention: a below-level ERA an above-level strikeout rate supports (100 = pool average, +10 = +1σ). Pitchers only.">KRP+</button>
         </div>
 
@@ -11106,12 +11144,36 @@ function _tiebreakerScoreRaw(p, opts) {
     // ACTIVE MiLB TBS - performance (RPS+ rate-vs-level + SC+ tracked-data
     // composite, both "+" metrics) is now weighted alongside the Tool
     // composite rather than well below it; Stuff+ adds pitcher arsenal signal.
-    const rps = (p.statline && p.statline.rps_plus) ?? null;
+    // 2026-07-29 correctness fix: this read `p.statline.rps_plus`, a field the
+    // exporter populates for 0 of 4,505 active players. It always resolved
+    // null, the part was filtered out and the remaining weights renormalized,
+    // so the "perf up (was 0.16)" reweight below was a NO-OP on the entire
+    // active board. Repointed at getRpsPlus(), the RPS+ that actually exists:
+    // it is computed client-side from the same payload (OPS+ vs level for
+    // hitters, ERA- vs level for pitchers, plus the age-vs-level adjustment,
+    // re-anchored to the player's age x position-group cohort) and is the SAME
+    // number the RPS+ pill and the RPS+ leaderboard already display. Covers
+    // 3,642 of 4,505 rows (1,724 hitters + 1,918 pitchers) vs 0 before.
+    // The baked field stays first in the chain so a future export that fills
+    // it in wins; it is not a silent second definition.
+    const rps = (typeof _rpsPlusValue === "function") ? _rpsPlusValue(p) : null;
     const sc  = getStatcastPlus(p);
     const stf = _stuffPlusTBS(p);
     parts = [
       [_tbsNorm(tool, 40, 70),   0.24],   // was 0.26
-      [_tbsNorm(rps,  80, 130),  0.22],   // perf ↑ (was 0.16)
+      // RPS+ term REMOVED 2026-07-29, and removing it is a TRUE NO-OP.
+      // It read statline.rps_plus, populated for 0 of 4,505 players, so it always
+      // resolved null, was filtered out, and the surviving weights renormalized. The
+      // "perf up (was 0.16)" note described a reweight that never happened on a single
+      // active row. The display surfaces above now read the live browser RPS+, but
+      // pointing THIS at the live value would make a dormant 0.22 weight suddenly bind,
+      // which moves TBS, and TBS is the sole tie-arbiter in fvCmpDesc AND feeds
+      // _tbsSurplusMult. That is a rank and dollar change, not a correctness fix, so it
+      // does not ride along here. Two things must be settled before it can be revived:
+      // the band is wrong for this metric (active RPS+ is a RATIO index with sd about
+      // 20, so _tbsNorm(v, 80, 130) saturates roughly 23% of rows, 15% at the floor and
+      // 7% at the ceiling, contributing no discrimination), and a revival moves served
+      // ordering so it needs a gate. Registered as a candidate, not shipped.
       [_tbsNorm(sc,   80, 130),  0.20],   // perf ↑ (was 0.16)
       [_tbsNorm(tmax, 40, 70),   0.10],
       [_tbsNorm(stf,  80, 130),  0.08],
@@ -11175,18 +11237,21 @@ function _tiebreakerScoreRaw(p, opts) {
 }
 
 function fvCmpDesc(a, b) {
-  // v42 - Owner: order PURELY by the eFV model's DECIMAL grade on the 20-80 scale (the
-  // continuous xfv_grade_quantile), NOT the rounded display value. Two prospects displaying
-  // the same integer (e.g. 62.6 and 63.2 both show 63) are ordered by the decimal (63.2 >
-  // 62.6); they are TIED only when their eFV grades match DOWN TO THE DECIMAL, and the
-  // Tiebreaker Score (TBS) is the SOLE arbiter of that exact tie. Cohorts eFV abstains on
-  // (draft / overseas) fall back to the surfaced consensus FV. (Reverses the v38
-  // rounded-surfaced-FV contract: TBS no longer breaks same-rounded-grade ties -- the eFV
-  // decimal does.)
+  // Order PURELY by the DECIMAL board number (efvBoardValue -- the raw eFV grade), NOT
+  // the rounded display value. Two prospects displaying the same integer (e.g. 62.6 and
+  // 63.2 both show 63) are ordered by the decimal (63.2 > 62.6); they are TIED only when
+  // their grades match DOWN TO THE DECIMAL, and the Tiebreaker Score (TBS) is the SOLE
+  // arbiter of that exact tie. Cohorts eFV abstains on (draft / overseas) fall back to the
+  // surfaced consensus FV.
+  // 2026-07-25: this reads efvBoardValue rather than its own resolution chain. It used to
+  // resolve xfv_grade_quantile first, which made it a SECOND ordering that could disagree
+  // with the displayed grade. One definition -- see efvBoardValue.
+  // NOTE: exact-decimal ties are the common case here, not the edge case (~3.1k of ~4.5k
+  // board rows sit on the 20.0 provisional floor), so the '+' / TBS / name chain below is
+  // what gives the floor block a stable order.
   const _g = p => {
-    const x = (typeof getEfv === "function") ? getEfv(p) : null;
-    if (x && x.xfv_grade_quantile != null) return Number(x.xfv_grade_quantile);
-    if (x && x.xfv_grade_realized != null) return Number(x.xfv_grade_realized);
+    const v = efvBoardValue((typeof getEfv === "function") ? getEfv(p) : null);
+    if (v != null) return v;
     return (p && p.fv_close != null) ? Number(p.fv_close) : -1;
   };
   const ag = _g(a), bg = _g(b);
@@ -11321,12 +11386,25 @@ function fvBadgeBreakoutClass(player) {
 function fvBadgeBreakoutMarkHTML(player) {
   if (!fvBadgeBreakoutClass(player)) return "";
   const meta = player.breakout_meta || {};
+  // 2026-07-29: this two-branch chain claimed "tool grades up N on average" for EVERY
+  // reason that was not "fv", so the 18 of 27 breakout players carrying reason "upside"
+  // or "stats" were shown a tool-velocity claim that is not why they were flagged, with
+  // an "?" where the number should be. Each reason now states its own basis, and an
+  // unrecognised reason says nothing specific rather than asserting the wrong one.
   const why = meta.reason === "fv"
     ? `FV upgraded ${meta.fv_upgrade > 0 ? "+" : ""}${meta.fv_upgrade ?? "?"} grade points over the window`
-    : `tool grades up ${meta.tool_velocity > 0 ? "+" : ""}${meta.tool_velocity ?? "?"} on average over the window`;
-  const gate = meta.perf_gate === "rps_plus" ? "RPS+ ≥ 120"
-             : meta.perf_gate === "stf_plus_periph" ? "Peripheral Stuff+ ≥ 105"
-             : meta.perf_gate === "fip_minus" ? "FIP- ≤ 90"
+    : meta.reason === "tools"
+    ? `tool grades up ${meta.tool_velocity > 0 ? "+" : ""}${meta.tool_velocity ?? "?"} on average over the window`
+    : meta.reason === "stats"
+    ? "performance cleared the breakout gate this season"
+    : "flagged by the breakout screen over the window";
+  // Gate labels 2026-07-29: these now name the gates storage.build_spotlights actually
+  // emits, with the thresholds it actually uses. The removed rps_plus branch read a
+  // field populated for 0 of 4,505 players and advertised a 120 cut that no gate used.
+  const gate = meta.perf_gate === "wrc_plus" ? "wRC+ ≥ 130"
+             : meta.perf_gate === "ops_plus_level" ? "OPS+ vs level ≥ 150"
+             : meta.perf_gate === "stf_plus_periph" ? "Peripheral Stuff+ ≥ 115"
+             : meta.perf_gate === "statcast_plus" ? "SC+ ≥ 130"
              : "performance gate";
   return `<span class="fv-breakout-mark" title="Breakout - ${why}, plus ${gate} this season.">★</span>`;
 }
@@ -12960,11 +13038,19 @@ function liveTrendHTML(p) {
   // RETIRED: the TJStats live-rankings UI (the "LIVE #rank" pills) was retired when eFV
   // became the primary ranking signal. TJStats stays a folded CONSENSUS source; only the
   // dedicated live-rank surface is gone. Neutralized here so no call site renders a pill.
+  //
+  // What it read is a CONSENSUS-SIDE signal, not an eFV output: consensus_live_score is
+  // consensus FV (fv_close_raw) plus live_signal.delta, and that delta is dominated by
+  // EXTERNAL SCOUTING-LIST MOVEMENT (BA Top 100 events). eFV already blends consensus at
+  // lambda ~0.85, so this must never be added to the model grade or the board ordering --
+  // it would double-count the same lists. Fields renamed 2026-07-25 (live_score ->
+  // consensus_live_score, live_overall_rank -> consensus_live_rank, live_rank_delta ->
+  // consensus_live_rank_delta) so the "live_" prefix stops reading like an eFV number.
   return "";
   /* eslint-disable no-unreachable */
-  if (!p || p.live_overall_rank == null || p.live_rank_delta == null) return "";
-  const delta = Number(p.live_rank_delta);
-  const liveRank = Number(p.live_overall_rank);
+  if (!p || p.consensus_live_rank == null || p.consensus_live_rank_delta == null) return "";
+  const delta = Number(p.consensus_live_rank_delta);
+  const liveRank = Number(p.consensus_live_rank);
   if (!Number.isFinite(delta) || !Number.isFinite(liveRank) || Math.abs(delta) < 10) return "";
   const cls = delta > 0 ? "stock-up" : "stock-down";
   const sign = delta > 0 ? "+" : "";
@@ -12977,8 +13063,8 @@ function liveTrendHTML(p) {
     })
     .filter(Boolean);
   const tip = [
-    `Live rank #${liveRank}`,
-    p.overall_rank != null ? `Consensus rank #${p.overall_rank}` : "",
+    `Consensus live-form rank #${liveRank}`,
+    p.overall_rank != null ? `Board rank #${p.overall_rank}` : "",
     `Move ${sign}${delta} spots`,
     drivers.length ? `Drivers: ${drivers.join(" · ")}` : ""
   ].filter(Boolean).join(" · ");
@@ -13016,7 +13102,11 @@ function rankTrendHTML(p) {
     const n = Math.abs(delta);
     return `<div class="fv-stock-line" title="${delta > 0 ? "Up" : "Down"} ${n} spot${n === 1 ? "" : "s"} on the eFV board in the last 30 days"><span class="${cls}">${glyph} ${sign}${delta}</span></div>`;
   }
-  // Consensus board (toggled): rank-spots trend from the consensus rank stream.
+  // Consensus board (toggled): rank-spots trend from the BAKED board rank stream
+  // (overall_rank now vs the same field at the previous snapshot). Both sides come from
+  // storage.py's one ordering, and prev_overall_rank is gated on BOARD_RANK_BASIS_EPOCH,
+  // so the 2026-07-25 raw-grade re-rank renders no arrow at all rather than a fabricated
+  // one. Empty until two post-epoch board snapshots exist.
   const cur = p.overall_rank, prev = p.prev_overall_rank;
   if (cur == null || prev == null) return "";
   const delta = prev - cur;  // positive = improved
@@ -15116,6 +15206,27 @@ function positionBucket(pos) {
   return null;
 }
 
+// COHORT position (2026-07-30, owner decision). `p.position` is the FanGraphs
+// forward-PROJECTION: where the industry thinks a prospect ends up. `p.position_observed`
+// is what he has actually been playing in the minors, most games at a non-DH slot
+// (storage publishes it from data/positions_played.json; omitted when there is no
+// qualifying observation, and always omitted for pitchers).
+//
+// Use this ONLY where the question is "who else has done this", never where it is
+// "what will he be worth". Cohorts, peer pools and comp lists are observed questions:
+// an exact string match on a forecast builds cohorts of players who never shared a
+// field. Positional scarcity dollars, the org depth chart, farm positional need, the
+// board filters and the position pill all stay on the PROJECTION on purpose - the
+// disagreement is signed (FanGraphs projects a move DOWN the spectrum 318 times against
+// 184 up), so pricing the observation would pay 318 players a premium-position premium
+// the industry says they will not hold.
+//
+// Degrades to the projection whenever the field is absent, so this is a no-op on any
+// payload built before the field shipped.
+function cohortPosition(p) {
+  return (p && (p.position_observed || p.position)) || null;
+}
+
 // Coarse → fine match: "INF" still wants to include 2B/SS/3B players,
 // "OF" still wants CF/LF/RF. Pitcher rollups: "P" matches every pitcher
 // bucket (back-compat), "RP" matches SIRP + MIRP + bare-RP. SP / SIRP /
@@ -15219,6 +15330,16 @@ function getFilteredActives() {
   // players who have never played the outfield). One-time per player, only once the
   // fielding sidecar has loaded; mutates the shared record so the fix is consistent
   // across the board, filters, grouping, and the detail page.
+  //
+  // OWED RECONCILIATION (2026-07-30, deliberately NOT changed here). This is an
+  // OF-only, undocumented, client-side version of the same question the backend now
+  // answers explicitly as `position_observed` - and because it OVERWRITES p.position
+  // in place before every filter, cohort, depth chart and scarcity multiplier runs,
+  // the frontend and the backend can disagree about the same player's position today.
+  // The right end state is a named field, not an in-place overwrite. Recorded in
+  // docs/efv-2026-07-30/POSITION_ROLE_GATE.md; it is its own change with its own
+  // blast radius (it moves the board FILTERS, which the observation flip deliberately
+  // does not).
   if (_POS_PLAYED) {
     for (const p of pool) {
       if (p && !p._gdPosChecked) {
@@ -16281,7 +16402,10 @@ function _prospectDetailSidebarCards(p, activeTab) {
   if (!p) return [];
   const isPit = !!(p.statline && p.statline.is_pitcher);
   const fv = p.fv_close != null ? p.fv_close : null;
-  const pos = positionBucket(p.position) || "?";
+  // OBSERVED position (cohortPosition): these sidebar pools are "who else is doing
+  // this at this level", which is a question about games played, not about a
+  // projection. See cohortPosition for the split.
+  const pos = positionBucket(cohortPosition(p)) || "?";
   // Helper - peer pool: same org, similar FV ±5, exclude self.
   const _peers = (filterFn, maxRows = 5) => {
     const pool = (DATA.players || []).filter(q =>
@@ -16291,7 +16415,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
   const _samePosLevel = q => {
     const slQ = q.statline || {};
     const slP = p.statline || {};
-    return positionBucket(q.position) === pos
+    return positionBucket(cohortPosition(q)) === pos
         && slQ.level === slP.level;
   };
   // Org card (always present) - quick jump to the prospect's org farm
@@ -16315,7 +16439,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
       .map(r => ({
         key: r.q.player_key,
         name: r.q.player_name,
-        tag: `${positionBucket(r.q.position)} · ${(r.q.statline || {}).level || " - "}`,
+        tag: `${positionBucket(cohortPosition(r.q))} · ${(r.q.statline || {}).level || " - "}`,
         value: `SC+ ${r.sp}`,
       }));
     const sl = p.statline || {};
@@ -16325,7 +16449,10 @@ function _prospectDetailSidebarCards(p, activeTab) {
     const signals = [
       sp != null ? { key: "SC+", value: sp, valColor: sp >= 105 ? "var(--up)" : sp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
       swp != null ? { key: "Swing+", value: Math.round(swp), valColor: swp >= 105 ? "var(--up)" : swp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
-      sl.rps_plus != null ? { key: "RPS+", value: sl.rps_plus, valColor: sl.rps_plus >= 110 ? "var(--up)" : sl.rps_plus <= 90 ? "var(--down)" : "var(--text-primary)" } : null,
+      // 2026-07-29: was `sl.rps_plus`, populated for 0 of 4,505 players, so this
+      // chip never rendered. Reads the live RPS+ (_rpsPlusValue) instead - the
+      // same number the RPS+ pill and the RPS+ leaderboard show.
+      ((rpsChip) => rpsChip != null ? { key: "RPS+", value: rpsChip, valColor: rpsChip >= 110 ? "var(--up)" : rpsChip <= 90 ? "var(--down)" : "var(--text-primary)" } : null)(_rpsPlusValue(p)),
       isPit && sl.stf_plus_periph != null ? { key: "pStuff+", value: sl.stf_plus_periph } : null,
       !isPit && sl.ops_plus_level != null ? { key: "OPS+ lvl", value: sl.ops_plus_level } : null,
       isPit && sl.era_minus_level != null ? { key: "ERA-", value: sl.era_minus_level } : null,
@@ -16339,7 +16466,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
   }
   if (activeTab === "scouting" || activeTab === "tools") {
     // Scouting tab - top 5 toolsiest same-pos peers + source agreement.
-    const peers = _peers(q => positionBucket(q.position) === pos)
+    const peers = _peers(q => positionBucket(cohortPosition(q)) === pos)
       .map(q => ({ q, tc: (q.tools || {}).composite_overall }))
       .filter(r => r.tc != null)
       .sort((a, b) => b.tc - a.tc)
@@ -16347,7 +16474,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
       .map(r => ({
         key: r.q.player_key,
         name: r.q.player_name,
-        tag: `${positionBucket(r.q.position)}`,
+        tag: `${positionBucket(cohortPosition(r.q))}`,
         value: `Tool ${Math.round(r.tc)}`,
       }));
     const pts = p.points || [];
@@ -16397,19 +16524,25 @@ function _prospectDetailSidebarCards(p, activeTab) {
     const acq = p.acquisition || {};
     const cohortYear = acq.year;
     const cohortMethod = acq.method;
+    // Peers rank + label on the live eFV (round-to-NEAREST), consensus FV
+    // (ceiling) as the labeled fallback when the model abstains.
     const cohortPeers = cohortYear && cohortMethod
       ? (DATA.players || []).filter(q =>
           q && q.player_key !== p.player_key
           && q.acquisition && q.acquisition.year === cohortYear
           && q.acquisition.method === cohortMethod)
-        .sort((a, b) => (b.fv_close ?? 0) - (a.fv_close ?? 0))
+        .sort((a, b) => efvRankValue(b) - efvRankValue(a) || fvCmpDesc(a, b))
         .slice(0, 5)
-        .map(q => ({
-          key: q.player_key,
-          name: q.player_name,
-          tag: q.org || " - ",
-          value: q.fv_close != null ? `FV ${fvCeil(q.fv_close)}` : " - ",
-        }))
+        .map(q => {
+          const _qEfv = efvGradeDisplay(getEfv(q));
+          return {
+            key: q.player_key,
+            name: q.player_name,
+            tag: q.org || " - ",
+            value: _qEfv != null ? `eFV ${_qEfv}`
+              : (q.fv_close != null ? `FV ${fvCeil(q.fv_close)}` : " - "),
+          };
+        })
       : [];
     const signals = [
       { key: "Method", value: cohortMethod || " - " },
@@ -16423,17 +16556,24 @@ function _prospectDetailSidebarCards(p, activeTab) {
       orgLinkCard,
     ];
   }
-  // Overview (default) - same-org top 5 by FV + key signals.
+  // Overview (default) - same-org top 5 by eFV (consensus fallback) + key
+  // signals. Ordering + value both lead with the live eFV so the sidebar
+  // agrees with the roster / main board; consensus FV (ceiling) labels the
+  // fallback when the model abstains.
   const orgPeers = (DATA.players || [])
     .filter(q => q && q.org === p.org && q.player_key !== p.player_key)
-    .sort((a, b) => (b.fv_close ?? 0) - (a.fv_close ?? 0))
+    .sort((a, b) => efvRankValue(b) - efvRankValue(a) || fvCmpDesc(a, b))
     .slice(0, 5)
-    .map(q => ({
-      key: q.player_key,
-      name: q.player_name,
-      tag: positionBucket(q.position) || "",
-      value: q.fv_close != null ? `FV ${fvCeil(q.fv_close)}` : " - ",
-    }));
+    .map(q => {
+      const _qEfv = efvGradeDisplay(getEfv(q));
+      return {
+        key: q.player_key,
+        name: q.player_name,
+        tag: positionBucket(q.position) || "",
+        value: _qEfv != null ? `eFV ${_qEfv}`
+          : (q.fv_close != null ? `FV ${fvCeil(q.fv_close)}` : " - "),
+      };
+    });
   const sl = p.statline || {};
   const displayLevel = currentDisplayLevel(p);
   const signals = [
@@ -16443,7 +16583,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
     p.age != null ? { key: "Age", value: p.age.toFixed(1) } : null,
   ].filter(Boolean);
   return [
-    { type: "leaderboard", title: `${p.org || "Org"} · top 5 by FV`, rows: orgPeers },
+    { type: "leaderboard", title: `${p.org || "Org"} · top 5 by eFV`, rows: orgPeers },
     { type: "signals",     title: "At a glance", signals },
     orgLinkCard,
   ];
@@ -16516,6 +16656,13 @@ function _draftDetailSidebarCards(p, cls, activeTab) {
           }))
       : [];
     // Same-position peers in the class - independent of tool.
+    // NOT repointed to cohortPosition (2026-07-30). This is the DRAFT-CLASS peer
+    // cohort: `classProspects` are amateurs, so data/positions_played.json has no
+    // MiLB fielding census for them and the observation is absent by construction.
+    // Flipping it would be a no-op on the pool it serves. Separately, and left
+    // alone deliberately because it is a different change: `pos` here is a RAW
+    // position string, so this equality already misses a compound label ("SS/2B"
+    // never equals "SS"). Recorded in docs/efv-2026-07-30/POSITION_ROLE_GATE.md.
     const posPeers = classProspects
       .filter(q => q.position === pos)
       .sort((a, b) => (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0))
@@ -18170,8 +18317,26 @@ function renderWatchlist() {
   // is the fallback when the per-window bake is absent.
   const _wScore = o => (o.farm_score_by_window || {})[win] ?? o.farm_score ?? -1;
   orgs.sort((a, b) => (_wScore(b) - _wScore(a)) || a.org.localeCompare(b.org));
+  // Provisional (source-ungraded) eFV rows fold into the live top-prospect pool
+  // below, exactly like the farm-list preview.
+  if (typeof ensureEfvUngraded === "function") ensureEfvUngraded();
   const fRows = orgs.map((org, i) => {
-    const tp = org.top_prospect;
+    // Live top prospect - same pool + eFV ordering as the farm-list preview
+    // (efvRankValue over org players + provisionals) with the badge resolved
+    // via gradeBlock (eFV round-to-NEAREST, consensus label fallback), so the
+    // starred row can never disagree with the farm list / roster. The baked
+    // org.top_prospect (one run stale, consensus fv_label) only fills in when
+    // the live pool is empty.
+    const _wlPool = (DATA.players || []).filter(p => p && p.player_key && p.org === org.org)
+      .concat((typeof provPlayers === "function" ? provPlayers() : []).filter(p => p.org === org.org));
+    _wlPool.sort((a, b) => efvRankValue(b) - efvRankValue(a)
+      || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
+    const _wlTop = _wlPool[0] || null;
+    const _wlGb = (_wlTop && typeof gradeBlock === "function") ? gradeBlock(_wlTop) : null;
+    const tp = _wlTop
+      ? { name: _wlTop.player_name, player_key: _wlTop.player_key,
+          fv_label: (_wlGb && _wlGb.label != null) ? String(_wlGb.label) : " - " }
+      : org.top_prospect;
     const overall = ((org.letter_by_window || {})[win]) || (org.grades && org.grades.overall) || " - ";
     const dvm = (org.dvm_plus || {})[win];
     return `
@@ -18226,7 +18391,7 @@ const CHART_AXES = {
     { key: "age",            label: "Age",                getter: p => p.age,                                fmt: v => v.toFixed(1) },
     { key: "fv",             label: "Consensus FV",       getter: p => (p.points && p.points.length) ? p.points[p.points.length-1].consensus_fv_raw : null, fmt: v => fvCeil(v).toString() },
     { key: "overall_rank",   label: "Overall rank",       getter: p => p.overall_rank,                       fmt: v => "#" + v },
-    { key: "rps_plus",       label: "RPS+",               getter: p => (p.statline && (p.statline.rps_plus ?? p.statline.ops_plus_level)), fmt: v => formatMetric(v, 'plus') },   // v-audit: rps_plus is unpopulated for actives; fall back to the level-relative OPS+ index (the actual relative-performance metric for the active pool)
+    { key: "rps_plus",       label: "RPS+",               getter: p => _rpsPlusValue(p), fmt: v => formatMetric(v, 'plus') },   // 2026-07-29: this axis used to substitute ops_plus_level when the (always-empty) baked rps_plus was missing, i.e. an axis LABELLED RPS+ that plotted a different metric than the RPS+ pill. Now on the one shared RPS+ (_rpsPlusValue), which also covers pitchers.
     { key: "tool",           label: "Tool",               getter: p => p.tool,                               fmt: v => fvCeil(v).toString() },
     { key: "height_in",      label: "Height (in)",        getter: p => _getPhysicalProfile(p).height_in,  fmt: v => v.toFixed(0) + '"' },
     { key: "weight",         label: "Weight (lb)",        getter: p => _getPhysicalProfile(p).weight_lb, fmt: v => v.toFixed(0) + "lb" },
@@ -19692,12 +19857,14 @@ function _radarToolsFor(p){
   const getT = k => { const v = grades[k]; if (v != null && !isNaN(v)) return Number(v); const lv = ltc[k]; return (lv != null && !isNaN(lv)) ? Number(lv) : null; };
   return keys.map(([lab, k]) => ({ label: lab, value: getT(k) }));
 }
+// OBSERVED position (2026-07-30): a tool-comparison cohort is "whose glove and bat
+// are being measured against the same job", which is an observed question.
 function _toolCompCandidates(p){
-  const bucket = positionBucket(p.position);
+  const bucket = positionBucket(cohortPosition(p));
   const myFv = p.fv_close_raw != null ? p.fv_close_raw : p.fv_close;
   if (bucket == null || myFv == null) return [];
   return (DATA.players || [])
-    .filter(q => q.player_key !== p.player_key && positionBucket(q.position) === bucket
+    .filter(q => q.player_key !== p.player_key && positionBucket(cohortPosition(q)) === bucket
       && q.tools && q.tools.grades && q.fv_close != null)
     .map(q => ({ q, d: Math.abs((q.fv_close_raw != null ? q.fv_close_raw : q.fv_close) - myFv) }))
     .sort((a, b) => a.d - b.d).slice(0, 4).map(x => x.q);
@@ -20165,8 +20332,18 @@ function _tmFmtDate(d) {
 }
 
 // The board as it stood on `dateStr`: each player's latest consensus_fv
-// at-or-before that date, ranked FV desc (avg_rank then name as tiebreaks).
-// Returns the FULL ordered board; callers slice to top-N.
+// at-or-before that date, ranked point-in-time eFV desc (consensus FV where
+// the model abstains; avg_rank then name as tiebreaks). Returns the FULL
+// ordered board; callers slice to top-N.
+//
+// KNOWN BASIS RESIDUAL (2026-07-25). This surface ranks and displays the SAME
+// point-in-time number, so it is internally consistent and is NOT a repeat of the
+// three-orderings bug. But that number comes from xfv_history.x, which
+// efv_score.score_history writes on the QUANTILE scale, while the live board is now
+// the RAW grade (see efvBoardValue). So a player's "today" row here can read a few
+// grade points off his live board grade. Do not paper over it with a rebase: the
+// offset is not constant back through time. The fix is upstream -- have
+// score_history emit the raw grade -- after which this surface needs no change.
 function _boardAsOf(dateStr) {
   const rows = [];
   for (const p of _tmPool()) {
@@ -20198,8 +20375,8 @@ function _boardAsOf(dateStr) {
       mlbamId: p.mlbam_id || (p.statline || {}).mlbam_id || null,
       fv: best.consensus_fv, fvPlus: !!best.consensus_fv_plus,
       // Point-in-time eFV (primary grade shown on the board pill); null when the
-      // model's eFV history doesn't cover this player/date -> pill falls back to
-      // the consensus FV above. Ranking still keys off consensus FV (see sort).
+      // model's eFV history doesn't cover this player/date -> pill AND ranking
+      // fall back to the consensus FV above (see _tmGradeVal / sort).
       ...(function () { const e = _tmEfvAsOf(p, dateStr); return { efv: e ? e.x : null, efvAsOf: e ? e.d : null }; })(),
       avgRank: best.avg_rank, asOf: best.snapshot_date,
       debutDate: p.debut_date || null,
@@ -20210,11 +20387,21 @@ function _boardAsOf(dateStr) {
       boomLabel: (wagObj && wagObj.boom_label) || null,
     });
   }
-  rows.sort((a, b) => (b.fv - a.fv)
+  // Rank on the SAME value the row's pill displays: point-in-time eFV first,
+  // point-in-time consensus FV where the model's history abstains - so the
+  // board order can never disagree with the grades it shows.
+  rows.sort((a, b) => (_tmGradeVal(b) - _tmGradeVal(a))
     || ((a.avgRank ?? 9e9) - (b.avgRank ?? 9e9))
     || a.name.localeCompare(b.name));
   rows.forEach((r, i) => { r.rank = i + 1; });
   return rows;
+}
+
+// The grade VALUE a Time Machine row ranks/diffs on: point-in-time eFV when
+// the model's history covers the player/date, else the point-in-time
+// consensus FV - the same fallback order _tmGradePill displays.
+function _tmGradeVal(r) {
+  return (r && r.efv != null) ? r.efv : ((r && r.fv != null) ? r.fv : -1);
 }
 
 // Diff two boards into a changelog. Membership is defined by top-N so the
@@ -20230,11 +20417,16 @@ function _boardDiff(dateA, dateB, topN) {
     const a = aAll.get(key);
     if (!a || a.rank > topN) { entered.push({ b, a: a || null }); continue; }
     const rankDelta = a.rank - b.rank;       // + = moved up the board
-    const fvDelta = b.fv - a.fv;
+    // Grade delta on the SAME eFV-first value the board ranks on (consensus
+    // fallback per row), so the changelog agrees with the eFV-ranked board.
+    // eFV carries decimals -> round to 1dp for display and gate gainers/
+    // sliders on the site's 0.5-grade eFV dead-band so day-to-day model
+    // drift doesn't flood the grade buckets.
+    const fvDelta = Math.round((_tmGradeVal(b) - _tmGradeVal(a)) * 10) / 10;
     if (rankDelta > 0) risers.push({ a, b, rankDelta, fvDelta });
     else if (rankDelta < 0) fallers.push({ a, b, rankDelta, fvDelta });
-    if (fvDelta > 0) gainers.push({ a, b, fvDelta, rankDelta });
-    else if (fvDelta < 0) sliders.push({ a, b, fvDelta, rankDelta });
+    if (fvDelta >= _EFV_STEP_EPS) gainers.push({ a, b, fvDelta, rankDelta });
+    else if (fvDelta <= -_EFV_STEP_EPS) sliders.push({ a, b, fvDelta, rankDelta });
   }
   for (const [key, a] of aTop) {
     if (bTop.has(key)) continue;
@@ -23664,7 +23856,7 @@ function _renderWarRoom(host) {
     host.innerHTML = head + `<div class="state-message is-error">The live draft feed is unavailable right now. It refreshes automatically.</div>`;
   } else if (!d || d.status !== "live" || !(d.picks && d.picks.length)) {
     // Doors-open / waiting state (pre-draft or between picks).
-    host.innerHTML = head + `<div class="state-message">The War Room opens on draft night (July 11-13). Live picks appear here priced against our board and the historical pick-value curve, so you see each reach or steal in surplus dollars.${d && d.generated_at ? `<div style="margin-top:8px;font-size:11px;color:var(--text-tertiary);">Feed live, waiting on the first pick. Updated ${escapeHtml(String(d.generated_at))}.</div>` : ""}</div>`;
+    host.innerHTML = head + `<div class="state-message">The War Room opens on draft night (July 11-13). Live picks appear here priced against our board and the historical pick-value curve, so you see each reach or steal in surplus dollars.${d && d.status !== "idle" && d.generated_at ? `<div style="margin-top:8px;font-size:11px;color:var(--text-tertiary);">Feed live, waiting on the first pick. Updated ${escapeHtml(String(d.generated_at))}.</div>` : ""}</div>`;
   } else {
     const picks = d.picks.slice().sort((a, b) => (a.pick_overall || 0) - (b.pick_overall || 0));
     const rows = picks.map(p => {
@@ -30742,22 +30934,28 @@ function getAaaStuffPlus(p) {
 
 // ===== eFV - our outcome-grounded Future Value grade (data/xfv.json) ========
 // Sidecar keyed by player_key (a prospect-centric slug), NOT mlbam_id - eFV is
-// a prospect grade. Each entry: xfv_grade_quantile (the displayed 20-80 headline;
-// drives surplus since the 2026-07-06 flip), xfv_grade (rank-preserving map onto
-// the consensus scale), xfv_grade_realized (deflated outcome-implied grade that
-// still drives the p_bucket/p_bust odds), the 5-bucket outcome mix, surplus + a P10-P90
+// a prospect grade. Each entry: xfv_grade (THE board number since 2026-07-25 -- the
+// grade that is displayed, sorted on, and ranked by; see efvBoardValue. Its SCALE is
+// the W-SIDESCALE per-side outcome calibration owned by efv_board_scale.py, applied
+// server-side; xfv_grade_model_raw carries the pre-calibration model grade and
+// meta.board_scale the coefficients + gate record),
+// xfv_grade_quantile (the same grade mapped onto the population's 20-80 shape; still
+// the surplus pricing basis and the fantasy dynasty-rank input, NOT the board),
+// xfv_grade_realized (the outcome-implied grade behind the p_bucket/p_bust odds),
+// the 5-bucket outcome mix, surplus + a P10-P90
 // fan, and tool eFVs. Shown ALONGSIDE consensus FV (it ties/▾consensus on rank;
 // its value-add is the calibrated distribution + uncertainty + surplus). Live-board
 // players carry kind="active"; eFV abstains on players with no pro track record.
 let _EFV = null;
 let _EFV_RANK = null;     // player_key -> 1-based eFV rank over the active board (lazy)
 let _EFV_PREV_RANK = null; // player_key -> eFV rank by PREVIOUS grade (drives the rank-spot delta chip)
+let _EFV_TIE_COUNT = null; // board value -> how many players share it exactly (tie-block guard)
 (function loadEfv() {
   fetch("/data/xfv.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => {
       _EFV = (j && j.by_player) || {};
-      _EFV_RANK = null; _EFV_PREV_RANK = null; _EFV_ORG_RANK = null;     // invalidate so the rank maps rebuild with fresh data
+      _EFV_RANK = null; _EFV_PREV_RANK = null; _EFV_TIE_COUNT = null; _EFV_ORG_RANK = null;     // invalidate so the rank maps rebuild with fresh data
       // First paint can beat this fetch - repaint so eFV chips/cards appear.
       scheduleRender();
     })
@@ -30850,7 +31048,7 @@ function ensureEfvUngraded() {
   fetch("/data/xfv_ungraded.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _EFV_UNG = j || { by_player: {}, by_mlbam: {} };
-      _PROV_PLAYERS = null; _PROV_BY_KEY = null; _EFV_RANK = null; _EFV_PREV_RANK = null; _EFV_ORG_RANK = null; _PROV_ORGRANK = {};   // rebuild w/ provisional
+      _PROV_PLAYERS = null; _PROV_BY_KEY = null; _EFV_RANK = null; _EFV_PREV_RANK = null; _EFV_TIE_COUNT = null; _EFV_ORG_RANK = null; _PROV_ORGRANK = {};   // rebuild w/ provisional
       scheduleRender(); })
     .catch(() => { _EFV_UNG = { by_player: {}, by_mlbam: {} }; });
 }
@@ -30962,7 +31160,11 @@ function ensurePalFit() {
     .then(r => (r.ok ? r.json() : null))
     .then(j => {
       const byKey = {}, byNameOrg = {};
-      const watch = (j && j.prospect_watch) || [];
+      // The UNBOUNDED set: /pal/'s own list is staged behind a severity threshold and
+      // a cap (pal_export.PROSPECT_WATCH_MARGIN_MIN / _CAP), but a player's own card
+      // should still show their role-conversion read. Falls back to the staged list on
+      // any payload built before prospect_watch_all shipped.
+      const watch = (j && (j.prospect_watch_all || j.prospect_watch)) || [];
       for (const w of watch) {
         if (!w) continue;
         if (w.player_key) byKey[w.player_key] = w;
@@ -30999,7 +31201,649 @@ function palFitPanel(p) {
         <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">PAL role-conversion read</div>
         <a href="/pal/#prospects" style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--neon-cyan);text-decoration:none;white-space:nowrap;">${escapeHtml(dir)} →</a>
       </div>
-      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.45;margin-top:5px;">${escapeHtml(lead)}${shape != null ? ` (starter shape <b style="color:var(--text-secondary);">${shape}/100</b>)` : ""}. Shape-only screen from the scout tool grades - open the <strong>Pitcher Alchemy Lab</strong> for the full role-fit breakdown.</div>
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.45;margin-top:5px;">${escapeHtml(lead)}${shape != null ? ` (starter shape <b style="color:var(--text-secondary);">${shape}/100</b>)` : ""}. Shape-only screen from the scout tool grades - open the <strong>Alchemy Lab</strong> for the full role-fit breakdown.</div>
+    </div>`;
+}
+// ===== AAA Statcast hitter sidecar (data/statcast_aaa_hitters.json) =========
+// Savant minors (AAA tracked parks) batter aggregates - each hitter's latest
+// >=100 PA tracked season, keyed by_mlbam. Batter analog of stuff_plus_aaa.json
+// but LAZY (ensurePalFit pattern): fetched once on the first HITTER detail
+// card, cached on a module-level var, repainted via scheduleRender when it
+// lands. bat_speed is null in the current payload - deliberately not rendered.
+let _AAA_STATCAST = null, _AAA_STATCAST_LOADING = false;
+function ensureAaaStatcast() {
+  if (_AAA_STATCAST !== null || _AAA_STATCAST_LOADING) return;
+  _AAA_STATCAST_LOADING = true;
+  fetch("/data/statcast_aaa_hitters.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _AAA_STATCAST = (j && j.by_mlbam) || {};
+      // First paint can beat this fetch - repaint the open card so the
+      // panel appears without a manual refresh (coalesced via scheduleRender).
+      scheduleRender();
+    })
+    .catch(() => { _AAA_STATCAST = {}; });
+}
+function _aaaStatcastFor(p) {
+  if (!_AAA_STATCAST || !p) return null;
+  const mid = p.mlbam_id || (p.career_war || {}).mlbam_id;
+  if (!mid) return null;
+  return _AAA_STATCAST[String(mid)] || null;
+}
+// Compact "AAA Statcast" pill row on the hitter detail card - the batter-side
+// mirror of palFitPanel (which is pitchers-only). Returns "" whenever the
+// player is a pitcher or has no sidecar row: no empty shell. The pill row
+// flex-wraps so narrow viewports stack pills instead of overflowing.
+function aaaStatcastPanel(p) {
+  if (!p) return "";
+  const pos = String(p.position || "").toUpperCase();
+  const isPit = !!(p.statline && p.statline.is_pitcher)
+             || ((p.sabermetrics || {}).is_pitcher === true)
+             || /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(pos);
+  if (isPit) return "";                // hitter prospects only
+  ensureAaaStatcast();                 // lazy-load on the first hitter card
+  const r = _aaaStatcastFor(p);
+  if (!r) return "";                   // not covered -> no panel at all
+  const f1 = v => (v != null && isFinite(v)) ? Number(v).toFixed(1) : null;
+  const f3 = v => (v != null && isFinite(v)) ? Number(v).toFixed(3) : null;
+  const pill = (label, txt, title, cls) => (txt == null) ? "" :
+    `<span class="rps-plus-pill ${cls || "is-neutral"}" title="${escapeHtml(title)}">${escapeHtml(label)} ${escapeHtml(txt)}</span>`;
+  const luck = (r.luck_gap != null && isFinite(r.luck_gap)) ? Number(r.luck_gap) : null;
+  const luckTxt = (luck != null) ? `${luck > 0 ? "+" : ""}${luck.toFixed(3)}` : null;
+  const luckCls = (luck == null || luck === 0) ? "is-neutral" : (luck > 0 ? "is-pos" : "is-neg");
+  const luckTitle = "Luck gap = xwOBA minus wOBA at AAA. Positive: his AAA line understates the underlying contact quality (xwOBA above wOBA), so the surface stats sell him short. Negative: results have outrun the contact quality.";
+  const pills = [
+    pill("xwOBA", f3(r.xwoba), "Expected wOBA from contact quality (exit velo + launch angle) plus real K/BB, AAA tracked parks only."),
+    pill("EV", f1(r.ev) != null ? `${f1(r.ev)} mph` : null, "Average exit velocity on batted balls at AAA."),
+    pill("HardHit%", f1(r.hardhit_percent) != null ? `${f1(r.hardhit_percent)}%` : null, "Share of batted balls hit 95+ mph at AAA."),
+    pill("Whiff%", f1(r.whiff) != null ? `${f1(r.whiff)}%` : null, "Swings and misses per swing at AAA."),
+    pill("Luck", luckTxt, luckTitle, luckCls),
+  ].filter(Boolean).join("");
+  if (!pills) return "";               // every metric null -> skip entirely
+  const suffix = [r.season != null ? `AAA ${r.season}` : "AAA",
+                  r.pa != null ? `${r.pa} PA` : null].filter(Boolean).join(", ");
+  return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:10px 14px;margin-bottom:12px;background:var(--bg-secondary);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">AAA Statcast</div>
+        <div style="font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${escapeHtml(suffix)}</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;">${pills}</div>
+    </div>`;
+}
+// ===== A-ball Statcast signal pill (data/statcast_alevel_signals.json) ======
+// S-XLINE-4 (registry xfv_statcast_line4) DISPLAY-ONLY surface. The grade
+// overlay was refused by its safety battery, so the validated residual read
+// renders as one informational pill and changes NO served number:
+//   Hitters:  whiff_z minus the frozen OLS fit on current-K z. Residual at or
+//             above +0.75 = swing-and-miss ahead of the current strikeout
+//             rate (future K% risk the line has not paid for); at or below
+//             -0.75 = contact lean (K rate looks inflated vs the swing data).
+//   Pitchers: velo_z minus the frozen fit on K%-against z. At or above +0.75
+//             = velocity ahead of the strikeout results (future K% upside);
+//             at or below -0.75 = results outrunning the raw velocity.
+// Coefficients are FROZEN in the sidecar (frozen_coefficients) - serve time
+// never refits. Same lazy idiom as aaaStatcastPanel: fetched once on the
+// first detail card, cached module-level, repainted via scheduleRender when
+// it lands. Players outside by_mlbam or inside the +/-0.75 band render
+// nothing at all (no empty shell).
+let _ALEVEL_SIG = null, _ALEVEL_SIG_LOADING = false;
+function ensureAlevelSignals() {
+  if (_ALEVEL_SIG !== null || _ALEVEL_SIG_LOADING) return;
+  _ALEVEL_SIG_LOADING = true;
+  fetch("/data/statcast_alevel_signals.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _ALEVEL_SIG = (j && j.by_mlbam && j.frozen_coefficients)
+        ? j : { by_mlbam: {}, frozen_coefficients: {} };
+      scheduleRender();
+    })
+    .catch(() => { _ALEVEL_SIG = { by_mlbam: {}, frozen_coefficients: {} }; });
+}
+function _alevelSigFor(p) {
+  if (!_ALEVEL_SIG || !p) return null;
+  const mid = p.mlbam_id || (p.career_war || {}).mlbam_id;
+  if (!mid) return null;
+  return _ALEVEL_SIG.by_mlbam[String(mid)] || null;
+}
+// Compact one-pill panel on the detail card Overview - sits directly after
+// the AAA Statcast panel slot (hitters) and doubles as the pitcher home,
+// since the AAA panel is hitters-only and the A/CPX signal pool barely
+// overlaps it. Muted header suffix carries level + season + n_pitches.
+function alevelSignalPanel(p) {
+  if (!p) return "";
+  ensureAlevelSignals();               // lazy-load on the first detail card
+  const r = _alevelSigFor(p);
+  if (!r) return "";                   // not covered -> no panel at all
+  const co = (_ALEVEL_SIG && _ALEVEL_SIG.frozen_coefficients) || {};
+  const fit = r.side === "pit" ? co.pit_velo_on_ka : co.hit_whiff_on_k;
+  if (!fit || fit.slope == null || fit.intercept == null) return "";
+  const sigZ = r.side === "pit" ? r.velo_z : r.whiff_z;
+  const kZ = r.side === "pit" ? r.k_a_z : r.k_z;
+  if (sigZ == null || kZ == null || !isFinite(sigZ) || !isFinite(kZ)) return "";
+  const residZ = sigZ - (fit.slope * kZ + fit.intercept);
+  if (!(residZ >= 0.75 || residZ <= -0.75)) return "";  // inside the band: no pill
+  const lvlWord = r.level === "CPX" ? "the complex level" : "Single-A";
+  let label, cls, title;
+  if (r.side === "pit") {
+    if (residZ >= 0.75) {
+      label = "A-ball velo lean"; cls = "is-pos";
+      title = `Fastball velocity runs ahead of his strikeout results at ${lvlWord}: future K% tends to catch up (S-XLINE-4 validated signal)`;
+    } else {
+      label = "A-ball velo deficit"; cls = "is-neg";
+      title = `Fastball velocity runs behind his strikeout results at ${lvlWord}: future K% tends to fade (S-XLINE-4 validated signal)`;
+    }
+  } else {
+    if (residZ >= 0.75) {
+      label = "A-ball K risk"; cls = "is-neg";
+      title = `Swing-and-miss runs ahead of his strikeout rate at ${lvlWord}: future K% tends to catch up (S-XLINE-4 validated signal)`;
+    } else {
+      label = "A-ball contact lean"; cls = "is-pos";
+      title = `Swing-and-miss runs behind his strikeout rate at ${lvlWord}: future K% tends to hold or improve (S-XLINE-4 validated signal)`;
+    }
+  }
+  const suffix = [
+    [r.level, r.season != null ? String(r.season) : null].filter(Boolean).join(" ") || null,
+    r.n_pitches != null ? `${r.n_pitches} pitches` : null,
+  ].filter(Boolean).join(", ");
+  return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:10px 14px;margin-bottom:12px;background:var(--bg-secondary);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">A-ball Statcast signal</div>
+        <div style="font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${escapeHtml(suffix)}</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;">
+        <span class="rps-plus-pill ${cls}" title="${escapeHtml(title)}">${escapeHtml(label)}</span>
+      </div>
+    </div>`;
+}
+// ----- A-ball whiff / FB-velo CARD PILLS (same sidecar, raw measurement) ----
+// Companion to alevelSignalPanel above, and a DIFFERENT read. The panel only
+// fires when the residual-vs-K fit clears +/-0.75; these pills show the raw
+// TRACKED measurement for every covered player (~603 in by_mlbam; the hitter
+// whiff-on-K call code was fit on n=788), so a reader can see the underlying
+// number rather than only the derived lean.
+//
+// DISPLAY ONLY, and deliberately so. The S-XLINE-4 grade overlay was NO-SHIP
+// (the rank-space ceiling problem), so nothing here feeds a grade, a rank, a
+// surplus dollar, or the TBS composite. The pill labels carry the level so
+// "A" / "CPX" is never mistaken for an upper-minors or MLB measurement, and
+// the tooltips say outright that this is a low-minors measurement signal and
+// not a grade input.
+//
+// Fail-soft contract: renders "" when the sidecar is absent, still in flight,
+// missing this player, or missing the specific metric. Never throws.
+function alevelSignalPillsHTML(p) {
+  if (!p) return "";
+  ensureAlevelSignals();                 // lazy-load, same cache as the panel
+  const r = _alevelSigFor(p);
+  if (!r) return "";                     // not covered -> no pills at all
+  const lvlTag  = r.level === "CPX" ? "CPX" : "A";
+  const lvlWord = r.level === "CPX" ? "complex level" : "Single-A";
+  const ctx = [
+    r.season != null ? String(r.season) : null,
+    r.n_pitches != null ? `${r.n_pitches} tracked pitches` : null,
+  ].filter(Boolean).join(", ");
+  const ctxTail = ctx ? ` (${ctx})` : "";
+  const note = " This is a low-minors tracked-measurement signal shown for context only: it is NOT an input to the FV, the eFV grade, the rank, or the surplus value.";
+  // z is signed the same way in the sidecar for both sides, but "good" flips:
+  // low whiff is good for a hitter, high velo is good for a pitcher.
+  const zCls = (z, higherIsBetter) => {
+    if (z == null || !isFinite(z)) return "is-neutral";
+    const good = higherIsBetter ? z : -z;
+    return good >= 1 ? "is-pos" : good <= -1 ? "is-neg" : "is-neutral";
+  };
+  const zTail = z => (z != null && isFinite(z))
+    ? ` Pool z ${z > 0 ? "+" : ""}${Number(z).toFixed(2)} against the ${lvlWord} ${r.season != null ? r.season + " " : ""}signal-qualified group.`
+    : "";
+  const out = [];
+  if (r.side === "pit") {
+    const v = r.fb_velo;
+    if (v != null && isFinite(v)) {
+      out.push(`<span class="rps-plus-pill ${zCls(r.velo_z, true)}" title="${escapeHtml(
+        `${lvlTag} FB velo ${Number(v).toFixed(1)} mph: his average tracked fastball velocity at ${lvlWord}${ctxTail}.${zTail(r.velo_z)}${note}`
+      )}">${lvlTag} FB ${Number(v).toFixed(1)}</span>`);
+    }
+  } else {
+    const w = r.whiff_share;
+    if (w != null && isFinite(w)) {
+      out.push(`<span class="rps-plus-pill ${zCls(r.whiff_z, false)}" title="${escapeHtml(
+        `${lvlTag} whiff ${(Number(w) * 100).toFixed(1)}%: swings and misses per swing on tracked pitches at ${lvlWord}${ctxTail}.${zTail(r.whiff_z)}${note}`
+      )}">${lvlTag} Whiff ${(Number(w) * 100).toFixed(1)}%</span>`);
+    }
+  }
+  return out.join("");
+}
+// ===== Per-source grade normalization readout ==============================
+// Consensus FV is NOT the average of the published grades. Each source's FV is
+// first quantile-mapped onto the FanGraphs scale (consensus.py, grade_norm,
+// applied BEFORE the vote and before the dropped-off shrink) so a chronically
+// hot or cold grader is de-biased, and the weighted mean is taken over those
+// NORMALIZED values. That is why a player published at 45/50/50 can carry a
+// consensus of 51, which readers have repeatedly read as an arithmetic bug
+// (the Ferris case). These helpers let the per-source rows show the whole
+// chain - published grade, normalized grade, vote weight - so the number is
+// legible instead of surprising.
+//
+// The normalized per-source value is only displayable when the payload carries
+// it; the key name is owned upstream, so probe the plausible ones and say
+// "not in this payload" rather than guessing or back-solving a number.
+function _normalizedFvOf(info) {
+  if (!info || typeof info !== "object") return null;
+  for (const k of ["fv_normalized", "fv_norm", "fv_for_consensus",
+                   "fv_consensus_input", "fv_scaled"]) {
+    const v = info[k];
+    if (v != null && isFinite(v)) return Number(v);
+  }
+  return null;
+}
+// Relative vote weights (data/source_weights.json). Currently an intentionally
+// EMPTY map - the weights were reverted to equal on 2026-07-25 because the
+// forward-chained A/B landed inside its permutation null - so the honest
+// display for every source today is "1.00 (equal vote)". Lazy, fail-soft.
+let _SRC_WEIGHTS = null, _SRC_WEIGHTS_LOADING = false;
+function ensureSourceWeights() {
+  if (_SRC_WEIGHTS !== null || _SRC_WEIGHTS_LOADING) return;
+  _SRC_WEIGHTS_LOADING = true;
+  fetch("/data/source_weights.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _SRC_WEIGHTS = (j && j.weights && typeof j.weights === "object") ? j.weights : {};
+      scheduleRender();
+    })
+    .catch(() => { _SRC_WEIGHTS = {}; });
+}
+function _srcWeightText(src) {
+  ensureSourceWeights();
+  if (_SRC_WEIGHTS === null) return null;          // still in flight
+  const w = _SRC_WEIGHTS[src];
+  if (w != null && isFinite(w)) return `${Number(w).toFixed(2)}`;
+  return "1.00 (equal vote)";                      // absent from the map = 1.0
+}
+// One tooltip line per source: published grade, normalized grade, weight.
+function _perSourceGradeTip(src, info, label) {
+  if (!info) return "";
+  const bits = [];
+  const pub = info.fv_published;
+  bits.push(pub != null && isFinite(pub)
+    ? `published ${Number.isInteger(pub) ? pub : Number(pub).toFixed(1)}${info.fv_plus && _fvQualifiesForPlus(pub) ? "+" : ""}`
+    : "published grade: none (rank only)");
+  const norm = _normalizedFvOf(info);
+  bits.push(norm != null
+    ? `normalized ${Number(norm).toFixed(1)}`
+    : "normalized grade not in this payload");
+  const w = _srcWeightText(src);
+  if (w) bits.push(`weight ${w}`);
+  if (info.rank != null) bits.push(`rank #${info.rank}`);
+  if (info.dropped_off === true && info.fv_adjusted != null && isFinite(info.fv_adjusted)) {
+    bits.push(`dropped off this cycle, shrunk to ${Number(info.fv_adjusted).toFixed(1)} before the vote`);
+  }
+  const explain = norm != null
+    ? " Consensus averages the NORMALIZED column, not the published one, so it can land outside the published range."
+    : " Consensus averages each source's quantile-normalized grade, not the published one, so it can land outside the published range.";
+  return `${label}: ${bits.join(" · ")}.${explain}`;
+}
+// ===== Archetype comps panel (data/archetype_comps.json) ===================
+// Renders the productized archetype strata as COMPS AND CONTEXT: "players who
+// looked like this resolved to N WAR on average." Display only. Nothing in
+// here touches an FV, an eFV grade, a rank, a surplus dollar, or the TBS
+// composite; the archetype search was measured to have no out-of-sample value
+// against the shipped model, so it is not a correction to anything.
+//
+// HONESTY CONTRACT - READ BEFORE EDITING.
+// The upstream artifact ships a `health_warning` string claiming that "every
+// one of these strata has an out-of-fold residual against the shipped eFV
+// model that is statistically zero." THAT CLAIM IS FALSE and this panel must
+// never render it. Audited over the 3,957-stratum descriptive table, 477
+// strata (12.05%) carry |t| >= 2 and 124 carry |t| >= 3, with a max |t| of
+// 4.91. So a per-comp reliability read is mandatory: we consume the producing
+// module's per-stratum flag when it is present, fall back to |oof_resid_t| >= 2
+// when it is not, and say "unknown" when neither exists. A flagged stratum is
+// labelled as flagged, and NO comp is ever described as "validated" - a clean
+// residual means "no measurable miss here", which is not the same as evidence.
+//
+// Defensive by construction: the sidecar may not exist at all when this page
+// is served. Absent file, empty file, unknown key layout, missing player, or a
+// malformed comp row all resolve to "" (no panel, no empty shell, no throw).
+let _ARCH_COMPS = null, _ARCH_COMPS_LOADING = false;
+function ensureArchetypeComps() {
+  if (_ARCH_COMPS !== null || _ARCH_COMPS_LOADING) return;
+  _ARCH_COMPS_LOADING = true;
+  fetch("/data/archetype_comps.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _ARCH_COMPS = (j && typeof j === "object") ? j : {};
+      scheduleRender();                  // first paint can beat this fetch
+    })
+    .catch(() => { _ARCH_COMPS = {}; });  // absent sidecar is a normal state
+}
+// The producing module owns its own key layout; probe the plausible ones
+// rather than hard-coding one and rendering nothing if it picked another.
+function _archCompsIndex() {
+  const j = _ARCH_COMPS;
+  if (!j || typeof j !== "object") return null;
+  for (const k of ["by_mlbam", "by_player_key", "by_key", "players", "by_player"]) {
+    if (j[k] && typeof j[k] === "object") return { map: j[k], keyName: k };
+  }
+  return null;
+}
+function _archCompsFor(p) {
+  if (!p) return null;
+  const idx = _archCompsIndex();
+  if (!idx) return null;
+  const mid = p.mlbam_id || (p.career_war || {}).mlbam_id;
+  const cands = [];
+  if (idx.keyName === "by_mlbam") { if (mid) cands.push(String(mid)); }
+  else { if (p.player_key) cands.push(String(p.player_key)); if (mid) cands.push(String(mid)); }
+  let hit = null;
+  for (const c of cands) { if (idx.map[c] != null) { hit = idx.map[c]; break; } }
+  if (hit == null) return null;
+  // Entry may be a bare list of comps or a wrapper carrying one.
+  if (Array.isArray(hit)) return hit;
+  for (const k of ["comps", "archetypes", "strata", "rows"]) {
+    if (Array.isArray(hit[k])) return hit[k];
+  }
+  return null;
+}
+// Reliability resolution. Prefers the producing module's explicit flag; the
+// |t| >= 2 fallback exists so this panel is never silently over-confident when
+// the flag is missing or renamed.
+function _archReliability(c) {
+  if (!c || typeof c !== "object") return { state: "unknown", basis: null, t: null };
+  const t = (c.oof_resid_t != null && isFinite(c.oof_resid_t)) ? Math.abs(Number(c.oof_resid_t)) : null;
+  for (const k of ["reliable", "is_reliable", "residual_clean", "oof_clean"]) {
+    if (typeof c[k] === "boolean") return { state: c[k] ? "clean" : "flagged", basis: "flag", t };
+  }
+  for (const k of ["reliability", "reliability_flag", "residual_flag", "flag"]) {
+    const v = c[k];
+    if (typeof v === "string" && v) {
+      const s = v.toLowerCase();
+      if (/^(reliable|clean|ok|pass|green|good)/.test(s)) return { state: "clean", basis: "flag", t };
+      if (/^(unreliable|flagged|suspect|fail|red|amber|warn|caution)/.test(s)) return { state: "flagged", basis: "flag", t };
+      return { state: "unknown", basis: "flag", t };
+    }
+    if (typeof v === "boolean") return { state: v ? "clean" : "flagged", basis: "flag", t };
+  }
+  if (t != null) return { state: t >= 2 ? "flagged" : "clean", basis: "derived", t };
+  return { state: "unknown", basis: null, t: null };
+}
+const _ARCH_DIM_LABEL = {
+  age_rel_level: "age vs level", ops_rel: "OPS vs level", iso_rel: "ISO vs level",
+  k_rel: "K% vs level", bb_rel: "BB% vs level", obp_rel: "OBP vs level",
+  peak_ops_rel: "peak OPS vs level", peak_k_rel: "peak K% vs level",
+  prod_trend: "production trend", fv_trend: "FV trend", n_milb_seasons: "MiLB seasons",
+  n_sources: "sources", pos_group: "position", pos_fine: "position",
+  acq: "acquired", level: "level", age: "age", fv: "FV", pick: "draft round",
+  bonus: "bonus", il_any_pre: "injury list", tool_hit: "hit tool",
+  tool_game_pwr: "game power", tool_raw_pwr: "raw power", tool_speed: "speed",
+  tool_field: "field", tool_throw: "arm",
+};
+// Value codes are rendered without asserting a DIRECTION we have not verified.
+// The tertile codes stay "tertile 1/2/3" rather than "bottom/top third": the
+// producing module owns that ordering, and for a rate like k_rel the high
+// tertile is the bad end, so a guessed gloss could invert the meaning.
+const _ARCH_VAL_LABEL = {
+  VYNG: "very young", YNG: "young", ONTIME: "on time", OLD: "old",
+  PLUS: "plus", AVG: "average", BLW: "below", BURNER: "burner",
+  T1: "tertile 1", T2: "tertile 2", T3: "tertile 3",
+  ABOVE: "above", BELOW: "below", NOIL: "no IL stint",
+  IFA: "international", HS: "high school", COL: "college",
+  SRC1: "1 source", SRC2: "2 sources",
+  "FV50+": "50+", FV45: "45", FV40: "40", "FV35-": "35 or below",
+  S1: "1", "S2-3": "2-3", "S4+": "4+",
+};
+function _archPrettyId(id) {
+  if (!id) return "";
+  return String(id).split("|").map(part => {
+    const eq = part.indexOf("=");
+    if (eq < 0) return part.replace(/_/g, " ");
+    const k = part.slice(0, eq), v = part.slice(eq + 1);
+    const kl = _ARCH_DIM_LABEL[k] || k.replace(/_/g, " ");
+    const vl = _ARCH_VAL_LABEL[v] || v;
+    return `${kl} ${vl}`;
+  }).join(" · ");
+}
+function archetypeCompPanel(p) {
+  if (!p) return "";
+  ensureArchetypeComps();                // lazy-load on the first detail card
+  const comps = _archCompsFor(p);
+  if (!comps || !comps.length) return "";
+  const j = _ARCH_COMPS || {};
+  const f1 = v => (v != null && isFinite(v)) ? Number(v).toFixed(1) : null;
+  const pct = v => (v != null && isFinite(v)) ? `${(Number(v) * 100).toFixed(0)}%` : null;
+  let nClean = 0, nFlagged = 0, nUnknown = 0;
+  const rows = comps.map(c => {
+    if (!c || typeof c !== "object") return "";
+    const rel = _archReliability(c);
+    if (rel.state === "clean") nClean++;
+    else if (rel.state === "flagged") nFlagged++;
+    else nUnknown++;
+    const name = c.label || c.name || _archPrettyId(c.id) || "unnamed stratum";
+    const n = (c.n_complete != null ? c.n_complete : c.n);
+    const war = f1(c.mean_war);
+    const ci = Array.isArray(c.war_ci95) && c.war_ci95.length === 2
+      ? `${f1(c.war_ci95[0])} to ${f1(c.war_ci95[1])}` : null;
+    const bust = pct(c.bust_rate_le_0p5 != null ? c.bust_rate_le_0p5 : c.bust_rate);
+    const tTxt = rel.t != null ? rel.t.toFixed(2) : "not reported";
+    let chipCls, chipTxt, chipTip;
+    if (rel.state === "flagged") {
+      chipCls = "is-neg"; chipTxt = "residual flagged";
+      chipTip = `This stratum's out-of-fold residual against the shipped eFV model is NOT statistically zero (|t| ${tTxt}${rel.basis === "derived" ? ", derived from the reported t because the sidecar carried no flag" : ""}). Read it as a description of who else looked like this, not as a checked or corrected expectation. It does not move his grade.`;
+    } else if (rel.state === "clean") {
+      chipCls = "is-neutral"; chipTxt = "residual clean";
+      chipTip = `This stratum's out-of-fold residual against the shipped eFV model is inside the noise band (|t| ${tTxt}${rel.basis === "derived" ? ", derived from the reported t because the sidecar carried no flag" : ""}). That means no measurable miss here. It is NOT a validation of the comp and it does not move his grade.`;
+    } else {
+      chipCls = "is-null"; chipTxt = "reliability unknown";
+      chipTip = "The sidecar carried no reliability flag and no out-of-fold residual for this stratum, so its accuracy against the shipped model is unmeasured. Treat it as an unchecked comp.";
+    }
+    const stats = [
+      n != null ? `n ${n}` : null,
+      war != null ? `mean ${war} WAR` : null,
+      ci ? `95% CI ${ci}` : null,
+      bust ? `bust ${bust}` : null,
+    ].filter(Boolean).join(" · ");
+    const priced = c.already_priced === true
+      ? ` <span class="rps-plus-pill is-null" title="${escapeHtml("The shipped model already prices this pattern, so the comp is not new information about him.")}">already priced</span>`
+      : "";
+    return `<div style="padding:6px 0;border-bottom:1px solid var(--border-light);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;">
+        <div style="font-size:12px;color:var(--text-primary);min-width:0;">${escapeHtml(name)}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0;">
+          <span class="rps-plus-pill ${chipCls}" title="${escapeHtml(chipTip)}">${escapeHtml(chipTxt)}</span>${priced}
+        </div>
+      </div>
+      ${stats ? `<div style="font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;margin-top:2px;">${escapeHtml(stats)}</div>` : ""}
+    </div>`;
+  }).filter(Boolean).join("");
+  if (!rows) return "";
+  // Audit line. Prefer counts the producing module published; otherwise
+  // compute them over whatever strata table the sidecar carries; otherwise
+  // state the caveat qualitatively rather than inventing numbers.
+  const summary = j.reliability_summary || j.residual_audit || null;
+  let auditTxt = "";
+  const _sN = summary && (summary.n_strata != null ? summary.n_strata : summary.n);
+  const _s2 = summary && (summary.n_flagged_t2 != null ? summary.n_flagged_t2 : summary.n_flagged);
+  const _s3 = summary && summary.n_flagged_t3;
+  const _sMax = summary && (summary.max_abs_t != null ? summary.max_abs_t : summary.max_t);
+  const _grp = n => Number(n).toLocaleString("en-US");
+  if (_sN != null && _s2 != null) {
+    auditTxt = `${_grp(_s2)} of ${_grp(_sN)} strata (${((_s2 / _sN) * 100).toFixed(2)}%) carry |t| >= 2`
+      + (_s3 != null ? `, ${_grp(_s3)} carry |t| >= 3` : "")
+      + (_sMax != null && isFinite(_sMax) ? `, max ${Number(_sMax).toFixed(2)}` : "") + ".";
+  } else {
+    const all = Array.isArray(j.archetypes) ? j.archetypes
+              : Array.isArray(j.strata) ? j.strata : null;
+    if (all && all.length) {
+      let n2 = 0, n3 = 0, mx = 0;
+      for (const a of all) {
+        const t = (a && a.oof_resid_t != null && isFinite(a.oof_resid_t)) ? Math.abs(Number(a.oof_resid_t)) : null;
+        if (t == null) continue;
+        if (t >= 2) n2++;
+        if (t >= 3) n3++;
+        if (t > mx) mx = t;
+      }
+      if (n2 > 0) {
+        auditTxt = `${_grp(n2)} of ${_grp(all.length)} strata (${((n2 / all.length) * 100).toFixed(2)}%) carry |t| >= 2, ${_grp(n3)} carry |t| >= 3, max ${mx.toFixed(2)}.`;
+      }
+    }
+  }
+  const mix = [
+    nFlagged ? `${nFlagged} flagged` : null,
+    nClean ? `${nClean} clean` : null,
+    nUnknown ? `${nUnknown} unmeasured` : null,
+  ].filter(Boolean).join(" · ");
+  // Deliberately does NOT print j.health_warning: see the honesty contract at
+  // the top of this section. The artifact's own blanket "every stratum's
+  // residual is statistically zero" line is not true and would mislead.
+  const caveat = "Comps and context only. These strata never move an FV, an eFV grade, a rank, or a surplus dollar. A per-stratum residual is not uniformly zero across the archetype table"
+    + (auditTxt ? ": " + auditTxt : ", so each row carries its own reliability read.")
+    + " Rows marked flagged are not reliable against the shipped model; rows marked clean showed no measurable miss, which is not the same as being validated.";
+  return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:10px 14px;margin-bottom:12px;background:var(--bg-secondary);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Archetype comps</div>
+        <div style="font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${escapeHtml(mix)}</div>
+      </div>
+      <div style="margin-top:6px;">${rows}</div>
+      <div style="font-size:10px;color:var(--text-tertiary);margin-top:7px;line-height:1.45;">${escapeHtml(caveat)}</div>
+    </div>`;
+}
+// ===== Advancement Pace+ panel (data/advancement_pace.json) ================
+// W5 AP+ - DESCRIPTIVE DISPLAY ONLY (docs/wills-2026-07-23/GATES.md product
+// wave). Peer-adjusted minor-league ladder pace for HITTERS: 100 = typical
+// for a comparable path, 110 = one standard unit faster, capped 70-130.
+// The sidecar is baked offline by advancement_pace_export.py and is
+// model_eligible:false by contract - this panel and the glossary are its
+// ONLY consumers; it never touches any served grade, rank, or sort. All
+// ladder fields are ap_-prefixed (the eFV level_rank scale is different -
+// documented name-collision hazard). Same lazy idiom as aaaStatcastPanel.
+let _AP_PACE = null, _AP_PACE_LOADING = false;
+function ensureAdvancementPace() {
+  if (_AP_PACE !== null || _AP_PACE_LOADING) return;
+  _AP_PACE_LOADING = true;
+  fetch("/data/advancement_pace.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _AP_PACE = (j && j.by_mlbam) ? j : { by_mlbam: {}, key_to_mlbam: {} };
+      scheduleRender();
+    })
+    .catch(() => { _AP_PACE = { by_mlbam: {}, key_to_mlbam: {} }; });
+}
+function _apPaceFor(p) {
+  if (!_AP_PACE || !p) return null;
+  const mid = p.mlbam_id || (p.career_war || {}).mlbam_id
+           || (_AP_PACE.key_to_mlbam || {})[p.player_key];
+  if (!mid) return null;
+  return _AP_PACE.by_mlbam[String(mid)] || null;
+}
+const _AP_LEVEL_LABEL = { "Rk": "Complex", "A": "Low-A", "A+": "High-A", "AA": "Double-A", "AAA": "Triple-A" };
+function _apOrdinal(n) {
+  const v = n % 100;
+  if (v >= 11 && v <= 13) return n + "th";
+  return n + ({ 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th");
+}
+// Card block per the source module's own display charter: score +
+// percentile + tier chip + level trajectory ladder + the display-state
+// footnotes (debut freeze / Insufficient / Early small-sample / 2020 gap).
+// Hitters only - pitchers render nothing at all.
+function apPacePanel(p) {
+  if (!p) return "";
+  const pos = String(p.position || "").toUpperCase();
+  const isPit = !!(p.statline && p.statline.is_pitcher)
+             || ((p.sabermetrics || {}).is_pitcher === true)
+             || /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(pos);
+  if (isPit) return "";                // hitters only
+  ensureAdvancementPace();             // lazy-load on the first hitter card
+  const r = _apPaceFor(p);
+  if (!r) return "";                   // not covered -> no panel at all
+  const methodTitle = "Advancement Pace+ describes how quickly a hitter has moved through the affiliated minor-league ladder relative to peers with the same starting level, professional experience, entry age, era, position group, and entry pathway. 100 = typical pace, 110 = one standard unit faster (never percentage language). Descriptive only: not a talent grade, not a projection, and never an input to any Eephus model.";
+  const suffix = r.debut_frozen && r.debut_season
+    ? `MiLB path through debut (${r.debut_season})`
+    : (r.ap_asof_season != null
+        ? `through ${r.ap_asof_season}${r.ap_asof_season >= new Date().getFullYear() ? " (in progress)" : ""}`
+        : "");
+  let body;
+  if (r.ap_plus == null || r.ap_tier === "Insufficient") {
+    body = `<div style="display:flex;align-items:baseline;gap:10px;margin-top:7px;">
+        <span style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--text-tertiary);" title="${escapeHtml(methodTitle)}">-</span>
+        <span style="font-size:10px;color:var(--text-tertiary);">Not enough professional history yet (needs a 30+ PA level assignment).</span>
+      </div>`;
+  } else {
+    const score = Math.round(r.ap_plus);
+    const pct = r.ap_percentile != null ? Math.min(99, r.ap_percentile) : null;
+    const word = score > 103 ? "faster than" : (score >= 97 ? "at a typical pace for" : "slower than");
+    const lead = `Advanced through the minor-league ladder ${word} comparable players with a similar starting level, age, position group, entry pathway, and professional experience.`;
+    const ladder = (r.level_history || []).map(row =>
+      `<div style="white-space:nowrap;"><span style="color:var(--text-tertiary);">${row[0]}</span>&nbsp; ${escapeHtml((row[1] || []).map(lv => _AP_LEVEL_LABEL[lv[0]] || lv[0]).join(" → "))}</div>`
+    ).join("");
+    const notes = [];
+    if (r.debut_frozen) notes.push("Frozen at the last pre-MLB read; this never updates again.");
+    if (r.ap_tier === "Early") notes.push("Small sample: the score is shrunk toward 100.");
+    if (r.spans_2020) notes.push("2020 minor-league season cancelled; not counted as development time.");
+    body = `<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:7px;">
+        <span style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--text-primary);" title="${escapeHtml(methodTitle)}">${score}</span>
+        ${pct != null ? `<span class="rps-plus-pill is-neutral" title="Percentile among scored hitters with the same number of active professional seasons.">${escapeHtml(_apOrdinal(pct))} pctile</span>` : ""}
+        <span class="rps-plus-pill is-neutral" title="Sample tier. Based on ${r.ap_experience_year || 0} active professional seasons and ${r.ap_meaningful_assignments || 0} meaningful level assignments (30+ PA each).">${escapeHtml(String(r.ap_tier || ""))} sample</span>
+      </div>
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.45;margin-top:5px;">${escapeHtml(lead)}</div>
+      ${ladder ? `<div style="font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);line-height:1.6;margin-top:6px;overflow-x:auto;">${ladder}</div>` : ""}
+      ${notes.length ? `<div style="font-size:9px;color:var(--text-tertiary);line-height:1.5;margin-top:5px;">${escapeHtml(notes.join(" "))}</div>` : ""}`;
+  }
+  return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:10px 14px;margin-bottom:12px;background:var(--bg-secondary);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;" title="${escapeHtml(methodTitle)}">Advancement Pace+</div>
+        <div style="font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${escapeHtml(suffix)}</div>
+      </div>
+      ${body}
+    </div>`;
+}
+// ===== Defensive home chip (data/def_home.json) =============================
+// W7 DEF-RISK - RISK CONTEXT ONLY (docs/wills-2026-07-23/GATES.md product
+// wave). Stay-probability band for premium-position prospects (listed
+// C/SS/CF/2B/3B) from the position-migration defense model sidecar
+// (def_home_export.py reshapes the deploy-excluded prospect_def_value
+// internals). Visibly separate from the grade; NEVER part of any rank or
+// sort. Active prospects only - debuted players' defensive home is being
+// revealed on the field, not projected.
+let _DEF_HOME = null, _DEF_HOME_LOADING = false;
+function ensureDefHome() {
+  if (_DEF_HOME !== null || _DEF_HOME_LOADING) return;
+  _DEF_HOME_LOADING = true;
+  fetch("/data/def_home.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _DEF_HOME = (j && j.by_mlbam) ? j : { by_mlbam: {}, key_to_mlbam: {} };
+      scheduleRender();
+    })
+    .catch(() => { _DEF_HOME = { by_mlbam: {}, key_to_mlbam: {} }; });
+}
+function _defHomeFor(p) {
+  if (!_DEF_HOME || !p) return null;
+  const mid = p.mlbam_id || (p.career_war || {}).mlbam_id
+           || (_DEF_HOME.key_to_mlbam || {})[p.player_key];
+  if (!mid) return null;
+  return _DEF_HOME.by_mlbam[String(mid)] || null;
+}
+function defHomeChip(p) {
+  if (!p) return "";
+  if (p.status === "debuted" || p.status === "graduated") return "";
+  const pos = String(p.position || "").toUpperCase();
+  const isPit = !!(p.statline && p.statline.is_pitcher)
+             || ((p.sabermetrics || {}).is_pitcher === true)
+             || /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(pos);
+  if (isPit) return "";                // position players only
+  ensureDefHome();                     // lazy-load on the first hitter card
+  const r = _defHomeFor(p);
+  if (!r || !r.band) return "";        // not premium-listed -> no chip
+  const cls = r.band === "Likely stays" ? "is-pos"
+            : (r.band === "Likely moves" ? "is-neg" : "is-neutral");
+  const holdPct = r.p_hold != null ? Math.round(r.p_hold * 100) : null;
+  const title = `Stay probability ${holdPct != null ? holdPct + "%" : "n/a"} that the primary MLB home stays ${r.listed_pos}, from position-migration base rates (listed position + age + body frame), not a scouting read. Band = tercile among tracked ${r.listed_pos} prospects (cuts ${r.t_lo != null ? r.t_lo : "?"} / ${r.t_hi != null ? r.t_hi : "?"}). Risk context only - separate from the grade and never part of any rank or sort.`;
+  return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:10px 14px;margin-bottom:12px;background:var(--bg-secondary);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Defensive home</div>
+        <div style="font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${escapeHtml(r.listed_pos || "")}</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;">
+        <span class="rps-plus-pill def-home-chip ${cls}" title="${escapeHtml(title)}">${escapeHtml(r.band)}${holdPct != null ? ` · ${holdPct}%` : ""}</span>
+      </div>
     </div>`;
 }
 // ===== eFV vs consensus: the track record (C1) + reliability diagram (C2) ==
@@ -31193,17 +32037,63 @@ function efvTrackRecordSection() {
 // provisional X sits BELOW a graded X on the board (ordering WITHIN provisional is
 // preserved). Without this an un-scouted DSL cameo ranked 1:1 with graded prospects
 // of the same number. Pure display; xfv.json / xfv_ungraded.json are unchanged.
-const _PROV_RANK_PENALTY = 4;
+// RETIRED 2026-07-25 (F2): the sort value must equal the displayed value or the board
+// grade column is not monotonic. Provisionals are flagged visually, not demoted in rank.
+const _PROV_RANK_PENALTY = 0;
+// ═══════════════════════════════════════════════════════════════════════════
+// THE BOARD NUMBER - single definition. Do not add a second one.
+// ═══════════════════════════════════════════════════════════════════════════
+// efvBoardValue(x) resolves the eFV board grade (xfv.json `xfv_grade`). It is the
+// ONLY board grade: what the board DISPLAYS (efvGradeDisplay rounds it), what the
+// board SORTS on (efvRankValue / fvCmpDesc), and what the baked overall_rank is
+// built from server-side (storage.py `_board_grade`, same field, same fallback).
+// Because the displayed value IS the sort key, the visible grade column is
+// monotonic by construction and a row's rendered position cannot contradict its
+// rank field.
+//
+// PROVENANCE / why this exists
+//   2026-07-06  the DISPLAY flipped to xfv_grade_quantile; overall_rank stayed put.
+//   2026-07-15  a unification pass moved the SORT onto the quantile too and again
+//               left the rank field behind, so three orderings coexisted (rendered
+//               order, timeseries overall_rank, live_overall_rank). The owner hit it
+//               twice ("why is Arias no longer #1", "why is Cholowsky #4").
+//   2026-07-25  owner decision: xfv_grade is the single number, everywhere. The
+//               floor-heavy distribution (p50 = 20.0) is ACCEPTED, not a bug: the
+//               board carries a very large provisional cohort.
+//   2026-07-25  W-SIDESCALE. The raw model grade is not cross-side comparable at the
+//               top (best pitcher 59.2 vs hitter p99 63.3 => a 25H/0P top 25), so the
+//               SCALE of this field is owned by efv_board_scale.py: a per-side affine
+//               calibration fit by equating each side's grade to realized first-6yr
+//               WAR. Affine => order-preserving within a side, so the column stays
+//               monotonic. It is applied SERVER-SIDE at the artifact seam (xfv.json
+//               `xfv_grade` carries the board number, `xfv_grade_model_raw` the
+//               pre-calibration value, `meta.board_scale` the coefficients and the
+//               gate record). Deliberately NO arithmetic here: the ~30 other reads of
+//               `x.xfv_grade` in this file must see the same number this function
+//               returns, and a second copy of the coefficients in JS is exactly the
+//               drift BOARD_GRADE_FIELD exists to prevent. Default OFF -- until it is
+//               enabled this field is byte-identical to the raw model grade.
+// If you are about to read xfv_grade_quantile or xfv_grade_realized for an ORDERING
+// or a DISPLAYED board grade, that is the bug this function exists to prevent. The
+// quantile stays a legitimate input elsewhere (surplus pricing, fantasy dynasty
+// ranks, the eFV-vs-consensus scale note): it is simply not the board.
+function efvBoardValue(x) {
+  return (x && x.xfv_grade != null) ? Number(x.xfv_grade) : null;
+}
 function efvRankValue(p) {
   const x = getEfv(p);
-  // Board ranking on the 20-80-scale eFV grade (xfv_grade_quantile) -- the SAME number the
-  // board displays, so same-integer players order by the underlying decimal. Falls back to
-  // the realized (pure-model) grade, then the raw grade, then consensus FV. Provisional
-  // (source-ungraded) prospects carry only xfv_grade and get a small rank penalty so an
-  // un-scouted cameo does not tie a graded prospect of the same grade.
-  if (x && x.xfv_grade_quantile != null) return x.xfv_grade_quantile;
-  if (x && x.xfv_grade_realized != null) return x.xfv_grade_realized;
-  if (x && x.xfv_grade != null) return (p && p._is_provisional) ? x.xfv_grade - _PROV_RANK_PENALTY : x.xfv_grade;
+  // Board ordering = the board number, decimal (so same-integer players order by the
+  // underlying decimal), with consensus FV as the fallback where eFV abstains.
+  // Provisional (source-ungraded) prospects carry real uncertainty vs a graded grade,
+  // so they take a fixed penalty: a provisional X sits BELOW a graded X (ordering
+  // WITHIN the provisional cohort is preserved).
+  const v = efvBoardValue(x);
+  // F2 repair 2026-07-25: the sort value MUST equal the displayed value, or the visible
+  // grade column stops being monotonic in board order - which is the entire point of the
+  // unification. Penalising the sort while displaying the unpenalised grade produced 103
+  // display inversions. Provisional prospects are flagged visually (dashed border) rather
+  // than silently demoted in the ordering.
+  if (v != null) return v;
   return (p && p.fv_close != null) ? Number(p.fv_close) : -1;
 }
 function buildEfvRankMap() {
@@ -31217,11 +32107,28 @@ function buildEfvRankMap() {
   pool.sort((a, b) => efvRankValue(b) - efvRankValue(a)
     || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
   pool.forEach((p, i) => { _EFV_RANK[p.player_key] = i + 1; });
+  // TIE-BLOCK census. On the raw-grade board ~3.1k of ~4.5k rows sit on the 20.0
+  // provisional floor, so for those players the rank NUMBER is decided by the tiebreak
+  // chain, not by the grade: a 0.1 grade nudge vaults them over thousands of tied
+  // players. getEfvRankDelta uses this to refuse to publish a rank move that is really
+  // just tie-order churn.
+  _EFV_TIE_COUNT = {};
+  pool.forEach(p => {
+    const v = efvRankValue(p);
+    _EFV_TIE_COUNT[v] = (_EFV_TIE_COUNT[v] || 0) + 1;
+  });
   // PREVIOUS-grade eFV rank: rank the SAME pool by each player's eFV grade ~30 days ago
   // (efvPrevGrade), so the rank chip shows how many SPOTS a player climbed/fell on the eFV
   // board over the last update window. Players flat over that window keep their slot (delta 0),
   // so only genuine recent movers shift -- no lifetime climbs.
-  const prevVal = p => { const pv = efvPrevGrade(p); return pv != null ? pv : efvRankValue(p); };
+  // The provisional penalty MUST be applied on both sides. efvPrevGrade returns a bare
+  // board value while efvRankValue subtracts _PROV_RANK_PENALTY, so without this every
+  // provisional prospect would read a phantom climb worth exactly the penalty.
+  const prevVal = p => {
+    const pv = efvPrevGrade(p);
+    if (pv == null) return efvRankValue(p);
+    return pv;   // symmetric with efvRankValue, which no longer penalises (F2 repair)
+  };
   pool.slice().sort((a, b) => prevVal(b) - prevVal(a)
     || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)))
     .forEach((p, i) => { _EFV_PREV_RANK[p.player_key] = i + 1; });
@@ -31264,30 +32171,52 @@ const _EFV_RANK_WINDOW_DAYS = 30;
 function efvPrevGrade(p) {
   const hist = (typeof getEfvHistory === "function") ? getEfvHistory(p) : null;
   if (!(hist && hist.length >= 2)) return null;
-  const cutoff = Date.parse(hist[hist.length - 1].d) - _EFV_RANK_WINDOW_DAYS * 86400000;
+  const last = hist[hist.length - 1];
+  const cutoff = Date.parse(last.d) - _EFV_RANK_WINDOW_DAYS * 86400000;
   let prev = hist[0].x;                                  // fallback: earliest known grade
   for (let i = hist.length - 1; i >= 0; i--) {
     if (Date.parse(hist[i].d) <= cutoff) { prev = hist[i].x; break; }
   }
+  // BASIS REBASE (2026-07-25). xfv_history.x is the QUANTILE-scale series
+  // (efv_score.score_history maps every historical point through the live grade map),
+  // while the board is now the RAW grade. Ranking a quantile-scale "previous" against a
+  // raw-scale "current" is a cross-basis comparison: it would hand EVERY player a
+  // spurious rank delta on the day the basis changed. Anchoring on the player's OWN
+  // latest history point removes the scale offset, so what survives is his grade CHANGE
+  // over the window, expressed on the board scale. A player who has not moved gets
+  // prev === current and therefore a delta of exactly 0, which is the correct reading.
+  // Known approximation, deliberately conservative: the change is MEASURED in quantile
+  // space, which is compressed relative to raw, so real moves read slightly small rather
+  // than inflated. Delete this rebase once xfv_history is written on the raw grade.
+  const cur = efvBoardValue((typeof getEfv === "function") ? getEfv(p) : null);
+  if (cur != null && prev != null && last.x != null) return cur + (prev - last.x);
   return prev;
 }
+// A player's exact board value is shared with more than this many others -> his rank
+// NUMBER is tiebreak order, not grade order, so a rank delta for him is not information.
+const _EFV_TIE_BLOCK_MAX = 50;
 // Spots climbed (+) / fallen (-) on the eFV board since the player's last real grade move.
+// Returns null (render nothing) rather than a number the board cannot stand behind.
 function getEfvRankDelta(p) {
   if (_EFV_RANK == null || _EFV_PREV_RANK == null) buildEfvRankMap();
   if (!(p && _EFV_RANK && _EFV_PREV_RANK)) return null;
   const cur = _EFV_RANK[p.player_key], prev = _EFV_PREV_RANK[p.player_key];
-  return (cur == null || prev == null) ? null : (prev - cur);
+  if (cur == null || prev == null) return null;
+  // Deep tie block (the 20.0 provisional floor): thousands of players share this exact
+  // value, so crossing it moves the rank number by thousands of spots on a rounding-scale
+  // grade nudge. Publish nothing instead of a four-figure phantom climb.
+  const tie = _EFV_TIE_COUNT ? _EFV_TIE_COUNT[efvRankValue(p)] : null;
+  if (tie != null && tie > _EFV_TIE_BLOCK_MAX) return null;
+  return prev - cur;
 }
-// Display grade rounded UP (owner rule: FV grades show the integer ceiling).
+// The DISPLAYED board grade: efvBoardValue rounded to the NEAREST integer (eFV rounds
+// to nearest, not up -- round-to-nearest is unbiased; the round-UP rule is for consensus
+// FV / tool grades, see fvCeil). This is deliberately the SAME resolution efvRankValue
+// sorts on, so the displayed column is monotonic in the board order by construction.
+// Same-integer players are separated by the underlying decimal in efvRankValue.
 function efvGradeDisplay(x) {
-  // 20-80-SCALE headline (owner): show the model's ranking mapped onto the familiar 20-80
-  // scale (xfv_grade_quantile), rounded to the NEAREST integer (eFV rounds to nearest, not
-  // up; round-to-nearest is unbiased). Same-integer players are ordered by the underlying
-  // decimal in efvRankValue / fvCmpDesc. Falls back to the realized (pure-model) grade, then
-  // the raw grade, when the quantile map is absent (e.g. some provisional cohorts).
-  if (x && x.xfv_grade_quantile != null) return Math.round(x.xfv_grade_quantile);
-  if (x && x.xfv_grade_realized != null) return Math.round(x.xfv_grade_realized);
-  return (x && x.xfv_grade != null) ? Math.round(x.xfv_grade) : null;
+  const v = efvBoardValue(x);
+  return (v != null) ? Math.round(v) : null;
 }
 // gradeBlock(p, opts): the single grade-resolution decision reused across board rows,
 // player detail, GFX rows and the compare/tooltip paths. It centralizes the two rounding
@@ -31364,15 +32293,18 @@ function efvGradeBandHTML(x) {
   if (!band) return "";
   return `<div class="efv-grade-band" title="Outcome-distribution band on the grade scale: eFV's modeled 6-year outcome runs from about ${band.lo} to ${band.hi} on the 20-80 scale (P10 to P90). This is the spread of how the model thinks this prospect turns out, not scouting-source disagreement." style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;cursor:help;">Outcome band <b style="color:var(--text-secondary);">${band.lo}-${band.hi}</b></div>`;
 }
-// eFV-minus-consensus delta CONSISTENT with the displayed (20-80-scale quantile) grade so
-// the colored +/- chip matches the headline number.
+// eFV-minus-consensus delta, computed off the DISPLAYED board number (efvBoardValue) so
+// the colored +/- chip subtracts to exactly what the two numbers next to it show.
+// 2026-07-25: was quantile-first (xfv_minus_consensus_quantile). With the headline on the
+// raw grade that chip no longer reconciled -- Franklin Arias read eFV 64 vs consensus 58
+// with a "+3.0" chip. The pre-baked xfv_minus_consensus is the same subtraction on the raw
+// grade, so it leads; the inline subtraction is the fallback.
 function efvMinusConsensus(x) {
-  if (x && x.xfv_minus_consensus_quantile != null) return x.xfv_minus_consensus_quantile;
-  if (x && x.xfv_grade_quantile != null && x.consensus_fv != null)
-    return Math.round((x.xfv_grade_quantile - x.consensus_fv) * 10) / 10;
-  if (x && x.xfv_grade_realized != null && x.consensus_fv != null)
-    return Math.round((x.xfv_grade_realized - x.consensus_fv) * 10) / 10;
-  return (x && x.xfv_minus_consensus != null) ? x.xfv_minus_consensus : null;
+  if (x && x.xfv_minus_consensus != null) return x.xfv_minus_consensus;
+  const v = efvBoardValue(x);
+  if (v != null && x && x.consensus_fv != null)
+    return Math.round((v - x.consensus_fv) * 10) / 10;
+  return null;
 }
 // Risk-profile shape from the eFV outcome-bucket distribution the prospect already
 // carries (p_bucket: {bust, bench, regular, good, star}, summing to 1). Returns
@@ -31410,11 +32342,13 @@ function efvTooltip(x) {
   }
   if (x.xfv_provisional && !x.xfv_ungraded)
     parts.push("Prior-anchored: no pro track record yet - the grade starts at the consensus prior, and any small gap vs consensus FV is 20-80 rank placement, not a penalty");
-  // Secondary transparency line: the pure-model outcome-implied grade before it is mapped
-  // onto the 20-80 scale (the headline eFV above is that map). Kept so eFV stays legible.
-  if (x.xfv_grade_realized != null && x.xfv_grade_quantile != null
-      && Math.round(x.xfv_grade_realized) !== Math.round(x.xfv_grade_quantile))
-    parts.push(`Model grade ${Math.round(x.xfv_grade_realized)} (outcome-implied, pre-scale)`);
+  // Secondary transparency line. The headline is the RAW model grade (2026-07-25); the
+  // quantile is the same grade mapped onto the population's 20-80 shape, which is what
+  // surplus is priced through. Surfaced when the two round differently so the number on
+  // the value side stays legible instead of looking like a contradiction.
+  if (x.xfv_grade_quantile != null
+      && Math.round(x.xfv_grade_quantile) !== efvGradeDisplay(x))
+    parts.push(`${Math.round(x.xfv_grade_quantile)} on the population 20-80 scale (the surplus basis)`);
   if (x.p_bust != null) parts.push(`P(bust) ${Math.round(x.p_bust * 100)}%`);
   if (x.surplus_mm != null) parts.push(`eFV surplus ${fmtSvMM(x.surplus_mm)}`);
   if (x.statcast_factor != null) parts.push(`Statcast+ tilt ${x.statcast_factor > 1 ? "+" : ""}${Math.round((x.statcast_factor - 1) * 100)}%`);
@@ -31558,6 +32492,30 @@ function efvDetailHeaderHTML(p, fvBadge) {
           + `Consensus FV <b style="color:var(--text-secondary);">${fvCeil(x.consensus_fv)}</b>`
           + (dtxt ? ` · <span style="color:${dcol};font-weight:700;">eFV ${dtxt}</span>` : "") + `</div>`);
 }
+// S-XLINE measurement annotation (xline_note on the xfv.json entry): covered
+// AAA 2023+ players have their current-season line blended with Statcast
+// expected stats BEFORE eFV reads it (gate passed 2026-07-23). Rendered as a
+// measurement note inside the explainer, visually distinct from the factor
+// chips: no direction arrow, no magnitude bar. It is a note about the INPUT
+// line, not a model contribution, and must never join the ranked factor list
+// (a distorted top-factors ordering would be a regression). Uncovered players
+// carry no xline_note field, so this renders nothing for them.
+function efvXlineNoteHTML(x) {
+  const n = x && x.xline_note;
+  if (!n) return "";
+  const d3 = v => (Number(v) < 0 ? "-" : "+") + Math.abs(Number(v)).toFixed(3).replace(/^0/, "");
+  let what;
+  if (n.era_mult != null) {
+    what = `ERA x${Number(n.era_mult).toFixed(3)} applied from the xwOBA-against gap`;
+  } else {
+    const bits = [["xBA", n.d_avg], ["xOBP", n.d_obp], ["xSLG", n.d_slg]]
+      .filter(b => b[1] != null && Math.round(Math.abs(Number(b[1])) * 1000) >= 1)
+      .map(b => `${b[0]} gap ${d3(b[1])}`);
+    what = bits.length ? `${bits.join(" · ")} applied` : "expected-stat blend applied, net gap under .001";
+  }
+  const seas = n.season ? `${n.season} AAA` : "AAA";
+  return `<div class="xline-measure-note" title="S-XLINE measurement layer, gate passed 2026-07-23: AAA seasons 2023+ with 100+ tracked Savant PA get the Statcast expected-vs-actual gap blended into the stat line eFV reads (half weight, capped) before the level-relative conversion. A measurement correction to the input line, not a model factor, so it carries no arrow or bar above." style="margin-top:7px;padding:5px 8px;border-left:2px solid var(--neon-cyan);border-radius:3px;background:var(--bg-tertiary);font-size:10px;color:var(--text-secondary);line-height:1.5;cursor:help;"><strong style="color:var(--neon-cyan);">Measurement</strong>: ${seas} line blended with Statcast expected stats (${what}).</div>`;
+}
 // Detail-page card: eFV's outcome read -- 5-bucket mix, expected surplus vs consensus,
 // and the simulated P10-P90 surplus fan. The honest (outcome-implied) view.
 function efvDetailCard(p) {
@@ -31576,10 +32534,12 @@ function efvDetailCard(p) {
   const pbust = x.p_bust != null ? `<span style="color:${x.p_bust >= 0.4 ? 'var(--down)' : 'var(--text-tertiary)'};">P(bust) ${Math.round(x.p_bust * 100)}%</span>` : "";
   // Explainer: how the eFV model moved off the consensus-FV prior for THIS prospect.
   // Each factor is a model contribution (signal that pushed the grade up/down); the bar
-  // scales with magnitude. Sum of factors ~= the eFV-minus-consensus adjustment.
+  // scales with magnitude. Directional model contributions, NOT a decomposition: they
+  // do not sum to the eFV-minus-consensus delta (efv_score._factors contract).
   const cons = x.consensus_fv != null ? fvCeil(x.consensus_fv) : null;
   const xg = efvGradeDisplay(x);
   const d = efvMinusConsensus(x);
+  const xlineHTML = efvXlineNoteHTML(x);
   const factorsHTML = (x.factors && x.factors.length) ? `
       <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
         <div title="Signals that moved eFV off the consensus prior, biggest first. Game power is intentionally not a driver (scouts over-price it vs realized WAR)." style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How eFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${d > 0 ? '+' : ''}${d != null ? d.toFixed(1) : ''}</span> &rarr; eFV ${xg}` : ""}</div>
@@ -31592,8 +32552,9 @@ function efvDetailCard(p) {
             <span style="flex:1;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(f.label)}</span>
             <span style="width:56px;height:5px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden;flex-shrink:0;"><span style="display:block;height:100%;width:${w.toFixed(0)}%;background:${col};"></span></span>
           </div>`;
-        }).join("")}
-      </div>` : "";
+        }).join("")}${xlineHTML}
+      </div>` : (xlineHTML ? `
+      <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">${xlineHTML}</div>` : "");
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       ${provBanner}
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
@@ -31634,8 +32595,10 @@ function getStatcastPlus(p) {
   }
   if (!zs.length) return null;
   const avgZ = zs.reduce((s, v) => s + v, 0) / zs.length;
-  // Anchor at 100; each σ moves 15 points (wRC+/OPS+ family scaling).
-  return Math.round(100 + avgZ * 10);   // v-audit finding 6: 10 pts/σ, harmonized with RPS+/DvM+/Stf+
+  // Anchor at 100; each σ moves 10 points (the house "+" convention shared by
+  // RPS+ / DvM+ / pStuff+ / CS+). The comment used to say 15 points, one line
+  // above code that has multiplied by 10 since v-audit finding 6.
+  return Math.round(100 + avgZ * 10);
 }
 
 // v29 - Pool-wide stats for the physical-profile (HT/WT/BMI) chips.
@@ -33233,8 +34196,11 @@ function buildProspectCard(snap) {
       if (_or) return `#${_or.rank} of ${_or.total} ${p.org}`;
       return (p.org_rank != null && p.org) ? `#${p.org_rank}${p.org_rank_total ? ` of ${p.org_rank_total}` : ""} ${p.org}` : null;
     })(),
+    // p.overall_rank is the BAKED board rank, not a consensus rank -- it is the same
+    // raw-eFV ordering as the live rank, one build behind (storage bakes it before
+    // xfv.json is regenerated). Labelled by what it is: the last published board.
     (_cardLeadEfv && p.overall_rank != null && p.overall_rank !== _cardXr)
-      ? `Consensus #${p.overall_rank}` : null,
+      ? `Last board #${p.overall_rank}` : null,
   ].filter(Boolean).join("  ·  ");
   const rankLine = rankBits
     ? `<div style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:${P.text2};margin-top:6px;">${escapeHtml(rankBits)}</div>` : "";
@@ -34534,6 +35500,12 @@ function makeSurplusCell(p) {
   const xf = getEfv(p);
   let s, d, buckets, isEfv = false;
   if (xf && xf.surplus_mm != null && _gradePrimary() === "xfv") {
+    // DELIBERATELY on the quantile, NOT the board number (efvBoardValue). surplus_mm was
+    // PRICED through the quantile scale (the 2026-07-06 flip), so fv_continuous has to be
+    // the grade the dollars were computed from or the $/grade curve stops reconciling.
+    // This is the one place a non-board grade is correct: it is a pricing input, not an
+    // ordering or a displayed board grade. Do not "unify" it onto xfv_grade without
+    // re-anchoring the valuation curve first.
     s = { value_mm: xf.surplus_mm, dist: xf.dist || {}, fv_continuous: xf.xfv_grade_quantile != null ? xf.xfv_grade_quantile : (xf.xfv_grade_realized != null ? xf.xfv_grade_realized : xf.xfv_grade) };
     d = xf.dist || {};
     buckets = xf.p_bucket;
@@ -35727,9 +36699,15 @@ function _buildDetailChipRibbon(p) {
       bits.push(`<span class="prior-season-tag" style="font-size:10px;">${escapeHtml(String(sl.season))}</span>`);
     }
     // RPS+ pill (sub-MLB only - MLB has wRC+).
-    if (sl.level !== "MLB" && sl.rps_plus != null) {
-      const c = sl.rps_plus >= 110 ? "var(--up)" : sl.rps_plus <= 90 ? "var(--down)" : "var(--text-secondary)";
-      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="Runs-Per-Sample+ (level-relative; 100 = level mean)">RPS+ ${sl.rps_plus}</span>`);
+    // 2026-07-29: was `sl.rps_plus`, populated for 0 of 4,505 players, so this
+    // pill never rendered. Reads the live RPS+ (_rpsPlusValue) instead - the
+    // same number the RPS+ pill and the RPS+ leaderboard show. Its inputs
+    // (OPS+ lvl / ERA-) are the adjacent chips below; RPS+ adds the
+    // age-vs-level adjustment and the age x position-group re-anchoring.
+    const _rpsPill = sl.level !== "MLB" ? _rpsPlusValue(p) : null;
+    if (_rpsPill != null) {
+      const c = _rpsPill >= 110 ? "var(--up)" : _rpsPill <= 90 ? "var(--down)" : "var(--text-secondary)";
+      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="RPS+ (Rate Performance Score) ${_rpsPill} · level-relative production (OPS+ vs level for hitters, ERA- vs level for pitchers) plus the age-vs-level adjustment, re-anchored to the mean prospect in the same age x position-group cohort. 100 = cohort mean.">RPS+ ${_rpsPill}</span>`);
     }
     if (isPit && sl.era_minus_level != null) {
       const v = Math.round(sl.era_minus_level);
@@ -38072,7 +39050,10 @@ function makeFarmDevTopMovers(rosterPlayersAll) {
   const fmtDelta = d => `${d >= 0 ? '+' : ''}${d.toFixed(1)}`;
   const row = r => {
     const p = r.p;
-    const fvNow = p.fv_close != null ? fvCeil(p.fv_close) : " - ";
+    // Grade pill leads with the live eFV (round-to-NEAREST); consensus FV
+    // (ceiling) is the labeled fallback when the model abstains.
+    const _efvNow = efvGradeDisplay(getEfv(p));
+    const fvNow = _efvNow != null ? _efvNow : (p.fv_close != null ? fvCeil(p.fv_close) : " - ");
     const tone = r.d >= 0 ? "var(--up)" : "var(--down)";
     return `<tr>
       <td><a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(p.player_key)}');" style="color:var(--text-primary);">${escapeHtml(p.player_name)}</a></td>
@@ -41049,14 +42030,23 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
       // v28 - Suppress "+" suffix when the source's own FV > 50.
       const fvShown = `${fvNum}${v.fv_plus && _fvQualifiesForPlus(v.fv_published) ? "+" : ""}`;
       const rk = v.rank != null ? ` (#${v.rank})` : "";
-      return `${lbl} ${fvShown}${rk}`;
+      // Published grade first, then the quantile-normalized value the vote is
+      // actually taken over, when the payload carries it. Only appended when
+      // the two differ, so unaffected sources stay compact.
+      const nv = (typeof _normalizedFvOf === "function") ? _normalizedFvOf(v) : null;
+      const nrm = (nv != null && Math.abs(nv - v.fv_published) >= 0.05)
+        ? ` [norm ${nv.toFixed(1)}]` : "";
+      return `${lbl} ${fvShown}${nrm}${rk}`;
     });
     const rankParts = rankOnly.map(([src, v]) => `${SOURCE_LABELS[src] || src} #${v.rank}`);
     const sources = [...parts, ...rankParts].join(" · ");
     const spreadTail = (pt.fv_spread != null && withFv.length >= 2)
-      ? `\nspread ${Math.round(pt.fv_spread)} across ${withFv.length} sources`
+      ? `\nspread ${Math.round(pt.fv_spread)} across ${withFv.length} normalized source grades`
       : "";
-    return `${head}\n── ${sources}${spreadTail}`;
+    const normNote = parts.length
+      ? "\nconsensus averages the quantile-normalized grades, not the published ones"
+      : "";
+    return `${head}\n── ${sources}${spreadTail}${normNote}`;
   };
 
   // Per-segment Catmull-Rom Bezier curves with shared tangents at
@@ -44712,11 +45702,12 @@ function renderPlayerDetail(key) {
   const liveRankPill = "";
   // Provisional prospects have no server ranks; compute their eFV ranks client-side so they
   // still see their overall board rank + their place within their farm system.
-  // The canonical board rank is the eFV rank (getEfvRank -> buildEfvRankMap: eFV grade ->
-  // fvCmpDesc -> TBS), IDENTICAL to the active list, so the detail page NEVER disagrees with
-  // the board (was showing the consensus overall_rank, e.g. Caden Hunter #35 here vs #34 on
-  // the list). Consensus rank shown as a secondary pill when it differs. Works for provisional
-  // prospects too (getEfvRank computes their rank client-side).
+  // The canonical board rank is the eFV rank (getEfvRank -> buildEfvRankMap: efvRankValue,
+  // i.e. the raw-grade board number -> fvCmpDesc -> TBS), IDENTICAL to the active list, so
+  // the detail page NEVER disagrees with the board. The baked p.overall_rank is the SAME
+  // ordering computed server-side one build earlier (storage.py _board_grade); it is shown
+  // as a secondary "Last board" pill when the lag makes them differ, and it is emphatically
+  // NOT a consensus rank. Works for provisional prospects too (ranked client-side).
   const _efvOverall = (typeof getEfvRank === "function") ? getEfvRank(p) : null;
   // Org pill on the CANONICAL eFV org rank (same ordering as the roster tab),
   // baked org_rank / provisional map as fallbacks only.
@@ -44726,7 +45717,7 @@ function renderPlayerDetail(key) {
     ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
         ${_efvOverall != null ? rankPill("Overall eFV", "#" + _efvOverall, "var(--neon-violet)")
           : (p.overall_rank != null ? rankPill("Overall", "#" + p.overall_rank, "var(--neon-violet)") : "")}
-        ${(_efvOverall != null && p.overall_rank != null && p.overall_rank !== _efvOverall) ? rankPill("Consensus", "#" + p.overall_rank, "var(--text-tertiary)") : ""}
+        ${(_efvOverall != null && p.overall_rank != null && p.overall_rank !== _efvOverall) ? rankPill("Last board", "#" + p.overall_rank, "var(--text-tertiary)") : ""}
         ${liveRankPill}
         ${_efvOrg ? rankPill(escapeHtml(p.org || "?"), "#" + _efvOrg.rank + " of " + _efvOrg.total, "var(--neon-cyan)")
           : p.org_rank != null ? rankPill(escapeHtml(p.org || "?"), "#" + p.org_rank + (p.org_rank_total ? " of " + p.org_rank_total : ""), "var(--neon-cyan)")
@@ -46786,10 +47777,22 @@ function renderPlayerDetail(key) {
       const rankCell = rank != null
         ? `<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-tertiary);font-size:10px;">#${rank}</span>`
         : "";
-      return `<tr>
+      // Published vs NORMALIZED. The badge shows what the source actually
+      // published; the tooltip adds the quantile-normalized value that the
+      // consensus vote is taken over, plus this source's vote weight, so the
+      // 45/50/50 -> consensus 51 arithmetic is legible instead of looking
+      // like a bug. Display only: it reads the payload and computes nothing.
+      const gradeTip = escapeHtml(_perSourceGradeTip(src, info, lbl));
+      // Normalized value inline next to the badge when the payload carries
+      // it, so the reader does not have to hover to see the two numbers.
+      const normVal = _normalizedFvOf(info);
+      const normCell = (normVal != null && fvNum != null && Math.abs(normVal - fvNum) >= 0.05)
+        ? `<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-tertiary);font-size:10px;margin-right:5px;" title="${gradeTip}">norm ${normVal.toFixed(1)}</span>`
+        : "";
+      return `<tr title="${gradeTip}">
         <td style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 6px 3px 0;border-bottom:1px solid var(--border-light);">${escapeHtml(lbl)}${sourceLinkHtml(src, p, srIds, lbl)}</td>
         <td style="padding:3px 6px;border-bottom:1px solid var(--border-light);text-align:right;">${rankCell}</td>
-        <td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;">${fvCell}</td>
+        <td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;white-space:nowrap;">${normCell}${fvCell}</td>
       </tr>`;
     }).join("");
     const explicitFvSources = entries.filter(([, v]) => v.fv_published != null).length;
@@ -46814,10 +47817,37 @@ function renderPlayerDetail(key) {
           driftLine = `<div style="font-size:var(--fs-xs);color:var(--text-tertiary);margin-top:2px;font-family:var(--font-sans);letter-spacing:0.02em;">${escapeHtml(hiLab)} ${fvCeil(highEntry[1].fv_published)} high · ${escapeHtml(loLab)} ${fvCeil(lowEntry[1].fv_published)} low</div>`;
         }
       }
+      // fv_min / fv_max / sigma come off `explicit_fvs` in consensus.py, which
+      // holds the NORMALIZED grades - not the published ones in the rows
+      // below. Saying so is the whole point of this pass: an unlabeled
+      // "Range" next to a published-grade table is exactly the read that
+      // made consensus 51 look wrong under a published 45/50/50.
+      const _rangeTip = escapeHtml("Range of the QUANTILE-NORMALIZED source grades, which is what the consensus vote averages. It can differ from the range of the published grades listed below.");
+      // The published-vs-normalized MEAN pair, when the payload lets the two
+      // be compared honestly. avg_fv IS the weighted mean of the normalized
+      // grades (consensus.py builds it off `explicit_fvs`); the published mean
+      // is arithmetic on the fv_published values in the rows below. Only shown
+      // when avg_fv_n matches the number of published grades on screen, so the
+      // two means are always over the same set of sources - otherwise the
+      // comparison would be between different populations and would mislead.
+      let meanLine = "";
+      const _pubFvs = sortedFvEntries
+        .map(([, v]) => v.fv_published)
+        .filter(v => v != null && isFinite(v));
+      if (latestPt.avg_fv != null && isFinite(latestPt.avg_fv)
+          && _pubFvs.length >= 2 && latestPt.avg_fv_n === _pubFvs.length) {
+        const pubMean = _pubFvs.reduce((a, b) => a + b, 0) / _pubFvs.length;
+        const gap = Number(latestPt.avg_fv) - pubMean;
+        const _meanTip = escapeHtml(`Published mean ${pubMean.toFixed(2)} is the plain average of the ${_pubFvs.length} grades listed below. Normalized mean ${Number(latestPt.avg_fv).toFixed(2)} is what consensus actually averages, after each source's grade is quantile-mapped onto the FanGraphs scale to de-bias a chronically hot or cold grader. The ${gap >= 0 ? "+" : ""}${gap.toFixed(2)} difference is that de-biasing, not an arithmetic error, and it is why the consensus can sit outside the published range.`);
+        meanLine = `<div style="font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;margin-top:2px;" title="${_meanTip}">
+          published mean ${pubMean.toFixed(2)} · normalized mean ${Number(latestPt.avg_fv).toFixed(2)} (${gap >= 0 ? "+" : ""}${gap.toFixed(2)})
+        </div>`;
+      }
       disagreementLine = `<div style="margin-bottom:6px;">
-        <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">
-          Range ${fvCeil(latestPt.fv_min)}-${fvCeil(latestPt.fv_max)}${sigma}${wide}
+        <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;" title="${_rangeTip}">
+          Normalized range ${fvCeil(latestPt.fv_min)}-${fvCeil(latestPt.fv_max)}${sigma}${wide}
         </div>
+        ${meanLine}
         ${driftLine}
       </div>`;
     } else if (_fvTotalInstances(p) === 1) {
@@ -46839,10 +47869,11 @@ function renderPlayerDetail(key) {
         <thead><tr style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;">
           <th style="text-align:left;padding-bottom:4px;">Source</th>
           <th style="text-align:right;padding-bottom:4px;">Rank</th>
-          <th style="text-align:right;padding-bottom:4px;">FV</th>
+          <th style="text-align:right;padding-bottom:4px;" title="${escapeHtml("FV as PUBLISHED by that source. Hover a row for the quantile-normalized grade the consensus vote is actually taken over, and the source's vote weight.")}">FV</th>
         </tr></thead>
         <tbody>${sourceRows}</tbody>
-      </table>`;
+      </table>
+      <div style="font-size:10px;color:var(--text-tertiary);margin-top:5px;line-height:1.45;">${escapeHtml("Consensus is the weighted mean of each source's QUANTILE-NORMALIZED grade, not of the published grades above, so it can sit outside the published range. Hover a row for published vs normalized vs weight.")}</div>`;
 
     // Tools panel -------------------------------------------------------
     const toolEntries = entries.filter(([, v]) => v && v.tools && Object.keys(v.tools).length);
@@ -47256,14 +48287,20 @@ function renderPlayerDetail(key) {
     const teammates = (DATA.players || [])
       .filter(t => t.org === p.org && t.player_key !== p.player_key)
       .filter(t => t.fv_close != null)
-      .sort(fvCmpDesc)
+      .sort((a, b) => efvRankValue(b) - efvRankValue(a) || fvCmpDesc(a, b))
       .slice(0, 4);
     if (!teammates.length) return "";
-    const rows = teammates.map(t => `
+    const rows = teammates.map(t => {
+      // Badge leads with the live eFV (round-to-NEAREST); consensus FV
+      // (ceiling) is the fallback when the model abstains.
+      const _tEfv = efvGradeDisplay(getEfv(t));
+      const _tLbl = _tEfv != null ? _tEfv : fvCeil(t.fv_close);
+      return `
       <div data-key="${escapeHtml(t.player_key)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-light);cursor:pointer;font-size:12px;">
         <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(t.player_name)} <span style="color:var(--text-tertiary);font-size:10px;">${escapeHtml(t.position || " - ")}</span></span>
-        <span class="fv-badge ${fvClass(String(fvCeil(t.fv_close)))} size-sm">${fvCeil(t.fv_close)}</span>
-      </div>`).join("");
+        <span class="fv-badge ${fvClass(String(_tLbl))} size-sm" title="${_tEfv != null ? "eFV (model grade)" : "Consensus FV"}">${_tLbl}</span>
+      </div>`;
+    }).join("");
     return `<div class="detail-title">On the same farm <span class="detail-title-sub">other top ${escapeHtml(p.org)} prospects</span></div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">${rows}</div>`;
   })();
@@ -47273,7 +48310,7 @@ function renderPlayerDetail(key) {
   // reader can scan how the same archetype is graded around the league.
   // Hidden when no matches; same compact-row idiom as sameFarmSection.
   const similarProspectsSection = (() => {
-    const myBucket = positionBucket(p.position);
+    const myBucket = positionBucket(cohortPosition(p));
     const myFv = p.fv_close_raw != null ? p.fv_close_raw : p.fv_close;
     if (myBucket == null || myFv == null || p.age == null) return "";
     const myIsPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP)$/.test(String(p.position || "").split("/")[0].toUpperCase());
@@ -47343,7 +48380,7 @@ function renderPlayerDetail(key) {
 
     const candidates = (DATA.players || [])
       .filter(t => t.player_key !== p.player_key)
-      .filter(t => positionBucket(t.position) === myBucket)
+      .filter(t => positionBucket(cohortPosition(t)) === myBucket)
       .filter(t => (t.fv_close_raw != null || t.fv_close != null) && t.age != null);
     if (!candidates.length) return "";
     const ranked = candidates
@@ -47579,7 +48616,27 @@ function renderPlayerDetail(key) {
   const efvCardHtml = efvDetailCard(p);   // eFV outcome read (primary grade's distribution + surplus)
   const efvProxyHtml = (typeof efvProxyPanel === "function") ? efvProxyPanel(p) : "";  // leading indicator
   const palFitHtml = (typeof palFitPanel === "function") ? palFitPanel(p) : "";  // PAL role-conversion cross-link (pitchers)
-  const overviewHtml = [summaryGridHtml, efvCardHtml, efvProxyHtml, palFitHtml, valuationHtml, chartSection, playerNewsSection, scoutReportsOnOverview, sourceSection, noteSection]
+  const aaaStatcastHtml = (typeof aaaStatcastPanel === "function") ? aaaStatcastPanel(p) : "";  // AAA Statcast contact-quality pills (hitters)
+  const alevelSignalHtml = (typeof alevelSignalPanel === "function") ? alevelSignalPanel(p) : "";  // A-ball Statcast signal pill (S-XLINE-4, display-only)
+  const apPaceHtml = (typeof apPacePanel === "function") ? apPacePanel(p) : "";  // Advancement Pace+ ladder-pace panel (W5, descriptive display only, hitters)
+  // Archetype comps panel is BUILT BUT DELIBERATELY UNWIRED (2026-07-29). It was
+  // written against an assumed per-player index (by_mlbam / by_player_key / ...) that
+  // data/archetype_comps.json does not have and cannot have: the artifact is COLUMNAR
+  // STRATA (3,957 facet combinations in `rows`, with `cols` and interned `tokens`), not
+  // per-player records. Joining a player to a stratum needs a facet classifier in the
+  // client (age band, level, production tercile), which is a feature, not a key rename.
+  // Verified inert before unwiring: the reader returned null and the panel returned ""
+  // for 100% of players, so this removes nothing a reader was seeing.
+  // It is not surfaced because the evidence does not justify building that classifier:
+  // the sweep behind the artifact returned NO SHIP under nested cross-validation
+  // (lift negative, selection bias 88 to 234%), its own health_warning is factually
+  // false (it claims every stratum's out-of-fold residual is statistically zero; 477 of
+  // 3,957 carry |t| >= 2), and its generating script does not exist so it cannot be
+  // reproduced or audited. The export stays as an honest, reliability-flagged data
+  // asset. Ledgered in docs/efv-2026-07-29/GATED_CANDIDATES.md.
+  const archetypeHtml = "";
+  const defHomeHtml = (typeof defHomeChip === "function") ? defHomeChip(p) : "";  // Defensive home stay-probability chip (W7, risk context only)
+  const overviewHtml = [summaryGridHtml, efvCardHtml, efvProxyHtml, palFitHtml, aaaStatcastHtml, alevelSignalHtml, apPaceHtml, archetypeHtml, defHomeHtml, valuationHtml, chartSection, playerNewsSection, scoutReportsOnOverview, sourceSection, noteSection]
     .filter(Boolean).join("");
   // v30.8 - Recent gameLogs viz. Reads p.statcast_metrics.recent_games
   // (populated by the per-player MLB Stats API gameLog pass). When
@@ -48444,19 +49501,35 @@ const ALL_TENDENCY_BADGES = [
   { kind: "arsenal-mix",      label: "Distinct arsenal mix" },
 ];
 
-// Compact farm-GFX identity strip: a one-line headline + the org's 3-4
-// strongest tendency badges (export-safe literal-hex fills via _OT_BADGE).
-// Returns "" when the sidecar isn't loaded or the org has no strong tendency.
+// Compact farm-GFX identity strip: a numeric vitals row (org-tendency
+// scalars) + the org's up-to-6 strongest tendency badges (export-safe
+// literal-hex fills via _OT_BADGE). The pills already carry the badge labels,
+// so no text headline repeats them. Returns "" when the sidecar isn't loaded
+// or the org has no strong tendency.
 function _gfxTendencyStrip(orgCode, P) {
-  const top = orgBadgeSet(orgCode).slice(0, 4);
+  const top = orgBadgeSet(orgCode).slice(0, 6);
   if (!top.length) return "";
-  const headline = top.map(c => c.label).join(" · ");
   const pills = top.map(({ kind, label }) => {
     const b = _OT_BADGE[kind] || { c: "#475569" };
     return `<span style="display:inline-flex;align-items:center;gap:8px;background:${b.c};color:#fff;border-radius:999px;padding:6px 16px;font-family:var(--font-retro-mono);font-size:16px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">${_otIcon(kind, 18, "#fff")}${escapeHtml(label)}</span>`;
   }).join("");
+  // Numeric vitals off the already-loaded sidecar (same null-guarded,
+  // render-only-when-present pattern as the system-pulse tiles).
+  const _tOrg = panel => (((_orgTendencies || {})[panel] || {}).orgs || {})[orgCode] || {};
+  const _promo = _tOrg("promotion"), _grad = _tOrg("graduation"),
+        _hp = _tOrg("health"), _ars = _tOrg("arsenal");
+  const vitals = [];
+  if (_promo.avlDiff != null)
+    vitals.push(["Age vs level", `${_promo.avlDiff > 0 ? "+" : ""}${Number(_promo.avlDiff).toFixed(1)} yr`]);
+  if (_grad.meanGradWar != null) vitals.push(["Avg grad WAR", Number(_grad.meanGradWar).toFixed(1)]);
+  if (_hp.stintsPer100 != null) vitals.push(["IL / 100", Number(_hp.stintsPer100).toFixed(1)]);
+  if (_ars.fbVelo != null) vitals.push(["FB velo", Number(_ars.fbVelo).toFixed(1)]);
+  const vitalsHTML = vitals.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:20px;font-family:var(--font-mono);font-size:15px;color:${P.text3};letter-spacing:0.05em;text-transform:uppercase;">${vitals.map(([l, v]) =>
+        `<span>${escapeHtml(l)} <strong style="color:${P.text};">${escapeHtml(String(v))}</strong></span>`).join("")}</div>`
+    : "";
   return `<div style="flex:none;display:flex;flex-direction:column;gap:11px;">
-    <div style="font-family:var(--font-mono);font-size:15px;color:${P.text3};letter-spacing:0.05em;text-transform:uppercase;">Org identity · ${escapeHtml(headline)}</div>
+    ${vitalsHTML}
     <div style="display:flex;flex-wrap:wrap;gap:9px;">${pills}</div>
   </div>`;
 }
@@ -49128,14 +50201,24 @@ function _renderFarmDetailBody(orgCode, org, root) {
     name: ypPlayer.player_name,
     pos: ypPlayer.position,
     age: ypPlayer.age,
-    fv_label: _ypFvNum != null ? String(fvCeil(_ypFvNum)) : " - ",
+    // eFV rounds to NEAREST (site rule); only the consensus fallback keeps
+    // the FV ceiling rule.
+    fv_label: _ypFvNum != null
+      ? String((_ypX && _ypX.xfv_grade != null) ? Math.round(_ypFvNum) : fvCeil(_ypFvNum))
+      : " - ",
   } : null;
+  // Top-prospect badge leads with the live eFV (round-to-NEAREST), falling
+  // back to the baked consensus fv_label only when the model abstains - so
+  // the side card can never disagree with the roster tab's eFV grades.
+  const _tpEfv = tpPlayer ? efvGradeDisplay(getEfv(tpPlayer)) : null;
+  const _tpLabel = _tpEfv != null ? String(_tpEfv)
+    : ((tp && tp.fv_label != null) ? String(tp.fv_label) : " - ");
   const topProspectCard = `<div class="farm-side-card">
     <div class="side-title">Top prospect</div>
     ${tp ? `<div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="goToPlayer('${escapeHtml((tpPlayer || {}).player_key || '')}');">
       ${headshotHTML(tpPlayer || {}, 64)}
       <div style="min-width:0;">
-        <div style="font-size:14px;font-weight:600;color:var(--neon-cyan);">${escapeHtml(tp.name)} <span class="fv-badge ${fvClass(tp.fv_label)} size-sm">${tp.fv_label}</span></div>
+        <div style="font-size:14px;font-weight:600;color:var(--neon-cyan);">${escapeHtml(tp.name)} <span class="fv-badge ${fvClass(_tpLabel)} size-sm" title="${_tpEfv != null ? "eFV (model grade)" : "Consensus FV"}">${escapeHtml(_tpLabel)}</span></div>
         <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(tp.pos||'')} · age ${tp.age != null ? tp.age.toFixed(1) : " - "}</div>
       </div>
     </div>` : ' - '}
@@ -49760,11 +50843,12 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // provisional eFV for source-ungraded ones (via getUngradedEfv), consensus fv_raw as the floor.
   const _rosterGrade = pl => {
     const x = (pl.player_key && typeof getEfv === "function") ? getEfv({ player_key: pl.player_key }) : null;
-    // AUDIT 2026-07-18 (A2): sort by the quantile DISPLAY grade (efvRankValue,
-    // xfv_grade_quantile-first) not the raw xfv_grade. The raw->quantile map is
-    // non-monotone, so a raw-grade sort produced visibly out-of-order quantile
-    // badges in the affiliate table (contradicting the "ordering matches the
-    // board's primary grade" contract below).
+    // Sort on efvRankValue -- the board number (raw xfv_grade), the same value the
+    // badge in this table displays. The 2026-07-18 (A2) fix pointed this at the
+    // quantile because the DISPLAY was on the quantile and the raw->quantile map is
+    // non-monotone, so a raw sort produced out-of-order badges. The 2026-07-25 flip
+    // moved the display to the raw grade, so pointing both at efvRankValue is now
+    // what keeps the badges ordered. Same contract, one basis.
     if (x && x.xfv_grade != null) return efvRankValue({ player_key: pl.player_key });
     const ung = (typeof getUngradedEfv === "function") ? getUngradedEfv(pl) : null;
     if (ung && ung.xfv_grade != null) return Number(ung.xfv_grade);
@@ -51055,10 +52139,15 @@ function _rpsPositionGroup(pos) {
 
 // Position multipliers reflecting positional difficulty. Applied
 // OUTSIDE the cohort-mean normalization so the effect survives the
-// per-bucket renormalization. Source: rough rule-of-thumb based on
-// positional adjustment values used in WAR calculations (catcher +12.5
-// runs, SS +7.5, 2B +2.5, 3B 0, CF +2.5, LF/RF −7.5, 1B −12.5, DH −17.5)
-// translated to a ~±10% RPS+ swing.
+// Source (2026-07-25): the EMPIRICAL positional ladder in
+// prospect_def_value.POS_ADJ, recovered by least squares from BRef
+// runs_position on innings shares (n=9,101 player-seasons 2000-2026,
+// R2 0.982, bootstrap CI +/-0.05 runs/650PA), translated to a ~+/-8%
+// RPS+ swing. It REPLACES the retired folklore table, which was wrong
+// in shape by up to 2.15 runs at 2B. The multipliers below were
+// re-derived under the empirical ladder and moved by at most 0.007
+// (0.7%), i.e. inside noise, so served values are unchanged; only the
+// citation is corrected so nothing points at a retired table.
 //
 // Pitchers stay at 1.00 because RPS+ flows through ERA- (already
 // position-corrected internally - pitching is the only thing pitchers do).
@@ -51073,8 +52162,13 @@ const _RPS_POSITION_MULTIPLIERS = {
   DH:  0.92,
   P:   1.00,
 };
+// OBSERVED position (2026-07-30, owner decision). RPS+ compares a player to peers
+// at his position on MEASURED production, so both the normalization cell and the
+// positional-difficulty multiplier must key on where the production HAPPENED, not on
+// where a scout thinks he ends up. Degrades to the projection when there is no
+// observation (every pitcher, and any hitter under the versa exposure floor).
 function _rpsPositionMultiplier(p) {
-  const g = _rpsPositionGroup(p && p.position);
+  const g = _rpsPositionGroup(cohortPosition(p));
   if (!g) return 1.00;
   return _RPS_POSITION_MULTIPLIERS[g] || 1.00;
 }
@@ -51093,7 +52187,7 @@ function _buildRpsPlusCache() {
     if (r == null) continue;
     const ageB = _rpsAgeBucket(p.age);
     if (ageB == null) continue;
-    const group = _rpsPositionGroup(p.position) || "?";
+    const group = _rpsPositionGroup(cohortPosition(p)) || "?";
     const key = `${ageB}::${group}`;
     playerRps.push({ key: p.player_key, bucket: key, ageBucket: ageB,
                      group, raw: r.score, posMult: _rpsPositionMultiplier(p) });
@@ -51144,6 +52238,20 @@ function getRpsPlus(p) {
   if (!p || !p.player_key) return null;
   if (!_rpsPlusCache.built) _buildRpsPlusCache();
   return _rpsPlusCache.byKey.get(p.player_key) || null;
+}
+
+// THE single RPS+ number for any surface that wants a bare integer (chips,
+// pills, the tiebreaker). Prefers a server-baked `statline.rps_plus` if a
+// future export ever populates it (it is populated for 0 of 4,505 players
+// today), then falls back to the client-computed cohort RPS+ that the RPS+
+// pill and the RPS+ leaderboard already display. Added 2026-07-29 so the
+// chip surfaces stop reading only the dead baked field and silently
+// rendering nothing. Null when the player has no qualifying sample.
+function _rpsPlusValue(p) {
+  const baked = p && p.statline ? p.statline.rps_plus : null;
+  if (baked != null && isFinite(Number(baked))) return Number(baked);
+  const row = getRpsPlus(p);
+  return (row && row.plus != null && isFinite(row.plus)) ? row.plus : null;
 }
 
 // MLB-level players don't have level-relative stats (ops_plus_level /
@@ -51305,25 +52413,9 @@ function _blendPlus(rawPlus, toolPlus, wRaw = 0.7) {
   };
 }
 
-// 3-way "+" blend (raw performance / Statcast / scouting tool), each already
-// on the 100-anchored scale. Weights renormalize over whichever components are
-// present, so a prospect missing Statcast (most non-AAA arms/bats) or a tool
-// grade still gets a comparable reading from what's available. Returns
-// {value, raw, statcast, tool} for tooltip transparency; null when all absent.
-function _blendPlus3(rawPlus, scPlus, toolPlus, wRaw, wSc, wTool) {
-  const parts = [[rawPlus, wRaw], [scPlus, wSc], [toolPlus, wTool]];
-  let sum = 0, wsum = 0;
-  for (const [v, w] of parts) {
-    if (v != null && isFinite(v)) { sum += v * w; wsum += w; }
-  }
-  if (wsum === 0) return null;
-  return {
-    value:    _clampPlus(sum / wsum),
-    raw:      (rawPlus  != null && isFinite(rawPlus))  ? _clampPlus(rawPlus)  : null,
-    statcast: (scPlus   != null && isFinite(scPlus))   ? _clampPlus(scPlus)   : null,
-    tool:     (toolPlus != null && isFinite(toolPlus)) ? _clampPlus(toolPlus) : null,
-  };
-}
+// (2026-07-29: the fixed-weight 3-way blend `_blendPlus3` is DELETED. It had no
+// callers left after POW+/HIT+ moved to _blendPlus3Rel below, and leaving it in
+// place kept a second, sample-blind definition of the same blend on the page.)
 
 // ── Arkmetric audit v1 - precision upgrades for the ratio "+" metrics ─────────
 // Stat-specific stabilization points (PA/AB-equivalent at which the rate is ~50%
@@ -51346,8 +52438,9 @@ function _ebShrinkPlus(rawPlus, n, k) {
 // (full base weight, always available); the stat and Statcast OBSERVATIONS are
 // down-weighted by their own sample reliability, so a thin-sample prospect leans
 // on the scouting prior and a full-season one leans on observed performance +
-// tracked data. Replaces the fixed-weight _blendPlus3 (which gave a 40-PA hot
-// streak the same weight as a full season). Same return shape + a reliability %.
+// tracked data. Replaced the earlier fixed-weight 3-way blend (which gave a
+// 40-PA hot streak the same weight as a full season, and is now deleted).
+// Same return shape + a reliability %.
 function _blendPlus3Rel(statPlus, statRel, scPlus, scRel, toolPlus, wStat, wSc, wTool) {
   const clamp01 = r => Math.max(0, Math.min(1, r == null ? 1 : r));
   const parts = [
@@ -51424,8 +52517,9 @@ function _pwrToolGrade(grades) {
 // on the same "100 = league-average, +1pt = 1% better" paradigm as wRC+/ERA+.
 // The baseline (perf.avg_iso) is read from the SAME DATA.level_norms source
 // every other "+" metric uses (same season/level cohort). Pure rescaling of
-// ISO - NO scouting-tool blend (that is POW+'s job; ISO+ feeds POW+ as its
-// stat component, see _powerPlusRaw). Hitters only; 40-game volume gate +
+// ISO - NO scouting-tool blend (that is POW+'s job; the UN-shrunk _isoPlusRaw
+// below is what feeds POW+ as its stat component, see computePowerPlus).
+// Hitters only; 40-game volume gate +
 // a positive level baseline. Null when inputs/baseline are missing.
 // v44 - Sample gates for the level-relative "+" metrics. Below PROVISIONAL the
 // metric is suppressed entirely (too noisy); in the [PROVISIONAL, MIN) band it
@@ -51467,49 +52561,19 @@ function isoPlusPillHTML(p) {
     "iso_plus", _plusProvisional(p));
 }
 
-// Raw power index - ISO + HR-rate vs the player's level average. 100 =
-// level-average power. Hitters only; 40-game volume gate. Null when the
-// gate fails or inputs are missing (the blend then leans on the tool).
-function _powerPlusRaw(p) {
-  const sl = p && p.statline; if (!sl || sl.is_pitcher) return null;
-  if ((Number(sl.games) || 0) < PLUS_PROVISIONAL_GAMES) return null;
-  const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
-  if (perf.avg_iso == null) return null;
-  // ISO+ IS the isolated-power component (100 = level-avg ISO) - item-1 metric
-  // wired in directly so POW+ and the standalone ISO+ pill never diverge.
-  const isoP = computeIsoPlus(p);
-  // HR-rate vs level on the same 100-anchored scale (HR-rate+). Prefer HR/PA;
-  // most rows carry games not PA, so fall back to a HR/G normalization.
-  let hrPlus = null;
-  const hr = Number(sl.hr) || 0;
-  const games = Number(sl.games) || 0;
-  if (sl.pa != null && Number(sl.pa) > 0) {
-    const playerRate = hr / Number(sl.pa);
-    const leagueRate = (perf.avg_iso || 0.130) * 0.18;   // league HR/PA ≈ 0.18 × level ISO
-    if (leagueRate > 0) hrPlus = 100 * playerRate / leagueRate;
-  } else if (games > 0) {
-    const playerRate = hr / games;
-    const leagueRate = (perf.avg_iso || 0.130) * 0.72;   // league HR/G ≈ 0.72 × level ISO
-    if (leagueRate > 0) hrPlus = 100 * playerRate / leagueRate;
-  }
-  // Raw power index = 60% ISO+ / 40% HR-rate+ (ISO is the more stable
-  // single-season power signal). Falls back to whichever component exists.
-  if (isoP != null && hrPlus != null) return _clampPlus(0.6 * isoP + 0.4 * hrPlus);
-  if (isoP != null)   return _clampPlus(isoP);
-  if (hrPlus != null) return _clampPlus(hrPlus);
-  return null;
-}
-
 // POW+ - RELIABILITY-WEIGHTED blend (audit v1). Base importances 0.45 perf /
 //   0.25 Statcast / 0.30 power tool, but the perf and Statcast OBSERVATIONS are
 //   down-weighted by their own sample reliability, so a thin-sample prospect
 //   leans on the scouting prior and a full-season one leans on observed batted-
 //   ball performance.
-// COLLINEARITY FIX: the performance signal is ISO+ ALONE. The old _powerPlusRaw
-//   stacked ISO+ and HR-rate+ additively, but they correlate r=0.91 across active
-// hitters - summing them double-counted one latent power trait and inflated the
-//   reading. ISO+ is the more stable single-season power rate, so it carries the
-//   performance axis on its own.
+// COLLINEARITY FIX: the performance signal is ISO+ ALONE. An earlier raw-power
+//   index stacked ISO+ and an HR-rate+ term additively, but they correlate
+//   r=0.91 across active hitters - summing them double-counted one latent power
+//   trait and inflated the reading. ISO+ is the more stable single-season power
+//   rate, so it carries the performance axis on its own. (2026-07-29: that
+//   retired helper, _powerPlusRaw, is DELETED rather than left dead - it still
+//   carried the retired 0.18 HR/PA and 0.72 HR/G constants, so anyone reading
+//   it would believe POW+ still stacks ISO+ and HR-rate+. It does not.)
 function computePowerPlus(p) {
   if (!p || !p.statline || p.statline.is_pitcher) return null;
   const sl = p.statline; const grades = (p.tools && p.tools.grades) || {};
@@ -51523,9 +52587,57 @@ function computePowerPlus(p) {
   return _blendPlus3Rel(statPlus, statRel, scPlus, scRel, toolPlus, 0.45, 0.25, 0.30);
 }
 
-// Raw plate-discipline index - additive shift on the BB% − K% differential
-// vs the level average. 100 = league-average discipline. Hitters only;
-// 40-game gate.
+// Per-level standard deviation of the BB% − K% differential, measured over the
+// SAME active pool the page is showing. Built lazily on first use and cached
+// (same pattern as _rpsPlusCache / _scPool). Levels with a thin cohort fall back
+// to the pooled all-level sigma; a payload too small to produce either (e.g. a
+// synthetic test fixture) falls back to PD_SIGMA_FALLBACK, the pooled sd
+// observed on the live board. Only hitters past the provisional games gate are
+// counted, so the sigma describes the same population the metric is shown for.
+const PD_SIGMA_MIN_N = 30;
+const PD_SIGMA_FALLBACK = 9.0;      // percentage points; pooled sd on the live board
+let _pdSigmaCache = null;
+function _pdSigmas() {
+  if (_pdSigmaCache) return _pdSigmaCache;
+  const byLevel = new Map();
+  const all = [];
+  for (const q of (DATA.players || [])) {
+    const s = q && q.statline;
+    if (!s || s.is_pitcher || !s.level) continue;
+    if ((Number(s.games) || 0) < PLUS_PROVISIONAL_GAMES) continue;
+    if (s.bb_pct == null || s.k_pct == null) continue;
+    const diff = Number(s.bb_pct) - Number(s.k_pct);
+    if (!isFinite(diff)) continue;
+    if (!byLevel.has(s.level)) byLevel.set(s.level, []);
+    byLevel.get(s.level).push(diff);
+    all.push(diff);
+  }
+  const sd = arr => {
+    if (arr.length < PD_SIGMA_MIN_N) return null;
+    const m = arr.reduce((a, b) => a + b, 0) / arr.length;
+    const v = arr.reduce((a, b) => a + (b - m) * (b - m), 0) / arr.length;
+    return v > 0 ? Math.sqrt(v) : null;
+  };
+  const levels = new Map();
+  for (const [lvl, arr] of byLevel) { const s = sd(arr); if (s) levels.set(lvl, s); }
+  const built = { levels, pooled: sd(all) || PD_SIGMA_FALLBACK };
+  // Only memoize once the pool is actually populated, so a call that lands
+  // before DATA.players is in hand cannot freeze the fallback sigma in place.
+  if (all.length) _pdSigmaCache = built;
+  return built;
+}
+
+// Raw plate-discipline index - the BB% − K% differential vs the level average,
+// expressed on the HOUSE "+" convention: 100 + 10z, so 10 points = one standard
+// deviation of that differential among hitters at the same level. Hitters only;
+// provisional games gate.
+// 2026-07-29 correctness fix: this used to return 100 + (playerDiff − levelDiff)
+// with both terms in PERCENTAGE POINTS, so one PD+ point meant "1pp of BB−K
+// differential" - neither 0.1 sigma (the house convention) nor 1% of a baseline
+// (the wRC+ convention), while being blended 70/30 against _toolToPlus, which
+// is on the ratio-ish grade scale. The two halves of PD+ were literally in
+// different units. The level sigma is 7.5pp (AAA) to 9.9pp (CPX), so the old
+// number was also not comparable across levels.
 function _disciplinePlusRaw(p) {
   const sl = p && p.statline; if (!sl || sl.is_pitcher) return null;
   if ((Number(sl.games) || 0) < PLUS_PROVISIONAL_GAMES) return null;
@@ -51533,12 +52645,16 @@ function _disciplinePlusRaw(p) {
   if (sl.bb_pct == null || sl.k_pct == null || perf.avg_bb_pct == null || perf.avg_k_pct == null) return null;
   const playerDiff = Number(sl.bb_pct) - Number(sl.k_pct);
   const levelDiff  = perf.avg_bb_pct - perf.avg_k_pct;
-  return _clampPlus(100 + (playerDiff - levelDiff));
+  const sig = _pdSigmas();
+  const sigma = sig.levels.get(sl.level) || sig.pooled;
+  if (!(sigma > 0)) return null;
+  return _clampPlus(100 + 10 * (playerDiff - levelDiff) / sigma);
 }
 
 // PD+ - 70% raw BB%−K% index / 30% Pitch-Selection (PSel) tool grade.
 // PSel is FanGraphs' plate-discipline tool (FG maps "plate discipline" →
-// pitch_sel), so it is the natural scouting input for discipline.
+// pitch_sel), so it is the natural scouting input for discipline. Both halves
+// are now 100-anchored indexes, so the blend no longer mixes units.
 function computeDisciplinePlus(p) {
   if (!p || !p.statline || p.statline.is_pitcher) return null;
   const grades = (p.tools && p.tools.grades) || {};
@@ -51600,23 +52716,57 @@ function computeHittingPlus(p) {
   return _blendPlus3Rel(statPlus, statRel, scPlus, scRel, toolPlus, 0.45, 0.25, 0.30);
 }
 
-// Pitcher Stuff+ (STF+) - composite of K/9, BB/9, HR/9 normalized
-// against the level mean. The level_norms doesn't carry stddev, so we
-// approximate σ = 0.15 * mean (rule of thumb), giving 1 standard
-// deviation ≈ 10 points. Pitchers only; 20-IP gate.
+// pStuff+ (peripheral pitcher index, formerly STF+). ONE definition, shared
+// with the server: storage._compute_peripheral_stf_plus bakes this exact number
+// onto every pitcher statline as `stf_plus_periph`, and this function is the
+// client mirror of that SAME formula, so the leaderboard, the pill, the detail
+// chip, the hover card and the breakout gate can no longer disagree.
+//
+//   pStuff+ = 100 + 10 * (0.55*zK - 0.30*zBB - 0.15*zHR9) / (sum of present weights)
+//
+// on the PER-BATTER K% / BB% rates (workload-neutral: a starter and a reliever
+// compare on the same footing, unlike K/9 which over-rewards short outings)
+// plus HR/9. Each z uses the level's EMPIRICAL sigma (level_norms perf.std_*,
+// populated at n >= 30) and falls back to the 0.15 * mean rule of thumb only
+// where the norms block carries no stdev. Gate mirrors the server: below 20 IP
+// AND below 30 batters faced.
+//
+// 2026-07-29 correctness fix: this used to be an UNWEIGHTED SUM of three
+// per-9 z-scores with sigma hardcoded at 0.15 * mean, i.e. a different metric
+// shipping under the same name on a ~17-points-per-sigma scale. On the current
+// payload that variant pinned 251 of 1,748 qualified pitchers at the 0 floor
+// and had a pool sd of 53.6 points; the shared definition has a pool sd of 6.1.
 function computeStuffPlus(p) {
   const sl = p && p.statline; if (!sl || !sl.is_pitcher) return null;
-  if ((Number(sl.ip) || 0) < 20) return null;
+  // Prefer the SERVER-BAKED value when the payload carries it: identical
+  // formula, one source of truth, zero rounding drift between surfaces.
+  if (sl.stf_plus_periph != null && isFinite(Number(sl.stf_plus_periph))) {
+    return _clampPlus(Number(sl.stf_plus_periph));
+  }
+  const ip = Number(sl.ip) || 0;
+  const bf = Number(sl.tbf != null ? sl.tbf : sl.batters_faced) || 0;
+  if (ip < 20 && bf < 30) return null;
   const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
-  const k = Number(sl.k_per_9),  bk = perf.avg_k_per_9;
-  const w = Number(sl.bb_per_9), bw = perf.avg_bb_per_9;
-  const h = Number(sl.hr_per_9), bh = perf.avg_hr_per_9;
-  if (!isFinite(k) || !isFinite(w) || bk == null || bw == null) return null;
-  const z = (val, mean) => mean > 0 ? (val - mean) / (0.15 * mean) : 0;
-  const zk = z(k, bk);                              // higher K/9 = better
-  const zw = z(w, bw);                              // higher BB/9 = worse
-  const zh = bh != null && isFinite(h) ? z(h, bh) : 0;  // higher HR/9 = worse
-  return _clampPlus(100 + 10 * (zk - zw - zh));
+  const z = (valKey, muKey, stdKey, invert) => {
+    const raw = sl[valKey], mu = Number(perf[muKey]);
+    if (raw == null || perf[muKey] == null) return null;
+    const v = Number(raw);
+    if (!isFinite(v) || !isFinite(mu) || mu === 0) return null;
+    const emp = Number(perf[stdKey]);
+    const sigma = (perf[stdKey] != null && isFinite(emp) && emp > 0) ? emp : 0.15 * mu;
+    if (!(sigma > 0)) return null;
+    const zz = (v - mu) / sigma;
+    return invert ? -zz : zz;                       // walks + homers: less is better
+  };
+  const parts = [
+    [0.55, z("k_pct",    "avg_pitcher_k_pct",  "std_pitcher_k_pct",  false)],
+    [0.30, z("bb_pct",   "avg_pitcher_bb_pct", "std_pitcher_bb_pct", true)],
+    [0.15, z("hr_per_9", "avg_hr_per_9",       "std_hr_per_9",       true)],
+  ].filter(part => part[1] != null && isFinite(part[1]));
+  if (!parts.length) return null;
+  const wsum = parts.reduce((a, part) => a + part[0], 0);
+  const composite = parts.reduce((a, part) => a + part[0] * part[1], 0) / wsum;
+  return _clampPlus(100 + 10 * composite);
 }
 
 // Sur+ (formerly SUR+) - Cleveland-derived expected MLB surplus value
@@ -51686,21 +52836,21 @@ function powerPlusPillHTML(p) {
   const b = computePowerPlus(p);
   if (b == null) return ""; // hitters only - silently omit for pitchers
   return _plusPill("POW+", b.value, _plusClass,
-    `POW+ ${b.value} · 45% ISO+ & HR-rate vs ${p.statline.level || "level"} mean / 25% Statcast hard-hit & barrel / 30% Power grade (100 = league-average power)${_blendTip(b)}`,
+    `POW+ ${b.value} · 45% ISO+ vs ${p.statline.level || "level"} mean (HR-rate retired: it correlated r=0.91 with ISO+ and double-counted) / 25% Statcast hard-hit & barrel / 30% Power grade (100 = league-average power)${_blendTip(b)}`,
     "pwr_plus", _plusProvisional(p));
 }
 function disciplinePlusPillHTML(p) {
   const b = computeDisciplinePlus(p);
   if (b == null) return "";
   return _plusPill("PD+", b.value, _plusClass,
-    `PD+ ${b.value} · BB%−K% differential vs ${p.statline.level || "level"} mean blended with the Pitch-Selection (PSel) tool grade (100 = league-average plate discipline)${_blendTip(b)}`,
+    `PD+ ${b.value} · BB%−K% differential vs the ${p.statline.level || "level"} mean, scaled so 10 points = 1 standard deviation of that differential among same-level hitters, then blended 70/30 with the Pitch-Selection (PSel) tool grade (100 = league-average plate discipline)${_blendTip(b)}`,
     "pd_plus", _plusProvisional(p));
 }
 function stuffPlusPillHTML(p) {
   const v = computeStuffPlus(p);
   if (v == null) return "";
   return _plusPill("pStuff+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
-    `pStuff+ ${v} · K/9 + BB/9 + HR/9 normalized to ${p.statline.level || "level"} mean (100 = league-average peripherals, 10 pts ≈ 1 std-dev). Renamed from STF+.`,
+    `pStuff+ ${v} · weighted z-composite of K% (0.55), BB% (0.30, inverted) and HR/9 (0.15, inverted) vs the ${p.statline.level || "level"} mean, using the level's empirical stdev where one is on file (100 = league-average peripherals; 10 points = 1 std-dev ON EACH INPUT RATE, so the composite's own spread is tighter than any single component). Same formula the server bakes into the detail chip. Renamed from STF+.`,
     "stf_plus");
 }
 function aaaStuffPlusPillHTML(p) {
@@ -51759,6 +52909,12 @@ function scoutRatesHTML(p) {
     stuffPlusPillHTML(p),
     aaaStuffPlusPillHTML(p),
     krpPlusPillHTML(p),
+    // A-ball / complex tracked whiff + FB-velo measurement pills. Display
+    // only (S-XLINE-4 was NO-SHIP as a grade overlay); returns "" whenever
+    // the sidecar is absent or the player is not in it, so the row never
+    // grows an empty slot. Placed after the "+" family and before the
+    // valuation pills so the measurement reads sit with the other rates.
+    (typeof alevelSignalPillsHTML === "function") ? alevelSignalPillsHTML(p) : "",
     milbProjHTML(p),
     tradeValuePillHTML(p),
   ].filter(Boolean).join("");
@@ -52579,6 +53735,37 @@ function attachHandlers() {
       setFilterBarPref("filter-bar", isOpen);
     });
     applyFilterBarDefault(document.getElementById("filter-bar"), filterToggle);
+  }
+
+  // Phone section-nav disclosure (mirrors the Filters accordion): the strip
+  // collapses behind a button naming the current section; picking a tab (or
+  // any programmatic section change via hashchange) re-syncs the label and
+  // folds the grid back up. Desktop never shows the toggle (CSS).
+  const sectionTabsToggle = document.getElementById("section-tabs-toggle");
+  if (sectionTabsToggle) {
+    const sectionTabsBar = document.getElementById("section-tabs");
+    const sectionTabsLabel = document.getElementById("section-tabs-toggle-label");
+    const closeSectionTabs = () => {
+      sectionTabsBar.classList.remove("is-open");
+      sectionTabsToggle.setAttribute("aria-expanded", "false");
+    };
+    const syncSectionTabsToggle = () => {
+      const cur = document.querySelector(".section-tab.active");
+      if (cur && sectionTabsLabel) sectionTabsLabel.textContent = cur.textContent.trim();
+    };
+    sectionTabsToggle.addEventListener("click", () => {
+      const open = sectionTabsBar.classList.toggle("is-open");
+      sectionTabsToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    document.querySelectorAll(".section-tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        closeSectionTabs();
+        setTimeout(syncSectionTabsToggle, 0);
+      });
+    });
+    window.addEventListener("hashchange", () => setTimeout(syncSectionTabsToggle, 0));
+    syncSectionTabsToggle();
+    setTimeout(syncSectionTabsToggle, 0);
   }
 
   // Comparison-cart open/close + per-card remove buttons.

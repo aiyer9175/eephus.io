@@ -194,9 +194,41 @@
   }
 
   // ---- unified share card ---------------------------------------------------
+  // DE-DUP 2026-07-23: EEPHUS_GFX is the single owner of the token resolver,
+  // resolved palette, ramp stops, and theme forcing. These are thin back-compat
+  // aliases: they delegate when the GFX module is loaded and keep a minimal
+  // local fallback for pages (prospx) that load the hub alone.
   function _tok(name, fallback) {
+    if (window.EEPHUS_GFX && window.EEPHUS_GFX.tok) return window.EEPHUS_GFX.tok(name, fallback);
     const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     return v || fallback;
+  }
+  function _palette(accentTok) {
+    if (window.EEPHUS_GFX && window.EEPHUS_GFX.palette) return window.EEPHUS_GFX.palette(accentTok);
+    const dark = document.documentElement.getAttribute("data-theme") === "dark";
+    return {
+      dark,
+      bg:   _tok("--bg-primary",    dark ? "#101014" : "#F6F1E4"),
+      bg2:  _tok("--bg-secondary",  dark ? "#16161B" : "#EFE9D8"),
+      fg:   _tok("--text-primary",  dark ? "#ECEEF2" : "#0F1B2D"),
+      sub:  _tok("--text-tertiary", dark ? "#7C808A" : "#706B5C"),
+      line: _tok("--border",        dark ? "#2B2B31" : "#C9C1AE"),
+      accent: _tok(accentTok || "--accent-cyan", dark ? "#00D9FF" : "#0E7C86"),
+      pos: dark ? "#4FFF9E" : "#1F7A3A",
+      neg: dark ? "#FF6B6B" : "#B91C1C",
+      MONO: '"DotGothic16","MS Gothic","MS UI Gothic","Osaka-Mono",monospace',
+      ramp: dark
+        ? [[0, "#00D9FF"], [0.3, "#B47CFF"], [0.55, "#FF4FD8"], [0.78, "#FFD700"], [1, "#4FFF9E"]]
+        : [[0, "#B91C1C"], [0.35, "#C9A227"], [0.65, "#1F7A3A"], [1, "#0E2B4D"]],
+    };
+  }
+  // Canvas fillStyle can't parse CSS var() references; callers historically pass
+  // both literal colors and "var(--x, fb)" strings, so resolve the latter here.
+  function _color(v, fallback) {
+    if (v == null) return fallback;
+    const m = /^var\((--[^,)]+)(?:,\s*([^)]+))?\)$/.exec(String(v).trim());
+    if (m) return _tok(m[1], (m[2] || fallback || "").trim() || fallback);
+    return v;
   }
   function _loadImage(url) {
     return new Promise(resolve => {
@@ -209,23 +241,147 @@
     });
   }
 
+  // ---- card template registry (GFX slice 4, 2026-07-23) ---------------------
+  // One declarative layout per card family. Module spec-builders pass
+  //   openCard({ template: "<name>", data: {...}, module, accentToken, name,
+  //              meta, sub?, headshotURL?, url, filename, caption? })
+  // and this registry owns the tile/section assembly each module used to
+  // hand-roll. Contract: data LEAVES arrive display-formatted by the module
+  // (money/WAR formatting rules genuinely differ per module and must stay
+  // there); a template owns STRUCTURE - which tiles exist, their order and
+  // labels, section titles, row composition, caps, and color rules. A template
+  // returns {tiles, sections} (it may also return hero/sub/caption); whatever
+  // it returns wins over the same key on the spec. Layouts are frozen copies
+  // of the 2026-07-23 per-module builders - pixel parity is the contract, so
+  // treat any composition change here as a visible redesign of every caller.
+  const templates = {
+    // FA market card (fa.js sharePlayerCard): the predicted market as tiles;
+    // rational-vs-price rows + top team fits, then nearest real comps.
+    // data: {projYears?, projGuar?, projAav?, dealPlus?, dealWar?, rational?,
+    //        surplus?, priorAav?, fits: [{org, blocked, fit}],
+    //        comps: [{name, yr, years, guar, to}]}
+    "player-market": (d) => {
+      const tiles = [];
+      if (d.projGuar != null) tiles.push({ label: "projected", value: `${d.projYears != null ? d.projYears + "y/" : ""}${d.projGuar}` });
+      if (d.projAav != null) tiles.push({ label: "proj AAV", value: d.projAav });
+      if (d.dealPlus != null) tiles.push({ label: "Deal+", value: d.dealPlus });
+      if (d.dealWar != null) tiles.push({ label: "deal WAR", value: d.dealWar });
+      const fitRows = (d.fits || []).slice(0, 3).map(f =>
+        [`fit · ${f.org}${f.blocked ? " (blocked)" : ""}`, String(f.fit)]);
+      const sections = [{
+        title: "Rational value vs price",
+        rows: [
+          ["rational value", d.rational != null ? d.rational : DASH],
+          ["contract surplus", d.surplus != null ? d.surplus : DASH],
+          d.priorAav != null ? ["prior AAV", d.priorAav] : null,
+        ].filter(Boolean).concat(fitRows),
+      }];
+      const comps = (d.comps || []).slice(0, 5);
+      if (comps.length) {
+        sections.push({ title: "Nearest real comps",
+          rows: comps.map(c => [`${c.name || "?"}${c.yr ? ` '${String(c.yr).slice(2)}` : ""}`,
+            `${c.years != null ? c.years + "y / " : ""}${c.guar != null ? c.guar : "-"}${c.to ? `  ${c.to}` : ""}`]) });
+      }
+      return { tiles, sections };
+    },
+    // MLB projection card (projections.js shareMlbCard): projection band +
+    // surplus + skill "+" stats as tiles; the season WAR path, then the
+    // pitcher arsenal OR (hitters / no arsenal) Statcast percentiles.
+    // data: {warYears, warTotal?, surplus?: {value, neg}, swingPlus?,
+    //        aaaStuffPlus?, projAav?, firstSeason, lastSeason,
+    //        warRows: [{season, war, band?}],
+    //        arsenal: [{pitch, usageWhiff}], statcast?: {season, metrics}}
+    "player-projection": (d) => {
+      const tiles = [];
+      if (d.warTotal != null) tiles.push({ label: `${d.warYears}y WAR`, value: d.warTotal });
+      if (d.surplus) tiles.push({ label: "Surplus", value: d.surplus.value,
+                                  color: d.surplus.neg ? "var(--down)" : undefined });
+      if (d.swingPlus != null) tiles.push({ label: "Swing+", value: d.swingPlus });
+      if (d.aaaStuffPlus != null) tiles.push({ label: "aStuff+", value: d.aaaStuffPlus });
+      if (d.projAav != null) tiles.push({ label: "proj AAV", value: d.projAav });
+      const sections = [];
+      if ((d.warRows || []).length) {
+        sections.push({ title: `Projected bWAR ${d.firstSeason}-${d.lastSeason}`,
+          rows: d.warRows.map(r => [r.season, `${r.war}${r.band ? `  (${r.band})` : ""}`]) });
+      }
+      if ((d.arsenal || []).length) {
+        sections.push({ title: "Pitch arsenal · usage / whiff",
+          rows: d.arsenal.slice(0, 6).map(a => [a.pitch, a.usageWhiff]) });
+      } else if (d.statcast && (d.statcast.metrics || []).length) {
+        sections.push({ title: `Statcast percentiles · ${d.statcast.season}`,
+          rows: d.statcast.metrics.map(m => [m.label, `${m.value}  (${m.pct})`]) });
+      }
+      return { tiles, sections };
+    },
+    // Two-subject compare card (projections.js head-to-head): no tile rail,
+    // one column per subject. data: {columns: [{title, rows}, {title, rows}]}
+    "compare": (d) => ({
+      tiles: [],
+      sections: (d.columns || []).slice(0, 2).map(c => ({ title: c.title, rows: c.rows })),
+    }),
+    // Trade Machine deal card: totals/gap/verdict tiles, one section per side,
+    // each asset row "name  [grade]" -> value (negative values in the down
+    // color). data: {sideA: {total, assets: [{name, grade, value, neg}]},
+    //                sideB: {...}, gap, verdict}
+    "deal": (d) => {
+      const a = d.sideA || {}, b = d.sideB || {};
+      const asset = x => [`${String(x.name || "?")}${x.grade ? `  [${x.grade}]` : ""}`,
+        x.value, x.neg ? "var(--down)" : undefined];
+      return {
+        tiles: [
+          { label: "Side A", value: a.total },
+          { label: "Side B", value: b.total },
+          { label: "Gap", value: d.gap },
+          { label: "Verdict", value: d.verdict },
+        ],
+        sections: [
+          { title: "Side A receives", rows: (a.assets || []).map(asset) },
+          { title: "Side B receives", rows: (b.assets || []).map(asset) },
+        ],
+      };
+    },
+    // Leaderboard-subject card (CollegeSavant hitter + pitcher profiles):
+    // headline stat tiles pass through; one percentile section vs the
+    // qualified pool. data: {stats: [{label, value}], poolSize, poolNoun,
+    //                        percentiles: [{label, value, pct}]}
+    "leaderboard-subject": (d) => ({
+      tiles: (d.stats || []).slice(0, 6),
+      sections: [{
+        title: `Percentiles · vs ${d.poolSize} qualified ${d.poolNoun}`,
+        rows: (d.percentiles || []).slice(0, 8).map(p => [p.label, `${p.value}  (${p.pct})`]),
+      }],
+    }),
+  };
+  // Resolve {template, data} specs into plain drawCard opts; pass-through for
+  // specs that already carry tiles/sections (prospx's own builder, callers
+  // predating slice 4). Unknown template names fall through unchanged so a
+  // stale page at worst draws an empty card body, never throws.
+  function resolveTemplate(opts) {
+    if (!opts || !opts.template || typeof templates[opts.template] !== "function") return opts;
+    const out = Object.assign({}, opts, templates[opts.template](opts.data || {}));
+    delete out.template;
+    delete out.data;
+    return out;
+  }
+
   // opts: {module, accentToken?, name, meta, sub?, headshotURL?, url,
-  //        filename, tiles: [{label, value, color?}] (<=4),
+  //        filename, tiles: [{label, value, color?}] (<=6),
   //        sections: [{title, rows: [[label, value, color?], ...]}] (<=2),
   //        caption?}
+  //        - or the declarative {template, data} form (see templates above).
   async function drawCard(opts) {
-    const dark = document.documentElement.getAttribute("data-theme") === "dark";
+    opts = resolveTemplate(opts);
     const W = 1200, H = 675, PAD = 48;
+    // 2x supersample (the EEPHUS_GFX board treatment): backing store at 2x,
+    // all geometry in logical W x H coordinates via ctx.scale.
+    const SCALE = (window.EEPHUS_GFX && window.EEPHUS_GFX.SCALE) || 2;
     const c = document.createElement("canvas");
-    c.width = W; c.height = H;
+    c.width = W * SCALE; c.height = H * SCALE;
     const g = c.getContext("2d");
-    const bg = _tok("--bg-primary", dark ? "#101014" : "#F6F1E4");
-    const bg2 = _tok("--bg-secondary", dark ? "#16161B" : "#EFE9D8");
-    const fg = _tok("--text-primary", dark ? "#ECEEF2" : "#0F1B2D");
-    const sub = _tok("--text-tertiary", dark ? "#7C808A" : "#706B5C");
-    const line = _tok("--border", dark ? "#2B2B31" : "#C9C1AE");
-    const accent = _tok(opts.accentToken || "--accent-cyan", dark ? "#00D9FF" : "#0E7C86");
-    const MONO = '"DotGothic16","MS Gothic","MS UI Gothic","Osaka-Mono",monospace';
+    g.scale(SCALE, SCALE);
+    const P = _palette(opts.accentToken || "--accent-cyan");
+    const bg = P.bg, bg2 = P.bg2, fg = P.fg, sub = P.sub, line = P.line,
+          accent = P.accent, MONO = P.MONO;
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
 
     // header: brand + module eyebrow + date, iridescent rule under
@@ -237,10 +393,7 @@
     g.fillStyle = sub; g.font = `15px ${MONO}`;
     g.fillText(today, W - PAD - g.measureText(today).width, 52);
     const ramp = g.createLinearGradient(PAD, 0, W - PAD, 0);
-    (dark
-      ? [[0, "#00D9FF"], [0.3, "#B47CFF"], [0.55, "#FF4FD8"], [0.78, "#FFD700"], [1, "#4FFF9E"]]
-      : [[0, "#B91C1C"], [0.35, "#C9A227"], [0.65, "#1F7A3A"], [1, "#0E2B4D"]]
-    ).forEach(([s, col]) => ramp.addColorStop(s, col));
+    P.ramp.forEach(([s, col]) => ramp.addColorStop(s, col));
     g.fillStyle = ramp; g.fillRect(PAD, 70, W - 2 * PAD, 3);
 
     // hero: headshot (when CORS lets us) + name + meta
@@ -256,30 +409,44 @@
       g.restore();
       heroX = PAD + S + 26;
     }
-    g.fillStyle = fg; g.font = `700 40px ${MONO}`;
+    // tile rail (right-aligned over the hero band); caps at 6 tiles - beyond 4
+    // the rail switches to a compact scale so it stays clear of the hero name
+    const tiles = (opts.tiles || []).slice(0, 6);
+    const compact = tiles.length > 4;
+    const tvFont = compact ? 20 : 24, tvMin = compact ? 64 : 86,
+          tvPad = compact ? 20 : 28, tGap = compact ? 8 : 10;
+    let tx = W - PAD;
+    for (let i = tiles.length - 1; i >= 0; i--) {
+      const t = tiles[i];
+      g.font = `700 ${tvFont}px ${MONO}`;
+      const vw = Math.max(g.measureText(String(t.value)).width, tvMin) + tvPad;
+      tx -= vw;
+      g.fillStyle = bg2; g.fillRect(tx, 96, vw, 64);
+      g.strokeStyle = line; g.lineWidth = 1; g.strokeRect(tx, 96, vw, 64);
+      g.fillStyle = sub; g.font = `700 11px ${MONO}`;
+      g.fillText(String(t.label).toUpperCase(), tx + 10, 116);
+      g.fillStyle = _color(t.color, fg) || fg; g.font = `700 ${tvFont}px ${MONO}`;
+      g.fillText(String(t.value), tx + 10, 146);
+      tx -= tGap;
+    }
+
+    // hero name shrinks to fit the space left of the tile rail (long names used
+    // to run under the tiles); meta/sub sit below the rail band, so only the
+    // name needs the clamp
+    const nameMax = (tiles.length ? tx : W - PAD) - 18 - heroX;
+    let nameSize = 40;
+    g.font = `700 ${nameSize}px ${MONO}`;
+    while (nameSize > 24 && g.measureText(opts.name || "").width > nameMax) {
+      nameSize -= 2;
+      g.font = `700 ${nameSize}px ${MONO}`;
+    }
+    g.fillStyle = fg;
     g.fillText(opts.name || "", heroX, 142);
     g.fillStyle = sub; g.font = `17px ${MONO}`;
     g.fillText(opts.meta || "", heroX, 174);
     if (opts.sub) {
       g.fillStyle = accent; g.font = `700 15px ${MONO}`;
       g.fillText(opts.sub, heroX, 202);
-    }
-
-    // tile rail (right-aligned over the hero band)
-    const tiles = (opts.tiles || []).slice(0, 4);
-    let tx = W - PAD;
-    for (let i = tiles.length - 1; i >= 0; i--) {
-      const t = tiles[i];
-      g.font = `700 24px ${MONO}`;
-      const vw = Math.max(g.measureText(String(t.value)).width, 86) + 28;
-      tx -= vw;
-      g.fillStyle = bg2; g.fillRect(tx, 96, vw, 64);
-      g.strokeStyle = line; g.lineWidth = 1; g.strokeRect(tx, 96, vw, 64);
-      g.fillStyle = sub; g.font = `700 11px ${MONO}`;
-      g.fillText(String(t.label).toUpperCase(), tx + 12, 116);
-      g.fillStyle = t.color || fg; g.font = `700 24px ${MONO}`;
-      g.fillText(String(t.value), tx + 12, 146);
-      tx -= 10;
     }
 
     // sections: up to two columns of label/value rows
@@ -296,7 +463,7 @@
       (s.rows || []).slice(0, 8).forEach(([label, value, color]) => {
         g.fillStyle = sub; g.font = `15px ${MONO}`;
         g.fillText(String(label), x, y);
-        g.fillStyle = color || fg; g.font = `700 17px ${MONO}`;
+        g.fillStyle = _color(color, fg) || fg; g.font = `700 17px ${MONO}`;
         const v = String(value);
         g.fillText(v, x + colW - g.measureText(v).width, y);
         y += 36;
@@ -356,6 +523,21 @@
     return exportCanvas(await drawCard(opts), opts);
   }
 
+  // One shared "open the card modal" helper (DE-DUP 2026-07-23): fa.js,
+  // projections.js, trademachine.js, and the CollegeSavant apps all carried a
+  // verbatim copy of this wrapper. Opens the shared Generate GFX modal when the
+  // module is loaded; falls back to the legacy direct shareCard download when
+  // it isn't (prospx keeps its own builder - untouched).
+  function openCard(opts) {
+    opts = resolveTemplate(opts);   // {template, data} -> plain drawCard opts
+    if (window.EEPHUS_GFX) {
+      window.EEPHUS_GFX.open({ kind: "card", module: opts.module, accentToken: opts.accentToken,
+        title: opts.name, filenameBase: (opts.filename || "eephus-card").replace(/\.png$/, ""), card: opts });
+    } else {
+      shareCard(opts);
+    }
+  }
+
   // Shared display helpers so every surface formats the site's headline values
   // the same way (FV rounding, money, and the missing-data glyph had each drifted
   // into per-module copies that disagreed).
@@ -374,5 +556,5 @@
     return (mm < 0 ? "-" : "") + "$" + Math.abs(mm).toFixed(d) + "M";
   }
 
-  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, esc, teamLogo, histogram, scatter, fvCeil, money, dash, DASH };
+  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, openCard, templates, esc, teamLogo, histogram, scatter, fvCeil, money, dash, DASH };
 })();

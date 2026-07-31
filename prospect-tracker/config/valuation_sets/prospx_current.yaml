@@ -42,29 +42,55 @@ meta:
       output. Phase 4 backfills it.
 
 # --- Captured live production tier table (table-mode prices) ---
+# RE-CAPTURED 2026-07-24b under the LANE B1 linearmap-v5 surplus calibration
+# (accuracy re-fit superseding the v4 that was live ~1 hour the same day; v5 minimizes
+# held-out MAE + drives slope->1.0, docs/efv-2026-07-24/GATES-ACCURACY.md B1). This file's
+# contract is "table mode reproduces current production" so the snapshot re-captures on an
+# intended production move. Grid history preserved for audit:
+#   v4 2026-07-24 hitter: 35+ 1.9 / 40 2.3 / 40+ 4.4 / 45 9.3 / 45+ 22.1 / 50 31.6 / 55 47.3 / 60 76.6 / 65 121.6 / 70 166.2
+#   v4 2026-07-24 pitcher: 35+ 1.9 / 40 2.2 / 40+ 3.3 / 45 5.6 / 45+ 10.2 / 50 23.2 / 55 37.3 / 60 63.5 / 65 104.4 / 70 144.6
+#   v3 2026-07-04 hitter: 35+ 1.4 / 40 1.5 / 40+ 2.6 / 45 4.5 / 45+ 14.8 / 50 17.7 / 55 33.2 / 60 63.9 / 65 111.1 / 70 157.9
+# ctrl_war is calibration-independent (fv_to_6yr_avg_war*6) and unchanged.
 tiers:
+  # RE-CAPTURED 2026-07-29. Two independent things moved, and they are worth keeping
+  # straight because only one of them is this program's doing.
+  #
+  # surplus_musd drifted BEFORE this program. The 2026-07-24 v5 calibration ship moved
+  # served pricing and the mandated coordinated re-capture never ran, so the frozen
+  # table sat about 16% below the live engine at FV50 (28.2 against 32.8) and 16 of
+  # these acceptance cases were red on arrival. The dollars below are the engine's
+  # current output; the prices readers have been seeing were already these.
+  #
+  # ctrl_war moved BECAUSE of this program: it is fv_to_6yr_avg_war * 6, and the
+  # sub-45 anchor knots were amended on 2026-07-29 (see
+  # data/value_framework_fitted.json empirical_anchors.anchors_provenance). The bottom
+  # three cells fall hard because the old table declared one constant 0.19 WAR/yr for
+  # every grade from 20 to 40: 35+ 1.14 -> 0.32, 40 1.14 -> 0.52, 40+ 1.50 -> 1.19.
+  # Grades 45 and up are unchanged in BOTH columns, by design.
+  #
+  # Grid history: v3 17.7 -> v4 31.6 -> v5 28.2 -> now 32.8 at FV50 hitter.
   hitter:
-    "35+": {surplus_musd: 1.4,   ctrl_war: 1.14}
-    "40":  {surplus_musd: 1.5,   ctrl_war: 1.14}
-    "40+": {surplus_musd: 2.6,   ctrl_war: 1.50}
-    "45":  {surplus_musd: 4.5,   ctrl_war: 1.86}
-    "45+": {surplus_musd: 14.8,  ctrl_war: 2.94}
-    "50":  {surplus_musd: 17.7,  ctrl_war: 4.02}
-    "55":  {surplus_musd: 33.2,  ctrl_war: 5.88}
-    "60":  {surplus_musd: 63.9,  ctrl_war: 8.64}
-    "65":  {surplus_musd: 111.1, ctrl_war: 12.00}
-    "70":  {surplus_musd: 157.9, ctrl_war: 15.12}
+    "35+": {surplus_musd: 0.0,   ctrl_war: 0.32}
+    "40":  {surplus_musd: 0.4,   ctrl_war: 0.52}
+    "40+": {surplus_musd: 6.1,   ctrl_war: 1.19}
+    "45":  {surplus_musd: 11.7,  ctrl_war: 1.86}
+    "45+": {surplus_musd: 22.0,  ctrl_war: 2.94}
+    "50":  {surplus_musd: 32.8,  ctrl_war: 4.02}
+    "55":  {surplus_musd: 52.8,  ctrl_war: 5.88}
+    "60":  {surplus_musd: 90.5,  ctrl_war: 8.64}
+    "65":  {surplus_musd: 148.5, ctrl_war: 12.00}
+    "70":  {surplus_musd: 206.0, ctrl_war: 15.12}
   pitcher:
-    "35+": {surplus_musd: 1.4,   ctrl_war: 1.14}
-    "40":  {surplus_musd: 1.5,   ctrl_war: 1.14}
-    "40+": {surplus_musd: 2.1,   ctrl_war: 1.50}
-    "45":  {surplus_musd: 2.9,   ctrl_war: 1.86}
-    "45+": {surplus_musd: 8.5,   ctrl_war: 2.94}
-    "50":  {surplus_musd: 15.2,  ctrl_war: 4.02}
-    "55":  {surplus_musd: 22.7,  ctrl_war: 5.88}
-    "60":  {surplus_musd: 50.2,  ctrl_war: 8.64}
-    "65":  {surplus_musd: 93.0,  ctrl_war: 12.00}
-    "70":  {surplus_musd: 135.2, ctrl_war: 15.12}
+    "35+": {surplus_musd: 0.0,   ctrl_war: 0.32}
+    "40":  {surplus_musd: 0.2,   ctrl_war: 0.52}
+    "40+": {surplus_musd: 3.8,   ctrl_war: 1.19}
+    "45":  {surplus_musd: 7.4,   ctrl_war: 1.86}
+    "45+": {surplus_musd: 14.8,  ctrl_war: 2.94}
+    "50":  {surplus_musd: 23.2,  ctrl_war: 4.02}
+    "55":  {surplus_musd: 39.8,  ctrl_war: 5.88}
+    "60":  {surplus_musd: 73.6,  ctrl_war: 8.64}
+    "65":  {surplus_musd: 126.3, ctrl_war: 12.00}
+    "70":  {surplus_musd: 178.1, ctrl_war: 15.12}
 
 # --- Global valuation parameters ---
 # MIRROR of value_framework_config.yaml at capture, for documentation and diff

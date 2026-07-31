@@ -1,0 +1,53 @@
+{
+ "lane": "W-SURPLUS S3 role-arg A/B (2026-07-24 cycle)",
+ "registration": "docs/efv-2026-07-24/GATES.md W-SURPLUS S3",
+ "generated_at": "2026-07-24",
+ "question": "Does feeding sv_distribution the MEASURED primary position (positions_played.json, SP/RP) instead of the LISTED position change the resolved-pitcher bucket likelihood (pooled logloss), and does the role-mismatch subcohort improve?",
+ "verdict": "AUDIT-ONLY",
+ "ship": false,
+ "wiring_diff": null,
+ "why_audit_only": "No clean resolved read exists. The lane fails on three independent grounds; per the registration ('if no clean resolved read exists the lane records AUDIT-ONLY (no ship) - honesty over reach') no gate number is manufactured and nothing ships.",
+ "grounds": {
+  "1_gate_metric_is_position_invariant_by_construction": {
+   "finding": "The registered gate metric is the resolved-pitcher BUCKET LIKELIHOOD (pooled logloss). That likelihood is p_bucket_given_fv(fv, is_pitcher) (value_framework.py:749), whose signature takes ONLY fv and is_pitcher - it does not consume a position argument at all.",
+   "p_bucket_given_fv_takes_position": false,
+   "consequence": "The measured-vs-listed A/B delta on the gate metric is exactly 0.000 by construction: swapping the position source cannot move a probability vector that never reads position. The registered metric cannot discriminate between the two sources.",
+   "where_position_actually_enters": "Position feeds ONLY the dollar layer, via _pitcher_rp_by_bucket (value_framework.py:1270) -> _effective_bucket_sv (1290): P(reliever|bucket) blends the full-SP value and the bullpen-capped RP value into the per-bucket surplus $. It changes surplus DOLLARS, never the bucket PROBABILITIES the gate scores.",
+   "dollar_layer_sensitivity_demo_fv50": {
+    "note": "position DOES move the $ layer materially - it is simply not what the registered likelihood metric measures",
+    "RHP_generic_star_mm": 141.08, "RHP_generic_regular_mm": 22.22,
+    "SIRP_reliever_star_mm": 25.46, "SIRP_reliever_regular_mm": 7.89
+   }
+  },
+  "2_measured_source_structurally_absent_for_pitchers": {
+   "finding": "positions_played.json is a POSITION-PLAYER fielding-versatility sidecar; pitchers are skipped by construction (fielding_positions.py:78-80, 'Fetch fielding-by-position for every POSITION-PLAYER prospect ... Pitchers are skipped (no versa)').",
+   "positions_played_total_players": 2661,
+   "positions_played_intersect_is_pitcher_1": 2,
+   "resolved_pitcher_universe": 1073,
+   "resolved_pitchers_present_in_positions_played": 2,
+   "resolved_pitcher_measured_coverage_share": 0.0019,
+   "note": "The 2 hits are a single duplicated key (adrian_hernandez, by_pos P g346/gs22 -> a reliever) plus position-players who pitched in blowouts elsewhere in the file; there is no pitcher SP/RP signal to read."
+  },
+  "3_listed_source_carries_no_role_for_the_resolved_cohort": {
+   "finding": "Even the incumbent LISTED position is handedness-only for the 2017-2019 resolved cohort, so there is no listed SP/RP role to contrast against a measured one.",
+   "listed_positions_of_resolved_pitchers": {"RHP": 814, "LHP": 249, "P": 6, "RHP/CF": 2, "MIRP": 1, "RHP/OF": 1},
+   "explicit_role_tags_SP_or_RP_family": 1,
+   "handedness_only_RHP_LHP": 1063,
+   "note": "1063/1073 resolved pitchers are tagged only by throwing hand. _pos_primary maps these to the GENERIC config base reliever mix; there is no SP/RP contrast to A/B, on either side."
+  }
+ },
+ "analysis_actually_run": {
+  "protocol": "Reference computation through the engine's public functions: resolved pitchers from surplus_backtest_real._resolved_only(build_cohorts()); realized 6yr-avg WAR from backtest._realized_control_war/6; realized bucket = nearest calibrated pitcher midpoint (0.0,1.0,2.0,3.2,5.0); predicted p = value_framework.p_bucket_given_fv(fv, True); logloss_i = -log(max(p[bucket],1e-9)).",
+  "resolved_pitchers_scored": 1073,
+  "pooled_bucket_logloss": 0.73775,
+  "pooled_bucket_logloss_listed_source": 0.73775,
+  "pooled_bucket_logloss_measured_source": 0.73775,
+  "logloss_delta_measured_minus_listed": 0.0,
+  "delta_is_exact_zero_reason": "p_bucket_given_fv does not read position; the two 'sources' produce identical probability vectors, so the pooled logloss is byte-identical, not merely close.",
+  "realized_bucket_distribution_bust_bench_regular_good_star": [954, 92, 13, 13, 1],
+  "role_mismatch_subcohort": {"defined": false, "n": 0, "reason": "a role-mismatch subcohort requires BOTH a listed role and a measured role; neither exists for pitchers here (grounds 2 and 3)."}
+ },
+ "recommendation_for_future_cycles_out_of_scope_this_registration": "If the owner wants to price pitcher role from measured usage, the signal is games-started share (career_stats gamesStarted/appearances or the by_pos['P'] gs/g concept), NOT positions_played.json (which excludes pitchers). That would be a NEW measured-role source and a NEW registration; it is not the frozen positions_played A/B and is not run here. Note also that any such feature would act on the DOLLAR layer (_pitcher_rp_by_bucket), not the bucket-likelihood metric this lane was registered against - the metric itself would need reframing.",
+ "files_touched": ["data/xfv_role_arg_eval.json (this artifact; lane-owned)"],
+ "code_edits": "NONE (value_framework.py and efv_score.py are locked; this lane is analysis-only and its verdict is AUDIT-ONLY)"
+}

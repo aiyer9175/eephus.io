@@ -1,0 +1,122 @@
+/* Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Noah J. Dengler (@ARKNDJL), 2026 */
+
+/* MiLB Park Factors (/parks/) - a thin extension of the shared .fa-app /
+   .mlbstats-app blocks in assets/site.css. The board reuses .mlbstats-table,
+   .mlbstats-bar, .mlbstats-sectionnav, .mlbstats-collapse and .mlbstats-scroll
+   verbatim; only the park-specific marks live here:
+     .pk-tiles     summary tiles above the board
+     .pk-fac       the factor cell (number + bar diverging from 1.00)
+     .pk-lvl       the level chip (AAA / AA / A+ / A / CPX / DSL)
+     .pk-detail    the per-season drilldown row
+   Sharp corners only (house style); the one curve on the site is the account
+   avatar. */
+
+.parks-app { font-family: var(--font-retro); }
+
+/* ---- summary tiles -------------------------------------------------------- */
+.parks-app .pk-tiles { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+.parks-app .pk-tile {
+  border: 1px solid var(--border); background: var(--bg-secondary);
+  padding: 7px 11px; min-width: 112px; flex: 0 1 auto;
+}
+.parks-app .pk-tile-label {
+  font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.parks-app .pk-tile-val {
+  font-family: var(--font-retro-mono); font-size: 17px; font-weight: 800;
+  color: var(--text-primary); font-variant-numeric: tabular-nums; line-height: 1.25;
+}
+.parks-app .pk-tile-sub {
+  font-size: 10.5px; color: var(--text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 22ch;
+}
+
+/* ---- the factor cell ------------------------------------------------------ */
+/* Number plus a bar that diverges from the 1.00 tick: right of the tick the
+   park adds offense, left of it the park takes offense away. Warm = inflates,
+   cool = suppresses (the Savant convention). The number carries the value on
+   its own, so color is never the only channel. */
+.parks-app .pk-fac { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.parks-app .pk-fac-n { font-weight: 700; min-width: 40px; text-align: right; }
+.parks-app .pk-fac-bar {
+  position: relative; width: 76px; height: 9px; flex: none;
+  background: var(--bg-tertiary); border: 1px solid var(--border-light);
+}
+.parks-app .pk-fac-bar::before {
+  content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px;
+  width: 1px; background: var(--border);
+}
+.parks-app .pk-fac-fill { position: absolute; top: 0; bottom: 0; opacity: .85; }
+.parks-app .pk-hot { color: var(--accent-red); }
+.parks-app .pk-cold { color: var(--accent-cyan); }
+.parks-app .pk-flat { color: var(--text-secondary); }
+.parks-app .pk-fill-hot { background: var(--accent-red); }
+.parks-app .pk-fill-cold { background: var(--accent-cyan); }
+
+/* ---- venue / affiliate cell ---------------------------------------------- */
+.parks-app .pk-venue { text-align: left; font-family: var(--font-retro); max-width: 260px; }
+.parks-app .pk-venue-name { color: var(--text-primary); font-weight: 700; }
+.parks-app .pk-affil { display: block; font-size: 10.5px; color: var(--text-tertiary); }
+.parks-app .pk-lvl {
+  font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: .03em; color: var(--text-secondary);
+  border: 1px solid var(--border); padding: 1px 5px; white-space: nowrap;
+}
+.parks-app .pk-flag {
+  font-family: var(--font-retro-mono); font-size: 8px; font-weight: 700;
+  color: var(--accent-orange); border: 1px solid var(--accent-orange);
+  padding: 1px 3px; margin-left: 5px; vertical-align: middle; cursor: help;
+}
+.parks-app tr.pk-row { cursor: pointer; }
+.parks-app tr.pk-row.is-open td { background: var(--bg-tertiary); }
+.parks-app .pk-caret { color: var(--text-tertiary); margin-right: 5px; font-size: 9px; }
+
+/* ---- per-season drilldown ------------------------------------------------- */
+.parks-app tr.pk-detail > td { padding: 0; background: var(--bg-secondary); }
+.parks-app .pk-detail-wrap { padding: 9px 12px 12px; }
+.parks-app .pk-detail-h {
+  font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+.parks-app .pk-mini { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.parks-app .pk-mini th, .parks-app .pk-mini td {
+  padding: 3px 8px; border-bottom: 1px solid var(--border-light);
+  text-align: right; white-space: nowrap;
+  font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums;
+}
+.parks-app .pk-mini th {
+  font-size: 9px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--text-tertiary); font-weight: 700;
+}
+.parks-app .pk-mini th:first-child, .parks-app .pk-mini td:first-child { text-align: left; }
+.parks-app .pk-mini td.pk-mini-club { font-family: var(--font-retro); color: var(--text-secondary); }
+
+/* ---- method / prose ------------------------------------------------------- */
+.parks-app .pk-prose { max-width: 78ch; }
+.parks-app .pk-prose h3 { margin: 16px 0 4px; }
+.parks-app .pk-prose p { margin: 0 0 8px; color: var(--text-secondary); font-size: 0.95rem; line-height: 1.55; }
+.parks-app .pk-prose ul { margin: 0 0 10px; padding-left: 18px; color: var(--text-secondary); font-size: 0.95rem; line-height: 1.55; }
+.parks-app .pk-prose li { margin: 0 0 4px; }
+.parks-app .pk-prose strong { color: var(--text-primary); }
+.parks-app .pk-verbatim {
+  border: 1px solid var(--border); background: var(--bg-secondary);
+  padding: 9px 12px; margin: 6px 0 12px;
+  font-family: var(--font-retro-mono); font-size: 11.5px; line-height: 1.6;
+  color: var(--text-secondary); white-space: pre-wrap; overflow-x: auto;
+}
+.parks-app .pk-warn {
+  border: 1px solid var(--accent-orange); background: var(--bg-secondary);
+  padding: 8px 12px; margin: 10px 0 4px; font-size: 12px; color: var(--text-secondary);
+}
+.parks-app .pk-warn strong { color: var(--accent-orange); }
+
+@media (max-width: 620px) {
+  .parks-app .pk-fac-bar { display: none; }
+  .parks-app .pk-tile { min-width: 0; flex: 1 1 44%; }
+}

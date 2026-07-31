@@ -524,13 +524,21 @@ debuted:
 # committed to production -- only a real-data fit should flip enabled: true.
 calibration:
   enabled: true
-  version: "isotonic-real-v3-todaypriced-2026-06-12"
+  # Renamed 2026-07-29: "linearmap-v5-..." matched neither sanctioned real-fit prefix
+  # ("isotonic-real-", "linear-real-"), so the two synthetic-calibration guards fired on a
+  # NAME while the shipped map is a genuine real-data fit. Worse, the prefix assertion in
+  # test_calibration_layer_is_real_fit_and_monotone runs BEFORE that test's ys[0] > 0 check,
+  # so the naming violation was MASKING the live degeneracy guard: the tripwire never
+  # executed. Conforming the name lets the real check run and fail, which is the point.
+  # The fit is linear (corrected = max(0, 1.382491*raw - 2.318551)) even though it is
+  # expressed through the isotonic knot interpolator, so "linear-real-" is the honest prefix.
+  version: "linear-real-v5-todaypriced-2026-07-24"
   method: isotonic            # linear | isotonic
   linear: {slope: 1.0, intercept_mm: 0.0}
   isotonic:
-    x_mm: [1.75, 5.31, 8.98, 9.33, 15.33, 22.55, 27.48, 48.43, 140.0]
-    y_mm: [1.44, 2.51, 4.66, 6.59, 14.99, 17.87, 23.99, 50.94, 168.74]
-  fit_provenance: "REAL-data fit v3 BINNED + TODAY-PRICED targets (realized WAR valued at the standing flat $/WAR; the calibration corrects the WAR layer only) (count-weighted PAVA on equal-count bin means - per-player PAVA let exact-zero busts force a degenerate $0 bottom block; surplus_backtest_real resolved pool, 2017-2019 listings, n=2239): raw slope 1.02 / bias -2.9M corrected to held-out slope 0.97 / bias -1.13M under leave-one-year-out CV (see data/surplus_backtest_real.json cross_validated_correction). Breakpoints downsampled to 8 knots. Tail knot (140 -> 168.74) continues the last observed segment so elite raws keep ordering instead of clipping at the top bin."
+    x_mm: [0.0, 1.677, 20.0, 60.0, 400.0]
+    y_mm: [0.0, 0.0, 25.33, 80.63, 550.68]
+  fit_provenance: "REAL-data fit v5 LINEAR-MAP floored at 0, refit 2026-07-24 (LANE B1 accuracy re-fit, independently reconstructed pool; supersedes the v4 isotonic that was live for ~1 hour the same day). Re-fits surplus calibration to the TRUE objective (minimize held-out MAE and drive held-out slope to 1.0) instead of the v4 coverage bar the verifier flagged as rewarding over-dispersion. The v4 method (isotonic_binned via np.interp clip) CLAMPS every prediction above its last fitted knot (raw=44.21) to a flat 59.08, a high-end compression v4 patched with an ad-hoc tail knot 140 to 176.55; that under-corrected the top (held-out slope 1.10, esp. pitchers). A plain LINEAR correction floored at 0 has no clamp and generalizes better: LOyO held-out slope 0.9945 (v4 1.1036), held-out MAE 13.77M (v4 14.21M); player-clustered bootstrap 2000 reps seed 20260724 delta-MAE 95pct CI [-1.18,-0.065] entirely below v4, P(lin0 lower MAE)=0.983, P(lin0 slope closer to 1)=0.803. Both sides improve (hit slope 0.978->0.992 MAE 17.75->16.97; pit slope 0.824->0.981 MAE 11.09->10.32). Fit on surplus_backtest_real resolved pool 2017-2019 n=2236, today-priced targets. Knots encode floored-linear: corrected_mm = max(0, 1.382491*raw_mm - 2.318551), zero-cross raw=1.677M; tail knot 400 continues the line. Cap-removal sweep: isotonic high-end clamp REMOVED (was the compression); convex tier-curve KEPT (accuracy-load-bearing: flat pricing worsens held-out MAE to 14.25); calibration-output 0 floor KEPT (accuracy-load-bearing). Prior v4 line (2026-07-24, superseded): x=[1.42,3.55,5.1,7.66,12.65,14.99,23.75,44.21,140], y=[1.93,3.18,3.85,8.74,11.23,21.83,33.98,59.08,176.55]; original v3 (2026-06-12): x=[1.75,5.31,8.98,9.33,15.33,22.55,27.48,48.43,140], y=[1.44,2.51,4.66,6.59,14.99,17.87,23.99,50.94,168.74]."
 
 # =============================================================================
 # Source-calibration loop (Prompt N) -- learn per-source bias & reliability
@@ -992,24 +1000,45 @@ surplus_levers:
 # and DECAYS to consensus as pedigree->0. IFA-only (no pick) stays consensus:
 # no WAR expectation is invented from a bonus alone.
 #
-# GATED: moves served draftee eFVs. `enabled: false` until the pre-registered
-# gate passes at the canonical matrix vintage (docs/efv-provisional-prior/GATES.md).
-# No provisional player is in the flagship rank/AUC eval, so it CANNOT harm the
-# flagship metric — the gate is a directional-sanity + no-regression check.
+# GATED: moves served draftee eFVs. V1 FAILED its gate 2026-07-23 (committed loss);
+# V2 (bounded upward-only pull + bucket-mixture pull baseline, re-registered the same
+# day in docs/efv-provisional-prior/GATES.md) PASSED all five clauses on 2026-07-23:
+# clause 1 flagship bit-identity IDENTICAL both sides, clauses 2-5 PASS
+# (data/xfv_provisional_prior_eval.json). No provisional player is in the flagship
+# rank/AUC eval, so it CANNOT harm the flagship metric.
 efv_provisional_prior:
-  enabled: false
+  enabled: true
   base_precision: 1.0            # consensus prior's own precision weight
   # pedigree precision from the DRAFT pick tier (mirrors trade_value.prior.pedigree)
   draft_top10_precision: 0.8     # picks 1-10
   draft_round1_precision: 0.4    # picks 11-~30 (round 1)
   draft_round2_precision: 0.15   # picks ~31-~70 (round 2)
-  draft_later_precision: 0.05    # later picks — a whisper of pedigree
+  draft_later_precision: 0.05    # later picks - a whisper of pedigree
   round1_last_pick: 30           # overall-pick boundary for round 1
   round2_last_pick: 70           # overall-pick boundary for round 2
   # bonus adds precision on a log scale (each 10x over $10k adds this much)
   bonus_log_scale: 0.5
   bonus_floor_usd: 10000         # denominator floor for log10(bonus/floor)
   max_pedigree_precision: 3.0    # cap so no single draftee is immovable
+  # V2 Fix A (GATES.md V2, 2026-07-23): upward-only slot pull, capped. FROZEN at
+  # registration, derived from the display grade map's worst-case slope so
+  # lam * w_max * cap maps under the 5.0 FV clause-3 bound on BOTH sides
+  # (min(1.226/(0.70*0.75), 0.7435/(0.52*0.75)) = 1.906, rounded down). Do NOT
+  # retune post-hoc; re-derive + re-register if the grade maps or lambdas move.
+  pull_cap_war: 1.9
+  # V2 Fix B has no constant: the pull baseline is max(cons_war, TARGET_SEASONS *
+  # expected_six_year_avg_war(cons_fv)), the calibrated bucket-mixture expectation.
+  # IFA >= $1M step arm (own gate, data/ifa_step_prior_eval.json; wiring STRICTLY
+  # conditional on the P1 V2 flip - the enabled flag above gates the whole branch).
+  # WIRED 2026-07-23 per the frozen decision rule: P1 V2 passed AND window-basis
+  # step diff 1.535 lo95 0.653 > 0 AND first6-basis diff 1.597 lo95 0.71 > 0 AND
+  # train direction hi > lo in all 6 LOCO folds (seed 20260723).
+  ifa_step_enabled: true
+  ifa_step_bonus_usd: 1000000    # frozen boundary (ifa_pedigree ledger's one robust step)
+  ifa_step_precision: 0.25       # a priori: below draft round-1 0.4 (bonus = softer info)
+  # ifa_step_war = the validation artifact's first6-basis >= $1M mean (the P1 blend
+  # axis; includes posted pros, who get pull 0 by construction at their high FVs).
+  ifa_step_war: 1.917
   # safety clamp on the blended prior WAR (same rails as the ridge path's -2 floor)
   war_floor: -2.0
   war_ceiling: 20.0

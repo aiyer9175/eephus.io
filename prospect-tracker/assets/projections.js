@@ -113,6 +113,8 @@
   let FIELDING_LOADING = false;
   let PITCHLB = null;           // {byMlbam:{...}} from the /mlbstats/ leaderboards, lazy
   let PITCHLB_LOADING = false;
+  let SWINGD = null;            // data/swing_delta.json (bat-tracking year-over-year), lazy
+  let SWINGD_LOADING = false;
 
   function syncFromURL() {
     const p = new URLSearchParams(location.hash.slice(1));
@@ -1128,16 +1130,18 @@
     const gfx = document.getElementById("cmp-gfx");
     if (gfx) gfx.onclick = () => {
       if (!window.EEPHUS_HUB) return;
-      _openCard({
+      // Declarative since GFX slice 4: the "compare" template owns the
+      // no-tiles / two-column layout; this site only supplies the columns.
+      window.EEPHUS_HUB.openCard({
+        template: "compare",
+        data: { columns: [
+          { title: esc(a.name), rows: seasons.map((s, t) => [String(s), fmtWar(warAt(a, t))]) },
+          { title: esc(b.name), rows: seasons.map((s, t) => [String(s), fmtWar(warAt(b, t))]) },
+        ] },
         module: "MLB Projections",
         accentToken: "--accent-cyan",
         name: `${a.name} vs ${b.name}`,
         meta: `head-to-head · projected ${DATA.horizon}y bWAR ${fmtWar(warShown(a))} vs ${fmtWar(warShown(b))}`,
-        tiles: [],
-        sections: [
-          { title: esc(a.name), rows: seasons.map((s, t) => [String(s), fmtWar(warAt(a, t))]) },
-          { title: esc(b.name), rows: seasons.map((s, t) => [String(s), fmtWar(warAt(b, t))]) },
-        ],
         url: "eephus.io/projections",
         filename: `eephus-cmp-${a.key}-${b.key}.png`,
         caption: "eephus projection engine (proj_lgbm_v1) · season-aligned mean bWAR",
@@ -1238,6 +1242,68 @@
       <div class="mlbp-grid">${cells.map(([l, v]) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${l}</span><span class="mlbp-cell-val">${v}</span></div>`).join("")}</div>
       <div class="fa-sub" style="margin-top:6px;"><a class="fa-player-link" href="/fa/#player=${encodeURIComponent(p.key)}">market card on the class board →</a></div></div>`;
   }
+  // ---- bat-speed change -----------------------------------------------------
+  // MLB bat tracking starts in 2024, so a year-over-year Swing+ delta exists ONLY
+  // for hitters with a scored season on BOTH sides of the latest pair. That is a
+  // small, named population (the payload reports exactly how many), and every
+  // other hitter gets an explicit no-data state instead of a chip that implies
+  // coverage we do not have.
+  //
+  // The alert cut is the 10th percentile of the MEASURED delta distribution in
+  // that same population, carried on the payload - a distributional flag, not a
+  // validated predictor of anything. Nothing here claims a decline forecasts
+  // decline; it says this season's swing is in the bottom tenth of observed
+  // year-over-year changes.
+  function ensureSwingDelta(key) {
+    if (SWINGD || SWINGD_LOADING) return;
+    SWINGD_LOADING = true;
+    fetch("/data/swing_delta.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        SWINGD = d || { players: {} };
+        SWINGD_LOADING = false;
+        if (state.player === key) renderPlayer(key);
+      })
+      .catch(() => { SWINGD = { players: {} }; SWINGD_LOADING = false; });
+  }
+
+  function batSpeedChip(p) {
+    if (p.isPit && !p.twoWay) return "";           // bat tracking is a hitter read
+    if (!SWINGD || !SWINGD.players) return "";
+    const yrs = (SWINGD.priorSeason && SWINGD.latestSeason)
+      ? `${String(SWINGD.priorSeason).slice(2)}&rarr;${String(SWINGD.latestSeason).slice(2)}` : "";
+    const row = p.mlbam != null ? SWINGD.players[String(p.mlbam)] : null;
+    const wrap = (cls, body, title) =>
+      `<div class="mlbp-batspeed ${cls}" title="${esc(title)}">${body}</div>`;
+    if (!row) {
+      // Two distinct no-data cases, said plainly rather than blended.
+      const why = (SWINGD.latestSeason && p.swingPlusSeasons
+                   && (p.swingPlusSeasons[String(SWINGD.latestSeason)] || {}).swing_plus != null)
+        ? `no ${SWINGD.priorSeason} bat-tracking season to compare against`
+        : "no scored bat-tracking pair for this hitter";
+      return wrap("is-nodata",
+        `<span class="mlbp-batspeed-label">Bat speed ${yrs}</span><span class="mlbp-batspeed-val">no data</span>`
+        + `<span class="mlbp-batspeed-why">${esc(why)}</span>`,
+        `Swing+ year-over-year change needs a scored season on both sides. Only ${SWINGD.n} hitters have one `
+        + `(${SWINGD.nLatestOnly} more have ${SWINGD.latestSeason} only). MLB bat tracking begins in 2024 and there is no minor-league equivalent.`);
+    }
+    const cut = (SWINGD.dist || {}).p10;
+    const alert = (cut != null && row.d <= cut);
+    const sign = row.d > 0 ? "+" : "";
+    const body = `<span class="mlbp-batspeed-label">Bat speed ${yrs}</span>`
+      + `<span class="mlbp-batspeed-val">${sign}${row.d.toFixed(1)}</span>`
+      + `<span class="mlbp-batspeed-why">Swing+ ${row.prior.toFixed(1)} &rarr; ${row.latest.toFixed(1)}`
+      + `${row.lowN ? " &middot; partial tracking" : ""}</span>`
+      + (alert ? `<span class="mlbp-batspeed-flag">bottom decile</span>` : "");
+    const title = `Swing+ moved ${sign}${row.d.toFixed(1)} from ${SWINGD.priorSeason} (n=${row.nPrior} swings) to `
+      + `${SWINGD.latestSeason} (n=${row.nLatest}). Across the ${SWINGD.n} hitters with both seasons the median change is `
+      + `${(SWINGD.dist || {}).p50}, the 10th percentile ${cut} and the 90th ${(SWINGD.dist || {}).p90}. `
+      + (alert ? "This change sits in the bottom tenth of that distribution. " : "")
+      + "A description of an observed change, not a projection: nothing here has been tested as a predictor."
+      + (row.lowN ? ` One of the two seasons is under ${SWINGD.minSwings} swings, so the model shrank it hard toward 100.` : "");
+    return wrap(alert ? "is-alert" : "", body, title);
+  }
+
   function ensureFielding(key) {
     if (FIELDING || FIELDING_LOADING) return;
     FIELDING_LOADING = true;
@@ -1483,6 +1549,7 @@
       return;
     }
     ensureFielding(key);
+    if (!p.isPit || p.twoWay) ensureSwingDelta(key);
     // Only client-fetch the pitching leaderboards when the skills block was not
     // baked into the payload (older builds); the baked block renders directly.
     if ((p.isPit || p.twoWay) && !(p.skills && p.skills.pitch)) ensurePitchingStats(key);
@@ -1503,6 +1570,20 @@
         "HEM+: a hitter's pure offensive-rate skill (100 = average qualified hitter), a sample-shrunk wOBA. From the MLB Stats hitter leaderboards.");
     }
     if (p.swingPlus != null) tile("Swing+", `${p.swingPlus}<span class="fa-band"> n=${p.swingN}</span>`, p.swingPlus >= 105 ? "proj-pos" : p.swingPlus <= 95 ? "proj-neg" : "");
+    // W6 display-only: per-season Swing+ trend. swingPlusSeasons rides the
+    // detail payload where scored; the guard covers older payloads and
+    // one-season hitters. * marks a sub-180-swing season (partial tracking,
+    // shrunk hard toward 100 by the model's reliability weight).
+    if (p.swingPlusSeasons) {
+      const sy = Object.keys(p.swingPlusSeasons).filter(y => (p.swingPlusSeasons[y] || {}).swing_plus != null).sort();
+      if (sy.length >= 2) {
+        const seg = sy.map(y => `${y.slice(2)}: ${Math.round(p.swingPlusSeasons[y].swing_plus)}${p.swingPlusSeasons[y].low_n ? "*" : ""}`).join(" / ");
+        const sd = p.swingPlusSeasons[sy[sy.length - 1]].swing_plus - p.swingPlusSeasons[sy[sy.length - 2]].swing_plus;
+        tile("Swing+ trend", `<span class="mlbp-swing-seasons">${seg}</span>`,
+          sd >= 5 ? "proj-pos" : sd <= -5 ? "proj-neg" : "",
+          "Per-season Swing+ (Will Cahoon's model): the same competitive-swing filter and 360-swing reliability shrink, scored season by season. * = under 180 swings that season. Display context only - the pooled Swing+ tile is the served number.");
+      }
+    }
     if (p.aaaStuffPlus != null) tile("aStuff+", `${Math.round(p.aaaStuffPlus)}<span class="fa-band"> AAA ${p.aaaStuffSeason}</span>`, p.aaaStuffPlus >= 110 ? "proj-pos" : p.aaaStuffPlus <= 90 ? "proj-neg" : "");
     if (p.fa && p.fa.projAav != null) tile("Proj AAV", money(p.fa.projAav));
     // Two-way: surface the hitting vs pitching WAR split (the path above sums both).
@@ -1533,8 +1614,9 @@
         </div>
         <div class="mlbp-tiles">${tiles.join("")}</div>
       </div>
+      ${batSpeedChip(p)}
       ${mlbpTabs(p, key)}
-      <div class="fa-note" style="margin-top:14px;">Projections: the eephus projection engine (proj_lgbm_v1; bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}${p.aaaStuffPlus != null ? " aStuff+: in-house AAA pitch-quality model (per-pitch kinematics vs run value, latest tracked AAA season)." : ""}</div>
+      <div class="fa-note" style="margin-top:14px;">Projections: the eephus projection engine (proj_lgbm_v1; bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}${p.swingPlusSeasons ? " Swing+ trend is per-season with the same reliability shrink; * = under 180 swings that season." : ""}${p.aaaStuffPlus != null ? " aStuff+: in-house AAA pitch-quality model (per-pitch kinematics vs run value, latest tracked AAA season)." : ""}</div>
     </div>`;
     bindMlbpTabs(root, p, key);
     // hub strip (cross-module identity) - lazy, never blocks the paint
@@ -1549,16 +1631,9 @@
     }
   }
 
-  // Open the shared Generate GFX modal for a one-subject (card) export; fall
-  // back to the legacy direct download if the module didn't load.
-  function _openCard(opts) {
-    if (window.EEPHUS_GFX) {
-      window.EEPHUS_GFX.open({ kind: "card", module: opts.module, accentToken: opts.accentToken,
-        title: opts.name, filenameBase: (opts.filename || "eephus-card").replace(/\.png$/, ""), card: opts });
-    } else if (window.EEPHUS_HUB) {
-      window.EEPHUS_HUB.shareCard(opts);
-    }
-  }
+  // One-subject card exports go through EEPHUS_HUB.openCard (the shared
+  // wrapper - DE-DUP 2026-07-23; it prefers the GFX modal, falls back to the
+  // direct shareCard download).
 
   // Board spec for the Generate GFX modal: the league projection board as a
   // column leaderboard (projected 5y bWAR, P10-P90 range, contract surplus).
@@ -1647,45 +1722,44 @@
     };
   }
 
-  // Unified share card (EEPHUS_HUB canvas template) - the MLB module's
-  // data priorities: projection band + surplus + Swing+ up top, Statcast
+  // Unified share card - declarative since GFX slice 4: this builder now only
+  // maps the detail payload's DATA (display-formatted with this module's own
+  // fmtWar/money rules) onto the shared "player-projection" template;
+  // EEPHUS_HUB.templates owns the tile/section layout. Data priorities are
+  // unchanged: projection band + surplus + Swing+ up top, Statcast
   // percentiles and (pitchers) arsenal as the body sections.
   function shareMlbCard(p) {
     const first = DATA.first_season;
-    const tiles = [];
-    if (p.proj && p.proj.warTotal != null)
-      tiles.push({ label: `${(p.proj.war || []).length}y WAR`, value: fmtWar(p.proj.warTotal) });
-    if (p.proj && p.proj.surNpv != null)
-      tiles.push({ label: "Surplus", value: money(p.proj.surNpv),
-                   color: p.proj.surNpv >= 0 ? undefined : "var(--down)" });
-    if (p.swingPlus != null)
-      tiles.push({ label: "Swing+", value: String(Math.round(p.swingPlus)) });
-    if (p.aaaStuffPlus != null)
-      tiles.push({ label: "aStuff+", value: String(Math.round(p.aaaStuffPlus)) });
-    if (p.fa && p.fa.projAav != null)
-      tiles.push({ label: "proj AAV", value: money(p.fa.projAav) });
-    const sections = [];
-    if (p.proj && (p.proj.war || []).length) {
-      sections.push({ title: `Projected bWAR ${first}-${first + (p.proj.war.length - 1)}`,
-        rows: p.proj.war.map((w, t) => [String(first + t),
-          `${fmtWar(w)}${(p.proj.warP10 || [])[t] != null ? `  (${fmtWar(p.proj.warP10[t])}-${fmtWar(p.proj.warP90[t])})` : ""}`]) });
-    }
-    if (p.isPit && p.arsenal && p.arsenal.length) {
-      sections.push({ title: "Pitch arsenal · usage / whiff",
-        rows: p.arsenal.slice(0, 6).map(a => [a.pitch || "?",
-          `${a.usage != null ? a.usage.toFixed(0) + "%" : "-"} / ${a.whiff != null ? a.whiff.toFixed(0) + "%" : "-"}`]) });
-    } else if (p.sc && p.sc.metrics && p.sc.metrics.length) {
-      sections.push({ title: `Statcast percentiles · ${p.sc.season}`,
-        rows: p.sc.metrics.map(m => [m.label, `${m.value}  (${m.pct})`]) });
-    }
-    _openCard({
+    const war = (p.proj && p.proj.war) || [];
+    window.EEPHUS_HUB.openCard({
+      template: "player-projection",
+      data: {
+        warYears: war.length,
+        warTotal: (p.proj && p.proj.warTotal != null) ? fmtWar(p.proj.warTotal) : null,
+        surplus: (p.proj && p.proj.surNpv != null)
+          ? { value: money(p.proj.surNpv), neg: !(p.proj.surNpv >= 0) } : null,
+        swingPlus: p.swingPlus != null ? String(Math.round(p.swingPlus)) : null,
+        aaaStuffPlus: p.aaaStuffPlus != null ? String(Math.round(p.aaaStuffPlus)) : null,
+        projAav: (p.fa && p.fa.projAav != null) ? money(p.fa.projAav) : null,
+        firstSeason: first,
+        lastSeason: first + (war.length - 1),
+        warRows: war.map((w, t) => ({ season: String(first + t), war: fmtWar(w),
+          band: (p.proj.warP10 || [])[t] != null
+            ? `${fmtWar(p.proj.warP10[t])}-${fmtWar(p.proj.warP90[t])}` : null })),
+        // arsenal is pitcher-gated HERE (not in the template) so a stray
+        // arsenal field on a hitter payload still falls through to Statcast,
+        // exactly like the pre-template builder.
+        arsenal: (p.isPit && p.arsenal) ? p.arsenal.map(a => ({ pitch: a.pitch || "?",
+          usageWhiff: `${a.usage != null ? a.usage.toFixed(0) + "%" : "-"} / ${a.whiff != null ? a.whiff.toFixed(0) + "%" : "-"}` })) : [],
+        statcast: (p.sc && p.sc.metrics && p.sc.metrics.length)
+          ? { season: p.sc.season, metrics: p.sc.metrics } : null,
+      },
       module: "MLB Projections",
       accentToken: "--accent-cyan",
       name: p.name || p.key,
       meta: `${p.pos || ""}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${p.team}` : " · FA"}`,
       sub: p.fa && p.fa.verdict ? `FA verdict: ${String(p.fa.verdict).toUpperCase()}` : "",
       headshotURL: p.mlbam ? headshotURL(p.mlbam, 240) : null,
-      tiles, sections,
       url: `eephus.io/projections/#player=${p.key}`,
       filename: `eephus-${p.key}-mlb-card.png`,
       caption: "eephus projection engine (proj_lgbm_v1) · bands = P10-P90 · Statcast percentiles vs qualified MLB pool",

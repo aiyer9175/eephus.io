@@ -1,0 +1,137 @@
+{
+ "n": 2236,
+ "seed": 20260724,
+ "boot": 1000,
+ "served_fv_mean": 44.62,
+ "served_fv_sd": 4.49,
+ "arms": {
+  "spread=0.6": {
+   "heldout_mae": 13.8733,
+   "served_fv_sd": 2.69,
+   "served_fv_min": 41.8,
+   "served_fv_max": 59.8
+  },
+  "spread=0.8": {
+   "heldout_mae": 13.7833,
+   "served_fv_sd": 3.59,
+   "served_fv_min": 40.9,
+   "served_fv_max": 64.9
+  },
+  "spread=0.9": {
+   "heldout_mae": 13.766,
+   "served_fv_sd": 4.04,
+   "served_fv_min": 40.5,
+   "served_fv_max": 67.5
+  },
+  "spread=1.0": {
+   "heldout_mae": 13.7678,
+   "served_fv_sd": 4.49,
+   "served_fv_min": 40.0,
+   "served_fv_max": 70.0
+  },
+  "spread=1.1": {
+   "heldout_mae": 13.7429,
+   "served_fv_sd": 4.94,
+   "served_fv_min": 39.5,
+   "served_fv_max": 72.5
+  },
+  "spread=1.25": {
+   "heldout_mae": 13.7363,
+   "served_fv_sd": 5.61,
+   "served_fv_min": 38.8,
+   "served_fv_max": 76.3
+  },
+  "spread=1.5": {
+   "heldout_mae": 13.7599,
+   "served_fv_sd": 6.72,
+   "served_fv_min": 37.7,
+   "served_fv_max": 80.0
+  },
+  "spread=2.0": {
+   "heldout_mae": 13.9133,
+   "served_fv_sd": 8.79,
+   "served_fv_min": 35.4,
+   "served_fv_max": 80.0
+  },
+  "spread=2.5": {
+   "heldout_mae": 13.9291,
+   "served_fv_sd": 10.72,
+   "served_fv_min": 33.1,
+   "served_fv_max": 80.0
+  }
+ },
+ "bootstrap_vs_spread_1.0": {
+  "spread=0.6": {
+   "reps": 1000,
+   "d_mae_mean": 0.1041,
+   "ci95": [
+    -0.1037,
+    0.3366
+   ],
+   "P(better)": 0.188
+  },
+  "spread=0.8": {
+   "reps": 1000,
+   "d_mae_mean": 0.0147,
+   "ci95": [
+    -0.0937,
+    0.1255
+   ],
+   "P(better)": 0.419
+  },
+  "spread=0.9": {
+   "reps": 1000,
+   "d_mae_mean": 0.0046,
+   "ci95": [
+    -0.0459,
+    0.058
+   ],
+   "P(better)": 0.452
+  },
+  "spread=1.1": {
+   "reps": 1000,
+   "d_mae_mean": -0.0329,
+   "ci95": [
+    -0.1061,
+    0.05
+   ],
+   "P(better)": 0.861
+  },
+  "spread=1.25": {
+   "reps": 1000,
+   "d_mae_mean": -0.0249,
+   "ci95": [
+    -0.1857,
+    0.154
+   ],
+   "P(better)": 0.655
+  },
+  "spread=1.5": {
+   "reps": 1000,
+   "d_mae_mean": -0.0165,
+   "ci95": [
+    -0.2781,
+    0.2306
+   ],
+   "P(better)": 0.54
+  },
+  "spread=2.0": {
+   "reps": 1000,
+   "d_mae_mean": 0.1301,
+   "ci95": [
+    -0.1706,
+    0.4337
+   ],
+   "P(better)": 0.196
+  },
+  "spread=2.5": {
+   "reps": 1000,
+   "d_mae_mean": 0.1501,
+   "ci95": [
+    -0.2035,
+    0.5255
+   ],
+   "P(better)": 0.209
+  }
+ }
+}

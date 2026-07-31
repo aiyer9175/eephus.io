@@ -1,0 +1,172 @@
+{
+ "generated_at": "2026-07-23",
+ "experiment": "IFA >= $1M step prior (P1 V2 companion; the ifa_pedigree ledger's one robust structure, pre-registered as its own arm)",
+ "registration": "docs/efv-provisional-prior/GATES.md, IFA $1M-step section (2026-07-23, frozen before this run); seed 20260723",
+ "protocol": {
+  "cohort": "identical to tools/ifa_pedigree_lab.py (Spotrac classes 2012-2017, same dedup/matching/QA amendments)",
+  "boundary_usd": 1000000,
+  "gate": "pooled step-boundary read lo95 > 0 (window basis) AND first6 lo95 > 0 (wiring units clause) AND train direction hi > lo in all 6 LOCO folds",
+  "consumable": "first6-basis >= $1M mean (the P1 blend axis)"
+ },
+ "accounting": {
+  "rows_parsed": 3507,
+  "bonus_rows_2012_2017": 1537,
+  "matched": 271,
+  "zero_unmatched": 1258,
+  "dropped_ambiguous": 7,
+  "dropped_name_miss": 1,
+  "qa_checked": 184,
+  "qa_disagree": 0
+ },
+ "loco_folds": {
+  "2012": {
+   "train_hi_mean": 1.837,
+   "train_lo_mean": 0.193,
+   "train_direction_ok": true,
+   "heldout_hi_mean": 0.412,
+   "heldout_lo_mean": 0.107,
+   "heldout_diff": 0.305,
+   "n_hi": 12,
+   "n_lo": 177
+  },
+  "2013": {
+   "train_hi_mean": 1.774,
+   "train_lo_mean": 0.168,
+   "train_direction_ok": true,
+   "heldout_hi_mean": 1.298,
+   "heldout_lo_mean": 0.272,
+   "heldout_diff": 1.026,
+   "n_hi": 17,
+   "n_lo": 187
+  },
+  "2014": {
+   "train_hi_mean": 1.905,
+   "train_lo_mean": 0.177,
+   "train_direction_ok": true,
+   "heldout_hi_mean": 0.634,
+   "heldout_lo_mean": 0.21,
+   "heldout_diff": 0.424,
+   "n_hi": 21,
+   "n_lo": 227
+  },
+  "2015": {
+   "train_hi_mean": 1.584,
+   "train_lo_mean": 0.177,
+   "train_direction_ok": true,
+   "heldout_hi_mean": 2.235,
+   "heldout_lo_mean": 0.218,
+   "heldout_diff": 2.017,
+   "n_hi": 29,
+   "n_lo": 189
+  },
+  "2016": {
+   "train_hi_mean": 1.834,
+   "train_lo_mean": 0.191,
+   "train_direction_ok": true,
+   "heldout_hi_mean": 1.315,
+   "heldout_lo_mean": 0.144,
+   "heldout_diff": 1.17,
+   "n_hi": 32,
+   "n_lo": 263
+  },
+  "2017": {
+   "train_hi_mean": 1.326,
+   "train_lo_mean": 0.188,
+   "train_direction_ok": true,
+   "heldout_hi_mean": 3.116,
+   "heldout_lo_mean": 0.164,
+   "heldout_diff": 2.952,
+   "n_hi": 31,
+   "n_lo": 344
+  }
+ },
+ "direction_stable_all_folds": true,
+ "heldout_step_predictor": {
+  "pooled_spearman": 0.0301,
+  "bootstrap_ci95": [
+   -0.0268,
+   0.0844
+  ],
+  "note": "two-level train-mean predictor vs held-out outcomes (reported)"
+ },
+ "step_boundary_window": {
+  "hi_mean": 1.717,
+  "n_hi": 142,
+  "lo_mean": 0.182,
+  "n_lo": 1387,
+  "diff": 1.535,
+  "diff_ci95": [
+   0.653,
+   2.62
+  ]
+ },
+ "step_boundary_first6": {
+  "hi_mean": 1.917,
+  "n_hi": 142,
+  "lo_mean": 0.32,
+  "n_lo": 1387,
+  "diff": 1.597,
+  "diff_ci95": [
+   0.71,
+   2.631
+  ]
+ },
+ "sensitivity": {
+  "posted_pro_excluded_window": {
+   "hi_mean": 1.407,
+   "lo_mean": 0.184,
+   "diff": 1.222,
+   "n_hi": 140,
+   "n_lo": 1374
+  },
+  "posted_pro_excluded_first6": {
+   "hi_mean": 1.7,
+   "lo_mean": 0.323,
+   "diff": 1.377,
+   "n_hi": 140,
+   "n_lo": 1374
+  },
+  "cuba_window": {
+   "hi_mean": 2.674,
+   "lo_mean": 0.443,
+   "diff": 2.231,
+   "n_hi": 27,
+   "n_lo": 27
+  },
+  "noncuba_window": {
+   "hi_mean": 1.492,
+   "lo_mean": 0.177,
+   "diff": 1.315,
+   "n_hi": 115,
+   "n_lo": 1360
+  },
+  "first6_2012_2014_only": {
+   "hi_mean": 1.268,
+   "lo_mean": 0.421,
+   "diff": 0.847,
+   "n_hi": 50,
+   "n_lo": 591
+  }
+ },
+ "caveats": [
+  "first6 basis is right-censored for late debuts of the 2016-17 classes; the 2012-2014-only refit is the censoring check (conservative-at-top).",
+  "the >= $1M group includes posted NPB/KBO professionals (Ohtani-class); in the served branch high-FV posted pros get pull 0 by construction (ref_war >> step mean), so the constant only lifts LOW-FV signees; the posted-pro-excluded sensitivity is the honest mean for that population.",
+  "tracker-listed cohort skews to larger bonuses; sub-$1M mass is near-uniformly 0 WAR, which if anything UNDERSTATES the step."
+ ],
+ "gates": {
+  "window_lo95_gt_0": true,
+  "first6_lo95_gt_0": true,
+  "direction_stable_all_folds": true,
+  "validation_pass": true
+ },
+ "p1_v2_precondition": {
+  "verdict": "PASS (clauses 2-5; clause 1 verified separately via --clause1)",
+  "pass": true
+ },
+ "consumable": {
+  "ifa_step_war": 1.917,
+  "basis": "first6 (P1 blend axis)",
+  "posted_pro_excluded_alternative": 1.7
+ },
+ "wiring_decision": "WIRE (ifa_step_enabled: true + ifa_step_war into config)"
+}

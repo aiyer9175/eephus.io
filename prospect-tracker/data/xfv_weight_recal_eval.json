@@ -1,0 +1,770 @@
+{
+ "seed": 20260724,
+ "nreps": 2000,
+ "contrib_bar": 3.0,
+ "sides": {
+  "hit": {
+   "baseline": {
+    "n": 353,
+    "spearman": 0.3787,
+    "auc": 0.7727
+   },
+   "alpha_sweep": [
+    {
+     "alpha": 0.1,
+     "spearman": 0.375,
+     "auc": 0.7686,
+     "d_spearman_mean": -0.0033,
+     "d_spearman_lo95": -0.0178,
+     "d_auc_mean": -0.004,
+     "p_gt0": 0.329
+    },
+    {
+     "alpha": 0.3,
+     "spearman": 0.3748,
+     "auc": 0.7684,
+     "d_spearman_mean": -0.0035,
+     "d_spearman_lo95": -0.018,
+     "d_auc_mean": -0.0041,
+     "p_gt0": 0.319
+    },
+    {
+     "alpha": 1.0,
+     "spearman": 0.3745,
+     "auc": 0.7683,
+     "d_spearman_mean": -0.0039,
+     "d_spearman_lo95": -0.0181,
+     "d_auc_mean": -0.0042,
+     "p_gt0": 0.293
+    },
+    {
+     "alpha": 2.0,
+     "spearman": 0.375,
+     "auc": 0.7684,
+     "d_spearman_mean": -0.0034,
+     "d_spearman_lo95": -0.017,
+     "d_auc_mean": -0.0041,
+     "p_gt0": 0.309
+    },
+    {
+     "alpha": 3.0,
+     "spearman": 0.3758,
+     "auc": 0.769,
+     "d_spearman_mean": -0.0026,
+     "d_spearman_lo95": -0.0162,
+     "d_auc_mean": -0.0035,
+     "p_gt0": 0.345
+    },
+    {
+     "alpha": 5.0,
+     "spearman": 0.3764,
+     "auc": 0.7694,
+     "d_spearman_mean": -0.002,
+     "d_spearman_lo95": -0.0148,
+     "d_auc_mean": -0.0032,
+     "p_gt0": 0.369
+    },
+    {
+     "alpha": 10.0,
+     "spearman": 0.3767,
+     "auc": 0.7696,
+     "d_spearman_mean": -0.0017,
+     "d_spearman_lo95": -0.0132,
+     "d_auc_mean": -0.0029,
+     "p_gt0": 0.382
+    },
+    {
+     "alpha": 20.0,
+     "spearman": 0.3765,
+     "auc": 0.77,
+     "d_spearman_mean": -0.002,
+     "d_spearman_lo95": -0.0127,
+     "d_auc_mean": -0.0026,
+     "p_gt0": 0.352
+    },
+    {
+     "alpha": 30.0,
+     "spearman": 0.3774,
+     "auc": 0.7707,
+     "d_spearman_mean": -0.0011,
+     "d_spearman_lo95": -0.0112,
+     "d_auc_mean": -0.0019,
+     "p_gt0": 0.41
+    },
+    {
+     "alpha": 50.0,
+     "spearman": 0.3767,
+     "auc": 0.771,
+     "d_spearman_mean": -0.0018,
+     "d_spearman_lo95": -0.0111,
+     "d_auc_mean": -0.0016,
+     "p_gt0": 0.339
+    },
+    {
+     "alpha": 100.0,
+     "spearman": 0.3761,
+     "auc": 0.7706,
+     "d_spearman_mean": -0.0025,
+     "d_spearman_lo95": -0.0121,
+     "d_auc_mean": -0.002,
+     "p_gt0": 0.297
+    },
+    {
+     "alpha": 200.0,
+     "spearman": 0.3736,
+     "auc": 0.7689,
+     "d_spearman_mean": -0.005,
+     "d_spearman_lo95": -0.0192,
+     "d_auc_mean": -0.0037,
+     "p_gt0": 0.244
+    },
+    {
+     "alpha": 300.0,
+     "spearman": 0.3705,
+     "auc": 0.767,
+     "d_spearman_mean": -0.0083,
+     "d_spearman_lo95": -0.0265,
+     "d_auc_mean": -0.0057,
+     "p_gt0": 0.184
+    },
+    {
+     "alpha": 1000.0,
+     "spearman": 0.3584,
+     "auc": 0.7583,
+     "d_spearman_mean": -0.0206,
+     "d_spearman_lo95": -0.0487,
+     "d_auc_mean": -0.0145,
+     "p_gt0": 0.075
+    }
+   ],
+   "alpha_best_by_pooled": {
+    "alpha": 30.0,
+    "spearman": 0.3774,
+    "auc": 0.7707,
+    "d_spearman_mean": -0.0011,
+    "d_spearman_lo95": -0.0112,
+    "d_auc_mean": -0.0019,
+    "p_gt0": 0.41
+   },
+   "alpha_fwdchain": {
+    "per_year_alpha": {
+     "2020": 10.0,
+     "2021": 1000.0,
+     "2022": 0.1,
+     "2023": 100.0
+    },
+    "pooled": {
+     "n": 353,
+     "spearman": 0.3719,
+     "auc": 0.7679
+    },
+    "delta_vs_base": {
+     "base_spearman": 0.3787,
+     "var_spearman": 0.3719,
+     "d_spearman_mean": -0.0065,
+     "d_spearman_lo95": -0.0331,
+     "d_spearman_hi95": 0.02,
+     "p_gt0": 0.312,
+     "base_auc": 0.7727,
+     "var_auc": 0.7679,
+     "d_auc_mean": -0.0046,
+     "d_auc_lo95": -0.0191,
+     "n": 353
+    }
+   },
+   "alpha_best_delta_vs_base": {
+    "base_spearman": 0.3787,
+    "var_spearman": 0.3774,
+    "d_spearman_mean": -0.0011,
+    "d_spearman_lo95": -0.0112,
+    "d_spearman_hi95": 0.0081,
+    "p_gt0": 0.41,
+    "base_auc": 0.7727,
+    "var_auc": 0.7707,
+    "d_auc_mean": -0.0019,
+    "d_auc_lo95": -0.0073,
+    "n": 353
+   },
+   "weights_shipped_auto": {
+    "alpha_full_fit": 10.0,
+    "b": 4.2738,
+    "w": {
+     "fv": 2.9915,
+     "obp_rel": 0.0898,
+     "k_rel": 0.8036,
+     "peak_k_rel": -0.4811,
+     "age_rel_level": 0.0948,
+     "n_milb_seasons": -0.3607,
+     "tool_hit": 0.7412,
+     "tool_speed": 0.4455,
+     "milb_missing": 0.36,
+     "is_ifa": -0.0213,
+     "is_college": 0.413,
+     "ops_rel": 0.2899,
+     "age": -0.2443,
+     "level_rank": 0.4496
+    }
+   },
+   "weights_reselected": {
+    "alpha": 30.0,
+    "b": 4.2738,
+    "w": {
+     "fv": 2.8642,
+     "obp_rel": 0.0872,
+     "k_rel": 0.7045,
+     "peak_k_rel": -0.3678,
+     "age_rel_level": 0.0026,
+     "n_milb_seasons": -0.2701,
+     "tool_hit": 0.7727,
+     "tool_speed": 0.4427,
+     "milb_missing": 0.3452,
+     "is_ifa": -0.0345,
+     "is_college": 0.4308,
+     "ops_rel": 0.3012,
+     "age": -0.2293,
+     "level_rank": 0.3625
+    }
+   },
+   "feature_addbacks": {
+    "iso_rel": {
+     "mean_impute": {
+      "base_spearman": 0.3787,
+      "var_spearman": 0.3675,
+      "d_spearman_mean": -0.0115,
+      "d_spearman_lo95": -0.0262,
+      "d_spearman_hi95": 0.0023,
+      "p_gt0": 0.05,
+      "base_auc": 0.7727,
+      "var_auc": 0.7642,
+      "d_auc_mean": -0.0087,
+      "d_auc_lo95": -0.0192,
+      "n": 353
+     },
+     "zero_impute": {
+      "base_spearman": 0.3787,
+      "var_spearman": 0.3676,
+      "d_spearman_mean": -0.0114,
+      "d_spearman_lo95": -0.0261,
+      "d_spearman_hi95": 0.0024,
+      "p_gt0": 0.051,
+      "base_auc": 0.7727,
+      "var_auc": 0.7642,
+      "d_auc_mean": -0.0087,
+      "d_auc_lo95": -0.0193,
+      "n": 353
+     }
+    },
+    "peak_iso_rel": {
+     "mean_impute": {
+      "base_spearman": 0.3787,
+      "var_spearman": 0.3726,
+      "d_spearman_mean": -0.0062,
+      "d_spearman_lo95": -0.0161,
+      "d_spearman_hi95": 0.0039,
+      "p_gt0": 0.11,
+      "base_auc": 0.7727,
+      "var_auc": 0.7708,
+      "d_auc_mean": -0.0019,
+      "d_auc_lo95": -0.0078,
+      "n": 353
+     },
+     "zero_impute": {
+      "base_spearman": 0.3787,
+      "var_spearman": 0.3727,
+      "d_spearman_mean": -0.0062,
+      "d_spearman_lo95": -0.016,
+      "d_spearman_hi95": 0.0039,
+      "p_gt0": 0.11,
+      "base_auc": 0.7727,
+      "var_auc": 0.7708,
+      "d_auc_mean": -0.0019,
+      "d_auc_lo95": -0.0078,
+      "n": 353
+     }
+    },
+    "kbb_rel": {
+     "mean_impute": {
+      "base_spearman": 0.3787,
+      "var_spearman": 0.3694,
+      "d_spearman_mean": -0.0094,
+      "d_spearman_lo95": -0.0232,
+      "d_spearman_hi95": 0.003,
+      "p_gt0": 0.066,
+      "base_auc": 0.7727,
+      "var_auc": 0.7686,
+      "d_auc_mean": -0.0042,
+      "d_auc_lo95": -0.0132,
+      "n": 353
+     },
+     "zero_impute": {
+      "base_spearman": 0.3787,
+      "var_spearman": 0.3693,
+      "d_spearman_mean": -0.0095,
+      "d_spearman_lo95": -0.0232,
+      "d_spearman_hi95": 0.0031,
+      "p_gt0": 0.067,
+      "base_auc": 0.7727,
+      "var_auc": 0.7685,
+      "d_auc_mean": -0.0042,
+      "d_auc_lo95": -0.0132,
+      "n": 353
+     }
+    }
+   }
+  },
+  "pit": {
+   "baseline": {
+    "n": 438,
+    "spearman": 0.302,
+    "auc": 0.7191
+   },
+   "alpha_sweep": [
+    {
+     "alpha": 0.1,
+     "spearman": 0.3023,
+     "auc": 0.7193,
+     "d_spearman_mean": 0.0002,
+     "d_spearman_lo95": -0.0015,
+     "d_auc_mean": 0.0001,
+     "p_gt0": 0.566
+    },
+    {
+     "alpha": 0.3,
+     "spearman": 0.3023,
+     "auc": 0.7193,
+     "d_spearman_mean": 0.0002,
+     "d_spearman_lo95": -0.0015,
+     "d_auc_mean": 0.0001,
+     "p_gt0": 0.569
+    },
+    {
+     "alpha": 1.0,
+     "spearman": 0.3024,
+     "auc": 0.7194,
+     "d_spearman_mean": 0.0003,
+     "d_spearman_lo95": -0.0014,
+     "d_auc_mean": 0.0002,
+     "p_gt0": 0.618
+    },
+    {
+     "alpha": 2.0,
+     "spearman": 0.3023,
+     "auc": 0.7193,
+     "d_spearman_mean": 0.0002,
+     "d_spearman_lo95": -0.0014,
+     "d_auc_mean": 0.0002,
+     "p_gt0": 0.566
+    },
+    {
+     "alpha": 3.0,
+     "spearman": 0.3022,
+     "auc": 0.7194,
+     "d_spearman_mean": 0.0002,
+     "d_spearman_lo95": -0.0013,
+     "d_auc_mean": 0.0002,
+     "p_gt0": 0.569
+    },
+    {
+     "alpha": 5.0,
+     "spearman": 0.3025,
+     "auc": 0.7194,
+     "d_spearman_mean": 0.0005,
+     "d_spearman_lo95": -0.0009,
+     "d_auc_mean": 0.0003,
+     "p_gt0": 0.715
+    },
+    {
+     "alpha": 10.0,
+     "spearman": 0.303,
+     "auc": 0.7196,
+     "d_spearman_mean": 0.0009,
+     "d_spearman_lo95": -0.0005,
+     "d_auc_mean": 0.0004,
+     "p_gt0": 0.878
+    },
+    {
+     "alpha": 20.0,
+     "spearman": 0.304,
+     "auc": 0.7199,
+     "d_spearman_mean": 0.0019,
+     "d_spearman_lo95": -0.0003,
+     "d_auc_mean": 0.0007,
+     "p_gt0": 0.95
+    },
+    {
+     "alpha": 30.0,
+     "spearman": 0.3045,
+     "auc": 0.72,
+     "d_spearman_mean": 0.0024,
+     "d_spearman_lo95": -0.0007,
+     "d_auc_mean": 0.0008,
+     "p_gt0": 0.93
+    },
+    {
+     "alpha": 50.0,
+     "spearman": 0.305,
+     "auc": 0.7201,
+     "d_spearman_mean": 0.0029,
+     "d_spearman_lo95": -0.0019,
+     "d_auc_mean": 0.0009,
+     "p_gt0": 0.873
+    },
+    {
+     "alpha": 100.0,
+     "spearman": 0.3054,
+     "auc": 0.7193,
+     "d_spearman_mean": 0.0033,
+     "d_spearman_lo95": -0.0054,
+     "d_auc_mean": 0.0002,
+     "p_gt0": 0.771
+    },
+    {
+     "alpha": 200.0,
+     "spearman": 0.3067,
+     "auc": 0.7187,
+     "d_spearman_mean": 0.0046,
+     "d_spearman_lo95": -0.0095,
+     "d_auc_mean": -0.0005,
+     "p_gt0": 0.742
+    },
+    {
+     "alpha": 300.0,
+     "spearman": 0.3052,
+     "auc": 0.7173,
+     "d_spearman_mean": 0.0031,
+     "d_spearman_lo95": -0.0147,
+     "d_auc_mean": -0.0019,
+     "p_gt0": 0.62
+    },
+    {
+     "alpha": 1000.0,
+     "spearman": 0.2985,
+     "auc": 0.7144,
+     "d_spearman_mean": -0.0036,
+     "d_spearman_lo95": -0.0337,
+     "d_auc_mean": -0.0048,
+     "p_gt0": 0.411
+    }
+   ],
+   "alpha_best_by_pooled": {
+    "alpha": 200.0,
+    "spearman": 0.3067,
+    "auc": 0.7187,
+    "d_spearman_mean": 0.0046,
+    "d_spearman_lo95": -0.0095,
+    "d_auc_mean": -0.0005,
+    "p_gt0": 0.742
+   },
+   "alpha_fwdchain": {
+    "per_year_alpha": {
+     "2020": 10.0,
+     "2021": 1000.0,
+     "2022": 50.0,
+     "2023": 100.0
+    },
+    "pooled": {
+     "n": 438,
+     "spearman": 0.3315,
+     "auc": 0.7302
+    },
+    "delta_vs_base": {
+     "base_spearman": 0.302,
+     "var_spearman": 0.3315,
+     "d_spearman_mean": 0.029,
+     "d_spearman_lo95": -0.001,
+     "d_spearman_hi95": 0.0603,
+     "p_gt0": 0.968,
+     "base_auc": 0.7191,
+     "var_auc": 0.7302,
+     "d_auc_mean": 0.0107,
+     "d_auc_lo95": -0.0094,
+     "n": 438
+    }
+   },
+   "alpha_best_delta_vs_base": {
+    "base_spearman": 0.302,
+    "var_spearman": 0.3067,
+    "d_spearman_mean": 0.0046,
+    "d_spearman_lo95": -0.0095,
+    "d_spearman_hi95": 0.0188,
+    "p_gt0": 0.742,
+    "base_auc": 0.7191,
+    "var_auc": 0.7187,
+    "d_auc_mean": -0.0005,
+    "d_auc_lo95": -0.0088,
+    "n": 438
+   },
+   "weights_shipped_auto": {
+    "alpha_full_fit": 1.0,
+    "b": 2.3015,
+    "w": {
+     "fv": 1.5877,
+     "peak_k_rel": 0.1227,
+     "k_rel": 0.2425,
+     "bb_rel": -0.1655,
+     "age_rel_level": 0.0518,
+     "x_era_k": 0.2825,
+     "tool_fb": 0.2112,
+     "age": -0.0277
+    }
+   },
+   "weights_reselected": {
+    "alpha": 200.0,
+    "b": 2.3015,
+    "w": {
+     "fv": 1.2235,
+     "peak_k_rel": 0.0737,
+     "k_rel": 0.2376,
+     "bb_rel": -0.1703,
+     "age_rel_level": -0.0443,
+     "x_era_k": 0.2401,
+     "tool_fb": 0.2425,
+     "age": -0.0795
+    }
+   },
+   "feature_addbacks": {
+    "level_rank": {
+     "mean_impute": {
+      "base_spearman": 0.302,
+      "var_spearman": 0.2639,
+      "d_spearman_mean": -0.0381,
+      "d_spearman_lo95": -0.075,
+      "d_spearman_hi95": -0.0018,
+      "p_gt0": 0.019,
+      "base_auc": 0.7191,
+      "var_auc": 0.7007,
+      "d_auc_mean": -0.0184,
+      "d_auc_lo95": -0.0408,
+      "n": 438
+     },
+     "zero_impute": {
+      "base_spearman": 0.302,
+      "var_spearman": 0.268,
+      "d_spearman_mean": -0.0339,
+      "d_spearman_lo95": -0.0692,
+      "d_spearman_hi95": 0.0007,
+      "p_gt0": 0.028,
+      "base_auc": 0.7191,
+      "var_auc": 0.7017,
+      "d_auc_mean": -0.0175,
+      "d_auc_lo95": -0.039,
+      "n": 438
+     }
+    },
+    "kbb_rel": {
+     "mean_impute": {
+      "base_spearman": 0.302,
+      "var_spearman": 0.3035,
+      "d_spearman_mean": 0.0014,
+      "d_spearman_lo95": -0.0016,
+      "d_spearman_hi95": 0.0057,
+      "p_gt0": 0.746,
+      "base_auc": 0.7191,
+      "var_auc": 0.7206,
+      "d_auc_mean": 0.0014,
+      "d_auc_lo95": -0.0007,
+      "n": 438
+     },
+     "zero_impute": {
+      "base_spearman": 0.302,
+      "var_spearman": 0.3021,
+      "d_spearman_mean": 0.0001,
+      "d_spearman_lo95": -0.0007,
+      "d_spearman_hi95": 0.0008,
+      "p_gt0": 0.568,
+      "base_auc": 0.7191,
+      "var_auc": 0.7191,
+      "d_auc_mean": -0.0,
+      "d_auc_lo95": -0.0004,
+      "n": 438
+     }
+    },
+    "peak_bb_rel": {
+     "mean_impute": {
+      "base_spearman": 0.302,
+      "var_spearman": 0.2776,
+      "d_spearman_mean": -0.0246,
+      "d_spearman_lo95": -0.0531,
+      "d_spearman_hi95": 0.0023,
+      "p_gt0": 0.036,
+      "base_auc": 0.7191,
+      "var_auc": 0.7052,
+      "d_auc_mean": -0.0139,
+      "d_auc_lo95": -0.0319,
+      "n": 438
+     },
+     "zero_impute": {
+      "base_spearman": 0.302,
+      "var_spearman": 0.2784,
+      "d_spearman_mean": -0.0237,
+      "d_spearman_lo95": -0.0513,
+      "d_spearman_hi95": 0.0022,
+      "p_gt0": 0.036,
+      "base_auc": 0.7191,
+      "var_auc": 0.7056,
+      "d_auc_mean": -0.0135,
+      "d_auc_lo95": -0.0308,
+      "n": 438
+     }
+    }
+   }
+  }
+ },
+ "alpha_criterion_test": {
+  "hit": {
+   "shipped_perfold_alpha_mae(1/10/100)": {
+    "2020": 100.0,
+    "2021": 1.0,
+    "2022": 100.0,
+    "2023": 100.0
+   },
+   "mae_wide": {
+    "picks": {
+     "2020": 30.0,
+     "2021": 1.0,
+     "2022": 300.0,
+     "2023": 100.0
+    },
+    "delta": {
+     "base_spearman": 0.3787,
+     "var_spearman": 0.3679,
+     "d_spearman_mean": -0.0108,
+     "d_spearman_lo95": -0.0179,
+     "d_spearman_hi95": -0.0039,
+     "p_gt0": 0.003,
+     "base_auc": 0.7727,
+     "var_auc": 0.7666,
+     "d_auc_mean": -0.0061,
+     "d_auc_lo95": -0.0098,
+     "n": 353
+    }
+   },
+   "spearman_ship_grid": {
+    "picks": {
+     "2020": 100.0,
+     "2021": 10.0,
+     "2022": 100.0,
+     "2023": 100.0
+    },
+    "delta": {
+     "base_spearman": 0.3787,
+     "var_spearman": 0.3779,
+     "d_spearman_mean": -0.0008,
+     "d_spearman_lo95": -0.0032,
+     "d_spearman_hi95": 0.0017,
+     "p_gt0": 0.23,
+     "base_auc": 0.7727,
+     "var_auc": 0.7719,
+     "d_auc_mean": -0.0008,
+     "d_auc_lo95": -0.0022,
+     "n": 353
+    }
+   },
+   "spearman_wide_grid": {
+    "picks": {
+     "2020": 300.0,
+     "2021": 10.0,
+     "2022": 100.0,
+     "2023": 100.0
+    },
+    "delta": {
+     "base_spearman": 0.3787,
+     "var_spearman": 0.3794,
+     "d_spearman_mean": 0.0006,
+     "d_spearman_lo95": -0.0072,
+     "d_spearman_hi95": 0.009,
+     "p_gt0": 0.562,
+     "base_auc": 0.7727,
+     "var_auc": 0.7731,
+     "d_auc_mean": 0.0003,
+     "d_auc_lo95": -0.004,
+     "n": 353
+    }
+   }
+  },
+  "pit": {
+   "shipped_perfold_alpha_mae(1/10/100)": {
+    "2020": 10.0,
+    "2021": 1.0,
+    "2022": 1.0,
+    "2023": 10.0
+   },
+   "mae_wide": {
+    "picks": {
+     "2020": 30.0,
+     "2021": 3.0,
+     "2022": 1.0,
+     "2023": 30.0
+    },
+    "delta": {
+     "base_spearman": 0.302,
+     "var_spearman": 0.3009,
+     "d_spearman_mean": -0.0011,
+     "d_spearman_lo95": -0.0036,
+     "d_spearman_hi95": 0.0014,
+     "p_gt0": 0.179,
+     "base_auc": 0.7191,
+     "var_auc": 0.7185,
+     "d_auc_mean": -0.0006,
+     "d_auc_lo95": -0.0021,
+     "n": 438
+    }
+   },
+   "spearman_ship_grid": {
+    "picks": {
+     "2020": 100.0,
+     "2021": 1.0,
+     "2022": 10.0,
+     "2023": 100.0
+    },
+    "delta": {
+     "base_spearman": 0.302,
+     "var_spearman": 0.2944,
+     "d_spearman_mean": -0.0076,
+     "d_spearman_lo95": -0.0175,
+     "d_spearman_hi95": 0.0019,
+     "p_gt0": 0.069,
+     "base_auc": 0.7191,
+     "var_auc": 0.715,
+     "d_auc_mean": -0.004,
+     "d_auc_lo95": -0.0097,
+     "n": 438
+    }
+   },
+   "spearman_wide_grid": {
+    "picks": {
+     "2020": 300.0,
+     "2021": 3.0,
+     "2022": 30.0,
+     "2023": 100.0
+    },
+    "delta": {
+     "base_spearman": 0.302,
+     "var_spearman": 0.2888,
+     "d_spearman_mean": -0.013,
+     "d_spearman_lo95": -0.0337,
+     "d_spearman_hi95": 0.0062,
+     "p_gt0": 0.097,
+     "base_auc": 0.7191,
+     "var_auc": 0.7103,
+     "d_auc_mean": -0.0087,
+     "d_auc_lo95": -0.02,
+     "n": 438
+    }
+   }
+  }
+ },
+ "verdict": {
+  "summary": "On the REPAIRED matrices, the shipped ridge alpha-selection, attribute weights, and lean feature set survive re-open. NOTHING clears the pooled-Spearman lo95>0 bar. No production wiring change. The empty wiring diff IS the ship.",
+  "hit_alpha": "NO SHIP. Shipped MAE auto-selector (grid 1/10/100, per-fold seeded-holdout) is at/above every fixed alpha (best fixed=30 gives dmean -0.0011, lo95 -0.0112) and every criterion/grid swap (spearman_wide dmean +0.0006 lo95 -0.0072). Auto-select is optimal.",
+  "pit_alpha": "NO SHIP. Global fixed-alpha sweep shows a real but sub-bar preference for heavier regularization (shipped MAE picks alpha=1; fixed alpha=20 dmean +0.0019 lo95 -0.0003 p=0.950; alpha=200 dmean +0.0046 lo95 -0.0095). No deployable leakage-honest selector clears lo95>0: in-fold Spearman criterion is noisier and HURTS (rho 0.302->0.294/0.289); the only variant that looked good (fwdchain rho 0.3315 p=0.968 AUC+0.011) was a single-prior-year degenerate alpha=1000 pick that collapses to baseline (0.3015) under a sane constrained grid. Shipped auto-select stands. KEEP-ALIVE recommended: revisit raising the pit alpha grid floor when >=6 forward folds exist.",
+  "features": "NO SHIP either side. iso_rel (hit dmean -0.0115 lo95 -0.0262), peak_iso_rel (-0.0062/-0.0161), hit kbb_rel (-0.0094/-0.0232); pit level_rank (-0.0381/-0.0750), pit peak_bb_rel (-0.0246/-0.0531) all fail on Spearman AND AUC. pit kbb_rel is neutral (+0.0014 lo95 -0.0016, k_rel+bb_rel already in lean). The iso_rel/peak_iso_rel rejection is NOT a corrupted-label artifact: it holds on repaired labels, consistent with the population power-overpricing correction (structural close upheld empirically).",
+  "weight_anomalies_flagged": [
+   "hit n_milb_seasons fits NEGATIVE (-0.36) on repaired labels despite its documented +1 direction (older/slower-developing signal dominates); not this lane to change, flagged for owner.",
+   "hit k_rel(+0.80)/peak_k_rel(-0.48) are a collinear opposite-sign pair: the ridge prices their DIFFERENCE (final-season vs peak contact decay), net ~+0.32 on the K axis.",
+   "hit age_rel_level (~+0.09) and pit age_rel_level (~+0.05) and pit age (~-0.03) are near-inert; collapse toward 0 as alpha rises."
+  ],
+  "wiring_diff": "EMPTY. No change to _ALPHAS, _FEATURES_HIT, _FEATURES_PIT, or the ridge selection criterion. Consolidator applies nothing from A2.",
+  "bar": "pooled Spearman delta lo95>0; player-clustered paired bootstrap, seed 20260724, 2000 reps; AUC (contributor bar 3.0 WAR) co-check."
+ }
+}

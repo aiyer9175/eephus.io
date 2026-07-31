@@ -1,0 +1,238 @@
+{
+ "generated_at": "2026-07-24",
+ "generated_at_note": "backfilled 2026-07-29: this artifact shipped without a generated_at, so model_registry.refresh_stamps() could not age it and freshness fell back to file mtime. Date taken from the lane that wrote it.",
+ "lane": "C3b projections + translations true-to-model",
+ "principle": "served metric should equal its model's raw output; remove only board-movement/display compression; keep numerical-safety + accuracy-load-bearing caps (with evidence).",
+ "translations_milb_band_binding": {
+  "k_pct": {
+   "n": 1950,
+   "lo_clip": 0.0,
+   "hi_clip": 60.0,
+   "band_sd": 5.017,
+   "lo_binds": 0,
+   "hi_binds": 0,
+   "exp_range": [
+    14.3,
+    34.6
+   ]
+  },
+  "bb_pct": {
+   "n": 1950,
+   "lo_clip": 0.0,
+   "hi_clip": 30.0,
+   "band_sd": 3.286,
+   "lo_binds": 0,
+   "hi_binds": 0,
+   "exp_range": [
+    6.0,
+    16.1
+   ]
+  }
+ },
+ "translations_college_band_binding": {
+  "hit_k": {
+   "n": 3672,
+   "lo_clip": 0.0,
+   "hi_clip": 60.0,
+   "band_sd": 6.572,
+   "lo_binds": 0,
+   "hi_binds": 0
+  },
+  "hit_bb": {
+   "n": 3672,
+   "lo_clip": 0.0,
+   "hi_clip": 30.0,
+   "band_sd": 4.459,
+   "lo_binds": 0,
+   "hi_binds": 0
+  },
+  "hit_ops": {
+   "n": 3672,
+   "lo_clip": 0.3,
+   "hi_clip": 1.2,
+   "band_sd": 0.17,
+   "lo_binds": 0,
+   "hi_binds": 0
+  },
+  "pit_k": {
+   "n": 4540,
+   "lo_clip": 0.0,
+   "hi_clip": 50.0,
+   "band_sd": 5.528,
+   "lo_binds": 0,
+   "hi_binds": 0
+  },
+  "pit_bb": {
+   "n": 4540,
+   "lo_clip": 0.0,
+   "hi_clip": 25.0,
+   "band_sd": 3.927,
+   "lo_binds": 0,
+   "hi_binds": 23
+  }
+ },
+ "projections_binding": {
+  "fip_floor_at_1_0": {
+   "n": 3380,
+   "min_served": 2.33,
+   "binds": 0
+  },
+  "war_no_zero_floor": {
+   "n_median_points": 7960,
+   "median_negatives": 604,
+   "p10_negatives": 5388,
+   "note": "NO ZERO FLOOR is live + true-to-model: WAR is served below replacement, uncompressed."
+  },
+  "warPTH_central_floor": {
+   "below_central": 0,
+   "note": "definitional: the if-healthy display line is floored at the expected-value central by construction."
+  }
+ },
+ "clamp_inventory": [
+  {
+   "id": "proj_ml.no_zero_floor",
+   "file": "proj_ml.py",
+   "line": 431,
+   "clamp": "quantile heads predict raw WAR incl. negatives; NO zero floor",
+   "class": "true-to-model-by-design (absence of a floor)",
+   "disposition": "KEEP",
+   "evidence": "604 served median WAR points are negative; 5388 p10 points negative."
+  },
+  {
+   "id": "proj_ml.quantile_monotone_sort",
+   "file": "proj_ml.py",
+   "line": 476,
+   "clamp": "sorted(_predict1(q) ...) - monotone sort across the 5 quantile heads",
+   "class": "numerical-safety (quantile-crossing repair; monotone -> rank-invariant)",
+   "disposition": "KEEP",
+   "evidence": "restores q10<=q25<=q50<=q75<=q90; does not compress the served tail."
+  },
+  {
+   "id": "proj_ml.mean_blend_lift_only",
+   "file": "proj_ml.py",
+   "line": 508,
+   "clamp": "GLOBAL mean-blend recenter is LIFT-ONLY (if shift > 0)",
+   "class": "accuracy-load-bearing (anti-compression: recenters q50 UP toward E[WAR])",
+   "disposition": "KEEP",
+   "evidence": "proj_mean_blend.json holdout: symmetric/full-lambda rejected on champion-MAE bar; a symmetric recenter TRIMS ceiling stars (more compression). Currently INERT in the shipped bundle (meta.mean_blend is None)."
+  },
+  {
+   "id": "proj_ml.star_blend",
+   "file": "proj_ml.py",
+   "line": 521,
+   "clamp": "star-slice q50 recenter toward implied mean (lambda_h; h5=1.0 active)",
+   "class": "accuracy-load-bearing (anti-compression; lifts star q50 toward E[WAR])",
+   "disposition": "KEEP",
+   "evidence": "proj_star_blend.json forward-chained dev fit w/ star-MAE +0.02 guard; moves the star tail UP, the opposite of compression."
+  },
+  {
+   "id": "proj_ml.warPTH_central_floor",
+   "file": "proj_ml.py",
+   "line": 537,
+   "clamp": "war_by_year_pth = max(central, q70) - if-healthy line floored at central",
+   "class": "definitional display floor (if-healthy >= expected); never feeds valuation",
+   "disposition": "KEEP",
+   "evidence": "0 served PTH points fall below their central; a display-only alt line."
+  },
+  {
+   "id": "fa_projection.component_rate_floor",
+   "file": "fa_projection.py",
+   "line": 675,
+   "clamp": "out[comp] = max(0.0, rate) - projected K%/BB%/ISO/BABIP/HR-rate >= 0",
+   "class": "numerical-safety (rate domain: a negative rate is nonsensical)",
+   "disposition": "KEEP",
+   "evidence": "domain guard on a proportion."
+  },
+  {
+   "id": "fa_projection.pt_floor",
+   "file": "fa_projection.py",
+   "line": 730,
+   "clamp": "pt_proj = max(0.0, pt) - projected playing time >= 0",
+   "class": "numerical-safety (PA/BF cannot be negative)",
+   "disposition": "KEEP",
+   "evidence": "domain guard."
+  },
+  {
+   "id": "fa_projection.fip_floor",
+   "file": "fa_projection.py",
+   "line": 791,
+   "clamp": "rate_path out-year FIP = max(fip, 1.0)",
+   "class": "numerical-safety (guards the FIP algebra from absurd/negative output)",
+   "disposition": "KEEP (inert)",
+   "evidence": "min served FIP across 3380 out-year points is 2.330; the 1.0 floor binds 0 times."
+  },
+  {
+   "id": "fa_projection.season_fraction_clamp",
+   "file": "fa_projection.py",
+   "line": 549,
+   "clamp": "season_fraction = max(0.05, min(1.0, cur/prev))",
+   "class": "numerical-safety (an elapsed fraction must lie in (0,1]; 0.05 blocks div-by-tiny)",
+   "disposition": "KEEP",
+   "evidence": "domain guard on a fraction."
+  },
+  {
+   "id": "fa_projection.curve_support_clamp",
+   "file": "fa_projection.py",
+   "line": 459,
+   "clamp": "curve_delta snaps age to the NEAREST supported age in the curve",
+   "class": "numerical-safety (extrapolation / support guard; thin cohorts have holes)",
+   "disposition": "KEEP",
+   "evidence": "prevents reading an unsupported age cell."
+  },
+  {
+   "id": "fa_projection.war_map_no_clamp",
+   "file": "fa_projection.py",
+   "line": 884,
+   "clamp": "war_from_projection returns the raw OLS linear combination (NO clamp/floor)",
+   "class": "true-to-model-by-design (raw model output)",
+   "disposition": "KEEP",
+   "evidence": "the WAR map is already fully true-to-model; nothing to remove."
+  },
+  {
+   "id": "fa_projection.pt_risk_clamp",
+   "file": "fa_projection.py",
+   "line": 618,
+   "clamp": "pt_risk_apply clamps the injury-PT adjustment at +-{hit150, pit60}",
+   "class": "a-priori bound on a GATED, DEFAULT-OFF adjustment (EEPHUS_PT_RISK)",
+   "disposition": "KEEP (out of served scope; inert by default)",
+   "evidence": "PT_RISK_DEFAULT=False; the adjustment does not touch the shipped projection."
+  },
+  {
+   "id": "translation._band.lo_clip",
+   "file": "college_translation.py",
+   "line": 489,
+   "clamp": "band lo = max(lo_clip, pred - 1.2816*sd); lo_clip = 0 (rates) / 0.3 (OPS)",
+   "class": "numerical-safety (band whisker cannot enter the impossible rate/OPS region)",
+   "disposition": "KEEP",
+   "evidence": "binds only where the raw whisker would go negative (1 of 8212 college rows, 0 of 1950 milb rows); the served POINT value (exp) is never clamped."
+  },
+  {
+   "id": "translation._band.hi_clip",
+   "file": "college_translation.py",
+   "line": 491,
+   "clamp": "band hi = min(hi_clip, pred + 1.2816*sd); hi_clip K%60 BB%30 pitK%50 pitBB%25 (rates)",
+   "class": "DISPLAY COMPRESSION - sub-domain soft cap that diverges the shown upper whisker from the model's own LOO-validated band",
+   "disposition": "REMOVE (raise rate hi_clip to the true [0,100] domain); leave OPS 1.2 (experimental, inert, fuzzier domain)",
+   "evidence": "college pit_bb hi_clip=25 BINDS on 23 of 4540 served rows; for the max-exp rows exp==25.0 so the clamped hi==exp (band shows ZERO upside uncertainty - a clamp artifact). _loo_mae_cov (college L399 / milb L103) computes coverage on the UNCLAMPED band, so the display cap makes the shown band inconsistent with the validated band. Raising to 100 is coverage-invariant + exp-invariant (exp/lo never touched); de-compresses only the 23 upper whiskers. hit/box/pit_k hi_clips bind 0 times (byte-invariant), raised for family consistency."
+  },
+  {
+   "id": "translation.slope_shrink_k",
+   "file": "college_translation.py",
+   "line": 357,
+   "clamp": "slope = ols_slope * n/(n+SLOPE_SHRINK_K) - regression-to-the-mean shrink",
+   "class": "accuracy-load-bearing (the model's core RTM design; LOO-validated)",
+   "disposition": "KEEP",
+   "evidence": "this IS the translation model (a weak relationship pulls to the level mean); not a display clamp. LOO MAE/coverage in college_translation_eval.json."
+  }
+ ],
+ "conclusion": "Served POINT values are already fully true-to-model on both surfaces (translation exp is never clamped; projection WAR is unfloored - 604 median negatives served live; the WAR map is raw OLS with no clamp). Of the whole clamp inventory, exactly ONE is genuine display compression: the translation _band() upper soft-caps on the rate lines, which cap the displayed P10-P90 upper whisker BELOW the model's own LOO-validated band (college pit_bb=25 binds 23 rows, producing hi==exp artifacts). SHIP: raise the rate hi_clips to the true [0,100] domain (coverage-invariant, exp-invariant, monotone). Every other clamp is numerical/domain safety (rate>=0, pt>=0, FIP>=1.0 [inert], season_fraction, curve support, quantile monotone sort), an accuracy-load-bearing RTM/recenter (slope shrink, mean/star lift-only blend - validated), or true-to-model by design (NO ZERO FLOOR).",
+ "ship_diff": {
+  "files": [
+   "college_translation.py",
+   "milb_translation.py"
+  ],
+  "change": "_band()/ct._band() rate call sites: hi_clip soft-cap -> 100 (true domain). K% 60->100, BB% 30->100, pit_k 50->100, pit_bb 25->100, box_k 60->100, box_bb 30->100. lo_clip=0 unchanged (domain floor). OPS 0.3/1.2 unchanged.",
+  "served_effect": "23 college pit_bb upper whiskers widen to the raw model band; all other rate rows byte-identical; exp/lo unchanged everywhere.",
+  "validation_invariance": "LOO MAE + P10-P90 coverage are computed unclamped -> unchanged. Spearman/rank invariant (exp untouched, monotone)."
+ }
+}

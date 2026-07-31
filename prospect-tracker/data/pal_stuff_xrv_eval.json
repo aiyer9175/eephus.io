@@ -1,0 +1,261 @@
+{
+ "generated_at": "2026-07-23",
+ "model": "pal_stuff_xrv (W3 PAL-XRV: per-pitch-type AAA aStuff+ into PAL conversion inputs)",
+ "lab": "tools/pal_xrv_lab.py",
+ "experiment": {
+  "registration": "docs/wills-2026-07-23/GATES.md section W3 PAL-XRV",
+  "seed": 20260714,
+  "bootstrap_reps": 2000,
+  "flags": {
+   "EEPHUS_PAL_XRV": "ARM-1 stuff-read blend (default OFF)",
+   "EEPHUS_PAL_XRV_RECO": "ARM-2 xRV-ranked pitch-add (default OFF, display only)"
+  },
+  "registered_bars": {
+   "coverage_floor_pitches": 100,
+   "coverage_window": "sidecar season == pre-year or pre-year - 1",
+   "covered_min_per_direction": 12,
+   "blend_w": 0.5,
+   "P1": "rho(FIT_blend, war_delta) >= rho(FIT_incumbent, war_delta), identical set, per direction",
+   "P2": "bootstrap gap lo95 > -0.01 (seed 20260714, 2000 reps), per direction",
+   "P3": "uncovered pitchers byte-identical FIT with the blend armed"
+  }
+ },
+ "sidecar_invariance": {
+  "rule": "pooled fields byte-identical for every pre-change player",
+  "n_players_pre": 1379,
+  "n_players_post": 1379,
+  "same_key_set": true,
+  "n_pooled_field_diffs": 0,
+  "diffs_sample": [],
+  "n_rows_with_by_type": 1379,
+  "n_league_xrv_types": 19,
+  "pass": true
+ },
+ "clause_P3_invariance": {
+  "rule": "uncovered pitchers byte-identical FIT with the blend armed",
+  "n_uncovered_checked": 86,
+  "n_mismatches": 0,
+  "pass": true
+ },
+ "per_direction": {
+  "RP->SP": {
+   "n_events": 29,
+   "n_gate_set": 25,
+   "n_covered_all_events": 5,
+   "n_covered_in_gate_set": 2,
+   "covered_min_bar": 12,
+   "covered_events": [
+    {
+     "mlbam": 663460,
+     "name": "Kris Bubic",
+     "year": 2025,
+     "pre_season": 2024,
+     "in_gate_set": true
+    },
+    {
+     "mlbam": 672282,
+     "name": "Reid Detmers",
+     "year": 2026,
+     "pre_season": 2025,
+     "in_gate_set": false
+    },
+    {
+     "mlbam": 669461,
+     "name": "Matthew Liberatore",
+     "year": 2025,
+     "pre_season": 2024,
+     "in_gate_set": true
+    },
+    {
+     "mlbam": 681517,
+     "name": "Kyle Leahy",
+     "year": 2026,
+     "pre_season": 2025,
+     "in_gate_set": false
+    },
+    {
+     "mlbam": 680736,
+     "name": "Justin Wrobleski",
+     "year": 2026,
+     "pre_season": 2025,
+     "in_gate_set": false
+    }
+   ],
+   "gate": {
+    "run": false,
+    "verdict": "COVERAGE-STARVED",
+    "reason": "covered-in-gate 2 < 12"
+   }
+  },
+  "SP->RP": {
+   "n_events": 67,
+   "n_gate_set": 61,
+   "n_covered_all_events": 5,
+   "n_covered_in_gate_set": 5,
+   "covered_min_bar": 12,
+   "covered_events": [
+    {
+     "mlbam": 502624,
+     "name": "Chase Anderson",
+     "year": 2024,
+     "pre_season": 2023,
+     "in_gate_set": true
+    },
+    {
+     "mlbam": 672282,
+     "name": "Reid Detmers",
+     "year": 2025,
+     "pre_season": 2024,
+     "in_gate_set": true
+    },
+    {
+     "mlbam": 666214,
+     "name": "Joey Wentz",
+     "year": 2024,
+     "pre_season": 2023,
+     "in_gate_set": true
+    },
+    {
+     "mlbam": 683769,
+     "name": "Hunter Gaddis",
+     "year": 2024,
+     "pre_season": 2023,
+     "in_gate_set": true
+    },
+    {
+     "mlbam": 663969,
+     "name": "Tyler Phillips",
+     "year": 2025,
+     "pre_season": 2024,
+     "in_gate_set": true
+    }
+   ],
+   "gate": {
+    "run": false,
+    "verdict": "COVERAGE-STARVED",
+    "reason": "covered-in-gate 5 < 12"
+   }
+  }
+ },
+ "arm2_recommend_pitch": {
+  "league_xrv_candidates": {
+   "SL": {
+    "mean_pred_rv": 0.00216,
+    "n_pitches": 204194
+   },
+   "ST": {
+    "mean_pred_rv": 0.00056,
+    "n_pitches": 66169
+   },
+   "CU": {
+    "mean_pred_rv": 0.00692,
+    "n_pitches": 75900
+   },
+   "KC": {
+    "mean_pred_rv": 0.00489,
+    "n_pitches": 6822
+   },
+   "CH": {
+    "mean_pred_rv": 0.00724,
+    "n_pitches": 124510
+   },
+   "FS": {
+    "mean_pred_rv": 0.00513,
+    "n_pitches": 20501
+   }
+  },
+  "examples_before_after": [
+   {
+    "n_candidates_walked": 4
+   },
+   {
+    "mlbam": 663158,
+    "name": "Robert Suarez",
+    "team": "ATL",
+    "families_present": [
+     "FB",
+     "OFF"
+    ],
+    "before": {
+     "add": "Slider",
+     "target": null,
+     "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+     "priority": "high"
+    },
+    "after": {
+     "add": "Sweeper",
+     "target": null,
+     "reason": "No reliable breaking ball. A sweeper is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+     "priority": "high"
+    }
+   },
+   {
+    "mlbam": 695243,
+    "name": "Mason Miller",
+    "team": "SD",
+    "families_present": [
+     "BR",
+     "FB"
+    ],
+    "before": {
+     "add": "Changeup",
+     "target": null,
+     "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
+     "priority": "medium"
+    },
+    "after": {
+     "add": "Splitter",
+     "target": null,
+     "reason": "No offspeed pitch. A splitter would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
+     "priority": "medium"
+    }
+   },
+   {
+    "mlbam": 661395,
+    "name": "Jhoan Duran",
+    "team": "PHI",
+    "families_present": [
+     "FB",
+     "OFF"
+    ],
+    "before": {
+     "add": "Slider",
+     "target": null,
+     "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+     "priority": "high"
+    },
+    "after": {
+     "add": "Sweeper",
+     "target": null,
+     "reason": "No reliable breaking ball. A sweeper is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+     "priority": "high"
+    }
+   }
+  ]
+ },
+ "incumbent_harness": {
+  "source": "tools/pal_backtest_lab.py run() (T1-6 repaired harness)",
+  "n_conversions": 96,
+  "per_direction_incumbent": {
+   "RP->SP": {
+    "n_gate": 25,
+    "rho_fit_war_delta": -0.2062
+   },
+   "SP->RP": {
+    "n_gate": 61,
+    "rho_fit_war_delta": 0.2916
+   }
+  }
+ },
+ "verdict": {
+  "status": "COVERAGE-STARVED",
+  "per_clause": {
+   "sidecar_invariance": "PASS",
+   "P3": "PASS",
+   "P1+P2 RP->SP": "COVERAGE-STARVED",
+   "P1+P2 SP->RP": "COVERAGE-STARVED"
+  },
+  "consequence": "ARM-1 (EEPHUS_PAL_XRV) stays OFF; per-type sidecar + ARM-2 ship display-only"
+ },
+ "reading": "Mechanism story: the per-type AAA aStuff+ sidecar reads cleanly (pooled scores byte-identical; by_type on every scored pitcher) and the blend machinery is inert without coverage (P3 clean). The conversion event set is MLB veterans flipping roles, and AAA pitch tracking only begins in 2023, so a conversion can only be covered when its TRUE pre-year is 2023+ AND the pitcher threw >= 100 AAA pitches that year or the prior one - the a-priori expected starvation recorded in the registration. Starved directions: ['RP->SP', 'SP->RP']. ARM-1 stays OFF; the per-type sidecar + the xRV-ranked pitch-add recommender (ARM-2, flag EEPHUS_PAL_XRV_RECO) are the shippable display product. Revival key: re-gate when enough post-2023 AAA graduates accumulate conversion events (each season adds pre-years with tracking; ~2028 before 12 covered events per direction is plausible)."
+}

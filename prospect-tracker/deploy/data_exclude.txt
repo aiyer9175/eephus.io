@@ -42,3 +42,25 @@ prospect_def_value.json
 # wire_fv_first_seen.json: build_site read-modify-write ledger kept in
 # local data/; no page fetches it.
 wire_fv_first_seen.json
+# identity_collisions.json: the merged-identity report (identity_audit.py).
+# An internal ops ledger naming players whose records fuse two humans; no
+# page fetches it, and it is not a model eval artifact. Read by
+# test_identity_collisions.py and by whoever works the repair queue.
+identity_collisions.json
+positional_fit.json
+# comps.json (5.6 MB): the archetype-comps donor pool from the 2026-07-25
+# combinatorial sweep. The sweep returned NO SHIP (nested-CV lift negative,
+# selection bias 88-234%), comps_engine.py is unwired, and no page fetches
+# it. Keep it local until an archetype surface is actually built.
+comps.json
+# milb_pitch_rates.json (5.3 MB): MiLB CSW/SwStr rates from the csw-consensus
+# lane. Its own header reads "DATA ASSET - NOT A MODEL INPUT"; the lane was a
+# measured null on all 5 conditions and no page fetches it.
+milb_pitch_rates.json
+# positions_played_seasons.json (1.0 MB) + fielding_census_ids.json (0.2 MB):
+# the as-of-aware fielding census and its census-scoped player_key -> mlbam
+# binding (docs/efv-2026-07-30/POSITION_CENSUS_ASOF.md). Model-side inputs
+# keyed by MLBAM id; no page fetches either, and the versa chip keeps reading
+# data/positions_played.json, which still ships.
+positions_played_seasons.json
+fielding_census_ids.json

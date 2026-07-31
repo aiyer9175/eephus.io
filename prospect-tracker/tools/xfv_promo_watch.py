@@ -168,7 +168,12 @@ def _inputs():
 
 def _passes(v: dict) -> bool:
     r = SPEC["cohort_rule"]
+    # bughunt SCORE d (2026-07-23): the backgrade contributes prior-anchored
+    # kind=="active" rows (xfv_provisional, no pro track record) to xfv.json;
+    # their grade is a consensus-anchored PRIOR, not a model read, so they must
+    # not enter the promo-watch cohort.
     return (v.get("kind") == "active"
+            and not v.get("xfv_provisional")
             and (v.get("xfv_minus_consensus") is not None
                  and v["xfv_minus_consensus"] >= r["xfv_minus_consensus_min"])
             and (v.get("consensus_fv") is not None

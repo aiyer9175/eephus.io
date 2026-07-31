@@ -1,0 +1,1191 @@
+{
+ "line": "LANE-PROV-MAP 2026-07-30: the provisional grade map, measured.",
+ "generated_at": "2026-07-30T19:33:03",
+ "lab": "tools/provisional_grade_map_lab.py",
+ "pre_registration": "docs/efv-2026-07-30/PROVISIONAL_GRADE_MAP_GATE.md",
+ "registry_row": "xfv_provisional_grade_map",
+ "changes_served_output": false,
+ "v1_algebra_check": {
+  "max_abs_fv_difference": 0.0,
+  "claim": "cap-in-WAR then affine == incumbent _grade"
+ },
+ "reconstruction_check": {
+  "n": 3404,
+  "n_exact": 3174,
+  "max_abs_fv": 0.1,
+  "mean_abs_fv": 0.00676,
+  "note": "xfv_war_6yr is stored at 2dp, so a 1dp grade can disagree by up to 0.1 FV"
+ },
+ "cap_interaction": {
+  "war_constants": {
+   "hit": {
+    "KNEE_W": 4.2105,
+    "CEIL_W": 5.7895,
+    "SOFT_W": 1.0526,
+    "SUBFLOOR_W": 0.7895
+   },
+   "pit": {
+    "KNEE_W": 2.0,
+    "CEIL_W": 2.8889,
+    "SOFT_W": 0.5556,
+    "SUBFLOOR_W": 1.1111
+   }
+  },
+  "fv_constants": {
+   "hit": {
+    "BASE": 27.0,
+    "SLOPE": 3.8,
+    "FLOOR": 20.0,
+    "KNEE": 43.0,
+    "CEIL": 49.0,
+    "SOFT": 4.0
+   },
+   "pit": {
+    "BASE": 25.0,
+    "SLOPE": 4.5,
+    "FLOOR": 20.0,
+    "KNEE": 34.0,
+    "CEIL": 38.0,
+    "SOFT": 2.5
+   }
+  },
+  "binds_at_predicted_war": {
+   "hit": {
+    "KNEE": {
+     "fv": 43.0,
+     "incumbent_map": 4.2105,
+     "outcome_map": 1.1253
+    },
+    "CEIL": {
+     "fv": 49.0,
+     "incumbent_map": 5.7895,
+     "outcome_map": 4.6984
+    },
+    "SUBFLOOR": {
+     "fv": 30.0,
+     "incumbent_map": 0.7895,
+     "outcome_map": 0.0281
+    }
+   },
+   "pit": {
+    "KNEE": {
+     "fv": 34.0,
+     "incumbent_map": 2.0,
+     "outcome_map": 0.061
+    },
+    "CEIL": {
+     "fv": 38.0,
+     "incumbent_map": 2.8889,
+     "outcome_map": 0.1756
+    },
+    "SUBFLOOR": {
+     "fv": 30.0,
+     "incumbent_map": 1.1111,
+     "outcome_map": 0.0281
+    }
+   }
+  },
+  "rows_above_knee": {
+   "KEEP": {
+    "hit": 5,
+    "pit": 176
+   },
+   "V0": {
+    "hit": 142,
+    "pit": 1416
+   },
+   "V1": {
+    "hit": 5,
+    "pit": 176
+   }
+  }
+ },
+ "distribution": {
+  "KEEP": {
+   "n": 3404,
+   "min": 20.0,
+   "median": 25.7,
+   "p75": 29.6,
+   "p90": 30.0,
+   "p99": 36.3,
+   "max": 46.6,
+   "mean": 25.58,
+   "share_le_30": 0.923,
+   "n_ge_35": 71,
+   "n_ge_40": 8,
+   "n_ge_45": 1,
+   "n_at_floor_20": 716
+  },
+  "V0": {
+   "n": 3404,
+   "min": 20.0,
+   "median": 30.0,
+   "p75": 37.7,
+   "p90": 37.9,
+   "p99": 44.7,
+   "max": 47.8,
+   "mean": 28.09,
+   "share_le_30": 0.641,
+   "n_ge_35": 1185,
+   "n_ge_40": 151,
+   "n_ge_45": 32,
+   "n_at_floor_20": 1650
+  },
+  "V1": {
+   "n": 3404,
+   "min": 20.0,
+   "median": 33.9,
+   "p75": 42.6,
+   "p90": 43.0,
+   "p99": 45.5,
+   "max": 49.5,
+   "mean": 31.02,
+   "share_le_30": 0.4909,
+   "n_ge_35": 1696,
+   "n_ge_40": 1340,
+   "n_ge_45": 62,
+   "n_at_floor_20": 1650
+  }
+ },
+ "distribution_by_side": {
+  "hit": {
+   "KEEP": {
+    "n": 1317,
+    "min": 20.0,
+    "median": 20.6,
+    "p75": 26.3,
+    "p90": 30.0,
+    "p99": 37.0,
+    "max": 46.6,
+    "mean": 23.41,
+    "share_le_30": 0.918,
+    "n_ge_35": 29,
+    "n_ge_40": 8,
+    "n_ge_45": 1,
+    "n_at_floor_20": 618
+   },
+   "V0": {
+    "n": 1317,
+    "min": 20.0,
+    "median": 20.0,
+    "p75": 20.0,
+    "p90": 41.0,
+    "p99": 46.0,
+    "max": 47.8,
+    "mean": 24.14,
+    "share_le_30": 0.836,
+    "n_ge_35": 205,
+    "n_ge_40": 151,
+    "n_ge_45": 32,
+    "n_at_floor_20": 1019
+   },
+   "V1": {
+    "n": 1317,
+    "min": 20.0,
+    "median": 20.0,
+    "p75": 20.0,
+    "p90": 42.2,
+    "p99": 45.8,
+    "max": 49.5,
+    "mean": 24.83,
+    "share_le_30": 0.779,
+    "n_ge_35": 280,
+    "n_ge_40": 226,
+    "n_ge_45": 23,
+    "n_at_floor_20": 1019
+   }
+  },
+  "pit": {
+   "KEEP": {
+    "n": 2087,
+    "min": 20.0,
+    "median": 27.4,
+    "p75": 30.0,
+    "p90": 30.0,
+    "p99": 36.3,
+    "max": 37.5,
+    "mean": 26.95,
+    "share_le_30": 0.9262,
+    "n_ge_35": 42,
+    "n_ge_40": 0,
+    "n_ge_45": 0,
+    "n_at_floor_20": 98
+   },
+   "V0": {
+    "n": 2087,
+    "min": 20.0,
+    "median": 30.0,
+    "p75": 37.8,
+    "p90": 37.9,
+    "p99": 38.0,
+    "max": 38.0,
+    "mean": 30.58,
+    "share_le_30": 0.518,
+    "n_ge_35": 980,
+    "n_ge_40": 0,
+    "n_ge_45": 0,
+    "n_at_floor_20": 631
+   },
+   "V1": {
+    "n": 2087,
+    "min": 20.0,
+    "median": 40.5,
+    "p75": 43.0,
+    "p90": 43.0,
+    "p99": 45.5,
+    "max": 46.1,
+    "mean": 34.94,
+    "share_le_30": 0.3091,
+    "n_ge_35": 1416,
+    "n_ge_40": 1114,
+    "n_ge_45": 39,
+    "n_at_floor_20": 631
+   }
+  }
+ },
+ "blast_radius": {
+  "V0": {
+   "hit": {
+    "n": 1317,
+    "n_moved": 624,
+    "share_moved": 0.4738,
+    "n_up": 218,
+    "n_down": 406,
+    "mean_d": 0.726,
+    "mean_abs_d": 2.705,
+    "max_abs_d": 12.3
+   },
+   "pit": {
+    "n": 2087,
+    "n_moved": 1553,
+    "share_moved": 0.7441,
+    "n_up": 1020,
+    "n_down": 533,
+    "mean_d": 3.625,
+    "mean_abs_d": 5.158,
+    "max_abs_d": 11.6
+   },
+   "all": {
+    "n": 3404,
+    "n_moved": 2177,
+    "share_moved": 0.6395,
+    "n_up": 1238,
+    "n_down": 939,
+    "mean_d": 2.504,
+    "mean_abs_d": 4.209,
+    "max_abs_d": 12.3
+   },
+   "fv45_line": {
+    "cross_up": 31,
+    "cross_down": 0,
+    "n_ge_45_before": 1,
+    "n_ge_45_after": 32
+   },
+   "within_side_order_violations": 70
+  },
+  "V1": {
+   "hit": {
+    "n": 1317,
+    "n_moved": 699,
+    "share_moved": 0.5308,
+    "n_up": 293,
+    "n_down": 406,
+    "mean_d": 1.415,
+    "mean_abs_d": 3.393,
+    "max_abs_d": 12.3
+   },
+   "pit": {
+    "n": 2087,
+    "n_moved": 1989,
+    "share_moved": 0.953,
+    "n_up": 1456,
+    "n_down": 533,
+    "mean_d": 7.983,
+    "mean_abs_d": 9.516,
+    "max_abs_d": 13.7
+   },
+   "all": {
+    "n": 3404,
+    "n_moved": 2688,
+    "share_moved": 0.7897,
+    "n_up": 1749,
+    "n_down": 939,
+    "mean_d": 5.442,
+    "mean_abs_d": 7.147,
+    "max_abs_d": 13.7
+   },
+   "fv45_line": {
+    "cross_up": 61,
+    "cross_down": 0,
+    "n_ge_45_before": 1,
+    "n_ge_45_after": 62
+   },
+   "within_side_order_violations": 68
+  }
+ },
+ "farm_pool": {
+  "V0": {
+   "available": true,
+   "n_orgs": 30,
+   "orgs_with_points_change": 30,
+   "league_total_points_before": 3488.49,
+   "league_total_points_after": 3861.07,
+   "provisional_in_top25_before": 82,
+   "provisional_in_top25_after": 281,
+   "per_org": {
+    "ARI": {
+     "n_graded": 144,
+     "n_prov": 118,
+     "top_end_before": 53.97,
+     "top_end_after": 53.97,
+     "depth_before": 30.85,
+     "depth_after": 41.34,
+     "prov_in_top25_before": 0,
+     "prov_in_top25_after": 7
+    },
+    "ATH": {
+     "n_graded": 127,
+     "n_prov": 87,
+     "top_end_before": 92.25,
+     "top_end_after": 92.25,
+     "depth_before": 17.35,
+     "depth_after": 29.43,
+     "prov_in_top25_before": 5,
+     "prov_in_top25_after": 12
+    },
+    "ATL": {
+     "n_graded": 123,
+     "n_prov": 116,
+     "top_end_before": 65.07,
+     "top_end_after": 65.07,
+     "depth_before": 24.88,
+     "depth_after": 34.37,
+     "prov_in_top25_before": 3,
+     "prov_in_top25_after": 10
+    },
+    "BAL": {
+     "n_graded": 147,
+     "n_prov": 132,
+     "top_end_before": 48.03,
+     "top_end_after": 48.03,
+     "depth_before": 57.53,
+     "depth_after": 65.37,
+     "prov_in_top25_before": 0,
+     "prov_in_top25_after": 5
+    },
+    "BOS": {
+     "n_graded": 145,
+     "n_prov": 106,
+     "top_end_before": 110.77,
+     "top_end_after": 110.77,
+     "depth_before": 28.91,
+     "depth_after": 45.69,
+     "prov_in_top25_before": 1,
+     "prov_in_top25_after": 12
+    },
+    "CHC": {
+     "n_graded": 139,
+     "n_prov": 142,
+     "top_end_before": 75.27,
+     "top_end_after": 75.27,
+     "depth_before": 23.21,
+     "depth_after": 32.19,
+     "prov_in_top25_before": 3,
+     "prov_in_top25_after": 12
+    },
+    "CHW": {
+     "n_graded": 139,
+     "n_prov": 99,
+     "top_end_before": 59.78,
+     "top_end_after": 59.78,
+     "depth_before": 12.12,
+     "depth_after": 21.57,
+     "prov_in_top25_before": 6,
+     "prov_in_top25_after": 14
+    },
+    "CIN": {
+     "n_graded": 137,
+     "n_prov": 123,
+     "top_end_before": 63.77,
+     "top_end_after": 63.77,
+     "depth_before": 27.73,
+     "depth_after": 35.14,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 7
+    },
+    "CLE": {
+     "n_graded": 150,
+     "n_prov": 108,
+     "top_end_before": 91.04,
+     "top_end_after": 91.04,
+     "depth_before": 55.69,
+     "depth_after": 65.42,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 6
+    },
+    "COL": {
+     "n_graded": 148,
+     "n_prov": 115,
+     "top_end_before": 68.08,
+     "top_end_after": 68.08,
+     "depth_before": 32.12,
+     "depth_after": 44.4,
+     "prov_in_top25_before": 3,
+     "prov_in_top25_after": 8
+    },
+    "DET": {
+     "n_graded": 150,
+     "n_prov": 114,
+     "top_end_before": 111.54,
+     "top_end_after": 111.54,
+     "depth_before": 31.99,
+     "depth_after": 43.11,
+     "prov_in_top25_before": 3,
+     "prov_in_top25_after": 10
+    },
+    "HOU": {
+     "n_graded": 141,
+     "n_prov": 142,
+     "top_end_before": 57.52,
+     "top_end_after": 58.78,
+     "depth_before": 19.58,
+     "depth_after": 47.33,
+     "prov_in_top25_before": 7,
+     "prov_in_top25_after": 15
+    },
+    "KCR": {
+     "n_graded": 136,
+     "n_prov": 120,
+     "top_end_before": 66.09,
+     "top_end_after": 66.09,
+     "depth_before": 27.92,
+     "depth_after": 38.49,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 10
+    },
+    "LAA": {
+     "n_graded": 124,
+     "n_prov": 88,
+     "top_end_before": 45.51,
+     "top_end_after": 46.6,
+     "depth_before": 20.24,
+     "depth_after": 34.17,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 9
+    },
+    "LAD": {
+     "n_graded": 145,
+     "n_prov": 117,
+     "top_end_before": 140.04,
+     "top_end_after": 140.04,
+     "depth_before": 95.21,
+     "depth_after": 107.26,
+     "prov_in_top25_before": 0,
+     "prov_in_top25_after": 5
+    },
+    "MIA": {
+     "n_graded": 154,
+     "n_prov": 124,
+     "top_end_before": 58.63,
+     "top_end_after": 58.63,
+     "depth_before": 55.79,
+     "depth_after": 68.4,
+     "prov_in_top25_before": 0,
+     "prov_in_top25_after": 6
+    },
+    "MIL": {
+     "n_graded": 151,
+     "n_prov": 100,
+     "top_end_before": 150.18,
+     "top_end_after": 150.18,
+     "depth_before": 69.42,
+     "depth_after": 85.32,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 8
+    },
+    "MIN": {
+     "n_graded": 138,
+     "n_prov": 130,
+     "top_end_before": 109.36,
+     "top_end_after": 109.36,
+     "depth_before": 43.98,
+     "depth_after": 54.97,
+     "prov_in_top25_before": 3,
+     "prov_in_top25_after": 8
+    },
+    "NYM": {
+     "n_graded": 132,
+     "n_prov": 143,
+     "top_end_before": 37.55,
+     "top_end_after": 37.55,
+     "depth_before": 22.48,
+     "depth_after": 41.43,
+     "prov_in_top25_before": 8,
+     "prov_in_top25_after": 13
+    },
+    "NYY": {
+     "n_graded": 148,
+     "n_prov": 108,
+     "top_end_before": 77.54,
+     "top_end_after": 78.89,
+     "depth_before": 16.8,
+     "depth_after": 29.2,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 14
+    },
+    "PHI": {
+     "n_graded": 122,
+     "n_prov": 105,
+     "top_end_before": 59.42,
+     "top_end_after": 59.42,
+     "depth_before": 29.63,
+     "depth_after": 41.71,
+     "prov_in_top25_before": 5,
+     "prov_in_top25_after": 12
+    },
+    "PIT": {
+     "n_graded": 143,
+     "n_prov": 127,
+     "top_end_before": 79.36,
+     "top_end_after": 79.36,
+     "depth_before": 33.86,
+     "depth_after": 57.0,
+     "prov_in_top25_before": 4,
+     "prov_in_top25_after": 11
+    },
+    "SDP": {
+     "n_graded": 152,
+     "n_prov": 127,
+     "top_end_before": 49.02,
+     "top_end_after": 49.02,
+     "depth_before": 11.16,
+     "depth_after": 22.53,
+     "prov_in_top25_before": 6,
+     "prov_in_top25_after": 13
+    },
+    "SEA": {
+     "n_graded": 125,
+     "n_prov": 85,
+     "top_end_before": 112.78,
+     "top_end_after": 112.78,
+     "depth_before": 45.17,
+     "depth_after": 53.88,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 10
+    },
+    "SFG": {
+     "n_graded": 145,
+     "n_prov": 92,
+     "top_end_before": 86.45,
+     "top_end_after": 86.45,
+     "depth_before": 46.06,
+     "depth_after": 58.1,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 8
+    },
+    "STL": {
+     "n_graded": 143,
+     "n_prov": 82,
+     "top_end_before": 75.63,
+     "top_end_after": 75.63,
+     "depth_before": 46.77,
+     "depth_after": 55.08,
+     "prov_in_top25_before": 1,
+     "prov_in_top25_after": 7
+    },
+    "TBR": {
+     "n_graded": 160,
+     "n_prov": 93,
+     "top_end_before": 106.84,
+     "top_end_after": 106.84,
+     "depth_before": 85.55,
+     "depth_after": 88.7,
+     "prov_in_top25_before": 0,
+     "prov_in_top25_after": 2
+    },
+    "TEX": {
+     "n_graded": 149,
+     "n_prov": 117,
+     "top_end_before": 63.49,
+     "top_end_after": 64.21,
+     "depth_before": 28.25,
+     "depth_after": 48.75,
+     "prov_in_top25_before": 4,
+     "prov_in_top25_after": 12
+    },
+    "TOR": {
+     "n_graded": 157,
+     "n_prov": 131,
+     "top_end_before": 61.66,
+     "top_end_after": 61.66,
+     "depth_before": 33.6,
+     "depth_after": 44.39,
+     "prov_in_top25_before": 3,
+     "prov_in_top25_after": 8
+    },
+    "WSN": {
+     "n_graded": 132,
+     "n_prov": 113,
+     "top_end_before": 95.32,
+     "top_end_after": 95.32,
+     "depth_before": 42.68,
+     "depth_after": 49.95,
+     "prov_in_top25_before": 1,
+     "prov_in_top25_after": 7
+    }
+   }
+  },
+  "V1": {
+   "available": true,
+   "n_orgs": 30,
+   "orgs_with_points_change": 30,
+   "league_total_points_before": 3488.49,
+   "league_total_points_after": 4412.57,
+   "provisional_in_top25_before": 82,
+   "provisional_in_top25_after": 434,
+   "per_org": {
+    "ARI": {
+     "n_graded": 144,
+     "n_prov": 118,
+     "top_end_before": 53.97,
+     "top_end_after": 53.97,
+     "depth_before": 30.85,
+     "depth_after": 55.39,
+     "prov_in_top25_before": 0,
+     "prov_in_top25_after": 15
+    },
+    "ATH": {
+     "n_graded": 127,
+     "n_prov": 87,
+     "top_end_before": 92.25,
+     "top_end_after": 92.25,
+     "depth_before": 17.35,
+     "depth_after": 52.17,
+     "prov_in_top25_before": 5,
+     "prov_in_top25_after": 16
+    },
+    "ATL": {
+     "n_graded": 123,
+     "n_prov": 116,
+     "top_end_before": 65.07,
+     "top_end_after": 65.07,
+     "depth_before": 24.88,
+     "depth_after": 59.9,
+     "prov_in_top25_before": 3,
+     "prov_in_top25_after": 17
+    },
+    "BAL": {
+     "n_graded": 147,
+     "n_prov": 132,
+     "top_end_before": 48.03,
+     "top_end_after": 48.03,
+     "depth_before": 57.53,
+     "depth_after": 73.05,
+     "prov_in_top25_before": 0,
+     "prov_in_top25_after": 11
+    },
+    "BOS": {
+     "n_graded": 145,
+     "n_prov": 106,
+     "top_end_before": 110.77,
+     "top_end_after": 110.77,
+     "depth_before": 28.91,
+     "depth_after": 62.63,
+     "prov_in_top25_before": 1,
+     "prov_in_top25_after": 17
+    },
+    "CHC": {
+     "n_graded": 139,
+     "n_prov": 142,
+     "top_end_before": 75.27,
+     "top_end_after": 75.27,
+     "depth_before": 23.21,
+     "depth_after": 61.74,
+     "prov_in_top25_before": 3,
+     "prov_in_top25_after": 18
+    },
+    "CHW": {
+     "n_graded": 139,
+     "n_prov": 99,
+     "top_end_before": 59.78,
+     "top_end_after": 59.78,
+     "depth_before": 12.12,
+     "depth_after": 56.03,
+     "prov_in_top25_before": 6,
+     "prov_in_top25_after": 20
+    },
+    "CIN": {
+     "n_graded": 137,
+     "n_prov": 123,
+     "top_end_before": 63.77,
+     "top_end_after": 63.77,
+     "depth_before": 27.73,
+     "depth_after": 56.74,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 15
+    },
+    "CLE": {
+     "n_graded": 150,
+     "n_prov": 108,
+     "top_end_before": 91.04,
+     "top_end_after": 91.04,
+     "depth_before": 55.69,
+     "depth_after": 74.72,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 10
+    },
+    "COL": {
+     "n_graded": 148,
+     "n_prov": 115,
+     "top_end_before": 68.08,
+     "top_end_after": 68.62,
+     "depth_before": 32.12,
+     "depth_after": 68.46,
+     "prov_in_top25_before": 3,
+     "prov_in_top25_after": 17
+    },
+    "DET": {
+     "n_graded": 150,
+     "n_prov": 114,
+     "top_end_before": 111.54,
+     "top_end_after": 111.54,
+     "depth_before": 31.99,
+     "depth_after": 65.28,
+     "prov_in_top25_before": 3,
+     "prov_in_top25_after": 15
+    },
+    "HOU": {
+     "n_graded": 141,
+     "n_prov": 142,
+     "top_end_before": 57.52,
+     "top_end_after": 59.5,
+     "depth_before": 19.58,
+     "depth_after": 61.42,
+     "prov_in_top25_before": 7,
+     "prov_in_top25_after": 17
+    },
+    "KCR": {
+     "n_graded": 136,
+     "n_prov": 120,
+     "top_end_before": 66.09,
+     "top_end_after": 66.09,
+     "depth_before": 27.92,
+     "depth_after": 58.34,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 15
+    },
+    "LAA": {
+     "n_graded": 124,
+     "n_prov": 88,
+     "top_end_before": 45.51,
+     "top_end_after": 46.51,
+     "depth_before": 20.24,
+     "depth_after": 53.46,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 18
+    },
+    "LAD": {
+     "n_graded": 145,
+     "n_prov": 117,
+     "top_end_before": 140.04,
+     "top_end_after": 140.04,
+     "depth_before": 95.21,
+     "depth_after": 110.15,
+     "prov_in_top25_before": 0,
+     "prov_in_top25_after": 7
+    },
+    "MIA": {
+     "n_graded": 154,
+     "n_prov": 124,
+     "top_end_before": 58.63,
+     "top_end_after": 58.63,
+     "depth_before": 55.79,
+     "depth_after": 78.12,
+     "prov_in_top25_before": 0,
+     "prov_in_top25_after": 10
+    },
+    "MIL": {
+     "n_graded": 151,
+     "n_prov": 100,
+     "top_end_before": 150.18,
+     "top_end_after": 150.18,
+     "depth_before": 69.42,
+     "depth_after": 93.06,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 10
+    },
+    "MIN": {
+     "n_graded": 138,
+     "n_prov": 130,
+     "top_end_before": 109.36,
+     "top_end_after": 109.36,
+     "depth_before": 43.98,
+     "depth_after": 74.9,
+     "prov_in_top25_before": 3,
+     "prov_in_top25_after": 14
+    },
+    "NYM": {
+     "n_graded": 132,
+     "n_prov": 143,
+     "top_end_before": 37.55,
+     "top_end_after": 37.55,
+     "depth_before": 22.48,
+     "depth_after": 69.46,
+     "prov_in_top25_before": 8,
+     "prov_in_top25_after": 18
+    },
+    "NYY": {
+     "n_graded": 148,
+     "n_prov": 108,
+     "top_end_before": 77.54,
+     "top_end_after": 79.52,
+     "depth_before": 16.8,
+     "depth_after": 56.29,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 19
+    },
+    "PHI": {
+     "n_graded": 122,
+     "n_prov": 105,
+     "top_end_before": 59.42,
+     "top_end_after": 59.42,
+     "depth_before": 29.63,
+     "depth_after": 64.22,
+     "prov_in_top25_before": 5,
+     "prov_in_top25_after": 15
+    },
+    "PIT": {
+     "n_graded": 143,
+     "n_prov": 127,
+     "top_end_before": 79.36,
+     "top_end_after": 79.36,
+     "depth_before": 33.86,
+     "depth_after": 71.22,
+     "prov_in_top25_before": 4,
+     "prov_in_top25_after": 14
+    },
+    "SDP": {
+     "n_graded": 152,
+     "n_prov": 127,
+     "top_end_before": 49.02,
+     "top_end_after": 49.47,
+     "depth_before": 11.16,
+     "depth_after": 53.55,
+     "prov_in_top25_before": 6,
+     "prov_in_top25_after": 20
+    },
+    "SEA": {
+     "n_graded": 125,
+     "n_prov": 85,
+     "top_end_before": 112.78,
+     "top_end_after": 112.78,
+     "depth_before": 45.17,
+     "depth_after": 73.22,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 15
+    },
+    "SFG": {
+     "n_graded": 145,
+     "n_prov": 92,
+     "top_end_before": 86.45,
+     "top_end_after": 86.45,
+     "depth_before": 46.06,
+     "depth_after": 72.71,
+     "prov_in_top25_before": 2,
+     "prov_in_top25_after": 12
+    },
+    "STL": {
+     "n_graded": 143,
+     "n_prov": 82,
+     "top_end_before": 75.63,
+     "top_end_after": 75.63,
+     "depth_before": 46.77,
+     "depth_after": 69.35,
+     "prov_in_top25_before": 1,
+     "prov_in_top25_after": 12
+    },
+    "TBR": {
+     "n_graded": 160,
+     "n_prov": 93,
+     "top_end_before": 106.84,
+     "top_end_after": 106.84,
+     "depth_before": 85.55,
+     "depth_after": 92.32,
+     "prov_in_top25_before": 0,
+     "prov_in_top25_after": 4
+    },
+    "TEX": {
+     "n_graded": 149,
+     "n_prov": 117,
+     "top_end_before": 63.49,
+     "top_end_after": 65.74,
+     "depth_before": 28.25,
+     "depth_after": 65.06,
+     "prov_in_top25_before": 4,
+     "prov_in_top25_after": 17
+    },
+    "TOR": {
+     "n_graded": 157,
+     "n_prov": 131,
+     "top_end_before": 61.66,
+     "top_end_after": 61.66,
+     "depth_before": 33.6,
+     "depth_after": 63.26,
+     "prov_in_top25_before": 3,
+     "prov_in_top25_after": 14
+    },
+    "WSN": {
+     "n_graded": 132,
+     "n_prov": 113,
+     "top_end_before": 95.32,
+     "top_end_after": 95.5,
+     "depth_before": 42.68,
+     "depth_after": 66.01,
+     "prov_in_top25_before": 1,
+     "prov_in_top25_after": 12
+    }
+   }
+  }
+ },
+ "joint_board": {
+  "V0": {
+   "available": true,
+   "pool_size": 7924,
+   "n_graded_active": 4520,
+   "graded_rows": {
+    "n": 4520,
+    "n_moved": 4348,
+    "median_abs": 934,
+    "p95_abs": 1071,
+    "max_abs": 1131
+   },
+   "provisional_rows": {
+    "n": 3404,
+    "n_moved": 3403,
+    "median_abs": 1014,
+    "p95_abs": 4209,
+    "max_abs": 5158
+   },
+   "membership": {
+    "top_10": {
+     "held": 10,
+     "in": 0,
+     "out": 0
+    },
+    "top_25": {
+     "held": 25,
+     "in": 0,
+     "out": 0
+    },
+    "top_50": {
+     "held": 50,
+     "in": 0,
+     "out": 0
+    },
+    "top_100": {
+     "held": 100,
+     "in": 0,
+     "out": 0
+    },
+    "top_300": {
+     "held": 281,
+     "in": 19,
+     "out": 19
+    }
+   },
+   "provisional_in_top": {
+    "top_100": [
+     0,
+     0
+    ],
+    "top_300": [
+     1,
+     20
+    ],
+    "top_500": [
+     7,
+     101
+    ],
+    "top_1000": [
+     123,
+     388
+    ]
+   }
+  },
+  "V1": {
+   "available": true,
+   "pool_size": 7924,
+   "n_graded_active": 4520,
+   "graded_rows": {
+    "n": 4520,
+    "n_moved": 4393,
+    "median_abs": 934,
+    "p95_abs": 1599,
+    "max_abs": 1643
+   },
+   "provisional_rows": {
+    "n": 3404,
+    "n_moved": 3404,
+    "median_abs": 783,
+    "p95_abs": 4209,
+    "max_abs": 5158
+   },
+   "membership": {
+    "top_10": {
+     "held": 10,
+     "in": 0,
+     "out": 0
+    },
+    "top_25": {
+     "held": 25,
+     "in": 0,
+     "out": 0
+    },
+    "top_50": {
+     "held": 50,
+     "in": 0,
+     "out": 0
+    },
+    "top_100": {
+     "held": 100,
+     "in": 0,
+     "out": 0
+    },
+    "top_300": {
+     "held": 276,
+     "in": 24,
+     "out": 24
+    }
+   },
+   "provisional_in_top": {
+    "top_100": [
+     0,
+     0
+    ],
+    "top_300": [
+     1,
+     25
+    ],
+    "top_500": [
+     7,
+     138
+    ],
+    "top_1000": [
+     123,
+     614
+    ]
+   }
+  }
+ },
+ "thin_pbust_direction": {
+  "V0": {
+   "n_cohort_grade_ge_35": 71,
+   "hit": {
+    "n": 29,
+    "mean_grade_before": 38.17,
+    "mean_grade_after": 46.24,
+    "graded_curve_p_bust_before": 0.7598,
+    "graded_curve_p_bust_after": 0.4515,
+    "thin_head_p_bust_before": 0.9138,
+    "thin_head_p_bust_if_reargued": 0.7874,
+    "measured_empirical_bust_rate": 0.881,
+    "g1_defect_empirical_minus_served": 0.169
+   },
+   "pit": {
+    "n": 42,
+    "mean_grade_before": 36.24,
+    "mean_grade_after": 37.98,
+    "graded_curve_p_bust_before": 0.8102,
+    "graded_curve_p_bust_after": 0.7637,
+    "thin_head_p_bust_before": 0.9519,
+    "thin_head_p_bust_if_reargued": 0.9368,
+    "measured_empirical_bust_rate": 0.94,
+    "g1_defect_empirical_minus_served": 0.13
+   }
+  },
+  "V1": {
+   "n_cohort_grade_ge_35": 71,
+   "hit": {
+    "n": 29,
+    "mean_grade_before": 38.17,
+    "mean_grade_after": 46.33,
+    "graded_curve_p_bust_before": 0.7598,
+    "graded_curve_p_bust_after": 0.4479,
+    "thin_head_p_bust_before": 0.9138,
+    "thin_head_p_bust_if_reargued": 0.7841,
+    "measured_empirical_bust_rate": 0.881,
+    "g1_defect_empirical_minus_served": 0.169
+   },
+   "pit": {
+    "n": 42,
+    "mean_grade_before": 36.24,
+    "mean_grade_after": 45.51,
+    "graded_curve_p_bust_before": 0.8102,
+    "graded_curve_p_bust_after": 0.4875,
+    "thin_head_p_bust_before": 0.9519,
+    "thin_head_p_bust_if_reargued": 0.8364,
+    "measured_empirical_bust_rate": 0.94,
+    "g1_defect_empirical_minus_served": 0.13
+   }
+  }
+ },
+ "orphans": {
+  "easton_shelton": {
+   "predicted_war": 3.505,
+   "KEEP": 40.3,
+   "V0": 47.1,
+   "V1": 47.6,
+   "flagship_grade_it_replaced": 40.8,
+   "flagship_map_at_this_war": 47.6
+  },
+  "braylon_whitaker": {
+   "predicted_war": 2.161,
+   "KEEP": 35.2,
+   "V0": 45.2,
+   "V1": 44.8,
+   "flagship_grade_it_replaced": 35.0,
+   "flagship_map_at_this_war": 44.8
+  },
+  "jacob_friend": {
+   "predicted_war": 2.144,
+   "KEEP": 35.1,
+   "V0": 45.2,
+   "V1": 44.8,
+   "flagship_grade_it_replaced": 43.5,
+   "flagship_map_at_this_war": 44.8
+  },
+  "michael_martinez": {
+   "predicted_war": 2.099,
+   "KEEP": 35.0,
+   "V0": 45.1,
+   "V1": 44.7,
+   "flagship_grade_it_replaced": 40.6,
+   "flagship_map_at_this_war": 44.7
+  },
+  "jake_cunningham": {
+   "predicted_war": 1.715,
+   "KEEP": 33.5,
+   "V0": 44.4,
+   "V1": 44.0,
+   "flagship_grade_it_replaced": 41.2,
+   "flagship_map_at_this_war": 44.0
+  },
+  "mason_guerra": {
+   "predicted_war": -0.2,
+   "KEEP": 26.2,
+   "V0": 20.0,
+   "V1": 20.0,
+   "flagship_grade_it_replaced": 37.5,
+   "flagship_map_at_this_war": 20.0
+  },
+  "jose_meza": {
+   "predicted_war": -1.464,
+   "KEEP": 21.4,
+   "V0": 20.0,
+   "V1": 20.0,
+   "flagship_grade_it_replaced": 21.6,
+   "flagship_map_at_this_war": 20.0
+  }
+ },
+ "runtime_s": 0.5
+}

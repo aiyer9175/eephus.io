@@ -1,0 +1,21 @@
+=== VENUES ===
+200 33616  data/sources/samples/venues_sport1.json  <- https://statsapi.mlb.com/api/v1/venues?hydrate=location,fieldInfo,timezone&sportId=1
+200 17283  data/sources/samples/venues_sport11.json  <- https://statsapi.mlb.com/api/v1/venues?hydrate=location,fieldInfo,timezone&sportId=11
+200 16638  data/sources/samples/venues_sport12.json  <- https://statsapi.mlb.com/api/v1/venues?hydrate=location,fieldInfo,timezone&sportId=12
+200 15699  data/sources/samples/venues_sport13.json  <- https://statsapi.mlb.com/api/v1/venues?hydrate=location,fieldInfo,timezone&sportId=13
+200 16427  data/sources/samples/venues_sport14.json  <- https://statsapi.mlb.com/api/v1/venues?hydrate=location,fieldInfo,timezone&sportId=14
+200 30548  data/sources/samples/venues_sport16.json  <- https://statsapi.mlb.com/api/v1/venues?hydrate=location,fieldInfo,timezone&sportId=16
+=== AMATEUR sportId 22 (college etc) 2025 ===
+200 1985140  data/sources/samples/amateur_sport22_hitting2025.json  <- https://statsapi.mlb.com/api/v1/stats?stats=season&group=hitting&season=2025&sportIds=22&playerPool=all&limit=5000
+200 2661625  data/sources/samples/amateur_sport22_pitching2025.json  <- https://statsapi.mlb.com/api/v1/stats?stats=season&group=pitching&season=2025&sportIds=22&playerPool=all&limit=5000
+=== sportId 17 winter 2025 ===
+200 974373  data/sources/samples/amateur_sport17_hitting2025.json  <- https://statsapi.mlb.com/api/v1/stats?stats=season&group=hitting&season=2025&sportIds=17&playerPool=all&limit=5000
+200 1690200  data/sources/samples/amateur_sport17_pitching2025.json  <- https://statsapi.mlb.com/api/v1/stats?stats=season&group=pitching&season=2025&sportIds=17&playerPool=all&limit=5000
+=== sportId 23 indy 2025 ===
+200 472207  data/sources/samples/amateur_sport23_hitting2025.json  <- https://statsapi.mlb.com/api/v1/stats?stats=season&group=hitting&season=2025&sportIds=23&playerPool=all&limit=5000
+200 883131  data/sources/samples/amateur_sport23_pitching2025.json  <- https://statsapi.mlb.com/api/v1/stats?stats=season&group=pitching&season=2025&sportIds=23&playerPool=all&limit=5000
+=== NEGATIVE CONTROLS 31 NPB / 32 KBO 2025 ===
+200 372  data/sources/samples/negctl_sport31_npb_hitting2025.json  <- https://statsapi.mlb.com/api/v1/stats?stats=season&group=hitting&season=2025&sportIds=31&playerPool=all&limit=5000
+200 372  data/sources/samples/negctl_sport32_kbo_hitting2025.json  <- https://statsapi.mlb.com/api/v1/stats?stats=season&group=hitting&season=2025&sportIds=32&playerPool=all&limit=5000
+=== playerPool default vs all (sport22 hitting 2025) ===
+200 1458091  data/sources/samples/amateur_sport22_hitting2025_defaultpool.json  <- https://statsapi.mlb.com/api/v1/stats?stats=season&group=hitting&season=2025&sportIds=22&limit=5000

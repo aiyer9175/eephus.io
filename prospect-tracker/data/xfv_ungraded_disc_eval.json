@@ -1,0 +1,150 @@
+{
+ "generated_at": "2026-07-24",
+ "experiment": "W-DISC (docs/efv-2026-07-24/GATES.md, Phase 2b)",
+ "tool": "tools/efv_ungraded_disc_lab.py",
+ "registration_echo": {
+  "source": "docs/efv-2026-07-24/GATES.md :: 'W-DISC (Phase 2b): swing-decision components -> xfv_ungraded ONLY'",
+  "seed": 20260724,
+  "bootstrap_reps": 2000,
+  "clustering": "player (rows unique)",
+  "features": [
+   "take_share_rel",
+   "zone_rec_proxy",
+   "twoK_take_rel"
+  ],
+  "shrink": "w = n/(n+200), a-priori",
+  "harness": "xfv_ungraded OOS protocol, hit side, low-minors gate cohort, forward chain (2019..2024); 2024 appended a-priori (newest labeled decision year in the regenerated matrix; the only fold reaching 2023+ feed coverage)",
+  "bar": "low-minors pooled Spearman delta lo95 > 0; one attempt; marginal = FAIL",
+  "ship": "efv_ungraded.py feature-list wiring default-OFF + provisional regen note; flip reserved to wave D"
+ },
+ "coverage": {
+  "feed_census_in_scope": {
+   "A_2023": 1952,
+   "CPX_2023": 866,
+   "A_2024": 1945,
+   "CPX_2024": 875,
+   "A_2025": 1948,
+   "CPX_2025": 878,
+   "AAA_2026": 1454,
+   "A_2026": 1368,
+   "CPX_2026": 863
+  },
+  "batter_seasons_with_features": 6279,
+  "matrix_hit_rows_in_pool": 886,
+  "pool_rows_covered": 81,
+  "low_minors_pooled_n": 145,
+  "low_minors_pooled_covered": 36
+ },
+ "folds": [
+  {
+   "year": 2019,
+   "n_train": 67,
+   "n_test": 75,
+   "n_covered_train": 0,
+   "n_covered_test": 0,
+   "impute_fallback_zero": true,
+   "disc_ridge_weights": {
+    "take_share_rel": 0.0,
+    "zone_rec_proxy": 0.0,
+    "twoK_take_rel": 0.0
+   }
+  },
+  {
+   "year": 2020,
+   "n_train": 142,
+   "n_test": 76,
+   "n_covered_train": 0,
+   "n_covered_test": 0,
+   "impute_fallback_zero": true,
+   "disc_ridge_weights": {
+    "take_share_rel": 0.0,
+    "zone_rec_proxy": 0.0,
+    "twoK_take_rel": 0.0
+   }
+  },
+  {
+   "year": 2021,
+   "n_train": 218,
+   "n_test": 76,
+   "n_covered_train": 0,
+   "n_covered_test": 0,
+   "impute_fallback_zero": true,
+   "disc_ridge_weights": {
+    "take_share_rel": 0.0,
+    "zone_rec_proxy": 0.0,
+    "twoK_take_rel": 0.0
+   }
+  },
+  {
+   "year": 2022,
+   "n_train": 294,
+   "n_test": 179,
+   "n_covered_train": 0,
+   "n_covered_test": 0,
+   "impute_fallback_zero": true,
+   "disc_ridge_weights": {
+    "take_share_rel": 0.0,
+    "zone_rec_proxy": 0.0,
+    "twoK_take_rel": 0.0
+   }
+  },
+  {
+   "year": 2023,
+   "n_train": 473,
+   "n_test": 202,
+   "n_covered_train": 0,
+   "n_covered_test": 0,
+   "impute_fallback_zero": true,
+   "disc_ridge_weights": {
+    "take_share_rel": 0.0,
+    "zone_rec_proxy": 0.0,
+    "twoK_take_rel": 0.0
+   }
+  },
+  {
+   "year": 2024,
+   "n_train": 675,
+   "n_test": 211,
+   "n_covered_train": 0,
+   "n_covered_test": 81,
+   "impute_fallback_zero": true,
+   "disc_ridge_weights": {
+    "take_share_rel": 0.0,
+    "zone_rec_proxy": 0.0,
+    "twoK_take_rel": 0.0
+   }
+  }
+ ],
+ "gate": {
+  "cohort": "low minors (DSL/CPX/A, age <= 21), pooled 2019-2024 chain",
+  "spearman_baseline": 0.2149,
+  "spearman_variant": 0.2149,
+  "delta": 0.0,
+  "lo95": 0.0,
+  "hi95": 0.0,
+  "bar": "lo95 > 0",
+  "pass": false
+ },
+ "descriptive_not_gating": {
+  "all_levels_delta": 0.0,
+  "low_minors_covered_subset_n": 36,
+  "low_minors_covered_subset_delta": null,
+  "per_feature_dy2024_covered_low_minors": {
+   "take_share_rel": {
+    "n": 36,
+    "spearman_vs_target": null
+   },
+   "zone_rec_proxy": {
+    "n": 36,
+    "spearman_vs_target": null
+   },
+   "twoK_take_rel": {
+    "n": 36,
+    "spearman_vs_target": null
+   }
+  }
+ },
+ "verdict": "COVERAGE-STARVED",
+ "structural_note": "Forward-chained coverage is structurally zero on the TRAIN side of every fold: the swing-decision features exist 2023+ (feed cache), but every labeled row whose milb_season reaches 2023 sits at decision year 2024 (test-only position). With zero covered train rows the ridge cannot place weight on the new columns (constant imputed column -> exact zero weight), so the gate delta is forced to ~0 regardless of feature quality. This is a coverage verdict, not evidence against swing-decision signal.",
+ "revival": "Re-register after a matrix regeneration labels decision-year-2025 rows (2025 debuts / cutoff-2024 busts with observed seasons): the dy-2024 rows (milb_season 2023, covered) then become TRAIN rows for the dy-2025 fold and the same frozen protocol becomes expressible. Expected earliest: the 2027 cycle. The extraction + frozen feature build in this tool are reusable as-is; per-feature descriptive reads on the covered dy-2024 cohort are recorded above for that ledger."
+}

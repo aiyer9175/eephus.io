@@ -638,6 +638,28 @@ def _safe_float(val: Any, default: float | None = None) -> float | None:
         return default
 
 
+def _eta_years_to_debut(eta) -> float | None:
+    """Years from now to projected debut (bughunt F2, 2026-07-23). The
+    timeseries payload carries `eta` as a DICT ({year, half, ...}) on every
+    prospect row - _safe_float(dict) returned None, so _resolve_timing fell to
+    default_eta_years=0.0 and every posterior priced debut-NOW (masked today by
+    the eFV surplus overwrite on the trade board; latent-P0 on any coverage
+    gap). Mirrors storage._eta_years_from: year - current year, late half adds
+    0.5, floored at 0. A bare number passes through; None/unresolvable -> None
+    (engine default), matching the consensus writer's behavior."""
+    if eta is None:
+        return None
+    if isinstance(eta, dict):
+        yr = _safe_float(eta.get("year"))
+        if yr is None:
+            return None
+        yrs = yr - float(date.today().year)
+        if str(eta.get("half") or "") == "late":
+            yrs += 0.5
+        return max(0.0, yrs)
+    return _safe_float(eta)
+
+
 def skills_authenticity(statline: dict | None,
                         statcast: dict | None,
                         is_pitcher: bool,
@@ -1909,6 +1931,24 @@ def _exposure_weighted_career_war(
     return total_war / total_weight, total_weight, weights
 
 
+def _stuff_or_league_avg(pitch: dict) -> float:
+    """tjStuff+ for one pitch row, defaulting to the 100 league anchor ONLY when
+    the value is genuinely absent.
+
+    `is None`, not `or`: tjStuff+ is an indexed metric whose scale reaches 0, and
+    a pitch graded 0.0 is the WORST possible offering, not a missing reading. The
+    prior `(pitch.get("avg_stuff_plus") or 100.0)` promoted that pitch to exactly
+    league average, which is the largest possible error the guard could make.
+    """
+    v = (pitch or {}).get("avg_stuff_plus")
+    if v is None:
+        return 100.0
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 100.0
+
+
 def _pitcher_stuff_summary(player: dict) -> dict:
     """Summarize pitch-level Stuff+ where available."""
     pm = ((player.get("statcast_metrics") or {}).get("pitch_movement") or {})
@@ -1917,11 +1957,11 @@ def _pitcher_stuff_summary(player: dict) -> dict:
         return {"has_data": False, "primary_stuff_plus": None, "weighted_stuff_plus": None}
     primary = max(pitches, key=lambda p: p.get("usage_pct") or 0, default={})
     total_usage = sum(p.get("usage_pct") or 0 for p in pitches) or 1.0
-    weighted = sum((p.get("avg_stuff_plus") or 100.0) * (p.get("usage_pct") or 0)
+    weighted = sum(_stuff_or_league_avg(p) * (p.get("usage_pct") or 0)
                    for p in pitches) / total_usage
     return {
         "has_data": True,
-        "primary_stuff_plus": round(float(primary.get("avg_stuff_plus") or 100.0), 1),
+        "primary_stuff_plus": round(_stuff_or_league_avg(primary), 1),
         "weighted_stuff_plus": round(float(weighted), 1),
     }
 
@@ -2696,7 +2736,9 @@ def bayesian_trade_value(
     status      = player.get("status", "active")
     fv          = _safe_float(player.get("fv_close"))
     age         = _safe_float(player.get("age"))
-    eta         = _safe_float(player.get("eta"))
+    # bughunt F2: eta arrives as the timeseries ETA DICT - derive years-to-debut
+    # from it (see _eta_years_to_debut) instead of _safe_float(dict) -> None -> 0.0.
+    eta         = _eta_years_to_debut(player.get("eta"))
     statline    = player.get("statline") or {}
     statcast    = player.get("statcast_metrics") or {}
     recent_games = (statcast or {}).get("recent_games") or []

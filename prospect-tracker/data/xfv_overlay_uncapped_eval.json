@@ -1,0 +1,426 @@
+{
+ "lane": "A4 SIGNAL REVIVAL WITHOUT CEILING",
+ "generated_by": "tools/efv_overlay_uncapped_lab.py",
+ "registration": "docs/efv-2026-07-24/GATES-ACCURACY.md A4",
+ "authorization": "coverage-limited LIVE signals, NO resolved OOS fold; ship authorized by screen validation + owner ceiling removal, not a new OOS gate",
+ "screen_validation": {
+  "aaa_survivors": {
+   "velo": {
+    "rho": 0.1283,
+    "lo95": 0.0289
+   },
+   "spin": {
+    "rho": 0.152,
+    "lo95": 0.048
+   },
+   "vaa": {
+    "rho": 0.1239,
+    "lo95": 0.0272
+   }
+  },
+  "s_xline_inc": {
+   "hit_whiff": {
+    "rho": 0.0965,
+    "ci95": [
+     0.0277,
+     0.1604
+    ],
+    "n": 788
+   },
+   "pit_fb_velo": {
+    "rho": 0.1423,
+    "ci95": [
+     0.0196,
+     0.2704
+    ],
+    "n": 227
+   }
+  }
+ },
+ "settings": {
+  "BETA_FV_PER_RESID_Z": 0.6,
+  "BETA_decision": "KEPT at screen-calibrated 0.6 (no resolved OOS fold justifies a raise)",
+  "DELTA_CAP_FV_before": 2.0,
+  "DELTA_CAP_FV_after": 12.0,
+  "DELTA_CAP_classification": "2-FV DISPLAY cap REMOVED (owner directive); 12.0 is a wide NUMERICAL-SAFETY sanity bound only, never binds on plausible signal (max real lean 2.36 FV)",
+  "OVERLAY_HIT_DEFAULT_after": true,
+  "OVERLAY_PIT_DEFAULT_after": true,
+  "f_side_fix_held": "EEPHUS_SIDE_FAIRNESS_FIX=0 across all scenarios to isolate the overlay"
+ },
+ "sides": {
+  "hit": {
+   "coverage": {
+    "n_covered_board": 405,
+    "coverage_flip_uncovered_moved": 0,
+    "n_lean_exceeds_old_2fv_cap": 1
+   },
+   "fv_lean_capped": {
+    "n": 405,
+    "max_abs": 2.0,
+    "p90_abs": 0.51,
+    "p50_abs": 0.2,
+    "mean_abs": 0.256,
+    "max_signed": 2.0,
+    "min_signed": -1.47
+   },
+   "fv_lean_uncapped": {
+    "n": 405,
+    "max_abs": 2.17,
+    "p90_abs": 0.51,
+    "p50_abs": 0.2,
+    "mean_abs": 0.257,
+    "max_signed": 2.17,
+    "min_signed": -1.47
+   },
+   "served_grade_move_vs_off": {
+    "capped": {
+     "n": 405,
+     "max_abs": 5.0,
+     "p90_abs": 0.46,
+     "p50_abs": 0.0,
+     "mean_abs": 0.169,
+     "max_signed": 5.0,
+     "min_signed": -2.7
+    },
+    "uncapped": {
+     "n": 405,
+     "max_abs": 5.0,
+     "p90_abs": 0.46,
+     "p50_abs": 0.0,
+     "mean_abs": 0.169,
+     "max_signed": 5.0,
+     "min_signed": -2.7
+    }
+   },
+   "served_rank_move_vs_off": {
+    "capped": {
+     "n": 405,
+     "max_abs": 303,
+     "p90_abs": 109.6,
+     "p50_abs": 26.0,
+     "mean_abs": 42.494,
+     "max_signed": 267,
+     "min_signed": -303
+    },
+    "uncapped": {
+     "n": 405,
+     "max_abs": 325,
+     "p90_abs": 109.6,
+     "p50_abs": 26.0,
+     "mean_abs": 42.541,
+     "max_signed": 267,
+     "min_signed": -325
+    }
+   },
+   "top_movers_uncapped": [
+    {
+     "name": "Evan Estevez",
+     "player_key": "evan_estevez",
+     "level": "CPX",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": 2.0,
+     "uncapped_lean_fv": 2.17,
+     "off_grade": 35.0,
+     "uncapped_grade": 40.0,
+     "uncapped_dgrade": 5.0,
+     "uncapped_drank": -325
+    },
+    {
+     "name": "Brayan Cortesia",
+     "player_key": "brayan_cortesia",
+     "level": "CPX",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": -0.51,
+     "uncapped_lean_fv": -0.51,
+     "off_grade": 37.7,
+     "uncapped_grade": 35.0,
+     "uncapped_dgrade": -2.7,
+     "uncapped_drank": 92
+    },
+    {
+     "name": "Ilan Fernandez",
+     "player_key": "ilan_fernandez",
+     "level": "A",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": -0.4,
+     "uncapped_lean_fv": -0.4,
+     "off_grade": 37.7,
+     "uncapped_grade": 35.0,
+     "uncapped_dgrade": -2.7,
+     "uncapped_drank": 73
+    },
+    {
+     "name": "Queni Pineda",
+     "player_key": "queni_pineda",
+     "level": "CPX",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": -0.92,
+     "uncapped_lean_fv": -0.92,
+     "off_grade": 37.7,
+     "uncapped_grade": 35.0,
+     "uncapped_dgrade": -2.7,
+     "uncapped_drank": 188
+    },
+    {
+     "name": "Estevan Moreno",
+     "player_key": "estevan_moreno",
+     "level": "A",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": -0.45,
+     "uncapped_lean_fv": -0.45,
+     "off_grade": 37.7,
+     "uncapped_grade": 35.0,
+     "uncapped_dgrade": -2.7,
+     "uncapped_drank": 83
+    },
+    {
+     "name": "Jase Mitchell",
+     "player_key": "jase_mitchell",
+     "level": "CPX",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": 0.8,
+     "uncapped_lean_fv": 0.8,
+     "off_grade": 35.0,
+     "uncapped_grade": 37.7,
+     "uncapped_dgrade": 2.7,
+     "uncapped_drank": -150
+    },
+    {
+     "name": "Connor Rasmussen",
+     "player_key": "connor_rasmussen",
+     "level": "A",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": 0.45,
+     "uncapped_lean_fv": 0.45,
+     "off_grade": 35.0,
+     "uncapped_grade": 37.7,
+     "uncapped_dgrade": 2.7,
+     "uncapped_drank": -76
+    },
+    {
+     "name": "Angel Arredondo",
+     "player_key": "angel_arredondo",
+     "level": "A",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": 0.23,
+     "uncapped_lean_fv": 0.23,
+     "off_grade": 35.0,
+     "uncapped_grade": 37.7,
+     "uncapped_dgrade": 2.7,
+     "uncapped_drank": -32
+    },
+    {
+     "name": "Gustavo Baptista",
+     "player_key": "gustavo_baptista",
+     "level": "CPX",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": 0.61,
+     "uncapped_lean_fv": 0.61,
+     "off_grade": 35.0,
+     "uncapped_grade": 37.7,
+     "uncapped_dgrade": 2.7,
+     "uncapped_drank": -104
+    },
+    {
+     "name": "Eddie King Jr.",
+     "player_key": "eddie_king_jr",
+     "level": "A",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": 0.2,
+     "uncapped_lean_fv": 0.2,
+     "off_grade": 35.0,
+     "uncapped_grade": 37.7,
+     "uncapped_dgrade": 2.7,
+     "uncapped_drank": -33
+    }
+   ]
+  },
+  "pit": {
+   "coverage": {
+    "n_covered_board": 228,
+    "coverage_flip_uncovered_moved": 0,
+    "n_lean_exceeds_old_2fv_cap": 2
+   },
+   "fv_lean_capped": {
+    "n": 228,
+    "max_abs": 2.0,
+    "p90_abs": 0.826,
+    "p50_abs": 0.35,
+    "mean_abs": 0.431,
+    "max_signed": 1.31,
+    "min_signed": -2.0
+   },
+   "fv_lean_uncapped": {
+    "n": 228,
+    "max_abs": 2.36,
+    "p90_abs": 0.826,
+    "p50_abs": 0.35,
+    "mean_abs": 0.433,
+    "max_signed": 1.31,
+    "min_signed": -2.36
+   },
+   "served_grade_move_vs_off": {
+    "capped": {
+     "n": 228,
+     "max_abs": 2.7,
+     "p90_abs": 0.0,
+     "p50_abs": 0.0,
+     "mean_abs": 0.122,
+     "max_signed": 2.7,
+     "min_signed": -2.7
+    },
+    "uncapped": {
+     "n": 228,
+     "max_abs": 2.7,
+     "p90_abs": 0.0,
+     "p50_abs": 0.0,
+     "mean_abs": 0.122,
+     "max_signed": 2.7,
+     "min_signed": -2.7
+    }
+   },
+   "served_rank_move_vs_off": {
+    "capped": {
+     "n": 228,
+     "max_abs": 393,
+     "p90_abs": 176.9,
+     "p50_abs": 45.0,
+     "mean_abs": 69.136,
+     "max_signed": 351,
+     "min_signed": -393
+    },
+    "uncapped": {
+     "n": 228,
+     "max_abs": 393,
+     "p90_abs": 176.9,
+     "p50_abs": 45.5,
+     "mean_abs": 69.408,
+     "max_signed": 351,
+     "min_signed": -393
+    }
+   },
+   "top_movers_uncapped": [
+    {
+     "name": "Kyle Amendt",
+     "player_key": "kyle_amendt",
+     "level": "AAA",
+     "chip": "AAA physics lean",
+     "capped_lean_fv": -0.34,
+     "uncapped_lean_fv": -0.34,
+     "off_grade": 37.7,
+     "uncapped_grade": 35.0,
+     "uncapped_dgrade": -2.7,
+     "uncapped_drank": 33
+    },
+    {
+     "name": "Denis Samudio",
+     "player_key": "denis_samudio",
+     "level": "A",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": -0.98,
+     "uncapped_lean_fv": -0.98,
+     "off_grade": 37.7,
+     "uncapped_grade": 35.0,
+     "uncapped_dgrade": -2.7,
+     "uncapped_drank": 111
+    },
+    {
+     "name": "Ben Abeldt",
+     "player_key": "ben_abeldt",
+     "level": "CPX",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": -2.0,
+     "uncapped_lean_fv": -2.36,
+     "off_grade": 37.7,
+     "uncapped_grade": 35.0,
+     "uncapped_dgrade": -2.7,
+     "uncapped_drank": 296
+    },
+    {
+     "name": "Ian Bedell",
+     "player_key": "ian_bedell",
+     "level": "AAA",
+     "chip": "AAA physics lean",
+     "capped_lean_fv": 0.13,
+     "uncapped_lean_fv": 0.13,
+     "off_grade": 35.0,
+     "uncapped_grade": 37.7,
+     "uncapped_dgrade": 2.7,
+     "uncapped_drank": -14
+    },
+    {
+     "name": "Blake Holub",
+     "player_key": "blake_holub",
+     "level": "AAA",
+     "chip": "AAA physics lean",
+     "capped_lean_fv": 0.51,
+     "uncapped_lean_fv": 0.51,
+     "off_grade": 35.0,
+     "uncapped_grade": 37.7,
+     "uncapped_dgrade": 2.7,
+     "uncapped_drank": -56
+    },
+    {
+     "name": "Roberto Perez",
+     "player_key": "roberto_perez",
+     "level": "CPX",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": -0.23,
+     "uncapped_lean_fv": -0.23,
+     "off_grade": 37.4,
+     "uncapped_grade": 35.0,
+     "uncapped_dgrade": -2.4,
+     "uncapped_drank": 24
+    },
+    {
+     "name": "Levi Wells",
+     "player_key": "levi_wells",
+     "level": "AAA",
+     "chip": "AAA physics lean",
+     "capped_lean_fv": 0.75,
+     "uncapped_lean_fv": 0.75,
+     "off_grade": 40.3,
+     "uncapped_grade": 42.3,
+     "uncapped_dgrade": 2.0,
+     "uncapped_drank": -14
+    },
+    {
+     "name": "Sadbiel Delzine",
+     "player_key": "sadbiel_delzine",
+     "level": "CPX",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": 0.99,
+     "uncapped_lean_fv": 0.99,
+     "off_grade": 40.0,
+     "uncapped_grade": 41.7,
+     "uncapped_dgrade": 1.7,
+     "uncapped_drank": -26
+    },
+    {
+     "name": "Jack Ralston",
+     "player_key": "jack_ralston",
+     "level": "AAA",
+     "chip": "AAA physics lean",
+     "capped_lean_fv": -2.0,
+     "uncapped_lean_fv": -2.02,
+     "off_grade": 40.0,
+     "uncapped_grade": 38.3,
+     "uncapped_dgrade": -1.7,
+     "uncapped_drank": 150
+    },
+    {
+     "name": "Jose M. Rodriguez",
+     "player_key": "jose_m_rodriguez",
+     "level": "A",
+     "chip": "A-ball Statcast lean",
+     "capped_lean_fv": 0.67,
+     "uncapped_lean_fv": 0.67,
+     "off_grade": 38.3,
+     "uncapped_grade": 40.0,
+     "uncapped_dgrade": 1.7,
+     "uncapped_drank": -58
+    }
+   ]
+  }
+ }
+}

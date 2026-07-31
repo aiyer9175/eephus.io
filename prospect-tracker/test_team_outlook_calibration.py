@@ -12,6 +12,11 @@ Two failure modes are pinned here so they cannot silently return:
   2. ACCOUNTING - the recentering remainder must stay near zero now that
      the level comes from the model (champion means + depth pool +
      cohort intercepts); a growing remainder means a regression upstream.
+
+Guard 2 is RED as of 2026-07-30 and is being left red on purpose: it caught a
+league-WAR level regression in the FA WAR paths within a day of that ship
+landing. The measured causal chain is in test_recenter_remainder_near_zero's
+docstring; the fix is owed by the FA lane, not by this bound.
 """
 
 from __future__ import annotations
@@ -51,10 +56,51 @@ def test_best_team_is_plausible():
 
 
 def test_recenter_remainder_near_zero():
+    """RED ON PURPOSE since 2026-07-30 (remainder 4.48, roster_war_sum 886.2).
+
+    This is the guard doing its job, and the bound is deliberately NOT widened.
+    Triage 2026-07-30, all numbers measured on the SAME inputs (fa_corpus.pkl
+    pickled 07-29 14:11 and the 30 spotrac_team_*.html caches from 07-29 12:45
+    were both untouched by the 07-30 nightly, so nothing but code differs):
+
+      cohort intercepts   NOT the cause. 30*REPLACEMENT_WINS + the cohort sum is
+                          1388.4 before and 1388.5 after. They still fit.
+      roster WAR          -43.5 (929.7 -> 886.2) = 1.45 wins/team.
+      assigned depth      -11.8 (32.7 -> 20.9)   = 0.39 wins/team.
+                          Together exactly the 2.64 -> 4.48 move.
+
+    The cause is upstream of this file, in the FA WAR paths (fa_projection /
+    fa_market, shipped 89112f5 on 07-29 20:36 - the E2 realized-WAR residual
+    channel plus the E3 playing-time refit). Replaying the vet + depth paths on
+    the identical corpus under the pre-ship code isolates it:
+
+      vets with a path        1317 -> 1317   (nobody fell out of the universe)
+      vet year-1 champion WAR 927.2 -> 866.6 (-60.6, -6.5% - a pure LEVEL drop)
+      depth players           394   -> 276   (118 now project an ALL-ZERO
+                                              5-season champion path)
+      depth year-1 WAR        90.8  -> 43.4  (-52%)
+      model league total      1018.0 -> 910.0 against the 1000-WAR benchmark
+
+    The ship is not wrong about accuracy - Gate-1 WAR MAE 0.617 -> 0.583 on 10
+    of 10 folds is real. It traded LEVEL for it, and a per-player MAE gate cannot
+    see that because bias cancels in |error| and accumulates in a sum. The ship's
+    own artifact says so in a field it added in the same commit:
+    data/fa_gate1_eval.json pooled war bias_model -0.0770 against bias_base
+    +0.0078, hitters -0.1533 (mean_pred 0.482 vs mean_actual 0.635), and the
+    star slice war:hit:act_ge4 bias -3.11 against the baseline's -2.11. Shrinking
+    the right tail is exactly what buys MAE and exactly what breaks a roster sum.
+
+    So the honest fix is NOT here: either re-anchor the playing-time refit so the
+    league still sums to ~1000, or re-fit the cohort intercepts on the new paths
+    under their own holdout gate (proj_backtest.py). Widening this bound would
+    delete the only instrument that noticed. See also REVIEW_QUEUE item 1
+    (proj_lgbm star-tail refit) - this is the same under-projected star tail.
+    """
     acc = _load("team_outlook_eval.json")["league_sum_accounting"]
     assert abs(acc["remainder_recenter_wins_per_team"]) < 3, (
         "the level should come from the model now (champion means + depth "
-        f"pool + cohort intercepts), not the recenter: {acc}")
+        "pool + cohort intercepts), not the recenter. See this test's "
+        f"docstring for the measured causal chain: {acc}")
     assert 900 <= acc["roster_war_sum"] <= 1100, acc["roster_war_sum"]
 
 

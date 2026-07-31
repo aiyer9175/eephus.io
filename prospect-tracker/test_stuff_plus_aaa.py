@@ -60,11 +60,22 @@ def test_sidecar_shape():
     d = json.loads(spa.OUT_PATH.read_text(encoding="utf-8"))
     players = d["players"]
     assert d["n_scored"] == len(players) > 200
+    core = {"stuff_plus", "n_pitches", "season"}
     for mid, row in players.items():
         assert mid.isdigit(), mid
-        assert set(row) == {"stuff_plus", "n_pitches", "season"}, mid
+        # W3 PAL-XRV: by_type is an ADDITIVE per-pitch-type extension; the
+        # pooled contract fields are unchanged.
+        assert core <= set(row) <= core | {"by_type"}, mid
         assert 40 <= row["stuff_plus"] <= 160, (mid, row)
         assert row["n_pitches"] >= 50 and row["season"] in spa.SEASONS
+        for pt, t in (row.get("by_type") or {}).items():
+            assert pt and set(t) == {"stuff_plus", "n_pitches"}, (mid, pt)
+            assert t["n_pitches"] >= 1, (mid, pt)
+    # W3 league-mean per-type xRV meta (the ARM-2 ranking input)
+    if "meta" in d:
+        lg = d["meta"]["league_xrv_by_type"]
+        assert lg and all(v["n_pitches"] >= 1 and "mean_pred_rv" in v
+                          for v in lg.values())
     # the scale promise: shrunk scores center near 100 on the pool scale
     vals = [r["stuff_plus"] for r in players.values()]
     mean = sum(vals) / len(vals)

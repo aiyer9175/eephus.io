@@ -190,6 +190,38 @@ _POS_BUCKET_IF = frozenset({"SS", "2B", "3B", "1B"})
 _POS_BUCKET_OF = frozenset({"LF", "CF", "RF", "OF"})
 
 
+_IS_PITCHER_TOKENS = frozenset({
+    "P", "SP", "RP", "LHP", "RHP", "LHRP", "RHRP", "SIRP", "MIRP",
+    "LHSP", "RHSP", "PITCHER",
+})
+_IS_HITTER_TOKENS = frozenset({
+    "C", "1B", "2B", "3B", "SS", "LF", "CF", "RF", "OF", "IF", "DH",
+    "INF", "UTIL", "UT", "CIF", "MIF", "CATCHER",
+})
+
+
+def _is_pitcher_flag(position_str: str | None) -> int | None:
+    """1 / 0 for a determinate position label, None when it says nothing.
+
+    players.is_pitcher used to be written by a code path that no longer
+    exists: both INSERT INTO players statements below omitted the column
+    (DEFAULT 0), so every row minted since then carried 0 regardless of
+    position and every position change left the old flag frozen. Measured
+    2026-07-25 before the repair: 1,748 of 10,347 rows carried a pitcher
+    position with is_pitcher = 0. This keeps the column in step with the
+    label from here on; TWP (two-way) and slash labels stay indeterminate
+    and preserve whatever the row already had.
+    """
+    if not position_str:
+        return None
+    tok = str(position_str).strip().upper()
+    if tok in _IS_PITCHER_TOKENS:
+        return 1
+    if tok in _IS_HITTER_TOKENS:
+        return 0
+    return None
+
+
 def _position_bucket(position_str: str | None) -> str | None:
     if not position_str:
         return None
@@ -505,11 +537,13 @@ _BREAKOUT_WINDOW_DAYS = 180          # 6 months
 _BREAKOUT_WINDOW_MIN_UPDATES = 4     # at least 4 consensus points
 _BREAKOUT_FV_UPGRADE_THRESHOLD = 5.0
 _BREAKOUT_TOOL_VELOCITY_THRESHOLD = 3.0  # avg tool grade improvement
-# v15 — Loosen hitter RPS+ gate from 120 → 110 (was producing zero hitter
-# breakouts league-wide). 110 ≈ 1 stdev above cohort mean; still exclusive
-# but allows truly-emerging bats through. Also accept a strong wRC+ proxy
-# for graduated-statline hitters (≥130 wRC+).
-_BREAKOUT_HITTER_RPS_PLUS_GATE = 110
+# RETIRED 2026-07-29 (kept as a tombstone, deliberately not deleted so a
+# future reader does not re-add the gate): _BREAKOUT_HITTER_RPS_PLUS_GATE = 110
+# fed a `statline.rps_plus` leg of the breakout perf gate. That leg was a
+# dead read (nothing writes rps_plus into a timeseries statline; 0 of 4,505
+# players carry the field) and was removed. Re-adding an RPS+ gate here
+# requires a producer for statline.rps_plus FIRST.
+# v15: hitter wRC+ proxy for graduated-statline hitters (>=130 wRC+).
 _BREAKOUT_HITTER_WRC_PLUS_GATE = 130
 _BREAKOUT_PITCHER_STF_PLUS_GATE = 105
 _BREAKOUT_PITCHER_FIP_MINUS_GATE = 90
@@ -650,11 +684,9 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
                           or saberm.get("is_pitcher"))
     if age is not None:
         if not is_pitcher_ctx and age <= _BREAKOUT_STAT_HITTER_MAX_AGE:
-            # v17 — Accept either wRC+ (MLB-experienced cohort) OR RPS+
-            # (active-prospect cohort) as the hitter stat-only signal.
-            # wRC+ is only on graduates/MLB-experienced players; RPS+ is
-            # the equivalent metric on active MiLB prospects. RPS+ gate
-            # mirrors the wRC+ gate's percentile (130 ≈ +2σ on each).
+            # v17: wRC+ (MLB-experienced cohort) is the first hitter
+            # stat-only signal. wRC+ lives on graduates / MLB-experienced
+            # players only.
             wrc = saberm.get("wrc_plus")
             try:
                 if wrc is not None and float(wrc) >= _BREAKOUT_STAT_WRC_PLUS_GATE:
@@ -668,23 +700,24 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
                     }
             except (TypeError, ValueError):
                 pass
-            rps = statline.get("rps_plus")
-            try:
-                if rps is not None and float(rps) >= _BREAKOUT_STAT_WRC_PLUS_GATE:
-                    return {
-                        "flag": True,
-                        "reason": "stats",
-                        "perf_gate": "rps_plus",
-                        "fv_upgrade": None,
-                        "tool_velocity": None,
-                        "window_anchor_date": None,
-                    }
-            except (TypeError, ValueError):
-                pass
-            # v17 — Active-prospect MiLB hitters mostly don't have wRC+
-            # OR RPS+ populated; their level-anchored equivalent is
-            # `statline.ops_plus_level` (100 = level mean). Accept ≥130
-            # at the same gate threshold for the stat-only breakout path.
+            # DEAD-READ REMOVED 2026-07-29: a `statline.rps_plus` leg used to sit
+            # here at the wRC+ threshold. `statline` NEVER carries `rps_plus`:
+            # the only producers are draft_export.py and overseas_export.py, and
+            # both stamp it at the TOP LEVEL of their own payloads (draft board /
+            # overseas board), not into the timeseries statline this function
+            # reads. Verified against the served artifact: `statline.rps_plus` is
+            # present on 0 of 4,505 players in data/timeseries.json. The branch
+            # was unreachable, so removing it is behaviour-identical. It is NOT
+            # repointed at ops_plus_level because the ops_plus_level leg already
+            # sits directly below at its OWN calibrated threshold
+            # (_BREAKOUT_STAT_OPS_PLUS_LEVEL_GATE); repointing would have added a
+            # second, looser gate on the same field and changed which players
+            # earn a Breakout badge.
+            # v17: Active-prospect MiLB hitters mostly don't carry wRC+;
+            # their level-anchored equivalent is `statline.ops_plus_level`
+            # (100 = level mean). Threshold is _BREAKOUT_STAT_OPS_PLUS_LEVEL_GATE
+            # (150), set higher than the wRC+ gate because level-anchored stats
+            # compress harder; see the constant's own comment.
             ops_plus = statline.get("ops_plus_level")
             try:
                 if ops_plus is not None and float(ops_plus) >= _BREAKOUT_STAT_OPS_PLUS_LEVEL_GATE:
@@ -812,20 +845,22 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
     if not (fv_signal or tool_signal or upside_signal):
         return None
 
-    # Performance gate — check hitter RPS+, then pitcher stf_plus_periph
+    # Performance gate: check hitter wRC+, then pitcher stf_plus_periph
     # or fip_minus. Two-way passes if either side passes. `statline` and
     # `saberm` already defined above for the stat-only gate path.
+    #
+    # DEAD-READ REMOVED 2026-07-29: a `statline.rps_plus` leg (gated at
+    # _BREAKOUT_HITTER_RPS_PLUS_GATE) used to run first here. Same finding as the
+    # stat-only path above: nothing writes `rps_plus` into a timeseries statline
+    # (draft_export.py / overseas_export.py stamp it top-level on their OWN
+    # payloads), so the field is present on 0 of 4,505 players in the served
+    # data/timeseries.json and the leg could never fire. Removal is
+    # behaviour-identical: all 32 currently-flagged breakouts pass on
+    # stf_plus_periph (29) or statcast_plus (3).
     perf_gate_passed = None
 
-    rps = statline.get("rps_plus")
-    try:
-        if rps is not None and float(rps) >= _BREAKOUT_HITTER_RPS_PLUS_GATE:
-            perf_gate_passed = "rps_plus"
-    except (TypeError, ValueError):
-        pass
-
-    # v15 — wRC+ alternative for hitters (graduates / MLB-experienced
-    # prospects who carry wRC+ in sabermetrics rather than RPS+).
+    # v15: wRC+ leg for hitters (graduates / MLB-experienced prospects
+    # who carry wRC+ in sabermetrics).
     if perf_gate_passed is None:
         wrc = saberm.get("wrc_plus")
         try:
@@ -1105,7 +1140,11 @@ CREATE TABLE IF NOT EXISTS runs (
 CREATE TABLE IF NOT EXISTS metric_snapshots (
     player_key    TEXT NOT NULL,
     snapshot_date TEXT NOT NULL,        -- 'YYYY-MM-DD' of the run
-    overall_rank  INTEGER,              -- PROSPX consensus board rank as-of
+    overall_rank  INTEGER,              -- PROSPX board rank as-of. Ranked on the RAW eFV
+                                        -- grade (BOARD_GRADE_FIELD) from
+                                        -- BOARD_RANK_BASIS_EPOCH on; earlier rows are on
+                                        -- the retired quantile basis and are filtered out
+                                        -- by load_rank_history (see the epoch constant).
     consensus_fv  REAL,                 -- headline consensus FV (fv_close)
     fv_plus       INTEGER NOT NULL DEFAULT 0,
     fv_tier       TEXT,                 -- bucket label ('60','55',… ) for cohorting
@@ -1114,8 +1153,9 @@ CREATE TABLE IF NOT EXISTS metric_snapshots (
     status        TEXT,                 -- active | debuted | inactive
     is_pitcher    INTEGER NOT NULL DEFAULT 0,
     age           REAL,
-    payload_json  TEXT NOT NULL,        -- {dollar_dvm_plus, statcast_plus, live_score,
-                                        --  tool, surplus_mm, …} — the Arkmetric family
+    payload_json  TEXT NOT NULL,        -- {dollar_dvm_plus, statcast_plus, tool,
+                                        --  consensus_live_score, surplus_mm, …} — the
+                                        --  Arkmetric family
     inserted_at   TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (player_key, snapshot_date)
 );
@@ -1818,14 +1858,17 @@ def insert_snapshots(snapshots: Iterable[Snapshot]) -> int:
             )
             count += cur.rowcount
             con.execute(
-                """INSERT INTO players (player_key, player_name, position, org)
-                   VALUES (?, ?, ?, ?)
+                """INSERT INTO players (player_key, player_name, position, org,
+                                       is_pitcher)
+                   VALUES (?, ?, ?, ?, COALESCE(?, 0))
                    ON CONFLICT(player_key) DO UPDATE SET
                        player_name = excluded.player_name,
                        position    = COALESCE(excluded.position, players.position),
                        org         = COALESCE(excluded.org, players.org),
+                       is_pitcher  = COALESCE(?, players.is_pitcher),
                        updated_at  = datetime('now')""",
-                (s.player_key, s.player_name, s.position, s.org),
+                (s.player_key, s.player_name, s.position, s.org,
+                 _is_pitcher_flag(s.position), _is_pitcher_flag(s.position)),
             )
     return count
 
@@ -1997,6 +2040,7 @@ def upsert_unranked_active_player(
     source_label: str = "performance_ingest",
     provisional_fv: float = 35.0,
     season: int | None = None,
+    as_of: str | None = None,
 ) -> bool:
     """Insert a player discovered via the MLB Stats API who has no FV snapshot.
 
@@ -2008,8 +2052,18 @@ def upsert_unranked_active_player(
 
     Returns True if a new player row was created, False if already present.
     """
+    # ANCHOR FIX (2026-07-25): the stamp date is the date the qualifying-
+    # production claim was OBSERVED, not January 1 of the season. The old
+    # `f"{season}-01-01"` froze every auto-tracked player's anchor at a date
+    # that can never advance, and because (source, interval_label, player_key)
+    # is the upsert key the same row was rewritten with the same date on every
+    # run. Downstream that anchor feeds efv_dataset._stale_anchor_discount,
+    # whose ramp starts at 18 months: a Jan-1 stamp begins decaying the whole
+    # cohort's model anchor ~18 months later and reaches the full -10 FV
+    # terminal at 30 months, purely as an artifact of the frozen date.
+    # `as_of` lets a caller pin an explicit observation date; default = today.
     import datetime as _dt
-    snap_date = (str(season) + "-01-01") if season else _dt.date.today().isoformat()
+    snap_date = as_of or _dt.date.today().isoformat()
     interval  = f"{season}_performance" if season else "performance"
 
     with connect() as con:
@@ -2020,20 +2074,37 @@ def upsert_unranked_active_player(
 
         # Create / update the master players record
         con.execute(
-            """INSERT INTO players (player_key, player_name, position, org)
-               VALUES (?, ?, ?, ?)
+            """INSERT INTO players (player_key, player_name, position, org,
+                                   is_pitcher)
+               VALUES (?, ?, ?, ?, COALESCE(?, 0))
                ON CONFLICT(player_key) DO UPDATE SET
                  player_name = excluded.player_name,
                  position    = COALESCE(excluded.position, players.position),
                  org         = COALESCE(excluded.org,      players.org),
+                 is_pitcher  = COALESCE(?, players.is_pitcher),
                  updated_at  = datetime('now')""",
-            (player_key, player_name, position, org),
+            (player_key, player_name, position, org,
+             _is_pitcher_flag(position), _is_pitcher_flag(position)),
         )
 
         # Anchor a lightweight snapshot so consensus has something to work with.
         # FV = provisional_fv (default 35 = "unranked but active").
-        # This never displaces a real FV from a scouting source because
-        # source='performance_ingest' is excluded from the consensus weights.
+        #
+        # CORRECTION (2026-07-25): the previous comment here claimed this row
+        # "never displaces a real FV from a scouting source because
+        # source='performance_ingest' is excluded from the consensus weights".
+        # That is NOT true. consensus.load_source_weights() reads
+        # data/source_weights.json, whose weights object is {} (reverted to
+        # equal on 2026-07-25), and sources absent from that file vote at 1.0 --
+        # so this row votes exactly like FanGraphs. It does not DISPLACE a real
+        # grade (it averages with one), but for a player no outlet has ever
+        # graded it IS the consensus: measured 2026-07-25, 2,575 of the 4,477
+        # active board players serve consensus_fv == 35.0 sourced from nothing
+        # but this constant, and 2,214 of them sit pinned at the served eFV
+        # floor. The single-instance shrinkage does not help: it pulls toward
+        # SINGLE_SOURCE_PRIOR = 35, which is a no-op on 35.
+        # See .cache/anchor_probe/PATCH_consensus_synthetic_anchor.md for the
+        # consensus-side patch (that file is owned by another lane).
         con.execute(
             """INSERT INTO snapshots
                (source, snapshot_date, interval_label, player_key,
@@ -3634,11 +3705,15 @@ def load_roster_status() -> dict[str, dict]:
 # present at the player top level (raw dvm_plus/rps_plus live on graduate/org
 # records, not the active board, so we capture the surfaced "+" versions).
 _METRIC_SNAPSHOT_PAYLOAD_FIELDS = (
-    "dollar_dvm_plus",   # $DvM+
-    "statcast_plus",     # SC+
-    "live_score",        # live composite
-    "tool",              # tool composite (ToolDvM+ base)
-    "live_overall_rank",
+    "dollar_dvm_plus",           # $DvM+
+    "statcast_plus",             # SC+
+    "tool",                      # tool composite (ToolDvM+ base)
+    # Consensus-side live form / external-list movement (consensus FV + live_signal
+    # delta). NOT an eFV output and not the board ordering — see the block that builds
+    # it in export_timeseries_json. Renamed 2026-07-25 from live_score/live_overall_rank;
+    # rows written before then carry the old keys in payload_json.
+    "consensus_live_score",
+    "consensus_live_rank",
 )
 
 
@@ -3803,16 +3878,24 @@ def load_metric_snapshots(player_key: str | None = None,
 def load_rank_history() -> dict[str, list[dict]]:
     """Per-player overall board-rank history from metric_snapshots, grouped by
     player_key and ordered oldest-first: {player_key: [{snapshot_date, rank}, ...]}.
-    The input layer for movement.compute_rank_movement (overall_rank becomes the
-    eFV rank once _active_key ranks by eFV, so this measures eFV-rank movement).
-    One query for the whole board (per-player queries in the export loop would be
-    ~1,700 round-trips)."""
+    The input layer for movement.compute_rank_movement AND for prev_overall_rank,
+    so both read one field on one basis. One query for the whole board (per-player
+    queries in the export loop would be ~4,500 round-trips).
+
+    BASIS GATE: rows dated before BOARD_RANK_BASIS_EPOCH were ranked on the retired
+    quantile basis. The 2026-07-25 flip to the raw eFV grade moved ~4.46k of 4.47k
+    board rows (median |move| ~417 spots, largest ~3.5k), so feeding pre-epoch ranks
+    into the movement engine would publish a basis change as player movement. They are
+    dropped at the source: rank movement and the rank-trend arrow report nothing until
+    two post-epoch snapshots exist, which is the disclosed one-time discontinuity."""
     out: dict[str, list[dict]] = {}
     try:
         with connect() as con:
             rows = con.execute(
                 "SELECT player_key, snapshot_date, overall_rank FROM metric_snapshots "
-                "WHERE overall_rank IS NOT NULL ORDER BY player_key, snapshot_date"
+                "WHERE overall_rank IS NOT NULL AND snapshot_date > ? "
+                "ORDER BY player_key, snapshot_date",
+                (BOARD_RANK_BASIS_EPOCH,),
             ).fetchall()
     except sqlite3.OperationalError:
         return out
@@ -4451,6 +4534,153 @@ def _fv_to_points(fv: float | int | None) -> float:
     return round(lo_pts + (hi_pts - lo_pts) * frac, 3)
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# THE BOARD NUMBER — single definition. Do not add a second one.
+# ═══════════════════════════════════════════════════════════════════════════
+# The PROSPX board has exactly ONE number: the RAW eFV grade, data/xfv.json
+# `xfv_grade`. It is simultaneously (a) the value displayed on the board, (b)
+# the sort key, and (c) the basis of `overall_rank` / `org_rank`. Because the
+# displayed value IS the sort key, the visible grade column is monotonic by
+# construction and the rendered row position can never disagree with the
+# `overall_rank` field.
+#
+# PROVENANCE / why this constant exists
+#   2026-07-06  the DISPLAY flipped to xfv_grade_quantile but overall_rank was
+#               left on another key.
+#   2026-07-15  a unification pass moved the SORT onto the quantile too and
+#               again left the rank field behind, so three orderings coexisted:
+#               rendered order (quantile), timeseries overall_rank, and
+#               live_overall_rank. The owner hit it twice ("why is Arias no
+#               longer #1", "why is Cholowsky #4").
+#   2026-07-25  owner decision: RAW xfv_grade is the single number, everywhere.
+#               p50 = 20.0 (~3.1k of ~4.5k board rows sit on the 20.0 floor) is
+#               ACCEPTED, not a bug: the board carries a very large provisional
+#               cohort, so a floor-heavy median is the honest distribution.
+#
+# Every board-ordering call site must go through `_board_grade` (python) /
+# `efvBoardValue` (prospx/index.html). If you find yourself resolving
+# xfv_grade_quantile / xfv_grade_realized for an ORDERING or a DISPLAYED board
+# grade, that is the bug this constant exists to prevent. The quantile remains
+# a legitimate input to other models (surplus pricing, fantasy dynasty ranks);
+# it is simply not the board.
+#
+#   2026-07-25  W-SIDESCALE. The raw grade is not cross-side comparable at the top:
+#               the model's best pitcher grades 59.2 against a hitter p99 of 63.3,
+#               so pitchers cannot reach the joint top 25 at all (25H/0P). The SCALE
+#               of this field is now owned by efv_board_scale.py, which applies a
+#               per-side affine outcome calibration at the artifact seam and keeps
+#               the pre-calibration value at `xfv_grade_model_raw`. The FIELD NAME
+#               below is unchanged on purpose: one field, one number, every reader
+#               already pointed at it. Default OFF (see that module's gate record --
+#               the primary specification is a measured NULL); when off, this
+#               resolves to exactly the raw grade and nothing moves.
+BOARD_GRADE_FIELD = "xfv_grade"
+
+# The board re-ranked once when the basis moved to BOARD_GRADE_FIELD. Board-rank
+# history written BEFORE this date is on the old quantile basis, so comparing it
+# to a post-epoch rank would report the one-time re-rank as real player movement.
+# Every reader of metric_snapshots.overall_rank filters on this date; rank
+# movement and the rank-trend arrow read empty until post-epoch history accrues.
+BOARD_RANK_BASIS_EPOCH = "2026-07-30"   # STRICTLY-AFTER gate: see load_rank_history.
+# F1 repair 2026-07-25: metric_snapshots already holds 4,467 rows STAMPED 2026-07-25 that were
+# ranked on the RETIRED quantile basis (they were written before the flip landed the same day).
+# A ">=" gate let those through, so the first post-flip export would have published 1,185 phantom
+# rank moves (36 inside the new top 100, max 3,178 spots) as real player movement - precisely what
+# the epoch exists to prevent. The comparison is now strictly-after, so a same-day pre-flip row is
+# excluded and the first post-flip snapshot is the first row the movement engine can ever see.
+#
+# 2026-07-30 BUMP (LANE-P2, the pooled outcome refit). xfv_grade stopped being the inverse of
+# value_framework's own forward map and became the inverse of the EMPIRICAL pooled outcome
+# curve (vf.outcome_implied_fv / data/fv_outcome_curves_pooled.json). The FIELD did not move
+# and the scale flag did not move, so the 07-25 fingerprint would not have noticed -- which
+# is exactly why the fingerprint below now names the curve hash as well. Measured re-rank on
+# identical inputs: 1,060 of 4,264 board rows change rank, median |move| 4, max |move| 27,
+# top-100 membership 100 held / 0 entered / 0 left, top-25 2 in / 2 out. Small next to the
+# 07-25 flip (median 417, max ~3.5k), but not zero, and the eFV delta is the owner's primary
+# movement signal, so it is an epoch. Blast radius, byte-identity proof and the movement
+# question: docs/efv-2026-07-30/POOLED_OUTCOME_REFIT.md.
+#
+# 2026-07-30, SECOND board input on the same date (LANE-SHIP, the pitcher role flip).
+# role_usage.USAGE_ROLE_BOTH_DIRECTIONS -> True lets MiLB usage overwrite a published
+# pitcher label in both directions; 871 rows enter efv_score._RP_DESIGNATIONS and become
+# eligible for the reliever-ceiling haircut. The DATE does not need to move (it is already
+# 2026-07-30 and this lands the same day), but the FINGERPRINT does, and it is extended
+# below with a roles= term for exactly the reason the grademap term was added. Measured
+# re-rank exposure: of the 871, ZERO sit inside the board top 300 (best rank 304) and only
+# 3 clear the ceiling's age+WAR trigger, upper-bounded at 0.8 FV of grade movement each,
+# so PINNED_MIX in test_board_basis_coherence is NOT re-recorded - the top-100 side mix
+# provably cannot move on this input. docs/efv-2026-07-30/POSITION_ROLE_GATE.md PART 3.
+
+# ── BASIS FINGERPRINT (A3, added 2026-07-30) ────────────────────────────────
+# BOARD_RANK_BASIS_EPOCH above is hand-maintained, and NOTHING forced it to be bumped
+# when the basis actually moved. It was not bumped on 2026-07-29 when efv_board_scale
+# was disabled, and the board duly re-ranked: the served top-100 pitcher count went 16
+# -> 8 and four arms moved 39->148 / 8->15 / 12->50 / 48->143 with zero grade changes,
+# which the movement engine then published as real player movement (Seth Hernandez's
+# card reads "down 33, confidence high" for a change no player caused).
+#
+# This fingerprint names every input that defines the board ORDERING. The suite pins it
+# (test_board_basis_coherence), so changing any of them fails until the epoch is bumped
+# and the fingerprint restamped in the SAME commit. It is a coordination device, not a
+# calculation: it never touches a served number.
+#
+# EXTENDED 2026-07-30 (LANE-P2) with the GRADE MAP. The first version named the field and
+# the side-scale flag only, which was enough for the two defects it was built from -- both
+# were flips of one of those two things. It was NOT enough for this one: the pooled outcome
+# refit re-ranked 1,051 board rows while leaving BOTH named inputs identical, so the
+# fingerprint would have reported "no change" through a real re-rank. The board number is
+# the inverse of a fitted curve, so the CURVE is part of the board's identity; the third
+# term is that curve's content hash (value_framework.outcome_curve_identity, a SHA-1 over
+# the knot/value pairs). Refit the curve, change the prior, change the pool -- the hash
+# moves, the suite fails, and a human decides whether the board really did re-rank.
+#
+# EXTENDED AGAIN 2026-07-30 (LANE-SHIP) with the PITCHER ROLE-RESOLUTION MODE. Same
+# lesson, third instance: role_usage.USAGE_ROLE_BOTH_DIRECTIONS decides whether MiLB
+# usage may overwrite a published pitcher label in BOTH directions, and an "RP" label
+# is what puts a row in efv_score._RP_DESIGNATIONS, which is what exposes its model WAR
+# leg to the reliever-ceiling haircut, which is the board number. Turning that switch
+# on moved 1,269 labels and 871 RP-set memberships while leaving all three existing
+# fingerprint terms identical -- i.e. the fingerprint would again have reported "no
+# change" through a real board input flipping. Role mode is a board-ordering input, so
+# it is named.
+BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
+                           "|roles=usage_both")
+
+
+def board_basis_fingerprint() -> str:
+    """Identity of the board ordering: which field is the board number, whether the
+    per-side outcome scale is applied on top of it (and if so, which coefficients),
+    WHICH FITTED CURVE the grade itself inverts, and HOW PITCHER ROLES ARE RESOLVED.
+
+    Deliberately cheap and import-safe: efv_board_scale, value_framework and role_usage
+    are imported lazily here exactly as efv_board_scale is in _board_grade, so importing
+    storage never hard-depends on any of them. Every term degrades to a literal
+    'unavailable' rather than raising -- a coordination device must never be the thing
+    that takes the site down; it just has to differ from the pin, which 'unavailable'
+    does."""
+    try:
+        import efv_board_scale as _bs
+        if _bs.enabled():
+            coeffs = ",".join(f"{s}:{a:.6f}/{b:.6f}"
+                              for s, (a, b) in sorted(_bs.COEFFS.items()))
+            scale = f"on[{coeffs}]"
+        else:
+            scale = "off"
+    except Exception:
+        scale = "unavailable"
+    try:
+        import value_framework as _vf
+        grademap = f"outcome_pooled@{_vf.outcome_curve_identity()}"
+    except Exception:
+        grademap = "unavailable"
+    try:
+        import role_usage as _ru
+        roles = _ru.role_resolution_mode()
+    except Exception:
+        roles = "unavailable"
+    return f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}|roles={roles}"
+
+
 # ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /
 # movement metrics (owner directive). Reads the PRIOR run's committed data/xfv.json
 # (per-player xfv_grade + surplus_mm + tool_xfv) and data/xfv_history.json (per-snapshot
@@ -4467,6 +4697,51 @@ def _load_xfv_join() -> tuple[dict, dict]:
         except Exception:
             return {}
     return _read("xfv.json"), _read("xfv_history.json")
+
+
+def xfv_history_basis() -> str | None:
+    """The board basis data/xfv_history.json was BUILT on, or None if it is unstamped.
+
+    efv_score.score_history stamps it (2026-07-30). An unstamped file is by definition
+    pre-stamp, i.e. the retired per-side quantile series, and is treated as foreign."""
+    base = Path(__file__).parent / "data"
+    try:
+        doc = json.loads((base / "xfv_history.json").read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    b = doc.get("basis") if isinstance(doc, dict) else None
+    return str(b) if b else None
+
+
+def xfv_history_is_on_board_basis() -> bool:
+    """THE MOVEMENT-SUPPRESSION GATE for the eFV delta (A2 / Phase 3.2, 2026-07-30).
+
+    BOARD_RANK_BASIS_EPOCH's strictly-after gate in load_rank_history covers the RANK
+    movement signal, because rank history lives in metric_snapshots as append-only rows
+    that can be dated and filtered. It does NOT cover the owner's PRIMARY movement signal,
+    the eFV delta: movement.xfv_movement reads data/xfv_history.json, which
+    efv_score.score_history REBUILDS in full on every run and which carries no per-point
+    basis. Nothing in the epoch machinery can see that file, so bumping the epoch alone
+    would have left the eFV delta unguarded through this grade-scale change -- the same
+    hole that let the 2026-07-29 re-rank reach Seth Hernandez's card as real movement.
+
+    The gate: publish the eFV-delta override only when the series on disk was built on the
+    basis the board is serving right now. The two go out of step for exactly the runs
+    between a basis change landing in code and the next production regen writing a series
+    on it -- the one-run lag _load_xfv_join documents. In that window the eFV override is
+    withheld and movement falls back to compute_genuine_movement's consensus same-source
+    step, which is the documented fallback for a player with no eFV series at all, not a
+    new code path. It clears itself: the next regen stamps the current basis and the
+    override returns.
+
+    SCOPE, stated because the narrower choice was deliberate. This gates the MOVEMENT
+    override only. The $DvM+ appreciation RATE also reads the series (via _xfv_series) and
+    is NOT gated: it is a within-series first-point-to-last-point rate, so a foreign-basis
+    series still gives it an internally consistent number, and withholding it would swing
+    $DvM+ for the whole board for one run to fix a coherence problem that predates this
+    change. Registered as an owner call in POOLED_OUTCOME_REFIT.md, not silently taken."""
+    b = xfv_history_basis()
+    return bool(b) and b == board_basis_fingerprint()
 
 
 def _load_ungraded_by_org() -> dict[str, list[dict]]:
@@ -4726,10 +5001,13 @@ _ROLE_BASELINES = _load_role_full_season_baselines()
 
 def _pitcher_role(graduate_payload: dict) -> str:
     """Bucket a pitcher into SP / MIRP / SIRP / CL using the position
-    string. Saves/games-started signal isn't reliably surfaced on the
-    payload, so this defers to the consensus position (FG-driven, which
-    already breaks out SP/MIRP/SIRP/CL when it can). Falls back to MIRP
-    when the position is just RHP/LHP/P/RP without role detail."""
+    string, then apply the usage mirror: the position-string signal is
+    FG-driven consensus (which breaks out SP/MIRP/SIRP/CL when it can),
+    and games-started isn't on the payload stats, so a relief bucket is
+    cross-checked against the milb_history cache via role_usage (rule
+    D: current-season MiLB GS-share >= 0.50, IP/G >= 3.0, IP >= 20
+    upgrades mirp/sirp to sp). Falls back to MIRP when the position is
+    just RHP/LHP/P/RP without role detail."""
     pos = (graduate_payload.get("position") or "").upper()
     # Split on "/" — a "MIRP/SIRP" prospect leans MIRP.
     tokens = [t.strip() for t in pos.split("/") if t.strip()]
@@ -4738,11 +5016,25 @@ def _pitcher_role(graduate_payload: dict) -> str:
     if any(t == "SP" for t in tokens):
         return "sp"
     if any(t == "SIRP" for t in tokens):
-        return "sirp"
-    if any(t == "MIRP" for t in tokens):
-        return "mirp"
-    # Generic RP / RHP / LHP / P → assume multi-inning fallback.
-    return "mirp"
+        role = "sirp"
+    elif any(t == "MIRP" for t in tokens):
+        role = "mirp"
+    else:
+        # Generic RP / RHP / LHP / P → assume multi-inning fallback.
+        role = "mirp"
+    # Usage mirror (rule D, role_usage.py). Import-guarded so storage
+    # never hard-fails when role_usage or the milb_stats cache is
+    # absent; the cache read itself is offline (fetch=False) and any
+    # missing data leaves the position-string bucket unchanged.
+    try:
+        from role_usage import current_season_pitching, starter_by_usage
+    except ImportError:
+        return role
+    line = current_season_pitching(graduate_payload.get("mlbam_id"),
+                                   date.today().year)
+    if line and starter_by_usage(line.get("g"), line.get("gs"), line.get("ip")):
+        return "sp"
+    return role
 
 
 def _is_pitcher_graduate(graduate_payload: dict) -> bool:
@@ -5803,6 +6095,14 @@ _SURPLUS_DIST_DRAWS = 4000   # outcome distribution (percentiles, P(bust), risk-
 _SURPLUS_CI_DRAWS   = 2000   # epistemic credible interval on expected SV
 
 
+# Shared no-ETA fallback timing for PROSPECT surplus pricing (bughunt F3,
+# 2026-07-23): when a prospect has no resolvable ETA, BOTH surplus writers (this
+# module's consensus surplus payload and efv_score's eFV surplus) price at this
+# assumed years-to-debut, so the two adjacent dollar columns can never assume
+# different debut timing on the same row. efv_score imports this constant.
+PROSPECT_ETA_FALLBACK_YEARS = 1.0
+
+
 def _eta_years_from(eta, today_year):
     """Years from now to projected debut, from the ETA estimate (half-season
     aware). None when no ETA year is known -> the engine uses its config default."""
@@ -6764,6 +7064,21 @@ def _stretch_composite(score: float, mean: float = 100.0,
     Pairs with `_letter_grade`: stretch increases the composite distance
     between farms, then the steeper percentile cutoffs convert that into
     an F at the bottom and a more selective A at the top.
+
+    CALL SITES AND WHY THEY DO NOT COMPOUND (documented 2026-07-29).
+    Four sites apply this: per-tool DvM+ (1.35), per-bucket per-tool DvM+
+    (1.35), farm_score (1.20) and farm_score_by_window (1.20). The per-tool
+    values do flow toward farm_score, but every path from them to farm_score
+    passes through `_zscore_to_100`, an affine re-standardization across the
+    30 orgs, and z-scoring annihilates any affine map applied to its input.
+    So 1.35 and 1.20 act on DISJOINT display surfaces; they never multiply,
+    and there is no 1.62x net widening on the DvM+ axis. Measured published
+    spread on the served 30-org run: per-tool DvM+ sd 11.2-12.6, ToolDvM+
+    composite sd 2.9, farm_score sd 6.4. None of those is the nominal 10
+    points per sigma; each site now states its own scale next to the call.
+    The one place a stretch is NOT purely presentational is the per-bucket
+    pass, whose stretched output enters `_blend_dvm_3way` alongside unstretched
+    FV and Statcast legs; that is documented at that call site.
     """
     if score is None:
         return score
@@ -7092,12 +7407,52 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     source_events_by_key = load_source_events()
     player_news_by_key = load_player_news()
 
+    # ── OBSERVED position (2026-07-30, owner decision). The served `position` string comes
+    # from consensus._latest_meta, which prefers FanGraphs because FG FORWARD-PROJECTS where
+    # a prospect ends up rather than reporting today's roster slot. That stays: measured over
+    # 1,957 comparable rows, FG projects a move DOWN the defensive spectrum 318 times against
+    # 184 up (24.3% hard disagreement, 1.73:1 skew), so repointing `position` would hand 318
+    # players a premium-position label the industry says they will not hold - and the
+    # positional scarcity dollars, the org depth chart and the farm positional need all price
+    # exactly that. This is the SECOND field: what he has actually been playing in the minors,
+    # most games at a non-DH position, from data/positions_played.json.
+    #
+    # It is a MiLB observation, not a display position, and it is DELIBERATELY absent rather
+    # than guessed: fielding_positions.load_observed_positions omits any player whose census is
+    # empty, all-DH, or under the shipped versa exposure floor, and pitchers are absent by
+    # construction. Coverage on the current build: 1,956 of 2,104 served non-pitcher rows.
+    # Graduates carry a FROZEN pre-debut census (the builder filters to players with no
+    # debut_date), which is why nothing downstream of a debut reads this.
+    try:
+        from fielding_positions import load_observed_positions as _load_obs_pos
+        _observed_pos = _load_obs_pos(Path(__file__).parent / "data" / "positions_played.json")
+    except Exception:
+        log.debug("export: observed-position sidecar unavailable", exc_info=True)
+        _observed_pos = {}
+
     # ── eFV join (one-run lag): the site's PRIMARY grade replaces consensus FV across the
     # farm / DvM+ / movement metrics. Loaded once here so every consumer below (the per-player
     # movement `stock`, the $DvM+ pre-pass, the org dev-FV history) reads one consistent value.
     # See _load_xfv_join for the one-run-lag rationale. Closures fall back to consensus FV
     # wherever eFV abstains, so nothing goes null.
     _xfv_by_key, _xfv_hist_by_key = _load_xfv_join()
+    # Is the eFV series on disk on the basis the board is serving? Resolved ONCE (it reads
+    # a file and a fingerprint) and consumed by the movement override below. False across a
+    # grade-scale transition, which is the one-run suppression window.
+    _xfv_hist_ok = xfv_history_is_on_board_basis()
+    if not _xfv_hist_ok:
+        log.warning("eFV history basis %r != board basis %r - eFV-delta movement suppressed "
+                    "for this run; movement falls back to the consensus same-source step",
+                    xfv_history_basis(), board_basis_fingerprint())
+
+    # W-SIDESCALE: the board grade SCALE lives in efv_board_scale, resolved once here
+    # (not per player) so _board_grade stays a cheap closure. Falls back to reading
+    # BOARD_GRADE_FIELD straight off the record if the module is unavailable.
+    try:
+        from efv_board_scale import board_value as _board_scale_value
+    except Exception:                                       # pragma: no cover
+        def _board_scale_value(rec):
+            return (rec or {}).get(BOARD_GRADE_FIELD)
 
     # Per-player overall board-RANK history (metric_snapshots). Drives the
     # de-noised rank_movement chip (movement.compute_rank_movement). overall_rank
@@ -7111,7 +7466,25 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # bounded depth. NOT added to any raw-sum / DvM+ / surplus accumulator.
     _prov_by_org = _load_ungraded_by_org()
 
-    def _rank_movement(pk, today_rank):
+    # A player whose exact board grade is shared with more than this many others is
+    # ranked by the TIEBREAK chain, not by his grade. movement.compute_rank_movement's
+    # 25-spot dead-band was sized for neighbour re-grade churn on a board with few ties;
+    # it cannot absorb a 3,100-player block, where a 0.1 grade nudge vaults a player
+    # thousands of spots. Rank movement is withheld for those players rather than
+    # published as a marquee move that no grade change supports.
+    _RANK_TIE_BLOCK_MAX = 50
+    _board_grade_tie_count: dict[float, int] = {}
+
+    def _rank_meaningful(grade) -> bool:
+        """False when the player sits inside a deep tie block (see _RANK_TIE_BLOCK_MAX),
+        i.e. his rank NUMBER carries no grade information."""
+        if grade is None:
+            return True
+        return _board_grade_tie_count.get(float(grade), 0) <= _RANK_TIE_BLOCK_MAX
+
+    def _rank_movement(pk, today_rank, grade=None):
+        if not _rank_meaningful(grade):
+            return None
         from movement import compute_rank_movement
         hist = list(_rank_hist_by_key.get(pk) or [])
         if today_rank is not None:
@@ -7122,30 +7495,39 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         mv = compute_rank_movement(hist)
         return mv if mv.get("basis") == "rank_step" else None
 
-    def _xg(pk, cons):
-        """eFV display grade for a player_key; consensus FV fallback where eFV abstains."""
-        g = (_xfv_by_key.get(pk) or {}).get("xfv_grade")
+    def _board_grade(pk, cons):
+        """THE board number for a player_key: the eFV grade (BOARD_GRADE_FIELD) on the
+        W-SIDESCALE board scale, with consensus FV as the fallback wherever eFV
+        abstains so no-track-record players still place instead of vanishing.
+
+        This ONE function is the board's display value, its sort key AND the basis of
+        overall_rank / org_rank. It mirrors efvBoardValue() in prospx/index.html, so a
+        baked rank and the live board order cannot drift apart. See BOARD_GRADE_FIELD
+        at module scope for why a second resolution chain must never be added here.
+
+        The scale itself is NOT defined here -- efv_board_scale.board_value owns it
+        (per-side affine, order-preserving within side). Going through that call means
+        this is correct whether or not data/xfv.json has been stamped yet: the module
+        re-derives from `xfv_grade_model_raw` when present, so it cannot double-apply.
+        If the module is unavailable, fall back to the field as written."""
+        g = _board_scale_value(_xfv_by_key.get(pk) or {})
         if g is not None:
             return float(g)
         return float(cons) if cons is not None else None
 
-    def _xgq(pk, cons):
-        """RANK-basis grade: the quantile-mapped HEADLINE eFV (xfv_grade_quantile),
-        realized-grade then consensus fallback. This is the same chain the
-        frontend's efvRankValue ranks on, so baked overall/org ranks agree with
-        the live board instead of drifting one field apart (the Ike Irish
-        farm-preview-vs-roster bug). Model inputs (farm score, DvM+, movement
-        stock) stay on _xg — the realized grade — by design."""
-        row = _xfv_by_key.get(pk) or {}
-        g = row.get("xfv_grade_quantile")
-        if g is None:
-            g = row.get("xfv_grade")
-        if g is not None:
-            return float(g)
-        return float(cons) if cons is not None else None
+    # Model-input alias. Farm score, $DvM+ and the movement `stock` have always read
+    # the raw grade; now that the board reads the same field, they are the same call.
+    # Kept as a name so those call sites stay self-documenting.
+    _xg = _board_grade
 
     def _xsurplus(pk, cons_mm):
-        """eFV expected surplus ($M); consensus-surplus fallback where eFV abstains."""
+        """eFV expected surplus ($M); consensus-surplus fallback where eFV abstains.
+        BASIS NOTE (bughunt F6, 2026-07-23): both legs are on the CALIBRATED engine
+        basis (eFV surplus_mm prices through vf.apply_calibration at the efv_score
+        seam; surplus_value_mm is calibrated by construction). Callers must pass a
+        timing-aware fallback (age + the shared eta fallback) so a coverage gap
+        cannot mix debut-now dollars into a timing-aware sum. Latent today: eFV
+        covers every ts active, so the fallback leg never fires."""
         s = (_xfv_by_key.get(pk) or {}).get("surplus_mm")
         return float(s) if s is not None else cons_mm
 
@@ -7158,17 +7540,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         out = [(pt.get("d"), pt.get("x")) for pt in h if pt.get("d") and pt.get("x") is not None]
         return out if len(out) >= 2 else None
 
-    def _xfv_at(pk, snap_date, cons):
-        """eFV grade as-of a past snapshot date (latest history point dated <= snap_date);
-        consensus FV fallback. Keeps the prev-rank trend arrow on the same eFV basis as the
-        current rank."""
-        h = _xfv_hist_by_key.get(pk)
-        if h and snap_date:
-            cand = [pt.get("x") for pt in h
-                    if pt.get("d") and pt.get("x") is not None and pt["d"] <= snap_date]
-            if cand:
-                return float(cand[-1])
-        return float(cons) if cons is not None else None
+    # REMOVED 2026-07-25 (_xfv_at): the prior-rank re-sort it fed was a SECOND board
+    # ordering (its own key: rounded prior grade -> tools -> IL -> avg_rank), so a player
+    # whose grade never moved could still show a rank-delta arrow. It also read
+    # xfv_history.x, which is the QUANTILE-scale series (efv_score.score_history maps
+    # through the live grade map) and is therefore not comparable to the raw-grade board.
+    # prev_overall_rank now comes from the player's OWN stored overall_rank at the previous
+    # post-epoch snapshot, which is basis-consistent with the current rank by construction.
 
     # v17 — Merge in manual contract overrides from
     # data/contract_overrides.json. These take precedence over Spotrac
@@ -7196,10 +7574,88 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         pass
     draft_pools = draft_pools or {}
     player_ids = player_ids or {}
+
+    # LAST-RESORT id source: the durable player_photos binding.
+    #
+    # `player_ids` is the freshly-resolved {key: mlbam} map, but the
+    # rebuild-only entry point passes {} (see run_monthly's rebuild path),
+    # so on that run EVERY board row falls back to the statline's embedded
+    # id - and a player with no current-season statline serves mlbam_id
+    # null even when the DB has always known his id. That is how six placed,
+    # identified prospects (jesus_flores, omar_calcurian, michael_braswell_
+    # iii, neomar_urbina, carlos_gonzalez, michael_oliveto__sa3069256) were
+    # published as unidentifiable rows. player_photos is the canonical
+    # mlbam_id<->player_key table, so it is the correct floor.
+    #
+    # A key bound to TWO ids is AMBIGUOUS by definition (the C2 class in
+    # identity_audit) and is deliberately excluded: guessing there is how
+    # two humans get fused. Measured 2026-07-25: 15 of 4467 active rows
+    # gain an id from this fallback, 2 of them excluded as ambiguous until
+    # the double binding is repaired.
+    _durable_ids_by_key: dict[str, int] = {}
+    try:
+        _multi: set[str] = set()
+        for _mid_s, _pk in load_mlbam_player_keys().items():
+            if not _pk:
+                continue
+            try:
+                _mid = int(_mid_s)
+            except (TypeError, ValueError):
+                continue
+            _prior = _durable_ids_by_key.get(_pk)
+            if _prior is not None and _prior != _mid:
+                _multi.add(_pk)
+            _durable_ids_by_key[_pk] = _mid
+        for _pk in _multi:
+            _durable_ids_by_key.pop(_pk, None)
+        if _multi:
+            log.warning("export: %d player_key(s) bound to more than one mlbam "
+                        "id in player_photos - excluded from the durable id "
+                        "fallback (see identity_audit C2): %s",
+                        len(_multi), ", ".join(sorted(_multi)[:10]))
+    except Exception:
+        log.debug("export: durable player_photos id map unavailable", exc_info=True)
+        _durable_ids_by_key = {}
+
+    # Usage-based role correction (rule D, role_usage.py): a MIRP/SIRP
+    # consensus label (FanGraphs forward-projection via
+    # consensus._latest_meta) flips to SP when the player's
+    # CURRENT-season MiLB usage is starter-shaped (GS-share >= 0.50,
+    # IP/G >= 3.0, IP >= 20; stretched starters like Clemmey 19 G /
+    # 19 GS / 87 IP flip, openers like 28 G / 5 GS / 32 IP stay).
+    # Applied HERE rather than in consensus.build_timeseries because
+    # this is the first seam where BOTH the finalized consensus label
+    # and the player's mlbam id are in hand (Snapshot/PlayerTimeseries
+    # never carry an mlbam; consensus.py cannot import storage). The
+    # pre-pass mutates p.position before any consumer below reads it,
+    # so the payload position, pitcher-vs-hitter valuation split, and
+    # farm cohort math all see one consistent label. Cache-only read
+    # (milb_history fetch=False): never networks, missing data no-ops.
+    try:
+        from role_usage import usage_position_override as _usage_pos_override
+    except ImportError:
+        _usage_pos_override = None
+    if _usage_pos_override is not None:
+        _usage_season = date.today().year
+        for _p_ru in timeseries:
+            if _p_ru.status == "debuted":
+                # Graduates' labels come from depth-chart sources (see
+                # _latest_meta); MiLB usage must not overwrite them.
+                continue
+            _ru_mlbam = player_ids.get(_p_ru.player_key)
+            if _ru_mlbam is None:
+                _ru_mlbam = (statlines.get(_p_ru.player_key) or {}).get("mlbam_id")
+            if _ru_mlbam is None:
+                continue
+            _ru_pos = _usage_pos_override(_p_ru.position, _ru_mlbam, _usage_season)
+            if _ru_pos != _p_ru.position:
+                _p_ru.position = _ru_pos
+
     birth_dates = load_birth_dates()
     from stats import compute_age_decimal
     from age_level import score_age_vs_level
-    from eta import estimate_eta, LEVEL_BIAS_ADJ as ETA_LEVEL_BIAS_ADJ
+    from eta import (estimate_eta, LEVEL_BIAS_ADJ as ETA_LEVEL_BIAS_ADJ,
+                     FORTYMAN_ADJ as ETA_FORTYMAN_ADJ)
     from trades import canonical_org
     from level_norms import (
         compute_level_norms,
@@ -8570,6 +9026,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # heuristic ran ~1yr LATE on debuted players; LEVEL_BIAS_ADJ pulls
             # minor-level ETAs earlier (eta_backtest MAE 1.44->1.23).
             level_bias_adj=ETA_LEVEL_BIAS_ADJ,
+            # S2 eta-hazard-lite (flipped 2026-07-29): a player already on the
+            # 40-man is nearer the majors than his level alone implies. Only
+            # 40-man rows get a shave; everyone else passes None and is
+            # byte-identical. See eta.FORTYMAN_ADJ for why the table is the
+            # production-frame refit and why AAA is deliberately 0.0.
+            fortyman_adj=(ETA_FORTYMAN_ADJ.get(level)
+                          if rs.get("on_40_man") else None),
         )
         # Performance-vs-level-median enrichment. wRC+/xFIP aren't on the
         # MLB Stats API, so we compute their conceptual cousins from the
@@ -8585,9 +9048,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             norms_perf = (level_norms.get(lvl) or {}).get("perf") or {} if lvl else {}
             try:
                 if sl_out.get("is_pitcher"):
-                    era = float(sl_out.get("era")) if sl_out.get("era") else None
+                    # `is None` (not truthiness): a genuine 0.00 ERA is a REAL
+                    # value, not a missing one. The old guard
+                    # (`if era and avg_era and era > 0`) dropped every scoreless
+                    # pitcher, and the drop cascaded: no era_minus_level means no
+                    # level_plus_pct, which means no computeRelProd and therefore
+                    # no RPS+ pill on the card. Same rule the acq_draft leaf spec
+                    # states further down this function. avg_era keeps a
+                    # truthiness guard because it is a DIVISOR (0 would raise).
+                    era = _safe_float(sl_out.get("era"))
                     avg_era = norms_perf.get("avg_era")
-                    if era and avg_era and era > 0:
+                    if era is not None and era >= 0 and avg_era:
                         # Empirical-Bayes shrinkage toward the level mean by
                         # sample size before indexing — a few-IP line no longer
                         # reads as an extreme ERA-. K_IP (ERA stabilization,
@@ -8605,10 +9076,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     if stf_periph is not None:
                         sl_out["stf_plus_periph"] = stf_periph
                 else:
-                    ops_str = sl_out.get("ops")
-                    ops = float(ops_str) if ops_str else None
+                    # Same `is None` rule as the ERA branch above: a genuine
+                    # .000 OPS is a real (bad) line, not a missing one, and it
+                    # must still index to an ops_plus_level / level_plus_pct.
+                    ops = _safe_float(sl_out.get("ops"))
                     avg_ops = norms_perf.get("avg_ops")
-                    if ops and avg_ops and avg_ops > 0:
+                    if ops is not None and ops >= 0 and avg_ops and avg_ops > 0:
                         # Empirical-Bayes shrinkage toward the level mean by
                         # sample size before indexing — a 4-AB line no longer
                         # reads OPS+ 374. K_AB (OPS stabilization, AB units):
@@ -8630,9 +9103,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             _norms_perf = (level_norms.get(_lvl) or {}).get("perf") or {} if _lvl else {}
             try:
                 if _rr.get("is_pitcher"):
-                    _era = float(_rr.get("era")) if _rr.get("era") and _rr.get("era") != "—" else None
+                    # Same `is None` rule as the headline statline above. Kept in
+                    # lockstep deliberately: if the per-season row used the old
+                    # truthiness guard a scoreless pitcher would show an ERA- chip
+                    # on his headline line and NO chip on the per-season row for
+                    # the same outing, which is a silent divergence between two
+                    # display surfaces of one number.
+                    _era = _safe_float(_rr.get("era"))
                     _avg_era = _norms_perf.get("avg_era")
-                    if _era and _avg_era and _era > 0:
+                    if _era is not None and _era >= 0 and _avg_era:
                         # Same empirical-Bayes shrink toward the level mean as the
                         # headline statline (storage.py ~L8473). Without it, a
                         # few-IP per-season row re-enabled the extreme ERA- the
@@ -8641,9 +9120,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                         _era_adj = (_ip * _era + K_IP * _avg_era) / (_ip + K_IP)
                         _rr["era_minus_level"] = round(_era_adj / _avg_era * 100)
                 else:
-                    _ops = float(_rr.get("ops")) if _rr.get("ops") and _rr.get("ops") != "—" else None
+                    # `is None`, matching the headline statline (see above).
+                    _ops = _safe_float(_rr.get("ops"))
                     _avg_ops = _norms_perf.get("avg_ops")
-                    if _ops and _avg_ops and _avg_ops > 0:
+                    if _ops is not None and _ops >= 0 and _avg_ops and _avg_ops > 0:
                         # Same empirical-Bayes shrink as the headline statline
                         # (storage.py ~L8494): a 4-AB line no longer reads
                         # OPS+ 374. K_AB has the provenance.
@@ -8677,6 +9157,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # function). `tool_flags` mirror stat_flags shape and ride the
         # same green/red renderer in the UI.
         latest_point = p.points[-1] if p.points else None
+        # THE board number for this player (see BOARD_GRADE_FIELD). Resolved once here so
+        # the rank-movement / prev-rank tie-block guard below reads exactly the value
+        # _active_key ordered on -- no second resolution, no drift.
+        _ser_board_grade = _board_grade(
+            p.player_key,
+            latest_point.consensus_fv_raw if latest_point else None)
         tool_consensus_grades = (
             dict(latest_point.tools_consensus)
             if latest_point and latest_point.tools_consensus
@@ -8686,7 +9172,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # position bucket (catcher vs non-catcher) both feed the Tool /
         # D-Tool composite math, so consolidate once and pass through.
         _player_extras = _extract_player_extras(latest_point)
-        _pos_bucket = _position_bucket(p.position)
+        # OBSERVATION, not projection (2026-07-30 owner decision). The ONLY thing
+        # this bucket decides in _compute_tool_composites is whether the D-Tool
+        # weights drop speed and bump field, i.e. "is this man a catcher". A player
+        # who has caught 400 minor-league games IS a catcher for the purpose of
+        # weighting his defensive tools, whatever the long-term projection says he
+        # becomes. Falls back to the projection wherever there is no observation
+        # (pitchers, and 148 served non-pitcher rows under the exposure floor), so
+        # coverage never regresses.
+        #
+        # Blast radius, measured on the 2026-07-30 tree: 156 covered rows change
+        # bucket, of which 44 cross the catcher boundary - the only crossing that
+        # changes a weight - and only 9 of those 44 have a composite_def to move at
+        # all (the rest carry no graded defensive tools). Best-ranked is
+        # josue_briceno (served 1B, observed C, rank 65), the case this was raised
+        # on. composite_def is a DISPLAY composite: it feeds the D-Tool pill and the
+        # green/red tool flag and nothing else - not the board grade, not surplus -
+        # so this is not board movement.
+        _pos_bucket = _position_bucket(_observed_pos.get(p.player_key) or p.position)
         # v47 - Top-100 pedigree flag; set from the tool-history labels
         # below (tools.history itself is no longer shipped) and baked on
         # the player payload for bayes_trade_value._has_top100_pedigree.
@@ -8946,6 +9449,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _mlbam = player_ids.get(p.player_key)
         if _mlbam is None and sl_out:
             _mlbam = sl_out.get("mlbam_id")
+        if _mlbam is None:
+            # Durable player_photos binding (see _durable_ids_by_key above).
+            _mlbam = _durable_ids_by_key.get(p.player_key)
         _latest_played_level = None
         for _g in ((scm or {}).get("recent_games") or []):
             _lvl = str((_g or {}).get("level") or "").strip()
@@ -9026,9 +9532,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # (for debuted players) the trade/total/realized split + WAG. The frontend
         # reads this block directly instead of recomputing a timing-naive curve.
         _is_pitcher_vf = _vf_is_pitcher_position(p.position)
+        # bughunt F3 (2026-07-23): a no-ETA prospect used to fall through to the
+        # engine's default_eta_years (0.0 = debut-now pricing) here while
+        # efv_score priced the SAME row's eFV surplus at 1.0 - two adjacent
+        # dollar columns on different assumed timing (237 live rows). Both
+        # writers now share PROSPECT_ETA_FALLBACK_YEARS.
+        _eta_yrs = _eta_years_from(eta, date.today().year)
+        if _eta_yrs is None:
+            _eta_yrs = PROSPECT_ETA_FALLBACK_YEARS
         _surplus = _build_surplus_payload(
             latest_fv, _is_pitcher_vf, p.position,
-            age=age, eta_years=_eta_years_from(eta, date.today().year),
+            age=age, eta_years=_eta_yrs,
             fv_dispersion=(p.points[-1].fv_stddev if p.points else None))
         # WAG baseline = the player's eFV grade (locked at debut for graduates) where
         # available; None falls back to consensus inside _build_debuted_payload.
@@ -9066,20 +9580,26 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "debut_date": _display_graduation_date(p) if p.status == "debuted" else p.debut_date,
             "birth_date": bd,
             "age": age,
-            # Position in the FV-sorted active list, plus position within
-            # the player's org. None for graduated/inactive (the maps below
-            # only carry actives). Drives the rank pills on prospect detail.
+            # THE board rank: position in the _active_key ordering, which sorts on the
+            # RAW eFV grade (BOARD_GRADE_FIELD) — the same number the board displays.
+            # Plus the player's position within their org under that same ordering.
+            # None for graduated/inactive (the maps below only carry actives).
             "overall_rank": overall_rank_by_key.get(p.player_key),
-            # De-noised "since last real change" board-rank movement (eFV rank
-            # once _active_key ranks by eFV). None until rank history accrues or
-            # when the move is within the dead-band; the eFV grade move on
-            # `stock` carries the immediate signal. Best-effort.
-            "rank_movement": _rank_movement(p.player_key, overall_rank_by_key.get(p.player_key)),
-            # Position in the same FV-sorted list, but computed off the
-            # second-to-last snapshot. Drives the rank-trend ▲/▼/—
-            # under the diamond on list rows. None for players with
-            # only one snapshot (new to the list — no prior position).
-            "prev_overall_rank": prev_overall_rank_by_key.get(p.player_key),
+            # De-noised "since last real change" board-rank movement over the raw-eFV
+            # rank. None until POST-EPOCH rank history accrues (BOARD_RANK_BASIS_EPOCH),
+            # when the move is within the dead-band, or when the player sits in a deep
+            # tie block (_rank_meaningful); the eFV grade move on `stock` carries the
+            # immediate signal. Best-effort.
+            "rank_movement": _rank_movement(p.player_key,
+                                            overall_rank_by_key.get(p.player_key),
+                                            _ser_board_grade),
+            # This player's own overall_rank at the previous post-epoch snapshot (same
+            # field, one run back — never a re-sort on a different key). Drives the
+            # rank-trend arrow. None for players new to the board, for every player until
+            # two post-epoch snapshots exist, and for tie-block players whose rank number
+            # is tiebreak order rather than grade order.
+            "prev_overall_rank": (prev_overall_rank_by_key.get(p.player_key)
+                                  if _rank_meaningful(_ser_board_grade) else None),
             "org_rank": org_rank_by_key.get(p.player_key),
             "org_rank_total": org_size_by_key.get(p.player_key),
             "age_vs_level": {"tier": avl.tier, "diff": avl.diff},
@@ -9113,6 +9633,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "fv_total_instances": getattr(p, "fv_total_instances", 0),
             # `stock` is stamped below by the movement engine (compute_movement),
             # with consensus.stock_movement as the exception-path fallback.
+            # CONSENSUS-SIDE live form / external-list movement (see the
+            # consensus_live_score block in export_timeseries_json). Its `delta` is
+            # dominated by scouting-list events (BA Top 100 moves), NOT by the eFV
+            # model. It is a sidecar signal only: it never enters overall_rank.
             "live_signal": _live_signal,
             "source_events": _source_events_export,
             "player_news": player_news_by_key.get(p.player_key, []),
@@ -9306,6 +9830,30 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         if _top100_pedigree:
             payload["top100_pedigree"] = True
 
+        # ── position_observed (2026-07-30, owner decision). The most-played non-DH
+        # MiLB position, published BESIDE `position` and never instead of it. See the
+        # sidecar load at the top of this function for why `position` stays on the
+        # FanGraphs forward-projection.
+        #
+        # OMITTED, not null, when there is no observation - 148 served non-pitcher
+        # rows plus every pitcher. A reader's `.get("position_observed")` returns None
+        # either way, and omitting keeps ~2,500 null keys out of the payload.
+        #
+        # This field is now the intended input for the consumers that are asking an
+        # OBSERVED question ("who else has played this position at this age", "is this
+        # man a catcher") rather than a forecast one ("what will he be worth on the
+        # trade market"). Backend consumers already repointed: the D-Tool catcher
+        # weighting above. Still on the projection ON PURPOSE: positional scarcity
+        # dollars, the org depth chart, farm positional need, and `position` itself.
+        # The frontend cohorts (archetype comps, similar prospects, peer percentile,
+        # RPS+ cell) are owed follow-ups recorded in
+        # docs/efv-2026-07-30/POSITION_ROLE_GATE.md - including the reconciliation of
+        # prospx displayPosition(), which today MUTATES p.position in place from this
+        # same sidecar for outfield slots and so can already disagree with the backend.
+        _obs_pos = _observed_pos.get(p.player_key)
+        if _obs_pos:
+            payload["position_observed"] = _obs_pos
+
         # Boom / Bust label — graduates only. Computed post-payload-build
         # since _compute_boom_bust reads career_war + career_stats fields
         # that were just stamped on the dict. Active prospects get None
@@ -9336,7 +9884,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # headline move (direction/delta/basis/endpoints) with the eFV "since last real
             # change" step; keep the consensus perf/skills drivers as supporting context.
             # Falls back to the consensus same-source step when eFV has no history.
-            _xm = xfv_movement(_xfv_series(p.player_key))
+            # BASIS GATE (2026-07-30): and also when the series on disk was built on a
+            # different board basis than the one being served, which is a grade-scale
+            # transition publishing itself as player movement. See
+            # storage.xfv_history_is_on_board_basis for why the BOARD_RANK_BASIS_EPOCH gate
+            # cannot reach this signal. Resolved once per export, not per player.
+            _xm = xfv_movement(_xfv_series(p.player_key)) if _xfv_hist_ok else None
             if _xm:
                 _stock.update(_xm)
             payload["stock"] = _stock
@@ -9785,20 +10338,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     def _active_key(p: PlayerTimeseries):
         latest = p.points[-1]
         rank_key = latest.avg_rank if latest.avg_rank is not None else 999
-        # eFV is the PRIMARY board-rank driver (consensus FV fallback where eFV
-        # abstains, via _xgq — the quantile HEADLINE grade with decimal
-        # tiebreak, matching the frontend's efvRankValue so baked ranks and
-        # the live board order never disagree). The '+' upside flag and the
-        # Tiebreaker-Score proxy arbitrate only EXACT decimal ties (mostly
-        # consensus-fallback players sitting on integer grades).
-        _xg_val = _xgq(p.player_key, latest.consensus_fv_raw)
-        surfaced_fv = (_xg_val if _xg_val is not None
+        # THE board ordering. Primary term is _board_grade — the RAW eFV grade
+        # (BOARD_GRADE_FIELD), which is also the number the board DISPLAYS, so the
+        # visible grade column is monotonic by construction. The '+' upside flag and
+        # the Tiebreaker-Score proxy arbitrate only EXACT decimal ties. Ties are the
+        # common case, not the edge case: ~3.1k of ~4.5k board rows sit on the 20.0
+        # provisional floor (accepted, see BOARD_GRADE_FIELD), so the tiebreak chain
+        # below is what gives the floor block a stable, meaningful internal order.
+        _bg = _board_grade(p.player_key, latest.consensus_fv_raw)
+        surfaced_fv = (_bg if _bg is not None
                        else (latest.consensus_fv if latest.consensus_fv is not None
                              else (latest.consensus_fv_raw
                                    if latest.consensus_fv_raw is not None else 0)))
         upside = 1 if getattr(latest, "consensus_fv_plus", False) else 0
         return (
-            -surfaced_fv,        # headline eFV grade desc (decimal) — primary
+            -surfaced_fv,        # RAW eFV grade desc (decimal) — the board number
             -upside,             # '+' upside flag — ranks above same-grade non-'+'
             -_tbs_proxy(p),      # Tiebreaker Score desc — ARBITER on exact ties
             rank_key,            # avg_rank asc — final stable separator
@@ -9806,6 +10360,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     actives.sort(key=_active_key)
     if top_n_active is not None:
         actives = actives[:top_n_active]
+
+    # TIE-BLOCK census over the board number. ~3.1k of ~4.5k rows share the 20.0
+    # provisional floor exactly, so for those players the rank NUMBER is produced by the
+    # tiebreak chain rather than by the grade. _rank_meaningful reads this to withhold
+    # rank movement / rank deltas that are tie-order churn, not player movement.
+    _board_grade_tie_count.clear()
+    for _p in actives:
+        _g = _board_grade(_p.player_key,
+                          _p.points[-1].consensus_fv_raw if _p.points else None)
+        if _g is not None:
+            _board_grade_tie_count[float(_g)] = _board_grade_tie_count.get(float(_g), 0) + 1
 
     # Pre-compute overall_rank (position in the FV-sorted active list) and
     # org_rank (position within the player's org by the same ordering).
@@ -9826,51 +10391,29 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         org_rank_by_key[p.player_key] = org_counters[org_key]
         org_size_by_key[p.player_key] = org_totals[org_key]
 
-    # Compute prev_overall_rank by re-sorting actives with the second-
-    # to-last snapshot's consensus_fv instead of the latest, so the
-    # frontend can render a rank-delta arrow (▲ +12 / ▼ -7 / — flat)
-    # under each prospect's rank diamond. Players with only one
-    # snapshot in history get no prior rank (they're new to the list).
-    def _prior_key(p: PlayerTimeseries):
-        pts = p.points or []
-        if len(pts) < 2:
-            return (999, 999, 999)
-        prior = pts[-2]
-        # eFV grade as-of the prior snapshot (consensus fallback), so the rank-delta
-        # arrow is on the same eFV basis as the current eFV-driven rank.
-        prior_fv = _xfv_at(p.player_key, prior.snapshot_date, prior.consensus_fv_raw)
-        prior_rank = prior.avg_rank if prior.avg_rank is not None else 999
-        # Same FV-then-Tools-then-rank tiebreak the current snapshot
-        # uses, but reading the prior snapshot's tools_consensus so the
-        # rank-delta arrow stays stable across snapshots with identical
-        # FV but different tool grades.
-        prior_tools = getattr(prior, "tools_consensus", None) or {}
-        is_pitcher = bool(p.position
-                          and p.position.split("/")[0] in PITCHER_POS_SET)
-        comp = _compute_tool_composites(dict(prior_tools), is_pitcher)
-        prior_tool = float(comp["composite_overall"]) if (comp and comp.get("composite_overall") is not None) else 0.0
-        # v37 — apply the same on-IL tiebreak so the rank-delta arrow
-        # reflects FV / tools movement rather than a one-time jump when a
-        # player goes on or off the IL (current IL status cancels out of
-        # both the current and prior keys).
-        _il = il_status.get(p.player_key) or {}
-        on_il = 1 if _il.get("is_on_il") else 0
-        # v38 — Item-5: round the prior FV too, so the rank-delta arrow is
-        # computed on the same surfaced-FV basis as the current rank (else a
-        # sub-decimal FV drift would manufacture a phantom rank change).
-        return (
-            -round(prior_fv) if prior_fv is not None else 999,
-            -prior_tool,
-            on_il,
-            prior_rank,
-        )
-    prior_actives = sorted(
-        [p for p in actives if (p.points or []) and len(p.points) >= 2],
-        key=_prior_key,
-    )
-    prev_overall_rank_by_key: dict[str, int] = {
-        p.player_key: i for i, p in enumerate(prior_actives, start=1)
-    }
+    # prev_overall_rank: the player's OWN overall_rank at the previous board
+    # snapshot, read straight out of metric_snapshots (the same field, the same
+    # basis, one run earlier). It feeds the rank-delta arrow (▲ +12 / ▼ -7 / flat)
+    # under the rank diamond on the consensus-toggled board.
+    #
+    # 2026-07-25 — this REPLACED a re-sort of the active list on a prior-snapshot key
+    # of its own. That re-sort was a second board ordering (rounded prior grade ->
+    # tool composite -> IL -> avg_rank, over a POOL restricted to players with >= 2
+    # points), so it disagreed with _active_key even when nothing had moved and
+    # manufactured rank deltas out of nothing. Reading back the stored rank cannot
+    # drift from the current rank because it IS the current rank, one snapshot ago.
+    #
+    # BASIS EPOCH: pre-epoch snapshots are on the retired quantile basis, so they are
+    # filtered out (load_rank_history applies the same gate). Until a second post-epoch
+    # snapshot lands, every player's prior rank is None and the arrow renders nothing.
+    # That is the disclosed one-time discontinuity for the raw-grade re-rank: no arrow
+    # is correct, a 3,000-spot arrow off a basis change would not be.
+    prev_overall_rank_by_key: dict[str, int] = {}
+    for _pk, _hist in _rank_hist_by_key.items():
+        _prior = [h for h in (_hist or [])
+                  if h.get("rank") is not None and h.get("snapshot_date") != _today_iso]
+        if _prior:
+            prev_overall_rank_by_key[_pk] = int(_prior[-1]["rank"])
 
     # Inactives: most recently seen first
     inactives.sort(key=lambda p: p.points[-1].snapshot_date if p.points else "", reverse=True)
@@ -10005,11 +10548,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         else:
             _mu, _sd = _g_mu, _g_sd
         _tier_stats[_t] = (_mu, _sd)
+    # TRUE-TO-MODEL 2026-07-29: the published $DvM+ is the raw 100 + 10z, with no
+    # display clamp. A `max(40, min(160, ...))` used to sit here; it is the same
+    # display-compression class the C2 lane removed from KRP+ (precedent +
+    # classification rule: data/plus_metric_recal_eval.json), and the owner has
+    # chosen full true-to-model, so a prospect whose development trajectory really
+    # is 6 sigma below his FV tier now reads as such instead of being parked on the
+    # floor next to everyone else down there. The clamp was NOT rank-preserving:
+    # it collapsed a whole tail into one displayed value.
     _dollar_dvm_by_key: dict[str, float] = {}
     for _k, _traj in _ddvm_raw_by_key.items():
         _mu, _sd = _tier_stats.get(_ddvm_tier_by_key[_k], (_g_mu, _g_sd))
         _z = (_traj - _mu) / (_sd or 1.0)
-        _dollar_dvm_by_key[_k] = round(max(40.0, min(160.0, 100.0 + 10.0 * _z)), 1)
+        _dollar_dvm_by_key[_k] = round(100.0 + 10.0 * _z, 1)
 
     org_map: dict[str, dict] = {}
     for idx, p in enumerate(actives):
@@ -10201,7 +10752,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             m["stock_flat"] += 1
         if avl.tier == "very-young":
             m["very_young_count"] += 1
-        elif avl.tier == "very-old":
+        elif avl.tier == "too-old":
+            # 2026-07-30: was "very-old", a tier age_level has NEVER emitted (its
+            # vocabulary is very-young / young / neutral / old / too-old, declared at
+            # age_level.py:73). So this branch was unreachable, very_old_count was
+            # permanently 0, and the Readiness net below - (very_young - very_old) /
+            # actives - could only ever be POSITIVE. Every org's readiness signal was
+            # measuring half of a two-sided statistic. "too-old" (diff >= +2.0) is the
+            # correct mirror of "very-young" (diff <= -2.0).
             m["very_old_count"] += 1
 
         # Tool Quality accumulator — composite_overall (raw 20-80
@@ -10275,7 +10833,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # surplus (consensus-surplus fallback). _xfvg (the player's eFV grade, consensus
         # fallback) was computed at the prospect-dict build above and is reused here + for
         # draft-ceiling + method buckets, so the FV-pt totals stay consistent with the surplus.
-        _surplus_mm = _xsurplus(p.player_key, _estimate_surplus_mm(fv_raw, is_pitcher_p, p.position))
+        # bughunt F6 (2026-07-23): the abstain-fallback used to price timing-NAIVE
+        # (no age/eta -> debut-now dollars) inside a sum whose eFV leg is
+        # timing-aware. Pass the row's age + the shared no-ETA fallback so the
+        # (currently never-firing) fallback stays on the same basis.
+        _surplus_mm = _xsurplus(p.player_key, _estimate_surplus_mm(
+            fv_raw, is_pitcher_p, p.position,
+            age=age, eta_years=PROSPECT_ETA_FALLBACK_YEARS))
         if _surplus_mm is not None:
             _bonus_mm = (float(acq_rec.get("bonus_usd") or 0) / 1_000_000.0)
             _net_mm = _surplus_mm - _bonus_mm
@@ -11514,6 +12078,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # widens the spread so a 60→80 PowerDvM+ jump is worth
                 # more than a 40→60 jump, matching the user's
                 # exponential-FV-value ask.
+                #
+                # SCALE OF RECORD (documented 2026-07-29, see _stretch_composite
+                # for the full chain). This chip is NOT on the nominal
+                # "100-anchored, +10 = 1 sigma" DvM+ scale that the rest of this
+                # file describes. Two things move it, in this order:
+                #   1. the z above is computed from the SHRUNK value against the
+                #      UNSHRUNK pool sd, so |z| < 1 sigma of the pool by design;
+                #   2. the 1.35 stretch then widens what is left.
+                # Measured on the served 30-org run the two roughly cancel to
+                # ~11.2-12.6 published points per sigma per tool group (not 10,
+                # not 13.5). Deliberate presentation, not a bug, but the number
+                # is stated here so nobody reads a per-tool DvM+ gap as if it
+                # were on the 10-point scale.
                 raw = 100 + 10 * z
                 stretched = _stretch_composite(raw)
                 _entry["tool_dev"]["per_tool_dvm_plus"][grp_name] = int(round(stretched))
@@ -11558,6 +12135,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     weight = n / (n + _DVM_SHRINK_K) if n > 0 else 0.0
                     shrunk_v = weight * v + (1 - weight) * mu_b
                     z_b = (shrunk_v - mu_b) / sd_b
+                    # Same 1.35 stretch, same scale caveat as the org-wide pass
+                    # above (shrink-then-z compresses, stretch re-widens; net is
+                    # neither 10 nor 13.5 points per sigma).
+                    #
+                    # NOT PURELY PRESENTATIONAL HERE: unlike the org-wide chip,
+                    # these per-bucket values are consumed downstream, by
+                    # _bucket_tool_dvm_plus -> _blend_dvm_3way, where the tool leg
+                    # is mixed with an FV leg and an SC leg that were NOT
+                    # stretched. Mixing a wider-scaled leg into a fixed-weight
+                    # blend raises that leg's effective influence in proportion to
+                    # the stretch. The v7 note above justifies the DISPLAY
+                    # widening only and says nothing about the blend, so intent
+                    # could not be established and nothing was changed here; this
+                    # comment exists so the next reader does not mistake the
+                    # blend-weight side effect for a deliberate weighting choice.
                     raw_b = 100 + 10 * z_b
                     stretched_b = _stretch_composite(raw_b)
                     _entry["tool_dev"]["per_tool_dvm_plus_by_bucket"] \
@@ -11568,6 +12160,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # that develop the tools that MATTER for a position over ones that pad
     # the average with off-position gains. The internal storage key stays
     # `tools_dvm_plus`; the front-end label is "ToolDvM+".
+    #
+    # SCALE OF RECORD (documented 2026-07-29): this composite is a WEIGHTED MEAN
+    # of legs that each already sit at ~12 published points per sigma, and a
+    # weighted mean of imperfectly-correlated legs has a much smaller sd than its
+    # legs do. Measured on the served 30-org run the composite's own sd is 2.9
+    # points (full range 94 to 107) while every leg it averages spans roughly
+    # 11 to 13. So ToolDvM+ is NOT on the "+10 = 1 sigma" DvM+ scale its name and
+    # its 100 anchor imply; it is roughly 2.9 points per sigma, i.e. COMPRESSED,
+    # which is the opposite direction from the 1.35 stretch applied to its inputs.
+    # The two effects do not compound into one net widening. Left as-is on the
+    # conservative rule (documented, not changed): re-standardizing this composite
+    # the way the farm tiebreaker now is would move every displayed ToolDvM+
+    # number and its rank ordering is already correct, so it is a presentation
+    # decision for the owner, not a correctness fix. See also _stretch_composite.
     _composite_vals: list[tuple[str, int | None]] = []
     for entry in org_summary:
         td = entry["tool_dev"]
@@ -13206,6 +13812,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Anchored at mean=100 because each main-grade score lives on
         # the DvM+-style 100-anchored scale (each branch z-rescaled to
         # mean=100 across the 30 orgs).
+        #
+        # DOES NOT COMPOUND WITH THE 1.35 PER-TOOL STRETCH (checked 2026-07-29).
+        # The stretched per-tool DvM+ values do reach this composite, but only
+        # through LEAF_SPECS -> _zscore_to_100, which re-standardizes each leaf
+        # sub-input across the 30 orgs. z-scoring is invariant to any affine map,
+        # so the 1.35 is erased at the leaf boundary and cannot multiply with the
+        # 1.20 here; the "1.35 x 1.20 = 1.62x net widening" reading is wrong.
+        # (What the 1.35 DOES survive into is the per-bucket blend weight inside
+        # _blend_dvm_3way, which is upstream of the leaf; see the note there.)
+        # Measured on the served 30-org run: leaf score_100 sd ~9.5 (as designed,
+        # ~10), farm_score sd 6.4, i.e. this composite is COMPRESSED relative to
+        # its leaves by the parent-averaging even after the 1.20 stretch.
         entry["farm_score"] = _stretch_composite(round(composite, 1), factor=1.20)
         # Back-compat: legacy field names (acquisitions_score,
         # transactions_score) resolve to the merged Acquisition Strategy
@@ -13216,7 +13834,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # ── v40 — Continuous TIEBREAKER score ─────────────────────────────────
     # Differentiates farms that land on the same letter grade (coarse grades
     # collapse real value gaps). A normalized z-blend across the 30 orgs of the
-    # three value dimensions, anchored DvM+-style (100 + 10·z):
+    # three value dimensions, anchored DvM+-style (100 + 10 * z_blend, where
+    # z_blend is the weighted blend RE-STANDARDIZED by its own measured pool sd;
+    # see the `_tb_sd` block below for why the raw weighted sum is not unit-sd):
     #   • total surplus      0.40 — aggregate risk-adjusted controlled value ($)
     #   • 6yDvM+             0.25 — the indexed view of the same controlled value
     #   • raw graduate WAR   0.35 — REALIZED MLB production (not WAG) over the grad pool
@@ -13239,12 +13859,35 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # and displayed input read the same 7y value so the label and the number can't disagree
     # (was labeled/displayed as "6y" while the z-score used 7y).
     _TB_W = {"surplus": 0.40, "dvm7y": 0.25, "grad_war": 0.35}
+    _tb_blends = [
+        (_TB_W["surplus"] * _surp_z[i] + _TB_W["dvm7y"] * _dvm_z[i]
+         + _TB_W["grad_war"] * _gwar_z[i])
+        for i in range(len(org_summary))
+    ]
+    # RE-STANDARDIZE the blend before mapping onto the 100 + 10z display scale.
+    # Each leg is a unit-variance z, but a WEIGHTED SUM of unit z's only has
+    # sd = 1 when the weights are an orthonormal combination, which these are
+    # not: surplus and 7yDvM+ are the dollar and indexed views of one
+    # controlled-value concept (measured pool correlation +0.52 on the current
+    # 30-org run), and the weights sum to 1.0 rather than their squares. The
+    # measured blend sd is ~0.70, so the un-restandardized score moved only
+    # ~7.0 points per blend-sigma while the "100 + 10z" label promised 10.
+    # Dividing by the pool's own measured sd is a positive-scalar map, so the
+    # org ORDER is bit-for-bit identical; only the display width changes. Same
+    # pattern as _join_fwdhem_plus in hitter_export.py (the house precedent).
+    # `blend_sd` ships on the payload so the number and its scale can never
+    # diverge silently.
+    _tb_mu = sum(_tb_blends) / len(_tb_blends) if _tb_blends else 0.0
+    _tb_sd = (
+        (sum((b - _tb_mu) ** 2 for b in _tb_blends) / len(_tb_blends)) ** 0.5
+        if len(_tb_blends) > 1 else 0.0
+    ) or 1.0
     for i, entry in enumerate(org_summary):
-        _blend = (_TB_W["surplus"] * _surp_z[i] + _TB_W["dvm7y"] * _dvm_z[i]
-                  + _TB_W["grad_war"] * _gwar_z[i])
+        _blend = _tb_blends[i]
         entry["farm_tiebreaker"] = {
-            "score": round(100 + 10 * _blend, 1),
+            "score": round(100 + 10 * (_blend / _tb_sd), 1),
             "weights": _TB_W,
+            "blend_sd": round(_tb_sd, 4),
             "components": {
                 "surplus_z":  round(_surp_z[i], 2),
                 "dvm7y_z":    round(_dvm_z[i], 2),
@@ -13258,8 +13901,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         }
     # Continuous "true rank" 1-30 by the tiebreaker score (finer than the letter
     # grade); the letter grade still comes from farm_score's rank bucket below.
-    _tb_order = sorted(range(len(org_summary)),
-                       key=lambda i: -(org_summary[i]["farm_tiebreaker"]["score"]))
+    # Sorted on the UNROUNDED blend, not on the 1-decimal published score. Two
+    # orgs whose scores collide only after display rounding (e.g. 101.26 and
+    # 101.31 both printing 101.3) used to be ordered by their position in
+    # org_summary, which is arbitrary; now the underlying value decides. This
+    # also makes the rank invariant to the display scale, so the blend
+    # re-standardization above provably cannot move an org's rank.
+    _tb_order = sorted(range(len(org_summary)), key=lambda i: -_tb_blends[i])
     for _r, _i in enumerate(_tb_order, start=1):
         org_summary[_i]["farm_tiebreaker"]["rank"] = _r
 
@@ -13808,6 +14456,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     + _w_dev  * (dev_parent  if dev_parent  is not None else 100.0)
                     + _w_fin  * (entry.get("financial_score") if entry.get("financial_score") is not None else 100.0)
                     + _w_prod * (prod_parent if prod_parent is not None else 100.0))
+            # Same 1.20 as the canonical farm_score, and the same non-compounding
+            # note applies: every leaf reaching `comp` came through
+            # _zscore_to_100, so the upstream 1.35 per-tool stretch is already
+            # erased and cannot multiply with this factor. See _stretch_composite.
             fs = _stretch_composite(round(comp, 1), factor=1.20)
             entry["farm_score_by_window"][win] = fs
             farm_scores_w.append(fs)
@@ -13917,6 +14569,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # alongside the prospect's surplus value.
     for _pl in active_payload:
         _pl["dollar_dvm_plus"] = _dollar_dvm_by_key.get(_pl.get("player_key"))
+    # ── CONSENSUS-SIDE live form / list-movement signal — NOT an eFV output ──────
+    # `consensus_live_score` = CONSENSUS FV (fv_close_raw) + live_signal.delta. Both
+    # legs are consensus-side: the delta is dominated by EXTERNAL SCOUTING-LIST
+    # MOVEMENT (top100_rank / joined / dropped / movement events, capped at +/-7),
+    # with recent-form terms (level-adjusted production, contact quality, zone
+    # discipline, injury drag) riding along. Franklin Arias's +6.05 delta was 5.68
+    # from a single "BA Top 100 #4" driver.
+    #
+    # It is therefore a CONSENSUS composite, not a model grade, and it MUST NOT touch
+    # the board ordering: eFV already blends consensus at lambda ~0.85, so adding this
+    # on top would double-count the same scouting lists. Renamed from live_score /
+    # live_overall_rank / live_rank_delta on 2026-07-25 because the bare "live_" prefix
+    # read like an eFV output and was one of the three competing orderings.
+    # `consensus_live_rank` is a SIDECAR ranking of this signal only, published for
+    # transparency; `overall_rank` above is the board. The UI pill that once rendered
+    # it was retired when eFV became the primary ranking signal.
     _live_ranked = []
     for _pl in active_payload:
         _base = _safe_float(_pl.get("fv_close_raw"))
@@ -13925,18 +14593,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _delta = _safe_float(((_pl.get("live_signal") or {}).get("delta")))
         if _base is None:
             continue
-        _live_score = round(_base + (_delta or 0.0), 2)
-        _pl["live_score"] = _live_score
+        _pl["consensus_live_score"] = round(_base + (_delta or 0.0), 2)
         _live_ranked.append(_pl)
     _live_ranked.sort(key=lambda _pl: (
-        -(_safe_float(_pl.get("live_score")) or -999),
+        -(_safe_float(_pl.get("consensus_live_score")) or -999),
         -(_safe_float(_pl.get("fv_close_raw")) or -999),
         _pl.get("player_name") or "",
     ))
     for _idx, _pl in enumerate(_live_ranked, start=1):
-        _pl["live_overall_rank"] = _idx
+        _pl["consensus_live_rank"] = _idx
         if _pl.get("overall_rank") is not None:
-            _pl["live_rank_delta"] = int(_pl["overall_rank"]) - _idx
+            # Board rank minus consensus-live rank. A gap is INFORMATION (the lists are
+            # moving on a player the model has not re-graded), never a correction to apply.
+            _pl["consensus_live_rank_delta"] = int(_pl["overall_rank"]) - _idx
     graduate_payload.sort(key=lambda p: p.get("debut_date") or "", reverse=True)
     # Stamp the precomputed Statcast+ onto each payload so downstream
     # consumers (UI badge, breakout gate, farm-grade rollup) can pull

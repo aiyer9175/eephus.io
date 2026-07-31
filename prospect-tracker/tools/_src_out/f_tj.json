@@ -1,0 +1,87 @@
+{
+ "candidate": "tj",
+ "B": 500,
+ "pit": {
+  "pool_n": 980,
+  "cols": [
+   "tj_pre",
+   "tj_recent"
+  ],
+  "coverage_full": "113/980 (11.5%)",
+  "coverage_test": "64",
+  "base": {
+   "n": 575,
+   "spearman": 0.2856,
+   "t45": 0.1049,
+   "per_year": {
+    "2020": 0.1999,
+    "2021": 0.194,
+    "2022": 0.3965,
+    "2023": 0.3323
+   },
+   "block_rho": 0.2903
+  },
+  "cand": {
+   "n": 575,
+   "spearman": 0.2807,
+   "t45": 0.0109,
+   "per_year": {
+    "2020": 0.1614,
+    "2021": 0.2296,
+    "2022": 0.3693,
+    "2023": 0.3478
+   },
+   "block_rho": 0.2862
+  },
+  "delta_pooled": -0.0049,
+  "delta_block": -0.0041,
+  "delta_t45": -0.094,
+  "per_fold_delta": {
+   "2020": -0.0385,
+   "2021": 0.0356,
+   "2022": -0.0272,
+   "2023": 0.0155
+  },
+  "control_permuted": {
+   "pooled_mean": -0.00208,
+   "pooled_null95": [
+    -0.0137,
+    0.0056
+   ],
+   "pooled_max_abs": 0.0137,
+   "block_mean": -0.00295,
+   "block_null95": [
+    -0.015,
+    0.0053
+   ],
+   "seeds": 20
+  },
+  "paired_boot_pooled": {
+   "mean": -0.00122,
+   "sd": 0.01347,
+   "ci95": [
+    -0.0275,
+    0.0297
+   ],
+   "p_gt0": 0.418,
+   "B": 500
+  },
+  "paired_boot_block": {
+   "mean": -0.00098,
+   "sd": 0.01436,
+   "ci95": [
+    -0.0277,
+    0.0275
+   ],
+   "p_gt0": 0.442,
+   "B": 500
+  },
+  "verdict": {
+   "pooled_floor": 0.016,
+   "block_floor": 0.0149,
+   "pooled_frac_of_floor": 0.306,
+   "block_frac_of_floor": 0.275,
+   "call": "NULL (below floor)"
+  }
+ }
+}

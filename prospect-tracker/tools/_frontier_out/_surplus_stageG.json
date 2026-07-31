@@ -1,0 +1,301 @@
+{
+ "n": 2236,
+ "years": [
+  2017,
+  2018,
+  2019
+ ],
+ "seed": 20260724,
+ "boot": 2000,
+ "arms": {
+  "global(shipped)": {
+   "mae": 13.7678,
+   "rmse": 26.268,
+   "bias": 0.3202,
+   "slope": 0.9945,
+   "d_mae_vs_shipped": 0.0,
+   "heldout_tier_bias": [
+    {
+     "fv": 40,
+     "n": 1050,
+     "bias_mm": -1.152,
+     "mae_mm": 5.863
+    },
+    {
+     "fv": 45,
+     "n": 679,
+     "bias_mm": 2.689,
+     "mae_mm": 11.65
+    },
+    {
+     "fv": 50,
+     "n": 396,
+     "bias_mm": -0.402,
+     "mae_mm": 29.413
+    },
+    {
+     "fv": 55,
+     "n": 57,
+     "bias_mm": 6.591,
+     "mae_mm": 35.648
+    },
+    {
+     "fv": 60,
+     "n": 54,
+     "bias_mm": -2.165,
+     "mae_mm": 56.266
+    }
+   ]
+  },
+  "per_side": {
+   "mae": 13.7773,
+   "rmse": 26.236,
+   "bias": 0.2726,
+   "slope": 0.9888,
+   "d_mae_vs_shipped": 0.0095,
+   "heldout_tier_bias": [
+    {
+     "fv": 40,
+     "n": 1050,
+     "bias_mm": -0.898,
+     "mae_mm": 6.054
+    },
+    {
+     "fv": 45,
+     "n": 679,
+     "bias_mm": 2.752,
+     "mae_mm": 11.706
+    },
+    {
+     "fv": 50,
+     "n": 396,
+     "bias_mm": -1.202,
+     "mae_mm": 29.062
+    },
+    {
+     "fv": 55,
+     "n": 57,
+     "bias_mm": 4.448,
+     "mae_mm": 35.162
+    },
+    {
+     "fv": 60,
+     "n": 54,
+     "bias_mm": -1.736,
+     "mae_mm": 55.353
+    }
+   ]
+  },
+  "fv_term": {
+   "mae": 13.8687,
+   "rmse": 26.259,
+   "bias": 0.3492,
+   "slope": 0.9801,
+   "d_mae_vs_shipped": 0.1009,
+   "heldout_tier_bias": [
+    {
+     "fv": 40,
+     "n": 1050,
+     "bias_mm": -0.061,
+     "mae_mm": 6.729
+    },
+    {
+     "fv": 45,
+     "n": 679,
+     "bias_mm": 1.817,
+     "mae_mm": 10.978
+    },
+    {
+     "fv": 50,
+     "n": 396,
+     "bias_mm": -1.769,
+     "mae_mm": 28.855
+    },
+    {
+     "fv": 55,
+     "n": 57,
+     "bias_mm": 4.352,
+     "mae_mm": 34.838
+    },
+    {
+     "fv": 60,
+     "n": 54,
+     "bias_mm": 1.176,
+     "mae_mm": 57.001
+    }
+   ]
+  },
+  "tier_bias": {
+   "mae": 13.8355,
+   "rmse": 26.397,
+   "bias": 0.2711,
+   "slope": 0.9906,
+   "d_mae_vs_shipped": 0.0677,
+   "heldout_tier_bias": [
+    {
+     "fv": 40,
+     "n": 1050,
+     "bias_mm": 0.106,
+     "mae_mm": 6.843
+    },
+    {
+     "fv": 45,
+     "n": 679,
+     "bias_mm": 0.512,
+     "mae_mm": 9.977
+    },
+    {
+     "fv": 50,
+     "n": 396,
+     "bias_mm": 0.437,
+     "mae_mm": 29.806
+    },
+    {
+     "fv": 55,
+     "n": 57,
+     "bias_mm": 1.596,
+     "mae_mm": 37.467
+    },
+    {
+     "fv": 60,
+     "n": 54,
+     "bias_mm": -2.165,
+     "mae_mm": 56.266
+    }
+   ]
+  },
+  "per_side+fv": {
+   "mae": 13.907,
+   "rmse": 26.306,
+   "bias": 0.4118,
+   "slope": 0.9664,
+   "d_mae_vs_shipped": 0.1392,
+   "heldout_tier_bias": [
+    {
+     "fv": 40,
+     "n": 1050,
+     "bias_mm": -0.166,
+     "mae_mm": 6.572
+    },
+    {
+     "fv": 45,
+     "n": 679,
+     "bias_mm": 2.249,
+     "mae_mm": 11.347
+    },
+    {
+     "fv": 50,
+     "n": 396,
+     "bias_mm": -1.671,
+     "mae_mm": 28.842
+    },
+    {
+     "fv": 55,
+     "n": 57,
+     "bias_mm": 4.117,
+     "mae_mm": 35.58
+    },
+    {
+     "fv": 60,
+     "n": 54,
+     "bias_mm": -0.1,
+     "mae_mm": 56.318
+    }
+   ]
+  },
+  "PLACEBO_random_2group": {
+   "mae": 13.7701,
+   "rmse": 26.166,
+   "bias": 0.3542,
+   "slope": 0.9904,
+   "d_mae_vs_shipped": 0.0023,
+   "heldout_tier_bias": [
+    {
+     "fv": 40,
+     "n": 1050,
+     "bias_mm": -0.899,
+     "mae_mm": 6.062
+    },
+    {
+     "fv": 45,
+     "n": 679,
+     "bias_mm": 2.721,
+     "mae_mm": 11.695
+    },
+    {
+     "fv": 50,
+     "n": 396,
+     "bias_mm": -0.718,
+     "mae_mm": 29.404
+    },
+    {
+     "fv": 55,
+     "n": 57,
+     "bias_mm": 5.936,
+     "mae_mm": 35.145
+    },
+    {
+     "fv": 60,
+     "n": 54,
+     "bias_mm": -3.07,
+     "mae_mm": 52.54
+    }
+   ]
+  }
+ },
+ "bootstrap_vs_shipped": {
+  "per_side": {
+   "reps": 2000,
+   "d_mae_mean": 0.0239,
+   "ci95": [
+    -0.1191,
+    0.132
+   ],
+   "P(better)": 0.2845
+  },
+  "fv_term": {
+   "reps": 2000,
+   "d_mae_mean": 0.0827,
+   "ci95": [
+    -0.3092,
+    0.4233
+   ],
+   "P(better)": 0.308
+  },
+  "tier_bias": {
+   "reps": 2000,
+   "d_mae_mean": 0.043,
+   "ci95": [
+    -0.2725,
+    0.3504
+   ],
+   "P(better)": 0.3835
+  },
+  "per_side+fv": {
+   "reps": 2000,
+   "d_mae_mean": 0.2032,
+   "ci95": [
+    -0.2143,
+    0.5959
+   ],
+   "P(better)": 0.154
+  },
+  "PLACEBO_random_2group": {
+   "reps": 2000,
+   "d_mae_mean": 0.0259,
+   "ci95": [
+    -0.1606,
+    0.1882
+   ],
+   "P(better)": 0.332
+  }
+ },
+ "oracle_listing_eta": {
+  "note": "perfect 6yr-WAR foresight -> realized_implied_fv -> engine, priced at the LISTING eta (same timing info the production path has); calibration refit in-sample so this is a BOUND, not a held-out figure",
+  "mae": 3.558,
+  "bias": -0.0,
+  "shipped_heldout_mae": 13.768,
+  "oracle_fv_mean": 27.1,
+  "listed_fv_mean": 44.62
+ }
+}

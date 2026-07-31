@@ -1,0 +1,1829 @@
+{
+ "generated_at": "2026-07-31T01:05:09Z",
+ "summary": {
+  "board_rows": 9603,
+  "active_board_rows": 4513,
+  "roster_rows": 10608,
+  "colliding_slugs": 196,
+  "critical_player_keys": 16,
+  "critical_active_player_keys": 0,
+  "c1_shared_key": 0,
+  "c1_unattributed": 9,
+  "c1_shadowed": 144,
+  "c1_split": 5,
+  "c1_untracked": 38,
+  "c2_double_bound": 0,
+  "c3_unresolved_active": 0,
+  "c4_side_conflicts": 11,
+  "c5_birthdate_conflicts": 0,
+  "c6_org_splits": 0,
+  "frankenstein_records": 0,
+  "unassigned_null_id_rows": 250
+ },
+ "critical_player_keys": [
+  "aaron_brown",
+  "adrian_hernandez",
+  "alexander_campos",
+  "anderson_franco",
+  "david_rodriguez",
+  "drew_smith",
+  "enmanuel_rodriguez",
+  "jesus_lopez",
+  "jorge_rodriguez",
+  "jose_martinez",
+  "jose_rondon",
+  "junior_garcia",
+  "luis_valdez",
+  "manuel_rodriguez",
+  "michael_perez",
+  "miguel_gomez"
+ ],
+ "critical_active_player_keys": [],
+ "frankenstein_records": [],
+ "unsplit_collisions": [
+  {
+   "check": "C1",
+   "slug": "david_rodriguez",
+   "status": "unattributed",
+   "n_humans": 2,
+   "board_key": "david_rodriguez",
+   "board_scope": "inactive",
+   "board_mlbam_id": null,
+   "board_position": "C",
+   "board_level": "A+",
+   "board_rank": null,
+   "members": [
+    {
+     "mlbam_id": 703330,
+     "name": "David Rodriguez",
+     "player_key": null,
+     "position": "P",
+     "org": "KCR",
+     "level": "CPX",
+     "age": 22.8
+    },
+    {
+     "mlbam_id": 815095,
+     "name": "David Rodriguez",
+     "player_key": "david_rodriguez",
+     "position": "P",
+     "org": "ATL",
+     "level": "A+",
+     "age": 24.6
+    }
+   ]
+  },
+  {
+   "check": "C1",
+   "slug": "drew_smith",
+   "status": "unattributed",
+   "n_humans": 2,
+   "board_key": "drew_smith",
+   "board_scope": "inactive",
+   "board_mlbam_id": null,
+   "board_position": "RHP",
+   "board_level": null,
+   "board_rank": null,
+   "members": [
+    {
+     "mlbam_id": 622098,
+     "name": "Drew Smith",
+     "player_key": null,
+     "position": "P",
+     "org": "MIN",
+     "level": "AAA",
+     "age": 32.8
+    },
+    {
+     "mlbam_id": 805021,
+     "name": "Drew Smith",
+     "player_key": null,
+     "position": "3B",
+     "org": "SFG",
+     "level": "CPX",
+     "age": 23.1
+    }
+   ]
+  },
+  {
+   "check": "C1",
+   "slug": "enmanuel_rodriguez",
+   "status": "unattributed",
+   "n_humans": 2,
+   "board_key": "enmanuel_rodriguez",
+   "board_scope": "inactive",
+   "board_mlbam_id": null,
+   "board_position": "CF",
+   "board_level": "DSL",
+   "board_rank": null,
+   "members": [
+    {
+     "mlbam_id": 838010,
+     "name": "Enmanuel Rodriguez",
+     "player_key": null,
+     "position": "P",
+     "org": "CHW",
+     "level": "DSL",
+     "age": 17.0
+    },
+    {
+     "mlbam_id": 840917,
+     "name": "Enmanuel Rodriguez",
+     "player_key": "enmanuel_rodriguez",
+     "position": "P",
+     "org": "BAL",
+     "level": "DSL",
+     "age": 19.6
+    }
+   ]
+  },
+  {
+   "check": "C1",
+   "slug": "jesus_lopez",
+   "status": "unattributed",
+   "n_humans": 5,
+   "board_key": "jesus_lopez",
+   "board_scope": "inactive",
+   "board_mlbam_id": null,
+   "board_position": "C",
+   "board_level": "DSL",
+   "board_rank": null,
+   "members": [
+    {
+     "mlbam_id": 805052,
+     "name": "Jesus Lopez",
+     "player_key": null,
+     "position": "C",
+     "org": "TEX",
+     "level": "A",
+     "age": 21.2
+    },
+    {
+     "mlbam_id": 806882,
+     "name": "Jesus Lopez",
+     "player_key": null,
+     "position": "P",
+     "org": "SDP",
+     "level": "A",
+     "age": 20.4
+    },
+    {
+     "mlbam_id": 808362,
+     "name": "Jesus Lopez",
+     "player_key": null,
+     "position": "P",
+     "org": "SFG",
+     "level": "DSL",
+     "age": 21.4
+    },
+    {
+     "mlbam_id": 821805,
+     "name": "Jesus Lopez",
+     "player_key": null,
+     "position": "P",
+     "org": "TEX",
+     "level": "DSL",
+     "age": 19.1
+    },
+    {
+     "mlbam_id": 838819,
+     "name": "Jesus Lopez",
+     "player_key": "jesus_lopez",
+     "position": "P",
+     "org": "BOS",
+     "level": "DSL",
+     "age": 18.1
+    }
+   ]
+  },
+  {
+   "check": "C1",
+   "slug": "jorge_rodriguez",
+   "status": "unattributed",
+   "n_humans": 2,
+   "board_key": "jorge_rodriguez",
+   "board_scope": "inactive",
+   "board_mlbam_id": null,
+   "board_position": "SP",
+   "board_level": "CPX",
+   "board_rank": null,
+   "members": [
+    {
+     "mlbam_id": 691715,
+     "name": "Jorge Rodriguez",
+     "player_key": null,
+     "position": "P",
+     "org": "NYM",
+     "level": "CPX",
+     "age": 24.6
+    },
+    {
+     "mlbam_id": 821772,
+     "name": "Jorge Rodriguez",
+     "player_key": "jorge_rodriguez",
+     "position": "C",
+     "org": "BOS",
+     "level": "CPX",
+     "age": 20.4
+    }
+   ]
+  },
+  {
+   "check": "C1",
+   "slug": "jose_martinez",
+   "status": "unattributed",
+   "n_humans": 2,
+   "board_key": "jose_martinez",
+   "board_scope": "inactive",
+   "board_mlbam_id": null,
+   "board_position": "SIRP",
+   "board_level": "DSL",
+   "board_rank": null,
+   "members": [
+    {
+     "mlbam_id": 814715,
+     "name": "Jose Martinez",
+     "player_key": null,
+     "position": "P",
+     "org": "NYY",
+     "level": "A",
+     "age": 21.6
+    },
+    {
+     "mlbam_id": 829897,
+     "name": "Jose Martinez",
+     "player_key": null,
+     "position": "OF",
+     "org": "CIN",
+     "level": "DSL",
+     "age": 18.8
+    }
+   ]
+  },
+  {
+   "check": "C1",
+   "slug": "luis_valdez",
+   "status": "unattributed",
+   "n_humans": 2,
+   "board_key": "luis_valdez",
+   "board_scope": "inactive",
+   "board_mlbam_id": null,
+   "board_position": "SP",
+   "board_level": "AA",
+   "board_rank": null,
+   "members": [
+    {
+     "mlbam_id": 687667,
+     "name": "Luis Valdez",
+     "player_key": "luis_valdez",
+     "position": "SS",
+     "org": "BAL",
+     "level": "AA",
+     "age": 26.5
+    },
+    {
+     "mlbam_id": 802099,
+     "name": "Luis Valdez",
+     "player_key": null,
+     "position": "P",
+     "org": "KCR",
+     "level": "A",
+     "age": 21.8
+    }
+   ]
+  },
+  {
+   "check": "C1",
+   "slug": "manuel_rodriguez",
+   "status": "unattributed",
+   "n_humans": 2,
+   "board_key": "manuel_rodriguez",
+   "board_scope": "inactive",
+   "board_mlbam_id": null,
+   "board_position": "SIRP",
+   "board_level": null,
+   "board_rank": null,
+   "members": [
+    {
+     "mlbam_id": 655889,
+     "name": "Manuel Rodríguez",
+     "player_key": null,
+     "position": "P",
+     "org": "TBR",
+     "level": "AAA",
+     "age": 30.0
+    },
+    {
+     "mlbam_id": 804973,
+     "name": "Manuel Rodriguez",
+     "player_key": null,
+     "position": "P",
+     "org": "MIL",
+     "level": "AA",
+     "age": 21.0
+    }
+   ]
+  },
+  {
+   "check": "C1",
+   "slug": "michael_perez",
+   "status": "unattributed",
+   "n_humans": 2,
+   "board_key": "michael_perez",
+   "board_scope": "inactive",
+   "board_mlbam_id": null,
+   "board_position": "C",
+   "board_level": "AA",
+   "board_rank": null,
+   "members": [
+    {
+     "mlbam_id": 605421,
+     "name": "Michael Pérez",
+     "player_key": null,
+     "position": "C",
+     "org": "ARI",
+     "level": "AAA",
+     "age": 34.0
+    },
+    {
+     "mlbam_id": 805872,
+     "name": "Michael Perez",
+     "player_key": "michael_perez",
+     "position": "P",
+     "org": "MIA",
+     "level": "AA",
+     "age": 23.9
+    }
+   ]
+  }
+ ],
+ "shadowed_slugs": [
+  {
+   "slug": "adrian_bello",
+   "board_key": "adrian_bello",
+   "n_humans": 2,
+   "mlbam_ids": [
+    808705,
+    837323
+   ]
+  },
+  {
+   "slug": "adrian_martinez",
+   "board_key": "adrian_martinez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    834255,
+    837701
+   ]
+  },
+  {
+   "slug": "adrian_rodriguez",
+   "board_key": "adrian_rodriguez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    689583,
+    703641
+   ]
+  },
+  {
+   "slug": "albert_feliz",
+   "board_key": "albert_feliz",
+   "n_humans": 2,
+   "mlbam_ids": [
+    682765,
+    833184
+   ]
+  },
+  {
+   "slug": "alexander_de_los_santos",
+   "board_key": "alexander_de_los_santos",
+   "n_humans": 2,
+   "mlbam_ids": [
+    808167,
+    822195
+   ]
+  },
+  {
+   "slug": "alexander_garcia",
+   "board_key": "alexander_garcia",
+   "n_humans": 4,
+   "mlbam_ids": [
+    808017,
+    824212,
+    837839,
+    842485
+   ]
+  },
+  {
+   "slug": "alexander_martinez",
+   "board_key": "alexander_martinez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    800329,
+    835325
+   ]
+  },
+  {
+   "slug": "alexis_hernandez",
+   "board_key": "alexis_hernandez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    692562,
+    703161
+   ]
+  },
+  {
+   "slug": "angel_gonzalez",
+   "board_key": "angel_gonzalez",
+   "n_humans": 3,
+   "mlbam_ids": [
+    694261,
+    821259,
+    829837
+   ]
+  },
+  {
+   "slug": "angel_guzman",
+   "board_key": "angel_guzman",
+   "n_humans": 2,
+   "mlbam_ids": [
+    808401,
+    815917
+   ]
+  },
+  {
+   "slug": "angel_perez",
+   "board_key": "angel_perez",
+   "n_humans": 3,
+   "mlbam_ids": [
+    808007,
+    823862,
+    839715
+   ]
+  },
+  {
+   "slug": "angel_ramirez",
+   "board_key": "angel_ramirez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    807587,
+    837979
+   ]
+  },
+  {
+   "slug": "antonio_jimenez",
+   "board_key": "antonio_jimenez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    682607,
+    806128
+   ]
+  },
+  {
+   "slug": "austin_smith",
+   "board_key": "austin_smith",
+   "n_humans": 2,
+   "mlbam_ids": [
+    694518,
+    801563
+   ]
+  },
+  {
+   "slug": "brady_smith",
+   "board_key": "brady_smith",
+   "n_humans": 2,
+   "mlbam_ids": [
+    806224,
+    842526
+   ]
+  },
+  {
+   "slug": "cade_smith",
+   "board_key": "cade_smith",
+   "n_humans": 2,
+   "mlbam_ids": [
+    671922,
+    694696
+   ]
+  },
+  {
+   "slug": "carlos_castillo",
+   "board_key": "carlos_castillo",
+   "n_humans": 2,
+   "mlbam_ids": [
+    807962,
+    837825
+   ]
+  },
+  {
+   "slug": "carlos_de_la_rosa",
+   "board_key": "carlos_de_la_rosa",
+   "n_humans": 2,
+   "mlbam_ids": [
+    820863,
+    822215
+   ]
+  },
+  {
+   "slug": "carlos_done",
+   "board_key": "carlos_done",
+   "n_humans": 2,
+   "mlbam_ids": [
+    821152,
+    837969
+   ]
+  },
+  {
+   "slug": "carlos_duran",
+   "board_key": "carlos_duran",
+   "n_humans": 2,
+   "mlbam_ids": [
+    679922,
+    827407
+   ]
+  },
+  {
+   "slug": "carlos_gonzalez",
+   "board_key": "carlos_gonzalez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    801262,
+    808712
+   ]
+  },
+  {
+   "slug": "carlos_gutierrez",
+   "board_key": "carlos_gutierrez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    699049,
+    806872
+   ]
+  },
+  {
+   "slug": "carlos_hernandez",
+   "board_key": "carlos_hernandez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    672578,
+    837645
+   ]
+  },
+  {
+   "slug": "carlos_jimenez",
+   "board_key": "carlos_jimenez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    683639,
+    692039
+   ]
+  },
+  {
+   "slug": "carlos_martinez",
+   "board_key": "carlos_martinez",
+   "n_humans": 5,
+   "mlbam_ids": [
+    829931,
+    830052,
+    834976,
+    837695,
+    838934
+   ]
+  },
+  {
+   "slug": "carlos_pena",
+   "board_key": "carlos_pena",
+   "n_humans": 2,
+   "mlbam_ids": [
+    685329,
+    826535
+   ]
+  },
+  {
+   "slug": "carlos_rodriguez",
+   "board_key": "carlos_rodriguez",
+   "n_humans": 4,
+   "mlbam_ids": [
+    677578,
+    692025,
+    692230,
+    823864
+   ]
+  },
+  {
+   "slug": "carlos_sanchez",
+   "board_key": "carlos_sanchez",
+   "n_humans": 4,
+   "mlbam_ids": [
+    800176,
+    801522,
+    831856,
+    842167
+   ]
+  },
+  {
+   "slug": "carlos_torres",
+   "board_key": "carlos_torres",
+   "n_humans": 2,
+   "mlbam_ids": [
+    688876,
+    829987
+   ]
+  },
+  {
+   "slug": "cesar_acosta",
+   "board_key": "cesar_acosta",
+   "n_humans": 2,
+   "mlbam_ids": [
+    830802,
+    831048
+   ]
+  },
+  {
+   "slug": "christian_rodriguez",
+   "board_key": "christian_rodriguez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    691010,
+    815184
+   ]
+  },
+  {
+   "slug": "darwin_rodriguez",
+   "board_key": "darwin_rodriguez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    801270,
+    807841
+   ]
+  },
+  {
+   "slug": "david_hernandez",
+   "board_key": "david_hernandez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    829967,
+    830395
+   ]
+  },
+  {
+   "slug": "deivi_garcia",
+   "board_key": "deivi_garcia",
+   "n_humans": 2,
+   "mlbam_ids": [
+    665620,
+    835491
+   ]
+  },
+  {
+   "slug": "diego_castillo",
+   "board_key": "diego_castillo",
+   "n_humans": 2,
+   "mlbam_ids": [
+    650895,
+    660636
+   ]
+  },
+  {
+   "slug": "diego_hernandez",
+   "board_key": "diego_hernandez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    678746,
+    837871
+   ]
+  },
+  {
+   "slug": "eduardo_herrera",
+   "board_key": "eduardo_herrera",
+   "n_humans": 2,
+   "mlbam_ids": [
+    672620,
+    815901
+   ]
+  },
+  {
+   "slug": "edwin_diaz",
+   "board_key": "edwin_diaz",
+   "n_humans": 2,
+   "mlbam_ids": [
+    621242,
+    641521
+   ]
+  },
+  {
+   "slug": "eliezer_alfonzo",
+   "board_key": "eliezer_alfonzo",
+   "n_humans": 2,
+   "mlbam_ids": [
+    672613,
+    829821
+   ]
+  },
+  {
+   "slug": "enmanuel_figuereo",
+   "board_key": "enmanuel_figuereo",
+   "n_humans": 2,
+   "mlbam_ids": [
+    825639,
+    830026
+   ]
+  },
+  {
+   "slug": "esteban_mejia",
+   "board_key": "esteban_mejia",
+   "n_humans": 3,
+   "mlbam_ids": [
+    800354,
+    821757,
+    842391
+   ]
+  },
+  {
+   "slug": "fabian_gonzalez",
+   "board_key": "fabian_gonzalez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    835648,
+    838854
+   ]
+  },
+  {
+   "slug": "fernando_cruz",
+   "board_key": "fernando_cruz",
+   "n_humans": 2,
+   "mlbam_ids": [
+    518585,
+    815890
+   ]
+  },
+  {
+   "slug": "francisco_perez",
+   "board_key": "francisco_perez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    806621,
+    842253
+   ]
+  },
+  {
+   "slug": "freilyn_rodriguez",
+   "board_key": "freilyn_rodriguez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    829785,
+    832323
+   ]
+  },
+  {
+   "slug": "gabriel_rodriguez",
+   "board_key": "gabriel_rodriguez",
+   "n_humans": 4,
+   "mlbam_ids": [
+    676082,
+    700421,
+    821657,
+    829712
+   ]
+  },
+  {
+   "slug": "gregory_sanchez",
+   "board_key": "gregory_sanchez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    821800,
+    834906
+   ]
+  },
+  {
+   "slug": "hunter_dobbins",
+   "board_key": "hunter_dobbins",
+   "n_humans": 2,
+   "mlbam_ids": [
+    690928,
+    701493
+   ]
+  },
+  {
+   "slug": "jack_mahoney",
+   "board_key": "jack_mahoney",
+   "n_humans": 2,
+   "mlbam_ids": [
+    680823,
+    694968
+   ]
+  },
+  {
+   "slug": "jacob_johnson",
+   "board_key": "jacob_johnson",
+   "n_humans": 2,
+   "mlbam_ids": [
+    835375,
+    840544
+   ]
+  },
+  {
+   "slug": "jacob_webb",
+   "board_key": "jacob_webb",
+   "n_humans": 2,
+   "mlbam_ids": [
+    657097,
+    701288
+   ]
+  },
+  {
+   "slug": "jake_bennett",
+   "board_key": "jake_bennett",
+   "n_humans": 2,
+   "mlbam_ids": [
+    687562,
+    821327
+   ]
+  },
+  {
+   "slug": "jake_miller",
+   "board_key": "jake_miller",
+   "n_humans": 2,
+   "mlbam_ids": [
+    681313,
+    805725
+   ]
+  },
+  {
+   "slug": "jared_jones",
+   "board_key": "jared_jones",
+   "n_humans": 2,
+   "mlbam_ids": [
+    683003,
+    702262
+   ]
+  },
+  {
+   "slug": "jared_thomas",
+   "board_key": "jared_thomas",
+   "n_humans": 2,
+   "mlbam_ids": [
+    683228,
+    703606
+   ]
+  },
+  {
+   "slug": "jesus_flores",
+   "board_key": "jesus_flores",
+   "n_humans": 2,
+   "mlbam_ids": [
+    808222,
+    837965
+   ]
+  },
+  {
+   "slug": "jesus_garcia",
+   "board_key": "jesus_garcia",
+   "n_humans": 3,
+   "mlbam_ids": [
+    821276,
+    835199,
+    842318
+   ]
+  },
+  {
+   "slug": "jesus_hernandez",
+   "board_key": "jesus_hernandez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    698929,
+    838567
+   ]
+  },
+  {
+   "slug": "jesus_perez",
+   "board_key": "jesus_perez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    829777,
+    829895
+   ]
+  },
+  {
+   "slug": "johan_rodriguez",
+   "board_key": "johan_rodriguez",
+   "n_humans": 3,
+   "mlbam_ids": [
+    810978,
+    821759,
+    830455
+   ]
+  },
+  {
+   "slug": "jorge_gonzalez",
+   "board_key": "jorge_gonzalez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    684083,
+    831106
+   ]
+  },
+  {
+   "slug": "jose_cabrera",
+   "board_key": "jose_cabrera",
+   "n_humans": 2,
+   "mlbam_ids": [
+    703615,
+    820872
+   ]
+  },
+  {
+   "slug": "jose_camacho",
+   "board_key": "jose_camacho",
+   "n_humans": 2,
+   "mlbam_ids": [
+    821277,
+    837663
+   ]
+  },
+  {
+   "slug": "jose_colmenares",
+   "board_key": "jose_colmenares",
+   "n_humans": 2,
+   "mlbam_ids": [
+    683511,
+    683569
+   ]
+  },
+  {
+   "slug": "jose_de_la_cruz",
+   "board_key": "jose_de_la_cruz",
+   "n_humans": 3,
+   "mlbam_ids": [
+    682627,
+    827452,
+    829927
+   ]
+  },
+  {
+   "slug": "jose_fermin",
+   "board_key": "jose_fermin",
+   "n_humans": 2,
+   "mlbam_ids": [
+    665877,
+    820862
+   ]
+  },
+  {
+   "slug": "jose_fernandez",
+   "board_key": "jose_fernandez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    699912,
+    801261
+   ]
+  },
+  {
+   "slug": "jose_geraldo",
+   "board_key": "jose_geraldo",
+   "n_humans": 2,
+   "mlbam_ids": [
+    678980,
+    702751
+   ]
+  },
+  {
+   "slug": "jose_gonzalez",
+   "board_key": "jose_gonzalez",
+   "n_humans": 4,
+   "mlbam_ids": [
+    681275,
+    683681,
+    806919,
+    837212
+   ]
+  },
+  {
+   "slug": "jose_lopez",
+   "board_key": "jose_lopez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    821653,
+    828372
+   ]
+  },
+  {
+   "slug": "jose_mejia",
+   "board_key": "jose_mejia",
+   "n_humans": 2,
+   "mlbam_ids": [
+    808090,
+    821777
+   ]
+  },
+  {
+   "slug": "jose_meza",
+   "board_key": "jose_meza",
+   "n_humans": 2,
+   "mlbam_ids": [
+    691561,
+    815336
+   ]
+  },
+  {
+   "slug": "jose_paulino",
+   "board_key": "jose_paulino",
+   "n_humans": 2,
+   "mlbam_ids": [
+    808685,
+    821067
+   ]
+  },
+  {
+   "slug": "jose_perdomo",
+   "board_key": "jose_perdomo",
+   "n_humans": 2,
+   "mlbam_ids": [
+    815899,
+    836620
+   ]
+  },
+  {
+   "slug": "jose_perez",
+   "board_key": "jose_perez",
+   "n_humans": 3,
+   "mlbam_ids": [
+    699077,
+    814545,
+    843412
+   ]
+  },
+  {
+   "slug": "jose_ramirez",
+   "board_key": "jose_ramirez",
+   "n_humans": 3,
+   "mlbam_ids": [
+    608070,
+    802064,
+    829759
+   ]
+  },
+  {
+   "slug": "jose_ramos",
+   "board_key": "jose_ramos",
+   "n_humans": 3,
+   "mlbam_ids": [
+    682947,
+    692374,
+    815927
+   ]
+  },
+  {
+   "slug": "jose_rodriguez",
+   "board_key": "jose_rodriguez",
+   "n_humans": 5,
+   "mlbam_ids": [
+    679563,
+    692064,
+    800412,
+    821072,
+    836624
+   ]
+  },
+  {
+   "slug": "jose_romero",
+   "board_key": "jose_romero",
+   "n_humans": 3,
+   "mlbam_ids": [
+    696098,
+    808487,
+    837932
+   ]
+  },
+  {
+   "slug": "jose_sanchez",
+   "board_key": "jose_sanchez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    814262,
+    839998
+   ]
+  },
+  {
+   "slug": "jose_serrano",
+   "board_key": "jose_serrano",
+   "n_humans": 2,
+   "mlbam_ids": [
+    699112,
+    805431
+   ]
+  },
+  {
+   "slug": "jose_suarez",
+   "board_key": "jose_suarez",
+   "n_humans": 3,
+   "mlbam_ids": [
+    660761,
+    699027,
+    825163
+   ]
+  },
+  {
+   "slug": "jose_taveras",
+   "board_key": "jose_taveras",
+   "n_humans": 2,
+   "mlbam_ids": [
+    835617,
+    842465
+   ]
+  },
+  {
+   "slug": "jose_tovar",
+   "board_key": "jose_tovar",
+   "n_humans": 2,
+   "mlbam_ids": [
+    808270,
+    832154
+   ]
+  },
+  {
+   "slug": "jose_urbina",
+   "board_key": "jose_urbina",
+   "n_humans": 2,
+   "mlbam_ids": [
+    808142,
+    808250
+   ]
+  },
+  {
+   "slug": "jose_urena",
+   "board_key": "jose_urena",
+   "n_humans": 2,
+   "mlbam_ids": [
+    570632,
+    829491
+   ]
+  },
+  {
+   "slug": "juan_cruz",
+   "board_key": "juan_cruz",
+   "n_humans": 2,
+   "mlbam_ids": [
+    700319,
+    809397
+   ]
+  },
+  {
+   "slug": "juan_garcia",
+   "board_key": "juan_garcia",
+   "n_humans": 3,
+   "mlbam_ids": [
+    821677,
+    830467,
+    835171
+   ]
+  },
+  {
+   "slug": "juan_martinez",
+   "board_key": "juan_martinez",
+   "n_humans": 6,
+   "mlbam_ids": [
+    682931,
+    700288,
+    821197,
+    821797,
+    829477,
+    837831
+   ]
+  },
+  {
+   "slug": "juan_medina",
+   "board_key": "juan_medina",
+   "n_humans": 2,
+   "mlbam_ids": [
+    821265,
+    839782
+   ]
+  },
+  {
+   "slug": "juan_nunez",
+   "board_key": "juan_nunez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    693725,
+    805400
+   ]
+  },
+  {
+   "slug": "juan_perez",
+   "board_key": "juan_perez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    800327,
+    839714
+   ]
+  },
+  {
+   "slug": "juan_rojas",
+   "board_key": "juan_rojas",
+   "n_humans": 2,
+   "mlbam_ids": [
+    700357,
+    829863
+   ]
+  },
+  {
+   "slug": "juan_sanchez",
+   "board_key": "juan_sanchez",
+   "n_humans": 4,
+   "mlbam_ids": [
+    678738,
+    702880,
+    803424,
+    825646
+   ]
+  },
+  {
+   "slug": "julian_garcia",
+   "board_key": "julian_garcia",
+   "n_humans": 2,
+   "mlbam_ids": [
+    670062,
+    838190
+   ]
+  },
+  {
+   "slug": "logan_allen",
+   "board_key": "logan_allen",
+   "n_humans": 2,
+   "mlbam_ids": [
+    663531,
+    671106
+   ]
+  },
+  {
+   "slug": "luis_carrasco",
+   "board_key": "luis_carrasco",
+   "n_humans": 2,
+   "mlbam_ids": [
+    682918,
+    816263
+   ]
+  },
+  {
+   "slug": "luis_castillo",
+   "board_key": "luis_castillo",
+   "n_humans": 2,
+   "mlbam_ids": [
+    622491,
+    699127
+   ]
+  },
+  {
+   "slug": "luis_contreras",
+   "board_key": "luis_contreras",
+   "n_humans": 2,
+   "mlbam_ids": [
+    664351,
+    837306
+   ]
+  },
+  {
+   "slug": "luis_de_la_cruz",
+   "board_key": "luis_de_la_cruz",
+   "n_humans": 2,
+   "mlbam_ids": [
+    806927,
+    821139
+   ]
+  },
+  {
+   "slug": "luis_de_leon",
+   "board_key": "luis_de_leon",
+   "n_humans": 3,
+   "mlbam_ids": [
+    801725,
+    808029,
+    825479
+   ]
+  },
+  {
+   "slug": "luis_garcia",
+   "board_key": "luis_garcia",
+   "n_humans": 4,
+   "mlbam_ids": [
+    472610,
+    677651,
+    807825,
+    829731
+   ]
+  },
+  {
+   "slug": "luis_german",
+   "board_key": "luis_german",
+   "n_humans": 2,
+   "mlbam_ids": [
+    702445,
+    837847
+   ]
+  },
+  {
+   "slug": "luis_gonzalez",
+   "board_key": "luis_gonzalez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    593574,
+    800461
+   ]
+  },
+  {
+   "slug": "luis_gutierrez",
+   "board_key": "luis_gutierrez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    692294,
+    829458
+   ]
+  },
+  {
+   "slug": "luis_hernandez",
+   "board_key": "luis_hernandez",
+   "n_humans": 3,
+   "mlbam_ids": [
+    801346,
+    815211,
+    836582
+   ]
+  },
+  {
+   "slug": "luis_leon",
+   "board_key": "luis_leon",
+   "n_humans": 2,
+   "mlbam_ids": [
+    828783,
+    830020
+   ]
+  },
+  {
+   "slug": "luis_martinez",
+   "board_key": "luis_martinez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    832327,
+    837863
+   ]
+  },
+  {
+   "slug": "luis_morales",
+   "board_key": "luis_morales",
+   "n_humans": 2,
+   "mlbam_ids": [
+    806960,
+    837949
+   ]
+  },
+  {
+   "slug": "luis_reyes",
+   "board_key": "luis_reyes",
+   "n_humans": 3,
+   "mlbam_ids": [
+    699105,
+    807001,
+    829401
+   ]
+  },
+  {
+   "slug": "luis_rodriguez",
+   "board_key": "luis_rodriguez",
+   "n_humans": 5,
+   "mlbam_ids": [
+    800170,
+    801749,
+    812160,
+    830447,
+    834827
+   ]
+  },
+  {
+   "slug": "luis_sanchez",
+   "board_key": "luis_sanchez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    800506,
+    829829
+   ]
+  },
+  {
+   "slug": "luis_vasquez",
+   "board_key": "luis_vasquez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    808070,
+    842252
+   ]
+  },
+  {
+   "slug": "luis_velasquez",
+   "board_key": "luis_velasquez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    686433,
+    829798
+   ]
+  },
+  {
+   "slug": "luke_jackson",
+   "board_key": "luke_jackson",
+   "n_humans": 2,
+   "mlbam_ids": [
+    592426,
+    703683
+   ]
+  },
+  {
+   "slug": "luke_williams",
+   "board_key": "luke_williams",
+   "n_humans": 2,
+   "mlbam_ids": [
+    663897,
+    828816
+   ]
+  },
+  {
+   "slug": "mason_miller",
+   "board_key": "mason_miller",
+   "n_humans": 2,
+   "mlbam_ids": [
+    692223,
+    695243
+   ]
+  },
+  {
+   "slug": "max_muncy",
+   "board_key": "max_muncy",
+   "n_humans": 2,
+   "mlbam_ids": [
+    571970,
+    691777
+   ]
+  },
+  {
+   "slug": "michael_martinez",
+   "board_key": "michael_martinez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    681597,
+    824765
+   ]
+  },
+  {
+   "slug": "miguel_flores",
+   "board_key": "miguel_flores",
+   "n_humans": 2,
+   "mlbam_ids": [
+    821793,
+    828009
+   ]
+  },
+  {
+   "slug": "miguel_rodriguez",
+   "board_key": "miguel_rodriguez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    808040,
+    808277
+   ]
+  },
+  {
+   "slug": "miguel_vargas",
+   "board_key": "miguel_vargas",
+   "n_humans": 3,
+   "mlbam_ids": [
+    678246,
+    836139,
+    837775
+   ]
+  },
+  {
+   "slug": "moises_morales",
+   "board_key": "moises_morales",
+   "n_humans": 2,
+   "mlbam_ids": [
+    815473,
+    829760
+   ]
+  },
+  {
+   "slug": "noah_miller",
+   "board_key": "noah_miller",
+   "n_humans": 2,
+   "mlbam_ids": [
+    695653,
+    806165
+   ]
+  },
+  {
+   "slug": "omar_gonzalez",
+   "board_key": "omar_gonzalez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    800439,
+    839502
+   ]
+  },
+  {
+   "slug": "rafael_gonzalez",
+   "board_key": "rafael_gonzalez_835403",
+   "n_humans": 2,
+   "mlbam_ids": [
+    808003,
+    835403
+   ]
+  },
+  {
+   "slug": "randy_guzman",
+   "board_key": "randy_guzman",
+   "n_humans": 2,
+   "mlbam_ids": [
+    807383,
+    837102
+   ]
+  },
+  {
+   "slug": "robinson_martinez",
+   "board_key": "robinson_martinez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    660822,
+    842067
+   ]
+  },
+  {
+   "slug": "ryan_brown",
+   "board_key": "ryan_brown",
+   "n_humans": 2,
+   "mlbam_ids": [
+    688664,
+    811286
+   ]
+  },
+  {
+   "slug": "ryan_johnson",
+   "board_key": "ryan_johnson",
+   "n_humans": 2,
+   "mlbam_ids": [
+    696270,
+    802459
+   ]
+  },
+  {
+   "slug": "ryan_watson",
+   "board_key": "ryan_watson",
+   "n_humans": 2,
+   "mlbam_ids": [
+    670245,
+    701511
+   ]
+  },
+  {
+   "slug": "samuel_gonzalez",
+   "board_key": "samuel_gonzalez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    820997,
+    828416
+   ]
+  },
+  {
+   "slug": "santiago_martinez",
+   "board_key": "santiago_martinez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    825422,
+    829775
+   ]
+  },
+  {
+   "slug": "sean_sullivan",
+   "board_key": "sean_sullivan__sa3018185",
+   "n_humans": 2,
+   "mlbam_ids": [
+    696155,
+    807743
+   ]
+  },
+  {
+   "slug": "sebastian_rojas",
+   "board_key": "sebastian_rojas",
+   "n_humans": 2,
+   "mlbam_ids": [
+    821121,
+    837943
+   ]
+  },
+  {
+   "slug": "steven_cruz",
+   "board_key": "steven_cruz",
+   "n_humans": 2,
+   "mlbam_ids": [
+    674444,
+    821161
+   ]
+  },
+  {
+   "slug": "tyler_davis",
+   "board_key": "tyler_davis",
+   "n_humans": 2,
+   "mlbam_ids": [
+    699823,
+    824623
+   ]
+  },
+  {
+   "slug": "victor_duarte",
+   "board_key": "victor_duarte_835994",
+   "n_humans": 2,
+   "mlbam_ids": [
+    683609,
+    835994
+   ]
+  },
+  {
+   "slug": "victor_gonzalez",
+   "board_key": "victor_gonzalez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    624647,
+    834812
+   ]
+  },
+  {
+   "slug": "victor_rodriguez",
+   "board_key": "victor_rodriguez",
+   "n_humans": 3,
+   "mlbam_ids": [
+    808123,
+    822247,
+    828349
+   ]
+  },
+  {
+   "slug": "victor_santos",
+   "board_key": "victor_santos",
+   "n_humans": 2,
+   "mlbam_ids": [
+    673257,
+    821670
+   ]
+  },
+  {
+   "slug": "wilmer_flores",
+   "board_key": "wilmer_flores",
+   "n_humans": 2,
+   "mlbam_ids": [
+    527038,
+    695865
+   ]
+  },
+  {
+   "slug": "wuilliams_rodriguez",
+   "board_key": "wuilliams_rodriguez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    805777,
+    808252
+   ]
+  },
+  {
+   "slug": "yunior_marte",
+   "board_key": "yunior_marte",
+   "n_humans": 2,
+   "mlbam_ids": [
+    628708,
+    805074
+   ]
+  }
+ ],
+ "double_bound_keys": [],
+ "unresolved_active": [],
+ "side_conflicts": [
+  {
+   "check": "C4",
+   "player_key": "junior_garcia",
+   "board_position": "RF",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 390,
+   "mlbam_id": null,
+   "scope": "inactive",
+   "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "adrian_hernandez",
+   "board_position": "CF",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 346,
+   "mlbam_id": null,
+   "scope": "inactive",
+   "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "miguel_gomez",
+   "board_position": "3B",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 262,
+   "mlbam_id": null,
+   "scope": "inactive",
+   "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "aaron_brown",
+   "board_position": "OF",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 208,
+   "mlbam_id": null,
+   "scope": "inactive",
+   "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "michael_perez",
+   "board_position": "C",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 156,
+   "mlbam_id": null,
+   "scope": "inactive",
+   "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "alexander_campos",
+   "board_position": "2B",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 124,
+   "mlbam_id": null,
+   "scope": "inactive",
+   "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "david_rodriguez",
+   "board_position": "C",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 124,
+   "mlbam_id": null,
+   "scope": "inactive",
+   "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "jose_rondon",
+   "board_position": "SS",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 22,
+   "mlbam_id": null,
+   "scope": "inactive",
+   "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "enmanuel_rodriguez",
+   "board_position": "CF",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 20,
+   "mlbam_id": null,
+   "scope": "inactive",
+   "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "jesus_lopez",
+   "board_position": "C",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 16,
+   "mlbam_id": null,
+   "scope": "inactive",
+   "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "anderson_franco",
+   "board_position": "3B",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 12,
+   "mlbam_id": null,
+   "scope": "inactive",
+   "overall_rank": null
+  }
+ ],
+ "birthdate_conflicts": [],
+ "org_splits": []
+}

@@ -68,22 +68,71 @@ def test_entry_side_tag_and_optional_fields():
 
 
 def test_committed_artifact_headline_alias_contract():
-    """Read-only: in the shipped artifact, xfv_grade IS xfv_grade_realized for every
-    player, and the quantile field is present + differs for the vast majority."""
+    """Read-only field contract of the shipped artifact.
+
+    The contract depends on whether the per-side board scale is enabled, so this
+    asserts the one that is actually in force rather than hard-coding either.
+
+    Scale DISABLED (the state since 2026-07-29):
+      xfv_grade == xfv_grade_realized             a pure alias, board_value is identity
+      xfv_grade_model_raw                         absent, nothing stamps it
+      xfv_grade_quantile present and distinct     the retired display scale, kept
+
+    Scale ENABLED:
+      xfv_grade_model_raw == xfv_grade_realized   the PRE-scale model grade
+      xfv_grade           == board_value(record)  the scaled grade the board serves
+      xfv_grade_quantile  present and distinct
+
+    History: this test asserted the plain alias until 2026-07-25, when W-SIDESCALE
+    rewrote it for the enabled state. The scale was disabled again on 2026-07-29
+    because its primary gate never resolved against its own control (perm p 0.259) and
+    nothing in the pipeline ever stamped the artifact, so the enabled-only form was
+    failing on the first row of a perfectly valid artifact. Parameterising on
+    bs.enabled() means neither flip can make a sanctioned state look like drift, which
+    is the golden fingerprint's job rather than a field-contract test's.
+    """
+    import efv_board_scale as bs
+
     doc = json.loads((DATA / "xfv.json").read_text(encoding="utf-8"))
     bp = doc["by_player"]
     assert len(bp) > 1000
-    both = 0
-    distinct = 0
-    for e in bp.values():
-        assert e.get("xfv_grade") == e.get("xfv_grade_realized"), "headline != realized alias"
-        if e.get("xfv_grade") is not None and e.get("xfv_grade_quantile") is not None:
+
+    both = distinct = scaled_apart = 0
+    for key, e in bp.items():
+        raw, real = e.get("xfv_grade_model_raw"), e.get("xfv_grade_realized")
+        if bs.enabled():
+            assert raw is not None, f"{key}: no xfv_grade_model_raw (scale anchor missing)"
+        if raw is None:
+            # unstamped artifact: the headline IS the pre-scale model grade
+            raw = e.get("xfv_grade")
+        assert raw == real, f"{key}: model_raw {raw} != realized {real}"
+
+        # the headline must be exactly what the board scale produces for this row.
+        # Tolerance is stamping precision only, NOT slack: stamp_doc quantizes to the
+        # 0.1 grid (the long-standing eFV grade contract, pinned by
+        # test_efv_score::test_committed_grades_carry_the_round_to_nearest_signature),
+        # so the stamped headline may sit up to half a grid step from the unrounded
+        # board_value and no further.
+        g, bv = e.get("xfv_grade"), bs.board_value(e)
+        if g is not None and bv is not None:
+            assert abs(g - bv) <= 0.05 + 1e-9, f"{key}: headline {g} != board_value {bv}"
+            if abs(g - raw) > 1e-9:
+                scaled_apart += 1
+
+        if g is not None and e.get("xfv_grade_quantile") is not None:
             both += 1
-            if abs(e["xfv_grade"] - e["xfv_grade_quantile"]) > 1e-9:
+            if abs(g - e["xfv_grade_quantile"]) > 1e-9:
                 distinct += 1
+
     assert both > 1000
-    # the two scales genuinely differ in production (they are not the same number)
+    # the headline and the retired quantile scale are genuinely different numbers
     assert distinct > 0.5 * both
+    # and the side scale is actually doing something when it is enabled (if this goes
+    # to zero with the flag on, board_value has silently become a passthrough)
+    if bs.enabled():
+        assert scaled_apart > 0.5 * len(bp), (
+            f"side scale enabled but only {scaled_apart}/{len(bp)} rows moved off "
+            f"their pre-scale grade")
 
 
 # --------------------------------------------------------------------------
@@ -207,7 +256,107 @@ def test_committed_artifact_headline_alias_contract():
 #   currently-on-IL players keep a factor; every healthy player cleared.
 #   Restamped from the in-session rebuild_only production regen. Rowcount
 #   9010 -> 9040 (daily pool churn since the 07-16 stamp, not the directive).
-_GOLDEN_XFV_SHA256 = "58fcfd4fb47e24c2c497edf5222647d7cd61adfe55ed04da5aa972fd30f6fa8e"
+# 2026-07-24 restamp: eFV holistic program (docs/efv-2026-07-24/GATES.md). FOUR
+#   coordinated served-number changes in one regen, restamped from the in-session
+#   production efv_export.py --all run:
+#   (a) G-BUGS wave-B repairs (data/xfv_bughunt_2026_07_24.json): the P0 that
+#       eFV surplus skipped the isotonic calibration layer is fixed (every prospect
+#       surplus now prices through it); the P1V3 slot-trust (pick,bonus) collision
+#       is gated on acq_year (5 backgrade rows revert); 20 MLB-career players
+#       (adolis_garcia/senga/yoshida...) removed from the bust training pool + 24
+#       mis-resolved mlbam ids nulled + a resolver vintage guard (training-input
+#       change -> matrices moved).
+#   (b) W-XLINE-W + W-XISO (verified PASS): S-XLINE hitter blend W_HIT 0.5->0.7 and
+#       a fourth capped delta d_iso; ~66 covered AAA hitters de-luck further.
+#   (c) W-FSIDE-SHIP (owner-authorized, verified): joint top-band fairness
+#       recalibration default ON, whole board (467 movers incl. debuted, max 3.0 FV;
+#       kade_anderson 62->59, top-25 pit share 0.37->0.21).
+#   (d) W-SURPLUS S1 (owner-authorized, verified): isotonic-real-v4 recalibration to
+#       the post-Clemens-re-anchor pool; served FV45-55 surplus +40-120%. The
+#       prospx_current base-identity table was re-captured under v4 in the same
+#       change (config/valuation_sets/prospx_current.yaml) and test_valuation_sets
+#       re-stamped (17.7->31.6).
+#   Rowcount 9040 -> 9267 (daily pool churn + FG trade-deadline draftees since 07-23,
+#   not the directive). The deploy box re-derives its own artifact under
+#   EEPHUS_DEPLOY_RUN shape mode; this dev hash is a session tripwire only.
+# 2026-07-24b restamp: eFV accuracy / true-to-model program (docs/efv-2026-07-24/
+#   GATES-ACCURACY.md), owner directive to maximize accuracy + remove display caps.
+#   Restamped from the in-session production regen. FOUR served-number changes:
+#   (A1) blend lambda HIT 0.70->0.85 (the old [0.50,0.70] rank_calibration band was a
+#     board-movement cap on the REPAIRED labels; re-select lifts pooled OOS Spearman
+#     0.3787->0.3835 and contributor AUC 0.7727->0.7758, both bootstrap-clean; pit held
+#     0.61 - raising it lowered AUC). This raises hit accuracy site-wide; grades/board shift.
+#   (A4) statcast overlay uncapped + default ON for covered players (whiff/velo/AAA-physics
+#     survivors; the 2.0 FV display cap + the 4.0/40 ceiling removed per owner; live-board
+#     only, ~405 hit + 228 pit covered, moves up to 5.0 FV; run_live only, resolved OOS
+#     unaffected).
+#   (B1) surplus calibration isotonic-v4 -> linearmap-v5: v4 clamped the high end; a linear
+#     floored-at-0 map is more accurate (held-out slope 0.994 vs 1.104, MAE 13.77 vs 14.21,
+#     bootstrap-clean). prospx_current base-identity table re-captured under v5 +
+#     test_valuation_sets re-stamped (FV50 31.6->28.2).
+#   (C1) provisional (efv_ungraded) soft grade cap REMOVED (true-to-model; OOS-invariant,
+#     grade map not in the eval path; top de-compresses hit 48->50.3, pit 37.7->40.1).
+#   Rowcount 9267 unchanged. Deploy box re-derives under EEPHUS_DEPLOY_RUN shape mode.
+# 2026-07-24c restamp: Wave G site-wide true-to-model sweep. KRP+ 40-160 clamp REMOVED
+#   (C2; monotone display de-compression, Kade Anderson 160->189.1, 3 live movers). The
+#   only served-number change on data/xfv.json; ranks/grades/surplus unchanged.
+# 2026-07-24d restamp: Wave H coordinated recalibration (owner decision queue). THREE changes:
+#   (1) reliability shrink K 100/80 -> 50/40 (A3, owner-authorized coordinated rebuild): both
+#     matrices rebuilt trusting MiLB rates more. Scoreboard arbiter confirmed NO regression -
+#     hit held (Spearman 0.3835->0.3834, AUC 0.7758->0.7762) and pit gained (0.302->0.303,
+#     AUC 0.7191->0.7197). n_milb_seasons feature-direction gate = KEEP (negative ridge weight
+#     is legitimate collinear work with level_rank, not corruption); lambda re-confirmed hit
+#     0.85 / pit dynamic 0.54 on the rebuilt matrix. data/xfv_wave_h_eval.json.
+#   (2) KRP+ display decouple (owner: decouple display only): the pill now reads a display-only
+#     true-signed raw so 834 doubly-below-average arms spread below 100 by severity instead of
+#     pinning at 99.3; the eFV MODEL feature x_era_k stays zeroed (grades/ranks byte-identical).
+#   (3) KRP+ display era_rel winsorized +-6 (hygiene: a 1-IP ERA blowup no longer drives an
+#     absurd pill; range now 27.6-150.5).
+#   Rowcount 9267 -> 9268 (pool churn). krp_plus is the only widespread served change; deploy
+#   box shape-checks under EEPHUS_DEPLOY_RUN.
+# 2026-07-24e restamp: round-2 MLB Pipeline per-team Top 30 DAILY refresh (owner-explicit
+#   data fix). The per-team Top 30s were frozen at 2026-01-22 (Jan preseason); the new
+#   scrapers.run_mlb_pipeline_org_live (wired run_monthly d0b-ii) refreshed 900 org rows to
+#   today, so ~829 active prospects who sit in a team Top 30 but not the overall Top 100
+#   gained a CURRENT-dated Pipeline grade. Those fresh grades flow through consensus into the
+#   live eFV board, shifting active-prospect grades. The RESOLVED OOS accuracy is unchanged
+#   (scoreboard hit 0.3834/0.7762, pit 0.303/0.7197 - the resolved cohort is historical
+#   debuted players, unaffected by the 2026 active-grade refresh). Rowcount 9268.
+# 2026-07-29 - DELIBERATELY NOT RESTAMPED, and this entry explains why so the next person
+#   does not "fix" it with the wrong hash. The committed artifact currently fingerprints
+#   39f9224922d2f6c1b49e5723c4d489ec130a91c88cea52384c87e36723a181b9, so this test is red.
+#   Two separate reasons stack, and neither is resolved by stamping that hash:
+#   (1) The pin below was last set on 2026-07-24e, which PREDATES the entire 2026-07-25
+#       program. The 39f9224 hash is simply the 2026-07-28 pipeline output, i.e. drift that
+#       was already committed before this program started.
+#   (2) This program then shipped changes that WILL move the artifact on the next production
+#       regen: the S2 eta-hazard flip (eta.FORTYMAN_ADJ, 54 rows, 22 ETAs a year earlier, 9
+#       surplus moves) and the sub-45 empirical anchors (published ctrl_war at the bottom of
+#       the board). Stamping 39f9224 now would record a state that is stale on arrival.
+#   The standing convention is that the golden is restamped from a PRODUCTION
+#   `efv_export.py --all` run on the box, not from a dev tree. So the restamp is OWED on the
+#   next box regen, and at that point the new hash should be recorded here together with the
+#   S2 and anchor ships as its cause. Under EEPHUS_DEPLOY_RUN=1 this test shape-checks
+#   instead of hashing, so the deploy gate is not blocked meanwhile.
+# 2026-07-30 RESTAMP - the owed restamp above, taken. This is the production regen the
+#   2026-07-29 entry was waiting for, run per docs/efv-2026-07-30/REGEN_AND_PUSH_RUNBOOK.md
+#   and stamped from THAT output before pytest ever touched the tree (a mid-suite test
+#   regenerates data/xfv.json under fixtures, and stamping from that records a fixture state
+#   as production truth). What moved, and why the hash had to change:
+#   (1) The POOLED OUTCOME GRADE MAP (c4adead). xfv_grade is now
+#       value_framework.outcome_implied_fv(predicted WAR6), the inverse of the empirical
+#       FV-to-outcome curve, replacing the side-neutral realized_implied_fv. Grades carry a
+#       new MEANING, not just new values.
+#   (2) The age-penalty onset at 23.0 (owner dial D2) reaching served output for the first
+#       time, plus the usage-based pitcher roles and position_observed work.
+#   (3) The fabricated baseballamerica_statcast_by_age FV removed at the source: 41 rows
+#       re-ingested with fv IS NULL, so that invented 40.0 no longer votes in consensus.
+#   Board effect, verified against the paired capture in POOLED_OUTCOME_REFIT.md: arias
+#   60.4 rank 2, brayden_taylor 48.2 rank 125 and enrique_bradfield_jr 48.2 rank 127 (both
+#   out of the top 100, which was the point of the age dial), top-100 side mix 92H/8P inside
+#   its band, history basis flipped onto the board basis so the eFV-delta movement signal
+#   un-suppresses. Rowcount 9268 -> 9324.
+_GOLDEN_XFV_SHA256 = "4f791d2f2123905fdd792fecbdadc800308924120e377812b98d57af1af19f8a"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
@@ -217,28 +366,69 @@ _GOLDEN_XFV_SHA256 = "58fcfd4fb47e24c2c497edf5222647d7cd61adfe55ed04da5aa972fd30
 # (data/xfv.json by_player, read 2026-07-16 post-DB-repair regen). The +/-20%
 # band tolerates ordinary roster churn while still catching a gross
 # truncation / empty-artifact regression.
-_GOLDEN_XFV_ROWCOUNT = 9040
+_GOLDEN_XFV_ROWCOUNT = 9268
 
 
 def test_efv_grade_map_inverts_on_model_window():
-    # The eFV grade map (realized_implied_fv) must invert on the MODEL's own target
-    # window (efv_dataset.TARGET_SEASONS = 6 seasons), NOT the global clemens
-    # control_years (=7). The two were coupled once and a control_years flip for
-    # valuation silently deflated top-end eFV grades. Guard: every grade-map call in
-    # efv_score passes exposure_seasons=TARGET_SEASONS so it can't happen again.
+    # The eFV grade map must invert on the MODEL's own target window
+    # (efv_dataset.TARGET_SEASONS = 6 seasons), NOT the global clemens control_years
+    # (=7). The two were coupled once and a control_years flip for valuation silently
+    # deflated top-end eFV grades. Guard: every grade-map call in efv_score passes
+    # exposure_seasons=TARGET_SEASONS so it can't happen again.
+    #
+    # 2026-07-30: efv_score now calls TWO maps per row and this pins both.
+    #   vf.outcome_implied_fv  -> xfv_grade, THE board number (pooled outcome curve)
+    #   vf.realized_implied_fv -> _odds_grade, which keeps p_bucket / p_bust on the
+    #                             basis they were ground-truthed on
+    # outcome_implied_fv RAISES on a window other than 6 rather than rescaling (its
+    # curve is defined on the 6-season label), so the source pin and the runtime guard
+    # now say the same thing from both ends.
     import re
     import efv_dataset
+    import value_framework as vf
     assert efv_dataset.TARGET_SEASONS == 6
     src = (Path(efv_export.__file__).parent / "efv_score.py").read_text(encoding="utf-8")
-    calls = re.findall(r"realized_implied_fv\((.*?)\)", src, re.DOTALL)
-    # Real grade-map calls carry the side arg (a comma); the docstring example
-    # `realized_implied_fv(xfv_war)` has none -> excluded.
-    grade_calls = [c for c in calls if ("xfv_war" in c or "model_war" in c) and "," in c]
-    assert grade_calls, "no realized_implied_fv grade-map calls found in efv_score.py"
-    for c in grade_calls:
-        assert "exposure_seasons=TARGET_SEASONS" in c, (
-            "an eFV grade-map call is missing exposure_seasons=TARGET_SEASONS "
-            "(a control_years flip would silently re-deflate top-end grades): " + " ".join(c.split())[:90])
+    for fn in ("realized_implied_fv", "outcome_implied_fv"):
+        calls = re.findall(re.escape(fn) + r"\((.*?)\)", src, re.DOTALL)
+        # Real grade-map calls carry a second arg (a comma); the docstring examples
+        # `realized_implied_fv(xfv_war)` / `outcome_implied_fv(xfv_war)` have none.
+        grade_calls = [c for c in calls
+                       if ("xfv_war" in c or "model_war" in c) and "," in c]
+        assert grade_calls, f"no {fn} grade-map calls found in efv_score.py"
+        for c in grade_calls:
+            assert "exposure_seasons=TARGET_SEASONS" in c, (
+                f"an eFV grade-map call ({fn}) is missing exposure_seasons=TARGET_SEASONS "
+                f"(a control_years flip would silently re-deflate top-end grades): "
+                + " ".join(c.split())[:90])
+    # The runtime end of the same guard: the outcome curve IS the 6-season window, so
+    # asking it for another one is a category error and must fail loudly, not rescale.
+    with pytest.raises(ValueError):
+        vf.outcome_implied_fv(5.0, exposure_seasons=7)
+
+
+def test_board_grade_comes_from_the_outcome_curve_not_the_valuation_core():
+    """xfv_grade is the inverse of the EMPIRICAL pooled outcome curve, and every
+    efv_score path that writes that field must use the SAME map.
+
+    The defect class: data/xfv.json carries active, debuted and bust rows in one file
+    under one field name, so a path left on the retired realized_implied_fv map would
+    put part of the board on a second grade basis with nothing to detect it -- the same
+    shape as the A2 history defect. Source-pinned because the three writers live in
+    three functions (run / run_live / run_backgrade) and a fourth (score_history)."""
+    import re
+    src = (Path(efv_export.__file__).parent / "efv_score.py").read_text(encoding="utf-8")
+    # every assignment to xfv_grade (not xfv_grade_display / _quantile / _realized)
+    assigns = re.findall(r"^\s*xfv_grade = (.+)$", src, re.MULTILINE)
+    assert len(assigns) >= 3, f"expected the three scoring paths, found {len(assigns)}"
+    for a in assigns:
+        assert "outcome_implied_fv" in a, (
+            "an efv_score path assigns xfv_grade from something other than "
+            f"vf.outcome_implied_fv: {a.strip()[:90]}")
+    # score_history grades through the same map (Phase 3.2 repoint) so the FV-history
+    # tail and the board are one number.
+    assert "grade = vf.outcome_implied_fv(model_war" in src, (
+        "score_history is not on the board grade map; the eFV history series would be "
+        "on a third basis again (see test_board_basis_coherence)")
 
 
 def test_efv_reliability_grade_map_inverts_on_model_window():
@@ -287,7 +477,7 @@ def test_score_history_no_track_record_uses_prior_not_ridge(monkeypatch):
     # Resolved (milb-present) snapshots must still use the ridge prediction.
     import efv_score
     monkeypatch.setattr(efv_score, "_provisional_prior_war",
-                        lambda cons_war, pick, bonus: (cons_war - 7.0, ["PRIOR"]))
+                        lambda cons_war, pick, bonus, **kw: (cons_war - 7.0, ["PRIOR"]))
     ridge_sentinel = lambda: 99.0
     # WITH a MiLB track record -> ridge prediction (resolved snapshots unchanged)
     assert efv_score._history_model_war({"milb": {"era_rel": -0.3}}, 3.0, ridge_sentinel) == 99.0
@@ -407,13 +597,24 @@ def test_asof_point_bust_uses_final_point():
 def test_role_factor_semantics():
     """Owner-directed reliever-ceiling overlay (2026-07-15, second Moore
     directive): fires ONLY on RP-designated (SIRP/MIRP/RP/CL, never generic P
-    or SP) arms age 25+ whose MODEL war is enthusiastic (>= 1.5); bounded
-    0.80/0.70, monotone in age. A policy dial, not a fitted parameter - this
-    pin keeps its scope from silently widening."""
+    or SP) arms whose MODEL war is enthusiastic (>= 1.5); bounded below by 0.70,
+    monotone in age. A policy dial, not a fitted parameter - this pin keeps its
+    scope from silently widening.
+
+    UPDATED 2026-07-30 (C3): the age term was a STAIRCASE (1.0 below 25.0, a flat
+    0.80 on [25, 26), 0.70 above), so it stepped twenty points of projected WAR at
+    exactly 25.0. It is now a continuous ramp through the retired staircase's own tier
+    MIDPOINTS - (25.5, 0.80) and (26.5, 0.70) - which is why the two age assertions
+    below moved: the SCOPE and the FLOOR are unchanged, the cliff is gone. Shape detail
+    and the 12-row measured blast radius: test_efv_age_pipeline.py and
+    docs/efv-2026-07-30/EFV_LANE_GATES.md."""
     from efv_score import _role_factor
     assert _role_factor({"position": "SIRP", "age_now": 26.9}, 3.5) == 0.70
-    assert _role_factor({"position": "MIRP", "age_now": 25.4}, 3.5) == 0.80
-    assert _role_factor({"position": "SIRP", "age_now": 24.9}, 3.5) == 1.0   # young: exempt
+    assert _role_factor({"position": "MIRP", "age_now": 26.5}, 3.5) == 0.70   # floor knot
+    assert _role_factor({"position": "MIRP", "age_now": 25.5}, 3.5) == 0.80   # midpoint knot
+    # the ramp starts 1.5 yr before the retired 25.0 step instead of dropping 0.20 at it
+    assert _role_factor({"position": "SIRP", "age_now": 23.5}, 3.5) == 1.0   # young: exempt
+    assert _role_factor({"position": "SIRP", "age_now": 24.9}, 3.5) == 0.86
     assert _role_factor({"position": "SIRP", "age_now": 26.9}, 1.2) == 1.0   # no model enthusiasm
     assert _role_factor({"position": "P", "age_now": 26.9}, 3.5) == 1.0     # generic P: exempt
     assert _role_factor({"position": "SP", "age_now": 26.9}, 3.5) == 1.0

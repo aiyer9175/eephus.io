@@ -1,0 +1,345 @@
+{
+ "protocol": {
+  "pool": "efv_lab_runner.data_for(side) debuted rows; forward-chained folds (2018, 2019, 2020, 2021, 2022, 2023)",
+  "bio_source": "dated FanGraphs board archives, vintage STRICTLY <= row cutoff",
+  "n_boot": 600,
+  "n_perm": 200,
+  "mde95_pooled_rho": {
+   "hit": 0.017,
+   "pit": 0.016
+  },
+  "encoding": "train-fold z-score, missing -> train mean + explicit missing indicator (never encoded as an extreme value)"
+ },
+ "sides": {
+  "hit": {
+   "pool_n": 845,
+   "bmi_cov": 0.6343,
+   "frame_cov": 0.2533,
+   "variants": {
+    "bmi": {
+     "rho": 0.3946,
+     "d_rho": -0.0029,
+     "d_t45": 0.0286,
+     "within_tier_wm": 0.1714,
+     "per_fold_d": {
+      "2018": 0.0098,
+      "2019": -0.0126,
+      "2020": -0.0023,
+      "2021": 0.0027,
+      "2022": 0.002,
+      "2023": 0.0026
+     },
+     "folds_positive": "4/6",
+     "boot_ci95": [
+      -0.0248,
+      0.0149
+     ],
+     "boot_p_improve": 0.307,
+     "perm_null_p95": 0.0055,
+     "perm_null_mean": 0.0002,
+     "p_vs_perm_null": 0.835,
+     "mde95": 0.017,
+     "verdict": "NULL (below MDE95)"
+    },
+    "linear": {
+     "rho": 0.3952,
+     "d_rho": -0.0023,
+     "d_t45": 0.0158,
+     "within_tier_wm": 0.1716,
+     "per_fold_d": {
+      "2018": 0.0098,
+      "2019": -0.0197,
+      "2020": 0.0006,
+      "2021": 0.0266,
+      "2022": -0.0005,
+      "2023": 0.0026
+     },
+     "folds_positive": "4/6",
+     "boot_ci95": [
+      -0.033,
+      0.0142
+     ],
+     "boot_p_improve": 0.283,
+     "perm_null_p95": 0.0067,
+     "perm_null_mean": -0.0002,
+     "p_vs_perm_null": 0.68,
+     "mde95": 0.017,
+     "verdict": "NULL (below MDE95)"
+    },
+    "frame": {
+     "rho": 0.3984,
+     "d_rho": 0.0009,
+     "d_t45": 0.0029,
+     "within_tier_wm": 0.1815,
+     "per_fold_d": {
+      "2018": 0.0,
+      "2019": 0.0,
+      "2020": 0.0,
+      "2021": 0.0,
+      "2022": 0.0,
+      "2023": 0.0024
+     },
+     "folds_positive": "1/6",
+     "boot_ci95": [
+      -0.0244,
+      0.0128
+     ],
+     "boot_p_improve": 0.34,
+     "perm_null_p95": 0.0077,
+     "perm_null_mean": -0.0002,
+     "p_vs_perm_null": 0.395,
+     "mde95": 0.017,
+     "verdict": "NULL (below MDE95)"
+    },
+    "arch_inter": {
+     "rho": 0.3929,
+     "d_rho": -0.0046,
+     "d_t45": 0.0012,
+     "within_tier_wm": 0.1807,
+     "per_fold_d": {
+      "2018": 0.0098,
+      "2019": -0.0191,
+      "2020": 0.0239,
+      "2021": 0.0088,
+      "2022": -0.0034,
+      "2023": 0.003
+     },
+     "folds_positive": "4/6",
+     "boot_ci95": [
+      -0.0534,
+      0.0141
+     ],
+     "boot_p_improve": 0.162,
+     "perm_null_p95": 0.0079,
+     "perm_null_mean": -0.0021,
+     "p_vs_perm_null": 0.655,
+     "mde95": 0.017,
+     "verdict": "NULL (below MDE95)"
+    },
+    "arch_strat": {
+     "rho": 0.3946,
+     "d_rho": -0.0029,
+     "d_t45": 0.0069,
+     "within_tier_wm": 0.1891,
+     "per_fold_d": {
+      "2018": 0.0,
+      "2019": 0.0,
+      "2020": 0.0316,
+      "2021": -0.009,
+      "2022": -0.0003,
+      "2023": -0.0112
+     },
+     "folds_positive": "1/6",
+     "boot_ci95": [
+      -0.033,
+      0.014
+     ],
+     "boot_p_improve": 0.235,
+     "perm_null_p95": 0.0071,
+     "perm_null_mean": -0.0033,
+     "p_vs_perm_null": 0.485,
+     "mde95": 0.017,
+     "verdict": "NULL (below MDE95)"
+    }
+   },
+   "baseline": {
+    "n": 469,
+    "rho": 0.3975,
+    "rho_pure": 0.3984,
+    "t45": 0.2745,
+    "within_tier_wm": 0.18509804347826087,
+    "per_fold": {
+     "2018": [
+      0.4833,
+      44
+     ],
+     "2019": [
+      0.3955,
+      72
+     ],
+     "2020": [
+      0.3304,
+      59
+     ],
+     "2021": [
+      0.2527,
+      74
+     ],
+     "2022": [
+      0.5577,
+      127
+     ],
+     "2023": [
+      0.2472,
+      93
+     ]
+    }
+   }
+  },
+  "pit": {
+   "pool_n": 981,
+   "bmi_cov": 0.6646,
+   "frame_cov": 0.2538,
+   "variants": {
+    "bmi": {
+     "rho": 0.2858,
+     "d_rho": 0.0102,
+     "d_t45": 0.0252,
+     "within_tier_wm": 0.067,
+     "per_fold_d": {
+      "2018": 0.0071,
+      "2019": 0.0925,
+      "2020": 0.005,
+      "2021": 0.035,
+      "2022": -0.0436,
+      "2023": 0.0037
+     },
+     "folds_positive": "5/6",
+     "boot_ci95": [
+      -0.0233,
+      0.0426
+     ],
+     "boot_p_improve": 0.713,
+     "perm_null_p95": 0.0098,
+     "perm_null_mean": 0.0004,
+     "p_vs_perm_null": 0.045,
+     "mde95": 0.016,
+     "verdict": "NULL (below MDE95)"
+    },
+    "linear": {
+     "rho": 0.2772,
+     "d_rho": 0.0016,
+     "d_t45": -0.0022,
+     "within_tier_wm": 0.0557,
+     "per_fold_d": {
+      "2018": 0.0071,
+      "2019": 0.0167,
+      "2020": 0.02,
+      "2021": 0.0198,
+      "2022": -0.0472,
+      "2023": -0.0019
+     },
+     "folds_positive": "4/6",
+     "boot_ci95": [
+      -0.0392,
+      0.0394
+     ],
+     "boot_p_improve": 0.467,
+     "perm_null_p95": 0.0105,
+     "perm_null_mean": -0.0012,
+     "p_vs_perm_null": 0.295,
+     "mde95": 0.016,
+     "verdict": "NULL (below MDE95)"
+    },
+    "frame": {
+     "rho": 0.2717,
+     "d_rho": -0.0039,
+     "d_t45": -0.0153,
+     "within_tier_wm": 0.0583,
+     "per_fold_d": {
+      "2018": 0.0,
+      "2019": 0.0,
+      "2020": 0.0,
+      "2021": 0.0,
+      "2022": -0.0332,
+      "2023": 0.0152
+     },
+     "folds_positive": "1/6",
+     "boot_ci95": [
+      -0.0316,
+      0.0127
+     ],
+     "boot_p_improve": 0.28,
+     "perm_null_p95": 0.0157,
+     "perm_null_mean": -0.001,
+     "p_vs_perm_null": 0.625,
+     "mde95": 0.016,
+     "verdict": "NULL (below MDE95)"
+    },
+    "arch_inter": {
+     "rho": 0.2879,
+     "d_rho": 0.0123,
+     "d_t45": 0.0265,
+     "within_tier_wm": 0.0863,
+     "per_fold_d": {
+      "2018": 0.0071,
+      "2019": 0.0518,
+      "2020": -0.0036,
+      "2021": 0.0413,
+      "2022": -0.0628,
+      "2023": 0.0242
+     },
+     "folds_positive": "4/6",
+     "boot_ci95": [
+      -0.0565,
+      0.0401
+     ],
+     "boot_p_improve": 0.417,
+     "perm_null_p95": 0.0157,
+     "perm_null_mean": -0.003,
+     "p_vs_perm_null": 0.08,
+     "mde95": 0.016,
+     "verdict": "NULL (below MDE95)"
+    },
+    "arch_strat": {
+     "rho": 0.2729,
+     "d_rho": -0.0027,
+     "d_t45": -0.049,
+     "within_tier_wm": 0.0703,
+     "per_fold_d": {
+      "2018": 0.0,
+      "2019": 0.0,
+      "2020": -0.0224,
+      "2021": 0.0553,
+      "2022": -0.0582,
+      "2023": 0.0442
+     },
+     "folds_positive": "2/6",
+     "boot_ci95": [
+      -0.0478,
+      0.0265
+     ],
+     "boot_p_improve": 0.268,
+     "perm_null_p95": 0.0175,
+     "perm_null_mean": -0.0045,
+     "p_vs_perm_null": 0.4,
+     "mde95": 0.016,
+     "verdict": "NULL (below MDE95)"
+    }
+   },
+   "baseline": {
+    "n": 567,
+    "rho": 0.2756,
+    "rho_pure": 0.2574,
+    "t45": 0.0413,
+    "within_tier_wm": 0.06499537366548043,
+    "per_fold": {
+     "2018": [
+      0.2757,
+      53
+     ],
+     "2019": [
+      0.0835,
+      76
+     ],
+     "2020": [
+      0.2431,
+      104
+     ],
+     "2021": [
+      0.1753,
+      106
+     ],
+     "2022": [
+      0.4151,
+      101
+     ],
+     "2023": [
+      0.3795,
+      127
+     ]
+    }
+   }
+  }
+ }
+}

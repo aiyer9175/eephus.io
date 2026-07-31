@@ -30,8 +30,13 @@ Phase 4b: external Stuff+ can't score pre-debut pitchers; this can).
              accumulate (began persisting 2026; documented in registry).
 
 Sidecar: data/stuff_plus_aaa.json {mlbam: {stuff_plus, n_pitches,
-season}}. Surfaces: PROSPX pitcher cards (an in-house pill beside the
-external Stf+), MLB player pages for recent graduates.
+season, by_type: {pitch_type: {stuff_plus, n_pitches}}}} plus
+meta.league_xrv_by_type (league-mean predicted delta_run_exp per pitch
+type over the scored pool - the W3 PAL-XRV ARM-2 ranking input). The
+pooled fields are untouched by the W3 extension. Surfaces: PROSPX
+pitcher cards (an in-house pill beside the external Stf+), MLB player
+pages for recent graduates, PAL conversion inputs (EEPHUS_PAL_XRV,
+default OFF).
 
 Run: python stuff_plus_aaa.py --fetch    (per-pitcher cache, hours cold)
      python stuff_plus_aaa.py --train    (season-out eval + shipping fit)
@@ -184,19 +189,28 @@ FEATURES = ["velo", "spin", "extension", "pfx_x_arm", "pfx_z",
             "velo_delta_vs_primary", "throws_r"]
 
 
-def _load_season(mlbam: int, season: int):
+def _load_season_typed(mlbam: int, season: int):
+    """(X, y, pitch_types) for one cached pitcher-season, row-aligned. The
+    pitch_type rides ALONGSIDE the feature matrix (W3 per-type sidecar): it is
+    never a model feature (the physics-only contract holds)."""
     path = CACHE_DIR / f"{mlbam}_{season}.csv"
     if not path.exists():
-        return [], []
+        return [], [], []
     rows = list(csv.DictReader(io.StringIO(path.read_text(encoding="utf-8"))))
     velos = [v for v in (_f(r.get("release_speed")) for r in rows) if v is not None]
     primary = max(velos) if velos else None    # proxy: top velo = primary FB
-    X, y = [], []
+    X, y, t = [], [], []
     for r in rows:
         fx = _featurize(r, primary)
         if fx is not None:
             X.append(fx[0])
             y.append(fx[1])
+            t.append(r.get("pitch_type") or "")
+    return X, y, t
+
+
+def _load_season(mlbam: int, season: int):
+    X, y, _t = _load_season_typed(mlbam, season)
     return X, y
 
 
@@ -270,13 +284,25 @@ def score(persist: bool = True) -> dict:
     for season in SEASONS:
         for path in CACHE_DIR.glob(f"*_{season}.csv"):
             mid = int(path.stem.split("_")[0])
-            X, y = _load_season(mid, season)
+            X, y, types = _load_season_typed(mid, season)
             if len(X) < 50:
                 continue
-            rv = float(np.mean(m.predict(np.asarray(X))))
+            preds = m.predict(np.asarray(X))
+            rv = float(np.mean(preds))
             cur = by_pitcher.get(mid)
             if cur is None or season > cur["season"]:
-                by_pitcher[mid] = {"rv": rv, "n": len(X), "season": season}
+                # W3 per-type aggregation for the SELECTED season only: mean
+                # predicted RV + count per pitch type (typeless rows count in
+                # the pooled score but drop from by_type).
+                tacc: dict[str, list] = {}
+                for p, pt in zip(preds, types):
+                    if pt:
+                        a = tacc.setdefault(pt, [0.0, 0])
+                        a[0] += float(p)
+                        a[1] += 1
+                by_pitcher[mid] = {"rv": rv, "n": len(X), "season": season,
+                                   "types": {pt: (s / c, c)
+                                             for pt, (s, c) in tacc.items()}}
             if season == VALID_SEASON and len(X) >= MIN_POOL_PITCHES:
                 pool_rvs.append(rv)
     if not pool_rvs:
@@ -284,17 +310,45 @@ def score(persist: bool = True) -> dict:
     mu = float(np.mean(pool_rvs))
     sd = float(np.std(pool_rvs)) or 1.0
     players = {}
+    lg_acc: dict[str, list] = {}     # league per-type xRV over the scored pool
     for mid, r in by_pitcher.items():
         shrunk = (r["rv"] * r["n"] + mu * SHRINK_K) / (r["n"] + SHRINK_K)
         z = (mu - shrunk) / sd                    # lower RV = better stuff
-        players[str(mid)] = {"stuff_plus": round(100 + 10 * z, 1),
-                             "n_pitches": r["n"], "season": r["season"]}
+        # W3 per-type scores: the SAME shrink convention applied per type
+        # (k=SHRINK_K per type, toward the SAME pooled mu) and the SAME
+        # pooled 100+10z scale - so per-type scores are comparable across
+        # types on one run-value axis (a pitch that beats the all-pitch pool
+        # mean scores > 100). NOT per-type-centered; documented a priori.
+        by_type = {}
+        for pt, (rv_t, n_t) in sorted(r.get("types", {}).items()):
+            shrunk_t = (rv_t * n_t + mu * SHRINK_K) / (n_t + SHRINK_K)
+            z_t = (mu - shrunk_t) / sd
+            by_type[pt] = {"stuff_plus": round(100 + 10 * z_t, 1),
+                           "n_pitches": n_t}
+            a = lg_acc.setdefault(pt, [0.0, 0])
+            a[0] += rv_t * n_t
+            a[1] += n_t
+        row = {"stuff_plus": round(100 + 10 * z, 1),
+               "n_pitches": r["n"], "season": r["season"]}
+        if by_type:
+            row["by_type"] = by_type
+        players[str(mid)] = row
+    # league-mean predicted delta_run_exp per pitch type over the scored pool
+    # (each scored pitcher's selected season; lower = better for the pitcher).
+    # Consumed by the W3 ARM-2 pitch-add ranking (pal_conversion.recommend_pitch).
+    league_xrv = {pt: {"mean_pred_rv": round(s / c, 5), "n_pitches": c}
+                  for pt, (s, c) in sorted(lg_acc.items()) if c}
     payload = {"generated_at": date.today().isoformat(),
                "model": "stuff_plus_aaa v1 (in-house LightGBM on AAA "
                         "per-pitch kinematics -> delta_run_exp)",
                "pool": f"AAA {VALID_SEASON} qualified ({len(pool_rvs)}), "
                        f"shrink k={SHRINK_K}",
-               "n_scored": len(players), "players": players}
+               "n_scored": len(players),
+               "meta": {"by_type": ("per-pitch-type scores, same model + same "
+                                    f"shrink (k={SHRINK_K} per type) on the "
+                                    "pooled 100+10z scale (W3 PAL-XRV)"),
+                        "league_xrv_by_type": league_xrv},
+               "players": players}
     if persist and players:
         OUT_PATH.write_text(json.dumps(payload, separators=(",", ":")),
                             encoding="utf-8")
