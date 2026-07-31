@@ -463,6 +463,10 @@ MODEL_GLOSSARY = {
     # than taking their own: same anchor pool, same ledger, same `unvalidated`
     # verdict, same surface. What differs is the reading, which is exactly what a
     # glossary entry is for, so each got its own entry.
+    # B3 level blend: a NO-SHIP loss ledger with no served number, so there is no
+    # glossary term for a reader to look up. "internal" by construction, same as
+    # the other candidate ledgers.
+    "xfv_level_blend": "internal",
     "war_pa_plus": ["war_pa_plus", "war_pa_plus_adj", "war_pa_plus_3yr"],
     "war_ip_plus_sp": ["war_ip_plus_sp", "war_ip_plus_sp_adj",
                        "war_ip_plus_sp_3yr"],
