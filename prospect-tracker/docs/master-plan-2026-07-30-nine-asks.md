@@ -99,9 +99,35 @@ runs, passed here; it is flaky under suite load rather than broken (item 10 in L
   fringe already tracked by the gate standard). Doc `FV50_WEAK_CELL_VERDICT.md`.
   **This corrects the premise in this very plan**, which called the FV50 weakness live.
 
-**NOT STARTED:** Lanes A (conversion engine build), B (MLB frontend uplift), D (tool-grade
-weighting). These are the remaining engineering lanes; the plan below is their
-specification. Every model lane in this program has now been run to a verdict.
+- **E1 PITCHER ARM SHIPPED** (owner decision after the permutation re-measure).
+  `seasons_at_level` is in `_FEATURES_PIT` at sign -1; pooled 0.3060 -> 0.3207, hitters
+  byte-stable. It ships INSIDE the generic MDE95 on the permutation null (0 of 30 draws
+  beat it, p=0.032) after the hitter arm came back p=0.375 with an inverted sign.
+  **Shipping it exposed a hole in the coordination device:** the board fingerprint
+  encoded scale, grade map and role mode but NOTHING about the model, so a new feature
+  moved every pitcher's grade and the whole board order while the fingerprint reported
+  no change. It now hashes the feature spec. Golden restamped `e397554e`.
+- **Lane B boards DONE, both on the PROSPX card pattern.** Projections and Free Agency
+  now share one two-row card (identity + headline numbers on row 1, a full-width tape on
+  row 2 carrying the season strip / the predicted deal). Projections was the one module
+  where sort headers were plain `<th>` with a click handler, so **keyboard users could
+  not sort at all**; every header on both boards is now a real button with `aria-sort`,
+  and rank and name became sortable. **Phase H shipped with it**: warCvar10, pAnyStar and
+  the option decomposition were computed and rendered nowhere, and now render.
+  Player cards also carry the previously hidden WAR/PA+, WAR/IP+, xHEM+/xREM+/xSEM+,
+  gmLI, saves/holds and a leverage block.
+- **Both commissioned lanes PRE-REGISTERED** (`ODDS_COHORT_REBUILD_GATE.md`,
+  `ZERO_FLOOR_PRICING_GATE.md`), each opening with what is already refuted so neither
+  rediscovers it.
+- **Zero-floor ARM 1 SHIPPED.** Found the mechanism: the calibration is
+  `max(0, 1.382491*raw - 2.318551)`, zero-cross at raw **$1.677M**, and the whole bottom
+  tier sits under it, so a served surplus of exactly 0 is ALWAYS a clamp and never a
+  computed value. 6,351 of 9,334 rows now read "under floor" instead of a false-precision
+  $0. The pricing repair is Arm 2 and the calibration tripwire stays red by design.
+
+**NOT STARTED:** Lane A (conversion engine build), Lane D (tool-grade weighting), Phase D
+(the wRC+ display program), and the two commissioned lanes' measurement halves. Every
+model lane in this program has been run to a verdict.
 
 ---
 
