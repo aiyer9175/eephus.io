@@ -232,6 +232,14 @@
       if (k === "age") return m.age ?? 99;
       if (k === "sur") return m.surNpv ?? -1e15;
       if (k === "warTotal") return warShown(m) ?? -99;  // sort by the DISPLAYED 5yr total (prospects: in-window only)
+      // Name and rank became sortable when the board moved to cards (2026-07-30).
+      // Name sorts as a string, so it is compared case-insensitively and the
+      // direction chip reads A-Z on the first click rather than Z-A.
+      if (k === "name") return String(m.name || "").toLowerCase();
+      // "rank" means the board's own current order, which is what the row
+      // number shows. Sorting by it is the way back to the default view after
+      // clicking through other columns.
+      if (k === "rank") return warShown(m) ?? -99;
       if (k.startsWith("y")) {
         const t = Number(k.slice(1));
         if (state.cells !== "war") {
@@ -908,23 +916,30 @@
     const list = sortRows(rows());
     const seasons = Array.from({ length: DATA.horizon }, (_, t) => first + t);
     const body = list.slice(0, state.limit).map((m, i) => {
-      const cells = seasons.map((s, t) => {
+      // Season cells, emitted as tape chips. Each carries its own season label,
+      // which is what lets the strip live in row 2 without a separate header
+      // row to align against.
+      const cellChips = seasons.map((s, t) => {
+        const chip = (cls, val, title) =>
+          `<div class="mlb-chip ${cls}"${title ? ` title="${title}"` : ""}><b>${s}</b>${val}</div>`;
         if (state.cells !== "war") {
           const v = rateAt(m, t);
           if (v == null) {
             const milb = m.src === "prospect" && s < m.eta;
-            return `<td class="proj-dim">${milb ? "MiLB" : EM_DASH}</td>`;
+            return chip("proj-dim", milb ? "MiLB" : EM_DASH);
           }
           const mm = RATE_META[state.cells];
-          return `<td class="proj-war${rateClass(v)}" title="${s}: ${esc(mm.tip)}. Rate line = the year-1 Marcel components walked along the engine's aging curves (display path; WAR and pricing are unaffected).">${mm.fmt(v)}</td>`;
+          return chip("proj-war" + rateClass(v), mm.fmt(v),
+            `${s}: ${esc(mm.tip)}. Rate line = the year-1 Marcel components walked along the engine's aging curves (display path; WAR and pricing are unaffected).`);
         }
         const w = warAt(m, t);
         if (w == null) {
           const milb = m.src === "prospect" && s < m.eta;
-          return `<td class="proj-dim">${milb ? "MiLB" : EM_DASH}</td>`;
+          return chip("proj-dim", milb ? "MiLB" : EM_DASH);
         }
         const lo = bandAt(m, t, "lo"), hi = bandAt(m, t, "hi");
-        return `<td class="proj-war${warClass(w)}" title="${s}: ${fmtWar(w)} bWAR (playing-time-held / if-healthy path)${lo != null ? ` · floor ${fmtWar(lo)} / ceiling ${fmtWar(hi)} (P10-P90 outcomes)` : ""}">${fmtWar(w)}</td>`;
+        return chip("proj-war" + warClass(w), fmtWar(w),
+          `${s}: ${fmtWar(w)} bWAR (playing-time-held / if-healthy path)${lo != null ? ` &middot; floor ${fmtWar(lo)} / ceiling ${fmtWar(hi)} (P10-P90 outcomes)` : ""}`);
       }).join("");
       // For prospects the per-season cells render only the fixed calendar window,
       // which can drop ETA-shifted prime seasons; sum the SHOWN cells so the Total
@@ -947,14 +962,28 @@
         : `<a class="fa-player-link" href="#player=${encodeURIComponent(m.key)}"><strong>${esc(m.name)}</strong></a>`;
       const inCmp = state.cmp.includes(m.key);
       const cmpBtn = `<button class="proj-cmp-btn${inCmp ? " active" : ""}" data-cmp-key="${esc(m.key)}" type="button" title="${inCmp ? "Remove from compare" : "Compare head-to-head (pick two players)"}" style="border:1px solid var(--border);background:${inCmp ? "var(--accent-cyan)" : "transparent"};color:${inCmp ? "var(--text-on-accent)" : "var(--text-tertiary)"};border-radius:5px;font-size:10px;line-height:1;padding:2px 5px;cursor:pointer;margin-left:4px;">⇄</button>`;
-      return `<tr>
-        <td>${i + 1}</td>
-        <td class="proj-player">${teamLogo(m.team)}${link} <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}</span> ${tagFor(m)}<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span>${cmpBtn}</td>
-        ${cells}
-        <td${m.warPeak != null ? ` title="Prime projection: ~${fmtWar(m.warPeak)} WAR/yr at peak age (talent path; surplus prices the expected value)"` : ""}>${tot}${m.warPeak != null ? `<span class="fa-sub" style="display:block;font-size:10px;">peak ~${fmtWar(m.warPeak)}</span>` : ""}</td>
-        <td>${ct}</td>
-        <td>${sur}</td>
-      </tr>`;
+      // PROSPX-pattern card (Lane B, 2026-07-30). Row 1 carries identity and the
+      // headline numbers; row 2 is a full-width tape of the season-by-season
+      // projection. The old markup put six elements into a single ellipsized
+      // 320px table cell, which is what made the board feel cramped: the fix is
+      // to give the seasons their own band rather than to keep widening a row.
+      const seasonTape = `<div class="mlb-tape"><div class="mlb-tape-inner">${cellChips}</div></div>`;
+      const cardHref = m.src === "prospect"
+        ? `/prospx/#player=${encodeURIComponent(m.key)}`
+        : `#player=${encodeURIComponent(m.key)}`;
+      return `<div class="mlb-card proj-card" tabindex="0" role="button"
+          data-card-href="${esc(cardHref)}"${m.orgColor ? ` style="--org-color:${esc(m.orgColor)}"` : ""}>
+        <span class="mlb-rank">${i + 1}</span>
+        <div style="min-width:0;">
+          <span class="mlb-name">${teamLogo(m.team)}${link}</span>
+          <span class="mlb-sub">${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " &middot; FA"}${tagFor(m)}<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span>${cmpBtn}</span>
+        </div>
+        <span class="mlb-metric"${m.warPeak != null ? ` title="Prime projection: ~${fmtWar(m.warPeak)} WAR/yr at peak age (talent path; surplus prices the expected value)"` : ""}>
+          <span class="mlb-metric-label">${DATA.horizon}y WAR</span>${tot}${m.warPeak != null ? `<span class="fa-sub" style="display:block;font-size:10px;">peak ~${fmtWar(m.warPeak)}</span>` : ""}</span>
+        <span class="mlb-metric"><span class="mlb-metric-label">Contract</span>${ct}</span>
+        <span class="mlb-metric"><span class="mlb-metric-label">Surplus</span>${sur}</span>
+        ${seasonTape}
+      </div>`;
     }).join("");
     const _wm = projWarMap(list);
     const _axSel = (id, cur) => `<select id="${id}" class="proj-select" style="font-size:11px;">
@@ -1001,16 +1030,46 @@
       const supplyMod = supply ? `<div class="fa-rail-mod"><div class="fa-rail-head" title="Current filtered pool by position group">Pool supply</div>${supply}</div>` : "";
       return `<aside class="fa-board-rail">${stampMod}${warMod}${surMod}${supplyMod}</aside>`;
     }
-    root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main">` + warMap + `<table class="detail-table proj-table">
-      <thead><tr><th>#</th><th>Player</th>
-      ${seasons.map((s, t) => sortHead(String(s), "y" + t, state.cells === "war"
-        ? `Projected ${s} bWAR - the playing-time-held (if-healthy) path; hover any cell for the floor/ceiling outcome band`
-        : `Projected ${s} ${RATE_META[state.cells].label} (veterans; toggle Cells back to WAR for the priced path)`)).join("")}
-      ${sortHead(`${DATA.horizon}y <span data-gl="war">WAR</span>`, "warTotal", "Five-year projected bWAR, playing-time-held (if-healthy) path, with the P10-P90 outcome band. Surplus prices the attrition-discounted expected value, not this path.")}
-      <th>Contract</th>
-      ${sortHead("Surplus", "sur", "Veterans: production value minus salary, salary-known seasons only. Prospects: platform surplus value.")}
-      </tr></thead><tbody>${body || `<tr><td colspan="${5 + seasons.length}">No players match.</td></tr>`}</tbody></table>
+    // Card-head columns must mirror the .proj-card grid exactly, so the two
+    // share one track definition rather than two that can drift apart.
+    const CARD_TRACKS = "34px minmax(0,1.7fr) 92px minmax(0,1fr) 96px";
+    // Every header is sortable now, including rank and name, and each is a real
+    // keyboard button with aria-sort. The old board exposed sorting on the
+    // season cells, 5y WAR and Surplus only, and none of them were reachable by
+    // keyboard, which made Projections the one module below the a11y contract
+    // that fa.js, mlbstats.js and prospx all already met.
+    const cardHead = (label, key, title) => {
+      const active = state.sort === key;
+      const aria = active ? (state.dir < 0 ? "descending" : "ascending") : "none";
+      return `<span role="button" tabindex="0" data-psort="${key}" aria-sort="${aria}"${title ? ` title="${esc(title)}"` : ""}>${label}${active ? (state.dir < 0 ? " ▾" : " ▴") : ""}</span>`;
+    };
+    root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main">` + warMap + `
+      <div class="mlb-card-head" style="grid-template-columns:${CARD_TRACKS};">
+        ${cardHead("#", "rank", "Board position under the current sort")}
+        ${cardHead("Player", "name", "Sort by name")}
+        ${cardHead(`${DATA.horizon}y WAR`, "warTotal", "Projected bWAR over the window, playing-time-held (if-healthy) path, with the P10-P90 outcome band. Surplus prices the attrition-discounted expected value, not this path.")}
+        ${cardHead("Contract", "age", "Sort by age; the contract line shows years and AAV where a real deal exists")}
+        ${cardHead("Surplus", "sur", "Veterans: production value minus salary, salary-known seasons only. Prospects: platform surplus value.")}
+      </div>
+      <div class="mlb-card-list" style="--card-tracks:${CARD_TRACKS};">${body || `<div class="fa-sub" style="padding:12px;">No players match.</div>`}</div>
       ${list.length > state.limit ? `<div style="text-align:center;margin:10px 0;"><button class="chip" id="proj-more">show ${Math.min(100, list.length - state.limit)} more (${list.length - state.limit} hidden)</button></div>` : ""}</div>${projBoardSidebar(list)}</div>`;
+    // One place sets the card grid, from the same string the header uses.
+    root.querySelectorAll(".proj-card").forEach(c => { c.style.gridTemplateColumns = CARD_TRACKS; });
+    // Keyboard parity for the new sort headers (click is wired below).
+    root.querySelectorAll(".mlb-card-head [data-psort]").forEach(h => {
+      h.onkeydown = e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); h.click(); }
+      };
+    });
+    // Whole-card activation, matching the PROSPX row behaviour. Ignore clicks
+    // that landed on a control inside the card (the compare button, any link).
+    root.querySelectorAll(".proj-card[data-card-href]").forEach(c => {
+      const open = () => { location.href = c.dataset.cardHref; };
+      c.onclick = e => { if (!e.target.closest("a,button")) open(); };
+      c.onkeydown = e => {
+        if ((e.key === "Enter" || e.key === " ") && !e.target.closest("a,button")) { e.preventDefault(); open(); }
+      };
+    });
     root.querySelectorAll("[data-psort]").forEach(h => h.onclick = () => {
       const k = h.dataset.psort;
       if (state.sort === k) state.dir = -state.dir;

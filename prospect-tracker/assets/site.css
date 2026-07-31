@@ -2584,3 +2584,106 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
     white-space: nowrap; max-width: 100%;
   }
 }
+
+/* ===========================================================================
+   MLB board cards (Lane B, 2026-07-30). The PROSPX row pattern, ported to the
+   shared stylesheet for the Projections and Free Agency boards.
+
+   Why cards and not a wider table: both boards had outgrown the table. The
+   Projections player cell packed six elements into one 320px ellipsized td,
+   and the FA board ran twelve columns with P10-P90 bands squeezed inside the
+   same cells as their point estimates. Adding columns makes that worse. The
+   PROSPX answer is a fixed-height two-row card: row 1 is the identity and the
+   headline numbers, row 2 is a full-width tape that always gets its own band
+   at the card bottom, so a data-rich row can never shove it out of the box.
+
+   The load-bearing bits, all learned the hard way in prospx/index.html:
+     - grid-template-rows: minmax(0, 1fr) auto. The 0 floor is what lets row 1
+       shrink to its share so the tape keeps its reserved band; without it a
+       long identity block forces row 1 to min-content and clips the tape.
+     - minmax(0, ...) on flexible columns so a long name cannot blow the track
+       out (a bare 1fr refuses to shrink below min-content).
+     - content-visibility with contain-intrinsic-size, so hundreds of rows in
+       the DOM stay cheap and the scrollbar still behaves.
+   =========================================================================== */
+.mlb-card-list { display: flex; flex-direction: column; gap: 6px; }
+
+.mlb-card {
+  position: relative;
+  display: grid;
+  align-items: center;
+  gap: 4px 10px;
+  box-sizing: border-box;
+  padding: 8px 12px 8px 16px;
+  border: 1px solid var(--border, rgba(128,128,128,.25));
+  border-radius: 4px;
+  background: var(--panel-bg, var(--card-bg, transparent));
+  grid-template-rows: minmax(0, 1fr) auto;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 92px;
+  cursor: pointer;
+}
+/* Org-colour stripe. Same device as the PROSPX row: it is the only element
+   carrying team identity, so it must survive both themes without a hardcoded
+   colour (test_no_hardcoded_colors pins that). */
+.mlb-card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  border-radius: 4px 0 0 4px;
+  background: var(--org-color, var(--accent, currentColor));
+  transition: width .12s ease, box-shadow .12s ease;
+}
+.mlb-card:hover::before { width: 7px; box-shadow: 0 0 8px var(--org-color, var(--accent)); }
+.mlb-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Row 2 tape: spans every column so a full season strip or a band row lays out
+   on ONE line at a uniform height, flush along the card bottom. */
+.mlb-card > .mlb-tape { grid-column: 1 / -1; grid-row: 2; min-width: 0; align-self: start; }
+.mlb-card > *:not(.mlb-tape) { grid-row: 1; min-width: 0; }
+
+/* Rank chip, the PROSPX diamond read as a circle for the MLB boards (these are
+   not prospect ranks and should not borrow the prospect glyph). */
+.mlb-rank {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 34px; height: 34px; padding: 0 6px;
+  border-radius: 50%;
+  border: 1px solid var(--border, rgba(128,128,128,.3));
+  font-family: var(--font-retro-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700; font-size: 13px;
+}
+.mlb-name { font-weight: 650; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mlb-sub { font-size: 11.5px; opacity: .72; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.mlb-metric { font-family: var(--font-retro-mono, ui-monospace, monospace);
+              font-variant-numeric: tabular-nums; text-align: right; }
+.mlb-metric-label { display: block; font-size: 10px; letter-spacing: .06em;
+                    text-transform: uppercase; opacity: .6; font-family: inherit; }
+
+/* The tape itself: a horizontal band of season / band chips. */
+.mlb-tape-inner { display: flex; gap: 4px; align-items: stretch; flex-wrap: nowrap;
+                  overflow-x: auto; padding-top: 6px; }
+.mlb-chip {
+  flex: 1 1 0; min-width: 0;
+  border-radius: 3px; padding: 3px 6px;
+  border: 1px solid var(--border, rgba(128,128,128,.22));
+  font-family: var(--font-retro-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums; font-size: 11.5px; text-align: center;
+  white-space: nowrap;
+}
+.mlb-chip b { display: block; font-size: 10px; font-weight: 600; opacity: .6;
+              letter-spacing: .04em; font-family: inherit; }
+
+/* Sort headers above the list, matching the mlbstats a11y contract. */
+.mlb-card-head {
+  display: grid; gap: 4px 10px; padding: 0 12px 6px 16px;
+  font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; opacity: .62;
+}
+.mlb-card-head [role="button"] { cursor: pointer; user-select: none; white-space: nowrap; }
+.mlb-card-head [role="button"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (max-width: 720px) {
+  .mlb-card { grid-template-columns: 1fr auto !important; row-gap: 6px; }
+  .mlb-card > .mlb-metric { text-align: left; }
+}
