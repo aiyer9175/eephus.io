@@ -117,3 +117,73 @@ if it does not, the change is bigger than advertised.
 
 Arm 1 ships regardless of Arm 2's verdict, because a false-precision $0 is worth removing
 even if the underlying price stays unresolvable.
+
+---
+
+# MEASUREMENT (added 2026-07-31, before any fit)
+
+Ran the Arm 2 diagnostics the gate above called for. Three results.
+
+## M1. The cause is the ANCHOR sitting under the cross, not the calibration alone
+
+Raw (pre-calibration) surplus against the $1.677M clamp point:
+
+| FV | hitter raw | hitter calibrated | RP raw | RP calibrated |
+|---|---|---|---|---|
+| 35.0 | 0.899 | **0.000** | 0.809 | **0.000** |
+| 37.5 | 1.341 | **0.000** | 1.207 | **0.000** |
+| 38.5 | 1.573 | **0.000** | 1.416 | **0.000** |
+| 39.0 | 1.704 | 0.038 | 1.534 | **0.000** |
+| 40.0 | 2.000 | 0.447 | 1.800 | 0.170 |
+
+**The first grade that prices above zero is FV 39.0 for hitters and FV 40.0 for
+relievers.** Everything below clamps. That is the 68.5%, and it is not a calibration bug
+in isolation: the calibration is a fixed linear map, and the anchor simply does not reach
+it until FV 39. Candidate (a) from the gate above (move the anchor) is therefore the arm
+that actually addresses the mechanism, and candidate (b) (re-fit the calibration) is
+attacking the wrong end.
+
+Note the anchor at FV 40 is already ABOVE the cross ($2.000M against $1.677M). So the
+repair is not "the anchor is too low" globally. It is that `decay_per_point` 0.16 pulls
+the sub-40 range under the cross within two grade points.
+
+## M2. C6 confirmed, and it is worse and wider than registered
+
+`GATED_CANDIDATES.md` describes the reliever bridge inversion as sitting "between FV40
+and FV40.5". Measured, it runs the whole bridge and does not stop:
+
+| FV | RP raw | RP calibrated |
+|---|---|---|
+| 40.0 | 1.800 | 0.170 |
+| 41.0 | 1.774 | 0.134 |
+| 42.0 | 1.747 | 0.097 |
+| 43.0 | 1.721 | 0.061 |
+| 44.0 | 1.694 | 0.024 |
+| 44.5 | 1.681 | **0.006** |
+
+Raw surplus falls monotonically as grade RISES (about -0.003M per 0.1 FV), identically for
+RP, SIRP and CL. After calibration subtracts its constant, the effect compounds: **a FV
+44.5 reliever prices at 28 times LESS than a FV 40 reliever.** Hitters over the same range
+behave correctly (2.000 rising to 8.444).
+
+## M3. But the served board does not currently expose it
+
+Checked before claiming a live defect: the 412 served active pitchers graded FV 39.5 to
+45.0 price from 0.0 at the bottom of the band to 8.1 at the top, i.e. RISING. So the
+served path is not routing them through the RP branch that carries the inversion, which
+is consistent with C6 being registered as latent rather than visible.
+
+**That is the sequencing risk the gate above already named, now quantified.** The
+inversion is a live landmine in the pricing function rather than a live defect on the
+board. If Arm 2 lifts the floor and anything later routes relievers onto the RP curve,
+28x backwards pricing becomes visible in the same motion. The monotonicity gate stays a
+hard requirement, and C6 should be repaired BEFORE or WITH the anchor, never after.
+
+## Recommendation
+
+Candidate (a), re-anchoring so the sub-40 range clears the cross, is the arm worth
+building, and the measurement says exactly how far it has to move. Candidate (b) is
+misdirected. Candidate (c), a small positive constant floor, remains the weakest and is
+now clearly unnecessary given (a) has a mechanical target.
+
+Do not start it without C6 in the same lane.
