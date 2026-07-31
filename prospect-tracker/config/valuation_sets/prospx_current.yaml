@@ -52,45 +52,53 @@ meta:
 #   v3 2026-07-04 hitter: 35+ 1.4 / 40 1.5 / 40+ 2.6 / 45 4.5 / 45+ 14.8 / 50 17.7 / 55 33.2 / 60 63.9 / 65 111.1 / 70 157.9
 # ctrl_war is calibration-independent (fv_to_6yr_avg_war*6) and unchanged.
 tiers:
-  # RE-CAPTURED 2026-07-29. Two independent things moved, and they are worth keeping
-  # straight because only one of them is this program's doing.
+  # RE-CAPTURED 2026-07-31 for the v6 EV-FRAME calibration (owner decision:
+  # docs/efv-2026-07-30/SURPLUS_EV_OBJECTIVE.md). surplus_musd is the live engine
+  # again; ctrl_war is UNCHANGED because the anchors did not move, only the pricing
+  # layer did.
   #
-  # surplus_musd drifted BEFORE this program. The 2026-07-24 v5 calibration ship moved
-  # served pricing and the mandated coordinated re-capture never ran, so the frozen
-  # table sat about 16% below the live engine at FV50 (28.2 against 32.8) and 16 of
-  # these acceptance cases were red on arrival. The dollars below are the engine's
-  # current output; the prices readers have been seeing were already these.
+  # What moved and why: surplus is now an EXPECTED-VALUE quantity. The v5 map floored
+  # every raw surplus under $1.677M at exactly $0, which was MAE-optimal (86-90% of the
+  # bottom bins realise nothing, so their median is 0) and wrong as a PRICE (their mean
+  # is $1.7M-$5.9M). The 35+ tier therefore leaves $0 for the first time on both sides:
+  # hitter 0.0 -> 2.5, pitcher 0.0 -> 2.0.
   #
-  # ctrl_war moved BECAUSE of this program: it is fv_to_6yr_avg_war * 6, and the
-  # sub-45 anchor knots were amended on 2026-07-29 (see
-  # data/value_framework_fitted.json empirical_anchors.anchors_provenance). The bottom
-  # three cells fall hard because the old table declared one constant 0.19 WAR/yr for
-  # every grade from 20 to 40: 35+ 1.14 -> 0.32, 40 1.14 -> 0.52, 40+ 1.50 -> 1.19.
-  # Grades 45 and up are unchanged in BOTH columns, by design.
+  # The SHAPE of the move is the tell that this is a median->mean switch and not a
+  # revaluation: the top barely moves (hitter 70 206.0 -> 204.0, pitcher 70 178.1 ->
+  # 178.2) because up there the median and the mean are the same player, while the
+  # bottom and middle lift hard (hitter 45 11.7 -> 21.6, pitcher 45+ 14.8 -> 25.0)
+  # because that is where the two diverge.
   #
-  # Grid history: v3 17.7 -> v4 31.6 -> v5 28.2 -> now 32.8 at FV50 hitter.
+  # Grid history at FV50 hitter: v3 17.7 -> v4 31.6 -> v5 28.2 -> 32.8 (07-29 recapture)
+  # -> 43.4 now.
+  #
+  # NOTE for the next person to re-capture this file: price the engine INSIDE
+  # `with vf.valuation_set("prospx_current")`. This is the base-identity set (6 control
+  # years), not the clemens_2026 default (7), and test_valuation_sets compares against
+  # the engine in that context. Capturing on the default silently yields a different
+  # grid -- pitcher 60 reads 75.2 there against the correct 81.3.
   hitter:
-    "35+": {surplus_musd: 0.0,   ctrl_war: 0.32}
-    "40":  {surplus_musd: 0.4,   ctrl_war: 0.52}
-    "40+": {surplus_musd: 6.1,   ctrl_war: 1.19}
-    "45":  {surplus_musd: 11.7,  ctrl_war: 1.86}
-    "45+": {surplus_musd: 22.0,  ctrl_war: 2.94}
-    "50":  {surplus_musd: 32.8,  ctrl_war: 4.02}
-    "55":  {surplus_musd: 52.8,  ctrl_war: 5.88}
-    "60":  {surplus_musd: 90.5,  ctrl_war: 8.64}
-    "65":  {surplus_musd: 148.5, ctrl_war: 12.00}
-    "70":  {surplus_musd: 206.0, ctrl_war: 15.12}
+    "35+": {surplus_musd: 2.5,   ctrl_war: 0.32}
+    "40":  {surplus_musd: 3.3,   ctrl_war: 0.52}
+    "40+": {surplus_musd: 10.8,   ctrl_war: 1.19}
+    "45":  {surplus_musd: 21.6,  ctrl_war: 1.86}
+    "45+": {surplus_musd: 33.0,  ctrl_war: 2.94}
+    "50":  {surplus_musd: 43.4,  ctrl_war: 4.02}
+    "55":  {surplus_musd: 61.9,  ctrl_war: 5.88}
+    "60":  {surplus_musd: 97.0,  ctrl_war: 8.64}
+    "65":  {surplus_musd: 150.7, ctrl_war: 12.0}
+    "70":  {surplus_musd: 204.0, ctrl_war: 15.12}
   pitcher:
-    "35+": {surplus_musd: 0.0,   ctrl_war: 0.32}
-    "40":  {surplus_musd: 0.2,   ctrl_war: 0.52}
-    "40+": {surplus_musd: 3.8,   ctrl_war: 1.19}
-    "45":  {surplus_musd: 7.4,   ctrl_war: 1.86}
-    "45+": {surplus_musd: 14.8,  ctrl_war: 2.94}
-    "50":  {surplus_musd: 23.2,  ctrl_war: 4.02}
-    "55":  {surplus_musd: 39.8,  ctrl_war: 5.88}
-    "60":  {surplus_musd: 73.6,  ctrl_war: 8.64}
-    "65":  {surplus_musd: 126.3, ctrl_war: 12.00}
-    "70":  {surplus_musd: 178.1, ctrl_war: 15.12}
+    "35+": {surplus_musd: 2.0,   ctrl_war: 0.32}
+    "40":  {surplus_musd: 2.9,   ctrl_war: 0.52}
+    "40+": {surplus_musd: 7.7,   ctrl_war: 1.19}
+    "45":  {surplus_musd: 12.2,   ctrl_war: 1.86}
+    "45+": {surplus_musd: 25.0,  ctrl_war: 2.94}
+    "50":  {surplus_musd: 34.3,  ctrl_war: 4.02}
+    "55":  {surplus_musd: 49.9,  ctrl_war: 5.88}
+    "60":  {surplus_musd: 81.3,  ctrl_war: 8.64}
+    "65":  {surplus_musd: 130.2, ctrl_war: 12.0}
+    "70":  {surplus_musd: 178.2, ctrl_war: 15.12}
 
 # --- Global valuation parameters ---
 # MIRROR of value_framework_config.yaml at capture, for documentation and diff

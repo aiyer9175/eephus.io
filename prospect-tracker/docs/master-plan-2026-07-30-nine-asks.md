@@ -119,11 +119,14 @@ runs, passed here; it is flaky under suite load rather than broken (item 10 in L
 - **Both commissioned lanes PRE-REGISTERED** (`ODDS_COHORT_REBUILD_GATE.md`,
   `ZERO_FLOOR_PRICING_GATE.md`), each opening with what is already refuted so neither
   rediscovers it.
-- **Zero-floor ARM 1 SHIPPED.** Found the mechanism: the calibration is
-  `max(0, 1.382491*raw - 2.318551)`, zero-cross at raw **$1.677M**, and the whole bottom
-  tier sits under it, so a served surplus of exactly 0 is ALWAYS a clamp and never a
-  computed value. 6,351 of 9,334 rows now read "under floor" instead of a false-precision
-  $0. The pricing repair is Arm 2 and the calibration tripwire stays red by design.
+- **Zero-floor ARM 1 SHIPPED, THEN SUPERSEDED AND REMOVED.** Found the mechanism: the
+  calibration is `max(0, 1.382491*raw - 2.318551)`, zero-cross at raw **$1.677M**, and
+  the whole bottom tier sat under it, so a served surplus of exactly 0 was ALWAYS a clamp
+  and never a computed value. 6,351 of 9,334 rows read "under floor" instead of a
+  false-precision $0. **That display is now gone**, because the thing it described is
+  gone: the v6 EV re-fit (below) removed the clamp outright, so there is no floor to be
+  under and every row carries a real price. Arm 1 was the right call for the ~24 hours a
+  floor existed. `calibration_zero_cross_mm()` is kept and now returns `None`.
 
 - **Lane A (ask 1) MEASURED TO A SPLIT VERDICT.** Both feeds SHIP:
   `savant_arm_strength.py` (795 players, 2020+, coverage probed) and `savant_sprint.py`

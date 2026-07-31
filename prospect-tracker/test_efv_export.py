@@ -366,7 +366,19 @@ def test_committed_artifact_headline_alias_contract():
 #   see a model change at all -- scale, grade map and role mode were all it knew, so a
 #   new feature moved the whole board while the fingerprint reported "no change".
 #   Rowcount 9324 -> 9334.
-_GOLDEN_XFV_SHA256 = "e397554e462e833a87b218b8cc6fe6d77ca96fdf6a96287af86719f67d1c8ca8"
+# 2026-07-31 RESTAMP: the v6 EV surplus calibration (owner decision on
+#   docs/efv-2026-07-30/SURPLUS_EV_OBJECTIVE.md). PRICING LAYER ONLY -- verified, not
+#   assumed: across all 9,334 rows, ZERO changed xfv_grade, xfv_grade_quantile or
+#   xfv_war_6yr, so the board ORDER is byte-identical and only surplus_mm moved.
+#   Every one of the 9,334 prices moved and every one moved UP (min +$0.70M, median
+#   +$2.00M, p90 +$8.20M, max +$11.30M); board total $33,660M -> $58,688M (+74.4%).
+#   The headline: the 6,271 rows priced at exactly $0 fell to 0. That $0 was a clamp,
+#   not a valuation -- the v5 map minimised per-player MAE, which on a population where
+#   86-90% of the bottom bins realise nothing is optimised by predicting the median,
+#   i.e. zero. Surplus is consumed as a PRICE, and a price is an expectation, so the
+#   objective moved to the conditional mean and the clamp went with it.
+#   Rowcount 9334 -> 9334 (unchanged).
+_GOLDEN_XFV_SHA256 = "7cc4e1991da46c45343dca7f2651c2abfed76425c5dea051d1ebf57a2796dfbc"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire

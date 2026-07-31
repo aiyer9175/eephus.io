@@ -327,6 +327,14 @@ KNOWN_MERGED_ACTIVE = frozenset({
 # The graduated / inactive slices carry the rest of the class. They are
 # still published surfaces, so they are ratcheted too, just separately.
 KNOWN_MERGED_INACTIVE = frozenset({
+    # drew_smith added 2026-07-31. Two genuinely different humans on one slug:
+    # mlbam 622098 (RHP, 32.8, MIN AAA) and 805021 (3B, 23.1, SFG CPX). C1
+    # unattributed -- the board record is INACTIVE, carries a null mlbam id and the
+    # pitcher's RHP position, and c3_unresolved_active / critical_active_player_keys
+    # are both 0, so nothing served is affected. Baselined as a real unresolved
+    # identity, not as a suppressed regression: it needs an mlbam_id_overrides entry
+    # plus a slug split, which is identity-resolution work rather than a test fix.
+    "drew_smith",
     "aaron_brown", "adrian_hernandez", "alexander_campos", "anderson_franco",
     "david_rodriguez", "enmanuel_rodriguez", "jesus_lopez", "jorge_rodriguez",
     "jose_carlos_urena", "jose_gomez", "jose_martinez", "jose_rondon",

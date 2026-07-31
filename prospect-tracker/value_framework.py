@@ -1516,14 +1516,18 @@ def calibration_zero_cross_mm() -> float | None:
 
     ARM 1 of docs/efv-2026-07-30/ZERO_FLOOR_PRICING_GATE.md. This exists so a
     surface can tell "the model priced this at nothing" apart from "the model
-    cannot resolve a price this small", which are very different claims and
-    currently render identically as $0.0M on 68.5% of the board.
+    cannot resolve a price this small", which are very different claims that
+    render identically as $0.0M.
 
-    On the shipped v5 map, max(0, 1.382491*raw - 2.318551), the cross is at raw
-    $1.677M, and the whole bottom tier sits under it: the engine computes $1.2 to
-    $1.3M for those 3,822 players and calibration clamps every one of them to
-    zero. So a served surplus of EXACTLY 0.0 is a clamped value by construction,
-    never a computed one, which is what makes the display fix well defined.
+    ON THE CURRENTLY SHIPPED MAP THIS RETURNS None, and that is the intended
+    steady state, not a degenerate case. The v5 map it was written against,
+    max(0, 1.382491*raw - 2.318551), clamped everything under raw $1.677M to
+    zero, which was 68.5% of the board. The v6 EV re-fit
+    (docs/efv-2026-07-30/SURPLUS_EV_OBJECTIVE.md) removed the clamp by changing
+    the objective from the MAE-optimal median to the conditional mean, so the
+    bottom of the board is priced rather than floored and no served value is a
+    clamp artefact. Keep this function: a future re-fit can reintroduce a flat
+    head, and callers should keep asking rather than assuming.
 
     Returns None when calibration is off or the shape is one this cannot invert;
     callers must treat None as "no threshold known" and fall back to showing the

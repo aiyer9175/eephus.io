@@ -132,7 +132,14 @@ def test_clemens_default_applies_and_context_restores():
         # the frozen grid sat about 16% under live for five days and 16 acceptance cases
         # were red. The engine has been serving 32.8 the whole time. Grid history at FV50
         # hitter: v3 17.7 -> v4 31.6 -> v5 28.2(claimed) -> 32.8(measured).
-        assert vf.surplus_value_mm(50.0, False) == pytest.approx(32.8, abs=0.1)
+        # Re-stamped 2026-07-31: 32.8 -> 43.4, the isotonic-real-v6-evframe re-fit. This
+        # one is an OBJECTIVE change, not an accuracy re-fit: surplus became an
+        # expected-value quantity (docs/efv-2026-07-30/SURPLUS_EV_OBJECTIVE.md), so the
+        # map targets the conditional MEAN instead of the MAE-optimal median. The median
+        # on this population is $0 for two thirds of the board, which is why the old map
+        # clamped a $0 bottom; the mean is not zero, so every tier lifts. Held-out bias
+        # -0.028 vs +2.521 uncalibrated, slope 1.059 vs 1.239. Deliberate.
+        assert vf.surplus_value_mm(50.0, False) == pytest.approx(43.4, abs=0.1)
     assert vf.active_valuation_set() == "clemens_2026"
     assert vf.surplus_value_mm(50.0, False) == pytest.approx(base_50, abs=0.01)
     assert vf._config()["_valuation_set"] == "clemens_2026"
