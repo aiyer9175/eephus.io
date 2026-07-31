@@ -147,3 +147,12 @@ happen to the individual player in front of you. The typical bottom-tier prospec
 does return nothing; the tier as a whole does not. Both facts are true, and the site will
 now be publishing the second one. The card copy should say so rather than letting a
 reader infer that a $1.5M prospect is likely to return $1.5M.
+
+**And the bottom is still flat, just no longer at zero.** The isotonic map clamps below
+its first knot (raw $0.82M), so **3,906 of 9,334 served rows share one price, $0.70M**.
+That is 42% of the board carrying no ordering information in its dollars. This is not a
+regression - those same rows previously shared $0.00M, so the flat block is exactly as
+wide as it was and is merely at an honest level now. But it does mean "ranked 6,000th vs
+6,500th" says nothing about price, and the card tooltip says so in those words. Anyone
+tempted to read fine structure into the bottom of the surplus column should read this
+paragraph first.
