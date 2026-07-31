@@ -1,0 +1,114 @@
+{
+ "generated_at": "2026-07-30",
+ "experiment": "B3 multi-level exposure blend in efv_dataset._milb_features",
+ "pre_registration": "docs/efv-2026-07-30/B3_LEVEL_BLEND_GATE.md (written BEFORE any fit)",
+ "verdict": "NO SHIP. The PRIMARY metric (debuted_km pooled blend Spearman) regresses on BOTH sides. Pre-registered no-ship condition 1. Code retained default-off as a registered candidate.",
+ "primary_metric": "pooled OOS Spearman, debuted_km, blend arm, forward-chained (the shipped efv_model.run protocol)",
+ "mde95": {
+  "hit": 0.017,
+  "pit": 0.016
+ },
+ "results": {
+  "hit": {
+   "debuted_km": {
+    "n": 353,
+    "baseline_spearman": 0.39,
+    "blend_on_spearman": 0.3818,
+    "delta": -0.0082,
+    "baseline_mae": 3.945,
+    "blend_on_mae": 3.963
+   },
+   "debuted_resolved": {
+    "n": 59,
+    "baseline_spearman": 0.3272,
+    "blend_on_spearman": 0.3279,
+    "delta": 0.0007,
+    "baseline_mae": 4.208,
+    "blend_on_mae": 4.272
+   },
+   "full_pool_km": {
+    "n": 795,
+    "baseline_spearman": 0.2874,
+    "blend_on_spearman": 0.2873,
+    "delta": -0.0001,
+    "baseline_mae": 2.177,
+    "blend_on_mae": 2.179
+   }
+  },
+  "pit": {
+   "debuted_km": {
+    "n": 438,
+    "baseline_spearman": 0.306,
+    "blend_on_spearman": 0.2898,
+    "delta": -0.0162,
+    "baseline_mae": 2.382,
+    "blend_on_mae": 2.391
+   },
+   "debuted_resolved": {
+    "n": 104,
+    "baseline_spearman": 0.2432,
+    "blend_on_spearman": 0.2439,
+    "delta": 0.0007,
+    "baseline_mae": 2.286,
+    "blend_on_mae": 2.29
+   },
+   "full_pool_km": {
+    "n": 837,
+    "baseline_spearman": 0.256,
+    "blend_on_spearman": 0.2491,
+    "delta": -0.0069,
+    "baseline_mae": 1.402,
+    "blend_on_mae": 1.404
+   }
+  }
+ },
+ "controls_run": "NONE. The four mandatory controls test whether a GAIN is real; there is no gain to defend.",
+ "defect_it_targeted": {
+  "note": "The selection walks down from the highest level and stops at the first clearing the exposure floor, so exposure gates and never weights.",
+  "live_board_2026_07_30": {
+   "hit": {
+    "multi_level": 701,
+    "scored_on_smaller_level": 151,
+    "share": 0.22,
+    "exposure_discarded_pa": 52746
+   },
+   "pit": {
+    "multi_level": 790,
+    "scored_on_smaller_level": 149,
+    "share": 0.19,
+    "exposure_discarded_bf": 49946
+   }
+  }
+ },
+ "mechanism_verified": {
+  "note": "The blend does what it claims; it simply does not predict better.",
+  "examples": [
+   {
+    "mlbam": 821041,
+    "scored_on": "51 PA at A+",
+    "discarded": "378 PA at A",
+    "ops_rel_off": -0.0375,
+    "ops_rel_on": 0.1423
+   },
+   {
+    "mlbam": 691024,
+    "scored_on": "53 PA at AAA",
+    "discarded": "318 PA at AA",
+    "ops_rel_off": -0.06,
+    "ops_rel_on": 0.1409
+   },
+   {
+    "mlbam": 808265,
+    "note": "franklin_arias moves DOWN: his 19-PA AAA cameo correctly earns 5% weight",
+    "ops_rel_off": 0.2477,
+    "ops_rel_on": 0.2211
+   }
+  ]
+ },
+ "leading_hypothesis_for_the_null": "The level a player HOLDS is itself signal: a promotion is the organisation's own revealed judgement, which winner-take-all reads and exposure-weighting dilutes. The pre-registered follow-up is to keep the highest-level read AND add the lower level as a SEPARATE feature, so the model prices both instead of receiving their average. Different experiment, different gate.",
+ "flags": {
+  "efv_dataset.LEVEL_BLEND_RATES": false,
+  "efv_dataset.LEVEL_BLEND_ANCHOR_MOST_EXPOSED": false
+ },
+ "matrices": "rebuilt under the treatment, then restored from backup and verified byte-identical (arias ops_rel 0.24769633507853406, level AA)"
+}

@@ -1,3 +1,61 @@
+# B3: the winner-take-all level cliff, a PA-weighted blend, and its NULL
+
+> ## VERDICT: NO-SHIP (measured 2026-07-30, same day as pre-registration)
+>
+> The blend was built, both matrices were rebuilt under it, and the shipped
+> forward-chained eval was re-run on both sides. **The primary metric regresses on
+> both sides**, which is no-ship condition 1 as written below, before any result was
+> seen.
+>
+> | cut | baseline | with blend | delta |
+> |---|---|---|---|
+> | **hit debuted_km (PRIMARY)** | 0.3900 | 0.3818 | **-0.0082** |
+> | hit debuted_resolved | 0.3272 | 0.3279 | +0.0007 |
+> | hit full_pool_km | 0.2874 | 0.2873 | -0.0001 |
+> | **pit debuted_km (PRIMARY)** | 0.3060 | 0.2898 | **-0.0162** |
+> | pit debuted_resolved | 0.2432 | 0.2439 | +0.0007 |
+> | pit full_pool_km | 0.2560 | 0.2491 | -0.0069 |
+>
+> Both primary deltas are negative and sit at or inside their MDE95 (0.017 hit /
+> 0.016 pit), so the honest reading is **a null that leans negative**, not a proven
+> loss. Either way it does not clear the bar, and the bar was set first. The four
+> mandatory controls were NOT run, because they are a test of whether a gain is real
+> and there is no gain to defend.
+>
+> **The code stays, DEFAULT OFF**, as a registered candidate with its mechanism
+> intact (`efv_dataset.LEVEL_BLEND_RATES` / `LEVEL_BLEND_ANCHOR_MOST_EXPOSED`).
+> Matrices were restored from backup and verified byte-identical afterwards
+> (arias ops_rel back to 0.24769633507853406, level AA).
+>
+> ### Why this is interesting rather than embarrassing
+>
+> The mechanism demonstrably does what it claims. mlbam 821041, scored on 51 A+
+> plate appearances while 378 at A were discarded, moves from `ops_rel` -0.0375 to
+> +0.1423; 691024 moves -0.0600 to +0.1409. These players really were being priced
+> as below-average on an eighth of their own season, and the blend really does fix
+> that. **It just does not predict better.**
+>
+> The most likely reason, and the pre-registered follow-up if anyone reopens this:
+> **the level a player holds is itself signal.** Being promoted and surviving 51 PA
+> at A+ may carry more information about a prospect than 378 good PA at A, because
+> the promotion is an organisation's own revealed judgement. Winner-take-all reads
+> that judgement; exposure-weighting deliberately dilutes it. If that is right, the
+> repair is not to blend the rates but to keep the highest-level read AND add the
+> lower level as a separate feature, so the model can price both rather than being
+> handed an average of them. That is a different experiment with a different gate.
+>
+> ### What this does NOT resolve
+>
+> The Arias cliff is still there and is now a documented, accepted behaviour rather
+> than a bug awaiting a fix. When he crosses 50 AAA plate appearances his 332-PA AA
+> season leaves the feature set and his grade will move for a mechanical reason. The
+> honest options are to accept it, or to run the separate-feature experiment above.
+> **What is not an option is shipping this blend anyway because it would help him**:
+> it loses on the metric the board is scored by, and the whole point of writing the
+> gate first was to make that call unarguable.
+
+---
+
 # B3 pre-registration: the winner-take-all level cliff, and a PA-weighted blend
 
 Pre-registered 2026-07-30, BEFORE any model change is written or measured, per ground
