@@ -68,3 +68,47 @@ def test_fetch_failure_renders_error_state():
     assert "nightly build is mid-run" in html
     assert "fa-retry" in html                # the retry affordance exists
     assert 'role="alert"' in html
+
+
+# ---------------------------------------------------------------------------
+# PROSPX-pattern board cards + Phase H fields (Lane B, 2026-07-30)
+#
+# Source-level assertions, not render assertions: this module's only browser
+# fixture drives the FETCH-FAILURE path (every fetch rejects by design), so
+# there is no rendered board to inspect here. Pinning the emitted markup in the
+# source is the same approach test_war_rate_plus.py takes for assets/mlbstats.js.
+# ---------------------------------------------------------------------------
+
+def test_board_emits_cards_not_a_table():
+    """The 12-column table squeezed four predicted-deal figures in beside their
+    own P10-P90 bands. The card moves the deal into a row-2 tape instead."""
+    assert "mlb-card fa-card" in JS, "board no longer emits cards"
+    assert "mlb-card-list" in JS
+    assert 'class="mlb-tape"' in JS
+    assert "detail-table" not in JS.split("function renderBoard")[1].split("boardRail(cls)")[0],         "the retired table shell is still emitted by renderBoard"
+
+
+def test_sort_headers_are_spans_with_the_a11y_contract():
+    """The head is a CSS grid now, so a <th> would be invalid markup that
+    browsers silently reparent, dropping the header row entirely."""
+    shead = JS.split("const sHead = (label, key, title) =>")[1].split("};")[0]
+    assert "<span class=\"fa-sort" in shead, "sHead still emits a table cell"
+    assert "<th" not in shead
+    for attr in ('tabindex="0"', 'role="button"', "aria-sort="):
+        assert attr in shead, f"sHead dropped {attr}"
+
+
+def test_rank_and_name_became_sortable():
+    """Both were inert <th> on the table board."""
+    head = JS.split('class="mlb-card-head"')[1].split("</div>")[0]
+    for key in ("rank", "name", "status", "warY1", "surplus", "verdict"):
+        assert f'sHead(' in head and f'"{key}"' in head, f"{key} is not a sort header"
+
+
+def test_phase_h_fields_are_rendered():
+    """warCvar10, pAnyStar and the option decomposition were computed and carried
+    in the payload but rendered NOWHERE (master-plan-2026-07-29 Phase H). A
+    surplus point estimate hides the downside; CVaR is what shows it."""
+    for field in ("warCvar10", "pAnyStar", "optKind"):
+        assert field in JS, f"Phase H field {field} still unrendered"
+    assert "downside WAR" in JS

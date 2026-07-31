@@ -521,15 +521,25 @@
     if (boardState.verdict !== "all") members = members.filter(m => m.verdict === boardState.verdict);
     if (boardState.hand !== "all") members = members.filter(m => handOf(m) === boardState.hand);
     members.sort((a, b) => {
-      const v = m => m[sortKey] ?? (sortKey === "age" ? 99 : -1e15);
+      const v = m => {
+        // String keys sort as text; "rank" means the board's own default order,
+        // which is surplus, so clicking it is the way back from any other sort.
+        if (sortKey === "name") return String(m.name || "").toLowerCase();
+        if (sortKey === "status" || sortKey === "verdict") return String(m[sortKey] || "");
+        if (sortKey === "rank") return m.surplus ?? -1e15;
+        return m[sortKey] ?? (sortKey === "age" ? 99 : -1e15);
+      };
       return boardState.dir * (v(a) > v(b) ? 1 : v(a) < v(b) ? -1 : 0);
     });
+    // Emits a SPAN, not a th: the board head is a CSS grid now, and a th inside
+    // a div is invalid markup that browsers silently reparent, which would drop
+    // the header row entirely.
     const sHead = (label, key, title) => {
       const on = sortKey === key;
       // a11y (matches the prospx/trademachine sort-header pattern): keyboard
       // reachable, announced as a button, live sort state on aria-sort.
       const ariaSort = on ? (boardState.dir < 0 ? "descending" : "ascending") : "none";
-      return `<th class="fa-sort${on ? " is-sorted" : ""}" data-fsort="${key}" title="${esc(title || "Click to sort")}" tabindex="0" role="button" aria-sort="${ariaSort}">${label}${on ? (boardState.dir < 0 ? " ▾" : " ▴") : ""}</th>`;
+      return `<span class="fa-sort${on ? " is-sorted" : ""}" data-fsort="${key}" title="${esc(title || "Click to sort")}" tabindex="0" role="button" aria-sort="${ariaSort}">${label}${on ? (boardState.dir < 0 ? " ▾" : " ▴") : ""}</span>`;
     };
     const head = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">${cls.class_year - 1}-${String(cls.class_year).slice(2)} Class Board</span>
@@ -572,36 +582,75 @@
         (m.projGuar == null || m.status === "option_exercised") ? "fa-dim" : "",
         isOption(m) ? "fa-row-opt" : "",
       ].filter(Boolean).join(" ");
-      return `<tr${trCls ? ` class="${trCls}"` : ""}>
-        <td>${i + 1}</td>
-        <td>${playerLink(m)}${noteBadge(m)} ${typeTag(m)}<span class="fa-sub"> ${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")}${handOf(m) ? " &middot; " + handShort(m) : ""}</span>${comps ? `<div class="fa-comps" title="Nearest real historical contracts (never fabricated)">comps: ${comps}</div>` : ""}</td>
-        <td>${statusChip(m)}</td>
-        <td>${m.warY1 != null ? formatMetric(m.warY1, "war") : EM_DASH}${thinBadge(m)}</td>
-        <td title="Projected bWAR over the predicted term (floor-ceiling from the Gate-1 probability buckets)">${dealWar}</td>
-        <td>${yearsBand}</td>
-        <td>${guarBand}</td>
-        <td>${m.projAav != null ? `${money(m.projAav)}<span class="fa-band"> (${money(m.projAavP10)}&ndash;${money(m.projAavP90)})</span>` : EM_DASH}</td>
-        <td>${m.rational != null ? money(m.rational) : EM_DASH}</td>
-        <td>${surplusSpan(m.surplus, m.surplusP10, m.surplusP90)}</td>
-        <td>${verdictChip(m)}</td>
-        <td title="* = blocked (hover each club for who's blocking - prospect or MLB incumbent)">${fits || EM_DASH}</td>
-      </tr>`;
+      // PROSPX-pattern card (Lane B, 2026-07-30), same treatment the Projections
+      // board took. Row 1 is identity and the verdict-bearing numbers; row 2 is a
+      // tape carrying the PREDICTED DEAL, which is the thing a reader actually
+      // came for and which the table had squeezed into four cells alongside their
+      // own P10-P90 bands.
+      const chip = (label, val, title) => (val == null || val === EM_DASH ? "" :
+        `<div class="mlb-chip"${title ? ` title="${title}"` : ""}><b>${label}</b>${val}</div>`);
+      // Phase H (docs/master-plan-2026-07-29-efv-fa.md): these were computed and
+      // carried in the payload but rendered nowhere. warCvar10 is the mean of the
+      // worst decile of outcomes, i.e. what the deal looks like when it goes
+      // wrong, which is exactly what a surplus point estimate hides.
+      const risk = [
+        m.warCvar10 != null ? chip("downside WAR", formatMetric(m.warCvar10, "war"),
+          "Conditional value at risk: the MEAN of the worst 10 percent of outcome paths, not the 10th percentile itself. What the contract looks like when it goes wrong.") : "",
+        m.pAnyStar != null ? chip("star odds", (m.pAnyStar * 100).toFixed(0) + "%",
+          "Probability of at least one star-level season over the predicted term.") : "",
+        m.optKind ? chip("option", esc(String(m.optKind)) + (m.optHeldBy ? " / " + esc(String(m.optHeldBy)) : ""),
+          "Contract option on the deal: which kind, and who holds it." + (m.optValue != null ? ` Modelled value ${money(m.optValue)}.` : "")) : "",
+      ].join("");
+      const tape = `<div class="mlb-tape"><div class="mlb-tape-inner">
+        ${chip("length", yearsBand, "Predicted contract length, with the P10-P90 range")}
+        ${chip("guarantee", guarBand, "Predicted total guarantee, with the P10-P90 range")}
+        ${chip("AAV", m.projAav != null ? `${money(m.projAav)}<span class="fa-band"> (${money(m.projAavP10)}&ndash;${money(m.projAavP90)})</span>` : null, "Predicted average annual value, with the P10-P90 range")}
+        ${chip("rational", m.rational != null ? money(m.rational) : null, "Convex-priced NPV of the projected production: what the deal is worth if you pay for value rather than for name")}
+        ${risk}
+        ${chip("fits", fits || null, "Clubs whose need, window, payroll room, park and behaviour line up. * = blocked; hover a club for who is blocking.")}
+      </div></div>`;
+      return `<div class="mlb-card fa-card${trCls ? " " + trCls : ""}" tabindex="0" role="button"
+          data-card-href="#player=${encodeURIComponent(m.key)}">
+        <span class="mlb-rank">${i + 1}</span>
+        <div style="min-width:0;">
+          <span class="mlb-name">${playerLink(m)}${noteBadge(m)} ${typeTag(m)}</span>
+          <span class="mlb-sub">${esc(m.pos || "")} &middot; ${m.age != null ? m.age.toFixed(1) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")}${handOf(m) ? " &middot; " + handShort(m) : ""}${m.qo ? ` &middot; <span title="Received a qualifying offer: signing him costs the new club draft compensation">QO</span>` : ""}</span>
+          ${comps ? `<span class="fa-comps" title="Nearest real historical contracts (never fabricated)">comps: ${comps}</span>` : ""}
+        </div>
+        <span class="mlb-metric"><span class="mlb-metric-label">Status</span>${statusChip(m)}</span>
+        <span class="mlb-metric"><span class="mlb-metric-label">WAR y1</span>${m.warY1 != null ? formatMetric(m.warY1, "war") : EM_DASH}${thinBadge(m)}</span>
+        <span class="mlb-metric" title="Projected bWAR over the predicted term (floor-ceiling from the Gate-1 probability buckets)"><span class="mlb-metric-label">Deal WAR</span>${dealWar}</span>
+        <span class="mlb-metric"><span class="mlb-metric-label">Surplus</span>${surplusSpan(m.surplus, m.surplusP10, m.surplusP90)}</span>
+        <span class="mlb-metric"><span class="mlb-metric-label">Verdict</span>${verdictChip(m)}</span>
+        ${tape}
+      </div>`;
     }).join("");
     const _vm = faValueMap(members);
     const valMap = _vm ? `<details class="fa-valmap"><summary>Value map &middot; rational value vs predicted price (current filters)</summary><div class="fa-valmap-wrap" data-export-chart data-export-title="FA value map - rational value vs predicted price">${_vm}</div></details>` : "";
-    rows.innerHTML = head + filterBar + valMap + `<div class="fa-board-layout"><div class="fa-board-main"><table class="detail-table">
-      <thead><tr><th>#</th><th>Player</th><th>Status</th>
-      ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 bWAR")}
-      ${sHead("Deal WAR", "warTotal", "Projected bWAR over the predicted term, with floor-ceiling buckets")}
-      ${sHead(`<span data-gl="m_years">projLength</span>`, "projYears", "Predicted contract length (P10-P90)")}
-      ${sHead(`<span data-gl="m_guarantee">projGuarantee</span>`, "projGuar", "Predicted total guarantee (P10-P90)")}
-      ${sHead(`<span data-gl="m_aav">projAAV</span>`, "projAav", "Predicted average annual value (P10-P90)")}
-      ${sHead(`<span data-gl="rational_value">Rational</span>`, "rational", "Convex-priced NPV of the projected production")}
-      ${sHead(`<span data-gl="contract_surplus">Surplus</span>`, "surplus", "Rational value minus predicted price (hover for the floor/ceiling range)")}
-      <th><span data-gl="deal_plus">Verdict</span></th>
-      <th><span data-gl="fit_components">Fits</span></th></tr></thead>
-      <tbody>${body || '<tr><td colspan="12" style="padding:2rem;text-align:center;color:var(--text-tertiary);">No free agents match these filters.</td></tr>'}</tbody></table></div>
+    // Card-head tracks must mirror the .fa-card grid exactly, so both read from
+    // one definition rather than two that can drift.
+    const FA_TRACKS = "34px minmax(0,1.9fr) 88px 76px 84px 96px 92px";
+    // # and Player join the sortable set; the table had them as inert th.
+    rows.innerHTML = head + filterBar + valMap + `<div class="fa-board-layout"><div class="fa-board-main">
+      <div class="mlb-card-head" style="grid-template-columns:${FA_TRACKS};">
+        ${sHead("#", "rank", "Board position under the current sort")}
+        ${sHead("Player", "name", "Sort by name")}
+        ${sHead("Status", "status", "Where the player is in the market")}
+        ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 bWAR")}
+        ${sHead("Deal WAR", "warTotal", "Projected bWAR over the predicted term, with floor-ceiling buckets")}
+        ${sHead(`<span data-gl="contract_surplus">Surplus</span>`, "surplus", "Rational value minus predicted price (hover for the floor/ceiling range)")}
+        ${sHead(`<span data-gl="deal_plus">Verdict</span>`, "verdict", "The deal call, from surplus banded within the player's own group")}
+      </div>
+      <div class="mlb-card-list">${body || '<div class="fa-sub" style="padding:2rem;text-align:center;">No free agents match these filters.</div>'}</div></div>
       ${boardRail(cls)}</div>`;
+    rows.querySelectorAll(".fa-card").forEach(c => { c.style.gridTemplateColumns = FA_TRACKS; });
+    rows.querySelectorAll(".fa-card[data-card-href]").forEach(c => {
+      const open = () => { location.hash = c.dataset.cardHref.replace(/^#/, ""); };
+      c.onclick = e => { if (!e.target.closest("a,button")) open(); };
+      c.onkeydown = e => {
+        if ((e.key === "Enter" || e.key === " ") && !e.target.closest("a,button")) { e.preventDefault(); open(); }
+      };
+    });
     rows.querySelectorAll("[data-fsort]").forEach(h => {
       const doSort = () => {
         const k = h.dataset.fsort;
