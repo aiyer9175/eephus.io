@@ -109,9 +109,18 @@ scale cannot move served surplus no matter how much it improves WAR accuracy.
 > 11.577 and Spearman 0.117 to 0.150. The shipped map then SUBTRACTS $2.32M from a model
 > already too low in all eight bins, raising mean binned absolute error 2.52 to 3.05 and
 > clamping the bottom three bins to zero, which IS the $0 floor. Re-fit on the production
-> frame the intercept is **+1.233, positive**. Until the re-fit ships, surplus dollars
-> remain provisional and rank claims remain the safe form, exactly as written below.
-> Full measurement: `docs/efv-2026-07-30/ZERO_FLOOR_PRICING_GATE.md` M5.
+> frame the intercept is **+1.233, positive**.
+>
+> **UPDATE 2026-07-31, same day: the re-fit was RUN and FAILED its gate**, losing to the
+> shipped map on held-out MAE on 3 of 3 folds (11.518 shipped against 13.581 refit). The
+> sharper claim above, that the calibration is pointed the wrong way, is **WITHDRAWN**: it
+> is correctly pointed for an MAE objective, because 86 to 90% of the bottom bins realise
+> nothing, the conditional MEDIAN is zero, and MAE is minimised by the median. What
+> survives is the FRAME correction, which is real and is why the artifact was regenerated.
+> Surplus dollars remain provisional for a DIFFERENT reason than this P0 gave: they are an
+> MAE-optimal point forecast being consumed as an expected-value price, and the two
+> objectives disagree by $1.7M to $3.9M per bottom-tier player. Rank claims remain the safe
+> form. Full measurement: `docs/efv-2026-07-30/ZERO_FLOOR_PRICING_GATE.md` M5 and M6.
 >
 > **Original P0 text, 2026-07-25: the surplus calibration is fit on a different FV scale
 > than production feeds it.** `surplus_backtest_real._load_inputs` medians the RAW

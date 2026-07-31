@@ -355,3 +355,85 @@ a correctly-framed fit `ys[0]` should not be 0 at all.
    `config/valuation_sets/prospx_current.yaml`; a re-fit re-freezes that capture and
    restamps every dollar on the board, so it needs a regen and an owner heads-up. This is
    the single largest served-number change any lane in this program has proposed.
+
+---
+
+# M6 (2026-07-31): THE RE-FIT FAILS ITS GATE, and M5's root-cause claim was wrong
+
+Owner authorised "measure, then ship if it clears". It does not clear. It loses on every
+fold.
+
+## The gate result
+
+Fitted on the production frame, the calibration comes out with `y_mm[0] = 0.67` rather
+than 0, exactly as M5 predicted: the degenerate zero bottom block disappears. Held-out
+bias improves to -0.028 (from +2.521 uncalibrated) and held-out slope to 1.059.
+
+Then the pre-registered PRIMARY metric, held-out MAE per player, leave-one-year-out:
+
+| fold | n | uncalibrated | **SHIPPED map** | refit |
+|---|---|---|---|---|
+| 2017 | 807 | 11.977 | **11.333** | 14.528 |
+| 2018 | 814 | 12.089 | **11.246** | 12.720 |
+| 2019 | 615 | 12.688 | **11.976** | 13.495 |
+| **mean** | | 12.251 | **11.518** | 13.581 |
+
+**The refit loses on 3 of 3 folds.** The shipped map also beats doing nothing. Under the
+gate as written this is a NO-SHIP, and not a close one.
+
+## Why M5 was wrong
+
+M5 compared the two maps on **bin means** and concluded the shipped calibration "actively
+HURTS". That comparison implicitly scored against the conditional MEAN. The gate scores
+per-player MAE, which is minimised by the conditional MEDIAN. Those are not the same
+target, and on this population they are violently different:
+
+| bin | pred mean | realised MEAN | realised MEDIAN | realised p75 | share realising <= $0.1M |
+|---|---|---|---|---|---|
+| 0 | 1.12 | 1.83 | **0.00** | 0.00 | **90%** |
+| 1 | 1.47 | 3.75 | **0.00** | 0.00 | 87% |
+| 2 | 1.67 | 1.70 | **0.00** | 0.00 | 90% |
+| 3 | 2.00 | 2.50 | **0.00** | 0.00 | 86% |
+| 4 | 2.32 | 3.89 | **0.00** | 0.00 | 90% |
+| 5 | 3.95 | 5.94 | **0.00** | 0.00 | 78% |
+| 6 | 7.43 | 14.92 | 0.00 | 19.95 | 57% |
+| 7 | 22.58 | 35.75 | 10.60 | 57.60 | 45% |
+
+Nine in ten players in the bottom bins realise essentially nothing. The positive mean is
+a handful of hits. **So $0 is the MAE-optimal prediction there**, and the zero floor is
+not a defect on the metric this lane is gated by. It is the loss function working.
+
+## What the zero floor actually is
+
+Not a bug. A **loss-function choice**, and the two answers genuinely differ:
+
+- Scored by **MAE** (predict the median), $0 is right for the bottom of the board, and the
+  shipped calibration is doing its job.
+- Scored by **expected value** (predict the mean), $0 understates by $1.7M to $3.9M per
+  player, because the tier is a lottery and the lottery has positive EV.
+
+Which one is correct depends on what surplus is FOR. As a point forecast judged on
+average error, the current behaviour is defensible. As a **trade-valuation price**, which
+is how `bayes_trade_value.apply_platform_surplus` consumes it, the expected value is the
+economically meaningful quantity and $0 is wrong: you would not accept a free lottery
+ticket priced at zero, and a club trading 3,822 such players is not trading 3,822 zeros.
+
+**That is the real question, and it is an owner question, not a measurement one.** No
+re-fit resolves it, because the two objectives disagree about the same data.
+
+## Verdict and what stands
+
+- **Re-fit: NO SHIP.** Fails the pre-registered primary on 3 of 3 folds.
+- **M5's claim that the calibration is "pointed the wrong way": WITHDRAWN.** It is
+  correctly pointed for an MAE objective. What survives from M5 is narrower and still
+  true: the calibration was fit on a different FV frame than production serves, the
+  regenerated artifact corrects that, and the production frame is the better one to score
+  on (MAE 11.577 against 12.019, Spearman 0.150 against 0.117).
+- **Arm 1 (the "under floor" display) stands and is now better motivated.** If $0 is
+  MAE-optimal but understates expected value, then rendering it as a hard dollar figure
+  was exactly the wrong presentation, and showing it as a limit is right regardless of
+  which objective wins.
+- **The tripwire stays red**, and its message should be re-read: it says the bottom block
+  is degenerate, which is TRUE and which the owner may decide is acceptable. If the
+  expected-value objective is chosen, the fix is not a re-fit but a second published
+  quantity.
