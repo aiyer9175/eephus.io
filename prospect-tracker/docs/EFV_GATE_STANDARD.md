@@ -101,7 +101,19 @@ scale cannot move served surplus no matter how much it improves WAR accuracy.
 > reprices the entire board even though every rank is untouched. The grade-normalization
 > repair is exactly such a change.
 >
-> **Open P0 as of 2026-07-25: the surplus calibration is fit on a different FV scale
+> **P0 CLOSED 2026-07-31. Kept below because the finding is worse than the warning was,
+> and because the calibration it indicts is still shipped.** Regenerating
+> `surplus_backtest_real` on the NORMALIZED frame (its own default; the committed artifact
+> predated the switch) flips the bias sign: -4.586 raw to **+2.521** normalized, i.e. the
+> model UNDER-predicts on the frame it actually serves, while MAE improves 12.019 to
+> 11.577 and Spearman 0.117 to 0.150. The shipped map then SUBTRACTS $2.32M from a model
+> already too low in all eight bins, raising mean binned absolute error 2.52 to 3.05 and
+> clamping the bottom three bins to zero, which IS the $0 floor. Re-fit on the production
+> frame the intercept is **+1.233, positive**. Until the re-fit ships, surplus dollars
+> remain provisional and rank claims remain the safe form, exactly as written below.
+> Full measurement: `docs/efv-2026-07-30/ZERO_FLOOR_PRICING_GATE.md` M5.
+>
+> **Original P0 text, 2026-07-25: the surplus calibration is fit on a different FV scale
 > than production feeds it.** `surplus_backtest_real._load_inputs` medians the RAW
 > per-source `fv` straight from the snapshots table with no grade normalization, and the
 > shipped calibration (`config/valuation_sets/prospx_current.yaml`,
