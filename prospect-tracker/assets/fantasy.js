@@ -15,6 +15,17 @@
   "use strict";
   var DATA_URL = "/data/fantasy.json";
   var S = { data: null, system: "fgp", section: "streamers", byId: {}, streamerDay: null };
+  // Resolve a section entry to its player record. Section lists are bare mlbam
+  // ids and every section except buy/sell is single-sided, so the SIDE comes from
+  // the calling surface. buy/sell entries carry their own side (see
+  // fantasy_export._buy_sell); the object form is handled by recOf below.
+  function rec(mlbam, side) { return S.byId[mlbam + "|" + side]; }
+  function recOf(entry, fallbackSide) {
+    if (entry && typeof entry === "object") return rec(entry.mlbam, entry.side);
+    // Tolerate the pre-2026-07-31 shape (bare id) so a cached JSON with fresh JS
+    // still renders: try the stated fallback, then the other side.
+    return rec(entry, fallbackSide) || rec(entry, fallbackSide === "hit" ? "pit" : "hit");
+  }
   // player_links map (mlbam -> merged-card key), resolved once at boot so
   // nameLink can build hrefs synchronously (mirrors mlbstats.js / pal.js).
   var LINKS = null;
@@ -80,7 +91,7 @@
   function isRoto() { return S.system === "5x5" || S.system === "4x4"; }
   // Score every player in `ids` under the current system → [{p, score}] desc.
   function scored(ids, side) {
-    var pool = ids.map(function (m) { return S.byId[m]; }).filter(Boolean);
+    var pool = ids.map(function (m) { return rec(m, side); }).filter(Boolean);
     if (isRoto()) {
       var rv = rotoValue(pool, side);
       return pool.map(function (p) { return { p: p, score: rv[p.mlbam] }; })
@@ -145,7 +156,7 @@
         '" role="tab" aria-selected="' + (on ? "true" : "false") + '">' + streamerDayLabel(d) + "</button>";
     }).join("");
     var rows = (byDay[S.streamerDay] || []).slice(0, 40).map(function (st, i) {
-      var p = S.byId[st.mlbam] || {}, s = p.skill || {};
+      var p = rec(st.mlbam, "pit") || {}, s = p.skill || {};   // probables are pitchers
       return '<tr><td class="ff-rk">' + (i + 1) + '</td><td>' + esc(st.date) + '</td><td class="ff-nm">' +
         nameLink(st.mlbam, st.name) + " " + teamLogo(st.team) + '</td><td>@ ' + esc(st.opp_org) +
         " (Off+ " + num(st.opp_off, 0) + ')</td><td class="ff-sc">' + num(st.per_start_fgp, 1) + "</td><td>" +
@@ -170,8 +181,8 @@
   }
   function renderBuySell() {
     function col(ids, label, cls) {
-      var rows = (ids || []).slice(0, 30).map(function (m) {
-        var p = S.byId[m]; if (!p) return "";
+      var rows = (ids || []).slice(0, 30).map(function (e) {
+        var p = recOf(e, "hit"); if (!p) return "";
         var s = p.skill || {}, isHit = p.side === "hit", gap = isHit ? s.luck_gap : s.luck;
         // Mechanics-trend chip (W6, display context only): baked server-side
         // from per-season Swing+ when the latest-vs-prior move is >= 5 points.
@@ -199,7 +210,7 @@
     var teams = Object.keys(depth).sort();
     var cards = teams.map(function (tm) {
       var lst = (depth[tm] || []).map(function (m, i) {
-        var p = S.byId[m]; if (!p) return "";
+        var p = rec(m, "pit"); if (!p) return "";   // bullpen depth is pitchers
         var s = p.skill || {};
         var role = i === 0 ? '<span class="ff-closer">CLOSER</span>' : '<span class="ff-hc">' + (i === 1 ? "next" : "depth") + "</span>";
         return '<div class="ff-relief">' + role + " " + nameLink(p.mlbam, p.name) +
@@ -330,7 +341,15 @@
   function onData(d) {
     if (!d || !d.players) { notReady(); return; }
     S.data = d;
-    S.byId = {}; d.players.forEach(function (p) { S.byId[p.mlbam] = p; });
+    // Keyed by mlbam AND side. A two-way player has TWO player records (the
+    // exporter emits both, correctly, inside its `for side in ("hit","pit")`
+    // loop), and keying on mlbam alone was last-write-wins: "pit" is appended
+    // second, so it silently clobbered the hitter record. Shohei Ohtani was
+    // rendering his 172.6 pitcher points on the ROS Hitters board, which put him
+    // at rank 15 instead of rank 3 with his real 284.8, and handed renderBuySell
+    // a pitcher skill object for a row ranked in on hitter luck.
+    S.byId = {};
+    d.players.forEach(function (p) { S.byId[p.mlbam + "|" + p.side] = p; });
     var def = (d.scoring_catalog || []).filter(function (c) { return c.default; })[0];
     S.system = def ? def.id : "fgp";
     var banner = el("fantasy-banner");

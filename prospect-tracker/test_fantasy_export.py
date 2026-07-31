@@ -81,11 +81,15 @@ def _synthetic_pool():
 def test_buy_sell_surfaces_pitchers_after_normalization():
     pool = _synthetic_pool()
     buy, sell = fe._buy_sell(pool, n=5)
+    # Entries carry side as of 2026-07-31 (see the two-way regression below), so
+    # read the id out rather than comparing against a bare int.
+    buy_ids = [e["mlbam"] for e in buy]
+    sell_ids = [e["mlbam"] for e in sell]
     # The most-unlucky pitcher (luck=+0.06) reaches the buy list, and the
     # most-lucky pitcher (luck=-0.06) reaches the sell list, despite raw
     # magnitudes ~150x smaller than the hitters'.
-    assert 2000 in buy, buy      # pitcher luck=+0.06
-    assert 2003 in sell, sell    # pitcher luck=-0.06
+    assert 2000 in buy_ids, buy      # pitcher luck=+0.06
+    assert 2003 in sell_ids, sell    # pitcher luck=-0.06
 
 
 def test_buy_sell_raw_sort_would_bury_pitchers():
@@ -102,10 +106,12 @@ def test_buy_sell_sign_preserved():
     # sell rows overperforming (luck<0), so the displayed gap stays consistent
     # with the Buy/Sell labels.
     pool = _synthetic_pool()
-    by_id = {p["mlbam"]: p for p in pool}
+    # Key by (mlbam, side) - the same fix the client got on 2026-07-31. Keying on
+    # mlbam alone is what silently collapsed two-way players.
+    by_id = {(p["mlbam"], p["side"]): p for p in pool}
     buy, sell = fe._buy_sell(pool, n=5)
-    assert all(fe._player_luck(by_id[m]) > 0 for m in buy), buy
-    assert all(fe._player_luck(by_id[m]) < 0 for m in sell), sell
+    assert all(fe._player_luck(by_id[(e["mlbam"], e["side"])]) > 0 for e in buy), buy
+    assert all(fe._player_luck(by_id[(e["mlbam"], e["side"])]) < 0 for e in sell), sell
 
 
 def test_buy_sell_respects_fpts_gate():
@@ -226,6 +232,51 @@ def test_dynasty_respects_top_n_cap():
     assert len(rows) == 5
     # Cap keeps the five highest-eFV prospects (grades 60..56 -> ids 20..16).
     assert [r["mlbam"] for r in rows] == [20, 19, 18, 17, 16], rows
+
+
+def test_buy_sell_entries_carry_side_for_two_way_players():
+    """Regression, 2026-07-31. Every section list is bare mlbam ids, which is fine
+    for the single-sided sections (a renderer of ROS Hitters knows it wants "hit").
+    buy/sell is the one COMBINED ranking, so a two-way player's two records are
+    both eligible and a bare id cannot be resolved. It was being resolved by a
+    client map keyed on mlbam alone, last-write-wins, and "pit" is appended
+    second: Shohei Ohtani rendered his 172.6 PITCHER points on the ROS Hitters
+    board and a pitcher skill object under a row ranked in on hitter luck.
+    Entries now carry their own side."""
+    def mk(mlbam, side, luck, fpts):
+        skill = {"luck_gap": luck} if side == "hit" else {"luck": luck}
+        return {"mlbam": mlbam, "side": side, "fpts_fgp": fpts, "skill": skill,
+                "pos": "DH" if side == "hit" else "SP"}
+    players = [
+        mk(1, "hit", 40.0, 300.0), mk(2, "hit", -35.0, 250.0),
+        mk(3, "pit", 0.04, 200.0), mk(4, "pit", -0.05, 190.0),
+        # the two-way player: BOTH records eligible, different sides
+        mk(99, "hit", 31.0, 284.8), mk(99, "pit", 0.01, 172.6),
+    ]
+    buy, sell = fe._buy_sell(players, n=6)
+    for entry in list(buy) + list(sell):
+        assert isinstance(entry, dict), f"entry must carry side, got {entry!r}"
+        assert entry.get("side") in ("hit", "pit"), entry
+        assert entry.get("mlbam") is not None, entry
+    # The two-way id must be resolvable to a SPECIFIC record, which is the whole
+    # point: a bare 99 could mean either row.
+    two_way = [e for e in buy + sell if e["mlbam"] == 99]
+    assert two_way, "two-way player should rank on at least one side"
+    for e in two_way:
+        match = [p for p in players if p["mlbam"] == 99 and p["side"] == e["side"]]
+        assert len(match) == 1, e
+
+
+def test_single_sided_sections_stay_bare_ids():
+    """The side-carrying shape is deliberately scoped to buy/sell. The other
+    sections are single-sided by construction and their renderers supply the side,
+    so widening the shape everywhere would be churn with no defect behind it."""
+    import inspect
+    src = inspect.getsource(fe.build_sections)
+    for name in ("ros_hitter", "ros_sp", "ros_rp"):
+        assert f'"{name}": rank(' in src, (
+            f"{name} should still be built by rank() as a bare-id list; if this "
+            "changed, assets/fantasy.js scored()/recOf() must change with it")
 
 
 if __name__ == "__main__":

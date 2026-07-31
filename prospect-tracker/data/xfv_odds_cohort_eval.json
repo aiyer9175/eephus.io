@@ -1,0 +1,142 @@
+{
+ "generated_at": "2026-07-31",
+ "model_id": "xfv_odds_cohort",
+ "verdict": "NO_SHIP",
+ "gate": "docs/efv-2026-07-30/ODDS_COHORT_REBUILD_GATE.md",
+ "hypothesis": "H1: conditioning the outcome-bucket distribution on (grade, age_rel_level, ops_rel/k_rel) rather than grade alone materially improves probabilistic calibration.",
+ "result": "REFUTED",
+ "pool": {
+  "n": 517,
+  "base_rate_bust": 0.6809,
+  "note": "forward-chained held-out rows carrying a resolved bucket and as-of cohort features"
+ },
+ "arms": {
+  "const": {
+   "brier": 0.23934,
+   "logloss": 0.67356
+  },
+  "incumbent": {
+   "brier": 0.231516,
+   "logloss": 0.737174,
+   "d_const_brier": 0.007824,
+   "d_const_logloss": -0.063613
+  },
+  "incumbent_plus_cohort": {
+   "brier": 0.223697,
+   "logloss": 0.730122,
+   "d_const_brier": 0.015643,
+   "d_const_logloss": -0.056561
+  },
+  "incumbent_plus_global_platt": {
+   "brier": 0.189564,
+   "logloss": 0.571016,
+   "d_const_brier": 0.049776,
+   "d_const_logloss": 0.102545
+  },
+  "platt_plus_cohort": {
+   "brier": 0.190273,
+   "logloss": 0.579427,
+   "d_const_brier": 0.049067,
+   "d_const_logloss": 0.094133
+  }
+ },
+ "cohort_increment": {
+  "on_raw_incumbent": {
+   "d_brier": 0.007819,
+   "d_logloss": 0.007052
+  },
+  "on_platt_base": {
+   "d_brier": -0.000709,
+   "d_logloss": -0.008411,
+   "note": "NEGATIVE: cohorts subtract once the base is calibrated"
+  }
+ },
+ "killing_control": {
+  "name": "zero-information control (cohort labels shuffled, 200 shuffles)",
+  "finding": "observed gain lies INSIDE the shuffled null band on all four metrics",
+  "d_inc_brier": {
+   "observed": 0.007819,
+   "null_ci95": [
+    0.000537,
+    0.010918
+   ]
+  },
+  "d_inc_logloss": {
+   "observed": 0.007052,
+   "null_ci95": [
+    -0.011079,
+    0.02185
+   ]
+  },
+  "d_const_brier": {
+   "observed": 0.015643,
+   "null_ci95": [
+    0.008361,
+    0.018742
+   ]
+  },
+  "d_const_logloss": {
+   "observed": -0.056561,
+   "null_ci95": [
+    -0.074693,
+    -0.041764
+   ]
+  }
+ },
+ "motivating_axis_was_fit": {
+  "note": "the motivating cells are cut on ABSOLUTE age (archetype_comps facets.age edges 20/22/23.5), an axis the first pass never fit; fitted here and it also fails",
+  "level_x_absage_x_sign": {
+   "cells": 35,
+   "d_inc_brier": 0.007831,
+   "ci95": [
+    -0.001055,
+    0.018863
+   ],
+   "ci_clean": false
+  },
+  "level_x_absage": {
+   "cells": 19,
+   "d_inc_brier": 0.009251,
+   "ci95": [
+    -0.00258,
+    0.021121
+   ],
+   "ci_clean": false
+  },
+  "absage_x_sign": {
+   "cells": 8,
+   "d_inc_brier": 0.011918,
+   "ci95": [
+    0.001509,
+    0.020238
+   ],
+   "ci_clean": true
+  }
+ },
+ "gain_is_decreasing_in_cell_count": {
+  "note": "H1 predicted the opposite. A ONE-cell grid carries no cohort information at all and beats the 33-cell pre-registered grid by 2.8x on Brier and 6.5x on log loss.",
+  "d_inc_brier_by_cells": {
+   "1": 0.0222,
+   "2": 0.0198,
+   "4": 0.0139,
+   "8": 0.0119,
+   "19": 0.0093,
+   "33": 0.0078,
+   "35": 0.0078
+  }
+ },
+ "root_cause": {
+  "incumbent_calibration_slope": 0.368,
+  "incumbent_ece": 0.201,
+  "note": "the defect is SLOPE; a per-cohort logit OFFSET can only move the intercept, which is why this design could not have worked"
+ },
+ "blast_radius": "none, nothing shipped; served p_bust unchanged",
+ "spun_out_lane": "docs/efv-2026-07-30/ODDS_CALIBRATION_SLOPE_GATE.md",
+ "provenance": {
+  "measurement_scripts": [
+   "rv_platt.py",
+   "rv_attack.py"
+  ],
+  "note": "scripts live in the session scratchpad, not the repo: this lane shipped no code. Numbers regenerated at artifact-write time, not transcribed."
+ }
+}

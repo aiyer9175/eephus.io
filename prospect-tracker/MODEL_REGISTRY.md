@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-31**. `validate()` at generation time: **clean**.
 
-**200 models.** Verdicts: validated: 34, provisional: 73, unvalidated: 28, deprecated: 65.
+**202 models.** Verdicts: validated: 34, provisional: 73, unvalidated: 29, deprecated: 66.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -210,6 +210,8 @@ stamped as of **2026-07-31**. `validate()` at generation time: **clean**.
 | `xfv_repeat_level` | none served. Candidate only, DEFAULT OFF (efv_model.E1_RE... | first-6yr bWAR; adds seasons_at_level (consecutive seasons on the current level) to the eFV ridge. | the shipped feature set without it | same; scored on the shipped forward-chained efv_model.run protocol on rebuilt... | pooled OOS Spearman, debuted_km, blend arm; MDE95 0.017 hit / 0.016 pit; plus... | **deprecated** | `data/xfv_repeat_level_eval.json` | 0 | no |
 | `savant_arm_strength` | none served yet. Ingest only: data/savant_arm.json. | nothing. MEASUREMENT FEED: per (player, season, position-thrown-from) average and max throw velocity from the Savant arm-streng... | the feed itself | n/a | coverage; 795 players, 2020-2026 | **unvalidated** | - | - | - |
 | `savant_sprint` | none served yet. Ingest only: data/savant_sprint.json. | nothing. MEASUREMENT FEED: per (player, season) sprint speed in ft/s from the Savant leaderboard, 2015+. | the feed itself | n/a | coverage; 1,603 players, 2015-2026 | **unvalidated** | - | - | - |
+| `xfv_odds_cohort` | NOTHING. This row records a NULL. The candidate was condi... | P(outcome bucket \| grade, age_rel_level, ops_rel/k_rel) for a prospect, with the existing grade-only p_bucket_given_fv as the... | the INCUMBENT grade-only curve p_bucket_given_fv, unchanged. The cohort head... | two baselines, both pre-registered: the incumbent grade-only curve AND a cons... | Brier and log loss on held-out forward-chained folds, with four mandatory con... | **deprecated** | `data/xfv_odds_cohort_eval.json` | 0 | no |
+| `xfv_odds_calibration_slope` | NOTHING YET. Pre-registered 2026-07-31, NOT FITTED, NOT S... | a two-parameter monotone recalibration of the EXISTING grade-only odds curve output (leaving p_bucket_given_fv itself untouched) | none; the lane is pre-registered and unfitted | the incumbent grade-only curve AND a constant base rate, both required with p... | Brier and log loss on held-out forward-chained folds (>=4 splits), plus calib... | **unvalidated** | - | - | no |
 
 Stored problems at last refresh: none.
 

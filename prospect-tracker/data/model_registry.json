@@ -2923,6 +2923,34 @@
    "verdict": "unvalidated",
    "notes": "SHIPPED 2026-07-30 for Lane A (owner ask 1). Unlike arm strength this one DOES discriminate position: 2025 medians run C 26.1, 1B 26.4, 3B 27.0, 2B/LF/RF 27.8, SS 27.9, CF 28.9, a spread of 2.75 ft/s against a pooled sd of 1.35, ratio 2.03 against context-adjusted arm's 0.51. Four times the discrimination, a monotone ladder in the expected order, and no throw-context confound because a sprint is a sprint wherever the player stands. It is therefore the indicator the outfield half of ask 1 should be built on, gated on its own terms. See docs/efv-2026-07-30/CONVERSION_ARM_GATE_VERDICT.md.",
    "last_checked": "2026-07-30"
+  },
+  {
+   "model_id": "xfv_odds_cohort",
+   "surface": "NOTHING. This row records a NULL. The candidate was conditioning the outcome-bucket distribution on cohort (grade, age-for-level, recent production) instead of grade alone. No production module was edited and no served p_bust moved.",
+   "predicts": "P(outcome bucket | grade, age_rel_level, ops_rel/k_rel) for a prospect, with the existing grade-only p_bucket_given_fv as the shrinkage prior for thin cells",
+   "champion": "the INCUMBENT grade-only curve p_bucket_given_fv, unchanged. The cohort head is refuted.",
+   "baseline": "two baselines, both pre-registered: the incumbent grade-only curve AND a constant base rate. Beating the incumbent while losing to a constant is the failure the prior odds lane already recorded.",
+   "metric": "Brier and log loss on held-out forward-chained folds, with four mandatory controls: paired bootstrap, zero-information control, permutation null, >=4 time splits",
+   "eval_artifact": "data/xfv_odds_cohort_eval.json",
+   "verdict": "deprecated",
+   "last_checked": "2026-07-31",
+   "stale": false,
+   "artifact_age_days": 0,
+   "notes": "NO-SHIP 2026-07-31, killed by its own mandatory zero-information control: with cohort labels shuffled across rows (200 shuffles) the observed gain lies INSIDE the null band on ALL FOUR metrics (d_inc_brier +0.007819 against null CI [+0.000537,+0.010918]; d_inc_logloss +0.007052 against [-0.011079,+0.021850]; d_const_brier +0.015643 against [+0.008361,+0.018742]; d_const_logloss -0.056561 against [-0.074693,-0.041764]). Shuffling reproduces the entire gain, so the cohort information contributes nothing. THE MOTIVATING AXIS WAS ALSO FIT and also fails: the first pass tested only age_rel_level grids, but the motivating cells are cut on ABSOLUTE age (archetype_comps facets.age edges 20/22/23.5); fitted, level x ABS-AGE x sign gives d_inc_brier +0.007831 CI [-0.001055,+0.018863], CI includes zero. THE HYPOTHESIS IS INVERTED BY THE DATA: the gain is strictly DECREASING in cell count (1 cell +0.0222, 2 +0.0198, 4 +0.0139, 8 +0.0119, 19 +0.0093, 33 +0.0078, 35 +0.0078), and a ONE-cell grid carries no cohort information at all yet beats the 33-cell pre-registered grid by 2.8x on Brier and 6.5x on log loss. ROOT CAUSE, which is why the design could never have worked: the incumbent calibration SLOPE is 0.368 with ECE 0.201, and a per-cohort logit OFFSET can only move the intercept. Fit a global Platt (2 params, zero cohort info) and cohort offsets on top go NEGATIVE (d_brier -0.000709, d_logloss -0.008411): cohorts only ever looked useful because they were absorbing miscalibration that two global parameters absorb better. CORRECTION TO THE FIRST PASS, recorded so it does not enter the ledger as fact: the first pass proposed to describe this as the identical beats_incumbent-true / beats_constant-false signature as xfv_odds_recalibration_ship. That is FALSE. That artifact records d_const_brier +0.013289 and d_const_logloss +0.041014, both POSITIVE; it beat the constant on point estimate and failed on CI width and the permutation null. Different failure in kind. The first pass also charged the candidate with a log-loss loss to the constant that PRE-EXISTS it (the raw incumbent loses by -0.063613 on the same 517 rows; the cohort head improves that to -0.056561). HONEST CONCLUSION PUBLISHED: our bust odds are calibrated to the GRADE and not to the player, and conditioning on cohort does not fix it; readers wanting the 24-year-old-repeating-AAA answer should use the outcome-comp cohorts directly, which already carry 77.1 percent. SPUN OUT, NOT SHIPPED: the Platt row is a real finding this lane was not chartered to make and it clears the hard bar (+0.049776 Brier / +0.102545 log loss against a constant); pre-registered separately at docs/efv-2026-07-30/ODDS_CALIBRATION_SLOPE_GATE.md rather than shipped on a gate written for a different hypothesis."
+  },
+  {
+   "model_id": "xfv_odds_calibration_slope",
+   "surface": "NOTHING YET. Pre-registered 2026-07-31, NOT FITTED, NOT SHIPPED. Served p_bust is unchanged.",
+   "predicts": "a two-parameter monotone recalibration of the EXISTING grade-only odds curve output (leaving p_bucket_given_fv itself untouched)",
+   "champion": "none; the lane is pre-registered and unfitted",
+   "baseline": "the incumbent grade-only curve AND a constant base rate, both required with paired-bootstrap CI95 excluding zero",
+   "metric": "Brier and log loss on held-out forward-chained folds (>=4 splits), plus calibration slope and ECE reported before/after: the claim is specifically that slope moves toward 1.0 from 0.368",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "last_checked": "2026-07-31",
+   "stale": false,
+   "artifact_age_days": null,
+   "notes": "PRE-REGISTERED ONLY, gate at docs/efv-2026-07-30/ODDS_CALIBRATION_SLOPE_GATE.md. Motivated by a control run inside the cohort lane refutation: on the 517-row forward-chained pool a global Platt on the incumbent output scores Brier 0.189564 / log loss 0.571016 against a constant 0.239340 / 0.673560, i.e. +0.049776 and +0.102545, clearing the beat-a-constant bar that killed both prior odds lanes. The raw incumbent LOSES to that constant on log loss by -0.063613. Mechanism: incumbent calibration slope 0.368, ECE 0.201, so the odds are compressed toward their mean by roughly 3x and one global monotone transform addresses it where per-cohort intercepts cannot. THIS IS A PROMISING NUMBER, NOT A VALIDATED ONE: it was produced as a control inside another lane gate, on one pool, with no forward-chaining discipline of its own and none of the four mandatory controls. That is exactly why it is pre-registered rather than shipped. DISTINCT from the already-spent xfv_odds_recalibration_ship lane, which re-fit the CURVE; this transforms its output. If that distinction collapses under inspection the lane is a duplicate and should be closed without fitting."
   }
  ],
  "problems": []
