@@ -432,11 +432,12 @@ null vs MDE95 0.017 in `tools/_sweep_out/structure_point.json`), tool_speed remo
 (HURTS -0.0068), C2 empirical age norms (would make Bradfield read YOUNG for AAA -
 `data/_c_agenorms.json`), surrogate labels (spent, ground rule above).
 
-**E5. Escalation dial if post-regen ranks are not decisive enough:** the measured
-onset table (`docs/efv-2026-07-30/EFV_LANE_GATES.md:329-339`) - onset 24.0 vs 23.0;
-blast radius is exactly three live hitters (bradfield 24.7, taylor 24.2, bo_davidson
-24.1); onset 22.0 was measured to cost two top-100 pitchers. Owner dial, not a model
-change.
+**E5. Escalation dial: DECIDED - keep 23.0, no code change.** Direction, for the record:
+a LOWER onset is HARSHER. The shipped 23.0 already lands Bradfield at 123 and Taylor
+outside the top 100 with zero pitcher-share cost. The only true escalation is 22.0
+(Bradfield 131) and it costs two top-100 pitchers, taxing the side this program has been
+repairing. 24.0 would be a DE-escalation (Bradfield back to 100). See the correction in
+the decision queue above. Owner dial, not a model change.
 
 **E6. Odds coherence audit (register as owner call).** Served p_bust: Taylor 0.264,
 Bradfield 0.243 - against comp-cohort bust rates of 70-77%. Odds are PINNED to the
@@ -549,14 +550,38 @@ drive-by).
 
 ---
 
-## Owner decision queue (blocking inputs, collect before the dependent step)
+## Owner decision queue
+
+### TAKEN 2026-07-30 evening (binding on the executor)
+
+| # | Decision | RULING |
+|---|----------|--------|
+| 1 | Push to main/beta after Phase 0 regen | **PUSH once the acceptance checks pass.** Run the runbook end to end including step 8 (main, then sync beta). |
+| 2 | WAR-rate shrink owner_call | **CLOSE it: ship the arm-S shrink as NEW `_adj` companion columns** (raw columns keep their meaning) **plus the 1yr percentile chip.** Lane C2 as written. |
+| 3 | Age-onset dial | **KEEP 23.0. No code change.** See the correction below. |
+| 4 | Arias policy overlay | **Do NOT build it.** Run the B3 gate and accept the outcome; revisit only if his AAA line moves consensus. |
+
+**Correction on record (author error, caught before execution).** The decision queue as
+first put to the owner described onset **24.0 as an escalation**. It is the opposite: a
+LOWER onset is the harsher setting. Verified against `_age_ramp` and the measured board
+table (`EFV_LANE_GATES.md:329-339`):
+
+| onset | bradfield age factor | bradfield rank | top-100 pitchers |
+|---|---|---|---|
+| 25.0 (retired) | 1.00 | 88 | 8 |
+| 24.0 | 0.93 | 100 | 8 |
+| **23.0 (shipped)** | **0.83** | **123** | **8** |
+| 22.0 | 0.75 | 131 | 6 |
+
+Applying 24.0 would have returned Bradfield to the top-100 edge and cut Taylor's penalty
+to 0.98, reversing ask 5. The owner was re-asked with the direction corrected and chose
+to keep 23.0, which already satisfies the ask at zero pitcher-share cost. Onset 22.0
+remains the only true escalation and carries a measured cost of two top-100 pitchers.
+
+### STILL OPEN (collect before the dependent step)
 
 | # | Decision | Default if silent | Blocks |
 |---|----------|-------------------|--------|
-| 1 | Push to main/beta after Phase 0 regen | Hold at step 7 (no push) | Phase 0 step 8 |
-| 2 | WAR-rate shrink owner_call | This plan reads ask 3 as CLOSE->ship `_adj` companion columns | C2 |
-| 3 | Age-onset escalation to 24.0 if 101-110 is not decisive | Keep 23.0 | E5 |
-| 4 | Arias policy overlay if B3 leaves him #2 | Do not build | E3 |
 | 5 | Odds re-key / p_bust basis | Keep pin, publish audit | E6 |
 | 6 | Fantasy module in the Lane B uplift | Exclude | B |
 | 7 | FA fits concentration-vs-MRR; rate_line OFF | Untouched (need pre-registration) | none in this plan |
