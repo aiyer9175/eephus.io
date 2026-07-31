@@ -2899,6 +2899,30 @@
    "last_checked": "2026-07-30",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "savant_arm_strength",
+   "surface": "none served yet. Ingest only: data/savant_arm.json.",
+   "predicts": "nothing. MEASUREMENT FEED: per (player, season, position-thrown-from) average and max throw velocity from the Savant arm-strength leaderboard, 2020+ (coverage start probed, not assumed).",
+   "champion": "the feed itself",
+   "baseline": "n/a",
+   "metric": "coverage; 795 players, 2020-2026",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "notes": "SHIPPED 2026-07-30 for Lane A (owner ask 1). First arm measurement anywhere in the tree. THE HEADLINE FINDING IS A NEGATIVE ONE and lives in docs/efv-2026-07-30/CONVERSION_ARM_GATE_VERDICT.md: the mph is heavily conditioned on THROW CONTEXT, not arm talent. Same player, same season, throwing from two spots reads +3.69 mph from 3B vs 2B and +7.46 from the outfield vs the infield (98% of 102 pairs). Removing that collapses the infield spread from 8.30 mph to 1.94 against a within-position sd of 3.80, so position barely selects on arm and the planned candidate GATE was a NO SHIP. 3B minus SS is +0.50 mph, i.e. arm is essentially never the binding constraint inside the infield. The feed still ships: it is what a scouted throw grade can finally be audited against (tool_grade_tables has no throw table because nothing measured arms). Catchers are absent (no arm_c column; catcher throwing is the separate pop-time feed) and the year param is `year`, with `season` silently ignored.",
+   "last_checked": "2026-07-30"
+  },
+  {
+   "model_id": "savant_sprint",
+   "surface": "none served yet. Ingest only: data/savant_sprint.json.",
+   "predicts": "nothing. MEASUREMENT FEED: per (player, season) sprint speed in ft/s from the Savant leaderboard, 2015+.",
+   "champion": "the feed itself",
+   "baseline": "n/a",
+   "metric": "coverage; 1,603 players, 2015-2026",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "notes": "SHIPPED 2026-07-30 for Lane A (owner ask 1). Unlike arm strength this one DOES discriminate position: 2025 medians run C 26.1, 1B 26.4, 3B 27.0, 2B/LF/RF 27.8, SS 27.9, CF 28.9, a spread of 2.75 ft/s against a pooled sd of 1.35, ratio 2.03 against context-adjusted arm's 0.51. Four times the discrimination, a monotone ladder in the expected order, and no throw-context confound because a sprint is a sprint wherever the player stands. It is therefore the indicator the outfield half of ask 1 should be built on, gated on its own terms. See docs/efv-2026-07-30/CONVERSION_ARM_GATE_VERDICT.md.",
+   "last_checked": "2026-07-30"
   }
  ],
  "problems": []
