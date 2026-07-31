@@ -518,7 +518,12 @@ _EXPLAINER_SKIP = {"fv", "milb_missing", "is_ifa", "is_college"}
 #       declared -1, while its marginal correlation with realized WAR is -0.0543, i.e.
 #       the declaration is true unconditionally and the fitted sign is an
 #       omitted-variable artifact. age_rel_level cannot offset it (served weight
-#       -0.0076, effectively zero).
+#       -0.0076 when this was written; CORRECTED 2026-07-30, it is not "effectively
+#       zero" any more. The C1 decimal-age rebuild moved the pitcher age_rel_level
+#       fit to +0.0418 and its declaration was changed to 0 in the same pass, which
+#       is the adjudication commit c26c6d6 recorded. The point this paragraph is
+#       making still stands: age_rel_level does not offset the `age` term. The
+#       number it cites does not.)
 #       The user-visible consequence: a pitcher YOUNGER than the 22.54 training mean
 #       gets a NEGATIVE contribution, so the "Age" chip read DOWN on 1,058 of 2,393
 #       live pitcher cards (44.2%), telling young arms their youth hurt them. Sloan at

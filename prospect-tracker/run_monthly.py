@@ -422,6 +422,7 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     from the current DB state, write `data/timeseries.json`. No scraping,
     no MLB API calls. Use after a fangraphs_csv drop when you don't want
     to wait through the full monthly pipeline."""
+    _utf8_console()
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -748,6 +749,7 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
     pass; never simultaneously. Every step is idempotent; a failure in one
     fetch logs and continues so a single flaky endpoint can't strand the run.
     """
+    _utf8_console()
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -1513,9 +1515,32 @@ def _post_export_summary(out_path: Path, all_snaps, log) -> None:
         log.exception("post-export summary failed (non-fatal)")
 
 
+def _utf8_console() -> None:
+    """Stop a non-UTF-8 console turning a log line into a traceback.
+
+    Several modules log a right-arrow ("wrote N players -> path"). On a Windows
+    console defaulting to cp1252 the StreamHandler cannot encode it, so logging
+    prints a UnicodeEncodeError traceback for a line that is pure progress
+    reporting. Measured 2026-07-30: seven such tracebacks in one rebuild, every
+    one of them cosmetic, and every one of them alarming in a log a human is
+    reading to decide whether a pipeline run went well.
+
+    Reconfigures stdout/stderr to UTF-8 and, failing that, degrades to replacing
+    the offending character. Never raises: a logging convenience must not be the
+    thing that stops a run. No effect on the Linux box, where UTF-8 is already
+    the default.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+
 def main(force_refetch: bool = False, skip_stats: bool = False,
          out_dir: Path = Path("data"), workers: int | None = None,
          cache_ttl: int | None = None, no_cache: bool = False, fast: bool = False):
+    _utf8_console()
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",

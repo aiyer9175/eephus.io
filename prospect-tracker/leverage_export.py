@@ -61,11 +61,22 @@ def _name_team(rows: list[dict]) -> dict:
     return out
 
 
-def _build_batters(bat: dict, bat_nt: dict) -> list[dict]:
-    """Batter board rows (WPA-sorted) from a finalized fold + name/team map."""
+def _build_batters(bat: dict, bat_nt: dict, pit_nt: dict | None = None) -> list[dict]:
+    """Batter board rows (WPA-sorted) from a finalized fold + name/team map.
+
+    The team falls back to the PITCHER name/team map before giving up. The two
+    maps come from load_season_hitting / load_season_pitching, which carry their
+    own row thresholds, while the leverage fold walks the winProbability feed and
+    therefore sees anyone who took a single plate appearance. So a batter can be
+    in the fold and absent from the hitting rows: measured 2026-07-31, exactly one
+    row (Osleivis Basabe, 1 PA) served a null team for that reason. The pitcher
+    map covers the two-way and position-player-pitching cases; anything still
+    missing keeps its name and a null team rather than inventing one.
+    """
+    pit_nt = pit_nt or {}
     batters = []
     for mid, m in bat.items():
-        nt = bat_nt.get(mid)
+        nt = bat_nt.get(mid) or pit_nt.get(mid)
         batters.append({
             "mlbam": mid, "name": m.get("name") or (nt[0] if nt else None),
             "team": nt[1] if nt else None,
@@ -115,7 +126,8 @@ def _season_boards(season: int, *, leverage_limit: Optional[int] = None, log=pri
     _rel, bat, strt, cov = mlb_leverage.fetch_season_all_leverage(season, limit=leverage_limit)
     log(f"  leverage: {cov.get('games')}/{cov.get('games_total')} games; "
         f"{len(bat)} batters, {len(strt)} starters folded")
-    return _build_batters(bat, bat_nt), _build_starters(strt, pit_nt, pit_gs), cov
+    return (_build_batters(bat, bat_nt, pit_nt),
+            _build_starters(strt, pit_nt, pit_gs), cov)
 
 
 def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None,
