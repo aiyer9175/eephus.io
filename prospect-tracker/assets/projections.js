@@ -1346,27 +1346,64 @@
     // Prefer the baked skills block (mlb_player_export); fall back to the
     // client-fetched leaderboard row for payloads generated before it was baked.
     let kind, season, role, ip, remPlus, rivPlus, remPlus3yr, semPlus, semPlus3yr;
+    let xremPlus, xsemPlus, warIpPlus, warIpPlusAdj, warIpPlusPct, gmli, saves, holds;
     if (p.skills && p.skills.pitch) {
       const s = p.skills.pitch;
       kind = s.kind; season = s.season; role = s.role; ip = s.ip;
       remPlus = s.remPlus; rivPlus = s.rivPlus; remPlus3yr = s.remPlus3yr;
       semPlus = s.semPlus; semPlus3yr = s.semPlus3yr;
+      xremPlus = s.xremPlus; xsemPlus = s.xsemPlus;
+      warIpPlus = s.warIpPlus; warIpPlusAdj = s.warIpPlusAdj;
+      warIpPlusPct = s.warIpPlusPct; gmli = s.gmli;
+      saves = s.saves; holds = s.holds;
     } else if (PITCHLB && PITCHLB.byMlbam && PITCHLB.byMlbam[p.mlbam]) {
       const hit = PITCHLB.byMlbam[p.mlbam], r = hit.row;
       kind = hit.kind; season = hit.season; role = r.role; ip = r.ip;
       remPlus = r.rem_plus; rivPlus = r.riv_plus; remPlus3yr = r.rem_plus_3yr;
       semPlus = r.sem_plus; semPlus3yr = r.sem_plus_3yr;
+      xremPlus = r.xrem_plus; xsemPlus = r.xsem_plus;
+      warIpPlus = r.war_ip_plus; warIpPlusAdj = r.war_ip_plus_adj;
+      warIpPlusPct = r.war_ip_plus_pct; gmli = r.gmli;
+      saves = r.saves; holds = r.holds;
     } else return "";
     const plus = (label, val, hi) => (val == null ? "" :
       `<div class="mlbp-tile"><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val ${val >= (hi || 105) ? "proj-pos" : val <= (200 - (hi || 105)) ? "proj-neg" : ""}">${val}</span></div>`);
+    // WAR/IP+ is 100 + 10z, so it bands at 80/120 (two pool sigma) rather than the
+    // 105/95 the ratio-scale REM+/SEM+ family uses. Separate helper so the two
+    // rulers cannot drift into each other.
+    const zplus = (label, val, title) => (val == null ? "" :
+      `<div class="mlbp-tile"${title ? ` title="${esc(title)}"` : ""}><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val ${val >= 120 ? "proj-pos" : val <= 80 ? "proj-neg" : ""}">${val}</span></div>`);
+    const raw = (label, val, title) => (val == null ? "" :
+      `<div class="mlbp-tile"${title ? ` title="${esc(title)}"` : ""}><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val">${val}</span></div>`);
+    const WAR_IP_TIP = "Pitching bWAR per inning, indexed so 100 is average and every TEN points is one standard deviation of the pool. Anchored on this pitcher's own role pool, so a starter's value and a reliever's are not comparable.";
     let tiles = "", n = "";
     if (kind === "rel") {
       tiles = plus("REM+", remPlus) + plus("RIV+", rivPlus)
-        + (remPlus3yr != null ? plus("REM+ 3yr", remPlus3yr) : "");
-      n = `${role || "reliever"}${ip != null ? ` · ${ip} IP` : ""}`;
+        + (remPlus3yr != null ? plus("REM+ 3yr", remPlus3yr) : "")
+        + plus("xREM+", xremPlus)
+        + zplus("WAR/IP+", warIpPlus, WAR_IP_TIP + (warIpPlusPct != null ? ` Percentile: ${warIpPlusPct}.` : ""))
+        + zplus("WAR/IP+ adj", warIpPlusAdj, "The same index regressed toward the pool rate by innings, so a short hot stretch does not outrank a full season. Relief innings totals are small enough that this matters most here.")
+        + raw("gmLI", gmli == null ? null : gmli.toFixed(2), "Average leverage index when he ENTERS a game: how big the moments are that his manager trusts him with. 1.00 is a neutral spot.");
+      n = `${role || "reliever"}${ip != null ? ` · ${ip} IP` : ""}`
+        + (saves != null || holds != null ? ` · ${saves || 0} SV / ${holds || 0} HLD` : "");
     } else {
-      tiles = plus("SEM+", semPlus) + (semPlus3yr != null ? plus("SEM+ 3yr", semPlus3yr) : "");
+      tiles = plus("SEM+", semPlus) + (semPlus3yr != null ? plus("SEM+ 3yr", semPlus3yr) : "")
+        + plus("xSEM+", xsemPlus)
+        + zplus("WAR/IP+", warIpPlus, WAR_IP_TIP + (warIpPlusPct != null ? ` Percentile: ${warIpPlusPct}.` : ""))
+        + zplus("WAR/IP+ adj", warIpPlusAdj, "The same index regressed toward the pool rate by innings, so a short hot stretch does not outrank a full season.");
       n = `${role || "starter"}${ip != null ? ` · ${ip} IP` : ""}`;
+    }
+    // Leverage: descriptive game-context, kept in its own line rather than mixed
+    // into the plus tiles above, because none of it is on a plus scale.
+    const L = (p.skills && p.skills.lev) || null;
+    if (L && (L.wpa != null || L.clutch != null)) {
+      const bits = [];
+      if (L.wpa != null) bits.push(`WPA ${L.wpa > 0 ? "+" : ""}${L.wpa.toFixed(2)}`);
+      if (L.wpaLi != null) bits.push(`WPA/LI ${L.wpaLi > 0 ? "+" : ""}${L.wpaLi.toFixed(2)}`);
+      if (L.pli != null) bits.push(`pLI ${L.pli.toFixed(2)}`);
+      if (L.clutch != null) bits.push(`Clutch ${L.clutch > 0 ? "+" : ""}${L.clutch.toFixed(2)}`);
+      if (L.wpaPerStart != null) bits.push(`WPA/start ${L.wpaPerStart > 0 ? "+" : ""}${L.wpaPerStart.toFixed(3)}`);
+      if (bits.length) n += ` · ${bits.join(" · ")}`;
     }
     if (!tiles) return "";
     const seasonTxt = season ? `${season} ` : "";
@@ -1568,6 +1605,22 @@
       tile("HEM+", `${h.hemPlus}${h.hemPlus3yr != null ? `<span class="fa-band"> 3yr ${h.hemPlus3yr}</span>` : ""}`,
         h.hemPlus >= 112 ? "proj-pos" : h.hemPlus <= 88 ? "proj-neg" : "",
         "HEM+: a hitter's pure offensive-rate skill (100 = average qualified hitter), a sample-shrunk wOBA. From the MLB Stats hitter leaderboards.");
+      // xHEM+ and the luck gap: what the batted-ball inputs say he should have hit.
+      if (h.xhemPlus != null)
+        tile("xHEM+", `${h.xhemPlus}${h.luckGap != null ? `<span class="fa-band"> luck ${h.luckGap > 0 ? "+" : ""}${h.luckGap}</span>` : ""}`,
+          h.xhemPlus >= 112 ? "proj-pos" : h.xhemPlus <= 88 ? "proj-neg" : "",
+          "xHEM+ is HEM+ rebuilt on expected (batted-ball) inputs instead of outcomes. The luck gap is HEM+ minus xHEM+: positive means results have run ahead of the contact quality behind them.");
+      // WAR/PA+ is 100 + 10z, so it bands at 80/120 (two pool sigma), NOT at the
+      // wRC+-width 88/112 the HEM+ family above uses. Do not "tidy" these to match:
+      // a 112 here is 1.2 sigma, which is a genuinely good hitter, not an average one.
+      if (h.warPaPlus != null)
+        tile("WAR/PA+", `${h.warPaPlus}${h.warPaPlusPct != null ? `<span class="fa-band"> p${h.warPaPlusPct}</span>` : ""}`,
+          h.warPaPlus >= 120 ? "proj-pos" : h.warPaPlus <= 80 ? "proj-neg" : "",
+          "Batting bWAR per plate appearance, indexed so 100 is average and every TEN points is one standard deviation of the hitter pool. That is a wider ruler than HEM+: a 113 is the 91st percentile, not 13 percent above average. Carries fielding, baserunning and the positional adjustment, which HEM+ leaves out. The p-number is the percentile.");
+      if (h.warPaPlusAdj != null)
+        tile("WAR/PA+ adj", `${h.warPaPlusAdj}`,
+          h.warPaPlusAdj >= 120 ? "proj-pos" : h.warPaPlusAdj <= 80 ? "proj-neg" : "",
+          "The same index with the rate regressed toward league average by playing time, so a hot short sample does not outrank a full season. A readability aid, not a forecast: neither WAR rate predicts next season better than plain season bWAR.");
     }
     if (p.swingPlus != null) tile("Swing+", `${p.swingPlus}<span class="fa-band"> n=${p.swingN}</span>`, p.swingPlus >= 105 ? "proj-pos" : p.swingPlus <= 95 ? "proj-neg" : "");
     // W6 display-only: per-season Swing+ trend. swingPlusSeasons rides the
