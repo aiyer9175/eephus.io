@@ -201,3 +201,37 @@ def test_export_history_skips_a_season_that_fails(monkeypatch):
     payload = lev.export_history([2024, 2025], write=False, log=lambda *a: None)
     assert payload["seasons"] == [2025]                # 2024 skipped, run survives
     assert "2024" not in payload["history"]
+
+
+# ---------------------------------------------------------------------------
+# Leverage board team fallback (2026-07-31)
+# ---------------------------------------------------------------------------
+
+def test_batter_team_falls_back_to_the_pitcher_map():
+    """The leverage fold walks the winProbability feed and sees anyone with a
+    single plate appearance, while the hitting/pitching name-team maps carry
+    their own row thresholds. So a batter can be in the fold and absent from the
+    hitting rows, which served exactly one null-team row on the live board."""
+    import leverage_export as L
+    bat = {1: {"name": "Two Way", "pa": 1, "wpa": 0.0},
+           2: {"name": "Regular", "pa": 300, "wpa": 1.0}}
+    rows = L._build_batters(bat, {2: ("Regular", "NYY")}, {1: ("Two Way", "TB")})
+    by = {r["mlbam"]: r for r in rows}
+    assert by[2]["team"] == "NYY", "hitting map must still win"
+    assert by[1]["team"] == "TB", "pitcher map must cover the fold-only batter"
+
+
+def test_batter_team_stays_null_rather_than_invented():
+    """A player in neither map keeps his name and a null team. Guessing a team
+    would be worse than admitting we do not have one."""
+    import leverage_export as L
+    rows = L._build_batters({9: {"name": "Ghost", "pa": 1, "wpa": 0.0}}, {}, {})
+    assert rows[0]["name"] == "Ghost"
+    assert rows[0]["team"] is None
+
+
+def test_build_batters_still_works_without_the_pitcher_map():
+    """The parameter is optional so existing callers are unaffected."""
+    import leverage_export as L
+    rows = L._build_batters({1: {"name": "A", "pa": 5, "wpa": 0.1}}, {1: ("A", "SEA")})
+    assert rows[0]["team"] == "SEA"
