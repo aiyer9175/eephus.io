@@ -79,9 +79,29 @@ runs, passed here; it is flaky under suite load rather than broken (item 10 in L
   level as a SEPARATE feature rather than averaging them, on the hypothesis that the
   level a player HOLDS is itself signal because promotion is the org's revealed judgement.
 
+- **Lane E1 (repeat-level feature) RUN TO A VERDICT: SPLIT.** `seasons_at_level` is
+  genuinely new information (taylor and arias share n_milb_seasons 4.0 and differ 3.0 vs
+  1.0 on the new one). All six cuts positive, 3/4 folds each side, and it beats all three
+  zero-information controls on both primaries, so the signal is real. But hit +0.0033 is
+  0.19x its floor and pit +0.0127 is 0.79x. **THE FINDING: the fitted sign SPLITS** -
+  pit -0.1072 (agrees with theory, 4th largest weight) but hit **+0.0945 (DISAGREES)**,
+  so the feature would move Taylor **UP** by ~0.19 predicted WAR. Hitter arm NO SHIP;
+  pitcher arm is a live OWNER CALL, default off. Ledger
+  `data/xfv_repeat_level_eval.json`, doc `E1_REPEAT_LEVEL_GATE.md`. This is direct
+  evidence that the model cannot learn the old-repeating-prospect penalty from a
+  survivorship-censored pool, which is why ask 5 correctly shipped as an age POLICY dial.
+- **Lane F (ask 8) CLOSED, no model change needed.** Regenerated the scoreboard (the
+  committed one was 07-24 and predated this whole program). **The FV50 weakness is GONE
+  on both sides**: pit FV50 went from margin -0.1426 to **+0.1581**, hit FV50 to +0.1316.
+  eFV now wins every pooled lane and every AUC on both sides, and head-to-head on 2,200
+  common players runs 0.384 vs consensus 0.283 / FanGraphs 0.248. Only one of the three
+  remaining negative tier cells clears its own floor (hit FV45, -0.0638, the known t45
+  fringe already tracked by the gate standard). Doc `FV50_WEAK_CELL_VERDICT.md`.
+  **This corrects the premise in this very plan**, which called the FV50 weakness live.
+
 **NOT STARTED:** Lanes A (conversion engine build), B (MLB frontend uplift), D (tool-grade
-weighting), E1 (repeat-level feature for Taylor), F (pitcher FV50). These are the
-multi-day gated engineering lanes; the plan below is their specification.
+weighting). These are the remaining engineering lanes; the plan below is their
+specification. Every model lane in this program has now been run to a verdict.
 
 ---
 
