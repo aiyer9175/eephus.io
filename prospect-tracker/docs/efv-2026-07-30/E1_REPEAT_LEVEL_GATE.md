@@ -8,8 +8,32 @@ headline is not what the lane was built to find.
 
 | arm | verdict |
 |---|---|
-| **hitters** | **NO SHIP.** Gain is 0.19x its noise floor, and the fitted sign is the OPPOSITE of the theory. It would raise Taylor, not lower him. |
-| **pitchers** | **CANDIDATE, default off. OWNER CALL.** Real, control-surviving, consistent across every instrument, but still 0.79x the noise floor on the primary metric. |
+| **hitters** | **NO SHIP, twice over.** Permutation p = 0.375 (5 of 15 nulls beat it), AND the fitted sign is the OPPOSITE of the theory. It would raise Taylor, not lower him. |
+| **pitchers** | **PASSES the feature-specific null test** (p = 0.032, 0 of 30 nulls matched it) while remaining inside the generic sampling floor. Default off. **OWNER CALL.** |
+
+## PERMUTATION NULL (added at owner request: "re-measure with more controls first")
+
+Feature values redrawn from the TRUE empirical marginal with the row link broken, model
+and data otherwise fixed. This corrects an earlier control that drew from a hand-made
+pool rather than the observed distribution.
+
+| side | real delta | null mean | null sd | null max | B | **p** |
+|---|---|---|---|---|---|---|
+| **pit** | **+0.0127** | -0.0004 | 0.0030 | +0.0064 | 30 | **0.032** |
+| **hit** | +0.0033 | +0.0014 | 0.0035 | +0.0101 | 15 | **0.375** |
+
+The test separates the two arms exactly as the sign split predicted. On pitchers the real
+effect is roughly **twice the largest of thirty null draws** and about 4.2 null standard
+deviations out. On hitters a third of the null draws beat it.
+
+**Two different uncertainties, both true, not in conflict.** The permutation test asks
+whether a meaningless column of this shape could produce this gain: on pitchers, no. The
+MDE95 asks how far the estimate would move on a redrawn eval sample: about +/-0.016, so
+the magnitude stays imprecise. The pitcher arm is therefore a REAL effect whose SIZE the
+eval cannot pin down, which is a different thing from a null and should not be filed as
+one. It also now satisfies this codebase's own stated bar for a feature gate, set after
+the pitcher-label lane: a random-label null band plus a permutation p-value
+(`docs/PITCHER_LABEL_LEDGER.md`).
 
 Both arms ship DEFAULT OFF (`efv_model.E1_REPEAT_LEVEL`). The feature itself
 (`seasons_at_level`) is now computed into both matrices unconditionally, because a key
