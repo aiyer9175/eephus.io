@@ -1489,6 +1489,45 @@ def expected_surplus_usd(fv: float | None, is_pitcher: bool, position: str | Non
 # =============================================================================
 # Public valuation API  (preserved signatures; now backed by the mixture model)
 # =============================================================================
+def calibration_zero_cross_mm() -> float | None:
+    """The RAW surplus ($M) below which the shipped calibration maps to exactly 0.
+
+    ARM 1 of docs/efv-2026-07-30/ZERO_FLOOR_PRICING_GATE.md. This exists so a
+    surface can tell "the model priced this at nothing" apart from "the model
+    cannot resolve a price this small", which are very different claims and
+    currently render identically as $0.0M on 68.5% of the board.
+
+    On the shipped v5 map, max(0, 1.382491*raw - 2.318551), the cross is at raw
+    $1.677M, and the whole bottom tier sits under it: the engine computes $1.2 to
+    $1.3M for those 3,822 players and calibration clamps every one of them to
+    zero. So a served surplus of EXACTLY 0.0 is a clamped value by construction,
+    never a computed one, which is what makes the display fix well defined.
+
+    Returns None when calibration is off or the shape is one this cannot invert;
+    callers must treat None as "no threshold known" and fall back to showing the
+    number, never to hiding it.
+    """
+    cal = _config().get("calibration", {})
+    if not cal.get("enabled"):
+        return None
+    method = str(cal.get("method", "linear")).lower()
+    if method == "isotonic":
+        iso = cal.get("isotonic", {})
+        xs = [float(v) for v in iso.get("x_mm", [])]
+        ys = [float(v) for v in iso.get("y_mm", [])]
+        if len(xs) >= 2 and len(xs) == len(ys):
+            # highest x whose y is still 0 = the last input that clamps
+            zero_xs = [x for x, y in zip(xs, ys) if y <= 0.0]
+            return max(zero_xs) if zero_xs else None
+        return None
+    slope = float(cal.get("slope", 1.0) or 0.0)
+    intercept = float(cal.get("intercept", 0.0) or 0.0)
+    if slope <= 0:
+        return None
+    cross = -intercept / slope
+    return cross if cross > 0 else None
+
+
 def apply_calibration(predicted_mm: float | None, fv: float | None = None,
                       is_pitcher: bool | None = None) -> float | None:
     """Apply the empirical CALIBRATION correction (the Prompt F backtest's

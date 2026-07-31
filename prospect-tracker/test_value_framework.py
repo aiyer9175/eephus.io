@@ -731,3 +731,61 @@ def test_expected_sv_monotonic_in_fv_by_position(is_pit: bool, position) -> None
             f"FV {first_violation[0]} -> {first_violation[1]} gave "
             f"{first_violation[2]} -> {first_violation[3]}"
             if first_violation else "")
+
+
+# ---------------------------------------------------------------------------
+# Zero-floor display arm (ARM 1, docs/efv-2026-07-30/ZERO_FLOOR_PRICING_GATE.md)
+#
+# These drive the helper against CONSTRUCTED configs rather than the shipped one,
+# because conftest pins this module to the identity valuation set (calibration
+# off), so asserting the production numbers here would test the fixture, not the
+# code. The shipped v5 values appear as one of the cases instead.
+# ---------------------------------------------------------------------------
+
+def _with_cal(monkeypatch, cal):
+    """Point value_framework._config() at a calibration block of our choosing."""
+    import value_framework as vf
+    base = dict(vf._config())
+    base["calibration"] = cal
+    monkeypatch.setattr(vf, "_config", lambda: base)
+    return vf
+
+
+def test_zero_cross_inverts_the_shipped_v5_isotonic_shape(monkeypatch):
+    """The shipped map is max(0, 1.382491*raw - 2.318551), committed as isotonic
+    knots whose flat head ends at raw $1.677M. Everything under that clamps to
+    exactly zero, which is where roughly two thirds of the board sits."""
+    vf = _with_cal(monkeypatch, {
+        "enabled": True, "method": "isotonic",
+        "isotonic": {"x_mm": [0.0, 1.677, 20.0, 60.0, 400.0],
+                     "y_mm": [0.0, 0.0, 25.33, 80.63, 550.68]}})
+    assert vf.calibration_zero_cross_mm() == 1.677
+
+
+def test_zero_cross_inverts_a_linear_calibration(monkeypatch):
+    vf = _with_cal(monkeypatch, {
+        "enabled": True, "method": "linear", "slope": 1.382491, "intercept": -2.318551})
+    assert abs(vf.calibration_zero_cross_mm() - (2.318551 / 1.382491)) < 1e-9
+
+
+def test_zero_cross_is_none_when_there_is_no_threshold(monkeypatch):
+    """A surface must tell "no threshold known" from "threshold is 0": the first
+    means show the number, the second would wrongly hide it."""
+    vf = _with_cal(monkeypatch, {"enabled": False})
+    assert vf.calibration_zero_cross_mm() is None
+    vf = _with_cal(monkeypatch, {
+        "enabled": True, "method": "linear", "slope": 1.0, "intercept": 0.5})
+    assert vf.calibration_zero_cross_mm() is None, "a map that never clamps has no cross"
+
+
+def test_an_exact_zero_is_always_a_clamped_value(monkeypatch):
+    """The property the display fix rests on: because the map is max(0, ...),
+    an output of exactly 0 implies an input at or below the cross. No raw surplus
+    above it can price to zero."""
+    vf = _with_cal(monkeypatch, {
+        "enabled": True, "method": "isotonic",
+        "isotonic": {"x_mm": [0.0, 1.677, 20.0, 60.0, 400.0],
+                     "y_mm": [0.0, 0.0, 25.33, 80.63, 550.68]}})
+    cross = vf.calibration_zero_cross_mm()
+    assert vf.apply_calibration(cross * 0.5) == 0.0
+    assert vf.apply_calibration(cross * 1.5) > 0.0

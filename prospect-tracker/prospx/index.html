@@ -35521,11 +35521,27 @@ function makeSurplusCell(p) {
   const wag = (p.debuted_value && p.debuted_value.wag)
               ? p.debuted_value.wag.regressed_wag : null;
   const dvm = p.dollar_dvm_plus;   // per-player $DvM+ (surplus-development index)
-  const svColor = s.value_mm >= 50 ? "var(--up)"
+  // ARM 1 of docs/efv-2026-07-30/ZERO_FLOOR_PRICING_GATE.md. A served surplus of
+  // EXACTLY 0 is a CLAMPED value, never a computed one: the shipped calibration
+  // is max(0, 1.382491*raw - 2.318551), so everything under raw $1.677M maps to
+  // zero, and 68.5% of the board sits under it. Rendering that as "$0.0M" claims
+  // the model priced the player at nothing, when what it actually knows is that
+  // it cannot resolve a price this small. Show the limit instead of a false
+  // precision. This does NOT fix the pricing (that is Arm 2, gated separately);
+  // it stops the display from asserting more than the engine supports.
+  const belowFloor = s.value_mm === 0;
+  const svColor = belowFloor ? "var(--text-tertiary)"
+                : s.value_mm >= 50 ? "var(--up)"
                 : s.value_mm >= 10 ? "var(--neon-cyan)" : "var(--text-primary)";
   const ciText = isEfv ? "" : svCiText(s);
   const consSv = isEfv && xf && xf.consensus_surplus_mm != null ? xf.consensus_surplus_mm : null;
-  const tip = `${isEfv ? "eFV" : "Consensus"} expected surplus ${fmtSvMM(s.value_mm)}`
+  const tip = belowFloor
+    ? "Below the pricing floor. The surplus engine cannot resolve a value this "
+      + "small: everything under about $1.7M of raw surplus is clamped to zero by "
+      + "the calibration layer, which is where roughly two thirds of the board "
+      + "sits. Read the rank rather than the dollar figure here. Open the player "
+      + "for the distribution."
+    : `${isEfv ? "eFV" : "Consensus"} expected surplus ${fmtSvMM(s.value_mm)}`
     + (consSv != null ? ` (consensus FV surplus ${fmtSvMM(consSv)})` : "")
     + (ciText ? ` · ${ciText}` : "")
     + (d.p10_mm != null ? ` · outcome range ${fmtSvMM(d.p10_mm)}-${fmtSvMM(d.p90_mm)}` : "")
@@ -35540,7 +35556,7 @@ function makeSurplusCell(p) {
   if (wag != null) botBits.push(`WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(1)}`);
   if (dvm != null) botBits.push(`<span style="color:${dollarDvmColor(dvm)};">$DvM+ ${Math.round(dvm)}</span>`);
   return `<div class="surplus-cell" title="${escapeHtml(tip)}">
-      <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${svColor};font-variant-numeric:tabular-nums;line-height:1.05;">${fmtSvMM(s.value_mm)}</div>
+      <div style="font-family:var(--font-mono);font-size:${belowFloor ? "11" : "13"}px;font-weight:${belowFloor ? "500" : "700"};color:${svColor};font-variant-numeric:tabular-nums;line-height:1.05;">${belowFloor ? "under floor" : fmtSvMM(s.value_mm)}</div>
       ${buckets ? renderBucketBar(buckets, { height: 7 }) : ""}
       ${d.p10_mm != null ? renderSvDistribution(d, { height: 13 }) : ""}
       ${botBits.length ? `<div style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);line-height:1.1;">${botBits.join(" · ")}</div>` : ""}
