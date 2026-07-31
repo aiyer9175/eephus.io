@@ -30,6 +30,47 @@ model/metric where a gated win exists.
 
 ---
 
+## EXECUTION STATUS (updated 2026-07-30 late evening)
+
+**DONE and PUSHED** (main `b4b1f67`, beta `f07cf9c`, trees byte-identical):
+
+- **Phase 0, all 8 runbook steps.** Data stability verified by two readings; the box's
+  churn committed as its own pipeline-regen commit after adjudicating
+  `wire_fv_first_seen.json` (1,205 unchanged, 60 re-dated against a real grade change,
+  zero re-dated without one, so the ledger's contract was working); ingest nulled the
+  fabricated BA FV on all 41 rows with the 7 orphans keeping identity; TWO export passes
+  (the second because `overall_rank` lags `xfv.json` by one run by documented design, and
+  across a basis change that lag is visible); three coordination points verified; golden
+  restamped to `4f791d2f` from the regen output before pytest touched the tree; suite run
+  serially; pushed main then beta via the `Sync beta to main@<sha>` full-tree snapshot
+  (a fast-forward, NOT a force push - beta is an orphan ops branch and its 30 commits are
+  intact).
+  **ACCEPTANCE MET:** arias 60.4 rank 2, brayden_taylor 48.2 rank **125** (was 100),
+  enrique_bradfield_jr 48.2 rank **127** (was 91). Ask 5 is delivered.
+- **Lane C (asks 3 and 7).** `war_pa_plus_adj` / `war_ip_plus_adj` companion columns
+  (arm-S shrink, mu/sd from the SHRUNK pool per the defect-C3 guard, pinned by a test at
+  10.0 points per sigma), plus the 1yr percentile chip. Served effect: the raw hitter
+  board is topped by a 121-PA line at 125; adjusted, the top five are all full seasons.
+  Three glossary entries, three registry rows, MODEL_REGISTRY.md regenerated.
+- **Lane A2.** DRS probed and measured UNREACHABLE from this box (HTTP 403 behind a
+  Cloudflare interstitial in 50ms). Out of scope, documented, do not retry-loop.
+- **Lane G.** Valuation-curve artifact rebuilt on the fresh regen and republished to its
+  existing URL (`03e424cb`), keeping the established visual identity and adding the
+  outcome-curve foundation, a live-board third view, and the $0-floor defect.
+
+**Suite state at push:** 2,521 passed, 5 failed, 22 skipped, 1 xfailed. All five failures
+are the documented expected reds (C5 inert anchor, michael_oliveto, team-outlook recenter,
+$0-bottom-block tripwire) plus one NEW finding: `test_prospx_sort_a11y::
+test_aria_sort_reflects_state_and_enter_resorts` fails ONLY inside the full suite and
+passes in isolation and with neighbours, i.e. a test-isolation artifact from build
+artifacts being dirtied mid-suite, not a product defect. Added to Lane H below.
+
+**NOT STARTED:** Lanes A (conversion engine build), B (MLB frontend uplift), D (tool-grade
+weighting), E (B3 level blend, repeat-level feature), F (pitcher FV50). These are the
+multi-day gated engineering lanes; the plan below is their specification.
+
+---
+
 ## 0. Ground rules (binding, carried forward + measured today)
 
 All rules from `docs/master-plan-2026-07-29-efv-fa.md` section 0 and
@@ -542,7 +583,21 @@ Confirmed items, cheapest first:
    Close the C3-ETA gate or ledger it.
 8. Console/smoke sweep: the only existing check is the manual LAUNCH_DAY five-page
    smoke; after Lane B lands, run it on all five MLB surfaces + prospx in both themes.
-9. `data/pal.json` schema refresh rides Phase 0 (pal_export re-run).
+9. `data/pal.json` schema refresh: still OWED. Phase 0 did not re-run `pal_export`, so
+   the served payload predates 23a7f44's staged watch (121 entries, no
+   `prospect_watch_rule` key). Do it before any /pal/ surface work.
+10. **NEW 2026-07-30: `test_prospx_sort_a11y::test_aria_sort_reflects_state_and_enter_resorts`
+    is order-dependent.** It fails deterministically in the full suite and passes in
+    isolation, with neighbours, and in every pairwise combination tried. The fixture is
+    module-scoped over a real browser page reading `data/timeseries.json`, and the suite
+    dirties build artifacts mid-run (the documented conftest-restore hazard), so the board
+    the page loads is not the board the test was written against. Fix is test isolation,
+    not the a11y feature, which passes whenever it is measured against a clean tree.
+11. **NEW: Windows console logging crashes on `→`.** Seven `UnicodeEncodeError`
+    tracebacks during the regen, all from `_log.info` calls containing a right-arrow
+    against a cp1252 console (`bayes_trade_value.py:4188` and siblings). Cosmetic only,
+    the exports completed, and it cannot fire on the Linux box, but it makes a clean run
+    look alarming. Either ASCII the arrows or force UTF-8 on the stream handler.
 
 Zero TODO/FIXME markers exist in source - the backlog above IS the bug list, plus
 whatever Lanes A-G surface (file new findings into this section rather than fixing
