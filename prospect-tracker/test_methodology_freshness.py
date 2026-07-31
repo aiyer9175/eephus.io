@@ -457,9 +457,17 @@ MODEL_GLOSSARY = {
     # and the reliever board carry the same column title over two different anchor
     # pools, and the values are not comparable
     # (docs/efv-2026-07-29/ARKMETRIC_SCALE_CONVENTIONS.md:77).
-    "war_pa_plus": ["war_pa_plus", "war_pa_plus_3yr"],
-    "war_ip_plus_sp": ["war_ip_plus_sp", "war_ip_plus_sp_3yr"],
-    "war_ip_plus_rp": ["war_ip_plus_rp", "war_ip_plus_rp_3yr"],
+    # The `_adj` companions joined the family 2026-07-30, when the owner closed the
+    # shrink call recorded OPEN in the ledger (docs/efv-2026-07-30/
+    # WAR_RATE_SHRINK_OWNER_CALL.md). They map onto the SAME registry row rather
+    # than taking their own: same anchor pool, same ledger, same `unvalidated`
+    # verdict, same surface. What differs is the reading, which is exactly what a
+    # glossary entry is for, so each got its own entry.
+    "war_pa_plus": ["war_pa_plus", "war_pa_plus_adj", "war_pa_plus_3yr"],
+    "war_ip_plus_sp": ["war_ip_plus_sp", "war_ip_plus_sp_adj",
+                       "war_ip_plus_sp_3yr"],
+    "war_ip_plus_rp": ["war_ip_plus_rp", "war_ip_plus_rp_adj",
+                       "war_ip_plus_rp_3yr"],
     # The trailing-window companion family across all three boards, one frozen
     # vintage artifact with three blocks.
     "war_rate_plus_3yr": ["war_pa_plus_3yr", "war_ip_plus_sp_3yr",

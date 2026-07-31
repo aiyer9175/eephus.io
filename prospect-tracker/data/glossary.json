@@ -1,5 +1,5 @@
 {
-  "version": "2026-07-29",
+  "version": "2026-07-30",
   "groups": {
     "scouting": "Prospect Grades & Scouting",
     "definition": "Prospect Grades & Scouting",
@@ -5160,6 +5160,73 @@
         "hem_plus",
         "sem_plus_3yr",
         "rem_plus_3yr"
+      ],
+      "shelf": "ark",
+      "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+    },
+    {
+      "id": "war_pa_plus_adj",
+      "term": "WAR/PA+ (sample-adjusted)",
+      "category": "custom-index",
+      "module": [
+        "mlbstats"
+      ],
+      "aliases": [
+        "WAR/PA+ adj",
+        "adjusted WAR/PA+",
+        "sample-adjusted WAR/PA+"
+      ],
+      "priority": 24,
+      "definition": "WAR/PA+ with the rate regressed toward the league rate by how many plate appearances the hitter actually took, so a hot hundred-plate-appearance line does not outrank a strong full season. Same 100-anchored, ten-points-per-standard-deviation scale, rebuilt on the regressed pool. Use it to read the board; use plain WAR/PA+ to read what a hitter banked.",
+      "methodology": "The same WAR/PA+ with one change made first: the rate is pulled toward the pool rate in proportion to how little the player played, using the pool's median plate-appearance count as the halfway point, and only then indexed. A player at that median sits halfway between his own rate and the league's; a full season barely moves; a player just over the display gate moves a long way. It exists because the unadjusted column ranks a hot short sample above a good full season, which is true of what was banked but is not what most readers are asking when they sort the board.\n\nThe scale is rebuilt on the regressed pool, not borrowed from the unregressed one, so ten points is still one standard deviation of the hitter pool. Doing it the other way is a real and previously shipped defect: an index that shrinks its numerator but keeps the old spread quietly stops being the scale it advertises.\n\nWhat it is not: a forecast. On the forward test the pre-registered shrink rule fired for this pool, with a paired gap of 0.0148 (95 percent interval 0.01 to 0.0195), and a volume control shows where that gap comes from. Splitting the same players into thirds by playing time, the gap survives in high, so most of the pooled improvement is the shrink standing in for sample size rather than measuring skill better. Read this column as the readable version of the rate, the unadjusted one as the banked truth, and neither as a projection. Measurement ledger: data/war_rate_plus_eval.json.",
+      "seeAlso": [
+        "war_pa_plus",
+        "war_pa_plus_3yr",
+        "hem_plus"
+      ],
+      "shelf": "ark",
+      "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+    },
+    {
+      "id": "war_ip_plus_sp_adj",
+      "term": "WAR/IP+ (starter pool, sample-adjusted)",
+      "category": "custom-index",
+      "module": [
+        "mlbstats"
+      ],
+      "aliases": [
+        "WAR/IP+ adj (starters)",
+        "adjusted starter WAR/IP+"
+      ],
+      "priority": 24,
+      "definition": "Starter WAR/IP+ with the rate regressed toward the starter pool rate by innings pitched, so a short hot stretch does not outrank a full season. Same starter-anchored, ten-points-per-standard-deviation scale, rebuilt on the regressed pool. Still not comparable with the reliever board's column.",
+      "methodology": "The same starter WAR/IP+ with one change made first: the rate is pulled toward the pool rate in proportion to how little the player played, using the pool's median innings count as the halfway point, and only then indexed. A player at that median sits halfway between his own rate and the league's; a full season barely moves; a player just over the display gate moves a long way. It exists because the unadjusted column ranks a hot short sample above a good full season, which is true of what was banked but is not what most readers are asking when they sort the board.\n\nThe scale is rebuilt on the regressed pool, not borrowed from the unregressed one, so ten points is still one standard deviation of the starter pool. Doing it the other way is a real and previously shipped defect: an index that shrinks its numerator but keeps the old spread quietly stops being the scale it advertises.\n\nWhat it is not: a forecast. On the forward test the pre-registered shrink rule did not fire for this pool, with a paired gap of 0.0056 (95 percent interval -0.0014 to 0.0131), and a volume control shows where that gap comes from. Splitting the same players into thirds by playing time, the gap survives in none of them, so most of the pooled improvement is the shrink standing in for sample size rather than measuring skill better. Read this column as the readable version of the rate, the unadjusted one as the banked truth, and neither as a projection. Measurement ledger: data/war_rate_plus_eval.json.",
+      "seeAlso": [
+        "war_ip_plus_sp",
+        "war_ip_plus_sp_3yr",
+        "sem_plus"
+      ],
+      "shelf": "ark",
+      "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+    },
+    {
+      "id": "war_ip_plus_rp_adj",
+      "term": "WAR/IP+ (reliever pool, sample-adjusted)",
+      "category": "custom-index",
+      "module": [
+        "mlbstats"
+      ],
+      "aliases": [
+        "WAR/IP+ adj (relievers)",
+        "adjusted reliever WAR/IP+"
+      ],
+      "priority": 24,
+      "definition": "Reliever WAR/IP+ with the rate regressed toward the reliever pool rate by innings pitched. This is the column where the adjustment matters most: relief innings totals are small enough that a good month can top the unadjusted board. Same reliever-anchored, ten-points-per-standard-deviation scale, rebuilt on the regressed pool. Still not comparable with the starter board's column.",
+      "methodology": "The same reliever WAR/IP+ with one change made first: the rate is pulled toward the pool rate in proportion to how little the player played, using the pool's median innings count as the halfway point, and only then indexed. A player at that median sits halfway between his own rate and the league's; a full season barely moves; a player just over the display gate moves a long way. It exists because the unadjusted column ranks a hot short sample above a good full season, which is true of what was banked but is not what most readers are asking when they sort the board.\n\nThe scale is rebuilt on the regressed pool, not borrowed from the unregressed one, so ten points is still one standard deviation of the reliever pool. Doing it the other way is a real and previously shipped defect: an index that shrinks its numerator but keeps the old spread quietly stops being the scale it advertises.\n\nWhat it is not: a forecast. On the forward test the pre-registered shrink rule fired for this pool, with a paired gap of 0.0041 (95 percent interval 0.0002 to 0.008), and a volume control shows where that gap comes from. Splitting the same players into thirds by playing time, the gap survives in none of them, so most of the pooled improvement is the shrink standing in for sample size rather than measuring skill better. Read this column as the readable version of the rate, the unadjusted one as the banked truth, and neither as a projection. Measurement ledger: data/war_rate_plus_eval.json.",
+      "seeAlso": [
+        "war_ip_plus_rp",
+        "war_ip_plus_rp_3yr",
+        "rem_plus"
       ],
       "shelf": "ark",
       "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."

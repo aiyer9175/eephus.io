@@ -75,6 +75,75 @@ def test_anchor_pool_delivers_exactly_ten_points_per_sigma(monkeypatch):
     assert meta["per_sigma"] == 10.0
 
 
+def test_adj_companion_delivers_exactly_ten_points_per_sigma(monkeypatch):
+    """The _adj column re-standardises on the SHRUNK pool. Taking mu/sd from the
+    unshrunk pool instead would leave it advertising ten points per sigma while
+    delivering fewer, which is precisely the aStuff+ 7.16 defect (GATED_CANDIDATES
+    C3). Shipped 2026-07-30 when the owner closed the shrink call."""
+    n = 60
+    rows = [{"mlbam": 1000 + i, "pa": 300.0 + i * 10} for i in range(n)]
+    bat = {1000 + i: (i - n / 2) * 0.01 for i in range(n)}
+    _patch_war(monkeypatch, _war_map(2026, bat=bat))
+    meta = he._join_war_pa_plus(rows, 2026)
+    assert meta["available"]
+    vals = [r["war_pa_plus_adj_raw"] for r in rows if "war_pa_plus_adj_raw" in r]
+    assert len(vals) == n
+    mu = sum(vals) / n
+    sd = (sum((v - mu) ** 2 for v in vals) / (n - 1)) ** 0.5
+    assert abs(mu - 100.0) < 0.02, mu
+    assert abs(sd - 10.0) < 0.02, f"{sd} points per SHRUNK-pool sigma, want 10"
+
+
+def test_adj_pulls_thin_samples_toward_average(monkeypatch):
+    """The whole reason the column exists: a hot short sample must not outrank a
+    strong full season once the rate is regressed for playing time."""
+    rows = [{"mlbam": 1, "pa": 110.0},            # hot but thin
+            {"mlbam": 2, "pa": 600.0}]            # strong and full
+    rows += [{"mlbam": 100 + i, "pa": 300.0 + i} for i in range(40)]
+    bat = {1: 1.9, 2: 6.0}
+    bat.update({100 + i: 1.0 + i * 0.01 for i in range(40)})
+    _patch_war(monkeypatch, _war_map(2026, bat=bat))
+    he._join_war_pa_plus(rows, 2026)
+    thin, full = rows[0], rows[1]
+    assert thin["war_pa_plus"] > full["war_pa_plus"], (
+        "precondition: unadjusted must favour the hot thin sample")
+    assert full["war_pa_plus_adj"] > thin["war_pa_plus_adj"], (
+        "adjusted must favour the full season")
+    # and the raw column must be untouched by the companion's existence
+    assert thin["war_pa_plus"] == int(round(thin["war_pa_plus_raw"]))
+
+
+def test_raw_column_still_reproduces_the_rate_on_the_row(monkeypatch):
+    """The reason _adj got its own NAME rather than replacing the column: the raw
+    index must stay checkable from the row's own war and denominator against
+    pool_mean_rate. The adjusted one deliberately does not."""
+    n = 40
+    rows = [{"mlbam": 1000 + i, "pa": 400.0 + i} for i in range(n)]
+    bat = {1000 + i: 1.0 + i * 0.05 for i in range(n)}
+    _patch_war(monkeypatch, _war_map(2026, bat=bat))
+    meta = he._join_war_pa_plus(rows, 2026)
+    r = rows[7]
+    expect = 100.0 + 10.0 * ((r["war"] / r["pa"]) - meta["pool_mean_rate"]) / meta["pool_sd_rate"]
+    assert abs(r["war_pa_plus_raw"] - expect) < 0.15, (r["war_pa_plus_raw"], expect)
+
+
+def test_one_year_percentile_chip_is_midrank_over_served_rows(monkeypatch):
+    """Mirrors war_rate_plus_lab._pct_map so the 1yr chip and the 3yr chip mean
+    the same thing on the same row. Added because a 10-points-per-sigma scale
+    hides how rare a modest-looking number is."""
+    n = 50
+    rows = [{"mlbam": 1000 + i, "pa": 400.0} for i in range(n)]
+    bat = {1000 + i: 0.5 + i * 0.1 for i in range(n)}       # strictly increasing
+    _patch_war(monkeypatch, _war_map(2026, bat=bat))
+    he._join_war_pa_plus(rows, 2026)
+    pcts = [r["war_pa_plus_pct"] for r in rows]
+    assert all(p is not None for p in pcts)
+    assert min(pcts) >= 0 and max(pcts) <= 100
+    # monotone in the underlying value, and the best row is at the top
+    best = max(rows, key=lambda r: r["war_pa_plus_raw"])
+    assert best["war_pa_plus_pct"] >= 99, best["war_pa_plus_pct"]
+
+
 def test_no_clamp_a_real_outlier_prints_past_the_band(monkeypatch):
     """True-to-model policy: no silent clamp. If a display cap is ever wanted it
     goes in as the AP+ two-field pattern, not as a clamp here."""
@@ -270,7 +339,9 @@ _JS = (ROOT / "assets" / "mlbstats.js").read_text(encoding="utf-8")
 _GLOSSARY_IDS = {e["id"] for e in json.loads(
     (ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))["entries"]}
 _WAR_RATE_TERMS = ("war_pa_plus", "war_pa_plus_3yr", "war_ip_plus_sp",
-                   "war_ip_plus_sp_3yr", "war_ip_plus_rp", "war_ip_plus_rp_3yr")
+                   "war_ip_plus_sp_3yr", "war_ip_plus_rp", "war_ip_plus_rp_3yr",
+                   # sample-adjusted companions, owner call closed 2026-07-30
+                   "war_pa_plus_adj", "war_ip_plus_sp_adj", "war_ip_plus_rp_adj")
 
 
 def test_every_column_term_slug_has_a_glossary_entry():
@@ -302,12 +373,12 @@ def test_war_rate_columns_are_dropped_from_history_boards():
     hit = _JS.split("var HITTER_HISTORY_DROP =")[1].split(";")[0]
     sp = _JS.split("var STARTER_HISTORY_DROP =")[1].split(";")[0]
     rel = _JS.split("var REL_HISTORY_KEYS =")[1].split(";")[0]
-    for k in ("war_pa_plus", "war_pa_plus_3yr", "war"):
+    for k in ("war_pa_plus", "war_pa_plus_adj", "war_pa_plus_3yr", "war"):
         assert k + ": 1" in hit, f"{k} not dropped from the hitter history board"
-    for k in ("war_ip_plus", "war_ip_plus_3yr", "war"):
+    for k in ("war_ip_plus", "war_ip_plus_adj", "war_ip_plus_3yr", "war"):
         assert k + ": 1" in sp, f"{k} not dropped from the starter history board"
     # the reliever map is an ALLOW-list: the keys must be ABSENT from it
-    for k in ("war_ip_plus", "war_ip_plus_3yr"):
+    for k in ("war_ip_plus", "war_ip_plus_adj", "war_ip_plus_3yr"):
         assert k not in rel, f"{k} leaked into the reliever history allow-list"
 
 

@@ -190,9 +190,18 @@
     // reliever banks more WAR per inning than a starter of equal talent, so the
     // two are never pooled. remCell, not hemCell: 100 + 10z has SD exactly 10.
     { key: "war_ip_plus", label: "WAR/IP+", term: "war_ip_plus_rp", num: true, desc: true, isRem: true,
-      title: "Pitching bWAR per inning, indexed over RELIEVERS with 20+ IP: 100 is the average reliever and every 10 points is one standard deviation of that pool. Anchored on relievers only, so it is not comparable with the starter board's WAR/IP+. Needs 30 IP to show.",
+      title: "Pitching bWAR per inning, indexed over RELIEVERS with 20+ IP: 100 is the average reliever and every 10 points is one standard deviation of that pool. Anchored on relievers only, so it is not comparable with the starter board's WAR/IP+. Needs 30 IP to show. The p-number is this value's percentile on the board, because on a 10-points-per-sigma scale a modest-looking number can still be rare.",
       get: function (r) { return r.war_ip_plus; },
-      cell: function (r) { return r.war_ip_plus == null ? "" : remCell(r.war_ip_plus); } },
+      cell: function (r) {
+        if (r.war_ip_plus == null) return "";
+        var s = remCell(r.war_ip_plus);
+        if (r.war_ip_plus_pct != null) s += '<span class="proj-dim"> p' + fInt(r.war_ip_plus_pct) + "</span>";
+        return s;
+      } },
+    { key: "war_ip_plus_adj", label: "WAR/IP+ adj", term: "war_ip_plus_rp_adj", num: true, desc: true, isRem: true,
+      title: "WAR/IP+ regressed for sample size: the rate is pulled toward the pool rate by innings before indexing, so a short hot stretch does not outrank a full season. Re-standardised on the regressed pool, so 10 points is still one standard deviation. A readability aid for thin samples, not a forecast: neither WAR rate predicts next season better than plain season bWAR does.",
+      get: function (r) { return r.war_ip_plus_adj; },
+      cell: function (r) { return r.war_ip_plus_adj == null ? "" : remCell(r.war_ip_plus_adj); } },
     { key: "war_ip_plus_3yr", label: "WAR/IP+ 3yr", term: "war_ip_plus_rp_3yr", num: true, desc: true, isRem: true,
       get: function (r) { return r.war_ip_plus_3yr; },
       cell: function (r) {
@@ -816,9 +825,18 @@
     // banks more WAR per inning than a starter of equal talent). Both ride
     // remCell: 100 + 10z has SD exactly 10, which is what remClass bands for.
     { key: "war_ip_plus", label: "WAR/IP+", term: "war_ip_plus_sp", num: true, desc: true, isRem: true,
-      title: "Pitching bWAR per inning, indexed over STARTERS with 20+ IP: 100 is the average starter and every 10 points is one standard deviation of that pool. Anchored on starters only, so it is not comparable with the reliever board's WAR/IP+. Needs 40 IP to show.",
+      title: "Pitching bWAR per inning, indexed over STARTERS with 20+ IP: 100 is the average starter and every 10 points is one standard deviation of that pool. Anchored on starters only, so it is not comparable with the reliever board's WAR/IP+. Needs 40 IP to show. The p-number is this value's percentile on the board, because on a 10-points-per-sigma scale a modest-looking number can still be rare.",
       get: function (r) { return r.war_ip_plus; },
-      cell: function (r) { return r.war_ip_plus == null ? "" : remCell(r.war_ip_plus); } },
+      cell: function (r) {
+        if (r.war_ip_plus == null) return "";
+        var s = remCell(r.war_ip_plus);
+        if (r.war_ip_plus_pct != null) s += '<span class="proj-dim"> p' + fInt(r.war_ip_plus_pct) + "</span>";
+        return s;
+      } },
+    { key: "war_ip_plus_adj", label: "WAR/IP+ adj", term: "war_ip_plus_sp_adj", num: true, desc: true, isRem: true,
+      title: "WAR/IP+ regressed for sample size: the rate is pulled toward the pool rate by innings before indexing, so a short hot stretch does not outrank a full season. Re-standardised on the regressed pool, so 10 points is still one standard deviation. A readability aid for thin samples, not a forecast: neither WAR rate predicts next season better than plain season bWAR does.",
+      get: function (r) { return r.war_ip_plus_adj; },
+      cell: function (r) { return r.war_ip_plus_adj == null ? "" : remCell(r.war_ip_plus_adj); } },
     { key: "war_ip_plus_3yr", label: "WAR/IP+ 3yr", term: "war_ip_plus_sp_3yr", num: true, desc: true, isRem: true,
       get: function (r) { return r.war_ip_plus_3yr; },
       cell: function (r) {
@@ -846,7 +864,7 @@
   // trailing-window SEM+ 3yr. Reuse the same column objects so the history board
   // renders and sorts identically, dropping the column its rows lack.
   var STARTER_HISTORY_DROP = { sem_plus_3yr: 1, xsem_plus: 1, luck: 1,
-    war_ip_plus: 1, war_ip_plus_3yr: 1, war: 1 };
+    war_ip_plus: 1, war_ip_plus_adj: 1, war_ip_plus_3yr: 1, war: 1 };
   var STARTER_HISTORY_COLS = STARTER_COLS.filter(function (c) { return !STARTER_HISTORY_DROP[c.key]; });
 
   var STARTER_TEAM_COLS = [
@@ -1287,9 +1305,18 @@
     // bands at. Recoloring it with hemCell would call a 1.2-sigma hitter
     // average. Do not "fix" this to match the neighbouring columns.
     { key: "war_pa_plus", label: "WAR/PA+", term: "war_pa_plus", num: true, desc: true, isRem: true,
-      title: "Batting bWAR per plate appearance, indexed over hitters with 50+ PA: 100 is average and every 10 points is one standard deviation of that pool (not the wRC+-width scale HEM+ uses). Whole-player batting value per trip, so it carries fielding, baserunning and the positional adjustment, which HEM+ deliberately leaves out. Needs 100 PA to show.",
+      title: "Batting bWAR per plate appearance, indexed over hitters with 50+ PA: 100 is average and every 10 points is one standard deviation of that pool (not the wRC+-width scale HEM+ uses). Whole-player batting value per trip, so it carries fielding, baserunning and the positional adjustment, which HEM+ deliberately leaves out. Needs 100 PA to show. The p-number is this value's percentile on the board, because on a 10-points-per-sigma scale a modest-looking number can still be rare.",
       get: function (r) { return r.war_pa_plus; },
-      cell: function (r) { return r.war_pa_plus == null ? "" : remCell(r.war_pa_plus); } },
+      cell: function (r) {
+        if (r.war_pa_plus == null) return "";
+        var s = remCell(r.war_pa_plus);
+        if (r.war_pa_plus_pct != null) s += '<span class="proj-dim"> p' + fInt(r.war_pa_plus_pct) + "</span>";
+        return s;
+      } },
+    { key: "war_pa_plus_adj", label: "WAR/PA+ adj", term: "war_pa_plus_adj", num: true, desc: true, isRem: true,
+      title: "WAR/PA+ regressed for sample size: the rate is pulled toward the league rate by playing time before indexing, so a hot 110-PA line does not outrank a full season. Re-standardised on the regressed pool, so 10 points is still one standard deviation. A readability aid for thin samples, not a forecast: neither WAR rate predicts next season better than plain season bWAR does.",
+      get: function (r) { return r.war_pa_plus_adj; },
+      cell: function (r) { return r.war_pa_plus_adj == null ? "" : remCell(r.war_pa_plus_adj); } },
     { key: "war_pa_plus_3yr", label: "WAR/PA+ 3yr", term: "war_pa_plus_3yr", num: true, desc: true, isRem: true,
       get: function (r) { return r.war_pa_plus_3yr; },
       cell: function (r) {
@@ -1322,7 +1349,7 @@
   // carries no bWAR join), so they drop out of a past-season board rather than
   // rendering as a blank column.
   var HITTER_HISTORY_DROP = { hem_plus_3yr: 1, xhem_plus: 1, fwdhem_plus: 1, luck_gap: 1, pwoba: 1,
-    war_pa_plus: 1, war_pa_plus_3yr: 1, war: 1 };
+    war_pa_plus: 1, war_pa_plus_adj: 1, war_pa_plus_3yr: 1, war: 1 };
   var HITTER_HISTORY_COLS = HITTER_COLS.filter(function (c) { return !HITTER_HISTORY_DROP[c.key]; });
   // A past board can only sort on columns it shows; if the shared key is a
   // current-only column (HEM+ 3yr), fall back to the HEM+ default.

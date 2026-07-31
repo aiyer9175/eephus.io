@@ -3,16 +3,25 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""One-time glossary add (2026-07-29): the WAR/PA+ and WAR/IP+ family.
+"""Glossary add (2026-07-29, extended 2026-07-30): the WAR/PA+ and WAR/IP+ family.
 
-Six entries, because there are six distinct things on the boards:
+Nine entries, because there are nine distinct things on the boards:
 
   war_pa_plus          hitter board, batting bWAR per plate appearance
+  war_pa_plus_adj      its sample-size-regressed companion
   war_pa_plus_3yr      its frozen trailing-window companion
   war_ip_plus_sp       starter board, pitching bWAR per inning, STARTER pool
+  war_ip_plus_sp_adj   its sample-size-regressed companion
   war_ip_plus_sp_3yr   its frozen trailing-window companion
   war_ip_plus_rp       reliever board, pitching bWAR per inning, RELIEVER pool
+  war_ip_plus_rp_adj   its sample-size-regressed companion
   war_ip_plus_rp_3yr   its frozen trailing-window companion
+
+The three `_adj` entries were added when the owner closed the shrink call on
+2026-07-30 (docs/efv-2026-07-30/WAR_RATE_SHRINK_OWNER_CALL.md). They are separate
+entries rather than a sentence inside the raw ones because they are a different
+number on a different pool: the adjusted value does NOT reproduce the row's own
+war/denominator, and saying so is the whole point of giving it its own name.
 
 The two WAR/IP+ entries are separate on purpose. The starter board and the
 reliever board carry a column with the same title over the same field name, and
@@ -77,6 +86,14 @@ def _figs() -> dict:
             "win_one": wr.get("rho_one_season"),
             "g4": bool(w.get("pass")),
         }
+        # shrink ruling, for the _adj companions (owner call closed 2026-07-30)
+        sr = blk.get("shrink_ruling") or {}
+        pg = sr.get("pooled_gap") or {}
+        out[pool]["shrink_fired"] = bool(sr.get("pre_registered_rule_fired"))
+        out[pool]["shrink_gap"] = (
+            f"{pg.get('mean')} (95 percent interval {pg.get('lo95')} to "
+            f"{pg.get('hi95')})" if pg else "not measured on this pool")
+        out[pool]["shrink_terciles"] = list(sr.get("terciles_clearing_zero") or [])
     return out
 
 
@@ -163,6 +180,39 @@ def _window_para(f: dict, label: str, denom: str, est: str) -> str:
     return head + "Measurement ledger: " + LEDGER + "."
 
 
+def _adj_para(f: dict, label: str, denom: str, pool_desc: str) -> str:
+    """Copy for a sample-size-regressed companion column. The measured numbers
+    come from the ledger's shrink_ruling so the published caveat cannot drift."""
+    fired = "fired" if f["shrink_fired"] else "did not fire"
+    gap = f["shrink_gap"]
+    terc = f["shrink_terciles"]
+    cleared = (", ".join(terc) if terc else "none of them")
+    return (
+        f"The same {label} with one change made first: the rate is pulled toward "
+        f"the pool rate in proportion to how little the player played, using the "
+        f"pool's median {denom} count as the halfway point, and only then indexed. "
+        f"A player at that median sits halfway between his own rate and the "
+        f"league's; a full season barely moves; a player just over the display "
+        f"gate moves a long way. It exists because the unadjusted column ranks a "
+        f"hot short sample above a good full season, which is true of what was "
+        f"banked but is not what most readers are asking when they sort the "
+        f"board.\n\n"
+        f"The scale is rebuilt on the regressed pool, not borrowed from the "
+        f"unregressed one, so ten points is still one standard deviation of "
+        f"{pool_desc}. Doing it the other way is a real and previously shipped "
+        f"defect: an index that shrinks its numerator but keeps the old spread "
+        f"quietly stops being the scale it advertises.\n\n"
+        f"What it is not: a forecast. On the forward test the pre-registered "
+        f"shrink rule {fired} for this pool, with a paired gap of {gap}, and a "
+        f"volume control shows where that gap comes from. Splitting the same "
+        f"players into thirds by playing time, the gap survives in {cleared}, so "
+        f"most of the pooled improvement is the shrink standing in for sample "
+        f"size rather than measuring skill better. Read this column as the "
+        f"readable version of the rate, the unadjusted one as the banked truth, "
+        f"and neither as a projection. Measurement ledger: " + LEDGER + "."
+    )
+
+
 def _entries() -> list[dict]:
     f = _figs()
     two_way = (
@@ -204,6 +254,28 @@ def _entries() -> list[dict]:
             ),
             "seeAlso": ["war_pa_plus_3yr", "hem_plus", "war",
                         "war_ip_plus_sp", "war_ip_plus_rp"],
+            "shelf": "ark",
+            "origin": ORIGIN,
+        },
+        {
+            "id": "war_pa_plus_adj",
+            "term": "WAR/PA+ (sample-adjusted)",
+            "category": "custom-index",
+            "module": ["mlbstats"],
+            "aliases": ["WAR/PA+ adj", "adjusted WAR/PA+",
+                        "sample-adjusted WAR/PA+"],
+            "priority": 24,
+            "definition": (
+                "WAR/PA+ with the rate regressed toward the league rate by how "
+                "many plate appearances the hitter actually took, so a hot "
+                "hundred-plate-appearance line does not outrank a strong full "
+                "season. Same 100-anchored, ten-points-per-standard-deviation "
+                "scale, rebuilt on the regressed pool. Use it to read the board; "
+                "use plain WAR/PA+ to read what a hitter banked."
+            ),
+            "methodology": _adj_para(f["hit"], "WAR/PA+", "plate-appearance",
+                                     "the hitter pool"),
+            "seeAlso": ["war_pa_plus", "war_pa_plus_3yr", "hem_plus"],
             "shelf": "ark",
             "origin": ORIGIN,
         },
@@ -258,6 +330,26 @@ def _entries() -> list[dict]:
             "origin": ORIGIN,
         },
         {
+            "id": "war_ip_plus_sp_adj",
+            "term": "WAR/IP+ (starter pool, sample-adjusted)",
+            "category": "custom-index",
+            "module": ["mlbstats"],
+            "aliases": ["WAR/IP+ adj (starters)", "adjusted starter WAR/IP+"],
+            "priority": 24,
+            "definition": (
+                "Starter WAR/IP+ with the rate regressed toward the starter pool "
+                "rate by innings pitched, so a short hot stretch does not outrank "
+                "a full season. Same starter-anchored, ten-points-per-standard-"
+                "deviation scale, rebuilt on the regressed pool. Still not "
+                "comparable with the reliever board's column."
+            ),
+            "methodology": _adj_para(f["SP"], "starter WAR/IP+", "innings",
+                                     "the starter pool"),
+            "seeAlso": ["war_ip_plus_sp", "war_ip_plus_sp_3yr", "sem_plus"],
+            "shelf": "ark",
+            "origin": ORIGIN,
+        },
+        {
             "id": "war_ip_plus_sp_3yr",
             "term": "WAR/IP+ (starter pool, 3yr)",
             "category": "custom-index",
@@ -303,6 +395,27 @@ def _entries() -> list[dict]:
             ),
             "seeAlso": ["war_ip_plus_rp_3yr", "war_ip_plus_sp", "rem_plus",
                         "riv_plus", "war"],
+            "shelf": "ark",
+            "origin": ORIGIN,
+        },
+        {
+            "id": "war_ip_plus_rp_adj",
+            "term": "WAR/IP+ (reliever pool, sample-adjusted)",
+            "category": "custom-index",
+            "module": ["mlbstats"],
+            "aliases": ["WAR/IP+ adj (relievers)", "adjusted reliever WAR/IP+"],
+            "priority": 24,
+            "definition": (
+                "Reliever WAR/IP+ with the rate regressed toward the reliever pool "
+                "rate by innings pitched. This is the column where the adjustment "
+                "matters most: relief innings totals are small enough that a good "
+                "month can top the unadjusted board. Same reliever-anchored, "
+                "ten-points-per-standard-deviation scale, rebuilt on the regressed "
+                "pool. Still not comparable with the starter board's column."
+            ),
+            "methodology": _adj_para(f["RP"], "reliever WAR/IP+", "innings",
+                                     "the reliever pool"),
+            "seeAlso": ["war_ip_plus_rp", "war_ip_plus_rp_3yr", "rem_plus"],
             "shelf": "ark",
             "origin": ORIGIN,
         },

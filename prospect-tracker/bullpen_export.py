@@ -31,6 +31,7 @@ import; any pull failure logs and returns 0 rather than aborting the caller.
 the coverage block discloses)."""
 from __future__ import annotations
 
+import bisect
 import functools
 import json
 import logging
@@ -557,6 +558,30 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
         meta["refused"] = "degenerate pool spread"
         return meta
 
+    # Sample-size companion (arm S), OWNER CALL CLOSED 2026-07-30:
+    # docs/efv-2026-07-30/WAR_RATE_SHRINK_OWNER_CALL.md. The pre-registered rule
+    # fired on hit and RP and the ship stayed unshrunk with the call left open;
+    # the owner closed it as "ship it, but as a SEPARATE column". So the raw
+    # index above is untouched - it still reproduces war/denom against
+    # pool_mean_rate on the row, which is the property the override protected -
+    # and the regressed variant lands beside it under its own name. Renaming is
+    # not cosmetic: an adjusted value no longer reproduces the row's own rate, so
+    # serving it under the raw column's name would silently change what a
+    # published number means (ARKMETRIC_SCALE_CONVENTIONS.md).
+    #
+    # K is the pool MEDIAN denominator and mu/sd come from the SHRUNK pool, never
+    # the unshrunk one. That second clause is the whole defect-C3 guard: aStuff+
+    # shipped 7.16 points per sigma while advertising 10 precisely by z-scoring a
+    # shrunk numerator against unshrunk moments (GATED_CANDIDATES.md C3).
+    dens = sorted((_num(r.get(denom_key)) or 0.0) for r, _w in covered)
+    K = dens[len(dens) // 2] if dens else 0.0
+    tot_d = sum(dens)
+    pool_rate = (sum(w for _r, w in covered) / tot_d) if tot_d else mu
+    adj_rates = [((w + pool_rate * K) / ((_num(r.get(denom_key)) or 1.0) + K))
+                 for r, w in covered]
+    mu_s = sum(adj_rates) / n
+    sd_s = (sum((x - mu_s) ** 2 for x in adj_rates) / (n - 1)) ** 0.5 if n > 1 else 0.0
+
     stamped = 0
     for r in rows:
         d = _num(r.get(denom_key)) or 0.0
@@ -569,16 +594,46 @@ def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,
         # never reads this field (it recomputes from bWAR), so the harness-v2
         # unrounded-predictor rule is satisfied upstream, not here.
         r[f"{out_key}_raw"] = round(raw, 1)
+        if sd_s:
+            adj = 100.0 + WAR_RATE_PER_SIGMA * (
+                ((w + pool_rate * K) / (d + K)) - mu_s) / sd_s
+            r[f"{out_key}_adj"] = int(round(adj))
+            r[f"{out_key}_adj_raw"] = round(adj, 1)
         r["war"] = round(w, 1)
         stamped += 1
+
+    # 1yr percentile chip. The 3yr columns already carry one (`*_3yr_pct`) and the
+    # 1yr did not, which is why a top-of-board rate read as an unremarkable number:
+    # on a 100+10z scale a reader has to do z-arithmetic to learn that 113 is rare.
+    # Midrank over the SERVED rows, matching war_rate_plus_lab._pct_map exactly so
+    # the two chips mean the same thing on the same row.
+    served = sorted(r[out_key] for r in rows if r.get(out_key) is not None)
+    if served:
+        m = len(served)
+        for r in rows:
+            v = r.get(out_key)
+            if v is None:
+                continue
+            lo = bisect.bisect_left(served, v)
+            hi = bisect.bisect_right(served, v)
+            r[f"{out_key}_pct"] = int(round(100.0 * ((lo + hi) / 2.0) / m))
     meta.update({
         "available": True, "n_stamped": stamped, "pool_n": n,
         "pool_mean_rate": round(mu, 6), "pool_sd_rate": round(sd, 6),
+        "shrink_K": round(K, 1), "pool_rate": round(pool_rate, 6),
+        "adj_mean_rate": round(mu_s, 6), "adj_sd_rate": round(sd_s, 6),
         "note": (f"100 + 10z of bWAR per {denom_key.upper()} over {anchor}. Ten "
                  f"points is one standard deviation of that pool, not one "
                  f"percent: this is not the HEM+/REM+/SEM+ ratio scale. No "
                  f"shrink and no clamp. Rows under {display_min:g} "
                  f"{denom_key.upper()} carry no value."),
+        "adj_note": (f"{out_key}_adj regresses the rate toward the pool rate by "
+                     f"sample size (K = pool median {denom_key.upper()} = {K:g}) "
+                     f"and re-standardises on the SHRUNK pool. It is a "
+                     f"readability aid for thin samples, not a forward claim: the "
+                     f"ship gate G2 failed on every pool, and the post-hoc volume "
+                     f"control shows the shrink gain is mostly a volume leak. It "
+                     f"does NOT reproduce war/{denom_key} on the row."),
     })
     return meta
 
