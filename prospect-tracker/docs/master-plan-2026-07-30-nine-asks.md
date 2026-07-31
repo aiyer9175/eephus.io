@@ -139,9 +139,28 @@ runs, passed here; it is flaky under suite load rather than broken (item 10 in L
   outfield half of the ask should be built. Verdict doc
   `CONVERSION_ARM_GATE_VERDICT.md`; design `CONVERSION_ARM_GATE.md`.
 
-**NOT STARTED:** Lane D (tool-grade weighting), Phase D (the wRC+ display program), the
-sprint-based outfield range indicator, and the measurement halves of the two commissioned
-lanes. Every model lane in this program has been run to a verdict.
+- **Lane D (ask 4) MEASURED: NO-SHIP on two independent grounds.** Blast radius is 188 of
+  1,806 tool-carrying players (10.4%), deep org filler, 0.07% of board surplus. And the
+  INV-2 offsets DO NOT REPLICATE on the live board: hit -4.48 against INV-2's -2.54, fb
+  -1.99 against -3.35, each outside the other's CI, not flat across the scale, median gap
+  exactly zero on five of six tools, and the sign FLIPS on the secondary pitches INV-2
+  never measured (sl +0.83, ch +1.27, cb +1.61) so correcting fb alone breaks a
+  cancellation in composite_stuff. **The better defect underneath: the outlets publish
+  DISJOINT tool key sets** (raw_pwr/bat_ctrl/pitch_sel FanGraphs-only, throw
+  Pipeline-only), so composites average structurally different inputs, 8.18 keys against
+  4.70. Composition problem, not calibration. Doc `TOOL_NORMALIZATION_VERDICT.md`.
+- **Zero-floor Arm 2 MEASURED (not yet built).** First grade pricing above zero is FV
+  39.0 hitters / 40.0 relievers; the FV40 anchor is already ABOVE the $1.677M cross, so
+  the defect is `decay_per_point` 0.16 pulling the sub-40 range under it within two grade
+  points. Candidate (a) has a mechanical target; (b) is misdirected. **C6 confirmed wider
+  and worse than registered**: reliever raw surplus falls monotonically across the WHOLE
+  bridge and a FV44.5 reliever prices 28x lower than a FV40 one. Verified it is still
+  LATENT (the 412 served pitchers in that band price 0.0 rising to 8.1), so it is a
+  landmine in the pricing function, not a live board defect. Repair it WITH the anchor.
+
+**NOT STARTED:** Phase D (the wRC+ display program), the sprint-based outfield range
+indicator, the odds cohort rebuild's fit, and the zero-floor Arm 2 build. Every model
+lane in this program has been run to a verdict.
 
 ---
 
