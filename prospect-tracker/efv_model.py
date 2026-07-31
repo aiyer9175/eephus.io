@@ -290,8 +290,19 @@ _CONTRIB_WAR = 3.0
 _STAR_WAR = 10.0
 
 
+# E1 repeat-level candidate (docs/efv-2026-07-30/E1_REPEAT_LEVEL_GATE.md). DEFAULT OFF:
+# adding a feature rebuilds both matrices and moves the board, so it ships only on the
+# pre-registered gate. Declared -1 as the THEORY (a stall is bad news), which the sign
+# audit will confirm or refute; this codebase has caught itself declaring the wrong sign
+# twice already (k_rel, n_milb_seasons), so the declaration is a hypothesis, not a claim.
+E1_REPEAT_LEVEL = False
+_E1_FEATURE = ("seasons_at_level", -1)
+
+
 def _feature_spec(side: str):
     feats = _FEATURES_PIT if side == "pit" else _FEATURES_HIT
+    if E1_REPEAT_LEVEL:
+        feats = feats + [_E1_FEATURE]
     return [k for k, _ in feats], [m for _, m in feats]
 
 
@@ -709,6 +720,14 @@ def _vec(r, side: str = "hit") -> dict:
         "bb_rel": g(m.get("bb_rel")),
         "milb_missing": milb_missing,
         "n_milb_seasons": min(g(m.get("n_milb_seasons")), _N_MILB_SEASONS_CAP),
+        # E1 candidate: consecutive seasons on the CURRENT level (1 = arrived this
+        # year). Emitted unconditionally so every consumer of `feats` has the key
+        # whether or not the feature is switched into the model -- _fit_lgbm_mono
+        # indexes feats directly with no default, so a key that exists only on
+        # some rows is a crash, not a missing value. Imputed to 1.0 for rows with
+        # no MiLB block, the modal value, matching how the rest of the milb block
+        # is mean-imputed behind the milb_missing indicator.
+        "seasons_at_level": g(m.get("seasons_at_level"), 1.0),
         "prod_trend": g(m.get("prod_trend")),
         "pos_prem": _pos_premium_for_row(r, side),
         "pick_overall": float(pick) if pick is not None else 250.0,

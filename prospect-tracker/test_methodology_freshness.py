@@ -467,6 +467,8 @@ MODEL_GLOSSARY = {
     # glossary term for a reader to look up. "internal" by construction, same as
     # the other candidate ledgers.
     "xfv_level_blend": "internal",
+    # E1 repeat-level candidate: measured, default off, nothing served.
+    "xfv_repeat_level": "internal",
     "war_pa_plus": ["war_pa_plus", "war_pa_plus_adj", "war_pa_plus_3yr"],
     "war_ip_plus_sp": ["war_ip_plus_sp", "war_ip_plus_sp_adj",
                        "war_ip_plus_sp_3yr"],

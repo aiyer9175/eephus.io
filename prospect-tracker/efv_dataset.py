@@ -442,6 +442,30 @@ def _blend_level_rates(per_level: list[tuple[float, dict]], side: str) -> dict:
     return out
 
 
+def _consecutive_at_level(seasons: list[dict]) -> int:
+    """How many consecutive seasons, counting back from the most recent, the player
+    spent at the level he is currently on. `seasons` is newest-first.
+
+    Consecutive rather than total on purpose: a player who was at AA in 2022, spent
+    2023 at AAA, and is back at AA in 2024 is a different animal from one who has sat
+    at AA for three straight years, and only the second is 'stalled'. Gaps in the
+    season list (an injury year with no MiLB row) break the run, which is the
+    conservative reading -- we did not observe him repeating.
+    """
+    if not seasons:
+        return 0
+    lvl = seasons[0].get("level")
+    n, prev = 0, None
+    for s in seasons:
+        if s.get("level") != lvl:
+            break
+        yr = s.get("season")
+        if prev is not None and prev - yr != 1:
+            break            # a missing season is not an observed repeat
+        n, prev = n + 1, yr
+    return n
+
+
 def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
                    annotate: bool = False, cutoff: str | None = None):
     """Translated production from the MiLB ladder strictly before the decision year
@@ -585,6 +609,19 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
         "age_missing": 1.0 if age is None else 0.0,
         "age_rel_level": age_rel if age_rel is not None else 0.0,
         "n_milb_seasons": float(len(seasons)),
+        # E1 (docs/efv-2026-07-30/E1_REPEAT_LEVEL_GATE.md): consecutive seasons the
+        # player has now spent at his CURRENT level, counting back from the most recent.
+        # 1 = arrived this year. 3 = a third year on the same rung.
+        #
+        # This is NOT n_milb_seasons. That one counts total seasons anywhere and is a
+        # declared suppressor precisely because, holding level_rank and age fixed, more
+        # seasons means more seasons spent REACHING the level. This counts the stall
+        # itself, which nothing in the feature set currently sees: only the final
+        # season's rates enter, so a player repeating a level on the back of a collapse
+        # reads exactly like a player who just arrived and is hitting well.
+        # Always computed (a matrix key is free); it only enters the model when the
+        # flag below is on.
+        "seasons_at_level": float(_consecutive_at_level(seasons)),
     }
     keep = ("k_rel", "bb_rel", "era_rel", "rates_missing") if side == "pit" \
         else ("k_rel", "bb_rel", "iso_rel", "obp_rel", "ops_rel", "rates_missing")
