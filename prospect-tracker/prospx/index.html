@@ -23170,6 +23170,28 @@ function _renderDraftLottery(host, cls) {
                        :                "var(--text-tertiary)";
   // Sort by pick order so the latest snapshot reads top-to-bottom.
   odds.sort((a, b) => (a.pick_pos || 0) - (b.pick_pos || 0));
+  // GAMES BACK FROM A TOP-3 LOTTERY SLOT. Under the 2022 CBA the three worst
+  // records share the top odds tier, so the pick_pos-3 row IS the top-3
+  // boundary: how far a club is from it is how far it is from the best odds
+  // available. NOT the same as Tankathon's own GB column, which is measured
+  // against the WORST record in the league.
+  //   GB = ((W_team - W_3) + (L_3 - L_team)) / 2   -- the standard convention,
+  // so a team BEHIND the boundary (worse record, better draft position) reads
+  // negative and is shown as "in" rather than a misleading negative number.
+  // Comp-pick rows carry a synthetic pick_pos (31-42) and no record, so they
+  // are excluded from this arithmetic entirely.
+  const anchor3 = odds.find(o => o.pick_pos === 3
+    && o.wins != null && o.losses != null) || null;
+  const gbToTop3 = o => {
+    if (!anchor3 || o.wins == null || o.losses == null) return null;
+    if (o.round_label === "1A" || o.round_label === "1B") return null;
+    return ((o.wins - anchor3.wins) + (anchor3.losses - o.losses)) / 2;
+  };
+  const fmtGB = v => {
+    if (v == null) return " - ";
+    if (v <= 0) return "in";              // already at or inside the top-3 tier
+    return v % 1 === 0 ? String(v) : v.toFixed(1);
+  };
   const rows = odds.map(o => {
     const rl = o.round_label || "1";
     // Comp picks carry a synthetic pick_pos (31-42); show their round badge as
@@ -23180,6 +23202,8 @@ function _renderDraftLottery(host, cls) {
       <td><span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:0.04em;color:${rlColor(rl)};border:1px solid ${rlColor(rl)};">${escapeHtml(rl)}</span></td>
       <td><span class="draft-cell-ico">${teamLogoHTML(o.team, "sm")}<strong>${escapeHtml(o.team)}</strong></span></td>
       <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums;color:${oddsColor(o.odds_pct)};">${fmtOdds(o.odds_pct)}</td>
+      <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums;color:${oddsColor(o.odds_top6_pct)};">${fmtOdds(o.odds_top6_pct)}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;color:${(() => { const g = gbToTop3(o); return g == null ? "var(--text-tertiary)" : g <= 0 ? "var(--up)" : g <= 3 ? "var(--neon-amber)" : "var(--text-secondary)"; })()};">${fmtGB(gbToTop3(o))}</td>
     </tr>`;
   }).join("");
 
@@ -23204,6 +23228,8 @@ function _renderDraftLottery(host, cls) {
           <th>Round</th>
           <th>Team</th>
           <th style="text-align:right;" title="Chance of winning the #1 overall pick in the lottery">% at #1</th>
+          <th style="text-align:right;" title="Chance of landing anywhere in the top 6, which is how many picks the lottery actually draws. A club can be a long shot for #1 and still very likely to pick in the top 6.">% top 6</th>
+          <th style="text-align:right;" title="Games back of the third-worst record. The three worst records share the top odds tier under the 2022 CBA, so this is the distance to the best lottery odds available. 'in' means the club is already at or inside that tier. Not the same as a standings GB, which is measured against the worst record in the league.">GB to top 3</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
