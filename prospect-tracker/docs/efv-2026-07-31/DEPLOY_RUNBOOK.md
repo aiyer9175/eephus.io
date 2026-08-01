@@ -10,13 +10,21 @@ writing, and a regen fired into that window corrupts artifacts.
 
 ## 1. DB repairs (`--apply`, idempotent, run in this order)
 
-| script | what it fixes | scope |
-|---|---|---|
-| `tools/repair_sabermetrics_stint_rows.py` | traded players stored ONE STINT as their season; prospx renders that wRC+ as a headline chip. 160 of 511 stored hitters were off by >0.5 | **scope on `numTeams > 1`**, not on "disagrees with the bulk call" (that flags 1,025 of 1,120, most of it ordinary daily drift) |
-| ingestion-lane repairs (see the lane's own report) | Just Baseball chimera split, MLB Pipeline International re-dating | written this session, `--dry-run` by default |
+All three default to dry-run. The corruption is in the DATABASE, not the code,
+so each must run on the deploy box's own `prospects.db` as well as locally.
 
-Local runs of these are already done where noted in the lane reports; the box
-has its own database and needs its own pass.
+```
+python tools/repair_sabermetrics_stint_rows.py --apply
+python tools/repair_jb_chimera.py --apply
+python tools/repair_intl_redating.py --apply
+python run_monthly.py --daily        # rebuild after the last two
+```
+
+| script | what it fixes | note |
+|---|---|---|
+| `repair_sabermetrics_stint_rows.py` | traded players stored ONE STINT as their season; prospx renders that wRC+ as a headline chip. 160 of 511 stored hitters were off by >0.5 | **scope on `numTeams > 1`**, NOT on "disagrees with the bulk call" (that flags 1,025 of 1,120, most of it ordinary daily drift) |
+| `repair_jb_chimera.py` | deletes the 100 exact June duplicates from the `JB 2026 Preseason` interval, leaving 26 rows with 26 distinct ranks | **74 of the original 100 March rows are UNRECOVERABLE** - the upsert destroyed rank/fv in place and JB no longer serves that list. The script says so rather than inventing them |
+| `repair_intl_redating.py` | re-dates the 50 MLB Pipeline International rows 2026-07-31 -> 2026-01-15 | **MOVES SERVED NUMBERS**: consensus events key on snapshot_date. Ranks and FVs untouched |
 
 ## 2. Regenerations, in dependency order
 
@@ -59,6 +67,34 @@ per-class freshness stamps, and the lottery top-6 / GB fields.
 parsed from the compact layout, and `fa_meta.sources.class` should show today
 rather than 2026-07-30. The prospx lottery panel should render "% top 6" and
 "GB to top 3" with real numbers rather than dashes.
+
+### 2c-bis. The $/WAR series, and an owner glance owed
+`data/fa_dpw_series.json` was deliberately NOT committed with the FA lane.
+Regenerating it moves the headline 2026 figure **$14.92M -> $17.29M per WAR**,
+decomposing into **+9.0% corpus drift** (which would arrive on the next pipeline
+run regardless) and **+6.4% from the shipped WAR-map changes**.
+
+That file is the $/WAR level the whole valuation engine prices against: on the
+first full-suite run it unfroze `prospx_current`'s table and turned **18
+valuation-set tests red**. It is not a ride-along on a chart page.
+
+When the pipeline regenerates it:
+- expect `test_valuation_sets` to go red until `prospx_current.yaml` is
+  re-frozen against the new $/WAR (and **re-capture it INSIDE
+  `with vf.valuation_set("prospx_current")`** - it is the base-identity set with
+  6 control years, and capturing on the clemens_2026 default silently yields a
+  different grid);
+- `proj_export._winter_dpw` READS this file while `fa_export` computes it in
+  memory, so the projections dollars step once on that run;
+- the $/WAR page fills in its breakdown cuts and its realized series at the same
+  moment, which is why they were left to arrive together.
+
+### 2c-ter. Positional ladder is INERT until its artifact regenerates
+`prospect_def_value` now reads `data/positional_fit.json` and refuses an
+artifact without the new `identification` block, so today `POS_ADJ_SOURCE`
+reads `"frozen fallback"` and **nothing has moved**. On regeneration: def_value
+mean |delta| 0.096 runs, Spearman 0.99966 over 884 rows. `def_home.json` is
+unaffected (it reads only p_hold / entropy).
 
 ### 2d. Homepage / static pages (`build_site.py`)
 Picks up the FV chip tier fix. **Acceptance:** in the generated
