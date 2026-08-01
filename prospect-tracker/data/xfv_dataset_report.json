@@ -1,15 +1,15 @@
 {
- "generated_at": "2026-07-31",
+ "generated_at": "2026-08-01",
  "scope": "HITTERS; debut 2011-2024 + never-MLB bust pool",
  "target": "first-6-season summed bWAR; resolved<= 2025",
  "no_model": true,
  "accounting": {
-  "debuted_seen": 2676,
+  "debuted_seen": 2679,
   "debuted_hitter": 993,
   "debuted_no_pre_fv": 103,
   "debuted_no_war": 17,
   "debuted_kept": 845,
-  "bust_seen": 2415,
+  "bust_seen": 2414,
   "bust_hitter": 1160,
   "bust_no_fv": 63,
   "bust_kept": 1082,

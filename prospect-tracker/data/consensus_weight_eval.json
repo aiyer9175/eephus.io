@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-31T13:25:48Z",
+ "generated_at": "2026-08-01T05:15:00Z",
  "vintage_rule": "weights for board-year Y use base years <= Y - 3 only",
  "per_year": [
   {
@@ -38,7 +38,7 @@
   },
   {
    "year": 2022,
-   "n": 728,
+   "n": 729,
    "weights_vintage_max_base": 2019,
    "weights": {
     "fangraphs": 0.8783,
@@ -46,11 +46,11 @@
    },
    "equal": {
     "spearman": 0.2938,
-    "auc": 0.7302
+    "auc": 0.7306
    },
    "weighted": {
     "spearman": 0.3014,
-    "auc": 0.7343
+    "auc": 0.7347
    }
   },
   {
@@ -72,14 +72,14 @@
   }
  ],
  "pooled": {
-  "pooled_n": 2858,
+  "pooled_n": 2859,
   "equal": {
    "spearman": 0.2763,
-   "auc": 0.7302
+   "auc": 0.7303
   },
   "weighted": {
    "spearman": 0.277,
-   "auc": 0.7373
+   "auc": 0.7375
   }
  },
  "ship": false,

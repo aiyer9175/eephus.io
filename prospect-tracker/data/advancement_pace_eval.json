@@ -1,10 +1,10 @@
 {
-"generated_at": "2026-07-31",
+"generated_at": "2026-08-01",
 "artifact": "data/advancement_pace.json",
 "kind": "descriptive QC only - no predictive claim is made or permitted anywhere for this statistic",
 "methodology_version": "1.0.0-eephus",
-"n_scored_latest_asof": 9573,
-"n_asof_rows_fit": 27482,
+"n_scored_latest_asof": 9575,
+"n_asof_rows_fit": 27484,
 "distribution_ap_plus_display_latest": {
 "mean": 99.26,
 "sd": 7.69,
@@ -33,12 +33,12 @@
 "n": 5893
 },
 "2017-19": {
-"mean_ap_plus": 99.46,
+"mean_ap_plus": 99.45,
 "n": 8301
 },
 "2021+": {
 "mean_ap_plus": 100.44,
-"n": 13288
+"n": 13290
 }
 },
 "position_group": {
@@ -60,7 +60,7 @@
 },
 "UNK": {
 "mean_ap_plus": 99.94,
-"n": 19017
+"n": 19019
 },
 "UT": {
 "mean_ap_plus": 100.33,
@@ -78,7 +78,7 @@
 },
 "intl_amateur": {
 "mean_ap_plus": 100.71,
-"n": 15855
+"n": 15857
 },
 "undrafted_other": {
 "mean_ap_plus": 98.97,
@@ -104,13 +104,13 @@
 },
 "<=17": {
 "mean_ap_plus": 100.96,
-"n": 10812
+"n": 10814
 }
 }
 },
 "threshold_stability": {
 "raw_pace_spearman_T20_vs_T30": 0.9943,
-"n_common_players": 9573
+"n_common_players": 9575
 },
 "named_riser_sanity": [
 {
@@ -136,7 +136,7 @@
 },
 {
 "name": "Dub Gleed",
-"ap_plus": 138.8,
+"ap_plus": 138.9,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AA in 2 active seasons"

@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-31",
+ "generated_at": "2026-08-01",
  "scope": "HITTERS",
  "n_scored": 1882,
  "calibration_scale": {
@@ -25,7 +25,7 @@
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 24675.8,
+  "xfv": 24738.2,
   "consensus": 24183.6
  },
  "example_up_adjustments": [

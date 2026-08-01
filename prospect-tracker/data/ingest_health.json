@@ -1,0 +1,77 @@
+{
+ "generated_at": "2026-08-01T05:28:52+00:00",
+ "mode": "monthly",
+ "sources": [
+  {
+   "source": "espn_article_probe",
+   "scope": "",
+   "ok": true,
+   "n_rows": 0,
+   "message": "",
+   "date": "2026-08-01",
+   "last_ok_at": "2026-08-01 05:28:42",
+   "last_ok_rows": 0
+  },
+  {
+   "source": "espn_article_probe",
+   "scope": "",
+   "ok": true,
+   "n_rows": 0,
+   "message": "",
+   "date": "2026-08-01",
+   "last_ok_at": "2026-08-01 05:28:42",
+   "last_ok_rows": 0
+  },
+  {
+   "source": "just_baseball",
+   "scope": "",
+   "ok": true,
+   "n_rows": 100,
+   "message": "unchanged",
+   "date": "2026-08-01",
+   "last_ok_at": "2026-08-01 04:28:56",
+   "last_ok_rows": 100
+  },
+  {
+   "source": "mlb_pipeline_live",
+   "scope": "",
+   "ok": true,
+   "n_rows": 100,
+   "message": "",
+   "date": "2026-08-01",
+   "last_ok_at": "2026-08-01 05:16:17",
+   "last_ok_rows": 100
+  },
+  {
+   "source": "mlb_pipeline_org",
+   "scope": "",
+   "ok": true,
+   "n_rows": 900,
+   "message": "",
+   "date": "2026-08-01",
+   "last_ok_at": "2026-08-01 05:16:26",
+   "last_ok_rows": 900
+  },
+  {
+   "source": "tjstats",
+   "scope": "daily-pm",
+   "ok": true,
+   "n_rows": 100,
+   "message": "",
+   "date": "2026-08-01",
+   "last_ok_at": "2026-08-01 05:28:42",
+   "last_ok_rows": 100
+  },
+  {
+   "source": "tjstats",
+   "scope": "monthly",
+   "ok": true,
+   "n_rows": 100,
+   "message": "",
+   "date": "2026-08-01",
+   "last_ok_at": "2026-08-01 04:28:55",
+   "last_ok_rows": 100
+  }
+ ],
+ "red": []
+}

@@ -192,6 +192,24 @@ function _tmSearch(q) {
       }
     }
   }
+  // Players we MODEL but cannot price, surfaced as unselectable rows carrying
+  // the reason. Returning nothing for a real major-leaguer reads as "the site
+  // has never heard of him"; it is why someone went looking for A.J. Minter in
+  // the source. They are disabled because there is no value to trade, not
+  // because we are hiding them.
+  for (const u of (_TM.unpriced || [])) {
+    if (out.length >= 12) break;
+    if (!(u.name || "").toLowerCase().includes(q)) continue;
+    if (out.some(o => o.key === u.key)) continue;
+    out.push({
+      kind: "unpriced", key: u.key, name: u.name,
+      org: u.org || "", pos: u.pos || "", mm: null,
+      disabled: true,
+      sub: u.reason === "expiring"
+        ? `${u.pos || ""} · ${u.org || "FA"} · contract ends ${u.thru} - no controlled season to trade`
+        : `${u.pos || ""} · ${u.org || "FA"} · no contract on file - cannot price surplus`,
+    });
+  }
   return out;
 }
 
@@ -288,8 +306,12 @@ function renderTradeMachine() {
       const side = inp.dataset.tmSearch;
       const res = el.querySelector(`[data-tm-results="${side}"]`);
       const hits = _tmSearch(inp.value);
-      res.innerHTML = hits.map((h, i) =>
-        `<button class="tm-hit" data-tm-add="${side}:${i}" type="button">
+      res.innerHTML = hits.map((h, i) => h.disabled
+        ? `<button class="tm-hit is-unpriced" type="button" disabled
+             title="We project this player, but there is no contract surplus to put in a deal.">
+             <strong>${escapeHtml(h.name)}</strong> <span class="tm-sub">${escapeHtml(h.sub)}</span>
+             <span class="tm-val">not tradeable</span></button>`
+        : `<button class="tm-hit" data-tm-add="${side}:${i}" type="button">
            <strong>${escapeHtml(h.name)}</strong> <span class="tm-sub">${escapeHtml(h.sub)}</span>
            <span class="tm-val">${window.EEPHUS_HUB.money(h.mm)}</span></button>`).join("");
       res._hits = hits;
@@ -1053,6 +1075,10 @@ function _tbShowGroup(playerKey) {
       .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(d => {
         _tbData = d; window._tbData = d;
+        // Vets we model but cannot price (expiring contract / none on file).
+        // Kept out of the board's value ranking, kept IN search so a real
+        // major-leaguer never returns silence.
+        _TM.unpriced = d.unpriced || [];
         _tmBuildProspectPool(d);
         _tbPopulateSelectFilters();
         _renderTBRows();

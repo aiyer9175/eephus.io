@@ -4236,7 +4236,173 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
         # Trade Value Grade off the FINAL value (re-pointed or bayes fallback) so
         # every board row carries a letter; survives board_slim automatically.
         r["trade_value_grade"] = _trade_value_grade(r.get("trade_value_mm"))
+
+    # ------------------------------------------------------------------ #
+    # MLB veterans the projection system prices but the board never saw
+    # ------------------------------------------------------------------ #
+    # The board population is assembled from timeseries.json + debuts.json +
+    # graduates.json, ALL THREE of which are prospect-derived: a player is only
+    # in them if this platform once tracked him as a prospect. An established
+    # veteran who was never in our ranking coverage - because he debuted before
+    # it, came from NPB/KBO, or was simply never ranked - therefore never
+    # reached the trade board, no matter how thoroughly /projections/ modelled
+    # him.
+    #
+    # Measured 2026-08-01: 325 of 1,319 projected vets (24.6%) were absent,
+    # including AARON JUDGE ($24.6M surplus through 2031), garrett_crochet and
+    # matt_chapman. The loop above could never fix it - it re-prices records
+    # that exist and has no path to ADD one.
+    #
+    # These rows are priced on EXACTLY the basis an MLB row already on the board
+    # gets (src="projection", value = surNpv), so the board stays one currency.
+    # No FV is invented: the prospect Bayesian model is not run on them, because
+    # fabricating a grade to get a player onto a board is the defect class this
+    # codebase has removed twice (the BA-statcast FV-40 and the
+    # performance_ingest FV-35).
+    added = _append_projection_only_rows(records, proj_sur, ages, det, dd)
+    stats["projection_only_added"] = added
     return stats
+
+
+def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
+                                 det: dict, data_dir) -> int:
+    """Append board rows for priced vets missing from the prospect-derived pool.
+
+    Only vets carrying a surNpv are added - that IS the priced value, and a row
+    without one has no value on any basis the board serves (see the coverage
+    test for what the remainder is and why it is deliberately not invented)."""
+    present = {r.get("player_key") for r in records if r.get("player_key")}
+    try:
+        proj = json.loads((Path(data_dir) / "mlb_projections.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return 0
+    n = 0
+    for v in (proj.get("vets") or []):
+        pk = v.get("key")
+        if not pk or pk in present or pk not in proj_sur:
+            continue
+        mm = round(float(proj_sur[pk]), 1)
+        row = {
+            "player_key": pk,
+            "player_name": v.get("name"),
+            "position": v.get("pos"),
+            "org": v.get("team"),
+            "status": "debuted",              # an MLB veteran, never a tracked prospect
+            "age": v.get("age") if v.get("age") is not None else ages.get(pk),
+            "trade_value_mm": mm,
+            "posterior_surplus_mm": mm,
+            "trade_value_tier": _platform_tier(mm),
+            "trade_value_grade": _trade_value_grade(mm),
+            "surplus_source": "projection",
+            # Same deliberate null as the projection branch above: the eFV
+            # credible band is a prospect-era basis and does not describe a
+            # contract-surplus NPV.
+            "trade_value_lo": None,
+            "trade_value_hi": None,
+            # Why this row exists at all, so the board can say so rather than
+            # leaving a reader to wonder why a star appeared from nowhere.
+            "board_entry": "projection_only",
+        }
+        thru, aav = v.get("thru"), v.get("aav")
+        if thru is not None or aav is not None:
+            row["contract"] = _clean_contract({
+                "signed_through": thru,
+                "aav_mm": round(aav / 1e6, 1) if aav is not None else None,
+                "fa_year": (thru + 1) if thru is not None else None,
+            })
+        records.append(row)
+        n += 1
+    return n
+
+
+def _clean_contract(d: dict) -> dict:
+    return {k: v for k, v in d.items() if v is not None}
+
+
+def _unpriced_vets(data_dir, on_board: set | None = None) -> list[dict]:
+    """Projected vets priced NOWHERE, and why.
+
+    `on_board` is the set of keys already carrying a value. It matters: a vet can
+    have no CONTRACT surplus (expiring deal) and still be on the board through the
+    eFV path, because he was once a tracked prospect - tarik_skubal is exactly
+    that. Publishing him as "not tradeable" would be false, and would render a
+    dimmed row in search for a player who IS tradeable. "Unpriced" has to mean
+    unpriced on EVERY basis, not just the contract one.
+
+    Two honest reasons, neither of which is a missing row:
+      expiring     - the contract ends before the projection horizon opens, so
+                     there is no team-controlled season left. A pending free
+                     agent is not a trade asset; the FA module prices him.
+      no_contract  - nothing on file (pre-arb / optioned players Spotrac does
+                     not list), so there is no salary to subtract from value.
+
+    Deliberately NOT given a fabricated value. `no_contract` is the larger and
+    more interesting group - those players have real team control and would
+    carry substantial surplus at the league minimum - and pricing them is a
+    modelling decision, registered rather than smuggled in here."""
+    try:
+        proj = json.loads((Path(data_dir) / "mlb_projections.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    first = proj.get("first_season") or 0
+    out = []
+    for v in (proj.get("vets") or []):
+        if not v.get("key") or v.get("surNpv") is not None:
+            continue
+        if on_board and v["key"] in on_board:
+            continue                    # priced by another basis (eFV backgrade)
+        thru = v.get("thru")
+        out.append({
+            "key": v["key"], "name": v.get("name"), "org": v.get("team"),
+            "pos": v.get("pos"), "thru": thru,
+            "war5": v.get("warTotal"),
+            "reason": "expiring" if (thru is not None and thru < first) else "no_contract",
+        })
+    out.sort(key=lambda r: -(r.get("war5") or 0))
+    return out
+
+
+def _projection_coverage(records: list, data_dir) -> dict:
+    """Is every vet the projection system PRICES also on the trade board?
+
+    The invariant that would have caught Aaron Judge's absence. Stamped into the
+    artifact so a population regression is visible in the data, not just in a log
+    line - the board silently lost a quarter of the projected veteran universe and
+    nothing anywhere reported it.
+
+    `unpriceable` is NOT a failure. It counts vets the projection system models
+    but cannot price, and there are exactly two kinds, both correct:
+      - contract expires this season (no team-controlled season inside the
+        2027-2031 horizon, so there is no future surplus to trade) - this is why
+        aj_minter is absent, and he is a pending free agent, not a lost row;
+      - no contract on file at all (pre-arb / optioned players Spotrac does not
+        list), so there is no salary to subtract from projected value.
+    Neither is invented a value here. The second group is the larger open
+    question and is registered in the coverage doc, not papered over."""
+    on_board = {r.get("player_key") for r in records
+                if r.get("player_key") and r.get("trade_value_mm") is not None}
+    try:
+        proj = json.loads((Path(data_dir) / "mlb_projections.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"available": False}
+    vets = [v for v in (proj.get("vets") or []) if v.get("key")]
+    priced = [v for v in vets if v.get("surNpv") is not None]
+    missing = [v for v in priced if v["key"] not in on_board]
+    unpriceable = [v for v in vets if v.get("surNpv") is None]
+    expiring = sum(1 for v in unpriceable
+                   if v.get("thru") is not None and v.get("thru") < (proj.get("first_season") or 0))
+    return {
+        "available": True,
+        "vets": len(vets),
+        "priced_vets": len(priced),
+        "priced_on_board": len(priced) - len(missing),
+        "missing": len(missing),
+        "examples": [v["key"] for v in sorted(
+            missing, key=lambda x: -(x.get("warTotal") or 0))[:5]],
+        "unpriceable": len(unpriceable),
+        "unpriceable_expiring": expiring,
+        "unpriceable_no_contract": len(unpriceable) - expiring,
+    }
 
 
 def export_trade_values_json(
@@ -4261,11 +4427,34 @@ def export_trade_values_json(
     results = [r for r in results if r.get("surplus_source") != "inactive_dropped"]
     results.sort(key=lambda r: r.get("trade_value_mm") if r.get("trade_value_mm") is not None else -1e9, reverse=True)
 
+    cov = _projection_coverage(results, out_path.parent)
+    if cov.get("missing"):
+        _log.warning("trade_values COVERAGE: %d priced vets are NOT on the board "
+                     "(e.g. %s) - the board population regressed",
+                     cov["missing"], ", ".join(cov.get("examples") or []))
+    else:
+        _log.info("trade_values coverage: every priced vet is on the board "
+                  "(%d of %d projected vets; %d unpriceable, see 'unpriceable')",
+                  cov.get("priced_on_board", 0), cov.get("vets", 0),
+                  cov.get("unpriceable", 0))
+
     payload = {
         "generated_at": date.today().isoformat(),
         # Which dollar calibration produced these numbers. Four served artifacts
         # silently disagreed on 2026-07-31 because none of them said.
         "calibration":   vf.calibration_stamp(),
+        # Board-vs-projection coverage, stamped so a regression is visible in the
+        # artifact itself rather than only in a log line nobody reads.
+        "coverage":      cov,
+        # Vets the projection system models but CANNOT price, with the reason.
+        # They are kept OUT of `players` so they never pollute a value ranking,
+        # and shipped here so the search can answer "why isn't he here?" instead
+        # of returning nothing - which is what sent someone looking for
+        # A.J. Minter into the code.
+        "unpriced":      _unpriced_vets(
+            out_path.parent,
+            {r.get("player_key") for r in results
+             if r.get("trade_value_mm") is not None}),
         "count":         len(results),
         "players":       [board_slim(r) for r in results],
     }
