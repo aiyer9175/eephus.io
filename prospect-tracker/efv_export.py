@@ -61,6 +61,8 @@ def _entry(s, side, kind):
         e["consensus_surplus_mm"] = s["consensus_surplus_mm"]
     if s.get("injury_factor") is not None:               # live injury penalty (<1.0 = hurt)
         e["injury_factor"] = s["injury_factor"]
+    if s.get("xfv_grade_healthy") is not None:           # same basis as xfv_grade, injury removed
+        e["xfv_grade_healthy"] = s["xfv_grade_healthy"]
     if s.get("statcast_factor") is not None:             # live Statcast+ tilt (!=1.0)
         e["statcast_factor"] = s["statcast_factor"]
     if s.get("krp_plus") is not None:                    # KRP+ (K-backed Run Prevention), pitchers

@@ -567,6 +567,39 @@ def _factors(ridge, feats, top: int = 4, side: str = "hit") -> list:
                              min_mag=0.05, top=top)
 
 
+def _relabel_pace_factor(factors: list, milb: dict | None) -> list:
+    """Tell the truth about "Seasons to reach level" for a fast climber.
+
+    The n_milb_seasons contribution is real and its sign is right - holding
+    level and age fixed, more seasons IS slower progression. But the feature
+    counts seasons with no idea where the player ENTERED, and DSL sits at rank 0,
+    so a 17-year-old IFA who climbs DSL to AA carries a bigger "slow" penalty
+    than a college bat who started at A and covered half the ladder.
+
+    Measured 2026-07-31 (owner ask): franklin_arias reads pace 1.33 rungs/season
+    from a DSL entry, and josue_de_paula 1.00, while the chip on their cards said
+    they were slow. The chip fires DOWN on 99.8% of live hitter cards, so this is
+    a narration defect at scale, not two players.
+
+    DISPLAY ONLY. The model contribution, the grade, the rank and every dollar
+    are untouched: only the label the reader sees changes, and only for players
+    the ladder itself says are climbing at least a rung a season.
+    """
+    if not factors or not milb:
+        return factors
+    pace = milb.get("pace_from_entry")
+    entry = milb.get("entry_level_rank")
+    if pace is None or pace < 1.0:
+        return factors
+    out = []
+    for f in factors:
+        if f.get("label") == _FACTOR_LABELS["n_milb_seasons"] and f.get("dir") == "down":
+            f = dict(f, label="Seasons used (fast riser from a low start)"
+                     if (entry is not None and entry <= 1.0) else "Seasons used (fast riser)")
+        out.append(f)
+    return out
+
+
 def _age_at(birth_date, year):
     if not birth_date:
         return None
@@ -1677,6 +1710,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         cons_war = max(0.0, _pred_ols(ols, _cons_anchor)) if ols else xfv_war
         rank_war = (1 - lam) * cons_war + lam * xfv_war   # guarded blend -> headline rank
         factors = _factors(ridge, feats, side=side)       # explainer: why eFV != consensus
+        factors = _relabel_pace_factor(factors, r.get("milb"))
         _stale_disc = float(r.get("anchor_stale_discount") or 0.0)
         if _stale_disc > 0:
             # surfaced like the other live overlays so the card explains WHY the
@@ -1715,18 +1749,30 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             factors.insert(0, {"label": "Reliever ceiling", "dir": "down",
                                "mag": round((1 - rolef) * 6, 2)})
         adj_factor = inj * sc * agef * rolef
+        # HEALTHY-FV COUNTERFACTUAL. Captured here because the injury penalty is
+        # NOT invertible downstream: it multiplies the MODEL leg of a lambda-blend
+        # and the result then passes through the nonlinear outcome grade map, so
+        # no consumer can divide injury_factor back out of the served grade. Only
+        # the injury term is dropped - Statcast, age and role tilts are kept - so
+        # the published number answers "what would he grade if healthy", not "what
+        # would he grade with no adjustments at all".
+        _war_pre_tilt = xfv_war
         if adj_factor != 1.0:                              # adjust grade, rank, AND surplus
             xfv_war = _apply_war_tilt(xfv_war, adj_factor)  # sign-aware (negative-war safe)
             # Tilt the MODEL term only, then rebuild the blend, so the consensus
             # anchor cons_war is not also haircut. (rank_war *= adj_factor scaled
             # the whole blend, double-penalizing an injured/low-Statcast player.)
             rank_war = (1 - lam) * cons_war + lam * xfv_war
+        xfv_war_healthy = (_apply_war_tilt(_war_pre_tilt, sc * agef * rolef)
+                           if inj < 1.0 else None)
         if xov and ols:
             # S-XLINE-4 lean: the FV-point delta is priced through the blend's
             # own FV->WAR line (the consensus OLS slope), MODEL leg only, then
             # the blend is rebuilt exactly like the multiplicative tilts above.
             xfv_war = max(-2.0, xfv_war + ols["b"] * xov)
             rank_war = (1 - lam) * cons_war + lam * xfv_war
+            if xfv_war_healthy is not None:                # same lean on the counterfactual
+                xfv_war_healthy = max(-2.0, xfv_war_healthy + ols["b"] * xov)
         pos = r.get("position")
         age = r.get("age_now")
         if age is None:
@@ -1748,6 +1794,11 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
                                              exposure_seasons=TARGET_SEASONS)
         if xfv_grade is None or _odds_grade is None:
             continue
+        # Mirrors xfv_grade's basis exactly (same map, same exposure), so the
+        # healthy figure is comparable to the badge it is displayed beside.
+        xfv_grade_healthy = (vf.outcome_implied_fv(xfv_war_healthy,
+                                                   exposure_seasons=TARGET_SEASONS)
+                             if xfv_war_healthy is not None else None)
         probs = vf.p_bucket_given_fv(_odds_grade, is_pit) or []
         # ODDS DISPERSION CALIBRATION, wired 2026-07-31 after the lane cleared its
         # pre-registered gate (docs/efv-2026-07-30/ODDS_CALIBRATION_SLOPE_GATE.md;
@@ -1789,6 +1840,10 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             "player_key": r["player_key"], "kind": "active", "position": pos,
             "consensus_fv": round(cons_fv, 1),
             "xfv_grade": round(xfv_grade, 1),                 # realized-implied (deflated)
+            # Same basis as xfv_grade, injury tilt removed. Present ONLY on rows
+            # actually carrying a penalty, so a null means "not hurt", not "unknown".
+            "xfv_grade_healthy": (round(xfv_grade_healthy, 1)
+                                  if xfv_grade_healthy is not None else None),
             "xfv_minus_consensus": round(xfv_grade - cons_fv, 1),
             "xfv_war_6yr": round(xfv_war, 2),
             "rank_war": round(rank_war, 3),
@@ -2008,6 +2063,7 @@ def run_backgrade(persist: bool = True) -> dict:
         if row.get("milb"):
             xfv_war = max(-2.0, a + b * _predict(ridge, feats))
             factors = _factors(ridge, feats, side=side)
+            factors = _relabel_pace_factor(factors, r.get("milb"))
         else:
             # AUDIT FIX 2026-07-14: honor the docstring's prior-anchored
             # contract - a no-track-record row scored through the ridge eats

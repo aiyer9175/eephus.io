@@ -21,6 +21,35 @@
 # any predictive or valuation head. Its outputs are a prospx card panel and
 # a glossary entry. Nothing else.
 #
+# ---------------------------------------------------------------------------
+# AMENDMENT 2026-07-31 (owner decision, recorded here because a contract that
+# changes silently is not a contract).
+#
+# SCOPE CLARIFIED, NOT WIDENED. The bar is on PREDICTIVE and VALUATION use, and
+# it stands unchanged: AP+ may not enter a model that produces a grade, a WAR
+# projection, an outcome probability or a dollar figure. That includes eFV.
+#
+# What the amendment permits: AP+ may be read by DISPLAY and EDITORIAL surfaces
+# outside this module's own card - a chip, a tooltip, a sort key, a filter, a
+# narration decision - provided the number itself is not an input to any fitted
+# or priced quantity. Rationale: the owner asked why a DSL climber's card says
+# "slow", and AP+ is the platform's own answer to exactly that question. Keeping
+# it locked in one panel meant the site contradicted itself in public.
+#
+# What is STILL FORBIDDEN, and why it is not merely policy:
+#   * Any efv_* / proj_* / fa_* / valuation import, in either direction.
+#   * Joining the SERVED artifact to training rows. data/advancement_pace.json
+#     is latest-as-of, so every historical row would carry a post-decision
+#     value. That is a leak, not a contract question.
+#   * Hitters-only remains a hard limit; there is no pitcher panel.
+#
+# The eFV-side answer to the same question is a SEPARATE, eFV-native column
+# computed from the same StatsAPI substrate with no AP+ import and no as-of
+# violation: efv_dataset._pace_from_entry, gated at efv_model.PACE_FROM_ENTRY,
+# docs/efv-2026-07-31/PACE_FROM_ENTRY_GATE.md. If someone later proposes
+# "just use AP+ in eFV", that document explains why the answer is still no.
+# ---------------------------------------------------------------------------
+#
 # NAME-COLLISION HAZARD: the eFV pipeline has its own level_rank on a
 # DIFFERENT 0-5 DSL-separate scale. Every ladder quantity here is
 # ap_-prefixed (ap_level_rank, ap_starting_level, ...) so the two scales
