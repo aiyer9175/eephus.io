@@ -16,6 +16,13 @@ Feeds hem_plus.score_pool(), which anchors HEM+ to the hitter pool and rolls up
 team offenses. Also builds the yearly hitter-history file for the /mlbstats/
 history tabs.
 
+One column on this board is NOT ours: wRC+ is the industry's published value,
+read verbatim from MLB's bulk season-total sabermetrics feed and joined by MLBAM
+id (load_published_wrc_plus). This site derives no wRC+; the column exists so the
+site's own HEM+ can be read beside the number the industry publishes. It is a
+live-board column only: export_history does not carry it, so a past-season board
+drops it rather than rendering a blank column.
+
 Run: `python hitter_export.py [season]`  or  `python hitter_export.py history`.
 Wired into run_monthly (best-effort). NETWORK-GATED + BEST-EFFORT: nothing
 fetches at import; any pull failure logs and returns 0 rather than aborting.
@@ -148,6 +155,227 @@ def build_hitters(rows: list[dict]) -> list[Hitter]:
             rbi=_num(r.get("RBI")) or 0.0, r=_num(r.get("R")) or 0.0,
         ))
     return out
+
+
+# --------------------------------------------------------------------------- #
+# Published wRC+ (INDUSTRY value, displayed verbatim - this site derives none)
+# --------------------------------------------------------------------------- #
+# ONE bulk season-scoped call, cached on disk by scrapers._fetch exactly like its
+# neighbours in fa_sources (fa_statsapi_*, savant_pf_*). Season totals BY
+# CONSTRUCTION: a season-scoped sabermetrics request returns one aggregated row
+# per player, so there is no stint decomposition to mis-index (see
+# load_published_wrc_plus for the measurement and the guard).
+_SABER_URL = ("https://statsapi.mlb.com/api/v1/stats?stats=sabermetrics"
+              "&group=hitting&season={season}&sportId=1&playerPool=All&limit=2000")
+
+# Color bands for the wRC+ column, DERIVED FROM THE MEASURED SPREAD of published
+# wRC+, NOT inherited from HEM+.
+#
+# Why they cannot be inherited: HEM+ is a shrunk ratio index and published wRC+
+# is not, so the same 100 anchor sits on two different widths. Measured over the
+# pooled 2021-2026 QUALIFIED pools (n = 2,069 hitter-seasons: the five history
+# boards plus the live board): published wRC+ mean 100.86 / SD 25.27 against
+# HEM+ mean 99.15 / SD 17.69, a ratio of 1.43. Reusing hemClass 88/112/130 on
+# that wider distribution would paint 29.9 / 37.9 / 19.7 / 12.4 percent of
+# qualified hitters low / average / good / elite, against the HEM+ reference of
+# 26.5 / 50.9 / 17.6 / 4.9. It would call elite 2.5x as often as HEM+ does and
+# hollow out the average band. So the bands are re-derived.
+#
+# Derivation, on the ROUNDED integers this column actually displays, by two
+# independent methods that agree:
+#   percentile-match (put each break at the same qualified-pool percentile as the
+#     HEM+ break it replaces): 88 -> 85.0, 112 -> 119.0, 130 -> 141.0
+#   sigma-match (put each break at the same z on the wRC+ pool):
+#                              88 -> 84.9, 112 -> 119.2, 130 -> 144.9
+# Rounded to the nearest 5 that minimises total band-share error against HEM+
+# (a sweep of all 125 round-5 triples over low 75-95 / good 110-130 / elite
+# 135-155): 85 / 120 / 145, L1 error 2.80 percentage points summed over the four
+# bands (shares 26.0 / 52.1 / 17.9 / 4.1 against the HEM+ reference 26.5 / 50.9 /
+# 17.6 / 4.9). Runner-up 85/120/150 scored 4.54, then 85/120/140 at 4.74.
+#
+# Cross-check, not an input: the industry's own published rule-of-thumb reading
+# of wRC+ breaks at 80 (below average), 115 (above average) and 140 (great). The
+# measurement landed within 5 points of all three without being pointed at them.
+#
+# assets/mlbstats.js wrcClass() mirrors these three numbers, and
+# test_hitter_wrc_plus.py pins the mirror so the two cannot drift.
+WRC_PLUS_BANDS = {"low": 85, "good": 120, "elite": 145}
+# Sample floor for the PUBLISHED wRC+ column, matching WAR/PA+, the site's
+# existing rate-index convention. Published wRC+ is UNSHRUNK, unlike the EB-shrunk
+# HEM+ it sits beside: at 1 PA, HEM+ reads 100.0 and wRC+ reads 481. See
+# _join_wrc_plus for the measurement.
+WRC_PLUS_MIN_PA = 100
+
+
+@functools.lru_cache(maxsize=8)
+def load_published_wrc_plus(season: int) -> dict:
+    """MLB's PUBLISHED wRC+ for one season, keyed by MLBAM id. One bulk call.
+
+    Returns {"values": {mlbam: int wRC+}, ...disclosure counters}. Never raises;
+    empty values on any failure, so the column simply goes blank.
+
+    NEVER A STINT, AND THE CODE DOES NOT TRUST THAT BY FAITH. The predecessor
+    defect on the sqlite path was reading splits[-1] off a season-scoped
+    response, which silently stored ONE STINT for a traded player. Two
+    protections here:
+
+      1. Rows are grouped by MLBAM id and the group is resolved explicitly. No
+         positional index is ever taken. `splits[-1]`, `splits[0]` and "last one
+         wins" appear nowhere in this function, on purpose.
+      2. If a group ever holds more than one row it is a stint decomposition,
+         and the season total is the row carrying the numTeams > 1 marker. If
+         that row is not unique the id is REFUSED, because every remaining
+         choice is a positional guess.
+
+         NOT the same test stats.py uses, and the difference matters. stats.py
+         selects on the PRESENCE of numTeams, which is correct for the
+         per-player endpoint where only the aggregate row carries it. The BULK
+         feed sets numTeams on EVERY row (measured 2026: 647 rows at 1, 27 at
+         2, 2 at 3), so a presence test here would match everything and decide
+         nothing. Same defect, two endpoints, two different correct tests.
+
+    Measured 2026-07-31 over seasons 2021-2026: 5,120 feed rows, 5,120 distinct
+    player ids, ZERO groups larger than one, so branch 2 is a guard and not a
+    live code path today. numTeams is nonetheless populated and correct on every
+    row (2026: 647 ones, 27 twos, 2 threes), and the 29 multi-team hitters on the
+    live board agree with the board's own season-total wOBA to within 0.0074 (max
+    over the 29), which is what proves these rows are aggregates, not stints.
+
+    IDENTITY. The join key is the MLBAM id and NOTHING ELSE. Measured on
+    prospects.db 2026-07-31, the sqlite `sabermetrics` table has 51 mlbam ids
+    carrying more than one player_key; 10 of those groups carry a wRC+ and 7 of
+    the 10 DISAGREE with themselves (jackson_chourio 115.9 vs 109.9,
+    jeferson_quero 120.9 vs 124.7, victor_mesa_jr 112.8 vs 113.3, chase_delauter
+    124.0 vs 130.3, cody_freeman 190.3 vs 47.7, josh_smith 67.3 vs 64.1,
+    sterlin_thompson 79.1 vs 53.1). The resolution rule for this column is that
+    player_key never enters the join: a colliding pair CANNOT produce two numbers
+    on this board, because both keys resolve to the one mlbam and read the one
+    published season total. That is also why this column does not read the sqlite
+    table, which additionally covers only 226 of 277 qualified hitters (the 51
+    misses include Judge, Trout, Harper, Freeman, Machado and Schwarber).
+    """
+    season = int(season)
+    meta = {"values": {}, "source": "statsapi sabermetrics (bulk, season totals)",
+            "season": season, "n_rows": 0, "n_players": 0, "n_multi_team": 0,
+            "n_ambiguous": 0, "ambiguous_ids": []}
+    try:
+        from scrapers import _fetch      # network-gated: nothing fetches at import
+        fr = _fetch(_SABER_URL.format(season=season),
+                    f"statsapi_saber_hitting_{season}", accept_json=True)
+        if fr.status != 200 or not fr.body:
+            _log.warning("sabermetrics %s: fetch failed (status=%s)", season, fr.status)
+            return meta
+        stats = json.loads(fr.body).get("stats") or []
+        splits = (stats[0].get("splits") or []) if stats else []
+    except Exception as e:   # noqa: BLE001 - best-effort join, never aborts the board
+        _log.warning("sabermetrics %s: unavailable (%s)", season, e)
+        return meta
+
+    by_id: dict[int, list[dict]] = {}
+    for s in splits:
+        pid = (s.get("player") or {}).get("id")
+        val = (s.get("stat") or {}).get("wRcPlus")
+        if pid is None or val is None:
+            continue
+        by_id.setdefault(int(pid), []).append(s)
+
+    values: dict[int, int] = {}
+    ambiguous: list[int] = []
+    n_multi = 0
+    for pid, group in by_id.items():
+        if len(group) == 1:
+            row = group[0]
+        else:
+            # Stint decomposition. Take the season-total marker, never a position.
+            tot = [r for r in group if (r.get("numTeams") or 1) > 1]
+            if len(tot) != 1:
+                ambiguous.append(pid)
+                continue
+            row = tot[0]
+        if (row.get("numTeams") or 1) > 1:
+            n_multi += 1
+        try:
+            values[pid] = int(round(float(row["stat"]["wRcPlus"])))
+        except (TypeError, ValueError, KeyError):
+            continue
+    meta.update({"values": values, "n_rows": len(splits), "n_players": len(values),
+                 "n_multi_team": n_multi, "n_ambiguous": len(ambiguous),
+                 "ambiguous_ids": sorted(ambiguous)})
+    return meta
+
+
+def _join_wrc_plus(hitters: list[dict], season: int) -> dict:
+    """Stamp the PUBLISHED wRC+ onto board rows by MLBAM id, and return the
+    disclosure block the payload carries.
+
+    Nothing here is computed: the value is MLB's published season figure, read
+    verbatim and only rounded to the integer the industry publishes it at (a "+"
+    stat, so round-to-nearest per the display convention, not the ceiling that
+    FV/tool grades take).
+
+    SAMPLE FLOOR (WRC_PLUS_MIN_PA, added 2026-07-31 after review). The original
+    version stamped every row the feed covered on the reasoning that a published
+    fact is not a pool-anchored index a thin sample would distort. That reasoning is
+    wrong HERE, and the reason is the column it sits beside. HEM+ is EB-SHRUNK, so a
+    1-PA hitter reads exactly 100.0; published wRC+ is UNSHRUNK, so the same man
+    reads 481. Measured on the live board: HEM+ sd 13.9 over range [63, 166] against
+    wRC+ sd 58.6 over [-100, 481], with 134 rows under 50 PA and 40 negative. Sorting
+    the unqualified view by wRC+ put a 1-PA pitcher (Victor Mederos, 481) above every
+    real hitter in baseball. Two indices side by side that answer the same question
+    at wildly different sample discipline is a false comparison, and the bands are fit
+    on the QUALIFIED pool (sd 25.27) so they mean nothing at sd 58.6 anyway.
+
+    The floor matches WAR/PA+, the site's existing rate-index convention, which is
+    already nulled below 100 PA. Below the floor the field is ABSENT rather than
+    zeroed, so the column renders empty and sorts to the bottom instead of asserting
+    a number nobody should read. Nothing is hidden that the reader can act on: those
+    rows already carry the is-provisional row treatment and the prov chip."""
+    src = load_published_wrc_plus(season)
+    vals = src.get("values") or {}
+    n = n_q = 0
+    n_board = len(hitters)
+    n_qual = sum(1 for h in hitters if h.get("qualified"))
+    n_thin = 0
+    n_eligible = sum(1 for h in hitters if (h.get("pa") or 0) >= WRC_PLUS_MIN_PA)
+    for h in hitters:
+        mid = h.get("mlbam")
+        v = vals.get(int(mid)) if mid is not None else None
+        if v is None:
+            continue
+        if (h.get("pa") or 0) < WRC_PLUS_MIN_PA:
+            n_thin += 1
+            continue
+        h["wrc_plus"] = v
+        n += 1
+        if h.get("qualified"):
+            n_q += 1
+    return {
+        "available": bool(n),
+        "source": src.get("source"),
+        "published": True,
+        "n_feed_rows": src.get("n_rows"), "n_feed_players": src.get("n_players"),
+        "n_multi_team": src.get("n_multi_team"),
+        "n_ambiguous": src.get("n_ambiguous"), "ambiguous_ids": src.get("ambiguous_ids"),
+        "min_pa": WRC_PLUS_MIN_PA, "n_below_min_pa": n_thin,
+        # Coverage on the population the column actually targets. hit_rate is
+        # stamped/board and so is depressed by the sample floor by design;
+        # this is the number that detects a real FEED regression.
+        "n_eligible": n_eligible,
+        "hit_rate_eligible": round(n / n_eligible, 4) if n_eligible else None,
+        "n_stamped": n, "n_board": n_board,
+        "hit_rate": round(n / n_board, 4) if n_board else None,
+        "n_stamped_qualified": n_q, "n_qualified": n_qual,
+        "hit_rate_qualified": round(n_q / n_qual, 4) if n_qual else None,
+        "bands": dict(WRC_PLUS_BANDS),
+        "note": ("wRC+ is MLB's PUBLISHED value, read verbatim from the bulk "
+                 "season-total sabermetrics feed and joined by MLBAM id. This "
+                 "site DISPLAYS wRC+ rather than deriving it; HEM+ is the "
+                 "offense-rate index it does compute. The value is a season "
+                 "total, never a single stint, so a traded hitter reads one "
+                 "line. Shown only at " + str(WRC_PLUS_MIN_PA) + "+ PA: it is "
+                 "unshrunk, unlike HEM+, so a thin sample reads as a wild "
+                 "number rather than as league average."),
+    }
 
 
 def _join_xhem_plus(hitters: list[dict], season: int) -> int:
@@ -439,6 +667,13 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     if h3_meta.get("n_stamped"):
         log(f"  hitters: 3-year HEM+ joined for {h3_meta['n_stamped']} hitters "
             f"(frozen lab vintage {h3_meta.get('generated_at')})")
+    wrc_meta = _join_wrc_plus(scored["hitters"], season)
+    if wrc_meta.get("available"):
+        log(f"  hitters: published wRC+ joined for {wrc_meta['n_stamped']}/"
+            f"{wrc_meta['n_board']} hitters "
+            f"({wrc_meta['n_stamped_qualified']}/{wrc_meta['n_qualified']} qualified)")
+    else:
+        log("  hitters: published wRC+ unavailable; column blank")
     n_xh = _join_xhem_plus(scored["hitters"], season)
     if n_xh:
         log(f"  hitters: xHEM+ (Savant deserved offense) joined for {n_xh} hitters")
@@ -468,6 +703,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         "verdict": _verdict(), "backtest": _backtest(),
         # Vintage of the FROZEN 3-year HEM+ column (see _join_hem_plus_3yr).
         "multiyear": h3_meta,
+        # Provenance + coverage of the PUBLISHED wRC+ column, and the color
+        # bands the frontend mirrors (see WRC_PLUS_BANDS).
+        "wrc_plus": wrc_meta,
         # WAR/PA+ scale block (anchor pool + measured pool parameters) and the
         # vintage of its FROZEN 3-year companion.
         "war_rate": wr_meta,

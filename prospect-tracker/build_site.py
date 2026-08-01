@@ -4006,8 +4006,18 @@ def build_swing_delta_payload() -> dict | None:
 # Current-season MLB stat line, keyed by MLBAM, for the modules whose rows carry
 # no stats of their own (the FA class board is a market payload). Every field is
 # lifted verbatim from a shipped leaderboard; nothing is recomputed. NOTE what is
-# NOT here: this site computes no wRC+ and no xFIP, so neither is served - HEM+
-# (offense-rate index) and FIP/ERA are the numbers that actually exist.
+# NOT here: this site DERIVES no wRC+ and no xFIP, so neither is derived into
+# this payload - HEM+ (offense-rate index) and FIP/ERA are the numbers the site
+# actually computes.
+#
+# Sharpened 2026-07-31, because the MLB Stats hitter board now shows a wRC+
+# column and a reader could otherwise read "no wRC+" as contradicting it. Both
+# statements are true and they are about different things: the site derives no
+# wRC+ of its own, and the board's wRC+ is MLB's PUBLISHED value read verbatim
+# (hitter_export.load_published_wrc_plus). Display is not derivation. This
+# payload deliberately stays a derived-numbers payload and does not carry the
+# published figure, so a downstream module cannot mistake a passed-through
+# industry number for one of ours.
 def build_current_lines_payload() -> dict | None:
     hit = _cached_data_json("hitter_leaderboards.json")
     sp = _cached_data_json("starter_leaderboards.json")
@@ -4053,9 +4063,13 @@ def build_current_lines_payload() -> dict | None:
         "season": hit.get("season") or sp.get("season"),
         "asOf": hit.get("as_of") or sp.get("as_of"),
         "note": ("Current-season MLB lines lifted verbatim from the eephus.io "
-                 "leaderboards. This site computes no wRC+ and no xFIP, so "
-                 "neither is served: HEM+ is the offense-rate index and "
-                 "FIP / SEM+ / REM+ are the run-prevention numbers."),
+                 "leaderboards. This site derives no wRC+ and no xFIP of its "
+                 "own, so neither is served here: HEM+ is the offense-rate "
+                 "index it does compute and FIP / SEM+ / REM+ are the "
+                 "run-prevention numbers. The MLB Stats hitter board does show "
+                 "a wRC+ column, but that figure is MLB's published wRC+ "
+                 "displayed verbatim rather than anything this site derives, "
+                 "and it is deliberately not carried in this payload."),
         "n": len(out),
         "players": out,
     }
