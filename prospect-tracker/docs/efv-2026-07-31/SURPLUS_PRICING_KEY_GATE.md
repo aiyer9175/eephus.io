@@ -48,17 +48,32 @@ class as the frame P0 closed on 2026-07-31, pointed the other way.
 ### 2. It would RE-CREATE the flat bottom v6 existed to remove
 
 `outcome_implied_fv` returns exactly 20.0 for every non-positive predicted WAR.
-**4,365 of 9,334 rows (46.8%) carry `xfv_grade == 20.0` exactly.**
 
-Pricing both keys through `expected_surplus_usd` + `apply_calibration`:
+Measured on the GRADE, which is the honest ground because price is a monotone
+function of grade given (side, position, age, eta):
 
-| | distinct prices | largest single-price bucket |
+| | distinct grades | largest single-grade bucket |
 |---|---|---|
-| quantile key (today) | 158 | 3,693 rows (39.6%) |
-| displayed key (proposed) | 237 | **4,542 rows (48.7%)** |
+| `xfv_grade_quantile` (today) | 176 | 3,693 rows (39.6%) at grade 35.0 |
+| `xfv_grade` (proposed) | 342 | **4,365 rows (46.8%) at grade 20.0** |
 
 The v6 EV re-fit's entire purpose was to lift 6,271 rows off a shared $0 floor.
-Re-keying puts nearly half the board back onto a single price.
+Re-keying puts nearly half the board onto a single grade, at the extreme floor,
+where it carries no ordering information at all.
+
+**CORRECTION, and it cuts both ways.** An earlier draft of this document quoted
+"158 vs 237 distinct prices, largest bucket 39.6% -> 48.7%". Those figures were
+computed by pricing rows straight out of `xfv.json`, which carries **no `age`,
+`eta_years` or `position`** - so every row was priced as an ageless, ETA-less
+hitter. The price-level numbers were therefore measured on a degenerate frame
+and are withdrawn. The grade-level table above replaces them and needs no
+pricing arguments to be true.
+
+The honest nuance the correction exposes: **`xfv_grade` is MORE granular overall**
+(342 distinct grades against 176). The re-key would buy resolution in the middle
+of the board and lose it at the bottom. The floor pile and the frame mismatch are
+still decisive, but "the displayed grade is a blunter instrument" would be a
+false way to put it.
 
 ### 3. Our own documentation forbids it
 
@@ -99,22 +114,17 @@ scale the dollar model was fitted on, and says so.
 ## Reproduce
 
 ```
-python - <<'PY'
-import json, value_framework as vf
+python - <<'EOF'
+import json
 from collections import Counter
+# Grade-level, deliberately. xfv.json carries no age / eta_years / position,
+# so anything that PRICES straight off this file is measuring an ageless,
+# ETA-less hitter - which is how the withdrawn price figures were produced.
 bp = json.load(open('data/xfv.json', encoding='utf-8'))['by_player']
 for key in ('xfv_grade_quantile', 'xfv_grade'):
-    ps = []
-    for v in bp.values():
-        g = v.get(key)
-        if g is None:
-            continue
-        pos = v.get('position')
-        is_pit = str(pos or '').upper() in ('SP','RP','RHP','LHP','P','SIRP','MIRP')
-        s = vf.expected_surplus_usd(float(g), is_pit, pos)
-        if s is not None:
-            ps.append(round(vf.apply_calibration(s / 1e6), 1))
-    c = Counter(ps).most_common(1)[0]
-    print(key, 'distinct', len(set(ps)), 'largest bucket', c)
-PY
+    gs = [round(v[key], 1) for v in bp.values() if v.get(key) is not None]
+    top_grade, n = Counter(gs).most_common(1)[0]
+    print(f'{key:20s} distinct={len(set(gs)):4d} '
+          f'largest={n} ({100*n/len(gs):.1f}%) at grade {top_grade}')
+EOF
 ```
