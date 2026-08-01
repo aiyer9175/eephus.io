@@ -386,18 +386,7 @@ def _skill_index() -> dict[int, dict]:
         out.setdefault(mid, {})["hem"] = {
             "hemPlus": r.get("hem_plus"), "hemPlus3yr": r.get("hem_plus_3yr"),
             "xhemPlus": r.get("xhem_plus"), "tier": r.get("tier"),
-            "qualified": bool(r.get("qualified")), "luckGap": r.get("luck_gap"),
-            # Baked 2026-07-30 (Lane B): every one of these was computed and served
-            # on /mlbstats/ but absent from the player card, so a reader had to open
-            # a different module to see the same player's own numbers.
-            # WAR/PA+ is 100+10z, NOT the wRC+-width ratio scale HEM+ uses -- the
-            # renderer must band it with remCell, never hemCell.
-            "warPaPlus": r.get("war_pa_plus"), "warPaPlusAdj": r.get("war_pa_plus_adj"),
-            "warPaPlusPct": r.get("war_pa_plus_pct"),
-            "warPaPlus3yr": r.get("war_pa_plus_3yr"),
-            "war": r.get("war"), "pa": r.get("pa"),
-            "pwoba": r.get("pwoba"), "fwdhemPlus": r.get("fwdhem_plus"),
-            "wrcPlus": r.get("wrc_plus")}
+            "qualified": bool(r.get("qualified")), "luckGap": r.get("luck_gap")}
 
     bd = _load("bullpen_leaderboards.json")
     b_season = bd.get("season")
@@ -410,17 +399,7 @@ def _skill_index() -> dict[int, dict]:
             "kind": "rel", "season": b_season, "role": r.get("role"),
             "ip": r.get("ip"), "qualified": bool(r.get("qualified")),
             "remPlus": r.get("rem_plus"), "rivPlus": r.get("riv_plus"),
-            "remPlus3yr": r.get("rem_plus_3yr"), "xremPlus": r.get("xrem_plus"),
-            # Lane B bake. warIpPlus here is RELIEVER-anchored and is NOT comparable
-            # with the starter block's field of the same name (separate pools, the
-            # SEM+/REM+ precedent). gmLI and the save/hold counts are the deployment
-            # story REM+ deliberately leaves out.
-            "warIpPlus": r.get("war_ip_plus"), "warIpPlusAdj": r.get("war_ip_plus_adj"),
-            "warIpPlusPct": r.get("war_ip_plus_pct"),
-            "warIpPlus3yr": r.get("war_ip_plus_3yr"), "war": r.get("war"),
-            "gmli": r.get("gmli"), "gmli3yr": r.get("gmli_3yr"),
-            "saves": r.get("saves"), "holds": r.get("holds"),
-            "wpa": r.get("wpa"), "sd": r.get("sd"), "md": r.get("md")}
+            "remPlus3yr": r.get("rem_plus_3yr"), "xremPlus": r.get("xrem_plus")}
 
     sd = _load("starter_leaderboards.json")
     s_season = sd.get("season")
@@ -436,29 +415,7 @@ def _skill_index() -> dict[int, dict]:
             "kind": "sp", "season": s_season, "role": r.get("role"),
             "ip": r.get("ip"), "qualified": bool(r.get("qualified")),
             "semPlus": r.get("sem_plus"), "semPlus3yr": r.get("sem_plus_3yr"),
-            "xsemPlus": r.get("xsem_plus"),
-            # Lane B bake. STARTER-anchored WAR/IP+; see the reliever note above for
-            # why the two must never share a scale in the renderer.
-            "warIpPlus": r.get("war_ip_plus"), "warIpPlusAdj": r.get("war_ip_plus_adj"),
-            "warIpPlusPct": r.get("war_ip_plus_pct"),
-            "warIpPlus3yr": r.get("war_ip_plus_3yr"), "war": r.get("war"),
-            "ipPerGs": r.get("ip_per_gs"), "gs": r.get("gs")}
-
-    # Leverage block (batters + starters), from the fourth /mlbstats/ board. Kept
-    # OUT of the hem/pitch blocks on purpose: it is descriptive game-context, not a
-    # skill index, and bundling it into "hem" would invite a renderer to band it on
-    # a plus scale it does not share.
-    ld = _load("leverage_leaderboards.json")
-    for grp, key in (("batters", "bat"), ("starters", "sp")):
-        for r in ld.get(grp) or []:
-            try:
-                mid = int(r.get("mlbam"))
-            except (TypeError, ValueError):
-                continue
-            out.setdefault(mid, {}).setdefault("lev", {}).update({
-                "kind": key, "wpa": r.get("wpa"), "wpaLi": r.get("wpa_li"),
-                "pli": r.get("pli"), "clutch": r.get("clutch"),
-                "wpaPerStart": r.get("wpa_per_start")})
+            "xsemPlus": r.get("xsem_plus")}
     return out
 
 
@@ -601,11 +558,6 @@ def build_payload() -> dict:
         if sw and (not p["isPit"] or p.get("twoWay")):
             p["swingPlus"] = sw["swing_plus"]
             p["swingN"] = sw["n_swings"]
-            # W6 display-only: per-season Swing+ slices for the card trend
-            # line (same filter + shrink, grouped by season; low_n = under
-            # the model's 180-swing floor). Never a model input.
-            if sw.get("seasons"):
-                p["swingPlusSeasons"] = sw["seasons"]
         # In-house AAA Stuff+ - recent graduates only (the ex-PROSPX origin
         # gate keeps a vet's rehab-stint AAA pitches off his page).
         st = aaa_stuff.get(str(mlbam))
@@ -626,7 +578,7 @@ def build_payload() -> dict:
         "notes": [
             "career: MLB season lines (StatsAPI) + per-season bWAR (war_daily)",
             "statcast: Savant leaderboard percentiles within the season's qualified pool; pitcher contact metrics invert (suppression = good)",
-            "swing_plus: Will Cahoon's model, MLB bat tracking 2024+ only; swingPlusSeasons = per-season slices (low_n under 180 swings)",
+            "swing_plus: Will Cahoon's model, MLB bat tracking 2024+ only",
             "aaa_stuff_plus: in-house AAA pitch-quality model (stuff_plus_aaa.py), ex-PROSPX pitchers' latest tracked AAA season",
             "skills: HEM+ (hitters), REM+/RIV+/SEM+ (pitchers) from the MLB Stats leaderboards, joined by MLBAM",
             "scout: latest published report blurb (capped) + consensus tool grades, ex-PROSPX players only",

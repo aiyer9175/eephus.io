@@ -1,7 +1,7 @@
 [
   { "name": "Noah J. Dengler",    "handle": "ARKNDJL",    "linkedin": "noahjdengler",
     "email": "arkndjl@gmail.com", "school": "New York University",
-    "note": ["eephus.io Creator/Lead Developer", "PROSPX Creator/Lead Developer", "CollegeSavant Developer", "MLB Free Agency Creator/Lead Developer", "MLB Projections Creator/Lead Developer", "MLB Stats Creator/Lead Developer", "Alchemy Lab Creator/Lead Developer", "Trade Machine Developer", "Writer", "Site Designer"],
+    "note": ["eephus.io Creator/Lead Developer", "PROSPX Creator/Lead Developer", "CollegeSavant Developer", "MLB Free Agency Creator/Lead Developer", "MLB Projections Creator/Lead Developer", "MLB Stats Creator/Lead Developer", "Pitcher Alchemy Lab Creator/Lead Developer", "Trade Machine Developer", "Writer", "Site Designer"],
     "back": [
       "Founder and lead developer of eephus.io: the site architecture, the static build pipeline, the data model, and the retro card-and-newspaper design system.",
       "PROSPX end to end: the prospect board, filters, player cards, the farm system, Generate GFX, and the account and forum layer.",
@@ -9,7 +9,7 @@
       "MLB Projections: the league-wide projection engine, Team Outlook, and the merged MLB player cards.",
       "MLB Free Agency: the market-value engine, the fit model, and the verdict framework.",
       "MLB Stats: the leaderboard module and the REM+, RIV+, SEM+, and HEM+ Arkmetrics, plus the Leverage boards.",
-      "Alchemy Lab: the starter and reliever role-conversion fit engine, the pitch-add lab, and the reverse-platoon radar.",
+      "Pitcher Alchemy Lab: the starter and reliever role-conversion fit engine, the pitch-add lab, and the reverse-platoon radar.",
       "Trade Machine: the Bayesian trade valuation for prospects and veterans.",
       "CollegeSavant: the college-to-pro translation and the CS+ Arkmetric.",
       "The unified Glossary, the Arkmetric standard, and the model-accountability registry.",

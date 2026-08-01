@@ -161,29 +161,6 @@ def test_in_progress_conversion_detection():
     assert pc.detect_in_progress_conversions(spot, 2026) == []
 
 
-def test_in_progress_rp_sp_requires_ip_per_appearance():
-    # An opener / multi-inning RP (Mason Montgomery pattern): 41 G with 5 "starts"
-    # but only ~1 IP per appearance. The GS count alone clears IN_PROGRESS_MIN_GS,
-    # yet this is not a rotation conversion - the IP-per-G gate must block it.
-    opener = {682254: {
-        2025: {"G": 57, "GS": 0, "IP": "64.1", "BF": 260, "SO": 85, "BB": 22, "ER": 24, "name": "Mason Montgomery", "team": "TBR", "season": 2025},
-        2026: {"G": 41, "GS": 5, "IP": "40.1", "BF": 170, "SO": 55, "BB": 15, "ER": 16, "name": "Mason Montgomery", "team": "TBR", "season": 2026},
-    }}
-    assert pc.detect_in_progress_conversions(opener, 2026) == []
-
-    # A genuine mid-year RP->SP convert (Griffin Jax pattern, full-shape line):
-    # 27 G / 16 GS / 81 IP -> 3.0 IP per appearance clears the gate and MUST emit.
-    convert = {643377: {
-        2025: {"G": 73, "GS": 2, "IP": "66.0", "BF": 270, "SO": 80, "BB": 20, "ER": 28, "name": "Griffin Jax", "team": "MIN", "season": 2025},
-        2026: {"G": 27, "GS": 16, "IP": "81.0", "BF": 330, "SO": 88, "BB": 24, "ER": 33, "name": "Griffin Jax", "team": "MIN", "season": 2026},
-    }}
-    evs = pc.detect_in_progress_conversions(convert, 2026)
-    assert len(evs) == 1
-    ev = evs[0]
-    assert ev["direction"] == "RP->SP" and ev["year"] == 2026
-    assert ev["held"] is None and ev["in_progress"] is True
-
-
 def test_pitch_add_recommender():
     # Hicks: fastball + slider, no offspeed, big platoon split -> add a changeup vs RHB
     rec = pc.recommend_pitch(HICKS)

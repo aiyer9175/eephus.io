@@ -53,7 +53,6 @@ from datetime import date, timedelta
 from pathlib import Path
 
 import value_framework as vf
-import efv_factor_groups as _fgroups
 from prospect_path import _fit_ridge, _predict, _fit_linear_calibration, _spearman
 from efv_model import _vec
 from efv_dataset import matrix_path, _milb_features, _f, CURRENT_SEASON
@@ -71,23 +70,6 @@ _NOFV_HIT = ["obp_rel", "ops_rel", "k_rel", "peak_k_rel", "peak_obp_rel",
              "iso_rel", "age_rel_level", "level_rank", "n_milb_seasons"]
 _NOFV_PIT = ["k_rel", "peak_k_rel", "bb_rel", "era_rel", "x_era_k",
              "age_rel_level", "n_milb_seasons"]
-
-# Declared monotone direction per provisional key (sign audit 2026-07-25). These sets
-# used to be bare key lists, so nothing stated what any of them was supposed to do and
-# the audit had to inherit the flagship declaration, which is how peak_obp_rel /
-# iso_rel / era_rel shipped with no stated intent at all and n_milb_seasons shipped
-# claiming +1 while fitting -1.0063. 0 = NO DIRECTIONAL CLAIM. Pinned by
-# test_efv_sign_declarations.py; audit function in efv_sign_audit.audit_provisional.
-_NOFV_MONO = {
-    "obp_rel": +1, "peak_obp_rel": +1, "ops_rel": +1, "iso_rel": +1,
-    "bb_rel": -1, "era_rel": -1, "x_era_k": +1,
-    "age_rel_level": -1, "level_rank": +1,
-    # n_milb_seasons: fitted -1.0063 (hit) / -0.1643 (pit) against the flagship's
-    # inherited +1, and the marginal is -0.0075 on the provisional pool, so the
-    # "track record" reading is not true even unconditionally here. Conditional on
-    # level_rank + age_rel_level it prices seasons USED to reach the level.
-    "n_milb_seasons": 0,
-}
 
 # Conventional grade map with a SOFT ceiling: grade = BASE + SLOPE*war_pred, floored at
 # FLOOR, then compressed above KNEE toward CEIL: g' = KNEE + (CEIL-KNEE)*(1-exp(-(g-KNEE)/SOFT)).
@@ -114,32 +96,6 @@ _GRADE_MAP = {
     "pit": {"BASE": 25.0, "SLOPE": 4.5, "FLOOR": 20.0, "KNEE": 34.0, "CEIL": 38.0, "SOFT": 2.5},
 }
 
-# C1 DE-CAP (true-to-model; owner: "same for provisional grades"). When True, the
-# war_pred -> FV grade map DROPS the soft ceiling (the KNEE/CEIL/SOFT exponential
-# compression above the knee) so a provisional grade reflects the model's raw,
-# UNCOMPRESSED war->FV linear map at the top: g = max(FLOOR, BASE + SLOPE*war_pred),
-# no upper compression (FLOOR stays -- it is the 20-80 scale minimum, a domain guard,
-# not top compression). A Primera-class breakout then grades to its true model value
-# instead of piling at the ceiling. The soft ceiling is ORDER-PRESERVING (strictly
-# monotone in war above the knee, identity below), and the low-minors OOS harness
-# (evaluate() / data/xfv_ungraded_eval.json) scores _war(), NOT _grade() -- so this
-# flip is Spearman-INVARIANT by construction; the only effect is de-compression of the
-# served grade distribution. Default OFF; the Wave-F consolidator flips to True on ship.
-# PROVISIONAL CAP RESTORED 2026-07-25 (owner call, docs/EFV_FRONTIER_AUDIT.md follow-up).
-# The C1 de-cap (2026-07-24b) turned the soft ceiling off for BOTH the graded and the
-# provisional paths on a true-to-model argument: do not compress the raw war->FV map.
-# That argument still holds for the GRADED path, where the grade rests on a real scouting
-# anchor plus a pro track record. It does not hold here. A provisional grade is fit on a
-# source-ungraded player with as little as _MIN_EXPO_PA=80 plate appearances, and the
-# measured outcome is that DSL bats carrying these grades realize ~0 WAR about 85% of the
-# time while the served card printed p_bust 0.201. Uncapped, an 87-PA DSL line produced a
-# 53 (deployed) / 43.5 (current tree) grade, above the CEIL49 the graded path uses as its
-# own asymptote. The KNEE/CEIL/SOFT map is ORDER-PRESERVING (see _grade), so restoring it
-# bounds magnitude on thin samples WITHOUT flattening the ranking that makes a breakout
-# visible - which is the correct treatment for a small-sample estimate.
-# Scope: this constant is local to efv_ungraded, so the graded-path de-cap is untouched.
-UNCAPPED_GRADE = False
-
 # Sample floor: a provisional grade needs a real exposure sample. The rate features
 # are exposure-shrunk, but level_rank + age_rel_level are NOT, so a 1-PA / 1.2-IP
 # cameo at a high level otherwise mints a mid-30s grade off level + age alone. Below
@@ -152,190 +108,11 @@ _SUBFLOOR_GRADE = 30.0  # org-filler cap for sub-floor lines
 # are years away. Surplus at FV 20-35 is near $0 regardless; this only shapes the band.
 _LEVEL_ETA = {"DSL": 6.0, "CPX": 5.0, "A": 4.5, "A+": 3.5, "AA": 2.5, "AAA": 1.5}
 
-
-# ---------------------------------------------------------------------------
-# THIN-SAMPLE p_bust CONDITIONAL (2026-07-25, owner-authorized)
-# ---------------------------------------------------------------------------
-# WHAT CHANGED. efv_score.py states that p_bucket / p_bust are "the validated
-# star/bust odds" and are "NEVER touched". That invariant now reads: NEVER
-# touched EXCEPT by this thin-sample conditional, which replaces p_bust (and
-# renormalizes p_bucket to stay consistent with it) on PROVISIONAL rows only.
-# Nothing on the graded flagship path changes; see the amended notes in
-# efv_score.py.
-#
-# WHY. p_bust arrives from vf.sv_distribution -> vf.p_bucket_given_fv, keyed on
-# the GRADE alone. That curve is fitted on the Clemens published-list population:
-# source-graded prospects with a real pro track record. A provisional grade is
-# fitted on a source-UNGRADED player off as little as _MIN_EXPO_PA = 80 plate
-# appearances, so the card inherited odds that were never calibrated for it. The
-# served result was a 17-year-old with an 87-PA DSL line printing P(bust) 51%
-# (and 20% on the pre-cap deployed build).
-#
-# WHAT WAS MEASURED (tools/pbust_thin/, artifact data/xfv_thin_pbust_eval.json).
-# A historical cohort was rebuilt to match the SERVED population exactly:
-# source-ungraded as of the cohort season, never MLB-exposed at or before it,
-# primary-level exposure at or above the served grade floor, primary level on the
-# DSL..AAA ladder. Cohort seasons 2015-2018 (four independent time splits; 8 to
-# 11 seasons of outcome, and 97.8% of eventual DSL/CPX debuts occur within 8).
-# n = 19,812 player-seasons. Every row is re-scored through THIS module's own
-# grade map. Label: bust = first-6-MLB-season summed bWAR < 3.0, i.e. the
-# Clemens bucket-0 band of < 0.5 WAR/season over the 6-season control window.
-# Never reaching MLB is a bust with certainty and needs no WAR join.
-#
-# THE HISTORICAL HIT RATE, with n (this is the number the served card was
-# missing). Among ungraded DSL bats carrying a provisional grade of 35 or better,
-# 88.1% never produced a non-bust MLB career (n = 87 for that exact cell; the
-# DSL cell as a whole is n = 2,236 at 99.2%). Ungraded DSL arms at grade 35+:
-# 99.0%, n = 314. Pooled at grade 35+: hitters 88.1% observed against 71.5%
-# served (n = 778), pitchers 94.0% against 80.9% (n = 745).
-#
-# GATES (docs/EFV_GATE_STANDARD.md; B = 400 paired bootstrap draws that resample
-# the TRAIN matrix AND the TEST cohort and REFIT the provisional ridge on every
-# draw, so the grade column carries its own sampling variability):
-#   G1 defect  empirical minus served, grade >= 35: hit +0.169 CI95 [0.128,
-#              0.204], pit +0.130 CI95 [0.094, 0.150]. Positive on all 8
-#              (side x cohort-year) cells.
-#   G2 ship    leave-one-cohort-year-out log loss, incumbent minus this head
-#              +0.0179 CI95 [0.0123, 0.0249], P(>0) = 1.000. Brier 0.0364 ->
-#              0.0329.
-#   G3 controls  the covariate-free CONSTANT head (the ablation that killed
-#              BUCKET-AGE-HEAD) loses by 0.0164 CI95 [0.0133, 0.0193]; a pure
-#              population offset is a measured NULL against the incumbent
-#              (+0.0015 CI95 [-0.0046, 0.0079], P = 0.695), so none of the gain
-#              is population recalibration. Row-permuted GRADE twin loses by
-#              0.0103 [0.0079, 0.0129]; row-permuted LEVEL twin by 0.0081
-#              [0.0060, 0.0103].
-#   G4 null    label-permutation null on (constant minus head) p95 = -0.00007
-#              against an observed 0.0164.
-#   G5 monotone  b < 0 on both sides, so p_bust is nonincreasing in the grade
-#              inside every level. Levels are CATEGORICAL on purpose: the
-#              realized level-to-bust relation is NOT monotone (ungraded AAA is
-#              org filler and busts more than ungraded AA), so a linear
-#              level_rank term is misspecified exactly where it moves served
-#              numbers most. That variant was fitted, beat the incumbent, and
-#              was REJECTED for this reason.
-#
-# LABEL BASIS. Rows that reached MLB but carry no career_war row are unknown.
-# The fit calls an unknown row a bust only when its first-6-MLB-season playing
-# time is under 300 PA / batters faced. That is validated, not assumed: of the
-# 1,144 cohort rows with a KNOWN first-6-year WAR, 0 of the 487 under 300 PA/BF
-# reached 3.0 WAR (highest was 1.58, and it is still 0 of 639 at a 500
-# threshold). The remaining unknowns stay labelled NON-bust even though 63.9% of
-# the KNOWN rows above 300 PA/BF are busts, so the fitted curve is a LOWER bound
-# on the real bust rate. Every gate above also passes under the two bracketing
-# labelings (all unknowns non-bust, all unknowns bust).
-#
-# SCOPE AND LIMITS.
-#  * Serves p_bust and p_bucket only. Surplus DOLLARS stay on the engine's own
-#    grade-anchored path: vf.expected_surplus_usd applies a separate sub-FV-40
-#    dollar anchor that does not decompose as a bucket mixture, so the exact
-#    "scale the non-bust mass" identity does not carry through it, and a dollar
-#    change was neither gated nor authorized here. The odds and the dollars
-#    therefore sit on different bases at this seam, the same documented split
-#    _reprice_surplus_on_display already makes on the flagship path.
-#  * The cohort's feature history is floored at 2014 by the MiLB cache, so early
-#    cohort rows see at most 1 to 2 prior seasons. That matters for the
-#    n_milb_seasons feature at the UPPER levels; the DSL/CPX population the
-#    defect lives in is 17 to 19 year olds with 1 to 2 pro seasons anyway.
-#  * Residual: the hitter 45+ band is still under-called out of fold (0.743
-#    against 0.813 observed, n = 107). The served provisional map tops out at
-#    CEIL 49 and the live artifact's maximum is 44.9, so that band is nearly
-#    empty in production. Not repaired here.
-#  * A row whose level does not resolve to the ladder keeps the incumbent
-#    p_bust and is flagged p_bust_low_confidence rather than fed a made-up
-#    number.
-THIN_PBUST_ENABLED = True          # env override EEPHUS_THIN_PBUST "1"/"0"
-# logit p_bust = a + b*(grade - 30) + level_offset      (DSL is the reference cell)
-_THIN_PBUST_HEAD = {
-    "hit": {"a": 4.251112, "b": -0.148750,
-            "level": {"DSL": 0.0, "CPX": -0.929576, "A": -1.182609,
-                      "A+": -1.659829, "AA": -1.502044, "AAA": -0.246737}},
-    "pit": {"a": 5.083222, "b": -0.169809,
-            "level": {"DSL": 0.0, "CPX": -1.372043, "A": -2.116888,
-                      "A+": -2.594148, "AA": -3.266335, "AAA": -2.662682}},
-}
-# Served clamp. The ceiling is 0.99 for two reasons, both conservative: the card
-# rounds to whole percent, so anything at or above 0.995 would print "P(bust)
-# 100%" and claim a certainty no model has; and 0.99 sits BELOW the measured DSL
-# cell rate (0.992 hit / 0.992 pit, n = 2,236 / 2,167), so the clamp can only
-# make a served row look SAFER than the cohort was. It binds on the low-grade
-# DSL/CPX tail, where the fitted head reaches 0.999.
-_THIN_PBUST_CLAMP = (0.02, 0.99)
-_THIN_PBUST_FIT = {
-    "cohort_seasons": [2015, 2016, 2017, 2018], "n": 19812,
-    "label": "first-6-MLB-season bWAR < 3.0 (Clemens bucket 0)",
-    "eval": "data/xfv_thin_pbust_eval.json", "lab": "tools/pbust_thin/",
-}
-
-
-def _thin_pbust_enabled() -> bool:
-    import os
-    env = os.environ.get("EEPHUS_THIN_PBUST")
-    if env is not None:
-        return env.strip() == "1"
-    return THIN_PBUST_ENABLED
-
-
-def thin_sample_p_bust(grade, side: str, level) -> float | None:
-    """P(bust) for a THIN-SAMPLE provisional row, from the population-conditional
-    head fitted on the served population's own realized outcomes (see the block
-    above). Returns None when the flag is off, the grade is unusable, or the level
-    does not resolve to the DSL..AAA ladder; the caller then keeps the incumbent
-    grade-only odds and flags the row low-confidence rather than inventing one."""
-    if not _thin_pbust_enabled() or grade is None:
-        return None
-    h = _THIN_PBUST_HEAD.get(side)
-    if not h:
-        return None
-    off = h["level"].get(level)
-    if off is None:
-        return None
-    try:
-        g = float(grade)
-    except (TypeError, ValueError):
-        return None
-    import math
-    z = max(-30.0, min(30.0, h["a"] + h["b"] * (g - 30.0) + off))
-    p = 1.0 / (1.0 + math.exp(-z))
-    lo, hi = _THIN_PBUST_CLAMP
-    return min(hi, max(lo, p))
-
-
-def _apply_thin_pbust(p_bucket: dict | None, p_old, p_new: float):
-    """Fold `p_new` into the served odds. The bust mass becomes p_new and the
-    NON-bust buckets are rescaled by (1 - p_new) / (1 - p_old), which preserves the
-    incumbent's relative shape across bench/regular/good/star (that shape was NOT
-    measured here and must not be invented) while keeping p_bucket['bust'] and
-    p_bust identical on the card. Returns the rebuilt p_bucket, or the original
-    when the incumbent leaves no non-bust mass to rescale."""
-    if not p_bucket or p_old is None:
-        return p_bucket
-    rem = 1.0 - float(p_old)
-    if rem <= 1e-9:
-        return p_bucket
-    f = (1.0 - p_new) / rem
-    out = {}
-    for k, v in p_bucket.items():
-        out[k] = round(p_new, 3) if k == "bust" else round(float(v) * f, 3)
-    # Absorb the 3dp rounding residual into the largest NON-bust bucket so the
-    # served vector still sums to 1.000 (rescaling then rounding otherwise loosens
-    # the sum from the incumbent's 0.001 to 0.002). bust stays exactly p_new.
-    nb = [k for k in out if k != "bust"]
-    if nb:
-        big = max(nb, key=lambda k: out[k])
-        out[big] = round(out[big] + (1.0 - sum(out.values())), 3)
-    return out
-
 _FACTOR_LABELS = {
     "obp_rel": "On-base vs level", "ops_rel": "OPS vs level", "k_rel": "Contact (K%) vs level",
     "bb_rel": "Walk rate vs level", "iso_rel": "Power (ISO) vs level", "era_rel": "ERA vs level",
     "age_rel_level": "Age for level", "level_rank": "Level reached", "x_era_k": "Run prevention x K",
-    "peak_k_rel": "Peak K rate", "peak_obp_rel": "Peak on-base",
-    # see efv_score._FACTOR_LABELS: the provisional weight is -1.0063 (hit) /
-    # -0.1643 (pit), so "Track record" rendered UP on 619 of 969 hitter and 615 of
-    # 983 pitcher cards precisely BECAUSE those players have little track record.
-    # Mean magnitude 1.300 on hitters (third-largest driver in that model).
-    "n_milb_seasons": "Seasons used to reach level",
+    "peak_k_rel": "Peak K rate", "peak_obp_rel": "Peak on-base", "n_milb_seasons": "Track record",
 }
 
 _PIT_POS = ("P", "RHP", "LHP", "SP", "RP", "SIRP", "MIRP")
@@ -414,16 +191,14 @@ def _war(ridge, a, b, feats) -> float:
 
 
 def _grade(war: float, side: str) -> float:
-    """war_pred -> provisional FV. Default: linear below the KNEE, soft-compressed toward CEIL
-    above it (order-preserving, so breakouts stay ranked while the magnitude is bounded).
-    With UNCAPPED_GRADE True (C1 de-cap): the raw uncompressed linear map, no soft ceiling."""
+    """war_pred -> provisional FV: linear below the KNEE, soft-compressed toward CEIL above it
+    (order-preserving, so breakouts stay ranked while the magnitude is bounded)."""
     import math
     m = _GRADE_MAP[side]
     g = max(m["FLOOR"], m["BASE"] + m["SLOPE"] * war)
-    if not UNCAPPED_GRADE:
-        knee, ceil, soft = m["KNEE"], m["CEIL"], m["SOFT"]
-        if g > knee:
-            g = knee + (ceil - knee) * (1.0 - math.exp(-(g - knee) / soft))
+    knee, ceil, soft = m["KNEE"], m["CEIL"], m["SOFT"]
+    if g > knee:
+        g = knee + (ceil - knee) * (1.0 - math.exp(-(g - knee) / soft))
     return round(g, 1)
 
 
@@ -530,22 +305,17 @@ def _career_stats(mlbam, side: str, org: str | None, max_seasons: int = 5):
     return out
 
 
-def _factors(ridge, feats, top: int = 3, side: str = "hit") -> list:
-    """The largest standardized production contributions (WAR units), for the explainer.
-
-    COLLINEAR-GROUP FIX 2026-07-25 (same defect as efv_score._factors, same shared
-    rule): k_rel/peak_k_rel and obp_rel/peak_obp_rel are the same statistic over two
-    windows (live r = +0.76 / +0.58) and both pairs ship in this provisional set, so
-    the explainer sums each declared group into ONE factor before the magnitude floor
-    and the top-N cut. A group is therefore shown or hidden whole and its direction is
-    the NET direction, instead of one half of a cancelling pair reaching the card.
-    DISPLAY ONLY: the provisional grade, WAR and surplus are untouched."""
+def _factors(ridge, feats, top: int = 3) -> list:
+    """The largest standardized production contributions (WAR units), for the explainer."""
     contribs = []
     for k, mu, sd, w in zip(ridge["keys"], ridge["mu"], ridge["sd"], ridge["w"]):
         zc = max(-_Z_CLIP, min(_Z_CLIP, (feats.get(k, 0.0) - mu) / (sd or 1.0)))   # match _war's clip
-        contribs.append((k, w * zc))
-    return _fgroups.collapse(contribs, side, lambda k: _FACTOR_LABELS.get(k, k),
-                             min_mag=0.05, top=top)
+        c = w * zc
+        if abs(c) >= 0.05:
+            contribs.append((k, c))
+    contribs.sort(key=lambda kc: -abs(kc[1]))
+    return [{"label": _FACTOR_LABELS.get(k, k), "dir": "up" if c > 0 else "down",
+             "mag": round(abs(c), 2)} for k, c in contribs[:top]]
 
 
 def evaluate(persist: bool = True) -> dict:
@@ -596,37 +366,6 @@ def evaluate(persist: bool = True) -> dict:
     return out
 
 
-def flagship_owns(roster_player: dict) -> bool:
-    """Does the FLAGSHIP eFV board own this roster row, or does the provisional path?
-
-    THE PARTITION, stated once (2026-07-30). `fv_raw` on a rosters_by_org.json row is
-    the latest consensus point's `consensus_fv_raw` (run_monthly stamps it from the
-    timeseries, and it is None whenever the player has no consensus point at all).
-    `consensus.compute_consensus_point` returns None unless the player has at least one
-    explicit FV or one non-org-list rank. So:
-
-        has a scout grade  ->  consensus point  ->  fv_raw set  ->  FLAGSHIP board
-        no scout grade     ->  no point         ->  fv_raw None ->  PROVISIONAL pool
-
-    The two are complements, so every rostered non-MLB player with usable MiLB
-    production lands in exactly one of them. That is a general rule and it predates
-    this note; it is named here because it was not obvious enough to survive being
-    tested.
-
-    WHY IT IS NAMED NOW. Removing `baseballamerica_statcast_by_age`'s fabricated FV 40
-    dropped seven players off the served board (`braylon_whitaker`, `easton_shelton`,
-    `jacob_friend`, `jake_cunningham`, `jose_meza`, `mason_guerra`,
-    `michael_martinez`): that snapshot was their ONLY row in the database, so with no
-    FV they produce no consensus point. They did not fall through a hole. The
-    fabricated grade had been holding them on the WRONG side of this partition, and
-    with it gone they route here, which is where a player with a track record and no
-    scout grade belongs. Nothing had to change for that to happen; what was missing
-    was a test saying so. See docs/efv-2026-07-30/POSITION_ROLE_GATE.md 3.2 and
-    ORPHAN_ROUTING.md.
-    """
-    return (roster_player or {}).get("fv_raw") is not None
-
-
 def build(persist: bool = True) -> dict:
     """Score every UNGRADED roster player (data/rosters_by_org.json: fv_raw is None) that has
     real MiLB production, on the no-FV production model + capped grade map. Writes
@@ -641,13 +380,12 @@ def build(persist: bool = True) -> dict:
 
     by_player, by_mlbam = {}, {}
     counts = {"hit": 0, "pit": 0, "no_production": 0, "no_mlbam": 0}
-    pb_counts = {"thin_conditional": 0, "incumbent_low_confidence": 0}
     for org, levels in rosters.items():
         for level, players in (levels or {}).items():
             if level == "MLB" or not isinstance(players, list):
                 continue
             for p in players:
-                if flagship_owns(p):        # already source-graded -> flagship owns it
+                if p.get("fv_raw") is not None:           # already source-graded -> flagship owns it
                     continue
                 mid = p.get("mlbam_id")
                 if not mid:
@@ -682,28 +420,6 @@ def build(persist: bool = True) -> dict:
                 dist = vf.sv_distribution(grade, is_pit, pos, age=age, eta_years=eta) or {}
                 pcts = dist.get("percentiles") or {}
                 probs = vf.p_bucket_given_fv(grade, is_pit) or []
-                # THIN-SAMPLE CONDITIONAL (see the block above _LEVEL_ETA). The head
-                # is keyed on the PRIMARY-level line the grade actually read (the
-                # statline), not the roster assignment, so the served row matches
-                # the fit population row for row; the roster level is the fallback.
-                _pb_level = (statline or {}).get("level") or level
-                _pb_old = dist.get("p_bust")
-                _pb_new = thin_sample_p_bust(grade, side, _pb_level)
-                _pb_basis, _pb_lowconf = "incumbent", False
-                if _pb_new is not None and _pb_old is not None:
-                    probs_d = {k: pv for k, pv in zip(_BUCKETS, probs)} if probs else None
-                    probs_d = _apply_thin_pbust(probs_d, _pb_old, _pb_new)
-                    probs = [probs_d[b_] for b_ in _BUCKETS] if probs_d else probs
-                    dist = {**dist, "p_bust": _pb_new}
-                    _pb_basis = "thin_sample_conditional"
-                    pb_counts["thin_conditional"] += 1
-                elif not _thin_pbust_enabled():
-                    # Feature off: the row is the plain incumbent baseline, which is
-                    # the documented pre-2026-07-25 behavior, NOT a low-confidence row.
-                    pb_counts["incumbent_flag_off"] = pb_counts.get("incumbent_flag_off", 0) + 1
-                else:
-                    _pb_lowconf = True
-                    pb_counts["incumbent_low_confidence"] += 1
                 career_stats = _career_stats(mid, side, p.get("team_name"))
                 # eFV TRAJECTORY: the provisional grade as-of each MiLB season (re-score
                 # production through that season only) so the detail page can plot an
@@ -759,14 +475,9 @@ def build(persist: bool = True) -> dict:
                     "band_p10_mm": _mm(pcts.get("p10")),
                     "band_p90_mm": _mm(pcts.get("p90")),
                     "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None,
-                    "p_bust_basis": _pb_basis,
-                    "factors": _factors(ridge, feats, side=side),
+                    "factors": _factors(ridge, feats),
                     "xfv_ungraded": True, "xfv_provisional": True,
                 }
-                if _pb_lowconf:
-                    # No fabricated number: the row kept the grade-only incumbent
-                    # odds because its level did not resolve to the measured ladder.
-                    entry["p_bust_low_confidence"] = True
                 by_player[pk] = entry
                 by_mlbam[str(mid)] = grade
                 counts[side] += 1
@@ -783,13 +494,6 @@ def build(persist: bool = True) -> dict:
                        "share_le_30": round(sum(1 for g in grades if g <= 30) / len(grades), 3) if grades else None,
                        "n_breakout_ge35": sum(1 for g in grades if g >= 35)},
         "grade_map": _GRADE_MAP, "eval": "data/xfv_ungraded_eval.json", "status": "provisional",
-        "p_bust_basis": {"enabled": _thin_pbust_enabled(), "counts": pb_counts,
-                         "head": _THIN_PBUST_HEAD if _thin_pbust_enabled() else None,
-                         "fit": _THIN_PBUST_FIT,
-                         "note": ("p_bust / p_bucket on provisional rows come from the "
-                                  "thin-sample conditional fitted on this population's own "
-                                  "realized outcomes, not the graded-population grade curve. "
-                                  "Surplus dollars stay on the engine's grade-anchored path.")},
         "note": ("Production-only leading indicator for source-UNGRADED roster players. "
                  "Conventional capped FV map; most 20-30, breakouts to the cap. NOT the flagship eFV."),
     }

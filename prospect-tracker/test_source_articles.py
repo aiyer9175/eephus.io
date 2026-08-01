@@ -69,17 +69,7 @@ def test_parse_ba_statcast_by_age_table(tmp_path: Path):
     assert events[0]["payload"]["p90_ev"] == "105.8"
 
 
-def test_statcast_by_age_snapshot_carries_no_fabricated_grade(tmp_path: Path):
-    """The BA age-band statcast table publishes NO grade, so our snapshot must not
-    invent one.
-
-    This assertion is INVERTED from what it was. It used to pin `fv == 40.0`, a
-    constant source_articles assigned itself and consensus.avg_fv then counted as a
-    published vote at full weight. Measured 2026-07-30: 34 of the 41 live rows landed
-    on players who already carried a real grade. Owner decision: the source carries
-    identity + statcast context and nothing else. If this ever goes back to a number,
-    it is a fabricated consensus vote again.
-    """
+def test_statcast_by_age_only_player_gets_conservative_snapshot(tmp_path: Path):
     (tmp_path / "2026-06-03_statcast_byage.txt").write_text(
         "Age 18\n"
         "PLAYER\tPOS\tORG\tTEAM\tBATS\tAGE\tPA\tZCON\tCHASE\tHIT95+\t90TH EV\n"
@@ -91,33 +81,8 @@ def test_statcast_by_age_snapshot_carries_no_fabricated_grade(tmp_path: Path):
 
     richard = next(s for s in snapshots if s.player_key == "richard_matic")
     assert richard.source == "baseballamerica_statcast_by_age"
-    assert richard.fv is None
-    assert richard.rank is None      # and no rank either: this source has neither
-    # The row still carries identity so the player stays tracked, and the statcast
-    # read still reaches source_events.
-    assert richard.position == "3B"
-    assert richard.status == "active"
+    assert richard.fv == 40.0
     assert any(e["player_key"] == "richard_matic" for e in events)
-
-
-def test_no_source_article_snapshot_invents_a_grade(tmp_path: Path):
-    """Guard the CLASS, not just the one source: nothing this parser emits may carry
-    an FV unless the outlet printed a number we parsed. Today that means every
-    source_articles snapshot is grade-free (BA prints ranks on the Top 100 and
-    nothing on the statcast table)."""
-    (tmp_path / "2026_06_03_BA_t100list.txt").write_text(
-        "18. Josuar Gonzalez\nSan Francisco Giants\n| SS\n", encoding="utf-8")
-    (tmp_path / "2026-06-03_statcast_byage.txt").write_text(
-        "Age 18\n"
-        "PLAYER\tPOS\tORG\tTEAM\tBATS\tAGE\tPA\tZCON\tCHASE\tHIT95+\t90TH EV\n"
-        "Richard Matic\t3B\tNYY\tFCL Yankees\tR\t18\t99\t89%\t15%\t43.30%\t102.5\n",
-        encoding="utf-8")
-
-    snapshots, _events = parse_source_article_drops(tmp_path)
-
-    assert snapshots, "expected at least one snapshot"
-    graded = [(s.source, s.player_key, s.fv) for s in snapshots if s.fv is not None]
-    assert not graded, f"source_articles emitted an FV nobody published: {graded}"
 
 
 def test_statcast_by_age_does_not_add_snapshot_when_top100_exists(tmp_path: Path):

@@ -47,7 +47,6 @@ import json
 import logging
 import math
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -227,11 +226,7 @@ def run(write: bool = True) -> dict:
     slice_a_prime = _slice_a_prime(by_player, _load(TRADE_VALUES_PATH))
 
     artifact = {
-        # Always an ISO stamp: prefer the xfv.json input's provenance stamp, but
-        # never ship an empty string when the input lacks one (freshness maps and
-        # cache-version params both key off this field being a real date).
-        "generated_at": (xfv.get("generated_at")
-                         or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")),
+        "generated_at": (xfv.get("generated_at") or ""),
         "model": "trade_machine_surplus",
         "conventions": {
             "predictor": "trade_values.json trade_value_mm = apply_platform_surplus "

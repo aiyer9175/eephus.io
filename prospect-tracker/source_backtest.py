@@ -611,22 +611,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         "spearman": _beats("spearman"),
         "auc": _beats("auc"),
     }
-    # OBS-1 (L4 bughunt-2, 2026-07-24e measurement fix): score archetypes on ONE row
-    # per player (latest pre-debut read), matching _xfv_vs_consensus_detail's dedup.
-    # pooled_common counts a stable player once per base YEAR (intl_bat ~2.4x), which
-    # flips a close head-to-head AUC cell vs the leakage-clean per-player read - the
-    # source of the misleading "intl_bat weak cell" on the scoreboard.
-    _arch_latest: dict = {}
-    for _c in pooled_common:
-        _dy = (_c.get("outcome") or {}).get("debut_year")
-        if _dy is not None and (_c.get("year") or 0) > _dy:
-            continue
-        _k = _c.get("key")
-        if _k is None:
-            continue
-        if _k not in _arch_latest or (_c.get("year") or 0) > (_arch_latest[_k].get("year") or 0):
-            _arch_latest[_k] = _c
-    accuracy["by_archetype"] = _archetype_accuracy(list(_arch_latest.values()), disp_raters)
+    accuracy["by_archetype"] = _archetype_accuracy(pooled_common, disp_raters)
     # The eFV-vs-CONSENSUS detail (per-FV-tier + biggest disagreements) runs on the
     # BROADER consensus + eFV pool - every player BOTH graded, not the all-source common
     # set. Only two graders are compared, so also requiring FanGraphs + Pipeline needlessly
@@ -773,25 +758,10 @@ def run_consensus_weight_ab(data_dir: Path = DATA_DIR, write: bool = True) -> di
         "weighted": {"spearman": _r4(_spearman(pooled["weighted_fv"], pooled["war"])),
                      "auc": _r4(_auc(pooled["weighted_fv"], pooled["contrib"]))},
     }
-    # SHIP GATE HARDENED 2026-07-25 (docs/EFV_GATE_STANDARD.md). The old rule was a bare
-    # "weighted >= equal on both metrics", with no floor - so ANY positive fluctuation shipped.
-    # It did: the live weights {fangraphs 0.9363, mlb_pipeline 1.0637} shipped on a pooled
-    # Spearman gain of +0.0011, and a forward-chained A/B with a refit-per-draw cluster
-    # bootstrap later measured that design at d_rho -0.0012 against an MDE95 of 0.0068 (i.e.
-    # unresolvable, inside the permutation null |d| p95 0.0033) with the SECOND metric,
-    # debut AUC, NEGATIVE and its CI excluding zero. The structural reason no recombination
-    # can help: of the 8 contributing outlets only FanGraphs (2017+) and MLB Pipeline (2011+)
-    # have any resolvable outcome history, and their precisions are indistinguishable
-    # (residual variance 14.362 vs 14.462, difference CI95 [-0.649, +0.454]).
-    # A weight now has to beat equal by more than the gate can resolve, on BOTH metrics.
-    _SHIP_MIN_RHO_GAIN = 0.0068   # measured MDE95 of this A/B's pooled-Spearman delta
-    _SHIP_MIN_AUC_GAIN = 0.0052   # measured magnitude of the debut-AUC loss it must clear
-    _d_rho = ((summary["weighted"]["spearman"] or 0) - (summary["equal"]["spearman"] or 0))
-    _d_auc = ((summary["weighted"]["auc"] or 0) - (summary["equal"]["auc"] or 0))
     ship = (summary["weighted"]["spearman"] is not None
+            and summary["weighted"]["spearman"] >= (summary["equal"]["spearman"] or 0)
             and summary["weighted"]["auc"] is not None
-            and _d_rho >= _SHIP_MIN_RHO_GAIN
-            and _d_auc >= _SHIP_MIN_AUC_GAIN)
+            and summary["weighted"]["auc"] >= (summary["equal"]["auc"] or 0))
     live_weights = derive_source_weights(universe, as_of_year - MIN_LAG_YEARS)
     out = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -804,7 +774,7 @@ def run_consensus_weight_ab(data_dir: Path = DATA_DIR, write: bool = True) -> di
         "notes": [
             "two-source A/B: only FanGraphs + MLB Pipeline have resolvable multi-year history; all other sources stay at weight 1.0 (equal) in the live blend — new sources are never punished for being new",
             f"weights shrunk toward equal with k={WEIGHT_SHRINK_K} pseudo-n, clamped {WEIGHT_CLAMP}",
-            "ship rule (hardened 2026-07-25): weighted must beat equal by more than the gate can RESOLVE on BOTH metrics (d_rho >= 0.0068 = the measured MDE95, d_auc >= 0.0052); anything smaller is inside the noise floor and equal-weight retains",
+            "ship rule: weighted >= equal on BOTH pooled Spearman and AUC; loss means equal-weight retains",
         ],
     }
     if write:

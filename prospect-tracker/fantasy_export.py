@@ -30,7 +30,6 @@ computed"); never aborts the pipeline. Run: `python fantasy_export.py`
 """
 from __future__ import annotations
 
-import functools
 import json
 import logging
 from datetime import datetime, timezone
@@ -60,19 +59,6 @@ def _load_json(name: str) -> dict | list | None:
         return json.loads(p.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return None
-
-
-@functools.lru_cache(maxsize=1)
-def _efv_by_key() -> dict:
-    """{player_key: xfv_grade} off data/xfv.json - the site-wide grade.
-    Empty when the artifact is absent (fresh checkout), so callers fall back
-    to consensus rather than failing."""
-    x = _load_json("xfv.json") or {}
-    by = x.get("by_player") if isinstance(x, dict) else None
-    if not isinstance(by, dict):
-        return {}
-    return {k: v.get("xfv_grade") for k, v in by.items()
-            if isinstance(v, dict) and v.get("xfv_grade") is not None}
 
 
 def _sb_rate_by_mlbam() -> dict:
@@ -332,49 +318,9 @@ def _buy_sell(players: list[dict], n: int = 50) -> tuple[list, list]:
         sd = scale.get(p.get("side")) or 0.0
         return (_player_luck(p) / sd) if sd else 0.0
 
-    # Entries carry SIDE, unlike the other section lists, because this is the one
-    # section a bare mlbam cannot resolve. Every other section is single-sided by
-    # construction (ros_hitter is hitters, closer_depth is relievers), so its
-    # renderer already knows which side to look up. buy/sell is the only COMBINED
-    # ranking, so a two-way player's two records are both eligible and a bare id
-    # is genuinely ambiguous. Shohei Ohtani is that player today: he is ranked in
-    # on his HIT-side luck_gap, and before this the client resolved him to his
-    # pitcher record and rendered a pitcher's luck number under a hitter's ranking.
-    buy = [{"mlbam": p["mlbam"], "side": p.get("side")}
-           for p in sorted(luckable, key=lambda p: -_norm(p))[:n]]
-    sell = [{"mlbam": p["mlbam"], "side": p.get("side")}
-            for p in sorted(luckable, key=lambda p: _norm(p))[:n]]
+    buy = [p["mlbam"] for p in sorted(luckable, key=lambda p: -_norm(p))[:n]]
+    sell = [p["mlbam"] for p in sorted(luckable, key=lambda p: _norm(p))[:n]]
     return buy, sell
-
-
-def _attach_swing_trend(players: list[dict]) -> None:
-    """W6 DISPLAY-ONLY mechanics-trend annotation from the per-season Swing+
-    sidecar (data/swing_plus.json, Will Cahoon's model). Latest-season minus
-    prior-season Swing+; annotated only when the move is >= +/-5 points.
-    NON-SCORING by construction: no ranking, sorting, or section-membership
-    code reads swing_trend (_buy_sell sorts on luck only) - the client renders
-    it as a context chip on the buy/sell boards."""
-    sw = (_load_json("swing_plus.json") or {}).get("players") or {}
-    for p in players:
-        seasons = (sw.get(str(p.get("mlbam"))) or {}).get("seasons") or {}
-        yrs = sorted(y for y in seasons
-                     if (seasons[y] or {}).get("swing_plus") is not None)
-        if len(yrs) < 2:
-            continue
-        cur, prev = seasons[yrs[-1]], seasons[yrs[-2]]
-        delta = round(float(cur["swing_plus"]) - float(prev["swing_plus"]), 1)
-        if abs(delta) >= 5:
-            p["swing_trend"] = {"delta": delta,
-                                "from": int(yrs[-2]), "to": int(yrs[-1])}
-
-
-# hitter/bullpen leaderboards key teams by MLB-style codes (AZ, CWS, KC, SD,
-# SF, TB, WSH); the schedule feed emits canonical codes (ARI, CHW, KCR, SDP,
-# SFG, TBR, WSN). Re-key on ingest so teams_ctx.get(opp_org) resolves all 30
-# opponents (7 previously fell through to the neutral offense_plus=100 path;
-# see data/fantasy_startscore_eval.json, 23% of 2026 starts affected).
-_LB_TO_CANON = {"AZ": "ARI", "CWS": "CHW", "KC": "KCR", "SD": "SDP",
-                "SF": "SFG", "TB": "TBR", "WSH": "WSN"}
 
 
 def _teams_context() -> dict:
@@ -382,10 +328,10 @@ def _teams_context() -> dict:
     opponent-quality context a streamer ranking needs."""
     out: dict = {}
     for t in ((_load_json("hitter_leaderboards.json") or {}).get("teams") or []):
-        out.setdefault(_LB_TO_CANON.get(t.get("team"), t.get("team")), {}).update(
+        out.setdefault(t.get("team"), {}).update(
             {"offense_plus": t.get("offense_plus"), "heart_hem": t.get("heart_hem")})
     for t in ((_load_json("bullpen_leaderboards.json") or {}).get("teams") or []):
-        out.setdefault(_LB_TO_CANON.get(t.get("team"), t.get("team")), {}).update(
+        out.setdefault(t.get("team"), {}).update(
             {"bullpen_plus": t.get("bullpen_plus"),
              "leverage_deploy_plus": t.get("leverage_deploy_plus")})
     return out
@@ -429,15 +375,10 @@ def _callup_watch(ts: dict | None = None) -> list:
         eta_year = eta.get("year") if isinstance(eta, dict) else eta
         near = (str(eta_year) in ("2026", "2027")) if eta_year else False
         if near and pl.get("mlbam_id"):
-            # eFV leads, consensus is the fallback: this column served an
-            # unlabeled consensus FV on a site whose grade is eFV, so a
-            # call-up-watch row could disagree with the same player's board row.
-            efv = (_efv_by_key() or {}).get(pl.get("player_key"))
             out.append({"mlbam": pl.get("mlbam_id"), "name": pl.get("player_name"),
                         "org": pl.get("org"), "pos": pl.get("position"), "eta": eta_year,
-                        "fv": pl.get("consensus_fv") or pl.get("fv_close"),
-                        "fvE": round(efv, 1) if efv is not None else None})
-    out.sort(key=lambda x: -(x.get("fvE") if x.get("fvE") is not None else (x.get("fv") or 0)))
+                        "fv": pl.get("consensus_fv") or pl.get("fv_close")})
+    out.sort(key=lambda x: -(x.get("fv") or 0))
     return out[:60]
 
 
@@ -551,9 +492,6 @@ def build_sections(payload: dict) -> dict:
     resolves against `players`); the prospect sections (callup_watch, dynasty) are
     self-contained rows joined from timeseries.json + xfv.json."""
     players = payload["players"]
-    # Display-only Swing+ mechanics-trend chips (attached here so the daily
-    # refresh_live path re-bakes them too). Never read by any section sort.
-    _attach_swing_trend(players)
     hitters = [p for p in players if p["side"] == "hit"]
     sps = [p for p in players if p.get("pos") == "SP"]
     rps = [p for p in players if p["side"] == "pit" and p.get("pos") == "RP"]
@@ -610,30 +548,18 @@ def build_sections(payload: dict) -> dict:
     streamers.sort(key=lambda s: -(s.get("per_start_fgp") or -1e9))
     sections["daily_streamers"] = streamers
 
-    # Two-Start SP — pitchers with 2 starts this week (announced + projected),
-    # ranked by summed expected FGP. A projected leg scores through the same
-    # _start_score (the opponent multiplier only needs opp_org) and carries its
-    # `projected` flag into the row payload for the client's "(proj)" suffix.
+    # Two-Start SP — pitchers with 2 starts this week, ranked by summed expected FGP.
     two = []
     for mid_s, starts in (sched.get("two_start") or {}).items():
         p = sp_by_id.get(int(mid_s))
         legs, total = [], 0.0
         for st in starts:
             sc = _start_score(p, st.get("opp_org"), teams_ctx)
-            leg = {"date": st.get("date"), "opp_org": st.get("opp_org"),
-                   "exp_fgp": (sc or {}).get("per_start_fgp")}
-            if st.get("projected"):
-                leg["projected"] = True
-            legs.append(leg)
+            legs.append({"date": st.get("date"), "opp_org": st.get("opp_org"),
+                         "exp_fgp": (sc or {}).get("per_start_fgp")})
             total += (sc or {}).get("per_start_fgp") or 0
-        # Pool misses (spot starters / no ROS projection) still list: fall back
-        # to the schedule's own probable name + org so the row never renders
-        # blank (they sort to the bottom on total_fgp anyway).
-        first = starts[0] if starts else {}
-        two.append({"mlbam": int(mid_s),
-                    "name": (p or {}).get("name") or first.get("name"),
-                    "team": (p or {}).get("team") or first.get("team_org"),
-                    "n_starts": len(starts),
+        two.append({"mlbam": int(mid_s), "name": (p or {}).get("name"),
+                    "team": (p or {}).get("team"), "n_starts": len(starts),
                     "total_fgp": round(total, 1), "legs": legs})
     two.sort(key=lambda s: -(s.get("total_fgp") or -1e9))
     sections["two_start"] = two
@@ -647,23 +573,17 @@ def build_sections(payload: dict) -> dict:
 
 
 def _attach_schedule(payload: dict) -> None:
-    """Attach the next-3-day probables (streamers) and the 7-day two-start view.
-
-    Two-start uses PROJECTED second legs (fsched.projected_two_start): probables
-    only post ~4-5 days out, so requiring two ANNOUNCED starts left the section
-    empty by construction. Legs keep their `projected` flag for the client."""
+    """Attach the next-3-day probables (streamers) and the 7-day two-start view."""
     try:
         s3, e3 = fsched.date_window(3)
         games3 = fsched.fetch_probables(s3, e3)
         s7, e7 = fsched.date_window(7)
         games7 = fsched.fetch_probables(s7, e7)
         starts7 = fsched.starts_index(games7)
-        team_sched = fsched.team_schedule(games7)
-        two = fsched.projected_two_start(starts7, team_sched, e7)
         payload["schedule"] = {
             "streamer_window": [s3, e3],
             "games": games3,
-            "two_start": {str(m): v for m, v in two.items()},
+            "two_start": {str(m): v for m, v in fsched.two_start_pitchers(starts7).items()},
         }
     except Exception:
         log.exception("fantasy: schedule attach failed — continuing without probables")

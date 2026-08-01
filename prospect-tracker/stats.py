@@ -827,106 +827,6 @@ def _search_mlbam_via_api(player_name: str) -> tuple[int | None, str | None]:
     return None, None
 
 
-def _split_key_for(player_key: str, mlbam_id) -> str | None:
-    """Lazy wrapper around scrapers.split_key_for_mlbam (avoids a module-load
-    cycle). Returns the discriminated key when (player_key, mlbam_id) is a
-    known name-slug collision, else None."""
-    try:
-        from scrapers import split_key_for_mlbam
-        return split_key_for_mlbam(player_key, mlbam_id)
-    except Exception:
-        return None
-
-
-def _durable_mlbam_bindings() -> tuple[dict[str, int], dict[int, str]]:
-    """({player_key: mlbam_id}, {mlbam_id: player_key}) from the persisted
-    player_photos mapping — the durable key<->id index the DB already holds.
-    Read-only; consumed by the slug-collision guard below."""
-    try:
-        import storage
-        raw = storage.load_mlbam_player_keys()  # {mlbam_id(str): player_key}
-    except Exception as e:
-        log.debug("collision guard: durable mlbam mapping unavailable: %s", e)
-        return {}, {}
-    by_key: dict[str, int] = {}
-    by_id: dict[int, str] = {}
-    for mid_s, key in raw.items():
-        try:
-            mid = int(mid_s)
-        except (TypeError, ValueError):
-            continue
-        by_id[mid] = key
-        by_key[key] = mid
-    return by_key, by_id
-
-
-def _apply_collision_guard(
-    cache: dict[str, int | None],
-    player_key: str,
-    mlbam_id: int,
-    durable: tuple[dict[str, int], dict[int, str]] | None = None,
-) -> int | None:
-    """Write the player_key -> mlbam_id binding into `cache`, forking the
-    key when the pair is a known or detected name-slug collision.
-
-    Two different humans can normalize to the same slug (the Jose Valdez
-    case: the retired Tigers RHP "Jose A. Valdez" and the 2026 DSL Giants
-    OF signee, mlbam 838649, both -> "jose_a_valdez"). Binding a resolved
-    id onto a key that durably belongs to a DIFFERENT person merges the two
-    identities in every downstream keyed write (statlines, career_stats,
-    player_transactions, roster_status, player_photos).
-
-    Returns the id the REQUESTED key should resolve to (None when the
-    resolved id belongs to a different identity). Mutates `cache` in place;
-    the caller persists it.
-    """
-    # 1) Allowlisted split (scrapers._SPLIT_KEYS): the resolved id is a
-    #    known slug-collision newcomer — its rows live under the split key.
-    split = _split_key_for(player_key, mlbam_id)
-    if split and split != player_key:
-        log.warning(
-            "mlbam key collision (allowlisted): %s resolved to id %s, which "
-            "belongs to %r — binding under the split key; %s stays unbound",
-            player_key, mlbam_id, split, player_key,
-        )
-        cache[split] = mlbam_id
-        cache[player_key] = None   # not this identity's id; stop re-resolving
-        return None
-
-    if durable is None:
-        durable = _durable_mlbam_bindings()
-    by_key, by_id = durable
-
-    # 2) Key already durably bound to a DIFFERENT id: the resolved id is a
-    #    newcomer with a colliding slug. Fork the newcomer to a
-    #    discriminated key; the requested key keeps its durable id.
-    durable_id = by_key.get(player_key)
-    if durable_id is not None and durable_id != mlbam_id:
-        forked = f"{player_key}_{mlbam_id}"
-        log.warning(
-            "mlbam key collision: %s is durably bound to id %s but resolved "
-            "to %s — forking the newcomer to %r",
-            player_key, durable_id, mlbam_id, forked,
-        )
-        cache[forked] = mlbam_id
-        cache[player_key] = durable_id
-        return durable_id
-
-    # 3) Resolved id durably bound to a DIFFERENT key: the id belongs to
-    #    that identity — refuse the merge; this key resolves to nothing.
-    owner = by_id.get(mlbam_id)
-    if owner is not None and owner != player_key:
-        log.warning(
-            "mlbam key collision: id %s is durably bound to %r — refusing to "
-            "bind it to %r", mlbam_id, owner, player_key,
-        )
-        cache[player_key] = None
-        return None
-
-    cache[player_key] = mlbam_id
-    return mlbam_id
-
-
 def resolve_mlbam_id(player_key: str, player_name: str,
                      position: str | None = None) -> int | None:
     """
@@ -945,15 +845,7 @@ def resolve_mlbam_id(player_key: str, player_name: str,
     """
     cache = _load_id_cache()
     if player_key in cache:
-        cached = cache[player_key]
-        if cached is not None and _split_key_for(player_key, cached):
-            # Stale pre-split binding: the cached id belongs to a known
-            # slug-collision newcomer (scrapers._SPLIT_KEYS), not to this
-            # key. Heal the binding through the guard instead of serving it.
-            healed = _apply_collision_guard(cache, player_key, cached)
-            _save_id_cache(cache)
-            return healed
-        return cached
+        return cache[player_key]
 
     mlbam_id = None
 
@@ -1016,67 +908,9 @@ def resolve_mlbam_id(player_key: str, player_name: str,
         _save_id_cache(cache)
         return None
 
-    # Slug-collision guard: never bind a resolved id onto a key that
-    # durably belongs to a different identity (see _apply_collision_guard).
-    mlbam_id = _apply_collision_guard(cache, player_key, mlbam_id)
+    cache[player_key] = mlbam_id
     _save_id_cache(cache)
     return mlbam_id
-
-
-# ---------------------------------------------------------------------------
-# F2 vintage guard (audit 2026-07-24): dormant-identity id mis-resolution
-# ---------------------------------------------------------------------------
-# A dormant prospect record (a 2013-listed bust) re-resolved against the
-# CURRENT PlayerIndex can bind a same-name kid whose first pro season
-# postdates the record's entire list era (luke_jackson, listed 2012-2017,
-# was bound to a Luke Jackson born 2004 whose first pro season is 2026).
-# The wrong id then leaks a wrong ladder + birth date into the eFV
-# training feeds. The guard rejects any candidate id whose first cached
-# pro season postdates the record's last list year by more than one season.
-_VINTAGE_PROVABLE_FLOOR = 2015   # milb_stats caches start 2014: earlier
-#   seasons are not provably missing, so pre-floor gaps never reject.
-_FIRST_CACHE_SEASON_MEMO: dict[int, int] | None = None
-
-
-def _first_cache_seasons() -> dict[int, int]:
-    """{mlbam_id: first season with any cached stat line} across the whole
-    affiliated ladder incl. MLB (milb_history caches, fetch=False so this
-    stays offline-safe). Built lazily, once per process."""
-    global _FIRST_CACHE_SEASON_MEMO
-    if _FIRST_CACHE_SEASON_MEMO is None:
-        import milb_history as _mh
-        first: dict[int, int] = {}
-        for season in range(2014, date.today().year + 1):   # ascending: first wins
-            for sport in _mh.ALL_SPORTS:
-                for group in ("hitting", "pitching"):
-                    for r in _mh.season_splits(sport, season, group, fetch=False):
-                        m = r.get("mlbam")
-                        if m and int(m) not in first:
-                            first[int(m)] = season
-        _FIRST_CACHE_SEASON_MEMO = first
-    return _FIRST_CACHE_SEASON_MEMO
-
-
-def vintage_guard_rejects(mlbam_id, last_list_year, first_season=None) -> bool:
-    """True when `mlbam_id` cannot plausibly belong to a record last listed
-    in `last_list_year`: the id's first pro season (first cached stat line,
-    MLB included) postdates that year by more than one season. EXEMPT: gaps
-    explained by the cancelled 2020 MiLB season - a gap spanning 2020
-    tolerates one extra missing season (the TJ-plus-COVID class: 2018/19
-    listees first cached in 2021 pass). No cached seasons = no evidence =
-    never reject."""
-    if mlbam_id is None or last_list_year is None:
-        return False
-    lly = int(last_list_year)
-    if first_season is None:
-        first_season = _first_cache_seasons().get(int(mlbam_id))
-    if first_season is None or int(first_season) <= lly + 1:
-        return False
-    fs = int(first_season)
-    gap = [y for y in range(max(lly + 1, _VINTAGE_PROVABLE_FLOOR), fs)
-           if y != 2020]
-    spans_2020 = lly < 2020 < fs
-    return len(gap) > (1 if spans_2020 else 0)
 
 
 def bulk_resolve_ids(
@@ -1084,7 +918,6 @@ def bulk_resolve_ids(
     season: int | None = None,
     force_rebuild_index: bool = False,
     fallback_workers: int = 8,
-    last_list_year_by_key: dict[str, int] | None = None,
 ) -> tuple[dict[str, int], dict[str, str], "PlayerIndex"]:
     """
     Resolve MLBAM IDs + birth dates for a batch of prospects in one pass.
@@ -1096,13 +929,6 @@ def bulk_resolve_ids(
         season: defaults to today's calendar year.
         force_rebuild_index: ignore the disk-cached PlayerIndex and refetch.
         fallback_workers: thread pool size for the MLB people-search fallback.
-        last_list_year_by_key: optional {player_key: last list year} for
-                 DORMANT identities (inactive busts / long-graduated players).
-                 Enables the vintage guard: a candidate id whose first cached
-                 pro season postdates the record's list era is rejected (and
-                 a cached one evicted) instead of bound - see
-                 vintage_guard_rejects. Keys absent from the map resolve
-                 exactly as before.
 
     Returns:
         (ids_by_key, birth_dates_by_key, player_index)
@@ -1122,18 +948,6 @@ def bulk_resolve_ids(
 
     triples = [(k, n, p) for k, n, p in players]
     cache = _load_id_cache()
-    # Durable key<->id index for the slug-collision guard, loaded once for
-    # the whole batch (see _apply_collision_guard).
-    durable = _durable_mlbam_bindings()
-
-    # F2 vintage guard closure: only fires for keys the caller marked as
-    # dormant identities (last_list_year_by_key); everyone else is exempt.
-    _lly_map = last_list_year_by_key or {}
-    vintage_rejected = 0
-
-    def _vintage_rejects(k: str, cand_id: int) -> bool:
-        lly = _lly_map.get(k)
-        return lly is not None and vintage_guard_rejects(cand_id, lly)
 
     ids_out: dict[str, int] = {}
     bds_out: dict[str, str] = {}
@@ -1154,14 +968,6 @@ def bulk_resolve_ids(
         if key in cache:
             cid = cache[key]
             if cid is not None:
-                if _split_key_for(key, cid):
-                    # Stale pre-split binding (see resolve_mlbam_id): the
-                    # cached id belongs to a slug-collision newcomer.
-                    rid = _apply_collision_guard(cache, key, cid, durable)
-                    cache_dirty = True
-                    if rid is not None:
-                        ids_out[key] = rid
-                    continue
                 if not _cached_id_matches_request(idx, cid, name, key):
                     log.warning(
                         "evicting stale MLBAM cache hit for %s (%s -> %s)",
@@ -1169,15 +975,6 @@ def bulk_resolve_ids(
                     )
                     cache.pop(key, None)
                     cache_dirty = True
-                elif _vintage_rejects(key, cid):
-                    log.warning(
-                        "vintage guard: evicting implausible MLBAM cache hit "
-                        "for %s (%s -> %s; first cached pro season postdates "
-                        "the record's list era)", key, name, cid,
-                    )
-                    cache.pop(key, None)
-                    cache_dirty = True
-                    vintage_rejected += 1
                 else:
                     ids_out[key] = cid
                     # Refresh birth date from the index when available — covers
@@ -1194,23 +991,11 @@ def bulk_resolve_ids(
         if rec is None:
             fallback_triples.append((key, name, position))
             continue
-        if _vintage_rejects(key, rec["id"]):
-            log.warning(
-                "vintage guard: refusing index match for %s (%s -> %s; first "
-                "cached pro season postdates the record's list era)",
-                key, name, rec["id"],
-            )
-            vintage_rejected += 1
-            continue    # leave unresolved - never bind a younger same-name id
-        rid = _apply_collision_guard(cache, key, rec["id"], durable)
+        ids_out[key] = rec["id"]
+        cache[key] = rec["id"]
         new_cache_entries += 1
-        if rid is not None:
-            ids_out[key] = rid
-            # Only take the index birth date when the requested key actually
-            # resolved to the index record (a collision fork returns the
-            # durable id of a DIFFERENT person than `rec`).
-            if rec.get("birthDate") and rid == rec["id"]:
-                bds_out[key] = rec["birthDate"]
+        if rec.get("birthDate"):
+            bds_out[key] = rec["birthDate"]
 
     # Parallelize the MLB people-search fallback for prospects missing
     # from every roster.
@@ -1222,23 +1007,12 @@ def bulk_resolve_ids(
         worker_count = max(1, min(fallback_workers, len(fallback_triples)))
         with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as ex:
             for key, (api_id, bd) in ex.map(_search, fallback_triples):
-                if api_id is not None and _vintage_rejects(key, api_id):
-                    log.warning(
-                        "vintage guard: refusing people-search match for %s "
-                        "(-> %s; first cached pro season postdates the "
-                        "record's list era)", key, api_id,
-                    )
-                    vintage_rejected += 1
-                    cache[key] = None  # remember "unresolvable" (vintage-rejected)
-                    new_cache_entries += 1
-                    continue
                 if api_id is not None:
-                    rid = _apply_collision_guard(cache, key, api_id, durable)
+                    ids_out[key] = api_id
+                    cache[key] = api_id
                     new_cache_entries += 1
-                    if rid is not None:
-                        ids_out[key] = rid
-                        if bd and rid == api_id:
-                            bds_out[key] = bd
+                    if bd:
+                        bds_out[key] = bd
                 else:
                     cache[key] = None  # remember "unresolvable"
 
@@ -1249,9 +1023,6 @@ def bulk_resolve_ids(
         "bulk_resolve_ids: %d resolved, %d new, %d via people-search fallback",
         len(ids_out), new_cache_entries, len(fallback_triples),
     )
-    if vintage_rejected:
-        log.info("bulk_resolve_ids: vintage guard rejected %d dormant-identity "
-                 "candidate ids", vintage_rejected)
     return ids_out, bds_out, idx
 
 
@@ -3183,19 +2954,8 @@ def fetch_sabermetrics(player_key: str, mlbam_id: int,
     if not splits:
         return None
 
-    # The request is SEASON-SCOPED (season={season} above), so more than one split
-    # never means more than one season. It means STINTS: StatsAPI returns the
-    # season TOTAL first, marked with numTeams and carrying no team block, then one
-    # row per club. The old code took splits[-1] with the comment "last in list is
-    # usually most recent season slice", which is the LAST STINT for anyone traded.
-    #
-    # Verified against the live API 2026-07-31, mlbam 672275 (traded mid-season):
-    # splits[0] numTeams=2 -> wRC+ 53.2, WAR 0.204; splits[-1] (San Francisco leg)
-    # -> wRC+ 14.8, WAR -0.156. For a player who was not traded there is exactly
-    # one split and the two readings are identical, which is why this survived.
-    # It is not cosmetic: prospx renders this wRC+ as a headline chip.
-    agg = next((s for s in splits if s.get("numTeams")), None)
-    stat = (agg or splits[0]).get("stat", {})
+    # Use the most recent split (last in list is usually most recent season slice)
+    stat = splits[-1].get("stat", {})
 
     if is_pitcher:
         xfip       = _safe_float(stat.get("xfip"))

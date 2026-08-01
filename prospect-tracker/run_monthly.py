@@ -32,7 +32,7 @@ import os
 import sys
 import time
 from contextlib import contextmanager
-from datetime import date, datetime, timezone
+from datetime import date
 import concurrent.futures
 from pathlib import Path
 
@@ -93,142 +93,6 @@ def _log_step_summary(log: logging.Logger, total_runtime: float) -> None:
     log.info("-" * 64)
     log.info("%-44s %10s %7.1f%%", "TOTAL", _fmt_duration(total), 100.0)
     log.info("=" * 64)
-
-
-# ===========================================================================
-# Ingest observability (2026-07-31)
-# ===========================================================================
-# WHY: TJStats wrote ZERO rows from 2026-07-08 to 2026-07-21 while seven full
-# monthly runs completed and reported success. Nothing anywhere recorded the
-# outage. Three independent gaps produced that silence:
-#   1. run_tjstats_pipeline never raises (correct) and its returned status was
-#      DISCARDED by both callers, so a skipped ingest looked like a done one;
-#   2. logs/pipeline_latest.log was last written in May - all pipeline logging
-#      goes to stdout, and nothing was capturing stdout;
-#   3. the end-of-run summary reports STEP DURATIONS only. A step that fetched
-#      nothing still shows a healthy-looking duration.
-#
-# The fix is a per-run ledger written to data/ingest_health.json plus a RED
-# line in the run summary for any scheduled grade source that wrote 0 rows.
-# The DURABLE half rides storage.record_source_check / load_source_checks (the
-# table the FA module already added) rather than a second mechanism: the JSON
-# is this run's view, source_checks is the across-runs "when did this source
-# last actually work" stamp that survives a run producing no output at all.
-
-# Sources that are SCHEDULED to write grade rows on a normal run. Zero rows
-# from one of these is an OUTAGE, not a quiet day - which is exactly the
-# distinction the 8-day TJStats gap needed someone to make.
-SCHEDULED_GRADE_SOURCES = ("tjstats", "mlb_pipeline_live", "mlb_pipeline_org")
-
-# Recorded by _record_ingest during a run; drained by write_ingest_health.
-_INGEST_HEALTH: list[dict] = []
-
-
-def _record_ingest(source: str, ok: bool, n_rows: int = 0, message: str = "",
-                   scope: str = "", log: logging.Logger | None = None) -> None:
-    """Log one source's ingest outcome for this run.
-
-    `ok=True` also stamps the durable source_checks ledger. Per that table's
-    own contract we stamp ONLY on a verified-good check: a parser that
-    silently returned nothing must leave the OLD stamp in place, because a
-    frozen stamp is the signal."""
-    _INGEST_HEALTH.append({
-        "source": source, "scope": scope, "ok": bool(ok),
-        "n_rows": int(n_rows or 0), "message": message or "",
-        "date": date.today().isoformat(),
-    })
-    if ok:
-        try:
-            from storage import record_source_check
-            record_source_check(source, scope, n_rows)
-        except Exception:                                # noqa: BLE001
-            if log:
-                log.warning("ingest health: could not stamp source_checks for %s", source)
-    if log:
-        if ok:
-            log.info("ingest health: %s OK (%d rows)%s", source, n_rows,
-                     f" - {message}" if message else "")
-        else:
-            log.error("ingest health: %s FAILED (%d rows) %s", source, n_rows, message)
-
-
-def write_ingest_health(out_dir: Path, mode: str,
-                        log: logging.Logger | None = None) -> dict:
-    """Write data/ingest_health.json and emit a RED summary line per source
-    that was scheduled to write grade rows and wrote none.
-
-    Shape:
-      {generated_at, mode, sources: [{source, scope, date, ok, n_rows,
-                                      message, last_ok_at, last_ok_rows}],
-       red: [source, ...]}
-
-    `last_ok_at` comes from the durable source_checks table, so a source that
-    produced nothing THIS run still reports the last date it genuinely worked
-    - the single number that would have made the TJStats gap obvious on day
-    one instead of day eight."""
-    try:
-        from storage import load_source_checks
-        checks = load_source_checks()
-    except Exception:                                    # noqa: BLE001
-        checks = {}
-
-    rows: list[dict] = []
-    for r in _INGEST_HEALTH:
-        stamp = checks.get((r["source"], r.get("scope") or "")) or {}
-        rows.append({**r,
-                     "last_ok_at": stamp.get("checked_at"),
-                     "last_ok_rows": stamp.get("n_rows")})
-
-    seen = {r["source"] for r in rows}
-    # A scheduled source that produced no ledger entry AT ALL is the worst
-    # case (its step never ran, or crashed before recording) - surface it
-    # rather than letting absence read as success.
-    for src in SCHEDULED_GRADE_SOURCES:
-        if src not in seen:
-            stamp = checks.get((src, "")) or {}
-            rows.append({"source": src, "scope": "", "ok": False, "n_rows": 0,
-                         "message": "no ingest attempt recorded this run",
-                         "date": date.today().isoformat(),
-                         "last_ok_at": stamp.get("checked_at"),
-                         "last_ok_rows": stamp.get("n_rows")})
-
-    red = sorted({r["source"] for r in rows
-                  if r["source"] in SCHEDULED_GRADE_SOURCES
-                  and (not r["ok"] or r["n_rows"] <= 0)})
-    payload = {
-        "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
-        "mode": mode,
-        "sources": sorted(rows, key=lambda r: (r["source"], r["scope"])),
-        "red": red,
-    }
-    try:
-        out_dir.mkdir(parents=True, exist_ok=True)
-        (out_dir / "ingest_health.json").write_text(
-            json.dumps(payload, indent=1), encoding="utf-8")
-    except OSError as e:
-        if log:
-            log.warning("ingest health: could not write ingest_health.json: %s", e)
-
-    if log:
-        log.info("=" * 64)
-        log.info("INGEST HEALTH (%s)", mode)
-        log.info("%-22s %-10s %6s  %s", "source", "status", "rows", "last OK")
-        log.info("-" * 64)
-        for r in payload["sources"]:
-            status = "OK" if (r["ok"] and r["n_rows"] > 0) else "FAIL"
-            log.info("%-22s %-10s %6d  %s", (r["source"] + (
-                f"/{r['scope']}" if r["scope"] else ""))[:22],
-                status, r["n_rows"], r.get("last_ok_at") or "never")
-        log.info("-" * 64)
-        for src in red:
-            hit = next((r for r in payload["sources"] if r["source"] == src), {})
-            log.error("RED: scheduled grade source %r wrote 0 rows this run "
-                      "(last OK %s). %s", src, hit.get("last_ok_at") or "never",
-                      hit.get("message") or "")
-        if not red:
-            log.info("ingest health: all scheduled grade sources wrote rows")
-        log.info("=" * 64)
-    return payload
 
 
 def _patch_export_run_summary(out_path: Path, log: logging.Logger) -> None:
@@ -335,25 +199,6 @@ LAB_EVAL_FRESH_DAYS = 30
 # tracked teams first). Bounded because each team is a headless-Chrome render;
 # raise once the first run is validated. 0 disables the pass.
 COLLEGESAVANT_MAX_TEAMS = 40
-
-
-def _vintage_years_by_key(timeseries) -> dict[str, int]:
-    """F2 vintage-guard input for stats.bulk_resolve_ids: {player_key: last
-    list year} for NON-ACTIVE identities (inactive busts + graduates). A
-    dormant record re-resolved against the current PlayerIndex can bind a
-    same-name kid whose first pro season postdates the record's entire list
-    era (the luke_jackson class); the guard rejects those candidates.
-    Actives are exempt: their lists are current, and the guard could misfire
-    on a legitimately rehabbing recent signee."""
-    out: dict[str, int] = {}
-    for p in timeseries:
-        if p.status == "active":
-            continue
-        yrs = [int(pt.snapshot_date[:4]) for pt in (p.points or [])
-               if pt.snapshot_date and str(pt.snapshot_date)[:4].isdigit()]
-        if yrs:
-            out[p.player_key] = max(yrs)
-    return out
 
 
 def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
@@ -558,7 +403,6 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     from the current DB state, write `data/timeseries.json`. No scraping,
     no MLB API calls. Use after a fangraphs_csv drop when you don't want
     to wait through the full monthly pipeline."""
-    _utf8_console()
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -693,24 +537,6 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("ifa export crashed in rebuild_only — continuing")
 
-    # Merged-identity report (the "Jesus Flores" class): two humans whose
-    # names normalize to the same slug fused onto one player_key. Pure
-    # detection over the just-written sidecars + a READ-ONLY read of
-    # player_photos; it never writes to prospects.db and never re-keys
-    # anything. Writes data/identity_collisions.json so the defect is
-    # visible on every build instead of being found by a reader.
-    # Best-effort; a failure must not abort the run.
-    try:
-        from identity_audit import build as _build_identity_audit
-        _ident = _build_identity_audit(path=out_dir / "identity_collisions.json")
-        log.info("identity audit (rebuild): %d critical keys (%d active), "
-                 "%d frankenstein records",
-                 _ident["summary"]["critical_player_keys"],
-                 _ident["summary"]["critical_active_player_keys"],
-                 _ident["summary"]["frankenstein_records"])
-    except Exception:
-        log.exception("identity audit crashed in rebuild_only — continuing")
-
     # CollegeSavant -> Single-A translation. Re-fits the matched-pair factors
     # against the just-refreshed Single-A statlines and rebuilds the per-player
     # sidecar (CS player pages) + the PROSPX draft bridge. Reads CollegeSavant's
@@ -755,22 +581,6 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
                  len(_mt["fits"]))
     except Exception:
         log.exception("milb_translation crashed in rebuild_only - continuing")
-
-    # Advancement Pace+ (W5, descriptive display ONLY - contract forbids any model
-    # consumer) + defensive-home sidecar (W7). Both read caches/DB already refreshed
-    # above and are compare-before-write. Best-effort.
-    try:
-        import advancement_pace_export
-        advancement_pace_export.run()
-        log.info("advancement_pace_export: refreshed data/advancement_pace.json")
-    except Exception:
-        log.exception("advancement_pace_export crashed in rebuild_only - continuing")
-    try:
-        import def_home_export
-        def_home_export.run()
-        log.info("def_home_export: refreshed data/def_home.json")
-    except Exception:
-        log.exception("def_home_export crashed in rebuild_only - continuing")
 
     # eFV PROXY — faster-resolving leading indicator (pre-debut profile -> first-MLB Statcast
     # quality), forward-validated on recent debut cohorts. Separate artifact, NOT eFV; pulls
@@ -827,21 +637,10 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         _reset_cache()   # clear GRPO cache so new scores are loaded
         tv_players = list(_ts_payload.get("players") or [])   # reuse the single parse above
         lnorms     = _ts_payload.get("level_norms")
-        # Sidecars are OPTIONAL but their absence must be VISIBLE. graduates.json
-        # is read here, by efv_score and by grpo_prospect, and NOTHING IN THIS
-        # REPO WRITES IT - a declared input that has silently never arrived,
-        # because `if exists()` makes a missing file indistinguishable from an
-        # empty one. Same failure shape as the FA parser that returned [] for a
-        # day without anyone noticing (2026-07-31).
         for _sidecar in ("debuts.json", "graduates.json"):
             _sp = out_dir / _sidecar
             if _sp.exists():
-                _rows = json.loads(_sp.read_text(encoding="utf-8"))
-                tv_players += _rows
-                log.info("trade values: %s contributed %d rows", _sidecar, len(_rows))
-            else:
-                log.warning("trade values: %s ABSENT - no producer exists in this "
-                            "repo; the board is built without it", _sidecar)
+                tv_players += json.loads(_sp.read_text(encoding="utf-8"))
         n_tv = export_trade_values_json(tv_players, out_dir / "trade_values.json",
                                         level_norms=lnorms)
         log.info("trade values (rebuild): exported %d players", n_tv)
@@ -896,7 +695,6 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
     pass; never simultaneously. Every step is idempotent; a failure in one
     fetch logs and continues so a single flaky endpoint can't strand the run.
     """
-    _utf8_console()
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -929,23 +727,15 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             else:
                 try:
                     import tjstats
-                    _tj = tjstats.run_tjstats_pipeline(live=True, history=False,
-                                                       scope="daily-am")
+                    _tj = tjstats.run_tjstats_pipeline(live=True, history=False)
                     if _tj.get("live"):
                         log.info("tjstats: daily Live %d players @ %s",
                                  _tj["live"]["n_players"], _tj["live"]["captured_at"])
                         tjstats.export_movers()   # wire sidecar + source events
                     elif _tj.get("health"):
                         log.error("tjstats: health check failed, skipped: %s", _tj["health"])
-                    _record_ingest("tjstats", _tj.get("ok", False),
-                                   _tj.get("n_rows", 0),
-                                   "; ".join(_tj.get("health") or [])
-                                   or (_tj.get("error") or ""),
-                                   scope="daily-am", log=log)
-                except Exception as e:            # noqa: BLE001
+                except Exception:
                     log.exception("tjstats daily capture crashed — continuing")
-                    _record_ingest("tjstats", False, 0, f"crashed: {e}",
-                                   scope="daily-am", log=log)
 
         # --- d0b. MLB Pipeline Live board (daily point-in-time capture) ---
         # Same rationale as d0: Pipeline re-ranks in-season (graduations,
@@ -966,93 +756,8 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 else:
                     log.error("mlb_pipeline: live capture failed: %s",
                               _pl.get("error"))
-                _record_ingest("mlb_pipeline_live", bool(_pl.get("live")),
-                               (_pl.get("live") or {}).get("n_players", 0),
-                               "; ".join(_pl.get("health") or [])
-                               or (_pl.get("error") or ""), log=log)
-            except Exception as e:                # noqa: BLE001
+            except Exception:
                 log.exception("mlb_pipeline daily capture crashed — continuing")
-                _record_ingest("mlb_pipeline_live", False, 0, f"crashed: {e}", log=log)
-
-        # --- d0b-i. Just Baseball rolling board (content-hash gated) ------
-        # JB republishes ONE permalink. The old fixed-label ingest turned the
-        # stored March board into a 126-row chimera with 26 duplicate ranks
-        # (see scrapers.JB_INTERVALS). run_just_baseball_live date-stamps the
-        # label and writes ONLY when the board's (key, rank, fv) fingerprint
-        # actually changed, so the common case is a no-op and a genuine new
-        # edition lands in its own point-in-time interval. Never aborts.
-        with _step("d0b-i. Just Baseball rolling capture", log):
-            if chained:
-                # Monthly 1c-bis ran this minutes ago in THIS process. The
-                # fingerprint gate would make a second call a no-op anyway,
-                # but skip the fetch rather than knock on JB twice for nothing.
-                log.info("daily: SKIP d0b-i: monthly 1c-bis just captured "
-                         "Just Baseball (chained)")
-            else:
-                try:
-                    from scrapers import run_just_baseball_live
-                    _jb = run_just_baseball_live()
-                    if _jb.get("live"):
-                        log.info("just_baseball: NEW board %d players -> %r",
-                                 _jb["live"]["n_players"], _jb["live"]["label"])
-                    elif _jb.get("unchanged"):
-                        log.info("just_baseball: board unchanged (%d players), "
-                                 "no write", _jb["unchanged"]["n_players"])
-                    elif _jb.get("health"):
-                        log.error("just_baseball: health gate refused, skipped: %s",
-                                  _jb["health"])
-                    else:
-                        log.error("just_baseball: capture failed: %s",
-                                  _jb.get("error"))
-                    # "unchanged" IS a healthy check - the source was reached
-                    # and parsed. It stamps source_checks so a quiet board can
-                    # never be confused with a dead scraper (the fa_signings
-                    # lesson).
-                    _ok = bool(_jb.get("live") or _jb.get("unchanged"))
-                    _n = int((_jb.get("live") or _jb.get("unchanged")
-                              or {}).get("n_players") or 0)
-                    _record_ingest("just_baseball", _ok, _n,
-                                   "; ".join(_jb.get("health") or [])
-                                   or (_jb.get("error") or "")
-                                   or ("unchanged" if _jb.get("unchanged") else ""),
-                                   log=log)
-                except Exception as e:            # noqa: BLE001
-                    log.exception("just_baseball daily capture crashed - continuing")
-                    _record_ingest("just_baseball", False, 0, f"crashed: {e}",
-                                   log=log)
-
-        # --- d0b-ii. MLB Pipeline per-team Top 30 boards (daily) ----------
-        # Same staleness fix as d0b, one tier down: the monthly backfill
-        # freezes each org's Top 30 at the {y}-01-22 preseason release, so
-        # the ~800 prospects who sit in a team Top 30 but not the Live Top
-        # 100 carry a January-vintage Pipeline grade all season. This capture
-        # re-scrapes the 30 current /prospects/{year}/{slug} pages and
-        # re-stamps the SAME per-team label with today's date (upsert bumps
-        # snapshot_date in place) so consensus reads the current vintage. A
-        # parse-health gate (>= 25 orgs, >= 20 players each) refuses a
-        # degraded scrape. Never aborts the run.
-        with _step("d0b-ii. MLB Pipeline per-team Top 30 capture", log):
-            try:
-                from scrapers import run_mlb_pipeline_org_live
-                _po = run_mlb_pipeline_org_live()
-                if _po.get("orgs"):
-                    log.info("mlb_pipeline: daily org Top-30 %d players across "
-                             "%d orgs @ %s",
-                             _po["orgs"]["n_players"], _po["orgs"]["n_orgs"],
-                             _po["orgs"]["snap_date"])
-                elif _po.get("health"):
-                    log.error("mlb_pipeline: org Top-30 health gate refused, "
-                              "skipped: %s", _po["health"])
-                else:
-                    log.error("mlb_pipeline: org Top-30 capture failed: %s",
-                              _po.get("error"))
-                _record_ingest("mlb_pipeline_org", bool(_po.get("orgs")),
-                               (_po.get("orgs") or {}).get("n_players", 0),
-                               "; ".join(_po.get("health") or [])
-                               or (_po.get("error") or ""), log=log)
-            except Exception as e:                # noqa: BLE001
-                log.exception("mlb_pipeline daily org capture crashed - continuing")
-                _record_ingest("mlb_pipeline_org", False, 0, f"crashed: {e}", log=log)
 
         # --- 1. Player set from existing snapshots (no scrape). -----------
         # --- d0. MLBAM-anchored prospect discovery —————————————————————————
@@ -1064,29 +769,12 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # here rather than waiting for a publication cycle.
         with _step("d0. MLBAM prospect discovery (unranked actives)", log):
             try:
-                from mlbam_ingest import (ingest_unranked_active_prospects,
-                                          refresh_performance_anchors)
+                from mlbam_ingest import ingest_unranked_active_prospects
                 _mlbam_summary = ingest_unranked_active_prospects(season=season)
                 _mlbam_total = sum(_mlbam_summary.values())
                 if _mlbam_total:
                     log.info("mlbam_ingest: added %d new unranked prospects %s",
                              _mlbam_total, _mlbam_summary)
-                # d0a. RE-DATE the anchors of players discovered on an EARLIER
-                # run who still qualify this season. The discovery pass above
-                # skips every already-known player, so before this step an
-                # auto-tracked player's anchor date was written once and never
-                # again: measured 2026-07-25, all 2,760 performance_ingest rows
-                # sat at snapshot_date 2026-01-01 (min == max). That matters
-                # because efv_dataset._stale_anchor_discount decays a model
-                # anchor older than 18 months toward a -10 FV terminal at 30
-                # months, so a permanently frozen stamp would have dragged the
-                # whole cohort from FV 35 to FV 25 starting 2027-07 -- a
-                # "dropped off the lists" event that never happened. Re-stamped
-                # ONLY while the player still appears in the qualifying leaders,
-                # and never for a player who has a real published anchor.
-                _refresh = refresh_performance_anchors(season=season)
-                log.info("mlbam_ingest: re-dated %d synthetic anchors %s",
-                         _refresh.get("refreshed", 0), _refresh)
             except Exception:
                 log.exception("mlbam_ingest: discovery step failed — continuing")
 
@@ -1100,7 +788,6 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             prospects = [(p.player_key, p.player_name, p.position) for p in timeseries]
             ids_by_key, _bds, player_index = bulk_resolve_ids(
                 prospects, season=season, force_rebuild_index=no_cache,
-                last_list_year_by_key=_vintage_years_by_key(timeseries),
             )
 
         # (d3 "Team affiliations" was cut 2026-07-14: its team_affil result
@@ -1475,89 +1162,12 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     _export_fa()
                 except Exception:
                     log.exception("daily: FA refresh failed — continuing")
-        else:
-            # --- 10b. FA re-export off the FRESH projections (year-round). ----
-            # ORDERING REPAIR 2026-07-25. fa_fit.team_baselines now reads
-            # team_outlook out of data/mlb_projections.json (T1.0), but the
-            # monthly step 6 exports the FA sidecars BEFORE the projections are
-            # rebuilt: monthly 6b is a documented SKIP because d9b re-bakes
-            # projections post-eFV-regen, and d9b runs in this daily tail, i.e.
-            # AFTER step 6. Outside the Nov-Mar window nothing re-exported FA
-            # afterwards, so baseSrc advertised "mlb_projections" while baseWins
-            # carried the PREVIOUS run's outlook (measured: 0 of 30 clubs equal,
-            # mean |delta| 1.483 wins). Attributing a number to a source it does
-            # not equal is worse than the old honest fallback. Re-exporting here
-            # costs one cached export and makes the attribution true. Inside the
-            # window d10 above already runs after d9b and covers this.
-            with _step("d10b. FA re-export off fresh projections", log):
-                try:
-                    from fa_export import export_all as _export_fa
-                    _export_fa()
-                except Exception:
-                    log.exception("daily: FA re-export failed — continuing")
-
-        # --- d10c. TJStats SECOND Live capture of the day -----------------
-        # The owner's Franklin Arias complaint was NOT a broken scraper: it
-        # works. TJStats reshuffles its board CONTINUOUSLY, and we captured
-        # once per day at ~12:58 UTC. Arias sat at #4 in our per-source
-        # history while a live probe during the investigation returned #1,
-        # because the board moved after our capture.
-        #
-        # This is the second polite pull of the day (the endpoint is one
-        # person's JSON API; the client throttles to 1.5s between requests
-        # and two pulls a day is well inside courteous use). It lands on the
-        # SAME date-stamped label, so insert_snapshots upserts the morning
-        # row in place -> one row per day, holding the LATEST state of that
-        # day rather than the earliest. The sidecar's captured_at moves with
-        # it, and export_movers now ships that timestamp so the served board
-        # says WHEN it was captured instead of only what day.
-        with _step("d10c. TJStats Live second capture", log):
-            try:
-                import tjstats
-                _tj2 = tjstats.run_tjstats_pipeline(live=True, history=False,
-                                                    scope="daily-pm")
-                if _tj2.get("live"):
-                    log.info("tjstats: second daily Live %d players @ %s",
-                             _tj2["live"]["n_players"], _tj2["live"]["captured_at"])
-                    tjstats.export_movers()
-                elif _tj2.get("health"):
-                    log.error("tjstats: second capture health check failed: %s",
-                              _tj2["health"])
-                _record_ingest("tjstats", _tj2.get("ok", False),
-                               _tj2.get("n_rows", 0),
-                               "; ".join(_tj2.get("health") or [])
-                               or (_tj2.get("error") or ""),
-                               scope="daily-pm", log=log)
-            except Exception as e:                # noqa: BLE001
-                log.exception("tjstats second capture crashed - continuing")
-                _record_ingest("tjstats", False, 0, f"crashed: {e}",
-                               scope="daily-pm", log=log)
-
-        # --- d10d. ESPN unwired-article probe (log only, never ingests) ---
-        with _step("d10d. ESPN new-article probe", log):
-            try:
-                from scrapers import probe_espn_new_prospect_article
-                _esp = probe_espn_new_prospect_article()
-                _record_ingest(
-                    "espn_article_probe", not _esp.get("error"),
-                    len(_esp.get("candidates") or []),
-                    _esp.get("error") or "; ".join(
-                        f"{c['id']} {c['headline']}"
-                        for c in (_esp.get("candidates") or [])),
-                    log=log)
-            except Exception as e:                # noqa: BLE001
-                log.exception("espn article probe crashed - continuing")
-                _record_ingest("espn_article_probe", False, 0, f"crashed: {e}",
-                               log=log)
 
         finish_run(run_id, new_snapshots=0, stat_lines=0,
                    notes=f"DAILY: {n_il} on IL, {n_debuts} debuts, {n_trades} new trades")
         # Patch the just-written run summary into timeseries.json so the
         # site's "as of" reflects this daily refresh.
         _patch_export_run_summary(out_dir / "timeseries.json", log)
-        # Ingest health ledger + RED lines. Written BEFORE the site build so
-        # the sidecar rides the same rsync as the rest of data/.
-        write_ingest_health(out_dir, "daily", log)
         # d11. Rebuild the static site from the fresh data. Without this the daily
         # data refresh (trades/promos/IL/debuts to today, refreshed MiLB statlines)
         # never reaches the browser -- the homepage "Prospect News" wire, /news/, and
@@ -1587,12 +1197,6 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
     except Exception:
         log.exception("DAILY run %s failed", run_id)
         finish_run(run_id, new_snapshots=0, stat_lines=0, notes="DAILY: failed")
-        # Same reasoning as the monthly crash path: publish what we know
-        # about which sources landed before the failure.
-        try:
-            write_ingest_health(out_dir, "daily-FAILED", log)
-        except Exception:                                # noqa: BLE001
-            log.exception("ingest health write failed on the crash path")
         raise
 
 
@@ -1790,32 +1394,9 @@ def _post_export_summary(out_path: Path, all_snaps, log) -> None:
         log.exception("post-export summary failed (non-fatal)")
 
 
-def _utf8_console() -> None:
-    """Stop a non-UTF-8 console turning a log line into a traceback.
-
-    Several modules log a right-arrow ("wrote N players -> path"). On a Windows
-    console defaulting to cp1252 the StreamHandler cannot encode it, so logging
-    prints a UnicodeEncodeError traceback for a line that is pure progress
-    reporting. Measured 2026-07-30: seven such tracebacks in one rebuild, every
-    one of them cosmetic, and every one of them alarming in a log a human is
-    reading to decide whether a pipeline run went well.
-
-    Reconfigures stdout/stderr to UTF-8 and, failing that, degrades to replacing
-    the offending character. Never raises: a logging convenience must not be the
-    thing that stops a run. No effect on the Linux box, where UTF-8 is already
-    the default.
-    """
-    for stream in (sys.stdout, sys.stderr):
-        try:
-            stream.reconfigure(encoding="utf-8", errors="replace")
-        except Exception:
-            pass
-
-
 def main(force_refetch: bool = False, skip_stats: bool = False,
          out_dir: Path = Path("data"), workers: int | None = None,
          cache_ttl: int | None = None, no_cache: bool = False, fast: bool = False):
-    _utf8_console()
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -2006,8 +1587,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         with _step("1c. TJStats Top-100 (Live + history)", log):
             try:
                 import tjstats
-                _tj = tjstats.run_tjstats_pipeline(live=True, history=True,
-                                                   scope="monthly")
+                _tj = tjstats.run_tjstats_pipeline(live=True, history=True)
                 if _tj.get("health"):
                     log.error("tjstats: health check failed, skipped ingest: %s", _tj["health"])
                 elif _tj.get("live"):
@@ -2015,63 +1595,8 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                              _tj["live"]["n_players"], _tj["live"]["captured_at"],
                              len(_tj["history"]))
                     tjstats.export_movers()   # wire sidecar + source events
-                _record_ingest("tjstats", _tj.get("ok", False), _tj.get("n_rows", 0),
-                               "; ".join(_tj.get("health") or [])
-                               or (_tj.get("error") or ""),
-                               scope="monthly", log=log)
-            except Exception as e:                # noqa: BLE001
+            except Exception:
                 log.exception("tjstats pipeline crashed — continuing")
-                _record_ingest("tjstats", False, 0, f"crashed: {e}",
-                               scope="monthly", log=log)
-
-        # --- 1c-bis. Just Baseball rolling board (content-hash gated) ----
-        # Replaces the old fixed-label JB entry in scrape_all (see
-        # scrapers.JB_INTERVALS for the chimera this prevents). Writes only
-        # when JB has actually republished. Never aborts the run.
-        with _step("1c-bis. Just Baseball rolling capture", log):
-            try:
-                from scrapers import run_just_baseball_live
-                _jb = run_just_baseball_live(force=force_refetch)
-                if _jb.get("live"):
-                    log.info("just_baseball: NEW board %d players -> %r",
-                             _jb["live"]["n_players"], _jb["live"]["label"])
-                elif _jb.get("unchanged"):
-                    log.info("just_baseball: board unchanged (%d players), no write",
-                             _jb["unchanged"]["n_players"])
-                elif _jb.get("health"):
-                    log.error("just_baseball: health gate refused: %s", _jb["health"])
-                else:
-                    log.error("just_baseball: capture failed: %s", _jb.get("error"))
-                _ok = bool(_jb.get("live") or _jb.get("unchanged"))
-                _n = int((_jb.get("live") or _jb.get("unchanged")
-                          or {}).get("n_players") or 0)
-                _record_ingest("just_baseball", _ok, _n,
-                               "; ".join(_jb.get("health") or [])
-                               or (_jb.get("error") or "")
-                               or ("unchanged" if _jb.get("unchanged") else ""),
-                               log=log)
-            except Exception as e:                # noqa: BLE001
-                log.exception("just_baseball capture crashed - continuing")
-                _record_ingest("just_baseball", False, 0, f"crashed: {e}", log=log)
-
-        # --- 1c-ter. ESPN unwired-article probe (log only) ---------------
-        # ESPN needs a code edit per new McDaniel list; without this probe a
-        # missed list is indistinguishable from a healthy source.
-        with _step("1c-ter. ESPN new-article probe", log):
-            try:
-                from scrapers import probe_espn_new_prospect_article
-                _esp = probe_espn_new_prospect_article(force=force_refetch)
-                _record_ingest(
-                    "espn_article_probe", not _esp.get("error"),
-                    len(_esp.get("candidates") or []),
-                    _esp.get("error") or "; ".join(
-                        f"{c['id']} {c['headline']}"
-                        for c in (_esp.get("candidates") or [])),
-                    log=log)
-            except Exception as e:                # noqa: BLE001
-                log.exception("espn article probe crashed - continuing")
-                _record_ingest("espn_article_probe", False, 0, f"crashed: {e}",
-                               log=log)
 
         # --- 2. Build consensus ----------------------------------------
         with _step("2. Build consensus timeseries", log):
@@ -2098,7 +1623,6 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 all_prospects_for_resolve,
                 season=season,
                 force_rebuild_index=force_refetch,
-                last_list_year_by_key=_vintage_years_by_key(timeseries),
             )
             # overwrite=True because these dates are tied to a freshly-resolved
             # MLBAM ID; any pre-existing date in the DB may correspond to a
@@ -2261,91 +1785,6 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.exception("il_history update failed — continuing")
                 log.info("IL: %d prospects currently on IL",
                          sum(1 for v in il_updates.values() if v))
-
-        # --- 2b.viii-2b.xii External data-source ingests ------------------
-        # Five standalone, disk-cached, fail-soft ingests that each land a
-        # data/*.json sidecar for the model/consensus layer (that wiring lives
-        # elsewhere; this block only fetches + lands the data). Every module is
-        # already internally fail-soft (a layout / network failure keeps the
-        # prior on-disk cache and returns without raising), and each step is
-        # ADDITIONALLY wrapped here + individually skippable via its own
-        # EEPHUS_SKIP_* env gate so a flaky source can be disabled without a
-        # code change. None of these feed any other step in THIS run.
-
-        # 2b.viii Tommy John surgery list (community sheet CSV) ->
-        # data/tj_surgery.json. Entry: tj_surgery.run().
-        if os.environ.get("EEPHUS_SKIP_TJ_SURGERY") == "1":
-            log.info("2b.viii SKIP: EEPHUS_SKIP_TJ_SURGERY=1 (Tommy John surgery ingest)")
-        else:
-            with _step("2b.viii. Tommy John surgery list ingest", log):
-                try:
-                    import tj_surgery
-                    _tj_surg = tj_surgery.run()
-                    log.info("tj_surgery: landed %d players / %d surgeries",
-                             _tj_surg.get("n_players", 0), _tj_surg.get("n_rows", 0))
-                except Exception:
-                    log.exception("tj_surgery ingest failed - continuing")
-
-        # 2b.ix Official MLB draft slot/bonus keyed by MLBAM id ->
-        # data/draft_bonus_slot.json. Entry: draft_bonus.build() (there is no
-        # run(); build lands the JSON). --force bypasses the per-year cache.
-        if os.environ.get("EEPHUS_SKIP_DRAFT_BONUS") == "1":
-            log.info("2b.ix SKIP: EEPHUS_SKIP_DRAFT_BONUS=1 (draft slot/bonus ingest)")
-        else:
-            with _step("2b.ix. MLB draft slot/bonus ingest", log):
-                try:
-                    import draft_bonus
-                    _db_records, _db_report = draft_bonus.build(use_cache=not force_refetch)
-                    log.info("draft_bonus: %d unique MLBAM ids (%d with bonus) across %s",
-                             _db_report.get("unique_mlbam", 0),
-                             _db_report.get("records_with_bonus", 0),
-                             _db_report.get("years_landed", []))
-                except Exception:
-                    log.exception("draft_bonus ingest failed - continuing")
-
-        # 2b.x Ballpark metadata from the StatsAPI /venues endpoint ->
-        # data/venue_meta.json. Entry: venue_meta.build().
-        if os.environ.get("EEPHUS_SKIP_VENUE_META") == "1":
-            log.info("2b.x SKIP: EEPHUS_SKIP_VENUE_META=1 (ballpark metadata ingest)")
-        else:
-            with _step("2b.x. Ballpark venue metadata ingest", log):
-                try:
-                    import venue_meta
-                    _venues = venue_meta.build()
-                    log.info("venue_meta: landed %d venues", len(_venues))
-                except Exception:
-                    log.exception("venue_meta ingest failed - continuing")
-
-        # 2b.xi Amateur / winter / independent league season stats ->
-        # data/amateur_leagues.json. Entry: amateur_leagues.build() (warm_cache
-        # only primes caches; build lands the keyed JSON).
-        if os.environ.get("EEPHUS_SKIP_AMATEUR_LEAGUES") == "1":
-            log.info("2b.xi SKIP: EEPHUS_SKIP_AMATEUR_LEAGUES=1 (amateur/winter/indy stats ingest)")
-        else:
-            with _step("2b.xi. Amateur/winter/indy league stats ingest", log):
-                try:
-                    import amateur_leagues
-                    _amateur = amateur_leagues.build()
-                    log.info("amateur_leagues: landed %d players / %d season lines",
-                             len(_amateur), sum(len(v) for v in _amateur.values()))
-                except Exception:
-                    log.exception("amateur_leagues ingest failed - continuing")
-
-        # 2b.xii MLB Pipeline point-in-time Top-100 vintages ->
-        # data/pipeline_vintages.json. Entry: pipeline_vintage.build() (there is
-        # no run(); build lands the JSON).
-        if os.environ.get("EEPHUS_SKIP_PIPELINE_VINTAGE") == "1":
-            log.info("2b.xii SKIP: EEPHUS_SKIP_PIPELINE_VINTAGE=1 (Pipeline vintage ingest)")
-        else:
-            with _step("2b.xii. MLB Pipeline vintage boards ingest", log):
-                try:
-                    import pipeline_vintage
-                    _vint = pipeline_vintage.build()
-                    log.info("pipeline_vintage: landed %d vintage years (mlbam fill %.1f%%)",
-                             len(_vint.get("years", [])),
-                             100 * _vint.get("mlbam_fill_rate", 0.0))
-                except Exception:
-                    log.exception("pipeline_vintage ingest failed - continuing")
 
         # --- 2c. Affiliate roster map. ~6 HTTP calls (one per sport level)
         # returns every MLB + MiLB team with its parent_org_id, which lets
@@ -3277,19 +2716,6 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             log.info("ifa pipeline: exported %d signings", n_ifa)
         except Exception:
             log.exception("ifa export crashed — continuing")
-        # Merged-identity report. See the rebuild_only copy of this block
-        # for the full rationale; detection only, no DB writes, no re-keying.
-        try:
-            from identity_audit import build as _build_identity_audit
-            _ident = _build_identity_audit(
-                path=out_dir / "identity_collisions.json")
-            log.info("identity audit: %d critical keys (%d active), "
-                     "%d frankenstein records",
-                     _ident["summary"]["critical_player_keys"],
-                     _ident["summary"]["critical_active_player_keys"],
-                     _ident["summary"]["frankenstein_records"])
-        except Exception:
-            log.exception("identity audit crashed — continuing")
         _STEP_TIMES.append(("5. Export timeseries.json + summary", time.monotonic() - _step_5_start))
 
         # OOM: free the monthly whole-universe caches HERE, right after the
@@ -3553,18 +2979,18 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("leverage leaderboards export failed - continuing")
 
-        # --- 6b5. Alchemy Lab (the /pal/ surface) ---------------
+        # --- 6b5. Pitcher Alchemy Lab (the /pal/ surface) ---------------
         # RP<->SP role-conversion candidate scores + a validated conversion
         # history. Arsenal/velocity from bulk Statcast, platoon from StatsAPI
         # splits, role from the season leaderboard; reuses the REM+ model for the
         # relief projection. Additive; never aborts.
-        with _step("6b5. Alchemy Lab (pal.json)", log):
+        with _step("6b5. Pitcher Alchemy Lab (pal.json)", log):
             try:
                 from pal_export import export as _export_pal
                 _pal_n = _export_pal(log=log.info)
                 log.info("pal: %d conversion candidates scored", _pal_n)
             except Exception:
-                log.exception("alchemy lab export failed - continuing")
+                log.exception("pitcher alchemy lab export failed - continuing")
 
         # --- 6b6. Fantasy Tools (the /fantasy/ surface) -----------------
         # ROS fantasy projections (reuse the FA/Projections engine) scored in the
@@ -3779,22 +3205,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.exception("trade_value snapshot failed — continuing")
         except Exception:
             log.exception("chained daily refresh failed — monthly run already completed")
-        # Ingest health, last. The chained daily already wrote a "daily"
-        # ledger; rewriting it here as "monthly" folds in this run's own
-        # entries (TJStats 1c, JB 1c-bis, the ESPN probe) so the published
-        # sidecar describes the FULL run, not just its daily tail.
-        write_ingest_health(out_dir, "monthly", log)
     except Exception:
         log.exception("run failed")
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes="FAILED — see logs")
-        # A crashed run is exactly when the ingest ledger matters most: it
-        # records which sources HAD landed before the failure, and which
-        # scheduled ones never ran at all.
-        try:
-            write_ingest_health(out_dir, "monthly-FAILED", log)
-        except Exception:                                # noqa: BLE001
-            log.exception("ingest health write failed on the crash path")
         # Still print the partial step summary on crash — useful for
         # debugging which phase blew up.
         _log_step_summary(log, time.monotonic() - _run_start)

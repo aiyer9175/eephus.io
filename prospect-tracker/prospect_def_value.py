@@ -40,21 +40,6 @@ VERDICT 2026-06-29 (data/prospect_def_value_eval.json):
     first-6yr-WAR target: the binding constraint is the TARGET, not measurement quality.
   * The real lane for this signal is the defense-IS-WAR surfaces (MLB Projections / farm
     / display), NOT the eFV ranker.
-
-LADDER ADOPTION 2026-07-25 (data/positional_ladder_eval.json). POS_ADJ below is now the
-EMPIRICALLY RECOVERED Baseball-Reference ladder, not the folklore round numbers. The
-provenance and the gate live on the POS_ADJ block itself, which is the ONE definition of
-the ladder in this codebase. Scope of the swap, measured not assumed:
-  * def_value / prospect_def_value.json move (mean |delta| 1.443 runs, 86.9% of the 382
-    graduated comps change rank order) but the predictive gain is a NULL (+0.0028
-    Spearman, CI95 [-0.0096, +0.0154], permutation band 0.0166).
-  * data/def_home.json is BIT-IDENTICAL under the swap: 0 of 2,478 records differ. The
-    chip reads p_hold and def_home_entropy, which come from the migration matrix and
-    never touch POS_ADJ. No served number on any surface moves.
-  * proj_ml and eFV are NOT consumers. proj_ml's pos_adj_prior is bWAR runs_position
-    read straight off data/mlb_def_history.json (it is already the realized quantity
-    this ladder recovers), and neither efv_model feature list carries a defensive
-    feature at all.
 """
 from __future__ import annotations
 
@@ -65,131 +50,9 @@ from pathlib import Path
 
 DATA = Path(__file__).parent / "data"
 
-# ---------------------------------------------------------------------------
-# THE POSITIONAL LADDER -- THE ONE COPY. Do not redefine it anywhere else.
-# ---------------------------------------------------------------------------
-# Positional adjustment in runs per 650 PA (~ runs per 162 games). These are not a
-# convention or a rule of thumb: they are the constants Baseball-Reference actually
-# applies, RECOVERED by inverting bWAR's own construction --
-#
-#     runs_position x 650 / PA  ~  Sum_pos (innings share at pos) x ladder[pos]
-#
-# solved by SVD least squares with no intercept over data/mlb_def_history.json joined
-# to the StatsAPI per-position innings splits.
-#
-#   fit date   2026-07-25          n          9,101 player-seasons (1,872 players)
-#   window     2000-2026           filter     >= 200 PA in the season
-#   R2         0.9821              resid MAE  0.675 runs/650PA
-#   CI95       +/- 0.05 runs per slot (2,000-draw bootstrap; +/- 0.10 clustered by player)
-#
-# GATE (docs/EFV_GATE_STANDARD.md), see data/positional_ladder_eval.json:
-#   * Out-of-split accuracy at reproducing bWAR's positional adjustment beats the
-#     retired folklore table in 4 of 4 independent era splits: MAE 0.48 runs/650PA
-#     better, paired-bootstrap CI95 [0.458, 0.503] with train AND test resampled and
-#     the ladder refit on every draw, P(better) = 1.000.
-#   * Zero-information control (row-permuted share matrix, refit): -5.02 runs, i.e.
-#     catastrophically worse, so the protocol does discriminate.
-#   * Null band under H0 "the folklore SHAPE is correct" (parametric bootstrap,
-#     resampled residuals): p95 = 0.000 runs. All nine slots clear it, C and 1B by
-#     22-31x.
-#   * The LEVEL of any such table is a CONVENTION and it must be stated. Every row of
-#     innings shares sums to 1, so X @ 1 = 1 and the OLS residuals are orthogonal to
-#     that column sum: the exposure-weighted sum of the coefficients equals mean(y),
-#     the league's own average runs_position per 650 PA in the fitted window (about
-#     -1 run through 2021, ~0 from 2022). The constants below were fitted WITHOUT
-#     stating a convention, so their level is whatever the window's league total
-#     happened to be. positional_fit.fit_ladder now imposes exposure-weighted
-#     sum-to-zero explicitly and publishes all three sums; see the note under
-#     _ladder_from_artifact below for why the equal-weight sums are not zero and
-#     should not be. Only the SHAPE above was gated. The folklore table also sat
-#     1.369 runs low in level; that is corrected here as a side effect.
-#
-# WHAT THE SWAP DID NOT BUY. Adopting this ladder does NOT measurably improve
-# def_value's accuracy at predicting realized MLB defensive value: +0.0028 Spearman
-# on n=382 graduated prospects, CI95 [-0.0096, +0.0154], below its own permutation
-# band of 0.0166. That is a NULL and is ledgered as one. The ladder is adopted on
-# CORRECTNESS, not on lift: a table fitted to n=9,101 with +/-0.05 CIs replaces
-# round numbers that were wrong by up to 3.05 runs in shape against the very bWAR
-# constants this site's WAR is denominated in.
-#
-# KNOWN LIMITS, do not overclaim:
-#   * SPECIFICATION uncertainty beats sampling uncertainty here by 7x. DH carries no
-#     fielding innings so its exposure must be imputed, and the choice renormalises
-#     every other rung. This fit uses DH games x 8.5 innings; imputing DH as the
-#     residual (PA x 1.9799 innings/PA minus fielded innings) instead yields C 10.56,
-#     SS 8.89, 2B 4.65, DH -13.76. Head to head on the same 9,101 rows the shipped
-#     spec wins out of sample by 0.037 runs/650PA, CI95 [0.027, 0.047], but it LOSES
-#     on the 2019-2026 universal-DH era (OOS MAE 1.043 vs 0.969). Refit on the
-#     residual spec if the DH rung ever becomes load bearing for a modern read.
-#   * Era drift is real and larger than the CIs. Per-era refits move C by 1.32 runs
-#     (10.40 in 2000-2006 vs 11.72 in 2019-2026) and 2B by 1.03; the pooled ladder is
-#     a 27-year average, not a 2026 read.
-#   * Sensitive to the PA filter: refitting at >= 400 PA moves C to 10.60 and LF to
-#     -6.06 (~0.4 runs). PA-weighting the >= 200 PA fit moves nothing (max 0.19).
-#
-# ONE OWNER, 2026-07-31. There were two independently refitted ladders in the tree
-# (this block, and positional_fit.fit_ladder writing data/positional_fit.json) and they
-# already disagreed by up to 0.35 runs. positional_fit.py is now THE FIT; this module
-# READS its artifact and keeps the constants below only as the frozen fallback for when
-# the artifact is missing or predates the identification constraint. Do not refit here.
-_POS_ADJ_FROZEN = {"C": 10.91, "SS": 8.76, "2B": 4.51, "CF": 3.53, "3B": 3.36,
-                   "LF": -6.47, "RF": -6.41, "1B": -8.53, "DH": -14.04, "P": 0.0}
-
-
-def _ladder_from_artifact() -> dict | None:
-    """The fitted ladder from data/positional_fit.json, or None.
-
-    Accepted ONLY when the artifact carries fit.ladder.identification, i.e. it was
-    written by the constrained fit. An older artifact has an unstated level and is
-    ignored rather than silently shifting def_value.
-
-    THE SUM QUESTION. The ladder is identified by exposure-weighted sum-to-zero: zero
-    is the league-average defensive position weighted by the innings shares the league
-    actually deploys. Equal-weighting the nine rungs does NOT give zero and should not:
-    DH is 7.5% of exposure, not a ninth (the NL had no DH before 2022), so equal
-    weighting over-counts the DH penalty. Equal-weighting the eight FIELDING rungs does
-    not give zero either, and that is the reading that looks wrong at a glance: with the
-    exposure-weighted sum pinned at zero the fielding rungs are forced to
-    -8 x w_DH x L_DH / (1 - w_DH), about +9.8. The folklore table reaches 0 there only
-    by leaving DH out of its normalisation. Both readings ship in the artifact under
-    fit.ladder.identification, alongside a folklore-comparable values_fielder_centred."""
-    try:
-        blk = (json.loads((DATA / "positional_fit.json").read_text(encoding="utf-8"))
-               .get("fit", {}).get("ladder") or {})
-    except (OSError, ValueError):
-        return None
-    if not blk.get("identification") or not blk.get("values"):
-        return None
-    out = {p: float(v) for p, v in blk["values"].items()}
-    out["P"] = 0.0
-    return out if set(out) >= set(_POS_ADJ_FROZEN) else None
-
-
-POS_ADJ = _ladder_from_artifact() or dict(_POS_ADJ_FROZEN)
-POS_ADJ_SOURCE = ("data/positional_fit.json"
-                  if POS_ADJ != _POS_ADJ_FROZEN else "frozen fallback (2026-07-25 fit)")
-
-# Machine-readable provenance so an eval artifact never has to restate it. Describes
-# the FROZEN fallback; when POS_ADJ_SOURCE is the artifact, the live provenance is
-# fit.ladder in data/positional_fit.json (window, n, r2, identification, CIs).
-POS_ADJ_PROVENANCE = {
-    "source": "SVD least-squares inversion of Baseball-Reference runs_position",
-    "inputs": ["data/mlb_def_history.json", ".cache/statsapi_field/fld_*.json"],
-    "fit_date": "2026-07-25", "n_player_seasons": 9101, "n_players": 1872,
-    "seasons": [2000, 2026], "min_pa": 200, "r2": 0.9821,
-    "resid_mae_runs_per_650pa": 0.675, "coef_ci95_halfwidth_runs": 0.05,
-    "units": "runs per 650 PA", "eval": "data/positional_ladder_eval.json",
-    "live_source": "positional_fit.fit_ladder -> data/positional_fit.json (fit.ladder)",
-    "identification": "exposure-weighted sum-to-zero (imposed by the fit, 2026-07-31)",
-}
-
-# RETIRED 2026-07-25. The unsourced round-number table this module used from its
-# first commit until the gate above. Kept ONLY so the ledger and the recon tools have
-# a name for it; it is not read by any code path. Wrong by up to 3.05 runs in shape
-# (C over-credited 3.05, 1B under-credited 2.51, DH under-credited 2.00, 2B
-# under-credited 0.55) plus a 1.369-run level offset.
-POS_ADJ_FOLKLORE_RETIRED = {"C": 12.5, "SS": 7.5, "CF": 2.5, "2B": 2.5, "3B": 2.5,
-                            "RF": -7.5, "LF": -7.5, "1B": -12.5, "DH": -17.5, "P": 0.0}
+# Standard positional adjustments (runs / 162), the league convention.
+POS_ADJ = {"C": 12.5, "SS": 7.5, "CF": 2.5, "2B": 2.5, "3B": 2.5,
+           "RF": -7.5, "LF": -7.5, "1B": -12.5, "DH": -17.5, "P": 0.0}
 POSITIONS = ("C", "SS", "2B", "3B", "CF", "LF", "RF", "1B", "DH")
 PREMIUM = ("C", "SS", "CF")            # the true up-the-middle premium
 UP_MIDDLE = ("C", "SS", "2B", "CF")    # broader up-the-middle (matches the model's up_mid_share)
@@ -353,56 +216,12 @@ def _up_mid_share_map() -> dict[str, float]:
     return out
 
 
-# ── def_value on the OBSERVED position: BUILT, MEASURED, DEFAULT OFF (2026-07-30) ────
-# The owner asked for this to read the observed position, and the argument for it is the
-# best one in the whole position sweep: def_home PREDICTS the spectrum move, and feeding
-# it the FanGraphs projection is close to feeding the model its own answer.
-#
-# It does not ship on, for two measured reasons, and the FIRST one is disqualifying:
-#
-# 1. LEAKAGE. The docstring above is explicit that `position` here is the AS-OF-DECISION
-#    listed position, dated at the scouting snapshot - that is what makes this model
-#    "leakage-safe" and what its out-of-split win over FanGraphs' fFld grade rests on.
-#    data/positions_played.json is a CAREER-TO-DATE census. For any historical row it
-#    contains games played AFTER the decision date, i.e. part of the very migration the
-#    model is scored on predicting. Swapping it in would not improve the model, it would
-#    invalidate its evaluation.
-#
-# 2. COVERAGE, and it is the wrong coverage. fielding_positions' builder filters to
-#    players with NO debut_date, so the census is pre-debut-only. Of the 1,927 hitter
-#    matrix rows, 613 (31.8%) carry an observation - but only 43 of the 845 DEBUTED rows
-#    (5.1%) do, and debuted rows ARE the ground-truth pool for
-#    data/positional_ladder_eval.json (realized MLB positional value). The flip would
-#    change 225 of the 613 covered rows' milb_vector while being unmeasurable on 95% of
-#    the pool that could tell you whether it helped.
-#
-# Note the contrast, because it is the reason this module already uses the census
-# correctly: _up_mid_share_map reads the SAME file as a present-day QUALITY MULTIPLIER
-# for current prospects, which is a legitimate as-of-today read. It is the POSITION
-# VECTOR - the thing that has to be dated - that cannot come from a career-to-date file.
-#
-# UNBLOCKING IT needs an AS-OF census (per-season fielding splits truncated at the
-# decision date), not just the graduate rebuild efv_model's flag is waiting on. That is
-# a data build, and it is the honest prerequisite.
-DEF_VALUE_USES_OBSERVED = False
-
-
-def _observed_pos_map() -> dict:
-    """{player_key: observed position} from the versa census. Empty on failure."""
-    try:
-        import fielding_positions as _fp
-        return _fp.load_observed_positions(DATA / "positions_played.json")
-    except Exception:                                                # noqa: BLE001
-        return {}
-
-
 def build(out_path: Path | None = None) -> dict:
     """Emit data/prospect_def_value.json keyed by mlbam: {def_value, def_home_entropy,
     p_<pos>}. Built from the eFV hitter matrix's AS-OF-DECISION listed position + age +
     BMI (draft_players frame) + the current up-mid-share quality multiplier."""
     rows = json.loads((DATA / "xfv_hitter_matrix.json").read_text(encoding="utf-8"))
     ums = _up_mid_share_map()
-    obs = _observed_pos_map() if DEF_VALUE_USES_OBSERVED else {}
     fm = frame_map()
     out, n_bmi = {}, 0
     for r in rows:
@@ -420,10 +239,7 @@ def build(out_path: Path | None = None) -> dict:
         bmi = (fm.get(pk) or {}).get("bmi")
         if bmi is not None:
             n_bmi += 1
-        # DEF_VALUE_USES_OBSERVED is False, so `obs` is empty and this is exactly
-        # `def_value(r["position"], ...)`. See the flag block for the leakage and
-        # coverage findings that keep it that way.
-        dv = def_value(obs.get(pk) or r.get("position"), age, ums.get(pk), bmi)
+        dv = def_value(r.get("position"), age, ums.get(pk), bmi)
         dv["player_key"] = pk
         out[str(mlbam)] = dv
     path = out_path or (DATA / "prospect_def_value.json")
@@ -434,13 +250,7 @@ def build(out_path: Path | None = None) -> dict:
 
 def _realized_pos_value() -> dict[int, float]:
     """mlbam -> realized MLB positional value = innings-weighted POS_ADJ of actual MLB
-    usage (data/mlb_fielding_positions.json). The ground truth def_value must predict.
-
-    Reads the canonical POS_ADJ, same as def_value(), so validate() compares like with
-    like. That also makes validate() CIRCULAR in the ladder: it cannot adjudicate one
-    ladder against another, because both sides move together. The non-circular test of
-    the ladder swap (realized bWAR runs_position per 650 PA as the target) is in
-    data/positional_ladder_eval.json and came back a null."""
+    usage (data/mlb_fielding_positions.json). The ground truth def_value must predict."""
     try:
         pl = json.loads((DATA / "mlb_fielding_positions.json").read_text(encoding="utf-8"))["players"]
     except (OSError, ValueError, KeyError):

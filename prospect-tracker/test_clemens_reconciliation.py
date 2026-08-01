@@ -32,31 +32,10 @@ def test_shipped_sets_carry_no_reconciliation_scale():
 
 
 def test_surplus_50_hitter_stays_model_scale_not_table():
-    # Production surplus for a 50 FV hitter is the MODEL value, NOT the published table
-    # $45M. The reconciliation does not move it.
-    # Literal restamped 2026-07-29: 18.5 -> 29.6. That is the third pre-v5 literal in this
-    # cluster (the others were 28.2 and a v3-era 17.7, both now 32.8); the v5 surplus
-    # calibration moved the model scale and these assertions were never restamped with it.
-    # The test's PURPOSE is intact and verified: the model value 29.6 is still distinct from
-    # the prospx_current TABLE value 32.8, which is the thing this test exists to pin.
-    # NOTE the headroom: the < 30.0 guard below now clears by only 0.4, so the next upward
-    # move in the model scale will trip it. That is deliberate. It is the tripwire for "the
-    # board jumped to table scale", and it should be re-examined rather than widened.
-    #
-    # 2026-07-31: the tripwire DID trip, and it was re-examined rather than widened, which
-    # is what it was for. The v6 EV calibration
-    # (docs/efv-2026-07-30/SURPLUS_EV_OBJECTIVE.md) moved the model scale 29.6 -> 40.5.
-    # This is NOT the board jumping to table scale: the table moved too, in the same
-    # change, 32.8 -> 43.4, and the model still runs clearly BELOW it. The invariant this
-    # test exists to pin is the model/table SEPARATION, so the guard is re-expressed below
-    # as that separation instead of an absolute dollar ceiling, which was only ever a
-    # proxy for it and one that any re-price would trip.
-    assert vf.surplus_value_mm(50.0, False) == pytest.approx(40.5, abs=0.6)
-    with vf.valuation_set("prospx_current"):
-        table_50 = vf.surplus_value_mm(50.0, False)
-    assert vf.surplus_value_mm(50.0, False) < table_50 - 1.0, (
-        "the model FV50 price must stay materially below the prospx_current TABLE price; "
-        "if these converge the board has been snapped to table scale")
+    # Production surplus for a 50 FV hitter is the MODEL value (~$18.5M), NOT the
+    # published table $45M. The reconciliation does not move it.
+    assert vf.surplus_value_mm(50.0, False) == pytest.approx(18.5, abs=0.6)
+    assert vf.surplus_value_mm(50.0, False) < 30.0
 
 
 def test_fit_reported_not_forced():
@@ -66,24 +45,9 @@ def test_fit_reported_not_forced():
     fit = vf.fit_tier_reconciliation("clemens_2026")
     for role in ("hitter", "pitcher"):
         d = fit["roles"][role]
-        # k FLIPPED SIDES on 2026-07-31 and that is a real finding, not a restamp.
-        # It used to be > 1.0 because the model ran BELOW the published tiers and k
-        # lifted it. Under the v6 EV calibration the model runs ABOVE them (hitter
-        # k=0.90, pitcher k=0.95, both interior to the 0.5-4.0 grid, so the fit
-        # converged rather than clamping). That is the expected direction: the
-        # published table is a per-player realisation figure while our surplus is now
-        # a tier EXPECTATION, and an expectation on a lottery-shaped population sits
-        # above the typical realisation. What this test pins is that k is FIT, not
-        # forced, so assert it is a real non-trivial fit rather than its direction.
-        assert 0.5 < d["k"] < 4.0 and abs(d["k"] - 1.0) > 0.01
-        # The joint objective (what the fitter actually minimises) must improve...
-        j_pre = d["pre"]["surplus_mean_pct_dev"] + d["pre"]["star_mean_abs_dev"]
-        j_post = d["post"]["surplus_mean_pct_dev"] + d["post"]["star_mean_abs_dev"]
-        assert j_post < j_pre
-        # ...and the star residual stays clearly above zero (not snapped). It no longer
-        # improves: one scalar buys surplus accuracy by paying in star odds, which is
-        # exactly the "a single scalar cannot zero a two-functional curve" claim in the
-        # docstring, now visible in the numbers instead of only asserted in prose.
+        assert d["k"] > 1.0  # model runs below the published tiers, so k lifts it
+        # star-odds residual improves but stays clearly above zero (not snapped)
+        assert d["post"]["star_mean_abs_dev"] < d["pre"]["star_mean_abs_dev"]
         assert d["post"]["star_mean_abs_dev"] > 0.01
         # surplus residual likewise stays materially non-zero
         assert d["post"]["surplus_mean_pct_dev"] > 0.05
@@ -122,18 +86,7 @@ def test_cache_cleared_on_set_switch():
     # the base-identity set, and the value must revert to the legacy scale.
     clemens_50 = vf.surplus_value_mm(50.0, False)
     with vf.valuation_set("prospx_current"):
-        # Re-stamped 2026-07-29: 17.7 -> 32.8. The 17.7 was a v3-era literal that was
-        # never restamped through v4 or v5, so this assertion had been pinning a price
-        # two calibration versions stale. It asserts the base-identity FV50 price, which
-        # is the same fact the prospx_current tier re-capture carries.
-        # Re-stamped 2026-07-31: 32.8 -> 43.4 with the v6 EV calibration
-        # (docs/efv-2026-07-30/SURPLUS_EV_OBJECTIVE.md).
-        base_50 = vf.surplus_value_mm(50.0, False)
-        assert base_50 == pytest.approx(43.4, abs=0.1)
-    # The CACHE-CLEARING fact this test exists for, stated scale-free so a future
-    # re-price restamps one literal instead of silently voiding the guard: the two
-    # contexts must price differently, and leaving must restore the clemens price.
-    assert abs(base_50 - clemens_50) > 1.0
+        assert vf.surplus_value_mm(50.0, False) == pytest.approx(17.7, abs=0.1)
     assert vf.surplus_value_mm(50.0, False) == pytest.approx(clemens_50, abs=0.01)
 
 

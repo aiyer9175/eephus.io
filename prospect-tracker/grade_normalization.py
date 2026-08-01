@@ -132,32 +132,6 @@ def _paired_dists(source: str, role: str, year: int) -> tuple:
     return src, ref, pooled
 
 
-def _apply_offset(fv: float, src, ref) -> float:
-    """CONTINUOUS per-source scale correction (2026-07-24, docs/EFV_FRONTIER_AUDIT.md).
-
-    REPLACES a discrete quantile map that was a near-IDENTITY in production. The old
-    path did `q = np.interp(fv, src, linspace(0,1,len(src)))` on the 5-point FV lattice;
-    with ties np.interp resolves to the UPPER edge of each block, and mapping that
-    quantile back through an equally-discrete reference returns the input grade. Measured
-    live: map(40)=40, map(45)=45, map(55)=55 while MLB Pipeline actually runs +4.367 FV
-    points hotter than the FanGraphs reference on the SAME players (SE 0.089, n_pair
-    1,864, ~49 sigma). The layer was removing ~0.7% of a real 4-point bias.
-
-    The bias is a pure SCALE offset, not an information difference: the outcome-equivalence
-    offsets (+4.45 hit / +4.49 pit) match the raw mean gap, and the WAR-per-FV slopes are
-    near-equal (FG 0.4204 vs MP 0.4499). So the correction is a shift, applied continuously.
-
-    A discrete MID-RANK quantile remap was tested and REJECTED: it collapses distinct
-    grades (40 and 45 land together, 50 -> 46.25), destroys injectivity, and turns the
-    22-block cross-split negative. This offset is strictly order-preserving.
-
-    Clamped to the 20-80 scouting scale. Degenerate cells never reach here (see _mappable)."""
-    offset = float(np.mean(src) - np.mean(ref))
-    if not np.isfinite(offset):
-        return float(fv)
-    return float(min(80.0, max(20.0, fv - offset)))
-
-
 def quantile_map(fv: float, source: str, role: str, year: int) -> float | None:
     """Map a source grade onto the FanGraphs FV scale by matching quantiles on the
     two sources' PAIRED (same-player) distributions. The reference maps to itself.
@@ -169,7 +143,11 @@ def quantile_map(fv: float, source: str, role: str, year: int) -> float | None:
     src, ref, _pooled = _paired_dists(source, role, year)
     if len(src) == 0 or len(ref) == 0 or not _mappable(src, ref):
         return None
-    return _apply_offset(float(fv), src, ref)
+    if len(src) == 1:
+        q = 0.5
+    else:
+        q = float(np.interp(float(fv), src, np.linspace(0.0, 1.0, len(src))))
+    return float(np.interp(q, np.linspace(0.0, 1.0, len(ref)), ref))
 
 
 def drift_row(source: str, role: str, year: int) -> dict | None:
@@ -224,7 +202,7 @@ def _latest_player_grades(year: int) -> dict:
             for pk, rec in latest.items()}
 
 
-def build_remapper(years: list[int] | None = None, aliases: dict | None = None):
+def build_remapper(years: list[int] | None = None):
     """Precompute the per-(source, role, cycle) quantile-mapping distributions in a
     SINGLE DB pass and return a PURE closure remap(fv, source, position, year) -> fv
     on the FanGraphs scale. Lets consensus.py ADOPT the normalized consensus without
@@ -234,17 +212,7 @@ def build_remapper(years: list[int] | None = None, aliases: dict | None = None):
     year) cell with no usable overlap falls back to the RAW fv (never drops the
     source). Role is derived from position with the same pitcher-token rule the
     paired distributions were built under, so a grade is remapped against its own
-    role's distribution. Deterministic given the DB contents.
-
-    `aliases` (2026-07-25) mirrors consensus.SOURCE_ALIASES: {alias -> canonical}.
-    An outlet that publishes several lists is ONE editorial voice for consensus
-    purposes, but its lists are not always ONE SCALE. MLB Pipeline's International
-    Top 50 grades the same player, in the same week, +7.279 FV [+6.438, +8.075]
-    hotter than that outlet's own main lists (n 147 player-cycles, 6 of 6 cycles
-    positive), while every OTHER pair of co-published Pipeline lists agrees to
-    0.035 FV mean absolute on 1,564 same-date rows. So a list gets its own cell
-    when one is measurable, and falls back to its canonical outlet's cell (NOT to
-    the raw scale) when it does not. Passing aliases=None keeps the old behaviour."""
+    role's distribution. Deterministic given the DB contents."""
     latest = _all_latest()
     sources: set[str] = set()
     for players in latest.values():
@@ -258,18 +226,8 @@ def build_remapper(years: list[int] | None = None, aliases: dict | None = None):
             if src == REFERENCE or src in _SYNTHETIC_SOURCES:
                 continue
             s_sorted, r_sorted, _pooled = _paired_dists(src, role, yr)
-            if not (len(s_sorted) and len(r_sorted) and _mappable(s_sorted, r_sorted)):
-                continue
-            if len(s_sorted) < _MIN_N:
-                # _paired_dists pools a thin cycle across years, but when the POOLED
-                # overlap is ALSO under min_n it hands back the thin cell anyway. An
-                # offset estimated off a handful of players is not a measurement, and
-                # the module's contract is "no fabricated grades". Drop the cell and
-                # let the alias / raw fallback below carry the grade instead.
-                continue
-            table[(src, role, yr)] = (s_sorted, r_sorted)
-
-    alias_map = dict(aliases or {})
+            if len(s_sorted) and len(r_sorted) and _mappable(s_sorted, r_sorted):
+                table[(src, role, yr)] = (s_sorted, r_sorted)
 
     def remap(fv, source, position, year):
         if fv is None:
@@ -283,14 +241,13 @@ def build_remapper(years: list[int] | None = None, aliases: dict | None = None):
         role = "pitcher" if _is_pitcher(position) else "hitter"
         ent = table.get((source, role, yr))
         if not ent:
-            canon = alias_map.get(source)
-            if canon and canon != source:
-                # This list has no measurable cell of its own: use its outlet's.
-                ent = table.get((canon, role, yr))
-        if not ent:
             return float(fv)          # no usable overlap -> raw fallback (never drop)
         src, ref = ent
-        return _apply_offset(float(fv), src, ref)
+        if len(src) == 1:
+            q = 0.5
+        else:
+            q = float(np.interp(float(fv), src, np.linspace(0.0, 1.0, len(src))))
+        return float(np.interp(q, np.linspace(0.0, 1.0, len(ref)), ref))
 
     return remap
 

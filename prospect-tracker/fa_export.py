@@ -178,20 +178,7 @@ def _apply_proj_override(path: dict, pv: dict, class_year: int,
     if first_season is None:
         return False
     start = class_year - first_season
-    # BASIS (2026-07-24 FA lane) -- this used to read pv["war"], proj_ml's q50
-    # QUANTILE head, and splice it into a stack whose pricer
-    # (rational_value_usd through the convex tier curve) and whose every
-    # market feature (war_y1, log_rational, prime_war) are calibrated on
-    # champion MEAN paths. Measured on the served payloads: mlb_projections
-    # year-1 league sum is 602.8 WAR on `war` vs 984.4 on `warChamp`; across
-    # the 212 players the 2027 class shares with it, in the SAME season,
-    # fa_class's own champion warY1 sums to 191.4 and warChamp[0] to 191.4
-    # (ratio 1.000) while war[0] sums to 90.7 (ratio 0.474). The q50 head is
-    # also unfloored, which is why 72 of the served 2028 members carried a
-    # negative season in warPath and 176 in warPathP10 while
-    # tiered_war_value_usd() truncates negatives at 0 -- warTotal and
-    # rational then described different paths on the same row.
-    war = pv.get("warChamp") or pv.get("war") or []
+    war = pv.get("war") or []
     if start < 0 or start >= len(war):
         return False
     new = war[start:]
@@ -211,34 +198,17 @@ def _apply_proj_override(path: dict, pv: dict, class_year: int,
         seq = (src or [])[start:]
         if not seq or not isinstance(cur, list):
             return
-        seq = [max(0.0, float(v)) for v in seq]   # fm._decay_path floors at 0
         cur[:len(seq)] = seq
         ratio = _decay_ratio(seq)
         last = seq[-1]
         for i in range(len(seq), len(cur)):
-            last = round(max(0.0, last * ratio), 2)
+            last = round(last * ratio, 2)
             cur[i] = last
 
-    _overlay("war_by_year", war)        # champion MEAN path
+    _overlay("war_by_year", war)        # mean path (always present)
     path["war_y1"] = new[0]
-    # Bands: proj_ml's quantile heads are cut around its OWN q50, so their
-    # absolute spread is transferred onto the champion mean rather than
-    # spliced raw (a raw splice puts p90 below the mean wherever champ >
-    # q90). Floored at 0 like fm._decay_path, then clamped so the invariant
-    # p10 <= mean <= p90 holds on every served season.
-    q50 = pv.get("war") or []
-    for key, src in (("war_by_year_p10", pv.get("warP10")),
-                     ("war_by_year_p90", pv.get("warP90"))):
-        if src and q50 and len(src) == len(q50) == len(war):
-            _overlay(key, [w + (q - m) for w, q, m in zip(war, src, q50)])
-        else:
-            _overlay(key, src)
-    lo, hi = path.get("war_by_year_p10"), path.get("war_by_year_p90")
-    for t, w in enumerate(path["war_by_year"]):
-        if isinstance(lo, list) and t < len(lo):
-            lo[t] = round(min(lo[t], w), 2)
-        if isinstance(hi, list) and t < len(hi):
-            hi[t] = round(max(hi[t], w), 2)
+    _overlay("war_by_year_p10", pv.get("warP10"))
+    _overlay("war_by_year_p90", pv.get("warP90"))
     path["war_total"] = round(sum(path["war_by_year"]), 2)
     return True
 
@@ -277,13 +247,6 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         model.supply_by_year[class_year] = fm._supply(
             [{"class_year": class_year, "position": p.get("position")} for p in cls], class_year)
     dpw = fm.winter_dpw(dpw_series, class_year)
-    # The rate this winter carries dollars forward at. Estimated from the
-    # module's OWN realized $/WAR series over the training winters (see
-    # fm._destale_rate) instead of borrowing value_framework's
-    # dollars_per_war_inflation, which is 0.0 in production for a
-    # prospect-side reason and silently made three separate FA mechanisms
-    # no-ops (comps de-staling, rational-value escalation, the $/WAR carry).
-    destale = fm._destale_rate(dpw_series, class_year)
 
     overrides = _load_overrides()
     proj = _load_mlb_projections()   # future-class WAR override source
@@ -381,34 +344,18 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                     if v2 is not None:
                         m["enterProb"] = v2["enter_prob"]
                         m["enterProbSrc"] = v2["method"]
-                    # T1.5 - the option, priced as a contingent claim on the
-                    # band rather than served as a bare flag. The SIGN is the
-                    # point: a player option is a liability the team is SHORT.
-                    optv = fm.option_value_usd(pred, row.get("fa_type"),
-                                               row.get("option_price_usd"))
-                    if optv:
-                        m["optValue"] = optv["option_value_usd"]
-                        m["optTeamValue"] = optv["team_value_usd"]
-                        m["optKind"] = optv["kind"]
-                        m["optHeldBy"] = optv["held_by"]
-                        m["optBasis"] = optv["basis"]
                     yrs = pred["proj_years"]
                     guar = pred["proj_guarantee_usd"]
-                    # T1.4 - the EXPECTATION of the convex tier price over the
-                    # shipped band, not the tier price of the mean path.
-                    rational = fm.expected_rational_value_usd(
-                        path, yrs, class_year, dpw, infl=destale)
+                    rational = fm.rational_value_usd(path["war_by_year"][:yrs], class_year, dpw)
                     deal_plus = round(100 * rational / max(guar, 1))
                     # Probability buckets: floor/ceiling WAR paths (Gate-1
                     # empirical quantiles decayed along the aging curves)
                     # price to floor/ceiling rational value -> surplus range.
                     p10_path = path.get("war_by_year_p10")
                     p90_path = path.get("war_by_year_p90")
-                    rational_p10 = (fm.rational_value_usd(p10_path[:yrs], class_year,
-                                                          dpw, infl=destale)
+                    rational_p10 = (fm.rational_value_usd(p10_path[:yrs], class_year, dpw)
                                     if p10_path else None)
-                    rational_p90 = (fm.rational_value_usd(p90_path[:yrs], class_year,
-                                                          dpw, infl=destale)
+                    rational_p90 = (fm.rational_value_usd(p90_path[:yrs], class_year, dpw)
                                     if p90_path else None)
                     comps = fm.comps_for(s, enriched, k=3)
                     # Full 30-org fit vector: top-3 rides the member row (the
@@ -417,51 +364,14 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                     all_fits = fa_fit.fit_scores(s, pred, class_year, top_n=30)
                     fits = all_fits[:3]
                     full_fits.append((m, all_fits))
-                    # T1.3 - the TOTAL comes from a correlated-path Monte
-                    # Carlo, not from adding the per-year quantiles. Adding
-                    # quantiles is only valid under comonotonicity (a player
-                    # who lands at his P10 in year 1 landing at his P10 every
-                    # remaining year); the measured horizon residual Spearman
-                    # is 0.4455 / 0.3594 / 0.3090 / 0.2571 at lags 1-4.
-                    mc = None
-                    if p10_path and p90_path and yrs >= 1:
-                        try:
-                            import fa_mc
-                            mc = fa_mc.path_quantiles(fa_mc.simulate(
-                                path["war_by_year"], p10_path, p90_path, yrs,
-                                draws=fa_mc.N_DRAWS))
-                        except Exception:                    # noqa: BLE001
-                            log.warning("fa mc failed for %s - falling back "
-                                        "to the quantile sum", row.get("player_key"))
-                            mc = None
                     m.update(_clean({
                         "warY1": path["war_y1"],
                         "warPath": path["war_by_year"][:max(yrs, 5)],
                         "warPathP10": p10_path[:max(yrs, 5)] if p10_path else None,
                         "warPathP90": p90_path[:max(yrs, 5)] if p90_path else None,
                         "warTotal": round(sum(path["war_by_year"][:yrs]), 1),
-                        "warTotalP10": (round(mc["p10"], 1) if mc else
-                                        (round(sum(p10_path[:yrs]), 1) if p10_path else None)),
-                        "warTotalP90": (round(mc["p90"], 1) if mc else
-                                        (round(sum(p90_path[:yrs]), 1) if p90_path else None)),
-                        # The superseded COMONOTONE total, served alongside so
-                        # the Accountability surface can show both. It is not
-                        # decoration: measured on 3,913 held 5-year paths the
-                        # quantile sum COVERS BETTER (0.647 vs 0.386 against a
-                        # nominal 0.80) despite being the invalid aggregation,
-                        # because it was compensating for per-year marginals
-                        # that are themselves far too narrow conditional on the
-                        # player appearing (survived coverage 0.367). Both
-                        # numbers are published rather than one being quietly
-                        # chosen. See fa_mc for the full ledger.
-                        "warTotalP10Comon": (round(sum(p10_path[:yrs]), 1)
-                                             if p10_path else None),
-                        "warTotalP90Comon": (round(sum(p90_path[:yrs]), 1)
-                                             if p90_path else None),
-                        # Functionals a quantile sum cannot express at all.
-                        "warCvar10": round(mc["cvar10"], 1) if mc else None,
-                        "pAnyStar": round(mc["p_any_star"], 3) if mc else None,
-                        "totalSrc": "mc_copula" if mc else "quantile_sum",
+                        "warTotalP10": round(sum(p10_path[:yrs]), 1) if p10_path else None,
+                        "warTotalP90": round(sum(p90_path[:yrs]), 1) if p90_path else None,
                         "projYears": yrs,
                         "projYearsP10": pred.get("proj_years_p10"),
                         "projYearsP90": pred.get("proj_years_p90"),
@@ -476,15 +386,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                         "surplusP10": (rational_p10 - guar) if rational_p10 is not None else None,
                         "surplusP90": (rational_p90 - guar) if rational_p90 is not None else None,
                         "dealPlus": deal_plus,
-                        # POSITION IS REQUIRED, not optional (2026-07-30). Under
-                        # fa_market.VERDICT_BAND_MODE == "group" the edges are keyed by
-                        # _pos_group, and _pos_group(None) returns "POS" - so omitting
-                        # the position here silently banded EVERY pitcher on the board
-                        # against HITTER edges (103/237 instead of SP 86/182, RP 65/146).
-                        # That is worse than pooled banding, not better. The mode is a
-                        # one-constant flip in fa_market but it is only correct with
-                        # this argument present.
-                        "verdict": fm.deal_verdict(deal_plus, row.get("position")),
+                        "verdict": fm.deal_verdict(deal_plus),
                         "comps": [_clean({"name": c["player_name"], "yr": c["class_year"],
                                           "to": c.get("to_team"), "years": c.get("years"),
                                           "guar": c.get("guarantee_usd")}) for c in comps],
@@ -539,11 +441,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         "generated_at": date.today().isoformat(),
         "class_year": class_year,
         "dpw_usd": int(dpw),
-        # The rate the module ACTUALLY carries dollars forward at. This used
-        # to publish value_framework's dollars_per_war_inflation, which is 0.0
-        # in production, while assets/fa.js printed "escalating 5%/yr" from its
-        # own default -- the served page and the served number disagreed.
-        "dpw_infl": round(destale, 4),
+        "dpw_infl": fm._dpw_inflation(),
         "cba_carry_forward": bool(thr.get("carry_forward")),
         "n_members": len(members), "n_projected": n_proj,
         "n_signed": sum(1 for m in members if m.get("status") == "signed"),
@@ -663,16 +561,6 @@ def build_fa_archive_payload(first: int = 2015, last: int = CLASS_YEAR - 1) -> d
                 "qo": s.get("qo") or None, "milb": (not s.get("mlb_deal")) or None,
                 "warTd": led.get("war_to_date"),
                 "surplusTd": led.get("surplus_to_date_usd"),
-                # Any REALIZED $/WAR the client computes needs the money that
-                # has actually been paid and how far through the deal we are.
-                # Without these, warTd (a partial) divided into guar (the whole
-                # contract) reads $40M+/WAR on any recent winter - not a market
-                # signal, an arithmetic error. `done` alone cannot fix it: a
-                # 6-year deal in year 2 is neither complete nor comparable.
-                "paidTd": led.get("paid_to_date_usd"),
-                "elapsed": (round(float(led["elapsed_years"])
-                                  / max(float(led.get("total_years") or s.get("years") or 1), 1.0), 3)
-                            if led.get("elapsed_years") is not None else None),
                 "done": led.get("complete"),
             }))
             spend += s.get("guarantee_usd") or 0
@@ -686,59 +574,21 @@ def build_fa_archive_payload(first: int = 2015, last: int = CLASS_YEAR - 1) -> d
     return {"generated_at": date.today().isoformat(), "winters": winters}
 
 
-def _source_freshness(class_year: int | None = None) -> dict:
-    """Last-successful-check date per FA source - the UI's staleness stamps.
-
-    Two granularity rules, both learned from live defects:
-
-    - The class board is read SCOPED TO `class_year`. A global MAX read fresh
-      off the 2028/2029 rows while the served 2027 board sat frozen behind a
-      broken parse.
-    - Signings take the later of (row MAX, recorded check). Before the winter
-      opens a class has zero signing rows, so a row-only read froze on the
-      previous class and tripped the UI 14-day flag every day from 2026-07-10.
-
+def _source_freshness() -> dict:
+    """MAX(fetched_at) per FA source table - the UI's staleness stamps.
     Read-only; missing tables (fresh DB) just drop out."""
     out = {}
-    checks = storage.load_source_checks()
     try:
         with storage.connect() as con:
-            for label, table, scoped in (("class", "fa_class_players", True),
-                                         ("signings", "fa_signings", True),
-                                         ("payroll", "fa_team_payroll", False),
-                                         ("parks", "fa_park_factors", False)):
-                if scoped and class_year is not None:
-                    r = con.execute(
-                        f"SELECT MAX(fetched_at) FROM {table} WHERE class_year = ?",
-                        (class_year,)).fetchone()
-                else:
-                    r = con.execute(f"SELECT MAX(fetched_at) FROM {table}").fetchone()
-                stamps = [str(r[0])[:10]] if r and r[0] else []
-                chk = checks.get((f"fa_{label}", str(class_year) if class_year else ""))
-                if chk and chk.get("checked_at"):
-                    stamps.append(str(chk["checked_at"])[:10])
-                if stamps:
-                    out[label] = max(stamps)
+            for label, table in (("class", "fa_class_players"),
+                                 ("signings", "fa_signings"),
+                                 ("payroll", "fa_team_payroll"),
+                                 ("parks", "fa_park_factors")):
+                r = con.execute(f"SELECT MAX(fetched_at) FROM {table}").fetchone()
+                if r and r[0]:
+                    out[label] = str(r[0])[:10]
     except Exception: # noqa: BLE001 - stamps are best-effort
         pass
-    return out
-
-
-def _qo_tax_block(class_year: int) -> dict:
-    """{payor_tier: qo_tax_usd(...)} for the class winter. Best-effort: a
-    missing or unmapped tier drops out rather than failing the export."""
-    out = {}
-    as_of = f"{class_year - 1}-12-15"
-    try:
-        tiers = sorted(fa_cba.qo_compensation(as_of)["signing_team_forfeits"])
-    except Exception:                                       # noqa: BLE001
-        log.warning("qo tax block: compensation matrix unavailable")
-        return {}
-    for tier in tiers:
-        try:
-            out[tier] = fm.qo_tax_usd(tier, as_of)
-        except Exception:                                   # noqa: BLE001
-            log.warning("qo tax block: tier %s failed - skipping", tier)
     return out
 
 
@@ -775,11 +625,6 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
             "maxGuar": b.get("max_guarantee_usd"), "n100m": b.get("n_100m"),
             "recentSpend": b.get("recent_spend_usd"),
             "baseWins": w.get("baseline_wins"),
-            # WHERE the baseline came from: "mlb_projections" (the same
-            # team_outlook the /projections/ surface serves) or
-            # "contracted_core" (the documented fallback). The surface must
-            # not describe an outlook win total as a contracted-core number.
-            "baseSrc": w.get("baseline_source"),
             "blocked": blocked or None,
         })
     try:
@@ -789,21 +634,11 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
     return {
         "generated_at": date.today().isoformat(),
         "class_year": class_year,
-        "sources": _source_freshness(class_year),
+        "sources": _source_freshness(),
         "cba": {"threshold_usd": thr["threshold_usd"],
                 "carry_forward": thr["carry_forward"],
                 "regime": thr.get("regime"),
                 "unverified_records": len(fa_cba.unverified_records())},
-        # T1.5 - qo_tax_usd was DEAD CODE: fully implemented, tested, and
-        # never called anywhere in the serve path. WIRED rather than deleted,
-        # because the pick forfeiture is a real cost that changes who can
-        # rationally sign a QO'd free agent and the module already prices it
-        # off the platform's own realized draft-slot curve. It is served PER
-        # PAYOR TIER instead of per member for a reason a reader can check:
-        # the tax is a property of the SIGNING TEAM, and before a signing
-        # there is no signing team. The board can apply the right tier once
-        # a destination is known.
-        "qo_tax_by_payor_tier": _qo_tax_block(class_year),
         "dpw_series": dpw_series,
         "gate1": _gate("fa_gate1_eval.json"),
         "gate2": _gate("fa_gate2_eval.json"),

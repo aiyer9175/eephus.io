@@ -679,23 +679,7 @@ function _methEfvPanel(bt) {
         <td style="color:${ok ? "var(--up)" : "var(--down)"};font-weight:700;">${ok ? "eFV ✓" : "consensus ✓"}</td></tr>`;
     }).join("");
     const share = det.xfv_right_share_on_disagreements;
-    // Lead stat + "called shots" cards: the resolved receipts promoted above
-    // the scroll table (which stays). Share and count computed from the
-    // artifact fields, never hardcoded. FV grades display CEILING (owner rule).
-    const lead = (share != null && det.n_disagreements)
-      ? `<p class="meth-note"><strong>eFV was closer on ${Math.round(share * 100)}% of the ${det.n_disagreements} biggest disagreements</strong> - resolved players where eFV and the consensus were at least 15 percentiles apart. The called shots below are the largest of them.</p>`
-      : "";
-    const shots = det.receipts.slice(0, 8).map(r => {
-      const ok = !!r.xfv_right;
-      return `<div class="meth-find-card">
-        <div class="meth-find-stat">${r.war != null && !isNaN(Number(r.war)) ? Number(r.war).toFixed(1) : "-"} WAR</div>
-        <div class="meth-find-label">${escapeHtml(r.name)}</div>
-        <div class="meth-find-sub">consensus FV ${r.consensus_fv != null && !isNaN(Number(r.consensus_fv)) ? Math.ceil(Number(r.consensus_fv)) : "-"} &middot; eFV said ${escapeHtml(r.dir || "-")} &middot; <span style="color:${ok ? "var(--up)" : "var(--down)"};font-weight:700;">${ok ? "eFV was closer" : "consensus was closer"}</span></div>
-      </div>`;
-    }).join("");
-    receipts = `<div class="meth-table-wrap"><div class="meth-table-title">Called shots - the biggest disagreements, resolved <span class="meth-sub">who the career proved closer</span></div>
-      ${lead}
-      <div class="meth-findings">${shots}</div>
+    receipts = `<div class="meth-table-wrap"><div class="meth-table-title">Biggest disagreements - who was right <span class="meth-sub">resolved players; on ${det.n_disagreements || "?"} clear grade disagreements (eFV vs consensus &ge;15 percentile apart), eFV was closer ${share != null ? Math.round(share * 100) : "?"}% of the time</span></div>
       <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Player</th><th>Consensus FV</th><th>eFV said</th><th>Career WAR</th><th>Closer</th></tr></thead><tbody>${rr}</tbody></table></div></div>`;
   }
   return `<div class="meth-chart meth-accuracy">
@@ -720,13 +704,6 @@ function _methEfvFindings(bt) {
   const cards = [];
   cards.push({ stat: f3(x.spearman), label: "eFV ranking skill (Spearman ρ vs realized WAR)",
     sub: `best of every grader &middot; consensus ${f3(c && c.spearman)} &middot; FanGraphs ${f3(fg && fg.spearman)} &middot; MLB ${f3(mlb && mlb.spearman)}` });
-  // WAR-capture headline: the lift curve's top-20% point translated to plain
-  // English, read live from capture_curve so it can never drift from the chart.
-  const cc = bt.accuracy && bt.accuracy.capture_curve;
-  if (cc && cc.xfv && cc.xfv.top20 != null && cc.consensus && cc.consensus.top20 != null)
-    cards.push({ stat: `${Math.round(cc.xfv.top20 * 100)}%`,
-      label: "of all the WAR this class produced sat in eFV's top 20%",
-      sub: `consensus captured ${Math.round(cc.consensus.top20 * 100)}% &middot; full graded pool, busts included` });
   // (Removed the per-tier "Sharpest edge" card: on the current cohort the best tier
   // margin is a fraction of a Spearman point -- e.g. 0.44 -> 0.45 -- which does not read
   // as a "sharp edge" and overstated a within-noise gap.)
@@ -744,131 +721,14 @@ function _methEfvFindings(bt) {
     </div>`).join("")}</div>`;
 }
 
-// Year-by-year ordering skill: Spearman per preseason cohort for every grader
-// with per_year coverage. Same inline-SVG idiom as _methCaptureCurve /
-// _methCalibrationChart: owner palette via _raterMeta, eFV drawn boldest and
-// solid, the public sources muted (thin, dashed), identity carried by the
-// legend + line style, never color alone. The takeaway line is computed from
-// the data so it can never contradict the chart.
-function _methPerYearChart(bt) {
-  const py = bt.accuracy && bt.accuracy.per_year;
-  if (!py || typeof py !== "object") return "";
-  const years = Object.keys(py).sort();
-  if (years.length < 2) return "";
-  // Fixed series order: the head-to-head raters as committed, then eFV.
-  const raterList = ((bt.accuracy && bt.accuracy.head_to_head_raters) || bt.raters || []).slice();
-  if (raterList.indexOf("xfv") === -1) raterList.push("xfv");
-  const series = raterList.map(r => ({
-    rater: r,
-    pts: years.map(y => {
-      const e = py[y] && py[y][r];
-      return e && e.spearman != null ? e.spearman : null;
-    }),
-  })).filter(s => s.pts.some(v => v != null));
-  if (series.length < 2) return "";
-  const allVals = series.flatMap(s => s.pts).filter(v => v != null);
-  const W = 580, H = 250, ML = 46, MR = 16, MT = 16, MB = 40;
-  const iW = W - ML - MR, iH = H - MT - MB;
-  const yMax = Math.max(...allVals) * 1.15 || 1, yMin = 0;
-  const sx = i => ML + (years.length === 1 ? iW / 2 : (i / (years.length - 1)) * iW);
-  const sy = v => MT + iH - ((v - yMin) / (yMax - yMin)) * iH;
-  const grid = [];
-  for (let i = 0; i <= 4; i++) {
-    const v = yMin + (yMax - yMin) * i / 4, y = sy(v).toFixed(1);
-    grid.push(`<line x1="${ML}" y1="${y}" x2="${ML + iW}" y2="${y}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,3"/>`,
-      `<text x="${ML - 6}" y="${y}" dy="3" text-anchor="end" font-size="9" fill="var(--text-tertiary)">${v.toFixed(2)}</text>`);
-  }
-  const xlabels = years.map((y, i) =>
-    `<text x="${sx(i).toFixed(1)}" y="${MT + iH + 16}" text-anchor="middle" font-size="10" fill="var(--text-secondary)" font-weight="600">${escapeHtml(y)}</text>`).join("");
-  const lines = series.map(s => {
-    const pts = s.pts.map((v, i) => (v == null ? null : { x: sx(i), y: sy(v) })).filter(Boolean);
-    if (pts.length < 2) return "";
-    const d = pts.map((p, i) => `${i ? "L" : "M"} ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-    const col = _raterMeta(s.rater).color;
-    const isEfv = s.rater === "xfv";
-    const emph = isEfv || s.rater === "prospx_consensus";
-    const dots = pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isEfv ? 3.8 : emph ? 3 : 2.4}" fill="${col}"/>`).join("");
-    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${isEfv ? 2.8 : emph ? 2.2 : 1.5}" ${emph ? "" : 'stroke-dasharray="5,3"'} stroke-linecap="round" stroke-linejoin="round"/>${dots}`;
-  }).join("");
-  const legend = series.map(s =>
-    `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${_raterMeta(s.rater).color};"></span>${escapeHtml(_raterMeta(s.rater).label)}</span>`).join("");
-  // Computed takeaway: in how many resolved cohorts does eFV post the best
-  // Spearman among the graders scored that year?
-  let wins = 0, total = 0;
-  years.forEach(y => {
-    const e = py[y] || {};
-    const vals = raterList.map(r => (e[r] && e[r].spearman)).filter(v => v != null);
-    const xa = e.xfv && e.xfv.spearman;
-    if (xa == null || vals.length < 2) return;
-    total++;
-    if (xa >= Math.max(...vals) - 1e-9) wins++;
-  });
-  const takeaway = total
-    ? `<p class="meth-note"><strong>eFV posts the best ordering skill in ${wins} of ${total} resolved preseason cohorts.</strong> Each point is one preseason's cohort scored against the WAR those prospects went on to produce. eFV is scored on its out-of-sample resolved subset of each cohort, so its yearly n runs smaller than the sources' full cohorts.</p>`
-    : "";
-  return `<div class="meth-chart">
-    <div class="meth-chart-title">Ordering skill by preseason cohort <span class="meth-sub">Spearman ρ, grade vs realized WAR, per base year</span></div>
-    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Spearman ordering skill by preseason cohort for each grader">
-      ${grid.join("")}
-      <line x1="${ML}" y1="${MT + iH}" x2="${ML + iW}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
-      <line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
-      ${lines}${xlabels}
-    </svg>
-    <div class="meth-legend">${legend}</div>
-    ${takeaway}
-  </div>`;
-}
-
-// One-line consensus-vs-inputs verdict, computed from the artifact so it can
-// never drift: does blending the sources beat the best single source?
-function _methConsensusVsInputsNote(bt) {
-  const cvi = bt.accuracy && bt.accuracy.consensus_vs_inputs;
-  if (!cvi || typeof cvi !== "object") return "";
-  const f3 = v => (v == null ? "-" : Number(v).toFixed(3));
-  const bits = [];
-  const sp = cvi.spearman, au = cvi.auc;
-  if (sp && sp.consensus != null && sp.best_input != null)
-    bits.push(`ordering skill ${f3(sp.consensus)} against ${f3(sp.best_input)} for its best single input (${sp.consensus_wins ? "the blend wins" : "the best input wins"})`);
-  if (au && au.consensus != null && au.best_input != null)
-    bits.push(`contributor AUC ${f3(au.consensus)} against ${f3(au.best_input)} (${au.consensus_wins ? "the blend wins" : "the best input wins"})`);
-  if (!bits.length) return "";
-  return `<p class="meth-note">Blending the sources is itself worth something: the PROSPX consensus scores ${bits.join(", and ")}.</p>`;
-}
-
-// Calibration cross-link tile: this view is the historical case; the live,
-// nightly-updating counterpart is the calibration monitor on the Methodology
-// view. Shows the current tripwire status inline once the shared reliability
-// artifact (_loadReliability) has arrived; renders without it otherwise. The
-// anchor drives the same #view= hash the nav chips sync to.
-function _methCalibCrossLink() {
-  const rel = _S.reliability;
-  const tw = (rel && !rel.__error && typeof rel === "object") ? rel.tripwire : null;
-  let stat = "→", status = "";
-  if (tw && typeof tw === "object" && tw.bust_ece != null && tw.threshold != null) {
-    const tripped = !!tw.tripped;
-    stat = tripped ? "⚠" : "✓";
-    status = `<div class="meth-find-sub">current status: <span style="color:${tripped ? "var(--down)" : "var(--up)"};font-weight:700;">${tripped ? "drift flagged for review" : "within the documented band"}</span> &middot; bust-bucket ECE ${Number(tw.bust_ece).toFixed(3)} vs threshold ${Number(tw.threshold).toFixed(3)}</div>`;
-  }
-  return `<div class="meth-findings"><div class="meth-find-card">
-    <div class="meth-find-stat">${stat}</div>
-    <div class="meth-find-label">eFV publishes its own live calibration - <a href="#view=methodology">see the monitor in Methodology</a></div>
-    ${status}
-    <div class="meth-find-sub">the shipped outcome distribution is re-scored nightly against resolved outcomes, with a drift tripwire</div>
-  </div></div>`;
-}
-
 function _methTierTable(bt, rater) {
   const c = bt.cohorts[rater];
-  // Median WAR ships alongside the mean whenever the artifact carries it: the
-  // mean is dragged by a few stars, the median shows the typical outcome.
-  const hasMed = (c.tiers || []).some(t => t.median_war != null);
   const rows = (c.tiers || []).slice().reverse().map(t => `
     <tr>
       <td class="meth-td-tier">${t.tier}</td>
       <td>${t.n}</td>
       <td>${Math.round(t.debut_rate * 100)}%</td>
       <td>${t.mean_war.toFixed(1)}</td>
-      ${hasMed ? `<td>${t.median_war != null ? t.median_war.toFixed(1) : " - "}</td>` : ""}
       <td>${t.mean_war_per_yr_debut != null ? t.mean_war_per_yr_debut.toFixed(2) : " - "}</td>
       <td>${Math.round(t.contributor_rate * 100)}%</td>
       <td>${Math.round((t.regular_pace_rate || 0) * 100)}%</td>
@@ -877,7 +737,7 @@ function _methTierTable(bt, rater) {
   return `<div class="meth-table-wrap">
     <div class="meth-table-title"><span class="meth-legend-swatch" style="background:${_raterMeta(rater).color};"></span>${escapeHtml(_raterMeta(rater).label)} <span class="meth-sub">n=${c.n} · ${c.n_debuted} debuted</span></div>
     <div class="table-scroll-x"><table class="meth-table">
-      <thead><tr><th>FV</th><th>n</th><th title="Reached MLB">Debut</th><th title="Mean cumulative career WAR (undebuted = 0)">WAR</th>${hasMed ? `<th title="Median cumulative career WAR (undebuted = 0)">Med WAR</th>` : ""}<th title="Mean WAR per season, among players who debuted">WAR/yr</th><th title="Career WAR ≥ 3">Contrib</th><th title="≥ 1.5 WAR per season">Reg pace</th><th title="Career WAR ≥ 10">Star</th></tr></thead>
+      <thead><tr><th>FV</th><th>n</th><th title="Reached MLB">Debut</th><th title="Mean cumulative career WAR (undebuted = 0)">WAR</th><th title="Mean WAR per season, among players who debuted">WAR/yr</th><th title="Career WAR ≥ 3">Contrib</th><th title="≥ 1.5 WAR per season">Reg pace</th><th title="Career WAR ≥ 10">Star</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
   </div>`;
@@ -1273,26 +1133,6 @@ function _methInteractivesHTML() {
   </div>`;
 }
 
-// Live calibration monitor artifact (finding 37): shared lazy loader. The
-// Methodology view renders the full monitor; the Source Comparison view shows
-// the tripwire status on its calibration cross-link tile. One in-flight guard,
-// one cached payload; the resolve re-renders whichever consumer view is
-// active. Diagnostic only; a failed fetch or absent artifact simply drops the
-// dependent sub-blocks - it is dark-launched, so the dev artifact is a stale
-// vintage that the canonical box regenerates nightly.
-function _loadReliability() {
-  if (_S.reliability || _S.relLoading) return;
-  _S.relLoading = true;
-  const rerender = () => {
-    if (_S.view === "methodology") renderMethodology();
-    else if (_S.view === "source-comparison") renderSourceComparison();
-  };
-  fetch("/data/xfv_reliability.json", { cache: "no-cache" })
-    .then(r => (r.ok ? r.json() : null))
-    .then(j => { _S.reliability = j || { __error: true }; rerender(); })
-    .catch(() => { _S.reliability = { __error: true }; rerender(); });
-}
-
 function renderMethodology() {
   const el = document.getElementById("methodology-body");
   if (!el) return;
@@ -1307,25 +1147,24 @@ function renderMethodology() {
       .catch(() => { _S.registry = { __error: true };
         if (_S.view === "methodology") renderMethodology(); });
   }
-  // Live calibration monitor (finding 37): shared lazy loader above.
-  _loadReliability();
-  // eFV valuation curve: lazy-load the per-tier published-vs-model-vs-live
-  // worth-of-a-grade artifact (efv_export._valuation_curve), same guard and
-  // re-render pattern as the reliability monitor. Diagnostic only; absent or
-  // errored, the section simply does not render.
-  if (!_S.valcurve && !_S.vcLoading) {
-    _S.vcLoading = true;
-    fetch("/data/xfv_valuation_curve.json", { cache: "no-cache" })
+  // Live calibration monitor (finding 37): lazy-load the eFV self-monitoring
+  // artifact, same guard/re-render pattern as the registry above. Diagnostic
+  // only; a failed fetch or absent artifact simply drops its sub-block (the
+  // section renders nothing) - it is dark-launched, so the dev artifact is a
+  // stale vintage that the canonical box regenerates nightly.
+  if (!_S.reliability && !_S.relLoading) {
+    _S.relLoading = true;
+    fetch("/data/xfv_reliability.json", { cache: "no-cache" })
       .then(r => (r.ok ? r.json() : null))
-      .then(j => { _S.valcurve = j || { __error: true };
+      .then(j => { _S.reliability = j || { __error: true };
         if (_S.view === "methodology") renderMethodology(); })
-      .catch(() => { _S.valcurve = { __error: true };
+      .catch(() => { _S.reliability = { __error: true };
         if (_S.view === "methodology") renderMethodology(); });
   }
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const printHead = `<div id="methodology-print-head">eephus.io - Methodology · eephus.io/glossary · ${escapeHtml(today)}</div>`;
   const toolbar = `<div class="meth-toolbar"><button class="meth-export-btn" type="button" onclick="_printMethodology()" title="Print or save the methodology as a PDF">⎙ Export methodology (PDF)</button></div>`;
-  el.innerHTML = printHead + toolbar + _methProseHTML() + _methRegistryHTML() + _methReliabilityHTML() + _methValuationCurveHTML() + _methInteractivesHTML();
+  el.innerHTML = printHead + toolbar + _methProseHTML() + _methRegistryHTML() + _methReliabilityHTML() + _methInteractivesHTML();
   if (window.EEPHUS_GL) window.EEPHUS_GL.wire(el);
   // Populate the interactives' initial state.
   _gx2080(); _gxConsensus(); _gxSurplus();
@@ -1468,68 +1307,6 @@ function _methReliabilityHTML() {
   </div>`;
 }
 
-// eFV valuation curve: what a grade is worth. efv_export._valuation_curve
-// writes data/xfv_valuation_curve.json on every eFV regen - per FV tier and
-// role, the value engine's own surplus / expected WAR / star odds under the
-// production valuation set (clemens_2026), side by side with the published
-// FanGraphs 2026 anchor table and the live board's medians. Strictly
-// DIAGNOSTIC: it measures the served numbers and changes none of them.
-// Degrades like the reliability monitor above: the whole section returns ""
-// when the artifact is absent / errored / an unexpected shape, and each role
-// table renders only when its tiers are present. The live "p(star bucket)"
-// column is the eFV 5-bucket star OUTCOME probability - a different quantity
-// from the two star-odds columns, which share the published definition of at
-// least two seasons of 4+ WAR inside the control window.
-const _VC_TIER_ORDER = ["35+", "40", "40+", "45", "45+", "50", "55", "60", "65", "70"];
-function _methValuationCurveHTML() {
-  const vc = _S.valcurve;
-  if (!vc || vc.__error || typeof vc !== "object") return "";
-  const tiers = vc.tiers;
-  if (!tiers || typeof tiers !== "object") return "";
-  const money = v => (v == null || isNaN(Number(v)) ? "-" : "$" + Number(v).toFixed(1) + "M");
-  const warF = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(1));
-  const odds = v => (v == null || isNaN(Number(v)) ? "-" : (Number(v) * 100).toFixed(1) + "%");
-  const roleTable = (key, label) => {
-    const rt = tiers[key];
-    if (!rt || typeof rt !== "object") return "";
-    const rows = _VC_TIER_ORDER.filter(t => rt[t] && typeof rt[t] === "object").map(t => {
-      const r = rt[t], pub = r.published || {}, mod = r.model || {}, live = r.live || {};
-      const n = live.n != null ? live.n : 0;
-      const liveCell = n > 0
-        ? (live.surplus_mm_median != null
-          ? `${n} · ${money(live.surplus_mm_median)}`
-          : `${n} <span class="meth-sub">(thin tier)</span>`)
-        : "0";
-      return `<tr><td class="meth-td-tier">${escapeHtml(t)}</td>
-        <td>${money(mod.surplus_mm)}</td><td>${money(pub.surplus_mm)}</td>
-        <td>${warF(mod.expected_war)}</td><td>${warF(pub.ctrl_war)}</td>
-        <td>${odds(mod.star_odds)}</td><td>${odds(pub.star_odds)}</td>
-        <td>${liveCell}</td><td>${live.p_star_median != null ? odds(live.p_star_median) : "-"}</td></tr>`;
-    }).join("");
-    if (!rows) return "";
-    return `<div class="meth-table-wrap">
-      <div class="meth-table-title">${label} <span class="meth-sub">per FV tier · model vs published anchor vs live board</span></div>
-      <div class="table-scroll-x"><table class="meth-table">
-        <thead><tr><th>Tier</th><th>eFV surplus $M</th><th>FG surplus $M</th><th>eFV WAR (7yr)</th><th>FG WAR</th><th>eFV star odds</th><th>FG star odds</th><th>Live n · median surplus</th><th>Live p(star bucket)</th></tr></thead>
-        <tbody>${rows}</tbody></table></div>
-    </div>`;
-  };
-  const hit = roleTable("hitter", "Hitters"), pit = roleTable("pitcher", "Pitchers");
-  if (!hit && !pit) return "";
-  const gen = vc.generated_at ? ` · regenerated ${escapeHtml(String(vc.generated_at))}` : "";
-  const sd = vc.star_def || {};
-  const starDefNote = (sd.min_seasons != null && sd.war_threshold != null)
-    ? ` A star in the odds columns means at least ${sd.min_seasons} seasons of ${sd.war_threshold}+ WAR inside the control window (the published definition; the model column prices the same event).`
-    : "";
-  return `<div class="source-comp-wrap">
-    <div class="source-comp-eyebrow"><span class="scx-dot"></span>eFV valuation curve · the model pricing its own grades</div>
-    <h2 class="meth-h">What an eFV grade is worth</h2>
-    <p class="meth-note">What an eFV grade is worth: the model's own surplus, WAR and star odds per tier, against the published FanGraphs 2026 anchor and the live board${gen}. Surplus is $M over the ${escapeHtml(String(vc.war_window || "7yr control window"))}, priced under the ${escapeHtml(String(vc.valuation_set || "production"))} valuation set.${starDefNote}</p>
-    ${hit}${pit}
-    <p class="meth-note">The last two columns are the current active board itself: how many live prospects sit nearest each tier and the median of their served surplus. The live star column is <strong>p(star bucket)</strong>, the median eFV 5-bucket star outcome probability - a different quantity from the star-odds columns, kept separate on purpose. Tiers with fewer than 5 live prospects show the count but no medians. Diagnostic only: this table measures the served numbers and changes none of them.</p>
-  </div>`;
-}
-
 // Source Comparison - the empirical backtest, visually set apart from the
 // methodology prose as the "does it work?" evidence area (distinct framed
 // container + eyebrow). Lazy-loads source_backtest.json.
@@ -1560,285 +1337,9 @@ function _methHeroBanner(bt) {
   </div>`;
 }
 
-// Model upgrades (owner ask 2026-07-23): the gate-checked ships that changed
-// how eFV reads its inputs, cited from their committed eval artifacts, plus
-// the lanes from the same program that FAILED their gates. Same lazy-load /
-// graceful-degrade idiom as the reliability monitor: numbers are read from
-// the artifacts at render time so the panel can never drift from the evals
-// it cites; an absent artifact simply drops its card. The failed-lanes line
-// is the credibility feature - the misses stay named next to the ships.
-function _loadUpgrades() {
-  const rerender = () => { if (_S.view === "source-comparison") renderSourceComparison(); };
-  if (!_S.xlineEval && !_S.xlineLoading) {
-    _S.xlineLoading = true;
-    fetch("/data/xfv_statcast_line_eval.json", { cache: "no-cache" })
-      .then(r => (r.ok ? r.json() : null))
-      .then(j => { _S.xlineEval = j || { __error: true }; rerender(); })
-      .catch(() => { _S.xlineEval = { __error: true }; rerender(); });
-  }
-  if (!_S.p1Eval && !_S.p1Loading) {
-    _S.p1Loading = true;
-    fetch("/data/xfv_provisional_prior_eval.json", { cache: "no-cache" })
-      .then(r => (r.ok ? r.json() : null))
-      .then(j => { _S.p1Eval = j || { __error: true }; rerender(); })
-      .catch(() => { _S.p1Eval = { __error: true }; rerender(); });
-  }
-}
-
-function _methUpgradeXlineHTML() {
-  const j = _S.xlineEval;
-  if (!j || j.__error || typeof j !== "object") return "";
-  const m = j.clause_m_measurement || {};
-  const hit = m.hit, pit = m.pit;
-  if (!hit || !pit || hit.delta_rho == null || pit.delta_rho_xslg_arm == null) return "";
-  const sgn = v => (Number(v) > 0 ? "+" : "") + Number(v).toFixed(3);
-  const ci = a => (Array.isArray(a) && a.length === 2) ? `95% CI ${sgn(a[0])} to ${sgn(a[1])}` : "";
-  const tile = (stat, label, sub) => `<div class="meth-find-card">
-      <div class="meth-find-stat">${stat}</div>
-      <div class="meth-find-label">${label}</div>
-      <div class="meth-find-sub">${sub}</div>
-    </div>`;
-  return `<div class="meth-table-wrap">
-    <div class="meth-table-title">S-XLINE · Statcast measurement layer <span class="meth-sub">shipped ${escapeHtml(String(j.generated_at || "2026-07-23"))} · live, both sides</span></div>
-    <p class="meth-note">AAA stat lines from 2023 on, for players with 100+ tracked Savant PA, are blended toward Statcast expected stats before eFV reads them: hitters get capped xBA/xOBP/xSLG gap deltas, pitchers a bounded ERA correction from the xwOBA-against gap. The line the model grades is the measured line, not the luck-inflated one.</p>
-    <div class="meth-findings">
-      ${tile(sgn(hit.delta_rho), "hitter blend, next-season prediction gain (delta Spearman ρ)", `${ci(hit.ci95)} · n=${hit.n_pairs} AAA season pairs`)}
-      ${tile(sgn(pit.delta_rho_xslg_arm), "pitcher blend, xSLG-against arm (delta Spearman ρ)", `${ci(pit.ci95)} · n=${pit.n_pairs} AAA season pairs`)}
-    </div>
-    <p class="meth-note">Served impact at the flip: 97 active grades moved, max move 2.7 FV. Covered players now carry a Measurement note inside "How eFV graded this prospect" on their PROSPX card; uncovered players are untouched, byte for byte. Gate ledger: <a href="/data/xfv_statcast_line_eval.json" target="_blank" rel="noopener">xfv_statcast_line_eval.json</a>.</p>
-  </div>`;
-}
-
-function _methUpgradeP1HTML() {
-  const j = _S.p1Eval;
-  if (!j || j.__error || typeof j !== "object") return "";
-  const v3 = j.v3;
-  const arm = v3 && v3.arms && v3.arms["ARM-A"];
-  if (!arm || !v3.verdict || v3.verdict["ARM-A"] !== "PASS") return "";
-  const bat = arm.a2_battery || {};
-  const ex = (v3.named_example_grady_emerson || {})["ARM-A"] || {};
-  const movers = (bat.n_movers != null && bat.n_scored != null && bat.max_delta_fv != null)
-    ? ` ${bat.n_movers} of ${bat.n_scored} served provisional grades moved, all upward, max +${Number(bat.max_delta_fv).toFixed(1)} FV.`
-    : "";
-  const exLine = (ex.grade_off != null && ex.grade_on != null)
-    ? ` Named example from the gate run: Grady Emerson, 2026 pick 2 with no recorded bonus, ${Number(ex.grade_off).toFixed(1)} to ${Number(ex.grade_on).toFixed(1)}.`
-    : "";
-  return `<div class="meth-table-wrap">
-    <div class="meth-table-title">P1 V3 slot trust · provisional prior fix <span class="meth-sub">shipped ${escapeHtml(String(v3.generated_at || "2026-07-23"))} · self-expiring</span></div>
-    <p class="meth-note">A train/serve correctness fix for provisional grades (drafted, no pro track record yet): an unsigned current-class pick with no recorded bonus now prices its pedigree at slot value instead of silently losing the credit. The backtest bar was no-harm and it held.${movers}${exLine} Self-expiring by construction: once the class's bonuses are recorded, the branch changes nothing. Gate ledger: <a href="/data/xfv_provisional_prior_eval.json" target="_blank" rel="noopener">xfv_provisional_prior_eval.json</a>.</p>
-  </div>`;
-}
-
-function _methModelUpgrades() {
-  return `<div class="source-comp-wrap" id="model-upgrades">
-    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Model upgrades · gate-checked ships, misses included</div>
-    <h2 class="meth-h">What recently changed under the hood</h2>
-    <p class="meth-note">Every upgrade ships through a pre-registered gate. The numbers below are read live from the committed eval artifacts, and the lanes that failed their gates are listed right next to the ones that passed.</p>
-    <div class="meth-tables">${_methUpgradeXlineHTML()}${_methUpgradeP1HTML()}</div>
-    <p class="meth-note"><strong>What did not ship:</strong> the same 2026-07-23 program ran four more gated lanes - playing-time IL risk for projections, MiLB park neutralization, per-pitch-type stuff into PAL conversions, and college stuff into the college-to-pro translation - and none cleared its gate. Nothing from those lanes touches a served number. Every failure is ledgered with its committed eval artifact in <a href="#view=models">Models &amp; Proofs</a>; that ledger is the point.</p>
-  </div>`;
-}
-
-// eFV Scoreboard (G-SCORE, 2026-07-24 program): the model's record cell by
-// cell, read live from data/xfv_scoreboard_eval.json (regenerated by
-// tools/efv_scoreboard.py; every cell carries eFV vs the consensus baseline
-// on identical rows plus a win flag). Same lazy-load / graceful-degrade
-// idiom as _loadUpgrades: an absent artifact simply drops the panel.
-function _loadScoreboard() {
-  if (!_S.scoreEval && !_S.scoreEvalLoading) {
-    _S.scoreEvalLoading = true;
-    fetch("/data/xfv_scoreboard_eval.json", { cache: "no-cache" })
-      .then(r => (r.ok ? r.json() : null))
-      .then(j => { _S.scoreEval = j || { __error: true };
-        if (_S.view === "source-comparison") renderSourceComparison(); })
-      .catch(() => { _S.scoreEval = { __error: true };
-        if (_S.view === "source-comparison") renderSourceComparison(); });
-  }
-}
-
-// One matrix row: label, n, eFV value, consensus baseline, verdict mark.
-// A loss is the highlight - red value + cross - so the weak cells are the
-// most visible thing in the table, not the wins.
-function _sbRow(label, cell) {
-  if (!cell || cell.efv == null || cell.consensus == null) return "";
-  const win = cell.win === true;
-  const mark = win ? '<span style="color:var(--up);font-weight:700;">&#10003;</span>'
-    : '<span style="color:var(--down);font-weight:700;">&#10007;</span>';
-  const vStyle = win ? "font-weight:600;" : "font-weight:700;color:var(--down);";
-  return `<tr><td class="meth-td-tier">${escapeHtml(label)}</td>
-    <td>${cell.n != null ? cell.n : "-"}</td>
-    <td style="${vStyle}">${Number(cell.efv).toFixed(3)}</td>
-    <td style="color:var(--text-secondary);">${Number(cell.consensus).toFixed(3)}</td>
-    <td>${mark}</td></tr>`;
-}
-
-function _sbSideTable(sideLabel, blk) {
-  if (!blk || !blk.pooled) return "";
-  const p = blk.pooled;
-  let rows = "";
-  rows += _sbRow("Pooled ordering (Spearman)", p.spearman);
-  rows += _sbRow("Contributor AUC (WAR 3+)", p.auc_contributor);
-  rows += _sbRow("Star AUC (WAR 10+)", p.auc_star);
-  rows += _sbRow("Within-tier, FV 45 (t45)", blk.t45);
-  rows += _sbRow("Within-tier, weighted mean", blk.wm);
-  ["<=2018", "2019-2021", "2022-2023"].forEach(ek => {
-    const c = blk.by_era && blk.by_era[ek];
-    if (c) rows += _sbRow(`Era ${ek}`, c.spearman);
-  });
-  Object.keys(blk.by_fv_tier || {}).sort((a, b) => Number(a) - Number(b)).forEach(tk => {
-    rows += _sbRow(`FV tier ${tk}`, blk.by_fv_tier[tk]);
-  });
-  const cohLabels = { ifa: "Int'l signs", college: "College draftees", hs: "HS draftees", draft: "Draft (age unknown)", other: "Other" };
-  Object.keys(cohLabels).forEach(ck => {
-    const c = blk.by_cohort && blk.by_cohort[ck];
-    if (c && c.efv != null) rows += _sbRow(cohLabels[ck], c);
-  });
-  if (!rows) return "";
-  return `<div class="meth-table-wrap">
-    <div class="meth-table-title">${escapeHtml(sideLabel)} <span class="meth-sub">eFV vs consensus, identical rows</span></div>
-    <div class="table-scroll-x"><table class="meth-table">
-      <thead><tr><th>Cell</th><th>n</th><th>eFV</th><th>Consensus</th><th></th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>
-  </div>`;
-}
-
-function _methScoreboardHTML() {
-  const j = _S.scoreEval;
-  if (!j || j.__error || !j.sides) return "";
-  const hit = _sbSideTable("Hitters", j.sides.hit);
-  const pit = _sbSideTable("Pitchers", j.sides.pit);
-  if (!hit && !pit) return "";
-  const nWeak = Array.isArray(j.weak_cells) ? j.weak_cells.length : 0;
-  const cap = j.top20_capture && j.top20_capture.top20;
-  const rec = j.disagreement_receipts || {};
-  const extras = [];
-  if (cap && cap.efv != null) extras.push(`top-20% WAR capture ${Number(cap.efv).toFixed(3)} vs ${Number(cap.consensus).toFixed(3)}${cap.win ? " (win)" : " (loss)"}`);
-  if (rec.efv_right_share != null) extras.push(`closer on ${(rec.efv_right_share * 100).toFixed(0)}% of the ${rec.n_disagreements} biggest resolved disagreements`);
-  const extraLine = extras.length
-    ? `<p class="meth-note">Also on the card: ${escapeHtml(extras.join("; "))}. Full detail, receipts included, in <a href="/data/xfv_scoreboard_eval.json" target="_blank" rel="noopener">xfv_scoreboard_eval.json</a>.</p>`
-    : `<p class="meth-note">Full detail in <a href="/data/xfv_scoreboard_eval.json" target="_blank" rel="noopener">xfv_scoreboard_eval.json</a>.</p>`;
-  return `<div class="source-comp-wrap" id="efv-scoreboard">
-    <div class="source-comp-eyebrow"><span class="scx-dot"></span>eFV Scoreboard &middot; the record, cell by cell</div>
-    <h2 class="meth-h">Where eFV wins, and where it does not</h2>
-    <p class="meth-note">Every cell is the same forward-chained out-of-sample read the evals use: eFV against the consensus baseline on identical players, era by era, FV tier by FV tier, cohort by cohort. A check is a win, a red cross is a loss, and the losses are left exactly as measured${nWeak ? ` (${nWeak} weak cells right now)` : ""}.</p>
-    <div class="meth-tables">${hit}${pit}</div>
-    ${extraLine}
-    <p class="meth-note"><strong>The losses set the agenda:</strong> the weak cells on this board, not the wins, drive the registered experiment queue for the next eFV program.</p>
-  </div>`;
-}
-
-// Generate GFX (2026-07-23): the Source Comparison share card, rendered by the
-// shared EEPHUS_GFX engine (kind:"sourcecomp", fixed Twitter 1200x675). The
-// spec is built AT CLICK TIME from the same loaded artifacts this view renders
-// (_S.backtest primary; _S.scoreEval fills capture / receipts if the backtest
-// detail is absent), so the card can never carry a number the page does not.
-// Returns null while the data has not loaded - the click is then a no-op.
-function _scxGfxSpec() {
-  const bt = _S.backtest;
-  if (!bt || bt.__error || !bt.accuracy || !bt.accuracy.pooled) return null;
-  const pooled = bt.accuracy.pooled;
-  const raters = ((bt.accuracy.head_to_head_raters) || bt.raters || []).slice();
-  if (raters.indexOf("xfv") === -1 && pooled.xfv) raters.push("xfv");
-  const f3 = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(3));
-  // Ranked bar rows per metric: highest first, eFV flagged for the accent, the
-  // public sources carrying their owner-palette identity colors (literal hex;
-  // the canvas cannot resolve CSS var(), which is why eFV rides isEfv instead).
-  const rowsFor = key => raters
-    .map(r => ({ label: r === "xfv" ? "eFV" : _raterMeta(r).label,
-                 v: pooled[r] ? pooled[r][key] : null,
-                 isEfv: r === "xfv",
-                 c: r === "xfv" ? null : _raterMeta(r).color }))
-    .filter(r => r.v != null)
-    .sort((a, b) => b.v - a.v);
-  const sp = rowsFor("spearman"), au = rowsFor("auc");
-  if (sp.length < 2 || !sp.some(r => r.isEfv)) return null;
-  const x = pooled.xfv || {};
-  const sb = (_S.scoreEval && !_S.scoreEval.__error) ? _S.scoreEval : null;
-
-  // Key-stat tiles, each computed live. "best public" = the top-ranked
-  // non-eFV row of the already-sorted list.
-  const tiles = [];
-  const bestPubSp = sp.filter(r => !r.isEfv)[0];
-  const bestPubAu = au.filter(r => !r.isEfv)[0];
-  if (x.spearman != null) tiles.push({
-    stat: f3(x.spearman),
-    label: "eFV ordering skill (Spearman)",
-    sub: bestPubSp ? "best public " + f3(bestPubSp.v) + " (" + bestPubSp.label + ")" : "grade vs realized WAR",
-  });
-  if (x.auc != null) tiles.push({
-    stat: f3(x.auc),
-    label: "eFV contributor AUC",
-    sub: bestPubAu ? "best public " + f3(bestPubAu.v) + " (" + bestPubAu.label + ")" : "predicts a 3+ WAR career",
-  });
-  const cc = bt.accuracy.capture_curve;
-  const sbCap = sb && sb.top20_capture && sb.top20_capture.top20;
-  const capX = (cc && cc.xfv && cc.xfv.top20 != null) ? cc.xfv.top20 : (sbCap ? sbCap.efv : null);
-  const capC = (cc && cc.consensus && cc.consensus.top20 != null) ? cc.consensus.top20 : (sbCap ? sbCap.consensus : null);
-  if (capX != null) tiles.push({
-    stat: Math.round(capX * 100) + "%",
-    label: "of realized WAR in eFV's top 20%",
-    sub: capC != null ? "consensus " + Math.round(capC * 100) + "% · busts included" : "busts included",
-  });
-  const det = bt.accuracy.xfv_vs_consensus_detail;
-  const sbRec = sb && sb.disagreement_receipts;
-  const share = (det && det.xfv_right_share_on_disagreements != null)
-    ? det.xfv_right_share_on_disagreements
-    : (sbRec && sbRec.efv_right_share != null ? sbRec.efv_right_share : null);
-  const nDis = (det && det.n_disagreements != null) ? det.n_disagreements
-    : (sbRec ? sbRec.n_disagreements : null);
-  if (share != null) tiles.push({
-    stat: Math.round(share * 100) + "%",
-    label: "closer on the biggest disagreements",
-    sub: nDis != null ? nDis + " resolved eFV vs consensus splits" : "resolved disagreements",
-  });
-
-  // Bar panels share the page chart's scales (_methAccuracyChart lo/hi).
-  const panels = [];
-  if (sp.length >= 2) panels.push({ title: "Ordering skill · Spearman (grade vs realized WAR)", lo: 0, hi: 0.4, rows: sp });
-  if (au.length >= 2) panels.push({ title: "Discrimination · contributor AUC", lo: 0.5, hi: 0.85, rows: au });
-
-  const years = (bt.window && bt.window.years) || [];
-  const span = years.length ? years[0] + "-" + years[years.length - 1] : "";
-  const nCommon = bt.accuracy.common_n;
-  const note = (x.n && nCommon)
-    ? "eFV is scored out of sample on its resolved subset (n=" + Number(x.n).toLocaleString()
-      + "); public sources on the full common set (n=" + Number(nCommon).toLocaleString()
-      + "). Higher is better · ★ = best in metric."
-    : "Higher is better · ★ = best in metric.";
-  return {
-    kind: "sourcecomp",
-    module: "Source Comparison",
-    accentToken: "--accent-lilac",
-    format: "twitter",
-    title: "Does eFV outperform its sources?",
-    subtitle: "Same players, same outcome, same window"
-      + (nCommon ? " · common set n=" + Number(nCommon).toLocaleString() : "")
-      + (span ? " · preseason cohorts " + span : ""),
-    url: "eephus.io/glossary/",
-    filenameBase: "eephus-source-comparison",
-    caption: "Leakage-free, forward-chained backtest on resolved cohorts · misses included",
-    comp: { tiles: tiles, panels: panels, note: note },
-  };
-}
-
-// The chip row (shared EEPHUS_GFX styling). Rendered only from the data-state
-// branch, so the button and the card read the same loaded backtest.
-function _scxGfxBarHTML() {
-  if (!window.EEPHUS_GFX || !window.EEPHUS_GFX.chipHTML) return "";
-  return `<div class="filter-bar" style="margin:2px 0 10px;">${window.EEPHUS_GFX.chipHTML("gl-scx-gfx", "Generate GFX")}</div>`;
-}
-
 function renderSourceComparison() {
   const el = document.getElementById("source-comparison-body");
   if (!el) return;
-  // The calibration cross-link tile shows the live tripwire status when the
-  // shared reliability artifact is available (same guard as Methodology).
-  _loadReliability();
-  // Model upgrades panel artifacts (same lazy idiom).
-  _loadUpgrades();
-  // Scoreboard artifact (same lazy idiom).
-  _loadScoreboard();
   if (!_S.backtest && !_S.btLoading) {
     _S.btLoading = true;
     const base = "/data/";
@@ -1861,16 +1362,12 @@ function renderSourceComparison() {
     const od = bt.outcome_defs || {};
     backtestHTML = `
       ${_methHeroBanner(bt)}
-      ${_scxGfxBarHTML()}
       <h2 class="meth-h">The full head-to-head</h2>
       <p class="meth-window">eFV is the primary grade, our outcome-grounded model. The test: a leakage-free, forward-chained backtest of eFV against the public sources (FanGraphs, MLB Pipeline) and the PROSPX consensus, scored on how well each grade ordered what prospects became. ${escapeHtml(bt.window.note)} <strong>Sources with too little history to score</strong> (${(bt.insufficient_history || []).join(", ")}) are excluded, not guessed at.</p>
       ${_methEfvFindings(bt)}
-      ${_methPerYearChart(bt)}
       <h3 class="meth-h3">Head-to-head: ranking skill + contributor AUC</h3>
       ${_methAccuracyChart(bt)}
-      ${_methConsensusVsInputsNote(bt)}
       ${_methEfvPanel(bt)}
-      ${_methCalibCrossLink()}
       <h3 class="meth-h3">Where each grade wins, by prospect archetype</h3>
       <p class="meth-note">eFV leads the field overall and on most archetypes; the few it trails (often HS arms / int'l bats, the youngest, lowest-track-record cohorts) are where the scouting consensus still reads projection best. The obvious adds (signing bonus, draft slot) are already priced into consensus FV, so out-of-sample they cost more than they returned.</p>
       ${_methArchetypeTable(bt)}
@@ -1897,14 +1394,7 @@ function renderSourceComparison() {
   el.innerHTML = `<div class="source-comp-wrap">
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Empirical backtest · resolved cohorts only</div>
     ${backtestHTML}
-  </div>` + _methScoreboardHTML() + _methModelUpgrades();
-  // Generate GFX: spec built at click time from the loaded artifacts; a click
-  // before the data resolves (or with the engine absent) is a clean no-op.
-  const gfxBtn = document.getElementById("gl-scx-gfx");
-  if (gfxBtn) gfxBtn.onclick = () => {
-    const spec = _scxGfxSpec();
-    if (spec && window.EEPHUS_GFX) window.EEPHUS_GFX.open(spec);
-  };
+  </div>`;
 }
 
 // ---- Models & Proofs view --------------------------------------------------

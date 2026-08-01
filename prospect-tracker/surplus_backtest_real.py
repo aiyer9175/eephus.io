@@ -58,7 +58,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import statistics
 from datetime import date
 from pathlib import Path
@@ -75,32 +74,6 @@ OUT_PATH = DATA_DIR / "surplus_backtest_real.json"
 
 LISTING_YEARS = (2017, 2018, 2019)
 MIN_FV = 40.0
-
-# --- FV SCALE (2026-07-25 repair) --------------------------------------------
-# The listing consensus used to be the median of the RAW per-source snapshot FV,
-# with NO grade normalization. PRODUCTION prices on the NORMALIZED consensus
-# (consensus.build_timeseries applies grade_normalization.build_remapper before
-# aggregation, gated by consensus.ADOPT_NORMALIZED_CONSENSUS, adopted 2026-07).
-# So the calibration this module feeds was fit on a scale production does not
-# use: measured on the 2017-2019 window the production scale sits 2.135 FV BELOW
-# the fit scale (78.3% of cells move, one-sided), and under the shipped
-# linearmap-v5 that units gap prices the resolved pool at 59% of its realized
-# dollars. FV_SCALE="normalized" puts the pool on production's scale.
-#
-# FV_SCALE="raw" reproduces the pre-repair pool EXACTLY (3,368 listings /
-# 2,236 resolved = the registered n of linearmap-v5-todaypriced-2026-07-24), so a
-# reviewer can regenerate the old numbers and diff the two. Override with the
-# env var SURPLUS_FIT_FV_SCALE.
-FV_SCALE = os.environ.get("SURPLUS_FIT_FV_SCALE", "normalized")
-
-# Which scale the MIN_FV pool gate is applied on. The gate runs AFTER the median,
-# so applying it on the normalized scale silently drops the bottom band: 493 of
-# the 3,368 fit-window cells (14.6%) fall below 40 once normalized and 0 enter,
-# which re-tilts the fit on a pool that changed for a reason unrelated to the
-# repair. Gating on RAW holds pool membership fixed at the registered n while the
-# SCALE of the inputs is what changes -- one variable at a time. Override with
-# SURPLUS_FIT_GATE_SCALE=normalized to move the gate too.
-GATE_SCALE = os.environ.get("SURPLUS_FIT_GATE_SCALE", "raw")
 CONTROL_YEARS = 6
 # Last COMPLETE season available for outcomes (2026 is in progress).
 LAST_FULL_SEASON = 2025
@@ -123,56 +96,32 @@ def _age_at(birth_date: str | None, asof: str) -> float | None:
     return round((a - b).days / 365.25, 1)
 
 
-def _remapper():
-    """The PRODUCTION grade-normalization closure (same construction consensus.
-    build_timeseries uses: one DB pass, aliased per outlet). None if unavailable,
-    in which case the pool degrades to the raw scale and says so."""
-    try:
-        import consensus as _cons
-        from grade_normalization import build_remapper
-        return build_remapper(aliases=_cons.SOURCE_ALIASES)
-    except Exception as exc:                       # pragma: no cover - defensive
-        log.warning("grade normalization unavailable (%s); pool stays RAW", exc)
-        return None
-
-
 def _load_inputs() -> tuple[dict, dict, dict, dict]:
     """(listings, career_war, career_levels, bio) from the DB.
-    listings: {(player_key, year): {fv: median, fv_raw, fv_normalized, date}}
-
-    `fv` is the field the cohort prices on and follows FV_SCALE; both scales are
-    always carried so a run can be diffed without a second DB pass."""
-    remap = _remapper() if FV_SCALE == "normalized" or GATE_SCALE == "normalized" else None
+    listings: {(player_key, year): {fv: median, date: earliest snapshot}}"""
     with storage.connect() as con:
-        # earliest same-year snapshot per (player, source, year); `position` comes
-        # along because the remapper resolves its (source, role, cycle) cell from it,
-        # exactly as consensus.compute_consensus_point does.
+        # earliest same-year FV per (player, source, year), then median across sources
         rows = con.execute("""
-            SELECT player_key, source, snapshot_date, fv, position
+            SELECT player_key, source, substr(snapshot_date,1,4) AS y,
+                   MIN(snapshot_date) AS d
             FROM snapshots WHERE fv IS NOT NULL
-              AND substr(snapshot_date,1,4) IN ({})""".format(
+              AND substr(snapshot_date,1,4) IN ({})
+            GROUP BY player_key, source, y""".format(
             ",".join(f"'{y}'" for y in LISTING_YEARS))).fetchall()
-        first: dict[tuple, tuple] = {}
-        for r in rows:
-            key = (r["player_key"], r["source"], int(str(r["snapshot_date"])[:4]))
-            d = str(r["snapshot_date"])
-            if key not in first or d < first[key][0]:
-                first[key] = (d, float(r["fv"]), r["position"])
         fv_at: dict[tuple, list] = {}
-        for (pk, src, y), (d, fv, pos) in first.items():
-            fvn = fv if remap is None else remap(fv, src, pos, y)
-            fv_at.setdefault((pk, y), []).append(
-                (float(fv), float(fv if fvn is None else fvn), d))
+        for r in rows:
+            fv = con.execute(
+                "SELECT fv FROM snapshots WHERE player_key=? AND source=? AND snapshot_date=?",
+                (r["player_key"], r["source"], r["d"])).fetchone()
+            if fv and fv[0] is not None:
+                fv_at.setdefault((r["player_key"], int(r["y"])), []).append(
+                    (float(fv[0]), r["d"]))
         listings = {}
         for key, vals in fv_at.items():
-            med_raw = statistics.median(v for v, _, _ in vals)
-            med_norm = statistics.median(n for _, n, _ in vals)
-            gate_on = med_norm if GATE_SCALE == "normalized" else med_raw
-            if gate_on >= MIN_FV:
-                listings[key] = {
-                    "fv": med_norm if FV_SCALE == "normalized" else med_raw,
-                    "fv_raw": med_raw, "fv_normalized": med_norm,
-                    "date": min(d for _, _, d in vals), "n_sources": len(vals)}
+            med = statistics.median(v for v, _ in vals)
+            if med >= MIN_FV:
+                listings[key] = {"fv": med, "date": min(d for _, d in vals),
+                                 "n_sources": len(vals)}
         cw = {r["player_key"]: json.loads(r["payload_json"])
               for r in con.execute("SELECT player_key, payload_json FROM career_war")}
         cs = {}
@@ -318,15 +267,8 @@ def run(persist: bool = True) -> dict:
         "generated_at": date.today().isoformat(),
         "listing_years": list(LISTING_YEARS),
         "accounting": acct,
-        "fv_scale": FV_SCALE,
-        "gate_scale": GATE_SCALE,
         "conventions": {
-            "listing_fv": ("median of each source's earliest same-year snapshot, "
-                           f"on the {FV_SCALE} FV scale (gate on {GATE_SCALE}); "
-                           "normalized = production's grade_normalization remap "
-                           "applied per source BEFORE the median, matching "
-                           "consensus.build_timeseries. SURPLUS_FIT_FV_SCALE=raw "
-                           "reproduces the pre-2026-07-25 pool exactly"),
+            "listing_fv": "median of each source's earliest same-year snapshot",
             "eta_proxy": "highest level by listing year -> years table (believed-ETA never recorded)",
             "salaries": "IMPUTED: league-min schedule (3 pre-arb) + arb fractions of tiered season value",
             "service": "one full year per season with a WAR row (actual service days not on file)",

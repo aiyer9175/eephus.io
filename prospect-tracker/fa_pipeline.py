@@ -189,15 +189,8 @@ def refresh_current_class(class_year: int, force: bool = False) -> dict:
     # when the quiet in-season market produced no NEW signing rows. Record that
     # check so the freshness stamp tracks "last checked", not "last NEW signing"
     # (which can be months stale in-season and falsely trip the UI 14-day flag).
-    #
-    # Gated on the parse actually producing players: a silently-empty parse (the
-    # 2026-07-30 Spotrac layout change returned 0 rows for weeks) must leave the
-    # stamp stale so the UI reports it, rather than certifying a frozen board.
     try:
         storage.touch_fa_signings(class_year)
-        if n:
-            storage.record_source_check("fa_signings", str(class_year), n_rows=0)
-            storage.record_source_check("fa_class", str(class_year), n_rows=n)
     except Exception:                                    # noqa: BLE001
         log.exception("fa signings freshness touch failed — continuing")
     return cls

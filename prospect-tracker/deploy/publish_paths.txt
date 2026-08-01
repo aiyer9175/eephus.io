@@ -21,11 +21,9 @@ fa
 fantasy
 forums
 glossary
-history
 mlbstats
 news
 pal
-parks
 player
 projections
 prospx

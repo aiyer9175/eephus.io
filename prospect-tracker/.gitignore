@@ -7,7 +7,6 @@ prospects.db.bak*
 prospects.db-journal
 prospects.db-wal
 prospects.db-shm
-prospects.backup-*
 # deploy heartbeat written by deploy/nightly-build.sh on every publish
 data/build_info.json
 # nightly-regenerated exports, untracked 2026-07-14 (repo diet): every one

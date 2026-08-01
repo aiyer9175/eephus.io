@@ -213,32 +213,11 @@ def parse_source_article_drops(data_dir: Path) -> tuple[list[Snapshot], list[dic
         if event["player_key"] in snapshot_keys:
             continue
         payload = event.get("payload") or {}
-        # A BA age-band statcast table is not a ranked list and Baseball America
-        # publishes NO grade with it, so this snapshot carries NO FV.
-        #
-        # It used to carry fv=40.0 - a number WE invented as a "conservative
-        # editorial-standout floor" - and that constant then voted in
-        # consensus.avg_fv at full weight 1.0, indistinguishable from a grade an
-        # outlet actually published. OWNER DECISION 2026-07-30: stop assigning an
-        # FV to this source entirely. It becomes identity + statcast only, which
-        # is what BA's main Top 100 already is in our ingestion (rank, no FV) and
-        # what BA's own scale supports: docs/reference/FANGRAPHS_FV_FRAMEWORK.md
-        # records that a BA headline grade is not on the FanGraphs FV scale at
-        # all, so a BA-sourced FV we made up is doubly unfounded.
-        #
-        # The guard below (skip a player this article set already ranked) is why
-        # the constant looked harmless: it only checked THIS parse, not whether
-        # ANY source had graded the player. Measured on the 2026-07-30 tree: 34 of
-        # the 41 rows landed on players who already carried a real published
-        # grade, i.e. an 83% collision rate against performance_ingest's 30-in-2798.
-        # Blast radius of the removal, measured through the real
-        # consensus.build_timeseries path, in
-        # docs/efv-2026-07-30/POSITION_ROLE_GATE.md PART 3.
-        #
-        # The row is still emitted (with no grade) rather than dropped: it carries
-        # the player's identity, position, org and active status into `players` /
-        # `snapshots`, and the statcast event payload is separate. What it no
-        # longer does is vote.
+        # A BA age-band statcast table is not a ranked list, but it is an
+        # explicit editorial standout. Emit a conservative single-source
+        # FV-40 snapshot only when this article set has no ranked snapshot
+        # for the player; normal consensus shrinkage still pulls the
+        # single-source confidence down.
         snapshots.append(Snapshot(
             source="baseballamerica_statcast_by_age",
             snapshot_date=event.get("event_date") or "",
@@ -248,7 +227,7 @@ def parse_source_article_drops(data_dir: Path) -> tuple[list[Snapshot], list[dic
             position=payload.get("pos"),
             org=canonical_org(payload.get("org") or "") or payload.get("org"),
             rank=None,
-            fv=None,
+            fv=40.0,
             status="active",
         ))
     deduped = {}

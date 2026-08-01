@@ -126,20 +126,6 @@ you get a site whose numbers change depending on which writer ran last,
 and `--delete` runs that remove files the other writer shipped. The box
 has the durable state, so the box owns the webroot; CI gates pushes.
 
-## Publish-time comment strip (prospx)
-
-`tools/strip_prospx_comments.py` runs in `nightly-build.sh` between the
-rsync and the precompress, rewriting **the webroot copy only** of
-`prospx/index.html` (~630KB raw / ~265KB gz smaller at introduction). The
-repo source keeps every comment - it is the app's documentation. The tool
-is a conservative tokenizer (own-line `//`, `/* */`, and `<!-- -->` only;
-strings, template literals, regex literals, `<style>`, and Copyright
-notices are never touched; it refuses to write unless a re-scan of its own
-output ends in a clean lexer state) and the sh step is fail-open: a strip
-failure ships the commented copy instead of blocking the nightly. The CI
-break-glass path (`EEPHUS_CI_PUBLISH`) does NOT strip - acceptable for an
-emergency publish, the page is just its commented size.
-
 ## nginx server block (required pieces)
 
 The build script precompresses every text asset (`*.gz` twins, gzip -9).

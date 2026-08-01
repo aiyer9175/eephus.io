@@ -83,13 +83,8 @@ def load_season(y: int) -> dict:
     rows = se.load_season_pitching(y)
     if not rows:
         return {}
-    # starter_export.load_bref_swstr was REMOVED when the bref pull was dropped
-    # ("No SwStr% here: the Starter record carries no such field"), but this
-    # caller was never updated -- the lab raised AttributeError on every run and
-    # data/sem_plus_eval.json could not be regenerated. build_starters keeps the
-    # positional `swstr` parameter for legacy callers and IGNORES it, so passing
-    # None is exactly equivalent to what the shipped export does.
-    starters = se.build_starters(rows, None)
+    swstr = se.load_bref_swstr(y)
+    starters = se.build_starters(rows, swstr)
     pool = [s for s in starters if sem_plus.is_true_starter(s)]
     for s in pool:
         sem_plus.derive_rates(s)

@@ -266,22 +266,8 @@ def seed_signed_draftees(year: int | None = None) -> int:
             # leaked org-less amateur rows into snapshots under
             # '<year>draft' labels — those are the DRAFTEE, not a
             # pre-existing pro, so they must not block the seed.
-            # ANCHOR HARDENING (2026-07-25), yield 0 today. The guard means
-            # "a real MiLB source already owns this identity", but it matched
-            # ANY source except draft_signing -- including performance_ingest,
-            # which is not a source at all but the auto-discovery stamp (a flat
-            # FV 35 constant; grade_normalization._SYNTHETIC_SOURCES refuses to
-            # treat it as a graded outlet). A signed draftee who accumulated
-            # 40 PA / 15 IP before this step ran would therefore have been
-            # denied his REAL published draft-board FV in favour of the
-            # constant. MEASURED against the live DB 2026-07-25: the old and
-            # new guards select the identical 49 current-class seeds, so this
-            # blocks nobody today (ingest ordering happens to keep them apart).
-            # Kept because a synthetic stamp must never outrank a real grade,
-            # and the ordering that currently saves us is incidental.
             pre = con.execute(
-                "SELECT 1 FROM snapshots WHERE player_key=? "
-                "AND source NOT IN ('draft_signing', 'performance_ingest', 'auto_detect') "
+                "SELECT 1 FROM snapshots WHERE player_key=? AND source != 'draft_signing' "
                 "AND interval_label NOT GLOB '20[0-9][0-9]draft' LIMIT 1",
                 (mk,),
             ).fetchone()

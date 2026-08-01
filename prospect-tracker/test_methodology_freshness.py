@@ -29,10 +29,7 @@ MODEL_GLOSSARY = {
     "prospect_greeks": ["prospect_greeks"],
     "star_odds": ["star_odds"],
     "upgrade_option": ["opt_pct"],   # Tier 2 grade-option layer; surfaced as the PROSPX OPT% column
-    # Tier 2 cross-source scale map; shapes the live consensus_fv scale. The
-    # normalized_source_grade entry (2026-07-29) is the reader-facing version:
-    # why a consensus can land outside the range of the grades on the card.
-    "grade_normalization": ["consensus_fv", "normalized_source_grade"],
+    "grade_normalization": ["consensus_fv"],  # Tier 2 cross-source scale map; now shapes the live consensus_fv scale
     "fa_projection_marcel": ["fa_projection_engine"],
     "fa_war_paths_decay": ["fa_projection_engine"],
     "proj_def_prior": "internal",   # a hit feature of fa_war_paths_decay; gate-artifact row
@@ -48,7 +45,7 @@ MODEL_GLOSSARY = {
     "prospect_surplus": ["surplus_value"],
     "fv_to_war_anchors": ["fv_to_war_table"],
     "wag": ["wag", "warwag"],
-    "consensus_fv": ["consensus_fv", "normalized_source_grade"],
+    "consensus_fv": ["consensus_fv"],
     "draft_consensus_weight": "internal",
     "source_track_record": ["single_source_mark"],
     "eta": ["eta"],
@@ -60,100 +57,6 @@ MODEL_GLOSSARY = {
     "stuff_plus_external": ["stuff_grade_plus"],
     "stuff_plus_aaa": ["stuff_plus_aaa"],
     "swing_plus_external": ["swing_plus"],
-    # Will's-metrics program 2026-07-23 (docs/wills-2026-07-23/GATES.md): loss ledgers
-    # are internal; shipped display surfaces map to their glossary entries.
-    "fa_pt_risk": "internal",              # W1/W1-B loss ledger (IL-history PT risk, era-transfer FAIL)
-    # W2 loss ledger (park-neutralized eFV rates, clause M FAIL). No longer
-    # internal: the park-factor entry it now maps to is where a reader is told
-    # the table exists AND that the correction built on it did not earn a ship.
-    "xfv_park_line": ["milb_park_factor"],
-    "pal_stuff_xrv": ["stuff_plus_aaa"],   # W3: per-type aStuff+ sidecar + PAL pitch-add ranking (display)
-    "college_stuff_translation": "internal",  # W4 loss ledger (college stuff+ K% covariate FAIL)
-    "collegesavant_stuff": ["collegesavant_stuff_plus"],  # W4 governance of the shipped display lineage
-    "advancement_pace": ["advancement_pace_plus"],        # W5 descriptive display (contract: never a model input)
-    # eFV holistic program 2026-07-24 (docs/efv-2026-07-24/GATES.md):
-    "efv_scoreboard": ["xfv"],             # eFV accountability scoreboard (source-comparison panel)
-    "xfv_platoon": "internal",             # W-PLATOON loss ledger (platoon splits FAIL both sides)
-    "xfv_wrc": "internal",                 # W-WRC/W-SB loss ledger (in-house wRC+ no ship)
-    # consensus-basis counterfactual; normalization STAYS ON (turning it off is worse,
-    # and no additive re-basing can change a gap between two players graded by the
-    # same source set). Loss ledger, nothing user-facing to document.
-    "xfv_gradenorm_basis": "internal",
-    # 2026-07-30 coherence lane, both NO-SHIP measurement ledgers, nothing rendered.
-    # xfv_provisional_grade_map: re-pointing the provisional engine onto the outcome
-    # curve fires 3 of 6 stop conditions (the soft cap's FV constants stop being WAR
-    # constants; 48.5% of the pool has non-positive predicted WAR and all of it collapses
-    # to exactly FV20, deleting the org-filler ladder).
-    # xfv_odds_index_basis: the consensus-vs-model index mismatch is REAL (2.7x dispersion)
-    # but re-indexing is a null, because the binding defect is a 35-point base-rate gap
-    # between a published-list table and the eFV matrix, not the units.
-    "xfv_provisional_grade_map": "internal",
-    "xfv_odds_index_basis": "internal",
-    # LANE-CURVES Phase 1 measurement artifact: per-side FV -> outcome curves + the
-    # industry bake-off. Not shipped, rendered nowhere, changes no served number; the
-    # reader-facing glossary entry belongs to the Phase-2 grade re-scale, not here.
-    "fv_outcome_curves": "internal",
-    # LANE-P2 Phase 2: the SHIPPED grade map. xfv_grade is now the inverse of the pooled
-    # empirical outcome curve, so grade G means "the industry FV whose realized outcome
-    # distribution matches our prediction" rather than "the FV our valuation core expects
-    # this WAR from". That is live eFV scoring behaviour a reader sees on every card, so
-    # it documents to the xfv entry - and that entry's wording is OWED an update to match
-    # (see docs/efv-2026-07-30/POOLED_OUTCOME_REFIT.md; data/glossary.json is another
-    # lane's file this cycle).
-    "fv_outcome_pooled_grade": ["xfv"],
-    "xfv_tbs2": "internal",                # W-TBS2 loss ledger (tiebreaker stack FAIL)
-    "xfv_ungraded_disc": "internal",       # W-DISC loss ledger (coverage-starved)
-    "xfv_role_arg": "internal",            # W-SURPLUS S3 audit-only
-    "eta_hazard_lite": ["eta"],            # W-SURPLUS S2 (PASS, gated OFF this cycle)
-    "aaa_physics_screen": ["stuff_plus_aaa"],  # W-SCREEN physics forward screen + sidecar
-    # eFV accuracy / true-to-model program 2026-07-24b (docs/efv-2026-07-24/GATES-ACCURACY.md):
-    "xfv_lambda_reselect": ["xfv"],        # blend-weight re-select SHIP (hit 0.85, +Spearman/AUC)
-    "xfv_weight_recal": "internal",        # attribute-weight/alpha re-open (no ship)
-    "xfv_cap_sweep": "internal",           # input-cap sweep (caps are safety, not compression)
-    # uncapped live overlay SHIP default-ON; the eFV entry covers the grade
-    # effect, the A-ball signal entry covers the input the reader can see.
-    "xfv_statcast_overlay_uncapped": ["xfv", "statcast_alevel_signal"],
-    "xfv_ungraded_recal": ["xfv_ungraded"],    # provisional de-cap SHIP true-to-model
-    # Wave G site-wide true-to-model sweep 2026-07-24b (GATES-ACCURACY C2/C3):
-    "plus_metric_recal": ["krp_plus"],     # KRP+ de-clamp SHIP; family already true-to-model
-    "c3_pal_fa_recal": "internal",         # PAL/FA audit, zero ships (measured on real gates)
-    "c3_proj_trans_recal": ["single_a_equivalent"],  # translation band de-cap SHIP
-    # Round 2 2026-07-24e:
-    "xfv_injury_history": "internal",   # injury-history overlay ledger (coverage-starved)
-    # 2026-07-30 age-pipeline and IL-severity work. Both are live scoring behaviour of
-    # the eFV model rather than surfaces of their own, so they document through the eFV
-    # entry exactly as xfv_role_ceiling does.
-    "efv_age_pipeline": ["xfv"],
-    "efv_il_severity": ["xfv"],
-    "xfv_peak_war": "internal",         # peak-WAR target measurement ledger (keep cumulative)
-    "xfv_bughunt2": "internal",         # bug hunt r2 + scoreboard intl_bat dedup fix
-    # 2026-07-25 calibration/diagnostic lanes, registered 2026-07-29. All are
-    # measurement ledgers rather than user-facing models: they grade the eFV
-    # model against its own declared meaning. The findings they carry are
-    # written up in docs/efv-2026-07-29/CALIBRATION_FINDINGS.md, and the two
-    # that drive a repair land their user-visible effect through the eFV grade
-    # and surplus entries that already exist.
-    "xfv_pred_dispersion": "internal",    # Defect A ledger: OOS WAR over-dispersion
-    "xfv_level_calibration": "internal",  # Defect B ledger: grade-to-WAR anchor bias
-    "xfv_odds_dispersion": "internal",    # p_bust dispersion candidate, patch INERT
-    # 2026-07-30 LANE-ODDS: which grade map p_bust should be keyed to after the
-    # board moved to outcome_implied_fv. A measurement lane that adjudicated the
-    # _odds_grade pin and shipped NOTHING; keeping the pin means no reader-facing
-    # number moved, so it has no glossary surface of its own.
-    "xfv_odds_grade_basis": "internal",   # re-key vs the pin: measured NULL, pin kept
-    "xfv_odds_recalibration_ship": "internal",  # re-link re-fit: NULL vs a flat base rate, not wired
-    # Cohort conditioning of the odds: NO-SHIP, killed by its own zero-information
-    # control (shuffled cohort labels reproduce the whole gain). Nothing wired, no
-    # served p_bust moved, so no glossary surface of its own.
-    "xfv_odds_cohort": "internal",
-    # Slope recalibration: PRE-REGISTERED ONLY, never fitted. It gets a glossary
-    # entry if and when it ships, not before.
-    "xfv_odds_calibration_slope": "internal",
-    "xfv_generality": "internal",         # stratum-generality audit, shipped nothing
-    "am_crossmodel_agelevel": "internal", # cross-model age-for-level null
-    # thin-sample p_bust DID ship and moves a number readers see on provisional
-    # cards, so it points at the provisional entry rather than being internal.
-    "xfv_thin_pbust": ["xfv_ungraded"],
     "spotlights_movement": ["spotlights", "spotlight_age_cap"],
     "org_tendencies": ["org_tendencies"],
     "team_win_projections": ["mlb_projections"],
@@ -180,7 +83,7 @@ MODEL_GLOSSARY = {
     # REM+ = the /mlbstats/ Bullpen Leaderboards reliever metric; its glossary entry
     # (and the Bullpen+ / gmLI / WPA companions) documents the methodology.
     "rem_plus": ["rem_plus", "bullpen_plus"],
-    # PAL = the /pal/ Alchemy Lab role-conversion screen; documented by its
+    # PAL = the /pal/ Pitcher Alchemy Lab role-conversion screen; documented by its
     # FIT-score + conversion-model glossary entries.
     "pal_conversion": ["pal_conversion", "rp_sp_fit", "sp_rp_fit"],
     # Holistic pass 3 (2026-07-01) model-dev artifacts, rendered nowhere:
@@ -189,24 +92,6 @@ MODEL_GLOSSARY = {
     "xfv_isotonic_calibration": "internal",
     "sc_plus_component_diagnostic": "internal",
     "surplus_sensitivity_diagnostic": "internal",
-    # --- 2026-07-25 ---
-    # Positional ladder = the empirically recovered positional-adjustment table
-    # (n=9,101 player-seasons, R2 0.982) that replaced the unsourced folklore one.
-    # It is a CONSTANTS table consumed by prospect_def_value, the projection
-    # pos_adj_prior and the eFV defensive prior rather than a surface of its own,
-    # and it is rendered for the reader in the /pal/ Position Fit ladder view,
-    # which is documented by the PAL conversion entry.
-    "positional_ladder": ["pal_conversion", "def_home_chip"],
-    # eFV board side scale (W-SIDESCALE) = the per-side affine that puts a hitter
-    # grade and a pitcher grade of the same number on the same realized-outcome
-    # scale. It changes the DISPLAYED eFV, so the eFV entry documents it.
-    "efv_board_side_scale": ["xfv"],
-    # Projection calibration map = the internal recalibration seam of the MLB
-    # projection engine; the projections entry documents the engine it calibrates.
-    "proj_calibration_map": ["mlb_projections"],
-    # eFV surrogate label = research lane, NO-SHIP on both sides (deprecated row,
-    # loss ledger). Wired into no surface, so there is nothing to document.
-    "xfv_surrogate_label": "internal",
     # X-D1 gmLI deployment-context metric: gate passed and wired 2026-07-02
     # (bullpen_export join + /mlbstats/ column); documented by its glossary
     # entry.
@@ -259,10 +144,7 @@ MODEL_GLOSSARY = {
     # band replacement (rejected, bands dropped), MiLB park factors
     # (infeasible), ERA-shrink unification (keep two values).
     "war_total_band_calibration": "internal",
-    # milb_park_factors stopped being internal on 2026-07-29: the 202-venue table
-    # is now a reader-facing reference surface, so it documents through the park
-    # factor entry (which also states that the eFV correction built on it failed).
-    "milb_park_factors": ["milb_park_factor"],
+    "milb_park_factors": "internal",
     "era_shrink_unification": "internal",
     # E-ISO4: the final eFV bucket-calibration attempt (joint side-symmetric
     # map); rejected, closes the line, loss ledger, rendered nowhere.
@@ -370,147 +252,6 @@ MODEL_GLOSSARY = {
     "fa_market_feature_arms": "internal",
     "fa_market_supply_population": "internal",  # serve-side input alignment (wave-2 ship, 2026-07-16)
     "fa_market_class_age_anchor": "internal",   # serve-side input alignment (wave-2 ship, 2026-07-16)
-    # 2026-07-23 program: S-XLINE Statcast measurement upgrade SHIPS live inside
-    # the eFV pipeline (covered AAA 2023+ actives), so its methodology rides the
-    # xfv glossary entry like the other live eFV layers.
-    "xfv_statcast_line": ["xfv"],
-    # S-XLINE-2/3/4 gate ledgers (2026-07-23), all rendered nowhere: the
-    # sub-AAA feeds-proxy V0 STOP (yardstick mismatch, superseded by line3),
-    # the S-XLINE-3 V0'-pass / primary-M-A-NULL run (AUX passes recorded as
-    # inputs to S-XLINE-4), and the S-XLINE-4 incremental arms (whiff-K +
-    # FB-velo overlay-ELIGIBLE per the registered ship rule; overlay not
-    # implemented, nothing served changed).
-    "xfv_statcast_line2": "internal",
-    "xfv_statcast_line3": "internal",
-    # line4 stopped being internal on 2026-07-29: its two INC reads are the
-    # measurement a reader is shown next to the A-ball whiff / FB-velo pills.
-    "xfv_statcast_line4": ["statcast_alevel_signal"],
-    # S-XLINE-4 overlay (2026-07-23): implemented, FAILED its registered
-    # post-flip 2-FV served ceiling (structural: fringe quantile-grid step is
-    # 2.7 FV), reverted same day - defaults OFF, chip never renders, so no
-    # user-facing methodology surface. Ledger in the line4 eval artifact.
-    "xfv_statcast_overlay": "internal",
-    # 2026-07-23 loss ledgers + diagnostics, all rendered nowhere: the
-    # pwoba_xwoba_blend keep-alive re-gate (zero new resolved pairs, next
-    # window 2026-11-15), the BT-1 bat-tracking hitter lane (both arms NULL),
-    # the fantasy streamer-score arm sweep (no arm ships; join bug flagged to
-    # the owner), the IFA bonus pedigree curve (7-tier LOCO gate FAIL; its one
-    # robust structure later shipped as ifa_step_prior under a NEW gate),
-    # and the provisional-penalty / ungraded-cap calibration diagnostic.
-    "pwoba_blend_regate": "internal",
-    "bat_tracking_hitters": "internal",
-    "fantasy_startscore": "internal",
-    "ifa_pedigree": "internal",
-    # P1 V2 (2026-07-23): V1 FAILED same-day (committed loss in the same GATES
-    # file); the V2 re-registration (bounded upward-only pull + bucket-mixture
-    # baseline) passed all five clauses and SHIPS live inside the eFV
-    # provisional path (run_backgrade + score_history), so its methodology
-    # rides the xfv glossary entry like the other live eFV layers. The IFA
-    # >= $1M step arm wired the same day under its own frozen gate rides it
-    # too (it is a branch of the same served prior).
-    "xfv_provisional_prior": ["xfv"],
-    "ifa_step_prior": ["xfv"],
-    "provisional_calibration": "internal",
-    # F-SIDE-FIX (2026-07-23, owner-authorized fairness-fix attempt under the
-    # queued G1-as-NO-HARM re-registration): loss ledger - the capped top-band
-    # joint recalibration fixes pit over-representation (F1a) but fails the
-    # equal-slot gap clause F1b (pit tail has no realized-WAR gradient, the
-    # TOP-QUANT root cause). Defaults OFF, hook dead-by-default, rendered
-    # nowhere.
-    "xfv_side_fairness_fix": "internal",
-    # --- 2026-07-29 display-index registration -----------------------------
-    # The standing rule says every shipped model carries a registry row. These
-    # rows close a long-standing gap for the user-facing plus-metrics: they are
-    # DISPLAY INDICES rather than predictive models, so each is registered
-    # 'unvalidated' with no eval artifact, and each points at the glossary
-    # entry that carries its scale convention. The cross-family scale table
-    # lives in docs/efv-2026-07-29/ARKMETRIC_SCALE_CONVENTIONS.md.
-    "krp_plus": ["krp_plus"],                 # 100+10z, display pill decoupled from the eFV model feature
-    "dvm_plus_org": ["dvm_plus"],             # org development index by window (incl. 6yDvM+ and the FVDvM+ bucket view)
-    "dvm_plus_tools": ["tools_dvm_plus", "tool_specific_dvm_plus"],
-    "dvm_plus_dollar": ["fin_dollar_dvm", "dvm_plus"],  # FV-tier-anchored, clamped 40-160 (the family's odd scale)
-    "cs_plus": ["cs_plus"],                   # college cohort 100+10z, computed client-side
-    "rps_plus": ["rps_plus"],                 # three variants under one name, all disclosed in the entry
-    "tool_plus": ["tiebreaker_score"],        # not rendered directly; a draft/overseas TBS input term
-    "draft_stock_plus": ["draft_stock_plus"],
-    "tbs_prospect": ["tiebreaker_score"],
-    "tbs_farm": ["farm_tiebreaker"],
-    "iso_plus": ["iso_plus"],
-    "pwr_plus": ["pwr_plus"],
-    "hit_plus": ["hit_plus"],
-    "pd_plus": ["pd_plus"],
-    "stf_plus": ["stf_plus"],
-    "fv_stuff_plus": ["stuff_grade_plus"],
-    # --- 2026-07-29 display surfaces. All three are DISPLAY decisions, and each
-    # one's glossary entry states in its own text how far the evidence goes.
-    # A-ball / complex whiff + FB-velo pills: provisional, the two INC reads are
-    # a forward correlation against a stat-line residual, not an outcome gate.
-    "statcast_alevel_display": ["statcast_alevel_signal"],
-    # Archetype comp panel: unvalidated with NO eval artifact, deliberately. The
-    # entry carries the three caveats (search with no multiplicity correction,
-    # a false health_warning in the source artifact, a missing generator).
-    "archetype_comps": ["archetype_comps"],
-    # The model lane behind that panel: measured, failed, deprecated. It maps to
-    # the same entry because that entry is where the failure is written down for
-    # a reader, which is the whole point of documenting a loss beside its display.
-    "archetype_search": ["archetype_comps"],
-    # --- WAR/PA+ and WAR/IP+ (2026-07-29 Arkmetric lane, master plan Phase G).
-    # Descriptive display indexes: the forward gate was run and LOST to plain
-    # season bWAR on all three pools, so every row is honestly `unvalidated` with
-    # a null eval artifact and the ledger cited in its notes. Each maps to its own
-    # glossary entry plus the trailing-window companion, because the entry text is
-    # where a reader is told both what the number means AND that it is not a
-    # forecast. The two WAR/IP+ entries are SEPARATE by design: the starter board
-    # and the reliever board carry the same column title over two different anchor
-    # pools, and the values are not comparable
-    # (docs/efv-2026-07-29/ARKMETRIC_SCALE_CONVENTIONS.md:77).
-    # The `_adj` companions joined the family 2026-07-30, when the owner closed the
-    # shrink call recorded OPEN in the ledger (docs/efv-2026-07-30/
-    # WAR_RATE_SHRINK_OWNER_CALL.md). They map onto the SAME registry row rather
-    # than taking their own: same anchor pool, same ledger, same `unvalidated`
-    # verdict, same surface. What differs is the reading, which is exactly what a
-    # glossary entry is for, so each got its own entry.
-    # B3 level blend: a NO-SHIP loss ledger with no served number, so there is no
-    # glossary term for a reader to look up. "internal" by construction, same as
-    # the other candidate ledgers.
-    "xfv_level_blend": "internal",
-    # E1 repeat-level candidate: measured, default off, nothing served.
-    "xfv_repeat_level": "internal",
-    # Lane A measurement feeds: ingests with no served number yet.
-    "savant_arm_strength": "internal",
-    "savant_sprint": "internal",
-    "war_pa_plus": ["war_pa_plus", "war_pa_plus_adj", "war_pa_plus_3yr"],
-    "war_ip_plus_sp": ["war_ip_plus_sp", "war_ip_plus_sp_adj",
-                       "war_ip_plus_sp_3yr"],
-    "war_ip_plus_rp": ["war_ip_plus_rp", "war_ip_plus_rp_adj",
-                       "war_ip_plus_rp_3yr"],
-    # The trailing-window companion family across all three boards, one frozen
-    # vintage artifact with three blocks.
-    "war_rate_plus_3yr": ["war_pa_plus_3yr", "war_ip_plus_sp_3yr",
-                          "war_ip_plus_rp_3yr"],
-    # --- derived tool-grade measurement tables (2026-07-30, master plan Phase 4).
-    # "internal" by construction: the row documents a REFERENCE TABLE, not a
-    # served number. Nothing on the site reads data/tool_grade_tables.json, so
-    # there is no glossary term for a reader to look up; the reader-facing
-    # write-up is the Phase 6 explainer, built FROM this artifact, and the
-    # methodology text is docs/efv-2026-07-30/TOOL_GRADE_TABLES.md. If any of
-    # the three inventions is ever wired into a display or a weight, that lane
-    # ships its own glossary entry and this line changes with it.
-    "tool_grade_tables": "internal",
-    # --- position + role assignment (2026-07-30, master plan Phase 5).
-    # BOTH SHIPPED 2026-07-30 (owner decision): position_observed is now a served
-    # payload field with live consumers, and pitcher_role_usage runs in both
-    # directions. They stay "internal" anyway, and the reason is the same for both:
-    # neither is a NUMBER a reader looks up. They are POSITION STRINGS - "SS", "RP" -
-    # that feed cohorts, weights and role gates. The glossary is a dictionary of
-    # metrics; adding "SS" to it would not answer any question a reader has.
-    # What a reader could reasonably ask is why the card says 3B while the peer pool
-    # says SS, and that belongs on the card as a labelled secondary line, not in the
-    # glossary. Methodology text: docs/efv-2026-07-30/POSITION_ROLE_GATE.md.
-    # If either ever becomes a displayed INDEX (say a "spectrum move" score), it
-    # ships a glossary entry and this line changes with it.
-    "position_observed": "internal",
-    "pitcher_role_usage": "internal",
 }
 
 

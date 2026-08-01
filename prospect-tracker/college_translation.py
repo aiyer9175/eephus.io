@@ -50,7 +50,6 @@ from __future__ import annotations
 
 import json
 import math
-import os
 import re
 from pathlib import Path
 
@@ -405,82 +404,6 @@ def _loo_mae_cov(cs, pro, cs_key, pro_idx):
 
 
 # --------------------------------------------------------------------------- #
-# W4 COL-XRV (gated 2026-07-23, default OFF): usage-weighted college Stuff+
-# covariate in the pitcher K% translation. Behind env flag EEPHUS_COL_XRV;
-# with the flag unset this whole block is inert and the outputs are
-# byte-identical. Gate ledger: data/college_stuff_translation_eval.json
-# (registration docs/wills-2026-07-23/GATES.md section W4; lab
-# tools/college_stuff_translation_lab.py, model key college_stuff_translation).
-# --------------------------------------------------------------------------- #
-_PITCH_STUFF_PAYLOADS = [
-    (2024, "pitcher_pitch_data_2024.js", "window.PITCHER_PITCH_DATA_2024"),
-    (2025, "pitcher_pitch_data_2025.js", "window.PITCHER_PITCH_DATA_2025"),
-    (2026, "pitcher_pitch_data_2026.js", "window.PITCHER_PITCH_DATA_2026"),
-]
-
-
-def load_cs_pitch_stuff() -> dict:
-    """(pitcher_id, year) -> usage-weighted college Stuff+ across that pitcher's
-    pitch types (weights = pitch_count; rows with null stuff_plus or zero count
-    excluded from numerator AND weights). Same-season join only: the covariate
-    must describe the same tracked season as the K% outcome row."""
-    out = {}
-    for year, fname, marker in _PITCH_STUFF_PAYLOADS:
-        path = CS / fname
-        if not path.exists():
-            continue
-        acc = {}
-        for r in _first_array(path, marker):
-            sp, pc = r.get("stuff_plus"), r.get("pitch_count") or 0
-            pid = str(r.get("pitcher_id") or "")
-            if sp is None or pc <= 0 or not pid:
-                continue
-            w, s = acc.get(pid, (0.0, 0.0))
-            acc[pid] = (w + pc, s + float(sp) * pc)
-        for pid, (w, s) in acc.items():
-            if w > 0:
-                out[(pid, year)] = s / w
-    return out
-
-
-def _fit2(rows: list[tuple]) -> dict | None:
-    """rows = [(x1, x2, y)] -> bivariate regression-to-the-mean factor: joint
-    OLS via 2x2 normal equations, BOTH slopes shrunk by n/(n+SLOPE_SHRINK_K)
-    (the incumbent univariate convention extended; registered a priori)."""
-    n = len(rows)
-    if n < 8:
-        return None
-    x1m = sum(r[0] for r in rows) / n
-    x2m = sum(r[1] for r in rows) / n
-    ym = sum(r[2] for r in rows) / n
-    s11 = sum((r[0] - x1m) ** 2 for r in rows)
-    s22 = sum((r[1] - x2m) ** 2 for r in rows)
-    s12 = sum((r[0] - x1m) * (r[1] - x2m) for r in rows)
-    s1y = sum((r[0] - x1m) * (r[2] - ym) for r in rows)
-    s2y = sum((r[1] - x2m) * (r[2] - ym) for r in rows)
-    det = s11 * s22 - s12 * s12
-    if abs(det) < 1e-9:
-        return None
-    shrink = n / (n + SLOPE_SHRINK_K)
-    b1 = (s22 * s1y - s12 * s2y) / det * shrink
-    b2 = (s11 * s2y - s12 * s1y) / det * shrink
-    resid = [r[2] - (ym + b1 * (r[0] - x1m) + b2 * (r[1] - x2m)) for r in rows]
-    rmse = math.sqrt(sum(e * e for e in resid) / n)
-    return {"x1_mean": round(x1m, 3), "x2_mean": round(x2m, 3),
-            "y_mean": round(ym, 3), "b1": round(b1, 4), "b2": round(b2, 4),
-            "band_sd": round(rmse, 3), "n": n}
-
-
-def _predict2(f: dict, x1: float, x2: float) -> float:
-    return f["y_mean"] + f["b1"] * (x1 - f["x1_mean"]) + f["b2"] * (x2 - f["x2_mean"])
-
-
-def col_xrv_enabled() -> bool:
-    """EEPHUS_COL_XRV: default OFF; any non-empty value enables the covariate."""
-    return bool(os.environ.get("EEPHUS_COL_XRV"))
-
-
-# --------------------------------------------------------------------------- #
 # Translate one player + build the artifacts
 # --------------------------------------------------------------------------- #
 def _band(pred: float, sd: float, lo_clip=None, hi_clip=None, ndigits=1):
@@ -495,9 +418,9 @@ def _band(pred: float, sd: float, lo_clip=None, hi_clip=None, ndigits=1):
 def _translate_hitter(v, F):
     out = {}
     if v.get("k_pct") is not None and F.get("hit_k"):
-        out["k_pct"] = _band(_predict(F["hit_k"], v["k_pct"]), F["hit_k"]["band_sd"], 0, 100)  # C2/C3b: hi_clip -> true [0,100] domain (display band widened to LOO-validated coverage)
+        out["k_pct"] = _band(_predict(F["hit_k"], v["k_pct"]), F["hit_k"]["band_sd"], 0, 60)
     if v.get("bb_pct") is not None and F.get("hit_bb"):
-        b = _band(_predict(F["hit_bb"], v["bb_pct"]), F["hit_bb"]["band_sd"], 0, 100)
+        b = _band(_predict(F["hit_bb"], v["bb_pct"]), F["hit_bb"]["band_sd"], 0, 30)
         b["low_confidence"] = F["hit_bb"]["r2"] < 0.10
         out["bb_pct"] = b
     if v.get("xwoba") is not None and F.get("hit_ops"):
@@ -507,18 +430,12 @@ def _translate_hitter(v, F):
     return out
 
 
-def _translate_pitcher(v, F, stuff_wt=None):
+def _translate_pitcher(v, F):
     out = {}
-    if v.get("k_pct") is not None and F.get("pit_k_stuff") and stuff_wt is not None:
-        # W4 COL-XRV covariate path: only reachable when EEPHUS_COL_XRV is set
-        # (build() fits pit_k_stuff and passes stuff_wt only then), so the
-        # flag-OFF output stays byte-identical.
-        f2 = F["pit_k_stuff"]
-        out["k_pct"] = _band(_predict2(f2, v["k_pct"], stuff_wt), f2["band_sd"], 0, 100)
-    elif v.get("k_pct") is not None and F.get("pit_k"):
-        out["k_pct"] = _band(_predict(F["pit_k"], v["k_pct"]), F["pit_k"]["band_sd"], 0, 100)
+    if v.get("k_pct") is not None and F.get("pit_k"):
+        out["k_pct"] = _band(_predict(F["pit_k"], v["k_pct"]), F["pit_k"]["band_sd"], 0, 50)
     if v.get("bb_pct") is not None and F.get("pit_bb"):
-        b = _band(_predict(F["pit_bb"], v["bb_pct"]), F["pit_bb"]["band_sd"], 0, 100)
+        b = _band(_predict(F["pit_bb"], v["bb_pct"]), F["pit_bb"]["band_sd"], 0, 25)
         b["low_confidence"] = F["pit_bb"]["r2"] < 0.10
         out["bb_pct"] = b
     return out
@@ -533,9 +450,9 @@ def _box_project(box, F):
         return None
     out = {}
     if box.get("k_pct") is not None and F.get("box_k"):
-        out["k_pct"] = _band(_predict(F["box_k"], box["k_pct"] * 100), F["box_k"]["band_sd"], 0, 100)
+        out["k_pct"] = _band(_predict(F["box_k"], box["k_pct"] * 100), F["box_k"]["band_sd"], 0, 60)
     if box.get("bb_pct") is not None and F.get("box_bb"):
-        b = _band(_predict(F["box_bb"], box["bb_pct"] * 100), F["box_bb"]["band_sd"], 0, 100)
+        b = _band(_predict(F["box_bb"], box["bb_pct"] * 100), F["box_bb"]["band_sd"], 0, 30)
         b["low_confidence"] = F["box_bb"]["r2"] < 0.10
         out["bb_pct"] = b
     return out or None
@@ -561,26 +478,6 @@ def build(out_dir: Path | None = None) -> dict:
             if f:
                 f["loo"] = _loo_mae_cov(cs, pro, ck, pi)
                 F[key] = f
-
-        # W4 COL-XRV (default OFF): with EEPHUS_COL_XRV set, fit the pitcher K%
-        # translation with the usage-weighted college Stuff+ covariate on the
-        # covered matched pairs (same-season (pitcher_id, year) join). Flag
-        # unset: cs_stuff stays empty, F never carries pit_k_stuff, and every
-        # output byte matches the incumbent path.
-        cs_stuff = load_cs_pitch_stuff() if col_xrv_enabled() else {}
-        if cs_stuff and F.get("pit_k"):
-            rows2 = []
-            for slug, v in cs_p.items():
-                if slug not in sa_p or v.get("k_pct") is None or sa_p[slug][1] is None:
-                    continue
-                sw = cs_stuff.get((str(v.get("pitcher_id")), v.get("year")))
-                if sw is not None:
-                    rows2.append((float(v["k_pct"]), sw, float(sa_p[slug][1])))
-            f2 = _fit2(rows2)
-            if f2:
-                f2["covariate"] = "usage_weighted_college_stuff_plus"
-                f2["eval_artifact"] = "college_stuff_translation_eval.json"
-                F["pit_k_stuff"] = f2
 
         # NB: the accountability eval artifact is written AFTER the box_k/box_bb
         # factors are fitted below (they are live-in-production but were omitted from
@@ -651,9 +548,7 @@ def build(out_dir: Path | None = None) -> dict:
                 bridge[pk] = {"side": "hit", "headline": _equiv_headline(t, "hit"), "name": v["name"]}
                 pk_to_cs.setdefault(pk, {"slug": slug, "year": v.get("year"), "side": "hit"})
         for slug_norm, v in cs_p.items():
-            stuff_wt = (cs_stuff.get((str(v.get("pitcher_id")), v.get("year")))
-                        if cs_stuff else None)
-            t = _translate_pitcher(v, F, stuff_wt)
+            t = _translate_pitcher(v, F)
             if not t:
                 continue
             # The pitcher frontend slug is slugify(name-pitcher_id) (it disambiguates

@@ -502,28 +502,13 @@ def ingest_history() -> list[dict]:
     return results
 
 
-def run_tjstats_pipeline(*, live: bool = True, history: bool = False,
-                         scope: str = "") -> dict:
+def run_tjstats_pipeline(*, live: bool = True, history: bool = False) -> dict:
     """Top-level entry for run_monthly / run_daily. Runs a health check first;
     on a detected endpoint/shape change it logs loudly and SKIPS all writes rather
     than corrupting storage. Never raises — a TJStats outage must not abort the
-    surrounding pipeline (the caller logs the returned status).
-
-    OBSERVABILITY (2026-07-31). This function not raising is correct, but its
-    status dict used to be discarded by both callers, so an outage left NO
-    trail anywhere: TJStats wrote zero rows from 2026-07-08 to 2026-07-21 while
-    seven full monthly runs reported success. Two things fix that here:
-
-      * `ok` is now an explicit boolean on the return, so a caller cannot
-        mistake "returned a dict" for "ingested a board";
-      * a SUCCESSFUL live ingest stamps storage.record_source_check, the
-        out-of-row ledger the FA module already uses. record_source_check is
-        deliberately called ONLY on success - a stale stamp is exactly how the
-        health export notices a source that has gone quiet.
-    """
+    surrounding pipeline (the caller logs the returned status)."""
     from storage import init_db
-    out: dict = {"health": [], "live": None, "history": [], "error": None,
-                 "ok": False, "n_rows": 0}
+    out: dict = {"health": [], "live": None, "history": [], "error": None}
     try:
         init_db()  # idempotent — ensures tjstats_snapshots exists on older DBs
         issues = health_check()
@@ -535,18 +520,6 @@ def run_tjstats_pipeline(*, live: bool = True, history: bool = False,
             out["history"] = ingest_history()
         if live:
             out["live"] = ingest_live()
-            n = int((out["live"] or {}).get("n_players") or 0)
-            out["n_rows"] = n
-            out["ok"] = n > 0
-            if out["ok"]:
-                try:
-                    from storage import record_source_check
-                    record_source_check(SOURCE_KEY, scope, n)
-                except Exception:                    # noqa: BLE001 - never fatal
-                    log.warning("tjstats: could not record source check")
-        else:
-            out["ok"] = bool(out["history"])
-            out["n_rows"] = sum(int(h.get("n_players") or 0) for h in out["history"])
     except Exception as e:           # noqa: BLE001 — courtesy to the parent pipeline
         log.exception("tjstats pipeline error — continuing")
         out["error"] = str(e)
@@ -679,15 +652,7 @@ def export_movers(out_path: Path | None = None) -> dict | None:
             })
     movers.sort(key=lambda m: -abs(m["rank_delta"] or 0))
     movers = movers[:_MOVER_MAX_ITEMS]
-    # `as_of` is only a DATE, and TJStats reshuffles its board through the day:
-    # the owner-reported Franklin Arias case was us serving #4 from a 12:58 UTC
-    # capture while the live board already said #1. The sidecar has stored the
-    # exact UTC capture instant all along (tjstats_snapshots.captured_at); ship
-    # it so a reader can see how old the board they are looking at actually is,
-    # instead of inferring "sometime today".
     out = {"as_of": newer["effective_date"],
-           "captured_at": newer.get("captured_at"),
-           "older_captured_at": older.get("captured_at"),
            "older_board": older["snapshot_label"],
            "newer_board": newer["snapshot_label"],
            "movers": movers}

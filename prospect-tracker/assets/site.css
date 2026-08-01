@@ -464,10 +464,6 @@
   background: transparent; color: var(--accent-gold); border: 1px solid var(--accent-gold);
   display: inline-flex; align-items: center; justify-content: center;
 }
-/* Phone hamburger (injected by eephus-nav.js). Hidden at every width above
-   640px - desktop keeps the one-line strip untouched; the <=640px block near
-   the end of the nav section shows + styles it. */
-.eephus-nav .eephus-nav-toggle { display: none; }
 
 /* ---- hero (Home) ---- */
 .hero { padding: 56px 0 36px; border-bottom: 3px double var(--border); margin-bottom: 32px; }
@@ -521,7 +517,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .section-head--byline .section-head-titles { display: flex; flex-direction: column; min-width: 0; }
 .section-head--byline .section-head-titles .build-banner { margin: 0 0 6px; }
 .section-head--byline .section-sub { max-width: 78ch; }
-/* Lead Developer & Creator credit badge (MLB Stats + Alchemy Lab). */
+/* Lead Developer & Creator credit badge (MLB Stats + Pitcher Alchemy Lab). */
 .lead-dev-badge { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
   text-decoration: none; font-family: var(--font-retro-mono); font-size: 10.5px; letter-spacing: .03em;
   margin: 9px 0 2px; padding: 4px 10px; border: 1px solid var(--accent-gold);
@@ -732,80 +728,27 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 
 /* ---- mobile ---- */
-/* Phone treatment: the old full-width swipe strip hid half the links with no
-   affordance, so <=640px now runs the hamburger pattern instead. Brand +
-   controls + the eephus-nav.js-injected toggle share ONE ~60px top line; the
-   LINK strip is hidden until [data-nav-open] (set by the toggle) shows it as
-   a full-width vertical panel. Desktop (>640px) is untouched. */
+/* Phone exception to the one-line rule (the old width:100% + flex:1 rules
+   here predated it and blew the nowrap bar past the viewport on every
+   page). Brand + controls share the top line; the LINK strip drops to its
+   own full-width swipe row beneath. The failure the one-line rule fixed
+   was the CONTROLS landing on a cramped second row - they stay up top. */
 @media (max-width: 640px) {
-  .eephus-nav { flex-wrap: wrap; gap: 8px; row-gap: 0; padding: 8px 1rem; }
-  .eephus-nav .eephus-links {
-    display: none;
-    order: 3; flex: 1 1 100%; margin-left: 0;
-  }
-  .eephus-nav[data-nav-open] .eephus-links {
-    display: block;
-    overflow-x: visible;
-    margin-top: 8px;
-    border-top: 1px solid var(--border);
-    padding: 4px 0 6px;
-  }
-  .eephus-nav[data-nav-open] .eephus-links a {
-    display: flex; align-items: center;
-    min-height: 44px; padding: 10px 12px;
-    border-left: none; border-top: 1px solid var(--border-light);
-  }
-  .eephus-nav[data-nav-open] .eephus-links a:first-of-type { border-top: none; }
-  /* Active-link underline: pin it to the label's left edge in the panel
-     (the full-width variant reads as a stray rule under empty space). */
-  .eephus-nav[data-nav-open] .eephus-links a.is-active::after {
-    left: 12px; right: auto; width: 44px; bottom: 6px;
-  }
-  /* "MLB Modules" group renders INLINE inside the open panel: static menu,
-     no shadow, indented under its summary. The fixed-position placement in
-     eephus-nav.js is desktop-only (it no-ops at <=640px). */
-  .eephus-nav .eephus-nav-group { display: block; }
-  .eephus-nav .eephus-nav-group > summary {
-    min-height: 44px; display: flex; align-items: center;
-    border-left: none; border-top: 1px solid var(--border-light);
-    padding: 10px 12px;
-  }
-  .eephus-nav .eephus-nav-menu {
-    position: static; min-width: 0; box-shadow: none;
-    border: none; border-left: 2px solid var(--border);
-    margin: 0 0 4px 14px; padding: 0;
-  }
-  .eephus-nav .eephus-nav-menu a { min-height: 44px; display: flex; align-items: center; }
+  .eephus-nav { flex-wrap: wrap; gap: 8px; row-gap: 4px; padding: 10px 1rem; }
+  .eephus-nav .eephus-links { order: 3; flex: 1 1 100%; margin-left: 0; }
+  .eephus-nav .eephus-links a { padding: 10px 12px; }
   .eephus-nav .eephus-nav-controls { margin-left: auto; }
-  /* Touch targets: every top-bar control (search / watchlist / theme) and
-     the hamburger meet the 44px minimum tap size. */
-  .eephus-nav .eephus-nav-ctrl { padding: 0 10px; min-height: 44px; min-width: 44px; justify-content: center; }
-  .eephus-nav .eephus-nav-toggle {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 44px; height: 44px; flex: none;
-    font-size: 18px; line-height: 1; cursor: pointer;
-    color: var(--text-primary); background: transparent;
-    border: 1px solid var(--border); border-radius: var(--radius-sm);
-  }
-  .eephus-nav[data-nav-open] .eephus-nav-toggle {
-    background: var(--bg-tertiary); border-color: var(--text-tertiary);
-  }
+  /* Touch targets: keep the mobile controls at ~40px (>= recommended tap size)
+     rather than shrinking below the 38px desktop height. */
+  .eephus-nav .eephus-nav-ctrl { padding: 0 10px; min-height: 40px; }
   .eephus-wrap { padding: 0 1rem 3rem; }
   .hero { padding: 36px 0 24px; }
   /* Module masthead: stack the title block above the description on phones so
      the title isn't crushed into a ~80px column beside the italic subtitle
-     (e.g. "MLB Projections" wrapping to "MLB / Projec…"). Full width each.
-     The subtitle clamps to 2 lines (full text rides the title attr, set by
-     eephus-nav.js) and the banner sheds some vertical padding. */
-  .section-head { flex-direction: column; align-items: flex-start; gap: 4px; padding: 8px 2px; margin: 18px 0 16px; }
+     (e.g. "MLB Projections" wrapping to "MLB / Projec…"). Full width each. */
+  .section-head { flex-direction: column; align-items: flex-start; gap: 4px; }
   .section-head--byline { align-items: flex-start; }
-  .section-head .section-sub {
-    font-size: .8rem;
-    display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2;
-    -webkit-box-orient: vertical; overflow: hidden;
-  }
-  /* Chip/filter-row swipe treatment lives at the END of this sheet (it must
-     out-cascade the base .filter-bar / .mlbstats-sectionnav rules below). */
+  .section-head .section-sub { font-size: .8rem; }
 }
 
 /* ===========================================================================
@@ -905,9 +848,6 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 
 /* sidebar brand + search + nav */
 .sb-brand { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
-/* Homepage drawer hamburger (markup lives in index.html's .sb-brand). Hidden
-   on desktop; the <=900px block below shows it and collapses the sidebar. */
-.home-nav-toggle { display: none; }
 /* Sidebar brand = the merged arc-wordmark at 20px (the arc IS the flourish - 
    the old iridescent underline is gone with it). */
 .sb-brand .wm { font-family: var(--font-retro-mono); font-weight: 700; font-size: 20px; letter-spacing: .03em; color: var(--text-primary); text-decoration: none; }
@@ -1323,28 +1263,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* ---- responsive ---- */
 @media (max-width: 900px) {
   .home-shell { grid-template-columns: 1fr; }
-  /* Sidebar collapses to a compact brand bar (wordmark + theme + hamburger);
-     search, the module list, and the wire feed all live in the drawer that
-     [data-nav-open] reveals (wired by the small inline script in index.html).
-     Keeps the pre-content chrome to ~100px instead of ~1800px of stacked rail. */
-  .home-sidebar {
-    position: static; max-height: none; border-right: 0;
-    border-bottom: 1px solid var(--border);
-    padding: 8px 16px;
-  }
-  .home-sidebar:not([data-nav-open]) > :not(.sb-brand) { display: none; }
-  .home-sidebar[data-nav-open] { padding-bottom: 28px; }
-  .home-sidebar .sb-brand { margin-bottom: 0; justify-content: flex-start; }
-  .home-sidebar[data-nav-open] .sb-brand { margin-bottom: 14px; }
-  .home-sidebar .sb-brand .home-theme-toggle { margin-left: auto; min-height: 44px; min-width: 44px; }
-  .home-nav-toggle {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 44px; height: 44px; flex: none;
-    font-size: 18px; line-height: 1; cursor: pointer;
-    color: var(--text-primary); background: transparent;
-    border: 1px solid var(--border); border-radius: var(--radius-sm);
-  }
-  .home-sidebar[data-nav-open] .home-nav-toggle { background: var(--bg-tertiary); }
+  .home-sidebar { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--border); }
   .home-main { padding: 0 16px 40px; }
   .module-cols, .lead-story, .secondary-stories { grid-template-columns: 1fr; }
   .teaser-row { grid-template-columns: minmax(0, 1fr); }
@@ -1507,12 +1426,6 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   .state-message.is-loading::before { animation-duration: 2.4s !important; animation-iteration-count: infinite !important; }
 }
 .fa-app .fa-thin { color: var(--accent-gold); cursor: help; }
-/* Handedness token on the class board (B:L bat side / T:R throwing hand). Small,
-   monospaced and helpable - it is a scanning aid, not a headline number. */
-.fa-app .fa-hand { font-family: var(--font-mono); letter-spacing: .02em; cursor: help; }
-/* Current-season line on the FA player card: the tiles read left-to-right like
-   a stat line rather than right-aligned like the hero's market tiles. */
-.fa-app .fa-current-tiles { justify-content: flex-start; margin: 6px 0 4px; }
 .fa-app .fa-stale { color: var(--accent-red); font-weight: 700; }
 .fa-app .fa-sources { margin: 2px 0 8px; font-size: 11px; color: var(--text-tertiary); }
 .fa-app .fa-player-link { color: var(--text-primary); text-decoration: none; border-bottom: 1px dotted var(--border); }
@@ -1563,9 +1476,6 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   color: var(--accent-gold); border-color: var(--accent-gold);
   background: color-mix(in srgb, var(--accent-gold) 14%, transparent);
 }
-/* DEAD since the board became cards - .fa-row-opt is only ever on a .fa-card
-   now, which has no td. The live rule is .fa-card.fa-row-opt::before at the
-   bottom of this file; kept here only so a future table row can reclaim it. */
 .fa-app .fa-row-opt td:first-child { box-shadow: inset 3px 0 0 var(--accent-gold); }
 .fa-app .fa-filter-bar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
@@ -1728,7 +1638,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   font-family: var(--font-retro-mono); font-size: 9px; text-transform: uppercase;
   letter-spacing: .05em; color: var(--text-tertiary); }
 .bp-slot--bench { opacity: .72; }
-/* ---- Alchemy Lab (/pal/) - reuses .mlbstats-* tables ------------- */
+/* ---- Pitcher Alchemy Lab (/pal/) - reuses .mlbstats-* tables ------------- */
 .pal-fit { font-weight: 700; cursor: help; font-variant-numeric: tabular-nums; }
 .pal-hi { color: var(--accent-cyan); }
 .pal-good { color: var(--accent-green); }
@@ -1761,11 +1671,6 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .pal-ars-row .pal-ars-pitch { color: var(--text-secondary); }
 .pal-ars-row .pal-bar > span { background: var(--accent-cyan); }
 .pal-ars-row .pal-ars-meta { color: var(--text-tertiary); white-space: nowrap; }
-/* Rng+ (legs), outfield destinations only. Cued as a measured read rather than a
-   model output, so it sits in the muted mono family beside the runs figure. */
-.pal-rng { font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .03em;
-  border: 1px solid var(--border); padding: 0 5px; margin-left: 6px;
-  color: var(--text-secondary); white-space: nowrap; cursor: help; }
 /* direction + outcome badges (Conversion History) */
 .pal-dir { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .03em;
   border: 1px solid var(--border); padding: 1px 6px; color: var(--text-secondary); white-space: nowrap; }
@@ -1776,10 +1681,6 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
    cyan), SP->RP is the muted salvage direction (orange). */
 .pal-dir--rp2sp { color: var(--accent-cyan); border-color: var(--accent-cyan); }
 .pal-dir--sp2rp { color: var(--accent-orange); border-color: var(--accent-orange); opacity: .85; }
-/* evidence chips on the Position Fit accounting cards: what the model was
-   measured to do (pass) vs the question it measured as a null. */
-.pal-dir--pass { color: var(--accent-green); border-color: var(--accent-green); }
-.pal-dir--null { color: var(--accent-orange); border-color: var(--accent-orange); }
 /* conversion candidate TIER titles (under the FIT number in the candidate table) */
 .pal-tier { font-family: var(--font-retro-mono); font-size: 8.5px; font-weight: 700; letter-spacing: .02em;
   text-transform: uppercase; margin-top: 3px; white-space: nowrap; color: var(--text-tertiary); }
@@ -2405,34 +2306,6 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   letter-spacing: .09em; text-transform: uppercase; color: var(--text-tertiary);
 }
 .mlbp-tile-val { font-family: var(--font-mono); font-size: 18px; font-weight: 800; }
-/* W6 per-season Swing+ trend tile: season slices read smaller than a
-   headline number so the tile stays compact ("24: 103 / 25: 108 / 26: 112") */
-.mlbp-tile-val .mlbp-swing-seasons { font-size: 12.5px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
-/* Bat-speed change strip under the MLB player hero. Three states: a plain
-   observed change, an alert when the change sits in the bottom decile of the
-   measured distribution, and an explicit no-data state for the (many) hitters
-   with no comparable pair of tracked seasons. */
-.mlbp-batspeed {
-  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
-  border: 1px solid var(--border); border-left-width: 3px;
-  padding: 7px 11px; margin: 12px 0 0; cursor: help;
-  font-size: 11px; color: var(--text-secondary);
-}
-.mlbp-batspeed-label {
-  font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
-  font-weight: 700; color: var(--text-tertiary);
-}
-.mlbp-batspeed-val { font-family: var(--font-mono); font-size: 15px; font-weight: 800; color: var(--text-primary); }
-.mlbp-batspeed-why { color: var(--text-tertiary); }
-.mlbp-batspeed.is-alert { border-left-color: var(--accent-orange); }
-.mlbp-batspeed.is-alert .mlbp-batspeed-val { color: var(--accent-orange); }
-.mlbp-batspeed-flag {
-  font-family: var(--font-retro-mono); font-size: 8.5px; font-weight: 700;
-  letter-spacing: .04em; text-transform: uppercase;
-  border: 1px solid var(--accent-orange); color: var(--accent-orange); padding: 1px 6px;
-}
-.mlbp-batspeed.is-nodata { border-left-color: var(--border); }
-.mlbp-batspeed.is-nodata .mlbp-batspeed-val { color: var(--text-tertiary); font-size: 13px; font-weight: 700; }
 .mlbp-tile-chip {
   font-family: var(--font-mono); font-size: 11px; font-weight: 700;
   border: 1px solid var(--border); padding: 2px 8px; margin-left: 8px;
@@ -2561,387 +2434,4 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .fa-row-headshot {
   width: 24px; height: 24px; object-fit: cover; display: block;
   border: 1px solid var(--border); background: var(--bg-tertiary);
-}
-
-/* ---- phone chip rows + fantasy tables (<=640px) ----
-   Sits at the END of the sheet on purpose: the base .filter-bar /
-   .mlbstats-sectionnav rules above share its specificity, so source order
-   is what lets flex-wrap:nowrap win here. One swipeable line with a REAL
-   affordance - a thin scrollbar plus a trailing fade hinting at more
-   content off-screen. Filter bars only; never board/sticky ancestors. */
-@media (max-width: 640px) {
-  .news-app .filter-bar, .gl-app .filter-bar, .mlbstats-sectionnav {
-    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
-    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
-    padding-bottom: 4px;
-  }
-  .news-app .filter-bar::-webkit-scrollbar,
-  .gl-app .filter-bar::-webkit-scrollbar,
-  .mlbstats-sectionnav::-webkit-scrollbar { height: 4px; display: block; }
-  .news-app .filter-bar::-webkit-scrollbar-thumb,
-  .gl-app .filter-bar::-webkit-scrollbar-thumb,
-  .mlbstats-sectionnav::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  .news-app .filter-bar > *, .gl-app .filter-bar > *, .mlbstats-sectionnav > * { flex: none; }
-  /* Fantasy leaderboard tables (styles injected at runtime by fantasy.js)
-     run wider than a phone; scroll each inside its own box so the DOCUMENT
-     never pans sideways. table.-qualified to outrank the injected rule. */
-  table.fantasy-table {
-    display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
-    white-space: nowrap; max-width: 100%;
-  }
-}
-
-/* ===========================================================================
-   MLB board cards (Lane B, 2026-07-30). The PROSPX row pattern, ported to the
-   shared stylesheet for the Projections and Free Agency boards.
-
-   Why cards and not a wider table: both boards had outgrown the table. The
-   Projections player cell packed six elements into one 320px ellipsized td,
-   and the FA board ran twelve columns with P10-P90 bands squeezed inside the
-   same cells as their point estimates. Adding columns makes that worse. The
-   PROSPX answer is a fixed-height two-row card: row 1 is the identity and the
-   headline numbers, row 2 is a full-width tape that always gets its own band
-   at the card bottom, so a data-rich row can never shove it out of the box.
-
-   The load-bearing bits, all learned the hard way in prospx/index.html:
-     - grid-template-rows: minmax(0, 1fr) auto. The 0 floor is what lets row 1
-       shrink to its share so the tape keeps its reserved band; without it a
-       long identity block forces row 1 to min-content and clips the tape.
-     - minmax(0, ...) on flexible columns so a long name cannot blow the track
-       out (a bare 1fr refuses to shrink below min-content).
-     - content-visibility with contain-intrinsic-size, so hundreds of rows in
-       the DOM stay cheap and the scrollbar still behaves.
-   =========================================================================== */
-.mlb-card-list { display: flex; flex-direction: column; gap: 6px; }
-
-.mlb-card {
-  position: relative;
-  display: grid;
-  align-items: center;
-  gap: 4px 10px;
-  box-sizing: border-box;
-  padding: 8px 12px 8px 16px;
-  border: 1px solid var(--border, rgba(128,128,128,.25));
-  border-radius: 4px;
-  background: var(--panel-bg, var(--card-bg, transparent));
-  grid-template-rows: minmax(0, 1fr) auto;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 92px;
-  cursor: pointer;
-}
-/* Org-colour stripe. Same device as the PROSPX row: it is the only element
-   carrying team identity, so it must survive both themes without a hardcoded
-   colour (test_no_hardcoded_colors pins that). */
-.mlb-card::before {
-  content: "";
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 4px;
-  border-radius: 4px 0 0 4px;
-  background: var(--org-color, var(--accent, currentColor));
-  transition: width .12s ease, box-shadow .12s ease;
-}
-/* BUGFIX 2026-07-31: both of these named var(--accent), which this stylesheet
-   has never defined (the tokens are --accent-cyan / -gold / -green / -red /
-   -navy / -orange / -lilac). A var() chain that resolves to nothing makes the
-   whole declaration INVALID AT COMPUTED-VALUE TIME, so the hover glow silently
-   did nothing and - the real defect - .mlb-card:focus-visible fell back to
-   `outline: initial`, i.e. NO keyboard focus ring on the Projections or Free
-   Agency board cards. Both now name a token that exists in both themes.
-   The ::before background above ALSO names --accent but still resolves (to
-   currentColor), so it is left alone here: changing it would repaint two
-   modules this lane does not own. Reported separately. */
-.mlb-card:hover::before { width: 7px; box-shadow: 0 0 8px var(--org-color, var(--accent-cyan)); }
-.mlb-card:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
-
-/* Row 2 tape: spans every column so a full season strip or a band row lays out
-   on ONE line at a uniform height, flush along the card bottom. */
-.mlb-card > .mlb-tape { grid-column: 1 / -1; grid-row: 2; min-width: 0; align-self: start; }
-.mlb-card > *:not(.mlb-tape) { grid-row: 1; min-width: 0; }
-
-/* Rank chip, the PROSPX diamond read as a circle for the MLB boards (these are
-   not prospect ranks and should not borrow the prospect glyph). */
-.mlb-rank {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 34px; height: 34px; padding: 0 6px;
-  border-radius: 50%;
-  border: 1px solid var(--border, rgba(128,128,128,.3));
-  font-family: var(--font-retro-mono, ui-monospace, monospace);
-  font-variant-numeric: tabular-nums;
-  font-weight: 700; font-size: 13px;
-}
-.mlb-name { font-weight: 650; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mlb-sub { font-size: 11.5px; opacity: .72; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.mlb-metric { font-family: var(--font-retro-mono, ui-monospace, monospace);
-              font-variant-numeric: tabular-nums; text-align: right; }
-.mlb-metric-label { display: block; font-size: 10px; letter-spacing: .06em;
-                    text-transform: uppercase; opacity: .6; font-family: inherit; }
-
-/* The tape itself: a horizontal band of season / band chips. */
-.mlb-tape-inner { display: flex; gap: 4px; align-items: stretch; flex-wrap: nowrap;
-                  overflow-x: auto; padding-top: 6px; }
-.mlb-chip {
-  flex: 1 1 0; min-width: 0;
-  border-radius: 3px; padding: 3px 6px;
-  border: 1px solid var(--border, rgba(128,128,128,.22));
-  font-family: var(--font-retro-mono, ui-monospace, monospace);
-  font-variant-numeric: tabular-nums; font-size: 11.5px; text-align: center;
-  white-space: nowrap;
-}
-.mlb-chip b { display: block; font-size: 10px; font-weight: 600; opacity: .6;
-              letter-spacing: .04em; font-family: inherit; }
-
-/* Sort headers above the list, matching the mlbstats a11y contract. */
-.mlb-card-head {
-  display: grid; gap: 4px 10px; padding: 0 12px 6px 16px;
-  font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; opacity: .62;
-}
-.mlb-card-head [role="button"] { cursor: pointer; user-select: none; white-space: nowrap; }
-/* BUGFIX 2026-07-31: was var(--accent), an undefined token - see the note on
-   .mlb-card:focus-visible above. Sort headers had no visible focus ring. */
-.mlb-card-head [role="button"]:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
-
-@media (max-width: 720px) {
-  .mlb-card { grid-template-columns: 1fr auto !important; row-gap: 6px; }
-  .mlb-card > .mlb-metric { text-align: left; }
-}
-
-/* ===========================================================================
-   Fantasy board cards (2026-07-31). FOUR of the nine /fantasy/ surfaces moved
-   onto the .mlb-card pattern above; the rest deliberately stayed tables. Row
-   counts measured off data/fantasy.json:
-
-     CONVERTED   ROS Hitters 350 | ROS SP 250 | ROS RP 180 | Dynasty 300
-       These are the leaderboards: 9-11 columns, 180-350 rows, and they re-rank
-       live every time the league-scoring selector moves. They also had no sort
-       at all - the boards were nailed to the score order, so a roto manager
-       could not ask "who is left with steals". Sortable headers were the win;
-       content-visibility is what makes 350 rows in the DOM affordable.
-
-     LEFT AS TABLES
-       Daily Streamers  26 / 23 / 27 rows per day slate (76 total, one day shown)
-       Two-Start SP     79 rows, 5 columns, one of them a free-text leg list
-       Buy / Sell       30 + 30, rendered as a deliberate side-by-side pair
-       Call-up Watch    60 rows, 5 narrow columns
-       Closer Grid      already a card grid (30 teams x 5 arms), untouched
-       A 27-row table is scannable in one screen. The same 27 rows as cards is
-       three screens of scrolling, and Buy/Sell would lose the pairing that is
-       the entire point of the surface.
-
-   Card height is 104px, NOT the 136px PROSPX uses. 136 is sized for PROSPX's
-   four-line MiLB cell plus its tool-grade strip. A fantasy card is a one-line
-   identity block over a single tape row, which measures ~96px, so copying the
-   constant would have hung ~32px of dead space off every one of 350 cards.
-   What is load-bearing from the pattern is that the height is FIXED and that
-   row 1 is minmax(0, 1fr) so the tape always keeps its own band at the card
-   bottom; the constant itself is content-sized per module.
-   =========================================================================== */
-.ff-card {
-  height: 104px;
-  /* Match the fixed height exactly so the virtualization estimate is not a
-     guess and the scrollbar does not jump as cards page in. */
-  contain-intrinsic-size: auto 104px;
-  background: var(--bg-secondary);
-  gap: 2px 10px;
-}
-.ff-card:hover { box-shadow: var(--shadow-card-hover); }
-.ff-card-list { gap: 5px; }
-.ff-card .ff-id { min-width: 0; }
-.ff-card .mlb-metric.ff-strong { font-weight: 800; }
-.ff-card .mlb-tape-inner { padding-top: 4px; }
-
-/* Diamond rank chip: the PROSPX .rank-num geometry (45deg rotation with a
-   counter-rotated inner span) rather than the .mlb-rank circle, because these
-   are ranked boards and the diamond is the house glyph for a rank. Its border
-   reads the same --org-color the stripe does, so the tier signal lands twice. */
-.ff-rank {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px;
-  transform: rotate(45deg);
-  border: 1.5px solid var(--org-color, var(--border));
-  background: var(--bg-tertiary);
-  font-family: var(--font-mono);
-  font-size: 11px; font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
-  margin: 0 auto;
-}
-.ff-rank-i { display: inline-block; transform: rotate(-45deg); line-height: 1; }
-
-/* Tape sort bar. The row-2 chips are not track-aligned with the header, so they
-   get their own strip of sort buttons instead of a fake column heading floating
-   above them. Same aria-sort + arrow contract as the aligned header.
-
-   SHARED, not fantasy-only: the Free Agency and Projections boards mount the
-   same device as .mlb-sortbar (2026-07-31). One implementation, two class names
-   rather than two implementations that drift - the naming split only exists
-   because /fantasy/ shipped it first under an ff- prefix. */
-.ff-sortbar, .mlb-sortbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 6px; }
-.ff-sortbar-lbl, .mlb-sortbar-lbl {
-  font: 600 10px/1 var(--font-retro-mono, monospace);
-  text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary);
-}
-.ff-sortbar [role="button"], .mlb-sortbar [role="button"] {
-  font: 600 11px/1 var(--font-retro-mono, monospace);
-  padding: 5px 8px;
-  border: 1px solid var(--border); border-radius: 4px;
-  background: var(--bg-secondary); color: var(--text-secondary);
-  cursor: pointer; user-select: none; white-space: nowrap;
-}
-.ff-sortbar [role="button"]:focus-visible,
-.mlb-sortbar [role="button"]:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
-.ff-sortbar [role="button"]:not([aria-sort="none"]),
-.ff-card-head [role="button"]:not([aria-sort="none"]),
-.mlb-sortbar [role="button"]:not([aria-sort="none"]) {
-  color: var(--text-primary); border-color: var(--accent-cyan); opacity: 1;
-}
-
-@media (max-width: 720px) {
-  /* The shared .mlb-card rule collapses row 1 to `1fr auto` under 720px, which
-     reflows the metrics onto extra lines - a fixed height would clip them. The
-     cards stay uniform on desktop, where the fixed grid holds, and grow on
-     phones, where it does not. */
-  .ff-card { height: auto; min-height: 104px; }
-  /* The header tracks no longer line up with a collapsed card, so the header
-     becomes a chip strip rather than being dropped: hiding it would take Player
-     and Score sorting away from exactly the users most likely to be re-ranking
-     a board on the move. */
-  .ff-card-head {
-    display: flex !important; flex-wrap: wrap; gap: 6px;
-    grid-template-columns: none !important;
-  }
-}
-
-/* ===========================================================================
-   Free Agency + Projections board cards (2026-07-31).
-
-   Both boards were ported onto .mlb-card above but kept AUTO height, so a row
-   measured 92px or 150px depending on how many optional chips its player
-   happened to carry, and the sortable columns the tables had were dropped in
-   the conversion. This block finishes the port the way /fantasy/ did it: a
-   content-sized FIXED height per board, and a sort bar for the row-2 tape.
-
-   HEIGHTS ARE MEASURED, NOT COPIED. PROSPX's 136px is sized for its four-line
-   MiLB cell plus a tool-grade strip; neither board has either. Working from the
-   site's 16px base font and the local 1.35 line-height below, the tape band is
-   42px on both boards (5 padding + a 37px chip: two lines plus padding and
-   border), the row gap is 4 and the card padding is 8 top and bottom. That
-   leaves the row-1 budget, which each board's tallest legal cell sets:
-     FA    108px -> 46px for row 1; tallest cell is the two-line clamped Status
-                    at ~41px (the identity block is ~40px).
-     Proj  104px -> 42px for row 1; tallest cell is the identity block at ~37px
-                    (one name line over one sub line).
-   FA is the taller board because its Status cell carries a signed contract's
-   terms in prose; Projections has no such cell once AAV became a column. Both
-   carry ~5px of slack, which is the margin for font-metric variation between
-   platforms - not padding to spend on more content.
-
-   The load-bearing bit both boards were missing: `align-items: center` on the
-   shared .mlb-card sizes every cell to its CONTENT, so a cell that outgrows
-   row 1 spills over the tape band instead of clipping. The cells that CAN
-   outgrow it (the identity block, the FA status) are stretched to the row and
-   clip inside it, which is what makes the fixed height a promise rather than
-   a hope.
-   =========================================================================== */
-.fa-app .fa-card, .proj-app .proj-card {
-  /* 1.35 rather than the body's 1.55. Three stacked text lines per card at
-     1.55 measure ~12px taller than they need to, which is the whole difference
-     between a 108px card and a 120px one. */
-  line-height: 1.35;
-  /* The fixed height is a promise: clip rather than let anything bleed over the
-     border into the card below. */
-  overflow: hidden;
-}
-.fa-app .fa-card { height: 108px; contain-intrinsic-size: auto 108px; }
-.proj-app .proj-card { height: 104px; contain-intrinsic-size: auto 104px; }
-/* Option / opt-out rows carried a gold edge on the table (.fa-row-opt td), which
-   the card conversion silently dropped - there is no td any more. Same signal,
-   on the stripe the card pattern already owns. */
-.fa-app .fa-card.fa-row-opt::before { background: var(--accent-gold); }
-
-/* Identity block and the metric cells: stretched to the row, centred inside it,
-   clipped at its edge (see the note above on align-items: center). */
-.fa-app .fa-card .fa-id, .proj-app .proj-card .proj-id,
-.fa-app .fa-card > .mlb-metric, .proj-app .proj-card > .mlb-metric {
-  align-self: stretch; min-width: 0; overflow: hidden;
-  display: flex; flex-direction: column; justify-content: center;
-}
-/* Metric children hug their content at the right edge; without this the verdict
-   and contract pills would stretch to the full track width and stop reading as
-   chips. */
-.fa-app .fa-card > .mlb-metric, .proj-app .proj-card > .mlb-metric { align-items: flex-end; }
-.fa-app .fa-card > .mlb-metric > *, .proj-app .proj-card > .mlb-metric > * { max-width: 100%; }
-/* Status is the one prose cell on either board (SIGNED NYY 4y / $92.0M, or an
-   option kind with its price and P(enter)). Two lines, then ellipsis - the full
-   string stays on the cell's title and on the player card. */
-.fa-app .fa-card .fa-statustext {
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
-  /* 11px/1.25 is not decoration: two lines plus the column label have to fit
-     the 46px row-1 budget, and at the card's own 1.35 they do not. */
-  overflow: hidden; font-size: 11px; line-height: 1.25;
-}
-.fa-app .fa-card .mlb-sub, .proj-app .proj-card .mlb-sub { row-gap: 0; }
-.fa-app .fa-card .mlb-tape-inner, .proj-app .proj-card .mlb-tape-inner { padding-top: 5px; }
-/* .mlb-chip is `flex: 1 1 0` + nowrap, so a chip that shrinks below its text
-   would spill it over its neighbour. Ellipsis instead - the full string is on
-   the chip's title, and both boards keep it on the player card. */
-.fa-app .fa-card .mlb-chip, .proj-app .proj-card .mlb-chip,
-.fa-app .fa-card .mlb-chip b, .proj-app .proj-card .mlb-chip b {
-  overflow: hidden; text-overflow: ellipsis;
-}
-/* The contract chip carries the longest string in either tape ("No multi-year
-   deal"), so it takes a wider share rather than ellipsing by default. */
-.proj-app .proj-card .mlb-chip-ct { flex: 1.8 1 0; }
-/* The contract status is a chip inside a chip otherwise. Flatten the pill so it
-   keeps its status colour without a second border ring. */
-.proj-app .proj-card .mlb-chip .proj-ct {
-  border: 0; background: none; padding: 0; font-size: 11px; cursor: inherit;
-}
-/* Active sort header. .mlb-card-head fades the whole strip with opacity, which a
-   child cannot undo, so the active column is marked with the house gold rule
-   (the same one the old th.fa-sort.is-sorted carried) plus full-strength text. */
-.fa-app .mlb-card-head [role="button"]:not([aria-sort="none"]),
-.proj-app .mlb-card-head [role="button"]:not([aria-sort="none"]) {
-  color: var(--text-primary); border-bottom: 2px solid var(--accent-gold);
-}
-
-/* Rail sparkline as a link to the $/WAR by winter view (#view=dpw). It is a real
-   button: hover cue, keyboard focus ring, and an explicit destination label -
-   a chart that silently navigates is a trap. */
-.fa-app .fa-dpw-link { display: block; cursor: pointer; border-radius: 3px; }
-.fa-app .fa-dpw-link:hover { background: var(--bg-tertiary); }
-.fa-app .fa-dpw-link:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
-.fa-app .fa-dpw-cue {
-  display: block; margin-top: 2px;
-  font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
-  letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-cyan);
-}
-
-@media (max-width: 720px) {
-  .fa-app .fa-card, .proj-app .proj-card { height: auto; min-height: 96px; }
-  /* The shared rule collapses row 1 to `1fr auto` under 720px, but it also PINS
-     every row-1 child to grid-row 1. Pinned items do not wrap - auto-placement
-     keeps making implicit COLUMNS - so the card would scroll sideways instead of
-     reflowing. Releasing the row is what actually makes the collapse work; the
-     tape still takes the full width, last. */
-  .fa-app .fa-card > *:not(.mlb-tape), .proj-app .proj-card > *:not(.mlb-tape) { grid-row: auto; }
-  .fa-app .fa-card > .mlb-tape, .proj-app .proj-card > .mlb-tape { grid-row: auto; grid-column: 1 / -1; }
-  .fa-app .fa-card .fa-id, .proj-app .proj-card .proj-id,
-  .fa-app .fa-card > .mlb-metric, .proj-app .proj-card > .mlb-metric {
-    align-self: auto; overflow: visible; align-items: flex-start; display: block;
-  }
-  .fa-app .fa-card .fa-statustext { display: block; }
-  /* Header tracks no longer line up with a collapsed card, so the header becomes
-     a chip strip rather than being dropped: hiding it would take sorting away
-     from exactly the readers most likely to be re-ranking a board on the move. */
-  .fa-app .mlb-card-head, .proj-app .mlb-card-head {
-    display: flex !important; flex-wrap: wrap; gap: 6px;
-    grid-template-columns: none !important; opacity: 1;
-  }
-  .fa-app .mlb-card-head [role="button"], .proj-app .mlb-card-head [role="button"] {
-    padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px;
-    color: var(--text-secondary);
-  }
 }

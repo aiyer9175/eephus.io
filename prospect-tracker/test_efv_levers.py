@@ -44,104 +44,66 @@ def test_c1_tripwire_threshold_above_standing_gap():
 
 
 # --------------------------------------------------------------------------- #
-# P1 V2 - provisional pedigree prior (bounded upward-only pull + mixture baseline;
-# docs/efv-provisional-prior/GATES.md V2, shipped 2026-07-23)
+# P1 — provisional pedigree prior
 # --------------------------------------------------------------------------- #
-def _force_p1(monkeypatch, enabled=True, **over):
+def _force_p1(monkeypatch, **over):
     import efv_score  # noqa: F401 (ensure module import path)
     cfg = dict(vf._config())
     cfg["efv_provisional_prior"] = {**cfg.get("efv_provisional_prior", {}),
-                                    "enabled": enabled, **over}
+                                    "enabled": True, **over}
     monkeypatch.setattr(vf, "_config", lambda: cfg)
 
 
-def test_p1_off_is_identity(monkeypatch):
+def test_p1_off_is_identity():
     import efv_score as es
-    # flag off -> prior == cons_war, no factors (the byte-identical OFF contract)
-    _force_p1(monkeypatch, enabled=False)
+    # default config has enabled: false -> prior == cons_war, no factors
     w, f = es._provisional_prior_war(3.0, 5, 2_000_000)
     assert w == 3.0 and f == []
 
 
-def test_p1_shipped_flags_and_cap():
-    # V2 shipped state: flag ON, frozen cap 1.9, IFA step wired at 1.917/0.25/$1M
-    cfg = vf._config().get("efv_provisional_prior") or {}
-    assert cfg.get("enabled") is True
-    assert abs(float(cfg.get("pull_cap_war")) - 1.9) < 1e-9
-    assert cfg.get("ifa_step_enabled") is True
-    assert abs(float(cfg.get("ifa_step_war")) - 1.917) < 1e-9
-    assert int(cfg.get("ifa_step_bonus_usd")) == 1_000_000
-
-
-def test_p1_ifa_sub_1m_stays_consensus(monkeypatch):
+def test_p1_ifa_no_pick_stays_consensus(monkeypatch):
     import efv_score as es
-    _force_p1(monkeypatch)   # shipped config: ifa_step wired
-    # sub-$1M IFA -> bit-identical consensus (the ifa_pedigree ledger's finding)
-    w, f = es._provisional_prior_war(3.0, None, 900_000)
-    assert w == 3.0 and f == []
-    # step disabled -> even a huge bonus stays consensus
-    _force_p1(monkeypatch, ifa_step_enabled=False)
-    w, f = es._provisional_prior_war(3.0, None, 5_000_000)
+    _force_p1(monkeypatch)
+    w, f = es._provisional_prior_war(3.0, None, 5_000_000)   # no pick -> no invented WAR
     assert w == 3.0 and f == []
 
 
-def test_p1_ifa_step_bounded_upward(monkeypatch):
-    import efv_score as es
-    _force_p1(monkeypatch, ifa_step_enabled=True, ifa_step_war=1.917)
-    # >= $1M IFA with a LOW consensus: prior rises by w_ifa * pull, never above
-    # cons + 0.2 * pull_cap; a HIGH consensus gets pull 0 (posted-pro guard)
-    w, f = es._provisional_prior_war(0.0, None, 2_000_000)
-    assert 0.0 < w <= 0.2 * 1.9 + 1e-9
-    w_hi, f_hi = es._provisional_prior_war(6.0, None, 2_000_000)
-    assert w_hi == 6.0 and f_hi == []
-
-
-def test_p1_top_pick_pull_is_capped(monkeypatch):
+def test_p1_top_pick_pulls_toward_slot(monkeypatch):
     import efv_score as es
     import storage
     _force_p1(monkeypatch)
-    slot5 = storage._pick_slot_expected_war(5)               # 8.492 >> cons + cap
+    slot5 = storage._pick_slot_expected_war(5)               # 8.492
     cons = 3.0
     ped = 0.8 + math.log10(2_000_000 / 10_000) * 0.5
     w_exp = ped / (ped + 1.0)
-    # V2: prior = cons + w * clip(slot - ref, 0, 1.9); no cons_fv here -> ref = cons
-    exp = cons + w_exp * min(slot5 - cons, 1.9)
+    exp = w_exp * slot5 + (1 - w_exp) * cons
     w, f = es._provisional_prior_war(cons, 5, 2_000_000)
     assert abs(w - exp) < 1e-6
     assert w > cons and f and f[0]["dir"] == "up"
 
 
-def test_p1_late_pick_does_not_move(monkeypatch):
+def test_p1_late_pick_barely_moves(monkeypatch):
     import efv_score as es
     import storage
     _force_p1(monkeypatch)
-    # V2 upward-only pull: slot(200) = 0.65 < cons 3.0 -> pull 0 -> identity
-    assert storage._pick_slot_expected_war(200) < 3.0
-    w, f = es._provisional_prior_war(3.0, 200, None)
-    assert w == 3.0 and f == []
+    slot200 = storage._pick_slot_expected_war(200)
+    ped = 0.05
+    w_exp = ped / (ped + 1.0)
+    exp = w_exp * slot200 + (1 - w_exp) * 3.0
+    w, _ = es._provisional_prior_war(3.0, 200, None)
+    assert abs(w - exp) < 1e-6
+    assert abs(w - 3.0) < 0.2                                # barely moves
 
 
 def test_p1_pedigree_capped(monkeypatch):
     import efv_score as es
     _force_p1(monkeypatch)
-    # absurd bonus -> pedigree caps at 3.0 -> weight 0.75; pull caps at 1.9
+    # absurd bonus -> pedigree caps at max_pedigree_precision (3.0) -> weight 0.75
     w, _ = es._provisional_prior_war(3.0, 1, 500_000_000)
-    assert abs(w - (3.0 + 0.75 * 1.9)) < 1e-6
-
-
-def test_p1_mixture_baseline_kills_tiny_slot_pull(monkeypatch):
-    import efv_score as es
     import storage
-    _force_p1(monkeypatch)
-    # V1 defect B cell: FV 37.66 hitter, cons_war floored to 0, pick 110 slot 0.776.
-    # The bucket-mixture baseline (~1.17 six-yr WAR) exceeds the slot leg -> pull 0.
-    assert storage._pick_slot_expected_war(110) < 1.1
-    w, f = es._provisional_prior_war(0.0, 110, 350_000,
-                                     cons_fv=37.66, is_pitcher=False)
-    assert w == 0.0 and f == []
-    # the same row WITHOUT the baseline inputs degrades to capped-V1 and would move:
-    w_deg, _ = es._provisional_prior_war(0.0, 110, 350_000)
-    assert w_deg > 0.0
+    slot1 = storage._pick_slot_expected_war(1)
+    exp = 0.75 * slot1 + 0.25 * 3.0
+    assert abs(w - exp) < 1e-6
 
 
 def test_p1_monotonic_in_pick(monkeypatch):

@@ -109,13 +109,5 @@
   "4": 0.0,
   "5": 1.0
  },
- "star_blend_note": "post-hoc star mean blend (tools/fit_star_blend.py); heads untouched, train hash unchanged",
- "mean_blend": {
-  "1": 1.0,
-  "2": 1.0,
-  "3": 1.0,
-  "4": 0.5,
-  "5": 0.5
- },
- "mean_blend_note": "post-hoc GLOBAL lift-only mean recenter (data/proj_mean_blend.json, tools/apply_mean_blend.py); heads untouched, train hash unchanged"
+ "star_blend_note": "post-hoc star mean blend (tools/fit_star_blend.py); heads untouched, train hash unchanged"
 }

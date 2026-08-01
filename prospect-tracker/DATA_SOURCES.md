@@ -13,8 +13,6 @@ happen inside the called module, so this file alone cannot split them).
 |---|---|
 | d0. TJStats Live capture | - |
 | d0b. MLB Pipeline Live capture | - |
-| d0b-i. Just Baseball rolling capture | - |
-| d0b-ii. MLB Pipeline per-team Top 30 capture | - |
 | d0. MLBAM prospect discovery (unranked actives) | - |
 | d1. Build player set from DB | - |
 | d2. Resolve IDs (warm PlayerIndex) | - |
@@ -31,10 +29,7 @@ happen inside the called module, so this file alone cannot split them).
 | d9b2. Re-bake MLB player detail (mlb_player_detail.json) | mlb_player_detail.json, photo_ctx.json |
 | d9c. Headshot resolution (photo_ctx.json) | fantasy.json, photo_ctx.json |
 | 9d. Fantasy daily refresh (fantasy.json schedule) | fantasy.json |
-| d10. FA signing-window refresh | mlb_projections.json |
-| d10b. FA re-export off fresh projections | - |
-| d10c. TJStats Live second capture | - |
-| d10d. ESPN new-article probe | timeseries.json |
+| d10. FA signing-window refresh | timeseries.json |
 | d11. Rebuild site (build_site) | - |
 
 ## Monthly pipeline (`run_monthly.main`)
@@ -48,8 +43,6 @@ happen inside the called module, so this file alone cannot split them).
 | 1. Scrape MiLB rankings + insert snapshots | - |
 | 0c/0d/1 parallel block | - |
 | 1c. TJStats Top-100 (Live + history) | - |
-| 1c-bis. Just Baseball rolling capture | - |
-| 1c-ter. ESPN new-article probe | - |
 | 2. Build consensus timeseries | - |
 | 2a. Bulk resolve IDs + birth dates | - |
 | 2b. Bulk fetch draft data (career-span window) | - |
@@ -59,12 +52,6 @@ happen inside the called module, so this file alone cannot split them).
 | 2b.v. MLB draft bonus-pool back-fill | - |
 | 2b.vi. Upsert acquisitions | - |
 | 2b.vii. IL status check | - |
-| 2b.viii-2b.xii External data-source ingests (no _step wrapper) | tj_surgery.json |
-| 2b.viii. Tommy John surgery list ingest | draft_bonus_slot.json |
-| 2b.ix. MLB draft slot/bonus ingest | venue_meta.json |
-| 2b.x. Ballpark venue metadata ingest | amateur_leagues.json |
-| 2b.xi. Amateur/winter/indy league stats ingest | pipeline_vintages.json |
-| 2b.xii. MLB Pipeline vintage boards ingest | - |
 | 2c. Affiliate roster map. ~6 HTTP calls (one per sport level) (no _step wrapper) | - |
 | 3a. Fetch career year-by-year stats (no _step wrapper) | - |
 | 3a-ii. Positional versatility (fielding) | positions_played.json |
@@ -77,7 +64,7 @@ happen inside the called module, so this file alone cannot split them).
 | 3e. Per-player transactions cache + within-season level changes (no _step wrapper) | - |
 | 3f. MLB roster-status derivation (debut, 40-man, options ...) (no _step wrapper) | - |
 | 4. Trade detection | - |
-| 5. Export (no _step wrapper) | debuts.json, identity_collisions.json, ifa_timeseries.json, rosters_by_org.json, timeseries.json |
+| 5. Export (no _step wrapper) | debuts.json, ifa_timeseries.json, rosters_by_org.json, timeseries.json |
 | 6. FA refresh + export (fa_* sidecars) | timeseries.json |
 | 6b. MLB projections export (mlb_projections.json) | mlb_projections.json, swing_plus.json |
 | 6b2. Swing+ scoring (swing_plus.json) | swing_plus.json |
@@ -92,7 +79,7 @@ happen inside the called module, so this file alone cannot split them).
 | 6b4g-lab. hitter lab (hem_plus + hem_plus_multiyear evals) | hem_plus_eval.json, xhem_plus_eval.json |
 | 6b4g. Hitter Leaderboards (hitter_leaderboards.json) | hitter_history.json, hitter_leaderboards.json, leverage_leaderboards.json |
 | 6b4h. Leverage Leaderboards (leverage_leaderboards.json) | leverage_history.json, leverage_leaderboards.json |
-| 6b5. Alchemy Lab (pal.json) | pal.json |
+| 6b5. Pitcher Alchemy Lab (pal.json) | pal.json |
 | 6b6. Fantasy Tools (fantasy.json) | fantasy.json |
 | 6c. Organization Tendencies (farm-detail Tendencies tab) (no _step wrapper) | - |
 | 6c / 6d: exported by the chained daily tail instead (no _step wrapper) | org_tendencies.json, trade_values.json |
@@ -102,7 +89,7 @@ happen inside the called module, so this file alone cannot split them).
 
 | phase | data/*.json referenced in the phase block |
 |---|---|
-| rebuild-only hook (no scrape): rebuild timeseries + movement + eFV consolidation + GRPO rescore | advancement_pace.json, contract_overrides.json, debuts.json, def_home.json, draft_timeseries.json, graduates.json, grpo_scores.json, identity_collisions.json, ifa_timeseries.json, milb_translation.json, overseas_timeseries.json, rosters_by_org.json, timeseries.json, trade_values.json, xfv.json, xfv_proxy_eval.json |
+| rebuild-only hook (no scrape): rebuild timeseries + movement + eFV consolidation + GRPO rescore | contract_overrides.json, debuts.json, draft_timeseries.json, graduates.json, grpo_scores.json, ifa_timeseries.json, milb_translation.json, overseas_timeseries.json, rosters_by_org.json, timeseries.json, trade_values.json, xfv.json, xfv_proxy_eval.json |
 
 ## Scraper / feed modules (first docstring paragraph)
 

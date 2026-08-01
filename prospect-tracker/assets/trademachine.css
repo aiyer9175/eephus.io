@@ -72,17 +72,6 @@
     }
 #trade-machine .tm-hit:hover { border-color: var(--accent-cyan); }
 #trade-machine .tm-hit .tm-val { margin-left: auto; }
-/* Modelled but unpriceable (expiring contract / none on file). Shown so a real
-   major-leaguer never returns an empty search, dimmed and inert because there
-   is no surplus to put in a deal. */
-#trade-machine .tm-hit.is-unpriced {
-      cursor: not-allowed; opacity: 0.62;
-      border-style: dashed; background: transparent;
-    }
-#trade-machine .tm-hit.is-unpriced:hover { border-color: var(--border); }
-#trade-machine .tm-hit.is-unpriced .tm-val {
-      font-style: italic; color: var(--text-tertiary); white-space: nowrap;
-    }
 #trade-machine .tm-row {
       display: flex; align-items: baseline; gap: 8px;
       padding: 5px 2px; font-size: var(--fs-base);

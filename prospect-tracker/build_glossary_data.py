@@ -179,26 +179,6 @@ NEW_ENTRIES = [
      "aliases": ["prospect wire", "ticker"], "priority": 83,
      "definition": "The homepage event feed and scrolling ticker: debuts, promotions, trades, IL moves, real FV changes, and free-agency winter events, each dated and color-coded by type. FV items are real grade changes only - composite movement scores never masquerade as news.",
      "seeAlso": ["stock_arrow", "first_seen_dates"]},
-    # wRC+ - INDUSTRY entry, re-homed here 2026-07-31.
-    #
-    # The slug already exists in data/glossary.json (priority 5, category
-    # hitter-stat, shelf "industry"), inherited from the legacy inline PROSPX
-    # GLOSSARY. That block no longer exists in prospx/index.html, so
-    # extract_prospx() can no longer produce this entry and this list is now its
-    # only registration; there is no duplicate-id risk against the assert in
-    # main(). data/glossary.json remains the CANONICAL hand-edited payload, so
-    # this copy is the provenance of record, not the served text.
-    #
-    # Sharpened for the MLB Stats hitter board's new wRC+ column: the entry now
-    # says explicitly that the number is displayed and not derived, which is what
-    # keeps it consistent with the site's "derives no wRC+" disclosure.
-    {"id": "wrc_plus", "term": "wRC+", "category": "hitter-stat",
-     "module": ["foundations"], "shelf": "industry", "priority": 5,
-     "aliases": ["wRC+", "Weighted Runs Created Plus"],
-     "definition": "League- and park-adjusted offensive value, published by MLB. 100 = MLB average, 120 is 20% above, 80 is 20% below. Displayed on this site, never derived by it: the MLB Stats hitter board reads MLB's published figure verbatim and shows it beside HEM+, the offense-rate index the site does compute.",
-     "methodology": "Read verbatim from MLB's bulk season-total feed and matched by player id, so a traded hitter reads one season line rather than a single stint, and two internal name keys that collide on the same player cannot produce two different numbers. MLB-only; MiLB equivalents use the level-relative RPS+ proxy instead. It runs wider than HEM+ because it is unshrunk: measured over the pooled 2021-2026 qualified pools (2,069 hitter-seasons), published wRC+ has a standard deviation of 25.3 against HEM+ at 17.7, which is why the two columns are colored on different thresholds rather than sharing one set. The wRC+ column bands at 85, 120 and 145, the round numbers that reproduce the HEM+ band shares on the wider wRC+ distribution.",
-     "origin": "Industry metric. Linear-weights framework by Tom Tango and coauthors (The Book); wRC+ implemented by FanGraphs and published by MLB. We display it as the offensive baseline next to our own metrics and compute no version of it.",
-     "seeAlso": ["hem_plus", "rps_plus", "ops"]},
     {"id": "active_pool", "term": "Active prospect pool", "category": "methodology",
      "aliases": ["active pool"], "priority": 84,
      "definition": "The set of currently-tracked, non-graduated MiLB prospects that every ranking, farm grade, and Arkmetric is computed over. Pool integrity is a platform invariant: MLB-side modules (Free Agency) read prospect data read-only and may not write into it.",

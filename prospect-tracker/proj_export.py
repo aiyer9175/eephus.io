@@ -105,124 +105,6 @@ def _display_names() -> dict[int, str]:
     return {k: v for k, v in out.items() if v}
 
 
-# P-POSVAL: the Spotrac contract join copied ct["position"] onto the public row
-# unvalidated, so malformed scrape rows shipped fielding-code strings as a
-# position ("35" for Christopher Morel, "37" for Santiago Espinal on the
-# 2026-07-24 payload - both with aav 0, i.e. the whole contract row was junk).
-# Whitelist the vocabulary the surface actually renders; anything else leaves
-# the engine's own role token in place instead of overwriting it with noise.
-_VALID_POS = {"C", "1B", "2B", "3B", "SS", "LF", "CF", "RF", "OF", "DH", "IF",
-              "INF", "SP", "RP", "P", "LHP", "RHP", "SIRP", "MIRP", "CL",
-              "TWP", "UT", "UTIL"}
-
-
-def _valid_pos(pos) -> bool:
-    return isinstance(pos, str) and pos.strip().upper() in _VALID_POS
-
-
-# ============================================================================
-# P-VETTEAM: team + contract identity resolution
-# ============================================================================
-# The Spotrac join is by NORMALIZED NAME and the roll-up drops any vet without a
-# team (`if not tm: continue`). Two independent leaks, measured 2026-07-31 on the
-# served payload: 361 of 1,319 vets carried no team and took 40.7 champion Y1 WAR
-# out of Team Outlook. Causes:
-#   1. Spotrac's team pages only list PRICED contracts (1,161 rows), so pre-arb
-#      and optioned players are absent by construction - 356 of the 361.
-#   2. Generational suffixes disagree between sources. Spotrac writes "Jazz
-#      Chisholm", war_daily writes "Jazz Chisholm Jr." -> keys never met.
-# The suffix mismatch also mis-AWARDED contracts: the WSN "Luis Garcia" deal
-# joined mlbam 472610 (the reliever, on MIN) instead of 671277 (Luis Garcia Jr.,
-# WSN), because the reliever's key matched exactly. Resolution below is
-# mlbam-keyed and uses the observed club as the tiebreak.
-_SUFFIX_TOKENS = {"jr", "sr", "ii", "iii", "iv"}
-
-
-def _base_key(key: str) -> str:
-    """Normalized key with trailing generational suffixes removed. Guarded at
-    two remaining tokens so a genuinely two-token name ("Sammy Sr") survives."""
-    parts = key.split("_")
-    while len(parts) > 2 and parts[-1] in _SUFFIX_TOKENS:
-        parts = parts[:-1]
-    return "_".join(parts)
-
-
-_TEAM_BY_MLBAM: dict[int, str] | None = None
-
-
-def _team_by_mlbam(lookback: int = 4) -> dict[int, str]:
-    """{mlbam: org code} - the club each player was last seen playing for.
-
-    Reads the StatsAPI season-stat splits the corpus build already caches (no
-    new ingest); later seasons overwrite earlier ones, so the map reads as
-    "most recent club seen". Best-effort: an unavailable cache leaves this
-    empty and every join falls back to exactly the pre-fix behaviour."""
-    global _TEAM_BY_MLBAM
-    if _TEAM_BY_MLBAM is not None:
-        return _TEAM_BY_MLBAM
-    out: dict[int, str] = {}
-    try:
-        import fa_sources
-        from trades import canonical_org
-    except ImportError:                                        # noqa: BLE001
-        _TEAM_BY_MLBAM = out
-        return out
-    for season in range(FIRST_SEASON - lookback, FIRST_SEASON):
-        for group in ("hitting", "pitching"):
-            try:
-                splits = fa_sources.fetch_statsapi_season_stats(season, group)
-            except Exception:                                  # noqa: BLE001
-                log.warning("team map: statsapi %s %d unavailable", group, season)
-                continue
-            for sp in splits or []:
-                pid = (sp.get("player") or {}).get("id")
-                name = (sp.get("team") or {}).get("name")
-                if not pid or not name:
-                    continue
-                org = canonical_org(name)
-                if org:
-                    out[int(pid)] = org
-    _TEAM_BY_MLBAM = out
-    log.info("team map: %d mlbam -> org from statsapi season splits", len(out))
-    return out
-
-
-def _resolve_contracts(mlbams, names: dict[int, str], contracts: dict[str, dict],
-                       teams: dict[int, str]) -> tuple[dict[int, dict], dict[str, list[int]]]:
-    """Assign at most one Spotrac contract per mlbam.
-
-    Returns ({mlbam: contract}, {contract_key: [contested mlbam, ...]}). A
-    contract is claimed by the exact normalized key first and by the
-    suffix-stripped key second. When several players claim the same contract,
-    the one whose OBSERVED club matches the contract's team wins outright;
-    if that does not single anyone out the contract is left contested and the
-    caller breaks the tie on projected WAR (the pre-fix behaviour)."""
-    claims: dict[str, list[int]] = {}
-    for mid in mlbams:
-        nm = names.get(mid)
-        if not nm:
-            continue
-        ekey = normalize_key(nm)
-        for ck in (ekey, _base_key(ekey)):
-            if ck in contracts:
-                claims.setdefault(ck, []).append(mid)
-                break
-    assigned: dict[int, dict] = {}
-    contested: dict[str, list[int]] = {}
-    for ck, cands in claims.items():
-        ct = contracts[ck]
-        if len(cands) == 1:
-            assigned[cands[0]] = ct
-            continue
-        tm = ct.get("team_code")
-        agree = [m for m in cands if tm and teams.get(m) == tm]
-        if len(agree) == 1:
-            assigned[agree[0]] = ct
-        else:
-            contested[ck] = cands
-    return assigned, contested
-
-
 def _season_value_usd(war: float, t: int, dpw_level: float) -> float:
     """One projected season priced on the platform's convex tier curve at
     the winter's ex-ante $/WAR level, escalated t seasons out."""
@@ -263,12 +145,11 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
 
     # Spotrac contracts are keyed by NORMALIZED NAME only (no mlbam), so two active
     # players sharing a name (Will Smith C/RP, Max Muncy LAD/ATH) would both join the
-    # SAME contract -- corrupting team/pos/salary/surNpv and the team outlook. The
-    # resolver above assigns each contract to ONE mlbam (exact key, then
-    # suffix-stripped, then observed-club tiebreak); anything it still cannot single
-    # out is awarded after the loop to the highest-projected-WAR row (Spotrac's
-    # collapse keeps the highest-AAV deal, which belongs to the flagship player).
-    # Everyone else honestly carries no contract rather than a wrong one.
+    # SAME contract -- corrupting team/pos/salary/surNpv and the team outlook. Names
+    # that collide within this vet universe join NO contract in the loop; after the
+    # loop the contract is awarded to the collision's highest-projected-WAR row only
+    # (Spotrac's collapse keeps the highest-AAV deal, which belongs to the flagship
+    # player). Everyone else honestly carries no contract rather than a wrong one.
     _vet_ids = set(by_player["hit"]) | set(by_player["pit"])
     _name_counts: dict[str, int] = {}
     for _mid in _vet_ids:
@@ -276,16 +157,13 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         if _nm:
             _k = normalize_key(_nm)
             _name_counts[_k] = _name_counts.get(_k, 0) + 1
-    _teams = _team_by_mlbam()
-    _ct_by_mlbam, _contested = _resolve_contracts(_vet_ids, names, contracts, _teams)
-    _contested_by_mlbam = {m: ck for ck, ms in _contested.items() for m in ms}
 
     def _apply_contract(m: dict, ct: dict) -> None:
         """Stamp the contract-dependent fields (pos/team/thru/aav/sur/surNpv) onto a
         built row. Shared by the inline (unambiguous) join and the post-loop
         collision-winner award so both paths price identically."""
-        if not m.get("twoWay") and _valid_pos(ct.get("position")):
-            m["pos"] = ct["position"].strip().upper()
+        if not m.get("twoWay") and ct.get("position"):
+            m["pos"] = ct["position"]
         if ct.get("team_code"):
             m["team"] = ct["team_code"]
         sal = {int(y): int(v) for y, v in (ct.get("salary_by_year") or {}).items()}
@@ -415,7 +293,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             continue
         _nkey = normalize_key(name)
         _ambiguous = _name_counts.get(_nkey, 0) > 1
-        ct = _ct_by_mlbam.get(mlbam)
+        ct = None if _ambiguous else contracts.get(_nkey)
         m = {
             # Collided names get a collision-safe key (base__mlbam, the thin-card
             # convention); the post-loop award below restores the PLAIN key on the
@@ -424,9 +302,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             "mlbam": mlbam,
             "src": "vet", "twoWay": True if two_way else None,
             "pos": "TWP" if two_way else ((ct or {}).get("position") or path["role"]),
-            # Contract club first (it is the paying club); the observed club is the
-            # fallback that keeps un-contracted vets on a roster instead of dropped.
-            "team": (ct or {}).get("team_code") or _teams.get(mlbam),
+            "team": (ct or {}).get("team_code"),
             "war": war_arr,
             # Champion MEAN path (5y) - the SUM basis for the Team Outlook
             # multi-year roll-up (warChamp[0] == warY1Champ below).
@@ -465,24 +341,18 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             m["warTotalP90"] = round(sum(p90_arr), 1)
         if ct:
             _apply_contract(m, ct)
-            # A resolved collision winner takes the plain key back (links/joins).
-            if _ambiguous and contracts.get(_nkey) is ct:
-                m["key"] = _nkey
         m = _clean(m)
         out.append(m)
-        _ck = _contested_by_mlbam.get(mlbam)
-        if _ck:
-            _collision_rows.setdefault(_ck, []).append(m)
-    # Contracts the resolver could not single out: award to the highest-projected-WAR
-    # claimant only (Spotrac's collapse keeps the highest-AAV deal, i.e. the flagship).
-    for _ck, rows in _collision_rows.items():
-        ct = contracts.get(_ck)
+        if _ambiguous:
+            _collision_rows.setdefault(_nkey, []).append(m)
+    # Award each collided name's contract to its highest-projected-WAR row only.
+    for _nkey, rows in _collision_rows.items():
+        ct = contracts.get(_nkey)
         if not ct or not rows:
             continue
         winner = max(rows, key=lambda m: m.get("warTotal") or 0.0)
         _apply_contract(winner, ct)   # mutates the row already in `out`
-        if winner["key"].split("__")[0] == _ck:
-            winner["key"] = _ck       # flagship keeps the plain key (links/joins)
+        winner["key"] = _nkey         # flagship keeps the plain key (links/joins)
     out.sort(key=lambda m: -(m.get("warTotal") or 0))
     return out
 
@@ -554,17 +424,7 @@ def _prospect_rows(dpw: float) -> list[dict]:
         if not probs:
             continue
         age = p.get("age")
-        # P-ETACLAMP: anchor the trajectory to the SHIPPED eta, not the raw one.
-        # The row ships eta_yr = max(eta, FIRST_SEASON) and both the board
-        # (assets/projections.js warAt) and the team roll-up offset the path by
-        # that shipped value - but debut_age was computed from the RAW eta, so
-        # every prospect whose eta had already passed (98 of 232 on the
-        # 2026-07-24 payload, 42%) got a trajectory shaped for a debut at their
-        # CURRENT age and then rendered one calendar year later. Aging, scaling
-        # and the surplus eta_years term (which already used the clamped value)
-        # now agree.
-        eta_shipped = max(int(eta), FIRST_SEASON)
-        debut_age = (float(age) + max(0, eta_shipped - (FIRST_SEASON - 1))) if age else None
+        debut_age = (float(age) + max(0, int(eta) - (FIRST_SEASON - 1))) if age else None
         scale = vf._war_scale_for(float(price_fv), role)
         paths = [vf._bucket_season_wars(role, i, reliever, debut_age, scale)
                  for i in range(len(_BUCKET_ORDER))]
@@ -586,21 +446,7 @@ def _prospect_rows(dpw: float) -> list[dict]:
             return len(probs) - 1
 
         lo_b, hi_b = _q_bucket(0.10), _q_bucket(0.90)
-        eta_yr = eta_shipped
-        # P-PWINDOW: the prospect war[] arrays are ETA-ALIGNED (index 0 = the
-        # debut season) while the veteran arrays are CALENDAR-aligned at
-        # FIRST_SEASON, so `sum(path[:HORIZON])` is NOT "the same HORIZON window
-        # as the veteran rows" its comment claimed - for a 2031-ETA prospect it
-        # summed 2031-2035 and labelled it a 2027-2031 total. Measured on the
-        # 2026-07-24 payload: 79 prospects with eta>2027 shipped 155.2 total WAR
-        # against 101.7 actually inside the window (1.53x). The board already
-        # windows correctly in JS (warShown); the PAYLOAD field did not, and
-        # mlb_player_export / fa_export / bayes_trade_value read it directly.
-        _in_win = max(0, HORIZON - (eta_yr - FIRST_SEASON))
-
-        def _wtot(series):
-            return round(sum(series[:_in_win]), 1)
-
+        eta_yr = max(int(eta), FIRST_SEASON)
         sv = vf.surplus_value_mm(float(price_fv), is_pit, pos, age=age,
                                  eta_years=max(0.0, eta_yr - (FIRST_SEASON - 1)))
         # PRIME/TALENT display path (warPTH) + headline peak: reconciled to the
@@ -617,20 +463,20 @@ def _prospect_rows(dpw: float) -> list[dict]:
             "war": [round(w, 2) for w in mean_path],
             "warP10": [round(w, 2) for w in paths[lo_b]],
             "warP90": [round(w, 2) for w in paths[hi_b]],
-            # Totals sum the SAME CALENDAR window as the veteran rows: the war
-            # arrays are ETA-aligned, so the in-window count is HORIZON minus the
-            # seasons before debut (see P-PWINDOW above). The arrays themselves
-            # keep the full control window for the card path.
-            "warTotal": _wtot(mean_path),
-            "warTotalP10": _wtot(paths[lo_b]),
-            "warTotalP90": _wtot(paths[hi_b]),
+            # Totals sum the SAME HORIZON window as the veteran rows (the war
+            # arrays themselves keep the full control window for the card path);
+            # summing the prospect's 7-season control window against the vets'
+            # 5-season totals made every same-column comparison prospect-inflated.
+            "warTotal": round(sum(mean_path[:HORIZON]), 1),
+            "warTotalP10": round(sum(paths[lo_b][:HORIZON]), 1),
+            "warTotalP90": round(sum(paths[hi_b][:HORIZON]), 1),
             # Prime/talent display path (not used for $): board WAR cells.
             "warPTH": [round(w, 2) for w in prime["mean"]] if prime else None,
             "warPTHP10": [round(w, 2) for w in prime["p10"]] if prime else None,
             "warPTHP90": [round(w, 2) for w in prime["p90"]] if prime else None,
-            "warTotalPTH": _wtot(prime["mean"]) if prime else None,
-            "warTotalPTHP10": _wtot(prime["p10"]) if prime else None,
-            "warTotalPTHP90": _wtot(prime["p90"]) if prime else None,
+            "warTotalPTH": round(sum(prime["mean"][:HORIZON]), 1) if prime else None,
+            "warTotalPTHP10": round(sum(prime["p10"][:HORIZON]), 1) if prime else None,
+            "warTotalPTHP90": round(sum(prime["p90"][:HORIZON]), 1) if prime else None,
             "warPeak": prime["peak"] if prime else None,
             "bucketLo": _BUCKET_ORDER[lo_b], "bucketHi": _BUCKET_ORDER[hi_b],
             "pBust": round(probs[0], 3),
@@ -649,23 +495,10 @@ def _cohort_intercepts() -> dict[str, float]:
     retro backtest (proj_backtest.py, fit on 2022-24 residuals, won the
     2025 holdout 7.71 vs 7.76 team-MAE). Applied at the TEAM ROLL-UP only
     - the per-player display keeps the engine's mean (the gate validated
-    the team-level improvement, nothing finer). Missing artifact = no-op.
-
-    GATED on the artifact's own ship_decision (added 2026-07-31). Until now
-    this read the intercepts unconditionally, so re-running proj_backtest.py
-    served whatever it produced even when the challenger LOST its holdout.
-    That is not hypothetical: re-fitting on the post-E3 paths yields
-    cohort_recentered 7.29 against plain recentered 7.19, i.e. the intercepts
-    become actively harmful, and the old code would have shipped them the
-    moment anyone regenerated the artifact. challenger_wins is True on the
-    committed 2026-06-12 fit, so this guard is a no-op TODAY and changes no
-    served number; it exists so the next refit cannot ship itself."""
+    the team-level improvement, nothing finer). Missing artifact = no-op."""
     try:
         d = json.loads((DATA_DIR / "team_outlook_eval.json").read_text(encoding="utf-8"))
-        rb = (d.get("retro_backtest") or {})
-        if not ((rb.get("ship_decision") or {}).get("challenger_wins")):
-            return {}
-        return rb.get("cohort_intercepts_fit_2022_24") or {}
+        return (d.get("retro_backtest") or {}).get("cohort_intercepts_fit_2022_24") or {}
     except (OSError, ValueError):
         return {}
 
@@ -758,7 +591,6 @@ def _depth_pool(corpus: dict, names: dict[int, str],
         if _nm:
             _k = normalize_key(_nm)
             _dp_name_counts[_k] = _dp_name_counts.get(_k, 0) + 1
-    _dp_teams = _team_by_mlbam()
     for mlbam in (set(by_player["hit"]) | set(by_player["pit"])) - vet_mlbams:
         champ = [0.0] * HORIZON
         age_any = None
@@ -787,9 +619,7 @@ def _depth_pool(corpus: dict, names: dict[int, str],
         name = names.get(mlbam)
         _dk = normalize_key(name) if name else None
         ct = (contracts.get(_dk) if (_dk and _dp_name_counts.get(_dk, 0) == 1) else None)
-        # Same fallback the vet rows use: the depth pool is nearly all pre-arb
-        # players, exactly the population Spotrac's contract pages omit.
-        org = (ct or {}).get("team_code") or _dp_teams.get(mlbam)
+        org = (ct or {}).get("team_code")
         last_ctrl = _last_controlled_season(
             {"src": "vet", "thru": (ct or {}).get("signed_through"), "age": age_any})
         bucket = team_war[org] if org else war_unassigned
@@ -1569,8 +1399,6 @@ def build_payload() -> dict:
     re_anchor = (cfg["dollars_per_war"].get("_fa_reanchor") or {})
     return {
         "generated_at": date.today().isoformat(),
-        # Which dollar calibration priced surNpv on the prospect rows.
-        "calibration": vf.calibration_stamp(),
         "first_season": FIRST_SEASON, "horizon": HORIZON,
         "dpw_usd": int(dpw),
         "dpw_infl": float(cfg.get("dollars_per_war_inflation", 0.05)),

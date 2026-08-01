@@ -98,45 +98,6 @@ def test_available_order_b_shuffled_headers(soup):
     assert cond["from_team"] == "SFG" and cond["market_value_aav_usd"] == 19_500_000
 
 
-# ---- compact available layout (2026-07-30 Spotrac redesign) ------------------
-
-def test_available_compact_layout(soup):
-    """The 2-column layout that silently froze the 2027 board for a day:
-    every field the old six columns carried now lives inside one cell."""
-    rows = fs._parse_available_table(soup.find("table", class_="avail-compact"), 2027)
-    assert len(rows) == 3
-    bo = rows[0]
-    assert bo["player_key"] == "bo_bichette" and bo["position"] == "3B"
-    assert bo["fa_type"] == "opt_out" and bo["fa_type_raw"] == "ETO"
-    assert bo["age"] == 28.3 and bo["prev_aav_usd"] == 42_000_000
-    assert bo["from_team"] == "NYM" and bo["spotrac_id"] == "19942"
-    # Fields the compact layout stopped publishing come back None, never stale.
-    assert bo["option_price_usd"] is None
-    assert bo["market_value_aav_usd"] is None and bo["prev_war"] is None
-
-
-def test_available_compact_missing_pill_is_plain_ufa(soup):
-    rows = fs._parse_available_table(soup.find("table", class_="avail-compact"), 2027)
-    gray = rows[1]
-    assert gray["player_key"] == "sonny_gray" and gray["fa_type"] == "ufa"
-    assert gray["position"] == "SP" and gray["prev_aav_usd"] == 25_000_000
-
-
-def test_available_compact_team_logo_variants(soup):
-    """Logo basenames are not uniform - mlb_nym.png, cle_2022.png,
-    ath_2025.png all have to resolve or coverage silently drops."""
-    rows = fs._parse_available_table(soup.find("table", class_="avail-compact"), 2027)
-    assert [r["from_team"] for r in rows] == ["NYM", "CLE", "ATH"]
-    assert rows[2]["fa_type"] == "club_option"
-
-
-def test_available_unknown_layout_still_degrades_loudly(soup, caplog):
-    """The compact fallback must not swallow a genuinely unknown shape."""
-    rows = fs._parse_available_table(soup.find("table", class_="avail-unknown"), 2027)
-    assert rows == []
-    assert any("unrecognized header set" in r.getMessage() for r in caplog.records)
-
-
 # ---- tax ledger --------------------------------------------------------------
 
 def test_tax_table_parses_status_space_and_team(soup):

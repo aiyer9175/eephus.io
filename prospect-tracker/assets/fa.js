@@ -69,9 +69,9 @@
   // Deal verdict chip - the plain-English read of Deal+ (band edges are the
   // 2015-2026 corpus terciles; see the deal_verdict glossary entry).
   const VERDICT_META = {
-    value: ["VALUE", "Projected to be UNDERPAID - rational value exceeds the predicted price (Deal+ in the corpus top tercile, ≥223)."],
-    market: ["MARKET", "Priced about right - rational value and predicted price sit in the corpus middle tercile (Deal+ 109-223)."],
-    overpay: ["OVERPAY", "Projected to be OVERPAID - predicted price exceeds rational value (Deal+ in the corpus bottom tercile, <109)."],
+    value: ["VALUE", "Projected to be UNDERPAID - rational value exceeds the predicted price (Deal+ in the corpus top tercile, ≥160)."],
+    market: ["MARKET", "Priced about right - rational value and predicted price sit in the corpus middle tercile (Deal+ 75-160)."],
+    overpay: ["OVERPAY", "Projected to be OVERPAID - predicted price exceeds rational value (Deal+ in the corpus bottom tercile, <75)."],
   };
   function verdictChip(m) {
     const v = VERDICT_META[m.verdict];
@@ -227,34 +227,6 @@
     return state.classYear ? `class=${state.classYear}&` : "";
   }
 
-  // ---- handedness -----------------------------------------------------------
-  // Class rows carry a single letter in `bt`, and it means DIFFERENT things by
-  // role: for position players it is the bat side, for pitchers the throwing
-  // hand. Verified against the shipped leaderboards before this shipped - the
-  // FA hitters agree with hitter_leaderboards `bats` on 85/85 overlapping
-  // names, and the FA pitchers agree with the PAL reverse-platoon `p_throws`
-  // on 110/110. So the label is role-aware and never claims both.
-  function isPitcherRow(m) {
-    const g = posGroup(m);
-    return g === "SP" || g === "RP";
-  }
-  function handOf(m) {
-    const v = String(m.bt || "").trim().toUpperCase();
-    return (v === "L" || v === "R" || v === "S") ? v : null;
-  }
-  function handLabel(m) {
-    const h = handOf(m);
-    if (!h) return null;
-    if (isPitcherRow(m)) return h === "S" ? "Switch-throws" : `Throws ${h}`;
-    return h === "S" ? "Switch-hitter" : `Bats ${h}`;
-  }
-  // Compact board form: T:L for arms, B:R for bats, so the column scans.
-  function handShort(m) {
-    const h = handOf(m);
-    if (!h) return "";
-    return `<span class="fa-hand" title="${esc(handLabel(m))}">${isPitcherRow(m) ? "T" : "B"}:${h}</span>`;
-  }
-
   function playerLink(m) {
     return `<a href="#${faHash()}player=${encodeURIComponent(m.key || "")}" class="fa-player-link"><span class="fa-row-photo" data-photo-key="${esc(m.key || "")}"></span><strong>${esc(m.name)}</strong></a>`;
   }
@@ -298,14 +270,93 @@
     }
     const stale = d => (Date.now() - new Date(d + "T00:00:00").getTime()) / 864e5 > 14;
     const parts = Object.entries(src).map(([k, d]) =>
-      `${k} ${d}${stale(d) ? ` <span class="fa-stale" title="${k} last confirmed ${d} - more than 14 days old. Re-run the FA pipeline.">&#9888; stale</span>` : ""}`);
-    return `<div class="fa-note fa-sources" title="When each input was last successfully checked for this class, not when the page was built. A quiet market with no new signings still counts as checked; a source that stopped parsing does not.">${gen ? gen + " &middot; " : ""}sources: ${parts.join(" &middot; ")}</div>`;
+      `${k} ${d}${stale(d) ? ` <span class="fa-stale" title="${k} last fetched ${d} - more than 14 days old. Re-run the FA pipeline.">&#9888; stale</span>` : ""}`);
+    return `<div class="fa-note fa-sources" title="MAX(fetched_at) per source table - when each input was last pulled, not when the page was built.">${gen ? gen + " &middot; " : ""}sources: ${parts.join(" &middot; ")}</div>`;
   }
 
-  // Share graphics: boards go through the shared EEPHUS_GFX modal, one-subject
-  // cards through EEPHUS_HUB.openCard (the shared wrapper; the legacy in-module
-  // canvas board renderer was deleted 2026-07-23 - EEPHUS_GFX is always loaded
-  // on this page).
+  // ---- Share card - canvas-native PNG of the board's top 10 -----------------
+  // Drawn by hand (no html2canvas: it can't resolve CSS var(), per the PROSPX
+  // GFX builder's literal-stops precedent), so the card is deterministic in
+  // both themes. Token colors are read from the live computed style.
+  function _tok(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+
+  function downloadShareCard(cls) {
+    const dark = document.documentElement.getAttribute("data-theme") === "dark";
+    const W = 1200, H = 675, PAD = 48;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const g = c.getContext("2d");
+    const bg = _tok("--bg-primary", dark ? "#101014" : "#F6F1E4");
+    const fg = _tok("--text-primary", dark ? "#ECEEF2" : "#0F1B2D");
+    const sub = _tok("--text-tertiary", dark ? "#7C808A" : "#706B5C");
+    const line = _tok("--border", dark ? "#2B2B31" : "#C9C1AE");
+    const MONO = '"DotGothic16","MS Gothic","MS UI Gothic","Osaka-Mono",monospace';
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    // iridescent rule - literal stops per theme (canvas can't read var())
+    const ramp = g.createLinearGradient(PAD, 0, W - PAD, 0);
+    (dark
+      ? [[0, "#00D9FF"], [0.3, "#B47CFF"], [0.55, "#FF4FD8"], [0.78, "#FFD700"], [1, "#4FFF9E"]]
+      : [[0, "#B91C1C"], [0.35, "#C9A227"], [0.65, "#1F7A3A"], [1, "#0E2B4D"]]
+    ).forEach(([s, col]) => ramp.addColorStop(s, col));
+    g.fillStyle = ramp; g.fillRect(PAD, 86, W - 2 * PAD, 3);
+    g.fillStyle = fg;
+    g.font = `700 34px ${MONO}`;
+    g.fillText(`MLB FREE AGENCY - ${cls.class_year - 1}-${String(cls.class_year).slice(2)} CLASS BOARD`, PAD, 60);
+    g.fillStyle = sub;
+    g.font = `16px ${MONO}`;
+    g.fillText(`${cls.n_members} constructed members · ${cls.n_projected} projected · winter $/WAR (ex-ante) ${money(cls.dpw_usd)}`, PAD, 116);
+    const cols = [PAD, PAD + 50, PAD + 440, PAD + 610, PAD + 750, PAD + 905, PAD + 1010];
+    g.font = `700 14px ${MONO}`;
+    ["#", "PLAYER", "projLEN/GUAR", "projAAV", "DEAL WAR", "SURPLUS", "VERDICT"].forEach((h, i) =>
+      g.fillText(h, cols[i], 152));
+    g.strokeStyle = line; g.beginPath(); g.moveTo(PAD, 162); g.lineTo(W - PAD, 162); g.stroke();
+    const top = cls.members.filter(m => m.projGuar != null).slice(0, 10);
+    const vcol = { value: dark ? "#4FFF9E" : "#1F7A3A", market: sub, overpay: dark ? "#FF6B6B" : "#B91C1C" };
+    top.forEach((m, i) => {
+      const y = 196 + i * 40;
+      g.fillStyle = sub; g.font = `16px ${MONO}`;
+      g.fillText(String(i + 1), cols[0], y);
+      g.fillStyle = fg; g.font = `700 17px ${MONO}`;
+      g.fillText(m.name, cols[1], y);
+      const nameW = g.measureText(m.name).width;
+      g.fillStyle = sub; g.font = `13px ${MONO}`;
+      g.fillText(`${m.pos || ""} · ${m.age != null ? Math.floor(m.age) : "?"} · ${m.from || ""}${m.thinPlatform ? " · ⚠ thin platform" : ""}`,
+                 cols[1] + nameW + 10, y);
+      g.fillStyle = fg; g.font = `16px ${MONO}`;
+      g.fillText(`${m.projYears}y / ${money(m.projGuar)}`, cols[2], y);
+      g.fillText(money(m.projAav), cols[3], y);
+      g.fillText(m.warTotal != null ? m.warTotal.toFixed(1) : " - ", cols[4], y);
+      g.fillText(formatMetric(m.surplus / 1e6, "surplusM"), cols[5], y);
+      g.fillStyle = vcol[m.verdict] || sub;
+      g.fillText((m.verdict || " - ").toUpperCase(), cols[6], y);
+    });
+    g.fillStyle = sub; g.font = `13px ${MONO}`;
+    g.fillText("predicted market (projGuarantee) vs rational value - two numbers, never conflated · both hard gates passed · projections ex-ante",
+               PAD, H - 56);
+    g.fillStyle = fg; g.font = `700 16px ${MONO}`;
+    g.fillText("eephus.io/fa", PAD, H - 28);
+    c.toBlob(blob => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `fa-class-board-${cls.class_year - 1}-${String(cls.class_year).slice(2)}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    }, "image/png");
+  }
+
+  // Open the shared Generate GFX modal for a one-subject (card) export; fall
+  // back to the legacy direct download if the module didn't load.
+  function _openCard(opts) {
+    if (window.EEPHUS_GFX) {
+      window.EEPHUS_GFX.open({ kind: "card", module: opts.module, accentToken: opts.accentToken,
+        title: opts.name, filenameBase: (opts.filename || "eephus-card").replace(/\.png$/, ""), card: opts });
+    } else if (window.EEPHUS_HUB) {
+      window.EEPHUS_HUB.shareCard(opts);
+    }
+  }
 
   // Board spec for the Generate GFX modal: the constructed class as a column
   // leaderboard (proj years/guarantee, AAV, deal WAR, surplus, verdict).
@@ -488,32 +539,15 @@
       : "UFA - contract expires; locked into the class";
     return `<span class="fa-type ${opt ? "fa-type-opt" : "fa-type-ufa"}" title="${tip}">${lbl}</span>`;
   }
-  function posHead(m) {
-    return String(m.pos || "").toUpperCase().split("/")[0];
-  }
   function posGroup(m) {
-    const head = posHead(m);
+    const head = String(m.pos || "").toUpperCase().split("/")[0];
     return ["SP", "LHP", "RHP", "P"].includes(head) ? "SP"
       : ["RP", "CL"].includes(head) ? "RP" : head === "C" ? "C"
       : ["1B", "2B", "3B", "SS"].includes(head) ? "IF"
       : ["LF", "CF", "RF", "OF"].includes(head) ? "OF" : "DH";
   }
-  // Filter chips accept BOTH the coarse roll-ups (IF / OF / SP / RP) and a specific
-  // position (1B / 2B / 3B / SS / LF / CF / RF). The class data is already granular -
-  // pos carries 1B/2B/3B/SS/LF/CF/RF/C/DH/SP/RP - so a specific chip matches the raw
-  // head position while a roll-up chip keeps the grouped behaviour.
-  const POS_ROLLUPS = new Set(["C", "IF", "OF", "SP", "RP", "DH"]);
-  function posMatches(m, sel) {
-    return POS_ROLLUPS.has(sel) ? posGroup(m) === sel : posHead(m) === sel;
-  }
 
-  // The board's default order is the predicted guarantee: the biggest deals
-  // first, which is what the printed rank numbers mean. BUGFIX 2026-07-31: this
-  // key had NO header, so first paint showed no active-sort indicator and the
-  // default ordering was a one-way door - once you clicked any column there was
-  // no way back to it. "Yrs / Guar" now carries projGuar, and # (rank) resolves
-  // to the same key, so the three agree.
-  const boardState = { sort: "projGuar", dir: -1, type: "all", pos: "all", verdict: "all", hand: "all" };
+  const boardState = { sort: "projGuar", dir: -1, type: "all", pos: "all", verdict: "all" };
 
   // Which "biggest misses" category the Model Accountability table is showing.
   let modelMissTab = "guar";   // guar | years | aav
@@ -523,32 +557,18 @@
     let members = cls.members.slice();
     if (boardState.type === "ufa") members = members.filter(m => !isOption(m));
     else if (boardState.type === "options") members = members.filter(isOption);
-    if (boardState.pos !== "all") members = members.filter(m => posMatches(m, boardState.pos));
+    if (boardState.pos !== "all") members = members.filter(m => posGroup(m) === boardState.pos);
     if (boardState.verdict !== "all") members = members.filter(m => m.verdict === boardState.verdict);
-    if (boardState.hand !== "all") members = members.filter(m => handOf(m) === boardState.hand);
     members.sort((a, b) => {
-      const v = m => {
-        // String keys sort as text; "rank" means the board's own default order,
-        // so clicking it is the way back from any other sort. BUGFIX 2026-07-31:
-        // rank resolved to SURPLUS while the rank numbers were painted in the
-        // projGuar default order, so the # column re-ranked the board into a
-        // sequence its own numbers contradicted. Both are projGuar now.
-        if (sortKey === "name") return String(m.name || "").toLowerCase();
-        if (sortKey === "status" || sortKey === "verdict") return String(m[sortKey] || "");
-        if (sortKey === "rank") return m.projGuar ?? -1e15;
-        return m[sortKey] ?? (sortKey === "age" ? 99 : -1e15);
-      };
+      const v = m => m[sortKey] ?? (sortKey === "age" ? 99 : -1e15);
       return boardState.dir * (v(a) > v(b) ? 1 : v(a) < v(b) ? -1 : 0);
     });
-    // Emits a SPAN, not a th: the board head is a CSS grid now, and a th inside
-    // a div is invalid markup that browsers silently reparent, which would drop
-    // the header row entirely.
     const sHead = (label, key, title) => {
       const on = sortKey === key;
       // a11y (matches the prospx/trademachine sort-header pattern): keyboard
       // reachable, announced as a button, live sort state on aria-sort.
       const ariaSort = on ? (boardState.dir < 0 ? "descending" : "ascending") : "none";
-      return `<span class="fa-sort${on ? " is-sorted" : ""}" data-fsort="${key}" title="${esc(title || "Click to sort")}" tabindex="0" role="button" aria-sort="${ariaSort}">${label}${on ? (boardState.dir < 0 ? " ▾" : " ▴") : ""}</span>`;
+      return `<th class="fa-sort${on ? " is-sorted" : ""}" data-fsort="${key}" title="${esc(title || "Click to sort")}" tabindex="0" role="button" aria-sort="${ariaSort}">${label}${on ? (boardState.dir < 0 ? " ▾" : " ▴") : ""}</th>`;
     };
     const head = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">${cls.class_year - 1}-${String(cls.class_year).slice(2)} Class Board</span>
@@ -565,124 +585,60 @@
       ${fchip("type", "ufa", `UFA · ${nUfa}`, boardState.type === "ufa")}
       ${fchip("type", "options", `Options · ${nOpt}`, boardState.type === "options")}
       <span class="filter-label" style="margin-left:12px;">Pos</span>
-      ${["all", "C", "1B", "2B", "3B", "SS", "IF", "LF", "CF", "RF", "OF", "DH", "SP", "RP"].map(p => fchip("pos", p, p === "all" ? "All" : p, boardState.pos === p)).join("")}
+      ${["all", "C", "IF", "OF", "SP", "RP", "DH"].map(p => fchip("pos", p, p === "all" ? "All" : p, boardState.pos === p)).join("")}
       <span class="filter-label" style="margin-left:12px;">Verdict</span>
       ${["all", "value", "market", "overpay"].map(v => fchip("verdict", v, v === "all" ? "All" : v[0].toUpperCase() + v.slice(1), boardState.verdict === v)).join("")}
-      <span class="filter-label" style="margin-left:12px;" title="Bat side for position players, throwing hand for pitchers - the class row carries one letter and it means the side that matters for that role.">Hand</span>
-      ${[["all", "All"], ["L", "L"], ["R", "R"], ["S", "Switch"]].map(([v, l]) => fchip("hand", v, l, boardState.hand === v)).join("")}
       <span class="fa-sub fa-filter-count">${members.length} shown</span>
     </div>`;
     const body = members.map((m, i) => {
-      // Comps and team fits are NOT on the board row any more (2026-07-31). They
-      // were the widest and least scannable content on it - a semicolon list of
-      // four historical contracts, and a run of club logos - and BOTH already
-      // render in full on the #player card (comps as a table with the signing
-      // club, fits as chips carrying their component scores). Dropping them from
-      // the row is what buys the card a fixed height without cramping anything.
-      const yearsBand = (m.projYearsP10 != null && m.projYearsP90 != null)
-        ? `${m.projYearsP10}&ndash;${m.projYearsP90}` : null;
+      const fits = (m.fits || []).map(f =>
+        `<span class="fa-fitorg" title="fit ${f.fit} - need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " - blocked by " + esc(blockedText(f.blockedBy)) : ""}">${teamLogo(f.org)}${f.org}${f.blockedBy ? "*" : ""}</span>`).join(" ");
+      const comps = (m.comps || []).map(c =>
+        `${esc(c.name)} '${String(c.yr).slice(2)} ${c.years || "?"}y/${c.guar ? "$" + (c.guar / 1e6).toFixed(0) + "M" : "?"}`).join("; ");
+      const yearsBand = m.projYears != null
+        ? `${m.projYears}<span class="fa-band"> (${m.projYearsP10 ?? "?"}&ndash;${m.projYearsP90 ?? "?"})</span>` : EM_DASH;
+      const guarBand = m.projGuar != null
+        ? `${money(m.projGuar)}<span class="fa-band"> (${money(m.projGuarP10)}&ndash;${money(m.projGuarP90)})</span>` : EM_DASH;
       // Total-WAR P10-P90 band dropped (F-01): summing per-year quantiles does
       // not give the total's quantile, and the underlying per-year marginals
       // undercover realized totals (no league-attrition zero floor), so the
       // band was miscalibrated. Point estimate stays; see REVIEW_QUEUE.
-      const dealWar = m.warTotal != null ? formatMetric(m.warTotal, "war") : null;
-      // Row-1 deal cells. The P10-P90 bands moved into the title: rendering a
-      // point estimate AND its band inside a ~110px track is exactly what made
-      // the old cells unreadable, and a band is hover-depth, not scan-depth.
-      const aavCell = m.projAav == null ? EM_DASH
-        : `<span title="Predicted average annual value. P10-P90 ${money(m.projAavP10)} to ${money(m.projAavP90)}.">${money(m.projAav)}</span>`;
-      const guarCell = m.projGuar == null ? EM_DASH
-        : `<span title="Predicted term and total guarantee. Length P10-P90 ${m.projYearsP10 ?? "?"} to ${m.projYearsP90 ?? "?"} years; guarantee P10-P90 ${money(m.projGuarP10)} to ${money(m.projGuarP90)}.">${m.projYears != null ? m.projYears + "y / " : ""}${money(m.projGuar)}</span>`;
+      const dealWar = m.warTotal != null
+        ? `${formatMetric(m.warTotal, "war")}` : EM_DASH;
       const trCls = [
         (m.projGuar == null || m.status === "option_exercised") ? "fa-dim" : "",
         isOption(m) ? "fa-row-opt" : "",
       ].filter(Boolean).join(" ");
-      // PROSPX-pattern card (Lane B, 2026-07-30), same treatment the Projections
-      // board took. Row 1 is identity and the verdict-bearing numbers; row 2 is a
-      // tape carrying the PREDICTED DEAL, which is the thing a reader actually
-      // came for and which the table had squeezed into four cells alongside their
-      // own P10-P90 bands.
-      const chip = (label, val, title) => (val == null || val === EM_DASH ? "" :
-        `<div class="mlb-chip"${title ? ` title="${title}"` : ""}><b>${label}</b>${val}</div>`);
-      // Phase H (docs/master-plan-2026-07-29-efv-fa.md): these were computed and
-      // carried in the payload but rendered nowhere. warCvar10 is the mean of the
-      // worst decile of outcomes, i.e. what the deal looks like when it goes
-      // wrong, which is exactly what a surplus point estimate hides.
-      const risk = [
-        m.warCvar10 != null ? chip("downside WAR", formatMetric(m.warCvar10, "war"),
-          "Conditional value at risk: the MEAN of the worst 10 percent of outcome paths, not the 10th percentile itself. What the contract looks like when it goes wrong.") : "",
-        m.pAnyStar != null ? chip("star odds", (m.pAnyStar * 100).toFixed(0) + "%",
-          "Probability of at least one star-level season over the predicted term.") : "",
-        m.optKind ? chip("option", esc(String(m.optKind)) + (m.optHeldBy ? " / " + esc(String(m.optHeldBy)) : ""),
-          "Contract option on the deal: which kind, and who holds it." + (m.optValue != null ? ` Modelled value ${money(m.optValue)}.` : "")) : "",
-      ].join("");
-      // Tape order runs production -> value -> risk -> shape, and every chip in
-      // it has a matching button in the sort bar above the board (see FA_SORTBAR).
-      const tape = `<div class="mlb-tape"><div class="mlb-tape-inner">
-        ${chip("WAR y1", m.warY1 != null ? formatMetric(m.warY1, "war") : null, "Projected year-1 bWAR")}
-        ${chip("deal WAR", dealWar, "Projected bWAR over the predicted term (floor-ceiling from the Gate-1 probability buckets)")}
-        ${chip("rational", m.rational != null ? money(m.rational) : null, "Convex-priced NPV of the projected production: what the deal is worth if you pay for value rather than for name")}
-        ${risk}
-        ${chip("yrs P10-P90", yearsBand, "The predicted term's P10-P90 range. The point estimate is in the Yrs / Guar column.")}
-      </div></div>`;
-      return `<div class="mlb-card fa-card${trCls ? " " + trCls : ""}" tabindex="0" role="button"
-          data-card-href="#player=${encodeURIComponent(m.key)}">
-        <span class="mlb-rank">${i + 1}</span>
-        <div class="fa-id">
-          <span class="mlb-name">${playerLink(m)}${noteBadge(m)}${thinBadge(m)} ${typeTag(m)}</span>
-          <span class="mlb-sub">${esc(m.pos || "")} &middot; ${m.age != null ? m.age.toFixed(1) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")}${handOf(m) ? " &middot; " + handShort(m) : ""}${m.qo ? ` &middot; <span title="Received a qualifying offer: signing him costs the new club draft compensation">QO</span>` : ""}</span>
-        </div>
-        <span class="mlb-metric"><span class="mlb-metric-label">Status</span><span class="fa-statustext">${statusChip(m)}</span></span>
-        <span class="mlb-metric"><span class="mlb-metric-label">proj AAV</span>${aavCell}</span>
-        <span class="mlb-metric"><span class="mlb-metric-label">Yrs / Guar</span>${guarCell}</span>
-        <span class="mlb-metric"><span class="mlb-metric-label">Surplus</span>${surplusSpan(m.surplus, m.surplusP10, m.surplusP90)}</span>
-        <span class="mlb-metric"><span class="mlb-metric-label">Verdict</span>${verdictChip(m)}</span>
-        ${tape}
-      </div>`;
+      return `<tr${trCls ? ` class="${trCls}"` : ""}>
+        <td>${i + 1}</td>
+        <td>${playerLink(m)}${noteBadge(m)} ${typeTag(m)}<span class="fa-sub"> ${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")}</span>${comps ? `<div class="fa-comps" title="Nearest real historical contracts (never fabricated)">comps: ${comps}</div>` : ""}</td>
+        <td>${statusChip(m)}</td>
+        <td>${m.warY1 != null ? formatMetric(m.warY1, "war") : EM_DASH}${thinBadge(m)}</td>
+        <td title="Projected bWAR over the predicted term (floor-ceiling from the Gate-1 probability buckets)">${dealWar}</td>
+        <td>${yearsBand}</td>
+        <td>${guarBand}</td>
+        <td>${m.projAav != null ? `${money(m.projAav)}<span class="fa-band"> (${money(m.projAavP10)}&ndash;${money(m.projAavP90)})</span>` : EM_DASH}</td>
+        <td>${m.rational != null ? money(m.rational) : EM_DASH}</td>
+        <td>${surplusSpan(m.surplus, m.surplusP10, m.surplusP90)}</td>
+        <td>${verdictChip(m)}</td>
+        <td title="* = blocked (hover each club for who's blocking - prospect or MLB incumbent)">${fits || EM_DASH}</td>
+      </tr>`;
     }).join("");
     const _vm = faValueMap(members);
     const valMap = _vm ? `<details class="fa-valmap"><summary>Value map &middot; rational value vs predicted price (current filters)</summary><div class="fa-valmap-wrap" data-export-chart data-export-title="FA value map - rational value vs predicted price">${_vm}</div></details>` : "";
-    // Card-head tracks must mirror the .fa-card grid exactly, so both read from
-    // one definition rather than two that can drift. Every flexible track is
-    // minmax(0,...) - a bare fr refuses to shrink below min-content and a long
-    // signed-status string would blow the row out sideways.
-    const FA_TRACKS = "34px minmax(0,1.85fr) minmax(0,1.2fr) 84px 118px 92px 84px";
-    // The row-2 tape chips are NOT track-aligned with the header (they live in
-    // the reserved band at the card bottom and scroll inside their own box), so
-    // they get their own strip of sort buttons - the /fantasy/ .ff-sortbar
-    // pattern. This is what restores every sort the table had, plus the ones it
-    // never exposed, WITHOUT re-widening row 1 back into a twelve-column table.
-    const FA_SORTBAR = `<div class="mlb-sortbar"><span class="mlb-sortbar-lbl">Sort tape</span>
+    rows.innerHTML = head + filterBar + valMap + `<div class="fa-board-layout"><div class="fa-board-main"><table class="detail-table">
+      <thead><tr><th>#</th><th>Player</th><th>Status</th>
       ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 bWAR")}
-      ${sHead("deal WAR", "warTotal", "Projected bWAR over the predicted term, with floor-ceiling buckets")}
-      ${sHead(`<span data-gl="rational_value">rational</span>`, "rational", "Convex-priced NPV of the projected production")}
-      ${sHead("downside WAR", "warCvar10", "Mean of the worst 10 percent of outcome paths - what the deal looks like when it goes wrong")}
-      ${sHead("star odds", "pAnyStar", "Probability of at least one star-level season over the predicted term")}
-      ${sHead("length", "projYears", "Predicted contract length in years")}
-      ${sHead("age", "age", "Player age carried on the class row")}
-    </div>`;
-    // # and Player join the sortable set; the table had them as inert th.
-    rows.innerHTML = head + filterBar + valMap + `<div class="fa-board-layout"><div class="fa-board-main">
-      ${FA_SORTBAR}
-      <div class="mlb-card-head" style="grid-template-columns:${FA_TRACKS};">
-        ${sHead("#", "rank", "Board position under the current sort. The default order is the predicted guarantee.")}
-        ${sHead("Player", "name", "Sort by name")}
-        ${sHead("Status", "status", "Where the player is in the market")}
-        ${sHead("proj AAV", "projAav", "Predicted average annual value. Hover a cell for its P10-P90 band.")}
-        ${sHead("Yrs / Guar", "projGuar", "Predicted term and total guarantee. Hover a cell for the P10-P90 bands.")}
-        ${sHead(`<span data-gl="contract_surplus">Surplus</span>`, "surplus", "Rational value minus predicted price (hover for the floor/ceiling range)")}
-        ${sHead(`<span data-gl="deal_plus">Verdict</span>`, "verdict", "The deal call, from surplus banded within the player's own group")}
-      </div>
-      <div class="mlb-card-list">${body || '<div class="fa-sub" style="padding:2rem;text-align:center;">No free agents match these filters.</div>'}</div></div>
+      ${sHead("Deal WAR", "warTotal", "Projected bWAR over the predicted term, with floor-ceiling buckets")}
+      ${sHead(`<span data-gl="m_years">projLength</span>`, "projYears", "Predicted contract length (P10-P90)")}
+      ${sHead(`<span data-gl="m_guarantee">projGuarantee</span>`, "projGuar", "Predicted total guarantee (P10-P90)")}
+      ${sHead(`<span data-gl="m_aav">projAAV</span>`, "projAav", "Predicted average annual value (P10-P90)")}
+      ${sHead(`<span data-gl="rational_value">Rational</span>`, "rational", "Convex-priced NPV of the projected production")}
+      ${sHead(`<span data-gl="contract_surplus">Surplus</span>`, "surplus", "Rational value minus predicted price (hover for the floor/ceiling range)")}
+      <th><span data-gl="deal_plus">Verdict</span></th>
+      <th><span data-gl="fit_components">Fits</span></th></tr></thead>
+      <tbody>${body || '<tr><td colspan="12" style="padding:2rem;text-align:center;color:var(--text-tertiary);">No free agents match these filters.</td></tr>'}</tbody></table></div>
       ${boardRail(cls)}</div>`;
-    rows.querySelectorAll(".fa-card").forEach(c => { c.style.gridTemplateColumns = FA_TRACKS; });
-    rows.querySelectorAll(".fa-card[data-card-href]").forEach(c => {
-      const open = () => { location.hash = c.dataset.cardHref.replace(/^#/, ""); };
-      c.onclick = e => { if (!e.target.closest("a,button")) open(); };
-      c.onkeydown = e => {
-        if ((e.key === "Enter" || e.key === " ") && !e.target.closest("a,button")) { e.preventDefault(); open(); }
-      };
-    });
     rows.querySelectorAll("[data-fsort]").forEach(h => {
       const doSort = () => {
         const k = h.dataset.fsort;
@@ -698,16 +654,6 @@
         if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") { e.preventDefault(); doSort(); }
       };
     });
-    // In-module jumps that are not player cards (today: the rail's $/WAR
-    // sparkline -> #view=dpw). faHash() keeps the selected winter on the URL,
-    // which A5 established: dropping class= reloads the wrong class.
-    rows.querySelectorAll("[data-fa-goto]").forEach(el => {
-      const go = () => { location.hash = faHash() + el.dataset.faGoto; };
-      el.onclick = go;
-      el.onkeydown = e => {
-        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") { e.preventDefault(); go(); }
-      };
-    });
     rows.querySelectorAll("[data-ffilter]").forEach(b => b.onclick = () => {
       boardState[b.dataset.ffilter] = b.dataset.fval;
       renderBoard(rows, cls);
@@ -716,6 +662,7 @@
     const gfx = document.getElementById("fa-gfx-btn");
     if (gfx) gfx.onclick = () => {
       if (window.EEPHUS_GFX) window.EEPHUS_GFX.open(_faBoardSpec(cls, members));
+      else downloadShareCard(cls);   // fallback if the GFX module didn't load
     };
     fillRowPhotos(rows);
   }
@@ -820,15 +767,8 @@
     const yrs = Object.keys(series).sort();
     // Chart of the FULL series (hover any point for its winter + $/WAR);
     // falls back to the old text rows if there are too few points for a line.
-    // The sparkline is a DOOR, not only a picture: it opens the $/WAR by winter
-    // detail view. role/tabindex/keydown make it a real button, because a target
-    // only a mouse can reach is not one; the hash is read by that view.
-    const trendSvg = dpwTrendChart(series, yrs);
-    const trend = trendSvg
-      ? `<div class="fa-dpw-link" role="button" tabindex="0" data-fa-goto="view=dpw"
-          title="Open the $/WAR by winter detail - the full signings-implied series, how it is estimated, and what every future season escalates against">${trendSvg}<span class="fa-dpw-cue">$/WAR by winter, in full &rarr;</span></div>`
-      : yrs.slice(-6).map(y =>
-        `<div class="fa-rail-row"><span>${Number(y) - 1}-${String(y).slice(2)}</span><span class="fa-rail-num">${money(series[y])}</span></div>`).join("");
+    const trend = dpwTrendChart(series, yrs) || yrs.slice(-6).map(y =>
+      `<div class="fa-rail-row"><span>${Number(y) - 1}-${String(y).slice(2)}</span><span class="fa-rail-num">${money(series[y])}</span></div>`).join("");
     const mod = (title, body, tip) => body
       ? `<div class="fa-rail-mod"><div class="fa-rail-head" title="${esc(tip || "")}">${title}</div>${body}</div>` : "";
     return `<aside class="fa-board-rail">
@@ -983,7 +923,7 @@
         <span id="fa-hero-photo"></span>
         <div class="mlbp-hero-main">
           <div class="mlbp-name">${teamLogo(m.from)}<h2>${esc(m.name)}</h2></div>
-          <div class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? "age " + Math.floor(m.age) : "?"} &middot; ${esc(m.from || "")}${handLabel(m) ? " &middot; " + esc(handLabel(m)) : ""} &middot; ${statusChip(m)}</div>
+          <div class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? "age " + Math.floor(m.age) : "?"} &middot; ${esc(m.from || "")} &middot; ${statusChip(m)}</div>
           <div style="margin-top:8px;"><button class="chip egfx-chip" id="fa-player-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>
         </div>
         <div class="mlbp-tiles">
@@ -992,7 +932,6 @@
           ${m.dealPlus != null ? `<div class="mlbp-tile"><span class="mlbp-tile-label">Deal+</span><span class="mlbp-tile-val">${Math.round(m.dealPlus)}</span></div>` : ""}
         </div>
       </div>
-      <div id="fa-current-line"></div>
       ${m.thinPlatform ? `<div class="fa-cba-note">&#9888; ${esc(m.thinPlatform)} - the projection, and every number priced off it, is low-confidence.</div>` : ""}
       ${m.note ? `<div class="fa-cba-note">&#8251; ${esc(m.note)}</div>` : ""}
       ${signedBlock}
@@ -1022,10 +961,6 @@
     if (window.EEPHUS_HUB) {
       window.EEPHUS_HUB.links().then(L => {
         const row = L && (L.byKey || {})[m.key];
-        // Fill the stat line FIRST: it is the only block here that is content
-        // rather than chrome, and a hub-strip/headshot failure must not take it
-        // down with it.
-        if (row && row.mlbam) fillCurrentLine(row.mlbam);
         const hub = document.getElementById("fa-hub");
         if (hub && row) hub.innerHTML = window.EEPHUS_HUB.stripHTML(row, "fa");
         const ph = document.getElementById("fa-hero-photo");
@@ -1038,84 +973,33 @@
     }
   }
 
-  // ---- current-season line --------------------------------------------------
-  // The class payload is a MARKET payload: it carries no stats at all, so what a
-  // free agent is actually doing right now has to be joined in. The sidecar
-  // (data/mlb_current_lines.json, baked by build_site.py) is the shipped MLB
-  // leaderboards keyed by MLBAM, lifted verbatim.
-  //
-  // WHAT IS NOT HERE, deliberately: this site computes no wRC+ and no xFIP, so
-  // neither is shown. HEM+ is the offense-rate index the site actually has (100
-  // = league average hitter), SEM+/REM+ and FIP are the run-prevention numbers,
-  // and season bWAR lives on the MLB player card rather than the leaderboards.
-  // Inventing either number to fill the row would be worse than its absence.
-  function currentLineHTML(line, meta) {
-    if (!line) return "";
-    const cell = (label, val, title) => val == null || val === "" ? ""
-      : `<div class="mlbp-tile"${title ? ` title="${esc(title)}"` : ""}><span class="mlbp-tile-label">${esc(label)}</span><span class="mlbp-tile-val">${val}</span></div>`;
-    const f3 = v => v == null ? null : Number(v).toFixed(3).replace(/^0\./, ".");
-    const pct = v => v == null ? null : (Number(v) * 100).toFixed(1) + "%";
-    let tiles = "";
-    if (line.side === "hit") {
-      tiles = cell("PA", line.pa) + cell("AVG/OBP/SLG",
-          [f3(line.avg), f3(line.obp), f3(line.slg)].every(x => x != null)
-            ? `${f3(line.avg)}/${f3(line.obp)}/${f3(line.slg)}` : null)
-        + cell("HR", line.hr) + cell("wOBA", f3(line.woba))
-        + cell("HEM+", line.hem, "HEM+ - offensive-rate skill index, 100 = league-average hitter. This site does not compute wRC+.")
-        + cell("Tier", line.tier ? esc(line.tier) : null);
-    } else {
-      tiles = cell("IP", line.ip == null ? null : Number(line.ip).toFixed(1))
-        + cell("ERA", line.era == null ? null : Number(line.era).toFixed(2))
-        + cell("FIP", line.fip == null ? null : Number(line.fip).toFixed(2), "FIP - this site does not compute xFIP.")
-        + cell("K%", pct(line.kPct)) + cell("BB%", pct(line.bbPct))
-        + cell(line.side === "sp" ? "SEM+" : "REM+", line.side === "sp" ? line.sem : line.rem,
-               line.side === "sp" ? "SEM+ - starter run-prevention skill index, 100 = league average."
-                                  : "REM+ - reliever skill index, 100 = league average.");
-    }
-    if (!tiles) return "";
-    const qual = line.qual === false
-      ? ' <span class="fa-sub">(below the qualifying threshold - the rate stats are shrunk toward league average)</span>' : "";
-    return `<h3>${esc(meta.season || "")} season to date</h3>
-      <div class="mlbp-tiles fa-current-tiles">${tiles}</div>
-      <p class="fa-note">Lifted verbatim from the eephus.io MLB leaderboards${meta.asOf ? `, data as of ${esc(meta.asOf)}` : ""}.${qual}</p>`;
-  }
-
-  function fillCurrentLine(mlbam) {
-    const host = document.getElementById("fa-current-line");
-    if (!host) return;
-    load("mlb_current_lines").then(payload => {
-      const line = payload && payload.players ? payload.players[String(mlbam)] : null;
-      const el = document.getElementById("fa-current-line");
-      if (!el) return;
-      el.innerHTML = line
-        ? currentLineHTML(line, payload)
-        : `<h3>${esc((payload && payload.season) || "")} season to date</h3><p class="fa-note">No current-season line: this player is not on the MLB leaderboards for the season (injured, not yet on a roster, or below the leaderboard's minimum playing time).</p>`;
-    }).catch(() => { /* sidecar absent - the card simply omits the block */ });
-  }
-
-  // Unified per-player share card - declarative since GFX slice 4: this
-  // builder now only maps the FA row's DATA (display-formatted with the FA
-  // module's own money rules) onto the shared "player-market" template;
-  // EEPHUS_HUB.templates owns the tile/section layout. Data priorities are
-  // unchanged: the predicted market as TILES (the section no longer repeats
-  // projGuarantee/projAAV/verdict - DEDUPE 2026-07-23), rational vs surplus +
-  // team fits + comps as the body.
+  // Unified per-player share card (EEPHUS_HUB canvas template) - the FA
+  // module's data priorities: the predicted market up top, rational vs
+  // surplus + comps as the body.
   function sharePlayerCard(m, linkRow) {
-    window.EEPHUS_HUB.openCard({
-      template: "player-market",
-      data: {
-        projYears: m.projYears,
-        projGuar: m.projGuar != null ? money(m.projGuar) : null,
-        projAav: m.projAav != null ? money(m.projAav) : null,
-        dealPlus: m.dealPlus != null ? String(Math.round(m.dealPlus)) : null,
-        dealWar: m.warTotal != null ? m.warTotal.toFixed(1) : null,
-        rational: m.rational != null ? money(m.rational) : null,
-        surplus: m.surplus != null ? money(m.surplus) : null,
-        priorAav: m.prevAav != null ? money(m.prevAav) : null,
-        fits: (m.fits || []).map(f => ({ org: f.org, blocked: !!f.blockedBy, fit: f.fit })),
-        comps: (m.comps || []).map(c => ({ name: c.name, yr: c.yr, years: c.years,
-          guar: c.guar != null ? money(c.guar) : null, to: c.to })),
-      },
+    const tiles = [];
+    if (m.projGuar != null) tiles.push({ label: "projected", value: `${m.projYears != null ? m.projYears + "y/" : ""}${money(m.projGuar)}` });
+    if (m.projAav != null) tiles.push({ label: "proj AAV", value: money(m.projAav) });
+    if (m.dealPlus != null) tiles.push({ label: "Deal+", value: String(Math.round(m.dealPlus)) });
+    if (m.warTotal != null) tiles.push({ label: "deal WAR", value: m.warTotal.toFixed(1) });
+    const sections = [{
+      title: "Predicted market vs rational value",
+      rows: [
+        ["projGuarantee", `${money(m.projGuar)}${m.projGuarP10 != null ? `  (${money(m.projGuarP10)}-${money(m.projGuarP90)})` : ""}`],
+        ["projAAV", `${money(m.projAav)}${m.projAavP10 != null ? `  (${money(m.projAavP10)}-${money(m.projAavP90)})` : ""}`],
+        ["rational value", m.rational != null ? money(m.rational) : " - "],
+        ["contract surplus", m.surplus != null ? money(m.surplus) : " - "],
+        ["verdict", (m.verdict || " - ").toUpperCase()],
+        m.prevAav != null ? ["prior AAV", money(m.prevAav)] : null,
+      ].filter(Boolean),
+    }];
+    const comps = (m.comps || []).slice(0, 5);
+    if (comps.length) {
+      sections.push({ title: "Nearest real comps",
+        rows: comps.map(c => [`${c.name || "?"}${c.yr ? ` '${String(c.yr).slice(2)}` : ""}`,
+          `${c.years != null ? c.years + "y / " : ""}${c.guar != null ? money(c.guar) : "-"}${c.to ? `  ${c.to}` : ""}`]) });
+    }
+    _openCard({
       module: "MLB Free Agency",
       accentToken: "--accent-green",
       name: m.name,
@@ -1123,6 +1007,7 @@
       sub: m.verdict ? `verdict: ${String(m.verdict).toUpperCase()}` : "",
       headshotURL: linkRow && linkRow.mlbam
         ? `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_240,q_auto:best/v1/people/${linkRow.mlbam}/headshot/67/current` : null,
+      tiles, sections,
       url: `eephus.io/fa/#player=${m.key}`,
       filename: `eephus-${m.key}-fa-card.png`,
       caption: "predicted market (projGuarantee) vs rational value - two numbers, never conflated · gate-validated, ex-ante",
@@ -1168,7 +1053,7 @@
       ? ` &middot; ${window.EEPHUS_GFX.chipHTML("fa-fits-gfx")}` : "";
     rows.innerHTML = `<div class="filter-bar"><span class="filter-label">Team</span>${chips}</div>
       <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${teamLogo(state.team)}${state.team} fits</span>
-      <span class="newsprint-eyebrow-meta">CBT payroll ${money(t.taxPayroll ?? t.committed)} &middot; tax space ${t.space != null ? formatMetric(t.space / 1e6, "surplusM") : EM_DASH}${t.payor ? ` &middot; ${esc(t.payor)}` : ""} &middot; baseline ${t.baseWins ?? "?"}w ${t.baseSrc === "mlb_projections" ? "(projected)" : "(contracted core)"} &middot; biggest deal ever ${money(t.maxGuar)} &middot; last-3-winter outlay ${money(t.recentSpend)}${fitsGfx}</span></div>
+      <span class="newsprint-eyebrow-meta">CBT payroll ${money(t.taxPayroll ?? t.committed)} &middot; tax space ${t.space != null ? formatMetric(t.space / 1e6, "surplusM") : EM_DASH}${t.payor ? ` &middot; ${esc(t.payor)}` : ""} &middot; baseline ${t.baseWins ?? "?"}w (contracted core) &middot; biggest deal ever ${money(t.maxGuar)} &middot; last-3-winter outlay ${money(t.recentSpend)}${fitsGfx}</span></div>
       ${blockedLine}
       <table class="detail-table fa-fits-table">
       <thead><tr><th>Player</th><th>Fit</th><th title="Displacement WAR gap at the position (CAN they upgrade here)">Need</th><th title="Marginal playoff leverage at the club's baseline wins">Window</th><th title="CBT space vs the predicted AAV - habitual taxpayers keep a documented floor">Afford</th><th title="Park factor alignment (deliberately the smallest weight - a tiebreaker, not a driver)">Park</th><th title="WILL they spend: biggest deal ever vs this price, recent 3-winter outlay, $100M-deal participation">Behavior</th><th title="WHO blocks the position: PX = PROSPX prospect (near ETA), MLB = contracted incumbent producing at the displaced slot">Blocked by</th><th>Predicted</th><th>Verdict</th></tr></thead>

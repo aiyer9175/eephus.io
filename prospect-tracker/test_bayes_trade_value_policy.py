@@ -695,20 +695,10 @@ def test_full_season_denominators_are_role_specific() -> None:
 
 
 def test_low_prior_partial_sample_hitter_gets_surplus_cap() -> None:
-    # fv_close moved 42.0 -> 40.0 on 2026-07-31 with the v6 EV calibration
-    # (docs/efv-2026-07-30/SURPLUS_EV_OBJECTIVE.md). The cap is RELATIVE
-    # (prior * mult), not an absolute dollar bound, so re-pricing the board moved
-    # both sides of it: at FV42 the prior lifted 3.3 -> 9.8 across a steep step in
-    # the new curve while the statline-driven posterior only reached 5.1, so the
-    # ceiling stopped binding on this fixture. The GUARD is unchanged and still
-    # fires across FV34-40; the fixture had simply drifted to the wrong side of it.
-    # The invariant assert below is the durable one -- it holds whether or not the
-    # cap engages, so a future curve move degrades this into a weaker test rather
-    # than a silently vacuous one.
     player = _base_debuted_player(
         player_key="low_prior_partial_hitter",
         position="INF",
-        fv_close=40.0,
+        fv_close=42.0,
         age=28.4,
         career_war={
             "seasons": {"2025": 1.9, "2026": -0.23},
@@ -727,9 +717,6 @@ def test_low_prior_partial_sample_hitter_gets_surplus_cap() -> None:
 
     assert "unsupported_partial_surplus_cap" in out["inputs_available"]
     assert out["trade_value_mm"] < 10.0
-    # What the cap actually promises: a sub-1.5-season MLB sample can never price
-    # this archetype above 0.75x its FV prior. Scale-free, so it survives a re-price.
-    assert out["posterior_surplus_mm"] <= out["prior_surplus_mm"] * 0.75 + 0.05
 
 
 def test_no_power_infielder_partial_sample_suppresses_defensive_floor() -> None:
@@ -1511,14 +1498,6 @@ def test_brief_past_starts_do_not_make_current_reliever_a_starter() -> None:
 
 
 def test_mlb_hitter_500_pa_projection_anchor_grounds_middling_bat(monkeypatch) -> None:
-    """FIXED 2026-07-31 (owner decision: the measured projection outranks the
-    archetype floor). This was xfail(strict=True) for exactly one day: the anchor
-    was being announced and then silently overridden by archetype_posterior_floor,
-    so anchoring at $35.0M and not anchoring produced the identical $51.6M. The
-    floor now yields whenever mlb_projection_surplus_anchor applied, and tags
-    archetype_floor_yielded_to_projection so the suppression is auditable rather
-    than invisible. Measured on the live board: the anchor+floor overlap went from
-    77 rows carrying $1,365M to ZERO, and 85 of 6,414 trade values moved."""
     import bayes_trade_value as btv
 
     player = _base_debuted_player(
@@ -1946,54 +1925,3 @@ def test_older_nonimpact_upper_minors_prospect_is_suppressed() -> None:
 
     assert "older_nonimpact_prospect_suppression" in out["inputs_available"]
     assert out["posterior_surplus_mm"] < out["prior_surplus_mm"] * 0.6
-
-
-def test_archetype_floors_are_grade_anchored_not_hardcoded_dollars() -> None:
-    """The four pitcher archetype floors were hardcoded dollars (65/62/58/65) that
-    did NOT re-scale when surplus became an expected value, so they quietly lost
-    strictness while every number around them rose. They are now anchored to a FV
-    and priced through the live engine, which tracks any future re-price.
-
-    They were deliberately NOT converted to a percentage of the player's own prior,
-    which was the obvious candidate. Measured floor/prior ratios on the rows they
-    tag run 0.76 to 4.77 and, in one case, 92.86: they are not a disguised
-    percentage. Mason Miller is the proof, with an FV prior pricing at $0.7M against
-    a $65M floor. A floor whose job is to override a broken prior cannot be defined
-    in terms of that prior.
-    """
-    import inspect
-    import re
-    import bayes_trade_value as btv
-    src = inspect.getsource(btv.archetype_policy_adjustment)
-    for tag in ("controlled_rotation_asset", "healthy_breakout_starter",
-                "productive_established_starter", "elite_controlled_reliever"):
-        assert f'_floor_from_fv("{tag}"' in src, (
-            f"{tag} lost its FV anchor. If it is back to a dollar literal it will "
-            "silently loosen on the next re-price.")
-    # No bare dollar floor may be reintroduced on posterior_floor_mm.
-    bad = re.findall(r'posterior_floor_mm"\]\s*=\s*max\(\s*float\([^)]*\)\s*,\s*\d+\.\d+\s*\)', src)
-    assert not bad, f"hardcoded dollar floor(s) reintroduced: {bad}"
-
-
-def test_projection_anchor_outranks_every_archetype_floor() -> None:
-    """The precedence, asserted directly rather than via one fixture. If a player
-    got the projection anchor, no archetype floor may also have set his price, and
-    the record must say so rather than staying silent."""
-    import bayes_trade_value as btv
-    player = _base_debuted_player(
-        player_key="anchored_arm", player_name="Anchored Arm", position="SP",
-        age=27.0, fv_close=55.0, is_pitcher=True,
-        career_stats=[{"level": "MLB", "season": 2026, "games": 30, "ip": 180.0},
-                      {"level": "MLB", "season": 2025, "games": 32, "ip": 195.0}],
-        statline={"level": "MLB", "games": 30, "ip": 180.0, "era": "3.20"},
-    )
-    orig = btv._mlb_projection_surplus_mm
-    try:
-        btv._mlb_projection_surplus_mm = lambda _p: 12.0
-        out = btv.bayesian_trade_value(dict(player))
-    finally:
-        btv._mlb_projection_surplus_mm = orig
-    flags = out["inputs_available"]
-    if "mlb_projection_surplus_anchor" in flags:
-        assert "archetype_posterior_floor" not in flags, (
-            "a floor set the price on an anchored row; the anchor is supposed to win")

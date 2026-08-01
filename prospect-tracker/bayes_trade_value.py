@@ -59,7 +59,6 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-import value_framework as vf
 from value_framework import (
     surplus_value_mm,
     sv_credible_interval,
@@ -70,30 +69,6 @@ from value_framework import (
     tiered_war_value_usd,
 )
 from age_level import score_age_vs_level
-
-
-def _level_plus(row) -> float | None:
-    """The level-anchored production chip, PHASE D2.
-
-    Reads wrc_plus_level and falls back to ops_plus_level. The two are close but
-    not the same number: measured over the 1,972 served hitter statlines the wRC+
-    chip runs mean 99.2 sd 6.06 against OPS+ at 100.9 sd 6.97, i.e. it is centred
-    about 1.7 points lower and is slightly tighter, because it fixes TWO things at
-    once. The metric moves OPS to a linear-weight wOBA, and the baseline moves from
-    an unweighted mean of TRACKED PROSPECTS over a two-season window to a
-    PA-weighted single-season pool of the WHOLE league. The old prospect baseline
-    ran 7-8% low at AA and A+ (.703 against a true .752, .708 against .767), so the
-    old chip flattered every hitter at those levels.
-
-    The FALLBACK matters for the gates below, which compare against fixed numbers:
-    a null would silently read as 0.0 or 100.0 and flip a threshold for a reason
-    that has nothing to do with the player. Coverage is 100% on the current board,
-    so the fallback is a guard rather than a live path.
-    """
-    if not row:
-        return None
-    v = _safe_float(row.get("wrc_plus_level"), None)
-    return v if v is not None else _safe_float(row.get("ops_plus_level"), None)
 
 _log = logging.getLogger(__name__)
 _HERE = Path(__file__).resolve().parent
@@ -221,7 +196,7 @@ def _projection_anchor_current_form_multiplier(player: dict, position: str | Non
     if games < 45.0 and pa < 175.0:
         return 1.0
 
-    ops_plus = _level_plus(row)
+    ops_plus = _safe_float(row.get("ops_plus_level"), None)
     ops = _safe_float(row.get("ops"), None)
     obp = _safe_float(row.get("obp"), None)
     k_pct = _safe_float(row.get("k_pct"), None)
@@ -661,28 +636,6 @@ def _safe_float(val: Any, default: float | None = None) -> float | None:
         return float(val)
     except (TypeError, ValueError):
         return default
-
-
-def _eta_years_to_debut(eta) -> float | None:
-    """Years from now to projected debut (bughunt F2, 2026-07-23). The
-    timeseries payload carries `eta` as a DICT ({year, half, ...}) on every
-    prospect row - _safe_float(dict) returned None, so _resolve_timing fell to
-    default_eta_years=0.0 and every posterior priced debut-NOW (masked today by
-    the eFV surplus overwrite on the trade board; latent-P0 on any coverage
-    gap). Mirrors storage._eta_years_from: year - current year, late half adds
-    0.5, floored at 0. A bare number passes through; None/unresolvable -> None
-    (engine default), matching the consensus writer's behavior."""
-    if eta is None:
-        return None
-    if isinstance(eta, dict):
-        yr = _safe_float(eta.get("year"))
-        if yr is None:
-            return None
-        yrs = yr - float(date.today().year)
-        if str(eta.get("half") or "") == "late":
-            yrs += 0.5
-        return max(0.0, yrs)
-    return _safe_float(eta)
 
 
 def skills_authenticity(statline: dict | None,
@@ -1956,24 +1909,6 @@ def _exposure_weighted_career_war(
     return total_war / total_weight, total_weight, weights
 
 
-def _stuff_or_league_avg(pitch: dict) -> float:
-    """tjStuff+ for one pitch row, defaulting to the 100 league anchor ONLY when
-    the value is genuinely absent.
-
-    `is None`, not `or`: tjStuff+ is an indexed metric whose scale reaches 0, and
-    a pitch graded 0.0 is the WORST possible offering, not a missing reading. The
-    prior `(pitch.get("avg_stuff_plus") or 100.0)` promoted that pitch to exactly
-    league average, which is the largest possible error the guard could make.
-    """
-    v = (pitch or {}).get("avg_stuff_plus")
-    if v is None:
-        return 100.0
-    try:
-        return float(v)
-    except (TypeError, ValueError):
-        return 100.0
-
-
 def _pitcher_stuff_summary(player: dict) -> dict:
     """Summarize pitch-level Stuff+ where available."""
     pm = ((player.get("statcast_metrics") or {}).get("pitch_movement") or {})
@@ -1982,11 +1917,11 @@ def _pitcher_stuff_summary(player: dict) -> dict:
         return {"has_data": False, "primary_stuff_plus": None, "weighted_stuff_plus": None}
     primary = max(pitches, key=lambda p: p.get("usage_pct") or 0, default={})
     total_usage = sum(p.get("usage_pct") or 0 for p in pitches) or 1.0
-    weighted = sum(_stuff_or_league_avg(p) * (p.get("usage_pct") or 0)
+    weighted = sum((p.get("avg_stuff_plus") or 100.0) * (p.get("usage_pct") or 0)
                    for p in pitches) / total_usage
     return {
         "has_data": True,
-        "primary_stuff_plus": round(_stuff_or_league_avg(primary), 1),
+        "primary_stuff_plus": round(float(primary.get("avg_stuff_plus") or 100.0), 1),
         "weighted_stuff_plus": round(float(weighted), 1),
     }
 
@@ -2194,38 +2129,6 @@ def archetype_policy_adjustment(
             prior_surplus_mm * float(pct),
         )
 
-    def _floor_from_fv(name: str, fv_anchor: float) -> None:
-        """A floor anchored to a GRADE, priced through the live valuation engine.
-
-        Replaces four hardcoded dollar floors (65/62/58/65) on 2026-07-31, owner
-        decision, docs/efv-2026-07-30/TRADE_ARCHETYPE_FLOOR_GATE.md.
-
-        WHY NOT A PERCENTAGE OF THE PRIOR, which was the obvious candidate: the
-        measured floor/prior ratios on the rows these tag are 0.76 to 4.77 and, in
-        one case, 92.86. They are not a disguised percentage, and a percentage would
-        destroy the only thing they are for. Mason Miller is the proof: his FV prior
-        prices at $0.7M, so ANY multiple of it is still nothing, and the floor
-        exists precisely because that prior has failed. A floor whose job is to
-        override a broken prior cannot be defined in terms of that prior.
-
-        WHY NOT KEEP DOLLARS: they were calibrated against the v5 price scale and
-        did not move when surplus became an expected value, so they quietly lost
-        strictness while every number around them rose. An absolute dollar guardrail
-        silently loosens every time the currency it guards is re-scaled.
-
-        A GRADE is the stable meaning. "This archetype is worth at least a FV-58
-        pitcher" survives a re-price by construction, because the engine re-prices
-        FV-58 too. The anchors below are the exact FV each old dollar figure
-        represented on the v5 pitcher table, so this is a re-expression and not a
-        re-calibration: 65.0 -> FV 58.73, 62.0 -> 58.28, 58.0 -> 57.69.
-        """
-        _tag(name)
-        try:
-            val = float(surplus_value_mm(float(fv_anchor), True) or 0.0)
-        except Exception:
-            return
-        out["posterior_floor_mm"] = max(float(out["posterior_floor_mm"]), val)
-
     def _mult(name: str, mult: float) -> None:
         _tag(name)
         out["posterior_multiplier"] *= float(mult)
@@ -2334,7 +2237,7 @@ def archetype_policy_adjustment(
         cq = ((player.get("statcast_metrics") or {}).get("contact_quality") or {})
         xwoba = _safe_float(cq.get("xwoba_est"), 0.0) or 0.0
         iso = _safe_float(statline.get("iso"), 0.0) or 0.0
-        ops_plus = _level_plus(statline) or 0.0
+        ops_plus = _safe_float(statline.get("ops_plus_level"), 0.0) or 0.0
         if xwoba < 0.360 and iso < 0.220 and ops_plus < 125.0:
             _mult("low_prior_corner_bat_not_elite",
                   0.72)
@@ -2349,7 +2252,7 @@ def archetype_policy_adjustment(
         xwoba = _safe_float(cq.get("xwoba_est"), 0.0) or 0.0
         barrel = _safe_float(cq.get("barrel_pct"), 0.0) or 0.0
         iso = _safe_float(statline.get("iso"), 0.0) or 0.0
-        ops_plus = _level_plus(statline) or 0.0
+        ops_plus = _safe_float(statline.get("ops_plus_level"), 0.0) or 0.0
         if (
             ops_plus <= 105.0
             and iso <= 0.170
@@ -2451,8 +2354,8 @@ def archetype_policy_adjustment(
             and not active_arm_injury
             and worry_score <= 0.45
             and (stuff["weighted_stuff_plus"] or composite_stuff_plus or 100.0) >= 102.0):
-        # was a hardcoded 65.0; FV 58.73 is exactly what that meant on the v5 table
-        _floor_from_fv("controlled_rotation_asset", 58.73)
+        _tag("controlled_rotation_asset")
+        out["posterior_floor_mm"] = max(float(out["posterior_floor_mm"]), 65.0)
 
     if (is_pitcher
             and starter_workload
@@ -2484,8 +2387,8 @@ def archetype_policy_adjustment(
                 or (composite_stuff_plus or 0.0) >= 102.0
                 or (_safe_float(statline.get("stf_plus_periph"), 0.0) or 0.0) >= 105.0
             )):
-        # was a hardcoded 62.0
-        _floor_from_fv("healthy_breakout_starter", 58.28)
+        _tag("healthy_breakout_starter")
+        out["posterior_floor_mm"] = max(float(out["posterior_floor_mm"]), 62.0)
 
     current_pitcher_ip = _safe_float(current_mlb_row.get("ip"), 0.0) or 0.0
     current_pitcher_games = _safe_float(current_mlb_row.get("games"), 0.0) or 0.0
@@ -2509,8 +2412,8 @@ def archetype_policy_adjustment(
                 current_pitcher_stf >= 102.0
                 or (stuff["weighted_stuff_plus"] or 0.0) >= 102.0
             )):
-        # was a hardcoded 58.0
-        _floor_from_fv("productive_established_starter", 57.69)
+        _tag("productive_established_starter")
+        out["posterior_floor_mm"] = max(float(out["posterior_floor_mm"]), 58.0)
 
     if (is_pitcher
             and starter_workload
@@ -2534,8 +2437,8 @@ def archetype_policy_adjustment(
             and tt_war >= 2.0
             and (stuff["weighted_stuff_plus"] or composite_stuff_plus or 0.0) >= 115.0
             and current_salary_mm <= 8.0):
-        # was a hardcoded 65.0
-        _floor_from_fv("elite_controlled_reliever", 58.73)
+        _tag("elite_controlled_reliever")
+        out["posterior_floor_mm"] = max(float(out["posterior_floor_mm"]), 65.0)
 
     yesp = cfg.get("young_elite_stuff_pitcher", {})
     has_elite_pitch_data = (
@@ -2793,9 +2696,7 @@ def bayesian_trade_value(
     status      = player.get("status", "active")
     fv          = _safe_float(player.get("fv_close"))
     age         = _safe_float(player.get("age"))
-    # bughunt F2: eta arrives as the timeseries ETA DICT - derive years-to-debut
-    # from it (see _eta_years_to_debut) instead of _safe_float(dict) -> None -> 0.0.
-    eta         = _eta_years_to_debut(player.get("eta"))
+    eta         = _safe_float(player.get("eta"))
     statline    = player.get("statline") or {}
     statcast    = player.get("statcast_metrics") or {}
     recent_games = (statcast or {}).get("recent_games") or []
@@ -3168,7 +3069,7 @@ def bayesian_trade_value(
         if not is_pitcher and _skill_row:
             _mlb_iso = _safe_float(_skill_row.get("iso"))
             _mlb_k = _safe_float(_skill_row.get("k_pct"))
-            _mlb_ops_plus = _level_plus(_skill_row)
+            _mlb_ops_plus = _safe_float(_skill_row.get("ops_plus_level"))
             _unsupported_hit = (
                 (_mlb_iso is not None and _mlb_iso < 0.130)
                 or (_mlb_k is not None and _mlb_k >= 28.0)
@@ -3440,7 +3341,7 @@ def bayesian_trade_value(
             and str(level or "").upper() in {"AA", "AAA"}
         ):
             prospect_iso = _safe_float((statline or {}).get("iso"), 0.0) or 0.0
-            prospect_ops_plus = _level_plus(statline) or 100.0
+            prospect_ops_plus = _safe_float((statline or {}).get("ops_plus_level"), 100.0) or 100.0
             prospect_k = _safe_float((statline or {}).get("k_pct"), 0.0) or 0.0
             if prospect_iso < 0.100 and prospect_ops_plus <= 100.0 and prospect_k >= 24.0:
                 posterior_surplus_mm = round(posterior_surplus_mm * 0.42, 1)
@@ -3547,38 +3448,9 @@ def bayesian_trade_value(
         authenticity=auth,
         worriedness=worry,
     )
-    # THE MEASURED MLB PROJECTION OUTRANKS THE ARCHETYPE FLOOR (owner decision
-    # 2026-07-31, docs/efv-2026-07-30/TRADE_ARCHETYPE_FLOOR_GATE.md).
-    #
-    # Until now this floor silently overrode the projection anchor set a few hundred
-    # lines above, while the record kept emitting mlb_projection_surplus_anchor. So
-    # the output announced an input that never reached the price: on the FV60 RF
-    # fixture, anchoring at $35.0M and not anchoring at all produced the identical
-    # $51.6M. Measured on the live board, the anchor applied to 276 of 6,414 rows
-    # and this floor overrode it on 77 of them, carrying $1,365M (Alvarez, Yamamoto,
-    # Fried, Suarez, Rasmussen).
-    #
-    # The floor's own docstring scopes it to "noisy early MLB evidence". The anchor
-    # gate requires 500+ MLB PA for hitters, 1000+ overall, or 300+ IP, which is the
-    # substantial-sample regime and the opposite of what the floor was written for.
-    # So on the floor's stated purpose it does not apply here at all, and yielding is
-    # the honest reading rather than the cautious one.
-    #
-    # Gated on the FLAG rather than on _projection_anchor because that local lives
-    # inside the is_mlb_player block and is not in scope here for every player.
-    _anchored = "mlb_projection_surplus_anchor" in inputs_available
-    _floor_mm = archetype_policy["posterior_floor_mm"]
-    if _floor_mm > posterior_surplus_mm and not _anchored:
-        posterior_surplus_mm = _floor_mm
+    if archetype_policy["posterior_floor_mm"] > posterior_surplus_mm:
+        posterior_surplus_mm = archetype_policy["posterior_floor_mm"]
         inputs_available.append("archetype_posterior_floor")
-    elif _floor_mm > posterior_surplus_mm and _floor_mm > 0.0:
-        # Record that a REAL floor wanted to fire and was outranked, so the
-        # suppression is auditable instead of invisible. Gated on > 0 because the
-        # default floor is 0.0 and every negative-surplus player would otherwise
-        # collect this tag for a floor that does not exist: measured, that was
-        # firing on rows like Austin Riley whose archetype policy computed no floor
-        # at all and only tagged stale_mlb_prior.
-        inputs_available.append("archetype_floor_yielded_to_projection")
     if archetype_policy["posterior_multiplier"] != 1.0:
         posterior_surplus_mm = round(
             posterior_surplus_mm * archetype_policy["posterior_multiplier"],
@@ -4236,173 +4108,7 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
         # Trade Value Grade off the FINAL value (re-pointed or bayes fallback) so
         # every board row carries a letter; survives board_slim automatically.
         r["trade_value_grade"] = _trade_value_grade(r.get("trade_value_mm"))
-
-    # ------------------------------------------------------------------ #
-    # MLB veterans the projection system prices but the board never saw
-    # ------------------------------------------------------------------ #
-    # The board population is assembled from timeseries.json + debuts.json +
-    # graduates.json, ALL THREE of which are prospect-derived: a player is only
-    # in them if this platform once tracked him as a prospect. An established
-    # veteran who was never in our ranking coverage - because he debuted before
-    # it, came from NPB/KBO, or was simply never ranked - therefore never
-    # reached the trade board, no matter how thoroughly /projections/ modelled
-    # him.
-    #
-    # Measured 2026-08-01: 325 of 1,319 projected vets (24.6%) were absent,
-    # including AARON JUDGE ($24.6M surplus through 2031), garrett_crochet and
-    # matt_chapman. The loop above could never fix it - it re-prices records
-    # that exist and has no path to ADD one.
-    #
-    # These rows are priced on EXACTLY the basis an MLB row already on the board
-    # gets (src="projection", value = surNpv), so the board stays one currency.
-    # No FV is invented: the prospect Bayesian model is not run on them, because
-    # fabricating a grade to get a player onto a board is the defect class this
-    # codebase has removed twice (the BA-statcast FV-40 and the
-    # performance_ingest FV-35).
-    added = _append_projection_only_rows(records, proj_sur, ages, det, dd)
-    stats["projection_only_added"] = added
     return stats
-
-
-def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
-                                 det: dict, data_dir) -> int:
-    """Append board rows for priced vets missing from the prospect-derived pool.
-
-    Only vets carrying a surNpv are added - that IS the priced value, and a row
-    without one has no value on any basis the board serves (see the coverage
-    test for what the remainder is and why it is deliberately not invented)."""
-    present = {r.get("player_key") for r in records if r.get("player_key")}
-    try:
-        proj = json.loads((Path(data_dir) / "mlb_projections.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return 0
-    n = 0
-    for v in (proj.get("vets") or []):
-        pk = v.get("key")
-        if not pk or pk in present or pk not in proj_sur:
-            continue
-        mm = round(float(proj_sur[pk]), 1)
-        row = {
-            "player_key": pk,
-            "player_name": v.get("name"),
-            "position": v.get("pos"),
-            "org": v.get("team"),
-            "status": "debuted",              # an MLB veteran, never a tracked prospect
-            "age": v.get("age") if v.get("age") is not None else ages.get(pk),
-            "trade_value_mm": mm,
-            "posterior_surplus_mm": mm,
-            "trade_value_tier": _platform_tier(mm),
-            "trade_value_grade": _trade_value_grade(mm),
-            "surplus_source": "projection",
-            # Same deliberate null as the projection branch above: the eFV
-            # credible band is a prospect-era basis and does not describe a
-            # contract-surplus NPV.
-            "trade_value_lo": None,
-            "trade_value_hi": None,
-            # Why this row exists at all, so the board can say so rather than
-            # leaving a reader to wonder why a star appeared from nowhere.
-            "board_entry": "projection_only",
-        }
-        thru, aav = v.get("thru"), v.get("aav")
-        if thru is not None or aav is not None:
-            row["contract"] = _clean_contract({
-                "signed_through": thru,
-                "aav_mm": round(aav / 1e6, 1) if aav is not None else None,
-                "fa_year": (thru + 1) if thru is not None else None,
-            })
-        records.append(row)
-        n += 1
-    return n
-
-
-def _clean_contract(d: dict) -> dict:
-    return {k: v for k, v in d.items() if v is not None}
-
-
-def _unpriced_vets(data_dir, on_board: set | None = None) -> list[dict]:
-    """Projected vets priced NOWHERE, and why.
-
-    `on_board` is the set of keys already carrying a value. It matters: a vet can
-    have no CONTRACT surplus (expiring deal) and still be on the board through the
-    eFV path, because he was once a tracked prospect - tarik_skubal is exactly
-    that. Publishing him as "not tradeable" would be false, and would render a
-    dimmed row in search for a player who IS tradeable. "Unpriced" has to mean
-    unpriced on EVERY basis, not just the contract one.
-
-    Two honest reasons, neither of which is a missing row:
-      expiring     - the contract ends before the projection horizon opens, so
-                     there is no team-controlled season left. A pending free
-                     agent is not a trade asset; the FA module prices him.
-      no_contract  - nothing on file (pre-arb / optioned players Spotrac does
-                     not list), so there is no salary to subtract from value.
-
-    Deliberately NOT given a fabricated value. `no_contract` is the larger and
-    more interesting group - those players have real team control and would
-    carry substantial surplus at the league minimum - and pricing them is a
-    modelling decision, registered rather than smuggled in here."""
-    try:
-        proj = json.loads((Path(data_dir) / "mlb_projections.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return []
-    first = proj.get("first_season") or 0
-    out = []
-    for v in (proj.get("vets") or []):
-        if not v.get("key") or v.get("surNpv") is not None:
-            continue
-        if on_board and v["key"] in on_board:
-            continue                    # priced by another basis (eFV backgrade)
-        thru = v.get("thru")
-        out.append({
-            "key": v["key"], "name": v.get("name"), "org": v.get("team"),
-            "pos": v.get("pos"), "thru": thru,
-            "war5": v.get("warTotal"),
-            "reason": "expiring" if (thru is not None and thru < first) else "no_contract",
-        })
-    out.sort(key=lambda r: -(r.get("war5") or 0))
-    return out
-
-
-def _projection_coverage(records: list, data_dir) -> dict:
-    """Is every vet the projection system PRICES also on the trade board?
-
-    The invariant that would have caught Aaron Judge's absence. Stamped into the
-    artifact so a population regression is visible in the data, not just in a log
-    line - the board silently lost a quarter of the projected veteran universe and
-    nothing anywhere reported it.
-
-    `unpriceable` is NOT a failure. It counts vets the projection system models
-    but cannot price, and there are exactly two kinds, both correct:
-      - contract expires this season (no team-controlled season inside the
-        2027-2031 horizon, so there is no future surplus to trade) - this is why
-        aj_minter is absent, and he is a pending free agent, not a lost row;
-      - no contract on file at all (pre-arb / optioned players Spotrac does not
-        list), so there is no salary to subtract from projected value.
-    Neither is invented a value here. The second group is the larger open
-    question and is registered in the coverage doc, not papered over."""
-    on_board = {r.get("player_key") for r in records
-                if r.get("player_key") and r.get("trade_value_mm") is not None}
-    try:
-        proj = json.loads((Path(data_dir) / "mlb_projections.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {"available": False}
-    vets = [v for v in (proj.get("vets") or []) if v.get("key")]
-    priced = [v for v in vets if v.get("surNpv") is not None]
-    missing = [v for v in priced if v["key"] not in on_board]
-    unpriceable = [v for v in vets if v.get("surNpv") is None]
-    expiring = sum(1 for v in unpriceable
-                   if v.get("thru") is not None and v.get("thru") < (proj.get("first_season") or 0))
-    return {
-        "available": True,
-        "vets": len(vets),
-        "priced_vets": len(priced),
-        "priced_on_board": len(priced) - len(missing),
-        "missing": len(missing),
-        "examples": [v["key"] for v in sorted(
-            missing, key=lambda x: -(x.get("warTotal") or 0))[:5]],
-        "unpriceable": len(unpriceable),
-        "unpriceable_expiring": expiring,
-        "unpriceable_no_contract": len(unpriceable) - expiring,
-    }
 
 
 def export_trade_values_json(
@@ -4427,34 +4133,8 @@ def export_trade_values_json(
     results = [r for r in results if r.get("surplus_source") != "inactive_dropped"]
     results.sort(key=lambda r: r.get("trade_value_mm") if r.get("trade_value_mm") is not None else -1e9, reverse=True)
 
-    cov = _projection_coverage(results, out_path.parent)
-    if cov.get("missing"):
-        _log.warning("trade_values COVERAGE: %d priced vets are NOT on the board "
-                     "(e.g. %s) - the board population regressed",
-                     cov["missing"], ", ".join(cov.get("examples") or []))
-    else:
-        _log.info("trade_values coverage: every priced vet is on the board "
-                  "(%d of %d projected vets; %d unpriceable, see 'unpriceable')",
-                  cov.get("priced_on_board", 0), cov.get("vets", 0),
-                  cov.get("unpriceable", 0))
-
     payload = {
         "generated_at": date.today().isoformat(),
-        # Which dollar calibration produced these numbers. Four served artifacts
-        # silently disagreed on 2026-07-31 because none of them said.
-        "calibration":   vf.calibration_stamp(),
-        # Board-vs-projection coverage, stamped so a regression is visible in the
-        # artifact itself rather than only in a log line nobody reads.
-        "coverage":      cov,
-        # Vets the projection system models but CANNOT price, with the reason.
-        # They are kept OUT of `players` so they never pollute a value ranking,
-        # and shipped here so the search can answer "why isn't he here?" instead
-        # of returning nothing - which is what sent someone looking for
-        # A.J. Minter into the code.
-        "unpriced":      _unpriced_vets(
-            out_path.parent,
-            {r.get("player_key") for r in results
-             if r.get("trade_value_mm") is not None}),
         "count":         len(results),
         "players":       [board_slim(r) for r in results],
     }

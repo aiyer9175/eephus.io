@@ -11,17 +11,11 @@ Anchored to the FanGraphs scouting primer:
 
 Design (v5)
 -----------
-Sources that publish an explicit 20-80 FV grade are combined into a mean that
-CAN be accuracy-weighted but today is not. Weights load from
-data/source_weights.json (shrunk toward equal from the resolved-outcome
-backtest) and default to 1.0, one equal vote. That file is currently EMPTY and
-every source votes at 1.0: the previous FanGraphs 0.939 / MLB Pipeline 1.061
-pair was reverted 2026-07-25 as unearned, because the forward-chained A/B
-measured d_rho -0.0012 against an MDE95 of 0.0068, i.e. nothing to weight on.
-The ship gate in source_backtest.py now demands a gain larger than the test can
-resolve. (The same question was measured again at the TOOL level on 2026-07-31
-and refused for a different reason, non-replication:
-docs/efv-2026-07-30/TOOL_NORMALIZATION_VERDICT.md.)
+Sources that publish an explicit 20-80 FV grade are combined into an
+accuracy-weighted mean. Weights load from data/source_weights.json (shrunk
+toward equal from the resolved-outcome backtest) and default to 1.0 - one
+equal vote - unless that file overrides a source; today only FanGraphs (0.939)
+and MLB Pipeline (1.061) differ from equal, every other source votes at 1.0.
 Sources that publish an explicit FV grade:
 
   * FanGraphs            (Eric Longenhagen + team)
@@ -121,9 +115,6 @@ from scrapers import Snapshot
 # collapsed onto a 40 tier regardless of what the source actually said.
 # At k=1.5 a 1-source FV gets ~45% raw weight; 2-source ~70% — moves
 # the marginal cases off 40 without affecting well-covered prospects.
-# INERT since 2026-05. These three drive apply_shrinkage / compute_prior_mean_fv,
-# which build_timeseries no longer calls; they are defaults on dead keyword args.
-# Changing them changes NOTHING on the board. The live knob is SINGLE_SOURCE_K below.
 DEFAULT_SHRINKAGE_K = 1.5
 DEFAULT_N_FULL = 4
 FALLBACK_PRIOR_FV = 45.0
@@ -236,35 +227,6 @@ def _dedupe_source_aliases(day_snaps: list[Snapshot]) -> list[Snapshot]:
         # Canonical outlet missing — keep the alias but relabel it so
         # downstream code treats it as the canonical source.
         out.append(_dc_replace(s, source=target))
-    return out
-
-
-def _alias_grade_sources(day_snaps: list[Snapshot]) -> dict:
-    """{(player_key, canonical_source): originating_alias_source} for exactly the
-    rows _dedupe_source_aliases RELABELS (alias present, canonical absent).
-
-    Why this exists (2026-07-25). _dedupe_source_aliases runs FIRST, so by the time
-    grade normalization is applied below it only ever sees `mlb_pipeline` and the
-    (mlb_pipeline_international, *, year) cells of the remapper are unreachable by
-    construction. Collapsing to one editorial VOICE is right for vote counting; it
-    is wrong for SCALE. Measured on the same players in the same cycle, Pipeline's
-    International Top 50 runs +7.279 FV [+6.438, +8.075] hotter than that outlet's
-    own main lists (n 147), so an intl-only prospect was being de-biased with the
-    main list's -3.70 offset instead of the intl list's -11.89: a ~8 FV
-    under-correction landing entirely on IFA-only prospects. Symptom on the live
-    board: in the 2026 cycle the intl-ONLY cohort (the players who did NOT make an
-    org top-30) was served +2.18 FV ABOVE the cohort that did, from the same
-    outlet's grades. This map re-attaches the originating list for normalization
-    only; vote counting, per_source and the single-source pull are untouched."""
-    if not day_snaps or not SOURCE_ALIASES:
-        return {}
-    present = {s.source for s in day_snaps}
-    out: dict = {}
-    for s in day_snaps:
-        target = SOURCE_ALIASES.get(s.source)
-        if target is None or target in present:
-            continue
-        out[(s.player_key, target)] = s.source
     return out
 
 
@@ -491,36 +453,6 @@ def load_source_weights() -> dict[str, float]:
 _SOURCE_WEIGHTS = load_source_weights()
 
 
-# Sources whose "FV" is a CONSTANT, not a published opinion.
-#
-#   performance_ingest  storage.upsert_unranked_active_player stamps a flat
-#                       35.0 on every auto-discovered player. Measured
-#                       2026-07-31: 2,808 rows, DISTINCT fv = {35.0}.
-#   auto_detect         debut/roster tracker; carries no FV at all today
-#                       (0 of 2,483 rows), listed so it can never start.
-#
-# `draft_signing` is deliberately NOT here even though
-# grade_normalization._SYNTHETIC_SOURCES lists it: that flag only tells the
-# quantile map to pass its scale through raw. Its VALUE is a real published
-# draft-board FV (138 rows, varying), so it keeps its vote.
-#
-# WHY THEY MUST NOT VOTE ALONGSIDE A REAL GRADE
-# ---------------------------------------------
-# The equal-weight mean below gives every source 1.0 (data/source_weights.json
-# has weights={} since 2026-07-25, and absent sources vote at 1.0). So for the
-# 32 players who have BOTH a real published FV and an auto-discovery stamp, a
-# fabricated 35 was averaged into the consensus at FanGraphs' weight - the
-# same defect class as the fabricated BA-statcast FV-40 removed on 2026-07-30.
-# A published 40 became a served 36.
-#
-# The constant is still the ONLY thing standing between ~2,776 genuinely
-# ungraded auto-tracked players and having no consensus point at all
-# (performance_ingest rows are written with rank = NULL, so there is no
-# rank-implied fallback for them). It therefore stays as a LAST RESORT: it
-# votes only when no real source published an FV at this point.
-CONSTANT_ANCHOR_SOURCES = frozenset({"performance_ingest", "auto_detect"})
-
-
 def compute_consensus_point(
     day_snaps: list[Snapshot],
     *,
@@ -555,19 +487,11 @@ def compute_consensus_point(
 
     # Collapse multi-list outlets (Pipeline Top 100 + Pipeline
     # International, etc.) into one canonical source per outlet before
-    # any aggregation logic runs — see _dedupe_source_aliases. Capture which rows
-    # get RELABELED first, so grade normalization can still price them against the
-    # list they were actually published on (see _alias_grade_sources).
-    _alias_grade_src = _alias_grade_sources(day_snaps)
+    # any aggregation logic runs — see _dedupe_source_aliases.
     day_snaps = _dedupe_source_aliases(day_snaps)
 
     explicit_fvs: list[float] = []
     _fv_weights: list[float] = []     # WS-5: per-vote relative weights (1.0 = equal)
-    # Constant-anchor votes are collected SEPARATELY and folded back in only
-    # if no real source published an FV here (see CONSTANT_ANCHOR_SOURCES).
-    _synthetic_fvs: list[float] = []
-    _synthetic_weights: list[float] = []
-    _synthetic_sources: set[str] = set()
     ranks: list[int] = []
     rank_implied_fvs: list[float] = []
 
@@ -601,8 +525,7 @@ def compute_consensus_point(
         if grade_norm is not None and base_fv is not None:
             try:
                 _yr = int(str(s.snapshot_date)[:4])
-                _gsrc = _alias_grade_src.get((s.player_key, s.source), s.source)
-                _nm = grade_norm(base_fv, _gsrc, s.position, _yr)
+                _nm = grade_norm(base_fv, s.source, s.position, _yr)
                 if _nm is not None:
                     base_fv = _nm
             except (TypeError, ValueError):
@@ -639,16 +562,9 @@ def compute_consensus_point(
         if already is None:
             per_source[s.source] = entry
             if fv_for_consensus is not None:
-                if s.source in CONSTANT_ANCHOR_SOURCES:
-                    # Park it. It is a placeholder constant, not an opinion;
-                    # it only gets to vote if nothing real graded this player.
-                    _synthetic_fvs.append(fv_for_consensus)
-                    _synthetic_weights.append((source_weights or {}).get(s.source, 1.0))
-                    _synthetic_sources.add(s.source)
-                else:
-                    explicit_fvs.append(fv_for_consensus)
-                    _fv_weights.append((source_weights or {}).get(s.source, 1.0))
-                    contributing_sources.add(s.source)
+                explicit_fvs.append(fv_for_consensus)
+                _fv_weights.append((source_weights or {}).get(s.source, 1.0))
+                contributing_sources.add(s.source)
         else:
             # Same-date same-source duplicate. Surface in `extras` so
             # the UI can render it as a second publication row; do NOT
@@ -685,17 +601,6 @@ def compute_consensus_point(
                     continue
                 tools_by_key.setdefault(k, []).append(v)
                 contributing_sources.add(s.source)
-
-    # LAST-RESORT fold-back of the constant anchor. If no outlet published an
-    # FV at this point, the placeholder is all we have and it must still stand
-    # in, or the ~2,776 auto-discovered players whose only FV row is the
-    # synthetic 35 would lose their ConsensusPoint entirely and vanish from
-    # the board (their rows carry rank = NULL, so there is no rank fallback).
-    # Once ANY real grade exists, the constant stays out of the average.
-    if not explicit_fvs and _synthetic_fvs:
-        explicit_fvs = _synthetic_fvs
-        _fv_weights = _synthetic_weights
-        contributing_sources |= _synthetic_sources
 
     if not explicit_fvs and not rank_implied_fvs:
         return None
@@ -1043,12 +948,6 @@ def _latest_meta(snaps: list[Snapshot]) -> tuple[str, str | None, str | None]:
                 non_fg_pos,
                 next((s.org for s in snaps_sorted if s.org), None),
             )
-    # NB: FG's MIRP/SIRP role projections get a usage correction (rule
-    # D: current-season MiLB GS-share >= 0.50, IP/G >= 3.0, IP >= 20
-    # flips the label to SP) downstream at the storage export seam via
-    # role_usage.usage_position_override. It cannot happen here:
-    # Snapshot/PlayerTimeseries carry no mlbam id, and consensus.py
-    # cannot import storage (storage imports consensus).
     fg_pos = next((s.position for s in snaps_sorted
                    if s.source == "fangraphs" and s.position), None)
     any_pos = next((s.position for s in snaps_sorted if s.position), None)
@@ -1141,7 +1040,8 @@ def build_timeseries(
     single_source_k: float = SINGLE_SOURCE_K,
     normalize: bool = False,
 ) -> list[PlayerTimeseries]:
-    """Build per-player FV time-series with forward-filled sources.
+    """Build per-player FV time-series with forward-filled sources and
+    Bayesian shrinkage applied to every point.
 
     Forward-fill: at each event date, the consensus aggregates the latest
     snapshot from every source that has ever graded the player up to that
@@ -1149,29 +1049,10 @@ def build_timeseries(
     Intl snaps on 5/19 produce a 5/19 point that averages BOTH grades, not
     just the most recent single source.
 
-    SHRINKAGE — read this before tuning anything. `shrinkage_k`,
-    `shrinkage_n_full` and `prior_mean_fv` are INERT. They are kept only so
-    pre-2026-05 callers still import; the body never reads them, and neither
-    apply_shrinkage nor compute_prior_mean_fv is wired in (see the note above
-    the `for p in result:` loop at the end of this function, where the
-    population prior was removed in 2026-05). This docstring previously
-    claimed the population prior was "applied uniformly across every point",
-    which is false and cost a later audit real time.
-
-    The ONE live shrinkage is `single_source_k` (SINGLE_SOURCE_K = 0.5, pulling
-    toward SINGLE_SOURCE_PRIOR = FV 35), applied inside compute_consensus_point
-    when the player has exactly one explicit-FV instance across all history.
-    Measured 2026-07-25: that pull fires on 2,818 of 4,477 active players with a
-    published FV (62.9% of the live board) but on only 56 of 5,347 rows (1.0%)
-    of the 2017-2023 resolved backtest window, because attrition drops exactly
-    the thinly-covered players it exists to discipline. A k sweep on that window
-    is therefore near-powerless: over k in [0.25, 0.75] the mean cross-year
-    Spearman against realized WAR moves by <= 0.0006 and raising k to 1.0/2.0
-    sits inside a zero-information placebo band (p95 |d_rho| 0.0021). Turning
-    the pull OFF (k=0) is the only resolvable move and it is a WASH -
-    d_rho -0.0045 [-0.0077, -0.0016] but d_auc +0.0048 [+0.0026, +0.0077], the
-    two metrics disagreeing in sign. Leave both constants alone until the
-    backtest universe stops dropping non-debuts.
+    Shrinkage: after the raw points are built, the population prior mean
+    is computed from each player's latest pre-shrinkage value and applied
+    uniformly across every point. Pass `prior_mean_fv` to override the
+    auto-computed prior (e.g. for unit tests).
     """
     snapshots = [_canonicalize_player_snapshot(s) for s in snapshots]
     # Grade normalization (adopted 2026-07): build the quantile-mapping remapper ONCE
@@ -1181,7 +1062,7 @@ def build_timeseries(
     if normalize:
         try:
             from grade_normalization import build_remapper
-            grade_norm = build_remapper(aliases=SOURCE_ALIASES)
+            grade_norm = build_remapper()
         except Exception:
             grade_norm = None   # degrade to the raw scale rather than crash the build
     # v14 — drop-off detection runs ONCE across the full snapshot pool so
@@ -1213,20 +1094,9 @@ def build_timeseries(
         # who have been re-graded over time escape the pull. Brand-new
         # prospects with exactly one published grade still get pulled,
         # which is the intended uncertainty signal.
-        #
-        # 2026-07-31 - constant-anchor rows are NOT observations. Counting a
-        # performance_ingest stamp here let a fabricated FV 35 buy a real
-        # single-source grade an escape from the very uncertainty pull it is
-        # supposed to trigger (measured: 25 of the 32 affected players had
-        # exactly one real grade plus one synthetic stamp, so they read as
-        # "2 instances, well observed"). Same reasoning as
-        # CONSTANT_ANCHOR_SOURCES in compute_consensus_point. A player whose
-        # ONLY rows are synthetic lands at 0 instances, which still trips the
-        # pull - and pulling 35 toward a prior of 35 is a no-op, so nothing
-        # moves for that cohort.
         seen_fv_keys: set[tuple[str, str]] = set()
         for s in player_snaps:
-            if s.fv is not None and s.source not in CONSTANT_ANCHOR_SOURCES:
+            if s.fv is not None:
                 seen_fv_keys.add((s.source, s.snapshot_date))
         total_fv_instances = len(seen_fv_keys)
 

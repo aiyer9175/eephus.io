@@ -192,24 +192,6 @@ function _tmSearch(q) {
       }
     }
   }
-  // Players we MODEL but cannot price, surfaced as unselectable rows carrying
-  // the reason. Returning nothing for a real major-leaguer reads as "the site
-  // has never heard of him"; it is why someone went looking for A.J. Minter in
-  // the source. They are disabled because there is no value to trade, not
-  // because we are hiding them.
-  for (const u of (_TM.unpriced || [])) {
-    if (out.length >= 12) break;
-    if (!(u.name || "").toLowerCase().includes(q)) continue;
-    if (out.some(o => o.key === u.key)) continue;
-    out.push({
-      kind: "unpriced", key: u.key, name: u.name,
-      org: u.org || "", pos: u.pos || "", mm: null,
-      disabled: true,
-      sub: u.reason === "expiring"
-        ? `${u.pos || ""} · ${u.org || "FA"} · contract ends ${u.thru} - no controlled season to trade`
-        : `${u.pos || ""} · ${u.org || "FA"} · no contract on file - cannot price surplus`,
-    });
-  }
   return out;
 }
 
@@ -223,9 +205,17 @@ function _tmTotal(side) {
 // real model uncertainty, so a sub-$5M edge is not a meaningful "winner."
 const BALANCED_THRESHOLD_MM = 5;
 
-// One-subject card exports go through EEPHUS_HUB.openCard (the shared wrapper -
-// DE-DUP 2026-07-23; it prefers the GFX modal, falls back to the direct
-// shareCard download).
+// Open the shared Generate GFX modal for a one-subject (card) export; fall back
+// to the legacy direct download if the module didn't load. (Same wrapper the
+// fa.js / projections.js card chips use.)
+function _openCard(opts) {
+  if (window.EEPHUS_GFX) {
+    window.EEPHUS_GFX.open({ kind: "card", module: opts.module, accentToken: opts.accentToken,
+      title: opts.name, filenameBase: (opts.filename || "eephus-card").replace(/\.png$/, ""), card: opts });
+  } else if (window.EEPHUS_HUB) {
+    window.EEPHUS_HUB.shareCard(opts);
+  }
+}
 
 function renderTradeMachine() {
   const el = document.getElementById("trade-machine");
@@ -242,7 +232,7 @@ function renderTradeMachine() {
         <a class="fa-player-link tm-name" href="${x.kind === "prospect" ? `/prospx/#player=${encodeURIComponent(x.key)}` : `/projections/#player=${encodeURIComponent(x.key)}`}">${escapeHtml(x.name)}</a>
         <span class="tm-sub">${escapeHtml(x.pos || "")}</span>
         ${g ? `<span class="tm-grade-chip" style="color:${gc};border-color:${gc};" title="Trade Value Grade ${g} (contract-adjusted surplus)">${g}</span>` : ""}
-        <span class="tm-val" style="color:${_tmValColor(x.mm)};">${(x.mm || 0) >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M</span>
+        <span class="tm-val" style="color:${_tmValColor(x.mm)};">${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm).toFixed(1)}M</span>
         <button class="tm-x" data-tm-remove="${side}:${i}" title="Remove">×</button>
       </div>`;
     }).join("");
@@ -306,12 +296,8 @@ function renderTradeMachine() {
       const side = inp.dataset.tmSearch;
       const res = el.querySelector(`[data-tm-results="${side}"]`);
       const hits = _tmSearch(inp.value);
-      res.innerHTML = hits.map((h, i) => h.disabled
-        ? `<button class="tm-hit is-unpriced" type="button" disabled
-             title="We project this player, but there is no contract surplus to put in a deal.">
-             <strong>${escapeHtml(h.name)}</strong> <span class="tm-sub">${escapeHtml(h.sub)}</span>
-             <span class="tm-val">not tradeable</span></button>`
-        : `<button class="tm-hit" data-tm-add="${side}:${i}" type="button">
+      res.innerHTML = hits.map((h, i) =>
+        `<button class="tm-hit" data-tm-add="${side}:${i}" type="button">
            <strong>${escapeHtml(h.name)}</strong> <span class="tm-sub">${escapeHtml(h.sub)}</span>
            <span class="tm-val">${window.EEPHUS_HUB.money(h.mm)}</span></button>`).join("");
       res._hits = hits;
@@ -338,42 +324,40 @@ function renderTradeMachine() {
   const copyB = el.querySelector("[data-tm-copy]");
   if (copyB) copyB.onclick = () => {
     const fmt = side => _TM[side].map(x =>
-      ` ${x.name} (${[x.pos, x.org].filter(Boolean).join(", ")}${x.org || x.pos ? ", " : ""}${x.kind === "prospect" ? "prospect" : "MLB"}) ${(x.mm || 0) >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M`
+      ` ${x.name} (${[x.pos, x.org].filter(Boolean).join(", ")}${x.org || x.pos ? ", " : ""}${x.kind === "prospect" ? "prospect" : "MLB"}) ${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm).toFixed(1)}M`
     ).join("\n");
     const text = `=== Trade Machine (eephus.io) ===\n\nSide A receives:\n${fmt("a") || "  (none)"}\n  Total: $${dA.toFixed(1)}M\n\nSide B receives:\n${fmt("b") || "  (none)"}\n  Total: $${dB.toFixed(1)}M\n\nGap: $${Math.abs(dA - dB).toFixed(1)}M`;
     const done = () => { copyB.textContent = "Copied!"; setTimeout(() => { copyB.textContent = "Copy as text"; }, 1300); };
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => prompt("Copy this trade:", text));
     else prompt("Copy this trade:", text);
   };
-  // Shareable deal card (only wired when both sides carry an asset).
-  // Declarative since GFX slice 4: the "deal" template owns the layout (four
-  // totals/gap/verdict tiles + one "receives" section per side); this site
-  // only supplies each asset's data. Each asset row carries its Trade Value
-  // Grade letter (the same _tbGrade the live UI chips show).
+  // Shareable deal card (only wired when both sides carry an asset). Two sections
+  // list each side's assets "name - $M"; four tiles carry the totals, gap, and
+  // verdict; the caption is the grader's verdict line.
   const gfxB = el.querySelector("[data-tm-gfx]");
   if (gfxB) gfxB.onclick = () => {
-    const asset = x => ({
-      name: x.name,
-      grade: _tbGrade(x.mm),
-      value: `${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M`,
-      neg: !((x.mm || 0) >= 0),
-    });
+    const asset = x => [String(x.name || "?"),
+      `${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M`,
+      (x.mm || 0) >= 0 ? undefined : "var(--down)"];
     const vWord = vClass === "is-warn" ? "Hesitate"
       : vClass === "is-bad" ? (pct >= 70 ? "Lopsided" : "Reject")
       : "Fair";
-    window.EEPHUS_HUB.openCard({
-      template: "deal",
-      data: {
-        sideA: { total: `$${dA.toFixed(1)}M`, assets: _TM.a.map(asset) },
-        sideB: { total: `$${dB.toFixed(1)}M`, assets: _TM.b.map(asset) },
-        gap: `$${diff.toFixed(1)}M`,
-        verdict: vWord,
-      },
+    _openCard({
       module: "Trade Machine",
       accentToken: "--accent-cyan",
       name: "Trade Evaluation",
       meta: "one currency · prospect eFV surplus + MLB contract surplus",
       sub: `verdict: ${vWord.toUpperCase()}`,
+      tiles: [
+        { label: "Side A", value: `$${dA.toFixed(1)}M` },
+        { label: "Side B", value: `$${dB.toFixed(1)}M` },
+        { label: "Gap", value: `$${diff.toFixed(1)}M` },
+        { label: "Verdict", value: vWord },
+      ],
+      sections: [
+        { title: "Side A receives", rows: _TM.a.map(asset) },
+        { title: "Side B receives", rows: _TM.b.map(asset) },
+      ],
       url: "eephus.io/trademachine",
       filename: "eephus-trademachine-deal.png",
       caption: vText,
@@ -734,13 +718,7 @@ function _renderTBRows() {
     const gradeCol = _tbGradeColor(grade);
     // FV only meaningful for active MiLB prospects - hide for MLB players
     const isProspect = p.status === "active";
-    // eFV leads (round-to-NEAREST), consensus ceil as the fallback. The row
-    // already carried xfv_grade and this column read only the consensus close,
-    // so a prospect the board grades 60 showed 59 on the trade board while the
-    // Grade column beside it was already ranking on xfv_grade.
-    const fv    = !isProspect ? ""
-                : p.xfv_grade != null ? String(Math.round(Number(p.xfv_grade)))
-                : p.fv != null ? String(Math.ceil(Number(p.fv))) : "";
+    const fv    = isProspect && p.fv != null ? String(Math.ceil(Number(p.fv))) : "";
     // Position: trade_values.json now carries fielding-corrected position
     const pos   = escapeHtml(p.position || "");
     const org   = escapeHtml(p.org || "");   // may be empty for some players
@@ -1075,10 +1053,6 @@ function _tbShowGroup(playerKey) {
       .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(d => {
         _tbData = d; window._tbData = d;
-        // Vets we model but cannot price (expiring contract / none on file).
-        // Kept out of the board's value ranking, kept IN search so a real
-        // major-leaguer never returns silence.
-        _TM.unpriced = d.unpriced || [];
         _tmBuildProspectPool(d);
         _tbPopulateSelectFilters();
         _renderTBRows();

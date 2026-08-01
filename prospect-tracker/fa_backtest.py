@@ -94,119 +94,6 @@ def _rmse(pairs: list[tuple[float, float]]) -> float | None:
     return math.sqrt(sum((p - a) ** 2 for p, a in pairs) / len(pairs))
 
 
-def _bias(pairs: list[tuple[float, float]]) -> float | None:
-    """Signed mean error (pred - actual). MAE alone cannot tell a side
-    correction which way to move; every sliced metric reports this too."""
-    if not pairs:
-        return None
-    return sum(p - a for p, a in pairs) / len(pairs)
-
-
-def _cell(pairs: list[tuple[float, float]], base: list[tuple[float, float]] | None = None) -> dict:
-    """One reported slice: MAE + signed bias + levels, for model (and baseline).
-    `bias_model` is mean(pred - actual): positive means the cell is OVER-stated."""
-    n = len(pairs)
-    out = {"mae_model": _mae(pairs), "bias_model": _bias(pairs), "n": n,
-           "mean_pred": (sum(p for p, _ in pairs) / n) if n else None,
-           "mean_actual": (sum(a for _, a in pairs) / n) if n else None}
-    if base is not None:
-        out["mae_base"] = _mae(base)
-        out["bias_base"] = _bias(base)
-    return out
-
-
-# E1 (2026-07-30): Gate 1 reports WAR per SIDE as well as pooled. The owner's
-# "overprojecting pitchers" read has to be tested against a measured per-side
-# level, and MAE alone is sign-blind.
-# Headline metrics stay EXACTLY these four: the Model Accountability surface
-# renders Object.entries(gate1.pooled) verbatim (assets/fa.js:1131), so a slice
-# added here would become a served table row. Slices live in `pooled_by_side`.
-GATE1_HEADLINE = ("war", "wrc_plus", "fip", "war30")
-# `*:act_ge4` are the star-compression DIAGNOSTIC cells (E2). They condition on
-# the ACTUAL, so regression to the mean guarantees a negative bias there and the
-# cell can never be a ship criterion on its own - it is read only as "how much
-# of the star tail does the map reach", against the pooled MAE as the gate.
-# `expo:*` are the E3 playing-time cells: PROJECTED exposure vs ACTUAL, scored
-# only where the target season exists with real exposure (a player who never
-# appears has actual 0, which is an attendance fact, not a playing-time miss).
-# Hitters in PA, pitchers in BF. This is the 456-vs-511 cell.
-GATE1_SLICES = ("war:hit", "war:pit", "war:hit:act_ge4", "war:pit:act_ge4",
-                "expo:hit", "expo:pit")
-GATE1_METRICS = GATE1_HEADLINE + GATE1_SLICES
-
-# Lab hook, same contract as GATE2_COLLECT below: set to a list and every scored
-# WAR row is appended as (target, side, mlbam, pred, actual) so two model
-# settings can be compared PAIRED ROW BY ROW. None in production.
-GATE1_COLLECT: list | None = None
-
-
-def _fit_band_scale(panel: list[dict]) -> dict:
-    """Fit the T1.2 location-scale band on the Gate-1 residual panel and
-    grade it, IN SAMPLE for the diagnostics and out of fold for the verdict.
-
-    The out-of-fold verdict is not recomputed here (that is the lab's job and
-    it is expensive); what is written is the fitted model the serve path
-    consumes plus the honest served-side dispersion and the conditional
-    coverage table. Returns {} when the panel is too thin, in which case the
-    serve path keeps the four-bucket bands."""
-    if not panel:
-        return {}
-    import fa_bands
-    ages = [r["age"] for r in panel if r["age"] is not None]
-    age_mean = statistics.mean(ages) if ages else 29.0
-    Z = [fa_bands.war_z(r["side"], r["pred"], r["expo"], r["age"],
-                        r["thin"], r["tj_n"], age_mean) for r in panel]
-    model = fa_bands.fit(Z, [r["resid"] for r in panel],
-                         [r["side"] for r in panel],
-                         names=fa_bands.WAR_Z_NAMES, age_mean=age_mean)
-    if model is None:
-        return {}
-    out = {"band_scale": model,
-           "band_scale_widths": fa_bands.width_summary(
-               model, [(z, r["side"]) for z, r in zip(Z, panel)])}
-    # ZERO-INFORMATION CONTROL, written into the artifact next to the model:
-    # the identical estimator on a row-permuted residual column must return a
-    # flat sigma. If sigma_sd here is not ~0, the fit is reading noise.
-    ctl = fa_bands.fit(Z, [r["resid"] for r in panel],
-                       [r["side"] for r in panel],
-                       names=fa_bands.WAR_Z_NAMES, age_mean=age_mean,
-                       permute_seed=1)
-    if ctl:
-        out["band_scale_permuted_control"] = {
-            "sigma_mean": round(ctl["sigma_mean"], 5),
-            "sigma_sd": round(ctl["sigma_sd"], 5),
-            "note": ("row-permuted residuals: sigma_sd must collapse toward 0. "
-                     "Compare against band_scale.sigma_sd.")}
-    # Conditional coverage of the fitted bands, which is the test the pooled
-    # P10-P90 hit rate cannot do (it reads 0.79996 against nominal 0.80 and is
-    # uninformative about whether the bands are calibrated anywhere).
-    try:
-        import fa_calibration as fc
-        rows = []
-        for z, r in zip(Z, panel):
-            o = fa_bands.offsets(model, z, r["side"], (0.10, 0.90))
-            if o:
-                rows.append({"y": r["resid"], "q": {0.10: o[0.10], 0.90: o[0.90]},
-                             "pred": r["pred"], "age": r["age"] or age_mean,
-                             "expo": r["expo"], "tj": "tj" if r["tj_n"] else "none"})
-        if rows:
-            out["band_scale_conditional_coverage"] = {
-                "marginal": fc.coverage(rows),
-                "by_pred_decile": fc.conditional_coverage(
-                    rows, lambda r: r["pred"], n_bins=10),
-                "by_age": fc.conditional_coverage(
-                    rows, lambda r: ("<25" if r["age"] < 25 else "25-29"
-                                     if r["age"] < 30 else "30-34"
-                                     if r["age"] < 35 else "35+")),
-                "by_expo_decile": fc.conditional_coverage(
-                    rows, lambda r: r["expo"], n_bins=10),
-                "by_prior_tj": fc.conditional_coverage(rows, lambda r: r["tj"]),
-            }
-    except Exception:                                   # noqa: BLE001
-        log.warning("band_scale conditional coverage failed - continuing")
-    return out
-
-
 def run_projection_gate(persist: bool = True) -> dict:
     cfg = fp._pcfg()
     corpus = fp.build_corpus()
@@ -223,31 +110,22 @@ def run_projection_gate(persist: bool = True) -> dict:
 
     # rolling residual store for band sigmas: bucket -> [residuals]
     resid: dict[str, list[float]] = defaultdict(list)
-    # T1.2 - the SAME residuals with their covariates attached, so the band
-    # width can be a continuous function of the player instead of a two-bit
-    # bucket. Collected here rather than in a second pass because this loop
-    # is already the point-in-time one.
-    panel: list[dict] = []
-    try:
-        import tj_surgery
-        _tj_store = tj_surgery._load_store()
-    except Exception:                      # noqa: BLE001 - fail soft to tj_n 0
-        tj_surgery, _tj_store = None, {}
 
     def _bucket(side: str, expo_proj: float) -> str:
         lo = 350 if side == "hit" else 250
         return f"{side}:{'hi' if expo_proj >= lo else 'lo'}"
 
     per_season: list[dict] = []
-    pooled = {k: {"m": [], "b": []} for k in GATE1_METRICS}
+    pooled = {"war": {"m": [], "b": []}, "wrc_plus": {"m": [], "b": []},
+              "fip": {"m": [], "b": []}, "war30": {"m": [], "b": []}}
     coverage_hits = coverage_n = 0
 
     for target in WARMUP_TARGETS + targets:
         is_warmup = target in WARMUP_TARGETS
         curves, war_map = fp.fitted_models(corpus, target - 1)
-        season_stats: dict = {k: {"m": [], "b": []} for k in GATE1_METRICS}
-        season_stats["cov_hits"] = 0
-        season_stats["cov_n"] = 0
+        season_stats = {"war": {"m": [], "b": []}, "wrc_plus": {"m": [], "b": []},
+                        "fip": {"m": [], "b": []}, "war30": {"m": [], "b": []},
+                        "cov_hits": 0, "cov_n": 0}
         new_resid: dict[str, list[float]] = defaultdict(list)
         for side in ("hit", "pit"):
             rate_key = "wrc_plus" if side == "hit" else "fip"
@@ -267,16 +145,8 @@ def run_projection_gate(persist: bool = True) -> dict:
                 act_war = act.get("war") if act.get("war") is not None else 0.0
                 # WAR pool (everyone)
                 if base["war"] is not None:
-                    if GATE1_COLLECT is not None and not is_warmup:
-                        GATE1_COLLECT.append((target, side, mlbam,
-                                              float(war_pred), float(act_war)))
                     season_stats["war"]["m"].append((war_pred, act_war))
                     season_stats["war"]["b"].append((base["war"], act_war))
-                    season_stats[f"war:{side}"]["m"].append((war_pred, act_war))
-                    season_stats[f"war:{side}"]["b"].append((base["war"], act_war))
-                    if act_war >= 4.0:
-                        season_stats[f"war:{side}:act_ge4"]["m"].append((war_pred, act_war))
-                        season_stats[f"war:{side}:act_ge4"]["b"].append((base["war"], act_war))
                     if age and age >= 30:
                         season_stats["war30"]["m"].append((war_pred, act_war))
                         season_stats["war30"]["b"].append((base["war"], act_war))
@@ -293,33 +163,6 @@ def run_projection_gate(persist: bool = True) -> dict:
                             season_stats["cov_hits"] += 1
                         season_stats["cov_n"] += 1
                     new_resid[bk].append(act_war - war_pred)
-                    # 2020 is a 60-game season: realized WAR is compressed by
-                    # ~2.7x, so its residuals are a different scale entirely
-                    # and would distort a fitted variance function. The gate's
-                    # own target list already excludes it; the panel does too.
-                    if target != 2020:
-                        platform = seasons.get(target - 1)
-                        vol = ((platform.get("pa" if side == "hit" else "bf") or 0)
-                               if platform else 0)
-                        tj_n = 0.0
-                        if tj_surgery is not None:
-                            try:
-                                tj_n = float(tj_surgery.tj_features(
-                                    mlbam, f"{target}-01-01",
-                                    _tj_store).get("tj_count_pre") or 0)
-                            except Exception:            # noqa: BLE001
-                                tj_n = 0.0
-                        panel.append({
-                            "season": target, "side": side,
-                            "pred": float(war_pred), "resid": act_war - war_pred,
-                            "age": float(age) if age else None,
-                            "expo": float(proj["pt_proj"]),
-                            "thin": 1.0 if (platform is None or vol < 180.0) else 0.0,
-                            "tj_n": tj_n})
-                # E3 exposure cell: projected vs actual playing time
-                if actual_row and (act["expo"] or 0) > 0:
-                    season_stats[f"expo:{side}"]["m"].append(
-                        (float(proj["pt_proj"]), float(act["expo"])))
                 # rate pool (target exposure gate)
                 min_expo = min_pa if side == "hit" else min_bf
                 if actual_row and act["expo"] >= min_expo and base.get(rate_key) is not None:
@@ -333,15 +176,10 @@ def run_projection_gate(persist: bool = True) -> dict:
         if is_warmup:
             continue
         row = {"season": target}
-        for k in GATE1_METRICS:
-            if k in GATE1_HEADLINE:
-                row[f"{k}_mae_model"] = _mae(season_stats[k]["m"])
-                row[f"{k}_mae_base"] = _mae(season_stats[k]["b"])
-                row[f"{k}_n"] = len(season_stats[k]["m"])
-            elif ":act_ge4" not in k:    # per-side: MAE + signed level per season
-                row[f"{k}_mae_model"] = _mae(season_stats[k]["m"])
-                row[f"{k}_bias_model"] = _bias(season_stats[k]["m"])
-                row[f"{k}_n"] = len(season_stats[k]["m"])
+        for k in ("war", "wrc_plus", "fip", "war30"):
+            row[f"{k}_mae_model"] = _mae(season_stats[k]["m"])
+            row[f"{k}_mae_base"] = _mae(season_stats[k]["b"])
+            row[f"{k}_n"] = len(season_stats[k]["m"])
             pooled[k]["m"].extend(season_stats[k]["m"])
             pooled[k]["b"].extend(season_stats[k]["b"])
         row["coverage"] = (season_stats["cov_hits"] / season_stats["cov_n"]
@@ -360,15 +198,9 @@ def run_projection_gate(persist: bool = True) -> dict:
     summary = {
         "model_version": MODEL_VERSION,
         "targets": targets,
-        "pooled": {k: {"mae_model": _mae(pooled[k]["m"]), "mae_base": _mae(pooled[k]["b"]),
-                       "bias_model": _bias(pooled[k]["m"]), "bias_base": _bias(pooled[k]["b"]),
-                       "rmse_model": _rmse(pooled[k]["m"]), "rmse_base": _rmse(pooled[k]["b"]),
-                       "n": len(pooled[k]["m"])} for k in GATE1_HEADLINE},
-        # E1 (2026-07-30): per-side WAR MAE **and signed bias**, plus the E2
-        # star-compression diagnostic. Kept out of `pooled` on purpose (see
-        # GATE1_HEADLINE) so the served accountability table is unchanged.
-        "pooled_by_side": {k: _cell(pooled[k]["m"], pooled[k]["b"])
-                           for k in GATE1_SLICES},
+        "pooled": {k: {"mae_model": _mae(v["m"]), "mae_base": _mae(v["b"]),
+                       "rmse_model": _rmse(v["m"]), "rmse_base": _rmse(v["b"]),
+                       "n": len(v["m"])} for k, v in pooled.items()},
         "coverage_p10_p90": coverage,
         "per_season": per_season,
         "notes": [
@@ -386,13 +218,6 @@ def run_projection_gate(persist: bool = True) -> dict:
                                 "n": len(v)}
                            for bk, v in resid.items() if len(v) >= 50},
     }
-    # ---- T1.2: player-specific band width -------------------------------
-    # Fitted on the SAME pooled residual panel band_quantiles is cut from, so
-    # the two are alternative readings of one dataset and band_quantiles stays
-    # as the documented fallback. Measured lift and its floor live in
-    # fa_bands' module docstring; the conditional-coverage table below is the
-    # evidence that a marginal 0.79996 could never have produced.
-    summary.update(_fit_band_scale(panel))
     gates = {
         "war": summary["pooled"]["war"]["mae_model"] < summary["pooled"]["war"]["mae_base"],
         "wrc_plus": summary["pooled"]["wrc_plus"]["mae_model"] < summary["pooled"]["wrc_plus"]["mae_base"],
@@ -449,26 +274,11 @@ def main() -> None:
 GATE2_WARMUP_THROUGH = 2017          # train-only winters; scoring starts after
 GATE2_MODEL_VERSION = "fa_mkt_v2"
 
-# Lab hook. Set to a list and every scored row is appended as
-# (winter, player_key, pred_guar_mm, act_guar_mm, pred_aav_mm, act_aav_mm,
-# pred_years, act_years). None in production and nothing else reads it; it
-# exists so an A/B of two model settings can be PAIRED ROW BY ROW instead of
-# compared on two pooled MAEs, which cannot tell a real 1% move from noise.
-GATE2_COLLECT: list | None = None
 
-
-def run_market_gate(persist: bool = True, challenger: bool = False,
-                    persist_dpw: bool = True) -> dict:
+def run_market_gate(persist: bool = True, challenger: bool = False) -> dict:
     """Gate 2. ``challenger=True`` additionally scores the WS-2f LightGBM
     challenger (fa_market_ml.MarketModelML) on the same folds — identical
-    train/test rows, identical comps baseline, identical NPV targets.
-
-    ``persist_dpw=False`` writes the EVAL ARTIFACT ONLY and leaves
-    data/fa_dpw_series.json alone. That coupling is this module's single biggest
-    write hazard: fa_dpw_series.json is the $/WAR level the ENTIRE valuation
-    engine prices against, and until 2026-07-30 there was no way to refresh the
-    published gate verdict after a model change without also rewriting it. The
-    default keeps the historical behaviour, so no existing caller changes."""
+    train/test rows, identical comps baseline, identical NPV targets."""
     import fa_market as fm
     enriched = fm.enriched_signings(2015, 2026)
     test_years = sorted({s["class_year"] for s in enriched
@@ -476,10 +286,6 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
     pooled = {"guarantee": {"m": [], "b": []}, "aav": {"m": [], "b": []},
               "years": {"m": [], "b": []}, "mega_guarantee": {"m": [], "b": []}}
     pooled_ch = {k: [] for k in pooled}
-    # E1 (2026-07-30): per-pos-group and per-side price slices with SIGNED bias.
-    # Deliberately NOT merged into `pooled` - assets/fa.js:1131 renders
-    # Object.entries(gate2.pooled) as the served accountability table.
-    grouped: dict[str, dict[str, list]] = defaultdict(lambda: {"m": [], "b": []})
     per_winter: list[dict] = []
     misses: list[dict] = []
     infl = fm._dpw_inflation()
@@ -532,33 +338,6 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
             wstats["aav"]["b"].append((b_aav / 1e6, act_a / 1e6))
             wstats["years"]["m"].append((float(pred["proj_years"]), act_y))
             wstats["years"]["b"].append((b_years, act_y))
-            if GATE2_COLLECT is not None:
-                GATE2_COLLECT.append((W, s.get("player_key") or s["player_name"],
-                                      pred["proj_guarantee_usd"] / 1e6, act_g / 1e6,
-                                      pred["proj_aav_usd"] / 1e6, act_a / 1e6,
-                                      float(pred["proj_years"]), act_y))
-            # --- E1 slices: pos group, side, and actual-guarantee tier -------
-            _g = fm._pos_group(s.get("position"))
-            _side = "pit" if _g in ("SP", "RP") else "hit"
-            # Two tier conditionings, and the difference matters. `tier:` bins on
-            # the ACTUAL guarantee, which forces a negative bias at the top and a
-            # positive one at the bottom by regression to the mean - it is a
-            # DESCRIPTIVE cell, never a calibration criterion. `ptier:` bins on
-            # the PREDICTED guarantee, which is the decision-relevant
-            # conditioning ("when the board says $15M, what do they get") and the
-            # one fa_market._fit_recal's own docstring is estimated against.
-            _tier = ("lt10" if act_g < 10e6 else "10to20" if act_g < 20e6
-                     else "20to50" if act_g < 50e6 else "ge50")
-            _pg = pred["proj_guarantee_usd"]
-            _ptier = ("lt10" if _pg < 10e6 else "10to20" if _pg < 20e6
-                      else "20to50" if _pg < 50e6 else "ge50")
-            for _sl in (_g, _side, f"tier:{_tier}", f"ptier:{_ptier}"):
-                grouped[f"guarantee:{_sl}"]["m"].append((pred["proj_guarantee_usd"] / 1e6, act_g / 1e6))
-                grouped[f"guarantee:{_sl}"]["b"].append((b_guar / 1e6, act_g / 1e6))
-                grouped[f"aav:{_sl}"]["m"].append((pred["proj_aav_usd"] / 1e6, act_a / 1e6))
-                grouped[f"aav:{_sl}"]["b"].append((b_aav / 1e6, act_a / 1e6))
-                grouped[f"years:{_sl}"]["m"].append((float(pred["proj_years"]), act_y))
-                grouped[f"years:{_sl}"]["b"].append((b_years, act_y))
             actual_aav_mm = round(act_a / 1e6, 1)
             pred_aav_mm = round(pred["proj_aav_usd"] / 1e6, 1)
             misses.append({"player": s["player_name"], "winter": W,
@@ -588,10 +367,6 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
         "test_winters": test_years,
         "pooled": {k: {"mae_model": _mae(v["m"]), "mae_base": _mae(v["b"]),
                        "n": len(v["m"])} for k, v in pooled.items()},
-        # E1 (2026-07-30): MAE *and signed bias* per pos group / side / actual
-        # guarantee tier. bias_model > 0 means the board OVER-prices that cell.
-        "pooled_by_pos_group": {k: _cell(v["m"], v["b"])
-                                for k, v in sorted(grouped.items())},
         "per_winter": per_winter,
         "biggest_misses": misses[:12],
         "biggest_misses_years": sorted(misses, key=lambda m: -abs(m["err_years"]))[:12],
@@ -635,20 +410,14 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
         from pathlib import Path as _Path
         (_Path(__file__).parent / "data" / "fa_gate2_eval.json").write_text(
             _json.dumps(summary, indent=1), encoding="utf-8")
-    if persist and persist_dpw:
-        import json as _json
-        from pathlib import Path as _Path
         # The estimated per-winter $/WAR series (FULL corpus — the ledger is
         # retrospective and may see every winter's own implied rate). This
         # REPLACES fa_class's v1 framework backcast, as the plan promised.
         series = fm.dollars_per_war_by_winter(enriched)
-        # Breakdowns ride along: same corpus, same winters, no extra ingest.
-        # The headline stays exactly where it was so no reader has to move.
         (_Path(__file__).parent / "data" / "fa_dpw_series.json").write_text(
             _json.dumps({"method": "fa_signings_implied_v1",
                          "model_version": GATE2_MODEL_VERSION,
-                         "usd_per_war_by_winter": {str(k): int(v) for k, v in series.items()},
-                         "breakdown": fm.dpw_breakdowns(enriched)},
+                         "usd_per_war_by_winter": {str(k): int(v) for k, v in series.items()}},
                         indent=1), encoding="utf-8")
     return summary
 

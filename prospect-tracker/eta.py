@@ -82,30 +82,6 @@ LEVEL_BIAS_ADJ: dict[str, float] = {
     "AAA": 0.5, "AA": 0.5, "A+": 0.5, "A": 0.5, "CPX": 0.5, "DSL": 0.5,
 }
 
-# S2 eta-hazard-lite 40-man shave (W-SURPLUS S2, PASSED its gate 2026-07-24, held OFF that
-# cycle, re-verified and flipped 2026-07-29). A player already on the 40-man is closer to
-# the majors than his level alone implies, and the heuristic did not know it.
-#
-# These values are the PRODUCTION-frame forward-chained refit, NOT
-# data/eta_hazard_eval.json:shippable_full_window_shave. The distinction is load-bearing:
-# the lab's champion runs estimate_eta WITHOUT LEVEL_BIAS_ADJ while production runs it WITH,
-# so the artifact's table was fitted against a model production does not run. AAA is 0.0 on
-# purpose. Once the 0.5 level-bias shave above is applied, the median AAA 40-man residual is
-# exactly 0 and the mechanism correctly asks for nothing; shipping the artifact's 0.964 would
-# apply a SECOND shave to the 32 of 54 live rows that no longer need one.
-#
-# A and A+ sit at the a-priori CAP of 1.0 in every vintage against median residuals of 2.0,
-# so their magnitude is a conservative BOUND rather than an estimate.
-#
-# Correcting the frame shrinks the measured effect 43% (d MAE -0.084 -> -0.048) and cleans it
-# up at the same time: the zero-information twin falls from 30-40% of the effect to 10-14%.
-# Bootstrap CI95 [-0.0529, -0.0256] on MAE and [+0.0116, +0.0253] on within-1yr, both
-# P=1.000, permutation p=0.000, 5 of 5 folds agreeing.
-#
-# Passed by storage.py ONLY for rows whose roster_status carries on_40_man; every other row
-# passes None and is byte-identical.
-FORTYMAN_ADJ: dict[str, float] = {"AAA": 0.0, "AA": 0.97, "A+": 1.0, "A": 1.0}
-
 # v38 — Item-4 ETA rebalance: shift weight from current level onto age.
 # The level base is modestly de-weighted (×0.90 — a ~10% compression of the
 # level term, so two players at different levels sit a touch closer and the
@@ -115,61 +91,6 @@ FORTYMAN_ADJ: dict[str, float] = {"AAA": 0.0, "AA": 0.97, "A+": 1.0, "A": 1.0}
 # old-for-level peer (e.g. a 24yo at High-A) instead of nearly tying them.
 # The young-floor still guards against absurd over-compression.
 _LEVEL_BASE_WEIGHT = 0.90
-
-# ── C3 2026-07-30: continuous age-for-level ETA adjustment (DEFAULT OFF) ──────
-# The shipped age_adj is a nine-tier STAIRCASE on the integer part of
-# `diff = age - level_median`, so it jumps 0.35 to 0.40 yr of projected ETA at every
-# integer boundary: diff -0.99 and diff -1.00 are a hundredth of a year apart in age
-# and 0.40 yr apart in forecast ETA. The knot table below is the SAME function
-# evaluated at those boundaries, linearly interpolated between them and clamped past
-# +/-4, so the staircase's value at every boundary is preserved exactly and only the
-# interior is smoothed. The one deliberate difference is the dead zone: the staircase
-# returns a flat 0.0 across the whole open interval (-1, +1), the ramp passes through
-# (0, 0) instead, so a 0.7-yr-old-for-level prospect gets 0.245 yr of ETA rather than
-# nothing.
-#
-# DEFAULT OFF and the gate is OWED, not passed. ETA is a forecast with censored
-# outcomes, so its arbiter is eta_backtest.py's KM/censoring-aware protocol, which needs
-# a resolved-cohort rebuild this lane is not permitted to run. Flipping this flag without
-# that backtest would ship an unmeasured change to every ETA on the site.
-# Registered in docs/efv-2026-07-30/EFV_LANE_GATES.md as arm C3-ETA (gate OWED).
-AGE_ADJ_CONTINUOUS = False
-# (diff, age_adj) knots == the shipped staircase evaluated at its own tier boundaries.
-_AGE_ADJ_KNOTS: tuple[tuple[float, float], ...] = (
-    (-4.0, -1.50), (-3.0, -1.15), (-2.0, -0.80), (-1.0, -0.40), (0.0, 0.0),
-    (1.0, +0.35), (2.0, +0.70), (3.0, +1.00), (4.0, +1.25),
-)
-
-
-def age_adj_for_diff(diff: float) -> float:
-    """Age-for-level ETA adjustment. Staircase (shipped) or, with
-    AGE_ADJ_CONTINUOUS, the linear interpolation of the same knots."""
-    if not AGE_ADJ_CONTINUOUS:
-        if diff <= -4.0:
-            return -1.50
-        if diff <= -3.0:
-            return -1.15
-        if diff <= -2.0:
-            return -0.80
-        if diff <= -1.0:
-            return -0.40
-        if diff >= 4.0:
-            return +1.25
-        if diff >= 3.0:
-            return +1.00
-        if diff >= 2.0:
-            return +0.70
-        if diff >= 1.0:
-            return +0.35
-        return 0.0
-    if diff <= _AGE_ADJ_KNOTS[0][0]:
-        return _AGE_ADJ_KNOTS[0][1]
-    if diff >= _AGE_ADJ_KNOTS[-1][0]:
-        return _AGE_ADJ_KNOTS[-1][1]
-    for (x0, y0), (x1, y1) in zip(_AGE_ADJ_KNOTS, _AGE_ADJ_KNOTS[1:]):
-        if x0 <= diff <= x1:
-            return round(y0 + (y1 - y0) * (diff - x0) / (x1 - x0), 4)
-    return 0.0
 
 # ── Static fallback expected ages — only used when the caller does not
 # supply empirical numbers from level_norms (e.g. unit tests).
@@ -270,13 +191,6 @@ class ETAResult:
     #     years rounds to a year out)
     # None when ETA itself is None (insufficient signal).
     eta_half: str | None = None      # "early" | "late" | None
-    # S2 eta-hazard-lite (2026-07-24 cycle, W-SURPLUS S2): years shaved off
-    # the final travel time because the player was ALREADY 40-man-selected
-    # at the snapshot (historical selection dates reconstructed from the
-    # .cache/mlb_transactions SE "selected the contract" events). 0.0 unless
-    # the caller passed fortyman_adj (default None = OFF, byte-identical).
-    # Appended LAST so existing field order is untouched.
-    fortyman_adj_applied: float = 0.0
 
 
 def _org_promotion_phase_weight(phase: str, org_tendency: dict | None) -> float:
@@ -325,7 +239,6 @@ def estimate_eta(
     statcast_plus: int | None = None,
     base_years: dict[str, float] | None = None,
     level_bias_adj: dict[str, float] | None = None,
-    fortyman_adj: float | None = None,
 ) -> ETAResult:
     """
     Return an ETAResult for the given prospect attributes.
@@ -347,14 +260,6 @@ def estimate_eta(
         Override for the per-level base travel-time table — used by
         eta_backtest.py to score candidate recalibrations through the
         EXACT live code path. None → the module BASE_YEARS.
-    fortyman_adj : float | None
-        S2 eta-hazard-lite (W-SURPLUS S2, 2026-07-24 cycle; DEFAULT-OFF).
-        Years to shave off the FINAL travel time because the player was
-        already 40-man-selected at the snapshot (selection dates come from
-        the .cache/mlb_transactions SE events; the magnitude is fitted
-        forward-chained by the S2 lab, never hardcoded here). None (the
-        default) = no adjustment, output byte-identical to the pre-hook
-        code path. Applied after level_bias_adj, floored at 0.
     """
     today_year = date.today().year
 
@@ -465,11 +370,22 @@ def estimate_eta(
         # strongly WITHIN a level tier (paired with the de-weighted level base
         # above). A 19yo at A+ (diff ≈ −3 → −1.15) now projects ~1.9y earlier
         # than a 24yo at A+ (diff ≈ +2 → +0.70), vs ~1.25y under the old tiers.
-        # Tier table + the default-OFF continuous variant live in age_adj_for_diff
-        # (C3, 2026-07-30). Byte-identical while AGE_ADJ_CONTINUOUS is False.
-        #   4+ yr young-for-level -1.50 (aggressive fast-track) .. 3+ yr -1.15
-        #   (elite fast-track) .. 3+ yr OLD +1.00 (org filler) .. 4+ yr +1.25.
-        age_adj = age_adj_for_diff(diff)
+        if diff <= -4.0:
+            age_adj = -1.50   # 4+ years young-for-level: aggressive fast-track
+        elif diff <= -3.0:
+            age_adj = -1.15   # 3+ years young-for-level: elite fast-track
+        elif diff <= -2.0:
+            age_adj = -0.80
+        elif diff <= -1.0:
+            age_adj = -0.40
+        elif diff >= 4.0:
+            age_adj = +1.25   # 4+ years old-for-level: deep org filler
+        elif diff >= 3.0:
+            age_adj = +1.00   # 3+ years old-for-level: organizational filler
+        elif diff >= 2.0:
+            age_adj = +0.70
+        elif diff >= 1.0:
+            age_adj = +0.35
         signals += 1
 
     # ── FV adjustment ──────────────────────────────────────────────────────
@@ -682,13 +598,6 @@ def estimate_eta(
     # last so it corrects the FINAL travel time, not an intermediate term.
     if level_bias_adj and current_level:
         total = max(0.0, total - float(level_bias_adj.get(current_level, 0.0)))
-    # S2 eta-hazard-lite 40-man selection shave (DEFAULT-OFF: fires only when
-    # the caller passes a fitted fortyman_adj; applied last, like the bias
-    # shave, so it corrects the FINAL travel time).
-    _fortyman_applied = 0.0
-    if fortyman_adj is not None:
-        _fortyman_applied = min(float(fortyman_adj), total)
-        total = max(0.0, total - float(fortyman_adj))
     eta_year = today_year + round(total)
 
     if signals >= 3:
@@ -774,5 +683,4 @@ def estimate_eta(
         org_promo_h2_rate=(org_promotion_tendency or {}).get("h2_rate"),
         org_promo_weight=round(org_weight, 2),
         eta_half=eta_half,
-        fortyman_adj_applied=round(_fortyman_applied, 2),
     )

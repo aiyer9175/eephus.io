@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-01",
+ "generated_at": "2026-07-16",
  "vintage_years": [
   2018,
   2019,
@@ -9,16 +9,16 @@
   2023
  ],
  "accounting": {
-  "listed": 8988,
-  "excluded_post_debut": 619,
+  "listed": 9214,
+  "excluded_post_debut": 620,
   "excluded_no_bio": 0,
-  "no_level_age_fallback": 3493,
-  "level_from_statsapi": 3441,
-  "level_from_career_stats": 1435,
-  "debuted": 4138,
-  "censored_active": 2171,
-  "washed_out": 743,
-  "overdue": 855
+  "no_level_age_fallback": 3719,
+  "level_from_statsapi": 3432,
+  "level_from_career_stats": 1443,
+  "debuted": 4178,
+  "censored_active": 2307,
+  "washed_out": 746,
+  "overdue": 885
  },
  "conventions": {
   "vintage_fv": "median of each source's earliest same-year snapshot",
@@ -28,46 +28,46 @@
   "selection": "MAE conditions on debuted players (shared by champion/baseline/challenger); overdue + washed-out rates carry the unconditional signal"
  },
  "champion_heuristic": {
-  "n": 4138,
-  "mae": 1.428,
-  "bias": 1.008,
-  "within_1y": 0.586,
-  "exact": 0.217
+  "n": 4178,
+  "mae": 1.427,
+  "bias": 1.017,
+  "within_1y": 0.585,
+  "exact": 0.218
  },
  "baseline_naive_level_table": {
-  "n": 3450,
-  "mae": 1.977,
-  "bias": 1.756,
-  "within_1y": 0.379,
-  "exact": 0.168
+  "n": 3441,
+  "mae": 1.982,
+  "bias": 1.765,
+  "within_1y": 0.378,
+  "exact": 0.167
  },
  "champion_on_baseline_rows": {
-  "n": 3450,
-  "mae": 1.441,
-  "bias": 1.089,
-  "within_1y": 0.579,
+  "n": 3441,
+  "mae": 1.443,
+  "bias": 1.1,
+  "within_1y": 0.577,
   "exact": 0.212
  },
  "challenger_empirical_table_forward_chained": {
-  "n": 2906,
-  "mae": 0.862,
-  "bias": 0.189,
-  "within_1y": 0.814,
-  "exact": 0.37
+  "n": 2897,
+  "mae": 0.853,
+  "bias": 0.203,
+  "within_1y": 0.818,
+  "exact": 0.373
  },
  "challenger_km_recalibrated_heuristic": {
-  "n": 2812,
-  "mae": 1.468,
-  "bias": 1.144,
-  "within_1y": 0.568,
-  "exact": 0.198
+  "n": 2803,
+  "mae": 1.453,
+  "bias": 1.137,
+  "within_1y": 0.571,
+  "exact": 0.199
  },
  "v38_frozen_on_km_rows": {
-  "n": 2812,
-  "mae": 2.0,
-  "bias": 1.835,
-  "within_1y": 0.409,
-  "exact": 0.138
+  "n": 2803,
+  "mae": 2.006,
+  "bias": 1.847,
+  "within_1y": 0.406,
+  "exact": 0.136
  },
  "km_base_years_full_window": {
   "AAA": 0.75,
@@ -93,9 +93,9 @@
   "DSL": 7.5
  },
  "overdue_v38_vs_km": {
-  "v38": 756,
-  "km_recalibrated": 855,
-  "censored_n": 2171
+  "v38": 786,
+  "km_recalibrated": 885,
+  "censored_n": 2307
  },
  "ship_decision": {
   "date": "2026-06-11",
@@ -121,38 +121,38 @@
  "by_level": {
   "DSL": {
    "n": 58,
-   "mae": 3.534,
-   "bias": 3.5,
-   "within_1y": 0.138,
+   "mae": 3.569,
+   "bias": 3.569,
+   "within_1y": 0.121,
    "exact": 0.034
   },
   "CPX": {
-   "n": 328,
-   "mae": 1.591,
-   "bias": 1.159,
-   "within_1y": 0.537,
-   "exact": 0.223
+   "n": 326,
+   "mae": 1.595,
+   "bias": 1.166,
+   "within_1y": 0.534,
+   "exact": 0.224
   },
   "A": {
-   "n": 921,
-   "mae": 1.596,
-   "bias": 1.188,
+   "n": 918,
+   "mae": 1.594,
+   "bias": 1.199,
    "within_1y": 0.526,
-   "exact": 0.18
+   "exact": 0.181
   },
   "A+": {
-   "n": 724,
-   "mae": 1.628,
-   "bias": 1.383,
-   "within_1y": 0.481,
-   "exact": 0.159
+   "n": 721,
+   "mae": 1.635,
+   "bias": 1.402,
+   "within_1y": 0.477,
+   "exact": 0.157
   },
   "AA": {
-   "n": 907,
-   "mae": 1.218,
-   "bias": 0.892,
-   "within_1y": 0.656,
-   "exact": 0.225
+   "n": 906,
+   "mae": 1.222,
+   "bias": 0.9,
+   "within_1y": 0.655,
+   "exact": 0.223
   },
   "AAA": {
    "n": 512,
@@ -165,72 +165,72 @@
  "by_vintage": {
   "2018": {
    "n": 649,
-   "mae": 1.253,
-   "bias": 0.59,
-   "within_1y": 0.635,
+   "mae": 1.256,
+   "bias": 0.596,
+   "within_1y": 0.633,
    "exact": 0.274
   },
   "2019": {
    "n": 774,
-   "mae": 1.279,
-   "bias": 0.641,
-   "within_1y": 0.645,
-   "exact": 0.251
+   "mae": 1.271,
+   "bias": 0.649,
+   "within_1y": 0.647,
+   "exact": 0.253
   },
   "2020": {
-   "n": 731,
-   "mae": 1.226,
-   "bias": 0.739,
-   "within_1y": 0.662,
-   "exact": 0.252
+   "n": 730,
+   "mae": 1.221,
+   "bias": 0.752,
+   "within_1y": 0.664,
+   "exact": 0.253
   },
   "2021": {
-   "n": 703,
-   "mae": 1.93,
-   "bias": 1.669,
-   "within_1y": 0.408,
-   "exact": 0.105
+   "n": 721,
+   "mae": 1.926,
+   "bias": 1.674,
+   "within_1y": 0.406,
+   "exact": 0.108
   },
   "2022": {
-   "n": 705,
-   "mae": 1.467,
-   "bias": 1.206,
-   "within_1y": 0.573,
-   "exact": 0.21
+   "n": 724,
+   "mae": 1.459,
+   "bias": 1.202,
+   "within_1y": 0.575,
+   "exact": 0.213
   },
   "2023": {
-   "n": 576,
-   "mae": 1.425,
-   "bias": 1.266,
-   "within_1y": 0.587,
-   "exact": 0.208
+   "n": 580,
+   "mae": 1.428,
+   "bias": 1.269,
+   "within_1y": 0.586,
+   "exact": 0.203
   }
  },
  "residual_by_level": {
   "DSL": {
    "n": 58,
-   "mean": 3.5,
+   "mean": 3.569,
    "median": 4.0
   },
   "CPX": {
-   "n": 328,
-   "mean": 1.159,
+   "n": 326,
+   "mean": 1.166,
    "median": 1.0
   },
   "A": {
-   "n": 921,
-   "mean": 1.188,
-   "median": 1
-  },
-  "A+": {
-   "n": 724,
-   "mean": 1.383,
+   "n": 918,
+   "mean": 1.199,
    "median": 1.0
   },
-  "AA": {
-   "n": 907,
-   "mean": 0.892,
+  "A+": {
+   "n": 721,
+   "mean": 1.402,
    "median": 1
+  },
+  "AA": {
+   "n": 906,
+   "mean": 0.9,
+   "median": 1.0
   },
   "AAA": {
    "n": 512,
@@ -240,30 +240,30 @@
  },
  "bias_corrected_forward_chained": {
   "champion_rescore": {
-   "n": 3450,
-   "mae": 1.441,
-   "bias": 1.089,
-   "within_1y": 0.579,
+   "n": 3441,
+   "mae": 1.443,
+   "bias": 1.1,
+   "within_1y": 0.577,
    "exact": 0.212
   },
   "bias_corrected": {
-   "n": 3450,
-   "mae": 1.233,
-   "bias": 0.721,
-   "within_1y": 0.659,
-   "exact": 0.263
+   "n": 3441,
+   "mae": 1.231,
+   "bias": 0.733,
+   "within_1y": 0.66,
+   "exact": 0.264
   },
   "overdue": {
    "champion": 331,
-   "bias_corrected": 426
+   "bias_corrected": 427
   },
   "shippable_level_bias_adj": {
-   "DSL": 0.5,
    "AAA": 0.5,
-   "A": 0.5,
+   "DSL": 0.5,
+   "A+": 0.5,
    "CPX": 0.5,
    "AA": 0.5,
-   "A+": 0.5
+   "A": 0.5
   },
   "cap": 0.5,
   "shrink_k": 10,
@@ -271,10 +271,10 @@
   "note": "conservative -0.5 final shave at every minor level (eta.LEVEL_BIAS_ADJ), applied by the live caller (storage.py); champion backtest UNtouched. MAE/within-1y improve; overdue +~99 (in line with the accepted KM +101)."
  },
  "censoring": {
-  "censored_active": 2171,
-  "overdue_rate": 0.394,
-  "washed_out": 743,
-  "washed_out_share_of_listed": 0.105
+  "censored_active": 2307,
+  "overdue_rate": 0.384,
+  "washed_out": 746,
+  "washed_out_share_of_listed": 0.103
  },
  "empirical_tables_by_vintage": {
   "2019": {
@@ -331,59 +331,59 @@
    0.1372
   ],
   "AA": [
-   0.6469,
-   0.3619,
-   0.2549,
-   0.2124,
-   0.2006,
-   0.1957,
-   0.1868,
-   0.1868,
-   0.1868
+   0.6457,
+   0.3596,
+   0.2524,
+   0.2117,
+   0.2012,
+   0.1962,
+   0.1874,
+   0.1874,
+   0.1874
   ],
   "A+": [
    0.9,
-   0.6864,
-   0.5093,
-   0.4322,
-   0.3946,
-   0.3762,
-   0.372,
-   0.372,
-   0.372
+   0.6856,
+   0.5068,
+   0.4305,
+   0.3959,
+   0.3785,
+   0.3757,
+   0.3757,
+   0.3757
   ],
   "A": [
    0.969,
    0.8176,
    0.6048,
-   0.4413,
-   0.3224,
-   0.2639,
-   0.238,
-   0.2249,
-   0.2249
+   0.4421,
+   0.3213,
+   0.2636,
+   0.239,
+   0.2277,
+   0.2277
   ],
   "CPX": [
-   0.9893,
-   0.9292,
-   0.7918,
-   0.5858,
-   0.3209,
-   0.2042,
-   0.1361,
-   0.1309,
-   0.1254
+   0.9892,
+   0.929,
+   0.7914,
+   0.5849,
+   0.325,
+   0.2068,
+   0.1379,
+   0.1326,
+   0.127
   ],
   "DSL": [
    0.9945,
-   0.978,
-   0.9231,
-   0.8242,
-   0.6614,
-   0.5952,
-   0.5372,
-   0.5372,
-   0.5209
+   0.9781,
+   0.9235,
+   0.8251,
+   0.6541,
+   0.5873,
+   0.5286,
+   0.5286,
+   0.5286
   ]
  }
 }

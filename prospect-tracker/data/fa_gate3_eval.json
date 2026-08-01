@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-29",
+ "generated_at": "2026-06-10",
  "test_winters": [
   2018,
   2019,
@@ -28,40 +28,73 @@
   },
   "behavior_only": {
    "n": 1173,
-   "top1": 0.0418,
-   "top3": 0.1313,
-   "top5": 0.208,
-   "mrr": 0.1515
+   "top1": 0.0401,
+   "top3": 0.1245,
+   "top5": 0.2157,
+   "mrr": 0.1525
   },
   "live_analog": {
    "n": 1173,
-   "top1": 0.052,
-   "top3": 0.1449,
-   "top5": 0.2293,
-   "mrr": 0.1669
+   "top1": 0.0341,
+   "top3": 0.0997,
+   "top5": 0.1807,
+   "mrr": 0.1418
   },
   "fitted_transfer": {
    "n": 1080,
    "top1": 0.0343,
-   "top3": 0.1167,
-   "top5": 0.1981,
-   "mrr": 0.1479
+   "top3": 0.1287,
+   "top5": 0.2231,
+   "mrr": 0.1518
   },
   "fitted_full": {
    "n": 1080,
    "top1": 0.1787,
-   "top3": 0.237,
-   "top5": 0.3065,
-   "mrr": 0.2679
+   "top3": 0.2398,
+   "top5": 0.3083,
+   "mrr": 0.27
   }
  },
  "verdicts": {
   "live_analog_beats_random": true,
   "live_analog_beats_payroll_only": true,
-  "live_analog_beats_behavior_only": true,
-  "fitted_transfer_beats_live_analog": false
+  "live_analog_beats_behavior_only": false,
+  "fitted_transfer_beats_live_analog": true
  },
+ "fitted_transfer_weight_candidate": {
+  "need": 0.276,
+  "window": 0.0,
+  "afford": 0.02,
+  "park": 0.025,
+  "behavior": 0.679
+ },
+ "fitted_transfer_coefs_final_winter": [
+  0.4700140903692502,
+  -0.17877478892800103,
+  0.03466455801632829,
+  0.042046587555702335,
+  1.1554923168855264
+ ],
+ "notes": [
+  "REDUCED-FEATURE ANALOG: the live engine's contracted-roster need/window inputs are not reconstructable historically \u2014 this gate validates the composite's reduced twin (payroll/tax Y-1, prior wins, behavior <Y, outgoing-FA need proxy, park Y-1)",
+  "deal-size context (NPV) is identical across all 30 candidate clubs per signing \u2014 conditions the ranking, cannot leak the winner",
+  "incumbency (re-signing gravity) is real and ex-ante but absent from the live composite \u2014 fitted_full shows its ceiling",
+  "mystery-team realism: top-5 is the headline metric; top-1 on 30 clubs is genuinely hard"
+ ],
  "weight_mix_comparison": {
+  "fitted_logistic": {
+   "weights": {
+    "need": 0.28,
+    "window": 0.0,
+    "afford": 0.02,
+    "park": 0.03,
+    "behavior": 0.67
+   },
+   "mrr": 0.1652,
+   "top1": 0.044,
+   "top3": 0.142,
+   "top5": 0.237
+  },
   "hand_v2": {
    "weights": {
     "need": 0.31,
@@ -70,10 +103,16 @@
     "park": 0.04,
     "behavior": 0.24
    },
-   "top1": 0.0324,
-   "top3": 0.104,
-   "top5": 0.185,
-   "mrr": 0.1396
+   "mrr": 0.1418,
+   "top1": 0.034,
+   "top3": 0.1,
+   "top5": 0.181
+  },
+  "behavior_only": {
+   "mrr": 0.1525,
+   "top1": 0.04,
+   "top3": 0.124,
+   "top5": 0.216
   },
   "shipped_balanced": {
    "weights": {
@@ -83,93 +122,11 @@
     "park": 0.05,
     "behavior": 0.45
    },
+   "mrr": 0.167,
    "top1": 0.052,
-   "top3": 0.1449,
-   "top5": 0.2293,
-   "mrr": 0.1669
-  },
-  "fitted_logistic": {
-   "weights": {
-    "need": 0.596,
-    "window": 0.0,
-    "afford": 0.0,
-    "park": 0.012,
-    "behavior": 0.392
-   },
-   "top1": 0.0494,
-   "top3": 0.1458,
-   "top5": 0.2353,
-   "mrr": 0.166
-  },
-  "behavior_only": {
-   "top1": 0.0418,
-   "top3": 0.1313,
-   "top5": 0.208,
-   "mrr": 0.1515
+   "top3": 0.138,
+   "top5": 0.228
   }
  },
- "ship_decision": "shipped weights are read from fa_config.fit.weights and scored here verbatim (LIVE_WEIGHTS). The mix comparison below is computed on the identical forward chain, so it can never drift from what ships. The shipped mix is kept player-discriminative on purpose: a behavior-dominated composite is nearly player-INDEPENDENT and put one club atop every pitcher's fit list (the measured Giants/Dodgers failure pattern). Need is the only player-specific signal, and the 2026-07-30 fits-v4 pass re-weighted toward it after the concentration tripwire below measured the failure directly. Differences among the top mixes are within noise and are disclosed as such.",
- "concentration": {
-  "n_members": 228,
-  "assertion_A1_all_30": true,
-  "max_top1_share": 0.5219,
-  "max_top1_club": "LAD",
-  "distinct_top1": 10,
-  "distinct_top3": 20,
-  "median_gap": 0.053,
-  "top1_counts": {
-   "LAD": 119,
-   "SFG": 54,
-   "NYM": 19,
-   "NYY": 10,
-   "CHC": 9,
-   "PHI": 7,
-   "ARI": 6,
-   "DET": 2,
-   "TOR": 1,
-   "TBR": 1
-  },
-  "per_side_max_top1_share_REPORTED_NOT_GATED": {
-   "hit": 0.4889,
-   "pit": 0.5435
-  },
-  "per_side_top1_club": {
-   "hit": "LAD",
-   "pit": "LAD"
-  },
-  "gate": {
-   "max_top1_share": false,
-   "distinct_top1": false,
-   "distinct_top3": true,
-   "median_gap": true
-  },
-  "pass": false,
-  "thresholds": {
-   "max_top1_share": 0.25,
-   "min_distinct_top1": 12,
-   "min_distinct_top3": 20,
-   "min_median_gap": 0.015
-  }
- },
- "fitted_transfer_weight_candidate": {
-  "need": 0.596,
-  "window": 0.0,
-  "afford": 0.0,
-  "park": 0.012,
-  "behavior": 0.392
- },
- "fitted_transfer_coefs_final_winter": [
-  0.5128183872934847,
-  -0.16791773675107283,
-  -0.0684238196289415,
-  0.010233797446307067,
-  0.3368035827209572
- ],
- "notes": [
-  "REDUCED-FEATURE ANALOG: the live engine's contracted-roster need/window inputs are not reconstructable historically \u2014 this gate validates the composite's reduced twin (payroll/tax Y-1, prior wins, behavior <Y, outgoing-FA need proxy, park Y-1)",
-  "deal-size context (NPV) is identical across all 30 candidate clubs per signing \u2014 conditions the ranking, cannot leak the winner",
-  "incumbency (re-signing gravity) is real and ex-ante but absent from the live composite \u2014 fitted_full shows its ceiling",
-  "mystery-team realism: top-5 is the headline metric; top-1 on 30 clubs is genuinely hard",
-  "CONCENTRATION TRIPWIRE (registered 2026-07-30): MRR/top-k are blind to a fit vector that ranks the SAME club first for everyone - a model can score well on signing prediction while being useless as a product. The concentration block measures that directly on the served class."
- ]
+ "ship_decision": "shipped_balanced: gate-equivalent-or-better than the fitted logistic (MRR 0.167 vs 0.165) while keeping the composite player-discriminative \u2014 the behavior-dominated fitted vector put one club (LAD) atop every pitcher's fit list, recreating the measured Giants-failure pattern as a product regression. Need is the only player-specific signal with positive coefficient; the shipped mix weights it accordingly. Pooled fixed-vector comparison (no per-winter refitting); differences among the top mixes are within noise and disclosed as such."
 }

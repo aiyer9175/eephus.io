@@ -44,7 +44,6 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import os
 import warnings
 from pathlib import Path
 
@@ -87,12 +86,6 @@ QUANTILES = (0.10, 0.25, 0.50, 0.75, 0.90)
 # def_war_prior gains similarly (collinear -- DON'T stack, "+both" is worse);
 # the def_missing flag is INERT (0.0000, redundant with the war_l*_missing
 # flags) and is dropped. () = dormant. Candidate set: DEF_FEATURE_CANDIDATES.
-#
-# NOT A POSITIONAL-ADJUSTMENT TABLE. pos_adj_prior is bWAR's OBSERVED runs_position
-# for this player, read off data/mlb_def_history.json -- it is the realized quantity a
-# positional-adjustment ladder tries to predict, so prospect_def_value.POS_ADJ (the
-# canonical ladder, refitted 2026-07-25) does NOT feed it and must not be wired into
-# it. Checked 2026-07-25: swapping that ladder moves nothing in this module.
 DEF_FEATURE_CANDIDATES = ("def_war_prior", "pos_adj_prior", "def_missing")
 DEF_FEATURE_KEYS: tuple = ("pos_adj_prior",)
 _DEF_SHRINK_PA = 600.0
@@ -458,22 +451,6 @@ def predict_path(models: dict, feats: list[float], side: str) -> dict | None:
         return None
     qs = tuple(models["meta"].get("quantiles") or QUANTILES)
     x = np.asarray(feats, dtype=float).reshape(1, -1)
-    # W-STAR star-slice mean-head recenter (registered docs/efv-2026-07-24/GATES.md;
-    # harness tools/mean_head_backtest.py --star-slice). DEFAULT OFF; env read at
-    # CALL time so the OFF path is byte-identical. When ON, rows in the EX-ANTE
-    # star slice (the star_l1 feature - the exact slice the star top-up below
-    # already gates on; never a new definition) recenter toward a DEDICATED
-    # objective=regression "mean" head instead of the tail-light quantile-implied
-    # mean, at every horizon, through the SAME shipped lift-only + top-up lambdas.
-    # Non-star rows never touch this path. Requires bundles that carry a "mean"
-    # head per horizon (added at the next bundle train if the lane passes and the
-    # central flip happens); with today's quantile-only bundles the hook is inert
-    # by construction.
-    smh_star = (bool(os.environ.get("EEPHUS_STAR_MEAN_HEAD"))
-                and len(feats) > _STAR_FLAG_IDX and feats[_STAR_FLAG_IDX] >= 1.0
-                and all("mean" in (models[side].get(h) or {})
-                        for h in range(1, HORIZONS + 1)))
-    smh_means: list[float] = []
     by_q = {q: [] for q in qs}
     for h in range(1, HORIZONS + 1):
         heads = models[side].get(h)
@@ -482,8 +459,6 @@ def predict_path(models: dict, feats: list[float], side: str) -> dict | None:
         preds = sorted(_predict1(heads[q], x) for q in qs)
         for q, v in zip(sorted(qs), preds):
             by_q[q].append(v)
-        if smh_star:
-            smh_means.append(_predict1(heads["mean"], x))
     full_qs = all(q in by_q for q in QUANTILES)
     raw_q50 = list(by_q[0.50])  # pre-recenter medians, for the if-healthy display path
     # GLOBAL mean blend (the across-the-board recenter): the q50 head is
@@ -502,9 +477,8 @@ def predict_path(models: dict, feats: list[float], side: str) -> dict | None:
             lam = float(gblend.get(str(t + 1)) or gblend.get(t + 1) or 0.0)
             if lam <= 0:
                 continue
-            mean = (smh_means[t] if smh_star else
-                    _implied_mean(by_q[0.10][t], by_q[0.25][t], by_q[0.50][t],
-                                  by_q[0.75][t], by_q[0.90][t]))
+            mean = _implied_mean(by_q[0.10][t], by_q[0.25][t], by_q[0.50][t],
+                                 by_q[0.75][t], by_q[0.90][t])
             # LIFT-ONLY: recenter under-projected (right-skewed) rows UP toward
             # the expected value; never pull a projection DOWN. A symmetric
             # recenter trimmed ceiling stars (mean < median when the downside
@@ -521,9 +495,8 @@ def predict_path(models: dict, feats: list[float], side: str) -> dict | None:
             lam = float(blend.get(str(t + 1)) or blend.get(t + 1) or 0.0)
             if lam <= 0:
                 continue
-            mean = (smh_means[t] if smh_star else
-                    _implied_mean(by_q[0.10][t], by_q[0.25][t], by_q[0.50][t],
-                                  by_q[0.75][t], by_q[0.90][t]))
+            mean = _implied_mean(by_q[0.10][t], by_q[0.25][t], by_q[0.50][t],
+                                 by_q[0.75][t], by_q[0.90][t])
             by_q[0.50][t] = by_q[0.50][t] + lam * (mean - by_q[0.50][t])
     out = {"war_by_year": [round(v, 2) for v in by_q[0.50]],
            "war_by_year_p10": [round(v, 2) for v in by_q[0.10]],
