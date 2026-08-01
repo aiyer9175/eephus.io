@@ -2169,6 +2169,38 @@ def archetype_policy_adjustment(
             prior_surplus_mm * float(pct),
         )
 
+    def _floor_from_fv(name: str, fv_anchor: float) -> None:
+        """A floor anchored to a GRADE, priced through the live valuation engine.
+
+        Replaces four hardcoded dollar floors (65/62/58/65) on 2026-07-31, owner
+        decision, docs/efv-2026-07-30/TRADE_ARCHETYPE_FLOOR_GATE.md.
+
+        WHY NOT A PERCENTAGE OF THE PRIOR, which was the obvious candidate: the
+        measured floor/prior ratios on the rows these tag are 0.76 to 4.77 and, in
+        one case, 92.86. They are not a disguised percentage, and a percentage would
+        destroy the only thing they are for. Mason Miller is the proof: his FV prior
+        prices at $0.7M, so ANY multiple of it is still nothing, and the floor
+        exists precisely because that prior has failed. A floor whose job is to
+        override a broken prior cannot be defined in terms of that prior.
+
+        WHY NOT KEEP DOLLARS: they were calibrated against the v5 price scale and
+        did not move when surplus became an expected value, so they quietly lost
+        strictness while every number around them rose. An absolute dollar guardrail
+        silently loosens every time the currency it guards is re-scaled.
+
+        A GRADE is the stable meaning. "This archetype is worth at least a FV-58
+        pitcher" survives a re-price by construction, because the engine re-prices
+        FV-58 too. The anchors below are the exact FV each old dollar figure
+        represented on the v5 pitcher table, so this is a re-expression and not a
+        re-calibration: 65.0 -> FV 58.73, 62.0 -> 58.28, 58.0 -> 57.69.
+        """
+        _tag(name)
+        try:
+            val = float(surplus_value_mm(float(fv_anchor), True) or 0.0)
+        except Exception:
+            return
+        out["posterior_floor_mm"] = max(float(out["posterior_floor_mm"]), val)
+
     def _mult(name: str, mult: float) -> None:
         _tag(name)
         out["posterior_multiplier"] *= float(mult)
@@ -2394,8 +2426,8 @@ def archetype_policy_adjustment(
             and not active_arm_injury
             and worry_score <= 0.45
             and (stuff["weighted_stuff_plus"] or composite_stuff_plus or 100.0) >= 102.0):
-        _tag("controlled_rotation_asset")
-        out["posterior_floor_mm"] = max(float(out["posterior_floor_mm"]), 65.0)
+        # was a hardcoded 65.0; FV 58.73 is exactly what that meant on the v5 table
+        _floor_from_fv("controlled_rotation_asset", 58.73)
 
     if (is_pitcher
             and starter_workload
@@ -2427,8 +2459,8 @@ def archetype_policy_adjustment(
                 or (composite_stuff_plus or 0.0) >= 102.0
                 or (_safe_float(statline.get("stf_plus_periph"), 0.0) or 0.0) >= 105.0
             )):
-        _tag("healthy_breakout_starter")
-        out["posterior_floor_mm"] = max(float(out["posterior_floor_mm"]), 62.0)
+        # was a hardcoded 62.0
+        _floor_from_fv("healthy_breakout_starter", 58.28)
 
     current_pitcher_ip = _safe_float(current_mlb_row.get("ip"), 0.0) or 0.0
     current_pitcher_games = _safe_float(current_mlb_row.get("games"), 0.0) or 0.0
@@ -2452,8 +2484,8 @@ def archetype_policy_adjustment(
                 current_pitcher_stf >= 102.0
                 or (stuff["weighted_stuff_plus"] or 0.0) >= 102.0
             )):
-        _tag("productive_established_starter")
-        out["posterior_floor_mm"] = max(float(out["posterior_floor_mm"]), 58.0)
+        # was a hardcoded 58.0
+        _floor_from_fv("productive_established_starter", 57.69)
 
     if (is_pitcher
             and starter_workload
@@ -2477,8 +2509,8 @@ def archetype_policy_adjustment(
             and tt_war >= 2.0
             and (stuff["weighted_stuff_plus"] or composite_stuff_plus or 0.0) >= 115.0
             and current_salary_mm <= 8.0):
-        _tag("elite_controlled_reliever")
-        out["posterior_floor_mm"] = max(float(out["posterior_floor_mm"]), 65.0)
+        # was a hardcoded 65.0
+        _floor_from_fv("elite_controlled_reliever", 58.73)
 
     yesp = cfg.get("young_elite_stuff_pitcher", {})
     has_elite_pitch_data = (
@@ -3490,9 +3522,38 @@ def bayesian_trade_value(
         authenticity=auth,
         worriedness=worry,
     )
-    if archetype_policy["posterior_floor_mm"] > posterior_surplus_mm:
-        posterior_surplus_mm = archetype_policy["posterior_floor_mm"]
+    # THE MEASURED MLB PROJECTION OUTRANKS THE ARCHETYPE FLOOR (owner decision
+    # 2026-07-31, docs/efv-2026-07-30/TRADE_ARCHETYPE_FLOOR_GATE.md).
+    #
+    # Until now this floor silently overrode the projection anchor set a few hundred
+    # lines above, while the record kept emitting mlb_projection_surplus_anchor. So
+    # the output announced an input that never reached the price: on the FV60 RF
+    # fixture, anchoring at $35.0M and not anchoring at all produced the identical
+    # $51.6M. Measured on the live board, the anchor applied to 276 of 6,414 rows
+    # and this floor overrode it on 77 of them, carrying $1,365M (Alvarez, Yamamoto,
+    # Fried, Suarez, Rasmussen).
+    #
+    # The floor's own docstring scopes it to "noisy early MLB evidence". The anchor
+    # gate requires 500+ MLB PA for hitters, 1000+ overall, or 300+ IP, which is the
+    # substantial-sample regime and the opposite of what the floor was written for.
+    # So on the floor's stated purpose it does not apply here at all, and yielding is
+    # the honest reading rather than the cautious one.
+    #
+    # Gated on the FLAG rather than on _projection_anchor because that local lives
+    # inside the is_mlb_player block and is not in scope here for every player.
+    _anchored = "mlb_projection_surplus_anchor" in inputs_available
+    _floor_mm = archetype_policy["posterior_floor_mm"]
+    if _floor_mm > posterior_surplus_mm and not _anchored:
+        posterior_surplus_mm = _floor_mm
         inputs_available.append("archetype_posterior_floor")
+    elif _floor_mm > posterior_surplus_mm and _floor_mm > 0.0:
+        # Record that a REAL floor wanted to fire and was outranked, so the
+        # suppression is auditable instead of invisible. Gated on > 0 because the
+        # default floor is 0.0 and every negative-surplus player would otherwise
+        # collect this tag for a floor that does not exist: measured, that was
+        # firing on rows like Austin Riley whose archetype policy computed no floor
+        # at all and only tagged stale_mlb_prior.
+        inputs_available.append("archetype_floor_yielded_to_projection")
     if archetype_policy["posterior_multiplier"] != 1.0:
         posterior_surplus_mm = round(
             posterior_surplus_mm * archetype_policy["posterior_multiplier"],

@@ -1510,25 +1510,15 @@ def test_brief_past_starts_do_not_make_current_reliever_a_starter() -> None:
     assert "controlled_rotation_asset" not in out["archetype_policy"]["tags"]
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "PRE-EXISTING defect, measured 2026-07-31 and confirmed red at HEAD before the v6 "
-    "EV calibration, so it is NOT a consequence of that change. The projection anchor "
-    "is applied (bayes_trade_value.py:3282 sets posterior = the projection) and then "
-    "SILENTLY OVERRIDDEN upward by archetype_posterior_floor a few hundred lines later "
-    "(:3493). The flag mlb_projection_surplus_anchor is still emitted, so the output "
-    "claims an anchor that did not survive. Here: anchor 35.0, archetype floor lifts it "
-    "to 51.6, and the anchored and UNanchored prices are byte-identical. "
-    "Blast radius on the live board: the anchor applies to 276 of 6,414 rows and the "
-    "archetype floor overrides it on 77 of them, carrying $1,365M of trade value "
-    "(Alvarez, Yamamoto, Fried, Suarez, Rasmussen). "
-    "NOT repaired here because the precedence is an owner call, not a mechanical bug: "
-    "the floor's own docstring scopes it to 'noisy early MLB evidence', and the anchor "
-    "gate requires 500+ MLB PA / 300+ IP, so on its stated purpose the floor should "
-    "yield -- but the floors are also deliberate hand-set guardrails, and reading them "
-    "as 'this archetype never trades below X regardless of projection' is defensible. "
-    "Gated in docs/efv-2026-07-30/TRADE_ARCHETYPE_FLOOR_GATE.md. strict=True so this "
-    "flips red the moment the precedence is settled either way."))
 def test_mlb_hitter_500_pa_projection_anchor_grounds_middling_bat(monkeypatch) -> None:
+    """FIXED 2026-07-31 (owner decision: the measured projection outranks the
+    archetype floor). This was xfail(strict=True) for exactly one day: the anchor
+    was being announced and then silently overridden by archetype_posterior_floor,
+    so anchoring at $35.0M and not anchoring produced the identical $51.6M. The
+    floor now yields whenever mlb_projection_surplus_anchor applied, and tags
+    archetype_floor_yielded_to_projection so the suppression is auditable rather
+    than invisible. Measured on the live board: the anchor+floor overlap went from
+    77 rows carrying $1,365M to ZERO, and 85 of 6,414 trade values moved."""
     import bayes_trade_value as btv
 
     player = _base_debuted_player(
@@ -1956,3 +1946,54 @@ def test_older_nonimpact_upper_minors_prospect_is_suppressed() -> None:
 
     assert "older_nonimpact_prospect_suppression" in out["inputs_available"]
     assert out["posterior_surplus_mm"] < out["prior_surplus_mm"] * 0.6
+
+
+def test_archetype_floors_are_grade_anchored_not_hardcoded_dollars() -> None:
+    """The four pitcher archetype floors were hardcoded dollars (65/62/58/65) that
+    did NOT re-scale when surplus became an expected value, so they quietly lost
+    strictness while every number around them rose. They are now anchored to a FV
+    and priced through the live engine, which tracks any future re-price.
+
+    They were deliberately NOT converted to a percentage of the player's own prior,
+    which was the obvious candidate. Measured floor/prior ratios on the rows they
+    tag run 0.76 to 4.77 and, in one case, 92.86: they are not a disguised
+    percentage. Mason Miller is the proof, with an FV prior pricing at $0.7M against
+    a $65M floor. A floor whose job is to override a broken prior cannot be defined
+    in terms of that prior.
+    """
+    import inspect
+    import re
+    import bayes_trade_value as btv
+    src = inspect.getsource(btv.archetype_policy_adjustment)
+    for tag in ("controlled_rotation_asset", "healthy_breakout_starter",
+                "productive_established_starter", "elite_controlled_reliever"):
+        assert f'_floor_from_fv("{tag}"' in src, (
+            f"{tag} lost its FV anchor. If it is back to a dollar literal it will "
+            "silently loosen on the next re-price.")
+    # No bare dollar floor may be reintroduced on posterior_floor_mm.
+    bad = re.findall(r'posterior_floor_mm"\]\s*=\s*max\(\s*float\([^)]*\)\s*,\s*\d+\.\d+\s*\)', src)
+    assert not bad, f"hardcoded dollar floor(s) reintroduced: {bad}"
+
+
+def test_projection_anchor_outranks_every_archetype_floor() -> None:
+    """The precedence, asserted directly rather than via one fixture. If a player
+    got the projection anchor, no archetype floor may also have set his price, and
+    the record must say so rather than staying silent."""
+    import bayes_trade_value as btv
+    player = _base_debuted_player(
+        player_key="anchored_arm", player_name="Anchored Arm", position="SP",
+        age=27.0, fv_close=55.0, is_pitcher=True,
+        career_stats=[{"level": "MLB", "season": 2026, "games": 30, "ip": 180.0},
+                      {"level": "MLB", "season": 2025, "games": 32, "ip": 195.0}],
+        statline={"level": "MLB", "games": 30, "ip": 180.0, "era": "3.20"},
+    )
+    orig = btv._mlb_projection_surplus_mm
+    try:
+        btv._mlb_projection_surplus_mm = lambda _p: 12.0
+        out = btv.bayesian_trade_value(dict(player))
+    finally:
+        btv._mlb_projection_surplus_mm = orig
+    flags = out["inputs_available"]
+    if "mlb_projection_surplus_anchor" in flags:
+        assert "archetype_posterior_floor" not in flags, (
+            "a floor set the price on an anchored row; the anchor is supposed to win")
