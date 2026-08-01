@@ -812,9 +812,19 @@ def _build_class(year: int,
     # 1-30 + 12 competitive-balance picks at 31-42 with round_label
     # "1A" / "1B"). Picks 7+ have odds_pct=None (deterministic slots).
     # Sort by pick_pos so the consumer renders the natural draft order.
+    # 2026-07-31 - three new fields ride through to the frontend:
+    #   odds_top6_pct  % chance of landing anywhere in the 6-pick lottery
+    #                  (odds_pct is the % chance at #1 overall)
+    #   wins / losses  the team's record at scrape time
+    # All three are NULL on rows captured before that date, on playoff teams,
+    # on lottery-INELIGIBLE non-playoff teams, and on comp picks. The frontend
+    # tolerates nulls; do NOT coerce them to 0 (that would render a real
+    # published "0% chance" where we simply have no number).
     lottery_rows = (lottery_by_year or {}).get(year) or []
     lottery_odds = sorted(
         ({"team": r["team"], "odds_pct": r.get("odds_pct"),
+          "odds_top6_pct": r.get("odds_top6_pct"),
+          "wins": r.get("wins"), "losses": r.get("losses"),
           "pick_pos": r["pick_pos"],
           "round_label": r.get("round_label") or "1",
           "snapshot_date": r["snapshot_date"]}

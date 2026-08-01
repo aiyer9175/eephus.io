@@ -51,7 +51,7 @@ import logging
 import re
 import time
 import unicodedata
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, replace as _dataclass_replace
 from datetime import date
 from pathlib import Path
 from typing import Iterable, Callable
@@ -1053,6 +1053,101 @@ def _fetch(url: str, cache_key: str, force: bool = False,
     return FetchResult(body=resp.text, status=200, from_cache=False, url=url)
 
 
+# ===========================================================================
+# Rolling-page capture discipline (content-hash gate)
+# ===========================================================================
+# WHY THIS EXISTS
+# ---------------
+# Several sources publish a ROLLING permalink: one URL whose content the
+# outlet silently rewrites in place (Just Baseball's /prospects/top-100-mlb-
+# prospects/, MLB Pipeline's /milb/prospects/international/). Two failure
+# modes come out of pinning such a page to a FIXED interval_label:
+#
+#   1. `insert_snapshots` upserts on (source, interval_label, player_key),
+#      so a rewritten page OVERWRITES the rank/fv of every player that
+#      survives from the previous edition while INSERTING the newcomers.
+#      The stored interval becomes a chimera of two boards carrying the
+#      OLD date: measured 2026-07-31, 'JB 2026 Preseason' held 126 rows
+#      with 26 duplicate ranks (two #1s: Konnor Griffin FV70 from the real
+#      March list beside Jesus Made FV60 from the June rewrite).
+#   2. Stamping snapshot_date with date.today() on a fixed label re-dates
+#      the WHOLE interval on every run (the upsert sets snapshot_date =
+#      excluded.snapshot_date), which erases point-in-time history, fakes
+#      permanent freshness, and silently migrates rows across the
+#      per-(source, role, YEAR) cycles grade_normalization keys on
+#      substr(snapshot_date,1,4).
+#
+# THE DISCIPLINE
+# --------------
+#   * date-stamp the label (the tjstats.scrape_live_board pattern) so each
+#     genuinely-new edition lands in its own point-in-time interval, OR
+#     hold the stored date stable when the board has not moved;
+#   * gate the write on a CONTENT FINGERPRINT so an unchanged page writes
+#     nothing at all, instead of minting a new interval every single run.
+#
+# The fingerprint is derived from the STORED rows, so it needs no extra
+# table and is identical on the deploy box (single writer, same DB).
+
+def board_fingerprint(rows: Iterable) -> str:
+    """Stable content hash of a parsed board.
+
+    Keyed on (player_key, rank, fv) only: those are the fields the board
+    IS. Writeups and tool grids are deliberately excluded because outlets
+    routinely re-edit prose without re-ranking anyone, and a prose-only
+    diff must not mint a new point-in-time interval."""
+    import hashlib
+    parts = sorted(
+        f"{getattr(r, 'player_key', '')}|{getattr(r, 'rank', None)}|"
+        f"{getattr(r, 'fv', None)}"
+        for r in rows
+    )
+    return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
+
+
+def stored_board_fingerprint(source: str, interval_label: str) -> tuple[str | None, str | None]:
+    """(fingerprint, snapshot_date) of a stored interval, or (None, None).
+
+    Read-only; any DB problem degrades to (None, None) so a scraper still
+    runs on a machine with no database."""
+    try:
+        from storage import connect
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, rank, fv, snapshot_date FROM snapshots "
+                "WHERE source = ? AND interval_label = ?",
+                (source, interval_label)).fetchall()
+    except Exception:                                    # noqa: BLE001
+        return None, None
+    if not rows:
+        return None, None
+    import hashlib
+    parts = sorted(f"{r[0]}|{r[1]}|{r[2]}" for r in rows)
+    fp = hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
+    return fp, rows[0][3]
+
+
+def latest_stored_board(source: str) -> tuple[str | None, str | None, str | None]:
+    """(interval_label, snapshot_date, fingerprint) of a source's most
+    recently dated stored interval, or (None, None, None).
+
+    This is what the rolling-page gate compares against: "is the page I
+    just parsed the same board I already have on file?" Comparing against
+    the NEWEST interval (not a fixed label) is what lets the gate stay
+    correct after a repair script re-labels or splits an old interval."""
+    try:
+        from storage import connect
+        with connect() as con:
+            row = con.execute(
+                "SELECT interval_label, snapshot_date FROM snapshots "
+                "WHERE source = ? ORDER BY snapshot_date DESC, interval_label DESC "
+                "LIMIT 1", (source,)).fetchone()
+    except Exception:                                    # noqa: BLE001
+        return None, None, None
+    if not row:
+        return None, None, None
+    label, snap_date = row[0], row[1]
+    fp, _ = stored_board_fingerprint(source, label)
+    return label, snap_date, fp
 
 
 # ===========================================================================
@@ -1109,6 +1204,83 @@ ESPN_INTERVALS = [
      "jesus-made-leo-de-vries-colt-emerson",
      "ESPN 2026 In-Season", "2026-05-22"),
 ]
+
+# ESPN publishes each McDaniel prospect list as a NEW dated article at a new
+# numeric id, with no index page and no feed we can subscribe an ingest to.
+# So ESPN_INTERVALS above needs a code edit per list, and until someone makes
+# that edit the new list is silently missed - which reads exactly like a
+# healthy source (the old URLs keep parsing fine).
+#
+# This probe closes the SILENCE, not the ingest. It never adds a URL and never
+# writes a snapshot: article ids are not stable identifiers of editorial
+# intent (ESPN ships prospect-adjacent features constantly), so auto-ingesting
+# whatever the news feed surfaces would be a data-integrity hazard. It logs a
+# prompt and lands in data/ingest_health.json for a human to action.
+ESPN_NEWS_FEED = ("https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/"
+                  "news?limit=50")
+# Headline must look like a RANKING publication, not a mailbag or a prospect
+# feature. Both halves must hit.
+_ESPN_RANKING_HEADLINE = re.compile(
+    r"(top[\s\-]?\d{2,3}|rankings?|prospect\s+rankings)", re.I)
+_ESPN_PROSPECT_HEADLINE = re.compile(r"prospect", re.I)
+_ESPN_ARTICLE_ID_RE = re.compile(r"/id/(\d+)/")
+
+
+def known_espn_article_ids() -> set[str]:
+    """Numeric article ids already wired into ESPN_INTERVALS."""
+    out: set[str] = set()
+    for url, _label, _snap in ESPN_INTERVALS:
+        m = _ESPN_ARTICLE_ID_RE.search(url)
+        if m:
+            out.add(m.group(1))
+    return out
+
+
+def probe_espn_new_prospect_article(force: bool = False) -> dict:
+    """Detect a McDaniel prospect-ranking article we have NOT wired up.
+
+    Returns {"candidates": [{id, headline, url, published}], "checked": n}.
+    Never raises, never ingests, never edits ESPN_INTERVALS. An empty
+    candidate list means "nothing new that looks like a ranking list"."""
+    known = known_espn_article_ids()
+    try:
+        fr = _fetch(ESPN_NEWS_FEED, "espn_news_feed", force=force, accept_json=True)
+        if fr.status != 200 or not fr.body:
+            return {"error": f"HTTP {fr.status}", "candidates": [], "checked": 0}
+        payload = json.loads(fr.body)
+    except Exception as e:                                    # noqa: BLE001
+        return {"error": str(e), "candidates": [], "checked": 0}
+
+    articles = payload.get("articles") or []
+    candidates: list[dict] = []
+    for a in articles:
+        headline = str(a.get("headline") or a.get("title") or "")
+        if not (_ESPN_PROSPECT_HEADLINE.search(headline)
+                and _ESPN_RANKING_HEADLINE.search(headline)):
+            continue
+        links = a.get("links") or {}
+        url = ((links.get("web") or {}).get("href")
+               or (links.get("api") or {}).get("news", {}).get("href") or "")
+        aid = str(a.get("id") or "")
+        if not aid:
+            m = _ESPN_ARTICLE_ID_RE.search(url)
+            aid = m.group(1) if m else ""
+        if not aid or aid in known:
+            continue
+        candidates.append({"id": aid, "headline": headline,
+                           "url": url.split("?")[0],
+                           "published": a.get("published")})
+    if candidates:
+        log.warning("ESPN: %d prospect-ranking article(s) on the news feed are "
+                    "NOT in ESPN_INTERVALS. Add the URL + label + publish date "
+                    "to scrapers.ESPN_INTERVALS to ingest:", len(candidates))
+        for c in candidates:
+            log.warning("  ESPN candidate id=%s %r %s", c["id"], c["headline"],
+                        c["url"])
+    else:
+        log.info("ESPN: news feed carries no unwired prospect-ranking article "
+                 "(%d headlines checked)", len(articles))
+    return {"candidates": candidates, "checked": len(articles)}
 
 # Stripper for the structured preamble ESPN ships before the writeup
 # prose. Each prospect's article block looks like:
@@ -1346,10 +1518,28 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
 # per pitcher — Sweeper vs Slider, Splitter vs Changeup), value row carries
 # present/future grade pairs. We always take the FUTURE grade.
 
-JB_INTERVALS = [
-    ("https://www.justbaseball.com/prospects/top-100-mlb-prospects/",
-     "JB 2026 Preseason", "2026-03-04"),
-]
+# The Just Baseball board lives on ONE rolling permalink that JB rewrites in
+# place (preseason -> midseason -> ...). It is NOT a dated archive URL.
+JB_ROLLING_URL = "https://www.justbaseball.com/prospects/top-100-mlb-prospects/"
+JB_SOURCE = "just_baseball"
+JB_LIVE_LABEL_PREFIX = "JB Live"          # -> "JB Live 2026-07-31"
+
+# FIXED-DATE ARCHIVE INTERVALS ONLY. Deliberately EMPTY.
+#
+# This list used to pin the rolling permalink above to the fixed label
+# 'JB 2026 Preseason' at the fixed date 2026-03-04. JB then rewrote the page
+# to its midseason board, and because insert_snapshots upserts on
+# (source, interval_label, player_key) the stored March interval absorbed the
+# June board: 126 rows, 26 DUPLICATE ranks, still dated 2026-03-04, with
+# Jesus Made (FV 60, June #1) sitting on rank 1 next to Konnor Griffin
+# (FV 70, the real March #1). Every subsequent JB edition would smear it
+# further. See run_just_baseball_live() for the replacement path and
+# tools/repair_jb_chimera.py for the repair of what is already stored.
+#
+# Add an entry here ONLY for a URL that is a permanent dated archive (one
+# that JB will never rewrite). scrape_all still walks this list, so such an
+# entry keeps working with no other change.
+JB_INTERVALS: list[tuple[str, str, str]] = []
 
 # JB column header → canonical tool key. Lowercased headers — Splitter
 # rides the ch slot, Sweeper rides the sl slot (variants of those pitch
@@ -1530,6 +1720,85 @@ def scrape_just_baseball(url: str, label: str, snap_date: str,
     log.info("just_baseball %s -> %d players (%d with tools)%s", label, len(rows), n_with_tools,
              "" if rows else " (parser returned 0 rows — page structure may have changed; check cached HTML)")
     return rows
+
+
+def validate_jb_board(rows: list[Snapshot]) -> list[str]:
+    """Health gate for the JB rolling capture (the tjstats.health_check /
+    validate_pipeline_live_board pattern). Refuse to ingest a degraded parse
+    so a silent JB redesign surfaces loudly instead of minting a half-empty
+    point-in-time interval. Returns human-readable problems (empty = healthy).
+
+    The duplicate-rank check is the specific tripwire that would have caught
+    the 2026 chimera on the very first bad run."""
+    problems: list[str] = []
+    if len(rows) < 90:
+        problems.append(f"jb: only {len(rows)} parsed rows (expected ~100)")
+        return problems
+    ranks = [s.rank for s in rows if s.rank is not None]
+    if len(set(ranks)) != len(ranks):
+        dupes = sorted({r for r in ranks if ranks.count(r) > 1})
+        problems.append(f"jb: duplicate ranks {dupes[:10]}")
+    if not ranks or min(ranks) != 1 or max(ranks) > 110:
+        problems.append(f"jb: rank span {min(ranks) if ranks else '-'}"
+                        f"..{max(ranks) if ranks else '-'}")
+    fv_cov = sum(1 for s in rows if s.fv is not None) / len(rows)
+    if fv_cov < 0.8:
+        problems.append(f"jb: FV coverage {fv_cov:.0%} (<80%, the wp-block-table "
+                        "grid may have moved)")
+    return problems
+
+
+def run_just_baseball_live(snap_date: str | None = None,
+                           force: bool = False) -> dict:
+    """Capture the Just Baseball rolling board CORRECTLY (defect fix, 2026-07-31).
+
+    Three rules, each of which the old fixed-label path broke:
+
+      1. DATE-STAMP THE LABEL. Every genuinely-new edition lands in its own
+         interval "JB Live <capture date>", so a rewrite can never overwrite
+         the previous board's ranks. Same-day re-runs upsert in place.
+      2. CONTENT-HASH GATE. JB's permalink serves the same board for months.
+         Without a gate, date-stamping alone would mint a fresh 100-row
+         interval EVERY run and flood the consensus with duplicate editions.
+         We fingerprint (player_key, rank, fv) and write nothing when it
+         matches the newest stored JB board.
+      3. HEALTH GATE. A degraded parse is never written (validate_jb_board).
+
+    Returns {"live": {...}} on ingest, {"unchanged": {...}} when the board
+    has not moved, {"health": [problems]} when the gate refuses,
+    {"error": "..."} on fetch/parse failure. Never raises."""
+    from storage import insert_snapshots
+
+    snap_date = snap_date or date.today().isoformat()
+    label = f"{JB_LIVE_LABEL_PREFIX} {snap_date}"
+    try:
+        rows = scrape_just_baseball(JB_ROLLING_URL, label, snap_date, force=force)
+    except Exception as e:                                    # noqa: BLE001
+        return {"error": f"fetch/parse failed: {e}"}
+    if not rows:
+        return {"error": "parser returned 0 rows (page structure may have changed)"}
+    problems = validate_jb_board(rows)
+    if problems:
+        return {"health": problems}
+
+    fp = board_fingerprint(rows)
+    prev_label, prev_date, prev_fp = latest_stored_board(JB_SOURCE)
+    # Also compare against THIS label directly, so a same-day re-run after a
+    # repair (which may have left a newer-dated interval on file) is still a
+    # no-op rather than a rewrite.
+    same_label_fp, _ = stored_board_fingerprint(JB_SOURCE, label)
+    if fp in (prev_fp, same_label_fp) and (prev_fp or same_label_fp):
+        log.info("just_baseball: board unchanged vs %s (%s) - no write",
+                 prev_label, prev_date)
+        return {"unchanged": {"n_players": len(rows), "matched_label": prev_label,
+                              "matched_date": prev_date, "fingerprint": fp}}
+
+    n = insert_snapshots(rows)
+    log.info("just_baseball live: %d players ingested @ %s as %r (board CHANGED "
+             "vs %s)", len(rows), snap_date, label, prev_label or "nothing on file")
+    return {"live": {"n_players": len(rows), "n_upserts": n, "label": label,
+                     "captured_at": snap_date, "fingerprint": fp,
+                     "prev_label": prev_label}}
 
 
 # FanGraphs org-list tool-label → canonical key. The org Top-N articles render
@@ -1717,12 +1986,84 @@ MLB_PIPELINE_INTERVALS = [
     for y in range(2011, 2027)
 ]
 
+# MLB Pipeline's international class page is a ROLLING permalink like JB's:
+# one URL, rewritten in place, no per-year archive. snapshot_date is
+# therefore resolved at SCRAPE time (None = "resolve me") instead of being
+# frozen into the module constant.
+#
+# THE DEFECT THIS REPLACES: this entry used to carry
+# `date.today().isoformat()`, and because insert_snapshots' upsert does
+# `snapshot_date = excluded.snapshot_date` on a FIXED label, all 50 rows were
+# re-dated on EVERY monthly run (measured 2026-07-31: all 50 sat at
+# 2026-07-31). Three consequences, all silent:
+#   * point-in-time history is destroyed - the interval can only ever be
+#     "today", so the Time Machine has no international board before today;
+#   * permanent freshness illusion - the rows look newly published every run
+#     even when Pipeline has not touched the page since January;
+#   * YEAR-CYCLE MIGRATION - grade_normalization builds per-(source, role,
+#     year) offsets keyed on substr(snapshot_date,1,4), so on the first run
+#     after New Year the whole 2026 international class would silently jump
+#     into the 2027 normalization cohort and be de-biased against the wrong
+#     year's grader baseline.
+#
+# The fallback date matches the sibling backfilled years (2021-2025 are all
+# {y}-01-15, the date the international signing period opens), so a board
+# with nothing on file is dated era-correctly and identically on every
+# machine instead of "whenever this box happened to run".
+MLB_INTERNATIONAL_FALLBACK_DATE = "{year}-01-15"
+MLB_INTERNATIONAL_SOURCE = "mlb_pipeline_international"
+
 MLB_INTERNATIONAL_INTERVALS = [
     ("https://www.mlb.com/milb/prospects/international/",
      "MLB Pipeline 2026 International",
-     date.today().isoformat(),
+     None,        # resolved by resolve_international_snapshot_date()
      2026)
 ]
+
+
+def resolve_international_snapshot_date(label: str, year: int) -> str:
+    """Provisional snapshot_date for the rolling international page.
+
+    Returns the date ALREADY on file for this interval when rows exist, so a
+    re-scrape cannot re-date them. The caller
+    (scrape_mlb_international_stable) advances the date only after it has
+    proved the parsed board differs from what is stored."""
+    _fp, stored_date = stored_board_fingerprint(MLB_INTERNATIONAL_SOURCE, label)
+    if stored_date:
+        return stored_date
+    return MLB_INTERNATIONAL_FALLBACK_DATE.format(year=year)
+
+
+def scrape_mlb_international_stable(url: str, label: str, year: int,
+                                    force: bool = False) -> list[Snapshot]:
+    """scrape_mlb_international with the rolling-page date discipline applied.
+
+    Parse once, fingerprint, then decide the date:
+      * board matches what is stored -> keep the STORED date (no re-dating,
+        no freshness illusion, no year-cycle migration);
+      * board changed (or nothing on file) -> advance to today, which is a
+        real publication event;
+      * parse degraded (0 rows) -> emit nothing, leaving the stored board
+        and its date untouched.
+    """
+    provisional = resolve_international_snapshot_date(label, year)
+    rows = scrape_mlb_international(url, label, provisional, year, force=force)
+    if not rows:
+        log.error("mlb_international %s: parser returned 0 rows - leaving the "
+                  "stored board untouched", label)
+        return []
+    stored_fp, stored_date = stored_board_fingerprint(MLB_INTERNATIONAL_SOURCE, label)
+    fp = board_fingerprint(rows)
+    if stored_fp is not None and fp == stored_fp:
+        log.info("mlb_international %s: board unchanged, holding snapshot_date %s",
+                 label, stored_date)
+        return rows            # already carries `provisional` == stored_date
+    new_date = date.today().isoformat() if stored_fp is not None else provisional
+    if new_date != provisional:
+        log.info("mlb_international %s: board CHANGED, advancing snapshot_date "
+                 "%s -> %s", label, provisional, new_date)
+        rows = [_dataclass_replace(r, snapshot_date=new_date) for r in rows]
+    return rows
 
 
 # MLB Pipeline per-org top-30 lists. Same Apollo Cache structure as the
@@ -2979,6 +3320,42 @@ def scrape_spotrac_draft_order(year: int, force: bool = False) -> list[dict]:
 
 TANKATHON_URL = "https://www.tankathon.com/mlb"
 
+# "42 - 67" (the Record column). The SPACES around the dash are load-bearing:
+# the L10 column on the same row reads "3-7" and would otherwise match, which
+# would store a team's last-ten record as its season record.
+_TANK_RECORD_RE = re.compile(r"^(\d{1,3})\s+-\s+(\d{1,3})$")
+_TANK_PCT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*%")
+
+
+def _parse_pct_cell(raw: str) -> float | None:
+    """'17.95 %' -> 17.95; '' / '--' / anything unparseable -> None."""
+    if not raw:
+        return None
+    m = _TANK_PCT_RE.search(raw)
+    if not m:
+        return None
+    try:
+        return float(m.group(1))
+    except ValueError:
+        return None
+
+
+def _parse_record_cell(cells: list[str]) -> tuple[int | None, int | None]:
+    """(wins, losses) from the Record column, or (None, None).
+
+    Index 2 is the Record column on the measured layout; we validate the
+    shape rather than trusting the position, and only fall back to a scan of
+    the other cells if index 2 does not look like a W - L record."""
+    candidates = ([cells[2]] if len(cells) > 2 else []) + list(cells)
+    for c in candidates:
+        m = _TANK_RECORD_RE.match((c or "").strip())
+        if m:
+            try:
+                return int(m.group(1)), int(m.group(2))
+            except ValueError:
+                return None, None
+    return None, None
+
 
 def scrape_tankathon_lottery(year: int, force: bool = False) -> list[dict]:
     """Parse Tankathon's MLB page → draft_lottery_odds rows for the
@@ -2987,12 +3364,41 @@ def scrape_tankathon_lottery(year: int, force: bool = False) -> list[dict]:
 
     Output row shape:
       {draft_year, team, pick_pos, odds_pct (nullable past pick 6),
+       odds_top6_pct, wins, losses,
        round_label ('1' or '1A'/'1B' for comp picks),
        snapshot_date, source='tankathon'}
 
-    Lottery slots (top 6) carry a real `odds_pct` % chance at #1.
-    Deterministic slots (7+) carry `odds_pct=None`. Comp-round picks
-    are labeled '1A' or '1B' depending on Tankathon's row classifier.
+    Lottery slots carry a real `odds_pct` (% chance at the #1 pick) AND
+    `odds_top6_pct` (% chance of landing anywhere in the lottery's top 6).
+    Deterministic slots carry None for both. Comp-round picks are labeled
+    '1A' or '1B' depending on Tankathon's row classifier.
+
+    CELL INDEXING - READ BEFORE EDITING. The header row and the data rows
+    have DIFFERENT lengths, so positional indexing has to be anchored to the
+    correct end. Measured against .cache/tankathon_mlb.html (2026-07-31):
+
+      header (10): Pick | Team | Record Rec | Win% Pct | GB | Streak | L10 |
+                   Top 6 | #1 OVR | ''
+      data   ( 9): 1 | Colorado COL | 42 - 67 | .385 | -- | Lost 4 | 3-7 |
+                   86.3 % | 17.95 %
+
+    The header carries a trailing empty cell the data rows do not, so
+    aligning by header index is off by one at the tail. We therefore index
+    the two odds columns from the END of the DATA row: cells[-1] = '#1 OVR',
+    cells[-2] = 'Top 6'. The previous implementation scanned for the LAST
+    cell containing '%', which happened to be right for '#1 OVR' but gave no
+    way to reach 'Top 6' at all.
+
+    GUARDS:
+      * Playoff-team rows (projected picks 19-30) carry EMPTY odds cells;
+        so do lottery-ineligible non-playoff teams (SF at 10 and PIT at 15
+        on the measured page - a team cannot receive a lottery pick in
+        consecutive years / revenue-sharing rules). Empty parses to None,
+        never to 0.0.
+      * Comp-balance picks come from a SIDEBAR widget, not this table. They
+        are renumbered to synthetic pick_pos 31-42 and carry round_label
+        '1A'/'1B' with wins/losses/odds all None. Filter them out of any
+        standings math by round_label - their pick_pos is NOT a real slot.
     """
     from trades import canonical_org
 
@@ -3041,13 +3447,11 @@ def scrape_tankathon_lottery(year: int, force: bool = False) -> list[dict]:
             continue
         pos_raw = cells[0].strip()
         team_raw = cells[1].strip()
-        # Odds column is the last numeric "%" cell. Most layouts put it
-        # at cell index 7; defensively scan all cells for "X%" and take
-        # the LAST one — picks 7+ won't have one (dash or blank).
-        odds_raw = ""
-        for c in cells:
-            if "%" in c:
-                odds_raw = c.strip()
+        # Odds columns, indexed from the END of the data row (see the
+        # docstring's cell map): last = '#1 OVR', second-to-last = 'Top 6'.
+        # Both are '' on playoff rows and on lottery-ineligible teams.
+        odds_raw = cells[-1].strip() if len(cells) >= 2 else ""
+        top6_raw = cells[-2].strip() if len(cells) >= 3 else ""
         if not pos_raw or not team_raw:
             continue
         # Team cell format: "LA Angels LAA" — the abbreviation is the
@@ -3086,22 +3490,21 @@ def scrape_tankathon_lottery(year: int, force: bool = False) -> list[dict]:
         else:
             round_label = "2"
 
-        # Parse odds. Picks 1-6 carry a real %; later rows have "—" or
-        # blank and we store None.
-        odds: float | None = None
-        if odds_raw:
-            m_odds = re.search(r"(\d+(?:\.\d+)?)\s*%", odds_raw)
-            if m_odds:
-                try:
-                    odds = float(m_odds.group(1))
-                except ValueError:
-                    odds = None
+        # Parse odds. Lottery-eligible rows carry a real %; playoff rows and
+        # ineligible teams have a dash or blank and we store None (NOT 0.0:
+        # "no published chance" and "a published 0%" are different claims).
+        odds = _parse_pct_cell(odds_raw)
+        top6 = _parse_pct_cell(top6_raw)
+        wins, losses = _parse_record_cell(cells)
 
         out.append({
             "draft_year":    year,
             "team":          team_code,
             "pick_pos":      pos,
             "odds_pct":      odds,
+            "odds_top6_pct": top6,
+            "wins":          wins,
+            "losses":        losses,
             "round_label":   round_label,
             "snapshot_date": today,
             "source":        "tankathon",
@@ -3151,15 +3554,25 @@ def scrape_tankathon_lottery(year: int, force: bool = False) -> list[dict]:
             "team":          r["team_code"],
             "pick_pos":      new_pos,
             "odds_pct":      None,
+            # Comp picks are a SIDEBAR widget with no standings columns, and
+            # their pick_pos is a synthetic renumbering (31-42) that does not
+            # correspond to a real draft slot. Everything standings-derived
+            # stays None so no consumer can average them into a real number.
+            "odds_top6_pct": None,
+            "wins":          None,
+            "losses":        None,
             "round_label":   "1A" if i < 6 else "1B",
             "snapshot_date": today,
             "source":        "tankathon",
         })
 
     n_lottery = sum(1 for r in out if r["odds_pct"] is not None)
+    n_top6 = sum(1 for r in out if r.get("odds_top6_pct") is not None)
+    n_rec = sum(1 for r in out if r.get("wins") is not None)
     n_comp = sum(1 for r in out if r["round_label"] in {"1A", "1B"})
-    log.info("tankathon_lottery (draft %d): %d projected picks (%d with odds, %d comp)",
-             year, len(out), n_lottery, n_comp)
+    log.info("tankathon_lottery (draft %d): %d projected picks (%d with #1 odds, "
+             "%d with top-6 odds, %d with W-L, %d comp)",
+             year, len(out), n_lottery, n_top6, n_rec, n_comp)
     return out
 
 
@@ -3541,7 +3954,11 @@ def scrape_all(force: bool = False) -> tuple[list[Snapshot], dict[str, str]]:
     # on a team page.
     for url, label, snap, year in MLB_INTERNATIONAL_INTERVALS:
         try:
-            got = scrape_mlb_international(url, label, snap, year, force=force)
+            # snap is None for the rolling permalink -> the stable-date wrapper
+            # resolves it (holds the stored date unless the board changed).
+            got = (scrape_mlb_international_stable(url, label, year, force=force)
+                   if snap is None else
+                   scrape_mlb_international(url, label, snap, year, force=force))
             snapshots.extend(got)
             counts[label] = len(got)
         except Exception as e:
@@ -3593,8 +4010,12 @@ def probe(force: bool = False) -> None:
             top = got[0]
             print(f"  Sample: {top.player_name} (rank {top.rank}, fv {top.fv}, org {top.org})")
 
-    # Tier B — Just Baseball
-    for url, label, snap in JB_INTERVALS:
+    # Tier B - Just Baseball. JB_INTERVALS holds only fixed-date ARCHIVE
+    # urls (normally empty); the live board rides the rolling permalink, so
+    # probe both.
+    for url, label, snap in list(JB_INTERVALS) + [
+            (JB_ROLLING_URL, f"{JB_LIVE_LABEL_PREFIX} (rolling)",
+             date.today().isoformat())]:
         print(f"\n[Just Baseball] {label}")
         print(f"  URL: {url}")
         cache_key = "probe_" + re.sub(r"[^a-z0-9]+", "_", label.lower())
@@ -3626,7 +4047,9 @@ def probe(force: bool = False) -> None:
     for url, label, snap, year in MLB_INTERNATIONAL_INTERVALS:
         print(f"\n[MLB Pipeline International] {label}")
         print(f"  URL: {url}")
-        got = scrape_mlb_international(url, label, snap, year, force=force)
+        got = (scrape_mlb_international_stable(url, label, year, force=force)
+               if snap is None else
+               scrape_mlb_international(url, label, snap, year, force=force))
         print(f"  Parser found: {len(got)} players")
         if got:
             top = got[0]

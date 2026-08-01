@@ -56,6 +56,36 @@ fi
 echo "=== $(date -Is) nightly build start ==="
 cd "$APP"
 
+# ---------------------------------------------------------------------------
+# Log capture (2026-07-31)
+# ---------------------------------------------------------------------------
+# The pipeline logs to STDOUT only, and logs/pipeline_latest.log was last
+# written in May. That is how TJStats managed to write zero rows from
+# 2026-07-08 to 2026-07-21 across seven completed runs with no trail: the
+# only copy of the evidence was whatever the cron MAILTO/redirect happened to
+# keep. Tee everything from here on into a dated file under logs/ plus a
+# stable `pipeline_latest.log` symlink-equivalent, and rotate by COUNT so the
+# directory cannot grow without bound on the small box.
+#
+# `exec > >(tee ...)` keeps stdout going to the cron redirect AS WELL, so
+# /opt/eephus/nightly.log behaves exactly as before - this only ADDS a copy
+# that lives with the app and rides nobody's mail spool.
+LOG_DIR="${EEPHUS_LOG_DIR:-$APP/logs}"
+LOG_KEEP="${EEPHUS_LOG_KEEP:-30}"
+mkdir -p "$LOG_DIR"
+RUN_LOG="$LOG_DIR/pipeline-$(date -u +%Y%m%dT%H%M%SZ).log"
+exec > >(tee -a "$RUN_LOG") 2>&1
+# Stable filename for "what happened last night" without globbing. Copied
+# rather than symlinked so a reader always gets a complete file even if the
+# dated log is rotated away underneath them.
+trap 'cp -f "$RUN_LOG" "$LOG_DIR/pipeline_latest.log" 2>/dev/null || true' EXIT
+echo "--- logging to $RUN_LOG (keeping $LOG_KEEP runs)"
+# Rotate: keep the newest $LOG_KEEP dated logs, delete the rest.
+# `|| true` on the pipeline: with `set -o pipefail` a no-match glob makes ls
+# exit non-zero, which would abort the whole nightly on a fresh box.
+{ ls -1t "$LOG_DIR"/pipeline-*.log 2>/dev/null | tail -n +$((LOG_KEEP + 1)) \
+    | while IFS= read -r old; do rm -f "$old"; done; } || true
+
 # Staleness alarm: if the webroot hasn't been touched in 48h, something has
 # been silently failing (red gate, dead cron) - say so loudly in the log.
 if [ -f "$WEBROOT/index.html" ] && [ -n "$(find "$WEBROOT/index.html" -mtime +2 2>/dev/null)" ]; then
@@ -124,6 +154,31 @@ else
   echo "--- daily refresh"
   MODE=daily
   python run_monthly.py --daily
+fi
+
+# Ingest health gate (report-only). run_monthly writes data/ingest_health.json
+# with a `red` array naming any SCHEDULED grade source that wrote zero rows.
+# We print it loudly here so it lands at the top of the nightly log rather
+# than buried in the pipeline's own output, and so a `grep '!!! INGEST RED'`
+# over logs/ answers "when did this source stop working?" in one command.
+# Deliberately does NOT fail the build: a single dead source must not stop
+# publishing the rest of the site.
+if [ -f data/ingest_health.json ]; then
+  python - <<'PY' || true
+import json, pathlib
+h = json.loads(pathlib.Path("data/ingest_health.json").read_text(encoding="utf-8"))
+red = h.get("red") or []
+by = {s["source"]: s for s in h.get("sources", [])}
+if red:
+    for src in red:
+        s = by.get(src, {})
+        print(f"!!! INGEST RED: {src} wrote 0 rows this run "
+              f"(last OK {s.get('last_ok_at') or 'never'}) {s.get('message','')}")
+else:
+    print(f"--- ingest health OK ({len(h.get('sources', []))} sources checked)")
+PY
+else
+  echo "!!! ingest health: data/ingest_health.json was not written by the pipeline"
 fi
 
 python build_site.py

@@ -491,6 +491,36 @@ def load_source_weights() -> dict[str, float]:
 _SOURCE_WEIGHTS = load_source_weights()
 
 
+# Sources whose "FV" is a CONSTANT, not a published opinion.
+#
+#   performance_ingest  storage.upsert_unranked_active_player stamps a flat
+#                       35.0 on every auto-discovered player. Measured
+#                       2026-07-31: 2,808 rows, DISTINCT fv = {35.0}.
+#   auto_detect         debut/roster tracker; carries no FV at all today
+#                       (0 of 2,483 rows), listed so it can never start.
+#
+# `draft_signing` is deliberately NOT here even though
+# grade_normalization._SYNTHETIC_SOURCES lists it: that flag only tells the
+# quantile map to pass its scale through raw. Its VALUE is a real published
+# draft-board FV (138 rows, varying), so it keeps its vote.
+#
+# WHY THEY MUST NOT VOTE ALONGSIDE A REAL GRADE
+# ---------------------------------------------
+# The equal-weight mean below gives every source 1.0 (data/source_weights.json
+# has weights={} since 2026-07-25, and absent sources vote at 1.0). So for the
+# 32 players who have BOTH a real published FV and an auto-discovery stamp, a
+# fabricated 35 was averaged into the consensus at FanGraphs' weight - the
+# same defect class as the fabricated BA-statcast FV-40 removed on 2026-07-30.
+# A published 40 became a served 36.
+#
+# The constant is still the ONLY thing standing between ~2,776 genuinely
+# ungraded auto-tracked players and having no consensus point at all
+# (performance_ingest rows are written with rank = NULL, so there is no
+# rank-implied fallback for them). It therefore stays as a LAST RESORT: it
+# votes only when no real source published an FV at this point.
+CONSTANT_ANCHOR_SOURCES = frozenset({"performance_ingest", "auto_detect"})
+
+
 def compute_consensus_point(
     day_snaps: list[Snapshot],
     *,
@@ -533,6 +563,11 @@ def compute_consensus_point(
 
     explicit_fvs: list[float] = []
     _fv_weights: list[float] = []     # WS-5: per-vote relative weights (1.0 = equal)
+    # Constant-anchor votes are collected SEPARATELY and folded back in only
+    # if no real source published an FV here (see CONSTANT_ANCHOR_SOURCES).
+    _synthetic_fvs: list[float] = []
+    _synthetic_weights: list[float] = []
+    _synthetic_sources: set[str] = set()
     ranks: list[int] = []
     rank_implied_fvs: list[float] = []
 
@@ -604,9 +639,16 @@ def compute_consensus_point(
         if already is None:
             per_source[s.source] = entry
             if fv_for_consensus is not None:
-                explicit_fvs.append(fv_for_consensus)
-                _fv_weights.append((source_weights or {}).get(s.source, 1.0))
-                contributing_sources.add(s.source)
+                if s.source in CONSTANT_ANCHOR_SOURCES:
+                    # Park it. It is a placeholder constant, not an opinion;
+                    # it only gets to vote if nothing real graded this player.
+                    _synthetic_fvs.append(fv_for_consensus)
+                    _synthetic_weights.append((source_weights or {}).get(s.source, 1.0))
+                    _synthetic_sources.add(s.source)
+                else:
+                    explicit_fvs.append(fv_for_consensus)
+                    _fv_weights.append((source_weights or {}).get(s.source, 1.0))
+                    contributing_sources.add(s.source)
         else:
             # Same-date same-source duplicate. Surface in `extras` so
             # the UI can render it as a second publication row; do NOT
@@ -643,6 +685,17 @@ def compute_consensus_point(
                     continue
                 tools_by_key.setdefault(k, []).append(v)
                 contributing_sources.add(s.source)
+
+    # LAST-RESORT fold-back of the constant anchor. If no outlet published an
+    # FV at this point, the placeholder is all we have and it must still stand
+    # in, or the ~2,776 auto-discovered players whose only FV row is the
+    # synthetic 35 would lose their ConsensusPoint entirely and vanish from
+    # the board (their rows carry rank = NULL, so there is no rank fallback).
+    # Once ANY real grade exists, the constant stays out of the average.
+    if not explicit_fvs and _synthetic_fvs:
+        explicit_fvs = _synthetic_fvs
+        _fv_weights = _synthetic_weights
+        contributing_sources |= _synthetic_sources
 
     if not explicit_fvs and not rank_implied_fvs:
         return None
@@ -1160,9 +1213,20 @@ def build_timeseries(
         # who have been re-graded over time escape the pull. Brand-new
         # prospects with exactly one published grade still get pulled,
         # which is the intended uncertainty signal.
+        #
+        # 2026-07-31 - constant-anchor rows are NOT observations. Counting a
+        # performance_ingest stamp here let a fabricated FV 35 buy a real
+        # single-source grade an escape from the very uncertainty pull it is
+        # supposed to trigger (measured: 25 of the 32 affected players had
+        # exactly one real grade plus one synthetic stamp, so they read as
+        # "2 instances, well observed"). Same reasoning as
+        # CONSTANT_ANCHOR_SOURCES in compute_consensus_point. A player whose
+        # ONLY rows are synthetic lands at 0 instances, which still trips the
+        # pull - and pulling 35 toward a prior of 35 is a no-op, so nothing
+        # moves for that cohort.
         seen_fv_keys: set[tuple[str, str]] = set()
         for s in player_snaps:
-            if s.fv is not None:
+            if s.fv is not None and s.source not in CONSTANT_ANCHOR_SOURCES:
                 seen_fv_keys.add((s.source, s.snapshot_date))
         total_fv_instances = len(seen_fv_keys)
 
