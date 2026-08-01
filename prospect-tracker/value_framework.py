@@ -1554,6 +1554,32 @@ def calibration_zero_cross_mm() -> float | None:
     return cross if cross > 0 else None
 
 
+def calibration_version() -> str:
+    """The identifier of the dollar calibration currently in force.
+
+    Every artifact that carries surplus DOLLARS should stamp this into its meta
+    (see `calibration_stamp`). On 2026-07-31 the v6 EV re-fit landed at 14:42 and
+    by that evening FOUR served artifacts disagreed about what a player was worth:
+    xfv.json had been rebuilt on v6 while trade_values.json, mlb_projections.json
+    and timeseries.json still carried v5 numbers - timeseries.json was WRITTEN at
+    21:12, six and a half hours after the config changed, because a long-running
+    chained export held the pre-14:42 config in memory. Nothing in the system
+    could see the disagreement, because no artifact said which map it used.
+    A fingerprint only guards what it NAMES."""
+    cal = _config().get("calibration", {}) or {}
+    if not cal.get("enabled"):
+        return "identity"
+    return str(cal.get("version") or "unversioned")
+
+
+def calibration_stamp() -> dict:
+    """The meta block a surplus-carrying artifact should embed verbatim."""
+    cal = _config().get("calibration", {}) or {}
+    return {"version": calibration_version(),
+            "enabled": bool(cal.get("enabled")),
+            "method": str(cal.get("method", "linear")).lower()}
+
+
 def apply_calibration(predicted_mm: float | None, fv: float | None = None,
                       is_pitcher: bool | None = None) -> float | None:
     """Apply the empirical CALIBRATION correction (the Prompt F backtest's

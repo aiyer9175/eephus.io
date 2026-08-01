@@ -15278,8 +15278,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for _k, _v in scout_reports_sidecar.items():
         scout_report_chunks[sum(ord(_c) for _c in _k) % _SCOUT_CHUNKS][_k] = _v
 
+    import value_framework as _vf_stamp        # local: module-level import is a cycle
     boot = {
         "generated_at": _utcnow_iso() + "Z",
+        # Which dollar calibration priced players[].surplus on these rows. This
+        # artifact is the reason the stamp exists: it was WRITTEN at 21:12 on
+        # 2026-07-31, six and a half hours after the v6 config landed, and still
+        # carried v5 dollars because a long-running chained export held the old
+        # config in memory. Nothing could see it, because nothing said.
+        "calibration": _vf_stamp.calibration_stamp(),
         "run": latest_run_summary(),
         "total_tracked": len(active_payload) + len(graduate_payload) + len(inactive_payload),
         "active_count": len(actives),

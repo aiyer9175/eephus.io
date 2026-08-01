@@ -15,6 +15,8 @@ import logging
 from datetime import date
 from pathlib import Path
 
+import value_framework as vf
+
 from efv_score import scored_path, scored_live_path
 
 log = logging.getLogger(__name__)
@@ -118,6 +120,10 @@ def run(persist: bool = True) -> dict:
     out = {
         "meta": {
             "generated_at": date.today().isoformat(),
+            # Which dollar calibration priced surplus_mm on these rows. Four
+            # served artifacts silently disagreed on 2026-07-31 because none of
+            # them recorded it; test_calibration_vintage_agreement now pins it.
+            "calibration": vf.calibration_stamp(),
             "n_players": len(by_player),
             # bughunt SCORE d (2026-07-23): count kind=="active" rows in the
             # MERGED artifact - the backgrade contributes prior-anchored
