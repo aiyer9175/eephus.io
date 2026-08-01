@@ -663,6 +663,16 @@ def build_fa_archive_payload(first: int = 2015, last: int = CLASS_YEAR - 1) -> d
                 "qo": s.get("qo") or None, "milb": (not s.get("mlb_deal")) or None,
                 "warTd": led.get("war_to_date"),
                 "surplusTd": led.get("surplus_to_date_usd"),
+                # Any REALIZED $/WAR the client computes needs the money that
+                # has actually been paid and how far through the deal we are.
+                # Without these, warTd (a partial) divided into guar (the whole
+                # contract) reads $40M+/WAR on any recent winter - not a market
+                # signal, an arithmetic error. `done` alone cannot fix it: a
+                # 6-year deal in year 2 is neither complete nor comparable.
+                "paidTd": led.get("paid_to_date_usd"),
+                "elapsed": (round(float(led["elapsed_years"])
+                                  / max(float(led.get("total_years") or s.get("years") or 1), 1.0), 3)
+                            if led.get("elapsed_years") is not None else None),
                 "done": led.get("complete"),
             }))
             spend += s.get("guarantee_usd") or 0

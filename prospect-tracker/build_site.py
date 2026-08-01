@@ -57,6 +57,10 @@ _UI_VER = _asset_ver("assets/eephus-ui.js")
 _ACCT_CSS_VER = _asset_ver("assets/eephus-account.css")
 _BG_VER = _asset_ver("assets/eephus-bg.js")
 _FA_VER = _asset_ver("assets/fa.js")
+# $/WAR-by-winter detail view, reached from the FA rail sparkline (#view=dpw).
+# Self-contained: it mounts its own section and hides #fa-rows while active,
+# so it never shares state with fa.js.
+_FA_DPW_VER = _asset_ver("assets/fa_dpw.js")
 _GL_VER = _asset_ver("assets/eephus-gl.js")
 _GLAPP_VER = _asset_ver("assets/glossary.js")
 _PROJ_VER = _asset_ver("assets/projections.js")
@@ -2767,6 +2771,7 @@ def build_fa() -> str:
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/fa.js?v={_FA_VER}" defer></script>'
+        f'<script src="/assets/fa_dpw.js?v={_FA_DPW_VER}" defer></script>'
     )
     return page("Free Agency - eephus.io", "fa", body,
                 "The 2026-27 MLB free-agent class: projected contracts (projLength / projGuarantee / "

@@ -134,6 +134,11 @@ GATE1_SLICES = ("war:hit", "war:pit", "war:hit:act_ge4", "war:pit:act_ge4",
                 "expo:hit", "expo:pit")
 GATE1_METRICS = GATE1_HEADLINE + GATE1_SLICES
 
+# Lab hook, same contract as GATE2_COLLECT below: set to a list and every scored
+# WAR row is appended as (target, side, mlbam, pred, actual) so two model
+# settings can be compared PAIRED ROW BY ROW. None in production.
+GATE1_COLLECT: list | None = None
+
 
 def _fit_band_scale(panel: list[dict]) -> dict:
     """Fit the T1.2 location-scale band on the Gate-1 residual panel and
@@ -262,6 +267,9 @@ def run_projection_gate(persist: bool = True) -> dict:
                 act_war = act.get("war") if act.get("war") is not None else 0.0
                 # WAR pool (everyone)
                 if base["war"] is not None:
+                    if GATE1_COLLECT is not None and not is_warmup:
+                        GATE1_COLLECT.append((target, side, mlbam,
+                                              float(war_pred), float(act_war)))
                     season_stats["war"]["m"].append((war_pred, act_war))
                     season_stats["war"]["b"].append((base["war"], act_war))
                     season_stats[f"war:{side}"]["m"].append((war_pred, act_war))
@@ -441,6 +449,13 @@ def main() -> None:
 GATE2_WARMUP_THROUGH = 2017          # train-only winters; scoring starts after
 GATE2_MODEL_VERSION = "fa_mkt_v2"
 
+# Lab hook. Set to a list and every scored row is appended as
+# (winter, player_key, pred_guar_mm, act_guar_mm, pred_aav_mm, act_aav_mm,
+# pred_years, act_years). None in production and nothing else reads it; it
+# exists so an A/B of two model settings can be PAIRED ROW BY ROW instead of
+# compared on two pooled MAEs, which cannot tell a real 1% move from noise.
+GATE2_COLLECT: list | None = None
+
 
 def run_market_gate(persist: bool = True, challenger: bool = False,
                     persist_dpw: bool = True) -> dict:
@@ -517,6 +532,11 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
             wstats["aav"]["b"].append((b_aav / 1e6, act_a / 1e6))
             wstats["years"]["m"].append((float(pred["proj_years"]), act_y))
             wstats["years"]["b"].append((b_years, act_y))
+            if GATE2_COLLECT is not None:
+                GATE2_COLLECT.append((W, s.get("player_key") or s["player_name"],
+                                      pred["proj_guarantee_usd"] / 1e6, act_g / 1e6,
+                                      pred["proj_aav_usd"] / 1e6, act_a / 1e6,
+                                      float(pred["proj_years"]), act_y))
             # --- E1 slices: pos group, side, and actual-guarantee tier -------
             _g = fm._pos_group(s.get("position"))
             _side = "pit" if _g in ("SP", "RP") else "hit"
@@ -622,10 +642,13 @@ def run_market_gate(persist: bool = True, challenger: bool = False,
         # retrospective and may see every winter's own implied rate). This
         # REPLACES fa_class's v1 framework backcast, as the plan promised.
         series = fm.dollars_per_war_by_winter(enriched)
+        # Breakdowns ride along: same corpus, same winters, no extra ingest.
+        # The headline stays exactly where it was so no reader has to move.
         (_Path(__file__).parent / "data" / "fa_dpw_series.json").write_text(
             _json.dumps({"method": "fa_signings_implied_v1",
                          "model_version": GATE2_MODEL_VERSION,
-                         "usd_per_war_by_winter": {str(k): int(v) for k, v in series.items()}},
+                         "usd_per_war_by_winter": {str(k): int(v) for k, v in series.items()},
+                         "breakdown": fm.dpw_breakdowns(enriched)},
                         indent=1), encoding="utf-8")
     return summary
 

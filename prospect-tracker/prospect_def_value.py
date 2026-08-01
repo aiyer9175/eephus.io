@@ -92,9 +92,16 @@ DATA = Path(__file__).parent / "data"
 #   * Null band under H0 "the folklore SHAPE is correct" (parametric bootstrap,
 #     resampled residuals): p95 = 0.000 runs. All nine slots clear it, C and 1B by
 #     22-31x.
-#   * The LEVEL of any such table is a convention, not an estimable quantity (every
-#     row of innings shares sums to 1, so adding a constant to all nine slots is
-#     unidentified). Only the SHAPE above was gated. The folklore table also sat
+#   * The LEVEL of any such table is a CONVENTION and it must be stated. Every row of
+#     innings shares sums to 1, so X @ 1 = 1 and the OLS residuals are orthogonal to
+#     that column sum: the exposure-weighted sum of the coefficients equals mean(y),
+#     the league's own average runs_position per 650 PA in the fitted window (about
+#     -1 run through 2021, ~0 from 2022). The constants below were fitted WITHOUT
+#     stating a convention, so their level is whatever the window's league total
+#     happened to be. positional_fit.fit_ladder now imposes exposure-weighted
+#     sum-to-zero explicitly and publishes all three sums; see the note under
+#     _ladder_from_artifact below for why the equal-weight sums are not zero and
+#     should not be. Only the SHAPE above was gated. The folklore table also sat
 #     1.369 runs low in level; that is corrected here as a side effect.
 #
 # WHAT THE SWAP DID NOT BUY. Adopting this ladder does NOT measurably improve
@@ -120,14 +127,51 @@ DATA = Path(__file__).parent / "data"
 #   * Sensitive to the PA filter: refitting at >= 400 PA moves C to 10.60 and LF to
 #     -6.06 (~0.4 runs). PA-weighting the >= 200 PA fit moves nothing (max 0.19).
 #
-# DO NOT ADD A SECOND LADDER. positional_fit.py (untracked, another lane) refits this
-# same ladder from the same two feeds on every run, under the residual-DH spec, and so
-# already disagrees with these constants by up to 0.35 runs. That needs one owner: see
-# duplicate_ladders_found in data/positional_ladder_eval.json.
-POS_ADJ = {"C": 10.91, "SS": 8.76, "2B": 4.51, "CF": 3.53, "3B": 3.36,
-           "LF": -6.47, "RF": -6.41, "1B": -8.53, "DH": -14.04, "P": 0.0}
+# ONE OWNER, 2026-07-31. There were two independently refitted ladders in the tree
+# (this block, and positional_fit.fit_ladder writing data/positional_fit.json) and they
+# already disagreed by up to 0.35 runs. positional_fit.py is now THE FIT; this module
+# READS its artifact and keeps the constants below only as the frozen fallback for when
+# the artifact is missing or predates the identification constraint. Do not refit here.
+_POS_ADJ_FROZEN = {"C": 10.91, "SS": 8.76, "2B": 4.51, "CF": 3.53, "3B": 3.36,
+                   "LF": -6.47, "RF": -6.41, "1B": -8.53, "DH": -14.04, "P": 0.0}
 
-# Machine-readable provenance so an eval artifact never has to restate it.
+
+def _ladder_from_artifact() -> dict | None:
+    """The fitted ladder from data/positional_fit.json, or None.
+
+    Accepted ONLY when the artifact carries fit.ladder.identification, i.e. it was
+    written by the constrained fit. An older artifact has an unstated level and is
+    ignored rather than silently shifting def_value.
+
+    THE SUM QUESTION. The ladder is identified by exposure-weighted sum-to-zero: zero
+    is the league-average defensive position weighted by the innings shares the league
+    actually deploys. Equal-weighting the nine rungs does NOT give zero and should not:
+    DH is 7.5% of exposure, not a ninth (the NL had no DH before 2022), so equal
+    weighting over-counts the DH penalty. Equal-weighting the eight FIELDING rungs does
+    not give zero either, and that is the reading that looks wrong at a glance: with the
+    exposure-weighted sum pinned at zero the fielding rungs are forced to
+    -8 x w_DH x L_DH / (1 - w_DH), about +9.8. The folklore table reaches 0 there only
+    by leaving DH out of its normalisation. Both readings ship in the artifact under
+    fit.ladder.identification, alongside a folklore-comparable values_fielder_centred."""
+    try:
+        blk = (json.loads((DATA / "positional_fit.json").read_text(encoding="utf-8"))
+               .get("fit", {}).get("ladder") or {})
+    except (OSError, ValueError):
+        return None
+    if not blk.get("identification") or not blk.get("values"):
+        return None
+    out = {p: float(v) for p, v in blk["values"].items()}
+    out["P"] = 0.0
+    return out if set(out) >= set(_POS_ADJ_FROZEN) else None
+
+
+POS_ADJ = _ladder_from_artifact() or dict(_POS_ADJ_FROZEN)
+POS_ADJ_SOURCE = ("data/positional_fit.json"
+                  if POS_ADJ != _POS_ADJ_FROZEN else "frozen fallback (2026-07-25 fit)")
+
+# Machine-readable provenance so an eval artifact never has to restate it. Describes
+# the FROZEN fallback; when POS_ADJ_SOURCE is the artifact, the live provenance is
+# fit.ladder in data/positional_fit.json (window, n, r2, identification, CIs).
 POS_ADJ_PROVENANCE = {
     "source": "SVD least-squares inversion of Baseball-Reference runs_position",
     "inputs": ["data/mlb_def_history.json", ".cache/statsapi_field/fld_*.json"],
@@ -135,6 +179,8 @@ POS_ADJ_PROVENANCE = {
     "seasons": [2000, 2026], "min_pa": 200, "r2": 0.9821,
     "resid_mae_runs_per_650pa": 0.675, "coef_ci95_halfwidth_runs": 0.05,
     "units": "runs per 650 PA", "eval": "data/positional_ladder_eval.json",
+    "live_source": "positional_fit.fit_ladder -> data/positional_fit.json (fit.ladder)",
+    "identification": "exposure-weighted sum-to-zero (imposed by the fit, 2026-07-31)",
 }
 
 # RETIRED 2026-07-25. The unsourced round-number table this module used from its
