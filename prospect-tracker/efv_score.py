@@ -984,6 +984,10 @@ SIDE_FAIRNESS_FIX_DEFAULT = True   # W-FSIDE-SHIP gate ALL-PASS 2026-07-24 (owne
 SFF_KNEE_RAW = 52.5      # display-55 knee (F-SIDE 55_plus_binding boundary)
 SFF_MOVE_CAP_FV = 3.0    # a-priori per-row move bound == standing served ceiling
 _SFF_MIN_CURVE_N = 20    # crosswalk needs a real labeled pool behind it
+# No single player may define a side's curve ENDPOINT. Measured 2026-07-31: the
+# pitcher terminal PAVA block was n=1 (ohtani, two-way WAR on a pitcher row)
+# against the hitter side's natural n=7. See _sff_pool_tail.
+_SFF_MIN_TAIL_N = 5
 
 
 def _sff_flag() -> bool:
@@ -1011,16 +1015,59 @@ def _sff_pava(ys):
     return out
 
 
-def _sff_crosswalk_curve(pairs, min_n: int = _SFF_MIN_CURVE_N):
+def _sff_pool_tail(fit, min_n: int):
+    """Merge trailing PAVA blocks until the TERMINAL block is backed by at
+    least `min_n` observations.
+
+    Why this exists (measured 2026-07-31): the pitcher crosswalk's terminal
+    block was ONE PLAYER. shohei_ohtani sits at the top of the pitcher pool by
+    rank_war and his realized first-6yr bWAR is 34.59 -- which is his TWO-WAY
+    total, because stored career WAR is one number per season with no
+    pitching/batting split. The knot below him reads 5.63, so a single
+    batting-inclusive row defined a 6.1x cliff at q=1.00, and whichever pitcher
+    ranked first inherited it through the joint band. The hitter side never
+    showed this: its terminal block naturally covers 7 players.
+
+    The same guard also dilutes right-censored extrapolations at the top
+    (paul_skenes carries a 41.40 target built from ~3 observed seasons at
+    rate x 6), without discarding the young cohort a censored filter would.
+
+    Merging adjacent blocks by their pooled mean preserves monotonicity: the
+    merged value lies between the blocks it replaces, so a nondecreasing fit
+    stays nondecreasing."""
+    n = len(fit)
+    if n == 0 or min_n <= 1:
+        return fit
+    fit = list(fit)
+    i = n - 1
+    while i > 0 and fit[i - 1] == fit[i]:
+        i -= 1
+    while (n - i) < min_n and i > 0:
+        j = i - 1
+        while j > 0 and fit[j - 1] == fit[j]:
+            j -= 1
+        mean = sum(fit[j:n]) / (n - j)
+        for k in range(j, n):
+            fit[k] = mean
+        i = j
+    return fit
+
+
+def _sff_crosswalk_curve(pairs, min_n: int = _SFF_MIN_CURVE_N,
+                         min_tail_n: int = None):
     """ARM-2 expected-WAR-at-rank crosswalk for one side: unweighted PAVA of the
     realized (target-censored) first-6yr WAR over the labeled pool's rank_war
     quantiles. `pairs` = [(rank_war, realized_war)]. Returns (qs, fitted) knots
-    for interpolation, or None when the pool is too thin to carry a curve."""
+    for interpolation, or None when the pool is too thin to carry a curve.
+
+    The terminal knot is guarded by `_sff_pool_tail` so no single player can
+    define the top of a side's curve (see that docstring for the measurement)."""
     pts = sorted(((float(rw), float(t)) for rw, t in pairs
                   if rw is not None and t is not None), key=lambda p: p[0])
     if len(pts) < min_n:
         return None
     fit = _sff_pava([t for _rw, t in pts])
+    fit = _sff_pool_tail(fit, _SFF_MIN_TAIL_N if min_tail_n is None else min_tail_n)
     m = len(pts)
     qs = [(i / (m - 1)) if m > 1 else 0.0 for i in range(m)]
     return qs, fit
