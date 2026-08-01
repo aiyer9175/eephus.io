@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-31**. `validate()` at generation time: **clean**.
 
-**202 models.** Verdicts: validated: 35, provisional: 73, unvalidated: 28, deprecated: 66.
+**202 models.** Verdicts: validated: 36, provisional: 73, unvalidated: 27, deprecated: 66.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -211,7 +211,7 @@ stamped as of **2026-07-31**. `validate()` at generation time: **clean**.
 | `savant_arm_strength` | none served yet. Ingest only: data/savant_arm.json. | nothing. MEASUREMENT FEED: per (player, season, position-thrown-from) average and max throw velocity from the Savant arm-streng... | the feed itself | n/a | coverage; 795 players, 2020-2026 | **unvalidated** | - | - | - |
 | `savant_sprint` | Alchemy Lab Position Fit panel: Rng+ (legs) plus the per-... | range at an OUTFIELD destination, read as OAA per 1000 innings at the position played | sprint speed (ft/s) as a descriptive range read, Arkmetric convention 3 (100... | no range read at all, which is what the panel showed before, plus the transpo... | Pearson r against OAA per 1000 innings at the position played (>=400 innings,... | **validated** | `data/sprint_range_eval.json` | 0 | no |
 | `xfv_odds_cohort` | NOTHING. This row records a NULL. The candidate was condi... | P(outcome bucket \| grade, age_rel_level, ops_rel/k_rel) for a prospect, with the existing grade-only p_bucket_given_fv as the... | the INCUMBENT grade-only curve p_bucket_given_fv, unchanged. The cohort head... | two baselines, both pre-registered: the incumbent grade-only curve AND a cons... | Brier and log loss on held-out forward-chained folds, with four mandatory con... | **deprecated** | `data/xfv_odds_cohort_eval.json` | 0 | no |
-| `xfv_odds_calibration_slope` | NOTHING YET. Pre-registered 2026-07-31, NOT FITTED, NOT S... | a two-parameter monotone recalibration of the EXISTING grade-only odds curve output (leaving p_bucket_given_fv itself untouched) | none; the lane is pre-registered and unfitted | the incumbent grade-only curve AND a constant base rate, both required with p... | Brier and log loss on held-out forward-chained folds (>=4 splits), plus calib... | **unvalidated** | - | - | no |
+| `xfv_odds_calibration_slope` | SHIPPED. Served p_bust and p_bucket on every eFV row site... | a two-parameter monotone recalibration of the EXISTING grade-only odds curve output (leaving p_bucket_given_fv itself untouched) | a single monotone Platt map in log-odds per side, applied to the incumbent p_... | the incumbent grade-only curve AND a constant base rate, both required with p... | Brier and log loss on held-out forward-chained folds (>=4 splits), plus calib... | **validated** | `data/xfv_odds_calibration_slope_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.
 

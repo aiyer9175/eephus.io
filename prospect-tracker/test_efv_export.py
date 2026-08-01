@@ -378,7 +378,28 @@ def test_committed_artifact_headline_alias_contract():
 #   i.e. zero. Surplus is consumed as a PRICE, and a price is an expectation, so the
 #   objective moved to the conditional mean and the clamp went with it.
 #   Rowcount 9334 -> 9334 (unchanged).
-_GOLDEN_XFV_SHA256 = "7cc4e1991da46c45343dca7f2651c2abfed76425c5dea051d1ebf57a2796dfbc"
+# 2026-07-31b RESTAMP: the ODDS DISPERSION CALIBRATION wired in (owner decision; gate
+#   docs/efv-2026-07-30/ODDS_CALIBRATION_SLOPE_GATE.md, artifact
+#   data/xfv_odds_calibration_slope_eval.json). p_bucket_given_fv is fitted on the
+#   CONSENSUS-FV scale (sd 6.57) and read at the realized-implied grade (sd 15.54),
+#   2.4x wider, so its log-odds ran about 2.7x too steep. One monotone Platt map in
+#   log-odds per side fixes the slope.
+#   ODDS ONLY -- verified, not assumed: across all 9,334 rows, ZERO changed xfv_grade,
+#   xfv_grade_quantile, xfv_war_6yr or surplus_mm. The map is strictly monotone, so
+#   board order is invariant by construction rather than by luck.
+#   9,320 of 9,334 p_bust values moved, 8,073 by more than 5 points (5,743 down,
+#   2,330 up), and every p_bucket vector still sums to 1 (bust mass replaced, the
+#   other four rescaled).
+#   Gate cleared on every condition: beats the incumbent (Brier +0.0301 CI
+#   [+0.0211,+0.0391], log loss +0.0911 CI [+0.0653,+0.1168]) AND a constant base rate
+#   (+0.0314 / +0.1018), all four CIs clean of zero, which is the bar two prior odds
+#   lanes failed. Label-shuffle control p=0.0 on both; monotone; 6 time splits.
+#   Calibration slope 0.6446 -> 1.1351, ECE 0.1528 -> 0.0428.
+#   Brayden Taylor p_bust 0.309 -> 0.605 and Bradfield 0.319 -> 0.609, most of the way
+#   to their 77.1% outcome-comp cohort rate, reached with ZERO cohort information. The
+#   cohort lane that chased this directly was a measured NO-SHIP.
+#   Rowcount 9334 -> 9334 (unchanged).
+_GOLDEN_XFV_SHA256 = "1f237b0c8a82355b1ec170f15acd8b816d6c9e65b8775dcb9bc92bc20bbfdf8f"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
