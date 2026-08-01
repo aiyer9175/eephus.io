@@ -3792,14 +3792,16 @@
     "foundations"
    ],
    "aliases": [
-    "OPS+",
+    "Level OPS+",
     "OPS plus",
+    "OPS+",
+    "OPS+ vs level",
     "OPS+ vs lvl",
-    "Level OPS+"
+    "wRC+ vs level"
    ],
    "priority": 6,
-   "definition": "On-base-plus-slugging indexed so 100 = the player's level average. Above 100 = better than his league; the +/− is roughly a percentage.",
-   "methodology": "OPS+ rescales OPS against the run environment the player actually hit in, so a .800 OPS in a pitcher-friendly Low-A league and a .800 OPS in the hitter-friendly PCL aren't read as equal. 100 is the level mean; 130 means ~30% better than league OPS. The site indexes the player's OPS directly against his level's mean OPS (not the Bill James OBP/SLG decomposition), and shrinks a small-sample line toward the level mean before indexing so a 4-AB line doesn't read as an extreme. It's the quick descriptive cousin of wRC+, which additionally park- and position-adjusts; OPS+ here carries no park adjustment.",
+   "definition": "Level-anchored offensive index for a MiLB season. 100 is the league average for that level and season. As of 2026-07-31 the site computes this as wRC+ vs level, not OPS+: the rate is a linear-weight wOBA rather than an OPS ratio, and the baseline is a plate-appearance-weighted pool of the WHOLE league rather than an unweighted mean of the prospects this site happens to track.",
+   "methodology": "Fixed FanGraphs-shape linear weights, rescaled inside each level-season so the pool's mean wOBA equals its OBP, then indexed against that pool and shrunk toward it by plate appearances (K = 200 PA, which holds the previous chip's shrink strength constant rather than retuning it inside a metric swap). The baseline change matters as much as the metric one: the old tracked-prospect baseline ran 7 to 8 percent low at Double-A and High-A (.703 against a true .752, .708 against .767), so the retired chip flattered every hitter at those levels. Measured across 1,972 served hitters the new chip sits about 2 points lower on the median and is slightly tighter, and it genuinely reorders: 8.5 percent of pairs swap. Coverage is 100 percent. Components come from the same MLB StatsAPI response the site already fetches for MiLB seasons.",
    "formula": "OPS+ = 100 × OPS_adj / lgOPS,  where OPS_adj = (AB·OPS + K·lgOPS)/(AB + K) shrinks toward the level mean (K = 170 AB).  Computed vs the player's level.",
    "seeAlso": [
     "ops",

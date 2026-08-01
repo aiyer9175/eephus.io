@@ -105,6 +105,18 @@ def season_splits(sport_id: int, season: int, group: str,
         # (e.g. league_norms) always use the cache.
         stale = (fetch and season >= _date.today().year
                  and (_time.time() - path.stat().st_mtime) >= _SEASON_TTL_SEC)
+        # SCHEMA MIGRATION, 2026-07-31. A hitting cache written before the wOBA
+        # components were added carries the old lean shape, and past seasons cache
+        # FOREVER, so a pure TTL would never heal them. Treat a component-less
+        # hitting row as stale so the refetch happens once, per file, on whatever
+        # box runs next. Self-healing beats a manual delete, because the deploy box
+        # has its own cache and nobody would remember to clear it there.
+        if not stale and fetch and group == "hitting" and cached:
+            probe = next((r for r in cached if (r.get("pa") or 0)), None)
+            if probe is not None and probe.get("h") is None:
+                stale = True
+                log.info("milb_stats: %s sport=%s season=%s predates the wOBA "
+                         "components; refetching once", group, sport_id, season)
         if not stale:
             return _relevel(cached, sport_id)
     if not fetch:
@@ -145,6 +157,20 @@ def season_splits(sport_id: int, season: int, group: str,
                 "slg": st.get("slg"), "avg": st.get("avg"),
                 "so": st.get("strikeOuts"), "bb": st.get("baseOnBalls"),
                 "hr": st.get("homeRuns"),
+                # wOBA COMPONENTS, added 2026-07-31. The same response already
+                # carried every one of these and the lean row dropped them, which is
+                # why wrc_rates.py had to read a separate .cache/milb_full_stats/
+                # tree that NOTHING in this repo produces: one reader, no writer, and
+                # already stale on 53.3% of rows. Keeping them here retires that
+                # orphan and costs no extra request.
+                #
+                # These are COUNTS, not rates, so they are additive across the stint
+                # rows the feed returns and cannot be reconstructed from ops/obp/slg.
+                # 1B is derived (h - 2b - 3b - hr) rather than stored.
+                "h": st.get("hits"), "doubles": st.get("doubles"),
+                "triples": st.get("triples"), "ibb": st.get("intentionalWalks"),
+                "hbp": st.get("hitByPitch"), "sf": st.get("sacFlies"),
+                "sb": st.get("stolenBases"),
             })
         else:
             row.update({
