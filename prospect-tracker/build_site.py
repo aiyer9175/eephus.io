@@ -892,15 +892,31 @@ def _fv_label(p: dict) -> str:
     fv = p.get("fv_close")
     return str(int(math.ceil(fv))) if fv is not None else " - "
 
+def _fv_tier_class(label: str) -> str:
+    """Tier class from the DISPLAYED integer, not the raw grade.
+
+    Keying tiers on the raw grade while printing the rounded one meant the
+    number and its colour could disagree: roch_cholowsky (eFV 59.9) printed
+    "60" in a plain pill while franklin_arias (60.3) and leo_de_vries (60.2)
+    printed the same "60" in gold, and jesus_made (60.9) printed "61" without
+    reaching holo. Any raw grade in [59.5, 60) or [60.5, 61) hit this window.
+
+    This is the JS rule (fvClass parses the label it is handed), so the
+    generated homepage and the PROSPX board can no longer disagree."""
+    m = re.match(r"-?\d+", (label or "").strip())
+    if not m:
+        return "fv-pill"
+    disp = int(m.group())
+    if disp >= 61:
+        return "fv-pill holo"
+    if disp >= 60:
+        return "fv-pill gold"
+    return "fv-pill"
+
+
 def _fv_pill(p: dict) -> str:
-    # Tier styling keys off the PRIMARY (eFV) grade now, raw/unrounded.
-    fv = _primary_fv(p)
-    cls = "fv-pill"
-    if fv is not None and fv >= 61:
-        cls += " holo"
-    elif fv is not None and fv >= 60:
-        cls += " gold"
-    return f'<span class="{cls}">{html.escape(_fv_label(p))}</span>'
+    label = _fv_label(p)
+    return f'<span class="{_fv_tier_class(label)}">{html.escape(label)}</span>'
 
 def _meta(*parts) -> str:
     return html.escape(" · ".join(str(x) for x in parts if x))
@@ -1729,8 +1745,9 @@ def _spotlight_html(players: list) -> str:
     if not cands:
         return ""
     d, p = max(cands, key=lambda t: t[0])
-    fv = _primary_fv(p)   # tier the holo border off the PRIMARY (eFV) grade, matching _fv_pill
-    holo = " holo" if (fv is not None and fv >= 61) else ""
+    # Tier the holo border off the DISPLAYED integer, matching _fv_pill (a raw
+    # threshold here disagreed with the pill rendered inside the same card).
+    holo = " holo" if "holo" in _fv_tier_class(_fv_label(p)) else ""
     url = _headshot_url(p.get("mlbam_id"), 180)   # unified chain (resolves milb-only ids)
     photo = f"background-image:url('{url}');" if url else ""
     spark = _fv_sparkline(p.get("points"), "var(--accent-green)")

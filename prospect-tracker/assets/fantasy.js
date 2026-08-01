@@ -497,7 +497,9 @@
     if (!list.length) return '<div class="fantasy-note">Call-up watch populates from the PROSPX prospect board on the nightly build (fantasy-relevant prospects near their ETA).</div>';
     var rows = list.map(function (c) {
       return "<tr><td class=\"ff-nm\">" + nameLink(c.mlbam, c.name) + "</td><td>" + esc(c.org) + "</td><td>" + esc(c.pos) +
-        "</td><td>" + esc(c.eta) + "</td><td>" + num(c.fv, 0) + "</td></tr>";
+        // eFV (round-to-nearest) leads; consensus ceil is the fallback.
+        "</td><td>" + esc(c.eta) + "</td><td>" +
+        (c.fvE != null ? String(Math.round(c.fvE)) : (c.fv != null ? String(Math.ceil(c.fv)) : "-")) + "</td></tr>";
     }).join("");
     return '<div class="fantasy-note">Prospects near the majors with fantasy upside - stash before the call.</div>' +
       '<table class="fantasy-table"><thead><tr><th>Prospect</th><th>Org</th><th>Pos</th><th>ETA</th><th>FV</th></tr></thead><tbody>' + rows + "</tbody></table>";

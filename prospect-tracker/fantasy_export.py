@@ -30,6 +30,7 @@ computed"); never aborts the pipeline. Run: `python fantasy_export.py`
 """
 from __future__ import annotations
 
+import functools
 import json
 import logging
 from datetime import datetime, timezone
@@ -59,6 +60,19 @@ def _load_json(name: str) -> dict | list | None:
         return json.loads(p.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return None
+
+
+@functools.lru_cache(maxsize=1)
+def _efv_by_key() -> dict:
+    """{player_key: xfv_grade} off data/xfv.json - the site-wide grade.
+    Empty when the artifact is absent (fresh checkout), so callers fall back
+    to consensus rather than failing."""
+    x = _load_json("xfv.json") or {}
+    by = x.get("by_player") if isinstance(x, dict) else None
+    if not isinstance(by, dict):
+        return {}
+    return {k: v.get("xfv_grade") for k, v in by.items()
+            if isinstance(v, dict) and v.get("xfv_grade") is not None}
 
 
 def _sb_rate_by_mlbam() -> dict:
@@ -415,10 +429,15 @@ def _callup_watch(ts: dict | None = None) -> list:
         eta_year = eta.get("year") if isinstance(eta, dict) else eta
         near = (str(eta_year) in ("2026", "2027")) if eta_year else False
         if near and pl.get("mlbam_id"):
+            # eFV leads, consensus is the fallback: this column served an
+            # unlabeled consensus FV on a site whose grade is eFV, so a
+            # call-up-watch row could disagree with the same player's board row.
+            efv = (_efv_by_key() or {}).get(pl.get("player_key"))
             out.append({"mlbam": pl.get("mlbam_id"), "name": pl.get("player_name"),
                         "org": pl.get("org"), "pos": pl.get("position"), "eta": eta_year,
-                        "fv": pl.get("consensus_fv") or pl.get("fv_close")})
-    out.sort(key=lambda x: -(x.get("fv") or 0))
+                        "fv": pl.get("consensus_fv") or pl.get("fv_close"),
+                        "fvE": round(efv, 1) if efv is not None else None})
+    out.sort(key=lambda x: -(x.get("fvE") if x.get("fvE") is not None else (x.get("fv") or 0)))
     return out[:60]
 
 

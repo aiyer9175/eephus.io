@@ -19897,7 +19897,9 @@ function renderToolCompRadar(key){
   const series = [{ label: p.player_name, color: "var(--neon-cyan)", items: _radarToolsFor(p) }];
   if (comp) series.push({ label: comp.player_name, color: "var(--neon-violet)", items: _radarToolsFor(comp) });
   const radar = (typeof _gfxRadarOverlay === "function") ? _gfxRadarOverlay(series, P, 300) : "";
-  const chips = cands.map(c => `<button class="split-chip${ui.comp === c.player_key ? " active" : ""}" onclick="toolCompSet('${escapeHtml(key)}','${escapeHtml(c.player_key)}')">${escapeHtml(c.player_name)} ${Math.round(c.fv_close)}</button>`).join("");
+  // Chip grade goes through gradeBlock: Math.round(c.fv_close) applied the
+  // round-to-NEAREST rule to a CONSENSUS number, which is the ceil rule's job.
+  const chips = cands.map(c => `<button class="split-chip${ui.comp === c.player_key ? " active" : ""}" onclick="toolCompSet('${escapeHtml(key)}','${escapeHtml(c.player_key)}')">${escapeHtml(c.player_name)} ${gradeBlock(c).label != null ? gradeBlock(c).label : " - "}</button>`).join("");
   const clear = ui.comp ? `<button class="split-chip" onclick="toolCompSet('${escapeHtml(key)}','')">clear</button>` : "";
   const legend = `<div style="display:flex;gap:16px;font-size:11px;margin-top:6px;justify-content:center;"><span style="color:var(--neon-cyan);">&#9632; ${escapeHtml(p.player_name)}</span>${comp ? `<span style="color:var(--neon-violet);">&#9632; ${escapeHtml(comp.player_name)}</span>` : ""}</div>`;
   host.innerHTML = `<div class="split-chips">${chips}${clear}</div><div style="display:flex;justify-content:center;">${radar}</div>${legend}`;
@@ -21162,7 +21164,7 @@ function _tmSeedFromURL() {
     const p = (DATA.players || []).find(x => x.player_key === key);
     const sv = p && p.surplus && p.surplus.value_mm;
     if (sv != null) { _TM.a.push({ kind: "prospect", key, name: p.player_name,
-      sub: `${p.position || ""} · ${p.org || ""} · FV ${p.fv_close ?? "?"}`, mm: sv }); _TM.seeded = true; }
+      sub: `${p.position || ""} · ${p.org || ""} · FV ${gradeBlock(p).label ?? "?"}`, mm: sv }); _TM.seeded = true; }
   } else if (kind === "mlb") {
     if (!_TM.detail) return;                 // detail still loading; seed on the re-render
     const d = _TM.detail[key];
@@ -21181,7 +21183,7 @@ function _tmSearch(q) {
     if ((p.player_name || "").toLowerCase().includes(q)) {
       const sv = p.surplus && p.surplus.value_mm;
       if (sv != null) out.push({ kind: "prospect", key: p.player_key,
-        name: p.player_name, sub: `${p.position || ""} · ${p.org || ""} · FV ${p.fv_close ?? "?"}`,
+        name: p.player_name, sub: `${p.position || ""} · ${p.org || ""} · FV ${gradeBlock(p).label ?? "?"}`,
         mm: sv });
     }
   }
@@ -32318,6 +32320,25 @@ function efvMinusConsensus(x) {
     return Math.round((v - x.consensus_fv) * 10) / 10;
   return null;
 }
+// The delta as the two DISPLAYED integers actually subtract.
+//
+// efvMinusConsensus carries the model's raw precision, which is right in storage and
+// wrong on screen: Franklin Arias is consensus 58.1 + 2.2 = eFV 60.3, but the card
+// CEILS consensus to 59 (round-up rule) and ROUNDS eFV to 60 (round-to-nearest rule),
+// so a raw "+2.2" printed between them claims 59 + 2.2 = 61.2 beside a badge reading
+// 60. Three roundings applied to two numbers; the reader can only see two of them.
+// Owner rule 2026-07-31: the chip subtracts what is on screen. Sorting and any
+// magnitude comparison keep the raw value above - only the printed chip changes.
+function efvMinusConsensusDisplay(x) {
+  if (!x || x.consensus_fv == null) return null;
+  const g = efvGradeDisplay(x);
+  const c = fvCeil(x.consensus_fv);
+  return (g != null && c != null) ? g - c : null;
+}
+// Signed integer for the chip ("+1", "0", "-2").
+function efvDeltaText(d) {
+  return d == null ? "" : `${d > 0 ? "+" : ""}${d}`;
+}
 // Risk-profile shape from the eFV outcome-bucket distribution the prospect already
 // carries (p_bucket: {bust, bench, regular, good, star}, summing to 1). Returns
 // "floor" | "lottery" | "balanced" | null. This is the SHAPE of the modeled
@@ -32349,8 +32370,8 @@ function efvTooltip(x) {
     ? `eFV ${efvGradeDisplay(x)} - FINAL grade, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR so far)` : ""}`
     : `eFV ${efvGradeDisplay(x)} - our outcome-grounded grade (provisional)`];
   if (x.consensus_fv != null) {
-    const d = efvMinusConsensus(x);
-    parts.push(`Consensus FV ${fvCeil(x.consensus_fv)}${d != null ? ` (${d > 0 ? "+" : ""}${d.toFixed(1)})` : ""}`);
+    const d = efvMinusConsensusDisplay(x);
+    parts.push(`Consensus FV ${fvCeil(x.consensus_fv)}${d != null ? ` (${efvDeltaText(d)})` : ""}`);
   }
   if (x.xfv_provisional && !x.xfv_ungraded)
     parts.push("Prior-anchored: no pro track record yet - the grade starts at the consensus prior, and any small gap vs consensus FV is 20-80 rank placement, not a penalty");
@@ -32485,8 +32506,8 @@ function efvDetailHeaderHTML(p, fvBadge) {
     return `<div style="${labelStyle}"><span>Current FV (consensus)</span></div>${fvBadge}`;
   }
   const g = gb.efvVal;
-  const d = efvMinusConsensus(x);
-  const dtxt = d == null ? "" : `${d > 0 ? "+" : ""}${d.toFixed(1)}`;
+  const d = efvMinusConsensusDisplay(x);
+  const dtxt = efvDeltaText(d);
   const dcol = d == null ? "var(--text-tertiary)" : d > 0 ? "var(--up)" : d < 0 ? "var(--down)" : "var(--text-secondary)";
   // Provisional (source-ungraded): label as provisional, dashed badge, and NO consensus-FV
   // reference line (there is no source grade to compare against).
@@ -32550,11 +32571,11 @@ function efvDetailCard(p) {
   // do not sum to the eFV-minus-consensus delta (efv_score._factors contract).
   const cons = x.consensus_fv != null ? fvCeil(x.consensus_fv) : null;
   const xg = efvGradeDisplay(x);
-  const d = efvMinusConsensus(x);
+  const d = efvMinusConsensusDisplay(x);
   const xlineHTML = efvXlineNoteHTML(x);
   const factorsHTML = (x.factors && x.factors.length) ? `
       <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
-        <div title="Signals that moved eFV off the consensus prior, biggest first. Game power is intentionally not a driver (scouts over-price it vs realized WAR)." style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How eFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${d > 0 ? '+' : ''}${d != null ? d.toFixed(1) : ''}</span> &rarr; eFV ${xg}` : ""}</div>
+        <div title="Signals that moved eFV off the consensus prior, biggest first. Game power is intentionally not a driver (scouts over-price it vs realized WAR)." style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How eFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${efvDeltaText(d)}</span> &rarr; eFV ${xg}` : ""}</div>
         ${x.factors.map(f => {
           const up = f.dir === "up";
           const col = up ? "var(--up)" : "var(--down)";
@@ -48426,7 +48447,12 @@ function renderPlayerDetail(key) {
     const refFmt = v => myIsPitcher ? Number(v).toFixed(2) : Number(v).toFixed(3).replace(/^(-?)0\./, "$1.");
 
     const rows = ranked.map(({ t, s }) => {
-      const tFv = t.fv_close_raw != null ? t.fv_close_raw : t.fv_close;
+      // Was fv_close_raw with Math.round: the RAW consensus mean under the
+      // round-to-nearest rule, so a comp chip could read 58 for a player the
+      // board grades 60 (wrong field AND wrong rounding). gradeBlock applies
+      // eFV-nearest / consensus-ceil once, the same as every other surface.
+      const tGb = gradeBlock(t);
+      const tFvLabel = tGb.label != null ? tGb.label : " - ";
       const orgTag = t.org
         ? `<span style="color:var(--text-tertiary);font-size:10px;margin-left:4px;">${escapeHtml(t.org)}</span>`
         : "";
@@ -48458,7 +48484,7 @@ function renderPlayerDetail(key) {
       return `<div data-key="${escapeHtml(t.player_key)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-light);cursor:pointer;font-size:12px;" title="${escapeHtml(matchTip)}">
         <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;">${escapeHtml(t.player_name)} <span style="color:var(--text-tertiary);font-size:10px;">${escapeHtml(t.position || " - ")} · ${t.age != null ? t.age.toFixed(1) + "y" : " - "} · ${matchLabel}</span>${orgTag}</span>
         ${statChip}
-        <span class="fv-badge ${fvClass(String(Math.round(tFv)))} size-sm">${Math.round(tFv)}</span>
+        <span class="fv-badge ${fvClass(String(tFvLabel))} size-sm">${tFvLabel}</span>
       </div>`;
     }).join("");
     return `<div class="detail-title">Similar prospects <span class="detail-title-sub">composite match · ${refLbl} vs ${escapeHtml(p.player_name)} shown</span></div>
@@ -53055,7 +53081,12 @@ function makeCompareStatTable(players) {
   const uniqSides = new Set(sides);
   const universal = [
     ["Age",          p => p.age != null ? p.age.toFixed(1) : null,    { hi: false, fmt: v => v.toFixed(1) }],
-    ["Current FV",   p => p.fv_close,                                 { hi: true,  fmt: v => String(fvCeil(v)) }],
+    // Two rows, both labeled for what they are. This was ONE row called
+    // "Current FV" reading p.fv_close -- the consensus close -- so the compare
+    // cart showed Arias 59 while the board showed his eFV 60. eFV leads (it is
+    // the site-wide grade since 2026-07-25); consensus stays, named.
+    ["eFV",          p => gradeBlock(p).efvVal,                       { hi: true,  fmt: v => String(v) }],
+    ["Consensus FV", p => p.fv_close,                                 { hi: true,  fmt: v => String(fvCeil(v)) }],
     ["Level",        p => (p.statline || {}).level || null,           { categorical: true }],
     ["ETA",          p => (p.eta || {}).year || null,                 { hi: false, fmt: v => String(v) }],
     ["Games (PA/IP volume)", p => {
@@ -53225,7 +53256,12 @@ function makeCompareSideBySide(players) {
   const cols = `repeat(${players.length}, minmax(0, 1fr))`;
   const heads = players.map((p, i) => {
     const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
-    const fvLabel = fvCloseLabel(p); // v26 - includes "+" suffix
+    // The cart badge reads the SAME grade the board does. It used to call
+    // fvCloseLabel(p) (the consensus close), so a pinned Arias showed 59
+    // against his 60 on the board behind it. gradeBlock is the sanctioned
+    // resolver: eFV round-to-nearest, consensus ceil as the fallback.
+    const gbHead = gradeBlock(p);
+    const fvLabel = gbHead.label != null ? gbHead.label : " - ";
     const sl = p.statline || {};
     const ageBits = [];
     if (p.age != null) ageBits.push(`${p.age.toFixed(1)}yo`);
