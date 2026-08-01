@@ -1645,6 +1645,20 @@ CREATE TABLE IF NOT EXISTS fa_signings (
 );
 CREATE INDEX IF NOT EXISTS idx_fa_signings_year ON fa_signings(class_year);
 
+-- Out-of-row "we successfully checked this source" ledger. A row-level
+-- fetched_at can only record that something CHANGED, so a source that is
+-- healthy but quiet (no new signings all summer, an empty class year) is
+-- indistinguishable from a source that is broken. Only successful checks
+-- are recorded here, so a parser that silently returns 0 rows leaves the
+-- stamp behind rather than refreshing it.
+CREATE TABLE IF NOT EXISTS source_checks (
+    source     TEXT NOT NULL,
+    scope      TEXT NOT NULL DEFAULT '',
+    checked_at TEXT NOT NULL DEFAULT (datetime('now')),
+    n_rows     INTEGER,
+    PRIMARY KEY (source, scope)
+);
+
 -- Spotrac CBT/payroll ledgers per (team, season).
 CREATE TABLE IF NOT EXISTS fa_team_payroll (
     team         TEXT NOT NULL,
@@ -15646,12 +15660,46 @@ def load_fa_signings(class_year: int | None = None) -> dict:
     return _fa_load("fa_signings", ("player_key", "class_year"), where, args)
 
 
+def record_source_check(source: str, scope: str = "", n_rows: int | None = None) -> None:
+    """Record that `source` was successfully checked just now.
+
+    Call this ONLY on a verified-good check. A parse that returned nothing
+    because the upstream layout changed must NOT call it - leaving the old
+    stamp in place is exactly how the UI notices."""
+    with connect() as con:
+        con.execute(
+            "INSERT INTO source_checks (source, scope, checked_at, n_rows) "
+            "VALUES (?, ?, datetime('now'), ?) "
+            "ON CONFLICT(source, scope) DO UPDATE SET "
+            "checked_at = excluded.checked_at, n_rows = excluded.n_rows",
+            (source, scope or "", n_rows))
+
+
+def load_source_checks() -> dict[tuple[str, str], dict]:
+    """{(source, scope): {checked_at, n_rows}}. Empty on a fresh DB."""
+    out: dict[tuple[str, str], dict] = {}
+    try:
+        with connect() as con:
+            for src, scope, at, n in con.execute(
+                    "SELECT source, scope, checked_at, n_rows FROM source_checks"):
+                out[(src, scope or "")] = {"checked_at": at, "n_rows": n}
+    except Exception:                                    # noqa: BLE001 - best effort
+        pass
+    return out
+
+
 def touch_fa_signings(class_year: int) -> int:
     """Bump fetched_at on the current class's signings to record that the FA
     pipeline re-checked them this run. A quiet in-season market produces no NEW
     signing rows, so without this the freshness stamp would freeze at the last
     actual signing and the UI's source-staleness check would read 'stale' even
-    though the signings are current. Returns the number of rows touched."""
+    though the signings are current. Returns the number of rows touched.
+
+    NOTE: this can only ever touch rows that EXIST. Before the winter opens a
+    class has zero signing rows, so this no-ops and the stamp stays frozen on
+    the previous class - the bug that made the 2027 board read "signings stale"
+    every day from 2026-07-10 onward. `record_source_check` is the authority;
+    this remains so an existing row's own fetched_at is not misleading."""
     with connect() as con:
         cur = con.execute(
             "UPDATE fa_signings SET fetched_at = datetime('now') WHERE class_year = ?",

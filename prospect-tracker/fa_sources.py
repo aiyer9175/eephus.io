@@ -101,6 +101,11 @@ _FA_TYPE_MAP = {
     "MUTUAL": "mutual_option",
     "CONDITIONAL-PLAYER": "conditional_player_option",
     "CONDITIONAL-CLUB": "conditional_club_option",
+    # Compact-layout pill tokens (2026-07-30 redesign). Same taxonomy, the
+    # abbreviations Spotrac prints inside the status pill.
+    "ETO": "opt_out",           # early termination option
+    "PLYR": "player_option",
+    "MUT": "mutual_option",
 }
 
 
@@ -172,6 +177,61 @@ def _col(hmap: dict[str, int], *names: str) -> int | None:
 # FA class pages
 # --------------------------------------------------------------------------- #
 
+_AGE_RE = re.compile(r"Age:\s*([\d.]+)", re.IGNORECASE)
+# Logo basenames are not uniform: mlb_nym.png, mil.png, cle_2022.png,
+# ath_2025.png. Optional mlb_ prefix, optional _YYYY rebrand suffix.
+_TEAM_IMG_RE = re.compile(r"/(?:mlb_)?([a-z]{2,3})(?:_\d{4})?\.(?:png|svg|jpg)", re.IGNORECASE)
+
+
+def _parse_available_compact(table, year: int) -> list[dict]:
+    """The 2-column AVAILABLE layout Spotrac switched to on 2026-07-30.
+
+    One "Players" cell now carries what used to be six columns: a status
+    pill (UFA / ETO / PLYR / CLUB), the player link, <strong>position</strong>,
+    a team logo, YOE and Age. Column 2 is "Previous AAV".
+
+    Fields the compact layout NO LONGER PUBLISHES anywhere on the page, and
+    which therefore come back None rather than stale: option strike price
+    (the old "CLUB / $12.0M" tail), market value AAV, bat/throw, prev WAR.
+    A missing pill means a plain pending UFA (verified: 31 of 218 rows on
+    the 2027 board, Sonny Gray / Joc Pederson / Eugenio Suarez et al).
+    """
+    out: list[dict] = []
+    for tr in (table.find("tbody") or table).find_all("tr"):
+        tds = tr.find_all("td")
+        if len(tds) < 2:
+            continue
+        cell = tds[0]
+        meta = _player_cell_meta(cell)
+        if not meta["player_name"]:
+            continue
+        pill = cell.select_one(".pill-start")
+        pill_txt = pill.get_text(strip=True) if pill else ""
+        strong = cell.find("strong")
+        img = cell.find("img")
+        team = None
+        if img and img.get("src"):
+            m = _TEAM_IMG_RE.search(img["src"])
+            if m:
+                team = _normalize_spotrac_org(m.group(1).upper())
+        age_m = _AGE_RE.search(cell.get_text(" ", strip=True))
+        row = {
+            "class_year": year,
+            **meta,
+            "position": strong.get_text(" ", strip=True) or None if strong else None,
+            "age": float(age_m.group(1)) if age_m else None,
+            "from_team": team,
+            "prev_aav_usd": _parse_money(tds[1].get_text(strip=True)),
+            "market_value_aav_usd": None,
+            "bat_throw": None,
+            "prev_war": None,
+        }
+        # No pill = plain pending UFA; _parse_fa_type maps "" to ufa already.
+        row.update(_parse_fa_type(pill_txt))
+        out.append(row)
+    return out
+
+
 def _parse_available_table(table, year: int) -> list[dict]:
     hmap = _header_map(table)
     i_player = _col(hmap, "player")
@@ -184,6 +244,13 @@ def _parse_available_table(table, year: int) -> list[dict]:
     i_bt = _col(hmap, "arm bat/throw", "bat/throw")
     i_war = _col(hmap, "prev war")
     if i_player is None or i_type is None:
+        # Compact layout: one compound "Players" column + "Previous AAV".
+        if _col(hmap, "players") is not None:
+            rows = _parse_available_compact(table, year)
+            if rows:
+                return rows
+            log.warning("fa available %d: compact layout parsed 0 rows", year)
+            return []
         log.warning("fa available %d: unrecognized header set %s", year, sorted(hmap))
         return []
     out: list[dict] = []

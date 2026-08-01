@@ -298,8 +298,8 @@
     }
     const stale = d => (Date.now() - new Date(d + "T00:00:00").getTime()) / 864e5 > 14;
     const parts = Object.entries(src).map(([k, d]) =>
-      `${k} ${d}${stale(d) ? ` <span class="fa-stale" title="${k} last fetched ${d} - more than 14 days old. Re-run the FA pipeline.">&#9888; stale</span>` : ""}`);
-    return `<div class="fa-note fa-sources" title="MAX(fetched_at) per source table - when each input was last pulled, not when the page was built.">${gen ? gen + " &middot; " : ""}sources: ${parts.join(" &middot; ")}</div>`;
+      `${k} ${d}${stale(d) ? ` <span class="fa-stale" title="${k} last confirmed ${d} - more than 14 days old. Re-run the FA pipeline.">&#9888; stale</span>` : ""}`);
+    return `<div class="fa-note fa-sources" title="When each input was last successfully checked for this class, not when the page was built. A quiet market with no new signings still counts as checked; a source that stopped parsing does not.">${gen ? gen + " &middot; " : ""}sources: ${parts.join(" &middot; ")}</div>`;
   }
 
   // Share graphics: boards go through the shared EEPHUS_GFX modal, one-subject
