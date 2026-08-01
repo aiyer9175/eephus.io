@@ -952,8 +952,16 @@
       // was miscalibrated. Point estimate stays; per-year bands are unaffected.
       const tot = `${fmtWar(totV)}`;
       const cs = contractStatus(m);
-      const ct = `<span class="proj-ct ${cs.cls}" title="${esc(cs.tip)}">${esc(cs.label)}</span>`
-        + (m.src !== "prospect" && m.thru && m.aav ? `<span class="fa-sub"> ${money(m.aav)}/y</span>` : "");
+      // Contract status moved OUT of row 1 into the tape (2026-07-31): it is a
+      // categorical chip rather than a number, and its row-1 header sorted by
+      // AGE, which is the kind of mismatch nobody discovers except by testing a
+      // sort they did not ask for. AAV came out of it into a column of its own,
+      // which is also what finally made AAV sortable at all.
+      const ctChip = `<div class="mlb-chip mlb-chip-ct" title="${esc(cs.tip)}"><b>contract</b><span class="proj-ct ${cs.cls}">${esc(cs.label)}</span></div>`;
+      const aavCell = m.aav != null ? money(m.aav) : EM_DASH;
+      const peakChip = m.warPeak != null
+        ? `<div class="mlb-chip" title="Prime projection: roughly this per year at peak age on the talent path. Surplus prices the attrition-discounted expected value, not this."><b>peak WAR</b>${fmtWar(m.warPeak)}</div>`
+        : "";
       const sur = m.surNpv != null
         ? `<span class="${m.surNpv >= 0 ? "proj-pos" : "proj-neg"}" title="${m.src === "prospect" ? "Platform prospect surplus value (control window, service-time aware, $/WAR-escalated)" : "NPV of (convex production value − salary) over salary-known seasons"}">${money(m.surNpv)}</span>`
         : EM_DASH;
@@ -967,20 +975,21 @@
       // projection. The old markup put six elements into a single ellipsized
       // 320px table cell, which is what made the board feel cramped: the fix is
       // to give the seasons their own band rather than to keep widening a row.
-      const seasonTape = `<div class="mlb-tape"><div class="mlb-tape-inner">${cellChips}</div></div>`;
+      const seasonTape = `<div class="mlb-tape"><div class="mlb-tape-inner">${cellChips}${peakChip}${ctChip}</div></div>`;
       const cardHref = m.src === "prospect"
         ? `/prospx/#player=${encodeURIComponent(m.key)}`
         : `#player=${encodeURIComponent(m.key)}`;
       return `<div class="mlb-card proj-card" tabindex="0" role="button"
           data-card-href="${esc(cardHref)}"${m.orgColor ? ` style="--org-color:${esc(m.orgColor)}"` : ""}>
         <span class="mlb-rank">${i + 1}</span>
-        <div style="min-width:0;">
+        <div class="proj-id">
           <span class="mlb-name">${teamLogo(m.team)}${link}</span>
-          <span class="mlb-sub">${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " &middot; FA"}${tagFor(m)}<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span>${cmpBtn}</span>
+          <span class="mlb-sub">${esc(m.pos || "")}${m.team ? "" : " &middot; FA"}${tagFor(m)}<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span>${cmpBtn}</span>
         </div>
-        <span class="mlb-metric"${m.warPeak != null ? ` title="Prime projection: ~${fmtWar(m.warPeak)} WAR/yr at peak age (talent path; surplus prices the expected value)"` : ""}>
-          <span class="mlb-metric-label">${DATA.horizon}y WAR</span>${tot}${m.warPeak != null ? `<span class="fa-sub" style="display:block;font-size:10px;">peak ~${fmtWar(m.warPeak)}</span>` : ""}</span>
-        <span class="mlb-metric"><span class="mlb-metric-label">Contract</span>${ct}</span>
+        <span class="mlb-metric" title="Projected bWAR over the window on the playing-time-held (if-healthy) path. Peak-age rate is in the tape.">
+          <span class="mlb-metric-label">${DATA.horizon}y WAR</span>${tot}</span>
+        <span class="mlb-metric" title="Average annual value of the guaranteed contract on file. Prospects and players without a multi-year deal carry none."><span class="mlb-metric-label">AAV</span>${aavCell}</span>
+        <span class="mlb-metric" title="Player age as carried on the projection row (the aging curves run forward from it)"><span class="mlb-metric-label">Age</span>${m.age != null ? Math.floor(m.age) : "?"}</span>
         <span class="mlb-metric"><span class="mlb-metric-label">Surplus</span>${sur}</span>
         ${seasonTape}
       </div>`;
@@ -1032,7 +1041,9 @@
     }
     // Card-head columns must mirror the .proj-card grid exactly, so the two
     // share one track definition rather than two that can drift apart.
-    const CARD_TRACKS = "34px minmax(0,1.7fr) 92px minmax(0,1fr) 96px";
+    // minmax(0,...) on the one flexible track: a bare fr refuses to shrink below
+    // min-content, so a long name would push the numbers off the card.
+    const CARD_TRACKS = "34px minmax(0,1.9fr) 92px 84px 52px 96px";
     // Every header is sortable now, including rank and name, and each is a real
     // keyboard button with aria-sort. The old board exposed sorting on the
     // season cells, 5y WAR and Surplus only, and none of them were reachable by
@@ -1043,20 +1054,37 @@
       const aria = active ? (state.dir < 0 ? "descending" : "ascending") : "none";
       return `<span role="button" tabindex="0" data-psort="${key}" aria-sort="${aria}"${title ? ` title="${esc(title)}"` : ""}>${label}${active ? (state.dir < 0 ? " ▾" : " ▴") : ""}</span>`;
     };
-    root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main">` + warMap + `
+    // The row-2 tape chips are NOT track-aligned with the header (they live in
+    // the reserved band at the card bottom and scroll inside their own box), so
+    // they get their own strip of sort buttons - the /fantasy/ .ff-sortbar
+    // pattern. The per-season keys y0..y4 have existed in sortRows since the
+    // board was a table, but nothing in the UI reached them after the card
+    // conversion: they were only addressable by hand-editing #sort=y0 into the
+    // URL. This is where they come back, and they follow the active cell metric
+    // (WAR / wRC+ / wOBA / FIP) the same way the chips do.
+    const cellLbl = state.cells === "war" ? "WAR" : RATE_META[state.cells].label;
+    const tapeSortbar = `<div class="mlb-sortbar"><span class="mlb-sortbar-lbl">Sort tape</span>
+      ${seasons.map((s, t) => cardHead(String(s), "y" + t, `Sort by the ${s} cell (currently ${cellLbl})`)).join("")}
+      ${cardHead("peak WAR", "warPeak", "Talent-path projection at peak age")}
+      ${cardHead("contract thru", "thru", "Final guaranteed season on the contract on file. Prospects and unsigned players sort last.")}
+    </div>`;
+    root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main">` + warMap + tapeSortbar + `
       <div class="mlb-card-head" style="grid-template-columns:${CARD_TRACKS};">
         ${cardHead("#", "rank", "Board position under the current sort")}
         ${cardHead("Player", "name", "Sort by name")}
         ${cardHead(`${DATA.horizon}y WAR`, "warTotal", "Projected bWAR over the window, playing-time-held (if-healthy) path, with the P10-P90 outcome band. Surplus prices the attrition-discounted expected value, not this path.")}
-        ${cardHead("Contract", "age", "Sort by age; the contract line shows years and AAV where a real deal exists")}
+        ${cardHead("AAV", "aav", "Average annual value of the guaranteed contract on file. Prospects and players without a multi-year deal carry none.")}
+        ${cardHead("Age", "age", "Sort by age - the aging curves run forward from it")}
         ${cardHead("Surplus", "sur", "Veterans: production value minus salary, salary-known seasons only. Prospects: platform surplus value.")}
       </div>
       <div class="mlb-card-list" style="--card-tracks:${CARD_TRACKS};">${body || `<div class="fa-sub" style="padding:12px;">No players match.</div>`}</div>
       ${list.length > state.limit ? `<div style="text-align:center;margin:10px 0;"><button class="chip" id="proj-more">show ${Math.min(100, list.length - state.limit)} more (${list.length - state.limit} hidden)</button></div>` : ""}</div>${projBoardSidebar(list)}</div>`;
     // One place sets the card grid, from the same string the header uses.
     root.querySelectorAll(".proj-card").forEach(c => { c.style.gridTemplateColumns = CARD_TRACKS; });
-    // Keyboard parity for the new sort headers (click is wired below).
-    root.querySelectorAll(".mlb-card-head [data-psort]").forEach(h => {
+    // Keyboard parity for EVERY sort affordance (click is wired below). This
+    // selector was scoped to .mlb-card-head, which would have left the new tape
+    // sort bar mouse-only - the exact a11y hole this pattern exists to close.
+    root.querySelectorAll("[data-psort]").forEach(h => {
       h.onkeydown = e => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); h.click(); }
       };

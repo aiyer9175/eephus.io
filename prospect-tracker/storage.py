@@ -1446,11 +1446,20 @@ CREATE INDEX IF NOT EXISTS idx_draft_canonical_milb ON draft_canonical_keys(milb
 -- first-round order (slots 1-30 + comp picks). `odds_pct` is nullable
 -- for deterministic slots (picks 7+). `round_label` distinguishes
 -- regular ("1") from competitive-balance ("1A" / "1B") picks.
+-- `odds_pct` is the % chance at the #1 overall pick; `odds_top6_pct` is the
+-- % chance of landing anywhere in the 6-pick lottery. Both are NULL for
+-- deterministic slots, for lottery-INELIGIBLE non-playoff teams, and for
+-- comp picks. `wins`/`losses` are the team's record at scrape time (NULL on
+-- comp picks, which come from a sidebar with no standings columns, and on
+-- every row written before 2026-07-31).
 CREATE TABLE IF NOT EXISTS draft_lottery_odds (
     draft_year      INTEGER NOT NULL,
     team            TEXT NOT NULL,
     pick_pos        INTEGER NOT NULL,
     odds_pct        REAL,
+    odds_top6_pct   REAL,
+    wins            INTEGER,
+    losses          INTEGER,
     round_label     TEXT NOT NULL DEFAULT '1',
     snapshot_date   TEXT NOT NULL,
     source          TEXT NOT NULL,
@@ -1924,6 +1933,23 @@ def init_db():
                 """)
         except sqlite3.OperationalError:
             pass
+        # 2026-07-31 — Migration: widen draft_lottery_odds beyond the single
+        # "% at #1" number. Tankathon's table already published a "Top 6"
+        # column (lottery-entry odds) and a "Record" column next to it; the
+        # scraper was throwing both away. Historical rows keep NULL, which is
+        # the honest value: we never captured those numbers for those dates.
+        #
+        # MUST run AFTER the NOT NULL rebuild above - that block recreates the
+        # table from the OLD column list, so adding these first would drop them.
+        for _col, _ddl in (
+            ("odds_top6_pct", "REAL"),
+            ("wins",          "INTEGER"),
+            ("losses",        "INTEGER"),
+        ):
+            try:
+                con.execute(f"ALTER TABLE draft_lottery_odds ADD COLUMN {_col} {_ddl}")
+            except sqlite3.OperationalError:
+                pass  # column already exists
 
 
 def insert_snapshots(snapshots: Iterable[Snapshot]) -> int:
@@ -3103,21 +3129,35 @@ def load_draft_canonical_keys() -> dict[str, str]:
 
 def upsert_draft_lottery_odds(rows: Iterable[dict]) -> int:
     """Upsert lottery + projected-order rows. Each row: draft_year, team,
-    pick_pos, odds_pct (nullable for picks 7+), round_label (default '1';
-    '1A' / '1B' for competitive-balance picks), snapshot_date, source."""
+    pick_pos, odds_pct (% at #1, nullable), odds_top6_pct (% of landing in the
+    top-6 lottery, nullable), wins / losses (record at scrape time, nullable),
+    round_label (default '1'; '1A' / '1B' for competitive-balance picks),
+    snapshot_date, source.
+
+    The new columns use COALESCE(excluded, existing) so a re-run of an OLDER
+    scraper build (which emits no top6/record keys) cannot blank values a
+    newer build already stored for the same day."""
     n = 0
     with connect() as con:
         for r in rows:
             con.execute(
                 """INSERT INTO draft_lottery_odds
-                     (draft_year, team, pick_pos, odds_pct, round_label, snapshot_date, source)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)
+                     (draft_year, team, pick_pos, odds_pct, odds_top6_pct,
+                      wins, losses, round_label, snapshot_date, source)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                    ON CONFLICT(draft_year, team, pick_pos, snapshot_date) DO UPDATE SET
-                     odds_pct    = excluded.odds_pct,
-                     round_label = excluded.round_label,
-                     source      = excluded.source,
-                     inserted_at = datetime('now')""",
+                     odds_pct      = excluded.odds_pct,
+                     odds_top6_pct = COALESCE(excluded.odds_top6_pct,
+                                              draft_lottery_odds.odds_top6_pct),
+                     wins          = COALESCE(excluded.wins,
+                                              draft_lottery_odds.wins),
+                     losses        = COALESCE(excluded.losses,
+                                              draft_lottery_odds.losses),
+                     round_label   = excluded.round_label,
+                     source        = excluded.source,
+                     inserted_at   = datetime('now')""",
                 (r["draft_year"], r["team"], r["pick_pos"], r.get("odds_pct"),
+                 r.get("odds_top6_pct"), r.get("wins"), r.get("losses"),
                  r.get("round_label", "1"), r["snapshot_date"], r["source"]),
             )
             n += 1
@@ -3133,15 +3173,17 @@ def load_draft_lottery_odds(draft_year: int | None = None,
     (team, pick_pos): teams move between projected slots from scrape to scrape,
     so keying on (team, pick_pos) would keep a team's stale old slot AND its new
     one - returning two rows at the same pick and self-contradictory odds."""
+    _cols = ("draft_year, team, pick_pos, odds_pct, odds_top6_pct, wins, losses, "
+             "round_label, snapshot_date, source")
     if latest_only:
-        q = """SELECT draft_year, team, pick_pos, odds_pct, round_label, snapshot_date, source
+        q = f"""SELECT {_cols}
                FROM draft_lottery_odds o
                WHERE snapshot_date = (
                  SELECT MAX(snapshot_date) FROM draft_lottery_odds
                  WHERE draft_year = o.draft_year
                )"""
     else:
-        q = """SELECT draft_year, team, pick_pos, odds_pct, round_label, snapshot_date, source
+        q = f"""SELECT {_cols}
                FROM draft_lottery_odds"""
     params: tuple = ()
     if draft_year is not None:
@@ -4409,6 +4451,42 @@ def data_freshness() -> dict:
 
 # ---------------------------------------------------------------------------
 # Farm-system grading
+# ---------------------------------------------------------------------------
+# Ingest health: "we successfully checked this source" (NOT FA-specific)
+# ---------------------------------------------------------------------------
+# Deliberately ABOVE the FA section: source_checks is general ingestion
+# infrastructure that the scraper lane also writes, and the FA block is
+# pinned by test_fa_readonly_prospx to touch fa_* tables ONLY. Leaving these
+# two inside it broke that isolation guard, which is exactly what the guard
+# is for.
+def record_source_check(source: str, scope: str = "", n_rows: int | None = None) -> None:
+    """Record that `source` was successfully checked just now.
+
+    Call this ONLY on a verified-good check. A parse that returned nothing
+    because the upstream layout changed must NOT call it - leaving the old
+    stamp in place is exactly how the UI notices."""
+    with connect() as con:
+        con.execute(
+            "INSERT INTO source_checks (source, scope, checked_at, n_rows) "
+            "VALUES (?, ?, datetime('now'), ?) "
+            "ON CONFLICT(source, scope) DO UPDATE SET "
+            "checked_at = excluded.checked_at, n_rows = excluded.n_rows",
+            (source, scope or "", n_rows))
+
+
+def load_source_checks() -> dict[tuple[str, str], dict]:
+    """{(source, scope): {checked_at, n_rows}}. Empty on a fresh DB."""
+    out: dict[tuple[str, str], dict] = {}
+    try:
+        with connect() as con:
+            for src, scope, at, n in con.execute(
+                    "SELECT source, scope, checked_at, n_rows FROM source_checks"):
+                out[(src, scope or "")] = {"checked_at": at, "n_rows": n}
+    except Exception:                                    # noqa: BLE001 - best effort
+        pass
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Each org gets a report card with four component scores plus an overall
 # letter grade. The previous system (60% total_fv + 30% 90-day delta + 10%
@@ -15665,34 +15743,6 @@ def upsert_fa_signings(class_year: int, signings: list[dict]) -> int:
 def load_fa_signings(class_year: int | None = None) -> dict:
     where, args = ("WHERE class_year = ?", (class_year,)) if class_year else ("", ())
     return _fa_load("fa_signings", ("player_key", "class_year"), where, args)
-
-
-def record_source_check(source: str, scope: str = "", n_rows: int | None = None) -> None:
-    """Record that `source` was successfully checked just now.
-
-    Call this ONLY on a verified-good check. A parse that returned nothing
-    because the upstream layout changed must NOT call it - leaving the old
-    stamp in place is exactly how the UI notices."""
-    with connect() as con:
-        con.execute(
-            "INSERT INTO source_checks (source, scope, checked_at, n_rows) "
-            "VALUES (?, ?, datetime('now'), ?) "
-            "ON CONFLICT(source, scope) DO UPDATE SET "
-            "checked_at = excluded.checked_at, n_rows = excluded.n_rows",
-            (source, scope or "", n_rows))
-
-
-def load_source_checks() -> dict[tuple[str, str], dict]:
-    """{(source, scope): {checked_at, n_rows}}. Empty on a fresh DB."""
-    out: dict[tuple[str, str], dict] = {}
-    try:
-        with connect() as con:
-            for src, scope, at, n in con.execute(
-                    "SELECT source, scope, checked_at, n_rows FROM source_checks"):
-                out[(src, scope or "")] = {"checked_at": at, "n_rows": n}
-    except Exception:                                    # noqa: BLE001 - best effort
-        pass
-    return out
 
 
 def touch_fa_signings(class_year: int) -> int:

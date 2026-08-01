@@ -1563,6 +1563,9 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   color: var(--accent-gold); border-color: var(--accent-gold);
   background: color-mix(in srgb, var(--accent-gold) 14%, transparent);
 }
+/* DEAD since the board became cards - .fa-row-opt is only ever on a .fa-card
+   now, which has no td. The live rule is .fa-card.fa-row-opt::before at the
+   bottom of this file; kept here only so a future table row can reclaim it. */
 .fa-app .fa-row-opt td:first-child { box-shadow: inset 3px 0 0 var(--accent-gold); }
 .fa-app .fa-filter-bar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
@@ -2769,22 +2772,29 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 
 /* Tape sort bar. The row-2 chips are not track-aligned with the header, so they
    get their own strip of sort buttons instead of a fake column heading floating
-   above them. Same aria-sort + arrow contract as the aligned header. */
-.ff-sortbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 6px; }
-.ff-sortbar-lbl {
+   above them. Same aria-sort + arrow contract as the aligned header.
+
+   SHARED, not fantasy-only: the Free Agency and Projections boards mount the
+   same device as .mlb-sortbar (2026-07-31). One implementation, two class names
+   rather than two implementations that drift - the naming split only exists
+   because /fantasy/ shipped it first under an ff- prefix. */
+.ff-sortbar, .mlb-sortbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 6px; }
+.ff-sortbar-lbl, .mlb-sortbar-lbl {
   font: 600 10px/1 var(--font-retro-mono, monospace);
   text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary);
 }
-.ff-sortbar [role="button"] {
+.ff-sortbar [role="button"], .mlb-sortbar [role="button"] {
   font: 600 11px/1 var(--font-retro-mono, monospace);
   padding: 5px 8px;
   border: 1px solid var(--border); border-radius: 4px;
   background: var(--bg-secondary); color: var(--text-secondary);
   cursor: pointer; user-select: none; white-space: nowrap;
 }
-.ff-sortbar [role="button"]:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+.ff-sortbar [role="button"]:focus-visible,
+.mlb-sortbar [role="button"]:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
 .ff-sortbar [role="button"]:not([aria-sort="none"]),
-.ff-card-head [role="button"]:not([aria-sort="none"]) {
+.ff-card-head [role="button"]:not([aria-sort="none"]),
+.mlb-sortbar [role="button"]:not([aria-sort="none"]) {
   color: var(--text-primary); border-color: var(--accent-cyan); opacity: 1;
 }
 
@@ -2801,5 +2811,137 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   .ff-card-head {
     display: flex !important; flex-wrap: wrap; gap: 6px;
     grid-template-columns: none !important;
+  }
+}
+
+/* ===========================================================================
+   Free Agency + Projections board cards (2026-07-31).
+
+   Both boards were ported onto .mlb-card above but kept AUTO height, so a row
+   measured 92px or 150px depending on how many optional chips its player
+   happened to carry, and the sortable columns the tables had were dropped in
+   the conversion. This block finishes the port the way /fantasy/ did it: a
+   content-sized FIXED height per board, and a sort bar for the row-2 tape.
+
+   HEIGHTS ARE MEASURED, NOT COPIED. PROSPX's 136px is sized for its four-line
+   MiLB cell plus a tool-grade strip; neither board has either. Working from the
+   site's 16px base font and the local 1.35 line-height below, the tape band is
+   42px on both boards (5 padding + a 37px chip: two lines plus padding and
+   border), the row gap is 4 and the card padding is 8 top and bottom. That
+   leaves the row-1 budget, which each board's tallest legal cell sets:
+     FA    108px -> 46px for row 1; tallest cell is the two-line clamped Status
+                    at ~41px (the identity block is ~40px).
+     Proj  104px -> 42px for row 1; tallest cell is the identity block at ~37px
+                    (one name line over one sub line).
+   FA is the taller board because its Status cell carries a signed contract's
+   terms in prose; Projections has no such cell once AAV became a column. Both
+   carry ~5px of slack, which is the margin for font-metric variation between
+   platforms - not padding to spend on more content.
+
+   The load-bearing bit both boards were missing: `align-items: center` on the
+   shared .mlb-card sizes every cell to its CONTENT, so a cell that outgrows
+   row 1 spills over the tape band instead of clipping. The cells that CAN
+   outgrow it (the identity block, the FA status) are stretched to the row and
+   clip inside it, which is what makes the fixed height a promise rather than
+   a hope.
+   =========================================================================== */
+.fa-app .fa-card, .proj-app .proj-card {
+  /* 1.35 rather than the body's 1.55. Three stacked text lines per card at
+     1.55 measure ~12px taller than they need to, which is the whole difference
+     between a 108px card and a 120px one. */
+  line-height: 1.35;
+  /* The fixed height is a promise: clip rather than let anything bleed over the
+     border into the card below. */
+  overflow: hidden;
+}
+.fa-app .fa-card { height: 108px; contain-intrinsic-size: auto 108px; }
+.proj-app .proj-card { height: 104px; contain-intrinsic-size: auto 104px; }
+/* Option / opt-out rows carried a gold edge on the table (.fa-row-opt td), which
+   the card conversion silently dropped - there is no td any more. Same signal,
+   on the stripe the card pattern already owns. */
+.fa-app .fa-card.fa-row-opt::before { background: var(--accent-gold); }
+
+/* Identity block and the metric cells: stretched to the row, centred inside it,
+   clipped at its edge (see the note above on align-items: center). */
+.fa-app .fa-card .fa-id, .proj-app .proj-card .proj-id,
+.fa-app .fa-card > .mlb-metric, .proj-app .proj-card > .mlb-metric {
+  align-self: stretch; min-width: 0; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: center;
+}
+/* Metric children hug their content at the right edge; without this the verdict
+   and contract pills would stretch to the full track width and stop reading as
+   chips. */
+.fa-app .fa-card > .mlb-metric, .proj-app .proj-card > .mlb-metric { align-items: flex-end; }
+.fa-app .fa-card > .mlb-metric > *, .proj-app .proj-card > .mlb-metric > * { max-width: 100%; }
+/* Status is the one prose cell on either board (SIGNED NYY 4y / $92.0M, or an
+   option kind with its price and P(enter)). Two lines, then ellipsis - the full
+   string stays on the cell's title and on the player card. */
+.fa-app .fa-card .fa-statustext {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  /* 11px/1.25 is not decoration: two lines plus the column label have to fit
+     the 46px row-1 budget, and at the card's own 1.35 they do not. */
+  overflow: hidden; font-size: 11px; line-height: 1.25;
+}
+.fa-app .fa-card .mlb-sub, .proj-app .proj-card .mlb-sub { row-gap: 0; }
+.fa-app .fa-card .mlb-tape-inner, .proj-app .proj-card .mlb-tape-inner { padding-top: 5px; }
+/* .mlb-chip is `flex: 1 1 0` + nowrap, so a chip that shrinks below its text
+   would spill it over its neighbour. Ellipsis instead - the full string is on
+   the chip's title, and both boards keep it on the player card. */
+.fa-app .fa-card .mlb-chip, .proj-app .proj-card .mlb-chip,
+.fa-app .fa-card .mlb-chip b, .proj-app .proj-card .mlb-chip b {
+  overflow: hidden; text-overflow: ellipsis;
+}
+/* The contract chip carries the longest string in either tape ("No multi-year
+   deal"), so it takes a wider share rather than ellipsing by default. */
+.proj-app .proj-card .mlb-chip-ct { flex: 1.8 1 0; }
+/* The contract status is a chip inside a chip otherwise. Flatten the pill so it
+   keeps its status colour without a second border ring. */
+.proj-app .proj-card .mlb-chip .proj-ct {
+  border: 0; background: none; padding: 0; font-size: 11px; cursor: inherit;
+}
+/* Active sort header. .mlb-card-head fades the whole strip with opacity, which a
+   child cannot undo, so the active column is marked with the house gold rule
+   (the same one the old th.fa-sort.is-sorted carried) plus full-strength text. */
+.fa-app .mlb-card-head [role="button"]:not([aria-sort="none"]),
+.proj-app .mlb-card-head [role="button"]:not([aria-sort="none"]) {
+  color: var(--text-primary); border-bottom: 2px solid var(--accent-gold);
+}
+
+/* Rail sparkline as a link to the $/WAR by winter view (#view=dpw). It is a real
+   button: hover cue, keyboard focus ring, and an explicit destination label -
+   a chart that silently navigates is a trap. */
+.fa-app .fa-dpw-link { display: block; cursor: pointer; border-radius: 3px; }
+.fa-app .fa-dpw-link:hover { background: var(--bg-tertiary); }
+.fa-app .fa-dpw-link:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+.fa-app .fa-dpw-cue {
+  display: block; margin-top: 2px;
+  font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-cyan);
+}
+
+@media (max-width: 720px) {
+  .fa-app .fa-card, .proj-app .proj-card { height: auto; min-height: 96px; }
+  /* The shared rule collapses row 1 to `1fr auto` under 720px, but it also PINS
+     every row-1 child to grid-row 1. Pinned items do not wrap - auto-placement
+     keeps making implicit COLUMNS - so the card would scroll sideways instead of
+     reflowing. Releasing the row is what actually makes the collapse work; the
+     tape still takes the full width, last. */
+  .fa-app .fa-card > *:not(.mlb-tape), .proj-app .proj-card > *:not(.mlb-tape) { grid-row: auto; }
+  .fa-app .fa-card > .mlb-tape, .proj-app .proj-card > .mlb-tape { grid-row: auto; grid-column: 1 / -1; }
+  .fa-app .fa-card .fa-id, .proj-app .proj-card .proj-id,
+  .fa-app .fa-card > .mlb-metric, .proj-app .proj-card > .mlb-metric {
+    align-self: auto; overflow: visible; align-items: flex-start; display: block;
+  }
+  .fa-app .fa-card .fa-statustext { display: block; }
+  /* Header tracks no longer line up with a collapsed card, so the header becomes
+     a chip strip rather than being dropped: hiding it would take sorting away
+     from exactly the readers most likely to be re-ranking a board on the move. */
+  .fa-app .mlb-card-head, .proj-app .mlb-card-head {
+    display: flex !important; flex-wrap: wrap; gap: 6px;
+    grid-template-columns: none !important; opacity: 1;
+  }
+  .fa-app .mlb-card-head [role="button"], .proj-app .mlb-card-head [role="button"] {
+    padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text-secondary);
   }
 }

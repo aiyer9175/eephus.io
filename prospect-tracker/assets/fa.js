@@ -507,6 +507,12 @@
     return POS_ROLLUPS.has(sel) ? posGroup(m) === sel : posHead(m) === sel;
   }
 
+  // The board's default order is the predicted guarantee: the biggest deals
+  // first, which is what the printed rank numbers mean. BUGFIX 2026-07-31: this
+  // key had NO header, so first paint showed no active-sort indicator and the
+  // default ordering was a one-way door - once you clicked any column there was
+  // no way back to it. "Yrs / Guar" now carries projGuar, and # (rank) resolves
+  // to the same key, so the three agree.
   const boardState = { sort: "projGuar", dir: -1, type: "all", pos: "all", verdict: "all", hand: "all" };
 
   // Which "biggest misses" category the Model Accountability table is showing.
@@ -523,10 +529,13 @@
     members.sort((a, b) => {
       const v = m => {
         // String keys sort as text; "rank" means the board's own default order,
-        // which is surplus, so clicking it is the way back from any other sort.
+        // so clicking it is the way back from any other sort. BUGFIX 2026-07-31:
+        // rank resolved to SURPLUS while the rank numbers were painted in the
+        // projGuar default order, so the # column re-ranked the board into a
+        // sequence its own numbers contradicted. Both are projGuar now.
         if (sortKey === "name") return String(m.name || "").toLowerCase();
         if (sortKey === "status" || sortKey === "verdict") return String(m[sortKey] || "");
-        if (sortKey === "rank") return m.surplus ?? -1e15;
+        if (sortKey === "rank") return m.projGuar ?? -1e15;
         return m[sortKey] ?? (sortKey === "age" ? 99 : -1e15);
       };
       return boardState.dir * (v(a) > v(b) ? 1 : v(a) < v(b) ? -1 : 0);
@@ -564,20 +573,26 @@
       <span class="fa-sub fa-filter-count">${members.length} shown</span>
     </div>`;
     const body = members.map((m, i) => {
-      const fits = (m.fits || []).map(f =>
-        `<span class="fa-fitorg" title="fit ${f.fit} - need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " - blocked by " + esc(blockedText(f.blockedBy)) : ""}">${teamLogo(f.org)}${f.org}${f.blockedBy ? "*" : ""}</span>`).join(" ");
-      const comps = (m.comps || []).map(c =>
-        `${esc(c.name)} '${String(c.yr).slice(2)} ${c.years || "?"}y/${c.guar ? "$" + (c.guar / 1e6).toFixed(0) + "M" : "?"}`).join("; ");
-      const yearsBand = m.projYears != null
-        ? `${m.projYears}<span class="fa-band"> (${m.projYearsP10 ?? "?"}&ndash;${m.projYearsP90 ?? "?"})</span>` : EM_DASH;
-      const guarBand = m.projGuar != null
-        ? `${money(m.projGuar)}<span class="fa-band"> (${money(m.projGuarP10)}&ndash;${money(m.projGuarP90)})</span>` : EM_DASH;
+      // Comps and team fits are NOT on the board row any more (2026-07-31). They
+      // were the widest and least scannable content on it - a semicolon list of
+      // four historical contracts, and a run of club logos - and BOTH already
+      // render in full on the #player card (comps as a table with the signing
+      // club, fits as chips carrying their component scores). Dropping them from
+      // the row is what buys the card a fixed height without cramping anything.
+      const yearsBand = (m.projYearsP10 != null && m.projYearsP90 != null)
+        ? `${m.projYearsP10}&ndash;${m.projYearsP90}` : null;
       // Total-WAR P10-P90 band dropped (F-01): summing per-year quantiles does
       // not give the total's quantile, and the underlying per-year marginals
       // undercover realized totals (no league-attrition zero floor), so the
       // band was miscalibrated. Point estimate stays; see REVIEW_QUEUE.
-      const dealWar = m.warTotal != null
-        ? `${formatMetric(m.warTotal, "war")}` : EM_DASH;
+      const dealWar = m.warTotal != null ? formatMetric(m.warTotal, "war") : null;
+      // Row-1 deal cells. The P10-P90 bands moved into the title: rendering a
+      // point estimate AND its band inside a ~110px track is exactly what made
+      // the old cells unreadable, and a band is hover-depth, not scan-depth.
+      const aavCell = m.projAav == null ? EM_DASH
+        : `<span title="Predicted average annual value. P10-P90 ${money(m.projAavP10)} to ${money(m.projAavP90)}.">${money(m.projAav)}</span>`;
+      const guarCell = m.projGuar == null ? EM_DASH
+        : `<span title="Predicted term and total guarantee. Length P10-P90 ${m.projYearsP10 ?? "?"} to ${m.projYearsP90 ?? "?"} years; guarantee P10-P90 ${money(m.projGuarP10)} to ${money(m.projGuarP90)}.">${m.projYears != null ? m.projYears + "y / " : ""}${money(m.projGuar)}</span>`;
       const trCls = [
         (m.projGuar == null || m.status === "option_exercised") ? "fa-dim" : "",
         isOption(m) ? "fa-row-opt" : "",
@@ -601,25 +616,25 @@
         m.optKind ? chip("option", esc(String(m.optKind)) + (m.optHeldBy ? " / " + esc(String(m.optHeldBy)) : ""),
           "Contract option on the deal: which kind, and who holds it." + (m.optValue != null ? ` Modelled value ${money(m.optValue)}.` : "")) : "",
       ].join("");
+      // Tape order runs production -> value -> risk -> shape, and every chip in
+      // it has a matching button in the sort bar above the board (see FA_SORTBAR).
       const tape = `<div class="mlb-tape"><div class="mlb-tape-inner">
-        ${chip("length", yearsBand, "Predicted contract length, with the P10-P90 range")}
-        ${chip("guarantee", guarBand, "Predicted total guarantee, with the P10-P90 range")}
-        ${chip("AAV", m.projAav != null ? `${money(m.projAav)}<span class="fa-band"> (${money(m.projAavP10)}&ndash;${money(m.projAavP90)})</span>` : null, "Predicted average annual value, with the P10-P90 range")}
+        ${chip("WAR y1", m.warY1 != null ? formatMetric(m.warY1, "war") : null, "Projected year-1 bWAR")}
+        ${chip("deal WAR", dealWar, "Projected bWAR over the predicted term (floor-ceiling from the Gate-1 probability buckets)")}
         ${chip("rational", m.rational != null ? money(m.rational) : null, "Convex-priced NPV of the projected production: what the deal is worth if you pay for value rather than for name")}
         ${risk}
-        ${chip("fits", fits || null, "Clubs whose need, window, payroll room, park and behaviour line up. * = blocked; hover a club for who is blocking.")}
+        ${chip("yrs P10-P90", yearsBand, "The predicted term's P10-P90 range. The point estimate is in the Yrs / Guar column.")}
       </div></div>`;
       return `<div class="mlb-card fa-card${trCls ? " " + trCls : ""}" tabindex="0" role="button"
           data-card-href="#player=${encodeURIComponent(m.key)}">
         <span class="mlb-rank">${i + 1}</span>
-        <div style="min-width:0;">
-          <span class="mlb-name">${playerLink(m)}${noteBadge(m)} ${typeTag(m)}</span>
+        <div class="fa-id">
+          <span class="mlb-name">${playerLink(m)}${noteBadge(m)}${thinBadge(m)} ${typeTag(m)}</span>
           <span class="mlb-sub">${esc(m.pos || "")} &middot; ${m.age != null ? m.age.toFixed(1) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")}${handOf(m) ? " &middot; " + handShort(m) : ""}${m.qo ? ` &middot; <span title="Received a qualifying offer: signing him costs the new club draft compensation">QO</span>` : ""}</span>
-          ${comps ? `<span class="fa-comps" title="Nearest real historical contracts (never fabricated)">comps: ${comps}</span>` : ""}
         </div>
-        <span class="mlb-metric"><span class="mlb-metric-label">Status</span>${statusChip(m)}</span>
-        <span class="mlb-metric"><span class="mlb-metric-label">WAR y1</span>${m.warY1 != null ? formatMetric(m.warY1, "war") : EM_DASH}${thinBadge(m)}</span>
-        <span class="mlb-metric" title="Projected bWAR over the predicted term (floor-ceiling from the Gate-1 probability buckets)"><span class="mlb-metric-label">Deal WAR</span>${dealWar}</span>
+        <span class="mlb-metric"><span class="mlb-metric-label">Status</span><span class="fa-statustext">${statusChip(m)}</span></span>
+        <span class="mlb-metric"><span class="mlb-metric-label">proj AAV</span>${aavCell}</span>
+        <span class="mlb-metric"><span class="mlb-metric-label">Yrs / Guar</span>${guarCell}</span>
         <span class="mlb-metric"><span class="mlb-metric-label">Surplus</span>${surplusSpan(m.surplus, m.surplusP10, m.surplusP90)}</span>
         <span class="mlb-metric"><span class="mlb-metric-label">Verdict</span>${verdictChip(m)}</span>
         ${tape}
@@ -628,16 +643,33 @@
     const _vm = faValueMap(members);
     const valMap = _vm ? `<details class="fa-valmap"><summary>Value map &middot; rational value vs predicted price (current filters)</summary><div class="fa-valmap-wrap" data-export-chart data-export-title="FA value map - rational value vs predicted price">${_vm}</div></details>` : "";
     // Card-head tracks must mirror the .fa-card grid exactly, so both read from
-    // one definition rather than two that can drift.
-    const FA_TRACKS = "34px minmax(0,1.9fr) 88px 76px 84px 96px 92px";
+    // one definition rather than two that can drift. Every flexible track is
+    // minmax(0,...) - a bare fr refuses to shrink below min-content and a long
+    // signed-status string would blow the row out sideways.
+    const FA_TRACKS = "34px minmax(0,1.85fr) minmax(0,1.2fr) 84px 118px 92px 84px";
+    // The row-2 tape chips are NOT track-aligned with the header (they live in
+    // the reserved band at the card bottom and scroll inside their own box), so
+    // they get their own strip of sort buttons - the /fantasy/ .ff-sortbar
+    // pattern. This is what restores every sort the table had, plus the ones it
+    // never exposed, WITHOUT re-widening row 1 back into a twelve-column table.
+    const FA_SORTBAR = `<div class="mlb-sortbar"><span class="mlb-sortbar-lbl">Sort tape</span>
+      ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 bWAR")}
+      ${sHead("deal WAR", "warTotal", "Projected bWAR over the predicted term, with floor-ceiling buckets")}
+      ${sHead(`<span data-gl="rational_value">rational</span>`, "rational", "Convex-priced NPV of the projected production")}
+      ${sHead("downside WAR", "warCvar10", "Mean of the worst 10 percent of outcome paths - what the deal looks like when it goes wrong")}
+      ${sHead("star odds", "pAnyStar", "Probability of at least one star-level season over the predicted term")}
+      ${sHead("length", "projYears", "Predicted contract length in years")}
+      ${sHead("age", "age", "Player age carried on the class row")}
+    </div>`;
     // # and Player join the sortable set; the table had them as inert th.
     rows.innerHTML = head + filterBar + valMap + `<div class="fa-board-layout"><div class="fa-board-main">
+      ${FA_SORTBAR}
       <div class="mlb-card-head" style="grid-template-columns:${FA_TRACKS};">
-        ${sHead("#", "rank", "Board position under the current sort")}
+        ${sHead("#", "rank", "Board position under the current sort. The default order is the predicted guarantee.")}
         ${sHead("Player", "name", "Sort by name")}
         ${sHead("Status", "status", "Where the player is in the market")}
-        ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 bWAR")}
-        ${sHead("Deal WAR", "warTotal", "Projected bWAR over the predicted term, with floor-ceiling buckets")}
+        ${sHead("proj AAV", "projAav", "Predicted average annual value. Hover a cell for its P10-P90 band.")}
+        ${sHead("Yrs / Guar", "projGuar", "Predicted term and total guarantee. Hover a cell for the P10-P90 bands.")}
         ${sHead(`<span data-gl="contract_surplus">Surplus</span>`, "surplus", "Rational value minus predicted price (hover for the floor/ceiling range)")}
         ${sHead(`<span data-gl="deal_plus">Verdict</span>`, "verdict", "The deal call, from surplus banded within the player's own group")}
       </div>
@@ -664,6 +696,16 @@
       // scrolling the page (same contract as the prospx sort headers).
       h.onkeydown = (e) => {
         if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") { e.preventDefault(); doSort(); }
+      };
+    });
+    // In-module jumps that are not player cards (today: the rail's $/WAR
+    // sparkline -> #view=dpw). faHash() keeps the selected winter on the URL,
+    // which A5 established: dropping class= reloads the wrong class.
+    rows.querySelectorAll("[data-fa-goto]").forEach(el => {
+      const go = () => { location.hash = faHash() + el.dataset.faGoto; };
+      el.onclick = go;
+      el.onkeydown = e => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") { e.preventDefault(); go(); }
       };
     });
     rows.querySelectorAll("[data-ffilter]").forEach(b => b.onclick = () => {
@@ -778,8 +820,15 @@
     const yrs = Object.keys(series).sort();
     // Chart of the FULL series (hover any point for its winter + $/WAR);
     // falls back to the old text rows if there are too few points for a line.
-    const trend = dpwTrendChart(series, yrs) || yrs.slice(-6).map(y =>
-      `<div class="fa-rail-row"><span>${Number(y) - 1}-${String(y).slice(2)}</span><span class="fa-rail-num">${money(series[y])}</span></div>`).join("");
+    // The sparkline is a DOOR, not only a picture: it opens the $/WAR by winter
+    // detail view. role/tabindex/keydown make it a real button, because a target
+    // only a mouse can reach is not one; the hash is read by that view.
+    const trendSvg = dpwTrendChart(series, yrs);
+    const trend = trendSvg
+      ? `<div class="fa-dpw-link" role="button" tabindex="0" data-fa-goto="view=dpw"
+          title="Open the $/WAR by winter detail - the full signings-implied series, how it is estimated, and what every future season escalates against">${trendSvg}<span class="fa-dpw-cue">$/WAR by winter, in full &rarr;</span></div>`
+      : yrs.slice(-6).map(y =>
+        `<div class="fa-rail-row"><span>${Number(y) - 1}-${String(y).slice(2)}</span><span class="fa-rail-num">${money(series[y])}</span></div>`).join("");
     const mod = (title, body, tip) => body
       ? `<div class="fa-rail-mod"><div class="fa-rail-head" title="${esc(tip || "")}">${title}</div>${body}</div>` : "";
     return `<aside class="fa-board-rail">
