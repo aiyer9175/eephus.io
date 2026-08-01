@@ -4319,8 +4319,15 @@ def _clean_contract(d: dict) -> dict:
     return {k: v for k, v in d.items() if v is not None}
 
 
-def _unpriced_vets(data_dir) -> list[dict]:
-    """Projected vets with no contract surplus to trade, and WHY.
+def _unpriced_vets(data_dir, on_board: set | None = None) -> list[dict]:
+    """Projected vets priced NOWHERE, and why.
+
+    `on_board` is the set of keys already carrying a value. It matters: a vet can
+    have no CONTRACT surplus (expiring deal) and still be on the board through the
+    eFV path, because he was once a tracked prospect - tarik_skubal is exactly
+    that. Publishing him as "not tradeable" would be false, and would render a
+    dimmed row in search for a player who IS tradeable. "Unpriced" has to mean
+    unpriced on EVERY basis, not just the contract one.
 
     Two honest reasons, neither of which is a missing row:
       expiring     - the contract ends before the projection horizon opens, so
@@ -4342,6 +4349,8 @@ def _unpriced_vets(data_dir) -> list[dict]:
     for v in (proj.get("vets") or []):
         if not v.get("key") or v.get("surNpv") is not None:
             continue
+        if on_board and v["key"] in on_board:
+            continue                    # priced by another basis (eFV backgrade)
         thru = v.get("thru")
         out.append({
             "key": v["key"], "name": v.get("name"), "org": v.get("team"),
@@ -4442,7 +4451,10 @@ def export_trade_values_json(
         # and shipped here so the search can answer "why isn't he here?" instead
         # of returning nothing - which is what sent someone looking for
         # A.J. Minter into the code.
-        "unpriced":      _unpriced_vets(out_path.parent),
+        "unpriced":      _unpriced_vets(
+            out_path.parent,
+            {r.get("player_key") for r in results
+             if r.get("trade_value_mm") is not None}),
         "count":         len(results),
         "players":       [board_slim(r) for r in results],
     }

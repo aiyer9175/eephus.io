@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-31",
+ "generated_at": "2026-08-01",
  "experiment": "star-odds-calibration",
  "model": "star_odds (P>=2 control seasons of >=4 WAR; mixture Poisson-binomial)",
  "seed": null,
@@ -175,85 +175,85 @@
       "tier": "35+",
       "fv": 37.5,
       "published": 2.0,
-      "model": 0.0,
-      "abs_dev": 2.0,
-      "pct_dev": 1.0
+      "model": 2.5,
+      "abs_dev": 0.5,
+      "pct_dev": 0.25
      },
      {
       "tier": "40",
       "fv": 40.0,
       "published": 5.5,
-      "model": 0.4,
-      "abs_dev": 5.1,
-      "pct_dev": 0.9273
+      "model": 3.3,
+      "abs_dev": 2.2,
+      "pct_dev": 0.4
      },
      {
       "tier": "40+",
       "fv": 42.5,
       "published": 8.0,
-      "model": 5.4,
-      "abs_dev": 2.6,
-      "pct_dev": 0.325
+      "model": 10.1,
+      "abs_dev": 2.1,
+      "pct_dev": 0.2625
      },
      {
       "tier": "45",
       "fv": 45.0,
       "published": 14.5,
-      "model": 10.3,
-      "abs_dev": 4.2,
-      "pct_dev": 0.2897
+      "model": 18.8,
+      "abs_dev": 4.3,
+      "pct_dev": 0.2966
      },
      {
       "tier": "45+",
       "fv": 47.5,
       "published": 18.5,
-      "model": 19.7,
-      "abs_dev": 1.2,
-      "pct_dev": 0.0649
+      "model": 30.5,
+      "abs_dev": 12.0,
+      "pct_dev": 0.6486
      },
      {
       "tier": "50",
       "fv": 50.0,
       "published": 45.0,
-      "model": 29.6,
-      "abs_dev": 15.4,
-      "pct_dev": 0.3422
+      "model": 40.5,
+      "abs_dev": 4.5,
+      "pct_dev": 0.1
      },
      {
       "tier": "55",
       "fv": 55.0,
       "published": 55.0,
-      "model": 48.0,
-      "abs_dev": 7.0,
-      "pct_dev": 0.1273
+      "model": 57.5,
+      "abs_dev": 2.5,
+      "pct_dev": 0.0455
      },
      {
       "tier": "60",
       "fv": 60.0,
       "published": 82.0,
-      "model": 83.0,
-      "abs_dev": 1.0,
-      "pct_dev": 0.0122
+      "model": 90.0,
+      "abs_dev": 8.0,
+      "pct_dev": 0.0976
      },
      {
       "tier": "65",
       "fv": 65.0,
       "published": 95.0,
-      "model": 135.9,
-      "abs_dev": 40.9,
-      "pct_dev": 0.4305
+      "model": 139.0,
+      "abs_dev": 44.0,
+      "pct_dev": 0.4632
      },
      {
       "tier": "70",
       "fv": 70.0,
       "published": 195.0,
-      "model": 188.0,
-      "abs_dev": 7.0,
-      "pct_dev": 0.0359
+      "model": 187.3,
+      "abs_dev": 7.7,
+      "pct_dev": 0.0395
      }
     ],
-    "max_abs_pct_dev": 1.0,
-    "mean_abs_pct_dev": 0.3555
+    "max_abs_pct_dev": 0.6486,
+    "mean_abs_pct_dev": 0.2603
    },
    "pitcher": {
     "tiers": [
@@ -261,85 +261,85 @@
       "tier": "35+",
       "fv": 37.5,
       "published": 1.5,
-      "model": 0.0,
-      "abs_dev": 1.5,
-      "pct_dev": 1.0
+      "model": 2.0,
+      "abs_dev": 0.5,
+      "pct_dev": 0.3333
      },
      {
       "tier": "40",
       "fv": 40.0,
       "published": 4.0,
-      "model": 0.2,
-      "abs_dev": 3.8,
-      "pct_dev": 0.95
+      "model": 2.9,
+      "abs_dev": 1.1,
+      "pct_dev": 0.275
      },
      {
       "tier": "40+",
       "fv": 42.5,
       "published": 7.0,
-      "model": 3.1,
-      "abs_dev": 3.9,
-      "pct_dev": 0.5571
+      "model": 6.6,
+      "abs_dev": 0.4,
+      "pct_dev": 0.0571
      },
      {
       "tier": "45",
       "fv": 45.0,
       "published": 9.5,
-      "model": 6.1,
-      "abs_dev": 3.4,
-      "pct_dev": 0.3579
+      "model": 10.8,
+      "abs_dev": 1.3,
+      "pct_dev": 0.1368
      },
      {
       "tier": "45+",
       "fv": 47.5,
       "published": 15.0,
-      "model": 12.9,
-      "abs_dev": 2.1,
-      "pct_dev": 0.14
+      "model": 23.0,
+      "abs_dev": 8.0,
+      "pct_dev": 0.5333
      },
      {
       "tier": "50",
       "fv": 50.0,
       "published": 33.5,
-      "model": 20.8,
-      "abs_dev": 12.7,
-      "pct_dev": 0.3791
+      "model": 31.6,
+      "abs_dev": 1.9,
+      "pct_dev": 0.0567
      },
      {
       "tier": "55",
       "fv": 55.0,
       "published": 45.0,
-      "model": 36.1,
-      "abs_dev": 8.9,
-      "pct_dev": 0.1978
+      "model": 46.5,
+      "abs_dev": 1.5,
+      "pct_dev": 0.0333
      },
      {
       "tier": "60",
       "fv": 60.0,
       "published": 70.0,
-      "model": 67.1,
-      "abs_dev": 2.9,
-      "pct_dev": 0.0414
+      "model": 75.2,
+      "abs_dev": 5.2,
+      "pct_dev": 0.0743
      },
      {
       "tier": "65",
       "fv": 65.0,
       "published": 95.0,
-      "model": 114.5,
-      "abs_dev": 19.5,
-      "pct_dev": 0.2053
+      "model": 119.2,
+      "abs_dev": 24.2,
+      "pct_dev": 0.2547
      },
      {
       "tier": "70",
       "fv": 70.0,
       "published": 195.0,
-      "model": 162.0,
-      "abs_dev": 33.0,
-      "pct_dev": 0.1692
+      "model": 163.2,
+      "abs_dev": 31.8,
+      "pct_dev": 0.1631
      }
     ],
-    "max_abs_pct_dev": 1.0,
-    "mean_abs_pct_dev": 0.3998
+    "max_abs_pct_dev": 0.5333,
+    "mean_abs_pct_dev": 0.1918
    }
   }
  },
@@ -352,33 +352,33 @@
   },
   "roles": {
    "hitter": {
-    "k": 1.05,
+    "k": 0.9,
     "pre": {
-     "surplus_max_pct_dev": 1.0,
-     "surplus_mean_pct_dev": 0.3555,
+     "surplus_max_pct_dev": 0.6486,
+     "surplus_mean_pct_dev": 0.2603,
      "star_max_abs_dev": 0.5472,
      "star_mean_abs_dev": 0.1464
     },
     "post": {
-     "surplus_max_pct_dev": 1.0,
-     "surplus_mean_pct_dev": 0.3589,
-     "star_max_abs_dev": 0.5121,
-     "star_mean_abs_dev": 0.1391
+     "surplus_max_pct_dev": 0.4703,
+     "surplus_mean_pct_dev": 0.2053,
+     "star_max_abs_dev": 0.618,
+     "star_mean_abs_dev": 0.1606
     }
    },
    "pitcher": {
-    "k": 1.15,
+    "k": 0.95,
     "pre": {
-     "surplus_max_pct_dev": 1.0,
-     "surplus_mean_pct_dev": 0.3998,
+     "surplus_max_pct_dev": 0.5333,
+     "surplus_mean_pct_dev": 0.1918,
      "star_max_abs_dev": 0.6439,
      "star_mean_abs_dev": 0.1314
     },
     "post": {
-     "surplus_max_pct_dev": 1.0,
-     "surplus_mean_pct_dev": 0.3562,
-     "star_max_abs_dev": 0.5157,
-     "star_mean_abs_dev": 0.1059
+     "surplus_max_pct_dev": 0.4533,
+     "surplus_mean_pct_dev": 0.1799,
+     "star_max_abs_dev": 0.6818,
+     "star_mean_abs_dev": 0.1382
     }
    }
   }

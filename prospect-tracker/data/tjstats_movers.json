@@ -1,57 +1,8 @@
 {
- "as_of": "2026-07-31",
- "older_board": "June 2026",
- "newer_board": "Live 2026-07-31",
- "movers": [
-  {
-   "player_key": "josh_adamczewski",
-   "name": "Josh Adamczewski",
-   "mlbam_id": "815304",
-   "rank": 96,
-   "prev_rank": null,
-   "rank_delta": null,
-   "fv_delta": null,
-   "status": "entered"
-  },
-  {
-   "player_key": "owen_murphy",
-   "name": "Owen Murphy",
-   "mlbam_id": "702566",
-   "rank": 97,
-   "prev_rank": null,
-   "rank_delta": null,
-   "fv_delta": null,
-   "status": "entered"
-  },
-  {
-   "player_key": "cam_cannarella",
-   "name": "Cam Cannarella",
-   "mlbam_id": "703448",
-   "rank": 98,
-   "prev_rank": null,
-   "rank_delta": null,
-   "fv_delta": null,
-   "status": "entered"
-  },
-  {
-   "player_key": "xavier_neyens",
-   "name": "Xavier Neyens",
-   "mlbam_id": "815832",
-   "rank": 99,
-   "prev_rank": null,
-   "rank_delta": null,
-   "fv_delta": null,
-   "status": "entered"
-  },
-  {
-   "player_key": "kaelen_culpepper",
-   "name": "Kaelen Culpepper",
-   "mlbam_id": "701785",
-   "rank": 100,
-   "prev_rank": null,
-   "rank_delta": null,
-   "fv_delta": null,
-   "status": "entered"
-  }
- ]
+ "as_of": "2026-08-01",
+ "captured_at": "2026-08-01T05:28:39+00:00",
+ "older_captured_at": "2026-08-01T04:28:50+00:00",
+ "older_board": "Post-Draft 2026",
+ "newer_board": "Live 2026-08-01",
+ "movers": []
 }

@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-31T13:25:49Z",
+ "generated_at": "2026-08-01T05:15:01Z",
  "raters": [
   "fangraphs",
   "mlb_pipeline_draft"
@@ -67,7 +67,7 @@
      "fangraphs": 1.0621,
      "mlb_pipeline_draft": 0.9379
     },
-    "debut_rate": 0.4848
+    "debut_rate": 0.4924
    }
   ],
   "pooled": {

@@ -9,19 +9,19 @@
     {
      "label": "Proj A K%",
      "value": "24.1%",
-     "band": "14-34%",
+     "band": "15-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.1%",
-     "band": "8-20%",
+     "value": "14.0%",
+     "band": "7-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".801",
-     "band": ".558-1.043",
+     "value": ".823",
+     "band": ".611-1.034",
      "flag": "experimental"
     }
    ],
@@ -32,20 +32,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.4%",
-     "band": "16-36%",
+     "value": "26.5%",
+     "band": "17-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "15.1%",
-     "band": "9-21%",
+     "value": "14.8%",
+     "band": "8-22%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".784",
-     "band": ".542-1.026",
+     "value": ".801",
+     "band": ".590-1.013",
      "flag": "experimental"
     }
    ],
@@ -56,20 +56,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "20.0%",
-     "band": "10-30%",
+     "value": "19.8%",
+     "band": "10-29%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.4%",
+     "value": "12.6%",
      "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".782",
-     "band": ".540-1.025",
+     "value": ".799",
+     "band": ".588-1.011",
      "flag": "experimental"
     }
    ],
@@ -80,20 +80,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.8%",
-     "band": "13-33%",
+     "value": "22.7%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "17.0%",
-     "band": "11-23%",
+     "value": "16.4%",
+     "band": "10-23%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".779",
-     "band": ".537-1.021",
+     "value": ".795",
+     "band": ".584-1.007",
      "flag": "experimental"
     }
    ],
@@ -104,20 +104,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.6%",
-     "band": "16-36%",
+     "value": "25.7%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.5%",
+     "value": "14.3%",
      "band": "8-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".779",
-     "band": ".536-1.021",
+     "value": ".795",
+     "band": ".583-1.006",
      "flag": "experimental"
     }
    ],
@@ -129,19 +129,19 @@
     {
      "label": "Proj A K%",
      "value": "25.3%",
-     "band": "15-35%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.4%",
+     "value": "12.7%",
      "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".770",
-     "band": ".528-1.012",
+     "value": ".784",
+     "band": ".573-.995",
      "flag": "experimental"
     }
    ],
@@ -152,20 +152,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.4%",
-     "band": "12-32%",
+     "value": "22.3%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "16.2%",
-     "band": "10-22%",
+     "value": "15.8%",
+     "band": "9-22%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".770",
-     "band": ".528-1.012",
+     "value": ".784",
+     "band": ".572-.995",
      "flag": "experimental"
     }
    ],
@@ -176,20 +176,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "20.9%",
-     "band": "11-31%",
+     "value": "20.7%",
+     "band": "11-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.2%",
-     "band": "7-19%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".769",
-     "band": ".527-1.012",
+     "value": ".783",
+     "band": ".571-.994",
      "flag": "experimental"
     }
    ],
@@ -201,19 +201,19 @@
     {
      "label": "Proj A K%",
      "value": "24.0%",
-     "band": "14-34%",
+     "band": "15-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "15.6%",
-     "band": "10-22%",
+     "value": "15.3%",
+     "band": "9-22%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".769",
-     "band": ".527-1.011",
+     "value": ".783",
+     "band": ".571-.994",
      "flag": "experimental"
     }
    ],
@@ -224,20 +224,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.6%",
-     "band": "12-32%",
+     "value": "21.5%",
+     "band": "12-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.8%",
-     "band": "7-19%",
+     "value": "13.0%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".767",
-     "band": ".525-1.010",
+     "value": ".780",
+     "band": ".569-.992",
      "flag": "experimental"
     }
    ],
@@ -249,19 +249,19 @@
     {
      "label": "Proj A K%",
      "value": "23.7%",
-     "band": "14-34%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.2%",
-     "band": "8-20%",
+     "value": "14.1%",
+     "band": "7-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".766",
-     "band": ".524-1.008",
+     "value": ".779",
+     "band": ".567-.990",
      "flag": "experimental"
     }
    ],
@@ -273,19 +273,19 @@
     {
      "label": "Proj A K%",
      "value": "24.6%",
-     "band": "14-35%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "6-18%",
+     "value": "12.4%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".765",
-     "band": ".523-1.008",
+     "value": ".778",
+     "band": ".566-.989",
      "flag": "experimental"
     }
    ],
@@ -296,20 +296,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.8%",
-     "band": "19-39%",
+     "value": "28.9%",
+     "band": "20-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.8%",
-     "band": "8-20%",
+     "value": "13.7%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".765",
-     "band": ".522-1.007",
+     "value": ".777",
+     "band": ".565-.988",
      "flag": "experimental"
     }
    ],
@@ -321,19 +321,19 @@
     {
      "label": "Proj A K%",
      "value": "24.6%",
-     "band": "14-35%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.1%",
-     "band": "8-20%",
+     "value": "14.0%",
+     "band": "7-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".763",
-     "band": ".521-1.005",
+     "value": ".775",
+     "band": ".564-.986",
      "flag": "experimental"
     }
    ],
@@ -345,19 +345,19 @@
     {
      "label": "Proj A K%",
      "value": "24.5%",
-     "band": "14-35%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.5%",
+     "value": "12.7%",
      "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".759",
-     "band": ".517-1.002",
+     "value": ".770",
+     "band": ".559-.982",
      "flag": "experimental"
     }
    ],
@@ -369,19 +369,19 @@
     {
      "label": "Proj A K%",
      "value": "24.1%",
-     "band": "14-34%",
+     "band": "15-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.7%",
-     "band": "7-19%",
+     "value": "12.9%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".758",
-     "band": ".516-1.000",
+     "value": ".769",
+     "band": ".557-.980",
      "flag": "experimental"
     }
    ],
@@ -392,20 +392,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "32.2%",
-     "band": "22-42%",
+     "value": "32.5%",
+     "band": "23-42%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "15.7%",
-     "band": "10-22%",
+     "value": "15.3%",
+     "band": "9-22%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".756",
-     "band": ".514-.998",
+     "value": ".766",
+     "band": ".554-.977",
      "flag": "experimental"
     }
    ],
@@ -416,20 +416,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.5%",
-     "band": "12-33%",
+     "value": "22.4%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.4%",
-     "band": "8-20%",
+     "value": "14.3%",
+     "band": "8-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".755",
-     "band": ".513-.997",
+     "value": ".765",
+     "band": ".553-.976",
      "flag": "experimental"
     }
    ],
@@ -440,8 +440,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.8%",
-     "band": "14-34%",
+     "value": "23.7%",
+     "band": "14-33%",
      "flag": null
     },
     {
@@ -452,8 +452,8 @@
     },
     {
      "label": "Proj A OPS",
-     "value": ".754",
-     "band": ".512-.996",
+     "value": ".763",
+     "band": ".552-.975",
      "flag": "experimental"
     }
    ],
@@ -465,19 +465,19 @@
     {
      "label": "Proj A K%",
      "value": "25.2%",
-     "band": "15-35%",
+     "band": "16-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.3%",
-     "band": "8-20%",
+     "value": "14.2%",
+     "band": "8-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".751",
-     "band": ".509-.994",
+     "value": ".760",
+     "band": ".548-.971",
      "flag": "experimental"
     }
    ],
@@ -488,20 +488,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "20.6%",
-     "band": "10-31%",
+     "value": "20.4%",
+     "band": "11-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.1%",
-     "band": "6-18%",
+     "value": "12.3%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".751",
-     "band": ".508-.993",
+     "value": ".759",
+     "band": ".548-.971",
      "flag": "experimental"
     }
    ],
@@ -512,20 +512,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.0%",
-     "band": "17-37%",
+     "value": "27.1%",
+     "band": "18-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.9%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".750",
-     "band": ".508-.993",
+     "value": ".759",
+     "band": ".547-.970",
      "flag": "experimental"
     }
    ],
@@ -536,20 +536,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.8%",
-     "band": "20-40%",
+     "value": "30.0%",
+     "band": "21-39%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.3%",
-     "band": "8-20%",
+     "value": "14.2%",
+     "band": "8-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".750",
-     "band": ".508-.992",
+     "value": ".758",
+     "band": ".547-.970",
      "flag": "experimental"
     }
    ],
@@ -560,20 +560,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.3%",
-     "band": "11-31%",
+     "value": "21.2%",
+     "band": "12-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "6-18%",
+     "value": "12.5%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".750",
-     "band": ".508-.992",
+     "value": ".758",
+     "band": ".547-.970",
      "flag": "experimental"
     }
    ],
@@ -585,19 +585,19 @@
     {
      "label": "Proj A K%",
      "value": "24.2%",
-     "band": "14-34%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
+     "value": "12.3%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".750",
-     "band": ".508-.992",
+     "value": ".758",
+     "band": ".547-.970",
      "flag": "experimental"
     }
    ],
@@ -609,19 +609,19 @@
     {
      "label": "Proj A K%",
      "value": "24.8%",
-     "band": "15-35%",
+     "band": "16-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.0%",
-     "band": "7-19%",
+     "value": "13.1%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".748",
-     "band": ".506-.990",
+     "value": ".756",
+     "band": ".544-.967",
      "flag": "experimental"
     }
    ],
@@ -632,20 +632,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.8%",
-     "band": "16-36%",
+     "value": "25.9%",
+     "band": "17-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "6-18%",
+     "value": "12.4%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".748",
-     "band": ".506-.990",
+     "value": ".756",
+     "band": ".544-.967",
      "flag": "experimental"
     }
    ],
@@ -656,20 +656,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.7%",
-     "band": "13-33%",
+     "value": "22.6%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.5%",
-     "band": "4-17%",
+     "value": "11.1%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".748",
-     "band": ".506-.990",
+     "value": ".756",
+     "band": ".544-.967",
      "flag": "experimental"
     }
    ],
@@ -681,19 +681,19 @@
     {
      "label": "Proj A K%",
      "value": "24.1%",
-     "band": "14-34%",
+     "band": "15-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.9%",
-     "band": "7-19%",
+     "value": "13.0%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".748",
-     "band": ".505-.990",
+     "value": ".755",
+     "band": ".544-.967",
      "flag": "experimental"
     }
    ],
@@ -704,20 +704,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.7%",
-     "band": "19-39%",
+     "value": "28.9%",
+     "band": "20-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.5%",
+     "value": "11.9%",
      "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".747",
-     "band": ".505-.990",
+     "value": ".755",
+     "band": ".543-.966",
      "flag": "experimental"
     }
    ],
@@ -728,20 +728,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.2%",
-     "band": "14-34%",
+     "value": "24.1%",
+     "band": "15-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.2%",
-     "band": "5-17%",
+     "value": "11.6%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".747",
-     "band": ".505-.989",
+     "value": ".754",
+     "band": ".543-.966",
      "flag": "experimental"
     }
    ],
@@ -752,20 +752,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.4%",
-     "band": "18-38%",
+     "value": "28.6%",
+     "band": "19-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "15.1%",
-     "band": "9-21%",
+     "value": "14.9%",
+     "band": "8-22%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".747",
-     "band": ".505-.989",
+     "value": ".754",
+     "band": ".543-.966",
      "flag": "experimental"
     }
    ],
@@ -776,20 +776,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.3%",
-     "band": "19-39%",
+     "value": "29.6%",
+     "band": "20-39%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.8%",
-     "band": "8-20%",
+     "value": "13.7%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".746",
-     "band": ".504-.989",
+     "value": ".754",
+     "band": ".542-.965",
      "flag": "experimental"
     }
    ],
@@ -801,199 +801,7 @@
     {
      "label": "Proj A K%",
      "value": "24.2%",
-     "band": "14-34%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "14.8%",
-     "band": "9-21%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".746",
-     "band": ".504-.988",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Cozart, Jacob"
-  },
-  "draft_2025_grant_jay": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "31.6%",
-     "band": "22-42%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.0%",
-     "band": "7-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".746",
-     "band": ".504-.988",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Jay, Grant"
-  },
-  "draft_2024_dakota_jordan": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "31.2%",
-     "band": "21-41%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "14.2%",
-     "band": "8-20%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".746",
-     "band": ".504-.988",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Jordan, Dakota"
-  },
-  "draft_2025_brooks_bryan": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "28.2%",
-     "band": "18-38%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.5%",
-     "band": "6-19%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".746",
-     "band": ".504-.988",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Bryan, Brooks"
-  },
-  "draft_2024_woody_hadeen": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "21.6%",
-     "band": "12-32%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "18.1%",
-     "band": "12-24%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".746",
-     "band": ".503-.988",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Hadeen, Woody"
-  },
-  "draft_2021_will_taylor": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.6%",
-     "band": "16-36%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "16.5%",
-     "band": "10-23%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".746",
-     "band": ".503-.988",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Taylor, Will"
-  },
-  "draft_2024_jared_thomas": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "27.7%",
-     "band": "18-38%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.1%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".746",
-     "band": ".503-.988",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Thomas, Jared"
-  },
-  "draft_2022_gavin_kilen": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "20.8%",
-     "band": "11-31%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "10.2%",
-     "band": "4-16%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".745",
-     "band": ".503-.987",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Kilen, Gavin"
-  },
-  "draft_2024_sam_antonacci": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "22.8%",
-     "band": "13-33%",
+     "band": "15-34%",
      "flag": null
     },
     {
@@ -1004,8 +812,200 @@
     },
     {
      "label": "Proj A OPS",
-     "value": ".745",
-     "band": ".502-.987",
+     "value": ".753",
+     "band": ".542-.965",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Cozart, Jacob"
+  },
+  "draft_2025_grant_jay": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "32.0%",
+     "band": "23-41%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "13.1%",
+     "band": "6-20%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".753",
+     "band": ".542-.965",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Jay, Grant"
+  },
+  "draft_2024_dakota_jordan": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "31.6%",
+     "band": "22-41%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "14.1%",
+     "band": "7-21%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".753",
+     "band": ".542-.965",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Jordan, Dakota"
+  },
+  "draft_2025_brooks_bryan": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "28.3%",
+     "band": "19-38%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "12.7%",
+     "band": "6-19%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".753",
+     "band": ".542-.965",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Bryan, Brooks"
+  },
+  "draft_2024_woody_hadeen": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "21.5%",
+     "band": "12-31%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "17.3%",
+     "band": "11-24%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".753",
+     "band": ".541-.964",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Hadeen, Woody"
+  },
+  "draft_2021_will_taylor": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "25.7%",
+     "band": "16-35%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "16.0%",
+     "band": "9-23%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".753",
+     "band": ".541-.964",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Taylor, Will"
+  },
+  "draft_2024_jared_thomas": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "27.9%",
+     "band": "19-37%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "12.4%",
+     "band": "6-19%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".753",
+     "band": ".541-.964",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Thomas, Jared"
+  },
+  "draft_2022_gavin_kilen": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "20.6%",
+     "band": "11-30%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "10.8%",
+     "band": "4-17%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".752",
+     "band": ".541-.963",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Kilen, Gavin"
+  },
+  "draft_2024_sam_antonacci": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "22.7%",
+     "band": "13-32%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "14.4%",
+     "band": "8-21%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".751",
+     "band": ".540-.963",
      "flag": "experimental"
     }
    ],
@@ -1016,20 +1016,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.0%",
-     "band": "15-35%",
+     "value": "25.1%",
+     "band": "16-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.3%",
+     "value": "13.4%",
      "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".745",
-     "band": ".502-.987",
+     "value": ".751",
+     "band": ".540-.963",
      "flag": "experimental"
     }
    ],
@@ -1040,20 +1040,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "20.4%",
-     "band": "10-30%",
+     "value": "20.2%",
+     "band": "11-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.7%",
-     "band": "7-19%",
+     "value": "12.9%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".744",
-     "band": ".502-.986",
+     "value": ".751",
+     "band": ".539-.962",
      "flag": "experimental"
     }
    ],
@@ -1064,20 +1064,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.4%",
-     "band": "19-39%",
+     "value": "29.6%",
+     "band": "20-39%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.3%",
+     "value": "13.4%",
      "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".744",
-     "band": ".502-.986",
+     "value": ".751",
+     "band": ".539-.962",
      "flag": "experimental"
     }
    ],
@@ -1088,20 +1088,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.0%",
-     "band": "18-38%",
+     "value": "28.1%",
+     "band": "19-37%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.7%",
-     "band": "6-18%",
+     "value": "12.1%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".744",
-     "band": ".502-.986",
+     "value": ".751",
+     "band": ".539-.962",
      "flag": "experimental"
     }
    ],
@@ -1112,20 +1112,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.7%",
-     "band": "13-33%",
+     "value": "22.6%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.7%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".744",
-     "band": ".502-.986",
+     "value": ".751",
+     "band": ".539-.962",
      "flag": "experimental"
     }
    ],
@@ -1136,20 +1136,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.8%",
-     "band": "12-32%",
+     "value": "21.7%",
+     "band": "12-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.7%",
-     "band": "9-21%",
+     "value": "14.5%",
+     "band": "8-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".750",
-     "band": ".508-.993",
+     "value": ".759",
+     "band": ".547-.970",
      "flag": "experimental"
     }
    ],
@@ -1160,20 +1160,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.4%",
-     "band": "12-32%",
+     "value": "22.3%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.1%",
-     "band": "5-17%",
+     "value": "11.6%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".743",
-     "band": ".501-.986",
+     "value": ".750",
+     "band": ".538-.961",
      "flag": "experimental"
     }
    ],
@@ -1185,19 +1185,19 @@
     {
      "label": "Proj A K%",
      "value": "24.3%",
-     "band": "14-34%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.9%",
-     "band": "6-18%",
+     "value": "12.2%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".743",
-     "band": ".501-.986",
+     "value": ".750",
+     "band": ".538-.961",
      "flag": "experimental"
     }
    ],
@@ -1208,20 +1208,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "20.1%",
-     "band": "10-30%",
+     "value": "19.9%",
+     "band": "11-29%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.7%",
-     "band": "7-19%",
+     "value": "12.9%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".753",
-     "band": ".511-.995",
+     "value": ".762",
+     "band": ".551-.974",
      "flag": "experimental"
     }
    ],
@@ -1232,20 +1232,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "30.7%",
-     "band": "21-41%",
+     "value": "31.0%",
+     "band": "22-40%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "6-18%",
+     "value": "12.5%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".743",
-     "band": ".500-.985",
+     "value": ".749",
+     "band": ".537-.960",
      "flag": "experimental"
     }
    ],
@@ -1256,20 +1256,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.9%",
-     "band": "18-38%",
+     "value": "28.1%",
+     "band": "19-37%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.7%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".742",
-     "band": ".500-.984",
+     "value": ".748",
+     "band": ".537-.960",
      "flag": "experimental"
     }
    ],
@@ -1281,19 +1281,19 @@
     {
      "label": "Proj A K%",
      "value": "23.8%",
-     "band": "14-34%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.8%",
-     "band": "5-17%",
+     "value": "11.3%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".742",
-     "band": ".500-.984",
+     "value": ".748",
+     "band": ".537-.960",
      "flag": "experimental"
     }
    ],
@@ -1304,20 +1304,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.8%",
-     "band": "13-33%",
+     "value": "22.7%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
+     "value": "12.3%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".742",
-     "band": ".500-.984",
+     "value": ".748",
+     "band": ".537-.960",
      "flag": "experimental"
     }
    ],
@@ -1329,19 +1329,19 @@
     {
      "label": "Proj A K%",
      "value": "24.5%",
-     "band": "14-34%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.5%",
-     "band": "5-18%",
+     "value": "11.9%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".742",
-     "band": ".499-.984",
+     "value": ".748",
+     "band": ".536-.959",
      "flag": "experimental"
     }
    ],
@@ -1352,20 +1352,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.4%",
-     "band": "14-34%",
+     "value": "24.3%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "6-18%",
+     "value": "12.5%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".741",
-     "band": ".499-.984",
+     "value": ".747",
+     "band": ".536-.959",
      "flag": "experimental"
     }
    ],
@@ -1377,19 +1377,19 @@
     {
      "label": "Proj A K%",
      "value": "24.4%",
-     "band": "14-34%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.5%",
+     "value": "12.7%",
      "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".741",
-     "band": ".499-.984",
+     "value": ".747",
+     "band": ".536-.959",
      "flag": "experimental"
     }
    ],
@@ -1400,20 +1400,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.3%",
-     "band": "16-36%",
+     "value": "26.4%",
+     "band": "17-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.1%",
-     "band": "5-17%",
+     "value": "11.5%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".741",
-     "band": ".499-.983",
+     "value": ".747",
+     "band": ".536-.958",
      "flag": "experimental"
     }
    ],
@@ -1424,200 +1424,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.7%",
-     "band": "16-36%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.2%",
-     "band": "5-17%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".741",
-     "band": ".499-.983",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Lewis, Kade"
-  },
-  "draft_2026_gavin_grahovac": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "29.4%",
-     "band": "19-39%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".741",
-     "band": ".499-.983",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Grahovac, Gavin"
-  },
-  "draft_2025_damian_bravo": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
      "value": "25.8%",
-     "band": "16-36%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.8%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".741",
-     "band": ".498-.983",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Bravo, Damian"
-  },
-  "draft_2025_henry_godbout": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "20.7%",
-     "band": "11-31%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.9%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".741",
-     "band": ".498-.983",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Godbout, Henry"
-  },
-  "draft_2024_joshua_kurodagrauer": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "19.8%",
-     "band": "10-30%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".741",
-     "band": ".498-.983",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Kuroda-Grauer, Joshua"
-  },
-  "draft_2024_carter_mathison": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "26.9%",
-     "band": "17-37%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "13.6%",
-     "band": "8-20%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".741",
-     "band": ".498-.983",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Mathison, Carter"
-  },
-  "draft_2024_robert_hipwell": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "27.4%",
-     "band": "17-38%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "14.1%",
-     "band": "8-20%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".740",
-     "band": ".498-.982",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Hipwell, Robert"
-  },
-  "draft_2025_tanner_thach": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "26.9%",
-     "band": "17-37%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".740",
-     "band": ".498-.982",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Thach, Tanner"
-  },
-  "draft_2019_mac_bingham": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.6%",
-     "band": "16-36%",
+     "band": "16-35%",
      "flag": null
     },
     {
@@ -1628,8 +1436,200 @@
     },
     {
      "label": "Proj A OPS",
-     "value": ".740",
-     "band": ".498-.982",
+     "value": ".747",
+     "band": ".536-.958",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Lewis, Kade"
+  },
+  "draft_2026_gavin_grahovac": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "29.6%",
+     "band": "20-39%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "12.5%",
+     "band": "6-19%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".747",
+     "band": ".535-.958",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Grahovac, Gavin"
+  },
+  "draft_2025_damian_bravo": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "25.9%",
+     "band": "17-35%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "12.1%",
+     "band": "6-19%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".746",
+     "band": ".535-.958",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Bravo, Damian"
+  },
+  "draft_2025_henry_godbout": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "20.6%",
+     "band": "11-30%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "12.2%",
+     "band": "6-19%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".746",
+     "band": ".535-.958",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Godbout, Henry"
+  },
+  "draft_2024_joshua_kurodagrauer": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "19.5%",
+     "band": "10-29%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "12.0%",
+     "band": "5-19%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".746",
+     "band": ".535-.958",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Kuroda-Grauer, Joshua"
+  },
+  "draft_2024_carter_mathison": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "27.0%",
+     "band": "18-36%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "13.6%",
+     "band": "7-20%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".746",
+     "band": ".535-.958",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Mathison, Carter"
+  },
+  "draft_2024_robert_hipwell": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "27.6%",
+     "band": "18-37%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "14.0%",
+     "band": "7-21%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".746",
+     "band": ".534-.957",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Hipwell, Robert"
+  },
+  "draft_2025_tanner_thach": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "27.0%",
+     "band": "18-36%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "12.3%",
+     "band": "6-19%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".746",
+     "band": ".534-.957",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Thach, Tanner"
+  },
+  "draft_2019_mac_bingham": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "25.7%",
+     "band": "16-35%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "11.9%",
+     "band": "5-19%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".746",
+     "band": ".534-.957",
      "flag": "experimental"
     }
    ],
@@ -1641,19 +1641,19 @@
     {
      "label": "Proj A K%",
      "value": "24.7%",
-     "band": "15-35%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
+     "value": "12.3%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".740",
-     "band": ".498-.982",
+     "value": ".746",
+     "band": ".534-.957",
      "flag": "experimental"
     }
    ],
@@ -1665,19 +1665,19 @@
     {
      "label": "Proj A K%",
      "value": "23.9%",
-     "band": "14-34%",
+     "band": "15-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.8%",
-     "band": "7-19%",
+     "value": "12.9%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".740",
-     "band": ".497-.982",
+     "value": ".745",
+     "band": ".534-.957",
      "flag": "experimental"
     }
    ],
@@ -1688,20 +1688,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.4%",
-     "band": "16-36%",
+     "value": "26.5%",
+     "band": "17-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.7%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".740",
-     "band": ".497-.982",
+     "value": ".745",
+     "band": ".534-.957",
      "flag": "experimental"
     }
    ],
@@ -1712,20 +1712,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.9%",
-     "band": "16-36%",
+     "value": "26.0%",
+     "band": "17-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.4%",
+     "value": "12.6%",
      "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".739",
-     "band": ".497-.981",
+     "value": ".744",
+     "band": ".533-.956",
      "flag": "experimental"
     }
    ],
@@ -1736,20 +1736,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "30.4%",
-     "band": "20-40%",
+     "value": "30.7%",
+     "band": "21-40%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.3%",
-     "band": "7-19%",
+     "value": "13.4%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".739",
-     "band": ".497-.981",
+     "value": ".744",
+     "band": ".533-.956",
      "flag": "experimental"
     }
    ],
@@ -1760,20 +1760,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.0%",
-     "band": "12-32%",
+     "value": "21.9%",
+     "band": "13-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "15.5%",
+     "value": "15.2%",
      "band": "9-22%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".739",
-     "band": ".497-.981",
+     "value": ".744",
+     "band": ".533-.956",
      "flag": "experimental"
     }
    ],
@@ -1784,20 +1784,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.7%",
-     "band": "17-37%",
+     "value": "26.8%",
+     "band": "18-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.8%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".739",
-     "band": ".496-.981",
+     "value": ".744",
+     "band": ".532-.955",
      "flag": "experimental"
     }
    ],
@@ -1808,20 +1808,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "20.8%",
-     "band": "11-31%",
+     "value": "20.6%",
+     "band": "11-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.2%",
-     "band": "5-17%",
+     "value": "11.6%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".738",
-     "band": ".496-.980",
+     "value": ".743",
+     "band": ".532-.954",
      "flag": "experimental"
     }
    ],
@@ -1832,20 +1832,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.0%",
-     "band": "19-39%",
+     "value": "29.2%",
+     "band": "20-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.8%",
-     "band": "7-19%",
+     "value": "12.9%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".738",
-     "band": ".496-.980",
+     "value": ".743",
+     "band": ".531-.954",
      "flag": "experimental"
     }
    ],
@@ -1856,20 +1856,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.0%",
-     "band": "11-31%",
+     "value": "20.9%",
+     "band": "12-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.6%",
-     "band": "4-17%",
+     "value": "11.1%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".737",
-     "band": ".495-.980",
+     "value": ".742",
+     "band": ".531-.954",
      "flag": "experimental"
     }
    ],
@@ -1880,20 +1880,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.5%",
-     "band": "12-32%",
+     "value": "21.4%",
+     "band": "12-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.2%",
-     "band": "8-20%",
+     "value": "14.1%",
+     "band": "7-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".737",
-     "band": ".495-.980",
+     "value": ".742",
+     "band": ".531-.954",
      "flag": "experimental"
     }
    ],
@@ -1905,19 +1905,19 @@
     {
      "label": "Proj A K%",
      "value": "23.4%",
-     "band": "13-34%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.0%",
-     "band": "4-16%",
+     "value": "10.6%",
+     "band": "4-17%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".737",
-     "band": ".495-.979",
+     "value": ".742",
+     "band": ".530-.953",
      "flag": "experimental"
     }
    ],
@@ -1928,20 +1928,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.1%",
-     "band": "19-39%",
+     "value": "29.3%",
+     "band": "20-39%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.1%",
-     "band": "5-17%",
+     "value": "11.6%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".737",
-     "band": ".494-.979",
+     "value": ".741",
+     "band": ".530-.953",
      "flag": "experimental"
     }
    ],
@@ -1953,19 +1953,19 @@
     {
      "label": "Proj A K%",
      "value": "24.7%",
-     "band": "15-35%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
+     "value": "11.8%",
      "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".737",
-     "band": ".494-.979",
+     "value": ".741",
+     "band": ".530-.953",
      "flag": "experimental"
     }
    ],
@@ -1976,20 +1976,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.6%",
-     "band": "18-38%",
+     "value": "27.7%",
+     "band": "18-37%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.5%",
+     "value": "12.7%",
      "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".737",
-     "band": ".494-.979",
+     "value": ".741",
+     "band": ".530-.953",
      "flag": "experimental"
     }
    ],
@@ -2001,19 +2001,19 @@
     {
      "label": "Proj A K%",
      "value": "25.7%",
-     "band": "16-36%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "6-18%",
+     "value": "12.5%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".737",
-     "band": ".494-.979",
+     "value": ".741",
+     "band": ".530-.953",
      "flag": "experimental"
     }
    ],
@@ -2025,19 +2025,19 @@
     {
      "label": "Proj A K%",
      "value": "23.9%",
-     "band": "14-34%",
+     "band": "15-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.3%",
+     "value": "13.4%",
      "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".736",
-     "band": ".494-.979",
+     "value": ".741",
+     "band": ".529-.952",
      "flag": "experimental"
     }
    ],
@@ -2048,20 +2048,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "19.8%",
-     "band": "10-30%",
+     "value": "19.6%",
+     "band": "10-29%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.2%",
-     "band": "4-16%",
+     "value": "10.8%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".736",
-     "band": ".494-.979",
+     "value": ".741",
+     "band": ".529-.952",
      "flag": "experimental"
     }
    ],
@@ -2072,20 +2072,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.4%",
-     "band": "16-36%",
+     "value": "26.5%",
+     "band": "17-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.1%",
-     "band": "7-19%",
+     "value": "13.2%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".736",
-     "band": ".494-.979",
+     "value": ".741",
+     "band": ".529-.952",
      "flag": "experimental"
     }
    ],
@@ -2096,20 +2096,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.7%",
-     "band": "18-38%",
+     "value": "27.9%",
+     "band": "19-37%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.1%",
-     "band": "7-19%",
+     "value": "13.2%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".736",
-     "band": ".494-.979",
+     "value": ".741",
+     "band": ".529-.952",
      "flag": "experimental"
     }
    ],
@@ -2120,20 +2120,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.7%",
-     "band": "20-40%",
+     "value": "30.0%",
+     "band": "21-39%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.7%",
-     "band": "6-19%",
+     "value": "12.8%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".736",
-     "band": ".494-.978",
+     "value": ".740",
+     "band": ".529-.952",
      "flag": "experimental"
     }
    ],
@@ -2144,20 +2144,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.0%",
-     "band": "12-32%",
+     "value": "21.9%",
+     "band": "13-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.2%",
-     "band": "5-17%",
+     "value": "11.6%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".736",
-     "band": ".494-.978",
+     "value": ".740",
+     "band": ".529-.952",
      "flag": "experimental"
     }
    ],
@@ -2169,19 +2169,19 @@
     {
      "label": "Proj A K%",
      "value": "25.8%",
-     "band": "16-36%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.3%",
-     "band": "7-19%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".736",
-     "band": ".494-.978",
+     "value": ".740",
+     "band": ".529-.952",
      "flag": "experimental"
     }
    ],
@@ -2192,20 +2192,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.4%",
-     "band": "12-32%",
+     "value": "22.3%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
+     "value": "12.3%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".735",
-     "band": ".493-.977",
+     "value": ".739",
+     "band": ".528-.951",
      "flag": "experimental"
     }
    ],
@@ -2216,20 +2216,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.9%",
-     "band": "12-32%",
+     "value": "21.8%",
+     "band": "12-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.9%",
-     "band": "9-21%",
+     "value": "14.7%",
+     "band": "8-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".735",
-     "band": ".492-.977",
+     "value": ".739",
+     "band": ".527-.950",
      "flag": "experimental"
     }
    ],
@@ -2240,20 +2240,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "20.8%",
-     "band": "11-31%",
+     "value": "20.7%",
+     "band": "11-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "6-18%",
+     "value": "12.4%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".734",
-     "band": ".492-.977",
+     "value": ".738",
+     "band": ".527-.950",
      "flag": "experimental"
     }
    ],
@@ -2264,20 +2264,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.3%",
-     "band": "19-39%",
+     "value": "29.5%",
+     "band": "20-39%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.2%",
-     "band": "8-20%",
+     "value": "14.1%",
+     "band": "8-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".734",
-     "band": ".492-.977",
+     "value": ".738",
+     "band": ".527-.950",
      "flag": "experimental"
     }
    ],
@@ -2289,19 +2289,19 @@
     {
      "label": "Proj A K%",
      "value": "24.7%",
-     "band": "15-35%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.7%",
-     "band": "6-18%",
+     "value": "12.0%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".734",
-     "band": ".492-.977",
+     "value": ".738",
+     "band": ".527-.950",
      "flag": "experimental"
     }
    ],
@@ -2312,20 +2312,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.7%",
-     "band": "18-38%",
+     "value": "27.9%",
+     "band": "19-37%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.8%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".734",
-     "band": ".492-.976",
+     "value": ".738",
+     "band": ".526-.949",
      "flag": "experimental"
     }
    ],
@@ -2336,20 +2336,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "31.1%",
-     "band": "21-41%",
+     "value": "31.4%",
+     "band": "22-41%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.7%",
-     "band": "7-19%",
+     "value": "12.9%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".734",
-     "band": ".492-.976",
+     "value": ".738",
+     "band": ".526-.949",
      "flag": "experimental"
     }
    ],
@@ -2360,8 +2360,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.8%",
-     "band": "19-39%",
+     "value": "29.0%",
+     "band": "20-38%",
      "flag": null
     },
     {
@@ -2372,8 +2372,8 @@
     },
     {
      "label": "Proj A OPS",
-     "value": ".734",
-     "band": ".492-.976",
+     "value": ".738",
+     "band": ".526-.949",
      "flag": "experimental"
     }
    ],
@@ -2384,20 +2384,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.5%",
-     "band": "18-39%",
+     "value": "28.7%",
+     "band": "19-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.9%",
-     "band": "8-20%",
+     "value": "13.8%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".734",
-     "band": ".492-.976",
+     "value": ".738",
+     "band": ".526-.949",
      "flag": "experimental"
     }
    ],
@@ -2409,19 +2409,19 @@
     {
      "label": "Proj A K%",
      "value": "23.4%",
-     "band": "13-34%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.3%",
-     "band": "7-19%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".733",
-     "band": ".491-.975",
+     "value": ".737",
+     "band": ".525-.948",
      "flag": "experimental"
     }
    ],
@@ -2432,20 +2432,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "30.8%",
-     "band": "21-41%",
+     "value": "31.0%",
+     "band": "22-40%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.7%",
-     "band": "6-18%",
+     "value": "12.0%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".733",
-     "band": ".491-.975",
+     "value": ".737",
+     "band": ".525-.948",
      "flag": "experimental"
     }
    ],
@@ -2456,20 +2456,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.9%",
-     "band": "17-37%",
+     "value": "27.0%",
+     "band": "18-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.3%",
+     "value": "11.7%",
      "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".733",
-     "band": ".490-.975",
+     "value": ".736",
+     "band": ".525-.948",
      "flag": "experimental"
     }
    ],
@@ -2480,20 +2480,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.5%",
-     "band": "16-36%",
+     "value": "25.6%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.3%",
-     "band": "5-17%",
+     "value": "11.7%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".732",
-     "band": ".490-.974",
+     "value": ".735",
+     "band": ".524-.947",
      "flag": "experimental"
     }
    ],
@@ -2505,19 +2505,19 @@
     {
      "label": "Proj A K%",
      "value": "23.5%",
-     "band": "14-34%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.1%",
-     "band": "6-18%",
+     "value": "12.4%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".732",
-     "band": ".490-.974",
+     "value": ".735",
+     "band": ".524-.947",
      "flag": "experimental"
     }
    ],
@@ -2529,19 +2529,19 @@
     {
      "label": "Proj A K%",
      "value": "25.1%",
-     "band": "15-35%",
+     "band": "16-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.5%",
+     "value": "11.9%",
      "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".732",
-     "band": ".490-.974",
+     "value": ".735",
+     "band": ".524-.947",
      "flag": "experimental"
     }
    ],
@@ -2552,20 +2552,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.3%",
-     "band": "17-37%",
+     "value": "27.4%",
+     "band": "18-37%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "6-18%",
+     "value": "12.5%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".732",
-     "band": ".489-.974",
+     "value": ".735",
+     "band": ".523-.946",
      "flag": "experimental"
     }
    ],
@@ -2576,20 +2576,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.9%",
-     "band": "19-39%",
+     "value": "29.1%",
+     "band": "20-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.1%",
-     "band": "6-18%",
+     "value": "12.4%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".732",
-     "band": ".489-.974",
+     "value": ".735",
+     "band": ".523-.946",
      "flag": "experimental"
     }
    ],
@@ -2601,19 +2601,19 @@
     {
      "label": "Proj A K%",
      "value": "23.8%",
-     "band": "14-34%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.9%",
-     "band": "7-19%",
+     "value": "13.0%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".745",
-     "band": ".503-.987",
+     "value": ".752",
+     "band": ".541-.963",
      "flag": "experimental"
     }
    ],
@@ -2624,20 +2624,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.8%",
-     "band": "19-39%",
+     "value": "28.9%",
+     "band": "20-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.4%",
+     "value": "12.6%",
      "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".731",
-     "band": ".489-.973",
+     "value": ".734",
+     "band": ".523-.946",
      "flag": "experimental"
     }
    ],
@@ -2648,20 +2648,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.3%",
-     "band": "18-38%",
+     "value": "28.4%",
+     "band": "19-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.3%",
-     "band": "7-19%",
+     "value": "13.4%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".731",
-     "band": ".488-.973",
+     "value": ".734",
+     "band": ".522-.945",
      "flag": "experimental"
     }
    ],
@@ -2672,20 +2672,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.2%",
-     "band": "13-33%",
+     "value": "23.1%",
+     "band": "14-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.1%",
-     "band": "6-18%",
+     "value": "12.3%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".730",
-     "band": ".488-.973",
+     "value": ".733",
+     "band": ".522-.945",
      "flag": "experimental"
     }
    ],
@@ -2697,19 +2697,19 @@
     {
      "label": "Proj A K%",
      "value": "25.9%",
-     "band": "16-36%",
+     "band": "17-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.2%",
-     "band": "5-17%",
+     "value": "11.6%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".730",
-     "band": ".488-.973",
+     "value": ".733",
+     "band": ".522-.945",
      "flag": "experimental"
     }
    ],
@@ -2720,8 +2720,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "30.1%",
-     "band": "20-40%",
+     "value": "30.4%",
+     "band": "21-40%",
      "flag": null
     },
     {
@@ -2732,8 +2732,8 @@
     },
     {
      "label": "Proj A OPS",
-     "value": ".730",
-     "band": ".488-.973",
+     "value": ".733",
+     "band": ".522-.945",
      "flag": "experimental"
     }
    ],
@@ -2744,20 +2744,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.3%",
-     "band": "13-33%",
+     "value": "23.2%",
+     "band": "14-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.6%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".730",
-     "band": ".487-.972",
+     "value": ".732",
+     "band": ".521-.944",
      "flag": "experimental"
     }
    ],
@@ -2768,20 +2768,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.9%",
-     "band": "19-39%",
+     "value": "29.1%",
+     "band": "20-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.9%",
-     "band": "7-19%",
+     "value": "13.0%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".729",
-     "band": ".487-.971",
+     "value": ".732",
+     "band": ".520-.943",
      "flag": "experimental"
     }
    ],
@@ -2792,20 +2792,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.0%",
-     "band": "12-32%",
+     "value": "21.9%",
+     "band": "13-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "6-18%",
+     "value": "12.5%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".729",
-     "band": ".486-.971",
+     "value": ".731",
+     "band": ".520-.943",
      "flag": "experimental"
     }
    ],
@@ -2817,19 +2817,19 @@
     {
      "label": "Proj A K%",
      "value": "23.8%",
-     "band": "14-34%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "6-18%",
+     "value": "12.0%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".738",
-     "band": ".496-.980",
+     "value": ".743",
+     "band": ".532-.954",
      "flag": "experimental"
     }
    ],
@@ -2840,20 +2840,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.2%",
-     "band": "15-35%",
+     "value": "25.3%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.2%",
-     "band": "5-17%",
+     "value": "11.6%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".729",
-     "band": ".486-.971",
+     "value": ".731",
+     "band": ".520-.943",
      "flag": "experimental"
     }
    ],
@@ -2864,20 +2864,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.5%",
-     "band": "18-38%",
+     "value": "27.7%",
+     "band": "18-37%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "16.6%",
-     "band": "10-23%",
+     "value": "16.1%",
+     "band": "9-23%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".728",
-     "band": ".486-.971",
+     "value": ".731",
+     "band": ".519-.942",
      "flag": "experimental"
     }
    ],
@@ -2889,19 +2889,19 @@
     {
      "label": "Proj A K%",
      "value": "25.4%",
-     "band": "15-35%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
+     "value": "11.8%",
      "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".728",
-     "band": ".486-.970",
+     "value": ".730",
+     "band": ".519-.942",
      "flag": "experimental"
     }
    ],
@@ -2913,19 +2913,19 @@
     {
      "label": "Proj A K%",
      "value": "22.9%",
-     "band": "13-33%",
+     "band": "14-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.8%",
-     "band": "6-18%",
+     "value": "12.1%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".728",
-     "band": ".486-.970",
+     "value": ".730",
+     "band": ".519-.942",
      "flag": "experimental"
     }
    ],
@@ -2936,20 +2936,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.3%",
-     "band": "12-32%",
+     "value": "22.2%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.8%",
-     "band": "7-19%",
+     "value": "12.9%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".728",
-     "band": ".486-.970",
+     "value": ".730",
+     "band": ".519-.942",
      "flag": "experimental"
     }
    ],
@@ -2961,19 +2961,19 @@
     {
      "label": "Proj A K%",
      "value": "23.7%",
-     "band": "14-34%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.8%",
-     "band": "7-19%",
+     "value": "13.0%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".728",
-     "band": ".485-.970",
+     "value": ".730",
+     "band": ".518-.941",
      "flag": "experimental"
     }
    ],
@@ -2984,20 +2984,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.8%",
-     "band": "14-34%",
+     "value": "23.7%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.5%",
+     "value": "12.7%",
      "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".727",
-     "band": ".485-.970",
+     "value": ".729",
+     "band": ".518-.941",
      "flag": "experimental"
     }
    ],
@@ -3008,20 +3008,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.8%",
-     "band": "20-40%",
+     "value": "30.0%",
+     "band": "21-39%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.2%",
-     "band": "8-20%",
+     "value": "14.1%",
+     "band": "8-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".727",
-     "band": ".485-.970",
+     "value": ".729",
+     "band": ".518-.941",
      "flag": "experimental"
     }
    ],
@@ -3033,19 +3033,19 @@
     {
      "label": "Proj A K%",
      "value": "24.5%",
-     "band": "14-35%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.6%",
-     "band": "6-19%",
+     "value": "12.8%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".727",
-     "band": ".484-.969",
+     "value": ".729",
+     "band": ".517-.940",
      "flag": "experimental"
     }
    ],
@@ -3057,7 +3057,7 @@
     {
      "label": "Proj A K%",
      "value": "25.0%",
-     "band": "15-35%",
+     "band": "16-34%",
      "flag": null
     },
     {
@@ -3068,8 +3068,8 @@
     },
     {
      "label": "Proj A OPS",
-     "value": ".726",
-     "band": ".484-.969",
+     "value": ".728",
+     "band": ".517-.940",
      "flag": "experimental"
     }
    ],
@@ -3081,19 +3081,19 @@
     {
      "label": "Proj A K%",
      "value": "24.4%",
-     "band": "14-34%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.7%",
-     "band": "6-18%",
+     "value": "12.0%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".726",
-     "band": ".484-.968",
+     "value": ".728",
+     "band": ".516-.939",
      "flag": "experimental"
     }
    ],
@@ -3104,20 +3104,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.0%",
-     "band": "18-38%",
+     "value": "28.2%",
+     "band": "19-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.6%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".726",
-     "band": ".484-.968",
+     "value": ".728",
+     "band": ".516-.939",
      "flag": "experimental"
     }
    ],
@@ -3128,20 +3128,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.4%",
-     "band": "19-39%",
+     "value": "29.6%",
+     "band": "20-39%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.6%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".725",
-     "band": ".483-.968",
+     "value": ".727",
+     "band": ".515-.938",
      "flag": "experimental"
     }
    ],
@@ -3152,32 +3152,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "31.2%",
-     "band": "21-41%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".725",
-     "band": ".483-.967",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Galvan, Rylan"
-  },
-  "draft_2021_michael_braswell_iii": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "25.1%",
-     "band": "15-35%",
+     "value": "31.5%",
+     "band": "22-41%",
      "flag": null
     },
     {
@@ -3188,8 +3164,32 @@
     },
     {
      "label": "Proj A OPS",
-     "value": ".724",
-     "band": ".482-.967",
+     "value": ".726",
+     "band": ".515-.938",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Galvan, Rylan"
+  },
+  "draft_2021_michael_braswell_iii": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "25.2%",
+     "band": "16-34%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "12.7%",
+     "band": "6-19%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".726",
+     "band": ".514-.937",
      "flag": "experimental"
     }
    ],
@@ -3200,20 +3200,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.6%",
-     "band": "12-32%",
+     "value": "21.5%",
+     "band": "12-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.8%",
-     "band": "8-20%",
+     "value": "13.7%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".734",
-     "band": ".492-.976",
+     "value": ".738",
+     "band": ".527-.949",
      "flag": "experimental"
     }
    ],
@@ -3224,20 +3224,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.9%",
-     "band": "14-34%",
+     "value": "23.8%",
+     "band": "15-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.2%",
-     "band": "5-17%",
+     "value": "11.6%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".724",
-     "band": ".482-.966",
+     "value": ".725",
+     "band": ".514-.937",
      "flag": "experimental"
     }
    ],
@@ -3249,19 +3249,19 @@
     {
      "label": "Proj A K%",
      "value": "25.9%",
-     "band": "16-36%",
+     "band": "17-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.5%",
-     "band": "4-17%",
+     "value": "11.0%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".724",
-     "band": ".481-.966",
+     "value": ".725",
+     "band": ".513-.936",
      "flag": "experimental"
     }
    ],
@@ -3273,19 +3273,19 @@
     {
      "label": "Proj A K%",
      "value": "23.6%",
-     "band": "14-34%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.9%",
-     "band": "7-19%",
+     "value": "13.1%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".724",
-     "band": ".481-.966",
+     "value": ".725",
+     "band": ".513-.936",
      "flag": "experimental"
     }
    ],
@@ -3296,20 +3296,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.4%",
-     "band": "12-32%",
+     "value": "22.3%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
+     "value": "11.8%",
      "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".724",
-     "band": ".481-.966",
+     "value": ".725",
+     "band": ".513-.936",
      "flag": "experimental"
     }
    ],
@@ -3321,19 +3321,19 @@
     {
      "label": "Proj A K%",
      "value": "24.8%",
-     "band": "15-35%",
+     "band": "16-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.6%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".723",
-     "band": ".481-.965",
+     "value": ".724",
+     "band": ".513-.935",
      "flag": "experimental"
     }
    ],
@@ -3344,20 +3344,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.0%",
-     "band": "17-37%",
+     "value": "27.1%",
+     "band": "18-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
+     "value": "12.3%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".723",
-     "band": ".481-.965",
+     "value": ".724",
+     "band": ".513-.935",
      "flag": "experimental"
     }
    ],
@@ -3368,20 +3368,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "19.9%",
-     "band": "10-30%",
+     "value": "19.6%",
+     "band": "10-29%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.3%",
-     "band": "5-17%",
+     "value": "11.7%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".723",
-     "band": ".481-.965",
+     "value": ".724",
+     "band": ".512-.935",
      "flag": "experimental"
     }
    ],
@@ -3392,20 +3392,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.6%",
-     "band": "16-36%",
+     "value": "25.7%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.8%",
-     "band": "7-19%",
+     "value": "13.0%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".723",
-     "band": ".481-.965",
+     "value": ".724",
+     "band": ".512-.935",
      "flag": "experimental"
     }
    ],
@@ -3416,20 +3416,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.9%",
-     "band": "13-33%",
+     "value": "22.8%",
+     "band": "14-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.1%",
-     "band": "6-18%",
+     "value": "12.4%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".722",
-     "band": ".480-.965",
+     "value": ".723",
+     "band": ".512-.935",
      "flag": "experimental"
     }
    ],
@@ -3441,19 +3441,19 @@
     {
      "label": "Proj A K%",
      "value": "23.7%",
-     "band": "14-34%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.5%",
+     "value": "12.7%",
      "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".722",
-     "band": ".480-.964",
+     "value": ".723",
+     "band": ".511-.934",
      "flag": "experimental"
     }
    ],
@@ -3464,20 +3464,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.6%",
-     "band": "13-33%",
+     "value": "22.5%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
+     "value": "11.8%",
      "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".722",
-     "band": ".480-.964",
+     "value": ".723",
+     "band": ".511-.934",
      "flag": "experimental"
     }
    ],
@@ -3489,19 +3489,19 @@
     {
      "label": "Proj A K%",
      "value": "25.7%",
-     "band": "16-36%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "6-18%",
+     "value": "12.5%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
      "value": ".722",
-     "band": ".479-.964",
+     "band": ".511-.934",
      "flag": "experimental"
     }
    ],
@@ -3512,20 +3512,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.8%",
-     "band": "20-40%",
+     "value": "30.1%",
+     "band": "21-39%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.6%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
      "value": ".722",
-     "band": ".479-.964",
+     "band": ".511-.934",
      "flag": "experimental"
     }
    ],
@@ -3536,20 +3536,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.4%",
-     "band": "13-33%",
+     "value": "23.3%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.4%",
-     "band": "6-18%",
+     "value": "12.6%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
      "value": ".722",
-     "band": ".479-.964",
+     "band": ".511-.934",
      "flag": "experimental"
     }
    ],
@@ -3560,20 +3560,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "19.8%",
-     "band": "10-30%",
+     "value": "19.6%",
+     "band": "10-29%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.7%",
-     "band": "7-19%",
+     "value": "12.9%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".737",
-     "band": ".495-.979",
+     "value": ".742",
+     "band": ".530-.953",
      "flag": "experimental"
     }
    ],
@@ -3585,19 +3585,19 @@
     {
      "label": "Proj A K%",
      "value": "23.4%",
-     "band": "13-34%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.9%",
-     "band": "6-18%",
+     "value": "12.2%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
      "value": ".721",
-     "band": ".479-.963",
+     "band": ".510-.933",
      "flag": "experimental"
     }
    ],
@@ -3608,20 +3608,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "30.0%",
-     "band": "20-40%",
+     "value": "30.3%",
+     "band": "21-40%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.8%",
-     "band": "7-19%",
+     "value": "13.0%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
      "value": ".721",
-     "band": ".479-.963",
+     "band": ".510-.933",
      "flag": "experimental"
     }
    ],
@@ -3632,20 +3632,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.3%",
-     "band": "17-37%",
+     "value": "27.5%",
+     "band": "18-37%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "6-18%",
+     "value": "12.6%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
      "value": ".721",
-     "band": ".478-.963",
+     "band": ".509-.932",
      "flag": "experimental"
     }
    ],
@@ -3656,20 +3656,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.6%",
-     "band": "13-33%",
+     "value": "22.5%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.9%",
-     "band": "8-20%",
+     "value": "13.8%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
      "value": ".721",
-     "band": ".478-.963",
+     "band": ".509-.932",
      "flag": "experimental"
     }
    ],
@@ -3680,20 +3680,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.9%",
-     "band": "13-33%",
+     "value": "22.8%",
+     "band": "14-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.0%",
-     "band": "7-19%",
+     "value": "13.1%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
      "value": ".720",
-     "band": ".478-.962",
+     "band": ".509-.932",
      "flag": "experimental"
     }
    ],
@@ -3704,20 +3704,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.6%",
-     "band": "12-33%",
+     "value": "22.5%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "6-18%",
+     "value": "12.6%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
      "value": ".719",
-     "band": ".477-.962",
+     "band": ".508-.931",
      "flag": "experimental"
     }
    ],
@@ -3729,19 +3729,19 @@
     {
      "label": "Proj A K%",
      "value": "23.8%",
-     "band": "14-34%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "5-18%",
+     "value": "11.9%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
      "value": ".719",
-     "band": ".477-.961",
+     "band": ".507-.930",
      "flag": "experimental"
     }
    ],
@@ -3753,19 +3753,19 @@
     {
      "label": "Proj A K%",
      "value": "24.7%",
-     "band": "15-35%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.8%",
-     "band": "5-17%",
+     "value": "11.3%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
      "value": ".718",
-     "band": ".476-.960",
+     "band": ".506-.929",
      "flag": "experimental"
     }
    ],
@@ -3776,20 +3776,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.4%",
-     "band": "11-31%",
+     "value": "21.2%",
+     "band": "12-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.1%",
-     "band": "7-19%",
+     "value": "13.2%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".718",
-     "band": ".475-.960",
+     "value": ".717",
+     "band": ".506-.929",
      "flag": "experimental"
     }
    ],
@@ -3800,20 +3800,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.4%",
-     "band": "16-36%",
+     "value": "26.5%",
+     "band": "17-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.5%",
+     "value": "12.7%",
      "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".717",
-     "band": ".475-.959",
+     "value": ".716",
+     "band": ".505-.928",
      "flag": "experimental"
     }
    ],
@@ -3825,31 +3825,7 @@
     {
      "label": "Proj A K%",
      "value": "24.9%",
-     "band": "15-35%",
-     "flag": null
-    },
-    {
-     "label": "Proj A BB%",
-     "value": "12.4%",
-     "band": "6-18%",
-     "flag": "low confidence"
-    },
-    {
-     "label": "Proj A OPS",
-     "value": ".717",
-     "band": ".475-.959",
-     "flag": "experimental"
-    }
-   ],
-   "name": "Camarillo, Ali"
-  },
-  "draft_2026_gavin_gallaher": {
-   "side": "hit",
-   "headline": [
-    {
-     "label": "Proj A K%",
-     "value": "26.3%",
-     "band": "16-36%",
+     "band": "16-34%",
      "flag": null
     },
     {
@@ -3860,8 +3836,32 @@
     },
     {
      "label": "Proj A OPS",
-     "value": ".717",
-     "band": ".475-.959",
+     "value": ".716",
+     "band": ".505-.928",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Camarillo, Ali"
+  },
+  "draft_2026_gavin_gallaher": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "26.4%",
+     "band": "17-36%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "12.8%",
+     "band": "6-20%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".716",
+     "band": ".505-.928",
      "flag": "experimental"
     }
    ],
@@ -3872,20 +3872,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "30.0%",
-     "band": "20-40%",
+     "value": "30.2%",
+     "band": "21-40%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.4%",
-     "band": "6-18%",
+     "value": "12.6%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".717",
-     "band": ".475-.959",
+     "value": ".716",
+     "band": ".505-.928",
      "flag": "experimental"
     }
    ],
@@ -3897,19 +3897,19 @@
     {
      "label": "Proj A K%",
      "value": "24.9%",
-     "band": "15-35%",
+     "band": "16-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.1%",
-     "band": "6-18%",
+     "value": "12.4%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".717",
-     "band": ".474-.959",
+     "value": ".716",
+     "band": ".504-.927",
      "flag": "experimental"
     }
    ],
@@ -3921,19 +3921,19 @@
     {
      "label": "Proj A K%",
      "value": "24.3%",
-     "band": "14-34%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
+     "value": "11.8%",
      "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".716",
-     "band": ".474-.958",
+     "value": ".715",
+     "band": ".504-.927",
      "flag": "experimental"
     }
    ],
@@ -3944,20 +3944,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.0%",
-     "band": "19-39%",
+     "value": "29.2%",
+     "band": "20-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.0%",
-     "band": "8-20%",
+     "value": "13.9%",
+     "band": "7-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".731",
-     "band": ".489-.973",
+     "value": ".734",
+     "band": ".523-.945",
      "flag": "experimental"
     }
    ],
@@ -3968,20 +3968,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.2%",
-     "band": "14-34%",
+     "value": "24.1%",
+     "band": "15-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "15.5%",
-     "band": "9-22%",
+     "value": "15.2%",
+     "band": "8-22%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".716",
-     "band": ".473-.958",
+     "value": ".715",
+     "band": ".503-.926",
      "flag": "experimental"
     }
    ],
@@ -3993,19 +3993,19 @@
     {
      "label": "Proj A K%",
      "value": "24.0%",
-     "band": "14-34%",
+     "band": "15-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.8%",
-     "band": "5-17%",
+     "value": "11.3%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".715",
-     "band": ".473-.958",
+     "value": ".714",
+     "band": ".503-.926",
      "flag": "experimental"
     }
    ],
@@ -4017,19 +4017,19 @@
     {
      "label": "Proj A K%",
      "value": "24.7%",
-     "band": "15-35%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.1%",
-     "band": "7-19%",
+     "value": "13.2%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".715",
-     "band": ".473-.958",
+     "value": ".714",
+     "band": ".503-.926",
      "flag": "experimental"
     }
    ],
@@ -4040,20 +4040,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.5%",
-     "band": "18-38%",
+     "value": "27.7%",
+     "band": "18-37%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "6-18%",
+     "value": "12.0%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".715",
-     "band": ".473-.958",
+     "value": ".714",
+     "band": ".503-.926",
      "flag": "experimental"
     }
    ],
@@ -4064,20 +4064,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.3%",
-     "band": "17-37%",
+     "value": "27.4%",
+     "band": "18-37%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.0%",
-     "band": "5-17%",
+     "value": "11.5%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".715",
-     "band": ".473-.957",
+     "value": ".714",
+     "band": ".502-.925",
      "flag": "experimental"
     }
    ],
@@ -4088,20 +4088,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.2%",
-     "band": "16-36%",
+     "value": "26.3%",
+     "band": "17-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.7%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".715",
-     "band": ".473-.957",
+     "value": ".714",
+     "band": ".502-.925",
      "flag": "experimental"
     }
    ],
@@ -4112,20 +4112,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "30.7%",
-     "band": "21-41%",
+     "value": "31.0%",
+     "band": "22-40%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.8%",
-     "band": "7-19%",
+     "value": "12.9%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".715",
-     "band": ".473-.957",
+     "value": ".714",
+     "band": ".502-.925",
      "flag": "experimental"
     }
    ],
@@ -4136,20 +4136,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "30.0%",
-     "band": "20-40%",
+     "value": "30.2%",
+     "band": "21-40%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.3%",
-     "band": "5-17%",
+     "value": "11.7%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".715",
-     "band": ".473-.957",
+     "value": ".714",
+     "band": ".502-.925",
      "flag": "experimental"
     }
    ],
@@ -4160,20 +4160,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.1%",
-     "band": "16-36%",
+     "value": "26.2%",
+     "band": "17-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.4%",
-     "band": "6-18%",
+     "value": "12.6%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".715",
-     "band": ".472-.957",
+     "value": ".713",
+     "band": ".502-.925",
      "flag": "experimental"
     }
    ],
@@ -4184,20 +4184,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.1%",
-     "band": "13-33%",
+     "value": "23.0%",
+     "band": "14-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.3%",
-     "band": "5-17%",
+     "value": "11.7%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".716",
-     "band": ".474-.958",
+     "value": ".715",
+     "band": ".504-.927",
      "flag": "experimental"
     }
    ],
@@ -4208,20 +4208,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.9%",
-     "band": "19-39%",
+     "value": "29.1%",
+     "band": "20-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.7%",
-     "band": "7-19%",
+     "value": "12.9%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".714",
-     "band": ".472-.956",
+     "value": ".712",
+     "band": ".501-.924",
      "flag": "experimental"
     }
    ],
@@ -4232,20 +4232,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.7%",
-     "band": "12-32%",
+     "value": "21.6%",
+     "band": "12-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.0%",
-     "band": "5-17%",
+     "value": "11.5%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".714",
-     "band": ".472-.956",
+     "value": ".712",
+     "band": ".501-.924",
      "flag": "experimental"
     }
    ],
@@ -4257,19 +4257,19 @@
     {
      "label": "Proj A K%",
      "value": "24.3%",
-     "band": "14-34%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "6-18%",
+     "value": "12.0%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".713",
-     "band": ".471-.956",
+     "value": ".712",
+     "band": ".500-.923",
      "flag": "experimental"
     }
    ],
@@ -4281,19 +4281,19 @@
     {
      "label": "Proj A K%",
      "value": "24.1%",
-     "band": "14-34%",
+     "band": "15-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.7%",
-     "band": "6-19%",
+     "value": "12.8%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".713",
-     "band": ".471-.956",
+     "value": ".712",
+     "band": ".500-.923",
      "flag": "experimental"
     }
    ],
@@ -4305,19 +4305,19 @@
     {
      "label": "Proj A K%",
      "value": "25.3%",
-     "band": "15-35%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.7%",
-     "band": "6-18%",
+     "value": "12.0%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".713",
-     "band": ".471-.955",
+     "value": ".711",
+     "band": ".500-.923",
      "flag": "experimental"
     }
    ],
@@ -4328,20 +4328,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "17.0%",
-     "band": "7-27%",
+     "value": "16.7%",
+     "band": "7-26%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.2%",
-     "band": "4-16%",
+     "value": "10.8%",
+     "band": "4-17%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".713",
-     "band": ".470-.955",
+     "value": ".711",
+     "band": ".499-.922",
      "flag": "experimental"
     }
    ],
@@ -4352,20 +4352,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "32.1%",
-     "band": "22-42%",
+     "value": "32.5%",
+     "band": "23-42%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.1%",
-     "band": "4-16%",
+     "value": "10.7%",
+     "band": "4-17%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".712",
-     "band": ".470-.954",
+     "value": ".710",
+     "band": ".498-.921",
      "flag": "experimental"
     }
    ],
@@ -4377,19 +4377,19 @@
     {
      "label": "Proj A K%",
      "value": "25.4%",
-     "band": "15-35%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.4%",
+     "value": "12.6%",
      "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".712",
-     "band": ".470-.954",
+     "value": ".710",
+     "band": ".498-.921",
      "flag": "experimental"
     }
    ],
@@ -4400,20 +4400,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "31.6%",
-     "band": "22-42%",
+     "value": "31.9%",
+     "band": "23-41%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.1%",
-     "band": "5-17%",
+     "value": "11.6%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".711",
-     "band": ".469-.954",
+     "value": ".709",
+     "band": ".498-.921",
      "flag": "experimental"
     }
    ],
@@ -4424,20 +4424,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.4%",
-     "band": "15-35%",
+     "value": "25.5%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "6-18%",
+     "value": "12.5%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".711",
-     "band": ".469-.953",
+     "value": ".709",
+     "band": ".497-.920",
      "flag": "experimental"
     }
    ],
@@ -4448,20 +4448,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.1%",
-     "band": "14-34%",
+     "value": "24.0%",
+     "band": "15-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.6%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".731",
-     "band": ".489-.973",
+     "value": ".734",
+     "band": ".523-.945",
      "flag": "experimental"
     }
    ],
@@ -4473,19 +4473,19 @@
     {
      "label": "Proj A K%",
      "value": "24.2%",
-     "band": "14-34%",
+     "band": "15-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.9%",
-     "band": "6-18%",
+     "value": "12.2%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".710",
-     "band": ".468-.952",
+     "value": ".707",
+     "band": ".496-.919",
      "flag": "experimental"
     }
    ],
@@ -4496,20 +4496,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "33.2%",
-     "band": "23-43%",
+     "value": "33.6%",
+     "band": "24-43%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.8%",
-     "band": "6-18%",
+     "value": "12.1%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".710",
-     "band": ".468-.952",
+     "value": ".707",
+     "band": ".496-.919",
      "flag": "experimental"
     }
    ],
@@ -4520,20 +4520,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.9%",
-     "band": "17-37%",
+     "value": "27.0%",
+     "band": "18-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
+     "value": "12.3%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".709",
-     "band": ".467-.952",
+     "value": ".707",
+     "band": ".495-.918",
      "flag": "experimental"
     }
    ],
@@ -4544,20 +4544,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.7%",
-     "band": "20-40%",
+     "value": "29.9%",
+     "band": "21-39%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.8%",
-     "band": "7-19%",
+     "value": "13.0%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".709",
-     "band": ".467-.951",
+     "value": ".706",
+     "band": ".495-.918",
      "flag": "experimental"
     }
    ],
@@ -4568,20 +4568,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.5%",
-     "band": "16-36%",
+     "value": "26.6%",
+     "band": "17-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.8%",
-     "band": "6-18%",
+     "value": "12.2%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".709",
-     "band": ".467-.951",
+     "value": ".706",
+     "band": ".495-.917",
      "flag": "experimental"
     }
    ],
@@ -4593,19 +4593,19 @@
     {
      "label": "Proj A K%",
      "value": "25.2%",
-     "band": "15-35%",
+     "band": "16-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.7%",
-     "band": "6-18%",
+     "value": "12.1%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".709",
-     "band": ".467-.951",
+     "value": ".706",
+     "band": ".495-.917",
      "flag": "experimental"
     }
    ],
@@ -4617,19 +4617,19 @@
     {
      "label": "Proj A K%",
      "value": "25.5%",
-     "band": "16-36%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "6-18%",
+     "value": "12.4%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".709",
-     "band": ".466-.951",
+     "value": ".706",
+     "band": ".494-.917",
      "flag": "experimental"
     }
    ],
@@ -4640,20 +4640,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "31.4%",
-     "band": "21-41%",
+     "value": "31.7%",
+     "band": "22-41%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.6%",
-     "band": "4-17%",
+     "value": "11.2%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".709",
-     "band": ".466-.951",
+     "value": ".706",
+     "band": ".494-.917",
      "flag": "experimental"
     }
    ],
@@ -4664,20 +4664,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.3%",
-     "band": "16-36%",
+     "value": "26.4%",
+     "band": "17-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.9%",
-     "band": "5-17%",
+     "value": "11.4%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".719",
-     "band": ".476-.961",
+     "value": ".718",
+     "band": ".507-.930",
      "flag": "experimental"
     }
    ],
@@ -4689,19 +4689,19 @@
     {
      "label": "Proj A K%",
      "value": "24.9%",
-     "band": "15-35%",
+     "band": "16-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "6-18%",
+     "value": "11.9%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".708",
-     "band": ".466-.951",
+     "value": ".705",
+     "band": ".494-.917",
      "flag": "experimental"
     }
    ],
@@ -4712,20 +4712,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.0%",
-     "band": "16-36%",
+     "value": "26.1%",
+     "band": "17-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
+     "value": "12.3%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".708",
-     "band": ".466-.950",
+     "value": ".705",
+     "band": ".493-.916",
      "flag": "experimental"
     }
    ],
@@ -4736,20 +4736,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.0%",
-     "band": "16-36%",
+     "value": "26.1%",
+     "band": "17-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.5%",
+     "value": "14.3%",
      "band": "8-21%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".708",
-     "band": ".466-.950",
+     "value": ".705",
+     "band": ".493-.916",
      "flag": "experimental"
     }
    ],
@@ -4760,20 +4760,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.1%",
-     "band": "17-37%",
+     "value": "27.2%",
+     "band": "18-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
+     "value": "12.3%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".708",
-     "band": ".466-.950",
+     "value": ".705",
+     "band": ".493-.916",
      "flag": "experimental"
     }
    ],
@@ -4784,20 +4784,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "35.9%",
-     "band": "26-46%",
+     "value": "36.4%",
+     "band": "27-46%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.8%",
-     "band": "5-17%",
+     "value": "11.3%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".707",
-     "band": ".465-.949",
+     "value": ".704",
+     "band": ".492-.915",
      "flag": "experimental"
     }
    ],
@@ -4808,20 +4808,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.3%",
-     "band": "17-37%",
+     "value": "27.4%",
+     "band": "18-37%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
+     "value": "12.3%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".706",
-     "band": ".463-.948",
+     "value": ".702",
+     "band": ".490-.913",
      "flag": "experimental"
     }
    ],
@@ -4833,19 +4833,19 @@
     {
      "label": "Proj A K%",
      "value": "23.2%",
-     "band": "13-33%",
+     "band": "14-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.1%",
-     "band": "7-19%",
+     "value": "13.2%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".706",
-     "band": ".464-.948",
+     "value": ".702",
+     "band": ".491-.914",
      "flag": "experimental"
     }
    ],
@@ -4856,20 +4856,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "36.7%",
-     "band": "27-47%",
+     "value": "37.3%",
+     "band": "28-47%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.5%",
-     "band": "4-17%",
+     "value": "11.0%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".706",
-     "band": ".464-.948",
+     "value": ".702",
+     "band": ".491-.914",
      "flag": "experimental"
     }
    ],
@@ -4881,19 +4881,19 @@
     {
      "label": "Proj A K%",
      "value": "23.0%",
-     "band": "13-33%",
+     "band": "14-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "9.7%",
-     "band": "4-16%",
+     "value": "10.4%",
+     "band": "4-17%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".706",
-     "band": ".464-.948",
+     "value": ".702",
+     "band": ".491-.914",
      "flag": "experimental"
     }
    ],
@@ -4904,20 +4904,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "33.3%",
-     "band": "23-43%",
+     "value": "33.7%",
+     "band": "24-43%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.3%",
-     "band": "5-17%",
+     "value": "11.7%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".706",
-     "band": ".464-.948",
+     "value": ".702",
+     "band": ".491-.914",
      "flag": "experimental"
     }
    ],
@@ -4928,20 +4928,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "31.1%",
-     "band": "21-41%",
+     "value": "31.4%",
+     "band": "22-41%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "6-18%",
+     "value": "12.6%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".706",
-     "band": ".463-.948",
+     "value": ".702",
+     "band": ".490-.913",
      "flag": "experimental"
     }
    ],
@@ -4952,20 +4952,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "31.7%",
-     "band": "22-42%",
+     "value": "32.0%",
+     "band": "23-41%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "9.7%",
-     "band": "4-16%",
+     "value": "10.4%",
+     "band": "4-17%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".706",
-     "band": ".463-.948",
+     "value": ".702",
+     "band": ".490-.913",
      "flag": "experimental"
     }
    ],
@@ -4976,20 +4976,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "30.3%",
-     "band": "20-40%",
+     "value": "30.6%",
+     "band": "21-40%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "6-18%",
+     "value": "12.0%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".705",
-     "band": ".463-.947",
+     "value": ".701",
+     "band": ".490-.913",
      "flag": "experimental"
     }
    ],
@@ -5001,19 +5001,19 @@
     {
      "label": "Proj A K%",
      "value": "22.7%",
-     "band": "13-33%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "15.5%",
-     "band": "9-22%",
+     "value": "15.2%",
+     "band": "8-22%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".726",
-     "band": ".483-.968",
+     "value": ".727",
+     "band": ".516-.939",
      "flag": "experimental"
     }
    ],
@@ -5025,19 +5025,19 @@
     {
      "label": "Proj A K%",
      "value": "24.9%",
-     "band": "15-35%",
+     "band": "16-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.3%",
-     "band": "5-17%",
+     "value": "11.7%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".704",
-     "band": ".462-.946",
+     "value": ".700",
+     "band": ".488-.911",
      "flag": "experimental"
     }
    ],
@@ -5048,20 +5048,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.0%",
-     "band": "17-37%",
+     "value": "27.1%",
+     "band": "18-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.5%",
+     "value": "11.9%",
      "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".704",
-     "band": ".461-.946",
+     "value": ".699",
+     "band": ".488-.911",
      "flag": "experimental"
     }
    ],
@@ -5072,20 +5072,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.6%",
-     "band": "20-40%",
+     "value": "29.9%",
+     "band": "21-39%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "6-18%",
+     "value": "12.5%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".704",
-     "band": ".461-.946",
+     "value": ".699",
+     "band": ".488-.911",
      "flag": "experimental"
     }
    ],
@@ -5097,19 +5097,19 @@
     {
      "label": "Proj A K%",
      "value": "23.9%",
-     "band": "14-34%",
+     "band": "15-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.3%",
-     "band": "6-18%",
+     "value": "12.5%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".704",
-     "band": ".461-.946",
+     "value": ".699",
+     "band": ".488-.911",
      "flag": "experimental"
     }
    ],
@@ -5120,20 +5120,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.7%",
-     "band": "13-33%",
+     "value": "22.6%",
+     "band": "13-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.9%",
-     "band": "7-19%",
+     "value": "13.0%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".743",
-     "band": ".500-.985",
+     "value": ".749",
+     "band": ".537-.960",
      "flag": "experimental"
     }
    ],
@@ -5144,8 +5144,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.8%",
-     "band": "20-40%",
+     "value": "30.0%",
+     "band": "21-39%",
      "flag": null
     },
     {
@@ -5156,8 +5156,8 @@
     },
     {
      "label": "Proj A OPS",
-     "value": ".703",
-     "band": ".461-.945",
+     "value": ".698",
+     "band": ".487-.910",
      "flag": "experimental"
     }
    ],
@@ -5168,20 +5168,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "33.0%",
-     "band": "23-43%",
+     "value": "33.3%",
+     "band": "24-43%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.9%",
-     "band": "6-18%",
+     "value": "12.2%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".703",
-     "band": ".461-.945",
+     "value": ".698",
+     "band": ".487-.910",
      "flag": "experimental"
     }
    ],
@@ -5193,19 +5193,19 @@
     {
      "label": "Proj A K%",
      "value": "24.9%",
-     "band": "15-35%",
+     "band": "16-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.2%",
-     "band": "6-18%",
+     "value": "12.5%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".703",
-     "band": ".460-.945",
+     "value": ".698",
+     "band": ".487-.910",
      "flag": "experimental"
     }
    ],
@@ -5216,20 +5216,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.1%",
-     "band": "18-38%",
+     "value": "28.3%",
+     "band": "19-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
+     "value": "11.8%",
      "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".702",
-     "band": ".459-.944",
+     "value": ".697",
+     "band": ".485-.908",
      "flag": "experimental"
     }
    ],
@@ -5240,20 +5240,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.5%",
-     "band": "16-37%",
+     "value": "26.6%",
+     "band": "17-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.4%",
-     "band": "4-16%",
+     "value": "11.0%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".702",
-     "band": ".460-.944",
+     "value": ".697",
+     "band": ".486-.909",
      "flag": "experimental"
     }
    ],
@@ -5264,20 +5264,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.6%",
-     "band": "17-37%",
+     "value": "26.7%",
+     "band": "18-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
+     "value": "11.8%",
      "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".702",
-     "band": ".459-.944",
+     "value": ".697",
+     "band": ".485-.908",
      "flag": "experimental"
     }
    ],
@@ -5288,20 +5288,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "33.6%",
-     "band": "24-44%",
+     "value": "34.0%",
+     "band": "25-43%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.6%",
-     "band": "4-17%",
+     "value": "11.1%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".701",
-     "band": ".459-.943",
+     "value": ".696",
+     "band": ".484-.907",
      "flag": "experimental"
     }
    ],
@@ -5312,20 +5312,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "29.6%",
-     "band": "20-40%",
+     "value": "29.8%",
+     "band": "20-39%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
+     "value": "12.3%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".701",
-     "band": ".459-.943",
+     "value": ".696",
+     "band": ".484-.907",
      "flag": "experimental"
     }
    ],
@@ -5336,20 +5336,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "31.0%",
-     "band": "21-41%",
+     "value": "31.3%",
+     "band": "22-41%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "13.9%",
-     "band": "8-20%",
+     "band": "7-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".701",
-     "band": ".459-.943",
+     "value": ".696",
+     "band": ".484-.907",
      "flag": "experimental"
     }
    ],
@@ -5360,20 +5360,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.0%",
-     "band": "17-37%",
+     "value": "27.1%",
+     "band": "18-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.0%",
-     "band": "6-18%",
+     "value": "12.3%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".701",
-     "band": ".459-.943",
+     "value": ".696",
+     "band": ".484-.907",
      "flag": "experimental"
     }
    ],
@@ -5384,20 +5384,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.8%",
-     "band": "16-36%",
+     "value": "25.9%",
+     "band": "17-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.1%",
-     "band": "5-17%",
+     "value": "11.6%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".699",
-     "band": ".457-.942",
+     "value": ".694",
+     "band": ".482-.905",
      "flag": "experimental"
     }
    ],
@@ -5409,19 +5409,19 @@
     {
      "label": "Proj A K%",
      "value": "26.3%",
-     "band": "16-36%",
+     "band": "17-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.7%",
-     "band": "6-18%",
+     "value": "12.0%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".699",
-     "band": ".457-.941",
+     "value": ".693",
+     "band": ".482-.905",
      "flag": "experimental"
     }
    ],
@@ -5432,20 +5432,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.8%",
-     "band": "16-36%",
+     "value": "25.9%",
+     "band": "17-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.7%",
-     "band": "6-18%",
+     "value": "12.0%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".699",
-     "band": ".457-.941",
+     "value": ".693",
+     "band": ".482-.905",
      "flag": "experimental"
     }
    ],
@@ -5457,19 +5457,19 @@
     {
      "label": "Proj A K%",
      "value": "23.6%",
-     "band": "14-34%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.4%",
-     "band": "4-17%",
+     "value": "11.0%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".698",
-     "band": ".456-.940",
+     "value": ".692",
+     "band": ".481-.904",
      "flag": "experimental"
     }
    ],
@@ -5480,20 +5480,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "30.3%",
-     "band": "20-40%",
+     "value": "30.6%",
+     "band": "21-40%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.7%",
-     "band": "7-19%",
+     "value": "12.9%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".696",
-     "band": ".454-.938",
+     "value": ".689",
+     "band": ".478-.901",
      "flag": "experimental"
     }
    ],
@@ -5504,20 +5504,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.4%",
-     "band": "18-38%",
+     "value": "28.6%",
+     "band": "19-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.8%",
-     "band": "6-18%",
+     "value": "12.1%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".695",
-     "band": ".453-.937",
+     "value": ".688",
+     "band": ".477-.900",
      "flag": "experimental"
     }
    ],
@@ -5529,19 +5529,19 @@
     {
      "label": "Proj A K%",
      "value": "24.8%",
-     "band": "15-35%",
+     "band": "16-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "9.9%",
-     "band": "4-16%",
+     "value": "10.6%",
+     "band": "4-17%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".694",
-     "band": ".452-.936",
+     "value": ".687",
+     "band": ".476-.899",
      "flag": "experimental"
     }
    ],
@@ -5553,19 +5553,19 @@
     {
      "label": "Proj A K%",
      "value": "25.2%",
-     "band": "15-35%",
+     "band": "16-34%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.6%",
-     "band": "4-17%",
+     "value": "11.1%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".694",
-     "band": ".452-.936",
+     "value": ".687",
+     "band": ".476-.899",
      "flag": "experimental"
     }
    ],
@@ -5576,20 +5576,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.9%",
-     "band": "13-33%",
+     "value": "22.8%",
+     "band": "14-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.0%",
-     "band": "7-19%",
+     "value": "13.1%",
+     "band": "6-20%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".693",
-     "band": ".451-.935",
+     "value": ".686",
+     "band": ".474-.897",
      "flag": "experimental"
     }
    ],
@@ -5600,20 +5600,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "32.4%",
-     "band": "22-42%",
+     "value": "32.8%",
+     "band": "24-42%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.9%",
-     "band": "5-17%",
+     "value": "11.4%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".693",
-     "band": ".450-.935",
+     "value": ".685",
+     "band": ".474-.897",
      "flag": "experimental"
     }
    ],
@@ -5624,20 +5624,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.6%",
-     "band": "14-34%",
+     "value": "23.5%",
+     "band": "14-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.5%",
-     "band": "4-17%",
+     "value": "11.1%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".692",
-     "band": ".449-.934",
+     "value": ".684",
+     "band": ".473-.896",
      "flag": "experimental"
     }
    ],
@@ -5648,20 +5648,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.1%",
-     "band": "18-38%",
+     "value": "28.3%",
+     "band": "19-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.2%",
-     "band": "5-17%",
+     "value": "11.6%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".689",
-     "band": ".447-.932",
+     "value": ".681",
+     "band": ".470-.893",
      "flag": "experimental"
     }
    ],
@@ -5672,20 +5672,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "32.7%",
-     "band": "23-43%",
+     "value": "33.1%",
+     "band": "24-42%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.7%",
-     "band": "6-18%",
+     "value": "12.0%",
+     "band": "5-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".689",
-     "band": ".447-.932",
+     "value": ".681",
+     "band": ".470-.893",
      "flag": "experimental"
     }
    ],
@@ -5696,20 +5696,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "35.9%",
-     "band": "26-46%",
+     "value": "36.4%",
+     "band": "27-46%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.7%",
-     "band": "4-17%",
+     "value": "11.2%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".689",
-     "band": ".447-.931",
+     "value": ".680",
+     "band": ".469-.892",
      "flag": "experimental"
     }
    ],
@@ -5721,19 +5721,19 @@
     {
      "label": "Proj A K%",
      "value": "25.5%",
-     "band": "16-36%",
+     "band": "16-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.6%",
-     "band": "4-17%",
+     "value": "11.1%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".687",
-     "band": ".445-.929",
+     "value": ".678",
+     "band": ".467-.889",
      "flag": "experimental"
     }
    ],
@@ -5744,20 +5744,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "34.5%",
-     "band": "24-44%",
+     "value": "34.9%",
+     "band": "26-44%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.0%",
-     "band": "5-17%",
+     "value": "11.5%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".687",
-     "band": ".445-.929",
+     "value": ".678",
+     "band": ".467-.889",
      "flag": "experimental"
     }
    ],
@@ -5768,20 +5768,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "33.7%",
-     "band": "24-44%",
+     "value": "34.1%",
+     "band": "25-43%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.2%",
-     "band": "5-17%",
+     "value": "11.6%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".686",
-     "band": ".444-.928",
+     "value": ".677",
+     "band": ".465-.888",
      "flag": "experimental"
     }
    ],
@@ -5792,20 +5792,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "36.2%",
-     "band": "26-46%",
+     "value": "36.8%",
+     "band": "28-46%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.1%",
-     "band": "6-18%",
+     "value": "12.4%",
+     "band": "6-19%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".683",
-     "band": ".441-.925",
+     "value": ".673",
+     "band": ".462-.885",
      "flag": "experimental"
     }
    ],
@@ -5816,20 +5816,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "33.0%",
-     "band": "23-43%",
+     "value": "33.4%",
+     "band": "24-43%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "9.7%",
-     "band": "4-16%",
+     "value": "10.4%",
+     "band": "4-17%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".678",
-     "band": ".436-.920",
+     "value": ".667",
+     "band": ".455-.878",
      "flag": "experimental"
     }
    ],
@@ -5840,20 +5840,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "31.7%",
-     "band": "22-42%",
+     "value": "32.0%",
+     "band": "23-41%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.0%",
-     "band": "5-17%",
+     "value": "11.5%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".677",
-     "band": ".435-.919",
+     "value": ".665",
+     "band": ".454-.877",
      "flag": "experimental"
     }
    ],
@@ -5864,20 +5864,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "40.4%",
-     "band": "30-50%",
+     "value": "41.1%",
+     "band": "32-50%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.5%",
-     "band": "4-17%",
+     "value": "11.1%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".675",
-     "band": ".433-.917",
+     "value": ".663",
+     "band": ".451-.874",
      "flag": "experimental"
     }
    ],
@@ -5888,20 +5888,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "35.7%",
-     "band": "26-46%",
+     "value": "36.2%",
+     "band": "27-46%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.6%",
-     "band": "4-17%",
+     "value": "11.1%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".665",
-     "band": ".423-.908",
+     "value": ".651",
+     "band": ".439-.862",
      "flag": "experimental"
     }
    ],
@@ -5912,20 +5912,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.1%",
-     "band": "11-31%",
+     "value": "21.0%",
+     "band": "12-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.8%",
-     "band": "5-17%",
+     "value": "11.3%",
+     "band": "5-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".733",
-     "band": ".491-.975",
+     "value": ".737",
+     "band": ".525-.948",
      "flag": "experimental"
     }
    ],
@@ -5936,20 +5936,20 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.5%",
-     "band": "18-38%",
+     "value": "28.6%",
+     "band": "19-38%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "9.5%",
-     "band": "3-16%",
+     "value": "10.2%",
+     "band": "4-17%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".722",
-     "band": ".480-.965",
+     "value": ".723",
+     "band": ".512-.935",
      "flag": "experimental"
     }
    ],
@@ -5961,19 +5961,19 @@
     {
      "label": "Proj A K%",
      "value": "26.5%",
-     "band": "16-36%",
+     "band": "17-36%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.7%",
-     "band": "4-17%",
+     "value": "11.2%",
+     "band": "4-18%",
      "flag": "low confidence"
     },
     {
      "label": "Proj A OPS",
-     "value": ".706",
-     "band": ".464-.948",
+     "value": ".702",
+     "band": ".491-.914",
      "flag": "experimental"
     }
    ],
@@ -5984,7 +5984,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.2%",
+     "value": "26.0%",
      "band": "19-33%",
      "flag": null
     },
@@ -6026,7 +6026,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "11.3%",
+     "value": "11.4%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -6038,7 +6038,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.1%",
+     "value": "25.9%",
      "band": "19-33%",
      "flag": null
     },
@@ -6056,8 +6056,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.5%",
-     "band": "16-30%",
+     "value": "23.4%",
+     "band": "17-30%",
      "flag": null
     },
     {
@@ -6080,7 +6080,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "10.9%",
+     "value": "11.0%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -6099,7 +6099,7 @@
     {
      "label": "Proj A BB%",
      "value": "10.3%",
-     "band": "5-15%",
+     "band": "5-16%",
      "flag": "low confidence"
     }
    ],
@@ -6110,7 +6110,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.4%",
+     "value": "25.2%",
      "band": "18-32%",
      "flag": null
     },
@@ -6128,8 +6128,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.6%",
-     "band": "18-32%",
+     "value": "24.5%",
+     "band": "18-31%",
      "flag": null
     },
     {
@@ -6146,7 +6146,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.0%",
+     "value": "23.9%",
      "band": "17-31%",
      "flag": null
     },
@@ -6170,8 +6170,8 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "10.5%",
-     "band": "6-16%",
+     "value": "10.6%",
+     "band": "5-16%",
      "flag": "low confidence"
     }
    ],
@@ -6200,7 +6200,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.8%",
+     "value": "24.7%",
      "band": "18-32%",
      "flag": null
     },
@@ -6236,7 +6236,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.1%",
+     "value": "24.9%",
      "band": "18-32%",
      "flag": null
     },
@@ -6254,7 +6254,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.1%",
+     "value": "24.9%",
      "band": "18-32%",
      "flag": null
     },
@@ -6272,7 +6272,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.3%",
+     "value": "24.2%",
      "band": "17-31%",
      "flag": null
     },
@@ -6290,13 +6290,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.5%",
+     "value": "25.4%",
      "band": "19-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.9%",
+     "value": "12.0%",
      "band": "7-17%",
      "flag": "low confidence"
     }
@@ -6308,7 +6308,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.1%",
+     "value": "25.0%",
      "band": "18-32%",
      "flag": null
     },
@@ -6326,8 +6326,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.7%",
-     "band": "17-31%",
+     "value": "23.6%",
+     "band": "17-30%",
      "flag": null
     },
     {
@@ -6344,13 +6344,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.3%",
+     "value": "25.1%",
      "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.1%",
+     "value": "11.2%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -6362,7 +6362,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.0%",
+     "value": "25.8%",
      "band": "19-33%",
      "flag": null
     },
@@ -6380,7 +6380,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.1%",
+     "value": "25.0%",
      "band": "18-32%",
      "flag": null
     },
@@ -6398,7 +6398,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.8%",
+     "value": "24.7%",
      "band": "18-32%",
      "flag": null
     },
@@ -6416,14 +6416,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.6%",
-     "band": "18-32%",
+     "value": "24.5%",
+     "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
-     "band": "6-16%",
+     "value": "11.5%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -6441,7 +6441,7 @@
     {
      "label": "Proj A BB%",
      "value": "11.7%",
-     "band": "7-17%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -6452,13 +6452,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.0%",
+     "value": "25.8%",
      "band": "19-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "9.7%",
+     "value": "9.8%",
      "band": "5-15%",
      "flag": "low confidence"
     }
@@ -6470,13 +6470,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.3%",
+     "value": "25.1%",
      "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.2%",
+     "value": "12.3%",
      "band": "7-17%",
      "flag": "low confidence"
     }
@@ -6506,13 +6506,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.3%",
+     "value": "24.2%",
      "band": "17-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.0%",
+     "value": "11.1%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -6524,13 +6524,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.4%",
+     "value": "24.3%",
      "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.1%",
+     "value": "13.2%",
      "band": "8-18%",
      "flag": "low confidence"
     }
@@ -6542,14 +6542,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.4%",
+     "value": "25.3%",
      "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.3%",
-     "band": "5-15%",
+     "value": "10.4%",
+     "band": "5-16%",
      "flag": "low confidence"
     }
    ],
@@ -6560,7 +6560,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.2%",
+     "value": "25.1%",
      "band": "18-32%",
      "flag": null
     },
@@ -6578,7 +6578,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.2%",
+     "value": "21.3%",
      "band": "14-28%",
      "flag": null
     },
@@ -6596,14 +6596,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.1%",
+     "value": "24.0%",
      "band": "17-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.5%",
-     "band": "8-18%",
+     "value": "12.6%",
+     "band": "7-18%",
      "flag": "low confidence"
     }
    ],
@@ -6614,7 +6614,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.4%",
+     "value": "27.1%",
      "band": "20-34%",
      "flag": null
     },
@@ -6632,7 +6632,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.0%",
+     "value": "24.9%",
      "band": "18-32%",
      "flag": null
     },
@@ -6668,7 +6668,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.1%",
+     "value": "25.9%",
      "band": "19-33%",
      "flag": null
     },
@@ -6686,13 +6686,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.6%",
-     "band": "18-32%",
+     "value": "24.5%",
+     "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.0%",
+     "value": "12.1%",
      "band": "7-17%",
      "flag": "low confidence"
     }
@@ -6704,13 +6704,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.2%",
+     "value": "26.0%",
      "band": "19-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.8%",
+     "value": "11.9%",
      "band": "7-17%",
      "flag": "low confidence"
     }
@@ -6740,14 +6740,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.9%",
+     "value": "23.8%",
      "band": "17-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
-     "band": "6-16%",
+     "value": "11.5%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -6758,7 +6758,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.2%",
+     "value": "25.1%",
      "band": "18-32%",
      "flag": null
     },
@@ -6782,8 +6782,8 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
-     "band": "6-16%",
+     "value": "11.5%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -6794,7 +6794,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.0%",
+     "value": "24.9%",
      "band": "18-32%",
      "flag": null
     },
@@ -6812,14 +6812,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.6%",
-     "band": "18-32%",
+     "value": "24.5%",
+     "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
-     "band": "6-16%",
+     "value": "11.5%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -6830,8 +6830,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.9%",
-     "band": "19-33%",
+     "value": "25.7%",
+     "band": "19-32%",
      "flag": null
     },
     {
@@ -6848,13 +6848,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.0%",
+     "value": "23.9%",
      "band": "17-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.2%",
+     "value": "13.3%",
      "band": "8-18%",
      "flag": "low confidence"
     }
@@ -6866,7 +6866,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.1%",
+     "value": "25.9%",
      "band": "19-33%",
      "flag": null
     },
@@ -6884,7 +6884,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.4%",
+     "value": "25.2%",
      "band": "18-32%",
      "flag": null
     },
@@ -6926,7 +6926,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "12.0%",
+     "value": "12.1%",
      "band": "7-17%",
      "flag": "low confidence"
     }
@@ -6938,8 +6938,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.6%",
-     "band": "18-32%",
+     "value": "24.5%",
+     "band": "18-31%",
      "flag": null
     },
     {
@@ -6956,7 +6956,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.1%",
+     "value": "24.0%",
      "band": "17-31%",
      "flag": null
     },
@@ -6974,13 +6974,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.4%",
-     "band": "20-33%",
+     "value": "26.2%",
+     "band": "19-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.9%",
+     "value": "12.0%",
      "band": "7-17%",
      "flag": "low confidence"
     }
@@ -6992,7 +6992,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.1%",
+     "value": "24.9%",
      "band": "18-32%",
      "flag": null
     },
@@ -7010,13 +7010,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.3%",
+     "value": "24.2%",
      "band": "17-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.2%",
+     "value": "10.3%",
      "band": "5-15%",
      "flag": "low confidence"
     }
@@ -7028,13 +7028,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.7%",
-     "band": "18-32%",
+     "value": "24.6%",
+     "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.1%",
+     "value": "11.2%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -7046,7 +7046,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.1%",
+     "value": "24.9%",
      "band": "18-32%",
      "flag": null
     },
@@ -7064,8 +7064,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.7%",
-     "band": "17-31%",
+     "value": "23.6%",
+     "band": "17-30%",
      "flag": null
     },
     {
@@ -7082,14 +7082,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.7%",
-     "band": "19-33%",
+     "value": "25.5%",
+     "band": "19-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.3%",
-     "band": "5-15%",
+     "value": "10.4%",
+     "band": "5-16%",
      "flag": "low confidence"
     }
    ],
@@ -7100,7 +7100,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.4%",
+     "value": "25.2%",
      "band": "18-32%",
      "flag": null
     },
@@ -7118,7 +7118,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.8%",
+     "value": "24.7%",
      "band": "18-32%",
      "flag": null
     },
@@ -7142,7 +7142,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "11.9%",
+     "value": "12.0%",
      "band": "7-17%",
      "flag": "low confidence"
     }
@@ -7172,7 +7172,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.3%",
+     "value": "24.2%",
      "band": "17-31%",
      "flag": null
     },
@@ -7196,8 +7196,8 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "7-17%",
+     "value": "11.7%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -7208,7 +7208,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.0%",
+     "value": "23.9%",
      "band": "17-31%",
      "flag": null
     },
@@ -7226,7 +7226,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.3%",
+     "value": "24.2%",
      "band": "17-31%",
      "flag": null
     },
@@ -7244,8 +7244,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.7%",
-     "band": "17-31%",
+     "value": "23.6%",
+     "band": "17-30%",
      "flag": null
     },
     {
@@ -7262,7 +7262,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.1%",
+     "value": "24.0%",
      "band": "17-31%",
      "flag": null
     },
@@ -7280,7 +7280,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.0%",
+     "value": "23.9%",
      "band": "17-31%",
      "flag": null
     },
@@ -7298,7 +7298,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.4%",
+     "value": "24.3%",
      "band": "18-31%",
      "flag": null
     },
@@ -7316,7 +7316,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.3%",
+     "value": "25.2%",
      "band": "18-32%",
      "flag": null
     },
@@ -7335,7 +7335,7 @@
     {
      "label": "Proj A K%",
      "value": "23.7%",
-     "band": "17-31%",
+     "band": "17-30%",
      "flag": null
     },
     {
@@ -7352,14 +7352,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.7%",
-     "band": "19-33%",
+     "value": "25.5%",
+     "band": "19-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "11.4%",
-     "band": "6-16%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -7376,7 +7376,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "10.0%",
+     "value": "10.1%",
      "band": "5-15%",
      "flag": "low confidence"
     }
@@ -7388,14 +7388,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.2%",
+     "value": "26.0%",
      "band": "19-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "7-17%",
+     "value": "11.7%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -7406,7 +7406,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.8%",
+     "value": "24.7%",
      "band": "18-32%",
      "flag": null
     },
@@ -7424,7 +7424,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.5%",
+     "value": "25.4%",
      "band": "19-32%",
      "flag": null
     },
@@ -7442,13 +7442,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.8%",
-     "band": "20-34%",
+     "value": "26.6%",
+     "band": "20-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.9%",
+     "value": "11.0%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -7478,8 +7478,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.7%",
-     "band": "21-35%",
+     "value": "27.4%",
+     "band": "21-34%",
      "flag": null
     },
     {
@@ -7496,14 +7496,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.9%",
+     "value": "24.8%",
      "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
-     "band": "6-16%",
+     "value": "11.5%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -7532,13 +7532,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.8%",
-     "band": "17-31%",
+     "value": "23.7%",
+     "band": "17-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.2%",
+     "value": "11.3%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -7550,7 +7550,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.4%",
+     "value": "25.2%",
      "band": "18-32%",
      "flag": null
     },
@@ -7568,8 +7568,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.6%",
-     "band": "18-32%",
+     "value": "24.5%",
+     "band": "18-31%",
      "flag": null
     },
     {
@@ -7586,7 +7586,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.1%",
+     "value": "25.0%",
      "band": "18-32%",
      "flag": null
     },
@@ -7604,7 +7604,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.1%",
+     "value": "25.0%",
      "band": "18-32%",
      "flag": null
     },
@@ -7628,7 +7628,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "17.9%",
+     "value": "18.0%",
      "band": "13-23%",
      "flag": "low confidence"
     }
@@ -7640,7 +7640,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.0%",
+     "value": "24.9%",
      "band": "18-32%",
      "flag": null
     },
@@ -7676,13 +7676,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.1%",
+     "value": "24.0%",
      "band": "17-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.0%",
+     "value": "13.1%",
      "band": "8-18%",
      "flag": "low confidence"
     }
@@ -7694,7 +7694,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.3%",
+     "value": "24.2%",
      "band": "17-31%",
      "flag": null
     },
@@ -7712,14 +7712,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.0%",
+     "value": "23.9%",
      "band": "17-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "12.3%",
-     "band": "7-17%",
+     "band": "7-18%",
      "flag": "low confidence"
     }
    ],
@@ -7730,7 +7730,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.8%",
+     "value": "24.6%",
      "band": "18-32%",
      "flag": null
     },
@@ -7748,7 +7748,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.4%",
+     "value": "24.3%",
      "band": "18-31%",
      "flag": null
     },
@@ -7766,8 +7766,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.5%",
-     "band": "19-32%",
+     "value": "25.3%",
+     "band": "18-32%",
      "flag": null
     },
     {
@@ -7802,13 +7802,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.8%",
-     "band": "19-33%",
+     "value": "25.6%",
+     "band": "19-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.3%",
+     "value": "11.4%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -7844,8 +7844,8 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "16.3%",
-     "band": "11-21%",
+     "value": "16.4%",
+     "band": "11-22%",
      "flag": "low confidence"
     }
    ],
@@ -7856,13 +7856,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.6%",
+     "value": "25.4%",
      "band": "19-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.8%",
+     "value": "12.9%",
      "band": "8-18%",
      "flag": "low confidence"
     }
@@ -7875,13 +7875,13 @@
     {
      "label": "Proj A K%",
      "value": "23.4%",
-     "band": "16-30%",
+     "band": "17-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
-     "band": "6-16%",
+     "value": "11.5%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -7892,7 +7892,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.6%",
+     "value": "25.4%",
      "band": "19-32%",
      "flag": null
     },
@@ -7910,7 +7910,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.5%",
+     "value": "25.4%",
      "band": "19-32%",
      "flag": null
     },
@@ -7934,7 +7934,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "11.3%",
+     "value": "11.4%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -7946,13 +7946,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.0%",
+     "value": "24.9%",
      "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.9%",
+     "value": "12.0%",
      "band": "7-17%",
      "flag": "low confidence"
     }
@@ -7964,13 +7964,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.5%",
+     "value": "24.4%",
      "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "14.9%",
+     "value": "15.0%",
      "band": "10-20%",
      "flag": "low confidence"
     }
@@ -7982,7 +7982,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.3%",
+     "value": "25.2%",
      "band": "18-32%",
      "flag": null
     },
@@ -8000,13 +8000,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.5%",
-     "band": "19-32%",
+     "value": "25.3%",
+     "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.1%",
+     "value": "11.2%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -8018,13 +8018,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.4%",
+     "value": "24.3%",
      "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.1%",
+     "value": "11.2%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -8036,7 +8036,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.2%",
+     "value": "24.1%",
      "band": "17-31%",
      "flag": null
     },
@@ -8054,7 +8054,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.2%",
+     "value": "24.1%",
      "band": "17-31%",
      "flag": null
     },
@@ -8078,7 +8078,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "11.0%",
+     "value": "11.1%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -8090,8 +8090,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.7%",
-     "band": "18-32%",
+     "value": "24.6%",
+     "band": "18-31%",
      "flag": null
     },
     {
@@ -8108,7 +8108,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.1%",
+     "value": "24.9%",
      "band": "18-32%",
      "flag": null
     },
@@ -8126,8 +8126,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.8%",
-     "band": "19-33%",
+     "value": "25.6%",
+     "band": "19-32%",
      "flag": null
     },
     {
@@ -8144,7 +8144,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.2%",
+     "value": "24.1%",
      "band": "17-31%",
      "flag": null
     },
@@ -8162,7 +8162,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.4%",
+     "value": "24.3%",
      "band": "18-31%",
      "flag": null
     },
@@ -8181,7 +8181,7 @@
     {
      "label": "Proj A K%",
      "value": "23.7%",
-     "band": "17-31%",
+     "band": "17-30%",
      "flag": null
     },
     {
@@ -8198,7 +8198,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.8%",
+     "value": "24.7%",
      "band": "18-32%",
      "flag": null
     },
@@ -8216,13 +8216,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.8%",
-     "band": "17-31%",
+     "value": "23.7%",
+     "band": "17-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.3%",
+     "value": "11.4%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -8252,8 +8252,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.9%",
-     "band": "19-33%",
+     "value": "25.7%",
+     "band": "19-32%",
      "flag": null
     },
     {
@@ -8288,13 +8288,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.2%",
+     "value": "21.3%",
      "band": "14-28%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "18.5%",
+     "value": "18.6%",
      "band": "14-24%",
      "flag": "low confidence"
     }
@@ -8306,13 +8306,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.2%",
+     "value": "25.1%",
      "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.9%",
+     "value": "12.0%",
      "band": "7-17%",
      "flag": "low confidence"
     }
@@ -8324,7 +8324,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.6%",
+     "value": "25.4%",
      "band": "19-32%",
      "flag": null
     },
@@ -8360,8 +8360,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.6%",
-     "band": "18-32%",
+     "value": "24.5%",
+     "band": "18-31%",
      "flag": null
     },
     {
@@ -8396,13 +8396,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.7%",
-     "band": "18-32%",
+     "value": "24.5%",
+     "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.7%",
+     "value": "11.8%",
      "band": "7-17%",
      "flag": "low confidence"
     }
@@ -8420,7 +8420,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "11.8%",
+     "value": "11.9%",
      "band": "7-17%",
      "flag": "low confidence"
     }
@@ -8432,13 +8432,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.5%",
-     "band": "16-30%",
+     "value": "22.6%",
+     "band": "16-29%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.3%",
+     "value": "11.4%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -8450,14 +8450,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.3%",
+     "value": "24.2%",
      "band": "17-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "10.4%",
-     "band": "5-15%",
+     "band": "5-16%",
      "flag": "low confidence"
     }
    ],
@@ -8474,7 +8474,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "13.0%",
+     "value": "13.1%",
      "band": "8-18%",
      "flag": "low confidence"
     }
@@ -8492,7 +8492,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "11.3%",
+     "value": "11.4%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -8510,7 +8510,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "11.1%",
+     "value": "11.2%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -8522,14 +8522,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.8%",
+     "value": "24.7%",
      "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "11.5%",
-     "band": "6-16%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -8540,13 +8540,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.5%",
+     "value": "24.4%",
      "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.2%",
+     "value": "10.3%",
      "band": "5-15%",
      "flag": "low confidence"
     }
@@ -8565,7 +8565,7 @@
     {
      "label": "Proj A BB%",
      "value": "10.6%",
-     "band": "6-16%",
+     "band": "5-16%",
      "flag": "low confidence"
     }
    ],
@@ -8576,7 +8576,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.4%",
+     "value": "24.3%",
      "band": "18-31%",
      "flag": null
     },
@@ -8594,7 +8594,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.8%",
+     "value": "24.6%",
      "band": "18-32%",
      "flag": null
     },
@@ -8618,7 +8618,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "10.9%",
+     "value": "11.0%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -8630,13 +8630,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.8%",
-     "band": "17-31%",
+     "value": "23.7%",
+     "band": "17-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.4%",
+     "value": "10.5%",
      "band": "5-16%",
      "flag": "low confidence"
     }
@@ -8648,8 +8648,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.7%",
-     "band": "19-33%",
+     "value": "25.6%",
+     "band": "19-32%",
      "flag": null
     },
     {
@@ -8666,7 +8666,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.9%",
+     "value": "24.7%",
      "band": "18-32%",
      "flag": null
     },
@@ -8684,14 +8684,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.8%",
+     "value": "21.9%",
      "band": "15-29%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.6%",
-     "band": "7-17%",
+     "value": "11.7%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -8702,7 +8702,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.4%",
+     "value": "23.3%",
      "band": "16-30%",
      "flag": null
     },
@@ -8726,8 +8726,8 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "11.4%",
-     "band": "6-16%",
+     "value": "11.5%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -8738,7 +8738,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.4%",
+     "value": "24.3%",
      "band": "18-31%",
      "flag": null
     },
@@ -8756,13 +8756,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.5%",
+     "value": "24.4%",
      "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.5%",
+     "value": "11.6%",
      "band": "6-17%",
      "flag": "low confidence"
     }
@@ -8810,7 +8810,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.6%",
+     "value": "25.4%",
      "band": "19-32%",
      "flag": null
     },
@@ -8828,13 +8828,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.6%",
-     "band": "20-34%",
+     "value": "26.4%",
+     "band": "20-33%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.6%",
+     "value": "12.7%",
      "band": "8-18%",
      "flag": "low confidence"
     }
@@ -8846,7 +8846,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.2%",
+     "value": "25.1%",
      "band": "18-32%",
      "flag": null
     },
@@ -8864,13 +8864,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.3%",
+     "value": "24.2%",
      "band": "17-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "9.9%",
+     "value": "10.0%",
      "band": "5-15%",
      "flag": "low confidence"
     }
@@ -8882,7 +8882,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.5%",
+     "value": "25.4%",
      "band": "19-32%",
      "flag": null
     },
@@ -8900,7 +8900,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.5%",
+     "value": "25.3%",
      "band": "18-32%",
      "flag": null
     },
@@ -8918,7 +8918,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.3%",
+     "value": "25.1%",
      "band": "18-32%",
      "flag": null
     },
@@ -8936,8 +8936,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.7%",
-     "band": "18-32%",
+     "value": "24.6%",
+     "band": "18-31%",
      "flag": null
     },
     {
@@ -8954,7 +8954,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.6%",
+     "value": "25.4%",
      "band": "19-32%",
      "flag": null
     },
@@ -8972,13 +8972,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.8%",
-     "band": "17-31%",
+     "value": "23.7%",
+     "band": "17-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.2%",
+     "value": "11.3%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -9008,14 +9008,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.9%",
-     "band": "19-33%",
+     "value": "25.7%",
+     "band": "19-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "11.4%",
-     "band": "6-16%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -9032,8 +9032,8 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "10.3%",
-     "band": "5-15%",
+     "value": "10.4%",
+     "band": "5-16%",
      "flag": "low confidence"
     }
    ],
@@ -9050,7 +9050,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "11.5%",
+     "value": "11.6%",
      "band": "6-17%",
      "flag": "low confidence"
     }
@@ -9063,7 +9063,7 @@
     {
      "label": "Proj A K%",
      "value": "22.6%",
-     "band": "16-30%",
+     "band": "16-29%",
      "flag": null
     },
     {
@@ -9080,8 +9080,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "26.6%",
-     "band": "20-34%",
+     "value": "26.3%",
+     "band": "20-33%",
      "flag": null
     },
     {
@@ -9098,13 +9098,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "28.8%",
-     "band": "22-36%",
+     "value": "28.5%",
+     "band": "22-35%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.8%",
+     "value": "12.9%",
      "band": "8-18%",
      "flag": "low confidence"
     }
@@ -9116,13 +9116,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.4%",
+     "value": "24.3%",
      "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "9.9%",
+     "value": "10.0%",
      "band": "5-15%",
      "flag": "low confidence"
     }
@@ -9152,14 +9152,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.7%",
-     "band": "18-32%",
+     "value": "24.6%",
+     "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "11.4%",
-     "band": "6-16%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -9170,14 +9170,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.2%",
+     "value": "25.0%",
      "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "12.4%",
-     "band": "7-17%",
+     "band": "7-18%",
      "flag": "low confidence"
     }
    ],
@@ -9188,7 +9188,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.3%",
+     "value": "24.2%",
      "band": "17-31%",
      "flag": null
     },
@@ -9206,7 +9206,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.6%",
+     "value": "23.5%",
      "band": "17-30%",
      "flag": null
     },
@@ -9224,7 +9224,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.5%",
+     "value": "24.4%",
      "band": "18-31%",
      "flag": null
     },
@@ -9242,7 +9242,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.9%",
+     "value": "24.8%",
      "band": "18-32%",
      "flag": null
     },
@@ -9260,7 +9260,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.3%",
+     "value": "25.1%",
      "band": "18-32%",
      "flag": null
     },
@@ -9278,7 +9278,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.9%",
+     "value": "23.8%",
      "band": "17-31%",
      "flag": null
     },
@@ -9303,7 +9303,7 @@
     {
      "label": "Proj A BB%",
      "value": "11.4%",
-     "band": "6-16%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -9314,7 +9314,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.9%",
+     "value": "24.8%",
      "band": "18-32%",
      "flag": null
     },
@@ -9368,13 +9368,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.9%",
+     "value": "24.8%",
      "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.7%",
+     "value": "10.8%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -9386,8 +9386,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.6%",
-     "band": "18-32%",
+     "value": "24.5%",
+     "band": "18-31%",
      "flag": null
     },
     {
@@ -9411,7 +9411,7 @@
     {
      "label": "Proj A BB%",
      "value": "12.4%",
-     "band": "7-17%",
+     "band": "7-18%",
      "flag": "low confidence"
     }
    ],
@@ -9422,13 +9422,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.1%",
+     "value": "24.0%",
      "band": "17-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.2%",
+     "value": "11.3%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -9440,7 +9440,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "27.1%",
+     "value": "26.8%",
      "band": "20-34%",
      "flag": null
     },
@@ -9458,7 +9458,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.4%",
+     "value": "25.2%",
      "band": "18-32%",
      "flag": null
     },
@@ -9476,7 +9476,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.2%",
+     "value": "25.1%",
      "band": "18-32%",
      "flag": null
     },
@@ -9500,7 +9500,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "13.3%",
+     "value": "13.4%",
      "band": "8-18%",
      "flag": "low confidence"
     }
@@ -9512,7 +9512,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.3%",
+     "value": "25.2%",
      "band": "18-32%",
      "flag": null
     },
@@ -9530,7 +9530,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.2%",
+     "value": "21.3%",
      "band": "14-28%",
      "flag": null
     },
@@ -9548,13 +9548,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.5%",
-     "band": "19-32%",
+     "value": "25.3%",
+     "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.4%",
+     "value": "10.5%",
      "band": "5-16%",
      "flag": "low confidence"
     }
@@ -9566,8 +9566,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.5%",
-     "band": "19-32%",
+     "value": "25.3%",
+     "band": "18-32%",
      "flag": null
     },
     {
@@ -9584,8 +9584,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.6%",
-     "band": "18-32%",
+     "value": "24.5%",
+     "band": "18-31%",
      "flag": null
     },
     {
@@ -9602,7 +9602,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.5%",
+     "value": "24.4%",
      "band": "18-31%",
      "flag": null
     },
@@ -9620,8 +9620,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.7%",
-     "band": "18-32%",
+     "value": "24.6%",
+     "band": "18-31%",
      "flag": null
     },
     {
@@ -9638,13 +9638,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.1%",
+     "value": "25.0%",
      "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.0%",
+     "value": "11.1%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -9656,8 +9656,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.7%",
-     "band": "17-31%",
+     "value": "23.6%",
+     "band": "17-30%",
      "flag": null
     },
     {
@@ -9692,14 +9692,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.1%",
+     "value": "22.2%",
      "band": "15-29%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.5%",
-     "band": "8-18%",
+     "value": "12.6%",
+     "band": "7-18%",
      "flag": "low confidence"
     }
    ],
@@ -9716,7 +9716,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "10.1%",
+     "value": "10.2%",
      "band": "5-15%",
      "flag": "low confidence"
     }
@@ -9728,7 +9728,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.2%",
+     "value": "24.1%",
      "band": "17-31%",
      "flag": null
     },
@@ -9746,13 +9746,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.6%",
+     "value": "25.5%",
      "band": "19-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "12.1%",
+     "value": "12.2%",
      "band": "7-17%",
      "flag": "low confidence"
     }
@@ -9764,7 +9764,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.9%",
+     "value": "24.7%",
      "band": "18-32%",
      "flag": null
     },
@@ -9783,12 +9783,12 @@
     {
      "label": "Proj A K%",
      "value": "23.7%",
-     "band": "17-31%",
+     "band": "17-30%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.2%",
+     "value": "13.3%",
      "band": "8-18%",
      "flag": "low confidence"
     }
@@ -9800,13 +9800,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.2%",
+     "value": "25.0%",
      "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.0%",
+     "value": "11.1%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -9818,7 +9818,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.3%",
+     "value": "25.1%",
      "band": "18-32%",
      "flag": null
     },
@@ -9836,13 +9836,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.7%",
+     "value": "21.8%",
      "band": "15-29%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.4%",
+     "value": "10.5%",
      "band": "5-16%",
      "flag": "low confidence"
     }
@@ -9860,7 +9860,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "12.6%",
+     "value": "12.7%",
      "band": "8-18%",
      "flag": "low confidence"
     }
@@ -9872,13 +9872,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.3%",
+     "value": "24.2%",
      "band": "17-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "13.1%",
+     "value": "13.2%",
      "band": "8-18%",
      "flag": "low confidence"
     }
@@ -9890,7 +9890,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.5%",
+     "value": "24.4%",
      "band": "18-31%",
      "flag": null
     },
@@ -9908,14 +9908,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.9%",
+     "value": "24.8%",
      "band": "18-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
      "value": "11.5%",
-     "band": "6-16%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -9926,13 +9926,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.7%",
-     "band": "19-33%",
+     "value": "25.5%",
+     "band": "19-32%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.6%",
+     "value": "10.7%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -9944,7 +9944,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.2%",
+     "value": "24.1%",
      "band": "17-31%",
      "flag": null
     },
@@ -9962,7 +9962,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.9%",
+     "value": "23.8%",
      "band": "17-31%",
      "flag": null
     },
@@ -9980,13 +9980,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.0%",
+     "value": "23.9%",
      "band": "17-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "11.2%",
+     "value": "11.3%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -9998,7 +9998,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.0%",
+     "value": "24.9%",
      "band": "18-32%",
      "flag": null
     },
@@ -10022,7 +10022,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "11.0%",
+     "value": "11.1%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -10041,7 +10041,7 @@
     {
      "label": "Proj A BB%",
      "value": "11.5%",
-     "band": "6-16%",
+     "band": "6-17%",
      "flag": "low confidence"
     }
    ],
@@ -10052,13 +10052,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "21.7%",
+     "value": "21.8%",
      "band": "15-29%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "9.9%",
+     "value": "10.0%",
      "band": "5-15%",
      "flag": "low confidence"
     }
@@ -10070,8 +10070,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.5%",
-     "band": "19-32%",
+     "value": "25.3%",
+     "band": "18-32%",
      "flag": null
     },
     {
@@ -10124,7 +10124,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.4%",
+     "value": "24.3%",
      "band": "18-31%",
      "flag": null
     },
@@ -10142,7 +10142,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.2%",
+     "value": "24.1%",
      "band": "17-31%",
      "flag": null
     },
@@ -10160,7 +10160,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.3%",
+     "value": "24.2%",
      "band": "17-31%",
      "flag": null
     },
@@ -10178,7 +10178,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.4%",
+     "value": "24.3%",
      "band": "18-31%",
      "flag": null
     },
@@ -10202,7 +10202,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "13.3%",
+     "value": "13.4%",
      "band": "8-18%",
      "flag": "low confidence"
     }
@@ -10214,8 +10214,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.7%",
-     "band": "18-32%",
+     "value": "24.6%",
+     "band": "18-31%",
      "flag": null
     },
     {
@@ -10232,7 +10232,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "25.1%",
+     "value": "25.0%",
      "band": "18-32%",
      "flag": null
     },
@@ -10250,13 +10250,13 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.5%",
+     "value": "24.4%",
      "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "9.9%",
+     "value": "10.0%",
      "band": "5-15%",
      "flag": "low confidence"
     }
@@ -10268,14 +10268,14 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.5%",
+     "value": "24.4%",
      "band": "18-31%",
      "flag": null
     },
     {
      "label": "Proj A BB%",
-     "value": "10.3%",
-     "band": "5-15%",
+     "value": "10.4%",
+     "band": "5-16%",
      "flag": "low confidence"
     }
    ],
@@ -10286,7 +10286,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "22.7%",
+     "value": "22.8%",
      "band": "16-30%",
      "flag": null
     },
@@ -10310,7 +10310,7 @@
     },
     {
      "label": "Proj A BB%",
-     "value": "10.9%",
+     "value": "11.0%",
      "band": "6-16%",
      "flag": "low confidence"
     }
@@ -10323,7 +10323,7 @@
     {
      "label": "Proj A K%",
      "value": "22.6%",
-     "band": "16-30%",
+     "band": "16-29%",
      "flag": null
     },
     {
@@ -10358,7 +10358,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.9%",
+     "value": "23.8%",
      "band": "17-31%",
      "flag": null
     },
@@ -10376,8 +10376,8 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "23.7%",
-     "band": "17-31%",
+     "value": "23.6%",
+     "band": "17-30%",
      "flag": null
     },
     {
@@ -10394,7 +10394,7 @@
    "headline": [
     {
      "label": "Proj A K%",
-     "value": "24.8%",
+     "value": "24.7%",
      "band": "18-32%",
      "flag": null
     },
@@ -10431,7 +10431,7 @@
     {
      "label": "Proj A K%",
      "value": "23.7%",
-     "band": "17-31%",
+     "band": "17-30%",
      "flag": null
     },
     {

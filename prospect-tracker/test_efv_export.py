@@ -399,7 +399,7 @@ def test_committed_artifact_headline_alias_contract():
 #   to their 77.1% outcome-comp cohort rate, reached with ZERO cohort information. The
 #   cohort lane that chased this directly was a measured NO-SHIP.
 #   Rowcount 9334 -> 9334 (unchanged).
-_GOLDEN_XFV_SHA256 = "1f237b0c8a82355b1ec170f15acd8b816d6c9e65b8775dcb9bc92bc20bbfdf8f"
+_GOLDEN_XFV_SHA256 = "d4ed14096922385680f96825c400033b2e9c9409e1759f909ee5174a80794f0d"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire

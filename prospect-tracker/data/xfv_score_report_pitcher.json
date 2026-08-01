@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-07-31",
+ "generated_at": "2026-08-01",
  "scope": "PITCHERS",
- "n_scored": 1988,
+ "n_scored": 1987,
  "calibration_scale": {
   "a": -0.018,
   "b": 1.073
@@ -20,19 +20,19 @@
   "max_down": -20.5
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.1417,
+  "spearman_adj_vs_consensus_miss": 0.1414,
   "n": 530,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 14282.3,
-  "consensus": 14694.6
+  "xfv": 14240.8,
+  "consensus": 14693.9
  },
  "example_up_adjustments": [
   {
    "player_key": "kevin_ginkel",
    "consensus_fv": 35.2,
-   "xfv_grade": 43.5,
+   "xfv_grade": 43.6,
    "delta": 8.3,
    "realized_war_6yr": 1.94
   },
@@ -68,7 +68,7 @@
    "player_key": "kyle_cody",
    "consensus_fv": 37.8,
    "xfv_grade": 43.5,
-   "delta": 5.7,
+   "delta": 5.8,
    "realized_war_6yr": 0.47
   }
  ],
