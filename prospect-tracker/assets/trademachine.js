@@ -712,7 +712,13 @@ function _renderTBRows() {
     const gradeCol = _tbGradeColor(grade);
     // FV only meaningful for active MiLB prospects - hide for MLB players
     const isProspect = p.status === "active";
-    const fv    = isProspect && p.fv != null ? String(Math.ceil(Number(p.fv))) : "";
+    // eFV leads (round-to-NEAREST), consensus ceil as the fallback. The row
+    // already carried xfv_grade and this column read only the consensus close,
+    // so a prospect the board grades 60 showed 59 on the trade board while the
+    // Grade column beside it was already ranking on xfv_grade.
+    const fv    = !isProspect ? ""
+                : p.xfv_grade != null ? String(Math.round(Number(p.xfv_grade)))
+                : p.fv != null ? String(Math.ceil(Number(p.fv))) : "";
     // Position: trade_values.json now carries fielding-corrected position
     const pos   = escapeHtml(p.position || "");
     const org   = escapeHtml(p.org || "");   // may be empty for some players

@@ -50,6 +50,23 @@ from pal_conversion import PalArm
 _log = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).parent / "data"
+
+
+@functools.lru_cache(maxsize=1)
+def _efv_by_key() -> dict:
+    """{player_key: xfv_grade} off data/xfv.json - the site-wide grade.
+    Empty when the artifact is absent, so callers fall back to consensus."""
+    try:
+        x = json.loads((DATA_DIR / "xfv.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    by = x.get("by_player") if isinstance(x, dict) else None
+    if not isinstance(by, dict):
+        return {}
+    return {k: v.get("xfv_grade") for k, v in by.items()
+            if isinstance(v, dict) and v.get("xfv_grade") is not None}
+
+
 OUT_PATH = DATA_DIR / "pal.json"
 EVAL_PATH = DATA_DIR / "pal_eval.json"
 
@@ -256,8 +273,13 @@ def load_prospect_pitchers(exclude_keys: Optional[set] = None) -> list:
             tools = {k: _num(tools.get(k)) for k in keys if _num(tools.get(k)) is not None}
             if not tools:
                 continue
+            # fvE = the site-wide eFV grade; fv stays as the consensus close so
+            # the card can fall back where eFV abstains. Serving only fv meant
+            # an unlabeled consensus number under a bare "FV" label.
+            efv = _efv_by_key().get(p.player_key)
             out.append({"player_key": p.player_key, "name": p.player_name, "org": p.org,
-                        "position": p.position, "fv": _r(getattr(p, "fv_close", None), 1), "tools": tools})
+                        "position": p.position, "fv": _r(getattr(p, "fv_close", None), 1),
+                        "fvE": _r(efv, 1), "tools": tools})
         except Exception:
             continue
     return out

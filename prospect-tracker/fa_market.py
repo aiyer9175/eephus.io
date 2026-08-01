@@ -493,6 +493,39 @@ def disc_war(path: dict, years: int) -> float:
                for t, w in enumerate(path["war_by_year"][:max(1, int(years))]))
 
 
+# The rational anchor's term is the years stage's CONTINUOUS prediction, but it
+# was rounded to an integer before being discounted, so the economic anchor
+# stepped by a whole season every time the predicted term crossed a half year.
+# That is the same class of defect as the comps cliff and it survived the
+# comps fix: measured on the Chisholm sweep it was still worth 1.31x on the
+# guarantee for a 0.02-WAR step after the anchor was smooth to 1.14x.
+#
+# MEASURED NO-SHIP 2026-07-31. Pro-rating the partial season removes that step
+# (1.31x -> 1.08x) but LOSES Gate 2 on AAV: paired on the identical 1,199
+# forward-chained rows against the kernel anchor alone, AAV MAE 2.8508 ->
+# 2.8894, dMAE +0.0387, CI95 [+0.0126, +0.0630], P(better) 0.003. Guarantee is
+# a tie (+0.0035, CI [-0.058, +0.070]) and years is byte-identical. Continuity
+# is not worth a significant accuracy loss, so the default stays OFF and the
+# residual ~1.3x step at the term boundary is an OPEN item, not a fixed one.
+RATIONAL_TERM_CONTINUOUS = False
+
+
+def _disc_war_term(path: dict, years: float) -> float:
+    """disc_war at a possibly FRACTIONAL term: whole seasons plus the pro-rated
+    share of the next one."""
+    if not RATIONAL_TERM_CONTINUOUS:
+        return disc_war(path, int(round(years)))
+    r = _discount_rate()
+    arr = path["war_by_year"]
+    y = max(1.0, float(years))
+    n = int(y)
+    tot = sum(w / ((1 + r) ** t) for t, w in enumerate(arr[:n]))
+    frac = y - n
+    if frac > 0 and n < len(arr):
+        tot += frac * arr[n] / ((1 + r) ** n)
+    return tot
+
+
 # ============================================================================
 # $/WAR from FA signings only (per winter, regime-aware)
 # ============================================================================
@@ -519,6 +552,152 @@ def dollars_per_war_by_winter(signings: list[dict]) -> dict[int, float]:
         a["n"] += 1
     return {y: v["g"] / v["w"] for y, v in sorted(agg.items())
             if v["w"] > 20 and v["n"] >= 25}
+
+
+# ============================================================================
+# $/WAR breakdowns - what the one headline number is made of
+# ============================================================================
+# The headline series is one ratio per winter over ~100-190 deals. Everything
+# that makes it interesting is inside that ratio: an SP win and an RP win are
+# not the same price, a 1-year deal and a 7-year deal are not the same price,
+# and the price a winter IMPLIED ex ante is not the price it turned out to
+# charge. All three read off the corpus that is already built - no new ingest.
+#
+# TWO SERIES, NEVER CONFLATED:
+#   implied  = NPV guarantee / PROJECTED discounted WAR. Ex ante, what buyers
+#              thought they were paying per win. This is the headline and it is
+#              what every future season escalates against.
+#   realized = paid to date / bWAR to date, off the signings ledger. Ex post,
+#              what the winter actually charged so far. A recent winter's
+#              realized number is NOT comparable to an old one: little of the
+#              money has been paid and little of the WAR banked, so both series
+#              carry `elapsed` and the UI must say so.
+_DPW_MIN_DEALS = 8            # below this a cell is a name, not a rate
+_DPW_MIN_WAR = 4.0            # ...and a tiny denominator makes any ratio
+
+
+def _fine_pos_group(position: str | None) -> str:
+    """SP / RP / C / IF / OF / DH - finer than _pos_group, display only."""
+    head = (position or "").upper().split("/")[0].strip()
+    if head in ("SP", "SP2", "P", "LHP", "RHP"):
+        return "SP"
+    if head in ("RP", "CL", "SIRP", "MIRP"):
+        return "RP"
+    if head == "C":
+        return "C"
+    if head in ("1B", "2B", "3B", "SS", "IF", "INF"):
+        return "IF"
+    if head in ("LF", "CF", "RF", "OF"):
+        return "OF"
+    return "DH"
+
+
+def _years_bucket(years: int) -> str:
+    if years <= 1:
+        return "1"
+    if years <= 3:
+        return "2-3"
+    if years <= 6:
+        return "4-6"
+    return "7+"
+
+
+def _guar_tier(usd: float) -> str:
+    if usd < 10e6:
+        return "<$10M"
+    if usd < 50e6:
+        return "$10-50M"
+    if usd < 100e6:
+        return "$50-100M"
+    return "$100M+"
+
+
+def _dpw_cell(rows: list[dict]) -> dict:
+    """{n, spend, war, dpw} for one slice. `dpw` is None - not zero, not a
+    guess - when the slice is too thin to price."""
+    spend = sum(r["_npv"] for r in rows)
+    war = sum(r["_disc"] for r in rows)
+    ok = len(rows) >= _DPW_MIN_DEALS and war >= _DPW_MIN_WAR
+    return {"n": len(rows), "spend": int(spend), "war": round(war, 2),
+            "dpw": int(spend / war) if ok else None}
+
+
+def dpw_breakdowns(signings: list[dict]) -> dict:
+    """Per-winter decomposition of the implied $/WAR series + the realized one.
+
+    ``signings`` are enriched rows (they carry _war_path); the realized half
+    reads the stored ledger, which only exists on winters old enough to have
+    banked WAR."""
+    rows = []
+    for s in signings:
+        cw = s.get("_war_path")
+        if not cw or not s.get("guarantee_usd") or not s.get("years"):
+            continue
+        disc = disc_war(cw, int(s["years"]))
+        if disc <= 0:
+            continue
+        rows.append({**s, "_disc": disc,
+                     "_npv": float(s.get("npv_guarantee_usd") or s["guarantee_usd"])})
+    winters = sorted({r["class_year"] for r in rows})
+    by_winter: dict[str, dict] = {}
+    for y in winters:
+        wr = [r for r in rows if r["class_year"] == y]
+        head = _dpw_cell(wr)
+        by_winter[str(y)] = {
+            "n": head["n"], "spend": head["spend"], "war": head["war"],
+            "dpw": head["dpw"],
+            "qo_share": round(sum(1 for r in wr if r.get("qo")) / len(wr), 3),
+            "pos": {g: _dpw_cell([r for r in wr if _fine_pos_group(r.get("position")) == g])
+                    for g in ("SP", "RP", "C", "IF", "OF", "DH")},
+            # 7+ deals run 0-5 a winter, so the per-winter cell is reported for
+            # its COUNT and its dpw is suppressed by _dpw_cell; the pooled 7+
+            # figure below is the one that can be read as a price.
+            "len": {b: _dpw_cell([r for r in wr if _years_bucket(int(r["years"])) == b])
+                    for b in ("1", "2-3", "4-6", "7+")},
+            "tier": {t: _dpw_cell([r for r in wr if _guar_tier(r["_npv"]) == t])
+                     for t in ("<$10M", "$10-50M", "$50-100M", "$100M+")},
+        }
+    pooled = {
+        "pos": {g: _dpw_cell([r for r in rows if _fine_pos_group(r.get("position")) == g])
+                for g in ("SP", "RP", "C", "IF", "OF", "DH")},
+        "len": {b: _dpw_cell([r for r in rows if _years_bucket(int(r["years"])) == b])
+                for b in ("1", "2-3", "4-6", "7+")},
+        "tier": {t: _dpw_cell([r for r in rows if _guar_tier(r["_npv"]) == t])
+                 for t in ("<$10M", "$10-50M", "$50-100M", "$100M+")},
+    }
+    # ---- realized, off the ledger ------------------------------------------
+    realized: dict[str, dict] = {}
+    for y in winters:
+        paid = warx = 0.0
+        n = done = 0
+        elapsed_num = elapsed_den = 0.0
+        for r in rows:
+            if r["class_year"] != y:
+                continue
+            led = r.get("ledger") or {}
+            p, w = led.get("paid_to_date_usd"), led.get("war_to_date")
+            if p is None or w is None:
+                continue
+            paid += float(p)
+            warx += float(w)
+            n += 1
+            done += 1 if led.get("complete") else 0
+            tot = float(led.get("total_years") or r["years"] or 1)
+            elapsed_num += min(1.0, float(led.get("elapsed_years") or 0) / max(tot, 1.0))
+            elapsed_den += 1
+        if n < _DPW_MIN_DEALS:
+            continue
+        realized[str(y)] = {
+            "n": n, "paid": int(paid), "war": round(warx, 1),
+            "dpw": int(paid / warx) if warx >= _DPW_MIN_WAR else None,
+            "complete_share": round(done / n, 3),
+            "elapsed": round(elapsed_num / elapsed_den, 3) if elapsed_den else None,
+        }
+    return {"by_winter": by_winter, "pooled": pooled, "realized": realized,
+            "thresholds": {"min_deals": _DPW_MIN_DEALS, "min_war": _DPW_MIN_WAR},
+            "groups": {"pos": ["SP", "RP", "C", "IF", "OF", "DH"],
+                       "len": ["1", "2-3", "4-6", "7+"],
+                       "tier": ["<$10M", "$10-50M", "$50-100M", "$100M+"]}}
 
 
 def _dpw_forecast_method() -> str:
@@ -1466,25 +1645,14 @@ class MarketModel:
         ident = s.get("player_key") or s.get("player_name")
         key = (ident, s.get("class_year")) if ident is not None else None
         if key is None or key not in self._comps_my_cache:
-            cs = comps_for(s, self.train_pool)
-            if cs:
-                yrs = sorted(c["years"] for c in cs)
-                my = statistics.median(yrs)
-                my75 = yrs[min(len(yrs) - 1, int(round(0.75 * (len(yrs) - 1))))]
-                infl = getattr(self, "destale", None)
-                if infl is None:
-                    infl = _dpw_inflation()
-                # comps anchor on the NPV basis too — the anchor and the
-                # target must speak the same currency.
-                mg = statistics.median(
-                    (c.get("npv_guarantee_usd") or c["guarantee_usd"])
-                    * ((1 + infl) ** (s["class_year"] - c["class_year"]))
-                    for c in cs)
-                ma = statistics.median(
-                    (c.get("npv_aav_usd") or c["aav_usd"]
-                     or c["guarantee_usd"] / max(c["years"], 1))
-                    * ((1 + infl) ** (s["class_year"] - c["class_year"]))
-                    for c in cs)
+            infl = getattr(self, "destale", None)
+            if infl is None:
+                infl = _dpw_inflation()
+            # comps anchor on the NPV basis too - the anchor and the
+            # target must speak the same currency.
+            anc = comps_anchor(s, self.train_pool, infl)
+            if anc:
+                my, mg, ma, my75 = anc
             else:
                 my, mg, ma, my75 = 1.0, 1_000_000.0, 1_000_000.0, 1.0
             out = (my, math.log(max(mg, 1.0)), ma, my75)
@@ -1498,7 +1666,7 @@ class MarketModel:
 
     @staticmethod
     def _log_rational(s: dict, years: float, dpw_usd: float) -> float:
-        units = max(disc_war(s["_war_path"], int(round(years))), 0.25)
+        units = max(_disc_war_term(s["_war_path"], years), 0.25)
         return math.log(max(units * dpw_usd, 1e6))
 
     @staticmethod
@@ -1747,6 +1915,118 @@ def comps_for(s: dict, pool: list[dict], k: int = 5) -> list[dict]:
              "npv_aav_usd": c.get("npv_aav_usd"),
              "war_y1_proj": c["_war_path"]["war_y1"], "age": c["_age"]}
             for c in scored[:k]]
+
+
+# ============================================================================
+# The comps ANCHOR (distinct from the comps DISPLAY list above)
+# ============================================================================
+# THE DEFECT, measured 2026-07-31. The anchor was the median of the SAME k=5
+# nearest neighbours the board displays, so it inherited their discreteness: as
+# a player's projected year-1 WAR moves, comps enter and leave the top 5 and the
+# median hops between contract tiers. Sweeping one real serve row (Jazz
+# Chisholm, everything but war_y1 held fixed) the anchor read $13.2M at 1.50
+# WAR, $85.8M at 1.76, $24.1M at 2.00 and $209.9M at 2.24 - a 6.5x drop and then
+# an 8.7x jump for two 0.24-WAR steps, because the k=5 set turned over from
+# {Rasmus, Moustakas, Naylor} to {Torres, Bichette, Sandoval} to {Upton, Seager,
+# Hosmer}. The anchor is a FEATURE in both stages and the clamp/mega-blend ride
+# on it, so the predicted guarantee inherited the cliff: 8.45x for a +0.75 WAR
+# step, 2.50x for a single 0.02 WAR step.
+#
+# THE FIX. Weight EVERY eligible comp by a Gaussian kernel on the same (age,
+# war_y1) z-distance instead of hard-selecting five, and read a LINEARLY
+# INTERPOLATED weighted quantile rather than an order statistic. Both halves are
+# needed: with a hard k, a comp crossing the boundary steps its weight from 0 to
+# 1/k; with a plain weighted median, the answer jumps to the next order
+# statistic the moment cumulative weight crosses 0.5. Interpolating a
+# full-neighbourhood kernel makes the anchor a continuous function of war_y1.
+# The DISPLAY list (comps_for) is untouched - the board still shows the five
+# nearest, which is what a reader wants to see.
+# GATE 2, forward-chained, paired on the identical 1,199 rows (persist=False):
+#   guarantee MAE 9.6751 -> 9.5253  dMAE -0.1498  CI95 [-0.5083, +0.1977]
+#   aav       MAE 2.9509 -> 2.8508  dMAE -0.1001  CI95 [-0.1814, -0.0244]
+#   years     MAE 0.4370 -> 0.4262  dMAE -0.0108  CI95 [-0.0209, -0.0008]
+#   megadeal  MAE 77.69  -> 76.82   (n=50, tracked not gating)
+# AAV and years CLEAR; guarantee improves but its CI spans zero (P 0.811), so
+# the claim is "no regression on guarantee, a real gain on AAV and years".
+# BANDWIDTH is a fitted choice with an interior optimum, not "wider is smoother":
+# guarantee MAE by bw = 0.35:9.581  0.50:9.540  0.75:9.529  1.00:9.613
+# 1.50:10.751 (and 1.50 FAILS the AAV gate outright). 0.75 ships.
+COMPS_ANCHOR_MODE = "kernel"        # "kernel" | "k5_median" (pre-2026-07-31)
+COMPS_KERNEL_BW = 0.75              # Gaussian bandwidth, z-units of (age, war_y1)
+COMPS_KERNEL_MIN_W = 1e-9           # underflow guard -> fall back to k5_median
+
+
+def _weighted_quantile(pairs: list[tuple[float, float]], q: float) -> float:
+    """Linear-interpolated weighted quantile of (value, weight) pairs.
+
+    Uses midpoint plotting positions so a uniform-weight call reproduces the
+    ordinary interpolated quantile, and so the result moves CONTINUOUSLY as
+    weights move - the property the k=5 median did not have."""
+    pts = sorted(pairs)
+    tot = sum(w for _, w in pts)
+    if tot <= 0:
+        return pts[len(pts) // 2][0]
+    xs, ps, cum = [], [], 0.0
+    for v, w in pts:
+        xs.append(v)
+        ps.append((cum + w / 2.0) / tot)
+        cum += w
+    if q <= ps[0]:
+        return xs[0]
+    if q >= ps[-1]:
+        return xs[-1]
+    for i in range(1, len(ps)):
+        if q <= ps[i]:
+            span = ps[i] - ps[i - 1]
+            f = (q - ps[i - 1]) / span if span > 0 else 0.0
+            return xs[i - 1] + f * (xs[i] - xs[i - 1])
+    return xs[-1]
+
+
+def comps_anchor(s: dict, pool: list[dict], infl: float,
+                 k: int = 5) -> tuple[float, float, float, float] | None:
+    """(years median, guarantee median $, AAV median $, years p75) for the
+    anchor features. Dollars are de-staled to the subject's winter first, so
+    the anchor and the target speak the same currency."""
+    g = _pos_group(s.get("position"))
+    cands = [c for c in pool if c is not s and c.get("_war_path")
+             and (c["class_year"] < s["class_year"] if COMPS_STRICT_PRIOR
+                  else c["class_year"] <= s["class_year"])
+             and _pos_group(c.get("position")) == g and c.get("guarantee_usd")]
+    if not cands:
+        return None
+    sa = statistics.pstdev([c["_age"] for c in cands]) or 1.0
+    sw = statistics.pstdev([c["_war_path"]["war_y1"] for c in cands]) or 1.0
+    dist = [math.hypot((c["_age"] - s["_age"]) / sa,
+                       (c["_war_path"]["war_y1"] - s["_war_path"]["war_y1"]) / sw)
+            for c in cands]
+    if COMPS_ANCHOR_MODE == "kernel":
+        bw = COMPS_KERNEL_BW
+        wts = [math.exp(-0.5 * (d / bw) ** 2) for d in dist]
+        if sum(wts) <= COMPS_KERNEL_MIN_W:
+            wts = None                      # degenerate neighbourhood
+    else:
+        wts = None
+    if wts is None:                         # legacy: the k nearest, unweighted
+        order = sorted(range(len(cands)), key=lambda i: dist[i])[:k]
+        cands = [cands[i] for i in order]
+        wts = [1.0] * len(cands)
+
+    def _de(c, usd):
+        return usd * ((1 + infl) ** (s["class_year"] - c["class_year"]))
+
+    yrs = [(float(c["years"]), w) for c, w in zip(cands, wts)]
+    # Dollars interpolate in LOG space - a linear interpolation between $6M and
+    # $325M in level space is not a price, it is an average of two markets.
+    lg = [(math.log(max(_de(c, c.get("npv_guarantee_usd") or c["guarantee_usd"]), 1.0)), w)
+          for c, w in zip(cands, wts)]
+    la = [(math.log(max(_de(c, (c.get("npv_aav_usd") or c["aav_usd"]
+                               or c["guarantee_usd"] / max(c["years"], 1))), 1.0)), w)
+          for c, w in zip(cands, wts)]
+    return (_weighted_quantile(yrs, 0.5),
+            math.exp(_weighted_quantile(lg, 0.5)),
+            math.exp(_weighted_quantile(la, 0.5)),
+            _weighted_quantile(yrs, 0.75))
 
 
 # ============================================================================

@@ -663,6 +663,16 @@ def build_fa_archive_payload(first: int = 2015, last: int = CLASS_YEAR - 1) -> d
                 "qo": s.get("qo") or None, "milb": (not s.get("mlb_deal")) or None,
                 "warTd": led.get("war_to_date"),
                 "surplusTd": led.get("surplus_to_date_usd"),
+                # Any REALIZED $/WAR the client computes needs the money that
+                # has actually been paid and how far through the deal we are.
+                # Without these, warTd (a partial) divided into guar (the whole
+                # contract) reads $40M+/WAR on any recent winter - not a market
+                # signal, an arithmetic error. `done` alone cannot fix it: a
+                # 6-year deal in year 2 is neither complete nor comparable.
+                "paidTd": led.get("paid_to_date_usd"),
+                "elapsed": (round(float(led["elapsed_years"])
+                                  / max(float(led.get("total_years") or s.get("years") or 1), 1.0), 3)
+                            if led.get("elapsed_years") is not None else None),
                 "done": led.get("complete"),
             }))
             spend += s.get("guarantee_usd") or 0
@@ -676,19 +686,39 @@ def build_fa_archive_payload(first: int = 2015, last: int = CLASS_YEAR - 1) -> d
     return {"generated_at": date.today().isoformat(), "winters": winters}
 
 
-def _source_freshness() -> dict:
-    """MAX(fetched_at) per FA source table - the UI's staleness stamps.
+def _source_freshness(class_year: int | None = None) -> dict:
+    """Last-successful-check date per FA source - the UI's staleness stamps.
+
+    Two granularity rules, both learned from live defects:
+
+    - The class board is read SCOPED TO `class_year`. A global MAX read fresh
+      off the 2028/2029 rows while the served 2027 board sat frozen behind a
+      broken parse.
+    - Signings take the later of (row MAX, recorded check). Before the winter
+      opens a class has zero signing rows, so a row-only read froze on the
+      previous class and tripped the UI 14-day flag every day from 2026-07-10.
+
     Read-only; missing tables (fresh DB) just drop out."""
     out = {}
+    checks = storage.load_source_checks()
     try:
         with storage.connect() as con:
-            for label, table in (("class", "fa_class_players"),
-                                 ("signings", "fa_signings"),
-                                 ("payroll", "fa_team_payroll"),
-                                 ("parks", "fa_park_factors")):
-                r = con.execute(f"SELECT MAX(fetched_at) FROM {table}").fetchone()
-                if r and r[0]:
-                    out[label] = str(r[0])[:10]
+            for label, table, scoped in (("class", "fa_class_players", True),
+                                         ("signings", "fa_signings", True),
+                                         ("payroll", "fa_team_payroll", False),
+                                         ("parks", "fa_park_factors", False)):
+                if scoped and class_year is not None:
+                    r = con.execute(
+                        f"SELECT MAX(fetched_at) FROM {table} WHERE class_year = ?",
+                        (class_year,)).fetchone()
+                else:
+                    r = con.execute(f"SELECT MAX(fetched_at) FROM {table}").fetchone()
+                stamps = [str(r[0])[:10]] if r and r[0] else []
+                chk = checks.get((f"fa_{label}", str(class_year) if class_year else ""))
+                if chk and chk.get("checked_at"):
+                    stamps.append(str(chk["checked_at"])[:10])
+                if stamps:
+                    out[label] = max(stamps)
     except Exception: # noqa: BLE001 - stamps are best-effort
         pass
     return out
@@ -759,7 +789,7 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
     return {
         "generated_at": date.today().isoformat(),
         "class_year": class_year,
-        "sources": _source_freshness(),
+        "sources": _source_freshness(class_year),
         "cba": {"threshold_usd": thr["threshold_usd"],
                 "carry_forward": thr["carry_forward"],
                 "regime": thr.get("regime"),

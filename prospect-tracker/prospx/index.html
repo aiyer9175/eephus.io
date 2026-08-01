@@ -19897,7 +19897,9 @@ function renderToolCompRadar(key){
   const series = [{ label: p.player_name, color: "var(--neon-cyan)", items: _radarToolsFor(p) }];
   if (comp) series.push({ label: comp.player_name, color: "var(--neon-violet)", items: _radarToolsFor(comp) });
   const radar = (typeof _gfxRadarOverlay === "function") ? _gfxRadarOverlay(series, P, 300) : "";
-  const chips = cands.map(c => `<button class="split-chip${ui.comp === c.player_key ? " active" : ""}" onclick="toolCompSet('${escapeHtml(key)}','${escapeHtml(c.player_key)}')">${escapeHtml(c.player_name)} ${Math.round(c.fv_close)}</button>`).join("");
+  // Chip grade goes through gradeBlock: Math.round(c.fv_close) applied the
+  // round-to-NEAREST rule to a CONSENSUS number, which is the ceil rule's job.
+  const chips = cands.map(c => `<button class="split-chip${ui.comp === c.player_key ? " active" : ""}" onclick="toolCompSet('${escapeHtml(key)}','${escapeHtml(c.player_key)}')">${escapeHtml(c.player_name)} ${gradeBlock(c).label != null ? gradeBlock(c).label : " - "}</button>`).join("");
   const clear = ui.comp ? `<button class="split-chip" onclick="toolCompSet('${escapeHtml(key)}','')">clear</button>` : "";
   const legend = `<div style="display:flex;gap:16px;font-size:11px;margin-top:6px;justify-content:center;"><span style="color:var(--neon-cyan);">&#9632; ${escapeHtml(p.player_name)}</span>${comp ? `<span style="color:var(--neon-violet);">&#9632; ${escapeHtml(comp.player_name)}</span>` : ""}</div>`;
   host.innerHTML = `<div class="split-chips">${chips}${clear}</div><div style="display:flex;justify-content:center;">${radar}</div>${legend}`;
@@ -21162,7 +21164,7 @@ function _tmSeedFromURL() {
     const p = (DATA.players || []).find(x => x.player_key === key);
     const sv = p && p.surplus && p.surplus.value_mm;
     if (sv != null) { _TM.a.push({ kind: "prospect", key, name: p.player_name,
-      sub: `${p.position || ""} · ${p.org || ""} · FV ${p.fv_close ?? "?"}`, mm: sv }); _TM.seeded = true; }
+      sub: `${p.position || ""} · ${p.org || ""} · FV ${gradeBlock(p).label ?? "?"}`, mm: sv }); _TM.seeded = true; }
   } else if (kind === "mlb") {
     if (!_TM.detail) return;                 // detail still loading; seed on the re-render
     const d = _TM.detail[key];
@@ -21181,7 +21183,7 @@ function _tmSearch(q) {
     if ((p.player_name || "").toLowerCase().includes(q)) {
       const sv = p.surplus && p.surplus.value_mm;
       if (sv != null) out.push({ kind: "prospect", key: p.player_key,
-        name: p.player_name, sub: `${p.position || ""} · ${p.org || ""} · FV ${p.fv_close ?? "?"}`,
+        name: p.player_name, sub: `${p.position || ""} · ${p.org || ""} · FV ${gradeBlock(p).label ?? "?"}`,
         mm: sv });
     }
   }
@@ -23168,6 +23170,28 @@ function _renderDraftLottery(host, cls) {
                        :                "var(--text-tertiary)";
   // Sort by pick order so the latest snapshot reads top-to-bottom.
   odds.sort((a, b) => (a.pick_pos || 0) - (b.pick_pos || 0));
+  // GAMES BACK FROM A TOP-3 LOTTERY SLOT. Under the 2022 CBA the three worst
+  // records share the top odds tier, so the pick_pos-3 row IS the top-3
+  // boundary: how far a club is from it is how far it is from the best odds
+  // available. NOT the same as Tankathon's own GB column, which is measured
+  // against the WORST record in the league.
+  //   GB = ((W_team - W_3) + (L_3 - L_team)) / 2   -- the standard convention,
+  // so a team BEHIND the boundary (worse record, better draft position) reads
+  // negative and is shown as "in" rather than a misleading negative number.
+  // Comp-pick rows carry a synthetic pick_pos (31-42) and no record, so they
+  // are excluded from this arithmetic entirely.
+  const anchor3 = odds.find(o => o.pick_pos === 3
+    && o.wins != null && o.losses != null) || null;
+  const gbToTop3 = o => {
+    if (!anchor3 || o.wins == null || o.losses == null) return null;
+    if (o.round_label === "1A" || o.round_label === "1B") return null;
+    return ((o.wins - anchor3.wins) + (anchor3.losses - o.losses)) / 2;
+  };
+  const fmtGB = v => {
+    if (v == null) return " - ";
+    if (v <= 0) return "in";              // already at or inside the top-3 tier
+    return v % 1 === 0 ? String(v) : v.toFixed(1);
+  };
   const rows = odds.map(o => {
     const rl = o.round_label || "1";
     // Comp picks carry a synthetic pick_pos (31-42); show their round badge as
@@ -23178,6 +23202,8 @@ function _renderDraftLottery(host, cls) {
       <td><span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:0.04em;color:${rlColor(rl)};border:1px solid ${rlColor(rl)};">${escapeHtml(rl)}</span></td>
       <td><span class="draft-cell-ico">${teamLogoHTML(o.team, "sm")}<strong>${escapeHtml(o.team)}</strong></span></td>
       <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums;color:${oddsColor(o.odds_pct)};">${fmtOdds(o.odds_pct)}</td>
+      <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums;color:${oddsColor(o.odds_top6_pct)};">${fmtOdds(o.odds_top6_pct)}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;color:${(() => { const g = gbToTop3(o); return g == null ? "var(--text-tertiary)" : g <= 0 ? "var(--up)" : g <= 3 ? "var(--neon-amber)" : "var(--text-secondary)"; })()};">${fmtGB(gbToTop3(o))}</td>
     </tr>`;
   }).join("");
 
@@ -23202,6 +23228,8 @@ function _renderDraftLottery(host, cls) {
           <th>Round</th>
           <th>Team</th>
           <th style="text-align:right;" title="Chance of winning the #1 overall pick in the lottery">% at #1</th>
+          <th style="text-align:right;" title="Chance of landing anywhere in the top 6, which is how many picks the lottery actually draws. A club can be a long shot for #1 and still very likely to pick in the top 6.">% top 6</th>
+          <th style="text-align:right;" title="Games back of the third-worst record. The three worst records share the top odds tier under the 2022 CBA, so this is the distance to the best lottery odds available. 'in' means the club is already at or inside that tier. Not the same as a standings GB, which is measured against the worst record in the league.">GB to top 3</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -32318,6 +32346,25 @@ function efvMinusConsensus(x) {
     return Math.round((v - x.consensus_fv) * 10) / 10;
   return null;
 }
+// The delta as the two DISPLAYED integers actually subtract.
+//
+// efvMinusConsensus carries the model's raw precision, which is right in storage and
+// wrong on screen: Franklin Arias is consensus 58.1 + 2.2 = eFV 60.3, but the card
+// CEILS consensus to 59 (round-up rule) and ROUNDS eFV to 60 (round-to-nearest rule),
+// so a raw "+2.2" printed between them claims 59 + 2.2 = 61.2 beside a badge reading
+// 60. Three roundings applied to two numbers; the reader can only see two of them.
+// Owner rule 2026-07-31: the chip subtracts what is on screen. Sorting and any
+// magnitude comparison keep the raw value above - only the printed chip changes.
+function efvMinusConsensusDisplay(x) {
+  if (!x || x.consensus_fv == null) return null;
+  const g = efvGradeDisplay(x);
+  const c = fvCeil(x.consensus_fv);
+  return (g != null && c != null) ? g - c : null;
+}
+// Signed integer for the chip ("+1", "0", "-2").
+function efvDeltaText(d) {
+  return d == null ? "" : `${d > 0 ? "+" : ""}${d}`;
+}
 // Risk-profile shape from the eFV outcome-bucket distribution the prospect already
 // carries (p_bucket: {bust, bench, regular, good, star}, summing to 1). Returns
 // "floor" | "lottery" | "balanced" | null. This is the SHAPE of the modeled
@@ -32349,8 +32396,8 @@ function efvTooltip(x) {
     ? `eFV ${efvGradeDisplay(x)} - FINAL grade, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR so far)` : ""}`
     : `eFV ${efvGradeDisplay(x)} - our outcome-grounded grade (provisional)`];
   if (x.consensus_fv != null) {
-    const d = efvMinusConsensus(x);
-    parts.push(`Consensus FV ${fvCeil(x.consensus_fv)}${d != null ? ` (${d > 0 ? "+" : ""}${d.toFixed(1)})` : ""}`);
+    const d = efvMinusConsensusDisplay(x);
+    parts.push(`Consensus FV ${fvCeil(x.consensus_fv)}${d != null ? ` (${efvDeltaText(d)})` : ""}`);
   }
   if (x.xfv_provisional && !x.xfv_ungraded)
     parts.push("Prior-anchored: no pro track record yet - the grade starts at the consensus prior, and any small gap vs consensus FV is 20-80 rank placement, not a penalty");
@@ -32364,7 +32411,9 @@ function efvTooltip(x) {
   if (x.p_bust != null) parts.push(`P(bust) ${Math.round(x.p_bust * 100)}%`);
   if (x.surplus_mm != null) parts.push(`eFV surplus ${fmtSvMM(x.surplus_mm)}`);
   if (x.statcast_factor != null) parts.push(`Statcast+ tilt ${x.statcast_factor > 1 ? "+" : ""}${Math.round((x.statcast_factor - 1) * 100)}%`);
-  if (x.injury_factor != null) parts.push(`injury penalty ${Math.round((1 - x.injury_factor) * 100)}%`);
+  if (x.injury_factor != null)
+    parts.push(`injury penalty ${Math.round((1 - x.injury_factor) * 100)}%`
+      + (x.xfv_grade_healthy != null ? ` (healthy: ~${Math.round(x.xfv_grade_healthy)})` : ""));
   parts.push("Predicts a calibrated 6-yr WAR outcome distribution from how comparable prospects actually turned out; it out-ranks consensus out-of-sample. Open the player for the full mix.");
   return parts.join(" · ");
 }
@@ -32420,7 +32469,10 @@ function efvBadgeHTML(p, opts) {
                   : (consLabel != null ? parseFloat(consLabel) : null);
   const xg = gb.efvVal;
   const inj = (x && x.injury_factor != null && x.injury_factor < 1)
-    ? `<span title="eFV applies an injury penalty (factor ${x.injury_factor})" style="color:var(--accent-il);font-size:9px;">⚕</span>` : "";
+    ? `<span title="eFV applies an injury penalty (factor ${x.injury_factor})${
+         x.xfv_grade_healthy != null
+           ? `. Healthy he would grade about ${Math.round(x.xfv_grade_healthy)}`
+           : ""}" style="color:var(--accent-il);font-size:9px;">⚕</span>` : "";
   // Locked: once a prospect debuts, its eFV is frozen at the final pre-debut grade (the grade
   // it carried into the majors) -- our last word on it as a prospect.
   const lock = (x && x.kind === "debuted")
@@ -32485,8 +32537,8 @@ function efvDetailHeaderHTML(p, fvBadge) {
     return `<div style="${labelStyle}"><span>Current FV (consensus)</span></div>${fvBadge}`;
   }
   const g = gb.efvVal;
-  const d = efvMinusConsensus(x);
-  const dtxt = d == null ? "" : `${d > 0 ? "+" : ""}${d.toFixed(1)}`;
+  const d = efvMinusConsensusDisplay(x);
+  const dtxt = efvDeltaText(d);
   const dcol = d == null ? "var(--text-tertiary)" : d > 0 ? "var(--up)" : d < 0 ? "var(--down)" : "var(--text-secondary)";
   // Provisional (source-ungraded): label as provisional, dashed badge, and NO consensus-FV
   // reference line (there is no source grade to compare against).
@@ -32550,11 +32602,11 @@ function efvDetailCard(p) {
   // do not sum to the eFV-minus-consensus delta (efv_score._factors contract).
   const cons = x.consensus_fv != null ? fvCeil(x.consensus_fv) : null;
   const xg = efvGradeDisplay(x);
-  const d = efvMinusConsensus(x);
+  const d = efvMinusConsensusDisplay(x);
   const xlineHTML = efvXlineNoteHTML(x);
   const factorsHTML = (x.factors && x.factors.length) ? `
       <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
-        <div title="Signals that moved eFV off the consensus prior, biggest first. Game power is intentionally not a driver (scouts over-price it vs realized WAR)." style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How eFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${d > 0 ? '+' : ''}${d != null ? d.toFixed(1) : ''}</span> &rarr; eFV ${xg}` : ""}</div>
+        <div title="Signals that moved eFV off the consensus prior, biggest first. Game power is intentionally not a driver (scouts over-price it vs realized WAR)." style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How eFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${efvDeltaText(d)}</span> &rarr; eFV ${xg}` : ""}</div>
         ${x.factors.map(f => {
           const up = f.dir === "up";
           const col = up ? "var(--up)" : "var(--down)";
@@ -32567,6 +32619,14 @@ function efvDetailCard(p) {
         }).join("")}${xlineHTML}
       </div>` : (xlineHTML ? `
       <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">${xlineHTML}</div>` : "");
+  // Visible healthy-eFV line for an injured prospect. The "Injury penalty" bar
+  // above says a penalty applied; this says what it cost, which is the question
+  // people actually ask when a hurt prospect slides down the board.
+  const healthyHTML = (x.xfv_grade_healthy != null && x.injury_factor != null)
+    ? `<div style="margin-top:8px;font-size:11px;color:var(--text-secondary);" title="Same grade basis with the injury tilt removed. Statcast, age and role adjustments are kept, so this is 'what he grades if healthy', not 'ungraded'.">
+         Healthy eFV <b style="color:var(--accent-il);">${Math.round(x.xfv_grade_healthy)}</b>
+         <span style="color:var(--text-tertiary);">currently ${efvGradeDisplay(x)}, injury penalty ${Math.round((1 - x.injury_factor) * 100)}%</span>
+       </div>` : "";
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       ${provBanner}
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
@@ -32577,6 +32637,7 @@ function efvDetailCard(p) {
         ${krpPlusPillHTML(p)}<span>K-backed run prevention: a below-level ERA the strikeouts support.</span>
       </div>` : ""}
       ${factorsHTML}
+      ${healthyHTML}
       ${bucketBar ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin:10px 0 4px;">Projected outcome mix (6-yr)</div>${bucketBar}` : ""}
       ${(p && p.surplus && p.surplus.star_odds != null) ? `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid var(--border-light);font-size:11px;" title="Star Odds: FanGraphs 2026 published probability of two or more seasons of four or more WAR during team control, for this player's FV and role. This is the SAME value shown in the board's Star Odds column. It is distinct from the outcome-mix Elite band above (the share of simulated careers whose per-season talent is in the top 4+ WAR/yr band).">
         <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Star Odds <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;color:var(--text-tertiary);">2+ seasons of 4+ WAR</span></span>
@@ -35559,6 +35620,12 @@ function makeSurplusCell(p) {
           + "what he is likely to give you. Ordering this far down the board carries little "
           + "information either."
         : ".")
+    + (isEfv && xf && xf.xfv_grade_quantile != null
+         && Math.round(xf.xfv_grade_quantile) !== efvGradeDisplay(xf)
+        ? ` Priced off the population 20-80 scale (${Math.round(xf.xfv_grade_quantile)}),`
+          + ` not the ${efvGradeDisplay(xf)} shown as the grade: the dollar calibration is`
+          + ` fitted on that scale, so pricing is done there and the two can round apart.`
+        : "")
     + " Open the player for the full distribution + methodology.";
   // Bottom meta line: P(bust), WAG (grads), and $DvM+ - whichever are present.
   const botBits = [];
@@ -37300,9 +37367,18 @@ function ilTagHTML(p) {
   }
   const typeLabel = il.type ? escapeHtml(il.type) + " IL" : "IL";
   const dayLabel = days != null ? ` · ${days}d` : "";
-  const title = il.description
+  // What the grade would read without the injury tilt. Computed at export time
+  // (efv_score emits xfv_grade_healthy on penalised rows only) because the
+  // factor multiplies the model leg of a blend and then goes through a
+  // nonlinear grade map - it cannot be divided back out here.
+  const _xh = (typeof getEfv === "function") ? getEfv(p) : null;
+  const healthy = (_xh && _xh.xfv_grade_healthy != null)
+    ? `\nHealthy eFV would be about ${Math.round(_xh.xfv_grade_healthy)}`
+      + (_xh.xfv_grade != null ? ` (currently ${Math.round(_xh.xfv_grade)})` : "")
+    : "";
+  const title = (il.description
     ? escapeHtml(il.description) + (days != null ? `\n${days} days` : "")
-    : `On ${typeLabel}${il.since ? ` since ${escapeHtml(il.since)}` : ""}`;
+    : `On ${typeLabel}${il.since ? ` since ${escapeHtml(il.since)}` : ""}`) + healthy;
   return `<span class="il-tag" title="${title}">${typeLabel}${dayLabel}</span>`;
 }
 
@@ -48426,7 +48502,12 @@ function renderPlayerDetail(key) {
     const refFmt = v => myIsPitcher ? Number(v).toFixed(2) : Number(v).toFixed(3).replace(/^(-?)0\./, "$1.");
 
     const rows = ranked.map(({ t, s }) => {
-      const tFv = t.fv_close_raw != null ? t.fv_close_raw : t.fv_close;
+      // Was fv_close_raw with Math.round: the RAW consensus mean under the
+      // round-to-nearest rule, so a comp chip could read 58 for a player the
+      // board grades 60 (wrong field AND wrong rounding). gradeBlock applies
+      // eFV-nearest / consensus-ceil once, the same as every other surface.
+      const tGb = gradeBlock(t);
+      const tFvLabel = tGb.label != null ? tGb.label : " - ";
       const orgTag = t.org
         ? `<span style="color:var(--text-tertiary);font-size:10px;margin-left:4px;">${escapeHtml(t.org)}</span>`
         : "";
@@ -48458,7 +48539,7 @@ function renderPlayerDetail(key) {
       return `<div data-key="${escapeHtml(t.player_key)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-light);cursor:pointer;font-size:12px;" title="${escapeHtml(matchTip)}">
         <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;">${escapeHtml(t.player_name)} <span style="color:var(--text-tertiary);font-size:10px;">${escapeHtml(t.position || " - ")} · ${t.age != null ? t.age.toFixed(1) + "y" : " - "} · ${matchLabel}</span>${orgTag}</span>
         ${statChip}
-        <span class="fv-badge ${fvClass(String(Math.round(tFv)))} size-sm">${Math.round(tFv)}</span>
+        <span class="fv-badge ${fvClass(String(tFvLabel))} size-sm">${tFvLabel}</span>
       </div>`;
     }).join("");
     return `<div class="detail-title">Similar prospects <span class="detail-title-sub">composite match · ${refLbl} vs ${escapeHtml(p.player_name)} shown</span></div>
@@ -53055,7 +53136,12 @@ function makeCompareStatTable(players) {
   const uniqSides = new Set(sides);
   const universal = [
     ["Age",          p => p.age != null ? p.age.toFixed(1) : null,    { hi: false, fmt: v => v.toFixed(1) }],
-    ["Current FV",   p => p.fv_close,                                 { hi: true,  fmt: v => String(fvCeil(v)) }],
+    // Two rows, both labeled for what they are. This was ONE row called
+    // "Current FV" reading p.fv_close -- the consensus close -- so the compare
+    // cart showed Arias 59 while the board showed his eFV 60. eFV leads (it is
+    // the site-wide grade since 2026-07-25); consensus stays, named.
+    ["eFV",          p => gradeBlock(p).efvVal,                       { hi: true,  fmt: v => String(v) }],
+    ["Consensus FV", p => p.fv_close,                                 { hi: true,  fmt: v => String(fvCeil(v)) }],
     ["Level",        p => (p.statline || {}).level || null,           { categorical: true }],
     ["ETA",          p => (p.eta || {}).year || null,                 { hi: false, fmt: v => String(v) }],
     ["Games (PA/IP volume)", p => {
@@ -53219,13 +53305,59 @@ function makeCompareStatTable(players) {
   return `<table class="compare-stat-table">${header}<tbody>${body}</tbody></table>`;
 }
 
+// Tool-profile radar for the compare cart. Was reachable ONLY through the
+// "Generate GFX" compare card; this puts it on the interactive panel where the
+// comparison is actually made. Pure reuse: _gfxRadarOverlay returns an SVG
+// string and the player-detail Scouting tab already renders it live with theme
+// tokens (renderToolCompRadar). The GFX caller must keep its concrete hex
+// palette because html2canvas cannot resolve var() - so the SERIES BUILDER is
+// shared and the palette is not.
+function makeCompareToolRadar(players) {
+  if (typeof _gfxRadarOverlay !== "function" || typeof _radarToolsFor !== "function") return "";
+  // Same gate as the GFX card: the axes are side-specific (HIT/PWR/SPD/FLD/ARM
+  // vs FB/SL/CB/CH/CMD), so a mixed pinning has no shared frame.
+  const sides = players.map(p => (p.statline || {}).is_pitcher ? "pit" : "hit");
+  if (new Set(sides).size !== 1) return "";
+  // A player with no grades on file would otherwise draw a collapsed polygon at
+  // the 20 floor (_gfxRadarOverlay plots nulls at FMIN), which reads as "all
+  // 20s" rather than "no data".
+  const series = [];
+  const missing = [];
+  players.forEach((p, i) => {
+    const items = _radarToolsFor(p);
+    if (items.some(t => t.value != null)) {
+      series.push({ label: p.player_name, color: COMPARE_COLORS[i % COMPARE_COLORS.length], items });
+    } else {
+      missing.push(p.player_name);
+    }
+  });
+  if (series.length < 1) return "";
+  const P = { border: "var(--border)", text2: "var(--text-secondary)", bg0: "var(--bg-primary)" };
+  const legend = series.map(s =>
+    `<span style="color:${s.color};">&#9632; ${escapeHtml(s.label)}</span>`).join("");
+  const note = missing.length
+    ? `<div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;">No tool grades on file: ${escapeHtml(missing.join(", "))}</div>`
+    : "";
+  return `<div class="compare-tool-radar" style="margin-top:10px;">
+      <div style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Tool profiles · 20-80</div>
+      <div style="display:flex;justify-content:center;">${_gfxRadarOverlay(series, P, 300)}</div>
+      <div style="display:flex;gap:16px;font-size:11px;margin-top:6px;justify-content:center;flex-wrap:wrap;">${legend}</div>
+      ${note}
+    </div>`;
+}
+
 // Side-by-side cart layout - used when 2+ players are pinned.
 function makeCompareSideBySide(players) {
   // Per-player header row with name, FV badge, RPS pill, remove btn.
   const cols = `repeat(${players.length}, minmax(0, 1fr))`;
   const heads = players.map((p, i) => {
     const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
-    const fvLabel = fvCloseLabel(p); // v26 - includes "+" suffix
+    // The cart badge reads the SAME grade the board does. It used to call
+    // fvCloseLabel(p) (the consensus close), so a pinned Arias showed 59
+    // against his 60 on the board behind it. gradeBlock is the sanctioned
+    // resolver: eFV round-to-nearest, consensus ceil as the fallback.
+    const gbHead = gradeBlock(p);
+    const fvLabel = gbHead.label != null ? gbHead.label : " - ";
     const sl = p.statline || {};
     const ageBits = [];
     if (p.age != null) ageBits.push(`${p.age.toFixed(1)}yo`);
@@ -53249,6 +53381,7 @@ function makeCompareSideBySide(players) {
 
   const head = `<div class="compare-sbs-head" style="grid-template-columns:${cols};">${heads}</div>`;
   const chart = `<div class="compare-overlay-chart"><div style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:700;margin-bottom:4px;">FV history · overlay</div>${makeFvOverlayChart(players)}</div>`;
+  const radar = makeCompareToolRadar(players);
   const table = makeCompareStatTable(players);
   // RPS+ summary row - repeat each player's index + the raw drivers
   // (OPS+ / ERA−, age vs level) that fed it, so the reader can see
@@ -53268,7 +53401,7 @@ function makeCompareSideBySide(players) {
     <div style="font-family:var(--font-sans);font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;margin-bottom:6px;">RPS+ · 100 = mean prospect at the same age, 10 pts = a meaningful gap · MLB-level players show wRC+ (hitters) or xFIP / FIP- (pitchers) instead</div>
     ${rpsRows}
   </div>`;
-  return head + chart + table + summary;
+  return head + chart + radar + table + summary;
 }
 
 // Build the side-by-side farm-systems block for the compare cart.

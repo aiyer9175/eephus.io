@@ -98,11 +98,34 @@ def test_sort_headers_are_spans_with_the_a11y_contract():
         assert attr in shead, f"sHead dropped {attr}"
 
 
-def test_rank_and_name_became_sortable():
-    """Both were inert <th> on the table board."""
+def test_every_board_column_is_sortable():
+    """rank and name were inert <th> on the table board; AAV and guarantee lost
+    their headers entirely when the board became cards (53355d9), which is how
+    "sort by AAV" disappeared while the comparator kept working.
+
+    Asserts the PROPERTY (the key is reachable through a sort control), not the
+    LOCATION. Row-1 columns live in .mlb-card-head and row-2 tape chips live in
+    the .mlb-sortbar strip, because the tape is not track-aligned with the
+    header; pinning a key to one region turned red the moment a chip moved
+    between them, which told us nothing about whether the board still sorts."""
     head = JS.split('class="mlb-card-head"')[1].split("</div>")[0]
-    for key in ("rank", "name", "status", "warY1", "surplus", "verdict"):
-        assert f'sHead(' in head and f'"{key}"' in head, f"{key} is not a sort header"
+    bar = JS.split('class="mlb-sortbar"')[1].split("</div>")[0]
+    controls = head + bar
+    for key in ("rank", "name", "status", "projAav", "projGuar", "surplus",
+                "verdict", "warY1", "warTotal", "warCvar10", "pAnyStar"):
+        assert f'"{key}"' in controls, f"{key} is not reachable through any sort control"
+    assert "sHead(" in head and "sHead(" in bar
+
+
+def test_default_sort_key_has_a_header():
+    """boardState.sort defaulted to projGuar while NO header carried that key,
+    so first paint showed no active-sort indicator and the default ordering was
+    unreachable after a single click."""
+    default = JS.split("boardState")[1].split("sort:")[1].split(",")[0]
+    key = default.strip().strip('"\' ')
+    head = JS.split('class="mlb-card-head"')[1].split("</div>")[0]
+    bar = JS.split('class="mlb-sortbar"')[1].split("</div>")[0]
+    assert f'"{key}"' in head + bar, f"default sort {key!r} has no sort control"
 
 
 def test_phase_h_fields_are_rendered():

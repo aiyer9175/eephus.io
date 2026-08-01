@@ -679,7 +679,8 @@
       return '<div class="pal-mix-card"><h4><span>' + logo(p.org) + esc(p.name)
         + '<span class="proj-dim"> ' + esc(p.org || "") + "</span></span>"
         + '<span class="pal-dir' + dirClass(pdir) + '">' + arrow + "</span></h4>"
-        + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position) + " &middot; FV " + fCeil(p.fv)
+        + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position)
+        + " &middot; FV " + (p.fvE != null ? Math.round(p.fvE) : fCeil(p.fv))
         + " &middot; shape " + f1(p.starter_shape) + " &middot; " + esc(p.arsenal_depth) + " plus pitches"
         + (p.mismatch_margin != null ? " &middot; " + f1(p.mismatch_margin) + " past the band" : "") + "</div>"
         + '<div style="margin:6px 0;font-size:11px;color:var(--text-secondary)">' + esc(msg) + "</div>"

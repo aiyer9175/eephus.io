@@ -80,7 +80,14 @@ LADDER_POSITIONS = ("C", "1B", "2B", "3B", "SS", "LF", "CF", "RF", "DH")
 IDX = {p: i for i, p in enumerate(OAA_POSITIONS)}
 
 FIRST_OAA_SEASON = 2016
-LADDER_FIRST_SEASON = 2000     # BRef runs_position goes back this far
+LADDER_EARLIEST_SEASON = 2000  # BRef runs_position goes back this far
+# The SHIPPED ladder window. Era drift in these coefficients (C 1.32 runs,
+# 2B 1.03 across 4 eras) is an order of magnitude larger than the sampling CIs
+# (+/-0.05), so a 2000-2026 pool is a 27-year average, not a current read. The
+# universal DH arrived in 2022 and the shift shows up in the DH rung, so the
+# shipped window starts at 2012 and the pooled + 2018 fits ride along as
+# published sensitivities.
+LADDER_FIRST_SEASON = 2012
 MIN_PAIR_INN = 100.0           # innings at BOTH positions to count as a conversion pair
 MIN_RELIABILITY_INN = 300.0    # innings floor for the year-over-year reliability fit
 LADDER_MIN_PA = 200
@@ -164,23 +171,11 @@ class Feeds:
 
 
 # =============================================== 1. the positional adjustment
-def fit_ladder(feeds: Feeds, first=LADDER_FIRST_SEASON, last=None,
-               min_pa=LADDER_MIN_PA, boot=200, seed=11):
-    """Recover the positional adjustment in runs per 650 PA.
+_FIELDERS = tuple(p for p in LADDER_POSITIONS if p != "DH")
 
-    This is an INVERSION, not a free fit. Baseball-Reference builds runs_position
-    as a per-inning rate summed over the positions a player actually played, so
-    regressing runs_position per 650 PA on the player's innings SHARES (no
-    intercept) recovers the per-position constants BRef used. There is one free
-    parameter per position and ~9,000 observations, so there is no overfitting
-    surface: the diagnostic that matters is R-squared, and it is 0.98.
 
-    DH carries no innings, so its exposure is the residual: a player's PA imply a
-    total defensive-inning opportunity, and whatever he did not field, he did not
-    field. That residual column is what identifies the DH rung.
-    """
-    last = last or feeds.inn.get("last_season")
-    # innings per PA, from full-time players, sets the DH residual scale
+def _ladder_design(feeds: Feeds, first: int, last: int, min_pa: int):
+    """(X innings-share matrix, y runs_position/650PA, keys, inn_per_pa)."""
     ipp = []
     for k, v in feeds.defhist.items():
         m, y = k.split(":")
@@ -200,7 +195,7 @@ def fit_ladder(feeds: Feeds, first=LADDER_FIRST_SEASON, last=None,
         if not byp:
             continue
         ex = {p: float((byp.get(p) or {}).get("inn", 0.0)) for p in LADDER_POSITIONS}
-        fielded = sum(ex[p] for p in LADDER_POSITIONS if p != "DH")
+        fielded = sum(ex[p] for p in _FIELDERS)
         ex["DH"] = max(0.0, v["pa"] * inn_per_pa - fielded)
         tot = sum(ex.values())
         if tot <= 0:
@@ -208,21 +203,74 @@ def fit_ladder(feeds: Feeds, first=LADDER_FIRST_SEASON, last=None,
         rows.append(([ex[p] / tot for p in LADDER_POSITIONS],
                      v["runs_position"] / v["pa"] * 650.0))
         keys.append((int(m), int(y)))
+    return (np.array([r[0] for r in rows]), np.array([r[1] for r in rows]),
+            keys, inn_per_pa)
 
-    X = np.array([r[0] for r in rows])
-    y = np.array([r[1] for r in rows])
-    beta, *_ = np.linalg.lstsq(X, y, rcond=None)
-    resid = y - X @ beta
+
+def _recentre(beta, exposure):
+    """Impose the exposure-weighted sum-to-zero identification.
+
+    WHY THIS EXISTS. Every row of innings shares sums to 1, so X @ 1 = 1 and the
+    OLS residuals are orthogonal to that column sum: the exposure-weighted sum of
+    the coefficients equals mean(y) EXACTLY. mean(y) is the league's own average
+    runs_position per 650 PA, which BRef ran at about -1 run through 2021 and ~0
+    from 2022. So the fitted ladder's level is whatever the source data's level
+    happened to be in the fitted window - it is a property of the window, not of
+    the positions. Subtracting it makes the convention explicit and stable:
+    'average defensive position, weighted by how the league actually deploys
+    players' is the zero."""
+    return beta - float(exposure @ beta)
+
+
+def fit_ladder(feeds: Feeds, first=LADDER_FIRST_SEASON, last=None,
+               min_pa=LADDER_MIN_PA, boot=200, seed=11):
+    """Recover the positional adjustment in runs per 650 PA.
+
+    This is an INVERSION, not a free fit. Baseball-Reference builds runs_position
+    as a per-inning rate summed over the positions a player actually played, so
+    regressing runs_position per 650 PA on the player's innings SHARES (no
+    intercept) recovers the per-position constants BRef used. There is one free
+    parameter per position and thousands of observations, so there is no
+    overfitting surface: the diagnostic that matters is R-squared, and it is 0.98.
+
+    DH carries no innings, so its exposure is the residual: a player's PA imply a
+    total defensive-inning opportunity, and whatever he did not field, he did not
+    field. That residual column is what identifies the DH rung.
+
+    THE SUM QUESTION, answered once so it stops recurring. Three different sums
+    are published in `identification` and only ONE of them is zero by
+    construction:
+      * exposure-weighted - zero, imposed. This is the identified quantity.
+      * equal weight over all nine rungs - NOT zero, and should not be. Weighting
+        DH like a fielding position asserts DH is a ninth of league exposure; it
+        is 7.2% (pre-2022 the NL had no DH at all), so the big negative DH rung
+        gets over-counted and the sum goes negative.
+      * equal weight over the eight FIELDING rungs - NOT zero either, and this is
+        the one that reads wrong. It is arithmetically forced: with the
+        exposure-weighted sum at zero, S8 = -8 * w_DH * L_DH / (1 - w_DH), which
+        at w_DH = 0.072 and L_DH = -13.7 is about +8.5. The folklore table gets
+        S8 = 0 only because it silently normalises DH out of the pool. The
+        folklore-comparable reading ships as `values_fielder_centred`.
+    """
+    last = last or feeds.inn.get("last_season")
+    X, y, keys, inn_per_pa = _ladder_design(feeds, first, last, min_pa)
+    n = len(y)
+    exposure = X.mean(axis=0)
+    raw, *_ = np.linalg.lstsq(X, y, rcond=None)
+    # r2 / residuals describe the UNCENTRED least-squares fit, which is the fit;
+    # the recentring below is a reporting convention, not a different model.
+    resid = y - X @ raw
     r2 = 1.0 - (resid ** 2).sum() / ((y - y.mean()) ** 2).sum()
+    level = float(exposure @ raw)
+    beta = _recentre(raw, exposure)
 
     rng = random.Random(seed)
-    n = len(rows)
     draws = []
-    for _ in range(boot):
+    for _ in range(max(0, boot)):
         pick = [rng.randrange(n) for _ in range(n)]
         b, *_ = np.linalg.lstsq(X[pick], y[pick], rcond=None)
-        draws.append(b)
-    draws = np.array(draws)
+        draws.append(_recentre(b, X[pick].mean(axis=0)))
+    draws = np.array(draws) if draws else None
 
     eras, span = {}, (last - first + 1) // 4
     for i in range(4):
@@ -231,19 +279,62 @@ def fit_ladder(feeds: Feeds, first=LADDER_FIRST_SEASON, last=None,
         sel = [j for j, (_, yy) in enumerate(keys) if lo <= yy <= hi]
         if len(sel) > 200:
             b, *_ = np.linalg.lstsq(X[sel], y[sel], rcond=None)
-            eras[f"{lo}-{hi}"] = {p: round(float(v), 2)
-                                  for p, v in zip(LADDER_POSITIONS, b)}
+            eras[f"{lo}-{hi}"] = {p: round(float(v), 2) for p, v in
+                                  zip(LADDER_POSITIONS, _recentre(b, X[sel].mean(axis=0)))}
+
+    values = {p: round(float(v), 2) for p, v in zip(LADDER_POSITIONS, beta)}
+    s_field = sum(values[p] for p in _FIELDERS)
+    ident = {
+        "convention": "exposure-weighted sum-to-zero",
+        "zero_means": ("the league-average defensive position, weighted by the innings "
+                       "shares the league actually deploys"),
+        "sum_exposure_weighted": round(float(exposure @ beta), 6),
+        "sum_equal_weight_9": round(sum(values.values()), 3),
+        "sum_equal_weight_fielders": round(s_field, 3),
+        "exposure_share": {p: round(float(exposure[i]), 4)
+                           for i, p in enumerate(LADDER_POSITIONS)},
+        "uncentred_level_runs": round(level, 4),
+        "uncentred_level_equals": "mean(runs_position per 650 PA) over the fitted rows",
+        "values_fielder_centred": {p: round(values[p] - s_field / len(_FIELDERS), 2)
+                                   for p in LADDER_POSITIONS},
+        "why_equal_weight_sums_are_not_zero": (
+            "DH is %.1f%% of exposure, not a ninth, so equal-weighting the nine rungs "
+            "over-counts the DH penalty; and with the exposure-weighted sum pinned at "
+            "zero the eight fielding rungs must sum to -8 x w_DH x L_DH / (1 - w_DH). "
+            "Only the exposure-weighted sum is a constraint - the other two are "
+            "consequences of it." % (100 * float(exposure[LADDER_POSITIONS.index("DH")]))),
+    }
+    # Window sensitivity. Published, not chosen: era drift exceeds the sampling CIs,
+    # so a reader needs to see how much of any rung is the window.
+    sens = {}
+    for w_first in (LADDER_EARLIEST_SEASON, 2018):
+        if w_first == first:
+            continue
+        Xw, yw, _kw, _ipp = _ladder_design(feeds, w_first, last, min_pa)
+        if len(yw) < 500:
+            continue
+        bw, *_ = np.linalg.lstsq(Xw, yw, rcond=None)
+        bw = _recentre(bw, Xw.mean(axis=0))
+        vw = {p: round(float(v), 2) for p, v in zip(LADDER_POSITIONS, bw)}
+        sens[f"{w_first}-{last}"] = {
+            "n": len(yw), "values": vw,
+            "sum_equal_weight_9": round(sum(vw.values()), 3),
+            "sum_equal_weight_fielders": round(sum(vw[p] for p in _FIELDERS), 3)}
     return {
         "units": "runs per 650 PA, relative to the league average defensive position",
-        "method": "least squares of BRef runs_position/650PA on innings shares, no intercept",
+        "method": ("least squares of BRef runs_position/650PA on innings shares, no "
+                   "intercept, recentred to exposure-weighted sum zero"),
+        "dh_exposure_spec": "residual: max(0, PA x inn_per_pa - fielded innings)",
         "n_player_seasons": n, "seasons": [first, last], "min_pa": min_pa,
         "inn_per_pa": round(inn_per_pa, 4),
         "r2": round(float(r2), 4), "resid_sd": round(float(resid.std()), 3),
-        "values": {p: round(float(v), 2) for p, v in zip(LADDER_POSITIONS, beta)},
+        "values": values,
+        "identification": ident,
         "ci95": {p: [round(float(np.percentile(draws[:, i], 2.5)), 2),
                      round(float(np.percentile(draws[:, i], 97.5)), 2)]
-                 for i, p in enumerate(LADDER_POSITIONS)},
+                 for i, p in enumerate(LADDER_POSITIONS)} if draws is not None else {},
         "era_splits": eras,
+        "window_sensitivity": sens,
         "folklore_ladder": {"C": 12.5, "SS": 7.5, "CF": 2.5, "2B": 2.5, "3B": 2.5,
                             "RF": -7.5, "LF": -7.5, "1B": -12.5, "DH": -17.5},
     }

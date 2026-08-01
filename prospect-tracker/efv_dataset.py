@@ -466,6 +466,43 @@ def _consecutive_at_level(seasons: list[dict]) -> int:
     return n
 
 
+_MILB_FIRST_SEASON = 2015          # StatsAPI MiLB coverage floor for this build
+
+
+def _pace_from_entry(seasons: list[dict], final: dict) -> dict:
+    """Rungs climbed per season since the player's OBSERVED entry level.
+
+    `seasons` is newest-first, so seasons[-1] is his first observed pro season.
+    Pace is (current rank - entry rank) / seasons elapsed, which is >= 0 for a
+    climber and 0 for someone who has not moved. A player in his first observed
+    season has no elapsed span, so pace is 0.0 and entry_observed still reports
+    whether the entry itself is trustworthy.
+
+    Deliberately NOT age-adjusted and NOT peer-baselined: that is what AP+ does
+    (advancement_pace_export.py, fixed effects per starting_level x experience
+    year), and AP+ is contractually barred from feeding eFV. This is the cheap
+    eFV-native construct that captures the same idea from the same StatsAPI
+    substrate, works for pitchers (AP+ is hitters-only), and is as-of correct by
+    construction because it reads only the pre-decision season list.
+    """
+    if not seasons:
+        return {"entry_level_rank": 0.0, "pace_from_entry": 0.0, "entry_observed": 0.0}
+    first = seasons[-1]
+    entry_rank = float(first.get("level_rank") or 0.0)
+    entry_season = first.get("season")
+    cur_rank = float(final.get("level_rank") or 0.0)
+    cur_season = final.get("season")
+    span = 0
+    if entry_season is not None and cur_season is not None:
+        span = int(cur_season) - int(entry_season)
+    pace = ((cur_rank - entry_rank) / span) if span > 0 else 0.0
+    observed = 1.0 if (entry_season is not None
+                       and int(entry_season) > _MILB_FIRST_SEASON) else 0.0
+    return {"entry_level_rank": entry_rank,
+            "pace_from_entry": round(pace, 4),
+            "entry_observed": observed}
+
+
 def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
                    annotate: bool = False, cutoff: str | None = None):
     """Translated production from the MiLB ladder strictly before the decision year
@@ -622,6 +659,30 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
         # Always computed (a matrix key is free); it only enters the model when the
         # flag below is on.
         "seasons_at_level": float(_consecutive_at_level(seasons)),
+        # STARTING-POINT-AWARE PACE (2026-07-31). n_milb_seasons counts seasons
+        # with no idea WHERE the player entered, and _LEVEL_RANK puts DSL at 0,
+        # so a 17-year-old IFA who climbs DSL -> AA in four seasons carries a
+        # bigger "slow" penalty than a college draftee who starts at A and
+        # reaches AA in two, despite covering twice the ladder. Owner ask
+        # 2026-07-31 (franklin_arias, josue_de_paula).
+        #
+        # entry_level_rank : the rung he actually started on (seasons is newest
+        #                    first, so [-1] is his first observed pro season).
+        # pace_from_entry  : rungs climbed per season since entry. Arias reads
+        #                    (4-0)/4 = 1.00, de_paula (4-0)/5 = 0.80, and a
+        #                    college bat at AA in year two reads (4-2)/2 = 1.00 -
+        #                    the DSL start becomes the NUMERATOR instead of a
+        #                    penalty.
+        # entry_observed   : 0.0 when the first observed season is at the
+        #                    2015 StatsAPI floor, i.e. the true entry may be
+        #                    left-censored and the pace is a lower bound. Guard
+        #                    pattern borrowed from advancement_pace's own 2014
+        #                    left-censor guard.
+        #
+        # Emitted UNCONDITIONALLY: _fit_lgbm_mono indexes feats[k] with no
+        # default, so a feature that appears only sometimes crashes the eval.
+        # These enter no model until a gate says so (efv_model.PACE_FROM_ENTRY).
+        **_pace_from_entry(seasons, final),
     }
     keep = ("k_rel", "bb_rel", "era_rel", "rates_missing") if side == "pit" \
         else ("k_rel", "bb_rel", "iso_rel", "obp_rel", "ops_rel", "rates_missing")

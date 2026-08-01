@@ -59,6 +59,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+import value_framework as vf
 from value_framework import (
     surplus_value_mm,
     sv_credible_interval,
@@ -4262,6 +4263,9 @@ def export_trade_values_json(
 
     payload = {
         "generated_at": date.today().isoformat(),
+        # Which dollar calibration produced these numbers. Four served artifacts
+        # silently disagreed on 2026-07-31 because none of them said.
+        "calibration":   vf.calibration_stamp(),
         "count":         len(results),
         "players":       [board_slim(r) for r in results],
     }

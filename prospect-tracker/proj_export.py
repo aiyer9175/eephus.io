@@ -120,6 +120,109 @@ def _valid_pos(pos) -> bool:
     return isinstance(pos, str) and pos.strip().upper() in _VALID_POS
 
 
+# ============================================================================
+# P-VETTEAM: team + contract identity resolution
+# ============================================================================
+# The Spotrac join is by NORMALIZED NAME and the roll-up drops any vet without a
+# team (`if not tm: continue`). Two independent leaks, measured 2026-07-31 on the
+# served payload: 361 of 1,319 vets carried no team and took 40.7 champion Y1 WAR
+# out of Team Outlook. Causes:
+#   1. Spotrac's team pages only list PRICED contracts (1,161 rows), so pre-arb
+#      and optioned players are absent by construction - 356 of the 361.
+#   2. Generational suffixes disagree between sources. Spotrac writes "Jazz
+#      Chisholm", war_daily writes "Jazz Chisholm Jr." -> keys never met.
+# The suffix mismatch also mis-AWARDED contracts: the WSN "Luis Garcia" deal
+# joined mlbam 472610 (the reliever, on MIN) instead of 671277 (Luis Garcia Jr.,
+# WSN), because the reliever's key matched exactly. Resolution below is
+# mlbam-keyed and uses the observed club as the tiebreak.
+_SUFFIX_TOKENS = {"jr", "sr", "ii", "iii", "iv"}
+
+
+def _base_key(key: str) -> str:
+    """Normalized key with trailing generational suffixes removed. Guarded at
+    two remaining tokens so a genuinely two-token name ("Sammy Sr") survives."""
+    parts = key.split("_")
+    while len(parts) > 2 and parts[-1] in _SUFFIX_TOKENS:
+        parts = parts[:-1]
+    return "_".join(parts)
+
+
+_TEAM_BY_MLBAM: dict[int, str] | None = None
+
+
+def _team_by_mlbam(lookback: int = 4) -> dict[int, str]:
+    """{mlbam: org code} - the club each player was last seen playing for.
+
+    Reads the StatsAPI season-stat splits the corpus build already caches (no
+    new ingest); later seasons overwrite earlier ones, so the map reads as
+    "most recent club seen". Best-effort: an unavailable cache leaves this
+    empty and every join falls back to exactly the pre-fix behaviour."""
+    global _TEAM_BY_MLBAM
+    if _TEAM_BY_MLBAM is not None:
+        return _TEAM_BY_MLBAM
+    out: dict[int, str] = {}
+    try:
+        import fa_sources
+        from trades import canonical_org
+    except ImportError:                                        # noqa: BLE001
+        _TEAM_BY_MLBAM = out
+        return out
+    for season in range(FIRST_SEASON - lookback, FIRST_SEASON):
+        for group in ("hitting", "pitching"):
+            try:
+                splits = fa_sources.fetch_statsapi_season_stats(season, group)
+            except Exception:                                  # noqa: BLE001
+                log.warning("team map: statsapi %s %d unavailable", group, season)
+                continue
+            for sp in splits or []:
+                pid = (sp.get("player") or {}).get("id")
+                name = (sp.get("team") or {}).get("name")
+                if not pid or not name:
+                    continue
+                org = canonical_org(name)
+                if org:
+                    out[int(pid)] = org
+    _TEAM_BY_MLBAM = out
+    log.info("team map: %d mlbam -> org from statsapi season splits", len(out))
+    return out
+
+
+def _resolve_contracts(mlbams, names: dict[int, str], contracts: dict[str, dict],
+                       teams: dict[int, str]) -> tuple[dict[int, dict], dict[str, list[int]]]:
+    """Assign at most one Spotrac contract per mlbam.
+
+    Returns ({mlbam: contract}, {contract_key: [contested mlbam, ...]}). A
+    contract is claimed by the exact normalized key first and by the
+    suffix-stripped key second. When several players claim the same contract,
+    the one whose OBSERVED club matches the contract's team wins outright;
+    if that does not single anyone out the contract is left contested and the
+    caller breaks the tie on projected WAR (the pre-fix behaviour)."""
+    claims: dict[str, list[int]] = {}
+    for mid in mlbams:
+        nm = names.get(mid)
+        if not nm:
+            continue
+        ekey = normalize_key(nm)
+        for ck in (ekey, _base_key(ekey)):
+            if ck in contracts:
+                claims.setdefault(ck, []).append(mid)
+                break
+    assigned: dict[int, dict] = {}
+    contested: dict[str, list[int]] = {}
+    for ck, cands in claims.items():
+        ct = contracts[ck]
+        if len(cands) == 1:
+            assigned[cands[0]] = ct
+            continue
+        tm = ct.get("team_code")
+        agree = [m for m in cands if tm and teams.get(m) == tm]
+        if len(agree) == 1:
+            assigned[agree[0]] = ct
+        else:
+            contested[ck] = cands
+    return assigned, contested
+
+
 def _season_value_usd(war: float, t: int, dpw_level: float) -> float:
     """One projected season priced on the platform's convex tier curve at
     the winter's ex-ante $/WAR level, escalated t seasons out."""
@@ -160,11 +263,12 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
 
     # Spotrac contracts are keyed by NORMALIZED NAME only (no mlbam), so two active
     # players sharing a name (Will Smith C/RP, Max Muncy LAD/ATH) would both join the
-    # SAME contract -- corrupting team/pos/salary/surNpv and the team outlook. Names
-    # that collide within this vet universe join NO contract in the loop; after the
-    # loop the contract is awarded to the collision's highest-projected-WAR row only
-    # (Spotrac's collapse keeps the highest-AAV deal, which belongs to the flagship
-    # player). Everyone else honestly carries no contract rather than a wrong one.
+    # SAME contract -- corrupting team/pos/salary/surNpv and the team outlook. The
+    # resolver above assigns each contract to ONE mlbam (exact key, then
+    # suffix-stripped, then observed-club tiebreak); anything it still cannot single
+    # out is awarded after the loop to the highest-projected-WAR row (Spotrac's
+    # collapse keeps the highest-AAV deal, which belongs to the flagship player).
+    # Everyone else honestly carries no contract rather than a wrong one.
     _vet_ids = set(by_player["hit"]) | set(by_player["pit"])
     _name_counts: dict[str, int] = {}
     for _mid in _vet_ids:
@@ -172,6 +276,9 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         if _nm:
             _k = normalize_key(_nm)
             _name_counts[_k] = _name_counts.get(_k, 0) + 1
+    _teams = _team_by_mlbam()
+    _ct_by_mlbam, _contested = _resolve_contracts(_vet_ids, names, contracts, _teams)
+    _contested_by_mlbam = {m: ck for ck, ms in _contested.items() for m in ms}
 
     def _apply_contract(m: dict, ct: dict) -> None:
         """Stamp the contract-dependent fields (pos/team/thru/aav/sur/surNpv) onto a
@@ -308,7 +415,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             continue
         _nkey = normalize_key(name)
         _ambiguous = _name_counts.get(_nkey, 0) > 1
-        ct = None if _ambiguous else contracts.get(_nkey)
+        ct = _ct_by_mlbam.get(mlbam)
         m = {
             # Collided names get a collision-safe key (base__mlbam, the thin-card
             # convention); the post-loop award below restores the PLAIN key on the
@@ -317,7 +424,9 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             "mlbam": mlbam,
             "src": "vet", "twoWay": True if two_way else None,
             "pos": "TWP" if two_way else ((ct or {}).get("position") or path["role"]),
-            "team": (ct or {}).get("team_code"),
+            # Contract club first (it is the paying club); the observed club is the
+            # fallback that keeps un-contracted vets on a roster instead of dropped.
+            "team": (ct or {}).get("team_code") or _teams.get(mlbam),
             "war": war_arr,
             # Champion MEAN path (5y) - the SUM basis for the Team Outlook
             # multi-year roll-up (warChamp[0] == warY1Champ below).
@@ -356,18 +465,24 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             m["warTotalP90"] = round(sum(p90_arr), 1)
         if ct:
             _apply_contract(m, ct)
+            # A resolved collision winner takes the plain key back (links/joins).
+            if _ambiguous and contracts.get(_nkey) is ct:
+                m["key"] = _nkey
         m = _clean(m)
         out.append(m)
-        if _ambiguous:
-            _collision_rows.setdefault(_nkey, []).append(m)
-    # Award each collided name's contract to its highest-projected-WAR row only.
-    for _nkey, rows in _collision_rows.items():
-        ct = contracts.get(_nkey)
+        _ck = _contested_by_mlbam.get(mlbam)
+        if _ck:
+            _collision_rows.setdefault(_ck, []).append(m)
+    # Contracts the resolver could not single out: award to the highest-projected-WAR
+    # claimant only (Spotrac's collapse keeps the highest-AAV deal, i.e. the flagship).
+    for _ck, rows in _collision_rows.items():
+        ct = contracts.get(_ck)
         if not ct or not rows:
             continue
         winner = max(rows, key=lambda m: m.get("warTotal") or 0.0)
         _apply_contract(winner, ct)   # mutates the row already in `out`
-        winner["key"] = _nkey         # flagship keeps the plain key (links/joins)
+        if winner["key"].split("__")[0] == _ck:
+            winner["key"] = _ck       # flagship keeps the plain key (links/joins)
     out.sort(key=lambda m: -(m.get("warTotal") or 0))
     return out
 
@@ -643,6 +758,7 @@ def _depth_pool(corpus: dict, names: dict[int, str],
         if _nm:
             _k = normalize_key(_nm)
             _dp_name_counts[_k] = _dp_name_counts.get(_k, 0) + 1
+    _dp_teams = _team_by_mlbam()
     for mlbam in (set(by_player["hit"]) | set(by_player["pit"])) - vet_mlbams:
         champ = [0.0] * HORIZON
         age_any = None
@@ -671,7 +787,9 @@ def _depth_pool(corpus: dict, names: dict[int, str],
         name = names.get(mlbam)
         _dk = normalize_key(name) if name else None
         ct = (contracts.get(_dk) if (_dk and _dp_name_counts.get(_dk, 0) == 1) else None)
-        org = (ct or {}).get("team_code")
+        # Same fallback the vet rows use: the depth pool is nearly all pre-arb
+        # players, exactly the population Spotrac's contract pages omit.
+        org = (ct or {}).get("team_code") or _dp_teams.get(mlbam)
         last_ctrl = _last_controlled_season(
             {"src": "vet", "thru": (ct or {}).get("signed_through"), "age": age_any})
         bucket = team_war[org] if org else war_unassigned
@@ -1451,6 +1569,8 @@ def build_payload() -> dict:
     re_anchor = (cfg["dollars_per_war"].get("_fa_reanchor") or {})
     return {
         "generated_at": date.today().isoformat(),
+        # Which dollar calibration priced surNpv on the prospect rows.
+        "calibration": vf.calibration_stamp(),
         "first_season": FIRST_SEASON, "horizon": HORIZON,
         "dpw_usd": int(dpw),
         "dpw_infl": float(cfg.get("dollars_per_war_inflation", 0.05)),

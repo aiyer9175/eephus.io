@@ -274,6 +274,39 @@ _FEATURES_PIT = [
 ]
 
 
+# PACE FROM ENTRY (2026-07-31, owner ask: franklin_arias / josue_de_paula).
+# PRE-REGISTERED, DEFAULT OFF, NOT YET GATED. The columns are emitted
+# unconditionally by efv_dataset._pace_from_entry (entry_level_rank,
+# pace_from_entry, entry_observed) because _fit_lgbm_mono indexes feats[k] with
+# no default; flipping this flag is what puts them in the ridge.
+#
+# THE DEFECT IT TARGETS, measured: n_milb_seasons counts seasons with no idea
+# where the player ENTERED, and _LEVEL_RANK puts DSL at 0, so a DSL starter
+# mechanically carries more counted seasons than a college draftee at the same
+# rung. The only entry-pathway machinery in the model today is the is_ifa dummy,
+# which fits -0.0010 (inert). Arias reads 1.33 rungs/season from a DSL entry and
+# de_paula 1.00, against a stalled AA repeater's 0.00.
+#
+# EXPECTED FAILURE MODE, PRE-REGISTERED so it is not read as a finding: this
+# feature family has inverted on the hitter side THREE times (n_milb_seasons
+# marginal +0.095 vs conditional -0.23; seasons_at_level +0.0945 at permutation
+# p=0.375; pit age_rel_level +0.0418 against a declared -1). The training pool is
+# survivorship-censored to debuted players, so "moved slowly but is still on the
+# board" selects for players the system KEPT. If the hitter arm fits a NEGATIVE
+# weight on pace (fast movers score worse), that is the censoring artifact and
+# the arm closes - it must NOT ship as "DSL starters are worse".
+#
+# Gate when run: forward-chained pooled Spearman vs MDE95 floors 0.017 hit /
+# 0.016 pit, a row-permuted zero-information control kept IN the feature set, the
+# feature-specific permutation null (30 draws, the bar seasons_at_level cleared at
+# p=0.032), and a paired bootstrap B=2000. Also worth its own arm: the same
+# column fits -0.5943 in the fv-anchor-free efv_ungraded set against ~0 in the
+# anchored flagship, so if the flagship arm nulls, efv_ungraded is where the
+# signal is not already priced by scouts.
+# Doc: docs/efv-2026-07-31/PACE_FROM_ENTRY_GATE.md
+PACE_FROM_ENTRY = False
+
+
 # Guarded-blend weight for the shipped HEADLINE rank: rank = (1-lambda)*consensus_OLS
 # + lambda*model. lambda is now WAG-CALIBRATED (see _wag_calibrated_lambda): it is the
 # trust factor that realized WAR-Above-Grade actually supports for eFV's adjustment,
@@ -745,6 +778,14 @@ def _vec(r, side: str = "hit") -> dict:
         # no MiLB block, the modal value, matching how the rest of the milb block
         # is mean-imputed behind the milb_missing indicator.
         "seasons_at_level": g(m.get("seasons_at_level"), 1.0),
+        # Pace from ENTRY level (see efv_model.PACE_FROM_ENTRY). Emitted
+        # unconditionally for the same reason seasons_at_level is: _fit_lgbm_mono
+        # indexes feats[k] with no default. Imputed neutral behind milb_missing -
+        # 1.0 rung/season is the modal climb rate, and entry_observed 0.0 for a
+        # row with no ladder is the honest "we cannot see where he started".
+        "pace_from_entry": g(m.get("pace_from_entry"), 1.0),
+        "entry_level_rank": g(m.get("entry_level_rank"), 2.0),
+        "entry_observed": g(m.get("entry_observed"), 0.0),
         "prod_trend": g(m.get("prod_trend")),
         "pos_prem": _pos_premium_for_row(r, side),
         "pick_overall": float(pick) if pick is not None else 250.0,

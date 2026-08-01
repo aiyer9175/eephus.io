@@ -339,7 +339,13 @@ def fitted_models(corpus: dict, max_season: int, use_cache: bool = True) -> tupl
     # refresh strictly advances 'last' (annual rollover + the in-progress season
     # going partial->full + bWAR revisions), so omitting it served the PREVIOUS
     # vintage's stale aging curves + WAR map from disk forever (2026-07-19 fix).
-    cache = CACHE_DIR / f"fa_fits_{max_season}_{corpus['first']}_{corpus['last']}.pkl"
+    # F-DEF changes the hitter map's COLUMN SET, and the key above carries
+    # nothing about model settings, so without this suffix an A/B of the arm
+    # would silently read the other arm's map off disk. Off = the historical
+    # filename, so no existing cache is invalidated.
+    _suffix = "_def" if _def_enabled() else ""
+    cache = (CACHE_DIR /
+             f"fa_fits_{max_season}_{corpus['first']}_{corpus['last']}{_suffix}.pkl")
     if use_cache and cache.exists():
         with open(cache, "rb") as fh:
             return pickle.load(fh)
@@ -925,11 +931,22 @@ def pt_tj_multiplier(mlbam, target_season: int) -> float:
 # fa_fit's contracted-roster projections, and data/fa_class.json.
 REALWAR_DEFAULT = True                      # central flip lives here
 # Stabilization for the residual rate, in effective PA (hitters) / IP
-# (pitchers). PRE-REGISTERED PRIMARY VALUES, chosen a priori, not swept for
-# the ship decision: ~2 full seasons of exposure, the standard public anchor
-# for a defense-scale signal. The grid {0.5x, 1x, 2x} is reported as
-# sensitivity only.
-REALWAR_K = {"hit": 1200.0, "pit": 400.0}
+# (pitchers).
+#
+# HITTER K 1200 -> 600, 2026-07-31. The 1200 was chosen a priori (~2 full
+# seasons) and never swept; the ship note above already flagged that 0.5x
+# scored better. Swept properly on Gate 1 (10 forward-chained targets, n=20,721,
+# persist=False), pooled WAR MAE by K_hit:
+#     150 0.58302 | 300 0.58062 | 600 0.58065 | 900 0.58185
+#    1200 0.58318 (shipped) | 1800 0.58539 | 2400 0.58706
+# The optimum is a PLATEAU over 300-900, every point of which beats 1200, and
+# 600 = one full season of PA is the a-priori anchor inside it. Paired on the
+# identical rows: dMAE -0.00253, CI95 [-0.00323, -0.00176], P(better) 1.000;
+# signed bias -0.0770 -> -0.0732. The >=4-bWAR hitter cell moves 3.1285 ->
+# 3.0196 MAE with bias -3.1122 -> -2.9968 - the star tail was paying most of
+# the over-shrink. Pitcher K left at 400: its own sweep (100/200/400/800) moves
+# pooled MAE by 0.0006 and the pitcher star cell gets WORSE as K rises.
+REALWAR_K = {"hit": 600.0, "pit": 400.0}
 # A-priori bound on the residual rate (WAR per 600 PA / per 100 IP). +-2.5 is
 # about the full observed range of season defensive value; it stops a 50-PA
 # fluke from moving a projection.
@@ -948,6 +965,145 @@ def _realwar_enabled() -> bool:
     if env is not None:
         return env.strip() == "1"
     return REALWAR_DEFAULT
+
+
+# ============================================================================
+# F-DEF: OBSERVED defense as a real feature of the hitter WAR map (gated arm)
+# ============================================================================
+# The hitter map's only positional term is a catcher dummy, so every non-catcher
+# is priced as if his glove and his position were league average. F-REALWAR
+# carries the consequence indirectly - it infers "whatever the map missed" from
+# realized bWAR, which is a NOISY read of a defensive signal that is published
+# directly. data/mlb_def_history.json carries bWAR's OWN war_def (fielding runs)
+# and runs_position (the positional adjustment) per player-season, in the same
+# currency as the target, back to 2000. This arm feeds their sum, per 600 PA and
+# point-in-time (prior seasons only, Marcel-weighted, shrunk on PA), into
+# fit_war_map as a fourth hitter column so the coefficient is FITTED rather than
+# assumed - the map then knows a premium-position plus glove is worth real WAR.
+#
+# Env flag EEPHUS_FA_DEF ("1"/"0") read at call time; "0" is byte-identical to
+# the pre-hook path.
+#
+# SHIPPED 2026-07-31, DEFAULT ON. Gate 1, 10 forward-chained targets, n=20,721,
+# paired on the identical rows AT FIXED REALWAR_K=600 so the two changes in this
+# lane are measured separately:
+#   pooled WAR MAE  0.58065 -> 0.57357  dMAE -0.00708 CI95 [-0.00863, -0.00559]
+#   hitters         0.67767 -> 0.66105     pitchers byte-identical (hitter-only column)
+#   wRC+ / FIP      byte-identical (the column touches only the WAR map)
+#   coverage        0.79745 -> 0.79750 (band 0.75-0.85), all four gates stay True
+#   >=4-bWAR hitter cell: MAE 3.0196 -> 2.9623, bias -2.9968 -> -2.9332,
+#                   mean predicted 2.491 -> 2.622 against 5.556 actual. Still
+#                   short of the naive 5/4/3 carry-forward (2.373) in that cell.
+# ZERO-INFORMATION CONTROL (the one that matters here): re-key the feature to a
+# DIFFERENT player with a record in the same season - identical marginal
+# distribution, identical exposure profile, no player linkage. Two seeds:
+# dMAE +0.00011 CI95 [-0.00005, +0.00027] and -0.00002 CI95 [-0.00006, +0.00002].
+# The entire gain is player-specific.
+# WHAT THE FIT ITSELF SAYS: the fitted coefficient is 0.2652 on a rate that
+# carries a mean shrink of ~0.4, i.e. ~0.106 WAR per run on the unshrunk rate -
+# the fit recovers 1/RPW from the data without being told it. And the catcher
+# dummy collapses from +0.6217 to -0.1539, because the positional value it was
+# standing in for now flows through the real column.
+# GOLDEN RESTAMP OWED: this reaches war_from_projection, so every surface built
+# on it moves, exactly as F-REALWAR did.
+DEF_FEATURE_DEFAULT = True
+# Shrink in PA. A-priori (~2 full seasons), NOT swept for the ship decision;
+# reported sensitivity is flat: pooled WAR MAE 0.57430 / 0.57379 / 0.57357 /
+# 0.57352 at DEF_K 300 / 600 / 1200 / 2400.
+DEF_K = 1200.0
+# A-priori bound in runs per 600 PA. +-20 is wider than any qualified season's
+# combined fielding + positional runs; it only stops a 30-PA sample exploding.
+DEF_CAP = 20.0
+
+_DEF_HIST: dict | None = None
+
+
+def _def_hist() -> dict:
+    """{(mlbam, season): (defensive+positional runs, pa)} from bWAR's own
+    war_daily split. Empty dict (arm no-ops) when the feed is absent."""
+    global _DEF_HIST
+    if _DEF_HIST is not None:
+        return _DEF_HIST
+    out: dict = {}
+    try:
+        raw = json.loads((Path(__file__).parent / "data" / "mlb_def_history.json")
+                         .read_text(encoding="utf-8"))["rows"]
+    except (OSError, ValueError, KeyError):
+        log.warning("F-DEF: data/mlb_def_history.json unavailable; arm no-ops")
+        _DEF_HIST = out
+        return out
+    for k, v in raw.items():
+        try:
+            mid, season = k.split(":")
+            out[(int(mid), int(season))] = (
+                _f(v.get("war_def")) + _f(v.get("runs_position")), _f(v.get("pa")))
+        except (ValueError, AttributeError, TypeError):
+            continue
+    _DEF_HIST = out
+    return out
+
+
+# Lab hook for the ZERO-INFORMATION CONTROL: set to an int and every lookup is
+# re-keyed to a different player who has a record in the same season, which
+# preserves the feature's marginal distribution and its exposure profile while
+# destroying the player linkage. None in production.
+DEF_PERMUTE_SEED: int | None = None
+_DEF_PERM: dict | None = None
+
+
+def _def_enabled() -> bool:
+    env = os.environ.get("EEPHUS_FA_DEF")
+    if env is not None:
+        return env.strip() == "1"
+    return DEF_FEATURE_DEFAULT
+
+
+def _def_perm() -> dict:
+    """{(mlbam, season): substitute mlbam} - a within-season derangement."""
+    global _DEF_PERM
+    if _DEF_PERM is not None:
+        return _DEF_PERM
+    import random as _random
+    by_season: dict[int, list[int]] = defaultdict(list)
+    for (mid, season) in _def_hist():
+        by_season[season].append(mid)
+    rng = _random.Random(DEF_PERMUTE_SEED)
+    out: dict = {}
+    for season, ids in by_season.items():
+        ids = sorted(ids)
+        shuffled = ids[:]
+        rng.shuffle(shuffled)
+        for a, b in zip(ids, shuffled):
+            out[(a, season)] = b
+    _DEF_PERM = out
+    return out
+
+
+def def_rate(mlbam, season: int) -> float:
+    """Shrunk prior-seasons defensive+positional runs per 600 PA, point in
+    time: only seasons strictly before ``season`` are read, on the same
+    5/3/2 recency weights the component rates use."""
+    if not mlbam:
+        return 0.0
+    hist = _def_hist()
+    if not hist:
+        return 0.0
+    w = _marcel_weights()
+    num = den = 0.0
+    for lag in (1, 2, 3):
+        _mid = int(mlbam)
+        if DEF_PERMUTE_SEED is not None:
+            _mid = _def_perm().get((_mid, int(season) - lag), _mid)
+        rec = hist.get((_mid, int(season) - lag))
+        if not rec or rec[1] <= 0:
+            continue
+        wl = float(w[lag - 1]) / float(w[0])
+        num += wl * rec[1] * (rec[0] / (rec[1] / 600.0))
+        den += wl * rec[1]
+    if den <= 0:
+        return 0.0
+    rate = max(-DEF_CAP, min(DEF_CAP, num / den))
+    return rate * (den / (den + DEF_K))
 
 
 # ============================================================================
@@ -1066,8 +1222,13 @@ def _realwar_map_features(h: dict, side: str, league: dict) -> list[float] | Non
                                 league, h["season"] + 1)["woba_proj"]
         wraa_pa = (woba - lg["woba"]) / _pcfg()["assembly"]["woba_scale"]
         pa6 = pa / 600.0
-        return [1.0, pa6, wraa_pa * pa6 * 600.0 / 10.0,
-                (1.0 if h.get("role") == "C" else 0.0) * pa6]
+        row = [1.0, pa6, wraa_pa * pa6 * 600.0 / 10.0,
+               (1.0 if h.get("role") == "C" else 0.0) * pa6]
+        if _def_enabled():
+            # Must match fit_war_map's column set or the residual reconstruction
+            # would subtract a prediction the map never made.
+            row.append(def_rate(h.get("mlbam"), h["season"]) * pa6)
+        return row
     ip = h.get("ip") or 0
     if ip < 20 or not lg.get("lg_fip") or h.get("fip") is None:
         return None
@@ -1269,6 +1430,11 @@ def project_player(history: list[dict], side: str, target_season: int,
                        "x": x})
         out["_rw"] = rw
         out["_rw_id"] = hist[0].get("mlbam")
+    # F-DEF: the point-in-time defensive rate the map's fourth hitter column
+    # consumes. Computed here (where the history is) rather than in
+    # war_from_projection (which only sees the assembled projection).
+    if side == "hit" and _def_enabled():
+        out["def_rate"] = def_rate(hist[0].get("mlbam"), target_season)
     # ---- composites ----------------------------------------------------------
     if side == "hit":
         out.update(_assemble_hitter(out, league, target_season))
@@ -1376,6 +1542,7 @@ def fit_war_map(corpus: dict, max_season: int) -> dict:
     import numpy as np
     league = corpus["league"]
     out: dict = {}
+    _def = _def_enabled()
     # hitters
     X, y = [], []
     a = _pcfg()["assembly"]
@@ -1389,11 +1556,17 @@ def fit_war_map(corpus: dict, max_season: int) -> dict:
                                 league, r["season"] + 1)["woba_proj"]
         wraa_pa = (woba - lg["woba"]) / a["woba_scale"]
         pa6 = r["pa"] / 600.0
-        X.append([1.0, pa6, wraa_pa * pa6 * 600.0 / 10.0, (1.0 if r["role"] == "C" else 0.0) * pa6])
+        row = [1.0, pa6, wraa_pa * pa6 * 600.0 / 10.0, (1.0 if r["role"] == "C" else 0.0) * pa6]
+        if _def:
+            # Point in time: the feature reads only seasons BEFORE this row's.
+            row.append(def_rate(r.get("mlbam"), r["season"]) * pa6)
+        X.append(row)
         y.append(r["war"])
     bh, *_ = np.linalg.lstsq(np.asarray(X), np.asarray(y), rcond=None)
+    _hf = ["1", "PA/600", "wRAA/10", "C×PA/600"]
     out["hit"] = {"coef": [round(c, 4) for c in bh.tolist()],
-                  "features": ["1", "PA/600", "wRAA/10", "C×PA/600"], "n": len(y)}
+                  "features": _hf + (["defRuns600×PA/600"] if _def else []),
+                  "n": len(y)}
     # pitchers
     X, y = [], []
     for r in corpus["pit"]:
@@ -1419,6 +1592,11 @@ def war_from_projection(proj: dict, side: str, war_map: dict, league: dict,
         wraa10 = proj["wraa_pa"] * proj["pt_proj"] / 10.0
         war = (c[0] + c[1] * pa6 + c[2] * wraa10
                + c[3] * (1.0 if proj["role"] == "C" else 0.0) * pa6)
+        # F-DEF: the fitted defensive/positional column, at PROJECTED exposure.
+        # Guarded on the coefficient count so a war_map pickled under the other
+        # setting cannot silently drop or invent a term.
+        if len(c) > 4:
+            war += c[4] * proj.get("def_rate", 0.0) * pa6
         expo6 = pa6
     else:
         c = war_map["pit"]["coef"]

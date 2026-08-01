@@ -15,6 +15,8 @@ import logging
 from datetime import date
 from pathlib import Path
 
+import value_framework as vf
+
 from efv_score import scored_path, scored_live_path
 
 log = logging.getLogger(__name__)
@@ -61,6 +63,8 @@ def _entry(s, side, kind):
         e["consensus_surplus_mm"] = s["consensus_surplus_mm"]
     if s.get("injury_factor") is not None:               # live injury penalty (<1.0 = hurt)
         e["injury_factor"] = s["injury_factor"]
+    if s.get("xfv_grade_healthy") is not None:           # same basis as xfv_grade, injury removed
+        e["xfv_grade_healthy"] = s["xfv_grade_healthy"]
     if s.get("statcast_factor") is not None:             # live Statcast+ tilt (!=1.0)
         e["statcast_factor"] = s["statcast_factor"]
     if s.get("krp_plus") is not None:                    # KRP+ (K-backed Run Prevention), pitchers
@@ -116,6 +120,10 @@ def run(persist: bool = True) -> dict:
     out = {
         "meta": {
             "generated_at": date.today().isoformat(),
+            # Which dollar calibration priced surplus_mm on these rows. Four
+            # served artifacts silently disagreed on 2026-07-31 because none of
+            # them recorded it; test_calibration_vintage_agreement now pins it.
+            "calibration": vf.calibration_stamp(),
             "n_players": len(by_player),
             # bughunt SCORE d (2026-07-23): count kind=="active" rows in the
             # MERGED artifact - the backgrade contributes prior-anchored
