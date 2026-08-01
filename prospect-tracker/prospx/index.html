@@ -35580,6 +35580,12 @@ function makeSurplusCell(p) {
           + "what he is likely to give you. Ordering this far down the board carries little "
           + "information either."
         : ".")
+    + (isEfv && xf && xf.xfv_grade_quantile != null
+         && Math.round(xf.xfv_grade_quantile) !== efvGradeDisplay(xf)
+        ? ` Priced off the population 20-80 scale (${Math.round(xf.xfv_grade_quantile)}),`
+          + ` not the ${efvGradeDisplay(xf)} shown as the grade: the dollar calibration is`
+          + ` fitted on that scale, so pricing is done there and the two can round apart.`
+        : "")
     + " Open the player for the full distribution + methodology.";
   // Bottom meta line: P(bust), WAG (grads), and $DvM+ - whichever are present.
   const botBits = [];
