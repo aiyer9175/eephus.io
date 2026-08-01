@@ -827,10 +827,21 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         _reset_cache()   # clear GRPO cache so new scores are loaded
         tv_players = list(_ts_payload.get("players") or [])   # reuse the single parse above
         lnorms     = _ts_payload.get("level_norms")
+        # Sidecars are OPTIONAL but their absence must be VISIBLE. graduates.json
+        # is read here, by efv_score and by grpo_prospect, and NOTHING IN THIS
+        # REPO WRITES IT - a declared input that has silently never arrived,
+        # because `if exists()` makes a missing file indistinguishable from an
+        # empty one. Same failure shape as the FA parser that returned [] for a
+        # day without anyone noticing (2026-07-31).
         for _sidecar in ("debuts.json", "graduates.json"):
             _sp = out_dir / _sidecar
             if _sp.exists():
-                tv_players += json.loads(_sp.read_text(encoding="utf-8"))
+                _rows = json.loads(_sp.read_text(encoding="utf-8"))
+                tv_players += _rows
+                log.info("trade values: %s contributed %d rows", _sidecar, len(_rows))
+            else:
+                log.warning("trade values: %s ABSENT - no producer exists in this "
+                            "repo; the board is built without it", _sidecar)
         n_tv = export_trade_values_json(tv_players, out_dir / "trade_values.json",
                                         level_norms=lnorms)
         log.info("trade values (rebuild): exported %d players", n_tv)

@@ -109,6 +109,43 @@ def test_all_surplus_artifacts_agree_on_the_calibration():
         f"is worth different amounts on different surfaces: {seen}")
 
 
+def test_the_same_player_is_worth_the_same_on_every_surface():
+    """Surplus cohesion, the invariant behind the stamps.
+
+    An MLB veteran's trade-board value IS his /projections/ contract surplus -
+    `apply_platform_surplus` re-points it to surNpv, and the vets seeded into the
+    board from the projection artifact are built from the same number. So the two
+    surfaces must agree per player, not merely share a calibration version. This
+    catches a re-point that silently stops firing, which is the failure the
+    Anderson investigation found in the OTHER direction (four artifacts on three
+    different vintages, all internally consistent, none agreeing)."""
+    tvp, projp = DATA / "trade_values.json", DATA / "mlb_projections.json"
+    if not (tvp.exists() and projp.exists()):
+        pytest.skip("artifacts not built on this machine")
+    try:
+        board = {p["player_key"]: p for p in
+                 json.loads(tvp.read_text(encoding="utf-8"))["players"]
+                 if p.get("player_key")}
+        vets = json.loads(projp.read_text(encoding="utf-8")).get("vets") or []
+    except (OSError, ValueError, KeyError) as exc:
+        pytest.skip(f"unreadable artifact: {exc}")
+
+    mismatched = []
+    for v in vets:
+        row = board.get(v.get("key"))
+        if not row or v.get("surNpv") is None:
+            continue
+        if row.get("surplus_source") != "projection":
+            continue          # eFV-sourced rows are a different basis by design
+        if row.get("trade_value_mm") is None:
+            continue
+        if abs(float(row["trade_value_mm"]) - v["surNpv"] / 1e6) > 0.15:
+            mismatched.append((v["key"], row["trade_value_mm"], v["surNpv"] / 1e6))
+    assert not mismatched[:10], (
+        "trade board and /projections/ disagree on the same player's surplus: "
+        f"{mismatched[:10]}")
+
+
 def test_stamped_artifacts_match_the_live_config():
     """A stamp that disagrees with the config in force means the artifact was
     built by a process holding a stale config in memory - the 21:12 timeseries
