@@ -13,6 +13,7 @@ happen inside the called module, so this file alone cannot split them).
 |---|---|
 | d0. TJStats Live capture | - |
 | d0b. MLB Pipeline Live capture | - |
+| d0b-i. Just Baseball rolling capture | - |
 | d0b-ii. MLB Pipeline per-team Top 30 capture | - |
 | d0. MLBAM prospect discovery (unranked actives) | - |
 | d1. Build player set from DB | - |
@@ -31,7 +32,9 @@ happen inside the called module, so this file alone cannot split them).
 | d9c. Headshot resolution (photo_ctx.json) | fantasy.json, photo_ctx.json |
 | 9d. Fantasy daily refresh (fantasy.json schedule) | fantasy.json |
 | d10. FA signing-window refresh | mlb_projections.json |
-| d10b. FA re-export off fresh projections | timeseries.json |
+| d10b. FA re-export off fresh projections | - |
+| d10c. TJStats Live second capture | - |
+| d10d. ESPN new-article probe | timeseries.json |
 | d11. Rebuild site (build_site) | - |
 
 ## Monthly pipeline (`run_monthly.main`)
@@ -45,6 +48,8 @@ happen inside the called module, so this file alone cannot split them).
 | 1. Scrape MiLB rankings + insert snapshots | - |
 | 0c/0d/1 parallel block | - |
 | 1c. TJStats Top-100 (Live + history) | - |
+| 1c-bis. Just Baseball rolling capture | - |
+| 1c-ter. ESPN new-article probe | - |
 | 2. Build consensus timeseries | - |
 | 2a. Bulk resolve IDs + birth dates | - |
 | 2b. Bulk fetch draft data (career-span window) | - |
