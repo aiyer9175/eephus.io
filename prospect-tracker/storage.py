@@ -43,6 +43,87 @@ from consensus import PlayerTimeseries, stock_movement
 from stats import StatLine
 from rate_stabilization import K_AB, K_IP
 
+
+# ---------------------------------------------------------------------------
+# wRC+ vs level (Phase D2). Level-anchored PUBLISHED-SHAPE wOBA index, computed
+# alongside ops_plus_level so the two can be compared before either is retired.
+# ---------------------------------------------------------------------------
+# Two things change against ops_plus_level, and they are separable on purpose:
+#
+#   METRIC   OPS -> wOBA-lite. Fixed FanGraphs 2013 linear-weight SHAPE, rescaled
+#            per sport-season so the pool's mean wOBA equals its OBP. wrc_rates.py
+#            owns that machinery and has since the W-WRC lane.
+#   BASELINE level_norms.avg_ops is an UNWEIGHTED mean of TRACKED-PROSPECT rates
+#            over a two-season window; the wrc_rates league pool is a PA-WEIGHTED
+#            single-season pool of the WHOLE league. Measured, the AA and A+
+#            prospect baselines run 7-8% low against the true league (.703 vs .752,
+#            .708 vs .767), so the old chip flattered every hitter at those levels.
+#
+# The baseline change is the bigger mover of the printed number but carries NO
+# ordering information: measured over 1,760 common rows it produced ZERO upward
+# moves, Spearman 0.9720 and 0 of 13,218 discordant pairs. It is a per-level
+# recentering. The METRIC change is the one that reorders.
+#
+# SHRINK: same strength as today, re-expressed in PA. K_AB is 170 AB and the
+# measured PA/AB median is 1.1776, so K_WRC_PA = 200 PA holds the EB pull constant
+# rather than quietly retuning it inside a metric swap.
+K_WRC_PA = 200.0
+_WRC_INDEX = None
+
+
+def _wrc_index():
+    """(index, leagues) from wrc_rates, loaded once. Empty on any failure: the
+    chip is display-only, so a missing components cache must degrade to "no chip"
+    and never to a wrong one."""
+    global _WRC_INDEX
+    if _WRC_INDEX is None:
+        try:
+            import wrc_rates
+            _WRC_INDEX = wrc_rates.build_index()
+        except Exception:
+            log.exception("wrc_rates index unavailable; wrc_plus_level will be absent")
+            _WRC_INDEX = ({}, {})
+    return _WRC_INDEX
+
+
+def _wrc_plus_level(mlbam, season, level):
+    """Level-anchored wRC+ for one player-season-level, or None.
+
+    None rather than a fallback on purpose. Silently substituting the OPS chip
+    would make two different metrics share one field name, which is exactly the
+    confusion this lane exists to remove.
+    """
+    if mlbam is None or season is None or not level:
+        return None
+    idx, leagues = _wrc_index()
+    if not idx:
+        return None
+    rec = idx.get((int(mlbam), int(season), level))
+    lg = leagues.get((int(season), level))
+    if not rec:
+        # LEVEL-LABEL FALLBACK. The board and the StatsAPI league name disagree on
+        # the complex leagues: 124 served rows are labelled CPX here while the feed
+        # puts the same player-seasons in the DSL. Measured 2026-07-31, that single
+        # disagreement was the ENTIRE coverage gap (122 of 122 misses were CPX 2026).
+        #
+        # Fall back to the same (player, season) at whatever level the FEED has, but
+        # only when that is unambiguous. The league pool then matches the league the
+        # player actually appeared in, which is the more defensible anchor of the
+        # two, and it is strictly better than printing no chip. An ambiguous case
+        # (two levels in one season) is left absent rather than guessed.
+        alt = [k for k in idx if k[0] == int(mlbam) and k[1] == int(season)]
+        if len(alt) != 1:
+            return None
+        rec = idx.get(alt[0])
+        lg = leagues.get((int(season), alt[0][2]))
+    if not rec or not lg:
+        return None
+    w, lw, pa = rec.get("woba"), lg.get("woba"), rec.get("pa") or 0.0
+    if w is None or not lw or lw <= 0:
+        return None
+    adj = (pa * w + K_WRC_PA * lw) / (pa + K_WRC_PA)
+    return round(adj / lw * 100)
+
 DB_PATH = Path(__file__).parent / "prospects.db"
 _LEVEL_SORT_ORDER = {"MLB": 0, "AAA": 1, "AA": 2, "A+": 3, "A": 4, "CPX": 5, "DSL": 6}
 
@@ -718,13 +799,21 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
             # (100 = level mean). Threshold is _BREAKOUT_STAT_OPS_PLUS_LEVEL_GATE
             # (150), set higher than the wRC+ gate because level-anchored stats
             # compress harder; see the constant's own comment.
-            ops_plus = statline.get("ops_plus_level")
+            # PHASE D2: reads the wRC+ chip, falling back to the retired OPS one.
+            # This gate is DEAD either way and has been for a while: measured
+            # 2026-07-31, 0 of 1,972 served rows reach 150 under ANY of the
+            # candidates (OPS+ max 127, wRC+ max 119). Repointed for consistency
+            # rather than for effect, so the flag cannot start describing one metric
+            # while the card shows another.
+            ops_plus = statline.get("wrc_plus_level")
+            if ops_plus is None:
+                ops_plus = statline.get("ops_plus_level")
             try:
                 if ops_plus is not None and float(ops_plus) >= _BREAKOUT_STAT_OPS_PLUS_LEVEL_GATE:
                     return {
                         "flag": True,
                         "reason": "stats",
-                        "perf_gate": "ops_plus_level",
+                        "perf_gate": "wrc_plus_level",
                         "fv_upgrade": None,
                         "tool_velocity": None,
                         "window_anchor_date": None,
@@ -9113,6 +9202,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                         ops_plus = round(ops_adj / avg_ops * 100)
                         sl_out["ops_plus_level"] = ops_plus
                         sl_out["level_plus_pct"] = round((ops_adj - avg_ops) / avg_ops * 100)
+                    # wRC+ vs level, stamped ALONGSIDE the OPS chip (Phase D2). See
+                    # _wrc_plus_level: different metric AND different baseline, so the
+                    # two are carried together while the swap is measured rather than
+                    # one silently replacing the other under a shared name.
+                    _w = _wrc_plus_level(sl_out.get("mlbam_id"), sl_out.get("season"),
+                                         sl_out.get("level"))
+                    if _w is not None:
+                        sl_out["wrc_plus_level"] = _w
             except (TypeError, ValueError, ZeroDivisionError):
                 pass
 
@@ -9152,6 +9249,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                         _ab = float(_rr.get("ab") or 0)
                         _ops_adj = (_ab * _ops + K_AB * _avg_ops) / (_ab + K_AB)
                         _rr["ops_plus_level"] = round(_ops_adj / _avg_ops * 100)
+                    # career_stats rows carry no mlbam_id (measured: 0 of 2,794),
+                    # so fall back to the headline statline's, which is the same
+                    # player by construction.
+                    _w = _wrc_plus_level(
+                        _rr.get("mlbam_id") or (sl_out or {}).get("mlbam_id"),
+                        _rr.get("season"), _rr.get("level"))
+                    if _w is not None:
+                        _rr["wrc_plus_level"] = _w
             except (TypeError, ValueError, ZeroDivisionError):
                 pass
             _current_season_statlines.append(_rr)

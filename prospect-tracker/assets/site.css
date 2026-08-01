@@ -1758,6 +1758,11 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .pal-ars-row .pal-ars-pitch { color: var(--text-secondary); }
 .pal-ars-row .pal-bar > span { background: var(--accent-cyan); }
 .pal-ars-row .pal-ars-meta { color: var(--text-tertiary); white-space: nowrap; }
+/* Rng+ (legs), outfield destinations only. Cued as a measured read rather than a
+   model output, so it sits in the muted mono family beside the runs figure. */
+.pal-rng { font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .03em;
+  border: 1px solid var(--border); padding: 0 5px; margin-left: 6px;
+  color: var(--text-secondary); white-space: nowrap; cursor: help; }
 /* direction + outcome badges (Conversion History) */
 .pal-dir { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .03em;
   border: 1px solid var(--border); padding: 1px 6px; color: var(--text-secondary); white-space: nowrap; }
@@ -2635,8 +2640,18 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   background: var(--org-color, var(--accent, currentColor));
   transition: width .12s ease, box-shadow .12s ease;
 }
-.mlb-card:hover::before { width: 7px; box-shadow: 0 0 8px var(--org-color, var(--accent)); }
-.mlb-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* BUGFIX 2026-07-31: both of these named var(--accent), which this stylesheet
+   has never defined (the tokens are --accent-cyan / -gold / -green / -red /
+   -navy / -orange / -lilac). A var() chain that resolves to nothing makes the
+   whole declaration INVALID AT COMPUTED-VALUE TIME, so the hover glow silently
+   did nothing and - the real defect - .mlb-card:focus-visible fell back to
+   `outline: initial`, i.e. NO keyboard focus ring on the Projections or Free
+   Agency board cards. Both now name a token that exists in both themes.
+   The ::before background above ALSO names --accent but still resolves (to
+   currentColor), so it is left alone here: changing it would repaint two
+   modules this lane does not own. Reported separately. */
+.mlb-card:hover::before { width: 7px; box-shadow: 0 0 8px var(--org-color, var(--accent-cyan)); }
+.mlb-card:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
 
 /* Row 2 tape: spans every column so a full season strip or a band row lays out
    on ONE line at a uniform height, flush along the card bottom. */
@@ -2681,9 +2696,110 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; opacity: .62;
 }
 .mlb-card-head [role="button"] { cursor: pointer; user-select: none; white-space: nowrap; }
-.mlb-card-head [role="button"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* BUGFIX 2026-07-31: was var(--accent), an undefined token - see the note on
+   .mlb-card:focus-visible above. Sort headers had no visible focus ring. */
+.mlb-card-head [role="button"]:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
 
 @media (max-width: 720px) {
   .mlb-card { grid-template-columns: 1fr auto !important; row-gap: 6px; }
   .mlb-card > .mlb-metric { text-align: left; }
+}
+
+/* ===========================================================================
+   Fantasy board cards (2026-07-31). FOUR of the nine /fantasy/ surfaces moved
+   onto the .mlb-card pattern above; the rest deliberately stayed tables. Row
+   counts measured off data/fantasy.json:
+
+     CONVERTED   ROS Hitters 350 | ROS SP 250 | ROS RP 180 | Dynasty 300
+       These are the leaderboards: 9-11 columns, 180-350 rows, and they re-rank
+       live every time the league-scoring selector moves. They also had no sort
+       at all - the boards were nailed to the score order, so a roto manager
+       could not ask "who is left with steals". Sortable headers were the win;
+       content-visibility is what makes 350 rows in the DOM affordable.
+
+     LEFT AS TABLES
+       Daily Streamers  26 / 23 / 27 rows per day slate (76 total, one day shown)
+       Two-Start SP     79 rows, 5 columns, one of them a free-text leg list
+       Buy / Sell       30 + 30, rendered as a deliberate side-by-side pair
+       Call-up Watch    60 rows, 5 narrow columns
+       Closer Grid      already a card grid (30 teams x 5 arms), untouched
+       A 27-row table is scannable in one screen. The same 27 rows as cards is
+       three screens of scrolling, and Buy/Sell would lose the pairing that is
+       the entire point of the surface.
+
+   Card height is 104px, NOT the 136px PROSPX uses. 136 is sized for PROSPX's
+   four-line MiLB cell plus its tool-grade strip. A fantasy card is a one-line
+   identity block over a single tape row, which measures ~96px, so copying the
+   constant would have hung ~32px of dead space off every one of 350 cards.
+   What is load-bearing from the pattern is that the height is FIXED and that
+   row 1 is minmax(0, 1fr) so the tape always keeps its own band at the card
+   bottom; the constant itself is content-sized per module.
+   =========================================================================== */
+.ff-card {
+  height: 104px;
+  /* Match the fixed height exactly so the virtualization estimate is not a
+     guess and the scrollbar does not jump as cards page in. */
+  contain-intrinsic-size: auto 104px;
+  background: var(--bg-secondary);
+  gap: 2px 10px;
+}
+.ff-card:hover { box-shadow: var(--shadow-card-hover); }
+.ff-card-list { gap: 5px; }
+.ff-card .ff-id { min-width: 0; }
+.ff-card .mlb-metric.ff-strong { font-weight: 800; }
+.ff-card .mlb-tape-inner { padding-top: 4px; }
+
+/* Diamond rank chip: the PROSPX .rank-num geometry (45deg rotation with a
+   counter-rotated inner span) rather than the .mlb-rank circle, because these
+   are ranked boards and the diamond is the house glyph for a rank. Its border
+   reads the same --org-color the stripe does, so the tier signal lands twice. */
+.ff-rank {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  transform: rotate(45deg);
+  border: 1.5px solid var(--org-color, var(--border));
+  background: var(--bg-tertiary);
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  margin: 0 auto;
+}
+.ff-rank-i { display: inline-block; transform: rotate(-45deg); line-height: 1; }
+
+/* Tape sort bar. The row-2 chips are not track-aligned with the header, so they
+   get their own strip of sort buttons instead of a fake column heading floating
+   above them. Same aria-sort + arrow contract as the aligned header. */
+.ff-sortbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 6px; }
+.ff-sortbar-lbl {
+  font: 600 10px/1 var(--font-retro-mono, monospace);
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary);
+}
+.ff-sortbar [role="button"] {
+  font: 600 11px/1 var(--font-retro-mono, monospace);
+  padding: 5px 8px;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg-secondary); color: var(--text-secondary);
+  cursor: pointer; user-select: none; white-space: nowrap;
+}
+.ff-sortbar [role="button"]:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+.ff-sortbar [role="button"]:not([aria-sort="none"]),
+.ff-card-head [role="button"]:not([aria-sort="none"]) {
+  color: var(--text-primary); border-color: var(--accent-cyan); opacity: 1;
+}
+
+@media (max-width: 720px) {
+  /* The shared .mlb-card rule collapses row 1 to `1fr auto` under 720px, which
+     reflows the metrics onto extra lines - a fixed height would clip them. The
+     cards stay uniform on desktop, where the fixed grid holds, and grow on
+     phones, where it does not. */
+  .ff-card { height: auto; min-height: 104px; }
+  /* The header tracks no longer line up with a collapsed card, so the header
+     becomes a chip strip rather than being dropped: hiding it would take Player
+     and Score sorting away from exactly the users most likely to be re-ranking
+     a board on the move. */
+  .ff-card-head {
+    display: flex !important; flex-wrap: wrap; gap: 6px;
+    grid-template-columns: none !important;
+  }
 }

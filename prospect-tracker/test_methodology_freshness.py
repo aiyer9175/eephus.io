@@ -142,6 +142,13 @@ MODEL_GLOSSARY = {
     # number moved, so it has no glossary surface of its own.
     "xfv_odds_grade_basis": "internal",   # re-key vs the pin: measured NULL, pin kept
     "xfv_odds_recalibration_ship": "internal",  # re-link re-fit: NULL vs a flat base rate, not wired
+    # Cohort conditioning of the odds: NO-SHIP, killed by its own zero-information
+    # control (shuffled cohort labels reproduce the whole gain). Nothing wired, no
+    # served p_bust moved, so no glossary surface of its own.
+    "xfv_odds_cohort": "internal",
+    # Slope recalibration: PRE-REGISTERED ONLY, never fitted. It gets a glossary
+    # entry if and when it ships, not before.
+    "xfv_odds_calibration_slope": "internal",
     "xfv_generality": "internal",         # stratum-generality audit, shipped nothing
     "am_crossmodel_agelevel": "internal", # cross-model age-for-level null
     # thin-sample p_bust DID ship and moves a number readers see on provisional

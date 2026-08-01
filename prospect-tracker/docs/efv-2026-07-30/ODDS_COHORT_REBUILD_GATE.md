@@ -112,3 +112,106 @@ and not to the player, and readers should use the outcome-comp cohorts directly.
 Re-keying the odds onto the pooled outcome map (measured, rejected, KEEP THE PIN) and
 re-fitting the grade-only curve (measured, NULL). This lane exists because those two are
 already spent.
+
+---
+
+# VERDICT 2026-07-31: NO-SHIP. Loss ledger.
+
+Measured, then adversarially re-measured because the first pass reached the right answer
+through wrong reasoning. Both passes are recorded; the second is the one that stands.
+
+## The kill: the mandatory zero-information control fires
+
+The gate made four controls mandatory. The **zero-information control** (cohort labels
+shuffled across rows, 200 shuffles, pre-registered grid) settles the lane on its own.
+Observed gains against the shuffled null band:
+
+| metric | observed | shuffled-null CI95 | verdict |
+|---|---|---|---|
+| d_inc_brier | +0.007819 | [+0.000537, +0.010918] | **INSIDE the null** |
+| d_inc_logloss | +0.007052 | [-0.011079, +0.021850] | **INSIDE the null** |
+| d_const_brier | +0.015643 | [+0.008361, +0.018742] | **INSIDE the null** |
+| d_const_logloss | -0.056561 | [-0.074693, -0.041764] | **INSIDE the null** |
+
+Shuffling the cohort labels reproduces the entire gain on all four metrics. The
+cohort information contributes nothing. Under section 5 that is a NO-SHIP, and it is
+not a close one.
+
+## The motivating axis WAS fit, and it also fails
+
+The first pass tested only `age_rel_level` grids. But the motivating cells
+(`data/archetype_comps.json` facets.age, edges 20 / 22 / 23.5) are cut on **absolute
+age**, so the axis the whole lane exists to exploit had never actually been fit. It has
+now been:
+
+| grid | cells | d_inc_brier | CI95 |
+|---|---|---|---|
+| level x ABS-AGE x sign (the motivating axis) | 35 | +0.007831 | [-0.001055, +0.018863] |
+| level x ABS-AGE | 19 | +0.009251 | [-0.002580, +0.021121] |
+| ABS-AGE x sign | 8 | +0.011918 | [+0.001509, +0.020238] |
+
+Two of the three include zero. The one that does not is the COARSEST, which is the tell
+below.
+
+## The gain is strictly decreasing in cell count, which inverts the hypothesis
+
+d_inc_brier by number of cells: 1 cell **+0.0222**, 2 +0.0198, 4 +0.0139, 8 +0.0119,
+19 +0.0093, 33 +0.0078, 35 +0.0078.
+
+A ONE-CELL grid carries no cohort information at all. It is a pure global recalibration.
+It beats the 33-cell pre-registered grid by **2.8x on Brier and 6.5x on log loss**, both
+with paired-bootstrap CI95 clean of zero. Every cell added subtracts. H1 predicted the
+opposite.
+
+## What the defect actually is, and it is not cohorts
+
+The incumbent's calibration slope on this subpool is **0.368** with ECE **0.201**. The
+defect is SLOPE, and a per-cohort logit OFFSET can only move the intercept. That is why
+the lane could never have worked as designed.
+
+Fit a global Platt (2 parameters, ZERO cohort information) and then add the cohort
+offsets on top, and the cohorts go **negative**:
+
+| arm | Brier | log loss | vs CONST (brier / logloss) |
+|---|---|---|---|
+| CONST (flat base rate) | 0.239340 | 0.673560 | - |
+| INC (raw incumbent) | 0.231516 | 0.737174 | +0.007824 / -0.063613 |
+| INC + cohort offsets (pre-registered arm) | 0.223697 | 0.730122 | +0.015643 / -0.056561 |
+| **INC + GLOBAL PLATT** | **0.189564** | **0.571016** | **+0.049776 / +0.102545** |
+| PLATT + cohort offsets | 0.190273 | 0.579427 | +0.049067 / +0.094133 |
+
+Incremental value of cohort conditioning: on the raw incumbent +0.0078 / +0.0071, on a
+properly calibrated base **-0.000709 / -0.008411**. Cohorts only ever looked useful
+because they were absorbing miscalibration that two global parameters absorb better.
+
+## A correction to the first pass, so it does not enter the ledger as fact
+
+The first pass proposed to record this lane as failing with "the identical
+beats_incumbent-true / beats_constant-false signature already recorded in
+`data/xfv_odds_recalibration_ship_eval.json`". **That is false and must not be
+published.** That artifact records `d_const_brier +0.013289` and `d_const_logloss
++0.041014`, both POSITIVE: the earlier lane beat the constant on point estimate and
+failed on CI width and the permutation null. Different failure in kind.
+
+The first pass also charged the candidate with a log-loss loss to the constant that
+**pre-exists it**: the raw incumbent loses to the same constant by -0.063613 on the same
+517 rows, and the cohort head improves that to -0.056561. Blaming the candidate for an
+inherited loss is not a valid falsification, which is why the controls above carry the
+verdict instead.
+
+## The honest conclusion to publish
+
+Our bust odds are calibrated to the GRADE and not to the player, exactly as section 5
+anticipated, and conditioning them on cohort does not fix it. A reader who wants to know
+how a 24-year-old repeating Triple-A actually fares should use the outcome-comp cohorts
+directly, which already carry the 77.1% figure. The served `p_bust` is unchanged.
+
+## Spun out, NOT shipped here: the calibration-slope lane
+
+The Platt row above is a real and large finding that this lane was not chartered to
+make, and it clears the exact bar section 4 calls the hard one (beating a constant on
+both scoring rules, +0.0498 and +0.1025). It is explicitly NOT shipped on the back of a
+gate written for a different hypothesis. It gets its own pre-registration:
+`ODDS_CALIBRATION_SLOPE_GATE.md`. Note it is adjacent to the already-spent "re-fit the
+grade-only curve" lane but is not the same thing: that lane re-fit the CURVE, this one
+leaves the curve alone and applies a two-parameter monotone recalibration to its output.

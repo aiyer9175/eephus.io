@@ -1,8 +1,8 @@
 {
- "generated_at": "2026-07-31T03:27:00Z",
+ "generated_at": "2026-07-31T18:10:47Z",
  "summary": {
   "board_rows": 9613,
-  "active_board_rows": 4523,
+  "active_board_rows": 4522,
   "roster_rows": 10624,
   "colliding_slugs": 197,
   "critical_player_keys": 16,

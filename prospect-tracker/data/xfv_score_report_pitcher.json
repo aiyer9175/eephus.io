@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-30",
+ "generated_at": "2026-07-31",
  "scope": "PITCHERS",
  "n_scored": 1988,
  "calibration_scale": {
@@ -20,13 +20,13 @@
   "max_down": -20.5
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.1413,
+  "spearman_adj_vs_consensus_miss": 0.1417,
   "n": 530,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 7745.6,
-  "consensus": 8202.9
+  "xfv": 14282.3,
+  "consensus": 14694.6
  },
  "example_up_adjustments": [
   {

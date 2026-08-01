@@ -534,10 +534,23 @@ def _cohort_intercepts() -> dict[str, float]:
     retro backtest (proj_backtest.py, fit on 2022-24 residuals, won the
     2025 holdout 7.71 vs 7.76 team-MAE). Applied at the TEAM ROLL-UP only
     - the per-player display keeps the engine's mean (the gate validated
-    the team-level improvement, nothing finer). Missing artifact = no-op."""
+    the team-level improvement, nothing finer). Missing artifact = no-op.
+
+    GATED on the artifact's own ship_decision (added 2026-07-31). Until now
+    this read the intercepts unconditionally, so re-running proj_backtest.py
+    served whatever it produced even when the challenger LOST its holdout.
+    That is not hypothetical: re-fitting on the post-E3 paths yields
+    cohort_recentered 7.29 against plain recentered 7.19, i.e. the intercepts
+    become actively harmful, and the old code would have shipped them the
+    moment anyone regenerated the artifact. challenger_wins is True on the
+    committed 2026-06-12 fit, so this guard is a no-op TODAY and changes no
+    served number; it exists so the next refit cannot ship itself."""
     try:
         d = json.loads((DATA_DIR / "team_outlook_eval.json").read_text(encoding="utf-8"))
-        return (d.get("retro_backtest") or {}).get("cohort_intercepts_fit_2022_24") or {}
+        rb = (d.get("retro_backtest") or {})
+        if not ((rb.get("ship_decision") or {}).get("challenger_wins")):
+            return {}
+        return rb.get("cohort_intercepts_fit_2022_24") or {}
     except (OSError, ValueError):
         return {}
 

@@ -76,10 +76,24 @@ def booted_page(server):
         # the loading placeholder has left #content. Generous ceiling; a
         # timeout is swallowed so each test's assertions report the real
         # failure state instead of a TimeoutError.
+        # The placeholder leaving #content is NOT sufficient: it clears before the
+        # board is interactive, so a keypress could land on a header that exists in
+        # the markup but is not wired yet. That is what made this test flaky, and it
+        # got worse as the shared CSS and JS grew: measured 2026-07-31, a failing run
+        # took 13.0s against 3.2s for a passing one, i.e. the downstream 10s re-sort
+        # wait was timing out rather than any assertion being wrong.
+        #
+        # Wait for what the tests actually need: real sort headers, carrying the
+        # role/tabindex the boot code stamps on them. Same generous ceiling, and a
+        # timeout is still swallowed so each test reports its own failure state
+        # instead of a TimeoutError from the fixture.
         try:
             page.wait_for_function(
                 "() => { const c = document.getElementById('content');"
-                " return !!c && c.innerHTML.indexOf('Loading prospect data') === -1; }",
+                " if (!c || c.innerHTML.indexOf('Loading prospect data') !== -1) return false;"
+                " const hs = [...document.querySelectorAll('.sort-header')];"
+                " return hs.length > 0 && hs.every(h => h.getAttribute('role') === 'button'"
+                "   && h.getAttribute('tabindex') === '0'); }",
                 timeout=30_000)
         except Exception:
             pass

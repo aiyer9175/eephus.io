@@ -1,10 +1,10 @@
 {
-"generated_at": "2026-07-30",
+"generated_at": "2026-07-31",
 "artifact": "data/advancement_pace.json",
 "kind": "descriptive QC only - no predictive claim is made or permitted anywhere for this statistic",
 "methodology_version": "1.0.0-eephus",
 "n_scored_latest_asof": 9573,
-"n_asof_rows_fit": 27480,
+"n_asof_rows_fit": 27482,
 "distribution_ap_plus_display_latest": {
 "mean": 99.26,
 "sd": 7.69,
@@ -19,8 +19,8 @@
 "distribution_ap_plus_model_latest": {
 "mean": 99.28,
 "sd": 7.78,
-"min": 63.1,
-"max": 163.1,
+"min": 63.0,
+"max": 163.0,
 "p5": 88.4,
 "p50": 98.9,
 "p95": 113.7
@@ -34,11 +34,11 @@
 },
 "2017-19": {
 "mean_ap_plus": 99.46,
-"n": 8300
+"n": 8301
 },
 "2021+": {
 "mean_ap_plus": 100.44,
-"n": 13287
+"n": 13288
 }
 },
 "position_group": {
@@ -52,7 +52,7 @@
 },
 "MIF": {
 "mean_ap_plus": 100.01,
-"n": 2103
+"n": 2104
 },
 "OF": {
 "mean_ap_plus": 100.06,
@@ -60,7 +60,7 @@
 },
 "UNK": {
 "mean_ap_plus": 99.94,
-"n": 19016
+"n": 19017
 },
 "UT": {
 "mean_ap_plus": 100.33,
@@ -74,11 +74,11 @@
 },
 "draft_hs": {
 "mean_ap_plus": 98.77,
-"n": 739
+"n": 740
 },
 "intl_amateur": {
 "mean_ap_plus": 100.71,
-"n": 15854
+"n": 15855
 },
 "undrafted_other": {
 "mean_ap_plus": 98.97,
@@ -88,7 +88,7 @@
 "entry_age_bucket": {
 "18": {
 "mean_ap_plus": 100.02,
-"n": 4740
+"n": 4741
 },
 "19-20": {
 "mean_ap_plus": 99.52,
@@ -104,7 +104,7 @@
 },
 "<=17": {
 "mean_ap_plus": 100.96,
-"n": 10811
+"n": 10812
 }
 }
 },
@@ -115,14 +115,14 @@
 "named_riser_sanity": [
 {
 "name": "Dayson Croes",
-"ap_plus": 163.1,
+"ap_plus": 163.0,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AAA in 2 active seasons"
 },
 {
 "name": "Sam Petersen",
-"ap_plus": 142.3,
+"ap_plus": 142.4,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AA in 2 active seasons"
@@ -136,7 +136,7 @@
 },
 {
 "name": "Dub Gleed",
-"ap_plus": 138.7,
+"ap_plus": 138.8,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AA in 2 active seasons"

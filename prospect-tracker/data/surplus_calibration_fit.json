@@ -1,6 +1,6 @@
 {
  "enabled": true,
- "version": "isotonic-real-v3-todaypriced-2026-07-31",
+ "version": "isotonic-real-v6-evframe-2026-07-31",
  "method": "isotonic",
  "linear": {
   "slope": 1.0,
@@ -18,7 +18,8 @@
    8.04,
    9.59,
    19.35,
-   36.42
+   36.42,
+   400.0
   ],
   "y_mm": [
    0.67,
@@ -31,8 +32,9 @@
    13.76,
    20.78,
    35.68,
-   57.56
+   57.56,
+   523.59
   ]
  },
- "fit_provenance": "REAL-data fit v3 BINNED + TODAY-PRICED targets (realized WAR valued at the standing flat $/WAR; the calibration corrects the WAR layer only) (count-weighted PAVA on equal-count bin means - per-player PAVA let exact-zero busts force a degenerate $0 bottom block; surplus_backtest_real resolved pool, 2017-2019 listings, n=2236): raw slope 1.67 / bias +3.5M corrected to held-out slope 1.09 / bias -0.85M under leave-one-year-out CV (see data/surplus_backtest_real.json cross_validated_correction). Breakpoints downsampled to 11 knots."
+ "fit_provenance": "REAL-data fit v3 BINNED + TODAY-PRICED targets (realized WAR valued at the standing flat $/WAR; the calibration corrects the WAR layer only) (count-weighted PAVA on equal-count bin means - per-player PAVA let exact-zero busts force a degenerate $0 bottom block; surplus_backtest_real resolved pool, 2017-2019 listings, n=2236): raw slope 1.67 / bias +3.5M corrected to held-out slope 1.09 / bias -0.85M under leave-one-year-out CV (see data/surplus_backtest_real.json cross_validated_correction). Breakpoints downsampled to 11 knots. TOP EXTENDED 2026-07-31: the isotonic map CLAMPS above its last knot, and the fitted top knot ($36.42M raw) is reachable, so every prospect above FV55 would have flattened to one figure. The final fitted segment's slope (1.2818) is continued to a 400 knot, matching the shipped linearmap-v5's domain. That region is EXTRAPOLATED, not fitted: the cohort has no raw surplus above ~$36M."
 }

@@ -214,3 +214,71 @@ def test_history_renders_with_the_trust_column_labelled():
     assert "function pfHistory" in js
     assert "Where he has played" in js
     assert "stabilization constant" in js
+
+
+def test_rng_plus_is_outfield_only_and_never_admits_an_infield_position():
+    """Rng+ (legs) is the surviving half of owner ask 1, and its whole content is
+    the RESTRICTION. Sprint speed predicts OAA per 1000 innings in the outfield
+    (CF r=+0.428, LF +0.416) and measures a flat zero on the dirt (SS -0.020,
+    3B -0.004), so a speed meter on an infield destination would show the reader
+    a measured nothing.
+
+    RIGHT FIELD is excluded on purpose even though it clears the headline bar
+    (+0.269 [+0.167,+0.365]): its pure-corner subgroup, right fielders with under
+    100 career CF innings, is r=+0.075 [-0.111,+0.256] and cannot clear zero, so
+    the RF signal is carried by displaced centre fielders. LF survives the same
+    test (+0.359 [+0.163,+0.528]).
+
+    This test exists because the failure mode is SILENT: a producer change that
+    widened the whitelist would put a meter on shortstop rows and nothing else
+    would complain."""
+    import json
+    from pathlib import Path
+    doc = json.loads((Path(__file__).parent / "data" / "positional_fit_ui.json")
+                     .read_text(encoding="utf-8"))
+    meta = doc.get("rngMeta")
+    assert meta, "rngMeta missing; the Position Fit payload lost its Rng+ block"
+    ship = meta["shipPositions"]
+    assert set(ship) == {"LF", "CF"}, (
+        f"Rng+ whitelist is {ship}. Only LF and CF are measured-positive with a "
+        "pure-corner subgroup that clears zero. Widening this needs the "
+        "per-position r re-measured first, not a code change.")
+    for bad in ("1B", "2B", "3B", "SS", "C", "DH", "RF"):
+        assert bad not in ship, f"{bad} must never carry a range meter"
+    # Every whitelisted position ships the correlation that justifies it, so the
+    # tooltip can cite a number instead of asserting one.
+    for pos in ship:
+        r = (meta.get("r") or {}).get(pos)
+        assert r and r.get("r", 0) > 0.15, (pos, r)
+        assert r["ci95"][0] > 0.15, (
+            f"{pos} CI lower bound {r['ci95'][0]} must be ABOVE +0.15. A CI that "
+            "merely EXCLUDES +0.15 is also satisfied by one lying entirely below "
+            "it, which would admit SS and 3B.")
+    # Percentile pools must be real, not a handful of players.
+    for pos, pool in (meta.get("pools") or {}).items():
+        assert pos in ship, f"pool built for {pos}, which does not ship"
+        assert pool["n"] >= 20, pool
+        assert pool["p10"] <= pool["p50"] <= pool["p90"], pool
+
+
+def test_rng_plus_is_display_only_and_never_reaches_the_model():
+    """OAA already contains the legs, so a sprint term in the conversion model
+    would double-count. This is the same argument that rejected the arm feature
+    (CONVERSION_ARM_GATE_VERDICT.md). The meter is allowed to be a display, and
+    only a display."""
+    import json
+    import re
+    from pathlib import Path
+    root = Path(__file__).parent
+    src = (root / "positional_fit.py").read_text(encoding="utf-8")
+    assert not re.search(r"\bsavant_sprint\b|\bsprint_for\b|\bspeed_for\b", src), (
+        "positional_fit.py imported the sprint feed. Rng+ is display-only; OAA "
+        "already contains the legs.")
+    doc = json.loads((root / "data" / "positional_fit_ui.json").read_text(encoding="utf-8"))
+    for r in doc["rows"]:
+        g = r.get("rng")
+        if not g:
+            continue
+        assert {"plus", "fts", "season"} <= set(g), g
+        # A read must never be silently invented for a player with no tracking.
+        assert g["fts"] and g["plus"], g

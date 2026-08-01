@@ -43,6 +43,7 @@ from datetime import date
 from pathlib import Path
 
 import value_framework as vf
+import efv_odds_calibration as _odds_cal
 import efv_factor_groups as _fgroups
 from prospect_path import _fit_ridge, _predict, _fit_linear_calibration, _spearman
 from efv_model import _prep, _vec, _feature_spec, _fit_ols_fv, _pred_ols, blend_lambda
@@ -1199,6 +1200,16 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         rank_war = (1 - lam) * cons_war + lam * xfv_war   # guarded blend -> headline rank
         _rank_exact[pk] = rank_war                        # unrounded, for the display-map sort
         probs = vf.p_bucket_given_fv(_odds_grade, is_pit) or []
+        # ODDS DISPERSION CALIBRATION, wired 2026-07-31 after the lane cleared its
+        # pre-registered gate (docs/efv-2026-07-30/ODDS_CALIBRATION_SLOPE_GATE.md;
+        # artifact data/xfv_odds_calibration_slope_eval.json). p_bucket_given_fv is
+        # fitted on the CONSENSUS-FV scale (sd 6.57) and read here at the
+        # realized-implied grade (sd 15.54), 2.4x wider, so its log-odds come out
+        # about 2.7x too steep. A single monotone Platt map in log-odds fixes the
+        # slope; because it is strictly monotone it cannot reorder anything, so no
+        # rank, grade or dollar figure moves. Bust mass is replaced and the four
+        # remaining buckets rescale, so the vector still sums to 1.
+        probs = _odds_cal.recalibrate_bucket(probs, is_pit, provisional=not (r.get("milb") or {}))
         # bughunt F1: raw engine dollars pass through the engine's isotonic
         # calibration at this seam (_cal_mm; consensus at its own grade), so the
         # eFV and consensus columns share one pricing basis.
@@ -1221,7 +1232,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
                                      if cons_surplus is not None else None),
             "band_p10_mm": round(_cx(pcts.get("p10", 0)), 1) if pcts else None,
             "band_p90_mm": round(_cx(pcts.get("p90", 0)), 1) if pcts else None,
-            "p_bust": round(dist.get("p_bust"), 3) if dist.get("p_bust") is not None else None,
+            "p_bust": round(probs[0], 3) if probs else None,
             "realized_war_6yr": round(r["target"], 2),
             "censored": src.get("censored", False),
         })
@@ -1691,6 +1702,16 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         if xfv_grade is None or _odds_grade is None:
             continue
         probs = vf.p_bucket_given_fv(_odds_grade, is_pit) or []
+        # ODDS DISPERSION CALIBRATION, wired 2026-07-31 after the lane cleared its
+        # pre-registered gate (docs/efv-2026-07-30/ODDS_CALIBRATION_SLOPE_GATE.md;
+        # artifact data/xfv_odds_calibration_slope_eval.json). p_bucket_given_fv is
+        # fitted on the CONSENSUS-FV scale (sd 6.57) and read here at the
+        # realized-implied grade (sd 15.54), 2.4x wider, so its log-odds come out
+        # about 2.7x too steep. A single monotone Platt map in log-odds fixes the
+        # slope; because it is strictly monotone it cannot reorder anything, so no
+        # rank, grade or dollar figure moves. Bust mass is replaced and the four
+        # remaining buckets rescale, so the vector still sums to 1.
+        probs = _odds_cal.recalibrate_bucket(probs, is_pit, provisional=not (r.get("milb") or {}))
         # bughunt F1: raw engine dollars pass through the engine's isotonic
         # calibration at this seam (_cal_mm; percentiles pointwise - monotone).
         xfv_surplus = vf.expected_surplus_usd(_odds_grade, is_pit, pos, age=age, eta_years=eta)
@@ -1731,10 +1752,10 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             "dist": {"p10_mm": _mm(_cx(pcts.get("p10"))), "p25_mm": _mm(_cx(pcts.get("p25"))),
                      "p50_mm": _mm(_cx(pcts.get("p50"))), "p75_mm": _mm(_cx(pcts.get("p75"))),
                      "p90_mm": _mm(_cx(pcts.get("p90"))), "mean_mm": _mm(_cx(dist.get("mean"))),
-                     "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None},
+                     "p_bust": round(probs[0], 3) if probs else None},
             "band_p10_mm": _mm(_cx(pcts.get("p10"))),
             "band_p90_mm": _mm(_cx(pcts.get("p90"))),
-            "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None,
+            "p_bust": round(probs[0], 3) if probs else None,
             "injury_factor": inj if inj < 1.0 else None,
             "statcast_factor": sc if sc != 1.0 else None,
             "factors": factors,
@@ -2040,6 +2061,31 @@ def run_backgrade(persist: bool = True) -> dict:
         if xfv_grade is None or _odds_grade is None:
             continue
         probs = vf.p_bucket_given_fv(_odds_grade, is_pit) or []
+        # ODDS DISPERSION CALIBRATION, wired 2026-07-31 after the lane cleared its
+        # pre-registered gate (docs/efv-2026-07-30/ODDS_CALIBRATION_SLOPE_GATE.md;
+        # artifact data/xfv_odds_calibration_slope_eval.json). p_bucket_given_fv is
+        # fitted on the CONSENSUS-FV scale (sd 6.57) and read here at the
+        # realized-implied grade (sd 15.54), 2.4x wider, so its log-odds come out
+        # about 2.7x too steep. A single monotone Platt map in log-odds fixes the
+        # slope; because it is strictly monotone it cannot reorder anything, so no
+        # rank, grade or dollar figure moves. Bust mass is replaced and the four
+        # remaining buckets rescale, so the vector still sums to 1.
+        # NOTE the missing `provisional` guard, which is deliberate and measured. The
+        # other two seams gate on `not r.get("milb")` because there an absent milb
+        # block genuinely means "no MiLB track record". In THIS seam the queue is
+        # built from debuts.json / graduates.json / inactives, and those rows carry
+        # no milb block AT ALL: measured, 0 of 2,676 debuts.json rows have one. So
+        # the same expression here is always True and would silently disable the
+        # correction for the entire backgrade population.
+        #
+        # That would be exactly backwards. The Platt map was FIT and gated on the
+        # forward-chained RESOLVED frame, which is these rows. Withholding it here
+        # while applying it to the active board would hand the correction to the
+        # population it was extrapolated onto and deny it to the one it was measured
+        # on. efv_ungraded provisional rows, which the scope limit in
+        # efv_odds_calibration.py actually protects, never pass through this
+        # function; they are built into their own artifact by efv_ungraded.build.
+        probs = _odds_cal.recalibrate_bucket(probs, is_pit)
         # bughunt F1: raw engine dollars pass through the engine's isotonic
         # calibration at this seam (_cal_mm; percentiles pointwise - monotone).
         surplus = vf.expected_surplus_usd(_odds_grade, is_pit, pos, age=age, eta_years=eta)
@@ -2062,9 +2108,9 @@ def run_backgrade(persist: bool = True) -> dict:
             "dist": {"p10_mm": _mm(_cx(pcts.get("p10"))), "p25_mm": _mm(_cx(pcts.get("p25"))),
                      "p50_mm": _mm(_cx(pcts.get("p50"))), "p75_mm": _mm(_cx(pcts.get("p75"))),
                      "p90_mm": _mm(_cx(pcts.get("p90"))), "mean_mm": _mm(_cx(dist.get("mean"))),
-                     "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None},
+                     "p_bust": round(probs[0], 3) if probs else None},
             "band_p10_mm": _mm(_cx(pcts.get("p10"))), "band_p90_mm": _mm(_cx(pcts.get("p90"))),
-            "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None,
+            "p_bust": round(probs[0], 3) if probs else None,
             "factors": factors,
         }
         # Surplus dollars on the DISPLAYED (quantile) grade, consistent with the live board.

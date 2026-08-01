@@ -109,6 +109,27 @@
     var g = glossaryTerm ? ' data-gl="' + glossaryTerm + '"' : "";
     return '<span class="rem-plus ' + hemClass(v) + '"' + g + '>' + fInt(v) + "</span>";
   }
+  // PUBLISHED wRC+ gets a THIRD band set, and that is deliberate. It is the
+  // industry's number, not one of ours, and it is unshrunk, so it runs wider
+  // than the HEM+ family beside it: measured over the pooled 2021-2026
+  // qualified pools (n = 2,069), published wRC+ has SD 25.3 against HEM+ 17.7.
+  // Painting it with hemClass 88/112/130 would call 12.4% of qualified hitters
+  // elite where HEM+ calls 4.9%. The breaks below are the round-5 triple that
+  // best reproduces the HEM+ band shares on the wRC+ distribution (85/120/145:
+  // shares 26.0 / 52.1 / 17.9 / 4.1 vs the HEM+ reference 26.5 / 50.9 / 17.6 /
+  // 4.9). SINGLE SOURCE OF TRUTH: hitter_export.WRC_PLUS_BANDS. These three
+  // numbers mirror it and test_hitter_wrc_plus.py fails if they drift apart.
+  function wrcClass(v) {
+    var n = num(v);
+    if (n == null) return "rem-avg";
+    if (n >= 145) return "rem-elite";
+    if (n >= 120) return "rem-good";
+    if (n >= 85) return "rem-avg";
+    return "rem-low";
+  }
+  function wrcCell(v) {
+    return '<span class="rem-plus ' + wrcClass(v) + '" data-gl="wrc_plus">' + fInt(v) + "</span>";
+  }
   function gloss(label, term) {
     return '<span class="g-term" data-gl="' + esc(term) + '">' + esc(label) + "</span>";
   }
@@ -1261,6 +1282,13 @@
   var HITTER_COLS = [
     { key: "name", label: "Hitter", term: null, sortable: true, kind: "name", asc: true },
     { key: "hem_plus", label: "HEM+", term: "hem_plus", fmt: hemCell, num: true, desc: true, isRem: true },
+    // INDUSTRY COLUMN, deliberately placed beside HEM+ so the site's own index
+    // can be read against the number the industry publishes. No isRem flag:
+    // that marks the site's own index family and this is not one of them.
+    { key: "wrc_plus", label: "wRC+", term: "wrc_plus", num: true, desc: true,
+      title: "PUBLISHED, NOT COMPUTED HERE. MLB's own wRC+ for this season, read verbatim from the league's season-total feed and matched by player id. 100 is league average, park and league adjusted. It sits here as the industry benchmark next to HEM+, which is the offense-rate index this site does compute. Because it is unshrunk it runs wider than HEM+ (about 25 points per standard deviation of the qualified pool against about 18), so it is colored on its own thresholds. A traded hitter reads one season line, not a single stint.",
+      get: function (r) { return r.wrc_plus; },
+      cell: function (r) { return r.wrc_plus == null ? "" : wrcCell(r.wrc_plus); } },
     { key: "hem_plus_3yr", label: "HEM+ 3yr", term: "hem_plus_3yr", num: true, desc: true, isRem: true,
       get: function (r) { return r.hem_plus_3yr; },
       cell: function (r) {
@@ -1347,9 +1375,11 @@
   // current-projection-only pWOBA column (a past board has no "next season").
   // The WAR-rate columns are joined only on the live board (the history export
   // carries no bWAR join), so they drop out of a past-season board rather than
-  // rendering as a blank column.
+  // rendering as a blank column. Published wRC+ drops for the same reason: the
+  // league feed serves it for every history season, but hitter_export joins it
+  // on the live board only, so a past board would render the column empty.
   var HITTER_HISTORY_DROP = { hem_plus_3yr: 1, xhem_plus: 1, fwdhem_plus: 1, luck_gap: 1, pwoba: 1,
-    war_pa_plus: 1, war_pa_plus_adj: 1, war_pa_plus_3yr: 1, war: 1 };
+    war_pa_plus: 1, war_pa_plus_adj: 1, war_pa_plus_3yr: 1, war: 1, wrc_plus: 1 };
   var HITTER_HISTORY_COLS = HITTER_COLS.filter(function (c) { return !HITTER_HISTORY_DROP[c.key]; });
   // A past board can only sort on columns it shows; if the shared key is a
   // current-only column (HEM+ 3yr), fall back to the HEM+ default.
@@ -1470,6 +1500,11 @@
           var note = '<div class="mlbstats-note">' + rows.length + " hitters. "
             + gloss("HEM+", "hem_plus") + " is pure offensive-rate skill (100 = average qualified hitter); "
             + "the volume (PA, HR, SB) and slash columns are context, kept separate from the skill number. "
+            + gloss("wRC+", "wrc_plus")
+            + " beside it is the industry's published number, not one of ours: it is read verbatim from"
+            + " MLB's season-total feed and matched by player id, so this site still derives no wRC+ of"
+            + " its own. It runs wider than HEM+ because it is unshrunk, which is why the two columns"
+            + " color on different thresholds. "
             + gloss("WAR/PA+", "war_pa_plus")
             + " is a different question and a different ruler: total batting value per plate appearance,"
             + " fielding and baserunning included, and 10 of its points is one standard deviation rather"

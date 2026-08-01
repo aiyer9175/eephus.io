@@ -11402,7 +11402,7 @@ function fvBadgeBreakoutMarkHTML(player) {
   // emits, with the thresholds it actually uses. The removed rps_plus branch read a
   // field populated for 0 of 4,505 players and advertised a 120 cut that no gate used.
   const gate = meta.perf_gate === "wrc_plus" ? "wRC+ ≥ 130"
-             : meta.perf_gate === "ops_plus_level" ? "OPS+ vs level ≥ 150"
+             : meta.perf_gate === "wrc_plus_level" ? "wRC+ vs level ≥ 150"
              : meta.perf_gate === "stf_plus_periph" ? "Peripheral Stuff+ ≥ 115"
              : meta.perf_gate === "statcast_plus" ? "SC+ ≥ 130"
              : "performance gate";
@@ -14149,6 +14149,18 @@ function currentSeasonStatRows(p) {
   });
 }
 
+// PHASE D2. The level-anchored production chip is now wRC+ vs level: a
+// linear-weight wOBA measured against a PA-weighted WHOLE-LEAGUE pool, replacing an
+// OPS ratio against an unweighted mean of TRACKED PROSPECTS over a two-season window.
+// The old prospect baseline ran 7-8% low at AA and A+ (.703 against a true .752,
+// .708 against .767), so the old chip flattered every hitter at those levels.
+// Function declaration so it hoists across this whole script block; falls back to the
+// retired field so a cached payload still paints rather than dropping the chip.
+function _lvlPlus(sl) {
+  if (!sl) return null;
+  const v = sl.wrc_plus_level;
+  return v != null ? v : (sl.ops_plus_level != null ? sl.ops_plus_level : null);
+}
 function formatLevelStatline(row) {
   if (!row) return " - ";
   if (row.is_pitcher) {
@@ -14160,7 +14172,7 @@ function formatLevelStatline(row) {
   }
   return `${row.avg ?? " - "}/${row.obp ?? " - "}/${row.slg ?? " - "}`
     + (row.hr != null ? ` · ${row.hr} HR` : "")
-    + (row.ops_plus_level != null ? ` · OPS+ ${Math.round(row.ops_plus_level)}` : "");
+    + (_lvlPlus(row) != null ? ` · wRC+ ${Math.round(_lvlPlus(row))}` : "");
 }
 
 function levelStatlinesHTML(p, opts = {}) {
@@ -14285,8 +14297,8 @@ function makeMilbCell(p) {
     ? (sl.era_minus_level != null
         ? `<span class="stat-pill" title="ERA- vs level (lower is better)">ERA- ${Math.round(sl.era_minus_level)}</span>`
         : "")
-    : (sl.ops_plus_level != null
-        ? `<span class="stat-pill" title="OPS+ vs level (higher is better)">OPS+ ${Math.round(sl.ops_plus_level)}</span>`
+    : (_lvlPlus(sl) != null
+        ? `<span class="stat-pill" title="wRC+ vs level: linear-weight offense against the PA-weighted league pool for his level and season. 100 is league average, higher is better.">wRC+ ${Math.round(_lvlPlus(sl))}</span>`
         : "");
   // v30.5 - Tailored Statcast outlier chips appended INLINE to the
   // existing detail line. Stays on the same row via inline-block;
@@ -16274,7 +16286,7 @@ function _renderStandoutPerformancesFallback(root) {
     let score = 0;
     const parts = [];
     if (!isPit) {
-      const opsPlus = sl.ops_plus_level;
+      const opsPlus = _lvlPlus(sl);
       const lp = sl.level_plus_pct;
       if (typeof opsPlus === "number" && isFinite(opsPlus)) {
         score += Math.abs(opsPlus - 100) / 10;
@@ -16454,7 +16466,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
       // same number the RPS+ pill and the RPS+ leaderboard show.
       ((rpsChip) => rpsChip != null ? { key: "RPS+", value: rpsChip, valColor: rpsChip >= 110 ? "var(--up)" : rpsChip <= 90 ? "var(--down)" : "var(--text-primary)" } : null)(_rpsPlusValue(p)),
       isPit && sl.stf_plus_periph != null ? { key: "pStuff+", value: sl.stf_plus_periph } : null,
-      !isPit && sl.ops_plus_level != null ? { key: "OPS+ lvl", value: sl.ops_plus_level } : null,
+      !isPit && _lvlPlus(sl) != null ? { key: "wRC+ lvl", value: _lvlPlus(sl) } : null,
       isPit && sl.era_minus_level != null ? { key: "ERA-", value: sl.era_minus_level } : null,
       sm.wrc_plus != null ? { key: "wRC+", value: Math.round(sm.wrc_plus) } : null,
     ].filter(Boolean);
@@ -18083,7 +18095,7 @@ const LB_STATS = {
   hit_level_plus: { label: "OPS+ lvl", hi: true,
                     fmt: v => v != null ? Math.round(Number(v)).toString() : " - ",
                     minAB: 50, support: _lbHitterSupport, side: "hit",
-                    getter: p => (p.statline && p.statline.ops_plus_level != null) ? p.statline.ops_plus_level : null },
+                    getter: p => (p.statline ? _lvlPlus(p.statline) : null) },
   // v17 - RPS+ leaderboard. Level-anchored Rate Performance Score (100 = mean,
   // +10 = +1σ). Hitters only.
   rps_plus: { label: "RPS+", hi: true,
@@ -18414,7 +18426,7 @@ const CHART_AXES = {
     { key: "iso_plus",       label: "ISO+ (vs level)",    getter: p => computeIsoPlus(p),                   fmt: v => formatMetric(v, 'plus') },
     { key: "bb_pct",         label: "BB%",                getter: p => _slOf(p, "bb_pct"),                  fmt: _fmtPct },
     { key: "k_pct",          label: "K%",                 getter: p => _slOf(p, "k_pct"),                   fmt: _fmtPct },
-    { key: "ops_plus_level", label: "OPS+ vs level",      getter: p => _slOf(p, "ops_plus_level"),          fmt: v => formatMetric(v, 'plus') },
+    { key: "wrc_plus_level", label: "wRC+ vs level",      getter: p => _lvlPlus(p && p.statline),           fmt: v => formatMetric(v, 'plus') },
     { key: "hr",             label: "Home runs",          getter: p => _slOf(p, "hr"),                      fmt: v => v.toFixed(0) },
     { key: "sb",             label: "Stolen bases",       getter: p => _slOf(p, "sb"),                      fmt: v => v.toFixed(0) },
     { key: "era",            label: "ERA",                getter: p => _slOf(p, "era"),                     fmt: _fmt2 },
@@ -34077,7 +34089,7 @@ function buildProspectCard(snap) {
   if (!isPitcher) {
     if (sl.avg != null && sl.obp != null && sl.slg != null) push("Slash", `${fmtAvg(sl.avg)}/${fmtAvg(sl.obp)}/${fmtAvg(sl.slg)}`);
     else if (sl.ops != null) push("OPS", Number(sl.ops).toFixed(3).replace(/^0(?=\.)/, ""));
-    if (sl.ops_plus_level != null) push("OPS+ vs lvl", String(Math.round(sl.ops_plus_level)));
+    if (_lvlPlus(sl) != null) push("wRC+ vs lvl", String(Math.round(_lvlPlus(sl))));
     if (sl.iso != null) push("ISO", Number(sl.iso).toFixed(3).replace(/^0(?=\.)/, ""));
     if (sl.bb_pct != null) push("BB%", pct1(sl.bb_pct));
     if (sl.k_pct != null) push("K%", pct1(sl.k_pct));
@@ -35521,31 +35533,18 @@ function makeSurplusCell(p) {
   const wag = (p.debuted_value && p.debuted_value.wag)
               ? p.debuted_value.wag.regressed_wag : null;
   const dvm = p.dollar_dvm_plus;   // per-player $DvM+ (surplus-development index)
-  // ARM 1 of docs/efv-2026-07-30/ZERO_FLOOR_PRICING_GATE.md. A served surplus of
-  // EXACTLY 0 is a CLAMPED value, never a computed one: the shipped calibration
-  // is max(0, 1.382491*raw - 2.318551), so everything under raw $1.677M maps to
-  // zero, and 68.5% of the board sits under it. Rendering that as "$0.0M" claims
-  // the model priced the player at nothing, when what it actually knows is that
-  // it cannot resolve a price this small. Show the limit instead of a false
-  // precision. This does NOT fix the pricing (that is Arm 2, gated separately);
-  // it stops the display from asserting more than the engine supports.
-  const belowFloor = s.value_mm === 0;
-  const svColor = belowFloor ? "var(--text-tertiary)"
-                : s.value_mm >= 50 ? "var(--up)"
+  // The "under floor" display that used to live here is GONE, along with the floor
+  // it described. Arm 1 of docs/efv-2026-07-30/ZERO_FLOOR_PRICING_GATE.md papered
+  // over a calibration that clamped everything under raw $1.677M to exactly zero;
+  // the v6 EV re-fit (docs/efv-2026-07-30/SURPLUS_EV_OBJECTIVE.md) removed the
+  // clamp by changing what surplus MEANS - it targets the conditional mean now, not
+  // the MAE-optimal median - so the bottom of the board carries a real, small,
+  // positive price instead of a limit. Every row is priced; nothing is "unpriced".
+  const svColor = s.value_mm >= 50 ? "var(--up)"
                 : s.value_mm >= 10 ? "var(--neon-cyan)" : "var(--text-primary)";
   const ciText = isEfv ? "" : svCiText(s);
   const consSv = isEfv && xf && xf.consensus_surplus_mm != null ? xf.consensus_surplus_mm : null;
-  const tip = belowFloor
-    ? "Below the pricing floor. Everything under about $1.7M of raw surplus is "
-      + "clamped to exactly zero by the calibration layer, which is where roughly "
-      + "two thirds of the board sits, so this is a limit rather than a valuation. "
-      + "Treat it as unpriced, not as worthless: backtested, the lowest predicted "
-      + "band realised about $4.4M on average, because a tier full of long shots "
-      + "has a positive expectation even when its median outcome is negative. The "
-      + "ordering down here carries little information either, so do not read the "
-      + "neighbouring ranks as a finer version of the same answer. Open the player "
-      + "for the distribution."
-    : `${isEfv ? "eFV" : "Consensus"} expected surplus ${fmtSvMM(s.value_mm)}`
+  const tip = `${isEfv ? "eFV" : "Consensus"} expected surplus ${fmtSvMM(s.value_mm)}`
     + (consSv != null ? ` (consensus FV surplus ${fmtSvMM(consSv)})` : "")
     + (ciText ? ` · ${ciText}` : "")
     + (d.p10_mm != null ? ` · outcome range ${fmtSvMM(d.p10_mm)}-${fmtSvMM(d.p90_mm)}` : "")
@@ -35553,14 +35552,21 @@ function makeSurplusCell(p) {
     + (d.risk_adjusted_mm != null ? ` · risk-adj ${fmtSvMM(d.risk_adjusted_mm)}` : "")
     + (wag != null ? ` · WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(2)}` : "")
     + (dvm != null ? ` · $DvM+ ${Math.round(dvm)} (surplus-development vs FV-tier peers)` : "")
-    + ". Open the player for the full distribution + methodology.";
+    + ". This is an expectation, not a forecast of this player's own return"
+    + (s.value_mm < 5
+        ? ": down here the typical outcome really is nothing, and the price is carried by "
+          + "the minority who arrive. Read it as what the tier is worth per head, not as "
+          + "what he is likely to give you. Ordering this far down the board carries little "
+          + "information either."
+        : ".")
+    + " Open the player for the full distribution + methodology.";
   // Bottom meta line: P(bust), WAG (grads), and $DvM+ - whichever are present.
   const botBits = [];
   if (pb != null)  botBits.push(`<span style="color:${pb >= 40 ? 'var(--down)' : 'var(--text-tertiary)'};">bust ${pb}%</span>`);
   if (wag != null) botBits.push(`WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(1)}`);
   if (dvm != null) botBits.push(`<span style="color:${dollarDvmColor(dvm)};">$DvM+ ${Math.round(dvm)}</span>`);
   return `<div class="surplus-cell" title="${escapeHtml(tip)}">
-      <div style="font-family:var(--font-mono);font-size:${belowFloor ? "11" : "13"}px;font-weight:${belowFloor ? "500" : "700"};color:${svColor};font-variant-numeric:tabular-nums;line-height:1.05;">${belowFloor ? "under floor" : fmtSvMM(s.value_mm)}</div>
+      <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${svColor};font-variant-numeric:tabular-nums;line-height:1.05;">${fmtSvMM(s.value_mm)}</div>
       ${buckets ? renderBucketBar(buckets, { height: 7 }) : ""}
       ${d.p10_mm != null ? renderSvDistribution(d, { height: 13 }) : ""}
       ${botBits.length ? `<div style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);line-height:1.1;">${botBits.join(" · ")}</div>` : ""}
@@ -36734,8 +36740,8 @@ function _buildDetailChipRibbon(p) {
       const c = v <= 90 ? "var(--up)" : v >= 110 ? "var(--down)" : "var(--text-secondary)";
       bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="ERA- vs level (lower = better)">ERA- ${v}</span>`);
     }
-    if (!isPit && sl.ops_plus_level != null) {
-      const v = Math.round(sl.ops_plus_level);
+    if (!isPit && _lvlPlus(sl) != null) {
+      const v = Math.round(_lvlPlus(sl));
       const c = v >= 110 ? "var(--up)" : v <= 90 ? "var(--down)" : "var(--text-secondary)";
       bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="OPS+ vs level (higher = better)">OPS+ ${v}</span>`);
     }
@@ -42540,7 +42546,7 @@ function _statRowOrgMetaHTML(player, row, size = "sm") {
 
 // Per-season OPS+ vs the league average at that level (100 = level
 // average; higher is better). Shares the DATA.level_norms baseline used by
-// the statline-level ops_plus_level. Null when the level norm or OPS is
+// the statline-level chip (wRC+ vs level as of Phase D2). Null when the pool or rate is
 // missing - e.g. MLB rows carry no MiLB level norm - so the cell shows " - ".
 function _rowOpsPlus(s) {
   const ops = parseFloat(s && s.ops);
@@ -52066,7 +52072,7 @@ function farmCompareToggle(org) {
 // directly in the UI - feeds the bucketed RPS+ index (see below) as
 // the raw value that gets percentile-anchored against same-age peers.
 // Composite of:
-//   - performance vs level (ops_plus_level − 100 for hitters,
+//   - performance vs level (wRC+ vs level − 100 for hitters, via _lvlPlus,
 //     100 − era_minus_level for pitchers, both being a "% above level
 //     average" delta)
 //   - age vs level (each year young = +10 points; old = −10 points)
@@ -52089,15 +52095,15 @@ function computeRelProd(p) {
       driver: `ERA- ${sl.era_minus_level} · ${avl.diff != null ? `${avl.diff > 0 ? "+" : ""}${avl.diff.toFixed(1)}y vs ${sl.level || "level"}` : "age unknown"}`,
     };
   } else {
-    if (sl.ops_plus_level == null) return null;
+    if (_lvlPlus(sl) == null) return null;
     const games = Number(sl.games || 0);
     if (games < 15) return null;
-    const perfAdj = sl.ops_plus_level - 100;
+    const perfAdj = _lvlPlus(sl) - 100;
     return {
       score: Math.round(perfAdj + ageAdj),
       perf: Math.round(perfAdj),
       age: Math.round(ageAdj),
-      driver: `OPS+ ${sl.ops_plus_level} · ${avl.diff != null ? `${avl.diff > 0 ? "+" : ""}${avl.diff.toFixed(1)}y vs ${sl.level || "level"}` : "age unknown"}`,
+      driver: `wRC+ ${_lvlPlus(sl)} · ${avl.diff != null ? `${avl.diff > 0 ? "+" : ""}${avl.diff.toFixed(1)}y vs ${sl.level || "level"}` : "age unknown"}`,
     };
   }
 }
@@ -53067,7 +53073,7 @@ function makeCompareStatTable(players) {
     ["SB",   p => (p.statline || {}).sb,    { hi: true,  fmt: v => String(v) }],
     ["BB%",  p => (p.statline || {}).bb_pct,{ hi: true,  fmt: v => v.toFixed(1) + "%" }],
     ["K%",   p => (p.statline || {}).k_pct, { hi: false, fmt: v => v.toFixed(1) + "%" }],
-    ["OPS+ (vs level)", p => (p.statline || {}).ops_plus_level, { hi: true, fmt: v => String(Math.round(v)) }],
+    ["wRC+ (vs level)", p => _lvlPlus(p.statline), { hi: true, fmt: v => String(Math.round(v)) }],
   ];
   const pitRows = [
     ["ERA",  p => (p.statline || {}).era,    { hi: false, fmt: v => v }],

@@ -3730,6 +3730,100 @@ def build_positional_fit_payload() -> dict | None:
         out.sort(key=lambda r: (-(r["season"] or 0), -(r["inn"] or 0)))
         return out
 
+    # ---- Rng+ (legs), display-only, LF/CF destinations ONLY -----------------
+    # Owner ask 1's surviving half. The ARM half was measured and no-shipped
+    # (docs/efv-2026-07-30/CONVERSION_ARM_GATE_VERDICT.md): context-adjusted, the
+    # infield arm spread collapses to 1.94 mph against a within-position sd of
+    # 3.80, and 3B minus SS is +0.50, so arm barely selects positions. Sprint
+    # speed does, but ONLY in the outfield, and that restriction is the finding
+    # rather than caution about it. Measured against OAA per 1000 innings at the
+    # position played (>=400 inn, 2016-2026): CF r=+0.428 [+0.342,+0.507],
+    # LF +0.416 [+0.323,+0.501], but SS -0.020 [-0.122,+0.083] and 3B -0.004
+    # [-0.108,+0.100]. A speed meter on an infield row would be a picture of a
+    # measured zero.
+    #
+    # RF IS EXCLUDED even though it clears the headline bar (+0.269
+    # [+0.167,+0.365]), because its PURE-CORNER subgroup does not: right fielders
+    # with under 100 career CF innings are r=+0.075 [-0.111,+0.256], which cannot
+    # clear zero. The RF signal is carried by displaced centre fielders, so the
+    # column would be telling corner-only right fielders something not measured
+    # on players like them. LF survives the identical test (+0.359
+    # [+0.163,+0.528], n=89) and is not restriction-of-range.
+    #
+    # NOTHING here enters the model: positional_fit's own field() gets no sprint
+    # term. OAA already contains the legs, so a sprint feature would double-count,
+    # which is the same argument that rejected the arm feature.
+    _RNG_SHIP = ("LF", "CF")
+    _RNG_R = {"CF": {"r": 0.428, "ci95": [0.342, 0.507]},
+              "LF": {"r": 0.416, "ci95": [0.323, 0.501]},
+              "RF": {"r": 0.269, "ci95": [0.167, 0.365],
+                     "excluded": "pure-corner subgroup r=+0.075 CI [-0.111,+0.256]"}}
+    _rng_meta: dict = {}
+    _sprint: dict = {}
+    _pos_pool: dict = {}
+    try:
+        import savant_sprint as _ss
+        _by = (_ss._payload().get("by_mlbam") or {})
+        _season = int(src.get("target_season") or 0)
+
+        def _fts(mlbam):
+            """Current season, else one back, with the season we actually used."""
+            yr = (_by.get(str(mlbam)) or {})
+            for s in (_season, _season - 1):
+                rec = yr.get(str(s))
+                if rec and rec.get("ft_s"):
+                    return float(rec["ft_s"]), s
+            return None, None
+
+        _pool = [float(r["ft_s"]) for _m, ys in _by.items()
+                 for _s, r in ys.items() if _s == str(_season) and r.get("ft_s")]
+        if len(_pool) >= 50:
+            _mu = sum(_pool) / len(_pool)
+            _sd = (sum((x - _mu) ** 2 for x in _pool) / len(_pool)) ** 0.5
+            # Incumbent pools for the per-destination percentile: everyone with
+            # >=400 innings at that position over the trailing three seasons. This
+            # is the number a reader acts on, because "28.3 ft/s" means nothing
+            # until you know it is the 28th percentile of centre fielders and the
+            # 77th of left fielders.
+            for _pos in _RNG_SHIP:
+                _inn: dict = {}
+                for _p in src["players"]:
+                    tot = sum((e.get("inn") or 0.0) for e in (_p.get("evidence") or [])
+                              if e.get("pos") == _pos
+                              and (e.get("season") or 0) >= _season - 2)
+                    if tot >= 400:
+                        _inn[_p.get("mlbam")] = tot
+                vals = sorted(v for v in (_fts(m)[0] for m in _inn) if v is not None)
+                if len(vals) >= 20:
+                    _pos_pool[_pos] = vals
+            for _p in src["players"]:
+                f, yr = _fts(_p.get("mlbam"))
+                if f is None:
+                    continue
+                pct = {}
+                for _pos, vals in _pos_pool.items():
+                    below = sum(1 for v in vals if v < f)
+                    pct[_pos] = int(round(100.0 * below / len(vals)))
+                _sprint[_p.get("mlbam")] = {
+                    "plus": round(100.0 + 10.0 * (f - _mu) / _sd),
+                    "fts": round(f, 1), "season": yr, "pct": pct,
+                }
+            _rng_meta = {
+                "anchor": {"season": _season, "n": len(_pool),
+                           "mean": round(_mu, 2), "sd": round(_sd, 2)},
+                "scale": "100 + 10z on the current-season MLB position-player pool",
+                "shipPositions": list(_RNG_SHIP),
+                "r": _RNG_R,
+                "pools": {k: {"n": len(v), "p10": v[int(0.10 * (len(v) - 1))],
+                              "p50": v[int(0.50 * (len(v) - 1))],
+                              "p90": v[int(0.90 * (len(v) - 1))]}
+                          for k, v in _pos_pool.items()},
+                "note": ("Display only. Sprint speed is not a model input: OAA already "
+                         "contains the legs, so adding it would double-count."),
+            }
+    except Exception:
+        log.exception("Rng+ block skipped; Position Fit renders without it")
+
     def _row(p: dict) -> dict:
         pos_totals = {k: v.get("def_total") for k, v in (p.get("by_position") or {}).items()
                       if v.get("feasible") and v.get("def_total") is not None}
@@ -3772,6 +3866,8 @@ def build_positional_fit_payload() -> dict | None:
         }
         if p.get("mlbam") in teams:
             row["team"] = teams[p["mlbam"]]
+        if p.get("mlbam") in _sprint:
+            row["rng"] = _sprint[p["mlbam"]]
         return {k: v for k, v in row.items() if v is not None}
 
     rows = [_row(p) for p in src["players"]
@@ -3791,6 +3887,7 @@ def build_positional_fit_payload() -> dict | None:
         "outOfScope": src.get("out_of_scope"),
         "sources": src.get("sources"),
         "caveats": src.get("caveats"),
+        "rngMeta": _rng_meta or None,
         "ladder": {
             "units": ladder.get("units"),
             "method": ladder.get("method"),
@@ -3909,8 +4006,18 @@ def build_swing_delta_payload() -> dict | None:
 # Current-season MLB stat line, keyed by MLBAM, for the modules whose rows carry
 # no stats of their own (the FA class board is a market payload). Every field is
 # lifted verbatim from a shipped leaderboard; nothing is recomputed. NOTE what is
-# NOT here: this site computes no wRC+ and no xFIP, so neither is served - HEM+
-# (offense-rate index) and FIP/ERA are the numbers that actually exist.
+# NOT here: this site DERIVES no wRC+ and no xFIP, so neither is derived into
+# this payload - HEM+ (offense-rate index) and FIP/ERA are the numbers the site
+# actually computes.
+#
+# Sharpened 2026-07-31, because the MLB Stats hitter board now shows a wRC+
+# column and a reader could otherwise read "no wRC+" as contradicting it. Both
+# statements are true and they are about different things: the site derives no
+# wRC+ of its own, and the board's wRC+ is MLB's PUBLISHED value read verbatim
+# (hitter_export.load_published_wrc_plus). Display is not derivation. This
+# payload deliberately stays a derived-numbers payload and does not carry the
+# published figure, so a downstream module cannot mistake a passed-through
+# industry number for one of ours.
 def build_current_lines_payload() -> dict | None:
     hit = _cached_data_json("hitter_leaderboards.json")
     sp = _cached_data_json("starter_leaderboards.json")
@@ -3956,9 +4063,13 @@ def build_current_lines_payload() -> dict | None:
         "season": hit.get("season") or sp.get("season"),
         "asOf": hit.get("as_of") or sp.get("as_of"),
         "note": ("Current-season MLB lines lifted verbatim from the eephus.io "
-                 "leaderboards. This site computes no wRC+ and no xFIP, so "
-                 "neither is served: HEM+ is the offense-rate index and "
-                 "FIP / SEM+ / REM+ are the run-prevention numbers."),
+                 "leaderboards. This site derives no wRC+ and no xFIP of its "
+                 "own, so neither is served here: HEM+ is the offense-rate "
+                 "index it does compute and FIP / SEM+ / REM+ are the "
+                 "run-prevention numbers. The MLB Stats hitter board does show "
+                 "a wRC+ column, but that figure is MLB's published wRC+ "
+                 "displayed verbatim rather than anything this site derives, "
+                 "and it is deliberately not carried in this payload."),
         "n": len(out),
         "players": out,
     }

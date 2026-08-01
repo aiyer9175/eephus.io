@@ -95,6 +95,47 @@ def test_recenter_remainder_near_zero():
     under their own holdout gate (proj_backtest.py). Widening this bound would
     delete the only instrument that noticed. See also REVIEW_QUEUE item 1
     (proj_lgbm star-tail refit) - this is the same under-projected star tail.
+
+    BOTH CANDIDATES MEASURED 2026-07-31, NEITHER SHIPS. Full writeup in
+    docs/efv-2026-07-30/TEAM_OUTLOOK_RECENTER_VERDICT.md.
+
+      cohort refit   Coefficients move exactly as predicted (every hitter band
+                     lifts, hit:30-33 -0.138 -> +0.022) and player-level accuracy
+                     improves outright: pooled MAE 0.593 -> 0.550, r 0.581 ->
+                     0.628. But it LOSES its own pre-registered rule
+                     (cohort_recentered < recentered) on the 2025 holdout: 7.29
+                     against 7.19 for doing nothing. On the post-E3 paths the
+                     intercepts are actively harmful. Artifact restored to the
+                     committed 06-12 fit, verified byte-identical.
+      PT re-anchor   NOT attempted as stated, because it would re-introduce an
+                     error the gate panel says is wrong. The refit is uniformly
+                     below the shipped Marcel at EVERY input (90 vs 200 at zero,
+                     579 vs 620 at 700/700), and on its own panel that level is
+                     BETTER: projected PA 364.0 -> 299.1 against 312.7 actual,
+                     error +51.3 -> -13.6. Anchoring upward to reach a 1000-WAR
+                     league sum pushes PA back above actual on the only
+                     population where exposure has been scored. A level
+                     convention traded against a measured quantity = owner call.
+
+    AND THE FINDING THAT REFRAMES THIS GUARD: the E3 ship IMPROVED holdout team
+    accuracy enough to cross the baseline for the first time. Plain-recentered
+    holdout MAE 7.76 -> 7.19 against a prior-wins baseline of 7.24; before the
+    ship the engine LOST to "just use last year's wins", after it, it wins.
+    Recentering forces 2,430 regardless, so a uniform level error cannot reach
+    recentered MAE - what this guard flags has no measured year-1 accuracy cost.
+    What it costs is interpretability: 4.48 of every team's wins come from a
+    constant rather than from its roster, growing to 27.9 by 2031.
+
+    A BUG FOUND WHILE MEASURING: proj_export._cohort_intercepts() read the
+    intercepts unconditionally, ignoring ship_decision.challenger_wins, so merely
+    RUNNING proj_backtest.py would have served losing intercepts with no gate.
+    Fixed 2026-07-31; a no-op today because challenger_wins is True on the
+    committed fit.
+
+    NOTE the second assertion below disagrees with _depth_pool's own docstring,
+    which says the >=1-input-season population "sums to ~870-930" on real
+    rosters. 886.3 is inside that and below this test's 900 floor. Whichever is
+    right, both should not stand.
     """
     acc = _load("team_outlook_eval.json")["league_sum_accounting"]
     assert abs(acc["remainder_recenter_wins_per_team"]) < 3, (

@@ -3183,8 +3183,19 @@ def fetch_sabermetrics(player_key: str, mlbam_id: int,
     if not splits:
         return None
 
-    # Use the most recent split (last in list is usually most recent season slice)
-    stat = splits[-1].get("stat", {})
+    # The request is SEASON-SCOPED (season={season} above), so more than one split
+    # never means more than one season. It means STINTS: StatsAPI returns the
+    # season TOTAL first, marked with numTeams and carrying no team block, then one
+    # row per club. The old code took splits[-1] with the comment "last in list is
+    # usually most recent season slice", which is the LAST STINT for anyone traded.
+    #
+    # Verified against the live API 2026-07-31, mlbam 672275 (traded mid-season):
+    # splits[0] numTeams=2 -> wRC+ 53.2, WAR 0.204; splits[-1] (San Francisco leg)
+    # -> wRC+ 14.8, WAR -0.156. For a player who was not traded there is exactly
+    # one split and the two readings are identical, which is why this survived.
+    # It is not cosmetic: prospx renders this wRC+ as a headline chip.
+    agg = next((s for s in splits if s.get("numTeams")), None)
+    stat = (agg or splits[0]).get("stat", {})
 
     if is_pitcher:
         xfip       = _safe_float(stat.get("xfip"))

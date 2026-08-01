@@ -98,20 +98,53 @@ def _woba_den(c):
     return c["ab"] + c["ubb"] + c["sf"] + c["hbp"]
 
 
+def _legacy_rows(sport, season):
+    """The ORPHAN cache. Retired 2026-07-31, read only as a fallback.
+
+    .cache/milb_full_stats/ had exactly one reader (this module) and NO writer
+    anywhere in the repo, so it could not be regenerated and was already stale on
+    53.3% of rows. milb_history.season_splits fetches the identical StatsAPI
+    response and now keeps the wOBA components, so the live path is that cache and
+    this exists only so a tree that still has the old files does not regress while
+    the new one warms.
+    """
+    fp = CACHE_DIR / f"hitting_{sport}_{season}.json"
+    if not fp.exists():
+        return []
+    try:
+        data = json.loads(fp.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return data if isinstance(data, list) else []
+
+
+def _live_rows(sport, season):
+    """The maintained cache: milb_history's own, which a nightly run refreshes."""
+    try:
+        import milb_history
+    except Exception:
+        return []
+    try:
+        rows = milb_history.season_splits(sport, season, "hitting", fetch=False) or []
+    except Exception:
+        return []
+    # Only rows that actually carry the components are usable here; a cache written
+    # before 2026-07-31 has the lean shape and must fall through to the legacy tree
+    # rather than silently producing a wOBA out of missing counts.
+    return [r for r in rows if r.get("h") is not None and r.get("doubles") is not None]
+
+
 def load_rows():
-    """All cached hitting rows with parsed components attached (skips PA=0 rows)."""
+    """All cached hitting rows with parsed components attached (skips PA=0 rows).
+
+    Prefers the MAINTAINED milb_history cache and falls back to the retired
+    .cache/milb_full_stats/ tree per (sport, season), so a partially warmed tree
+    mixes cleanly instead of losing whole seasons.
+    """
     out = []
     for sport in SPORTS:
         for season in SEASONS:
-            fp = CACHE_DIR / f"hitting_{sport}_{season}.json"
-            if not fp.exists():
-                continue
-            try:
-                data = json.loads(fp.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
-                continue
-            if not isinstance(data, list):
-                continue
+            data = _live_rows(sport, season) or _legacy_rows(sport, season)
             for r in data:
                 mid, season_r, level = r.get("mlbam"), r.get("season"), r.get("level")
                 if mid is None or season_r is None or level is None:

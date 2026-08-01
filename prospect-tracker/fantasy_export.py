@@ -318,8 +318,18 @@ def _buy_sell(players: list[dict], n: int = 50) -> tuple[list, list]:
         sd = scale.get(p.get("side")) or 0.0
         return (_player_luck(p) / sd) if sd else 0.0
 
-    buy = [p["mlbam"] for p in sorted(luckable, key=lambda p: -_norm(p))[:n]]
-    sell = [p["mlbam"] for p in sorted(luckable, key=lambda p: _norm(p))[:n]]
+    # Entries carry SIDE, unlike the other section lists, because this is the one
+    # section a bare mlbam cannot resolve. Every other section is single-sided by
+    # construction (ros_hitter is hitters, closer_depth is relievers), so its
+    # renderer already knows which side to look up. buy/sell is the only COMBINED
+    # ranking, so a two-way player's two records are both eligible and a bare id
+    # is genuinely ambiguous. Shohei Ohtani is that player today: he is ranked in
+    # on his HIT-side luck_gap, and before this the client resolved him to his
+    # pitcher record and rendered a pitcher's luck number under a hitter's ranking.
+    buy = [{"mlbam": p["mlbam"], "side": p.get("side")}
+           for p in sorted(luckable, key=lambda p: -_norm(p))[:n]]
+    sell = [{"mlbam": p["mlbam"], "side": p.get("side")}
+            for p in sorted(luckable, key=lambda p: _norm(p))[:n]]
     return buy, sell
 
 
