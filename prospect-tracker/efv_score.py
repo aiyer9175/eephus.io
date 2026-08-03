@@ -1289,7 +1289,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         # slope; because it is strictly monotone it cannot reorder anything, so no
         # rank, grade or dollar figure moves. Bust mass is replaced and the four
         # remaining buckets rescale, so the vector still sums to 1.
-        probs = _odds_cal.recalibrate_bucket(probs, is_pit, provisional=not (r.get("milb") or {}))
+        probs = _odds_cal.recalibrate_bucket(probs, is_pit, provisional=not src.get("milb"))
         # bughunt F1: raw engine dollars pass through the engine's isotonic
         # calibration at this seam (_cal_mm; consensus at its own grade), so the
         # eFV and consensus columns share one pricing basis.
@@ -2063,7 +2063,7 @@ def run_backgrade(persist: bool = True) -> dict:
         if row.get("milb"):
             xfv_war = max(-2.0, a + b * _predict(ridge, feats))
             factors = _factors(ridge, feats, side=side)
-            factors = _relabel_pace_factor(factors, r.get("milb"))
+            factors = _relabel_pace_factor(factors, row.get("milb"))
         else:
             # AUDIT FIX 2026-07-14: honor the docstring's prior-anchored
             # contract - a no-track-record row scored through the ridge eats

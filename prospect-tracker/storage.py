@@ -40,7 +40,7 @@ from scrapers import (
     HITTER_TOOL_KEYS, PITCHER_TOOL_KEYS, ALL_TOOL_KEYS,
 )
 from consensus import PlayerTimeseries, stock_movement
-from stats import StatLine
+from stats import PitchArsenal, Sabermetrics, StatLine
 from rate_stabilization import K_AB, K_IP
 
 

@@ -3843,8 +3843,10 @@ def build_positional_fit_payload() -> dict | None:
                 "note": ("Display only. Sprint speed is not a model input: OAA already "
                          "contains the legs, so adding it would double-count."),
             }
-    except Exception:
-        log.exception("Rng+ block skipped; Position Fit renders without it")
+    except Exception as e:
+        # `log` was never defined in this module, so this handler raised NameError
+        # and destroyed the graceful degradation it exists to provide (2026-08-03).
+        print(f"[site] Rng+ block skipped ({e!r}); Position Fit renders without it")
 
     def _row(p: dict) -> dict:
         pos_totals = {k: v.get("def_total") for k, v in (p.get("by_position") or {}).items()
