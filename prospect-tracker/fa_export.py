@@ -243,6 +243,31 @@ def _apply_proj_override(path: dict, pv: dict, class_year: int,
     return True
 
 
+_CONTRACT_ORGS: dict[str, str] | None = None
+
+
+def _contract_orgs() -> dict[str, str]:
+    """player_key -> club, taken from the contract-derived projection artifact.
+
+    The FA availability page is a per-class scrape and its club column is not
+    trustworthy: A.J. Minter's 2027 row carried "MIN" because a Twins token sat
+    in the Mets' row, so the FA board published a Mets reliever as a Twin while
+    every contract-derived surface correctly said NYM. proj_export builds `team`
+    from each club's OWN roster page, which cannot make that mistake, and it
+    runs before this module in both the monthly and daily chains.
+
+    Best effort by design: a missing or unreadable artifact leaves the scraped
+    value in place rather than blanking the column.
+    """
+    global _CONTRACT_ORGS
+    if _CONTRACT_ORGS is None:
+        # Reuses the module's existing projection cache rather than reading the
+        # same artifact a second time.
+        by_key = (_load_mlb_projections() or {}).get("by_key") or {}
+        _CONTRACT_ORGS = {k: v["team"] for k, v in by_key.items() if v.get("team")}
+    return _CONTRACT_ORGS
+
+
 def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
     corpus = fp.build_corpus()
     league = corpus["league"]
@@ -297,7 +322,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         m = _clean({
             "key": row.get("player_key"), "name": row["player_name"],
             "pos": row.get("position"), "age": row.get("age"),
-            "from": row.get("from_team"), "bt": row.get("bat_throw"),
+            "from": _contract_orgs().get(row.get("player_key")) or row.get("from_team"), "bt": row.get("bat_throw"),
             "status": row.get("status"), "type": row.get("fa_type"),
             "optPrice": row.get("option_price_usd"),
             "enterProb": row.get("enter_prob"),

@@ -113,12 +113,19 @@ def test_the_same_player_is_worth_the_same_on_every_surface():
     """Surplus cohesion, the invariant behind the stamps.
 
     An MLB veteran's trade-board value IS his /projections/ contract surplus -
-    `apply_platform_surplus` re-points it to surNpv, and the vets seeded into the
-    board from the projection artifact are built from the same number. So the two
+    `apply_platform_surplus` re-points it, and the vets seeded into the board
+    from the projection artifact are built from the same number. So the two
     surfaces must agree per player, not merely share a calibration version. This
     catches a re-point that silently stops firing, which is the failure the
     Anderson investigation found in the OTHER direction (four artifacts on three
-    different vintages, all internally consistent, none agreeing)."""
+    different vintages, all internally consistent, none agreeing).
+
+    The compared field is `surTotal` (2026-08-03): the balance of the season in
+    progress plus the NPV of every controlled season after it. Both surfaces
+    moved to it together, which is the point - comparing the board's surTotal
+    against the page's surNpv would fail for every player with a priced
+    remainder and would be measuring a mismatch this test invented itself.
+    `surNpv` remains the fallback so a pre-change artifact still reconciles."""
     tvp, projp = DATA / "trade_values.json", DATA / "mlb_projections.json"
     if not (tvp.exists() and projp.exists()):
         pytest.skip("artifacts not built on this machine")
@@ -133,14 +140,15 @@ def test_the_same_player_is_worth_the_same_on_every_surface():
     mismatched = []
     for v in vets:
         row = board.get(v.get("key"))
-        if not row or v.get("surNpv") is None:
+        val = v.get("surTotal") if v.get("surTotal") is not None else v.get("surNpv")
+        if not row or val is None:
             continue
         if row.get("surplus_source") != "projection":
             continue          # eFV-sourced rows are a different basis by design
         if row.get("trade_value_mm") is None:
             continue
-        if abs(float(row["trade_value_mm"]) - v["surNpv"] / 1e6) > 0.15:
-            mismatched.append((v["key"], row["trade_value_mm"], v["surNpv"] / 1e6))
+        if abs(float(row["trade_value_mm"]) - val / 1e6) > 0.15:
+            mismatched.append((v["key"], row["trade_value_mm"], val / 1e6))
     assert not mismatched[:10], (
         "trade board and /projections/ disagree on the same player's surplus: "
         f"{mismatched[:10]}")

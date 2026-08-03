@@ -143,6 +143,27 @@ function _tmEnsureDetail() {
     .catch(() => { _TM.detail = {}; });
 }
 
+// What acquiring this player is worth, in raw dollars. `surTotal` (2026-08-03)
+// is the balance of the season in progress plus the NPV of every controlled
+// season after it; `surNpv` covered only the seasons from 2027 on, which priced
+// a deadline rental at nothing and made every expiring contract read as having
+// no trade value at all. The fallback keeps a pre-2026-08-03 artifact readable.
+function _tmProjValue(proj) {
+  if (!proj) return null;
+  if (proj.surTotal != null) return proj.surTotal;
+  if (proj.surNpv != null) return proj.surNpv;
+  return null;
+}
+
+// Name the basis so the row does not claim more than it knows. A player whose
+// only priced months are the rest of this season is a rental, and saying so is
+// the difference between an honest small number and a number that looks broken.
+function _tmValueLabel(proj) {
+  if (proj && proj.surNpv == null && proj.surRos != null) return "rest-of-season control";
+  if (proj && proj.surRos != null) return "contract surplus, incl. rest of season";
+  return "contract surplus";
+}
+
 // Translatability with MLB Projections: a "⇄ Trade Machine" link on a player's
 // /projections/ page deep-links here as #tab=trademachine&tm=<kind>:<key>, which
 // pre-loads that player into Side A so you can value him against a package.
@@ -160,8 +181,15 @@ function _tmSeedFromURL() {
   } else if (kind === "mlb") {
     if (!_TM.detail) return;                 // detail still loading; seed on the re-render
     const d = _TM.detail[key];
-    if (d && d.proj && d.proj.surNpv != null) _TM.a.push({ kind: "mlb", key, name: d.name, pos: d.pos || "", org: d.team || "",
-      sub: `${d.pos || ""} · ${d.team || "FA"} · contract surplus`, mm: d.proj.surNpv / 1e6 });
+    const pv = d ? _tmProjValue(d.proj) : null;
+    if (pv != null) {
+      _TM.a.push({ kind: "mlb", key, name: d.name, pos: d.pos || "", org: d.team || "",
+        sub: `${d.pos || ""} · ${d.team || "FA"} · ${_tmValueLabel(d.proj)}`, mm: pv / 1e6 });
+    } else {
+      const b = (DATA.mlbBoard || []).find(x => x.player_key === key);
+      if (b) _TM.a.push({ kind: "mlb", key, name: b.player_name, pos: b.position || "",
+        org: b.org || "", sub: `${b.position || ""} · ${b.org || ""} · board value`, mm: b.mm });
+    }
     _TM.seeded = true;
   } else { _TM.seeded = true; }
 }
@@ -184,13 +212,26 @@ function _tmSearch(q) {
     for (const k in _TM.detail) {
       if (out.length >= 10) break;
       const d = _TM.detail[k];
-      if ((d.name || "").toLowerCase().includes(q) && d.proj && d.proj.surNpv != null) {
+      const pv = _tmProjValue(d.proj);
+      if ((d.name || "").toLowerCase().includes(q) && pv != null) {
         out.push({ kind: "mlb", key: k, name: d.name,
           org: d.team || "", pos: d.pos || "",
-          sub: `${d.pos || ""} · ${d.team || "FA"} · contract surplus`,
-          mm: d.proj.surNpv / 1e6 });
+          sub: `${d.pos || ""} · ${d.team || "FA"} · ${_tmValueLabel(d.proj)}`,
+          mm: pv / 1e6 });
       }
     }
+  }
+  // Board-valued MLB players whose detail row carries no projection surplus.
+  // Without this they are priced on the board and findable nowhere.
+  const seen = new Set(out.map(o => o.key));
+  for (const p of (DATA.mlbBoard || [])) {
+    if (out.length >= 12) break;
+    if (seen.has(p.player_key)) continue;
+    if (!(p.player_name || "").toLowerCase().includes(q)) continue;
+    out.push({ kind: "mlb", key: p.player_key, name: p.player_name,
+      org: p.org || "", pos: p.position || "",
+      sub: `${p.position || ""} · ${p.org || ""} · board value`,
+      mm: p.mm });
   }
   // Players we MODEL but cannot price, surfaced as unselectable rows carrying
   // the reason. Returning nothing for a real major-leaguer reads as "the site
@@ -205,8 +246,12 @@ function _tmSearch(q) {
       kind: "unpriced", key: u.key, name: u.name,
       org: u.org || "", pos: u.pos || "", mm: null,
       disabled: true,
+      // "no controlled season to trade" was false at the deadline: the club
+      // controls him for the rest of the season, and since 2026-08-03 that is
+      // priced. A row only lands here now when there is no salary on file to
+      // price the remainder with, so say that instead.
       sub: u.reason === "expiring"
-        ? `${u.pos || ""} · ${u.org || "FA"} · contract ends ${u.thru} - no controlled season to trade`
+        ? `${u.pos || ""} · ${u.org || "FA"} · contract ends ${u.thru} - no salary on file for the remainder`
         : `${u.pos || ""} · ${u.org || "FA"} · no contract on file - cannot price surplus`,
     });
   }
@@ -1047,6 +1092,19 @@ function _tbShowGroup(playerKey) {
         player_key: p.player_key, player_name: p.player_name,
         position: p.position, org: p.org, fv_close: p.fv,
         surplus: { value_mm: p.posterior_surplus_mm }
+      }));
+    // Valued MLB rows, kept for search. The prospect pool above drops every
+    // graduated/debuted row, and the MLB search path only sees players whose
+    // mlb_player_detail entry carries a projection surplus. 840 players were
+    // therefore valued on the board and findable NOWHERE, including Jose
+    // Quintana, Yoan Moncada, Gleyber Torres and Gavin Lux. The board is the
+    // authority on whether a player has a price, so let it answer.
+    DATA.mlbBoard = (d.players || [])
+      .filter(p => p && _tbIsMlb(p) && p.posterior_surplus_mm != null)
+      .map(p => ({
+        player_key: p.player_key, player_name: p.player_name,
+        position: p.position, org: p.org,
+        mm: p.posterior_surplus_mm, source: p.surplus_source || null
       }));
   }
 

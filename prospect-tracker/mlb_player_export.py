@@ -504,9 +504,15 @@ def build_payload() -> dict:
         is_pit = _is_pitcher_pos(v.get("pos"))
         p = {"key": key, "name": v.get("name"), "mlbam": mlbam,
              "pos": v.get("pos"), "team": v.get("team"), "age": v.get("age"),
+             # surTotal / surRos / rosWar / rosFrac (2026-08-03): the balance of
+             # the season in progress. Without them on the card the Trade
+             # Machine cannot price a rental and the "Trade Machine" link never
+             # renders for one, which is what hid A.J. Minter.
              "proj": {k: v.get(k) for k in ("war", "warP10", "warP90",
                                             "warTotal", "warTotalP10",
                                             "warTotalP90", "sur", "surNpv",
+                                            "surTotal", "surRos", "rosWar",
+                                            "rosFrac",
                                             "thru", "aav", "warHit", "warPit")},
              "twoWay": bool(v.get("twoWay")) or None,
              "isPit": is_pit and not v.get("twoWay")}

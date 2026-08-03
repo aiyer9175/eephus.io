@@ -147,10 +147,29 @@ def _mlb_projection_entry(player: dict) -> dict | None:
     return players.get(_name_key(player.get("player_name")))
 
 
+def _proj_value_usd(v: dict) -> float | None:
+    """What ACQUIRING this player is worth right now, in raw dollars.
+
+    `surTotal` (proj_export, 2026-08-03) is the balance of the in-progress
+    season plus the NPV of every controlled season after it. `surNpv` covers
+    only FIRST_SEASON onward and so priced a deadline rental at nothing, which
+    is what made every expiring contract read "not tradeable".
+
+    The fallback is deliberate: a stale mlb_projections.json written before the
+    rest-of-season leg existed still prices normally, instead of silently
+    unpricing the entire league for one export cycle.
+    """
+    for k in ("surTotal", "surNpv"):
+        val = _safe_float(v.get(k))
+        if val is not None:
+            return val
+    return None
+
+
 def _mlb_projection_surplus_mm(player: dict) -> float | None:
     entry = _mlb_projection_entry(player) or {}
     proj = entry.get("proj") or {}
-    val = _safe_float(proj.get("surNpv"))
+    val = _proj_value_usd(proj)
     return round(val / 1_000_000.0, 1) if val is not None else None
 
 
@@ -4124,8 +4143,9 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
             k = r.get("key")
             if not k:
                 continue
-            if r.get("surNpv") is not None:
-                proj_sur[k] = r["surNpv"] / 1e6        # surNpv is raw $; board surplus is $M
+            _pv = _proj_value_usd(r)
+            if _pv is not None:
+                proj_sur[k] = _pv / 1e6               # raw $ in the artifact; board surplus is $M
             if r.get("age") is not None:
                 ages.setdefault(k, r["age"])
     for k, v in det.items():
@@ -4232,6 +4252,13 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
                 r["trade_value_hi"] = None
             stats[src] += 1
         else:
+            # D3 (2026-08-03): these rows kept their raw-bayes value and carried
+            # NO surplus_source at all, so a reader could not tell a modelled
+            # price from an unrepointed leftover. jose_quintana sat at board
+            # rank #40 on $95.9M that way. Stamping the basis does not change
+            # any number; it makes the ones that never reached a modelled basis
+            # visible and sortable instead of anonymous.
+            r["surplus_source"] = "bayes_unrepointed"
             stats["unchanged"] += 1
         # Trade Value Grade off the FINAL value (re-pointed or bayes fallback) so
         # every board row carries a letter; survives board_slim automatically.
@@ -4268,9 +4295,12 @@ def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
                                  det: dict, data_dir) -> int:
     """Append board rows for priced vets missing from the prospect-derived pool.
 
-    Only vets carrying a surNpv are added - that IS the priced value, and a row
-    without one has no value on any basis the board serves (see the coverage
-    test for what the remainder is and why it is deliberately not invented)."""
+    Only vets the projection system can price are added - that IS the priced
+    value, and a row without one has no value on any basis the board serves
+    (see the coverage test for what the remainder is and why it is deliberately
+    not invented). Since 2026-08-03 "can price" means `surTotal`, which
+    includes the balance of the season in progress, so deadline rentals now
+    reach the board instead of being valued at nothing."""
     present = {r.get("player_key") for r in records if r.get("player_key")}
     try:
         proj = json.loads((Path(data_dir) / "mlb_projections.json").read_text(encoding="utf-8"))
@@ -4330,9 +4360,16 @@ def _unpriced_vets(data_dir, on_board: set | None = None) -> list[dict]:
     unpriced on EVERY basis, not just the contract one.
 
     Two honest reasons, neither of which is a missing row:
-      expiring     - the contract ends before the projection horizon opens, so
-                     there is no team-controlled season left. A pending free
-                     agent is not a trade asset; the FA module prices him.
+      expiring     - the contract ends before the projection horizon opens AND
+                     no current-season salary is on file, so even the balance
+                     of the season in progress cannot be priced. NOTE (owner
+                     ask, 2026-08-03): an expiring deal is no longer unpriceable
+                     by itself. A club still controls the player for the rest of
+                     this season and that is a real, tradeable asset; whenever
+                     the current season carries a salary the row is priced
+                     through surTotal and never reaches this list. This
+                     supersedes the earlier reading that a pending free agent is
+                     not a trade asset (docs/efv-2026-07-31/TRADE_BOARD_COVERAGE.md).
       no_contract  - nothing on file (pre-arb / optioned players Spotrac does
                      not list), so there is no salary to subtract from value.
 
@@ -4347,7 +4384,7 @@ def _unpriced_vets(data_dir, on_board: set | None = None) -> list[dict]:
     first = proj.get("first_season") or 0
     out = []
     for v in (proj.get("vets") or []):
-        if not v.get("key") or v.get("surNpv") is not None:
+        if not v.get("key") or _proj_value_usd(v) is not None:
             continue
         if on_board and v["key"] in on_board:
             continue                    # priced by another basis (eFV backgrade)
@@ -4372,9 +4409,10 @@ def _projection_coverage(records: list, data_dir) -> dict:
 
     `unpriceable` is NOT a failure. It counts vets the projection system models
     but cannot price, and there are exactly two kinds, both correct:
-      - contract expires this season (no team-controlled season inside the
-        2027-2031 horizon, so there is no future surplus to trade) - this is why
-        aj_minter is absent, and he is a pending free agent, not a lost row;
+      - contract expires this season AND no current-season salary is on file,
+        so there is nothing left to price. An expiring deal alone no longer
+        lands here: since 2026-08-03 the balance of the season in progress is
+        priced through surTotal, which is what put aj_minter back on the board;
       - no contract on file at all (pre-arb / optioned players Spotrac does not
         list), so there is no salary to subtract from projected value.
     Neither is invented a value here. The second group is the larger open
@@ -4386,11 +4424,19 @@ def _projection_coverage(records: list, data_dir) -> dict:
     except (OSError, ValueError):
         return {"available": False}
     vets = [v for v in (proj.get("vets") or []) if v.get("key")]
-    priced = [v for v in vets if v.get("surNpv") is not None]
+    priced = [v for v in vets if _proj_value_usd(v) is not None]
     missing = [v for v in priced if v["key"] not in on_board]
-    unpriceable = [v for v in vets if v.get("surNpv") is None]
-    expiring = sum(1 for v in unpriceable
-                   if v.get("thru") is not None and v.get("thru") < (proj.get("first_season") or 0))
+    unpriceable = [v for v in vets if _proj_value_usd(v) is None]
+    # D4 (2026-08-03): this census and the `unpriced` ledger shipped different
+    # totals in the same artifact (581 stamped vs 240 published) because only
+    # the ledger excluded vets already priced by another basis. Neither number
+    # was wrong; they answered different questions and nothing said so. Publish
+    # both, labelled, so they reconcile in the data:
+    #     unpriceable = unpriceable_priced_elsewhere + unpriceable_published
+    published = [v for v in unpriceable if v["key"] not in on_board]
+    _first = proj.get("first_season") or 0
+    expiring = sum(1 for v in published
+                   if v.get("thru") is not None and v.get("thru") < _first)
     return {
         "available": True,
         "vets": len(vets),
@@ -4400,8 +4446,12 @@ def _projection_coverage(records: list, data_dir) -> dict:
         "examples": [v["key"] for v in sorted(
             missing, key=lambda x: -(x.get("warTotal") or 0))[:5]],
         "unpriceable": len(unpriceable),
+        "unpriceable_priced_elsewhere": len(unpriceable) - len(published),
+        "unpriceable_published": len(published),
+        # Split of what actually ships in `unpriced`, so these two counts sum
+        # to unpriceable_published rather than to a different denominator.
         "unpriceable_expiring": expiring,
-        "unpriceable_no_contract": len(unpriceable) - expiring,
+        "unpriceable_no_contract": len(published) - expiring,
     }
 
 

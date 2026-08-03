@@ -253,6 +253,12 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
     frac = fp.season_fraction(league, FIRST_SEASON - 1)
     in_prog = (FIRST_SEASON - 1, frac)
     r = float(vf._config()["discount_rate"])
+    # REST-OF-SEASON CONTROL (2026-08-03). Fraction of the in-progress season
+    # still to be played. season_fraction() returns the ELAPSED share and falls
+    # back to 1.0 when the league PA substrate is missing, so a broken estimate
+    # lands here as 0.0 remaining: the rest-of-season leg silently prices at
+    # nothing rather than inventing a full season of value. Clamp is defensive.
+    ros_frac = max(0.0, min(1.0, 1.0 - frac))
 
     by_player: dict[str, dict[int, dict[int, dict]]] = {
         "hit": defaultdict(dict), "pit": defaultdict(dict)}
@@ -310,6 +316,50 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         if any_sal:
             m["sur"] = sur
             m["surNpv"] = int(npv)
+        # REST-OF-SEASON CONTROL (2026-08-03, owner ask). Until now a contract
+        # whose last season is the one in progress produced no `sur` and no
+        # `surNpv` at all: the horizon starts at FIRST_SEASON, so the months a
+        # club still controls the player were worth exactly zero everywhere on
+        # the platform. That made every deadline rental "not tradeable" (the
+        # question that opened docs/efv-2026-07-31/TRADE_BOARD_COVERAGE.md,
+        # whose answer for A.J. Minter is superseded here: a rental IS a trade
+        # asset, it is simply a small one).
+        #
+        # Deliberate conventions, so the two legs stay comparable:
+        #   * UNDISCOUNTED and un-escalated (t=0). This is money and wins now,
+        #     and surNpv's own discount origin is t=0 at FIRST_SEASON, so a
+        #     naive t=-1 would have inflated the remainder by (1+r).
+        #   * Talent basis is war[0], the nearest full-season projection,
+        #     prorated by the share of the season left. Slightly conservative
+        #     for an aging vet (his in-season talent is a shade above next
+        #     year's) and it deliberately does not read 2026 results to date,
+        #     which measure what the SELLING club already banked.
+        #   * The prorated WAR is priced through the same convex tier curve at
+        #     its own level, exactly as every full season is. That under-prices
+        #     a star rental relative to how contenders actually bid for
+        #     concentrated wins; correcting it needs a measured premium, not a
+        #     default, so it is registered as a follow-up rather than smuggled
+        #     in here.
+        #   * Salary is prorated too: the acquiring club pays only the balance.
+        # Applies to EVERY vet with a current-season salary, not just expiring
+        # ones. Pricing Minter's remainder while ignoring Judge's would invent
+        # a new inconsistency of exactly the class this codebase keeps paying
+        # to remove.
+        ros_d = None
+        cur_sal = sal.get(FIRST_SEASON - 1)
+        war_now = (m.get("war") or [None])[0]
+        if cur_sal is not None and war_now is not None and ros_frac > 0.0:
+            ros_war = float(war_now) * ros_frac
+            ros_d = _season_value_usd(ros_war, 0, dpw) - float(cur_sal) * ros_frac
+            m["surRos"] = round(ros_d / 1e6, 1)
+            m["rosWar"] = round(ros_war, 2)
+            m["rosFrac"] = round(ros_frac, 3)
+        # What the player is worth to ACQUIRE right now: the balance of the
+        # current season plus the NPV of every controlled season after it.
+        # `surNpv` keeps its old meaning (FIRST_SEASON onward) so /projections/
+        # and any external reader of that field are unchanged.
+        if ros_d is not None or any_sal:
+            m["surTotal"] = int((ros_d or 0.0) + npv)
 
     out: list[dict] = []
     _collision_rows: dict[str, list[dict]] = {}
@@ -1572,6 +1622,14 @@ def build_payload() -> dict:
         # Which dollar calibration priced surNpv on the prospect rows.
         "calibration": vf.calibration_stamp(),
         "first_season": FIRST_SEASON, "horizon": HORIZON,
+        # Provenance for the rest-of-season control leg (surRos / surTotal):
+        # the share of the in-progress season already played, and therefore the
+        # share still being sold. Published so a reader can reconstruct surRos
+        # instead of taking it on trust.
+        "season_fraction": round(fp.season_fraction(corpus["league"],
+                                                    FIRST_SEASON - 1), 3),
+        "ros_fraction": round(max(0.0, min(1.0, 1.0 - fp.season_fraction(
+            corpus["league"], FIRST_SEASON - 1))), 3),
         "dpw_usd": int(dpw),
         "dpw_infl": float(cfg.get("dollars_per_war_inflation", 0.05)),
         "dpw_reanchor": re_anchor or None,

@@ -1,5 +1,30 @@
 # Trade board coverage: why Aaron Judge was missing
 
+> **SUPERSEDED IN PART, 2026-08-03 (owner decision).** The section below titled
+> "Why Minter is STILL not on the valued board, and why that is right" is no
+> longer the platform's position. Its premise - that a contract ending this
+> season leaves nothing to trade - ignored the months the club still controls.
+> A deadline rental IS a trade asset. `proj_export` now prices the balance of
+> the season in progress as `surRos`, and `surTotal = surRos + surNpv` is what
+> the trade board, the Trade Machine and /projections/ all read.
+>
+> A.J. Minter prices at about **-$1.7M**: ~32% of 2026 left, a 0.23-WAR
+> full-season projection, and $7,588,208 owed for the year. Negative is a
+> result, not a failure - he is a below-market rental, and saying so is more
+> useful than "no trade value". The leg applies to EVERY vet with a
+> current-season salary, not just expiring ones (Aaron Judge gains about
+> +$3.6M on top of his $23.4M), because pricing one and not the other would
+> invent a fresh inconsistency.
+>
+> The change also retired an indefensible side effect documented nowhere: 145
+> expiring vets were being priced off a SIX-YEAR eFV backgrade basis, which had
+> Gleyber Torres at $80.1M with two months of control. He now prices at about
+> -$2.0M through the projection basis.
+>
+> What did NOT change: the 361 `no_contract` (mostly pre-arb) players below are
+> still deliberately unpriced. That remains a real modelling decision with a
+> real gate, not a default to smuggle in. See `test_rest_of_season_control.py`.
+
 Opened by a user question: "Why isn't A.J. Minter showing up in the trade
 calculator?" The answer for Minter turned out to be correct behaviour. The
 answer for everyone else did not.

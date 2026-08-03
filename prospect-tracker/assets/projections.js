@@ -161,6 +161,21 @@
   // healthy level rather than the attrition-discounted expected value. Surplus
   // and all valuation still price off the expected value (m.war / surNpv), never
   // this display series. Vets carry warPTH; prospects fall back to war.
+  // The player's full remaining surplus, in raw dollars. `surTotal`
+  // (2026-08-03) is the balance of the season in progress plus the NPV of every
+  // controlled season after it; `surNpv` counted only seasons from
+  // DATA.first_season on, so a contract ending this year showed no surplus at
+  // all even while its club still controlled the player for months.
+  //
+  // The trade board prices surTotal, and the two surfaces are required to agree
+  // per player (test_calibration_vintage: "the same player is worth the same on
+  // every surface"), so this page reads the same field. Prospect rows are
+  // unaffected: they carry surNpv only.
+  function surOf(m) {
+    if (!m) return null;
+    if (m.surTotal != null) return m.surTotal;
+    return m.surNpv != null ? m.surNpv : null;
+  }
   function warAt(m, t) {
     const arr = (m.warPTH && m.warPTH.length) ? m.warPTH : m.war;
     if (m.src === "prospect") {
@@ -230,7 +245,7 @@
     const k = state.sort;
     const val = m => {
       if (k === "age") return m.age ?? 99;
-      if (k === "sur") return m.surNpv ?? -1e15;
+      if (k === "sur") return surOf(m) ?? -1e15;
       if (k === "warTotal") return warShown(m) ?? -99;  // sort by the DISPLAYED 5yr total (prospects: in-window only)
       // Name and rank became sortable when the board moved to cards (2026-07-30).
       // Name sorts as a string, so it is compared case-insensitively and the
@@ -962,8 +977,16 @@
       const peakChip = m.warPeak != null
         ? `<div class="mlb-chip" title="Prime projection: roughly this per year at peak age on the talent path. Surplus prices the attrition-discounted expected value, not this."><b>peak WAR</b>${fmtWar(m.warPeak)}</div>`
         : "";
-      const sur = m.surNpv != null
-        ? `<span class="${m.surNpv >= 0 ? "proj-pos" : "proj-neg"}" title="${m.src === "prospect" ? "Platform prospect surplus value (control window, service-time aware, $/WAR-escalated)" : "NPV of (convex production value − salary) over salary-known seasons"}">${money(m.surNpv)}</span>`
+      const _sv = surOf(m);
+      const _surTitle = m.src === "prospect"
+        ? "Platform prospect surplus value (control window, service-time aware, $/WAR-escalated)"
+        : (m.surRos != null && m.surNpv == null
+            ? `Rest-of-season control only: ${Math.round((m.rosFrac || 0) * 100)}% of ${DATA.first_season - 1} still to play, priced on the prorated projection minus the prorated salary`
+            : (m.surRos != null
+                ? "Balance of the season in progress plus the NPV of (convex production value − salary) over salary-known seasons"
+                : "NPV of (convex production value − salary) over salary-known seasons"));
+      const sur = _sv != null
+        ? `<span class="${_sv >= 0 ? "proj-pos" : "proj-neg"}" title="${_surTitle}">${money(_sv)}</span>`
         : EM_DASH;
       const link = m.src === "prospect"
         ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(m.key)}"><strong>${esc(m.name)}</strong></a>`
@@ -1028,8 +1051,8 @@
       const warRow = m => `<div class="fa-rail-row"><a class="fa-player-link" href="${m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`}">${esc(m.name)}</a><span class="fa-rail-num">${fmtWar(warTot(m))}</span></div>`;
       const warMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Top ${DATA.horizon}-year projected bWAR among the current filters (if-healthy path)">Top projected WAR</div>
         ${topWar.map(warRow).join("")}</div>`;
-      const surList = curr.filter(m => m.surNpv != null).sort((a, b) => (b.surNpv || 0) - (a.surNpv || 0)).slice(0, 6);
-      const surRow = m => `<div class="fa-rail-row"><a class="fa-player-link" href="${m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`}">${esc(m.name)}</a><span class="fa-rail-num ${m.surNpv >= 0 ? "proj-pos" : "proj-neg"}">${money(m.surNpv)}</span></div>`;
+      const surList = curr.filter(m => surOf(m) != null).sort((a, b) => (surOf(b) || 0) - (surOf(a) || 0)).slice(0, 6);
+      const surRow = m => `<div class="fa-rail-row"><a class="fa-player-link" href="${m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`}">${esc(m.name)}</a><span class="fa-rail-num ${surOf(m) >= 0 ? "proj-pos" : "proj-neg"}">${money(surOf(m))}</span></div>`;
       const surMod = surList.length ? `<div class="fa-rail-mod"><div class="fa-rail-head" title="Largest surplus NPV among the current filters - value above salary where a real contract exists">Best surplus</div>
         ${surList.map(surRow).join("")}</div>` : "";
       const groups = {};
@@ -1211,7 +1234,7 @@
           <thead><tr><th>Season</th><th style="color:${CA};">${esc(a.name)}</th><th style="color:${CB};">${esc(b.name)}</th><th>Edge</th></tr></thead>
           <tbody>${seasonRows}
             ${totRow(`${DATA.horizon}y WAR`, warShown(a), warShown(b), fmtWar)}
-            ${totRow("Surplus", a.surNpv, b.surNpv, money)}</tbody></table>
+            ${totRow("Surplus", surOf(a), surOf(b), money)}</tbody></table>
         <div class="fa-note" style="margin-top:8px;">Edge = left minus right, per season. Totals carry each player's own P10-P90 band on the board view. Surplus compares different things across sources (veteran contract surplus vs prospect control-window surplus) - read it as "value above cost," not like-for-like contract terms.</div>
       </div></div>`;
     const gfx = document.getElementById("cmp-gfx");
@@ -1685,7 +1708,13 @@
       // Total-WAR band dropped (F-01, miscalibrated); per-year bands stay in the fan chart + upside strip.
       tile(`${(p.proj.war || []).length}y WAR`, `${fmtWar(p.proj.warTotal)}`,
         null, "Expected (attrition-discounted) bWAR over the projection window - the same path surplus prices. The board headline uses the if-healthy path, which reads a little higher.");
-    if (p.proj && p.proj.surNpv != null) tile("Surplus NPV", money(p.proj.surNpv), p.proj.surNpv >= 0 ? "proj-pos" : "proj-neg");
+    if (p.proj && surOf(p.proj) != null) {
+      const _pv = surOf(p.proj);
+      // Name the basis when the only priced months are the rest of this season,
+      // so a small honest number does not read as a broken one.
+      const _lbl = (p.proj.surNpv == null && p.proj.surRos != null) ? "Surplus (rest of season)" : "Surplus NPV";
+      tile(_lbl, money(_pv), _pv >= 0 ? "proj-pos" : "proj-neg");
+    }
     // HEM+ (hitters): pure offensive-rate skill from the MLB Stats leaderboards.
     if (p.skills && p.skills.hem && p.skills.hem.hemPlus != null) {
       const h = p.skills.hem;
@@ -1750,7 +1779,7 @@
           <div class="mlbp-name">${teamLogo(p.team)}<h2>${esc(p.name || key)}</h2></div>
           <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${esc(p.team)}` : " · FA"} · ${contract}</div>
           ${originLine}
-          <div style="margin-top:8px;display:inline-flex;gap:6px;flex-wrap:wrap;"><button class="chip egfx-chip" id="mlbp-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>${(p.proj && p.proj.surNpv != null) ? `<a class="chip" href="/trademachine/#tm=mlb:${encodeURIComponent(key)}" title="Value this player in the Trade Machine - prospects (eFV surplus) and MLB players (projection surplus) on one currency">&#8646; Trade Machine</a>` : ""}</div>
+          <div style="margin-top:8px;display:inline-flex;gap:6px;flex-wrap:wrap;"><button class="chip egfx-chip" id="mlbp-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>${(p.proj && surOf(p.proj) != null) ? `<a class="chip" href="/trademachine/#tm=mlb:${encodeURIComponent(key)}" title="Value this player in the Trade Machine - prospects (eFV surplus) and MLB players (projection surplus) on one currency">&#8646; Trade Machine</a>` : ""}</div>
         </div>
         <div class="mlbp-tiles">${tiles.join("")}</div>
       </div>
@@ -1794,7 +1823,7 @@
         { t: war(m) != null ? fmtWar(war(m)) : "-", c: "accent" },
         { t: lo(m) != null ? `${fmtWar(lo(m))}-${fmtWar(hi(m))}` : "-", c: "muted" },
       ];
-      const s = (m.surNpv != null) ? m.surNpv : (m.surplus != null ? m.surplus : null);
+      const s = (surOf(m) != null) ? surOf(m) : (m.surplus != null ? m.surplus : null);
       cells.push(s != null ? { t: money(s), c: s >= 0 ? "pos" : "neg" } : { t: "-" });
       return { cells };
     });
@@ -1876,8 +1905,8 @@
       data: {
         warYears: war.length,
         warTotal: (p.proj && p.proj.warTotal != null) ? fmtWar(p.proj.warTotal) : null,
-        surplus: (p.proj && p.proj.surNpv != null)
-          ? { value: money(p.proj.surNpv), neg: !(p.proj.surNpv >= 0) } : null,
+        surplus: (p.proj && surOf(p.proj) != null)
+          ? { value: money(surOf(p.proj)), neg: !(surOf(p.proj) >= 0) } : null,
         swingPlus: p.swingPlus != null ? String(Math.round(p.swingPlus)) : null,
         aaaStuffPlus: p.aaaStuffPlus != null ? String(Math.round(p.aaaStuffPlus)) : null,
         projAav: (p.fa && p.fa.projAav != null) ? money(p.fa.projAav) : null,
