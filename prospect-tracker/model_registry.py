@@ -42,7 +42,13 @@ REQUIRED_KEYS = ("model_id", "surface", "predicts", "champion", "baseline",
                  "metric", "eval_artifact", "verdict")
 # Evals older than this (vs today) get a stale flag at refresh time —
 # advisory only; expensive gates run pre-merge, not on a clock.
-STALE_DAYS = 240
+#
+# LOWERED 240 -> 90 on 2026-08-03. At 240 the threshold sat 4.5x above the
+# oldest artifact in the tree (53 days), so the stale flag was structurally
+# incapable of firing and the freshness map reported "nothing is stale" as a
+# tautology rather than a finding. 90 days is roughly one quarter, which is
+# the cadence at which a live-surface eval genuinely wants re-running.
+STALE_DAYS = 90
 
 
 def load() -> dict:
@@ -81,6 +87,12 @@ def validate(reg: dict | None = None) -> list[str]:
                     json.loads(p.read_text(encoding="utf-8"))
                 except ValueError:
                     problems.append(f"{mid}: artifact unparseable: {art}")
+            elif p.stat().st_size == 0:
+                # Non-JSON artifacts (efv_il_severity points at a lane-gates
+                # .md) skipped the parse check entirely, so an emptied file
+                # would validate clean. Existence is not evidence; at minimum
+                # require content.
+                problems.append(f"{mid}: artifact is empty: {art}")
         # Optional Report Card block: proof numbers rendered inline on the
         # Models & Proofs view. A card may only exist on a row that has an
         # eval_artifact to trace back to (the honesty rule for cards).
@@ -101,9 +113,63 @@ def validate(reg: dict | None = None) -> list[str]:
     return problems
 
 
+# Fields an eval artifact may use to state when it was actually produced.
+# Preferred over the file mtime: `git checkout` and a fresh clone rewrite every
+# mtime to the moment of checkout, so an mtime-only freshness map reports the
+# whole registry as brand new on the deploy box - exactly where staleness
+# matters most. Read the artifact's own stamp when it carries one.
+_GENERATED_AT_KEYS = ("generated_at", "run_at", "fit_date", "as_of", "date")
+# Parsing guard: a handful of eval artifacts are multi-MB. Age is advisory, so
+# skip the parse rather than pay it, and fall back to mtime for those.
+_MAX_STAMP_PARSE_BYTES = 4_000_000
+
+
+def _parse_stamp(raw: str):
+    """Parse an artifact date stamp to NAIVE LOCAL time.
+
+    Stamps are mixed: some are bare dates ("2026-08-03"), some are local
+    naive, and some are UTC with a Z suffix ("2026-08-03T23:17:20Z"). Treating
+    a Z stamp as local put it hours in the FUTURE and produced a negative age
+    (source_track_record read -1 day). Normalize the suffix, then convert any
+    offset-aware value to local before dropping the tzinfo. Note fromisoformat
+    on py3.10 (the deploy box) accepts "+00:00" but not "Z".
+    """
+    txt = raw.strip().replace(" ", "T")
+    if txt.endswith(("Z", "z")):
+        txt = txt[:-1] + "+00:00"
+    try:
+        dt = datetime.fromisoformat(txt)
+    except ValueError:
+        try:
+            dt = datetime.fromisoformat(txt[:10])   # bare date prefix
+        except ValueError:
+            return None
+    return dt.astimezone().replace(tzinfo=None) if dt.tzinfo else dt
+
+
+def _artifact_date(p: Path):
+    """The artifact's self-declared production date, or None."""
+    try:
+        if p.suffix != ".json" or p.stat().st_size > _MAX_STAMP_PARSE_BYTES:
+            return None
+        doc = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(doc, dict):
+        return None
+    for key in _GENERATED_AT_KEYS:
+        raw = doc.get(key)
+        if isinstance(raw, str) and raw[:4].isdigit():
+            got = _parse_stamp(raw)
+            if got is not None:
+                return got
+    return None
+
+
 def freshness(reg: dict | None = None) -> dict[str, dict]:
-    """{model_id: {artifact_age_days, stale}} from artifact mtimes —
-    advisory stamps for the accountability surface."""
+    """{model_id: {artifact_age_days, stale, age_source}} — advisory stamps for
+    the accountability surface. Age comes from the artifact's own generated_at
+    stamp where it has one, else the file mtime (see _artifact_date)."""
     reg = reg or load()
     out = {}
     today = datetime.now()
@@ -114,8 +180,14 @@ def freshness(reg: dict | None = None) -> dict[str, dict]:
         p = Path(__file__).parent / art
         if not p.exists():
             continue
-        age = (today - datetime.fromtimestamp(p.stat().st_mtime)).days
-        out[m["model_id"]] = {"artifact_age_days": age, "stale": age > STALE_DAYS}
+        stamped = _artifact_date(p)
+        when = stamped or datetime.fromtimestamp(p.stat().st_mtime)
+        age = (today - when).days
+        out[m["model_id"]] = {
+            "artifact_age_days": age,
+            "stale": age > STALE_DAYS,
+            "age_source": "artifact" if stamped else "mtime",
+        }
     return out
 
 

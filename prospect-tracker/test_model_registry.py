@@ -87,6 +87,44 @@ def test_freshness_stamps():
     for mid, f in fresh.items():
         assert f["artifact_age_days"] >= 0, mid
         assert isinstance(f["stale"], bool), mid
+        assert f["age_source"] in ("artifact", "mtime"), mid
+
+
+def test_stale_threshold_is_reachable():
+    """A threshold far above the oldest artifact is not a freshness check.
+
+    STALE_DAYS was 240 while the oldest artifact in the tree was 53 days, so
+    `stale` could not fire for any model and the freshness map reported
+    "nothing is stale" as a tautology. Keep the threshold within sight of the
+    real artifact ages: it should exceed today's oldest (no false alarm on a
+    healthy tree) but stay inside 3x of it, so a genuinely neglected eval
+    trips it in a plausible amount of time.
+    """
+    fresh = mr.freshness()
+    oldest = max(f["artifact_age_days"] for f in fresh.values())
+    assert mr.STALE_DAYS > oldest, (
+        f"STALE_DAYS={mr.STALE_DAYS} is below the oldest artifact ({oldest}d), "
+        "so the registry would flag a healthy tree")
+    assert mr.STALE_DAYS <= 3 * oldest, (
+        f"STALE_DAYS={mr.STALE_DAYS} is more than 3x the oldest artifact "
+        f"({oldest}d) and cannot realistically fire; lower it so the freshness "
+        "map reports a finding rather than a tautology")
+
+
+def test_freshness_prefers_the_artifacts_own_stamp_over_mtime():
+    """Age must not be measured by file mtime alone.
+
+    `git checkout` and a fresh clone rewrite every mtime to the checkout
+    moment, so an mtime-only freshness map reports the entire registry as
+    brand new on the deploy box, which is exactly where a stale eval matters.
+    Most eval artifacts carry their own generated_at stamp; that must win.
+    """
+    fresh = mr.freshness()
+    stamped = [m for m, f in fresh.items() if f["age_source"] == "artifact"]
+    assert len(stamped) > len(fresh) // 2, (
+        f"only {len(stamped)}/{len(fresh)} freshness stamps come from the "
+        "artifact's own date; the map has fallen back to mtime, which a "
+        "checkout resets")
 
 
 def test_surplus_real_backtest_artifact_shape():
