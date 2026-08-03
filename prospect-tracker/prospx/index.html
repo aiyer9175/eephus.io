@@ -8676,6 +8676,14 @@
           <option value="square">Square 1:1</option>
           <option value="story">Story 9:16</option>
           <option value="wide">Wide 16:9</option>
+          <option value="board">Board 4:5</option>
+          <option value="landscape">Landscape 16:9</option>
+        </select>
+      </label>
+      <label class="gfx-ctrl">Layout
+        <select id="gfx-layout" class="gfx-select">
+          <option value="chips">Chips (photo grid)</option>
+          <option value="rows">Rows (compact)</option>
         </select>
       </label>
       <label class="gfx-ctrl">Template
@@ -33263,12 +33271,19 @@ const _GFX_FORMATS = {
   square:   { w: 1080, h: 1080, label: "Square 1:1" },
   story:    { w: 1080, h: 1920, label: "Story 9:16" },
   wide:     { w: 1600, h: 900,  label: "Wide 16:9" },
+  // Board formats, sized for the CHIP layout (see _gfxChipHtml). A 100-player
+  // list on the 1600x900 "wide" canvas was never 16:9: it ran to ~1929px tall
+  // because the frame only sets a MINIMUM height, so the promised aspect was a
+  // label, not a measurement. These two are tall enough to actually hold 100
+  // photo chips at the ratio they claim.
+  board:     { w: 1600, h: 2000, label: "Board 4:5" },
+  landscape: { w: 1920, h: 1080, label: "Landscape 16:9" },
 };
 // User customization (persists across opens within a session).
 // v45 - default format is WIDE (1600×900, 16:9): graphics land Twitter/X-ready
 // with no crop. Prospect-card kinds still force their own portrait/tall
 // geometry via _gfxVariantFormat.
-const _gfxOpts = { count: 50, title: "", accent: "lilac", showValue: true, format: "wide", theme: "auto", photos: true, logos: true, variant: "compact", frame: "rarity", pack: false };
+const _gfxOpts = { count: 50, title: "", accent: "lilac", showValue: true, format: "board", theme: "auto", photos: true, logos: true, variant: "compact", frame: "rarity", pack: false, layout: "chips" };
 let _gfxOrigTheme = null;
 // v38 - Force the GFX board (+ the open modal) to a chosen light/dark theme by
 // flipping the root data-theme. The board inherits ALL tokens + fv-badge tints
@@ -33674,6 +33689,30 @@ function _gfxTeamLogo(org, P, px) {
 function _gfxRowHasPhotoAvatar(r) {
   return !!(_gfxOpts.photos && r && r.mlbam);
 }
+// Photo layer for a chip, as CSS only. The row avatar uses <img object-fit>,
+// which html2canvas 1.4.1 does not implement and therefore exports STRETCHED
+// (it only ever got fixed for the logo path, by sizing the logo instead of
+// cropping it). A background-image with `cover` crops identically in the live
+// DOM and in the raster, so the chip never distorts a face.
+//
+// Layers, in order of preference: headshot, then team logo, then the
+// silhouette. A missing headshot leaves the logo showing rather than a hole,
+// which is the same degradation rule the row avatar follows.
+function _gfxChipPhotoCss(r, P) {
+  const layers = [];
+  if (_gfxRowHasPhotoAvatar(r)) layers.push(`url('${_gfxHeadshotURL(r.mlbam, 140)}')`);
+  const logo = (typeof teamLogoURL === "function" && r && r.org) ? teamLogoURL(r.org) : null;
+  if (_gfxOpts.logos && logo) layers.push(`url('${logo}')`);
+  if (!layers.length) layers.push(_gfxSilhouetteBg(P));
+  // Sizes/positions line up index-for-index with the image list: the headshot
+  // covers, anything behind it sits centered and small so a 404 degrades to a
+  // readable club mark rather than a blown-up crop.
+  const sizes = layers.map((l, i) => (i === 0 && _gfxRowHasPhotoAvatar(r)) ? "cover" : "58%");
+  const poss = layers.map((l, i) => (i === 0 && _gfxRowHasPhotoAvatar(r)) ? "top center" : "center");
+  return `background-color:${P.bg};background-image:${layers.join(",")};`
+    + `background-size:${sizes.join(",")};background-position:${poss.join(",")};`
+    + `background-repeat:no-repeat;`;
+}
 function _gfxAvatar(r, P) {
   const useP = _gfxRowHasPhotoAvatar(r);
   const useL = _gfxOpts.logos && r && r.org;
@@ -33712,6 +33751,18 @@ function _gfxAvatar(r, P) {
   // at its natural aspect ratio (never distorted) and html2canvas captures that
   // box faithfully. Flex-center it in the cell.
   return `<span style="${wrap}background-image:none;display:inline-flex;align-items:center;justify-content:center;"><img src="${teamLogoURL(r.org)}" crossorigin="anonymous" alt="${escapeHtml(r.org || "")}" style="max-width:34px;max-height:38px;width:auto;height:auto;display:block;" onerror="this.style.display='none';"></span>`;
+}
+// Legend for the CHIP layout. It must describe only what a chip actually
+// carries: rank, grade, name, one meta line. The row-board legend explains $M
+// and $DvM+, and those columns do not exist here - printing them would be the
+// graphic telling the reader to look for something that is not on it.
+function _gfxChipFooterNote(kind) {
+  const _boardEfv = (typeof _gradePrimary === "function") ? _gradePrimary() === "xfv" : true;
+  const _gradEfv = ((state.debutGrade || "xfv") === "xfv");
+  const badge = (kind === "graduate")
+    ? (_gradEfv ? "final eFV (locked at debut)" : "consensus FV at debut")
+    : (_boardEfv ? "eFV (consensus FV fallback)" : "consensus FV");
+  return `badge = ${badge} · number = board rank · line = position, level, age`;
 }
 // Footer legend per kind. The prospect/graduate badge legend tracks the same
 // lead-grade toggles the row badges follow (see _gfxRow, B3) so the exported
@@ -34803,7 +34854,7 @@ function _gfxMiniCard(item, kind, P, accent, idx) {
 // must stay legible) and by the row count. Short non-wide lists stay 1 column;
 // anything past a short list keeps a floor of 2 (the prior behavior).
 function _gfxColumnCount(cap) {
-  const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.wide;
+  const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.board;
   const wide = _gfxOpts.format === "wide";
   if (cap <= 12 && !wide) return 1;
   const TARGET_PER_COL = 24;   // aim for readable column lengths
@@ -34814,6 +34865,60 @@ function _gfxColumnCount(cap) {
   ncol = Math.min(ncol, maxByWidth, cap);
   return Math.max(1, ncol);
 }
+// ---------------------------------------------------------------------------
+// CHIP LAYOUT (2026-08-03, owner ask). The row layout gives a 100-player board
+// 359x67px per player, of which the headshot is 40x52 - 8.6% of the chip - and
+// spends a whole column on a surplus figure whose sub-line renders at 10px. At
+// a 600px-wide timeline render that 10px is under 4px on screen. The owner's
+// requirement: photo, eFV grade and rank are the only things that MUST survive;
+// level, age and position are wanted if they stay legible; the value column
+// goes. Ten columns on a 1600x2000 canvas gives ~141x170 per player with a
+// ~141x104 photo, which is 6x the photo area and no text under 11px.
+//
+// Column count is derived from the canvas, not hardcoded, so the same renderer
+// serves the landscape canvas (20 x 5) and short lists.
+function _gfxChipColumns(cap, fmt) {
+  const PAD = 40, GAP = 12, MIN_CHIP_W = 120, MIN_CELL_H = 96, CHROME = 190;
+  const usable = fmt.w - PAD * 2;
+  const maxByWidth = Math.max(1, Math.floor((usable + GAP) / (MIN_CHIP_W + GAP)));
+  // Prefer a grid whose shape follows the canvas, so the chips stay squarish.
+  let cols = Math.max(1, Math.round(Math.sqrt(cap * (fmt.w / Math.max(1, fmt.h)))));
+  // Height budget: a short canvas needs MORE columns, because fewer rows is the
+  // only way to keep every cell above the legibility floor. Without this a
+  // 100-player list on a 900px-tall canvas laid out 10 rows and simply ran off
+  // the bottom, which is the "the format is a label, not a measurement" defect
+  // this layout exists to end. Where even the widest grid cannot fit, the board
+  // still grows rather than crushing the cells - an honest tall image beats an
+  // unreadable one - but it now grows by as little as possible.
+  const maxRows = Math.max(1, Math.floor((fmt.h - CHROME + GAP) / (MIN_CELL_H + GAP)));
+  cols = Math.max(cols, Math.ceil(cap / maxRows));
+  cols = Math.min(cols, maxByWidth, Math.max(1, cap));
+  return cols;
+}
+// One player chip: photo, rank and eFV grade over it, name, one meta line.
+// No surplus, no $DvM+, no value column anywhere - that is the ask.
+function _gfxChipHtml(r, i, P, accent, geo) {
+  const rank = (r.rank != null) ? r.rank : (i + 1);
+  // html2canvas 1.4.1 does not implement object-fit, so an <img> here exports
+  // STRETCHED. A background-image with cover crops correctly in the raster.
+  const photo = _gfxChipPhotoCss(r, P);
+  const badge = (r.fv != null)
+    ? `<span class="fv-badge ${fvClass(r.fv)}" style="position:absolute;top:4px;right:4px;font-size:${geo.badge}px;padding:1px 5px;line-height:1.25;">${escapeHtml(String(r.fv))}</span>`
+    : "";
+  const meta = r.meta
+    ? `<div style="font-family:var(--font-mono);font-size:${geo.meta}px;color:${P.text3};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;">${escapeHtml(r.meta)}</div>`
+    : "";
+  return `<div style="display:flex;flex-direction:column;background:${P.bg2 || "transparent"};border:1px solid ${P.border};border-radius:6px;overflow:hidden;">
+      <div style="position:relative;height:${geo.photo}px;${photo}">
+        <span style="position:absolute;top:4px;left:4px;font-family:var(--font-mono);font-size:${geo.rank}px;font-weight:700;color:#fff;background:rgba(0,0,0,0.62);border-radius:4px;padding:1px 5px;line-height:1.25;">${escapeHtml(String(rank))}</span>
+        ${badge}
+      </div>
+      <div style="padding:5px 5px 6px;display:flex;flex-direction:column;gap:2px;min-width:0;">
+        <div style="font-weight:700;font-size:${geo.name}px;color:${P.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;line-height:1.2;">${escapeHtml(r.name)}</div>
+        ${meta}
+      </div>
+    </div>`;
+}
 function buildGfxBoard() {
   const snap = _gfxSnapshot;
   // v40 - single-subject card modes (prospect / farm detail) branch out early;
@@ -34823,7 +34928,9 @@ function buildGfxBoard() {
   if (snap && snap.kind === "compare-card") return buildCompareCard(snap);
   const P = _gfxPalette();
   const accent = _gfxAccentColor(P);
-  const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.portrait;
+  // Fallback must match _gfxColumnCount's, or a bad format key lays out column
+  // math for one canvas inside another (1600px of columns in a 1080px frame).
+  const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.board;
   const W = fmt.w, H = fmt.h;
   const board = document.createElement("div");
   const base = `width:${W}px;box-sizing:border-box;background:${_gfxBoardBg(P, P.bg)};color:${P.text};font-family:var(--font-sans);`;
@@ -34838,8 +34945,19 @@ function buildGfxBoard() {
       <div style="font-size:16px;color:${P.text2};max-width:640px;line-height:1.5;">Open a list - Prospects, Draft, Graduates, Overseas, Farm, Leaderboards, Spotlights, Int'l&nbsp;Amateurs - set your filters, then generate.</div>`;
     return { board, total: 0, w: W, h: H };
   }
-  const cap = (_gfxOpts.count === "all") ? total : Math.min(total, Number(_gfxOpts.count) || 50);
+  // Show=All used to mean literally all: the unfiltered active pool is 4,526
+  // rows, which at 67px a row builds a ~76,000px board and ~152,000px after the
+  // 2x export scale. Browsers cap a canvas dimension near 32,767px, so that
+  // export failed silently and handed back a blank or truncated image. Cap it
+  // and say so in the footer instead of pretending.
+  const GFX_MAX_ROWS = 200;
+  const askedAll = (_gfxOpts.count === "all");
+  const cap = Math.min(total, askedAll ? GFX_MAX_ROWS : (Number(_gfxOpts.count) || 50));
+  const capped = askedAll && total > GFX_MAX_ROWS;
   const shown = snap.items.slice(0, cap);
+  // Chip layout: player lists only. Farm rows have no headshots, so a photo
+  // grid would be 100 identical club marks.
+  const useChips = (_gfxOpts.layout === "chips") && snap.kind !== "farm" && !_gfxOpts.pack;
   const title = _gfxTitle(cap);
   const subtitle = _gfxSubtitle(total, cap);
   const dateStr = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
@@ -34856,7 +34974,9 @@ function buildGfxBoard() {
       <div><div style="font-family:var(--font-retro);font-size:34px;font-weight:700;color:${P.text};line-height:1.05;">${escapeHtml(title)}</div>
         <div style="font-family:var(--font-mono);font-size:14px;color:${P.text3};margin-top:6px;">${escapeHtml(subtitle)}</div></div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">${cards}</div>`;
-    return { board, total, w: PW2, h: board.offsetHeight || H };
+    // `board` is detached here (never appended), so offsetHeight is always 0
+    // and this only ever returned H. Measuring would need a layout pass.
+    return { board, total, w: PW2, h: H };
   }
 
   const rowHtml = (item, i) => {
@@ -34865,10 +34985,12 @@ function buildGfxBoard() {
     // r.rank; show it once as the leading "#N" ordinal rather than a bare
     // position number followed by a redundant "#N" badge.
     const rankOnly = (r.fv == null && r.rank != null);
+    // A row with no grade and no rank used to emit a 36px-wide span containing
+    // nothing, so the whole line sat indented by an invisible column.
     const lead = (r.fv != null)
       ? `<span class="fv-badge ${fvClass(r.fv)}" style="flex:none;">${escapeHtml(String(r.fv))}</span>`
-      : (rankOnly ? ""
-         : `<span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${accent};flex:none;width:36px;text-align:center;">${r.rank != null ? "#" + r.rank : ""}</span>`);
+      : ((rankOnly || r.rank == null) ? ""
+         : `<span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${accent};flex:none;width:36px;text-align:center;">#${r.rank}</span>`);
     // Team logo rides the meta line when the AVATAR is a player photo (so the
     // team is still shown). When the avatar is already the team logo (photos
     // off, or a photo-less / farm row), we skip the meta logo to avoid a
@@ -34876,7 +34998,7 @@ function buildGfxBoard() {
     const metaLogo = (_gfxOpts.logos && r.org && _gfxRowHasPhotoAvatar(r))
       ? _gfxTeamLogo(r.org, P, 18) : "";
     return `<div style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-bottom:1px solid ${P.border};">
-        <span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:${accent};width:30px;text-align:right;flex:none;">${rankOnly ? "#" + r.rank : (i + 1)}</span>
+        <span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:${accent};min-width:30px;text-align:right;flex:none;">${rankOnly ? "#" + r.rank : (i + 1)}</span>
         ${lead}
         ${_gfxAvatar(r, P)}
         <span style="min-width:0;flex:1;overflow:hidden;">
@@ -34891,6 +35013,28 @@ function buildGfxBoard() {
   // Column-major fill: ranks read top-to-bottom down a column, then continue in
   // the next column (left col = top of the list).
   let grid;
+  if (useChips) {
+    const cols = _gfxChipColumns(cap, fmt);
+    const rows = Math.ceil(cap / cols);
+    const GAP = 12;
+    const chipW = Math.floor((W - 80 - (cols - 1) * GAP) / cols);
+    // Vertical budget: canvas minus the slim chrome, split across the rows.
+    // The photo takes what is left after the two text lines and the padding,
+    // so a shorter canvas shrinks the picture rather than clipping the name.
+    const chrome = 190;
+    const cellH = Math.max(96, Math.floor((H - chrome - (rows - 1) * GAP) / rows));
+    const geo = {
+      name: chipW >= 130 ? 14 : (chipW >= 100 ? 12 : 11),
+      meta: chipW >= 130 ? 11 : 11,
+      rank: chipW >= 130 ? 13 : 12,
+      badge: chipW >= 130 ? 13 : 12,
+    };
+    // Text block = name line + meta line + padding + border. Whatever remains
+    // is the photo, floored so it never collapses to a sliver.
+    geo.photo = Math.max(52, cellH - (geo.name + geo.meta + 22));
+    grid = `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:${GAP}px;align-content:start;">`
+      + shown.map((it, i) => _gfxChipHtml(it, i, P, accent, geo)).join("") + `</div>`;
+  } else {
   const ncol = _gfxColumnCount(cap);
   if (ncol <= 1) {
     grid = `<div>${shown.map((it, i) => rowHtml(it, i)).join("")}</div>`;
@@ -34904,10 +35048,30 @@ function buildGfxBoard() {
     }
     grid = `<div style="display:grid;grid-template-columns:repeat(${cols.length},1fr);gap:0 28px;">${cols.join("")}</div>`;
   }
+  }
   // Fixed-canvas frame: pins to the format's min-height so short lists hit the
   // exact social aspect ratio (the footer rides the bottom edge); long lists
   // extend below it. flex column => header top, rows fill, footer bottom.
   board.style.cssText = base + `min-height:${H}px;padding:40px;display:flex;flex-direction:column;`;
+  // Slim header for the chip layout. The full band spends 93px on a 40px title,
+  // a subtitle and a 74px QR block; every pixel it gives back becomes photo.
+  // Same wordmark, same as-of date, one strip.
+  if (useChips) {
+    board.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid ${accent};padding-bottom:9px;flex:none;gap:16px;">
+      <div style="font-family:var(--font-retro);font-size:26px;font-weight:700;line-height:1.05;color:${P.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(title)}</div>
+      <div style="font-family:var(--font-mono);font-size:12px;color:${P.text3};flex:none;white-space:nowrap;">
+        <span style="font-family:var(--font-retro);font-weight:700;font-size:15px;color:${accent};">PROSPX</span>
+        <span style="margin-left:8px;">eephus.io/PROSPX · ${_gfxAsOf()}</span>
+      </div>
+    </div>
+    <div style="flex:1 1 auto;padding:14px 0;display:flex;flex-direction:column;justify-content:flex-start;">${grid}</div>
+    <div style="margin-top:10px;border-top:1px solid ${P.border};padding-top:8px;font-size:11px;color:${P.text3};display:flex;justify-content:space-between;flex:none;gap:16px;">
+      <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(_gfxChipFooterNote(snap.kind))}</span>
+      <span style="flex:none;">${total} matched${cap < total ? ` · top ${cap} shown${capped ? " (max)" : ""}` : ""}</span>
+    </div>`;
+    return { board, total, w: W, h: H };
+  }
   board.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid ${accent};padding-bottom:16px;flex:none;">
       <div style="min-width:0;">
@@ -34938,7 +35102,7 @@ function buildGfxBoard() {
     <div style="flex:1 1 auto;padding:20px 0;display:flex;flex-direction:column;justify-content:center;">${grid}</div>
     <div style="margin-top:16px;border-top:1px solid ${P.border};padding-top:11px;font-size:11px;color:${P.text3};display:flex;justify-content:space-between;flex:none;">
       <span>${escapeHtml(_gfxFooterNote(snap.kind))}</span>
-      <span>${total} matched${cap < total ? ` · top ${cap} shown · +${total - cap} more at eephus.io/prospx` : ""}</span>
+      <span>${total} matched${cap < total ? ` · top ${cap} shown${capped ? " (max)" : ""} · +${total - cap} more at eephus.io/prospx` : ""}</span>
     </div>`;
   return { board, total, w: W, h: H };
 }
@@ -34993,8 +35157,12 @@ function _gfxSyncControls() {
   if (lg) lg.checked = !!_gfxOpts.logos;
   const pk = document.getElementById("gfx-pack");
   if (pk) pk.checked = !!_gfxOpts.pack;
+  const lay = document.getElementById("gfx-layout");
+  if (lay) lay.value = _gfxOpts.layout || "chips";
   const va = document.getElementById("gfx-variant");
-  if (va) va.value = _gfxOpts.variant || "detailed";
+  // "detailed" was never reachable (variant initialises to "compact" and is
+  // never cleared), so the fallback advertised a default the code cannot pick.
+  if (va) va.value = _gfxOpts.variant || "compact";
   const frm = document.getElementById("gfx-frame");
   if (frm) frm.value = _gfxOpts.frame || "rarity";
   document.querySelectorAll("[data-gfx-accent]").forEach(b =>
@@ -35018,7 +35186,11 @@ function _gfxApplyModeUI() {
   const hide = (el, h) => { if (el) el.style.display = h ? "none" : ""; };
   const ctrlOf = id => { const el = document.getElementById(id); return el ? el.closest(".gfx-ctrl") : null; };
   hide(ctrlOf("gfx-count"), card);
-  hide(ctrlOf("gfx-showval"), card);
+  // Layout (chips vs rows) is a LIST-board choice; farm lists have no headshots.
+  hide(ctrlOf("gfx-layout"), card || k === "farm");
+  // The value column does not exist in the chip layout, so offering its toggle
+  // there would be a control that silently does nothing.
+  hide(ctrlOf("gfx-showval"), card || (_gfxOpts.layout === "chips" && k !== "farm"));
   hide(ctrlOf("gfx-title-input"), card);
   hide(ctrlOf("gfx-photos"), k === "farm-card");
   // Template variants apply to player + farm cards (farm honors Compact/Detailed).
@@ -35347,6 +35519,9 @@ document.addEventListener("change", (e) => {
     _gfxRefresh();
   } else if (e.target.id === "gfx-frame") {
     _gfxOpts.frame = e.target.value;
+    _gfxRefresh();
+  } else if (e.target.id === "gfx-layout") {
+    _gfxOpts.layout = e.target.value;
     _gfxRefresh();
   } else if (e.target.id === "gfx-variant") {
     _gfxOpts.variant = e.target.value;
