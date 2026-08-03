@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-01",
+ "generated_at": "2026-08-03",
  "scope": "HITTERS",
  "n_scored": 1882,
  "calibration_scale": {
@@ -8,25 +8,25 @@
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 0.72,
+  "mean_abs_delta": 0.74,
   "max_up": 5.8,
   "max_down": -3.8,
-  "share_within_2_grades": 0.876
+  "share_within_2_grades": 0.878
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
   "mean_abs_delta": 6.05,
   "max_up": 7.6,
-  "max_down": -20.9
+  "max_down": -21.0
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.0606,
+  "spearman_adj_vs_consensus_miss": 0.0619,
   "n": 463,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 24738.2,
-  "consensus": 24183.6
+  "xfv": 24807.3,
+  "consensus": 24191.2
  },
  "example_up_adjustments": [
   {

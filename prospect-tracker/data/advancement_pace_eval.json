@@ -1,14 +1,14 @@
 {
-"generated_at": "2026-08-01",
+"generated_at": "2026-08-03",
 "artifact": "data/advancement_pace.json",
 "kind": "descriptive QC only - no predictive claim is made or permitted anywhere for this statistic",
 "methodology_version": "1.0.0-eephus",
-"n_scored_latest_asof": 9575,
-"n_asof_rows_fit": 27484,
+"n_scored_latest_asof": 9576,
+"n_asof_rows_fit": 27488,
 "distribution_ap_plus_display_latest": {
-"mean": 99.26,
+"mean": 99.27,
 "sd": 7.69,
-"p5": 88.4,
+"p5": 88.3,
 "p25": 94.8,
 "p50": 98.9,
 "p75": 103.2,
@@ -20,8 +20,8 @@
 "mean": 99.28,
 "sd": 7.78,
 "min": 63.0,
-"max": 163.0,
-"p5": 88.4,
+"max": 162.6,
+"p5": 88.3,
 "p50": 98.9,
 "p95": 113.7
 },
@@ -29,7 +29,7 @@
 "note": "joint-OLS residual means are exactly zero per included margin by construction; the per-experience-year SD scaling that builds z can move a margin mean up to about a point on this panel (residual sign correlating with experience year inside a margin)",
 "era": {
 "2015-16": {
-"mean_ap_plus": 99.79,
+"mean_ap_plus": 99.78,
 "n": 5893
 },
 "2017-19": {
@@ -38,7 +38,7 @@
 },
 "2021+": {
 "mean_ap_plus": 100.44,
-"n": 13290
+"n": 13294
 }
 },
 "position_group": {
@@ -51,16 +51,16 @@
 "n": 1519
 },
 "MIF": {
-"mean_ap_plus": 100.01,
-"n": 2104
+"mean_ap_plus": 100.0,
+"n": 2105
 },
 "OF": {
 "mean_ap_plus": 100.06,
-"n": 2532
+"n": 2533
 },
 "UNK": {
 "mean_ap_plus": 99.94,
-"n": 19019
+"n": 19021
 },
 "UT": {
 "mean_ap_plus": 100.33,
@@ -69,16 +69,16 @@
 },
 "entry_pathway": {
 "draft_college": {
-"mean_ap_plus": 99.58,
-"n": 1289
+"mean_ap_plus": 99.59,
+"n": 1290
 },
 "draft_hs": {
 "mean_ap_plus": 98.77,
-"n": 740
+"n": 741
 },
 "intl_amateur": {
 "mean_ap_plus": 100.71,
-"n": 15857
+"n": 15859
 },
 "undrafted_other": {
 "mean_ap_plus": 98.97,
@@ -88,7 +88,7 @@
 "entry_age_bucket": {
 "18": {
 "mean_ap_plus": 100.02,
-"n": 4741
+"n": 4743
 },
 "19-20": {
 "mean_ap_plus": 99.52,
@@ -96,7 +96,7 @@
 },
 "21-22": {
 "mean_ap_plus": 98.91,
-"n": 7078
+"n": 7079
 },
 "23+": {
 "mean_ap_plus": 99.34,
@@ -104,18 +104,18 @@
 },
 "<=17": {
 "mean_ap_plus": 100.96,
-"n": 10814
+"n": 10815
 }
 }
 },
 "threshold_stability": {
-"raw_pace_spearman_T20_vs_T30": 0.9943,
-"n_common_players": 9575
+"raw_pace_spearman_T20_vs_T30": 0.994,
+"n_common_players": 9576
 },
 "named_riser_sanity": [
 {
 "name": "Dayson Croes",
-"ap_plus": 163.0,
+"ap_plus": 162.6,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AAA in 2 active seasons"
@@ -136,7 +136,7 @@
 },
 {
 "name": "Dub Gleed",
-"ap_plus": 138.9,
+"ap_plus": 139.2,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AA in 2 active seasons"

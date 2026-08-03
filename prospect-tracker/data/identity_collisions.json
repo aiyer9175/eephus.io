@@ -1,16 +1,16 @@
 {
- "generated_at": "2026-08-01T05:36:31Z",
+ "generated_at": "2026-08-03T22:20:50Z",
  "summary": {
-  "board_rows": 9619,
-  "active_board_rows": 4526,
-  "roster_rows": 10673,
+  "board_rows": 9644,
+  "active_board_rows": 4550,
+  "roster_rows": 10679,
   "colliding_slugs": 197,
   "critical_player_keys": 16,
   "critical_active_player_keys": 0,
   "c1_shared_key": 0,
   "c1_unattributed": 9,
-  "c1_shadowed": 145,
-  "c1_split": 5,
+  "c1_shadowed": 144,
+  "c1_split": 6,
   "c1_untracked": 38,
   "c2_double_bound": 0,
   "c3_unresolved_active": 0,
@@ -18,7 +18,7 @@
   "c5_birthdate_conflicts": 0,
   "c6_org_splits": 0,
   "frankenstein_records": 0,
-  "unassigned_null_id_rows": 251
+  "unassigned_null_id_rows": 255
  },
  "critical_player_keys": [
   "aaron_brown",
@@ -60,7 +60,7 @@
      "position": "P",
      "org": "KCR",
      "level": "CPX",
-     "age": 22.8
+     "age": 22.9
     },
     {
      "mlbam_id": 815095,
@@ -1650,15 +1650,6 @@
    "mlbam_ids": [
     683609,
     835994
-   ]
-  },
-  {
-   "slug": "victor_gonzalez",
-   "board_key": "victor_gonzalez",
-   "n_humans": 2,
-   "mlbam_ids": [
-    624647,
-    834812
    ]
   },
   {

@@ -1,15 +1,15 @@
 {
- "generated_at": "2026-08-01",
+ "generated_at": "2026-08-03",
  "scope": "PITCHERS; debut 2011-2024 + never-MLB bust pool",
  "target": "first-6-season summed bWAR; resolved<= 2025",
  "no_model": true,
  "accounting": {
-  "debuted_seen": 2679,
+  "debuted_seen": 2681,
   "debuted_hitter": 1160,
   "debuted_no_pre_fv": 130,
   "debuted_no_war": 34,
   "debuted_kept": 981,
-  "bust_seen": 2414,
+  "bust_seen": 2413,
   "bust_hitter": 1160,
   "bust_no_fv": 47,
   "bust_kept": 1082,
@@ -61,11 +61,11 @@
   },
   "full_pool_resolved": {
    "n": 1536,
-   "spearman": 0.2162
+   "spearman": 0.2163
   },
   "full_pool_km_censored": {
    "n": 1987,
-   "spearman": 0.2155
+   "spearman": 0.2156
   },
   "debuted_km_censored": {
    "n": 981,

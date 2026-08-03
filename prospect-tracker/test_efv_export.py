@@ -399,7 +399,26 @@ def test_committed_artifact_headline_alias_contract():
 #   to their 77.1% outcome-comp cohort rate, reached with ZERO cohort information. The
 #   cohort lane that chased this directly was a measured NO-SHIP.
 #   Rowcount 9334 -> 9334 (unchanged).
-_GOLDEN_XFV_SHA256 = "d4ed14096922385680f96825c400033b2e9c9409e1759f909ee5174a80794f0d"
+# 2026-08-03 -- FanGraphs 2026 UPDATED BOARD (published 2026-08-02) ingested.
+#   1,384 snapshots from the four-CSV set (summary/position/pitching/physical),
+#   carrying FV, future tool grades, present grades, physicals and 1,379 scouting
+#   reports. This is a DATA refresh, not a basis change: board_basis_fingerprint
+#   is untouched and BOARD_RANK_BASIS_EPOCH stays 2026-07-30.
+#   Consensus supersedes per source (latest-per-source forward fill), so the new
+#   board replaced the 2026-07-23 trade-deadline vote rather than averaging with
+#   it. Of the 43 players whose FanGraphs FV actually moved, all 37 with a
+#   readable consensus moved the SAME direction, none opposite.
+#   Rowcount 9338 -> 9366 (+28); eFV changed on 1,154 of 9,334 common rows and
+#   consensus on 1,386 -- both figures also carry the 2026-08-01..03 eFV fixes
+#   (the run_backgrade NameError and the resolved-seam Platt no-op) and three
+#   days of drift, so they are NOT attributable to the board alone.
+#   Jesus Made is the new board #1 (FV 65, eFV 61.0).
+#   Identity: the ingest re-merged carlos_castillo (Angels OF onto the Pirates
+#   RHP incumbent) because the newcomer carries NO FanGraphs PlayerId, so
+#   neither the PID disambiguator nor scrapers._SPLIT_KEYS (MLBAM-keyed) could
+#   see him. Fixed forward by fangraphs_csv._FG_ORG_SPLIT_KEYS and repaired in
+#   the DB by tools/repair_carlos_castillo_collision.py --apply.
+_GOLDEN_XFV_SHA256 = "287f01560761593cfea3ed2544befc95a93801c582427ab23d2efca4a2d1d900"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire

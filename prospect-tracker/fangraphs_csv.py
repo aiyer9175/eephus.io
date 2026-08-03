@@ -229,6 +229,24 @@ def _norm_headers(row: dict) -> dict:
     return out
 
 
+# Two different humans whose names slug the same, where the newcomer carries
+# NO FanGraphs PlayerId - so neither _compute_fg_canonical_owners (which needs
+# two distinct PIDs) nor scrapers._SPLIT_KEYS (which needs an MLBAM id in hand)
+# can separate them, and the newcomer lands on the incumbent's key on EVERY
+# board drop. Org is the only discriminator the CSV carries.
+#
+# carlos_castillo: the Angels OF (mlbam 837825, b.2008-09-15) vs the incumbent
+# Pirates RHP (mlbam 807962, b.2006-02-04). Repaired once by
+# tools/repair_carlos_castillo_collision.py after the 2026-07-23 board, then
+# RE-MERGED by the 2026-08-02 board because the repair fixed the stored rows
+# but nothing stopped the next ingest re-minting the bare key. Registered in
+# scrapers._SPLIT_KEYS[("carlos_castillo", 837825)] -> the same target.
+# The incumbent is never re-keyed; only the newcomer is routed.
+_FG_ORG_SPLIT_KEYS: dict[tuple[str, str], str] = {
+    ("carlos_castillo", "LAA"): "carlos_castillo_laa",
+}
+
+
 def _row_id(row: dict) -> tuple[str, str | None]:
     """Compute (player_key, fg_player_id) join keys from a normalized row."""
     name = _str_or_none(row.get("name") or row.get("player"))
@@ -236,7 +254,10 @@ def _row_id(row: dict) -> tuple[str, str | None]:
         return ("", None)
     name = fix_mojibake(name)
     pid = _str_or_none(row.get("playerid") or row.get("player id"))
-    return (normalize_key(name), pid)
+    key = normalize_key(name)
+    org = (_str_or_none(row.get("org")) or "").strip().upper()
+    key = _FG_ORG_SPLIT_KEYS.get((key, org), key)
+    return (key, pid)
 
 
 # ---------------------------------------------------------------------------
@@ -488,6 +509,15 @@ FG_PUBLICATION_CALENDAR: dict[tuple[int, str], str] = {
     (2025, "graduated"): "2025-11-13",
     # 2026
     (2026, "report"):    "2026-02-12",
+    # Owner-confirmed publish date for the mid-season Updated board. Without
+    # this entry the slug falls through to _FG_TYPE_DEFAULTS and dates itself
+    # 2026-07-30, three days early, which would slot it AHEAD of the
+    # 2026-07-23 trade-deadline drop by less than it should and mis-stamp the
+    # FV-history point. The age back-solve is not the arbiter here: FG's Age
+    # column is age as of EXPORT, so it reads 2026-08-02/03 for a board
+    # published on the 2nd (median 08-03, p25 08-02 over 1,178 matched birth
+    # dates) - which is why the calendar outranks it in _detect_publish_date.
+    (2026, "updated"):   "2026-08-02",
 }
 
 # Slugs not in the table get this month/day per kind as a safe default.
