@@ -718,6 +718,70 @@ def _save_id_cache(cache: dict[str, int | None]):
     ID_CACHE_FILE.write_text(json.dumps(cache, indent=2, sort_keys=True))
 
 
+# ---------------------------------------------------------------------------
+# NEGATIVE-RESULT TTL (2026-08-03)
+# ---------------------------------------------------------------------------
+# A resolved id is permanent: MLBAM ids do not change, so caching a HIT
+# forever is correct. A MISS is not the same kind of fact. "Not in StatsAPI"
+# is a statement about today, and for a just-drafted amateur it is guaranteed
+# true on the day of the draft and false a few weeks later once he signs and
+# is assigned to an affiliate.
+#
+# Caching misses with the same permanence as hits is what left the entire 2026
+# draft class without stats: every one of the 199 active 2026 draftees was
+# resolved once at ingest (before any of them appeared on a roster), cached
+# null, and never retried, so they carried no mlbam_id and the stat fetch had
+# nothing to key on. Measured on the served board: of 4,550 active players,
+# every one of the 4,296 WITH an id had stats and every one of the 254 without
+# an id had none. Roch Cholowsky and Vahn Lackey were two of them, and both
+# resolve fine through PlayerIndex today (800604 / 822518).
+#
+# Misses are therefore stamped in a sidecar and expire quickly. Entries with
+# no stamp (everything cached before this change) read as expired, so the
+# existing poisoned nulls heal themselves on the next resolution pass.
+NEG_ID_CACHE_TTL_DAYS = 3
+MISS_STAMP_FILE = CACHE_DIR / "mlbam_id_misses.json"
+
+
+def _load_miss_stamps() -> dict[str, float]:
+    """{player_key: epoch_seconds} for cached negative resolutions. Kept in a
+    sidecar so the id cache keeps its plain {key: int|None} on-disk contract
+    for every other reader."""
+    try:
+        return json.loads(MISS_STAMP_FILE.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def _miss_is_fresh(player_key: str) -> bool:
+    """True when this key was recorded as unresolvable recently enough that
+    re-querying would just repeat the same miss. An unstamped miss is treated
+    as expired so pre-existing nulls get one retry."""
+    ts = _load_miss_stamps().get(player_key)
+    if not isinstance(ts, (int, float)):
+        return False
+    return (time.time() - ts) < NEG_ID_CACHE_TTL_DAYS * 86400.0
+
+
+def _record_miss(player_key: str) -> None:
+    stamps = _load_miss_stamps()
+    stamps[player_key] = time.time()
+    try:
+        MISS_STAMP_FILE.parent.mkdir(parents=True, exist_ok=True)
+        MISS_STAMP_FILE.write_text(json.dumps(stamps, indent=2, sort_keys=True))
+    except OSError:
+        pass    # advisory only; a failed stamp costs a retry, never correctness
+
+
+def _clear_miss(player_key: str) -> None:
+    stamps = _load_miss_stamps()
+    if stamps.pop(player_key, None) is not None:
+        try:
+            MISS_STAMP_FILE.write_text(json.dumps(stamps, indent=2, sort_keys=True))
+        except OSError:
+            pass
+
+
 def _is_historical_stub(record: dict) -> bool:
     """
     True if an MLB Stats API people record looks like a 1920s-1940s player
@@ -953,7 +1017,16 @@ def resolve_mlbam_id(player_key: str, player_name: str,
             healed = _apply_collision_guard(cache, player_key, cached)
             _save_id_cache(cache)
             return healed
-        return cached
+        # A cached MISS only holds for NEG_ID_CACHE_TTL_DAYS. Past that we fall
+        # through and re-resolve, because "StatsAPI does not have him" is a
+        # fact about the day it was recorded, not about the player. Hits are
+        # still returned straight from cache and never expire here.
+        if cached is None:
+            if _miss_is_fresh(player_key):
+                return None
+            log.info("mlbam_id miss for %s has expired - re-resolving", player_key)
+        else:
+            return cached
 
     mlbam_id = None
 
@@ -1008,18 +1081,20 @@ def resolve_mlbam_id(player_key: str, player_name: str,
 
     if mlbam_id is None:
         log.warning(
-            "could not resolve MLBAM ID for %s — caching null; "
-            "delete entry from .cache/mlbam_ids.json to retry",
-            player_name,
+            "could not resolve MLBAM ID for %s - caching null for %d days "
+            "(a just-drafted player resolves once he is assigned)",
+            player_name, NEG_ID_CACHE_TTL_DAYS,
         )
-        cache[player_key] = None  # suppress retries on future runs
+        cache[player_key] = None
         _save_id_cache(cache)
+        _record_miss(player_key)      # expires; see NEG_ID_CACHE_TTL_DAYS
         return None
 
     # Slug-collision guard: never bind a resolved id onto a key that
     # durably belongs to a different identity (see _apply_collision_guard).
     mlbam_id = _apply_collision_guard(cache, player_key, mlbam_id)
     _save_id_cache(cache)
+    _clear_miss(player_key)           # resolved: drop any stale miss stamp
     return mlbam_id
 
 
