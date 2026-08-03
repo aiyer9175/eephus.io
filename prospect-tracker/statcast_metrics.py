@@ -1178,13 +1178,45 @@ def fetch_statcast_metrics_for_players(
             "date": split.get("date"),
             "_level": split.get("_level"),
         }
+    # DEFECT FIX 2026-08-03. The trim above is correct about the PARENT's own
+    # reads (pass-2 gamePk/date dedup, pass-3 level filter) and about external
+    # callers of _game_logs (vaa.py, the leaderboard tool) which still receive
+    # full splits. What it missed is that the trimmed list is handed to the
+    # pass-3 WORKER as its `logs` argument, and the worker runs two gameLog
+    # piggyback extractors off that same list: _extract_standout_games and
+    # _extract_recent_games read split["stat"], ["opponent"], ["isHome"] and
+    # game["officialDate"], none of which survive the trim. Both bail on the
+    # missing stat block, so every row came back with standout_games=[] and
+    # recent_games=[] - and upsert_statcast_metrics replaces the whole payload,
+    # so the empties overwrote good stored values on every run. Silent: the
+    # rows still populate contact_quality, so nothing errored.
+    #
+    # Re-adding `stat` to the trim would hand back the memory the trim exists
+    # to save (the batting/pitching stat lines ARE the bulk). Instead the two
+    # extractors run HERE, in pass 1, while the full split is still in hand,
+    # and their small results ride to the row after the worker returns. Peak
+    # parent memory is unchanged in kind: what is retained is the same handful
+    # of summary rows that end up in the payload anyway, not 190K stat blocks.
+    _extras_by_key: dict[str, tuple[list, list]] = {}
+
+    def _harvest_extras(key: str, is_p: bool, splits: list[dict]) -> None:
+        if not splits:
+            return
+        try:
+            _extras_by_key[key] = (
+                _extract_standout_games(splits, is_p, limit=8),
+                _extract_recent_games(splits, is_p, limit=15),
+            )
+        except Exception as e:                                  # never fail the run for a widget
+            _log.debug("statcast gameLog extras failed for %s: %s", key, e)
+
     fetched_logs_by_key: dict[str, list[dict]] = {}
     _p1_start = _time.monotonic()
     if logs_by_key is not None:
-        fetched_logs_by_key = {
-            key: [_slim_split(s) for s in (logs_by_key.get(key) or [])]
-            for key, *_ in targets
-        }
+        for _k, _n, _m, _lv, _isp in targets:
+            _full = logs_by_key.get(_k) or []
+            _harvest_extras(_k, _isp, _full)
+            fetched_logs_by_key[_k] = [_slim_split(s) for s in _full]
         _log.info("statcast pass 1/3: using preloaded game logs for %d players",
                   len(targets))
     else:
@@ -1193,7 +1225,13 @@ def fetch_statcast_metrics_for_players(
         def _fetch_logs(item):
             key, _name, mlbam, _level, is_p = item
             try:
-                return key, [_slim_split(s) for s in _game_logs(int(mlbam), season, is_pitcher=is_p)]
+                _full = _game_logs(int(mlbam), season, is_pitcher=is_p)
+                # Harvested here, off the FULL splits, before they are trimmed.
+                # This runs on the pass-1 thread pool, so _extras_by_key is
+                # touched from several threads; dict item assignment is atomic
+                # under the GIL and each key is written by exactly one task.
+                _harvest_extras(key, is_p, _full)
+                return key, [_slim_split(s) for s in _full]
             except Exception as e:
                 _log.debug("statcast logs failed for %s: %s", key, e)
                 return key, []
@@ -1302,41 +1340,59 @@ def fetch_statcast_metrics_for_players(
     _p3_errors = 0
     for _batch_start in range(0, len(targets), _P3_BATCH_SIZE):
         _batch = targets[_batch_start:_batch_start + _P3_BATCH_SIZE]
-        with concurrent.futures.ProcessPoolExecutor(max_workers=_p3_workers, mp_context=_p3_ctx) as ex:
-            future_to_key = {
-                ex.submit(
-                    fetch_statcast_metrics_for_player,
-                    key, name, mlbam, season, level, is_pitcher,
-                    None,  # v20 — no in-memory feed_cache; falls back to the disk
-                           # cache pass 2 just warmed (see _fetch_feed above).
-                    fetched_logs_by_key.get(key),
-                ): key
-                for key, name, mlbam, level, is_pitcher in _batch
-            }
-            for fut in concurrent.futures.as_completed(future_to_key):
-                key = future_to_key[fut]
-                try:
-                    row = fut.result()
-                except Exception as _exc:
-                    # AUDIT 2026-07-18 (A8): under the spawn ProcessPoolExecutor a single
-                    # dead worker marks the pool broken and raises BrokenProcessPool on
-                    # EVERY pending future; swallowing them silently staled hundreds of
-                    # rows inside a run that still logged success. Log so a pool break or
-                    # a per-player fetch failure is visible at production log level. The
-                    # v23 batching above also caps the blast radius of any one break to
-                    # the current batch (<= _P3_BATCH_SIZE players) instead of the whole
-                    # 6700+-player run.
-                    row = None
-                    _p3_errors += 1
-                    if _p3_errors <= 5 or _p3_errors % 200 == 0:
-                        _log.warning("statcast pass 3/3: worker failed for %s (%d errors so far): %s",
-                                     key, _p3_errors, _exc)
-                if row:
-                    out[key] = row
-                _p3_done += 1
-                if _p3_done % 500 == 0 or _p3_done == len(targets):
-                    _log.info("statcast pass 3/3: %d/%d processed (%d with data, %.0fs elapsed)",
-                              _p3_done, len(targets), len(out), _time.monotonic() - _p3_start)
+        # The batching only capped the blast radius of a fut.result() failure.
+        # Pool CONSTRUCTION and ex.submit() sat outside the guard, so a worker
+        # dying mid-submit (the OOM this exists to survive) raised straight out
+        # of the function and discarded every already-completed batch - up to
+        # ~5,500 finished rows on a 6,700-player run, which is worse than the
+        # failure it was written to soften. Keep what earlier batches produced.
+        try:
+            with concurrent.futures.ProcessPoolExecutor(max_workers=_p3_workers, mp_context=_p3_ctx) as ex:
+                future_to_key = {
+                    ex.submit(
+                        fetch_statcast_metrics_for_player,
+                        key, name, mlbam, season, level, is_pitcher,
+                        None,  # v20 — no in-memory feed_cache; falls back to the disk
+                               # cache pass 2 just warmed (see _fetch_feed above).
+                        fetched_logs_by_key.get(key),
+                    ): key
+                    for key, name, mlbam, level, is_pitcher in _batch
+                }
+                for fut in concurrent.futures.as_completed(future_to_key):
+                    key = future_to_key[fut]
+                    try:
+                        row = fut.result()
+                    except Exception as _exc:
+                        # AUDIT 2026-07-18 (A8): under the spawn ProcessPoolExecutor a single
+                        # dead worker marks the pool broken and raises BrokenProcessPool on
+                        # EVERY pending future; swallowing them silently staled hundreds of
+                        # rows inside a run that still logged success. Log so a pool break or
+                        # a per-player fetch failure is visible at production log level. The
+                        # v23 batching above also caps the blast radius of any one break to
+                        # the current batch (<= _P3_BATCH_SIZE players) instead of the whole
+                        # 6700+-player run.
+                        row = None
+                        _p3_errors += 1
+                        if _p3_errors <= 5 or _p3_errors % 200 == 0:
+                            _log.warning("statcast pass 3/3: worker failed for %s (%d errors so far): %s",
+                                         key, _p3_errors, _exc)
+                    if row:
+                        # Stamp the gameLog extras harvested in pass 1. The worker
+                        # computed them from the TRIMMED logs, so its own values are
+                        # empty by construction; these came off the full splits.
+                        _ex = _extras_by_key.get(key)
+                        if _ex is not None:
+                            row.standout_games, row.recent_games = _ex
+                        out[key] = row
+                    _p3_done += 1
+                    if _p3_done % 500 == 0 or _p3_done == len(targets):
+                        _log.info("statcast pass 3/3: %d/%d processed (%d with data, %.0fs elapsed)",
+                                  _p3_done, len(targets), len(out), _time.monotonic() - _p3_start)
+        except Exception as _bexc:
+            _p3_errors += 1
+            _log.warning("statcast pass 3/3: batch starting at %d failed wholesale "
+                         "(%s); keeping %d rows already collected",
+                         _batch_start, _bexc, len(out))
     if _p3_errors:
         _log.warning("statcast pass 3/3: %d/%d workers failed (rows left stale this run)",
                      _p3_errors, len(targets))
