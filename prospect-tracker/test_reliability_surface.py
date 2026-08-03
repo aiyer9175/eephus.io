@@ -77,6 +77,53 @@ def test_glossary_reliability_renders_defensively():
     assert 'return "";' in body
 
 
+def test_monitor_scores_the_recalibrated_distribution():
+    """The monitor must grade the odds the site SERVES.
+
+    Until 2026-08-03 this module reproduced efv_score's path up to the grade
+    inversion and then read the raw p_bucket_given_fv curve, while the scorer
+    applies the odds-dispersion Platt map at all three seams. The public card
+    therefore published a pre-fix miscalibration (bust ECE 0.128) that the
+    scorer had already corrected (0.075), and its tripwire threshold had been
+    tuned to the pre-fix band, so it reported "within the documented standing
+    miscalibration band" about a defect that no longer existed.
+
+    Pin the wiring, not the numbers: the OOF row builder must apply the
+    recalibration, and the curve/tier scorers must default to the served key.
+    """
+    import inspect
+    import efv_reliability
+
+    src = inspect.getsource(efv_reliability._oof_rows)
+    assert "recalibrate_bucket" in src, (
+        "efv_reliability._oof_rows no longer applies the odds-dispersion "
+        "recalibration, so the monitor is grading a distribution the site "
+        "does not serve (see efv_score seams 1292/1812/2191)")
+    assert "p_after" in src, "the OOF rows must carry the served distribution"
+
+    for fn in (efv_reliability._reliability_bins, efv_reliability._tier_reliability):
+        assert inspect.signature(fn).parameters["key"].default == "p_after", (
+            f"{fn.__name__} must default to the served distribution")
+
+
+def test_tripwire_threshold_can_actually_fire():
+    """A threshold above the value it watches is not a tripwire.
+
+    The old 0.14 sat 1.9x above the served bust ECE and could not fire. The
+    re-derived value must (a) leave headroom over the served baseline and
+    (b) sit BELOW the pre-recalibration level, so that silently dropping the
+    Platt map from the scoring seams trips the wire instead of going unnoticed.
+    """
+    import efv_reliability
+    # Measured on the current tree, forward-chained OOF, pooled n=2825.
+    served, pre_map = 0.0754, 0.1281
+    thr = efv_reliability.BUST_ECE_TRIPWIRE
+    assert served < thr < pre_map, (
+        f"BUST_ECE_TRIPWIRE={thr} must sit between the served bust ECE "
+        f"({served}) and the pre-recalibration value ({pre_map}); outside that "
+        "band it either fires constantly or can never fire at all")
+
+
 def test_writer_output_path_matches_the_frontend_fetch():
     """The producer (efv_reliability.OUT_PATH) and the consumer (the glossary
     fetch) must point at the SAME filename, so a rename can never leave the card

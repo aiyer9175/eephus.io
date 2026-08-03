@@ -6,6 +6,16 @@
 """C1 — forward-chained reliability/ECE regen for the SHIPPED eFV outcome
 distribution, with a drift tripwire.
 
+THE MONITOR WAS GRADING THE WRONG DISTRIBUTION (fixed 2026-08-03). This module
+reproduces efv_score's path up to the grade inversion and then read the raw
+`p_bucket_given_fv` curve, while the scorer applies the odds-dispersion Platt
+map at all three seams (wired 07-31). The public "model grading itself" card
+was therefore reporting a pre-fix miscalibration the site no longer serves,
+and its tripwire threshold had been tuned to that same pre-fix band - so it
+reported "within the documented standing miscalibration band" about a defect
+that had already been corrected. Both curve sets are emitted now (`after` =
+served, `before` = drift reference) and the tripwire judges `after`.
+
 Background (audit 2026-07-19): `regen_all` refreshes every eFV artifact EXCEPT
 the reliability curves — `data/xfv_reliability.json` was last written by the
 one-off isotonic lab (`tools/efv_isotonic_lab.py`, a failed pre-registered gate)
@@ -32,6 +42,8 @@ import logging
 from collections import defaultdict
 from pathlib import Path
 
+import efv_odds_calibration as _odds_cal
+
 log = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).parent / "data"
@@ -48,10 +60,27 @@ BUCKET_EDGES = (0.5, 1.5, 2.5, 4.0)      # 6yr-avg annual WAR band edges
 TARGET_SEASONS = 6.0
 
 # Tripwire: the pooled bust-bucket ECE at which the reliability regen flags a
-# miscalibration for review. The 2026-07-01 baseline read ~0.12 (a known,
-# documented low-p under-prediction), so the tripwire trips ABOVE that to catch
-# genuine WIDENING, not the standing gap. Rank-neutral: this only sets a flag.
-BUST_ECE_TRIPWIRE = 0.14
+# miscalibration for review. Judged on the SERVED (post-Platt) curve.
+#
+# RE-DERIVED 2026-08-03. The old 0.14 was set just above a ~0.12 PRE-Platt
+# baseline. Once the map is applied the served bust ECE is 0.0754, so 0.14 was
+# 1.9x the value it watched and could not fire for any plausible drift.
+#
+# Measured on the current tree (forward-chained OOF, pooled n=2825) - the map
+# improves every bucket, which is the first confirmation of it on this frame:
+#     bucket    after     before
+#     bust      0.07540   0.12809
+#     bench     0.01603   0.02714
+#     regular   0.03298   0.04917
+#     good      0.02328   0.04048
+#     star      0.00677   0.00939
+#
+# 0.10 is chosen to sit ~33% above the served baseline (room for fold-to-fold
+# drift) AND BELOW the 0.1281 pre-recalibration value. That second property is
+# the point: if the Platt map is ever silently dropped from the scoring seams,
+# the served curve reverts to ~0.128 and this wire TRIPS. The tripwire now
+# regression-tests the calibration it reports on. Rank-neutral: only a flag.
+BUST_ECE_TRIPWIRE = 0.10
 
 
 def _tier(fv: float) -> int:
@@ -123,24 +152,41 @@ def _oof_rows(side: str) -> list[dict]:
             probs = vf.p_bucket_given_fv(grade, is_pit)
             if not probs or len(probs) != len(BUCKETS):
                 continue
+            # THE SERVED DISTRIBUTION IS THE RECALIBRATED ONE (fix 2026-08-03).
+            # This diagnostic mirrored efv_score.run() up to the grade inversion
+            # and then stopped one line short: the scorer applies the odds
+            # dispersion Platt map at all three seams (efv_score 1292/1812/2191,
+            # wired 07-31) and this module never did. So the public "model
+            # grading itself" card was reporting the PRE-fix curve and its
+            # tripwire was tuned to a miscalibration that had already been
+            # corrected. Both curve sets are emitted now: `after` is what the
+            # site serves and what the tripwire judges, `before` is retained as
+            # the drift reference the tripwire was originally written against.
+            # `provisional` mirrors the resolved seam exactly - rows with no
+            # milb block belong to the thin-sample lane, which owns its own
+            # p_bust replacement, and stacking the two would undo that fix.
+            probs_after = _odds_cal.recalibrate_bucket(
+                probs, is_pit, provisional=not src.get("milb"))
             out.append({
                 "player_key": r["player_key"], "side": side,
                 "decision_year": yr, "fv": r["fv"],
                 "p_before": np.asarray(probs, dtype=float),
+                "p_after": np.asarray(probs_after, dtype=float),
                 "y": _realized_bucket(r["target"]),
                 "weight": float(r["weight"]),
             })
     return out
 
 
-def _reliability_bins(rows, n_bins: int = 10) -> dict:
-    """Pooled per-bucket reliability curve (equal-width prob bins) + ECE, over the
-    shipped `p_before` distribution. Identical binning to the isotonic lab."""
+def _reliability_bins(rows, n_bins: int = 10, key: str = "p_after") -> dict:
+    """Pooled per-bucket reliability curve (equal-width prob bins) + ECE.
+    Identical binning to the isotonic lab. `key` selects the distribution:
+    `p_after` is what the site serves, `p_before` the pre-Platt reference."""
     import numpy as np
     out = {}
     edges = np.linspace(0.0, 1.0, n_bins + 1)
     for bi, name in enumerate(BUCKETS):
-        p = np.array([r["p_before"][bi] for r in rows])
+        p = np.array([r[key][bi] for r in rows])
         y = np.array([1.0 if r["y"] == bi else 0.0 for r in rows])
         curve, ece = [], 0.0
         for i in range(n_bins):
@@ -155,8 +201,9 @@ def _reliability_bins(rows, n_bins: int = 10) -> dict:
     return out
 
 
-def _tier_reliability(rows) -> dict:
-    """Per consensus-FV tier: mean |mean predicted p_b - realized freq_b| gap."""
+def _tier_reliability(rows, key: str = "p_after") -> dict:
+    """Per consensus-FV tier: mean |mean predicted p_b - realized freq_b| gap,
+    over the served distribution by default (see _reliability_bins)."""
     import numpy as np
 
     def _onehot(k: int):
@@ -171,7 +218,7 @@ def _tier_reliability(rows) -> dict:
         if len(grp) < MIN_TIER_N:
             continue
         freq = np.mean([_onehot(r["y"]) for r in grp], axis=0)
-        mb = np.mean([r["p_before"] for r in grp], axis=0)
+        mb = np.mean([r[key] for r in grp], axis=0)
         gap = float(np.mean(np.abs(mb - freq)))
         out[str(tk)] = {
             "n": len(grp), "gap": round(gap, 5),
@@ -196,26 +243,33 @@ def build(persist: bool = True) -> dict:
     if not pooled:
         log.warning("efv_reliability: no OOF rows — skipping regen")
         return {}
-    curves = _reliability_bins(pooled)
-    tiers = _tier_reliability(pooled)
-    bust_ece = curves.get("bust", {}).get("ece", 0.0)
+    curves_after = _reliability_bins(pooled, key="p_after")
+    curves_before = _reliability_bins(pooled, key="p_before")
+    tiers = _tier_reliability(pooled, key="p_after")
+    bust_ece = curves_after.get("bust", {}).get("ece", 0.0)
+    bust_ece_before = curves_before.get("bust", {}).get("ece", 0.0)
     tripwire = {
         "bust_ece": bust_ece,
+        "bust_ece_before_recalibration": bust_ece_before,
         "threshold": BUST_ECE_TRIPWIRE,
+        "basis": "after",
         "tripped": bool(bust_ece > BUST_ECE_TRIPWIRE),
-        "note": ("bust-bucket ECE exceeded the drift threshold — the low-p bin "
-                 "under-prediction has widened; review calibration"
+        "note": ("bust-bucket ECE on the SERVED (recalibrated) distribution "
+                 "exceeded the drift threshold; review calibration"
                  if bust_ece > BUST_ECE_TRIPWIRE else
-                 "within the documented standing miscalibration band"),
+                 "served bust-bucket calibration within the post-recalibration band"),
     }
     payload = {
         "generated_at": date.today().isoformat(),
-        "note": ("Reliability curves for the SHIPPED eFV 5-bucket outcome "
-                 "distribution (forward-chained out-of-fold, the 'before' "
-                 "baseline). Regenerated by efv_reliability.build (C1); diagnostic "
-                 "only — no served number depends on these curves. A raised "
-                 "tripwire.tripped flags a widening bust-bucket calibration gap."),
-        "reliability_curves_pooled": {"before": curves},
+        "note": ("Reliability curves for the eFV 5-bucket outcome distribution "
+                 "(forward-chained out-of-fold). `after` is the SERVED "
+                 "distribution: it carries the odds-dispersion Platt map that "
+                 "efv_score applies at all three scoring seams. `before` is the "
+                 "pre-map reference kept for drift comparison - it is NOT what "
+                 "the site shows. Regenerated by efv_reliability.build (C1); "
+                 "diagnostic only, no served number depends on these curves. "
+                 "tripwire.tripped judges the served curve."),
+        "reliability_curves_pooled": {"after": curves_after, "before": curves_before},
         "per_tier_reliability": tiers,
         "tripwire": tripwire,
         "pooled_n": len(pooled),
@@ -235,6 +289,11 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     rep = build(persist="--no-persist" not in __import__("sys").argv)
     if rep:
-        print(f"reliability regen: pooled n={rep['pooled_n']}, "
-              f"bust ECE={rep['reliability_curves_pooled']['before']['bust']['ece']}, "
-              f"tripwire={'TRIPPED' if rep['tripwire']['tripped'] else 'ok'}")
+        pooled = rep["reliability_curves_pooled"]
+        print(f"reliability regen: pooled n={rep['pooled_n']}")
+        for name in BUCKETS:
+            print(f"  {name:<8} ECE  after={pooled['after'][name]['ece']:.5f}  "
+                  f"before={pooled['before'][name]['ece']:.5f}")
+        print(f"  tripwire ({rep['tripwire']['basis']} basis, thr "
+              f"{rep['tripwire']['threshold']}): "
+              f"{'TRIPPED' if rep['tripwire']['tripped'] else 'ok'}")

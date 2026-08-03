@@ -1400,8 +1400,17 @@ function _methReliabilityHTML() {
   // Silent while the fetch is in flight (null) or failed (__error); the
   // resolved re-render fills it in, and a failure just stays hidden.
   if (!rel || rel.__error || typeof rel !== "object") return "";
-  const before = rel.reliability_curves_pooled && rel.reliability_curves_pooled.before;
-  if (!before || typeof before !== "object") return "";   // unexpected shape - hide
+  // PREFER THE SERVED CURVE (2026-08-03). The artifact carries `after` (the
+  // distribution the site actually shows, odds-dispersion map applied) and
+  // `before` (the pre-map reference). This card read `before` exclusively,
+  // so it published a miscalibration the scorer had already corrected.
+  // `before` is kept as the fallback because an artifact regenerated prior to
+  // that fix carries only that key - an older vintage shows the old number
+  // rather than an empty card, and says so.
+  const pooled = rel.reliability_curves_pooled;
+  const curves = pooled && (pooled.after || pooled.before);
+  const isServed = !!(pooled && pooled.after);
+  if (!curves || typeof curves !== "object") return "";   // unexpected shape - hide
   const f3 = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(3));
   const pct = v => (v == null || isNaN(Number(v)) ? "-" : Math.round(Number(v) * 100) + "%");
 
@@ -1414,19 +1423,22 @@ function _methReliabilityHTML() {
   if (tw && typeof tw === "object" && tw.bust_ece != null && tw.threshold != null) {
     const tripped = !!tw.tripped;
     tripHTML = `<div class="meth-verdict${tripped ? "" : " is-good"}"${tripped ? ' style="border-left-color:var(--down);"' : ""}>
-      <strong>${tripped ? "Drift flagged for review" : "Calibration within the documented band"}</strong>
+      <strong>${tripped ? "Drift flagged for review" : "Calibration within the expected band"}</strong>
       · bust-bucket calibration error (ECE) is <b>${f3(tw.bust_ece)}</b> against a drift threshold of <b>${f3(tw.threshold)}</b>${tripped
-        ? ", so the low-probability bust bin has widened and is queued for a calibration review."
+        ? ", so the bust bin has widened and is queued for a calibration review."
         : ", so no drift is flagged this run."}</div>`;
   }
 
   // --- Per-outcome-bucket calibration error (both vintages carry this) ------
   const bucketRows = _REL_BUCKET_ORDER
-    .filter(b => before[b] && before[b].ece != null)
-    .map(b => `<tr><td class="meth-td-tier">${_REL_BUCKET_LABEL[b]}</td><td>${f3(before[b].ece)}</td></tr>`)
+    .filter(b => curves[b] && curves[b].ece != null)
+    .map(b => `<tr><td class="meth-td-tier">${_REL_BUCKET_LABEL[b]}</td><td>${f3(curves[b].ece)}</td></tr>`)
     .join("");
+  const bucketTitle = isServed
+    ? "Calibration error by outcome bucket, as served"
+    : "Calibration error by outcome bucket, before recalibration";
   const bucketTable = bucketRows ? `<div class="meth-table-wrap">
-      <div class="meth-table-title">Calibration error by outcome bucket</div>
+      <div class="meth-table-title">${bucketTitle}</div>
       <table class="meth-table"><thead><tr><th>Outcome</th><th>ECE</th></tr></thead>
       <tbody>${bucketRows}</tbody></table></div>` : "";
 
@@ -1464,7 +1476,9 @@ function _methReliabilityHTML() {
     <p class="meth-note">Every night the shipped eFV five-bucket outcome distribution is re-scored forward-chained out-of-fold against resolved outcomes${nPool}${gen}. This is the model's own self-monitoring: a widening bust-bucket calibration gap trips a review flag. Diagnostic only - no grade, WAR, or dollar figure depends on these curves; they only measure them.</p>
     ${tripHTML}
     <div class="meth-tables">${bucketTable}${tierTable}</div>
-    <p class="meth-note">ECE (expected calibration error) is the bin-weighted gap between the probability the model assigned an outcome and how often it actually happened; lower is better. Honest read: low-probability bust calls land above the diagonal, meaning more prospects bust than the model predicts, so bust risk on higher-FV prospects runs understated - a standing miscalibration the tripwire watches for widening.</p>
+    <p class="meth-note">ECE (expected calibration error) is the bin-weighted gap between the probability the model assigned an outcome and how often it actually happened; lower is better. ${isServed
+      ? "These are the odds the site serves, after the dispersion correction that rescales the bust curve from the consensus-grade scale it was fitted on to the wider eFV scale it is read at. Honest read: bust still lands above the diagonal in every bin, so more prospects bust than the model says and bust risk stays understated - but by materially less than the uncorrected curve, and the tripwire trips if it ever drifts back toward it."
+      : "This vintage predates the dispersion correction, so it reports the uncorrected curve rather than the odds now served. Honest read: low-probability bust calls land well above the diagonal, meaning far more prospects bust than the model predicts."}</p>
   </div>`;
 }
 
