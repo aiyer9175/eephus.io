@@ -88,10 +88,33 @@ from __future__ import annotations
 import math
 
 # Forward-chained Platt fits on the served-comparable, fully-resolved frame
-# (n=516; hitters 244, pitchers 272). Per-fold slope stability: 0.470 / 0.392 /
-# 0.289 / 0.276 as the training window grows -- monotonically DOWNWARD, so these
-# full-frame values are the CONSERVATIVE end of the measured range (less
-# compression than the most recent fold alone would ask for).
+# (n=516; hitters 244, pitchers 272).
+#
+# RE-MEASURED 2026-08-03 on the current tree, and the old note here was wrong.
+# It read "per-fold slope stability: 0.470 / 0.392 / 0.289 / 0.276 as the
+# training window grows -- monotonically DOWNWARD, so these full-frame values
+# are the CONSERVATIVE end of the measured range". A monotone trend in a fixed
+# constant would be a re-fit trigger, so it was worth checking. It is not one.
+# Cumulative slope by training window on the served frame (tools/
+# odds_grade_basis_lab: score_chain -> irls_logit on logit(p_inc)):
+#
+#     through   hit n    hit slope     pit n    pit slope
+#     2017         44       0.6526        39       0.4163
+#     2018         81       0.2627        85       0.3139
+#     2019        163       0.2910       164       0.2598
+#     2020        244       0.3750       272       0.3602
+#
+# Neither side is monotone: both dip in the small-n middle and come back. The
+# intermediate points are noise-dominated (n=44 to n=163), and the full-frame
+# fit REPRODUCES THE SHIPPED CONSTANTS (hit 0.3750 vs 0.3749 shipped; pit
+# 0.3602 vs 0.3553, a 1.4% gap). So these are the converged values, not a
+# conservative end of a drifting range, and no re-fit is warranted.
+#
+# A re-fit was also tested end to end and does NOT clear the pre-registered
+# ship gate: tools/odds_recalibration_ship_lab has the per-fold refit beating
+# the incumbent on Brier and log loss with the CI excluding zero, but failing
+# to beat a flat base-rate constant, which the gate requires
+# (data/xfv_odds_recalibration_ship_eval.json, SHIP false).
 _PLATT = {
     "hit": (0.7268, 0.3749),
     "pit": (0.7269, 0.3553),
