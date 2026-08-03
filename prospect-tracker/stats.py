@@ -782,6 +782,26 @@ def _clear_miss(player_key: str) -> None:
             pass
 
 
+def _update_miss_stamps(add=(), clear=()) -> None:
+    """Batch form of _record_miss/_clear_miss. bulk_resolve_ids walks thousands
+    of keys per run, so stamping one at a time would be one read plus one write
+    per player."""
+    add, clear = set(add), set(clear)
+    if not add and not clear:
+        return
+    stamps = _load_miss_stamps()
+    now = time.time()
+    for k in add:
+        stamps[k] = now
+    for k in clear:
+        stamps.pop(k, None)
+    try:
+        MISS_STAMP_FILE.parent.mkdir(parents=True, exist_ok=True)
+        MISS_STAMP_FILE.write_text(json.dumps(stamps, indent=2, sort_keys=True))
+    except OSError:
+        pass
+
+
 def _is_historical_stub(record: dict) -> bool:
     """
     True if an MLB Stats API people record looks like a 1920s-1940s player
@@ -1225,6 +1245,8 @@ def bulk_resolve_ids(
 
     new_cache_entries = 0
     cache_dirty = False
+    expired_misses = 0
+    miss_add: set[str] = set()
     for key, name, position in triples:
         if key in cache:
             cid = cache[key]
@@ -1262,7 +1284,17 @@ def bulk_resolve_ids(
                         bds_out[key] = idx_bd
                     continue
             else:
-                continue
+                # A cached MISS. This used to `continue` unconditionally, which
+                # is what actually starved the 2026 draft class: run_monthly
+                # resolves ids ONLY through this function (the per-player
+                # resolve_mlbam_id loop was removed for performance), so a null
+                # written at draft ingest - before anyone had signed or been
+                # assigned - was never revisited by the pipeline. Honour the
+                # same negative TTL resolve_mlbam_id uses and fall through to
+                # the index / people-search below once it expires.
+                if _miss_is_fresh(key):
+                    continue
+                expired_misses += 1
         if key in ids_out:
             continue
         rec = idx.best_match(name, position=position, player_key=key)
@@ -1305,6 +1337,7 @@ def bulk_resolve_ids(
                     )
                     vintage_rejected += 1
                     cache[key] = None  # remember "unresolvable" (vintage-rejected)
+                    miss_add.add(key)
                     new_cache_entries += 1
                     continue
                 if api_id is not None:
@@ -1316,6 +1349,12 @@ def bulk_resolve_ids(
                             bds_out[key] = bd
                 else:
                     cache[key] = None  # remember "unresolvable"
+                    miss_add.add(key)
+
+    # Stamp every null this run wrote, and drop the stamp for anything that
+    # resolved. Without the stamps the expiry check above would re-query every
+    # cached miss on every run instead of once per NEG_ID_CACHE_TTL_DAYS.
+    _update_miss_stamps(add=miss_add, clear=set(ids_out))
 
     if new_cache_entries or cache_dirty:
         _save_id_cache(cache)
@@ -1324,6 +1363,10 @@ def bulk_resolve_ids(
         "bulk_resolve_ids: %d resolved, %d new, %d via people-search fallback",
         len(ids_out), new_cache_entries, len(fallback_triples),
     )
+    if expired_misses:
+        log.info("bulk_resolve_ids: retried %d expired negative cache entries "
+                 "(a just-drafted player resolves once he is assigned)",
+                 expired_misses)
     if vintage_rejected:
         log.info("bulk_resolve_ids: vintage guard rejected %d dormant-identity "
                  "candidate ids", vintage_rejected)

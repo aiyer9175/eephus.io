@@ -34877,23 +34877,87 @@ function _gfxColumnCount(cap) {
 //
 // Column count is derived from the canvas, not hardcoded, so the same renderer
 // serves the landscape canvas (20 x 5) and short lists.
+const _GFX_CHIP_PAD = 40, _GFX_CHIP_GAP = 12, _GFX_CHIP_MIN_W = 120;
+const _GFX_CHIP_MIN_CELL_H = 96;
+// Chrome actually emitted by the chip markup below: 40px padding top+bottom
+// (80), the header strip (38), the grid wrapper's 14px padding top+bottom (28)
+// and the footer (34). It was two separate 190 literals that both over-reserved
+// and could drift apart; one named constant now feeds the column search, the
+// cell-height budget and nothing else.
+const _GFX_CHIP_CHROME = 180;
+// Name size steps with the chip width; meta is always 11. Shared by the column
+// search and the renderer so a change in one cannot silently mis-budget the
+// other (the photo is whatever height the text does not take).
+function _gfxChipNamePx(chipW) { return chipW >= 130 ? 14 : (chipW >= 100 ? 12 : 11); }
+function _gfxChipTextH(chipW) { return _gfxChipNamePx(chipW) + 11 + 22; }
+
+// A headshot is a portrait crop taken `cover` from `top center`. Past about 4:3
+// tall it stops reading as a face and starts reading as a neck, and on a short
+// list the leftover vertical budget is enormous - a 10-player board had room for
+// a 294x857 well. Cap the photo (and therefore the cell) at this aspect and let
+// the surplus stay margin. It never binds on a full 100-chip board, where the
+// well is wider than it is tall.
+const _GFX_CHIP_MAX_PHOTO_ASPECT = 1.35;
+// ...and the same argument in the other direction. `cover` on a well WIDER than
+// it is tall crops the top and bottom off the source, so a 294x124 letterbox
+// shows a strip across the eyes rather than a head. Wells below this ratio are
+// rejected outright and the search takes more, narrower columns instead, which
+// is how a 50-player board goes from 243x144 (0.59) to a portrait 180x202.
+const _GFX_CHIP_MIN_PHOTO_ASPECT = 0.8;
+
+// Geometry for one candidate column count, or null when it violates a floor.
+function _gfxChipGeoFor(cap, fmt, cols) {
+  const rows = Math.ceil(cap / cols);
+  const chipW = Math.floor((fmt.w - _GFX_CHIP_PAD * 2 - (cols - 1) * _GFX_CHIP_GAP) / cols);
+  if (chipW < _GFX_CHIP_MIN_W) return null;
+  const avail = Math.floor((fmt.h - _GFX_CHIP_CHROME - (rows - 1) * _GFX_CHIP_GAP) / rows);
+  if (avail < _GFX_CHIP_MIN_CELL_H) return null;      // would run off the canvas
+  const textH = _gfxChipTextH(chipW);
+  const photoH = Math.max(52, Math.min(avail - textH,
+                                       Math.round(chipW * _GFX_CHIP_MAX_PHOTO_ASPECT)));
+  const cellH = Math.max(_GFX_CHIP_MIN_CELL_H, photoH + textH);
+  const letterboxed = photoH < chipW * _GFX_CHIP_MIN_PHOTO_ASPECT;
+  return { cols, rows, chipW, cellH, photoH, letterboxed,
+           photoArea: chipW * photoH, empty: cols * rows - cap };
+}
+
+// Pick the column count that puts the most PHOTO on the board, then breaks ties
+// toward a full last row.
+//
+// This replaced `round(sqrt(cap * w/h))`, which on the default 1600x2000 board
+// returned 9 columns for 100 players: 9x12 = 108 cells, so the bottom row held
+// one chip and eight blanks, and each photo was 158x92. The module comment
+// above already specified ten columns; the formula never agreed with it. Ten is
+// 10x10 = exactly 100 cells with a 141x123 photo, which is 19% more photo AND
+// no ragged row, so the old heuristic was losing on both counts at once.
 function _gfxChipColumns(cap, fmt) {
-  const PAD = 40, GAP = 12, MIN_CHIP_W = 120, MIN_CELL_H = 96, CHROME = 190;
-  const usable = fmt.w - PAD * 2;
-  const maxByWidth = Math.max(1, Math.floor((usable + GAP) / (MIN_CHIP_W + GAP)));
-  // Prefer a grid whose shape follows the canvas, so the chips stay squarish.
-  let cols = Math.max(1, Math.round(Math.sqrt(cap * (fmt.w / Math.max(1, fmt.h)))));
-  // Height budget: a short canvas needs MORE columns, because fewer rows is the
-  // only way to keep every cell above the legibility floor. Without this a
-  // 100-player list on a 900px-tall canvas laid out 10 rows and simply ran off
-  // the bottom, which is the "the format is a label, not a measurement" defect
-  // this layout exists to end. Where even the widest grid cannot fit, the board
-  // still grows rather than crushing the cells - an honest tall image beats an
-  // unreadable one - but it now grows by as little as possible.
-  const maxRows = Math.max(1, Math.floor((fmt.h - CHROME + GAP) / (MIN_CELL_H + GAP)));
-  cols = Math.max(cols, Math.ceil(cap / maxRows));
-  cols = Math.min(cols, maxByWidth, Math.max(1, cap));
-  return cols;
+  const usable = fmt.w - _GFX_CHIP_PAD * 2;
+  const maxByWidth = Math.max(1, Math.floor((usable + _GFX_CHIP_GAP) / (_GFX_CHIP_MIN_W + _GFX_CHIP_GAP)));
+  const hi = Math.min(maxByWidth, Math.max(1, cap));
+
+  const better = (g, b) => !b
+    || g.photoArea > b.photoArea * 1.02
+    // The 2% band keeps a trivially larger photo from reintroducing a ragged
+    // row: at equal-ish photo, a full grid always reads better.
+    || (g.photoArea > b.photoArea * 0.98 && g.empty < b.empty);
+
+  let best = null, bestLetterboxed = null;
+  for (let c = 1; c <= hi; c++) {
+    const g = _gfxChipGeoFor(cap, fmt, c);
+    if (!g) continue;
+    if (g.letterboxed) {
+      // Kept only as a fallback: on a very short canvas every candidate is a
+      // letterbox, and some photo beats none.
+      if (better(g, bestLetterboxed)) bestLetterboxed = g;
+      continue;
+    }
+    if (better(g, best)) best = g;
+  }
+  best = best || bestLetterboxed;
+  // Nothing fits the canvas (a very long list): fall back to the widest legible
+  // grid and let the board grow rather than crushing the cells. An honest tall
+  // image beats an unreadable one.
+  return best ? best.cols : hi;
 }
 // One player chip: photo, rank and eFV grade over it, name, one meta line.
 // No surplus, no $DvM+, no value column anywhere - that is the ask.
@@ -35015,25 +35079,37 @@ function buildGfxBoard() {
   let grid;
   if (useChips) {
     const cols = _gfxChipColumns(cap, fmt);
-    const rows = Math.ceil(cap / cols);
-    const GAP = 12;
-    const chipW = Math.floor((W - 80 - (cols - 1) * GAP) / cols);
-    // Vertical budget: canvas minus the slim chrome, split across the rows.
-    // The photo takes what is left after the two text lines and the padding,
-    // so a shorter canvas shrinks the picture rather than clipping the name.
-    const chrome = 190;
-    const cellH = Math.max(96, Math.floor((H - chrome - (rows - 1) * GAP) / rows));
+    const GAP = _GFX_CHIP_GAP;
+    // Take the cell geometry from the same helper the column search scored, so
+    // the layout that ships is the one that was chosen. These were duplicated
+    // formulas plus a second copy of the chrome constant, which is how the
+    // search could optimise one grid while the renderer drew another.
+    const fit = _gfxChipGeoFor(cap, fmt, cols)
+      || { rows: Math.ceil(cap / cols),
+           chipW: Math.floor((W - _GFX_CHIP_PAD * 2 - (cols - 1) * GAP) / cols),
+           cellH: _GFX_CHIP_MIN_CELL_H };
+    const chipW = fit.chipW;
+    const cellH = Math.max(_GFX_CHIP_MIN_CELL_H, fit.cellH);
     const geo = {
-      name: chipW >= 130 ? 14 : (chipW >= 100 ? 12 : 11),
-      meta: chipW >= 130 ? 11 : 11,
+      name: _gfxChipNamePx(chipW),
+      meta: 11,
       rank: chipW >= 130 ? 13 : 12,
       badge: chipW >= 130 ? 13 : 12,
     };
     // Text block = name line + meta line + padding + border. Whatever remains
     // is the photo, floored so it never collapses to a sliver.
-    geo.photo = Math.max(52, cellH - (geo.name + geo.meta + 22));
-    grid = `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:${GAP}px;align-content:start;">`
-      + shown.map((it, i) => _gfxChipHtml(it, i, P, accent, geo)).join("") + `</div>`;
+    geo.photo = Math.max(52, cellH - _gfxChipTextH(chipW));
+    // _gfxRow is what turns a raw snapshot item into the {name, fv, rank, meta,
+    // mlbam, org} shape every renderer reads. The chip path shipped without it
+    // (2026-08-03) and handed _gfxChipHtml the raw player object, whose fields
+    // are named player_name / fv_close / mlbam_id. Every lookup missed, so the
+    // board rendered a grid of team logos with a bare array index: no name, no
+    // eFV badge, no headshot, no meta line. Nothing threw, because escapeHtml
+    // returns "" for null and the FV badge is null-guarded, which is why it
+    // laid out perfectly while showing nothing. `org` was the one key that
+    // happened to match on both shapes, which is why the logos still appeared.
+    grid = `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);grid-auto-rows:${cellH}px;gap:${GAP}px;align-content:start;">`
+      + shown.map((it, i) => _gfxChipHtml(_gfxRow(it, snap.kind, snap.meta), i, P, accent, geo)).join("") + `</div>`;
   } else {
   const ncol = _gfxColumnCount(cap);
   if (ncol <= 1) {

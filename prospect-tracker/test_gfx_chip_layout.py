@@ -44,36 +44,80 @@ def _formats() -> dict[str, tuple[int, int]]:
     return out
 
 
-def _chip_consts() -> dict[str, int]:
-    m = re.search(r"function _gfxChipColumns\([^)]*\)\s*\{(.*?)\n\}", SRC, re.S)
-    assert m, "could not find _gfxChipColumns"
-    body = m.group(1)
-    c = dict(re.findall(r"(PAD|GAP|MIN_CHIP_W|MIN_CELL_H|CHROME)\s*=\s*(\d+)", body))
-    for k in ("PAD", "GAP", "MIN_CHIP_W", "MIN_CELL_H", "CHROME"):
-        assert k in c, f"{k} missing from _gfxChipColumns"
-    return {k: int(v) for k, v in c.items()}
+def _chip_consts() -> dict[str, float]:
+    """The layout constants, now module-level in prospx (they were locals inside
+    _gfxChipColumns until the column search was rewritten)."""
+    want = {
+        "PAD": r"_GFX_CHIP_PAD\s*=\s*(\d+)",
+        "GAP": r"_GFX_CHIP_GAP\s*=\s*(\d+)",
+        "MIN_CHIP_W": r"_GFX_CHIP_MIN_W\s*=\s*(\d+)",
+        "MIN_CELL_H": r"_GFX_CHIP_MIN_CELL_H\s*=\s*(\d+)",
+        "CHROME": r"_GFX_CHIP_CHROME\s*=\s*(\d+)",
+        "MAX_ASPECT": r"_GFX_CHIP_MAX_PHOTO_ASPECT\s*=\s*([\d.]+)",
+        "MIN_ASPECT": r"_GFX_CHIP_MIN_PHOTO_ASPECT\s*=\s*([\d.]+)",
+    }
+    out: dict[str, float] = {}
+    for key, pat in want.items():
+        m = re.search(pat, SRC)
+        assert m, f"{key} constant missing from prospx chip layout"
+        out[key] = float(m.group(1))
+    return out
 
 
-def _columns(cap: int, w: int, h: int, k: dict[str, int]) -> int:
-    max_by_width = max(1, (w - k["PAD"] * 2 + k["GAP"]) // (k["MIN_CHIP_W"] + k["GAP"]))
-    cols = max(1, round(math.sqrt(cap * (w / max(1, h)))))
-    max_rows = max(1, (h - k["CHROME"] + k["GAP"]) // (k["MIN_CELL_H"] + k["GAP"]))
-    cols = max(cols, math.ceil(cap / max_rows))
-    return min(cols, max_by_width, max(1, cap))
+def _text_h(chip_w: int) -> int:
+    name = 14 if chip_w >= 130 else (12 if chip_w >= 100 else 11)
+    return name + 11 + 22
+
+
+def _geo_for(cap: int, w: int, h: int, cols: int, k):
+    """Mirror of _gfxChipGeoFor. Returns None when the candidate is infeasible."""
+    rows = math.ceil(cap / cols)
+    chip_w = (w - int(k["PAD"]) * 2 - (cols - 1) * int(k["GAP"])) // cols
+    if chip_w < k["MIN_CHIP_W"]:
+        return None
+    avail = (h - int(k["CHROME"]) - (rows - 1) * int(k["GAP"])) // rows
+    if avail < k["MIN_CELL_H"]:
+        return None
+    text_h = _text_h(chip_w)
+    photo = max(52, min(avail - text_h, round(chip_w * k["MAX_ASPECT"])))
+    cell_h = max(int(k["MIN_CELL_H"]), photo + text_h)
+    return dict(cols=cols, rows=rows, chip_w=chip_w, cell_h=cell_h, photo=photo,
+                letterboxed=photo < chip_w * k["MIN_ASPECT"],
+                area=chip_w * photo, empty=cols * rows - cap)
+
+
+def _columns(cap: int, w: int, h: int, k) -> int:
+    """Mirror of _gfxChipColumns: maximise photo area, break ties toward a full
+    last row, reject letterboxed wells unless nothing else fits."""
+    hi = max(1, min((w - int(k["PAD"]) * 2 + int(k["GAP"])) // (int(k["MIN_CHIP_W"]) + int(k["GAP"])),
+                    max(1, cap)))
+
+    def better(g, b):
+        return (not b or g["area"] > b["area"] * 1.02
+                or (g["area"] > b["area"] * 0.98 and g["empty"] < b["empty"]))
+
+    best = boxed = None
+    for c in range(1, hi + 1):
+        g = _geo_for(cap, w, h, c, k)
+        if not g:
+            continue
+        if g["letterboxed"]:
+            if better(g, boxed):
+                boxed = g
+        elif better(g, best):
+            best = g
+    best = best or boxed
+    return best["cols"] if best else hi
 
 
 def _geometry(cap: int, fmt_key: str):
     w, h = _formats()[fmt_key]
     k = _chip_consts()
     cols = _columns(cap, w, h, k)
-    rows = math.ceil(cap / cols)
-    chip_w = (w - 80 - (cols - 1) * k["GAP"]) // cols
-    cell_h = max(k["MIN_CELL_H"], (h - k["CHROME"] - (rows - 1) * k["GAP"]) // rows)
-    name = 14 if chip_w >= 130 else (12 if chip_w >= 100 else 11)
-    photo = max(52, cell_h - (name + 11 + 22))
-    total = rows * cell_h + (rows - 1) * k["GAP"] + k["CHROME"]
-    return dict(cols=cols, rows=rows, chip_w=chip_w, cell_h=cell_h,
-                name=name, meta=11, photo=photo, total=total, w=w, h=h)
+    g = _geo_for(cap, w, h, cols, k) or _geo_for(cap, w, h, 1, k)
+    total = g["rows"] * g["cell_h"] + (g["rows"] - 1) * int(k["GAP"]) + int(k["CHROME"])
+    name = 14 if g["chip_w"] >= 130 else (12 if g["chip_w"] >= 100 else 11)
+    return dict(name=name, meta=11, total=total, w=w, h=h, **g)
 
 
 # --------------------------------------------------------------------------
@@ -128,6 +172,43 @@ def test_chip_is_bigger_than_the_row_it_replaces_where_it_counts():
     assert g["chip_w"] * g["photo"] > 40 * 52
 
 
+def test_the_owners_board_has_no_ragged_last_row():
+    """`round(sqrt(cap * w/h))` returned 9 columns for 100 players on the board
+    canvas: 9x12 = 108 cells, so the bottom row held one chip and eight blanks -
+    a ~1,360x137px hole, which is the empty space the owner reported. The
+    module comment above _gfxChipColumns had specified ten columns all along."""
+    g = _geometry(100, "board")
+    assert g["cols"] == 10 and g["rows"] == 10, (
+        f"expected a 10x10 grid for 100 chips, got {g['cols']}x{g['rows']}")
+    assert g["empty"] == 0, f"{g['empty']} empty cells in the Top-100 board"
+
+
+@pytest.mark.parametrize("cap", [10, 25, 50, 100])
+@pytest.mark.parametrize("fmt", ["board", "landscape"])
+def test_grid_wastes_at_most_one_partial_row(cap, fmt):
+    """A few holes are unavoidable when cap is prime-ish; a whole empty row is
+    not."""
+    g = _geometry(cap, fmt)
+    assert g["empty"] < g["cols"], (
+        f"{fmt} n={cap}: {g['empty']} empty cells across {g['cols']} columns "
+        "is a full blank row")
+
+
+def test_the_photo_well_is_not_a_letterbox_on_the_default_board():
+    """A headshot is cropped `cover` from `top center`, so a well wider than it
+    is tall shows a strip across the eyes instead of a face. The old 100-chip
+    board was 158x93, an 0.59 well."""
+    g = _geometry(100, "board")
+    aspect = g["photo"] / g["chip_w"]
+    k = _chip_consts()
+    assert aspect >= k["MIN_ASPECT"], (
+        f"photo well is {g['chip_w']}x{g['photo']} (aspect {aspect:.2f}), a "
+        "letterbox for a portrait headshot")
+    assert aspect <= k["MAX_ASPECT"] + 0.01, (
+        f"photo well aspect {aspect:.2f} is taller than the cap; a short list "
+        "should leave margin rather than stretch the chip")
+
+
 # --------------------------------------------------------------------------
 # What the chip may and may not carry
 # --------------------------------------------------------------------------
@@ -157,6 +238,53 @@ def test_chip_carries_the_three_required_elements():
 def test_chip_keeps_the_preferred_meta_line():
     """Position / level / age, which the owner wanted kept if it stayed legible."""
     assert "r.meta" in _chip_html_body()
+
+
+# --------------------------------------------------------------------------
+# The caller/callee contract. Everything above asserts what the RENDERER reads;
+# none of it could see that the CALLER was handing over a different object.
+# --------------------------------------------------------------------------
+
+def _chips_block() -> str:
+    """The `if (useChips) { ... }` body that builds the grid."""
+    start = SRC.index("if (useChips) {")
+    return SRC[start:SRC.index("} else {", start)]
+
+
+def test_chip_grid_normalizes_items_through_gfxrow():
+    """THE REGRESSION (2026-08-03).
+
+    The chip layout shipped calling `_gfxChipHtml(it, ...)` on the raw snapshot
+    item, while the row layout it replaced called
+    `_gfxRow(item, snap.kind, snap.meta)` first. The raw prospect object carries
+    player_name / fv_close / mlbam_id; the chip renderer reads name / fv / mlbam.
+    Every lookup missed, so the Top-100 board rendered a grid of team logos with
+    a bare array index and no name, no eFV badge, no headshot and no meta line.
+
+    Nothing threw - escapeHtml returns "" for null and the FV badge is
+    null-guarded - which is exactly why it laid out perfectly while showing
+    nothing, and why every source-grep test above stayed green.
+    """
+    block = _chips_block()
+    assert "_gfxChipHtml(" in block, "chip grid no longer builds chips"
+    assert re.search(r"_gfxChipHtml\(\s*_gfxRow\(", block), (
+        "the chip grid must pass each item through _gfxRow before rendering; "
+        "handing _gfxChipHtml a raw snapshot item silently blanks every field")
+
+
+def test_every_field_the_chip_reads_is_a_field_gfxrow_returns():
+    """Pin the shape contract itself, so a future rename cannot re-open the gap
+    from the other side."""
+    m = re.search(r"function _gfxRow\(([^)]*)\)\s*\{", SRC)
+    assert m, "could not find _gfxRow"
+    start = m.start()
+    body = SRC[start:start + 12000]
+    reads = set(re.findall(r"\br\.(\w+)", _chip_html_body()))
+    assert reads, "chip renderer reads no row fields at all"
+    for field in sorted(reads):
+        assert re.search(rf"\b{field}\b\s*[:,=]", body), (
+            f"_gfxChipHtml reads r.{field}, which _gfxRow does not appear to "
+            "produce - the two shapes have drifted apart again")
 
 
 def test_chip_photo_uses_background_cover_not_object_fit():

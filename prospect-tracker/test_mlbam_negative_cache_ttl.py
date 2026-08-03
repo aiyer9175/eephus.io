@@ -103,6 +103,65 @@ def test_cached_hit_is_permanent(isolated_cache, no_resolvers):
     assert no_resolvers == [], "a cached hit must never trigger re-resolution"
 
 
+class _FakeIndex:
+    """Minimal PlayerIndex stand-in: knows one player."""
+    players: list = []
+
+    def best_match(self, name, position=None, player_key=None):
+        return ({"id": 800604, "birthDate": "2004-01-01"}
+                if name == "Roch Cholowsky" else None)
+
+
+@pytest.fixture
+def fake_index(monkeypatch):
+    monkeypatch.setattr(stats.PlayerIndex, "load_or_build",
+                        staticmethod(lambda *a, **k: _FakeIndex()))
+    monkeypatch.setattr(stats, "_cached_id_matches_request",
+                        lambda *a, **k: True)
+    monkeypatch.setattr(stats, "_search_mlbam_via_api", lambda name: (None, None))
+    return _FakeIndex()
+
+
+def test_bulk_resolver_honours_the_negative_ttl(isolated_cache, fake_index):
+    """THE PRODUCTION PATH.
+
+    run_monthly resolves ids ONLY through bulk_resolve_ids; the per-player
+    resolve_mlbam_id loop was removed for performance (run_monthly.py:3201).
+    So fixing the TTL in resolve_mlbam_id alone left the pipeline still
+    skipping every null-cached draftee - the fix would have been dead code
+    exactly where it was needed.
+    """
+    stats._save_id_cache({"roch_cholowsky": None})   # unstamped, pre-TTL entry
+
+    ids, _bds, _idx = stats.bulk_resolve_ids([("roch_cholowsky", "Roch Cholowsky", "SS")])
+
+    assert ids.get("roch_cholowsky") == 800604, (
+        "bulk_resolve_ids must retry an expired negative cache entry; a null "
+        "written at draft ingest otherwise starves the player forever")
+
+
+def test_bulk_resolver_respects_a_fresh_miss(isolated_cache, fake_index):
+    """The other half: a miss recorded moments ago must not be re-queried, or
+    every run would hammer the people-search fallback for thousands of keys."""
+    stats._save_id_cache({"roch_cholowsky": None})
+    stats._record_miss("roch_cholowsky")
+
+    ids, _bds, _idx = stats.bulk_resolve_ids([("roch_cholowsky", "Roch Cholowsky", "SS")])
+
+    assert "roch_cholowsky" not in ids, "a fresh miss should still short-circuit"
+
+
+def test_bulk_resolver_stamps_the_misses_it_writes(isolated_cache, fake_index):
+    """Without stamping, the expiry check would re-query every cached miss on
+    every run instead of once per NEG_ID_CACHE_TTL_DAYS."""
+    stats._save_id_cache({})
+
+    stats.bulk_resolve_ids([("nobody_at_all", "Nobody At All", None)])
+
+    assert stats._miss_is_fresh("nobody_at_all"), (
+        "bulk_resolve_ids wrote a null without stamping it")
+
+
 def test_miss_stamp_is_cleared_once_resolved(isolated_cache, monkeypatch):
     """A player who resolves later must not keep a stale miss stamp around."""
     stats._save_id_cache({"late_bloomer": None})
