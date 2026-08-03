@@ -4110,6 +4110,61 @@ def _write(rel: str, content: str) -> None:
     path.write_text(content, encoding="utf-8")
     print(f"  wrote {rel}")
 
+# --------------------------------------------------------------------------- #
+# Hand-authored surfaces are not written by any generator, so their /assets/
+# refs carried a hand-bumped date stamp that nothing forced anyone to bump.
+# On 2026-08-03 site.css had changed on 07-31 while all three pages still
+# advertised ?v=20260730 (pitcher_index ?v=20260709), so the 7-day max-age on
+# /assets/ served up to a week of stale CSS to exactly the pages that hand-edit
+# it. They are now stamped from the same content hash the generated pages use,
+# so any asset edit propagates on the next build with no hand step.
+#
+# Scoped to stylesheet links and script srcs, matching test_asset_versioning's
+# scope exactly: icons, manifest, canonical and preconnect are deliberately
+# left alone because a momentarily stale one does not break rendering, and
+# stamping them would only churn a 55k-line file. `?v=` is optional in the URL
+# pattern so a newly added ref is stamped on its first build rather than
+# waiting for someone to notice test_asset_versioning going red.
+HAND_AUTHORED_PAGES = (
+    "prospx/index.html",
+    "collegesavant/index.html",
+    "collegesavant/pitcher_index.html",
+)
+
+_STYLESHEET_TAG_RE = re.compile(r"<link\b[^>]*\brel=[\"']stylesheet[\"'][^>]*>", re.I)
+_SCRIPT_TAG_RE = re.compile(r"<script\b[^>]*\bsrc=[\"'][^\"']+[\"'][^>]*>", re.I)
+_ASSET_URL_RE = re.compile(r'((?:href|src)=")(/assets/[^"?]+)(?:\?v=[^"]*)?(")')
+
+
+def restamp_hand_authored_pages() -> None:
+    """Stamp every /assets/ stylesheet and script ref in the hand-authored
+    pages with the asset's current content hash. Refs whose target is absent
+    from the tree keep whatever they carry - there is no content to hash."""
+
+    def _stamp_url(m: "re.Match[str]") -> str:
+        asset = m.group(2).lstrip("/")
+        if not (ROOT / asset).exists():
+            return m.group(0)
+        return f"{m.group(1)}{m.group(2)}?v={_asset_ver(asset)}{m.group(3)}"
+
+    def _stamp_tag(m: "re.Match[str]") -> str:
+        return _ASSET_URL_RE.sub(_stamp_url, m.group(0))
+
+    for rel in HAND_AUTHORED_PAGES:
+        path = ROOT / rel
+        if not path.exists():
+            print(f"  skipped {rel} (absent)")
+            continue
+        original = path.read_text(encoding="utf-8")
+        stamped = _STYLESHEET_TAG_RE.sub(_stamp_tag, original)
+        stamped = _SCRIPT_TAG_RE.sub(_stamp_tag, stamped)
+        if stamped != original:
+            path.write_text(stamped, encoding="utf-8")
+            print(f"  restamped {rel}")
+        else:
+            print(f"  {rel} asset stamps already current")
+
+
 def main() -> None:
     print("build_site.py - generating editorial pages")
     art_dir = CONTENT / "articles"
@@ -4141,6 +4196,10 @@ def main() -> None:
     _write("404.html", build_404())
     _write("robots.txt", build_robots())
     _write("sitemap.xml", build_sitemap(articles))
+
+    # The hand-authored pages share /assets/ with everything above, so they are
+    # re-stamped on the same pass rather than by hand (see the note above).
+    restamp_hand_authored_pages()
 
     # Derived browser payloads (slim, display-only slices of heavier or
     # non-shipping model artifacts). Absent source => the file is left exactly

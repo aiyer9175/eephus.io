@@ -54,12 +54,12 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=20260730">
+  <link rel="stylesheet" href="/assets/site.css?v=d2d01ba6">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
        site-wide sharp-corner rule. -->
-  <link rel="stylesheet" href="/assets/eephus-account.css?v=20260709">
+  <link rel="stylesheet" href="/assets/eephus-account.css?v=83b9b043">
 
   <!-- Webfonts: Source Serif for headlines, Inter for UI, JetBrains Mono
        for numerics. System fallbacks (Georgia / -apple-system / Menlo)
@@ -10104,7 +10104,7 @@
 
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
-<script src="/assets/eephus-export.js?v=20260709" defer></script>
+<script src="/assets/eephus-export.js?v=a768496c" defer></script>
 
 <!-- eephus.io account layer (Parts 1-7). Both are OPTIONAL: eephus-config.js is
      git-ignored and absent on the public/dev tree, so its <script> 404s harmlessly
@@ -10112,18 +10112,18 @@
      inert - no Supabase SDK fetch, no behavior change - and the site works exactly
      as today (logged-out, localStorage watchlist). When config IS present, the
      module self-injects the Supabase SDK and lights up the account UI. -->
-<script src="/assets/eephus-config.js?v=20260709" defer></script>
-<script src="/assets/eephus-account.js?v=20260709" defer></script>
-<script src="/assets/eephus-nav.js?v=20260709" defer></script>
-<script src="/assets/eephus-ui.js?v=20260709" defer></script>
-  <script src="/assets/eephus-gl.js?v=20260709" defer></script>
+<script src="/assets/eephus-config.js?v=5e092777" defer></script>
+<script src="/assets/eephus-account.js?v=2434e464" defer></script>
+<script src="/assets/eephus-nav.js?v=3065435f" defer></script>
+<script src="/assets/eephus-ui.js?v=6b17bed4" defer></script>
+  <script src="/assets/eephus-gl.js?v=da29f8f5" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->
-  <script src="/assets/eephus-hub.js?v=20260709" defer></script>
+  <script src="/assets/eephus-hub.js?v=96609a05" defer></script>
 <!-- Dark-theme phosphor-starfield background - shared with the editorial
      pages (single component + token set in assets/site.css [data-theme=dark]).
      Mounts only while the dark theme is active; render() feeds it the
      prospect FV on detail views so the field escalates with the rarity tier. -->
-<script src="/assets/eephus-bg.js?v=20260709" defer></script>
+<script src="/assets/eephus-bg.js?v=619ab847" defer></script>
 
 <!-- v32.0 - FV/WAR/$ conversion framework, loaded synchronously so all
      downstream code can call dollarsPerWar() / surplusValueMM() / etc

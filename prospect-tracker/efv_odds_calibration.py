@@ -1,8 +1,16 @@
 # Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
 """eFV OUTCOME-ODDS DISPERSION CALIBRATION (the ODDS lane, 2026-07-25).
 
-NOT YET WIRED IN. Inert until the efv_score.py hunks in tools/_prem_odds.patch are
-applied. Importing this module changes nothing.
+WIRED AND LIVE at all three efv_score scoring seams: run() resolved
+(efv_score.py:1292), run_live() (efv_score.py:1812) and run_backgrade()
+(efv_score.py:2191). Importing this module alone still changes nothing - the
+seams call recalibrate_bucket() explicitly - but the served numbers DO go
+through this map, so a change here moves p_bust/p_bucket on the board.
+
+(This header read "NOT YET WIRED IN. Inert until the efv_score.py hunks in
+tools/_prem_odds.patch are applied" until 2026-08-03. The hunks were applied
+on 2026-07-31 and the header was never updated, which is the kind of stale
+disclaimer that makes a live calibration look safe to edit.)
 
 THE DEFECT
 ----------
