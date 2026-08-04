@@ -3923,6 +3923,16 @@ def build_positional_fit_payload() -> dict | None:
             "nPlayerSeasons": ladder.get("n_player_seasons"),
             "seasons": ladder.get("seasons"),
             "minPa": ladder.get("min_pa"),
+            # The sum question, forwarded so the page can answer it. Only the
+            # EXPOSURE-WEIGHTED sum is zero, and it is zero by construction
+            # (positional_fit._recentre imposes it). Equal-weighting the nine
+            # displayed rungs does not sum to zero and should not: DH is ~7%
+            # of league exposure, not a ninth, so it over-counts the big
+            # negative DH rung. Without this block the ladder simply looks
+            # like it fails an identity it was never claiming.
+            # Absent from artifacts generated before 2026-07-31; the consumer
+            # renders the explanation only when it is present.
+            "identification": ladder.get("identification"),
         },
         "accuracy": {
             "nConversions": conv.get("n_conversions"),

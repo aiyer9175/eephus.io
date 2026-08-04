@@ -914,11 +914,33 @@
       + "construction rather than taken from the folklore table: least squares of positional runs per 650 PA on innings "
       + "shares, no intercept, " + fThou(L.nPlayerSeasons) + " player-seasons from " + esc((L.seasons || [])[0])
       + " to " + esc((L.seasons || [])[1]) + " at " + fInt(L.minPa) + "+ PA. R&sup2; " + (L.r2 == null ? "-" : f1(L.r2 * 100) + "%")
-      + ", residual SD " + f2(L.residSd) + " runs. The folklore column is the table everyone quotes; the difference column is "
+      + ", residual SD " + f2(L.residSd) + " runs. This is an INVERSION: it recovers the constants Baseball-Reference "
+      + "themselves used, so a rung reads as what BRef prices that position at, not as an independent measure of how "
+      + "hard it is to play. The folklore column is the table everyone quotes; the difference column is "
       + "where it is wrong.</div>";
+    // WHICH SUM IS ZERO. The column does not sum to zero and is not supposed
+    // to, which reads as an error every time someone checks - so the page now
+    // says so instead of leaving it to be rediscovered. Only rendered when the
+    // artifact carries the identification block (added 2026-07-31); older
+    // artifacts get the table with no claim attached rather than a wrong one.
+    var id = L.identification || null;
+    var sums = "";
+    if (id && id.sum_exposure_weighted != null) {
+      var wDH = ((id.exposure_share || {}).DH != null)
+        ? f1(100 * id.exposure_share.DH) + "%" : "about 7%";
+      sums = '<div class="mlbstats-note"><strong>Why the column does not add to zero.</strong> '
+        + "The identity is a weighted one: the adjustment is centred so that the league&rsquo;s "
+        + "own deployment averages zero, and that sum is <strong>" + f2(id.sum_exposure_weighted)
+        + "</strong> here, imposed by construction. Adding the nine rungs with EQUAL weight gives "
+        + f2(id.sum_equal_weight_9) + ", which is not an error: it weights DH like a fielding "
+        + "position when DH is " + wDH + " of league exposure, so the large negative DH rung gets "
+        + "counted nine times too heavily. With the weighted sum pinned at zero, the eight fielding "
+        + "rungs are then forced to " + f2(id.sum_equal_weight_fielders) + ". Only the weighted sum "
+        + "is a constraint; the other two are consequences of it.</div>";
+    }
     return note + '<div class="mlbstats-scroll"><table class="mlbstats-table">'
       + "<thead><tr><th>Pos</th><th>Fitted (runs/650)</th><th>95% CI</th><th>Folklore</th><th>Difference</th></tr></thead>"
-      + "<tbody>" + rows + "</tbody></table></div>" + pfMethod();
+      + "<tbody>" + rows + "</tbody></table></div>" + sums + pfMethod();
   }
 
   // Honest accounting. Two DIFFERENT questions were measured and they got two
