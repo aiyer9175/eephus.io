@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=d2d01ba6">
+  <link rel="stylesheet" href="/assets/site.css?v=df3819f9">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -33283,7 +33283,11 @@ const _GFX_FORMATS = {
 // v45 - default format is WIDE (1600×900, 16:9): graphics land Twitter/X-ready
 // with no crop. Prospect-card kinds still force their own portrait/tall
 // geometry via _gfxVariantFormat.
-const _gfxOpts = { count: 50, title: "", accent: "lilac", showValue: true, format: "board", theme: "auto", photos: true, logos: true, variant: "compact", frame: "rarity", pack: false, layout: "chips" };
+// v46 (owner, 2026-08-03) - default is the COMPACT ROW list on the WIDE 16:9
+// canvas. The chip grid made the headshot the subject; the ask is a small
+// headshot beside the text with all 100 prospects on one 16:9 board. Chips
+// remain selectable in the layout dropdown.
+const _gfxOpts = { count: 50, title: "", accent: "lilac", showValue: true, format: "wide", theme: "auto", photos: true, logos: true, variant: "compact", frame: "rarity", pack: false, layout: "rows" };
 let _gfxOrigTheme = null;
 // v38 - Force the GFX board (+ the open modal) to a chosen light/dark theme by
 // flipping the root data-theme. The board inherits ALL tokens + fv-badge tints
@@ -34983,6 +34987,114 @@ function _gfxChipHtml(r, i, P, accent, geo) {
       </div>
     </div>`;
 }
+// ---------------------------------------------------------------------------
+// COMPACT LIST LAYOUT (2026-08-03, owner redirect). The chip grid made the
+// headshot the subject; the owner wants the opposite - a small headshot beside
+// the text, all 100 prospects on ONE 16:9 canvas, in rows, filling the space,
+// nothing clipped. Required per row: headshot, name, eFV, rank, team. Wanted
+// if it fits: age / position / level.
+//
+// Distinct from the legacy `rowHtml` path, which is 67px tall, spends a column
+// on surplus and $DvM+, and only ever fits ~26 rows on this canvas.
+const _GFX_LIST_MIN_ROW_H = 26;    // below this the 12px name starts to clip
+const _GFX_LIST_MIN_COL_W = 240;   // below this the name ellipsis eats the name
+// Caps. Without them a short list stretches into 80px rows beside a 22px
+// headshot, or one 1,520px-wide column that is mostly blank. Past these the
+// surplus stays margin, which looks deliberate; stretching does not.
+const _GFX_LIST_MAX_ROW_H = 44;
+const _GFX_LIST_MAX_COL_W = 560;
+// Two ways to show position / age / level. A tall row stacks it under the
+// name; a short but wide row puts it inline after the name, which is how the
+// owner's 100-in-16:9 case gets its meta at a 28px row height.
+const _GFX_LIST_META_STACK_MIN_H = 32;
+const _GFX_LIST_META_INLINE_MIN_W = 330;
+
+function _gfxListGeoFor(cap, fmt, cols) {
+  const rows = Math.ceil(cap / cols);
+  const colW = Math.min(_GFX_LIST_MAX_COL_W,
+    Math.floor((fmt.w - _GFX_CHIP_PAD * 2 - (cols - 1) * _GFX_CHIP_GAP) / cols));
+  if (colW < _GFX_LIST_MIN_COL_W) return null;
+  const rowH = Math.min(_GFX_LIST_MAX_ROW_H,
+                        Math.floor((fmt.h - _GFX_CHIP_CHROME) / rows));
+  if (rowH < _GFX_LIST_MIN_ROW_H) return null;
+  const metaMode = rowH >= _GFX_LIST_META_STACK_MIN_H ? "stack"
+                 : (colW >= _GFX_LIST_META_INLINE_MIN_W ? "inline" : "none");
+  return { cols, rows, colW, rowH, metaMode,
+           photo: Math.min(rowH - 6, 30),
+           area: colW * rowH, empty: cols * rows - cap };
+}
+
+// Maximise the area of a single row (a bigger row is both a bigger headshot and
+// a longer un-truncated name), then break ties toward a grid with no holes.
+function _gfxListColumns(cap, fmt) {
+  const hi = Math.max(1, Math.min(
+    Math.floor((fmt.w - _GFX_CHIP_PAD * 2 + _GFX_CHIP_GAP) / (_GFX_LIST_MIN_COL_W + _GFX_CHIP_GAP)),
+    Math.max(1, cap)));
+  let best = null;
+  for (let c = 1; c <= hi; c++) {
+    const g = _gfxListGeoFor(cap, fmt, c);
+    if (!g) continue;
+    if (!best || g.area > best.area * 1.02
+        || (g.area > best.area * 0.98 && g.empty < best.empty)) best = g;
+  }
+  return best ? best.cols : hi;
+}
+
+// Small square headshot. Same background-image technique the chip well uses:
+// html2canvas 1.4.1 has no object-fit, so an <img> would export stretched.
+// Degrades headshot -> team logo -> silhouette, like every other avatar here.
+function _gfxListPhotoCss(r, P, px) {
+  const layers = [];
+  if (_gfxRowHasPhotoAvatar(r)) layers.push(`url('${_gfxHeadshotURL(r.mlbam, px)}')`);
+  const logo = (typeof teamLogoURL === "function" && r && r.org) ? teamLogoURL(r.org) : null;
+  if (_gfxOpts.logos && logo) layers.push(`url('${logo}')`);
+  if (!layers.length) layers.push(_gfxSilhouetteBg(P));
+  const cover = _gfxRowHasPhotoAvatar(r);
+  return `background-color:${P.bg};background-image:${layers.join(",")};`
+       + `background-size:${layers.map((l, i) => (i === 0 && cover) ? "cover" : "70%").join(",")};`
+       + `background-position:${layers.map((l, i) => (i === 0 && cover) ? "top center" : "center").join(",")};`
+       + `background-repeat:no-repeat;`;
+}
+
+// One compact row: rank, headshot, name (+ optional meta), eFV badge, club mark.
+// Every element is `flex:none` except the name block, which is the only thing
+// allowed to absorb slack - so nothing can push a neighbour out of the row.
+function _gfxListRowHtml(r, i, P, accent, geo) {
+  const rank = (r.rank != null) ? r.rank : (i + 1);
+  const nameSize = geo.rowH >= 34 ? 12.5 : 11.5;
+  const badge = (r.fv != null)
+    ? `<span class="fv-badge ${fvClass(r.fv)}" style="flex:none;font-size:${geo.rowH >= 34 ? 11 : 10}px;padding:0 4px;line-height:1.5;">${escapeHtml(String(r.fv))}</span>`
+    : "";
+  const logo = (_gfxOpts.logos && r.org && typeof _gfxTeamLogo === "function")
+    ? `<span style="flex:none;display:flex;align-items:center;">${_gfxTeamLogo(r.org, P, Math.min(16, geo.rowH - 14))}</span>`
+    : (r.org ? `<span style="flex:none;font-family:var(--font-mono);font-size:9px;color:${P.text3};">${escapeHtml(r.org)}</span>` : "");
+  const metaTxt = r.meta ? escapeHtml(r.meta) : "";
+  const stacked = (geo.metaMode === "stack" && metaTxt)
+    ? `<span style="font-family:var(--font-mono);font-size:9px;line-height:1.15;color:${P.text3};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">${metaTxt}</span>`
+    : "";
+  // Inline meta shares the name's line. It is `flex:0 1 auto` with its own
+  // ellipsis, so a long meta gives way before the name does rather than
+  // pushing the badge out of the row.
+  const inline = (geo.metaMode === "inline" && metaTxt)
+    ? `<span style="flex:0 1 auto;min-width:0;font-family:var(--font-mono);font-size:9px;color:${P.text3};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${metaTxt}</span>`
+    : "";
+  const nameBlock = inline
+    ? `<span style="flex:1 1 auto;min-width:0;display:flex;align-items:baseline;gap:6px;">
+         <span style="flex:0 1 auto;min-width:0;font-weight:700;font-size:${nameSize}px;color:${P.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name)}</span>
+         ${inline}
+       </span>`
+    : `<span style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;">
+         <span style="font-weight:700;font-size:${nameSize}px;line-height:1.15;color:${P.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name)}</span>
+         ${stacked}
+       </span>`;
+  return `<div style="display:flex;align-items:center;gap:6px;height:${geo.rowH}px;box-sizing:border-box;padding:0 4px;border-bottom:1px solid ${P.border};overflow:hidden;">
+      <span style="flex:none;width:24px;text-align:right;font-family:var(--font-mono);font-size:${geo.rowH >= 34 ? 11 : 10}px;font-weight:700;color:${accent};">${escapeHtml(String(rank))}</span>
+      <span style="flex:none;width:${geo.photo}px;height:${geo.photo}px;${_gfxListPhotoCss(r, P, geo.photo)}"></span>
+      ${nameBlock}
+      ${badge}${logo}
+    </div>`;
+}
+
 function buildGfxBoard() {
   const snap = _gfxSnapshot;
   // v40 - single-subject card modes (prospect / farm detail) branch out early;
@@ -35022,6 +35134,9 @@ function buildGfxBoard() {
   // Chip layout: player lists only. Farm rows have no headshots, so a photo
   // grid would be 100 identical club marks.
   const useChips = (_gfxOpts.layout === "chips") && snap.kind !== "farm" && !_gfxOpts.pack;
+  // Compact rows. Farm rows carry no headshot, so they keep the legacy row
+  // renderer rather than reserving a photo well for 30 identical club marks.
+  const useList = (_gfxOpts.layout === "rows") && snap.kind !== "farm" && !_gfxOpts.pack;
   const title = _gfxTitle(cap);
   const subtitle = _gfxSubtitle(total, cap);
   const dateStr = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
@@ -35077,7 +35192,25 @@ function buildGfxBoard() {
   // Column-major fill: ranks read top-to-bottom down a column, then continue in
   // the next column (left col = top of the list).
   let grid;
-  if (useChips) {
+  if (useList) {
+    const cols = _gfxListColumns(cap, fmt);
+    const geo = _gfxListGeoFor(cap, fmt, cols)
+      || { cols, rows: Math.ceil(cap / cols), rowH: _GFX_LIST_MIN_ROW_H,
+           colW: Math.floor((W - _GFX_CHIP_PAD * 2) / cols), photo: 20, showMeta: false };
+    // Column-major so ranks read top-to-bottom down a column, the way the
+    // legacy multi-column row board already reads.
+    const per = geo.rows;
+    const colHtml = [];
+    for (let c = 0; c * per < cap; c++) {
+      const slice = shown.slice(c * per, c * per + per);
+      colHtml.push(`<div style="min-width:0;">`
+        + slice.map((it, j) => _gfxListRowHtml(_gfxRow(it, snap.kind, snap.meta),
+                                               c * per + j, P, accent, geo)).join("")
+        + `</div>`);
+    }
+    grid = `<div style="display:grid;grid-template-columns:repeat(${cols},minmax(0,1fr));`
+         + `gap:0 ${_GFX_CHIP_GAP}px;align-content:start;">${colHtml.join("")}</div>`;
+  } else if (useChips) {
     const cols = _gfxChipColumns(cap, fmt);
     const GAP = _GFX_CHIP_GAP;
     // Take the cell geometry from the same helper the column search scored, so
@@ -35132,7 +35265,7 @@ function buildGfxBoard() {
   // Slim header for the chip layout. The full band spends 93px on a 40px title,
   // a subtitle and a 74px QR block; every pixel it gives back becomes photo.
   // Same wordmark, same as-of date, one strip.
-  if (useChips) {
+  if (useChips || useList) {
     board.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid ${accent};padding-bottom:9px;flex:none;gap:16px;">
       <div style="font-family:var(--font-retro);font-size:26px;font-weight:700;line-height:1.05;color:${P.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(title)}</div>

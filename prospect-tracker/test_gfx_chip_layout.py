@@ -124,12 +124,14 @@ def _geometry(cap: int, fmt_key: str):
 # The owner's board: 100 players, default canvas
 # --------------------------------------------------------------------------
 
-def test_default_gfx_opts_use_the_chip_layout_on_a_board_canvas():
-    m = re.search(r"const _gfxOpts = \{(.*?)\};", SRC, re.S)
-    assert m, "could not find _gfxOpts"
-    opts = m.group(1)
-    assert re.search(r'layout:\s*"chips"', opts), "chip layout is not the default"
-    assert re.search(r'format:\s*"board"', opts), "default canvas is not the board format"
+def test_chip_layout_is_still_offered():
+    """Chips stopped being the DEFAULT on 2026-08-03 (the owner asked for
+    compact 16:9 rows instead, see the list tests below), but the photo grid
+    is still a selectable layout and everything below still governs it."""
+    m = re.search(r'<select id="gfx-layout"(.*?)</select>', SRC, re.S)
+    assert m, "could not find the layout dropdown"
+    assert 'value="chips"' in m.group(1), "the chip layout is no longer offered"
+    assert 'value="rows"' in m.group(1), "the compact row layout is not offered"
 
 
 def test_one_hundred_chips_fit_the_default_canvas():
@@ -285,6 +287,135 @@ def test_every_field_the_chip_reads_is_a_field_gfxrow_returns():
         assert re.search(rf"\b{field}\b\s*[:,=]", body), (
             f"_gfxChipHtml reads r.{field}, which _gfxRow does not appear to "
             "produce - the two shapes have drifted apart again")
+
+
+# --------------------------------------------------------------------------
+# COMPACT LIST LAYOUT (owner redirect, 2026-08-03): "not a photo grid" - a
+# small headshot beside the text, all 100 on one 16:9 canvas, in rows, filling
+# the space, nothing bleeding or cut off.
+# --------------------------------------------------------------------------
+
+def _list_consts() -> dict[str, float]:
+    want = {
+        "MIN_ROW_H": r"_GFX_LIST_MIN_ROW_H\s*=\s*(\d+)",
+        "MIN_COL_W": r"_GFX_LIST_MIN_COL_W\s*=\s*(\d+)",
+        "MAX_ROW_H": r"_GFX_LIST_MAX_ROW_H\s*=\s*(\d+)",
+        "MAX_COL_W": r"_GFX_LIST_MAX_COL_W\s*=\s*(\d+)",
+        "STACK_MIN_H": r"_GFX_LIST_META_STACK_MIN_H\s*=\s*(\d+)",
+        "INLINE_MIN_W": r"_GFX_LIST_META_INLINE_MIN_W\s*=\s*(\d+)",
+    }
+    out = {}
+    for k, pat in want.items():
+        m = re.search(pat, SRC)
+        assert m, f"{k} missing from the compact list layout"
+        out[k] = float(m.group(1))
+    return out
+
+
+def _list_geometry(cap: int, fmt_key: str):
+    """Mirror of _gfxListGeoFor / _gfxListColumns."""
+    w, h = _formats()[fmt_key]
+    k = _list_consts()
+    chrome = int(re.search(r"_GFX_CHIP_CHROME\s*=\s*(\d+)", SRC).group(1))
+    pad = int(re.search(r"_GFX_CHIP_PAD\s*=\s*(\d+)", SRC).group(1))
+    gap = int(re.search(r"_GFX_CHIP_GAP\s*=\s*(\d+)", SRC).group(1))
+
+    def geo(cols):
+        rows = math.ceil(cap / cols)
+        col_w = min(k["MAX_COL_W"], (w - pad * 2 - (cols - 1) * gap) // cols)
+        if col_w < k["MIN_COL_W"]:
+            return None
+        row_h = min(k["MAX_ROW_H"], (h - chrome) // rows)
+        if row_h < k["MIN_ROW_H"]:
+            return None
+        mode = ("stack" if row_h >= k["STACK_MIN_H"]
+                else ("inline" if col_w >= k["INLINE_MIN_W"] else "none"))
+        return dict(cols=cols, rows=rows, col_w=col_w, row_h=row_h, meta=mode,
+                    photo=min(row_h - 6, 30), area=col_w * row_h,
+                    empty=cols * rows - cap)
+
+    hi = max(1, min((w - pad * 2 + gap) // (int(k["MIN_COL_W"]) + gap), max(1, cap)))
+    best = None
+    for c in range(1, hi + 1):
+        g = geo(c)
+        if not g:
+            continue
+        if (not best or g["area"] > best["area"] * 1.02
+                or (g["area"] > best["area"] * 0.98 and g["empty"] < best["empty"])):
+            best = g
+    return best
+
+
+def test_compact_rows_on_wide_is_the_default():
+    """The owner asked for 16:9 rows, not a photo grid."""
+    m = re.search(r"const _gfxOpts = \{(.*?)\};", SRC, re.S)
+    opts = m.group(1)
+    assert re.search(r'layout:\s*"rows"', opts), "compact rows is not the default layout"
+    assert re.search(r'format:\s*"wide"', opts), "the default canvas is not wide 16:9"
+
+
+def test_all_one_hundred_fit_one_wide_canvas_with_no_holes():
+    g = _list_geometry(100, "wide")
+    assert g, "100 rows do not fit the wide canvas at all"
+    assert g["cols"] * g["rows"] >= 100
+    assert g["empty"] == 0, f"{g['empty']} empty cells on the Top-100 board"
+
+
+def test_the_wide_board_actually_fills_its_height():
+    """'Use all available space'. The chip grid left a blank bottom strip."""
+    w, h = _formats()["wide"]
+    chrome = int(re.search(r"_GFX_CHIP_CHROME\s*=\s*(\d+)", SRC).group(1))
+    g = _list_geometry(100, "wide")
+    fill = (g["rows"] * g["row_h"]) / (h - chrome)
+    assert fill > 0.90, f"only {fill:.0%} of the vertical space is used"
+
+
+def test_the_headshot_is_small():
+    """The explicit correction: 'the headshots are too big'. The chip layout
+    gave the photo 141x124; here it is a thumbnail beside the text."""
+    g = _list_geometry(100, "wide")
+    assert g["photo"] <= 30, f"headshot is {g['photo']}px, not a small thumbnail"
+    assert g["photo"] < g["row_h"], "the headshot must sit inside the row"
+
+
+def test_meta_is_shown_at_the_default_size():
+    """Age / position / level, 'only if we have space'. At 100-in-16:9 the row
+    is short but wide, so the meta rides inline rather than stacking."""
+    g = _list_geometry(100, "wide")
+    assert g["meta"] != "none", "no room found for position/age/level"
+
+
+def _list_row_body() -> str:
+    m = re.search(r"function _gfxListRowHtml\([^)]*\)\s*\{(.*?)\n\}", SRC, re.S)
+    assert m, "could not find _gfxListRowHtml"
+    return m.group(1)
+
+
+def test_compact_row_carries_every_required_element():
+    body = _list_row_body()
+    assert "r.name" in body, "no name"
+    assert "fv-badge" in body, "no eFV grade"
+    assert "rank" in body, "no rank"
+    assert "_gfxListPhotoCss" in body, "no headshot"
+    assert "r.org" in body, "no team"
+
+
+def test_nothing_but_the_name_block_can_absorb_slack():
+    """'Everything appropriately in-line, with no bleeding or cut off
+    elements.' Rank, photo, badge and logo are all flex:none, so a long name
+    ellipsizes instead of pushing a neighbour out of the row."""
+    body = _list_row_body()
+    assert body.count("flex:none") >= 3, (
+        "fixed row elements must be flex:none or a long name will shove them out")
+    assert "min-width:0" in body and "text-overflow:ellipsis" in body
+
+
+def test_compact_rows_normalize_through_gfxrow():
+    """Same contract the chip grid got wrong."""
+    start = SRC.index("if (useList) {")
+    block = SRC[start:SRC.index("} else if (useChips) {", start)]
+    assert re.search(r"_gfxListRowHtml\(\s*_gfxRow\(", block), (
+        "the compact list must pass items through _gfxRow")
 
 
 def test_chip_photo_uses_background_cover_not_object_fit():

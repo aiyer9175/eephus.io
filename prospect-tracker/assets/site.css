@@ -1540,10 +1540,16 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   margin-right: 4px; }
 .fa-app .fa-verdict { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
   letter-spacing: 0.08em; padding: 2px 6px; border: 1px solid var(--border); white-space: nowrap; cursor: help; }
+/* BUGFIX 2026-08-03: these two washes were baked rgba literals - rgba(31,122,58)
+   is --accent-green's LIGHT value and rgba(185,28,28) is --accent-red's light
+   value. The tokens flip in dark theme (to #4FFF9E / #FF6B7A) but a literal
+   cannot, so the VALUE and OVERPAY pills carried a muddy light-palette tint
+   against the Topps-Chrome field. color-mix keeps the tint tied to whichever
+   token is live, which is the pattern .fa-type-opt below already uses. */
 .fa-app .fa-verdict-value { color: var(--accent-green); border-color: var(--accent-green);
-  background: rgba(31, 122, 58, 0.08); }
+  background: color-mix(in srgb, var(--accent-green) 8%, transparent); }
 .fa-app .fa-verdict-overpay { color: var(--accent-red); border-color: var(--accent-red);
-  background: rgba(185, 28, 28, 0.08); }
+  background: color-mix(in srgb, var(--accent-red) 8%, transparent); }
 .fa-app .fa-verdict-market { color: var(--text-secondary); }
 .fa-app .fa-pos { color: var(--accent-green); font-weight: 600; }
 .fa-app .fa-neg { color: var(--accent-red); font-weight: 600; }
@@ -2625,7 +2631,15 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   padding: 8px 12px 8px 16px;
   border: 1px solid var(--border, rgba(128,128,128,.25));
   border-radius: 4px;
-  background: var(--panel-bg, var(--card-bg, transparent));
+  /* BUGFIX 2026-08-03: this was var(--panel-bg, var(--card-bg, transparent))
+     and NEITHER token has ever been defined in this stylesheet, so both boards
+     fell through to `transparent` and their rows sat directly on the grain
+     field with only a hairline border. The fantasy board, which uses the same
+     .mlb-card primitive, names --bg-secondary explicitly and has always been
+     filled - so Projections and Free Agency were the only two lists on the
+     site without a panel, which is most of why they read as a different
+     product. Same token, and it resolves in both themes. */
+  background: var(--bg-secondary);
   grid-template-rows: minmax(0, 1fr) auto;
   content-visibility: auto;
   contain-intrinsic-size: auto 92px;
