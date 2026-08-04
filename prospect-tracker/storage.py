@@ -4383,25 +4383,45 @@ def bind_player_ids(ids_by_key: dict[str, int]) -> int:
     id evaporated between the resolve step and the export. Binding here makes
     the resolution outlive the cache.
 
-    Skips a key already bound to a DIFFERENT id rather than repointing it: a
-    key bound to two ids is the ambiguous C2 class in identity_audit, and
-    guessing there is how two people get fused.
+    The binding is guarded in BOTH directions, because a binding is a pair and
+    either half can already be spoken for:
+
+      * a KEY already bound to a different id is the ambiguous C2 class in
+        identity_audit, and guessing there is how two people get fused;
+      * an ID already bound to a different key is the same error mirrored, and
+        it used to get through. The key-side guard passed for an unseen key,
+        and then `ON CONFLICT(mlbam_id) DO UPDATE SET player_key = COALESCE(
+        excluded.player_key, ...)` repointed the id, because excluded.player_key
+        is never null here so the COALESCE could only ever choose the incoming
+        key. Measured live while wiring the draft-time id seeding: MLBAM 814385
+        belongs to `jackson_natili`, the draft feed spells the same pick
+        `jack_natili`, and an unguarded harvest MOVED the id onto the draft
+        slug - silently taking the identity away from the row that had it.
+
+    The SQL now refuses the repoint on its own (the DO UPDATE only fires on a
+    row whose player_key IS NULL, i.e. a photo-context row with no owner yet),
+    so a future caller that forgets the python guard still cannot corrupt an
+    existing binding. Both halves are deliberate: the python guard makes the
+    skip observable and countable, the SQL guard makes it impossible.
     """
     if not ids_by_key:
         return 0
     n = 0
     with connect() as con:
-        existing = {r[0]: r[1] for r in con.execute(
+        rows = con.execute(
             "SELECT player_key, mlbam_id FROM player_photos "
-            "WHERE player_key IS NOT NULL").fetchall()}
+            "WHERE player_key IS NOT NULL").fetchall()
+        existing = {r[0]: r[1] for r in rows}          # key -> id
+        owner_of = {int(r[1]): r[0] for r in rows if r[1] is not None}   # id -> key
         for key, mid in ids_by_key.items():
             if not key or mid is None:
                 continue
             prior = existing.get(key)
-            if prior is not None and int(prior) != int(mid):
-                continue                      # ambiguous binding, leave it alone
             if prior is not None:
-                continue                      # already bound to this id
+                continue                      # key already bound (same id or ambiguous)
+            owner = owner_of.get(int(mid))
+            if owner is not None and owner != key:
+                continue                      # id belongs to another key, do not steal it
             # headshot_ctx is NOT NULL, and 'milb' is the provisional default
             # the snapshot path already uses when it binds a prospect id. The
             # real context is resolved later by headshots.resolve_ctx and
@@ -4411,7 +4431,8 @@ def bind_player_ids(ids_by_key: dict[str, int]) -> int:
                 """INSERT INTO player_photos (mlbam_id, headshot_ctx, player_key)
                    VALUES (?, 'milb', ?)
                    ON CONFLICT(mlbam_id) DO UPDATE SET
-                     player_key = COALESCE(excluded.player_key, player_photos.player_key)""",
+                     player_key = excluded.player_key
+                   WHERE player_photos.player_key IS NULL""",
                 (int(mid), key),
             )
             n += 1
