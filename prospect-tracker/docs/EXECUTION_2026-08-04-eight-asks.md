@@ -322,3 +322,118 @@ deleted. The jump chips call `preventDefault`, which matters: a bare `href="#ov-
 ejecting the reader mid-scroll. The detail sidebar was `display:none` below 1300px, so its Key
 Signals card was unreachable on every tablet and phone; it now stacks under the tab content
 reusing the SAME DOM node, so double-rendering is structurally impossible.
+
+
+---
+
+# PART 2 (same day): the repair plan, docs/master-plan-2026-08-04-repairs-ewar2.md
+
+Executed against a RUNNING PIPELINE. `python run_monthly.py` was live 13:16-14:21, so
+every lane was resequenced source-first and no artifact was written until it exited.
+Suite at close: **3,044 passed / 4 failed / 21 skipped / 1 xfailed** (opened at 3,001 / 1).
+
+## The one deliberate red is GONE
+
+Re-running proj_backtest with persist flipped `challenger_wins` to false, so
+`_cohort_intercepts()` returns `{}` and the 2026-06-12 vector no longer serves. The league
+remainder fell **3.02 -> 0.69** wins per team and `test_recenter_remainder_near_zero` passes
+for the first time since 2026-07-30. Verified it passes on a REAL value (0.69 present in
+`league_sum_accounting`), not a missing one.
+
+**My own justification for that was wrong, and the new instrument caught it.** The plan said
+the vector was "MAE-neutral". The arm that scores the vector proj_export ACTUALLY SERVES,
+which the challenger-vs-incumbent gate never did, returns 2025 holdout MAE **7.18 against
+7.21** for plain recentering, i.e. on the holdout it was the BEST of four arms. Across all
+four targets it is 2 wins and 2 losses, every gap inside noise on 30 teams. The drop still
+stands, but because it costs nothing resolvable and buys back 2.3 wins/team of accounting,
+not because it was free. Quoting the holdout alone would have argued the other way.
+
+Now measured every run instead of in a scratch script: the assigned-roster level deficit is
+**persistent, not a 2025 artifact** (-131.6, -83.7, -114.9, -88.1 across 2022-25 against a
+stable ~920 actual), and pooled bias dilutes 1.75x because the 3,837 unassigned rows carry
+bias -0.0 and r 0.0 BY CONSTRUCTION.
+
+## eWAR v2: the fielding swap is REMOVED, on measurement
+
+A blend axis was built to rescue it. Grid over 2016-2025, 300 team-seasons:
+
+| w | wins r | wins mae0 | next-yr r | prevention abs r |
+|---|---|---|---|---|
+| 0.00 | 0.8595 | 4.306 | **0.2524** | **0.3780** |
+| 0.50 | 0.8667 | 4.251 | 0.2452 | 0.3718 |
+| 1.00 | 0.8686 | 4.347 | 0.2359 | 0.3559 |
+| bWAR | 0.8803 | 3.787 | 0.2481 | 0.4290 |
+
+**Both forward legs are monotone decreasing in w**, across five points and two independent
+gates, so there is no weight at which the Statcast read pays for itself. At w=0 eWAR BEATS
+bWAR on the forward leg (0.2524 vs 0.2481) while losing same-season fit: exactly the trade
+the FIP pitching swap exists to make, and now the whole of eWAR v2.
+
+- NEW GATE 1b (team runs) needed no fetch: the cached standings already carried
+  runsScored/runsAllowed and `standings()` was discarding them. Its OFFENCE ARM IS AN EXACT
+  NULL CONTROL (r 0.3132 both series), which is what licenses trusting the prevention
+  comparison.
+- Endpoints verified on real rows: w=1.0 reproduces v1 to 0.0, w=0.0 reproduces bWAR's
+  rfield to 0.0 over 6,640 batter-seasons.
+- **CATCHER FRAMING: probed and REFUSED.** Savant responds and rv_tot is genuinely framing
+  runs (per-zone integers sum to it), but the season parameter is INERT: every spelling
+  returns one identical undated payload, md5 b389177d5e. Ingesting it would assign one
+  snapshot to ten seasons.
+- A trap caught in the rebuild: with the default now w=0, the `fielding_swap_only`
+  attribution arm was being built AT THE DEFAULT and came back as bWAR under a label
+  promising the opposite. It now asks at w=1.0 explicitly.
+
+## Two standing gates were grading something other than their own rule
+
+**SIDE FAIRNESS.** S1 declares the top-25 mean AND median co-primary; the coded B4 check read
+the MEAN ONLY and stamped `median_ci90` without ever testing it. On the shipped lambdas the
+mean CI90 excludes zero and **the median CI90 [-0.64, 6.53] does not**. B4 now tests both.
+Critically a control at the OLD lambdas on the SAME rows also fails the median leg, so this
+is 11 days of matrix drift, NOT the pitcher pin.
+
+**GATE 3.** Four rounds of re-weighting had failed on the assumption that NEED was saturated.
+Wrong: need is the healthiest component (3.9% club effect, supplying 75.6% of the composite's
+interaction). **BEHAVIOR is saturated** - LAD is its #1 for 228 of 228 with zero ties. One
+level deeper: `behavior = 0.5*reach + 0.3*recent + 0.2*rich` and ONLY reach takes a player
+input; `recent` divides by the league-max 3-winter outlay, which IS LAD, so they score 1.0 BY
+CONSTRUCTION. Those constants hand LAD a 0.500 floor against a league median of 0.077 before
+the free agent is consulted. **You cannot re-weight your way to a constant**, which is why
+four rounds failed. All three candidates NO-SHIP; a 386-vector passing set exists and the
+best was declined for zero slack and for zeroing the components that encode known failures.
+
+## GFX rendered in a browser, and a defect only a picture could show
+
+24/24 list cases pass: exact 2x dimensions, non-blank, and ZERO headshot URLs or
+background-images in every list board, while the hero and compare cards keep theirs.
+
+Looking at the export showed a top-25 board filling only 83.6% of its canvas. The cause was
+an inherited constant: MAX_ROW_H was 44 because a row used to be "44px beside a 22px
+headshot", and the headshot left today. Swept the cap across the whole matrix rather than
+fixing the case in front of me: **52 improves every case and regresses none** (wide/25
+83.6 -> 95.1, portrait/25 94.8 -> 98.5); 56 fills wide better but collapses portrait to 67%.
+
+## The 4 remaining reds, each attributed
+
+None are caused by source changes in this session; all are surfaced by the nightly regen.
+
+1. **efv_sign_declarations[hit]** - hitter `age` fits +0.042 against a declared -1 on the
+   rebuilt matrix. Same class as the pitcher `age_rel_level` case resolved 07-30, whose
+   sanctioned remedy is a drop-gate adjudication and then moving the DECLARATION, not the
+   feature. Owed: that gate.
+2. **identity_collisions (2)** - jack_natili, jose_rodriguez and three more. Verified NOT
+   from this session's id seeding: jack_natili is absent from player_photos because the new
+   symmetric guard REFUSED to bind it, and the pipeline started before that code was
+   committed. Owed: split the NEWCOMER onto a discriminated key, never re-key the incumbent.
+   `tools/identity_age_sweep.py` (new) generalises the detection and finds 15 impossible
+   bindings, 13 of them invisible to the trade-board inactive rule.
+3. **eta_bases_match_km** - the pipeline refit KM at 14:08 (A+ 3.25) while `eta.BASE_YEARS`
+   stays 3.0. The constants owe an update through the eta backtest gate.
+
+## Other work landed
+
+Pre-arb pricing for the 167 published no_contract vets on the registered league-minimum
+basis, with a no-inversion invariant. `roster_status.mlb_seasons` backfilled from career_war
+(the empty field on 782 of 2,681 rows is what let a fused identity reach the board).
+/fantasy/ hash router. projections.js inline styles 58 -> 19, every survivor computed. The
+Methodology page stopped describing a grade the site retired in July. `composite_at_shipped`
+now records the shipped lambda instead of the selector's. Pitcher lambda pinned at 0.57.
