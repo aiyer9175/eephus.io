@@ -1950,6 +1950,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             "mean_abs_delta": round(statistics.mean(abs(s["xfv_minus_consensus"]) for s in scored), 2) if scored else None,
             "mean_signed_delta": round(statistics.mean(s["xfv_minus_consensus"] for s in scored), 2) if scored else None,
         },
+        "biggest_disagreements": _live_disagreement_block(scored),
         "surplus_totals_mm": {"xfv": xfv_tot, "consensus": cons_tot,
                               "xfv_share_of_consensus": round(xfv_tot / cons_tot, 3) if cons_tot else None},
     }
@@ -1957,6 +1958,80 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         scored_live_path(side).write_text(json.dumps(scored, indent=0), encoding="utf-8")
         log.info("wrote %s (%d players)", scored_live_path(side), len(scored))
     return report
+
+
+_DISAGREE_TOP_N = 25
+# A grade that disagrees with the industry by a full 5-point rung is a different
+# opinion about the player, not rounding.
+_DISAGREE_MATERIAL_FV = 5.0
+
+
+def _live_disagreement_block(scored, top_n: int = _DISAGREE_TOP_N) -> dict:
+    """Rank the live board's biggest model-vs-consensus disagreements.
+
+    The resolved cohort has published its top movers since the model shipped
+    (see the score_report built in run()), but the LIVE board - the players
+    anyone is actually arguing about - only ever published mean and max delta.
+    So "where does eFV disagree most with the industry right now" had no
+    committed answer anywhere, and every discussion of it started by rebuilding
+    the list by hand.
+
+    TWO bases, and MIND WHICH IS WHICH - the field names predate the board and
+    now point the wrong way:
+      * `board` = xfv_minus_consensus. Despite reading like a pure-model
+        quantity, this is xfv_grade minus consensus, and xfv_grade has been the
+        SERVED headline since the 2026-07-25 basis flip. This is the delta a
+        reader can actually see.
+      * `legacy_quantile` = xfv_minus_consensus_display. Named "display" because
+        it once was: it tracks xfv_grade_display, the rank-preserving quantile
+        remap onto the consensus distribution that was RETIRED as the headline
+        on 2026-07-25. It is kept for back-compat reads and is not shown.
+    The distinction is not cosmetic. Measured on the 2026-08-03 live board, the
+    board basis disagrees with consensus by a mean 12.5 FV with 1,597 of 2,015
+    hitters a full rung or more apart, while the retired quantile basis reads a
+    mean 0.56 with 18 material - because a quantile remap onto the consensus
+    distribution reproduces consensus almost by construction. Quoting the
+    quantile numbers would say the model barely disagrees with the industry,
+    which is the opposite of true.
+
+    Display-only. Nothing consumes this; it is an instrument.
+    """
+    if not scored:
+        return {"n": 0, "display": {}, "model": {}}
+
+    def _row(s, key):
+        return {
+            "player_key": s.get("player_key"),
+            "position": s.get("position"),
+            "consensus_fv": s.get("consensus_fv"),
+            "xfv_grade_display": s.get("xfv_grade_display"),
+            "xfv_grade": s.get("xfv_grade"),
+            "delta": s.get(key),
+            "xfv_war_6yr": s.get("xfv_war_6yr"),
+            "surplus_mm": s.get("surplus_mm"),
+        }
+
+    def _side(key):
+        rows = [s for s in scored if s.get(key) is not None and s.get("consensus_fv") is not None]
+        if not rows:
+            return {}
+        hi = sorted(rows, key=lambda s: -s[key])[:top_n]
+        lo = sorted(rows, key=lambda s: s[key])[:top_n]
+        deltas = [s[key] for s in rows]
+        return {
+            "n_compared": len(rows),
+            "mean_abs": round(statistics.mean(abs(d) for d in deltas), 2),
+            "n_material": sum(1 for d in deltas if abs(d) >= _DISAGREE_MATERIAL_FV),
+            "material_threshold_fv": _DISAGREE_MATERIAL_FV,
+            "model_higher": [_row(s, key) for s in hi],
+            "model_lower": [_row(s, key) for s in lo],
+        }
+
+    return {"n": len(scored),
+            "basis_note": ("board = xfv_grade - consensus (the SERVED headline since "
+                           "2026-07-25); legacy_quantile = the retired quantile display"),
+            "board": _side("xfv_minus_consensus"),
+            "legacy_quantile": _side("xfv_minus_consensus_display")}
 
 
 def backgrade_path():

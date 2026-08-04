@@ -45,11 +45,23 @@ def _entry(s, side, kind):
         "xfv_grade_realized": s.get("xfv_grade"),        # alias (identical; kept for back-compat reads)
         "xfv_grade_quantile": s.get("xfv_grade_display"),# the DISPLAYED headline (20-80 quantile map)
         "consensus_fv": s.get("consensus_fv"),
-        # COMMENT CORRECTED 2026-07-23 (bughunt doc-drift): the realized delta
-        # does NOT track the displayed quantile headline - the headline's delta
-        # is xfv_minus_consensus_quantile below.
-        "xfv_minus_consensus": s.get("xfv_minus_consensus"),          # realized - consensus (pure-model delta)
-        "xfv_minus_consensus_quantile": s.get("xfv_minus_consensus_display"),  # displayed headline - consensus
+        # COMMENT RE-CORRECTED 2026-08-04. The 2026-07-23 version of this note
+        # said the realized delta "does NOT track the displayed headline - the
+        # headline's delta is xfv_minus_consensus_quantile". That was true when
+        # the quantile map WAS the headline. It was retired as the served grade
+        # on 2026-07-25 (BOARD_GRADE_FIELD = xfv_grade), so the two lines below
+        # now mean the OPPOSITE of what the old note claimed, and anyone reading
+        # it got the wrong field. Same drift class as the FanGraphs/bWAR comments
+        # fixed in 5325440.
+        #   xfv_minus_consensus          = xfv_grade - consensus = THE SERVED delta.
+        #   xfv_minus_consensus_quantile = the RETIRED quantile display's delta,
+        #                                  kept only for back-compat reads.
+        # The gap is large: on the 2026-08-03 live board the served basis
+        # disagrees with consensus by a mean 12.5 FV, the retired quantile basis
+        # by 0.56, because a quantile remap onto the consensus distribution
+        # reproduces consensus by construction.
+        "xfv_minus_consensus": s.get("xfv_minus_consensus"),          # SERVED headline - consensus
+        "xfv_minus_consensus_quantile": s.get("xfv_minus_consensus_display"),  # retired quantile - consensus
         "xfv_war_6yr": s.get("xfv_war_6yr"),
         "p_bucket": s.get("p_bucket"),
         "surplus_mm": s.get("surplus_mm"),
