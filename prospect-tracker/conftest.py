@@ -16,8 +16,12 @@ and test_backtest.py."""
 
 from __future__ import annotations
 
+import contextlib
 import functools
+import http.server
 import json
+import socketserver
+import threading
 from pathlib import Path
 
 import pytest
@@ -38,6 +42,82 @@ import pytest
 # ---------------------------------------------------------------------------
 
 _DATA_DIR = Path(__file__).resolve().parent / "data"
+_SITE_ROOT = Path(__file__).resolve().parent
+
+
+class _QuietHTTP(http.server.SimpleHTTPRequestHandler):
+    """Static handler for the browser tests. TWO non-default settings, both
+    load-bearing, which is why this lives in ONE place instead of being
+    re-typed in each test module.
+
+    HTTP/1.1 (the stdlib default is HTTP/1.0) -- THIS IS THE BUG FIX.
+    Under HTTP/1.0 the handler sets close_connection after every response, so
+    the server signals end-of-body by CLOSING THE SOCKET. On Windows that
+    close races the send buffer: for a small file the whole body is already
+    buffered and delivered, but for a large one the close can discard the
+    tail, and the browser sits waiting for bytes that will never arrive until
+    page.goto times out. Measured 2026-08-04: assets/site.css is 211KB and was
+    the ONLY asset big enough to lose the race, which is exactly why the
+    failures looked random and hit a different subset of tests every run.
+    Under HTTP/1.1 the response is framed by Content-Length (which
+    SimpleHTTPRequestHandler already sends), so no close is needed to mark the
+    end and there is nothing to race. Verified: same page, same file, HTTP/1.0
+    times out at 12s and HTTP/1.1 loads in 0.02s.
+
+    log_message silenced so a failing assertion is not buried in access logs.
+    """
+
+    protocol_version = "HTTP/1.1"
+
+    def log_message(self, format, *args):  # noqa: A002 (matches stdlib sig)
+        pass
+
+
+def make_static_server(directory: str | Path | None = None):
+    """(httpd, port), already serving on a background thread.
+
+    THREADING IS REQUIRED, not an optimisation, for TWO independent reasons.
+    Both were learned the hard way in separate test modules and are recorded
+    here so a future consolidation cannot drop one of them:
+      * The homepage boot path kicks off a large async fetch of
+        data/timeseries.json (~58MB). On a single-threaded server that blocks
+        the remaining load-blocking resources and pushes
+        page.goto(wait_until="load") past its timeout. A threaded server
+        serves concurrently, like real static hosting.
+      * HTTP/1.1 keeps connections alive and a browser opens several in
+        parallel for one page, so a single-threaded server would hold the
+        first open and DEADLOCK on the rest.
+    daemon_threads so a kept-alive connection cannot outlive the test and hang
+    server_close().
+
+    Caller owns shutdown, and owes BOTH calls: shutdown() stops serve_forever,
+    server_close() releases the listening socket. Without the latter the socket
+    lingers until GC and surfaces as a ResourceWarning on Python 3.13+.
+    Prefer serve_site(), which does both, where the `with` shape fits.
+    """
+    root = str(directory or _SITE_ROOT)
+    handler = functools.partial(_QuietHTTP, directory=root)
+    httpd = socketserver.ThreadingTCPServer(("127.0.0.1", 0), handler,
+                                            bind_and_activate=False)
+    httpd.daemon_threads = True
+    httpd.allow_reuse_address = True
+    httpd.server_bind()
+    httpd.server_activate()
+    port = httpd.server_address[1]
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    return httpd, port
+
+
+@contextlib.contextmanager
+def serve_site(directory: str | Path | None = None):
+    """Serve the site root over loopback; yields the base URL with a trailing
+    slash. Use in a `with` block or wrap in a fixture."""
+    httpd, port = make_static_server(directory)
+    try:
+        yield f"http://127.0.0.1:{port}/"
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
 
 
 @functools.lru_cache(maxsize=None)

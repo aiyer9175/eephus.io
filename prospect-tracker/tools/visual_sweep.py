@@ -92,9 +92,25 @@ PROBE = r"""
 
 
 def _serve():
-    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=ROOT)
+    class _H(http.server.SimpleHTTPRequestHandler):
+        # HTTP/1.1, not the stdlib HTTP/1.0 default. Under 1.0 the server marks
+        # end-of-body by CLOSING the socket, and on Windows that close races the
+        # send buffer: a large asset (assets/site.css is 211KB) can lose its tail,
+        # so the browser waits on bytes that never arrive. In a TEST that showed
+        # up as a goto timeout; HERE it would be worse, because a sweep whose CSS
+        # truncated still SCREENSHOTS, and an unstyled page is a plausible-looking
+        # image rather than an error. Content-Length framing removes the race.
+        # Measured 2026-08-04, same file: HTTP/1.0 hangs to 12s, HTTP/1.1 0.02s.
+        protocol_version = "HTTP/1.1"
+
+        def log_message(self, format, *args):  # noqa: A002 (matches stdlib sig)
+            pass
+
+    handler = functools.partial(_H, directory=ROOT)
 
     class Quiet(socketserver.ThreadingTCPServer):
+        # Threading is REQUIRED once keep-alive is on: a browser opens several
+        # parallel connections per page and a single-threaded server deadlocks.
         allow_reuse_address = True
         daemon_threads = True
 

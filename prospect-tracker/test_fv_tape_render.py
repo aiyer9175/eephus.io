@@ -3,13 +3,10 @@ tape flag is set (via ?tape=1, captured to localStorage before the SPA router
 rewrites the hash), and is dark by default in a clean context. Skips where
 playwright/chromium is unavailable.
 """
-import functools
-import http.server
-import socketserver
-import threading
 import os
 
 import pytest
+from conftest import make_static_server
 
 pytest.importorskip("playwright.sync_api")
 from playwright.sync_api import sync_playwright  # noqa: E402
@@ -19,11 +16,15 @@ PLAYER = "emmanuel_rodriguez"  # 49 consensus points, well over the candle gate
 
 
 def _serve():
-    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=ROOT)
-    httpd = socketserver.TCPServer(("127.0.0.1", 0), handler)
-    port = httpd.server_address[1]
-    threading.Thread(target=httpd.serve_forever, daemon=True).start()
-    return httpd, port
+    """Shared harness (conftest.make_static_server): HTTP/1.1 + threaded.
+
+    Was a single-threaded TCPServer on the stdlib HTTP/1.0 default. Both
+    were wrong: HTTP/1.0 signals end-of-body by closing the socket, which
+    on Windows races the send buffer and truncates a large asset
+    (assets/site.css, 211KB) so page.goto hangs to timeout; and once
+    HTTP/1.1 keep-alive is on, a single-threaded server deadlocks on the
+    browser's parallel connections. See conftest._QuietHTTP."""
+    return make_static_server(ROOT)
 
 
 def test_fv_tape_flag_gating():

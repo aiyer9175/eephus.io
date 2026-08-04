@@ -21,37 +21,23 @@ Playwright/chromium are OPTIONAL; the test skips cleanly when unavailable
 (mirrors test_index_html_loads.py)."""
 from __future__ import annotations
 
-import http.server
-import socketserver
-import threading
 from pathlib import Path
 
 import pytest
+from conftest import serve_site
 
 ROOT = Path(__file__).parent
 
 
-class _QuietHandler(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, format, *args):  # noqa: A002
-        pass
-
-
 @pytest.fixture(scope="module")
 def server():
-    httpd = socketserver.ThreadingTCPServer(("127.0.0.1", 0), _QuietHandler,
-                                            bind_and_activate=False)
-    httpd.daemon_threads = True
-    httpd.allow_reuse_address = True
-    httpd.server_bind()
-    httpd.server_activate()
-    port = httpd.server_address[1]
-    th = threading.Thread(target=httpd.serve_forever, daemon=True)
-    th.start()
-    try:
-        yield f"http://127.0.0.1:{port}/"
-    finally:
-        httpd.shutdown()
-        httpd.server_close()
+    """Shared harness (conftest.serve_site): HTTP/1.1 + threaded.
+
+    Both settings are load-bearing and the reason this is no longer
+    re-typed per module; see conftest._QuietHTTP for the measured
+    HTTP/1.0 large-file truncation this fixes."""
+    with serve_site() as base:
+        yield base
 
 
 @pytest.fixture(scope="module")
