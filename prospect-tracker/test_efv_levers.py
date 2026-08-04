@@ -38,9 +38,19 @@ def test_c1_tier_matches_lab():
 
 def test_c1_tripwire_threshold_above_standing_gap():
     import efv_reliability as er
-    # the documented standing bust-bucket ECE is ~0.12; the tripwire must sit above
-    # it so it catches WIDENING, not the known standing miscalibration.
-    assert er.BUST_ECE_TRIPWIRE > 0.12
+    # REBASED 2026-08-03. This asserted `> 0.12` against a ~0.12 standing gap,
+    # but that gap was measured on the RAW curve. The monitor was reading
+    # p_bucket_given_fv without the odds-dispersion Platt map that efv_score
+    # applies at all three scoring seams, so it graded a distribution the site
+    # had stopped serving. On the served curve the bust ECE is 0.0754, and a
+    # 0.14 threshold sat 1.9x above the number it watched - it could not fire.
+    #
+    # The intent is unchanged: sit ABOVE the standing gap so the wire catches
+    # widening rather than the standing state. It must also sit BELOW the
+    # pre-map 0.1281, so that silently dropping the Platt map trips it.
+    assert er.BUST_ECE_TRIPWIRE > 0.0754, "would fire on a healthy tree"
+    assert er.BUST_ECE_TRIPWIRE < 0.1281, (
+        "must trip if the recalibration is ever dropped from the scoring seams")
 
 
 # --------------------------------------------------------------------------- #

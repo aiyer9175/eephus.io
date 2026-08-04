@@ -3,7 +3,7 @@
 
 Source: `data/model_registry.json` via `model_registry.load()`. Freshness columns
 (artifact age / stale) are the registry's own stamps, written by
-`model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
+`model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-08-01**. `validate()` at generation time: **clean**.
 
 **202 models.** Verdicts: validated: 36, provisional: 73, unvalidated: 27, deprecated: 66.
