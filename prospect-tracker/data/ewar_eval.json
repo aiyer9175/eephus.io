@@ -1,6 +1,6 @@
 {
  "model": "ewar_v1",
- "generated_at": "2026-08-04T00:21:28",
+ "generated_at": "2026-08-04T14:27:44",
  "eval_window": [
   2016,
   2025
@@ -13,13 +13,13 @@
    2025
   ],
   "ewar": {
-   "r": 0.8686,
-   "r2": 0.7545,
-   "mae_fit": 7.379,
-   "rmse_fit": 9.819,
-   "fit_intercept": 35.153,
-   "fit_slope": 1.3055,
-   "mae_zero_param": 4.347,
+   "r": 0.8595,
+   "r2": 0.7387,
+   "mae_fit": 7.542,
+   "rmse_fit": 10.131,
+   "fit_intercept": 38.044,
+   "fit_slope": 1.2128,
+   "mae_zero_param": 4.306,
    "bias_zero_param": 0.0
   },
   "bwar": {
@@ -34,83 +34,139 @@
   },
   "next_season_wins": {
    "n": 270,
-   "r_ewar": 0.2359,
+   "r_ewar": 0.2524,
    "r_bwar": 0.2481,
    "reading": "team WAR in season y against actual wins in season y+1"
   },
   "by_season": {
    "2016": {
     "n": 30,
-    "r_ewar": 0.8052,
+    "r_ewar": 0.8205,
     "r_bwar": 0.9065,
-    "mae0_ewar": 5.009,
+    "mae0_ewar": 4.977,
     "mae0_bwar": 3.26
    },
    "2017": {
     "n": 30,
-    "r_ewar": 0.9126,
+    "r_ewar": 0.933,
     "r_bwar": 0.9324,
-    "mae0_ewar": 3.551,
+    "mae0_ewar": 3.629,
     "mae0_bwar": 3.099
    },
    "2018": {
     "n": 30,
-    "r_ewar": 0.9231,
+    "r_ewar": 0.9362,
     "r_bwar": 0.9279,
-    "mae0_ewar": 4.417,
+    "mae0_ewar": 4.271,
     "mae0_bwar": 4.482
    },
    "2019": {
     "n": 30,
-    "r_ewar": 0.9037,
+    "r_ewar": 0.924,
     "r_bwar": 0.9339,
-    "mae0_ewar": 5.319,
+    "mae0_ewar": 4.913,
     "mae0_bwar": 4.824
    },
    "2020": {
     "n": 30,
-    "r_ewar": 0.8045,
+    "r_ewar": 0.8526,
     "r_bwar": 0.7963,
-    "mae0_ewar": 2.642,
+    "mae0_ewar": 2.375,
     "mae0_bwar": 2.961
    },
    "2021": {
     "n": 30,
-    "r_ewar": 0.8886,
+    "r_ewar": 0.8658,
     "r_bwar": 0.9256,
-    "mae0_ewar": 5.177,
+    "mae0_ewar": 5.7,
     "mae0_bwar": 4.073
    },
    "2022": {
     "n": 30,
-    "r_ewar": 0.9525,
+    "r_ewar": 0.9512,
     "r_bwar": 0.9642,
-    "mae0_ewar": 3.714,
+    "mae0_ewar": 3.574,
     "mae0_bwar": 3.505
    },
    "2023": {
     "n": 30,
-    "r_ewar": 0.861,
+    "r_ewar": 0.8903,
     "r_bwar": 0.9228,
-    "mae0_ewar": 5.493,
+    "mae0_ewar": 5.437,
     "mae0_bwar": 4.313
    },
    "2024": {
     "n": 30,
-    "r_ewar": 0.9195,
+    "r_ewar": 0.9221,
     "r_bwar": 0.9406,
-    "mae0_ewar": 3.92,
+    "mae0_ewar": 3.713,
     "mae0_bwar": 3.246
    },
    "2025": {
     "n": 30,
-    "r_ewar": 0.8859,
+    "r_ewar": 0.8813,
     "r_bwar": 0.9001,
-    "mae0_ewar": 4.224,
+    "mae0_ewar": 4.476,
     "mae0_bwar": 4.101
    }
   },
   "verdict": "bWAR better"
+ },
+ "gate_1b_team_runs": {
+  "n_team_seasons": 300,
+  "seasons": [
+   2016,
+   2025
+  ],
+  "offense_vs_runs_scored": {
+   "ewar": {
+    "r": 0.3132,
+    "abs_r": 0.3132,
+    "mae_fit": 89.86,
+    "slope": 0.7012
+   },
+   "bwar": {
+    "r": 0.3132,
+    "abs_r": 0.3132,
+    "mae_fit": 89.86,
+    "slope": 0.7012
+   },
+   "note": "NULL CONTROL: identical by construction; a difference is a leak"
+  },
+  "prevention_vs_runs_allowed": {
+   "ewar": {
+    "r": -0.378,
+    "abs_r": 0.378,
+    "mae_fit": 91.44,
+    "slope": -0.8071
+   },
+   "bwar": {
+    "r": -0.429,
+    "abs_r": 0.429,
+    "mae_fit": 88.34,
+    "slope": -0.9983
+   },
+   "note": "r is expected NEGATIVE (runs above average vs runs allowed); compare on abs_r"
+  },
+  "total_vs_run_differential": {
+   "ewar": {
+    "r": 0.9403,
+    "abs_r": 0.9403,
+    "mae_fit": 33.44,
+    "slope": 1.0168
+   },
+   "bwar": {
+    "r": 0.9628,
+    "abs_r": 0.9628,
+    "mae_fit": 26.96,
+    "slope": 1.0935
+   }
+  },
+  "verdict": {
+   "prevention_winner": "bwar",
+   "total_winner": "bwar",
+   "offense_control_clean": true
+  }
  },
  "gate_2_pitcher_persistence": {
   "n_pairs": 1825,
@@ -124,7 +180,7 @@
    "reading": "correlation of season-y value with season-(y+1) ACTUAL runs above average (B-Ref runs-allowed basis)"
   },
   "season_war_self_r": {
-   "ewar": 0.469,
+   "ewar": 0.4688,
    "bwar": 0.3089
   },
   "verdict": "FIP persists better"
@@ -840,7 +896,16 @@
     "CATCHER: the Savant OAA leaderboard returns zero rows for C, so every catcher-season in eWAR carries B-Ref rfield unchanged",
     "PITCHER glove: not on the OAA board; falls back to rfield",
     "pre-2016: no Statcast OAA at all"
-   ]
+   ],
+   "catcher_framing_probe": {
+    "date": "2026-08-04",
+    "endpoint": "baseballsavant.mlb.com/leaderboard/catcher-framing",
+    "reachable": true,
+    "n_rows": 62,
+    "runs_column": "rv_tot (validated: per-zone rv_* sum to it)",
+    "blocker": "season parameter inert - year/season/startYear all return one identical undated payload (md5 b389177d5e)",
+    "decision": "NOT ingested; a single undated snapshot cannot be assigned to ten seasons"
+   }
   },
   "pitching": {
    "n_rows": 10094,
@@ -1159,79 +1224,57 @@
   },
   "row_sources_by_season": {
    "2016": {
-    "bat_bref": 897,
-    "bat_oaa": 544,
-    "bat_mixed": 41,
+    "bat_bref": 1482,
     "pit_fip": 824,
     "pit_bref": 2
    },
    "2017": {
-    "bat_bref": 912,
-    "bat_oaa": 540,
-    "bat_mixed": 42,
+    "bat_bref": 1494,
     "pit_fip": 837,
     "pit_bref": 4
    },
    "2018": {
-    "bat_oaa": 541,
-    "bat_bref": 944,
-    "bat_mixed": 48,
+    "bat_bref": 1533,
     "pit_fip": 890,
     "pit_bref": 6
    },
    "2019": {
-    "bat_bref": 967,
-    "bat_oaa": 547,
-    "bat_mixed": 53,
+    "bat_bref": 1567,
     "pit_fip": 927,
     "pit_bref": 11
    },
    "2020": {
-    "bat_bref": 842,
-    "bat_oaa": 474,
-    "bat_mixed": 44,
+    "bat_bref": 1360,
     "pit_fip": 770,
     "pit_bref": 1
    },
    "2021": {
-    "bat_bref": 1071,
-    "bat_oaa": 580,
-    "bat_mixed": 55,
+    "bat_bref": 1706,
     "pit_fip": 1028,
     "pit_bref": 9
    },
    "2022": {
-    "bat_bref": 1018,
-    "bat_oaa": 615,
-    "bat_mixed": 50,
+    "bat_bref": 1683,
     "pit_fip": 971,
     "pit_bref": 14
    },
    "2023": {
-    "bat_bref": 1010,
-    "bat_oaa": 573,
-    "bat_mixed": 31,
+    "bat_bref": 1614,
     "pit_fip": 965,
     "pit_bref": 2
    },
    "2024": {
-    "bat_bref": 1028,
-    "bat_oaa": 596,
-    "bat_mixed": 27,
+    "bat_bref": 1651,
     "pit_fip": 972,
     "pit_bref": 6
    },
    "2025": {
-    "bat_bref": 1054,
-    "bat_oaa": 602,
-    "bat_mixed": 36,
+    "bat_bref": 1692,
     "pit_fip": 1015,
     "pit_bref": 11
    },
    "2026": {
-    "bat_oaa": 497,
-    "bat_bref": 176,
-    "bat_mixed": 33,
+    "bat_bref": 706,
     "pit_fip": 828,
     "pit_bref": 1
    }
@@ -1243,89 +1286,89 @@
     "team_games": 4854,
     "target": 997.77,
     "bwar_sum": 998.06,
-    "ewar_sum_pre_rescale": 992.45,
+    "ewar_sum_pre_rescale": 998.07,
     "ewar_sum": 997.77,
-    "replacement_scale": 1.00532
+    "replacement_scale": 0.99969
    },
    "2017": {
     "team_games": 4860,
     "target": 999.0,
     "bwar_sum": 997.54,
-    "ewar_sum_pre_rescale": 994.01,
+    "ewar_sum_pre_rescale": 997.3,
     "ewar_sum": 999.0,
-    "replacement_scale": 1.00498
+    "replacement_scale": 1.0017
    },
    "2018": {
     "team_games": 4862,
     "target": 999.41,
     "bwar_sum": 997.42,
-    "ewar_sum_pre_rescale": 991.9,
+    "ewar_sum_pre_rescale": 997.6,
     "ewar_sum": 999.41,
-    "replacement_scale": 1.0075
+    "replacement_scale": 1.00181
    },
    "2019": {
     "team_games": 4858,
     "target": 998.59,
     "bwar_sum": 996.81,
-    "ewar_sum_pre_rescale": 990.87,
+    "ewar_sum_pre_rescale": 997.35,
     "ewar_sum": 998.59,
-    "replacement_scale": 1.00772
+    "replacement_scale": 1.00124
    },
    "2020": {
     "team_games": 1796,
     "target": 369.18,
     "bwar_sum": 370.59,
-    "ewar_sum_pre_rescale": 370.32,
+    "ewar_sum_pre_rescale": 370.44,
     "ewar_sum": 369.18,
-    "replacement_scale": 0.99692
+    "replacement_scale": 0.99661
    },
    "2021": {
     "team_games": 4858,
     "target": 998.59,
     "bwar_sum": 998.35,
-    "ewar_sum_pre_rescale": 1006.6,
+    "ewar_sum_pre_rescale": 997.24,
     "ewar_sum": 998.59,
-    "replacement_scale": 0.99199
+    "replacement_scale": 1.00135
    },
    "2022": {
     "team_games": 4860,
     "target": 999.0,
     "bwar_sum": 1000.56,
-    "ewar_sum_pre_rescale": 1007.36,
+    "ewar_sum_pre_rescale": 1000.57,
     "ewar_sum": 999.0,
-    "replacement_scale": 0.99164
+    "replacement_scale": 0.99843
    },
    "2023": {
     "team_games": 4860,
     "target": 999.0,
     "bwar_sum": 1000.35,
-    "ewar_sum_pre_rescale": 1006.13,
+    "ewar_sum_pre_rescale": 999.99,
     "ewar_sum": 999.0,
-    "replacement_scale": 0.99287
+    "replacement_scale": 0.99901
    },
    "2024": {
     "team_games": 4858,
     "target": 998.59,
     "bwar_sum": 999.79,
-    "ewar_sum_pre_rescale": 1008.55,
+    "ewar_sum_pre_rescale": 998.58,
     "ewar_sum": 998.59,
-    "replacement_scale": 0.99004
+    "replacement_scale": 1.00001
    },
    "2025": {
     "team_games": 4860,
     "target": 999.0,
     "bwar_sum": 1000.44,
-    "ewar_sum_pre_rescale": 1006.31,
+    "ewar_sum_pre_rescale": 999.55,
     "ewar_sum": 999.0,
-    "replacement_scale": 0.99269
+    "replacement_scale": 0.99945
    },
    "2026": {
     "team_games": 3364,
     "target": 691.49,
     "bwar_sum": 681.4,
-    "ewar_sum_pre_rescale": 687.07,
+    "ewar_sum_pre_rescale": 680.91,
     "ewar_sum": 691.49,
-    "replacement_scale": 1.00648
+    "replacement_scale": 1.01553
    }
   },
   "max_abs_deviation_from_target": 0.0,
@@ -1339,86 +1382,86 @@
     {
      "name": "Zack Godley",
      "season": 2018,
-     "delta": 3.97,
-     "ewar": 3.05,
+     "delta": 3.96,
+     "ewar": 3.04,
      "bwar": -0.92
     },
     {
      "name": "Aaron Nola",
      "season": 2018,
-     "delta": -3.54,
-     "ewar": 6.15,
+     "delta": -3.55,
+     "ewar": 6.14,
      "bwar": 9.69
     },
     {
      "name": "Dan Straily",
      "season": 2016,
-     "delta": -3.52,
-     "ewar": 0.63,
+     "delta": -3.53,
+     "ewar": 0.62,
      "bwar": 4.15
     },
     {
      "name": "Mike Minor",
      "season": 2019,
-     "delta": -3.31,
-     "ewar": 4.68,
+     "delta": -3.32,
+     "ewar": 4.67,
      "bwar": 7.99
     },
     {
      "name": "Mike Fiers",
      "season": 2018,
-     "delta": -3.19,
-     "ewar": 1.19,
+     "delta": -3.2,
+     "ewar": 1.18,
      "bwar": 4.38
-    },
-    {
-     "name": "Andrew Abbott",
-     "season": 2024,
-     "delta": -3.07,
-     "ewar": 0.23,
-     "bwar": 3.3
     },
     {
      "name": "Mike Fiers",
      "season": 2019,
-     "delta": -3.05,
-     "ewar": 0.31,
+     "delta": -3.06,
+     "ewar": 0.3,
      "bwar": 3.36
+    },
+    {
+     "name": "Andrew Abbott",
+     "season": 2024,
+     "delta": -3.06,
+     "ewar": 0.24,
+     "bwar": 3.3
     },
     {
      "name": "Ian Kennedy",
      "season": 2016,
-     "delta": -3.02,
-     "ewar": 1.23,
+     "delta": -3.03,
+     "ewar": 1.22,
      "bwar": 4.25
     },
     {
      "name": "Justin Verlander",
      "season": 2017,
-     "delta": -2.92,
-     "ewar": 4.01,
+     "delta": -2.93,
+     "ewar": 4.0,
      "bwar": 6.93
     },
     {
      "name": "JP Sears",
      "season": 2023,
-     "delta": -2.87,
-     "ewar": 0.03,
+     "delta": -2.86,
+     "ewar": 0.04,
      "bwar": 2.9
     },
     {
      "name": "Ronel Blanco",
      "season": 2024,
-     "delta": -2.85,
-     "ewar": 1.82,
+     "delta": -2.83,
+     "ewar": 1.84,
      "bwar": 4.67
     },
     {
-     "name": "Robbie Ray",
-     "season": 2021,
-     "delta": -2.82,
-     "ewar": 4.05,
-     "bwar": 6.87
+     "name": "Gio Gonzalez",
+     "season": 2017,
+     "delta": -2.81,
+     "ewar": 3.64,
+     "bwar": 6.45
     }
    ]
   },
@@ -1426,176 +1469,176 @@
    "units": "fielding runs, full-time (450+ PA) seasons with >=95% Statcast coverage",
    "rows": [
     {
-     "name": "Nick Ahmed",
-     "season": 2018,
-     "fielding_runs_ewar": 14.1,
-     "rfield_bref": 20.0,
-     "delta": -5.9
-    },
-    {
-     "name": "Byron Buxton",
+     "name": "Andrelton Simmons",
      "season": 2017,
-     "fielding_runs_ewar": 12.8,
-     "rfield_bref": 23.0,
-     "delta": -10.2
-    },
-    {
-     "name": "Javier B\u00e1ez",
-     "season": 2019,
-     "fielding_runs_ewar": 12.6,
-     "rfield_bref": 27.0,
-     "delta": -14.4
-    },
-    {
-     "name": "Nicky Lopez",
-     "season": 2021,
-     "fielding_runs_ewar": 11.5,
-     "rfield_bref": 1.0,
-     "delta": 10.5
-    },
-    {
-     "name": "Pete Crow-Armstrong",
-     "season": 2025,
-     "fielding_runs_ewar": 11.1,
-     "rfield_bref": 12.0,
-     "delta": -0.9
+     "fielding_runs_ewar": 36.0,
+     "rfield_bref": 36.0,
+     "delta": 0.0
     },
     {
      "name": "Mookie Betts",
      "season": 2017,
-     "fielding_runs_ewar": 10.8,
+     "fielding_runs_ewar": 28.0,
      "rfield_bref": 28.0,
-     "delta": -17.2
+     "delta": 0.0
     },
     {
-     "name": "Billy Hamilton",
-     "season": 2016,
-     "fielding_runs_ewar": 10.7,
-     "rfield_bref": 11.0,
-     "delta": -0.3
-    },
-    {
-     "name": "V\u00edctor Robles",
+     "name": "Javier B\u00e1ez",
      "season": 2019,
-     "fielding_runs_ewar": 10.2,
-     "rfield_bref": 14.0,
-     "delta": -3.8
+     "fielding_runs_ewar": 27.0,
+     "rfield_bref": 27.0,
+     "delta": 0.0
     },
     {
-     "name": "Francisco Lindor",
-     "season": 2019,
-     "fielding_runs_ewar": 10.1,
-     "rfield_bref": 4.0,
-     "delta": 6.1
-    },
-    {
-     "name": "Bobby Witt Jr.",
-     "season": 2025,
-     "fielding_runs_ewar": 9.9,
-     "rfield_bref": 4.0,
-     "delta": 5.9
-    },
-    {
-     "name": "Addison Russell",
+     "name": "Kevin Pillar",
      "season": 2016,
-     "fielding_runs_ewar": 9.6,
-     "rfield_bref": 18.0,
-     "delta": -8.4
+     "fielding_runs_ewar": 25.0,
+     "rfield_bref": 25.0,
+     "delta": 0.0
     },
     {
-     "name": "Dansby Swanson",
+     "name": "Daulton Varsho",
+     "season": 2024,
+     "fielding_runs_ewar": 24.0,
+     "rfield_bref": 24.0,
+     "delta": 0.0
+    },
+    {
+     "name": "Nolan Arenado",
+     "season": 2019,
+     "fielding_runs_ewar": 23.0,
+     "rfield_bref": 23.0,
+     "delta": 0.0
+    },
+    {
+     "name": "Mookie Betts",
+     "season": 2016,
+     "fielding_runs_ewar": 23.0,
+     "rfield_bref": 23.0,
+     "delta": 0.0
+    },
+    {
+     "name": "Byron Buxton",
+     "season": 2017,
+     "fielding_runs_ewar": 23.0,
+     "rfield_bref": 23.0,
+     "delta": 0.0
+    },
+    {
+     "name": "Paul DeJong",
+     "season": 2019,
+     "fielding_runs_ewar": 23.0,
+     "rfield_bref": 23.0,
+     "delta": 0.0
+    },
+    {
+     "name": "Brandon Crawford",
+     "season": 2016,
+     "fielding_runs_ewar": 22.0,
+     "rfield_bref": 22.0,
+     "delta": 0.0
+    },
+    {
+     "name": "Brice Turang",
+     "season": 2024,
+     "fielding_runs_ewar": 22.0,
+     "rfield_bref": 22.0,
+     "delta": 0.0
+    },
+    {
+     "name": "Ke'Bryan Hayes",
      "season": 2022,
-     "fielding_runs_ewar": 9.5,
-     "rfield_bref": 7.0,
-     "delta": 2.5
+     "fielding_runs_ewar": 21.0,
+     "rfield_bref": 21.0,
+     "delta": 0.0
     }
    ]
   },
   "worst_fielders_by_ewar": {
    "rows": [
     {
-     "name": "Nick Castellanos",
+     "name": "Bobby Witt Jr.",
+     "season": 2022,
+     "fielding_runs_ewar": -24.0,
+     "rfield_bref": -24.0,
+     "delta": 0.0
+    },
+    {
+     "name": "Alcides Escobar",
      "season": 2018,
-     "fielding_runs_ewar": -11.6,
-     "rfield_bref": -16.0,
-     "delta": 4.4
+     "fielding_runs_ewar": -24.0,
+     "rfield_bref": -24.0,
+     "delta": 0.0
+    },
+    {
+     "name": "Brad Miller",
+     "season": 2016,
+     "fielding_runs_ewar": -23.0,
+     "rfield_bref": -23.0,
+     "delta": 0.0
+    },
+    {
+     "name": "Nick Castellanos",
+     "season": 2017,
+     "fielding_runs_ewar": -23.0,
+     "rfield_bref": -23.0,
+     "delta": 0.0
+    },
+    {
+     "name": "Danny Valencia",
+     "season": 2016,
+     "fielding_runs_ewar": -21.0,
+     "rfield_bref": -21.0,
+     "delta": 0.0
     },
     {
      "name": "Andrew McCutchen",
      "season": 2016,
-     "fielding_runs_ewar": -10.7,
+     "fielding_runs_ewar": -21.0,
      "rfield_bref": -21.0,
-     "delta": 10.3
+     "delta": 0.0
     },
     {
-     "name": "Jorge Polanco",
-     "season": 2019,
-     "fielding_runs_ewar": -9.7,
-     "rfield_bref": -11.0,
-     "delta": 1.3
-    },
-    {
-     "name": "Matt Kemp",
-     "season": 2016,
-     "fielding_runs_ewar": -9.3,
-     "rfield_bref": -9.0,
-     "delta": -0.3
-    },
-    {
-     "name": "Amed Rosario",
-     "season": 2018,
-     "fielding_runs_ewar": -8.9,
-     "rfield_bref": -3.0,
-     "delta": -5.9
-    },
-    {
-     "name": "Charlie Blackmon",
-     "season": 2018,
-     "fielding_runs_ewar": -8.9,
-     "rfield_bref": -19.0,
-     "delta": 10.1
-    },
-    {
-     "name": "CJ Abrams",
-     "season": 2024,
-     "fielding_runs_ewar": -8.6,
-     "rfield_bref": 0.0,
-     "delta": -8.6
-    },
-    {
-     "name": "Adam Jones",
+     "name": "Melky Cabrera",
      "season": 2017,
-     "fielding_runs_ewar": -8.3,
-     "rfield_bref": -12.0,
-     "delta": 3.7
+     "fielding_runs_ewar": -21.0,
+     "rfield_bref": -21.0,
+     "delta": 0.0
     },
     {
-     "name": "Adam Jones",
-     "season": 2018,
-     "fielding_runs_ewar": -8.0,
-     "rfield_bref": -19.0,
-     "delta": 11.0
+     "name": "JJ Bleday",
+     "season": 2024,
+     "fielding_runs_ewar": -21.0,
+     "rfield_bref": -21.0,
+     "delta": 0.0
     },
     {
-     "name": "Carlos Correa",
-     "season": 2016,
-     "fielding_runs_ewar": -7.7,
-     "rfield_bref": 5.0,
-     "delta": -12.7
-    },
-    {
-     "name": "Mark Trumbo",
-     "season": 2016,
-     "fielding_runs_ewar": -7.5,
-     "rfield_bref": -10.0,
-     "delta": 2.5
+     "name": "Jose Iglesias",
+     "season": 2021,
+     "fielding_runs_ewar": -20.0,
+     "rfield_bref": -20.0,
+     "delta": 0.0
     },
     {
      "name": "Denard Span",
      "season": 2017,
-     "fielding_runs_ewar": -7.4,
+     "fielding_runs_ewar": -19.0,
      "rfield_bref": -19.0,
-     "delta": 11.6
+     "delta": 0.0
+    },
+    {
+     "name": "Jos\u00e9 Reyes",
+     "season": 2017,
+     "fielding_runs_ewar": -19.0,
+     "rfield_bref": -19.0,
+     "delta": 0.0
+    },
+    {
+     "name": "Colin Moran",
+     "season": 2019,
+     "fielding_runs_ewar": -19.0,
+     "rfield_bref": -19.0,
+     "delta": 0.0
     }
    ]
   }
@@ -1606,25 +1649,97 @@
    "r": 0.8803,
    "mae_zero_param": 3.787,
    "mae_fit": 6.835,
-   "next_season_r": 0.2481
+   "next_season_r": 0.2481,
+   "by_season_r": {
+    "2016": 0.9065,
+    "2017": 0.9324,
+    "2018": 0.9279,
+    "2019": 0.9339,
+    "2020": 0.7963,
+    "2021": 0.9256,
+    "2022": 0.9642,
+    "2023": 0.9228,
+    "2024": 0.9406,
+    "2025": 0.9001
+   },
+   "by_season_mae0": {
+    "2016": 3.26,
+    "2017": 3.099,
+    "2018": 4.482,
+    "2019": 4.824,
+    "2020": 2.961,
+    "2021": 4.073,
+    "2022": 3.505,
+    "2023": 4.313,
+    "2024": 3.246,
+    "2025": 4.101
+   }
   },
   "fielding_swap_only": {
    "r": 0.8777,
    "mae_zero_param": 4.243,
    "mae_fit": 7.077,
-   "next_season_r": 0.2255
+   "next_season_r": 0.2255,
+   "by_season_r": {
+    "2016": 0.8795,
+    "2017": 0.9004,
+    "2018": 0.8814,
+    "2019": 0.9098,
+    "2020": 0.7163,
+    "2021": 0.9142,
+    "2022": 0.9594,
+    "2023": 0.8943,
+    "2024": 0.9062,
+    "2025": 0.8902
+   },
+   "by_season_mae0": {
+    "2016": 3.614,
+    "2017": 3.73,
+    "2018": 5.525,
+    "2019": 5.398,
+    "2020": 3.675,
+    "2021": 4.37,
+    "2022": 3.586,
+    "2023": 4.66,
+    "2024": 3.875,
+    "2025": 3.996
+   }
   },
   "pitching_swap_only": {
    "r": 0.8595,
    "mae_zero_param": 4.306,
    "mae_fit": 7.542,
-   "next_season_r": 0.2524
+   "next_season_r": 0.2524,
+   "by_season_r": {
+    "2016": 0.8205,
+    "2017": 0.933,
+    "2018": 0.9362,
+    "2019": 0.924,
+    "2020": 0.8526,
+    "2021": 0.8658,
+    "2022": 0.9512,
+    "2023": 0.8903,
+    "2024": 0.9221,
+    "2025": 0.8813
+   },
+   "by_season_mae0": {
+    "2016": 4.977,
+    "2017": 3.629,
+    "2018": 4.271,
+    "2019": 4.913,
+    "2020": 2.375,
+    "2021": 5.7,
+    "2022": 3.574,
+    "2023": 5.437,
+    "2024": 3.713,
+    "2025": 4.476
+   }
   },
   "both_swaps_shipped": {
-   "r": 0.8686,
-   "mae_zero_param": 4.347,
-   "mae_fit": 7.379,
-   "next_season_r": 0.2359
+   "r": 0.8595,
+   "mae_zero_param": 4.306,
+   "mae_fit": 7.542,
+   "next_season_r": 0.2524
   }
  },
  "sensitivity_unshrunk_fielding": {
@@ -1636,13 +1751,13 @@
     2025
    ],
    "ewar": {
-    "r": 0.8644,
-    "r2": 0.7472,
-    "mae_fit": 7.422,
-    "rmse_fit": 9.965,
-    "fit_intercept": 36.489,
-    "fit_slope": 1.2627,
-    "mae_zero_param": 4.277,
+    "r": 0.8595,
+    "r2": 0.7387,
+    "mae_fit": 7.542,
+    "rmse_fit": 10.131,
+    "fit_intercept": 38.044,
+    "fit_slope": 1.2128,
+    "mae_zero_param": 4.306,
     "bias_zero_param": 0.0
    },
    "bwar": {
@@ -1657,79 +1772,79 @@
    },
    "next_season_wins": {
     "n": 270,
-    "r_ewar": 0.2426,
+    "r_ewar": 0.2524,
     "r_bwar": 0.2481,
     "reading": "team WAR in season y against actual wins in season y+1"
    },
    "by_season": {
     "2016": {
      "n": 30,
-     "r_ewar": 0.8103,
+     "r_ewar": 0.8205,
      "r_bwar": 0.9065,
-     "mae0_ewar": 5.096,
+     "mae0_ewar": 4.977,
      "mae0_bwar": 3.26
     },
     "2017": {
      "n": 30,
-     "r_ewar": 0.9065,
+     "r_ewar": 0.933,
      "r_bwar": 0.9324,
-     "mae0_ewar": 3.858,
+     "mae0_ewar": 3.629,
      "mae0_bwar": 3.099
     },
     "2018": {
      "n": 30,
-     "r_ewar": 0.9264,
+     "r_ewar": 0.9362,
      "r_bwar": 0.9279,
-     "mae0_ewar": 4.389,
+     "mae0_ewar": 4.271,
      "mae0_bwar": 4.482
     },
     "2019": {
      "n": 30,
-     "r_ewar": 0.9077,
+     "r_ewar": 0.924,
      "r_bwar": 0.9339,
-     "mae0_ewar": 5.186,
+     "mae0_ewar": 4.913,
      "mae0_bwar": 4.824
     },
     "2020": {
      "n": 30,
-     "r_ewar": 0.8286,
+     "r_ewar": 0.8526,
      "r_bwar": 0.7963,
-     "mae0_ewar": 2.478,
+     "mae0_ewar": 2.375,
      "mae0_bwar": 2.961
     },
     "2021": {
      "n": 30,
-     "r_ewar": 0.893,
+     "r_ewar": 0.8658,
      "r_bwar": 0.9256,
-     "mae0_ewar": 5.105,
+     "mae0_ewar": 5.7,
      "mae0_bwar": 4.073
     },
     "2022": {
      "n": 30,
-     "r_ewar": 0.9579,
+     "r_ewar": 0.9512,
      "r_bwar": 0.9642,
-     "mae0_ewar": 3.435,
+     "mae0_ewar": 3.574,
      "mae0_bwar": 3.505
     },
     "2023": {
      "n": 30,
-     "r_ewar": 0.8616,
+     "r_ewar": 0.8903,
      "r_bwar": 0.9228,
-     "mae0_ewar": 5.522,
+     "mae0_ewar": 5.437,
      "mae0_bwar": 4.313
     },
     "2024": {
      "n": 30,
-     "r_ewar": 0.9265,
+     "r_ewar": 0.9221,
      "r_bwar": 0.9406,
-     "mae0_ewar": 3.732,
+     "mae0_ewar": 3.713,
      "mae0_bwar": 3.246
     },
     "2025": {
      "n": 30,
-     "r_ewar": 0.893,
+     "r_ewar": 0.8813,
      "r_bwar": 0.9001,
-     "mae0_ewar": 3.965,
+     "mae0_ewar": 4.476,
      "mae0_bwar": 4.101
     }
    },
@@ -1741,89 +1856,89 @@
      "team_games": 4854,
      "target": 997.77,
      "bwar_sum": 998.06,
-     "ewar_sum_pre_rescale": 988.44,
+     "ewar_sum_pre_rescale": 998.07,
      "ewar_sum": 997.77,
-     "replacement_scale": 1.00932
+     "replacement_scale": 0.99969
     },
     "2017": {
      "team_games": 4860,
      "target": 999.0,
      "bwar_sum": 997.54,
-     "ewar_sum_pre_rescale": 986.3,
+     "ewar_sum_pre_rescale": 997.3,
      "ewar_sum": 999.0,
-     "replacement_scale": 1.01269
+     "replacement_scale": 1.0017
     },
     "2018": {
      "team_games": 4862,
      "target": 999.41,
      "bwar_sum": 997.42,
-     "ewar_sum_pre_rescale": 985.84,
+     "ewar_sum_pre_rescale": 997.6,
      "ewar_sum": 999.41,
-     "replacement_scale": 1.01356
+     "replacement_scale": 1.00181
     },
     "2019": {
      "team_games": 4858,
      "target": 998.59,
      "bwar_sum": 996.81,
-     "ewar_sum_pre_rescale": 986.5,
+     "ewar_sum_pre_rescale": 997.35,
      "ewar_sum": 998.59,
-     "replacement_scale": 1.01208
+     "replacement_scale": 1.00124
     },
     "2020": {
      "team_games": 1796,
      "target": 369.18,
      "bwar_sum": 370.59,
-     "ewar_sum_pre_rescale": 368.38,
+     "ewar_sum_pre_rescale": 370.44,
      "ewar_sum": 369.18,
-     "replacement_scale": 1.00216
+     "replacement_scale": 0.99661
     },
     "2021": {
      "team_games": 4858,
      "target": 998.59,
      "bwar_sum": 998.35,
-     "ewar_sum_pre_rescale": 999.53,
+     "ewar_sum_pre_rescale": 997.24,
      "ewar_sum": 998.59,
-     "replacement_scale": 0.99906
+     "replacement_scale": 1.00135
     },
     "2022": {
      "team_games": 4860,
      "target": 999.0,
      "bwar_sum": 1000.56,
-     "ewar_sum_pre_rescale": 1001.26,
+     "ewar_sum_pre_rescale": 1000.57,
      "ewar_sum": 999.0,
-     "replacement_scale": 0.99774
+     "replacement_scale": 0.99843
     },
     "2023": {
      "team_games": 4860,
      "target": 999.0,
      "bwar_sum": 1000.35,
-     "ewar_sum_pre_rescale": 997.84,
+     "ewar_sum_pre_rescale": 999.99,
      "ewar_sum": 999.0,
-     "replacement_scale": 1.00116
+     "replacement_scale": 0.99901
     },
     "2024": {
      "team_games": 4858,
      "target": 998.59,
      "bwar_sum": 999.79,
-     "ewar_sum_pre_rescale": 998.93,
+     "ewar_sum_pre_rescale": 998.58,
      "ewar_sum": 998.59,
-     "replacement_scale": 0.99966
+     "replacement_scale": 1.00001
     },
     "2025": {
      "team_games": 4860,
      "target": 999.0,
      "bwar_sum": 1000.44,
-     "ewar_sum_pre_rescale": 1000.35,
+     "ewar_sum_pre_rescale": 999.55,
      "ewar_sum": 999.0,
-     "replacement_scale": 0.99865
+     "replacement_scale": 0.99945
     },
     "2026": {
      "team_games": 3364,
      "target": 691.49,
      "bwar_sum": 681.4,
-     "ewar_sum_pre_rescale": 682.06,
+     "ewar_sum_pre_rescale": 680.91,
      "ewar_sum": 691.49,
-     "replacement_scale": 1.01384
+     "replacement_scale": 1.01553
     }
    },
    "max_abs_deviation_from_target": 0.0,
@@ -1835,12 +1950,12 @@
   "gate 2 forecast: r 0.2548 vs bWAR 0.1769"
  ],
  "gates_failed": [
-  "gate 1 team wins: r 0.8686 vs bWAR 0.8803",
-  "gate 1 zero-param MAE: 4.347 vs bWAR 3.787"
+  "gate 1 team wins: r 0.8595 vs bWAR 0.8803",
+  "gate 1 zero-param MAE: 4.306 vs bWAR 3.787"
  ],
  "reading": {
   "verdict": "provisional - eWAR LOSES the headline gate and WINS the persistence gate; it is not ready to replace bWAR site-wide",
-  "headline": "Gate 1 (team wins, 300 team-seasons): eWAR r 0.8686 vs bWAR 0.8803, zero-parameter MAE 4.347 vs 3.787. eWAR is a WORSE description of the wins a team actually banked.",
+  "headline": "Gate 1 (team wins, 300 team-seasons): eWAR r 0.8595 vs bWAR 0.8803, zero-parameter MAE 4.306 vs 3.787. eWAR is a WORSE description of the wins a team actually banked.",
   "why_that_was_expected": "Gate 1 rewards DESCRIBING the season that happened. B-Ref prices pitchers on the runs they actually allowed, which is most of what decided the games, so a runs-allowed WAR is close to mechanically fitted to team wins. FIP deliberately throws away sequencing and balls in play, so it must fit worse in-sample. Any FIP-based WAR (fWAR included) loses this test to a runs-allowed WAR. Losing it is not evidence the pitching swap is wrong; it is the price the swap is supposed to pay.",
   "what_it_bought": "Gate 2: the FIP-priced pitching component self-correlates 0.3664 year to year against 0.1769 for the runs-allowed component (1825 pitcher-season pairs, same rows), and it predicts NEXT year's actual runs above average better than this year's actual runs above average does (0.2548 vs 0.1769). That is a 2.1x persistence gain and the entire case for a FIP basis.",
   "the_component_that_did_not_earn_its_place": "The ATTRIBUTION arms separate the two swaps. The FIP swap costs same-season r (0.8595 vs 0.8803) and BUYS next-season signal (0.2524 vs 0.2481). The Statcast fielding swap loses BOTH: same-season 0.8777 and next-season 0.2255. That is a real finding with a mechanical cause: Statcast OAA is a RANGE metric. It carries no outfield or infield ARM value, no catcher framing or blocking, no first-base scoops, no double-play pivot. B-Ref rfield does carry those. Swapping OAA in for rfield is therefore not 'a better defensive metric for the same quantity', it is a BETTER metric for a NARROWER quantity, and the value it drops is real value. data/savant_arm.json exists but is arm STRENGTH in mph from 2020 on, not runs, so it cannot close the gap without a model that does not exist yet.",

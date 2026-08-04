@@ -1,5 +1,5 @@
 # Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
-"""Build eWAR v1 -> data/ewar.json + data/ewar_eval.json.
+"""Build eWAR v2 -> data/ewar.json + data/ewar_eval.json.
 
     python tools/build_ewar.py                 # build + gates, print, write nothing
     python tools/build_ewar.py --write         # ...and commit both artifacts
@@ -94,15 +94,24 @@ def main() -> int:
 
     model = ewar.build(first=args.first, last=args.last,
                        shrink=True, force_fetch=args.force_fetch)
-    print(f"eWAR v1: {len(model['rows'])} war_daily rows, "
+    print(f"eWAR v2: {len(model['rows'])} war_daily rows, "
           f"seasons {model['meta']['seasons']}")
 
     unshrunk, arms = None, None
     if not args.no_sensitivity:
         unshrunk = ewar.build(first=args.first, last=args.last, shrink=False)
         arms = {
+            # AT w=1.0 EXPLICITLY. The shipped default became 0.0 on 2026-08-04
+            # (the w grid found both forward legs monotone decreasing in w), so
+            # an arm built at the default would apply no Statcast fielding at
+            # all and come back as bWAR wearing the label "fielding_swap_only".
+            # That reads as "the fielding swap is fine now" and is the exact
+            # opposite of what was measured. This arm exists to answer "what
+            # does the Statcast fielding swap DO", so it must ask at full
+            # strength regardless of what the default happens to be.
             "fielding_swap_only": ewar.build(first=args.first, last=args.last,
-                                             swap_pitching=False),
+                                             swap_pitching=False,
+                                             fielding_blend_w=1.0),
             "pitching_swap_only": ewar.build(first=args.first, last=args.last,
                                              swap_fielding=False),
         }

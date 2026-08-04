@@ -37,7 +37,7 @@ MODEL_GLOSSARY = {
     "fa_war_paths_decay": ["fa_projection_engine"],
     "proj_def_prior": "internal",   # a hit feature of fa_war_paths_decay; gate-artifact row
     "prospect_def_value": "internal",  # Will Cahoon def model (local reconstruction); eFV-swap loss ledger
-    "ewar_v1": "internal",   # eephus WAR: measured, consumed by nothing, not a served metric
+    "ewar": "internal",   # eephus WAR: measured, consumed by nothing, not a served metric
     # 2026-08-04 gated experiments, all three measured NO-SHIP (loss ledgers).
     "xfv_pace_from_entry": "internal",   # pre-registered kill criterion fired on the hitter weight sign
     "xfv_level_blend_arms": "internal",  # 17 of 18 cells negative; the anchor arm is a measured loss
