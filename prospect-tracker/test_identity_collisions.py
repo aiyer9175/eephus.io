@@ -306,6 +306,27 @@ def test_position_kind_classification():
 # bound in player_photos (C2), and the 6 id-less-but-placed active rows
 # (C3), with jesus_flores present in all three.
 KNOWN_MERGED_ACTIVE = frozenset({
+    # jack_natili added 2026-08-04. The ONLY entry here that is NOT two humans on
+    # one key: it is the INVERSE, one human on two ACTIVE board keys, and it is
+    # baselined because the repair is out of reach rather than because the
+    # evidence is thin.
+    #   mlbam 814385  Jack Natili  b.2005-03-10  USA  C  draftYear 2026  ACL Rockies
+    # He is published TWICE. "jackson_natili" is rank 160, carries 814385, and owns
+    # the FanGraphs C/COL rows 2026-07-23 and 2026-08-02 (org rank 8, FV 45).
+    # "jack_natili" is rank 332, carries NO id, and owns the 2026-08-04
+    # draft_signing row (C/COL, FV 45); the roster join gives it level CPX, and an
+    # id-less active row WITH a level is exactly C3. Same birth_date, position, org
+    # and FV on both keys, and StatsAPI spells 814385 "Jack Natili" while FanGraphs
+    # spells him "Jackson Natili" - one human, two source spellings.
+    # Not repairable from the identity-binding lane: moving 814385 onto the draft
+    # slug is precisely what the id-side guards added 2026-08-04
+    # (storage.bind_player_ids and draft_promotion._harvest) refuse to do, and
+    # they are correct to - "two spellings of one identity is a merge decision".
+    # The real fix is the michael_oliveto treatment, a scrapers._CANONICAL_KEYS
+    # entry collapsing jack_natili onto jackson_natili so a future FanGraphs drop
+    # cannot re-fracture him, plus a merge of the two records. That is a key
+    # re-map, which this repair class never does -> OWNER DECISION.
+    "jack_natili",
     "alexander_de_los_santos",   # C2  808167 / 822195
     "carlos_gonzalez",           # C1 C2 C3 C4 C6  801262 / 808712
     "christian_rodriguez",       # C2  691010 / 815184

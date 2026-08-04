@@ -431,7 +431,15 @@ def test_committed_artifact_headline_alias_contract():
 #   the pin. The hitter side was already pinned and did not move.
 #   Restamped deliberately; the eFV eval artifacts and the side-fairness gate
 #   were regenerated on the same shipped lambdas in the same session.
-_GOLDEN_XFV_SHA256 = "e0a1fc82f3cd116accf8918126ef5982b105d4b4b353c1870b695136140c109d"
+# 2026-08-04b -- REBUILD-ONLY after the identity repair. run_monthly --rebuild-only
+#   was run so the five merged-identity splits (tools/repair_merged_identities_
+#   2026_08_04.py, 26 guarded writes) would reach the board; the audit reads
+#   timeseries.json, so a DB-only repair is invisible until the board is rebuilt.
+#   Rowcount 9369 -> 9369 (unchanged). Basis epoch stays 2026-07-30. The board
+#   fingerprint DID move (feats dbb1bc2a -> b747e1d3) but only because the hitter
+#   `age` sign declaration moved -1 -> 0, which binds the eval-only monotone
+#   challenger and not the served ridge, so no grade moved because of it.
+_GOLDEN_XFV_SHA256 = "103a10aae0955b7f73820b2a738e91cd5e0d5ada0fe61253b9a9ce03e53c5c39"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire

@@ -139,7 +139,20 @@ _EXPECTED_HIT = [
     # age: absolute age, OWNER-DIRECTED ship 2026-07-14 (missed the pooled
     # auto-bar by 0.0003, every metric >= -noise; ledger
     # data/xfv_age_feature_eval.json + docs/efv-2026-07-14/GATES.md).
-    ("age", -1),
+    # DECLARATION MOVED -1 -> 0 on 2026-08-04. The feature STAYS; only the
+    # directional claim went. On the rebuilt matrix the column serves +0.0420
+    # against a declared -1, and the four-step adjudication (the same one the
+    # pitcher age_rel_level case got on 2026-07-30) found: it is a COLLINEAR
+    # SPLIT with age_rel_level (r +0.518; removing the sibling snaps the sign
+    # back to -0.0502), and the fresh drop gate is a sub-floor NULL (+0.00669 =
+    # 0.39x the hitter MDE95, CI95 straddling zero, and a row-permuted control
+    # scores 93 percent of the candidate). The gate standard forbids removing a
+    # feature on sub-floor evidence, so the feature stays and the declaration
+    # moves. Not +1 either: the fold mean is negative, the rank marginal is
+    # negative, and it served -0.0619 one rebuild ago. A direction that inverts
+    # when the label is redefined is not a theory. Ledger:
+    # data/xfv_hit_age_sign_gate.json, docs/efv-2026-08-04/HIT_AGE_SIGN_GATE.md.
+    ("age", 0),
     # level_rank: cleared its pre-registered LR-FRINGE re-gate at the 2024-fold
     # vintage (t45 +0.0192, bar +0.015; docs/efv-2026-07-15/GATES.md; ledger
     # data/xfv_level_rank_fringe_eval.json).

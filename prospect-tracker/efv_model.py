@@ -127,7 +127,80 @@ _FEATURES_HIT = [
     # owner flagged). No missing indicator: mean-imputed (22.5) rows stay
     # neutral under standardization; the indicator variant destabilizes
     # pitchers (sparse-column class).
-    ("age",            -1),
+    # age declared 0 for HITTERS (sign audit 2026-08-04). Same latent class as the
+    # pitcher `age` (2026-07-25) and pitcher `age_rel_level` (2026-07-30) corrections,
+    # one matrix rebuild later, and adjudicated by the SAME four steps. Two of the four
+    # land DIFFERENTLY here and are recorded as such rather than assimilated.
+    #   what moved   the 07-25 audit measured served -0.0619, negative in 9 of 9
+    #                informative folds, marginal -0.0506: the -1 was true and stable.
+    #                On the 2026-08-04 hitter matrix (n 1883, the same pool size as the
+    #                07-25 n 1882) the served ridge fits +0.0420 and the contradiction
+    #                surfaces.
+    #   why it moved NOT the C1 decimal-age ship, which is what moved the pitcher side.
+    #                Tested directly on the same rows: rounding the age column back to
+    #                integers does not restore the declared sign, it goes MORE positive
+    #                (+0.0520, +0.0668 with age_rel_level also rounded), and the marginal
+    #                stays positive (+0.0205). The FEATURE COLUMN is not what moved. The
+    #                marginal correlation of age with realized WAR went -0.0506 -> +0.0165
+    #                on the same pool, so this is a LABEL-side change out of the
+    #                2026-08-04 rebuild. Isolating which one was outside that lane.
+    #   fitted sign  NOT a suppressor, and the suppressor defence the pitcher case had is
+    #                not available: marginal weighted Pearson +0.0165 is on the SAME side
+    #                as the fit, so efv_sign_audit classifies WRONG_SIGN. But the marginal
+    #                is not reliably signed EITHER way - the rank marginal (Spearman) is
+    #                -0.0547, on the DECLARED side - and the unregularized OLS partial is
+    #                +0.0119, BELOW the audit's own NOISE_W 0.02 floor. The served +0.0420
+    #                is 2.1x that floor and the second-smallest weight in the set. Nothing
+    #                measured here supports -1 and nothing supports +1.
+    #   IS a split   the OTHER divergence from the precedent. r(age, age_rel_level) =
+    #                +0.518, and removing the sibling SNAPS THE SIGN BACK to -0.0502 while
+    #                the sibling barely notices the removal of age (-0.2159 -> -0.1952).
+    #                That is _sweep_signs' COLLINEAR_SPLIT verdict: one age signal split
+    #                arbitrarily across two columns. On pitchers the same test came out the
+    #                opposite way (dropping age pushed age_rel_level MORE positive, +0.0418
+    #                -> +0.0916), which is what earned that case its "independent
+    #                conditional effect" reading. The hitter contradiction is therefore
+    #                WEAKER evidence for a real positive effect than the pitcher one was.
+    #                The block's declared negative direction is intact and simply lives in
+    #                age_rel_level (served -0.2159, marginal -0.2146).
+    #   stability    6 of 9 informative folds positive but the fold-weight MEAN is NEGATIVE
+    #                (-0.0056), range -0.2754 to +0.1231. There is the same drift with
+    #                sample size the pitcher case had (the 5 largest folds, train n
+    #                845..1641, all positive) but the magnitudes never leave the noise
+    #                band. Unstable sign, not a stable positive one.
+    #   drop gate    FRESH on this matrix, the pit-age protocol: pooled forward-chained rho
+    #                over 11 splits, dropping = +0.00669, i.e. dropping HELPS but at 0.393x
+    #                the 0.017 hit MDE95. Paired bootstrap B=2000 (resampling TRAIN and
+    #                TEST, refit per draw) CI95 [-0.0042, +0.0108], P(drop helps) 0.82,
+    #                helps in 6 of 11 folds and the fold deltas are dominated by 2018
+    #                (+0.0601) with the other ten inside +/-0.012. The zero-information
+    #                control - the same column ROW-PERMUTED and KEPT in the set - scores
+    #                +0.0062, which is 93% of the candidate: destroying the column's
+    #                information buys almost exactly what removing it buys, so the "gain"
+    #                is not a gain from removing information. Permutation null p 0.150.
+    #                Sub-floor NULL, and gate standard section 6 forbids removing on
+    #                sub-floor evidence -> KEEP.
+    #   merge gate   already adjudicated 2026-07-25 (data/xfv_sign_merge_gate.json,
+    #                "hit:age+age_rel_level"): merging the pair into one z-mean column is
+    #                itself a null (+0.00033 = 0.02x floor, the smallest effect in that
+    #                whole set, CI95 [-0.0256, +0.0121]) -> rejected as a remedy. It would
+    #                also move served numbers, which a correctness fix must not.
+    #   why 0        not +1: every stability probe refuses "older hitters are better", and
+    #                a direction that inverts when the LABEL is redefined is not theory.
+    #                0 = NO DIRECTIONAL CLAIM, the same declaration used five times before
+    #                for this exact situation.
+    # CORRECTNESS only, no accuracy claim and none required: the declaration binds only
+    # _fit_lgbm_mono's monotone_constraints (the eval-only LightGBM challenger), never the
+    # shipped ridge, so no grade, WAR, surplus or ordering moves.
+    # DISPLAY CONSEQUENCE, reported not patched (efv_score.py was outside this lane): with
+    # w +0.0420 and train mean 22.10, a hitter YOUNGER than the mean gets a NEGATIVE
+    # contribution, so the Age chip reaches ~150 of 2,128 live hitter cards and 134 of them
+    # read DOWN on young hitters. Same defect class as the 2026-07-25 Ryan Sloan pitcher
+    # bug (1,058 of 2,393 cards, 44.2%), at 7.1% incidence. Whether hitters join pit in
+    # efv_score._EXPLAINER_SKIP_SIDE is an owner call; the comment at efv_score.py:536
+    # still quotes the retired -0.0619 and needs correcting either way.
+    # Ledger: data/xfv_hit_age_sign_gate.json, data/xfv_sign_merge_gate.json.
+    ("age",             0),
     # level_rank: highest MiLB level reached at the decision read (DSL 0 .. AAA 5).
     # The 2026-07-15 feature-arms sweep flagged the ops_rel FRINGE signature (t45
     # +0.0200, pooled flat) but refused post-hoc fringe-gating; the keep-alive
@@ -231,8 +304,13 @@ _FEATURES_PIT = [
     #                 3 of 11 folds) and is itself a null (-0.00588 = 0.37x floor,
     #                 CI95 [-0.0231, +0.0167]) -> rejected as a remedy.
     # This is a CORRECTNESS fix, not an accuracy claim: no rank gain is claimed and none
-    # is required. The hitter-side ("age", -1) above is untouched and correct
-    # (served -0.0619, negative in all 9 informative folds).
+    # is required.
+    # SUPERSEDED 2026-08-04: the sentence that used to sit here said the hitter-side
+    # ("age", -1) was "untouched and correct (served -0.0619, negative in all 9
+    # informative folds)". Both halves expired on the 2026-08-04 matrix rebuild - the
+    # hitter column now serves +0.0420 and its fold mean is negative only on average
+    # (6 of 9 folds positive), so the hitter declaration moved to 0 as well. See
+    # docs/efv-2026-08-04/HIT_AGE_SIGN_GATE.md.
     # Ledger: data/xfv_sign_audit.json, data/xfv_sign_merge_gate.json.
     ("age",             0),
     # NOTE: pitcher cohort interactions (ifa_x_era / col_x_k / fb_x_k) were tested + REVERTED

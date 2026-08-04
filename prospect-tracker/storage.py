@@ -4910,7 +4910,21 @@ BOARD_RANK_BASIS_EPOCH = "2026-07-30"   # STRICTLY-AFTER gate: see load_rank_his
 # roles note above describes, one layer deeper, so the feature spec itself is now hashed
 # into the fingerprint and named here.
 BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
-                           "|roles=usage_both|feats=dbb1bc2a")
+                           "|roles=usage_both|feats=b747e1d3")
+# feats dbb1bc2a -> b747e1d3 on 2026-08-04: the hitter `age` SIGN DECLARATION moved
+# -1 -> 0 (docs/efv-2026-08-04/HIT_AGE_SIGN_GATE.md). The hash covers declared signs
+# ON PURPOSE, so this trip is the coordination check working as designed.
+#
+# BOARD_RANK_BASIS_EPOCH is deliberately NOT bumped with it, and that is the whole
+# judgement here. The epoch exists for ONE job: tell the movement engine that ranks
+# were re-based so it does not publish a one-time re-rank as player movement. A
+# declaration is documentation for the EVAL-ONLY monotone LightGBM challenger -
+# _feature_spec hands the signs to _fit_lgbm_mono and hands only the NAMES to
+# _fit_ridge, which is the served model - so no served grade and no rank moved
+# because of this. Bumping the epoch would suppress a night of GENUINE movement to
+# hide a re-rank that did not happen, which is the mirror of the 2026-07-29 mistake
+# rather than a repeat of it. The fingerprint's job (a change happened, a human
+# looked) applies; the epoch's job (ranks re-based) does not.
 
 
 def board_basis_fingerprint() -> str:

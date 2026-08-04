@@ -1,0 +1,191 @@
+{
+ "gate": "hitter `age` monotone sign declaration",
+ "date": "2026-08-04",
+ "side": "hit",
+ "feature": "age",
+ "matrix_vintage": "data/xfv_hitter_matrix.json rebuilt 2026-08-04",
+ "n": 1883,
+ "declared_before": -1,
+ "declared_after": 0,
+ "verdict": "KEEP THE FEATURE, MOVE THE DECLARATION TO 0 (no directional claim)",
+ "precedent": "docs/efv-2026-07-30 pitcher `age_rel_level`, recorded in efv_model._FEATURES_PIT and data/xfv_sign_merge_gate.json. Same four steps run here; two of the four land DIFFERENTLY and are recorded as such rather than assimilated to the precedent.",
+ "gate_standard": "docs/EFV_GATE_STANDARD.md section 6",
+ "mde95": 0.017,
+ "replica_check": {
+  "max_abs_weight_diff": 0.0,
+  "alpha_match": true,
+  "ok": true
+ },
+ "step1_suppressor_check": {
+  "served_w": 0.042,
+  "alpha": 100.0,
+  "marginal_wpearson": 0.0165,
+  "marginal_spearman": -0.0547,
+  "ols_partial_std": 0.0119,
+  "sibling_served_w": -0.2159,
+  "sibling_marginal_wpearson": -0.2146,
+  "classification": "WRONG_SIGN, not SUPPRESSOR",
+  "reasoning": "efv_sign_audit classifies SUPPRESSOR only when the MARGINAL agrees with the declaration while the partial does not. Here the marginal weighted Pearson is +0.0165, on the SAME side as the fit, so the suppressor defence the pitcher case had (marginal -0.0543) is NOT available. But the marginal is not reliably signed EITHER way: the rank marginal (Spearman) is -0.0547, on the DECLARED side, and the unregularized OLS partial is +0.0119, BELOW the audit's own NOISE_W 0.02 floor. The served ridge +0.0420 is 2.1x that floor and the second-smallest weight in the hitter set. Nothing here supports -1, and nothing supports +1.",
+  "sibling_carries_the_declared_direction": "age_rel_level served -0.2159, marginal -0.2146: the age block's negative direction is intact, it just does not live in this column."
+ },
+ "step1_stability": {
+  "informative_folds": [
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "fold_w": [
+   -0.1507,
+   0.0232,
+   -0.2754,
+   -0.034,
+   0.0534,
+   0.1002,
+   0.1231,
+   0.0479,
+   0.0621
+  ],
+  "fold_train_n": [
+   265,
+   360,
+   472,
+   646,
+   845,
+   1014,
+   1141,
+   1392,
+   1641
+  ],
+  "folds_positive": 6,
+  "folds_n": 9,
+  "fold_w_mean": -0.0056,
+  "fold_w_min": -0.2754,
+  "fold_w_max": 0.1231,
+  "reasoning": "6 of 9 informative folds positive, fold-weight mean -0.0056, range -0.2754 to +0.1231. Like the pitcher case there is a drift with sample size (the 5 largest folds, train n 845..1641, are all positive), but unlike it the magnitudes never leave the noise band. This is an UNSTABLE sign, not a stable positive one. The 2014/2015 folds are degenerate (pre-StatsAPI, constant production columns) and are excluded rather than counted as disagreement.",
+  "prior_vintage_2026_07_25": {
+   "served_w": -0.0619,
+   "marginal_wpearson": -0.0506,
+   "marginal_spearman": -0.1011,
+   "ols_partial_std": -0.1305,
+   "folds_positive": 0,
+   "folds_n": 9,
+   "sign_stable_across_folds": true,
+   "note": "This is the vintage efv_model and efv_score still quote: served -0.0619, negative in 9 of 9. The sign inverted across one matrix rebuild. A direction that flips when the LABEL is redefined is by definition not a theory-defensible declaration, which is the positive argument for 0 over +1."
+  }
+ },
+ "step1_resolution_isolation": {
+  "why": "The 2026-07-30 pitcher precedent attributed its flip to the C1 decimal-age ship (2026-07-29). Tested here on the SAME rows by rounding the age column back to integers. It is NOT the cause on the hitter side.",
+  "decimal_fraction_of_age_column": 0.938,
+  "served_w_age_decimal": 0.042,
+  "served_w_age_integer_rounded": 0.052,
+  "served_w_age_both_rounded": 0.0668,
+  "marginal_wpearson_decimal": 0.0165,
+  "marginal_wpearson_rounded": 0.0205,
+  "marginal_spearman_decimal": -0.0547,
+  "marginal_spearman_rounded": -0.0497,
+  "conclusion": "Rounding away the decimal resolution does NOT restore the declared negative sign, it goes MORE positive (+0.0520, +0.0668 with the sibling also rounded), and the marginal stays positive (+0.0205). The FEATURE COLUMN is not what moved. The MARGINAL correlation of age with realized WAR went from -0.0506 (2026-07-25 ledger, n 1882) to +0.0165 (now, n 1883) on the same pool, which is a LABEL-side change from the 2026-08-04 matrix rebuild, not a feature-side one. Isolating which label change is outside this lane."
+ },
+ "step2_collinear_split": {
+  "sibling": "age_rel_level",
+  "pearson_r_age_vs_age_rel_level": 0.5177,
+  "age_w_without_sibling": -0.0502,
+  "sibling_w_without_age": -0.1952,
+  "snaps_back_to_declared": true,
+  "verdict": "COLLINEAR SPLIT - CONFIRMED (this is where the hitter case DIVERGES from the pitcher precedent)",
+  "reasoning": "r(age, age_rel_level) = +0.518. Remove the sibling and `age` SNAPS BACK to the declared direction, -0.0502. The sibling barely notices the removal of `age` (-0.2159 -> -0.1952). By _sweep_signs' own rule (`split = contradiction AND the partner-dropped refit no longer contradicts`) this is a COLLINEAR_SPLIT verdict, i.e. one age signal arbitrarily divided between two columns, not an independent conditional effect.",
+  "contrast_with_precedent": "On pitchers the same test came out the OPPOSITE way and that is what earned that adjudication its 'independent conditional effect' reading: dropping `age` pushed pitcher age_rel_level MORE positive (+0.0418 -> +0.0916), proving the two were not a split. Here it snaps back. So the hitter contradiction is WEAKER evidence for a real positive effect than the pitcher one was, which again argues 0 and not +1.",
+  "merge_remedy": "Already adjudicated 2026-07-25, data/xfv_sign_merge_gate.json key 'hit:age+age_rel_level': merging the pair into one z-mean column is itself a null (+0.00033 = 0.02x the 0.017 floor, CI95 [-0.0256, +0.0121], p_merge_helps 0.374). Not re-run; a merge that was the smallest effect in the whole 07-25 set is not a remedy, and shipping one would move served numbers, which a correctness fix must not."
+ },
+ "step3_drop_gate": {
+  "side": "hit",
+  "feature": "age",
+  "lambda": 0.7,
+  "n": 1883,
+  "rho_with": 0.2717,
+  "rho_without": 0.2784,
+  "delta_drop_minus_keep": 0.00669,
+  "mde95_feature_add": 0.017,
+  "x_of_floor": 0.393,
+  "per_fold_delta": {
+   "2014": 0.0,
+   "2015": 0.0,
+   "2016": 0.0011,
+   "2017": 0.0009,
+   "2018": 0.0601,
+   "2019": -0.0008,
+   "2020": -0.0002,
+   "2021": 0.0051,
+   "2022": 0.0117,
+   "2023": -0.0022,
+   "2024": 0.0032
+  },
+  "folds_drop_helps": 6,
+  "folds_n": 11,
+  "boot": {
+   "n": 2000,
+   "mean": 0.00249,
+   "sd": 0.0036,
+   "ci95": [
+    -0.00421,
+    0.01084
+   ],
+   "p_drop_helps": 0.824
+  },
+  "zero_info_control": {
+   "n": 200,
+   "mean": 0.0062,
+   "p95_abs": 0.01,
+   "band": [
+    0.001,
+    0.01073
+   ]
+  },
+  "permutation_null": {
+   "n": 1000,
+   "band95": [
+    -0.01141,
+    0.008
+   ],
+   "p_two_sided": 0.15
+  },
+  "verdict": "NULL (below MDE95 and CI straddles 0)",
+  "protocol": "The pit-`age` protocol, fresh on the 2026-08-04 matrix: 11 forward-chained splits (train = decision_year < Y), the shipped blend leg at lambda 0.70 with the consensus OLS anchor refit on the same train rows, paired bootstrap B=2000 resampling TRAIN AND TEST with a refit per draw, a zero-information control (the same column row-permuted and KEPT in the set), and a permutation null band (1000 draws, labels shuffled within fold).",
+  "reading": "Dropping HELPS by +0.00669 = 0.393x the 0.017 hitter MDE95. That is sub-floor and it is not resolvable: the bootstrap CI95 straddles zero, and the zero-information control scores +0.0062, which is 93% of the candidate's +0.00669. Destroying the column's information while leaving it in the model buys almost exactly what removing it buys, so the 'gain' is not a gain from removing information. Permutation null p 0.150. Dropping helps in only 6 of 11 folds and the fold deltas are dominated by 2018 (+0.0601) with the other ten inside +/-0.012.",
+  "zero_info_control_share_of_candidate": 0.93,
+  "decision_rule": "EFV_GATE_STANDARD section 6: 'Do not add and do not remove features on sub-floor evidence.' 0.393x floor with a CI straddling zero is sub-floor. THE FEATURE STAYS."
+ },
+ "step4_declaration": {
+  "chosen": 0,
+  "why_not_minus_1": "The served ridge fits +0.0420 against it. That is the RED.",
+  "why_not_plus_1": "+1 would require a stable, theory-defensible 'older hitters are better'. Every stability probe refuses it: 6 of 9 folds positive with a NEGATIVE fold mean (-0.0056), rank marginal -0.0547, OLS partial +0.0119 below the noise floor, the sign inverts to -0.0502 the moment the collinear sibling is removed, and it was -0.0619 and negative in 9 of 9 folds one matrix rebuild ago.",
+  "why_0": "0 is 'no directional claim' and is a legal LightGBM constraint. It is the declaration this codebase has used five times for exactly this situation (hit k_rel / n_milb_seasons / milb_missing 2026-07-25, pit age 2026-07-25, pit age_rel_level 2026-07-30). It stops the module asserting a direction its own fit contradicts without asserting the reverse.",
+  "served_impact": "NONE. The declaration is consumed only by efv_model._fit_lgbm_mono's monotone_constraints, which binds the eval-only LightGBM challenger. The shipped ridge (fit_production_stack -> prospect_path._fit_ridge) ignores it. No grade, WAR, surplus or ordering moves."
+ },
+ "follow_ups_outside_this_lane": [
+  {
+   "file": "test_efv_model.py",
+   "line": 142,
+   "issue": "_EXPECTED_HIT pins (\"age\", -1) and will go RED when the declaration moves to 0.",
+   "needed": "(\"age\", 0) with the same note, exactly as _EXPECTED_PIT was updated on 2026-07-25/30."
+  },
+  {
+   "file": "efv_score.py",
+   "line": "536-537",
+   "issue": "The _EXPLAINER_SKIP_SIDE comment asserts 'The hitter side keeps its Age chip: there `age` fits -0.0619, agreeing with its declaration'. Both halves are now false (+0.0420, contradicting).",
+   "needed": "Correct the stated numbers. Separately, decide whether hitters join pit in _EXPLAINER_SKIP_SIDE: the Age chip now renders on ~150 of 2,128 live hitter cards and 134 of them read DOWN on hitters YOUNGER than the training mean. That is a DISPLAY change, an owner call, and not this lane's file."
+  },
+  {
+   "file": "data/model_registry.json",
+   "issue": "This artifact needs a registry row under the standing rule.",
+   "needed": "Row for data/xfv_hit_age_sign_gate.json. Deliberately NOT named *_eval.json so it does not trip test_model_registry::test_every_eval_artifact_is_registered mid-sweep, same convention as xfv_sign_audit.json."
+  }
+ ],
+ "lab": "tools/_sweep_signs.py (drop_gate / audit_side / wols, unmodified)",
+ "elapsed_sec": 396.2
+}

@@ -533,9 +533,24 @@ _EXPLAINER_SKIP = {"fv", "milb_missing", "is_ifa", "is_college"}
 #       disagree on whether the declaration should become 0 or stay -1 with an
 #       omitted-variable note, no rank gain is available either way (every arm
 #       measured sub-floor), and a confounded coefficient should not be narrated to a
-#       reader as that player's age either way. The hitter side keeps its Age chip:
-#       there `age` fits -0.0619, agreeing with its declaration, alongside level_rank.
-_EXPLAINER_SKIP_SIDE = {"pit": {"age"}}
+#       reader as that player's age either way.
+#
+# HITTERS JOIN THE SKIP 2026-08-04, on the same rule and for the same reason.
+# The sentence that used to end this block said the hitter side keeps its Age chip
+# "there `age` fits -0.0619, agreeing with its declaration". Both halves expired on
+# the 2026-08-04 matrix rebuild: the column now serves +0.0420 AGAINST a declared -1,
+# and the adjudication (docs/efv-2026-08-04/HIT_AGE_SIGN_GATE.md) found it is a
+# COLLINEAR SPLIT with age_rel_level - removing the sibling snaps the sign back to
+# -0.0502 - so the hitter declaration moved to 0 and there is no longer a directional
+# claim to narrate.
+#
+# The display consequence is not hypothetical and is what decides it: the chip reaches
+# about 150 of 2,128 live hitter cards, and 134 of those read DOWN on hitters YOUNGER
+# than the training mean. So roughly 89 percent of the time it appears, it tells a
+# reader that being young cost this prospect grade. That is the identical failure the
+# pitcher side was skipped for, at a higher rate. The model is unchanged; only the
+# explanation stops being offered where it cannot be true.
+_EXPLAINER_SKIP_SIDE = {"pit": {"age"}, "hit": {"age"}}
 
 
 def _factors(ridge, feats, top: int = 4, side: str = "hit") -> list:

@@ -57,6 +57,49 @@ from datetime import date
 # debuted in-window), so the KM median is undefined there.
 # v18 spacing rationale (level dominates the ±adjustments) still holds:
 # the AAA→A gap is 3.0y and the floor logic scales with the base.
+#
+# RE-GATED 2026-08-04 and HELD. The nightly eta_backtest rerun moved the
+# artifact's full-window KM table underneath this table at two cells:
+# A+ 3.0→3.25 and CPX 4.25→4.5. Both are ROUNDING-BOUNDARY crossings, not
+# a change of belief: the raw (unrounded) KM medians are A+ 3.19 against a
+# 3.125 quantization boundary and CPX 4.40 against a 4.375 boundary, i.e.
+# CPX crossed by 0.025 yr (about 9 days). The drift comes from cohort
+# accounting, not from new debuts: censored_active went 2,171→2,315 while
+# debuted moved only 4,138→4,143, so fresh still-active non-debuted rows
+# entered the risk set and pushed the survival curve later.
+#
+# The refit was scored against the SAME criterion the v39 ship was decided
+# on (forward-chained, live estimate_eta path, identical rows; debuted MAE
+# and within-1y must BOTH beat the incumbent). It loses both legs:
+#
+#   table                    MAE     within-1y   bias     overdue
+#   incumbent v39 (this)     1.440   0.579       +1.088   345
+#   KM refit full-window     1.490   0.561       +1.161   331
+#   only A+ 3.0→3.25         1.481   0.563       +1.139   332
+#   only CPX 4.25→4.5        1.448   0.576       +1.110   344
+#   v38 frozen (legacy)      1.940   0.426       +1.746   242
+#   (n=3,454 debuted / 958 censored-active on identical rows)
+#
+# Paired bootstrap on the refit: dMAE +0.0495, CI95 [+0.0408, +0.0585];
+# dWithin-1y -0.0185, CI95 [-0.0237, -0.0136]; P(refit better)=0.000 on
+# both. Of the 253 debuted rows the refit moves, 212 get WORSE and 41 get
+# better. Each disputed cell loses on its own, so this is not a joint
+# artifact. The overdue guardrail is NOT what refuses it: the refit pulls
+# ETAs LATER, so overdue FALLS (345 to 331). It is refused on accuracy.
+#
+# The direction is the whole story: the shipped heuristic already runs
+# systematically LATE (bias +1.09 here; LEVEL_BIAS_ADJ below exists to
+# shave 0.5y off in production). A refit that pushes two level bases a
+# further quarter-year out is moving away from the residual, not toward
+# it. For reference, the forward-chained per-vintage KM tables mostly keep
+# A+ at 3.0 and want A at 3.5 (EARLIER than the shipped 3.75). The fit's
+# own out-of-sample preference is earlier, which the full-window refit's
+# rounding inverts.
+#
+# Declined blast radius: adopting the refit would have moved 7.79% of
+# scoreable cohort rows (335 of 4,301) one year LATER, concentrated
+# entirely in the two disputed levels (A+ 241/1,014 = 23.8%, CPX 94/394 =
+# 23.9%); every other level is byte-identical.
 BASE_YEARS: dict[str, float] = {
     "MLB": 0.0,
     "AAA": 0.75,
