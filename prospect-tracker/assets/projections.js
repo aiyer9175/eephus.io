@@ -1018,7 +1018,11 @@
       </div>`;
     }).join("");
     const _wm = projWarMap(list);
-    const _axSel = (id, cur) => `<select id="${id}" class="proj-select" style="font-size:11px;">
+    // font-size lives in CSS, not inline: an inline declaration outranks every
+    // stylesheet, so the 11px here survived the coarse-pointer rule that lifts
+    // fields to 16px and kept iOS zooming the page on focus. .proj-select
+    // already carries the compact desktop size.
+    const _axSel = (id, cur) => `<select id="${id}" class="proj-select proj-select-ax">
       ${Object.entries(SCATTER_AXES).map(([k, ax]) => `<option value="${k}"${cur === k ? " selected" : ""}>${esc(ax.label)}</option>`).join("")}</select>`;
     const _ay = (SCATTER_AXES[state.sy] || SCATTER_AXES.warY1).label;
     const _ax2 = (SCATTER_AXES[state.sx] || SCATTER_AXES.age).label;

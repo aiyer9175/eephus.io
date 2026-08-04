@@ -2839,7 +2839,7 @@ _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
     </div>
   </div>
   <div style="padding:8px 0 4px;">
-    <input id="tb-search" type="search" placeholder="Search player name..." style="width:100%;max-width:340px;padding:7px 10px;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-secondary);color:var(--text-primary);font-size:13px;" autocomplete="off" spellcheck="false">
+    <input id="tb-search" type="search" placeholder="Search player name..." style="width:100%;max-width:340px;padding:7px 10px;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-secondary);color:var(--text-primary);" autocomplete="off" spellcheck="false">
   </div>
   <div id="tb-group-panel" style="display:none;margin:8px 0;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:8px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">

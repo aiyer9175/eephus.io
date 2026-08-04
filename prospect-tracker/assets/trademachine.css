@@ -191,6 +191,31 @@
   #tradeboard-content { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   #tradeboard-content table { min-width: 620px; }
   .tm-org-abbr { display: none; }   /* the logo carries the team on small screens */
+  /* The group panel is a SIBLING of #tradeboard-content, so the overflow rule
+     above never reached the 9- and 4-column tables that trademachine.js
+     renders into it. They got their own scroller rather than panning the
+     document. */
+  #tb-group-panel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  #tb-group-panel table { min-width: 560px; }
+}
+
+/* Touch pass (2026-08-03). The equivalent block in assets/site.css cannot
+   reach these: `#trade-machine .tm-search` is an ID selector in a stylesheet
+   that loads AFTER site.css, so it wins on both counts. Fixed at the source
+   instead of escalating to !important. 16px is the size below which iOS zooms
+   the viewport when a field takes focus. */
+@media (pointer: coarse) {
+  #trade-machine .tm-search,
+  .tm-app .tm-search,
+  .tm-app select.chip {
+    font-size: 16px;
+  }
+  .tm-app select.chip,
+  .tm-app button.chip,
+  #trade-machine .pg-chip,
+  #trade-machine .pg-nav {
+    min-height: 44px;
+  }
 }
 
 /* --- Trade Board filter bar: theme the native <select>s + toggle to match the chips

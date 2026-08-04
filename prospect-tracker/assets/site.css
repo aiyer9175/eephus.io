@@ -1881,6 +1881,11 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   font-size: 12px; padding: 4px 8px; background: var(--bg-secondary);
   border: 1px solid var(--border); color: var(--text-primary); }
 .proj-app .proj-search { margin-left: auto; min-width: 180px; }
+/* The two scatter axis pickers are visually secondary, so they sit a step
+   below the filter selects. This was an inline style:11px on the element,
+   which no stylesheet could override - including the touch rule that lifts
+   fields to 16px so iOS stops zooming the page. */
+.proj-app .proj-select-ax { font-size: 11px; }
 .proj-app th.proj-sort { cursor: pointer; user-select: none; white-space: nowrap; }
 .proj-app th.proj-sort:hover { color: var(--text-primary); }
 .proj-app th.proj-sort.is-sorted { color: var(--text-primary); border-bottom: 2px solid var(--accent-gold); }
@@ -2655,12 +2660,106 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   .gl-app .filter-bar::-webkit-scrollbar-thumb,
   .mlbstats-sectionnav::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   .news-app .filter-bar > *, .gl-app .filter-bar > *, .mlbstats-sectionnav > * { flex: none; }
+  /* The module surfaces never got this pass. Measured at 390px: /fa/ wraps 25
+     filter chips, and once they are 44px tall (below) that is six rows and
+     ~260px of filters before the first card. Same single swipeable line, same
+     fade affordance. .mlbstats-tabs / -seasons were the two tiers the original
+     rule skipped, so the section nav swiped while the tabs under it wrapped. */
+  .fa-app .fa-filter-bar, .fa-app .filter-bar,
+  .mlbstats-tabs, .mlbstats-seasons, .mlb-sortbar {
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    padding-bottom: 4px;
+  }
+  .fa-app .fa-filter-bar > *, .fa-app .filter-bar > *,
+  .mlbstats-tabs > *, .mlbstats-seasons > *, .mlb-sortbar > * { flex: none; }
+  .fa-app .fa-filter-bar::-webkit-scrollbar, .fa-app .filter-bar::-webkit-scrollbar,
+  .mlbstats-tabs::-webkit-scrollbar, .mlbstats-seasons::-webkit-scrollbar,
+  .mlb-sortbar::-webkit-scrollbar { height: 4px; display: block; }
+  .fa-app .fa-filter-bar::-webkit-scrollbar-thumb,
+  .fa-app .filter-bar::-webkit-scrollbar-thumb,
+  .mlbstats-tabs::-webkit-scrollbar-thumb,
+  .mlbstats-seasons::-webkit-scrollbar-thumb,
+  .mlb-sortbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   /* Fantasy leaderboard tables (styles injected at runtime by fantasy.js)
      run wider than a phone; scroll each inside its own box so the DOCUMENT
      never pans sideways. table.-qualified to outrank the injected rule. */
   table.fantasy-table {
     display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
     white-space: nowrap; max-width: 100%;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   TOUCH TARGETS + iOS INPUT ZOOM on the module surfaces (2026-08-03).
+
+   PROSPX got a 44px pass long ago; the seven .fa-app surfaces never did, and
+   their primary filter control was not merely small but SMALLER on a phone
+   than on a desktop - `.fa-app button.chip` drops to 3px/11px at <=720px,
+   which measures 19px tall. Counted in Chromium at 390px before this block:
+   /fa/ 50 controls under 44px, /projections/ 150, /trademachine/ 59 (one at
+   11px), /mlbstats/ 40, /glossary/ 18.
+
+   Keyed on (pointer: coarse) rather than width, because the thing that makes
+   44px necessary is the finger, not the viewport - and because the site's
+   reduced-motion reset is deliberately ignored elsewhere, so width queries
+   here would fight the tickers. Desktop is untouched.
+   --------------------------------------------------------------------------- */
+@media (pointer: coarse) {
+  /* Controls a thumb actually aims at. */
+  .fa-app button.chip, .fa-app a.chip, .fa-app select,
+  .gl-app button.chip, .news-app button.chip,
+  .mlbstats-tab, .mlbstats-season, .mlbstats-sectionbtn,
+  .hub-chip, .pg-chip, .pg-nav, .cs-tabs a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Undo the phone-only shrink. A control that gets smaller exactly where it
+     is hardest to hit is the defect, not the fix. */
+  .fa-app button.chip { padding: 3px 12px; font-size: 12px; }
+
+  /* Per-row affordances (compare, expand) sit inside fixed-height cards and
+     table rows, so growing the BOX would relayout the board. Grow only the
+     HIT AREA: a transparent inset overlay takes the tap without moving a
+     single pixel. Measured targets were 16px (proj compare), 24px (prospx
+     compare-add) and 28px (row expand). */
+  /* inline-block so `position:relative` has a real box for the overlay to be
+     inset from; an inline box fragment does not reliably give one. */
+  .proj-cmp-btn, .compare-add-btn, .row-expand-btn,
+  .fa-sort, .sort-header, .mlb-card-head [role="button"] {
+    position: relative;
+    display: inline-block;
+  }
+  .proj-cmp-btn::after, .compare-add-btn::after, .row-expand-btn::after,
+  .fa-sort::after, .sort-header::after, .mlb-card-head [role="button"]::after {
+    content: "";
+    position: absolute;
+    inset: -11px -8px;
+  }
+
+  /* iOS zooms the whole page when a focused field is under 16px, and every
+     text field on the site was: 11px on the projections search, 12px on the
+     mlbstats bar, 13px on the prospx and collegesavant searches, 15px on the
+     site-wide command palette. Only prospx's GFX modal ever got this right. */
+  input[type="text"], input[type="search"], input[type="number"],
+  input[type="date"], input:not([type]), textarea, select {
+    font-size: 16px;
+  }
+  /* The bare element selector above is (0,0,1) and loses to every field that
+     sets its own size through a class, which is all of the interesting ones.
+     Named explicitly rather than reached for with !important. Verified by
+     measuring computed font-size at 390px, not by reading the cascade. */
+  .proj-app .proj-select, .proj-app .proj-search, .proj-app .proj-select-ax,
+  .gl-app input.gl-search,
+  #trade-machine .tm-search, .tm-app .tm-search, #tb-search,
+  .mlbstats-bar input, .mlbstats-bar select, .mlbstats-bar .mlbstats-search,
+  .fa-app input, .fa-app select,
+  .qk-input, .sb-search, .eph-input, .egfx-select {
+    font-size: 16px;
   }
 }
 

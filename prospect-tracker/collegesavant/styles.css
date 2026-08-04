@@ -1356,6 +1356,51 @@ select {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   TOUCH PASS (2026-08-03). This stylesheet stopped at 720px, so the two
+   CollegeSavant apps had no phone tier at all: no touch-target work, and a
+   header that only wrapped. Measured at 390px before this block: 6 controls
+   under 44px (smallest 31px) and a 13px year select, which zooms the page on
+   iOS the moment it is focused.
+
+   Keyed on the pointer, matching the block added to assets/site.css, so a
+   desktop mouse user sees no change.
+   --------------------------------------------------------------------------- */
+@media (pointer: coarse) {
+  .cs-tabs a,
+  .cs-bar button,
+  .select-box,
+  .toolbar button {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* 16px is the threshold below which iOS zooms the viewport on focus. The
+     inputs here inherit the 13px body size, so every one of them qualified. */
+  .global-search input,
+  .select-box,
+  input[type="text"],
+  input[type="search"],
+  select {
+    font-size: 16px;
+  }
+
+  /* The bar carries a title, a Hitters/Pitchers toggle, four view tabs and a
+     search. At 44px each it wraps into a very tall header, so the tab strip
+     becomes one swipeable line instead - the same pattern the module surfaces
+     use on assets/site.css. */
+  .cs-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .cs-tabs > * {
+    flex: none;
+  }
+}
+
 /* eephus.io theme refinements: headers ride the site's MS-Gothic face */
 .home-intro h1,
 .profile-title h1 {
