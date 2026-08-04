@@ -4359,6 +4359,56 @@ def upsert_photo_ctx(by_id: dict[int, dict]) -> int:
     return n
 
 
+def bind_player_ids(ids_by_key: dict[str, int]) -> int:
+    """Persist freshly-resolved {player_key: mlbam_id} into player_photos.
+
+    player_photos is the canonical, durable mlbam_id <-> player_key table, and
+    the export's LAST-RESORT id source (see the note in the timeseries builder).
+    Resolution previously lived only in the .cache id map, which the export
+    cannot see: `--rebuild-only` passes an empty player_ids map, so a row with
+    no current-season statline and no photo binding published `mlbam_id: null`
+    even though the pipeline had just resolved it.
+
+    That is what left the 2026 draft class unidentifiable on the board after
+    their ids were recovered - they had no statline yet and no binding, so the
+    id evaporated between the resolve step and the export. Binding here makes
+    the resolution outlive the cache.
+
+    Skips a key already bound to a DIFFERENT id rather than repointing it: a
+    key bound to two ids is the ambiguous C2 class in identity_audit, and
+    guessing there is how two people get fused.
+    """
+    if not ids_by_key:
+        return 0
+    n = 0
+    with connect() as con:
+        existing = {r[0]: r[1] for r in con.execute(
+            "SELECT player_key, mlbam_id FROM player_photos "
+            "WHERE player_key IS NOT NULL").fetchall()}
+        for key, mid in ids_by_key.items():
+            if not key or mid is None:
+                continue
+            prior = existing.get(key)
+            if prior is not None and int(prior) != int(mid):
+                continue                      # ambiguous binding, leave it alone
+            if prior is not None:
+                continue                      # already bound to this id
+            # headshot_ctx is NOT NULL, and 'milb' is the provisional default
+            # the snapshot path already uses when it binds a prospect id. The
+            # real context is resolved later by headshots.resolve_ctx and
+            # written through upsert_photo_ctx; this row only has to carry the
+            # id<->key binding until then.
+            con.execute(
+                """INSERT INTO player_photos (mlbam_id, headshot_ctx, player_key)
+                   VALUES (?, 'milb', ?)
+                   ON CONFLICT(mlbam_id) DO UPDATE SET
+                     player_key = COALESCE(excluded.player_key, player_photos.player_key)""",
+                (int(mid), key),
+            )
+            n += 1
+    return n
+
+
 def load_career_stats_meta() -> dict[str, str]:
     """Return {player_key: fetched_at_iso} for every stored career_stats row.
 

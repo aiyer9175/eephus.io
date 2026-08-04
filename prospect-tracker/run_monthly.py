@@ -2107,6 +2107,21 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 upsert_birth_date(key, bd, overwrite=True)
             if bds_from_index:
                 log.info("upserted %d birth dates from PlayerIndex", len(bds_from_index))
+            # Persist the RESOLUTION itself, not just what it implied. The ids
+            # lived only in the .cache map, which the export cannot see:
+            # --rebuild-only passes an empty player_ids map, so a row with no
+            # current-season statline and no photo binding published
+            # `mlbam_id: null` even though this step had just resolved it. That
+            # is how the 2026 draft class stayed unidentifiable on the board
+            # after their ids came back. Same reasoning as the birth dates
+            # above, one line later than it should have been.
+            try:
+                from storage import bind_player_ids
+                n_bound = bind_player_ids(ids_by_key)
+                if n_bound:
+                    log.info("bound %d resolved MLBAM ids into player_photos", n_bound)
+            except Exception:                                # noqa: BLE001
+                log.exception("player id binding failed - continuing")
 
         # --- 2b. Bulk fetch draft data for the full window of years a tracked
         # prospect could plausibly have been drafted in. One call per year

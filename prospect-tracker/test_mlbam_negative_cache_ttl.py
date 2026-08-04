@@ -163,7 +163,16 @@ def test_bulk_resolver_stamps_the_misses_it_writes(isolated_cache, fake_index):
 
 
 def test_miss_stamp_is_cleared_once_resolved(isolated_cache, monkeypatch):
-    """A player who resolves later must not keep a stale miss stamp around."""
+    """A player who resolves later must not keep a stale miss stamp around.
+
+    The stand-in id is deliberately OUT OF RANGE (9,000,000+). This test used
+    800604, which was fictional when written and became Roch Cholowsky's real
+    id once the 2026 draft class was bound into player_photos - at which point
+    the slug-collision guard correctly refused to rebind a durable id to a
+    made-up key, and the test failed for a reason that had nothing to do with
+    the TTL it exists to check. A fake id has to stay fake.
+    """
+    fake_id = 9_000_001
     stats._save_id_cache({"late_bloomer": None})
     stats._record_miss("late_bloomer")
     assert stats._miss_is_fresh("late_bloomer")
@@ -174,9 +183,9 @@ def test_miss_stamp_is_cleared_once_resolved(isolated_cache, monkeypatch):
     monkeypatch.setattr(stats.PlayerIndex, "load_or_build",
                         staticmethod(lambda *a, **k: (_ for _ in ()).throw(
                             RuntimeError("no index"))))
-    monkeypatch.setattr(stats, "_search_mlbam_via_api", lambda name: (800604, None))
+    monkeypatch.setattr(stats, "_search_mlbam_via_api", lambda name: (fake_id, None))
 
-    assert stats.resolve_mlbam_id("late_bloomer", "Late Bloomer") == 800604
+    assert stats.resolve_mlbam_id("late_bloomer", "Late Bloomer") == fake_id
     assert not stats._miss_is_fresh("late_bloomer")
     assert "late_bloomer" not in stats._load_miss_stamps(), (
         "the miss stamp should be dropped once the player resolves")
