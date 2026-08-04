@@ -2957,6 +2957,22 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
    rather than two implementations that drift - the naming split only exists
    because /fantasy/ shipped it first under an ff- prefix. */
 .ff-sortbar, .mlb-sortbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 6px; }
+/* Phone: one swipeable line instead of a wrapped block. The seven sort keys
+   wrap to three rows at 390px, which is ~90px of chrome above the first card.
+   This override lives HERE, next to the rule it beats, rather than in the
+   swipe-strip block further up the file: that block is earlier, and at equal
+   specificity a later `flex-wrap: wrap` simply wins, which is exactly what
+   happened on the first attempt. */
+@media (max-width: 640px) {
+  .ff-sortbar, .mlb-sortbar {
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    padding-bottom: 4px;
+  }
+  .ff-sortbar > *, .mlb-sortbar > * { flex: none; }
+}
 .ff-sortbar-lbl, .mlb-sortbar-lbl {
   font: 600 10px/1 var(--font-retro-mono, monospace);
   text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary);
