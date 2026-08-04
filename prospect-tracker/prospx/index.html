@@ -35399,7 +35399,25 @@ const _GFX_LIST_MIN_COL_W = 240;   // unchanged: the 36px freed goes to the name
 // Caps. Without them a short list stretches into 80px rows, or one 1,520px-wide
 // column that is mostly blank. Past these the surplus stays margin, which looks
 // deliberate; stretching does not.
-const _GFX_LIST_MAX_ROW_H = 44;
+//
+// RAISED 44 -> 52 on 2026-08-04, after LOOKING at an exported board. 44 was set
+// when a row was "44px beside a 22px headshot", and the headshot is gone, so the
+// number was inherited from a constraint that no longer exists: a top-25 wide
+// board filled only 83.6% of its canvas and left a visibly empty bottom quarter,
+// which reads as a bug rather than as margin.
+//
+// 52 was chosen by sweeping the cap over the whole format x count matrix and
+// taking the value that improves every case and regresses none:
+//     cap   wide/25   portrait/25   wide/50   wide/100
+//      44    83.6%       94.8%       99.3%     97.8%
+//      52    95.1%       98.5%       99.3%     97.8%   <- shipped
+//      56    99.4%       67.3%       99.3%     97.8%
+//      64    84.0%       75.0%       99.3%     97.8%
+// 56 and 60 fill `wide` better but flip portrait from one column to two and cost
+// it 27 points; 64 flips `wide` itself to 3x9 and is worse than where we started.
+// The dense cases are canvas-bound and never touch the cap, so nothing that was
+// already tight moves at all.
+const _GFX_LIST_MAX_ROW_H = 52;
 const _GFX_LIST_MAX_COL_W = 560;
 // Two ways to show position / age / level. A tall row stacks it under the
 // name; a short but wide row puts it inline after the name.
