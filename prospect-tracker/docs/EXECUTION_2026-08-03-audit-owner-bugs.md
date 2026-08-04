@@ -4,18 +4,49 @@ Eight commits on `main` (`36beaa2` .. `947e58a`). Suite **2,889 passed / 2
 failed**, both the documented pre-existing reds. Baseline at session start was
 2,853 / 3. Nothing was pushed; beta untouched.
 
-## What the box owes
+## The regens: two shipped, two are the box's to run
 
-1. `run_monthly.py` -> `python efv_export.py` -> `run_monthly.py --rebuild-only`
-   (still owed from `docs/RUNBOOK_2026-08-03.md`; nothing here supersedes it).
-2. **A resolution + stats pass** for the 2026 draft class. The id fix is code
-   only. Until `bulk_resolve_ids` runs on the box, the ids are not in the cache
-   there and no stat line reaches the board.
-3. `data/xfv_reliability.json` regenerates with a new shape (`after` + `before`
-   curve sets). The glossary card reads the old shape safely in the meantime.
-4. **A `positional_fit` regen.** The served artifact is from 2026-07-24 and
-   predates the `ladder.identification` block by a week, so /pal/ cannot yet
-   explain which sum is zero. It degrades to the plain table until then.
+Run locally on 2026-08-03 after the fixes above.
+
+**Shipped in this branch** (verified not degraded, committed):
+
+1. **`positional_fit`** (`94b11c4`). /pal/ now explains which sum is zero.
+2. **`xfv_reliability`** (`a81db4a`). The monitor now reports 0.075 against a
+   0.100 threshold, labelled "as served", instead of the pre-Platt 0.128/0.140.
+   Local fit is n=2825 / hit 1375 / pit 1450, identical to the served artifact,
+   so the degraded-local-data rule does not bind.
+
+**Still the box's** (proved locally, but the artifacts are gitignored so they
+cannot ship from here):
+
+3. **The id + stats pass.** `prospects.db`, `timeseries.json` and
+   `trade_values.json` are all gitignored, so the 241 id bindings and 48
+   career-stat rows written here are LOCAL. What ships is the code. Measured
+   end to end anyway: the production bulk path now resolves **4,521 of 4,549**
+   active players (was 4,296), career-stats coverage goes **4,296 -> 4,343**,
+   and **189 of the 199** 2026 draftees carry an id (was zero). Vahn Lackey's
+   Single-A line reaches the board; Roch Cholowsky carries his id with no stat
+   rows, which is correct.
+4. **The eFV two-pass.** Ran `efv_export` then `--rebuild-only`. Coherent:
+   9,366 players in and out, none added or dropped, one calibration vintage
+   across all four artifacts (`test_calibration_vintage` green). The golden
+   fingerprint fires, as the runbook predicts for an intentional eFV ship.
+
+**Not committed, deliberately.** The regenerated `xfv.json` and siblings were
+restored. They are a partial state: this machine now holds 48 stat rows and 241
+bindings the box does not, so the box's own run will produce a fuller and
+different result, and committing a local pass is precisely how four artifacts
+ended up on three calibration vintages on 07-31.
+
+**Expect ~34 grades to move** when the box runs, 0.4% of the board, all of them
+downstream of the stats fix rather than of any model change. Players who now
+have a real MiLB line are graded on it instead of a prior: `harrison_kreiling`
+20.0 -> 42.6 and `brayden_martin` 20.0 -> 41.4 on the way up, `caden_bogenpohl`
+43.2 -> 20.0 and `calvin_ziegler` 39.9 -> 20.0 on the way down. The downgrades
+are one- and six-game samples producing a negative xfv_war, which lands on the
+20.0 floor grade. Worth a look as a product question - a single bad rookie-ball
+game should probably not outrank having no evidence at all - but it is the
+machinery behaving as designed, not a defect introduced here.
 
 No data artifacts were committed: the box is the single writer and a locally
 regenerated copy is degraded by definition. Locally rebuilt `xfv.json`,
