@@ -2953,6 +2953,39 @@
    "stale": false,
    "artifact_age_days": 0,
    "notes": "SHIPPED 2026-07-31 after clearing its pre-registration on EVERY condition. THE DEFECT: p_bucket_given_fv is fitted on the CONSENSUS-FV scale (sd 6.57 on the served-comparable pool) and read in production at the realized-implied eFV grade (sd 15.54), 2.4x wider, so its log-odds came out about 2.7x too steep. That is a SLOPE error, which is why per-cohort intercept offsets could never have fixed it. GATE, all on held-out forward-chained folds (6 splits, 1,740 pooled rows): beats the INCUMBENT on Brier +0.030139 CI95 [+0.021109,+0.039055] and log loss +0.091055 CI95 [+0.065310,+0.116788]; beats a CONSTANT base rate on Brier +0.031369 CI95 [+0.026449,+0.035966] and log loss +0.101815 CI95 [+0.085284,+0.117593]. All four CIs clean of zero, which is the bar TWO prior odds lanes failed. Label-shuffle zero-information control (200 refits on permuted labels): null CI95 [-0.006157,+0.003907] against an observed +0.030139, p=0.0 on both metrics. Monotone in the input probability, so it cannot reorder anything. MECHANISM CONFIRMED, which the gate required and not just the score: calibration slope 0.6446 -> 1.1351 and ECE 0.1528 -> 0.0428. NOTE the gate text predicted the slope would move 'from 0.368'; that figure came from the 517-row subpool used in the cohort lane's refutation, and on this 1,740-row frame the incumbent slope is 0.6446. Both are real and they are different populations; the direction claim held and the starting value is reported as measured. HONEST CAVEAT: F LOSES fold 2015 on Brier (0.1887 against 0.1672), which is the first fold carrying a Platt arm and so the one with the least history to fit on. It wins 5 of 6 against the incumbent and 6 of 6 against the constant. BLAST RADIUS, measured: 9,320 of 9,334 served p_bust values moved, 8,073 by more than 5 points (5,743 down, 2,330 up); every p_bucket vector still sums to 1; and ZERO rows changed xfv_grade, xfv_grade_quantile, xfv_war_6yr or surplus_mm, so no rank, grade or dollar figure moved. Brayden Taylor p_bust 0.309 -> 0.605 and Enrique Bradfield Jr 0.319 -> 0.609, most of the way to the 77.1% bust rate of their own outcome-comp cohort, reached with ZERO cohort information. THE CODE ALREADY EXISTED: efv_odds_calibration.py was written 2026-07-25 and left inert with an exact wiring patch at tools/_prem_odds.patch; this lane independently re-derived the finding under a fresh pre-registration and then wired it. A DEFECT IN THAT PATCH WAS FOUND AND FIXED while wiring: its backgrade hunk gated on `not rec.get('milb')`, but debuts.json rows carry no milb block at all (measured: 0 of 2,676), so the expression was always True and would have silently disabled the correction for the entire resolved population. That is backwards, because the resolved frame is exactly what the map was fit on. The guard is kept on the two seams where an absent milb block genuinely means no MiLB track record, and dropped on the backgrade seam. SISTER LANE: the cohort rebuild that chased the same Taylor and Bradfield complaint directly was a measured NO-SHIP, killed by its own zero-information control, with cohort conditioning going NEGATIVE on a calibrated base (data/xfv_odds_cohort_eval.json)."
+  },
+  {
+   "model_id": "xfv_pace_from_entry",
+   "surface": "model-dev artifact (rendered nowhere) - loss ledger",
+   "predicts": "n/a - gated experiment: promotion pace measured from org entry as an eFV feature, built and left default OFF 2026-07-31, gate run 2026-08-04",
+   "champion": "shipped eFV feature sets (efv_model _FEATURES_HIT / _FEATURES_PIT), unchanged",
+   "baseline": "base arm reproducing data/xfv_eval*.json byte-exactly (hit 0.3882 n=353, pit 0.3208 n=438)",
+   "metric": "forward-chained pooled blend Spearman vs MDE95 0.017 hit / 0.016 pit, plus a pre-registered kill criterion on the fitted hitter weight sign",
+   "eval_artifact": "data/xfv_pace_entry_eval.json",
+   "verdict": "deprecated",
+   "notes": "NO SHIP. The PRE-REGISTERED KILL CRITERION FIRED and was not relaxed: the hitter arm fits a NEGATIVE standardized weight on pace (mean -0.0419, negative in 3 of 4 forward-chained folds), which the gate doc named in advance as the survivorship-censoring artifact, so the arm CLOSES rather than shipping as 'DSL starters are worse'. Hitters -0.0015 (-0.09x floor), permutation p=0.7097 with 21 of 30 nulls beating the real effect. Pitchers -0.0075 (-0.47x floor), p=0.9355, all 4 folds negative. The 'fuller' triple variant (+entry_level_rank +entry_observed) is a RESOLVED HARM, not a null: pit -0.0270 (-1.69x floor) with bootstrap CI95 [-0.0467, -0.0076] excluding zero. Do not revisit it as the richer specification. Coverage was NOT the limiter: ~80% of eval rows carry a non-censored entry, better than the doc assumed. The efv_ungraded second arm is also null, and its stated premise does not reproduce - the doc's -0.5943 weight is not found under any of four plausible specs."
+  },
+  {
+   "model_id": "xfv_level_blend_arms",
+   "surface": "model-dev artifact (rendered nowhere) - loss ledger",
+   "predicts": "n/a - gated experiment: exposure-weighted multi-level blending of the eFV rate features (rates arm), plus anchoring to the most-exposed level (anchor arm) and both together",
+   "champion": "shipped single-level feature build (efv_dataset LEVEL_BLEND_* all False), unchanged",
+   "baseline": "flags-off rebuild verified BYTE-IDENTICAL to the shipped xfv_hitter_matrix.json / xfv_pitcher_matrix.json",
+   "metric": "forward-chained pooled blend Spearman vs MDE95 0.017 hit / 0.016 pit, with paired player-clustered bootstrap, four time splits, a zero-information control and the defect subgroup",
+   "eval_artifact": "data/xfv_level_blend_arms_eval.json",
+   "verdict": "deprecated",
+   "notes": "NO SHIP, all three arms, both sides. The ANCHOR and JOINT arms had never been scored before (the RATES arm was scored 2026-07-30); the four pre-registered controls and the defect-subgroup restriction were run here for the first time. 17 of 18 arm x side x cut cells are negative; the single positive is +0.0015 (0.09x MDE, P(gain) 0.643), a null. The ANCHOR arm is the WORST and on pitchers exceeds MDE95 on ALL THREE cuts (-0.0265 / -0.0306 / -0.0161), making it a measured LOSS rather than a null. AUC agrees in sign with rho on every arm, and the hitter anchor arm is the one cell where both metrics' paired CIs exclude zero, both negative. The underlying DEFECT is real and stays real (22% of multi-level hitter rows and 19% of pitcher rows are scored on a level that is not their most-exposed one); blending as specified is not the repair."
+  },
+  {
+   "model_id": "eta_age_continuous",
+   "surface": "model-dev artifact (rendered nowhere) - loss ledger",
+   "predicts": "n/a - gated experiment: continuous age ramp replacing the ETA staircase (C3-ETA, implemented default OFF 2026-07-30, KM gate owed since)",
+   "champion": "shipped v39 BASE_YEARS staircase (eta.py), unchanged",
+   "baseline": "champion staircase on identical rows, n=3,450 scored",
+   "metric": "the criterion the v39 ETA ship was decided on: forward-chained debuted MAE and within-1y must BOTH beat the incumbent on identical rows",
+   "eval_artifact": "data/eta_age_continuous_eval.json",
+   "verdict": "deprecated",
+   "notes": "NO SHIP. The continuous ramp loses BOTH legs of the criterion the incumbent was shipped on, same 3,450 rows: MAE 1.441 -> 1.488 (worse by 0.047) and within-1y 0.579 -> 0.562 (worse by 0.017). Bias also worsens 1.089 -> 1.141. It changes 668 predictions (209 earlier, 459 later) to buy nothing. Closes the KM gate that had been owed since 2026-07-30; the flag stays default OFF."
   }
  ],
  "problems": []

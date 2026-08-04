@@ -1,0 +1,531 @@
+{
+ "generated_at": "2026-08-03",
+ "experiment": "PACE_FROM_ENTRY (efv_model.PACE_FROM_ENTRY, default False)",
+ "registration": "docs/efv-2026-07-31/PACE_FROM_ENTRY_GATE.md",
+ "regen_cmd": "python tools/efv_pace_entry_gate_lab.py",
+ "pre_registered_criteria": {
+  "primary": "forward-chained pooled blend Spearman vs MDE95 0.017 hit / 0.016 pit",
+  "control": "row-permuted pace column kept IN the feature set (B3/E1 shape)",
+  "permutation_null": "B=30 draws from the true marginal, bar p<=0.032",
+  "bootstrap": "paired, B=2000",
+  "kill_criterion": "PRE-REGISTERED: a NEGATIVE fitted hitter weight on pace_from_entry is the survivorship-censoring artifact and CLOSES the arm; it must not ship as 'DSL starters are worse'."
+ },
+ "flagship": {
+  "hit": {
+   "protocol": "forward-chained OOS, debuted cohort, blend (consensus OLS(FV) + ridge at the shipped lambda); folds = efv_model.SCORED_YEARS, floors train>=50 / test>=12 (efv_lab_runner convention, reproduces data/xfv_eval*.json pooled_oos)",
+   "mde95": 0.017,
+   "consensus_baseline": {
+    "n": 353,
+    "spearman": 0.3521,
+    "within_tier_wm": 0.1338,
+    "t45": 0.343,
+    "auc_contributor": 0.7555,
+    "auc_star": 0.8087,
+    "per_year": {
+     "2020": 0.3411,
+     "2021": 0.1773,
+     "2022": 0.5747,
+     "2023": 0.1943
+    }
+   },
+   "arms": {
+    "base": {
+     "n": 353,
+     "spearman": 0.3882,
+     "within_tier_wm": 0.2349,
+     "t45": 0.2777,
+     "auc_contributor": 0.7768,
+     "auc_star": 0.8275,
+     "per_year": {
+      "2020": 0.3345,
+      "2021": 0.2531,
+      "2022": 0.5559,
+      "2023": 0.2478
+     }
+    },
+    "pace1": {
+     "n": 353,
+     "spearman": 0.3867,
+     "within_tier_wm": 0.2238,
+     "t45": 0.2578,
+     "auc_contributor": 0.7769,
+     "auc_star": 0.8247,
+     "per_year": {
+      "2020": 0.3395,
+      "2021": 0.2518,
+      "2022": 0.5561,
+      "2023": 0.2391
+     }
+    },
+    "pace3": {
+     "n": 353,
+     "spearman": 0.3867,
+     "within_tier_wm": 0.2092,
+     "t45": 0.2787,
+     "auc_contributor": 0.7751,
+     "auc_star": 0.8233,
+     "per_year": {
+      "2020": 0.3202,
+      "2021": 0.2496,
+      "2022": 0.5544,
+      "2023": 0.2393
+     }
+    }
+   },
+   "delta_vs_base": {
+    "pace1": -0.0015,
+    "pace3": -0.0015,
+    "pace1_x_floor": -0.09,
+    "pace3_x_floor": -0.09
+   },
+   "delta_auc_vs_base": {
+    "pace1_contributor": 0.0001,
+    "pace1_star": -0.0028,
+    "pace1_t45": -0.0199,
+    "pace1_wm": -0.0111
+   },
+   "per_fold_delta": {
+    "2020": 0.005,
+    "2021": -0.0013,
+    "2022": 0.0002,
+    "2023": -0.0087
+   },
+   "zero_information_control": {
+    "seeds": [
+     11,
+     22,
+     33
+    ],
+    "deltas": [
+     -0.004,
+     -0.0033,
+     0.0047
+    ],
+    "mean": -0.0009,
+    "real_beats_all": false
+   },
+   "permutation_null": {
+    "real_delta": -0.0015,
+    "B": 30,
+    "null_mean": 0.0,
+    "null_sd": 0.0034,
+    "null_max": 0.0084,
+    "null_min": -0.0069,
+    "n_ge_real": 21,
+    "p": 0.7097
+   },
+   "paired_bootstrap": {
+    "pace1": {
+     "point": -0.00145,
+     "mean": -0.00155,
+     "ci95": [
+      -0.00679,
+      0.00322
+     ],
+     "p_gt_0": 0.275,
+     "B": 2000
+    },
+    "pace3": {
+     "point": -0.00149,
+     "mean": -0.00143,
+     "ci95": [
+      -0.01162,
+      0.00879
+     ],
+     "p_gt_0": 0.385,
+     "B": 2000
+    }
+   },
+   "fitted_weight_pace_from_entry": {
+    "per_fold": [
+     {
+      "fold": 2020,
+      "w": -0.0784,
+      "mu": 1.0015,
+      "sd": 0.3125,
+      "alpha": 10.0
+     },
+     {
+      "fold": 2021,
+      "w": -0.2147,
+      "mu": 1.0055,
+      "sd": 0.329,
+      "alpha": 10.0
+     },
+     {
+      "fold": 2022,
+      "w": -0.057,
+      "mu": 1.0092,
+      "sd": 0.3575,
+      "alpha": 10.0
+     },
+     {
+      "fold": 2023,
+      "w": 0.1825,
+      "mu": 0.976,
+      "sd": 0.3557,
+      "alpha": 10.0
+     }
+    ],
+    "mean_standardized_w": -0.0419,
+    "sign": "negative",
+    "full_pool_in_sample_w": -0.0042,
+    "note": "standardized ridge weight, WAR6 units per 1 sd of pace. The per-fold values are the gate evidence (each fitted only on rows strictly before its test year); the full-pool value is the in-sample descriptive number the gate doc quotes."
+   }
+  },
+  "pit": {
+   "protocol": "forward-chained OOS, debuted cohort, blend (consensus OLS(FV) + ridge at the shipped lambda); folds = efv_model.SCORED_YEARS, floors train>=50 / test>=12 (efv_lab_runner convention, reproduces data/xfv_eval*.json pooled_oos)",
+   "mde95": 0.016,
+   "consensus_baseline": {
+    "n": 438,
+    "spearman": 0.2671,
+    "within_tier_wm": 0.0117,
+    "t45": 0.0916,
+    "auc_contributor": 0.7023,
+    "auc_star": 0.8371,
+    "per_year": {
+     "2020": 0.2361,
+     "2021": 0.1119,
+     "2022": 0.3428,
+     "2023": 0.3355
+    }
+   },
+   "arms": {
+    "base": {
+     "n": 438,
+     "spearman": 0.3208,
+     "within_tier_wm": 0.1498,
+     "t45": 0.0915,
+     "auc_contributor": 0.723,
+     "auc_star": 0.8604,
+     "per_year": {
+      "2020": 0.2419,
+      "2021": 0.2148,
+      "2022": 0.4034,
+      "2023": 0.3955
+     }
+    },
+    "pace1": {
+     "n": 438,
+     "spearman": 0.3133,
+     "within_tier_wm": 0.1354,
+     "t45": 0.0138,
+     "auc_contributor": 0.7209,
+     "auc_star": 0.8443,
+     "per_year": {
+      "2020": 0.2236,
+      "2021": 0.2052,
+      "2022": 0.4007,
+      "2023": 0.3908
+     }
+    },
+    "pace3": {
+     "n": 438,
+     "spearman": 0.2938,
+     "within_tier_wm": 0.1016,
+     "t45": -0.0173,
+     "auc_contributor": 0.7066,
+     "auc_star": 0.8339,
+     "per_year": {
+      "2020": 0.2004,
+      "2021": 0.1793,
+      "2022": 0.4022,
+      "2023": 0.3786
+     }
+    }
+   },
+   "delta_vs_base": {
+    "pace1": -0.0075,
+    "pace3": -0.027,
+    "pace1_x_floor": -0.47,
+    "pace3_x_floor": -1.69
+   },
+   "delta_auc_vs_base": {
+    "pace1_contributor": -0.0021,
+    "pace1_star": -0.0161,
+    "pace1_t45": -0.0777,
+    "pace1_wm": -0.0144
+   },
+   "per_fold_delta": {
+    "2020": -0.0183,
+    "2021": -0.0096,
+    "2022": -0.0027,
+    "2023": -0.0047
+   },
+   "zero_information_control": {
+    "seeds": [
+     11,
+     22,
+     33
+    ],
+    "deltas": [
+     -0.0012,
+     -0.0026,
+     -0.0021
+    ],
+    "mean": -0.002,
+    "real_beats_all": false
+   },
+   "permutation_null": {
+    "real_delta": -0.0075,
+    "B": 30,
+    "null_mean": -0.0024,
+    "null_sd": 0.0041,
+    "null_max": 0.0058,
+    "null_min": -0.0122,
+    "n_ge_real": 28,
+    "p": 0.9355
+   },
+   "paired_bootstrap": {
+    "pace1": {
+     "point": -0.00749,
+     "mean": -0.00747,
+     "ci95": [
+      -0.01797,
+      0.00276
+     ],
+     "p_gt_0": 0.074,
+     "B": 2000
+    },
+    "pace3": {
+     "point": -0.02696,
+     "mean": -0.02704,
+     "ci95": [
+      -0.04671,
+      -0.00763
+     ],
+     "p_gt_0": 0.002,
+     "B": 2000
+    }
+   },
+   "fitted_weight_pace_from_entry": {
+    "per_fold": [
+     {
+      "fold": 2020,
+      "w": 0.2985,
+      "mu": 1.0061,
+      "sd": 0.3097,
+      "alpha": 10.0
+     },
+     {
+      "fold": 2021,
+      "w": 0.1018,
+      "mu": 1.008,
+      "sd": 0.3751,
+      "alpha": 10.0
+     },
+     {
+      "fold": 2022,
+      "w": 0.0328,
+      "mu": 0.9993,
+      "sd": 0.4048,
+      "alpha": 10.0
+     },
+     {
+      "fold": 2023,
+      "w": 0.0504,
+      "mu": 0.9643,
+      "sd": 0.4136,
+      "alpha": 1.0
+     }
+    ],
+    "mean_standardized_w": 0.1209,
+    "sign": "positive",
+    "full_pool_in_sample_w": -0.0623,
+    "note": "standardized ridge weight, WAR6 units per 1 sd of pace. The per-fold values are the gate evidence (each fitted only on rows strictly before its test year); the full-pool value is the in-sample descriptive number the gate doc quotes."
+   }
+  }
+ },
+ "ungraded_second_arm": {
+  "hit": {
+   "protocol": "efv_ungraded.evaluate protocol: no-FV production ridge + linear calibration, forward-chained folds 2019-2023, floors train>=60 / test>=15, production-bearing rows only, bust_recent excluded",
+   "arms": {
+    "base": {
+     "low_minors_age_le21": {
+      "n": 116,
+      "spearman": 0.1252
+     },
+     "all_levels": {
+      "n": 621,
+      "spearman": 0.2779
+     }
+    },
+    "pace1": {
+     "low_minors_age_le21": {
+      "n": 116,
+      "spearman": 0.1408
+     },
+     "all_levels": {
+      "n": 621,
+      "spearman": 0.2798
+     }
+    }
+   },
+   "delta_vs_base": {
+    "low_minors_age_le21": 0.0156,
+    "all_levels": 0.0019
+   },
+   "zero_information_control": [
+    {
+     "low_minors_age_le21": -0.0138,
+     "all_levels": -0.0072
+    },
+    {
+     "low_minors_age_le21": -0.0069,
+     "all_levels": -0.0005
+    },
+    {
+     "low_minors_age_le21": 0.0085,
+     "all_levels": 0.0053
+    }
+   ],
+   "fitted_weight_pace_from_entry": {
+    "per_fold": [
+     {
+      "fold": 2019,
+      "w": 0.7524
+     },
+     {
+      "fold": 2020,
+      "w": 0.0697
+     },
+     {
+      "fold": 2021,
+      "w": -0.2337
+     },
+     {
+      "fold": 2022,
+      "w": -0.0457
+     },
+     {
+      "fold": 2023,
+      "w": 0.4948
+     }
+    ],
+    "mean_standardized_w": 0.2075,
+    "full_pool_in_sample_w": 0.1879
+   },
+   "doc_claim_reconciliation": {
+    "claim": "docs/efv-2026-07-31/PACE_FROM_ENTRY_GATE.md: \"The same column fits -0.5943 in the efv_ungraded provisional set ... against ~0 in the anchored flagship.\"",
+    "in_sample_weights_by_spec": {
+     "production_bearing/single": {
+      "n": 907,
+      "pace_from_entry": 0.1879
+     },
+     "production_bearing/triple": {
+      "n": 907,
+      "pace_from_entry": 0.344,
+      "entry_level_rank": 0.3717,
+      "entry_observed": -0.4263
+     },
+     "all_labeled_rows/single": {
+      "n": 1927,
+      "pace_from_entry": 0.0993
+     },
+     "all_labeled_rows/triple": {
+      "n": 1927,
+      "pace_from_entry": -0.0559,
+      "entry_level_rank": -0.0788,
+      "entry_observed": -0.5329
+     }
+    },
+    "finding": "pace_from_entry fits POSITIVE in every reproducible ungraded specification. The nearest match to -0.5943 is entry_observed (the left-censoring indicator), not pace_from_entry, so the premise for this second arm looks like a column mix-up. The arm was run anyway and is reported on its own OOS numbers."
+   }
+  },
+  "pit": {
+   "protocol": "efv_ungraded.evaluate protocol: no-FV production ridge + linear calibration, forward-chained folds 2019-2023, floors train>=60 / test>=15, production-bearing rows only, bust_recent excluded",
+   "arms": {
+    "base": {
+     "low_minors_age_le21": {
+      "n": 48,
+      "spearman": 0.1109
+     },
+     "all_levels": {
+      "n": 627,
+      "spearman": 0.1499
+     }
+    },
+    "pace1": {
+     "low_minors_age_le21": {
+      "n": 48,
+      "spearman": 0.0746
+     },
+     "all_levels": {
+      "n": 627,
+      "spearman": 0.1453
+     }
+    }
+   },
+   "delta_vs_base": {
+    "low_minors_age_le21": -0.0363,
+    "all_levels": -0.0046
+   },
+   "zero_information_control": [
+    {
+     "low_minors_age_le21": -0.0082,
+     "all_levels": 0.0002
+    },
+    {
+     "low_minors_age_le21": 0.0025,
+     "all_levels": -0.0045
+    },
+    {
+     "low_minors_age_le21": 0.0136,
+     "all_levels": 0.0173
+    }
+   ],
+   "fitted_weight_pace_from_entry": {
+    "per_fold": [
+     {
+      "fold": 2019,
+      "w": 0.9832
+     },
+     {
+      "fold": 2020,
+      "w": 0.5015
+     },
+     {
+      "fold": 2021,
+      "w": 0.129
+     },
+     {
+      "fold": 2022,
+      "w": 0.0249
+     },
+     {
+      "fold": 2023,
+      "w": 0.1451
+     }
+    ],
+    "mean_standardized_w": 0.3567,
+    "full_pool_in_sample_w": 0.1559
+   },
+   "doc_claim_reconciliation": {
+    "claim": "docs/efv-2026-07-31/PACE_FROM_ENTRY_GATE.md: \"The same column fits -0.5943 in the efv_ungraded provisional set ... against ~0 in the anchored flagship.\"",
+    "in_sample_weights_by_spec": {
+     "production_bearing/single": {
+      "n": 919,
+      "pace_from_entry": 0.1559
+     },
+     "production_bearing/triple": {
+      "n": 919,
+      "pace_from_entry": 0.2708,
+      "entry_level_rank": 0.4259,
+      "entry_observed": -0.4462
+     },
+     "all_labeled_rows/single": {
+      "n": 2064,
+      "pace_from_entry": 0.0751
+     },
+     "all_labeled_rows/triple": {
+      "n": 2064,
+      "pace_from_entry": 0.1401,
+      "entry_level_rank": 0.3937,
+      "entry_observed": 0.0127
+     }
+    },
+    "finding": "pace_from_entry fits POSITIVE in every reproducible ungraded specification. The nearest match to -0.5943 is entry_observed (the left-censoring indicator), not pace_from_entry, so the premise for this second arm looks like a column mix-up. The arm was run anyway and is reported on its own OOS numbers."
+   }
+  }
+ }
+}

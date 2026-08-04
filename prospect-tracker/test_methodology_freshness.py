@@ -37,6 +37,10 @@ MODEL_GLOSSARY = {
     "fa_war_paths_decay": ["fa_projection_engine"],
     "proj_def_prior": "internal",   # a hit feature of fa_war_paths_decay; gate-artifact row
     "prospect_def_value": "internal",  # Will Cahoon def model (local reconstruction); eFV-swap loss ledger
+    # 2026-08-04 gated experiments, all three measured NO-SHIP (loss ledgers).
+    "xfv_pace_from_entry": "internal",   # pre-registered kill criterion fired on the hitter weight sign
+    "xfv_level_blend_arms": "internal",  # 17 of 18 cells negative; the anchor arm is a measured loss
+    "eta_age_continuous": "internal",    # loses both legs of the criterion v39 was shipped on
     "fa_market": ["fa_projection_engine", "deal_plus"],
     "fa_rational_value": ["rational_value", "contract_surplus"],
     "fa_dpw_series": ["winter_dpw", "dpw_tier"],

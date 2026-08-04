@@ -1,0 +1,1961 @@
+{
+ "generated_at": "2026-08-03",
+ "experiment": "B3 level-blend gate, COMPLETED: both arms (RATES and ANCHOR) plus the joint arm, both sides, with the four pre-registered controls and a defect-subgroup restriction",
+ "companion_to": "data/xfv_level_blend_eval.json (2026-07-30, RATES arm only)",
+ "pre_registration": "docs/efv-2026-07-30/B3_LEVEL_BLEND_GATE.md",
+ "verdict": "NO SHIP, all three arms, both sides. Every arm regresses the PRIMARY metric on both sides (12 of 12 arm x side x cut cells negative except one +0.0015 hit/rates full_pool_km). The ANCHOR arm, scored here for the FIRST time, is the WORST arm and on the pitcher side exceeds MDE95 on all three cuts (-0.0265 / -0.0306 / -0.0161 vs 0.016), making it a measured LOSS rather than a null. Pre-registered no-ship condition 1.",
+ "primary_metric": "pooled OOS Spearman, debuted_km, blend leg, forward-chained (efv_model.SCORED_YEARS 2020-2023, 4 time splits)",
+ "mde95": {
+  "hit": 0.017,
+  "pit": 0.016
+ },
+ "harness_validation": {
+  "baseline_rebuild_vs_shipped_matrix": {
+   "hit": {
+    "shipped_rows": 1927,
+    "rebuilt_rows": 1927,
+    "byte_identical": true
+   },
+   "pit": {
+    "shipped_rows": 2064,
+    "rebuilt_rows": 2064,
+    "byte_identical": true
+   }
+  },
+  "note": "the flags-off rebuild is BYTE-IDENTICAL to the shipped matrices on both sides, so every delta below is a paired comparison of the SAME rows against the SHIPPED champion, not across populations.",
+  "lambda": "held at the champion value (hit 0.70 pinned, pit 0.57 rank-gate) so the comparison is paired; lambda re-selected per arm is reported separately and only moves on the pitcher side (0.57 -> 0.50-0.53), which would flatter the arms by shrinking their own influence."
+ },
+ "results": {
+  "hit": {
+   "lambda_champion": 0.7,
+   "lambda_reselected_per_arm": {
+    "base": 0.7,
+    "rates": 0.7,
+    "anchor": 0.7,
+    "both": 0.7
+   },
+   "champion": {
+    "debuted_km": {
+     "n": 353,
+     "spearman": 0.3882,
+     "spearman_ci95": [
+      0.2927,
+      0.4832
+     ],
+     "contributor_auc": 0.7768,
+     "star_auc": 0.8275
+    },
+    "debuted_resolved": {
+     "n": 59,
+     "spearman": 0.3345,
+     "spearman_ci95": [
+      0.0743,
+      0.5698
+     ],
+     "contributor_auc": 0.7612,
+     "star_auc": 0.7156
+    },
+    "full_pool_km": {
+     "n": 795,
+     "spearman": 0.2858,
+     "spearman_ci95": [
+      0.2007,
+      0.3667
+     ],
+     "contributor_auc": 0.893,
+     "star_auc": 0.9111
+    }
+   },
+   "treatment_exposure": {
+    "rates": {
+     "scored_pool_debuted_km": 845,
+     "rows_touched": 405,
+     "share_touched": 0.4793,
+     "rows_final_level_rekeyed": 0
+    },
+    "anchor": {
+     "scored_pool_debuted_km": 845,
+     "rows_touched": 238,
+     "share_touched": 0.2817,
+     "rows_final_level_rekeyed": 172
+    },
+    "both": {
+     "scored_pool_debuted_km": 845,
+     "rows_touched": 405,
+     "share_touched": 0.4793,
+     "rows_final_level_rekeyed": 172
+    }
+   },
+   "arms": {
+    "rates": {
+     "flags": {
+      "LEVEL_BLEND_RATES": true,
+      "LEVEL_BLEND_ANCHOR_MOST_EXPOSED": false
+     },
+     "cuts": {
+      "debuted_km": {
+       "n": 353,
+       "champion_spearman": 0.3882,
+       "arm_spearman": 0.3818,
+       "arm_spearman_ci95": [
+        0.2861,
+        0.4766
+       ],
+       "delta_spearman": -0.0064,
+       "x_of_mde95": 0.38,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.0168,
+        0.0038
+       ],
+       "p_gain_gt_0": 0.1055,
+       "folds_improved": "1/4",
+       "contributor_auc": 0.7768,
+       "contributor_auc_arm": 0.7746,
+       "contributor_auc_delta": -0.0022,
+       "contributor_auc_delta_ci95": [
+        -0.00854,
+        0.00431
+       ],
+       "star_auc": 0.8275,
+       "star_auc_arm": 0.8268,
+       "star_auc_delta": -0.0007,
+       "star_auc_delta_ci95": [
+        -0.00796,
+        0.00589
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 59,
+         "champion": 0.3345,
+         "arm": 0.3279,
+         "delta": -0.0066
+        },
+        "2021": {
+         "n": 74,
+         "champion": 0.2531,
+         "arm": 0.2314,
+         "delta": -0.0217
+        },
+        "2022": {
+         "n": 127,
+         "champion": 0.5559,
+         "arm": 0.5562,
+         "delta": 0.0003
+        },
+        "2023": {
+         "n": 93,
+         "champion": 0.2478,
+         "arm": 0.2388,
+         "delta": -0.009
+        }
+       }
+      },
+      "debuted_resolved": {
+       "n": 59,
+       "champion_spearman": 0.3345,
+       "arm_spearman": 0.3279,
+       "arm_spearman_ci95": [
+        0.0663,
+        0.5639
+       ],
+       "delta_spearman": -0.0066,
+       "x_of_mde95": 0.39,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.0369,
+        0.0224
+       ],
+       "p_gain_gt_0": 0.3605,
+       "folds_improved": "0/1",
+       "contributor_auc": 0.7612,
+       "contributor_auc_arm": 0.7541,
+       "contributor_auc_delta": -0.0071,
+       "contributor_auc_delta_ci95": [
+        -0.02256,
+        0.00725
+       ],
+       "star_auc": 0.7156,
+       "star_auc_arm": 0.7156,
+       "star_auc_delta": 0.0,
+       "star_auc_delta_ci95": [
+        -0.03061,
+        0.0271
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 59,
+         "champion": 0.3345,
+         "arm": 0.3279,
+         "delta": -0.0066
+        }
+       }
+      },
+      "full_pool_km": {
+       "n": 795,
+       "champion_spearman": 0.2858,
+       "arm_spearman": 0.2873,
+       "arm_spearman_ci95": [
+        0.2037,
+        0.3675
+       ],
+       "delta_spearman": 0.0015,
+       "x_of_mde95": 0.09,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.0056,
+        0.0088
+       ],
+       "p_gain_gt_0": 0.643,
+       "folds_improved": "2/4",
+       "contributor_auc": 0.893,
+       "contributor_auc_arm": 0.8948,
+       "contributor_auc_delta": 0.0018,
+       "contributor_auc_delta_ci95": [
+        -0.00271,
+        0.00673
+       ],
+       "star_auc": 0.9111,
+       "star_auc_arm": 0.9116,
+       "star_auc_delta": 0.0005,
+       "star_auc_delta_ci95": [
+        -0.0025,
+        0.00367
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 169,
+         "champion": 0.333,
+         "arm": 0.3258,
+         "delta": -0.0072
+        },
+        "2021": {
+         "n": 127,
+         "champion": 0.1615,
+         "arm": 0.1541,
+         "delta": -0.0074
+        },
+        "2022": {
+         "n": 251,
+         "champion": 0.3441,
+         "arm": 0.3465,
+         "delta": 0.0024
+        },
+        "2023": {
+         "n": 248,
+         "champion": 0.2875,
+         "arm": 0.288,
+         "delta": 0.0005
+        }
+       }
+      }
+     }
+    },
+    "anchor": {
+     "flags": {
+      "LEVEL_BLEND_RATES": false,
+      "LEVEL_BLEND_ANCHOR_MOST_EXPOSED": true
+     },
+     "cuts": {
+      "debuted_km": {
+       "n": 353,
+       "champion_spearman": 0.3882,
+       "arm_spearman": 0.3752,
+       "arm_spearman_ci95": [
+        0.2773,
+        0.4721
+       ],
+       "delta_spearman": -0.013,
+       "x_of_mde95": 0.76,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.0254,
+        -0.0006
+       ],
+       "p_gain_gt_0": 0.016,
+       "folds_improved": "0/4",
+       "contributor_auc": 0.7768,
+       "contributor_auc_arm": 0.7682,
+       "contributor_auc_delta": -0.0086,
+       "contributor_auc_delta_ci95": [
+        -0.01736,
+        -0.00107
+       ],
+       "star_auc": 0.8275,
+       "star_auc_arm": 0.8255,
+       "star_auc_delta": -0.002,
+       "star_auc_delta_ci95": [
+        -0.01188,
+        0.00535
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 59,
+         "champion": 0.3345,
+         "arm": 0.3191,
+         "delta": -0.0154
+        },
+        "2021": {
+         "n": 74,
+         "champion": 0.2531,
+         "arm": 0.2371,
+         "delta": -0.016
+        },
+        "2022": {
+         "n": 127,
+         "champion": 0.5559,
+         "arm": 0.5526,
+         "delta": -0.0033
+        },
+        "2023": {
+         "n": 93,
+         "champion": 0.2478,
+         "arm": 0.2413,
+         "delta": -0.0065
+        }
+       }
+      },
+      "debuted_resolved": {
+       "n": 59,
+       "champion_spearman": 0.3345,
+       "arm_spearman": 0.3191,
+       "arm_spearman_ci95": [
+        0.0573,
+        0.5613
+       ],
+       "delta_spearman": -0.0154,
+       "x_of_mde95": 0.91,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.0517,
+        0.0232
+       ],
+       "p_gain_gt_0": 0.2135,
+       "folds_improved": "0/1",
+       "contributor_auc": 0.7612,
+       "contributor_auc_arm": 0.7471,
+       "contributor_auc_delta": -0.0141,
+       "contributor_auc_delta_ci95": [
+        -0.03744,
+        0.00614
+       ],
+       "star_auc": 0.7156,
+       "star_auc_arm": 0.7178,
+       "star_auc_delta": 0.0022,
+       "star_auc_delta_ci95": [
+        -0.01837,
+        0.02449
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 59,
+         "champion": 0.3345,
+         "arm": 0.3191,
+         "delta": -0.0154
+        }
+       }
+      },
+      "full_pool_km": {
+       "n": 795,
+       "champion_spearman": 0.2858,
+       "arm_spearman": 0.2819,
+       "arm_spearman_ci95": [
+        0.1964,
+        0.3624
+       ],
+       "delta_spearman": -0.0039,
+       "x_of_mde95": 0.23,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.0136,
+        0.0052
+       ],
+       "p_gain_gt_0": 0.2015,
+       "folds_improved": "1/4",
+       "contributor_auc": 0.893,
+       "contributor_auc_arm": 0.8871,
+       "contributor_auc_delta": -0.0059,
+       "contributor_auc_delta_ci95": [
+        -0.01463,
+        0.00122
+       ],
+       "star_auc": 0.9111,
+       "star_auc_arm": 0.9083,
+       "star_auc_delta": -0.0028,
+       "star_auc_delta_ci95": [
+        -0.01354,
+        0.0036
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 169,
+         "champion": 0.333,
+         "arm": 0.3263,
+         "delta": -0.0067
+        },
+        "2021": {
+         "n": 127,
+         "champion": 0.1615,
+         "arm": 0.1309,
+         "delta": -0.0306
+        },
+        "2022": {
+         "n": 251,
+         "champion": 0.3441,
+         "arm": 0.3519,
+         "delta": 0.0078
+        },
+        "2023": {
+         "n": 248,
+         "champion": 0.2875,
+         "arm": 0.2833,
+         "delta": -0.0042
+        }
+       }
+      }
+     }
+    },
+    "both": {
+     "flags": {
+      "LEVEL_BLEND_RATES": true,
+      "LEVEL_BLEND_ANCHOR_MOST_EXPOSED": true
+     },
+     "cuts": {
+      "debuted_km": {
+       "n": 353,
+       "champion_spearman": 0.3882,
+       "arm_spearman": 0.3798,
+       "arm_spearman_ci95": [
+        0.2834,
+        0.4751
+       ],
+       "delta_spearman": -0.0084,
+       "x_of_mde95": 0.49,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.0201,
+        0.0034
+       ],
+       "p_gain_gt_0": 0.0705,
+       "folds_improved": "0/4",
+       "contributor_auc": 0.7768,
+       "contributor_auc_arm": 0.7726,
+       "contributor_auc_delta": -0.0041,
+       "contributor_auc_delta_ci95": [
+        -0.01119,
+        0.00278
+       ],
+       "star_auc": 0.8275,
+       "star_auc_arm": 0.828,
+       "star_auc_delta": 0.0005,
+       "star_auc_delta_ci95": [
+        -0.00783,
+        0.00711
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 59,
+         "champion": 0.3345,
+         "arm": 0.3238,
+         "delta": -0.0107
+        },
+        "2021": {
+         "n": 74,
+         "champion": 0.2531,
+         "arm": 0.2343,
+         "delta": -0.0188
+        },
+        "2022": {
+         "n": 127,
+         "champion": 0.5559,
+         "arm": 0.5546,
+         "delta": -0.0013
+        },
+        "2023": {
+         "n": 93,
+         "champion": 0.2478,
+         "arm": 0.2428,
+         "delta": -0.005
+        }
+       }
+      },
+      "debuted_resolved": {
+       "n": 59,
+       "champion_spearman": 0.3345,
+       "arm_spearman": 0.3238,
+       "arm_spearman_ci95": [
+        0.0627,
+        0.5631
+       ],
+       "delta_spearman": -0.0107,
+       "x_of_mde95": 0.63,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.0418,
+        0.0213
+       ],
+       "p_gain_gt_0": 0.284,
+       "folds_improved": "0/1",
+       "contributor_auc": 0.7612,
+       "contributor_auc_arm": 0.7529,
+       "contributor_auc_delta": -0.0082,
+       "contributor_auc_delta_ci95": [
+        -0.02681,
+        0.00941
+       ],
+       "star_auc": 0.7156,
+       "star_auc_arm": 0.7156,
+       "star_auc_delta": 0.0,
+       "star_auc_delta_ci95": [
+        -0.03061,
+        0.0271
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 59,
+         "champion": 0.3345,
+         "arm": 0.3238,
+         "delta": -0.0107
+        }
+       }
+      },
+      "full_pool_km": {
+       "n": 795,
+       "champion_spearman": 0.2858,
+       "arm_spearman": 0.2849,
+       "arm_spearman_ci95": [
+        0.2011,
+        0.3659
+       ],
+       "delta_spearman": -0.0009,
+       "x_of_mde95": 0.05,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.0099,
+        0.008
+       ],
+       "p_gain_gt_0": 0.3875,
+       "folds_improved": "2/4",
+       "contributor_auc": 0.893,
+       "contributor_auc_arm": 0.8926,
+       "contributor_auc_delta": -0.0004,
+       "contributor_auc_delta_ci95": [
+        -0.00628,
+        0.0054
+       ],
+       "star_auc": 0.9111,
+       "star_auc_arm": 0.9126,
+       "star_auc_delta": 0.0015,
+       "star_auc_delta_ci95": [
+        -0.00405,
+        0.006
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 169,
+         "champion": 0.333,
+         "arm": 0.328,
+         "delta": -0.005
+        },
+        "2021": {
+         "n": 127,
+         "champion": 0.1615,
+         "arm": 0.1397,
+         "delta": -0.0218
+        },
+        "2022": {
+         "n": 251,
+         "champion": 0.3441,
+         "arm": 0.3458,
+         "delta": 0.0017
+        },
+        "2023": {
+         "n": 248,
+         "champion": 0.2875,
+         "arm": 0.2878,
+         "delta": 0.0003
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "pit": {
+   "lambda_champion": 0.57,
+   "lambda_reselected_per_arm": {
+    "base": 0.57,
+    "rates": 0.53,
+    "anchor": 0.52,
+    "both": 0.5
+   },
+   "champion": {
+    "debuted_km": {
+     "n": 438,
+     "spearman": 0.3208,
+     "spearman_ci95": [
+      0.2316,
+      0.4063
+     ],
+     "contributor_auc": 0.723,
+     "star_auc": 0.8604
+    },
+    "debuted_resolved": {
+     "n": 104,
+     "spearman": 0.2419,
+     "spearman_ci95": [
+      0.0239,
+      0.4273
+     ],
+     "contributor_auc": 0.8273,
+     "star_auc": 0.8
+    },
+    "full_pool_km": {
+     "n": 836,
+     "spearman": 0.263,
+     "spearman_ci95": [
+      0.1968,
+      0.3373
+     ],
+     "contributor_auc": 0.8226,
+     "star_auc": 0.9157
+    }
+   },
+   "treatment_exposure": {
+    "rates": {
+     "scored_pool_debuted_km": 981,
+     "rows_touched": 544,
+     "share_touched": 0.5545,
+     "rows_final_level_rekeyed": 0
+    },
+    "anchor": {
+     "scored_pool_debuted_km": 981,
+     "rows_touched": 278,
+     "share_touched": 0.2834,
+     "rows_final_level_rekeyed": 179
+    },
+    "both": {
+     "scored_pool_debuted_km": 981,
+     "rows_touched": 559,
+     "share_touched": 0.5698,
+     "rows_final_level_rekeyed": 179
+    }
+   },
+   "arms": {
+    "rates": {
+     "flags": {
+      "LEVEL_BLEND_RATES": true,
+      "LEVEL_BLEND_ANCHOR_MOST_EXPOSED": false
+     },
+     "cuts": {
+      "debuted_km": {
+       "n": 438,
+       "champion_spearman": 0.3208,
+       "arm_spearman": 0.3049,
+       "arm_spearman_ci95": [
+        0.2147,
+        0.3909
+       ],
+       "delta_spearman": -0.0159,
+       "x_of_mde95": 0.99,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.035,
+        0.0018
+       ],
+       "p_gain_gt_0": 0.0405,
+       "folds_improved": "0/4",
+       "contributor_auc": 0.723,
+       "contributor_auc_arm": 0.7164,
+       "contributor_auc_delta": -0.0065,
+       "contributor_auc_delta_ci95": [
+        -0.01939,
+        0.00568
+       ],
+       "star_auc": 0.8604,
+       "star_auc_arm": 0.8525,
+       "star_auc_delta": -0.008,
+       "star_auc_delta_ci95": [
+        -0.04145,
+        0.019
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 104,
+         "champion": 0.2419,
+         "arm": 0.2391,
+         "delta": -0.0028
+        },
+        "2021": {
+         "n": 106,
+         "champion": 0.2148,
+         "arm": 0.1787,
+         "delta": -0.0361
+        },
+        "2022": {
+         "n": 101,
+         "champion": 0.4034,
+         "arm": 0.3564,
+         "delta": -0.047
+        },
+        "2023": {
+         "n": 127,
+         "champion": 0.3955,
+         "arm": 0.3861,
+         "delta": -0.0094
+        }
+       }
+      },
+      "debuted_resolved": {
+       "n": 104,
+       "champion_spearman": 0.2419,
+       "arm_spearman": 0.2391,
+       "arm_spearman_ci95": [
+        0.0182,
+        0.43
+       ],
+       "delta_spearman": -0.0028,
+       "x_of_mde95": 0.17,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.0468,
+        0.0398
+       ],
+       "p_gain_gt_0": 0.435,
+       "folds_improved": "0/1",
+       "contributor_auc": 0.8273,
+       "contributor_auc_arm": 0.8313,
+       "contributor_auc_delta": 0.004,
+       "contributor_auc_delta_ci95": [
+        -0.02127,
+        0.03215
+       ],
+       "star_auc": 0.8,
+       "star_auc_arm": 0.8323,
+       "star_auc_delta": 0.0323,
+       "star_auc_delta_ci95": [
+        -0.0125,
+        0.10034
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 104,
+         "champion": 0.2419,
+         "arm": 0.2391,
+         "delta": -0.0028
+        }
+       }
+      },
+      "full_pool_km": {
+       "n": 836,
+       "champion_spearman": 0.263,
+       "arm_spearman": 0.2545,
+       "arm_spearman_ci95": [
+        0.1877,
+        0.3295
+       ],
+       "delta_spearman": -0.0085,
+       "x_of_mde95": 0.53,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.023,
+        0.006
+       ],
+       "p_gain_gt_0": 0.1235,
+       "folds_improved": "0/4",
+       "contributor_auc": 0.8226,
+       "contributor_auc_arm": 0.8249,
+       "contributor_auc_delta": 0.0022,
+       "contributor_auc_delta_ci95": [
+        -0.00717,
+        0.01113
+       ],
+       "star_auc": 0.9157,
+       "star_auc_arm": 0.9084,
+       "star_auc_delta": -0.0073,
+       "star_auc_delta_ci95": [
+        -0.02753,
+        0.00675
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 204,
+         "champion": 0.1552,
+         "arm": 0.1551,
+         "delta": -0.0001
+        },
+        "2021": {
+         "n": 152,
+         "champion": 0.2118,
+         "arm": 0.203,
+         "delta": -0.0088
+        },
+        "2022": {
+         "n": 224,
+         "champion": 0.361,
+         "arm": 0.342,
+         "delta": -0.019
+        },
+        "2023": {
+         "n": 256,
+         "champion": 0.2939,
+         "arm": 0.2839,
+         "delta": -0.01
+        }
+       }
+      }
+     }
+    },
+    "anchor": {
+     "flags": {
+      "LEVEL_BLEND_RATES": false,
+      "LEVEL_BLEND_ANCHOR_MOST_EXPOSED": true
+     },
+     "cuts": {
+      "debuted_km": {
+       "n": 438,
+       "champion_spearman": 0.3208,
+       "arm_spearman": 0.2943,
+       "arm_spearman_ci95": [
+        0.2021,
+        0.3823
+       ],
+       "delta_spearman": -0.0265,
+       "x_of_mde95": 1.66,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.0588,
+        0.0038
+       ],
+       "p_gain_gt_0": 0.0445,
+       "folds_improved": "0/4",
+       "contributor_auc": 0.723,
+       "contributor_auc_arm": 0.7152,
+       "contributor_auc_delta": -0.0077,
+       "contributor_auc_delta_ci95": [
+        -0.02826,
+        0.01448
+       ],
+       "star_auc": 0.8604,
+       "star_auc_arm": 0.8561,
+       "star_auc_delta": -0.0043,
+       "star_auc_delta_ci95": [
+        -0.0432,
+        0.033
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 104,
+         "champion": 0.2419,
+         "arm": 0.2113,
+         "delta": -0.0306
+        },
+        "2021": {
+         "n": 106,
+         "champion": 0.2148,
+         "arm": 0.1949,
+         "delta": -0.0199
+        },
+        "2022": {
+         "n": 101,
+         "champion": 0.4034,
+         "arm": 0.3417,
+         "delta": -0.0617
+        },
+        "2023": {
+         "n": 127,
+         "champion": 0.3955,
+         "arm": 0.3918,
+         "delta": -0.0037
+        }
+       }
+      },
+      "debuted_resolved": {
+       "n": 104,
+       "champion_spearman": 0.2419,
+       "arm_spearman": 0.2113,
+       "arm_spearman_ci95": [
+        -0.0078,
+        0.4021
+       ],
+       "delta_spearman": -0.0306,
+       "x_of_mde95": 1.91,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.1011,
+        0.0396
+       ],
+       "p_gain_gt_0": 0.193,
+       "folds_improved": "0/1",
+       "contributor_auc": 0.8273,
+       "contributor_auc_arm": 0.8026,
+       "contributor_auc_delta": -0.0247,
+       "contributor_auc_delta_ci95": [
+        -0.07679,
+        0.01723
+       ],
+       "star_auc": 0.8,
+       "star_auc_arm": 0.8182,
+       "star_auc_delta": 0.0182,
+       "star_auc_delta_ci95": [
+        -0.02941,
+        0.07843
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 104,
+         "champion": 0.2419,
+         "arm": 0.2113,
+         "delta": -0.0306
+        }
+       }
+      },
+      "full_pool_km": {
+       "n": 836,
+       "champion_spearman": 0.263,
+       "arm_spearman": 0.2469,
+       "arm_spearman_ci95": [
+        0.1771,
+        0.321
+       ],
+       "delta_spearman": -0.0161,
+       "x_of_mde95": 1.01,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.039,
+        0.0068
+       ],
+       "p_gain_gt_0": 0.087,
+       "folds_improved": "1/4",
+       "contributor_auc": 0.8226,
+       "contributor_auc_arm": 0.8255,
+       "contributor_auc_delta": 0.0029,
+       "contributor_auc_delta_ci95": [
+        -0.01277,
+        0.01869
+       ],
+       "star_auc": 0.9157,
+       "star_auc_arm": 0.9101,
+       "star_auc_delta": -0.0055,
+       "star_auc_delta_ci95": [
+        -0.02865,
+        0.01119
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 204,
+         "champion": 0.1552,
+         "arm": 0.1492,
+         "delta": -0.006
+        },
+        "2021": {
+         "n": 152,
+         "champion": 0.2118,
+         "arm": 0.2257,
+         "delta": 0.0139
+        },
+        "2022": {
+         "n": 224,
+         "champion": 0.361,
+         "arm": 0.3149,
+         "delta": -0.0461
+        },
+        "2023": {
+         "n": 256,
+         "champion": 0.2939,
+         "arm": 0.277,
+         "delta": -0.0169
+        }
+       }
+      }
+     }
+    },
+    "both": {
+     "flags": {
+      "LEVEL_BLEND_RATES": true,
+      "LEVEL_BLEND_ANCHOR_MOST_EXPOSED": true
+     },
+     "cuts": {
+      "debuted_km": {
+       "n": 438,
+       "champion_spearman": 0.3208,
+       "arm_spearman": 0.307,
+       "arm_spearman_ci95": [
+        0.2143,
+        0.395
+       ],
+       "delta_spearman": -0.0138,
+       "x_of_mde95": 0.86,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.0405,
+        0.0123
+       ],
+       "p_gain_gt_0": 0.161,
+       "folds_improved": "2/4",
+       "contributor_auc": 0.723,
+       "contributor_auc_arm": 0.722,
+       "contributor_auc_delta": -0.001,
+       "contributor_auc_delta_ci95": [
+        -0.01758,
+        0.01693
+       ],
+       "star_auc": 0.8604,
+       "star_auc_arm": 0.8648,
+       "star_auc_delta": 0.0044,
+       "star_auc_delta_ci95": [
+        -0.02277,
+        0.0338
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 104,
+         "champion": 0.2419,
+         "arm": 0.2183,
+         "delta": -0.0236
+        },
+        "2021": {
+         "n": 106,
+         "champion": 0.2148,
+         "arm": 0.2158,
+         "delta": 0.001
+        },
+        "2022": {
+         "n": 101,
+         "champion": 0.4034,
+         "arm": 0.3523,
+         "delta": -0.0511
+        },
+        "2023": {
+         "n": 127,
+         "champion": 0.3955,
+         "arm": 0.3986,
+         "delta": 0.0031
+        }
+       }
+      },
+      "debuted_resolved": {
+       "n": 104,
+       "champion_spearman": 0.2419,
+       "arm_spearman": 0.2183,
+       "arm_spearman_ci95": [
+        -0.0061,
+        0.4118
+       ],
+       "delta_spearman": -0.0236,
+       "x_of_mde95": 1.48,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.086,
+        0.0401
+       ],
+       "p_gain_gt_0": 0.217,
+       "folds_improved": "0/1",
+       "contributor_auc": 0.8273,
+       "contributor_auc_arm": 0.8067,
+       "contributor_auc_delta": -0.0207,
+       "contributor_auc_delta_ci95": [
+        -0.05873,
+        0.01098
+       ],
+       "star_auc": 0.8,
+       "star_auc_arm": 0.8141,
+       "star_auc_delta": 0.0141,
+       "star_auc_delta_ci95": [
+        -0.02941,
+        0.07261
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 104,
+         "champion": 0.2419,
+         "arm": 0.2183,
+         "delta": -0.0236
+        }
+       }
+      },
+      "full_pool_km": {
+       "n": 836,
+       "champion_spearman": 0.263,
+       "arm_spearman": 0.2573,
+       "arm_spearman_ci95": [
+        0.1871,
+        0.3304
+       ],
+       "delta_spearman": -0.0057,
+       "x_of_mde95": 0.36,
+       "paired_bootstrap_delta_rho_ci95": [
+        -0.0254,
+        0.0134
+       ],
+       "p_gain_gt_0": 0.284,
+       "folds_improved": "2/4",
+       "contributor_auc": 0.8226,
+       "contributor_auc_arm": 0.8281,
+       "contributor_auc_delta": 0.0055,
+       "contributor_auc_delta_ci95": [
+        -0.00725,
+        0.01781
+       ],
+       "star_auc": 0.9157,
+       "star_auc_arm": 0.9154,
+       "star_auc_delta": -0.0003,
+       "star_auc_delta_ci95": [
+        -0.01624,
+        0.01363
+       ],
+       "per_fold": {
+        "2020": {
+         "n": 204,
+         "champion": 0.1552,
+         "arm": 0.1553,
+         "delta": 0.0001
+        },
+        "2021": {
+         "n": 152,
+         "champion": 0.2118,
+         "arm": 0.2295,
+         "delta": 0.0177
+        },
+        "2022": {
+         "n": 224,
+         "champion": 0.361,
+         "arm": 0.3316,
+         "delta": -0.0294
+        },
+        "2023": {
+         "n": 256,
+         "champion": 0.2939,
+         "arm": 0.2841,
+         "delta": -0.0098
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "controls": {
+  "hit": {
+   "rates": {
+    "paired_bootstrap": "player-clustered, 2000 reps, seed 20260803; see results[].arms[].cuts[].paired_bootstrap_delta_rho_ci95",
+    "time_splits": {
+     "n": 4,
+     "years": [
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "folds_improved_debuted_km": "1/4"
+    },
+    "zero_information_control": {
+     "method": "treatment feature DELTA reassigned to a random OTHER touched row (same treated rows, same delta distribution, row link broken); 20 seeds",
+     "real_delta": -0.0064,
+     "control_mean": 0.00041,
+     "control_sd": 0.00393,
+     "control_min": -0.0082,
+     "control_max": 0.0075,
+     "n_controls_worse_than_real": 1,
+     "reading": "real BELOW the control band = the treatment removes signal rather than merely adding noise"
+    },
+    "permutation_null": {
+     "B": 30,
+     "method": "treatment assignment permuted across the scored pool (count of treated rows held fixed, delta shapes reused)",
+     "real_delta": -0.0064,
+     "null_mean": 0.0008,
+     "null_sd": 0.00475,
+     "null_max": 0.0155,
+     "p_value_ge_real": 0.9333
+    }
+   },
+   "anchor": {
+    "paired_bootstrap": "player-clustered, 2000 reps, seed 20260803; see results[].arms[].cuts[].paired_bootstrap_delta_rho_ci95",
+    "time_splits": {
+     "n": 4,
+     "years": [
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "folds_improved_debuted_km": "0/4"
+    },
+    "zero_information_control": {
+     "method": "treatment feature DELTA reassigned to a random OTHER touched row (same treated rows, same delta distribution, row link broken); 20 seeds",
+     "real_delta": -0.013,
+     "control_mean": -0.00304,
+     "control_sd": 0.00699,
+     "control_min": -0.0108,
+     "control_max": 0.015,
+     "n_controls_worse_than_real": 0,
+     "reading": "real BELOW the control band = the treatment removes signal rather than merely adding noise"
+    },
+    "permutation_null": {
+     "B": 30,
+     "method": "treatment assignment permuted across the scored pool (count of treated rows held fixed, delta shapes reused)",
+     "real_delta": -0.013,
+     "null_mean": 0.00092,
+     "null_sd": 0.00479,
+     "null_max": 0.0088,
+     "p_value_ge_real": 1.0
+    }
+   },
+   "both": {
+    "paired_bootstrap": "player-clustered, 2000 reps, seed 20260803; see results[].arms[].cuts[].paired_bootstrap_delta_rho_ci95",
+    "time_splits": {
+     "n": 4,
+     "years": [
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "folds_improved_debuted_km": "0/4"
+    },
+    "zero_information_control": {
+     "method": "treatment feature DELTA reassigned to a random OTHER touched row (same treated rows, same delta distribution, row link broken); 20 seeds",
+     "real_delta": -0.0084,
+     "control_mean": 0.00043,
+     "control_sd": 0.00492,
+     "control_min": -0.0078,
+     "control_max": 0.0107,
+     "n_controls_worse_than_real": 0,
+     "reading": "real BELOW the control band = the treatment removes signal rather than merely adding noise"
+    },
+    "permutation_null": {
+     "B": 30,
+     "method": "treatment assignment permuted across the scored pool (count of treated rows held fixed, delta shapes reused)",
+     "real_delta": -0.0084,
+     "null_mean": 0.00091,
+     "null_sd": 0.00529,
+     "null_max": 0.0147,
+     "p_value_ge_real": 1.0
+    }
+   }
+  },
+  "pit": {
+   "rates": {
+    "paired_bootstrap": "player-clustered, 2000 reps, seed 20260803; see results[].arms[].cuts[].paired_bootstrap_delta_rho_ci95",
+    "time_splits": {
+     "n": 4,
+     "years": [
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "folds_improved_debuted_km": "0/4"
+    },
+    "zero_information_control": {
+     "method": "treatment feature DELTA reassigned to a random OTHER touched row (same treated rows, same delta distribution, row link broken); 20 seeds",
+     "real_delta": -0.0159,
+     "control_mean": -0.004,
+     "control_sd": 0.00986,
+     "control_min": -0.0224,
+     "control_max": 0.0194,
+     "n_controls_worse_than_real": 2,
+     "reading": "real BELOW the control band = the treatment removes signal rather than merely adding noise"
+    },
+    "permutation_null": {
+     "B": 30,
+     "method": "treatment assignment permuted across the scored pool (count of treated rows held fixed, delta shapes reused)",
+     "real_delta": -0.0159,
+     "null_mean": -0.01217,
+     "null_sd": 0.00798,
+     "null_max": 0.0081,
+     "p_value_ge_real": 0.6333
+    }
+   },
+   "anchor": {
+    "paired_bootstrap": "player-clustered, 2000 reps, seed 20260803; see results[].arms[].cuts[].paired_bootstrap_delta_rho_ci95",
+    "time_splits": {
+     "n": 4,
+     "years": [
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "folds_improved_debuted_km": "0/4"
+    },
+    "zero_information_control": {
+     "method": "treatment feature DELTA reassigned to a random OTHER touched row (same treated rows, same delta distribution, row link broken); 20 seeds",
+     "real_delta": -0.0265,
+     "control_mean": -0.0199,
+     "control_sd": 0.01258,
+     "control_min": -0.0425,
+     "control_max": -0.0028,
+     "n_controls_worse_than_real": 5,
+     "reading": "real BELOW the control band = the treatment removes signal rather than merely adding noise"
+    },
+    "permutation_null": {
+     "B": 30,
+     "method": "treatment assignment permuted across the scored pool (count of treated rows held fixed, delta shapes reused)",
+     "real_delta": -0.0265,
+     "null_mean": -0.01802,
+     "null_sd": 0.01203,
+     "null_max": 0.0051,
+     "p_value_ge_real": 0.7667
+    }
+   },
+   "both": {
+    "paired_bootstrap": "player-clustered, 2000 reps, seed 20260803; see results[].arms[].cuts[].paired_bootstrap_delta_rho_ci95",
+    "time_splits": {
+     "n": 4,
+     "years": [
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "folds_improved_debuted_km": "2/4"
+    },
+    "zero_information_control": {
+     "method": "treatment feature DELTA reassigned to a random OTHER touched row (same treated rows, same delta distribution, row link broken); 20 seeds",
+     "real_delta": -0.0138,
+     "control_mean": -0.01798,
+     "control_sd": 0.00967,
+     "control_min": -0.0325,
+     "control_max": -0.0018,
+     "n_controls_worse_than_real": 14,
+     "reading": "real BELOW the control band = the treatment removes signal rather than merely adding noise"
+    },
+    "permutation_null": {
+     "B": 30,
+     "method": "treatment assignment permuted across the scored pool (count of treated rows held fixed, delta shapes reused)",
+     "real_delta": -0.0138,
+     "null_mean": -0.0171,
+     "null_sd": 0.01139,
+     "null_max": 0.0053,
+     "p_value_ge_real": 0.4333
+    }
+   }
+  }
+ },
+ "defect_subgroup": {
+  "hit": {
+   "rates": {
+    "touched_vs_untouched": {
+     "touched": {
+      "n": 242,
+      "champion_spearman": 0.4002,
+      "arm_spearman": 0.3905,
+      "delta_spearman": -0.0097,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 242,
+       "mean": -0.00952,
+       "ci95": [
+        -0.0232,
+        0.0039
+       ],
+       "p_gain_gt_0": 0.0875
+      }
+     },
+     "untouched": {
+      "n": 111,
+      "champion_spearman": 0.2824,
+      "arm_spearman": 0.2788,
+      "delta_spearman": -0.0036,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 111,
+       "mean": -0.00388,
+       "ci95": [
+        -0.0282,
+        0.0216
+       ],
+       "p_gain_gt_0": 0.3755
+      }
+     }
+    },
+    "reading_untouched": "'untouched' test rows have BYTE-IDENTICAL feature vectors under both arms; any delta there is pure coefficient contamination from refitting on a treated TRAINING matrix.",
+    "by_exposure_the_champion_scored_on": {
+     "n_touched": 242,
+     "thin_half": {
+      "n": 121,
+      "scored_on_exposure_median": 143.0,
+      "scored_on_exposure_range": [
+       29.0,
+       226.0
+      ],
+      "median_share_of_season_scored": 0.339,
+      "champion_spearman": 0.3261,
+      "arm_spearman": 0.3066,
+      "delta_spearman": -0.0195,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 121,
+       "mean": -0.01934,
+       "ci95": [
+        -0.0432,
+        0.0042
+       ],
+       "p_gain_gt_0": 0.0495
+      }
+     },
+     "thick_half": {
+      "n": 121,
+      "scored_on_exposure_median": 357.0,
+      "scored_on_exposure_range": [
+       229.0,
+       603.0
+      ],
+      "median_share_of_season_scored": 0.889,
+      "champion_spearman": 0.4722,
+      "arm_spearman": 0.4688,
+      "delta_spearman": -0.0034,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 121,
+       "mean": -0.00326,
+       "ci95": [
+        -0.0241,
+        0.0171
+       ],
+       "p_gain_gt_0": 0.3835
+      }
+     },
+     "split_at_selected_exposure": 229.0,
+     "strict_defect_set_scored_on_minority_of_season": {
+      "n": 104,
+      "median_share_scored": 0.322,
+      "champion_spearman": 0.3675,
+      "arm_spearman": 0.3461,
+      "delta_spearman": -0.0214,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 104,
+       "mean": -0.02111,
+       "ci95": [
+        -0.0478,
+        0.0035
+       ],
+       "p_gain_gt_0": 0.0425
+      }
+     }
+    }
+   },
+   "anchor": {
+    "touched_vs_untouched": {
+     "touched": {
+      "n": 141,
+      "champion_spearman": 0.3393,
+      "arm_spearman": 0.3159,
+      "delta_spearman": -0.0234,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 141,
+       "mean": -0.02308,
+       "ci95": [
+        -0.0515,
+        0.0043
+       ],
+       "p_gain_gt_0": 0.0535
+      }
+     },
+     "untouched": {
+      "n": 212,
+      "champion_spearman": 0.4101,
+      "arm_spearman": 0.4047,
+      "delta_spearman": -0.0054,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 212,
+       "mean": -0.00542,
+       "ci95": [
+        -0.0136,
+        0.0021
+       ],
+       "p_gain_gt_0": 0.081
+      }
+     }
+    },
+    "reading_untouched": "'untouched' test rows have BYTE-IDENTICAL feature vectors under both arms; any delta there is pure coefficient contamination from refitting on a treated TRAINING matrix.",
+    "by_exposure_the_champion_scored_on": {
+     "n_touched": 141,
+     "thin_half": {
+      "n": 70,
+      "scored_on_exposure_median": 120.0,
+      "scored_on_exposure_range": [
+       51.0,
+       172.0
+      ],
+      "median_share_of_season_scored": 0.26,
+      "champion_spearman": 0.2547,
+      "arm_spearman": 0.2255,
+      "delta_spearman": -0.0292,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 70,
+       "mean": -0.02807,
+       "ci95": [
+        -0.0695,
+        0.0103
+       ],
+       "p_gain_gt_0": 0.07
+      }
+     },
+     "thick_half": {
+      "n": 71,
+      "scored_on_exposure_median": 269.0,
+      "scored_on_exposure_range": [
+       174.0,
+       603.0
+      ],
+      "median_share_of_season_scored": 0.642,
+      "champion_spearman": 0.3755,
+      "arm_spearman": 0.3697,
+      "delta_spearman": -0.0058,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 71,
+       "mean": -0.00633,
+       "ci95": [
+        -0.0506,
+        0.0316
+       ],
+       "p_gain_gt_0": 0.393
+      }
+     },
+     "split_at_selected_exposure": 174.0,
+     "strict_defect_set_scored_on_minority_of_season": {
+      "n": 101,
+      "median_share_scored": 0.318,
+      "champion_spearman": 0.3489,
+      "arm_spearman": 0.3227,
+      "delta_spearman": -0.0262,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 101,
+       "mean": -0.02562,
+       "ci95": [
+        -0.0577,
+        0.003
+       ],
+       "p_gain_gt_0": 0.041
+      }
+     }
+    }
+   },
+   "both": {
+    "touched_vs_untouched": {
+     "touched": {
+      "n": 242,
+      "champion_spearman": 0.4002,
+      "arm_spearman": 0.3929,
+      "delta_spearman": -0.0073,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 242,
+       "mean": -0.00692,
+       "ci95": [
+        -0.0221,
+        0.008
+       ],
+       "p_gain_gt_0": 0.181
+      }
+     },
+     "untouched": {
+      "n": 111,
+      "champion_spearman": 0.2824,
+      "arm_spearman": 0.2736,
+      "delta_spearman": -0.0088,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 111,
+       "mean": -0.00883,
+       "ci95": [
+        -0.0268,
+        0.0087
+       ],
+       "p_gain_gt_0": 0.148
+      }
+     }
+    },
+    "reading_untouched": "'untouched' test rows have BYTE-IDENTICAL feature vectors under both arms; any delta there is pure coefficient contamination from refitting on a treated TRAINING matrix.",
+    "by_exposure_the_champion_scored_on": {
+     "n_touched": 242,
+     "thin_half": {
+      "n": 121,
+      "scored_on_exposure_median": 143.0,
+      "scored_on_exposure_range": [
+       29.0,
+       226.0
+      ],
+      "median_share_of_season_scored": 0.339,
+      "champion_spearman": 0.3261,
+      "arm_spearman": 0.3142,
+      "delta_spearman": -0.0119,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 121,
+       "mean": -0.01201,
+       "ci95": [
+        -0.036,
+        0.0115
+       ],
+       "p_gain_gt_0": 0.16
+      }
+     },
+     "thick_half": {
+      "n": 121,
+      "scored_on_exposure_median": 357.0,
+      "scored_on_exposure_range": [
+       229.0,
+       603.0
+      ],
+      "median_share_of_season_scored": 0.889,
+      "champion_spearman": 0.4722,
+      "arm_spearman": 0.4693,
+      "delta_spearman": -0.0029,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 121,
+       "mean": -0.00273,
+       "ci95": [
+        -0.0234,
+        0.0156
+       ],
+       "p_gain_gt_0": 0.399
+      }
+     },
+     "split_at_selected_exposure": 229.0,
+     "strict_defect_set_scored_on_minority_of_season": {
+      "n": 104,
+      "median_share_scored": 0.322,
+      "champion_spearman": 0.3675,
+      "arm_spearman": 0.3502,
+      "delta_spearman": -0.0173,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 104,
+       "mean": -0.01698,
+       "ci95": [
+        -0.0441,
+        0.0071
+       ],
+       "p_gain_gt_0": 0.0835
+      }
+     }
+    }
+   }
+  },
+  "pit": {
+   "rates": {
+    "touched_vs_untouched": {
+     "touched": {
+      "n": 325,
+      "champion_spearman": 0.2909,
+      "arm_spearman": 0.2707,
+      "delta_spearman": -0.0202,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 325,
+       "mean": -0.02048,
+       "ci95": [
+        -0.0442,
+        0.0019
+       ],
+       "p_gain_gt_0": 0.037
+      }
+     },
+     "untouched": {
+      "n": 113,
+      "champion_spearman": 0.4346,
+      "arm_spearman": 0.4297,
+      "delta_spearman": -0.0049,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 113,
+       "mean": -0.00507,
+       "ci95": [
+        -0.0348,
+        0.0239
+       ],
+       "p_gain_gt_0": 0.376
+      }
+     }
+    },
+    "reading_untouched": "'untouched' test rows have BYTE-IDENTICAL feature vectors under both arms; any delta there is pure coefficient contamination from refitting on a treated TRAINING matrix.",
+    "by_exposure_the_champion_scored_on": {
+     "n_touched": 325,
+     "thin_half": {
+      "n": 162,
+      "scored_on_exposure_median": 113.0,
+      "scored_on_exposure_range": [
+       18.0,
+       186.0
+      ],
+      "median_share_of_season_scored": 0.471,
+      "champion_spearman": 0.1998,
+      "arm_spearman": 0.1496,
+      "delta_spearman": -0.0502,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 162,
+       "mean": -0.04945,
+       "ci95": [
+        -0.1005,
+        -0.0002
+       ],
+       "p_gain_gt_0": 0.0245
+      }
+     },
+     "thick_half": {
+      "n": 163,
+      "scored_on_exposure_median": 297.0,
+      "scored_on_exposure_range": [
+       187.0,
+       639.0
+      ],
+      "median_share_of_season_scored": 0.789,
+      "champion_spearman": 0.384,
+      "arm_spearman": 0.3805,
+      "delta_spearman": -0.0035,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 163,
+       "mean": -0.00343,
+       "ci95": [
+        -0.0231,
+        0.0156
+       ],
+       "p_gain_gt_0": 0.3705
+      }
+     },
+     "split_at_selected_exposure": 187.0,
+     "strict_defect_set_scored_on_minority_of_season": {
+      "n": 110,
+      "median_share_scored": 0.347,
+      "champion_spearman": 0.1945,
+      "arm_spearman": 0.1549,
+      "delta_spearman": -0.0396,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 110,
+       "mean": -0.03955,
+       "ci95": [
+        -0.0944,
+        0.0088
+       ],
+       "p_gain_gt_0": 0.0595
+      }
+     }
+    }
+   },
+   "anchor": {
+    "touched_vs_untouched": {
+     "touched": {
+      "n": 160,
+      "champion_spearman": 0.1784,
+      "arm_spearman": 0.17,
+      "delta_spearman": -0.0084,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 160,
+       "mean": -0.00786,
+       "ci95": [
+        -0.0675,
+        0.049
+       ],
+       "p_gain_gt_0": 0.392
+      }
+     },
+     "untouched": {
+      "n": 278,
+      "champion_spearman": 0.4075,
+      "arm_spearman": 0.3797,
+      "delta_spearman": -0.0278,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 278,
+       "mean": -0.02708,
+       "ci95": [
+        -0.0635,
+        0.0068
+       ],
+       "p_gain_gt_0": 0.0625
+      }
+     }
+    },
+    "reading_untouched": "'untouched' test rows have BYTE-IDENTICAL feature vectors under both arms; any delta there is pure coefficient contamination from refitting on a treated TRAINING matrix.",
+    "by_exposure_the_champion_scored_on": {
+     "n_touched": 160,
+     "thin_half": {
+      "n": 80,
+      "scored_on_exposure_median": 94.0,
+      "scored_on_exposure_range": [
+       18.0,
+       156.0
+      ],
+      "median_share_of_season_scored": 0.309,
+      "champion_spearman": 0.0252,
+      "arm_spearman": -0.0186,
+      "delta_spearman": -0.0438,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 80,
+       "mean": -0.04353,
+       "ci95": [
+        -0.1618,
+        0.0695
+       ],
+       "p_gain_gt_0": 0.22
+      }
+     },
+     "thick_half": {
+      "n": 80,
+      "scored_on_exposure_median": 250.0,
+      "scored_on_exposure_range": [
+       158.0,
+       643.0
+      ],
+      "median_share_of_season_scored": 0.599,
+      "champion_spearman": 0.2974,
+      "arm_spearman": 0.3337,
+      "delta_spearman": 0.0363,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 80,
+       "mean": 0.0366,
+       "ci95": [
+        -0.0294,
+        0.1048
+       ],
+       "p_gain_gt_0": 0.8575
+      }
+     },
+     "split_at_selected_exposure": 158.0,
+     "strict_defect_set_scored_on_minority_of_season": {
+      "n": 105,
+      "median_share_scored": 0.336,
+      "champion_spearman": 0.1958,
+      "arm_spearman": 0.1651,
+      "delta_spearman": -0.0307,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 105,
+       "mean": -0.03047,
+       "ci95": [
+        -0.1059,
+        0.0378
+       ],
+       "p_gain_gt_0": 0.212
+      }
+     }
+    }
+   },
+   "both": {
+    "touched_vs_untouched": {
+     "touched": {
+      "n": 332,
+      "champion_spearman": 0.2876,
+      "arm_spearman": 0.2759,
+      "delta_spearman": -0.0117,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 332,
+       "mean": -0.0116,
+       "ci95": [
+        -0.0414,
+        0.0192
+       ],
+       "p_gain_gt_0": 0.231
+      }
+     },
+     "untouched": {
+      "n": 106,
+      "champion_spearman": 0.4696,
+      "arm_spearman": 0.4487,
+      "delta_spearman": -0.0209,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 106,
+       "mean": -0.02033,
+       "ci95": [
+        -0.08,
+        0.0394
+       ],
+       "p_gain_gt_0": 0.2495
+      }
+     }
+    },
+    "reading_untouched": "'untouched' test rows have BYTE-IDENTICAL feature vectors under both arms; any delta there is pure coefficient contamination from refitting on a treated TRAINING matrix.",
+    "by_exposure_the_champion_scored_on": {
+     "n_touched": 332,
+     "thin_half": {
+      "n": 166,
+      "scored_on_exposure_median": 115.0,
+      "scored_on_exposure_range": [
+       18.0,
+       191.0
+      ],
+      "median_share_of_season_scored": 0.473,
+      "champion_spearman": 0.2108,
+      "arm_spearman": 0.1883,
+      "delta_spearman": -0.0225,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 166,
+       "mean": -0.02193,
+       "ci95": [
+        -0.0845,
+        0.0416
+       ],
+       "p_gain_gt_0": 0.257
+      }
+     },
+     "thick_half": {
+      "n": 166,
+      "scored_on_exposure_median": 302.0,
+      "scored_on_exposure_range": [
+       192.0,
+       643.0
+      ],
+      "median_share_of_season_scored": 0.801,
+      "champion_spearman": 0.3691,
+      "arm_spearman": 0.3603,
+      "delta_spearman": -0.0088,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 166,
+       "mean": -0.00886,
+       "ci95": [
+        -0.0389,
+        0.0214
+       ],
+       "p_gain_gt_0": 0.283
+      }
+     },
+     "split_at_selected_exposure": 192.0,
+     "strict_defect_set_scored_on_minority_of_season": {
+      "n": 110,
+      "median_share_scored": 0.347,
+      "champion_spearman": 0.1945,
+      "arm_spearman": 0.175,
+      "delta_spearman": -0.0195,
+      "paired_bootstrap_delta_rho": {
+       "n_pairs": 110,
+       "mean": -0.01941,
+       "ci95": [
+        -0.0844,
+        0.041
+       ],
+       "p_gain_gt_0": 0.269
+      }
+     }
+    }
+   }
+  }
+ },
+ "flags": {
+  "efv_dataset.LEVEL_BLEND_RATES": false,
+  "efv_dataset.LEVEL_BLEND_ANCHOR_MOST_EXPOSED": false,
+  "efv_dataset.LEVEL_BLEND_MIN_EXPOSURE": 10.0
+ },
+ "repo_state": "NOTHING FLIPPED. Matrices in data/ untouched: every arm was built in memory and written only to a scratchpad.",
+ "headline_table_debuted_km": {
+  "hit/rates": {
+   "champion": 0.3882,
+   "arm": 0.3818,
+   "delta": -0.0064,
+   "x_of_mde95": 0.38
+  },
+  "hit/anchor": {
+   "champion": 0.3882,
+   "arm": 0.3752,
+   "delta": -0.013,
+   "x_of_mde95": 0.76
+  },
+  "hit/both": {
+   "champion": 0.3882,
+   "arm": 0.3798,
+   "delta": -0.0084,
+   "x_of_mde95": 0.49
+  },
+  "pit/rates": {
+   "champion": 0.3208,
+   "arm": 0.3049,
+   "delta": -0.0159,
+   "x_of_mde95": 0.99
+  },
+  "pit/anchor": {
+   "champion": 0.3208,
+   "arm": 0.2943,
+   "delta": -0.0265,
+   "x_of_mde95": 1.66
+  },
+  "pit/both": {
+   "champion": 0.3208,
+   "arm": 0.307,
+   "delta": -0.0138,
+   "x_of_mde95": 0.86
+  }
+ },
+ "what_this_adds_over_the_2026_07_30_record": [
+  "The ANCHOR arm (LEVEL_BLEND_ANCHOR_MOST_EXPOSED) had NEVER been scored. It is now, and it is the worst of the three arms on both sides.",
+  "The joint arm (both flags on) had never been scored. Also NO SHIP.",
+  "The four pre-registered controls were run despite there being no gain to defend, because they turned out to be diagnostic in the other direction.",
+  "The defect subgroup was restricted for the first time. The loss is CONCENTRATED where the defect lives: on rows where the champion scored the player on a MINORITY of his season (median 32-35 percent of it), every arm loses on both sides.",
+  "The RATES arm reproduces the 2026-07-30 sign and near-magnitude on TODAY's matrices (hit -0.0064 vs -0.0082 then; pit -0.0159 vs -0.0162 then), so that verdict is robust to three model-changing days of matrix drift."
+ ],
+ "mechanistic_reading": "Two findings sharpen the 2026-07-30 hypothesis that the level a player HOLDS is itself signal. (1) The zero-information control reassigns each treated row's feature delta to a random OTHER treated row, holding the treated set and the delta distribution fixed. On 3 of 4 primary cells the REAL treatment scores BELOW that control band (hit/rates real -0.0064 vs control mean +0.0004; hit/anchor -0.0130 vs -0.0030, 0 of 20 controls worse; pit/rates -0.0159 vs -0.0040). Applying the re-anchor to the RIGHT players hurts more than applying the same-sized re-anchor to random players, which is the signature of removing information rather than adding noise. (2) The ANCHOR arm degrades rows it never touches: untouched test rows carry BYTE-IDENTICAL feature vectors under both arms, so their delta is pure coefficient contamination from refitting on a treated TRAINING matrix, and it is -0.0054 hit / -0.0278 pit. Re-keying level_rank and age_rel_level onto the most-exposed level does not merely mis-score the split-season players, it degrades the fit for everyone.",
+ "arias_consequence": "Unchanged from 2026-07-30 and now doubly closed. The cliff stays. When franklin_arias crosses 50 AAA plate appearances his AA season leaves the feature set and his grade moves for a mechanical reason. Neither arm may be flipped to prevent that: the ANCHOR arm, which is the one that would hold him on AA, is the arm that loses most."
+}

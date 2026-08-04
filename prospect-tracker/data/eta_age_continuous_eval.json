@@ -1,0 +1,288 @@
+{
+ "generated_at": "2026-08-03",
+ "experiment": "C3-ETA: eta.AGE_ADJ_CONTINUOUS (staircase -> knot interpolation)",
+ "registration": "docs/efv-2026-07-30/EFV_LANE_GATES.md, arm C3-ETA (gate OWED)",
+ "regen_cmd": "python tools/eta_age_continuous_gate_lab.py",
+ "protocol": "eta_backtest.py censoring-aware harness: vintages 2018-2023, MAE scored on debuted rows only (shared selection), overdue + washed-out due counts carry the censored signal; both arms rescored through estimate_eta with identical base tables, the flag the only difference",
+ "accounting": {
+  "listed": 8988,
+  "excluded_post_debut": 619,
+  "excluded_no_bio": 0,
+  "no_level_age_fallback": 3488,
+  "level_from_statsapi": 3441,
+  "level_from_career_stats": 1440,
+  "debuted": 4138,
+  "censored_active": 2176,
+  "washed_out": 743,
+  "overdue": 856
+ },
+ "arms": {
+  "live_base_years": {
+   "label": "live BASE_YEARS (shipped v39)",
+   "scored_rows": 3450,
+   "champion_staircase": {
+    "n": 3450,
+    "mae": 1.441,
+    "bias": 1.089,
+    "within_1y": 0.579,
+    "exact": 0.212
+   },
+   "continuous_ramp": {
+    "n": 3450,
+    "mae": 1.488,
+    "bias": 1.141,
+    "within_1y": 0.562,
+    "exact": 0.212
+   },
+   "delta": {
+    "mae": 0.047,
+    "within_1y": -0.017,
+    "bias": 0.052,
+    "exact": 0.0
+   },
+   "footprint": {
+    "rows_with_a_prediction": 4881,
+    "predictions_changed": 668,
+    "changed_earlier": 209,
+    "changed_later": 459
+   },
+   "censoring": {
+    "overdue_champion": 856,
+    "overdue_continuous": 841,
+    "washed_out_already_due_champion": 633,
+    "washed_out_already_due_continuous": 633
+   },
+   "by_level_mae": {
+    "A": {
+     "n": 921,
+     "champion_mae": 1.595,
+     "continuous_mae": 1.673
+    },
+    "A+": {
+     "n": 724,
+     "champion_mae": 1.628,
+     "continuous_mae": 1.681
+    },
+    "AA": {
+     "n": 907,
+     "champion_mae": 1.218,
+     "continuous_mae": 1.246
+    },
+    "AAA": {
+     "n": 512,
+     "champion_mae": 0.957,
+     "continuous_mae": 0.98
+    },
+    "CPX": {
+     "n": 328,
+     "champion_mae": 1.591,
+     "continuous_mae": 1.616
+    },
+    "DSL": {
+     "n": 58,
+     "champion_mae": 3.534,
+     "continuous_mae": 3.655
+    }
+   },
+   "paired_bootstrap": {
+    "n": 3450,
+    "B": 2000,
+    "d_mae": {
+     "point": 0.04696,
+     "mean": 0.04721,
+     "ci95": [
+      0.03449,
+      0.05884
+     ],
+     "p_improves": 0.0
+    },
+    "d_within_1y": {
+     "point": -0.01681,
+     "mean": -0.01684,
+     "ci95": [
+      -0.02435,
+      -0.00986
+     ],
+     "p_improves": 0.0
+    }
+   }
+  },
+  "km_forward_chained": {
+   "label": "KM bases refit forward-chained per vintage",
+   "scored_rows": 2812,
+   "champion_staircase": {
+    "n": 2812,
+    "mae": 1.469,
+    "bias": 1.145,
+    "within_1y": 0.567,
+    "exact": 0.198
+   },
+   "continuous_ramp": {
+    "n": 2812,
+    "mae": 1.508,
+    "bias": 1.191,
+    "within_1y": 0.553,
+    "exact": 0.201
+   },
+   "delta": {
+    "mae": 0.039,
+    "within_1y": -0.014,
+    "bias": 0.046,
+    "exact": 0.003
+   },
+   "footprint": {
+    "rows_with_a_prediction": 4106,
+    "predictions_changed": 579,
+    "changed_earlier": 199,
+    "changed_later": 380
+   },
+   "censoring": {
+    "overdue_champion": 868,
+    "overdue_continuous": 858,
+    "washed_out_already_due_champion": 631,
+    "washed_out_already_due_continuous": 630
+   },
+   "by_level_mae": {
+    "A": {
+     "n": 754,
+     "champion_mae": 1.615,
+     "continuous_mae": 1.656
+    },
+    "A+": {
+     "n": 601,
+     "champion_mae": 1.734,
+     "continuous_mae": 1.782
+    },
+    "AA": {
+     "n": 802,
+     "champion_mae": 1.246,
+     "continuous_mae": 1.276
+    },
+    "AAA": {
+     "n": 392,
+     "champion_mae": 1.01,
+     "continuous_mae": 1.056
+    },
+    "CPX": {
+     "n": 241,
+     "champion_mae": 1.647,
+     "continuous_mae": 1.672
+    }
+   },
+   "paired_bootstrap": {
+    "n": 2812,
+    "B": 2000,
+    "d_mae": {
+     "point": 0.03912,
+     "mean": 0.0391,
+     "ci95": [
+      0.02596,
+      0.05228
+     ],
+     "p_improves": 0.0
+    },
+    "d_within_1y": {
+     "point": -0.01387,
+     "mean": -0.01391,
+     "ci95": [
+      -0.02169,
+      -0.0064
+     ],
+     "p_improves": 0.0
+    }
+   }
+  }
+ },
+ "zero_information_control": {
+  "design": "decimal age permuted across cohort rows, 20 draws, live bases",
+  "draws": [
+   {
+    "d_mae": 0.018,
+    "d_within_1y": -0.002
+   },
+   {
+    "d_mae": 0.022,
+    "d_within_1y": -0.001
+   },
+   {
+    "d_mae": 0.01,
+    "d_within_1y": 0.002
+   },
+   {
+    "d_mae": 0.013,
+    "d_within_1y": -0.005
+   },
+   {
+    "d_mae": 0.02,
+    "d_within_1y": -0.008
+   },
+   {
+    "d_mae": 0.016,
+    "d_within_1y": -0.005
+   },
+   {
+    "d_mae": 0.02,
+    "d_within_1y": -0.01
+   },
+   {
+    "d_mae": 0.021,
+    "d_within_1y": -0.008
+   },
+   {
+    "d_mae": 0.027,
+    "d_within_1y": -0.008
+   },
+   {
+    "d_mae": 0.018,
+    "d_within_1y": -0.012
+   },
+   {
+    "d_mae": 0.022,
+    "d_within_1y": -0.004
+   },
+   {
+    "d_mae": 0.023,
+    "d_within_1y": -0.006
+   },
+   {
+    "d_mae": 0.02,
+    "d_within_1y": -0.007
+   },
+   {
+    "d_mae": 0.012,
+    "d_within_1y": -0.002
+   },
+   {
+    "d_mae": 0.023,
+    "d_within_1y": -0.009
+   },
+   {
+    "d_mae": 0.017,
+    "d_within_1y": -0.006
+   },
+   {
+    "d_mae": 0.015,
+    "d_within_1y": -0.001
+   },
+   {
+    "d_mae": 0.018,
+    "d_within_1y": -0.001
+   },
+   {
+    "d_mae": 0.026,
+    "d_within_1y": -0.004
+   },
+   {
+    "d_mae": 0.023,
+    "d_within_1y": -0.006
+   }
+  ],
+  "d_mae_mean": 0.0192,
+  "d_mae_sd": 0.0044,
+  "d_mae_min": 0.01,
+  "d_mae_max": 0.027,
+  "real_d_mae": 0.047,
+  "real_better_than_all_controls": false
+ },
+ "ship_criterion": "the criterion the v39 ETA ship was decided on: forward-chained debuted MAE and within-1y must BOTH beat the incumbent on identical rows, with the overdue shift disclosed; a delta whose paired-bootstrap CI95 covers 0 is unresolved, not a win"
+}
