@@ -352,6 +352,23 @@
   overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
 }
 .eephus-nav .eephus-links::-webkit-scrollbar { display: none; }
+/* 641-1024px is the band with no nav affordance at all: the hamburger only
+   takes over at <=640, so between those widths the strip is a silent
+   horizontal swipe - 10 links plus a dropdown at 12.5px need roughly 900px,
+   and the ones past the fold have nothing to suggest they exist. That is the
+   same failure the <=640 hamburger was built to fix.
+   A thin scrollbar rather than a fade mask on purpose: the strip is
+   right-aligned by margin-left:auto, so when the links DO fit, a mask would
+   dim the last one. A scrollbar is drawn only when there is real overflow. */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .eephus-nav .eephus-links {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    padding-bottom: 3px;
+  }
+  .eephus-nav .eephus-links::-webkit-scrollbar { display: block; height: 3px; }
+  .eephus-nav .eephus-links::-webkit-scrollbar-thumb { background: var(--border); }
+}
 .eephus-nav .eephus-links a {
   font-family: var(--font-retro); font-size: 12.5px; font-weight: 600;
   letter-spacing: .02em; color: var(--text-secondary); text-decoration: none;
@@ -1449,14 +1466,22 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   width: 100%; border-collapse: collapse; font-family: var(--font-retro-mono);
 }
 .fa-app .detail-table th, .fa-app .detail-table td {
-  padding: 6px 10px; text-align: center; font-size: 12px;
+  padding: 6px 10px; text-align: center; font-size: 12.5px;
   font-variant-numeric: tabular-nums;
   border-bottom: 1px solid var(--border-light);
 }
+/* ONE TABLE DIALECT (2026-08-03). The site shipped two: .mlbstats-table and
+   .fa-app .detail-table disagreed on font-size (12.5 vs 12), cell padding
+   (6x9 vs 6x10), header alignment, header background AND header colour, so
+   the three MLB surfaces read as three products. .proj-app already overrode
+   the header to --bg-secondary below, which made .fa-app the odd one out of
+   three rather than the standard, so the unification moves FA onto the other
+   two: mono, tertiary, --bg-secondary - the same treatment .mlb-card-head
+   uses over the card boards. */
 .fa-app .detail-table thead th {
-  background: var(--bg-tertiary); color: var(--text-primary);
-  font-family: var(--font-retro); font-weight: 700; font-size: 10px;
-  letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--bg-secondary); color: var(--text-tertiary);
+  font-family: var(--font-retro-mono); font-weight: 700; font-size: 10px;
+  letter-spacing: 0.05em; text-transform: uppercase;
   border-bottom: 2px solid var(--bg-header);
   position: sticky; top: 0; z-index: 2;
 }
@@ -1654,14 +1679,31 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .mlbstats-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-gold); }
 /* Season selector pills (yearly history board) - a compact row above the table. */
 .mlbstats-seasons { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 10px; }
+/* Designed as a lozenge, shipped as a rectangle: the global
+   `*{border-radius:0!important}` reset has always flattened the 999px, so the
+   declaration was decoration on a corpse. Dropped rather than left to imply a
+   shape the site does not have. */
 .mlbstats-season {
   font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
   letter-spacing: .03em; cursor: pointer; color: var(--text-tertiary);
-  background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 999px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
   padding: 3px 11px;
 }
 .mlbstats-season:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
-.mlbstats-season.active { color: var(--bg-primary); background: var(--accent-gold); border-color: var(--accent-gold); }
+/* ONE ACTIVE LANGUAGE. This was the only solid-fill active state on the site:
+   a gold block with inverted text, sitting two rows below a section nav and a
+   tab strip that both mark active with a gold underline. Everywhere else the
+   selected control is outline + gold border + the iridescent 2px rule
+   (.fa-app button.chip.active). Same device here now, so the three mlbstats
+   tiers finally agree with each other and with the rest of the site. */
+.mlbstats-season.active {
+  color: var(--text-primary); background: var(--bg-secondary);
+  border-color: var(--accent-gold); position: relative; overflow: hidden;
+}
+.mlbstats-season.active::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: var(--iridescent);
+}
 .mlbstats-note { font-size: 11px; color: var(--text-tertiary); margin: 6px 0 12px; }
 .mlbstats-empty { padding: 28px 16px; text-align: center; color: var(--text-tertiary);
   font-family: var(--font-retro-mono); font-size: 12px; border: 1px dashed var(--border); }
@@ -1755,7 +1797,10 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .mlbstats-bar .mlbstats-search { margin-left: auto; min-width: 180px; }
 /* Leaderboard table - terminal/scoreboard treatment, tabular numerics. */
 .mlbstats-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-.mlbstats-table th, .mlbstats-table td { padding: 6px 9px; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
+/* 6px 10px + 12.5px: the shared cell density, matching .fa-app .detail-table
+   (see the note on its thead). Numeric columns stay right-aligned here, which
+   is correct for a stat table and is deliberately NOT unified away. */
+.mlbstats-table th, .mlbstats-table td { padding: 6px 10px; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
 .mlbstats-table th { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
   letter-spacing: .04em; text-transform: uppercase; color: var(--text-tertiary); text-align: right;
   cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--bg-secondary); }

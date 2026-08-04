@@ -27,6 +27,13 @@
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
   function num(v, d) { return (v == null || isNaN(v)) ? null : Number(v); }
+  // The site's null marker. fa.js and projections.js both render an absent
+  // value as this; mlbstats rendered an EMPTY CELL, so a missing number and a
+  // rendering bug looked identical on the only surface where whole columns
+  // are legitimately absent for unqualified players. Named EM_DASH to match
+  // fa.js, and like fa.js it is a spaced hyphen: real em-dashes are banned in
+  // user-facing copy and tools/strip_emdashes.py lints assets/*.js.
+  var EM_DASH = " - ";
   function fInt(v) { var n = num(v); return n == null ? "-" : String(Math.round(n)); }
   function f1(v) { var n = num(v); return n == null ? "-" : n.toFixed(1); }
   function f2(v) { var n = num(v); return n == null ? "-" : n.toFixed(2); }
@@ -348,7 +355,11 @@
         if (c.kind === "team") { body += '<td class="mlbstats-name">' + logo(r.team) + esc(r.team || "-") + "</td>"; return; }
         if (c.cell) { body += "<td>" + c.cell(r) + "</td>"; return; }
         var v = getVal(c, r);
-        var rendered = c.fmt ? c.fmt(v, c.term) : esc(v);
+        // An absent value reads as the site-wide null marker rather than a
+        // blank cell. Columns with their own formatter keep it: they already
+        // decide how their own absence looks.
+        var rendered = c.fmt ? c.fmt(v, c.term)
+                     : (v == null || v === "" ? EM_DASH : esc(v));
         body += "<td>" + rendered + "</td>";
       });
       body += "</tr>";
