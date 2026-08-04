@@ -13,6 +13,9 @@ failed**, both the documented pre-existing reds. Baseline at session start was
    there and no stat line reaches the board.
 3. `data/xfv_reliability.json` regenerates with a new shape (`after` + `before`
    curve sets). The glossary card reads the old shape safely in the meantime.
+4. **A `positional_fit` regen.** The served artifact is from 2026-07-24 and
+   predates the `ladder.identification` block by a week, so /pal/ cannot yet
+   explain which sum is zero. It degrades to the plain table until then.
 
 No data artifacts were committed: the box is the single writer and a locally
 regenerated copy is degraded by definition. Locally rebuilt `xfv.json`,
@@ -346,6 +349,55 @@ equal specificity and simply won. Overrides belong next to the rule they beat.
   deliberately a scrollbar and not a fade mask, because the strip is
   right-aligned by `margin-left:auto`, so a mask would dim the last link
   whenever the links DO fit.
+
+---
+
+## Owner bug 3: the positional ladder's zero
+
+Reported as the Fitted (runs/650) column not summing to zero, "which it should
+by definition", plus surprise that 2B outranks CF.
+
+**The zero is a WEIGHTED one.** The adjustment is centred on an
+exposure-weighted sum, imposed exactly by `positional_fit._recentre`. Verified
+as an invariant rather than trusted: `_recentre` subtracts a scalar from every
+rung, which only zeroes the weighted sum if the weights sum to 1, and they do
+because `_ladder_design` normalises each row of innings by that row's total.
+The new test builds a design under that convention and asserts the weighted
+sum lands at zero to 1e-9, and that recentring shifts the level without
+changing the shape.
+
+Adding the nine displayed rungs with equal weight gives **-4.27**, which is
+not an error: DH is about 7% of league exposure rather than a ninth, so equal
+weighting counts the large negative DH rung nine times too heavily. With the
+weighted sum pinned at zero the eight fielding rungs are then forced to
+**+9.49**. Only the weighted sum is a constraint; the other two follow from it.
+
+**Why it looked wrong.** `positional_fit` has published all three sums in
+`ladder.identification` since 2026-07-31, and the page could show none of it
+for two independent reasons: `build_positional_fit_payload` did not forward the
+block, and the SERVED artifact was generated **2026-07-24**, a week before the
+block existed, so the source data could not answer the question either. A
+correct number with no way to check it is indistinguishable from a wrong one.
+The payload now forwards it and /pal/ explains it, rendering only when the
+artifact carries the block. **The box owes a `positional_fit` regen.**
+
+**2B above CF is real, and it is a statement about Baseball-Reference.** The
+fit is an INVERSION: it recovers the constants BRef themselves used, so a rung
+reads as what BRef prices a position at, not as an independent measure of how
+hard it is to play. The gap is stable across four independently recentred era
+splits spanning 26 seasons:
+
+| era | 2B | CF | 2B - CF |
+|---|---|---|---|
+| 2000-2005 | +4.61 | +3.49 | +1.12 |
+| 2006-2011 | +4.47 | +3.47 | +1.00 |
+| 2012-2017 | +4.42 | +3.47 | +0.95 |
+| 2018-2026 | +5.02 | +4.01 | +1.01 |
+| full | +4.65 | +3.63 | +1.02 |
+
+The 95% CIs do not overlap. The folklore table prices the two positions
+identically (+2.5 each), which is exactly the kind of gap the difference column
+exists to show. The ladder note now states the inversion framing explicitly.
 
 ## Open, deliberately not done
 
