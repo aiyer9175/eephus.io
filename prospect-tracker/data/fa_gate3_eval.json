@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-03",
+ "generated_at": "2026-08-04",
  "test_winters": [
   2018,
   2019,
@@ -112,28 +112,27 @@
  "concentration": {
   "n_members": 228,
   "assertion_A1_all_30": true,
-  "max_top1_share": 0.5833,
+  "max_top1_share": 0.5746,
   "max_top1_club": "LAD",
-  "distinct_top1": 12,
+  "distinct_top1": 11,
   "distinct_top3": 19,
-  "median_gap": 0.0495,
+  "median_gap": 0.0475,
   "top1_counts": {
-   "LAD": 133,
-   "NYY": 27,
-   "CHC": 26,
-   "NYM": 21,
-   "DET": 7,
+   "LAD": 131,
+   "NYY": 28,
+   "CHC": 21,
+   "NYM": 20,
+   "DET": 16,
+   "ARI": 4,
    "LAA": 3,
-   "ARI": 3,
-   "COL": 2,
-   "WSN": 2,
    "PHI": 2,
    "SFG": 1,
-   "SEA": 1
+   "SEA": 1,
+   "WSN": 1
   },
   "per_side_max_top1_share_REPORTED_NOT_GATED": {
    "hit": 0.5889,
-   "pit": 0.5797
+   "pit": 0.5652
   },
   "per_side_top1_club": {
    "hit": "LAD",
@@ -141,7 +140,7 @@
   },
   "gate": {
    "max_top1_share": false,
-   "distinct_top1": true,
+   "distinct_top1": false,
    "distinct_top3": false,
    "median_gap": true
   },
@@ -152,6 +151,1459 @@
    "min_distinct_top3": 20,
    "min_median_gap": 0.015
   }
+ },
+ "concentration_decomposition": {
+  "available": true,
+  "n_members": 228,
+  "class_year": 2027,
+  "weights_scored": {
+   "need": 0.4,
+   "window": 0.05,
+   "afford": 0.05,
+   "park": 0.05,
+   "behavior": 0.45
+  },
+  "per_component_top1": {
+   "need": {
+    "max_top1_share": 0.5263,
+    "max_top1_club": "ARI",
+    "distinct_top1": 8,
+    "distinct_top3": 22,
+    "median_gap": 0.02,
+    "mean_clubs_tied_at_top": 8.1,
+    "top1_counts": {
+     "ARI": 120,
+     "COL": 52,
+     "NYY": 23,
+     "CLE": 13,
+     "CHC": 9,
+     "ATH": 5,
+     "SEA": 4,
+     "BAL": 2
+    }
+   },
+   "window": {
+    "max_top1_share": 0.9298,
+    "max_top1_club": "BOS",
+    "distinct_top1": 3,
+    "distinct_top3": 5,
+    "median_gap": 0.034,
+    "mean_clubs_tied_at_top": 1.0,
+    "top1_counts": {
+     "BOS": 212,
+     "DET": 15,
+     "CHC": 1
+    }
+   },
+   "afford": {
+    "max_top1_share": 1.0,
+    "max_top1_club": "ARI",
+    "distinct_top1": 1,
+    "distinct_top3": 3,
+    "median_gap": 0.0,
+    "mean_clubs_tied_at_top": 27.14,
+    "top1_counts": {
+     "ARI": 228
+    }
+   },
+   "park": {
+    "max_top1_share": 0.4079,
+    "max_top1_club": "PIT",
+    "distinct_top1": 4,
+    "distinct_top3": 10,
+    "median_gap": 0.05,
+    "mean_clubs_tied_at_top": 1.0,
+    "top1_counts": {
+     "PIT": 93,
+     "LAD": 71,
+     "STL": 45,
+     "PHI": 19
+    }
+   },
+   "behavior": {
+    "max_top1_share": 1.0,
+    "max_top1_club": "LAD",
+    "distinct_top1": 1,
+    "distinct_top3": 4,
+    "median_gap": 0.089,
+    "mean_clubs_tied_at_top": 1.0,
+    "top1_counts": {
+     "LAD": 228
+    }
+   },
+   "COMPOSITE": {
+    "max_top1_share": 0.5746,
+    "max_top1_club": "LAD",
+    "distinct_top1": 11,
+    "distinct_top3": 19,
+    "median_gap": 0.0475,
+    "mean_clubs_tied_at_top": 1.02,
+    "top1_counts": {
+     "LAD": 131,
+     "NYY": 28,
+     "CHC": 21,
+     "NYM": 20,
+     "DET": 16,
+     "ARI": 4,
+     "LAA": 3,
+     "PHI": 2
+    }
+   }
+  },
+  "variance_decomposition": {
+   "need": {
+    "sd_player": 0.1794,
+    "sd_club": 0.0474,
+    "sd_interaction": 0.151,
+    "pct_player": 56.2,
+    "pct_club": 3.9,
+    "pct_interaction": 39.8,
+    "club_over_interaction": 0.31,
+    "beta_club": {
+     "ARI": 0.0861,
+     "ATH": 0.0284,
+     "ATL": -0.0389,
+     "BAL": -0.022,
+     "BOS": -0.084,
+     "CHC": 0.0168,
+     "CHW": -0.0104,
+     "CIN": -0.0033,
+     "CLE": 0.0051,
+     "COL": 0.1159,
+     "DET": 0.0371,
+     "HOU": 0.037,
+     "KCR": -0.0144,
+     "LAA": 0.061,
+     "LAD": -0.0684,
+     "MIA": -0.0122,
+     "MIL": -0.0474,
+     "MIN": -0.018,
+     "NYM": 0.0305,
+     "NYY": 0.021,
+     "PHI": -0.0219,
+     "PIT": -0.0471,
+     "SDP": 0.0216,
+     "SEA": -0.0767,
+     "SFG": 0.0121,
+     "STL": -0.0385,
+     "TBR": 0.0057,
+     "TEX": -0.0226,
+     "TOR": -0.0413,
+     "WSN": 0.089
+    }
+   },
+   "window": {
+    "sd_player": 0.0148,
+    "sd_club": 0.2445,
+    "sd_interaction": 0.0102,
+    "pct_player": 0.4,
+    "pct_club": 99.5,
+    "pct_interaction": 0.2,
+    "club_over_interaction": 24.01,
+    "beta_club": {
+     "ARI": -0.1862,
+     "ATH": -0.1862,
+     "ATL": 0.2567,
+     "BAL": 0.0059,
+     "BOS": 0.4562,
+     "CHC": 0.4148,
+     "CHW": -0.0173,
+     "CIN": -0.2056,
+     "CLE": 0.0731,
+     "COL": -0.2931,
+     "DET": 0.4279,
+     "HOU": -0.2025,
+     "KCR": -0.2085,
+     "LAA": -0.2699,
+     "LAD": 0.3128,
+     "MIA": -0.0173,
+     "MIL": 0.4103,
+     "MIN": -0.171,
+     "NYM": -0.1035,
+     "NYY": 0.3619,
+     "PHI": -0.0978,
+     "PIT": 0.0818,
+     "SDP": -0.1994,
+     "SEA": 0.3547,
+     "SFG": -0.1994,
+     "STL": -0.1749,
+     "TBR": -0.1305,
+     "TEX": -0.2113,
+     "TOR": -0.06,
+     "WSN": -0.2218
+    }
+   },
+   "afford": {
+    "sd_player": 0.0175,
+    "sd_club": 0.1516,
+    "sd_interaction": 0.0593,
+    "pct_player": 1.1,
+    "pct_club": 85.7,
+    "pct_interaction": 13.1,
+    "club_over_interaction": 2.56,
+    "beta_club": {
+     "ARI": 0.0512,
+     "ATH": 0.0512,
+     "ATL": 0.0512,
+     "BAL": 0.0512,
+     "BOS": 0.0512,
+     "CHC": 0.0512,
+     "CHW": 0.0512,
+     "CIN": 0.0512,
+     "CLE": 0.0512,
+     "COL": 0.0512,
+     "DET": 0.0512,
+     "HOU": 0.0512,
+     "KCR": 0.0512,
+     "LAA": 0.0512,
+     "LAD": -0.5488,
+     "MIA": 0.0512,
+     "MIL": 0.0512,
+     "MIN": 0.0512,
+     "NYM": -0.5488,
+     "NYY": -0.0738,
+     "PHI": -0.1279,
+     "PIT": 0.0512,
+     "SDP": 0.022,
+     "SEA": 0.0512,
+     "SFG": 0.0512,
+     "STL": 0.0512,
+     "TBR": 0.0512,
+     "TEX": 0.0512,
+     "TOR": 0.0475,
+     "WSN": 0.0512
+    }
+   },
+   "park": {
+    "sd_player": 0.0012,
+    "sd_club": 0.0234,
+    "sd_interaction": 0.1243,
+    "pct_player": 0.0,
+    "pct_club": 3.4,
+    "pct_interaction": 96.6,
+    "club_over_interaction": 0.19,
+    "beta_club": {
+     "ARI": 0.0051,
+     "ATH": -0.0003,
+     "ATL": -0.0003,
+     "BAL": -0.0185,
+     "BOS": 0.0188,
+     "CHC": 0.0034,
+     "CHW": 0.0119,
+     "CIN": -0.0323,
+     "CLE": 0.0166,
+     "COL": -0.0401,
+     "DET": -0.004,
+     "HOU": -0.03,
+     "KCR": 0.0205,
+     "LAA": -0.004,
+     "LAD": -0.05,
+     "MIA": 0.0255,
+     "MIL": 0.0004,
+     "MIN": 0.0019,
+     "NYM": -0.0027,
+     "NYY": -0.0316,
+     "PHI": -0.0279,
+     "PIT": 0.0295,
+     "SDP": -0.003,
+     "SEA": 0.021,
+     "SFG": 0.043,
+     "STL": 0.0483,
+     "TBR": -0.0013,
+     "TEX": 0.0235,
+     "TOR": -0.0159,
+     "WSN": -0.0076
+    }
+   },
+   "behavior": {
+    "sd_player": 0.1002,
+    "sd_club": 0.1559,
+    "sd_interaction": 0.0217,
+    "pct_player": 28.9,
+    "pct_club": 69.8,
+    "pct_interaction": 1.4,
+    "club_over_interaction": 7.18,
+    "beta_club": {
+     "ARI": 0.0143,
+     "ATH": -0.1684,
+     "ATL": -0.1466,
+     "BAL": -0.0191,
+     "BOS": 0.1251,
+     "CHC": 0.151,
+     "CHW": -0.1052,
+     "CIN": -0.134,
+     "CLE": -0.157,
+     "COL": -0.0579,
+     "DET": 0.1113,
+     "HOU": 0.0046,
+     "KCR": -0.0952,
+     "LAA": -0.0951,
+     "LAD": 0.4278,
+     "MIA": -0.1409,
+     "MIL": -0.1922,
+     "MIN": -0.0159,
+     "NYM": 0.3405,
+     "NYY": 0.1894,
+     "PHI": 0.2164,
+     "PIT": -0.1638,
+     "SDP": 0.0044,
+     "SEA": -0.1279,
+     "SFG": 0.1398,
+     "STL": -0.0919,
+     "TBR": -0.1583,
+     "TEX": 0.0176,
+     "TOR": 0.1302,
+     "WSN": -0.003
+    }
+   },
+   "COMPOSITE": {
+    "sd_player": 0.0348,
+    "sd_club": 0.0688,
+    "sd_interaction": 0.0607,
+    "pct_player": 12.6,
+    "pct_club": 49.1,
+    "pct_interaction": 38.3,
+    "club_over_interaction": 1.13,
+    "beta_club": {
+     "ARI": 0.0344,
+     "ATH": -0.0712,
+     "ATL": -0.0662,
+     "BAL": -0.0155,
+     "BOS": 0.049,
+     "CHC": 0.0982,
+     "CHW": -0.0492,
+     "CIN": -0.071,
+     "CLE": -0.0616,
+     "COL": 0.0062,
+     "DET": 0.0886,
+     "HOU": 0.0078,
+     "KCR": -0.0554,
+     "LAA": -0.0295,
+     "LAD": 0.151,
+     "MIA": -0.0652,
+     "MIL": -0.0823,
+     "MIN": -0.0202,
+     "NYM": 0.1327,
+     "NYY": 0.1064,
+     "PHI": 0.076,
+     "PIT": -0.0844,
+     "SDP": 0.0016,
+     "SEA": -0.067,
+     "SFG": 0.0625,
+     "STL": -0.0606,
+     "TBR": -0.0731,
+     "TEX": -0.008,
+     "TOR": 0.0407,
+     "WSN": 0.0254
+    }
+   }
+  },
+  "weighted_contribution_to_composite": {
+   "need": {
+    "weight": 0.4,
+    "w_sd_club": 0.019,
+    "w_sd_interaction": 0.0604,
+    "share_of_composite_club_effect_pct": 17.2,
+    "share_of_composite_interaction_pct": 75.6
+   },
+   "window": {
+    "weight": 0.05,
+    "w_sd_club": 0.0122,
+    "w_sd_interaction": 0.0005,
+    "share_of_composite_club_effect_pct": 11.1,
+    "share_of_composite_interaction_pct": 0.6
+   },
+   "afford": {
+    "weight": 0.05,
+    "w_sd_club": 0.0076,
+    "w_sd_interaction": 0.003,
+    "share_of_composite_club_effect_pct": 6.9,
+    "share_of_composite_interaction_pct": 3.7
+   },
+   "park": {
+    "weight": 0.05,
+    "w_sd_club": 0.0012,
+    "w_sd_interaction": 0.0062,
+    "share_of_composite_club_effect_pct": 1.1,
+    "share_of_composite_interaction_pct": 7.8
+   },
+   "behavior": {
+    "weight": 0.45,
+    "w_sd_club": 0.0702,
+    "w_sd_interaction": 0.0098,
+    "share_of_composite_club_effect_pct": 63.7,
+    "share_of_composite_interaction_pct": 12.2
+   }
+  },
+  "club_baseline_propensity": {
+   "ARI": 0.3315,
+   "ATH": 0.226,
+   "ATL": 0.231,
+   "BAL": 0.2817,
+   "BOS": 0.3462,
+   "CHC": 0.3953,
+   "CHW": 0.248,
+   "CIN": 0.2261,
+   "CLE": 0.2356,
+   "COL": 0.3034,
+   "DET": 0.3858,
+   "HOU": 0.305,
+   "KCR": 0.2417,
+   "LAA": 0.2677,
+   "LAD": 0.4482,
+   "MIA": 0.232,
+   "MIL": 0.2149,
+   "MIN": 0.277,
+   "NYM": 0.4298,
+   "NYY": 0.4036,
+   "PHI": 0.3731,
+   "PIT": 0.2128,
+   "SDP": 0.2987,
+   "SEA": 0.2302,
+   "SFG": 0.3597,
+   "STL": 0.2366,
+   "TBR": 0.2241,
+   "TEX": 0.2892,
+   "TOR": 0.3379,
+   "WSN": 0.3226
+  },
+  "candidates": {
+   "b_relative_fit_lambda_0": {
+    "kind": "display_offset",
+    "lambda": 0.0,
+    "concentration": {
+     "max_top1_share": 0.5746,
+     "max_top1_club": "LAD",
+     "distinct_top1": 11,
+     "distinct_top3": 19,
+     "median_gap": 0.0475,
+     "mean_clubs_tied_at_top": 1.02,
+     "top1_counts": {
+      "LAD": 131,
+      "NYY": 28,
+      "CHC": 21,
+      "NYM": 20,
+      "DET": 16,
+      "ARI": 4,
+      "LAA": 3,
+      "PHI": 2
+     },
+     "gate": {
+      "max_top1_share": false,
+      "distinct_top1": false,
+      "distinct_top3": false,
+      "median_gap": true
+     },
+     "pass_3_criterion": false,
+     "pass": false
+    },
+    "chain": {
+     "n": 1173,
+     "top1": 0.052,
+     "top3": 0.1449,
+     "top5": 0.2293,
+     "mrr": 0.1669
+    }
+   },
+   "b_relative_fit_lambda_0.25": {
+    "kind": "display_offset",
+    "lambda": 0.25,
+    "concentration": {
+     "max_top1_share": 0.5351,
+     "max_top1_club": "LAD",
+     "distinct_top1": 12,
+     "distinct_top3": 20,
+     "median_gap": 0.0403,
+     "mean_clubs_tied_at_top": 1.0,
+     "top1_counts": {
+      "LAD": 122,
+      "NYY": 40,
+      "CHC": 21,
+      "DET": 20,
+      "NYM": 8,
+      "LAA": 5,
+      "ARI": 4,
+      "SEA": 2
+     },
+     "gate": {
+      "max_top1_share": false,
+      "distinct_top1": true,
+      "distinct_top3": true,
+      "median_gap": true
+     },
+     "pass_3_criterion": false,
+     "pass": false
+    },
+    "chain": {
+     "n": 1173,
+     "top1": 0.0494,
+     "top3": 0.1543,
+     "top5": 0.2234,
+     "mrr": 0.1658
+    }
+   },
+   "b_relative_fit_lambda_0.5": {
+    "kind": "display_offset",
+    "lambda": 0.5,
+    "concentration": {
+     "max_top1_share": 0.4693,
+     "max_top1_club": "LAD",
+     "distinct_top1": 13,
+     "distinct_top3": 21,
+     "median_gap": 0.0211,
+     "mean_clubs_tied_at_top": 1.0,
+     "top1_counts": {
+      "LAD": 107,
+      "NYY": 53,
+      "CHC": 17,
+      "DET": 16,
+      "COL": 12,
+      "LAA": 5,
+      "PHI": 4,
+      "SDP": 4
+     },
+     "gate": {
+      "max_top1_share": false,
+      "distinct_top1": true,
+      "distinct_top3": true,
+      "median_gap": true
+     },
+     "pass_3_criterion": false,
+     "pass": false
+    },
+    "chain": {
+     "n": 1173,
+     "top1": 0.0418,
+     "top3": 0.1304,
+     "top5": 0.2055,
+     "mrr": 0.1539
+    }
+   },
+   "b_relative_fit_lambda_0.7": {
+    "kind": "display_offset",
+    "lambda": 0.7,
+    "concentration": {
+     "max_top1_share": 0.4254,
+     "max_top1_club": "LAD",
+     "distinct_top1": 13,
+     "distinct_top3": 23,
+     "median_gap": 0.0154,
+     "mean_clubs_tied_at_top": 1.0,
+     "top1_counts": {
+      "LAD": 97,
+      "NYY": 55,
+      "COL": 19,
+      "DET": 15,
+      "CHC": 11,
+      "CLE": 9,
+      "PHI": 6,
+      "SEA": 4
+     },
+     "gate": {
+      "max_top1_share": false,
+      "distinct_top1": true,
+      "distinct_top3": true,
+      "median_gap": true
+     },
+     "pass_3_criterion": false,
+     "pass": false
+    },
+    "chain": {
+     "n": 1173,
+     "top1": 0.0324,
+     "top3": 0.1168,
+     "top5": 0.1986,
+     "mrr": 0.1456
+    }
+   },
+   "b_relative_fit_lambda_0.8": {
+    "kind": "display_offset",
+    "lambda": 0.8,
+    "concentration": {
+     "max_top1_share": 0.2807,
+     "max_top1_club": "LAD",
+     "distinct_top1": 15,
+     "distinct_top3": 26,
+     "median_gap": 0.0123,
+     "mean_clubs_tied_at_top": 1.0,
+     "top1_counts": {
+      "LAD": 64,
+      "NYY": 57,
+      "BOS": 30,
+      "COL": 26,
+      "DET": 13,
+      "CLE": 9,
+      "SEA": 7,
+      "PHI": 7
+     },
+     "gate": {
+      "max_top1_share": false,
+      "distinct_top1": true,
+      "distinct_top3": true,
+      "median_gap": false
+     },
+     "pass_3_criterion": false,
+     "pass": false
+    },
+    "chain": {
+     "n": 1173,
+     "top1": 0.0324,
+     "top3": 0.1134,
+     "top5": 0.1986,
+     "mrr": 0.1435
+    }
+   },
+   "b_relative_fit_lambda_0.9": {
+    "kind": "display_offset",
+    "lambda": 0.9,
+    "concentration": {
+     "max_top1_share": 0.2368,
+     "max_top1_club": "NYY",
+     "distinct_top1": 15,
+     "distinct_top3": 29,
+     "median_gap": 0.014,
+     "mean_clubs_tied_at_top": 1.0,
+     "top1_counts": {
+      "NYY": 54,
+      "BOS": 45,
+      "LAD": 40,
+      "COL": 37,
+      "CLE": 10,
+      "PIT": 9,
+      "SEA": 9,
+      "PHI": 7
+     },
+     "gate": {
+      "max_top1_share": true,
+      "distinct_top1": true,
+      "distinct_top3": true,
+      "median_gap": false
+     },
+     "pass_3_criterion": true,
+     "pass": false
+    },
+    "chain": {
+     "n": 1173,
+     "top1": 0.0307,
+     "top3": 0.1134,
+     "top5": 0.1978,
+     "mrr": 0.1422
+    }
+   },
+   "b_relative_fit_lambda_1": {
+    "kind": "display_offset",
+    "lambda": 1.0,
+    "concentration": {
+     "max_top1_share": 0.1667,
+     "max_top1_club": "COL",
+     "distinct_top1": 17,
+     "distinct_top3": 29,
+     "median_gap": 0.0086,
+     "mean_clubs_tied_at_top": 1.0,
+     "top1_counts": {
+      "COL": 38,
+      "BOS": 32,
+      "SEA": 29,
+      "LAD": 27,
+      "NYY": 24,
+      "CHW": 22,
+      "PIT": 15,
+      "CLE": 10
+     },
+     "gate": {
+      "max_top1_share": true,
+      "distinct_top1": true,
+      "distinct_top3": true,
+      "median_gap": false
+     },
+     "pass_3_criterion": true,
+     "pass": false
+    },
+    "chain": {
+     "n": 1173,
+     "top1": 0.0307,
+     "top3": 0.1151,
+     "top5": 0.1927,
+     "mrr": 0.141
+    }
+   },
+   "a_club_mass_cap_T0.02": {
+    "kind": "model_offset",
+    "temperature": 0.02,
+    "concentration": {
+     "max_top1_share": 0.0965,
+     "max_top1_club": "BOS",
+     "distinct_top1": 29,
+     "distinct_top3": 30,
+     "median_gap": 0.005,
+     "mean_clubs_tied_at_top": 1.0,
+     "top1_counts": {
+      "BOS": 22,
+      "COL": 17,
+      "ATH": 16,
+      "STL": 16,
+      "CIN": 15,
+      "CHW": 13,
+      "KCR": 13,
+      "MIA": 11
+     },
+     "gate": {
+      "max_top1_share": true,
+      "distinct_top1": true,
+      "distinct_top3": true,
+      "median_gap": false
+     },
+     "pass_3_criterion": true,
+     "pass": false
+    },
+    "chain": {
+     "n": 1173,
+     "top1": 0.0418,
+     "top3": 0.1117,
+     "top5": 0.1927,
+     "mrr": 0.1472
+    }
+   },
+   "a_club_mass_cap_T0.05": {
+    "kind": "model_offset",
+    "temperature": 0.05,
+    "concentration": {
+     "max_top1_share": 0.1535,
+     "max_top1_club": "BOS",
+     "distinct_top1": 26,
+     "distinct_top3": 30,
+     "median_gap": 0.0071,
+     "mean_clubs_tied_at_top": 1.0,
+     "top1_counts": {
+      "BOS": 35,
+      "COL": 24,
+      "KCR": 18,
+      "CHW": 16,
+      "ATH": 14,
+      "CIN": 14,
+      "LAD": 13,
+      "STL": 13
+     },
+     "gate": {
+      "max_top1_share": true,
+      "distinct_top1": true,
+      "distinct_top3": true,
+      "median_gap": false
+     },
+     "pass_3_criterion": true,
+     "pass": false
+    },
+    "chain": {
+     "n": 1173,
+     "top1": 0.0358,
+     "top3": 0.1159,
+     "top5": 0.1765,
+     "mrr": 0.1422
+    }
+   },
+   "a_club_mass_cap_T0.1": {
+    "kind": "model_offset",
+    "temperature": 0.1,
+    "concentration": {
+     "max_top1_share": 0.1798,
+     "max_top1_club": "BOS",
+     "distinct_top1": 24,
+     "distinct_top3": 30,
+     "median_gap": 0.0096,
+     "mean_clubs_tied_at_top": 1.0,
+     "top1_counts": {
+      "BOS": 41,
+      "COL": 31,
+      "LAD": 20,
+      "SEA": 19,
+      "CHW": 19,
+      "KCR": 18,
+      "PIT": 13,
+      "CLE": 10
+     },
+     "gate": {
+      "max_top1_share": true,
+      "distinct_top1": true,
+      "distinct_top3": true,
+      "median_gap": false
+     },
+     "pass_3_criterion": true,
+     "pass": false
+    },
+    "chain": {
+     "n": 1173,
+     "top1": 0.0307,
+     "top3": 0.1117,
+     "top5": 0.1884,
+     "mrr": 0.14
+    }
+   },
+   "c1_zscore_composite_per_player": {
+    "kind": "no_op",
+    "ranking_identical_to_shipped": true,
+    "concentration": {
+     "max_top1_share": 0.5746,
+     "max_top1_club": "LAD",
+     "distinct_top1": 11,
+     "distinct_top3": 19,
+     "median_gap": 0.5747,
+     "mean_clubs_tied_at_top": 1.02,
+     "top1_counts": {
+      "LAD": 131,
+      "NYY": 28,
+      "CHC": 21,
+      "NYM": 20,
+      "DET": 16,
+      "ARI": 4,
+      "LAA": 3,
+      "PHI": 2
+     },
+     "gate": {
+      "max_top1_share": false,
+      "distinct_top1": false,
+      "distinct_top3": false,
+      "median_gap": true
+     },
+     "pass_3_criterion": false,
+     "pass": false
+    },
+    "chain": {
+     "n": 1173,
+     "top1": 0.052,
+     "top3": 0.1449,
+     "top5": 0.2293,
+     "mrr": 0.1669
+    }
+   },
+   "c2_zscore_components_per_player": {
+    "kind": "model_rescale",
+    "concentration": {
+     "max_top1_share": 0.2763,
+     "max_top1_club": "LAD",
+     "distinct_top1": 13,
+     "distinct_top3": 18,
+     "median_gap": 0.2343,
+     "mean_clubs_tied_at_top": 1.0,
+     "top1_counts": {
+      "LAD": 63,
+      "NYM": 51,
+      "NYY": 50,
+      "COL": 19,
+      "ARI": 10,
+      "LAA": 9,
+      "DET": 7,
+      "PHI": 6
+     },
+     "gate": {
+      "max_top1_share": false,
+      "distinct_top1": true,
+      "distinct_top3": false,
+      "median_gap": true
+     },
+     "pass_3_criterion": false,
+     "pass": false
+    },
+    "chain": {
+     "n": 1173,
+     "top1": 0.0443,
+     "top3": 0.1424,
+     "top5": 0.2199,
+     "mrr": 0.1612
+    }
+   }
+  },
+  "saturated_component": "behavior",
+  "most_player_specific_component": "need",
+  "saturated_component_basis": "largest share of the COMPOSITE's club main effect (weight x sd_club)",
+  "most_player_specific_basis": "largest share of the COMPOSITE's interaction (weight x sd_interaction)",
+  "most_lopsided_raw_ratio_component": "window",
+  "least_lopsided_raw_ratio_component": "park",
+  "raw_ratio_note": "On the UNWEIGHTED club/interaction ratio the extremes are 'window' (24.01) and 'park' (0.19), but both carry weight 0.05/0.05 and are therefore inert in the composite. Judge saturation on the weighted basis.",
+  "scale_note": "median_gap is only comparable to the threshold for candidates that keep the fit SCALE (the offset families a and b). The z-scored candidates report a gap in standard-deviation units, so their median_gap flag is not meaningful and only their share/distinct counts should be read.",
+  "reading": "score[player][club] splits into a player main effect (irrelevant WITHIN a list), a CLUB main effect (identical on every list, so it is the monopoly) and an INTERACTION (the only term that can hand a different club a different player). 'behavior' is the saturated component: it supplies 63.7% of the composite's club main effect but only 12.2% of its interaction, it is 69.8% club variance against 1.4% interaction, and its top-1 club LAD wins 1.0000 of the class on an average of 1.0 clubs tied. 'need' is the player signal: 75.6% of the composite's interaction and only 17.2% of its club effect. NO weight on a saturated component de-monopolizes; it only sets how loudly the monopoly speaks."
+ },
+ "concentration_reweight_sweep": {
+  "lattice_step": 0.05,
+  "n_vectors": 10626,
+  "n_pass_3_criterion": 632,
+  "n_pass_4_criterion": 386,
+  "shipped_mrr": 0.1669,
+  "passer_mrr_distribution": {
+   "min": 0.1386,
+   "p10": 0.141,
+   "median": 0.1457,
+   "p90": 0.1545,
+   "max": 0.1703,
+   "n_at_or_above_shipped": 8
+  },
+  "best_by_mrr": [
+   {
+    "weights": {
+     "need": 0.75,
+     "window": 0.0,
+     "afford": 0.0,
+     "park": 0.1,
+     "behavior": 0.15
+    },
+    "concentration": {
+     "max_top1_share": 0.2193,
+     "max_top1_club": "NYY",
+     "distinct_top1": 12,
+     "distinct_top3": 21,
+     "median_gap": 0.021
+    },
+    "slack": 0.0,
+    "chain": {
+     "mrr": 0.1703,
+     "top1": 0.0588,
+     "top3": 0.1449,
+     "top5": 0.2302
+    }
+   },
+   {
+    "weights": {
+     "need": 0.5,
+     "window": 0.0,
+     "afford": 0.0,
+     "park": 0.25,
+     "behavior": 0.25
+    },
+    "concentration": {
+     "max_top1_share": 0.25,
+     "max_top1_club": "SFG",
+     "distinct_top1": 14,
+     "distinct_top3": 20,
+     "median_gap": 0.016
+    },
+    "slack": 0.0,
+    "chain": {
+     "mrr": 0.169,
+     "top1": 0.0563,
+     "top3": 0.1432,
+     "top5": 0.2182
+    }
+   },
+   {
+    "weights": {
+     "need": 0.6,
+     "window": 0.0,
+     "afford": 0.0,
+     "park": 0.2,
+     "behavior": 0.2
+    },
+    "concentration": {
+     "max_top1_share": 0.2149,
+     "max_top1_club": "SFG",
+     "distinct_top1": 14,
+     "distinct_top3": 20,
+     "median_gap": 0.0169
+    },
+    "slack": 0.0,
+    "chain": {
+     "mrr": 0.169,
+     "top1": 0.0563,
+     "top3": 0.1432,
+     "top5": 0.2182
+    }
+   },
+   {
+    "weights": {
+     "need": 0.7,
+     "window": 0.0,
+     "afford": 0.0,
+     "park": 0.15,
+     "behavior": 0.15
+    },
+    "concentration": {
+     "max_top1_share": 0.2149,
+     "max_top1_club": "COL",
+     "distinct_top1": 13,
+     "distinct_top3": 21,
+     "median_gap": 0.0326
+    },
+    "slack": 0.05,
+    "chain": {
+     "mrr": 0.169,
+     "top1": 0.0563,
+     "top3": 0.1432,
+     "top5": 0.2182
+    }
+   },
+   {
+    "weights": {
+     "need": 0.8,
+     "window": 0.0,
+     "afford": 0.0,
+     "park": 0.1,
+     "behavior": 0.1
+    },
+    "concentration": {
+     "max_top1_share": 0.2325,
+     "max_top1_club": "ARI",
+     "distinct_top1": 12,
+     "distinct_top3": 22,
+     "median_gap": 0.0286
+    },
+    "slack": 0.0,
+    "chain": {
+     "mrr": 0.169,
+     "top1": 0.0563,
+     "top3": 0.1432,
+     "top5": 0.2182
+    }
+   }
+  ],
+  "best_by_slack": [
+   {
+    "weights": {
+     "need": 0.5,
+     "window": 0.05,
+     "afford": 0.2,
+     "park": 0.25,
+     "behavior": 0.0
+    },
+    "concentration": {
+     "max_top1_share": 0.1667,
+     "max_top1_club": "NYY",
+     "distinct_top1": 16,
+     "distinct_top3": 27,
+     "median_gap": 0.0216
+    },
+    "slack": 0.333,
+    "chain": {
+     "mrr": 0.1438,
+     "top1": 0.0392,
+     "top3": 0.1049,
+     "top5": 0.1773
+    }
+   },
+   {
+    "weights": {
+     "need": 0.6,
+     "window": 0.05,
+     "afford": 0.05,
+     "park": 0.3,
+     "behavior": 0.0
+    },
+    "concentration": {
+     "max_top1_share": 0.1667,
+     "max_top1_club": "PIT",
+     "distinct_top1": 16,
+     "distinct_top3": 27,
+     "median_gap": 0.0273
+    },
+    "slack": 0.333,
+    "chain": {
+     "mrr": 0.1432,
+     "top1": 0.0367,
+     "top3": 0.104,
+     "top5": 0.1858
+    }
+   },
+   {
+    "weights": {
+     "need": 0.45,
+     "window": 0.05,
+     "afford": 0.25,
+     "park": 0.25,
+     "behavior": 0.0
+    },
+    "concentration": {
+     "max_top1_share": 0.1711,
+     "max_top1_club": "PIT",
+     "distinct_top1": 16,
+     "distinct_top3": 28,
+     "median_gap": 0.0216
+    },
+    "slack": 0.316,
+    "chain": {
+     "mrr": 0.1437,
+     "top1": 0.0392,
+     "top3": 0.104,
+     "top5": 0.1748
+    }
+   },
+   {
+    "weights": {
+     "need": 0.5,
+     "window": 0.05,
+     "afford": 0.15,
+     "park": 0.3,
+     "behavior": 0.0
+    },
+    "concentration": {
+     "max_top1_share": 0.1711,
+     "max_top1_club": "NYY",
+     "distinct_top1": 16,
+     "distinct_top3": 28,
+     "median_gap": 0.027
+    },
+    "slack": 0.316,
+    "chain": {
+     "mrr": 0.1413,
+     "top1": 0.0341,
+     "top3": 0.1032,
+     "top5": 0.1816
+    }
+   },
+   {
+    "weights": {
+     "need": 0.55,
+     "window": 0.05,
+     "afford": 0.05,
+     "park": 0.35,
+     "behavior": 0.0
+    },
+    "concentration": {
+     "max_top1_share": 0.1711,
+     "max_top1_club": "PIT",
+     "distinct_top1": 16,
+     "distinct_top3": 28,
+     "median_gap": 0.0296
+    },
+    "slack": 0.316,
+    "chain": {
+     "mrr": 0.1444,
+     "top1": 0.0392,
+     "top3": 0.1049,
+     "top5": 0.1884
+    }
+   }
+  ],
+  "best_all_components_positive": [
+   {
+    "weights": {
+     "need": 0.45,
+     "window": 0.05,
+     "afford": 0.05,
+     "park": 0.2,
+     "behavior": 0.25
+    },
+    "concentration": {
+     "max_top1_share": 0.2368,
+     "max_top1_club": "BOS",
+     "distinct_top1": 12,
+     "distinct_top3": 20,
+     "median_gap": 0.015
+    },
+    "slack": 0.0,
+    "chain": {
+     "mrr": 0.1664,
+     "top1": 0.0571,
+     "top3": 0.1424,
+     "top5": 0.2251
+    }
+   },
+   {
+    "weights": {
+     "need": 0.45,
+     "window": 0.05,
+     "afford": 0.05,
+     "park": 0.25,
+     "behavior": 0.2
+    },
+    "concentration": {
+     "max_top1_share": 0.1886,
+     "max_top1_club": "NYY",
+     "distinct_top1": 12,
+     "distinct_top3": 21,
+     "median_gap": 0.0206
+    },
+    "slack": 0.0,
+    "chain": {
+     "mrr": 0.1618,
+     "top1": 0.0503,
+     "top3": 0.1407,
+     "top5": 0.2165
+    }
+   },
+   {
+    "weights": {
+     "need": 0.5,
+     "window": 0.05,
+     "afford": 0.05,
+     "park": 0.25,
+     "behavior": 0.15
+    },
+    "concentration": {
+     "max_top1_share": 0.2018,
+     "max_top1_club": "BOS",
+     "distinct_top1": 14,
+     "distinct_top3": 23,
+     "median_gap": 0.0152
+    },
+    "slack": 0.013,
+    "chain": {
+     "mrr": 0.1532,
+     "top1": 0.0409,
+     "top3": 0.1296,
+     "top5": 0.2012
+    }
+   }
+  ],
+  "need_behavior_line": [
+   {
+    "need": 0.0,
+    "behavior": 0.85,
+    "max_top1_share": 1.0,
+    "max_top1_club": "LAD",
+    "distinct_top1": 1,
+    "distinct_top3": 5,
+    "median_gap": 0.0923,
+    "pass": false,
+    "mrr": 0.1505
+   },
+   {
+    "need": 0.05,
+    "behavior": 0.8,
+    "max_top1_share": 1.0,
+    "max_top1_club": "LAD",
+    "distinct_top1": 1,
+    "distinct_top3": 5,
+    "median_gap": 0.0838,
+    "pass": false,
+    "mrr": 0.155
+   },
+   {
+    "need": 0.1,
+    "behavior": 0.75,
+    "max_top1_share": 0.9912,
+    "max_top1_club": "LAD",
+    "distinct_top1": 2,
+    "distinct_top3": 5,
+    "median_gap": 0.0766,
+    "pass": false,
+    "mrr": 0.1577
+   },
+   {
+    "need": 0.15,
+    "behavior": 0.7,
+    "max_top1_share": 0.8553,
+    "max_top1_club": "LAD",
+    "distinct_top1": 3,
+    "distinct_top3": 8,
+    "median_gap": 0.0712,
+    "pass": false,
+    "mrr": 0.16
+   },
+   {
+    "need": 0.2,
+    "behavior": 0.65,
+    "max_top1_share": 0.7675,
+    "max_top1_club": "LAD",
+    "distinct_top1": 4,
+    "distinct_top3": 10,
+    "median_gap": 0.0651,
+    "pass": false,
+    "mrr": 0.1615
+   },
+   {
+    "need": 0.25,
+    "behavior": 0.6,
+    "max_top1_share": 0.7193,
+    "max_top1_club": "LAD",
+    "distinct_top1": 5,
+    "distinct_top3": 13,
+    "median_gap": 0.0607,
+    "pass": false,
+    "mrr": 0.1629
+   },
+   {
+    "need": 0.3,
+    "behavior": 0.55,
+    "max_top1_share": 0.6579,
+    "max_top1_club": "LAD",
+    "distinct_top1": 6,
+    "distinct_top3": 15,
+    "median_gap": 0.0563,
+    "pass": false,
+    "mrr": 0.1633
+   },
+   {
+    "need": 0.35,
+    "behavior": 0.5,
+    "max_top1_share": 0.614,
+    "max_top1_club": "LAD",
+    "distinct_top1": 9,
+    "distinct_top3": 17,
+    "median_gap": 0.0522,
+    "pass": false,
+    "mrr": 0.1652
+   },
+   {
+    "need": 0.4,
+    "behavior": 0.45,
+    "max_top1_share": 0.5702,
+    "max_top1_club": "LAD",
+    "distinct_top1": 11,
+    "distinct_top3": 18,
+    "median_gap": 0.0473,
+    "pass": false,
+    "mrr": 0.1669
+   },
+   {
+    "need": 0.45,
+    "behavior": 0.4,
+    "max_top1_share": 0.5132,
+    "max_top1_club": "LAD",
+    "distinct_top1": 11,
+    "distinct_top3": 20,
+    "median_gap": 0.037,
+    "pass": false,
+    "mrr": 0.1671
+   },
+   {
+    "need": 0.5,
+    "behavior": 0.35,
+    "max_top1_share": 0.4561,
+    "max_top1_club": "LAD",
+    "distinct_top1": 10,
+    "distinct_top3": 20,
+    "median_gap": 0.0287,
+    "pass": false,
+    "mrr": 0.1661
+   },
+   {
+    "need": 0.55,
+    "behavior": 0.3,
+    "max_top1_share": 0.3991,
+    "max_top1_club": "LAD",
+    "distinct_top1": 11,
+    "distinct_top3": 22,
+    "median_gap": 0.0323,
+    "pass": false,
+    "mrr": 0.1661
+   },
+   {
+    "need": 0.6,
+    "behavior": 0.25,
+    "max_top1_share": 0.3333,
+    "max_top1_club": "LAD",
+    "distinct_top1": 11,
+    "distinct_top3": 22,
+    "median_gap": 0.0266,
+    "pass": false,
+    "mrr": 0.1642
+   },
+   {
+    "need": 0.65,
+    "behavior": 0.2,
+    "max_top1_share": 0.3202,
+    "max_top1_club": "NYY",
+    "distinct_top1": 11,
+    "distinct_top3": 22,
+    "median_gap": 0.0253,
+    "pass": false,
+    "mrr": 0.1607
+   },
+   {
+    "need": 0.7,
+    "behavior": 0.15,
+    "max_top1_share": 0.3246,
+    "max_top1_club": "NYY",
+    "distinct_top1": 11,
+    "distinct_top3": 22,
+    "median_gap": 0.0245,
+    "pass": false,
+    "mrr": 0.1547
+   },
+   {
+    "need": 0.75,
+    "behavior": 0.1,
+    "max_top1_share": 0.3772,
+    "max_top1_club": "NYY",
+    "distinct_top1": 11,
+    "distinct_top3": 22,
+    "median_gap": 0.0176,
+    "pass": false,
+    "mrr": 0.1467
+   },
+   {
+    "need": 0.8,
+    "behavior": 0.05,
+    "max_top1_share": 0.3816,
+    "max_top1_club": "NYY",
+    "distinct_top1": 10,
+    "distinct_top3": 22,
+    "median_gap": 0.0143,
+    "pass": false,
+    "mrr": 0.1432
+   },
+   {
+    "need": 0.85,
+    "behavior": 0.0,
+    "max_top1_share": 0.2895,
+    "max_top1_club": "NYY",
+    "distinct_top1": 11,
+    "distinct_top3": 22,
+    "median_gap": 0.0078,
+    "pass": false,
+    "mrr": 0.1425
+   }
+  ],
+  "note": "SELECTION WARNING: best_by_mrr is the extreme of a 10,626-vector search whose selection criterion was concentration and whose guard was MRR. Only 8 of 386 passers reach the shipped MRR, so the typical passer LOSES accuracy; the top one is a tail draw and its bootstrap CI straddles zero. It is reported for the next reader, NOT adopted."
+ },
+ "concentration_repair_verdict": {
+  "gate": "concentration PASS with MRR not worse on the same forward chain",
+  "candidate_a_club_mass_cap": {
+   "concentration_pass": false,
+   "concentration_pass_3_criterion": true,
+   "max_top1_share": 0.0965,
+   "distinct_top1": 29,
+   "distinct_top3": 30,
+   "median_gap": 0.005,
+   "mrr": 0.1472,
+   "mrr_delta_vs_shipped": -0.0197
+  },
+  "candidate_b_display_relative_fit": {
+   "concentration_pass": false,
+   "concentration_pass_3_criterion": true,
+   "max_top1_share": 0.1667,
+   "distinct_top1": 17,
+   "distinct_top3": 29,
+   "median_gap": 0.0086,
+   "mrr": 0.141,
+   "mrr_delta_vs_shipped": -0.0259
+  },
+  "candidate_b_minimal_passing": {
+   "concentration_pass": false,
+   "concentration_pass_3_criterion": true,
+   "max_top1_share": 0.2368,
+   "distinct_top1": 15,
+   "distinct_top3": 29,
+   "median_gap": 0.014,
+   "mrr": 0.1422,
+   "mrr_delta_vs_shipped": -0.0247
+  },
+  "candidate_c1_zscore_composite": {
+   "concentration_pass": false,
+   "concentration_pass_3_criterion": false,
+   "max_top1_share": 0.5746,
+   "distinct_top1": 11,
+   "distinct_top3": 19,
+   "median_gap": 0.5747,
+   "mrr": 0.1669,
+   "mrr_delta_vs_shipped": 0.0
+  },
+  "candidate_c2_zscore_components": {
+   "concentration_pass": false,
+   "concentration_pass_3_criterion": false,
+   "max_top1_share": 0.2763,
+   "distinct_top1": 13,
+   "distinct_top3": 18,
+   "median_gap": 0.2343,
+   "mrr": 0.1612,
+   "mrr_delta_vs_shipped": -0.0057
+  },
+  "findings": [
+   "PREMISE REFUTED. The decomposition was run to test whether NEED was saturated. It is not: need has the LOWEST club-over-interaction ratio of the five components and supplies the large majority of the composite's player-club interaction. The saturated component is BEHAVIOR, whose top-1 club is the same club for every member of the class with no ties at all.",
+   "MECHANISM. behavior = 0.5*reach + 0.3*recent + 0.2*rich and only `reach` takes a player input. `recent` divides by the LEAGUE-MAX 3-winter outlay, which is the same club, so that club scores exactly 1.0 by construction; `rich` clips at n_100m/5 so it saturates for five clubs at once. Those two player-independent constants decide the composite before the free agent is consulted. The F4 repair fixed `reach` and `reach` now behaves; the other two terms were never repaired.",
+   "CANDIDATE (c) AS SPECIFIED IS A NO-OP. Per-player z-scoring of the composite across clubs is a positive affine transform WITHIN each player, so it cannot change any ranking or any argmax. Measured: ranking identical for every member, concentration and MRR both bit-identical to shipped. Recorded so it is never proposed again.",
+   "CANDIDATES (a) AND (b) BUY CONCENTRATION WITH ACCURACY. Both are per-club additive offsets, and the club main effect they remove IS the signing signal (that club really does sign more free agents). Both clear the 3-criterion gate and both lose MRR well beyond this harness's registered MDE95 of 0.0126, landing between random and behavior_only. They fail the stated gate.",
+   "NEITHER (a) NOR (b) CAN EVER CLEAR THE SHIPPED FOUR-CRITERION GATE. min_median_gap and max_top1_share are in mechanical tension along the whole offset family: the #1-vs-#2 gap IS the club main effect, so any offset that shrinks the monopoly shrinks the gap. median_gap falls through 0.015 while max_top1_share is still above 0.42.",
+   "THE ONLY LEVER THAT CLEARS BOTH IS A RE-WEIGHT, AND IT IS NOT A NEED/BEHAVIOR SPLIT. See concentration_reweight_sweep: the need-vs-behavior line with window/afford/park pinned at 0.05 has no passing point at all, which is why four rounds of hand re-weighting failed. Passing requires raising park and cutting behavior. The best passer is reported with its selection warning and zero slack; it is NOT adopted here."
+  ],
+  "recommendation": "Do not flip fa_config.fit.weights on this evidence. (1) SHIP candidate (b) as a DISPLAY-side relative-fit view with a disclosure line, model untouched, tripwire left red and honest - the view's own implied signing accuracy is recorded above and is materially worse than the model's, which is exactly what the disclosure must say. (2) The real repair is inside BEHAVIOR, not in the composite weights: `recent` and `rich` are player-independent club constants and `recent`'s league-max normalizer guarantees the monopolist a 1.0. Re-deriving them as player-conditional terms (or dropping them into a separate club-propensity display axis) attacks the measured cause instead of the symptom. (3) Re-measure the sweep's passing region on a SECOND class year before treating any of it as real - every passer here has near-zero slack and the served class moved under the shipped weights between two regenerations of the same code."
  },
  "fitted_transfer_weight_candidate": {
   "need": 0.596,
@@ -172,6 +1624,8 @@
   "deal-size context (NPV) is identical across all 30 candidate clubs per signing \u2014 conditions the ranking, cannot leak the winner",
   "incumbency (re-signing gravity) is real and ex-ante but absent from the live composite \u2014 fitted_full shows its ceiling",
   "mystery-team realism: top-5 is the headline metric; top-1 on 30 clubs is genuinely hard",
-  "CONCENTRATION TRIPWIRE (registered 2026-07-30): MRR/top-k are blind to a fit vector that ranks the SAME club first for everyone - a model can score well on signing prediction while being useless as a product. The concentration block measures that directly on the served class."
+  "CONCENTRATION TRIPWIRE (registered 2026-07-30): MRR/top-k are blind to a fit vector that ranks the SAME club first for everyone - a model can score well on signing prediction while being useless as a product. The concentration block measures that directly on the served class.",
+  "CONCENTRATION DECOMPOSITION (R6, 2026-08-04): concentration_decomposition scores each component as if it were the whole fit and splits every component into player / CLUB / interaction variance. It REFUTES the standing premise that need is the saturated term: need is the most player-specific component, and BEHAVIOR is the saturated one. concentration_repair_verdict carries the candidate results and the recommendation.",
+  "CONCENTRATION AND MRR MEASURE OPPOSITE HALVES OF ONE VARIANCE SPLIT: the club main effect is both the monopoly and the signing signal, so every de-monopolizer that works by a per-club offset trades MRR for concentration one-for-one. That is a property of the decomposition, not a tuning failure."
  ]
 }

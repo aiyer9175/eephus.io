@@ -1741,11 +1741,27 @@ def _side_fairness_eval(persist: bool = True, out_path=None) -> dict:
             "B3_ipcw_identity_where_uncensored": dict(
                 {"rule": "IPCW estimate sign-preserving AND within 1 bootstrap SE of "
                          "unweighted on the resolved <=2018 decision folds"}, **b3),
+            # CLAUSE SCOPE CORRECTED 2026-08-04. S1 below declares the top-25
+            # mean AND median co-primary, and this check tested the MEAN ONLY
+            # while stamping median_ci90 into the artifact and never reading it.
+            # Its own rule string said "mean-diff CI90", contradicting the
+            # declaration two blocks down, so the gate reported pass while one
+            # of its two co-primary legs was failing and nothing surfaced it.
+            #
+            # Measured on the shipped lambdas: mean CI90 [0.81, 6.01] excludes
+            # zero, median CI90 [-0.64, 6.53] does NOT. A control run at the OLD
+            # lambdas {0.85, 0.54} on the SAME rows also fails the median leg
+            # ([-0.07, 6.58]), so this is matrix and label drift over 11 days,
+            # NOT the 2026-08-04 pitcher pin. The legs are reported separately so
+            # a future failure is attributable instead of hidden behind one flag.
             "B4_ci90_excludes_zero": {
-                "rule": "primary top-25 mean-diff CI90 excludes 0",
+                "rule": "S1 co-primary: top-25 mean-diff AND median-diff CI90 exclude 0",
                 "mean_ci90": top["boot"]["mean_ci90"],
                 "median_ci90": top["boot"]["median_ci90"],
-                "pass": bool(top["boot"]["mean_ci90"][0] * top["boot"]["mean_ci90"][1] > 0)},
+                "mean_pass": bool(top["boot"]["mean_ci90"][0] * top["boot"]["mean_ci90"][1] > 0),
+                "median_pass": bool(top["boot"]["median_ci90"][0] * top["boot"]["median_ci90"][1] > 0),
+                "pass": bool(top["boot"]["mean_ci90"][0] * top["boot"]["mean_ci90"][1] > 0
+                             and top["boot"]["median_ci90"][0] * top["boot"]["median_ci90"][1] > 0)},
         }
         s3ref = _sf_s3_reference()
         rw = full["joint_bands_rank_war"]
