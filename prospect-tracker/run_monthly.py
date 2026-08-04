@@ -2835,11 +2835,14 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.info("fetched sabermetrics for %d players", len(new_sabermetrics))
 
                 # --- 3d-bis. Career WAR for anyone who has touched MLB.
-                # Uses pybaseball.batting_stats / pitching_stats once per
-                # year in the window to pull FanGraphs WAR. The MLB Stats
-                # API only exposes WAR via single-season sabermetrics calls,
-                # so a per-player loop would cost ~2-4k extra requests on
-                # a cold cache; the bulk FG pull is two calls per year.
+                # Uses pybaseball.bwar_bat / bwar_pitch - the two static
+                # BASEBALL-REFERENCE war_daily tables - in one bulk pull.
+                # This comment used to describe a FanGraphs batting_stats /
+                # pitching_stats pull; FG 403s pybaseball's endpoint, so the
+                # site moved to bWAR and the comment did not follow
+                # (corrected 2026-08-03). The MLB Stats API only exposes WAR
+                # via single-season sabermetrics calls, so a per-player loop
+                # would cost ~2-4k extra requests on a cold cache.
                 # Cohort = every tracked player whose career_stats carries
                 # at least one MLB row (covers active cup-of-coffee call-
                 # ups, graduates, and reclassified inactives in one pass).

@@ -1128,13 +1128,22 @@ CREATE TABLE IF NOT EXISTS career_stats (
     fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Per-graduate career WAR aggregated from FanGraphs (bulk batting_stats /
--- pitching_stats pull via pybaseball). payload_json is a dict:
+-- Per-graduate career WAR, aggregated from BASEBALL-REFERENCE via
+-- pybaseball.bwar_bat / bwar_pitch (the static war_daily tables).
+--
+-- This comment used to say FanGraphs, describing a bulk batting_stats /
+-- pitching_stats pull that no longer exists: FG 403s pybaseball's endpoint
+-- (see stats.fetch_career_war_bulk), so the site moved to bWAR and the
+-- comment did not follow. Corrected 2026-08-03. The site is bWAR end to end,
+-- which is also why the full B-Ref run-value decomposition (runs_bat,
+-- runs_field, runs_position, ...) is available to prospect_def_value and
+-- mlb_def_history for free.
+-- payload_json is a dict:
 --   {"seasons": {"2023": 1.5, "2024": 2.8, ...},
 --    "career_war": 4.3,
 --    "war_per_yr": 2.15,
 --    "war_seasons_count": 2,
---    "source": "fangraphs"}
+--    "source": "bbref"}
 -- Only populated for graduates / inactives that have at least one MLB
 -- season on file; actives skip this fetch entirely (no value-add yet).
 CREATE TABLE IF NOT EXISTS career_war (
