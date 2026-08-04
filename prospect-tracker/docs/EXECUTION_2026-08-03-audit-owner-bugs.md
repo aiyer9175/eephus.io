@@ -317,15 +317,44 @@ The sortbar strip needed a second pass: the rule was added to the shared swipe
 block, but `.mlb-sortbar { flex-wrap: wrap }` is defined ~290 lines later at
 equal specificity and simply won. Overrides belong next to the rule they beat.
 
+## Lane C, part 2: the unification pass
+
+* **One table dialect.** `.mlbstats-table` and `.fa-app .detail-table`
+  disagreed on font-size, cell padding, header background, header colour and
+  header face. `.proj-app` already overrode its header to `--bg-secondary`,
+  which made `.fa-app` the odd one out of three rather than the standard, so FA
+  moved onto the other two. Verified by computed style: the FA header now
+  resolves to `rgb(250,245,230)` / `rgb(112,107,92)` / MS Gothic, matching
+  mlbstats. Cell density unified at `6px 10px` / 12.5px. Numeric alignment was
+  deliberately NOT unified - right-aligned is correct for a stat table and
+  centred is correct for the comparison tables.
+* **One active state.** `.mlbstats-season.active` was the only solid-fill
+  active control on the site, a gold block with inverted text sitting two rows
+  below two tiers that both mark active with a gold underline. Now the house
+  device (outline, gold border, iridescent rule). Its `border-radius: 999px`
+  is gone too: the global reset always flattened it, so it only implied a
+  lozenge the site never had.
+* **One null marker.** mlbstats rendered an absent value as an EMPTY CELL where
+  the other two render the site marker - on the one surface where whole columns
+  are legitimately absent for unqualified players, a missing number and a
+  rendering bug looked identical. Note the constant is called `EM_DASH` in
+  fa.js but is a spaced hyphen, because real em-dashes are banned in copy and
+  `strip_emdashes` lints `assets/*.js`.
+* **Nav, 641-1024px.** The hamburger only takes over at <=640, so between those
+  widths the link strip is a silent swipe with `scrollbar-width: none` while 10
+  links at 12.5px need about 900px. A thin scrollbar now appears in that band -
+  deliberately a scrollbar and not a fade mask, because the strip is
+  right-aligned by `margin-left:auto`, so a mask would dim the last link
+  whenever the links DO fit.
+
 ## Open, deliberately not done
 
-From `docs/master-plan-2026-08-03-audit-mobile-displays.md`: the two table
-dialects (`.mlbstats-table` vs `.detail-table` disagree on size, padding and
-header alignment), the three number-formatting vocabularies (`fa.js`
-formatMetric is the reference; mlbstats emits `""` where the others emit
-EM_DASH), the mlbstats control tiers that still use three different active
-treatments, and the 641-1024px nav gap where `.eephus-links` is an
-affordance-less swipe strip.
+Nothing outstanding from the plan's Lane B or Lane C. Still carried forward:
+the three number-formatting *implementations* remain three (only the null
+convention was unified; `projections.js` still reimplements `money()`/`fmtWar()`
+locally rather than importing fa.js's `formatMetric`), and `projections.js`
+still carries 93 inline `style=` attributes that are invisible to the theme
+system.
 
 ## Gotcha worth keeping
 
