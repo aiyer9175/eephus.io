@@ -708,6 +708,48 @@
       color: var(--text-primary);
       border-color: var(--text-tertiary);
     }
+    /* H1 - IN-TAB variant of the jump strip. Same chips, but static instead of
+       sticky: the detail tab bar is already sticky at top:0 / z-index:30, so a
+       second sticky strip inside the panel would slide underneath it and read as
+       a rendering fault. Sits flush at the top of the Overview panel and scrolls
+       away with the content; the targets carry .ov-anchor (below), whose
+       scroll-margin parks each landing point clear of that sticky tab bar. */
+    .detail-jumplinks.ov-jumplinks {
+      position: static;
+      margin: 0 0 12px;
+      padding: 7px 0;
+      border-top: 0;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      align-items: center;
+    }
+    .detail-jumplinks.ov-jumplinks .ov-jump-label {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      margin-right: 2px;
+    }
+    /* Phones give every chip a 44px touch target (see the max-width:640px block),
+       so a nine-chip strip would wrap to four rows and cost more vertical space
+       than the scrolling it saves. Below 900px it becomes ONE horizontally
+       scrollable row instead - same chips, one row tall, no visible scrollbar. */
+    @media (max-width: 900px) {
+      .detail-jumplinks.ov-jumplinks {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      .detail-jumplinks.ov-jumplinks::-webkit-scrollbar { display: none; }
+      .detail-jumplinks.ov-jumplinks a,
+      .detail-jumplinks.ov-jumplinks .ov-jump-label { flex: none; white-space: nowrap; }
+    }
+    /* Overview section anchors: every wrapped block is scroll-margin'd like the
+       legacy detail-* ids so a jump lands the heading under the sticky tab bar. */
+    .ov-anchor { scroll-margin-top: 108px; }
     /* Detail-page tab bar - sticky chip strip beneath the header on
        prospect + farm-detail pages. Visually mirrors the jumplinks chip
        row but each chip is a button that swaps the panel below. */
@@ -1677,31 +1719,50 @@
     .col-header, .player-row {
       display: grid;
       /* 7 cols: Player | Rank (diamond) | FV Grade | History | MiLB
-         | Phys cluster (Ht·Wt·BMI merged) | ETA. Rank sits LEFT of
+         | ETA | Surplus. Rank sits LEFT of
          the FV badge so the FV badge ends up adjacent to the FV
          history chart on its right - reads as a pair ("60 FV trending
          up" vs the separate "#12 rank" tag on the left). Rank column
          widened to 50px so the "RANK" header label has room next to
          the diamond chip. FV history bumped to 1.8fr so the sparkline
-         fills more of the available horizontal space. */
-      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr 0.75fr;
+         fills more of the available horizontal space.
+         H10 - the Ht/Wt/BMI phys cluster is NO LONGER a permanent track. It is a
+         niche axis that held a fixed column while higher-value reads sat behind
+         flags, so it now rides the same opt-in convention (#phys / ?phys, default
+         OFF) and adds its track back through .has-phys. Its slot is BETWEEN MiLB
+         and ETA, so unlike Star Odds / PLUS% it cannot simply be appended - hence
+         the written-out combinations below. Sort keys (ht/wt/bmi) keep working
+         whether or not the column is painted. */
+      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.55fr 0.75fr;
       grid-template-rows: auto auto; /* v19 - row 1 = existing cells; row 2 = tool strip */
       gap: 14px;
       column-gap: 14px;
       row-gap: 0;                      /* tightened so toolstrip sits flush below meta */
       align-items: center;
     }
-    /* Star Odds / OPT% columns (opt-in, #starodds / #optpct): each appends one
-       extra track to the right of Surplus so the grid stays column-aligned when a
-       column is surfaced. Star Odds and OPT% are independent flags, so THREE states
-       exist: star-only (9 tracks), opt-only (9 tracks), both (10 tracks). The base
-       8-track layout is untouched. Mobile overrides below keep the 3-col collapse
-       (both cells are desktop-only). */
+    /* Optional columns (opt-in flags). Phys (#phys) INSERTS a track after MiLB;
+       Star Odds (#starodds) and PLUS% (#optpct) each APPEND one track to the right
+       of Surplus. Three independent flags = eight states, written out so the grid
+       stays column-aligned in every one. Rules are ordered by specificity
+       (one-class, then two-class, then three-class) so the most specific
+       combination always wins. Mobile overrides below keep the 3-col collapse
+       (every one of these cells is desktop-only). */
+    .col-header.has-phys, .player-row.has-phys {
+      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr 0.75fr;
+    }
     .col-header.has-star-odds, .player-row.has-star-odds,
     .col-header.has-opt-pct, .player-row.has-opt-pct {
-      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr 0.75fr 0.6fr;
+      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.55fr 0.75fr 0.6fr;
     }
     .col-header.has-star-odds.has-opt-pct, .player-row.has-star-odds.has-opt-pct {
+      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.55fr 0.75fr 0.6fr 0.6fr;
+    }
+    .col-header.has-phys.has-star-odds, .player-row.has-phys.has-star-odds,
+    .col-header.has-phys.has-opt-pct, .player-row.has-phys.has-opt-pct {
+      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr 0.75fr 0.6fr;
+    }
+    .col-header.has-phys.has-star-odds.has-opt-pct,
+    .player-row.has-phys.has-star-odds.has-opt-pct {
       grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr 0.75fr 0.6fr 0.6fr;
     }
     /* v20 - Tool-grade-strip is a FULL-WIDTH tape: it spans every column in
@@ -3291,6 +3352,60 @@
     @media (max-width: 900px) {
       .mobile-only-pill { display: inline-flex; margin-left: 6px; vertical-align: middle; }
     }
+
+    /* H4 - phone movement strip. The FV-history sparkline, MiLB line, ETA and
+       Surplus cells all drop out of the card at <=900px, which stripped the phone
+       board of every TREND read: a row became identity + rank + badge. This strip
+       rides inside the existing full-width toolstrip (grid row 2), so it costs no
+       extra grid row: one 10px line inside a card that is already height:auto at
+       this width. Desktop never paints it (the real columns are there). */
+    .row-phone-signals { display: none; }
+    @media (max-width: 900px) {
+      .row-phone-signals {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 8px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        margin-top: 3px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.3;
+        color: var(--text-tertiary);
+      }
+      .row-phone-signals::-webkit-scrollbar { display: none; }
+      .row-phone-signals .rps-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        white-space: nowrap;
+        flex: none;
+      }
+      .row-phone-signals .rps-key {
+        font-size: 9px;
+        letter-spacing: 0.04em;
+        opacity: 0.8;
+      }
+      .row-phone-signals .rps-val { font-weight: 700; color: var(--text-primary); }
+      /* Micro outcome-bucket bar - the same stacked primitive the Surplus cell
+         uses, shrunk to a 34px sliver so the phone keeps the shape read too. */
+      .row-phone-signals .rps-bar {
+        display: inline-block;
+        width: 34px;
+        flex: none;
+        line-height: 0;
+      }
+      /* rankTrendHTML / fvTrendHTML are reused verbatim, so neutralize the
+         stacked-under-the-badge geometry they carry for their desktop cells. */
+      .row-phone-signals .fv-stock-line {
+        margin-top: 0;
+        font-size: 10px;
+        text-align: left;
+      }
+    }
+    body.density-compact .row-phone-signals { display: none !important; }
 
     /* Density toggle - three-state chip strip that sits next to the
        sort/search controls. Active chip uses the same .chip.active
@@ -6774,21 +6889,38 @@
            Rank column at 44px so "RANK" header fits without wrapping. */
         grid-template-columns: 1fr 44px 0.5fr;
       }
-      /* Keep the mobile 3-col collapse even when Star Odds / OPT% are surfaced -
-         the desktop .has-star-odds / .has-opt-pct multi-track rules outweigh the
-         base mobile selector, so re-override here at matching-or-higher specificity
-         + later in source. Both cells are desktop-only, so mobile drops them like
-         the other dense columns. Includes the combined selector so the 10-track
-         desktop rule (specificity 0,3,0) is beaten at mobile width. */
+      /* Keep the mobile 3-col collapse even when Phys / Star Odds / PLUS% are
+         surfaced - the desktop .has-phys / .has-star-odds / .has-opt-pct
+         multi-track rules outweigh the base mobile selector, so re-override here at
+         matching-or-higher specificity + later in source. Every one of those cells
+         is desktop-only, so mobile drops them like the other dense columns. The
+         three-class selector is listed so the 10-track desktop rule (specificity
+         0,4,0) is beaten at mobile width. */
+      .col-header.has-phys, .player-row.has-phys,
       .col-header.has-star-odds, .player-row.has-star-odds,
       .col-header.has-opt-pct, .player-row.has-opt-pct,
-      .col-header.has-star-odds.has-opt-pct, .player-row.has-star-odds.has-opt-pct {
+      .col-header.has-star-odds.has-opt-pct, .player-row.has-star-odds.has-opt-pct,
+      .col-header.has-phys.has-star-odds, .player-row.has-phys.has-star-odds,
+      .col-header.has-phys.has-opt-pct, .player-row.has-phys.has-opt-pct,
+      .col-header.has-phys.has-star-odds.has-opt-pct,
+      .player-row.has-phys.has-star-odds.has-opt-pct {
         grid-template-columns: 1fr 44px 0.5fr;
       }
+      /* H4 - the dense right-hand cells are hidden on phones. The old list named
+         `.phys-cell`, a class the phys cluster stopped emitting (it renders
+         `.phys-cluster`), and never covered the plain `desktop-only` wrappers
+         around Surplus / Star Odds / PLUS% at all - so those four cells were still
+         grid children at phone width and, being pinned to grid-row 1 by the base
+         rule, spilled into implicit columns 4+ past the card's right edge. Hiding
+         every direct `.desktop-only` child of a row collapses the phone card back
+         to the intended 3 tracks; the signal those cells carried is surfaced by
+         the phone toolstrip strip (.row-phone-signals) instead. */
       .player-row .line-chart-cell,
       .player-row .milb-cell-wrap,
       .player-row .eta-cell,
       .player-row .phys-cell,
+      .player-row > .phys-cluster,
+      .player-row > .desktop-only,
       .col-header .desktop-only { display: none; }
       /* v43 - Mobile keeps the signature FV-history "stock chart": surface it as
          a compact full-width strip at the BOTTOM of the card (desktop hides it
@@ -7067,6 +7199,33 @@
        Below the breakpoint the sidebar hides (display:none above);
        the main content takes the full width naturally. */
     .detail-with-rail { display: block; }
+    /* H1 - `.rail-stacks` opts a page out of the "hide the rail below 1300px"
+       default. The rail's cards (Key signals, peer leaderboards, org link) were
+       simply UNREACHABLE on tablets and phones. Because `.detail-with-rail` is
+       display:block under 1300px and the <aside> is already the LAST child, the
+       fix is to stop hiding it: it then flows as a normal block directly beneath
+       the active tab panel. ONE instance in the DOM, so it is structurally
+       impossible to double-render at >=1300px - the same element simply moves into
+       grid column 2 there (the min-width:1300px block below re-establishes
+       display:block + sticky, and this rule's higher specificity only re-asserts
+       the same display value). Cards lay out as an auto-fit grid at the wider
+       stacked widths so a tablet doesn't get one long column. */
+    .detail-with-rail.rail-stacks > .detail-context-rail {
+      display: block;
+      margin-top: 18px;
+    }
+    @media (min-width: 640px) and (max-width: 1299px) {
+      .detail-with-rail.rail-stacks > .detail-context-rail {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 12px;
+        align-items: start;
+      }
+      .detail-with-rail.rail-stacks > .detail-context-rail .ctx-card { margin-bottom: 0; }
+    }
+    @media (min-width: 1300px) {
+      .detail-with-rail.rail-stacks > .detail-context-rail { margin-top: 0; }
+    }
     @media (min-width: 1300px) {
       .detail-with-rail {
         display: grid;
@@ -13234,6 +13393,9 @@ function syncToURL(push) {
   if (state.levelFilter !== "all")        p.set("lvl",   state.levelFilter);
   if (state.posFilter   !== "all")        p.set("pos",   state.posFilter);
   if (state.sort        !== "xfv")        p.set("sort",  state.sort);
+  // Grade lead rides its own key. Before this existed the lead was inferred from
+  // `sort=fv`, so `#sort=eta` silently shipped the eFV lead to whoever opened the link.
+  if (state.gradePrimary === "fv")        p.set("grade", "fv");
   if (state.stockFilter !== "all")        p.set("stock", state.stockFilter);
   if (state.spreadFilter && state.spreadFilter !== "all") p.set("spread", state.spreadFilter);
   if (state.density     && state.density !== "compact") p.set("density", state.density);
@@ -13429,6 +13591,12 @@ function _syncFromURLBody() {
   if (p.has("lvl"))   state.levelFilter = p.get("lvl");
   if (p.has("pos"))   state.posFilter   = p.get("pos");
   if (p.has("sort"))  state.sort        = p.get("sort");
+  // Grade lead. Explicit `grade=` wins; otherwise fall back to the legacy encoding
+  // (the lead used to BE the sort, so an old shared `sort=fv` link meant "consensus
+  // leads"). Any sort value other than fv restores the eFV default, matching how
+  // those legacy links used to render.
+  if (p.has("grade")) state.gradePrimary = p.get("grade") === "fv" ? "fv" : "xfv";
+  else if (p.has("sort")) state.gradePrimary = p.get("sort") === "fv" ? "fv" : "xfv";
   if (p.has("stock")) state.stockFilter = p.get("stock");
   if (p.has("spread")) state.spreadFilter = p.get("spread");
   if (p.has("density")) state.density   = p.get("density");
@@ -14562,21 +14730,23 @@ function _statcastPercentileBlock(p, opts = {}) {
       true, v => v.toFixed(0) + "%");
   }
   if (!specs.length) return "";
-  // Render - bars + label + percentile tag.
-  const pctColor = (pct) => {
-    const p = Math.max(0, Math.min(100, Number(pct) || 0));
-    const stops = [
-      { at: 0,   rgb: [56, 123, 210] },
-      { at: 45,  rgb: [104, 126, 148] },
-      { at: 75,  rgb: [206, 75, 83] },
-      { at: 100, rgb: [126, 23, 31] },
-    ];
-    const hi = stops.find(s => p <= s.at) || stops[stops.length - 1];
-    const lo = stops[Math.max(0, stops.indexOf(hi) - 1)];
-    const span = Math.max(1, hi.at - lo.at);
-    const t = Math.max(0, Math.min(1, (p - lo.at) / span));
-    const rgb = lo.rgb.map((v, i) => Math.round(v + (hi.rgb[i] - v) * t));
-    return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+  // H3 - ONE percentile-bar language site-wide. This block used to draw its own
+  // dialect (rounded 8px track, a blue->red gradient fill keyed to the percentile
+  // VALUE, the percentile spelled out in a fourth column) while /projections/ drew
+  // the house Savant-style sliders. Same idea, two looks, and a reader moving
+  // between a prospect page and an MLB player page had to re-learn the chart.
+  // This now mirrors the house renderer in assets/projections.js (the `sliders()`
+  // function): `.mlbp-slider` grid, flat `.mlbp-slider-track`, a tier-classed
+  // `.mlbp-slider-fill`, the percentile as a pill riding ON the track, and the
+  // formatted value at the right. Those classes live in assets/site.css, which
+  // prospx already loads, so nothing is duplicated here.
+  //
+  // The tier ramp is the house one (elite/good/avg/low/poor at 80/60/40/20), which
+  // also fixes a readability defect in the old ramp: it painted HIGH percentiles
+  // dark red, the color every other surface on this site uses for BAD.
+  const pctClass = (pct) => {
+    const v = Math.max(0, Math.min(100, Number(pct) || 0));
+    return v >= 80 ? "is-elite" : v >= 60 ? "is-good" : v >= 40 ? "is-avg" : v >= 20 ? "is-low" : "is-poor";
   };
   // Statcast slider label → glossary slug (single source of truth, click-to-define).
   const _SC_LABEL_SLUG = {
@@ -14585,23 +14755,22 @@ function _statcastPercentileBlock(p, opts = {}) {
     "Chase%": "chase_pct", "Whiff%": "whiff_pct", "Z-Contact%": "z_contact_pct",
   };
   const bars = specs.map(s => {
-    const tone = pctColor(s.pct);
-    const pctLabel = s.pct >= 90 ? `${s.pct}th · top ${100 - s.pct}%`
+    const cls = pctClass(s.pct);
+    const pctLabel = s.pct >= 90 ? `${s.pct}th percentile · top ${100 - s.pct}%`
                     : s.pct >= 50 ? `${s.pct}th percentile`
-                    : `${s.pct}th · bottom ${s.pct}%`;
+                    : `${s.pct}th percentile · bottom ${s.pct}%`;
     const valStr = s.fmt(s.val);
+    const rowTip = `${s.label}: ${valStr} · ${pctLabel} vs ${ourLevel} ${isPit ? "pitchers" : "hitters"}`
+      + (s.lowerIsBetter ? " (lower raw value is better, so the percentile is flipped)" : "");
     const _scSlug = _SC_LABEL_SLUG[s.label] || _SC_LABEL_SLUG[s.label.replace(/ allowed$/, "")];
     const labelHtml = (_scSlug && (window.EEPHUS_GLOSSARY || {})[_scSlug])
-      ? `<span class="g-term" data-term="${_scSlug}" style="color:var(--text-secondary);font-weight:600;">${escapeHtml(s.label)}</span>`
-      : `<span style="color:var(--text-secondary);font-weight:600;">${escapeHtml(s.label)}</span>`;
-    return `<div style="display:grid;grid-template-columns:96px 1fr 70px 110px;gap:8px;align-items:center;font-size:var(--fs-sm);margin-bottom:4px;">
+      ? `<span class="mlbp-slider-label g-term" data-term="${_scSlug}">${escapeHtml(s.label)}</span>`
+      : `<span class="mlbp-slider-label">${escapeHtml(s.label)}</span>`;
+    return `<div class="mlbp-slider" title="${escapeHtml(rowTip)}">
       ${labelHtml}
-      <div style="position:relative;height:8px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;border:1px solid var(--border-light);">
-        <div style="position:absolute;left:0;top:0;height:100%;width:${s.pct}%;background:${tone};border-radius:4px;"></div>
-        <div style="position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--text-tertiary);opacity:0.5;"></div>
-      </div>
-      <span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary);font-weight:700;text-align:right;">${escapeHtml(valStr)}</span>
-      <span style="font-family:var(--font-mono);font-size:10px;color:${tone};text-align:right;font-weight:700;">${escapeHtml(pctLabel)}</span>
+      <div class="mlbp-slider-track"><div class="mlbp-slider-fill ${cls}" style="width:${s.pct}%;"></div>
+        <span class="mlbp-slider-pct ${cls}" style="left:${Math.min(94, Math.max(2, s.pct))}%;">${s.pct}</span></div>
+      <span class="mlbp-slider-val">${escapeHtml(valStr)}</span>
     </div>`;
   }).join("");
   const cohortLabel = `${ourLevel} · ${isPit ? "pitchers" : "hitters"}`;
@@ -14611,7 +14780,7 @@ function _statcastPercentileBlock(p, opts = {}) {
     <div class="detail-card" style="padding:12px 14px;">
       ${bars}
       <div style="font-size:10px;color:var(--text-tertiary);margin-top:6px;line-height:1.5;border-top:1px dashed var(--border-light);padding-top:6px;">
-        Higher percentile = better for this metric (direction handled per-metric - Whiff%, Chase%, HH% allowed flip so "low value" = "high percentile"). Bar color is keyed to percentile value: blue low, red high.
+        Higher percentile = better for every metric here; direction is handled per-metric, so Whiff%, Chase% and HH%-allowed flip and a LOW raw value scores HIGH. Fill color is the same tier ramp the MLB player pages use: green elite, cyan good, grey average, gold low, red poor.
       </div>
     </div>`;
 }
@@ -14991,6 +15160,14 @@ const state = {
   // still shows the precise published position.
   posFilter: "all",
   sort: "xfv",   // eFV is the primary board ranking (consensus FV available via the menu)
+  // Which grade LEADS every board surface (badge, rank, surplus): "xfv" | "fv".
+  // Deliberately separate from state.sort. state.sort takes ~25 values (upside,
+  // eta, age_asc, tool, statcast_plus, name_asc, surplus_sv, level_desc ...);
+  // overloading the grade lead onto it meant picking any of those silently
+  // flipped the whole board back to the eFV lead, and made "sort by age with
+  // the consensus grade leading" unreachable. Written ONLY by the [data-grade-
+  // toggle] buttons. Same shape as debutGrade below.
+  gradePrimary: "xfv",
   debutGrade: "xfv",   // Debuted list lead grade (xfv | fv), via its own grade toggle
   // v31 - Default sort flipped back to Farm Rank now that the v31 tree
   // overhaul gives the grade a richer signal mix (Health Mgmt + HOF-
@@ -17445,6 +17622,10 @@ function renderActives() {
   // payload presence - only surfaces when a filtered prospect carries the field.
   const starOddsOn = _starOddsShow(filtered);
   const optPctOn = _optPctShow(filtered);
+  // H10 - Ht/Wt/BMI is now flag-gated the same way (#phys), default OFF. No
+  // payload gate: every player carries some physical profile, so presence would
+  // never dark the column - the flag is the whole switch.
+  const physOn = _physColUiOn();
   const pageSize = state.pageSizes.actives || 50;
   const totalItems = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -17460,15 +17641,15 @@ function renderActives() {
   // says "Consensus FV · stock" so the source of the value is explicit.
   // Both still click-to-sort by FV (FV-derived rank == consensus FV).
   // Every column is now click-to-sort - Player (alpha), MiLB level, etc.
-  const header = `<div class="col-header${starOddsOn ? " has-star-odds" : ""}${optPctOn ? " has-opt-pct" : ""}">
+  const header = `<div class="col-header${physOn ? " has-phys" : ""}${starOddsOn ? " has-star-odds" : ""}${optPctOn ? " has-opt-pct" : ""}">
     <span class="sort-header" data-sort-key="name_asc" title="Player name + meta line: pos · org · age · handedness (LHB/RHB/SHB or LHP/RHP). Click to sort alphabetically.">Player · pos · org · age · B/T</span>
     <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV rank - our outcome-grounded ranking (primary). Diamond border matches the rarity tier. Click to sort.">eFV Rank</span>
     <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV - our outcome-grounded Future Value (primary grade). Click to sort by eFV.">eFV · FV</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline - hover for OHLC open / high / low / close">FV history</span>
     <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level + age vs level. Click to sort by closeness to MLB (MLB → DSL); click again for the reverse.">MiLB · age vs. level</span>
-    <span class="desktop-only" style="text-align:center;white-space:nowrap;" title="Physical profile: Height · Weight · BMI (colored by z-score vs same-position-bucket peers). Click Ht, Wt, or BMI to sort by that dimension; click the same one again to reverse.">
+    ${physOn ? `<span class="desktop-only" style="text-align:center;white-space:nowrap;" title="Physical profile: Height · Weight · BMI (colored by z-score vs same-position-bucket peers). Click Ht, Wt, or BMI to sort by that dimension; click the same one again to reverse.">
       <span class="sort-header" data-sort-key="ht_desc" title="Sort by height (tallest first; click again to reverse)">Ht</span> · <span class="sort-header" data-sort-key="wt_desc" title="Sort by weight (heaviest first; click again to reverse)">Wt</span> · <span class="sort-header" data-sort-key="bmi_desc" title="Sort by BMI (highest first; click again to reverse)">BMI</span>
-    </span>
+    </span>` : ""}
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="surplus_sv" title="Expected MLB surplus value ($M) from the career-path mixture engine, with the outcome-bucket bar (bust→star). Click to sort by expected SV.">Surplus</span>
     ${starOddsOn ? `<span class="desktop-only sort-header" style="text-align:center;" data-sort-key="star_odds" title="Star Odds: probability of two or more seasons of four or more WAR during team control. FanGraphs 2026 published value for this FV and role.">Star Odds</span>` : ""}
@@ -17482,7 +17663,7 @@ function renderActives() {
     // primary grade), consistent with the eFV rank + badge in this same row.
     const fvTier = fvTierAttr(p);
     return `
-      <div class="player-row${starOddsOn ? " has-star-odds" : ""}${optPctOn ? " has-opt-pct" : ""}" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
+      <div class="player-row${physOn ? " has-phys" : ""}${starOddsOn ? " has-star-odds" : ""}${optPctOn ? " has-opt-pct" : ""}" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
         <div class="player-row-col1" style="display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;"><div class="player-row-idrow" style="display:flex;align-items:center;gap:10px;min-width:0;width:100%;">
           <span class="headshot-stack">${headshotHTML(p, 64)}${optionsDotsHTML(p)}</span>
           <div class="player-name-stack" style="min-width:0;flex:1;">
@@ -17497,7 +17678,7 @@ function renderActives() {
         <div style="text-align:center;">${efvBadgeHTML(p)}${fvTrendHTML(p)}</div>
         <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${lazyLineChartHTML(p)}</div>
         ${makeMilbCell(p)}
-        ${physClusterHTML(p)}
+        ${physOn ? physClusterHTML(p) : ""}
         ${makeEtaCell(p)}
         <div class="desktop-only" style="align-self:center;min-width:0;">${makeSurplusCell(p)}</div>
         ${starOddsOn ? makeStarOddsCell(p) : ""}
@@ -18284,13 +18465,18 @@ function renderWatchlist() {
     // to mirror the active board), so these headers are plain labels - no
     // sort-header class / data-sort-key, which would otherwise reach the
     // universal sort delegate and silently mutate the main board's sort.
-    const pHeader = `<div class="col-header">
+    // H10 - the phys column is flag-gated board-wide (#phys, default off). The
+    // watchlist shares the `.col-header` / `.player-row` grid with the active
+    // board, so it MUST carry the same has-phys class and the same conditional
+    // cell or the two lists would disagree about how many tracks exist.
+    const _wlPhysOn = _physColUiOn();
+    const pHeader = `<div class="col-header${_wlPhysOn ? " has-phys" : ""}">
       <span title="Player name + meta line: pos · org · age · handedness.">Player · pos · org · age · B/T</span>
       <span style="text-align:center;" title="eFV-derived overall rank - diamond border matches the prospect's rarity tier.">Rank</span>
       <span style="text-align:center;" title="eFV grade (primary) · stock delta below.">FV Grade</span>
       <span class="desktop-only" style="text-align:center;" title="FV history sparkline">FV history</span>
       <span class="desktop-only" title="MiLB level + age vs level.">MiLB · age vs. level</span>
-      <span class="desktop-only" style="text-align:center;" title="Physical profile: Height · Weight · BMI.">Ht · Wt · BMI</span>
+      ${_wlPhysOn ? `<span class="desktop-only" style="text-align:center;" title="Physical profile: Height · Weight · BMI.">Ht · Wt · BMI</span>` : ""}
       <span class="desktop-only" style="text-align:center;" title="ETA">ETA</span>
       <span class="desktop-only" style="text-align:center;" title="Expected MLB surplus value ($M) from the career-path mixture engine.">Surplus</span>
     </div>`;
@@ -18298,7 +18484,7 @@ function renderWatchlist() {
       const latest = p.points && p.points.length ? p.points[p.points.length - 1] : null;
       const fvTier = fvTierAttr(p);
       return `
-        <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
+        <div class="player-row${_wlPhysOn ? " has-phys" : ""}" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
           <div class="player-row-col1" style="display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;"><div class="player-row-idrow" style="display:flex;align-items:center;gap:10px;min-width:0;width:100%;">
             <span class="headshot-stack">${headshotHTML(p, 64)}${optionsDotsHTML(p)}</span>
             <div class="player-name-stack" style="min-width:0;flex:1;">
@@ -18313,7 +18499,7 @@ function renderWatchlist() {
           <div style="text-align:center;">${efvBadgeHTML(p)}${fvTrendHTML(p)}</div>
           <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${p.points && p.points.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;"> - </span>`}</div>
           ${makeMilbCell(p)}
-          ${physClusterHTML(p)}
+          ${_wlPhysOn ? physClusterHTML(p) : ""}
           ${makeEtaCell(p)}
           <div class="desktop-only" style="align-self:center;min-width:0;">${makeSurplusCell(p)}</div>
           ${playerExpandedMetaHTML(p)}
@@ -18476,8 +18662,14 @@ const CHART_AXES = {
   ifa: [
     { key: "bonus_usd",      label: "Signing bonus ($M)", getter: s => (s.bonus_usd ? s.bonus_usd / 1e6 : null), fmt: v => "$" + v.toFixed(2) + "M" },
     { key: "pool_pct",       label: "Pool %",             getter: s => s.pool_pct,                           fmt: v => v.toFixed(1) + "%" },
-    { key: "fv",             label: "Current FV",         getter: s => s.fv,                                 fmt: v => fvCeil(v).toString() },
-    { key: "fv_signing",     label: "FV at signing",      getter: s => s.fv_signing,                         fmt: v => fvCeil(v).toString() },
+    // The IFA `fv` field is ifa_export's CURRENT grade: eFV for every signee it can grade,
+    // consensus only as the fallback (s.fv_basis records which). fmt receives the bare
+    // number with no row, so it cannot branch on the basis - round to NEAREST (the eFV rule
+    // and the majority basis here) instead of ceil (the CONSENSUS rule), which was quietly
+    // promoting an eFV 44.2 to "45" on the axis. The label states the basis.
+    { key: "fv",             label: "Current grade (eFV where graded)", getter: s => s.fv,                   fmt: v => String(Math.round(v)) },
+    // fv_signing is fv_open off the earliest snapshot: always consensus, so ceil is right.
+    { key: "fv_signing",     label: "Consensus FV at signing", getter: s => s.fv_signing,                    fmt: v => fvCeil(v).toString() },
     { key: "age_at_signing", label: "Age at signing",     getter: s => s.age_at_signing,                     fmt: v => v.toFixed(1) },
     { key: "overall_rank",   label: "Overall rank",       getter: s => s.overall_rank,                       fmt: v => "#" + v },
     { key: "tool_current",   label: "Tool (current)",     getter: s => s.tool_current,                       fmt: v => v.toFixed(0) },
@@ -20364,14 +20556,18 @@ function _tmFmtDate(d) {
 // the model abstains; avg_rank then name as tiebreaks). Returns the FULL
 // ordered board; callers slice to top-N.
 //
-// KNOWN BASIS RESIDUAL (2026-07-25). This surface ranks and displays the SAME
-// point-in-time number, so it is internally consistent and is NOT a repeat of the
-// three-orderings bug. But that number comes from xfv_history.x, which
-// efv_score.score_history writes on the QUANTILE scale, while the live board is now
-// the RAW grade (see efvBoardValue). So a player's "today" row here can read a few
-// grade points off his live board grade. Do not paper over it with a rebase: the
-// offset is not constant back through time. The fix is upstream -- have
-// score_history emit the raw grade -- after which this surface needs no change.
+// KNOWN BASIS RESIDUAL (2026-07-25, upstream fix landed 2026-07-30). This surface
+// ranks and displays the SAME point-in-time number, so it is internally consistent
+// and is NOT a repeat of the three-orderings bug. The number comes from
+// xfv_history.x, which USED TO be written on the QUANTILE scale while the live board
+// was the RAW grade (see efvBoardValue), so a player's "today" row here could read a
+// few grade points off his live board grade. The upstream fix asked for here has
+// shipped: efv_score.score_history now grades every point through
+// value_framework.outcome_implied_fv and stamps the artifact with its basis. This
+// surface needed no change, as predicted -- but the residual persists on any deploy
+// box still SERVING a pre-regen data/xfv_history.json. _efvHistoryOnBoardBasis()
+// reads that stamp if you need to tell the two states apart. Still do not paper over
+// it with a rebase here: the offset is not constant back through time.
 function _boardAsOf(dateStr) {
   const rows = [];
   for (const p of _tmPool()) {
@@ -25191,22 +25387,59 @@ function _ifaOrgLink(org, { logoOnly = false } = {}) {
   return `<span class="ifa-org-link" onclick="event.stopPropagation();goToFarm('${escapeHtml(org)}')" title="Open ${escapeHtml(full)} farm system" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;">${inner}</span>`;
 }
 
+// IFA grade basis. ifa_export writes the CURRENT grade on the eFV basis whenever
+// the signee has one (consensus FV only as fallback) and records which in
+// `fv_basis` ("xfv" | "consensus"). The two bases do NOT round the same way:
+// eFV rounds to NEAREST, consensus FV rounds UP (owner rule). `fv_signing` /
+// `fv_signing_label` are ALWAYS consensus - they come from fv_open, the earliest
+// snapshot grade - so a signee on the eFV basis has a mixed-basis pair.
+function _ifaIsEfv(s) { return !!(s && s.fv_basis === "xfv"); }
+// Display label for the CURRENT grade: prefer the exported label (ifa_export
+// already applied the basis-correct rounding), else round here on the basis.
+function _ifaCurLabel(s) {
+  if (s && s.fv_label != null) return String(s.fv_label);
+  const v = s ? s.fv : null;
+  if (v == null || !isFinite(v)) return null;
+  return String(_ifaIsEfv(s) ? Math.round(v) : fvCeil(v));
+}
+// Display label for the AT-SIGNING grade (always consensus -> ceil).
+function _ifaSigLabel(s) {
+  if (s && s.fv_signing_label != null) return String(s.fv_signing_label);
+  const v = s ? s.fv_signing : null;
+  if (v == null || !isFinite(v)) return null;
+  return String(fvCeil(v));
+}
+
 function _ifaFvProgHTML(s) {
   const sig = s.fv_signing, cur = s.fv;
   if (sig == null && cur == null) return `<span style="color:var(--text-tertiary);font-size:11px;"> - </span>`;
-  const badge = (v, label, muted) => {
+  const curLbl = _ifaCurLabel(s), sigLbl = _ifaSigLabel(s);
+  const curEfv = _ifaIsEfv(s);
+  // Tier color keys off the LABEL that is actually printed, not off fvCeil(v).
+  // Keying it off the ceiling mis-tiered every eFV row whose value rounds DOWN
+  // (44.2 prints "44" but ceil'd to 45, so it wore the 45-tier chrome).
+  const badge = (label, muted) => {
     const style = muted ? `font-size:9px;padding:0 4px;opacity:0.5;filter:saturate(0.4);`
                         : `font-size:10px;padding:1px 5px;`;
-    return `<span class="fv-badge ${fvClass(String(fvCeil(v)))}" style="${style}">${escapeHtml(label || String(fvCeil(v)))}</span>`;
+    return `<span class="fv-badge ${fvClass(String(label))}" style="${style}">${escapeHtml(String(label))}</span>`;
   };
-  if (sig == null) return badge(cur, s.fv_label, false);
-  if (cur == null) return badge(sig, s.fv_signing_label, true);
+  if (sig == null) return badge(curLbl, false);
+  if (cur == null) return badge(sigLbl, true);
+  const _sigTip = `consensus FV at signing ${sigLbl}`;
+  const _curTip = `current ${curEfv ? "eFV" : "consensus FV"} ${curLbl}`;
+  // Mixed bases: the current grade is eFV and the signing grade is consensus, so
+  // cur - sig subtracts two different scales. Print the pair, withhold the number.
+  if (curEfv) {
+    return `<span style="display:inline-flex;align-items:center;gap:4px;" title="${escapeHtml(_sigTip)} → ${escapeHtml(_curTip)}. No delta shown: the two grades are on different scales (consensus FV vs eFV), so the difference is not a movement.">
+      ${badge(sigLbl, true)}<span style="color:var(--text-tertiary);font-size:12px;line-height:1;">→</span>${badge(curLbl, false)}
+    </span>`;
+  }
   const delta = cur - sig;
   const dColor = delta > 0 ? "var(--up)" : delta < 0 ? "var(--down)" : "var(--text-tertiary)";
   const arrow = delta > 0 ? "↗" : delta < 0 ? "↘" : "→";
   const dTxt = delta ? `${delta > 0 ? "+" : ""}${delta % 1 ? delta.toFixed(1) : delta.toFixed(0)}` : "";
-  return `<span style="display:inline-flex;align-items:center;gap:4px;" title="FV at signing ${escapeHtml(s.fv_signing_label || String(fvCeil(sig)))} → current ${escapeHtml(s.fv_label || String(fvCeil(cur)))}">
-    ${badge(sig, s.fv_signing_label, true)}<span style="color:${dColor};font-size:12px;line-height:1;">${arrow}</span>${badge(cur, s.fv_label, false)}${dTxt ? `<span style="color:${dColor};font-size:9px;font-family:var(--font-mono);">${dTxt}</span>` : ""}
+  return `<span style="display:inline-flex;align-items:center;gap:4px;" title="${escapeHtml(_sigTip)} → ${escapeHtml(_curTip)}">
+    ${badge(sigLbl, true)}<span style="color:${dColor};font-size:12px;line-height:1;">${arrow}</span>${badge(curLbl, false)}${dTxt ? `<span style="color:${dColor};font-size:9px;font-family:var(--font-mono);">${dTxt}</span>` : ""}
   </span>`;
 }
 
@@ -29881,8 +30114,10 @@ function _tbSortRows(rows) {
     if (_tbSort === "surplus_desc") return (num(b.trade_value_mm) ?? -1) - (num(a.trade_value_mm) ?? -1);
     // Default: rank by the model's raw eFV grade (orders realized WAR better
     // than the $-transform per data/trade_machine_eval.json; surplus itself is
-    // priced on the displayed quantile grade since 2026-07-06), surplus $
-    // as the tiebreak.
+    // still PRICED through xfv_grade_quantile, the 2026-07-06 flip). The quantile
+    // is no longer the displayed grade -- that was retired 2026-07-25 when
+    // xfv_grade became the single board number (see efvBoardValue) -- it is a
+    // pricing input only. Surplus $ is the tiebreak.
     return withTradeTiebreak((num(b.xfv_grade) ?? -1) - (num(a.xfv_grade) ?? -1), a, b);
   });
   return rows;
@@ -31046,14 +31281,31 @@ function getEfv(p) {
 // the shipped model re-scored at each historical board snapshot. Powers the FV-history chart
 // drawing eFV (primary) over consensus (ghost). Lazy; absent => charts fall back to consensus.
 let _EFV_HIST = null;
+// The SERVED series' own basis stamp (efv_score.score_history writes it; the same string
+// storage.xfv_history_basis reads server-side). Shape:
+//   "<BOARD_GRADE_FIELD>|scale=...|grademap=...|roles=...|feats=..."
+// null when the file predates the stamp (2026-07-30), which by definition means the retired
+// per-side quantile series. Read by _efvHistoryOnBoardBasis to switch efvPrevGrade's rebase
+// off once the deploy box has regenerated onto the board basis.
+let _EFV_HIST_BASIS = null;
 (function loadEfvHistory() {
   fetch("/data/xfv_history.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _EFV_HIST = (j && j.by_player) || {};
+      _EFV_HIST_BASIS = (j && typeof j.basis === "string") ? j.basis : null;
       _EFV_PREV_RANK = null;   // rank-delta chips need history -> rebuild the prev-grade rank map now that it loaded
       scheduleRender(); })
-    .catch(() => { _EFV_HIST = {}; });
+    .catch(() => { _EFV_HIST = {}; _EFV_HIST_BASIS = null; });
 })();
+// Does the SERVED history report the same board basis the board is on? The stamp's first
+// term is storage.BOARD_GRADE_FIELD, and "xfv_grade" is the board number efvBoardValue
+// returns (see THE BOARD NUMBER block). True => the series is already the raw board grade
+// and efvPrevGrade must NOT rebase; false/unstamped => still the quantile-scale series.
+const _BOARD_GRADE_FIELD = "xfv_grade";
+function _efvHistoryOnBoardBasis() {
+  return typeof _EFV_HIST_BASIS === "string"
+      && _EFV_HIST_BASIS.split("|")[0] === _BOARD_GRADE_FIELD;
+}
 function getEfvHistory(p) {
   if (!p) return null;
   // Provisional (source-ungraded) prospects carry their own per-season eFV trajectory inline
@@ -32231,17 +32483,32 @@ function efvPrevGrade(p) {
   for (let i = hist.length - 1; i >= 0; i--) {
     if (Date.parse(hist[i].d) <= cutoff) { prev = hist[i].x; break; }
   }
-  // BASIS REBASE (2026-07-25). xfv_history.x is the QUANTILE-scale series
-  // (efv_score.score_history maps every historical point through the live grade map),
-  // while the board is now the RAW grade. Ranking a quantile-scale "previous" against a
-  // raw-scale "current" is a cross-basis comparison: it would hand EVERY player a
-  // spurious rank delta on the day the basis changed. Anchoring on the player's OWN
-  // latest history point removes the scale offset, so what survives is his grade CHANGE
-  // over the window, expressed on the board scale. A player who has not moved gets
-  // prev === current and therefore a delta of exactly 0, which is the correct reading.
-  // Known approximation, deliberately conservative: the change is MEASURED in quantile
-  // space, which is compressed relative to raw, so real moves read slightly small rather
-  // than inflated. Delete this rebase once xfv_history is written on the raw grade.
+  // BASIS REBASE (2026-07-25), now SELF-DISABLING (B6c, 2026-08-03).
+  //
+  // Why it exists: xfv_history.x used to be the QUANTILE-scale series (score_history mapped
+  // every historical point through the live grade map) while the board moved to the RAW
+  // grade. Ranking a quantile-scale "previous" against a raw-scale "current" is a
+  // cross-basis comparison: it would hand EVERY player a spurious rank delta on the day the
+  // basis changed. Anchoring on the player's OWN latest history point removes the scale
+  // offset, so what survives is his grade CHANGE over the window, expressed on the board
+  // scale. A player who has not moved gets prev === current and a delta of exactly 0.
+  // The approximation was deliberately conservative: the change is MEASURED in quantile
+  // space, which is compressed relative to raw, so real moves read slightly small.
+  //
+  // The old note said "delete this rebase once xfv_history is written on the raw grade".
+  // efv_score.score_history now grades every historical point through
+  // value_framework.outcome_implied_fv, i.e. the board grade, so the CODE condition is met.
+  // It is still NOT deleted, because the condition that matters is what the DEPLOY BOX is
+  // SERVING: until it regenerates, data/xfv_history.json on the box can still be the old
+  // quantile series, and deleting the rebase would reintroduce the board-wide phantom delta
+  // for exactly those runs. So the switch is the artifact's own basis stamp
+  // (_efvHistoryOnBoardBasis, the client-side twin of storage.xfv_history_is_on_board_basis):
+  // stamped with the board grade field -> no rebase, the series is already on the board
+  // scale; unstamped or a foreign field -> rebase, as before. It turns itself off the run
+  // the box regenerates, with no code change. Provisional prospects' inline xfv_history
+  // (efv_ungraded) has always carried the board grade, so skipping the rebase is correct
+  // for them too; when the stamp is missing they take the offset, which is ~0 for them.
+  if (_efvHistoryOnBoardBasis()) return prev;
   const cur = efvBoardValue((typeof getEfv === "function") ? getEfv(p) : null);
   if (cur != null && prev != null && last.x != null) return cur + (prev - last.x);
   return prev;
@@ -32431,8 +32698,11 @@ function efvTooltip(x) {
   parts.push("Predicts a calibrated 6-yr WAR outcome distribution from how comparable prospects actually turned out; it out-ranks consensus out-of-sample. Open the player for the full mix.");
   return parts.join(" · ");
 }
-// Which grade leads the board: follows the eFV/Consensus toggle (state.sort). Default eFV.
-function _gradePrimary() { return (typeof state !== "undefined" && state.sort === "fv") ? "fv" : "xfv"; }
+// Which grade leads the board: follows the eFV/Consensus toggle (state.gradePrimary).
+// Default eFV. NOT state.sort - the sort dropdown, the column-click headers and the
+// tool/Statcast overrides all write state.sort, and any of those used to flip the grade
+// lead as a side effect. The lead is its own axis now, exactly like state.debutGrade.
+function _gradePrimary() { return (typeof state !== "undefined" && state.gradePrimary === "fv") ? "fv" : "xfv"; }
 // Highlight the active "Rank by" toggle button to match _gradePrimary().
 function _syncGradeToggle() {
   const pr = _gradePrimary();
@@ -32530,16 +32800,41 @@ function efvCompactBadge(p, opts) {
   fv = fvCeil(Number(fv));
   return `<span class="fv-badge ${fvClass(String(fv))} ${sz}"${style} title="Consensus FV ${fv} (eFV not yet rated)">${fv}</span>`;
 }
-// Board rank cell: leading rank (diamond) + the other rank as a muted subscript.
+// Board rank cell: the single "#N" diamond.
+//
+// B6a - THIS NUMBER IS ALWAYS THE eFV BOARD RANK. It used to print getEfvRank when the
+// Rank-by toggle was on eFV and p.overall_rank when it was on Consensus, which read as
+// "here is your consensus rank". It never was one: overall_rank is baked server-side off
+// BOARD_GRADE_FIELD, and that field is "xfv_grade" (storage.py) - the very same eFV
+// ordering, just one run stale. So the toggle was swapping a LIVE eFV rank for a STALE
+// eFV rank and mislabelling the result.
+//
+// Chosen fix: LABEL it, do not compute a consensus rank. A client-side consensus rank was
+// the alternative and is the wrong call here:
+//   - consensus FV is a coarse integer grade with hundreds of exact ties per tier, so a
+//     dense rank over it would be mostly tiebreak-chain noise wearing authoritative
+//     precision;
+//   - it would contradict every other rank surface at once (the detail-page Overall pill,
+//     the news tooltip's "Board rank #N", the field registry's overall_rank, the GFX
+//     footer's "number = board rank"), none of which have a consensus basis to move to;
+//   - it would not even match the rendered row order: as of 2026-08-03 the sort chain has
+//     NO state.sort === "fv" branch, so consensus mode leaves the pool in board order.
+//     (That is a separate open bug - the toggle's own title says "Rank + lead with
+//     consensus FV" and the re-rank half has never run. If that branch is ever added,
+//     re-open this decision; a consensus rank would then at least match the row order.)
+//     Today it would be exactly the "rendered order vs rank field" contradiction the
+//     BOARD NUMBER block above exists to prevent.
+// So: show the live board rank in BOTH modes (baked overall_rank only as the fallback) and
+// say in the tooltip what basis it is on.
 function efvRankNumHTML(p) {
-  const xr = getEfvRank(p), cr = p.overall_rank;
-  // Single clean rank (no consensus-rank subscript): eFV rank by default, consensus rank when
-  // the board is toggled to consensus. Mirrors the eFV-only badge.
-  if (xr != null && _gradePrimary() === "xfv") {
-    return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${xr}</span></div>`;
+  const n = (typeof getEfvRank === "function" ? getEfvRank(p) : null) ?? p.overall_rank ?? null;
+  if (n == null) {
+    return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner"> - </span></div>`;
   }
-  const prim = cr != null ? "#" + cr : (xr != null ? "#" + xr : " - ");
-  return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${prim}</span></div>`;
+  const tip = (_gradePrimary() === "xfv")
+    ? `Board rank #${n} (eFV basis)`
+    : `Board rank #${n} - still the eFV board ordering. The Consensus toggle changes which GRADE leads the cells; PROSPX does not publish a consensus-FV rank.`;
+  return `<div class="rank-num ${rankNumRarityClass(p)}" title="${escapeHtml(tip)}"><span class="rank-num-inner">#${n}</span></div>`;
 }
 // Detail-page header: eFV as the primary big grade, consensus FV as the reference line.
 // Falls back to the consensus fvBadge when eFV abstains (no pro track record).
@@ -33578,8 +33873,20 @@ function _gfxRow(item, kind, meta) {
       const lbl = typeof best === "string" ? best : (best.label || "");
       return (lbl && typeof _driverShort === "function") ? _driverShort(lbl) : (lbl || null);
     })();
+    // B5a - the on-screen spotlight row FORCES the eFV lead (renderSpotlights calls
+    // efvBadgeHTML(_full, {primary:"xfv"}) against the full player record it resolves by
+    // key). The snapshot used to print fvCeil(s.fv), and spotlights.py exports `fv` as
+    // consensus_fv_label, so the graphic showed a DIFFERENT grade than the row it copies.
+    // Resolve the same full record and ask the shared grade block for the same lead, so the
+    // export is byte-identical to the badge. findPlayer covers players / debuts / inactive /
+    // provisional; when the key does not resolve (a spotlight subject with no board record)
+    // fall back to the exported consensus value on the consensus rounding rule.
+    const _sFull = (s.player_key && typeof findPlayer === "function") ? findPlayer(s.player_key) : null;
+    const _sLabel = (_sFull && typeof gradeBlock === "function")
+      ? gradeBlock(_sFull, { primary: "xfv" }).label : null;
     return {
-      fv: (s.fv != null && isFinite(s.fv)) ? String(fvCeil(s.fv)) : null,
+      fv: (_sLabel != null) ? String(_sLabel)
+        : (s.fv != null && isFinite(s.fv)) ? String(fvCeil(s.fv)) : null,
       name: s.player_name || "",
       mlbam: s.mlbam_id, org: s.org,
       meta: [s.position, s.org, s.level, s.line].filter(Boolean).join(" · "),
@@ -33590,8 +33897,14 @@ function _gfxRow(item, kind, meta) {
   if (kind === "ifa") {
     const s = item || {};
     const bonus = (s.bonus_usd != null) ? (s.bonus_usd >= 1e6 ? `$${(s.bonus_usd / 1e6).toFixed(2)}M` : `$${Math.round(s.bonus_usd / 1e3)}K`) : "";
+    // B5b - ifa_export writes s.fv on the eFV basis for every signee it can grade
+    // (s.fv_basis says which) and s.fv_label already carries the basis-correct
+    // rounding. This branch used to ceil s.fv unconditionally; ceil is the CONSENSUS
+    // rule, so an eFV row reading 44.2 exported "45" while the site showed "44".
+    // _ifaCurLabel prefers the exported label and otherwise rounds on the basis.
     return {
-      fv: (s.fv != null && isFinite(s.fv)) ? String(fvCeil(s.fv)) : null,
+      fv: (typeof _ifaCurLabel === "function") ? _ifaCurLabel(s)
+          : ((s.fv != null && isFinite(s.fv)) ? String(fvCeil(s.fv)) : null),
       name: s.player_name || "",
       mlbam: s.mlbam_id, org: s.org,
       meta: [s.position, s.country, s.org].filter(Boolean).join(" · "),
@@ -33772,33 +34085,48 @@ function _gfxAvatar(r, P) {
   // box faithfully. Flex-center it in the cell.
   return `<span style="${wrap}background-image:none;display:inline-flex;align-items:center;justify-content:center;"><img src="${teamLogoURL(r.org)}" crossorigin="anonymous" alt="${escapeHtml(r.org || "")}" style="max-width:34px;max-height:38px;width:auto;height:auto;display:block;" onerror="this.style.display='none';"></span>`;
 }
+// SINGLE source of the badge legend, shared by both footer builders below. The
+// legend has to name the basis the badge is ACTUALLY on, per kind:
+//   prospect  - the board's Rank-by toggle (_gradePrimary)
+//   graduate  - the Debuted tab's own lead-grade toggle (state.debutGrade)
+//   spotlight - always eFV: renderSpotlights forces primary:"xfv", and _gfxRow's
+//               spotlight branch now resolves the same grade (B5a)
+//   ifa       - ifa_export grades on eFV wherever it can and records fv_basis;
+//               the badge is therefore eFV for graded signees and consensus for
+//               the rest. It used to claim a flat "consensus FV" (B5b)
+//   draftee / overseas - eFV does not grade those cohorts, so consensus only
+function _gfxBadgeLegend(kind) {
+  const _boardEfv = (typeof _gradePrimary === "function") ? _gradePrimary() === "xfv" : true;
+  const _gradEfv = ((state.debutGrade || "xfv") === "xfv");
+  if (kind === "graduate") return _gradEfv ? "final eFV (locked at debut)" : "consensus FV at debut";
+  if (kind === "spotlight") return "eFV (consensus FV fallback)";
+  if (kind === "ifa")      return "eFV where the signee is graded, else consensus FV";
+  if (kind === "draftee" || kind === "overseas") return "consensus FV";
+  if (kind === "leader")   return "eFV (consensus FV fallback)";
+  return _boardEfv ? "eFV (consensus FV fallback)" : "consensus FV";
+}
 // Legend for the CHIP layout. It must describe only what a chip actually
 // carries: rank, grade, name, one meta line. The row-board legend explains $M
 // and $DvM+, and those columns do not exist here - printing them would be the
 // graphic telling the reader to look for something that is not on it.
 function _gfxChipFooterNote(kind) {
-  const _boardEfv = (typeof _gradePrimary === "function") ? _gradePrimary() === "xfv" : true;
-  const _gradEfv = ((state.debutGrade || "xfv") === "xfv");
-  const badge = (kind === "graduate")
-    ? (_gradEfv ? "final eFV (locked at debut)" : "consensus FV at debut")
-    : (_boardEfv ? "eFV (consensus FV fallback)" : "consensus FV");
-  return `badge = ${badge} · number = board rank · line = position, level, age`;
+  if (kind === "farm") return "grade = composite farm-system grade · number = farm rank · line = top prospect, ranked count, avg age";
+  return `badge = ${_gfxBadgeLegend(kind)} · number = board rank · line = position, level, age`;
 }
 // Footer legend per kind. The prospect/graduate badge legend tracks the same
 // lead-grade toggles the row badges follow (see _gfxRow, B3) so the exported
 // graphic labels the grade it actually shows.
 function _gfxFooterNote(kind) {
-  const _boardEfv = (typeof _gradePrimary === "function") ? _gradePrimary() === "xfv" : true;
-  const _gradEfv = ((state.debutGrade || "xfv") === "xfv");
+  const _badge = _gfxBadgeLegend(kind);
   return {
-    prospect: `$M = engine expected surplus value · $DvM+ = surplus-development index (100 = FV-tier avg) · badge = ${_boardEfv ? "eFV (consensus FV fallback)" : "consensus FV"}`,
-    graduate: `WAR = career MLB WAR since debut (bWAR) · $DvM+ = surplus-development index · badge = ${_gradEfv ? "final eFV (locked at debut)" : "consensus FV at debut"}`,
-    draftee: "Stk+ = Draft Stock+ (100 = class median) · badge = consensus FV",
-    overseas: "badge = consensus FV",
-    leader: "value = the selected stat · badge = eFV (consensus FV fallback)",
+    prospect: `$M = engine expected surplus value · $DvM+ = surplus-development index (100 = FV-tier avg) · badge = ${_badge}`,
+    graduate: `WAR = career MLB WAR since debut (bWAR) · $DvM+ = surplus-development index · badge = ${_badge}`,
+    draftee: `Stk+ = Draft Stock+ (100 = class median) · badge = ${_badge}`,
+    overseas: `badge = ${_badge}`,
+    leader: `value = the selected stat · badge = ${_badge}`,
     farm: "grade = composite farm-system grade · # = farm rank",
-    spotlight: "FV Δ = recent consensus-FV movement · badge = current FV",
-    ifa: "$ = signing bonus · badge = consensus FV",
+    spotlight: `FV Δ = recent consensus-FV movement · badge = ${_badge}`,
+    ifa: `$ = signing bonus · badge = ${_badge}`,
   }[kind] || "";
 }
 
@@ -34355,14 +34683,17 @@ function buildProspectCard(snap) {
     return bits.join(" · ");
   })();
   const metaLine = [p.position, (typeof fullOrgName === "function" && p.org) ? fullOrgName(p.org) : p.org, sl.level, p.age != null ? "age " + p.age.toFixed(1) : null, htWt || null].filter(Boolean).join("  ·  ");
-  // Lead rank follows the SAME Rank-by toggle as the board rank cell
-  // (efvRankNumHTML) and this card's FV badge: eFV rank when eFV leads
-  // (getEfvRank = the active list's exact order, so the card can never
-  // disagree with the board - it was showing consensus #2 for the board's
-  // #1 prospect), consensus overall_rank when toggled to consensus.
+  // Lead rank = the live board rank (getEfvRank = the active list's exact order, so the
+  // card can never disagree with the board - it was showing consensus #2 for the board's
+  // #1 prospect).
+  // B6a - it used to fall back to p.overall_rank whenever the Rank-by toggle was on
+  // Consensus and label that "Rank", which reads as a consensus ranking. It is not one:
+  // overall_rank is baked off BOARD_GRADE_FIELD ("xfv_grade", storage.py), the same eFV
+  // ordering one build stale. Same call as efvRankNumHTML (see its comment for why we
+  // label rather than compute a consensus rank) - except a GFX card has no hover, so the
+  // basis has to ride on the tile LABEL instead of a tooltip.
   const _cardXr = (typeof getEfvRank === "function") ? getEfvRank(p) : null;
-  const _cardLeadEfv = _cardXr != null && (typeof _gradePrimary !== "function" || _gradePrimary() === "xfv");
-  const _cardLeadRank = _cardLeadEfv ? _cardXr : p.overall_rank;
+  const _cardLeadRank = (_cardXr != null) ? _cardXr : p.overall_rank;
   // Rankings are a hero TILE now (high priority); this line keeps only the
   // context the tile doesn't carry: org rank, plus the non-lead overall
   // rank when the two boards disagree (mirrors the detail page's
@@ -34376,7 +34707,9 @@ function buildProspectCard(snap) {
     // p.overall_rank is the BAKED board rank, not a consensus rank -- it is the same
     // raw-eFV ordering as the live rank, one build behind (storage bakes it before
     // xfv.json is regenerated). Labelled by what it is: the last published board.
-    (_cardLeadEfv && p.overall_rank != null && p.overall_rank !== _cardXr)
+    // No longer gated on the Rank-by toggle: the lead rank above is the live board rank
+    // in both modes, so the stale-vs-live comparison is meaningful in both modes too.
+    (_cardXr != null && p.overall_rank != null && p.overall_rank !== _cardXr)
       ? `Last board #${p.overall_rank}` : null,
   ].filter(Boolean).join("  ·  ");
   const rankLine = rankBits
@@ -34394,9 +34727,10 @@ function buildProspectCard(snap) {
          <span style="font-family:var(--font-mono);font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:${col || P.text};">${val}</span>
        </div>`);
     // Rank leads the rail (Open Beta priority: rankings up top, once -
-    // the eyebrow no longer repeats it). Lead-grade-aware (_cardLeadRank):
-    // eFV board rank when eFV leads, consensus rank otherwise.
-    if (_cardLeadRank != null) tile("Rank", `#${_cardLeadRank}`, accent);
+    // the eyebrow no longer repeats it). Labelled "Board rank", not "Rank":
+    // it is the eFV board ordering in BOTH toggle modes (B6a), and a shared
+    // graphic has no tooltip to carry that.
+    if (_cardLeadRank != null) tile("Board rank", `#${_cardLeadRank}`, accent);
     const _heroSv = displaySurplusMM(p);
     if (_heroSv != null && typeof fmtSvMM === "function") {
       tile("Surplus", fmtSvMM(_heroSv), accent);
@@ -34967,7 +35301,16 @@ function _gfxTileNamePx(w) { return w >= 230 ? 19 : (w >= 190 ? 17 : (w >= 160 ?
 // is a FIXED two-line box: a one-line name simply centres in it, so every tile
 // in a row shares a baseline instead of jittering with name length.
 function _gfxTileNameLineH(w) { return Math.round(_gfxTileNamePx(w) * 1.22); }
-function _gfxTileTextH(w) { return _gfxTileNameLineH(w) * 2 + 13 + 20 + 10; }
+// Budget, itemised against the markup in _gfxTileHtml so it cannot drift:
+//   2 name lines   = _gfxTileNameLineH * 2
+//   rank/badge strip                    20  (fixed height in the markup)
+//   meta line                           15  (11px at line-height 1.3, rounded up)
+//   padding 6 top + 7 bottom            13
+//   1px border top + bottom              2
+// The first version of this counted the meta line as 10 and forgot the border,
+// so it under-reserved by 6px and the meta could clip on a tight canvas - the
+// exact "elements disappearing" failure this rewrite exists to remove.
+function _gfxTileTextH(w) { return _gfxTileNameLineH(w) * 2 + 20 + 15 + 13 + 2; }
 
 // Geometry for one candidate column count, or null when it violates a floor.
 function _gfxTileGeoFor(cap, fmt, cols) {
@@ -35954,6 +36297,45 @@ function _starTierOf(fv) {
   if (v < 65) return "60-65";
   return "65+";
 }
+// H5 - micro-bar primitive shared by the Star Odds + PLUS% cells. The Surplus
+// cell draws an outcome-bucket bar while the two numeric columns beside it were
+// bare digits, so the board spoke two visual languages for the same kind of
+// quantity. This emits the SAME `.sv-bucket-bar` geometry renderBucketBar does
+// (flex track, 2px radius, 1px --border-light hairline, colored segment + unfilled
+// remainder) at a shorter height, so the three columns read as one family.
+// Scale is the honest one: the full track is the full probability range, so a
+// 13.5% Star Odds bar really is 13.5% of the track - never a re-scaled "punchier"
+// domain. `opts.signed` centers zero at mid-track and draws left of the baseline,
+// which PLUS% needs because high grades run net negative.
+function renderShareMicroBar(frac, color, tip, opts) {
+  opts = opts || {};
+  const v = Number(frac);
+  if (frac == null || !isFinite(v)) return "";
+  const h = opts.height || 6;
+  const shell = (inner, aria) =>
+    `<div class="sv-bucket-bar" role="img" aria-label="${escapeHtml(aria)}" title="${escapeHtml(tip || "")}"`
+    + ` style="display:flex;width:100%;height:${h}px;border-radius:2px;overflow:hidden;`
+    + `border:1px solid var(--border-light);background:var(--bg-tertiary);">${inner}</div>`;
+  if (opts.signed) {
+    // Symmetric track: -100% .. 0 .. +100%, zero pinned at mid-track. The dotted
+    // hairline always lands on the 50% mark (it rides the element that ENDS
+    // there), so a negative bar reads as growing leftward off the baseline.
+    const w = Math.min(50, Math.abs(v) * 50);
+    const tick = "border-right:1px dotted var(--text-tertiary);";
+    const pad = v < 0 ? (50 - w) : 50;
+    return shell(
+      `<div style="width:${pad.toFixed(2)}%;height:100%;${v < 0 ? "" : tick}"></div>`
+      + `<div style="width:${w.toFixed(2)}%;height:100%;background:${color};${v < 0 ? tick : ""}"></div>`
+      + `<div style="flex:1;height:100%;"></div>`,
+      "signed share");
+  }
+  const w = Math.max(0, Math.min(100, v * 100));
+  return shell(
+    `<div style="width:${w.toFixed(2)}%;height:100%;background:${color};"></div>`
+    + `<div style="flex:1;height:100%;"></div>`,
+    "share of probability");
+}
+
 // Realized star rate + n for a prospect's role + FV tier, or null.
 function _starRealizedFor(p) {
   if (!_STAR_REALIZED || !p) return null;
@@ -35992,7 +36374,11 @@ function makeStarOddsCell(p) {
       realizedLine = `<div style="font-size:10px;font-weight:600;color:var(--text-tertiary);font-variant-numeric:tabular-nums;" title="Realized star rate in the resolved cohort for this role and FV tier (n=${rc.n})">${(rc.realized * 100).toFixed(1)}% real</div>`;
     }
   }
-  return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);color:${col};" title="${escapeHtml(tip)}"><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;">${fmtStarOdds(v)}</div>${realizedLine}</div>`;
+  // H5 - matching micro-bar. Same primitive/geometry as the Surplus cell's
+  // outcome-bucket bar so the column is a picture as well as a number; the track
+  // is the full 0-100% probability range, so widths are comparable down the board.
+  const bar = renderShareMicroBar(v, col, `${fmtStarOdds(v)} of the full 0-100% probability track. ${tip}`);
+  return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);color:${col};" title="${escapeHtml(tip)}"><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.05;">${fmtStarOdds(v)}</div>${bar}${realizedLine}</div>`;
 }
 
 // OPT% (upgrade-option layer): the share of a grade's value that comes from the
@@ -36026,8 +36412,36 @@ function makeOptPctCell(p) {
             : v >= 0 ? "var(--text-primary)"
             : "var(--text-tertiary)";
   const tip = "PLUS%: share of this grade's value that comes from the chance of upgrading to a better grade before graduating (upgrade-option layer, provisional). Low tiers are option-rich; high grades run low or negative because grade mobility at the top is net downgrade risk.";
-  return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:${col};" title="${escapeHtml(tip)}">${fmtOptPct(v)}</div>`;
+  // H5 - matching micro-bar, SIGNED: the zero baseline sits mid-track so a
+  // net-negative option layer draws to the left of it instead of vanishing.
+  // Same primitive/geometry as the Surplus cell's outcome-bucket bar.
+  const bar = renderShareMicroBar(v, col, `${fmtOptPct(v)} on a -100% .. 0 .. +100% track; the dotted hairline is zero. ${tip}`, { signed: true });
+  return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);color:${col};" title="${escapeHtml(tip)}"><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.05;">${fmtOptPct(v)}</div>${bar}</div>`;
 }
+
+// ── Ht/Wt/BMI (phys) column ─────────────────────────────────────────────────
+// H10 - the physical-profile cluster held a PERMANENT board track for a niche
+// axis while higher-value reads (Star Odds, PLUS%) sat behind flags. It now uses
+// the same opt-in convention, defaulting OFF: surface it per-view with #phys=1
+// (or ?phys=1). Nothing else changes - the ht_desc / wt_desc / bmi_desc sort keys
+// keep working whether or not the column is painted, so a reader who sorts by
+// height from a saved URL still gets the ordering, and every value stays on the
+// player detail page. Column-alignment is handled by the `.has-phys` grid rules.
+const PHYS_COL_DEFAULT = false;   // niche axis: off unless explicitly asked for
+// LATCHED at script-evaluation time, deliberately unlike the two flags above.
+// syncToURL() rebuilds location.hash from state and drops every key it does not
+// own, so a lazily-read flag would evaporate the first time the reader touched a
+// filter. #starodds / #optpct default ON, so losing their key is a no-op and they
+// can afford to re-read; a default-OFF flag cannot. This runs before the first
+// render, while location still holds the URL the reader actually opened.
+const _PHYS_COL_ON = (() => {
+  const h = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("phys");
+  if (h != null) return h !== "0";
+  const q = new URLSearchParams(location.search || "").get("phys");
+  if (q != null) return q !== "0";
+  return PHYS_COL_DEFAULT;
+})();
+function _physColUiOn() { return _PHYS_COL_ON; }
 
 function makeSurplusCell(p) {
   // eFV is the primary FV site-wide, so surplus is the eFV surplus when available (and the
@@ -36380,6 +36794,9 @@ document.addEventListener("click", (e) => {
       break;
     case key === "toolsort":     state.toolSortKey     = "off"; break;
     case key === "statcastsort": state.statcastSortKey = "off"; break;
+    // Clears the ORDER only. state.gradePrimary (which grade leads the cells) is a
+    // separate axis owned by the "Rank by" toggle, so dismissing a sort chip must
+    // not yank a deliberately-picked consensus lead out from under the user.
     case key === "sort":   state.sort = "xfv"; break;
     case key === "il-org":  state.ilOrgFilter  = "all"; break;
     case key === "il-type": state.ilTypeFilter = "all"; break;
@@ -37801,6 +38218,48 @@ function _sortStatPill(p) {
   return "";
 }
 
+// H4 - phone-only signal strip. Below 900px the FV-history sparkline, the MiLB
+// line, ETA and Surplus all leave the card, so a phone row collapsed to identity
+// + rank + badge and the reader lost every MOVEMENT and VALUE read. This strip
+// rides inside the toolstrip, which is already a full-width row-2 grid item on
+// phones, so it costs no new row and nothing on desktop (display:none there).
+// Every value comes from the SAME renderer the desktop cell uses, so the two
+// surfaces cannot drift: rankTrendHTML / fvTrendHTML for movement, the baked ETA,
+// and the Surplus cell's own source chain + renderBucketBar for the outcome mix.
+// Returns "" when a player carries none of them.
+function _rowPhoneSignalsHTML(p) {
+  if (!p) return "";
+  const bits = [];
+  const rankMove = (typeof rankTrendHTML === "function") ? rankTrendHTML(p) : "";
+  if (rankMove) bits.push(`<span class="rps-item"><span class="rps-key">RANK</span>${rankMove}</span>`);
+  const fvMove = (typeof fvTrendHTML === "function") ? fvTrendHTML(p) : "";
+  if (fvMove) bits.push(`<span class="rps-item"><span class="rps-key">STOCK</span>${fvMove}</span>`);
+  const etaYear = (p.eta && p.eta.year) ? p.eta.year : null;
+  if (etaYear != null) {
+    const label = (typeof etaDisplayYear === "function") ? etaDisplayYear(p.eta) : String(etaYear);
+    bits.push(`<span class="rps-item"><span class="rps-key">ETA</span><span class="rps-val">${escapeHtml(String(label))}</span></span>`);
+  }
+  // Surplus: the identical precedence makeSurplusCell uses - eFV surplus while the
+  // board is eFV-primary, baked consensus surplus otherwise - so the phone number
+  // is always the number the desktop column would have shown for this same row.
+  const _xf = (typeof getEfv === "function") ? getEfv(p) : null;
+  const _useX = !!(_xf && _xf.surplus_mm != null
+                   && typeof _gradePrimary === "function" && _gradePrimary() === "xfv");
+  const sv = _useX ? _xf.surplus_mm
+           : ((p.surplus && p.surplus.value_mm != null) ? p.surplus.value_mm : null);
+  if (sv != null && typeof fmtSvMM === "function") {
+    const buckets = _useX
+      ? _xf.p_bucket
+      : ((p.debuted_value && p.debuted_value.posterior)
+          ? p.debuted_value.posterior : (p.surplus || {}).buckets);
+    const bar = (buckets && typeof renderBucketBar === "function")
+      ? `<span class="rps-bar">${renderBucketBar(buckets, { height: 5 })}</span>` : "";
+    bits.push(`<span class="rps-item"><span class="rps-key">SV</span><span class="rps-val">${escapeHtml(fmtSvMM(sv))}</span>${bar}</span>`);
+  }
+  if (!bits.length) return "";
+  return `<div class="row-phone-signals" aria-label="Movement and value signals">${bits.join("")}</div>`;
+}
+
 function makeListRowSummary(p) {
   const sortPill = _sortStatPill(p);
   // Pass the active tool-sort key so the sorted tool leads + highlights inside
@@ -37809,13 +38268,17 @@ function makeListRowSummary(p) {
     && !state.view && state.toolSortKey && state.toolSortKey !== "off")
     ? state.toolSortKey : null;
   const chipStrip = makeToolGradeChips(p, activeToolKey);
-  if (chipStrip) return sortPill + chipStrip;
+  // H4 - appended last so it reads as the bottom line of the card on phones and
+  // is a zero-height no-op on desktop. It also makes the toolstrip worth emitting
+  // for players who carry no tool grades and no quick-read parts.
+  const phoneSignals = _rowPhoneSignalsHTML(p);
+  if (chipStrip) return sortPill + chipStrip + phoneSignals;
   // listMode=true trims segments whose data already shows on sibling
   // cells of the same row (age/pos/level, FV badge, stock arrow, ETA,
   // B/T chip) - see makeQuickReadSummaryParts for the gating.
   const parts = makeQuickReadSummaryParts(p, { listMode: true });
-  if (!parts.length) return sortPill;
-  return sortPill + `<div class="player-row-summary">${parts.join(" · ")}</div>`;
+  if (!parts.length) return sortPill + phoneSignals;
+  return sortPill + `<div class="player-row-summary">${parts.join(" · ")}</div>` + phoneSignals;
 }
 
 
@@ -43768,7 +44231,11 @@ function _playerNewsRows(player) {
   }).sort((a, b) => String(b.published_at || b.date || "").localeCompare(String(a.published_at || a.date || "")));
 }
 
-function makePlayerNewsSection(player) {
+// opts.bare drops the "News" detail-title + card chrome and returns just the
+// stacked headline rows. H1 needs that so the Overview can nest the block inside
+// a <details> without the summary line and the section title both saying "News".
+function makePlayerNewsSection(player, opts) {
+  opts = opts || {};
   if (!_playerNewsLoaded) {
     loadPlayerNewsSidecar().then(() => {
       if (state.view && state.view.type === "player" && state.view.key === player.player_key) render();
@@ -43793,6 +44260,7 @@ function makePlayerNewsSection(player) {
       ${analysis && analysis !== summary ? `<div style="margin-top:5px;color:var(--text-tertiary);font-size:12px;line-height:1.45;">${escapeHtml(analysis)}</div>` : ""}
     </div>`;
   }).join("");
+  if (opts.bare) return cards;
   return `<div class="detail-title">News</div><div class="detail-card" style="padding-top:0;">${cards}</div>`;
 }
 
@@ -46859,9 +47327,13 @@ function renderPlayerDetail(key) {
   // full table on demand. Summary line shows the update count for
   // context. <details> renders without JS so it survives if the
   // inline-handler observers fail.
+  // H1 - now CLOSED by default. It was the single tallest block on an already
+  // fifteen-section Overview (one row per source per update interval) and it is
+  // reference detail, not a headline; the interval count in the summary line
+  // still tells the reader how much is behind the disclosure.
   const _fvHistoryCount = (p.points && p.points.length) || 0;
   const sourceSection = _fvHistoryCount
-    ? `<details open style="margin:14px 0 6px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
+    ? `<details style="margin:14px 0 6px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
          <summary style="cursor:pointer;padding:8px 12px;font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);user-select:none;list-style:revert;">Source-by-source FV history <span style="color:var(--text-tertiary);font-weight:400;">· ${_fvHistoryCount} update interval${_fvHistoryCount !== 1 ? "s" : ""}</span></summary>
          <div style="padding:0 12px 12px;">${makePerSourceHistory(p.points || [])}</div>
        </details>`
@@ -49058,10 +49530,12 @@ function renderPlayerDetail(key) {
   // textarea slots into the right sidebar so the main column stays
   // dedicated to chart + career + sources. Hidden on graduates because
   // a note on a graduated prospect rarely matters going forward.
+  // H1 - the "Notes" heading moved OUT of this block: on the Overview it is now
+  // nested in a <details> whose summary already reads "Notes · private to this
+  // browser", so keeping the detail-title here printed the same words twice.
   const noteSection = p.status === "debuted" ? "" : (() => {
     const existing = noteLoad(p.player_key);
-    return `<div class="detail-title">Notes <span class="detail-title-sub">private to this browser</span></div>
-      <textarea class="player-note-area" data-note-key="${escapeHtml(p.player_key)}" placeholder="Scouting notes, follow-up reminders, links - saved as you type.">${escapeHtml(existing)}</textarea>`;
+    return `<textarea class="player-note-area" data-note-key="${escapeHtml(p.player_key)}" placeholder="Scouting notes, follow-up reminders, links - saved as you type.">${escapeHtml(existing)}</textarea>`;
   })();
 
   // "Back of a baseball card" tab bar. Header + quick-read summary +
@@ -49167,21 +49641,33 @@ function renderPlayerDetail(key) {
       ${_ovTile(_ovSurplus,   null)}
       ${_ovTile(_ovStock,     null)}
     </div>`;
-  // v12 - scouting reports also surface on the Overview tab so users
-  // see them up-front. Same section still renders on Scouting & Tools
-  // (per user redundancy ask). Wrapped in <details open> here so the
-  // Overview can collapse it without losing the content entirely.
-  const scoutReportsOnOverview = scoutingReportsSection
-    ? `<details open style="margin:14px 0 6px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
-         <summary style="cursor:pointer;padding:8px 12px;font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);user-select:none;list-style:revert;">Scouting reports</summary>
-         <div style="padding:0 12px 12px;">${scoutingReportsSection}</div>
+  // H1 - one collapsible shell for every Overview block that gets the <details>
+  // treatment, lifted out of the scouting-reports block below so the four
+  // disclosures are byte-identical instead of four hand-copied style strings.
+  const _ovCollapse = (label, sub, body, isOpen) => body && body.trim()
+    ? `<details${isOpen ? " open" : ""} style="margin:14px 0 6px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
+         <summary style="cursor:pointer;padding:8px 12px;font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);user-select:none;list-style:revert;">${escapeHtml(label)}${sub ? ` <span style="color:var(--text-tertiary);font-weight:400;">· ${escapeHtml(sub)}</span>` : ""}</summary>
+         <div style="padding:0 12px 12px;">${body}</div>
        </details>`
     : "";
+  // v12 - scouting reports also surface on the Overview tab so users
+  // see them up-front. Same section still renders on Scouting & Tools
+  // (per user redundancy ask - that duplication is DELIBERATE, leave it).
+  // Wrapped in <details open> here so the Overview can collapse it
+  // without losing the content entirely.
+  const scoutReportsOnOverview = _ovCollapse("Scouting reports", "", scoutingReportsSection, true);
   // v39 - Surface the valuation (surplus + contract) prominently on the
   // Overview tab, right under the summary tiles, instead of burying it in the
   // back "Details" tab. The two financial cards stay together.
   const valuationHtml = [surplusValueSection, contractDetailsSection].filter(Boolean).join("");
-  const playerNewsSection = makePlayerNewsSection(p);
+  // H2 - player news renders ONCE, here on the Overview. It used to render on the
+  // Scouting / Tools tab as well, which was not the deliberate scouting-reports
+  // duplication (that one is documented above) - just the same block emitted into
+  // two tab arrays. The Scouting tab now carries a link chip back to this copy.
+  // Fetched bare (no title / card chrome) because the Overview nests it in a
+  // <details> whose summary already says "News"; empty string when the player has
+  // no headlines, which is also what gates the Scouting-tab chip.
+  const playerNewsBare = makePlayerNewsSection(p, { bare: true });
   const efvCardHtml = efvDetailCard(p);   // eFV outcome read (primary grade's distribution + surplus)
   const efvProxyHtml = (typeof efvProxyPanel === "function") ? efvProxyPanel(p) : "";  // leading indicator
   const palFitHtml = (typeof palFitPanel === "function") ? palFitPanel(p) : "";  // PAL role-conversion cross-link (pitchers)
@@ -49205,8 +49691,42 @@ function renderPlayerDetail(key) {
   // asset. Ledgered in docs/efv-2026-07-29/GATED_CANDIDATES.md.
   const archetypeHtml = "";
   const defHomeHtml = (typeof defHomeChip === "function") ? defHomeChip(p) : "";  // Defensive home stay-probability chip (W7, risk context only)
-  const overviewHtml = [summaryGridHtml, efvCardHtml, efvProxyHtml, palFitHtml, aaaStatcastHtml, alevelSignalHtml, apPaceHtml, archetypeHtml, defHomeHtml, valuationHtml, chartSection, playerNewsSection, scoutReportsOnOverview, sourceSection, noteSection]
-    .filter(Boolean).join("");
+  // H1 - the Overview was FIFTEEN stacked sections with no navigation: a reader
+  // who wanted the FV chart or the notes box had to drag past everything above it,
+  // and on a phone that is several screens. NOTHING is removed. The same blocks,
+  // in the same order, are now (a) grouped into nine anchored sections, (b) fronted
+  // by a jump-chip strip reusing the detail-page `.detail-jumplinks` chips, and
+  // (c) the three lowest-value blocks - news, source-by-source FV history, private
+  // notes - collapse into <details>, the treatment the scouting-reports block on
+  // this same tab already used. The seven small model/context panels that used to
+  // stack individually now share one "Signals" section, which is what they are.
+  const _ovNews = _ovCollapse("News", "recent headlines", playerNewsBare, false);
+  const _ovNotes = _ovCollapse("Notes", "private to this browser", noteSection, false);
+  const _ovBlocks = [
+    { id: "summary",   label: "Summary",    html: summaryGridHtml },
+    { id: "efv",       label: "eFV",        html: efvCardHtml },
+    { id: "signals",   label: "Signals",    html: [efvProxyHtml, palFitHtml, aaaStatcastHtml,
+                                                   alevelSignalHtml, apPaceHtml, archetypeHtml,
+                                                   defHomeHtml].filter(Boolean).join("") },
+    { id: "valuation", label: "Valuation",  html: valuationHtml },
+    { id: "fvchart",   label: "FV history", html: chartSection },
+    { id: "news",      label: "News",       html: _ovNews },
+    { id: "reports",   label: "Reports",    html: scoutReportsOnOverview },
+    { id: "sources",   label: "Sources",    html: sourceSection },
+    { id: "notes",     label: "Notes",      html: _ovNotes },
+  ].filter(b => b.html && b.html.trim());
+  // Chips preventDefault and scroll by id: a bare href="#ov-..." would rewrite
+  // location.hash, and the global hashchange listener re-runs syncFromURL +
+  // render(), which would throw the reader back out of the section they clicked.
+  // The href is kept so the target is still meaningful without JS.
+  const _ovJumpStrip = _ovBlocks.length > 2
+    ? `<nav class="detail-jumplinks ov-jumplinks" aria-label="Overview sections">
+         <span class="ov-jump-label">Jump to</span>
+         ${_ovBlocks.map(b => `<a href="#ov-${b.id}" onclick="event.preventDefault();var _t=document.getElementById('ov-${b.id}');if(_t){var _d=_t.querySelector('details');if(_d)_d.open=true;_t.scrollIntoView({block:'start'});}">${escapeHtml(b.label)}</a>`).join("")}
+       </nav>`
+    : "";
+  const overviewHtml = _ovJumpStrip + _ovBlocks
+    .map(b => `<section id="ov-${b.id}" class="ov-anchor">${b.html}</section>`).join("");
   // v30.8 - Recent gameLogs viz. Reads p.statcast_metrics.recent_games
   // (populated by the per-player MLB Stats API gameLog pass). When
   // present, renders a compact "Last 15 games" table.
@@ -49238,11 +49758,22 @@ function renderPlayerDetail(key) {
   // post-velo-gain).
   const toolHistorySection = _toolHistoryChart(p);
   const toolCompSection = makeToolCompRadar(p);
+  // H2 - the full news block used to render here AS WELL as on the Overview. That
+  // was straight duplication (unlike the scouting-reports repeat above, which is a
+  // deliberate, documented ask), so this tab now carries a one-line chip that
+  // switches to the Overview, opens the News disclosure and scrolls to it. The
+  // chip only appears when the player actually has headlines.
+  const newsLinkChip = (playerNewsBare && playerNewsBare.trim())
+    ? `<nav class="detail-jumplinks ov-jumplinks" aria-label="Related sections" style="margin-top:14px;">
+         <span class="ov-jump-label">Also</span>
+         <a href="#ov-news" onclick="event.preventDefault();state.playerTab='overview';syncToURL();render();setTimeout(function(){var _t=document.getElementById('ov-news');if(_t){var _d=_t.querySelector('details');if(_d)_d.open=true;_t.scrollIntoView({block:'start'});}},0);">Player news →</a>
+       </nav>`
+    : "";
   const scoutingHtml = [
     toolsSection + (sourceHistorySection || ""),
     toolCompSection,
     toolHistorySection,
-    toolDevSection, perSourceToolsSection, playerNewsSection, scoutingReportsSection,
+    toolDevSection, perSourceToolsSection, scoutingReportsSection, newsLinkChip,
   ].filter(s => s && s.trim()).join("");
   const healthHtml = [ilSection, healthSection]
     .filter(Boolean).join("");
@@ -49288,15 +49819,20 @@ function renderPlayerDetail(key) {
   const detailChipRibbon = _buildDetailChipRibbon(p);
   // v30.7 - Tab-aware sidebar. Wraps the tabBar inside a 2-column
   // grid (`.detail-with-rail`) so the cards sit to the RIGHT of the
-  // tab content on viewports ≥1300px. Below that breakpoint the
-  // sidebar hides and the tab content takes full width - no layout
-  // regression on smaller screens. Cards rebuild on each render
+  // tab content on viewports ≥1300px. Cards rebuild on each render
   // (tab switch goes through render()), so per-tab content swaps
   // cleanly without bespoke wiring.
+  // H1 - `.rail-stacks` stops the rail being DISPLAY:NONE below 1300px. Its "Key
+  // signals" card, the peer leaderboards and the org link were unreachable on
+  // every tablet and phone. The <aside> is the last child of a wrapper that is
+  // display:block under the breakpoint, so simply not hiding it makes it flow
+  // beneath the active tab panel. This is ONE element, not a second copy, so
+  // double-rendering at >=1300px is structurally impossible - the same node just
+  // becomes grid column 2 there.
   const sidebarHtml = renderDetailSidebar(
     _prospectDetailSidebarCards(p, state.playerTab || "overview")
   );
-  const tabBarWithRail = `<div class="detail-with-rail">
+  const tabBarWithRail = `<div class="detail-with-rail rail-stacks">
     <div class="detail-with-rail-main">${tabBar}</div>
     ${sidebarHtml}
   </div>`;
@@ -50636,10 +51172,13 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const rosterPaginationStripTop = renderPaginationStripCompact(_rosterCurPage, _rosterTotalItems, _rosterPageSize, "farmRoster");
   // v31 - Roster row layout now matches the Active Prospects list
   // exactly. Uses the same 7-col grid (Player+name | Rank | FV |
-  // History | MiLB | Phys cluster | ETA) plus the inline expand
+  // History | MiLB | ETA | Surplus) plus the inline expand
   // meta + tool strip. Click navigation handled by the global row-
   // click delegate (looks for data-key) so no inline onclick needed.
   // is-farm-roster grid override removed - we want exact parity.
+  // H10 - phys column is flag-gated board-wide (#phys, default off); parity means
+  // this list carries the same has-phys class + conditional cell as the actives.
+  const _frPhysOn = _physColUiOn();
   let rosterRows = _rosterPaged.map((p, i) => {
     const pts = (p && p.points) || [];
     const latest = pts.length ? pts[pts.length - 1] : null;
@@ -50649,7 +51188,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     const fvLabel = (latest && latest.consensus_fv_label != null)
       ? latest.consensus_fv_label : " - ";
     return `
-      <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
+      <div class="player-row${_frPhysOn ? " has-phys" : ""}" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
         <div class="player-row-col1" style="display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;"><div class="player-row-idrow" style="display:flex;align-items:center;gap:10px;min-width:0;width:100%;">
           <span class="headshot-stack">${headshotHTML(p, 64)}${optionsDotsHTML(p)}</span>
           <div class="player-name-stack" style="min-width:0;flex:1;">
@@ -50664,7 +51203,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
         <div style="text-align:center;">${efvBadgeHTML(p)}${fvTrendHTML(p)}</div>
         <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${pts.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;"> - </span>`}</div>
         ${makeMilbCell(p)}
-        ${physClusterHTML(p)}
+        ${_frPhysOn ? physClusterHTML(p) : ""}
         ${makeEtaCell(p)}
         <div class="desktop-only" style="align-self:center;min-width:0;">${makeSurplusCell(p)}</div>
         ${playerExpandedMetaHTML(p)}
@@ -50694,13 +51233,13 @@ function _renderFarmDetailBody(orgCode, org, root) {
     <span class="newsprint-eyebrow-label">${escapeHtml(org.org)} · Tracked Prospects · ${_rosterTotalItems} on the roster</span>
     <span class="newsprint-eyebrow-meta">${(state.acqFilter !== "all" || state.levelFilter !== "all" || state.posFilter !== "all") ? "filtered view" : "full roster"}</span>
   </div>`;
-  const rosterHeader = rosterEyebrow + `<div class="col-header">
+  const rosterHeader = rosterEyebrow + `<div class="col-header${_frPhysOn ? " has-phys" : ""}">
     <span class="sort-header" data-roster-sort="name" title="Player name + meta · click to sort">Player · pos · age · B/T</span>
     <span class="sort-header" data-roster-sort="avg_rank" title="Sort by rank" style="text-align:center;">Rank</span>
     <span class="sort-header" data-roster-sort="fv" title="Sort by eFV (high to low) - our outcome-grounded grade (consensus FV fallback where eFV abstains)" style="text-align:center;">FV Grade</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline">FV history</span>
     <span class="desktop-only" style="text-align:center;">MiLB · age vs. level</span>
-    <span class="desktop-only" style="text-align:center;">Ht · Wt · BMI</span>
+    ${_frPhysOn ? `<span class="desktop-only" style="text-align:center;">Ht · Wt · BMI</span>` : ""}
     <span class="desktop-only sort-header" data-roster-sort="eta" title="Sort by estimated MLB arrival year (soonest first)" style="text-align:center;">ETA</span>
   </div>`;
 
@@ -53432,7 +53971,7 @@ function aaaStuffPlusPillHTML(p) {
   if (!row || row.stuff_plus == null) return "";
   const v = Math.round(row.stuff_plus);
   return _plusPill("aStuff+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
-    `aStuff+ ${v} · in-house AAA pitch-quality model: LightGBM on per-pitch kinematics (velo / spin / movement / release / extension) vs run value, ${row.n_pitches} tracked AAA pitches (${row.season}). 100 = qualified-AAA pool mean, 10 pts ≈ 1 std-dev; shrunk toward the pool below 300 pitches.`,
+    `aStuff+ ${v} · in-house AAA pitch-quality model: LightGBM on per-pitch kinematics (velo / spin / movement / release / extension) vs run value, ${row.n_pitches} tracked AAA pitches (${row.season}). 100 = qualified-AAA pool mean, 10 pts = 1 std-dev on that anchor pool; shrunk toward the pool below 300 pitches, so arms with fewer tracked pitches sit closer to 100.`,
     "stuff_plus_aaa");
 }
 function krpPlusPillHTML(p) {
@@ -54450,6 +54989,7 @@ function attachHandlers() {
         acqFilter:    "all",
         classFilter:  "all",
         sort:         "xfv",   // eFV is the primary board ranking; reset returns to it, not consensus
+        gradePrimary: "xfv",   // and the grade LEAD resets with it (own axis since the sort/lead split)
         search:       "",
         tradedShowAll: false,
         debutsShowAll: false,
@@ -54760,15 +55300,22 @@ function attachHandlers() {
     const _ss = document.getElementById("statcast-sort-select");
     if (_ss) _ss.value = "off";
   };
-  // eFV / Consensus "Rank by" toggle: sets the board sort (and, via _gradePrimary,
-  // which grade leads every cell). Sets state.sort to "xfv" or "fv".
+  // eFV / Consensus "Rank by" toggle: the ONLY writer of state.gradePrimary, which is
+  // what _gradePrimary() (and so every badge / rank / surplus surface) reads. It also
+  // moves state.sort to the matching grade sort, because "Rank by" promises a re-rank -
+  // but that is a one-way courtesy: the sort dropdown below no longer writes the lead
+  // back, so the user can then sort by age/ETA/tool and keep the consensus grade leading.
   document.querySelectorAll("[data-grade-toggle]").forEach(btn => {
     btn.addEventListener("click", () => {
-      state.sort = btn.dataset.gradeToggle;
+      const pr = btn.dataset.gradeToggle === "fv" ? "fv" : "xfv";
+      state.gradePrimary = pr;
+      state.sort = pr;   // the two grade sorts only; never any other sort value
       if (state.sortRev) state.sortRev.sort = false;   // clear stale reverse flag on an explicit sort pick
       _clearSortOverrides();
       _syncGradeToggle();
       syncSortHeaderActive();
+      const _ss = document.getElementById("sort-select");
+      if (_ss) _ss.value = state.sort;   // keep the dropdown showing the sort the toggle just picked
       resetListPages();
       render();
       try { syncToURL(); } catch (e) { /* noop */ }
@@ -54786,6 +55333,10 @@ function attachHandlers() {
     state.sort = e.target.value;
     if (state.sortRev) state.sortRev.sort = false;   // an explicit dropdown pick must not be silently reversed by a stale column-toggle flag
     _clearSortOverrides();   // the tool/Statcast overrides otherwise win in sortPool and the list ignores this pick
+    // NOTE: deliberately does NOT touch state.gradePrimary. Ordering the board is a
+    // separate choice from which grade leads the cells; picking "ETA" or "Age" here
+    // used to snap every badge back to eFV. The re-sync below only re-paints the
+    // toggle's active class from the (unchanged) lead.
     _syncGradeToggle();
     // Mirror dropdown-driven sort changes into the column-click sort
     // header indicator (the header carries .is-active when its
@@ -55030,6 +55581,7 @@ function _resetPageFilters(page) {
     state.levelFilter    = "all";
     state.posFilter      = "all";
     state.sort           = "xfv";   // eFV is the primary board ranking; reset returns to it, not consensus (matches the initializer + FILTER_DEFAULTS)
+    state.gradePrimary   = "xfv";   // the grade lead is its own axis now; Reset returns it to eFV too
     state.stockFilter    = "all";
     state.spreadFilter   = "all";
     state.healthFilter   = "all";
