@@ -806,10 +806,19 @@ def _depth_pool(corpus: dict, names: dict[int, str],
     """Per-season WAR for every projectable player the exposure floors exclude
     from the display list - the retro backtest showed the floor-gated
     universe carries only ~560 of the league's ~1000 WAR while the full
-    >=1-input-season population, on real rosters, sums to ~870-930. These
+    >=1-input-season population, on real rosters, sums to ~870-935. These
     players never appear in the UI table; their WAR joins the Team Outlook
     roll-up per team (contract team), shrinking the uniform depth allowance to
     a small remainder.
+
+    RANGE RECONCILED 2026-08-04. This said "~870-930" while
+    test_team_outlook_calibration floors the same quantity at 900, and that
+    test's own docstring flagged the disagreement ("whichever is right, both
+    should not stand") back when the served value was 886.3 and sat between
+    them. It no longer does: after the F-DEF ship restored the vet paths and
+    the stale cohort-intercept vector was dropped, the served sum is 932.9, so
+    the top of the stated range was the stale half. Widened to 935; the test's
+    900 floor stands unchanged and now has real headroom.
 
     Multi-year: champion MEANS (use_ml=False pins the champion path) are summed
     season-by-season - the same mean basis the rostered roll-up uses - and each
