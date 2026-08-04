@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-29",
+ "generated_at": "2026-08-03",
  "test_winters": [
   2018,
   2019,
@@ -112,26 +112,28 @@
  "concentration": {
   "n_members": 228,
   "assertion_A1_all_30": true,
-  "max_top1_share": 0.5219,
+  "max_top1_share": 0.5833,
   "max_top1_club": "LAD",
-  "distinct_top1": 10,
-  "distinct_top3": 20,
-  "median_gap": 0.053,
+  "distinct_top1": 12,
+  "distinct_top3": 19,
+  "median_gap": 0.0495,
   "top1_counts": {
-   "LAD": 119,
-   "SFG": 54,
-   "NYM": 19,
-   "NYY": 10,
-   "CHC": 9,
-   "PHI": 7,
-   "ARI": 6,
-   "DET": 2,
-   "TOR": 1,
-   "TBR": 1
+   "LAD": 133,
+   "NYY": 27,
+   "CHC": 26,
+   "NYM": 21,
+   "DET": 7,
+   "LAA": 3,
+   "ARI": 3,
+   "COL": 2,
+   "WSN": 2,
+   "PHI": 2,
+   "SFG": 1,
+   "SEA": 1
   },
   "per_side_max_top1_share_REPORTED_NOT_GATED": {
-   "hit": 0.4889,
-   "pit": 0.5435
+   "hit": 0.5889,
+   "pit": 0.5797
   },
   "per_side_top1_club": {
    "hit": "LAD",
@@ -139,8 +141,8 @@
   },
   "gate": {
    "max_top1_share": false,
-   "distinct_top1": false,
-   "distinct_top3": true,
+   "distinct_top1": true,
+   "distinct_top3": false,
    "median_gap": true
   },
   "pass": false,
