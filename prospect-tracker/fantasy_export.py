@@ -62,17 +62,47 @@ def _load_json(name: str) -> dict | list | None:
         return None
 
 
+# ONE eFV BASIS FOR THIS WHOLE MODULE (2026-08-03). /fantasy/ used to show two
+# different eFV numbers on one page: Call-up Watch read raw `xfv_grade` while the
+# Dynasty board's eFV column read the RETIRED `xfv_grade_quantile`, so the same
+# prospect could carry two grades a tab apart. Both now go through _board_grade,
+# which mirrors build_site._load_xfv_grades / storage.BOARD_GRADE_FIELD / the
+# prospx client's efvBoardValue exactly. The SCALE is owned by efv_board_scale;
+# no copy of the coefficients lives here.
+try:
+    from efv_board_scale import board_value as _efv_board_value
+except Exception:                                            # pragma: no cover
+    def _efv_board_value(rec):
+        return (rec or {}).get("xfv_grade")
+
+
+def _board_grade(rec: dict | None):
+    """THE displayed eFV grade for an xfv.json record, or None. Unrounded -
+    callers that display it round to NEAREST (eFV is not a scouting FV)."""
+    rec = rec or {}
+    g = _efv_board_value(rec)
+    if g is None:
+        g = rec.get("xfv_grade_realized")
+    if g is None:
+        g = rec.get("xfv_grade_quantile")
+    return float(g) if isinstance(g, (int, float)) else None
+
+
 @functools.lru_cache(maxsize=1)
 def _efv_by_key() -> dict:
-    """{player_key: xfv_grade} off data/xfv.json - the site-wide grade.
+    """{player_key: board eFV grade} off data/xfv.json - the site-wide grade.
     Empty when the artifact is absent (fresh checkout), so callers fall back
     to consensus rather than failing."""
     x = _load_json("xfv.json") or {}
     by = x.get("by_player") if isinstance(x, dict) else None
     if not isinstance(by, dict):
         return {}
-    return {k: v.get("xfv_grade") for k, v in by.items()
-            if isinstance(v, dict) and v.get("xfv_grade") is not None}
+    out = {}
+    for k, v in by.items():
+        g = _board_grade(v) if isinstance(v, dict) else None
+        if g is not None:
+            out[k] = g
+    return out
 
 
 def _sb_rate_by_mlbam() -> dict:
@@ -478,6 +508,11 @@ def _dynasty_prospects(ts: dict | None, season: int, xfv: dict | None = None,
               +  4 * eta_proximity             # sooner ETA = value sooner
               +  2 * clamp(surplus_mm / 100)   # surplus composite (small tiebreak)
 
+    The DISPLAYED `efv` column is NOT that quantile: it is THE board grade
+    (_board_grade), the same number PROSPX, the homepage and /projections/ serve,
+    so /fantasy/ carries ONE eFV basis across Dynasty and Call-up Watch. The
+    quantile stays in the SCORE only, as a registered model input.
+
     Returns rows sorted desc with rank + rank-bucket tier + the eFV outcome band
     (band_p10_mm..band_p90_mm, $M). Best-effort: empty list when inputs unavailable."""
     if not isinstance(ts, dict):
@@ -494,11 +529,21 @@ def _dynasty_prospects(ts: dict | None, season: int, xfv: dict | None = None,
         mid = pl.get("mlbam_id")
         if not xr or not mid:
             continue
+        # SCORE input (not the displayed column): the retired per-side quantile is
+        # kept here on purpose. The blend's weights (+10 star, -6 bust, +4 ETA) were
+        # set against the quantile's spread, so swapping the driver would silently
+        # re-weight the composite. This is a model input, not a served grade.
         efv_q = xr.get("xfv_grade_quantile")
         if efv_q is None:
             efv_q = xr.get("xfv_grade")
         if efv_q is None:
             continue
+        # DISPLAYED column: THE board grade. Reading the quantile here made the
+        # Dynasty eFV column disagree with Call-up Watch's fvE and with the PROSPX
+        # board for the same prospect (2026-08-03 repair).
+        efv_disp = _board_grade(xr)
+        if efv_disp is None:
+            efv_disp = efv_q
         pb = xr.get("p_bucket") or {}
         star = pb.get("star") or 0.0
         bust = xr.get("p_bust")
@@ -516,7 +561,7 @@ def _dynasty_prospects(ts: dict | None, season: int, xfv: dict | None = None,
         rows.append({
             "mlbam": mid, "name": pl.get("player_name"), "org": pl.get("org"),
             "pos": pl.get("position"), "eta": eta_year,
-            "efv": round(efv_q, 1), "star": round(star * 100),
+            "efv": round(efv_disp, 1), "star": round(star * 100),
             "bust": round((bust or 0.0) * 100), "surplus": round(surplus),
             "band": [xr.get("band_p10_mm"), xr.get("band_p90_mm")],
             "score": round(score, 1),

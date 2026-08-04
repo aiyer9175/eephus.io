@@ -122,15 +122,50 @@ function _tmTeamLogo(org) {
   return `<img class="tm-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png" `
        + `alt="${escapeHtml(org)}" loading="lazy" onerror="this.style.display='none'">`;
 }
-// Surplus-$ magnitude -> tier color (evaluator; mirrors the board's _TB_TIER_COLORS feel).
-function _tmValColor(mm) {
-  const v = Math.abs(mm || 0);
-  if (mm < 0) return "var(--down, #e05c5c)";
-  if (v >= 80) return "var(--card-gold)";
-  if (v >= 35) return "var(--neon-green)";
-  if (v >= 12) return "var(--neon-cyan, var(--accent-cyan))";
-  return "var(--text-secondary)";
+// Surplus $M -> board tier. The SAME cuts the board's tier filter and the
+// server's bayes_trade_value._platform_tier use (Elite $40M+ / High $20-40M /
+// Mid $8-20M), so one dollar figure gets one tier everywhere.
+function _tmTierOf(mm) {
+  const v = Number(mm);
+  if (!isFinite(v)) return "low";
+  if (v >= 40) return "elite";
+  if (v >= 20) return "high";
+  if (v >= 8)  return "mid";
+  if (v >= 0)  return "low";
+  return "minimal";
 }
+// Evaluator value color. It used to break at 80/35/12 against the board's
+// 40/20/8, so an $18M asset read plain grey in the evaluator and cyan "mid" one
+// tab over on the board, on the same number from the same file. (_TB_TIER_COLORS
+// is declared further down; this only ever runs from a render, long after the
+// module body has evaluated.)
+function _tmValColor(mm) {
+  // A negative surplus is a liability and the evaluator says so in red. It is
+  // the board's "minimal" tier - the only tier a negative can land in.
+  if (Number(mm) < 0) return "var(--down, #e05c5c)";
+  return _TB_TIER_COLORS[_tmTierOf(mm)] || "var(--text-secondary)";
+}
+// FV display rule, ONE implementation for the board's FV column and the
+// evaluator's search / seed sub-lines: the eFV grade LEADS and rounds to
+// NEAREST, the consensus FV is the fallback and rounds UP (the platform's
+// grade-rounding rule). The sub-lines used to print the raw consensus close -
+// "FV 52.5" - which is neither rounded nor the grade the board ranks on, so the
+// same prospect read 52.5 in search and 53 in the column beside it.
+function _tmFvNum(xfvGrade, consensusFv) {
+  const x = Number(xfvGrade);
+  if (xfvGrade != null && isFinite(x)) return String(Math.round(x));
+  const c = Number(consensusFv);
+  if (consensusFv != null && isFinite(c)) return String(Math.ceil(c));
+  return "";
+}
+// The same number, labelled with the basis it came from. The board column has a
+// header saying "FV" and no room; a sub-line has room to be exact.
+function _tmFvText(xfvGrade, consensusFv) {
+  const n = _tmFvNum(xfvGrade, consensusFv);
+  if (!n) return "";
+  return ((xfvGrade != null && isFinite(Number(xfvGrade))) ? "eFV " : "FV ") + n;
+}
+
 const _TM = { a: [], b: [], detail: null, detailLoading: false };
 
 function _tmEnsureDetail() {
@@ -164,6 +199,17 @@ function _tmValueLabel(proj) {
   return "contract surplus";
 }
 
+// The rental leg, in $M. `surRos` is the balance of the season in progress -
+// undiscounted, prorated salary already netted out - and it is the reason a
+// deadline vet is priceable at all. It drove a label string and nothing else, so
+// the split between "what he is worth for the stretch run" and "what he is worth
+// after it" was carried in the artifact and shown nowhere. Note the unit break in
+// the projection payload: surTotal / surNpv are raw dollars, surRos is $M.
+function _tmRosMm(proj) {
+  return (proj && proj.surRos != null && isFinite(Number(proj.surRos)))
+    ? Number(proj.surRos) : null;
+}
+
 // Translatability with MLB Projections: a "⇄ Trade Machine" link on a player's
 // /projections/ page deep-links here as #tab=trademachine&tm=<kind>:<key>, which
 // pre-loads that player into Side A so you can value him against a package.
@@ -177,14 +223,16 @@ function _tmSeedFromURL() {
     const p = (DATA.players || []).find(x => x.player_key === key);
     const sv = p && p.surplus && p.surplus.value_mm;
     if (sv != null) { _TM.a.push({ kind: "prospect", key, name: p.player_name, pos: p.position || "", org: p.org || "",
-      sub: `${p.position || ""} · ${p.org || ""} · FV ${p.fv_close ?? "?"}`, mm: sv }); _TM.seeded = true; }
+      sub: [p.position || "", p.org || "", _tmFvText(p.xfv_grade, p.fv_close)].filter(Boolean).join(" · "),
+      mm: sv }); _TM.seeded = true; }
   } else if (kind === "mlb") {
     if (!_TM.detail) return;                 // detail still loading; seed on the re-render
     const d = _TM.detail[key];
     const pv = d ? _tmProjValue(d.proj) : null;
     if (pv != null) {
       _TM.a.push({ kind: "mlb", key, name: d.name, pos: d.pos || "", org: d.team || "",
-        sub: `${d.pos || ""} · ${d.team || "FA"} · ${_tmValueLabel(d.proj)}`, mm: pv / 1e6 });
+        sub: `${d.pos || ""} · ${d.team || "FA"} · ${_tmValueLabel(d.proj)}`, mm: pv / 1e6,
+        ros: _tmRosMm(d.proj) });
     } else {
       const b = (DATA.mlbBoard || []).find(x => x.player_key === key);
       if (b) _TM.a.push({ kind: "mlb", key, name: b.player_name, pos: b.position || "",
@@ -204,7 +252,8 @@ function _tmSearch(q) {
       const sv = p.surplus && p.surplus.value_mm;
       if (sv != null) out.push({ kind: "prospect", key: p.player_key,
         name: p.player_name, org: p.org || "", pos: p.position || "",
-        sub: `${p.position || ""} · ${p.org || ""} · FV ${p.fv_close ?? "?"}`,
+        sub: [p.position || "", p.org || "",
+              _tmFvText(p.xfv_grade, p.fv_close)].filter(Boolean).join(" · "),
         mm: sv });
     }
   }
@@ -217,7 +266,7 @@ function _tmSearch(q) {
         out.push({ kind: "mlb", key: k, name: d.name,
           org: d.team || "", pos: d.pos || "",
           sub: `${d.pos || ""} · ${d.team || "FA"} · ${_tmValueLabel(d.proj)}`,
-          mm: pv / 1e6 });
+          mm: pv / 1e6, ros: _tmRosMm(d.proj) });
       }
     }
   }
@@ -280,12 +329,19 @@ function renderTradeMachine() {
   const sideHtml = (side, label) => {
     const list = _TM[side].map((x, i) => {
       const g = _tbGrade(x.mm), gc = _tbGradeColor(g);   // contract-adjusted surplus -> letter
+      // Rental split, shown rather than merely labelled: how much of this
+      // player's price is the balance of the season in progress, and therefore
+      // how much of it a buyer keeps past October.
+      const rest = (x.ros != null && x.mm != null) ? (x.mm - x.ros) : null;
+      const rosChip = x.ros == null ? "" :
+        `<span class="tm-sub" title="Rest-of-season control ${_tbFmt(x.ros)} of ${_tbFmt(x.mm)}${rest != null ? `, ${_tbFmt(rest)} in controlled seasons after it` : ""}. The balance of the season in progress, undiscounted, with the prorated salary already netted out.">rental ${_tbFmt(x.ros)}</span>`;
       return `
       <div class="tm-row">
         <span class="tm-kind tm-kind--${x.kind}" title="${x.kind === "prospect" ? "Prospect (eFV surplus)" : "MLB (contract surplus)"}">${x.kind === "prospect" ? "P" : "M"}</span>
         ${_tmTeamLogo(x.org)}
         <a class="fa-player-link tm-name" href="${x.kind === "prospect" ? `/prospx/#player=${encodeURIComponent(x.key)}` : `/projections/#player=${encodeURIComponent(x.key)}`}">${escapeHtml(x.name)}</a>
         <span class="tm-sub">${escapeHtml(x.pos || "")}</span>
+        ${rosChip}
         ${g ? `<span class="tm-grade-chip" style="color:${gc};border-color:${gc};" title="Trade Value Grade ${g} (contract-adjusted surplus)">${g}</span>` : ""}
         <span class="tm-val" style="color:${_tmValColor(x.mm)};">${(x.mm || 0) >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M</span>
         <button class="tm-x" data-tm-remove="${side}:${i}" title="Remove">×</button>
@@ -782,10 +838,9 @@ function _renderTBRows() {
     // eFV leads (round-to-NEAREST), consensus ceil as the fallback. The row
     // already carried xfv_grade and this column read only the consensus close,
     // so a prospect the board grades 60 showed 59 on the trade board while the
-    // Grade column beside it was already ranking on xfv_grade.
-    const fv    = !isProspect ? ""
-                : p.xfv_grade != null ? String(Math.round(Number(p.xfv_grade)))
-                : p.fv != null ? String(Math.ceil(Number(p.fv))) : "";
+    // Grade column beside it was already ranking on xfv_grade. The rule now
+    // lives in _tmFvNum, shared with the evaluator's search + seed sub-lines.
+    const fv    = !isProspect ? "" : _tmFvNum(p.xfv_grade, p.fv);
     // Position: trade_values.json now carries fielding-corrected position
     const pos   = escapeHtml(p.position || "");
     const org   = escapeHtml(p.org || "");   // may be empty for some players
@@ -793,8 +848,18 @@ function _renderTBRows() {
     const isMlb = _tbIsMlb(p);
     const statusCol = isMlb ? "var(--neon-violet)" : "var(--neon-green)";
     const statusLbl = isMlb ? "MLB" : "MiLB";
+    // Range tooltip. The band is NAMED, because two different ones ship: an eFV
+    // credible interval on a prospect-era surplus, and (since 2026-08-03) the
+    // projection's own p10-p90 WAR fan repriced with salary held fixed, which is
+    // what gives a re-pointed veteran a range again. Formatted through _tbFmt
+    // because a projection band can go negative and "$-63.6-$799.4M" is not a
+    // range anyone can read.
     const lo = p.trade_value_lo, hi = p.trade_value_hi;
-    const rangeTip = (lo != null && hi != null) ? `Range: $${lo}-$${hi}M` : "";
+    const rangeTip = (lo != null && hi != null)
+      ? `Range ${_tbFmt(lo)} to ${_tbFmt(hi)} · ` + (p.band_basis === "projection"
+          ? "projection p10-p90 WAR fan, salary held fixed (every season at its own p10 together, so it is wide)"
+          : "eFV credible interval")
+      : "";
     const flash = p.flash || {};
     const injD  = p.injury_discount || 0;
 
@@ -1091,6 +1156,10 @@ function _tbShowGroup(playerKey) {
       .map(p => ({
         player_key: p.player_key, player_name: p.player_name,
         position: p.position, org: p.org, fv_close: p.fv,
+        // The eFV grade the board's FV column leads with. Dropped here, so the
+        // evaluator's search fell back to the raw consensus close and showed a
+        // different FV for the same prospect.
+        xfv_grade: p.xfv_grade != null ? p.xfv_grade : null,
         surplus: { value_mm: p.posterior_surplus_mm }
       }));
     // Valued MLB rows, kept for search. The prospect pool above drops every

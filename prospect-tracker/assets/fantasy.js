@@ -239,7 +239,7 @@
           '</span><span class="mlb-sub">' + esc(d.pos || "") + (d.org ? " &middot; " + esc(d.org) : "") + "</span></div>";
       } },
     { key: "efv", label: "eFV", term: "xfv", where: "head", track: "72px", strong: true,
-      title: "The eFV grade, rounded to NEAREST (eFV and plus-stats round to nearest; consensus FV grades display as ceiling).",
+      title: "The eFV board grade - the same number the PROSPX board and Call-up Watch serve for this prospect - rounded to NEAREST (eFV and plus-stats round to nearest; consensus FV grades display as ceiling). The dynasty rank blends it with star odds, bust odds, ETA and surplus.",
       get: function (d) { return d.efv; }, fmt: f0 },
     { key: "eta", label: "ETA", where: "head", track: "72px", asc: true,
       get: function (d) { return d.eta; }, cell: function (d) { return esc(d.eta || "-"); } },

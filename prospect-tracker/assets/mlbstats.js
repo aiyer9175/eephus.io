@@ -34,13 +34,62 @@
   // fa.js, and like fa.js it is a spaced hyphen: real em-dashes are banned in
   // user-facing copy and tools/strip_emdashes.py lints assets/*.js.
   var EM_DASH = " - ";
-  function fInt(v) { var n = num(v); return n == null ? "-" : String(Math.round(n)); }
-  function f1(v) { var n = num(v); return n == null ? "-" : n.toFixed(1); }
-  function f2(v) { var n = num(v); return n == null ? "-" : n.toFixed(2); }
+
+  // Mirror of PROSPX's formatMetric for the types this surface renders -
+  // same precision rules, same null token, same -0 collapse. Kept local so
+  // the MLB Stats page never imports the 2.4MB PROSPX script.
+  function formatMetric(value, type = "int") {
+    const n = Number(value);
+    if (value == null || value === "" || !Number.isFinite(n)) return EM_DASH;
+    const z = n === 0 ? 0 : n;                       // collapse -0 -> 0
+    const sign = z > 0 ? "+" : (z < 0 ? "-" : "");   // zero is unsigned
+    const abs = Math.abs(z);
+    switch (type) {
+      case "int":      return String(Math.round(z));
+      case "war":      return z.toFixed(1);
+      case "rate":     return sign + abs.toFixed(2);
+      case "surplusM": return sign + "$" + abs.toFixed(1) + "M";
+      // MINUS but never PLUS. Dropping the sign entirely was harmless for the
+      // guarantees and AAVs this surface passes it (all positive) but rendered
+      // a NEGATIVE dollar figure as a positive one, and /projections/ prices
+      // surplus through this same type, where negatives are now common
+      // (rest-of-season control pricing, 2026-08-03). A liability shown as an
+      // asset is the worst possible rounding of that number. The leading "+"
+      // that `sign` would add belongs to surplusM, where the direction is the
+      // point; on a contract guarantee it is noise.
+      case "moneyM":   return (z < 0 ? "-" : "") + "$"
+                            + (abs >= 100 ? abs.toFixed(0) : abs.toFixed(1)) + "M";
+      case "pct":      return z.toFixed(1) + "%";
+      default:         return String(z);
+    }
+  }
+  // ^ CHARACTER-IDENTICAL to the copies in assets/fa.js and
+  // assets/projections.js, including the comments and the FA-specific docstring
+  // above it: test_number_format_parity.py compares the extracted text, so a
+  // "tidied" copy is a failing copy. This surface was outside that contract
+  // entirely until 2026-08-03 - it carried its own EM_DASH and six one-off
+  // formatters, two of which rendered an absent number as a bare "-" while
+  // every other board on the site rendered " - ". Extending the test's MIRRORS
+  // list to cover this file is a follow-up for the orchestrator; until then
+  // this copy is pinned by review only.
+  //
+  // The board formatters below ROUTE through the mirror wherever the type
+  // exists, and where it does not they at least share its null token. What
+  // stays local is stated, not left to be rediscovered:
+  //   f2  - ERA / FIP / gmLI want two decimals and NEVER a sign. The mirror's
+  //         "rate" type is signed, which would print a 3.45 ERA as "+3.45".
+  //   f3  - the baseball slash convention (.300, leading zero dropped) has no
+  //         type in the contract; OPS over 1 keeps its leading digit.
+  //   fSigned - one decimal, signed. "rate" is two decimals.
+  function fInt(v) { return formatMetric(v, "int"); }
+  function f1(v) { return formatMetric(v, "war"); }
+  function f2(v) { var n = num(v); return n == null ? EM_DASH : n.toFixed(2); }
   // 3-decimal baseball slash formatter: .300 (drops the leading zero; OPS>1 keeps it).
-  function f3(v) { var n = num(v); return n == null ? "-" : n.toFixed(3).replace(/^0\./, "."); }
-  function fPct(v) { var n = num(v); return n == null ? "-" : (n * 100).toFixed(1) + "%"; }
-  function fSigned(v) { var n = num(v); if (n == null) return "-"; return (n > 0 ? "+" : "") + n.toFixed(1); }
+  function f3(v) { var n = num(v); return n == null ? EM_DASH : n.toFixed(3).replace(/^0\./, "."); }
+  // The payload carries rates as fractions and the contract's "pct" type
+  // formats an already-scaled percentage, so scale first, then hand it over.
+  function fPct(v) { var n = num(v); return n == null ? EM_DASH : formatMetric(n * 100, "pct"); }
+  function fSigned(v) { var n = num(v); if (n == null) return EM_DASH; return (n > 0 ? "+" : "") + n.toFixed(1); }
   function logo(team) {
     try { return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo) ? EEPHUS_HUB.teamLogo(team) : ""; }
     catch (e) { return ""; }
@@ -144,6 +193,71 @@
     try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(el); } catch (e) { /* glossary optional */ }
   }
 
+  // ---- shared filter controls -----------------------------------------------
+  // Every board on this surface shipped with exactly two filters: a search box
+  // and a "qualified only" checkbox. The rows already carry team, role, innings
+  // and plate appearances, so these narrow client-side off what is on screen
+  // and never refetch. Markup rides the existing .mlbstats-bar input/select
+  // rule and the .mlbstats-season pill, so there is no second control language.
+  //
+  // The option list is built from the ROWS, not a static club map, so it can
+  // never offer a team the active board (or the active season) has nobody on.
+  function teamSelect(id, rows, sel) {
+    var seen = {}, out = [];
+    (rows || []).forEach(function (r) { if (r.team && !seen[r.team]) { seen[r.team] = 1; out.push(r.team); } });
+    out.sort();
+    var opts = '<option value="">All teams</option>' + out.map(function (t) {
+      return '<option value="' + esc(t) + '"' + (t === sel ? " selected" : "") + ">" + esc(t) + "</option>";
+    }).join("");
+    return '<label class="mlbstats-ctl">team <select id="' + id + '" aria-label="Filter by team">'
+      + opts + "</select></label>";
+  }
+  // A numeric floor (min IP / min PA). Empty means no floor, which is not the
+  // same as zero: the qualified-only checkbox is a different, coarser gate and
+  // the two compose.
+  function minSelect(id, label, val, title) {
+    return '<label class="mlbstats-ctl"' + (title ? ' title="' + esc(title) + '"' : "") + ">" + esc(label)
+      + ' <input class="mlbstats-minnum" type="number" min="0" step="1" inputmode="numeric" id="'
+      + id + '" value="' + (val == null ? "" : esc(val)) + '" aria-label="' + esc(label) + '"></label>';
+  }
+  // "" / non-numeric reads as "no floor" rather than 0, so clearing the box
+  // restores the unfiltered board instead of pinning it at zero.
+  function readMin(el) {
+    if (!el) return null;
+    var s = String(el.value == null ? "" : el.value).trim();
+    if (!s) return null;
+    var n = Number(s);
+    return isNaN(n) ? null : n;
+  }
+  function passesMin(v, min) {
+    if (min == null) return true;
+    var n = num(v);
+    return n != null && n >= min;
+  }
+  // Role chips reuse the season-pill markup wholesale: same active state, same
+  // phone swipe strip, same 44px touch target, no new CSS. Multi-select (an OR
+  // set) because "Closer + High-leverage" is the question people actually ask;
+  // "All" clears rather than toggling a tenth pill.
+  function roleSlug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "_"); }
+  function roleChips(rows, active, idPrefix) {
+    var counts = {}, n = 0;
+    (rows || []).forEach(function (r) { if (r.role) { counts[r.role] = (counts[r.role] || 0) + 1; n++; } });
+    if (!n) return "";
+    var roles = ROLE_ORDER.filter(function (x) { return counts[x]; });
+    Object.keys(counts).sort().forEach(function (x) { if (roles.indexOf(x) < 0) roles.push(x); });
+    var all = !active.length;
+    return '<div class="mlbstats-seasons mlbstats-roles" role="group" aria-label="Filter by bullpen role">'
+      + '<span class="mlbstats-roles-lbl">Role</span>'
+      + '<button type="button" class="mlbstats-season' + (all ? " active" : "") + '" id="' + idPrefix
+      + 'all" data-mlbrole="" aria-pressed="' + all + '">All</button>'
+      + roles.map(function (x) {
+          var on = active.indexOf(x) >= 0;
+          return '<button type="button" class="mlbstats-season' + (on ? " active" : "") + '" id="'
+            + idPrefix + roleSlug(x) + '" data-mlbrole="' + esc(x) + '" aria-pressed="' + on + '">'
+            + esc(x) + '<span class="proj-dim"> ' + counts[x] + "</span></button>";
+        }).join("") + "</div>";
+  }
+
   // ---- collapsible chart panels --------------------------------------------
   // Charts default to COLLAPSED (they are context, not the leaderboard). The
   // header is the click target; open/closed state persists in localStorage so a
@@ -192,6 +306,7 @@
     { key: "name", label: "Reliever", term: null, sortable: true, kind: "name", asc: true },
     { key: "rem_plus", label: "REM+", term: "rem_plus", fmt: remCell, num: true, desc: true, isRem: true },
     { key: "rem_plus_3yr", label: "REM+ 3yr", term: "rem_plus_3yr", num: true, desc: true, isRem: true,
+      vintage: "multiyear",
       get: function (r) { return r.rem_plus_3yr; },
       cell: function (r) {
         if (r.rem_plus_3yr == null) return "";
@@ -231,6 +346,7 @@
       get: function (r) { return r.war_ip_plus_adj; },
       cell: function (r) { return r.war_ip_plus_adj == null ? "" : remCell(r.war_ip_plus_adj); } },
     { key: "war_ip_plus_3yr", label: "WAR/IP+ 3yr", term: "war_ip_plus_rp_3yr", num: true, desc: true, isRem: true,
+      vintage: "multiyear_war_rate",
       get: function (r) { return r.war_ip_plus_3yr; },
       cell: function (r) {
         if (r.war_ip_plus_3yr == null) return "";
@@ -250,7 +366,13 @@
     { key: "swstr_pct", label: "SwStr%", fmt: fPct, num: true },
     { key: "era", label: "ERA", fmt: f2, num: true, asc: true },
     { key: "gmli", label: "gmLI", term: "gmli", fmt: f2, num: true },
+    // Frozen the same way as REM+ 3yr (leverage_consistency_eval.json), but its
+    // join stamps no vintage block on the payload, so there is no date to show
+    // and none is invented. Stamping one is an exporter change, not a frontend
+    // one: see _join_leverage_consistency in bullpen_export.py, which returns a
+    // row count where its sibling _join_rem_plus_3yr returns a vintage dict.
     { key: "gmli_3yr", label: "gmLI 3yr", term: "gmli_3yr", fmt: f2, num: true,
+      title: "Trailing 3-year game-entry Leverage Index, read verbatim from the frozen leverage-consistency artifact rather than recomputed with this board. Deployment context only, never an input to REM+. This artifact ships no vintage stamp, so unlike the other 3-year columns it cannot state its own date.",
       cell: function (r) {
         if (r.gmli_3yr == null) return "";
         var s = f2(r.gmli_3yr);
@@ -279,7 +401,14 @@
   var TEAM_COLS = [
     { key: "team", label: "Team", sortable: true, kind: "team", asc: true },
     { key: "bullpen_plus", label: "Bullpen+", term: "bullpen_plus", fmt: remCell, num: true, desc: true, isRem: true },
-    { key: "leverage_deploy_plus", label: "Lev Deploy+", term: "bullpen_plus", fmt: remCell, num: true },
+    // GLOSSARY PROXY, deliberate. There is no leverage_deploy_plus entry: the
+    // glossary defines bullpen_plus, and Lev Deploy+ is the same index computed
+    // on leverage-weighted rather than IP-weighted innings, so the tooltip
+    // explains the scale a reader needs even though the id is not this column's
+    // own. Point it at a real leverage_deploy_plus entry the day one exists;
+    // until then a near-miss definition beats no tooltip at all.
+    { key: "leverage_deploy_plus", label: "Lev Deploy+", term: "bullpen_plus", fmt: remCell, num: true,
+      title: "Bullpen+ recomputed on leverage-weighted innings: how good the arms are in the spots that actually decide games, rather than across all relief innings equally. Same 100-average scale." },
     { key: "n_above_avg", label: "Above-avg arms", fmt: fInt, num: true,
       get: function (t) { var a = num(t.n_above_avg), n = num(t.n_relievers); return a; },
       cell: function (t) { return fInt(t.n_above_avg) + (t.n_relievers != null ? '<span class="proj-dim"> / ' + fInt(t.n_relievers) + "</span>" : ""); } },
@@ -298,6 +427,15 @@
   var teamSort = { key: "bullpen_plus", asc: false };
   var query = "";
   var qualifiedOnly = true;
+  // Filters added 2026-08-03. Until then the only reachable narrowing on a
+  // 460-row reliever board was a free-text box and one binary checkbox, so
+  // "the Padres' high-leverage arms with 30+ innings" was a question the page
+  // could answer from data already on every row and offered no way to ask.
+  // All three are client-side off fields the payload already carries
+  // (team / role / ip); nothing here refetches.
+  var relTeam = "";                // "" = all clubs
+  var relRoles = [];               // empty = all roles; otherwise an OR set
+  var relMinIp = null;             // null = no floor
 
   // Yearly history board (bullpen_history.json) is lazy-fetched the first time a
   // past season is picked. relSeason is "current" for the live board or a season
@@ -329,14 +467,71 @@
     });
   }
 
+  // ---- frozen-vintage disclosure --------------------------------------------
+  // Several columns are NOT computed by the run that built the board: the
+  // trailing-window ones are read verbatim from frozen lab artifacts, so their
+  // numbers are as of the artifact's generated_at, not the board's as_of. The
+  // exporters have always passed that divergence down deliberately (see the
+  // docstring on bullpen_export._join_rem_plus_3yr, which says in as many words
+  // that it "returns the artifact's vintage block ... for the payload to carry
+  // and the frontend to disclose"), and the frontend has never once read it.
+  // A 3-year column three weeks stale beside a same-day 1-year column, with no
+  // date on either, is the whole reason those blocks exist.
+  //
+  // Payload key paths, confirmed against the served files:
+  //   <payload>.multiyear            -> REM+ 3yr / SEM+ 3yr / HEM+ 3yr
+  //   <payload>.multiyear_war_rate   -> WAR/IP+ 3yr / WAR/PA+ 3yr
+  // Each block carries { available, source, generated_at, season, window,
+  // n_stamped, n_in_artifact, note }. gmLI 3yr is frozen the same way (from
+  // leverage_consistency_eval.json) but its join stamps NO vintage block, so
+  // nothing here can date it and nothing here pretends to.
+  function vintageOf(meta, key) {
+    var b = meta && meta[key];
+    return (b && b.available && b.generated_at) ? b : null;
+  }
+  function vintageWindow(b) {
+    var w = b && b.window;
+    return (w && w.length >= 2) ? (w[0] + "-" + w[w.length - 1]) : "";
+  }
+  // Column-tooltip sentence, appended after whatever `title` the column already
+  // carries.
+  function vintageTitle(b) {
+    if (!b) return "";
+    var w = vintageWindow(b);
+    return "FROZEN LAB COLUMN: read verbatim from " + (b.source || "a lab artifact")
+      + ", generated " + b.generated_at + (w ? " over the " + w + " window" : "")
+      + ". These values are as of that date, NOT as of this board's date, so the column can"
+      + " trail the season columns beside it and anyone who entered the pool since then is blank.";
+  }
+  // Compact board note. `cols` is [[payload key, column label], ...]; a block
+  // that is absent or unavailable simply contributes nothing.
+  function vintageNote(meta, cols, extra) {
+    var bits = [];
+    (cols || []).forEach(function (p) {
+      var b = vintageOf(meta, p[0]);
+      if (!b) return;
+      var w = vintageWindow(b);
+      bits.push(esc(p[1]) + " as of " + esc(b.generated_at) + (w ? " (" + esc(w) + ")" : ""));
+    });
+    if (!bits.length) return "";
+    return '<div class="mlbstats-note mlbstats-vintage"><b>Frozen columns:</b> ' + bits.join(", ")
+      + ". The trailing-window columns are read verbatim from lab artifacts rather than recomputed"
+      + " with this board, so they carry their own date and stay blank for anyone who joined the"
+      + " pool after it." + (extra || "") + "</div>";
+  }
+
   // ---- render: shared table -------------------------------------------------
-  function renderTable(rows, cols, sort, onSort) {
+  // `meta` is the section payload, passed only so a column flagged
+  // `vintage: "<payload key>"` can date itself in its own tooltip.
+  function renderTable(rows, cols, sort, meta) {
     var head = "<thead><tr>";
     cols.forEach(function (c) {
       var sortable = !!c.num || c.kind === "name" || c.kind === "team";
       var sorted = (c.key === sort.key) ? " is-sorted" : "";
       var lbl = c.term ? gloss(c.label, c.term) : esc(c.label);
-      var title = c.title ? ' title="' + esc(c.title) + '"' : "";
+      var vint = c.vintage ? vintageTitle(vintageOf(meta, c.vintage)) : "";
+      var titleTxt = c.title ? (vint ? c.title + " " + vint : c.title) : vint;
+      var title = titleTxt ? ' title="' + esc(titleTxt) + '"' : "";
       // keyboard-operable sort headers (the trademachine _tbTh pattern):
       // tabbable, announced as sorted, activated by Enter/Space via bindSortKeys
       var a11y = sortable
@@ -352,12 +547,15 @@
       body += "<tr" + prov + ">";
       cols.forEach(function (c) {
         if (c.kind === "name") { body += nameCell(r); return; }
-        if (c.kind === "team") { body += '<td class="mlbstats-name">' + logo(r.team) + esc(r.team || "-") + "</td>"; return; }
+        if (c.kind === "team") { body += '<td class="mlbstats-name">' + logo(r.team) + esc(r.team || EM_DASH) + "</td>"; return; }
         if (c.cell) { body += "<td>" + c.cell(r) + "</td>"; return; }
         var v = getVal(c, r);
         // An absent value reads as the site-wide null marker rather than a
-        // blank cell. Columns with their own formatter keep it: they already
-        // decide how their own absence looks.
+        // blank cell. Columns with their own formatter keep it: those
+        // formatters all route through the shared number-format contract now,
+        // so they render the same token. A non-numeric value (none ship today)
+        // falls through to escaped text rather than the contract, which would
+        // read it as absent.
         var rendered = c.fmt ? c.fmt(v, c.term)
                      : (v == null || v === "" ? EM_DASH : esc(v));
         body += "<td>" + rendered + "</td>";
@@ -383,7 +581,7 @@
     var role = r.role ? ' <span class="bp-role">' + esc(r.role) + "</span>" : "";
     var team = r.team ? '<span class="proj-dim"> ' + esc(r.team) + "</span>" : "";
     var prov = (r.qualified === false) ? '<span class="bp-prov" title="below the qualifying sample - shown but provisional">prov</span>' : "";
-    var nm = esc(r.name || "-");
+    var nm = esc(r.name || EM_DASH);
     var href = playerHref(r);
     var name = href ? '<a class="mlbstats-name-link" href="' + href + '" title="Open the MLB player card">' + nm + "</a>" : nm;
     return '<td class="mlbstats-name">' + logo(r.team) + name + team + role + prov + "</td>";
@@ -418,15 +616,31 @@
   }
 
   // ---- views ----------------------------------------------------------------
-  function filteredRelievers() {
-    var rows = (DATA && DATA.relievers) || [];
+  // The unfiltered pool behind whichever season is selected. The controls read
+  // it too, so the team options and role chips always describe the board the
+  // user is looking at rather than the live season's roster.
+  function relSourceRows() {
+    if (relSeason !== "current") {
+      var yr = historyYear();
+      return (yr && yr.relievers) || [];
+    }
+    return (DATA && DATA.relievers) || [];
+  }
+  // ONE matcher for the live board and the history board: they took separate
+  // (identical) copies before, which is how a filter gets added to one and not
+  // the other. History rows carry team, role and ip, so every filter applies.
+  function relMatch(r) {
+    if (qualifiedOnly && r.qualified === false) return false;
+    if (relTeam && r.team !== relTeam) return false;
+    if (relRoles.length && relRoles.indexOf(r.role) < 0) return false;
+    if (!passesMin(r.ip, relMinIp)) return false;
     var q = query.trim().toLowerCase();
-    return rows.filter(function (r) {
-      if (qualifiedOnly && r.qualified === false) return false;
-      if (!q) return true;
-      return (String(r.name || "").toLowerCase().indexOf(q) >= 0
-        || String(r.team || "").toLowerCase().indexOf(q) >= 0);
-    });
+    if (!q) return true;
+    return (String(r.name || "").toLowerCase().indexOf(q) >= 0
+      || String(r.team || "").toLowerCase().indexOf(q) >= 0);
+  }
+  function filteredRelievers() {
+    return ((DATA && DATA.relievers) || []).filter(relMatch);
   }
 
   // ---- yearly history board -------------------------------------------------
@@ -466,14 +680,7 @@
   }
   function filteredHistory() {
     var yr = historyYear();
-    var rows = (yr && yr.relievers) || [];
-    var q = query.trim().toLowerCase();
-    return rows.filter(function (r) {
-      if (qualifiedOnly && r.qualified === false) return false;
-      if (!q) return true;
-      return (String(r.name || "").toLowerCase().indexOf(q) >= 0
-        || String(r.team || "").toLowerCase().indexOf(q) >= 0);
-    });
+    return ((yr && yr.relievers) || []).filter(relMatch);
   }
   // A past board can only sort on columns it actually shows; if the shared sort
   // key belongs to a current-only column, fall back to the REM+ default.
@@ -516,7 +723,10 @@
             + " is banked value per inning, anchored on RELIEVERS only, so it does not compare with the"
             + " starter board's column of the same name; 10 of its points is one standard deviation.</div>";
           return remExplainer() + scorecard() + relieverViz() + note
-            + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort) + "</div>";
+            + vintageNote(DATA, [["multiyear", "REM+ 3yr"], ["multiyear_war_rate", "WAR/IP+ 3yr"]],
+                " gmLI 3yr is frozen the same way, from the leverage-consistency artifact, which ships no"
+                + " date for the board to quote.")
+            + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort, DATA) + "</div>";
         })()
       : '<div class="mlbstats-empty">No relievers match the current filters.</div>';
     return seasonPills() + body;
@@ -581,8 +791,8 @@
     var cards = sorted.map(function (t) {
       var slots = teamDepth(t).map(function (r) {
         return '<div class="bp-slot">'
-          + '<span class="bp-slot-role">' + esc(r.role || "-") + "</span>"
-          + '<span class="bp-slot-name">' + esc(r.name || "-")
+          + '<span class="bp-slot-role">' + esc(r.role || EM_DASH) + "</span>"
+          + '<span class="bp-slot-name">' + esc(r.name || EM_DASH)
           + (r.gmli != null ? '<span class="proj-dim"> gmLI ' + f2(r.gmli) + "</span>" : "") + "</span>"
           + '<span class="bp-slot-rem ' + remClass(r.rem_plus) + '">' + fInt(r.rem_plus) + "</span>"
           + "</div>";
@@ -597,23 +807,39 @@
   }
 
   // ---- shell ----------------------------------------------------------------
-  function banner() {
-    if (!DATA) return "";
+  // FRESHNESS BANNER, one implementation for all four sections. This read
+  // season / as_of / coverage / verdict off the bullpen payload only, and wrote
+  // into the #mlbstats-banner div the page shell provides for that section
+  // alone - so Starters, Hitters and Leverage showed no date at all, even
+  // though every one of those payloads carries as_of (and Leverage carries a
+  // coverage block too). A stat board that will not say what day it is through
+  // is the one thing a reader cannot check for himself.
+  //
+  // The other three sections have no banner div in the shell, so they prepend
+  // the same markup inside their own root instead. `opts.noCoverage` is for
+  // Leverage, whose board note already prints a SEASON-AWARE coverage line
+  // (the live count is wrong for a past-season pill); one number, once.
+  function bannerHTML(d, opts) {
+    if (!d) return "";
+    var o = opts || {};
     var bits = [];
-    if (DATA.season) bits.push("Season " + esc(DATA.season));
-    if (DATA.as_of) bits.push("through " + esc(DATA.as_of));
-    if (DATA.coverage && DATA.coverage.games != null) {
-      var cov = DATA.coverage;
-      bits.push(esc(cov.games) + (cov.expected ? " / " + esc(cov.expected) : "") + " games of play-by-play");
+    if (d.season) bits.push("Season " + esc(d.season));
+    if (d.as_of) bits.push("through " + esc(d.as_of));
+    if (!o.noCoverage && d.coverage && d.coverage.games != null) {
+      var cov = d.coverage;
+      // bullpen stamps `expected`, leverage stamps `games_total`.
+      var tot = (cov.expected != null) ? cov.expected : cov.games_total;
+      bits.push(esc(cov.games) + (tot != null ? " / " + esc(tot) : "") + " games of play-by-play");
     }
-    if (DATA.verdict === "validated") {
-      bits.push('<span class="bp-validated" title="Backtested out of sample - see the REM+ scorecard below">backtested</span>');
-    } else if (DATA.verdict) {
-      bits.push('<span class="bp-prov" style="margin-left:0">' + esc(DATA.verdict) + "</span>");
+    if (d.verdict === "validated") {
+      bits.push('<span class="bp-validated" title="Backtested out of sample - see the scorecard below">backtested</span>');
+    } else if (d.verdict) {
+      bits.push('<span class="bp-prov" style="margin-left:0">' + esc(d.verdict) + "</span>");
     }
     if (!bits.length) return "";
-    return '<div class="mlbstats-note">' + bits.join(" &middot; ") + "</div>";
+    return '<div class="mlbstats-note mlbstats-freshness">' + bits.join(" &middot; ") + "</div>";
   }
+  function banner() { return bannerHTML(DATA); }
 
   // REM+ accountability scorecard - mirrors PAL's pattern so a validated model
   // surfaces its out-of-sample backtest to users, not just a status word.
@@ -622,8 +848,8 @@
     if (b.rho_rem_plus == null) return "";
     return '<div class="mlbstats-scorecard">'
       + '<span class="pal-sc-stat">' + gloss("REM+", "rem_plus") + ' forward &rho; <b>'
-      + b.rho_rem_plus + '</b><span class="proj-dim"> vs FIP ' + (b.rho_fip == null ? "-" : b.rho_fip)
-      + ", ERA " + (b.rho_era == null ? "-" : b.rho_era) + "</span></span>"
+      + b.rho_rem_plus + '</b><span class="proj-dim"> vs FIP ' + (b.rho_fip == null ? EM_DASH : b.rho_fip)
+      + ", ERA " + (b.rho_era == null ? EM_DASH : b.rho_era) + "</span></span>"
       + '<span class="pal-sc-stat"><b>' + esc(b.n_pairs) + "</b> out-of-sample year pairs"
       + (b.seasons ? '<span class="proj-dim"> (' + esc(b.seasons) + " seasons)</span>" : "") + "</span>"
       + (b.market_rho == null ? "" : '<span class="pal-sc-stat">market fit &rho; <b>' + b.market_rho + '</b><span class="proj-dim"> vs AAV</span></span>')
@@ -649,12 +875,17 @@
       return teamChip ? '<div class="mlbstats-bar">' + teamChip + "</div>" : "";
     }
     if (view !== "relievers") return "";
+    var pool = relSourceRows();
     return '<div class="mlbstats-bar">'
-      + '<label style="font-size:11px;color:var(--text-tertiary);display:inline-flex;gap:5px;align-items:center;">'
+      + '<label class="mlbstats-ctl">'
       + '<input type="checkbox" id="mlbstats-qual"' + (qualifiedOnly ? " checked" : "") + "> qualified only</label>"
+      + teamSelect("mlbstats-team", pool, relTeam)
+      + minSelect("mlbstats-minip", "min IP", relMinIp,
+          "Hide relievers under this many innings. Composes with qualified only, which is the coarser gate.")
       + gfxChip("mlbstats-rel-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-q" placeholder="Search reliever or team" value="' + esc(query) + '">'
-      + "</div>";
+      + "</div>"
+      + roleChips(pool, relRoles, "mlbstats-role-");
   }
 
   function render() {
@@ -695,6 +926,29 @@
     if (q) q.addEventListener("input", function () { query = q.value; renderInPlace(); });
     var qual = root.querySelector("#mlbstats-qual");
     if (qual) qual.addEventListener("change", function () { qualifiedOnly = qual.checked; renderInPlace(); });
+    // Each control re-renders in place and hands focus back to ITSELF, so a
+    // keyboard user is not thrown to the search box every time he narrows.
+    var relTeamSel = root.querySelector("#mlbstats-team");
+    if (relTeamSel) relTeamSel.addEventListener("change", function () {
+      relTeam = relTeamSel.value || "";
+      renderInPlace("mlbstats-team");
+    });
+    var relMin = root.querySelector("#mlbstats-minip");
+    if (relMin) relMin.addEventListener("input", function () {
+      relMinIp = readMin(relMin);
+      renderInPlace("mlbstats-minip");
+    });
+    root.querySelectorAll("[data-mlbrole]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var v = b.getAttribute("data-mlbrole");
+        if (!v) relRoles = [];
+        else {
+          var i = relRoles.indexOf(v);
+          if (i >= 0) relRoles.splice(i, 1); else relRoles.push(v);
+        }
+        renderInPlace(b.id || null);
+      });
+    });
     var relGfx = root.querySelector("#mlbstats-rel-gfx");
     if (relGfx) relGfx.addEventListener("click", function () {
       if (!window.EEPHUS_GFX) return;
@@ -712,6 +966,7 @@
       b.addEventListener("click", function () {
         relSeason = b.getAttribute("data-mlbseason");
         if (relSeason !== "current") loadHistory();
+        writeHash();
         render();
       });
     });
@@ -731,13 +986,25 @@
         var sort = (view === "teams") ? teamSort : relSort;
         if (sort.key === key) sort.asc = !sort.asc;
         else { sort.key = key; sort.asc = !!col.asc; }
+        writeHash();
         render();
       });
     });
   }
 
-  // Re-render only the table region (keeps search-box focus on input).
-  function renderInPlace() {
+  // Focus restore after an in-place re-render. The innerHTML swap destroys the
+  // control the user was operating, so whichever one triggered the render gets
+  // put back under the caret. setSelectionRange throws on input[type=number] in
+  // Chromium, hence the guard - the focus still lands.
+  function restoreFocus(root, id) {
+    var el = root.querySelector("#" + (id || "mlbstats-q"));
+    if (!el) return;
+    el.focus();
+    try { el.setSelectionRange(el.value.length, el.value.length); } catch (e) { /* not a text field */ }
+  }
+
+  // Re-render only the table region (keeps focus on the control being used).
+  function renderInPlace(focusId) {
     var root = document.getElementById("mlbstats-app-root");
     if (!root) return;
     var inner = (view === "teams") ? renderTeams() : (view === "depth") ? renderDepth() : renderRelievers();
@@ -745,13 +1012,51 @@
     var tabsHtml = tabBar();
     var ctrlHtml = controls();
     root.innerHTML = tabsHtml + ctrlHtml + inner;
-    // restore focus + caret to the search field
-    var q = root.querySelector("#mlbstats-q");
-    if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+    restoreFocus(root, focusId);
     bindEvents(root);
     wireGlossary(root);
   }
 
+  // ---- deep-linkable page state ---------------------------------------------
+  // Section + view have been in the hash for a while; SEASON and SORT were not,
+  // so a URL copied off "2024 relievers sorted by K-BB%" reopened on the
+  // current season sorted by REM+ - a link that silently shows something else
+  // is worse than no link. Both are in the hash now.
+  //
+  // Sort encodes as "<column key>.<a|d>" (ascending / descending). Only the
+  // per-board DEFAULT is omitted, so a fresh board still produces the short URL
+  // it always did and an old URL, which carries none of these keys, restores
+  // exactly what it used to.
+  var SORT_DEFAULTS = {
+    rsort:  { key: "rem_plus", asc: false },        // Relievers
+    rtsort: { key: "bullpen_plus", asc: false },    // Team Bullpens
+    ssort:  { key: "sem_plus", asc: false },        // Starters
+    stsort: { key: "rotation_plus", asc: false },   // Team Rotations
+    hsort:  { key: "hem_plus", asc: false },        // Hitters
+    htsort: { key: "offense_plus", asc: false },    // Team Lineups
+    lbsort: { key: "wpa", asc: false },             // Leverage: batters
+    lssort: { key: "wpa", asc: false },             // Leverage: starters
+  };
+  // A season key is "current" or a four-digit year; anything else is ignored
+  // rather than trusted, because the value goes straight into a payload lookup.
+  function readSeason(h, key, fallback) {
+    var m = new RegExp("(?:^#|[#&])" + key + "=(current|\\d{4})\\b").exec(h);
+    return m ? m[1] : fallback;
+  }
+  // A sort key is only honoured if the named column EXISTS on that board and is
+  // actually sortable; a stale or hand-edited URL falls back to the default
+  // instead of leaving the board sorted by a column it does not have.
+  function readSort(h, key, cols, sort) {
+    var m = new RegExp("(?:^#|[#&])" + key + "=([A-Za-z0-9_]+)\\.([ad])\\b").exec(h);
+    if (!m) return;
+    var ok = false;
+    (cols || []).forEach(function (c) {
+      if (c.key === m[1] && (c.num || c.kind === "name" || c.kind === "team")) ok = true;
+    });
+    if (!ok) return;
+    sort.key = m[1];
+    sort.asc = (m[2] === "a");
+  }
   function readHash() {
     var h = location.hash || "";
     // Top-level section deep-link (#section=bullpen|starters|hitters) + the
@@ -767,19 +1072,52 @@
     if (hv) hitterView = hv[1];
     var lv = /(?:^#|[#&])lview=(batters|starters)\b/.exec(h);
     if (lv) leverageView = lv[1];
+    // Season pills. readHash runs from init(), after every one of these vars
+    // and column arrays has been assigned, so the forward references are safe.
+    relSeason = readSeason(h, "rseason", relSeason);
+    starterSeason = readSeason(h, "sseason", starterSeason);
+    hitterSeason = readSeason(h, "hseason", hitterSeason);
+    leverageSeason = readSeason(h, "lseason", leverageSeason);
+    // Sort per board.
+    readSort(h, "rsort", REL_COLS, relSort);
+    readSort(h, "rtsort", TEAM_COLS, teamSort);
+    readSort(h, "ssort", STARTER_COLS, starterSort);
+    readSort(h, "stsort", STARTER_TEAM_COLS, starterTeamSort);
+    readSort(h, "hsort", HITTER_COLS, hitterSort);
+    readSort(h, "htsort", HITTER_TEAM_COLS, hitterTeamSort);
+    readSort(h, "lbsort", BAT_LEV_COLS, leverageBatSort);
+    readSort(h, "lssort", STARTER_LEV_COLS, leverageStarterSort);
   }
 
-  // Compose the FULL page state into the hash on every section/tab switch so a
-  // copied URL restores what the user sees. The section is always written; the
-  // per-section views only when off their defaults (keeps URLs short), and the
-  // single replaceState never clobbers a deep-linked #section= the way the old
-  // bullpen-only "#view=" write did.
+  // Compose the FULL page state into the hash on every section/tab/season/sort
+  // change so a copied URL restores what the user sees. The section is always
+  // written; everything else only when off its default (keeps URLs short), and
+  // the single replaceState never clobbers a deep-linked #section= the way the
+  // old bullpen-only "#view=" write did.
+  function pushSort(parts, key, sort) {
+    var d = SORT_DEFAULTS[key];
+    if (!sort || !sort.key) return;
+    if (d && sort.key === d.key && !!sort.asc === !!d.asc) return;
+    parts.push(key + "=" + sort.key + "." + (sort.asc ? "a" : "d"));
+  }
   function writeHash() {
     var parts = ["section=" + section];
     if (view !== "relievers") parts.push("view=" + view);
     if (starterView !== "starters") parts.push("sview=" + starterView);
     if (hitterView !== "hitters") parts.push("hview=" + hitterView);
     if (leverageView !== "batters") parts.push("lview=" + leverageView);
+    if (relSeason && relSeason !== "current") parts.push("rseason=" + relSeason);
+    if (starterSeason && starterSeason !== "current") parts.push("sseason=" + starterSeason);
+    if (hitterSeason && hitterSeason !== "current") parts.push("hseason=" + hitterSeason);
+    if (leverageSeason && leverageSeason !== "current") parts.push("lseason=" + leverageSeason);
+    pushSort(parts, "rsort", relSort);
+    pushSort(parts, "rtsort", teamSort);
+    pushSort(parts, "ssort", starterSort);
+    pushSort(parts, "stsort", starterTeamSort);
+    pushSort(parts, "hsort", hitterSort);
+    pushSort(parts, "htsort", hitterTeamSort);
+    pushSort(parts, "lbsort", leverageBatSort);
+    pushSort(parts, "lssort", leverageStarterSort);
     try { history.replaceState(null, "", "#" + parts.join("&")); } catch (e) { /* hash optional */ }
   }
 
@@ -816,6 +1154,8 @@
   var starterTeamSort = { key: "rotation_plus", asc: false };
   var starterQuery = "";
   var starterQualifiedOnly = true;
+  var starterTeam = "";                       // "" = all clubs
+  var starterMinIp = null;                    // null = no floor
 
   // Yearly history board (starter_history.json), lazy-fetched the first time a
   // past season pill is picked. Mirrors the reliever history state machine.
@@ -830,6 +1170,7 @@
     { key: "name", label: "Starter", term: null, sortable: true, kind: "name", asc: true },
     { key: "sem_plus", label: "SEM+", term: "sem_plus", fmt: remCell, num: true, desc: true, isRem: true },
     { key: "sem_plus_3yr", label: "SEM+ 3yr", term: "sem_plus_3yr", num: true, desc: true, isRem: true,
+      vintage: "multiyear",
       get: function (r) { return r.sem_plus_3yr; },
       cell: function (r) {
         if (r.sem_plus_3yr == null) return "";
@@ -870,6 +1211,7 @@
       get: function (r) { return r.war_ip_plus_adj; },
       cell: function (r) { return r.war_ip_plus_adj == null ? "" : remCell(r.war_ip_plus_adj); } },
     { key: "war_ip_plus_3yr", label: "WAR/IP+ 3yr", term: "war_ip_plus_sp_3yr", num: true, desc: true, isRem: true,
+      vintage: "multiyear_war_rate",
       get: function (r) { return r.war_ip_plus_3yr; },
       cell: function (r) {
         if (r.war_ip_plus_3yr == null) return "";
@@ -901,7 +1243,7 @@
 
   var STARTER_TEAM_COLS = [
     { key: "team", label: "Team", sortable: true, kind: "team", asc: true },
-    { key: "rotation_plus", label: "Rotation+", fmt: remCell, num: true, desc: true, isRem: true },
+    { key: "rotation_plus", label: "Rotation+", term: "rotation_plus", fmt: remCell, num: true, desc: true, isRem: true },
     { key: "front_sem", label: "Front 3", fmt: remCell, num: true },
     { key: "n_above_avg", label: "Above-avg", fmt: fInt, num: true,
       get: function (t) { return num(t.n_above_avg); },
@@ -927,8 +1269,8 @@
     if (b.rho_sem_plus == null) return "";
     return '<div class="mlbstats-scorecard">'
       + '<span class="pal-sc-stat">' + gloss("SEM+", "sem_plus") + ' forward &rho; <b>'
-      + b.rho_sem_plus + '</b><span class="proj-dim"> vs FIP ' + (b.rho_fip == null ? "-" : b.rho_fip)
-      + ", ERA " + (b.rho_era == null ? "-" : b.rho_era) + "</span></span>"
+      + b.rho_sem_plus + '</b><span class="proj-dim"> vs FIP ' + (b.rho_fip == null ? EM_DASH : b.rho_fip)
+      + ", ERA " + (b.rho_era == null ? EM_DASH : b.rho_era) + "</span></span>"
       + '<span class="pal-sc-stat"><b>' + esc(b.n_pairs) + "</b> out-of-sample year pairs"
       + (b.seasons ? '<span class="proj-dim"> (' + esc(b.seasons) + " seasons)</span>" : "") + "</span>"
       + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
@@ -967,26 +1309,31 @@
   function starterHistoryYear() {
     return (STARTER_HISTORY && STARTER_HISTORY.history && STARTER_HISTORY.history[starterSeason]) || null;
   }
-  function filteredStarters() {
-    var rows = (starterData && starterData.starters) || [];
+  // The unfiltered pool behind the active season pill, so the team options
+  // describe the board on screen.
+  function starterSourceRows() {
+    if (starterSeason !== "current") {
+      var yr = starterHistoryYear();
+      return (yr && yr.starters) || [];
+    }
+    return (starterData && starterData.starters) || [];
+  }
+  // One matcher for the live and history boards (see relMatch).
+  function starterMatch(r) {
+    if (starterQualifiedOnly && r.qualified === false) return false;
+    if (starterTeam && r.team !== starterTeam) return false;
+    if (!passesMin(r.ip, starterMinIp)) return false;
     var q = starterQuery.trim().toLowerCase();
-    return rows.filter(function (r) {
-      if (starterQualifiedOnly && r.qualified === false) return false;
-      if (!q) return true;
-      return (String(r.name || "").toLowerCase().indexOf(q) >= 0
-        || String(r.team || "").toLowerCase().indexOf(q) >= 0);
-    });
+    if (!q) return true;
+    return (String(r.name || "").toLowerCase().indexOf(q) >= 0
+      || String(r.team || "").toLowerCase().indexOf(q) >= 0);
+  }
+  function filteredStarters() {
+    return ((starterData && starterData.starters) || []).filter(starterMatch);
   }
   function filteredStarterHistory() {
     var yr = starterHistoryYear();
-    var rows = (yr && yr.starters) || [];
-    var q = starterQuery.trim().toLowerCase();
-    return rows.filter(function (r) {
-      if (starterQualifiedOnly && r.qualified === false) return false;
-      if (!q) return true;
-      return (String(r.name || "").toLowerCase().indexOf(q) >= 0
-        || String(r.team || "").toLowerCase().indexOf(q) >= 0);
-    });
+    return ((yr && yr.starters) || []).filter(starterMatch);
   }
   // A past board can only sort on columns it shows; if the shared sort key is a
   // current-only column (SEM+ 3yr), fall back to the SEM+ default.
@@ -1007,8 +1354,11 @@
   function starterControls() {
     if (starterView !== "starters") return "";
     return '<div class="mlbstats-bar">'
-      + '<label style="font-size:11px;color:var(--text-tertiary);display:inline-flex;gap:5px;align-items:center;">'
+      + '<label class="mlbstats-ctl">'
       + '<input type="checkbox" id="mlbstats-starter-qual"' + (starterQualifiedOnly ? " checked" : "") + "> qualified only</label>"
+      + teamSelect("mlbstats-starter-team", starterSourceRows(), starterTeam)
+      + minSelect("mlbstats-starter-minip", "min IP", starterMinIp,
+          "Hide starters under this many innings. Composes with qualified only, which is the coarser gate.")
       + gfxChip("mlbstats-starter-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-starter-q" placeholder="Search starter or team" value="' + esc(starterQuery) + '">'
       + "</div>";
@@ -1026,7 +1376,8 @@
             + " is banked value per inning, anchored on STARTERS only, so it does not compare with the"
             + " reliever board's column of the same name; 10 of its points is one standard deviation.</div>";
           return semExplainer() + starterScorecard() + note
-            + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_COLS, starterSort) + "</div>";
+            + vintageNote(starterData, [["multiyear", "SEM+ 3yr"], ["multiyear_war_rate", "WAR/IP+ 3yr"]])
+            + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_COLS, starterSort, starterData) + "</div>";
         })()
       : '<div class="mlbstats-empty">No starters match the current filters.</div>';
     return starterSeasonPills() + body;
@@ -1069,7 +1420,7 @@
     var rows = (starterData && starterData.teams) || [];
     rows = sortRows(rows, STARTER_TEAM_COLS, starterTeamSort);
     if (!rows.length) return '<div class="mlbstats-empty">No team rotations to show yet.</div>';
-    var note = '<div class="mlbstats-note">Rotation+ weights each rotation by the '
+    var note = '<div class="mlbstats-note">' + gloss("Rotation+", "rotation_plus") + ' weights each rotation by the '
       + gloss("SEM+", "sem_plus") + " of the starter innings it throws (starter-IP-weighted). Front 3 reads the"
       + " top of the rotation; the durability columns are context.</div>";
     return note + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_TEAM_COLS, starterTeamSort) + "</div>";
@@ -1133,14 +1484,14 @@
       var slots = rot.map(function (r, i) {
         return '<div class="bp-slot">'
           + '<span class="bp-slot-role">SP' + (i + 1) + "</span>"
-          + '<span class="bp-slot-name">' + esc(r.name || "-")
+          + '<span class="bp-slot-name">' + esc(r.name || EM_DASH)
           + (r.ip_per_gs != null ? '<span class="proj-dim"> ' + f1(r.ip_per_gs) + " IP/GS</span>" : "") + "</span>"
           + '<span class="bp-slot-rem ' + remClass(r.sem_plus) + '">' + fInt(r.sem_plus) + "</span>"
           + "</div>";
       }).join("");
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
         + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
-        + '<span class="rem-plus ' + remClass(t.rotation_plus) + '" data-gl="sem_plus">Rotation+ ' + fInt(t.rotation_plus) + "</span>"
+        + '<span class="rem-plus ' + remClass(t.rotation_plus) + '" data-gl="rotation_plus">Rotation+ ' + fInt(t.rotation_plus) + "</span>"
         + "</div>" + slots + "</div>";
     }).join("");
     return '<div class="mlbstats-note">Each rotation as a depth ladder: its starters ordered by workload, with '
@@ -1175,7 +1526,9 @@
     }
     var inner = (starterView === "teams") ? renderStarterTeams()
       : (starterView === "charts") ? renderStarterCharts() : renderStarterBoard();
-    root.innerHTML = starterTabBar() + starterControls() + inner;
+    // No #mlbstats-banner div exists for this section, so the freshness line
+    // leads the section's own root.
+    root.innerHTML = bannerHTML(starterData) + starterTabBar() + starterControls() + inner;
     bindStarterEvents(root);
     wireGlossary(root);
   }
@@ -1193,6 +1546,16 @@
     if (q) q.addEventListener("input", function () { starterQuery = q.value; renderStartersInPlace(); });
     var qual = root.querySelector("#mlbstats-starter-qual");
     if (qual) qual.addEventListener("change", function () { starterQualifiedOnly = qual.checked; renderStartersInPlace(); });
+    var spTeam = root.querySelector("#mlbstats-starter-team");
+    if (spTeam) spTeam.addEventListener("change", function () {
+      starterTeam = spTeam.value || "";
+      renderStartersInPlace("mlbstats-starter-team");
+    });
+    var spMin = root.querySelector("#mlbstats-starter-minip");
+    if (spMin) spMin.addEventListener("input", function () {
+      starterMinIp = readMin(spMin);
+      renderStartersInPlace("mlbstats-starter-minip");
+    });
     var starterGfx = root.querySelector("#mlbstats-starter-gfx");
     if (starterGfx) starterGfx.addEventListener("click", function () {
       if (!window.EEPHUS_GFX) return;
@@ -1205,6 +1568,7 @@
       b.addEventListener("click", function () {
         starterSeason = b.getAttribute("data-starterseason");
         if (starterSeason !== "current") loadStarterHistory();
+        writeHash();
         renderStarters();
       });
     });
@@ -1224,20 +1588,20 @@
         var sort = (starterView === "teams") ? starterTeamSort : starterSort;
         if (sort.key === key) sort.asc = !sort.asc;
         else { sort.key = key; sort.asc = !!col.asc; }
+        writeHash();
         renderStarters();
       });
     });
   }
 
-  // Re-render only the starters root (keeps search-box focus on input).
-  function renderStartersInPlace() {
+  // Re-render only the starters root (keeps focus on the control being used).
+  function renderStartersInPlace(focusId) {
     var root = document.getElementById("mlbstats-starters-root");
     if (!root) return;
     var inner = (starterView === "teams") ? renderStarterTeams()
       : (starterView === "charts") ? renderStarterCharts() : renderStarterBoard();
-    root.innerHTML = starterTabBar() + starterControls() + inner;
-    var q = root.querySelector("#mlbstats-starter-q");
-    if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+    root.innerHTML = bannerHTML(starterData) + starterTabBar() + starterControls() + inner;
+    restoreFocus(root, focusId || "mlbstats-starter-q");
     bindStarterEvents(root);
     wireGlossary(root);
   }
@@ -1283,6 +1647,12 @@
   var hitterTeamSort = { key: "offense_plus", asc: false };
   var hitterQuery = "";
   var hitterQualifiedOnly = true;
+  var hitterTeam = "";                        // "" = all clubs
+  var hitterMinPa = null;                     // null = no floor
+  // NO POSITION FILTER. The hitter payload carries no position field at all
+  // (hitter_export ships name / team / bats / the rate and volume columns and
+  // nothing else), so a position dropdown would either be empty or invented.
+  // It is an exporter change, not a frontend one.
 
   var hitterSeason = "current";
   var HITTER_HISTORY = null;
@@ -1301,6 +1671,7 @@
       get: function (r) { return r.wrc_plus; },
       cell: function (r) { return r.wrc_plus == null ? "" : wrcCell(r.wrc_plus); } },
     { key: "hem_plus_3yr", label: "HEM+ 3yr", term: "hem_plus_3yr", num: true, desc: true, isRem: true,
+      vintage: "multiyear",
       get: function (r) { return r.hem_plus_3yr; },
       cell: function (r) {
         if (r.hem_plus_3yr == null) return "";
@@ -1357,6 +1728,7 @@
       get: function (r) { return r.war_pa_plus_adj; },
       cell: function (r) { return r.war_pa_plus_adj == null ? "" : remCell(r.war_pa_plus_adj); } },
     { key: "war_pa_plus_3yr", label: "WAR/PA+ 3yr", term: "war_pa_plus_3yr", num: true, desc: true, isRem: true,
+      vintage: "multiyear_war_rate",
       get: function (r) { return r.war_pa_plus_3yr; },
       cell: function (r) {
         if (r.war_pa_plus_3yr == null) return "";
@@ -1402,7 +1774,7 @@
 
   var HITTER_TEAM_COLS = [
     { key: "team", label: "Team", sortable: true, kind: "team", asc: true },
-    { key: "offense_plus", label: "Offense+", fmt: hemCell, num: true, desc: true, isRem: true },
+    { key: "offense_plus", label: "Offense+", term: "offense_plus", fmt: hemCell, num: true, desc: true, isRem: true },
     { key: "heart_hem", label: "Heart 3", fmt: hemCell, num: true, title: "Top-3 regulars by HEM+ (heart of the order)" },
     { key: "n_above_avg", label: "Above-avg", fmt: fInt, num: true,
       get: function (t) { return num(t.n_above_avg); },
@@ -1424,8 +1796,8 @@
     if (b.rho_hem_plus == null) return "";
     return '<div class="mlbstats-scorecard">'
       + '<span class="pal-sc-stat">' + gloss("HEM+", "hem_plus") + ' forward &rho; <b>'
-      + b.rho_hem_plus + '</b><span class="proj-dim"> vs raw wOBA ' + (b.rho_woba == null ? "-" : b.rho_woba)
-      + ", OPS " + (b.rho_ops == null ? "-" : b.rho_ops) + ", AVG " + (b.rho_avg == null ? "-" : b.rho_avg)
+      + b.rho_hem_plus + '</b><span class="proj-dim"> vs raw wOBA ' + (b.rho_woba == null ? EM_DASH : b.rho_woba)
+      + ", OPS " + (b.rho_ops == null ? EM_DASH : b.rho_ops) + ", AVG " + (b.rho_avg == null ? EM_DASH : b.rho_avg)
       + "</span></span>"
       + '<span class="pal-sc-stat"><b>' + esc(b.n_pairs) + "</b> out-of-sample year pairs"
       + (b.seasons ? '<span class="proj-dim"> (' + esc(b.seasons) + " seasons)</span>" : "") + "</span>"
@@ -1464,26 +1836,29 @@
   function hitterHistoryYear() {
     return (HITTER_HISTORY && HITTER_HISTORY.history && HITTER_HISTORY.history[hitterSeason]) || null;
   }
-  function filteredHitters() {
-    var rows = (hitterData && hitterData.hitters) || [];
+  // The unfiltered pool behind the active season pill (see relSourceRows).
+  function hitterSourceRows() {
+    if (hitterSeason !== "current") {
+      var yr = hitterHistoryYear();
+      return (yr && yr.hitters) || [];
+    }
+    return (hitterData && hitterData.hitters) || [];
+  }
+  function hitterMatch(r) {
+    if (hitterQualifiedOnly && r.qualified === false) return false;
+    if (hitterTeam && r.team !== hitterTeam) return false;
+    if (!passesMin(r.pa, hitterMinPa)) return false;
     var q = hitterQuery.trim().toLowerCase();
-    return rows.filter(function (r) {
-      if (hitterQualifiedOnly && r.qualified === false) return false;
-      if (!q) return true;
-      return (String(r.name || "").toLowerCase().indexOf(q) >= 0
-        || String(r.team || "").toLowerCase().indexOf(q) >= 0);
-    });
+    if (!q) return true;
+    return (String(r.name || "").toLowerCase().indexOf(q) >= 0
+      || String(r.team || "").toLowerCase().indexOf(q) >= 0);
+  }
+  function filteredHitters() {
+    return ((hitterData && hitterData.hitters) || []).filter(hitterMatch);
   }
   function filteredHitterHistory() {
     var yr = hitterHistoryYear();
-    var rows = (yr && yr.hitters) || [];
-    var q = hitterQuery.trim().toLowerCase();
-    return rows.filter(function (r) {
-      if (hitterQualifiedOnly && r.qualified === false) return false;
-      if (!q) return true;
-      return (String(r.name || "").toLowerCase().indexOf(q) >= 0
-        || String(r.team || "").toLowerCase().indexOf(q) >= 0);
-    });
+    return ((yr && yr.hitters) || []).filter(hitterMatch);
   }
 
   function hitterTabBar() {
@@ -1496,8 +1871,11 @@
   function hitterControls() {
     if (hitterView !== "hitters") return "";
     return '<div class="mlbstats-bar">'
-      + '<label style="font-size:11px;color:var(--text-tertiary);display:inline-flex;gap:5px;align-items:center;">'
+      + '<label class="mlbstats-ctl">'
       + '<input type="checkbox" id="mlbstats-hitter-qual"' + (hitterQualifiedOnly ? " checked" : "") + "> qualified only</label>"
+      + teamSelect("mlbstats-hitter-team", hitterSourceRows(), hitterTeam)
+      + minSelect("mlbstats-hitter-minpa", "min PA", hitterMinPa,
+          "Hide hitters under this many plate appearances. Composes with qualified only, which is the coarser gate.")
       + gfxChip("mlbstats-hitter-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-hitter-q" placeholder="Search hitter or team" value="' + esc(hitterQuery) + '">'
       + "</div>";
@@ -1521,7 +1899,8 @@
             + " fielding and baserunning included, and 10 of its points is one standard deviation rather"
             + " than the wider spread HEM+ reads on.</div>";
           return hemExplainer() + hitterScorecard() + note
-            + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_COLS, hitterSort) + "</div>";
+            + vintageNote(hitterData, [["multiyear", "HEM+ 3yr"], ["multiyear_war_rate", "WAR/PA+ 3yr"]])
+            + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_COLS, hitterSort, hitterData) + "</div>";
         })()
       : '<div class="mlbstats-empty">No hitters match the current filters.</div>';
     return hitterSeasonPills() + body;
@@ -1561,7 +1940,7 @@
     var rows = (hitterData && hitterData.teams) || [];
     rows = sortRows(rows, HITTER_TEAM_COLS, hitterTeamSort);
     if (!rows.length) return '<div class="mlbstats-empty">No team lineups to show yet.</div>';
-    var note = '<div class="mlbstats-note">Offense+ weights each lineup by the '
+    var note = '<div class="mlbstats-note">' + gloss("Offense+", "offense_plus") + ' weights each lineup by the '
       + gloss("HEM+", "hem_plus") + " of the plate appearances it takes (PA-weighted). Heart 3 reads the"
       + " top of the order; the volume columns are context.</div>";
     return note + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_TEAM_COLS, hitterTeamSort) + "</div>";
@@ -1621,7 +2000,7 @@
     var hand = h.bats ? '<span class="proj-dim"> ' + esc(h.bats) + "HB</span>" : "";
     return '<div class="bp-slot">'
       + '<span class="bp-slot-role">' + slotNum + "</span>"
-      + '<span class="bp-slot-name">' + esc(h.name || "-") + hand + adv
+      + '<span class="bp-slot-name">' + esc(h.name || EM_DASH) + hand + adv
       + (h.pa != null ? '<span class="proj-dim"> ' + fInt(h.pa) + " PA</span>" : "") + "</span>"
       + '<span class="bp-slot-rem ' + hemClass(h.hem_plus) + '">' + fInt(h.hem_plus) + "</span>"
       + "</div>";
@@ -1648,7 +2027,7 @@
               var hand = h.bats ? '<span class="proj-dim"> ' + esc(h.bats) + "HB</span>" : "";
               return '<div class="bp-slot bp-slot--bench">'
                 + '<span class="bp-slot-role">&mdash;</span>'
-                + '<span class="bp-slot-name">' + esc(h.name || "-") + hand
+                + '<span class="bp-slot-name">' + esc(h.name || EM_DASH) + hand
                 + (h.pa != null ? '<span class="proj-dim"> ' + fInt(h.pa) + " PA</span>" : "") + "</span>"
                 + '<span class="bp-slot-rem ' + hemClass(h.hem_plus) + '">' + fInt(h.hem_plus) + "</span>"
                 + "</div>";
@@ -1656,7 +2035,7 @@
         : "";
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
         + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
-        + '<span class="rem-plus ' + hemClass(t.offense_plus) + '" data-gl="hem_plus">Offense+ ' + fInt(t.offense_plus) + "</span>"
+        + '<span class="rem-plus ' + hemClass(t.offense_plus) + '" data-gl="offense_plus">Offense+ ' + fInt(t.offense_plus) + "</span>"
         + "</div>" + slots + benchHtml + "</div>";
     }).join("");
     return '<div class="mlbstats-note">A sabermetric batting order, not a HEM+ sort: the two best bats hit '
@@ -1693,7 +2072,9 @@
     }
     var inner = (hitterView === "teams") ? renderHitterTeams()
       : (hitterView === "charts") ? renderHitterCharts() : renderHitterBoard();
-    root.innerHTML = hitterTabBar() + hitterControls() + inner;
+    // No #mlbstats-banner div for this section; the freshness line leads the
+    // section's own root.
+    root.innerHTML = bannerHTML(hitterData) + hitterTabBar() + hitterControls() + inner;
     bindHitterEvents(root);
     wireGlossary(root);
   }
@@ -1717,6 +2098,16 @@
     if (q) q.addEventListener("input", function () { hitterQuery = q.value; renderHittersInPlace(); });
     var qual = root.querySelector("#mlbstats-hitter-qual");
     if (qual) qual.addEventListener("change", function () { hitterQualifiedOnly = qual.checked; renderHittersInPlace(); });
+    var hTeam = root.querySelector("#mlbstats-hitter-team");
+    if (hTeam) hTeam.addEventListener("change", function () {
+      hitterTeam = hTeam.value || "";
+      renderHittersInPlace("mlbstats-hitter-team");
+    });
+    var hMin = root.querySelector("#mlbstats-hitter-minpa");
+    if (hMin) hMin.addEventListener("input", function () {
+      hitterMinPa = readMin(hMin);
+      renderHittersInPlace("mlbstats-hitter-minpa");
+    });
     var hitterGfx = root.querySelector("#mlbstats-hitter-gfx");
     if (hitterGfx) hitterGfx.addEventListener("click", function () {
       if (!window.EEPHUS_GFX) return;
@@ -1729,6 +2120,7 @@
       b.addEventListener("click", function () {
         hitterSeason = b.getAttribute("data-hitterseason");
         if (hitterSeason !== "current") loadHitterHistory();
+        writeHash();
         renderHitters();
       });
     });
@@ -1748,19 +2140,19 @@
         var sort = (hitterView === "teams") ? hitterTeamSort : hitterSort;
         if (sort.key === key) sort.asc = !sort.asc;
         else { sort.key = key; sort.asc = !!col.asc; }
+        writeHash();
         renderHitters();
       });
     });
   }
 
-  function renderHittersInPlace() {
+  function renderHittersInPlace(focusId) {
     var root = document.getElementById("mlbstats-hitters-root");
     if (!root) return;
     var inner = (hitterView === "teams") ? renderHitterTeams()
       : (hitterView === "charts") ? renderHitterCharts() : renderHitterBoard();
-    root.innerHTML = hitterTabBar() + hitterControls() + inner;
-    var q = root.querySelector("#mlbstats-hitter-q");
-    if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+    root.innerHTML = bannerHTML(hitterData) + hitterTabBar() + hitterControls() + inner;
+    restoreFocus(root, focusId || "mlbstats-hitter-q");
     bindHitterEvents(root);
     wireGlossary(root);
   }
@@ -1799,6 +2191,7 @@
   var leverageStarterSort = { key: "wpa", asc: false };
   var leverageQuery = "";
   var leverageQualifiedOnly = true;
+  var leverageTeam = "";                        // "" = all clubs
 
   // Yearly leverage history (leverage_history.json) is lazy-fetched the first
   // time a past-season pill is picked. leverageSeason is "current" for the live
@@ -1814,7 +2207,7 @@
   // negative reads down, a neutral band stays quiet.
   function levSignedCell(v, digits, band) {
     var n = num(v);
-    if (n == null) return "-";
+    if (n == null) return EM_DASH;
     var d = (digits == null) ? 2 : digits;
     var b = band || 0;
     var col = n > b ? "var(--up)" : n < -b ? "var(--down)" : "var(--text-tertiary)";
@@ -1831,7 +2224,7 @@
       cell: function (r) { return levSignedCell(r.wpa, 2, 0); } },
     { key: "pli", label: "pLI", term: "pli", num: true, desc: true,
       title: "Average Leverage Index faced (1.0 = neutral). How high-stakes his plate appearances were on average.",
-      cell: function (r) { return r.pli == null ? "-" : f2(r.pli); } },
+      cell: function (r) { return r.pli == null ? EM_DASH : f2(r.pli); } },
     { key: "clutch", label: "Clutch", term: "clutch", num: true, desc: true,
       title: "WPA/pLI minus WPA/LI: how much more (or less) win probability he added in high-leverage spots than his own rate predicts. A timing read, not a skill.",
       cell: function (r) { return levSignedCell(r.clutch, 2, 0.5); } },
@@ -1883,6 +2276,7 @@
     var q = leverageQuery.trim().toLowerCase();
     return rows.filter(function (r) {
       if (leverageQualifiedOnly && r.qualified === false) return false;
+      if (leverageTeam && r.team !== leverageTeam) return false;
       if (!q) return true;
       return (String(r.name || "").toLowerCase().indexOf(q) >= 0
         || String(r.team || "").toLowerCase().indexOf(q) >= 0);
@@ -1963,7 +2357,7 @@
       var col = (c == null) ? "var(--text-tertiary)" : (c >= 0.5 ? "var(--up)" : (c <= -0.5 ? "var(--down)" : "var(--text-tertiary)"));
       return { x: r.wpa_li, y: r.pli, color: col,
                label: r.name + "  WPA/LI " + fSigned(r.wpa_li) + "  pLI " + f2(r.pli)
-                 + "  Clutch " + (c == null ? "-" : fSigned(c)) };
+                 + "  Clutch " + (c == null ? EM_DASH : fSigned(c)) };
     });
     sc = chart("scatter", pts, { height: 250, xLabel: "WPA/LI (context-neutral) →", yLabel: "↑ pLI (leverage faced)",
       xRef: 0, yRef: 1, aria: "production vs leverage faced" });
@@ -1986,9 +2380,14 @@
     }).join("") + "</div>";
   }
   function leverageControls() {
+    // No min-PA / min-GS control here: this board is already gated to qualified
+    // players by the export and the volume column is context, not a filter the
+    // memo asked for. Team is, and it is the one narrowing a 400-row WPA board
+    // actually needs.
     return '<div class="mlbstats-bar">'
-      + '<label style="font-size:11px;color:var(--text-tertiary);display:inline-flex;gap:5px;align-items:center;">'
+      + '<label class="mlbstats-ctl">'
       + '<input type="checkbox" id="mlbstats-leverage-qual"' + (leverageQualifiedOnly ? " checked" : "") + "> qualified only</label>"
+      + teamSelect("mlbstats-leverage-team", leverageSourceRows(), leverageTeam)
       + gfxChip("mlbstats-leverage-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-leverage-q" placeholder="Search player or team" value="' + esc(leverageQuery) + '">'
       + "</div>";
@@ -2053,17 +2452,21 @@
       });
       return;
     }
-    root.innerHTML = leverageTabBar() + leverageSeasonPills() + leverageControls() + levExplainer() + renderLeverageBoard();
+    // noCoverage: the board note below already prints a SEASON-AWARE coverage
+    // count (leverageCoverage), and the live figure is wrong for a past-season
+    // pill. One number, in the place that knows which season it belongs to.
+    root.innerHTML = bannerHTML(leverageData, { noCoverage: true })
+      + leverageTabBar() + leverageSeasonPills() + leverageControls() + levExplainer() + renderLeverageBoard();
     bindLeverageEvents(root);
     wireGlossary(root);
   }
 
-  function renderLeverageInPlace() {
+  function renderLeverageInPlace(focusId) {
     var root = document.getElementById("mlbstats-leverage-root");
     if (!root) return;
-    root.innerHTML = leverageTabBar() + leverageSeasonPills() + leverageControls() + levExplainer() + renderLeverageBoard();
-    var q = root.querySelector("#mlbstats-leverage-q");
-    if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+    root.innerHTML = bannerHTML(leverageData, { noCoverage: true })
+      + leverageTabBar() + leverageSeasonPills() + leverageControls() + levExplainer() + renderLeverageBoard();
+    restoreFocus(root, focusId || "mlbstats-leverage-q");
     bindLeverageEvents(root);
     wireGlossary(root);
   }
@@ -2081,6 +2484,11 @@
     if (q) q.addEventListener("input", function () { leverageQuery = q.value; renderLeverageInPlace(); });
     var qual = root.querySelector("#mlbstats-leverage-qual");
     if (qual) qual.addEventListener("change", function () { leverageQualifiedOnly = qual.checked; renderLeverageInPlace(); });
+    var levTeam = root.querySelector("#mlbstats-leverage-team");
+    if (levTeam) levTeam.addEventListener("change", function () {
+      leverageTeam = levTeam.value || "";
+      renderLeverageInPlace("mlbstats-leverage-team");
+    });
     var levGfx = root.querySelector("#mlbstats-leverage-gfx");
     if (levGfx) levGfx.addEventListener("click", function () {
       if (!window.EEPHUS_GFX) return;
@@ -2090,6 +2498,7 @@
       b.addEventListener("click", function () {
         leverageSeason = b.getAttribute("data-leverageseason");
         if (leverageSeason !== "current") loadLeverageHistory();
+        writeHash();
         renderLeverage();
       });
     });
@@ -2108,6 +2517,7 @@
         var sort = levSort();
         if (sort.key === key) sort.asc = !sort.asc;
         else { sort.key = key; sort.asc = !!col.asc; }
+        writeHash();
         renderLeverage();
       });
     });
@@ -2168,7 +2578,7 @@
       var relRows = rows.map(function (r, i) {
         return { cells: [
           { t: i + 1 },
-          { t: r.name || "-", sub: r.team || undefined },
+          { t: r.name || EM_DASH, sub: r.team || undefined },
           { t: fInt(r.rem_plus), c: "accent" },
           { t: fInt(r.rem_plus_3yr) },
           { t: fPct(r.k_bb_pct) },
@@ -2197,7 +2607,7 @@
       var bpRows = rows.map(function (t, i) {
         return { cells: [
           { t: i + 1 },
-          { t: t.team || "-" },
+          { t: t.team || EM_DASH },
           { t: fInt(t.bullpen_plus), c: "accent" },
           { t: fInt(t.high_lev_core_rem) },
           { t: f1(t.relief_ip) },
@@ -2220,7 +2630,7 @@
       var spRows = rows.map(function (r, i) {
         return { cells: [
           { t: i + 1 },
-          { t: r.name || "-", sub: r.team || undefined },
+          { t: r.name || EM_DASH, sub: r.team || undefined },
           { t: fInt(r.sem_plus), c: "accent" },
           { t: fInt(r.sem_plus_3yr) },
           { t: fPct(r.k_bb_pct) },
@@ -2249,7 +2659,7 @@
       var hitRows = rows.map(function (r, i) {
         return { cells: [
           { t: i + 1 },
-          { t: r.name || "-", sub: r.team || undefined },
+          { t: r.name || EM_DASH, sub: r.team || undefined },
           { t: fInt(r.hem_plus), c: "accent" },
           { t: fInt(r.hem_plus_3yr) },
           { t: f3(r.woba) },
@@ -2277,11 +2687,11 @@
       var levRows = rows.map(function (r, i) {
         var cells = [
           { t: i + 1 },
-          { t: r.name || "-", sub: r.team || undefined },
+          { t: r.name || EM_DASH, sub: r.team || undefined },
           { t: fSigned(r.wpa), c: "accent" },
         ];
         if (isStart) {
-          cells.push({ t: r.wpa_per_start == null ? "-"
+          cells.push({ t: r.wpa_per_start == null ? EM_DASH
             : (r.wpa_per_start > 0 ? "+" : "") + Number(r.wpa_per_start).toFixed(2) });
           cells.push({ t: fSigned(r.wpa_li) });
         } else {

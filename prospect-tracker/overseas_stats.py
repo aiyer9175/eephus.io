@@ -25,6 +25,7 @@ limiting story as every other scraper in the project.
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -48,6 +49,31 @@ CACHE_DIR = _BASE / ".cache"
 CACHE_DIR.mkdir(exist_ok=True)
 
 FG_PLAYER_STATS_URL = "https://www.fangraphs.com/players/x/{player_id}/stats"
+
+
+# ---------------------------------------------------------------------------
+# Loud failure types (2026-08-03).
+#
+# Every failure in this module used to collapse to `return []`: a blocked
+# fetch, a login wall, an FG markup restructure and a player who genuinely
+# has no seasons were all the same value. `refresh_overseas_stats` skips
+# empty results, so a dead source reads as a clean run with nothing to do.
+# That is the silent-empty class that froze the 2027 FA board once already.
+# The three cases now have distinct, named outcomes.
+# ---------------------------------------------------------------------------
+class OverseasStatsError(RuntimeError):
+    """Base class for FG player-page scrape failures."""
+
+
+class OverseasFetchError(OverseasStatsError):
+    """The FG player page could not be retrieved at all (non-200 or empty
+    body) and no cached copy existed to fall back on."""
+
+
+class OverseasParseError(OverseasStatsError):
+    """A page WAS retrieved, its own payload says it carries seasons, and
+    the table parser still found none. Always a page-shape change, never a
+    player with an empty career."""
 
 
 # Strip the FG tooltip suffix from a header cell: "WW - Wins" → "W",
@@ -178,35 +204,151 @@ def _pick_dashboard_table(soup: BeautifulSoup) -> list[dict]:
     return candidates[0] if candidates else []
 
 
+_NEXT_DATA_RE = re.compile(
+    r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', re.S)
+
+
+def _payload_season_count(html: str) -> int | None:
+    """How many season rows FG's OWN page payload says the page carries.
+
+    The FG player page is a Next.js app: the seasons rendered into the
+    `<table>` markup are also shipped verbatim in the `__NEXT_DATA__` JSON
+    under `props.pageProps.dataStats.data`. That makes the payload a free
+    REFEREE for the table parser. It answers "was there anything to parse?"
+    without depending on the table markup at all, which is precisely the
+    thing a restructure changes.
+
+    Returns the season count, or None when the page carries no usable
+    payload block (itself a page-shape change worth shouting about).
+
+    MEASURED over all 259 cached FG player pages on 2026-08-03: the table
+    parse yields rows for exactly the pages whose payload is non-empty, and
+    the single payload-empty page (Raidel Martinez, sa3023350 - FG serves
+    that route with no `dataStats.data` key at all) really does render no
+    stat tables. So "payload > 0 with zero parsed rows" cannot be an empty
+    career; it can only be a markup change.
+    """
+    m = _NEXT_DATA_RE.search(html or "")
+    if not m:
+        return None
+    try:
+        doc = json.loads(m.group(1))
+    except ValueError:
+        return None
+    props = (doc.get("props") or {}).get("pageProps")
+    if not isinstance(props, dict):
+        return None
+    stats = props.get("dataStats")
+    if not isinstance(stats, dict):
+        return None                      # payload renamed -> shape change
+    data = stats.get("data")
+    return len(data) if isinstance(data, list) else 0
+
+
+def _cached_page(cache_key: str) -> str:
+    """The on-disk copy `scrapers._fetch` keeps for this cache key, or ''.
+
+    Read directly so a FAILED refetch can fall back to a STALE copy. The
+    cache key 'fg_player_<id>' carries no 20xx token, so
+    `scrapers._cache_ttl_for_key` hands it the 24h current-year TTL: once
+    the copy is a day old `_fetch` goes to the network, and any FG block or
+    offline run then turns a perfectly good cached page into zero rows.
+    A day-stale overseas season line beats no season line.
+    """
+    p = CACHE_DIR / f"{cache_key}.html"
+    try:
+        return p.read_text(encoding="utf-8") if p.exists() else ""
+    except OSError:
+        return ""
+
+
 def scrape_fg_player_stats(fg_player_id: str,
-                            force: bool = False) -> list[dict]:
+                            force: bool = False,
+                            strict: bool = True) -> list[dict]:
     """Fetch + parse one FG player page. Returns a list of per-season
     dicts ready for `upsert_overseas_statlines`.
 
     The URL takes any slug; FG resolves by the trailing ID. We use 'x'
     as the placeholder slug so the cache key is stable per ID.
+
+    LOUD ON EMPTY (2026-08-03). Every failure used to `return []`, so the
+    callers (which skip empty results) could not tell a dead source from a
+    player with nothing to report. The outcomes are now separated, with
+    FG's own page payload as the referee (see `_payload_season_count`):
+
+      * fetch failed AND no cached copy on disk -> OverseasFetchError
+      * page payload carries N > 0 seasons, or has no payload block at all,
+        and the table parse still found nothing -> OverseasParseError
+      * page genuinely carries no seasons -> `[]`, logged at WARNING
+
+    Pass `strict=False` to get the old return-empty behaviour with the
+    diagnosis logged instead of raised.
     """
     if not fg_player_id:
         return []
     url = FG_PLAYER_STATS_URL.format(player_id=fg_player_id)
     cache_key = f"fg_player_{fg_player_id}"
     fr = _fetch(url, cache_key, force=force)
-    if fr.status != 200 or not fr.body:
-        log.info("fg_player_stats %s: HTTP %d", fg_player_id, fr.status)
-        return []
-    soup = BeautifulSoup(fr.body, "html.parser")
+
+    body = fr.body if (fr.status == 200 and fr.body) else ""
+    origin = "cached" if fr.from_cache else "fetched"
+    if not body:
+        body = _cached_page(cache_key)
+        origin = "stale-cached"
+        if body:
+            log.warning("fg_player_stats %s: HTTP %d - falling back to the "
+                        "stale cached page (%d bytes)",
+                        fg_player_id, fr.status, len(body))
+        else:
+            msg = (f"fg_player_stats {fg_player_id}: HTTP {fr.status} and no "
+                   f"cached page on disk - nothing to parse")
+            if strict:
+                raise OverseasFetchError(msg)
+            log.warning("%s", msg)
+            return []
+
+    soup = BeautifulSoup(body, "html.parser")
     rows = _pick_dashboard_table(soup)
-    return rows
+    if rows:
+        return rows
+
+    n_payload = _payload_season_count(body)
+    detail = (f"fg_player_stats {fg_player_id}: parsed ZERO season rows from "
+              f"the {origin} page ({len(body)} bytes, "
+              f"{len(soup.find_all('table'))} tables, payload says "
+              f"{'no payload block' if n_payload is None else n_payload} "
+              f"seasons)")
+    if n_payload is None or n_payload > 0:
+        shape = f"{detail} - the FG player page shape has changed"
+        if strict:
+            raise OverseasParseError(shape)
+        log.error("%s", shape)
+        return []
+    log.warning("%s - FG serves no seasons for this player", detail)
+    return []
 
 
-def _fetch_one_overseas(pk_fg_id: tuple[str, str], force: bool) -> tuple[str, list[dict]]:
+def _fetch_one_overseas(pk_fg_id: tuple[str, str],
+                        force: bool) -> tuple[str, list[dict], str | None]:
+    """Thread-pool worker. Returns (player_key, rows, failure_class).
+
+    failure_class is None on success, 'parse' when the FG page shape broke
+    and 'fetch' when the page could not be retrieved at all. One bad player
+    never aborts the batch, but the batch can now tell an honestly-empty
+    result from a source that stopped delivering."""
     pk, fg_id = pk_fg_id
     try:
         rows = scrape_fg_player_stats(fg_id, force=force)
+    except OverseasParseError as e:
+        log.error("overseas_stats: %s (%s)", e, pk)
+        return (pk, [], "parse")
+    except OverseasFetchError as e:
+        log.warning("overseas_stats: %s (%s)", e, pk)
+        return (pk, [], "fetch")
     except Exception:
         log.exception("overseas_stats fetch crashed for %s (%s)", pk, fg_id)
-        return (pk, [])
-    return (pk, rows)
+        return (pk, [], "fetch")
+    return (pk, rows, None)
 
 
 def refresh_overseas_stats(force: bool = False,
@@ -232,16 +374,22 @@ def refresh_overseas_stats(force: bool = False,
              len(targets), workers)
 
     results: dict[str, list[dict]] = {}
+    failures: dict[str, int] = {"fetch": 0, "parse": 0}
+
+    def _take(triple: tuple[str, list[dict], str | None]) -> None:
+        pk, rows, err = triple
+        results[pk] = rows
+        if err:
+            failures[err] = failures.get(err, 0) + 1
+
     if workers <= 1:
         for t in targets:
-            pk, rows = _fetch_one_overseas(t, force)
-            results[pk] = rows
+            _take(_fetch_one_overseas(t, force))
     else:
         with ThreadPoolExecutor(max_workers=workers) as ex:
             futures = {ex.submit(_fetch_one_overseas, t, force): t[0] for t in targets}
             for fut in as_completed(futures):
-                pk, rows = fut.result()
-                results[pk] = rows
+                _take(fut.result())
 
     total = 0
     for pk, rows in results.items():
@@ -270,4 +418,20 @@ def refresh_overseas_stats(force: bool = False,
             total += n
     log.info("refresh_overseas_stats: %d total season rows upserted across %d players",
              total, len(targets))
+
+    # Do NOT let a dead source read as a clean run. An empty refresh upserts
+    # nothing and used to log the cheerful line above and stop.
+    if failures.get("parse"):
+        log.error("refresh_overseas_stats: %d/%d FG pages parsed ZERO rows "
+                  "while their own page payload carried seasons - the FG "
+                  "player page markup has changed and overseas stats are NOT "
+                  "refreshing", failures["parse"], len(targets))
+    if failures.get("fetch"):
+        log.warning("refresh_overseas_stats: %d/%d FG pages could not be "
+                    "retrieved at all", failures["fetch"], len(targets))
+    if total == 0:
+        log.error("refresh_overseas_stats: ZERO season rows upserted across "
+                  "%d players (%d fetch failures, %d parse failures) - treat "
+                  "this as a dead source, not a quiet no-op",
+                  len(targets), failures.get("fetch", 0), failures.get("parse", 0))
     return total

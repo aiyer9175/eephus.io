@@ -4825,7 +4825,7 @@
    ],
    "priority": 9,
    "definition": "eephusFV (abbreviated eFV) is our own Future Value grade and the site's PRIMARY prospect ranking, grounded in what past prospects actually became rather than in scout consensus. eFV predicts a prospect's realized first-six-MLB-season bWAR distribution and summarizes it on the 20-80 FV scale; consensus FV is shown alongside as a secondary reference. eFV needs a pro track record to grade, so very recent draftees and international signings show consensus FV until they have a season of production.",
-   "methodology": "eFV is a prior-anchored, outcome-grounded model. The backbone prior is consensus FV (raw, pre-rounding); a deliberately LEAN regularized model (ridge, with a guarded blend back toward consensus) nudges the grade using only the signals that actually add information beyond consensus out of sample. For hitters: level-translated on-base skill (OBP) and contact (K-rate plus its multi-season peak), an OPS-vs-level read for the fringe tiers, age relative to level and absolute age, track record (pro seasons, a missing-record indicator, IFA/college acquisition cohorts), highest level reached (proximity to the majors), and the hit and speed tools. For pitchers: multi-season peak and final-season strikeout rate, walk rate, K-backed run prevention (the x_era_k interaction behind KRP+), age relative to level and absolute age, and the fastball. Game power is deliberately excluded for hitters, because scouts over-price it relative to realized WAR - that omission is eFV's power-correction. It is trained leakage-free on prospects who debuted 2011-2024 (boards strictly before debut) against their realized 6-year bWAR, busts kept at zero, forward-chained out of time; the 2024 debut class is right-censored (two of its six seasons observed) and enters at reduced weight. The headline grade is rank-preserving onto the familiar 20-80 consensus distribution, and surplus dollars are priced on that displayed grade so the dollars match the grade the site shows; the separate outcome-implied grade (honestly lower, since consensus FV runs optimistic) still drives the star/bust outcome odds through the existing value engine. On the live board only, owner-directed overlays (injury, prospect age, stale list coverage, and a reliever-ceiling dial) tilt the model's WAR leg and surface as labeled factor chips; the reliever ceiling is a policy dial, not an accuracy claim - relief-designated arms age 25 and up whose model WAR runs hot take a bounded haircut on the model leg (0.80, or 0.70 from age 26), because list-time relievers of that profile almost never returned star value in the resolved training rows and the survivorship-censored data cannot price that risk on its own. Measured standing: on this lean feature set eFV OUT-RANKS consensus FV out of sample for both hitters (Spearman ~0.38 vs 0.33 on the debuted cohort) and pitchers (~0.30 vs 0.26), with the edge concentrated in the recent 2019-2023 cohorts (consensus actually wins the pre-2019 era) - so it is not exploiting older, less-accurate scouting. It still trails consensus on absolute error (it predicts more spread; consensus regresses to the mean), and that loss is committed. The flagship case: the rank edge plus the calibrated outcome distribution, the uncertainty band, and the surplus translation. Provisional. GRADE SCALE, restamped 2026-07-30: the number you see is the FV whose MEASURED first-six-year bWAR matches our prediction for this player, read off a curve fitted on prospects who were graded, then debuted, then either produced or did not. It is a pure function of predicted WAR and takes no age or position, so two players with the same projection carry the same grade. Two honest limits. Below about FV45 the measured curve is flat, so grades down there preserve ORDER but their SPACING is not outcome-calibrated and should not be read as a WAR statement. Above about FV57 the measured cells fall into single digits per grade and are blended heavily toward a published industry prior, so the very top of the board is closer to the industry's table than to our own measurement. Surplus dollars are still priced through the retired per-side quantile grade, which is why re-anchoring the grade moved no money, and the star/bust odds still sit on the retired map because they were ground-truthed on it.",
+   "methodology": "eFV is a prior-anchored, outcome-grounded model. The backbone prior is consensus FV (raw, pre-rounding); a deliberately LEAN regularized model (ridge, with a guarded blend back toward consensus) nudges the grade using only the signals that actually add information beyond consensus out of sample. For hitters: level-translated on-base skill (OBP) and contact (K-rate plus its multi-season peak), an OPS-vs-level read for the fringe tiers, age relative to level and absolute age, track record (pro seasons, a missing-record indicator, IFA/college acquisition cohorts), highest level reached (proximity to the majors), and the hit and speed tools. For pitchers: multi-season peak and final-season strikeout rate, walk rate, K-backed run prevention (the x_era_k interaction behind KRP+), age relative to level and absolute age, and the fastball. Game power is deliberately excluded for hitters, because scouts over-price it relative to realized WAR - that omission is eFV's power-correction. It is trained leakage-free on prospects who debuted 2011-2024 (boards strictly before debut) against their realized 6-year bWAR, busts kept at zero, forward-chained out of time; the 2024 debut class is right-censored (two of its six seasons observed) and enters at reduced weight. The headline grade is value_framework.outcome_implied_fv(E[6yr bWAR]): the inverse of the POOLED empirical outcome curve fitted on resolved cohorts, so the number states the FV whose measured first-six-year bWAR matches this prediction. It is NOT a rank-map onto the consensus distribution; that retired per-side quantile map stopped being displayed on 2026-07-25, when the board unified on one number for display, sort and rank. Surplus dollars are still priced through the RETIRED quantile grade, deliberately, because the surplus and WAR-path curves were fitted on the consensus 20-80 scale that map lands on - which is exactly why re-anchoring the headline grade on 2026-07-30 moved zero dollars. Displayed grade and priced grade are therefore two different numbers on purpose. The star/bust outcome odds stay on the retired realized-implied map for the same reason: they were ground-truthed on it, and re-keying them has not been measured. On the live board only, owner-directed overlays (injury, prospect age, stale list coverage, and a reliever-ceiling dial) tilt the model's WAR leg and surface as labeled factor chips; the reliever ceiling is a policy dial, not an accuracy claim - relief-designated arms age 25 and up whose model WAR runs hot take a bounded haircut on the model leg (0.80, or 0.70 from age 26), because list-time relievers of that profile almost never returned star value in the resolved training rows and the survivorship-censored data cannot price that risk on its own. Measured standing: on this lean feature set eFV OUT-RANKS consensus FV out of sample for both hitters (Spearman ~0.38 vs 0.33 on the debuted cohort) and pitchers (~0.30 vs 0.26), with the edge concentrated in the recent 2019-2023 cohorts (consensus actually wins the pre-2019 era) - so it is not exploiting older, less-accurate scouting. It still trails consensus on absolute error (it predicts more spread; consensus regresses to the mean), and that loss is committed. The flagship case: the rank edge plus the calibrated outcome distribution, the uncertainty band, and the surplus translation. Provisional. GRADE SCALE, restamped 2026-07-30: the number you see is the FV whose MEASURED first-six-year bWAR matches our prediction for this player, read off a curve fitted on prospects who were graded, then debuted, then either produced or did not. It is a pure function of predicted WAR and takes no age or position, so two players with the same projection carry the same grade. Two honest limits. Below about FV45 the measured curve is flat, so grades down there preserve ORDER but their SPACING is not outcome-calibrated and should not be read as a WAR statement. Above about FV57 the measured cells fall into single digits per grade and are blended heavily toward a published industry prior, so the very top of the board is closer to the industry's table than to our own measurement. Surplus dollars are still priced through the retired per-side quantile grade, which is why re-anchoring the grade moved no money, and the star/bust odds still sit on the retired map because they were ground-truthed on it.",
    "formula": "eFV grade = outcome_implied_fv( E[6yr bWAR] ), the inverse of the pooled empirical outcome curve fitted on resolved cohorts; surplus = value_framework( retired per-side quantile grade ); star/bust odds = outcome model( retired realized-implied FV )",
    "example": "A contact-and-discipline hitter consensus has at 45 can read 48 eFV when his translated MiLB walk and strikeout rates beat the level; a power-over-hit profile can read lower, since power adds less realized WAR than scouts price.",
    "seeAlso": [
@@ -5001,6 +5001,78 @@
    "seeAlso": [
     "rem_plus",
     "gmli"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "rotation_plus",
+   "term": "Rotation+",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Rotation+",
+    "team rotation rating",
+    "rotation plus"
+   ],
+   "priority": 19,
+   "definition": "A team rotation rating where 100 is an average rotation. A starter-innings-weighted blend of the staff's SEM+, so it reads the run-prevention talent of the innings a rotation actually starts. Shown on the Team Rotations board in MLB Stats. Higher is better.",
+   "methodology": "Rotation+ weights each starter's SEM+ by the innings he threw as a starter, then divides by those same innings, so a staff is credited for the quality of the innings it actually covers instead of the length of its depth chart: a swingman with 30 innings cannot move a rotation the way a flat average would let him. Only starters carrying a scored SEM+ and positive innings enter the weight, and the result is rounded to a whole point for display (the unrounded value ships alongside it as rotation_plus_raw). Because SEM+ is anchored over the starter pool, 100 is the average ROTATION, not the average staff, and Rotation+ inherits SEM+'s sample shrinkage rather than adding any of its own. Nothing else is mixed in: Front 3 (the mean SEM+ of the three best starters, reading the top of the rotation), the count of above-average starters, and the durability columns (starter innings, games started) sit beside the rating as context and never enter it. Built by starter_export.py, which feeds the StatsAPI season pitching leaderboard into sem_plus.score_pool and rolls up sem_plus.team_rotation per club.",
+   "formula": "Rotation+ = sum(SEM+ x starter IP) / sum(starter IP), over starters with a scored SEM+ (100 = average rotation)",
+   "seeAlso": [
+    "sem_plus",
+    "bullpen_plus",
+    "offense_plus"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "offense_plus",
+   "term": "Offense+",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Offense+",
+    "team offense rating",
+    "offense plus"
+   ],
+   "priority": 19,
+   "definition": "A team lineup rating where 100 is an average offense. A plate-appearance-weighted blend of the club's HEM+, so it reads the offensive quality of the plate appearances a lineup actually takes. Shown on the Team Lineups board in MLB Stats. Higher is better.",
+   "methodology": "Offense+ weights each hitter's HEM+ by his plate appearances and divides by those same plate appearances, so playing time decides how much a bat counts toward the club number without playing time entering the rate itself: a hot bench bat with 40 trips cannot carry a lineup. Only hitters with a scored HEM+ and positive PA enter the weight, and the result is rounded to a whole point for display (the unrounded value ships alongside it as offense_plus_raw). Because HEM+ is anchored over the hitter pool, 100 is the average LINEUP, not the average hitter. It rides the same WIDER spread HEM+ displays on: HEM+ is stretched from the bare wOBA ratio to the wRC+ deviation width by a fixed monotone gain, so read Offense+ against roughly 16 points per standard deviation rather than the tighter REM+/SEM+ bands. Heart 3 (the top three regulars by HEM+), the count of above-average hitters, and team PA sit beside the rating as context and never enter it; the constructed batting orders versus right- and left-handed pitching and the bench list are display only. Built by hitter_export.py, which feeds the StatsAPI season hitting leaderboard into hem_plus.score_pool and rolls up hem_plus.team_offense per club.",
+   "formula": "Offense+ = sum(HEM+ x PA) / sum(PA), over hitters with a scored HEM+ (100 = average lineup)",
+   "seeAlso": [
+    "hem_plus",
+    "rotation_plus",
+    "bullpen_plus"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "rng_plus",
+   "term": "Rng+ (sprint-speed range index)",
+   "category": "custom-index",
+   "module": [
+    "pal"
+   ],
+   "aliases": [
+    "Rng+",
+    "range plus",
+    "sprint speed index"
+   ],
+   "priority": 34,
+   "definition": "A fielder's sprint speed expressed as a range read on the 100 + 10z scale, where 100 is the league average position player and ten points is one standard deviation. It appears as a chip on the Position Fit rows in the Pitcher Alchemy Lab, and ONLY on left-field and centre-field destinations. It is display only: it never enters the position-fit model.",
+   "methodology": "Sprint speed comes from the Statcast leaderboard for the current season, falling back one season when a player has no current tracking (the chip labels the season it read). It is standardized against that season's MLB position-player pool, so Rng+ = 100 + 10 x z(feet per second), and the chip also reports the player's percentile among incumbents at the destination position, meaning everyone with 400 or more innings there over the trailing three seasons.\n\nThe whitelist is the finding, not caution about it. Measured against OAA per 1000 innings at the position played (400+ innings, 2016-2026), sprint speed tracks range in centre field at r = +0.428 (95 percent CI +0.342 to +0.507) and in left field at r = +0.416 (+0.323 to +0.501), so those two destinations ship the chip. Right field clears the headline bar at r = +0.269 (+0.167 to +0.365) but is EXCLUDED, because that signal is carried by displaced centre fielders: right fielders with under 100 career centre-field innings come back at r = +0.075 (-0.111 to +0.256), whose lower bound sits below the +0.15 bar, so the chip would be telling corner-only right fielders something never measured on players like them. Left field survives the identical pure-corner test (+0.359, +0.163 to +0.528, n = 89). Shortstop (-0.020, -0.122 to +0.083) and third base (-0.004, -0.108 to +0.100) have no signal at all, so a speed meter on an infield row would be a picture of a measured zero and is never rendered.\n\nNothing here reaches the model: positional_fit's field() carries no sprint term, because OAA already contains the legs and a sprint feature would double-count it. That is the same argument that rejected the arm feature. The producer (build_site.py) decides which positions qualify and bakes every number, including the per-destination percentile; assets/pal.js computes none of it and renders no chip for a position off the whitelist.",
+   "formula": "Rng+ = 100 + 10 x z(sprint speed, ft/s) against the current-season MLB position-player pool; shipped for LF and CF destinations only",
+   "seeAlso": [
+    "sprint_speed",
+    "versa",
+    "pal_conversion"
    ],
    "shelf": "ark",
    "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."

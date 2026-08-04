@@ -1739,15 +1739,31 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 }
 /* The header needs to paint over the rows it now sits above. */
 .mlbstats-table thead th { z-index: 2; }
-/* FROZEN NAME COLUMN. The reliever and hitter boards carry 23-24 nowrap
+/* FROZEN IDENTITY COLUMN. The reliever and hitter boards carry 23-24 nowrap
    columns and run ~1,500-1,900px wide against a 1,400px wrap, so they are
    horizontally scrolled at every desktop width. Without this, scrolling right
-   to reach a stat orphans every number from the player it belongs to. The
-   name is always the first cell (the text-align rule below relies on the same
-   thing), so freezing :first-child keeps identity on screen. Both cells need
-   an opaque fill or the columns underneath show through as they pass. */
+   to reach a stat orphans every number from the player it belongs to. On
+   /mlbstats/ the name is always the first cell (the text-align rule below
+   relies on the same thing), so freezing :first-child keeps identity on
+   screen. Every frozen cell needs an OPAQUE fill or the columns underneath
+   show through as they pass - see the .is-provisional note further down, which
+   is why that row treatment may never use element opacity.
+
+   TWO CELLS ARE NOT AN IDENTITY COLUMN and are excluded here:
+
+   1. A [colspan] cell is not a column at all. /pal/ and /parks/ both append a
+      full-width expanded detail row (<td colspan="20">) inside the same table;
+      freezing it pins a table-wide panel to the left edge and it slides out
+      from under its own row as you scroll.
+   2. /pal/'s candidate boards lead with a RANK DIGIT (kind:"rank"), not the
+      player. Freezing first-child there pins the number and scrolls the name
+      away - precisely the orphaning this block exists to prevent. Those cells
+      carry .mlbstats-col-rank (pal.js stamps the td to match the th), so the
+      rule below pins the narrow rank at the left edge AND pins the name beside
+      it. /pal/'s other tables (Conversion History, Pitch-Add) lead with the
+      name and keep the plain first-child freeze. */
 .mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table th:first-child,
-.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table td:first-child {
+.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table td:first-child:not([colspan]) {
   position: sticky;
   left: 0;
   z-index: 1;
@@ -1760,7 +1776,32 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   background: var(--bg-secondary);
 }
 /* Keep the row-hover tint continuous across the frozen cell. */
-.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table tbody tr:hover td:first-child {
+.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table tbody tr:hover td:first-child:not([colspan]) {
+  background: var(--bg-tertiary);
+}
+/* RANK-LED BOARDS (/pal/): freeze the rank AND the name next to it. The rank
+   column is pinned to a fixed 48px so the second cell's `left` offset is a
+   known constant rather than a measurement. 48px is deliberately generous:
+   .eephus-page sets border-box, so 20px of that is the shared cell padding,
+   leaving 28px for content that is at most three tabular digits (~23px at
+   12.5px mono). The width has to stay ABOVE min-content or the browser falls
+   back to min-content and the `left` below stops lining up. */
+.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table .mlbstats-col-rank {
+  width: 48px;
+  min-width: 48px;
+}
+.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table th.mlbstats-col-rank + th,
+.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table td.mlbstats-col-rank + td {
+  position: sticky;
+  left: 48px;
+  z-index: 1;
+  background: var(--bg-primary);
+}
+.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table thead th.mlbstats-col-rank + th {
+  z-index: 3;
+  background: var(--bg-secondary);
+}
+.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table tbody tr:hover td.mlbstats-col-rank + td {
   background: var(--bg-tertiary);
 }
 .mlbstats-app .proj-dim { color: var(--text-tertiary); opacity: .65; font-size: 10px; font-family: var(--font-retro-mono); }
@@ -1795,6 +1836,33 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border);
 }
 .mlbstats-bar .mlbstats-search { margin-left: auto; min-width: 180px; }
+/* Filter controls added 2026-08-03 (team select + minimum IP/PA). They ride the
+   .mlbstats-bar input/select rule above verbatim so they match the search box
+   and the qualified-only checkbox with no second styling language; only the
+   things a shared rule cannot know are set here. The label wrapper mirrors the
+   inline style the qualified-only checkbox has always carried. */
+.mlbstats-bar .mlbstats-ctl {
+  font-size: 11px; color: var(--text-tertiary);
+  display: inline-flex; gap: 5px; align-items: center;
+}
+/* A four-digit minimum needs four digits of room, not a browser default that
+   is wider than the team select beside it. */
+.mlbstats-bar .mlbstats-minnum { width: 72px; }
+/* The role chip row reuses .mlbstats-seasons / .mlbstats-season wholesale (the
+   season pills are this module's filter-pill language) so the active state,
+   the phone swipe strip and the 44px touch pass all apply without a second
+   implementation. Only the leading caption is new. */
+.mlbstats-roles { align-items: center; }
+.mlbstats-roles-lbl {
+  font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--text-tertiary);
+  margin-right: 2px;
+}
+/* Frozen-vintage disclosure: the trailing-window columns are read verbatim
+   from lab artifacts and carry their own (older) date, so the board says so.
+   A quieter sibling of .mlbstats-note, hung off the same margins. */
+.mlbstats-vintage { margin-top: -6px; font-size: 10.5px; }
+.mlbstats-vintage b { color: var(--text-secondary); font-weight: 700; }
 /* Leaderboard table - terminal/scoreboard treatment, tabular numerics. */
 .mlbstats-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 /* 6px 10px + 12.5px: the shared cell density, matching .fa-app .detail-table
@@ -1813,7 +1881,17 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .mlbstats-name-link { color: var(--text-primary); text-decoration: none; border-bottom: 1px dotted var(--border); }
 .mlbstats-name-link:hover { border-bottom-color: var(--text-tertiary); color: var(--neon-cyan); }
 .mlbstats-table tbody tr:hover { background: var(--bg-tertiary); }
-.mlbstats-table tr.is-provisional td { opacity: .82; }
+/* PROVISIONAL ROWS: de-emphasised by COLOR, never by element opacity on the
+   cell. This was `opacity: .82` on the td, and it defeated the frozen identity
+   column above: that freeze works by filling the pinned cell with an opaque
+   --bg-primary, and opacity on the cell makes the fill translucent too, so on
+   every unqualified row the columns scrolling underneath ghosted straight
+   through the frozen name. The same dimming is now a text color on the cell
+   plus opacity on the cell's own CHILDREN - the chips, links and colored
+   metric spans, none of which paint a background - so the cell's fill stays
+   fully opaque. Do not put opacity back on the td. */
+.mlbstats-table tr.is-provisional td { color: var(--text-secondary); }
+.mlbstats-table tr.is-provisional td > * { opacity: .82; }
 /* REM+ / Bullpen+ index coloring (100 = average; thresholds mirror the +stat read). */
 .rem-plus { font-weight: 700; cursor: help; }
 .rem-elite { color: var(--accent-cyan); }
@@ -2915,6 +2993,28 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 }
 .mlb-chip b { display: block; font-size: 10px; font-weight: 600; opacity: .6;
               letter-spacing: .04em; font-family: inherit; }
+/* Swipe affordance for the tape, the same one .mlb-sortbar and .mlbstats-tabs
+   already carry (see the phone chip-row block near the end of this sheet).
+   .mlb-tape-inner has scrolled horizontally since it shipped with NO hint that
+   it does: iOS hides the scrollbar until a scroll is already in progress, so
+   the season chips past the right edge of a card were undiscoverable.
+
+   Phone-scoped for the same reason the sortbar's is: the mask fades a fixed
+   28px of the strip whether or not it overflows, which is a fair trade where
+   the overflow is near-certain and a needless nick on a wide card. Only the
+   affordance is copied, NOT the sortbar's `flex-wrap:nowrap` + `flex:none`
+   pair - those would defeat the tape's shrink-to-fit chips (flex: 1 1 0). */
+@media (max-width: 640px) {
+  .mlb-tape-inner {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    padding-bottom: 4px;
+  }
+  .mlb-tape-inner::-webkit-scrollbar { height: 4px; display: block; }
+  .mlb-tape-inner::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+}
 
 /* Sort headers above the list, matching the mlbstats a11y contract. */
 .mlb-card-head {

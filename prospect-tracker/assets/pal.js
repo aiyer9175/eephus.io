@@ -278,7 +278,13 @@
       body += "<tr" + (open ? " class=\"is-open\"" : "") + " data-open=\"" + r.mlbam
         + "\" tabindex=\"0\" aria-expanded=\"" + (open ? "true" : "false") + "\">";
       cols.forEach(function (c) {
-        if (c.kind === "rank") { body += "<td>" + (i + 1) + "</td>"; return; }
+        // The rank CELL carries the same .mlbstats-col-rank class the header
+        // already gets. site.css keys the frozen-column rules off it: /pal/
+        // leads with the rank digit rather than the player, so the shared
+        // "freeze :first-child" would pin the number and scroll the name away.
+        // With the class on both cells the rank pins narrow at the left edge
+        // and the NAME pins beside it. Do not drop it.
+        if (c.kind === "rank") { body += '<td class="mlbstats-col-rank">' + (i + 1) + "</td>"; return; }
         if (c.kind === "name") {
           body += '<td class="mlbstats-name pal-expand">' + logo(r.team) + nameLink(r.name, r.mlbam)
             + '<span class="proj-dim"> ' + esc(r.team || "") + "</span>" + flagChips(r.flags) + "</td>";
@@ -878,7 +884,9 @@
       body += "<tr" + (open ? ' class="is-open"' : "") + ' data-open="' + r.mlbam
         + '" tabindex="0" aria-expanded="' + (open ? "true" : "false") + '">';
       POSFIT_COLS.forEach(function (c) {
-        if (c.kind === "rank") { body += "<td>" + (i + 1) + "</td>"; return; }
+        // .mlbstats-col-rank: see the note in candTable - it is what lets the
+        // frozen column pin the player name instead of the rank digit.
+        if (c.kind === "rank") { body += '<td class="mlbstats-col-rank">' + (i + 1) + "</td>"; return; }
         if (c.kind === "name") {
           body += '<td class="mlbstats-name pal-expand">' + logo(r.team) + nameLink(r.name, r.mlbam)
             + '<span class="proj-dim"> ' + esc(r.team || "") + "</span>"

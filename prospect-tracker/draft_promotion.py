@@ -28,6 +28,7 @@ It is idempotent. Safe to re-run after every ingest cycle.
 
 from __future__ import annotations
 
+import json
 import logging
 import sqlite3
 from datetime import date
@@ -81,6 +82,122 @@ def _better_draft_record(a: dict, b: dict) -> dict:
     if a_signed:  # both signed -> collision -> older wins
         return a if a_year <= b_year else b
     return a if a_year >= b_year else b
+
+
+def _tjstats_extras_ids() -> dict[str, int]:
+    """{player_key: mlbam_id} harvested from the TJStats snapshot `_extras`
+    blob (tjstats.ingest_board stamps the board's MLBAM id there).
+
+    A key that carries TWO different ids across snapshots is DROPPED rather
+    than picked between: that is the ambiguous identity class, and guessing
+    there is how two people get fused.
+    """
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, tools_json FROM snapshots "
+                "WHERE source = 'tjstats' AND tools_json IS NOT NULL"
+            ).fetchall()
+    except sqlite3.Error:
+        return {}
+    seen: dict[str, set[int]] = {}
+    for r in rows:
+        key = r["player_key"]
+        if not key:
+            continue
+        try:
+            tools = json.loads(r["tools_json"]) or {}
+        except (TypeError, ValueError):
+            continue
+        extras = tools.get("_extras") if isinstance(tools, dict) else None
+        if not isinstance(extras, dict):
+            continue
+        try:
+            mid = int(extras.get("mlbam_id"))
+        except (TypeError, ValueError):
+            continue
+        if mid > 0:
+            seen.setdefault(key, set()).add(mid)
+    return {k: next(iter(v)) for k, v in seen.items() if len(v) == 1}
+
+
+def _harvest_known_mlbam_ids(pairs: Iterable[tuple[str, str]],
+                             by_key: dict[str, dict]) -> dict[str, int]:
+    """{milb_key: mlbam_id} for draftees whose MLBAM id is ALREADY known
+    somewhere in the system, ready for `storage.bind_player_ids`.
+
+    Three id sources existed and none of them reached the id layer, which is
+    the residue of the negative-cache bug that left the whole 2026 draft
+    class without stats:
+
+      * `draft_players.mlbam_id` - written straight from the MLB draft API,
+        populated for 136 of the 565 signed 2026 draftees;
+      * the `mlbam_id` TJStats stamps into its snapshot `_extras` blob;
+      * `player_photos`, which needs no harvest because it IS the durable
+        binding table - `bind_player_ids` reads it to decide what to skip.
+
+    `pairs` is (draft_key, milb_key) for draftees that have ALREADY cleared
+    every identity guard in `seed_signed_draftees`. Nothing else may be
+    passed: binding an id onto a key that failed a collision guard (the two
+    Jake Bennetts) is exactly the fusion those guards exist to prevent.
+
+    A milb key whose sources DISAGREE, or that two different draft keys both
+    claim, is dropped rather than guessed at - the same rule
+    `bind_player_ids` applies to a key already bound to another id.
+
+    The ID SIDE of that rule is enforced here too, because bind_player_ids
+    only enforces the KEY side: its `ON CONFLICT(mlbam_id) DO UPDATE SET
+    player_key` would happily REPOINT an id row that already belongs to a
+    different key. Measured on the live DB 2026-08-03: MLBAM 814385 is bound
+    to 'jackson_natili' while the draft API spells the same pick
+    'jack_natili', so an unguarded harvest would have moved that id onto the
+    draft slug. Two spellings of one identity is a merge decision, not a
+    seeding decision, so the candidate is dropped and logged.
+    """
+    wanted = [(dk, mk) for dk, mk in pairs if dk and mk]
+    if not wanted:
+        return {}
+    tj = _tjstats_extras_ids()
+    cand: dict[str, set[int]] = {}
+    for dk, mk in wanted:
+        for raw in ((by_key.get(dk) or {}).get("mlbam_id"), tj.get(mk)):
+            try:
+                mid = int(raw)
+            except (TypeError, ValueError):
+                continue
+            if mid > 0:
+                cand.setdefault(mk, set()).add(mid)
+    if not cand:
+        return {}
+
+    # {mlbam_id: player_key} already durably bound, for the id-side guard.
+    try:
+        from storage import load_mlbam_player_keys
+        owned: dict[int, str] = {}
+        for mid_s, key in load_mlbam_player_keys().items():
+            try:
+                owned[int(mid_s)] = key
+            except (TypeError, ValueError):
+                continue
+    except Exception:                                     # noqa: BLE001
+        log.exception("draft id seed: durable binding index unavailable - "
+                      "refusing to bind without the id-side guard")
+        return {}
+
+    out: dict[str, int] = {}
+    for mk, ids in cand.items():
+        if len(ids) != 1:
+            log.warning("draft id seed: %s has conflicting known ids %s - "
+                        "not binding", mk, sorted(ids))
+            continue
+        mid = next(iter(ids))
+        holder = owned.get(mid)
+        if holder is not None and holder != mk:
+            log.warning("draft id seed: MLBAM %d is already bound to %r, not "
+                        "%r - not rebinding", mid, holder, mk)
+            continue
+        out[mk] = mid
+    return out
 
 
 def promote_drafted_players(year: int | None = None) -> dict:
@@ -218,7 +335,14 @@ def seed_signed_draftees(year: int | None = None) -> int:
       * SKIP any milb_key whose earliest signed pick is an earlier year
         (same collision, acquisitions side).
 
-    Idempotent: UNIQUE(source, interval_label, player_key) upserts.
+    Also binds every ALREADY-KNOWN MLBAM id for the draftees that clear
+    those guards (see `_harvest_known_mlbam_ids`), through the same durable
+    `storage.bind_player_ids` path the pipeline uses at 2a. Until this,
+    a signed draftee's stats depended entirely on name-search resolution
+    even when the draft API had handed us his id at ingest.
+
+    Idempotent: UNIQUE(source, interval_label, player_key) upserts, and
+    bind_player_ids never repoints an existing binding.
     Returns the number of snapshots written."""
     from scrapers import Snapshot
     from storage import insert_snapshots
@@ -248,6 +372,11 @@ def seed_signed_draftees(year: int | None = None) -> int:
 
     today = date.today().isoformat()
     seeds: list[Snapshot] = []
+    # (draft_key, milb_key) for every draftee that clears the IDENTITY guards
+    # below. Collected even when no board grade exists (fv is None): a missing
+    # grade is a reason not to fabricate a snapshot, not a reason to leave a
+    # known id on the floor.
+    bindable: list[tuple[str, str]] = []
     with connect() as con:
         for r in results:
             dk = r["player_key"]
@@ -287,6 +416,7 @@ def seed_signed_draftees(year: int | None = None) -> int:
             ).fetchone()
             if pre:
                 continue  # identity already tracked by a real MiLB source
+            bindable.append((dk, mk))
             fv = _draft_board_consensus_fv(dk)
             if fv is None:
                 continue  # no board grade — nothing honest to seed
@@ -305,7 +435,23 @@ def seed_signed_draftees(year: int | None = None) -> int:
             ))
 
     n = insert_snapshots(seeds) if seeds else 0
-    log.info("seed_signed_draftees(year=%s): %d signed draftees seeded", year, n)
+
+    # Bind the ids we ALREADY hold, through the durable path (player_photos)
+    # rather than a private cache format. Same caller shape as run_monthly's
+    # step 2a: best-effort, never fatal to the seed itself. bind_player_ids
+    # refuses to repoint a key that is already bound to a different id, so a
+    # bad harvest cannot fuse two identities.
+    n_bound = 0
+    try:
+        from storage import bind_player_ids
+        known_ids = _harvest_known_mlbam_ids(bindable, by_key)
+        if known_ids:
+            n_bound = bind_player_ids(known_ids)
+    except Exception:                                     # noqa: BLE001
+        log.exception("draft id seeding failed - continuing")
+
+    log.info("seed_signed_draftees(year=%s): %d signed draftees seeded, "
+             "%d known MLBAM ids bound", year, n, n_bound)
     return n
 
 

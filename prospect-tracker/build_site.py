@@ -63,6 +63,16 @@ _FA_VER = _asset_ver("assets/fa.js")
 _FA_DPW_VER = _asset_ver("assets/fa_dpw.js")
 _GL_VER = _asset_ver("assets/eephus-gl.js")
 _GLAPP_VER = _asset_ver("assets/glossary.js")
+# CONTENT version of the glossary DATA (not the runtime that reads it).
+# assets/eephus-gl.js used to fetch the ~366KB data/glossary.json with
+# cache:"no-cache" on EVERY page view - a forced revalidation on the single
+# heaviest recurring transfer on the site. The runtime now fetches
+# /data/glossary.json?v=<this hash> under NORMAL caching, so the payload is
+# served from the browser cache until the file actually changes. The hash rides
+# a tiny inline global (below) rather than a query param on the script tag:
+# restamp_hand_authored_pages() rewrites `/assets/x.js?v=<hash>` wholesale on
+# the hand-authored pages, so any extra param on that URL would be stripped.
+_GL_DATA_VER = _asset_ver("data/glossary.json")
 _PROJ_VER = _asset_ver("assets/projections.js")
 _MLBSTATS_VER = _asset_ver("assets/mlbstats.js")
 _PAL_VER = _asset_ver("assets/pal.js")
@@ -89,6 +99,13 @@ ACCOUNT_SCRIPTS = (
     # per-page script block; inert (mounts nothing) under the light theme.
     f'<script src="/assets/eephus-bg.js?v={_BG_VER}" defer></script>\n'
     # Shared glossary runtime: data loader + ⌘K palette + term tooltips.
+    # The inline global carries the DATA hash so the runtime can request a
+    # content-versioned /data/glossary.json and let the browser cache it
+    # normally. Inline (non-defer) => it always runs before the deferred module
+    # below. Absent (the hand-authored pages carry their own <script> tags and
+    # never see this block) the runtime falls back to the unversioned URL under
+    # default caching, which is still cheaper than the old forced revalidation.
+    f'<script>window.EEPHUS_GL_DATA_VER="{_GL_DATA_VER}";</script>\n'
     f'<script src="/assets/eephus-gl.js?v={_GL_VER}" defer></script>\n'
     # Universal copy/export: a quiet chip on every table + chart (text + image).
     f'<script src="/assets/eephus-export.js?v={_EXPORT_VER}" defer></script>'
@@ -247,6 +264,10 @@ def _footer() -> str:
     links = (
         f'<a href="/team/">About</a>'
         f'<a href="/news/">Prospect News</a>'
+        # /history/ (Today in Prospect History) is a full generated surface but
+        # carried NO nav entry anywhere - its only inbound link was the homepage
+        # module's "See all" kicker, so it was unreachable from every other page.
+        f'<a href="/history/">This Day</a>'
         f'<a href="/parks/">Park Factors</a>'
         f'<a href="/sources/">Data Sources</a>'
         f'<a href="/glossary/">Glossary</a>'
@@ -847,6 +868,11 @@ def load_site_data() -> dict | None:
         "players": ts.get("players") or [],
         "org_summary": ts.get("org_summary") or [],
         "graduates": grads,
+        # The movement engine's three published buckets (risers / rebounders /
+        # fallers, plus the legacy `hot` alias of risers - see
+        # test_spotlights_three_buckets.py). Carried through here so the sidebar
+        # spotlight can rotate over them without re-parsing timeseries.json.
+        "spotlights": ts.get("spotlights") or {},
     }
 
 def _player_href(key: str) -> str:
@@ -876,6 +902,19 @@ def _team_logo(org: str | None, cls: str = "row-logo") -> str:
     return (f'<img class="{cls}" src="https://a.espncdn.com/i/teamlogos/mlb/500/{slug}.png" alt="{o}" loading="lazy" '
             f"onerror=\"this.outerHTML='<span class=&quot;{cls}&quot; style=&quot;font:700 9px var(--font-retro-mono);display:inline-flex;align-items:center;justify-content:center&quot;>{o}</span>'\">")
 
+def _round_half_up(x: float) -> int:
+    """Round HALF-UP (ties toward +infinity) - the JS `Math.round` convention.
+
+    THE ONE ROUNDER for every eFV number this file prints or steps. Python's
+    built-in round() is banker's (half-to-EVEN): round(64.5)==64 while
+    Math.round(64.5)==65, so any x.5 eFV grade made the homepage disagree with
+    the PROSPX board / player card / projections, which all round in JS. It is
+    correct for signed values too (grade DELTAS): floor(-1.5+0.5) == -1, exactly
+    what Math.round(-1.5) returns, where round(-1.5) would give -2.
+
+    Consensus FV is NOT this: it rounds CEIL (see _fv_label's fallback branch)."""
+    return int(math.floor(x + 0.5))
+
 def _fv_label(p: dict) -> str:
     # Lead with the eFV grade when eFV has graded this player (round-to-NEAREST: eFV is the
     # true-model grade, so it rounds nearest, not up). For players eFV abstains on, keep the
@@ -883,13 +922,7 @@ def _fv_label(p: dict) -> str:
     # snapping / '+' upside), else ceil(fv_close) (consensus FV still rounds up).
     g = _EFV_GRADES.get(p.get("player_key"))
     if g is not None:
-        # eFV rounds to NEAREST, HALF-UP -- matching the JS efvGradeDisplay
-        # (Math.round) that the PROSPX board + player card + projections all use.
-        # Python's built-in round() is banker's (half-to-even), so round(64.5)=64
-        # while Math.round(64.5)=65 -> the homepage disagreed with the board on any
-        # x.5 grade (e.g. franklin_arias 64.5). math.floor(g+0.5) is half-up for the
-        # always-positive 20-80 grade range.
-        return str(int(math.floor(g + 0.5)))
+        return str(_round_half_up(g))
     pts = p.get("points") or []
     if pts and pts[-1].get("consensus_fv_label") is not None:
         return str(pts[-1]["consensus_fv_label"])
@@ -941,7 +974,11 @@ def _meta(*parts) -> str:
 # actually moved, not when a daily capture re-confirmed it.
 # --------------------------------------------------------------------------- #
 def _label_series(p: dict) -> list[tuple[str, int]]:
-    """(snapshot_date, consensus grade as int) per point, oldest → newest."""
+    """(snapshot_date, consensus grade as int) per point, oldest → newest.
+
+    NOT an eFV read, so it deliberately does NOT take _round_half_up:
+    `consensus_fv_label` is the PUBLISHED consensus label, already an integer on
+    every point, so the round() here is a type coercion and never breaks a tie."""
     out = []
     for pt in (p.get("points") or []):
         d = pt.get("snapshot_date")
@@ -1065,7 +1102,7 @@ def _genuine_mover_step(p: dict) -> int | None:
         return None
     if moved < date.today() - timedelta(days=_HOME_MOVER_RECENCY_DAYS):
         return None
-    step = int(round(st["delta"]))
+    step = _round_half_up(st["delta"])   # eFV-basis step -> half-up, like the JS
     return step if abs(step) >= 2 else None
 
 def _row_mover(p: dict, d: int) -> str:
@@ -1163,7 +1200,10 @@ def display_metric_for(p: dict) -> dict:
     if fv is not None:
         return {"metric": "FV", "cls": "flat",
                 "html": (f'<span class="row-meta" title="Final prospect FV - no MLB sample yet">'
-                         f'FV {int(round(fv))}</span>')}   # eFV-primary -> rounds to NEAREST
+                         # eFV-primary -> rounds to NEAREST, HALF-UP (_round_half_up),
+                         # NOT python's banker's round(): that printed FV 64 for a 64.5
+                         # eFV while the board beside it printed 65.
+                         f'FV {_round_half_up(fv)}</span>')}
     return {"metric": None, "cls": "flat", "html": '<span class="row-meta">debut</span>'}
 
 
@@ -1299,21 +1339,24 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
             if (mv.get("basis") == "same_source" and mv.get("delta") is not None
                     and mv.get("direction") not in ("flat", "debuted")
                     and mv.get("confidence") in ("high", "medium")):
-                step = int(round(mv["delta"]))
+                step = _round_half_up(mv["delta"])
                 try:
-                    new_grade = int(round(float(mv.get("to_label"))))
+                    new_grade = _round_half_up(float(mv.get("to_label")))
                 except (TypeError, ValueError):
                     new_grade = None
                 if abs(step) >= 2 and new_grade is not None:
                     chg = (str(mv.get("to_date"))[:10], step, new_grade)
             elif (mv.get("basis") == "xfv" and mv.get("delta") is not None
                     and mv.get("direction") not in ("flat", "debuted")):
-                step = int(round(mv["delta"]))
+                step = _round_half_up(mv["delta"])
                 # to_label is the string "eFV NN.N" for the xfv basis; pull the
-                # number out and round it to nearest (eFV is the true-model grade).
+                # number out and round it to nearest, HALF-UP - this is an eFV
+                # value, so it takes the same rounder as _fv_label. Banker's
+                # round() published "eFV 60" in the wire for a 60.5 grade the
+                # board rendered as 61.
                 _m = re.search(r"-?\d+(?:\.\d+)?", str(mv.get("to_label") or ""))
                 try:
-                    new_grade = int(round(float(_m.group()))) if _m else None
+                    new_grade = _round_half_up(float(_m.group())) if _m else None
                 except (TypeError, ValueError):
                     new_grade = None
                 if abs(step) >= 2 and new_grade is not None:
@@ -1738,25 +1781,20 @@ def _fv_sparkline(points: list, color: str, w: int = 150, h: int = 34) -> str:
             f'<polyline points="{pts}" fill="none" stroke="{color}" stroke-width="2" '
             'stroke-linejoin="round" stroke-linecap="round"/></svg>')
 
-def _spotlight_html(players: list) -> str:
-    # Biggest riser with FV history - rendered as a baseball card. Ranked by the
-    # de-noised genuine same-source move (the same selector the Top Movers
-    # module uses), so the "+N FV" caption is a true FV statement and the hero
-    # card never disagrees with the movers list or the per-player stock chips.
-    cands = [(d, p) for p in players
-             if p.get("status") != "debuted"
-             and (d := _genuine_mover_step(p)) is not None and d > 0]
-    if not cands:
-        return ""
-    d, p = max(cands, key=lambda t: t[0])
+def _spotlight_card(label: str, p: dict, chip: str, spark_color: str) -> str:
+    """ONE spotlight card - the baseball-card markup every rotation slot shares.
+    `label` is the sb-group caption, `chip` the ready-made status chip that sits
+    beside the FV pill. Split out of _spotlight_html so riser / faller /
+    hot-sample are byte-identical in structure and only the caption, the chip and
+    the sparkline colour differ."""
     # Tier the holo border off the DISPLAYED integer, matching _fv_pill (a raw
     # threshold here disagreed with the pill rendered inside the same card).
     holo = " holo" if "holo" in _fv_tier_class(_fv_label(p)) else ""
     url = _headshot_url(p.get("mlbam_id"), 180)   # unified chain (resolves milb-only ids)
     photo = f"background-image:url('{url}');" if url else ""
-    spark = _fv_sparkline(p.get("points"), "var(--accent-green)")
+    spark = _fv_sparkline(p.get("points"), spark_color)
     return (
-        '<div class="sb-group"><div class="sb-group-label">Spotlight - Top Riser</div>'
+        f'<div class="sb-group"><div class="sb-group-label">{html.escape(label)}</div>'
         f'<a class="spotlight{holo}" href="{_player_href(p.get("player_key"))}" style="text-decoration:none;color:inherit;">'
         f'<div class="sp-photo" style="{photo}"></div>'
         '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;">'
@@ -1766,9 +1804,74 @@ def _spotlight_html(players: list) -> str:
         # delta can outgrow the narrow sidebar column - wrap the chip as a unit
         # below the pill instead of letting it overflow into the card border.
         f'<div style="display:flex;align-items:center;gap:8px;row-gap:2px;margin-top:4px;flex-wrap:wrap;">{_fv_pill(p)}'
-        f'<span class="row-delta up" style="font-family:var(--font-retro-mono);font-size:12px;white-space:nowrap;">▲ +{d} FV</span></div>'
+        f'{chip}</div>'
         f'{spark}</div></a></div>'
     )
+
+def _spotlight_html(players: list, spotlights: dict | None = None) -> str:
+    """Sidebar spotlight, ROTATED by day-of-year across the movement engine's
+    three published buckets instead of always showing the same Top Riser.
+
+    Slot 1 (Top Riser) and slot 2 (Top Faller) come from `_genuine_mover_step` -
+    the de-noised genuine grade move, the same selector the Top Movers module
+    uses - so the "+N FV" / "-N FV" caption stays a true FV statement and the
+    hero card never disagrees with the movers list or the per-player stock chips.
+    Slot 3 (Hot Sample) is the engine's own performance bucket
+    (timeseries.spotlights.hot, the alias of `risers` guarded by
+    test_spotlights_three_buckets), captioned with that entry's published stat
+    line rather than a grade step - the bucket is scored on performance, so
+    printing an FV delta there would be a category error.
+
+    Deterministic per day (tm_yday), and the rotation only ever contains slots
+    that actually resolved, so a thin data day silently shows whatever exists
+    rather than an empty rail. Returns "" only when NO slot fills."""
+    steps = [(d, p) for p in players
+             if p.get("status") != "debuted"
+             and (d := _genuine_mover_step(p)) is not None]
+    chip_style = "font-family:var(--font-retro-mono);font-size:12px;white-space:nowrap;"
+    slots: list[tuple[str, dict, str, str]] = []
+
+    risers = [t for t in steps if t[0] > 0]
+    if risers:
+        d, p = max(risers, key=lambda t: t[0])
+        slots.append(("Spotlight - Top Riser", p,
+                      f'<span class="row-delta up" style="{chip_style}">▲ +{d} FV</span>',
+                      "var(--accent-green)"))
+    fallers = [t for t in steps if t[0] < 0]
+    if fallers:
+        d, p = min(fallers, key=lambda t: t[0])
+        # d is already negative, so it carries its own sign - never print "+-3".
+        slots.append(("Spotlight - Top Faller", p,
+                      f'<span class="row-delta down" style="{chip_style}">▼ {d} FV</span>',
+                      "var(--accent-red)"))
+
+    # Hot sample: the top entry of the engine's performance bucket that still
+    # resolves to a player on the board (an entry whose player left the pool is
+    # skipped, not rendered as a dead card).
+    bucket = (spotlights or {}).get("hot") or (spotlights or {}).get("risers") or []
+    if bucket:
+        by_key = {p.get("player_key"): p for p in players}
+        for e in bucket:
+            p = by_key.get((e or {}).get("player_key"))
+            line = (e or {}).get("line")
+            if not p or not line:
+                continue
+            why = (e or {}).get("why") or "Hot sample"
+            slots.append((
+                "Spotlight - Hot Sample", p,
+                # The stat line is far wider than an FV delta, so this chip
+                # wraps (the row is already flex-wrap) instead of nowrapping
+                # itself out through the card border.
+                f'<span class="row-delta up" title="{html.escape(str(why))} - current-season sample" '
+                f'style="font-family:var(--font-retro-mono);font-size:11px;white-space:normal;">'
+                f'{html.escape(str(line))}</span>',
+                "var(--accent-green)"))
+            break
+
+    if not slots:
+        return ""
+    label, p, chip, color = slots[datetime.now().timetuple().tm_yday % len(slots)]
+    return _spotlight_card(label, p, chip, color)
 
 # Homepage teaser rotation - curated Arkmetrics showcase. The phrases are
 # label expansions (hints), not definitions; the canonical entry lives in
@@ -1781,6 +1884,48 @@ _GLOSSARY_TERMS = [
     ("wag", "WAG", "WAR above grade"),
     ("tool", "Tool+", "20-80 tool composite"),
 ]
+
+# The teaser used to rotate the six hardcoded pairs above out of the 285 real
+# entries in data/glossary.json, so 279 of them were unreachable from the
+# homepage and the six drifted from their canonical definitions. It now rotates
+# the REAL Arkmetrics shelf (the `custom-index` + `farm` categories, which
+# glossary.json's own `groups` map calls "Arkmetrics" - the same grouping
+# /glossary/ renders), keyed by day-of-year exactly as before.
+_GLOSSARY_TEASER_GROUP = "Arkmetrics"
+
+def _glossary_hint(text: str, limit: int = 76) -> str:
+    """A one-line hint from a canonical definition: first sentence, clipped at a
+    WORD boundary. The teaser slot is a single narrow line, and the real entries
+    run to ~250 characters."""
+    s = " ".join(str(text or "").split())
+    # First sentence, but only when the period really ends one ("2.5 WAR" and
+    # "vs. peers" must not split the line).
+    m = re.search(r"(?<=[a-z0-9)\]])\.(?=\s+[A-Z(])", s)
+    if m:
+        s = s[:m.start()]
+    if len(s) > limit:
+        cut = s[:limit].rsplit(" ", 1)[0].rstrip(" ,;:")
+        s = (cut or s[:limit]) + "…"
+    return s
+
+@functools.lru_cache(maxsize=1)
+def _glossary_teaser_terms() -> tuple:
+    """(slug, term, hint) for every Arkmetrics entry, ordered by slug so the
+    day-of-year rotation is STABLE across rebuilds (glossary.json's entry order
+    is a build artifact and must not be allowed to reshuffle the calendar).
+    Falls back to the curated six when the file is missing or has no group."""
+    doc = _cached_data_json("glossary.json")
+    groups = doc.get("groups") or {}
+    out = []
+    for e in (doc.get("entries") or []):
+        e = e or {}
+        if groups.get(e.get("category")) != _GLOSSARY_TEASER_GROUP:
+            continue
+        slug, term, defn = e.get("id"), e.get("term"), e.get("definition")
+        if slug and term and defn:
+            out.append((str(slug), str(term), _glossary_hint(defn)))
+    out.sort(key=lambda t: t[0])
+    return tuple(out) or tuple(_GLOSSARY_TERMS)
 
 def page_home(title: str, inner: str, description: str = "") -> str:
     desc = html.escape(description or "eephus.io - sabermetrics")
@@ -2294,17 +2439,44 @@ def build_this_day(data: dict | None = None) -> str:
                 url=f"{SITE_ORIGIN}/history/")
 
 def _date_callout() -> str:
-    """Date-aware countdown when the MLB Draft or Int'l signing period is near.
+    """Date-aware countdown when a prospect-calendar event is near.
 
     Events carry a (start, end) range rather than a single date - the MLB
     Draft runs three days (Jul 11-13), not one, so "days until" has to count
     down to the START, and the callout needs an in-progress state for the
     days the event is actually happening, not just before/after.
+
+    CALENDAR COVERAGE. The table used to hold only the Draft and the January
+    international window, so from mid-July through the end of November the
+    callout rendered nothing at all - the emptiest stretch of the site's year
+    covered none of the events a prospect reader actually tracks. The four
+    additions below close it. Ranges are the RECURRING windows, not scraped
+    dates: the trade deadline has sat on Jul 31 since 2019, the Rule 5 draft
+    closes the Winter Meetings (a moving day inside the second week of
+    December, hence a window rather than a false-precision single date), the
+    Futures Game is All-Star Saturday, and FanGraphs' offseason org lists run
+    through the late fall. Anything softer than that does not belong here.
+
+    ORDER MATTERS: the loop returns the FIRST event (by start date) that is
+    live or inside the 45-day horizon, so windows are kept short deliberately.
+    A months-long "list season" range would sit "Underway" across December and
+    January and swallow both the Rule 5 draft and the international window.
     """
     today = date.today()
     yr = today.year
     events = [
+        # All-Star Saturday. Listed BEFORE the Draft so that on a shared start
+        # date the one-day event wins the (stable-sorted) tie and the Draft
+        # takes the slot back for the rest of its run.
+        (date(yr, 7, 11), date(yr, 7, 11), "Futures Game", "/prospx/"),
         (date(yr, 7, 11), date(yr, 7, 13), "MLB Draft", "/prospx/#tab=draft"),
+        (date(yr, 7, 31), date(yr, 7, 31), "MLB trade deadline", "/prospx/#tab=traded"),
+        # FanGraphs list season - the offseason org-list run that re-grades the
+        # consensus board. Capped at November on purpose (see ORDER MATTERS).
+        (date(yr, 11, 1), date(yr, 11, 30), "FanGraphs list season", "/prospx/"),
+        # Rule 5 draft - final day of the Winter Meetings; the window spans the
+        # days that day has landed on rather than asserting one.
+        (date(yr, 12, 8), date(yr, 12, 12), "Rule 5 draft", "/prospx/#tab=traded"),
         (date(yr if today <= date(yr, 1, 15) else yr + 1, 1, 15),
          date(yr if today <= date(yr, 1, 15) else yr + 1, 1, 15),
          "International signing period", "/prospx/#tab=ifa"),
@@ -2329,20 +2501,85 @@ def _date_callout() -> str:
                 f'<span class="cal-go">View →</span></a>')
     return ""
 
-def _scatter_teaser() -> str:
-    """Tiny inline scatter linking to the Scatterplots builder - a visual nudge,
-    not live data (kept featherweight; the real plot lives in PROSPX)."""
+# The eFV model floors at 20 for the long tail of organizational filler it has
+# no projection for. Those rows are a spike ON the floor, not a distribution, so
+# every homepage read of the eFV shape excludes them and SAYS it excludes them.
+_EFV_FLOOR = 20.0
+
+def _scatter_points(players: list, n: int) -> list[tuple[float, float]]:
+    """`n` REAL (age, eFV) pairs spread across the graded board, chosen
+    deterministically from the day's ordinal.
+
+    Spread along the GRADE AXIS, not uniformly and not by rank. A uniform draw
+    is ~72% floor rows, and even with the floor dropped it piles two thirds of
+    its dots into the 38-49 band - a horizontal smear, not a scatter. Equal-COUNT
+    strata are barely better: the board is right-skewed, so the top sixteenth
+    still spans 48-61 and the elite corner usually goes unrepresented. Walking
+    evenly UP THE GRADE RANGE and taking the nearest real player at each step
+    (each used once) spans 21 to 61 with sixteen actual prospects. It samples the
+    board, it does not estimate its density - the caption says exactly that."""
     import random
+    by_grade: dict[int, list] = {}
+    for p in players:
+        age, fv = p.get("age"), _primary_fv(p)
+        if not (isinstance(age, (int, float)) and isinstance(fv, (int, float))):
+            continue
+        # Gate on the DISPLAYED grade, exactly as the histogram does - a raw
+        # 20.2 displays as 20 and is a floor row, not a graded one.
+        g = _round_half_up(fv)
+        if g > _EFV_FLOOR:
+            by_grade.setdefault(g, []).append((float(age), float(fv)))
+    present = sorted(by_grade)
+    if not present:
+        return []
     rnd = random.Random(date.today().toordinal())
-    pts = "".join(
-        f'<circle cx="{rnd.uniform(8, 142):.0f}" cy="{rnd.uniform(6, 42):.0f}" r="2.2" '
-        f'fill="var(--accent-{"green" if rnd.random() > .5 else "gold"})" opacity="0.85"/>'
-        for _ in range(16))
-    svg = (f'<svg viewBox="0 0 150 48" preserveAspectRatio="none" aria-hidden="true">'
-           f'<line x1="6" y1="44" x2="144" y2="44" stroke="var(--border)" stroke-width="1"/>'
-           f'<line x1="6" y1="4" x2="6" y2="44" stroke="var(--border)" stroke-width="1"/>{pts}</svg>')
+    lo_g, hi_g = present[0], present[-1]
+    out = []
+    for k in range(n):
+        target = lo_g + (hi_g - lo_g) * k / max(1, n - 1)
+        # Nearest grade that still has an unused player; ties break low.
+        for g in sorted(present, key=lambda q: (abs(q - target), q)):
+            if by_grade[g]:
+                out.append(by_grade[g].pop(rnd.randrange(len(by_grade[g]))))
+                break
+        else:
+            break                       # board exhausted (tiny/test data layer)
+    return out
+
+def _scatter_teaser(players: list | None = None) -> str:
+    """Tiny inline scatter linking to the Scatterplots builder.
+
+    The dots used to be 16 RANDOM coordinates seeded off the date - a picture of
+    nothing, on the front page of a site whose whole claim is measured numbers.
+    They are now 16 real prospects plotted as age (x) against eFV (y), on the
+    real domains, with the fill carrying the tier split the rest of the page
+    uses (foil and up = gold). Same SVG budget: same box, same dot count, no
+    fetch. With no data layer the card renders without its chart rather than
+    falling back to invented dots."""
+    pts_data = _scatter_points(players or [], 16)
+    svg = ""
+    if len(pts_data) >= 2:
+        ages = [a for a, _ in pts_data]
+        fvs = [f for _, f in pts_data]
+        a_lo, a_hi = min(ages), max(ages)
+        f_lo, f_hi = min(fvs), max(fvs)
+        a_span = (a_hi - a_lo) or 1.0
+        f_span = (f_hi - f_lo) or 1.0
+        pts = "".join(
+            f'<circle cx="{8 + ((a - a_lo) / a_span) * 134:.0f}" '
+            f'cy="{42 - ((f - f_lo) / f_span) * 36:.0f}" r="2.2" '
+            f'style="fill:var(--accent-{"gold" if f >= 50 else "green"});opacity:0.85;"/>'
+            for a, f in pts_data)
+        cap = (f'{len(pts_data)} prospects sampled across the graded board: '
+               f'age {a_lo:.1f}-{a_hi:.1f} on x, '
+               f'eFV {_round_half_up(f_lo)}-{_round_half_up(f_hi)} on y')
+        svg = (f'<div class="st-svg"><svg viewBox="0 0 150 48" preserveAspectRatio="none" '
+               f'role="img" aria-label="{html.escape(cap)}"><title>{html.escape(cap)}</title>'
+               f'<line x1="6" y1="44" x2="144" y2="44" style="stroke:var(--border);stroke-width:1;"/>'
+               f'<line x1="6" y1="4" x2="6" y2="44" style="stroke:var(--border);stroke-width:1;"/>'
+               f'{pts}</svg></div>')
     return (f'<a class="scatter-teaser" href="/prospx/#tab=charts">'
-            f'<div class="st-svg">{svg}</div>'
+            f'{svg}'
             f'<div class="st-txt"><strong>Build a scatterplot</strong>'
             f'<span>Any X/Y metric · color &amp; size encodings · brush-to-zoom</span></div>'
             f'<span class="st-go">Scatterplots →</span></a>')
@@ -2385,13 +2622,27 @@ def _cross_module_strip() -> str:
                           'five-year bWAR leaders', rows))
     except (OSError, ValueError, KeyError):
         pass
-    # Trade Machine - top surplus trade values (prospects + MLB, one currency)
+    # Trade Machine - top surplus trade values (prospects + MLB, one currency).
+    # DEEP LINKS: every other card in this strip opens the player it names, but
+    # these rows all pointed at a bare /trademachine/. The app DOES support a
+    # per-player seed - _tmSeedFromURL() in assets/trademachine.js reads
+    # `#tm=<kind>:<key>` off the hash and pre-loads that player into Side A, and
+    # renderTradeMachine() calls it on mount, so the standalone page honours it,
+    # not just the PROSPX-embedded view. `kind` is the app's own split
+    # (_tbIsMlb: status graduated/debuted => "mlb", else "prospect"); the seed
+    # needs posterior_surplus_mm, which is exactly what the board price is
+    # derived from, so a row that renders here always seeds.
     try:
         tv = _cached_data_json("trade_values.json")
-        top = sorted((p for p in tv.get("players") or [] if p.get("trade_value_mm") is not None),
+        top = sorted((p for p in tv.get("players") or []
+                      if p.get("trade_value_mm") is not None
+                      and p.get("posterior_surplus_mm") is not None
+                      and p.get("player_key")),
                      key=lambda p: -p["trade_value_mm"])[:3]
         rows = "".join(
-            f'<a class="xmod-row" href="/trademachine/">'
+            f'<a class="xmod-row" href="/trademachine/#tm='
+            f'{"mlb" if p.get("status") in ("graduated", "debuted") else "prospect"}:'
+            f'{html.escape(p["player_key"])}">'
             f'<span class="xmod-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="xmod-sub">{html.escape(p.get("position") or "")} · {html.escape(p.get("org") or "")}</span>'
             f'<span class="xmod-val">${p["trade_value_mm"]:.0f}M</span></a>'
@@ -2422,6 +2673,36 @@ def _cross_module_strip() -> str:
                           'top relievers by REM+', rows))
     except (OSError, ValueError, KeyError):
         pass
+    # Leverage Leaderboards - realized win-probability impact, the one side of
+    # /mlbstats/ the REM+ card above never reaches (that card is relievers only,
+    # and leverage_leaderboards.json carries BOTH batters and starters). WPA is
+    # descriptive realized value, not a projection - the sub-head says so.
+    # Deep-links the section the app's own readHash() understands:
+    # #section=leverage, plus lview= for the starters view.
+    try:
+        lv = _cached_data_json("leverage_leaderboards.json")
+        bat = sorted((b for b in lv.get("batters") or [] if b.get("wpa") is not None),
+                     key=lambda b: -b["wpa"])[:2]
+        sp = sorted((s for s in lv.get("starters") or [] if s.get("wpa") is not None),
+                    key=lambda s: -s["wpa"])[:1]
+        rows = "".join(
+            f'<a class="xmod-row" href="/mlbstats/#section=leverage">'
+            f'<span class="xmod-name">{html.escape(b.get("name") or "")}</span>'
+            f'<span class="xmod-sub">{html.escape(b.get("team") or "")} · batter</span>'
+            f'<span class="xmod-val">{b["wpa"]:+.1f} WPA</span></a>'
+            for b in bat)
+        rows += "".join(
+            f'<a class="xmod-row" href="/mlbstats/#section=leverage&amp;lview=starters">'
+            f'<span class="xmod-name">{html.escape(s.get("name") or "")}</span>'
+            f'<span class="xmod-sub">{html.escape(s.get("team") or "")} · starter</span>'
+            f'<span class="xmod-val">{s["wpa"]:+.1f} WPA</span></a>'
+            for s in sp)
+        if rows:
+            # ⇅ (the win-probability swing); ◈ is spoken for by Fantasy, below.
+            cards.append(('⇅ Leverage', '/mlbstats/#section=leverage',
+                          'realized win-probability added', rows))
+    except (OSError, ValueError, KeyError):
+        pass
     # Alchemy Lab - top RP->SP conversion candidates by FIT score
     try:
         pal = _cached_data_json("pal.json")
@@ -2436,6 +2717,31 @@ def _cross_module_strip() -> str:
         if rows:
             cards.append(('⚗ Alchemy Lab', '/pal/',
                           'top reliever-to-starter conversion candidates', rows))
+    except (OSError, ValueError, KeyError):
+        pass
+    # Fantasy - rest-of-season projected points leaders. The section lists in
+    # fantasy.json are BARE mlbam ids and the side comes from the section they
+    # sit in (assets/fantasy.js resolves them the same way), so a two-way player
+    # has one record per side and the lookup has to be keyed (mlbam, side) or it
+    # prints Ohtani's pitching total on the hitter board. Rows land on /fantasy/
+    # itself: the app keeps its section state in memory, not the hash, so there
+    # is no per-player deep link to honour.
+    try:
+        ff = _cached_data_json("fantasy.json")
+        by_side = {(p.get("mlbam"), p.get("side")): p for p in ff.get("players") or []}
+        ids = ((ff.get("sections") or {}).get("ros_hitter") or [])[:24]
+        cand = [by_side.get((i, "hit")) for i in ids]
+        top = sorted((c for c in cand if c and c.get("fpts_fgp") is not None),
+                     key=lambda c: -c["fpts_fgp"])[:3]
+        rows = "".join(
+            f'<a class="xmod-row" href="/fantasy/">'
+            f'<span class="xmod-name">{html.escape(c.get("name") or "")}</span>'
+            f'<span class="xmod-sub">{html.escape(c.get("team") or "")}</span>'
+            f'<span class="xmod-val">{c["fpts_fgp"]:.0f} FG pts</span></a>'
+            for c in top)
+        if rows:
+            cards.append(('◈ Fantasy', '/fantasy/',
+                          'rest-of-season hitter points leaders', rows))
     except (OSError, ValueError, KeyError):
         pass
     # MiLB Park Factors - the most offense-inflating venues on the current
@@ -2471,6 +2777,258 @@ def _cross_module_strip() -> str:
         for title, href, sub, rows in cards)
     return (f'<div class="xmod-strip"><div class="xmod-eyebrow">Across eephus.io</div>'
             f'<div class="xmod-grid">{body}</div></div>')
+
+
+# --------------------------------------------------------------------------- #
+# eFV distribution - a build-time histogram of the board's own grade shape.
+#
+# The bands are the RARITY RAMP, mirrored from prospx rankNumRarityClass()
+# (45 shine / 50 foil / 55 chrome / 61 holo / 70 legendary) so the chart and a
+# player's card treatment can never disagree about where a tier starts. Keyed
+# on the DISPLAYED integer, like _fv_tier_class, for the same reason: a raw
+# threshold would colour a bar labelled "60" as if it were 61.
+#
+# COLOUR. Grade is an ORDERED quantity, so the bars take a single-hue
+# SEQUENTIAL ramp (the brand navy, which is the refractor cyan on dark),
+# escalating in weight through the common/shine/foil/chrome tiers, and the rare
+# tail takes the site's holo accent as a highlight hue. That is deliberately not
+# six categorical colours: a hue per band would be a rainbow on ordered data.
+# Both themes were checked - the ramp is monotonic in lightness (4.1:1 -> 12.5:1
+# on paper, 5.0:1 -> 11.8:1 on the dark field) and the chrome/holo pair clears
+# colour-blind separation (deutan dE 26.6 light, 14.5 dark).
+#
+# Zero runtime cost: no fetch, no script, no client work - just rects.
+# --------------------------------------------------------------------------- #
+_EFV_TIERS = (
+    # lo (None = open) | hi (None = open) | key | axis label | fill | fill-opacity
+    (None,   44, "common",    "under 45", "var(--accent-navy)", "0.62"),
+    (45,     49, "shine",     "45-49",    "var(--accent-navy)", "0.78"),
+    (50,     54, "foil",      "50-54",    "var(--accent-navy)", "0.92"),
+    (55,     60, "chrome",    "55-60",    "var(--accent-navy)", "1"),
+    (61,     69, "holo",      "61-69",    "var(--accent-lilac)", "1"),
+    (70,   None, "legendary", "70+",      "var(--accent-lilac)", "1"),
+)
+
+def _efv_tier(g: int) -> tuple:
+    """The rarity-ramp row a DISPLAYED integer grade falls in."""
+    for row in reversed(_EFV_TIERS):
+        if row[0] is None or g >= row[0]:
+            return row
+    return _EFV_TIERS[0]
+
+def _efv_distribution_html(players: list) -> str:
+    """Full-width homepage module: the distribution of displayed eFV grades
+    across the board, banded by rarity tier.
+
+    THE FLOOR IS EXCLUDED AND SAID SO. eFV floors at 20 for the long tail of
+    organizational filler it has no projection for - today roughly 7 of every 10
+    rows. Plotting that spike would drown every real bar at ~1px and misread as
+    "the board is all replacement level", so the histogram covers the graded
+    range and the caption states the floor count outright rather than quietly
+    dropping it."""
+    grades = []
+    for p in players:
+        v = _primary_fv(p)
+        if isinstance(v, (int, float)):
+            grades.append(_round_half_up(v))
+    if not grades:
+        return ""
+    floor_n = sum(1 for g in grades if g <= _EFV_FLOOR)
+    plotted = sorted(g for g in grades if g > _EFV_FLOOR)
+    if len(plotted) < 10:            # nothing to shape a histogram out of
+        return ""
+    lo, hi = plotted[0], plotted[-1]
+    counts: dict[int, int] = {}
+    for g in plotted:
+        counts[g] = counts.get(g, 0) + 1
+    n_bkt = hi - lo + 1
+    top_c = max(counts.values())
+    total = len(plotted)
+    median = plotted[total // 2] if total % 2 else plotted[total // 2 - 1]
+
+    # ---- geometry (viewBox units; the SVG scales to the module width) ----
+    pad, w, base, top = 10, 720, 118, 16
+    plot_h = base - top
+    slot = (w - 2 * pad) / n_bkt
+    bar_w = max(1.2, slot - 2)       # 2u surface gap between bars
+
+    def x_of(g: int) -> float:
+        """Left edge of grade `g`'s bucket."""
+        return pad + (g - lo) * slot
+
+    # NB: every themed colour below rides `style=`, never a bare presentation
+    # attribute - a CSS custom property in `fill="var(...)"` is not reliably
+    # substituted, and the failure mode is a silent fallback to black.
+    bars = []
+    for g in range(lo, hi + 1):
+        c = counts.get(g, 0)
+        if not c:
+            continue
+        _, _, tier_key, _, fill, op = _efv_tier(g)
+        h = max(1.0, (c / top_c) * plot_h)
+        pct = 100.0 * c / total
+        bars.append(
+            f'<rect x="{x_of(g):.1f}" y="{base - h:.1f}" width="{bar_w:.1f}" height="{h:.1f}" '
+            f'style="fill:{fill};fill-opacity:{op};">'
+            f'<title>eFV {g} ({tier_key}) - {c} prospect{"s" if c != 1 else ""}, '
+            f'{pct:.1f}% of the graded board</title></rect>')
+
+    # Tier boundary rules + the threshold number, drawn only for thresholds that
+    # actually fall inside the plotted range (a rule for a tier nobody reaches
+    # would be furniture).
+    rules = []
+    for t_lo, _, _, _, _, _ in _EFV_TIERS:
+        if t_lo is None or not (lo < t_lo <= hi):
+            continue
+        x = x_of(t_lo)
+        rules.append(
+            f'<line x1="{x:.1f}" y1="{top - 6}" x2="{x:.1f}" y2="{base}" '
+            f'style="stroke:var(--border);stroke-width:1;stroke-dasharray:2 3;"/>')
+        # Only label a threshold the x axis does not already carry (the ticks
+        # below run every 5 grades, so 45/50/55 would print twice); 61 is the
+        # off-grid one and is the only band edge that needs saying.
+        if t_lo % 5:
+            rules.append(
+                f'<text x="{x + 3:.1f}" y="{top - 7}" '
+                f'style="font:9px var(--font-retro-mono);fill:var(--text-tertiary);">{t_lo}</text>')
+
+    # x ticks every 5 grades - selective labels, never one per bar.
+    ticks = []
+    for g in range(lo + (-lo % 5), hi + 1, 5):
+        ticks.append(
+            f'<text x="{x_of(g) + bar_w / 2:.1f}" y="{base + 13}" text-anchor="middle" '
+            f'style="font:9px var(--font-retro-mono);fill:var(--text-tertiary);">{g}</text>')
+
+    svg = (
+        f'<svg viewBox="0 0 {w} 136" style="width:100%;height:auto;display:block;" role="img" '
+        f'aria-label="Histogram of eephusFV grades across the board, banded by rarity tier">'
+        f'<title>eFV distribution: {total} graded prospects from {lo} to {hi}, '
+        f'median {median}</title>'
+        f'<line x1="{pad}" y1="{base}" x2="{w - pad}" y2="{base}" '
+        f'style="stroke:var(--border);stroke-width:1;"/>'
+        f'{"".join(rules)}{"".join(bars)}{"".join(ticks)}</svg>')
+
+    # Legend doubles as the table view: every tier that has players, with its
+    # count, so identity never rests on colour alone.
+    chips = []
+    for t_lo, t_hi, _, t_label, fill, op in _EFV_TIERS:
+        n = sum(c for g, c in counts.items()
+                if (t_lo is None or g >= t_lo) and (t_hi is None or g <= t_hi))
+        if not n:
+            continue
+        chips.append(
+            f'<span style="display:inline-flex;align-items:center;gap:5px;">'
+            f'<span aria-hidden="true" style="width:10px;height:10px;flex:none;'
+            f'background:{fill};opacity:{op};"></span>{html.escape(t_label)}'
+            f'<span style="color:var(--text-tertiary)">{n:,}</span></span>')
+    legend = ('<div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;'
+              'font-family:var(--font-retro-mono);font-size:11px;color:var(--text-secondary);">'
+              + "".join(chips) + '</div>')
+    caption = (
+        f'<div style="margin-top:6px;font-family:var(--font-retro-mono);font-size:11px;'
+        f'color:var(--text-tertiary);line-height:1.5;">'
+        f'{total:,} graded prospects · median eFV {median} · '
+        f'{floor_n:,} more sit at the eFV {int(_EFV_FLOOR)} floor (organizational depth the '
+        f'model carries no projection for) and are not plotted.</div>')
+    return _home_module("eFV Distribution", "/prospx/", "Full board",
+                        svg + legend + caption, full=True)
+
+
+# --------------------------------------------------------------------------- #
+# Data-driven lead story.
+#
+# The homepage lead is articles[0], and exactly one article has ever been
+# published (2026-06-05), so the front page has led with the same two-month-old
+# headline while the secondary slot showed a "more analysis soon" strip. A stale
+# lead on a daily-refreshed site reads as an abandoned site.
+#
+# When the newest article passes _LEAD_STALE_DAYS the lead is generated from the
+# data layer instead, and the real article drops into the secondary row (it is
+# never hidden). This is NOT ghost-written editorial: the card is kicker-labelled
+# "From the data", the byline says it was generated rather than written, and
+# every headline is a restatement of one published fact - an event already on the
+# wire, or the board's own top riser. No adjectives, no analysis, no voice.
+# --------------------------------------------------------------------------- #
+_LEAD_STALE_DAYS = 21
+_LEAD_EVENT_FRESH_DAYS = 2      # "the last day" of the wire, with a day of slack
+
+def _lead_event_headline(typ: str, name: str, org: str | None, val: str) -> str | None:
+    """A flat, factual restatement of one wire event. Returns None for event
+    types with no headline-worthy phrasing rather than inventing one."""
+    if not name:
+        return None
+    if typ == "debut":
+        return f"{name} makes his MLB debut" + (f" for {org}" if org else "")
+    if typ == "trade":
+        return f"{name} traded, {val}"
+    if typ == "promo":
+        return f"{name} promoted, {val}"
+    if typ == "demo":
+        return f"{name} sent down, {val}"
+    if typ == "il":
+        return f"{name} placed on the {val}"
+    if typ in ("up", "down"):
+        return f"{name} moves {val}"
+    if typ == "signing":
+        return f"{name}: {val}"
+    return None
+
+def _data_lead_html(events: list, players: list) -> str:
+    """The generated lead card. Prefers the top item on the freshest wire day;
+    falls back to the board's biggest genuine riser. Returns "" when neither
+    exists, so the caller can keep the article lead."""
+    today = date.today()
+    for ev in events[:24]:
+        d, typ, _glyph, _text, key, org, name, val = ev
+        try:
+            when = date.fromisoformat(d)
+        except (TypeError, ValueError):
+            continue
+        if (today - when).days > _LEAD_EVENT_FRESH_DAYS:
+            break                       # events are date-sorted; nothing fresher follows
+        head = _lead_event_headline(typ, name, org, val)
+        if not head:
+            continue
+        return (
+            '<article class="lead-story no-img">'
+            '<div><div class="lead-kicker">From the data</div>'
+            f'<h1>{html.escape(head)}</h1>'
+            f'<div class="byline">{html.escape(_fmt_iso_date(d))} · generated from the '
+            'eephus.io data layer</div>'
+            '<p class="excerpt">Top item on the prospect wire for that date. The wire is '
+            'assembled from the tracked board - debuts, trades, promotions, IL moves, '
+            'genuine grade changes and free-agency signings - and is not editorially '
+            'selected.</p>'
+            f'<a class="read" href="{_player_href(key)}">Open the player →</a></div>'
+            '</article>')
+
+    cands = [(step, p) for p in players
+             if p.get("status") != "debuted"
+             and (step := _genuine_mover_step(p)) is not None and step > 0]
+    if not cands:
+        return ""
+    step, p = max(cands, key=lambda t: t[0])
+    nm = p.get("player_name") or ""
+    where = _meta(p.get("position"), p.get("org"))
+    return (
+        '<article class="lead-story no-img">'
+        '<div><div class="lead-kicker">From the data</div>'
+        f'<h1>{html.escape(nm)} is the board\'s biggest riser, +{step} FV</h1>'
+        f'<div class="byline">{html.escape(where)} · generated from the eephus.io data layer</div>'
+        '<p class="excerpt">Largest genuine grade move on the board over the trailing year. '
+        'Genuine means the move survived the de-noising the Top Movers module uses: a real '
+        'eFV step, or a same-source consensus step, never a source re-publishing an old '
+        'grade or the scouting panel changing shape.</p>'
+        f'<a class="read" href="{_player_href(p.get("player_key"))}">Open the player →</a></div>'
+        '</article>')
+
+def _article_is_stale(a: dict | None, days: int = _LEAD_STALE_DAYS) -> bool:
+    """True when an article is older than `days`. An unparseable/absent date is
+    NOT stale - the article lead stays, exactly as it behaved before."""
+    try:
+        return (date.today() - date.fromisoformat(str((a or {}).get("date_sort"))[:10])).days > days
+    except (TypeError, ValueError):
+        return False
 
 
 _HOME_DRAWER_JS = '''<script>
@@ -2519,6 +3077,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     as_of = data.get("as_of", " - ")
     today = datetime.now().strftime("%A, %B %d, %Y").replace(" 0", " ")
     events = _collect_events(players, graduates, _load_fa_events_for_wire())
+    spotlight_buckets = data.get("spotlights") or {}
 
     # ---- sidebar ----
     # The sidebar has room for fuller module names than the horizontal
@@ -2556,7 +3115,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     sub = "".join(f'<a href="{href}"><span class="px-glyph">›</span>{html.escape(label)}</a>'
                   for label, href in PROSPX_SUBNAV)
     feed = _feed_html(events, 12) or '<div class="feed-item" style="color:#6f8a76;">No recent activity.</div>'
-    spotlight = _spotlight_html(players)
+    spotlight = _spotlight_html(players, spotlight_buckets)
     search = ('<input class="sb-search" type="search" placeholder="Search prospects…" aria-label="Search prospects" '
               "onkeydown=\"if(event.key==='Enter'&&this.value.trim()){location.href='/prospx/#q='+encodeURIComponent(this.value.trim());}\">")
     # Mobile drawer (<=900px): the homepage does not load eephus-nav.js, so the
@@ -2616,9 +3175,17 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '.catch(function(){});}catch(e){}})();</script>'
     )
 
-    # ---- lead story (latest article) + secondary ----
+    # ---- lead story (latest article, or generated when that has gone stale) ----
     latest = articles[0] if articles else None
-    if latest:
+    # A lead older than three weeks makes a daily-refreshed site look abandoned,
+    # so past that point the data layer takes the slot and EVERY article - the
+    # stale one included - shifts down into the secondary row. `articles[0:3]`
+    # vs `articles[1:4]` is the whole mechanism: nothing is hidden.
+    data_lead = _data_lead_html(events, players) if _article_is_stale(latest) else ""
+    if data_lead:
+        lead = data_lead
+        sec_from = 0
+    elif latest:
         lead = (
             '<article class="lead-story no-img">'
             '<div><div class="lead-kicker">Latest</div>'
@@ -2628,9 +3195,11 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
             f'<a class="read" href="/articles/{latest["slug"]}/">Read the full story →</a></div>'
             '</article>'
         )
+        sec_from = 1
     else:
         lead = '<article class="lead-story no-img"><div><div class="lead-kicker">Latest</div><h1>No articles yet</h1></div></article>'
-    sec = articles[1:4]
+        sec_from = 1
+    sec = articles[sec_from:sec_from + 3]
     if sec:
         secondary = ('<div class="secondary-stories">' + "".join(
             f'<a href="/articles/{a["slug"]}/"><div class="s-kicker">{html.escape(a.get("date_disp", ""))}</div>'
@@ -2682,19 +3251,45 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     farm_body = "".join(_row_farm(o, o.get("farm_rank") or i) for i, o in enumerate(fm, 1))
     farm = _home_module("Top Farm Systems", "/prospx/#tab=farm", "Farm systems", farm_body) if farm_body else ""
 
-    slug, term, defn = _GLOSSARY_TERMS[datetime.now().timetuple().tm_yday % len(_GLOSSARY_TERMS)]
+    # Rotates the real Arkmetrics shelf out of data/glossary.json (110 entries),
+    # not the six hardcoded pairs, still keyed by day-of-year.
+    terms = _glossary_teaser_terms()
+    slug, term, defn = terms[datetime.now().timetuple().tm_yday % len(terms)]
     glossary = (f'<div class="glossary-teaser"><span>Today\'s term: <strong>{html.escape(term)}</strong> - {html.escape(defn)}</span>'
                 f'<a href="/glossary/#g={slug}">Glossary →</a></div>')
 
     callout = _date_callout()
     otd = _this_day_html(graduates, players)
     trades_mod = _recent_trades_html(players)
-    scatter = _scatter_teaser()
+    scatter = _scatter_teaser(players)
     cross = _cross_module_strip()
+    # Full-width band under the 2x3 grid: a histogram wants width, and it reads
+    # as the summary of the six ranking modules above it rather than a seventh
+    # competing card (a 7th cell would also strand a half-empty grid row).
+    efv_dist = _efv_distribution_html(players)
     # eephus.io - Forums module (third content pillar). Hydrated client-side by
     # eephus-ui.js (#eph-home-forums): bump/Hot ordering, last-active first.
-    forums_mod = _home_module("Forums", "/forums/", "All discussions",
-                              '<div id="eph-home-forums"></div>', full=True)
+    #
+    # COLLAPSED UNTIL THE ACCOUNT LAYER IS LIVE. assets/eephus-config.js is
+    # absent on the public tree, so eephus-ui.js's LIVE gate has no Supabase
+    # project, mountForumsList paints "Discussion opens at launch" and the
+    # homepage donated a full-width band to a placeholder. The slot is now
+    # server-rendered hidden and revealed by the same condition the client
+    # gates on (window.EEPHUS_SUPABASE carrying url + anonKey), so the module
+    # still hydrates the moment config appears - nothing to re-deploy - and
+    # costs one hidden div until then. Inline + DOMContentLoaded so it runs
+    # after the deferred config script has (or has not) defined the global.
+    forums_mod = (
+        '<div id="home-forums-slot" hidden>'
+        + _home_module("Forums", "/forums/", "All discussions",
+                       '<div id="eph-home-forums"></div>', full=True)
+        + '</div>'
+        '<script>(function(){function r(){try{var c=window.EEPHUS_SUPABASE;'
+        'if(c&&c.url&&c.anonKey){var e=document.getElementById("home-forums-slot");'
+        'if(e)e.removeAttribute("hidden");}}catch(e){}}'
+        'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",r);'
+        'else r();})();</script>'
+    )
     main = (
         '<main class="home-main">'
         f'{masthead}{callout}{lead}{secondary}'
@@ -2702,6 +3297,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         # [Top Prospects | Farm] (rankings), [Recent Graduates | Recent Trades]
         # (recent transactions).
         f'<div class="module-cols">{otd}{movers}{topp}{farm}{grads}{trades_mod}</div>'
+        f'{efv_dist}'
         f'{cross}'
         f'{forums_mod}'
         f'<div class="teaser-row">{glossary}{scatter}</div>'

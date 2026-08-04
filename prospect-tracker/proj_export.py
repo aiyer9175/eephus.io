@@ -558,6 +558,35 @@ def _prospect_calibration_shift() -> float:
     return 0.0
 
 
+# BASIS REPAIR 2026-08-03. THE board eFV number, mirroring build_site's
+# `_load_xfv_grades` precedence exactly (which in turn mirrors
+# storage.BOARD_GRADE_FIELD and the prospx client's efvBoardValue): the
+# calibrated board value first, then the realized grade, then the RETIRED
+# quantile as a legacy fallback. This file kept a private quantile-FIRST copy of
+# the precedence when the board unified onto raw xfv_grade on 2026-07-25, so
+# /projections/ went on serving the retired quantile as the eFV headline while
+# the board, the homepage and prospx served xfv_grade: one player, two different
+# eFV numbers. The SCALE itself is owned by efv_board_scale.board_value(); there
+# is deliberately no second copy of the coefficients here to drift.
+try:
+    from efv_board_scale import board_value as _efv_board_value
+except Exception:                                            # pragma: no cover
+    def _efv_board_value(rec):
+        return (rec or {}).get("xfv_grade")
+
+
+def _board_grade(rec: dict | None):
+    """The DISPLAYED eFV grade for an xfv.json record, or None. Unrounded -
+    callers that display it round to NEAREST (eFV is not a scouting FV)."""
+    rec = rec or {}
+    g = _efv_board_value(rec)
+    if g is None:
+        g = rec.get("xfv_grade_realized")
+    if g is None:
+        g = rec.get("xfv_grade_quantile")
+    return float(g) if isinstance(g, (int, float)) else None
+
+
 def _prospect_rows(dpw: float) -> list[dict]:
     try:
         players = json.loads((DATA_DIR / "timeseries.json")
@@ -574,22 +603,24 @@ def _prospect_rows(dpw: float) -> list[dict]:
     out: list[dict] = []
     for p in players:
         cons_fv = p.get("fv_close")
-        # DISPLAY grade: the 20-80-scale eFV headline (matches the PROSPX board's
-        # efvGradeDisplay precedence since the 2026-07-06 quantile flip: xfv_grade_quantile,
-        # then realized, then raw), so the two surfaces show the SAME eFV number.
+        # DISPLAY grade: THE board eFV headline, on the SAME precedence as
+        # build_site._load_xfv_grades and storage.BOARD_GRADE_FIELD (see
+        # _board_grade above), so /projections/, the homepage Top Prospects module
+        # and the PROSPX board all show the same eFV number for the same player.
         _rec = xfv_by.get(p.get("player_key")) or {}
-        _xg = _rec.get("xfv_grade_quantile")
-        _xg = _rec.get("xfv_grade_realized") if _xg is None else _xg
-        _xg = _rec.get("xfv_grade") if _xg is None else _xg
+        _xg = _board_grade(_rec)
         fv = _xg if _xg is not None else cons_fv
         fv_source = "xfv" if _xg is not None else "consensus"
-        # PRICING grade: the FV>=45 gate + p_bucket / WAR-path / surplus / prime curves are
-        # all calibrated on the CONSENSUS 20-80 scale -- exactly the scale the quantile
-        # grade lives on, so display and pricing are now the SAME number for eFV-graded
-        # prospects (the realized grade sits ~9 pts lower and floors a pile at 20; pricing
-        # on it once inflated the projected prospect pool ~+60% vs consensus). Rank-order
-        # identical to realized, so the eFV ordering edge is kept; mirrors fa_fit.py's
-        # blocker-FV rule.
+        # PRICING grade: DELIBERATELY the retired per-side quantile, NOT the displayed
+        # board grade. The FV>=45 gate + p_bucket / WAR-path / surplus / prime curves are
+        # all calibrated on the CONSENSUS 20-80 scale, which is exactly the scale the
+        # quantile map lands on; the pure-model grade sits lower and floors a pile at 20,
+        # and pricing on it once inflated the projected prospect pool ~+60% vs consensus.
+        # This is the same split efv_export documents in meta.grade_scale: the board
+        # displays xfv_grade while surplus_mm stays priced through xfv_grade_quantile,
+        # which is why the 2026-07-30 grade refit moved zero dollars. So display and
+        # pricing are two different numbers here ON PURPOSE - do not "unify" them without
+        # re-fitting the value curves. Mirrors fa_fit.py's blocker-FV rule.
         _pq = _rec.get("xfv_grade_quantile")
         price_fv = _pq if (fv_source == "xfv" and _pq is not None) else fv
         eta = (p.get("eta") or {}).get("year")

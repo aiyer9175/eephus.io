@@ -352,7 +352,11 @@
   function tagFor(m) {
     if (m.src === "prospect") {
       const gradeNote = m.fv_source === "xfv"
-        ? `Graded on eFV (outcome-grounded model grade, rank-mapped to the 20-80 scale)${m.consensus_fv != null ? `; consensus FV ${EEPHUS_HUB.fvCeil(m.consensus_fv)}` : ""}. `
+        // "rank-mapped to the 20-80 scale" described the QUANTILE map, which was
+        // retired from display on 2026-07-25. proj_export now serves the board
+        // grade (value_framework.outcome_implied_fv off the pooled outcome
+        // curve), so this copy was describing a grade the row no longer carries.
+        ? `Graded on eFV (outcome-grounded model grade off the pooled outcome curve)${m.consensus_fv != null ? `; consensus FV ${EEPHUS_HUB.fvCeil(m.consensus_fv)}` : ""}. `
         : "";
       return `<span class="proj-tag proj-tag-prospect" title="PROSPX prospect - outcome-model projection (P(bucket|FV) × calibrated trajectories) starting at the projected ETA. ${gradeNote}Floor/ceiling are the 10th/90th-percentile OUTCOME buckets (${esc(m.bucketLo || "?")} → ${esc(m.bucketHi || "?")}); P(bust) ${m.pBust != null ? (m.pBust * 100).toFixed(0) + "%" : "?"}.">${prospectGrade(m)} · ETA ${m.eta}</span>`;
     }
@@ -422,20 +426,20 @@
     const chip = (label, key, field) =>
       `<button class="chip${state[field] === key ? " active" : ""}" data-pf="${field}:${key}">${label}</button>`;
     bar.innerHTML = viewChips("players") + `
-      <span class="filter-label" style="margin-left:10px;">Source</span>
+      <span class="filter-label proj-fgroup">Source</span>
       ${chip("All", "all", "src")}${chip("Veterans", "vet", "src")}${chip("Prospects", "prospect", "src")}
-      <span class="filter-label" style="margin-left:10px;">Pos</span>
+      <span class="filter-label proj-fgroup">Pos</span>
       ${[["All", "all"], ["H", "H"], ["P", "P"], ["SP", "SP"], ["RP", "RP"], ["C", "C"], ["IF", "IF"], ["OF", "OF"], ["DH", "DH"]].map(([l, p]) => chip(l, p, "pos")).join("")}
-      <span class="filter-label" style="margin-left:10px;">Age</span>
+      <span class="filter-label proj-fgroup">Age</span>
       ${[["All", "all"], ["U23", "u23"], ["23-26", "23-26"], ["27-30", "27-30"], ["31-34", "31-34"], ["35+", "35+"]].map(([l, k]) => chip(l, k, "age")).join("")}
-      <span class="filter-label" style="margin-left:10px;">Contract</span>
+      <span class="filter-label proj-fgroup">Contract</span>
       ${[["All", "all"], ["Signed", "signed"], ["Expiring", "expiring"], ["Cost-ctrl", "controlled"], ["Prospect", "prospect"]].map(([l, k]) => chip(l, k, "contract")).join("")}
-      <span class="filter-label" style="margin-left:10px;">Team</span>
+      <span class="filter-label proj-fgroup">Team</span>
       <select id="proj-team" class="proj-select">
         <option value="all">All teams</option>
         ${teams.map(t => `<option value="${t}"${state.team === t ? " selected" : ""}>${t}</option>`).join("")}
       </select>
-      <span class="filter-label" style="margin-left:10px;" title="What the per-season cells show: projected WAR (default) or the projected rate line (veterans; the prospect outcome model is FV-anchored and carries no rate paths)">Cells</span>
+      <span class="filter-label proj-fgroup" title="What the per-season cells show: projected WAR (default) or the projected rate line (veterans; the prospect outcome model is FV-anchored and carries no rate paths)">Cells</span>
       ${[["WAR", "war"], ["wRC+", "wrc"], ["wOBA", "woba"], ["FIP", "fip"]].map(([l, k]) => chip(l, k, "cells")).join("")}
       <input id="proj-q" class="proj-search" type="search" placeholder="Search players…" value="${esc(state.q)}" aria-label="Search players">`;
     bar.querySelectorAll("[data-pv]").forEach(b => b.onclick = () => {
@@ -453,6 +457,47 @@
     }
     renderTable();
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(banner);
+  }
+
+  // ---- mini trend line -------------------------------------------------------
+  // SOURCE OF TRUTH: assets/fa.js `miniTrendSVG` (extracted there out of
+  // dpwTrendChart, the module's $/WAR-by-winter rail chart). Same shape, same
+  // contract: var() colour tokens only so it is right in both themes, endpoint
+  // VALUE labels rather than an unlabelled squiggle, and an invisible fat hit
+  // circle over every point so each one is hoverable. Duplicated rather than
+  // imported for the reason formatMetric is duplicated at the top of this file:
+  // these surfaces share no module system and /projections/ deliberately loads
+  // no other module's script.
+  //
+  // pts: [{ v: <number>, t: <hover text> }, ...]. Returns "" under two points,
+  // which is the caller's cue to render nothing rather than a one-dot chart.
+  function miniTrendSVG(pts, opt) {
+    const o = opt || {};
+    const use = (pts || []).filter(p => p && Number.isFinite(Number(p.v)));
+    if (use.length < 2) return "";
+    const W = o.w || 92, H = o.h || 28;
+    const PT = o.pt != null ? o.pt : 10, PB = o.pb != null ? o.pb : 4;
+    const PL = o.pl != null ? o.pl : 4, PR = o.pr != null ? o.pr : 4;
+    const vs = use.map(p => Number(p.v));
+    let lo = Math.min(...vs), hi = Math.max(...vs);
+    const span = (hi - lo) || 1;
+    lo -= span * 0.08; hi += span * 0.08;
+    const x = i => PL + i * (W - PL - PR) / (use.length - 1);
+    const y = v => PT + (hi - v) * (H - PT - PB) / (hi - lo);
+    const col = o.color || "var(--accent-cyan)";
+    const fmt = o.fmt || (v => String(v));
+    const line = use.map((p, i) => `${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join(" ");
+    const dots = use.map((p, i) => i === use.length - 1
+      ? `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="2.2" fill="${col}"/>`
+      : `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="1.3" fill="${col}" fill-opacity="0.75"/>`).join("");
+    const hits = use.map((p, i) =>
+      `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="6" fill="transparent"><title>${esc(p.t || "")}</title></circle>`).join("");
+    const first = use[0], last = use[use.length - 1];
+    const firstLbl = `<text x="${PL}" y="${Math.max(7, y(first.v) - 4).toFixed(1)}" font-size="7" fill="var(--text-tertiary)">${esc(fmt(first.v))}</text>`;
+    const lastLbl = `<text x="${W - PR}" y="${Math.max(7, y(last.v) - 4).toFixed(1)}" text-anchor="end" font-size="7.5" font-weight="700" fill="var(--text-secondary)">${esc(fmt(last.v))}</text>`;
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="proj-minitrend" role="img" aria-label="${esc(o.aria || "trend")}">
+      <polyline points="${line}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}${firstLbl}${lastLbl}${hits}</svg>`;
   }
 
   function renderTeams() {
@@ -584,8 +629,16 @@
       const tip = `Remaining strength of schedule (log5): avg opponent talent ${(c.sos * 100).toFixed(1)}% over ${c.remGames} unplayed games; rank ${rk} (1 = hardest). Expected ~${c.remWinExp} added wins the rest of the way.`;
       return `<span title="${esc(tip)}" style="font-family:var(--font-mono);color:${col};">${(c.sos * 100).toFixed(1)}% <span class="fa-sub">${rk}</span></span>`;
     };
-    // Core-control cell: a decline sparkline of CONTROLLED WAR per season (the
-    // cliff) + the WAR-weighted lock-up %. % colored up/down; bars from byYear.
+    // Core-control cell: a decline TREND of CONTROLLED WAR per season (the
+    // cliff) + the WAR-weighted lock-up %. % colored up/down; the line is drawn
+    // from r.byYear, verified on the shipped payload as
+    // [{season, war, wins, losses, winsRaw, depthWar, n}, ...] - `war` is the
+    // controlled-WAR series this cell has always plotted.
+    //
+    // The bar strip this replaced was the same data with no numbers on it: you
+    // could see that the core declined but not from what to what. The endpoint
+    // labels are the whole point of the fa.js chart being the best small viz in
+    // the tree, and they are what the control cliff most needed.
     const controlCell = (r) => {
       const by = Array.isArray(r.byYear) ? r.byYear : [];
       const pct = r.lockedPct != null ? Math.round(r.lockedPct * 100) : null;
@@ -595,18 +648,17 @@
       const pctStr = pct == null ? EM_DASH : `${pct}%`;
       let spark = "";
       if (by.length) {
-        const mx = Math.max(0.1, ...by.map(s => s.war));
-        spark = `<span style="display:inline-flex;align-items:flex-end;gap:1.5px;height:20px;">${
-          by.map(s => {
-            const h = Math.max(2, Math.round((Math.max(0, s.war) / mx) * 18));
-            return `<span title="${esc(`${s.season}: ${s.war.toFixed(1)} controlled WAR`)}" style="display:inline-block;width:5px;height:${h}px;background:var(--accent-cyan);opacity:.85;border-radius:1px;"></span>`;
-          }).join("")
-        }</span> `;
+        spark = miniTrendSVG(
+          by.filter(s => s && Number.isFinite(Number(s.war)))
+            .map(s => ({ v: s.war, t: `${s.season}: ${fmtWar(s.war)} controlled WAR` })),
+          { color: "var(--accent-cyan)", fmt: v => fmtWar(v),
+            aria: `Controlled WAR by season, ${by[0].season} to ${by[by.length - 1].season}` });
+        if (spark) spark += " ";
       }
       const tip = (r.ctrlWar5y != null && r.fullWar5y != null && by.length)
-        ? `Cost-controlled core: ${pctStr} of projected ${by[0].season}-${by[by.length - 1].season} WAR is locked up (${r.ctrlWar5y} of ${r.fullWar5y} WAR-seasons under team control). Bars = controlled WAR per season; the cliff is players reaching free agency.`
+        ? `Cost-controlled core: ${pctStr} of projected ${by[0].season}-${by[by.length - 1].season} WAR is locked up (${r.ctrlWar5y} of ${r.fullWar5y} WAR-seasons under team control). The line is controlled WAR per season, labelled at both ends; the cliff is players reaching free agency.`
         : "Cost-controlled core lock-up";
-      return `<span class="proj-ctrl" title="${esc(tip)}" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">${spark}<span style="font-family:var(--font-mono);font-weight:600;color:${pctCol};">${pctStr}</span></span>`;
+      return `<span class="proj-ctrl" title="${esc(tip)}">${spark}<span class="proj-ctrl-pct" style="color:${pctCol};">${pctStr}</span></span>`;
     };
     // Click-sortable columns. `natural` = first-click direction; clicking the
     // same header again flips it (state.teamDir). Nulls always sink. Default
@@ -761,7 +813,9 @@
   };
   function verdictBadge(v) {
     const m = VERDICT_META[v] || { label: v || "?", col: "var(--text-tertiary)" };
-    return `<span class="proj-verdict" style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;letter-spacing:.02em;color:#0b0b0b;background:${m.col};">${esc(m.label)}</span>`;
+    // Only `background` stays inline: it is a computed VALUE (the verdict's own
+    // colour). Shape, type and the on-badge text colour live on .proj-verdict.
+    return `<span class="proj-verdict" style="background:${m.col};">${esc(m.label)}</span>`;
   }
   function _num(v, d) {
     return v == null || !Number.isFinite(Number(v)) ? EM_DASH : Number(v).toFixed(d == null ? 2 : d);
@@ -908,30 +962,30 @@
       return "";
     };
     const legend = (acct.verdict_enum || []).map(v =>
-      VERDICT_META[v] ? `<span style="white-space:nowrap;margin-right:14px;display:inline-block;">${verdictBadge(v)} <span class="fa-sub">${esc(VERDICT_DESC[v] || "")}</span></span>` : "").join("");
+      VERDICT_META[v] ? `<span class="proj-acct-legend-item">${verdictBadge(v)} <span class="fa-sub">${esc(VERDICT_DESC[v] || "")}</span></span>` : "").join("");
     const glHref = `/glossary/#cat=${encodeURIComponent("Platform & Methodology")}`;
     const cards = models.map(m => {
       const fresh = m.last_checked
         ? `last checked ${esc(String(m.last_checked))}${m.artifact_age_days != null ? ` &middot; artifact ${m.artifact_age_days}d old` : ""}${m.stale ? ` &middot; <span class="proj-neg">stale</span>` : ""}`
         : "";
-      return `<div class="mlbp-section" style="margin-top:14px;">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span class="mlbp-section-title" style="margin:0;">${esc(m.label)}</span>${verdictBadge(m.verdict)}
+      return `<div class="mlbp-section proj-acct-card">
+        <div class="proj-acct-head">
+          <span class="mlbp-section-title">${esc(m.label)}</span>${verdictBadge(m.verdict)}
         </div>
-        <div class="fa-sub" style="margin-top:4px;">${esc(m.predicts || "")}</div>
-        <div style="margin-top:6px;font-size:13px;line-height:1.7;">
+        <div class="fa-sub proj-acct-predicts">${esc(m.predicts || "")}</div>
+        <div class="proj-acct-meta">
           <strong>Champion</strong> ${esc(m.champion || "?")}<br>
           <strong>Baseline</strong> <span class="fa-sub">${esc(m.baseline || "?")}</span><br>
           <strong>Metric</strong> <span class="fa-sub">${esc(m.metric || "?")}</span>
         </div>
         ${tableFor(m.eval_artifact)}
-        ${m.notes ? `<details style="margin-top:8px;"><summary class="fa-sub" style="cursor:pointer;">Methodology and disclosures</summary><div class="fa-note" style="margin-top:6px;white-space:pre-wrap;">${esc(m.notes)}</div></details>` : ""}
-        ${fresh ? `<div class="fa-sub" style="margin-top:6px;font-size:11px;">${fresh} &middot; <a href="${glHref}">methodology glossary</a></div>` : ""}
+        ${m.notes ? `<details class="proj-acct-notes"><summary class="fa-sub">Methodology and disclosures</summary><div class="fa-note">${esc(m.notes)}</div></details>` : ""}
+        ${fresh ? `<div class="fa-sub proj-acct-fresh">${fresh} &middot; <a href="${glHref}">methodology glossary</a></div>` : ""}
       </div>`;
     }).join("");
     root.innerHTML = `<div class="mlbp-page">
-      <div class="fa-note" style="margin:8px 0;">Every projection on this site is graded against held-out history before it ships. Each model below shows its champion, the baseline it beat, the metric, the measured result, and a note on what is not yet gateable. Verdicts come from the platform's model registry, refreshed monthly.</div>
-      <div style="margin:10px 0;line-height:2;">${legend}</div>
+      <div class="fa-note proj-block-note">Every projection on this site is graded against held-out history before it ships. Each model below shows its champion, the baseline it beat, the metric, the measured result, and a note on what is not yet gateable. Verdicts come from the platform's model registry, refreshed monthly.</div>
+      <div class="proj-acct-legend">${legend}</div>
       ${cards}</div>`;
     const agfx = document.getElementById("proj-acct-gfx");
     if (agfx) agfx.onclick = () => {
@@ -1012,7 +1066,10 @@
         ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(m.key)}"><strong>${esc(m.name)}</strong></a>`
         : `<a class="fa-player-link" href="#player=${encodeURIComponent(m.key)}"><strong>${esc(m.name)}</strong></a>`;
       const inCmp = state.cmp.includes(m.key);
-      const cmpBtn = `<button class="proj-cmp-btn${inCmp ? " active" : ""}" data-cmp-key="${esc(m.key)}" type="button" title="${inCmp ? "Remove from compare" : "Compare head-to-head (pick two players)"}" style="border:1px solid var(--border);background:${inCmp ? "var(--accent-cyan)" : "transparent"};color:${inCmp ? "var(--text-on-accent)" : "var(--text-tertiary)"};border-radius:5px;font-size:10px;line-height:1;padding:2px 5px;cursor:pointer;margin-left:4px;">⇄</button>`;
+      // The whole appearance (including the picked-vs-unpicked colours) is on
+      // .proj-cmp-btn / .proj-cmp-btn.active - the class already encoded the
+      // state, so the inline copy of it was duplicated truth, not a value.
+      const cmpBtn = `<button class="proj-cmp-btn${inCmp ? " active" : ""}" data-cmp-key="${esc(m.key)}" type="button" title="${inCmp ? "Remove from compare" : "Compare head-to-head (pick two players)"}">⇄</button>`;
       // PROSPX-pattern card (Lane B, 2026-07-30). Row 1 carries identity and the
       // headline numbers; row 2 is a full-width tape of the season-by-season
       // projection. The old markup put six elements into a single ellipsized
@@ -1049,13 +1106,16 @@
     // Compact legend for the scatter's color encoding (contract status) -
     // swatches share CONTRACT_DOT_COLORS with the dots; labels mirror the
     // Contract filter chips. var() tokens keep it correct in both themes.
-    const warMapLegend = `<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:2px 0 6px;font-size:11px;color:var(--text-secondary);">
-        <span style="color:var(--text-tertiary);">dot color = contract status</span>
+    // Only the swatch BACKGROUND stays inline - it is a computed value out of
+    // CONTRACT_DOT_COLORS, the same map the dots read. Everything else is
+    // .proj-warmap-legend / .proj-legend-item / .proj-legend-dot.
+    const warMapLegend = `<div class="proj-warmap-legend">
+        <span class="proj-warmap-legend-lede">dot color = contract status</span>
         ${[["signed", "Signed"], ["expiring", "Expiring"], ["controlled", "Cost-ctrl / unsigned"], ["prospect", "Prospect"]].map(([k, l]) =>
-          `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:9px;height:9px;border-radius:50%;background:${CONTRACT_DOT_COLORS[k]};opacity:.85;flex:none;" aria-hidden="true"></span>${l}</span>`).join("")}
+          `<span class="proj-legend-item"><span class="proj-legend-dot" style="background:${CONTRACT_DOT_COLORS[k]};" aria-hidden="true"></span>${l}</span>`).join("")}
       </div>`;
     const warMap = _wm ? `<details class="proj-warmap"><summary>Scatter &middot; ${esc(_ay)} vs ${esc(_ax2)} (current filters &middot; pick any axes)</summary>
-      <div style="display:flex;gap:10px;align-items:center;margin:6px 0;font-size:11px;color:var(--text-tertiary);">
+      <div class="proj-warmap-axes">
         <span>Y</span>${_axSel("proj-sy", state.sy)}<span>X</span>${_axSel("proj-sx", state.sx)}
       </div>
       ${warMapLegend}
@@ -1558,9 +1618,14 @@
     const y = v => PY + (mx - v) * (H - 2 * PY) / ((mx - mn) || 1);
     const pts = spark.map((s, i) => s[1] != null ? `${x(i).toFixed(1)},${y(s[1]).toFixed(1)}` : null).filter(Boolean).join(" ");
     const last = vals[vals.length - 1];
-    return `<svg class="mlbp-fvspark" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Consensus FV trajectory, ${vals[0]} to ${last}" style="vertical-align:middle;margin-left:6px;" preserveAspectRatio="none">
+    // The GEOMETRY plots the raw arc (a rounded path would step, not curve), but
+    // every number SAID out loud is a consensus FV, so it displays CEILING per
+    // the owner rule. The baked arc is fractional (8,984 of the points in the
+    // shipped mlb_player_detail.json are), so this read "FV 67.8" before.
+    const fvc = v => (window.EEPHUS_HUB ? EEPHUS_HUB.fvCeil(v) : Math.ceil(v));
+    return `<svg class="mlbp-fvspark" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Consensus FV trajectory, ${fvc(vals[0])} to ${fvc(last)}" preserveAspectRatio="none">
       <polyline points="${pts}" fill="none" stroke="var(--accent-cyan)" stroke-width="1.5" stroke-linejoin="round"/>
-      <circle cx="${x(spark.length - 1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="1.8" fill="var(--accent-cyan)"><title>latest consensus FV ${last}</title></circle></svg>`;
+      <circle cx="${x(spark.length - 1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="1.8" fill="var(--accent-cyan)"><title>latest consensus FV ${fvc(last)}</title></circle></svg>`;
   }
   // 20-80 scouting-scale color (50 = MLB average). Tool grades display CEILING.
   function gradeColor(v) {
@@ -1584,18 +1649,20 @@
       const pills = order.concat(extra).filter(([, k]) => s.tools[k] != null).map(([lbl, k]) => {
         const raw = Number(s.tools[k]);
         const g = Math.ceil(raw);   // owner rule: tool grades display ceiling
-        return `<span style="display:inline-flex;flex-direction:column;align-items:center;min-width:40px;padding:3px 7px;border:1px solid var(--border);border-radius:7px;">
-          <span style="font-size:10px;letter-spacing:.03em;color:var(--text-tertiary);text-transform:uppercase;">${esc(lbl)}</span>
-          <span style="font-family:var(--font-mono);font-weight:700;font-size:14px;color:${gradeColor(raw)};">${g}</span></span>`;
+        // Only the grade COLOUR stays inline (gradeColor is a value read off the
+        // 20-80 grade); the pill shape lives on .mlbp-toolpill.
+        return `<span class="mlbp-toolpill">
+          <span class="mlbp-toolpill-label">${esc(lbl)}</span>
+          <span class="mlbp-toolpill-val" style="color:${gradeColor(raw)};">${g}</span></span>`;
       }).join("");
-      if (pills) pillsHtml = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${pills}</div>`;
+      if (pills) pillsHtml = `<div class="mlbp-toolpills">${pills}</div>`;
     }
     let reportHtml = "";
     const r = s.report;
     if (r && r.text) {
       reportHtml = `<div class="mlbp-scout-report">
-        <div class="fa-sub" style="margin-bottom:4px;">${esc(r.source || "Scouting report")}${r.date ? ` · ${esc(r.date)}` : ""}</div>
-        <p style="margin:0;line-height:1.5;color:var(--text-secondary);">${esc(r.text)}${r.truncated ? "&hellip;" : ""}${p.origin && p.origin.prospx ? ` <a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(p.origin.prospx)}">full report &rarr;</a>` : ""}</p></div>`;
+        <div class="fa-sub mlbp-scout-src">${esc(r.source || "Scouting report")}${r.date ? ` · ${esc(r.date)}` : ""}</div>
+        <p class="mlbp-scout-text">${esc(r.text)}${r.truncated ? "&hellip;" : ""}${p.origin && p.origin.prospx ? ` <a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(p.origin.prospx)}">full report &rarr;</a>` : ""}</p></div>`;
     }
     if (!pillsHtml && !reportHtml) return "";
     return `<div class="mlbp-section"><div class="mlbp-section-title">Scouting <span class="fa-sub">consensus 20-80 tool grades + latest published report · via PROSPX</span></div>${pillsHtml}${reportHtml}</div>`;
@@ -1652,8 +1719,13 @@
     if (window.EephusUI && typeof window.EephusUI.mountForum === "function")
       panels.push({ id: "discussion", label: "Discussion", html: '<div id="eph-forum-mount"></div>' });
     if (!panels.length) return "";
+    // The active/inactive read is carried by aria-selected ALONE: the strip's
+    // layout is .mlbp-tabs and the dimmed state is .mlbp-tab[aria-selected="false"]
+    // in the stylesheet. It used to be an inline opacity written here and
+    // rewritten in bindMlbpTabs, which meant the visual state and the accessible
+    // state were two facts that had to be kept in agreement by hand.
     const strip = panels.length > 1
-      ? `<div class="mlbp-tabs" role="tablist" style="display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 4px;">${panels.map((pan, i) => `<button type="button" class="chip mlbp-tab" data-mlbp-tab="${pan.id}" role="tab" aria-selected="${i === 0}"${i === 0 ? "" : ' style="opacity:.55;"'}>${pan.label}</button>`).join("")}</div>`
+      ? `<div class="mlbp-tabs" role="tablist">${panels.map((pan, i) => `<button type="button" class="chip mlbp-tab" data-mlbp-tab="${pan.id}" role="tab" aria-selected="${i === 0}">${pan.label}</button>`).join("")}</div>`
       : "";
     const body = panels.map((pan, i) => `<div class="mlbp-tabpanel" data-mlbp-panel="${pan.id}"${i === 0 ? "" : " hidden"}>${pan.html}</div>`).join("");
     return strip + body;
@@ -1678,9 +1750,10 @@
     tabs.forEach((t) => t.addEventListener("click", () => {
       const id = t.getAttribute("data-mlbp-tab");
       root.querySelectorAll("[data-mlbp-tab]").forEach((b) => {
-        const on = b.getAttribute("data-mlbp-tab") === id;
-        b.setAttribute("aria-selected", on ? "true" : "false");
-        b.style.opacity = on ? "" : ".55";
+        // aria-selected is the ONLY thing toggled: the stylesheet dims the
+        // unselected tabs off that attribute, so there is no second copy of the
+        // state to fall out of sync with the accessible one.
+        b.setAttribute("aria-selected", b.getAttribute("data-mlbp-tab") === id ? "true" : "false");
       });
       root.querySelectorAll("[data-mlbp-panel]").forEach((pane) => {
         if (pane.getAttribute("data-mlbp-panel") === id) pane.removeAttribute("hidden");

@@ -35,7 +35,41 @@
   }
 
   // ---- data layer ------------------------------------------------------------
-  fetch("/data/glossary.json", { cache: "no-cache" })
+  // CACHING. data/glossary.json is ~366KB and every surface on the site loads
+  // this file, so its fetch is the heaviest recurring transfer we make. It used
+  // to run with cache:"no-cache", which forces a revalidation round trip on
+  // EVERY page view and re-downloads the whole payload whenever the build
+  // touched it. It now rides a CONTENT-VERSIONED url under normal caching: the
+  // hash is data/glossary.json's own content hash, injected by build_site.py
+  // (window.EEPHUS_GL_DATA_VER, see _GL_DATA_VER there), so the browser serves
+  // it from cache until the file actually changes and the changed file lands
+  // under a url no cache has seen. Same freshness, one transfer per version.
+  //
+  // The eager fetch STAYS. Deferring it to first tooltip/palette use would be a
+  // bigger byte win, but PROSPX reads window.EEPHUS_GLOSSARY synchronously
+  // (_resolveGlossaryTerm on its inline .g-term popovers, and two label
+  // builders), so a lazy map would render those paths empty. Do not make this
+  // lazy without giving those call sites an async entry point first.
+  //
+  // Pages that do not carry the global (the hand-authored ones, which get their
+  // <script> tags from restamp_hand_authored_pages and never see build_site's
+  // inline block) fall back to the unversioned url - still under default HTTP
+  // caching, so still cheaper than the forced revalidation it replaces.
+  function glossaryURL() {
+    var v = null;
+    try {
+      v = window.EEPHUS_GL_DATA_VER || null;
+      // Secondary source: a `d=` param on this script's own src, for any page
+      // that would rather stamp the tag than emit a global.
+      if (!v && document.currentScript && document.currentScript.src) {
+        var m = /[?&]d=([A-Za-z0-9._-]+)/.exec(document.currentScript.src);
+        if (m) v = m[1];
+      }
+    } catch (e) { v = null; }
+    return "/data/glossary.json" + (v ? "?v=" + encodeURIComponent(v) : "");
+  }
+
+  fetch(glossaryURL())
     .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
     .then(d => {
       const map = {};

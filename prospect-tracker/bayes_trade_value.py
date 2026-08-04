@@ -3369,24 +3369,38 @@ def bayesian_trade_value(
         base_trade_value_mm = posterior_surplus_mm
 
     else:  # active prospect
-        # § GRPO: adjust FV prior from the group-relative breakout model.
-        # For unranked / low-FV players (provisional FV=35 from mlbam_ingest),
-        # this is where elite raw tools (Frias's 117mph EV) can lift the prior
-        # even before scouting sources publish a grade.
-        # The adjustment is capped at ±10 FV points and scaled by model confidence:
-        # low confidence → small adjustment; high confidence → full adjustment.
+        # § GRPO: a within-cohort breakout SIGNAL, and only a signal.
+        #
+        # It used to shift the FV prior (capped at +-10 points, scaled by model
+        # confidence), which is why the group-relative model existed: for an
+        # unranked / provisional-FV=35 player, elite raw tools could lift the
+        # prior before any scouting source published a grade. That shift is GONE
+        # as of 2026-08-03 (C3), for two reasons that point the same way.
+        #
+        # It no longer reaches a reader. apply_platform_surplus re-points every
+        # served prospect row to the PROSPX eFV surplus, which overwrites the
+        # posterior outright, so on a healthy export the shift moves nothing at
+        # all. The single path where it did survive was a row the re-point could
+        # not place - and there the board's own breakout chip is on screen saying
+        # the score "does not change the surplus", which was then false for
+        # exactly the rows nobody could audit.
+        #
+        # And the claim has to hold WITHOUT depending on re-point coverage.
+        # Enforcing it downstream instead (refusing to serve a GRPO-shifted
+        # unrepointed row) would make a stale xfv.json delete the prospect board
+        # rather than fall back to it: 4,512 of 4,549 scored prospects carry a
+        # non-zero adjustment. Zeroing it here makes the sentence true at the
+        # source, in every artifact state, and costs nothing that is served.
+        #
+        # The score itself still ships as `grpo_breakout_score` (the board's
+        # breakout badge) and the suggested adjustment still ships in
+        # data/grpo_scores.json, so nothing is hidden; it simply is not priced.
         grpo_s = _grpo_scores().get(player_key) or {}
-        grpo_fv_adj = 0.0
-        grpo_score  = None
-        if grpo_s:
-            raw_adj = _safe_float(grpo_s.get("fv_adj"), 0.0) or 0.0
-            conf    = grpo_s.get("confidence") or "low"
-            conf_scale = {"high": 1.0, "medium": 0.6, "low": 0.3}.get(conf, 0.3)
-            grpo_fv_adj = max(-10.0, min(10.0, raw_adj * conf_scale))
-            grpo_score  = grpo_s.get("breakout_score")
-        fv_effective = round((fv or 35.0) + grpo_fv_adj, 1)
+        grpo_fv_adj = 0.0           # APPLIED adjustment, and it is deliberately none
+        grpo_score  = grpo_s.get("breakout_score") if grpo_s else None
+        fv_effective = round(fv or 35.0, 1)
 
-        # § PRIOR: prospect FV-based surplus (with GRPO-adjusted effective FV)
+        # § PRIOR: prospect FV-based surplus (on the published FV, un-shifted)
         prior_surplus_mm = surplus_value_mm(fv_effective, is_pitcher, position, age=age, eta_years=eta) or 0.0
         inputs_available.append("fv")
 
@@ -3661,19 +3675,13 @@ def bayesian_trade_value(
     trade_value_lo = round(max(floor_mm, trade_value_mm * lo_scale), 1)
     trade_value_hi = round(trade_value_mm * hi_scale, 1)
 
-    # Tier label
-    if trade_value_mm is None:
-        tier = "unknown"
-    elif trade_value_mm >= 40:
-        tier = "elite"
-    elif trade_value_mm >= 20:
-        tier = "high"
-    elif trade_value_mm >= 8:
-        tier = "mid"
-    elif trade_value_mm >= 2:
-        tier = "low"
-    else:
-        tier = "minimal"
+    # Tier label. ONE labeler for the platform (C4a, 2026-08-03): this path used
+    # to carry its own cuts (low at >= 2, minimal below), which disagreed with
+    # _platform_tier (low at >= 0) for every value in [0, 2) - the same player
+    # could leave the compute "minimal" and leave the re-point "low", on the same
+    # dollar figure. trade_value_mm is a float by here (the no-FV path returns
+    # long before), so the old None -> "unknown" branch was unreachable.
+    tier = _platform_tier(trade_value_mm)
 
     # ── Contract metadata for display ────────────────────────────────────────
     # Exposes service time, phase, current salary, and FA year so the frontend
@@ -4111,20 +4119,228 @@ def _sortino_fields(dist: dict | None, scale: float) -> dict | None:
     }
 
 
+def _career_war_seasons_index(data_dir: Path) -> dict:
+    """player_key -> the LAST season carrying a career-WAR entry in debuts.json.
+
+    `_roster_seasons_index` above answers the same question from
+    roster_status.mlb_seasons, and that field is EMPTY on 782 of the 2,681
+    debuts rows - every one of them invisible to the inactive-drop rule, which
+    requires `pk in roster` before it can fire. career_war.seasons is the
+    bbref-sourced season map on the same record (2,540 rows carry it), so it
+    answers "when did the MLB career attached to this key last appear" for the
+    rows the roster feed never filled in.
+
+    Used ONLY for records that reached no platform pricing basis at all, so a
+    disagreement between the two sources can never re-price a row the platform
+    already prices."""
+    out: dict = {}
+    try:
+        d = json.loads((Path(data_dir) / "debuts.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return out
+    players = d.get("players") if isinstance(d, dict) else d
+    if isinstance(players, dict):
+        players = list(players.values())
+    for p in (players or []):
+        pk = p.get("player_key")
+        seasons = ((p.get("career_war") or {}).get("seasons")) or {}
+        years = []
+        for y in seasons:
+            try:
+                years.append(int(y))
+            except (TypeError, ValueError):
+                continue
+        if pk and years:
+            out[pk] = max(years)
+    return out
+
+
+# The youngest age at which anyone has appeared in a major-league game is 15
+# (Joe Nuxhall, 1944); nobody in the expansion era has done it below 17. A row
+# whose age implies an MLB appearance younger than this is not a prodigy, it is
+# two humans sharing one player_key.
+_MIN_PLAUSIBLE_MLB_AGE = 17.0
+
+# surplus_source values that mean "this row publishes no price". Every one of
+# them is filtered out of the exported board.
+_EXCLUDED_SOURCES = ("inactive_dropped", "identity_collision")
+
+
+def _identity_age_incoherence(status, age, last_mlb_season, ref_season) -> str | None:
+    """Is this row's AGE impossible for the MLB career attached to its key?
+
+    kelvin_herrera shipped on the board as a DEBUTED 18.6-year-old for HOU: the
+    identity resolver bound the key to a current DSL arm (mlbam 838975, born
+    2007) while the debut date, the MLB level and a ten-season career-WAR map
+    still belonged to the retired Royals reliever. Neither half is wrong on its
+    own and the row reads as a plausible player, which is exactly why it needs a
+    mechanical check: the two halves cannot describe one human.
+
+    Returns the reason string when the row is incoherent, else None."""
+    if status not in ("debuted", "graduated"):
+        return None
+    if age is None or last_mlb_season is None or ref_season is None:
+        return None
+    implied = float(age) - (int(ref_season) - int(last_mlb_season))
+    if implied >= _MIN_PLAUSIBLE_MLB_AGE:
+        return None
+    return (f"age {float(age):.1f} implies age {implied:.1f} in the last MLB season "
+            f"on this key ({int(last_mlb_season)}), below the "
+            f"{_MIN_PLAUSIBLE_MLB_AGE:.0f} floor - the key holds two humans")
+
+
+def _unrepointable_exclusion(r: dict, age, last_mlb_season, ref_season):
+    """Why a row that reached NO platform pricing basis must not publish a price.
+
+    These rows are the residue of the re-point: not in xfv.json by_player, not
+    priced by MLB Projections, and not caught by the inactive rule (which reads
+    roster_status.mlb_seasons and therefore cannot see a row whose season list
+    is empty). What is left is the bayes engine's own internal number, which no
+    other surface on the platform uses. Publishing it is worse than publishing
+    nothing, because the board presents one currency and this is not it.
+
+    Returns (surplus_source, reason) or None to leave the row alone."""
+    status = r.get("status")
+    detail = _identity_age_incoherence(status, age, last_mlb_season, ref_season)
+    if detail:
+        return "identity_collision", detail
+    if (status in ("debuted", "graduated") and last_mlb_season is not None
+            and ref_season is not None and int(last_mlb_season) <= int(ref_season) - 2):
+        return "inactive_dropped", (
+            f"last MLB season {int(last_mlb_season)}, and no platform basis prices "
+            "him - the same disposition the inactive rule gives a row whose roster "
+            "feed happens to carry its seasons")
+    # A row that survives to here keeps its bayes value. That is safe for the
+    # claim the board's breakout chip makes ("does not change the surplus")
+    # because the GRPO shift was removed from the prior itself (C3), not policed
+    # from out here - policing it from here would turn a stale xfv.json into a
+    # deleted prospect board instead of a fallback.
+    return None
+
+
+def _excluded_rows(records: list) -> list[dict]:
+    """Ledger of the rows the re-point removed as UNPRICEABLE ON EVERY BASIS.
+
+    The sibling of `_unpriced_vets`: that one lists players the projection system
+    models but cannot price, this one lists players who reached the board and
+    then failed every basis. Both ship in the artifact for the same reason - a
+    row that silently disappears is indistinguishable from a row that was never
+    built, and the last time that happened the board quietly lost a quarter of
+    the veteran universe.
+
+    Scoped to the residue, NOT to every dropped row. The ordinary inactive rule
+    removes ~497 rows an export, all of them for the plain and already-documented
+    reason that the player has not appeared in the majors for two seasons;
+    publishing that list would bury the handful of rows where something is
+    actually wrong. Only rows carrying `excluded_reason` (stamped by
+    _unrepointable_exclusion) appear here.
+
+    Deliberately NOT surfaced in the evaluator's search the way `unpriced` is: an
+    identity collision is not a player, so offering "Kelvin Herrera, HOU" as a
+    findable-but-unpriced row would publish the very confusion being removed."""
+    out = [{
+        "key": r.get("player_key"), "name": r.get("player_name"),
+        "org": r.get("org"), "pos": r.get("position"),
+        "age": r.get("age"), "status": r.get("status"),
+        "reason": r.get("surplus_source"), "detail": r.get("excluded_reason"),
+    } for r in records if r.get("excluded_reason")]
+    out.sort(key=lambda x: ((x["reason"] or ""), (x["key"] or "")))
+    return out
+
+
+_SEASON_VALUE_FN: Any = None
+
+
+def _proj_season_value_fn():
+    """proj_export's own per-season pricing kernel, imported lazily.
+
+    Imported rather than re-implemented: the band below has to price WAR the way
+    the number it brackets was priced (convex tier curve, at the artifact's
+    ex-ante $/WAR level, escalated t seasons out), and a second copy of that
+    formula would be a mirror free to drift from the value it describes. Lazy so
+    importing bayes_trade_value never drags in the projection stack, and
+    fail-soft so a missing module costs the band, not the export."""
+    global _SEASON_VALUE_FN
+    if _SEASON_VALUE_FN is None:
+        try:
+            from proj_export import _season_value_usd
+            _SEASON_VALUE_FN = _season_value_usd
+        except Exception:
+            _SEASON_VALUE_FN = False
+    return _SEASON_VALUE_FN or None
+
+
+def _projection_band_mm(v: dict | None, dpw: float | None, disc: float):
+    """A p10-p90 surplus band for a PROJECTION-priced row, ON THE PROJECTION BASIS.
+
+    The re-point hands MLB rows the projection's surTotal and then nulls the band,
+    because the band on the record came out of the bayes compute and bracketed a
+    value that had just been discarded. Nulling it was right; leaving every
+    veteran with no range at all was not, because the projection publishes its own
+    fan (warP10 / warP90 - the very per-season paths warTotalP10/P90 sum).
+
+    Salary is contractual and does not move with the fan, so it CANCELS out of the
+    difference: only the production leg is re-priced, season by season, through
+    proj_export's kernel and discounted at the platform rate. The band is exact
+    rather than a re-derivation - reconstructing surNpv from the published `sur`
+    array at this discount rate reproduces the published integer.
+
+    COMONOTONE by construction (every season sits at its own p10 together), which
+    is what makes it wide and is exactly how the artifact's own warTotalP10/P90
+    are built. Narrowing it here would invent a correlation the projection does
+    not claim. Returns (None, None) whenever the inputs are not all present."""
+    if not v or not dpw:
+        return None, None
+    total = _proj_value_usd(v)
+    war, p10, p90 = v.get("war"), v.get("warP10"), v.get("warP90")
+    if total is None or not (isinstance(war, list) and isinstance(p10, list)
+                             and isinstance(p90, list)):
+        return None, None
+    season_value = _proj_season_value_fn()
+    if season_value is None:
+        return None, None
+    sur = v.get("sur") if isinstance(v.get("sur"), list) else []
+    d_lo = d_hi = 0.0
+    for t in range(min(len(war), len(p10), len(p90))):
+        # Only seasons that carry a salary are in surNpv, so only they get a band.
+        if t >= len(sur) or sur[t] is None:
+            continue
+        mid = season_value(float(war[t]), t, dpw)
+        d_lo += (mid - season_value(float(p10[t]), t, dpw)) / ((1.0 + disc) ** t)
+        d_hi += (season_value(float(p90[t]), t, dpw) - mid) / ((1.0 + disc) ** t)
+    # The rest-of-season leg is priced undiscounted at t=0 on a prorated share of
+    # the first projected season, so its band prorates the same fan the same way.
+    ros_frac, ros_war = _safe_float(v.get("rosFrac")), _safe_float(v.get("rosWar"))
+    if ros_frac and ros_war is not None and p10 and p90:
+        mid = season_value(ros_war, 0, dpw)
+        d_lo += mid - season_value(float(p10[0]) * ros_frac, 0, dpw)
+        d_hi += season_value(float(p90[0]) * ros_frac, 0, dpw) - mid
+    if d_lo <= 0.0 and d_hi <= 0.0:
+        return None, None                      # degenerate fan: no band to show
+    tot_mm = float(total) / 1e6
+    return round(tot_mm - d_lo / 1e6, 1), round(tot_mm + d_hi / 1e6, 1)
+
+
 def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     """Re-point each Trade Machine record's surplus to the PLATFORM-STANDARD value the rest
     of the site shows, so the board/evaluator stop using bayes' own (floored/scarcity-scaled)
     number that the owner flagged as out of line:
 
-      active prospects -> PROSPX eFV surplus      (data/xfv.json by_player[key].surplus_mm)
-      MLB (modeled)    -> MLB Projections surNpv  (data/mlb_projections.json vets/prospects)
-      MLB (unmodeled)  -> eFV backgrade surplus   (universal fallback; ~99.5% MLB coverage)
+      active prospects -> PROSPX eFV surplus       (data/xfv.json by_player[key].surplus_mm)
+      MLB (modeled)    -> MLB Projections surTotal (data/mlb_projections.json vets/prospects)
+      MLB (unmodeled)  -> eFV backgrade surplus    (universal fallback; ~99.5% MLB coverage)
+
+    The MLB line reads `surTotal`, not `surNpv` (see _proj_value_usd): surNpv covers
+    FIRST_SEASON onward and priced a deadline rental at nothing, so surTotal - the balance
+    of the season in progress plus that NPV - is what the board now serves.
 
     Also backfills null ages from the projection artifacts (player_key join). All sources are
     value_framework-priced, so this makes Trade Machine == PROSPX/Projections. Defensive: if an
-    artifact is missing/stale, the record keeps its existing bayes value. Mutates in place;
-    returns a small stats dict. GRPO breakout (grpo_breakout_score) is left as a DISPLAY signal
-    only -- it no longer drives the shown value (that was a source of the misalignment)."""
+    artifact is missing/stale, a record with a coherent identity keeps its existing bayes value;
+    one that reaches NO basis and cannot be trusted as a single human publishes nothing and is
+    ledgered instead (see _unrepointable_exclusion). Mutates in place; returns a small stats
+    dict. GRPO breakout (grpo_breakout_score) is left as a DISPLAY signal only -- it no longer
+    drives the shown value (that was a source of the misalignment)."""
     dd = Path(data_dir)
 
     def _load(name):
@@ -4137,7 +4353,7 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     mp = _load("mlb_projections.json") or {}
     det = (_load("mlb_player_detail.json") or {}).get("players", {}) or {}
 
-    proj_sur, ages = {}, {}
+    proj_sur, proj_rows, ages = {}, {}, {}
     for grp in ("vets", "prospects"):
         for r in (mp.get(grp) or []):
             k = r.get("key")
@@ -4146,17 +4362,27 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
             _pv = _proj_value_usd(r)
             if _pv is not None:
                 proj_sur[k] = _pv / 1e6               # raw $ in the artifact; board surplus is $M
+                proj_rows[k] = r                      # kept for the projection-basis band
             if r.get("age") is not None:
                 ages.setdefault(k, r["age"])
     for k, v in det.items():
         if v.get("age") is not None:
             ages.setdefault(k, v["age"])
 
+    # Band inputs, read from the artifact that produced the value being bracketed.
+    _dpw = _safe_float(mp.get("dpw_usd"))
+    try:
+        _disc = float(vf._config()["discount_rate"])
+    except (KeyError, TypeError, ValueError):
+        _disc = 0.07
+
     roster = _roster_seasons_index(dd)                       # pk -> (last_mlb_season, n_seasons)
     current_season = max((ls for ls, _ in roster.values()), default=None)
+    career_last = _career_war_seasons_index(dd)               # pk -> last career-WAR season
 
     stats = {"xfv": 0, "projection": 0, "xfv_backgrade": 0, "unchanged": 0,
-             "age_backfilled": 0, "inactive_dropped": 0, "backgrade_tempered": 0}
+             "age_backfilled": 0, "inactive_dropped": 0, "backgrade_tempered": 0,
+             "excluded_unpriceable": 0}
     for r in records:
         pk = r.get("player_key")
         is_pros = r.get("status") == "active"
@@ -4245,9 +4471,12 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
                     r["sortino"] = rf["sortino"]
             else:
                 # src == "projection": the bayes compute's lo/hi bracketed the
-                # DISCARDED bayes value, so the re-pointed surNpv could sit
-                # outside its own band. No band exists on this basis -> null
-                # (the frontends null-guard the range tooltip).
+                # DISCARDED bayes value, so the re-pointed surTotal could sit
+                # outside its own band, and the eFV band beside it is a
+                # prospect-era quantity. Both are wrong here, so both go; the
+                # band that DOES belong to this basis is stamped by
+                # _stamp_projection_bands after the seeder runs, in one pass over
+                # every projection-priced row.
                 r["trade_value_lo"] = None
                 r["trade_value_hi"] = None
             stats[src] += 1
@@ -4258,8 +4487,34 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
             # rank #40 on $95.9M that way. Stamping the basis does not change
             # any number; it makes the ones that never reached a modelled basis
             # visible and sortable instead of anonymous.
-            r["surplus_source"] = "bayes_unrepointed"
-            stats["unchanged"] += 1
+            #
+            # C2 (2026-08-03): stamping was not enough for the three that were
+            # left. They are un-repointable because they are not in xfv by_player
+            # and not modelled by the projection system, and they escaped the
+            # inactive rule above only because roster_status.mlb_seasons is empty
+            # on their debuts rows, so `pk in roster` was False. Two of the three
+            # are identity collisions (a current low-minors arm wearing a retired
+            # reliever's key) and the third is a retired reliever the roster feed
+            # simply never listed. A price on any of them is a bayes-internal
+            # number no other surface uses, attached to a player who is in one
+            # case not a single human. Unprice and ledger, do not publish.
+            excl = _unrepointable_exclusion(
+                r, age,
+                career_last.get(pk, roster[pk][0] if pk in roster else None),
+                current_season)
+            if excl:
+                src_x, why = excl
+                r["trade_value_mm"] = None
+                r["posterior_surplus_mm"] = None
+                r["trade_value_lo"] = None
+                r["trade_value_hi"] = None
+                r["trade_value_tier"] = None
+                r["surplus_source"] = src_x
+                r["excluded_reason"] = why
+                stats["excluded_unpriceable"] += 1
+            else:
+                r["surplus_source"] = "bayes_unrepointed"
+                stats["unchanged"] += 1
         # Trade Value Grade off the FINAL value (re-pointed or bayes fallback) so
         # every board row carries a letter; survives board_slim automatically.
         r["trade_value_grade"] = _trade_value_grade(r.get("trade_value_mm"))
@@ -4288,7 +4543,28 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     # performance_ingest FV-35).
     added = _append_projection_only_rows(records, proj_sur, ages, det, dd)
     stats["projection_only_added"] = added
+    # ONE pass for the projection-basis band, over the rows re-pointed above AND
+    # the ones just seeded, so a veteran the board always carried and a veteran
+    # who arrived through the seeder reach the reader on identical footing. Doing
+    # it in each construction path instead is how the two drift.
+    stats["projection_banded"] = _stamp_projection_bands(records, proj_rows, _dpw, _disc)
     return stats
+
+
+def _stamp_projection_bands(records: list, proj_rows: dict,
+                            dpw: float | None, disc: float) -> int:
+    """Attach the projection-basis p10-p90 band to every projection-priced row."""
+    n = 0
+    for r in records:
+        if r.get("surplus_source") != "projection":
+            continue
+        lo, hi = _projection_band_mm(proj_rows.get(r.get("player_key")), dpw, disc)
+        r["trade_value_lo"] = lo
+        r["trade_value_hi"] = hi
+        if lo is not None:
+            r["band_basis"] = "projection"       # named in the range tooltip
+            n += 1
+    return n
 
 
 def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
@@ -4326,7 +4602,10 @@ def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
             "surplus_source": "projection",
             # Same deliberate null as the projection branch above: the eFV
             # credible band is a prospect-era basis and does not describe a
-            # contract-surplus NPV.
+            # contract-surplus NPV. The band that DOES belong to this basis is
+            # stamped by _stamp_projection_bands, which runs over the whole
+            # record list after this seeder, so a row built here and a row
+            # re-pointed in the loop get it from exactly one place.
             "trade_value_lo": None,
             "trade_value_hi": None,
             # Why this row exists at all, so the board can say so rather than
@@ -4471,10 +4750,18 @@ def export_trade_values_json(
     # ages, then sort by the ALIGNED value.
     st = apply_platform_surplus(results, out_path.parent)
     _log.info("trade_values platform-surplus: %s", st)
+    # Ledger the rows that reached NO platform basis BEFORE they are filtered out,
+    # so an exclusion is visible in the artifact instead of being a row that simply
+    # is not there.
+    excluded = _excluded_rows(results)
+    if excluded:
+        _log.warning("trade_values: %d row(s) publish no price (no platform basis): %s",
+                     len(excluded),
+                     ", ".join(f"{e['key']} [{e['reason']}]" for e in excluded))
     # Drop players apply_platform_surplus flagged inactive (no MLB appearance in
-    # 2+ seasons - restricted-list / retired / released); they are not tradeable
-    # assets and shouldn't appear on the board.
-    results = [r for r in results if r.get("surplus_source") != "inactive_dropped"]
+    # 2+ seasons - restricted-list / retired / released) or unpriceable on every
+    # basis; they are not tradeable assets and shouldn't appear on the board.
+    results = [r for r in results if r.get("surplus_source") not in _EXCLUDED_SOURCES]
     results.sort(key=lambda r: r.get("trade_value_mm") if r.get("trade_value_mm") is not None else -1e9, reverse=True)
 
     cov = _projection_coverage(results, out_path.parent)
@@ -4505,6 +4792,14 @@ def export_trade_values_json(
             out_path.parent,
             {r.get("player_key") for r in results
              if r.get("trade_value_mm") is not None}),
+        # Rows that DID reach the board and then failed every pricing basis, with
+        # the reason (identity collisions and rows the roster feed could not date).
+        # `unpriced` above is the other half of the same question: players the
+        # projection system models but cannot price. This one is NOT surfaced in
+        # the evaluator's search the way `unpriced` is - an identity collision is
+        # not a player, so offering it as a findable row would publish the
+        # confusion this removes.
+        "excluded":      excluded,
         "count":         len(results),
         "players":       [board_slim(r) for r in results],
     }
