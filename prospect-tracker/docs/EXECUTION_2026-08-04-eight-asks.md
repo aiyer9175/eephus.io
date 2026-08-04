@@ -437,3 +437,93 @@ basis, with a no-inversion invariant. `roster_status.mlb_seasons` backfilled fro
 /fantasy/ hash router. projections.js inline styles 58 -> 19, every survivor computed. The
 Methodology page stopped describing a grade the site retired in July. `composite_at_shipped`
 now records the shipped lambda instead of the selector's. Pitcher lambda pinned at 0.57.
+
+---
+
+# Part 3: the owed gates. Two no-ships, one repair, zero reds left.
+
+Suite closes at **3,048 passed, 21 skipped, 1 xfailed, 0 failed**. The four reds above are
+gone and none of them were closed by relaxing a test.
+
+## G1 - hitter `age`: the DECLARATION moves, the feature stays
+
+Four-step adjudication, same shape as the pitcher `age_rel_level` case from 07-30. Two steps
+landed differently and are recorded that way rather than assimilated to the precedent.
+
+| step | pitcher case (07-30) | hitter case (here) |
+|---|---|---|
+| marginal sign | negative, opposite the fit | **+0.0420, same side as the fit** |
+| suppressor? | yes | **no - that defence is unavailable** |
+| collinear sibling | yes | yes: r=+0.518 with `age_rel_level`; drop it and age snaps to -0.0502 |
+| drop gate | sub-floor | sub-floor: **+0.00669 = 0.39x MDE95**, CI straddles 0, permuted control scores 93% |
+
+The gate standard forbids removal on sub-floor evidence, so the column stays and only the
+directional claim goes. **Not +1 either**: fold mean negative, rank marginal negative, and
+it served -0.0619 in 9 of 9 folds one rebuild ago. A direction that inverts when the label
+is redefined is not a theory, so `("age", 0)` is the honest declaration.
+
+**The part that reached readers.** The Age explainer chip appeared on ~150 live hitter cards
+and **134 of them read DOWN on hitters YOUNGER than the training mean** - ~89% of its
+appearances told someone that being young cost the prospect grade. Pitchers were already
+skipped for exactly this at a lower rate. Hitters join `_EXPLAINER_SKIP_SIDE`. The model is
+untouched; the explanation stops being offered where it cannot be true.
+
+## G2 - identity: 4 repaired, 1 allowlisted as an owner decision
+
+Three shared one systemic cause: a bulk pass wrote 712 photo bindings, `bulk_resolve_ids`
+resolves by NAME, and the collision guard can only refuse when a key is **already** durably
+bound - so three long-inactive records took the id of an active same-slug stranger. One
+newcomer was 9.6 years old at "his" first snapshot.
+
+Repaired by attaching the incumbent and forking the newcomer to a discriminated key. Never
+renamed a key, every write value-guarded, idempotent, DB backed up first.
+
+`jack_natili` is the **inverse** case - one human on two active keys, not two humans on one.
+The fix is a key re-map, which this repair class never performs. Allowlisted with its
+evidence, flagged for the owner.
+
+**The repair was invisible until the board was rebuilt.** The audit reads `timeseries.json`,
+so a DB-only repair changes nothing it can see. After `--rebuild-only`, a residual: the
+fielding census still carried the newcomers' pitching games under the incumbents' keys (32,
+11 and 55 games, all at P). Repointing them produced independent confirmation the repair
+picked the right humans - the census now reads RF/1B for the outfielder, C for the catcher,
+SS/3B for the infielder, matching the board positions it had been contradicting. **29/29.**
+
+A companion age-coherence bind guard was built and then **reverted**: it caught 0 of the 3
+targets and would have refused 71 of 7,606 legitimate bindings including julio_rodriguez and
+eury_perez. Recorded on the `consensus_fv` registry row, with the 71-row sweep as the
+baseline any real version has to beat.
+
+## G3 - eta BASE_YEARS: NO SHIP, held at v39
+
+The nightly moved the KM artifact under the hand-set table in **two** cells, not the one the
+test names (A+ 3.0 vs 3.25, CPX 4.25 vs 4.5). Both are rounding-boundary crossings driven by
+cohort accounting: `debuted` rose +5 while `censored_active` rose +144, so still-active
+non-debuted rows entered the risk set and pushed the curve later.
+
+On identical rows the refit loses **both** legs of the criterion v39 shipped on - MAE
+1.440 -> 1.490, within-1y 0.579 -> 0.561, P(refit better) 0.000 on each - and of 253 rows it
+moves, **212 get worse**.
+
+Worth stating precisely: the overdue guardrail did **not** refuse this and could not have.
+The refit pushes ETAs later, so overdue *falls* 345 -> 331. That guardrail exists for the
+opposite hazard. This is refused purely on accuracy.
+
+## Fingerprint restamped, epoch deliberately NOT bumped
+
+The `feats` hash covers declared signs on purpose, so a declaration change trips it by
+design (`dbb1bc2a` -> `b747e1d3`). The **epoch** has one job: tell the movement engine that
+ranks were re-based. `_feature_spec` hands signs to the eval-only monotone challenger and
+only NAMES to the served ridge, so nothing re-ranked. Bumping it would suppress a night of
+genuine movement to hide a re-rank that did not happen - the mirror of the 2026-07-29
+mistake, not a repeat of it.
+
+## Still open, carried forward
+
+- **R1c** roster-level repair (exposure vs rate decomposition) - not started.
+- **R3** eWAR label-swap gate, **R5.2** star-rental premium harness, **R2e** HR-shrink
+  variant gating - not started.
+- **R7** dpw re-anchor - CHECKPOINT, needs the owner.
+- `jack_natili` key re-map - owner decision.
+- `prearb_min: 9` is priced; the service-time proxy gating those 167 candidates is worth a
+  look.
