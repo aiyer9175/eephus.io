@@ -656,11 +656,39 @@ def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
     instead of being one undifferentiated number.
 
     fielding_blend_w is the weight on the STATCAST read over the innings it
-    covers; rfield takes the remainder. None means 1.0, i.e. the v1 full
-    replacement, so the default build is unchanged. See the long note at the
-    blend itself for why a blend and not a swap. w=0.0 reproduces bWAR's
-    fielding exactly and w=1.0 reproduces v1 exactly; both are asserted by
-    test_ewar_fielding_blend.py rather than assumed.
+    covers; rfield takes the remainder. w=0.0 reproduces bWAR's fielding exactly
+    and w=1.0 reproduces eWAR v1 exactly; both endpoints are asserted by
+    test_ewar_fielding_blend.py and were confirmed on real rows (max diff 0.0 to
+    ten decimals over 6,640 batter-seasons).
+
+    THE DEFAULT IS NOW 0.0, i.e. eWAR v2 DOES NOT USE STATCAST FIELDING AT ALL.
+    That is a measured decision, not a preference. Grid over 2016-2025, 300
+    team-seasons, pitching swap on throughout so w=0 is the pitching-only arm:
+
+        w      wins r   wins mae0   next-yr r   prevention |r|
+        0.00   0.8595     4.306      0.2524         0.3780
+        0.25   0.8636     4.260      0.2491         0.3759
+        0.50   0.8667     4.251      0.2452         0.3718
+        0.75   0.8684     4.277      0.2408         0.3652
+        1.00   0.8686     4.347      0.2359         0.3559
+        bWAR   0.8803     3.787      0.2481         0.4290
+
+    Both FORWARD-LOOKING legs are monotone decreasing in w: every increment of
+    Statcast fielding costs next-season signal AND run-prevention correlation.
+    The blend was built to rescue the fielding swap and instead established that
+    the optimum is not to use it. At w=0 eWAR BEATS bWAR on the forward leg
+    (0.2524 vs 0.2481) while losing same-season fit (0.8595 vs 0.8803), which is
+    precisely the trade the FIP pitching swap exists to make.
+
+    The offense arm is an exact null control at every w (r 0.3132 for both
+    series), so no component leaked and the gate can be trusted.
+
+    The machinery stays because the DECISION is re-testable, not permanent: the
+    reason Statcast fielding loses here is that Savant's read is range-only
+    while rfield also carries arm, framing, blocking and the double-play pivot,
+    so it is a better metric for a NARROWER quantity. If an arm-value and
+    catcher-framing run model ever lands, re-run this grid before assuming the
+    answer is still 0.
     """
     import numpy as np                  # noqa: PLC0415
     import pandas as pd                 # noqa: PLC0415
@@ -708,7 +736,9 @@ def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
 
     field_delta_season: dict[tuple[int, int], float] = {}
     field_src: dict[tuple[int, int], tuple[str, float]] = {}
-    w_blend = 1.0 if fielding_blend_w is None else float(fielding_blend_w)
+    # DEFAULT 0.0 since 2026-08-04: no Statcast fielding. See build()'s docstring
+    # for the w grid that decided it (both forward legs monotone decreasing in w).
+    w_blend = 0.0 if fielding_blend_w is None else float(fielding_blend_w)
     for key, bref in bat_field_season.items():
         rec = fld.get(key) if swap_fielding else None
         if rec is None or rec["share"] <= 0:
@@ -840,7 +870,7 @@ def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
         # Weight on the Statcast read over the innings it covers; rfield takes
         # the rest. 1.0 is the v1 full replacement. Recorded so a served payload
         # always states which fielding configuration produced it.
-        "fielding_blend_w": (1.0 if fielding_blend_w is None else float(fielding_blend_w)),
+        "fielding_blend_w": (0.0 if fielding_blend_w is None else float(fielding_blend_w)),
         # Home-run regression strength on the FIP leg (None = off, which is
         # the shipped model). Recorded so a payload states its own variant.
         "fip_hr_shrink_k": (None if fip_hr_shrink_k is None else float(fip_hr_shrink_k)),

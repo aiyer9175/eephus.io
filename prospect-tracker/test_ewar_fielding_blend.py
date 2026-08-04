@@ -111,11 +111,22 @@ def test_build_exposes_the_blend_parameter():
         "build no longer takes fielding_blend_w; the v2 grid search has no axis")
 
 
-def test_default_build_is_still_v1():
-    """The default must not silently become a blended model."""
-    assert re.search(r"w_blend\s*=\s*1\.0 if fielding_blend_w is None", SRC), (
-        "the default blend weight is no longer 1.0, so an unparameterised "
-        "build() no longer reproduces eWAR v1")
+def test_default_is_the_measured_optimum_zero():
+    """The default is 0.0: eWAR v2 uses NO Statcast fielding.
+
+    Measured over 2016-2025, 300 team-seasons, pitching swap on throughout, so
+    w=0 is the pitching-only arm. Both FORWARD legs are monotone decreasing in
+    w: next-season r 0.2524 -> 0.2359 and run-prevention |r| 0.3780 -> 0.3559 as
+    w goes 0 -> 1. The blend was built to rescue the fielding swap and instead
+    established the optimum is not to use it.
+
+    This test previously pinned the default at 1.0 (eWAR v1). It moved because
+    the evidence moved, which is the point of having built the axis.
+    """
+    assert re.search(r"w_blend\s*=\s*0\.0 if fielding_blend_w is None", SRC), (
+        "the default blend weight is no longer 0.0. w>0 was measured to cost "
+        "next-season signal AND run-prevention correlation, monotonically; do "
+        "not raise it without re-running the grid in build()'s docstring")
 
 
 def test_only_the_covered_fraction_is_blended():
