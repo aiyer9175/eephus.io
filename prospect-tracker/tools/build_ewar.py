@@ -99,7 +99,16 @@ def main() -> int:
 
     unshrunk, arms = None, None
     if not args.no_sensitivity:
-        unshrunk = ewar.build(first=args.first, last=args.last, shrink=False)
+        # AT w=1.0 EXPLICITLY, for the same reason fielding_swap_only is, and
+        # this line got the trap the comment below was written about. The OAA
+        # reliability shrinkage multiplies the STATCAST fielding term; at the
+        # shipped w of 0.0 that term is multiplied by zero, so an unshrunk build
+        # at the default is bit-identical to the shipped build and the whole
+        # sensitivity block reproduced gate 1 to the last decimal while claiming
+        # to test something. Verified: r 0.8595 / mae0 4.306 in BOTH arms.
+        # The shrinkage question only exists where the Statcast read is used.
+        unshrunk = ewar.build(first=args.first, last=args.last, shrink=False,
+                              fielding_blend_w=1.0)
         arms = {
             # AT w=1.0 EXPLICITLY. The shipped default became 0.0 on 2026-08-04
             # (the w grid found both forward legs monotone decreasing in w), so

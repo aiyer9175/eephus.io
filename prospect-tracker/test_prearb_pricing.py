@@ -226,14 +226,62 @@ class PreArbNoInversion(unittest.TestCase):
     fixture."""
 
     def test_league_minimum_never_prices_below_arbitration(self):
+        # THE PRE-ARB LEG COMES FROM PRODUCTION, DELIBERATELY.
+        #
+        # This test used to compare _league_min_total against _arb_total, i.e.
+        # one local reimplementation against another, and it was ALGEBRAICALLY
+        # VACUOUS. Both charge the same market value over the same window at the
+        # same discount; the only difference is the salary, lm versus
+        # max(lm, frac*mkt), and max(lm, x) >= lm term by term. Measured
+        # 2026-08-04: 50,000 random WAR paths (war ~ U(-6, +12), window ~
+        # U{0..5}) produced 0 inversions and a MINIMUM GAP OF EXACTLY $0.000000.
+        # Nothing could have made it fail, including a production bug, because
+        # production was never called.
+        #
+        # Now the pre-arb side is priced by btv._prearb_priced through a real
+        # fixture, so a window, curve, discount or salary-basis regression in
+        # the shipped path breaks this. The arb side stays longhand: it is the
+        # comparator the gate is stated against, not the thing under test.
+        # Window 0 is excluded on purpose, not for convenience: a player past
+        # his pre-arb window is not priced on this basis AT ALL (the row comes
+        # back carrying reason 'past_prearb_window' and no surTotal), so there
+        # is no pre-arb price to invert. test_an_established_veteran_is_NOT_
+        # priced_at_the_minimum owns that case.
+        lengths = {1: _career(2025, 2026),           # 2 seasons -> window 1
+                   2: _career(2026)}                 # 1 season  -> window 2
         inversions = []
         for w in (0.0, 0.3, 1.0, 2.0, 3.5, 5.0, 8.0):
-            for n in (0, 1, 2, 3):
-                mn = _league_min_total(_war(w), n)
-                ab = _arb_total(_war(w), n)
+            for n, career in sorted(lengths.items()):
+                fx = _Fixture(vets=[_vet("p", _war(w))],
+                              detail={"p": {"key": "p", "career": career}})
+                try:
+                    row = btv._prearb_priced(fx.dir).get("p") or {}
+                finally:
+                    fx.close()
+                self.assertIn("surTotal", row,
+                              f"production declined to price w={w} window={n}")
+                mn, ab = float(row["surTotal"]), _arb_total(_war(w), n)
                 if mn < ab - 1.0:
                     inversions.append((w, n, mn, ab))
         self.assertEqual(inversions, [], f"pre-arb priced below arb: {inversions}")
+
+    def test_the_comparison_above_is_not_vacuous(self):
+        """The guard on the guard: prove the production leg can actually move.
+
+        If _prearb_priced ever stops pricing (returns nothing, or a zero), the
+        test above would read 0.0 against a negative arb total for a
+        sub-replacement player and still pass. Pin that the fixture really is
+        producing a live, WAR-responsive price."""
+        got = []
+        for w in (1.0, 4.0):
+            fx = _Fixture(vets=[_vet("p", _war(w))],
+                          detail={"p": {"key": "p", "career": _career(2026)}})
+            try:
+                got.append(float(btv._prearb_priced(fx.dir)["p"]["surTotal"]))
+            finally:
+                fx.close()
+        self.assertGreater(got[0], 0.0)
+        self.assertGreater(got[1] - got[0], 10_000_000.0)
 
     def test_the_gap_is_strict_once_the_arb_fraction_binds(self):
         # At a low projection both bases pay the minimum and the two agree; at a

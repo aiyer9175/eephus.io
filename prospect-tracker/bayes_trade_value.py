@@ -4448,6 +4448,25 @@ def _prearb_service_seasons(entry: dict | None, floor_season, thru_season) -> in
     bound on service and therefore a LOWER bound on the pre-arb window that
     remains. The error direction invents less value, never more.
 
+    THAT LAST SENTENCE HOLDS ONLY WHERE THE PER-SEASON SURPLUS IS POSITIVE.
+    Corrected 2026-08-04: for a SUB-REPLACEMENT row the sign flips, because
+    pricing fewer seasons drops fewer negative terms, so a short count makes the
+    player look BETTER, not worse. It matters here because the 9 rows that
+    actually ship on this basis all carry war0 <= 0.35, i.e. they sit exactly in
+    the band where the invariant is weakest.
+
+    ACCURACY, measured 2026-08-04: the proxy itself is sound. Against
+    independent career_war season keys it agrees on 221 of 223 rows (0.9910),
+    with zero over-counts, zero genuinely pre-arb players suppressed, and no
+    off-by-one on the floor/thru boundary. Both disagreements are career-block
+    UNDER-counts, which is the direction that manufactures a false pre-arb.
+    CAVEAT ON THAT NUMBER, because it is easy to over-read: it is measured on
+    the 107 of 125 priced rows that HAVE independent evidence, and 8 of the 9
+    rows that actually ship carry no debuts.json row at all. For those 8 the
+    only service evidence is the same career block this function reads, so any
+    audit of them is proxy against proxy. The 0.9910 licenses the proxy in
+    general; it does not independently license the shipped 9.
+
     Returns None - "cannot say" - when there is no MLB season on file, or when
     the first season on file is the career block's own floor year."""
     years = []
@@ -4474,7 +4493,31 @@ def _prearb_window(est_service, phase, pre_arb_years: int, n_seasons: int):
     Measured against that label the bare proxy has no false positives - every
     arb_eligible row counts >= 4 appearance seasons - and misses 5 genuinely
     pre-arb rows that bounced through the minors, which is what the label
-    recovers."""
+    recovers.
+
+    THAT VALIDATION IS ONE-DIRECTIONAL AND WAS READ AS IF IT WERE NOT.
+    Audited 2026-08-04. It checks that `arb_eligible` rows are not short-counted.
+    It never checked the reverse, which is the direction that actually costs:
+    whether a `pre_arb` label should win when the proxy CONFIDENTLY contradicts
+    it. Measured on the current class, 10 candidates carry `pre_arb` on an EMPTY
+    season list (where the label is the only signal, which is its job and is
+    fine) and 3 carry it against a career block of 4 to 8 seasons: nestor_cortes
+    (8), joel_payamps (8) and nick_senzel (6). For the two 8-season rows the
+    proxy ALREADY reads est=8 and the `min(svc, pre_arb_years - 1)` below caps
+    it to 2, so the proxy is not the failure, the unconditional override is.
+
+    KNOWN OPEN DEFECT, deliberately NOT patched here. It does not reach the
+    board: none of the 3 is among the 9 rows that ship as prearb_min, so no
+    published dollar moves. Fixing it means choosing a threshold at which an
+    appearance count is allowed to beat the roster label, and that threshold is
+    a modelling decision with no measurement behind it yet. The obvious rule
+    (ignore `pre_arb` once est >= pre_arb_years + 1) was costed and moves ELEVEN
+    rows out of the priced set, not 3, shifting the census reason map
+    (past_prearb_window 87 -> 91, priced_but_row_excluded 14 -> 10) while
+    prearb_min stays 9. A player CAN legitimately hold 6 appearance seasons and
+    under 3 years of service by bouncing, so the rule cannot simply be "more
+    seasons wins". Pinned as-is by test_the_roster_label_overrides_the_
+    appearance_count; see the owner queue before changing the threshold."""
     if phase == "arb_eligible":
         return 0, False
     svc = None if est_service is None else int(est_service)

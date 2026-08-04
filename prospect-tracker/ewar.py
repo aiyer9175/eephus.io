@@ -3,7 +3,7 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""eWAR v1 - "eephus WAR" -> data/ewar.json + data/ewar_eval.json.
+"""eWAR v2 - "eephus WAR" -> data/ewar.json + data/ewar_eval.json.
 
 WHY THIS EXISTS
     The site currently serves Baseball-Reference bWAR. The owner asked for
@@ -15,14 +15,63 @@ WHY THIS EXISTS
 
     NOTHING CONSUMES THIS YET. It is a module, an artifact and a measurement.
 
-THE FRAME
-    eWAR stays on the Baseball-Reference run-value frame and replaces exactly
-    two components. Everything else - offense, baserunning, double plays, the
-    positional adjustment, replacement level, leverage - is B-Ref's, untouched,
-    so the accounting identity stays closed and the difference between eWAR and
-    bWAR is attributable to the two swaps and nothing else.
+    THE OWNER'S HYPOTHESIS WAS "a better WAR label makes eFV more accurate."
+    Both consumer gates have now been run and neither supports a swap.
 
-        eWAR(row) = bWAR(row) + delta_field(row)/RPW + delta_pitch(row)/RPW
+    R3a, eFV first-6yr label swap (2026-08-04). Decision quantity is the
+    model-versus-consensus MARGIN with BOTH scored on the SAME labels, because
+    swapping the label changes what "right" means and absolute rho is therefore
+    uninterpretable. DELTA = -0.0011 (hit) and -0.0115 (pit), both NEGATIVE,
+    against MDE floors of 0.017 and 0.016. Coverage was not the obstacle: 98.6%
+    of hit and 99.1% of pit test-fold rows carry an eWAR label, because the
+    scored folds are debut years 2020-2023 and eWAR starts in 2016.
+    IMPORTANT, and the reason this is a NO-SHIP rather than a CLOSED question:
+    the null is NOT tight enough to exclude a floor-sized effect on the pitching
+    side. The lane's own bootstrap held both fitted models FIXED, but the eWAR
+    arm refits ridge and OLS on the new label, so model-estimation variance
+    belongs in the sampling distribution. Adding it moves pit sd 0.0164 ->
+    0.0210 and the CI90 upper bound to +0.0206, which is ABOVE the 0.016 floor;
+    the original single-seed CI90 upper of +0.0147 also sits within Monte Carlo
+    error of the floor, and 10 of 40 reseeds put it at or above. So: no evidence
+    of benefit, do NOT flip, and do not write down that the hypothesis is
+    closed. It is unsupported, which is a weaker and more honest claim.
+
+    R3b, fa_backtest Gate 1 (2026-08-04). Margin over the Marcel carry-forward
+    baseline, both scored on the same labels: -0.0387 WAR on pitchers against a
+    pre-registered floor of +0.020, CI95 [-0.0472, -0.0309], negative in all six
+    scored targets. THE MECHANISM IS THE INTERESTING PART and it generalises:
+    the eWAR pitching label really IS more forecastable (label r 0.5033 ->
+    0.5779, persistence 0.4528 -> 0.5823), but a 5/4/3 carry-forward IS a
+    persistence bet, so a more persistent label helps the NAIVE BASELINE more
+    than it helps the model. A cleaner label raises the floor before it raises
+    the ceiling. Expect this anywhere a model is scored as margin-over-carry.
+
+THE FRAME
+    eWAR stays on the Baseball-Reference run-value frame. v1 replaced two
+    components; v2 replaces exactly ONE. Everything else - offense,
+    baserunning, double plays, the positional adjustment, replacement level,
+    reliever leverage - is B-Ref's, untouched, so the accounting identity stays
+    closed and the difference between eWAR and bWAR is attributable to the
+    pitching swap and nothing else.
+
+        eWAR(row) = bWAR(row) + delta_pitch(row)/RPW        (v2, shipped)
+        eWAR(row) = bWAR(row) + delta_pitch/RPW + delta_field/RPW   (v1)
+
+    THE FIELDING SWAP WAS MEASURED AND REMOVED on 2026-08-04. The blend weight
+    `fielding_blend_w` defaults to 0.0, which makes delta_field identically
+    zero. The machinery below is retained because it is the axis the decision
+    was swept on, not because any of it is live. See the w grid in
+    _reading().what_would_change_the_verdict.
+
+    RELIEVER LEVERAGE, precisely, because "untouched" is doing real work in
+    that sentence. B-Ref's reliever leverage chaining lives in war_daily's
+    WAA_adj term, and the identity WAR = WAA + WAA_adj + WAR_rep holds to a
+    residual sd of 0.0029. build() ingests WAR whole and never decomposes it,
+    so the FIP swap re-prices runs WITHOUT disturbing the leverage credit.
+    Verified 2026-08-04 (lane R2e.3), and the alternative was killed on the
+    same pass: our own gmLI (mlb_leverage) and B-Ref's are the same number,
+    r = 0.9947 on 993 reliever-seasons. Do not re-propose crediting relievers
+    with our gmLI; it is a measured null, not an untried idea.
 
     1. PITCHING: B-Ref prices a pitcher on RUNS ALLOWED (runs_above_avg_adj =
        xRA_final - RA, league-centred). eWAR re-prices him on FIP - his own
@@ -99,7 +148,7 @@ CACHE_DIR = ROOT / ".cache"
 OUT = DATA_DIR / "ewar.json"
 EVAL_OUT = DATA_DIR / "ewar_eval.json"
 
-MODEL = "ewar_v1"
+MODEL = "ewar_v2"
 
 # Statcast OAA covers these seven. C returns zero rows from the leaderboard
 # (savant_oaa.json "blind_spots"), DH has no defense, P is not on the board.
@@ -230,6 +279,32 @@ def corpus_fip(hr_shrink_k: float | None = None) -> tuple[dict, dict]:
         component's centring is IP-weighted, so he moves nothing. Do not "fix"
         this by clamping, which would silently un-regress exactly the pitchers
         the variant exists to regress.
+
+    GATED 2026-08-04 (lane R2e.2): NO SHIP, stays default-off, and the reason is
+    NOT that it failed. It PASSED its own pre-registered rule in sample. The
+    forecast leg (gate_pitcher_persistence.forecast_next_year_actual_runs,
+    min_ip 50, 1825 pairs) runs smooth and single-peaked in k:
+
+        k        None    100     200     400     800     1600
+        forecast 0.2548  0.2665  0.2725  0.2782  0.2782  ~peak
+
+    and two discriminating controls rule out the cheap explanation that this is
+    generic reliability weighting rather than a home-run effect: the SAME
+    exposure shrink applied to all three FIP rates gives 0.2222 at k=800 (WORSE
+    than doing nothing) and applied to the K rate alone gives 0.1825, against
+    0.2782 for HR-only. The effect is home-run specific, exactly as the
+    hypothesis predicted.
+
+    It is declined on two grounds that the in-sample curve cannot see.
+      1. IT DOES NOT TRANSPORT. On a temporal holdout the gain is +0.0017, and
+         the argmax moves from k=1600 to k=400 between eras. A parameter whose
+         optimum is that unstable across time is fitting the era, not the noise.
+      2. IT COLLIDES WITH THE w=0 DECISION. Turning it on drives the team
+         next-season-wins leg monotonically DOWN past bWAR (0.2421 at k=400,
+         0.2380 at k=800). That leg is already a null at k=None (see build());
+         this would turn a null into a loss.
+    Re-open only with a shrink target that is not a single global k, e.g. one
+    fit per role or per era with its own transport test.
     """
     cor = _corpus()
     rows = cor.get("pit", [])
@@ -665,20 +740,42 @@ def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
     That is a measured decision, not a preference. Grid over 2016-2025, 300
     team-seasons, pitching swap on throughout so w=0 is the pitching-only arm:
 
-        w      wins r   wins mae0   next-yr r   prevention |r|
-        0.00   0.8595     4.306      0.2524         0.3780
-        0.25   0.8636     4.260      0.2491         0.3759
-        0.50   0.8667     4.251      0.2452         0.3718
-        0.75   0.8684     4.277      0.2408         0.3652
-        1.00   0.8686     4.347      0.2359         0.3559
-        bWAR   0.8803     3.787      0.2481         0.4290
+        w      wins r   wins mae0   next-yr r   next-yr r   prevention |r|
+                                    (pooled)    (full sched)
+        0.00   0.8595     4.306      0.2524       0.5920        0.3780
+        0.25   0.8636     4.260      0.2491       0.5894        0.3759
+        0.50   0.8667     4.251      0.2452       0.5856        0.3718
+        0.75   0.8684     4.277      0.2408       0.5805        0.3652
+        1.00   0.8686     4.347      0.2359       0.5740        0.3559
+        bWAR   0.8803     3.787      0.2481       0.5913        0.4290
 
     Both FORWARD-LOOKING legs are monotone decreasing in w: every increment of
     Statcast fielding costs next-season signal AND run-prevention correlation.
     The blend was built to rescue the fielding swap and instead established that
-    the optimum is not to use it. At w=0 eWAR BEATS bWAR on the forward leg
-    (0.2524 vs 0.2481) while losing same-season fit (0.8595 vs 0.8803), which is
-    precisely the trade the FIP pitching swap exists to make.
+    the optimum is not to use it. THAT ORDERING IS ROBUST: it is monotone on the
+    pooled pairs AND on full-schedule pairs only, so it is not an artifact of
+    the 2020 scale problem described next. w=0.0 is the measured optimum.
+
+    WHAT w=0 DOES **NOT** BUY, corrected 2026-08-04 after this docstring
+    briefly claimed the opposite. The pooled next-yr column is
+    SCALE-CONTAMINATED: 60 of its 270 pairs straddle the 60-game 2020 season,
+    putting a 60-game season on one axis and a 162-game season on the other.
+    Those 60 pairs correlate about -0.53 and drag the pooled r from roughly
+    0.59 to 0.25. On full-schedule pairs (n=210) eWAR reads 0.5920 against
+    bWAR's 0.5913, a delta of +0.0006, i.e. NOTHING. A zero-information control
+    that shuffles the per-team eWAR-minus-bWAR delta across teams produces an
+    absolute delta at least as large 82.3% of the time and beats bWAR outright
+    in 27.3% of shuffles; per year-pair eWAR wins 4 of 9 and loses the four most
+    recent, with the pooled edge carried by 2016->2017 and the COVID pair. So
+    eWAR v2 is a NULL against bWAR at the TEAM level in both directions of
+    time, and its real case is at the PITCHER level (gate 2), where the
+    persistence gain is 2.1x and survives its controls. Do not quote the pooled
+    0.2524 as a win.
+
+    The forward number is also fragile to the pitching variant: turning on
+    fip_hr_shrink_k at k>=200 drives it BELOW bWAR (0.2421 at k=400, 0.2380 at
+    k=800), which is one of the two reasons that variant stays default-off.
+    See corpus_fip for the full sweep.
 
     The offense arm is an exact null control at every w (r 0.3132 for both
     series), so no component leaked and the gate can be trusted.
@@ -963,7 +1060,10 @@ def export_payload(model: dict) -> dict:
         "model": MODEL,
         "generated_at": meta["generated_at"],
         "seasons": meta["seasons"],
-        "consumers": "NONE - eWAR v1 is not wired into any surface",
+        "consumers": "NONE - eWAR v2 is not wired into any surface. Two "
+                     "consumer gates were measured 2026-08-04 and both said "
+                     "no: eFV first-6yr label swap (R3a) and fa_backtest "
+                     "Gate 1 (R3b).",
         "field_key": {
             "ew": "eWAR (wins)", "bw": "Baseball-Reference bWAR (wins)",
             "ewb": "eWAR batting side", "bwb": "bWAR batting side",
@@ -1114,6 +1214,28 @@ def gate_team_wins(model: dict, first: int, last: int) -> dict:
             "r_bwar": round(_pearson([a["bwar"] for a, _ in nxt], ys) or float("nan"), 4),
             "reading": "team WAR in season y against actual wins in season y+1",
         }
+        # THE POOLED NUMBER ABOVE IS SCALE-CONTAMINATED AND MUST NOT BE QUOTED
+        # ALONE. A pair that straddles 2020 puts a 60-game season on one axis
+        # and a 162-game season on the other, so the pair is not measuring
+        # persistence at all: those 60 pairs correlate NEGATIVELY (about -0.53)
+        # and drag the pooled r from roughly 0.59 down to 0.25. Report the
+        # full-schedule subset beside it. This is the number to read.
+        full = [(a, b) for a, b in nxt
+                if a["games"] >= 140 and b["games"] >= 140]
+        if len(full) >= 30:
+            fy = [float(b["wins"]) for _, b in full]
+            re_ = _pearson([a["ewar"] for a, _ in full], fy)
+            rb_ = _pearson([a["bwar"] for a, _ in full], fy)
+            out["next_season_wins_full_schedule_only"] = {
+                "n": len(full),
+                "n_dropped_short_season_pairs": len(nxt) - len(full),
+                "r_ewar": round(re_, 4) if re_ is not None else None,
+                "r_bwar": round(rb_, 4) if rb_ is not None else None,
+                "delta": round(re_ - rb_, 4) if (re_ is not None and rb_ is not None) else None,
+                "reading": "same test, restricted to pairs where BOTH seasons "
+                           "ran a full schedule (>=140 team games). The pooled "
+                           "row above mixes 60-game and 162-game seasons.",
+            }
     per = {}
     for season in sorted({p["season"] for p in pts}):
         sub = [p for p in pts if p["season"] == season]
@@ -1447,6 +1569,41 @@ def gate_league_sum(model: dict) -> dict:
                            f"league target = (0.5 - {REPLACEMENT_WINS}/162) x team-games")}
 
 
+def _window_model(model: dict, first: int, last: int) -> dict:
+    """Return a shallow copy of `model` carrying only seasons in [first, last].
+
+    Every per-season block a gate reads gets filtered, not just `rows`:
+    gate_league_sum reads meta.by_season, gate_coverage reads
+    meta.fielding.by_season and meta.pitching.by_season. Season keys are ints
+    in memory and strings once the payload has been through JSON, so both are
+    accepted. If the model is already inside the window this is close to a
+    no-op and the gates see exactly what they saw before.
+    """
+    def _in(k) -> bool:
+        try:
+            return first <= int(k) <= last
+        except (TypeError, ValueError):
+            return True
+
+    def _filt(d):
+        return {k: v for k, v in d.items() if _in(k)} if isinstance(d, dict) else d
+
+    meta = dict(model["meta"])
+    meta["seasons"] = [first, last]
+    if isinstance(meta.get("by_season"), dict):
+        meta["by_season"] = _filt(meta["by_season"])
+    for comp in ("fielding", "pitching"):
+        blk = meta.get(comp)
+        if isinstance(blk, dict) and isinstance(blk.get("by_season"), dict):
+            blk = dict(blk)
+            blk["by_season"] = _filt(blk["by_season"])
+            meta[comp] = blk
+    out = dict(model)
+    out["meta"] = meta
+    out["rows"] = [r for r in model["rows"] if _in(r.get("season"))]
+    return out
+
+
 def evaluate(model: dict, model_unshrunk: dict | None = None,
              first: int | None = None, last: int | None = None,
              arms: dict | None = None) -> dict:
@@ -1458,18 +1615,34 @@ def evaluate(model: dict, model_unshrunk: dict | None = None,
     first = int(first if first is not None else lo)
     # the last season is usually in progress; the gates need completed seasons
     last = int(last if last is not None else min(hi, _dt.date.today().year - 1))
+    # WINDOW THE MODEL ONCE, then hand the SAME rows to every block.
+    #
+    # Until 2026-08-04 this line computed `last` and then passed it to
+    # gate_team_wins and gate_team_runs ONLY. The other four blocks took the
+    # unwindowed model, so the artifact declared eval_window [2016, 2025] while
+    # persistence, coverage, accounting and face-validity all ran 2016-2026 on
+    # a season three weeks old. It was not cosmetic: 148 of 1825 gate-2 pairs
+    # (8.1%) had the in-progress 2026 as their y+1 target, at a mean 89.6 IP
+    # against 98.9 in 2025, and accounting_league_sum reported a 2026 row with
+    # only 3364 team-games inside a "max_abs_deviation_from_target 0.0" pass.
+    # Excluding 2026 the persistence direction is unchanged (self-r 0.3619 vs
+    # 0.1766, forecast 0.2574 vs 0.1766), so no verdict moves; what was wrong
+    # was the artifact describing a population it did not measure.
+    windowed = _window_model(model, first, last)
     ev = {
         "model": MODEL,
         "generated_at": _dt.datetime.now().isoformat(timespec="seconds"),
         "eval_window": [first, last],
         "population": "every Baseball-Reference war_daily row in the window; "
-                      "eWAR and bWAR are always measured on IDENTICAL rows",
-        "gate_1_team_wins": gate_team_wins(model, first, last),
-        "gate_1b_team_runs": gate_team_runs(model, first, last),
-        "gate_2_pitcher_persistence": gate_pitcher_persistence(model),
-        "gate_3_coverage_identity": gate_coverage(model),
-        "accounting_league_sum": gate_league_sum(model),
-        "face_validity": face_validity(model),
+                      "eWAR and bWAR are always measured on IDENTICAL rows; "
+                      "EVERY block below is windowed to eval_window, including "
+                      "persistence, coverage, accounting and face validity",
+        "gate_1_team_wins": gate_team_wins(windowed, first, last),
+        "gate_1b_team_runs": gate_team_runs(windowed, first, last),
+        "gate_2_pitcher_persistence": gate_pitcher_persistence(windowed),
+        "gate_3_coverage_identity": gate_coverage(windowed),
+        "accounting_league_sum": gate_league_sum(windowed),
+        "face_validity": face_validity(windowed),
     }
     if arms:
         att = {"why": "the two component swaps run one at a time, so a gate "
@@ -1519,8 +1692,24 @@ def evaluate(model: dict, model_unshrunk: dict | None = None,
             "what": "identical build with the OAA reliability shrinkage OFF "
                     "(raw centred FRP instead of FRP x inn/(inn+k_inn))",
             "gate_1_team_wins": gate_team_wins(model_unshrunk, first, last),
-            "accounting_league_sum": gate_league_sum(model_unshrunk),
+            "accounting_league_sum": gate_league_sum(
+                _window_model(model_unshrunk, first, last)),
         }
+        # A CONTROL THAT CANNOT MOVE IS NOT A CONTROL. At the shipped
+        # fielding_blend_w of 0.0 the only shrink-sensitive term is multiplied
+        # by zero, so an unshrunk build is bit-identical to the shipped one and
+        # this whole block was reproducing gate 1 to the last decimal while
+        # claiming to vary something. The caller now pins the arm at w=1.0
+        # (tools/build_ewar.py); assert the block is live rather than trusting
+        # the caller, because the failure mode is silent and reads as a pass.
+        _sh = ev["gate_1_team_wins"]["ewar"]
+        _un = ev["sensitivity_unshrunk_fielding"]["gate_1_team_wins"]["ewar"]
+        ev["sensitivity_unshrunk_fielding"]["degenerate"] = bool(_sh == _un)
+        if _sh == _un:
+            ev["sensitivity_unshrunk_fielding"]["what"] += (
+                " -- DEGENERATE ON THIS RUN: identical to the shipped gate, so "
+                "it varies nothing. Build the arm at fielding_blend_w=1.0 to "
+                "make the shrinkage question answerable.")
     g1, g2 = ev["gate_1_team_wins"], ev["gate_2_pitcher_persistence"]
     passed = []
     failed = []
@@ -1554,9 +1743,14 @@ def _reading(ev: dict) -> dict:
         return {"verdict": "unmeasured"}
     e, b = g1["ewar"], g1["bwar"]
     fore = g2.get("forecast_next_year_actual_runs") or {}
+    nxt = g1.get("next_season_wins") or {}
+    nxf = g1.get("next_season_wins_full_schedule_only") or {}
     return {
-        "verdict": "provisional - eWAR LOSES the headline gate and WINS the "
-                   "persistence gate; it is not ready to replace bWAR site-wide",
+        "verdict": "provisional - eWAR v2 (FIP pitching ONLY, the Statcast "
+                   "fielding swap was measured and REMOVED) LOSES the "
+                   "descriptive gate, WINS the pitcher persistence gate, and "
+                   "is a NULL against bWAR on team forward-looking wins; it is "
+                   "not ready to replace bWAR site-wide",
         "headline": (
             f"Gate 1 (team wins, {g1['n_team_seasons']} team-seasons): eWAR r "
             f"{e['r']} vs bWAR {b['r']}, zero-parameter MAE {e['mae_zero_param']} "
@@ -1580,7 +1774,32 @@ def _reading(ev: dict) -> dict:
             f"year's actual runs above average does ({fore.get('from_ewar_fip')} "
             f"vs {fore.get('from_bwar_ra')}). That is a 2.1x persistence gain "
             f"and the entire case for a FIP basis."),
-        "the_component_that_did_not_earn_its_place": (
+        "what_it_did_NOT_buy": (
+            f"A TEAM-LEVEL forward-looking win. Measured 2026-08-04 and stated "
+            f"here because the opposite was briefly claimed: on team WAR in "
+            f"year y against wins in y+1, eWAR reads {nxt.get('r_ewar')} against "
+            f"bWAR {nxt.get('r_bwar')}, and that gap is NOT real. Three "
+            f"independent reasons. (1) SCALE CONTAMINATION: "
+            f"{nxf.get('n_dropped_short_season_pairs')} of {nxt.get('n')} pairs "
+            f"straddle the 60-game 2020 season and correlate NEGATIVELY, "
+            f"dragging the pooled r down; on full-schedule pairs only "
+            f"(n {nxf.get('n')}) it is {nxf.get('r_ewar')} vs {nxf.get('r_bwar')}, "
+            f"a delta of {nxf.get('delta')}. (2) A zero-information control that "
+            f"SHUFFLES the per-team eWAR-minus-bWAR delta across teams produces "
+            f"an absolute delta at least as large 82.3% of the time, and beats "
+            f"bWAR outright in 27.3% of shuffles. (3) Per year-pair, eWAR wins "
+            f"4 of 9 and LOSES the four most recent; the pooled edge is carried "
+            f"by 2016->2017 (+0.176) and the COVID pair 2020->2021 (+0.119). "
+            f"The pitching component's forward case is at the PITCHER level "
+            f"(gate 2), where it is large and survives controls. It does not "
+            f"survive aggregation to the team."),
+        "the_component_that_was_removed": (
+            "THE STATCAST FIELDING SWAP IS NOT IN THE v2 BUILD (shipped "
+            "fielding_blend_w = 0.0, so eWAR carries B-Ref rfield unchanged). "
+            "This block is the COUNTERFACTUAL that removed it, not a "
+            "description of what ships: the fielding_swap_only arm is built at "
+            "fielding_blend_w=1.0 on purpose so it answers 'what would the swap "
+            "do', which is why it still appears below. "
             "The ATTRIBUTION arms separate the two swaps. The FIP swap costs "
             f"same-season r ({att.get('pitching_swap_only', {}).get('r')} vs "
             f"{b['r']}) and BUYS next-season signal "
@@ -1601,9 +1820,18 @@ def _reading(ev: dict) -> dict:
         "what_would_change_the_verdict": [
             "an arm-value and catcher-framing run model, so the fielding swap "
             "covers the same quantity rfield does instead of a subset",
-            "a BLEND of OAA and rfield rather than a replacement (the two "
-            "measure overlapping but not identical things; the correlation "
-            "between them on full-time covered seasons is 0.63)",
+            "CLOSED 2026-08-04, do NOT re-run: a BLEND of OAA and rfield "
+            "rather than a replacement was built and swept. w = 0.00 / 0.25 / "
+            "0.50 / 0.75 / 1.00 gives a forward-leg delta against bWAR of "
+            "+0.0006 / -0.0019 / -0.0057 / -0.0108 / -0.0173 on full-schedule "
+            "pairs (and +0.0043 / +0.0009 / -0.0029 / -0.0073 / -0.0122 on the "
+            "contaminated pooled set). MONOTONE DECREASING IN w ON BOTH "
+            "BASES, so the 2020 contamination does not drive the ordering and "
+            "no positive weight pays for itself. The blend is now the axis the "
+            "decision was made on, not a candidate: w=0.0 IS v2. Re-open only "
+            "if an arm-value or catcher-framing run model lands, which would "
+            "change what the Statcast read MEASURES rather than how it is "
+            "weighted",
             "gate 1 re-run against team RUNS ALLOWED and RUNS SCORED separately "
             "instead of wins, which separates component accuracy from the "
             "Pythagorean noise both series inherit",
@@ -1613,7 +1841,11 @@ def _reading(ev: dict) -> dict:
             "divergences by name (Aaron Nola 2018 9.69 -> 6.15, Mike Minor 2019 "
             "7.99 -> 4.68, both toward their published fWAR), it persists 2.1x "
             "better, and it forecasts next-year run prevention better than "
-            "actual run prevention does. NOTHING consumes eWAR yet and nothing "
-            "should until the fielding gap above is closed or the fielding swap "
-            "is dropped."),
+            "actual run prevention does. NOTHING consumes eWAR yet. v2 already "
+            "took the second of the two exits named here: the Statcast fielding "
+            "swap was DROPPED (w=0.0) rather than repaired, so what remains is "
+            "a one-component model. Two consumer gates have since been measured "
+            "and both said no: the eFV first-6yr label swap (lane R3a) and "
+            "fa_backtest Gate 1 (lane R3b). Read those before wiring eWAR into "
+            "anything."),
     }
