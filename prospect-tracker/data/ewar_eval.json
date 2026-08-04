@@ -1,0 +1,1854 @@
+{
+ "model": "ewar_v1",
+ "generated_at": "2026-08-04T00:21:28",
+ "eval_window": [
+  2016,
+  2025
+ ],
+ "population": "every Baseball-Reference war_daily row in the window; eWAR and bWAR are always measured on IDENTICAL rows",
+ "gate_1_team_wins": {
+  "n_team_seasons": 300,
+  "seasons": [
+   2016,
+   2025
+  ],
+  "ewar": {
+   "r": 0.8686,
+   "r2": 0.7545,
+   "mae_fit": 7.379,
+   "rmse_fit": 9.819,
+   "fit_intercept": 35.153,
+   "fit_slope": 1.3055,
+   "mae_zero_param": 4.347,
+   "bias_zero_param": 0.0
+  },
+  "bwar": {
+   "r": 0.8803,
+   "r2": 0.7749,
+   "mae_fit": 6.835,
+   "rmse_fit": 9.402,
+   "fit_intercept": 35.527,
+   "fit_slope": 1.2933,
+   "mae_zero_param": 3.787,
+   "bias_zero_param": 0.006
+  },
+  "next_season_wins": {
+   "n": 270,
+   "r_ewar": 0.2359,
+   "r_bwar": 0.2481,
+   "reading": "team WAR in season y against actual wins in season y+1"
+  },
+  "by_season": {
+   "2016": {
+    "n": 30,
+    "r_ewar": 0.8052,
+    "r_bwar": 0.9065,
+    "mae0_ewar": 5.009,
+    "mae0_bwar": 3.26
+   },
+   "2017": {
+    "n": 30,
+    "r_ewar": 0.9126,
+    "r_bwar": 0.9324,
+    "mae0_ewar": 3.551,
+    "mae0_bwar": 3.099
+   },
+   "2018": {
+    "n": 30,
+    "r_ewar": 0.9231,
+    "r_bwar": 0.9279,
+    "mae0_ewar": 4.417,
+    "mae0_bwar": 4.482
+   },
+   "2019": {
+    "n": 30,
+    "r_ewar": 0.9037,
+    "r_bwar": 0.9339,
+    "mae0_ewar": 5.319,
+    "mae0_bwar": 4.824
+   },
+   "2020": {
+    "n": 30,
+    "r_ewar": 0.8045,
+    "r_bwar": 0.7963,
+    "mae0_ewar": 2.642,
+    "mae0_bwar": 2.961
+   },
+   "2021": {
+    "n": 30,
+    "r_ewar": 0.8886,
+    "r_bwar": 0.9256,
+    "mae0_ewar": 5.177,
+    "mae0_bwar": 4.073
+   },
+   "2022": {
+    "n": 30,
+    "r_ewar": 0.9525,
+    "r_bwar": 0.9642,
+    "mae0_ewar": 3.714,
+    "mae0_bwar": 3.505
+   },
+   "2023": {
+    "n": 30,
+    "r_ewar": 0.861,
+    "r_bwar": 0.9228,
+    "mae0_ewar": 5.493,
+    "mae0_bwar": 4.313
+   },
+   "2024": {
+    "n": 30,
+    "r_ewar": 0.9195,
+    "r_bwar": 0.9406,
+    "mae0_ewar": 3.92,
+    "mae0_bwar": 3.246
+   },
+   "2025": {
+    "n": 30,
+    "r_ewar": 0.8859,
+    "r_bwar": 0.9001,
+    "mae0_ewar": 4.224,
+    "mae0_bwar": 4.101
+   }
+  },
+  "verdict": "bWAR better"
+ },
+ "gate_2_pitcher_persistence": {
+  "n_pairs": 1825,
+  "min_ip": 50.0,
+  "units": "runs above average per 9 IP",
+  "self_r_ewar_fip": 0.3664,
+  "self_r_bwar_ra": 0.1769,
+  "forecast_next_year_actual_runs": {
+   "from_ewar_fip": 0.2548,
+   "from_bwar_ra": 0.1769,
+   "reading": "correlation of season-y value with season-(y+1) ACTUAL runs above average (B-Ref runs-allowed basis)"
+  },
+  "season_war_self_r": {
+   "ewar": 0.469,
+   "bwar": 0.3089
+  },
+  "verdict": "FIP persists better"
+ },
+ "gate_3_coverage_identity": {
+  "fielding": {
+   "by_season": {
+    "2016": {
+     "fielding_innings_share_covered": 0.7772,
+     "share_within_oaa_positions": 0.9993,
+     "n_player_seasons_with_defense": 1347,
+     "n_non_pitcher_player_seasons": 627,
+     "n_with_statcast_read": 544,
+     "by_position": {
+      "1B": {
+       "inn": 43306.4,
+       "share": 0.999,
+       "n": 181,
+       "n_covered": 160
+      },
+      "2B": {
+       "inn": 43306.6,
+       "share": 0.9994,
+       "n": 160,
+       "n_covered": 150
+      },
+      "3B": {
+       "inn": 43306.3,
+       "share": 0.9994,
+       "n": 171,
+       "n_covered": 158
+      },
+      "C": {
+       "inn": 43306.3,
+       "share": 0.0,
+       "n": 104,
+       "n_covered": 0
+      },
+      "CF": {
+       "inn": 43306.6,
+       "share": 0.9995,
+       "n": 164,
+       "n_covered": 153
+      },
+      "LF": {
+       "inn": 43306.1,
+       "share": 0.9991,
+       "n": 252,
+       "n_covered": 232
+      },
+      "P": {
+       "inn": 43307.1,
+       "share": 0.0,
+       "n": 742,
+       "n_covered": 0
+      },
+      "RF": {
+       "inn": 43306.2,
+       "share": 0.9987,
+       "n": 217,
+       "n_covered": 197
+      },
+      "SS": {
+       "inn": 43306.3,
+       "share": 0.9999,
+       "n": 125,
+       "n_covered": 121
+      }
+     }
+    },
+    "2017": {
+     "fielding_innings_share_covered": 0.777,
+     "share_within_oaa_positions": 0.999,
+     "n_player_seasons_with_defense": 1355,
+     "n_non_pitcher_player_seasons": 623,
+     "n_with_statcast_read": 534,
+     "by_position": {
+      "1B": {
+       "inn": 43256.8,
+       "share": 0.9984,
+       "n": 185,
+       "n_covered": 155
+      },
+      "2B": {
+       "inn": 43257.3,
+       "share": 0.9998,
+       "n": 162,
+       "n_covered": 154
+      },
+      "3B": {
+       "inn": 43257.1,
+       "share": 0.9995,
+       "n": 175,
+       "n_covered": 163
+      },
+      "C": {
+       "inn": 43256.6,
+       "share": 0.0,
+       "n": 113,
+       "n_covered": 0
+      },
+      "CF": {
+       "inn": 43257.0,
+       "share": 0.9999,
+       "n": 164,
+       "n_covered": 159
+      },
+      "LF": {
+       "inn": 43256.9,
+       "share": 0.9985,
+       "n": 245,
+       "n_covered": 223
+      },
+      "P": {
+       "inn": 43256.5,
+       "share": 0.0,
+       "n": 753,
+       "n_covered": 0
+      },
+      "RF": {
+       "inn": 43257.3,
+       "share": 0.9968,
+       "n": 211,
+       "n_covered": 182
+      },
+      "SS": {
+       "inn": 43256.8,
+       "share": 0.9999,
+       "n": 128,
+       "n_covered": 126
+      }
+     }
+    },
+    "2018": {
+     "fielding_innings_share_covered": 0.7772,
+     "share_within_oaa_positions": 0.9992,
+     "n_player_seasons_with_defense": 1376,
+     "n_non_pitcher_player_seasons": 630,
+     "n_with_statcast_read": 536,
+     "by_position": {
+      "1B": {
+       "inn": 43488.8,
+       "share": 0.9983,
+       "n": 187,
+       "n_covered": 162
+      },
+      "2B": {
+       "inn": 43489.2,
+       "share": 0.9994,
+       "n": 182,
+       "n_covered": 169
+      },
+      "3B": {
+       "inn": 43489.2,
+       "share": 0.9996,
+       "n": 186,
+       "n_covered": 173
+      },
+      "C": {
+       "inn": 43488.9,
+       "share": 0.0,
+       "n": 116,
+       "n_covered": 0
+      },
+      "CF": {
+       "inn": 43488.6,
+       "share": 0.9997,
+       "n": 166,
+       "n_covered": 158
+      },
+      "LF": {
+       "inn": 43489.0,
+       "share": 0.9992,
+       "n": 238,
+       "n_covered": 217
+      },
+      "P": {
+       "inn": 43488.0,
+       "share": 0.0,
+       "n": 797,
+       "n_covered": 0
+      },
+      "RF": {
+       "inn": 43489.0,
+       "share": 0.9987,
+       "n": 216,
+       "n_covered": 193
+      },
+      "SS": {
+       "inn": 43488.6,
+       "share": 0.9995,
+       "n": 130,
+       "n_covered": 121
+      }
+     }
+    },
+    "2019": {
+     "fielding_innings_share_covered": 0.7771,
+     "share_within_oaa_positions": 0.9992,
+     "n_player_seasons_with_defense": 1405,
+     "n_non_pitcher_player_seasons": 628,
+     "n_with_statcast_read": 548,
+     "by_position": {
+      "1B": {
+       "inn": 43423.2,
+       "share": 0.9984,
+       "n": 197,
+       "n_covered": 173
+      },
+      "2B": {
+       "inn": 43423.6,
+       "share": 0.9998,
+       "n": 172,
+       "n_covered": 165
+      },
+      "3B": {
+       "inn": 43423.3,
+       "share": 0.9993,
+       "n": 176,
+       "n_covered": 160
+      },
+      "C": {
+       "inn": 43423.3,
+       "share": 0.0,
+       "n": 113,
+       "n_covered": 0
+      },
+      "CF": {
+       "inn": 43423.4,
+       "share": 0.9993,
+       "n": 167,
+       "n_covered": 163
+      },
+      "LF": {
+       "inn": 43423.4,
+       "share": 0.9987,
+       "n": 247,
+       "n_covered": 225
+      },
+      "P": {
+       "inn": 43423.9,
+       "share": 0.0,
+       "n": 829,
+       "n_covered": 0
+      },
+      "RF": {
+       "inn": 43423.5,
+       "share": 0.9989,
+       "n": 228,
+       "n_covered": 215
+      },
+      "SS": {
+       "inn": 43423.3,
+       "share": 0.9997,
+       "n": 135,
+       "n_covered": 129
+      }
+     }
+    },
+    "2020": {
+     "fielding_innings_share_covered": 0.7762,
+     "share_within_oaa_positions": 0.998,
+     "n_player_seasons_with_defense": 1288,
+     "n_non_pitcher_player_seasons": 572,
+     "n_with_statcast_read": 486,
+     "by_position": {
+      "1B": {
+       "inn": 15468.4,
+       "share": 0.9959,
+       "n": 159,
+       "n_covered": 139
+      },
+      "2B": {
+       "inn": 15468.4,
+       "share": 0.9992,
+       "n": 139,
+       "n_covered": 132
+      },
+      "3B": {
+       "inn": 15468.3,
+       "share": 0.9996,
+       "n": 133,
+       "n_covered": 129
+      },
+      "C": {
+       "inn": 15468.4,
+       "share": 0.0,
+       "n": 101,
+       "n_covered": 0
+      },
+      "CF": {
+       "inn": 15468.7,
+       "share": 0.9986,
+       "n": 132,
+       "n_covered": 122
+      },
+      "LF": {
+       "inn": 15468.6,
+       "share": 0.9955,
+       "n": 194,
+       "n_covered": 173
+      },
+      "P": {
+       "inn": 15468.7,
+       "share": 0.0,
+       "n": 735,
+       "n_covered": 0
+      },
+      "RF": {
+       "inn": 15468.5,
+       "share": 0.9975,
+       "n": 172,
+       "n_covered": 158
+      },
+      "SS": {
+       "inn": 15468.6,
+       "share": 0.9994,
+       "n": 103,
+       "n_covered": 100
+      }
+     }
+    },
+    "2021": {
+     "fielding_innings_share_covered": 0.7768,
+     "share_within_oaa_positions": 0.9987,
+     "n_player_seasons_with_defense": 1504,
+     "n_non_pitcher_player_seasons": 658,
+     "n_with_statcast_read": 568,
+     "by_position": {
+      "1B": {
+       "inn": 42615.0,
+       "share": 0.998,
+       "n": 192,
+       "n_covered": 160
+      },
+      "2B": {
+       "inn": 42614.7,
+       "share": 0.9995,
+       "n": 192,
+       "n_covered": 184
+      },
+      "3B": {
+       "inn": 42615.0,
+       "share": 0.9993,
+       "n": 190,
+       "n_covered": 176
+      },
+      "C": {
+       "inn": 42615.0,
+       "share": 0.0,
+       "n": 116,
+       "n_covered": 0
+      },
+      "CF": {
+       "inn": 42614.6,
+       "share": 0.9992,
+       "n": 186,
+       "n_covered": 175
+      },
+      "LF": {
+       "inn": 42614.8,
+       "share": 0.9969,
+       "n": 278,
+       "n_covered": 246
+      },
+      "P": {
+       "inn": 42615.5,
+       "share": 0.0,
+       "n": 906,
+       "n_covered": 0
+      },
+      "RF": {
+       "inn": 42615.2,
+       "share": 0.9982,
+       "n": 249,
+       "n_covered": 230
+      },
+      "SS": {
+       "inn": 42614.7,
+       "share": 0.9998,
+       "n": 135,
+       "n_covered": 127
+      }
+     }
+    },
+    "2022": {
+     "fielding_innings_share_covered": 0.7771,
+     "share_within_oaa_positions": 0.9992,
+     "n_player_seasons_with_defense": 1493,
+     "n_non_pitcher_player_seasons": 682,
+     "n_with_statcast_read": 587,
+     "by_position": {
+      "1B": {
+       "inn": 43075.0,
+       "share": 0.9992,
+       "n": 187,
+       "n_covered": 171
+      },
+      "2B": {
+       "inn": 43075.0,
+       "share": 0.9995,
+       "n": 189,
+       "n_covered": 176
+      },
+      "3B": {
+       "inn": 43075.5,
+       "share": 0.9996,
+       "n": 197,
+       "n_covered": 183
+      },
+      "C": {
+       "inn": 43075.5,
+       "share": 0.0,
+       "n": 120,
+       "n_covered": 0
+      },
+      "CF": {
+       "inn": 43075.2,
+       "share": 0.9991,
+       "n": 180,
+       "n_covered": 165
+      },
+      "LF": {
+       "inn": 43075.4,
+       "share": 0.9985,
+       "n": 265,
+       "n_covered": 245
+      },
+      "P": {
+       "inn": 43075.7,
+       "share": 0.0,
+       "n": 871,
+       "n_covered": 0
+      },
+      "RF": {
+       "inn": 43075.4,
+       "share": 0.9985,
+       "n": 249,
+       "n_covered": 224
+      },
+      "SS": {
+       "inn": 43075.6,
+       "share": 0.9998,
+       "n": 144,
+       "n_covered": 140
+      }
+     }
+    },
+    "2023": {
+     "fielding_innings_share_covered": 0.7771,
+     "share_within_oaa_positions": 0.9991,
+     "n_player_seasons_with_defense": 1454,
+     "n_non_pitcher_player_seasons": 647,
+     "n_with_statcast_read": 558,
+     "by_position": {
+      "1B": {
+       "inn": 43087.8,
+       "share": 0.9992,
+       "n": 179,
+       "n_covered": 162
+      },
+      "2B": {
+       "inn": 43087.7,
+       "share": 0.9993,
+       "n": 178,
+       "n_covered": 165
+      },
+      "3B": {
+       "inn": 43087.0,
+       "share": 0.9995,
+       "n": 177,
+       "n_covered": 171
+      },
+      "C": {
+       "inn": 43087.4,
+       "share": 0.0,
+       "n": 102,
+       "n_covered": 0
+      },
+      "CF": {
+       "inn": 43087.2,
+       "share": 0.9995,
+       "n": 174,
+       "n_covered": 164
+      },
+      "LF": {
+       "inn": 43087.5,
+       "share": 0.9981,
+       "n": 242,
+       "n_covered": 214
+      },
+      "P": {
+       "inn": 43088.0,
+       "share": 0.0,
+       "n": 863,
+       "n_covered": 0
+      },
+      "RF": {
+       "inn": 43087.5,
+       "share": 0.9988,
+       "n": 235,
+       "n_covered": 216
+      },
+      "SS": {
+       "inn": 43087.3,
+       "share": 0.9996,
+       "n": 142,
+       "n_covered": 134
+      }
+     }
+    },
+    "2024": {
+     "fielding_innings_share_covered": 0.777,
+     "share_within_oaa_positions": 0.9991,
+     "n_player_seasons_with_defense": 1452,
+     "n_non_pitcher_player_seasons": 640,
+     "n_with_statcast_read": 552,
+     "by_position": {
+      "1B": {
+       "inn": 43115.7,
+       "share": 0.9994,
+       "n": 170,
+       "n_covered": 152
+      },
+      "2B": {
+       "inn": 43116.3,
+       "share": 0.9994,
+       "n": 184,
+       "n_covered": 174
+      },
+      "3B": {
+       "inn": 43115.9,
+       "share": 0.9998,
+       "n": 177,
+       "n_covered": 171
+      },
+      "C": {
+       "inn": 43116.4,
+       "share": 0.0,
+       "n": 100,
+       "n_covered": 0
+      },
+      "CF": {
+       "inn": 43116.1,
+       "share": 0.9988,
+       "n": 166,
+       "n_covered": 147
+      },
+      "LF": {
+       "inn": 43116.5,
+       "share": 0.9981,
+       "n": 233,
+       "n_covered": 209
+      },
+      "P": {
+       "inn": 43116.6,
+       "share": 0.0,
+       "n": 853,
+       "n_covered": 0
+      },
+      "RF": {
+       "inn": 43116.3,
+       "share": 0.998,
+       "n": 218,
+       "n_covered": 201
+      },
+      "SS": {
+       "inn": 43116.0,
+       "share": 0.9999,
+       "n": 125,
+       "n_covered": 122
+      }
+     }
+    },
+    "2025": {
+     "fielding_innings_share_covered": 0.7773,
+     "share_within_oaa_positions": 0.9993,
+     "n_player_seasons_with_defense": 1470,
+     "n_non_pitcher_player_seasons": 662,
+     "n_with_statcast_read": 567,
+     "by_position": {
+      "1B": {
+       "inn": 43075.3,
+       "share": 0.9986,
+       "n": 182,
+       "n_covered": 159
+      },
+      "2B": {
+       "inn": 43074.8,
+       "share": 0.9993,
+       "n": 185,
+       "n_covered": 174
+      },
+      "3B": {
+       "inn": 43074.9,
+       "share": 0.9997,
+       "n": 176,
+       "n_covered": 168
+      },
+      "C": {
+       "inn": 43074.9,
+       "share": 0.0,
+       "n": 111,
+       "n_covered": 0
+      },
+      "CF": {
+       "inn": 43075.0,
+       "share": 0.9998,
+       "n": 178,
+       "n_covered": 173
+      },
+      "LF": {
+       "inn": 43074.7,
+       "share": 0.9991,
+       "n": 235,
+       "n_covered": 215
+      },
+      "P": {
+       "inn": 43076.6,
+       "share": 0.0,
+       "n": 873,
+       "n_covered": 0
+      },
+      "RF": {
+       "inn": 43074.3,
+       "share": 0.999,
+       "n": 230,
+       "n_covered": 216
+      },
+      "SS": {
+       "inn": 43075.4,
+       "share": 0.9998,
+       "n": 127,
+       "n_covered": 123
+      }
+     }
+    },
+    "2026": {
+     "fielding_innings_share_covered": 0.7768,
+     "share_within_oaa_positions": 0.9988,
+     "n_player_seasons_with_defense": 1320,
+     "n_non_pitcher_player_seasons": 595,
+     "n_with_statcast_read": 508,
+     "by_position": {
+      "1B": {
+       "inn": 27543.4,
+       "share": 0.9969,
+       "n": 152,
+       "n_covered": 131
+      },
+      "2B": {
+       "inn": 27543.5,
+       "share": 0.9992,
+       "n": 142,
+       "n_covered": 134
+      },
+      "3B": {
+       "inn": 27543.0,
+       "share": 0.9991,
+       "n": 154,
+       "n_covered": 142
+      },
+      "C": {
+       "inn": 27544.4,
+       "share": 0.0,
+       "n": 104,
+       "n_covered": 0
+      },
+      "CF": {
+       "inn": 27543.8,
+       "share": 0.9994,
+       "n": 150,
+       "n_covered": 143
+      },
+      "LF": {
+       "inn": 27543.9,
+       "share": 0.9988,
+       "n": 217,
+       "n_covered": 205
+      },
+      "P": {
+       "inn": 27543.0,
+       "share": 0.0,
+       "n": 757,
+       "n_covered": 0
+      },
+      "RF": {
+       "inn": 27544.4,
+       "share": 0.9981,
+       "n": 192,
+       "n_covered": 178
+      },
+      "SS": {
+       "inn": 27543.3,
+       "share": 0.9998,
+       "n": 117,
+       "n_covered": 114
+      }
+     }
+    }
+   },
+   "k_inn": {
+    "1B": 2539.0,
+    "2B": 1739.0,
+    "3B": 1164.0,
+    "SS": 874.0,
+    "LF": 935.0,
+    "CF": 632.0,
+    "RF": 724.0
+   },
+   "shrunk": true,
+   "structural_blind_spots": [
+    "CATCHER: the Savant OAA leaderboard returns zero rows for C, so every catcher-season in eWAR carries B-Ref rfield unchanged",
+    "PITCHER glove: not on the OAA board; falls back to rfield",
+    "pre-2016: no Statcast OAA at all"
+   ]
+  },
+  "pitching": {
+   "n_rows": 10094,
+   "n_fip_priced": 10027,
+   "ip_share_fip_priced": 1.0,
+   "by_season": {
+    "2016": {
+     "n_rows": 826,
+     "n_covered": 824,
+     "ip_share": 1.0,
+     "lg_ra9": 4.5189,
+     "lg_era": 4.1897,
+     "ra9_per_era_scale": 1.07857,
+     "cells": {
+      "RP": {
+       "n": 532,
+       "solved": true,
+       "centre_ra9": 4.3115,
+       "centre_vs_lg_ra9": -0.2074,
+       "bref_raa_total": -50.32,
+       "ewar_raa_total": -50.32,
+       "ip": 14967.7
+      },
+      "SP": {
+       "n": 292,
+       "solved": true,
+       "centre_ra9": 4.6242,
+       "centre_vs_lg_ra9": 0.1053,
+       "bref_raa_total": 50.29,
+       "ewar_raa_total": 50.29,
+       "ip": 28338.7
+      }
+     }
+    },
+    "2017": {
+     "n_rows": 841,
+     "n_covered": 837,
+     "ip_share": 1.0,
+     "lg_ra9": 4.6984,
+     "lg_era": 4.3576,
+     "ra9_per_era_scale": 1.07821,
+     "cells": {
+      "RP": {
+       "n": 539,
+       "solved": true,
+       "centre_ra9": 4.4337,
+       "centre_vs_lg_ra9": -0.2647,
+       "bref_raa_total": -72.65,
+       "ewar_raa_total": -72.65,
+       "ip": 15619.3
+      },
+      "SP": {
+       "n": 298,
+       "solved": true,
+       "centre_ra9": 4.8412,
+       "centre_vs_lg_ra9": 0.1428,
+       "bref_raa_total": 75.33,
+       "ewar_raa_total": 75.33,
+       "ip": 27637.7
+      }
+     }
+    },
+    "2018": {
+     "n_rows": 896,
+     "n_covered": 890,
+     "ip_share": 1.0,
+     "lg_ra9": 4.4763,
+     "lg_era": 4.1485,
+     "ra9_per_era_scale": 1.07902,
+     "cells": {
+      "RP": {
+       "n": 598,
+       "solved": true,
+       "centre_ra9": 4.1397,
+       "centre_vs_lg_ra9": -0.3366,
+       "bref_raa_total": -463.11,
+       "ewar_raa_total": -463.11,
+       "ip": 16505.3
+      },
+      "SP": {
+       "n": 292,
+       "solved": true,
+       "centre_ra9": 4.6816,
+       "centre_vs_lg_ra9": 0.2053,
+       "bref_raa_total": 467.79,
+       "ewar_raa_total": 467.79,
+       "ip": 26983.7
+      }
+     }
+    },
+    "2019": {
+     "n_rows": 938,
+     "n_covered": 927,
+     "ip_share": 1.0,
+     "lg_ra9": 4.8638,
+     "lg_era": 4.5038,
+     "ra9_per_era_scale": 1.07994,
+     "cells": {
+      "RP": {
+       "n": 641,
+       "solved": true,
+       "centre_ra9": 4.6115,
+       "centre_vs_lg_ra9": -0.2523,
+       "bref_raa_total": -462.12,
+       "ewar_raa_total": -462.12,
+       "ip": 16881.7
+      },
+      "SP": {
+       "n": 286,
+       "solved": true,
+       "centre_ra9": 5.0305,
+       "centre_vs_lg_ra9": 0.1667,
+       "bref_raa_total": 469.85,
+       "ewar_raa_total": 469.85,
+       "ip": 26541.7
+      }
+     }
+    },
+    "2020": {
+     "n_rows": 771,
+     "n_covered": 770,
+     "ip_share": 1.0,
+     "lg_ra9": 4.8547,
+     "lg_era": 4.4533,
+     "ra9_per_era_scale": 1.09015,
+     "cells": {
+      "RP": {
+       "n": 531,
+       "solved": true,
+       "centre_ra9": 4.5925,
+       "centre_vs_lg_ra9": -0.2622,
+       "bref_raa_total": -213.25,
+       "ewar_raa_total": -213.25,
+       "ip": 6518.3
+      },
+      "SP": {
+       "n": 239,
+       "solved": true,
+       "centre_ra9": 5.0468,
+       "centre_vs_lg_ra9": 0.1921,
+       "bref_raa_total": 213.35,
+       "ewar_raa_total": 213.35,
+       "ip": 8950.3
+      }
+     }
+    },
+    "2021": {
+     "n_rows": 1037,
+     "n_covered": 1028,
+     "ip_share": 1.0,
+     "lg_ra9": 4.6484,
+     "lg_era": 4.2646,
+     "ra9_per_era_scale": 1.08998,
+     "cells": {
+      "RP": {
+       "n": 719,
+       "solved": true,
+       "centre_ra9": 4.3924,
+       "centre_vs_lg_ra9": -0.2559,
+       "bref_raa_total": -434.63,
+       "ewar_raa_total": -434.63,
+       "ip": 17212.3
+      },
+      "SP": {
+       "n": 309,
+       "solved": true,
+       "centre_ra9": 4.8222,
+       "centre_vs_lg_ra9": 0.1739,
+       "bref_raa_total": 440.2,
+       "ewar_raa_total": 440.2,
+       "ip": 25402.7
+      }
+     }
+    },
+    "2022": {
+     "n_rows": 985,
+     "n_covered": 971,
+     "ip_share": 1.0,
+     "lg_ra9": 4.3494,
+     "lg_era": 3.9683,
+     "ra9_per_era_scale": 1.09604,
+     "cells": {
+      "RP": {
+       "n": 680,
+       "solved": true,
+       "centre_ra9": 4.1068,
+       "centre_vs_lg_ra9": -0.2426,
+       "bref_raa_total": -325.9,
+       "ewar_raa_total": -325.9,
+       "ip": 17141.0
+      },
+      "SP": {
+       "n": 291,
+       "solved": true,
+       "centre_ra9": 4.5153,
+       "centre_vs_lg_ra9": 0.1659,
+       "bref_raa_total": 325.94,
+       "ewar_raa_total": 325.94,
+       "ip": 25934.3
+      }
+     }
+    },
+    "2023": {
+     "n_rows": 967,
+     "n_covered": 965,
+     "ip_share": 1.0,
+     "lg_ra9": 4.6856,
+     "lg_era": 4.3317,
+     "ra9_per_era_scale": 1.08169,
+     "cells": {
+      "RP": {
+       "n": 669,
+       "solved": true,
+       "centre_ra9": 4.4182,
+       "centre_vs_lg_ra9": -0.2674,
+       "bref_raa_total": -208.64,
+       "ewar_raa_total": -208.64,
+       "ip": 17097.3
+      },
+      "SP": {
+       "n": 296,
+       "solved": true,
+       "centre_ra9": 4.8548,
+       "centre_vs_lg_ra9": 0.1693,
+       "bref_raa_total": 208.63,
+       "ewar_raa_total": 208.63,
+       "ip": 25990.0
+      }
+     }
+    },
+    "2024": {
+     "n_rows": 978,
+     "n_covered": 972,
+     "ip_share": 1.0,
+     "lg_ra9": 4.4551,
+     "lg_era": 4.0789,
+     "ra9_per_era_scale": 1.09222,
+     "cells": {
+      "RP": {
+       "n": 673,
+       "solved": true,
+       "centre_ra9": 4.1707,
+       "centre_vs_lg_ra9": -0.2844,
+       "bref_raa_total": -301.18,
+       "ewar_raa_total": -301.18,
+       "ip": 17150.7
+      },
+      "SP": {
+       "n": 299,
+       "solved": true,
+       "centre_ra9": 4.6443,
+       "centre_vs_lg_ra9": 0.1892,
+       "bref_raa_total": 310.87,
+       "ewar_raa_total": 310.88,
+       "ip": 25965.7
+      }
+     }
+    },
+    "2025": {
+     "n_rows": 1026,
+     "n_covered": 1015,
+     "ip_share": 1.0,
+     "lg_ra9": 4.516,
+     "lg_era": 4.1585,
+     "ra9_per_era_scale": 1.08597,
+     "cells": {
+      "RP": {
+       "n": 725,
+       "solved": true,
+       "centre_ra9": 4.2474,
+       "centre_vs_lg_ra9": -0.2686,
+       "bref_raa_total": -379.85,
+       "ewar_raa_total": -379.85,
+       "ip": 17368.0
+      },
+      "SP": {
+       "n": 290,
+       "solved": true,
+       "centre_ra9": 4.6965,
+       "centre_vs_lg_ra9": 0.1805,
+       "bref_raa_total": 379.87,
+       "ewar_raa_total": 379.87,
+       "ip": 25707.0
+      }
+     }
+    },
+    "2026": {
+     "n_rows": 829,
+     "n_covered": 828,
+     "ip_share": 1.0,
+     "lg_ra9": 4.5603,
+     "lg_era": 4.1869,
+     "ra9_per_era_scale": 1.08918,
+     "cells": {
+      "RP": {
+       "n": 576,
+       "solved": true,
+       "centre_ra9": 4.3324,
+       "centre_vs_lg_ra9": -0.2279,
+       "bref_raa_total": -308.7,
+       "ewar_raa_total": -308.7,
+       "ip": 11828.0
+      },
+      "SP": {
+       "n": 252,
+       "solved": true,
+       "centre_ra9": 4.7086,
+       "centre_vs_lg_ra9": 0.1484,
+       "bref_raa_total": 309.54,
+       "ewar_raa_total": 309.54,
+       "ip": 17988.7
+      }
+     }
+    }
+   }
+  },
+  "row_sources_by_season": {
+   "2016": {
+    "bat_bref": 897,
+    "bat_oaa": 544,
+    "bat_mixed": 41,
+    "pit_fip": 824,
+    "pit_bref": 2
+   },
+   "2017": {
+    "bat_bref": 912,
+    "bat_oaa": 540,
+    "bat_mixed": 42,
+    "pit_fip": 837,
+    "pit_bref": 4
+   },
+   "2018": {
+    "bat_oaa": 541,
+    "bat_bref": 944,
+    "bat_mixed": 48,
+    "pit_fip": 890,
+    "pit_bref": 6
+   },
+   "2019": {
+    "bat_bref": 967,
+    "bat_oaa": 547,
+    "bat_mixed": 53,
+    "pit_fip": 927,
+    "pit_bref": 11
+   },
+   "2020": {
+    "bat_bref": 842,
+    "bat_oaa": 474,
+    "bat_mixed": 44,
+    "pit_fip": 770,
+    "pit_bref": 1
+   },
+   "2021": {
+    "bat_bref": 1071,
+    "bat_oaa": 580,
+    "bat_mixed": 55,
+    "pit_fip": 1028,
+    "pit_bref": 9
+   },
+   "2022": {
+    "bat_bref": 1018,
+    "bat_oaa": 615,
+    "bat_mixed": 50,
+    "pit_fip": 971,
+    "pit_bref": 14
+   },
+   "2023": {
+    "bat_bref": 1010,
+    "bat_oaa": 573,
+    "bat_mixed": 31,
+    "pit_fip": 965,
+    "pit_bref": 2
+   },
+   "2024": {
+    "bat_bref": 1028,
+    "bat_oaa": 596,
+    "bat_mixed": 27,
+    "pit_fip": 972,
+    "pit_bref": 6
+   },
+   "2025": {
+    "bat_bref": 1054,
+    "bat_oaa": 602,
+    "bat_mixed": 36,
+    "pit_fip": 1015,
+    "pit_bref": 11
+   },
+   "2026": {
+    "bat_oaa": 497,
+    "bat_bref": 176,
+    "bat_mixed": 33,
+    "pit_fip": 828,
+    "pit_bref": 1
+   }
+  }
+ },
+ "accounting_league_sum": {
+  "by_season": {
+   "2016": {
+    "team_games": 4854,
+    "target": 997.77,
+    "bwar_sum": 998.06,
+    "ewar_sum_pre_rescale": 992.45,
+    "ewar_sum": 997.77,
+    "replacement_scale": 1.00532
+   },
+   "2017": {
+    "team_games": 4860,
+    "target": 999.0,
+    "bwar_sum": 997.54,
+    "ewar_sum_pre_rescale": 994.01,
+    "ewar_sum": 999.0,
+    "replacement_scale": 1.00498
+   },
+   "2018": {
+    "team_games": 4862,
+    "target": 999.41,
+    "bwar_sum": 997.42,
+    "ewar_sum_pre_rescale": 991.9,
+    "ewar_sum": 999.41,
+    "replacement_scale": 1.0075
+   },
+   "2019": {
+    "team_games": 4858,
+    "target": 998.59,
+    "bwar_sum": 996.81,
+    "ewar_sum_pre_rescale": 990.87,
+    "ewar_sum": 998.59,
+    "replacement_scale": 1.00772
+   },
+   "2020": {
+    "team_games": 1796,
+    "target": 369.18,
+    "bwar_sum": 370.59,
+    "ewar_sum_pre_rescale": 370.32,
+    "ewar_sum": 369.18,
+    "replacement_scale": 0.99692
+   },
+   "2021": {
+    "team_games": 4858,
+    "target": 998.59,
+    "bwar_sum": 998.35,
+    "ewar_sum_pre_rescale": 1006.6,
+    "ewar_sum": 998.59,
+    "replacement_scale": 0.99199
+   },
+   "2022": {
+    "team_games": 4860,
+    "target": 999.0,
+    "bwar_sum": 1000.56,
+    "ewar_sum_pre_rescale": 1007.36,
+    "ewar_sum": 999.0,
+    "replacement_scale": 0.99164
+   },
+   "2023": {
+    "team_games": 4860,
+    "target": 999.0,
+    "bwar_sum": 1000.35,
+    "ewar_sum_pre_rescale": 1006.13,
+    "ewar_sum": 999.0,
+    "replacement_scale": 0.99287
+   },
+   "2024": {
+    "team_games": 4858,
+    "target": 998.59,
+    "bwar_sum": 999.79,
+    "ewar_sum_pre_rescale": 1008.55,
+    "ewar_sum": 998.59,
+    "replacement_scale": 0.99004
+   },
+   "2025": {
+    "team_games": 4860,
+    "target": 999.0,
+    "bwar_sum": 1000.44,
+    "ewar_sum_pre_rescale": 1006.31,
+    "ewar_sum": 999.0,
+    "replacement_scale": 0.99269
+   },
+   "2026": {
+    "team_games": 3364,
+    "target": 691.49,
+    "bwar_sum": 681.4,
+    "ewar_sum_pre_rescale": 687.07,
+    "ewar_sum": 691.49,
+    "replacement_scale": 1.00648
+   }
+  },
+  "max_abs_deviation_from_target": 0.0,
+  "convention": "REPLACEMENT_WINS 47.7 on a .294 baseline; league target = (0.5 - 47.7/162) x team-games"
+ },
+ "face_validity": {
+  "pitchers_moved_most": {
+   "units": "season WAR, eWAR minus bWAR",
+   "min_ip": 120,
+   "rows": [
+    {
+     "name": "Zack Godley",
+     "season": 2018,
+     "delta": 3.97,
+     "ewar": 3.05,
+     "bwar": -0.92
+    },
+    {
+     "name": "Aaron Nola",
+     "season": 2018,
+     "delta": -3.54,
+     "ewar": 6.15,
+     "bwar": 9.69
+    },
+    {
+     "name": "Dan Straily",
+     "season": 2016,
+     "delta": -3.52,
+     "ewar": 0.63,
+     "bwar": 4.15
+    },
+    {
+     "name": "Mike Minor",
+     "season": 2019,
+     "delta": -3.31,
+     "ewar": 4.68,
+     "bwar": 7.99
+    },
+    {
+     "name": "Mike Fiers",
+     "season": 2018,
+     "delta": -3.19,
+     "ewar": 1.19,
+     "bwar": 4.38
+    },
+    {
+     "name": "Andrew Abbott",
+     "season": 2024,
+     "delta": -3.07,
+     "ewar": 0.23,
+     "bwar": 3.3
+    },
+    {
+     "name": "Mike Fiers",
+     "season": 2019,
+     "delta": -3.05,
+     "ewar": 0.31,
+     "bwar": 3.36
+    },
+    {
+     "name": "Ian Kennedy",
+     "season": 2016,
+     "delta": -3.02,
+     "ewar": 1.23,
+     "bwar": 4.25
+    },
+    {
+     "name": "Justin Verlander",
+     "season": 2017,
+     "delta": -2.92,
+     "ewar": 4.01,
+     "bwar": 6.93
+    },
+    {
+     "name": "JP Sears",
+     "season": 2023,
+     "delta": -2.87,
+     "ewar": 0.03,
+     "bwar": 2.9
+    },
+    {
+     "name": "Ronel Blanco",
+     "season": 2024,
+     "delta": -2.85,
+     "ewar": 1.82,
+     "bwar": 4.67
+    },
+    {
+     "name": "Robbie Ray",
+     "season": 2021,
+     "delta": -2.82,
+     "ewar": 4.05,
+     "bwar": 6.87
+    }
+   ]
+  },
+  "best_fielders_by_ewar": {
+   "units": "fielding runs, full-time (450+ PA) seasons with >=95% Statcast coverage",
+   "rows": [
+    {
+     "name": "Nick Ahmed",
+     "season": 2018,
+     "fielding_runs_ewar": 14.1,
+     "rfield_bref": 20.0,
+     "delta": -5.9
+    },
+    {
+     "name": "Byron Buxton",
+     "season": 2017,
+     "fielding_runs_ewar": 12.8,
+     "rfield_bref": 23.0,
+     "delta": -10.2
+    },
+    {
+     "name": "Javier B\u00e1ez",
+     "season": 2019,
+     "fielding_runs_ewar": 12.6,
+     "rfield_bref": 27.0,
+     "delta": -14.4
+    },
+    {
+     "name": "Nicky Lopez",
+     "season": 2021,
+     "fielding_runs_ewar": 11.5,
+     "rfield_bref": 1.0,
+     "delta": 10.5
+    },
+    {
+     "name": "Pete Crow-Armstrong",
+     "season": 2025,
+     "fielding_runs_ewar": 11.1,
+     "rfield_bref": 12.0,
+     "delta": -0.9
+    },
+    {
+     "name": "Mookie Betts",
+     "season": 2017,
+     "fielding_runs_ewar": 10.8,
+     "rfield_bref": 28.0,
+     "delta": -17.2
+    },
+    {
+     "name": "Billy Hamilton",
+     "season": 2016,
+     "fielding_runs_ewar": 10.7,
+     "rfield_bref": 11.0,
+     "delta": -0.3
+    },
+    {
+     "name": "V\u00edctor Robles",
+     "season": 2019,
+     "fielding_runs_ewar": 10.2,
+     "rfield_bref": 14.0,
+     "delta": -3.8
+    },
+    {
+     "name": "Francisco Lindor",
+     "season": 2019,
+     "fielding_runs_ewar": 10.1,
+     "rfield_bref": 4.0,
+     "delta": 6.1
+    },
+    {
+     "name": "Bobby Witt Jr.",
+     "season": 2025,
+     "fielding_runs_ewar": 9.9,
+     "rfield_bref": 4.0,
+     "delta": 5.9
+    },
+    {
+     "name": "Addison Russell",
+     "season": 2016,
+     "fielding_runs_ewar": 9.6,
+     "rfield_bref": 18.0,
+     "delta": -8.4
+    },
+    {
+     "name": "Dansby Swanson",
+     "season": 2022,
+     "fielding_runs_ewar": 9.5,
+     "rfield_bref": 7.0,
+     "delta": 2.5
+    }
+   ]
+  },
+  "worst_fielders_by_ewar": {
+   "rows": [
+    {
+     "name": "Nick Castellanos",
+     "season": 2018,
+     "fielding_runs_ewar": -11.6,
+     "rfield_bref": -16.0,
+     "delta": 4.4
+    },
+    {
+     "name": "Andrew McCutchen",
+     "season": 2016,
+     "fielding_runs_ewar": -10.7,
+     "rfield_bref": -21.0,
+     "delta": 10.3
+    },
+    {
+     "name": "Jorge Polanco",
+     "season": 2019,
+     "fielding_runs_ewar": -9.7,
+     "rfield_bref": -11.0,
+     "delta": 1.3
+    },
+    {
+     "name": "Matt Kemp",
+     "season": 2016,
+     "fielding_runs_ewar": -9.3,
+     "rfield_bref": -9.0,
+     "delta": -0.3
+    },
+    {
+     "name": "Amed Rosario",
+     "season": 2018,
+     "fielding_runs_ewar": -8.9,
+     "rfield_bref": -3.0,
+     "delta": -5.9
+    },
+    {
+     "name": "Charlie Blackmon",
+     "season": 2018,
+     "fielding_runs_ewar": -8.9,
+     "rfield_bref": -19.0,
+     "delta": 10.1
+    },
+    {
+     "name": "CJ Abrams",
+     "season": 2024,
+     "fielding_runs_ewar": -8.6,
+     "rfield_bref": 0.0,
+     "delta": -8.6
+    },
+    {
+     "name": "Adam Jones",
+     "season": 2017,
+     "fielding_runs_ewar": -8.3,
+     "rfield_bref": -12.0,
+     "delta": 3.7
+    },
+    {
+     "name": "Adam Jones",
+     "season": 2018,
+     "fielding_runs_ewar": -8.0,
+     "rfield_bref": -19.0,
+     "delta": 11.0
+    },
+    {
+     "name": "Carlos Correa",
+     "season": 2016,
+     "fielding_runs_ewar": -7.7,
+     "rfield_bref": 5.0,
+     "delta": -12.7
+    },
+    {
+     "name": "Mark Trumbo",
+     "season": 2016,
+     "fielding_runs_ewar": -7.5,
+     "rfield_bref": -10.0,
+     "delta": 2.5
+    },
+    {
+     "name": "Denard Span",
+     "season": 2017,
+     "fielding_runs_ewar": -7.4,
+     "rfield_bref": -19.0,
+     "delta": 11.6
+    }
+   ]
+  }
+ },
+ "attribution_gate_1": {
+  "why": "the two component swaps run one at a time, so a gate movement is attributable to a component and not to 'eWAR' as an undifferentiated whole. Same rows, same replacement re-derivation, same window.",
+  "bwar_baseline": {
+   "r": 0.8803,
+   "mae_zero_param": 3.787,
+   "mae_fit": 6.835,
+   "next_season_r": 0.2481
+  },
+  "fielding_swap_only": {
+   "r": 0.8777,
+   "mae_zero_param": 4.243,
+   "mae_fit": 7.077,
+   "next_season_r": 0.2255
+  },
+  "pitching_swap_only": {
+   "r": 0.8595,
+   "mae_zero_param": 4.306,
+   "mae_fit": 7.542,
+   "next_season_r": 0.2524
+  },
+  "both_swaps_shipped": {
+   "r": 0.8686,
+   "mae_zero_param": 4.347,
+   "mae_fit": 7.379,
+   "next_season_r": 0.2359
+  }
+ },
+ "sensitivity_unshrunk_fielding": {
+  "what": "identical build with the OAA reliability shrinkage OFF (raw centred FRP instead of FRP x inn/(inn+k_inn))",
+  "gate_1_team_wins": {
+   "n_team_seasons": 300,
+   "seasons": [
+    2016,
+    2025
+   ],
+   "ewar": {
+    "r": 0.8644,
+    "r2": 0.7472,
+    "mae_fit": 7.422,
+    "rmse_fit": 9.965,
+    "fit_intercept": 36.489,
+    "fit_slope": 1.2627,
+    "mae_zero_param": 4.277,
+    "bias_zero_param": 0.0
+   },
+   "bwar": {
+    "r": 0.8803,
+    "r2": 0.7749,
+    "mae_fit": 6.835,
+    "rmse_fit": 9.402,
+    "fit_intercept": 35.527,
+    "fit_slope": 1.2933,
+    "mae_zero_param": 3.787,
+    "bias_zero_param": 0.006
+   },
+   "next_season_wins": {
+    "n": 270,
+    "r_ewar": 0.2426,
+    "r_bwar": 0.2481,
+    "reading": "team WAR in season y against actual wins in season y+1"
+   },
+   "by_season": {
+    "2016": {
+     "n": 30,
+     "r_ewar": 0.8103,
+     "r_bwar": 0.9065,
+     "mae0_ewar": 5.096,
+     "mae0_bwar": 3.26
+    },
+    "2017": {
+     "n": 30,
+     "r_ewar": 0.9065,
+     "r_bwar": 0.9324,
+     "mae0_ewar": 3.858,
+     "mae0_bwar": 3.099
+    },
+    "2018": {
+     "n": 30,
+     "r_ewar": 0.9264,
+     "r_bwar": 0.9279,
+     "mae0_ewar": 4.389,
+     "mae0_bwar": 4.482
+    },
+    "2019": {
+     "n": 30,
+     "r_ewar": 0.9077,
+     "r_bwar": 0.9339,
+     "mae0_ewar": 5.186,
+     "mae0_bwar": 4.824
+    },
+    "2020": {
+     "n": 30,
+     "r_ewar": 0.8286,
+     "r_bwar": 0.7963,
+     "mae0_ewar": 2.478,
+     "mae0_bwar": 2.961
+    },
+    "2021": {
+     "n": 30,
+     "r_ewar": 0.893,
+     "r_bwar": 0.9256,
+     "mae0_ewar": 5.105,
+     "mae0_bwar": 4.073
+    },
+    "2022": {
+     "n": 30,
+     "r_ewar": 0.9579,
+     "r_bwar": 0.9642,
+     "mae0_ewar": 3.435,
+     "mae0_bwar": 3.505
+    },
+    "2023": {
+     "n": 30,
+     "r_ewar": 0.8616,
+     "r_bwar": 0.9228,
+     "mae0_ewar": 5.522,
+     "mae0_bwar": 4.313
+    },
+    "2024": {
+     "n": 30,
+     "r_ewar": 0.9265,
+     "r_bwar": 0.9406,
+     "mae0_ewar": 3.732,
+     "mae0_bwar": 3.246
+    },
+    "2025": {
+     "n": 30,
+     "r_ewar": 0.893,
+     "r_bwar": 0.9001,
+     "mae0_ewar": 3.965,
+     "mae0_bwar": 4.101
+    }
+   },
+   "verdict": "bWAR better"
+  },
+  "accounting_league_sum": {
+   "by_season": {
+    "2016": {
+     "team_games": 4854,
+     "target": 997.77,
+     "bwar_sum": 998.06,
+     "ewar_sum_pre_rescale": 988.44,
+     "ewar_sum": 997.77,
+     "replacement_scale": 1.00932
+    },
+    "2017": {
+     "team_games": 4860,
+     "target": 999.0,
+     "bwar_sum": 997.54,
+     "ewar_sum_pre_rescale": 986.3,
+     "ewar_sum": 999.0,
+     "replacement_scale": 1.01269
+    },
+    "2018": {
+     "team_games": 4862,
+     "target": 999.41,
+     "bwar_sum": 997.42,
+     "ewar_sum_pre_rescale": 985.84,
+     "ewar_sum": 999.41,
+     "replacement_scale": 1.01356
+    },
+    "2019": {
+     "team_games": 4858,
+     "target": 998.59,
+     "bwar_sum": 996.81,
+     "ewar_sum_pre_rescale": 986.5,
+     "ewar_sum": 998.59,
+     "replacement_scale": 1.01208
+    },
+    "2020": {
+     "team_games": 1796,
+     "target": 369.18,
+     "bwar_sum": 370.59,
+     "ewar_sum_pre_rescale": 368.38,
+     "ewar_sum": 369.18,
+     "replacement_scale": 1.00216
+    },
+    "2021": {
+     "team_games": 4858,
+     "target": 998.59,
+     "bwar_sum": 998.35,
+     "ewar_sum_pre_rescale": 999.53,
+     "ewar_sum": 998.59,
+     "replacement_scale": 0.99906
+    },
+    "2022": {
+     "team_games": 4860,
+     "target": 999.0,
+     "bwar_sum": 1000.56,
+     "ewar_sum_pre_rescale": 1001.26,
+     "ewar_sum": 999.0,
+     "replacement_scale": 0.99774
+    },
+    "2023": {
+     "team_games": 4860,
+     "target": 999.0,
+     "bwar_sum": 1000.35,
+     "ewar_sum_pre_rescale": 997.84,
+     "ewar_sum": 999.0,
+     "replacement_scale": 1.00116
+    },
+    "2024": {
+     "team_games": 4858,
+     "target": 998.59,
+     "bwar_sum": 999.79,
+     "ewar_sum_pre_rescale": 998.93,
+     "ewar_sum": 998.59,
+     "replacement_scale": 0.99966
+    },
+    "2025": {
+     "team_games": 4860,
+     "target": 999.0,
+     "bwar_sum": 1000.44,
+     "ewar_sum_pre_rescale": 1000.35,
+     "ewar_sum": 999.0,
+     "replacement_scale": 0.99865
+    },
+    "2026": {
+     "team_games": 3364,
+     "target": 691.49,
+     "bwar_sum": 681.4,
+     "ewar_sum_pre_rescale": 682.06,
+     "ewar_sum": 691.49,
+     "replacement_scale": 1.01384
+    }
+   },
+   "max_abs_deviation_from_target": 0.0,
+   "convention": "REPLACEMENT_WINS 47.7 on a .294 baseline; league target = (0.5 - 47.7/162) x team-games"
+  }
+ },
+ "gates_passed": [
+  "gate 2 persistence: r 0.3664 vs bWAR 0.1769",
+  "gate 2 forecast: r 0.2548 vs bWAR 0.1769"
+ ],
+ "gates_failed": [
+  "gate 1 team wins: r 0.8686 vs bWAR 0.8803",
+  "gate 1 zero-param MAE: 4.347 vs bWAR 3.787"
+ ],
+ "reading": {
+  "verdict": "provisional - eWAR LOSES the headline gate and WINS the persistence gate; it is not ready to replace bWAR site-wide",
+  "headline": "Gate 1 (team wins, 300 team-seasons): eWAR r 0.8686 vs bWAR 0.8803, zero-parameter MAE 4.347 vs 3.787. eWAR is a WORSE description of the wins a team actually banked.",
+  "why_that_was_expected": "Gate 1 rewards DESCRIBING the season that happened. B-Ref prices pitchers on the runs they actually allowed, which is most of what decided the games, so a runs-allowed WAR is close to mechanically fitted to team wins. FIP deliberately throws away sequencing and balls in play, so it must fit worse in-sample. Any FIP-based WAR (fWAR included) loses this test to a runs-allowed WAR. Losing it is not evidence the pitching swap is wrong; it is the price the swap is supposed to pay.",
+  "what_it_bought": "Gate 2: the FIP-priced pitching component self-correlates 0.3664 year to year against 0.1769 for the runs-allowed component (1825 pitcher-season pairs, same rows), and it predicts NEXT year's actual runs above average better than this year's actual runs above average does (0.2548 vs 0.1769). That is a 2.1x persistence gain and the entire case for a FIP basis.",
+  "the_component_that_did_not_earn_its_place": "The ATTRIBUTION arms separate the two swaps. The FIP swap costs same-season r (0.8595 vs 0.8803) and BUYS next-season signal (0.2524 vs 0.2481). The Statcast fielding swap loses BOTH: same-season 0.8777 and next-season 0.2255. That is a real finding with a mechanical cause: Statcast OAA is a RANGE metric. It carries no outfield or infield ARM value, no catcher framing or blocking, no first-base scoops, no double-play pivot. B-Ref rfield does carry those. Swapping OAA in for rfield is therefore not 'a better defensive metric for the same quantity', it is a BETTER metric for a NARROWER quantity, and the value it drops is real value. data/savant_arm.json exists but is arm STRENGTH in mph from 2020 on, not runs, so it cannot close the gap without a model that does not exist yet.",
+  "what_would_change_the_verdict": [
+   "an arm-value and catcher-framing run model, so the fielding swap covers the same quantity rfield does instead of a subset",
+   "a BLEND of OAA and rfield rather than a replacement (the two measure overlapping but not identical things; the correlation between them on full-time covered seasons is 0.63)",
+   "gate 1 re-run against team RUNS ALLOWED and RUNS SCORED separately instead of wins, which separates component accuracy from the Pythagorean noise both series inherit"
+  ],
+  "safe_to_use_today": "The pitching component. It reproduces the known bWAR/fWAR divergences by name (Aaron Nola 2018 9.69 -> 6.15, Mike Minor 2019 7.99 -> 4.68, both toward their published fWAR), it persists 2.1x better, and it forecasts next-year run prevention better than actual run prevention does. NOTHING consumes eWAR yet and nothing should until the fielding gap above is closed or the fielding swap is dropped."
+ }
+}
