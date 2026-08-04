@@ -22,6 +22,14 @@ Phase 4b: external Stuff+ can't score pre-debut pitchers; this can).
   SCORE      pitcher-season mean predicted RV, reliability-shrunk toward
              the pool mean below 300 pitches, scaled to 100 + 10z
              (higher = better stuff; z vs the qualified AAA pool).
+             The z divides by the spread of the SHRUNK pool, i.e. of the
+             same quantity that is in the numerator, so 10 points is one
+             standard deviation ON THE ANCHOR POOL, matching every other
+             100+10z metric on the platform. Until 2026-08-04 it divided
+             by the RAW pool spread and moved 7.16 points per sigma while
+             claiming 10. Served rows read a shade under 10 because they
+             go down to 50 pitches against the pool's 340 floor and are
+             correctly shrunk harder; that is reliability, not scale.
   VALIDATION data/stuff_plus_aaa_eval.json: (a) season-out pitch-level
              RV correlation; (b) the forward gate - graduates' final-AAA
              Stuff+ vs first-MLB ERA/K% (the arkmetric_forward_eval
@@ -304,11 +312,41 @@ def score(persist: bool = True) -> dict:
                                    "types": {pt: (s / c, c)
                                              for pt, (s, c) in tacc.items()}}
             if season == VALID_SEASON and len(X) >= MIN_POOL_PITCHES:
-                pool_rvs.append(rv)
+                pool_rvs.append((rv, len(X)))
     if not pool_rvs:
         raise RuntimeError("no qualified pool season cached - run --fetch first")
-    mu = float(np.mean(pool_rvs))
-    sd = float(np.std(pool_rvs)) or 1.0
+    mu = float(np.mean([rv for rv, _n in pool_rvs]))
+    # SCALE FIX 2026-08-04. The standardizer must describe the quantity that is
+    # actually in the numerator, and the numerator below is the SHRUNK deviation
+    # (mu - shrunk). This divided it by the spread of the RAW pool instead.
+    # Shrinking pulls every arm toward mu, so the shrunk spread is strictly
+    # narrower than the raw one, and dividing by the wider number under-states
+    # every z. Measured on the 638-arm anchor pool: raw sd 0.0037860, shrunk sd
+    # 0.0027124, ratio 0.7164 - so "aStuff+" was moving 7.16 points per standard
+    # deviation while the pill tooltip, the glossary and the module docstring all
+    # promised 10, and every OTHER 100+10z metric on the platform means 10. An
+    # aStuff+ of 110 was +1.396 sigma, not +1.0.
+    #
+    # Standardizing on the shrunk spread makes the anchor pool read sd exactly
+    # 10.000. The served population still reads a shade under (about 9.82)
+    # because served rows go down to 50 pitches while the pool floor is 340, and
+    # those low-n arms are correctly pulled harder toward 100. That gap is the
+    # reliability shrink the model card promises, not residual bug.
+    #
+    # The alternative - unshrink the numerator - also yields sd 10 and was
+    # REJECTED: it deletes that reliability shrink.
+    #
+    # ATOMIC with efv_statcast_overlay's frozen resid_fit_on_astuff pairs in
+    # data/aaa_physics_screen_eval.json. aStuff+ enters that overlay only as the
+    # right-hand side of a linear fit, so an affine rescale of the predictor is
+    # absorbed EXACTLY by re-parameterizing (slope' = r*slope, intercept' =
+    # intercept + 100*slope*(1 - r)); fitted values, residuals, resid_sd and the
+    # lo95 survivor verdicts are all unchanged. A refit is not merely unnecessary
+    # here, it is forbidden: tools/aaa_physics_screen_lab.py is one-shot by
+    # design. Changing this denominator WITHOUT that re-parameterization would
+    # move live eFV by up to 0.330 FV on 285 rows.
+    sd = float(np.std([(rv * n + mu * SHRINK_K) / (n + SHRINK_K)
+                       for rv, n in pool_rvs])) or 1.0
     players = {}
     lg_acc: dict[str, list] = {}     # league per-type xRV over the scored pool
     for mid, r in by_pitcher.items():
@@ -342,7 +380,8 @@ def score(persist: bool = True) -> dict:
                "model": "stuff_plus_aaa v1 (in-house LightGBM on AAA "
                         "per-pitch kinematics -> delta_run_exp)",
                "pool": f"AAA {VALID_SEASON} qualified ({len(pool_rvs)}), "
-                       f"shrink k={SHRINK_K}",
+                       f"shrink k={SHRINK_K}, z standardized on the SHRUNK "
+                       f"pool spread (10 pts = 1 sd on this pool)",
                "n_scored": len(players),
                "meta": {"by_type": ("per-pitch-type scores, same model + same "
                                     f"shrink (k={SHRINK_K} per type) on the "

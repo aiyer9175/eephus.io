@@ -64,8 +64,8 @@
    "n_reps_effective": 2000,
    "verdict": "PASS",
    "resid_fit_on_astuff": {
-    "intercept": 82.009237,
-    "slope": 0.059033
+    "intercept": 83.683226,
+    "slope": 0.042293
    },
    "resid_sd": 2.427761,
    "feat_mean": 87.806045,
@@ -81,8 +81,8 @@
    "n_reps_effective": 2000,
    "verdict": "FAIL",
    "resid_fit_on_astuff": {
-    "intercept": 4.114301,
-    "slope": 0.030688
+    "intercept": 4.984516,
+    "slope": 0.021986
    },
    "resid_sd": 2.847363,
    "feat_mean": 7.127708,
@@ -98,8 +98,8 @@
    "n_reps_effective": 2000,
    "verdict": "PASS",
    "resid_fit_on_astuff": {
-    "intercept": 1373.561934,
-    "slope": 8.341022
+    "intercept": 1610.086931,
+    "slope": 5.975772
    },
    "resid_sd": 152.466194,
    "feat_mean": 2192.61461,
@@ -115,8 +115,8 @@
    "n_reps_effective": 2000,
    "verdict": "FAIL",
    "resid_fit_on_astuff": {
-    "intercept": 6.161917,
-    "slope": 0.028859
+    "intercept": 6.980267,
+    "slope": 0.020676
    },
    "resid_sd": 2.59897,
    "feat_mean": 8.995718,
@@ -132,8 +132,8 @@
    "n_reps_effective": 2000,
    "verdict": "FAIL",
    "resid_fit_on_astuff": {
-    "intercept": 5.757126,
-    "slope": 0.005419
+    "intercept": 5.910792,
+    "slope": 0.003882
    },
    "resid_sd": 0.370483,
    "feat_mean": 6.28927,
@@ -149,8 +149,8 @@
    "n_reps_effective": 2000,
    "verdict": "FAIL",
    "resid_fit_on_astuff": {
-    "intercept": 6.67654,
-    "slope": -0.009012
+    "intercept": 6.420988,
+    "slope": -0.006456
    },
    "resid_sd": 0.442889,
    "feat_mean": 5.791562,
@@ -166,8 +166,8 @@
    "n_reps_effective": 2000,
    "verdict": "FAIL",
    "resid_fit_on_astuff": {
-    "intercept": 48.83752,
-    "slope": -0.105747
+    "intercept": 45.83887,
+    "slope": -0.07576
    },
    "resid_sd": 11.524684,
    "feat_mean": 38.453652,
@@ -183,8 +183,8 @@
    "n_reps_effective": 2000,
    "verdict": "FAIL",
    "resid_fit_on_astuff": {
-    "intercept": 3.656015,
-    "slope": -0.018335
+    "intercept": 3.136092,
+    "slope": -0.013136
    },
    "resid_sd": 0.299242,
    "feat_mean": 1.855554,
@@ -200,8 +200,8 @@
    "n_reps_effective": 2000,
    "verdict": "FAIL",
    "resid_fit_on_astuff": {
-    "intercept": -1.341737,
-    "slope": 0.05994
+    "intercept": 0.357972,
+    "slope": 0.042943
    },
    "resid_sd": 2.047399,
    "feat_mean": 4.544081,
@@ -217,8 +217,8 @@
    "n_reps_effective": 2000,
    "verdict": "FAIL",
    "resid_fit_on_astuff": {
-    "intercept": -0.869467,
-    "slope": 0.011976
+    "intercept": -0.529866,
+    "slope": 0.00858
    },
    "resid_sd": 2.767423,
    "feat_mean": 0.306549,
@@ -234,8 +234,8 @@
    "n_reps_effective": 2000,
    "verdict": "PASS",
    "resid_fit_on_astuff": {
-    "intercept": -8.39087,
-    "slope": 0.018699
+    "intercept": -7.860626,
+    "slope": 0.013397
    },
    "resid_sd": 0.557132,
    "feat_mean": -6.554716,
@@ -251,8 +251,8 @@
    "n_reps_effective": 2000,
    "verdict": "FAIL",
    "resid_fit_on_astuff": {
-    "intercept": -0.79178,
-    "slope": 0.008236
+    "intercept": -0.558233,
+    "slope": 0.005901
    },
    "resid_sd": 0.328559,
    "feat_mean": 0.016944,
@@ -267,8 +267,8 @@
    "lo95": 0.0289,
    "hi95": 0.2297,
    "resid_fit_on_astuff": {
-    "intercept": 82.009237,
-    "slope": 0.059033
+    "intercept": 83.683226,
+    "slope": 0.042293
    },
    "resid_sd": 2.427761,
    "feat_mean": 87.806045,
@@ -281,8 +281,8 @@
    "lo95": 0.048,
    "hi95": 0.2504,
    "resid_fit_on_astuff": {
-    "intercept": 1373.561934,
-    "slope": 8.341022
+    "intercept": 1610.086931,
+    "slope": 5.975772
    },
    "resid_sd": 152.466194,
    "feat_mean": 2192.61461,
@@ -295,8 +295,8 @@
    "lo95": 0.0272,
    "hi95": 0.2212,
    "resid_fit_on_astuff": {
-    "intercept": -8.39087,
-    "slope": 0.018699
+    "intercept": -7.860626,
+    "slope": 0.013397
    },
    "resid_sd": 0.557132,
    "feat_mean": -6.554716,

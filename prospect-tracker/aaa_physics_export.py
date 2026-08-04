@@ -193,10 +193,16 @@ def _score_astuff():
             rv_by[(mid, season)] = (rv, len(X),
                                     {pt: (s / c, c) for pt, (s, c) in tacc.items()})
             if season == spa.VALID_SEASON and len(X) >= spa.MIN_POOL_PITCHES:
-                pool_rvs.append(rv)
-    mu = float(np.mean(pool_rvs))
-    sd = float(np.std(pool_rvs)) or 1.0
+                pool_rvs.append((rv, len(X)))
+    mu = float(np.mean([rv for rv, _n in pool_rvs]))
     k = spa.SHRINK_K
+    # SCALE FIX 2026-08-04, mirroring stuff_plus_aaa.score() exactly (read the
+    # long note there). Standardize on the spread of the SHRUNK pool, which is
+    # the quantity the numerator below actually carries. The raw spread is wider,
+    # so this used to move 7.16 points per sigma while advertising 10.
+    sd_unshrunk = float(np.std([rv for rv, _n in pool_rvs])) or 1.0
+    sd = float(np.std([(rv * n + mu * k) / (n + k)
+                       for rv, n in pool_rvs])) or 1.0
     out = {}
     for (mid, season), (rv, n, tmap) in rv_by.items():
         shrunk = (rv * n + mu * k) / (n + k)
@@ -206,7 +212,7 @@ def _score_astuff():
             shrunk_t = (rv_t * n_t + mu * k) / (n_t + k)
             by_type[pt] = 100 + 10 * (mu - shrunk_t) / sd
         out[(mid, season)] = (pooled, by_type)
-    return out, mu, sd, len(pool_rvs)
+    return out, mu, sd, len(pool_rvs), sd_unshrunk
 
 
 def run(persist: bool = True) -> dict:
@@ -220,7 +226,7 @@ def run(persist: bool = True) -> dict:
                 blocks.setdefault(mid, {})[season] = b
 
     # pass 2: per-season aStuff+ (pooled + per-type) from the shipped model
-    astuff, mu, sd, pool_n = _score_astuff()
+    astuff, mu, sd, pool_n, sd_unshrunk = _score_astuff()
     for mid, seasons in blocks.items():
         for season, b in seasons.items():
             got = astuff.get((mid, season))
@@ -312,8 +318,19 @@ def run(persist: bool = True) -> dict:
             "astuff_scale": {
                 "convention": "stuff_plus_aaa score(): 100+10z vs qualified "
                               "AAA 2025 pool, shrink k=300 (pooled and "
-                              "per-type), shipped model bundle",
-                "pool_mu_rv": round(mu, 6), "pool_sd_rv": round(sd, 6),
+                              "per-type), shipped model bundle. The z divides "
+                              "by the SHRUNK pool spread (the quantity in the "
+                              "numerator), so 10 points is 1 sd on the anchor "
+                              "pool. Before 2026-08-04 it divided by the raw "
+                              "spread and moved 7.16 points per sigma.",
+                # 9dp, not 6: the RATIO of these two is what re-parameterizes
+                # the frozen resid_fit_on_astuff pairs in
+                # data/aaa_physics_screen_eval.json, and at 6dp the ratio is
+                # only recoverable to about 4 decimals, so the re-parameterization
+                # could not be audited from the artifact alone.
+                "pool_mu_rv": round(mu, 9), "pool_sd_rv": round(sd, 9),
+                "pool_sd_rv_unshrunk": round(sd_unshrunk, 9),
+                "pool_sd_shrink_ratio": round(sd / sd_unshrunk, 12),
                 "pool_n": pool_n},
             "served_json_agreement": {
                 "checked": agree_n, "max_abs_diff": round(max_diff, 2),
