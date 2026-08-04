@@ -172,5 +172,153 @@ rather than silent) is the part still worth doing.
 
 ---
 
-*(Lane results for the trade machine, homepage, mlbstats, pages, prospx consistency, eWAR,
-the eFV gates and the FA/projection gates are appended below as they land.)*
+## Wave 1: one eFV basis across the site (commit adc7a8d)
+
+**/projections/ was serving the RETIRED quantile as its eFV grade.** The board flipped to
+`xfv_grade` on 2026-07-25 and `build_site` got the matching repair the same day, but
+`proj_export` kept a private copy of the precedence and was never repointed, so the module a
+reader would most naturally compare against the board disagreed with it. It now calls
+`efv_board_scale.board_value`. Pricing stays on the quantile deliberately, because the value
+curves were fitted on the consensus 20-80 scale, which is why the 07-30 refit moved zero
+dollars; that split is now stated rather than implied.
+
+Measured so the box regen is not a surprise: of the 201 active rows clearing the price gate
+(the real /projections/ population) **196 display grades move, median +1.4 FV, range -3.8 to
++3.4**. The row SET does not change, because the gate still reads the quantile.
+
+**/fantasy/ showed two different numbers under one name**: dynasty served the quantile, call-up
+served the raw grade, both labelled "eFV". Display is unified on the board grade; the quantile
+stays as the dynasty blend's score driver, which is a registered model input.
+
+**Trade Machine: three served rows are not players.** `kelvin_herrera` is a live DSL arm born
+2007 bolted to a 2011 debut and a career-WAR map ending 2020. The inactive rule could not see
+them because it keys on `roster_status.mlb_seasons`, empty on 782 of 2,681 debuts rows.
+`identity_collisions.json` does not know them either: it counts humans per slug in the CURRENT
+roster feed, and the retired half of each pair is not in it, so each slug looks singular. The
+guard reads the record's own internal contradiction instead (age under 17 at last MLB season).
+Fires at 12.6 and 9.1; does NOT fire at 29.7 for a genuinely retired reliever.
+
+**GRPO no longer shifts the prior**, so the tooltip promising it "does not change the surplus"
+is true in every artifact state. The alternative (assert every row is repointed) was
+implemented FIRST and then measured: 4,512 of 4,549 prospects carry a non-zero adjustment, so a
+stale `xfv.json` would have deleted the prospect board instead of falling back to it.
+
+**MLB Stats**: provisional-row opacity was ghosting the frozen first column; PAL was freezing a
+rank digit while the name scrolled away; and a table-wide expanded panel (`colspan`) was being
+pinned as an identity column, so it slid out from under its own row. Frozen-vintage dates that
+the exporters have been passing for the frontend to disclose, and which nothing ever rendered,
+are now shown.
+
+**Homepage**: the scatter teaser was 16 random dots and is now 16 real players; the lead story
+had been the same June 5 article for two months and now falls back to live wire data past 21
+days; a new eFV distribution module deliberately EXCLUDES the 20-floor spike (3,257 of 4,549
+rows) with the count stated, because plotting it drowns every real bar.
+
+## The aStuff+ scale was lying (commit 28a4cdb)
+
+Every 100+10z metric on the platform means "10 points is one standard deviation". aStuff+
+divided the SHRUNK deviation by the RAW pool spread. Shrinking pulls every arm toward the mean,
+so the denominator was strictly too wide and every z came out understated. Anchor pool: raw sd
+0.003785971, shrunk sd 0.002712389, **ratio 0.716432, so the index moved 7.16 points per sigma
+and an aStuff+ of 110 was plus 1.40 sigma, not plus 1.0**, while the pill tooltip, the glossary
+and the docstring all promised otherwise.
+
+The fix is genuinely ATOMIC. aStuff+ is the right-hand side of `efv_statcast_overlay`'s frozen
+linear fits, so changing the denominator alone would have silently re-weighted a LIVE overlay
+by up to 0.330 FV on 285 rows. But it needs no refit, and a refit is not permitted:
+`tools/aaa_physics_screen_lab.py` is one-shot by design. An affine rescale of the predictor is
+absorbed EXACTLY by re-parameterizing (slope' = r*slope, intercept' = intercept +
+100*slope*(1-r)), leaving fitted values, residuals, `resid_sd` and every lo95 survivor verdict
+untouched. Asserted to 1e-9 at three points on each of 15 fits.
+
+Measured, both producers agreeing at `max_abs_diff 0.0` after regen:
+
+| | before | after |
+|---|---|---|
+| anchor-pool sd | 7.16 | 10.000 |
+| served sd | 7.034 | 9.816 |
+| rows moved | - | 1,353 of 1,379 (mean abs 2.21, max 13.9) |
+| strict order flips | - | **0**, checked over all 950,131 pairs |
+| display bands crossed | - | 190 (green pills 72 to 150) |
+
+The band movement is CORRECT: those bands were written to mean plus or minus one sigma and had
+been firing at 1.40 sigma. Found by an independent recomputation that reproduced the served
+file byte-identically (1,379 of 1,379) BEFORE touching anything.
+
+## Lane E: three registered gates run, all no-ships (a744797); incumbents re-measured (c4dd62d)
+
+**Read the eval regen carefully.** Old vs new is NOT like-for-like: the 07-24 matrix is
+gitignored and overwritten, so labels and the consensus anchor both moved. The clean control is
+the hitter side, whose feature list is byte-identical to 07-24: its consensus BASELINE moved
++0.0201, itself above the 0.017 hitter MDE95. So any old-vs-new movement smaller than that is
+data vintage. On that reading the -0.0110 hitter edge shrink and the +0.0119 pitcher edge gain
+are BOTH drift and neither is a claim.
+
+The one same-rows test that IS a claim: re-gating `seasons_at_level` on today's pitcher matrix,
+same 438 rows, lambda fixed, reproduces the 07-30 ship evidence almost to the digit (rho
++0.0143, both AUCs up, 0 of 30 permutation draws beat it, p=0.032, 3.6 sd out).
+
+- **PACE_FROM_ENTRY: NO-SHIP.** The pre-registered kill criterion FIRED and was not relaxed:
+  the hitter arm fits a NEGATIVE weight on pace (-0.0419, negative in 3 of 4 folds), named in
+  advance as the survivorship-censoring artifact. Permutation p=0.71 hit / 0.94 pit. The
+  "fuller" triple variant is a RESOLVED HARM, not a null (CI95 excludes zero), so it must not
+  return as the richer spec. Coverage was NOT the limiter (80 percent of eval rows are
+  non-censored). The second arm's stated premise does not reproduce at all.
+- **B3 LEVEL BLEND: NO-SHIP, all three arms.** 17 of 18 cells negative; the anchor arm is the
+  worst and on pitchers exceeds MDE95 on all three cuts, a measured LOSS. Harness trustworthy:
+  the flags-off rebuild is byte-identical to the shipped matrices. **The underlying defect stays
+  open**: 22 percent of multi-level hitter rows and 19 percent of pitcher rows are scored on a
+  level that is not their most-exposed one. Blending as specified is not the repair.
+- **C3-ETA: NO-SHIP.** Loses BOTH legs of the criterion the incumbent shipped on, same 3,450
+  rows: MAE 1.441 to 1.488, within-1y 0.579 to 0.562. Closes a gate owed since 07-30.
+
+**The pitcher lambda discrepancy is closed, and the answer is that the number is noise.** The
+served value is 0.57; the 0.59 and 0.54 were each true at their own matrix vintage. Pooled rho
+across the entire selection band spans 0.16x the pitcher MDE and 0.21x the hitter MDE, and all
+the movement the selector argmaxes over lives in a Spearman on 60 rows. Recorded so it stops
+being re-derived and re-quoted.
+
+## Lane F: the team-wins guard is close to green for the wrong reason (a60678e)
+
+- **Cohort intercepts lose a third consecutive time** (7.27 vs 7.21). F-DEF did not
+  rehabilitate the refit.
+- **The 3.02 remainder decomposes exactly, and 77 percent of it is a stale constant.** Dropping
+  the served 06-12 intercept vector takes it to 0.70, which is the genuine roster and depth gap.
+  That vector is MAE-NEUTRAL today (7.18 vs 7.21), so removing it trades a level convention
+  against nothing measured. **OWNER CALL, not a gate outcome.**
+- **Shape improved while LEVEL got worse, on identical rows.** Player MAE 0.593 to 0.541, better
+  in 8 of 8 cohorts. But the engine under-projects real 2025 rosters by **88.1 WAR** where the
+  06-12 engine was within 8.3. Recentering forces 2,430, so no recentered MAE can see it; raw
+  holdout MAE moved 7.73 to 8.31. Attribution: against the 07-31 post-E3 figure of 8.56, F-DEF
+  IMPROVED the un-recentered level, and the bulk of the drop is E3.
+- **`roster_war_sum` crossing 900 is NOT evidence the per-player regression was repaired.** The
+  served roll-up is propped by body count (1,324 vet slots plus 311 depth) while the per-player
+  deficit widened.
+- **The harness's pooled bias understates by 1.75x**: 4,019 of 8,866 scored rows are players
+  with no roster spot whose actual WAR is 0 by construction. Assigned-only bias is +0.086.
+- **Gate 1 regen reproduces commit 4853e68's message to 5 decimals**, so the commit was telling
+  the truth and only the file was stale. F-DEF recovered +186.5 WAR of level, all hitter-side.
+  Note `fa_market` reads this artifact at SERVE time for bands, so the served bands move.
+- **Market challenger NO-SHIP**: loses all three criteria, and under-prices the top of the
+  market by an additional 805M dollars across 50 megadeals.
+- **My Gate 3 premise was REFUTED.** I asserted the artifact predated the shipped weights; it did
+  not, and the accuracy half comes back byte-identical. Concentration moved from the DATA regen
+  (0.5219 to 0.5833), and the old Giants-tops-pitchers pattern was a roster-vintage artifact
+  that today's regen erased, replacing it with more Dodgers. No need and behaviour split tested
+  passes.
+
+## Wave 2: prospx (commit 0188c82)
+
+`_gradePrimary()` returned "xfv" for every `state.sort` value that was not literally "fv", but
+that field carries about 25 ordering choices, so switching to Consensus and then sorting by age,
+or opening a shared `sort=eta` link, silently flipped every grade, rank, surplus and GFX badge
+back to eFV. `state.gradePrimary` now holds the choice, shaped like the existing
+`state.debutGrade` precedent; legacy `#sort=fv` links still land on the consensus lead. All 13
+consumers were re-checked individually.
+
+Overview went from fifteen stacked sections to nine anchored ones with a jump strip, nothing
+deleted. The jump chips call `preventDefault`, which matters: a bare `href="#ov-x"` rewrites
+`location.hash`, and the global `hashchange` listener re-runs `syncFromURL()` plus `render()`,
+ejecting the reader mid-scroll. The detail sidebar was `display:none` below 1300px, so its Key
+Signals card was unreachable on every tablet and phone; it now stacks under the tab content
+reusing the SAME DOM node, so double-rendering is structurally impossible.
