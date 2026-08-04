@@ -1,362 +1,43 @@
 {
- "generated_at": "2026-08-03T22:20:50Z",
+ "generated_at": "2026-08-04T20:24:25Z",
  "summary": {
-  "board_rows": 9644,
-  "active_board_rows": 4550,
+  "board_rows": 9647,
+  "active_board_rows": 4581,
   "roster_rows": 10679,
   "colliding_slugs": 197,
-  "critical_player_keys": 16,
-  "critical_active_player_keys": 0,
+  "critical_player_keys": 11,
+  "critical_active_player_keys": 1,
   "c1_shared_key": 0,
-  "c1_unattributed": 9,
-  "c1_shadowed": 144,
-  "c1_split": 6,
+  "c1_unattributed": 0,
+  "c1_shadowed": 152,
+  "c1_split": 7,
   "c1_untracked": 38,
   "c2_double_bound": 0,
-  "c3_unresolved_active": 0,
-  "c4_side_conflicts": 11,
+  "c3_unresolved_active": 1,
+  "c4_side_conflicts": 10,
   "c5_birthdate_conflicts": 0,
   "c6_org_splits": 0,
   "frankenstein_records": 0,
-  "unassigned_null_id_rows": 255
+  "unassigned_null_id_rows": 25
  },
  "critical_player_keys": [
   "aaron_brown",
   "adrian_hernandez",
   "alexander_campos",
-  "anderson_franco",
   "david_rodriguez",
-  "drew_smith",
   "enmanuel_rodriguez",
-  "jesus_lopez",
-  "jorge_rodriguez",
-  "jose_martinez",
+  "jack_natili",
+  "jose_gomez",
   "jose_rondon",
   "junior_garcia",
-  "luis_valdez",
-  "manuel_rodriguez",
   "michael_perez",
   "miguel_gomez"
  ],
- "critical_active_player_keys": [],
- "frankenstein_records": [],
- "unsplit_collisions": [
-  {
-   "check": "C1",
-   "slug": "david_rodriguez",
-   "status": "unattributed",
-   "n_humans": 2,
-   "board_key": "david_rodriguez",
-   "board_scope": "inactive",
-   "board_mlbam_id": null,
-   "board_position": "C",
-   "board_level": "A+",
-   "board_rank": null,
-   "members": [
-    {
-     "mlbam_id": 703330,
-     "name": "David Rodriguez",
-     "player_key": null,
-     "position": "P",
-     "org": "KCR",
-     "level": "CPX",
-     "age": 22.9
-    },
-    {
-     "mlbam_id": 815095,
-     "name": "David Rodriguez",
-     "player_key": "david_rodriguez",
-     "position": "P",
-     "org": "ATL",
-     "level": "A+",
-     "age": 24.6
-    }
-   ]
-  },
-  {
-   "check": "C1",
-   "slug": "drew_smith",
-   "status": "unattributed",
-   "n_humans": 2,
-   "board_key": "drew_smith",
-   "board_scope": "inactive",
-   "board_mlbam_id": null,
-   "board_position": "RHP",
-   "board_level": null,
-   "board_rank": null,
-   "members": [
-    {
-     "mlbam_id": 622098,
-     "name": "Drew Smith",
-     "player_key": null,
-     "position": "P",
-     "org": "MIN",
-     "level": "AAA",
-     "age": 32.9
-    },
-    {
-     "mlbam_id": 805021,
-     "name": "Drew Smith",
-     "player_key": null,
-     "position": "3B",
-     "org": "SFG",
-     "level": "CPX",
-     "age": 23.1
-    }
-   ]
-  },
-  {
-   "check": "C1",
-   "slug": "enmanuel_rodriguez",
-   "status": "unattributed",
-   "n_humans": 2,
-   "board_key": "enmanuel_rodriguez",
-   "board_scope": "inactive",
-   "board_mlbam_id": null,
-   "board_position": "CF",
-   "board_level": "DSL",
-   "board_rank": null,
-   "members": [
-    {
-     "mlbam_id": 838010,
-     "name": "Enmanuel Rodriguez",
-     "player_key": null,
-     "position": "P",
-     "org": "CHW",
-     "level": "DSL",
-     "age": 17.0
-    },
-    {
-     "mlbam_id": 840917,
-     "name": "Enmanuel Rodriguez",
-     "player_key": "enmanuel_rodriguez",
-     "position": "P",
-     "org": "BAL",
-     "level": "DSL",
-     "age": 19.6
-    }
-   ]
-  },
-  {
-   "check": "C1",
-   "slug": "jesus_lopez",
-   "status": "unattributed",
-   "n_humans": 5,
-   "board_key": "jesus_lopez",
-   "board_scope": "inactive",
-   "board_mlbam_id": null,
-   "board_position": "C",
-   "board_level": "DSL",
-   "board_rank": null,
-   "members": [
-    {
-     "mlbam_id": 805052,
-     "name": "Jesus Lopez",
-     "player_key": null,
-     "position": "C",
-     "org": "TEX",
-     "level": "A",
-     "age": 21.2
-    },
-    {
-     "mlbam_id": 806882,
-     "name": "Jesus Lopez",
-     "player_key": null,
-     "position": "P",
-     "org": "SDP",
-     "level": "A",
-     "age": 20.4
-    },
-    {
-     "mlbam_id": 808362,
-     "name": "Jesus Lopez",
-     "player_key": null,
-     "position": "P",
-     "org": "SFG",
-     "level": "DSL",
-     "age": 21.4
-    },
-    {
-     "mlbam_id": 821805,
-     "name": "Jesus Lopez",
-     "player_key": null,
-     "position": "P",
-     "org": "TEX",
-     "level": "DSL",
-     "age": 19.1
-    },
-    {
-     "mlbam_id": 838819,
-     "name": "Jesus Lopez",
-     "player_key": "jesus_lopez",
-     "position": "P",
-     "org": "BOS",
-     "level": "DSL",
-     "age": 18.1
-    }
-   ]
-  },
-  {
-   "check": "C1",
-   "slug": "jorge_rodriguez",
-   "status": "unattributed",
-   "n_humans": 2,
-   "board_key": "jorge_rodriguez",
-   "board_scope": "inactive",
-   "board_mlbam_id": null,
-   "board_position": "SP",
-   "board_level": "CPX",
-   "board_rank": null,
-   "members": [
-    {
-     "mlbam_id": 691715,
-     "name": "Jorge Rodriguez",
-     "player_key": null,
-     "position": "P",
-     "org": "NYM",
-     "level": "CPX",
-     "age": 24.6
-    },
-    {
-     "mlbam_id": 821772,
-     "name": "Jorge Rodriguez",
-     "player_key": "jorge_rodriguez",
-     "position": "C",
-     "org": "BOS",
-     "level": "CPX",
-     "age": 20.4
-    }
-   ]
-  },
-  {
-   "check": "C1",
-   "slug": "jose_martinez",
-   "status": "unattributed",
-   "n_humans": 2,
-   "board_key": "jose_martinez",
-   "board_scope": "inactive",
-   "board_mlbam_id": null,
-   "board_position": "SIRP",
-   "board_level": "DSL",
-   "board_rank": null,
-   "members": [
-    {
-     "mlbam_id": 814715,
-     "name": "Jose Martinez",
-     "player_key": null,
-     "position": "P",
-     "org": "NYY",
-     "level": "A",
-     "age": 21.6
-    },
-    {
-     "mlbam_id": 829897,
-     "name": "Jose Martinez",
-     "player_key": null,
-     "position": "OF",
-     "org": "CIN",
-     "level": "DSL",
-     "age": 18.8
-    }
-   ]
-  },
-  {
-   "check": "C1",
-   "slug": "luis_valdez",
-   "status": "unattributed",
-   "n_humans": 2,
-   "board_key": "luis_valdez",
-   "board_scope": "inactive",
-   "board_mlbam_id": null,
-   "board_position": "SP",
-   "board_level": "AA",
-   "board_rank": null,
-   "members": [
-    {
-     "mlbam_id": 687667,
-     "name": "Luis Valdez",
-     "player_key": "luis_valdez",
-     "position": "SS",
-     "org": "BAL",
-     "level": "AA",
-     "age": 26.5
-    },
-    {
-     "mlbam_id": 802099,
-     "name": "Luis Valdez",
-     "player_key": null,
-     "position": "P",
-     "org": "KCR",
-     "level": "A",
-     "age": 21.8
-    }
-   ]
-  },
-  {
-   "check": "C1",
-   "slug": "manuel_rodriguez",
-   "status": "unattributed",
-   "n_humans": 2,
-   "board_key": "manuel_rodriguez",
-   "board_scope": "inactive",
-   "board_mlbam_id": null,
-   "board_position": "SIRP",
-   "board_level": null,
-   "board_rank": null,
-   "members": [
-    {
-     "mlbam_id": 655889,
-     "name": "Manuel Rodríguez",
-     "player_key": null,
-     "position": "P",
-     "org": "TBR",
-     "level": "AAA",
-     "age": 30.0
-    },
-    {
-     "mlbam_id": 804973,
-     "name": "Manuel Rodriguez",
-     "player_key": null,
-     "position": "P",
-     "org": "MIL",
-     "level": "AA",
-     "age": 21.0
-    }
-   ]
-  },
-  {
-   "check": "C1",
-   "slug": "michael_perez",
-   "status": "unattributed",
-   "n_humans": 2,
-   "board_key": "michael_perez",
-   "board_scope": "inactive",
-   "board_mlbam_id": null,
-   "board_position": "C",
-   "board_level": "AA",
-   "board_rank": null,
-   "members": [
-    {
-     "mlbam_id": 605421,
-     "name": "Michael Pérez",
-     "player_key": null,
-     "position": "C",
-     "org": "ARI",
-     "level": "AAA",
-     "age": 34.0
-    },
-    {
-     "mlbam_id": 805872,
-     "name": "Michael Perez",
-     "player_key": "michael_perez",
-     "position": "P",
-     "org": "MIA",
-     "level": "AA",
-     "age": 23.9
-    }
-   ]
-  }
+ "critical_active_player_keys": [
+  "jack_natili"
  ],
+ "frankenstein_records": [],
+ "unsplit_collisions": [],
  "shadowed_slugs": [
   {
    "slug": "adrian_bello",
@@ -561,15 +242,6 @@
    ]
   },
   {
-   "slug": "carlos_hernandez",
-   "board_key": "carlos_hernandez",
-   "n_humans": 2,
-   "mlbam_ids": [
-    672578,
-    837645
-   ]
-  },
-  {
    "slug": "carlos_jimenez",
    "board_key": "carlos_jimenez",
    "n_humans": 2,
@@ -667,6 +339,15 @@
    ]
   },
   {
+   "slug": "david_rodriguez",
+   "board_key": "david_rodriguez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    703330,
+    815095
+   ]
+  },
+  {
    "slug": "deivi_garcia",
    "board_key": "deivi_garcia",
    "n_humans": 2,
@@ -691,6 +372,15 @@
    "mlbam_ids": [
     678746,
     837871
+   ]
+  },
+  {
+   "slug": "drew_smith",
+   "board_key": "drew_smith",
+   "n_humans": 2,
+   "mlbam_ids": [
+    622098,
+    805021
    ]
   },
   {
@@ -727,6 +417,15 @@
    "mlbam_ids": [
     825639,
     830026
+   ]
+  },
+  {
+   "slug": "enmanuel_rodriguez",
+   "board_key": "enmanuel_rodriguez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    838010,
+    840917
    ]
   },
   {
@@ -896,6 +595,18 @@
    ]
   },
   {
+   "slug": "jesus_lopez",
+   "board_key": "jesus_lopez",
+   "n_humans": 5,
+   "mlbam_ids": [
+    805052,
+    806882,
+    808362,
+    821805,
+    838819
+   ]
+  },
+  {
    "slug": "jesus_perez",
    "board_key": "jesus_perez",
    "n_humans": 2,
@@ -921,6 +632,15 @@
    "mlbam_ids": [
     684083,
     831106
+   ]
+  },
+  {
+   "slug": "jorge_rodriguez",
+   "board_key": "jorge_rodriguez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    691715,
+    821772
    ]
   },
   {
@@ -1005,6 +725,15 @@
    "mlbam_ids": [
     821653,
     828372
+   ]
+  },
+  {
+   "slug": "jose_martinez",
+   "board_key": "jose_martinez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    814715,
+    829897
    ]
   },
   {
@@ -1409,6 +1138,15 @@
    ]
   },
   {
+   "slug": "luis_valdez",
+   "board_key": "luis_valdez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    687667,
+    802099
+   ]
+  },
+  {
    "slug": "luis_vasquez",
    "board_key": "luis_vasquez",
    "n_humans": 2,
@@ -1445,6 +1183,15 @@
    ]
   },
   {
+   "slug": "manuel_rodriguez",
+   "board_key": "manuel_rodriguez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    655889,
+    804973
+   ]
+  },
+  {
    "slug": "mason_miller",
    "board_key": "mason_miller",
    "n_humans": 2,
@@ -1469,6 +1216,15 @@
    "mlbam_ids": [
     681597,
     824765
+   ]
+  },
+  {
+   "slug": "michael_perez",
+   "board_key": "michael_perez",
+   "n_humans": 2,
+   "mlbam_ids": [
+    605421,
+    805872
    ]
   },
   {
@@ -1700,7 +1456,17 @@
   }
  ],
  "double_bound_keys": [],
- "unresolved_active": [],
+ "unresolved_active": [
+  {
+   "check": "C3",
+   "player_key": "jack_natili",
+   "position": "C",
+   "org": "COL",
+   "current_level": "CPX",
+   "overall_rank": 320,
+   "birth_date": "2005-03-10"
+  }
+ ],
  "side_conflicts": [
   {
    "check": "C4",
@@ -1708,8 +1474,8 @@
    "board_position": "RF",
    "claimed_side": "H",
    "fielded_side": "P",
-   "fielded_games": 390,
-   "mlbam_id": null,
+   "fielded_games": 195,
+   "mlbam_id": 642371,
    "scope": "inactive",
    "overall_rank": null
   },
@@ -1719,8 +1485,8 @@
    "board_position": "CF",
    "claimed_side": "H",
    "fielded_side": "P",
-   "fielded_games": 346,
-   "mlbam_id": null,
+   "fielded_games": 173,
+   "mlbam_id": 681753,
    "scope": "inactive",
    "overall_rank": null
   },
@@ -1730,8 +1496,8 @@
    "board_position": "3B",
    "claimed_side": "H",
    "fielded_side": "P",
-   "fielded_games": 262,
-   "mlbam_id": null,
+   "fielded_games": 131,
+   "mlbam_id": 685777,
    "scope": "inactive",
    "overall_rank": null
   },
@@ -1741,8 +1507,8 @@
    "board_position": "OF",
    "claimed_side": "H",
    "fielded_side": "P",
-   "fielded_games": 208,
-   "mlbam_id": null,
+   "fielded_games": 104,
+   "mlbam_id": 676345,
    "scope": "inactive",
    "overall_rank": null
   },
@@ -1752,19 +1518,8 @@
    "board_position": "C",
    "claimed_side": "H",
    "fielded_side": "P",
-   "fielded_games": 156,
-   "mlbam_id": null,
-   "scope": "inactive",
-   "overall_rank": null
-  },
-  {
-   "check": "C4",
-   "player_key": "alexander_campos",
-   "board_position": "2B",
-   "claimed_side": "H",
-   "fielded_side": "P",
-   "fielded_games": 124,
-   "mlbam_id": null,
+   "fielded_games": 80,
+   "mlbam_id": 805872,
    "scope": "inactive",
    "overall_rank": null
   },
@@ -1774,19 +1529,19 @@
    "board_position": "C",
    "claimed_side": "H",
    "fielded_side": "P",
-   "fielded_games": 124,
-   "mlbam_id": null,
+   "fielded_games": 63,
+   "mlbam_id": 815095,
    "scope": "inactive",
    "overall_rank": null
   },
   {
    "check": "C4",
-   "player_key": "jose_rondon",
-   "board_position": "SS",
+   "player_key": "alexander_campos",
+   "board_position": "2B",
    "claimed_side": "H",
    "fielded_side": "P",
-   "fielded_games": 22,
-   "mlbam_id": null,
+   "fielded_games": 62,
+   "mlbam_id": 814226,
    "scope": "inactive",
    "overall_rank": null
   },
@@ -1796,30 +1551,30 @@
    "board_position": "CF",
    "claimed_side": "H",
    "fielded_side": "P",
-   "fielded_games": 20,
-   "mlbam_id": null,
-   "scope": "inactive",
-   "overall_rank": null
-  },
-  {
-   "check": "C4",
-   "player_key": "jesus_lopez",
-   "board_position": "C",
-   "claimed_side": "H",
-   "fielded_side": "P",
-   "fielded_games": 16,
-   "mlbam_id": null,
-   "scope": "inactive",
-   "overall_rank": null
-  },
-  {
-   "check": "C4",
-   "player_key": "anderson_franco",
-   "board_position": "3B",
-   "claimed_side": "H",
-   "fielded_side": "P",
    "fielded_games": 12,
-   "mlbam_id": null,
+   "mlbam_id": 840917,
+   "scope": "inactive",
+   "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "jose_gomez",
+   "board_position": "UTIL",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 11,
+   "mlbam_id": 823845,
+   "scope": "inactive",
+   "overall_rank": null
+  },
+  {
+   "check": "C4",
+   "player_key": "jose_rondon",
+   "board_position": "SS",
+   "claimed_side": "H",
+   "fielded_side": "P",
+   "fielded_games": 11,
+   "mlbam_id": 831791,
    "scope": "inactive",
    "overall_rank": null
   }

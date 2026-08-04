@@ -1,49 +1,49 @@
 {
- "generated_at": "2026-08-03",
+ "generated_at": "2026-08-04",
  "scope": "PITCHERS; debut 2011-2024 + never-MLB bust pool",
  "target": "first-6-season summed bWAR; resolved<= 2025",
  "no_model": true,
  "accounting": {
-  "debuted_seen": 2681,
-  "debuted_hitter": 1160,
+  "debuted_seen": 2682,
+  "debuted_hitter": 1161,
   "debuted_no_pre_fv": 130,
-  "debuted_no_war": 34,
+  "debuted_no_war": 35,
   "debuted_kept": 981,
-  "bust_seen": 2413,
-  "bust_hitter": 1160,
+  "bust_seen": 2384,
+  "bust_hitter": 1142,
   "bust_no_fv": 47,
-  "bust_kept": 1082,
-  "bust_recent_flagged": 76,
+  "bust_kept": 1063,
+  "bust_recent_flagged": 62,
   "bust_mlb_exposure_rerouted": 0,
-  "bust_mlb_exposure_dropped": 31,
+  "bust_mlb_exposure_dropped": 32,
   "debuted_veteran_dropped": 14,
   "debuted_war_gap_dropped": 1,
   "debuted_terminal_resolved": 2,
   "bust_terminal_resolved": 1
  },
  "counts": {
-  "rows_total": 2063,
+  "rows_total": 2044,
   "debuted": 981,
-  "busts": 1082,
+  "busts": 1063,
   "resolved_debuted": 530,
   "censored_debuted": 451,
-  "bust_recent_excluded_from_label": 76
+  "bust_recent_excluded_from_label": 62
  },
  "feature_coverage": {
-  "consensus_fv_raw": "2063/2063",
-  "fv_fangraphs": "1402/2063",
-  "fv_mlb_pipeline": "1566/2063",
-  "fv_stddev": "925/2063",
-  "tool_hit": "0/2063",
-  "tool_game_pwr": "0/2063",
-  "pick_overall": "848/2063",
-  "bonus_usd": "634/2063"
+  "consensus_fv_raw": "2044/2044",
+  "fv_fangraphs": "1385/2044",
+  "fv_mlb_pipeline": "1554/2044",
+  "fv_stddev": "915/2044",
+  "tool_hit": "0/2044",
+  "tool_game_pwr": "0/2044",
+  "pick_overall": "838/2044",
+  "bonus_usd": "625/2044"
  },
  "milb_feature_coverage": {
-  "level_rank": "941/2063",
-  "age_rel_level": "941/2063",
-  "k_rel": "941/2063",
-  "era_rel": "941/2063"
+  "level_rank": "1030/2044",
+  "age_rel_level": "1030/2044",
+  "k_rel": "1030/2044",
+  "era_rel": "1030/2044"
  },
  "war_distribution_resolved_debuted": {
   "n": 530,
@@ -60,12 +60,12 @@
    "spearman": 0.2961
   },
   "full_pool_resolved": {
-   "n": 1536,
-   "spearman": 0.2163
+   "n": 1531,
+   "spearman": 0.2165
   },
   "full_pool_km_censored": {
-   "n": 1987,
-   "spearman": 0.2156
+   "n": 1982,
+   "spearman": 0.2157
   },
   "debuted_km_censored": {
    "n": 981,

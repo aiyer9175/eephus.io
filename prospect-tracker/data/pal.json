@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-08-03",
+ "generated_at": "2026-08-04",
  "season": 2026,
- "n_conversions": 114,
+ "n_conversions": 113,
  "rp2sp": [
   {
    "mlbam": 664199,
@@ -445,6 +445,78 @@
    }
   },
   {
+   "mlbam": 642232,
+   "name": "Ryan Yarbrough",
+   "team": "NYY",
+   "fit": 86.4,
+   "n_pitches": 5,
+   "ip": 44.0,
+   "k_pct": 0.1579,
+   "bb_pct": 0.0947,
+   "fb_velo": 87.4,
+   "proj_velo": 86.3,
+   "fb_pct": 0.579,
+   "platoon_split": 0.005,
+   "components": {
+    "arsenal_depth": 100.0,
+    "command": 36.1,
+    "fb_reliance_inv": 77.4,
+    "stuff_quality": 98.3,
+    "platoon_neutrality": 98.0,
+    "survivability": 100.0
+   },
+   "flags": [
+    {
+     "key": "started_before",
+     "label": "started before"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "CH",
+     "usage": 0.21,
+     "whiff": 0.322,
+     "est_woba": 0.251
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.267,
+     "whiff": 0.193,
+     "est_woba": 0.327
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.21,
+     "whiff": 0.381,
+     "est_woba": 0.196
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.131,
+     "whiff": 0.039,
+     "est_woba": 0.364
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.181,
+     "whiff": 0.136,
+     "est_woba": 0.292
+    }
+   ],
+   "pitch_add": null,
+   "reverse_platoon": {
+    "p_throws": "L",
+    "own_ops": 0.677,
+    "opp_ops": 0.672,
+    "reverse_index": 0.005,
+    "reverse": false,
+    "split": 0.005,
+    "extreme": false,
+    "weak_hand": "LHB"
+   }
+  },
+  {
    "mlbam": 667463,
    "name": "John King",
    "team": "MIA",
@@ -643,78 +715,6 @@
     "reverse": true,
     "split": 0.172,
     "extreme": true,
-    "weak_hand": "LHB"
-   }
-  },
-  {
-   "mlbam": 642232,
-   "name": "Ryan Yarbrough",
-   "team": "NYY",
-   "fit": 84.2,
-   "n_pitches": 5,
-   "ip": 43.0,
-   "k_pct": 0.1604,
-   "bb_pct": 0.0963,
-   "fb_velo": 87.4,
-   "proj_velo": 86.3,
-   "fb_pct": 0.579,
-   "platoon_split": 0.042,
-   "components": {
-    "arsenal_depth": 100.0,
-    "command": 33.9,
-    "fb_reliance_inv": 77.4,
-    "stuff_quality": 98.3,
-    "platoon_neutrality": 83.2,
-    "survivability": 100.0
-   },
-   "flags": [
-    {
-     "key": "started_before",
-     "label": "started before"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "CH",
-     "usage": 0.21,
-     "whiff": 0.322,
-     "est_woba": 0.251
-    },
-    {
-     "pitch": "FC",
-     "usage": 0.267,
-     "whiff": 0.193,
-     "est_woba": 0.327
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.21,
-     "whiff": 0.381,
-     "est_woba": 0.196
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.131,
-     "whiff": 0.039,
-     "est_woba": 0.364
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.181,
-     "whiff": 0.136,
-     "est_woba": 0.292
-    }
-   ],
-   "pitch_add": null,
-   "reverse_platoon": {
-    "p_throws": "L",
-    "own_ops": 0.687,
-    "opp_ops": 0.645,
-    "reverse_index": 0.042,
-    "reverse": true,
-    "split": 0.042,
-    "extreme": false,
     "weak_hand": "LHB"
    }
   },
@@ -1171,6 +1171,65 @@
    }
   },
   {
+   "mlbam": 805299,
+   "name": "Brandyn Garcia",
+   "team": "AZ",
+   "fit": 77.7,
+   "n_pitches": 2,
+   "ip": 31.0,
+   "k_pct": 0.3103,
+   "bb_pct": 0.0603,
+   "fb_velo": 97.3,
+   "proj_velo": 96.1,
+   "fb_pct": 0.493,
+   "platoon_split": 0.001,
+   "components": {
+    "arsenal_depth": 45.0,
+    "command": 85.2,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 100.0,
+    "platoon_neutrality": 99.6,
+    "survivability": 100.0
+   },
+   "flags": [
+    {
+     "key": "needs_third",
+     "label": "needs a third pitch"
+    }
+   ],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.493,
+     "whiff": 0.1,
+     "est_woba": 0.293
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.301,
+     "whiff": 0.549,
+     "est_woba": 0.08
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "medium"
+   },
+   "reverse_platoon": {
+    "p_throws": "L",
+    "own_ops": 0.425,
+    "opp_ops": 0.426,
+    "reverse_index": -0.001,
+    "reverse": false,
+    "split": 0.001,
+    "extreme": false,
+    "weak_hand": "RHB"
+   }
+  },
+  {
    "mlbam": 663738,
    "name": "Daniel Lynch IV",
    "team": "KC",
@@ -1236,65 +1295,6 @@
     "reverse": false,
     "split": 0.29,
     "extreme": true,
-    "weak_hand": "RHB"
-   }
-  },
-  {
-   "mlbam": 805299,
-   "name": "Brandyn Garcia",
-   "team": "AZ",
-   "fit": 77.0,
-   "n_pitches": 2,
-   "ip": 30.0,
-   "k_pct": 0.3186,
-   "bb_pct": 0.0619,
-   "fb_velo": 97.3,
-   "proj_velo": 96.1,
-   "fb_pct": 0.493,
-   "platoon_split": 0.008,
-   "components": {
-    "arsenal_depth": 45.0,
-    "command": 82.9,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 100.0,
-    "platoon_neutrality": 96.8,
-    "survivability": 100.0
-   },
-   "flags": [
-    {
-     "key": "needs_third",
-     "label": "needs a third pitch"
-    }
-   ],
-   "successful": true,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.493,
-     "whiff": 0.1,
-     "est_woba": 0.293
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.301,
-     "whiff": 0.549,
-     "est_woba": 0.08
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "medium"
-   },
-   "reverse_platoon": {
-    "p_throws": "L",
-    "own_ops": 0.433,
-    "opp_ops": 0.441,
-    "reverse_index": -0.008,
-    "reverse": false,
-    "split": 0.008,
-    "extreme": false,
     "weak_hand": "RHB"
    }
   },
@@ -1488,6 +1488,71 @@
    }
   },
   {
+   "mlbam": 682608,
+   "name": "Peyton Gray",
+   "team": "TEX",
+   "fit": 74.9,
+   "n_pitches": 3,
+   "ip": 43.3,
+   "k_pct": 0.2394,
+   "bb_pct": 0.0691,
+   "fb_velo": 92.8,
+   "proj_velo": 91.8,
+   "fb_pct": 0.381,
+   "platoon_split": 0.212,
+   "components": {
+    "arsenal_depth": 80.0,
+    "command": 72.6,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 96.8,
+    "platoon_neutrality": 15.2,
+    "survivability": 73.9
+   },
+   "flags": [
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "CH",
+     "usage": 0.419,
+     "whiff": 0.293,
+     "est_woba": 0.291
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.381,
+     "whiff": 0.22,
+     "est_woba": 0.267
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.2,
+     "whiff": 0.245,
+     "est_woba": 0.301
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "priority": "medium"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.788,
+    "opp_ops": 0.576,
+    "reverse_index": 0.212,
+    "reverse": true,
+    "split": 0.212,
+    "extreme": true,
+    "weak_hand": "RHB"
+   }
+  },
+  {
    "mlbam": 621383,
    "name": "Tanner Banks",
    "team": "PHI",
@@ -1609,61 +1674,6 @@
    }
   },
   {
-   "mlbam": 593974,
-   "name": "Wandy Peralta",
-   "team": "SD",
-   "fit": 74.5,
-   "n_pitches": 3,
-   "ip": 56.0,
-   "k_pct": 0.1538,
-   "bb_pct": 0.094,
-   "fb_velo": 96.4,
-   "proj_velo": 95.4,
-   "fb_pct": 0.385,
-   "platoon_split": 0.035,
-   "components": {
-    "arsenal_depth": 80.0,
-    "command": 37.1,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 72.1,
-    "platoon_neutrality": 86.0,
-    "survivability": 81.9
-   },
-   "flags": [],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.385,
-     "whiff": 0.152,
-     "est_woba": 0.301
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.346,
-     "whiff": 0.293,
-     "est_woba": 0.333
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.173,
-     "whiff": 0.279,
-     "est_woba": 0.302
-    }
-   ],
-   "pitch_add": null,
-   "reverse_platoon": {
-    "p_throws": "L",
-    "own_ops": 0.704,
-    "opp_ops": 0.739,
-    "reverse_index": -0.035,
-    "reverse": false,
-    "split": 0.035,
-    "extreme": false,
-    "weak_hand": "RHB"
-   }
-  },
-  {
    "mlbam": 656794,
    "name": "Sean Newcomb",
    "team": "CWS",
@@ -1729,25 +1739,25 @@
    }
   },
   {
-   "mlbam": 682608,
-   "name": "Peyton Gray",
-   "team": "TEX",
-   "fit": 74.1,
-   "n_pitches": 3,
-   "ip": 42.3,
-   "k_pct": 0.2459,
-   "bb_pct": 0.0656,
-   "fb_velo": 92.8,
-   "proj_velo": 91.8,
-   "fb_pct": 0.381,
-   "platoon_split": 0.254,
+   "mlbam": 642397,
+   "name": "Gregory Soto",
+   "team": "PIT",
+   "fit": 73.5,
+   "n_pitches": 4,
+   "ip": 47.7,
+   "k_pct": 0.2828,
+   "bb_pct": 0.1061,
+   "fb_velo": 97.1,
+   "proj_velo": 96.0,
+   "fb_pct": 0.558,
+   "platoon_split": 0.157,
    "components": {
-    "arsenal_depth": 80.0,
-    "command": 77.8,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 96.8,
-    "platoon_neutrality": 0.0,
-    "survivability": 73.9
+    "arsenal_depth": 100.0,
+    "command": 19.9,
+    "fb_reliance_inv": 83.4,
+    "stuff_quality": 98.9,
+    "platoon_neutrality": 37.2,
+    "survivability": 96.2
    },
    "flags": [
     {
@@ -1755,113 +1765,48 @@
      "label": "platoon risk"
     }
    ],
-   "successful": true,
-   "arsenal": [
-    {
-     "pitch": "CH",
-     "usage": 0.419,
-     "whiff": 0.293,
-     "est_woba": 0.291
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.381,
-     "whiff": 0.22,
-     "est_woba": 0.267
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.2,
-     "whiff": 0.245,
-     "est_woba": 0.301
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
-    "priority": "medium"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.79,
-    "opp_ops": 0.536,
-    "reverse_index": 0.254,
-    "reverse": true,
-    "split": 0.254,
-    "extreme": true,
-    "weak_hand": "RHB"
-   }
-  },
-  {
-   "mlbam": 676879,
-   "name": "Aaron Ashby",
-   "team": "MIL",
-   "fit": 73.6,
-   "n_pitches": 4,
-   "ip": 60.7,
-   "k_pct": 0.3086,
-   "bb_pct": 0.1152,
-   "fb_velo": 97.6,
-   "proj_velo": 96.6,
-   "fb_pct": 0.525,
-   "platoon_split": 0.13,
-   "components": {
-    "arsenal_depth": 100.0,
-    "command": 6.8,
-    "fb_reliance_inv": 92.9,
-    "stuff_quality": 100.0,
-    "platoon_neutrality": 48.0,
-    "survivability": 56.4
-   },
-   "flags": [
-    {
-     "key": "started_before",
-     "label": "started before"
-    }
-   ],
    "successful": false,
    "arsenal": [
     {
      "pitch": "SI",
-     "usage": 0.525,
-     "whiff": 0.147,
-     "est_woba": 0.35
+     "usage": 0.36,
+     "whiff": 0.091,
+     "est_woba": 0.412
     },
     {
      "pitch": "SL",
-     "usage": 0.146,
-     "whiff": 0.569,
-     "est_woba": 0.136
+     "usage": 0.257,
+     "whiff": 0.421,
+     "est_woba": 0.14
     },
     {
-     "pitch": "CU",
-     "usage": 0.193,
-     "whiff": 0.534,
-     "est_woba": 0.192
+     "pitch": "ST",
+     "usage": 0.183,
+     "whiff": 0.455,
+     "est_woba": 0.153
     },
     {
-     "pitch": "CH",
-     "usage": 0.112,
-     "whiff": 0.525,
-     "est_woba": 0.233
+     "pitch": "FF",
+     "usage": 0.198,
+     "whiff": 0.164,
+     "est_woba": 0.346
     }
    ],
    "pitch_add": {
     "add": "Changeup",
-    "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
-    "priority": "medium"
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "high"
    },
    "reverse_platoon": {
     "p_throws": "L",
-    "own_ops": 0.595,
-    "opp_ops": 0.725,
-    "reverse_index": -0.13,
-    "reverse": false,
-    "split": 0.13,
-    "extreme": false,
-    "weak_hand": "RHB"
+    "own_ops": 0.693,
+    "opp_ops": 0.536,
+    "reverse_index": 0.157,
+    "reverse": true,
+    "split": 0.157,
+    "extreme": true,
+    "weak_hand": "LHB"
    }
   },
   {
@@ -1931,77 +1876,6 @@
     "split": 0.273,
     "extreme": true,
     "weak_hand": "RHB"
-   }
-  },
-  {
-   "mlbam": 642397,
-   "name": "Gregory Soto",
-   "team": "PIT",
-   "fit": 73.4,
-   "n_pitches": 4,
-   "ip": 46.3,
-   "k_pct": 0.2775,
-   "bb_pct": 0.1047,
-   "fb_velo": 97.1,
-   "proj_velo": 96.0,
-   "fb_pct": 0.558,
-   "platoon_split": 0.169,
-   "components": {
-    "arsenal_depth": 100.0,
-    "command": 21.8,
-    "fb_reliance_inv": 83.4,
-    "stuff_quality": 98.9,
-    "platoon_neutrality": 32.4,
-    "survivability": 96.2
-   },
-   "flags": [
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.36,
-     "whiff": 0.091,
-     "est_woba": 0.412
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.257,
-     "whiff": 0.421,
-     "est_woba": 0.14
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.183,
-     "whiff": 0.455,
-     "est_woba": 0.153
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.198,
-     "whiff": 0.164,
-     "est_woba": 0.346
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "LHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "L",
-    "own_ops": 0.695,
-    "opp_ops": 0.526,
-    "reverse_index": 0.169,
-    "reverse": true,
-    "split": 0.169,
-    "extreme": true,
-    "weak_hand": "LHB"
    }
   },
   {
@@ -2125,6 +1999,61 @@
     "reverse": true,
     "split": 0.319,
     "extreme": true,
+    "weak_hand": "RHB"
+   }
+  },
+  {
+   "mlbam": 593974,
+   "name": "Wandy Peralta",
+   "team": "SD",
+   "fit": 73.1,
+   "n_pitches": 3,
+   "ip": 57.0,
+   "k_pct": 0.15,
+   "bb_pct": 0.0917,
+   "fb_velo": 96.4,
+   "proj_velo": 95.4,
+   "fb_pct": 0.385,
+   "platoon_split": 0.079,
+   "components": {
+    "arsenal_depth": 80.0,
+    "command": 40.5,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 72.1,
+    "platoon_neutrality": 68.4,
+    "survivability": 81.9
+   },
+   "flags": [],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.385,
+     "whiff": 0.152,
+     "est_woba": 0.301
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.346,
+     "whiff": 0.293,
+     "est_woba": 0.333
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.173,
+     "whiff": 0.279,
+     "est_woba": 0.302
+    }
+   ],
+   "pitch_add": null,
+   "reverse_platoon": {
+    "p_throws": "L",
+    "own_ops": 0.698,
+    "opp_ops": 0.777,
+    "reverse_index": -0.079,
+    "reverse": false,
+    "split": 0.079,
+    "extreme": false,
     "weak_hand": "RHB"
    }
   },
@@ -2256,6 +2185,77 @@
    }
   },
   {
+   "mlbam": 676879,
+   "name": "Aaron Ashby",
+   "team": "MIL",
+   "fit": 72.8,
+   "n_pitches": 4,
+   "ip": 62.7,
+   "k_pct": 0.3105,
+   "bb_pct": 0.1155,
+   "fb_velo": 97.6,
+   "proj_velo": 96.6,
+   "fb_pct": 0.525,
+   "platoon_split": 0.145,
+   "components": {
+    "arsenal_depth": 100.0,
+    "command": 6.4,
+    "fb_reliance_inv": 92.9,
+    "stuff_quality": 100.0,
+    "platoon_neutrality": 42.0,
+    "survivability": 56.4
+   },
+   "flags": [
+    {
+     "key": "started_before",
+     "label": "started before"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.525,
+     "whiff": 0.147,
+     "est_woba": 0.35
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.146,
+     "whiff": 0.569,
+     "est_woba": 0.136
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.193,
+     "whiff": 0.534,
+     "est_woba": 0.192
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.112,
+     "whiff": 0.525,
+     "est_woba": 0.233
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "priority": "medium"
+   },
+   "reverse_platoon": {
+    "p_throws": "L",
+    "own_ops": 0.578,
+    "opp_ops": 0.723,
+    "reverse_index": -0.145,
+    "reverse": false,
+    "split": 0.145,
+    "extreme": false,
+    "weak_hand": "RHB"
+   }
+  },
+  {
    "mlbam": 548384,
    "name": "Brooks Raley",
    "team": "NYM",
@@ -2311,6 +2311,66 @@
     "reverse_index": -0.095,
     "reverse": false,
     "split": 0.095,
+    "extreme": false,
+    "weak_hand": "RHB"
+   }
+  },
+  {
+   "mlbam": 666661,
+   "name": "Juan Morillo",
+   "team": "AZ",
+   "fit": 72.4,
+   "n_pitches": 3,
+   "ip": 46.0,
+   "k_pct": 0.2989,
+   "bb_pct": 0.087,
+   "fb_velo": 98.7,
+   "proj_velo": 97.5,
+   "fb_pct": 0.635,
+   "platoon_split": 0.085,
+   "components": {
+    "arsenal_depth": 80.0,
+    "command": 47.2,
+    "fb_reliance_inv": 61.4,
+    "stuff_quality": 100.0,
+    "platoon_neutrality": 66.0,
+    "survivability": 97.7
+   },
+   "flags": [],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.466,
+     "whiff": 0.337,
+     "est_woba": 0.223
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.207,
+     "whiff": 0.303,
+     "est_woba": 0.183
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.169,
+     "whiff": 0.2,
+     "est_woba": 0.241
+    }
+   ],
+   "pitch_add": {
+    "add": "Slider",
+    "target": "RHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.582,
+    "opp_ops": 0.497,
+    "reverse_index": 0.085,
+    "reverse": true,
+    "split": 0.085,
     "extreme": false,
     "weak_hand": "RHB"
    }
@@ -2515,6 +2575,65 @@
     "split": 0.258,
     "extreme": true,
     "weak_hand": "RHB"
+   }
+  },
+  {
+   "mlbam": 661395,
+   "name": "Jhoan Duran",
+   "team": "PHI",
+   "fit": 71.1,
+   "n_pitches": 2,
+   "ip": 37.3,
+   "k_pct": 0.3716,
+   "bb_pct": 0.0405,
+   "fb_velo": 100.3,
+   "proj_velo": 99.1,
+   "fb_pct": 0.273,
+   "platoon_split": 0.034,
+   "components": {
+    "arsenal_depth": 45.0,
+    "command": 100.0,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 100.0,
+    "platoon_neutrality": 86.4,
+    "survivability": 0.0
+   },
+   "flags": [
+    {
+     "key": "needs_third",
+     "label": "needs a third pitch"
+    }
+   ],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "FS",
+     "usage": 0.451,
+     "whiff": 0.311,
+     "est_woba": 0.3
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.273,
+     "whiff": 0.432,
+     "est_woba": 0.22
+    }
+   ],
+   "pitch_add": {
+    "add": "Slider",
+    "target": "LHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.502,
+    "opp_ops": 0.536,
+    "reverse_index": -0.034,
+    "reverse": false,
+    "split": 0.034,
+    "extreme": false,
+    "weak_hand": "LHB"
    }
   },
   {
@@ -2779,25 +2898,25 @@
    }
   },
   {
-   "mlbam": 661395,
-   "name": "Jhoan Duran",
+   "mlbam": 679775,
+   "name": "Kyle Backhus",
    "team": "PHI",
-   "fit": 70.3,
+   "fit": 70.6,
    "n_pitches": 2,
-   "ip": 36.3,
-   "k_pct": 0.3681,
-   "bb_pct": 0.0417,
-   "fb_velo": 100.3,
-   "proj_velo": 99.1,
-   "fb_pct": 0.273,
-   "platoon_split": 0.051,
+   "ip": 20.0,
+   "k_pct": 0.2128,
+   "bb_pct": 0.0638,
+   "fb_velo": 90.7,
+   "proj_velo": 89.4,
+   "fb_pct": 0.558,
+   "platoon_split": 0.014,
    "components": {
     "arsenal_depth": 45.0,
-    "command": 100.0,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 100.0,
-    "platoon_neutrality": 79.6,
-    "survivability": 0.0
+    "command": 80.2,
+    "fb_reliance_inv": 83.4,
+    "stuff_quality": 84.1,
+    "platoon_neutrality": 94.4,
+    "survivability": 81.5
    },
    "flags": [
     {
@@ -2805,19 +2924,88 @@
      "label": "needs a third pitch"
     }
    ],
-   "successful": true,
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.558,
+     "whiff": 0.088,
+     "est_woba": 0.37
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.344,
+     "whiff": 0.37,
+     "est_woba": 0.184
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "medium"
+   },
+   "reverse_platoon": {
+    "p_throws": "L",
+    "own_ops": 0.79,
+    "opp_ops": 0.804,
+    "reverse_index": -0.014,
+    "reverse": false,
+    "split": 0.014,
+    "extreme": false,
+    "weak_hand": "RHB"
+   }
+  },
+  {
+   "mlbam": 676775,
+   "name": "Keaton Winn",
+   "team": "SF",
+   "fit": 70.3,
+   "n_pitches": 3,
+   "ip": 38.7,
+   "k_pct": 0.1962,
+   "bb_pct": 0.0886,
+   "fb_velo": 96.3,
+   "proj_velo": 95.3,
+   "fb_pct": 0.472,
+   "platoon_split": 0.247,
+   "components": {
+    "arsenal_depth": 80.0,
+    "command": 44.8,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 82.3,
+    "platoon_neutrality": 1.2,
+    "survivability": 87.1
+   },
+   "flags": [
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    },
+    {
+     "key": "started_before",
+     "label": "started before"
+    }
+   ],
+   "successful": false,
    "arsenal": [
     {
      "pitch": "FS",
-     "usage": 0.451,
-     "whiff": 0.311,
-     "est_woba": 0.3
+     "usage": 0.478,
+     "whiff": 0.361,
+     "est_woba": 0.279
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.228,
+     "whiff": 0.077,
+     "est_woba": 0.253
     },
     {
      "pitch": "FF",
-     "usage": 0.273,
-     "whiff": 0.432,
-     "est_woba": 0.22
+     "usage": 0.244,
+     "whiff": 0.098,
+     "est_woba": 0.39
     }
    ],
    "pitch_add": {
@@ -2828,12 +3016,12 @@
    },
    "reverse_platoon": {
     "p_throws": "R",
-    "own_ops": 0.499,
-    "opp_ops": 0.55,
-    "reverse_index": -0.051,
+    "own_ops": 0.505,
+    "opp_ops": 0.752,
+    "reverse_index": -0.247,
     "reverse": false,
-    "split": 0.051,
-    "extreme": false,
+    "split": 0.247,
+    "extreme": true,
     "weak_hand": "LHB"
    }
   },
@@ -3151,66 +3339,6 @@
    }
   },
   {
-   "mlbam": 666661,
-   "name": "Juan Morillo",
-   "team": "AZ",
-   "fit": 70.0,
-   "n_pitches": 3,
-   "ip": 44.7,
-   "k_pct": 0.2961,
-   "bb_pct": 0.0894,
-   "fb_velo": 98.7,
-   "proj_velo": 97.5,
-   "fb_pct": 0.635,
-   "platoon_split": 0.12,
-   "components": {
-    "arsenal_depth": 80.0,
-    "command": 43.7,
-    "fb_reliance_inv": 61.4,
-    "stuff_quality": 100.0,
-    "platoon_neutrality": 52.0,
-    "survivability": 97.7
-   },
-   "flags": [],
-   "successful": true,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.466,
-     "whiff": 0.337,
-     "est_woba": 0.223
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.207,
-     "whiff": 0.303,
-     "est_woba": 0.183
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.169,
-     "whiff": 0.2,
-     "est_woba": 0.241
-    }
-   ],
-   "pitch_add": {
-    "add": "Slider",
-    "target": "RHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.606,
-    "opp_ops": 0.486,
-    "reverse_index": 0.12,
-    "reverse": true,
-    "split": 0.12,
-    "extreme": false,
-    "weak_hand": "RHB"
-   }
-  },
-  {
    "mlbam": 666171,
    "name": "Ryan Zeferjahn",
    "team": "LAA",
@@ -3273,75 +3401,6 @@
     "reverse": false,
     "split": 0.136,
     "extreme": false,
-    "weak_hand": "LHB"
-   }
-  },
-  {
-   "mlbam": 676775,
-   "name": "Keaton Winn",
-   "team": "SF",
-   "fit": 69.7,
-   "n_pitches": 3,
-   "ip": 38.0,
-   "k_pct": 0.1935,
-   "bb_pct": 0.0903,
-   "fb_velo": 96.3,
-   "proj_velo": 95.3,
-   "fb_pct": 0.472,
-   "platoon_split": 0.301,
-   "components": {
-    "arsenal_depth": 80.0,
-    "command": 42.4,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 82.3,
-    "platoon_neutrality": 0.0,
-    "survivability": 87.1
-   },
-   "flags": [
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    },
-    {
-     "key": "started_before",
-     "label": "started before"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "FS",
-     "usage": 0.478,
-     "whiff": 0.361,
-     "est_woba": 0.279
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.228,
-     "whiff": 0.077,
-     "est_woba": 0.253
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.244,
-     "whiff": 0.098,
-     "est_woba": 0.39
-    }
-   ],
-   "pitch_add": {
-    "add": "Slider",
-    "target": "LHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.476,
-    "opp_ops": 0.777,
-    "reverse_index": -0.301,
-    "reverse": false,
-    "split": 0.301,
-    "extreme": true,
     "weak_hand": "LHB"
    }
   },
@@ -3674,6 +3733,69 @@
    }
   },
   {
+   "mlbam": 656945,
+   "name": "Tanner Scott",
+   "team": "LAD",
+   "fit": 68.2,
+   "n_pitches": 2,
+   "ip": 45.3,
+   "k_pct": 0.341,
+   "bb_pct": 0.0462,
+   "fb_velo": 96.8,
+   "proj_velo": 95.6,
+   "fb_pct": 0.472,
+   "platoon_split": 0.227,
+   "components": {
+    "arsenal_depth": 45.0,
+    "command": 100.0,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 100.0,
+    "platoon_neutrality": 9.2,
+    "survivability": 78.9
+   },
+   "flags": [
+    {
+     "key": "needs_third",
+     "label": "needs a third pitch"
+    },
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    }
+   ],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "SL",
+     "usage": 0.528,
+     "whiff": 0.421,
+     "est_woba": 0.217
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.472,
+     "whiff": 0.294,
+     "est_woba": 0.321
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize RHB - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "L",
+    "own_ops": 0.4,
+    "opp_ops": 0.627,
+    "reverse_index": -0.227,
+    "reverse": false,
+    "split": 0.227,
+    "extreme": true,
+    "weak_hand": "RHB"
+   }
+  },
+  {
    "mlbam": 622088,
    "name": "Tejay Antone",
    "team": "CIN",
@@ -3858,69 +3980,6 @@
     "split": 0.017,
     "extreme": false,
     "weak_hand": "LHB"
-   }
-  },
-  {
-   "mlbam": 656945,
-   "name": "Tanner Scott",
-   "team": "LAD",
-   "fit": 67.1,
-   "n_pitches": 2,
-   "ip": 44.7,
-   "k_pct": 0.3373,
-   "bb_pct": 0.0414,
-   "fb_velo": 96.8,
-   "proj_velo": 95.6,
-   "fb_pct": 0.472,
-   "platoon_split": 0.264,
-   "components": {
-    "arsenal_depth": 45.0,
-    "command": 100.0,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 100.0,
-    "platoon_neutrality": 0.0,
-    "survivability": 78.9
-   },
-   "flags": [
-    {
-     "key": "needs_third",
-     "label": "needs a third pitch"
-    },
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    }
-   ],
-   "successful": true,
-   "arsenal": [
-    {
-     "pitch": "SL",
-     "usage": 0.528,
-     "whiff": 0.421,
-     "est_woba": 0.217
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.472,
-     "whiff": 0.294,
-     "est_woba": 0.321
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize RHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "L",
-    "own_ops": 0.368,
-    "opp_ops": 0.632,
-    "reverse_index": -0.264,
-    "reverse": false,
-    "split": 0.264,
-    "extreme": true,
-    "weak_hand": "RHB"
    }
   },
   {
@@ -4178,6 +4237,61 @@
     "split": 0.444,
     "extreme": true,
     "weak_hand": "LHB"
+   }
+  },
+  {
+   "mlbam": 592773,
+   "name": "Ryne Stanek",
+   "team": "STL",
+   "fit": 65.5,
+   "n_pitches": 3,
+   "ip": 43.7,
+   "k_pct": 0.2435,
+   "bb_pct": 0.1295,
+   "fb_velo": 98.1,
+   "proj_velo": 97.1,
+   "fb_pct": 0.512,
+   "platoon_split": 0.014,
+   "components": {
+    "arsenal_depth": 80.0,
+    "command": 0.0,
+    "fb_reliance_inv": 96.6,
+    "stuff_quality": 68.2,
+    "platoon_neutrality": 94.4,
+    "survivability": 60.9
+   },
+   "flags": [],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.512,
+     "whiff": 0.245,
+     "est_woba": 0.386
+    },
+    {
+     "pitch": "FS",
+     "usage": 0.15,
+     "whiff": 0.345,
+     "est_woba": 0.154
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.23,
+     "whiff": 0.403,
+     "est_woba": 0.274
+    }
+   ],
+   "pitch_add": null,
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.778,
+    "opp_ops": 0.764,
+    "reverse_index": 0.014,
+    "reverse": false,
+    "split": 0.014,
+    "extreme": false,
+    "weak_hand": "RHB"
    }
   },
   {
@@ -4506,6 +4620,71 @@
    }
   },
   {
+   "mlbam": 689147,
+   "name": "Orion Kerkering",
+   "team": "PHI",
+   "fit": 64.7,
+   "n_pitches": 3,
+   "ip": 43.0,
+   "k_pct": 0.254,
+   "bb_pct": 0.1323,
+   "fb_velo": 97.5,
+   "proj_velo": 96.5,
+   "fb_pct": 0.512,
+   "platoon_split": 0.163,
+   "components": {
+    "arsenal_depth": 80.0,
+    "command": 0.0,
+    "fb_reliance_inv": 96.6,
+    "stuff_quality": 100.0,
+    "platoon_neutrality": 34.8,
+    "survivability": 100.0
+   },
+   "flags": [
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    }
+   ],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "ST",
+     "usage": 0.446,
+     "whiff": 0.27,
+     "est_woba": 0.26
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.328,
+     "whiff": 0.361,
+     "est_woba": 0.307
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.184,
+     "whiff": 0.113,
+     "est_woba": 0.245
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.545,
+    "opp_ops": 0.708,
+    "reverse_index": -0.163,
+    "reverse": false,
+    "split": 0.163,
+    "extreme": true,
+    "weak_hand": "LHB"
+   }
+  },
+  {
    "mlbam": 664141,
    "name": "JT Brubaker",
    "team": "SF",
@@ -4771,61 +4950,6 @@
    }
   },
   {
-   "mlbam": 592773,
-   "name": "Ryne Stanek",
-   "team": "STL",
-   "fit": 63.8,
-   "n_pitches": 3,
-   "ip": 43.3,
-   "k_pct": 0.2434,
-   "bb_pct": 0.1323,
-   "fb_velo": 98.1,
-   "proj_velo": 97.1,
-   "fb_pct": 0.512,
-   "platoon_split": 0.05,
-   "components": {
-    "arsenal_depth": 80.0,
-    "command": 0.0,
-    "fb_reliance_inv": 96.6,
-    "stuff_quality": 68.2,
-    "platoon_neutrality": 80.0,
-    "survivability": 60.9
-   },
-   "flags": [],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.512,
-     "whiff": 0.245,
-     "est_woba": 0.386
-    },
-    {
-     "pitch": "FS",
-     "usage": 0.15,
-     "whiff": 0.345,
-     "est_woba": 0.154
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.23,
-     "whiff": 0.403,
-     "est_woba": 0.274
-    }
-   ],
-   "pitch_add": null,
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.733,
-    "opp_ops": 0.683,
-    "reverse_index": 0.05,
-    "reverse": true,
-    "split": 0.05,
-    "extreme": false,
-    "weak_hand": "RHB"
-   }
-  },
-  {
    "mlbam": 544150,
    "name": "Albert Su\u00e1rez",
    "team": "BAL",
@@ -4954,71 +5078,6 @@
    }
   },
   {
-   "mlbam": 689147,
-   "name": "Orion Kerkering",
-   "team": "PHI",
-   "fit": 63.5,
-   "n_pitches": 3,
-   "ip": 42.0,
-   "k_pct": 0.2473,
-   "bb_pct": 0.1344,
-   "fb_velo": 97.5,
-   "proj_velo": 96.5,
-   "fb_pct": 0.512,
-   "platoon_split": 0.188,
-   "components": {
-    "arsenal_depth": 80.0,
-    "command": 0.0,
-    "fb_reliance_inv": 96.6,
-    "stuff_quality": 100.0,
-    "platoon_neutrality": 24.8,
-    "survivability": 100.0
-   },
-   "flags": [
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "ST",
-     "usage": 0.446,
-     "whiff": 0.27,
-     "est_woba": 0.26
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.328,
-     "whiff": 0.361,
-     "est_woba": 0.307
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.184,
-     "whiff": 0.113,
-     "est_woba": 0.245
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "LHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.545,
-    "opp_ops": 0.733,
-    "reverse_index": -0.188,
-    "reverse": false,
-    "split": 0.188,
-    "extreme": true,
-    "weak_hand": "LHB"
-   }
-  },
-  {
    "mlbam": 668941,
    "name": "JoJo Romero",
    "team": "STL",
@@ -5081,6 +5140,71 @@
     "split": 0.169,
     "extreme": true,
     "weak_hand": "LHB"
+   }
+  },
+  {
+   "mlbam": 666277,
+   "name": "George Soriano",
+   "team": "STL",
+   "fit": 63.4,
+   "n_pitches": 3,
+   "ip": 49.7,
+   "k_pct": 0.2319,
+   "bb_pct": 0.0918,
+   "fb_velo": 96.5,
+   "proj_velo": 95.5,
+   "fb_pct": 0.282,
+   "platoon_split": 0.308,
+   "components": {
+    "arsenal_depth": 80.0,
+    "command": 40.3,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 95.0,
+    "platoon_neutrality": 0.0,
+    "survivability": 35.5
+   },
+   "flags": [
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "CH",
+     "usage": 0.278,
+     "whiff": 0.394,
+     "est_woba": 0.176
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.282,
+     "whiff": 0.172,
+     "est_woba": 0.357
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.23,
+     "whiff": 0.373,
+     "est_woba": 0.332
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "priority": "medium"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.83,
+    "opp_ops": 0.522,
+    "reverse_index": 0.308,
+    "reverse": true,
+    "split": 0.308,
+    "extreme": true,
+    "weak_hand": "RHB"
    }
   },
   {
@@ -5204,71 +5328,6 @@
     "split": 0.179,
     "extreme": true,
     "weak_hand": "LHB"
-   }
-  },
-  {
-   "mlbam": 666277,
-   "name": "George Soriano",
-   "team": "STL",
-   "fit": 63.0,
-   "n_pitches": 3,
-   "ip": 49.0,
-   "k_pct": 0.2304,
-   "bb_pct": 0.0931,
-   "fb_velo": 96.5,
-   "proj_velo": 95.5,
-   "fb_pct": 0.282,
-   "platoon_split": 0.343,
-   "components": {
-    "arsenal_depth": 80.0,
-    "command": 38.4,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 95.0,
-    "platoon_neutrality": 0.0,
-    "survivability": 35.5
-   },
-   "flags": [
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    }
-   ],
-   "successful": true,
-   "arsenal": [
-    {
-     "pitch": "CH",
-     "usage": 0.278,
-     "whiff": 0.394,
-     "est_woba": 0.176
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.282,
-     "whiff": 0.172,
-     "est_woba": 0.357
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.23,
-     "whiff": 0.373,
-     "est_woba": 0.332
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
-    "priority": "medium"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.83,
-    "opp_ops": 0.487,
-    "reverse_index": 0.343,
-    "reverse": true,
-    "split": 0.343,
-    "extreme": true,
-    "weak_hand": "RHB"
    }
   },
   {
@@ -5831,71 +5890,6 @@
    }
   },
   {
-   "mlbam": 673513,
-   "name": "Yuki Matsui",
-   "team": "SD",
-   "fit": 61.7,
-   "n_pitches": 3,
-   "ip": 41.7,
-   "k_pct": 0.2647,
-   "bb_pct": 0.1412,
-   "fb_velo": 91.9,
-   "proj_velo": 90.9,
-   "fb_pct": 0.376,
-   "platoon_split": 0.215,
-   "components": {
-    "arsenal_depth": 80.0,
-    "command": 0.0,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 94.2,
-    "platoon_neutrality": 14.0,
-    "survivability": 95.6
-   },
-   "flags": [
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    }
-   ],
-   "successful": true,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.376,
-     "whiff": 0.274,
-     "est_woba": 0.367
-    },
-    {
-     "pitch": "FS",
-     "usage": 0.252,
-     "whiff": 0.484,
-     "est_woba": 0.24
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.299,
-     "whiff": 0.456,
-     "est_woba": 0.226
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
-    "priority": "medium"
-   },
-   "reverse_platoon": {
-    "p_throws": "L",
-    "own_ops": 0.544,
-    "opp_ops": 0.759,
-    "reverse_index": -0.215,
-    "reverse": false,
-    "split": 0.215,
-    "extreme": true,
-    "weak_hand": "RHB"
-   }
-  },
-  {
    "mlbam": 670036,
    "name": "Matt Festa",
    "team": "CLE",
@@ -6079,6 +6073,71 @@
    }
   },
   {
+   "mlbam": 673513,
+   "name": "Yuki Matsui",
+   "team": "SD",
+   "fit": 61.0,
+   "n_pitches": 3,
+   "ip": 43.0,
+   "k_pct": 0.267,
+   "bb_pct": 0.142,
+   "fb_velo": 91.9,
+   "proj_velo": 90.9,
+   "fb_pct": 0.376,
+   "platoon_split": 0.231,
+   "components": {
+    "arsenal_depth": 80.0,
+    "command": 0.0,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 94.2,
+    "platoon_neutrality": 7.6,
+    "survivability": 95.6
+   },
+   "flags": [
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    }
+   ],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.376,
+     "whiff": 0.274,
+     "est_woba": 0.367
+    },
+    {
+     "pitch": "FS",
+     "usage": 0.252,
+     "whiff": 0.484,
+     "est_woba": 0.24
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.299,
+     "whiff": 0.456,
+     "est_woba": 0.226
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "priority": "medium"
+   },
+   "reverse_platoon": {
+    "p_throws": "L",
+    "own_ops": 0.532,
+    "opp_ops": 0.763,
+    "reverse_index": -0.231,
+    "reverse": false,
+    "split": 0.231,
+    "extreme": true,
+    "weak_hand": "RHB"
+   }
+  },
+  {
    "mlbam": 667297,
    "name": "Tommy Nance",
    "team": "MIN",
@@ -6258,24 +6317,83 @@
    }
   },
   {
+   "mlbam": 677865,
+   "name": "Justin Bruihl",
+   "team": "STL",
+   "fit": 60.4,
+   "n_pitches": 2,
+   "ip": 54.3,
+   "k_pct": 0.1605,
+   "bb_pct": 0.0823,
+   "fb_velo": 91.6,
+   "proj_velo": 90.4,
+   "fb_pct": 0.449,
+   "platoon_split": 0.079,
+   "components": {
+    "arsenal_depth": 45.0,
+    "command": 53.9,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 70.8,
+    "platoon_neutrality": 68.4,
+    "survivability": 45.0
+   },
+   "flags": [
+    {
+     "key": "needs_third",
+     "label": "needs a third pitch"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.449,
+     "whiff": 0.099,
+     "est_woba": 0.36
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.38,
+     "whiff": 0.25,
+     "est_woba": 0.262
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "medium"
+   },
+   "reverse_platoon": {
+    "p_throws": "L",
+    "own_ops": 0.666,
+    "opp_ops": 0.745,
+    "reverse_index": -0.079,
+    "reverse": false,
+    "split": 0.079,
+    "extreme": false,
+    "weak_hand": "RHB"
+   }
+  },
+  {
    "mlbam": 643511,
    "name": "Tyler Rogers",
    "team": "TOR",
    "fit": 60.0,
    "n_pitches": 2,
-   "ip": 49.0,
-   "k_pct": 0.135,
-   "bb_pct": 0.07,
+   "ip": 50.0,
+   "k_pct": 0.133,
+   "bb_pct": 0.069,
    "fb_velo": 83.2,
    "proj_velo": 81.5,
    "fb_pct": 0.777,
-   "platoon_split": 0.066,
+   "platoon_split": 0.072,
    "components": {
     "arsenal_depth": 45.0,
-    "command": 71.4,
+    "command": 72.9,
     "fb_reliance_inv": 20.9,
     "stuff_quality": 100.0,
-    "platoon_neutrality": 73.6,
+    "platoon_neutrality": 71.2,
     "survivability": 100.0
    },
    "flags": [
@@ -6307,11 +6425,11 @@
    },
    "reverse_platoon": {
     "p_throws": "R",
-    "own_ops": 0.5,
-    "opp_ops": 0.566,
-    "reverse_index": -0.066,
+    "own_ops": 0.488,
+    "opp_ops": 0.56,
+    "reverse_index": -0.072,
     "reverse": false,
-    "split": 0.066,
+    "split": 0.072,
     "extreme": false,
     "weak_hand": "LHB"
    }
@@ -6563,71 +6681,6 @@
    }
   },
   {
-   "mlbam": 683618,
-   "name": "Edgardo Henriquez",
-   "team": "LAD",
-   "fit": 59.7,
-   "n_pitches": 3,
-   "ip": 43.0,
-   "k_pct": 0.2486,
-   "bb_pct": 0.1098,
-   "fb_velo": 100.9,
-   "proj_velo": 99.7,
-   "fb_pct": 0.597,
-   "platoon_split": 0.348,
-   "components": {
-    "arsenal_depth": 80.0,
-    "command": 14.5,
-    "fb_reliance_inv": 72.3,
-    "stuff_quality": 100.0,
-    "platoon_neutrality": 0.0,
-    "survivability": 100.0
-   },
-   "flags": [
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    }
-   ],
-   "successful": true,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.325,
-     "whiff": 0.276,
-     "est_woba": 0.294
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.272,
-     "whiff": 0.149,
-     "est_woba": 0.259
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.223,
-     "whiff": 0.377,
-     "est_woba": 0.2
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "LHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.397,
-    "opp_ops": 0.745,
-    "reverse_index": -0.348,
-    "reverse": false,
-    "split": 0.348,
-    "extreme": true,
-    "weak_hand": "LHB"
-   }
-  },
-  {
    "mlbam": 696147,
    "name": "Sam Bachman",
    "team": "LAA",
@@ -6690,65 +6743,6 @@
     "split": 0.235,
     "extreme": true,
     "weak_hand": "LHB"
-   }
-  },
-  {
-   "mlbam": 677865,
-   "name": "Justin Bruihl",
-   "team": "STL",
-   "fit": 59.6,
-   "n_pitches": 2,
-   "ip": 52.7,
-   "k_pct": 0.1646,
-   "bb_pct": 0.0844,
-   "fb_velo": 91.6,
-   "proj_velo": 90.4,
-   "fb_pct": 0.449,
-   "platoon_split": 0.083,
-   "components": {
-    "arsenal_depth": 45.0,
-    "command": 50.9,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 70.8,
-    "platoon_neutrality": 66.8,
-    "survivability": 45.0
-   },
-   "flags": [
-    {
-     "key": "needs_third",
-     "label": "needs a third pitch"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.449,
-     "whiff": 0.099,
-     "est_woba": 0.36
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.38,
-     "whiff": 0.25,
-     "est_woba": 0.262
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "medium"
-   },
-   "reverse_platoon": {
-    "p_throws": "L",
-    "own_ops": 0.65,
-    "opp_ops": 0.733,
-    "reverse_index": -0.083,
-    "reverse": false,
-    "split": 0.083,
-    "extreme": false,
-    "weak_hand": "RHB"
    }
   },
   {
@@ -7254,6 +7248,65 @@
    }
   },
   {
+   "mlbam": 518585,
+   "name": "Fernando Cruz",
+   "team": "NYY",
+   "fit": 58.1,
+   "n_pitches": 2,
+   "ip": 48.3,
+   "k_pct": 0.2913,
+   "bb_pct": 0.1456,
+   "fb_velo": 93.2,
+   "proj_velo": 92.0,
+   "fb_pct": 0.321,
+   "platoon_split": 0.053,
+   "components": {
+    "arsenal_depth": 45.0,
+    "command": 0.0,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 99.0,
+    "platoon_neutrality": 78.8,
+    "survivability": 100.0
+   },
+   "flags": [
+    {
+     "key": "needs_third",
+     "label": "needs a third pitch"
+    }
+   ],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "FS",
+     "usage": 0.521,
+     "whiff": 0.53,
+     "est_woba": 0.205
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.321,
+     "whiff": 0.154,
+     "est_woba": 0.405
+    }
+   ],
+   "pitch_add": {
+    "add": "Slider",
+    "target": "RHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.661,
+    "opp_ops": 0.608,
+    "reverse_index": 0.053,
+    "reverse": true,
+    "split": 0.053,
+    "extreme": false,
+    "weak_hand": "RHB"
+   }
+  },
+  {
    "mlbam": 622608,
    "name": "Antonio Senzatela",
    "team": "COL",
@@ -7312,65 +7365,6 @@
     "reverse_index": 0.086,
     "reverse": true,
     "split": 0.086,
-    "extreme": false,
-    "weak_hand": "RHB"
-   }
-  },
-  {
-   "mlbam": 518585,
-   "name": "Fernando Cruz",
-   "team": "NYY",
-   "fit": 57.8,
-   "n_pitches": 2,
-   "ip": 47.3,
-   "k_pct": 0.2857,
-   "bb_pct": 0.1478,
-   "fb_velo": 93.2,
-   "proj_velo": 92.0,
-   "fb_pct": 0.321,
-   "platoon_split": 0.06,
-   "components": {
-    "arsenal_depth": 45.0,
-    "command": 0.0,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 99.0,
-    "platoon_neutrality": 76.0,
-    "survivability": 100.0
-   },
-   "flags": [
-    {
-     "key": "needs_third",
-     "label": "needs a third pitch"
-    }
-   ],
-   "successful": true,
-   "arsenal": [
-    {
-     "pitch": "FS",
-     "usage": 0.521,
-     "whiff": 0.53,
-     "est_woba": 0.205
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.321,
-     "whiff": 0.154,
-     "est_woba": 0.405
-    }
-   ],
-   "pitch_add": {
-    "add": "Slider",
-    "target": "RHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.675,
-    "opp_ops": 0.615,
-    "reverse_index": 0.06,
-    "reverse": true,
-    "split": 0.06,
     "extreme": false,
     "weak_hand": "RHB"
    }
@@ -7679,6 +7673,71 @@
     "split": 0.466,
     "extreme": true,
     "weak_hand": "RHB"
+   }
+  },
+  {
+   "mlbam": 683618,
+   "name": "Edgardo Henriquez",
+   "team": "LAD",
+   "fit": 56.8,
+   "n_pitches": 3,
+   "ip": 44.0,
+   "k_pct": 0.2514,
+   "bb_pct": 0.1229,
+   "fb_velo": 100.9,
+   "proj_velo": 99.7,
+   "fb_pct": 0.597,
+   "platoon_split": 0.334,
+   "components": {
+    "arsenal_depth": 80.0,
+    "command": 0.0,
+    "fb_reliance_inv": 72.3,
+    "stuff_quality": 100.0,
+    "platoon_neutrality": 0.0,
+    "survivability": 100.0
+   },
+   "flags": [
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    }
+   ],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.325,
+     "whiff": 0.276,
+     "est_woba": 0.294
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.272,
+     "whiff": 0.149,
+     "est_woba": 0.259
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.223,
+     "whiff": 0.377,
+     "est_woba": 0.2
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.417,
+    "opp_ops": 0.751,
+    "reverse_index": -0.334,
+    "reverse": false,
+    "split": 0.334,
+    "extreme": true,
+    "weak_hand": "LHB"
    }
   },
   {
@@ -8066,6 +8125,69 @@
    }
   },
   {
+   "mlbam": 687330,
+   "name": "Kevin Kelly",
+   "team": "TB",
+   "fit": 54.9,
+   "n_pitches": 2,
+   "ip": 51.0,
+   "k_pct": 0.2222,
+   "bb_pct": 0.0423,
+   "fb_velo": 93.0,
+   "proj_velo": 91.7,
+   "fb_pct": 0.593,
+   "platoon_split": 0.209,
+   "components": {
+    "arsenal_depth": 45.0,
+    "command": 100.0,
+    "fb_reliance_inv": 73.4,
+    "stuff_quality": 61.9,
+    "platoon_neutrality": 16.4,
+    "survivability": 0.0
+   },
+   "flags": [
+    {
+     "key": "needs_third",
+     "label": "needs a third pitch"
+    },
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    }
+   ],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.593,
+     "whiff": 0.133,
+     "est_woba": 0.359
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.254,
+     "whiff": 0.271,
+     "est_woba": 0.248
+    }
+   ],
+   "pitch_add": {
+    "add": "Slider",
+    "target": "LHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.431,
+    "opp_ops": 0.64,
+    "reverse_index": -0.209,
+    "reverse": false,
+    "split": 0.209,
+    "extreme": true,
+    "weak_hand": "LHB"
+   }
+  },
+  {
    "mlbam": 623474,
    "name": "Jimmy Herget",
    "team": "COL",
@@ -8189,69 +8311,6 @@
     "reverse_index": -0.428,
     "reverse": false,
     "split": 0.428,
-    "extreme": true,
-    "weak_hand": "LHB"
-   }
-  },
-  {
-   "mlbam": 687330,
-   "name": "Kevin Kelly",
-   "team": "TB",
-   "fit": 54.5,
-   "n_pitches": 2,
-   "ip": 50.7,
-   "k_pct": 0.2234,
-   "bb_pct": 0.0426,
-   "fb_velo": 93.0,
-   "proj_velo": 91.7,
-   "fb_pct": 0.593,
-   "platoon_split": 0.217,
-   "components": {
-    "arsenal_depth": 45.0,
-    "command": 100.0,
-    "fb_reliance_inv": 73.4,
-    "stuff_quality": 61.9,
-    "platoon_neutrality": 13.2,
-    "survivability": 0.0
-   },
-   "flags": [
-    {
-     "key": "needs_third",
-     "label": "needs a third pitch"
-    },
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    }
-   ],
-   "successful": true,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.593,
-     "whiff": 0.133,
-     "est_woba": 0.359
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.254,
-     "whiff": 0.271,
-     "est_woba": 0.248
-    }
-   ],
-   "pitch_add": {
-    "add": "Slider",
-    "target": "LHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.431,
-    "opp_ops": 0.648,
-    "reverse_index": -0.217,
-    "reverse": false,
-    "split": 0.217,
     "extreme": true,
     "weak_hand": "LHB"
    }
@@ -8879,66 +8938,6 @@
    }
   },
   {
-   "mlbam": 700669,
-   "name": "Gordon Graceffo",
-   "team": "STL",
-   "fit": 53.1,
-   "n_pitches": 3,
-   "ip": 54.3,
-   "k_pct": 0.156,
-   "bb_pct": 0.1193,
-   "fb_velo": 95.5,
-   "proj_velo": 94.5,
-   "fb_pct": 0.4,
-   "platoon_split": 0.144,
-   "components": {
-    "arsenal_depth": 80.0,
-    "command": 1.0,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 48.0,
-    "platoon_neutrality": 42.4,
-    "survivability": 0.0
-   },
-   "flags": [],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.4,
-     "whiff": 0.088,
-     "est_woba": 0.421
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.287,
-     "whiff": 0.281,
-     "est_woba": 0.299
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.119,
-     "whiff": 0.211,
-     "est_woba": 0.183
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
-    "priority": "medium"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.672,
-    "opp_ops": 0.528,
-    "reverse_index": 0.144,
-    "reverse": true,
-    "split": 0.144,
-    "extreme": false,
-    "weak_hand": "RHB"
-   }
-  },
-  {
    "mlbam": 679358,
    "name": "Eric Orze",
    "team": "MIN",
@@ -9002,6 +9001,71 @@
    }
   },
   {
+   "mlbam": 700669,
+   "name": "Gordon Graceffo",
+   "team": "STL",
+   "fit": 53.0,
+   "n_pitches": 3,
+   "ip": 56.3,
+   "k_pct": 0.1607,
+   "bb_pct": 0.1161,
+   "fb_velo": 95.5,
+   "proj_velo": 94.5,
+   "fb_pct": 0.4,
+   "platoon_split": 0.165,
+   "components": {
+    "arsenal_depth": 80.0,
+    "command": 5.6,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 48.0,
+    "platoon_neutrality": 34.0,
+    "survivability": 0.0
+   },
+   "flags": [
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.4,
+     "whiff": 0.088,
+     "est_woba": 0.421
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.287,
+     "whiff": 0.281,
+     "est_woba": 0.299
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.119,
+     "whiff": 0.211,
+     "est_woba": 0.183
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "priority": "medium"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.666,
+    "opp_ops": 0.501,
+    "reverse_index": 0.165,
+    "reverse": true,
+    "split": 0.165,
+    "extreme": true,
+    "weak_hand": "RHB"
+   }
+  },
+  {
    "mlbam": 623149,
    "name": "Paul Sewald",
    "team": "AZ",
@@ -9062,65 +9126,6 @@
     "split": 0.426,
     "extreme": true,
     "weak_hand": "LHB"
-   }
-  },
-  {
-   "mlbam": 669093,
-   "name": "Jeremiah Estrada",
-   "team": "SD",
-   "fit": 52.7,
-   "n_pitches": 2,
-   "ip": 23.0,
-   "k_pct": 0.3011,
-   "bb_pct": 0.1398,
-   "fb_velo": 95.8,
-   "proj_velo": 94.5,
-   "fb_pct": 0.578,
-   "platoon_split": 0.074,
-   "components": {
-    "arsenal_depth": 45.0,
-    "command": 0.0,
-    "fb_reliance_inv": 77.7,
-    "stuff_quality": 88.9,
-    "platoon_neutrality": 70.4,
-    "survivability": 100.0
-   },
-   "flags": [
-    {
-     "key": "needs_third",
-     "label": "needs a third pitch"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.578,
-     "whiff": 0.255,
-     "est_woba": 0.345
-    },
-    {
-     "pitch": "FS",
-     "usage": 0.32,
-     "whiff": 0.535,
-     "est_woba": 0.2
-    }
-   ],
-   "pitch_add": {
-    "add": "Slider",
-    "target": "RHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.634,
-    "opp_ops": 0.56,
-    "reverse_index": 0.074,
-    "reverse": true,
-    "split": 0.074,
-    "extreme": false,
-    "weak_hand": "RHB"
    }
   },
   {
@@ -9607,6 +9612,65 @@
     "reverse_index": -0.11,
     "reverse": false,
     "split": 0.11,
+    "extreme": false,
+    "weak_hand": "RHB"
+   }
+  },
+  {
+   "mlbam": 669093,
+   "name": "Jeremiah Estrada",
+   "team": "SD",
+   "fit": 51.6,
+   "n_pitches": 2,
+   "ip": 23.7,
+   "k_pct": 0.2947,
+   "bb_pct": 0.1368,
+   "fb_velo": 95.8,
+   "proj_velo": 94.5,
+   "fb_pct": 0.578,
+   "platoon_split": 0.098,
+   "components": {
+    "arsenal_depth": 45.0,
+    "command": 0.0,
+    "fb_reliance_inv": 77.7,
+    "stuff_quality": 88.9,
+    "platoon_neutrality": 60.8,
+    "survivability": 100.0
+   },
+   "flags": [
+    {
+     "key": "needs_third",
+     "label": "needs a third pitch"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.578,
+     "whiff": 0.255,
+     "est_woba": 0.345
+    },
+    {
+     "pitch": "FS",
+     "usage": 0.32,
+     "whiff": 0.535,
+     "est_woba": 0.2
+    }
+   ],
+   "pitch_add": {
+    "add": "Slider",
+    "target": "RHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.634,
+    "opp_ops": 0.536,
+    "reverse_index": 0.098,
+    "reverse": true,
+    "split": 0.098,
     "extreme": false,
     "weak_hand": "RHB"
    }
@@ -10602,6 +10666,130 @@
    }
   },
   {
+   "mlbam": 690925,
+   "name": "Clayton Beeter",
+   "team": "WSH",
+   "fit": 48.5,
+   "n_pitches": 2,
+   "ip": 33.0,
+   "k_pct": 0.2394,
+   "bb_pct": 0.1479,
+   "fb_velo": 95.6,
+   "proj_velo": 94.4,
+   "fb_pct": 0.507,
+   "platoon_split": 0.037,
+   "components": {
+    "arsenal_depth": 45.0,
+    "command": 0.0,
+    "fb_reliance_inv": 98.0,
+    "stuff_quality": 60.3,
+    "platoon_neutrality": 85.2,
+    "survivability": 22.1
+   },
+   "flags": [
+    {
+     "key": "needs_third",
+     "label": "needs a third pitch"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "SL",
+     "usage": 0.493,
+     "whiff": 0.352,
+     "est_woba": 0.211
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.507,
+     "whiff": 0.207,
+     "est_woba": 0.441
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "medium"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.67,
+    "opp_ops": 0.707,
+    "reverse_index": -0.037,
+    "reverse": false,
+    "split": 0.037,
+    "extreme": false,
+    "weak_hand": "LHB"
+   }
+  },
+  {
+   "mlbam": 666808,
+   "name": "Camilo Doval",
+   "team": "PIT",
+   "fit": 48.5,
+   "n_pitches": 3,
+   "ip": 41.7,
+   "k_pct": 0.2216,
+   "bb_pct": 0.0973,
+   "fb_velo": 98.8,
+   "proj_velo": 97.4,
+   "fb_pct": 0.717,
+   "platoon_split": 0.429,
+   "components": {
+    "arsenal_depth": 80.0,
+    "command": 32.4,
+    "fb_reliance_inv": 38.0,
+    "stuff_quality": 82.8,
+    "platoon_neutrality": 0.0,
+    "survivability": 0.0
+   },
+   "flags": [
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.424,
+     "whiff": 0.187,
+     "est_woba": 0.29
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.293,
+     "whiff": 0.184,
+     "est_woba": 0.337
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.248,
+     "whiff": 0.451,
+     "est_woba": 0.276
+    }
+   ],
+   "pitch_add": {
+    "add": "Changeup",
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.522,
+    "opp_ops": 0.951,
+    "reverse_index": -0.429,
+    "reverse": false,
+    "split": 0.429,
+    "extreme": true,
+    "weak_hand": "LHB"
+   }
+  },
+  {
    "mlbam": 621097,
    "name": "Jacob Waguespack",
    "team": "DET",
@@ -10723,71 +10911,6 @@
     "split": 0.327,
     "extreme": true,
     "weak_hand": "RHB"
-   }
-  },
-  {
-   "mlbam": 666808,
-   "name": "Camilo Doval",
-   "team": "PIT",
-   "fit": 48.0,
-   "n_pitches": 3,
-   "ip": 40.7,
-   "k_pct": 0.2198,
-   "bb_pct": 0.0989,
-   "fb_velo": 98.8,
-   "proj_velo": 97.4,
-   "fb_pct": 0.717,
-   "platoon_split": 0.446,
-   "components": {
-    "arsenal_depth": 80.0,
-    "command": 30.1,
-    "fb_reliance_inv": 38.0,
-    "stuff_quality": 82.8,
-    "platoon_neutrality": 0.0,
-    "survivability": 0.0
-   },
-   "flags": [
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.424,
-     "whiff": 0.187,
-     "est_woba": 0.29
-    },
-    {
-     "pitch": "FC",
-     "usage": 0.293,
-     "whiff": 0.184,
-     "est_woba": 0.337
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.248,
-     "whiff": 0.451,
-     "est_woba": 0.276
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "LHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.528,
-    "opp_ops": 0.974,
-    "reverse_index": -0.446,
-    "reverse": false,
-    "split": 0.446,
-    "extreme": true,
-    "weak_hand": "LHB"
    }
   },
   {
@@ -11036,65 +11159,6 @@
     "split": 0.295,
     "extreme": true,
     "weak_hand": "LHB"
-   }
-  },
-  {
-   "mlbam": 690925,
-   "name": "Clayton Beeter",
-   "team": "WSH",
-   "fit": 47.7,
-   "n_pitches": 2,
-   "ip": 32.7,
-   "k_pct": 0.2446,
-   "bb_pct": 0.1439,
-   "fb_velo": 95.6,
-   "proj_velo": 94.4,
-   "fb_pct": 0.507,
-   "platoon_split": 0.054,
-   "components": {
-    "arsenal_depth": 45.0,
-    "command": 0.0,
-    "fb_reliance_inv": 98.0,
-    "stuff_quality": 60.3,
-    "platoon_neutrality": 78.4,
-    "survivability": 22.1
-   },
-   "flags": [
-    {
-     "key": "needs_third",
-     "label": "needs a third pitch"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "SL",
-     "usage": 0.493,
-     "whiff": 0.352,
-     "est_woba": 0.211
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.507,
-     "whiff": 0.207,
-     "est_woba": 0.441
-    }
-   ],
-   "pitch_add": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "medium"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.681,
-    "opp_ops": 0.627,
-    "reverse_index": 0.054,
-    "reverse": true,
-    "split": 0.054,
-    "extreme": false,
-    "weak_hand": "RHB"
    }
   },
   {
@@ -12087,13 +12151,13 @@
    "team": "SF",
    "fit": 43.0,
    "n_pitches": 2,
-   "ip": 23.7,
-   "k_pct": 0.25,
-   "bb_pct": 0.1667,
+   "ip": 25.0,
+   "k_pct": 0.2478,
+   "bb_pct": 0.1681,
    "fb_velo": 93.9,
    "proj_velo": 92.6,
    "fb_pct": 0.566,
-   "platoon_split": 0.399,
+   "platoon_split": 0.369,
    "components": {
     "arsenal_depth": 45.0,
     "command": 0.0,
@@ -12135,11 +12199,11 @@
    },
    "reverse_platoon": {
     "p_throws": "L",
-    "own_ops": 0.845,
-    "opp_ops": 0.446,
-    "reverse_index": 0.399,
+    "own_ops": 0.806,
+    "opp_ops": 0.437,
+    "reverse_index": 0.369,
     "reverse": true,
-    "split": 0.399,
+    "split": 0.369,
     "extreme": true,
     "weak_hand": "LHB"
    }
@@ -12269,6 +12333,69 @@
    }
   },
   {
+   "mlbam": 663765,
+   "name": "Jake Woodford",
+   "team": "CHC",
+   "fit": 42.6,
+   "n_pitches": 2,
+   "ip": 26.3,
+   "k_pct": 0.1825,
+   "bb_pct": 0.0556,
+   "fb_velo": 93.7,
+   "proj_velo": 92.3,
+   "fb_pct": 0.653,
+   "platoon_split": 0.414,
+   "components": {
+    "arsenal_depth": 45.0,
+    "command": 92.1,
+    "fb_reliance_inv": 56.3,
+    "stuff_quality": 0.0,
+    "platoon_neutrality": 0.0,
+    "survivability": 0.0
+   },
+   "flags": [
+    {
+     "key": "needs_third",
+     "label": "needs a third pitch"
+    },
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "FC",
+     "usage": 0.366,
+     "whiff": 0.213,
+     "est_woba": 0.474
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.287,
+     "whiff": 0.103,
+     "est_woba": 0.385
+    }
+   ],
+   "pitch_add": {
+    "add": "Slider",
+    "target": "LHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.731,
+    "opp_ops": 1.145,
+    "reverse_index": -0.414,
+    "reverse": false,
+    "split": 0.414,
+    "extreme": true,
+    "weak_hand": "LHB"
+   }
+  },
+  {
    "mlbam": 683000,
    "name": "Riley Cornelio",
    "team": "WSH",
@@ -12392,69 +12519,6 @@
     "split": 0.226,
     "extreme": true,
     "weak_hand": "RHB"
-   }
-  },
-  {
-   "mlbam": 663765,
-   "name": "Jake Woodford",
-   "team": "CHC",
-   "fit": 42.2,
-   "n_pitches": 2,
-   "ip": 25.3,
-   "k_pct": 0.187,
-   "bb_pct": 0.0569,
-   "fb_velo": 93.7,
-   "proj_velo": 92.3,
-   "fb_pct": 0.653,
-   "platoon_split": 0.375,
-   "components": {
-    "arsenal_depth": 45.0,
-    "command": 90.1,
-    "fb_reliance_inv": 56.3,
-    "stuff_quality": 0.0,
-    "platoon_neutrality": 0.0,
-    "survivability": 0.0
-   },
-   "flags": [
-    {
-     "key": "needs_third",
-     "label": "needs a third pitch"
-    },
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "FC",
-     "usage": 0.366,
-     "whiff": 0.213,
-     "est_woba": 0.474
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.287,
-     "whiff": 0.103,
-     "est_woba": 0.385
-    }
-   ],
-   "pitch_add": {
-    "add": "Slider",
-    "target": "LHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.752,
-    "opp_ops": 1.127,
-    "reverse_index": -0.375,
-    "reverse": false,
-    "split": 0.375,
-    "extreme": true,
-    "weak_hand": "LHB"
    }
   },
   {
@@ -13721,6 +13785,63 @@
    }
   },
   {
+   "mlbam": 663423,
+   "name": "Trent Thornton",
+   "team": "CHC",
+   "fit": 34.4,
+   "n_pitches": 1,
+   "ip": 34.7,
+   "k_pct": 0.1185,
+   "bb_pct": 0.0963,
+   "fb_velo": 95.0,
+   "proj_velo": 93.7,
+   "fb_pct": 0.327,
+   "platoon_split": 0.137,
+   "components": {
+    "arsenal_depth": 12.0,
+    "command": 33.9,
+    "fb_reliance_inv": 100.0,
+    "stuff_quality": 0.0,
+    "platoon_neutrality": 45.2,
+    "survivability": 0.0
+   },
+   "flags": [
+    {
+     "key": "needs_third",
+     "label": "needs a third pitch"
+    },
+    {
+     "key": "started_before",
+     "label": "started before"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.327,
+     "whiff": 0.173,
+     "est_woba": 0.42
+    }
+   ],
+   "pitch_add": {
+    "add": "Slider",
+    "target": "LHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "R",
+    "own_ops": 0.601,
+    "opp_ops": 0.738,
+    "reverse_index": -0.137,
+    "reverse": false,
+    "split": 0.137,
+    "extreme": false,
+    "weak_hand": "LHB"
+   }
+  },
+  {
    "mlbam": 669270,
    "name": "Joel Kuhnel",
    "team": "MIL",
@@ -13784,67 +13905,6 @@
    }
   },
   {
-   "mlbam": 663423,
-   "name": "Trent Thornton",
-   "team": "CHC",
-   "fit": 32.9,
-   "n_pitches": 1,
-   "ip": 33.3,
-   "k_pct": 0.1145,
-   "bb_pct": 0.0992,
-   "fb_velo": 95.0,
-   "proj_velo": 93.7,
-   "fb_pct": 0.327,
-   "platoon_split": 0.15,
-   "components": {
-    "arsenal_depth": 12.0,
-    "command": 29.7,
-    "fb_reliance_inv": 100.0,
-    "stuff_quality": 0.0,
-    "platoon_neutrality": 40.0,
-    "survivability": 0.0
-   },
-   "flags": [
-    {
-     "key": "needs_third",
-     "label": "needs a third pitch"
-    },
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    },
-    {
-     "key": "started_before",
-     "label": "started before"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.327,
-     "whiff": 0.173,
-     "est_woba": 0.42
-    }
-   ],
-   "pitch_add": {
-    "add": "Slider",
-    "target": "LHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "R",
-    "own_ops": 0.618,
-    "opp_ops": 0.768,
-    "reverse_index": -0.15,
-    "reverse": false,
-    "split": 0.15,
-    "extreme": true,
-    "weak_hand": "LHB"
-   }
-  },
-  {
    "mlbam": 445276,
    "name": "Kenley Jansen",
    "team": "DET",
@@ -13902,6 +13962,67 @@
    }
   },
   {
+   "mlbam": 657612,
+   "name": "Tim Hill",
+   "team": "NYY",
+   "fit": 32.0,
+   "n_pitches": 1,
+   "ip": 42.0,
+   "k_pct": 0.1143,
+   "bb_pct": 0.0571,
+   "fb_velo": 89.3,
+   "proj_velo": 87.4,
+   "fb_pct": 0.804,
+   "platoon_split": 0.406,
+   "components": {
+    "arsenal_depth": 12.0,
+    "command": 89.8,
+    "fb_reliance_inv": 13.1,
+    "stuff_quality": 71.7,
+    "platoon_neutrality": 0.0,
+    "survivability": 9.3
+   },
+   "flags": [
+    {
+     "key": "relief_only",
+     "label": "relief-only profile"
+    },
+    {
+     "key": "needs_third",
+     "label": "needs a third pitch"
+    },
+    {
+     "key": "platoon_risk",
+     "label": "platoon risk"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.804,
+     "whiff": 0.1,
+     "est_woba": 0.314
+    }
+   ],
+   "pitch_add": {
+    "add": "Slider",
+    "target": "RHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   },
+   "reverse_platoon": {
+    "p_throws": "L",
+    "own_ops": 0.585,
+    "opp_ops": 0.991,
+    "reverse_index": -0.406,
+    "reverse": false,
+    "split": 0.406,
+    "extreme": true,
+    "weak_hand": "RHB"
+   }
+  },
+  {
    "mlbam": 696519,
    "name": "Samy Natera Jr.",
    "team": "LAA",
@@ -13955,67 +14076,6 @@
     "reverse": false,
     "split": 0.129,
     "extreme": false,
-    "weak_hand": "RHB"
-   }
-  },
-  {
-   "mlbam": 657612,
-   "name": "Tim Hill",
-   "team": "NYY",
-   "fit": 31.5,
-   "n_pitches": 1,
-   "ip": 40.7,
-   "k_pct": 0.1124,
-   "bb_pct": 0.0592,
-   "fb_velo": 89.3,
-   "proj_velo": 87.4,
-   "fb_pct": 0.804,
-   "platoon_split": 0.435,
-   "components": {
-    "arsenal_depth": 12.0,
-    "command": 86.9,
-    "fb_reliance_inv": 13.1,
-    "stuff_quality": 71.7,
-    "platoon_neutrality": 0.0,
-    "survivability": 9.3
-   },
-   "flags": [
-    {
-     "key": "relief_only",
-     "label": "relief-only profile"
-    },
-    {
-     "key": "needs_third",
-     "label": "needs a third pitch"
-    },
-    {
-     "key": "platoon_risk",
-     "label": "platoon risk"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.804,
-     "whiff": 0.1,
-     "est_woba": 0.314
-    }
-   ],
-   "pitch_add": {
-    "add": "Slider",
-    "target": "RHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   },
-   "reverse_platoon": {
-    "p_throws": "L",
-    "own_ops": 0.556,
-    "opp_ops": 0.991,
-    "reverse_index": -0.435,
-    "reverse": false,
-    "split": 0.435,
-    "extreme": true,
     "weak_hand": "RHB"
    }
   },
@@ -14715,56 +14775,6 @@
    "proj_relief_rem_plus": 101
   },
   {
-   "mlbam": 837227,
-   "name": "Tatsuya Imai",
-   "team": "HOU",
-   "fit": 54.2,
-   "n_pitches": 2,
-   "ip": 58.7,
-   "k_pct": 0.2717,
-   "bb_pct": 0.1509,
-   "fb_velo": 94.9,
-   "proj_velo": 96.1,
-   "fb_pct": null,
-   "platoon_split": 0.185,
-   "components": {
-    "stuff_upside": 47.3,
-    "putaway": 100.0,
-    "velo_leverage": 44.5,
-    "tto_leakage": 38.5,
-    "conversion_need": 83.6
-   },
-   "flags": [
-    {
-     "key": "putaway",
-     "label": "late-inning weapon"
-    },
-    {
-     "key": "struggling_sp",
-     "label": "struggling as a starter"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "SL",
-     "usage": 0.454,
-     "whiff": 0.398,
-     "est_woba": 0.272
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.427,
-     "whiff": 0.18,
-     "est_woba": 0.419
-    }
-   ],
-   "best_whiff": 0.398,
-   "relief_upside": 61.2,
-   "starter_era": 5.83,
-   "proj_relief_rem_plus": 98
-  },
-  {
    "mlbam": 686218,
    "name": "Emmet Sheehan",
    "team": "LAD",
@@ -15236,7 +15246,7 @@
    "best_whiff": 0.363,
    "relief_upside": 71.3,
    "starter_era": 4.77,
-   "proj_relief_rem_plus": 113
+   "proj_relief_rem_plus": 114
   },
   {
    "mlbam": 656288,
@@ -15357,24 +15367,74 @@
    "proj_relief_rem_plus": 101
   },
   {
+   "mlbam": 837227,
+   "name": "Tatsuya Imai",
+   "team": "HOU",
+   "fit": 51.5,
+   "n_pitches": 2,
+   "ip": 61.7,
+   "k_pct": 0.281,
+   "bb_pct": 0.146,
+   "fb_velo": 94.9,
+   "proj_velo": 96.1,
+   "fb_pct": null,
+   "platoon_split": 0.209,
+   "components": {
+    "stuff_upside": 47.3,
+    "putaway": 100.0,
+    "velo_leverage": 44.5,
+    "tto_leakage": 38.5,
+    "conversion_need": 77.3
+   },
+   "flags": [
+    {
+     "key": "putaway",
+     "label": "late-inning weapon"
+    },
+    {
+     "key": "struggling_sp",
+     "label": "struggling as a starter"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "SL",
+     "usage": 0.454,
+     "whiff": 0.398,
+     "est_woba": 0.272
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.427,
+     "whiff": 0.18,
+     "est_woba": 0.419
+    }
+   ],
+   "best_whiff": 0.398,
+   "relief_upside": 61.2,
+   "starter_era": 5.55,
+   "proj_relief_rem_plus": 101
+  },
+  {
    "mlbam": 605400,
    "name": "Aaron Nola",
    "team": "PHI",
-   "fit": 51.5,
+   "fit": 51.0,
    "n_pitches": 4,
-   "ip": 114.0,
-   "k_pct": 0.2329,
-   "bb_pct": 0.0783,
+   "ip": 120.0,
+   "k_pct": 0.2318,
+   "bb_pct": 0.0785,
    "fb_velo": 92.2,
    "proj_velo": 93.2,
    "fb_pct": null,
-   "platoon_split": 0.101,
+   "platoon_split": 0.098,
    "components": {
     "stuff_upside": 64.4,
     "putaway": 100.0,
     "velo_leverage": 20.0,
     "tto_leakage": 0.0,
-    "conversion_need": 87.3
+    "conversion_need": 86.2
    },
    "flags": [
     {
@@ -15421,8 +15481,76 @@
    ],
    "best_whiff": 0.405,
    "relief_upside": 56.5,
-   "starter_era": 5.61,
+   "starter_era": 5.55,
    "proj_relief_rem_plus": 108
+  },
+  {
+   "mlbam": 687075,
+   "name": "Brandon Sproat",
+   "team": "MIL",
+   "fit": 50.3,
+   "n_pitches": 4,
+   "ip": 95.7,
+   "k_pct": 0.2415,
+   "bb_pct": 0.1159,
+   "fb_velo": 96.7,
+   "proj_velo": 98.1,
+   "fb_pct": null,
+   "platoon_split": 0.021,
+   "components": {
+    "stuff_upside": 45.6,
+    "putaway": 100.0,
+    "velo_leverage": 60.9,
+    "tto_leakage": 18.8,
+    "conversion_need": 75.1
+   },
+   "flags": [
+    {
+     "key": "putaway",
+     "label": "late-inning weapon"
+    },
+    {
+     "key": "struggling_sp",
+     "label": "struggling as a starter"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.251,
+     "whiff": 0.165,
+     "est_woba": 0.329
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.246,
+     "whiff": 0.232,
+     "est_woba": 0.334
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.222,
+     "whiff": 0.243,
+     "est_woba": 0.413
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.101,
+     "whiff": 0.324,
+     "est_woba": 0.365
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.098,
+     "whiff": 0.409,
+     "est_woba": 0.242
+    }
+   ],
+   "best_whiff": 0.409,
+   "relief_upside": 60.9,
+   "starter_era": 5.27,
+   "proj_relief_rem_plus": 100
   },
   {
    "mlbam": 683004,
@@ -15893,70 +16021,6 @@
    "proj_relief_rem_plus": 103
   },
   {
-   "mlbam": 687075,
-   "name": "Brandon Sproat",
-   "team": "MIL",
-   "fit": 47.4,
-   "n_pitches": 4,
-   "ip": 92.7,
-   "k_pct": 0.2412,
-   "bb_pct": 0.1156,
-   "fb_velo": 96.7,
-   "proj_velo": 98.1,
-   "fb_pct": null,
-   "platoon_split": 0.04,
-   "components": {
-    "stuff_upside": 45.6,
-    "putaway": 100.0,
-    "velo_leverage": 60.9,
-    "tto_leakage": 18.8,
-    "conversion_need": 68.4
-   },
-   "flags": [
-    {
-     "key": "putaway",
-     "label": "late-inning weapon"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.251,
-     "whiff": 0.165,
-     "est_woba": 0.329
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.246,
-     "whiff": 0.232,
-     "est_woba": 0.334
-    },
-    {
-     "pitch": "FC",
-     "usage": 0.222,
-     "whiff": 0.243,
-     "est_woba": 0.413
-    },
-    {
-     "pitch": "CU",
-     "usage": 0.101,
-     "whiff": 0.324,
-     "est_woba": 0.365
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.098,
-     "whiff": 0.409,
-     "est_woba": 0.242
-    }
-   ],
-   "best_whiff": 0.409,
-   "relief_upside": 60.9,
-   "starter_era": 5.05,
-   "proj_relief_rem_plus": 100
-  },
-  {
    "mlbam": 683003,
    "name": "Jared Jones",
    "team": "PIT",
@@ -16008,13 +16072,13 @@
    "team": "COL",
    "fit": 46.5,
    "n_pitches": 5,
-   "ip": 104.7,
-   "k_pct": 0.1594,
-   "bb_pct": 0.0797,
+   "ip": 107.7,
+   "k_pct": 0.1538,
+   "bb_pct": 0.0827,
    "fb_velo": 94.0,
    "proj_velo": 95.1,
    "fb_pct": null,
-   "platoon_split": 0.227,
+   "platoon_split": 0.228,
    "components": {
     "stuff_upside": 34.6,
     "putaway": 89.3,
@@ -16079,8 +16143,8 @@
    ],
    "best_whiff": 0.321,
    "relief_upside": 46.5,
-   "starter_era": 6.54,
-   "proj_relief_rem_plus": 91
+   "starter_era": 6.94,
+   "proj_relief_rem_plus": 89
   },
   {
    "mlbam": 687570,
@@ -16341,59 +16405,6 @@
    "proj_relief_rem_plus": 96
   },
   {
-   "mlbam": 696149,
-   "name": "Bubba Chandler",
-   "team": "PIT",
-   "fit": 45.2,
-   "n_pitches": 3,
-   "ip": 104.7,
-   "k_pct": 0.2009,
-   "bb_pct": 0.1231,
-   "fb_velo": 98.5,
-   "proj_velo": 99.6,
-   "fb_pct": null,
-   "platoon_split": 0.171,
-   "components": {
-    "stuff_upside": 71.9,
-    "putaway": 77.4,
-    "velo_leverage": 77.3,
-    "tto_leakage": 17.9,
-    "conversion_need": 54.3
-   },
-   "flags": [],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.475,
-     "whiff": 0.214,
-     "est_woba": 0.335
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.199,
-     "whiff": 0.289,
-     "est_woba": 0.271
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.167,
-     "whiff": 0.252,
-     "est_woba": 0.281
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.071,
-     "whiff": 0.143,
-     "est_woba": 0.368
-    }
-   ],
-   "best_whiff": 0.289,
-   "relief_upside": 66.5,
-   "starter_era": 4.56,
-   "proj_relief_rem_plus": 91
-  },
-  {
    "mlbam": 656849,
    "name": "David Peterson",
    "team": "CHC",
@@ -16460,6 +16471,59 @@
    "relief_upside": 50.7,
    "starter_era": 5.52,
    "proj_relief_rem_plus": 96
+  },
+  {
+   "mlbam": 696149,
+   "name": "Bubba Chandler",
+   "team": "PIT",
+   "fit": 44.3,
+   "n_pitches": 3,
+   "ip": 110.3,
+   "k_pct": 0.2012,
+   "bb_pct": 0.1253,
+   "fb_velo": 98.5,
+   "proj_velo": 99.6,
+   "fb_pct": null,
+   "platoon_split": 0.158,
+   "components": {
+    "stuff_upside": 71.9,
+    "putaway": 77.4,
+    "velo_leverage": 77.3,
+    "tto_leakage": 17.9,
+    "conversion_need": 52.3
+   },
+   "flags": [],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.475,
+     "whiff": 0.214,
+     "est_woba": 0.335
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.199,
+     "whiff": 0.289,
+     "est_woba": 0.271
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.167,
+     "whiff": 0.252,
+     "est_woba": 0.281
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.071,
+     "whiff": 0.143,
+     "est_woba": 0.368
+    }
+   ],
+   "best_whiff": 0.289,
+   "relief_upside": 66.5,
+   "starter_era": 4.49,
+   "proj_relief_rem_plus": 90
   },
   {
    "mlbam": 621111,
@@ -18323,6 +18387,64 @@
    "proj_relief_rem_plus": 100
   },
   {
+   "mlbam": 663903,
+   "name": "Brady Singer",
+   "team": "CIN",
+   "fit": 37.9,
+   "n_pitches": 3,
+   "ip": 107.7,
+   "k_pct": 0.19,
+   "bb_pct": 0.0752,
+   "fb_velo": 91.3,
+   "proj_velo": 92.4,
+   "fb_pct": null,
+   "platoon_split": 0.132,
+   "components": {
+    "stuff_upside": 53.1,
+    "putaway": 100.0,
+    "velo_leverage": 11.8,
+    "tto_leakage": 17.9,
+    "conversion_need": 58.2
+   },
+   "flags": [
+    {
+     "key": "putaway",
+     "label": "late-inning weapon"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.477,
+     "whiff": 0.152,
+     "est_woba": 0.359
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.292,
+     "whiff": 0.346,
+     "est_woba": 0.292
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.131,
+     "whiff": 0.451,
+     "est_woba": 0.287
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.069,
+     "whiff": 0.203,
+     "est_woba": 0.46
+    }
+   ],
+   "best_whiff": 0.451,
+   "relief_upside": 53.6,
+   "starter_era": 4.68,
+   "proj_relief_rem_plus": 100
+  },
+  {
    "mlbam": 605135,
    "name": "Chris Bassitt",
    "team": "BAL",
@@ -18740,62 +18862,6 @@
    "proj_relief_rem_plus": 104
   },
   {
-   "mlbam": 669456,
-   "name": "Shane Bieber",
-   "team": "TOR",
-   "fit": 35.4,
-   "n_pitches": 3,
-   "ip": 31.3,
-   "k_pct": 0.156,
-   "bb_pct": 0.1277,
-   "fb_velo": 92.5,
-   "proj_velo": 93.5,
-   "fb_pct": null,
-   "platoon_split": 0.295,
-   "components": {
-    "stuff_upside": 22.3,
-    "putaway": 100.0,
-    "velo_leverage": 22.7,
-    "tto_leakage": 14.0,
-    "conversion_need": 71.0
-   },
-   "flags": [
-    {
-     "key": "putaway",
-     "label": "late-inning weapon"
-    },
-    {
-     "key": "struggling_sp",
-     "label": "struggling as a starter"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.367,
-     "whiff": 0.153,
-     "est_woba": 0.403
-    },
-    {
-     "pitch": "CU",
-     "usage": 0.18,
-     "whiff": 0.373,
-     "est_woba": 0.393
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.209,
-     "whiff": 0.255,
-     "est_woba": 0.304
-    }
-   ],
-   "best_whiff": 0.373,
-   "relief_upside": 44.4,
-   "starter_era": 5.74,
-   "proj_relief_rem_plus": 87
-  },
-  {
    "mlbam": 677960,
    "name": "Ryan Weathers",
    "team": "NYY",
@@ -19106,7 +19172,7 @@
    "best_whiff": 0.329,
    "relief_upside": 71.8,
    "starter_era": 3.68,
-   "proj_relief_rem_plus": 103
+   "proj_relief_rem_plus": 104
   },
   {
    "mlbam": 622663,
@@ -19478,64 +19544,6 @@
    "proj_relief_rem_plus": 103
   },
   {
-   "mlbam": 663903,
-   "name": "Brady Singer",
-   "team": "CIN",
-   "fit": 34.1,
-   "n_pitches": 3,
-   "ip": 107.7,
-   "k_pct": 0.19,
-   "bb_pct": 0.0752,
-   "fb_velo": 91.3,
-   "proj_velo": 92.4,
-   "fb_pct": null,
-   "platoon_split": 0.125,
-   "components": {
-    "stuff_upside": 53.1,
-    "putaway": 100.0,
-    "velo_leverage": 11.8,
-    "tto_leakage": 17.9,
-    "conversion_need": 48.0
-   },
-   "flags": [
-    {
-     "key": "putaway",
-     "label": "late-inning weapon"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.477,
-     "whiff": 0.152,
-     "est_woba": 0.359
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.292,
-     "whiff": 0.346,
-     "est_woba": 0.292
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.131,
-     "whiff": 0.451,
-     "est_woba": 0.287
-    },
-    {
-     "pitch": "FC",
-     "usage": 0.069,
-     "whiff": 0.203,
-     "est_woba": 0.46
-    }
-   ],
-   "best_whiff": 0.451,
-   "relief_upside": 53.6,
-   "starter_era": 4.35,
-   "proj_relief_rem_plus": 100
-  },
-  {
    "mlbam": 608566,
    "name": "Germ\u00e1n M\u00e1rquez",
    "team": "SD",
@@ -19884,6 +19892,58 @@
    "relief_upside": 65.8,
    "starter_era": 3.72,
    "proj_relief_rem_plus": 99
+  },
+  {
+   "mlbam": 669456,
+   "name": "Shane Bieber",
+   "team": "TOR",
+   "fit": 32.4,
+   "n_pitches": 3,
+   "ip": 37.0,
+   "k_pct": 0.1657,
+   "bb_pct": 0.1183,
+   "fb_velo": 92.5,
+   "proj_velo": 93.5,
+   "fb_pct": null,
+   "platoon_split": 0.261,
+   "components": {
+    "stuff_upside": 22.3,
+    "putaway": 100.0,
+    "velo_leverage": 22.7,
+    "tto_leakage": 14.0,
+    "conversion_need": 61.3
+   },
+   "flags": [
+    {
+     "key": "putaway",
+     "label": "late-inning weapon"
+    }
+   ],
+   "successful": false,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.367,
+     "whiff": 0.153,
+     "est_woba": 0.403
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.18,
+     "whiff": 0.373,
+     "est_woba": 0.393
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.209,
+     "whiff": 0.255,
+     "est_woba": 0.304
+    }
+   ],
+   "best_whiff": 0.373,
+   "relief_upside": 44.4,
+   "starter_era": 5.11,
+   "proj_relief_rem_plus": 88
   },
   {
    "mlbam": 691587,
@@ -20670,7 +20730,7 @@
    "best_whiff": 0.5,
    "relief_upside": 78.0,
    "starter_era": 2.72,
-   "proj_relief_rem_plus": 124
+   "proj_relief_rem_plus": 123
   },
   {
    "mlbam": 605540,
@@ -20973,70 +21033,6 @@
    "relief_upside": 58.8,
    "starter_era": 3.81,
    "proj_relief_rem_plus": 102
-  },
-  {
-   "mlbam": 657277,
-   "name": "Logan Webb",
-   "team": "SF",
-   "fit": 30.2,
-   "n_pitches": 5,
-   "ip": 119.0,
-   "k_pct": 0.1914,
-   "bb_pct": 0.0617,
-   "fb_velo": 92.4,
-   "proj_velo": 93.5,
-   "fb_pct": null,
-   "platoon_split": 0.106,
-   "components": {
-    "stuff_upside": 78.4,
-    "putaway": 75.9,
-    "velo_leverage": 21.8,
-    "tto_leakage": 4.9,
-    "conversion_need": 35.0
-   },
-   "flags": [
-    {
-     "key": "keep_starting",
-     "label": "deep arsenal, keep starting"
-    }
-   ],
-   "successful": false,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.308,
-     "whiff": 0.105,
-     "est_woba": 0.363
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.256,
-     "whiff": 0.285,
-     "est_woba": 0.29
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.125,
-     "whiff": 0.219,
-     "est_woba": 0.254
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.187,
-     "whiff": 0.238,
-     "est_woba": 0.286
-    },
-    {
-     "pitch": "FC",
-     "usage": 0.124,
-     "whiff": 0.216,
-     "est_woba": 0.279
-    }
-   ],
-   "best_whiff": 0.285,
-   "relief_upside": 55.3,
-   "starter_era": 3.93,
-   "proj_relief_rem_plus": 105
   },
   {
    "mlbam": 663460,
@@ -21529,6 +21525,62 @@
    "proj_relief_rem_plus": 80
   },
   {
+   "mlbam": 571510,
+   "name": "Matthew Boyd",
+   "team": "CHC",
+   "fit": 28.3,
+   "n_pitches": 3,
+   "ip": 72.7,
+   "k_pct": 0.2086,
+   "bb_pct": 0.0662,
+   "fb_velo": 92.7,
+   "proj_velo": 93.7,
+   "fb_pct": null,
+   "platoon_split": 0.157,
+   "components": {
+    "stuff_upside": 59.3,
+    "putaway": 100.0,
+    "velo_leverage": 24.5,
+    "tto_leakage": 14.0,
+    "conversion_need": 27.1
+   },
+   "flags": [
+    {
+     "key": "putaway",
+     "label": "late-inning weapon"
+    },
+    {
+     "key": "succeeding_sp",
+     "label": "succeeding as a starter"
+    }
+   ],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.466,
+     "whiff": 0.176,
+     "est_woba": 0.378
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.275,
+     "whiff": 0.278,
+     "est_woba": 0.321
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.156,
+     "whiff": 0.508,
+     "est_woba": 0.196
+    }
+   ],
+   "best_whiff": 0.508,
+   "relief_upside": 57.8,
+   "starter_era": 3.59,
+   "proj_relief_rem_plus": 106
+  },
+  {
    "mlbam": 690986,
    "name": "Kyle Harrison",
    "team": "MIL",
@@ -21583,6 +21635,74 @@
    "relief_upside": 76.3,
    "starter_era": 3.01,
    "proj_relief_rem_plus": 130
+  },
+  {
+   "mlbam": 657277,
+   "name": "Logan Webb",
+   "team": "SF",
+   "fit": 27.8,
+   "n_pitches": 5,
+   "ip": 125.0,
+   "k_pct": 0.198,
+   "bb_pct": 0.0608,
+   "fb_velo": 92.4,
+   "proj_velo": 93.5,
+   "fb_pct": null,
+   "platoon_split": 0.08,
+   "components": {
+    "stuff_upside": 78.4,
+    "putaway": 75.9,
+    "velo_leverage": 21.8,
+    "tto_leakage": 4.9,
+    "conversion_need": 28.9
+   },
+   "flags": [
+    {
+     "key": "succeeding_sp",
+     "label": "succeeding as a starter"
+    },
+    {
+     "key": "keep_starting",
+     "label": "deep arsenal, keep starting"
+    }
+   ],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.308,
+     "whiff": 0.105,
+     "est_woba": 0.363
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.256,
+     "whiff": 0.285,
+     "est_woba": 0.29
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.125,
+     "whiff": 0.219,
+     "est_woba": 0.254
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.187,
+     "whiff": 0.238,
+     "est_woba": 0.286
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.124,
+     "whiff": 0.216,
+     "est_woba": 0.279
+    }
+   ],
+   "best_whiff": 0.285,
+   "relief_upside": 55.3,
+   "starter_era": 3.74,
+   "proj_relief_rem_plus": 107
   },
   {
    "mlbam": 701656,
@@ -21920,63 +22040,7 @@
    "best_whiff": 0.461,
    "relief_upside": 67.0,
    "starter_era": 3.29,
-   "proj_relief_rem_plus": 103
-  },
-  {
-   "mlbam": 571510,
-   "name": "Matthew Boyd",
-   "team": "CHC",
-   "fit": 26.7,
-   "n_pitches": 3,
-   "ip": 66.0,
-   "k_pct": 0.219,
-   "bb_pct": 0.0693,
-   "fb_velo": 92.7,
-   "proj_velo": 93.7,
-   "fb_pct": null,
-   "platoon_split": 0.2,
-   "components": {
-    "stuff_upside": 59.3,
-    "putaway": 100.0,
-    "velo_leverage": 24.5,
-    "tto_leakage": 14.0,
-    "conversion_need": 23.0
-   },
-   "flags": [
-    {
-     "key": "putaway",
-     "label": "late-inning weapon"
-    },
-    {
-     "key": "succeeding_sp",
-     "label": "succeeding as a starter"
-    }
-   ],
-   "successful": true,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.466,
-     "whiff": 0.176,
-     "est_woba": 0.378
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.275,
-     "whiff": 0.278,
-     "est_woba": 0.321
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.156,
-     "whiff": 0.508,
-     "est_woba": 0.196
-    }
-   ],
-   "best_whiff": 0.508,
-   "relief_upside": 57.8,
-   "starter_era": 3.41,
-   "proj_relief_rem_plus": 107
+   "proj_relief_rem_plus": 104
   },
   {
    "mlbam": 687562,
@@ -22561,13 +22625,13 @@
    "team": "NYY",
    "fit": 25.7,
    "n_pitches": 3,
-   "ip": 136.7,
-   "k_pct": 0.3067,
-   "bb_pct": 0.0483,
+   "ip": 139.7,
+   "k_pct": 0.3081,
+   "bb_pct": 0.0559,
    "fb_velo": 97.8,
    "proj_velo": 99.5,
    "fb_pct": null,
-   "platoon_split": 0.023,
+   "platoon_split": 0.042,
    "components": {
     "stuff_upside": 100.0,
     "putaway": 100.0,
@@ -22614,8 +22678,8 @@
    ],
    "best_whiff": 0.385,
    "relief_upside": 85.8,
-   "starter_era": 2.04,
-   "proj_relief_rem_plus": 142
+   "starter_era": 2.26,
+   "proj_relief_rem_plus": 139
   },
   {
    "mlbam": 695505,
@@ -23434,6 +23498,58 @@
    "proj_relief_rem_plus": 117
   },
   {
+   "mlbam": 680736,
+   "name": "Justin Wrobleski",
+   "team": "LAD",
+   "fit": 23.1,
+   "n_pitches": 2,
+   "ip": 117.0,
+   "k_pct": 0.1928,
+   "bb_pct": 0.0508,
+   "fb_velo": 94.3,
+   "proj_velo": 95.6,
+   "fb_pct": null,
+   "platoon_split": 0.131,
+   "components": {
+    "stuff_upside": 72.2,
+    "putaway": 56.7,
+    "velo_leverage": 39.1,
+    "tto_leakage": 44.3,
+    "conversion_need": 15.5
+   },
+   "flags": [
+    {
+     "key": "succeeding_sp",
+     "label": "succeeding as a starter"
+    }
+   ],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.493,
+     "whiff": 0.233,
+     "est_woba": 0.293
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.294,
+     "whiff": 0.2,
+     "est_woba": 0.322
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.075,
+     "whiff": 0.077,
+     "est_woba": 0.414
+    }
+   ],
+   "best_whiff": 0.233,
+   "relief_upside": 56.7,
+   "starter_era": 3.31,
+   "proj_relief_rem_plus": 108
+  },
+  {
    "mlbam": 641778,
    "name": "Eric Lauer",
    "team": "LAD",
@@ -24021,6 +24137,64 @@
    "proj_relief_rem_plus": 118
   },
   {
+   "mlbam": 650633,
+   "name": "Michael King",
+   "team": "SD",
+   "fit": 21.7,
+   "n_pitches": 4,
+   "ip": 130.3,
+   "k_pct": 0.2119,
+   "bb_pct": 0.1004,
+   "fb_velo": 94.0,
+   "proj_velo": 95.0,
+   "fb_pct": null,
+   "platoon_split": 0.067,
+   "components": {
+    "stuff_upside": 53.0,
+    "putaway": 80.0,
+    "velo_leverage": 36.4,
+    "tto_leakage": 0.0,
+    "conversion_need": 19.3
+   },
+   "flags": [
+    {
+     "key": "succeeding_sp",
+     "label": "succeeding as a starter"
+    }
+   ],
+   "successful": true,
+   "arsenal": [
+    {
+     "pitch": "CH",
+     "usage": 0.283,
+     "whiff": 0.296,
+     "est_woba": 0.295
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.281,
+     "whiff": 0.168,
+     "est_woba": 0.406
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.191,
+     "whiff": 0.295,
+     "est_woba": 0.357
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.195,
+     "whiff": 0.269,
+     "est_woba": 0.276
+    }
+   ],
+   "best_whiff": 0.296,
+   "relief_upside": 49.8,
+   "starter_era": 3.45,
+   "proj_relief_rem_plus": 99
+  },
+  {
    "mlbam": 663554,
    "name": "Casey Mize",
    "team": "DET",
@@ -24225,64 +24399,6 @@
    "relief_upside": 60.5,
    "starter_era": 3.06,
    "proj_relief_rem_plus": 113
-  },
-  {
-   "mlbam": 650633,
-   "name": "Michael King",
-   "team": "SD",
-   "fit": 20.9,
-   "n_pitches": 4,
-   "ip": 125.3,
-   "k_pct": 0.2117,
-   "bb_pct": 0.0971,
-   "fb_velo": 94.0,
-   "proj_velo": 95.0,
-   "fb_pct": null,
-   "platoon_split": 0.059,
-   "components": {
-    "stuff_upside": 53.0,
-    "putaway": 80.0,
-    "velo_leverage": 36.4,
-    "tto_leakage": 0.0,
-    "conversion_need": 17.1
-   },
-   "flags": [
-    {
-     "key": "succeeding_sp",
-     "label": "succeeding as a starter"
-    }
-   ],
-   "successful": true,
-   "arsenal": [
-    {
-     "pitch": "CH",
-     "usage": 0.283,
-     "whiff": 0.296,
-     "est_woba": 0.295
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.281,
-     "whiff": 0.168,
-     "est_woba": 0.406
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.191,
-     "whiff": 0.295,
-     "est_woba": 0.357
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.195,
-     "whiff": 0.269,
-     "est_woba": 0.276
-    }
-   ],
-   "best_whiff": 0.296,
-   "relief_upside": 49.8,
-   "starter_era": 3.38,
-   "proj_relief_rem_plus": 100
   },
   {
    "mlbam": 608372,
@@ -24794,66 +24910,14 @@
    "proj_relief_rem_plus": 101
   },
   {
-   "mlbam": 680736,
-   "name": "Justin Wrobleski",
-   "team": "LAD",
-   "fit": 17.9,
-   "n_pitches": 2,
-   "ip": 112.7,
-   "k_pct": 0.1938,
-   "bb_pct": 0.0468,
-   "fb_velo": 94.3,
-   "proj_velo": 95.6,
-   "fb_pct": null,
-   "platoon_split": 0.151,
-   "components": {
-    "stuff_upside": 72.2,
-    "putaway": 56.7,
-    "velo_leverage": 39.1,
-    "tto_leakage": 44.3,
-    "conversion_need": 2.3
-   },
-   "flags": [
-    {
-     "key": "succeeding_sp",
-     "label": "succeeding as a starter"
-    }
-   ],
-   "successful": true,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.493,
-     "whiff": 0.233,
-     "est_woba": 0.293
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.294,
-     "whiff": 0.2,
-     "est_woba": 0.322
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.075,
-     "whiff": 0.077,
-     "est_woba": 0.414
-    }
-   ],
-   "best_whiff": 0.233,
-   "relief_upside": 56.7,
-   "starter_era": 2.88,
-   "proj_relief_rem_plus": 110
-  },
-  {
    "mlbam": 700241,
    "name": "Michael McGreevy",
    "team": "STL",
-   "fit": 16.8,
+   "fit": 16.9,
    "n_pitches": 6,
-   "ip": 116.0,
-   "k_pct": 0.162,
-   "bb_pct": 0.0618,
+   "ip": 120.3,
+   "k_pct": 0.1663,
+   "bb_pct": 0.0616,
    "fb_velo": 91.7,
    "proj_velo": 92.8,
    "fb_pct": null,
@@ -24863,7 +24927,7 @@
     "putaway": 67.8,
     "velo_leverage": 15.5,
     "tto_leakage": 3.3,
-    "conversion_need": 23.7
+    "conversion_need": 24.2
    },
    "flags": [
     {
@@ -24916,7 +24980,7 @@
    ],
    "best_whiff": 0.263,
    "relief_upside": 36.1,
-   "starter_era": 3.57,
+   "starter_era": 3.59,
    "proj_relief_rem_plus": 100
   },
   {
@@ -25131,20 +25195,20 @@
    },
    "post": {
     "season": 2026,
-    "g": 15,
-    "gs": 7,
-    "ip": 57.7,
-    "k_pct": 0.2302,
-    "bb_pct": 0.1111,
-    "era": 4.06
+    "g": 16,
+    "gs": 8,
+    "ip": 64.0,
+    "k_pct": 0.2283,
+    "bb_pct": 0.1123,
+    "era": 3.94
    },
    "held": null,
    "in_progress": true,
    "pre_fit": 20.8,
    "success": null,
    "pre_war": 0.7,
-   "post_war": 0.8,
-   "war_delta": 0.2,
+   "post_war": 1.0,
+   "war_delta": 0.4,
    "pitch_mix": {
     "before": [
      {
@@ -25205,7 +25269,7 @@
    "pre_fit": 20.9,
    "success": null,
    "pre_war": 5.1,
-   "post_war": 0.8,
+   "post_war": 0.7,
    "war_delta": -4.3,
    "pitch_mix": {
     "before": [
@@ -25332,7 +25396,7 @@
    "pre_fit": 25.4,
    "success": null,
    "pre_war": 0.6,
-   "post_war": 1.6,
+   "post_war": 1.5,
    "war_delta": 1.0,
    "pitch_mix": {
     "before": [
@@ -25390,7 +25454,7 @@
    "pre_fit": 27.0,
    "success": null,
    "pre_war": 0.3,
-   "post_war": -0.6,
+   "post_war": -0.5,
    "war_delta": -0.9,
    "pitch_mix": {
     "before": [
@@ -25456,12 +25520,12 @@
    },
    "post": {
     "season": 2026,
-    "g": 36,
+    "g": 37,
     "gs": 6,
-    "ip": 82.3,
-    "k_pct": 0.2166,
-    "bb_pct": 0.089,
-    "era": 3.5
+    "ip": 83.3,
+    "k_pct": 0.2206,
+    "bb_pct": 0.0882,
+    "era": 3.46
    },
    "held": null,
    "in_progress": true,
@@ -25571,20 +25635,20 @@
    },
    "post": {
     "season": 2026,
-    "g": 14,
+    "g": 15,
     "gs": 5,
-    "ip": 58.0,
-    "k_pct": 0.2062,
-    "bb_pct": 0.0506,
-    "era": 5.9
+    "ip": 64.0,
+    "k_pct": 0.1972,
+    "bb_pct": 0.0458,
+    "era": 5.91
    },
    "held": null,
    "in_progress": true,
    "pre_fit": 35.6,
    "success": null,
    "pre_war": -0.1,
-   "post_war": 0.3,
-   "war_delta": 0.4,
+   "post_war": 0.1,
+   "war_delta": 0.3,
    "pitch_mix": {
     "before": [
      {
@@ -25694,20 +25758,20 @@
    },
    "post": {
     "season": 2026,
-    "g": 22,
-    "gs": 6,
-    "ip": 58.7,
-    "k_pct": 0.1566,
-    "bb_pct": 0.0723,
-    "era": 3.84
+    "g": 23,
+    "gs": 7,
+    "ip": 64.7,
+    "k_pct": 0.1575,
+    "bb_pct": 0.0696,
+    "era": 3.62
    },
    "held": null,
    "in_progress": true,
    "pre_fit": 36.1,
    "success": null,
    "pre_war": -0.7,
-   "post_war": 0.2,
-   "war_delta": 0.9,
+   "post_war": 0.3,
+   "war_delta": 1.0,
    "pitch_mix": {
     "before": [
      {
@@ -26025,20 +26089,20 @@
    },
    "post": {
     "season": 2026,
-    "g": 19,
-    "gs": 9,
-    "ip": 72.0,
-    "k_pct": 0.1591,
-    "bb_pct": 0.0682,
-    "era": 4.0
+    "g": 20,
+    "gs": 10,
+    "ip": 78.7,
+    "k_pct": 0.1562,
+    "bb_pct": 0.0661,
+    "era": 3.66
    },
    "held": null,
    "in_progress": true,
    "pre_fit": 43.0,
    "success": null,
    "pre_war": 0.5,
-   "post_war": 0.6,
-   "war_delta": 0.1,
+   "post_war": 0.8,
+   "war_delta": 0.4,
    "pitch_mix": {
     "before": [
      {
@@ -26090,64 +26154,6 @@
      {
       "pitch": "FC",
       "usage": 0.131
-     }
-    ]
-   }
-  },
-  {
-   "mlbam": 664299,
-   "name": "Cristian Javier",
-   "team": "HOU",
-   "direction": "SP->RP",
-   "year": 2026,
-   "pre": {
-    "season": 2025,
-    "g": 8,
-    "gs": 8,
-    "ip": 37.0,
-    "k_pct": 0.2166,
-    "bb_pct": 0.0955,
-    "era": 4.62
-   },
-   "post": {
-    "season": 2026,
-    "g": 8,
-    "gs": 4,
-    "ip": 21.3,
-    "k_pct": 0.2079,
-    "bb_pct": 0.1485,
-    "era": 7.17
-   },
-   "held": null,
-   "in_progress": true,
-   "pre_fit": 47.9,
-   "success": null,
-   "pre_war": 0.1,
-   "post_war": -0.3,
-   "war_delta": -0.5,
-   "pitch_mix": {
-    "before": [
-     {
-      "pitch": "FF",
-      "usage": 0.399
-     },
-     {
-      "pitch": "ST",
-      "usage": 0.199
-     },
-     {
-      "pitch": "CH",
-      "usage": 0.186
-     }
-    ],
-    "after": [
-     {
-      "pitch": "FF",
-      "usage": 0.516
-     },
-     {
-      "pitch": "CH",
-      "usage": 0.159
      }
     ]
    }
@@ -26247,7 +26253,7 @@
    "pre_fit": 59.0,
    "success": null,
    "pre_war": -0.3,
-   "post_war": 0.2,
+   "post_war": 0.1,
    "war_delta": 0.4,
    "pitch_mix": {
     "before": [
@@ -26436,8 +26442,8 @@
    "pre_fit": 74.9,
    "success": null,
    "pre_war": 1.5,
-   "post_war": 2.1,
-   "war_delta": 0.6,
+   "post_war": 2.2,
+   "war_delta": 0.7,
    "pitch_mix": {
     "before": [
      {
@@ -26510,19 +26516,19 @@
    },
    "post": {
     "season": 2026,
-    "g": 18,
-    "gs": 17,
-    "ip": 112.7,
-    "k_pct": 0.1938,
-    "bb_pct": 0.0468,
-    "era": 2.88
+    "g": 19,
+    "gs": 18,
+    "ip": 117.0,
+    "k_pct": 0.1928,
+    "bb_pct": 0.0508,
+    "era": 3.31
    },
    "held": null,
    "pre_fit": 75.1,
    "success": null,
    "pre_war": -0.1,
-   "post_war": 2.7,
-   "war_delta": 2.8,
+   "post_war": 2.2,
+   "war_delta": 2.2,
    "pitch_mix": {
     "before": [
      {
@@ -26727,7 +26733,7 @@
    "success": null,
    "pre_war": 0.8,
    "post_war": 1.6,
-   "war_delta": 0.8,
+   "war_delta": 0.9,
    "pitch_mix": {
     "before": [
      {
@@ -36188,37 +36194,6 @@
    ]
   },
   {
-   "mlbam": 664299,
-   "name": "Cristian Javier",
-   "team": "HOU",
-   "direction": "SP->RP",
-   "year": 2026,
-   "before": [
-    {
-     "pitch": "FF",
-     "usage": 0.399
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.199
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.186
-    }
-   ],
-   "after": [
-    {
-     "pitch": "FF",
-     "usage": 0.516
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.159
-    }
-   ]
-  },
-  {
    "mlbam": 643377,
    "name": "Griffin Jax",
    "team": "TB",
@@ -37024,6 +36999,34 @@
    }
   },
   {
+   "mlbam": 805299,
+   "name": "Brandyn Garcia",
+   "team": "AZ",
+   "fit": 77.7,
+   "n_pitches": 2,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.493,
+     "whiff": 0.1,
+     "est_woba": 0.293
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.301,
+     "whiff": 0.549,
+     "est_woba": 0.08
+    }
+   ],
+   "platoon_split": 0.001,
+   "rec": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "medium"
+   }
+  },
+  {
    "mlbam": 663738,
    "name": "Daniel Lynch IV",
    "team": "KC",
@@ -37054,34 +37057,6 @@
     "add": "Changeup",
     "target": "RHB",
     "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
-    "priority": "medium"
-   }
-  },
-  {
-   "mlbam": 805299,
-   "name": "Brandyn Garcia",
-   "team": "AZ",
-   "fit": 77.0,
-   "n_pitches": 2,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.493,
-     "whiff": 0.1,
-     "est_woba": 0.293
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.301,
-     "whiff": 0.549,
-     "est_woba": 0.08
-    }
-   ],
-   "platoon_split": 0.008,
-   "rec": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
     "priority": "medium"
    }
   },
@@ -37182,6 +37157,40 @@
    }
   },
   {
+   "mlbam": 682608,
+   "name": "Peyton Gray",
+   "team": "TEX",
+   "fit": 74.9,
+   "n_pitches": 3,
+   "arsenal": [
+    {
+     "pitch": "CH",
+     "usage": 0.419,
+     "whiff": 0.293,
+     "est_woba": 0.291
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.381,
+     "whiff": 0.22,
+     "est_woba": 0.267
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.2,
+     "whiff": 0.245,
+     "est_woba": 0.301
+    }
+   ],
+   "platoon_split": 0.212,
+   "rec": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "priority": "medium"
+   }
+  },
+  {
    "mlbam": 621383,
    "name": "Tanner Banks",
    "team": "PHI",
@@ -37250,77 +37259,43 @@
    }
   },
   {
-   "mlbam": 682608,
-   "name": "Peyton Gray",
-   "team": "TEX",
-   "fit": 74.1,
-   "n_pitches": 3,
-   "arsenal": [
-    {
-     "pitch": "CH",
-     "usage": 0.419,
-     "whiff": 0.293,
-     "est_woba": 0.291
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.381,
-     "whiff": 0.22,
-     "est_woba": 0.267
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.2,
-     "whiff": 0.245,
-     "est_woba": 0.301
-    }
-   ],
-   "platoon_split": 0.254,
-   "rec": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
-    "priority": "medium"
-   }
-  },
-  {
-   "mlbam": 676879,
-   "name": "Aaron Ashby",
-   "team": "MIL",
-   "fit": 73.6,
+   "mlbam": 642397,
+   "name": "Gregory Soto",
+   "team": "PIT",
+   "fit": 73.5,
    "n_pitches": 4,
    "arsenal": [
     {
      "pitch": "SI",
-     "usage": 0.525,
-     "whiff": 0.147,
-     "est_woba": 0.35
+     "usage": 0.36,
+     "whiff": 0.091,
+     "est_woba": 0.412
     },
     {
      "pitch": "SL",
-     "usage": 0.146,
-     "whiff": 0.569,
-     "est_woba": 0.136
+     "usage": 0.257,
+     "whiff": 0.421,
+     "est_woba": 0.14
     },
     {
-     "pitch": "CU",
-     "usage": 0.193,
-     "whiff": 0.534,
-     "est_woba": 0.192
+     "pitch": "ST",
+     "usage": 0.183,
+     "whiff": 0.455,
+     "est_woba": 0.153
     },
     {
-     "pitch": "CH",
-     "usage": 0.112,
-     "whiff": 0.525,
-     "est_woba": 0.233
+     "pitch": "FF",
+     "usage": 0.198,
+     "whiff": 0.164,
+     "est_woba": 0.346
     }
    ],
-   "platoon_split": 0.13,
+   "platoon_split": 0.157,
    "rec": {
     "add": "Changeup",
-    "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
-    "priority": "medium"
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "high"
    }
   },
   {
@@ -37355,46 +37330,6 @@
     "target": "RHB",
     "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
     "priority": "medium"
-   }
-  },
-  {
-   "mlbam": 642397,
-   "name": "Gregory Soto",
-   "team": "PIT",
-   "fit": 73.4,
-   "n_pitches": 4,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.36,
-     "whiff": 0.091,
-     "est_woba": 0.412
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.257,
-     "whiff": 0.421,
-     "est_woba": 0.14
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.183,
-     "whiff": 0.455,
-     "est_woba": 0.153
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.198,
-     "whiff": 0.164,
-     "est_woba": 0.346
-    }
-   ],
-   "platoon_split": 0.169,
-   "rec": {
-    "add": "Changeup",
-    "target": "LHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
    }
   },
   {
@@ -37460,6 +37395,46 @@
    }
   },
   {
+   "mlbam": 676879,
+   "name": "Aaron Ashby",
+   "team": "MIL",
+   "fit": 72.8,
+   "n_pitches": 4,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.525,
+     "whiff": 0.147,
+     "est_woba": 0.35
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.146,
+     "whiff": 0.569,
+     "est_woba": 0.136
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.193,
+     "whiff": 0.534,
+     "est_woba": 0.192
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.112,
+     "whiff": 0.525,
+     "est_woba": 0.233
+    }
+   ],
+   "platoon_split": 0.145,
+   "rec": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "priority": "medium"
+   }
+  },
+  {
    "mlbam": 548384,
    "name": "Brooks Raley",
    "team": "NYM",
@@ -37491,6 +37466,40 @@
     "target": "RHB",
     "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
     "priority": "medium"
+   }
+  },
+  {
+   "mlbam": 666661,
+   "name": "Juan Morillo",
+   "team": "AZ",
+   "fit": 72.4,
+   "n_pitches": 3,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.466,
+     "whiff": 0.337,
+     "est_woba": 0.223
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.207,
+     "whiff": 0.303,
+     "est_woba": 0.183
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.169,
+     "whiff": 0.2,
+     "est_woba": 0.241
+    }
+   ],
+   "platoon_split": 0.085,
+   "rec": {
+    "add": "Slider",
+    "target": "RHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
    }
   },
   {
@@ -37559,6 +37568,34 @@
     "target": "RHB",
     "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
     "priority": "medium"
+   }
+  },
+  {
+   "mlbam": 661395,
+   "name": "Jhoan Duran",
+   "team": "PHI",
+   "fit": 71.1,
+   "n_pitches": 2,
+   "arsenal": [
+    {
+     "pitch": "FS",
+     "usage": 0.451,
+     "whiff": 0.311,
+     "est_woba": 0.3
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.273,
+     "whiff": 0.432,
+     "est_woba": 0.22
+    }
+   ],
+   "platoon_split": 0.034,
+   "rec": {
+    "add": "Slider",
+    "target": "LHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
    }
   },
   {
@@ -37710,26 +37747,60 @@
    }
   },
   {
-   "mlbam": 661395,
-   "name": "Jhoan Duran",
+   "mlbam": 679775,
+   "name": "Kyle Backhus",
    "team": "PHI",
-   "fit": 70.3,
+   "fit": 70.6,
    "n_pitches": 2,
    "arsenal": [
     {
+     "pitch": "SI",
+     "usage": 0.558,
+     "whiff": 0.088,
+     "est_woba": 0.37
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.344,
+     "whiff": 0.37,
+     "est_woba": 0.184
+    }
+   ],
+   "platoon_split": 0.014,
+   "rec": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "medium"
+   }
+  },
+  {
+   "mlbam": 676775,
+   "name": "Keaton Winn",
+   "team": "SF",
+   "fit": 70.3,
+   "n_pitches": 3,
+   "arsenal": [
+    {
      "pitch": "FS",
-     "usage": 0.451,
-     "whiff": 0.311,
-     "est_woba": 0.3
+     "usage": 0.478,
+     "whiff": 0.361,
+     "est_woba": 0.279
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.228,
+     "whiff": 0.077,
+     "est_woba": 0.253
     },
     {
      "pitch": "FF",
-     "usage": 0.273,
-     "whiff": 0.432,
-     "est_woba": 0.22
+     "usage": 0.244,
+     "whiff": 0.098,
+     "est_woba": 0.39
     }
    ],
-   "platoon_split": 0.051,
+   "platoon_split": 0.247,
    "rec": {
     "add": "Slider",
     "target": "LHB",
@@ -37902,40 +37973,6 @@
    }
   },
   {
-   "mlbam": 666661,
-   "name": "Juan Morillo",
-   "team": "AZ",
-   "fit": 70.0,
-   "n_pitches": 3,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.466,
-     "whiff": 0.337,
-     "est_woba": 0.223
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.207,
-     "whiff": 0.303,
-     "est_woba": 0.183
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.169,
-     "whiff": 0.2,
-     "est_woba": 0.241
-    }
-   ],
-   "platoon_split": 0.12,
-   "rec": {
-    "add": "Slider",
-    "target": "RHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   }
-  },
-  {
    "mlbam": 666171,
    "name": "Ryan Zeferjahn",
    "team": "LAA",
@@ -37972,40 +38009,6 @@
     "add": "Changeup",
     "target": "LHB",
     "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   }
-  },
-  {
-   "mlbam": 676775,
-   "name": "Keaton Winn",
-   "team": "SF",
-   "fit": 69.7,
-   "n_pitches": 3,
-   "arsenal": [
-    {
-     "pitch": "FS",
-     "usage": 0.478,
-     "whiff": 0.361,
-     "est_woba": 0.279
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.228,
-     "whiff": 0.077,
-     "est_woba": 0.253
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.244,
-     "whiff": 0.098,
-     "est_woba": 0.39
-    }
-   ],
-   "platoon_split": 0.301,
-   "rec": {
-    "add": "Slider",
-    "target": "LHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
     "priority": "high"
    }
   },
@@ -38198,6 +38201,34 @@
    }
   },
   {
+   "mlbam": 656945,
+   "name": "Tanner Scott",
+   "team": "LAD",
+   "fit": 68.2,
+   "n_pitches": 2,
+   "arsenal": [
+    {
+     "pitch": "SL",
+     "usage": 0.528,
+     "whiff": 0.421,
+     "est_woba": 0.217
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.472,
+     "whiff": 0.294,
+     "est_woba": 0.321
+    }
+   ],
+   "platoon_split": 0.227,
+   "rec": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize RHB - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "high"
+   }
+  },
+  {
    "mlbam": 622088,
    "name": "Tejay Antone",
    "team": "CIN",
@@ -38284,34 +38315,6 @@
     "add": "Slider",
     "target": "LHB",
     "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   }
-  },
-  {
-   "mlbam": 656945,
-   "name": "Tanner Scott",
-   "team": "LAD",
-   "fit": 67.1,
-   "n_pitches": 2,
-   "arsenal": [
-    {
-     "pitch": "SL",
-     "usage": 0.528,
-     "whiff": 0.421,
-     "est_woba": 0.217
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.472,
-     "whiff": 0.294,
-     "est_woba": 0.321
-    }
-   ],
-   "platoon_split": 0.264,
-   "rec": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize RHB - the classic weapon against opposite-handed hitters over multiple times through.",
     "priority": "high"
    }
   },
@@ -38604,6 +38607,40 @@
    }
   },
   {
+   "mlbam": 689147,
+   "name": "Orion Kerkering",
+   "team": "PHI",
+   "fit": 64.7,
+   "n_pitches": 3,
+   "arsenal": [
+    {
+     "pitch": "ST",
+     "usage": 0.446,
+     "whiff": 0.27,
+     "est_woba": 0.26
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.328,
+     "whiff": 0.361,
+     "est_woba": 0.307
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.184,
+     "whiff": 0.113,
+     "est_woba": 0.245
+    }
+   ],
+   "platoon_split": 0.163,
+   "rec": {
+    "add": "Changeup",
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "high"
+   }
+  },
+  {
    "mlbam": 664141,
    "name": "JT Brubaker",
    "team": "SF",
@@ -38808,40 +38845,6 @@
    }
   },
   {
-   "mlbam": 689147,
-   "name": "Orion Kerkering",
-   "team": "PHI",
-   "fit": 63.5,
-   "n_pitches": 3,
-   "arsenal": [
-    {
-     "pitch": "ST",
-     "usage": 0.446,
-     "whiff": 0.27,
-     "est_woba": 0.26
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.328,
-     "whiff": 0.361,
-     "est_woba": 0.307
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.184,
-     "whiff": 0.113,
-     "est_woba": 0.245
-    }
-   ],
-   "platoon_split": 0.188,
-   "rec": {
-    "add": "Changeup",
-    "target": "LHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   }
-  },
-  {
    "mlbam": 668941,
    "name": "JoJo Romero",
    "team": "STL",
@@ -38872,6 +38875,40 @@
     "add": "Cutter",
     "target": "LHB",
     "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A cutter would flatten the split a starter has to survive.",
+    "priority": "medium"
+   }
+  },
+  {
+   "mlbam": 666277,
+   "name": "George Soriano",
+   "team": "STL",
+   "fit": 63.4,
+   "n_pitches": 3,
+   "arsenal": [
+    {
+     "pitch": "CH",
+     "usage": 0.278,
+     "whiff": 0.394,
+     "est_woba": 0.176
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.282,
+     "whiff": 0.172,
+     "est_woba": 0.357
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.23,
+     "whiff": 0.373,
+     "est_woba": 0.332
+    }
+   ],
+   "platoon_split": 0.308,
+   "rec": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
     "priority": "medium"
    }
   },
@@ -38935,40 +38972,6 @@
     "target": "LHB",
     "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
     "priority": "high"
-   }
-  },
-  {
-   "mlbam": 666277,
-   "name": "George Soriano",
-   "team": "STL",
-   "fit": 63.0,
-   "n_pitches": 3,
-   "arsenal": [
-    {
-     "pitch": "CH",
-     "usage": 0.278,
-     "whiff": 0.394,
-     "est_woba": 0.176
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.282,
-     "whiff": 0.172,
-     "est_woba": 0.357
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.23,
-     "whiff": 0.373,
-     "est_woba": 0.332
-    }
-   ],
-   "platoon_split": 0.343,
-   "rec": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
-    "priority": "medium"
    }
   },
   {
@@ -39232,40 +39235,6 @@
    }
   },
   {
-   "mlbam": 673513,
-   "name": "Yuki Matsui",
-   "team": "SD",
-   "fit": 61.7,
-   "n_pitches": 3,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.376,
-     "whiff": 0.274,
-     "est_woba": 0.367
-    },
-    {
-     "pitch": "FS",
-     "usage": 0.252,
-     "whiff": 0.484,
-     "est_woba": 0.24
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.299,
-     "whiff": 0.456,
-     "est_woba": 0.226
-    }
-   ],
-   "platoon_split": 0.215,
-   "rec": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
-    "priority": "medium"
-   }
-  },
-  {
    "mlbam": 670036,
    "name": "Matt Festa",
    "team": "CLE",
@@ -39325,6 +39294,40 @@
     "target": "LHB",
     "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
     "priority": "high"
+   }
+  },
+  {
+   "mlbam": 673513,
+   "name": "Yuki Matsui",
+   "team": "SD",
+   "fit": 61.0,
+   "n_pitches": 3,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.376,
+     "whiff": 0.274,
+     "est_woba": 0.367
+    },
+    {
+     "pitch": "FS",
+     "usage": 0.252,
+     "whiff": 0.484,
+     "est_woba": 0.24
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.299,
+     "whiff": 0.456,
+     "est_woba": 0.226
+    }
+   ],
+   "platoon_split": 0.231,
+   "rec": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "priority": "medium"
    }
   },
   {
@@ -39390,6 +39393,34 @@
    }
   },
   {
+   "mlbam": 677865,
+   "name": "Justin Bruihl",
+   "team": "STL",
+   "fit": 60.4,
+   "n_pitches": 2,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.449,
+     "whiff": 0.099,
+     "est_woba": 0.36
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.38,
+     "whiff": 0.25,
+     "est_woba": 0.262
+    }
+   ],
+   "platoon_split": 0.079,
+   "rec": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "medium"
+   }
+  },
+  {
    "mlbam": 643511,
    "name": "Tyler Rogers",
    "team": "TOR",
@@ -39409,7 +39440,7 @@
      "est_woba": 0.229
     }
    ],
-   "platoon_split": 0.066,
+   "platoon_split": 0.072,
    "rec": {
     "add": "Changeup",
     "target": "LHB",
@@ -39536,40 +39567,6 @@
    }
   },
   {
-   "mlbam": 683618,
-   "name": "Edgardo Henriquez",
-   "team": "LAD",
-   "fit": 59.7,
-   "n_pitches": 3,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.325,
-     "whiff": 0.276,
-     "est_woba": 0.294
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.272,
-     "whiff": 0.149,
-     "est_woba": 0.259
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.223,
-     "whiff": 0.377,
-     "est_woba": 0.2
-    }
-   ],
-   "platoon_split": 0.348,
-   "rec": {
-    "add": "Changeup",
-    "target": "LHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   }
-  },
-  {
    "mlbam": 696147,
    "name": "Sam Bachman",
    "team": "LAA",
@@ -39600,34 +39597,6 @@
     "add": "Cutter",
     "target": "LHB",
     "reason": "Deep arsenal, but a large platoon split leaves him exposed to LHB. A cutter would flatten the split a starter has to survive.",
-    "priority": "medium"
-   }
-  },
-  {
-   "mlbam": 677865,
-   "name": "Justin Bruihl",
-   "team": "STL",
-   "fit": 59.6,
-   "n_pitches": 2,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.449,
-     "whiff": 0.099,
-     "est_woba": 0.36
-    },
-    {
-     "pitch": "ST",
-     "usage": 0.38,
-     "whiff": 0.25,
-     "est_woba": 0.262
-    }
-   ],
-   "platoon_split": 0.083,
-   "rec": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
     "priority": "medium"
    }
   },
@@ -39874,6 +39843,34 @@
    }
   },
   {
+   "mlbam": 518585,
+   "name": "Fernando Cruz",
+   "team": "NYY",
+   "fit": 58.1,
+   "n_pitches": 2,
+   "arsenal": [
+    {
+     "pitch": "FS",
+     "usage": 0.521,
+     "whiff": 0.53,
+     "est_woba": 0.205
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.321,
+     "whiff": 0.154,
+     "est_woba": 0.405
+    }
+   ],
+   "platoon_split": 0.053,
+   "rec": {
+    "add": "Slider",
+    "target": "RHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   }
+  },
+  {
    "mlbam": 622608,
    "name": "Antonio Senzatela",
    "team": "COL",
@@ -39894,34 +39891,6 @@
     }
    ],
    "platoon_split": 0.086,
-   "rec": {
-    "add": "Slider",
-    "target": "RHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   }
-  },
-  {
-   "mlbam": 518585,
-   "name": "Fernando Cruz",
-   "team": "NYY",
-   "fit": 57.8,
-   "n_pitches": 2,
-   "arsenal": [
-    {
-     "pitch": "FS",
-     "usage": 0.521,
-     "whiff": 0.53,
-     "est_woba": 0.205
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.321,
-     "whiff": 0.154,
-     "est_woba": 0.405
-    }
-   ],
-   "platoon_split": 0.06,
    "rec": {
     "add": "Slider",
     "target": "RHB",
@@ -40078,6 +40047,40 @@
     "add": "Changeup",
     "target": "RHB",
     "reason": "No offspeed pitch. A changeup would give him a third look and neutralize RHB - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "high"
+   }
+  },
+  {
+   "mlbam": 683618,
+   "name": "Edgardo Henriquez",
+   "team": "LAD",
+   "fit": 56.8,
+   "n_pitches": 3,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.325,
+     "whiff": 0.276,
+     "est_woba": 0.294
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.272,
+     "whiff": 0.149,
+     "est_woba": 0.259
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.223,
+     "whiff": 0.377,
+     "est_woba": 0.2
+    }
+   ],
+   "platoon_split": 0.334,
+   "rec": {
+    "add": "Changeup",
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
     "priority": "high"
    }
   },
@@ -40268,6 +40271,34 @@
    }
   },
   {
+   "mlbam": 687330,
+   "name": "Kevin Kelly",
+   "team": "TB",
+   "fit": 54.9,
+   "n_pitches": 2,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.593,
+     "whiff": 0.133,
+     "est_woba": 0.359
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.254,
+     "whiff": 0.271,
+     "est_woba": 0.248
+    }
+   ],
+   "platoon_split": 0.209,
+   "rec": {
+    "add": "Slider",
+    "target": "LHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   }
+  },
+  {
    "mlbam": 623474,
    "name": "Jimmy Herget",
    "team": "COL",
@@ -40326,34 +40357,6 @@
     "add": "Changeup",
     "target": "LHB",
     "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   }
-  },
-  {
-   "mlbam": 687330,
-   "name": "Kevin Kelly",
-   "team": "TB",
-   "fit": 54.5,
-   "n_pitches": 2,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.593,
-     "whiff": 0.133,
-     "est_woba": 0.359
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.254,
-     "whiff": 0.271,
-     "est_woba": 0.248
-    }
-   ],
-   "platoon_split": 0.217,
-   "rec": {
-    "add": "Slider",
-    "target": "LHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
     "priority": "high"
    }
   },
@@ -40650,40 +40653,6 @@
    }
   },
   {
-   "mlbam": 700669,
-   "name": "Gordon Graceffo",
-   "team": "STL",
-   "fit": 53.1,
-   "n_pitches": 3,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.4,
-     "whiff": 0.088,
-     "est_woba": 0.421
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.287,
-     "whiff": 0.281,
-     "est_woba": 0.299
-    },
-    {
-     "pitch": "CH",
-     "usage": 0.119,
-     "whiff": 0.211,
-     "est_woba": 0.183
-    }
-   ],
-   "platoon_split": 0.144,
-   "rec": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
-    "priority": "medium"
-   }
-  },
-  {
    "mlbam": 679358,
    "name": "Eric Orze",
    "team": "MIN",
@@ -40712,6 +40681,40 @@
    }
   },
   {
+   "mlbam": 700669,
+   "name": "Gordon Graceffo",
+   "team": "STL",
+   "fit": 53.0,
+   "n_pitches": 3,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.4,
+     "whiff": 0.088,
+     "est_woba": 0.421
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.287,
+     "whiff": 0.281,
+     "est_woba": 0.299
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.119,
+     "whiff": 0.211,
+     "est_woba": 0.183
+    }
+   ],
+   "platoon_split": 0.165,
+   "rec": {
+    "add": "Changeup",
+    "target": "RHB",
+    "reason": "Deep arsenal, but a large platoon split leaves him exposed to RHB. A changeup would flatten the split a starter has to survive.",
+    "priority": "medium"
+   }
+  },
+  {
    "mlbam": 623149,
    "name": "Paul Sewald",
    "team": "AZ",
@@ -40736,34 +40739,6 @@
     "add": "Changeup",
     "target": "LHB",
     "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   }
-  },
-  {
-   "mlbam": 669093,
-   "name": "Jeremiah Estrada",
-   "team": "SD",
-   "fit": 52.7,
-   "n_pitches": 2,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.578,
-     "whiff": 0.255,
-     "est_woba": 0.345
-    },
-    {
-     "pitch": "FS",
-     "usage": 0.32,
-     "whiff": 0.535,
-     "est_woba": 0.2
-    }
-   ],
-   "platoon_split": 0.074,
-   "rec": {
-    "add": "Slider",
-    "target": "RHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
     "priority": "high"
    }
   },
@@ -40989,6 +40964,34 @@
     "target": "RHB",
     "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
     "priority": "medium"
+   }
+  },
+  {
+   "mlbam": 669093,
+   "name": "Jeremiah Estrada",
+   "team": "SD",
+   "fit": 51.6,
+   "n_pitches": 2,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.578,
+     "whiff": 0.255,
+     "est_woba": 0.345
+    },
+    {
+     "pitch": "FS",
+     "usage": 0.32,
+     "whiff": 0.535,
+     "est_woba": 0.2
+    }
+   ],
+   "platoon_split": 0.098,
+   "rec": {
+    "add": "Slider",
+    "target": "RHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
    }
   },
   {
@@ -41446,6 +41449,68 @@
    }
   },
   {
+   "mlbam": 690925,
+   "name": "Clayton Beeter",
+   "team": "WSH",
+   "fit": 48.5,
+   "n_pitches": 2,
+   "arsenal": [
+    {
+     "pitch": "SL",
+     "usage": 0.493,
+     "whiff": 0.352,
+     "est_woba": 0.211
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.507,
+     "whiff": 0.207,
+     "est_woba": 0.441
+    }
+   ],
+   "platoon_split": 0.037,
+   "rec": {
+    "add": "Changeup",
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "medium"
+   }
+  },
+  {
+   "mlbam": 666808,
+   "name": "Camilo Doval",
+   "team": "PIT",
+   "fit": 48.5,
+   "n_pitches": 3,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.424,
+     "whiff": 0.187,
+     "est_woba": 0.29
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.293,
+     "whiff": 0.184,
+     "est_woba": 0.337
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.248,
+     "whiff": 0.451,
+     "est_woba": 0.276
+    }
+   ],
+   "platoon_split": 0.429,
+   "rec": {
+    "add": "Changeup",
+    "target": "LHB",
+    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
+    "priority": "high"
+   }
+  },
+  {
    "mlbam": 621097,
    "name": "Jacob Waguespack",
    "team": "DET",
@@ -41492,40 +41557,6 @@
     "add": "Changeup",
     "target": "RHB",
     "reason": "No offspeed pitch. A changeup would give him a third look and neutralize RHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   }
-  },
-  {
-   "mlbam": 666808,
-   "name": "Camilo Doval",
-   "team": "PIT",
-   "fit": 48.0,
-   "n_pitches": 3,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.424,
-     "whiff": 0.187,
-     "est_woba": 0.29
-    },
-    {
-     "pitch": "FC",
-     "usage": 0.293,
-     "whiff": 0.184,
-     "est_woba": 0.337
-    },
-    {
-     "pitch": "SL",
-     "usage": 0.248,
-     "whiff": 0.451,
-     "est_woba": 0.276
-    }
-   ],
-   "platoon_split": 0.446,
-   "rec": {
-    "add": "Changeup",
-    "target": "LHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
     "priority": "high"
    }
   },
@@ -41651,34 +41682,6 @@
     "target": "LHB",
     "reason": "No offspeed pitch. A changeup would give him a third look and neutralize LHB - the classic weapon against opposite-handed hitters over multiple times through.",
     "priority": "high"
-   }
-  },
-  {
-   "mlbam": 690925,
-   "name": "Clayton Beeter",
-   "team": "WSH",
-   "fit": 47.7,
-   "n_pitches": 2,
-   "arsenal": [
-    {
-     "pitch": "SL",
-     "usage": 0.493,
-     "whiff": 0.352,
-     "est_woba": 0.211
-    },
-    {
-     "pitch": "FF",
-     "usage": 0.507,
-     "whiff": 0.207,
-     "est_woba": 0.441
-    }
-   ],
-   "platoon_split": 0.054,
-   "rec": {
-    "add": "Changeup",
-    "target": "RHB",
-    "reason": "No offspeed pitch. A changeup would give him a third look - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "medium"
    }
   },
   {
@@ -42161,7 +42164,7 @@
      "est_woba": 0.328
     }
    ],
-   "platoon_split": 0.399,
+   "platoon_split": 0.369,
    "rec": {
     "add": "Slider",
     "target": "LHB",
@@ -42232,6 +42235,34 @@
    }
   },
   {
+   "mlbam": 663765,
+   "name": "Jake Woodford",
+   "team": "CHC",
+   "fit": 42.6,
+   "n_pitches": 2,
+   "arsenal": [
+    {
+     "pitch": "FC",
+     "usage": 0.366,
+     "whiff": 0.213,
+     "est_woba": 0.474
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.287,
+     "whiff": 0.103,
+     "est_woba": 0.385
+    }
+   ],
+   "platoon_split": 0.414,
+   "rec": {
+    "add": "Slider",
+    "target": "LHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   }
+  },
+  {
    "mlbam": 683000,
    "name": "Riley Cornelio",
    "team": "WSH",
@@ -42284,34 +42315,6 @@
     "add": "Changeup",
     "target": "RHB",
     "reason": "No offspeed pitch. A changeup would give him a third look and neutralize RHB - the classic weapon against opposite-handed hitters over multiple times through.",
-    "priority": "high"
-   }
-  },
-  {
-   "mlbam": 663765,
-   "name": "Jake Woodford",
-   "team": "CHC",
-   "fit": 42.2,
-   "n_pitches": 2,
-   "arsenal": [
-    {
-     "pitch": "FC",
-     "usage": 0.366,
-     "whiff": 0.213,
-     "est_woba": 0.474
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.287,
-     "whiff": 0.103,
-     "est_woba": 0.385
-    }
-   ],
-   "platoon_split": 0.375,
-   "rec": {
-    "add": "Slider",
-    "target": "LHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
     "priority": "high"
    }
   },
@@ -42868,6 +42871,28 @@
    }
   },
   {
+   "mlbam": 663423,
+   "name": "Trent Thornton",
+   "team": "CHC",
+   "fit": 34.4,
+   "n_pitches": 1,
+   "arsenal": [
+    {
+     "pitch": "FF",
+     "usage": 0.327,
+     "whiff": 0.173,
+     "est_woba": 0.42
+    }
+   ],
+   "platoon_split": 0.137,
+   "rec": {
+    "add": "Slider",
+    "target": "LHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   }
+  },
+  {
    "mlbam": 669270,
    "name": "Joel Kuhnel",
    "team": "MIL",
@@ -42888,28 +42913,6 @@
     }
    ],
    "platoon_split": 0.428,
-   "rec": {
-    "add": "Slider",
-    "target": "LHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   }
-  },
-  {
-   "mlbam": 663423,
-   "name": "Trent Thornton",
-   "team": "CHC",
-   "fit": 32.9,
-   "n_pitches": 1,
-   "arsenal": [
-    {
-     "pitch": "FF",
-     "usage": 0.327,
-     "whiff": 0.173,
-     "est_woba": 0.42
-    }
-   ],
-   "platoon_split": 0.15,
    "rec": {
     "add": "Slider",
     "target": "LHB",
@@ -42940,6 +42943,28 @@
    }
   },
   {
+   "mlbam": 657612,
+   "name": "Tim Hill",
+   "team": "NYY",
+   "fit": 32.0,
+   "n_pitches": 1,
+   "arsenal": [
+    {
+     "pitch": "SI",
+     "usage": 0.804,
+     "whiff": 0.1,
+     "est_woba": 0.314
+    }
+   ],
+   "platoon_split": 0.406,
+   "rec": {
+    "add": "Slider",
+    "target": "RHB",
+    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
+    "priority": "high"
+   }
+  },
+  {
    "mlbam": 696519,
    "name": "Samy Natera Jr.",
    "team": "LAA",
@@ -42954,28 +42979,6 @@
     }
    ],
    "platoon_split": 0.129,
-   "rec": {
-    "add": "Slider",
-    "target": "RHB",
-    "reason": "No reliable breaking ball. A slider is the swing-and-miss weapon he needs to turn a lineup over a second and third time.",
-    "priority": "high"
-   }
-  },
-  {
-   "mlbam": 657612,
-   "name": "Tim Hill",
-   "team": "NYY",
-   "fit": 31.5,
-   "n_pitches": 1,
-   "arsenal": [
-    {
-     "pitch": "SI",
-     "usage": 0.804,
-     "whiff": 0.1,
-     "est_woba": 0.314
-    }
-   ],
-   "platoon_split": 0.435,
    "rec": {
     "add": "Slider",
     "target": "RHB",
@@ -43221,21 +43224,6 @@
    "weak_hand": "RHB"
   },
   {
-   "mlbam": 656529,
-   "name": "Sam Hentges",
-   "team": "SF",
-   "role": "RP",
-   "min_tbf": 53.0,
-   "p_throws": "L",
-   "own_ops": 0.845,
-   "opp_ops": 0.446,
-   "reverse_index": 0.399,
-   "reverse": true,
-   "split": 0.399,
-   "extreme": true,
-   "weak_hand": "LHB"
-  },
-  {
    "mlbam": 623352,
    "name": "Josh Hader",
    "team": "HOU",
@@ -43251,19 +43239,19 @@
    "weak_hand": "LHB"
   },
   {
-   "mlbam": 666277,
-   "name": "George Soriano",
-   "team": "STL",
+   "mlbam": 656529,
+   "name": "Sam Hentges",
+   "team": "SF",
    "role": "RP",
-   "min_tbf": 99.0,
-   "p_throws": "R",
-   "own_ops": 0.83,
-   "opp_ops": 0.487,
-   "reverse_index": 0.343,
+   "min_tbf": 54.0,
+   "p_throws": "L",
+   "own_ops": 0.806,
+   "opp_ops": 0.437,
+   "reverse_index": 0.369,
    "reverse": true,
-   "split": 0.343,
+   "split": 0.369,
    "extreme": true,
-   "weak_hand": "RHB"
+   "weak_hand": "LHB"
   },
   {
    "mlbam": 668964,
@@ -43341,21 +43329,6 @@
    "weak_hand": "RHB"
   },
   {
-   "mlbam": 668984,
-   "name": "Casey Legumina",
-   "team": "TB",
-   "role": "SWING",
-   "min_tbf": 89.0,
-   "p_throws": "R",
-   "own_ops": 0.883,
-   "opp_ops": 0.564,
-   "reverse_index": 0.319,
-   "reverse": true,
-   "split": 0.319,
-   "extreme": true,
-   "weak_hand": "RHB"
-  },
-  {
    "mlbam": 689266,
    "name": "Dylan Dodd",
    "team": "ATL",
@@ -43371,17 +43344,32 @@
    "weak_hand": "LHB"
   },
   {
-   "mlbam": 669456,
-   "name": "Shane Bieber",
-   "team": "TOR",
-   "role": "SP",
-   "min_tbf": 64.0,
+   "mlbam": 666277,
+   "name": "George Soriano",
+   "team": "STL",
+   "role": "RP",
+   "min_tbf": 99.0,
    "p_throws": "R",
-   "own_ops": 1.033,
-   "opp_ops": 0.738,
-   "reverse_index": 0.295,
+   "own_ops": 0.83,
+   "opp_ops": 0.522,
+   "reverse_index": 0.308,
    "reverse": true,
-   "split": 0.295,
+   "split": 0.308,
+   "extreme": true,
+   "weak_hand": "RHB"
+  },
+  {
+   "mlbam": 664299,
+   "name": "Cristian Javier",
+   "team": "HOU",
+   "role": "SWING",
+   "min_tbf": 53.0,
+   "p_throws": "R",
+   "own_ops": 0.993,
+   "opp_ops": 0.694,
+   "reverse_index": 0.299,
+   "reverse": true,
+   "split": 0.299,
    "extreme": true,
    "weak_hand": "RHB"
   },
@@ -43412,21 +43400,6 @@
    "reverse_index": 0.278,
    "reverse": true,
    "split": 0.278,
-   "extreme": true,
-   "weak_hand": "LHB"
-  },
-  {
-   "mlbam": 693855,
-   "name": "Ian Seymour",
-   "team": "TB",
-   "role": "SWING",
-   "min_tbf": 120.0,
-   "p_throws": "L",
-   "own_ops": 0.858,
-   "opp_ops": 0.581,
-   "reverse_index": 0.277,
-   "reverse": true,
-   "split": 0.277,
    "extreme": true,
    "weak_hand": "LHB"
   },
@@ -43521,6 +43494,21 @@
    "weak_hand": "LHB"
   },
   {
+   "mlbam": 669456,
+   "name": "Shane Bieber",
+   "team": "TOR",
+   "role": "SP",
+   "min_tbf": 83.0,
+   "p_throws": "R",
+   "own_ops": 0.981,
+   "opp_ops": 0.72,
+   "reverse_index": 0.261,
+   "reverse": true,
+   "split": 0.261,
+   "extreme": true,
+   "weak_hand": "RHB"
+  },
+  {
    "mlbam": 668873,
    "name": "Caleb Kilian",
    "team": "SF",
@@ -43529,6 +43517,21 @@
    "p_throws": "R",
    "own_ops": 0.802,
    "opp_ops": 0.542,
+   "reverse_index": 0.26,
+   "reverse": true,
+   "split": 0.26,
+   "extreme": true,
+   "weak_hand": "RHB"
+  },
+  {
+   "mlbam": 668984,
+   "name": "Casey Legumina",
+   "team": "TB",
+   "role": "SWING",
+   "min_tbf": 93.0,
+   "p_throws": "R",
+   "own_ops": 0.897,
+   "opp_ops": 0.637,
    "reverse_index": 0.26,
    "reverse": true,
    "split": 0.26,
@@ -43562,21 +43565,6 @@
    "reverse_index": 0.256,
    "reverse": true,
    "split": 0.256,
-   "extreme": true,
-   "weak_hand": "RHB"
-  },
-  {
-   "mlbam": 682608,
-   "name": "Peyton Gray",
-   "team": "TEX",
-   "role": "RP",
-   "min_tbf": 88.0,
-   "p_throws": "R",
-   "own_ops": 0.79,
-   "opp_ops": 0.536,
-   "reverse_index": 0.254,
-   "reverse": true,
-   "split": 0.254,
    "extreme": true,
    "weak_hand": "RHB"
   },
@@ -43701,6 +43689,21 @@
    "weak_hand": "RHB"
   },
   {
+   "mlbam": 693855,
+   "name": "Ian Seymour",
+   "team": "TB",
+   "role": "SWING",
+   "min_tbf": 128.0,
+   "p_throws": "L",
+   "own_ops": 0.835,
+   "opp_ops": 0.617,
+   "reverse_index": 0.218,
+   "reverse": true,
+   "split": 0.218,
+   "extreme": true,
+   "weak_hand": "LHB"
+  },
+  {
    "mlbam": 694819,
    "name": "Jacob Misiorowski",
    "team": "MIL",
@@ -43712,6 +43715,21 @@
    "reverse_index": 0.215,
    "reverse": true,
    "split": 0.215,
+   "extreme": true,
+   "weak_hand": "RHB"
+  },
+  {
+   "mlbam": 682608,
+   "name": "Peyton Gray",
+   "team": "TEX",
+   "role": "RP",
+   "min_tbf": 91.0,
+   "p_throws": "R",
+   "own_ops": 0.788,
+   "opp_ops": 0.576,
+   "reverse_index": 0.212,
+   "reverse": true,
+   "split": 0.212,
    "extreme": true,
    "weak_hand": "RHB"
   },
@@ -43772,21 +43790,6 @@
    "reverse_index": 0.198,
    "reverse": true,
    "split": 0.198,
-   "extreme": true,
-   "weak_hand": "RHB"
-  },
-  {
-   "mlbam": 664299,
-   "name": "Cristian Javier",
-   "team": "HOU",
-   "role": "SWING",
-   "min_tbf": 45.0,
-   "p_throws": "R",
-   "own_ops": 0.974,
-   "opp_ops": 0.778,
-   "reverse_index": 0.196,
-   "reverse": true,
-   "split": 0.196,
    "extreme": true,
    "weak_hand": "RHB"
   },
@@ -43896,21 +43899,6 @@
    "weak_hand": "LHB"
   },
   {
-   "mlbam": 642397,
-   "name": "Gregory Soto",
-   "team": "PIT",
-   "role": "RP",
-   "min_tbf": 64.0,
-   "p_throws": "L",
-   "own_ops": 0.695,
-   "opp_ops": 0.526,
-   "reverse_index": 0.169,
-   "reverse": true,
-   "split": 0.169,
-   "extreme": true,
-   "weak_hand": "LHB"
-  },
-  {
    "mlbam": 669373,
    "name": "Tarik Skubal",
    "team": "DET",
@@ -43937,6 +43925,21 @@
    "reverse_index": 0.166,
    "reverse": true,
    "split": 0.166,
+   "extreme": true,
+   "weak_hand": "RHB"
+  },
+  {
+   "mlbam": 700669,
+   "name": "Gordon Graceffo",
+   "team": "STL",
+   "role": "RP",
+   "min_tbf": 101.0,
+   "p_throws": "R",
+   "own_ops": 0.666,
+   "opp_ops": 0.501,
+   "reverse_index": 0.165,
+   "reverse": true,
+   "split": 0.165,
    "extreme": true,
    "weak_hand": "RHB"
   },
@@ -44016,17 +44019,17 @@
    "weak_hand": "RHB"
   },
   {
-   "mlbam": 680736,
-   "name": "Justin Wrobleski",
-   "team": "LAD",
-   "role": "SP",
-   "min_tbf": 119.0,
+   "mlbam": 642397,
+   "name": "Gregory Soto",
+   "team": "PIT",
+   "role": "RP",
+   "min_tbf": 67.0,
    "p_throws": "L",
-   "own_ops": 0.725,
-   "opp_ops": 0.574,
-   "reverse_index": 0.151,
+   "own_ops": 0.693,
+   "opp_ops": 0.536,
+   "reverse_index": 0.157,
    "reverse": true,
-   "split": 0.151,
+   "split": 0.157,
    "extreme": true,
    "weak_hand": "LHB"
   },
@@ -44057,21 +44060,6 @@
    "reverse_index": 0.147,
    "reverse": true,
    "split": 0.147,
-   "extreme": false,
-   "weak_hand": "RHB"
-  },
-  {
-   "mlbam": 700669,
-   "name": "Gordon Graceffo",
-   "team": "STL",
-   "role": "RP",
-   "min_tbf": 96.0,
-   "p_throws": "R",
-   "own_ops": 0.672,
-   "opp_ops": 0.528,
-   "reverse_index": 0.144,
-   "reverse": true,
-   "split": 0.144,
    "extreme": false,
    "weak_hand": "RHB"
   },
@@ -44166,6 +44154,21 @@
    "weak_hand": "RHB"
   },
   {
+   "mlbam": 680736,
+   "name": "Justin Wrobleski",
+   "team": "LAD",
+   "role": "SP",
+   "min_tbf": 125.0,
+   "p_throws": "L",
+   "own_ops": 0.747,
+   "opp_ops": 0.616,
+   "reverse_index": 0.131,
+   "reverse": true,
+   "split": 0.131,
+   "extreme": false,
+   "weak_hand": "LHB"
+  },
+  {
    "mlbam": 805123,
    "name": "AJ Blubaugh",
    "team": "HOU",
@@ -44224,21 +44227,6 @@
    "split": 0.123,
    "extreme": false,
    "weak_hand": "LHB"
-  },
-  {
-   "mlbam": 666661,
-   "name": "Juan Morillo",
-   "team": "AZ",
-   "role": "RP",
-   "min_tbf": 78.0,
-   "p_throws": "R",
-   "own_ops": 0.606,
-   "opp_ops": 0.486,
-   "reverse_index": 0.12,
-   "reverse": true,
-   "split": 0.12,
-   "extreme": false,
-   "weak_hand": "RHB"
   },
   {
    "mlbam": 621237,
@@ -44406,6 +44394,21 @@
    "weak_hand": "RHB"
   },
   {
+   "mlbam": 669093,
+   "name": "Jeremiah Estrada",
+   "team": "SD",
+   "role": "RP",
+   "min_tbf": 44.0,
+   "p_throws": "R",
+   "own_ops": 0.634,
+   "opp_ops": 0.536,
+   "reverse_index": 0.098,
+   "reverse": true,
+   "split": 0.098,
+   "extreme": false,
+   "weak_hand": "RHB"
+  },
+  {
    "mlbam": 800048,
    "name": "Parker Messick",
    "team": "CLE",
@@ -44481,19 +44484,19 @@
    "weak_hand": "RHB"
   },
   {
-   "mlbam": 674841,
-   "name": "Andrew Alvarez",
-   "team": "WSH",
-   "role": "SWING",
-   "min_tbf": 69.0,
-   "p_throws": "L",
-   "own_ops": 0.797,
-   "opp_ops": 0.711,
-   "reverse_index": 0.086,
+   "mlbam": 666661,
+   "name": "Juan Morillo",
+   "team": "AZ",
+   "role": "RP",
+   "min_tbf": 81.0,
+   "p_throws": "R",
+   "own_ops": 0.582,
+   "opp_ops": 0.497,
+   "reverse_index": 0.085,
    "reverse": true,
-   "split": 0.086,
+   "split": 0.085,
    "extreme": false,
-   "weak_hand": "LHB"
+   "weak_hand": "RHB"
   },
   {
    "mlbam": 702070,
@@ -44646,21 +44649,6 @@
    "weak_hand": "RHB"
   },
   {
-   "mlbam": 669093,
-   "name": "Jeremiah Estrada",
-   "team": "SD",
-   "role": "RP",
-   "min_tbf": 44.0,
-   "p_throws": "R",
-   "own_ops": 0.634,
-   "opp_ops": 0.56,
-   "reverse_index": 0.074,
-   "reverse": true,
-   "split": 0.074,
-   "extreme": false,
-   "weak_hand": "RHB"
-  },
-  {
    "mlbam": 667463,
    "name": "John King",
    "team": "MIA",
@@ -44717,6 +44705,21 @@
    "reverse_index": 0.069,
    "reverse": true,
    "split": 0.069,
+   "extreme": false,
+   "weak_hand": "RHB"
+  },
+  {
+   "mlbam": 650633,
+   "name": "Michael King",
+   "team": "SD",
+   "role": "SP",
+   "min_tbf": 210.0,
+   "p_throws": "R",
+   "own_ops": 0.689,
+   "opp_ops": 0.622,
+   "reverse_index": 0.067,
+   "reverse": true,
+   "split": 0.067,
    "extreme": false,
    "weak_hand": "RHB"
   },
@@ -44841,21 +44844,6 @@
    "weak_hand": "LHB"
   },
   {
-   "mlbam": 518585,
-   "name": "Fernando Cruz",
-   "team": "NYY",
-   "role": "RP",
-   "min_tbf": 95.0,
-   "p_throws": "R",
-   "own_ops": 0.675,
-   "opp_ops": 0.615,
-   "reverse_index": 0.06,
-   "reverse": true,
-   "split": 0.06,
-   "extreme": false,
-   "weak_hand": "RHB"
-  },
-  {
    "mlbam": 663687,
    "name": "Hogan Harris",
    "team": "ATH",
@@ -44882,21 +44870,6 @@
    "reverse_index": 0.06,
    "reverse": true,
    "split": 0.06,
-   "extreme": false,
-   "weak_hand": "RHB"
-  },
-  {
-   "mlbam": 650633,
-   "name": "Michael King",
-   "team": "SD",
-   "role": "SP",
-   "min_tbf": 201.0,
-   "p_throws": "R",
-   "own_ops": 0.677,
-   "opp_ops": 0.618,
-   "reverse_index": 0.059,
-   "reverse": true,
-   "split": 0.059,
    "extreme": false,
    "weak_hand": "RHB"
   },
@@ -45021,21 +44994,6 @@
    "weak_hand": "RHB"
   },
   {
-   "mlbam": 690925,
-   "name": "Clayton Beeter",
-   "team": "WSH",
-   "role": "RP",
-   "min_tbf": 65.0,
-   "p_throws": "R",
-   "own_ops": 0.681,
-   "opp_ops": 0.627,
-   "reverse_index": 0.054,
-   "reverse": true,
-   "split": 0.054,
-   "extreme": false,
-   "weak_hand": "RHB"
-  },
-  {
    "mlbam": 641778,
    "name": "Eric Lauer",
    "team": "LAD",
@@ -45066,6 +45024,21 @@
    "weak_hand": "RHB"
   },
   {
+   "mlbam": 518585,
+   "name": "Fernando Cruz",
+   "team": "NYY",
+   "role": "RP",
+   "min_tbf": 97.0,
+   "p_throws": "R",
+   "own_ops": 0.661,
+   "opp_ops": 0.608,
+   "reverse_index": 0.053,
+   "reverse": true,
+   "split": 0.053,
+   "extreme": false,
+   "weak_hand": "RHB"
+  },
+  {
    "mlbam": 669084,
    "name": "DL Hall",
    "team": "MIL",
@@ -45081,19 +45054,19 @@
    "weak_hand": "LHB"
   },
   {
-   "mlbam": 592773,
-   "name": "Ryne Stanek",
-   "team": "STL",
-   "role": "RP",
-   "min_tbf": 81.0,
-   "p_throws": "R",
-   "own_ops": 0.733,
-   "opp_ops": 0.683,
-   "reverse_index": 0.05,
+   "mlbam": 674841,
+   "name": "Andrew Alvarez",
+   "team": "WSH",
+   "role": "SWING",
+   "min_tbf": 80.0,
+   "p_throws": "L",
+   "own_ops": 0.744,
+   "opp_ops": 0.696,
+   "reverse_index": 0.048,
    "reverse": true,
-   "split": 0.05,
+   "split": 0.048,
    "extreme": false,
-   "weak_hand": "RHB"
+   "weak_hand": "LHB"
   },
   {
    "mlbam": 594027,
@@ -45124,21 +45097,6 @@
    "split": 0.043,
    "extreme": false,
    "weak_hand": "RHB"
-  },
-  {
-   "mlbam": 642232,
-   "name": "Ryan Yarbrough",
-   "team": "NYY",
-   "role": "RP",
-   "min_tbf": 78.0,
-   "p_throws": "L",
-   "own_ops": 0.687,
-   "opp_ops": 0.645,
-   "reverse_index": 0.042,
-   "reverse": true,
-   "split": 0.042,
-   "extreme": false,
-   "weak_hand": "LHB"
   },
   {
    "mlbam": 681217,
@@ -45194,21 +45152,6 @@
    "p_throws": "R",
    "own_ops": 0.771,
    "opp_ops": 0.731,
-   "reverse_index": 0.04,
-   "reverse": true,
-   "split": 0.04,
-   "extreme": false,
-   "weak_hand": "RHB"
-  },
-  {
-   "mlbam": 687075,
-   "name": "Brandon Sproat",
-   "team": "MIL",
-   "role": "SP",
-   "min_tbf": 187.0,
-   "p_throws": "R",
-   "own_ops": 0.809,
-   "opp_ops": 0.769,
    "reverse_index": 0.04,
    "reverse": true,
    "split": 0.04,
@@ -45471,6 +45414,21 @@
    "weak_hand": "LHB"
   },
   {
+   "mlbam": 687075,
+   "name": "Brandon Sproat",
+   "team": "MIL",
+   "role": "SP",
+   "min_tbf": 192.0,
+   "p_throws": "R",
+   "own_ops": 0.802,
+   "opp_ops": 0.781,
+   "reverse_index": 0.021,
+   "reverse": false,
+   "split": 0.021,
+   "extreme": false,
+   "weak_hand": "RHB"
+  },
+  {
    "mlbam": 579328,
    "name": "Yusei Kikuchi",
    "team": "LAA",
@@ -45621,6 +45579,21 @@
    "weak_hand": "RHB"
   },
   {
+   "mlbam": 592773,
+   "name": "Ryne Stanek",
+   "team": "STL",
+   "role": "RP",
+   "min_tbf": 84.0,
+   "p_throws": "R",
+   "own_ops": 0.778,
+   "opp_ops": 0.764,
+   "reverse_index": 0.014,
+   "reverse": false,
+   "split": 0.014,
+   "extreme": false,
+   "weak_hand": "RHB"
+  },
+  {
    "mlbam": 571945,
    "name": "Miles Mikolas",
    "team": "WSH",
@@ -45756,6 +45729,21 @@
    "weak_hand": "RHB"
   },
   {
+   "mlbam": 642232,
+   "name": "Ryan Yarbrough",
+   "team": "NYY",
+   "role": "RP",
+   "min_tbf": 79.0,
+   "p_throws": "L",
+   "own_ops": 0.677,
+   "opp_ops": 0.672,
+   "reverse_index": 0.005,
+   "reverse": false,
+   "split": 0.005,
+   "extreme": false,
+   "weak_hand": "LHB"
+  },
+  {
    "mlbam": 663992,
    "name": "Richard Lovelady",
    "team": "WSH",
@@ -45846,6 +45834,21 @@
    "weak_hand": "LHB"
   },
   {
+   "mlbam": 805299,
+   "name": "Brandyn Garcia",
+   "team": "AZ",
+   "role": "RP",
+   "min_tbf": 55.0,
+   "p_throws": "L",
+   "own_ops": 0.425,
+   "opp_ops": 0.426,
+   "reverse_index": -0.001,
+   "reverse": false,
+   "split": 0.001,
+   "extreme": false,
+   "weak_hand": "RHB"
+  },
+  {
    "mlbam": 676974,
    "name": "Max Meyer",
    "team": "MIA",
@@ -45921,21 +45924,6 @@
    "weak_hand": "RHB"
   },
   {
-   "mlbam": 805299,
-   "name": "Brandyn Garcia",
-   "team": "AZ",
-   "role": "RP",
-   "min_tbf": 54.0,
-   "p_throws": "L",
-   "own_ops": 0.433,
-   "opp_ops": 0.441,
-   "reverse_index": -0.008,
-   "reverse": false,
-   "split": 0.008,
-   "extreme": false,
-   "weak_hand": "RHB"
-  },
-  {
    "mlbam": 552640,
    "name": "Andrew Kittredge",
    "team": "BAL",
@@ -45955,15 +45943,30 @@
    "name": "Michael McGreevy",
    "team": "STL",
    "role": "SP",
-   "min_tbf": 175.0,
+   "min_tbf": 177.0,
    "p_throws": "R",
-   "own_ops": 0.707,
-   "opp_ops": 0.721,
+   "own_ops": 0.706,
+   "opp_ops": 0.72,
    "reverse_index": -0.014,
    "reverse": false,
    "split": 0.014,
    "extreme": false,
    "weak_hand": "LHB"
+  },
+  {
+   "mlbam": 679775,
+   "name": "Kyle Backhus",
+   "team": "PHI",
+   "role": "RP",
+   "min_tbf": 37.0,
+   "p_throws": "L",
+   "own_ops": 0.79,
+   "opp_ops": 0.804,
+   "reverse_index": -0.014,
+   "reverse": false,
+   "split": 0.014,
+   "extreme": false,
+   "weak_hand": "RHB"
   },
   {
    "mlbam": 571948,
@@ -46084,21 +46087,6 @@
    "split": 0.021,
    "extreme": false,
    "weak_hand": "RHB"
-  },
-  {
-   "mlbam": 693645,
-   "name": "Cam Schlittler",
-   "team": "NYY",
-   "role": "SP",
-   "min_tbf": 208.0,
-   "p_throws": "R",
-   "own_ops": 0.547,
-   "opp_ops": 0.57,
-   "reverse_index": -0.023,
-   "reverse": false,
-   "split": 0.023,
-   "extreme": false,
-   "weak_hand": "LHB"
   },
   {
    "mlbam": 607259,
@@ -46236,6 +46224,21 @@
    "weak_hand": "LHB"
   },
   {
+   "mlbam": 661395,
+   "name": "Jhoan Duran",
+   "team": "PHI",
+   "role": "RP",
+   "min_tbf": 62.0,
+   "p_throws": "R",
+   "own_ops": 0.502,
+   "opp_ops": 0.536,
+   "reverse_index": -0.034,
+   "reverse": false,
+   "split": 0.034,
+   "extreme": false,
+   "weak_hand": "LHB"
+  },
+  {
    "mlbam": 675660,
    "name": "Shane Drohan",
    "team": "MIL",
@@ -46279,21 +46282,6 @@
    "split": 0.035,
    "extreme": false,
    "weak_hand": "LHB"
-  },
-  {
-   "mlbam": 593974,
-   "name": "Wandy Peralta",
-   "team": "SD",
-   "role": "RP",
-   "min_tbf": 116.0,
-   "p_throws": "L",
-   "own_ops": 0.704,
-   "opp_ops": 0.739,
-   "reverse_index": -0.035,
-   "reverse": false,
-   "split": 0.035,
-   "extreme": false,
-   "weak_hand": "RHB"
   },
   {
    "mlbam": 674444,
@@ -46341,6 +46329,21 @@
    "weak_hand": "LHB"
   },
   {
+   "mlbam": 690925,
+   "name": "Clayton Beeter",
+   "team": "WSH",
+   "role": "RP",
+   "min_tbf": 66.0,
+   "p_throws": "R",
+   "own_ops": 0.67,
+   "opp_ops": 0.707,
+   "reverse_index": -0.037,
+   "reverse": false,
+   "split": 0.037,
+   "extreme": false,
+   "weak_hand": "LHB"
+  },
+  {
    "mlbam": 605488,
    "name": "Jeffrey Springs",
    "team": "ATH",
@@ -46369,6 +46372,21 @@
    "split": 0.04,
    "extreme": false,
    "weak_hand": "RHB"
+  },
+  {
+   "mlbam": 693645,
+   "name": "Cam Schlittler",
+   "team": "NYY",
+   "role": "SP",
+   "min_tbf": 216.0,
+   "p_throws": "R",
+   "own_ops": 0.552,
+   "opp_ops": 0.594,
+   "reverse_index": -0.042,
+   "reverse": false,
+   "split": 0.042,
+   "extreme": false,
+   "weak_hand": "LHB"
   },
   {
    "mlbam": 669062,
@@ -46442,21 +46460,6 @@
    "reverse_index": -0.049,
    "reverse": false,
    "split": 0.049,
-   "extreme": false,
-   "weak_hand": "LHB"
-  },
-  {
-   "mlbam": 661395,
-   "name": "Jhoan Duran",
-   "team": "PHI",
-   "role": "RP",
-   "min_tbf": 60.0,
-   "p_throws": "R",
-   "own_ops": 0.499,
-   "opp_ops": 0.55,
-   "reverse_index": -0.051,
-   "reverse": false,
-   "split": 0.051,
    "extreme": false,
    "weak_hand": "LHB"
   },
@@ -46701,21 +46704,6 @@
    "weak_hand": "RHB"
   },
   {
-   "mlbam": 643511,
-   "name": "Tyler Rogers",
-   "team": "TOR",
-   "role": "RP",
-   "min_tbf": 92.0,
-   "p_throws": "R",
-   "own_ops": 0.5,
-   "opp_ops": 0.566,
-   "reverse_index": -0.066,
-   "reverse": false,
-   "split": 0.066,
-   "extreme": false,
-   "weak_hand": "LHB"
-  },
-  {
    "mlbam": 702193,
    "name": "Andrew Morris",
    "team": "MIN",
@@ -46772,6 +46760,21 @@
    "reverse_index": -0.07,
    "reverse": false,
    "split": 0.07,
+   "extreme": false,
+   "weak_hand": "LHB"
+  },
+  {
+   "mlbam": 643511,
+   "name": "Tyler Rogers",
+   "team": "TOR",
+   "role": "RP",
+   "min_tbf": 94.0,
+   "p_throws": "R",
+   "own_ops": 0.488,
+   "opp_ops": 0.56,
+   "reverse_index": -0.072,
+   "reverse": false,
+   "split": 0.072,
    "extreme": false,
    "weak_hand": "LHB"
   },
@@ -46836,6 +46839,36 @@
    "weak_hand": "LHB"
   },
   {
+   "mlbam": 593974,
+   "name": "Wandy Peralta",
+   "team": "SD",
+   "role": "RP",
+   "min_tbf": 118.0,
+   "p_throws": "L",
+   "own_ops": 0.698,
+   "opp_ops": 0.777,
+   "reverse_index": -0.079,
+   "reverse": false,
+   "split": 0.079,
+   "extreme": false,
+   "weak_hand": "RHB"
+  },
+  {
+   "mlbam": 677865,
+   "name": "Justin Bruihl",
+   "team": "STL",
+   "role": "RP",
+   "min_tbf": 117.0,
+   "p_throws": "L",
+   "own_ops": 0.666,
+   "opp_ops": 0.745,
+   "reverse_index": -0.079,
+   "reverse": false,
+   "split": 0.079,
+   "extreme": false,
+   "weak_hand": "RHB"
+  },
+  {
    "mlbam": 681799,
    "name": "Ethan Roberts",
    "team": "CHC",
@@ -46851,19 +46884,19 @@
    "weak_hand": "LHB"
   },
   {
-   "mlbam": 677865,
-   "name": "Justin Bruihl",
-   "team": "STL",
-   "role": "RP",
-   "min_tbf": 116.0,
-   "p_throws": "L",
-   "own_ops": 0.65,
-   "opp_ops": 0.733,
-   "reverse_index": -0.083,
+   "mlbam": 657277,
+   "name": "Logan Webb",
+   "team": "SF",
+   "role": "SP",
+   "min_tbf": 200.0,
+   "p_throws": "R",
+   "own_ops": 0.577,
+   "opp_ops": 0.657,
+   "reverse_index": -0.08,
    "reverse": false,
-   "split": 0.083,
+   "split": 0.08,
    "extreme": false,
-   "weak_hand": "RHB"
+   "weak_hand": "LHB"
   },
   {
    "mlbam": 593958,
@@ -46971,6 +47004,21 @@
    "weak_hand": "RHB"
   },
   {
+   "mlbam": 605400,
+   "name": "Aaron Nola",
+   "team": "PHI",
+   "role": "SP",
+   "min_tbf": 196.0,
+   "p_throws": "R",
+   "own_ops": 0.791,
+   "opp_ops": 0.889,
+   "reverse_index": -0.098,
+   "reverse": false,
+   "split": 0.098,
+   "extreme": false,
+   "weak_hand": "LHB"
+  },
+  {
    "mlbam": 669276,
    "name": "Dylan Lee",
    "team": "ATL",
@@ -47014,21 +47062,6 @@
    "split": 0.101,
    "extreme": false,
    "weak_hand": "RHB"
-  },
-  {
-   "mlbam": 605400,
-   "name": "Aaron Nola",
-   "team": "PHI",
-   "role": "SP",
-   "min_tbf": 194.0,
-   "p_throws": "R",
-   "own_ops": 0.789,
-   "opp_ops": 0.89,
-   "reverse_index": -0.101,
-   "reverse": false,
-   "split": 0.101,
-   "extreme": false,
-   "weak_hand": "LHB"
   },
   {
    "mlbam": 669622,
@@ -47087,21 +47120,6 @@
    "reverse_index": -0.104,
    "reverse": false,
    "split": 0.104,
-   "extreme": false,
-   "weak_hand": "LHB"
-  },
-  {
-   "mlbam": 657277,
-   "name": "Logan Webb",
-   "team": "SF",
-   "role": "SP",
-   "min_tbf": 190.0,
-   "p_throws": "R",
-   "own_ops": 0.569,
-   "opp_ops": 0.675,
-   "reverse_index": -0.106,
-   "reverse": false,
-   "split": 0.106,
    "extreme": false,
    "weak_hand": "LHB"
   },
@@ -47256,21 +47274,6 @@
    "weak_hand": "LHB"
   },
   {
-   "mlbam": 680755,
-   "name": "Braydon Fisher",
-   "team": "TOR",
-   "role": "SWING",
-   "min_tbf": 109.0,
-   "p_throws": "R",
-   "own_ops": 0.627,
-   "opp_ops": 0.742,
-   "reverse_index": -0.115,
-   "reverse": false,
-   "split": 0.115,
-   "extreme": false,
-   "weak_hand": "LHB"
-  },
-  {
    "mlbam": 668674,
    "name": "Lucas Erceg",
    "team": "KC",
@@ -47391,14 +47394,14 @@
    "weak_hand": "LHB"
   },
   {
-   "mlbam": 663903,
-   "name": "Brady Singer",
-   "team": "CIN",
-   "role": "SP",
-   "min_tbf": 174.0,
+   "mlbam": 680755,
+   "name": "Braydon Fisher",
+   "team": "TOR",
+   "role": "SWING",
+   "min_tbf": 111.0,
    "p_throws": "R",
-   "own_ops": 0.722,
-   "opp_ops": 0.847,
+   "own_ops": 0.628,
+   "opp_ops": 0.753,
    "reverse_index": -0.125,
    "reverse": false,
    "split": 0.125,
@@ -47466,21 +47469,6 @@
    "weak_hand": "RHB"
   },
   {
-   "mlbam": 676879,
-   "name": "Aaron Ashby",
-   "team": "MIL",
-   "role": "RP",
-   "min_tbf": 108.0,
-   "p_throws": "L",
-   "own_ops": 0.595,
-   "opp_ops": 0.725,
-   "reverse_index": -0.13,
-   "reverse": false,
-   "split": 0.13,
-   "extreme": false,
-   "weak_hand": "RHB"
-  },
-  {
    "mlbam": 594580,
    "name": "Sam Moll",
    "team": "CIN",
@@ -47526,6 +47514,21 @@
    "weak_hand": "RHB"
   },
   {
+   "mlbam": 663903,
+   "name": "Brady Singer",
+   "team": "CIN",
+   "role": "SP",
+   "min_tbf": 174.0,
+   "p_throws": "R",
+   "own_ops": 0.722,
+   "opp_ops": 0.854,
+   "reverse_index": -0.132,
+   "reverse": false,
+   "split": 0.132,
+   "extreme": false,
+   "weak_hand": "LHB"
+  },
+  {
    "mlbam": 681867,
    "name": "Cooper Criswell",
    "team": "SEA",
@@ -47567,6 +47570,21 @@
    "reverse_index": -0.136,
    "reverse": false,
    "split": 0.136,
+   "extreme": false,
+   "weak_hand": "LHB"
+  },
+  {
+   "mlbam": 663423,
+   "name": "Trent Thornton",
+   "team": "CHC",
+   "role": "RP",
+   "min_tbf": 56.0,
+   "p_throws": "R",
+   "own_ops": 0.601,
+   "opp_ops": 0.738,
+   "reverse_index": -0.137,
+   "reverse": false,
+   "split": 0.137,
    "extreme": false,
    "weak_hand": "LHB"
   },
@@ -47691,6 +47709,21 @@
    "weak_hand": "RHB"
   },
   {
+   "mlbam": 676879,
+   "name": "Aaron Ashby",
+   "team": "MIL",
+   "role": "RP",
+   "min_tbf": 111.0,
+   "p_throws": "L",
+   "own_ops": 0.578,
+   "opp_ops": 0.723,
+   "reverse_index": -0.145,
+   "reverse": false,
+   "split": 0.145,
+   "extreme": false,
+   "weak_hand": "RHB"
+  },
+  {
    "mlbam": 656876,
    "name": "Drew Rasmussen",
    "team": "TB",
@@ -47733,21 +47766,6 @@
    "reverse": false,
    "split": 0.149,
    "extreme": false,
-   "weak_hand": "LHB"
-  },
-  {
-   "mlbam": 663423,
-   "name": "Trent Thornton",
-   "team": "CHC",
-   "role": "RP",
-   "min_tbf": 54.0,
-   "p_throws": "R",
-   "own_ops": 0.618,
-   "opp_ops": 0.768,
-   "reverse_index": -0.15,
-   "reverse": false,
-   "split": 0.15,
-   "extreme": true,
    "weak_hand": "LHB"
   },
   {
@@ -47886,6 +47904,21 @@
    "weak_hand": "LHB"
   },
   {
+   "mlbam": 571510,
+   "name": "Matthew Boyd",
+   "team": "CHC",
+   "role": "SP",
+   "min_tbf": 76.0,
+   "p_throws": "L",
+   "own_ops": 0.568,
+   "opp_ops": 0.725,
+   "reverse_index": -0.157,
+   "reverse": false,
+   "split": 0.157,
+   "extreme": true,
+   "weak_hand": "RHB"
+  },
+  {
    "mlbam": 677952,
    "name": "Braxton Ashcraft",
    "team": "PIT",
@@ -47946,6 +47979,36 @@
    "weak_hand": "RHB"
   },
   {
+   "mlbam": 694477,
+   "name": "Chad Patrick",
+   "team": "MIL",
+   "role": "SWING",
+   "min_tbf": 167.0,
+   "p_throws": "R",
+   "own_ops": 0.591,
+   "opp_ops": 0.749,
+   "reverse_index": -0.158,
+   "reverse": false,
+   "split": 0.158,
+   "extreme": true,
+   "weak_hand": "LHB"
+  },
+  {
+   "mlbam": 696149,
+   "name": "Bubba Chandler",
+   "team": "PIT",
+   "role": "SP",
+   "min_tbf": 226.0,
+   "p_throws": "R",
+   "own_ops": 0.609,
+   "opp_ops": 0.767,
+   "reverse_index": -0.158,
+   "reverse": false,
+   "split": 0.158,
+   "extreme": true,
+   "weak_hand": "LHB"
+  },
+  {
    "mlbam": 701519,
    "name": "Travis Adams",
    "team": "MIN",
@@ -48002,6 +48065,21 @@
    "reverse_index": -0.161,
    "reverse": false,
    "split": 0.161,
+   "extreme": true,
+   "weak_hand": "LHB"
+  },
+  {
+   "mlbam": 689147,
+   "name": "Orion Kerkering",
+   "team": "PHI",
+   "role": "RP",
+   "min_tbf": 93.0,
+   "p_throws": "R",
+   "own_ops": 0.545,
+   "opp_ops": 0.708,
+   "reverse_index": -0.163,
+   "reverse": false,
+   "split": 0.163,
    "extreme": true,
    "weak_hand": "LHB"
   },
@@ -48111,36 +48189,6 @@
    "weak_hand": "LHB"
   },
   {
-   "mlbam": 694477,
-   "name": "Chad Patrick",
-   "team": "MIL",
-   "role": "SWING",
-   "min_tbf": 167.0,
-   "p_throws": "R",
-   "own_ops": 0.591,
-   "opp_ops": 0.762,
-   "reverse_index": -0.171,
-   "reverse": false,
-   "split": 0.171,
-   "extreme": true,
-   "weak_hand": "LHB"
-  },
-  {
-   "mlbam": 696149,
-   "name": "Bubba Chandler",
-   "team": "PIT",
-   "role": "SP",
-   "min_tbf": 215.0,
-   "p_throws": "R",
-   "own_ops": 0.61,
-   "opp_ops": 0.781,
-   "reverse_index": -0.171,
-   "reverse": false,
-   "split": 0.171,
-   "extreme": true,
-   "weak_hand": "LHB"
-  },
-  {
    "mlbam": 608372,
    "name": "Tomoyuki Sugano",
    "team": "COL",
@@ -48152,6 +48200,21 @@
    "reverse_index": -0.172,
    "reverse": false,
    "split": 0.172,
+   "extreme": true,
+   "weak_hand": "LHB"
+  },
+  {
+   "mlbam": 694297,
+   "name": "Brandon Pfaadt",
+   "team": "AZ",
+   "role": "SWING",
+   "min_tbf": 151.0,
+   "p_throws": "R",
+   "own_ops": 0.605,
+   "opp_ops": 0.779,
+   "reverse_index": -0.174,
+   "reverse": false,
+   "split": 0.174,
    "extreme": true,
    "weak_hand": "LHB"
   },
@@ -48276,21 +48339,6 @@
    "weak_hand": "RHB"
   },
   {
-   "mlbam": 837227,
-   "name": "Tatsuya Imai",
-   "team": "HOU",
-   "role": "SP",
-   "min_tbf": 100.0,
-   "p_throws": "R",
-   "own_ops": 0.623,
-   "opp_ops": 0.808,
-   "reverse_index": -0.185,
-   "reverse": false,
-   "split": 0.185,
-   "extreme": true,
-   "weak_hand": "LHB"
-  },
-  {
    "mlbam": 702275,
    "name": "JR Ritchie",
    "team": "ATL",
@@ -48344,21 +48392,6 @@
    "p_throws": "R",
    "own_ops": 0.5,
    "opp_ops": 0.688,
-   "reverse_index": -0.188,
-   "reverse": false,
-   "split": 0.188,
-   "extreme": true,
-   "weak_hand": "LHB"
-  },
-  {
-   "mlbam": 689147,
-   "name": "Orion Kerkering",
-   "team": "PHI",
-   "role": "RP",
-   "min_tbf": 90.0,
-   "p_throws": "R",
-   "own_ops": 0.545,
-   "opp_ops": 0.733,
    "reverse_index": -0.188,
    "reverse": false,
    "split": 0.188,
@@ -48471,36 +48504,6 @@
    "weak_hand": "LHB"
   },
   {
-   "mlbam": 571510,
-   "name": "Matthew Boyd",
-   "team": "CHC",
-   "role": "SP",
-   "min_tbf": 66.0,
-   "p_throws": "L",
-   "own_ops": 0.51,
-   "opp_ops": 0.71,
-   "reverse_index": -0.2,
-   "reverse": false,
-   "split": 0.2,
-   "extreme": true,
-   "weak_hand": "RHB"
-  },
-  {
-   "mlbam": 694297,
-   "name": "Brandon Pfaadt",
-   "team": "AZ",
-   "role": "SWING",
-   "min_tbf": 137.0,
-   "p_throws": "R",
-   "own_ops": 0.607,
-   "opp_ops": 0.807,
-   "reverse_index": -0.2,
-   "reverse": false,
-   "split": 0.2,
-   "extreme": true,
-   "weak_hand": "LHB"
-  },
-  {
    "mlbam": 680570,
    "name": "Grayson Rodriguez",
    "team": "LAA",
@@ -48531,6 +48534,21 @@
    "weak_hand": "LHB"
   },
   {
+   "mlbam": 687330,
+   "name": "Kevin Kelly",
+   "team": "TB",
+   "role": "RP",
+   "min_tbf": 86.0,
+   "p_throws": "R",
+   "own_ops": 0.431,
+   "opp_ops": 0.64,
+   "reverse_index": -0.209,
+   "reverse": false,
+   "split": 0.209,
+   "extreme": true,
+   "weak_hand": "LHB"
+  },
+  {
    "mlbam": 693686,
    "name": "Spencer Miles",
    "team": "TOR",
@@ -48539,6 +48557,21 @@
    "p_throws": "R",
    "own_ops": 0.456,
    "opp_ops": 0.665,
+   "reverse_index": -0.209,
+   "reverse": false,
+   "split": 0.209,
+   "extreme": true,
+   "weak_hand": "LHB"
+  },
+  {
+   "mlbam": 837227,
+   "name": "Tatsuya Imai",
+   "team": "HOU",
+   "role": "SP",
+   "min_tbf": 106.0,
+   "p_throws": "R",
+   "own_ops": 0.583,
+   "opp_ops": 0.792,
    "reverse_index": -0.209,
    "reverse": false,
    "split": 0.209,
@@ -48576,51 +48609,6 @@
    "weak_hand": "RHB"
   },
   {
-   "mlbam": 673513,
-   "name": "Yuki Matsui",
-   "team": "SD",
-   "role": "RP",
-   "min_tbf": 76.0,
-   "p_throws": "L",
-   "own_ops": 0.544,
-   "opp_ops": 0.759,
-   "reverse_index": -0.215,
-   "reverse": false,
-   "split": 0.215,
-   "extreme": true,
-   "weak_hand": "RHB"
-  },
-  {
-   "mlbam": 687330,
-   "name": "Kevin Kelly",
-   "team": "TB",
-   "role": "RP",
-   "min_tbf": 85.0,
-   "p_throws": "R",
-   "own_ops": 0.431,
-   "opp_ops": 0.648,
-   "reverse_index": -0.217,
-   "reverse": false,
-   "split": 0.217,
-   "extreme": true,
-   "weak_hand": "LHB"
-  },
-  {
-   "mlbam": 615698,
-   "name": "Cal Quantrill",
-   "team": "TEX",
-   "role": "SWING",
-   "min_tbf": 110.0,
-   "p_throws": "R",
-   "own_ops": 0.584,
-   "opp_ops": 0.801,
-   "reverse_index": -0.217,
-   "reverse": false,
-   "split": 0.217,
-   "extreme": true,
-   "weak_hand": "LHB"
-  },
-  {
    "mlbam": 656271,
    "name": "Brock Burke",
    "team": "CIN",
@@ -48634,6 +48622,36 @@
    "split": 0.22,
    "extreme": true,
    "weak_hand": "RHB"
+  },
+  {
+   "mlbam": 685299,
+   "name": "Tanner Gordon",
+   "team": "COL",
+   "role": "SWING",
+   "min_tbf": 129.0,
+   "p_throws": "R",
+   "own_ops": 0.81,
+   "opp_ops": 1.03,
+   "reverse_index": -0.22,
+   "reverse": false,
+   "split": 0.22,
+   "extreme": true,
+   "weak_hand": "LHB"
+  },
+  {
+   "mlbam": 615698,
+   "name": "Cal Quantrill",
+   "team": "TEX",
+   "role": "SWING",
+   "min_tbf": 120.0,
+   "p_throws": "R",
+   "own_ops": 0.564,
+   "opp_ops": 0.786,
+   "reverse_index": -0.222,
+   "reverse": false,
+   "split": 0.222,
+   "extreme": true,
+   "weak_hand": "LHB"
   },
   {
    "mlbam": 676534,
@@ -48679,21 +48697,6 @@
    "split": 0.225,
    "extreme": true,
    "weak_hand": "RHB"
-  },
-  {
-   "mlbam": 685299,
-   "name": "Tanner Gordon",
-   "team": "COL",
-   "role": "SWING",
-   "min_tbf": 120.0,
-   "p_throws": "R",
-   "own_ops": 0.812,
-   "opp_ops": 1.037,
-   "reverse_index": -0.225,
-   "reverse": false,
-   "split": 0.225,
-   "extreme": true,
-   "weak_hand": "LHB"
   },
   {
    "mlbam": 664208,
@@ -48756,19 +48759,19 @@
    "weak_hand": "LHB"
   },
   {
-   "mlbam": 547179,
-   "name": "Michael Lorenzen",
-   "team": "COL",
-   "role": "SP",
-   "min_tbf": 228.0,
-   "p_throws": "R",
-   "own_ops": 0.792,
-   "opp_ops": 1.019,
+   "mlbam": 656945,
+   "name": "Tanner Scott",
+   "team": "LAD",
+   "role": "RP",
+   "min_tbf": 54.0,
+   "p_throws": "L",
+   "own_ops": 0.4,
+   "opp_ops": 0.627,
    "reverse_index": -0.227,
    "reverse": false,
    "split": 0.227,
    "extreme": true,
-   "weak_hand": "LHB"
+   "weak_hand": "RHB"
   },
   {
    "mlbam": 669372,
@@ -48784,6 +48787,36 @@
    "split": 0.228,
    "extreme": true,
    "weak_hand": "LHB"
+  },
+  {
+   "mlbam": 547179,
+   "name": "Michael Lorenzen",
+   "team": "COL",
+   "role": "SP",
+   "min_tbf": 234.0,
+   "p_throws": "R",
+   "own_ops": 0.802,
+   "opp_ops": 1.03,
+   "reverse_index": -0.228,
+   "reverse": false,
+   "split": 0.228,
+   "extreme": true,
+   "weak_hand": "LHB"
+  },
+  {
+   "mlbam": 673513,
+   "name": "Yuki Matsui",
+   "team": "SD",
+   "role": "RP",
+   "min_tbf": 80.0,
+   "p_throws": "L",
+   "own_ops": 0.532,
+   "opp_ops": 0.763,
+   "reverse_index": -0.231,
+   "reverse": false,
+   "split": 0.231,
+   "extreme": true,
+   "weak_hand": "RHB"
   },
   {
    "mlbam": 687473,
@@ -48936,6 +48969,21 @@
    "weak_hand": "RHB"
   },
   {
+   "mlbam": 676775,
+   "name": "Keaton Winn",
+   "team": "SF",
+   "role": "RP",
+   "min_tbf": 67.0,
+   "p_throws": "R",
+   "own_ops": 0.505,
+   "opp_ops": 0.752,
+   "reverse_index": -0.247,
+   "reverse": false,
+   "split": 0.247,
+   "extreme": true,
+   "weak_hand": "LHB"
+  },
+  {
    "mlbam": 670990,
    "name": "Yohan Ram\u00edrez",
    "team": "PIT",
@@ -49037,21 +49085,6 @@
    "reverse_index": -0.257,
    "reverse": false,
    "split": 0.257,
-   "extreme": true,
-   "weak_hand": "RHB"
-  },
-  {
-   "mlbam": 656945,
-   "name": "Tanner Scott",
-   "team": "LAD",
-   "role": "RP",
-   "min_tbf": 53.0,
-   "p_throws": "L",
-   "own_ops": 0.368,
-   "opp_ops": 0.632,
-   "reverse_index": -0.264,
-   "reverse": false,
-   "split": 0.264,
    "extreme": true,
    "weak_hand": "RHB"
   },
@@ -49296,21 +49329,6 @@
    "weak_hand": "RHB"
   },
   {
-   "mlbam": 676775,
-   "name": "Keaton Winn",
-   "team": "SF",
-   "role": "RP",
-   "min_tbf": 65.0,
-   "p_throws": "R",
-   "own_ops": 0.476,
-   "opp_ops": 0.777,
-   "reverse_index": -0.301,
-   "reverse": false,
-   "split": 0.301,
-   "extreme": true,
-   "weak_hand": "LHB"
-  },
-  {
    "mlbam": 657424,
    "name": "Matt Gage",
    "team": "SF",
@@ -49431,6 +49449,21 @@
    "weak_hand": "LHB"
   },
   {
+   "mlbam": 683618,
+   "name": "Edgardo Henriquez",
+   "team": "LAD",
+   "role": "RP",
+   "min_tbf": 75.0,
+   "p_throws": "R",
+   "own_ops": 0.417,
+   "opp_ops": 0.751,
+   "reverse_index": -0.334,
+   "reverse": false,
+   "split": 0.334,
+   "extreme": true,
+   "weak_hand": "LHB"
+  },
+  {
    "mlbam": 675848,
    "name": "Juan Mejia",
    "team": "COL",
@@ -49476,21 +49509,6 @@
    "weak_hand": "RHB"
   },
   {
-   "mlbam": 683618,
-   "name": "Edgardo Henriquez",
-   "team": "LAD",
-   "role": "RP",
-   "min_tbf": 72.0,
-   "p_throws": "R",
-   "own_ops": 0.397,
-   "opp_ops": 0.745,
-   "reverse_index": -0.348,
-   "reverse": false,
-   "split": 0.348,
-   "extreme": true,
-   "weak_hand": "LHB"
-  },
-  {
    "mlbam": 605288,
    "name": "Adrian Houser",
    "team": "SF",
@@ -49510,13 +49528,13 @@
    "name": "Mason Montgomery",
    "team": "PIT",
    "role": "SWING",
-   "min_tbf": 70.0,
+   "min_tbf": 71.0,
    "p_throws": "L",
-   "own_ops": 0.382,
-   "opp_ops": 0.739,
-   "reverse_index": -0.357,
+   "own_ops": 0.375,
+   "opp_ops": 0.737,
+   "reverse_index": -0.362,
    "reverse": false,
-   "split": 0.357,
+   "split": 0.362,
    "extreme": true,
    "weak_hand": "RHB"
   },
@@ -49534,21 +49552,6 @@
    "split": 0.374,
    "extreme": true,
    "weak_hand": "RHB"
-  },
-  {
-   "mlbam": 663765,
-   "name": "Jake Woodford",
-   "team": "CHC",
-   "role": "RP",
-   "min_tbf": 50.0,
-   "p_throws": "R",
-   "own_ops": 0.752,
-   "opp_ops": 1.127,
-   "reverse_index": -0.375,
-   "reverse": false,
-   "split": 0.375,
-   "extreme": true,
-   "weak_hand": "LHB"
   },
   {
    "mlbam": 683769,
@@ -49626,6 +49629,36 @@
    "weak_hand": "LHB"
   },
   {
+   "mlbam": 657612,
+   "name": "Tim Hill",
+   "team": "NYY",
+   "role": "RP",
+   "min_tbf": 71.0,
+   "p_throws": "L",
+   "own_ops": 0.585,
+   "opp_ops": 0.991,
+   "reverse_index": -0.406,
+   "reverse": false,
+   "split": 0.406,
+   "extreme": true,
+   "weak_hand": "RHB"
+  },
+  {
+   "mlbam": 663765,
+   "name": "Jake Woodford",
+   "team": "CHC",
+   "role": "RP",
+   "min_tbf": 51.0,
+   "p_throws": "R",
+   "own_ops": 0.731,
+   "opp_ops": 1.145,
+   "reverse_index": -0.414,
+   "reverse": false,
+   "split": 0.414,
+   "extreme": true,
+   "weak_hand": "LHB"
+  },
+  {
    "mlbam": 664126,
    "name": "Pete Fairbanks",
    "team": "MIA",
@@ -49686,19 +49719,19 @@
    "weak_hand": "LHB"
   },
   {
-   "mlbam": 657612,
-   "name": "Tim Hill",
-   "team": "NYY",
+   "mlbam": 666808,
+   "name": "Camilo Doval",
+   "team": "PIT",
    "role": "RP",
-   "min_tbf": 69.0,
-   "p_throws": "L",
-   "own_ops": 0.556,
-   "opp_ops": 0.991,
-   "reverse_index": -0.435,
+   "min_tbf": 91.0,
+   "p_throws": "R",
+   "own_ops": 0.522,
+   "opp_ops": 0.951,
+   "reverse_index": -0.429,
    "reverse": false,
-   "split": 0.435,
+   "split": 0.429,
    "extreme": true,
-   "weak_hand": "RHB"
+   "weak_hand": "LHB"
   },
   {
    "mlbam": 650911,
@@ -49727,21 +49760,6 @@
    "reverse_index": -0.444,
    "reverse": false,
    "split": 0.444,
-   "extreme": true,
-   "weak_hand": "LHB"
-  },
-  {
-   "mlbam": 666808,
-   "name": "Camilo Doval",
-   "team": "PIT",
-   "role": "RP",
-   "min_tbf": 89.0,
-   "p_throws": "R",
-   "own_ops": 0.528,
-   "opp_ops": 0.974,
-   "reverse_index": -0.446,
-   "reverse": false,
-   "split": 0.446,
    "extreme": true,
    "weak_hand": "LHB"
   },
@@ -49996,26 +50014,6 @@
    "lean": "RP",
    "mismatch": true,
    "mismatch_margin": 26.0
-  },
-  {
-   "player_key": "jack_cebert",
-   "name": "Jack Cebert",
-   "org": "WSN",
-   "position": "SP",
-   "fv": 42.0,
-   "tools": {
-    "fb": 52.5,
-    "sl": 52.5,
-    "cb": 50.0,
-    "cmd": 47.5
-   },
-   "starter_shape": 18.0,
-   "arsenal_depth": 0,
-   "cmd": 47.5,
-   "role": "SP",
-   "lean": "RP",
-   "mismatch": true,
-   "mismatch_margin": 22.0
   },
   {
    "player_key": "ben_jacobs",
@@ -51148,26 +51146,6 @@
    "lean": "RP",
    "mismatch": true,
    "mismatch_margin": 26.0
-  },
-  {
-   "player_key": "jack_cebert",
-   "name": "Jack Cebert",
-   "org": "WSN",
-   "position": "SP",
-   "fv": 42.0,
-   "tools": {
-    "fb": 52.5,
-    "sl": 52.5,
-    "cb": 50.0,
-    "cmd": 47.5
-   },
-   "starter_shape": 18.0,
-   "arsenal_depth": 0,
-   "cmd": 47.5,
-   "role": "SP",
-   "lean": "RP",
-   "mismatch": true,
-   "mismatch_margin": 22.0
   },
   {
    "player_key": "ben_jacobs",
@@ -52423,32 +52401,11 @@
    "mismatch_margin": 8.0
   },
   {
-   "player_key": "karson_milbrandt",
-   "name": "Karson Milbrandt",
-   "org": "MIA",
-   "position": "SP",
-   "fv": 50.0,
-   "tools": {
-    "fb": 59.0,
-    "sl": 56.0,
-    "cb": 54.0,
-    "ch": 40.0,
-    "cmd": 43.0
-   },
-   "starter_shape": 33.0,
-   "arsenal_depth": 2,
-   "cmd": 43.0,
-   "role": "SP",
-   "lean": "RP",
-   "mismatch": true,
-   "mismatch_margin": 7.0
-  },
-  {
    "player_key": "weien_lin",
    "name": "Wei-En Lin",
    "org": "ATH",
    "position": "SP",
-   "fv": 48.0,
+   "fv": 49.0,
    "tools": {
     "fb": 54.0,
     "sl": 54.0,
@@ -52527,37 +52484,16 @@
    "mismatch_margin": 7.0
   },
   {
-   "player_key": "carlos_lagrange",
-   "name": "Carlos Lagrange",
-   "org": "NYY",
-   "position": "SIRP",
-   "fv": 50.0,
-   "tools": {
-    "fb": 69.0,
-    "sl": 61.0,
-    "cb": 55.0,
-    "ch": 56.0,
-    "cmd": 43.0
-   },
-   "starter_shape": 66.0,
-   "arsenal_depth": 4,
-   "cmd": 43.0,
-   "role": "RP",
-   "lean": "SP",
-   "mismatch": true,
-   "mismatch_margin": 6.0
-  },
-  {
    "player_key": "jaxon_wiggins",
    "name": "Jaxon Wiggins",
    "org": "CHC",
    "position": "SP",
-   "fv": 49.0,
+   "fv": 50.0,
    "tools": {
-    "fb": 65.0,
-    "sl": 51.5,
+    "fb": 68.5,
+    "sl": 53.5,
     "cb": 50.0,
-    "ch": 56.5,
+    "ch": 58.5,
     "cmd": 43.5
    },
    "starter_shape": 34.0,
@@ -52688,6 +52624,48 @@
    "lean": "RP",
    "mismatch": true,
    "mismatch_margin": 6.0
+  },
+  {
+   "player_key": "carlos_lagrange",
+   "name": "Carlos Lagrange",
+   "org": "NYY",
+   "position": "SIRP",
+   "fv": 50.0,
+   "tools": {
+    "fb": 69.0,
+    "sl": 61.0,
+    "cb": 55.0,
+    "ch": 56.0,
+    "cmd": 42.5
+   },
+   "starter_shape": 65.0,
+   "arsenal_depth": 4,
+   "cmd": 42.5,
+   "role": "RP",
+   "lean": "SP",
+   "mismatch": true,
+   "mismatch_margin": 5.0
+  },
+  {
+   "player_key": "karson_milbrandt",
+   "name": "Karson Milbrandt",
+   "org": "MIA",
+   "position": "SP",
+   "fv": 50.0,
+   "tools": {
+    "fb": 60.0,
+    "sl": 56.0,
+    "cb": 54.0,
+    "ch": 40.0,
+    "cmd": 44.0
+   },
+   "starter_shape": 35.0,
+   "arsenal_depth": 2,
+   "cmd": 44.0,
+   "role": "SP",
+   "lean": "RP",
+   "mismatch": true,
+   "mismatch_margin": 5.0
   },
   {
    "player_key": "aidan_curry",
@@ -52863,26 +52841,6 @@
     "fb": 60.0,
     "sl": 50.0,
     "ch": 62.5,
-    "cmd": 45.0
-   },
-   "starter_shape": 37.0,
-   "arsenal_depth": 2,
-   "cmd": 45.0,
-   "role": "SP",
-   "lean": "RP",
-   "mismatch": true,
-   "mismatch_margin": 3.0
-  },
-  {
-   "player_key": "kruz_schoolcraft",
-   "name": "Kruz Schoolcraft",
-   "org": "SDP",
-   "position": "SP",
-   "fv": 44.0,
-   "tools": {
-    "fb": 57.5,
-    "sl": 50.0,
-    "ch": 60.0,
     "cmd": 45.0
    },
    "starter_shape": 37.0,
@@ -53248,7 +53206,7 @@
    "position": "SP",
    "fv": 42.0,
    "tools": {
-    "fb": 42.5,
+    "fb": 45.0,
     "sl": 47.5,
     "cb": 45.0,
     "ch": 50.0,
@@ -53304,7 +53262,7 @@
    "mismatch_margin": 1.0
   },
   {
-   "player_key": "aaron_watson__sa3069259",
+   "player_key": "aaron_watson",
    "name": "Aaron Watson",
    "org": "CIN",
    "position": "SP",
@@ -53592,16 +53550,16 @@
   "fv_min": 40.0,
   "margin_min": 10.0,
   "cap": 60,
-  "n_mismatches": 121,
-  "n_qualified": 56,
-  "n_shown": 56,
-  "n_below_margin": 65,
+  "n_mismatches": 119,
+  "n_qualified": 55,
+  "n_shown": 55,
+  "n_below_margin": 64,
   "n_over_cap": 0,
   "cap_binding": false,
   "best_margin_below_threshold": 8.0,
   "basis": "severity = shape points past the SWING band [40, 60]; threshold is half the band width, an a-priori structural bound, not a fitted one"
  },
- "n_prospects": 1787,
+ "n_prospects": 1786,
  "backtest": {
   "n_labeled": 35,
   "spearman_prefit_vs_held": 0.281,
@@ -53620,8 +53578,8 @@
    }
   },
   "primary_outcome": "war_delta (bWAR post-season minus pre-season), per direction, closed post seasons only; the pooled held rho above is a legacy reporting field (two different 0-100 scales)",
-  "relief_k_bump_measured": 0.0164,
-  "converter_median_fit_pool_pctile": 73,
+  "relief_k_bump_measured": 0.016,
+  "converter_median_fit_pool_pctile": 72,
   "disclaimer": "A screen, not a success-probability model. The conversion sample is small and selection-biased (only pitchers teams chose to convert), so the weights are frozen priors from the literature. The gated evaluation (per-direction rho vs same-event baselines, bootstrap CI) lives in tools/pal_backtest_lab.py -> data/pal_eval.json; the rhos here are the live stamp of the same repaired harness. Held labels read closed >=20 IP follow-up seasons only."
  },
  "verdict": "downgraded"

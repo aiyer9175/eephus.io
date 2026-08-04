@@ -2,7 +2,7 @@
   "_meta": {
     "source": "https://data-graph.mlb.com/graphql",
     "query": "getPlayerRankingsFromSelection(slug=sel-pr-YYYY-top100)",
-    "generated": "2026-08-01T04:31:56Z",
+    "generated": "2026-08-04T17:28:10Z",
     "years": [
       2015,
       2016,

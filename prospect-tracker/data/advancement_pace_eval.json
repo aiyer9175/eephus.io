@@ -1,10 +1,10 @@
 {
-"generated_at": "2026-08-03",
+"generated_at": "2026-08-04",
 "artifact": "data/advancement_pace.json",
 "kind": "descriptive QC only - no predictive claim is made or permitted anywhere for this statistic",
 "methodology_version": "1.0.0-eephus",
-"n_scored_latest_asof": 9576,
-"n_asof_rows_fit": 27488,
+"n_scored_latest_asof": 9577,
+"n_asof_rows_fit": 27489,
 "distribution_ap_plus_display_latest": {
 "mean": 99.27,
 "sd": 7.69,
@@ -12,7 +12,7 @@
 "p25": 94.8,
 "p50": 98.9,
 "p75": 103.2,
-"p95": 113.7,
+"p95": 113.8,
 "n_at_low_clip": 2,
 "n_at_high_clip": 27
 },
@@ -23,7 +23,7 @@
 "max": 162.6,
 "p5": 88.3,
 "p50": 98.9,
-"p95": 113.7
+"p95": 113.8
 },
 "margin_flatness_fit_pool": {
 "note": "joint-OLS residual means are exactly zero per included margin by construction; the per-experience-year SD scaling that builds z can move a margin mean up to about a point on this panel (residual sign correlating with experience year inside a margin)",
@@ -38,57 +38,57 @@
 },
 "2021+": {
 "mean_ap_plus": 100.44,
-"n": 13294
+"n": 13295
 }
 },
 "position_group": {
 "C": {
 "mean_ap_plus": 100.24,
-"n": 1349
+"n": 1388
 },
 "CIF": {
-"mean_ap_plus": 100.2,
-"n": 1519
+"mean_ap_plus": 100.21,
+"n": 1539
 },
 "MIF": {
-"mean_ap_plus": 100.0,
-"n": 2105
+"mean_ap_plus": 100.03,
+"n": 2145
 },
 "OF": {
-"mean_ap_plus": 100.06,
-"n": 2533
+"mean_ap_plus": 100.09,
+"n": 2601
 },
 "UNK": {
-"mean_ap_plus": 99.94,
-"n": 19021
+"mean_ap_plus": 99.93,
+"n": 18828
 },
 "UT": {
-"mean_ap_plus": 100.33,
-"n": 961
+"mean_ap_plus": 100.34,
+"n": 988
 }
 },
 "entry_pathway": {
 "draft_college": {
 "mean_ap_plus": 99.59,
-"n": 1290
+"n": 1310
 },
 "draft_hs": {
-"mean_ap_plus": 98.77,
-"n": 741
+"mean_ap_plus": 98.79,
+"n": 753
 },
 "intl_amateur": {
-"mean_ap_plus": 100.71,
-"n": 15859
+"mean_ap_plus": 100.72,
+"n": 15848
 },
 "undrafted_other": {
 "mean_ap_plus": 98.97,
-"n": 9598
+"n": 9578
 }
 },
 "entry_age_bucket": {
 "18": {
 "mean_ap_plus": 100.02,
-"n": 4743
+"n": 4744
 },
 "19-20": {
 "mean_ap_plus": 99.52,
@@ -110,7 +110,7 @@
 },
 "threshold_stability": {
 "raw_pace_spearman_T20_vs_T30": 0.994,
-"n_common_players": 9576
+"n_common_players": 9577
 },
 "named_riser_sanity": [
 {

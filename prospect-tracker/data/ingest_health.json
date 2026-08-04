@@ -1,26 +1,26 @@
 {
- "generated_at": "2026-08-01T05:28:52+00:00",
+ "generated_at": "2026-08-04T18:21:29+00:00",
  "mode": "monthly",
  "sources": [
   {
    "source": "espn_article_probe",
    "scope": "",
    "ok": true,
-   "n_rows": 0,
-   "message": "",
-   "date": "2026-08-01",
-   "last_ok_at": "2026-08-01 05:28:42",
-   "last_ok_rows": 0
+   "n_rows": 1,
+   "message": "49464501 MLB trade deadline 2026: Ranking prospects who changed teams",
+   "date": "2026-08-04",
+   "last_ok_at": "2026-08-04 18:21:19",
+   "last_ok_rows": 1
   },
   {
    "source": "espn_article_probe",
    "scope": "",
    "ok": true,
-   "n_rows": 0,
-   "message": "",
-   "date": "2026-08-01",
-   "last_ok_at": "2026-08-01 05:28:42",
-   "last_ok_rows": 0
+   "n_rows": 1,
+   "message": "49464501 MLB trade deadline 2026: Ranking prospects who changed teams",
+   "date": "2026-08-04",
+   "last_ok_at": "2026-08-04 18:21:19",
+   "last_ok_rows": 1
   },
   {
    "source": "just_baseball",
@@ -28,8 +28,8 @@
    "ok": true,
    "n_rows": 100,
    "message": "unchanged",
-   "date": "2026-08-01",
-   "last_ok_at": "2026-08-01 04:28:56",
+   "date": "2026-08-04",
+   "last_ok_at": "2026-08-04 17:18:51",
    "last_ok_rows": 100
   },
   {
@@ -38,8 +38,8 @@
    "ok": true,
    "n_rows": 100,
    "message": "",
-   "date": "2026-08-01",
-   "last_ok_at": "2026-08-01 05:16:17",
+   "date": "2026-08-04",
+   "last_ok_at": "2026-08-04 18:08:56",
    "last_ok_rows": 100
   },
   {
@@ -48,8 +48,8 @@
    "ok": true,
    "n_rows": 900,
    "message": "",
-   "date": "2026-08-01",
-   "last_ok_at": "2026-08-01 05:16:26",
+   "date": "2026-08-04",
+   "last_ok_at": "2026-08-04 18:09:04",
    "last_ok_rows": 900
   },
   {
@@ -58,8 +58,8 @@
    "ok": true,
    "n_rows": 100,
    "message": "",
-   "date": "2026-08-01",
-   "last_ok_at": "2026-08-01 05:28:42",
+   "date": "2026-08-04",
+   "last_ok_at": "2026-08-04 18:21:19",
    "last_ok_rows": 100
   },
   {
@@ -68,8 +68,8 @@
    "ok": true,
    "n_rows": 100,
    "message": "",
-   "date": "2026-08-01",
-   "last_ok_at": "2026-08-01 04:28:55",
+   "date": "2026-08-04",
+   "last_ok_at": "2026-08-04 17:18:49",
    "last_ok_rows": 100
   }
  ],
