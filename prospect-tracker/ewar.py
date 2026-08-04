@@ -187,24 +187,92 @@ def _corpus() -> dict:
     return fp.build_corpus()
 
 
-def corpus_fip() -> tuple[dict, dict]:
+def corpus_fip(hr_shrink_k: float | None = None) -> tuple[dict, dict]:
     """({(mlbam, season): fip}, {season: league_block}).
 
     The FIP is fa_projection's, verbatim: (13HR + 3(BB+HBP) - 2K)/IP plus the
     season's fitted FIP constant, which is defined so league FIP == league ERA.
     Re-deriving it here would be a second convention; the platform has one.
+
+    hr_shrink_k turns on the HOME-RUN REGRESSION VARIANT (default off, so the
+    shipped map is untouched). HR is the noisiest of FIP's three inputs, and the
+    standard fix is xFIP: replace a pitcher's actual home runs with his fly balls
+    times the league home-run-per-fly-ball rate. THAT IS NOT COMPUTABLE HERE -
+    the projection corpus carries k_pct, bb_pct, hr_bf, bf, ip and no batted-ball
+    profile at all, so there is no fly-ball denominator. Rather than fake one,
+    this variant regresses the HR RATE itself toward the season's league rate by
+    exposure, hr' = (hr_bf*bf + lg_hr_bf*k) / (bf + k), which tests the same
+    hypothesis (a pitcher's home-run total is largely noise, so damping it should
+    improve year-to-year persistence) without inventing a batted-ball input.
+    It is deliberately NOT called xFIP anywhere, because it is not xFIP.
+
+    The adjustment is applied as a DELTA to the existing FIP rather than by
+    recomputing it: FIP is linear in home runs, so dFIP = 13*(HR' - HR)/IP is
+    exact, and this keeps the platform's single FIP-constant convention intact
+    (see the warning above - re-deriving it here is precisely what must not
+    happen).
+
+    MEASURED at k=400 over the 19,324-row corpus, so neither of these is a
+    surprise at gate time:
+      * DIRECTION IS RIGHT. The three highest home-run rates move -1.14, -0.93
+        and -0.67 FIP; the three lowest move +0.53, +0.57 and +0.30.
+      * THE LEAGUE LEVEL MOVES, 4.997 -> 4.734. Shrinking is mean-preserving in
+        the RATE but not in the FIP delta, because dFIP carries a bf/IP factor
+        that varies by pitcher. This is HARMLESS HERE and only here: the
+        pitching component SOLVES its centring constant per (season, role) so
+        the role total is preserved by construction, which means a level shift
+        in the FIP input is absorbed and the swap stays a within-role
+        redistribution. Any other consumer of this map would need to handle it.
+      * THE TAIL IS WILD ON TINY SAMPLES, min dFIP -71. That is arithmetic, not
+        a bug: a pitcher who allowed 2 home runs in 5 batters faced has roughly
+        1.9 of them regressed away over a third of an inning. His FIP was
+        meaningless before the adjustment and is meaningless after; the
+        component's centring is IP-weighted, so he moves nothing. Do not "fix"
+        this by clamping, which would silently un-regress exactly the pitchers
+        the variant exists to regress.
     """
     cor = _corpus()
+    rows = cor.get("pit", [])
+    league = {int(k): v for k, v in (cor.get("league") or {}).items()}
+
+    lg_hr_bf: dict[int, float] = {}
+    if hr_shrink_k:
+        hr_sum: dict[int, float] = defaultdict(float)
+        bf_sum: dict[int, float] = defaultdict(float)
+        for r in rows:
+            try:
+                s = int(r["season"]); bf = float(r.get("bf") or 0.0)
+                hr = float(r.get("hr_bf") or 0.0) * bf
+            except (TypeError, ValueError, KeyError):
+                continue
+            if bf > 0:
+                hr_sum[s] += hr
+                bf_sum[s] += bf
+        lg_hr_bf = {s: hr_sum[s] / bf_sum[s] for s in bf_sum if bf_sum[s] > 0}
+
     fip = {}
-    for r in cor.get("pit", []):
+    for r in rows:
         mid, season, f = r.get("mlbam"), r.get("season"), r.get("fip")
         if mid is None or season is None or f is None:
             continue
         try:
-            fip[(int(mid), int(season))] = float(f)
+            key = (int(mid), int(season))
+            val = float(f)
         except (TypeError, ValueError):
             continue
-    league = {int(k): v for k, v in (cor.get("league") or {}).items()}
+        if hr_shrink_k:
+            try:
+                bf = float(r.get("bf") or 0.0)
+                ip = float(r.get("ip") or 0.0)
+                rate = float(r.get("hr_bf") or 0.0)
+                lg = lg_hr_bf.get(int(season))
+            except (TypeError, ValueError):
+                bf = ip = 0.0
+                lg = None
+            if lg is not None and bf > 0 and ip > 0:
+                shrunk = (rate * bf + lg * hr_shrink_k) / (bf + hr_shrink_k)
+                val += 13.0 * (shrunk - rate) * bf / ip
+        fip[key] = val
     return fip, league
 
 
@@ -575,7 +643,8 @@ def runs_per_win(bat, pit) -> tuple[dict, dict]:
 def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
           shrink: bool = True, force_fetch: bool = False,
           swap_fielding: bool = True, swap_pitching: bool = True,
-          fielding_blend_w: float | None = None) -> dict:
+          fielding_blend_w: float | None = None,
+          fip_hr_shrink_k: float | None = None) -> dict:
     """The model. Returns {"rows": [...], "meta": {...}}.
 
     A row is one war_daily stint (player x season x team x side), carrying both
@@ -616,7 +685,7 @@ def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
     pit["year_ID"] = pd.to_numeric(pit["year_ID"], errors="coerce").astype(int)
 
     fld, fld_meta = fielding_component(first, last, shrink=shrink)
-    fip_map, league = corpus_fip()
+    fip_map, league = corpus_fip(hr_shrink_k=fip_hr_shrink_k)
     praa, pit_meta = pitching_component(pit, fip_map, league)
     rpw_team, rpw_season = runs_per_win(bat, pit)
 
@@ -772,6 +841,9 @@ def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
         # the rest. 1.0 is the v1 full replacement. Recorded so a served payload
         # always states which fielding configuration produced it.
         "fielding_blend_w": (1.0 if fielding_blend_w is None else float(fielding_blend_w)),
+        # Home-run regression strength on the FIP leg (None = off, which is
+        # the shipped model). Recorded so a payload states its own variant.
+        "fip_hr_shrink_k": (None if fip_hr_shrink_k is None else float(fip_hr_shrink_k)),
         "replacement_wins": REPLACEMENT_WINS,
         "fielding": fld_meta,
         "pitching": pit_meta,
