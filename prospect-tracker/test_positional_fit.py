@@ -175,7 +175,19 @@ def test_payload_has_the_documented_blocks(payload):
 def test_ladder_is_a_real_inversion_not_a_guess(payload):
     L = payload["fit"]["ladder"]
     assert L["r2"] > 0.95
-    assert L["n_player_seasons"] > 5000
+    # REBASED 2026-08-03 onto the SHIPPED window. This read `> 5000`, which was
+    # the size of the old 2000-2026 pool (9,101 player-seasons). The shipped
+    # window deliberately starts at 2012 - era drift in these coefficients is
+    # an order of magnitude larger than the sampling CIs, so a 27-year pool is
+    # an average rather than a current read, and the universal DH arrived in
+    # 2022. That window fits ~4,970, so the old floor failed the first honest
+    # regen after the decision and made a correct artifact look degraded.
+    # Verified the corpus is not short: refitting from 2000 on this machine
+    # reproduces 9,101 exactly.
+    assert L["seasons"][0] == pf.LADDER_FIRST_SEASON, (
+        f"ladder fitted from {L['seasons'][0]}, shipped window starts at "
+        f"{pf.LADDER_FIRST_SEASON}")
+    assert L["n_player_seasons"] > 4000
     v = L["values"]
     # the defensive spectrum must come out in the right order
     assert v["C"] > v["SS"] > v["2B"] > v["3B"] > v["1B"] > v["DH"]
