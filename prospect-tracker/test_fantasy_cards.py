@@ -235,7 +235,15 @@ function __btn(sec) {
   return { __sec: sec,
     getAttribute: function (n) { return n === 'data-fantasysection' ? sec : null; },
     setAttribute: function () {},
-    classList: { add: function () {}, remove: function () {} },
+    // toggle/contains added 2026-08-04. This stub carried only add/remove while
+    // the other element stub in this file (__el) already provided the full four,
+    // and syncTabs has always called classList.toggle. The gap only surfaced
+    // when the /fantasy/ hash router changed which boot path reaches these
+    // buttons. The product code is standard DOM and was never wrong; the stub
+    // was an incomplete mock of it, which is the failure mode a hand-written
+    // mock invites.
+    classList: { add: function () {}, remove: function () {},
+                 toggle: function () {}, contains: function () { return false; } },
     addEventListener: function (t, cb) { if (t === 'click') hs.push(cb); },
     click: function () { hs.forEach(function (h) { h({}); }); } };
 }

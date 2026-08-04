@@ -136,7 +136,21 @@ def test_prospects_carry_outcome_buckets_and_eta():
     order = list(pe._BUCKET_ORDER)
     for m in d["prospects"]:
         assert m["eta"] >= pe.FIRST_SEASON
-        assert m.get("fv") is not None and m["fv"] >= 45
+        # The membership GATE is price_fv >= 45 (proj_export ~:627), on the
+        # quantile basis, because the value curves were fitted on the consensus
+        # 20-80 scale. The DISPLAYED fv became the board grade on 2026-08-04
+        # (outcome_implied_fv), so the two are deliberately different numbers and
+        # `fv >= 45` is no longer an invariant: 9 of 209 served rows display
+        # 44.1 to 44.9 while clearing the gate on the grade that admits them.
+        # Nothing user-facing claims a 45 threshold (the 45 in projections.js is
+        # only a colour break), so this is a basis split, not a mislabel.
+        #
+        # The floor is kept, loosened to 42, because the failure it really
+        # guards against is a BASIS BREAK: if fv were ever wired to the raw
+        # 20-floored grade, roughly half the pool would read exactly 20 and this
+        # would catch it immediately. A bound of 42 does that with headroom over
+        # the observed 44.1 minimum.
+        assert m.get("fv") is not None and m["fv"] >= 42
         assert m["bucketLo"] in order and m["bucketHi"] in order
         assert order.index(m["bucketLo"]) <= order.index(m["bucketHi"]), m["name"]
         assert 0 <= (m.get("pBust") or 0) <= 1

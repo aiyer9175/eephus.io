@@ -418,7 +418,20 @@ def test_committed_artifact_headline_alias_contract():
 #   neither the PID disambiguator nor scrapers._SPLIT_KEYS (MLBAM-keyed) could
 #   see him. Fixed forward by fangraphs_csv._FG_ORG_SPLIT_KEYS and repaired in
 #   the DB by tools/repair_carlos_castillo_collision.py --apply.
-_GOLDEN_XFV_SHA256 = "287f01560761593cfea3ed2544befc95a93801c582427ab23d2efca4a2d1d900"
+# 2026-08-04 -- NIGHTLY run_monthly REGEN (13:16-14:21 local), not a basis change.
+#   The pipeline rebuilt the matrices and re-scored the board on the same
+#   grade map; BOARD_RANK_BASIS_EPOCH stays 2026-07-30 and the board basis
+#   fingerprint is unchanged. Rowcount 9366 -> 9369 (+3).
+#   The one CODE change in the window that reaches this artifact is the pitcher
+#   blend-lambda pin (efv_model._BLEND_LAMBDA_RESELECT pit None -> 0.57). That
+#   is a stability pin, not an accuracy claim: pooled blend rho spans 0.0025
+#   across the whole [0.50, 0.70] selection band, 0.16x the pitcher MDE95, so
+#   the dynamic selector was an argmax over noise that moved published grades
+#   every rebuild. meta.live_lambda now reads {hit 0.70, pit 0.57} and matches
+#   the pin. The hitter side was already pinned and did not move.
+#   Restamped deliberately; the eFV eval artifacts and the side-fairness gate
+#   were regenerated on the same shipped lambdas in the same session.
+_GOLDEN_XFV_SHA256 = "e0a1fc82f3cd116accf8918126ef5982b105d4b4b353c1870b695136140c109d"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
