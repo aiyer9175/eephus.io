@@ -232,9 +232,16 @@ def bwar_frames(force: bool = False):
 
 
 def standings(seasons) -> dict[int, dict[str, dict]]:
-    """{season: {bref_team_id: {"w": wins, "l": losses}}} from the StatsAPI
+    """{season: {bref_team_id: {"w", "l", "rs", "ra"}}} from the StatsAPI
     standings blobs fa_fit_backtest already caches under .cache/. Read-only:
-    a missing season is skipped, never fetched."""
+    a missing season is skipped, never fetched.
+
+    Runs scored / allowed come free in the same cached blob and are carried for
+    gate_team_runs. They are what the components CAUSE; wins are what the
+    components cause AFTER the Pythagorean relation adds noise neither series
+    controls. Scoring against runs is therefore the sharper test, and it is the
+    only place a fielding change is big enough to be visible at all.
+    """
     out: dict[int, dict[str, dict]] = {}
     for y in seasons:
         p = CACHE_DIR / f"statsapi_standings_{y}.json"
@@ -256,7 +263,9 @@ def standings(seasons) -> dict[int, dict[str, dict]]:
                     continue
                 try:
                     rows[tid] = {"w": int(tr.get("wins") or 0),
-                                 "l": int(tr.get("losses") or 0)}
+                                 "l": int(tr.get("losses") or 0),
+                                 "rs": _num(tr.get("runsScored"), None),
+                                 "ra": _num(tr.get("runsAllowed"), None)}
                 except (TypeError, ValueError):
                     continue
         if rows:
@@ -565,7 +574,8 @@ def runs_per_win(bat, pit) -> tuple[dict, dict]:
 # ================================================================== assembly
 def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
           shrink: bool = True, force_fetch: bool = False,
-          swap_fielding: bool = True, swap_pitching: bool = True) -> dict:
+          swap_fielding: bool = True, swap_pitching: bool = True,
+          fielding_blend_w: float | None = None) -> dict:
     """The model. Returns {"rows": [...], "meta": {...}}.
 
     A row is one war_daily stint (player x season x team x side), carrying both
@@ -575,6 +585,13 @@ def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
     independently. Both default True (that is eWAR v1); the eval runs the two
     single-swap arms so the gate movement is ATTRIBUTABLE to a component
     instead of being one undifferentiated number.
+
+    fielding_blend_w is the weight on the STATCAST read over the innings it
+    covers; rfield takes the remainder. None means 1.0, i.e. the v1 full
+    replacement, so the default build is unchanged. See the long note at the
+    blend itself for why a blend and not a swap. w=0.0 reproduces bWAR's
+    fielding exactly and w=1.0 reproduces v1 exactly; both are asserted by
+    test_ewar_fielding_blend.py rather than assumed.
     """
     import numpy as np                  # noqa: PLC0415
     import pandas as pd                 # noqa: PLC0415
@@ -622,6 +639,7 @@ def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
 
     field_delta_season: dict[tuple[int, int], float] = {}
     field_src: dict[tuple[int, int], tuple[str, float]] = {}
+    w_blend = 1.0 if fielding_blend_w is None else float(fielding_blend_w)
     for key, bref in bat_field_season.items():
         rec = fld.get(key) if swap_fielding else None
         if rec is None or rec["share"] <= 0:
@@ -629,9 +647,28 @@ def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
             field_src[key] = ("bref", 0.0)
             continue
         share = rec["share"]
-        e_field = rec["runs"] + bref * (1.0 - share)
+        # v1 REPLACED rfield with the Statcast read wherever Statcast covered the
+        # innings. v2 BLENDS the two over the covered fraction instead, because
+        # they do not measure the same quantity: Savant FRP is range, while
+        # B-Ref rfield also carries arm, catcher framing and blocking, scoops and
+        # the double-play pivot. A replacement therefore trades a better metric
+        # for a NARROWER one and drops real value, which is what the v1
+        # attribution arms measured - the fielding swap alone lost BOTH gates
+        # (same-season r 0.8777 and next-season 0.2255, against a bWAR baseline
+        # of 0.8803 / 0.2481) while the pitching swap paid for itself.
+        #
+        # Only the COVERED fraction is blended; uncovered innings keep rfield
+        # pro-rated exactly as before. The two endpoints are the harness's
+        # validity checks and must hold exactly:
+        #   w = 1.0  ->  rec["runs"] + bref*(1-share)      = eWAR v1
+        #   w = 0.0  ->  bref*share  + bref*(1-share)      = bWAR
+        covered_e = w_blend * rec["runs"] + (1.0 - w_blend) * (bref * share)
+        e_field = covered_e + bref * (1.0 - share)
         field_delta_season[key] = e_field - bref
-        field_src[key] = ("oaa" if share >= 0.95 else "mixed", share)
+        src = "bref" if w_blend <= 0.0 else ("oaa" if share >= 0.95 else "mixed")
+        if 0.0 < w_blend < 1.0 and src != "bref":
+            src = "blend"
+        field_src[key] = (src, share)
 
     rows = []
     for r in bat.itertuples(index=False):
@@ -731,6 +768,10 @@ def build(first: int = DEFAULT_FIRST_SEASON, last: int | None = None,
         "shrunk_fielding": bool(shrink),
         "swap_fielding": bool(swap_fielding),
         "swap_pitching": bool(swap_pitching),
+        # Weight on the Statcast read over the innings it covers; rfield takes
+        # the rest. 1.0 is the v1 full replacement. Recorded so a served payload
+        # always states which fielding configuration produced it.
+        "fielding_blend_w": (1.0 if fielding_blend_w is None else float(fielding_blend_w)),
         "replacement_wins": REPLACEMENT_WINS,
         "fielding": fld_meta,
         "pitching": pit_meta,
@@ -993,6 +1034,103 @@ def gate_team_wins(model: dict, first: int, last: int) -> dict:
     return out
 
 
+def gate_team_runs(model: dict, first: int, last: int) -> dict:
+    """GATE 1b - score the components against what they actually CAUSE.
+
+    Team wins are runs filtered through the Pythagorean relation, which adds
+    sequencing and one-run-game luck that NEITHER series controls. That noise is
+    shared, so gate 1 is fair, but it is also large enough to bury a component
+    whose whole effect is a few runs a season. Fielding is exactly that
+    component: swapping the entire league's fielding basis moves a team by a
+    handful of runs, which is a fraction of a win, so gate 1 literally cannot
+    resolve it. Runs scored and runs allowed can.
+
+    Three regressions, eWAR and bWAR on IDENTICAL team-seasons:
+      offense      (runs_bat + runs_br + runs_dp)  vs actual runs SCORED
+      prevention   (fielding + pitching RAA)        vs actual runs ALLOWED
+      total        (offense + prevention)           vs actual run DIFFERENTIAL
+
+    SIGN: the components are runs-above-average, so more is better, while runs
+    ALLOWED is lower-is-better. The prevention correlation is therefore expected
+    to be NEGATIVE, and the comparison between the two series is on |r|. This is
+    stated rather than hidden by flipping a sign, because a prevention r that
+    came back positive would be a bug, not a result, and flipping would mask it.
+
+    NOTE the offense arm is identical between the two series by construction:
+    eWAR only replaces pitching and fielding, so runs_bat / runs_br / runs_dp are
+    B-Ref's in both. It is reported anyway as a NULL CONTROL - if the offense
+    arms ever differ, something has leaked across components.
+    """
+    stand = standings(range(first, last + 1))
+    tot: dict[tuple[int, str], dict] = defaultdict(
+        lambda: {"off": 0.0, "prev_e": 0.0, "prev_b": 0.0, "off_b": 0.0})
+    for r in model["rows"]:
+        if r["season"] < first or r["season"] > last:
+            continue
+        t = tot[(r["season"], r["team"])]
+        off = _num(r.get("rbat")) + _num(r.get("rbr")) + _num(r.get("rdp"))
+        t["off"] += off
+        t["off_b"] += off
+        t["prev_e"] += _num(r.get("rfield_ewar")) + _num(r.get("praa_ewar"))
+        t["prev_b"] += _num(r.get("rfield_bref")) + _num(r.get("praa_bref"))
+
+    pts = []
+    for (season, team), v in sorted(tot.items()):
+        rec = (stand.get(season) or {}).get(team)
+        if not rec or rec.get("rs") is None or rec.get("ra") is None:
+            continue
+        pts.append({"season": season, "team": team,
+                    "rs": float(rec["rs"]), "ra": float(rec["ra"]),
+                    "rd": float(rec["rs"]) - float(rec["ra"]), **v})
+    if len(pts) < 30:
+        return {"n": len(pts),
+                "note": "not enough cached standings with runs for this window"}
+
+    def _arm(xkey, ykey):
+        xs = [p[xkey] for p in pts]
+        ys = [p[ykey] for p in pts]
+        r = _pearson(xs, ys)
+        a, b = _ols(xs, ys)
+        mae = sum(abs(y - (a + b * x)) for x, y in zip(xs, ys)) / len(xs)
+        return {"r": round(r, 4) if r is not None else None,
+                "abs_r": round(abs(r), 4) if r is not None else None,
+                "mae_fit": round(mae, 2), "slope": round(b, 4)}
+
+    out = {
+        "n_team_seasons": len(pts), "seasons": [first, last],
+        "offense_vs_runs_scored": {
+            "ewar": _arm("off", "rs"), "bwar": _arm("off_b", "rs"),
+            "note": "NULL CONTROL: identical by construction; a difference is a leak",
+        },
+        "prevention_vs_runs_allowed": {
+            "ewar": _arm("prev_e", "ra"), "bwar": _arm("prev_b", "ra"),
+            "note": "r is expected NEGATIVE (runs above average vs runs allowed); "
+                    "compare on abs_r",
+        },
+    }
+    for p in pts:
+        p["tot_e"] = p["off"] + p["prev_e"]
+        p["tot_b"] = p["off_b"] + p["prev_b"]
+    out["total_vs_run_differential"] = {
+        "ewar": _arm("tot_e", "rd"), "bwar": _arm("tot_b", "rd"),
+    }
+
+    pe = out["prevention_vs_runs_allowed"]["ewar"]["abs_r"]
+    pb = out["prevention_vs_runs_allowed"]["bwar"]["abs_r"]
+    te = out["total_vs_run_differential"]["ewar"]["abs_r"]
+    tb = out["total_vs_run_differential"]["bwar"]["abs_r"]
+    off_leak = (out["offense_vs_runs_scored"]["ewar"]["r"]
+                != out["offense_vs_runs_scored"]["bwar"]["r"])
+    out["verdict"] = {
+        "prevention_winner": ("ewar" if (pe or 0) > (pb or 0) else
+                              "bwar" if (pb or 0) > (pe or 0) else "tie"),
+        "total_winner": ("ewar" if (te or 0) > (tb or 0) else
+                         "bwar" if (tb or 0) > (te or 0) else "tie"),
+        "offense_control_clean": not off_leak,
+    }
+    return out
+
+
 def gate_pitcher_persistence(model: dict, min_ip: float = 50.0) -> dict:
     """GATE 2 - year-over-year self-correlation of the PITCHING component,
     eWAR (FIP basis) vs bWAR (runs-allowed basis), on the same pitcher-seasons.
@@ -1094,6 +1232,32 @@ def gate_coverage(model: dict) -> dict:
                 "PITCHER glove: not on the OAA board; falls back to rfield",
                 "pre-2016: no Statcast OAA at all",
             ],
+            # PROBED 2026-08-04 and REFUSED. The obvious repair for the catcher
+            # hole is Savant's catcher-framing leaderboard, and it does respond:
+            #   /leaderboard/catcher-framing?year=YYYY&team=&min=1&csv=true
+            # returns 62 catchers with rv_tot = framing runs (verified internally:
+            # the per-zone rv_11..rv_19 integers sum to rv_tot).
+            # BUT the season parameter is INERT. year=2016, year=2019, year=2024,
+            # year=2026, season=YYYY and startYear/endYear all return the SAME
+            # payload, md5 b389177d5e, byte for byte, and the payload carries no
+            # season stamp of its own - so there is no way to learn which season
+            # it describes. Ingesting it would assign one undated snapshot's
+            # framing runs to every season in the window, which is a fabricated
+            # feature wearing a real column name. The catcher hole therefore
+            # stays open and honest. Do not re-probe these spellings; if this is
+            # revisited, the question to answer FIRST is where a season-resolved
+            # framing source lives, not how to parse this one.
+            "catcher_framing_probe": {
+                "date": "2026-08-04",
+                "endpoint": "baseballsavant.mlb.com/leaderboard/catcher-framing",
+                "reachable": True,
+                "n_rows": 62,
+                "runs_column": "rv_tot (validated: per-zone rv_* sum to it)",
+                "blocker": "season parameter inert - year/season/startYear all "
+                           "return one identical undated payload (md5 b389177d5e)",
+                "decision": "NOT ingested; a single undated snapshot cannot be "
+                            "assigned to ten seasons",
+            },
         },
         "pitching": {
             "n_rows": pit["n_rows"], "n_fip_priced": pit["n_covered"],
@@ -1199,6 +1363,7 @@ def evaluate(model: dict, model_unshrunk: dict | None = None,
         "population": "every Baseball-Reference war_daily row in the window; "
                       "eWAR and bWAR are always measured on IDENTICAL rows",
         "gate_1_team_wins": gate_team_wins(model, first, last),
+        "gate_1b_team_runs": gate_team_runs(model, first, last),
         "gate_2_pitcher_persistence": gate_pitcher_persistence(model),
         "gate_3_coverage_identity": gate_coverage(model),
         "accounting_league_sum": gate_league_sum(model),
@@ -1214,13 +1379,32 @@ def evaluate(model: dict, model_unshrunk: dict | None = None,
                    "mae_zero_param": ev["gate_1_team_wins"]["bwar"]["mae_zero_param"],
                    "mae_fit": ev["gate_1_team_wins"]["bwar"]["mae_fit"],
                    "next_season_r": (ev["gate_1_team_wins"].get("next_season_wins")
-                                     or {}).get("r_bwar")}}
+                                     or {}).get("r_bwar"),
+                   # the reference series the arms' by_season_* are read against
+                   "by_season_r": {s: b.get("r_bwar") for s, b in
+                                   sorted((ev["gate_1_team_wins"].get("by_season") or {}).items())},
+                   "by_season_mae0": {s: b.get("mae0_bwar") for s, b in
+                                      sorted((ev["gate_1_team_wins"].get("by_season") or {}).items())}}}
         for label, m in arms.items():
             g = gate_team_wins(m, first, last)
             att[label] = {"r": g["ewar"]["r"],
                           "mae_zero_param": g["ewar"]["mae_zero_param"],
                           "mae_fit": g["ewar"]["mae_fit"],
-                          "next_season_r": (g.get("next_season_wins") or {}).get("r_ewar")}
+                          "next_season_r": (g.get("next_season_wins") or {}).get("r_ewar"),
+                          # PER-SEASON, because the mechanism story is testable.
+                          # The account for why the fielding swap loses is that
+                          # Savant's fielding read is range-only while rfield also
+                          # carries arm, framing and the rest. If that is the whole
+                          # story, the loss should SHRINK in the seasons after
+                          # Savant folded outfield arm into its fielding run value,
+                          # and stay flat before. A flat profile across eras means
+                          # the range-only account is incomplete and the blend
+                          # weight should NOT be made era-aware on the strength of
+                          # a story the seasons do not support.
+                          "by_season_r": {s: b.get("r_ewar")
+                                          for s, b in sorted((g.get("by_season") or {}).items())},
+                          "by_season_mae0": {s: b.get("mae0_ewar")
+                                             for s, b in sorted((g.get("by_season") or {}).items())}}
         att["both_swaps_shipped"] = {
             "r": ev["gate_1_team_wins"]["ewar"]["r"],
             "mae_zero_param": ev["gate_1_team_wins"]["ewar"]["mae_zero_param"],

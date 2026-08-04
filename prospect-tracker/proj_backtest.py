@@ -146,6 +146,31 @@ def _project_targets() -> list[dict]:
     return rows
 
 
+def _served_intercepts() -> dict[str, float]:
+    """The cohort-intercept vector proj_export ACTUALLY SERVES right now.
+
+    Mirrors proj_export._cohort_intercepts exactly: read the committed artifact,
+    and return {} unless its own ship_decision says the challenger won. Kept as a
+    local read rather than an import so the backtest cannot pull the exporter's
+    module-level machinery into a measurement run.
+
+    Why this exists: the gate below scores a FRESH refit against plain
+    recentering, and never scored the vector actually in production. Those are
+    different questions, and on 2026-08-04 they had different answers - the
+    fresh refit LOST (7.27 vs 7.21) while the committed 2026-06-12 vector was
+    MAE-neutral (7.18 vs 7.21). Without this arm the artifact could not say
+    whether what ships was helping, hurting, or doing nothing.
+    """
+    try:
+        d = json.loads(EVAL_PATH.read_text(encoding="utf-8"))
+        rb = d.get("retro_backtest") or {}
+        if not ((rb.get("ship_decision") or {}).get("challenger_wins")):
+            return {}
+        return rb.get("cohort_intercepts_fit_2022_24") or {}
+    except (OSError, ValueError):
+        return {}
+
+
 def _team_tables(rows, teams, standings):
     """Per-season team scoring for every calibration variant."""
     out = []
@@ -160,6 +185,12 @@ def _team_tables(rows, teams, standings):
             coh_n[(r["side"], r["band"])] += 1
     intercepts = {k: coh_sum[k] / coh_n[k] for k in coh_n if coh_n[k] >= 100}
 
+    # The vector proj_export ACTUALLY SERVES, read exactly the way it reads it
+    # (committed artifact, gated on its own ship_decision). The gate below scores
+    # a FRESH refit against plain recentering and has never scored this, so
+    # "is what ships helping" was a question the artifact could not answer.
+    served = _served_intercepts()
+
     for target in TARGETS:
         act_wins = standings.get(target) or {}
         prior_wins = standings.get(target - 1) or {}
@@ -167,14 +198,20 @@ def _team_tables(rows, teams, standings):
             continue
         sums_raw: dict[str, float] = defaultdict(float)
         sums_coh: dict[str, float] = defaultdict(float)
+        sums_srv: dict[str, float] = defaultdict(float)
         assigned = 0
+        act_assigned = 0.0
+        pred_assigned = 0.0
         for r in (x for x in rows if x["target"] == target):
             org = teams.get((r["mlbam"], target))
             if not org or org not in act_wins:
                 continue
             assigned += 1
+            act_assigned += r["act"]
+            pred_assigned += r["pred"]
             sums_raw[org] += r["pred"]
             sums_coh[org] += r["pred"] + intercepts.get((r["side"], r["band"]), 0.0)
+            sums_srv[org] += r["pred"] + served.get(f"{r['side']}:{r['band']}", 0.0)
 
         def wins_of(sums, recenter):
             w = {o: REPLACEMENT_WINS + sums.get(o, 0.0) for o in act_wins}
@@ -187,10 +224,21 @@ def _team_tables(rows, teams, standings):
             "raw": wins_of(sums_raw, False),
             "recentered": wins_of(sums_raw, True),
             "cohort_recentered": wins_of(sums_coh, True),
+            "served_recentered": wins_of(sums_srv, True),
             "baseline_prior_wins": {o: float(prior_wins.get(o, 81.0)) for o in act_wins},
         }
         row = {"season": target, "n_assigned_players": assigned,
                "roster_war_sum": round(sum(sums_raw.values()), 1),
+               # The LEVEL check, which no recentered MAE can see: recentering
+               # forces the league to a constant, so a systematic per-player
+               # shortfall cancels out of every recentered number while
+               # accumulating in this sum. The 2026-08-04 measurement found the
+               # engine under-projecting real 2025 rosters by 88.1 WAR while
+               # every recentered metric looked fine, so the series is emitted
+               # rather than left to a scratch script.
+               "assigned_actual_war": round(act_assigned, 1),
+               "assigned_pred_war": round(pred_assigned, 1),
+               "assigned_level_deficit": round(pred_assigned - act_assigned, 1),
                "is_holdout": target == holdout}
         for name, w in variants.items():
             pairs = [(w[o], float(act_wins[o])) for o in act_wins]
@@ -217,6 +265,22 @@ def run(persist: bool = True) -> dict:
                 "r": round(_r(pairs) or 0, 3)}
 
     player_block = {"pooled": _stats(rows)}
+    # POOLED DILUTES BY 1.75x, and the registry quoted the diluted figure for
+    # two months. Roughly 4,019 of the 8,866 scored rows are players who never
+    # took a roster spot in the target season, so their actual WAR is 0 BY
+    # CONSTRUCTION and their error is near-zero by construction with it. They
+    # drag the pooled bias toward zero while contributing nothing to any team
+    # sum. The assigned-roster rows are the population every team-level number
+    # is actually built from, so they get their own block and the registry
+    # quotes THAT one.
+    assigned_rows = [r for r in rows if teams.get((r["mlbam"], r["target"]))]
+    player_block["assigned_only"] = _stats(assigned_rows)
+    player_block["unassigned_only"] = _stats(
+        [r for r in rows if not teams.get((r["mlbam"], r["target"]))])
+    player_block["_reading"] = (
+        "pooled mixes rostered players with players who never took a roster spot "
+        "(actual WAR 0 by construction); assigned_only is the population the team "
+        "roll-up is built from and is the one to quote")
     for side in ("hit", "pit"):
         for lo, hi in AGE_BANDS:
             band = f"{lo}-{hi}"
@@ -246,7 +310,12 @@ def run(persist: bool = True) -> dict:
             "challenger_wins": ship_cohort,
             "holdout_mae": {k: holdout[k]["mae"] for k in
                             ("raw", "recentered", "cohort_recentered",
-                             "baseline_prior_wins")} if holdout else None,
+                             "served_recentered", "baseline_prior_wins")} if holdout else None,
+            "served_vector_note": (
+                "served_recentered scores the vector proj_export actually serves "
+                "today, which the challenger-vs-incumbent comparison does not. A "
+                "served arm that matches 'recentered' means the vector is doing "
+                "nothing; worse means it is actively costing wins."),
         },
     }
     if persist:
