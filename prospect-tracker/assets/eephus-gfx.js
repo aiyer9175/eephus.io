@@ -584,7 +584,37 @@
   }
 
   // ---- render dispatch -------------------------------------------------------
+  // Canvas text does NOT wait for a webfont. `g.font = "700 26px DotGothic16"`
+  // silently falls back to the next family in the stack if the face has not
+  // loaded, and every face here is declared font-display:swap - so the FIRST
+  // graphic generated in a session could rasterise in a different face than
+  // every later one, with nothing in the console to say so. The DOM engine in
+  // prospx awaits document.fonts before capture; this one never did.
+  //
+  // Resolves rather than rejects on failure: a missing webfont should degrade
+  // to the fallback face, not block the export.
+  var _fontsReady = null;
+  function awaitFonts() {
+    if (_fontsReady) return _fontsReady;
+    if (!document.fonts || !document.fonts.load) {
+      _fontsReady = Promise.resolve();
+      return _fontsReady;
+    }
+    var specs = ["700 34px DotGothic16", "700 26px DotGothic16", "700 17px DotGothic16",
+                 "700 14px DotGothic16", "15px DotGothic16", "12px DotGothic16"];
+    var jobs = specs.map(function (s) {
+      try { return document.fonts.load(s).catch(function () {}); }
+      catch (e) { return Promise.resolve(); }
+    });
+    if (document.fonts.ready) jobs.push(document.fonts.ready.catch(function () {}));
+    // Never let a hung font request hold an export hostage.
+    var timeout = new Promise(function (r) { setTimeout(r, 4000); });
+    _fontsReady = Promise.race([Promise.all(jobs), timeout]);
+    return _fontsReady;
+  }
+
   async function renderCanvas() {
+    await awaitFonts();
     var fmt = FORMATS[_opts.format] || FORMATS.wide;
     if (_spec.kind === "card") {
       // The unified card has its own 16:9-ish geometry; format control is hidden.
