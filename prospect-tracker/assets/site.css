@@ -1480,7 +1480,17 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   border: 1px solid var(--accent-gold); border-left-width: 4px;
   background: var(--bg-secondary);
 }
-.fa-app #fa-rows { overflow-x: auto; }   /* wide board scrolls, never clips */
+/* STICKY RAIL FIX (2026-08-03). This was `#fa-rows { overflow-x: auto }`, a
+   blanket that also made #fa-rows the sticky containing block for everything
+   inside it - including .fa-board-rail, which declares `position:sticky;
+   top:8px` and never once stuck. Measured in Chromium before the fix: scroll
+   500px, the FA rail moves 500px while the IDENTICAL rail on /projections/
+   moves 375 and holds, purely because #proj-rows carries no overflow.
+   The wide board keeps its own scroller on .fa-board-main below, which is a
+   SIBLING of the rail, so the rail is no longer trapped. The views that write
+   a bare table straight into #fa-rows (fits, archive, model) get their own
+   scroller on the next rule rather than relying on the blanket. */
+.fa-app #fa-rows > .detail-table { display: block; overflow-x: auto; }
 .fa-app .state-message {
   text-align: center; padding: 4rem 1rem; font-size: 14px;
   color: var(--text-secondary); line-height: 1.5;
@@ -1656,6 +1666,61 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .mlbstats-empty { padding: 28px 16px; text-align: center; color: var(--text-tertiary);
   font-family: var(--font-retro-mono); font-size: 12px; border: 1px dashed var(--border); }
 .mlbstats-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* STICKY HEADER FIX (2026-08-03). .mlbstats-table th has declared
+   `position:sticky; top:0` all along, and it never once stuck: an
+   `overflow-x:auto` ancestor computes overflow-y to auto as well, which makes
+   THIS element the sticky containing block, and its height is its content, so
+   there is no scrollport for `top:0` to resolve against. Measured in Chromium
+   before the fix: scroll 400px, header moves 400px. On the 610-row hitter
+   board that means the column headings are gone by the second screen.
+   Giving the scroller a bounded height turns it into a real scrollport, so
+   the header sticks to the top of the table rather than the page.
+   Scoped with :has() to containers that actually hold a leaderboard - the
+   same feature .eephus-wrap:has(.fa-app) already relies on - so the charts
+   and tiles that also ride .mlbstats-scroll keep their natural height.
+
+   DESKTOP ONLY. Bounding the height creates a nested scroll region, which
+   reads as a data table on a wide screen and as a trap on a phone, where the
+   page itself is the only scroll anyone expects. Below 1025px the container
+   keeps its natural height and only the frozen first column applies (left
+   sticky needs no height bound, because the horizontal overflow is real). */
+@media (min-width: 1025px) {
+  .mlbstats-scroll:has(> .mlbstats-table) {
+    overflow: auto;
+    max-height: calc(100dvh - 210px);
+  }
+}
+@supports not (height: 100dvh) {
+  @media (min-width: 1025px) {
+    .mlbstats-scroll:has(> .mlbstats-table) { max-height: calc(100vh - 210px); }
+  }
+}
+/* The header needs to paint over the rows it now sits above. */
+.mlbstats-table thead th { z-index: 2; }
+/* FROZEN NAME COLUMN. The reliever and hitter boards carry 23-24 nowrap
+   columns and run ~1,500-1,900px wide against a 1,400px wrap, so they are
+   horizontally scrolled at every desktop width. Without this, scrolling right
+   to reach a stat orphans every number from the player it belongs to. The
+   name is always the first cell (the text-align rule below relies on the same
+   thing), so freezing :first-child keeps identity on screen. Both cells need
+   an opaque fill or the columns underneath show through as they pass. */
+.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table th:first-child,
+.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg-primary);
+}
+/* The header's own first cell is sticky on BOTH axes, so it has to outrank
+   the row it freezes and the header it sits in. */
+.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table thead th:first-child {
+  z-index: 3;
+  background: var(--bg-secondary);
+}
+/* Keep the row-hover tint continuous across the frozen cell. */
+.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table tbody tr:hover td:first-child {
+  background: var(--bg-tertiary);
+}
 .mlbstats-app .proj-dim { color: var(--text-tertiary); opacity: .65; font-size: 10px; font-family: var(--font-retro-mono); }
 /* shared MLB team logo (ESPN), used across the MLB modules */
 .eephus-teamlogo { width: 17px; height: 17px; object-fit: contain; vertical-align: -4px; margin-right: 5px; }
