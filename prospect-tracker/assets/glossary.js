@@ -340,16 +340,20 @@ function _methProseHTML() {
     labeled prospects (2011-2023), rate features sample-shrunk so a cup of coffee does not read as
     a track record.</p>
     <p><strong>The guarded blend.</strong> The headline ranking is a guarded blend,
-    rank = (1-λ)·(consensus→WAR) + λ·(model→WAR), where λ is <em>WAG-calibrated</em>: the trust
-    that realized WAR-Above-Grade supports for eFV's adjustment, fit forward-chained
-    (hitters ~0.85; pitchers shrink harder, since consensus is the stronger pitcher signal). The
-    blend cannot fall far below the consensus prior, and leans on eFV where its edge is real.</p>
-    <p><strong>Two grades, one model.</strong> The <em>headline</em> eFV is a rank-preserving
-    quantile map of that blended ranking onto the consensus 20-80 distribution (so it reads on the
-    scale you know); a deflated <em>realized-implied</em> grade - typically lower, because scout FV
-    runs optimistic - drives the surplus + the 5-bucket outcome mix. Live prospects also get two
-    bounded tilts: an injury penalty (current IL + recent IL load + post-TJ) and a Statcast+
-    quality tilt on upper-level prospects.</p>
+    rank = (1-λ)·(consensus→WAR) + λ·(model→WAR). λ is <em>pinned</em>, hitters 0.70 and pitchers
+    0.57, and the pins are stability decisions rather than accuracy claims: across the whole
+    selection band the pooled result moves by about a fifth of what this eval can even resolve, so
+    re-picking λ every rebuild was chasing noise and moving published grades for no measured gain.
+    The blend cannot fall far below the consensus prior, and leans on eFV where its edge is real.</p>
+    <p><strong>Two grades, one model.</strong> The <em>headline</em> eFV is the model's own
+    outcome-grounded grade: predicted first-six-year WAR read back through a curve fit on what
+    prospects at each grade actually went on to do. It is not pinned to the consensus
+    distribution, so it can and does disagree with the industry, and on the current board it
+    disagrees by a full 5-point rung or more on most of the hitters. A separate grade on the older
+    consensus-anchored scale still prices the surplus dollars and the 5-bucket outcome mix, because
+    those value curves were fitted on that scale. Live prospects also get two bounded tilts: an
+    injury penalty (current IL + recent IL load + post-TJ) and a Statcast+ quality tilt on
+    upper-level prospects.</p>
     <p><strong>Everywhere, frozen at debut.</strong> Every graded prospect carries an eFV: the
     active boards, graduates (backgraded at their final pre-debut snapshot, then <em>locked</em>),
     and the farm-system rankings, surplus, DvM+, and movement engine all run on it. Players with no

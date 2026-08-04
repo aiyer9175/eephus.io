@@ -1,8 +1,22 @@
 # Pace from entry: pre-registered gate
 
-Status: **COLUMNS BUILT, FLAG DEFAULT OFF, NOT YET MEASURED.**
-Flag `efv_model.PACE_FROM_ENTRY`. Columns are emitted unconditionally by
-`efv_dataset._pace_from_entry`.
+Status (updated 2026-08-04): **MEASURED. NO-SHIP. ARM CLOSED ON ITS OWN
+PRE-REGISTERED KILL CRITERION.** Flag `efv_model.PACE_FROM_ENTRY` stays False.
+Columns are still emitted unconditionally by `efv_dataset._pace_from_entry` and
+still feed nothing. Result artifact: `data/xfv_pace_entry_eval.json`; writeup in
+`docs/EXECUTION_2026-08-04-eight-asks.md`.
+
+The original status line, kept for the record: *"COLUMNS BUILT, FLAG DEFAULT
+OFF, NOT YET MEASURED."*
+
+**What fired.** The hitter arm fits a NEGATIVE weight on pace (-0.0419, negative
+in 3 of 4 folds). That exact sign was named in advance, below, as the
+survivorship-censoring artifact, so the arm closes and must not ship as "DSL
+starters are worse". Permutation p=0.71 hit / 0.94 pit. The "fuller" triple
+variant is a RESOLVED HARM (CI95 excludes zero), not a null, so it must not come
+back as the richer spec. Coverage was not the limiter: ~80% of eval rows are
+non-censored. See also the correction under "Second arm worth running" below,
+whose premise did not survive measurement.
 
 ## The complaint
 
@@ -100,6 +114,42 @@ them up first and verify the restore (arias ops_rel 0.24769633507853406, level
 AA), and `git checkout` the two tracked `*_dataset_report.json` files after.**
 
 ## Second arm worth running (possibly the better one)
+
+> **CORRECTION 2026-08-04: the claim in this section DOES NOT REPRODUCE. The
+> original text is kept below, unedited, because it was part of the stated
+> motivation and the record should show what was believed at the time.**
+>
+> Measured on the live matrices under four plausible specifications of "the
+> `efv_ungraded` set" - {production-bearing rows, all labeled rows} x {pace
+> alone, the full triple} - `pace_from_entry` fits **POSITIVE in every one**, on
+> both sides:
+>
+> | spec | hit | pit |
+> |---|---|---|
+> | production_bearing / single (n 907 / 919) | +0.1879 | +0.1559 |
+> | production_bearing / triple | +0.3440 | +0.2708 |
+> | all_labeled_rows / single (n 1927 / 2064) | +0.0993 | +0.0751 |
+> | all_labeled_rows / triple | -0.0559 | +0.1401 |
+>
+> Nothing near -0.5943. The nearest match in any of those fits is
+> `entry_observed`, the left-censoring indicator (-0.4263 hit / -0.4462 pit
+> production-bearing triple, -0.5329 hit all-labeled triple), which is a
+> different column. The -0.5943 also appears verbatim in `efv_model.py` as
+> `age_rel_level`'s `efv_ungraded` **pitcher** weight, so the likeliest story is
+> a column mix-up when this section was written, not a since-drifted fit.
+>
+> The arm was run anyway rather than dropped on the bad premise, and is reported
+> on its own OOS numbers. It lost: deltas vs base are negative on both sides
+> (pit -0.0363 low-minors / -0.0046 all-levels), inside zero-information control
+> range. Reconciliation block:
+> `data/xfv_pace_entry_eval.json -> sides.{hit,pit}.doc_claim_reconciliation`.
+>
+> **The arm did not close because of this number.** It closed on the
+> pre-registered kill criterion in the section above (negative hitter pace
+> weight = the censoring artifact). The correction removes a motivation, not the
+> verdict.
+
+*Original text, superseded:*
 
 The same column fits **-0.5943 in the `efv_ungraded` provisional set**, which has
 no `fv` anchor, against ~0 in the anchored flagship. Where scouts have already

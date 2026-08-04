@@ -1317,14 +1317,20 @@ def run(persist: bool = True, side: str = "hit") -> dict:
             "censored": src.get("censored", False),
         })
 
-    # --- re-anchor the HEADLINE grade onto the familiar 20-80 scale -------
-    # The realized_implied_fv grade is honestly deflated (consensus FV is
-    # optimistic) but floors at 20 and reads as jarringly low next to consensus.
-    # The headline xfv_grade_display is a RANK-PRESERVING quantile map of the
-    # GUARDED-BLEND ranking (rank_war) onto the consensus FV distribution of this
-    # pool: the ordering is eFV's outcome-grounded ranking (the value-add, now
-    # beating consensus OOS), the units match consensus (usable). Surplus/
-    # distribution stay on the honest realized grade.
+    # --- the SURPLUS-PRICING grade, on the familiar 20-80 scale -----------
+    # HISTORICAL NOTE, corrected 2026-08-04: this block used to be titled
+    # "re-anchor the HEADLINE grade", and xfv_grade_display WAS the headline
+    # until 2026-07-25. It is not any more. BOARD_GRADE_FIELD is xfv_grade
+    # (value_framework.outcome_implied_fv off the pooled outcome curve), and
+    # this quantile map survives only because the surplus value curves were
+    # fitted on the consensus 20-80 scale, so the dollars must be priced on it.
+    # Calling it the headline in present tense sent readers to the wrong field
+    # for two weeks; the export comment had the same drift and was fixed in
+    # 4eecb44.
+    #
+    # What it still is: a RANK-PRESERVING quantile map of the GUARDED-BLEND
+    # ranking (rank_war) onto this pool's consensus FV distribution. The
+    # ordering is eFV's; the units are consensus's. Nothing displayed reads it.
     if scored:
         target = sorted(s["consensus_fv"] for s in scored)
         # Sort on the UNROUNDED rank_war with player_key as the stable tiebreak
@@ -1872,10 +1878,12 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             entry["xline_note"] = _xn
         scored.append(entry)
 
-    # headline grade -- rank-preserving quantile map of the GUARDED-BLEND ranking
-    # (rank_war) onto the LIVE pool's consensus FV distribution (units match consensus;
-    # order is eFV's outcome-grounded ranking, which beats consensus OOS). Mirrors run();
-    # surplus/distribution stay on the honest realized grade.
+    # SURPLUS-PRICING grade (NOT the headline since 2026-07-25; see the long note
+    # in run()). Rank-preserving quantile map of the GUARDED-BLEND ranking
+    # (rank_war) onto the LIVE pool's consensus FV distribution: units match
+    # consensus, order is eFV's. It survives because the surplus value curves
+    # were fitted on the consensus 20-80 scale. The served headline is
+    # xfv_grade. Mirrors run().
     if scored:
         target = sorted(s["consensus_fv"] for s in scored)
         # UNROUNDED rank_war + player_key tiebreak -- see run() (bughunt SCORE

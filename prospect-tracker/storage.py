@@ -7623,6 +7623,56 @@ def _file_equals_bytes(path: Path, data: bytes, chunk: int = 1 << 20) -> bool:
         mv.release()
 
 
+def _roster_status_with_derived_seasons(rs: dict | None,
+                                        cw: dict | None) -> dict:
+    """Return the exported `roster_status` block with `mlb_seasons` filled in
+    from the career-WAR season map when the roster feed did not supply it.
+
+    WHY (R5.3, 2026-08-04). `mlb_seasons` is derived in stats.derive_roster_status
+    from career_stats rows at level == 'MLB'. When the identity behind a key never
+    resolved to MLB career rows, that list comes out EMPTY - 782 of 2,681
+    debuts.json rows on the 2026-08-04 build. Empty is indistinguishable from
+    "never played in MLB", so the trade board's inactive-drop rule
+    (bayes_trade_value._roster_seasons_index) could not see those rows at all, and
+    three of them - one a FUSED IDENTITY, a live DSL arm born 2007 welded to a
+    2011 debut - reached the board at a published price. The career_war table
+    stores an independent per-season map from bbref for the same key (see the
+    career_war schema comment near the top of this module), so it answers "when
+    did the MLB career attached to this key last appear" for exactly the rows the
+    roster feed left blank.
+
+    Provenance stays distinguishable rather than fused:
+      * a roster-fed list is returned untouched, with NO source marker;
+      * a derived list is stamped `mlb_seasons_source = "career_war"` so any
+        consumer can tell the two apart (and so an audit can count them).
+    A non-empty roster-fed value is NEVER overwritten - this only fills holes.
+
+    Returns the input dict itself when there is nothing to add (no copy, so the
+    common path costs one dict lookup on a ~2,700-row export)."""
+    if not isinstance(rs, dict):
+        return {}
+    if rs.get("mlb_seasons"):
+        return rs
+    seasons_map = (cw or {}).get("seasons")
+    if not isinstance(seasons_map, dict) or not seasons_map:
+        return rs
+    years: list[int] = []
+    for y in seasons_map:
+        try:
+            yi = int(y)
+        except (TypeError, ValueError):
+            continue
+        # Guard against a junk key ("career", "total") reaching the season list.
+        if 1870 <= yi <= date.today().year + 1:
+            years.append(yi)
+    if not years:
+        return rs
+    out = dict(rs)
+    out["mlb_seasons"] = sorted(set(years))
+    out["mlb_seasons_source"] = "career_war"
+    return out
+
+
 def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           statlines: dict[str, dict] | None = None,
                           pitch_arsenals: dict[str, dict] | None = None,
@@ -9994,7 +10044,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # MLB roster status: debut, options used, 40-man state,
             # accumulated service time, arb cycle bucket. Empty dict if
             # the player has not yet appeared in the majors.
-            "roster_status": roster_status.get(p.player_key, {}),
+            # R5.3 (2026-08-04): `mlb_seasons` is backfilled from the
+            # career_war season map when the roster feed left it empty
+            # (782 of 2,681 debuts rows), stamped
+            # mlb_seasons_source = "career_war" so the derived list stays
+            # distinguishable from a roster-fed one. This is what makes the
+            # trade board's inactive-drop rule structurally able to see a
+            # retired-plus-current fused key instead of needing a guard to
+            # rescue it after the fact. See
+            # _roster_status_with_derived_seasons.
+            "roster_status": _roster_status_with_derived_seasons(
+                roster_status.get(p.player_key), career_war.get(p.player_key)),
             "acquisition": acq,
             # How the player's CURRENT org acquired them. Powers the
             # acquisition filter on the main prospect list + farm

@@ -43,7 +43,7 @@ def _entry(s, side, kind):
         # The artifact shape (xfv_grade == realized alias) is test-pinned.
         "xfv_grade": s.get("xfv_grade"),                 # realized (pure model) reference
         "xfv_grade_realized": s.get("xfv_grade"),        # alias (identical; kept for back-compat reads)
-        "xfv_grade_quantile": s.get("xfv_grade_display"),# the DISPLAYED headline (20-80 quantile map)
+        "xfv_grade_quantile": s.get("xfv_grade_display"),# RETIRED as the display 2026-07-25; prices surplus only
         "consensus_fv": s.get("consensus_fv"),
         # COMMENT RE-CORRECTED 2026-08-04. The 2026-07-23 version of this note
         # said the realized delta "does NOT track the displayed headline - the

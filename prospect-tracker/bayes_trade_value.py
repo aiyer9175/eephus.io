@@ -4321,6 +4321,287 @@ def _projection_band_mm(v: dict | None, dpw: float | None, disc: float):
     return round(tot_mm - d_lo / 1e6, 1), round(tot_mm + d_hi / 1e6, 1)
 
 
+# ────────────────────────────────────────────────────────────────────────────
+# R5.1  Pre-arb veterans, priced on a LEAGUE-MINIMUM salary basis
+# ────────────────────────────────────────────────────────────────────────────
+# The modelling decision registered above `_unpriced_vets` on 2026-08-03,
+# implemented. A `no_contract` row is not "unpriceable"; for a player still
+# inside his pre-arb window it is priced on a basis nobody had written yet.
+# Spotrac lists no contract for him, so there is no salary to subtract - but the
+# salary is not UNKNOWN, it is the league minimum, and the valuation config
+# already carries that schedule by year. Production comes off the SAME
+# per-season kernel every other row uses (proj_export._season_value_usd, i.e.
+# the convex tier curve at the artifact's ex-ante $/WAR level), discounted at
+# the same platform rate, with the same rest-of-season convention. There is
+# still exactly one pricing path; this branch supplies only the salary leg.
+#
+# MEASURED BEFORE IMPLEMENTING (2026-08-04), and the premise did not survive:
+# of the 167 published `no_contract` rows only ~24 are inside a pre-arb window.
+# The rest are established veterans - the modal row has ELEVEN MLB seasons on
+# file, and Jurickson Profar (34) and Tyler Anderson (37) are both in the list -
+# whose Spotrac row simply failed to join. Their salary is genuinely unknown,
+# NOT the league minimum, and paying them the minimum would fabricate roughly
+# $15M of surplus apiece. They stay in the ledger, now carrying the reason.
+_PREARB_SOURCE = "prearb_min"
+
+_SERVICE_PHASE_CACHE: dict = {}
+_PREARB_CACHE: dict = {}
+
+
+def _file_stamp(path: Path):
+    """(path, mtime_ns, size) - the cache key for an artifact-derived index, so a
+    rebuilt artifact invalidates itself instead of serving last export's answer."""
+    try:
+        st = path.stat()
+    except OSError:
+        return None
+    return (str(path), st.st_mtime_ns, st.st_size)
+
+
+def _service_phase_index(data_dir) -> dict:
+    """player_key -> roster_status.service_phase from debuts.json.
+
+    The only REAL service-time signal anywhere in the pipeline ('pre_arb' /
+    'arb_eligible' / 'none'). It is partial - 78 of the 167 no-contract rows
+    have a debuts row at all and 50 of those read 'none' - which is why the
+    appearance-season proxy below exists; where this one speaks, it wins."""
+    ck = _file_stamp(Path(data_dir) / "debuts.json")
+    if ck is None:
+        return {}
+    hit = _SERVICE_PHASE_CACHE.get(ck)
+    if hit is not None:
+        return hit
+    out: dict = {}
+    try:
+        d = json.loads((Path(data_dir) / "debuts.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    players = d.get("players") if isinstance(d, dict) else d
+    if isinstance(players, dict):
+        players = list(players.values())
+    for p in (players or []):
+        pk = p.get("player_key")
+        ph = (p.get("roster_status") or {}).get("service_phase")
+        if pk and ph:
+            out[pk] = ph
+    _SERVICE_PHASE_CACHE.clear()
+    _SERVICE_PHASE_CACHE[ck] = out
+    return out
+
+
+def _league_min_usd_fn():
+    """(season -> league-minimum salary in raw $) straight off the valuation config.
+
+    `league_min_by_year` is the tabled schedule and it stops at the current
+    season (it was built for REALIZED seasons), so a projected season carries
+    the last tabled year forward - which is a season fresher than the flat
+    `service_time.league_min_usd` default it would otherwise fall back to. No
+    dollar figure is written here; both numbers come from the config."""
+    cfg = vf._config()
+    table: dict = {}
+    for y, v in (cfg.get("league_min_by_year") or {}).items():
+        try:
+            table[int(y)] = float(v) * 1e6            # config table is in $M
+        except (TypeError, ValueError):
+            continue
+    try:
+        flat = float(cfg["service_time"]["league_min_usd"])
+    except (KeyError, TypeError, ValueError):
+        flat = 0.0
+    lo, hi = (min(table), max(table)) if table else (None, None)
+
+    def _lm(season: int) -> float:
+        if not table:
+            return flat
+        if season in table:
+            return table[season]
+        return table[hi] if season > hi else table[lo]
+    return _lm
+
+
+def _career_floor_season(det: dict) -> int | None:
+    """The earliest season mlb_player_detail's career block can hold, READ OFF THE
+    DATA rather than copied from mlb_player_export.CAREER_FROM. A player whose
+    first season on file IS that floor may have had earlier seasons truncated
+    away, so his appearance count is not a bound on anything."""
+    best = None
+    for e in (det or {}).values():
+        for r in ((e or {}).get("career") or []):
+            try:
+                y = int(r["y"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if best is None or y < best:
+                best = y
+    return best
+
+
+def _prearb_service_seasons(entry: dict | None, floor_season, thru_season) -> int | None:
+    """Upper-bound service-time proxy: MLB APPEARANCE SEASONS on file through
+    `thru_season`, off mlb_player_detail's career block.
+
+    THE PIPELINE CARRIES NO SERVICE TIME - proj_export says so in as many words
+    at `_last_controlled_season`, and mlb_projections.json has no service field
+    on any row - so this is a proxy and is disclosed as one in the payload. Each
+    appearance season contributes AT MOST one year of service (a September
+    call-up counts here and is worth ~0.1 years there), so the count is an UPPER
+    bound on service and therefore a LOWER bound on the pre-arb window that
+    remains. The error direction invents less value, never more.
+
+    Returns None - "cannot say" - when there is no MLB season on file, or when
+    the first season on file is the career block's own floor year."""
+    years = []
+    for r in ((entry or {}).get("career") or []):
+        try:
+            y = int(r["y"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if thru_season is None or y <= int(thru_season):
+            years.append(y)
+    if not years:
+        return None
+    if floor_season is not None and min(years) <= int(floor_season):
+        return None
+    return len(set(years))
+
+
+def _prearb_window(est_service, phase, pre_arb_years: int, n_seasons: int):
+    """(pre-arb seasons left from FIRST_SEASON, is he pre-arb in the season NOW
+    in progress).
+
+    debuts.json's label overrides the proxy in BOTH directions: `arb_eligible`
+    closes the window outright, `pre_arb` guarantees at least the coming season.
+    Measured against that label the bare proxy has no false positives - every
+    arb_eligible row counts >= 4 appearance seasons - and misses 5 genuinely
+    pre-arb rows that bounced through the minors, which is what the label
+    recovers."""
+    if phase == "arb_eligible":
+        return 0, False
+    svc = None if est_service is None else int(est_service)
+    if phase == "pre_arb":
+        svc = (pre_arb_years - 1) if svc is None else min(svc, pre_arb_years - 1)
+    if svc is None:
+        return 0, False
+    return max(0, min(pre_arb_years - svc, int(n_seasons))), svc <= pre_arb_years
+
+
+def _prearb_priced(data_dir) -> dict:
+    """key -> a SHADOW projection row for every vet the contract feed cannot price.
+
+    A row the pre-arb basis CAN price carries `sur` / `surNpv` / `surTotal` (and
+    the rest-of-season leg) built exactly the way proj_export._apply_contract
+    builds them, so every downstream consumer - the re-point, the
+    projection-basis band, the coverage census - reads it through code it
+    already had instead of a second path. A row it CANNOT price carries the meta
+    alone, so the unpriced ledger can publish why rather than an empty shrug.
+
+    Cached on mlb_projections.json's stamp: three call sites want this answer per
+    export and it costs a debuts.json parse to produce."""
+    dd = Path(data_dir)
+    ck = _file_stamp(dd / "mlb_projections.json")
+    if ck is None:
+        return {}
+    hit = _PREARB_CACHE.get(ck)
+    if hit is not None:
+        return hit
+    try:
+        mp = json.loads((dd / "mlb_projections.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    try:
+        det = (json.loads((dd / "mlb_player_detail.json").read_text(
+            encoding="utf-8")) or {}).get("players") or {}
+    except (OSError, ValueError, AttributeError):
+        det = {}
+    season_value = _proj_season_value_fn()
+    first = mp.get("first_season")
+    dpw = _safe_float(mp.get("dpw_usd"))
+    ros_frac = _safe_float(mp.get("ros_fraction"), 0.0) or 0.0
+    if season_value is None or not dpw or not first:
+        return {}
+    try:
+        cfg = vf._config()
+        pre_arb_years = int(cfg["service_time"]["pre_arb_years"])
+        disc = float(cfg["discount_rate"])
+    except (KeyError, TypeError, ValueError):
+        return {}
+    first = int(first)
+    lm = _league_min_usd_fn()
+    floor = _career_floor_season(det)
+    phases = _service_phase_index(dd)
+
+    out: dict = {}
+    for v in (mp.get("vets") or []):
+        k = v.get("key")
+        # A row with a contract on file is priced (or expiring) on the contract
+        # basis and is not this branch's business either way.
+        if not k or v.get("thru") is not None or _proj_value_usd(v) is not None:
+            continue
+        war = v.get("war") if isinstance(v.get("war"), list) else []
+        raw_phase = phases.get(k)
+        # 'none' is debuts.json for "this row carries no service phase", which is
+        # the absence of information, not a third phase. Reading it as one would
+        # have told 32 rows they were past their pre-arb window when the honest
+        # answer is that nothing here knows.
+        phase = raw_phase if raw_phase in ("pre_arb", "arb_eligible") else None
+        est = _prearb_service_seasons(det.get(k), floor, first - 1)
+        n_left, now_prearb = _prearb_window(est, phase, pre_arb_years, len(war))
+        meta = {
+            "basis": "league_minimum",
+            "service_seasons_est": est,
+            "service_source": ("debuts.roster_status.service_phase" if phase
+                               else "mlb_appearance_seasons_proxy"),
+            "service_phase": raw_phase,
+            "prearb_seasons_priced": 0,
+            "rest_of_season_priced": False,
+            "priced": False,
+        }
+        shadow = dict(v)
+        sur, npv, n_priced = [], 0.0, 0
+        for t in range(len(war)):
+            w = _safe_float(war[t]) if t < n_left else None
+            if w is None:
+                sur.append(None)
+                continue
+            d = season_value(w, t, dpw) - lm(first + t)
+            sur.append(round(d / 1e6, 1))
+            npv += d / ((1.0 + disc) ** t)
+            n_priced += 1
+        # Rest-of-season control, on proj_export's conventions to the letter:
+        # undiscounted at t=0, talent = war[0] prorated by the share of the
+        # season left, salary prorated the same way. Pricing a contracted vet's
+        # remainder and not a pre-arb player's would re-open exactly the
+        # inconsistency the ROS leg was added to close.
+        ros_d = None
+        w0 = _safe_float(war[0]) if war else None
+        if now_prearb and ros_frac > 0.0 and w0 is not None:
+            ros_war = w0 * ros_frac
+            ros_d = season_value(ros_war, 0, dpw) - lm(first - 1) * ros_frac
+            shadow["surRos"] = round(ros_d / 1e6, 1)
+            shadow["rosWar"] = round(ros_war, 2)
+            shadow["rosFrac"] = round(ros_frac, 3)
+            meta["rest_of_season_priced"] = True
+        if n_priced:
+            shadow["sur"] = sur
+            shadow["surNpv"] = int(npv)
+            meta["prearb_seasons_priced"] = n_priced
+        if n_priced or ros_d is not None:
+            shadow["surTotal"] = int((ros_d or 0.0) + npv)
+            meta["priced"] = True
+            meta["league_min_mm"] = round(lm(first) / 1e6, 3)
+        elif est is None and phase is None:
+            meta["reason"] = "service_unknown"
+        elif not war:
+            meta["reason"] = "no_projected_seasons"
+        else:
+            meta["reason"] = "past_prearb_window"
+        shadow["prearb"] = meta
+        out[k] = shadow
+    _PREARB_CACHE.clear()
+    _PREARB_CACHE[ck] = out
+    return out
+
+
 def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     """Re-point each Trade Machine record's surplus to the PLATFORM-STANDARD value the rest
     of the site shows, so the board/evaluator stop using bayes' own (floored/scarcity-scaled)
@@ -4369,6 +4650,35 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
         if v.get("age") is not None:
             ages.setdefault(k, v["age"])
 
+    # R5.1: vets with NO contract row who are still inside their pre-arb window.
+    #
+    # DELIBERATELY KEPT OUT of proj_sur, which is the re-point loop's input. The
+    # league-minimum basis fills rows that would otherwise publish NOTHING; it
+    # does not outrank a basis a row already has. Merging it into proj_sur was
+    # the first thing I wrote and it was wrong: 127 of the 359 no-contract vets
+    # are pre-arb, but 100+ of those already price through the eFV backgrade,
+    # and the backgrade values the whole remaining career while this basis
+    # values one or two seasons. Swapping them would not have upgraded the
+    # basis, it would have swapped the QUANTITY and collapsed a hundred young
+    # players' board values without measuring anything. Which of the two SHOULD
+    # win is a real question and is registered, not answered here.
+    #
+    # `proj_rows` does take them, because that map only supplies band inputs and
+    # is read by key for rows already stamped prearb_min.
+    prearb_sur: dict = {}
+    prearb_meta: dict = {}
+    for k, row in _prearb_priced(dd).items():
+        if k in proj_sur:
+            continue
+        _pv = _proj_value_usd(row)
+        if _pv is None:
+            continue                                  # ledgered, not priced
+        prearb_sur[k] = _pv / 1e6
+        prearb_meta[k] = dict(row.get("prearb") or {})
+        proj_rows[k] = row
+        if row.get("age") is not None:
+            ages.setdefault(k, row["age"])
+
     # Band inputs, read from the artifact that produced the value being bracketed.
     _dpw = _safe_float(mp.get("dpw_usd"))
     try:
@@ -4382,7 +4692,7 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
 
     stats = {"xfv": 0, "projection": 0, "xfv_backgrade": 0, "unchanged": 0,
              "age_backfilled": 0, "inactive_dropped": 0, "backgrade_tempered": 0,
-             "excluded_unpriceable": 0}
+             "excluded_unpriceable": 0, _PREARB_SOURCE: 0}
     for r in records:
         pk = r.get("player_key")
         is_pros = r.get("status") == "active"
@@ -4541,8 +4851,17 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     # fabricating a grade to get a player onto a board is the defect class this
     # codebase has removed twice (the BA-statcast FV-40 and the
     # performance_ingest FV-35).
-    added = _append_projection_only_rows(records, proj_sur, ages, det, dd)
+    #
+    # R5.1 rides this seeder rather than the loop above (see the note where
+    # prearb_sur is built): a vet who is pre-arb AND reaches no other basis has
+    # no record to re-point, he has no record at all. This is the only path that
+    # can give him one, so it is the only place the league-minimum basis enters
+    # the board.
+    added = _append_projection_only_rows(records, {**proj_sur, **prearb_sur},
+                                         ages, det, dd, prearb=prearb_meta)
     stats["projection_only_added"] = added
+    stats[_PREARB_SOURCE] = sum(1 for r in records
+                                if r.get("surplus_source") == _PREARB_SOURCE)
     # ONE pass for the projection-basis band, over the rows re-pointed above AND
     # the ones just seeded, so a veteran the board always carried and a veteran
     # who arrived through the seeder reach the reader on identical footing. Doing
@@ -4553,10 +4872,17 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
 
 def _stamp_projection_bands(records: list, proj_rows: dict,
                             dpw: float | None, disc: float) -> int:
-    """Attach the projection-basis p10-p90 band to every projection-priced row."""
+    """Attach the projection-basis p10-p90 band to every projection-priced row.
+
+    Pre-arb rows (R5.1) come through here too: their value is the same
+    projection fan priced against a FLAT league-minimum salary, and a flat
+    salary cancels out of a p10-p90 difference exactly the way a contractual one
+    does, so `_projection_band_mm` brackets them without knowing the difference.
+    `band_basis` still reads "projection" because that is the fan the tooltip is
+    naming; `surplus_source` is where the salary basis is recorded."""
     n = 0
     for r in records:
-        if r.get("surplus_source") != "projection":
+        if r.get("surplus_source") not in ("projection", _PREARB_SOURCE):
             continue
         lo, hi = _projection_band_mm(proj_rows.get(r.get("player_key")), dpw, disc)
         r["trade_value_lo"] = lo
@@ -4568,7 +4894,7 @@ def _stamp_projection_bands(records: list, proj_rows: dict,
 
 
 def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
-                                 det: dict, data_dir) -> int:
+                                 det: dict, data_dir, prearb: dict | None = None) -> int:
     """Append board rows for priced vets missing from the prospect-derived pool.
 
     Only vets the projection system can price are added - that IS the priced
@@ -4576,7 +4902,14 @@ def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
     (see the coverage test for what the remainder is and why it is deliberately
     not invented). Since 2026-08-03 "can price" means `surTotal`, which
     includes the balance of the season in progress, so deadline rentals now
-    reach the board instead of being valued at nothing."""
+    reach the board instead of being valued at nothing.
+
+    `prearb` maps key -> the league-minimum salary assumption for the rows priced
+    on that basis (R5.1). They are seeded here on the same footing as everyone
+    else - only the stamped `surplus_source` and the disclosure differ - because
+    a pre-arb player who reaches the board through the seeder and one who was
+    already on it must be the same row."""
+    prearb = prearb or {}
     present = {r.get("player_key") for r in records if r.get("player_key")}
     try:
         proj = json.loads((Path(data_dir) / "mlb_projections.json").read_text(encoding="utf-8"))
@@ -4599,7 +4932,7 @@ def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
             "posterior_surplus_mm": mm,
             "trade_value_tier": _platform_tier(mm),
             "trade_value_grade": _trade_value_grade(mm),
-            "surplus_source": "projection",
+            "surplus_source": (_PREARB_SOURCE if pk in prearb else "projection"),
             # Same deliberate null as the projection branch above: the eFV
             # credible band is a prospect-era basis and does not describe a
             # contract-surplus NPV. The band that DOES belong to this basis is
@@ -4612,6 +4945,8 @@ def _append_projection_only_rows(records: list, proj_sur: dict, ages: dict,
             # leaving a reader to wonder why a star appeared from nowhere.
             "board_entry": "projection_only",
         }
+        if pk in prearb:
+            row["prearb"] = dict(prearb[pk])       # the salary assumption travels
         thru, aav = v.get("thru"), v.get("aav")
         if thru is not None or aav is not None:
             row["contract"] = _clean_contract({
@@ -4652,15 +4987,25 @@ def _unpriced_vets(data_dir, on_board: set | None = None) -> list[dict]:
       no_contract  - nothing on file (pre-arb / optioned players Spotrac does
                      not list), so there is no salary to subtract from value.
 
-    Deliberately NOT given a fabricated value. `no_contract` is the larger and
-    more interesting group - those players have real team control and would
-    carry substantial surplus at the league minimum - and pricing them is a
-    modelling decision, registered rather than smuggled in here."""
+    R5.1 (2026-08-04) closed the half of `no_contract` that was closable. A vet
+    still inside his pre-arb window HAS a known salary - the league minimum -
+    and is now priced on that basis, reaches the board, and therefore never
+    reaches this list. What is left is the other half, and it is a different
+    thing wearing the same label: established veterans (the modal row has eleven
+    MLB seasons on file) whose Spotrac contract simply failed to join. Their
+    salary is genuinely unknown, so they still publish no price - but the row
+    now carries `prearb_reason` and the service estimate that decided it, so
+    "no contract on file" stops being the end of the explanation.
+
+    The top-level `reason` vocabulary is UNCHANGED on purpose: the Trade Machine
+    search renders off it (assets/trademachine.js), and a new enum value there
+    would silently fall through to the default copy."""
     try:
         proj = json.loads((Path(data_dir) / "mlb_projections.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return []
     first = proj.get("first_season") or 0
+    prearb = _prearb_priced(data_dir)
     out = []
     for v in (proj.get("vets") or []):
         if not v.get("key") or _proj_value_usd(v) is not None:
@@ -4668,12 +5013,17 @@ def _unpriced_vets(data_dir, on_board: set | None = None) -> list[dict]:
         if on_board and v["key"] in on_board:
             continue                    # priced by another basis (eFV backgrade)
         thru = v.get("thru")
-        out.append({
+        pa = (prearb.get(v["key"]) or {}).get("prearb") or {}
+        row = {
             "key": v["key"], "name": v.get("name"), "org": v.get("team"),
             "pos": v.get("pos"), "thru": thru,
             "war5": v.get("warTotal"),
             "reason": "expiring" if (thru is not None and thru < first) else "no_contract",
-        })
+        }
+        if pa.get("reason"):
+            row["prearb_reason"] = pa["reason"]
+            row["svc_seasons_est"] = pa.get("service_seasons_est")
+        out.append(row)
     out.sort(key=lambda r: -(r.get("war5") or 0))
     return out
 
@@ -4695,7 +5045,14 @@ def _projection_coverage(records: list, data_dir) -> dict:
       - no contract on file at all (pre-arb / optioned players Spotrac does not
         list), so there is no salary to subtract from projected value.
     Neither is invented a value here. The second group is the larger open
-    question and is registered in the coverage doc, not papered over."""
+    question and is registered in the coverage doc, not papered over.
+
+    R5.1 (2026-08-04): the pre-arb part of that second group now HAS a salary
+    basis (the league minimum) and is priced, so it moves out of the published
+    ledger and into `unpriceable_priced_prearb` - counted on its own line rather
+    than folded into `unpriceable_priced_elsewhere`, because "priced by the eFV
+    backgrade" and "priced at the league minimum" are different claims and a
+    census that cannot tell them apart cannot be used to check either."""
     on_board = {r.get("player_key") for r in records
                 if r.get("player_key") and r.get("trade_value_mm") is not None}
     try:
@@ -4706,6 +5063,14 @@ def _projection_coverage(records: list, data_dir) -> dict:
     priced = [v for v in vets if _proj_value_usd(v) is not None]
     missing = [v for v in priced if v["key"] not in on_board]
     unpriceable = [v for v in vets if _proj_value_usd(v) is None]
+    prearb = _prearb_priced(data_dir)
+    # Counted off the STAMPED source, not off "the pre-arb basis could have
+    # priced him": ~100 of the pre-arb-eligible vets already price through the
+    # eFV backgrade and keep it, and a census that credited this lane for those
+    # rows would be measuring the wrong thing.
+    prearb_on_board = {r.get("player_key") for r in records
+                       if r.get("surplus_source") == _PREARB_SOURCE
+                       and r.get("trade_value_mm") is not None}
     # D4 (2026-08-03): this census and the `unpriced` ledger shipped different
     # totals in the same artifact (581 stamped vs 240 published) because only
     # the ledger excluded vets already priced by another basis. Neither number
@@ -4727,10 +5092,65 @@ def _projection_coverage(records: list, data_dir) -> dict:
         "unpriceable": len(unpriceable),
         "unpriceable_priced_elsewhere": len(unpriceable) - len(published),
         "unpriceable_published": len(published),
+        # Sub-line of unpriceable_priced_elsewhere: the R5.1 league-minimum
+        # basis, counted separately so the coverage this lane bought is legible
+        # instead of hiding inside the eFV-backgrade number.
+        "unpriceable_priced_prearb": len(prearb_on_board),
         # Split of what actually ships in `unpriced`, so these two counts sum
         # to unpriceable_published rather than to a different denominator.
         "unpriceable_expiring": expiring,
         "unpriceable_no_contract": len(published) - expiring,
+        # Why the no_contract remainder is STILL unpriced, from the same
+        # service-time read that priced the rest. `past_prearb_window` means the
+        # club-control assumption does not apply and the salary is genuinely
+        # unknown - not that the row was forgotten.
+        "unpriceable_no_contract_reasons": _count_prearb_reasons(published, prearb),
+    }
+
+
+def _count_prearb_reasons(published: list, prearb: dict) -> dict:
+    """Tally of why each still-unpriced NO-CONTRACT vet failed the pre-arb basis.
+
+    Scoped to rows the pre-arb pass actually looked at (no `thru`), so the tally
+    sums to `unpriceable_no_contract` and not to some other denominator - the
+    exact defect D4 fixed for the two counts above it."""
+    out: dict = {}
+    for v in published:
+        meta = (prearb.get(v.get("key")) or {}).get("prearb")
+        if meta is None:
+            continue                                  # has a contract: `expiring`
+        why = meta.get("reason") or (
+            "priced_but_row_excluded" if meta.get("priced") else "unclassified")
+        out[why] = out.get(why, 0) + 1
+    return dict(sorted(out.items()))
+
+
+def _prearb_basis_stamp() -> dict:
+    """What the `prearb_min` surplus_source actually assumed, for the payload.
+
+    Everything numeric here is read from the valuation config, so the stamp can
+    never disagree with the pricing. The honest parts are the last two fields:
+    service time does not exist anywhere in this pipeline, and the window priced
+    is the PRE-ARB window only - the arbitration years a club also controls are
+    NOT in this number, which makes every pre-arb row a floor on its own value."""
+    cfg = vf._config()
+    st = cfg.get("service_time") or {}
+    lm = _league_min_usd_fn()
+    yr = date.today().year
+    return {
+        "surplus_source": _PREARB_SOURCE,
+        "salary_basis": "league_minimum",
+        "league_min_mm_this_year": round(lm(yr) / 1e6, 3),
+        "pre_arb_years": st.get("pre_arb_years"),
+        "control_years": st.get("control_years"),
+        "service_time_source": (
+            "PROXY - the pipeline carries no service time. MLB appearance seasons "
+            "on file (mlb_player_detail career block) upper-bound it; debuts.json "
+            "roster_status.service_phase overrides where present."),
+        "window_priced": (
+            "remaining pre-arb seasons plus the balance of the season in progress. "
+            "The arbitration years the club also controls are NOT priced, so a "
+            "prearb_min value is a FLOOR on the row's true control-window surplus."),
     }
 
 
@@ -4780,6 +5200,10 @@ def export_trade_values_json(
         # Which dollar calibration produced these numbers. Four served artifacts
         # silently disagreed on 2026-07-31 because none of them said.
         "calibration":   vf.calibration_stamp(),
+        # The R5.1 league-minimum salary basis, disclosed ONCE at the top rather
+        # than only per-row: it is an ASSUMPTION, not an observation, and the
+        # service-time input behind it is a proxy the pipeline does not carry.
+        "prearb_basis":  _prearb_basis_stamp(),
         # Board-vs-projection coverage, stamped so a regression is visible in the
         # artifact itself rather than only in a log line nobody reads.
         "coverage":      cov,

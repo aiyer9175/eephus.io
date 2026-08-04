@@ -571,19 +571,21 @@
       let spark = "";
       if (by.length) {
         const mx = Math.max(0.01, ...by);
-        spark = `<span style="display:inline-flex;align-items:flex-end;gap:1.5px;height:20px;">${
+        // Only the bar HEIGHT stays inline - it is the data. Everything else
+        // (width, colour, radius) is presentation and lives on .proj-eta-bar.
+        spark = `<span class="proj-eta-spark">${
           by.map((v, k) => {
             const yr = DATA.first_season + k;
             const lab = k === by.length - 1 ? `${yr}+` : `${yr}`;
             const h = Math.max(2, Math.round((v / mx) * 18));
-            return `<span title="${esc(`${lab}: ${Math.round(v * 100)}% of farm surplus`)}" style="display:inline-block;width:5px;height:${h}px;background:var(--accent-gold);opacity:.85;border-radius:1px;"></span>`;
+            return `<span class="proj-eta-bar" title="${esc(`${lab}: ${Math.round(v * 100)}% of farm surplus`)}" style="height:${h}px;"></span>`;
           }).join("")
         }</span> `;
       }
       const col = a <= 0 ? "var(--up)" : a >= 1.5 ? "var(--down)" : "var(--text-primary)";
       const sign = a > 0 ? "+" : "";
       const tip = `Window alignment: the farm's surplus-weighted arrival (${f.etaMean != null ? f.etaMean : "?"}) vs the controlled-core WAR center (${f.coreCenter != null ? f.coreCenter : "?"}). ${a <= 0 ? "Farm lands inside the control window (aligned)." : "Farm arrives after the core leaks to free agency (gap)."} Bars = share of farm surplus by arrival season.`;
-      return `<span title="${esc(tip)}" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">${spark}<span style="font-family:var(--font-mono);font-weight:600;color:${col};">${sign}${a.toFixed(1)}y</span></span>`;
+      return `<span class="proj-cell-inline" title="${esc(tip)}">${spark}<span class="proj-cell-num" style="color:${col};">${sign}${a.toFixed(1)}y</span></span>`;
     };
     // ---- Current (2026) cell-builders. All read r.current (the exporter's
     // nested block) and EM_DASH per-field when absent, so a partial payload
@@ -593,7 +595,7 @@
       const pc = c.actualPct != null ? (c.actualPct * 100).toFixed(1) + "%" : EM_DASH;
       const gb = c.gb != null ? (c.gb === 0 ? "div lead" : `${c.gb} GB`) : "";
       const tip = `Actual ${curSeason} record: ${c.record} (${pc})${gb ? " · " + gb : ""}${c.ilOut60 ? ` · ${c.ilOut60} on the 60-day IL` : ""}.`;
-      return `<span title="${esc(tip)}" style="white-space:nowrap;"><strong>${esc(c.record)}</strong> <span class="fa-sub">${pc}</span></span>`;
+      return `<span class="proj-cell-nowrap" title="${esc(tip)}"><strong>${esc(c.record)}</strong> <span class="fa-sub">${pc}</span></span>`;
     };
     const pythagCell = (r) => {
       const c = r.current; if (!c || c.pythagPct == null) return EM_DASH;
@@ -601,33 +603,35 @@
       const col = delta == null ? "var(--text-primary)"
         : delta >= 0.020 ? "var(--up)" : delta <= -0.020 ? "var(--down)" : "var(--text-primary)";
       const tip = `Pythagorean expectation ${(c.pythagPct * 100).toFixed(1)}% from run differential (exp 1.83).${delta != null ? ` Actual is ${delta >= 0 ? "over" : "under"}-performing by ${Math.abs(delta * 100).toFixed(1)} pts.` : ""}`;
-      return `<span title="${esc(tip)}" style="font-family:var(--font-mono);color:${col};">${(c.pythagPct * 100).toFixed(1)}%</span>`;
+      return `<span class="proj-cell-mono" title="${esc(tip)}" style="color:${col};">${(c.pythagPct * 100).toFixed(1)}%</span>`;
     };
     const blendCell = (r) => {
       const c = r.current; if (!c || c.curWins == null) return EM_DASH;
       const tip = `Projected full-season ${curSeason} record: ${wlOf(c.curWins, c.curLosses)} (${(c.curPct * 100).toFixed(1)}%). Bayesian blend of the roster-talent prior (${pctStr(c.talentPriorPct)}), actual record (${pctStr(c.actualPct)}), and Pythag (${pctStr(c.pythagPct)}); weights prior/actual/pythag = ${c.blendWeights ? [c.blendWeights.prior, c.blendWeights.actual, c.blendWeights.pythag].map(x => x.toFixed(2)).join("/") : "?"} at ${c.gamesPlayed} games played.`;
-      return `<span title="${esc(tip)}" style="white-space:nowrap;"><strong>${wlOf(c.curWins, c.curLosses)}</strong> <span class="fa-sub">${(c.curPct * 100).toFixed(1)}%</span></span>`;
+      return `<span class="proj-cell-nowrap" title="${esc(tip)}"><strong>${wlOf(c.curWins, c.curLosses)}</strong> <span class="fa-sub">${(c.curPct * 100).toFixed(1)}%</span></span>`;
     };
     const playoffCell = (r) => {
       const c = r.current; if (!c || c.playoffPct == null) return EM_DASH;
       const div = c.divisionPct || 0, wc = c.wildcardPct || 0, play = c.playoffPct || 0;
       const divW = Math.round(div * 100), wcW = Math.round(wc * 100);
       const missW = Math.max(0, 100 - divW - wcW);
-      const bar = `<span style="display:inline-flex;width:64px;height:9px;border-radius:2px;overflow:hidden;vertical-align:middle;background:var(--track,rgba(128,128,128,.25));">`
-        + `<span style="width:${divW}%;background:var(--up);"></span>`
-        + `<span style="width:${wcW}%;background:var(--accent-gold);"></span>`
-        + `<span style="width:${missW}%;background:transparent;"></span></span>`;
+      // Only the segment WIDTHS stay inline - they are the odds. The track box
+      // and each segment's colour live on .proj-odds-* in the stylesheet.
+      const bar = `<span class="proj-odds-bar">`
+        + `<span class="proj-odds-div" style="width:${divW}%;"></span>`
+        + `<span class="proj-odds-wc" style="width:${wcW}%;"></span>`
+        + `<span class="proj-odds-miss" style="width:${missW}%;"></span></span>`;
       const proj = (c.projWinsP10 != null && c.projWinsP90 != null)
         ? ` Projected wins ${c.projWinsMean} (80% range ${c.projWinsP10}-${c.projWinsP90}).` : "";
       const tip = `Playoff odds ${(play * 100).toFixed(0)}% = division ${(div * 100).toFixed(0)}% + wildcard ${(wc * 100).toFixed(0)}% (Monte Carlo, ${DATA.mc_schedule_source === "balanced_fallback" ? "balanced-schedule estimate" : "live remaining schedule"}).${proj}`;
-      return `<span title="${esc(tip)}" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">${bar}<span style="font-family:var(--font-mono);font-weight:600;">${(play * 100).toFixed(0)}%</span></span>`;
+      return `<span class="proj-cell-inline" title="${esc(tip)}">${bar}<span class="proj-cell-num">${(play * 100).toFixed(0)}%</span></span>`;
     };
     const sosCell = (r) => {
       const c = r.current; if (!c || c.sos == null) return EM_DASH;
       const rk = c.sosRank != null ? `#${c.sosRank}` : "";
       const col = c.sos >= 0.520 ? "var(--down)" : c.sos <= 0.480 ? "var(--up)" : "var(--text-primary)";
       const tip = `Remaining strength of schedule (log5): avg opponent talent ${(c.sos * 100).toFixed(1)}% over ${c.remGames} unplayed games; rank ${rk} (1 = hardest). Expected ~${c.remWinExp} added wins the rest of the way.`;
-      return `<span title="${esc(tip)}" style="font-family:var(--font-mono);color:${col};">${(c.sos * 100).toFixed(1)}% <span class="fa-sub">${rk}</span></span>`;
+      return `<span class="proj-cell-mono" title="${esc(tip)}" style="color:${col};">${(c.sos * 100).toFixed(1)}% <span class="fa-sub">${rk}</span></span>`;
     };
     // Core-control cell: a decline TREND of CONTROLLED WAR per season (the
     // cliff) + the WAR-weighted lock-up %. % colored up/down; the line is drawn
@@ -742,7 +746,7 @@
       ${showWindow ? `<td>${windowCell(r)}</td>` : ""}
       ${hasFarm ? `<td>${farmCell}</td><td>${surCell}</td><td>${topCell}</td>` : ""}
       <td class="fa-sub">${(r.top || []).map(p => `<a class="fa-player-link" href="#player=${encodeURIComponent(p.key)}">${esc(p.name)}</a> ${p.war.toFixed(1)}`).join(" · ")}</td>
-      ${hasFarm ? `<td class="fa-sub" style="white-space:nowrap;">${openCell}</td>` : ""}
+      ${hasFarm ? `<td class="fa-sub proj-cell-nowrap">${openCell}</td>` : ""}
     </tr>`;
     }).join("");
     const note = nowMode
@@ -751,19 +755,19 @@
     // Sortable header: click to sort by it, click again to flip direction.
     // The active column shows a ▲/▼ arrow reflecting the effective direction.
     const _arrow = (key) => state.teamSort === key
-      ? ` <span style="font-size:0.8em;opacity:0.75;">${_sortAsc(key) ? "▲" : "▼"}</span>` : "";
+      ? ` <span class="proj-sort-arrow">${_sortAsc(key) ? "▲" : "▼"}</span>` : "";
     const sth = (key, label, title) =>
-      `<th class="proj-sortable" data-team-sort="${key}"${title ? ` title="${esc(title)}"` : ""} style="cursor:pointer;user-select:none;white-space:nowrap;">${label}${_arrow(key)}</th>`;
+      `<th class="proj-sortable" data-team-sort="${key}"${title ? ` title="${esc(title)}"` : ""}>${label}${_arrow(key)}</th>`;
     // Mode sub-chips (only when the current-season payload is available + opted in).
     const modeChips = nowAvail
-      ? `<div class="proj-mode-chips" style="margin:6px 0 2px;display:flex;gap:6px;">
+      ? `<div class="proj-mode-chips">
         <button class="chip${!nowMode ? " active" : ""}" data-team-mode="proj">Projected (${DATA.first_season})</button>
         <button class="chip${nowMode ? " active" : ""}" data-team-mode="now">Current (${curSeason})</button></div>`
       : "";
     const header = nowMode
       ? `<thead><tr><th>#</th>${sth("team", "Team")}${sth("nowPct", "Record", `Actual ${curSeason} record + win%`)}${sth("pythag", "Pythag", "Pythagorean win% from run differential (exp 1.83)")}${sth("blend", "Proj W-L", "Bayesian blend of talent prior + actual + Pythag -> projected full-season record")}${sth("playoff", "Playoff odds", "Monte-Carlo division/wildcard/playoff probability")}${sth("sos", "Rem SOS", "Remaining strength of schedule via log5 (rank 1 = hardest)")}</tr></thead>`
       : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `Cost-controlled core: WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under team control (sparkline = controlled WAR per season)`) : ""}${showWindow ? sth("window", "Window", `System Duration: farm surplus-weighted arrival vs the controlled-core window. Negative = the farm lands while the core is still under control (aligned); positive = it arrives after the core leaks. Bars = share of farm surplus by arrival season.`) : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net control-window NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
-    root.innerHTML = `${modeChips}<div class="fa-note" style="margin:8px 0;">${note}</div>
+    root.innerHTML = `${modeChips}<div class="fa-note proj-teams-note">${note}</div>
       <table class="detail-table proj-table">
       ${header}
       <tbody>${body}</tbody></table>`;
@@ -837,7 +841,7 @@
     const rows = tw.per_season.map(s => `<tr>
       <td>${s.season}${s.is_holdout ? ` <span class="proj-tag" title="Held out of the cohort-intercept fit" data-gl="holdout">holdout</span>` : ""}</td>
       <td>${s.n_assigned_players ?? EM_DASH}</td>
-      <td style="font-weight:700;">${_num(s.mae)}</td>
+      <td class="proj-acct-key">${_num(s.mae)}</td>
       <td>${_num(s.r)}</td>
       <td class="fa-sub">${_num(s.baseline_mae)}</td>
     </tr>`).join("");
@@ -845,14 +849,14 @@
     const pooled = tw.player_pooled || {};
     const sd = tw.ship_decision || {};
     const hm = sd.holdout_mae || {};
-    return `<table class="detail-table proj-table" style="margin-top:8px;">
+    return `<table class="detail-table proj-table proj-acct-table">
       <thead><tr><th>Season</th><th title="Players assigned to their actual season team">Roster n</th>
         <th title="Mean absolute error in projected team wins, cohort-recentered roll-up (lower is better)"><span data-gl="mae">MAE</span> (wins)</th>
         <th title="Correlation of projected vs actual wins">r</th>
         <th title="Prior-season wins carry-forward baseline MAE">Baseline</th></tr></thead>
       <tbody>${rows}</tbody></table>
-      <div class="fa-sub" style="margin-top:6px;">Player-level engine pooled bias ${_signed(pooled.bias_act_minus_pred)} WAR, MAE ${_num(pooled.mae)} (n=${pooled.n ?? "?"}).${sd.holdout_season ? ` Ship gate on the ${sd.holdout_season} holdout: cohort-recentered ${_num(hm.cohort_recentered)} vs prior-wins baseline ${_num(hm.baseline_prior_wins)} - ${sd.challenger_wins ? "shipped" : "baseline retained"} (published either way).` : ""}</div>
-      <div class="fa-note" style="margin-top:6px;"><span data-gl="forward_gate">Forward gate</span>: ${esc(fg.status || "pending")} - ${esc(fg.scope || "first season only")}; first scoreable ${esc(fg.first_scoreable || "end of the 2027 season")}. ${esc(fg.metric || "")}</div>`;
+      <div class="fa-sub proj-acct-foot">Player-level engine pooled bias ${_signed(pooled.bias_act_minus_pred)} WAR, MAE ${_num(pooled.mae)} (n=${pooled.n ?? "?"}).${sd.holdout_season ? ` Ship gate on the ${sd.holdout_season} holdout: cohort-recentered ${_num(hm.cohort_recentered)} vs prior-wins baseline ${_num(hm.baseline_prior_wins)} - ${sd.challenger_wins ? "shipped" : "baseline retained"} (published either way).` : ""}</div>
+      <div class="fa-note proj-acct-foot"><span data-gl="forward_gate">Forward gate</span>: ${esc(fg.status || "pending")} - ${esc(fg.scope || "first season only")}; first scoreable ${esc(fg.first_scoreable || "end of the 2027 season")}. ${esc(fg.metric || "")}</div>`;
   }
 
   // Veteran WAR paths - the touched-once 2022-24 holdout, champion vs baseline
@@ -867,14 +871,14 @@
       const b = blByH[r.h] || {};
       return `<tr>
         <td>h${r.h}</td>
-        <td style="font-weight:700;">${_num(r.mae)}</td>
+        <td class="proj-acct-key">${_num(r.mae)}</td>
         <td class="fa-sub">${b.mae != null ? _num(b.mae) : EM_DASH}</td>
         <td>${_signed(r.bias)}</td>
         <td>${_pct0(r.coverage)}</td>
         <td class="fa-sub">${b.coverage != null ? _pct0(b.coverage) : EM_DASH}</td>
       </tr>`;
     }).join("");
-    return `<table class="detail-table proj-table" style="margin-top:8px;">
+    return `<table class="detail-table proj-table proj-acct-table">
       <thead><tr><th title="Projection horizon, seasons ahead">Horizon</th>
         <th title="Champion mean absolute WAR error (lower is better)"><span data-gl="mae">MAE</span></th>
         <th title="Baseline MAE" class="fa-sub">Baseline</th>
@@ -882,7 +886,7 @@
         <th title="Share of actuals inside the P10-P90 band (target ~80%)"><span data-gl="p10_p90_bands">Coverage</span></th>
         <th title="Baseline coverage" class="fa-sub">Baseline</th></tr></thead>
       <tbody>${rows}</tbody></table>
-      <div class="fa-sub" style="margin-top:6px;">${esc(vh.frame || "")} Champion ${esc((vh.champion || {}).model || "")} vs prior baseline ${esc((vh.baseline || {}).model || "")}.</div>`;
+      <div class="fa-sub proj-acct-foot">${esc(vh.frame || "")} Champion ${esc((vh.champion || {}).model || "")} vs prior baseline ${esc((vh.baseline || {}).model || "")}.</div>`;
   }
 
   // Prospect post-ETA paths - forward-chained debut cohorts: the FV-only
@@ -890,13 +894,13 @@
   function prospectPathsTable(pp) {
     if (!pp || !pp.champion) return "";
     const c = pp.champion, ch = pp.challenger || {};
-    return `<table class="detail-table proj-table" style="margin-top:8px;">
+    return `<table class="detail-table proj-table proj-acct-table">
       <thead><tr><th>Model</th><th>n</th><th><span data-gl="mae">MAE</span> (WAR)</th><th title="Rank correlation vs realized first-3y WAR (the ship metric)">Spearman</th></tr></thead>
       <tbody>
-        <tr><td>${esc(c.label || "champion")} <span class="proj-tag">champion</span></td><td>${c.n ?? EM_DASH}</td><td>${_num(c.mae)}</td><td style="font-weight:700;">${_num(c.spearman, 3)}</td></tr>
+        <tr><td>${esc(c.label || "champion")} <span class="proj-tag">champion</span></td><td>${c.n ?? EM_DASH}</td><td>${_num(c.mae)}</td><td class="proj-acct-key">${_num(c.spearman, 3)}</td></tr>
         <tr><td class="fa-sub">${esc(ch.label || "challenger")}</td><td>${ch.n ?? EM_DASH}</td><td>${_num(ch.mae)}</td><td>${_num(ch.spearman, 3)}</td></tr>
       </tbody></table>
-      <div class="fa-sub" style="margin-top:6px;">Forward-chained debut cohorts ${esc((pp.scored_years || []).join(", "))}. The scouting-consensus FV model ranks better (higher Spearman); stat-line challengers lost the pre-registered dual gate and are committed as losses.</div>`;
+      <div class="fa-sub proj-acct-foot">Forward-chained debut cohorts ${esc((pp.scored_years || []).join(", "))}. The scouting-consensus FV model ranks better (higher Spearman); stat-line challengers lost the pre-registered dual gate and are committed as losses.</div>`;
   }
 
   // Board spec for the Generate GFX modal on the Model Accountability view:
@@ -1184,8 +1188,8 @@
         ${cardHead("Age", "age", "Sort by age - the aging curves run forward from it")}
         ${cardHead("Surplus", "sur", "Veterans: production value minus salary, salary-known seasons only. Prospects: platform surplus value.")}
       </div>
-      <div class="mlb-card-list" style="--card-tracks:${CARD_TRACKS};">${body || `<div class="fa-sub" style="padding:12px;">No players match.</div>`}</div>
-      ${list.length > state.limit ? `<div style="text-align:center;margin:10px 0;"><button class="chip" id="proj-more">show ${Math.min(100, list.length - state.limit)} more (${list.length - state.limit} hidden)</button></div>` : ""}</div>${projBoardSidebar(list)}</div>`;
+      <div class="mlb-card-list" style="--card-tracks:${CARD_TRACKS};">${body || `<div class="fa-sub proj-empty">No players match.</div>`}</div>
+      ${list.length > state.limit ? `<div class="proj-more-wrap"><button class="chip" id="proj-more">show ${Math.min(100, list.length - state.limit)} more (${list.length - state.limit} hidden)</button></div>` : ""}</div>${projBoardSidebar(list)}</div>`;
     // One place sets the card grid, from the same string the header uses.
     root.querySelectorAll(".proj-card").forEach(c => { c.style.gridTemplateColumns = CARD_TRACKS; });
     // Keyboard parity for EVERY sort affordance (click is wired below). This
@@ -1292,8 +1296,10 @@
     const zero = mn < 0 ? `<line x1="${PX}" x2="${W - 8}" y1="${y(0)}" y2="${y(0)}" class="mlbp-fan-zero"/>` : "";
     const chart = `<svg class="mlbp-fan" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected WAR comparison">
       ${zero}${line(wA, CA)}${line(wB, CB)}${dots(wA, CA, a.name)}${dots(wB, CB, b.name)}${ticks}</svg>`;
-    const head = (m, color) => `<div style="display:flex;align-items:center;gap:8px;min-width:0;">
-      ${teamLogo(m.team)}<strong style="color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.name)}</strong>
+    // Only the name COLOUR stays inline - it is the per-side series colour the
+    // chart already draws with. The ellipsizing box lives on .proj-cmp-name.
+    const head = (m, color) => `<div class="proj-cmp-head">
+      ${teamLogo(m.team)}<strong class="proj-cmp-name" style="color:${color};">${esc(m.name)}</strong>
       <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}</span>${tagFor(m)}</div>`;
     const seasonRows = seasons.map((s, t) => {
       const va = warAt(a, t), vb = warAt(b, t);
@@ -1306,20 +1312,20 @@
     }).join("");
     const totRow = (label, va, vb, fmt) => {
       const d = (va != null && vb != null) ? va - vb : null;
-      return `<tr style="font-weight:700;"><td>${label}</td><td>${va != null ? fmt(va) : EM_DASH}</td><td>${vb != null ? fmt(vb) : EM_DASH}</td>
+      return `<tr class="proj-cmp-total"><td>${label}</td><td>${va != null ? fmt(va) : EM_DASH}</td><td>${vb != null ? fmt(vb) : EM_DASH}</td>
         <td class="${d == null ? "proj-dim" : d >= 0 ? "proj-pos" : "proj-neg"}">${d == null ? EM_DASH : (d >= 0 ? "+" : "") + (fmt === fmtWar ? d.toFixed(1) : money(d))}</td></tr>`;
     };
     root.innerHTML = `<div class="mlbp-page">
-      <div class="mlbp-section" style="margin-top:4px;">
+      <div class="mlbp-section proj-cmp-section">
         <div class="mlbp-section-title">Head-to-Head <span class="fa-sub">projected mean bWAR, season-aligned${(a.src === "prospect" || b.src === "prospect") ? " · prospects join at their PROSPX ETA" : ""}</span></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 10px;">${head(a, CA)}${head(b, CB)}</div>
+        <div class="proj-cmp-heads">${head(a, CA)}${head(b, CB)}</div>
         ${chart}
-        <table class="detail-table proj-table" style="margin-top:10px;">
+        <table class="detail-table proj-table proj-cmp-table">
           <thead><tr><th>Season</th><th style="color:${CA};">${esc(a.name)}</th><th style="color:${CB};">${esc(b.name)}</th><th>Edge</th></tr></thead>
           <tbody>${seasonRows}
             ${totRow(`${DATA.horizon}y WAR`, warShown(a), warShown(b), fmtWar)}
             ${totRow("Surplus", surOf(a), surOf(b), money)}</tbody></table>
-        <div class="fa-note" style="margin-top:8px;">Edge = left minus right, per season. Totals carry each player's own P10-P90 band on the board view. Surplus compares different things across sources (veteran contract surplus vs prospect control-window surplus) - read it as "value above cost," not like-for-like contract terms.</div>
+        <div class="fa-note proj-cmp-note">Edge = left minus right, per season. Totals carry each player's own P10-P90 band on the board view. Surplus compares different things across sources (veteran contract surplus vs prospect control-window surplus) - read it as "value above cost," not like-for-like contract terms.</div>
       </div></div>`;
     const gfx = document.getElementById("cmp-gfx");
     if (gfx) gfx.onclick = () => {
@@ -1434,7 +1440,7 @@
     ];
     return `<div class="mlbp-section"><div class="mlbp-section-title">Free Agency <span class="fa-sub">${esc(f.status || "")} · gate-validated market model</span> ${verd}</div>
       <div class="mlbp-grid">${cells.map(([l, v]) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${l}</span><span class="mlbp-cell-val">${v}</span></div>`).join("")}</div>
-      <div class="fa-sub" style="margin-top:6px;"><a class="fa-player-link" href="/fa/#player=${encodeURIComponent(p.key)}">market card on the class board →</a></div></div>`;
+      <div class="fa-sub mlbp-block-foot"><a class="fa-player-link" href="/fa/#player=${encodeURIComponent(p.key)}">market card on the class board →</a></div></div>`;
   }
   // ---- bat-speed change -----------------------------------------------------
   // MLB bat tracking starts in 2024, so a year-over-year Swing+ delta exists ONLY
@@ -1601,8 +1607,8 @@
     }
     if (!tiles) return "";
     const seasonTxt = season ? `${season} ` : "";
-    return `<div class="mlbp-section-title" style="margin-top:18px;">Live pitching <span class="fa-sub" style="font-weight:normal;">${esc(seasonTxt)}season</span></div>
-      <div class="fa-sub" style="margin:-2px 0 8px;">${esc(n)} · <a class="fa-player-link" href="/mlbstats/">open the MLB Stats leaderboards &rarr;</a></div>
+    return `<div class="mlbp-section-title mlbp-subhead">Live pitching <span class="fa-sub mlbp-subhead-sub">${esc(seasonTxt)}season</span></div>
+      <div class="fa-sub mlbp-subhead-note">${esc(n)} · <a class="fa-player-link" href="/mlbstats/">open the MLB Stats leaderboards &rarr;</a></div>
       <div class="mlbp-tiles">${tiles}</div>`;
   }
   // Consensus-FV trajectory as a tiny inline sparkline (ex-PROSPX players). The
@@ -1700,10 +1706,10 @@
     const nonEmpty = (h) => !!(h && h.replace(/\s+/g, "").length);
     const twoWayNote = (p.twoWay && p.proj && p.proj.warHit)
       ? `<div class="fa-note">Two-way projection: the path above SUMS both sides per season - hitting ${p.proj.warHit.map(fmtWar).join(" / ")} + pitching ${p.proj.warPit.map(fmtWar).join(" / ")}.</div>` : "";
-    const statcast = (p.twoWay ? `<div class="mlbp-section-title" style="margin-top:18px;">As a hitter</div>` : "")
+    const statcast = (p.twoWay ? `<div class="mlbp-section-title mlbp-subhead">As a hitter</div>` : "")
       + sliders(p.sc)
       + ((p.isPit && !p.twoWay) ? arsenalTable(p.arsenal) : "")
-      + (p.twoWay ? `<div class="mlbp-section-title" style="margin-top:18px;">As a pitcher</div>${sliders(p.scPit)}${arsenalTable(p.arsenal)}` : "");
+      + (p.twoWay ? `<div class="mlbp-section-title mlbp-subhead">As a pitcher</div>${sliders(p.scPit)}${arsenalTable(p.arsenal)}` : "");
     const stats = positionGamesSummary(key) + pitchingStatsBlock(p) + careerTable(p)
       + (p.twoWay && p.careerPit && p.careerPit.length ? careerTable({ ...p, career: p.careerPit, isPit: true }) : "");
     const panels = [
@@ -1866,7 +1872,7 @@
     // debut date - the hub strip carries the link to the full arc.
     const org = p.origin;
     const originLine = (org && org.prospx)
-      ? `<div class="fa-sub" style="margin-top:4px;"><a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(org.prospx)}" title="Open this player's full PROSPX prospect page (FV history, tools, eFV)">ex-PROSPX prospect &rarr;</a>${org.fvOpen != null && org.fvClose != null ? ` · FV ${org.fvOpen} &rarr; ${org.fvClose}` : ""}${org.debut ? ` · debuted ${esc(org.debut)}` : ""}${fvSparkSVG(org.fvSpark)}</div>`
+      ? `<div class="fa-sub mlbp-origin-line"><a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(org.prospx)}" title="Open this player's full PROSPX prospect page (FV history, tools, eFV)">ex-PROSPX prospect &rarr;</a>${org.fvOpen != null && org.fvClose != null ? ` · FV ${org.fvOpen} &rarr; ${org.fvClose}` : ""}${org.debut ? ` · debuted ${esc(org.debut)}` : ""}${fvSparkSVG(org.fvSpark)}</div>`
       : "";
     root.innerHTML = `<div class="mlbp-page">
       <div id="mlbp-hub"></div>
@@ -1876,13 +1882,13 @@
           <div class="mlbp-name">${teamLogo(p.team)}<h2>${esc(p.name || key)}</h2></div>
           <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${esc(p.team)}` : " · FA"} · ${contract}</div>
           ${originLine}
-          <div style="margin-top:8px;display:inline-flex;gap:6px;flex-wrap:wrap;"><button class="chip egfx-chip" id="mlbp-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>${(p.proj && surOf(p.proj) != null) ? `<a class="chip" href="/trademachine/#tm=mlb:${encodeURIComponent(key)}" title="Value this player in the Trade Machine - prospects (eFV surplus) and MLB players (projection surplus) on one currency">&#8646; Trade Machine</a>` : ""}</div>
+          <div class="mlbp-hero-actions"><button class="chip egfx-chip" id="mlbp-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>${(p.proj && surOf(p.proj) != null) ? `<a class="chip" href="/trademachine/#tm=mlb:${encodeURIComponent(key)}" title="Value this player in the Trade Machine - prospects (eFV surplus) and MLB players (projection surplus) on one currency">&#8646; Trade Machine</a>` : ""}</div>
         </div>
         <div class="mlbp-tiles">${tiles.join("")}</div>
       </div>
       ${batSpeedChip(p)}
       ${mlbpTabs(p, key)}
-      <div class="fa-note" style="margin-top:14px;">Projections: the eephus projection engine (proj_lgbm_v1; bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}${p.swingPlusSeasons ? " Swing+ trend is per-season with the same reliability shrink; * = under 180 swings that season." : ""}${p.aaaStuffPlus != null ? " aStuff+: in-house AAA pitch-quality model (per-pitch kinematics vs run value, latest tracked AAA season)." : ""}</div>
+      <div class="fa-note mlbp-page-foot">Projections: the eephus projection engine (proj_lgbm_v1; bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}${p.swingPlusSeasons ? " Swing+ trend is per-season with the same reliability shrink; * = under 180 swings that season." : ""}${p.aaaStuffPlus != null ? " aStuff+: in-house AAA pitch-quality model (per-pitch kinematics vs run value, latest tracked AAA season)." : ""}</div>
     </div>`;
     bindMlbpTabs(root, p, key);
     // hub strip (cross-module identity) - lazy, never blocks the paint

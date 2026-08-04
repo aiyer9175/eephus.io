@@ -303,6 +303,21 @@ _FEATURES_PIT = [
 # column fits -0.5943 in the fv-anchor-free efv_ungraded set against ~0 in the
 # anchored flagship, so if the flagship arm nulls, efv_ungraded is where the
 # signal is not already priced by scouts.
+#
+# RESULT 2026-08-04 (data/xfv_pace_entry_eval.json): GATE RUN, NO-SHIP, ARM
+# CLOSED. The pre-registered failure above FIRED and was not relaxed: the hitter
+# arm fits a NEGATIVE pace weight (-0.0419, negative in 3 of 4 folds), i.e. the
+# censoring artifact. Permutation p 0.71 hit / 0.94 pit; the fuller triple
+# variant is a RESOLVED HARM (CI95 excludes zero), so it must not return as the
+# richer spec. Coverage was not the limiter (~80% of eval rows non-censored).
+# CORRECTION to the second-arm motivation two paragraphs up: the -0.5943 figure
+# DOES NOT REPRODUCE. pace_from_entry fits POSITIVE in all four plausible
+# efv_ungraded specs on both sides (+0.0993..+0.3440 hit, +0.0751..+0.2708 pit;
+# one -0.0559 outlier); the nearest thing to -0.5943 is entry_observed, a
+# different column, and -0.5943 is also age_rel_level's efv_ungraded PITCHER
+# weight quoted ~130 lines above, so this reads as a column mix-up. The arm was
+# run anyway on its own OOS numbers and lost. Do NOT re-open on that premise.
+# Keep this flag False; the columns stay emitted and inert.
 # Doc: docs/efv-2026-07-31/PACE_FROM_ENTRY_GATE.md
 PACE_FROM_ENTRY = False
 
@@ -319,7 +334,8 @@ _BLEND_LAMBDA_CLAMP = (0.35, 0.90)
 _WAG_LAMBDA_CACHE: dict[str, float] = {}
 
 # A1 lambda re-select ship (see blend_lambda): hit accuracy-max blend weight 0.85 (was the
-# 0.70 rank_calibration band ceiling); pit keeps the dynamic rank-gate value (None = no override).
+# 0.70 rank_calibration band ceiling). BOTH sides are now pinned; None would mean "no
+# override, take whatever rank_calibration selects on this matrix rebuild".
 #
 # CHURN TRADE (2026-07-24, docs/EFV_FRONTIER_AUDIT.md): hit 0.85 -> 0.70. This is NOT an
 # accuracy claim in either direction. The A1 ship that raised it to 0.85 was measured at
@@ -329,7 +345,29 @@ _WAG_LAMBDA_CACHE: dict[str, float] = {}
 # measurable is stability: the lower weight cuts run-to-run movement of the displayed eFV
 # grade by 6.0%, because the consensus leg is far more stable across refits than the model
 # leg. Non-inferiority + product trade, taken deliberately. Revert = set this back to 0.85.
-_BLEND_LAMBDA_RESELECT: dict[str, float | None] = {"hit": 0.70, "pit": None}
+#
+# PITCHER CHURN PIN (2026-08-04, docs/EXECUTION_2026-08-04-eight-asks.md): pit None -> 0.57,
+# the value the served board was already built on. Same shape of trade as the hit pin above
+# and, like it, explicitly NOT an accuracy claim in either direction - nothing here says 0.57
+# ranks better than any other value in the band.
+#
+# What was measured (2026-08-03): pooled blend Spearman across the ENTIRE rank-gate band
+# [0.50, 0.70] spans only 0.0025 on pitchers, which is 0.16x the 0.016 pitcher MDE95 (hitters
+# 0.0035, 0.21x their MDE95). The band is flat inside its own noise floor, so no lambda in it
+# is distinguishable from any other on the criterion that matters. Worse, almost all of the
+# movement the argmax actually resolves lives in the t45 term - a Spearman on 60 FV-45 pitcher
+# rows - so the selector is maximizing a 60-row rank correlation, i.e. an argmax over noise.
+#
+# What IS measurable is churn: re-selecting on every matrix rebuild produced three different
+# served pitcher lambdas in three weeks (0.54, 0.57, 0.59), each true only at its own matrix
+# vintage, and each one re-blends and re-prints every pitcher grade on the board for no
+# resolvable accuracy reason. It also cost review time three times over, since the quoted
+# number kept disagreeing with the artifact. Pinning removes that movement entirely.
+#
+# Stability/correctness change, not an accuracy change. Revert = set this back to None (the
+# dynamic rank_calibration reselect). If a future rebuild claims a better lambda, it has to
+# clear MDE95 on pooled rho first, not win the composite argmax.
+_BLEND_LAMBDA_RESELECT: dict[str, float | None] = {"hit": 0.70, "pit": 0.57}
 
 # WAG sizes the blend ONLY when its predicted-edge -> realized-WAG regression is meaningful.
 # When that regression is non-significant (|spearman| below this / too few rows), its slope is
@@ -421,7 +459,12 @@ def wag_calibration(side: str) -> dict:
             "spearman": _spearman(x, y) if len(x) >= 8 else None, "n": len(x)}
 
 
-def rank_calibration(side: str) -> dict:
+def _lam_key(lam: float) -> str:
+    """Stable dict key for a lambda in the composite_at map (3dp, matches the candidate grid)."""
+    return f"{float(lam):.3f}"
+
+
+def rank_calibration(side: str, also_at: tuple[float, ...] = ()) -> dict:
     """RANK-gate blend lambda -- the fallback used when WAG cannot calibrate (its predicted-
     edge -> realized-WAG regression is non-significant). Sizes lambda directly on the forward-
     chained OOS ranking, over the same debuted-cohort folds the eval uses (identical setup to
@@ -454,7 +497,18 @@ def rank_calibration(side: str) -> dict:
     leak-fixed D == C exactly), not implementation sensitivity. This
     debuted-only selector is the ADJUDICATED WINNER; no owner decision pending.
     The returned dict carries the full candidate curve + near_boundary flag so
-    any future restamp proposal checks flatness first."""
+    any future restamp proposal checks flatness first.
+
+    also_at (2026-08-04): extra lambdas at which to ALSO report the decisive
+    components, returned under 'composite_at' keyed by _lam_key. This exists
+    because what this selector picks is NOT always what ships -- both sides now
+    carry a _BLEND_LAMBDA_RESELECT pin -- and the eval artifact must be able to
+    quote the composite at the lambda that actually served. Reporting only; it
+    does not touch selection, and any lambda is accepted, inside the band or not.
+
+    LIVE NOTE 2026-08-04: no production caller reaches this selector for its
+    lambda any more (both sides are pinned). It still runs in run() so the
+    rank-gate evidence stays in the artifact and the pins stay auditable."""
     from efv_dataset import matrix_path
     keys, _m = _feature_spec(side)
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
@@ -515,10 +569,21 @@ def rank_calibration(side: str) -> dict:
     # weak evidence and a restamp needs the owner's sign-off, not just a rerun.
     curve = {str(L): round(sum(metr[L]), 4) for L in cand}
     spread = max(curve.values()) - min(curve.values())
-    return {"lambda": best, "rho": round(rho, 4), "within_tier_wm": round(wm, 4),
-            "t45": round(t45, 4), "n": len(folds), "band": [lo, hi],
-            "curve": curve, "curve_spread": round(spread, 4),
-            "near_boundary": bool(best <= lo + 0.02 or best >= hi - 0.02)}
+    out = {"lambda": best, "rho": round(rho, 4), "within_tier_wm": round(wm, 4),
+           "t45": round(t45, 4), "n": len(folds), "band": [lo, hi],
+           "curve": curve, "curve_spread": round(spread, 4),
+           "near_boundary": bool(best <= lo + 0.02 or best >= hi - 0.02)}
+    if also_at:
+        # Components at caller-supplied lambdas (the SHIPPED one, typically). Cheap:
+        # _metrics only re-scores the already-fitted folds, no refits.
+        at = {}
+        for L in also_at:
+            r_, w_, t_ = _metrics(float(L))
+            at[_lam_key(L)] = {"lambda": round(float(L), 4), "pooled_rho": round(r_, 4),
+                               "within_tier_wm": round(w_, 4), "t45": round(t_, 4),
+                               "composite_sum": round(r_ + w_ + t_, 4)}
+        out["composite_at"] = at
+    return out
 
 
 def blend_lambda(side: str) -> float:
@@ -527,7 +592,12 @@ def blend_lambda(side: str) -> float:
     _WAG_MIN_SPEARMAN); otherwise the slope is noise and pins a rank-suboptimal weight, so we
     size lambda by the rank gate directly (rank_calibration). As of the 2026 norm-fix BOTH sides
     are non-significant on WAG (pitchers spearman ~0.001, hitters ~0.066, both CIs straddle 0),
-    so both defer to the rank gate. Falls back to the hand-set value on any error."""
+    so both would defer to the rank gate. Falls back to the hand-set value on any error.
+
+    LIVE PATH (2026-08-04): neither branch below actually runs any more. Both sides carry a
+    _BLEND_LAMBDA_RESELECT pin (hit 0.70, pit 0.57), so this returns the pin. The WAG and
+    rank-gate branches are kept live for the un-pinned case and because both calibrations are
+    still emitted into the eval artifact as evidence."""
     if side not in _WAG_LAMBDA_CACHE:
         # A1 LAMBDA RE-SELECT (2026-07-24b; data/xfv_lambda_reselect_eval.json). Re-opened on
         # the wave-B REPAIRED matrices (the 2026-07-14 band raise was retracted on CORRUPTED
@@ -537,9 +607,11 @@ def blend_lambda(side: str) -> float:
         # The significance-bar-clearing accuracy-max (player-clustered bootstrap seed 20260724 /
         # 2000 reps: one-sided-95 lower bound > 0 on BOTH pooled rho AND contributor AUC) is 0.85
         # (d_rho +0.0048 lo +0.0001 P0.952; d_cAUC +0.0031 lo +0.0003; leakage-free nested
-        # forward-chain agrees). Pit stays dynamic (~0.61): its pooled curve is a flat noise
-        # plateau AND every higher lambda LOWERS contributor/star AUC, so no accuracy-justified
-        # move (the owner rule is ship only if OOS does not drop).
+        # forward-chain agrees). Pit was left dynamic (~0.61) at the time: its pooled curve is a
+        # flat noise plateau AND every higher lambda LOWERS contributor/star AUC, so there was no
+        # accuracy-justified move (the owner rule is ship only if OOS does not drop). SUPERSEDED
+        # 2026-08-04: pit is now PINNED at 0.57 for run-to-run stability, not for accuracy - see
+        # the pitcher churn-pin block on _BLEND_LAMBDA_RESELECT.
         ov = _BLEND_LAMBDA_RESELECT.get(side)
         if ov is not None:
             _WAG_LAMBDA_CACHE[side] = ov
@@ -1283,11 +1355,22 @@ def _sf_fwd_chain(data, side, lam, years):
 
 
 def _sf_quantile_display(rows_side):
-    """Production display grade: per-side rank-preserving quantile map of rank_war onto
-    that side's OWN consensus-FV distribution (efv_score.run/run_live), replicated
-    within one fold-year test pool. This map is exactly what lets each side fill the
-    joint board's top slots at its own FV-distribution rate -- the display-vs-raw
-    share-inflation this line measures."""
+    """Per-side rank-preserving quantile map of rank_war onto that side's OWN
+    consensus-FV distribution (efv_score.run/run_live: xfv_grade_display),
+    replicated within one fold-year test pool. This map is exactly what lets each
+    side fill the joint board's top slots at its own FV-distribution rate -- the
+    map-vs-raw share-inflation this line measures.
+
+    NAMING CORRECTED 2026-08-04: this used to be documented as "Production display
+    grade". It is NOT the served display any more. The quantile map was retired
+    from display on 2026-07-25 (storage.BOARD_GRADE_FIELD = raw xfv_grade); what
+    it still IS, in production, is the basis SURPLUS DOLLARS are priced through
+    (efv_score re-prices on xfv_grade_display). So the F-SIDE 'display' leg is a
+    fairness read on the DOLLAR basis, not on the served board order.
+    OPEN: the served-board leg of that eval is the raw rank_war leg, and nothing
+    here measures fairness on the actual served grade. Flagged, not silently
+    re-plumbed - changing what F-SIDE measures is a gate decision, not a comment
+    fix."""
     if not rows_side:
         return
     target = sorted(r["fv"] for r in rows_side)
@@ -1739,10 +1822,17 @@ def _side_fairness_eval(persist: bool = True, out_path=None) -> dict:
                 "lambdas": lam, "lambda_source": lam_src,
                 "display_map": "per-side rank-preserving quantile map of rank_war onto "
                                "the side's consensus-FV distribution, replicated within "
-                               "each fold-year test pool (production analogue)",
-                "joint_board": "both sides unioned; ranked by display grade "
-                               "(production) and by raw rank_war WAR units "
-                               "(calibration-honest)",
+                               "each fold-year test pool. LABEL CORRECTED 2026-08-04: this "
+                               "is the analogue of xfv_grade_display, which was RETIRED as "
+                               "the served display on 2026-07-25 and now serves only as the "
+                               "SURPLUS-PRICING basis. It is not the served board grade.",
+                "joint_board": "both sides unioned; ranked by the quantile map above (the "
+                               "surplus-pricing basis, formerly the display) and by raw "
+                               "rank_war WAR units (calibration-honest). NOTE: the served "
+                               "board grade is raw xfv_grade "
+                               "(storage.BOARD_GRADE_FIELD), so neither leg is a direct "
+                               "read on served board order; re-basing this eval is a gate "
+                               "decision, recorded here rather than done silently.",
                 "war_metric": "first-6yr summed bWAR, KM-censored (target_censored)",
                 "bootstrap": {"reps": _SF_BOOT, "seed": _SF_SEED, "ci": "CI90"},
                 "outcome_thresholds": {"contributor": _CONTRIB_WAR, "star": _STAR_WAR,
@@ -1838,9 +1928,17 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     keys, mono = _feature_spec(side)
     wag_cal = wag_calibration(side)
     lam = blend_lambda(side)   # WAG when it has signal; rank-gate fallback when WAG is noise
-    rank_cal = rank_calibration(side)
-    lam_source = ("wag" if abs(wag_cal.get("spearman") or 0) >= _WAG_MIN_SPEARMAN
-                  and (wag_cal.get("n") or 0) >= _WAG_MIN_N else "rank_gate")
+    # also_at=(lam,) so the artifact can quote the composite at the lambda that ACTUALLY
+    # SHIPS. The selector's own argmax is reported separately: with both sides pinned via
+    # _BLEND_LAMBDA_RESELECT the two are routinely different (2026-08-03 hit: shipped 0.70,
+    # selector 0.50).
+    rank_cal = rank_calibration(side, also_at=(lam,))
+    lam_selector = ("wag" if abs(wag_cal.get("spearman") or 0) >= _WAG_MIN_SPEARMAN
+                    and (wag_cal.get("n") or 0) >= _WAG_MIN_N else "rank_gate")
+    lam_pin = _BLEND_LAMBDA_RESELECT.get(side)
+    # "source" answers WHERE THE SERVED NUMBER CAME FROM, which is the pin whenever one is
+    # set; lam_selector is only which calibrator would have been consulted without it.
+    lam_source = "pinned_reselect" if lam_pin is not None else lam_selector
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
     deb = [r for r in rows if r["kind"] == "debuted"]
     full = [r for r in rows if not (r["kind"] == "bust" and r.get("bust_recent"))]
@@ -1883,9 +1981,25 @@ def run(persist: bool = True, side: str = "hit") -> dict:
                 # export's lambda again.
                 "live_blend_lambda": blend_lambda(side),
                 "matches_shipped_lambda": abs(lam - blend_lambda(side)) < 1e-9,
-                "selector": lam_source,
+                "source": lam_source,
+                "pinned_lambda": lam_pin,
+                "selector": lam_selector,
                 "rank_gate_band": rank_cal.get("band"),
-                "composite_at_shipped": {
+                # BOOKKEEPING FIX 2026-08-04. This key used to be filled from
+                # rank_cal["rho"/"within_tier_wm"/"t45"], which are the components at the
+                # lambda the SELECTOR chose -- not at the lambda that shipped. It was
+                # harmless only while the two coincided. On the 2026-08-03 hitter run the
+                # selector chose 0.50 while _BLEND_LAMBDA_RESELECT pins the served value at
+                # 0.70, so a key asserting "at shipped" carried 0.50's numbers (rho 0.3851 /
+                # wm 0.2456 / t45 0.3334) instead of 0.70's (0.3882 / 0.2349 / 0.2777).
+                # Now: composite_at_shipped is evaluated AT shipped_lambda, and the
+                # selector's own argmax keeps its own key. Selection logic unchanged.
+                "composite_at_shipped": dict(
+                    (rank_cal.get("composite_at") or {}).get(_lam_key(lam))
+                    or {"lambda": lam, "pooled_rho": None, "within_tier_wm": None,
+                        "t45": None, "composite_sum": None}),
+                "composite_at_selected": {
+                    "selected_lambda": rank_cal.get("lambda"),
                     "pooled_rho": rank_cal.get("rho"),
                     "within_tier_wm": rank_cal.get("within_tier_wm"),
                     "t45": rank_cal.get("t45"),
@@ -1894,9 +2008,14 @@ def run(persist: bool = True, side: str = "hit") -> dict:
                                             + (rank_cal.get("t45") or 0), 4)
                                       if rank_cal.get("rho") is not None else None),
                 },
+                "shipped_equals_selected": (rank_cal.get("lambda") is not None
+                                            and abs(lam - rank_cal["lambda"]) < 1e-9),
                 "note": "rank_calibration selects lambda in rank_gate_band by argmax of "
-                        "pooled + within-tier + FV45-fringe Spearman; composite_at_shipped "
-                        "are those decisive components at the selected lambda.",
+                        "pooled + within-tier + FV45-fringe Spearman. composite_at_shipped "
+                        "= those decisive components recomputed AT shipped_lambda (the value "
+                        "actually served); composite_at_selected = the same components at the "
+                        "selector's own argmax. They differ whenever a _BLEND_LAMBDA_RESELECT "
+                        "pin overrides the selector, which is the live case on both sides.",
             },
             "wag": wag_cal,
             "rank_gate": rank_cal,
@@ -1906,11 +2025,18 @@ def run(persist: bool = True, side: str = "hit") -> dict:
                        "predicted-edge -> realized-WAG regression is SIGNIFICANT. As of the 2026 "
                        "norm-fix that regression is non-significant on BOTH sides (pitchers spearman "
                        "~0.001, hitters ~0.066, both bootstrap CIs straddle 0), so a WAG-sized lambda "
-                       "would be noise pinning a rank-suboptimal weight. Both sides therefore size "
-                       "lambda by the RANK GATE directly (rank_calibration): pooled + within-tier + "
-                       "FV45-fringe rank rho maximized in a conservative band -> ~0.70, which lifts "
-                       "the pooled OOS rank rho vs the old WAG-pinned lambda (the robust, "
-                       "CI-positive part of the available gain).",
+                       "would be noise pinning a rank-suboptimal weight. Both sides therefore "
+                       "defer to the RANK GATE (rank_calibration): pooled + within-tier + "
+                       "FV45-fringe rank rho maximized in a conservative band, which lifts the "
+                       "pooled OOS rank rho vs the old WAG-pinned lambda (the robust, "
+                       "CI-positive part of the available gain). AS SERVED both sides are then "
+                       "PINNED inside that band (hit 0.70, pit 0.57 as of 2026-08-04) rather "
+                       "than re-selected on every matrix rebuild: the composite curve is flat "
+                       "within the band's own noise floor (pooled-rho spread 0.16x the pitcher "
+                       "MDE95, 0.21x the hitter MDE95) so the argmax is not resolvable, while "
+                       "the run-to-run grade churn it caused is. The pins are STABILITY "
+                       "decisions, not accuracy claims - see composite_at_shipped vs "
+                       "composite_at_selected for what each costs on this vintage.",
         },
         "era_split_debuted": _era_split(_prep(deb, "target_censored", side), keys, lam),
         "evals": evals,

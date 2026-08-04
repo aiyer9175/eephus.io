@@ -18,7 +18,10 @@
 (function () {
   "use strict";
   var DATA_URL = "/data/fantasy.json";
-  var S = { data: null, system: "fgp", section: "streamers", byId: {}, streamerDay: null };
+  // streamerDay0 is the first slate tableStreamers actually served this load. It
+  // is not user state; it exists so writeHash can tell "the user picked a day"
+  // from "the day the board opened on" and keep the default out of the URL.
+  var S = { data: null, system: "fgp", section: "streamers", byId: {}, streamerDay: null, streamerDay0: null };
   // Sort state, one entry per CARD board (the table surfaces keep their served
   // order). Every board defaults to what it showed before the card conversion,
   // so the first paint is identical in ordering to the retired tables.
@@ -28,6 +31,12 @@
     ros_rp: { key: "score", asc: false },
     dynasty: { key: "rank", asc: true }
   };
+  // Copied off SORT above, before anything can mutate it, so writeHash can omit
+  // a board still sitting on its served default. Deriving it instead of writing
+  // a second literal is the point: two literals would drift the first time a
+  // board's default changed and the URL would start carrying a phantom sort.
+  var SORT_DEFAULTS = {};
+  Object.keys(SORT).forEach(function (k) { SORT_DEFAULTS[k] = { key: SORT[k].key, asc: SORT[k].asc }; });
   // Resolve a section entry to its player record. Section lists are bare mlbam
   // ids and every section except buy/sell is single-sided, so the SIDE comes from
   // the calling surface. buy/sell entries carry their own side (see
@@ -415,6 +424,11 @@
     });
     days.sort();
     if (!days.length) return '<div class="fantasy-note">Probables are not posted for the streamer window yet - check back once lineups firm up.</div>';
+    // A deep-linked #day= that is not in the served window (yesterday's link,
+    // opened this morning) is not an error state: it snaps to the first slate,
+    // exactly as an empty S.streamerDay does. That is why readHash does not
+    // validate the date against the slate itself - only this render knows it.
+    S.streamerDay0 = days[0];
     if (!S.streamerDay || days.indexOf(S.streamerDay) < 0) S.streamerDay = days[0];
     var pills = days.map(function (d) {
       var on = d === S.streamerDay;
@@ -548,6 +562,7 @@
       b.addEventListener("click", function () {
         S.streamerDay = b.getAttribute("data-streamerday");
         renderSection();
+        writeHash();
       });
     });
     // Sort headers + tape sort bar. Click AND Enter/Space, with focus restored
@@ -562,6 +577,7 @@
         if (st.key === k) st.asc = !st.asc;
         else { st.key = k; st.asc = !!(c && c.asc); }
         renderSection();
+        writeHash();
         if (!refocus) return;
         var again = root.querySelector('[data-ffsort="' + k + '"]');
         if (again && again.focus) again.focus();
@@ -619,7 +635,7 @@
     bar.querySelectorAll(".ff-scorebtn").forEach(function (b) {
       b.addEventListener("click", function () {
         S.system = b.getAttribute("data-system");
-        renderSelector(); renderSection();
+        renderSelector(); renderSection(); writeHash();
       });
     });
   }
@@ -640,18 +656,141 @@
     if (callups && callups.nextSibling) nav.insertBefore(b, callups.nextSibling);
     else nav.appendChild(b);
   }
+  // Paint S.section onto the section nav (the showSection pattern from
+  // assets/mlbstats.js). The shell ships with Daily Streamers hard-coded active,
+  // so a deep-linked #section=dynasty needs this or it renders the dynasty board
+  // under a nav that still says, and announces, Daily Streamers.
+  function syncTabs() {
+    document.querySelectorAll(".mlbstats-sectionbtn[data-fantasysection]").forEach(function (b) {
+      var on = b.getAttribute("data-fantasysection") === S.section;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+  }
   function wireTabs() {
     document.querySelectorAll(".mlbstats-sectionbtn[data-fantasysection]").forEach(function (b) {
       b.addEventListener("click", function () {
-        document.querySelectorAll(".mlbstats-sectionbtn[data-fantasysection]").forEach(function (x) {
-          x.classList.remove("active"); x.setAttribute("aria-selected", "false");
-        });
-        b.classList.add("active"); b.setAttribute("aria-selected", "true");
         S.section = b.getAttribute("data-fantasysection");
+        syncTabs();
         renderSection();
+        writeHash();
       });
     });
   }
+
+  // ---- hash router ----------------------------------------------------------
+  // /fantasy/ kept every bit of its state in memory: a refresh dropped you back
+  // on Daily Streamers in FanGraphs Points, nothing outside the module could
+  // point at a board inside it, and the homepage cross-module card had to link
+  // the bare page while its neighbours all deep-linked a row.
+  //
+  // GRAMMAR (readHash/writeHash follow assets/mlbstats.js; every key is optional
+  // and every key is validated, so a hand-edited or stale URL degrades to the
+  // default rather than to a broken board):
+  //   #section=streamers|two_start|ros_sp|ros_rp|ros_hitter|buysell|closers|callups|dynasty
+  //   #sys=<scoring id>      any id the SERVED scoring_catalog carries (fgp|sabr|5x5|4x4 today)
+  //   #day=YYYY-MM-DD        the Daily Streamers slate
+  //   #hsort= #spsort= #rpsort= #dsort=   <column>.<a|d>, one per card board
+  //                          (ros_hitter / ros_sp / ros_rp / dynasty)
+  // section is always written; everything else only when it is off its default,
+  // which keeps a shared URL short and readable.
+  //
+  // THERE IS NO PLAYER DEEP-LINK, because there is no player detail HERE: every
+  // name on this module is an outbound link to the merged card at
+  // /projections/#player=<key> (see nameLink/hrefFor above). A "#player=" on
+  // /fantasy/ would have to invent a surface that does not exist, so the deepest
+  // this module goes is the board, and the merged card already owns the player.
+
+  // The section names renderSection switches on, as an ALTERNATION baked into
+  // the regex rather than a lookup in a map. A map would have accepted
+  // "#section=constructor" - inherited off Object.prototype, truthy, and enough
+  // to render the fallback board under a nav with no tab marked active.
+  var SECTIONS = ["streamers", "two_start", "ros_sp", "ros_rp", "ros_hitter",
+                  "buysell", "closers", "callups", "dynasty"];
+  var SECTION_PAT = SECTIONS.join("|");
+  var LAST_HASH = null;
+  // Each key is anchored to a separator, so a longer key can never be matched by
+  // a shorter one's regex (the mlbstats.js "sview= must not match view=" rule -
+  // here it is what keeps "spsort=" out of the "dsort=" and "hsort=" reads).
+  function hashParam(h, key, pat) {
+    var m = new RegExp("(?:^#|[#&])" + key + "=(" + pat + ")(?:&|$)").exec(h || "");
+    return m ? m[1] : null;
+  }
+  // A sort is only honoured if the named column EXISTS on that board and can be
+  // compared there. colsFor + colByKey are the same pair the click handler uses,
+  // and sortRowsBy needs exactly one thing from a column - a get() - so that is
+  // the test. Anything else leaves the board on its served default instead of
+  // sorted by a column it does not have.
+  function readSort(h, key, board) {
+    var v = hashParam(h, key, "[A-Za-z0-9_]+\\.[ad]");
+    if (!v) return;
+    var i = v.lastIndexOf("."), k = v.slice(0, i), c = colByKey(colsFor(board), k);
+    if (!c || !c.get) return;
+    SORT[board].key = k;
+    SORT[board].asc = (v.slice(i + 1) === "a");
+  }
+  // Runs from onData, after S.system has taken the served catalog default and
+  // before the first paint, so every value this touches already holds what a
+  // hash-less load would have left it on. An absent or rejected key is simply
+  // not applied, which is what makes a bare /fantasy/ behave exactly as before.
+  function readHash() {
+    var h = location.hash || "";
+    var s = hashParam(h, "section", SECTION_PAT);
+    if (s) S.section = s;
+    // Validated against the SERVED catalog rather than a literal list: a format
+    // added to or dropped from fantasy_scoring.SCORING_CATALOG needs no change
+    // here, and a retired id cannot leave the pool scored by a weight table the
+    // payload no longer carries.
+    var sys = hashParam(h, "sys", "[A-Za-z0-9_]+");
+    var known = ((S.data && S.data.scoring_catalog) || []).filter(function (c) { return c.id === sys; });
+    if (sys && known.length) S.system = sys;
+    // Not checked against the slate here - tableStreamers owns that window and
+    // snaps an out-of-range day to the first served date (see its comment).
+    var day = hashParam(h, "day", "\\d{4}-\\d{2}-\\d{2}");
+    if (day) S.streamerDay = day;
+    readSort(h, "hsort", "ros_hitter");
+    readSort(h, "spsort", "ros_sp");
+    readSort(h, "rpsort", "ros_rp");
+    readSort(h, "dsort", "dynasty");
+  }
+  function pushSort(parts, key, board) {
+    var st = SORT[board], d = SORT_DEFAULTS[board];
+    if (!st || !st.key) return;
+    if (d && st.key === d.key && !!st.asc === !!d.asc) return;
+    parts.push(key + "=" + st.key + "." + (st.asc ? "a" : "d"));
+  }
+  // Composes the WHOLE module state on every section/scoring/day/sort change, so
+  // a copied URL restores what the reader is looking at, and one replaceState
+  // writes it. Never called during boot or during a render: the hash of a page
+  // nobody has touched stays empty.
+  function writeHash() {
+    var parts = ["section=" + S.section];
+    var def = ((S.data && S.data.scoring_catalog) || []).filter(function (c) { return c.default; })[0];
+    if (S.system && S.system !== (def ? def.id : "fgp")) parts.push("sys=" + S.system);
+    // Only once the reader has moved off the slate the board opened on. Writing
+    // the default day would stamp today's date into every shared /fantasy/ URL,
+    // and that date is wrong by tomorrow morning.
+    if (S.streamerDay && S.streamerDay !== S.streamerDay0) parts.push("day=" + S.streamerDay);
+    pushSort(parts, "hsort", "ros_hitter");
+    pushSort(parts, "spsort", "ros_sp");
+    pushSort(parts, "rpsort", "ros_rp");
+    pushSort(parts, "dsort", "dynasty");
+    LAST_HASH = "#" + parts.join("&");
+    try { history.replaceState(null, "", LAST_HASH); } catch (e) { /* the hash is an optional nicety */ }
+  }
+  // history.replaceState does not fire hashchange, so this only ever sees a hash
+  // the READER changed: an edited URL, a same-page anchor, a Back across a link
+  // that carried one. LAST_HASH is compared anyway. The prospx lesson is that a
+  // hashchange handler which re-renders on an echo of its own write ejects the
+  // user mid-scroll, and one string compare is cheaper than discovering that a
+  // browser disagrees about which writes are silent.
+  function onHashChange() {
+    if (!S.data) return;                       // pre-data hashes are read by onData
+    if ((location.hash || "") === LAST_HASH) return;
+    readHash();
+    renderSelector(); syncTabs(); renderSection();
+  }
+  window.addEventListener("hashchange", onHashChange);
 
   // ---- boot / load states ---------------------------------------------------
   function errorState(msg) {
@@ -681,7 +820,13 @@
     var banner = el("fantasy-banner");
     if (banner) banner.innerHTML = '<div class="fantasy-asof">' + (d.n_players || 0) + " players · rest-of-season, " +
       Math.round((d.season_fraction || 0) * 100) + "% of " + esc(d.season) + " played · scored in your league format</div>";
-    renderSelector(); injectDynastyTab(); wireTabs(); renderSection();
+    // Deep-link restore, between the defaults and the first paint so a restored
+    // section/scoring/sort renders once rather than flashing Daily Streamers in
+    // FanGraphs Points first. injectDynastyTab runs before syncTabs because the
+    // Dynasty button does not exist in the shell markup, and a deep link to
+    // #section=dynasty has to find a tab to mark active.
+    readHash();
+    renderSelector(); injectDynastyTab(); wireTabs(); syncTabs(); renderSection();
     // Preload the player-links map, then re-render so names upgrade from plain
     // text to merged-card links (matches mlbstats.js / pal.js).
     if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {

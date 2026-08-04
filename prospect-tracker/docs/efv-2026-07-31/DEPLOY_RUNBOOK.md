@@ -37,8 +37,9 @@ Picks up, all committed this session and all currently INERT:
   60.1 -> 55.8 and the band top reads made > de_vries > arias.
 - **`xfv_grade_healthy`** on injured rows (the healthy-eFV display).
 - **Pace columns** in the matrix (`entry_level_rank`, `pace_from_entry`,
-  `entry_observed`) - emitted, feeding nothing until `PACE_FROM_ENTRY` is
-  flipped after its gate.
+  `entry_observed`) - emitted, feeding nothing. (2026-08-04: the gate RAN and
+  came back NO-SHIP, so `PACE_FROM_ENTRY` stays False and these columns stay
+  permanently inert unless the arm is re-opened on new evidence.)
 - **Chip relabel** for fast risers from a low start.
 - **`meta.calibration`** stamp on `xfv.json`.
 
@@ -129,9 +130,13 @@ old golden is expected to be red until this is done.
 
 ## 6. Not owed to the box, but owed
 
-- `PACE_FROM_ENTRY` gate run (`docs/efv-2026-07-31/PACE_FROM_ENTRY_GATE.md`) -
-  needs a matrix rebuild and the four-part gate; the expected failure mode is
-  pre-registered.
+- ~~`PACE_FROM_ENTRY` gate run~~ - **DONE 2026-08-04, NO-SHIP.** The
+  pre-registered failure mode fired (negative hitter pace weight = the
+  survivorship-censoring artifact); the arm is closed and the flag stays False.
+  The gate doc's "second arm" premise (a -0.5943 `efv_ungraded` weight) does not
+  reproduce and is annotated in place. See
+  `docs/efv-2026-07-31/PACE_FROM_ENTRY_GATE.md` and
+  `data/xfv_pace_entry_eval.json`.
 - The surplus re-key remains a NO-SHIP with its preconditions recorded
   (`SURPLUS_PRICING_KEY_GATE.md`); do not re-open it from the display-coherence
   argument alone.
