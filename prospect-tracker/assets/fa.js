@@ -37,7 +37,16 @@
       case "war":      return z.toFixed(1);
       case "rate":     return sign + abs.toFixed(2);
       case "surplusM": return sign + "$" + abs.toFixed(1) + "M";
-      case "moneyM":   return "$" + (abs >= 100 ? abs.toFixed(0) : abs.toFixed(1)) + "M";
+      // MINUS but never PLUS. Dropping the sign entirely was harmless for the
+      // guarantees and AAVs this surface passes it (all positive) but rendered
+      // a NEGATIVE dollar figure as a positive one, and /projections/ prices
+      // surplus through this same type, where negatives are now common
+      // (rest-of-season control pricing, 2026-08-03). A liability shown as an
+      // asset is the worst possible rounding of that number. The leading "+"
+      // that `sign` would add belongs to surplusM, where the direction is the
+      // point; on a contract guarantee it is noise.
+      case "moneyM":   return (z < 0 ? "-" : "") + "$"
+                            + (abs >= 100 ? abs.toFixed(0) : abs.toFixed(1)) + "M";
       case "pct":      return z.toFixed(1) + "%";
       default:         return String(z);
     }

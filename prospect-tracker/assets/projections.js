@@ -17,17 +17,37 @@
   const EM_DASH = " - ";
   let DATA = null;
 
-  function fmtWar(v) {
-    if (v == null || !Number.isFinite(Number(v))) return EM_DASH;
-    const z = Number(v) === 0 ? 0 : Number(v);
-    return z.toFixed(1);
+  // Mirror of PROSPX's formatMetric, character-identical to the copy in fa.js -
+  // same precision rules, same null token, same -0 collapse. This surface had
+  // its OWN pair of one-off formatters instead, which is how the three MLB
+  // boards ended up with three number vocabularies that agreed by luck rather
+  // than by contract. The local mirror (rather than a shared import) is the
+  // established convention here: fa.js keeps one for the same reason, so no
+  // module surface has to pull in the PROSPX script. test_number_format_parity
+  // pins the two copies identical so they cannot drift again.
+  function formatMetric(value, type = "int") {
+    const n = Number(value);
+    if (value == null || value === "" || !Number.isFinite(n)) return EM_DASH;
+    const z = n === 0 ? 0 : n;                       // collapse -0 -> 0
+    const sign = z > 0 ? "+" : (z < 0 ? "-" : "");   // zero is unsigned
+    const abs = Math.abs(z);
+    switch (type) {
+      case "int":      return String(Math.round(z));
+      case "war":      return z.toFixed(1);
+      case "rate":     return sign + abs.toFixed(2);
+      case "surplusM": return sign + "$" + abs.toFixed(1) + "M";
+      case "moneyM":   return (z < 0 ? "-" : "") + "$"
+                            + (abs >= 100 ? abs.toFixed(0) : abs.toFixed(1)) + "M";
+      case "pct":      return z.toFixed(1) + "%";
+      default:         return String(z);
+    }
   }
-  function money(usd) {
-    if (usd == null) return EM_DASH;
-    const m = usd / 1e6;
-    const a = Math.abs(m);
-    return (m < 0 ? "-$" : "$") + (a >= 100 ? a.toFixed(0) : a.toFixed(1)) + "M";
-  }
+
+  const fmtWar = v => formatMetric(v, "war");
+  // Signature kept at one argument: every call site here passes dollars and
+  // wants the millions form. The old body emitted "-$1.6M" for negatives,
+  // which `moneyM` now does too (it used to drop the sign).
+  const money = usd => (usd == null ? EM_DASH : formatMetric(usd / 1e6, "moneyM"));
   function esc(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
