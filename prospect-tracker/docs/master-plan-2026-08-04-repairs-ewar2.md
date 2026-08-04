@@ -341,3 +341,72 @@ stop for an AskUserQuestion with deltas attached; everything else proceeds witho
 asking. Bugs and stale claims found along the way get fixed at the source and recorded,
 per the standing pattern - this session's biggest wins (the aStuff+ scale, the id theft,
 the retired-grade delta field) were all found "along the way" by agents told to look.
+
+---
+
+# CLOSE-OUT: every lane adjudicated, 2026-08-04
+
+Nine lanes measured by a 22-agent fan-out with adversarial verification on every
+ship claim and on the high-stakes no-ships. **Four lanes were refuted by their own
+reviewers**, which is the point of running them. Verdicts below are post-refutation.
+
+## The correction that matters most
+
+**The eWAR v2 forward-leg "win" was not real, and it was published.** R2f's reviewers
+killed it and it reproduced from source: 60 of the 270 forward pairs straddle the
+60-game 2020 season and correlate about -0.53, dragging pooled r from ~0.59 to 0.25;
+on full-schedule pairs it is 0.5920 vs 0.5913, delta **+0.0006**. A zero-information
+shuffle beats it 82.3% of the time. Per year-pair eWAR wins 4 of 9 and loses the four
+most recent. **The w-grid that decided v2 survives** (monotone decreasing in w on both
+bases), because that is a comparison among eWAR variants, not against bWAR. Those two
+claims had been conflated.
+
+## Lane verdicts
+
+| lane | verdict | the one thing to remember |
+|---|---|---|
+| **R1c** roster level | NO_SHIP | 18 arms, none passes all three legs. Structural, not tuning: stage 1's convicted allocation leg was binned on ACTUAL playing time; re-binned on PROJECTED playing time (all a projection can see) the decile spread collapses 6.0x, 320.8 -> 53.6 PA, and recoverable WAR **changes sign**, +54.49 -> -6.63. |
+| **R2e.2** HR shrink | NO_SHIP | It PASSED in-sample (forecast 0.2548 -> 0.2782, and controls prove HR-specificity: all-three-rates 0.2222, K-only 0.1825). Declined on transport (+0.0017 OOS, argmax moves 1600 -> 400 across eras) and because it drives the team forward leg below bWAR. |
+| **R2e.3** leverage | RECORD_AND_STOP | Priced upstream and untouched by the swap: WAR = WAA + WAA_adj + WAR_rep to residual sd 0.0029. Our gmLI == B-Ref's at r 0.9947 on 993 reliever-seasons. Closed permanently. |
+| **R2f** eval honesty | REPAIR, applied | Premise refuted (the artifact was already v2); the stale numbers were in the REGISTRY. Reviewers then found the two vacuous controls below. |
+| **R3a** eFV label swap | NO_SHIP, **unsupported not closed** | Margin -0.0011 hit / -0.0115 pit vs floors 0.017 / 0.016; coverage was never the issue (98.6% / 99.1%). But the bootstrap held both models FIXED while the eWAR arm refits, and adding estimation variance puts the pit CI90 upper at +0.0206, ABOVE the floor. Do not flip; do not claim closure. |
+| **R3b** FA gate | NO_SHIP | Margin -0.0387 vs floor +0.020, negative in all six targets. **The mechanism generalises**: eWAR's label IS more persistent, and a 5/4/3 carry-forward IS a persistence bet, so it helps the baseline more than the model. |
+| **R5.2** star rental | BLOCKED | 8 usable deadline trades against a floor of 40. Independently, the intuition is **refuted**: the curve is linear above 2.5 WAR so the implied premium falls monotonically (Spearman -1.0000, n=69) and is exactly zero at 8.31 WAR. |
+| **R6.3** Gate 3 | NO_SHIP, **gate reframed** | Pre-registered falsification fired: delete BEHAVIOR entirely and the composite still concentrates 0.3816. No behavior-confined change can ever pass. The earlier "make recent/rich player-conditional" diagnosis is superseded. Fallback (b) also fails, at 0.2544. |
+| **PREARB** | REPAIR, applied | Accounting reproduces exactly (355 -> 125 -> 9; 167 was a stale published ledger). But "9 is correct" was CIRCULAR: 8 of the 9 shipped rows are absent from debuts.json, so the audit read the proxy's own input. |
+
+## Three shipped controls that could not fail
+
+1. **`evaluate()` windowed 2 of 6 blocks.** Persistence, coverage, accounting and
+   face-validity ran unwindowed, so the artifact declared `[2016, 2025]` while four
+   blocks measured 2016-**2026**. Fixed; no verdict moved (gate 2 goes 0.3664 ->
+   0.3617 self, 0.2548 -> 0.2573 forecast, on 1,677 pairs not 1,825).
+2. **`sensitivity_unshrunk_fielding` was bit-identical to the gate it varies**,
+   because OAA shrinkage multiplies a term that w=0 zeroes. Now pinned at w=1.0 and
+   asserted live; post-fix it moves (0.8644 vs 0.8595).
+3. **`PreArbNoInversion` was algebra.** Both sides local reimplementations, and
+   `max(lm, x) >= lm` term by term: 50,000 random paths, **0 inversions, minimum gap
+   exactly $0.000000**. Now drives production `_prearb_priced`.
+
+## Banned experiments, added to the standing ledger
+
+Do not re-propose without genuinely new structure, and say what is new:
+crediting relievers with our own gmLI (measured null, r 0.9947); a behavior-confined
+Gate 3 repair (falsified by deletion); per-player z-scoring across clubs (proven no-op,
+affine within player); the R1c cohort refit and uniform PT re-anchor; a star-rental
+premium constant before the data unblocks; an OAA/rfield fielding blend at any w.
+
+## Still open
+
+**Owner checkpoints:** R7 dpw re-anchor; R3c label flip (do NOT run, R3a failed);
+`jack_natili` key remap; the prearb `pre_arb`-label threshold (fixing it moves 11 rows,
+not 3, and reaches no published dollar, so it is recorded in-source rather than patched).
+
+**Unfinished measurement:** R1c's gate specification is internally inconsistent and
+needs repair before the lane re-opens. Leg (a) is a SUM (mean-matching) and leg (b) is
+MAE (median-matching), and on this population they point in opposite directions
+(residual mean +0.0719, median -0.0552, only 46.69% of rows have actual > predicted).
+An information-free pure level injection fails leg (b) at z +6.57, so the passing region
+is one-sided and razor thin. One reviewer showed a candidate that passes all three legs
+under RMSE instead of MAE; that is a post-hoc metric swap and was NOT adopted, but it
+means the gate, not the candidate, is the thing to fix first.

@@ -373,6 +373,20 @@ def run_projection_gate(persist: bool = True) -> dict:
         "per_season": per_season,
         "notes": [
             "WAR = bWAR (war_daily); absent target seasons score actual WAR 0 for model AND baseline",
+            "eWAR LABEL SWAP MEASURED 2026-08-04 (lane R3b) and NOT ADOPTED. "
+            "Swapping the realized label to eWAR on the 6 fully covered targets "
+            "(12,934 rows) makes the margin over the 5/4/3 carry-forward baseline "
+            "SMALLER on pitchers, not larger: -0.0387 WAR against a pre-registered "
+            "floor of +0.020, CI95 [-0.0472, -0.0309], negative in all six targets. "
+            "THE TRAP IS WORTH NAMING because it will recur: the eWAR pitching "
+            "label IS more forecastable (label r 0.5033 -> 0.5779, persistence "
+            "0.4528 -> 0.5823), so it is easy to read that as evidence for the "
+            "swap. But this gate scores MARGIN OVER A PERSISTENCE BASELINE, and a "
+            "5/4/3 carry-forward IS a persistence bet, so a more persistent label "
+            "helps the BASELINE more than it helps the model. A cleaner label "
+            "raises the floor before it raises the ceiling. If eWAR is ever wired "
+            "into the FA stack it needs a justification other than Gate 1, and "
+            "Gate 1's floors would have to be re-derived on the new label.",
             f"wRC+ park-neutral, assembled from components (eval PA >= {min_pa})",
             f"FIP per-season constant (eval BF >= {min_bf})",
             "baseline = 5/4/3 weighted average of actual final metrics, no regression, no aging",

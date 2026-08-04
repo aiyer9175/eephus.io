@@ -335,11 +335,33 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         #     year's) and it deliberately does not read 2026 results to date,
         #     which measure what the SELLING club already banked.
         #   * The prorated WAR is priced through the same convex tier curve at
-        #     its own level, exactly as every full season is. That under-prices
-        #     a star rental relative to how contenders actually bid for
-        #     concentrated wins; correcting it needs a measured premium, not a
-        #     default, so it is registered as a follow-up rather than smuggled
-        #     in here.
+        #     its own level, exactly as every full season is.
+        #
+        #     THIS COMMENT USED TO SAY THAT UNDER-PRICES A STAR RENTAL. It was
+        #     asserted, never measured, and MEASURING IT REFUTED IT (2026-08-04,
+        #     lane R5.2). The shortfall against pricing at the full-season rate,
+        #     f*V(w_full), is SINGLE-PEAKED and largest for MID-tier rentals: it
+        #     peaks around a 2.5 to 3.0 WAR full-season rate at roughly +0.79,
+        #     then FALLS MONOTONICALLY across the star class (Spearman -1.0000
+        #     over n=69) and is EXACTLY ZERO at and above 8.31 WAR. The reason
+        #     is mechanical: the platform's own curve is LINEAR above about 2.5
+        #     WAR, and proration is exact on a linear segment, so there is no
+        #     convexity left to under-price at the top. The intuition had the
+        #     population backwards - if anything is mispriced here it is the
+        #     mid-tier deadline add, not the star.
+        #
+        #     A concentration premium may still exist in what clubs PAY; that
+        #     is a different claim and it is UNMEASURED. The backtest is
+        #     BLOCKED, not merely unfinished: historical per-player salary and
+        #     in-season WAR splits do not exist in this tree, and the only
+        #     multi-year return valuation (xfv_history) is 0% covered before
+        #     2021 and survivor-selected after, leaving 8 usable deadline
+        #     trades against a pre-registered floor of 40. Unblocks, in order of
+        #     cheapness: trade_value_history has snapshotted every board member
+        #     contemporaneously since 2026-06-25 and accrues an unbiased
+        #     price-paid series on its own; failing that, per-player historical
+        #     salary by season, then in-season WAR splits or dated game logs.
+        #     Do NOT ship a premium constant before one of those lands.
         #   * Salary is prorated too: the acquiring club pays only the balance.
         # Applies to EVERY vet with a current-season salary, not just expiring
         # ones. Pricing Minter's remainder while ignoring Judge's would invent

@@ -1,11 +1,11 @@
 {
- "model": "ewar_v1",
- "generated_at": "2026-08-04T14:27:44",
+ "model": "ewar_v2",
+ "generated_at": "2026-08-04T18:52:48",
  "eval_window": [
   2016,
   2025
  ],
- "population": "every Baseball-Reference war_daily row in the window; eWAR and bWAR are always measured on IDENTICAL rows",
+ "population": "every Baseball-Reference war_daily row in the window; eWAR and bWAR are always measured on IDENTICAL rows; EVERY block below is windowed to eval_window, including persistence, coverage, accounting and face validity",
  "gate_1_team_wins": {
   "n_team_seasons": 300,
   "seasons": [
@@ -37,6 +37,14 @@
    "r_ewar": 0.2524,
    "r_bwar": 0.2481,
    "reading": "team WAR in season y against actual wins in season y+1"
+  },
+  "next_season_wins_full_schedule_only": {
+   "n": 210,
+   "n_dropped_short_season_pairs": 60,
+   "r_ewar": 0.592,
+   "r_bwar": 0.5913,
+   "delta": 0.0006,
+   "reading": "same test, restricted to pairs where BOTH seasons ran a full schedule (>=140 team games). The pooled row above mixes 60-game and 162-game seasons."
   },
   "by_season": {
    "2016": {
@@ -169,19 +177,19 @@
   }
  },
  "gate_2_pitcher_persistence": {
-  "n_pairs": 1825,
+  "n_pairs": 1677,
   "min_ip": 50.0,
   "units": "runs above average per 9 IP",
-  "self_r_ewar_fip": 0.3664,
-  "self_r_bwar_ra": 0.1769,
+  "self_r_ewar_fip": 0.3617,
+  "self_r_bwar_ra": 0.1768,
   "forecast_next_year_actual_runs": {
-   "from_ewar_fip": 0.2548,
-   "from_bwar_ra": 0.1769,
+   "from_ewar_fip": 0.2573,
+   "from_bwar_ra": 0.1768,
    "reading": "correlation of season-y value with season-(y+1) ACTUAL runs above average (B-Ref runs-allowed basis)"
   },
   "season_war_self_r": {
-   "ewar": 0.4688,
-   "bwar": 0.3089
+   "ewar": 0.4722,
+   "bwar": 0.3176
   },
   "verdict": "FIP persists better"
  },
@@ -817,69 +825,6 @@
        "n_covered": 123
       }
      }
-    },
-    "2026": {
-     "fielding_innings_share_covered": 0.7768,
-     "share_within_oaa_positions": 0.9988,
-     "n_player_seasons_with_defense": 1320,
-     "n_non_pitcher_player_seasons": 595,
-     "n_with_statcast_read": 508,
-     "by_position": {
-      "1B": {
-       "inn": 27543.4,
-       "share": 0.9969,
-       "n": 152,
-       "n_covered": 131
-      },
-      "2B": {
-       "inn": 27543.5,
-       "share": 0.9992,
-       "n": 142,
-       "n_covered": 134
-      },
-      "3B": {
-       "inn": 27543.0,
-       "share": 0.9991,
-       "n": 154,
-       "n_covered": 142
-      },
-      "C": {
-       "inn": 27544.4,
-       "share": 0.0,
-       "n": 104,
-       "n_covered": 0
-      },
-      "CF": {
-       "inn": 27543.8,
-       "share": 0.9994,
-       "n": 150,
-       "n_covered": 143
-      },
-      "LF": {
-       "inn": 27543.9,
-       "share": 0.9988,
-       "n": 217,
-       "n_covered": 205
-      },
-      "P": {
-       "inn": 27543.0,
-       "share": 0.0,
-       "n": 757,
-       "n_covered": 0
-      },
-      "RF": {
-       "inn": 27544.4,
-       "share": 0.9981,
-       "n": 192,
-       "n_covered": 178
-      },
-      "SS": {
-       "inn": 27543.3,
-       "share": 0.9998,
-       "n": 117,
-       "n_covered": 114
-      }
-     }
     }
    },
    "k_inn": {
@@ -1191,34 +1136,6 @@
        "ip": 25707.0
       }
      }
-    },
-    "2026": {
-     "n_rows": 829,
-     "n_covered": 828,
-     "ip_share": 1.0,
-     "lg_ra9": 4.5603,
-     "lg_era": 4.1869,
-     "ra9_per_era_scale": 1.08918,
-     "cells": {
-      "RP": {
-       "n": 576,
-       "solved": true,
-       "centre_ra9": 4.3324,
-       "centre_vs_lg_ra9": -0.2279,
-       "bref_raa_total": -308.7,
-       "ewar_raa_total": -308.7,
-       "ip": 11828.0
-      },
-      "SP": {
-       "n": 252,
-       "solved": true,
-       "centre_ra9": 4.7086,
-       "centre_vs_lg_ra9": 0.1484,
-       "bref_raa_total": 309.54,
-       "ewar_raa_total": 309.54,
-       "ip": 17988.7
-      }
-     }
     }
    }
   },
@@ -1272,11 +1189,6 @@
     "bat_bref": 1692,
     "pit_fip": 1015,
     "pit_bref": 11
-   },
-   "2026": {
-    "bat_bref": 706,
-    "pit_fip": 828,
-    "pit_bref": 1
    }
   }
  },
@@ -1361,14 +1273,6 @@
     "ewar_sum_pre_rescale": 999.55,
     "ewar_sum": 999.0,
     "replacement_scale": 0.99945
-   },
-   "2026": {
-    "team_games": 3364,
-    "target": 691.49,
-    "bwar_sum": 681.4,
-    "ewar_sum_pre_rescale": 680.91,
-    "ewar_sum": 691.49,
-    "replacement_scale": 1.01553
    }
   },
   "max_abs_deviation_from_target": 0.0,
@@ -1751,13 +1655,13 @@
     2025
    ],
    "ewar": {
-    "r": 0.8595,
-    "r2": 0.7387,
-    "mae_fit": 7.542,
-    "rmse_fit": 10.131,
-    "fit_intercept": 38.044,
-    "fit_slope": 1.2128,
-    "mae_zero_param": 4.306,
+    "r": 0.8644,
+    "r2": 0.7472,
+    "mae_fit": 7.422,
+    "rmse_fit": 9.965,
+    "fit_intercept": 36.489,
+    "fit_slope": 1.2627,
+    "mae_zero_param": 4.277,
     "bias_zero_param": 0.0
    },
    "bwar": {
@@ -1772,79 +1676,87 @@
    },
    "next_season_wins": {
     "n": 270,
-    "r_ewar": 0.2524,
+    "r_ewar": 0.2426,
     "r_bwar": 0.2481,
     "reading": "team WAR in season y against actual wins in season y+1"
+   },
+   "next_season_wins_full_schedule_only": {
+    "n": 210,
+    "n_dropped_short_season_pairs": 60,
+    "r_ewar": 0.5817,
+    "r_bwar": 0.5913,
+    "delta": -0.0096,
+    "reading": "same test, restricted to pairs where BOTH seasons ran a full schedule (>=140 team games). The pooled row above mixes 60-game and 162-game seasons."
    },
    "by_season": {
     "2016": {
      "n": 30,
-     "r_ewar": 0.8205,
+     "r_ewar": 0.8103,
      "r_bwar": 0.9065,
-     "mae0_ewar": 4.977,
+     "mae0_ewar": 5.096,
      "mae0_bwar": 3.26
     },
     "2017": {
      "n": 30,
-     "r_ewar": 0.933,
+     "r_ewar": 0.9065,
      "r_bwar": 0.9324,
-     "mae0_ewar": 3.629,
+     "mae0_ewar": 3.858,
      "mae0_bwar": 3.099
     },
     "2018": {
      "n": 30,
-     "r_ewar": 0.9362,
+     "r_ewar": 0.9264,
      "r_bwar": 0.9279,
-     "mae0_ewar": 4.271,
+     "mae0_ewar": 4.389,
      "mae0_bwar": 4.482
     },
     "2019": {
      "n": 30,
-     "r_ewar": 0.924,
+     "r_ewar": 0.9077,
      "r_bwar": 0.9339,
-     "mae0_ewar": 4.913,
+     "mae0_ewar": 5.186,
      "mae0_bwar": 4.824
     },
     "2020": {
      "n": 30,
-     "r_ewar": 0.8526,
+     "r_ewar": 0.8286,
      "r_bwar": 0.7963,
-     "mae0_ewar": 2.375,
+     "mae0_ewar": 2.478,
      "mae0_bwar": 2.961
     },
     "2021": {
      "n": 30,
-     "r_ewar": 0.8658,
+     "r_ewar": 0.893,
      "r_bwar": 0.9256,
-     "mae0_ewar": 5.7,
+     "mae0_ewar": 5.105,
      "mae0_bwar": 4.073
     },
     "2022": {
      "n": 30,
-     "r_ewar": 0.9512,
+     "r_ewar": 0.9579,
      "r_bwar": 0.9642,
-     "mae0_ewar": 3.574,
+     "mae0_ewar": 3.435,
      "mae0_bwar": 3.505
     },
     "2023": {
      "n": 30,
-     "r_ewar": 0.8903,
+     "r_ewar": 0.8616,
      "r_bwar": 0.9228,
-     "mae0_ewar": 5.437,
+     "mae0_ewar": 5.522,
      "mae0_bwar": 4.313
     },
     "2024": {
      "n": 30,
-     "r_ewar": 0.9221,
+     "r_ewar": 0.9265,
      "r_bwar": 0.9406,
-     "mae0_ewar": 3.713,
+     "mae0_ewar": 3.732,
      "mae0_bwar": 3.246
     },
     "2025": {
      "n": 30,
-     "r_ewar": 0.8813,
+     "r_ewar": 0.893,
      "r_bwar": 0.9001,
-     "mae0_ewar": 4.476,
+     "mae0_ewar": 3.965,
      "mae0_bwar": 4.101
     }
    },
@@ -1856,114 +1768,108 @@
      "team_games": 4854,
      "target": 997.77,
      "bwar_sum": 998.06,
-     "ewar_sum_pre_rescale": 998.07,
+     "ewar_sum_pre_rescale": 988.44,
      "ewar_sum": 997.77,
-     "replacement_scale": 0.99969
+     "replacement_scale": 1.00932
     },
     "2017": {
      "team_games": 4860,
      "target": 999.0,
      "bwar_sum": 997.54,
-     "ewar_sum_pre_rescale": 997.3,
+     "ewar_sum_pre_rescale": 986.3,
      "ewar_sum": 999.0,
-     "replacement_scale": 1.0017
+     "replacement_scale": 1.01269
     },
     "2018": {
      "team_games": 4862,
      "target": 999.41,
      "bwar_sum": 997.42,
-     "ewar_sum_pre_rescale": 997.6,
+     "ewar_sum_pre_rescale": 985.84,
      "ewar_sum": 999.41,
-     "replacement_scale": 1.00181
+     "replacement_scale": 1.01356
     },
     "2019": {
      "team_games": 4858,
      "target": 998.59,
      "bwar_sum": 996.81,
-     "ewar_sum_pre_rescale": 997.35,
+     "ewar_sum_pre_rescale": 986.5,
      "ewar_sum": 998.59,
-     "replacement_scale": 1.00124
+     "replacement_scale": 1.01208
     },
     "2020": {
      "team_games": 1796,
      "target": 369.18,
      "bwar_sum": 370.59,
-     "ewar_sum_pre_rescale": 370.44,
+     "ewar_sum_pre_rescale": 368.38,
      "ewar_sum": 369.18,
-     "replacement_scale": 0.99661
+     "replacement_scale": 1.00216
     },
     "2021": {
      "team_games": 4858,
      "target": 998.59,
      "bwar_sum": 998.35,
-     "ewar_sum_pre_rescale": 997.24,
+     "ewar_sum_pre_rescale": 999.53,
      "ewar_sum": 998.59,
-     "replacement_scale": 1.00135
+     "replacement_scale": 0.99906
     },
     "2022": {
      "team_games": 4860,
      "target": 999.0,
      "bwar_sum": 1000.56,
-     "ewar_sum_pre_rescale": 1000.57,
+     "ewar_sum_pre_rescale": 1001.26,
      "ewar_sum": 999.0,
-     "replacement_scale": 0.99843
+     "replacement_scale": 0.99774
     },
     "2023": {
      "team_games": 4860,
      "target": 999.0,
      "bwar_sum": 1000.35,
-     "ewar_sum_pre_rescale": 999.99,
+     "ewar_sum_pre_rescale": 997.84,
      "ewar_sum": 999.0,
-     "replacement_scale": 0.99901
+     "replacement_scale": 1.00116
     },
     "2024": {
      "team_games": 4858,
      "target": 998.59,
      "bwar_sum": 999.79,
-     "ewar_sum_pre_rescale": 998.58,
+     "ewar_sum_pre_rescale": 998.93,
      "ewar_sum": 998.59,
-     "replacement_scale": 1.00001
+     "replacement_scale": 0.99966
     },
     "2025": {
      "team_games": 4860,
      "target": 999.0,
      "bwar_sum": 1000.44,
-     "ewar_sum_pre_rescale": 999.55,
+     "ewar_sum_pre_rescale": 1000.35,
      "ewar_sum": 999.0,
-     "replacement_scale": 0.99945
-    },
-    "2026": {
-     "team_games": 3364,
-     "target": 691.49,
-     "bwar_sum": 681.4,
-     "ewar_sum_pre_rescale": 680.91,
-     "ewar_sum": 691.49,
-     "replacement_scale": 1.01553
+     "replacement_scale": 0.99865
     }
    },
    "max_abs_deviation_from_target": 0.0,
    "convention": "REPLACEMENT_WINS 47.7 on a .294 baseline; league target = (0.5 - 47.7/162) x team-games"
-  }
+  },
+  "degenerate": false
  },
  "gates_passed": [
-  "gate 2 persistence: r 0.3664 vs bWAR 0.1769",
-  "gate 2 forecast: r 0.2548 vs bWAR 0.1769"
+  "gate 2 persistence: r 0.3617 vs bWAR 0.1768",
+  "gate 2 forecast: r 0.2573 vs bWAR 0.1768"
  ],
  "gates_failed": [
   "gate 1 team wins: r 0.8595 vs bWAR 0.8803",
   "gate 1 zero-param MAE: 4.306 vs bWAR 3.787"
  ],
  "reading": {
-  "verdict": "provisional - eWAR LOSES the headline gate and WINS the persistence gate; it is not ready to replace bWAR site-wide",
+  "verdict": "provisional - eWAR v2 (FIP pitching ONLY, the Statcast fielding swap was measured and REMOVED) LOSES the descriptive gate, WINS the pitcher persistence gate, and is a NULL against bWAR on team forward-looking wins; it is not ready to replace bWAR site-wide",
   "headline": "Gate 1 (team wins, 300 team-seasons): eWAR r 0.8595 vs bWAR 0.8803, zero-parameter MAE 4.306 vs 3.787. eWAR is a WORSE description of the wins a team actually banked.",
   "why_that_was_expected": "Gate 1 rewards DESCRIBING the season that happened. B-Ref prices pitchers on the runs they actually allowed, which is most of what decided the games, so a runs-allowed WAR is close to mechanically fitted to team wins. FIP deliberately throws away sequencing and balls in play, so it must fit worse in-sample. Any FIP-based WAR (fWAR included) loses this test to a runs-allowed WAR. Losing it is not evidence the pitching swap is wrong; it is the price the swap is supposed to pay.",
-  "what_it_bought": "Gate 2: the FIP-priced pitching component self-correlates 0.3664 year to year against 0.1769 for the runs-allowed component (1825 pitcher-season pairs, same rows), and it predicts NEXT year's actual runs above average better than this year's actual runs above average does (0.2548 vs 0.1769). That is a 2.1x persistence gain and the entire case for a FIP basis.",
-  "the_component_that_did_not_earn_its_place": "The ATTRIBUTION arms separate the two swaps. The FIP swap costs same-season r (0.8595 vs 0.8803) and BUYS next-season signal (0.2524 vs 0.2481). The Statcast fielding swap loses BOTH: same-season 0.8777 and next-season 0.2255. That is a real finding with a mechanical cause: Statcast OAA is a RANGE metric. It carries no outfield or infield ARM value, no catcher framing or blocking, no first-base scoops, no double-play pivot. B-Ref rfield does carry those. Swapping OAA in for rfield is therefore not 'a better defensive metric for the same quantity', it is a BETTER metric for a NARROWER quantity, and the value it drops is real value. data/savant_arm.json exists but is arm STRENGTH in mph from 2020 on, not runs, so it cannot close the gap without a model that does not exist yet.",
+  "what_it_bought": "Gate 2: the FIP-priced pitching component self-correlates 0.3617 year to year against 0.1768 for the runs-allowed component (1677 pitcher-season pairs, same rows), and it predicts NEXT year's actual runs above average better than this year's actual runs above average does (0.2573 vs 0.1768). That is a 2.1x persistence gain and the entire case for a FIP basis.",
+  "what_it_did_NOT_buy": "A TEAM-LEVEL forward-looking win. Measured 2026-08-04 and stated here because the opposite was briefly claimed: on team WAR in year y against wins in y+1, eWAR reads 0.2524 against bWAR 0.2481, and that gap is NOT real. Three independent reasons. (1) SCALE CONTAMINATION: 60 of 270 pairs straddle the 60-game 2020 season and correlate NEGATIVELY, dragging the pooled r down; on full-schedule pairs only (n 210) it is 0.592 vs 0.5913, a delta of 0.0006. (2) A zero-information control that SHUFFLES the per-team eWAR-minus-bWAR delta across teams produces an absolute delta at least as large 82.3% of the time, and beats bWAR outright in 27.3% of shuffles. (3) Per year-pair, eWAR wins 4 of 9 and LOSES the four most recent; the pooled edge is carried by 2016->2017 (+0.176) and the COVID pair 2020->2021 (+0.119). The pitching component's forward case is at the PITCHER level (gate 2), where it is large and survives controls. It does not survive aggregation to the team.",
+  "the_component_that_was_removed": "THE STATCAST FIELDING SWAP IS NOT IN THE v2 BUILD (shipped fielding_blend_w = 0.0, so eWAR carries B-Ref rfield unchanged). This block is the COUNTERFACTUAL that removed it, not a description of what ships: the fielding_swap_only arm is built at fielding_blend_w=1.0 on purpose so it answers 'what would the swap do', which is why it still appears below. The ATTRIBUTION arms separate the two swaps. The FIP swap costs same-season r (0.8595 vs 0.8803) and BUYS next-season signal (0.2524 vs 0.2481). The Statcast fielding swap loses BOTH: same-season 0.8777 and next-season 0.2255. That is a real finding with a mechanical cause: Statcast OAA is a RANGE metric. It carries no outfield or infield ARM value, no catcher framing or blocking, no first-base scoops, no double-play pivot. B-Ref rfield does carry those. Swapping OAA in for rfield is therefore not 'a better defensive metric for the same quantity', it is a BETTER metric for a NARROWER quantity, and the value it drops is real value. data/savant_arm.json exists but is arm STRENGTH in mph from 2020 on, not runs, so it cannot close the gap without a model that does not exist yet.",
   "what_would_change_the_verdict": [
    "an arm-value and catcher-framing run model, so the fielding swap covers the same quantity rfield does instead of a subset",
-   "a BLEND of OAA and rfield rather than a replacement (the two measure overlapping but not identical things; the correlation between them on full-time covered seasons is 0.63)",
+   "CLOSED 2026-08-04, do NOT re-run: a BLEND of OAA and rfield rather than a replacement was built and swept. w = 0.00 / 0.25 / 0.50 / 0.75 / 1.00 gives a forward-leg delta against bWAR of +0.0006 / -0.0019 / -0.0057 / -0.0108 / -0.0173 on full-schedule pairs (and +0.0043 / +0.0009 / -0.0029 / -0.0073 / -0.0122 on the contaminated pooled set). MONOTONE DECREASING IN w ON BOTH BASES, so the 2020 contamination does not drive the ordering and no positive weight pays for itself. The blend is now the axis the decision was made on, not a candidate: w=0.0 IS v2. Re-open only if an arm-value or catcher-framing run model lands, which would change what the Statcast read MEASURES rather than how it is weighted",
    "gate 1 re-run against team RUNS ALLOWED and RUNS SCORED separately instead of wins, which separates component accuracy from the Pythagorean noise both series inherit"
   ],
-  "safe_to_use_today": "The pitching component. It reproduces the known bWAR/fWAR divergences by name (Aaron Nola 2018 9.69 -> 6.15, Mike Minor 2019 7.99 -> 4.68, both toward their published fWAR), it persists 2.1x better, and it forecasts next-year run prevention better than actual run prevention does. NOTHING consumes eWAR yet and nothing should until the fielding gap above is closed or the fielding swap is dropped."
+  "safe_to_use_today": "The pitching component. It reproduces the known bWAR/fWAR divergences by name (Aaron Nola 2018 9.69 -> 6.15, Mike Minor 2019 7.99 -> 4.68, both toward their published fWAR), it persists 2.1x better, and it forecasts next-year run prevention better than actual run prevention does. NOTHING consumes eWAR yet. v2 already took the second of the two exits named here: the Statcast fielding swap was DROPPED (w=0.0) rather than repaired, so what remains is a one-component model. Two consumer gates have since been measured and both said no: the eFV first-6yr label swap (lane R3a) and fa_backtest Gate 1 (lane R3b). Read those before wiring eWAR into anything."
  }
 }

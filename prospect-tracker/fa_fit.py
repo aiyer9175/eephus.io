@@ -807,6 +807,23 @@ def fit_scores(player: dict, market_pred: dict, class_year: int,
         park = park_component(player, org, class_year - 1)
         guar = market_pred.get("proj_guarantee_usd") or 20_000_000
         scale = _spend_reach(b, float(guar))
+        # ONLY `scale` TAKES A PLAYER INPUT. `recent` divides by the league-max
+        # 3-winter outlay and `rich` clips at n_100m/5, so both are CLUB
+        # CONSTANTS: the top spender scores 1.0 on `recent` by construction and
+        # starts from a 0.500 behavior floor against a league median of 0.077
+        # before the player is consulted. That is the mechanism behind Gate 3's
+        # concentration failure (one club top-1 for 228 of 228 players).
+        #
+        # THE PLAYER-CONDITIONAL REWRITE WAS MEASURED 2026-08-04 AND REFUTED
+        # (lane R6.3). Re-deriving recent and rich as within-club conditional
+        # rates DOES fix the term (behavior's club main effect 69.8% -> 10.7%,
+        # the top club's constant edge 0.091 -> 0.019) and the composite STILL
+        # FAILS at 0.3816 against a 0.25 threshold. The pre-registered
+        # falsification settles it: DELETE the behavior component outright and
+        # concentration is still 0.3816, so NO change confined to this block can
+        # ever reach the gate. The saturation is in the composite, not here.
+        # Do not re-attempt a behavior-only repair; see fa_fit_backtest's
+        # concentration_repair_verdict for the full ledger.
         recent = min(1.0, (b.get("recent_spend_usd") or 0) / max_recent)
         rich = min(1.0, (b.get("n_100m") or 0) / 5.0)
         behavior = bw["max_guar"] * scale + bw["recent"] * recent + bw["rich"] * rich

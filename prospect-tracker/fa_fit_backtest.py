@@ -1036,6 +1036,30 @@ def _repair_verdict(decomp: dict, sweep: dict | None, live: dict) -> dict:
             "failed. Passing requires raising park and cutting behavior. The "
             "best passer is reported with its selection warning and zero slack; "
             "it is NOT adopted here.",
+            "R6.3 BEHAVIOR-CONFINED REPAIR: REFUTED, 2026-08-04. Six "
+            "player-conditional rewrites of `recent` and `rich` (within-club "
+            "conditional rates: share of the club's own guarantees at or above "
+            "this player's price, restricted to the last 3 winters and to his "
+            "price band) all FAIL BOTH halves of the gate. The term-level "
+            "diagnosis is CONFIRMED - behavior's club main effect drops 69.8% "
+            "-> 10.7% and the top club's constant edge 0.091 -> 0.019 - and the "
+            "composite still concentrates at 0.3816.",
+            "THE PRE-REGISTERED FALSIFICATION FIRED, and it reframes the gate. "
+            "With the BEHAVIOR component DELETED OUTRIGHT the composite still "
+            "concentrates 0.3816 on one club, against a 0.25 threshold. So the "
+            "concentration failure is NOT a behavior defect and no change "
+            "confined to behavior can ever pass. Two consequences: recommendation "
+            "(2) below is SUPERSEDED (it named behavior as 'the real repair'), "
+            "and any future attempt has to move the composite, not a term. Note "
+            "also that `recent`'s league-max normalizer is carrying real signing "
+            "signal, so the conditional replacement loses accuracy as well as "
+            "failing concentration.",
+            "FALLBACK (b) DOES NOT CLEAR THE GATE EITHER, contrary to the "
+            "recommendation below: on the current class the display-side "
+            "relative-fit view reads max_top1_share 0.2544 at lambda=1 and FAILS "
+            "the 0.25 criterion; it clears only at lambda 1.1, where it fails "
+            "elsewhere. If (b) ships it ships as a disclosed VIEW that does not "
+            "pass, not as a repair.",
         ],
         "recommendation": (
             "Do not flip fa_config.fit.weights on this evidence. (1) SHIP "
