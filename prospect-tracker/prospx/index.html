@@ -61,13 +61,19 @@
        site-wide sharp-corner rule. -->
   <link rel="stylesheet" href="/assets/eephus-account.css?v=83b9b043">
 
-  <!-- Webfonts: Source Serif for headlines, Inter for UI, JetBrains Mono
-       for numerics. System fallbacks (Georgia / -apple-system / Menlo)
-       keep the page readable offline if the CDN is blocked. -->
+  <!-- Webfonts: Roboto Mono ONLY. The retro/mono token stacks lead with the
+       Windows MS Gothic faces and fall through to ui-monospace / SF Mono /
+       Menlo / DejaVu; Roboto Mono is the last named rung before generic
+       monospace, so it is the one CDN face that can actually be selected.
+       Inter, JetBrains Mono, Source Serif 4, VT323 and Press Start 2P were
+       still being downloaded here while appearing in NO font-family stack
+       anywhere in the tree (verified by grep: comments only). Six families
+       were racing document.fonts.ready before every GFX capture for nothing.
+       System fallbacks keep the page readable if the CDN is blocked. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:wght@500;600;700&family=VT323&family=Press+Start+2P&family=Roboto+Mono:wght@400;500;700&display=swap">
+        href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap">
 
   <style>
     /* === Baseball card / sportsbook theme ============================
@@ -8682,8 +8688,8 @@
       </label>
       <label class="gfx-ctrl">Layout
         <select id="gfx-layout" class="gfx-select">
-          <option value="chips">Chips (photo grid)</option>
-          <option value="rows">Rows (compact)</option>
+          <option value="rows">Rows (compact list)</option>
+          <option value="chips">Tiles (big names)</option>
         </select>
       </label>
       <label class="gfx-ctrl">Template
@@ -8734,7 +8740,7 @@
       </span>
       <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-pack" type="checkbox"> card pack</label>
       <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-showval" type="checkbox" checked> value column</label>
-      <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-photos" type="checkbox" checked> photos</label>
+      <label class="gfx-ctrl gfx-ctrl-check" title="Player photos on the single-player and compare cards. List graphics (Rows / Tiles) are names-only."><input id="gfx-photos" type="checkbox" checked> card photos</label>
       <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-logos" type="checkbox" checked> team logos</label>
     </div>
     <div class="gfx-preview" id="gfx-preview"></div>
@@ -33060,6 +33066,18 @@ async function _gfxAwaitAssets(el, timeoutMs = 8000) {
   // Webfonts - the pixel/mono faces must be ready or text reflows in the capture.
   if (document.fonts && document.fonts.ready) {
     jobs.push(Promise.race([document.fonts.ready, _to(timeoutMs)]).catch(() => {}));
+    // `fonts.ready` resolves for the faces the document has ALREADY decided it
+    // needs. Every face here is declared font-display:swap, so a cold first
+    // export can satisfy fonts.ready while the board's own weights are still
+    // swapping in, and the capture rasterises the fallback. Ask for the exact
+    // weights the GFX markup uses so they are guaranteed resolved first.
+    if (document.fonts.load) {
+      ["700 26px DotGothic16", "400 12px DotGothic16",
+       "700 14px 'Roboto Mono'", "400 11px 'Roboto Mono'"].forEach(spec => {
+        try { jobs.push(Promise.race([document.fonts.load(spec), _to(timeoutMs)]).catch(() => {})); }
+        catch (e) { /* an unparseable font shorthand must never block an export */ }
+      });
+    }
   }
   if (el) {
     const urls = new Set();
@@ -33068,7 +33086,18 @@ async function _gfxAwaitAssets(el, timeoutMs = 8000) {
       if (s && !s.startsWith("data:")) urls.add(s);
     });
     el.querySelectorAll("*").forEach(node => {
-      const bg = node.style && node.style.backgroundImage;
+      // Inline style first (all GFX markup is inline-styled), then the computed
+      // value, which is the only way to see a background painted by a CLASS.
+      // The inline-only scan was correct for today's markup and silently wrong
+      // for any future rule-based background: it would report ready while the
+      // image was still loading.
+      let bg = node.style && node.style.backgroundImage;
+      if (!bg || bg.indexOf("url(") < 0) {
+        try {
+          const cbg = getComputedStyle(node).backgroundImage;
+          if (cbg && cbg.indexOf("url(") >= 0) bg = cbg;
+        } catch (e) { /* detached or cross-origin node: skip */ }
+      }
       if (bg && bg.indexOf("url(") >= 0) {
         (bg.match(/url\((['"]?)(.*?)\1\)/g) || []).forEach(u => {
           const mm = u.match(/url\((['"]?)(.*?)\1\)/);
@@ -33271,11 +33300,12 @@ const _GFX_FORMATS = {
   square:   { w: 1080, h: 1080, label: "Square 1:1" },
   story:    { w: 1080, h: 1920, label: "Story 9:16" },
   wide:     { w: 1600, h: 900,  label: "Wide 16:9" },
-  // Board formats, sized for the CHIP layout (see _gfxChipHtml). A 100-player
-  // list on the 1600x900 "wide" canvas was never 16:9: it ran to ~1929px tall
-  // because the frame only sets a MINIMUM height, so the promised aspect was a
-  // label, not a measurement. These two are tall enough to actually hold 100
-  // photo chips at the ratio they claim.
+  // Taller board formats. A 100-player list on the 1600x900 "wide" canvas was
+  // never 16:9: it ran to ~1929px tall because the frame only sets a MINIMUM
+  // height, so the promised aspect was a label, not a measurement. These two
+  // are tall enough to actually hold a 100-player grid at the ratio they claim.
+  // buildGfxBoard now also DISCLOSES an overflow in the footer rather than
+  // letting the format label keep making a promise the PNG does not honour.
   board:     { w: 1600, h: 2000, label: "Board 4:5" },
   landscape: { w: 1920, h: 1080, label: "Landscape 16:9" },
 };
@@ -33284,10 +33314,15 @@ const _GFX_FORMATS = {
 // with no crop. Prospect-card kinds still force their own portrait/tall
 // geometry via _gfxVariantFormat.
 // v46 (owner, 2026-08-03) - default is the COMPACT ROW list on the WIDE 16:9
-// canvas. The chip grid made the headshot the subject; the ask is a small
-// headshot beside the text with all 100 prospects on one 16:9 board. Chips
-// remain selectable in the layout dropdown.
-const _gfxOpts = { count: 50, title: "", accent: "lilac", showValue: true, format: "wide", theme: "auto", photos: true, logos: true, variant: "compact", frame: "rarity", pack: false, layout: "rows" };
+// canvas. The chip grid made the headshot the subject; the ask was a small
+// headshot beside the text with all 100 prospects on one 16:9 board.
+// v47 (owner, 2026-08-04) - player pictures come OFF the list graphics
+// entirely; the name is the subject. `count` now opens at 100 to match how the
+// owner actually uses the row board (the ask was and is "all 100 on one
+// canvas"); it had been defaulting to 50, so the top-100 board had to be
+// re-selected by hand on every open. `photos` stays true because it now governs
+// the single-subject CARDS only, which keep their headshots.
+const _gfxOpts = { count: 100, title: "", accent: "lilac", showValue: true, format: "wide", theme: "auto", photos: true, logos: true, variant: "compact", frame: "rarity", pack: false, layout: "rows" };
 let _gfxOrigTheme = null;
 // v38 - Force the GFX board (+ the open modal) to a chosen light/dark theme by
 // flipping the root data-theme. The board inherits ALL tokens + fv-badge tints
@@ -33693,30 +33728,11 @@ function _gfxTeamLogo(org, P, px) {
 function _gfxRowHasPhotoAvatar(r) {
   return !!(_gfxOpts.photos && r && r.mlbam);
 }
-// Photo layer for a chip, as CSS only. The row avatar uses <img object-fit>,
-// which html2canvas 1.4.1 does not implement and therefore exports STRETCHED
-// (it only ever got fixed for the logo path, by sizing the logo instead of
-// cropping it). A background-image with `cover` crops identically in the live
-// DOM and in the raster, so the chip never distorts a face.
-//
-// Layers, in order of preference: headshot, then team logo, then the
-// silhouette. A missing headshot leaves the logo showing rather than a hole,
-// which is the same degradation rule the row avatar follows.
-function _gfxChipPhotoCss(r, P) {
-  const layers = [];
-  if (_gfxRowHasPhotoAvatar(r)) layers.push(`url('${_gfxHeadshotURL(r.mlbam, 140)}')`);
-  const logo = (typeof teamLogoURL === "function" && r && r.org) ? teamLogoURL(r.org) : null;
-  if (_gfxOpts.logos && logo) layers.push(`url('${logo}')`);
-  if (!layers.length) layers.push(_gfxSilhouetteBg(P));
-  // Sizes/positions line up index-for-index with the image list: the headshot
-  // covers, anything behind it sits centered and small so a 404 degrades to a
-  // readable club mark rather than a blown-up crop.
-  const sizes = layers.map((l, i) => (i === 0 && _gfxRowHasPhotoAvatar(r)) ? "cover" : "58%");
-  const poss = layers.map((l, i) => (i === 0 && _gfxRowHasPhotoAvatar(r)) ? "top center" : "center");
-  return `background-color:${P.bg};background-image:${layers.join(",")};`
-    + `background-size:${sizes.join(",")};background-position:${poss.join(",")};`
-    + `background-repeat:no-repeat;`;
-}
+// (The chip photo-well helper that used to live here was removed on 2026-08-04
+// when player pictures came off the list graphics. The `cover` background
+// technique it pioneered - html2canvas 1.4.1 has no object-fit, so an <img>
+// exports STRETCHED - is still the rule for any future photo well, and is
+// still in use by the single-subject cards below, which KEEP their headshots.)
 function _gfxAvatar(r, P) {
   const useP = _gfxRowHasPhotoAvatar(r);
   const useL = _gfxOpts.logos && r && r.org;
@@ -33808,6 +33824,39 @@ function _gfxWordmark(accent, P, px) {
     </svg>
     <span style="font-family:var(--font-retro);font-weight:700;font-size:${Math.round(s * 0.86)}px;color:${accent};letter-spacing:0.02em;">PROSPX</span>
   </div>`;
+}
+
+// The SAME problem as _gfxResolveVars below, for FONTS: html2canvas serializes
+// inline <svg> standalone, so `font-family:var(--font-mono)` inside an SVG is
+// unresolvable there. Each SVG helper therefore carried its own LITERAL stack,
+// and the three copies had drifted apart:
+//   _gfxToolRadar   'MS Gothic','Osaka-Mono','Roboto Mono','Courier New',monospace
+//   _gfxRadarOverlay 'MS Gothic','Osaka-Mono','Roboto Mono',monospace
+//   _gfxFvOverlay   'Roboto Mono',monospace
+// So a card's radar labels, its overlay labels and its axis labels could each
+// resolve to a DIFFERENT face on the same export - the "not using our preferred
+// font" inconsistency. One constant now feeds all three, and it mirrors
+// --font-retro-mono (index.html:240) rung for rung. Keep them in sync.
+const _GFX_SVG_MONO = "'MS Gothic','MS UI Gothic',ui-monospace,'SF Mono','SFMono-Regular',Consolas,Menlo,'Liberation Mono','DejaVu Sans Mono','Roboto Mono',monospace";
+
+// Long names WRAPPED on every single-subject card: the 44px hero name, the 22px
+// compare columns, the 40px farm title and the 18px pack mini-card each rendered
+// at a fixed size with no ellipsis, no min-width:0 and no step-down. A
+// hyphenated or double surname therefore pushed onto a second line and shoved
+// the whole card body down - and on the compare card it also broke the three
+// columns out of horizontal alignment, because each column is an independent
+// flex column that grows on its own.
+//
+// Step the size down by length instead, so a card keeps ONE line and everything
+// under it stays where the layout put it. The token stacks are monospace-led, so
+// rendered width is close to linear in character count and base*fit/n is a good
+// estimate; floored at 62% of base so a pathological name gets small rather than
+// illegible. Deliberately NOT an ellipsis: a name is the subject of these cards
+// and truncating it is the failure the owner reported.
+function _gfxFitNamePx(name, basePx, fitChars) {
+  const n = String(name == null ? "" : name).trim().length;
+  if (!n || n <= fitChars) return basePx;
+  return Math.max(Math.round(basePx * 0.62), Math.floor(basePx * fitChars / n));
 }
 
 // v42 - Resolve CSS var() tokens to concrete colors in an SVG string. html2canvas
@@ -33940,7 +33989,7 @@ function _gfxCareerTable(p, isPitcher, P) {
 // html2canvas serialization. items: [{label, value(20-80|null)}].
 function _gfxToolRadar(items, P, accent, size) {
   const n = items.length; if (n < 3) return "";
-  const MONO = "'MS Gothic','Osaka-Mono','Roboto Mono','Courier New',monospace";
+  const MONO = _GFX_SVG_MONO;
   const S = size || 320, cx = S / 2, cy = S / 2, R = S * 0.30, FMIN = 20, FMAX = 80;
   const ang = i => -Math.PI / 2 + i * (2 * Math.PI / n);
   const pt = (i, val) => { const r = R * Math.max(0, Math.min(1, (val - FMIN) / (FMAX - FMIN))); return [cx + r * Math.cos(ang(i)), cy + r * Math.sin(ang(i))]; };
@@ -34508,7 +34557,7 @@ function buildProspectCard(snap) {
           <div>
             <div style="display:flex;align-items:center;gap:12px;">
               ${orgLogo}
-              <div style="font-family:var(--font-retro);font-size:44px;font-weight:700;line-height:1.03;color:${P.text};">${escapeHtml(p.player_name || "")}</div>
+              <div style="font-family:var(--font-retro);font-size:${_gfxFitNamePx(p.player_name, 44, 18)}px;font-weight:700;line-height:1.03;color:${P.text};overflow-wrap:anywhere;">${escapeHtml(p.player_name || "")}</div>
             </div>
             <div style="font-family:var(--font-mono);font-size:17px;color:${P.text2};margin-top:10px;">${escapeHtml(metaLine)}</div>
             ${rankLine}
@@ -34677,7 +34726,7 @@ function buildFarmCard(snap) {
       <div style="display:flex;align-items:center;gap:18px;min-width:0;">
         <div style="display:flex;align-items:center;justify-content:center;height:64px;min-width:64px;">${logo}</div>
         <div style="min-width:0;">
-          <div style="font-family:var(--font-retro);font-size:40px;font-weight:700;line-height:1.02;color:${P.text};">${escapeHtml(orgName)} <span style="font-size:21px;color:${P.text3};font-weight:700;">Farm System</span></div>
+          <div style="font-family:var(--font-retro);font-size:${_gfxFitNamePx(orgName, 40, 20)}px;font-weight:700;line-height:1.02;color:${P.text};overflow-wrap:anywhere;">${escapeHtml(orgName)} <span style="font-size:21px;color:${P.text3};font-weight:700;">Farm System</span></div>
           <div style="font-family:var(--font-mono);font-size:16px;color:${P.text2};margin-top:8px;">Farm rank #${escapeHtml(String(meta.farmRank != null ? meta.farmRank : (farmWindowRank(org) != null ? farmWindowRank(org) : " - ")))} of 30 · ${escapeHtml(String(org.count != null ? org.count : (meta.gradedCount || " - ")))} prospects tracked</div>
         </div>
       </div>
@@ -34696,7 +34745,7 @@ function buildFarmCard(snap) {
 function _gfxRadarOverlay(series, P, size) {
   if (!series.length) return "";
   const items0 = series[0].items; const n = items0.length; if (n < 3) return "";
-  const MONO = "'MS Gothic','Osaka-Mono','Roboto Mono',monospace";
+  const MONO = _GFX_SVG_MONO;
   const S = size || 360, cx = S / 2, cy = S / 2, R = S * 0.30, FMIN = 20, FMAX = 80;
   const ang = i => -Math.PI / 2 + i * (2 * Math.PI / n);
   const pt = (i, v) => { const r = R * Math.max(0, Math.min(1, (v - FMIN) / (FMAX - FMIN))); return [cx + r * Math.cos(ang(i)), cy + r * Math.sin(ang(i))]; };
@@ -34722,7 +34771,7 @@ function _gfxFvOverlay(data, P) {
   const W = 720, H = 230, PL = 30, PR = 14, PT = 14, PB = 22, iW = W - PL - PR, iH = H - PT - PB, FMIN = 35, FMAX = 80;
   const xs = t => PL + ((t - minT) / span) * iW, ys = fv => PT + iH - ((Math.max(FMIN, Math.min(FMAX, fv)) - FMIN) / (FMAX - FMIN)) * iH;
   const grid = [];
-  for (let fv = FMIN; fv <= FMAX; fv += 5) { const y = ys(fv).toFixed(1); grid.push(`<line x1="${PL}" y1="${y}" x2="${W - PR}" y2="${y}" stroke="${P.border}" stroke-width="0.5" stroke-dasharray="${fv === 50 ? "3,2" : "2,3"}" opacity="${fv === 50 ? 0.6 : 0.4}"/>`); grid.push(`<text x="${PL - 4}" y="${(Number(y) + 3).toFixed(1)}" text-anchor="end" style="font-family:'Roboto Mono',monospace;font-size:9px;fill:${P.text3};">${fv}</text>`); }
+  for (let fv = FMIN; fv <= FMAX; fv += 5) { const y = ys(fv).toFixed(1); grid.push(`<line x1="${PL}" y1="${y}" x2="${W - PR}" y2="${y}" stroke="${P.border}" stroke-width="0.5" stroke-dasharray="${fv === 50 ? "3,2" : "2,3"}" opacity="${fv === 50 ? 0.6 : 0.4}"/>`); grid.push(`<text x="${PL - 4}" y="${(Number(y) + 3).toFixed(1)}" text-anchor="end" style="font-family:${_GFX_SVG_MONO};font-size:9px;fill:${P.text3};">${fv}</text>`); }
   const lines = series.map(s => { const pts = s.pts.map(p => `${xs(p.t).toFixed(1)},${ys(p.fv).toFixed(1)}`).join(" "); const last = s.pts[s.pts.length - 1]; return `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round"/><circle cx="${xs(last.t).toFixed(1)}" cy="${ys(last.fv).toFixed(1)}" r="3.5" fill="${s.color}"/>`; }).join("");
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;">${grid.join("")}${lines}</svg>`;
 }
@@ -34761,13 +34810,23 @@ function buildCompareCard(snap) {
   const allPit = data.every(d => d.isPit), allHit = data.every(d => !d.isPit);
 
   // Player columns (photo, name+logo, FV, meta).
+  //
+  // Each column is an independent flex column, so anything that changes height
+  // in ONE of them slides that column's remaining rows out of line with its
+  // neighbours. The name was the offender: at a fixed 22px a long name wrapped
+  // to two lines, and that column's FV badge then sat ~24px lower than the other
+  // two. The name now steps down to fit (_gfxFitNamePx) AND sits in a
+  // fixed-height box, so the badge row is pinned across all three columns no
+  // matter what the names do.
+  const NAME_BOX_H = 30;
   const colDivider = `<div style="width:1px;background:${P.border};flex:none;"></div>`;
   const cols = data.map(d => {
     const hs = (d.p.mlbam_id) ? _gfxHeadshotURL(d.p.mlbam_id, 200) : "";
     const meta = [d.p.position, d.p.org, d.sl.level, d.p.age != null ? "age " + d.p.age.toFixed(1) : null].filter(Boolean).join(" · ");
+    const namePx = _gfxFitNamePx(d.p.player_name, 22, 16);
     return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;border-top:5px solid ${d.color};padding:16px 10px 0;">
       <div style="width:132px;height:176px;flex:none;border:1px solid ${P.borderStrong};border-radius:6px;overflow:hidden;${_gfxPhotoBaseLayer(d.p.org, P)}">${hs ? `<div style="width:100%;height:100%;background-image:url('${hs}');background-size:cover;background-position:center top;"></div>` : ""}</div>
-      <div style="display:flex;align-items:center;gap:8px;justify-content:center;">${_gfxTeamLogo(d.p.org, P, 26)}<div style="font-family:var(--font-retro);font-size:22px;font-weight:700;color:${P.text};line-height:1.05;">${escapeHtml(d.p.player_name || "")}</div></div>
+      <div style="display:flex;align-items:center;gap:8px;justify-content:center;height:${NAME_BOX_H}px;flex:none;max-width:100%;min-width:0;overflow:hidden;">${_gfxTeamLogo(d.p.org, P, 26)}<div style="font-family:var(--font-retro);font-size:${namePx}px;font-weight:700;color:${P.text};line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">${escapeHtml(d.p.player_name || "")}</div></div>
       <div style="font-family:var(--font-mono);font-size:12px;color:${P.text2};">${escapeHtml(meta)}</div>
       <span class="fv-badge ${fvClass(d.fvLabel)}" style="font-size:32px;padding:7px 15px;border-radius:8px;font-weight:800;">${escapeHtml(d.fvLabel)}</span>
     </div>`;
@@ -34845,7 +34904,7 @@ function _gfxMiniCard(item, kind, P, accent, idx) {
         ${fvBadge}
       </div>
       ${photo}
-      <div style="font-family:var(--font-retro);font-size:18px;font-weight:700;line-height:1.05;color:${P.text};">${escapeHtml(r.name || "")}</div>
+      <div style="font-family:var(--font-retro);font-size:${_gfxFitNamePx(r.name, 18, 16)}px;font-weight:700;line-height:1.05;color:${P.text};overflow-wrap:anywhere;">${escapeHtml(r.name || "")}</div>
       <div style="font-family:var(--font-mono);font-size:11px;color:${P.text3};display:flex;align-items:center;gap:5px;justify-content:center;">${logo}${escapeHtml(metaTxt)}</div>
       ${r.value ? `<div style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:${accent};">${escapeHtml(String(r.value))}</div>` : ""}
     </div>`;
@@ -34870,121 +34929,113 @@ function _gfxColumnCount(cap) {
   return Math.max(1, ncol);
 }
 // ---------------------------------------------------------------------------
-// CHIP LAYOUT (2026-08-03, owner ask). The row layout gives a 100-player board
-// 359x67px per player, of which the headshot is 40x52 - 8.6% of the chip - and
-// spends a whole column on a surplus figure whose sub-line renders at 10px. At
-// a 600px-wide timeline render that 10px is under 4px on screen. The owner's
-// requirement: photo, eFV grade and rank are the only things that MUST survive;
-// level, age and position are wanted if they stay legible; the value column
-// goes. Ten columns on a 1600x2000 canvas gives ~141x170 per player with a
-// ~141x104 photo, which is 6x the photo area and no text under 11px.
+// TILE LAYOUT (2026-08-04, owner ask). This was the CHIP layout, and it was
+// built around the headshot: a photo well on top, name and one meta line
+// beneath, and a column search that maximised PHOTO AREA. The owner has now
+// asked for player pictures to come off the LIST graphics entirely and for the
+// reclaimed space to go to the names ("just have names instead").
 //
-// Column count is derived from the canvas, not hardcoded, so the same renderer
-// serves the landscape canvas (20 x 5) and short lists.
-const _GFX_CHIP_PAD = 40, _GFX_CHIP_GAP = 12, _GFX_CHIP_MIN_W = 120;
-const _GFX_CHIP_MIN_CELL_H = 96;
-// Chrome actually emitted by the chip markup below: 40px padding top+bottom
+// SCOPE: lists only. Single-subject hero cards KEEP their headshots - that was
+// explicit - so buildProspectCard / buildCompareCard / _gfxMiniCard and the
+// legacy farm rowHtml path are untouched, as is the `photos` toggle that feeds
+// them. The two LIST layouts (tiles, rows) no longer consult it at all.
+//
+// With the photo gone the vertical budget is no longer spent on a face, so a
+// tile can afford TWO LINES of name. That is the real fix for the owner's
+// "missing spaces for prospect names": the old chip ellipsised every name past
+// roughly 14 characters at 14px, so hyphenated and double surnames lost their
+// second half on every board. Names now WRAP rather than truncate, and the
+// column search maximises the name budget instead of the photo.
+//
+// Column count is still derived from the canvas, not hardcoded, so one renderer
+// serves every format.
+const _GFX_CHIP_PAD = 40, _GFX_CHIP_GAP = 12;
+// Raised from 120: at 120px even the smallest name step could not hold a
+// two-line name without breaking mid-word.
+const _GFX_TILE_MIN_W = 140;
+const _GFX_TILE_MIN_CELL_H = 72;
+// Chrome actually emitted by the board markup below: 40px padding top+bottom
 // (80), the header strip (38), the grid wrapper's 14px padding top+bottom (28)
-// and the footer (34). It was two separate 190 literals that both over-reserved
-// and could drift apart; one named constant now feeds the column search, the
-// cell-height budget and nothing else.
+// and the footer (34).
 const _GFX_CHIP_CHROME = 180;
-// Name size steps with the chip width; meta is always 11. Shared by the column
+// Name size steps with the tile width; meta is always 11 (the floor the chip
+// work established - nothing on a board goes under 11px). Shared by the column
 // search and the renderer so a change in one cannot silently mis-budget the
-// other (the photo is whatever height the text does not take).
-function _gfxChipNamePx(chipW) { return chipW >= 130 ? 14 : (chipW >= 100 ? 12 : 11); }
-function _gfxChipTextH(chipW) { return _gfxChipNamePx(chipW) + 11 + 22; }
-
-// A headshot is a portrait crop taken `cover` from `top center`. Past about 4:3
-// tall it stops reading as a face and starts reading as a neck, and on a short
-// list the leftover vertical budget is enormous - a 10-player board had room for
-// a 294x857 well. Cap the photo (and therefore the cell) at this aspect and let
-// the surplus stay margin. It never binds on a full 100-chip board, where the
-// well is wider than it is tall.
-const _GFX_CHIP_MAX_PHOTO_ASPECT = 1.35;
-// ...and the same argument in the other direction. `cover` on a well WIDER than
-// it is tall crops the top and bottom off the source, so a 294x124 letterbox
-// shows a strip across the eyes rather than a head. Wells below this ratio are
-// rejected outright and the search takes more, narrower columns instead, which
-// is how a 50-player board goes from 243x144 (0.59) to a portrait 180x202.
-const _GFX_CHIP_MIN_PHOTO_ASPECT = 0.8;
+// other.
+function _gfxTileNamePx(w) { return w >= 230 ? 19 : (w >= 190 ? 17 : (w >= 160 ? 15 : 14)); }
+// Two name lines + meta line + the rank/badge strip + padding. The name block
+// is a FIXED two-line box: a one-line name simply centres in it, so every tile
+// in a row shares a baseline instead of jittering with name length.
+function _gfxTileNameLineH(w) { return Math.round(_gfxTileNamePx(w) * 1.22); }
+function _gfxTileTextH(w) { return _gfxTileNameLineH(w) * 2 + 13 + 20 + 10; }
 
 // Geometry for one candidate column count, or null when it violates a floor.
-function _gfxChipGeoFor(cap, fmt, cols) {
+function _gfxTileGeoFor(cap, fmt, cols) {
   const rows = Math.ceil(cap / cols);
   const chipW = Math.floor((fmt.w - _GFX_CHIP_PAD * 2 - (cols - 1) * _GFX_CHIP_GAP) / cols);
-  if (chipW < _GFX_CHIP_MIN_W) return null;
+  if (chipW < _GFX_TILE_MIN_W) return null;
   const avail = Math.floor((fmt.h - _GFX_CHIP_CHROME - (rows - 1) * _GFX_CHIP_GAP) / rows);
-  if (avail < _GFX_CHIP_MIN_CELL_H) return null;      // would run off the canvas
-  const textH = _gfxChipTextH(chipW);
-  const photoH = Math.max(52, Math.min(avail - textH,
-                                       Math.round(chipW * _GFX_CHIP_MAX_PHOTO_ASPECT)));
-  const cellH = Math.max(_GFX_CHIP_MIN_CELL_H, photoH + textH);
-  const letterboxed = photoH < chipW * _GFX_CHIP_MIN_PHOTO_ASPECT;
-  return { cols, rows, chipW, cellH, photoH, letterboxed,
-           photoArea: chipW * photoH, empty: cols * rows - cap };
+  const textH = _gfxTileTextH(chipW);
+  if (avail < Math.max(_GFX_TILE_MIN_CELL_H, textH)) return null;   // would clip
+  // A tile never needs to be taller than its content; surplus vertical budget
+  // stays as margin rather than stretching a name box into a blank panel.
+  const cellH = Math.max(_GFX_TILE_MIN_CELL_H, Math.min(avail, textH + 14));
+  return { cols, rows, chipW, cellH,
+           // The quantity worth maximising is now how much NAME fits: width
+           // carries characters, and the name step is a function of width.
+           nameArea: chipW * _gfxTileNamePx(chipW),
+           empty: cols * rows - cap };
 }
 
-// Pick the column count that puts the most PHOTO on the board, then breaks ties
+// Pick the column count that gives the names the most room, then break ties
 // toward a full last row.
-//
-// This replaced `round(sqrt(cap * w/h))`, which on the default 1600x2000 board
-// returned 9 columns for 100 players: 9x12 = 108 cells, so the bottom row held
-// one chip and eight blanks, and each photo was 158x92. The module comment
-// above already specified ten columns; the formula never agreed with it. Ten is
-// 10x10 = exactly 100 cells with a 141x123 photo, which is 19% more photo AND
-// no ragged row, so the old heuristic was losing on both counts at once.
-function _gfxChipColumns(cap, fmt) {
+function _gfxTileColumns(cap, fmt) {
   const usable = fmt.w - _GFX_CHIP_PAD * 2;
-  const maxByWidth = Math.max(1, Math.floor((usable + _GFX_CHIP_GAP) / (_GFX_CHIP_MIN_W + _GFX_CHIP_GAP)));
+  const maxByWidth = Math.max(1, Math.floor((usable + _GFX_CHIP_GAP) / (_GFX_TILE_MIN_W + _GFX_CHIP_GAP)));
   const hi = Math.min(maxByWidth, Math.max(1, cap));
 
   const better = (g, b) => !b
-    || g.photoArea > b.photoArea * 1.02
-    // The 2% band keeps a trivially larger photo from reintroducing a ragged
-    // row: at equal-ish photo, a full grid always reads better.
-    || (g.photoArea > b.photoArea * 0.98 && g.empty < b.empty);
+    || g.nameArea > b.nameArea * 1.02
+    // The 2% band keeps a trivially wider name from reintroducing a ragged
+    // row: at equal-ish name budget, a full grid always reads better.
+    || (g.nameArea > b.nameArea * 0.98 && g.empty < b.empty);
 
-  let best = null, bestLetterboxed = null;
+  let best = null;
   for (let c = 1; c <= hi; c++) {
-    const g = _gfxChipGeoFor(cap, fmt, c);
-    if (!g) continue;
-    if (g.letterboxed) {
-      // Kept only as a fallback: on a very short canvas every candidate is a
-      // letterbox, and some photo beats none.
-      if (better(g, bestLetterboxed)) bestLetterboxed = g;
-      continue;
-    }
-    if (better(g, best)) best = g;
+    const g = _gfxTileGeoFor(cap, fmt, c);
+    if (g && better(g, best)) best = g;
   }
-  best = best || bestLetterboxed;
   // Nothing fits the canvas (a very long list): fall back to the widest legible
   // grid and let the board grow rather than crushing the cells. An honest tall
-  // image beats an unreadable one.
+  // image beats an unreadable one; buildGfxBoard discloses the overflow.
   return best ? best.cols : hi;
 }
-// One player chip: photo, rank and eFV grade over it, name, one meta line.
-// No surplus, no $DvM+, no value column anywhere - that is the ask.
-function _gfxChipHtml(r, i, P, accent, geo) {
+// One player tile: rank and eFV grade on a strip, then the name (up to two
+// lines, centred), then one meta line. No photo, no surplus, no value column.
+function _gfxTileHtml(r, i, P, accent, geo) {
   const rank = (r.rank != null) ? r.rank : (i + 1);
-  // html2canvas 1.4.1 does not implement object-fit, so an <img> here exports
-  // STRETCHED. A background-image with cover crops correctly in the raster.
-  const photo = _gfxChipPhotoCss(r, P);
+  if (!r || r.name == null) _gfxWarnUnnormalized("tile", r);
   const badge = (r.fv != null)
-    ? `<span class="fv-badge ${fvClass(r.fv)}" style="position:absolute;top:4px;right:4px;font-size:${geo.badge}px;padding:1px 5px;line-height:1.25;">${escapeHtml(String(r.fv))}</span>`
+    ? `<span class="fv-badge ${fvClass(r.fv)}" style="flex:none;font-size:${geo.badge}px;padding:0 5px;line-height:1.4;">${escapeHtml(String(r.fv))}</span>`
     : "";
   const meta = r.meta
-    ? `<div style="font-family:var(--font-mono);font-size:${geo.meta}px;color:${P.text3};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;">${escapeHtml(r.meta)}</div>`
+    ? `<div style="font-family:var(--font-mono);font-size:${geo.meta}px;line-height:1.3;color:${P.text3};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;">${escapeHtml(r.meta)}</div>`
     : "";
-  return `<div style="display:flex;flex-direction:column;background:${P.bg2 || "transparent"};border:1px solid ${P.border};border-radius:6px;overflow:hidden;">
-      <div style="position:relative;height:${geo.photo}px;${photo}">
-        <span style="position:absolute;top:4px;left:4px;font-family:var(--font-mono);font-size:${geo.rank}px;font-weight:700;color:#fff;background:rgba(0,0,0,0.62);border-radius:4px;padding:1px 5px;line-height:1.25;">${escapeHtml(String(rank))}</span>
-        ${badge}
+  const logo = (_gfxOpts.logos && r.org && typeof _gfxTeamLogo === "function")
+    ? `<span style="flex:none;display:flex;align-items:center;">${_gfxTeamLogo(r.org, P, 15)}</span>`
+    : (r.org ? `<span style="flex:none;font-family:var(--font-mono);font-size:${geo.meta}px;color:${P.text3};">${escapeHtml(r.org)}</span>` : "");
+  // Fixed two-line name box. overflow-wrap lets a pathological single token
+  // break rather than escape the tile; the box height is reserved by the
+  // geometry search, so a wrap can never push the meta line off the cell.
+  return `<div style="display:flex;flex-direction:column;background:${P.bg2 || "transparent"};border:1px solid ${P.border};border-radius:6px;overflow:hidden;padding:6px 7px 7px;box-sizing:border-box;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex:none;height:20px;">
+        <span style="flex:none;font-family:var(--font-mono);font-size:${geo.rank}px;font-weight:700;color:${accent};">${escapeHtml(String(rank))}</span>
+        <span style="display:flex;align-items:center;gap:5px;min-width:0;">${logo}${badge}</span>
       </div>
-      <div style="padding:5px 5px 6px;display:flex;flex-direction:column;gap:2px;min-width:0;">
-        <div style="font-weight:700;font-size:${geo.name}px;color:${P.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;line-height:1.2;">${escapeHtml(r.name)}</div>
-        ${meta}
+      <div style="height:${geo.nameLineH * 2}px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+        <span style="font-weight:700;font-size:${geo.name}px;line-height:${geo.nameLineH}px;color:${P.text};text-align:center;overflow-wrap:anywhere;">${escapeHtml(r.name)}</span>
       </div>
+      ${meta}
     </div>`;
 }
 // ---------------------------------------------------------------------------
@@ -34996,18 +35047,28 @@ function _gfxChipHtml(r, i, P, accent, geo) {
 //
 // Distinct from the legacy `rowHtml` path, which is 67px tall, spends a column
 // on surplus and $DvM+, and only ever fits ~26 rows on this canvas.
-const _GFX_LIST_MIN_ROW_H = 26;    // below this the 12px name starts to clip
-const _GFX_LIST_MIN_COL_W = 240;   // below this the name ellipsis eats the name
-// Caps. Without them a short list stretches into 80px rows beside a 22px
-// headshot, or one 1,520px-wide column that is mostly blank. Past these the
-// surplus stays margin, which looks deliberate; stretching does not.
+// Row heights are now TEXT-driven, not photo-driven (see the TILE LAYOUT note
+// above: player pictures are off the list graphics by owner ask). Removing the
+// 30px headshot and its 6px gutter hands 36px per row straight to the name
+// field, which is where the owner's truncated-name complaint came from.
+const _GFX_LIST_MIN_ROW_H = 26;    // below this the 13px name starts to clip
+const _GFX_LIST_MIN_COL_W = 240;   // unchanged: the 36px freed goes to the name
+// Caps. Without them a short list stretches into 80px rows, or one 1,520px-wide
+// column that is mostly blank. Past these the surplus stays margin, which looks
+// deliberate; stretching does not.
 const _GFX_LIST_MAX_ROW_H = 44;
 const _GFX_LIST_MAX_COL_W = 560;
 // Two ways to show position / age / level. A tall row stacks it under the
-// name; a short but wide row puts it inline after the name, which is how the
-// owner's 100-in-16:9 case gets its meta at a 28px row height.
-const _GFX_LIST_META_STACK_MIN_H = 32;
-const _GFX_LIST_META_INLINE_MIN_W = 330;
+// name; a short but wide row puts it inline after the name.
+// STACK_MIN_H rose 32 -> 34 because the meta line rose 9px -> 11px: a 14px name
+// (17px line) plus an 11px meta (14px line) plus padding needs 34, and at 32 the
+// meta was being clipped by 2px on its descenders.
+const _GFX_LIST_META_STACK_MIN_H = 34;
+const _GFX_LIST_META_INLINE_MIN_W = 320;
+// Nothing on a board renders under 11px. The old list rows put the meta at 9px,
+// which at a 600px-wide timeline render is 3.4px on screen - unreadable, and
+// the one place the board still broke the floor the chip work set.
+const _GFX_LIST_META_PX = 11;
 
 function _gfxListGeoFor(cap, fmt, cols) {
   const rows = Math.ceil(cap / cols);
@@ -35019,8 +35080,13 @@ function _gfxListGeoFor(cap, fmt, cols) {
   if (rowH < _GFX_LIST_MIN_ROW_H) return null;
   const metaMode = rowH >= _GFX_LIST_META_STACK_MIN_H ? "stack"
                  : (colW >= _GFX_LIST_META_INLINE_MIN_W ? "inline" : "none");
+  // 14px where the row stacks its meta, 13px on the dense single-line rows.
+  // The old sizes were 12.5 / 11.5 beside a headshot; with the photo gone the
+  // vertical budget carries 13px comfortably at the 26px minimum row (a 13px
+  // line box is 15.3px), so the dense case gets BIGGER type and a name field
+  // roughly twice as wide, which is the whole point of the change.
   return { cols, rows, colW, rowH, metaMode,
-           photo: Math.min(rowH - 6, 30),
+           name: rowH >= _GFX_LIST_META_STACK_MIN_H ? 14 : 13,
            area: colW * rowH, empty: cols * rows - cap };
 }
 
@@ -35040,43 +35106,47 @@ function _gfxListColumns(cap, fmt) {
   return best ? best.cols : hi;
 }
 
-// Small square headshot. Same background-image technique the chip well uses:
-// html2canvas 1.4.1 has no object-fit, so an <img> would export stretched.
-// Degrades headshot -> team logo -> silhouette, like every other avatar here.
-function _gfxListPhotoCss(r, P, px) {
-  const layers = [];
-  if (_gfxRowHasPhotoAvatar(r)) layers.push(`url('${_gfxHeadshotURL(r.mlbam, px)}')`);
-  const logo = (typeof teamLogoURL === "function" && r && r.org) ? teamLogoURL(r.org) : null;
-  if (_gfxOpts.logos && logo) layers.push(`url('${logo}')`);
-  if (!layers.length) layers.push(_gfxSilhouetteBg(P));
-  const cover = _gfxRowHasPhotoAvatar(r);
-  return `background-color:${P.bg};background-image:${layers.join(",")};`
-       + `background-size:${layers.map((l, i) => (i === 0 && cover) ? "cover" : "70%").join(",")};`
-       + `background-position:${layers.map((l, i) => (i === 0 && cover) ? "top center" : "center").join(",")};`
-       + `background-repeat:no-repeat;`;
+// A renderer only ever sees rows that went through _gfxRow. When the chip path
+// shipped without it (2026-08-03) every field lookup missed and the board drew
+// a tidy grid of team logos with no names, no grades and no headshots - and
+// NOTHING THREW, because escapeHtml returns "" for null and the badge is
+// null-guarded. It laid out perfectly while showing nothing. This makes that
+// class of failure loud in the console instead of silent in the PNG.
+let _gfxUnnormalizedWarned = false;
+function _gfxWarnUnnormalized(where, r) {
+  if (_gfxUnnormalizedWarned) return;
+  _gfxUnnormalizedWarned = true;
+  try {
+    console.warn("[gfx] " + where + " received a row that did not go through _gfxRow "
+      + "(no `name` field). The board will render blank cells.", r);
+  } catch (e) { /* console is not guaranteed inside the html2canvas clone */ }
 }
 
-// One compact row: rank, headshot, name (+ optional meta), eFV badge, club mark.
-// Every element is `flex:none` except the name block, which is the only thing
-// allowed to absorb slack - so nothing can push a neighbour out of the row.
+// One compact row: rank, name (+ optional meta), eFV badge, club mark.
+// The headshot that used to sit between the rank and the name is gone (owner
+// ask); its 30px well plus the 6px gutter now belong to the name field, which
+// is the only element allowed to absorb slack. Everything else is `flex:none`,
+// so nothing can push a neighbour out of the row.
 function _gfxListRowHtml(r, i, P, accent, geo) {
   const rank = (r.rank != null) ? r.rank : (i + 1);
-  const nameSize = geo.rowH >= 34 ? 12.5 : 11.5;
+  if (!r || r.name == null) _gfxWarnUnnormalized("list row", r);
+  const nameSize = geo.name || (geo.rowH >= 34 ? 14 : 13);
+  const smallPx = geo.rowH >= 34 ? 11 : 10;
   const badge = (r.fv != null)
-    ? `<span class="fv-badge ${fvClass(r.fv)}" style="flex:none;font-size:${geo.rowH >= 34 ? 11 : 10}px;padding:0 4px;line-height:1.5;">${escapeHtml(String(r.fv))}</span>`
+    ? `<span class="fv-badge ${fvClass(r.fv)}" style="flex:none;font-size:${smallPx}px;padding:0 4px;line-height:1.5;">${escapeHtml(String(r.fv))}</span>`
     : "";
   const logo = (_gfxOpts.logos && r.org && typeof _gfxTeamLogo === "function")
-    ? `<span style="flex:none;display:flex;align-items:center;">${_gfxTeamLogo(r.org, P, Math.min(16, geo.rowH - 14))}</span>`
-    : (r.org ? `<span style="flex:none;font-family:var(--font-mono);font-size:9px;color:${P.text3};">${escapeHtml(r.org)}</span>` : "");
+    ? `<span style="flex:none;display:flex;align-items:center;">${_gfxTeamLogo(r.org, P, Math.min(16, geo.rowH - 12))}</span>`
+    : (r.org ? `<span style="flex:none;font-family:var(--font-mono);font-size:${_GFX_LIST_META_PX}px;color:${P.text3};">${escapeHtml(r.org)}</span>` : "");
   const metaTxt = r.meta ? escapeHtml(r.meta) : "";
   const stacked = (geo.metaMode === "stack" && metaTxt)
-    ? `<span style="font-family:var(--font-mono);font-size:9px;line-height:1.15;color:${P.text3};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">${metaTxt}</span>`
+    ? `<span style="font-family:var(--font-mono);font-size:${_GFX_LIST_META_PX}px;line-height:1.2;color:${P.text3};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">${metaTxt}</span>`
     : "";
   // Inline meta shares the name's line. It is `flex:0 1 auto` with its own
   // ellipsis, so a long meta gives way before the name does rather than
   // pushing the badge out of the row.
   const inline = (geo.metaMode === "inline" && metaTxt)
-    ? `<span style="flex:0 1 auto;min-width:0;font-family:var(--font-mono);font-size:9px;color:${P.text3};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${metaTxt}</span>`
+    ? `<span style="flex:0 1 auto;min-width:0;font-family:var(--font-mono);font-size:${_GFX_LIST_META_PX}px;color:${P.text3};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${metaTxt}</span>`
     : "";
   const nameBlock = inline
     ? `<span style="flex:1 1 auto;min-width:0;display:flex;align-items:baseline;gap:6px;">
@@ -35084,12 +35154,11 @@ function _gfxListRowHtml(r, i, P, accent, geo) {
          ${inline}
        </span>`
     : `<span style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;">
-         <span style="font-weight:700;font-size:${nameSize}px;line-height:1.15;color:${P.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name)}</span>
+         <span style="font-weight:700;font-size:${nameSize}px;line-height:1.18;color:${P.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name)}</span>
          ${stacked}
        </span>`;
   return `<div style="display:flex;align-items:center;gap:6px;height:${geo.rowH}px;box-sizing:border-box;padding:0 4px;border-bottom:1px solid ${P.border};overflow:hidden;">
-      <span style="flex:none;width:24px;text-align:right;font-family:var(--font-mono);font-size:${geo.rowH >= 34 ? 11 : 10}px;font-weight:700;color:${accent};">${escapeHtml(String(rank))}</span>
-      <span style="flex:none;width:${geo.photo}px;height:${geo.photo}px;${_gfxListPhotoCss(r, P, geo.photo)}"></span>
+      <span style="flex:none;width:24px;text-align:right;font-family:var(--font-mono);font-size:${smallPx}px;font-weight:700;color:${accent};">${escapeHtml(String(rank))}</span>
       ${nameBlock}
       ${badge}${logo}
     </div>`;
@@ -35147,7 +35216,6 @@ function buildGfxBoard() {
   if (_gfxOpts.pack && snap.kind !== "farm") {
     const packN = Math.min(cap, 15);
     const cards = shown.slice(0, packN).map((it, i) => _gfxMiniCard(it, snap.kind, P, accent, i)).join("");
-    const PW2 = 1080;
     board.style.cssText = base + `padding:40px 44px 34px;display:flex;flex-direction:column;gap:24px;`;
     board.innerHTML = `${_gfxHeader(P, accent, "Prospect Pack · " + packN, "")}
       <div><div style="font-family:var(--font-retro);font-size:34px;font-weight:700;color:${P.text};line-height:1.05;">${escapeHtml(title)}</div>
@@ -35155,7 +35223,13 @@ function buildGfxBoard() {
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">${cards}</div>`;
     // `board` is detached here (never appended), so offsetHeight is always 0
     // and this only ever returned H. Measuring would need a layout pass.
-    return { board, total, w: PW2, h: H };
+    //
+    // The returned `w` used to be a hardcoded 1080 while the style above fixes
+    // the element to the SELECTED format's width. On any non-1080 format (wide
+    // 1600, landscape 1920) the two disagreed, so the caller was told a width
+    // the element did not have. The preview happens to survive because its
+    // fit-scale measures offsetWidth directly, but nothing else could trust it.
+    return { board, total, w: W, h: H };
   }
 
   const rowHtml = (item, i) => {
@@ -35192,11 +35266,18 @@ function buildGfxBoard() {
   // Column-major fill: ranks read top-to-bottom down a column, then continue in
   // the next column (left col = top of the list).
   let grid;
+  // The frame pins min-height only, so a grid that does not fit simply extends
+  // past the format's stated aspect. That used to be silent: the file said
+  // "Wide 16:9" and handed back a 16:9.4 PNG. The geometry search knows its own
+  // row count and row height, so the overflow is computable without a layout
+  // pass (the board is detached and cannot be measured), and the footer says so.
+  let layoutOverflow = false;
   if (useList) {
     const cols = _gfxListColumns(cap, fmt);
     const geo = _gfxListGeoFor(cap, fmt, cols)
       || { cols, rows: Math.ceil(cap / cols), rowH: _GFX_LIST_MIN_ROW_H,
-           colW: Math.floor((W - _GFX_CHIP_PAD * 2) / cols), photo: 20, showMeta: false };
+           colW: Math.floor((W - _GFX_CHIP_PAD * 2) / cols), name: 12, metaMode: "none" };
+    layoutOverflow = (geo.rows * geo.rowH + _GFX_CHIP_CHROME) > H;
     // Column-major so ranks read top-to-bottom down a column, the way the
     // legacy multi-column row board already reads.
     const per = geo.rows;
@@ -35211,38 +35292,31 @@ function buildGfxBoard() {
     grid = `<div style="display:grid;grid-template-columns:repeat(${cols},minmax(0,1fr));`
          + `gap:0 ${_GFX_CHIP_GAP}px;align-content:start;">${colHtml.join("")}</div>`;
   } else if (useChips) {
-    const cols = _gfxChipColumns(cap, fmt);
+    const cols = _gfxTileColumns(cap, fmt);
     const GAP = _GFX_CHIP_GAP;
     // Take the cell geometry from the same helper the column search scored, so
     // the layout that ships is the one that was chosen. These were duplicated
     // formulas plus a second copy of the chrome constant, which is how the
     // search could optimise one grid while the renderer drew another.
-    const fit = _gfxChipGeoFor(cap, fmt, cols)
+    const fit = _gfxTileGeoFor(cap, fmt, cols)
       || { rows: Math.ceil(cap / cols),
            chipW: Math.floor((W - _GFX_CHIP_PAD * 2 - (cols - 1) * GAP) / cols),
-           cellH: _GFX_CHIP_MIN_CELL_H };
+           cellH: _GFX_TILE_MIN_CELL_H };
     const chipW = fit.chipW;
-    const cellH = Math.max(_GFX_CHIP_MIN_CELL_H, fit.cellH);
+    const cellH = Math.max(_GFX_TILE_MIN_CELL_H, fit.cellH);
+    layoutOverflow = (fit.rows * cellH + (fit.rows - 1) * GAP + _GFX_CHIP_CHROME) > H;
     const geo = {
-      name: _gfxChipNamePx(chipW),
-      meta: 11,
-      rank: chipW >= 130 ? 13 : 12,
-      badge: chipW >= 130 ? 13 : 12,
+      name: _gfxTileNamePx(chipW),
+      nameLineH: _gfxTileNameLineH(chipW),
+      meta: _GFX_LIST_META_PX,
+      rank: chipW >= 190 ? 13 : 12,
+      badge: chipW >= 190 ? 13 : 12,
     };
-    // Text block = name line + meta line + padding + border. Whatever remains
-    // is the photo, floored so it never collapses to a sliver.
-    geo.photo = Math.max(52, cellH - _gfxChipTextH(chipW));
     // _gfxRow is what turns a raw snapshot item into the {name, fv, rank, meta,
-    // mlbam, org} shape every renderer reads. The chip path shipped without it
-    // (2026-08-03) and handed _gfxChipHtml the raw player object, whose fields
-    // are named player_name / fv_close / mlbam_id. Every lookup missed, so the
-    // board rendered a grid of team logos with a bare array index: no name, no
-    // eFV badge, no headshot, no meta line. Nothing threw, because escapeHtml
-    // returns "" for null and the FV badge is null-guarded, which is why it
-    // laid out perfectly while showing nothing. `org` was the one key that
-    // happened to match on both shapes, which is why the logos still appeared.
+    // mlbam, org} shape every renderer reads; passing a raw item is the failure
+    // _gfxWarnUnnormalized now catches (see its comment for the 2026-08-03 bug).
     grid = `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);grid-auto-rows:${cellH}px;gap:${GAP}px;align-content:start;">`
-      + shown.map((it, i) => _gfxChipHtml(_gfxRow(it, snap.kind, snap.meta), i, P, accent, geo)).join("") + `</div>`;
+      + shown.map((it, i) => _gfxTileHtml(_gfxRow(it, snap.kind, snap.meta), i, P, accent, geo)).join("") + `</div>`;
   } else {
   const ncol = _gfxColumnCount(cap);
   if (ncol <= 1) {
@@ -35277,7 +35351,7 @@ function buildGfxBoard() {
     <div style="flex:1 1 auto;padding:14px 0;display:flex;flex-direction:column;justify-content:flex-start;">${grid}</div>
     <div style="margin-top:10px;border-top:1px solid ${P.border};padding-top:8px;font-size:11px;color:${P.text3};display:flex;justify-content:space-between;flex:none;gap:16px;">
       <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(_gfxChipFooterNote(snap.kind))}</span>
-      <span style="flex:none;">${total} matched${cap < total ? ` · top ${cap} shown${capped ? " (max)" : ""}` : ""}</span>
+      <span style="flex:none;">${total} matched${cap < total ? ` · top ${cap} shown${capped ? " (max)" : ""}` : ""}${layoutOverflow ? ` · taller than ${escapeHtml(fmt.label)}` : ""}</span>
     </div>`;
     return { board, total, w: W, h: H };
   }
@@ -35395,13 +35469,17 @@ function _gfxApplyModeUI() {
   const hide = (el, h) => { if (el) el.style.display = h ? "none" : ""; };
   const ctrlOf = id => { const el = document.getElementById(id); return el ? el.closest(".gfx-ctrl") : null; };
   hide(ctrlOf("gfx-count"), card);
-  // Layout (chips vs rows) is a LIST-board choice; farm lists have no headshots.
+  // Layout (tiles vs rows) is a LIST-board choice; the farm board keeps the
+  // legacy row renderer either way.
   hide(ctrlOf("gfx-layout"), card || k === "farm");
-  // The value column does not exist in the chip layout, so offering its toggle
+  // The value column does not exist in the tile layout, so offering its toggle
   // there would be a control that silently does nothing.
   hide(ctrlOf("gfx-showval"), card || (_gfxOpts.layout === "chips" && k !== "farm"));
   hide(ctrlOf("gfx-title-input"), card);
-  hide(ctrlOf("gfx-photos"), k === "farm-card");
+  // Photos are a CARD-only option since 2026-08-04: the list layouts are
+  // names-only by owner ask, so on a list this checkbox would do nothing.
+  // (farm-card has no headshot to show either.)
+  hide(ctrlOf("gfx-photos"), !card || k === "farm-card");
   // Template variants apply to player + farm cards (farm honors Compact/Detailed).
   hide(ctrlOf("gfx-variant"), k !== "prospect-card" && k !== "farm-card");
   // Frame style applies to prospect cards (rarity/chrome/retro/team).
