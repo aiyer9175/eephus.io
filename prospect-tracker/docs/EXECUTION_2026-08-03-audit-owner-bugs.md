@@ -237,15 +237,95 @@ Verified it fires by re-injecting `?v=20260730`.
 
 ---
 
+---
+
+## Lane C: sticky that never stuck
+
+Both defects had the same cause and neither was visible from the stylesheet
+alone: an `overflow-x:auto` ancestor computes overflow-y to auto as well, which
+makes it the sticky containing block, and its height is its content, so there
+is no scrollport for `top` to resolve against. Measured in Chromium before and
+after.
+
+* **mlbstats header.** `.mlbstats-table th` has declared `position:sticky;
+  top:0` all along. Before: scroll 400px, header moves 400px. After: moves 0.
+  Bounding `.mlbstats-scroll` makes it a real scrollport, scoped with `:has()`
+  to containers that hold a leaderboard and gated to >=1025px, because a nested
+  scroll region reads as a data table on a wide screen and a trap on a phone.
+* **Frozen name column.** Those boards carry 23-24 nowrap columns and run wider
+  than the wrap at every desktop width, so scrolling right orphaned every
+  number from its player. First cell is now left-sticky, which needs no height
+  bound, so it applies on phones too. Verified both axes hold at once: name at
+  left 0 through a 600px horizontal scroll while the header holds top 0 through
+  a 300px vertical one.
+* **FA rail.** `#fa-rows { overflow-x:auto }` was a blanket that also trapped
+  `.fa-board-rail`. The identical rail on /projections/ always worked purely
+  because `#proj-rows` carries no overflow. After: the FA rail pins at 8px and
+  holds through 3,000px of scroll.
+
+**Worth recording as method.** My first probe called the FA rail broken, then
+called it fixed, for the wrong reason both times: it scrolled 500px at a rail
+that starts 545px down, so the rail never engaged. The honest test is whether
+it pins near its offset at deep scroll, and the honest control was restoring
+the old blanket to confirm causation - `pinned=False` with it, `pinned=True`
+without.
+
+## Lane B: mobile
+
+Measured at 390px with touch emulation across ten surfaces.
+
+**Document bleed was already zero everywhere**, including `/glossary/`, which
+the recon predicted would pan sideways because its `table-scroll-x` wrapper
+class is only defined in prospx. It does not, at that width. Predicted defects
+still have to be measured.
+
+**Touch targets.** PROSPX got a 44px pass long ago; the seven `.fa-app`
+surfaces never did, and their primary filter control was not merely small but
+SMALLER on a phone - `.fa-app button.chip` drops to 3px/11px at <=720px, which
+measures 19px. Counted under 44px, before -> after: `/fa/` 50 -> 15,
+`/glossary/` 18 -> 2, `/news/` 22 -> 1, `/mlbstats/` 40 -> 26,
+`/collegesavant/` 6 -> 1, `/pal/` 18 -> 10.
+
+Per-row affordances sit in fixed-height cards, so growing the box would
+relayout the board. They get a transparent inset overlay instead, verified by
+hit-testing outside the visual box: projections compare 16px -> 38px effective,
+prospx compare-add 24 -> 46, row expand 28 -> 50, all three now take the tap.
+The residual counts are dominated by those same buttons plus 28 trademachine
+`span.chip` labels the probe flags but which have no handler. Honest exception:
+`.fa-sort` did not gain its overlay, because the sort strip sits directly under
+the filter bar which paints over it; left at 23px rather than fight the
+stacking order.
+
+**iOS input zoom: closed.** Every text field on the site was under the 16px
+threshold at which iOS zooms the viewport on focus - 11px on the projections
+scatter axes, 12px on the mlbstats bar, 13px on four searches, 15px on the
+command palette. Only prospx's GFX modal ever got it right. Now zero fields
+under 16px on all ten surfaces. Three resisted the first fix for three
+different reasons: a bare element selector losing on specificity; INLINE
+font-size on `#tb-search` and the scatter axes, which no stylesheet can
+outrank, so those moved into CSS; and `#trade-machine .tm-search`, an ID
+selector in a stylesheet that loads after site.css, fixed in its own file
+rather than with `!important`.
+
+**Also:** the swipe-strip pattern now covers the module filter bars, the
+mlbstats tab and season tiers, and the card sortbar (without it, 25 FA chips at
+44px wrap into six rows); `#tb-group-panel`, a sibling of `#tradeboard-content`,
+never inherited its overflow rule; and CollegeSavant, whose stylesheet stopped
+at 720px, got a phone tier for the first time.
+
+The sortbar strip needed a second pass: the rule was added to the shared swipe
+block, but `.mlb-sortbar { flex-wrap: wrap }` is defined ~290 lines later at
+equal specificity and simply won. Overrides belong next to the rule they beat.
+
 ## Open, deliberately not done
 
-The remaining lanes of `docs/master-plan-2026-08-03-audit-mobile-displays.md`
-are untouched: the rest of Lane C (sticky headers killed by `overflow-x:auto`
-scroll containers, the mlbstats frozen name column, the two table dialects, the
-three number-formatting vocabularies) and all of Lane B (mobile). The sticky
-header work in particular changes scroll behaviour on `/mlbstats/`, `/pal/` and
-`/parks/` and wants browser verification, which is why it was not attempted
-blind at the end of a long session.
+From `docs/master-plan-2026-08-03-audit-mobile-displays.md`: the two table
+dialects (`.mlbstats-table` vs `.detail-table` disagree on size, padding and
+header alignment), the three number-formatting vocabularies (`fa.js`
+formatMetric is the reference; mlbstats emits `""` where the others emit
+EM_DASH), the mlbstats control tiers that still use three different active
+treatments, and the 641-1024px nav gap where `.eephus-links` is an
+affordance-less swipe strip.
 
 ## Gotcha worth keeping
 
