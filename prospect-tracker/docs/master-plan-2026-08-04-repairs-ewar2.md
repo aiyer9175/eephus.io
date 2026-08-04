@@ -410,3 +410,99 @@ An information-free pure level injection fails leg (b) at z +6.57, so the passin
 is one-sided and razor thin. One reviewer showed a candidate that passes all three legs
 under RMSE instead of MAE; that is a post-hoc metric swap and was NOT adopted, but it
 means the gate, not the candidate, is the thing to fix first.
+
+---
+
+# R1c GATE REPAIR, pre-registered 2026-08-04. Not yet run.
+
+The R1c gate is internally inconsistent. This section fixes the SPEC and stops
+there: no candidate is graded here, because the repair was designed after seeing
+stage-2 results and grading against it in the same breath would be the exact
+post-hoc move the gate exists to prevent. The next attempt runs everything fresh.
+
+## Defect 1: legs (a) and (b) are structurally antagonistic
+
+Leg (a) is a SUM over assigned rows, so it is satisfied by moving the MEAN. Leg
+(b) is MAE, which is minimised at the MEDIAN. On this population those pull in
+opposite directions: the 2025 assigned residual has mean +0.0719 but median
+-0.0552, and only 46.69% of rows have actual > predicted. So the shift that
+closes the level gap moves MAE the wrong way BY CONSTRUCTION, and every WAR of
+level is charged to the shape leg. The proof that this is structural rather than
+a property of any candidate: an information-free uniform level injection, sized
+to zero the deficit exactly, fails leg (b) at z +6.57.
+
+Compounding it, the two legs are measured on DIFFERENT POPULATIONS. Leg (a) is
+assigned rows only; leg (b) pools eleven objects including all 8,866 rows. A
+correction aimed at the assigned subpopulation necessarily perturbs rows leg (a)
+never asked about.
+
+## Defect 2: my own first proposed repair is REFUTED, recorded so it is not retried
+
+The obvious fix is to make leg (b) LEVEL-NEUTRAL: de-mean both arms, then compare
+MAE, so shape is judged orthogonally to level. **That makes the gate vacuous.** A
+pure level injection is a constant, so de-meaning removes it entirely and the MAE
+delta goes to ~0: leg (b) PASSES. Leg (a) passes by construction. Leg (c) is
+already recorded as structurally blind to a pure level shift. An
+information-free arm would therefore clear all three legs. Do not adopt it.
+
+## What the metric evidence actually says
+
+Under RMSE (mean-consistent, so aligned with leg (a)'s objective) the controls
+still bite, which is the property that matters:
+
+| arm | leg (a) | leg (b) MAE | leg (b) RMSE |
+|---|---|---|---|
+| pure level, per-exposure, zeroes D | pass | fail z 6.57 | **fail z 2.84** |
+| pure level, per-row, zeroes D | pass | fail z 8.97 | **fail z 2.86** |
+| C2 pitcher rate by role | pass | fail z 11.14 | **fail z 4.32** |
+| C2u pitcher rate uniform | pass | fail | **fail** |
+| C1b hitter de-shrink s=1.41 | pass | fail z 5.85 | **pass z 1.96** |
+
+So RMSE is not "the metric that lets C1b through": all three information-free
+arms still fail it. That is a real point in its favour and it should not be
+dismissed as goalpost-moving.
+
+## Defect 3: the gate is missing a leg, and that is what actually kills C1b
+
+C1b clears every existing leg under RMSE, and it is not a fluke arm: its fitted
+strength is STABLE without lookahead (s=1.41 full, leave-one-season-out 1.43 /
+1.52 / 1.30, all three inside the [1.18, 1.56] window that passes leg (a)) and it
+is strongly information-bearing (permutation null over 200 seeded shuffles: real
+move +80.74 against null mean +0.07, sd 3.93, z +20.51). On the metric dispute
+alone it would ship.
+
+It should not ship, for a reason NO leg currently measures. Mean PA bias on 2025
+hitter rows that actually PLAYED:
+
+    baseline 10.02   C1c s=1.00 12.56   C1c s=4.00 19.90   C1b 39.77
+
+C1b buys its 80.74 WAR of level by inflating projected playing time on players
+who did play, nearly QUADRUPLING an exposure error the engine is separately
+judged on. That is the same class of defect E3 was criticised for, in the
+opposite direction, and the gate is blind to it because leg (b) scores WAR shape
+and leg (c) scores team totals. A level repair that pays for itself in exposure
+accuracy is not a repair.
+
+## The repaired spec, to be pre-registered BEFORE the next fit
+
+  (a) UNCHANGED. Assigned-level deficit shrinks by more than half on the 2025
+      holdout, graded on the de-duplicated basis (-69.11, not the published
+      -88.10), magnitude not sign.
+  (b) SHAPE, on RMSE rather than MAE, over the same eleven objects and the same
+      seeded paired bootstrap. RMSE because leg (a) is a mean objective and a
+      median-matching shape metric makes the two antagonistic by construction.
+      FAIL if any object has delta > 0 and delta > 2*SE.
+  (c) UNCHANGED. Recentered team MAE not worse. Recorded again: (c) is blind to
+      a pure level shift, so passing it is not evidence in a candidate's favour.
+  (d) NEW. EXPOSURE ACCURACY NOT WORSE. Mean absolute PA/IP bias on rows that
+      actually played, per side, must not degrade beyond 2*SE of the same paired
+      bootstrap. This is the leg that catches a candidate paying for WAR level
+      with playing-time error, and it is the leg that rejects C1b.
+  VACUITY CONTROL, mandatory and graded FIRST: the three information-free level
+      injections must FAIL. If a proposed metric change lets any of them pass,
+      the metric is wrong, not the controls.
+
+Under this spec C1b is expected to fail (d) and everything else to fail as
+before, so the honest prediction is that R1c stays NO_SHIP and the value of the
+repair is that the gate would then be REJECTING FOR THE RIGHT REASON. Record the
+prediction now so the re-run cannot be graded generously after the fact.
