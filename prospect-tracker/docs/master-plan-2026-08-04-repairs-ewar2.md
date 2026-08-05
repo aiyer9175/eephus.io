@@ -622,3 +622,74 @@ served price is stale" from an earlier note and repeated it into an owner
 decision without checking which valuation set production actually runs. One
 `vf.active_valuation_set()` call would have caught it. Check which set is active
 before claiming anything about served prices.
+
+---
+
+# R1c GATE, DESIGN 3: it survives its controls. R1c is now a DEFENSIBLE no-ship.
+
+Third attempt, built from the CONTROL SET instead of from a candidate, which is
+what the previous two failures said to do. It holds.
+
+## The leg the first two designs were missing
+
+Both earlier repairs started from whichever leg had convicted the last candidate.
+This one starts from the question a repair gate has to answer, stated so it is
+testable:
+
+    An informative arm reduces error on the ROWS THAT WERE WRONG.
+    An information-free arm moves the level and leaves the row pattern alone.
+
+**LEG (0), graded FIRST and disqualifying.** Shuffle the arm's OWN per-row
+adjustment within (season, side) cells, marginal held fixed, and ask whether the
+real placement reduces total absolute error more than a random placement of the
+same numbers. 200 seeded shuffles, pre-registered z >= +3. A constant shift is
+invariant under that shuffle, so it scores z ~ 0 BY CONSTRUCTION. That is the
+property attempts 1 and 2 lacked and it is why they were vacuous.
+
+## Controls: all three fail, as required
+
+    arm                              leg0 z    a      b      d
+    per-exposure injection, zeroes D  -0.57   PASS   PASS   PASS
+    per-row constant, zeroes D        -2.91   PASS   FAIL   PASS
+    per-row constant, half-way        -2.45   FAIL   PASS   PASS
+
+All NEGATIVE: the real placement does WORSE than reshuffling, which is exactly
+what "carries no row-level information" looks like. Note the first row: the
+per-exposure injection passes (a), (b) AND (d), and **only leg (0) catches it**.
+That is the arm that voided design 2.
+
+## Candidates: nothing ships, and every rejection now has a reason
+
+    arm                        leg0 z         a      b      d              ships
+    C1b hit de-shrink s=1.41    +2.97 fail   PASS   PASS   FAIL 10.02->39.77  no
+    C1c decile PT scale 1.00    +3.53 PASS   FAIL   PASS   FAIL 10.02->12.56  no
+    C1c decile PT scale 4.00    +3.36 PASS   PASS   PASS   FAIL 10.02->19.90  no
+    C2 pit rate by ROLE         -0.88 fail   PASS   FAIL   PASS               no
+
+  * **C1b** fails (d) decisively: it buys 80.74 WAR of level by nearly
+    QUADRUPLING played-row PA bias. It is also only MARGINAL on information at
+    z +2.97 against a threshold of 3.0, which is a razor-thin fail and should
+    not be read as a clean one. The decisive leg for C1b is (d), not (0).
+  * **AND THIS CORRECTS MY OWN PREDICTION.** I registered that C1b would CLEAR
+    leg (0), reasoning from its published permutation z of +20.51. That +20.51
+    is permutation on the LEVEL MOVE; leg (0) tests ERROR REDUCTION. C1b is
+    strongly informative about where the level should go and barely informative
+    about individual rows. Those are different claims and I had conflated them.
+  * **C2** is the most improved verdict. The original gate rejected it on shape.
+    Leg (0) shows it is information-free outright, z -0.88, i.e. its role split
+    places its adjustment no better than at random. That is a stronger and more
+    honest reason than "the MAE moved".
+  * **C1c** at the shippable scale fails the level bar; at scale 4.00 it clears
+    (a) but fails (d), and that scale was LOOKAHEAD (chosen on the holdout) and
+    was never shippable anyway.
+
+## Status
+
+R1c is **NO_SHIP**, unchanged in verdict from the original gate and for the first
+time rejecting for reasons that survive their own controls. The prediction
+registered before the run was that no candidate would ship; that held. The part
+that did not hold is recorded above rather than smoothed over.
+
+This gate is now the one to use if the lane is ever re-opened. Grade leg (0)
+first; an arm that cannot beat a reshuffle of its own adjustment is not a repair,
+whatever it does to the level.
