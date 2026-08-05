@@ -74,8 +74,60 @@ def _fmt_duration(seconds: float) -> str:
     return f"{mins}m{int(secs):02d}s"
 
 
-def _log_step_summary(log: logging.Logger, total_runtime: float) -> None:
-    """Print the per-step duration table + a `% of total` column.
+STEP_TIMINGS_PATH = Path(__file__).resolve().parent / "logs" / "pipeline_steps_latest.json"
+
+
+def write_step_timings(mode: str, total_runtime: float,
+                       log: logging.Logger | None = None,
+                       path: Path | None = None,
+                       run_id: object = None) -> Path | None:
+    """Write the per-step timings as JSON so a run can be RANKED, not just read.
+
+    WHY: before this, the only on-disk step record was `logs/pipeline_latest.log`
+    from May 2026 - which predates the eval labs, the Statcast three-pass
+    rewrite and the versa census entirely, so nothing in it can be compared
+    against a current run. Every runtime claim therefore had to be sourced from
+    comments in the code rather than from a measurement. This makes the next
+    run produce its own baseline.
+
+    Shape::
+
+        {"generated_at": iso, "mode": "monthly"|"daily"|..., "run_id": str,
+         "total_s": float, "n_steps": int,
+         "steps": [{"step", "seconds", "pct"}, ...]}   # slowest first
+
+    Written LAST-WINS to a single stable filename so before/after is a two-file
+    diff. Best-effort: instrumentation must never be able to fail a run."""
+    out_path = Path(path or STEP_TIMINGS_PATH)
+    try:
+        ranked = sorted(_STEP_TIMES, key=lambda x: x[1], reverse=True)
+        total = max(total_runtime, sum(d for _, d in ranked))
+        payload = {
+            "generated_at": datetime.now().isoformat(timespec="seconds"),
+            "mode": mode,
+            "run_id": None if run_id is None else str(run_id),
+            "total_s": round(total, 2),
+            "n_steps": len(ranked),
+            "steps": [{"step": name, "seconds": round(dur, 2),
+                       "pct": round((dur / total * 100) if total > 0 else 0.0, 2)}
+                      for name, dur in ranked],
+        }
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        if log:
+            log.info("step timings -> %s (%d steps, %.0fs total)",
+                     out_path, len(ranked), total)
+        return out_path
+    except Exception as e:                                   # noqa: BLE001
+        if log:
+            log.warning("step-timing artifact write failed: %s", e)
+        return None
+
+
+def _log_step_summary(log: logging.Logger, total_runtime: float,
+                      mode: str = "monthly", run_id: object = None) -> None:
+    """Print the per-step duration table + a `% of total` column, and write the
+    machine-readable companion artifact.
     Steps are listed by descending duration so the worst hogs lead.
     """
     if not _STEP_TIMES:
@@ -93,6 +145,7 @@ def _log_step_summary(log: logging.Logger, total_runtime: float) -> None:
     log.info("-" * 64)
     log.info("%-44s %10s %7.1f%%", "TOTAL", _fmt_duration(total), 100.0)
     log.info("=" * 64)
+    write_step_timings(mode, total, log=log, run_id=run_id)
 
 
 # ===========================================================================
@@ -307,9 +360,39 @@ DAILY_STATCAST_TRACKED_LEVELS = {"MLB", "AAA", "AA", "A+", "A", "CPX"}
 # stats.py still absorbs duplicate-payload cost on same-day re-runs;
 # this just stops the per-player skip from short-circuiting the API
 # pass. --force is now a no-op for these gates (kept for HTTP cache).
-CAREER_STATS_FRESH_DAYS = 0
-ZONE_METRICS_FRESH_DAYS = 0
-STATCAST_METRICS_FRESH_DAYS = 0
+#
+# RUNTIME 2026-08-04 — 0 -> 1. At 0 these constants did not "refetch
+# everything": they made four gates UNREACHABLE, because `_is_career_fresh`
+# tests `days < max_age_days` and `days` is a non-negative integer, so
+# `days < 0` is false for every row that has ever existed. The dead branches
+# were the career `skipped_fresh` skip, the career-WAR skip, the transactions
+# TTL skip, and the two "90% of the pool is fresh" whole-step gates for zone
+# and Statcast metrics — roughly 80 lines of logic (and their log lines) that
+# could never execute. Rather than delete gates that are genuinely wanted,
+# restore the smallest TTL that makes them reachable.
+#
+# WHY 1 IS NOT A DATA CHANGE. `stats.CACHE_TTL_SECONDS` is 24h, so a second
+# run inside the same day was already being served byte-identical payloads out
+# of the HTTP cache: the refetch it performed could not produce different
+# data, only re-pay the request, parse and DB-write cost. A 1-day TTL skips
+# exactly that repayment. `_is_career_fresh` floors to whole days, so "fresh"
+# means "stamped less than ~24h ago"; the normal nightly cadence (>= 24h
+# apart) still refetches everything, and the monthly cadence (~30d) is not
+# affected at all. What this buys is the case the v24 note did not consider:
+# a run that crashes and is restarted the same day currently repays every
+# per-player fan-out from scratch.
+#
+# ESCAPE HATCH: --force (force_refetch) still bypasses all of them, and it is
+# no longer a no-op for these gates.
+#
+# INTERACTION with the 2026-08-04 incremental Statcast pass: skipped players'
+# rows are not rewritten, so their `fetched_at` does not advance and the
+# Statcast 90%-fresh whole-step gate will usually NOT fire on a restart. That
+# is the safe ordering — the incremental gate inside the step is the precise
+# one; the 90% gate is the coarse one.
+CAREER_STATS_FRESH_DAYS = 1
+ZONE_METRICS_FRESH_DAYS = 1
+STATCAST_METRICS_FRESH_DAYS = 1
 
 # WS-R (2026-07): positional-versatility freshness gate. Unlike the stats
 # gates above (dropped to 0 so every run refetches fast-moving lines), versa
@@ -329,7 +412,30 @@ VERSA_FRESH_DAYS = 7
 # generated_at is younger than this. EEPHUS_LABS=1 forces them all (for a
 # metric-research session). The leaderboard EXPORTS they feed still run every
 # run — only the slow re-validation is gated.
-LAB_EVAL_FRESH_DAYS = 30
+#
+# RUNTIME 2026-08-04, OWNER-POLICY CHANGE: 30 -> 45. This is a deliberate
+# change to a PUBLISHED re-validation cadence, not a tuning tweak, so it is
+# recorded here as well as in the execution doc.
+#
+# WHY 30 was the worst possible value: the full monthly pipeline runs on the
+# 1st of each calendar month (deploy/nightly-build.sh gates on
+# `date +%d = 01`), i.e. every 28-31 days. A 30-day gate therefore expires
+# essentially every single monthly run - the artifact is 28-31 days old when
+# the gate reads it, so the gate NEVER skips in February and skips at best
+# erratically the rest of the year. The labs it guards (leverage 271s +
+# reliever 185s + hitter 47s + the starter lab, plus the three history
+# exports) were re-derived on every monthly night, which is exactly what the
+# gate existed to stop.
+#
+# WHY 45: it clears the longest month by 14 days, so the gate now reliably
+# skips on the monthly cadence and expires roughly every OTHER run - the
+# "monthly-plus horizon" the original comment says these conclusions actually
+# move on. It does not weaken the escape hatch: EEPHUS_LABS=1 still forces
+# every lab for a metric-research session, and a missing or malformed eval
+# artifact still reads as stale and re-runs (fail-open, see _lab_should_skip).
+# Cost of the change: a lab conclusion can now be up to 45 days old instead of
+# up to 30 before it is re-derived.
+LAB_EVAL_FRESH_DAYS = 45
 
 # How many CollegeSavant teams the NCAA box-score pass renders per run (densest
 # tracked teams first). Bounded because each team is a headless-Chrome render;
@@ -394,6 +500,60 @@ def _artifact_age_days(path: Path) -> int | None:
         return (_dt.now(_tz.utc).replace(tzinfo=None) - ts).days
     except Exception:
         return None
+
+
+def _maybe_prune_cache(log: logging.Logger) -> None:
+    """OPT-IN, DEFAULT OFF: bound the refetchable `.cache/` at run start.
+
+    `.cache/` was 55GB on 2026-08-04 (win_prob ~19G, statcast_metrics ~15G,
+    zone_metrics ~5G) and only `game_feeds` had a pruner wired into the
+    pipeline (`feed_cache.prune_old_feeds`, called just above this in main).
+    The other caches DO have one - `tools/prune_cache.py`, which already
+    covers all three by name, is age/target aware, protects a trailing window
+    and excludes backups - it was simply never called from a run; the deploy
+    shell invokes it only under disk pressure.
+
+    This wires it in WITHOUT changing default behaviour: every knob is an env
+    var that is unset by default, so an unconfigured run prunes nothing. The
+    owner opts in per box:
+
+      EEPHUS_PRUNE_CACHE_DAYS=400        age-prune the safe caches
+      EEPHUS_PRUNE_VERSIONED_DAYS=30     sweep hash-keyed orphans only
+      EEPHUS_PRUNE_TARGET_FREE_GB=25     pressure-prune oldest-first
+      EEPHUS_PRUNE_MIN_KEEP_DAYS=120     floor for the pressure prune
+      EEPHUS_PRUNE_DRY_RUN=1             report only, delete nothing
+
+    Best-effort in the same spirit as the feed prune above: cache maintenance
+    must never abort a pipeline run."""
+    days = os.environ.get("EEPHUS_PRUNE_CACHE_DAYS")
+    vdays = os.environ.get("EEPHUS_PRUNE_VERSIONED_DAYS")
+    target = os.environ.get("EEPHUS_PRUNE_TARGET_FREE_GB")
+    if not (days or vdays or target):
+        return
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent / "tools"))
+        import prune_cache
+        dry = os.environ.get("EEPHUS_PRUNE_DRY_RUN") == "1"
+        if days:
+            n, freed = prune_cache.prune_by_age(float(days), dry_run=dry)
+            log.info("cache prune (age %sd)%s: %d files, %.2f GB",
+                     days, " [dry-run]" if dry else "", n, freed / 1e9)
+        if vdays:
+            n, freed = prune_cache.prune_versioned_orphans(float(vdays), dry_run=dry)
+            log.info("cache prune (versioned orphans %sd)%s: %d files, %.2f GB",
+                     vdays, " [dry-run]" if dry else "", n, freed / 1e9)
+        if target:
+            keep = float(os.environ.get("EEPHUS_PRUNE_MIN_KEEP_DAYS") or 120)
+            n, freed, reached = prune_cache.prune_to_target(
+                float(target), min_keep_days=keep, dry_run=dry)
+            log.info("cache prune (target %s GB free, keep %.0fd)%s: %d files, "
+                     "%.2f GB, reached=%s", target, keep,
+                     " [dry-run]" if dry else "", n, freed / 1e9, reached)
+            if not reached:
+                log.warning("cache prune could not reach %s GB free without "
+                            "touching the protected recent window", target)
+    except Exception as e:                                   # noqa: BLE001
+        log.warning("cache prune skipped: %s", e)
 
 
 def _lab_should_skip(artifact: Path, label: str, log: logging.Logger,
@@ -1584,6 +1744,14 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         log.info("DAILY run %s complete in %.1fs", run_id, total)
         for label, secs in _STEP_TIMES:
             log.info("  %-34s %6.1fs", label, secs)
+        # Machine-readable companion so a daily run is rankable too. Daily
+        # writes its OWN file: a chained daily runs inside the monthly process
+        # and clears _STEP_TIMES at its start, and a standalone daily runs
+        # every night, so sharing the monthly filename would clobber the
+        # monthly baseline this artifact exists to preserve.
+        write_step_timings("daily-chained" if chained else "daily", total, log=log,
+                           path=STEP_TIMINGS_PATH.with_name("pipeline_steps_daily.json"),
+                           run_id=run_id)
     except Exception:
         log.exception("DAILY run %s failed", run_id)
         finish_run(run_id, new_snapshots=0, stat_lines=0, notes="DAILY: failed")
@@ -1840,6 +2008,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         feed_cache.prune_old_feeds()
     except Exception as e:  # noqa: BLE001 — never let cache maintenance abort a run
         log.warning("feed cache prune skipped: %s", e)
+    # The other big refetchable caches (win_prob, statcast_metrics,
+    # zone_metrics). Opt-in via env; a run with nothing configured is a no-op.
+    _maybe_prune_cache(log)
 
     new_count = 0
     stat_count = 0
@@ -2539,7 +2710,20 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                             for p in timeseries
                             if p.status != "debuted" and ids_by_key.get(p.player_key)
                         ]
-                        build_positions_played(versa_input, log_=log)
+                        # RUNTIME 2026-08-04: the builder now derives by_pos
+                        # from the LEAGUE-WIDE season census (~154 cached
+                        # (sportId, season) files folded to the board's id
+                        # allowlist in ~0.7s of CPU) instead of one serial
+                        # StatsAPI request per player with a 50ms sleep. Two
+                        # guards keep it honest - players the census does not
+                        # carry, and players it scores below their own
+                        # previous career total, fall back to the per-player
+                        # career endpoint through a 16-way pool. Set
+                        # EEPHUS_VERSA_PER_PLAYER=1 to force the old route
+                        # (still pooled). See fielding_positions for the
+                        # measured coverage numbers.
+                        build_positions_played(versa_input, log_=log,
+                                               workers=min(16, workers or 16))
                 except Exception:
                     log.exception("positions_played build failed — continuing")
         _step_3a_per_start = time.monotonic() if not skip_stats else None
@@ -2557,7 +2741,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             # AGGREGATE row into career_cache, so only the finer yearByYear
             # per-stint / org-stint detail lags one monthly cycle. (The other
             # gate path this flag feeds - the _is_career_fresh skip at 2005-2009
-            # - is inert in monthly runs because CAREER_STATS_FRESH_DAYS == 0.)
+            # - is inert on the ~30-day monthly cadence because
+            # CAREER_STATS_FRESH_DAYS is 1: it only fires on a same-day
+            # re-run, where the 24h HTTP cache would have returned the same
+            # payload anyway.)
             # This same derivation (affil map + derive_level_changes) also runs
             # a second time at 3e over the FRESHLY fetched tx (see line ~2526),
             # so it executes twice per monthly run (warm-cache CPU only;
@@ -2756,6 +2943,36 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             if fast:
                 log.info("--fast: skipping pitch arsenals + sabermetrics")
             else:
+                # RUNTIME 2026-08-04 — MLB-ONLY FAN-OUT GATE.
+                # Both endpoints below (pitch arsenal, sabermetrics) are
+                # MLB-only: the comments right here have always said so, and
+                # for a ~4,500-player, overwhelmingly-MiLB tracked population
+                # that means most of ~6.5K requests per run return None BY
+                # CONSTRUCTION. The has-MLB-career-row test the WAR cohort
+                # already computes a few dozen lines below (`has_mlb`) is
+                # exactly the right filter, so it is hoisted here and shared.
+                #
+                # SAFETY — this must never miss a FIRST MLB stint:
+                #   * a player with NO career_cache row at all still fetches
+                #     (an absent row means step 3a never landed for him, not
+                #     that he has no MLB time);
+                #   * so does anyone the board already calls debuted, or whose
+                #     current statline level is MLB, which covers the case
+                #     where 3a-i's bulk merge has the MLB row but the cached
+                #     rows this dict was built from do not yet.
+                # 3a-i splices the current season's MLB aggregate into
+                # career_cache earlier in THIS run, and 3c's auto-debut pass
+                # has already rebuilt the timeseries, so a debut that happened
+                # since the last run is visible to all three tests.
+                _mlb_fanout_keys: set[str] = set()
+                for p in timeseries:
+                    _rows = career_cache.get(p.player_key) or []
+                    if (not _rows
+                            or any(r.get("level") == "MLB" for r in _rows)
+                            or p.status == "debuted"
+                            or (statlines.get(p.player_key) or {}).get("level") == "MLB"):
+                        _mlb_fanout_keys.add(p.player_key)
+
                 pitchers = [(p.player_key, p.player_name)
                             for p in timeseries
                             if _is_pitcher(p.position)]
@@ -2767,7 +2984,12 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 pa_tasks: list[tuple[str, int]] = [
                     (key, ids_by_key[key]) for key, _name in pitchers
                     if key in ids_by_key and ids_by_key[key] is not None
+                    and key in _mlb_fanout_keys
                 ]
+                log.info("pitch arsenal: %d of %d pitchers have MLB exposure "
+                         "(or no career row yet); the rest are MiLB-only and the "
+                         "endpoint would return None for them",
+                         len(pa_tasks), len(pitchers))
                 if pa_tasks:
                     if workers is not None:
                         max_workers = max(1, min(workers, len(pa_tasks)))
@@ -2801,12 +3023,15 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 # None. We still attempt it for everyone: graduates have
                 # full MLB time, and any tracked prospect who's had even
                 # a brief MLB cup-of-coffee will surface a value.
-                log.info("fetching sabermetrics (wRC+/xFIP) for %d players", len(all_active))
                 new_sabermetrics: dict = {}
                 sm_tasks: list[tuple[str, int, bool]] = [
                     (key, ids_by_key[key], is_p) for key, _name, is_p in all_active
                     if key in ids_by_key and ids_by_key[key] is not None
+                    and key in _mlb_fanout_keys        # see the fan-out gate above
                 ]
+                log.info("fetching sabermetrics (wRC+/xFIP) for %d of %d tracked "
+                         "players (MLB-only endpoint; MiLB-only players skipped)",
+                         len(sm_tasks), len(all_active))
                 if sm_tasks:
                     if workers is not None:
                         max_workers = max(1, min(workers, len(sm_tasks)))
@@ -3032,7 +3257,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                              STATCAST_METRICS_FRESH_DAYS, _sc_fresh_pct)
                 else:
                     try:
-                        from statcast_metrics import fetch_statcast_metrics_for_players
+                        from statcast_metrics import (
+                            METRIC_SCHEMA_VERSION as _SC_SCHEMA,
+                            fetch_statcast_metrics_for_players,
+                        )
                         statcast_players = []
                         for p in timeseries:
                             sl = statlines.get(p.player_key) or {}
@@ -3043,6 +3271,50 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                 sl.get("level"),
                                 bool(sl.get("is_pitcher")) or _is_pitcher(p.position),
                             ))
+                        # RUNTIME 2026-08-04 — INCREMENTAL 3d-ter.
+                        # The monthly pass rebuilt every tracked player from
+                        # scratch every run: thousands of /feed/live blobs in
+                        # pass 2 and a full CPU-bound process-pool sweep in
+                        # pass 3, for players who had not played a tracked
+                        # game since the last run. The daily path has skipped
+                        # those since WS-R via _statcast_logs_newer_than_metric;
+                        # this hands the monthly path the same filter, applied
+                        # AFTER pass 1's game-log scan proves a player has no
+                        # newer game.
+                        #
+                        # SAFETY - this is a skip gate, so it can silently
+                        # freeze rows. Three things force a full rebuild:
+                        #   * --force (force_refetch) or EEPHUS_FULL=1;
+                        #   * no stored row for that player;
+                        #   * a stored payload whose schema_version differs
+                        #     from statcast_metrics.METRIC_SCHEMA_VERSION.
+                        # The stamp is the load-bearing one: it is what stops
+                        # a future change to the payload shape from leaving
+                        # skipped players on the old shape with nothing
+                        # raising - the exact failure mode of the 2026-08-03
+                        # standout/recent-games defect. Rows written before
+                        # the stamp existed carry none, so the first run after
+                        # this ships rebuilds everything and only later runs
+                        # are incremental.
+                        _sc_full = (force_refetch
+                                    or os.environ.get("EEPHUS_FULL") == "1")
+                        _sc_incremental: dict[str, str] = {}
+                        if not _sc_full:
+                            for _k, _payload in (statcast_metric_cache or {}).items():
+                                if not isinstance(_payload, dict):
+                                    continue
+                                if _payload.get("schema_version") != _SC_SCHEMA:
+                                    continue          # stale shape -> rebuild
+                                _d = _latest_statcast_metric_game_date(_payload)
+                                if _d:
+                                    _sc_incremental[_k] = _d
+                            log.info("3d-ter incremental: %d/%d stored rows are "
+                                     "current-schema and datable (the rest rebuild)",
+                                     len(_sc_incremental), len(statcast_metric_cache or {}))
+                        else:
+                            log.info("3d-ter incremental: DISABLED (%s) - "
+                                     "rebuilding every row",
+                                     "--force" if force_refetch else "EEPHUS_FULL=1")
                         new_statcast_metrics = fetch_statcast_metrics_for_players(
                             statcast_players,
                             season,
@@ -3050,6 +3322,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                             # step in a cold full run (~56s); more workers
                             # cuts it materially.
                             workers=workers or 16,
+                            skip_if_not_newer_than=_sc_incremental or None,
                         )
                         if new_statcast_metrics:
                             upsert_statcast_metrics(new_statcast_metrics, season)
@@ -3752,8 +4025,12 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         except Exception:
             log.exception("headshot resolution failed — continuing")
         # v19 — Per-step duration table. Sorted by slowest first so the
-        # biggest wall-time culprits surface at the top of the log.
-        _log_step_summary(log, time.monotonic() - _run_start)
+        # biggest wall-time culprits surface at the top of the log. Also
+        # writes logs/pipeline_steps_latest.json (machine-readable) so the
+        # NEXT run can be diffed against this one instead of against a
+        # May-2026 log that predates half these steps.
+        _log_step_summary(log, time.monotonic() - _run_start,
+                          mode="monthly", run_id=run_id)
         # The monthly run also performs the DAILY fast-moving refresh
         # (transactions, IL, roster status, debuts/graduations, trades) so a
         # plain `python run_monthly.py` never leaves them stale — the Injured
@@ -3814,8 +4091,11 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         except Exception:                                # noqa: BLE001
             log.exception("ingest health write failed on the crash path")
         # Still print the partial step summary on crash — useful for
-        # debugging which phase blew up.
-        _log_step_summary(log, time.monotonic() - _run_start)
+        # debugging which phase blew up. The JSON companion is written too:
+        # a crashed run's step table is exactly when someone needs to rank
+        # what had already been paid for.
+        _log_step_summary(log, time.monotonic() - _run_start,
+                          mode="monthly-FAILED", run_id=run_id)
         raise
 
 

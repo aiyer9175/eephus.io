@@ -66,6 +66,28 @@ SPORT_LEVELS = {
 TRACKED_LEVELS = {"MLB", "AAA", "AA", "A+", "A", "CPX"}
 PITCH_PLOT_LIMIT = 900
 
+# ── METRIC PAYLOAD SCHEMA VERSION ──────────────────────────────────────────
+# CACHE_VERSION above versions the HTTP cache. This versions the STORED ROW,
+# and it exists because run_monthly's 3d-ter pass is now INCREMENTAL: a player
+# with no game newer than the newest game already inside his stored payload is
+# skipped, so his row is never rewritten. That is exactly the silent-staleness
+# shape that produced the 2026-08-03 defect (the pass-1 trim left every row
+# with standout_games=[] / recent_games=[] and nothing errored). Under a skip
+# gate the same class of change would leave the SKIPPED players on the old
+# payload shape forever while newly-active players got the new one, with no
+# error anywhere.
+#
+# The contract: ANY change to what a row carries - a new field, a changed
+# meaning, a fixed extractor - MUST bump this. run_monthly compares the stamp
+# in each stored payload against this value and force-rebuilds every row whose
+# stamp differs (a stored row from before the stamp existed has none, so it
+# reads as a mismatch and rebuilds). --force and EEPHUS_FULL=1 also rebuild
+# everything unconditionally.
+#   1 — first stamped shape: coverage / contact_quality / pitch_movement /
+#       pitch_plot / level_splits / standout_games / recent_games, with the
+#       2026-08-03 gameLog-extras repair in place.
+METRIC_SCHEMA_VERSION = 1
+
 SESSION = requests.Session()
 retries = Retry(total=2, backoff_factor=0.3, status_forcelist=[500, 502, 503, 504])
 adapter = HTTPAdapter(max_retries=retries, pool_connections=80, pool_maxsize=80)
@@ -99,6 +121,11 @@ class StatcastMetricRow:
     # prospect detail page. Newest-first; no quality filter applied
     # so the table can show the full chronology (cold games + hot).
     recent_games: list[dict] = field(default_factory=list)
+    # Stamped on every row this module builds. run_monthly's incremental
+    # 3d-ter gate refuses to skip a player whose stored stamp differs from
+    # METRIC_SCHEMA_VERSION, so a payload-shape change can never leave a
+    # skipped player silently on the old shape. See that constant.
+    schema_version: int = METRIC_SCHEMA_VERSION
 
 
 def _get_json(url: str, params: dict | None = None, ttl_seconds: int = 7 * 86400) -> dict:
@@ -1132,12 +1159,67 @@ def fetch_statcast_metrics_for_player(
     )
 
 
+def _has_tracked_logs(slim_logs: list[dict] | None,
+                      level_hint: str | None = None) -> bool:
+    """True if any split is at a TRACKED level.
+
+    Byte-for-byte the same predicate `fetch_statcast_metrics_for_player`
+    applies at its top (`logs = [s for s in logs if (s.get("_level") or
+    level_hint) in TRACKED_LEVELS]; if not logs: return None`). Deliberately
+    does NOT require a parseable date, so it cannot be stricter than the
+    worker it stands in for."""
+    for split in slim_logs or []:
+        if (split.get("_level") or level_hint) in TRACKED_LEVELS:
+            return True
+    return False
+
+
+def _latest_tracked_log_date(slim_logs: list[dict] | None,
+                             level_hint: str | None = None) -> str | None:
+    """Newest TRACKED-level game date in a slimmed gameLog list, or None.
+
+    Reads only `date` and `_level`, both of which survive `_slim_split`, so
+    the incremental gate below costs nothing extra in memory. Mirrors
+    run_monthly._latest_statcast_log_date, which is the daily path's version
+    of the same question."""
+    best: str | None = None
+    for split in slim_logs or []:
+        if (split.get("_level") or level_hint) not in TRACKED_LEVELS:
+            continue
+        d = split.get("date")
+        if not isinstance(d, str) or len(d) < 10:
+            continue
+        d = d[:10]
+        if best is None or d > best:
+            best = d
+    return best
+
+
 def fetch_statcast_metrics_for_players(
     players: list[tuple[str, str, int | None, str | None, bool]],
     season: int,
     workers: int = 10,
     logs_by_key: dict[str, list[dict]] | None = None,
+    skip_if_not_newer_than: dict[str, str] | None = None,
 ) -> dict[str, StatcastMetricRow]:
+    """Bulk-build Statcast rows for `players`.
+
+    ``skip_if_not_newer_than`` is the INCREMENTAL gate: ``{player_key: newest
+    game date already inside that player's stored payload}``. After pass 1 has
+    the game logs in hand, any listed player whose newest tracked game is not
+    strictly newer than his stored date is dropped from passes 2 and 3 and
+    returned nothing, so his stored row is left untouched. Players absent from
+    the map are ALWAYS rebuilt, which is how the caller expresses "no stored
+    row", "schema stamp mismatch", "--force" and "EEPHUS_FULL=1" - see
+    METRIC_SCHEMA_VERSION. Pass None (the default) to rebuild everything, so
+    every existing caller keeps its exact behaviour.
+
+    MEMORY: the gate is a strict reduction. It drops the skipped players'
+    entries out of `fetched_logs_by_key` and `_extras_by_key` before pass 2
+    reads them, so peak parent memory, the unique game-feed set, and the pass-3
+    process-pool workload all shrink. The v24 pass-1 trim, the v23 750-row
+    pass-3 batching and the v22 spawn context are untouched.
+    """
     targets = [
         p for p in players
         if p[2] is not None and (p[3] in TRACKED_LEVELS or p[3] is None)
@@ -1243,6 +1325,58 @@ def fetch_statcast_metrics_for_players(
                 if _p1_done % 250 == 0 or _p1_done == len(targets):
                     _log.info("statcast pass 1/3: %d/%d game-log fetches done (%.0fs)",
                               _p1_done, len(targets), _time.monotonic() - _p1_start)
+
+    # ---- INCREMENTAL GATE (between pass 1 and pass 2) ----
+    # Pass 1 is the cheap half: one cached /people gameLog lookup per player.
+    # Passes 2 and 3 are the expensive halves (thousands of /feed/live blobs
+    # and a CPU-bound process pool over every player). A player whose newest
+    # tracked game is already inside his stored payload cannot produce a
+    # different row, so he is dropped HERE - after the scan that proves it,
+    # before the work that would be wasted. This is the same test the daily
+    # path has run since WS-R (run_monthly._statcast_logs_newer_than_metric);
+    # all that is new is applying it on the monthly 3d-ter path too.
+    #
+    # Dropping is done by deleting the entries, not by keeping a parallel
+    # list, so the skipped players' slimmed logs and harvested extras are
+    # released before pass 2 builds the game_pk set from what remains.
+    # Two drops, in order:
+    #
+    #   (A) NO TRACKED LOGS - unconditional, and NOT a heuristic. The pass-3
+    #       worker's own first act is to filter its `logs` to TRACKED_LEVELS
+    #       and `return None` when nothing survives, so a player with no
+    #       tracked split cannot produce a row no matter what passes 2 and 3
+    #       do. Today he is carried through both anyway. `_has_tracked_logs`
+    #       is the same predicate, evaluated ~2 passes earlier. Output is
+    #       provably identical (no row either way, so nothing is upserted and
+    #       any stored row is left alone in both worlds).
+    #   (B) NO NEWER GAME - the incremental gate, applied only to players the
+    #       caller listed in `skip_if_not_newer_than`.
+    _n_untracked = _n_skipped = 0
+    _kept: list[tuple[str, str, int | None, str | None, bool]] = []
+    for _t in targets:
+        _key, _level = _t[0], _t[3]
+        _logs = fetched_logs_by_key.get(_key)
+        if not _has_tracked_logs(_logs, _level):
+            fetched_logs_by_key.pop(_key, None)
+            _extras_by_key.pop(_key, None)
+            _n_untracked += 1
+            continue
+        _stored = (skip_if_not_newer_than or {}).get(_key)
+        if _stored:
+            _newest = _latest_tracked_log_date(_logs, _level)
+            if _newest is None or _newest <= _stored:
+                fetched_logs_by_key.pop(_key, None)
+                _extras_by_key.pop(_key, None)
+                _n_skipped += 1
+                continue
+        _kept.append(_t)
+    _log.info("statcast pass 1/3 filter: %d/%d players go on to passes 2-3 "
+              "(%d have no tracked-level games and could never yield a row, "
+              "%d already current in the stored payload)",
+              len(_kept), len(targets), _n_untracked, _n_skipped)
+    targets = _kept
+    if not targets:
+        return out
 
     # ---- PASS 2: unique game-feed fetch (parallel, cached) ----
     # Feeds go through the shared feed_cache (one on-disk dir keyed by

@@ -28,8 +28,10 @@ SECOND ARTIFACT: data/positions_played_seasons.json
 """
 from __future__ import annotations
 
+import concurrent.futures
 import json
 import logging
+import os
 import re
 import time
 import unicodedata
@@ -106,11 +108,25 @@ def versa_positions(by_pos: dict[str, dict],
                     min_games: int = VERSA_MIN_GAMES,
                     min_starts: int = VERSA_MIN_STARTS) -> list[str]:
     """Positions the prospect QUALIFIES at (>= min_games games OR >= min_starts
-    starts), most-played first. DH / PH / PR excluded."""
+    starts), most-played first. DH / PH / PR excluded.
+
+    TIE-BREAK (2026-08-04): ties used to fall through to dict-insertion order,
+    i.e. whatever order the StatsAPI happened to return, which made the FIRST
+    chip on the versa list a property of the FEED rather than of the player. It
+    also made the artifact non-reproducible across sources: on the 2026-08-04
+    board, 40+ of the 68 players whose versa list differed between the
+    per-player career feed and the league-wide season census differed ONLY in
+    the order of two positions with identical game counts (devin_fitzgerald
+    2B/SS both 48 G, rj_schreck LF/RF both 98 G). Ties now break on
+    (games, starts, defensive spectrum, name) - the SAME deterministic rule
+    `observed_position_detail` already used, so the two resolvers agree and no
+    new tunable enters the system. `_SPECTRUM_RANK` is defined just below;
+    module-level names resolve at call time."""
     qual = [(pos, v) for pos, v in by_pos.items()
             if pos not in _NON_FIELD
             and ((v.get("g") or 0) >= min_games or (v.get("gs") or 0) >= min_starts)]
-    qual.sort(key=lambda kv: -(kv[1].get("g") or 0))
+    qual.sort(key=lambda kv: (-(kv[1].get("g") or 0), -(kv[1].get("gs") or 0),
+                              _SPECTRUM_RANK.get(kv[0], len(_SPECTRUM)), kv[0]))
     return [pos for pos, _ in qual]
 
 
@@ -213,46 +229,238 @@ def load_observed_positions(path: str | Path = "data/positions_played.json",
     return out
 
 
+# Counting convention of the versa artifact. Bump whenever a change makes the
+# stored by_pos counts non-comparable with the previous vintage, because the
+# monotone floor below is only meaningful WITHIN a convention. Measured case:
+# the 2026-07-28 artifact predates the "Minors" rollup dedupe and its career
+# totals are almost exactly DOUBLE the current ones (miguel_hiraldo 984 vs
+# 492), so using it as a floor would have forced 2,143 of 2,216 players
+# (96.7%) into the per-player fallback - safe, but it would have thrown away
+# the whole win silently. A stamp mismatch drops the floor instead.
+#   1 = pre-2026-07-30 (rollup double-count)
+#   2 = rollup-deduped career splits + deterministic versa tie-break
+VERSA_CONVENTION = 2
+
+
+def _prior_career_games(out_path: str | Path,
+                        convention: int = VERSA_CONVENTION) -> dict[str, int]:
+    """{player_key: total by_pos games} from the PREVIOUS versa artifact.
+
+    Career games at a position are monotone non-decreasing, so the last
+    artifact is a valid FLOOR for the next one. The census route below uses it
+    as its correctness guard: any player the league-wide census scores BELOW
+    his own previous total is missing something (a league outside
+    CENSUS_SPORTS, a season the feed dropped, a stale open-season page) and is
+    re-derived from the authoritative per-player career endpoint instead.
+    Missing/corrupt artifact, or one written under a DIFFERENT counting
+    convention -> empty floor, which degrades to "trust the census", the same
+    fail-open posture the rest of this module takes."""
+    try:
+        doc = json.loads(Path(out_path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if int(doc.get("convention") or 0) != int(convention):
+        return {}
+    out: dict[str, int] = {}
+    for pk, rec in (doc.get("players") or {}).items():
+        try:
+            out[pk] = sum(int((v or {}).get("g") or 0)
+                          for v in ((rec or {}).get("by_pos") or {}).values())
+        except (TypeError, ValueError, AttributeError):
+            continue
+    return out
+
+
+def _census_career_by_pos(mlbam_ids, *, sports: "tuple[int, ...]" = None,
+                          seasons: "range | list[int] | None" = None,
+                          fetch: bool = True,
+                          log_: logging.Logger | None = None) -> dict[int, dict[str, dict]]:
+    """Career-to-date `{mlbam: {POS: {'g','gs'}}}` from the LEAGUE-WIDE census.
+
+    One cached request per (sportId, season) - ~154 files for 2005-2026 across
+    the seven affiliated sportIds - instead of one request per player. Reading
+    the whole cached census and folding it down to a board-sized id allowlist
+    measured 0.79s on 2026-08-04 (154 files, 38,402 kept rows). Rows for ids
+    outside `mlbam_ids` are dropped as they stream, so peak memory is the
+    allowlist's slice, not the league's."""
+    lg = log_ or log
+    if sports is None:
+        sports = CENSUS_SPORTS
+    if seasons is None:
+        seasons = range(CENSUS_FIRST_SEASON, date.today().year + 1)
+    keep = {int(m) for m in mlbam_ids if m}
+    out: dict[int, dict[str, dict]] = {}
+    n_seasons = 0
+    for sport_id in sports:
+        for season in seasons:
+            rows = fetch_season_fielding(sport_id, season, fetch=fetch, log_=lg)
+            if rows:
+                n_seasons += 1
+            for r in rows:
+                mid = r.get("mlbam")
+                if mid not in keep:
+                    continue
+                slot = out.setdefault(mid, {}).setdefault(r["pos"], {"g": 0, "gs": 0})
+                try:
+                    slot["g"] += int(r.get("g") or 0)
+                    slot["gs"] += int(r.get("gs") or 0)
+                except (TypeError, ValueError):
+                    continue
+    lg.info("versa census: %d league-seasons covered %d of %d target players",
+            n_seasons, len(out), len(keep))
+    return out
+
+
 def build_positions_played(players: list[dict],
                            out_path: str | Path = "data/positions_played.json",
                            throttle: float = 0.05,
-                           log_: logging.Logger | None = None) -> dict:
-    """Fetch fielding-by-position for every POSITION-PLAYER prospect with an mlbam_id
-    and write the versa sidecar. Pitchers are skipped (no versa). Per-player errors
-    are swallowed so one bad id can't sink the batch."""
+                           log_: logging.Logger | None = None,
+                           *,
+                           use_census: bool | None = None,
+                           census_fetch: bool = True,
+                           workers: int = 16) -> dict:
+    """Build the versa sidecar for every POSITION-PLAYER prospect with an
+    mlbam_id. Pitchers are skipped (no versa). Per-player errors are swallowed
+    so one bad id can't sink the batch.
+
+    ROUTE (2026-08-04 runtime lane). This step was the single slowest in the
+    pipeline at a measured 437s, because it fired ONE StatsAPI request per
+    player, serially, with a 50ms sleep between them. It now derives the same
+    career `by_pos` from the LEAGUE-WIDE season census that already exists in
+    this module (`fetch_season_fielding`): ~154 cached (sportId, season) files
+    covering 2005-2026, folded down to the board's id allowlist in ~1s of CPU
+    plus a refresh of the seven OPEN-season files.
+
+    Two guards keep the route swap from becoming a silent data regression -
+    the failure class that produced the 2026-08-03 standout/recent-games
+    defect:
+
+      1. COVERAGE FALLBACK. Any player the census does not carry at all falls
+         back to `fetch_player_fielding`, the authoritative per-player career
+         endpoint. Measured 2026-08-04 on the 2,216-player board: 193 (8.7%),
+         mostly players with no fielding record anywhere yet.
+      2. MONOTONE FLOOR. Career games only ever increase, so any player the
+         census scores BELOW his own previous artifact total also falls back.
+         That catches leagues outside CENSUS_SPORTS, seasons the feed dropped
+         (measured: 8 of 2,010 comparable players short by 6+ games, worst
+         -53) and any open-season cache that went stale despite the TTL. With
+         a deliberately 5-day-stale census the floor pushed 1,610 of 2,216
+         into the fallback - the guard doing its job, and still pooled rather
+         than serial.
+
+    Both fallbacks run through a thread pool with NO sleep; the serial 50ms
+    throttle is kept only for the `workers <= 1` legacy path. Set
+    ``use_census=False`` (or ``EEPHUS_VERSA_PER_PLAYER=1``) to force the old
+    per-player route for the whole board - still pooled, so even the escape
+    hatch is not the 437s original.
+    """
     lg = log_ or log
-    out: dict[str, dict] = {}
-    n = err = skipped = 0
+    if use_census is None:
+        use_census = os.environ.get("EEPHUS_VERSA_PER_PLAYER") != "1"
+
+    targets: list[tuple[str, int]] = []
+    skipped = 0
     for p in players:
         mid = p.get("mlbam_id")
         pk = p.get("player_key")
-        if not mid or not pk:
-            skipped += 1
-            continue
-        if (p.get("statline") or {}).get("is_pitcher"):
+        if not mid or not pk or (p.get("statline") or {}).get("is_pitcher"):
             skipped += 1
             continue
         try:
-            by_pos = fetch_player_fielding(mid)
-        except Exception:
-            err += 1
-            continue
-        if not by_pos:
-            continue
-        out[pk] = {"by_pos": by_pos, "versa": versa_positions(by_pos)}
-        n += 1
-        if throttle:
-            time.sleep(throttle)
+            targets.append((pk, int(mid)))
+        except (TypeError, ValueError):
+            skipped += 1
+
+    out: dict[str, dict] = {}
+    err = 0
+    n_census = 0
+    fallback: list[tuple[str, int]] = []
+    # Census value for a player who was ROUTED to the fallback, kept so a
+    # failed or empty per-player fetch degrades to the census rather than to
+    # nothing. Losing a player entirely is strictly worse than serving a
+    # census read the floor merely flagged as incomplete.
+    census_backup: dict[str, dict] = {}
+
+    if use_census:
+        floor = _prior_career_games(out_path)
+        census = _census_career_by_pos((m for _pk, m in targets),
+                                       fetch=census_fetch, log_=lg)
+        n_missing = n_regressed = 0
+        for pk, mid in targets:
+            by_pos = census.get(mid)
+            if not by_pos:
+                n_missing += 1
+                fallback.append((pk, mid))
+                continue
+            if sum(int(v.get("g") or 0) for v in by_pos.values()) < floor.get(pk, 0):
+                n_regressed += 1
+                census_backup[pk] = by_pos
+                fallback.append((pk, mid))
+                continue
+            out[pk] = {"by_pos": by_pos, "versa": versa_positions(by_pos)}
+            n_census += 1
+        lg.info("positions_played: %d players from the season census; "
+                "%d per-player fallbacks (%d absent from the census, "
+                "%d below their previous career total)",
+                n_census, len(fallback), n_missing, n_regressed)
+    else:
+        lg.info("positions_played: census route DISABLED - per-player fetch "
+                "for all %d targets", len(targets))
+        fallback = list(targets)
+
+    if fallback:
+        n_workers = max(1, min(int(workers or 1), len(fallback)))
+
+        def _one(item: tuple[str, int]):
+            pk, mid = item
+            try:
+                return pk, fetch_player_fielding(mid)
+            except Exception:                                        # noqa: BLE001
+                return pk, None
+
+        if n_workers > 1:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as ex:
+                results = list(ex.map(_one, fallback))
+        else:
+            results = []
+            for item in fallback:
+                results.append(_one(item))
+                if throttle:
+                    time.sleep(throttle)
+        n_backed_off = 0
+        for pk, by_pos in results:
+            if not by_pos:
+                # None = the per-player fetch raised; {} = it returned no
+                # fielding data. Either way, if the census had something for
+                # this player, keep it: he was routed here because the census
+                # looked INCOMPLETE, which is still better than absent.
+                if by_pos is None:
+                    err += 1
+                backup = census_backup.get(pk)
+                if backup:
+                    out[pk] = {"by_pos": backup, "versa": versa_positions(backup)}
+                    n_backed_off += 1
+                continue
+            out[pk] = {"by_pos": by_pos, "versa": versa_positions(by_pos)}
+        if n_backed_off:
+            lg.info("positions_played: %d fallback fetches came back empty or "
+                    "failed; kept the census value for those players",
+                    n_backed_off)
+
     payload = {
         "generated_at": date.today().isoformat(),
         "min_games": VERSA_MIN_GAMES,
         "min_starts": VERSA_MIN_STARTS,
+        "convention": VERSA_CONVENTION,
+        "source": "season_census" if use_census else "per_player",
+        "n_from_census": n_census,
+        "n_from_per_player": len(fallback) - err,
         "players": out,
     }
     Path(out_path).write_text(json.dumps(payload, separators=(",", ":")),
                               encoding="utf-8")
     lg.info("positions_played: wrote %d players (%d errors, %d skipped) -> %s",
-            n, err, skipped, out_path)
+            len(out), err, skipped, out_path)
     return payload
 
 
@@ -416,31 +624,69 @@ def _mlb_season_from_innings_cache(season: int) -> list[dict] | None:
     return _lean(splits, season, MLB_SPORT) if splits else None
 
 
+# A CLOSED league-season is immutable, so its cache file is permanent. The
+# season IN PROGRESS is not, and this cache had no TTL at all: measured
+# 2026-08-04, the on-disk 2026 files were written 2026-07-30 and the census
+# therefore undercounted career games for 1,418 of 2,010 board players by a
+# median of 2 (never over - a frozen census is a strict time prefix). That is
+# harmless for the as-of census, which drops the partial current season by
+# construction, and NOT harmless for the versa route, which reads career
+# totals. Refresh the open season on this TTL; leave closed seasons alone.
+SEASON_OPEN_TTL_SECONDS = 6 * 3600
+
+
+def _season_is_open(season: int) -> bool:
+    """True while `season` can still accrue games (calendar-year test)."""
+    try:
+        return int(season) >= date.today().year
+    except (TypeError, ValueError):
+        return False
+
+
 def fetch_season_fielding(sport_id: int, season: int, fetch: bool = True,
-                          log_: logging.Logger | None = None) -> list[dict]:
+                          log_: logging.Logger | None = None,
+                          open_ttl_seconds: float | None = SEASON_OPEN_TTL_SECONDS
+                          ) -> list[dict]:
     """Every (player, position) fielding split for one league-season, cached.
 
     Returns lean rows (see `_lean`). `fetch=False` keeps a caller strictly
     offline: an uncached league-season reads as [] rather than firing a request.
-    A failed fetch falls back to whatever is cached and never raises."""
+    A failed fetch falls back to whatever is cached and never raises.
+
+    Closed seasons are cached forever. The OPEN season is refreshed once its
+    file is older than `open_ttl_seconds` (pass None to restore the old
+    permanent-cache behaviour). The refresh is strictly non-destructive: a
+    failed or SHORTER re-fetch keeps the cached copy, because a league-season
+    can only gain rows and a short page-set is a feed hiccup, never a
+    shrinking season."""
     lg = log_ or log
     _SEASON_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     # v2 keeps `age` (the birth-year guard in resolve_census_ids needs it). The
     # filename is versioned so a v1 cache is refetched rather than silently
     # read back missing the field.
     path = _SEASON_CACHE_DIR / f"fld_v2_{sport_id}_{season}.json"
+    cached: list[dict] | None = None
     if path.exists():
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            cached = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
-            pass
-    if sport_id == MLB_SPORT:
+            cached = None
+        if cached is not None:
+            stale = False
+            if fetch and open_ttl_seconds is not None and _season_is_open(season):
+                try:
+                    stale = (time.time() - path.stat().st_mtime) > open_ttl_seconds
+                except OSError:
+                    stale = False
+            if not stale:
+                return cached
+    if sport_id == MLB_SPORT and cached is None:
         reused = _mlb_season_from_innings_cache(season)
         if reused is not None:
             path.write_text(json.dumps(reused, separators=(",", ":")), encoding="utf-8")
             return reused
     if not fetch:
-        return []
+        return cached if cached is not None else []
     rows: list[dict] = []
     offset = 0
     while True:
@@ -451,7 +697,7 @@ def fetch_season_fielding(sport_id: int, season: int, fetch: bool = True,
         except Exception as exc:                                     # noqa: BLE001
             lg.warning("season fielding fetch failed sport=%s season=%s: %s",
                        sport_id, season, exc)
-            return rows
+            return cached if cached is not None else rows
         block = (doc.get("stats") or [{}])[0]
         page = block.get("splits") or []
         rows.extend(_lean(page, season, sport_id))
@@ -459,6 +705,11 @@ def fetch_season_fielding(sport_id: int, season: int, fetch: bool = True,
         offset += len(page)
         if not page or offset >= total:
             break
+    if cached is not None and len(rows) < len(cached):
+        lg.warning("season fielding refresh sport=%s season=%s returned %d rows "
+                   "vs %d cached - keeping the cache (a season cannot shrink)",
+                   sport_id, season, len(rows), len(cached))
+        return cached
     path.write_text(json.dumps(rows, separators=(",", ":")), encoding="utf-8")
     return rows
 
