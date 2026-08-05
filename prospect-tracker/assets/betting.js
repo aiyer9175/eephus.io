@@ -119,9 +119,13 @@
   // ---- odds math (shared by the boards and the calculators) -----------------
   // One implementation, used by every surface on the page, so a number in the
   // calculator can never disagree with the same number on a board.
+  // American prices below 100 in absolute value do not exist: the scale runs
+  // +100 / -100 outward from an even-money bet and there is nothing in the gap.
+  // Without the floor, a half-typed "-1" converted to decimal 101 and printed
+  // "+10000" as though it were a price a book had posted.
   function amToDec(a) {
     var n = Number(a);
-    if (!isFinite(n) || n === 0) return null;
+    if (!isFinite(n) || Math.abs(n) < 100) return null;
     return 1 + (n > 0 ? n / 100 : 100 / Math.abs(n));
   }
   function decToAm(d) {
@@ -297,13 +301,13 @@
     if (bt && (bt.in_sample || bt.forward)) {
       rows.push('<div class="bt-panel-sub">Backtest, and why it does not count</div>');
       rows.push("<p>" + esc(bt.contamination || "") + "</p>");
-      rows.push('<table class="bt-table"><thead><tr><th>Test</th><th>Games</th>' +
+      rows.push('<div class="bt-scroll"><table class="bt-table"><thead><tr><th>Test</th><th>Games</th>' +
         "<th>Brier</th><th>vs flat .500</th><th>vs home base</th><th>Accuracy</th></tr></thead><tbody>" +
         [bt.in_sample, bt.forward].filter(Boolean).map(function (b) {
           return "<tr><td class=\"bt-l\">" + esc(b.label) + "</td><td>" + b.n + "</td><td>" +
             num(b.brier, 5) + "</td><td>" + num(b.brier_flat_500, 5) + "</td><td>" +
             num(b.brier_home_base, 5) + "</td><td>" + pct(b.accuracy) + "</td></tr>";
-        }).join("") + "</tbody></table>");
+        }).join("") + "</tbody></table></div>");
       rows.push(note("Lower Brier is better. The model beats both baselines, and that still " +
         "does not make it validated: the team inputs are season to date, so every graded " +
         "game sits inside its own features. " + esc(bt.note || "")));
@@ -355,9 +359,10 @@
         "The schedule has not been refreshed today.");
     }
     var hasMarket = (d.status || {}).odds_feed === "ok";
+    var reason = (d.status || {}).odds_note || "";
     var head = hasMarket ? "" : note("No odds feed is configured, so these are model fair " +
-      "prices with nothing to compare them against. " +
-      esc((d.status || {}).odds_note || ""));
+      "prices with nothing to compare them against." +
+      (reason ? " The build reports: " + esc(reason) + "." : ""));
     return head + bets.map(gameCard).join("");
   }
 
@@ -429,8 +434,8 @@
       }
       return "<tr>" + cells + "</tr>";
     }).join("");
-    return '<div class="bt-market"><table class="bt-table bt-market-table"><thead>' + head +
-      "</thead><tbody>" + body + "</tbody></table></div>";
+    return '<div class="bt-market"><div class="bt-scroll"><table class="bt-table bt-market-table">' +
+      "<thead>" + head + "</thead><tbody>" + body + "</tbody></table></div></div>";
   }
 
   // ---- section: props -------------------------------------------------------
@@ -452,7 +457,7 @@
       kv("Distribution", esc(meth.distribution || "-")) + "</div></div>");
 
     out.push('<div class="bt-subhd">Starting pitchers</div>');
-    out.push('<table class="bt-table"><thead><tr><th class="bt-l">Pitcher</th><th>Opp</th>' +
+    out.push('<div class="bt-scroll"><table class="bt-table"><thead><tr><th class="bt-l">Pitcher</th><th>Opp</th>' +
       "<th>Exp IP</th><th>K fair</th><th>P(over)</th><th>ER fair</th><th>H fair</th></tr></thead><tbody>" +
       (pf.pitchers || []).map(function (p) {
         var k = propOf(p, "Strikeouts"), er = propOf(p, "Earned runs"), h = propOf(p, "Hits allowed");
@@ -462,10 +467,10 @@
           "<td>" + num(k.fair_line, 2) + "</td>" +
           "<td>" + (k.over_line != null ? "o" + k.over_line + " " + pct(k.p_over) : "-") + "</td>" +
           "<td>" + num(er.fair_line, 2) + "</td><td>" + num(h.fair_line, 2) + "</td></tr>";
-      }).join("") + "</tbody></table>");
+      }).join("") + "</tbody></table></div>");
 
     out.push('<div class="bt-subhd">Hitters</div>');
-    out.push('<table class="bt-table"><thead><tr><th class="bt-l">Hitter</th><th>Slot</th>' +
+    out.push('<div class="bt-scroll"><table class="bt-table"><thead><tr><th class="bt-l">Hitter</th><th>Slot</th>' +
       "<th>Exp PA</th><th>TB fair</th><th>P(TB 2+)</th><th>P(hit)</th><th>P(HR)</th></tr></thead><tbody>" +
       (pf.hitters || []).map(function (p) {
         var tb = propOf(p, "Total bases"), hh = propOf(p, "1+ hits"), hr = propOf(p, "1+ home runs");
@@ -474,7 +479,7 @@
           "<td>" + (p.slot || "-") + "</td><td>" + num(p.expected_pa, 2) + "</td>" +
           "<td>" + num(tb.fair_line, 2) + "</td><td>" + pct(tb.p_over) + "</td>" +
           "<td>" + pct(hh.p_over) + "</td><td>" + pct(hr.p_over) + "</td></tr>";
-      }).join("") + "</tbody></table>");
+      }).join("") + "</tbody></table></div>");
     return out.join("");
   }
 
@@ -495,13 +500,13 @@
       "<p>" + esc(pc.math_note || "") + "</p></div>");
 
     out.push('<div class="bt-subhd">Correlation rules</div>');
-    out.push('<table class="bt-table"><thead><tr><th class="bt-l">When</th><th class="bt-l">Why it matters</th>' +
+    out.push('<div class="bt-scroll"><table class="bt-table"><thead><tr><th class="bt-l">When</th><th class="bt-l">Why it matters</th>' +
       "<th>Builder</th></tr></thead><tbody>" +
       (pc.rules || []).map(function (r) {
         return '<tr><td class="bt-l">' + esc(r.when) + '</td><td class="bt-l">' + esc(r.why) +
           '</td><td><span class="bt-tag ' + (r.severity === "block" ? "bt-tag-block" : "bt-tag-warn") +
           '">' + esc(r.severity) + "</span></td></tr>";
-      }).join("") + "</tbody></table>");
+      }).join("") + "</tbody></table></div>");
 
     out.push('<div class="bt-subhd">Builder</div>');
     if (!(pc.legs || []).length) {
@@ -536,8 +541,11 @@
   function paintParlay() {
     var host = el("bt-parlay-out");
     if (!host) return;
-    if (!S.legs.length) {
-      host.innerHTML = empty("No legs yet", "Add two or more legs to see the parlay math.");
+    if (S.legs.length < 2) {
+      host.innerHTML = empty(S.legs.length ? "One leg is not a parlay" : "No legs yet",
+        "Add two or more legs to see the parlay math.") +
+        (S.legs.length ? legTable() : "");
+      wireLegDrops(host);
       return;
     }
     var byGame = {}, blocked = false, warned = [];
@@ -547,23 +555,33 @@
     Object.keys(byGame).forEach(function (g) {
       if (byGame[g] > 1) { blocked = true; warned.push(g); }
     });
-    var rows = S.legs.map(function (l, i) {
-      return '<tr><td class="bt-l">' + esc(l.label) + "</td><td>" + pct(l.model_prob) +
-        "</td><td>" + fmtOdds(l.odds) + '</td><td><button type="button" class="bt-btn bt-btn-x" ' +
-        'data-legdrop="' + i + '">remove</button></td></tr>';
-    }).join("");
     var pProd = S.legs.reduce(function (a, l) { return a * (l.model_prob || 0); }, 1);
-    var decProd = S.legs.reduce(function (a, l) {
+    // A ticket has a price only if EVERY leg has one. With no odds feed the
+    // legs carry model probabilities and a null price, and the old fold
+    // substituted decimal 1.0 for the missing legs: that turned "no price" into
+    // a confident EV of minus the miss probability, which is a number the page
+    // has no business printing. Count the priced legs instead and refuse.
+    var priced = 0, decProd = 1;
+    S.legs.forEach(function (l) {
       var d = amToDec(l.odds);
-      return a * (d || 1);
-    }, 1);
-    var body = '<table class="bt-table"><thead><tr><th class="bt-l">Leg</th><th>Model</th>' +
-      "<th>Price</th><th></th></tr></thead><tbody>" + rows + "</tbody></table>";
+      if (d) { priced++; decProd *= d; }
+    });
+    var allPriced = priced === S.legs.length;
+    var body = legTable();
     if (blocked) {
       body += '<div class="bt-block"><strong>Same-game legs. The naive product is blocked.</strong> ' +
         "Two legs from one game are not independent, so multiplying them is not a price. " +
         "This builder will not print a number it cannot stand behind. Remove a leg, or treat " +
         "the ticket as a same-game parlay and price it at the book.</div>";
+    } else if (!allPriced) {
+      body += '<div class="bt-parlay-sum">' +
+        chip("Legs", S.legs.length) +
+        chip("Model probability", pct(pProd, 2)) + "</div>" +
+        note("<strong>No price on this ticket.</strong> " + (S.legs.length - priced) + " of " +
+          S.legs.length + " legs have no posted odds, because no odds feed is configured. " +
+          "The model probability above is ours and stands on its own. A parlay price, an " +
+          "implied probability and an EV all need a real price on every leg, so none of them " +
+          "is shown. The parlay calculator under Calculators takes prices you type in.");
     } else {
       body += '<div class="bt-parlay-sum">' +
         chip("Legs", S.legs.length) +
@@ -575,6 +593,21 @@
           "is arithmetic rather than an assumption.");
     }
     host.innerHTML = body;
+    wireLegDrops(host);
+  }
+
+  function legTable() {
+    var rows = S.legs.map(function (l, i) {
+      return '<tr><td class="bt-l">' + esc(l.label) + "</td><td>" + pct(l.model_prob) +
+        "</td><td>" + fmtOdds(l.odds) + '</td><td><button type="button" class="bt-btn bt-btn-x" ' +
+        'data-legdrop="' + i + '">remove</button></td></tr>';
+    }).join("");
+    return '<div class="bt-scroll"><table class="bt-table"><thead><tr><th class="bt-l">Leg</th>' +
+      "<th>Model</th><th>Price</th><th></th></tr></thead><tbody>" + rows +
+      "</tbody></table></div>";
+  }
+
+  function wireLegDrops(host) {
     host.querySelectorAll("[data-legdrop]").forEach(function (b) {
       b.addEventListener("click", function () {
         S.legs.splice(parseInt(b.getAttribute("data-legdrop"), 10), 1);
@@ -595,8 +628,11 @@
         "Type in any one box. The other two follow. Implied probability includes the vig."),
       calcBox("Vig and hold", "bt-c2",
         field("Side A (American)", "bt-c2-a", "-110") + field("Side B (American)", "bt-c2-b", "-110"),
-        "Hold is what the book keeps if it balances the book. Fair probabilities are " +
-        "de-vigged proportionally, the same method the boards use."),
+        "Overround is the two implied prices added up. Hold is that figure over 100%, the " +
+        "same number the game cards publish. Book keeps is the share of a balanced handle " +
+        "the book actually retains, which is the hold divided by the overround: at -110 " +
+        "both ways the hold reads 4.76% and the book keeps 4.55% of what is staked. Fair " +
+        "probabilities are de-vigged proportionally, the same method the boards use."),
       calcBox("Expected value", "bt-c3",
         field("Your probability %", "bt-c3-p", "55") + field("Price (American)", "bt-c3-odds", "-110") +
         field("Stake (units)", "bt-c3-stake", "1"),
@@ -643,7 +679,15 @@
           chip("American", fmtOdds(decToAm(d))) + chip("Implied", pct(decToImplied(d), 2)) +
           chip("Break-even win rate", pct(decToImplied(d), 2));
       } else {
-        el("bt-c1-out").innerHTML = '<span class="bt-dim">Enter a price.</span>';
+        // The two boxes the reader is NOT typing in are cleared. Leaving the
+        // last good conversion sitting next to an unparseable entry shows a
+        // decimal and an implied percentage that belong to a price nobody
+        // typed, which is worse than showing nothing.
+        if (from !== "am") am.value = "";
+        if (from !== "dec") dec.value = "";
+        if (from !== "imp") imp.value = "";
+        el("bt-c1-out").innerHTML = '<span class="bt-dim">Enter a price. American runs ' +
+          "from +100 and -100 outward; there is nothing between them.</span>";
       }
       guard = false;
     }
@@ -658,8 +702,14 @@
       if (!a || !b) { host.innerHTML = '<span class="bt-dim">Enter both sides.</span>'; return; }
       var raw = decToImplied(a) + decToImplied(b);
       var fair = devig([a, b]);
+      // "Hold" here is overround minus 100%, which is the definition
+      // betting_model.hold_pct uses and the number the game cards publish, so
+      // the two surfaces agree. It is NOT the share of a balanced handle the
+      // book retains: that is the hold over the overround, and it is shown
+      // beside it rather than left for the reader to assume they are the same.
       host.innerHTML = chip("Overround", (raw * 100).toFixed(2) + "%") +
         chip("Hold", ((raw - 1) * 100).toFixed(2) + "%") +
+        chip("Book keeps", (100 * (raw - 1) / raw).toFixed(2) + "%") +
         chip("Fair A", pct(fair[0], 2)) + chip("Fair B", pct(fair[1], 2)) +
         chip("Fair A price", fmtOdds(decToAm(1 / fair[0]))) +
         chip("Fair B price", fmtOdds(decToAm(1 / fair[1])));
@@ -789,6 +839,18 @@
     saveLocal(rows); S.bets = rows;
     return Promise.resolve(rows);
   }
+  // THE PUBLIC RECORD IS APPEND ONLY. This log is not the public record: it is
+  // the reader's own, and a private log he cannot correct is a log he stops
+  // using. Delete removes the row here and, when signed in, through the
+  // account layer's deleteBet.
+  function removeBet(id) {
+    if (acctLive() && acct().deleteBet) {
+      return acct().deleteBet(id).then(loadBets).catch(function () { return loadBets(); });
+    }
+    var rows = localBets().filter(function (r) { return r.id !== id; });
+    saveLocal(rows); S.bets = rows;
+    return Promise.resolve(rows);
+  }
   // Merge-on-sign-in, cloning the watchlist adapter's contract. Never
   // destructive: it copies local rows up, it does not delete them.
   function mergeOnSignIn() {
@@ -866,26 +928,39 @@
       chip("Net units", signed(units, 2)) +
       chip("ROI", staked ? signed(100 * units / staked, 2) + "%" : "-") +
       chip("Open", rows.filter(function (r) { return r.result === "open"; }).length) + "</div>";
-    var body = '<table class="bt-table"><thead><tr><th class="bt-l">Selection</th><th>Market</th>' +
+    var body = '<div class="bt-scroll"><table class="bt-table"><thead><tr>' +
+      '<th class="bt-l">Selection</th><th>Market</th>' +
       "<th>Price</th><th>Stake</th><th>Result</th><th></th></tr></thead><tbody>" +
       rows.map(function (r) {
         var cls = r.result === "won" ? " bt-pos" : (r.result === "lost" ? " bt-neg" : "");
+        var id = esc(r.id);
+        // A settled row keeps its controls. Grading was one click and a
+        // misgrade used to be permanent: the buttons disappeared and there was
+        // no delete either, so one slip left a wrong row in the log forever.
+        var acts = (r.result === "open" || !r.result)
+          ? '<button type="button" class="bt-btn" data-settle="won" data-id="' + id + '">won</button>' +
+            '<button type="button" class="bt-btn" data-settle="lost" data-id="' + id + '">lost</button>' +
+            '<button type="button" class="bt-btn" data-settle="void" data-id="' + id + '">void</button>'
+          : '<button type="button" class="bt-btn" data-settle="open" data-id="' + id + '">reopen</button>';
+        acts += '<button type="button" class="bt-btn bt-btn-x" data-betdrop="' + id + '">delete</button>';
         return '<tr><td class="bt-l">' + esc(r.selection) + "</td><td>" + esc(r.market || "") +
           "</td><td>" + fmtOdds(r.odds) + "</td><td>" + num(r.stake, 2) + "u</td>" +
           '<td class="' + cls + '">' + esc(r.result || "open") + "</td>" +
-          "<td>" + (r.result === "open" ?
-            '<button type="button" class="bt-btn" data-settle="won" data-id="' + esc(r.id) + '">won</button>' +
-            '<button type="button" class="bt-btn" data-settle="lost" data-id="' + esc(r.id) + '">lost</button>' +
-            '<button type="button" class="bt-btn" data-settle="void" data-id="' + esc(r.id) + '">void</button>'
-            : "") + "</td></tr>";
-      }).join("") + "</tbody></table>";
+          '<td class="bt-acts">' + acts + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
     host.innerHTML = sum + body + note(esc(src));
     host.querySelectorAll("[data-settle]").forEach(function (b) {
       b.addEventListener("click", function () {
+        var to = b.getAttribute("data-settle");
         updateBet(b.getAttribute("data-id"), {
-          result: b.getAttribute("data-settle"),
-          settled_at: new Date().toISOString()
+          result: to,
+          settled_at: to === "open" ? null : new Date().toISOString()
         }).then(paintBets);
+      });
+    });
+    host.querySelectorAll("[data-betdrop]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        removeBet(b.getAttribute("data-betdrop")).then(paintBets);
       });
     });
   }
@@ -1052,52 +1127,57 @@
   var css = document.createElement("style");
   css.textContent = [
     ".bt-legal{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--accent-gold,#a80);border-radius:0;padding:10px 12px;margin:10px 0;background:var(--bg-secondary)}",
-    ".bt-legal-badge{font:700 13px/1 var(--font-retro,monospace);color:var(--text-on-accent,#fff);background:var(--accent-gold,#a80);padding:6px 8px;white-space:nowrap}",
+    ".bt-legal-badge{font:700 13px/1 var(--font-retro,monospace);color:var(--text-primary);border:2px solid var(--accent-gold,#a80);padding:5px 7px;white-space:nowrap}",
     ".bt-legal-body p{margin:0 0 4px;font-size:12.5px;color:var(--text-secondary)}",
     ".bt-legal-help{font-weight:700;color:var(--text-primary)}",
     ".bt-asof{font-size:12px;color:var(--text-tertiary);margin:4px 0}",
-    ".bt-chip{font:600 10px/1 var(--font-retro,monospace);border:1px solid var(--border-subtle,#333);padding:3px 6px;margin-left:4px;text-transform:uppercase;letter-spacing:.03em}",
+    ".bt-chip{font:600 10px/1 var(--font-retro,monospace);border:1px solid var(--border,#333);padding:3px 6px;margin-left:4px;text-transform:uppercase;letter-spacing:.03em}",
     ".bt-chip-ok{color:var(--accent-green,#3a9);border-color:var(--accent-green,#3a9)}",
-    ".bt-chip-warn{color:var(--accent-gold,#a80);border-color:var(--accent-gold,#a80)}",
+    ".bt-chip-warn{color:var(--text-primary);border-color:var(--accent-gold,#a80);border-width:1.5px}",
     ".bt-chip-stage{color:var(--accent-lilac,#a8f);border-color:var(--accent-lilac,#a8f)}",
     ".bt-toolbar{display:flex;justify-content:flex-end;margin:6px 0}",
     ".bt-subhd{font:700 12px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 6px}",
-    ".bt-panel{border:1px solid var(--border-subtle,#333);background:var(--bg-secondary);padding:12px;margin:10px 0}",
+    ".bt-panel{border:1px solid var(--border,#333);background:var(--bg-secondary);padding:12px;margin:10px 0}",
     ".bt-panel-hd{font:700 13px/1.2 var(--font-retro,monospace);color:var(--text-primary);margin-bottom:8px}",
     ".bt-panel-sub{font:700 11px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;margin:12px 0 6px}",
     ".bt-panel p{font-size:12.5px;color:var(--text-secondary);margin:0 0 8px}",
     ".bt-list{margin:0 0 8px 18px;padding:0;font-size:12.5px;color:var(--text-secondary)}",
     ".bt-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:4px 14px;margin:6px 0}",
-    ".bt-kv-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px solid var(--border-subtle,#222);padding:3px 0}",
+    ".bt-kv-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px solid var(--border-light,#222);padding:3px 0}",
     ".bt-kv-k{color:var(--text-tertiary)}.bt-kv-v{color:var(--text-primary);font-weight:600;text-align:right}",
+    // Wide content scrolls inside its own box. Without this the six-column
+    // backtest table pushed the whole document sideways on a narrow phone,
+    // which drags every other element off-screen with it.
+    ".bt-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}",
     ".bt-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0}",
-    ".bt-table th{text-align:right;font:600 10px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border-subtle,#333)}",
-    ".bt-table td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--border-subtle,#222);color:var(--text-primary)}",
+    ".bt-acts{white-space:nowrap}",
+    ".bt-table th{text-align:right;font:600 10px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border,#333)}",
+    ".bt-table td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--border-light,#222);color:var(--text-primary)}",
     ".bt-table th.bt-l,.bt-table td.bt-l{text-align:left}",
     ".bt-pos{color:var(--accent-green,#3a9)}.bt-neg{color:var(--accent-red,#c55)}",
     ".bt-dim{color:var(--text-tertiary)}",
     ".bt-note{font-size:12px;color:var(--text-secondary);background:var(--bg-secondary);border-left:3px solid var(--accent-cyan,#2a7);padding:8px 10px;margin:8px 0}",
-    ".bt-empty{display:flex;flex-direction:column;gap:4px;border:1px dashed var(--border-subtle,#333);padding:14px;margin:10px 0;color:var(--text-secondary);font-size:12.5px}",
+    ".bt-empty{display:flex;flex-direction:column;gap:4px;border:1px dashed var(--border,#333);padding:14px;margin:10px 0;color:var(--text-secondary);font-size:12.5px}",
     ".bt-empty strong{color:var(--text-primary);font-size:13px}",
     ".bt-error{border:1px solid var(--accent-red,#c55);padding:12px;margin:8px 0;color:var(--text-primary);background:var(--bg-secondary);font-size:12.5px}",
     ".bt-nopick{border:1px solid var(--accent-gold,#a80);padding:14px;margin:10px 0;background:var(--bg-secondary)}",
-    ".bt-nopick-hd{font:700 14px/1 var(--font-retro,monospace);color:var(--accent-gold,#a80);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}",
+    ".bt-nopick-hd{font:700 14px/1 var(--font-retro,monospace);color:var(--text-primary);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}",
     ".bt-nopick p{font-size:12.5px;color:var(--text-secondary);margin:0 0 6px}",
     ".bt-pick{border:1px solid var(--accent-green,#3a9);padding:14px;margin:10px 0;background:var(--bg-secondary)}",
     ".bt-pick-hd{font:700 11px/1 var(--font-retro,monospace);color:var(--accent-green,#3a9);text-transform:uppercase;letter-spacing:.06em}",
     ".bt-pick-sel{font:700 20px/1.2 var(--font-retro,monospace);color:var(--text-primary);margin:6px 0}",
     ".bt-pick-meta{font-size:12px;color:var(--text-tertiary);margin-bottom:8px}",
-    ".bt-numchip{display:inline-flex;flex-direction:column;border:1px solid var(--border-subtle,#333);padding:4px 8px;margin:0 6px 6px 0;min-width:82px}",
+    ".bt-numchip{display:inline-flex;flex-direction:column;border:1px solid var(--border,#333);padding:4px 8px;margin:0 6px 6px 0;min-width:82px}",
     ".bt-numchip-l{font:600 9px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em}",
     ".bt-numchip-v{font:700 14px/1.2 var(--font-retro,monospace);color:var(--text-primary);margin-top:3px}",
-    ".bt-game{border:1px solid var(--border-subtle,#333);background:var(--bg-secondary);padding:10px 12px;margin:10px 0}",
+    ".bt-game{border:1px solid var(--border,#333);background:var(--bg-secondary);padding:10px 12px;margin:10px 0}",
     ".bt-game-hd{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}",
     ".bt-game-teams{font:700 14px/1.2 var(--font-retro,monospace);color:var(--text-primary);display:flex;align-items:center;gap:6px}",
     ".bt-at{color:var(--text-tertiary);font-weight:400}",
     ".bt-game-sub{font-size:11.5px;color:var(--text-tertiary)}",
     ".bt-game-probs{margin:8px 0 4px}",
     ".bt-game-sp{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:4px 12px;margin-bottom:6px}",
-    ".bt-sp{display:flex;gap:8px;align-items:baseline;font-size:12px;border-bottom:1px solid var(--border-subtle,#222);padding:3px 0}",
+    ".bt-sp{display:flex;gap:8px;align-items:baseline;font-size:12px;border-bottom:1px solid var(--border-light,#222);padding:3px 0}",
     ".bt-sp-org{font:700 10px/1 var(--font-retro,monospace);color:var(--text-tertiary);min-width:34px}",
     ".bt-sp-name{flex:1;min-width:0;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     ".bt-sp-num{font:600 10px/1 var(--font-retro,monospace);color:var(--text-tertiary)}",
@@ -1107,20 +1187,20 @@
     ".bt-faironly{font-size:12px;color:var(--text-secondary);padding:6px 0}",
     ".bt-hold{font-size:11px;color:var(--text-tertiary);margin-top:6px}",
     ".bt-tag{font:700 9px/1 var(--font-retro,monospace);padding:3px 5px;text-transform:uppercase}",
-    ".bt-tag-warn{color:var(--accent-gold,#a80);border:1px solid var(--accent-gold,#a80)}",
+    ".bt-tag-warn{color:var(--text-primary);border:1.5px solid var(--accent-gold,#a80)}",
     ".bt-tag-block{color:var(--text-on-accent,#fff);background:var(--accent-red,#c55)}",
     ".bt-block{border:1px solid var(--accent-red,#c55);padding:10px;margin:8px 0;font-size:12.5px;color:var(--text-secondary);background:var(--bg-secondary)}",
     ".bt-block strong{color:var(--text-primary);display:block;margin-bottom:4px}",
     ".bt-parlay-sum{margin:8px 0}",
     ".bt-legpick{margin:8px 0}",
-    ".bt-calc{border:1px solid var(--border-subtle,#333);background:var(--bg-secondary);padding:12px;margin:10px 0}",
+    ".bt-calc{border:1px solid var(--border,#333);background:var(--bg-secondary);padding:12px;margin:10px 0}",
     ".bt-calc-hd{font:700 13px/1 var(--font-retro,monospace);color:var(--text-primary);margin-bottom:8px}",
     ".bt-calc-fields,.bt-betform{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;align-items:end}",
     ".bt-field{display:flex;flex-direction:column;gap:3px;font:600 10px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em}",
-    ".bt-input{font:600 13px/1 var(--font-retro,monospace);padding:7px 9px;border:1px solid var(--border-subtle,#3a3a3a);background:var(--bg-primary,transparent);color:var(--text-primary);border-radius:0;width:100%;box-sizing:border-box}",
+    ".bt-input{font:600 13px/1 var(--font-retro,monospace);padding:7px 9px;border:1px solid var(--border,#3a3a3a);background:var(--bg-primary,transparent);color:var(--text-primary);border-radius:0;width:100%;box-sizing:border-box}",
     ".bt-calc-out{margin:10px 0 6px;min-height:22px}",
     ".bt-calc-why{font-size:11.5px;color:var(--text-tertiary)}",
-    ".bt-btn{font:600 11px/1 var(--font-retro,monospace);padding:6px 10px;border:1px solid var(--border-subtle,#3a3a3a);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;border-radius:0;margin-left:4px}",
+    ".bt-btn{font:600 11px/1 var(--font-retro,monospace);padding:6px 10px;border:1px solid var(--border,#3a3a3a);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;border-radius:0;margin-left:4px}",
     ".bt-btn:hover{background:var(--bg-hover,var(--bg-secondary));transition:var(--transition-hover,none)}",
     ".bt-btn-go{background:var(--accent-cyan,#2a7);color:var(--text-on-accent,#fff);border-color:transparent;margin-left:0}",
     ".bt-btn-x{color:var(--accent-red,#c55)}",

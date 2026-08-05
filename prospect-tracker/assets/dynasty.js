@@ -110,7 +110,7 @@
     { key: "name", label: "Prospect", where: "head", track: "minmax(0,1.7fr)", kind: "name", text: true, asc: true,
       title: "Sort by name", get: function (d) { return d.name; },
       cell: function (d) {
-        return '<div class="dyn-id"><span class="mlb-name">' + teamLogo(d.org) + " " + nameLink(d.mlbam, d.name) +
+        return '<div class="dyn-id ff-id"><span class="mlb-name">' + teamLogo(d.org) + " " + nameLink(d.mlbam, d.name) +
           '</span><span class="mlb-sub">' + esc(d.pos || "") + (d.org ? " &middot; " + esc(d.org) : "") + "</span></div>";
       } },
     { key: "efv", label: "eFV", term: "xfv", where: "head", track: "72px", strong: true,
@@ -205,10 +205,19 @@
     if (v == null) return "-";
     return c.fmt ? c.fmt(v) : esc(v);
   }
+  // THE CARD CLASSES ARE THE SHARED ff- ONES, NOT dyn- COPIES. assets/site.css
+  // carries the whole board-card block (fixed 104px height with a matching
+  // contain-intrinsic-size, the rotated rank diamond, the hover shadow, the
+  // phone-swipeable sort bar, the phone header collapse) under .ff-card /
+  // .ff-rank / .ff-sortbar, written for exactly these four boards when they
+  // lived at /fantasy/. The split renamed them to dyn-* and rd-*, which
+  // silently dropped every one of those rules. Emitting the shared names is
+  // the fix, and it is the fix rather than a local re-declaration because the
+  // stylesheet already says so: one implementation, not two that drift.
   function cardCell(c, row, rk) {
-    if (c.kind === "rank") return '<span class="dyn-rank"><span class="dyn-rank-i">' + esc(rk) + "</span></span>";
+    if (c.kind === "rank") return '<span class="ff-rank"><span class="ff-rank-i">' + esc(rk) + "</span></span>";
     if (c.kind === "name") return cellValue(c, row);
-    return '<span class="mlb-metric' + (c.strong ? " dyn-strong" : "") + '"><span class="mlb-metric-label">' +
+    return '<span class="mlb-metric' + (c.strong ? " ff-strong" : "") + '"><span class="mlb-metric-label">' +
       glossLbl(c) + "</span>" + cellValue(c, row) + "</span>";
   }
   function dynStripe(d) {
@@ -230,20 +239,20 @@
       var chips = tcols.map(function (c) {
         return '<div class="mlb-chip"><b>' + esc(labelOf(c)) + "</b>" + cellValue(c, row) + "</div>";
       }).join("");
-      return '<div class="mlb-card dyn-card" style="--org-color:' +
+      return '<div class="mlb-card ff-card dyn-card" style="--org-color:' +
         (opts.stripeOf ? opts.stripeOf(row, rk) : "var(--border)") + ";grid-template-columns:" + tracks + '"' +
         (href ? ' tabindex="0" role="button" data-dynhref="' + esc(href) + '"' : "") + ">" +
         hcols.map(function (c) { return cardCell(c, row, rk); }).join("") +
         '<div class="mlb-tape"><div class="mlb-tape-inner">' + chips + "</div></div></div>";
     }).join("");
     if (!body) return '<div class="dyn-note">' + esc(opts.empty || "No rows to show yet.") + "</div>";
-    var head = '<div class="mlb-card-head dyn-card-head" style="grid-template-columns:' + tracks + '">' +
+    var head = '<div class="mlb-card-head ff-card-head dyn-card-head" style="grid-template-columns:' + tracks + '">' +
       hcols.map(function (c) { return sortBtn(c, st); }).join("") + "</div>";
     var bar = tcols.length
-      ? '<div class="dyn-sortbar"><span class="dyn-sortbar-lbl">Sort by</span>' +
+      ? '<div class="ff-sortbar dyn-sortbar"><span class="ff-sortbar-lbl">Sort by</span>' +
         tcols.map(function (c) { return sortBtn(c, st); }).join("") + "</div>"
       : "";
-    return bar + head + '<div class="mlb-card-list dyn-card-list">' + body + "</div>" +
+    return bar + head + '<div class="mlb-card-list ff-card-list dyn-card-list">' + body + "</div>" +
       gateNote(total, sorted.length);
   }
 
@@ -357,8 +366,9 @@
         "</td><td>" + esc(c.pos) + "</td><td>" + esc(c.eta) + '</td><td class="dyn-sc">' + grade + "</td></tr>";
     }).join("");
     return '<div class="dyn-note">Prospects close to the majors with fantasy upside. Stash before the call.</div>' +
-      '<table class="dyn-table"><thead><tr><th>Prospect</th><th>Org</th><th>Pos</th><th>ETA</th><th>eFV</th></tr></thead><tbody>' +
-      rows + "</tbody></table>" + gateNote(list.length, shown.length);
+      '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table">' +
+      '<thead><tr><th class="dyn-nm">Prospect</th><th>Org</th><th>Pos</th><th>ETA</th><th>eFV</th></tr></thead><tbody>' +
+      rows + "</tbody></table></div>" + gateNote(list.length, shown.length);
   }
 
   // ---- keeper calculator ----------------------------------------------------
@@ -409,8 +419,9 @@
     return explain + form +
       '<div class="dyn-note">Edge is the pick you spend minus his board rank. Positive means the board ranks him ' +
       "ahead of what the keeper costs. Keep by is the earliest round where that flips positive.</div>" +
-      '<table class="dyn-table"><thead><tr><th>#</th><th>Prospect</th><th>Pos</th><th>eFV</th><th>ETA</th>' +
-      "<th>Keep by</th><th>Verdict at R" + esc(k.round) + "</th></tr></thead><tbody>" + rows + "</tbody></table>" +
+      '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table">' +
+      '<thead><tr><th>#</th><th class="dyn-nm">Prospect</th><th>Pos</th><th>eFV</th><th>ETA</th>' +
+      "<th>Keep by</th><th>Verdict at R" + esc(k.round) + "</th></tr></thead><tbody>" + rows + "</tbody></table></div>" +
       gateNote(list.length, shown.length);
   }
   function field(id, label, val, lo, hi) {
@@ -671,7 +682,18 @@
     ".dyn-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}",
     ".dyn-table th{text-align:right;font:600 11px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border)}",
     ".dyn-table td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--border-light);color:var(--text-primary)}",
-    ".dyn-table th:nth-child(2),.dyn-table td.dyn-nm{text-align:left}",
+    // The name column is column 2 on the keeper table and column 1 on Call-up
+    // Watch, so the old `th:nth-child(2)` left-aligned the WRONG heading on
+    // each: "Prospect" sat right-aligned over left-aligned names and "Org" sat
+    // left-aligned over right-aligned orgs. The heading now carries the same
+    // class its cells do, which cannot drift when a column moves.
+    ".dyn-table th.dyn-nm,.dyn-table td.dyn-nm{text-align:left}",
+    // Wide tables scroll INSIDE this box. Without it the 7-column keeper table
+    // measured 430px against a 390px phone and scrolled the PAGE sideways.
+    ".dyn-tablewrap{max-width:100%}",
+    "@media (max-width:640px){.dyn-tablewrap{scrollbar-width:thin;scrollbar-color:var(--border) transparent;padding-bottom:4px}",
+    ".dyn-tablewrap::-webkit-scrollbar{height:4px;display:block}",
+    ".dyn-tablewrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}}",
     ".dyn-table td.dyn-rk{color:var(--text-tertiary)}",
     ".dyn-table td.dyn-sc{font-weight:700}",
     ".dyn-pos{color:var(--accent-green)}.dyn-neg{color:var(--accent-red)}",
@@ -687,12 +709,13 @@
     ".dyn-win-out{color:var(--text-tertiary)}",
     ".dyn-form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:10px 0}",
     ".dyn-field{display:flex;flex-direction:column;gap:3px;font:600 11px/1.3 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em}",
-    ".dyn-field input{width:150px;padding:6px 8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font:600 13px/1 var(--font-retro,monospace)}",
-    ".dyn-sortbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0;font:600 11px/1 var(--font-retro,monospace);color:var(--text-tertiary)}",
-    ".dyn-sortbar [role=button]{cursor:pointer;padding:3px 6px;border:1px solid var(--border);color:var(--text-secondary)}",
-    ".dyn-sortbar-lbl{text-transform:uppercase;letter-spacing:.04em}",
-    ".dyn-strong{font-weight:700}",
-    ".dyn-rank{display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 var(--font-retro,monospace);color:var(--text-secondary)}"
+    ".dyn-field input{width:150px;padding:6px 8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font:600 13px/1 var(--font-retro,monospace)}"
+    // NOTHING FOR THE SORT BAR, THE RANK CHIP OR THE SCORE CELL LIVES HERE any
+    // more. Those are .ff-sortbar / .ff-rank / .ff-strong in assets/site.css
+    // and the markup above names them. The local copies that used to sit here
+    // were at the same specificity but LATER in the cascade than the
+    // stylesheet, so they quietly beat it: that is how the phone sort-bar
+    // swipe strip and the rank diamond went missing on this page.
   ].join("");
   document.head.appendChild(css);
 })();

@@ -98,6 +98,7 @@ _REDRAFT_VER = _asset_ver("assets/redraft.js")
 _DFS_VER = _asset_ver("assets/dfs.js")
 _BETTING_VER = _asset_ver("assets/betting.js")
 _CARDS_VER = _asset_ver("assets/cards.js")
+_CARDS_CSS_VER = _asset_ver("assets/cards.css")
 _DIAMOND_VER = _asset_ver("assets/diamond.js")
 # The gate switch lives in ONE file (assets/diamond-config.js:
 # window.EEPHUS_DIAMOND = {gating:false, ...}). Every Diamond page loads it
@@ -3860,6 +3861,11 @@ def build_cards() -> str:
         '<div id="cards-app-root"></div>'
         '</div>'
         '</div>'
+        # The module stylesheet's permanent, cache-busted home. cards.js also
+        # self-loads it behind a href*="cards.css" guard, which this versioned
+        # URL satisfies, so the injection becomes a no-op rather than a double
+        # load. Placement mirrors build_trademachine().
+        f'<link rel="stylesheet" href="/assets/cards.css?v={_CARDS_CSS_VER}">'
         f'{DIAMOND_CONFIG_SCRIPT}'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'

@@ -331,7 +331,8 @@ from storage import (
     snapshot_board_metrics, snapshot_trade_values, snapshot_farm_ranks,
     snapshot_farm_grades, record_il_observation,
 )
-from consensus import build_timeseries, ADOPT_NORMALIZED_CONSENSUS
+from consensus import (build_timeseries, ADOPT_NORMALIZED_CONSENSUS,
+                       CONSTANT_ANCHOR_SOURCES)
 from stats import (fetch_statlines_for, derive_statlines_from_career,
                    fetch_pitch_arsenal, fetch_sabermetrics,
                    fetch_career_war_bulk,
@@ -2620,7 +2621,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 "player_key": p.player_key,
                 "fv_label": latest.consensus_fv_label if latest else None,
                 "fv_raw":   latest.consensus_fv_raw   if latest else None,
-                "fv_synthetic_only": bool(_srcs) and _srcs <= consensus.CONSTANT_ANCHOR_SOURCES,
+                "fv_synthetic_only": bool(_srcs) and _srcs <= CONSTANT_ANCHOR_SOURCES,
                 "status":   p.status,
             }
 

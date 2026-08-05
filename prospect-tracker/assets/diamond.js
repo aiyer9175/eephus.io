@@ -103,7 +103,14 @@
     });
     var archHTML = "";
     if (arch.length) {
-      archHTML = '<table class="dm-table"><thead><tr>' +
+      // SAY WHICH METRIC. The table reads by_archetype_vs_consensus[].spearman
+      // and nothing else, but it sits directly under two tiles carrying two
+      // DIFFERENT numbers (rank correlation and contributor AUC) and named
+      // neither of them. A reader had no way to tell which one the per-group
+      // rows were, and the green win highlight is a Spearman win specifically.
+      archHTML = '<p class="dm-fine">Rank correlation with realized career WAR, ' +
+        "by prospect group. Green is the higher of the two.</p>" +
+        '<table class="dm-table"><thead><tr>' +
         "<th>Group</th><th>eFV</th><th>" + esc(who) + "</th><th>n</th>" +
         "</tr></thead><tbody>" +
         arch.map(function (a) {
@@ -316,14 +323,34 @@
   // Injected rather than added to site.css: this is one page's worth of rules
   // and site.css is shared by every surface. Theme tokens only, sharp corners,
   // and every value carries a fallback so an unthemed render is still legible.
+  //
+  // TOKEN NAMES ARE CHECKED, NOT GUESSED (fixed 2026-08-05, first real-browser
+  // render). This sheet was written against `--border-subtle`, which THIS SITE
+  // DOES NOT DEFINE: getPropertyValue("--border-subtle") is "" in both themes,
+  // so every rule below fell through to its hardcoded #333 / #222 fallback.
+  // In dark that was near enough to pass unnoticed. In LIGHT it painted a
+  // near-black 1px rule around every card, tile, stat box and table row on a
+  // cream page, where the real token --border is #C9C1AE. The tell was that
+  // the SAME cards looked correct with JavaScript off, because site.css's own
+  // .card rule uses --border and this sheet was overriding it with a worse
+  // value. Tokens used here now: --border (hairline), --border-light (the
+  // softer inner rule), both defined in site.css for light and dark.
+  //
+  // The fine print also has to out-specify site.css's `.card p` (0,1,1), which
+  // otherwise sets it to .95rem and --text-secondary: the provenance line, the
+  // protocol line and the "Diamond funds the free site" line were all rendering
+  // at body size, so the page had no fine print, only more body copy.
   var css = document.createElement("style");
   css.textContent = [
-    ".diamond-app .card{border:1px solid var(--border-subtle,#333);background:var(--bg-secondary);padding:14px 16px;margin:12px 0}",
+    ".diamond-app .card{border:1px solid var(--border,#c9c1ae);background:var(--bg-secondary);padding:14px 16px;margin:12px 0}",
     ".diamond-app .diamond-banner{border-left:3px solid var(--accent-cyan,#2a7)}",
     ".diamond-app .diamond-price h3{margin-top:0}",
     ".diamond-fine,.dm-fine{font-size:12px;color:var(--text-tertiary);margin-top:8px}",
+    ".diamond-app .card p.diamond-fine,.diamond-app .card p.dm-fine," +
+      ".diamond-app p.diamond-fine,.diamond-app p.dm-fine" +
+      "{font-size:12px;line-height:1.5;color:var(--text-tertiary)}",
     ".dm-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:12px 0}",
-    ".dm-tile{border:1px solid var(--border-subtle,#333);padding:10px 12px;background:var(--bg-primary,transparent)}",
+    ".dm-tile{border:1px solid var(--border,#c9c1ae);padding:10px 12px;background:var(--bg-primary,transparent)}",
     ".dm-tile-lbl{font:600 11px/1.3 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}",
     ".dm-tile-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:2px 0}",
     ".dm-tile-who{font-size:12.5px;color:var(--text-secondary)}",
@@ -331,13 +358,13 @@
     ".dm-tile-val.dm-ours{color:var(--accent-green,#3a9)}",
     ".dm-tile-n{font-size:11px;color:var(--text-tertiary);margin-top:6px}",
     ".dm-table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}",
-    ".dm-table th{text-align:right;font:600 11px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border-subtle,#333)}",
+    ".dm-table th{text-align:right;font:600 11px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border,#c9c1ae)}",
     ".dm-table th:first-child{text-align:left}",
-    ".dm-table td{padding:6px 8px;border-bottom:1px solid var(--border-subtle,#222);color:var(--text-primary)}",
+    ".dm-table td{padding:6px 8px;border-bottom:1px solid var(--border-light,var(--border,#e2dcc9));color:var(--text-primary)}",
     ".dm-table td.dm-num{text-align:right;font-variant-numeric:tabular-nums}",
     ".dm-table td.dm-win{color:var(--accent-green,#3a9);font-weight:700}",
     ".dm-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin:10px 0}",
-    ".dm-stat{border:1px solid var(--border-subtle,#333);padding:8px 10px;display:flex;flex-direction:column;gap:3px}",
+    ".dm-stat{border:1px solid var(--border,#c9c1ae);padding:8px 10px;display:flex;flex-direction:column;gap:3px}",
     ".dm-stat-lbl{font:600 10px/1.2 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em}",
     ".dm-stat-val{font:700 15px/1 var(--font-retro,monospace);color:var(--text-primary)}",
     ".dm-btn{font:600 13px/1 var(--font-retro,monospace);padding:9px 14px;border:1px solid var(--accent-cyan,#2a7);background:transparent;color:var(--accent-cyan,#2a7);cursor:pointer;margin-top:6px}",

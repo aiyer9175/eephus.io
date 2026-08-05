@@ -34,6 +34,30 @@
 (function () {
   "use strict";
 
+  // ---- the module stylesheet ------------------------------------------------
+  // assets/cards.css SHIPPED ORPHANED. Rendered in a real browser for the first
+  // time on 2026-08-05, /cards/ was serving with site.css only: nothing in
+  // build_site.py, in the emitted <head>, or in any script ever referenced
+  // cards.css, so all 176 of its lines were dead. Every .cards-* class on the
+  // page - the screen banner, the signal chips, the sparkline, the detail
+  // drawer, the refractor hairline, and the phone/desktop chip swap that stops
+  // the row-1 metrics being printed TWICE - resolved to nothing.
+  //
+  // Self-loading here fixes it from the asset side with no rebuild, and the
+  // guard makes it a no-op the moment a proper versioned <link> lands in the
+  // page shell (which is the better permanent home, since a <link> in <head>
+  // has no flash). Do not remove the guard: two copies of a sheet is not a bug
+  // but it is noise in the network tab.
+  (function ensureCSS() {
+    try {
+      if (document.querySelector('link[rel="stylesheet"][href*="cards.css"]')) return;
+      var l = document.createElement("link");
+      l.rel = "stylesheet";
+      l.href = "/assets/cards.css";
+      document.head.appendChild(l);
+    } catch (e) { /* no head yet: the page is broken in a bigger way */ }
+  })();
+
   var DATA_URL = "/data/card_market.json";
   var SECTIONS = { buy: 1, movers: 1, watchlist: 1, method: 1 };
 
@@ -59,7 +83,12 @@
   function f1(v) { var n = num(v); return n === null ? "-" : n.toFixed(1); }
   // eFV rounds to NEAREST (it is not a scouting FV, which ceilings). The site
   // rule in one place so no cell can drift off it.
-  function fEfv(v) { var n = num(v); return n === null ? "-" : String(Math.round(n * 10) / 10); }
+  //
+  // ONE DECIMAL, ALWAYS. String(Math.round(n*10)/10) drops the trailing zero,
+  // so a tabular-nums column read 61.9 / 61 / 60.2 / 58 / 57.4 with the whole
+  // numbers hanging a digit short of their neighbours. toFixed(1) is the same
+  // rounding, printed to a fixed width.
+  function fEfv(v) { var n = num(v); return n === null ? "-" : (Math.round(n * 10) / 10).toFixed(1); }
   function money(v) {
     var n = num(v);
     if (n === null) return "-";
@@ -148,6 +177,15 @@
       return Math.abs(y) - Math.abs(x);
     };
   }
+  // The watchlist order, in ONE place, so the exported graphic cannot list the
+  // same cards in a different order than the board on screen.
+  function byEfvThenName(a, b) {
+    var x = num(a.efv), y = num(b.efv);
+    if (x === null && y === null) return String(a.name || "").localeCompare(String(b.name || ""));
+    if (x === null) return 1;
+    if (y === null) return -1;
+    return y - x;
+  }
 
   // ---- card rows ------------------------------------------------------------
   function signalChip(c) {
@@ -210,6 +248,10 @@
           // on screen and nothing is lost on a phone.
           '<div class="mlb-chip cards-chip-phone"><b>Index</b>' + indexCell(c) + "</div>" +
           '<div class="mlb-chip cards-chip-phone"><b>eFV</b>' + efvCell(c) + "</div>" +
+          // Trend was the ONE row-1 metric with no phone twin: below 720px the
+          // metric track is hidden and the only "Trend" left in the tape was the
+          // sparkline, so the percentage simply vanished on a phone.
+          '<div class="mlb-chip cards-chip-phone"><b>Trend</b>' + trendCell(c) + "</div>" +
           '<div class="mlb-chip cards-chip-phone"><b>Gap</b>' +
             (num(c.gap) === null ? "-" : (num(c.gap) > 0 ? "+" : "") + f1(c.gap)) + "</div>" +
           '<div class="mlb-chip"><b>Signal</b>' + signalChip(c) + "</div>" +
@@ -217,7 +259,11 @@
           '<div class="mlb-chip"><b>Price pct</b>' + (num(c.market_pct) === null ? "-" : f1(c.market_pct)) + "</div>" +
           '<div class="mlb-chip"><b>Comps in window</b>' + esc(c.index_n == null ? "0" : c.index_n) + "</div>" +
           '<div class="mlb-chip"><b>Prior index</b>' + (c.prior_index_usd == null ? "-" : money(c.prior_index_usd)) + "</div>" +
-          '<div class="mlb-chip"><b>Trend</b>' + sparkline(c.history, { width: 110, height: 22 }) + "</div>" +
+          // "History", not "Trend": the row-1 metric track and the phone chip
+          // both already carry a cell labelled Trend, and this one is the
+          // sparkline of published index points, which is what the detail
+          // drawer calls "Index history" too.
+          '<div class="mlb-chip"><b>History</b>' + sparkline(c.history, { width: 110, height: 22 }) + "</div>" +
         "</div></div>" +
       "</div>";
     return head + (open ? detailPanel(c) : "");
@@ -285,8 +331,30 @@
   }
   var HEAD_COLS = ["#", "Card", "eFV", "Index", "Trend", "Gap"];
 
+  // An empty board has TWO different causes and they need two different
+  // sentences. Saying "no card has a priced index yet" to a reader who just
+  // typed a name that matches nothing is false, and the reverse - telling a
+  // reader to "run the ingest" - is an instruction to the site operator printed
+  // on a public page. filtering() answers which case we are in.
+  //
+  // The pre-fix copy on the watchlist was the worst of both: filter to zero
+  // matches and it read "The watchlist is empty. Regenerate
+  // data/card_watchlist.json", on a board that was showing 40 cards a keystroke
+  // earlier.
+  function filtering() {
+    return state.tier !== "ALL" || !!(state.query || "").trim();
+  }
+  function noMatchMsg() {
+    var bits = [];
+    if ((state.query || "").trim()) bits.push('"' + (state.query || "").trim() + '"');
+    if (state.tier !== "ALL") bits.push(state.tier === "mlb" ? "MLB cards" : "prospect cards");
+    return "No tracked card matches " + (bits.join(" in ") || "this filter") +
+           ". Clear the filter to see the whole board.";
+  }
   function renderList(rows, emptyMsg) {
-    if (!rows.length) return '<div class="mlbstats-empty">' + esc(emptyMsg) + "</div>";
+    if (!rows.length) {
+      return '<div class="mlbstats-empty">' + esc(filtering() ? noMatchMsg() : emptyMsg) + "</div>";
+    }
     return boardHead(HEAD_COLS) + '<div class="mlb-card-list cards-list">' +
       rows.map(function (c, i) { return cardRow(c, i + 1); }).join("") + "</div>";
   }
@@ -294,34 +362,31 @@
   function renderBuy() {
     var rows = filtered().filter(function (c) { return c.gap !== null && c.gap !== undefined; })
                          .sort(byDesc("gap"));
-    return screenBanner() + filterBar() +
+    return screenBanner() + filterBar(rows.length) +
       '<p class="mlbstats-note">Ranked by the gap between where the player sits on talent and ' +
       'where the card sits on price, inside its own tier. Cards with no index are in Watchlist.</p>' +
-      renderList(rows, "No card has a priced index yet. Drop comps or run the ingest, then re-export.");
+      renderList(rows, "No card carries a priced index yet, so there is no gap to rank. The screen " +
+                       "fills in as sold comps land in the window; every tracked card is in Watchlist " +
+                       "in the meantime.");
   }
 
   function renderMovers() {
     var rows = filtered().filter(function (c) { return c.trend_pct !== null && c.trend_pct !== undefined; })
                          .sort(absDesc("trend_pct"));
-    return screenBanner() + filterBar() +
+    return screenBanner() + filterBar(rows.length) +
       '<p class="mlbstats-note">Biggest index change against the prior window. A mover needs ' +
       'both windows priced, so a card can be tracked and still not appear here.</p>' +
       renderList(rows, "No card has two priced windows yet. Movers fill in as history accumulates.");
   }
 
   function renderWatchlist() {
-    var rows = filtered().slice().sort(function (a, b) {
-      var x = num(a.efv), y = num(b.efv);
-      if (x === null && y === null) return String(a.name || "").localeCompare(String(b.name || ""));
-      if (x === null) return 1;
-      if (y === null) return -1;
-      return y - x;
-    });
+    var rows = filtered().slice().sort(byEfvThenName);
     var m = (DATA && DATA.meta) || {};
-    return screenBanner() + filterBar() +
+    return screenBanner() + filterBar(rows.length) +
       '<p class="mlbstats-note">Every tracked card, priced or not. ' + esc(m.n_priced || 0) +
       " of " + esc(m.n_cards || 0) + " carry an index today.</p>" +
-      renderList(rows, "The watchlist is empty. Regenerate data/card_watchlist.json.");
+      renderList(rows, "No card is being tracked yet. The watchlist is curated, so this board is " +
+                       "empty until cards are added to it.");
   }
 
   function renderMethod() {
@@ -365,7 +430,13 @@
       "Individual sales and listings are not republished.</span></div>";
   }
 
-  function filterBar() {
+  // rowCount gates the board GFX button. On a zero-comp export the Buy Screen
+  // has no rows, and "Generate GFX" was still offered: it opened the export
+  // dialog on a board with a title, a legend, a column rule and NOTHING under
+  // it, and the Download PNG button in that dialog works. A blank shareable
+  // graphic with the site's name on it is worse than no button, so the button
+  // is only emitted when there is something to draw.
+  function filterBar(rowCount) {
     var tiers = ["ALL", "prospect", "mlb"];
     return '<div class="cards-filters">' +
       '<div class="cards-tiers">' + tiers.map(function (t) {
@@ -375,18 +446,47 @@
       }).join("") + "</div>" +
       '<input id="cards-search" class="cards-search" type="search" placeholder="Filter by player, org or set" ' +
         'value="' + esc(state.query) + '" aria-label="Filter cards">' +
-      (window.EEPHUS_GFX ? '<button type="button" class="chip" id="cards-board-gfx">Generate GFX</button>' : "") +
+      ((window.EEPHUS_GFX && rowCount)
+        ? '<button type="button" class="chip" id="cards-board-gfx">Generate GFX</button>' : "") +
       "</div>";
   }
 
   // ---- GFX ------------------------------------------------------------------
+  // The exported board follows the board you are LOOKING AT. It used to always
+  // rebuild the Buy Screen rows: from Watchlist or Movers, "Generate GFX" quietly
+  // handed you a different board than the one on screen, and on a zero-comp
+  // export that different board was empty.
+  function sectionRows() {
+    if (section === "movers") {
+      return { rows: filtered().filter(function (c) { return num(c.trend_pct) !== null; })
+                               .sort(absDesc("trend_pct")),
+               title: "Card Market · Movers", file: "cards-movers",
+               noun: "cards with two priced windows" };
+    }
+    if (section === "watchlist") {
+      return { rows: filtered().slice().sort(byEfvThenName),
+               title: "Card Market · Watchlist", file: "cards-watchlist",
+               noun: "tracked cards" };
+    }
+    return { rows: filtered().filter(function (c) { return c.gap !== null && c.gap !== undefined; })
+                             .sort(byDesc("gap")),
+             title: "Card Market · Buy Screen", file: "cards-buy-screen",
+             noun: "priced cards" };
+  }
   function boardSpec() {
-    var rows = filtered().filter(function (c) { return c.gap !== null && c.gap !== undefined; })
-                         .sort(byDesc("gap"));
+    var cur = sectionRows();
+    var rows = cur.rows;
     var brows = rows.map(function (c, i) {
       return { cells: [
         { t: i + 1 },
-        { t: c.name || c.player_key, sub: (c.org || "") + (c.set ? " " + c.set : "") },
+        // KEEP THE SUB SHORT. The board renderer in eephus-gfx.js draws a
+        // cell's `sub` at its natural width with no fitTxt() clamp, so anything
+        // long runs straight over the next column: "WSH Topps Chrome Rookie
+        // Refractor" collided with the eFV number on every row of the 16:9
+        // two-column layout. Org plus grade identifies the row and fits; the
+        // set name lives on the page, which is where the link points.
+        { t: c.name || c.player_key,
+          sub: [c.org, c.grade].filter(Boolean).join(" ") },
         { t: fEfv(c.efv) },
         { t: money(c.index_usd), c: "accent" },
         { t: pct(c.trend_pct, true), c: num(c.trend_pct) > 0 ? "pos" : (num(c.trend_pct) < 0 ? "neg" : "muted") },
@@ -395,19 +495,22 @@
     });
     return {
       kind: "board", module: "Card Market", accentToken: "--accent-gold",
-      title: "Card Market · Buy Screen",
-      subtitle: rows.length + " priced cards · eephus Card Index, derived from public sold prices",
-      url: "eephus.io/cards", filenameBase: "cards-buy-screen",
+      title: cur.title,
+      subtitle: rows.length + " " + cur.noun + " · eephus Card Index, derived from public sold prices",
+      url: "eephus.io/cards", filenameBase: cur.file,
       caption: "a screen, not investment advice · index values are derived statistics, raw comps are not republished",
       board: { defaultCount: 25, counts: [10, 25, 50],
         legend: "Index = grade-adjusted trimmed median · Gap = talent percentile minus price percentile",
+        // The identity column carries a name AND a sub on one baseline, so it
+        // needs more of the panel than four short numeric cells do. 0.34 was
+        // not enough for either half of the two-column 16:9 layout.
         columns: [
-          { label: "#", frac: 0.06 },
-          { label: "Card", frac: 0.34 },
-          { label: "eFV", frac: 0.12 },
-          { label: "Index", frac: 0.16 },
-          { label: "Trend", frac: 0.16, wideOnly: true },
-          { label: "Gap", frac: 0.16 },
+          { label: "#", frac: 0.05 },
+          { label: "Card", frac: 0.47 },
+          { label: "eFV", frac: 0.10 },
+          { label: "Index", frac: 0.14 },
+          { label: "Trend", frac: 0.12, wideOnly: true },
+          { label: "Gap", frac: 0.12 },
         ], rows: brows },
     };
   }
@@ -466,18 +569,27 @@
     }
   }
 
+  // TWO different failures, two different headlines. "Card Market is not built
+  // yet" was printed for BOTH, and it is simply false in the LOAD_ERROR case:
+  // a reader on a flaky connection, or hitting a five-minute CDN blip, was told
+  // the module does not exist. The reader-facing sentence comes first and the
+  // file and script names drop to a muted diagnostic line, because this card
+  // renders on a public page and a stranger should not be handed a build
+  // instruction as the main text.
   function emptyStateHTML() {
+    var title = LOAD_ERROR ? "The card market did not load" : "No cards are being tracked yet";
     var why = LOAD_ERROR
-      ? "The card market payload did not load."
-      : "The card market payload is present but has no cards in it.";
+      ? "The board could not fetch its data. That is usually the connection rather than the " +
+        "module: try again, and if it keeps failing the export has not published."
+      : "The payload is here but carries no cards. Until a card is on the watchlist there is " +
+        "nothing to price, and an empty board is the honest thing to show.";
     return '<div class="state-message is-error">' +
-      '<div class="state-message-title">Card Market is not built yet</div>' +
-      '<div class="state-message-body"><p>' + esc(why) + " The board reads " +
-      "<code>/data/card_market.json</code>, written by <code>card_market_export.py</code> " +
-      "from the curated watchlist in <code>data/card_watchlist.json</code>.</p>" +
-      "<p>Until comps are ingested there is nothing to price, and an empty board is the " +
-      "honest thing to show.</p>" +
-      '<p><button type="button" class="chip" id="cards-retry">Retry</button></p></div></div>';
+      '<div class="state-message-title">' + esc(title) + "</div>" +
+      '<div class="state-message-body"><p>' + esc(why) + "</p>" +
+      '<p><button type="button" class="chip" id="cards-retry">Retry</button></p>' +
+      '<p class="cards-meta">Source: <code>/data/card_market.json</code>, written by ' +
+      "<code>card_market_export.py</code> from <code>data/card_watchlist.json</code>.</p>" +
+      "</div></div>";
   }
 
   function bind(root) {
@@ -526,26 +638,45 @@
   }
 
   // ---- section nav / boot ---------------------------------------------------
+  // THE TAB WIRING IS DELIBERATELY TOLERANT, and that is not defensive
+  // programming for its own sake. The page shell emits its buttons as
+  // data-cardSSection="screen|movers|watchlist|method" while this module was
+  // written against data-cardSection="buy|...". Rendered for the first time in
+  // a real browser on 2026-08-05, that one-letter attribute name plus the
+  // screen/buy value split meant querySelectorAll matched NOTHING: three of the
+  // four boards, including Watchlist (the only populated board in a zero-comp
+  // run) and Method, were unreachable and no error was thrown to say so.
+  //
+  // Accepting BOTH attribute spellings and aliasing "screen" -> "buy" fixes it
+  // from the asset side, with no rebuild, and stays correct if the shell is
+  // later normalised to the singular name.
+  var SECTION_NODES = "[data-cardsection],[data-cardssection]";
+  var SECTION_ALIAS = { screen: "buy", buy: "buy" };
+  function sectionOf(node) {
+    var raw = node.getAttribute("data-cardsection") || node.getAttribute("data-cardssection") || "";
+    return SECTION_ALIAS[raw] || raw;
+  }
   function setSection(s) {
+    s = SECTION_ALIAS[s] || s;
     if (!SECTIONS[s]) return;
     section = s;
-    Array.prototype.forEach.call(document.querySelectorAll("[data-cardsection]"), function (x) {
-      var on = x.getAttribute("data-cardsection") === s;
+    Array.prototype.forEach.call(document.querySelectorAll(SECTION_NODES), function (x) {
+      var on = sectionOf(x) === s;
       x.classList.toggle("active", on);
       x.setAttribute("aria-selected", on ? "true" : "false");
     });
   }
   function bindSectionNav() {
-    Array.prototype.forEach.call(document.querySelectorAll("[data-cardsection]"), function (b) {
+    Array.prototype.forEach.call(document.querySelectorAll(SECTION_NODES), function (b) {
       b.addEventListener("click", function () {
-        setSection(b.getAttribute("data-cardsection"));
+        setSection(sectionOf(b));
         try { history.replaceState(null, "", "#" + section); } catch (e) { /* file:// */ }
         render();
       });
     });
   }
   function readHash() {
-    var m = /^#(buy|movers|watchlist|method)/.exec(location.hash || "");
+    var m = /^#(buy|screen|movers|watchlist|method)/.exec(location.hash || "");
     if (m) setSection(m[1]);
   }
   function loadLinks() {
@@ -561,12 +692,22 @@
       .then(function (j) { DATA = j; render(); })
       .catch(function () { DATA = null; LOAD_ERROR = true; render(); });
   }
+  // history.replaceState does not fire hashchange, so this only ever sees a hash
+  // somebody else wrote: a deep link followed from the nav or another page, or a
+  // pasted /cards/#method. Same shape as redraft.js / fantasy.js / dfs.js, which
+  // all carry this and which cards.js was the only module missing.
+  function onHashChange() {
+    var before = section;
+    readHash();
+    if (section !== before) render();
+  }
   function init() {
     bindSectionNav();
     readHash();
     render();
     load();
     loadLinks();
+    window.addEventListener("hashchange", onHashChange);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

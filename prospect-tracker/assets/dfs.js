@@ -29,7 +29,7 @@
   var LS_SAL = "eephus.dfs.salaries";
   var LS_SET = "eephus.dfs.settings";
   var S = {
-    data: null, section: "slate", system: "dk", template: null,
+    data: null, error: null, section: "slate", system: "dk", template: null,
     cap: null, maxPerTeam: null, minStart: 0.5, avoidOpp: false,
     salaries: {}, salaryMeta: null, lineup: null, importReport: null,
     sort: { pitchers: { key: "pts", asc: false }, hitters: { key: "pts", asc: false } }
@@ -384,7 +384,8 @@
       }).join("") + "</tr>";
     }).join("");
     return methodNote(side) +
-      '<table class="dfs-table"><thead><tr>' + head + "</tr></thead><tbody>" + body + "</tbody></table>" +
+      '<div class="dfs-scroll"><table class="dfs-table"><thead><tr>' + head +
+      "</tr></thead><tbody>" + body + "</tbody></table></div>" +
       gateNote(total, sorted.length);
   }
   function methodNote(side) {
@@ -435,9 +436,10 @@
       '<div class="dfs-note">Projected points per thousand dollars of salary, over every player you have a ' +
       "price for. Projections are ours; salaries are yours. A high value score on a low start rate is a bench " +
       "bat who happens to be cheap, not a play.</div>" +
-      '<table class="dfs-table"><thead><tr><th>#</th><th class="dfs-l">Player</th><th>Game</th><th>Proj</th>' +
-      "<th>Salary</th><th>Pts/$1k</th><th>Start</th></tr></thead><tbody>" + rows + "</tbody></table>" +
-      gateNote(total, shown.length);
+      '<div class="dfs-scroll"><table class="dfs-table"><thead><tr><th>#</th>' +
+      '<th class="dfs-l">Player</th><th>Game</th><th>Proj</th>' +
+      "<th>Salary</th><th>Pts/$1k</th><th>Start</th></tr></thead><tbody>" + rows +
+      "</tbody></table></div>" + gateNote(total, shown.length);
   }
 
   // ---- stacks ---------------------------------------------------------------
@@ -478,9 +480,10 @@
       "with the arm they face and that opponent's innings-weighted pitching index (lower is easier). This is a " +
       "SUM of independent per-player projections. The correlation that makes a stack worth building is real and " +
       "we do not model it, so read this as a shortlist of good spots, not as a stack projection.</div>" +
-      '<table class="dfs-table"><thead><tr><th>#</th><th class="dfs-l">Club</th><th>Game</th><th>Opp SP</th>' +
+      '<div class="dfs-scroll"><table class="dfs-table"><thead><tr><th>#</th>' +
+      '<th class="dfs-l">Club</th><th>Game</th><th>Opp SP</th>' +
       "<th>Opp index</th><th>Top 4</th><th>Top 5</th><th>Top 4 salary</th>" +
-      '<th class="dfs-l">Bats</th></tr></thead><tbody>' + body + "</tbody></table>" +
+      '<th class="dfs-l">Bats</th></tr></thead><tbody>' + body + "</tbody></table></div>" +
       gateNote(rows.length, shown.length);
   }
 
@@ -499,19 +502,27 @@
       "</div>" +
       '<textarea id="dfs-csv-text" class="dfs-textarea" rows="6" placeholder="Name,Position,Salary,TeamAbbrev"></textarea>' +
       '<div class="dfs-form"><button type="button" class="dfs-btn dfs-btn-go" id="dfs-csv-go">Import pasted text</button></div>';
-    var status = "";
-    if (rep && !rep.ok) {
-      status = '<div class="dfs-warn">' + esc(rep.msg) + "</div>";
-    } else if (rep && rep.ok) {
-      status = '<div class="dfs-ok">Read ' + rep.read + " priced rows, matched " + rep.matched +
+    return block + salaryStatus();
+  }
+  // Split out of renderSalaries so the OPTIMIZER can show it too. Importing
+  // from the optimizer tab used to make the form and the result vanish
+  // together the moment the import succeeded: the reader pressed Import and
+  // got no confirmation that anything had happened at all.
+  function salaryStatus() {
+    var meta = S.salaryMeta, rep = S.importReport;
+    var have = Object.keys(S.salaries).length;
+    if (rep && !rep.ok) return '<div class="dfs-warn">' + esc(rep.msg) + "</div>";
+    if (rep && rep.ok) {
+      return '<div class="dfs-ok">Read ' + rep.read + " priced rows, matched " + rep.matched +
         " to the slate." + (rep.unmatched_n ? " " + rep.unmatched_n + " did not match: " +
           esc(rep.unmatched.join(", ")) + (rep.unmatched_n > rep.unmatched.length ? ", and more." : "") : "") +
         "</div>";
-    } else if (have) {
-      status = '<div class="dfs-ok">' + have + " salaries stored for " +
+    }
+    if (have) {
+      return '<div class="dfs-ok">' + have + " salaries stored for " +
         esc((meta && meta.slate_date) || "this slate") + ".</div>";
     }
-    return block + status;
+    return "";
   }
 
   // ---- optimizer ------------------------------------------------------------
@@ -574,27 +585,69 @@
     roster.forEach(function (p) { if (p) t += fn(p) || 0; });
     return t;
   }
+  // WHAT THE UNFILLED SLOTS WILL COST, AT LEAST. Two lower bounds, and the
+  // larger of the two is still a lower bound, so reserving it can never rule
+  // out a lineup that exists:
+  //
+  //   per slot   - every remaining slot costs at least the cheapest unused
+  //                player who can fill it,
+  //   distinct   - the remaining slots get DISTINCT players drawn from the
+  //                union of their pools, so together they cost at least the
+  //                sum of the n cheapest players in that union.
+  //
+  // The second bound is the one that matters and the one the first pass of
+  // this solver was missing. Three outfield slots share one pool, so summing
+  // the per-slot minimum reserved the cheapest outfielder three times over.
+  // The build then walked into a budget it could not finish, and the page told
+  // the reader no lineup satisfied his constraints while a lineup costing 68%
+  // of his cap sat in the pool.
+  function reserveFor(rest, cands, used) {
+    var perSlot = 0, union = {}, i, j, key, sal;
+    for (i = 0; i < rest.length; i++) {
+      var list = cands[rest[i]], lo = Infinity;
+      for (j = 0; j < list.length; j++) {
+        key = list[j].mlbam + "|" + list[j].side;
+        if (used[key]) continue;
+        sal = salaryOf(list[j]) || 0;
+        if (sal < lo) lo = sal;
+        union[key] = sal;
+      }
+      if (lo === Infinity) return Infinity;   // nothing left that can fill it
+      perSlot += lo;
+    }
+    var vals = Object.keys(union).map(function (k) { return union[k]; })
+      .sort(function (a, b) { return a - b; });
+    if (vals.length < rest.length) return Infinity;
+    var distinct = 0;
+    for (i = 0; i < rest.length; i++) distinct += vals[i];
+    return Math.max(perSlot, distinct);
+  }
   // GREEDY BUILD. Slots are filled scarcest first (a catcher pool of eight is
   // where a lineup gets stuck, not the outfield), and each pick has to leave
   // enough money on the table for the cheapest legal filling of what is left.
   // That reservation is the difference between a solver that fills nine slots
   // and one that spends the cap on eight and reports failure.
-  function greedy(tpl, pool) {
+  //
+  // `byCost` runs the same build cheapest-first instead of best-first. It is
+  // the feasibility pass: a lower bound is a bound, not a plan, so a points
+  // ordering can still dead-end, and "no lineup exists" is a claim this page
+  // should only make after trying to build the cheapest one there is.
+  function greedy(tpl, pool, byCost) {
     var slots = tpl.slots.map(function (s, i) { return { s: s, i: i }; });
     var cands = slots.map(function (x) {
-      return candidatesFor(x.s, pool).sort(function (a, b) { return ptsOf(b) - ptsOf(a); });
+      var list = candidatesFor(x.s, pool);
+      return byCost
+        ? list.sort(function (a, b) { return (salaryOf(a) || 0) - (salaryOf(b) || 0); })
+        : list.sort(function (a, b) { return ptsOf(b) - ptsOf(a); });
     });
     var order = slots.map(function (x, i) { return i; })
       .sort(function (a, b) { return cands[a].length - cands[b].length; });
     var roster = slots.map(function () { return null; });
-    var minSal = cands.map(function (list) {
-      return list.length ? Math.min.apply(null, list.map(function (p) { return salaryOf(p); })) : Infinity;
-    });
     var used = {};
     for (var oi = 0; oi < order.length; oi++) {
       var si = order[oi];
-      var reserve = 0;
-      for (var k = oi + 1; k < order.length; k++) reserve += minSal[order[k]];
+      var reserve = reserveFor(order.slice(oi + 1), cands, used);
+      if (!isFinite(reserve)) return null;
       var spent = total(roster, salaryOf);
       var budget = capOf(tpl) - spent - reserve;
       var best = null;
@@ -607,7 +660,7 @@
         trial[si] = p;
         if (!feasible(trial, tpl)) continue;
         best = p;
-        break;                       // candidates are points-sorted already
+        break;                       // candidates are already in pick order
       }
       if (!best) return null;
       roster[si] = best;
@@ -674,10 +727,13 @@
       return { ok: false, msg: "No player on this slate has both a salary and a projection. " +
                               "Import a salary sheet on the Salaries tab first." };
     }
-    var roster = greedy(tpl, pool);
+    var roster = greedy(tpl, pool, false);
+    if (!roster) roster = greedy(tpl, pool, true);   // cheapest-first feasibility pass
     if (!roster) {
-      return { ok: false, msg: "No lineup satisfies these constraints. Try raising the cap, raising the " +
-                              "per-team limit, lowering the minimum start rate, or importing more salaries." };
+      return { ok: false, msg: "No lineup satisfies these constraints. The solver tried a best-first " +
+                              "build and then a cheapest-first one, and neither filled every slot. Try " +
+                              "raising the cap, raising the per-team limit, lowering the minimum start " +
+                              "rate, or importing more salaries." };
     }
     roster = improve(roster, tpl, pool);
     return { ok: true, tpl: tpl, roster: roster,
@@ -717,8 +773,9 @@
         "do not have them, by choice: bring them from your own contest site below.</div>" + renderSalaries();
     }
     var res = S.lineup;
-    if (!res) return intro + controls;
-    if (!res.ok) return intro + controls + '<div class="dfs-warn">' + esc(res.msg) + "</div>";
+    var head = intro + controls + salaryStatus();
+    if (!res) return head;
+    if (!res.ok) return head + '<div class="dfs-warn">' + esc(res.msg) + "</div>";
     var rows = res.roster.map(function (p, i) {
       var slot = res.tpl.slots[i];
       return "<tr><td>" + esc(slot.slot) + '</td><td class="dfs-l">' + teamLogo(p.team) + " " +
@@ -731,9 +788,11 @@
       "<span><b>" + money(res.salary) + "</b> of " + money(cap) + " used</span>" +
       "<span><b>" + money(cap - res.salary) + "</b> left</span>" +
       "<span>" + res.pool + " players in the pool</span></div>";
-    return intro + controls + summary +
-      '<table class="dfs-table"><thead><tr><th>Slot</th><th class="dfs-l">Player</th><th>Game</th>' +
-      "<th>Proj</th><th>Salary</th><th>Pts/$1k</th></tr></thead><tbody>" + rows + "</tbody></table>";
+    return head + summary +
+      '<div class="dfs-scroll"><table class="dfs-table"><thead><tr><th>Slot</th>' +
+      '<th class="dfs-l">Player</th><th>Game</th>' +
+      "<th>Proj</th><th>Salary</th><th>Pts/$1k</th></tr></thead><tbody>" + rows +
+      "</tbody></table></div>";
   }
 
   // ---- slate header ---------------------------------------------------------
@@ -761,7 +820,16 @@
     if (!r) return;
     var d = S.data || {};
     var html;
-    if (d.empty_reason) {
+    if (S.error) {
+      // The payload never arrived. The tabs are still wired, so the reader gets
+      // a control that responds instead of four buttons that do nothing, and
+      // the same honest message under every one of them.
+      html = '<div class="dfs-error" role="alert"><strong>Slate failed to load.</strong> ' +
+        esc(S.error) + " The daily build may be mid-run, or the slate for today has not been " +
+        "built yet. Nothing on this page works without it, including the optimizer, which " +
+        'needs the projected pool to solve over. <button type="button" id="dfs-retry" ' +
+        'class="dfs-btn">Retry</button></div>';
+    } else if (d.empty_reason) {
       html = '<div class="dfs-empty" role="status"><strong>No slate to price.</strong><span>' +
         esc(d.empty_reason) + "</span><span>This page rebuilds every day. Nothing is broken.</span></div>";
     } else if (S.section === "value") html = renderValue();
@@ -775,8 +843,10 @@
     // The shell gives /redraft/ a bar for its scoring selector and gives this
     // page none, so the contest-format selector rides at the top of the
     // section when there is nowhere else to put it.
-    if (!scoringBar() && !d.empty_reason) html = selectorHTML() + html;
+    if (!scoringBar() && !d.empty_reason && !S.error) html = selectorHTML() + html;
     r.innerHTML = html;
+    var rb = r.querySelector("#dfs-retry");
+    if (rb) rb.addEventListener("click", boot);
     wireSection(r);
     if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(r);
   }
@@ -895,8 +965,13 @@
       b.setAttribute("aria-selected", on ? "true" : "false");
     });
   }
+  // Idempotent: a Retry after a failed load runs the boot path a second time,
+  // and a second listener on the same button would render the section twice
+  // per click.
   function wireTabs() {
     tabs().forEach(function (b) {
+      if (b.getAttribute("data-dfswired")) return;
+      b.setAttribute("data-dfswired", "1");
       b.addEventListener("click", function () {
         S.section = tabKey(b);
         syncTabs();
@@ -936,7 +1011,7 @@
     try { history.replaceState(null, "", LAST_HASH); } catch (e) { /* the hash is a nicety */ }
   }
   function onHashChange() {
-    if (!S.data) return;
+    if (!S.data && !S.error) return;
     if ((location.hash || "") === LAST_HASH) return;
     readHash();
     renderSelector(); syncTabs(); renderSection();
@@ -944,14 +1019,17 @@
   window.addEventListener("hashchange", onHashChange);
 
   // ---- boot -----------------------------------------------------------------
+  // A failed load used to paint one red box and stop, leaving the shell's four
+  // section tabs on screen with nothing bound to them: every click was a dead
+  // control. The tabs get wired either way now, and renderSection carries the
+  // message.
   function errorState(msg) {
-    var r = root();
-    if (r) r.innerHTML = '<div class="dfs-error" role="alert"><strong>Slate failed to load.</strong> ' +
-      esc(msg || "") + ' The daily build may be mid-run. <button type="button" id="dfs-retry" class="dfs-btn">Retry</button></div>';
-    var rb = el("dfs-retry");
-    if (rb) rb.addEventListener("click", boot);
+    S.error = String(msg || "the payload did not load");
+    S.data = null;
+    readHash(); wireTabs(); syncTabs(); renderSection();
   }
   function onData(d) {
+    S.error = null;
     S.data = d || {};
     loadSettings();
     loadSalaries();
@@ -984,6 +1062,9 @@
   // ---- module styles (theme tokens only) ------------------------------------
   var css = document.createElement("style");
   css.textContent = [
+    // Wide boards scroll inside their own box. The nine-column slate and stacks
+    // tables were pushing the whole document sideways at phone widths.
+    ".dfs-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}",
     ".dfs-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}",
     ".dfs-table th{text-align:right;font:600 11px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border)}",
     ".dfs-table td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--border-light);color:var(--text-primary)}",

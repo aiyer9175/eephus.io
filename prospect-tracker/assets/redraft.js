@@ -186,13 +186,13 @@
   function rosIdentity(o) {
     var p = o.p;
     var sub = (p.elig && p.elig.length) ? p.elig.join("/") : (p.pos || "");
-    return '<div class="rd-id"><span class="mlb-name">' + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) +
+    return '<div class="rd-id ff-id"><span class="mlb-name">' + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) +
       '</span><span class="mlb-sub">' + esc(sub) + (p.team ? " &middot; " + esc(p.team) : "") + "</span></div>";
   }
   var SCORE_TITLE = "Rest-of-season value in the league format picked above. Points formats are the dot product of the projection and that format's weight table; roto formats are pooled category z-scores.";
   var HIT_COLS = [
     { key: "rank", label: "#", where: "head", track: "38px", kind: "rank",
-      title: "Board position under the current sort", get: function (o) { return o.score; } },
+      title: "Board position under the current sort" },
     { key: "name", label: "Player", where: "head", track: "minmax(0,1.7fr)", kind: "name", text: true, asc: true,
       title: "Sort by name", get: function (o) { return o.p.name; }, cell: rosIdentity },
     { key: "score", label: scoreLabel, where: "head", track: "94px", title: SCORE_TITLE,
@@ -211,7 +211,7 @@
   function pitCols(isRp) {
     return [
       { key: "rank", label: "#", where: "head", track: "38px", kind: "rank",
-        title: "Board position under the current sort", get: function (o) { return o.score; } },
+        title: "Board position under the current sort" },
       { key: "name", label: "Pitcher", where: "head", track: "minmax(0,1.7fr)", kind: "name", text: true, asc: true,
         title: "Sort by name", get: function (o) { return o.p.name; }, cell: rosIdentity },
       { key: "score", label: scoreLabel, where: "head", track: "94px", title: SCORE_TITLE,
@@ -267,7 +267,13 @@
     });
     return out;
   }
+  // A column with no get() cannot be compared, so it is NOT dressed as a
+  // button. The "#" column used to be: it borrowed the score comparator, so
+  // clicking it re-sorted the board into the order it was already in and moved
+  // the sort arrow off Score onto a heading that is a display position, not a
+  // field. A control whose first click does nothing is worse than no control.
   function sortBtn(c, st) {
+    if (!c.get) return "<span>" + glossLbl(c) + "</span>";
     var on = st.key === c.key;
     return '<span role="button" tabindex="0" data-rdsort="' + esc(c.key) + '" aria-sort="' +
       (on ? (st.asc ? "ascending" : "descending") : "none") + '"' +
@@ -280,10 +286,19 @@
     if (v == null) return "-";
     return c.fmt ? c.fmt(v) : esc(v);
   }
+  // THE CARD CLASSES ARE THE SHARED ff- ONES, NOT rd- COPIES. assets/site.css
+  // carries the whole board-card block (fixed 104px height with a matching
+  // contain-intrinsic-size, the rotated rank diamond, the hover shadow, the
+  // phone-swipeable sort bar, the phone header collapse) under .ff-card /
+  // .ff-rank / .ff-sortbar, written for exactly these boards when they lived
+  // at /fantasy/. The split renamed them to rd-* and dyn-*, which silently
+  // dropped every one of those rules. Emitting the shared names is the fix,
+  // and it is the fix rather than a local re-declaration because the
+  // stylesheet already says so: one implementation, not two that drift.
   function cardCell(c, row, rk) {
-    if (c.kind === "rank") return '<span class="rd-rank"><span class="rd-rank-i">' + esc(rk) + "</span></span>";
+    if (c.kind === "rank") return '<span class="ff-rank"><span class="ff-rank-i">' + esc(rk) + "</span></span>";
     if (c.kind === "name") return cellValue(c, row);
-    return '<span class="mlb-metric' + (c.strong ? " rd-strong" : "") + '"><span class="mlb-metric-label">' +
+    return '<span class="mlb-metric' + (c.strong ? " ff-strong" : "") + '"><span class="mlb-metric-label">' +
       glossLbl(c) + "</span>" + cellValue(c, row) + "</span>";
   }
   // The stripe rides --org-color, the same custom property the PROSPX row and
@@ -307,20 +322,21 @@
       var chips = tcols.map(function (c) {
         return '<div class="mlb-chip"><b>' + esc(labelOf(c)) + "</b>" + cellValue(c, row) + "</div>";
       }).join("");
-      return '<div class="mlb-card rd-card" style="--org-color:' +
+      return '<div class="mlb-card ff-card rd-card" style="--org-color:' +
         (opts.stripeOf ? opts.stripeOf(row, rk) : stripeFor(rk)) + ";grid-template-columns:" + tracks + '"' +
         (href ? ' tabindex="0" role="button" data-rdhref="' + esc(href) + '"' : "") + ">" +
         hcols.map(function (c) { return cardCell(c, row, rk); }).join("") +
         '<div class="mlb-tape"><div class="mlb-tape-inner">' + chips + "</div></div></div>";
     }).join("");
     if (!body) return '<div class="rd-note">' + esc(opts.empty || "No rows to show yet.") + "</div>";
-    var head = '<div class="mlb-card-head rd-card-head" style="grid-template-columns:' + tracks + '">' +
+    var head = '<div class="mlb-card-head ff-card-head rd-card-head" style="grid-template-columns:' + tracks + '">' +
       hcols.map(function (c) { return sortBtn(c, st); }).join("") + "</div>";
     var bar = tcols.length
-      ? '<div class="rd-sortbar"><span class="rd-sortbar-lbl">Sort by</span>' +
+      ? '<div class="ff-sortbar rd-sortbar"><span class="ff-sortbar-lbl">Sort by</span>' +
         tcols.map(function (c) { return sortBtn(c, st); }).join("") + "</div>"
       : "";
-    return bar + head + '<div class="mlb-card-list rd-card-list">' + body + "</div>" + gateNote(total, sorted.length);
+    return bar + head + '<div class="mlb-card-list ff-card-list rd-card-list">' + body + "</div>" +
+      gateNote(total, sorted.length);
   }
 
   // ---- section renderers ----------------------------------------------------
@@ -379,8 +395,9 @@
       "expected points (a weaker opposing offense ranks higher). Pick a day below. Scored in FanGraphs Points; " +
       "switch formats above to re-rank the rest-of-season boards.</div>" +
       '<div class="rd-daypills" role="tablist" aria-label="Streamer day">' + pills + "</div>" +
-      '<table class="rd-table"><thead><tr><th>#</th><th>Date</th><th>Pitcher</th><th>Opponent</th><th>Exp pts</th>' +
-      "<th>SEM+</th><th>Park</th></tr></thead><tbody>" + rows + "</tbody></table>";
+      '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table">' +
+      '<thead><tr><th>#</th><th>Date</th><th class="rd-nm">Pitcher</th><th>Opponent</th><th>Exp pts</th>' +
+      "<th>SEM+</th><th>Park</th></tr></thead><tbody>" + rows + "</tbody></table></div>";
   }
   // STAYS A TABLE: the Matchups column is a free-text leg list that would fight
   // a fixed-height card box.
@@ -401,13 +418,14 @@
     return '<div class="rd-note">Pitchers lined up for two starts this scoring week. MLB posts probables only ' +
       "about 5 days out, so the second start is projected from the team schedule on normal rest and marked (proj) " +
       "until it is announced.</div>" +
-      '<table class="rd-table"><thead><tr><th>#</th><th>Pitcher</th><th>Starts</th><th>Total pts</th>' +
-      "<th>Matchups</th></tr></thead><tbody>" + rows + "</tbody></table>";
+      '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table">' +
+      '<thead><tr><th>#</th><th class="rd-nm">Pitcher</th><th>Starts</th><th>Total pts</th>' +
+      "<th>Matchups</th></tr></thead><tbody>" + rows + "</tbody></table></div>";
   }
   // STAYS A TABLE: 30 and 30 rows in a deliberate side-by-side pair. Cards would
   // break the left-right comparison, which is the entire point of the surface.
   function renderBuySell() {
-    function col(ids, label, cls) {
+    function col(ids, label, cls, kind) {
       var rows = (ids || []).slice(0, 30).map(function (e) {
         var p = recOf(e, "hit"); if (!p) return "";
         var s = p.skill || {}, isHit = p.side === "hit", gap = isHit ? s.luck_gap : s.luck;
@@ -428,16 +446,28 @@
           esc(p.pos || "") + '</td><td class="rd-sc ' + cls + '">' + (gap > 0 ? "+" : "") +
           num(gap, isHit ? 0 : 3) + "</td></tr>";
       }).join("");
-      return '<div class="rd-half"><h3>' + label + '</h3><table class="rd-table"><thead><tr><th>Player</th>' +
-        "<th>Pos</th><th>Luck gap</th></tr></thead><tbody>" + rows + "</tbody></table></div>";
+      // AN EMPTY SIDE IS A SENTENCE, NOT A HEADER ROW OVER NOTHING. This was
+      // the one surface on the page that fell through to a bare <tbody></tbody>:
+      // on an empty payload the reader got "Buy-Low (unlucky)" and three column
+      // headings above a blank strip. It also fires when the list IS served but
+      // no id in it resolves to a player record, which reads the same way.
+      if (!rows) {
+        return '<div class="rd-half"><h3>' + label + "</h3>" +
+          '<div class="rd-note">No ' + esc(kind) + " candidates in this build. The list comes " +
+          "from the expected-stat gaps on the nightly run.</div></div>";
+      }
+      return '<div class="rd-half"><h3>' + label + '</h3>' +
+        '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table">' +
+        '<thead><tr><th class="rd-nm">Player</th>' +
+        "<th>Pos</th><th>Luck gap</th></tr></thead><tbody>" + rows + "</tbody></table></div></div>";
     }
     var sec = S.data.sections || {};
     return '<div class="rd-note">Regression candidates from our expected-stat gaps (hitters: xHEM+ against HEM+; ' +
       "pitchers: xERA and xwOBA against actual). A positive gap means the player has been UNLUCKY and is due to " +
       "improve (buy); negative means he has been overperforming (sell). A mech trend chip flags a 5 point move in " +
       "per-season Swing+ (Will Cahoon), swing-mechanics context only, never part of the ranking.</div>" +
-      '<div class="rd-cols">' + col(sec.buy_low, "Buy-Low (unlucky)", "rd-pos") +
-      col(sec.sell_high, "Sell-High (overperforming)", "rd-neg") + "</div>";
+      '<div class="rd-cols">' + col(sec.buy_low, "Buy-Low (unlucky)", "rd-pos", "buy-low") +
+      col(sec.sell_high, "Sell-High (overperforming)", "rd-neg", "sell-high") + "</div>";
   }
   // ALREADY A CARD GRID: 30 team cards of 5 arms each.
   function renderClosers() {
@@ -456,8 +486,10 @@
           ' <span class="rd-dim">gmLI ' + num(s.gmli, 2) + " · " + num(s.saves, 0) +
           "sv · REM+ " + num(s.rem_plus, 0) + "</span></div>";
       }).join("");
+      // A team whose depth ids all miss the player index would otherwise render
+      // as a logo over nothing. Say so instead.
       return '<div class="rd-team-card"><div class="rd-team-hd">' + teamLogo(tm) + " " + esc(tm) + "</div>" +
-        lst + "</div>";
+        (lst || '<div class="rd-relief rd-dim">No projectable arms in this build.</div>') + "</div>";
     }).join("");
     return '<div class="rd-note">Bullpen pecking order by average leverage (gmLI). The top arm is the likely ' +
       "closer, the rest are save handcuffs. Grab the next in line before the save chance opens.</div>" +
@@ -706,7 +738,20 @@
     ".rd-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}",
     ".rd-table th{text-align:right;font:600 11px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border)}",
     ".rd-table td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--border-light);color:var(--text-primary)}",
-    ".rd-table th:nth-child(2),.rd-table td.rd-nm{text-align:left}",
+    // The name column is column 3 on Daily Streamers, 2 on Two-Start SP and 1
+    // on Buy / Sell, so the old `th:nth-child(2)` left-aligned the WRONG
+    // heading on two of the three: "Player" and "Pitcher" sat right-aligned
+    // over left-aligned names while "Date" and "Pos" sat left-aligned over
+    // right-aligned values. The heading now carries the same class its cells
+    // do, which cannot drift when a column moves.
+    ".rd-table th.rd-nm,.rd-table td.rd-nm{text-align:left}",
+    // Wide tables scroll INSIDE this box. Without it the 7-column streamers
+    // table measured 431px against a 390px phone and scrolled the PAGE
+    // sideways, clipping the Park column off the right edge of the viewport.
+    ".rd-tablewrap{max-width:100%}",
+    "@media (max-width:640px){.rd-tablewrap{scrollbar-width:thin;scrollbar-color:var(--border) transparent;padding-bottom:4px}",
+    ".rd-tablewrap::-webkit-scrollbar{height:4px;display:block}",
+    ".rd-tablewrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}}",
     ".rd-table td.rd-rk{color:var(--text-tertiary)}",
     ".rd-table td.rd-sc{font-weight:700}",
     ".rd-pos{color:var(--accent-green)}.rd-neg{color:var(--accent-red)}",
@@ -727,12 +772,13 @@
     ".rd-name-link{color:var(--accent-cyan);text-decoration:none}.rd-name-link:hover{text-decoration:underline}",
     ".rd-mech{font:600 10px/1 var(--font-retro,monospace);border:1px solid var(--border);padding:2px 5px;white-space:nowrap;cursor:help}",
     ".rd-mech.rd-mech-up{color:var(--accent-green);border-color:var(--accent-green)}",
-    ".rd-mech.rd-mech-down{color:var(--accent-red);border-color:var(--accent-red)}",
-    ".rd-sortbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0;font:600 11px/1 var(--font-retro,monospace);color:var(--text-tertiary)}",
-    ".rd-sortbar [role=button]{cursor:pointer;padding:3px 6px;border:1px solid var(--border);color:var(--text-secondary)}",
-    ".rd-sortbar-lbl{text-transform:uppercase;letter-spacing:.04em}",
-    ".rd-strong{font-weight:700}",
-    ".rd-rank{display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 var(--font-retro,monospace);color:var(--text-secondary)}"
+    ".rd-mech.rd-mech-down{color:var(--accent-red);border-color:var(--accent-red)}"
+    // NOTHING FOR THE SORT BAR, THE RANK CHIP OR THE SCORE CELL LIVES HERE any
+    // more. Those are .ff-sortbar / .ff-rank / .ff-strong in assets/site.css
+    // and the markup above names them. The local copies that used to sit here
+    // were at the same specificity but LATER in the cascade than the
+    // stylesheet, so they quietly beat it: that is how the phone sort-bar
+    // swipe strip and the rank diamond went missing on this page.
   ].join("");
   document.head.appendChild(css);
 })();

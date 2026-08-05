@@ -225,7 +225,14 @@
           g.fillText(t, x0[i], y);
           var nameW = g.measureText(t).width;
           g.fillStyle = sub; g.font = "12px " + MONO;
-          g.fillText(String(cell.sub), x0[i] + nameW + 9, y);
+          // Clamp the sub-text to the gap before the next column origin. The
+          // tile renderer has always done this via fitTxt(); the board renderer
+          // did not, so any spec with a long `sub` painted straight over the
+          // next column. Found by the /cards/ board, which worked around it by
+          // shortening its own sub, but the defect belonged here.
+          var subX = x0[i] + nameW + 9;
+          var subLimit = (i + 1 < x0.length ? x0[i + 1] - 8 : W - PAD) - subX;
+          if (subLimit > 0) g.fillText(fitTxt(g, String(cell.sub), subLimit), subX, y);
         } else {
           g.fillStyle = cell.c ? colorOf(cell.c) : fg;
           g.font = (cell.c === "accent" || cell.bold ? "700 " : "") + "16px " + MONO;
