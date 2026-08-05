@@ -24,6 +24,50 @@
   font-display: swap;
 }
 
+/* PixelMplus12 - the MS Gothic STAND-IN for Apple (2026-08-05).
+   MS Gothic / MS UI Gothic are Windows-only system faces, so before this every
+   Mac and iPhone visitor read the whole site - body, headings, tables, even the
+   nav wordmark - in SF Mono, i.e. none of the brand's type identity survived
+   off Windows. PixelMplus is an outline conversion of M+ BITMAP FONTS, the same
+   genre of Japanese screen-gothic bitmap that MS Gothic's embedded strikes come
+   from, so it is the closest freely-licensable match rather than a generic
+   pixel font.
+   Why THIS one, against the two constraints that killed the alternatives:
+     - It ships a REAL 700. `font-synthesis: none` is set on body (see below), so
+       a single-weight face would have silently flattened every 700/800 on the
+       site for Apple readers - that alone disqualified Ark Pixel, Fusion Pixel
+       and DotGothic16 itself.
+     - It is 12px-native, and the site's copy sits at 12-14px. DotGothic16 was
+       tried as body copy once and pulled (see the token comment below): it is
+       16px-native, so at 12-13px it renders at 0.75-0.8x of its grid and the
+       pixel rows collapse. 12px-native at 12-13px is 1.0-1.08x.
+   Latin+symbol subset only: 276 codepoints, 6.2KB + 5.4KB for the two weights,
+   which is less than the single-weight DotGothic16 subset above. The census was
+   taken from the built pages and the served payloads, and confirmed the data
+   uses NO Latin Extended-A (only Latin-1 accents: ÉÓáéíñóú).
+   Six symbols the UI uses are NOT in the face (>=, <=, the compare glyph, minus,
+   check, command) and fall through per-glyph to the next family. That is not a
+   regression: on Apple those characters already render from the fallback today,
+   because the whole stack does.
+   NOT preloaded, deliberately: Windows matches MS Gothic first, so lazy font
+   loading means a Windows visitor never downloads these files at all.
+   M+ FONT LICENSE (commercial use permitted, no attribution burden); license
+   text and the source TTFs are vendored in branding/fonts/. */
+@font-face {
+  font-family: "PixelMplus12";
+  src: url("/assets/fonts/pixelmplus12-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PixelMplus12";
+  src: url("/assets/fonts/pixelmplus12-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg-primary:    #F4F0E6;   /* warm paper */
   --bg-secondary:  #FAF5E6;   /* card surface - warm baseball-card cream (was near-white #FBF8F0) */
@@ -68,15 +112,23 @@
   --paper-dot:        rgba(14,43,77,.055);   /* navy newsprint halftone ink   */
   --paper-dot2:       rgba(178,75,40,.035);  /* warm registration-offset dot  */
   --paper-pinstripe:  rgba(14,43,77,.028);   /* faint baseball pinstripe / column rule */
-  /* LEGIBILITY FIX: MS UI Gothic / MS Gothic still lead (the brand pixel-gothic on
-     Windows), but where they're ABSENT (Mac / Linux / mobile) COPY now falls to a
-     clean technical MONOSPACE - on-theme + legible - instead of the DotGothic16
-     pixel face, which rendered body copy illegibly off-Windows. Pixel-gothic is
-     kept ONLY for the logo (--font-logo). Mirrors prospx/index.html. */
-  --font-retro: "MS UI Gothic","MS Gothic",
+  /* MS UI Gothic / MS Gothic still lead, so Windows renders EXACTLY as before and
+     never downloads a webfont. PixelMplus12 (self-hosted, @font-face above) now
+     sits directly behind them, so Apple and Linux get a real Japanese-screen-
+     gothic pixel face instead of dropping all the way to SF Mono.
+     HISTORY, so the earlier fix is not misread as a reversal: DotGothic16 was
+     once put in this position and pulled, because it is 16px-native and the
+     site's copy is 12-14px, which renders it at 0.75-0.8x of its pixel grid and
+     turns body text to mush. PixelMplus12 is 12px-native, so the same copy sits
+     ON its grid rather than under it, and it ships a real bold. DotGothic16
+     stays what it became: logo only (--font-logo).
+     The monospace ladder is kept intact behind PixelMplus12 - it is still what
+     renders the six symbols the subset does not carry. Mirrors prospx/index.html;
+     the two definitions must be edited together. */
+  --font-retro: "MS UI Gothic","MS Gothic","PixelMplus12",
                 ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,
                 "Liberation Mono","DejaVu Sans Mono","Roboto Mono",monospace;
-  --font-retro-mono: "MS Gothic","MS UI Gothic",
+  --font-retro-mono: "MS Gothic","MS UI Gothic","PixelMplus12",
                      ui-monospace,"SF Mono","SFMono-Regular",Consolas,Menlo,
                      "Liberation Mono","DejaVu Sans Mono","Roboto Mono",monospace;
   /* The eephus.io wordmark + headings. DotGothic16 (self-hosted pixel-gothic)
@@ -3337,7 +3389,27 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   overflow: hidden;
 }
 .fa-app .fa-card { height: 108px; contain-intrinsic-size: auto 108px; }
-.proj-app .proj-card { height: 104px; contain-intrinsic-size: auto 104px; }
+/* BUGFIX 2026-08-05 (owner-reported: every player name on the board rendered with
+   its top sliced off). The 104px promise was set from a measurement of the
+   identity block at 40px, but the block actually needs 44px, so row 1 resolved to
+   39.66px and .mlb-name - which carries overflow:hidden for its ellipsis, and is
+   therefore a grid item whose automatic minimum size is 0 - was compressed to a
+   17.66px box around a 22px line box and clipped exactly 4px of its own text.
+   Measured identically in both themes at DPR 1.0 and 1.25, so it was never a
+   theme or retina artifact; it read as "fine" on some machines only because the
+   surviving band happened to contain the glyphs at those font metrics.
+   Three changes, each closing part of the gap rather than papering over it:
+     - the name line no longer inherits the 1.35 card leading (21.6px at 16px);
+       1.2 is enough for a single nowrap line and buys 3.4px,
+     - the inline team logo is centred rather than sitting 3px below the baseline,
+       so a 16px mark can no longer push the line box past the leading,
+     - the card grows to FA's 108px, which leaves the block ~2px of slack instead
+       of running it at exactly zero.
+   test_projections_card_name_not_clipped.py pins scrollHeight <= clientHeight on
+   the name so a future metric change cannot silently re-clip it. */
+.proj-app .proj-card { height: 108px; contain-intrinsic-size: auto 108px; }
+.proj-app .proj-card .proj-id > .mlb-name { line-height: 1.2; }
+.proj-app .proj-card .proj-id > .mlb-name img { vertical-align: middle; }
 /* Option / opt-out rows carried a gold edge on the table (.fa-row-opt td), which
    the card conversion silently dropped - there is no td any more. Same signal,
    on the stripe the card pattern already owns. */

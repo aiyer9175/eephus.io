@@ -230,20 +230,25 @@
          Long-form prose (scouting reports, glossary entries) keeps
          its readability tuning via per-element line-height + size
          tokens rather than a separate font family. */
-      /* LEGIBILITY FIX: on Windows the brand pixel-gothic (MS UI Gothic / MS
-         Gothic) still leads, but where it's ABSENT (Mac / Linux / mobile) COPY now
-         falls to a clean technical MONOSPACE - on-theme for an analytics tool and a
-         retro-terminal cousin of MS Gothic - instead of the self-hosted DotGothic16
-         pixel face, which was rendering body copy illegibly off-Windows. The pixel-
-         gothic is retained ONLY for the logo (var(--font-logo), DotGothic16).
-         Mirrors assets/site.css. */
-      --font-retro: "MS UI Gothic", "MS Gothic",
+      /* On Windows the brand pixel-gothic (MS UI Gothic / MS Gothic) still leads
+         and nothing changes. Where it is ABSENT (Mac / iPhone / Linux), copy now
+         falls to PixelMplus12, a self-hosted 12px-native Japanese screen-gothic
+         with a real bold, declared via @font-face in assets/site.css (which this
+         page loads, so the face is available here without redeclaring it).
+         HISTORY: DotGothic16 once held this slot and was pulled because it is
+         16px-native and this app's copy is 12-14px, i.e. under its pixel grid.
+         PixelMplus12 is on-grid at those sizes. DotGothic16 stays logo-only
+         (var(--font-logo)). The monospace ladder below it is retained and still
+         renders the handful of symbols the Latin subset does not carry.
+         MIRRORS assets/site.css - edit both or Apple renders PROSPX and the
+         editorial pages in two different faces. */
+      --font-retro: "MS UI Gothic", "MS Gothic", "PixelMplus12",
                     ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas,
                     "Liberation Mono", "DejaVu Sans Mono", "Roboto Mono", monospace;
       /* Blockier monospace variant - used on the iconic chrome
          elements (FV badges, farm-grade letters) where the strict
          monospace baseball-card look is the point. */
-      --font-retro-mono: "MS Gothic", "MS UI Gothic",
+      --font-retro-mono: "MS Gothic", "MS UI Gothic", "PixelMplus12",
                          ui-monospace, "SF Mono", "SFMono-Regular", Consolas, Menlo,
                          "Liberation Mono", "DejaVu Sans Mono", "Roboto Mono", monospace;
       --font-serif: var(--font-retro);
