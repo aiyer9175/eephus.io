@@ -1,0 +1,227 @@
+[
+  {
+    "id": "a1f0c4e2b9d34f6a8c1e5b7d9f2a4c60",
+    "sport_key": "baseball_mlb",
+    "sport_title": "MLB",
+    "commence_time": "2026-08-04T22:40:00Z",
+    "home_team": "Cleveland Guardians",
+    "away_team": "New York Mets",
+    "bookmakers": [
+      {
+        "key": "draftkings",
+        "title": "DraftKings",
+        "last_update": "2026-08-04T13:02:11Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2026-08-04T13:02:11Z",
+            "outcomes": [
+              { "name": "Cleveland Guardians", "price": 118 },
+              { "name": "New York Mets", "price": -140 }
+            ]
+          },
+          {
+            "key": "spreads",
+            "last_update": "2026-08-04T13:02:11Z",
+            "outcomes": [
+              { "name": "Cleveland Guardians", "price": -145, "point": 1.5 },
+              { "name": "New York Mets", "price": 122, "point": -1.5 }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": "2026-08-04T13:02:11Z",
+            "outcomes": [
+              { "name": "Over", "price": -108, "point": 8.5 },
+              { "name": "Under", "price": -112, "point": 8.5 }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "fanduel",
+        "title": "FanDuel",
+        "last_update": "2026-08-04T13:01:44Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2026-08-04T13:01:44Z",
+            "outcomes": [
+              { "name": "Cleveland Guardians", "price": 122 },
+              { "name": "New York Mets", "price": -145 }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": "2026-08-04T13:01:44Z",
+            "outcomes": [
+              { "name": "Over", "price": -105, "point": 8.5 },
+              { "name": "Under", "price": -115, "point": 8.5 }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "b2e1d5f3c0a45b7c9d2f6a8e0b3d5f71",
+    "sport_key": "baseball_mlb",
+    "sport_title": "MLB",
+    "commence_time": "2026-08-04T22:40:00Z",
+    "home_team": "Philadelphia Phillies",
+    "away_team": "Washington Nationals",
+    "bookmakers": [
+      {
+        "key": "draftkings",
+        "title": "DraftKings",
+        "last_update": "2026-08-04T13:02:11Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2026-08-04T13:02:11Z",
+            "outcomes": [
+              { "name": "Philadelphia Phillies", "price": -195 },
+              { "name": "Washington Nationals", "price": 162 }
+            ]
+          },
+          {
+            "key": "spreads",
+            "last_update": "2026-08-04T13:02:11Z",
+            "outcomes": [
+              { "name": "Philadelphia Phillies", "price": 105, "point": -1.5 },
+              { "name": "Washington Nationals", "price": -125, "point": 1.5 }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": "2026-08-04T13:02:11Z",
+            "outcomes": [
+              { "name": "Over", "price": -110, "point": 8.0 },
+              { "name": "Under", "price": -110, "point": 8.0 }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "betmgm",
+        "title": "BetMGM",
+        "last_update": "2026-08-04T13:00:02Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2026-08-04T13:00:02Z",
+            "outcomes": [
+              { "name": "Philadelphia Phillies", "price": -190 },
+              { "name": "Washington Nationals", "price": 158 }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "c3d2e6a4b1f56c8d0e3a7b9f1c4e6a82",
+    "sport_key": "baseball_mlb",
+    "sport_title": "MLB",
+    "commence_time": "2026-08-05T00:05:00Z",
+    "home_team": "Chicago Cubs",
+    "away_team": "Los Angeles Dodgers",
+    "bookmakers": [
+      {
+        "key": "draftkings",
+        "title": "DraftKings",
+        "last_update": "2026-08-04T13:02:11Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2026-08-04T13:02:11Z",
+            "outcomes": [
+              { "name": "Chicago Cubs", "price": 135 },
+              { "name": "Los Angeles Dodgers", "price": -158 }
+            ]
+          },
+          {
+            "key": "spreads",
+            "last_update": "2026-08-04T13:02:11Z",
+            "outcomes": [
+              { "name": "Chicago Cubs", "price": -170, "point": 1.5 },
+              { "name": "Los Angeles Dodgers", "price": 142, "point": -1.5 }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": "2026-08-04T13:02:11Z",
+            "outcomes": [
+              { "name": "Over", "price": -115, "point": 7.5 },
+              { "name": "Under", "price": -105, "point": 7.5 }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d4c3f7b5a2e67d9e1f4b8c0a2d5f7b93",
+    "sport_key": "baseball_mlb",
+    "sport_title": "MLB",
+    "commence_time": "2026-08-05T00:40:00Z",
+    "home_team": "Colorado Rockies",
+    "away_team": "Tampa Bay Rays",
+    "bookmakers": [
+      {
+        "key": "draftkings",
+        "title": "DraftKings",
+        "last_update": "2026-08-04T13:02:11Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2026-08-04T13:02:11Z",
+            "outcomes": [
+              { "name": "Colorado Rockies", "price": 145 },
+              { "name": "Tampa Bay Rays", "price": -172 }
+            ]
+          },
+          {
+            "key": "spreads",
+            "last_update": "2026-08-04T13:02:11Z",
+            "outcomes": [
+              { "name": "Colorado Rockies", "price": -155, "point": 1.5 },
+              { "name": "Tampa Bay Rays", "price": 130, "point": -1.5 }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": "2026-08-04T13:02:11Z",
+            "outcomes": [
+              { "name": "Over", "price": -110, "point": 11.5 },
+              { "name": "Under", "price": -110, "point": 11.5 }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "fanduel",
+        "title": "FanDuel",
+        "last_update": "2026-08-04T13:01:44Z",
+        "markets": [
+          {
+            "key": "h2h",
+            "last_update": "2026-08-04T13:01:44Z",
+            "outcomes": [
+              { "name": "Colorado Rockies", "price": 152 },
+              { "name": "Tampa Bay Rays", "price": -180 }
+            ]
+          },
+          {
+            "key": "totals",
+            "last_update": "2026-08-04T13:01:44Z",
+            "outcomes": [
+              { "name": "Over", "price": -112, "point": 11.5 },
+              { "name": "Under", "price": -108, "point": 11.5 }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

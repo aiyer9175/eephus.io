@@ -1,0 +1,166 @@
+{
+ "generated_at": "2026-08-05T14:34:13+00:00",
+ "model_version": "betting_runs_v1",
+ "season": null,
+ "validated": false,
+ "contaminated": true,
+ "contamination": "team inputs are season-to-date leaderboards, so every graded game is inside its own features; this measures calibration, not out-of-sample skill",
+ "gates_picks": false,
+ "min_edge": null,
+ "n_games": 1705,
+ "in_sample": {
+  "label": "in-sample (coefficients and features both leak)",
+  "n": 1705,
+  "coefficients": {
+   "b0": 4.489608335888872,
+   "b1": 0.28346801149824224,
+   "b2": -0.3262424150856068,
+   "b3": 3.2105859916499724,
+   "b4": 0.012008529055270672,
+   "source": "fitted",
+   "n_rows": 3410,
+   "rmse": 3.171821826351269,
+   "r2": 0.04541729447579368
+  },
+  "home_field_runs_adj": 0.2216,
+  "diff_shrink": 0.76,
+  "brier": 0.24164,
+  "brier_flat_500": 0.25,
+  "brier_home_base": 0.24946,
+  "log_loss": 0.67636,
+  "log_loss_flat_500": 0.69315,
+  "accuracy": 0.5672,
+  "home_win_rate": 0.5232,
+  "mean_p_home": 0.5232,
+  "total_mae": 3.54,
+  "calibration": [
+   {
+    "bin": "0.1-0.2",
+    "n": 2,
+    "pred": 0.1957,
+    "actual": 0.5
+   },
+   {
+    "bin": "0.2-0.3",
+    "n": 11,
+    "pred": 0.2582,
+    "actual": 0.4545
+   },
+   {
+    "bin": "0.3-0.4",
+    "n": 108,
+    "pred": 0.3663,
+    "actual": 0.3056
+   },
+   {
+    "bin": "0.4-0.5",
+    "n": 546,
+    "pred": 0.4591,
+    "actual": 0.4707
+   },
+   {
+    "bin": "0.5-0.6",
+    "n": 741,
+    "pred": 0.5475,
+    "actual": 0.5412
+   },
+   {
+    "bin": "0.6-0.7",
+    "n": 260,
+    "pred": 0.6348,
+    "actual": 0.6423
+   },
+   {
+    "bin": "0.7-0.8",
+    "n": 31,
+    "pred": 0.7346,
+    "actual": 0.7742
+   },
+   {
+    "bin": "0.8-0.9",
+    "n": 6,
+    "pred": 0.8324,
+    "actual": 0.6667
+   }
+  ]
+ },
+ "split_date": "2026-06-24",
+ "forward": {
+  "label": "forward from 2026-06-24 (coefficient leakage removed, feature leakage remains)",
+  "n": 521,
+  "coefficients": {
+   "b0": 4.488399749117375,
+   "b1": 0.26855701369216267,
+   "b2": -0.3549004884947132,
+   "b3": 2.8352354356995813,
+   "b4": -0.023697205718094944,
+   "source": "fitted",
+   "n_rows": 2368,
+   "rmse": 3.12265431588337,
+   "r2": 0.05101375448686285
+  },
+  "home_field_runs_adj": 0.3363,
+  "diff_shrink": 0.74,
+  "brier": 0.24327,
+  "brier_flat_500": 0.25,
+  "brier_home_base": 0.24995,
+  "log_loss": 0.6796,
+  "log_loss_flat_500": 0.69315,
+  "accuracy": 0.5509,
+  "home_win_rate": 0.5067,
+  "mean_p_home": 0.5297,
+  "total_mae": 3.613,
+  "calibration": [
+   {
+    "bin": "0.1-0.2",
+    "n": 2,
+    "pred": 0.1865,
+    "actual": 0.5
+   },
+   {
+    "bin": "0.2-0.3",
+    "n": 1,
+    "pred": 0.2725,
+    "actual": 1.0
+   },
+   {
+    "bin": "0.3-0.4",
+    "n": 31,
+    "pred": 0.3613,
+    "actual": 0.2903
+   },
+   {
+    "bin": "0.4-0.5",
+    "n": 143,
+    "pred": 0.459,
+    "actual": 0.4615
+   },
+   {
+    "bin": "0.5-0.6",
+    "n": 244,
+    "pred": 0.5469,
+    "actual": 0.4959
+   },
+   {
+    "bin": "0.6-0.7",
+    "n": 89,
+    "pred": 0.6357,
+    "actual": 0.6404
+   },
+   {
+    "bin": "0.7-0.8",
+    "n": 8,
+    "pred": 0.7411,
+    "actual": 0.75
+   },
+   {
+    "bin": "0.8-0.9",
+    "n": 3,
+    "pred": 0.845,
+    "actual": 1.0
+   }
+  ]
+ },
+ "status": "ran",
+ "note": "A pick threshold is NOT set from these numbers. Publishing a pick needs vintage-dated team inputs and a clean forward test."
+}

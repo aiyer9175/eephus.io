@@ -1,0 +1,304 @@
+{
+ "generated_at": "2026-08-05T14:40:09+00:00",
+ "slate_date": "2026-08-05",
+ "status": {
+  "odds_feed": "not_configured",
+  "odds_note": "odds feed not configured: set EEPHUS_ODDS_API_KEY on the build box",
+  "odds_captured_at": null,
+  "odds_kind": null,
+  "model": "unvalidated",
+  "empty_reasons": [
+   "odds feed not configured: set EEPHUS_ODDS_API_KEY on the build box"
+  ]
+ },
+ "model": {
+  "version": "betting_runs_v1",
+  "validated": false,
+  "stage": "Diamond preview",
+  "min_edge": null
+ },
+ "disclaimer": {
+  "age": "21+ only.",
+  "purpose": "Informational and entertainment purposes only. Nothing here is betting advice.",
+  "legality": "Sports betting is not legal in all states. Know the rules where you are.",
+  "help": "If gambling stops being fun, call 1-800-GAMBLER.",
+  "helpline": "1-800-GAMBLER",
+  "affiliates": "eephus.io takes no affiliate money from any sportsbook and links to none.",
+  "staking": "Every pick on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
+ },
+ "pick_of_the_day": null,
+ "pick_reason": "no odds feed configured, so there is no market to price against",
+ "n_games": 15,
+ "team_bets": [
+  {
+   "game_pk": 824158,
+   "date": "2026-08-05",
+   "start": "2026-08-05T18:10:00Z",
+   "venue": "Daikin Park",
+   "home": {
+    "org": "HOU",
+    "team": "Houston Astros",
+    "probable": {
+     "mlbam": 686613,
+     "name": "Hunter Brown"
+    },
+    "offense_plus": 103.0,
+    "bullpen_plus": 102.0
+   },
+   "away": {
+    "org": "TOR",
+    "team": "Toronto Blue Jays",
+    "probable": {
+     "mlbam": 592791,
+     "name": "Jameson Taillon"
+    },
+    "offense_plus": 92.0,
+    "bullpen_plus": 113.0
+   },
+   "model": {
+    "p_home": 0.62786,
+    "p_away": 0.37214,
+    "lam_home": 5.246,
+    "lam_away": 4.217,
+    "fair_total": 9.46,
+    "park_index": 1.02,
+    "home_prevention": {
+     "starter_plus": 95.0,
+     "bullpen_plus": 102.0,
+     "starter_share": 0.586,
+     "blend_plus": 97.9,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 77.0,
+     "bullpen_plus": 113.0,
+     "starter_share": 0.563,
+     "blend_plus": 92.7,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "HOU",
+     "model_prob": 0.62786,
+     "fair_odds": -169,
+     "book": null,
+     "odds": null,
+     "decimal": null,
+     "implied_prob": null,
+     "market_fair_prob": null,
+     "edge": null,
+     "ev_per_unit": null,
+     "kelly_full": null
+    },
+    {
+     "side": "away",
+     "label": "TOR",
+     "model_prob": 0.37214,
+     "fair_odds": 169,
+     "book": null,
+     "odds": null,
+     "decimal": null,
+     "implied_prob": null,
+     "market_fair_prob": null,
+     "edge": null,
+     "ev_per_unit": null,
+     "kelly_full": null
+    }
+   ],
+   "runline": null,
+   "total": {
+    "line": null,
+    "sides": null,
+    "fair_total": 9.46
+   },
+   "market": null
+  },
+  {
+   "game_pk": 824646,
+   "date": "2026-08-05",
+   "start": "2026-08-05T18:20:00Z",
+   "venue": "Wrigley Field",
+   "home": {
+    "org": "CHC",
+    "team": "Chicago Cubs",
+    "probable": {
+     "mlbam": 684007,
+     "name": "Shota Imanaga"
+    },
+    "offense_plus": 106.0,
+    "bullpen_plus": 96.0
+   },
+   "away": {
+    "org": "LAD",
+    "team": "Los Angeles Dodgers",
+    "probable": {
+     "mlbam": 641778,
+     "name": "Eric Lauer"
+    },
+    "offense_plus": 109.0,
+    "bullpen_plus": 107.0
+   },
+   "model": {
+    "p_home": 0.54883,
+    "p_away": 0.45117,
+    "lam_home": 5.48,
+    "lam_away": 5.064,
+    "fair_total": 10.54,
+    "park_index": 0.92,
+    "home_prevention": {
+     "starter_plus": 99.0,
+     "bullpen_plus": 96.0,
+     "starter_share": 0.644,
+     "blend_plus": 97.9,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 80.0,
+     "bullpen_plus": 107.0,
+     "starter_share": 0.699,
+     "blend_plus": 88.1,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "CHC",
+     "model_prob": 0.54883,
+     "fair_odds": -122,
+     "book": null,
+     "odds": null,
+     "decimal": null,
+     "implied_prob": null,
+     "market_fair_prob": null,
+     "edge": null,
+     "ev_per_unit": null,
+     "kelly_full": null
+    },
+    {
+     "side": "away",
+     "label": "LAD",
+     "model_prob": 0.45117,
+     "fair_odds": 122,
+     "book": null,
+     "odds": null,
+     "decimal": null,
+     "implied_prob": null,
+     "market_fair_prob": null,
+     "edge": null,
+     "ev_per_unit": null,
+     "kelly_full": null
+    }
+   ],
+   "runline": null,
+   "total": {
+    "line": null,
+    "sides": null,
+    "fair_total": 10.54
+   },
+   "market": null
+  },
+  {
+   "game_pk": 822866,
+   "date": "2026-08-05",
+   "start": "2026-08-05T18:35:00Z",
+   "venue": "Globe Life Field",
+   "home": {
+    "org": "TEX",
+    "team": "Texas Rangers",
+    "probable": {
+     "mlbam": 674003,
+     "name": "Cody Bradford"
+    },
+    "offense_plus": 100.0,
+    "bullpen_plus": 101.0
+   },
+   "away": {
+    "org": "SFG",
+    "team": "San Francisco Giants",
+    "probable": {
+     "mlbam": 687931,
+     "name": "Carson Whisenhunt"
+    },
+    "offense_plus": 97.0,
+    "bullpen_plus": 92.0
+   },
+   "model": {
+    "p_home": 0.61817,
+    "p_away": 0.38183,
+    "lam_home": 4.801,
+    "lam_away": 3.889,
+    "fair_total": 8.69,
+    "park_index": 0.88,
+    "home_prevention": {
+     "starter_plus": 103.0,
+     "bullpen_plus": 101.0,
+     "starter_share": 0.6,
+     "blend_plus": 102.2,
+     "source": "rotation-average"
+    },
+    "away_prevention": {
+     "starter_plus": 86.0,
+     "bullpen_plus": 92.0,
+     "starter_share": 0.528,
+     "blend_plus": 88.8,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "TEX",
+     "model_prob": 0.61817,
+     "fair_odds": -162,
+     "book": null,
+     "odds": null,
+     "decimal": null,
+     "implied_prob": null,
+     "market_fair_prob": null,
+     "edge": null,
+     "ev_per_unit": null,
+     "kelly_full": null
+    },
+    {
+     "side": "away",
+     "label": "SFG",
+     "model_prob": 0.38183,
+     "fair_odds": 162,
+     "book": null,
+     "odds": null,
+     "decimal": null,
+     "implied_prob": null,
+     "market_fair_prob": null,
+     "edge": null,
+     "ev_per_unit": null,
+     "kelly_full": null
+    }
+   ],
+   "runline": null,
+   "total": {
+    "line": null,
+    "sides": null,
+    "fair_total": 8.69
+   },
+   "market": null
+  }
+ ],
+ "record": {
+  "n_rows": 0,
+  "n_settled": 0,
+  "n_open": 0,
+  "won": 0,
+  "lost": 0,
+  "push": 0,
+  "net_units": 0.0,
+  "roi_pct": null,
+  "n_clv_graded": 0,
+  "beat_close_rate": null,
+  "avg_clv_pct": null,
+  "stake_policy": "flat 1 unit"
+ },
+ "gating_note": "Preview slice. Everything is public during the Diamond preview; this file is the seam a future gate would read."
+}

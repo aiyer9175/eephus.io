@@ -1,0 +1,23 @@
+{
+ "generated_at": "2026-08-05T14:40:09+00:00",
+ "configured": false,
+ "provider": "The Odds API (free tier)",
+ "sport": "baseball_mlb",
+ "markets": [
+  "h2h",
+  "spreads",
+  "totals"
+ ],
+ "regions": [
+  "us"
+ ],
+ "credits_per_snapshot": 3,
+ "monthly_budget": 500,
+ "planned_monthly_credits": 186,
+ "n_snapshots_cached": 0,
+ "latest_snapshot": null,
+ "latest_kind": null,
+ "latest_credits": {},
+ "props": "model fair lines only; the per-event props endpoint is not on the free-tier budget",
+ "note": "odds feed not configured: set EEPHUS_ODDS_API_KEY on the build box"
+}
