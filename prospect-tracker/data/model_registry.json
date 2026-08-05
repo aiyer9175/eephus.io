@@ -852,7 +852,7 @@
     },
     {
       "model_id": "milb_park_factors",
-      "surface": "/parks/ MiLB Park Factors page (parks/index.html, assets/parks.js) via data/milb_park_factors_display.json (park_factors_export.py); source table data/milb_park_factors.json, originally a model-dev artifact for the college translation SOS/park gap",
+      "surface": "/parks/ MiLB Park Factors page (parks/index.html, assets/parks.js) reading data/milb_park_factors.json (built by tools/park_line_lab.py factors), originally a model-dev artifact for the college translation SOS/park gap",
       "predicts": "n/a - gated experiment R-PARK: per-park run/contact environment factors from Savant-minors 2023+ to adjust college -> Single-A translation; INFEASIBLE on cached data",
       "champion": "no park adjustment (college_translation unchanged)",
       "baseline": "per-park factors + matched-pair LOO with the adjustment (could not be run)",

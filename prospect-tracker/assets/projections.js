@@ -69,8 +69,11 @@
   }
 
   // ===========================================================================
-  // Board-row headshots (2026-08-04). Ported from the FA board, which reuses
-  // .fa-row-photo / .fa-row-headshot for the well and the image.
+  // Headshots (2026-08-04; face-cropped 2026-08-05). ONE builder for every
+  // headshot this surface renders - the 24px board-row wells (ported from the
+  // FA board, which reuses .fa-row-photo / .fa-row-headshot for the well and
+  // the image), the 96px .mlbp-headshot on the player page, and the 132px hero
+  // the shared GFX card draws. All three boxes are SQUARE.
   //
   // THE URL IS NOT THE FA ONE. fa.js requests the `d_people:generic` overlay
   // set, which Cloudinary answers with a SILHOUETTE at HTTP 200 whenever the
@@ -83,20 +86,41 @@
   // current payload: 973 of 1324 veterans resolve directly, and all 209
   // prospects resolve through the player-links map below (59 '67', 146 'milb',
   // 4 'none').
+  //
+  // FACE CROP (2026-08-05). img.mlbstatic.com is Cloudinary and honours
+  // `c_fill,g_face`: c_fill returns EXACTLY the requested box, g_face centres
+  // that crop on the detected face. Source headshots are 480x720 (2:3), so the
+  // square DOM boxes were papering over the mismatch with object-fit:cover
+  // (which lops the top of the head off), and the card hero could not paper
+  // over it at all - canvas drawImage has no object-fit, so it VERTICALLY
+  // SQUASHED the face (see the CONTRACT note in eephus-hub.js). Asking for the
+  // real box fixes all three and needs no consumer change. Verified live on
+  // BOTH contexts: exact pixel dimensions back, Access-Control-Allow-Origin:*
+  // intact, so the crops stay export-safe on the card canvas. Same transform
+  // string as PROSPX's _GFX_FACE_CROP; c_thumb was rejected there for zooming
+  // too tight on the face and is not reconsidered here.
+  const FACE_CROP = "c_fill,g_face";
   let PHOTO_CTX = null;                 // null = not loaded yet, {} = failed
 
-  function boardPhotoURL(mlbam, px) {
+  // Square box in CSS px -> requested pixels. 2x for retina and for the 2x
+  // supersample the card canvas exports at, with a 60px floor so a 24px well
+  // still asks for something legible. Square in, square out - the aspect can
+  // never drift, which is the whole point of the crop.
+  function faceBox(px) { return Math.max(60, Math.round((px || 24) * 2)); }
+  function cropURL(mlbam, seg, box) {
+    return `https://img.mlbstatic.com/mlb-photos/image/upload/${FACE_CROP},w_${box},h_${box},q_auto:best/v1/people/${mlbam}/headshot/${seg}/current`;
+  }
+
+  function headshotURL(mlbam, px) {
     if (!mlbam) return null;
-    const r = Math.max(60, Math.round((px || 24) * 2));   // 2x for retina
     const ctx = PHOTO_CTX ? PHOTO_CTX[String(mlbam)] : undefined;
     if (ctx === "none") return null;    // resolver checked: no photo on file
-    if (ctx === "67" || ctx === "milb")
-      return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${r},q_auto:best/v1/people/${mlbam}/headshot/${ctx}/current`;
+    if (ctx === "67" || ctx === "milb") return cropURL(mlbam, ctx, faceBox(px));
     // Unresolved: an id added since the last monthly backfill, or the map
     // failed to load. Ask for the real 67 photo with NO overlay so a miss 404s
     // and the one-shot MiLB retry below can recover it, instead of silently
     // returning a silhouette that nothing can detect.
-    return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${r},q_auto:best/v1/people/${mlbam}/headshot/67/current`;
+    return cropURL(mlbam, "67", faceBox(px));
   }
 
   function rowPhotoImg(mlbam) {
@@ -104,11 +128,12 @@
     // and it arrives from a data payload, not from this file.
     const id = String(mlbam == null ? "" : mlbam).replace(/\D/g, "");
     if (!id) return "";
-    const url = boardPhotoURL(id, 24);
+    const url = headshotURL(id, 24);
     if (!url) return "";
     const ctx = PHOTO_CTX ? PHOTO_CTX[id] : undefined;
     const resolved = (ctx === "67" || ctx === "milb");
-    const milb = `https://img.mlbstatic.com/mlb-photos/image/upload/w_48,q_auto:best/v1/people/${id}/headshot/milb/current`;
+    // The retry is the SAME square crop, only forced onto the MiLB set.
+    const milb = cropURL(id, "milb", faceBox(24));
     // A resolved context is already the right set, so its onerror just drops
     // the image and leaves the empty well - never a broken-image glyph.
     const onerr = resolved
@@ -1439,9 +1464,13 @@
   // sliders, pitch arsenal, season-by-season career with bWAR, FA market
   // block for class members.
   // ===========================================================================
-  function headshotURL(mlbam, r) {
-    return `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_${r || 240},q_auto:best/v1/people/${mlbam}/headshot/67/current`;
-  }
+  // The player page's own headshotURL is GONE (2026-08-05). It duplicated the
+  // board builder and lost the two things that builder had learned: it asked
+  // for `d_people:generic`, which serves a silhouette at HTTP 200 so no onerror
+  // in the degrade chain can ever fire, and it never consulted photo_ctx, so
+  // every milb-only prospect on this surface got that silhouette instead of the
+  // photo that exists one context over. Both hero boxes now call the shared
+  // `headshotURL` at the top of this file with the box they actually render.
   function pctClass(p) {
     return p >= 80 ? "is-elite" : p >= 60 ? "is-good" : p >= 40 ? "is-avg" : p >= 20 ? "is-low" : "is-poor";
   }
@@ -1885,8 +1914,11 @@
     // Only client-fetch the pitching leaderboards when the skills block was not
     // baked into the payload (older builds); the baked block renders directly.
     if ((p.isPit || p.twoWay) && !(p.skills && p.skills.pitch)) ensurePitchingStats(key);
-    const photo = p.mlbam
-      ? `<img class="mlbp-headshot" src="${headshotURL(p.mlbam, 240)}" alt="" onerror="this.style.visibility='hidden'">` : "";
+    // .mlbp-headshot is 96x96 (site.css), same box fa.js asks for. A 'none'
+    // context returns null: no img at all rather than a known-404 request.
+    const heroShot = headshotURL(p.mlbam, 96);
+    const photo = heroShot
+      ? `<img class="mlbp-headshot" src="${heroShot}" alt="" onerror="this.style.visibility='hidden'">` : "";
     const tiles = [];
     const tile = (label, val, cls, title) => tiles.push(`<div class="mlbp-tile"${title ? ` title="${esc(title)}"` : ""}><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val ${cls || ""}">${val}</span></div>`);
     if (p.proj && p.proj.warTotal != null)
@@ -2113,7 +2145,9 @@
       name: p.name || p.key,
       meta: `${p.pos || ""}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${p.team}` : " · FA"}`,
       sub: p.fa && p.fa.verdict ? `FA verdict: ${String(p.fa.verdict).toUpperCase()}` : "",
-      headshotURL: p.mlbam ? headshotURL(p.mlbam, 240) : null,
+      // eephus-hub.js draws this into a 132x132 square with drawImage, which
+      // has no object-fit - it MUST already be a square crop. 132 -> w_264,h_264.
+      headshotURL: headshotURL(p.mlbam, 132),
       url: `eephus.io/projections/#player=${p.key}`,
       filename: `eephus-${p.key}-mlb-card.png`,
       caption: "eephus projection engine (proj_lgbm_v1) · bands = P10-P90 · Statcast percentiles vs qualified MLB pool",

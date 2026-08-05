@@ -263,9 +263,14 @@
   // header is the click target; open/closed state persists in localStorage so a
   // user who opens the charts keeps them open across renders and visits.
   var COLLAPSE = {};
-  function collapseState(id) {
+  // `dflt` is the panel's OPENING state when the user has never toggled it.
+  // Omitted means collapsed, which is what every chart panel wants; the
+  // methodology folds below pass a viewport-dependent default instead. A
+  // user's own choice is written to localStorage by setCollapse and outranks
+  // whatever default the caller asked for, on every board and every visit.
+  function collapseState(id, dflt) {
     if (COLLAPSE[id] != null) return COLLAPSE[id];
-    var v = true; // default collapsed
+    var v = (dflt == null) ? true : !!dflt;
     try {
       var s = window.localStorage.getItem("mlbstats.collapse." + id);
       if (s === "0") v = false; else if (s === "1") v = true;
@@ -277,13 +282,50 @@
     COLLAPSE[id] = collapsed;
     try { window.localStorage.setItem("mlbstats.collapse." + id, collapsed ? "1" : "0"); } catch (e) { /* optional */ }
   }
-  function collapsible(id, title, body) {
+  // opts: { collapsed: <default open/closed>, cls: <extra class on the panel> }.
+  // Both optional; the three-argument call shape every chart panel uses is
+  // unchanged.
+  function collapsible(id, title, body, opts) {
     if (!body) return "";
-    var collapsed = collapseState(id);
-    return '<div class="mlbstats-collapse' + (collapsed ? " is-collapsed" : "") + '" data-collapse="' + esc(id) + '">'
+    var o = opts || {};
+    var collapsed = collapseState(id, o.collapsed);
+    return '<div class="mlbstats-collapse' + (o.cls ? " " + o.cls : "")
+      + (collapsed ? " is-collapsed" : "") + '" data-collapse="' + esc(id) + '">'
       + '<button type="button" class="mlbstats-collapse-head" aria-expanded="' + (!collapsed) + '">'
       + '<span class="mlbstats-collapse-caret" aria-hidden="true"></span>' + title + "</button>"
       + '<div class="mlbstats-collapse-body">' + body + "</div></div>";
+  }
+
+  // ---- the methodology fold -------------------------------------------------
+  // MEASURED 2026-08-05 at 390x844, Bullpen Leaderboards: 1,108px of masthead,
+  // controls and PROSE sat above the first data row, 484px of it explanatory
+  // copy (the metric explainer, the backtest scorecard, the column key and the
+  // frozen-column disclosure). That is more than a full phone screen a reader
+  // has to scroll past EVERY visit to reach a board he came for, to re-read a
+  // methodology he needs ONCE.
+  //
+  // None of it is deleted. It rides one collapsible per board, and the default
+  // is viewport-aware rather than fixed: OPEN on a desktop, where it costs a
+  // reader nothing and the methodology should be in his face, CLOSED on a
+  // phone, where it costs him the board. The fold head keeps the row count
+  // visible in both states, so the one number that is data rather than
+  // methodology never hides.
+  function isNarrowViewport() {
+    // No matchMedia in the py_mini_racer smoke harness (and none in very old
+    // browsers): fall back to "not a phone", i.e. the fold opens, which is the
+    // state that shows the most.
+    try {
+      return !!(window.matchMedia && window.matchMedia("(max-width: 640px)").matches);
+    } catch (e) { return false; }
+  }
+  // `lead` is HTML, like collapsible()'s title: escape anything dynamic at the
+  // call site (every caller today passes a number or an already-esc()'d value).
+  function proseFold(id, lead, body) {
+    if (!body) return "";
+    return collapsible(id,
+      '<span class="mlbstats-fold-lead">' + lead + "</span>"
+      + '<span class="mlbstats-fold-hint">how to read this board</span>',
+      body, { collapsed: isNarrowViewport(), cls: "mlbstats-fold" });
   }
   function bindCollapse(root) {
     root.querySelectorAll("[data-collapse]").forEach(function (el) {
@@ -577,14 +619,29 @@
     return (hit && hit.key) ? ("/projections/#player=" + encodeURIComponent(hit.key)) : null;
   }
 
+  // The identity cell is capped at 260px and ellipsized (site.css), so a long
+  // name-plus-team-plus-role runs off the end: measured at 390px, "Antonio
+  // Senzatela COL High-leverage" needs 263px and loses its tail. The full
+  // string therefore rides `title` on the CELL - and, because a title on the
+  // anchor would win over the cell's for a pointer over the name itself, on
+  // the LINK too. The link keeps its affordance hint after the name rather
+  // than instead of it.
   function nameCell(r) {
     var role = r.role ? ' <span class="bp-role">' + esc(r.role) + "</span>" : "";
     var team = r.team ? '<span class="proj-dim"> ' + esc(r.team) + "</span>" : "";
     var prov = (r.qualified === false) ? '<span class="bp-prov" title="below the qualifying sample - shown but provisional">prov</span>' : "";
     var nm = esc(r.name || EM_DASH);
+    // A row with no name at all gets no title rather than a title of null
+    // markers: an empty tooltip is worse than none.
+    var full = [r.name, r.team, r.role].filter(Boolean).join(" - ");
+    if (full && r.qualified === false) full += " (provisional)";
     var href = playerHref(r);
-    var name = href ? '<a class="mlbstats-name-link" href="' + href + '" title="Open the MLB player card">' + nm + "</a>" : nm;
-    return '<td class="mlbstats-name">' + logo(r.team) + name + team + role + prov + "</td>";
+    var name = href
+      ? '<a class="mlbstats-name-link" href="' + href + '" title="'
+        + (full ? esc(full) + " - " : "") + 'open the MLB player card">' + nm + "</a>"
+      : nm;
+    return '<td class="mlbstats-name"' + (full ? ' title="' + esc(full) + '"' : "") + ">"
+      + logo(r.team) + name + team + role + prov + "</td>";
   }
 
   function sortRows(rows, cols, sort) {
@@ -715,17 +772,19 @@
     var rows = sortRows(filteredRelievers(), REL_COLS, relSort);
     var body = rows.length
       ? (function () {
-          var note = '<div class="mlbstats-note">' + rows.length + " relievers. "
+          var note = '<div class="mlbstats-note">'
             + gloss("REM+", "rem_plus") + " is pure run-prevention skill (100 = average reliever); "
             + gloss("RIV+", "riv_plus") + " is realized leverage-weighted value, and "
             + "gmLI / WPA / WPA-LI / SD-MD are the leverage context, kept separate. "
             + gloss("WAR/IP+", "war_ip_plus_rp")
             + " is banked value per inning, anchored on RELIEVERS only, so it does not compare with the"
             + " starter board's column of the same name; 10 of its points is one standard deviation.</div>";
-          return remExplainer() + scorecard() + relieverViz() + note
-            + vintageNote(DATA, [["multiyear", "REM+ 3yr"], ["multiyear_war_rate", "WAR/IP+ 3yr"]],
-                " gmLI 3yr is frozen the same way, from the leverage-consistency artifact, which ships no"
-                + " date for the board to quote.")
+          return proseFold("rel-about", rows.length + " relievers",
+              remExplainer() + scorecard() + note
+              + vintageNote(DATA, [["multiyear", "REM+ 3yr"], ["multiyear_war_rate", "WAR/IP+ 3yr"]],
+                  " gmLI 3yr is frozen the same way, from the leverage-consistency artifact, which ships no"
+                  + " date for the board to quote."))
+            + relieverViz()
             + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort, DATA) + "</div>";
         })()
       : '<div class="mlbstats-empty">No relievers match the current filters.</div>';
@@ -756,10 +815,11 @@
     var sort = historySort();
     var rows = sortRows(filteredHistory(), REL_HISTORY_COLS, sort);
     var nQual = (yr.n_qualified != null) ? yr.n_qualified : yr.relievers.length;
-    var cap = '<div class="mlbstats-note">' + esc(relSeason) + " season, " + esc(nQual)
-      + " qualified relievers. " + gloss("REM+", "rem_plus") + " is the skill read and "
+    var cap = proseFold("rel-history-about",
+      esc(relSeason) + " season, " + esc(nQual) + " qualified relievers",
+      '<div class="mlbstats-note">' + gloss("REM+", "rem_plus") + " is the skill read and "
       + gloss("RIV+", "riv_plus") + " is realized leverage-weighted value; compare them against how "
-      + "these arms actually played forward.</div>";
+      + "these arms actually played forward.</div>");
     var table = rows.length
       ? '<div class="mlbstats-scroll">' + renderTable(rows, REL_HISTORY_COLS, sort) + "</div>"
       : '<div class="mlbstats-empty">No relievers match the current filters.</div>';
@@ -773,7 +833,8 @@
     var note = '<div class="mlbstats-note">' + gloss("Bullpen+", "bullpen_plus")
       + " weights each pen by the quality of the relief innings it throws (relief-IP-weighted REM+); "
       + "Lev Deploy+ adds how much leverage those innings carry.</div>";
-    return bullpenExplainer() + note + '<div class="mlbstats-scroll">' + renderTable(rows, TEAM_COLS, teamSort) + "</div>";
+    return proseFold("relteam-about", rows.length + " bullpens", bullpenExplainer() + note)
+      + '<div class="mlbstats-scroll">' + renderTable(rows, TEAM_COLS, teamSort) + "</div>";
   }
 
   function teamDepth(t) {
@@ -792,7 +853,7 @@
       var slots = teamDepth(t).map(function (r) {
         return '<div class="bp-slot">'
           + '<span class="bp-slot-role">' + esc(r.role || EM_DASH) + "</span>"
-          + '<span class="bp-slot-name">' + esc(r.name || EM_DASH)
+          + '<span class="bp-slot-name"' + (r.name ? ' title="' + esc(r.name) + '"' : "") + ">" + esc(r.name || EM_DASH)
           + (r.gmli != null ? '<span class="proj-dim"> gmLI ' + f2(r.gmli) + "</span>" : "") + "</span>"
           + '<span class="bp-slot-rem ' + remClass(r.rem_plus) + '">' + fInt(r.rem_plus) + "</span>"
           + "</div>";
@@ -1369,14 +1430,15 @@
     var rows = sortRows(filteredStarters(), STARTER_COLS, starterSort);
     var body = rows.length
       ? (function () {
-          var note = '<div class="mlbstats-note">' + rows.length + " starters. "
+          var note = '<div class="mlbstats-note">'
             + gloss("SEM+", "sem_plus") + " is pure run-prevention skill (100 = average qualified starter); "
             + "the durability columns (IP, GS, IP/GS) are context, kept separate from the skill number. "
             + gloss("WAR/IP+", "war_ip_plus_sp")
             + " is banked value per inning, anchored on STARTERS only, so it does not compare with the"
             + " reliever board's column of the same name; 10 of its points is one standard deviation.</div>";
-          return semExplainer() + starterScorecard() + note
-            + vintageNote(starterData, [["multiyear", "SEM+ 3yr"], ["multiyear_war_rate", "WAR/IP+ 3yr"]])
+          return proseFold("sp-about", rows.length + " starters",
+              semExplainer() + starterScorecard() + note
+              + vintageNote(starterData, [["multiyear", "SEM+ 3yr"], ["multiyear_war_rate", "WAR/IP+ 3yr"]]))
             + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_COLS, starterSort, starterData) + "</div>";
         })()
       : '<div class="mlbstats-empty">No starters match the current filters.</div>';
@@ -1407,9 +1469,10 @@
     var sort = starterHistorySort();
     var rows = sortRows(filteredStarterHistory(), STARTER_HISTORY_COLS, sort);
     var nQual = (yr.n_qualified != null) ? yr.n_qualified : yr.starters.length;
-    var cap = '<div class="mlbstats-note">' + esc(starterSeason) + " season, " + esc(nQual)
-      + " qualified starters. " + gloss("SEM+", "sem_plus") + " is the skill read; the durability columns"
-      + " (IP, GS, IP/GS) are context. Compare against how these arms actually pitched forward.</div>";
+    var cap = proseFold("sp-history-about",
+      esc(starterSeason) + " season, " + esc(nQual) + " qualified starters",
+      '<div class="mlbstats-note">' + gloss("SEM+", "sem_plus") + " is the skill read; the durability columns"
+      + " (IP, GS, IP/GS) are context. Compare against how these arms actually pitched forward.</div>");
     var table = rows.length
       ? '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_HISTORY_COLS, sort) + "</div>"
       : '<div class="mlbstats-empty">No starters match the current filters.</div>';
@@ -1423,7 +1486,8 @@
     var note = '<div class="mlbstats-note">' + gloss("Rotation+", "rotation_plus") + ' weights each rotation by the '
       + gloss("SEM+", "sem_plus") + " of the starter innings it throws (starter-IP-weighted). Front 3 reads the"
       + " top of the rotation; the durability columns are context.</div>";
-    return note + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_TEAM_COLS, starterTeamSort) + "</div>";
+    return proseFold("spteam-about", rows.length + " rotations", note)
+      + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_TEAM_COLS, starterTeamSort) + "</div>";
   }
 
   // ---- starters: Rotation Charts (mirrors the reliever viz + bullpen depth) --
@@ -1484,7 +1548,7 @@
       var slots = rot.map(function (r, i) {
         return '<div class="bp-slot">'
           + '<span class="bp-slot-role">SP' + (i + 1) + "</span>"
-          + '<span class="bp-slot-name">' + esc(r.name || EM_DASH)
+          + '<span class="bp-slot-name"' + (r.name ? ' title="' + esc(r.name) + '"' : "") + ">" + esc(r.name || EM_DASH)
           + (r.ip_per_gs != null ? '<span class="proj-dim"> ' + f1(r.ip_per_gs) + " IP/GS</span>" : "") + "</span>"
           + '<span class="bp-slot-rem ' + remClass(r.sem_plus) + '">' + fInt(r.sem_plus) + "</span>"
           + "</div>";
@@ -1886,7 +1950,7 @@
     var rows = sortRows(filteredHitters(), HITTER_COLS, hitterSort);
     var body = rows.length
       ? (function () {
-          var note = '<div class="mlbstats-note">' + rows.length + " hitters. "
+          var note = '<div class="mlbstats-note">'
             + gloss("HEM+", "hem_plus") + " is pure offensive-rate skill (100 = average qualified hitter); "
             + "the volume (PA, HR, SB) and slash columns are context, kept separate from the skill number. "
             + gloss("wRC+", "wrc_plus")
@@ -1898,8 +1962,9 @@
             + " is a different question and a different ruler: total batting value per plate appearance,"
             + " fielding and baserunning included, and 10 of its points is one standard deviation rather"
             + " than the wider spread HEM+ reads on.</div>";
-          return hemExplainer() + hitterScorecard() + note
-            + vintageNote(hitterData, [["multiyear", "HEM+ 3yr"], ["multiyear_war_rate", "WAR/PA+ 3yr"]])
+          return proseFold("hit-about", rows.length + " hitters",
+              hemExplainer() + hitterScorecard() + note
+              + vintageNote(hitterData, [["multiyear", "HEM+ 3yr"], ["multiyear_war_rate", "WAR/PA+ 3yr"]]))
             + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_COLS, hitterSort, hitterData) + "</div>";
         })()
       : '<div class="mlbstats-empty">No hitters match the current filters.</div>';
@@ -1927,9 +1992,10 @@
     var sort = hitterHistorySort();
     var rows = sortRows(filteredHitterHistory(), HITTER_HISTORY_COLS, sort);
     var nQual = (yr.n_qualified != null) ? yr.n_qualified : yr.hitters.length;
-    var cap = '<div class="mlbstats-note">' + esc(hitterSeason) + " season, " + esc(nQual)
-      + " qualified hitters. " + gloss("HEM+", "hem_plus") + " is the skill read; the slash + volume"
-      + " columns are context. Compare against how these bats actually hit forward.</div>";
+    var cap = proseFold("hit-history-about",
+      esc(hitterSeason) + " season, " + esc(nQual) + " qualified hitters",
+      '<div class="mlbstats-note">' + gloss("HEM+", "hem_plus") + " is the skill read; the slash + volume"
+      + " columns are context. Compare against how these bats actually hit forward.</div>");
     var table = rows.length
       ? '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_HISTORY_COLS, sort) + "</div>"
       : '<div class="mlbstats-empty">No hitters match the current filters.</div>';
@@ -1943,7 +2009,8 @@
     var note = '<div class="mlbstats-note">' + gloss("Offense+", "offense_plus") + ' weights each lineup by the '
       + gloss("HEM+", "hem_plus") + " of the plate appearances it takes (PA-weighted). Heart 3 reads the"
       + " top of the order; the volume columns are context.</div>";
-    return note + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_TEAM_COLS, hitterTeamSort) + "</div>";
+    return proseFold("hitteam-about", rows.length + " lineups", note)
+      + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_TEAM_COLS, hitterTeamSort) + "</div>";
   }
 
   // Lineup Charts: HEM+ distribution + skill-vs-volume scatter (clone of the
@@ -2000,7 +2067,7 @@
     var hand = h.bats ? '<span class="proj-dim"> ' + esc(h.bats) + "HB</span>" : "";
     return '<div class="bp-slot">'
       + '<span class="bp-slot-role">' + slotNum + "</span>"
-      + '<span class="bp-slot-name">' + esc(h.name || EM_DASH) + hand + adv
+      + '<span class="bp-slot-name"' + (h.name ? ' title="' + esc(h.name) + '"' : "") + ">" + esc(h.name || EM_DASH) + hand + adv
       + (h.pa != null ? '<span class="proj-dim"> ' + fInt(h.pa) + " PA</span>" : "") + "</span>"
       + '<span class="bp-slot-rem ' + hemClass(h.hem_plus) + '">' + fInt(h.hem_plus) + "</span>"
       + "</div>";
@@ -2027,7 +2094,7 @@
               var hand = h.bats ? '<span class="proj-dim"> ' + esc(h.bats) + "HB</span>" : "";
               return '<div class="bp-slot bp-slot--bench">'
                 + '<span class="bp-slot-role">&mdash;</span>'
-                + '<span class="bp-slot-name">' + esc(h.name || EM_DASH) + hand
+                + '<span class="bp-slot-name"' + (h.name ? ' title="' + esc(h.name) + '"' : "") + ">" + esc(h.name || EM_DASH) + hand
                 + (h.pa != null ? '<span class="proj-dim"> ' + fInt(h.pa) + " PA</span>" : "") + "</span>"
                 + '<span class="bp-slot-rem ' + hemClass(h.hem_plus) + '">' + fInt(h.hem_plus) + "</span>"
                 + "</div>";
@@ -2428,11 +2495,18 @@
     if (!rows.length) return '<div class="mlbstats-empty">No players match the current filters.</div>';
     var isStart = (leverageView === "starters");
     var seasonLbl = (leverageSeason === "current") ? "" : (esc(leverageSeason) + " season, ");
-    var note = '<div class="mlbstats-note">' + seasonLbl + rows.length + (isStart ? " starters. " : " batters. ")
+    var note = '<div class="mlbstats-note">'
       + gloss("WPA", "wpa") + " is realized in-game impact; " + gloss("pLI", "pli")
       + " and " + gloss("Clutch", "clutch") + " read the leverage of the spots. Descriptive outcome value, "
-      + "not a forecast." + leverageCoverage() + "</div>";
-    return note + leverageViz() + '<div class="mlbstats-scroll">' + renderTable(rows, cols, sort) + "</div>";
+      + "not a forecast.</div>";
+    // The coverage count rides the fold HEAD, not the folded body: the shell
+    // banner suppresses its own copy here (noCoverage) because only this board
+    // knows which season the pill is on, so folding it away would leave a phone
+    // reader with no games-walked count at all.
+    return proseFold("lev-about",
+        seasonLbl + rows.length + (isStart ? " starters" : " batters") + leverageCoverage(),
+        levExplainer() + note)
+      + leverageViz() + '<div class="mlbstats-scroll">' + renderTable(rows, cols, sort) + "</div>";
   }
 
   function renderLeverage() {
@@ -2455,8 +2529,11 @@
     // noCoverage: the board note below already prints a SEASON-AWARE coverage
     // count (leverageCoverage), and the live figure is wrong for a past-season
     // pill. One number, in the place that knows which season it belongs to.
+    // levExplainer() is no longer prepended here: it rides the board's own
+    // methodology fold (renderLeverageBoard), so it does not stand above a
+    // load error or a "no rows" state either.
     root.innerHTML = bannerHTML(leverageData, { noCoverage: true })
-      + leverageTabBar() + leverageSeasonPills() + leverageControls() + levExplainer() + renderLeverageBoard();
+      + leverageTabBar() + leverageSeasonPills() + leverageControls() + renderLeverageBoard();
     bindLeverageEvents(root);
     wireGlossary(root);
   }
@@ -2465,7 +2542,7 @@
     var root = document.getElementById("mlbstats-leverage-root");
     if (!root) return;
     root.innerHTML = bannerHTML(leverageData, { noCoverage: true })
-      + leverageTabBar() + leverageSeasonPills() + leverageControls() + levExplainer() + renderLeverageBoard();
+      + leverageTabBar() + leverageSeasonPills() + leverageControls() + renderLeverageBoard();
     restoreFocus(root, focusId || "mlbstats-leverage-q");
     bindLeverageEvents(root);
     wireGlossary(root);

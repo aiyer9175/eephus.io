@@ -1830,6 +1830,29 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .mlbstats-collapse-body { padding: 0 12px 12px; }
 .mlbstats-collapse.is-collapsed .mlbstats-collapse-body { display: none; }
 .mlbstats-collapse .mlbstats-viz { margin: 0; }
+/* METHODOLOGY FOLD (.mlbstats-fold) - the same collapsible carrying prose
+   rather than charts. Measured at 390x844 on Bullpen Leaderboards: 484px of
+   explainer + backtest scorecard + column key + frozen-column disclosure sat
+   between the controls and the first data row, on a 844px screen. The copy is
+   the methodology and none of it is deleted; it opens by default on a desktop
+   and closes by default on a phone (mlbstats.js proseFold), and a reader's own
+   toggle persists and outranks both.
+
+   The head stays a two-part line: the row count (data, always readable) and
+   the affordance hint. Both wrap rather than ellipsize - a subhead cut
+   mid-sentence is the thing this pattern exists to avoid. */
+.mlbstats-fold .mlbstats-collapse-head { align-items: baseline; flex-wrap: wrap; row-gap: 2px; }
+.mlbstats-fold .mlbstats-collapse-caret { align-self: center; }
+.mlbstats-fold-lead { color: var(--text-primary); }
+.mlbstats-fold-hint { color: var(--text-tertiary); font-weight: 400; letter-spacing: .05em; }
+/* Panels inside the fold already sit on the fold's own surface; a second
+   border and fill would draw a box inside a box. Flatten them and let the
+   fold's padding do the insetting. */
+.mlbstats-fold .mlbstats-collapse-body > .mlbstats-scorecard {
+  border: 0; background: none; padding: 0; margin: 8px 0 12px;
+}
+.mlbstats-fold .mlbstats-collapse-body > :first-child { margin-top: 0; }
+.mlbstats-fold .mlbstats-collapse-body > :last-child { margin-bottom: 0; }
 .mlbstats-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 12px; }
 .mlbstats-bar input, .mlbstats-bar select {
   font-family: var(--font-retro-mono); font-size: 12px; padding: 6px 9px;

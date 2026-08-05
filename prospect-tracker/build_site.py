@@ -138,10 +138,21 @@ ACCOUNT_CSS_LINK = f'<link rel="stylesheet" href="/assets/eephus-account.css?v={
 
 # Unified prospect-photo resolution - mirrors PROSPX's headshotURL(): consult the
 # resolved context map (data/photo_ctx.json, built by headshots.py) and use the
-# REAL MiLB/MLB photo for resolved ids ('67'/'milb'); fall back to the generic
-# silhouette overlay (always 200 - never a broken image) when unresolved/'none'.
+# REAL MiLB/MLB photo for resolved ids ('67'/'milb').
 # Single source of truth so the homepage shows the same coverage as PROSPX,
 # instead of the old hardcoded '67' that silhouetted every milb-only prospect.
+#
+# FACE CROP (2026-08-05). img.mlbstatic.com is Cloudinary and honours
+# `c_fill,g_face`: c_fill returns EXACTLY the requested box, g_face centres that
+# crop on the detected face. Source headshots are 480x720 (2:3), so every
+# consumer that wanted some other box was cropping blind - here through
+# `background: center top/cover`, which is a guess about where the face sits.
+# Asking the CDN for the real box removes the guess. Verified live on both the
+# '67' and 'milb' contexts: exact pixel dimensions back, ACAO:* intact. Same
+# transform string as PROSPX's _GFX_FACE_CROP and projections.js's FACE_CROP;
+# c_thumb was rejected there for zooming too tight and is not reconsidered here.
+_FACE_CROP = "c_fill,g_face"
+
 def _load_photo_ctx() -> dict:
     try:
         return (json.loads((ROOT / "data" / "photo_ctx.json").read_text(encoding="utf-8")).get("ctx")) or {}
@@ -149,20 +160,33 @@ def _load_photo_ctx() -> dict:
         return {}
 _PHOTO_CTX = _load_photo_ctx()
 
-def _headshot_url(mlbam, px: int = 180) -> str | None:
-    """Resolved rectangular prospect headshot URL via the unified chain, or None
-    when there's no MLBAM id (caller renders the silhouette)."""
+def _headshot_url(mlbam, box_w: int = 84, box_h: int | None = None) -> str | None:
+    """Face-cropped headshot URL for a `box_w` x `box_h` CSS-pixel well, or None
+    when there is no usable photo (no MLBAM id, or the resolver validated 'none')
+    and the caller should render its own empty/silhouette state.
+
+    The `d_people:generic` overlay is DELIBERATELY not used: it answers HTTP 200
+    with a silhouette, so a caller can never tell a real photo from a miss and no
+    onerror/degrade path downstream can fire. Without it a genuine miss 404s and
+    the caller's own empty state shows through.
+    """
     if not mlbam:
         return None
-    r = max(60, px * 2)
     ctx = _PHOTO_CTX.get(str(mlbam))
-    if ctx in ("67", "milb"):
-        return (f"https://img.mlbstatic.com/mlb-photos/image/upload/"
-                f"w_{r},q_auto:best/v1/people/{mlbam}/headshot/{ctx}/current")
-    # 'none' / not-yet-resolved → generic overlay (always returns an image:
-    # the real headshot if one exists, else the silhouette) so it's never empty.
+    if ctx == "none":                       # resolver checked: no photo on file
+        return None
+    # Unresolved ids (added since the last monthly photo_ctx backfill) ask the
+    # real '67' set with no overlay, so a miss 404s instead of silhouetting.
+    seg = ctx if ctx in ("67", "milb") else "67"
+    bw = max(20, int(box_w))
+    bh = max(20, int(box_h if box_h is not None else box_w))
+    # 2x for retina, clamped PROPORTIONALLY so a large well cannot ask the CDN
+    # for an absurd render and cannot distort the aspect on the way (clamping
+    # one axis alone would).
+    k = max(1.0, min(2.0, 1400 / max(bw, bh)))
+    w, h = round(bw * k), round(bh * k)
     return (f"https://img.mlbstatic.com/mlb-photos/image/upload/"
-            f"d_people:generic:headshot:67:current.png/w_{r},q_auto:best/v1/people/{mlbam}/headshot/67/current")
+            f"{_FACE_CROP},w_{w},h_{h},q_auto:best/v1/people/{mlbam}/headshot/{seg}/current")
 
 # Owner-set order (2026-06-11): Home, PROSPX, CollegeSavant (directly under
 # PROSPX), FA, Projections, Articles, Forums, Glossary, Team.
@@ -1687,8 +1711,11 @@ def _news_gfx_blob(recent: list, pmap: dict, max_events: int | None = None) -> s
     rendered feed shows (the per-date card contract: every item from that
     date, nothing silently dropped), so no cap beyond the feed's own window.
     mlbam + pctx let the client rebuild the resolved headshot URL (the
-    _headshot_url chain: pctx '67'/'milb' = the real photo context; absent =
-    the generic-overlay form); logo is the org's ESPN CDN logo slug."""
+    _headshot_url chain). pctx carries ALL THREE resolver verdicts, including
+    'none': the client needs to tell "no photo on file" apart from "not resolved
+    yet" so it can emit no URL at all for the former rather than fetch a
+    known-404. Absent pctx = unresolved, and the client asks the '67' set.
+    logo is the org's ESPN CDN logo slug."""
     items = []
     for dt, typ, glyph, text, key, org, name, val in (
             recent if max_events is None else recent[:max_events]):
@@ -1700,7 +1727,7 @@ def _news_gfx_blob(recent: list, pmap: dict, max_events: int | None = None) -> s
         if mlbam:
             it["mlbam"] = mlbam
             ctx = _PHOTO_CTX.get(str(mlbam))
-            if ctx in ("67", "milb"):
+            if ctx in ("67", "milb", "none"):
                 it["pctx"] = ctx
         if org and org in ESPN_SLUGS:
             it["logo"] = ESPN_SLUGS[org]
@@ -1724,10 +1751,23 @@ _NEWS_GFX_JS = """<script>
             up:'FV up',down:'FV down',signing:'Signing'};
   var CLR={up:'pos',down:'neg',il:'neg',debut:'accent'};
   var CDN='https://img.mlbstatic.com/mlb-photos/image/upload/';
+  // SQUARE face crop, 2026-08-05. renderNewsDay (eephus-gfx.js) draws this into
+  // an SxS box with drawImage, which has no object-fit, so a 480x720 source was
+  // arriving VERTICALLY SQUASHED - the CONTRACT note there says the fix belongs
+  // at this supplier, and this is that supplier. S = rowH-12 over the fit
+  // ladder's 40..58px rows, so 46px is the largest box; at the engine's 2x
+  // supersample that is 92 device px, and 96 covers it (the width the plain
+  // form already asked for). c_fill returns exactly the box, g_face centres it
+  // on the detected face. Verified live on both contexts, ACAO:* intact, so the
+  // crop stays canvas-export-safe.
+  // No d_people:generic: it answers 200 with a silhouette, which would draw a
+  // squashed grey outline that no fallback can detect. pctx 'none' means the
+  // resolver checked and there is no photo - return null and let the renderer
+  // draw its initials disc instead of fetching a known-404.
   function shotURL(e){
-    if(!e.mlbam)return null;
-    if(e.pctx)return CDN+'w_96,q_auto:best/v1/people/'+e.mlbam+'/headshot/'+e.pctx+'/current';
-    return CDN+'d_people:generic:headshot:67:current.png/w_96,q_auto:best/v1/people/'+e.mlbam+'/headshot/67/current';
+    if(!e.mlbam||e.pctx==='none')return null;
+    var seg=(e.pctx==='67'||e.pctx==='milb')?e.pctx:'67';
+    return CDN+'c_fill,g_face,w_96,h_96,q_auto:best/v1/people/'+e.mlbam+'/headshot/'+seg+'/current';
   }
   function logoURL(e){
     return e.logo?'https://a.espncdn.com/i/teamlogos/mlb/500/'+e.logo+'.png':null;
@@ -1862,7 +1902,10 @@ def _spotlight_card(label: str, p: dict, chip: str, spark_color: str) -> str:
     # Tier the holo border off the DISPLAYED integer, matching _fv_pill (a raw
     # threshold here disagreed with the pill rendered inside the same card).
     holo = " holo" if "holo" in _fv_tier_class(_fv_label(p)) else ""
-    url = _headshot_url(p.get("mlbam_id"), 180)   # unified chain (resolves milb-only ids)
+    # .spotlight .sp-photo is an 84x128 well (site.css); ask the CDN for exactly
+    # that, face-centred, instead of letting `background: center top/cover` guess
+    # where the face sits in a 480x720 source.
+    url = _headshot_url(p.get("mlbam_id"), 84, 128)   # unified chain (resolves milb-only ids)
     photo = f"background-image:url('{url}');" if url else ""
     spark = _fv_sparkline(p.get("points"), spark_color)
     return (

@@ -197,6 +197,137 @@
       "</div>";
   }
 
+  // ---- the vintage state ----------------------------------------------------
+  // betting_export carries `model.validation` out of the backtest artifact:
+  // which of the two grading modes produced each block, how much dated
+  // leaderboard history exists, how many games the honest mode could grade
+  // with it, and the three gates on the minimum-edge threshold. Everything in
+  // this section READS that block. It computes nothing, and in particular it
+  // projects no date for validation: the gates give a game count, and turning
+  // a count into a calendar date needs a rate the payload does not carry.
+  //
+  // A payload built before that lane existed has no `validation` key. Every
+  // reader here returns null in that case and the callers say so out loud,
+  // because "unknown" and "measured zero" are different facts.
+  // null means the key is absent (an old payload). A block with
+  // `available: false` means the key is present and says the artifact is
+  // missing. The callers distinguish the two.
+  function vstate() {
+    return ((S.data && S.data.model) || {}).validation || null;
+  }
+  function gateById(v, id) {
+    var gs = ((v || {}).gate || {}).gates || [];
+    for (var i = 0; i < gs.length; i++) if (gs[i].id === id) return gs[i];
+    return null;
+  }
+  function haveText(g) {
+    if (!g) return "-";
+    var h = g.have;
+    // "none measured" and not "not measured": this string reads both as a
+    // table cell and inside "has ...", and only one of the two works in both.
+    return (h == null) ? "none measured" : String(h);
+  }
+  function sentence(s) {
+    s = String(s || "");
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+  }
+  // The one sentence the pick section leads with. Built from the gate the
+  // reader can actually count, so it reads "600 needed, 0 today" rather than
+  // "the model is unvalidated" with no way to check the claim.
+  function noPickHeadline(v) {
+    if (!v) return "No pick: this payload carries no validation state, so treat the model " +
+      "as unvalidated.";
+    if (v.available === false) {
+      return "No pick: " + (v.reason || "the validation state is unknown") + ".";
+    }
+    var g = gateById(v, "vintage_sample");
+    if (g) {
+      return "No pick: the model is unvalidated until " + g.need + " exist, and " +
+        haveText(g) + " exist today.";
+    }
+    return "No pick: the model is unvalidated and no minimum edge has been measured.";
+  }
+
+  function modeTag(mode, honest) {
+    if (!mode) return '<span class="bt-dim">-</span>';
+    return '<span class="bt-tag ' + (honest ? "bt-tag-ok" : "bt-tag-warn") + '">' +
+      esc(mode) + "</span>";
+  }
+
+  function validationPanel() {
+    var v = vstate();
+    var rows = ['<div class="bt-panel-hd">Is the model validated?</div>'];
+    if (!v) {
+      return '<div class="bt-panel">' + rows.join("") +
+        "<p>No. This payload carries no validation state, which means it was built before " +
+        "the vintage grading lane existed. Treat every number on this page as unvalidated.</p></div>";
+    }
+    if (v.available === false) {
+      return '<div class="bt-panel">' + rows.join("") + "<p><strong>No.</strong> " +
+        esc(sentence(v.reason) || "The validation state is unknown.") + "</p></div>";
+    }
+    var vin = v.vintage || {}, cov = v.coverage || {}, gate = v.gate || {};
+    var need = vin.min_graded_games_for_min_edge;
+
+    rows.push("<p><strong>" + (v.validated ? "Yes." : "No.") + "</strong> " +
+      (v.validated
+        ? "The vintage mode has cleared every gate below, and the headline numbers on this " +
+          "page come from it."
+        : "The headline numbers on this page come from the <strong>" +
+          esc(v.headline_mode || "contaminated") + "</strong> mode, which cannot validate " +
+          "anything. " + esc((v.mode_meaning || {}).contaminated || "")) + "</p>");
+
+    if ((v.mode_meaning || {}).vintage) {
+      rows.push("<p><strong>The honest mode.</strong> " + esc(v.mode_meaning.vintage) + " " +
+        "It has graded " + (vin.n_graded == null ? "-" : vin.n_graded) + " of the " +
+        (v.n_games_completed == null ? "-" : v.n_games_completed) + " completed games in the " +
+        "cache, and skipped " + (vin.n_skipped_no_vintage == null ? "-" : vin.n_skipped_no_vintage) +
+        " for want of a snapshot dated before them.</p>");
+    }
+
+    rows.push('<div class="bt-kv">' +
+      kv("Dated leaderboard snapshots", cov.n_vintages == null ? "-" : cov.n_vintages) +
+      kv("Snapshot range", cov.first ? esc(cov.first) + " to " + esc(cov.last) : "none yet") +
+      kv("Missing days inside that range", (cov.missing_dates || []).length) +
+      kv("First game date a snapshot can price",
+         cov.earliest_gradable_game_date ? esc(cov.earliest_gradable_game_date) : "-") +
+      kv("Games graded by the honest mode", vin.n_graded == null ? "-" : vin.n_graded) +
+      kv("Graded games needed for a threshold", need == null ? "-" : need) +
+      "</div>");
+
+    if ((gate.gates || []).length) {
+      rows.push('<div class="bt-panel-sub">The three gates on a published pick</div>');
+      rows.push('<div class="bt-scroll"><table class="bt-table"><thead><tr>' +
+        '<th class="bt-l">Gate</th><th class="bt-l">What it needs</th><th>Have</th>' +
+        "<th>State</th></tr></thead><tbody>" +
+        gate.gates.map(function (g) {
+          return '<tr><td class="bt-l">' + esc(g.id) + "</td>" +
+            '<td class="bt-l bt-gate-need">' + esc(g.need || "") +
+            (g.why ? '<div class="bt-gate-why">' + esc(g.why) + "</div>" : "") + "</td>" +
+            "<td>" + esc(haveText(g)) + "</td>" +
+            '<td><span class="bt-tag ' + (g.open ? "bt-tag-ok" : "bt-tag-warn") + '">' +
+            (g.open ? "open" : "closed") + "</span></td></tr>";
+        }).join("") + "</tbody></table></div>");
+      rows.push(note(esc(gate.n_open + " of " + gate.n_gates + " gates are open. ") +
+        esc(gate.policy || "")));
+    }
+
+    rows.push('<div class="bt-panel-sub">When does that change</div>');
+    rows.push("<p>One dated snapshot lands per night, and a completed game becomes gradable " +
+      "only once a snapshot predates it. So the honest sample starts at games played on or " +
+      "after " + (cov.earliest_gradable_game_date ? esc(cov.earliest_gradable_game_date) :
+        "the first night the snapshot runs") + ", and it grows by roughly a slate a day from " +
+      "there until it reaches " + (need == null ? "the threshold" : need) + ". " +
+      "There is no projected date on this page, because turning a game count into a calendar " +
+      "date needs a games-per-night rate this module does not measure, and a made-up date is " +
+      "the same sin as a made-up edge.</p>");
+    if (v.generated_at) {
+      rows.push('<div class="bt-asof">Backtest artifact generated ' + esc(v.generated_at) +
+        (v.model_version ? " &middot; " + esc(v.model_version) : "") + "</div>");
+    }
+    return '<div class="bt-panel">' + rows.join("") + "</div>";
+  }
+
   // ---- model banner ---------------------------------------------------------
   function renderBanner() {
     var host = el("betting-banner");
@@ -207,10 +338,23 @@
       return;
     }
     var m = S.data.model || {}, st = S.data.status || {};
+    var v = vstate();
     var chips = [];
     chips.push('<span class="bt-chip bt-chip-stage">' + esc(m.stage || "Diamond preview") + "</span>");
     chips.push('<span class="bt-chip ' + (m.validated ? "bt-chip-ok" : "bt-chip-warn") + '">' +
       (m.validated ? "validated" : "unvalidated model") + "</span>");
+    // Which mode the numbers on this page came from, on every tab. The word
+    // "unvalidated" on its own does not tell a reader that the Brier he is
+    // looking at was scored on features that contain the game.
+    if (v && v.available !== false && v.headline_mode) {
+      chips.push('<span class="bt-chip bt-chip-warn">' + esc(v.headline_mode) + " numbers</span>");
+      var vin = v.vintage || {};
+      if (vin.min_graded_games_for_min_edge != null) {
+        chips.push('<span class="bt-chip bt-chip-warn">vintage graded ' +
+          (vin.n_graded == null ? "-" : vin.n_graded) + " of " +
+          vin.min_graded_games_for_min_edge + "</span>");
+      }
+    }
     chips.push('<span class="bt-chip ' + (st.odds_feed === "ok" ? "bt-chip-ok" : "bt-chip-warn") + '">' +
       (st.odds_feed === "ok" ? "odds feed live" : "no odds feed") + "</span>");
     if (gated()) chips.push('<span class="bt-chip bt-chip-warn">preview slice</span>');
@@ -229,11 +373,28 @@
     }
     var p = d.pick_of_the_day;
     if (!p) {
+      // EVERY blocker, not the first one. The payload used to carry a single
+      // reason, so on a day with no odds feed the page said "no odds feed" and
+      // a reader walked away thinking an API key was the only thing missing.
+      var blockers = d.pick_blockers || [];
+      var lines = blockers.length
+        ? '<ul class="bt-list">' + blockers.map(function (b) {
+            var reason = String(b.reason || "");
+            // The need is appended only when the reason has not already said
+            // it, so the min_edge line does not print "600 vintage-graded
+            // games" twice in one bullet.
+            var tail = (b.need && reason.indexOf(String(b.need)) === -1)
+              ? ' <span class="bt-dim">(needs ' + esc(b.need) + "; has " +
+                esc(haveText(b)) + ")</span>"
+              : "";
+            return "<li>" + esc(reason) + tail + "</li>";
+          }).join("") + "</ul>"
+        : "<p>" + esc(d.pick_reason || "") + "</p>";
       out.push('<div class="bt-nopick"><div class="bt-nopick-hd">No pick today</div>' +
-        "<p>" + esc(d.pick_reason || "") + "</p>" +
-        "<p>A pick ships when two things are true: an odds feed is live, and a clean " +
-        "out-of-sample test has measured the minimum edge worth betting. Neither is " +
-        "true yet, so there is nothing here. That is the honest state, not a bug.</p></div>");
+        "<p>" + esc(noPickHeadline(vstate())) + "</p>" + lines +
+        "<p>A pick ships when two things are true: an odds feed is live, and the vintage " +
+        "mode has measured a minimum edge worth betting on games it could not see. Neither " +
+        "is true yet, so there is nothing here. That is the honest state, not a bug.</p></div>");
     } else {
       out.push('<div class="bt-pick">' +
         '<div class="bt-pick-hd">Pick of the day</div>' +
@@ -245,6 +406,7 @@
         chip("Edge", signed(p.edge * 100, 1) + "%") + chip("EV / unit", signed(p.ev_per_unit, 3)) +
         "</div></div>");
     }
+    out.push(validationPanel());
     out.push(modelPanel(d.model || {}));
     return out.join("");
   }
@@ -252,7 +414,7 @@
   // ---- section: the record --------------------------------------------------
   function renderRecord() {
     var d = S.data;
-    return recordPanel(d ? d.record : null) +
+    return recordPanel(d ? d.record : null) + validationPanel() +
       '<div class="bt-panel"><div class="bt-panel-hd">How a pick gets graded</div>' +
       "<p>Every published pick carries the timestamp, the book, the price at post " +
       "and a flat one unit. It settles won, lost or void, and it is then graded a " +
@@ -272,8 +434,47 @@
       '</span><span class="bt-numchip-v">' + esc(value) + "</span></span>";
   }
 
+  // The graded blocks, mode labels attached. `model.validation.graded_blocks`
+  // is the shaped list betting_export builds; the raw backtest object is the
+  // fallback for a payload built before that key existed, and its rows may
+  // carry no mode at all, which the table prints as unknown rather than
+  // guessing.
+  function backtestBlocks(m) {
+    var v = (m || {}).validation;
+    if (v && v.graded_blocks && v.graded_blocks.length) return v.graded_blocks;
+    var bt = (m || {}).backtest || {};
+    return [bt.in_sample, bt.forward, bt.vintage].filter(Boolean);
+  }
+
+  // Beating a baseline on the point estimate and beating it significantly are
+  // two different claims. The page used to make the first and let it read as
+  // the second. The forward split's paired-Brier t is in the payload, so the
+  // sentence states both or neither.
+  function skillSentence(blocks) {
+    var fwd = null, i;
+    for (i = 0; i < blocks.length; i++) {
+      if (blocks[i].key === "forward" || /^forward/.test(String(blocks[i].label || ""))) {
+        fwd = blocks[i];
+      }
+    }
+    var sk = fwd && fwd.skill_vs_home_base;
+    if (!sk || sk.t == null) {
+      return "Each contaminated block beats both baselines on the point estimate, which is " +
+        "a point estimate and not a significance test.";
+    }
+    var head = "Each contaminated block beats both baselines on the point estimate. On the " +
+      "forward split that margin over the home-field baseline is " + signed(sk.delta, 6) +
+      " Brier at t = " + num(sk.t, 2) + ", which ";
+    if (sk.beats_baseline_95) {
+      return head + "clears the one-sided 95% bar of 1.645.";
+    }
+    return head + "does NOT clear the one-sided 95% bar of 1.645: a margin that size needs " +
+      "about " + (sk.n_for_95 == null ? "more" : sk.n_for_95) + " games and the split has " +
+      (fwd.n == null ? "fewer" : fwd.n) + ". Treat it as not significant.";
+  }
+
   function modelPanel(m) {
-    var bt = m.backtest || null;
+    var bt = m.backtest || {};
     var rows = [];
     rows.push('<div class="bt-panel-hd">How the number is made</div>');
     rows.push("<p>Game probabilities come from the same measurements the rest of the site " +
@@ -298,19 +499,30 @@
         kv("Home win rate", pct(lc.home_win_rate)) +
         kv("Extra innings, home rate", pct(lc.extra_inning_home_rate)) + "</div>");
     }
-    if (bt && (bt.in_sample || bt.forward)) {
+    var blocks = backtestBlocks(m);
+    if (blocks.length) {
       rows.push('<div class="bt-panel-sub">Backtest, and why it does not count</div>');
       rows.push("<p>" + esc(bt.contamination || "") + "</p>");
-      rows.push('<div class="bt-scroll"><table class="bt-table"><thead><tr><th>Test</th><th>Games</th>' +
+      // EVERY row names the mode that produced it. Two of these blocks are
+      // contaminated and one is honest, they are not comparable, and a table
+      // that stacks them without the label invites the reader to read the
+      // wrong number as the result.
+      rows.push('<div class="bt-scroll"><table class="bt-table"><thead><tr><th class="bt-l">Test</th>' +
+        "<th>Mode</th><th>Games</th>" +
         "<th>Brier</th><th>vs flat .500</th><th>vs home base</th><th>Accuracy</th></tr></thead><tbody>" +
-        [bt.in_sample, bt.forward].filter(Boolean).map(function (b) {
-          return "<tr><td class=\"bt-l\">" + esc(b.label) + "</td><td>" + b.n + "</td><td>" +
-            num(b.brier, 5) + "</td><td>" + num(b.brier_flat_500, 5) + "</td><td>" +
+        blocks.map(function (b) {
+          var n = (b.n != null) ? b.n : b.n_graded;
+          return "<tr><td class=\"bt-l\">" + esc(b.label || b.key || "") +
+            (b.status && b.status !== "graded"
+              ? ' <span class="bt-dim">' + esc(b.status) + "</span>" : "") +
+            "</td><td>" + modeTag(b.mode, b.honest) + "</td><td>" + (n == null ? "-" : n) +
+            "</td><td>" + num(b.brier, 5) + "</td><td>" + num(b.brier_flat_500, 5) + "</td><td>" +
             num(b.brier_home_base, 5) + "</td><td>" + pct(b.accuracy) + "</td></tr>";
         }).join("") + "</tbody></table></div>");
-      rows.push(note("Lower Brier is better. The model beats both baselines, and that still " +
-        "does not make it validated: the team inputs are season to date, so every graded " +
-        "game sits inside its own features. " + esc(bt.note || "")));
+      rows.push(note("Lower Brier is better. " + skillSentence(blocks) +
+        " None of that validates the model: the team inputs in the contaminated rows are " +
+        "season to date, so every graded game sits inside its own features. " +
+        esc(bt.note || "")));
     }
     if (m.known_limits && m.known_limits.length) {
       rows.push('<div class="bt-panel-sub">What it does not know</div><ul class="bt-list">' +
@@ -1188,6 +1400,12 @@
     ".bt-hold{font-size:11px;color:var(--text-tertiary);margin-top:6px}",
     ".bt-tag{font:700 9px/1 var(--font-retro,monospace);padding:3px 5px;text-transform:uppercase}",
     ".bt-tag-warn{color:var(--text-primary);border:1.5px solid var(--accent-gold,#a80)}",
+    ".bt-tag-ok{color:var(--accent-green,#3a9);border:1.5px solid var(--accent-green,#3a9)}",
+    // The gate table's `why` is a paragraph, not a cell value. Without a cap
+    // it stretches the row to its own length and the whole table becomes a
+    // horizontal scroll of one sentence.
+    ".bt-gate-need{max-width:46ch;white-space:normal}",
+    ".bt-gate-why{font-size:11.5px;color:var(--text-tertiary);margin-top:3px;white-space:normal}",
     ".bt-tag-block{color:var(--text-on-accent,#fff);background:var(--accent-red,#c55)}",
     ".bt-block{border:1px solid var(--accent-red,#c55);padding:10px;margin:8px 0;font-size:12.5px;color:var(--text-secondary);background:var(--bg-secondary)}",
     ".bt-block strong{color:var(--text-primary);display:block;margin-bottom:4px}",

@@ -33,6 +33,17 @@ The threshold that would gate a pick is `min_edge`, and it is null until a
 clean forward test measures one. Inventing a "3% edge" threshold would be the
 single most dishonest number on the site.
 
+AND THE PAYLOAD HAS TO SAY SO IN STRUCTURE, NOT JUST IN PROSE. betting_model
+now grades in TWO labelled modes (contaminated and vintage) and puts `min_edge`
+behind three named gates, and none of that reached the reader while this file
+lifted nine keys out of the eval artifact and dropped the rest. `model.validation`
+carries it through: which mode produced each graded block, how much vintage
+history exists and how many games the honest mode could grade with it, and each
+gate with its need, its have and its open/closed state. `pick_blockers` carries
+EVERY reason there is no pick rather than the first one hit, because a reader
+told only about the missing odds feed would reasonably assume the model itself
+was ready.
+
 CLI:
     python betting_export.py            # build the payload (offline-safe)
     python betting_export.py --summary  # print what it wrote
@@ -76,6 +87,37 @@ DISCLAIMER = {
     "helpline": "1-800-GAMBLER",
     "affiliates": "eephus.io takes no affiliate money from any sportsbook and links to none.",
     "staking": "Every pick on the public record is a flat 1 unit. Kelly is shown as information, never as a stake.",
+}
+
+# ---------------------------------------------------------------------------
+# WHAT THE EVAL ARTIFACT IS ALLOWED TO PUT ON A PUBLIC PAGE
+# ---------------------------------------------------------------------------
+# Keys lifted verbatim out of data/betting_model_eval.json. Two things are
+# deliberately NOT here:
+#   * vintage_coverage["dir"], an absolute path on the build box. A filesystem
+#     path is not a fact about the model and has no business being served.
+#   * vintage_coverage["bytes"], which measures the store and not the evidence.
+BACKTEST_KEYS = ("generated_at", "model_version", "n_games", "validated",
+                 "contaminated", "contamination", "modes", "headline_mode",
+                 "in_sample", "forward", "vintage", "split_date", "note")
+COVERAGE_KEYS = ("schema", "n_vintages", "first", "last", "missing_dates",
+                 "span_days", "latest_cutoff", "earliest_gradable_game_date", "note")
+# Per-block fields the client needs to print a mode-labelled row. `n` and
+# `n_graded` are both read because the vintage block reports its sample under
+# `n_graded` and only grows an `n` on the day it actually grades something.
+BLOCK_KEYS = ("label", "mode", "honest", "status", "n", "n_graded", "brier",
+              "brier_flat_500", "brier_home_base", "accuracy", "note")
+
+# The two modes in one sentence each, so the reader never has to infer what
+# "contaminated" means from the word alone.
+MODE_MEANING = {
+    "contaminated": ("Team inputs are season-to-date leaderboards, so every graded game "
+                     "sits inside its own features. This measures calibration, not skill, "
+                     "and it cannot validate anything."),
+    "vintage": ("Every game is priced on a leaderboard snapshot whose knowledge cutoff is "
+                "strictly before that game. A game with no such snapshot is skipped, not "
+                "graded on today's numbers. This is the only mode that can validate the "
+                "model."),
 }
 
 # Correlation rules the parlay builder enforces. A naive parlay multiplies leg
@@ -620,23 +662,170 @@ def parlay_context(bets: list[dict]) -> dict:
 
 
 # ===========================================================================
+# VINTAGE STATE: what the honest mode can grade, and which gates are shut
+# ===========================================================================
+def _graded_block(evald: dict, key: str) -> dict | None:
+    """One mode-labelled row of the backtest for the client's table.
+
+    `n` is the sample the row was graded on. The contaminated blocks carry it
+    directly; the vintage block carries `n_graded`, which equals `n` on the day
+    it grades and is 0 (with no `n` at all) before then, so both are read and
+    the honest count wins."""
+    b = evald.get(key)
+    if not isinstance(b, dict):
+        return None
+    row = {k: b.get(k) for k in BLOCK_KEYS if k in b}
+    row["key"] = key
+    n = b.get("n_graded") if key == "vintage" else b.get("n")
+    row["n"] = n if n is not None else b.get("n_graded")
+    skill = b.get("skill_vs_home_base") or {}
+    # The significance, not just the point estimate. The forward split beats the
+    # home-field baseline on the number and does NOT clear the one-sided 95%
+    # bar, and a page that prints the first without the second is claiming a
+    # result the artifact does not contain.
+    row["skill_vs_home_base"] = {
+        "delta": skill.get("delta"), "sd": skill.get("sd"), "t": skill.get("t"),
+        "beats_baseline_95": skill.get("beats_baseline_95"),
+        "n_for_95": skill.get("n_for_95"), "baseline": skill.get("baseline"),
+    } if skill else None
+    return row
+
+
+def validation_state(evald: dict | None) -> dict:
+    """The block that answers three questions without leaving the page: is
+    there a pick, is the model validated, and when will it be.
+
+    EVERY value here is READ from data/betting_model_eval.json. Nothing is
+    computed, projected or filled in. If the artifact has not been written the
+    state says exactly that, because "no artifact" and "artifact says zero" are
+    different facts and a reader is entitled to tell them apart.
+
+    One thing deliberately absent: a calendar date for validation. The gates
+    give a count (600 vintage-graded games, 0 in hand) and the coverage gives
+    the first game date a vintage can price. Turning those into "expect it in
+    March" needs a games-per-night rate the artifact does not carry, and a
+    projected date is exactly the kind of number this module refuses to
+    invent."""
+    evald = evald or {}
+    if not evald:
+        return {
+            "available": False,
+            "artifact": "data/betting_model_eval.json",
+            "reason": ("the backtest artifact has not been written in this build, so the "
+                       "validation state is unknown rather than clean"),
+            "validated": False,
+            "min_edge": None,
+        }
+    cov = evald.get("vintage_coverage") or {}
+    gate = evald.get("min_edge_gate") or {}
+    blocks = [b for b in (_graded_block(evald, k)
+                          for k in ("in_sample", "forward", "vintage")) if b]
+    vintage = evald.get("vintage") or {}
+    return {
+        "available": True,
+        "artifact": "data/betting_model_eval.json",
+        "generated_at": evald.get("generated_at"),
+        "model_version": evald.get("model_version"),
+        "validated": bool(evald.get("validated")),
+        "gates_picks": bool(evald.get("gates_picks")),
+        "min_edge": evald.get("min_edge"),
+        "modes": evald.get("modes") or [],
+        "headline_mode": evald.get("headline_mode"),
+        "mode_meaning": MODE_MEANING,
+        "graded_blocks": blocks,
+        "vintage": {
+            "status": vintage.get("status"),
+            "n_vintages": vintage.get("n_vintages"),
+            "n_gradable": vintage.get("n_gradable"),
+            "n_graded": vintage.get("n_graded"),
+            "n_skipped_no_vintage": vintage.get("n_skipped_no_vintage"),
+            "min_fit_games": vintage.get("min_fit_games"),
+            "min_eval_games": vintage.get("min_eval_games"),
+            "min_graded_games_for_min_edge": vintage.get("min_graded_games_for_min_edge"),
+            "first_graded_date": vintage.get("first_graded_date"),
+            "last_graded_date": vintage.get("last_graded_date"),
+            "note": vintage.get("note"),
+        },
+        "coverage": {k: cov[k] for k in COVERAGE_KEYS if k in cov},
+        "n_games_completed": evald.get("n_games"),
+        "gate": {
+            "all_gates_open": gate.get("all_gates_open"),
+            "gates": gate.get("gates") or [],
+            "n_open": sum(1 for g in (gate.get("gates") or []) if g.get("open")),
+            "n_gates": len(gate.get("gates") or []),
+            "odds_snapshot_dates": gate.get("odds_snapshot_dates"),
+            "sweep": gate.get("sweep"),
+            "policy": gate.get("policy"),
+        } if gate else None,
+        "note": evald.get("note"),
+    }
+
+
+# ===========================================================================
 # pick of the day
 # ===========================================================================
+def pick_blockers(*, min_edge: float | None, odds_configured: bool,
+                  gate: dict | None = None) -> list[dict]:
+    """EVERY reason there is no pick, not just the first one.
+
+    The old shape returned the first blocker and stopped, so on a day with no
+    odds feed the payload said "no odds feed" and never mentioned that the
+    model has no measured threshold either. Both are true today. A reader told
+    only the first would reasonably conclude that a key on the build box is all
+    that stands between him and a published pick, which is wrong by two gates."""
+    out = []
+    if not odds_configured:
+        out.append({
+            "id": "odds_feed", "open": False,
+            "need": "a cached odds snapshot to price against",
+            "have": "none",
+            "reason": "no odds feed is configured, so there is no market to have an edge against",
+        })
+    if min_edge is None:
+        closed = [g for g in ((gate or {}).get("gates") or []) if not g.get("open")]
+        n_gates = len((gate or {}).get("gates") or [])
+        if closed:
+            first = closed[0]
+            have = first.get("have")
+            have_txt = "none measured" if have is None else str(have)
+            out.append({
+                "id": "min_edge", "open": False,
+                "need": first.get("need"),
+                "have": have,
+                "gates_closed": [g.get("id") for g in closed],
+                "n_closed": len(closed), "n_gates": n_gates,
+                "reason": (f"the model is unvalidated: the minimum-edge threshold sits behind "
+                           f"{n_gates} gates and {len(closed)} are closed, starting with "
+                           f"{first.get('need')} against {have_txt} in hand"),
+            })
+        else:
+            out.append({
+                "id": "min_edge", "open": False,
+                "need": "a clean out-of-sample test that measures a minimum edge",
+                "have": None,
+                "reason": ("the model is unvalidated: the backtest is contaminated by "
+                           "season-to-date team inputs, so no minimum-edge threshold has "
+                           "been measured and no pick is published"),
+            })
+    return out
+
+
 def pick_of_the_day(bets: list[dict], *, min_edge: float | None,
-                    odds_configured: bool) -> tuple[dict | None, str]:
-    """The highest-EV qualifying edge, or None with the reason it is absent.
+                    odds_configured: bool,
+                    gate: dict | None = None) -> tuple[dict | None, str]:
+    """The highest-EV qualifying edge, or None with every reason it is absent.
 
     Two hard gates, both of which are currently closed:
       * no odds feed means no market to have an edge against, and
       * no measured `min_edge` means no threshold, and a threshold invented to
         make a pick appear is the oldest trick in this industry.
-    """
-    if not odds_configured:
-        return None, "no odds feed configured, so there is no market to price against"
-    if min_edge is None:
-        return None, ("the model is unvalidated: the backtest is contaminated by "
-                      "season-to-date team inputs, so no minimum-edge threshold has been "
-                      "measured and no pick is published")
+
+    `gate` is the eval artifact's `min_edge_gate` block when one exists; it
+    turns the second reason from "unvalidated" into the named count that is
+    missing."""
+    blockers = pick_blockers(min_edge=min_edge, odds_configured=odds_configured, gate=gate)
+    if blockers:
+        return None, "; ".join(b["reason"] for b in blockers)
     cands = []
     for b in bets:
         for market, rows in (("moneyline", b.get("moneyline") or []),
@@ -673,8 +862,18 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
 
     bets = team_bets(games, events, teams=teams, parks=parks, starters=starters) if games else []
     min_edge = evald.get("min_edge")          # None until a clean test measures one
+    gate = evald.get("min_edge_gate")
+    odds_configured = bool(status.get("configured") and events)
+    validation = validation_state(evald)
+    # ONE derivation of "validated", read by status.model, model.validated and
+    # (through the payload) the client's banner chip, so the three can never
+    # disagree on the page. It takes BOTH halves: the artifact's gates open AND
+    # a measured threshold. "All gates open" with a null min_edge is a
+    # contradiction, and this resolves it the safe way.
+    validated = bool(validation.get("validated") and min_edge is not None)
+    blockers = pick_blockers(min_edge=min_edge, odds_configured=odds_configured, gate=gate)
     pick, pick_reason = pick_of_the_day(bets, min_edge=min_edge,
-                                        odds_configured=bool(status.get("configured") and events))
+                                        odds_configured=odds_configured, gate=gate)
     record = load_record()
 
     empty_reasons = []
@@ -696,12 +895,13 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
             "odds_note": status.get("note"),
             "odds_captured_at": (snap or {}).get("captured_at"),
             "odds_kind": (snap or {}).get("kind"),
-            "model": "unvalidated",
+            "model": "validated" if validated else "unvalidated",
+            "model_mode": validation.get("headline_mode"),
             "empty_reasons": empty_reasons,
         },
         "model": {
             "version": bm.MODEL_VERSION,
-            "validated": False,
+            "validated": validated,
             "stage": "Diamond preview",
             "inputs": ["team Offense+ (HEM+ rollup)", "team Bullpen+ (REM+ rollup)",
                        "starter SEM+ for the listed probable", "park runs index",
@@ -718,15 +918,17 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
                 "no weather, no umpire, no travel, no injury news beyond what the "
                 "leaderboards already absorb",
             ],
-            "backtest": {k: evald.get(k) for k in
-                         ("generated_at", "n_games", "validated", "contaminated",
-                          "contamination", "in_sample", "forward", "split_date", "note")
-                         if k in evald} or None,
+            "backtest": {k: evald.get(k) for k in BACKTEST_KEYS if k in evald} or None,
+            # The vintage state, the coverage behind it and the three gates on
+            # min_edge, so the client can say WHICH number it is showing and
+            # WHY there is no pick without guessing at either.
+            "validation": validation,
             "min_edge": min_edge,
         },
         "disclaimer": DISCLAIMER,
         "pick_of_the_day": pick,
         "pick_reason": pick_reason,
+        "pick_blockers": blockers,
         "team_bets": bets,
         "props_fair_lines": props_fair_lines(games, starters=starters) if games else
                             {"model_only": True, "pitchers": [], "hitters": [],
@@ -743,10 +945,15 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         "generated_at": payload["generated_at"],
         "slate_date": payload["slate_date"],
         "status": payload["status"],
-        "model": {k: payload["model"][k] for k in ("version", "validated", "stage", "min_edge")},
+        # The free slice carries the FULL validation state. Whatever a future
+        # gate hides, "why is there no pick and is this thing validated" is not
+        # it: that answer is the reason a reader can trust the paid half.
+        "model": {k: payload["model"][k] for k in
+                  ("version", "validated", "stage", "min_edge", "validation")},
         "disclaimer": DISCLAIMER,
         "pick_of_the_day": pick,
         "pick_reason": pick_reason,
+        "pick_blockers": blockers,
         "n_games": payload["n_games"],
         "team_bets": bets[:PREVIEW_GAMES],
         "record": payload["record"],
@@ -785,10 +992,19 @@ if __name__ == "__main__":                                       # pragma: no co
 
     p = build(on_date=args.date, log_fn=print)
     if args.summary:
+        v = p["model"]["validation"]
         print(json.dumps({
             "slate_date": p["slate_date"], "n_games": p["n_games"],
             "status": p["status"], "pick": p["pick_of_the_day"],
-            "pick_reason": p["pick_reason"], "record": p["record"],
+            "pick_reason": p["pick_reason"],
+            "pick_blockers": [b["id"] for b in p["pick_blockers"]],
+            "validated": v.get("validated"),
+            "headline_mode": v.get("headline_mode"),
+            "vintages": (v.get("coverage") or {}).get("n_vintages"),
+            "vintage_graded": (v.get("vintage") or {}).get("n_graded"),
+            "gates_open": f"{(v.get('gate') or {}).get('n_open')} of "
+                          f"{(v.get('gate') or {}).get('n_gates')}",
+            "record": p["record"],
             "n_prop_pitchers": len(p["props_fair_lines"]["pitchers"]),
             "n_prop_hitters": len(p["props_fair_lines"]["hitters"]),
             "n_parlay_legs": len(p["parlay_context"]["legs"]),
