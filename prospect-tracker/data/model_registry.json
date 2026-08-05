@@ -1674,6 +1674,34 @@
       "artifact_age_days": 20
     },
     {
+      "model_id": "xfv_sb_driver",
+      "surface": "model-dev artifact (rendered nowhere) - loss ledger; owner ask: eFV stolen-base driver (2026-08-04 omnibus lane B4)",
+      "predicts": "n/a - gated experiment: MiLB stolen-base VOLUME per 600 PA, level-relative (sb_rate_rel: final pre-decision season, contemporaneous (season,level) median norm with prior-season + static-prior fallbacks, pa/(pa+50) reliability shrink), alone and in w-blends with z(tool_speed), added to the served hitter ridge on the shipped forward-chained protocol (driver docs/efv-sb-athleticism-2026-08-05/run_lab.py; pre-registration PREREG.md written before any fit)",
+      "champion": "shipped lean hitter feature set - unchanged",
+      "baseline": "same-run served-set baseline: pooled OOS rho 0.3882 / MAE 3.9339 (n 353, folds 2020-2023, lambda 0.70, target_censored); driver baseline reproduces the stock efv_lab_runner baseline exactly",
+      "metric": "PREREG gate, all clauses required: pooled rho margin >= 0.017 (hit MDE95) AND pooled MAE improves AND rho win in >= 3/4 folds AND row-permuted zero-info control reproduces < 50 percent of the margin",
+      "eval_artifact": "docs/efv-sb-athleticism-2026-08-05/results.json",
+      "verdict": "deprecated",
+      "notes": "NO SHIP (2026-08-05), sub-floor null - the FIRST SB feature ever tested against eFV (no SB-adjacent ban existed; verified 2026-08-04 and re-verified 2026-08-05 by ledger grep). MiLB caughtStealing is NOT captured in the lean hitting cache rows, so this is the honest v1 VOLUME spec, not success rate; the CS ingest was evaluated and DECLINED as not cheap/safe (the lean-row schema-migration pattern would refetch every hitting cache season x sport against a cache other in-flight lanes share). RESULT: sb_rate_rel alone is the strongest arm in the run and still unresolvable - pooled rho +0.0076 = 0.45x the 0.017 floor, MAE improves 3.9339 -> 3.9275 (KM-weighted 3.9084 -> 3.9051), within-tier 0.2349 -> 0.2468, t45 0.2777 -> 0.3018, and the zero-information control is genuinely dead (-0.0007, NOT the hit-age case where the control ate 93 percent) - but it wins only 2 of 4 folds and the 2020 fold ties exactly because only 26 percent of that fold's rows carry a milb block (sb imputes neutral 0.0; pool-wide coverage 581/845 = 69 percent). The speed blends are strictly weaker re-expressions, monotone toward the sb leg (w=0.5: +0.0068, 3/4 folds; w=0.7: +0.0050, 2/4) because tool_speed is already served and the composite's speed share is redundant; replacement of tool_speed was never run (banned: measured -0.014, and the add-only runner cannot express it). Face validity held (observed sb_rate_rel mean +6.33 sd 12.86, n 581: the prospect pool runs well above level median; grade-side anchor SB/600 by speed grade corr 0.57, TOOL_GRADE_TABLES.md 2.6). PLUMBING KEPT AND INERT: level_norms.FALLBACK_SB600_NORM + sb600_league_norm and the efv_dataset production-block key ship with this ledger row; the committed matrix was NOT rebuilt, efv_model._vec does not emit the key, and the served fit reads only _feature_spec names (_FEATURES_HIT unchanged) through fit_production_stack - no served number can move until a future gate names it. Do not re-attempt the volume spec blind on an unchanged pool; the earned re-run triggers are (a) CS ingest lands and a success-rate spec becomes computable, or (b) milb coverage of the eval pool materially rises.",
+      "last_checked": "2026-08-05",
+      "stale": false,
+      "artifact_age_days": 0
+    },
+    {
+      "model_id": "xfv_athleticism_blend",
+      "surface": "model-dev artifact (rendered nowhere) - loss ledger; owner ask: eFV athleticism blend (2026-08-04 omnibus lane B5)",
+      "predicts": "n/a - gated experiment: mean-z composites of the debuted-coverage hitter tools {tool_speed, tool_field, tool_throw} (the triple and both speed pairs), each ADDED alongside the served features on the shipped forward-chained protocol (driver docs/efv-sb-athleticism-2026-08-05/run_lab.py; pre-registration PREREG.md). Scoped BY the standing refutations: frame/athl excluded as UNTRAINABLE (FG-only, 0/843 debuted coverage, data/xfv_physical_eval.json); BMI-for-arms banned outright",
+      "champion": "shipped lean hitter feature set - unchanged",
+      "baseline": "same-run served-set baseline: pooled OOS rho 0.3882 / MAE 3.9339 (n 353, folds 2020-2023)",
+      "metric": "same PREREG gate as xfv_sb_driver",
+      "eval_artifact": "docs/efv-sb-athleticism-2026-08-05/results.json",
+      "verdict": "deprecated",
+      "notes": "NO SHIP (2026-08-05) - the FOURTH consecutive defense-adjacent refutation on this target, after xfv_defense_tools (isolated field / D-Tool / field x pos_prem all regress), the Will's-proxy arm (flat-to-negative, control reproduced the delta to the digit) and the prospect_def_value swap (regresses every gate): the binding constraint is the offense-dominated first-6yr-WAR TARGET (prospect_def_value.py:37-42), and re-packaging the same grades as composites does not change the target. NUMBERS: any composite carrying tool_field REGRESSES - triple mean-z -0.0019 pooled rho with MAE worse by 0.0265 and t45 collapsing 0.2777 -> 0.2343; speed+field is the WORST arm (-0.0027, 1/4 folds, t45 0.2012) and its own row-permuted control (+0.0019) OUTSCORES it, i.e. destroying the column's information helps more than keeping it. speed+throw is pure noise (+0.0021 = 0.12x the 0.017 floor, 2/4 folds). The PREREG called the field/throw null in advance and it landed; the PREREG sub-call that speed+field would be the informative variant was WRONG and is recorded as such. STALE-LEDGER CORRECTION recorded in passing: the xfv_defense_tools note 'tool_throw untestable (2017-2020-only coverage)' no longer holds - current-matrix coverage is 717/845 across debut years 2014-2024, so coverage was NOT why these arms failed. Do not re-attempt blind; the sanctioned lanes for defensive/athletic signal remain display chips and the MLB-side defense-IS-WAR surfaces.",
+      "last_checked": "2026-08-05",
+      "stale": false,
+      "artifact_age_days": 0
+    },
+    {
       "model_id": "xfv_model_class_sweep",
       "surface": "model-dev artifact (rendered nowhere) - loss ledger; model-class + target-engineering sweep (owner program 2026-07-15)",
       "predicts": "n/a - gated sweep: 9 alternative model classes + 2 alternative targets vs the shipped ridge on the lean set, forward-chained folds",

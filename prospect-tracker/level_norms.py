@@ -149,6 +149,52 @@ FALLBACK_PITCHER_BB_PCT_NORM: dict[str, float] = {
 }
 
 
+# --- Stolen-base norms (B4, 2026-08-05) --------------------------------------
+# SB per 600 PA by level. The empirical leg CANNOT live in compute_level_norms:
+# career_stats hitter rows carry the `sb` count but no `pa` column (verified
+# 2026-08-05: 0 of 1,816 sampled hitter season rows have `pa`), so an exact
+# per-600-PA rate is only computable from the milb_history season_splits cache,
+# which carries both. sb600_league_norm below therefore mirrors
+# milb_history.league_norms' contract (same pa>=100 qualifier, same n>=30
+# floor, same median) instead of the career_stats machinery.
+#
+# Static fallbacks = pooled 2015-2024 empirical medians from that cache
+# (computed 2026-08-05, docs/efv-sb-athleticism-2026-08-05/PREREG.md section 2).
+# The gradient is real and steep: rookie-ball runs ~4x the MLB rate, which is
+# exactly why the feature must be level-relative.
+FALLBACK_SB600_NORM: dict[str, float] = {
+    "DSL": 20.4, "CPX": 15.6, "A": 11.4, "A+": 10.9,
+    "AA": 9.4, "AAA": 7.4, "MLB": 4.8,
+}
+
+
+def sb600_league_norm(season: int, level: str, fetch: bool = False) -> float | None:
+    """Contemporaneous league MEDIAN SB per 600 PA for one (season, level).
+
+    Cache-only by default (fetch=False) so norm consumers stay offline-safe,
+    the same convention efv_dataset._resolved_norms already uses for the other
+    rate norms. Returns None when fewer than 30 qualifying (pa>=100) hitter
+    lines exist at the level-season; callers own the prior-season fallback and
+    the FALLBACK_SB600_NORM static floor, mirroring the k_pct/obp chain.
+    Pre-2014 hitting caches lack the `sb` key (lean-row schema vintage); those
+    seasons simply return None."""
+    import statistics as _stats
+    import milb_history as mh
+    vals: list[float] = []
+    for sport, lv in mh.SPORT_LEVEL.items():
+        if lv == level or (level in ("DSL", "CPX") and sport == 16):
+            for r in mh.season_splits(sport, season, "hitting", fetch=fetch):
+                if r.get("level") != level:
+                    continue
+                pa = _parse_float(r.get("pa")) or 0.0
+                sb = _parse_float(r.get("sb"))
+                if pa >= 100 and sb is not None:
+                    vals.append(sb / pa * 600.0)
+    if len(vals) < 30:
+        return None
+    return round(_stats.median(vals), 4)
+
+
 def _parse_float(v) -> float | None:
     if v is None:
         return None

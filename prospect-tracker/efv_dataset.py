@@ -47,6 +47,7 @@ import statistics
 from datetime import date
 from pathlib import Path
 
+import level_norms
 import milb_history as mh
 import storage
 from prospect_path import _spearman   # reuse the house hand-rolled rank corr
@@ -348,6 +349,19 @@ def _resolved_norms(season, level, group):
         n = mh.league_norms(season - 1, level, group, fetch=False) or {}
     if not n.get("k_pct"):
         n = dict(_NORM_PRIOR.get(group, {}))
+    if group == "hitting":
+        # B4 (2026-08-05): stolen-base norm, same contemporaneous -> prior-season
+        # -> static-prior chain as the rate norms above. COPY before annotating:
+        # mh.league_norms is lru_cached and returns its cached dict, so mutating
+        # it in place would corrupt every other consumer's norms.
+        n = dict(n)
+        sbn = level_norms.sb600_league_norm(season, level)
+        if sbn is None:
+            sbn = level_norms.sb600_league_norm(season - 1, level)
+        if sbn is None:
+            sbn = level_norms.FALLBACK_SB600_NORM.get(level)
+        if sbn is not None:
+            n["sb600"] = sbn
     return n
 
 
@@ -388,6 +402,16 @@ def _season_rates(row, norms, side: str, shrink: bool = True):
         # RPS+ family: full OPS vs the level mean (the site's level-relative production
         # metric). Adds the batting-average / contact-quality component beyond OBP + ISO.
         "ops_rel": w * ((ops - (norms.get("ops") or 0.0)) if ops is not None and norms.get("ops") else 0.0),
+        # B4 (2026-08-05): stolen-base VOLUME per 600 PA vs the contemporaneous
+        # level median (docs/efv-sb-athleticism-2026-08-05/PREREG.md section 2).
+        # Volume, not success rate: caughtStealing is not captured at MiLB in the
+        # lean cache rows, and the CS ingest was evaluated and declined (a full
+        # hitting-cache refetch for one experiment input). Same reliability
+        # shrink and the same missing-norm guard as obp_rel: a missing norm must
+        # never let the raw rate masquerade as a level-relative edge. INERT in
+        # the served model until _FEATURES_HIT names it, which it does not.
+        "sb_rate_rel": w * (((_f(row.get("sb")) / pa * 600.0) - (norms.get("sb600") or 0.0))
+                            if _f(row.get("sb")) is not None and pa and norms.get("sb600") else 0.0),
         "exposure": pa, "rates_missing": 0.0 if pa else 1.0,
     }
 
@@ -427,7 +451,7 @@ def _blend_level_rates(per_level: list[tuple[float, dict]], side: str) -> dict:
     season of identical quality, which is the opposite of the defect being repaired.
     """
     keys = ("k_rel", "bb_rel", "era_rel") if side == "pit" \
-        else ("k_rel", "bb_rel", "iso_rel", "obp_rel", "ops_rel")
+        else ("k_rel", "bb_rel", "iso_rel", "obp_rel", "ops_rel", "sb_rate_rel")
     total = sum(e for e, _r in per_level)
     if total <= 0:
         return dict(per_level[0][1]) if per_level else {}
@@ -685,7 +709,8 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
         **_pace_from_entry(seasons, final),
     }
     keep = ("k_rel", "bb_rel", "era_rel", "rates_missing") if side == "pit" \
-        else ("k_rel", "bb_rel", "iso_rel", "obp_rel", "ops_rel", "rates_missing")
+        else ("k_rel", "bb_rel", "iso_rel", "obp_rel", "ops_rel", "sb_rate_rel",
+              "rates_missing")
     base.update({k: final[k] for k in keep})
     if annotate and final.get("_xline_note"):
         # Measurement note for the CURRENT (final) season only: what S-XLINE

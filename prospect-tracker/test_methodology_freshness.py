@@ -212,6 +212,13 @@ MODEL_GLOSSARY = {
     # eFV surrogate label = research lane, NO-SHIP on both sides (deprecated row,
     # loss ledger). Wired into no surface, so there is nothing to document.
     "xfv_surrogate_label": "internal",
+    # 2026-08-05 pre-registered driver experiments, both NO-SHIP loss ledgers
+    # (docs/efv-sb-athleticism-2026-08-05/): SB rate 0.45x its MDE floor on
+    # 2/4 folds; every field-bearing composite regresses. The sb_rate_rel
+    # plumbing exists but is inert (not in _FEATURES_HIT), so no surface
+    # documents it.
+    "xfv_sb_driver": "internal",
+    "xfv_athleticism_blend": "internal",
     # X-D1 gmLI deployment-context metric: gate passed and wired 2026-07-02
     # (bullpen_export join + /mlbstats/ column); documented by its glossary
     # entry.
