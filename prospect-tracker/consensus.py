@@ -186,6 +186,27 @@ PLAYER_KEY_ALIASES = {
         "player_key": "leo_bernal",
         "player_name": "Leo Bernal",
     },
+    # 2026-08-04 - the same shape as yeremi_cabrera above, and the ONLY
+    # remaining critical_active identity collision. The draft-signing feed
+    # spells him "Jack Natili" (that is the wording of the 2026-07-20 Rockies
+    # transaction), FanGraphs and MLBAM spell him "Jackson", and the two
+    # spellings fragmented one human into two active cards. Same DOB
+    # 2005-03-10, same club, same position, same draft pick (2026, round 3,
+    # pick 76). He was reaching the SERVED board TWICE, at ranks 155 and 320
+    # with grades 45 and 42, and his surplus was double counted at $16.7M plus
+    # $3.8M.
+    #
+    # Fixed HERE rather than by re-keying the database on purpose. This table
+    # canonicalises at READ time (_canonicalize_player_snapshot), so the merge
+    # happens every rebuild and is undone by deleting these four lines. The
+    # alternative - a DB key remap - cannot be cleanly undone, and the survey
+    # in docs/identity-2026-08-04/JACK_NATILI_REMAP_PROPOSAL.md found it would
+    # also have thrown on 23 of 30 rows, because both keys hold snapshots on
+    # the same dates under PK(player_key, snapshot_date).
+    "jack_natili": {
+        "player_key": "jackson_natili",
+        "player_name": "Jackson Natili",
+    },
 }
 
 CANONICAL_PLAYER_NAMES = {

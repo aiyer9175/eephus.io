@@ -1,19 +1,19 @@
 {
- "generated_at": "2026-08-05T00:13:04Z",
+ "generated_at": "2026-08-05T01:25:41Z",
  "summary": {
-  "board_rows": 9647,
-  "active_board_rows": 4581,
+  "board_rows": 9646,
+  "active_board_rows": 4580,
   "roster_rows": 10679,
   "colliding_slugs": 197,
-  "critical_player_keys": 11,
-  "critical_active_player_keys": 1,
+  "critical_player_keys": 10,
+  "critical_active_player_keys": 0,
   "c1_shared_key": 0,
   "c1_unattributed": 0,
   "c1_shadowed": 152,
   "c1_split": 7,
   "c1_untracked": 38,
   "c2_double_bound": 0,
-  "c3_unresolved_active": 1,
+  "c3_unresolved_active": 0,
   "c4_side_conflicts": 10,
   "c5_birthdate_conflicts": 0,
   "c6_org_splits": 0,
@@ -26,16 +26,13 @@
   "alexander_campos",
   "david_rodriguez",
   "enmanuel_rodriguez",
-  "jack_natili",
   "jose_gomez",
   "jose_rondon",
   "junior_garcia",
   "michael_perez",
   "miguel_gomez"
  ],
- "critical_active_player_keys": [
-  "jack_natili"
- ],
+ "critical_active_player_keys": [],
  "frankenstein_records": [],
  "unsplit_collisions": [],
  "shadowed_slugs": [
@@ -1456,17 +1453,7 @@
   }
  ],
  "double_bound_keys": [],
- "unresolved_active": [
-  {
-   "check": "C3",
-   "player_key": "jack_natili",
-   "position": "C",
-   "org": "COL",
-   "current_level": "CPX",
-   "overall_rank": 320,
-   "birth_date": "2005-03-10"
-  }
- ],
+ "unresolved_active": [],
  "side_conflicts": [
   {
    "check": "C4",

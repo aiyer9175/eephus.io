@@ -439,7 +439,30 @@ def test_committed_artifact_headline_alias_contract():
 #   fingerprint DID move (feats dbb1bc2a -> b747e1d3) but only because the hitter
 #   `age` sign declaration moved -1 -> 0, which binds the eval-only monotone
 #   challenger and not the served ridge, so no grade moved because of it.
-_GOLDEN_XFV_SHA256 = "103a10aae0955b7f73820b2a738e91cd5e0d5ada0fe61253b9a9ce03e53c5c39"
+# 2026-08-04c -- the jack_natili / jackson_natili SPELLING SPLIT collapsed. One
+#   human held two ACTIVE keys because the draft-signing feed spells him "Jack"
+#   (that is the wording of the 2026-07-20 Rockies transaction) while FanGraphs
+#   and MLBAM spell him "Jackson". He was reaching the SERVED board TWICE, at
+#   ranks 155 and 320 with grades 45 and 42, and his surplus was DOUBLE COUNTED
+#   at $16.7M plus $3.8M. Fixed by adding him to consensus.PLAYER_KEY_ALIASES,
+#   the same read-time mechanism that already handles yeremi_cabrera, rather
+#   than by re-keying the database: the alias is reversible and re-applies every
+#   rebuild, and the DB survey found a key remap would have thrown on 23 of 30
+#   rows (both keys hold snapshots on the same dates under PK(player_key,
+#   snapshot_date)). See docs/identity-2026-08-04/JACK_NATILI_REMAP_PROPOSAL.md.
+#   Rowcount 9369 -> 9368, exactly the one duplicate. identity_collisions
+#   critical_active_player_keys ["jack_natili"] -> [] and c3_unresolved_active
+#   1 -> 0. One DB write accompanied it, and it was NOT a remap: the $1,097,500
+#   signing bonus was stranded on the losing key's acquisitions row, so it was
+#   copied onto the canonical row value-guarded (fills a NULL only, verified
+#   idempotent, 1.5GB backup taken first). The canonical row's pick_round 3 was
+#   kept over the orphan's contradictory 1.
+#   Stamped from the run_monthly --rebuild-only output (xfv.json mtime 21:26:42,
+#   BEFORE the suite ran) and re-verified outside pytest with
+#   tools.pipeline_artifact_diff.fingerprint_file, per the 2026-07-30 note above:
+#   a mid-suite test regenerates xfv.json under fixtures, and stamping from that
+#   would record a fixture state as production truth.
+_GOLDEN_XFV_SHA256 = "f9d680b833913f9ce7638d4a78e40afbd76f1fc160109867adadcb519d8553fe"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire

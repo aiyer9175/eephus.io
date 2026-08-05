@@ -6,8 +6,8 @@
 "enabled": true,
 "method": "isotonic"
 },
-"n_players": 9369,
-"n_active": 4581,
+"n_players": 9368,
+"n_active": 4580,
 "live_lambda": {
 "hit": 0.7,
 "pit": 0.57
@@ -206933,38 +206933,6 @@
 "p75_mm": 5.7,
 "p90_mm": 21.1,
 "mean_mm": 4.5,
-"p_bust": 0.681
-},
-"xfv_provisional": true
-},
-"jack_natili": {
-"side": "H",
-"kind": "active",
-"xfv_grade": 44.3,
-"xfv_grade_realized": 44.3,
-"xfv_grade_quantile": 40.7,
-"consensus_fv": 41.7,
-"xfv_minus_consensus": 2.6,
-"xfv_minus_consensus_quantile": -1.0,
-"xfv_war_6yr": 1.86,
-"p_bucket": {
-"bust": 0.681,
-"bench": 0.151,
-"regular": 0.111,
-"good": 0.051,
-"star": 0.007
-},
-"surplus_mm": 3.8,
-"band_p10_mm": 0.7,
-"band_p90_mm": 14.6,
-"p_bust": 0.681,
-"dist": {
-"p10_mm": 0.7,
-"p25_mm": 0.7,
-"p50_mm": 0.7,
-"p75_mm": 4.7,
-"p90_mm": 14.6,
-"mean_mm": 3.8,
 "p_bust": 0.681
 },
 "xfv_provisional": true
