@@ -135,6 +135,23 @@ def side_war_by_season(*, provider: str = DEFAULT_PROVIDER
 # the stint frame + run-value decomposition
 # ---------------------------------------------------------------------------
 
+def condensed_frame(side: str, *, provider: str = DEFAULT_PROVIDER):
+    """The CONDENSED war_daily frame: pybaseball's default call, WITHOUT
+    return_all=True, so it carries the narrow public column set rather than the
+    full decomposition. A different shape from stint_frame(), which is why
+    mlb_trade_lookup's name-to-WAR backfill reads through this door instead.
+
+    Kept separate on purpose: a caller written against one column set will
+    KeyError on the other, so the two frames must never be silently swapped.
+    Provider semantics and exception policy match stint_frame()."""
+    _require(provider)
+    if side not in _SIDES:
+        raise ValueError(f"unknown frame side {side!r}; use one of {_SIDES}")
+    import pybaseball as pyb
+    fn = pyb.bwar_bat if side == "bat" else pyb.bwar_pitch
+    return fn()
+
+
 def stint_frame(side: str, *, provider: str = DEFAULT_PROVIDER):
     """The raw war_daily stint frame: one row per player-stint-season, with
     mlb_ID / year_ID / WAR / name_common / age / team_ID / exposure columns.

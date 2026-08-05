@@ -428,18 +428,24 @@ def _ensure_bwar_loaded(is_pitcher: bool, timeout_seconds: float = 30.0) -> bool
     if failed_ref:
         return False
     try:
-        import pybaseball as pyb
+        import pybaseball as pyb  # noqa: F401  availability probe only
+        import war_source
     except ImportError:
         if is_pitcher: _BWAR_PIT_FAILED = True
         else:           _BWAR_BAT_FAILED = True
         return False
     # Download in a thread so we can enforce a timeout. Module-level
     # caches are touched directly on success.
+    #
+    # This site reads the CONDENSED frame (pybaseball's default, no
+    # return_all=True), a different column set from the stint frame the other
+    # ten WAR sites use, so it goes through war_source.condensed_frame rather
+    # than stint_frame. Swapping the two silently KeyErrors downstream.
     import threading
     result: dict[str, object] = {}
     def _worker():
         try:
-            result["df"] = pyb.bwar_pitch() if is_pitcher else pyb.bwar_bat()
+            result["df"] = war_source.condensed_frame("pit" if is_pitcher else "bat")
         except Exception as e:
             result["err"] = e
     t = threading.Thread(target=_worker, daemon=True)

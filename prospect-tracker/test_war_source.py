@@ -84,13 +84,17 @@ def _fake_pybaseball() -> types.ModuleType:
     bat = pd.DataFrame(_BAT_ROWS)
     pit = pd.DataFrame(_PIT_ROWS)
 
+    # The two frames differ in SHAPE, which is the whole reason the facade has
+    # two doors: return_all=True carries the decomposition columns, the default
+    # call carries only the narrow public set. The stub mirrors that so a test
+    # can prove each door asks for the frame its callers were written against.
+    _CONDENSED_COLS = ["mlb_ID", "year_ID", "name_common", "WAR"]
+
     def bwar_bat(return_all=False):
-        assert return_all, "war_daily reads must pass return_all=True"
-        return bat.copy()
+        return bat.copy() if return_all else bat[_CONDENSED_COLS].copy()
 
     def bwar_pitch(return_all=False):
-        assert return_all, "war_daily reads must pass return_all=True"
-        return pit.copy()
+        return pit.copy() if return_all else pit[_CONDENSED_COLS].copy()
 
     mod.bwar_bat = bwar_bat
     mod.bwar_pitch = bwar_pitch
@@ -205,6 +209,22 @@ def test_stint_and_run_value_frames_are_the_raw_frames():
         assert {"WAR_def", "runs_position", "PA", "pitcher"} <= set(rv.columns)
 
 
+def test_condensed_frame_is_the_narrow_frame_and_not_the_stint_frame():
+    """mlb_trade_lookup's WAR backfill reads pybaseball's DEFAULT call, a
+    different column set from the stint frame. The two doors must stay
+    distinct: a caller written against one KeyErrors on the other."""
+    with _patched_pybaseball():
+        import pybaseball as pyb
+        for side, fn in (("bat", pyb.bwar_bat), ("pit", pyb.bwar_pitch)):
+            cond = war_source.condensed_frame(side)
+            assert cond.equals(fn())
+            # narrow by construction: the decomposition columns are ABSENT
+            assert "WAR_def" not in cond.columns
+            assert set(cond.columns) < set(war_source.stint_frame(side).columns)
+            # and it still carries what the backfill joins on
+            assert {"mlb_ID", "year_ID", "WAR"} <= set(cond.columns)
+
+
 # --------------------------------------------------------------------------- #
 # the provider contract
 # --------------------------------------------------------------------------- #
@@ -213,6 +233,7 @@ _PUBLIC_FNS = (
     war_source.career_war_table,
     war_source.side_war_by_season,
     war_source.stint_frame,
+    war_source.condensed_frame,
     war_source.run_value_frame,
     war_source.name_index,
 )
@@ -222,7 +243,7 @@ def _call(fn, provider):
     kwargs = {"provider": provider}
     if fn is war_source.career_war_bulk:
         return fn([("x", 1, False)], 2000, 2026, **kwargs)
-    if fn in (war_source.stint_frame,):
+    if fn in (war_source.stint_frame, war_source.condensed_frame):
         return fn("bat", **kwargs)
     return fn(**kwargs)
 
