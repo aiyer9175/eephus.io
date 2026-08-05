@@ -80,10 +80,31 @@ _TM_VER = _asset_ver("assets/trademachine.js")
 _TM_CSS_VER = _asset_ver("assets/trademachine.css")
 _HUB_VER = _asset_ver("assets/eephus-hub.js")
 _GFX_VER = _asset_ver("assets/eephus-gfx.js")
+# Retained through the 2026-08-05 Diamond split: /fantasy/ is a redirect now
+# and assets/fantasy.js is being carved into dynasty.js / redraft.js / dfs.js
+# by the module lane. The constant costs one md5 and keeps the stamp available
+# until that carve lands.
 _FANTASY_VER = _asset_ver("assets/fantasy.js")
 _EXPORT_VER = _asset_ver("assets/eephus-export.js")
 _PARKS_VER = _asset_ver("assets/parks.js")
 _PARKS_CSS_VER = _asset_ver("assets/parks.css")
+# Diamond section (2026-08-05): one config script, five module apps, and the
+# Diamond Pass client. The five module apps are owned by their own lanes. A
+# file that is not on disk yet hashes to "1" here rather than raising, so the
+# scaffold builds and each page paints its own empty state until its app lands.
+_DIAMOND_CFG_VER = _asset_ver("assets/diamond-config.js")
+_DYNASTY_VER = _asset_ver("assets/dynasty.js")
+_REDRAFT_VER = _asset_ver("assets/redraft.js")
+_DFS_VER = _asset_ver("assets/dfs.js")
+_BETTING_VER = _asset_ver("assets/betting.js")
+_CARDS_VER = _asset_ver("assets/cards.js")
+_DIAMOND_VER = _asset_ver("assets/diamond.js")
+# The gate switch lives in ONE file (assets/diamond-config.js:
+# window.EEPHUS_DIAMOND = {gating:false, ...}). Every Diamond page loads it
+# BEFORE its module app so the app can read the flag on first paint. Both are
+# deferred, and deferred scripts run in document order, so config wins the race
+# by position rather than by luck.
+DIAMOND_CONFIG_SCRIPT = f'<script src="/assets/diamond-config.js?v={_DIAMOND_CFG_VER}" defer></script>'
 
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
 # page. OPTIONAL by design: assets/eephus-config.js is git-ignored and absent on
@@ -165,7 +186,21 @@ NAV_ITEMS = [
         ("mlbstats",    "MLB Stats",   "/mlbstats/"),
         ("pal",         "Alchemy Lab", "/pal/"),
         ("trademachine", "Trade Machine", "/trademachine/"),
-        ("fantasy",     "Fantasy", "/fantasy/"),
+    ]},
+    # 2026-08-05: the Diamond section. The old single "Fantasy" leaf split into
+    # Dynasty / Redraft / DFS and moved here alongside the two new modules and
+    # the Diamond Pass page; /fantasy/ is now a redirect to /redraft/ so old
+    # links and bookmarks still land somewhere real. Every page in this group
+    # ships PUBLIC with "Diamond preview" labeling. The group key is
+    # deliberately NOT "diamond" so it cannot be confused with the leaf of that
+    # name (the leaf key is what _nav() matches `active` against).
+    {"group": "Diamond", "key": "diamondgrp", "children": [
+        ("dynasty",  "Dynasty",        "/dynasty/"),
+        ("redraft",  "Redraft",        "/redraft/"),
+        ("dfs",      "DFS",            "/dfs/"),
+        ("betting",  "Sports Betting", "/betting/"),
+        ("cards",    "Card Market",    "/cards/"),
+        ("diamond",  "Diamond Pass",   "/diamond/"),
     ]},
     ("articles", "Articles",         "/articles/"),
     ("forums",   "Forums",           "/forums/"),
@@ -314,7 +349,43 @@ MODULE_STAGE = {
     "fantasy": ("β", "Fantasy is in beta - newly launched; ROS projections may shift as the models mature"),
     "forums": ("β", "Forums is in beta - newly launched"),
     "parks": ("β", "MiLB Park Factors is in beta - newly launched; the factors are a measured artifact, the surface is new"),
+    # Diamond section (2026-08-05). These rows carry the FULL chip text in
+    # slot [0] and render through _stage_chip(); the older rows above predate
+    # the helper and their call sites still write "β beta" literally, using
+    # only slot [1] for the hover title. Nothing is gated: these pages are
+    # public and free while the section is built out.
+    "dynasty": ("◆ Diamond preview", "Dynasty is a Diamond preview - free and public while the Diamond section is built out"),
+    "redraft": ("◆ Diamond preview", "Redraft is a Diamond preview - free and public while the Diamond section is built out"),
+    "dfs": ("◆ Diamond preview", "DFS is a Diamond preview - free and public while the Diamond section is built out"),
+    "betting": ("◆ Diamond preview", "Sports Betting is a Diamond preview - free and public while the Diamond section is built out"),
+    "cards": ("◆ Diamond preview", "Card Market is a Diamond preview - free and public while the Diamond section is built out"),
+    "diamond": ("◆ Diamond preview", "Diamond Pass is not selling anything yet - everything on the site is free today"),
 }
+
+def _stage_chip(key: str) -> str:
+    """The lifecycle chip on a module masthead: MODULE_STAGE[key] = (visible
+    text, hover title). Reuses the existing .eephus-beta chip so the Diamond
+    modules inherit the same sharp-cornered treatment as the beta chips."""
+    label, title = MODULE_STAGE[key]
+    return (f'<span class="eephus-beta" title="{html.escape(title)}">'
+            f'{html.escape(label)}</span>')
+
+# Every betting surface carries this block. It is not decoration: it is the
+# legal floor the module ships under (21+, informational only, state-by-state
+# legality, no affiliate relationships, problem-gambling helpline). Any new
+# betting surface renders it too.
+BETTING_DISCLAIMER = (
+    '<div class="card betting-disclaimer" role="note">'
+    '<h3>21+. Informational and entertainment only.</h3>'
+    '<p>eephus.io is not a sportsbook. We do not accept wagers, we do not take a cut of yours, '
+    'and there are no affiliate links anywhere on this site. Nothing here is betting advice. '
+    'Sports betting is not legal in every state and the rules differ where it is. '
+    'Odds shown are the odds captured at the time a pick was posted and they move after that. '
+    'No model wins every bet and we do not claim one will. '
+    'If betting stops being fun, call 1-800-GAMBLER or visit '
+    '<a href="https://www.1800gamblerhelp.org/" target="_blank" rel="noopener noreferrer">1800gamblerhelp.org</a>.</p>'
+    '</div>'
+)
 
 # Dev byline - the same "Created by" signature PROSPX renders above its
 # masthead (prospx/index.html .build-banner). FA + Projections carry it too
@@ -2719,13 +2790,14 @@ def _cross_module_strip() -> str:
                           'top reliever-to-starter conversion candidates', rows))
     except (OSError, ValueError, KeyError):
         pass
-    # Fantasy - rest-of-season projected points leaders. The section lists in
+    # Redraft - rest-of-season projected points leaders. The section lists in
     # fantasy.json are BARE mlbam ids and the side comes from the section they
-    # sit in (assets/fantasy.js resolves them the same way), so a two-way player
+    # sit in (assets/redraft.js resolves them the same way), so a two-way player
     # has one record per side and the lookup has to be keyed (mlbam, side) or it
-    # prints Ohtani's pitching total on the hitter board. Rows land on /fantasy/
+    # prints Ohtani's pitching total on the hitter board. Rows land on /redraft/
     # itself: the app keeps its section state in memory, not the hash, so there
-    # is no per-player deep link to honour.
+    # is no per-player deep link to honour. (Pre-2026-08-05 this pointed at
+    # /fantasy/, which is now a redirect - one hop saved, same destination.)
     try:
         ff = _cached_data_json("fantasy.json")
         by_side = {(p.get("mlbam"), p.get("side")): p for p in ff.get("players") or []}
@@ -2734,13 +2806,13 @@ def _cross_module_strip() -> str:
         top = sorted((c for c in cand if c and c.get("fpts_fgp") is not None),
                      key=lambda c: -c["fpts_fgp"])[:3]
         rows = "".join(
-            f'<a class="xmod-row" href="/fantasy/">'
+            f'<a class="xmod-row" href="/redraft/">'
             f'<span class="xmod-name">{html.escape(c.get("name") or "")}</span>'
             f'<span class="xmod-sub">{html.escape(c.get("team") or "")}</span>'
             f'<span class="xmod-val">{c["fpts_fgp"]:.0f} FG pts</span></a>'
             for c in top)
         if rows:
-            cards.append(('◈ Fantasy', '/fantasy/',
+            cards.append(('◈ Redraft', '/redraft/',
                           'rest-of-season hitter points leaders', rows))
     except (OSError, ValueError, KeyError):
         pass
@@ -2993,7 +3065,10 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$", "projections": "Δ",
                      "collegesavant": "✪", "glossary": "§", "forums": "❝",
                      "team": "⚒", "mlbstats": "▦", "pal": "⚗", "trademachine": "⇄",
-                     "fantasy": "◈"}
+                     # Diamond section (the old "fantasy" ◈ went to Redraft,
+                     # which is what that card's rows actually are).
+                     "dynasty": "♛", "redraft": "◈", "dfs": "⚡",
+                     "betting": "⌁", "cards": "▧", "diamond": "◆"}
     def _sb_link(key, label, href, grouped=False):
         classes = []
         if key == "home":
@@ -3535,48 +3610,416 @@ def build_pal() -> str:
                 url=f"{SITE_ORIGIN}/pal/")
 
 def build_fantasy() -> str:
-    """The /fantasy/ Fantasy module - rest-of-season fantasy rankings + daily SP
-    streamers, scored in the user's league format (Ottoneu FanGraphs Points
-    default, SABR points, 5x5, 4x4). Static shell + assets/fantasy.js, which
-    fetches the fantasy_export.py sidecar (data/fantasy.json): ROS projections
-    from the FA/Projections engine, per-player counting-stat vectors the client
-    re-scores per system, the probable-pitcher schedule, and eight sections
-    (Daily Streamers, Two-Start SP, ROS SP/RP/Hitters, Buy/Sell, Closer Grid,
-    Call-up Watch). Styles ride the .fa-app / .mlbstats-app blocks in site.css."""
+    """/fantasy/ - a redirect stub, same shape as build_teams_redirect().
+
+    The single Fantasy module split three ways on 2026-08-05 (Dynasty /
+    Redraft / DFS under the Diamond group). Redraft inherited the streamers,
+    two-start, ROS and buy-sell surfaces, so that is where an old /fantasy/
+    link belongs. The path STAYS in deploy/publish_paths.txt: the whole point
+    of a redirect stub is that the old URL keeps resolving."""
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fantasy - eephus.io</title>
+{FAVICON_LINKS}
+<meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="0; url=/redraft/">
+<script>location.replace("/redraft/");</script>
+</head><body>
+<p style="font-family:monospace;padding:2rem;">Fantasy split into
+<a href="/redraft/">Redraft</a>, <a href="/dynasty/">Dynasty</a> and
+<a href="/dfs/">DFS</a>. Redraft is where the streamers and rest-of-season
+ranks live.</p>
+</body></html>
+"""
+
+# --------------------------------------------------------------------------- #
+# The Diamond section (2026-08-05)
+# --------------------------------------------------------------------------- #
+# Six pages, one group in the nav, all of them PUBLIC. The gate flag exists
+# (assets/diamond-config.js) and is OFF; nothing on these pages is withheld
+# from anyone. Each shell is the build_fantasy shape it was cloned from:
+# masthead + stage chip + section nav + a banner div + an app root, then the
+# module's own deferred JS. The five module apps belong to other lanes, so
+# every shell is written to survive its app (and its data sidecar) not being
+# there yet: the app root is empty until an app fills it, and each app owns
+# its own loud empty state.
+#
+# Section keys are the CONTRACT between these shells and those apps. They are
+# spelled out per builder below; the data attribute is data-<module>section and
+# the three ids are <module>-section / <module>-banner / <module>-app-root.
+# --------------------------------------------------------------------------- #
+
+def build_dynasty() -> str:
+    """/dynasty/ - dynasty and keeper league value. Reads data/fantasy.json
+    (the shared fantasy_export corpus) through assets/dynasty.js: the eFV +
+    ETA + surplus dynasty board, Call-up Watch, and a keeper-value calculator
+    that prices years of control against a redraft replacement.
+
+    Section keys: dynasty | callups | keeper."""
     body = (
-        '<div class="fa-app mlbstats-app fantasy-app">'
+        '<div class="fa-app mlbstats-app dynasty-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Fantasy <span class="eephus-beta" title="{html.escape(MODULE_STAGE["fantasy"][1])}">β beta</span></h1></div>'
-        '<span class="section-sub">Rest-of-season fantasy rankings and daily streamers, scored in YOUR league format - '
-        'Ottoneu FanGraphs Points (default), SABR Points, Old School 5x5, or Ottoneu 4x4. ROS projections from the same '
-        'engine as the MLB Projections board; matchup + regression context from REM+/SEM+/HEM+, team Offense+/Bullpen+, '
-        'and xStat luck gaps.</span></div>'
-        # League scoring selector (fantasy.js fills it from data/fantasy.json scoring_catalog; default FanGraphs Points).
-        '<div id="fantasy-scoring" class="fantasy-scoring-bar" aria-label="League scoring format"></div>'
-        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Fantasy sections">'
-        '<button type="button" class="mlbstats-sectionbtn active" data-fantasysection="streamers" role="tab" aria-selected="true">Daily Streamers</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="two_start" role="tab" aria-selected="false">Two-Start SP</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="ros_sp" role="tab" aria-selected="false">ROS SP</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="ros_rp" role="tab" aria-selected="false">ROS RP</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="ros_hitter" role="tab" aria-selected="false">ROS Hitters</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="buysell" role="tab" aria-selected="false">Buy / Sell</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="closers" role="tab" aria-selected="false">Closer Grid</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="callups" role="tab" aria-selected="false">Call-up Watch</button>'
+        f'<h1>Dynasty {_stage_chip("dynasty")}</h1></div>'
+        '<span class="section-sub">Dynasty and keeper value on one board. Prospect grades come from eFV, '
+        'the same model the PROSPX board runs on, blended with ETA and surplus value so a 19-year-old in '
+        'A-ball and a 27-year-old in his arbitration years can sit in the same ranking. Call-up Watch flags '
+        'who is next. The keeper calculator prices years of control against what the same player costs in a '
+        'redraft league.</span></div>'
+        '<div id="dynasty-scoring" class="fantasy-scoring-bar" aria-label="League scoring format"></div>'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Dynasty sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-dynastysection="dynasty" role="tab" aria-selected="true">Dynasty Board</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-dynastysection="callups" role="tab" aria-selected="false">Call-up Watch</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-dynastysection="keeper" role="tab" aria-selected="false">Keeper Calculator</button>'
         '</div>'
-        '<div id="fantasy-section" class="mlbstats-section">'
-        '<div id="fantasy-banner"></div>'
-        '<div id="fantasy-app-root"></div>'
+        '<div id="dynasty-section" class="mlbstats-section">'
+        '<div id="dynasty-banner"></div>'
+        '<div id="dynasty-app-root"></div>'
         '</div>'
         '</div>'
+        f'{DIAMOND_CONFIG_SCRIPT}'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
-        f'<script src="/assets/fantasy.js?v={_FANTASY_VER}" defer></script>'
+        f'<script src="/assets/dynasty.js?v={_DYNASTY_VER}" defer></script>'
     )
-    return page("Fantasy - eephus.io", "fantasy", body,
-                "Rest-of-season fantasy baseball rankings and daily SP streamers from eephus.io, scored in your league "
-                "format (Ottoneu FanGraphs Points, SABR, 5x5, 4x4): SP/RP/hitter ROS ranks, two-start pitchers, "
-                "buy-low/sell-high regression candidates, and a closer depth grid.",
-                url=f"{SITE_ORIGIN}/fantasy/")
+    return page("Dynasty - eephus.io", "dynasty", body,
+                "Dynasty and keeper league rankings from eephus.io: prospects graded by the eFV model, "
+                "blended with ETA and surplus value, plus a call-up watch list and a keeper calculator "
+                "that prices years of control.",
+                url=f"{SITE_ORIGIN}/dynasty/")
+
+
+def build_redraft() -> str:
+    """/redraft/ - the single-season fantasy surfaces that used to live at
+    /fantasy/: daily SP streamers, two-start pitchers, rest-of-season SP/RP/
+    hitter ranks, buy-low and sell-high candidates, and the closer grid, all
+    re-scored client-side in the user's league format by assets/redraft.js
+    off data/fantasy.json.
+
+    Section keys: streamers | two_start | ros_sp | ros_rp | ros_hitter |
+    buysell | closers."""
+    body = (
+        '<div class="fa-app mlbstats-app redraft-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>Redraft {_stage_chip("redraft")}</h1></div>'
+        '<span class="section-sub">Rest-of-season rankings and daily streamers, scored in YOUR league format: '
+        'Ottoneu FanGraphs Points (default), SABR Points, Old School 5x5, or Ottoneu 4x4. The projections come '
+        'from the same engine as the MLB Projections board. Matchup and regression context comes from '
+        'REM+/SEM+/HEM+, team Offense+/Bullpen+, and the gap between real and expected stats.</span></div>'
+        # League scoring selector (redraft.js fills it from data/fantasy.json scoring_catalog; default FanGraphs Points).
+        '<div id="redraft-scoring" class="fantasy-scoring-bar" aria-label="League scoring format"></div>'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Redraft sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-redraftsection="streamers" role="tab" aria-selected="true">Daily Streamers</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-redraftsection="two_start" role="tab" aria-selected="false">Two-Start SP</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-redraftsection="ros_sp" role="tab" aria-selected="false">ROS SP</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-redraftsection="ros_rp" role="tab" aria-selected="false">ROS RP</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-redraftsection="ros_hitter" role="tab" aria-selected="false">ROS Hitters</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-redraftsection="buysell" role="tab" aria-selected="false">Buy / Sell</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-redraftsection="closers" role="tab" aria-selected="false">Closer Grid</button>'
+        '</div>'
+        '<div id="redraft-section" class="mlbstats-section">'
+        '<div id="redraft-banner"></div>'
+        '<div id="redraft-app-root"></div>'
+        '</div>'
+        '</div>'
+        f'{DIAMOND_CONFIG_SCRIPT}'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
+        f'<script src="/assets/redraft.js?v={_REDRAFT_VER}" defer></script>'
+    )
+    return page("Redraft - eephus.io", "redraft", body,
+                "Rest-of-season redraft fantasy rankings and daily SP streamers from eephus.io, scored in your "
+                "league format (Ottoneu FanGraphs Points, SABR, 5x5, 4x4): SP/RP/hitter ranks, two-start "
+                "pitchers, buy-low and sell-high candidates, and a closer depth grid.",
+                url=f"{SITE_ORIGIN}/redraft/")
+
+
+def build_dfs() -> str:
+    """/dfs/ - the daily slate. assets/dfs.js reads the dfs_export.py sidecar
+    (data/dfs.json): per-game projections priced off the same rest-of-season
+    engine with matchup context, plus a client-side lineup optimizer.
+
+    SALARY PROVENANCE, stated on the page and repeated here so it does not get
+    lost: we do not scrape DraftKings or FanDuel salary feeds. The optimizer
+    runs on salaries the user pastes or imports from a CSV they export from
+    their own DFS site. Projections are ours; salaries are theirs.
+
+    Section keys: slate | value | optimizer | stacks."""
+    body = (
+        '<div class="fa-app mlbstats-app dfs-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>DFS {_stage_chip("dfs")}</h1></div>'
+        '<span class="section-sub">Today\'s slate, priced per game. Projections come from the same '
+        'rest-of-season engine as the Redraft board, re-scored for one night with the probable pitcher, '
+        'the park, and the bullpen behind him. Paste or import your own salaries from your DFS site and '
+        'the optimizer builds lineups against them. We do not scrape salary feeds, so the salaries are '
+        'yours and the projections are ours.</span></div>'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="DFS sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-dfssection="slate" role="tab" aria-selected="true">Today\'s Slate</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-dfssection="value" role="tab" aria-selected="false">Value Plays</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-dfssection="optimizer" role="tab" aria-selected="false">Lineup Optimizer</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-dfssection="stacks" role="tab" aria-selected="false">Stacks</button>'
+        '</div>'
+        '<div id="dfs-section" class="mlbstats-section">'
+        '<div id="dfs-banner"></div>'
+        '<div id="dfs-app-root"></div>'
+        '</div>'
+        '</div>'
+        f'{DIAMOND_CONFIG_SCRIPT}'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
+        f'<script src="/assets/dfs.js?v={_DFS_VER}" defer></script>'
+    )
+    return page("DFS - eephus.io", "dfs", body,
+                "Daily fantasy baseball projections from eephus.io: per-game hitter and pitcher projections "
+                "with matchup context, value plays, stacks, and a lineup optimizer that runs on salaries you "
+                "import yourself.",
+                url=f"{SITE_ORIGIN}/dfs/")
+
+
+def build_betting() -> str:
+    """/betting/ - model probabilities against book prices. assets/betting.js
+    reads data/betting.json (model win probabilities and edges) and
+    data/betting_record.json (the append-only public record).
+
+    THE RAILS ARE PART OF THE PAGE, not a footnote. BETTING_DISCLAIMER renders
+    ABOVE the boards, not below them, so nobody reaches a pick without passing
+    it. There are no affiliate links here and there never will be without legal
+    review. The record is append-only and graded against the closing line, so
+    it can embarrass us; that is the point of publishing it.
+
+    Section keys: potd | teams | props | parlays | calculators | mybets."""
+    body = (
+        '<div class="fa-app mlbstats-app betting-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>Sports Betting {_stage_chip("betting")}</h1></div>'
+        '<span class="section-sub">Our model probability next to the book price, with the vig stripped out, '
+        'so you can see the edge rather than take our word for it. Every pick is posted with a timestamp, '
+        'the book, the odds at post, and a flat one-unit stake. The record is append-only: nothing gets '
+        'quietly deleted after it loses. Each pick is also graded against the closing line, because beating '
+        'the close is the honest test of whether a model knows something.</span></div>'
+        f'{BETTING_DISCLAIMER}'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Sports Betting sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-bettingsection="potd" role="tab" aria-selected="true">Pick of the Day</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="teams" role="tab" aria-selected="false">Team Bets</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="props" role="tab" aria-selected="false">Player Props</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="parlays" role="tab" aria-selected="false">Parlays</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="calculators" role="tab" aria-selected="false">Calculators</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="record" role="tab" aria-selected="false">The Record</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="mybets" role="tab" aria-selected="false">My Bets</button>'
+        '</div>'
+        '<div id="betting-section" class="mlbstats-section">'
+        '<div id="betting-banner"></div>'
+        '<div id="betting-app-root"></div>'
+        '</div>'
+        '</div>'
+        f'{DIAMOND_CONFIG_SCRIPT}'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
+        f'<script src="/assets/betting.js?v={_BETTING_VER}" defer></script>'
+    )
+    return page("Sports Betting - eephus.io", "betting", body,
+                "MLB betting model from eephus.io: game win probabilities from our own team-strength "
+                "surfaces against de-vigged book prices, a flat-stake public record graded against the "
+                "closing line, betting calculators, and a personal bet tracker. 21+, informational only.",
+                url=f"{SITE_ORIGIN}/betting/")
+
+
+def build_cards() -> str:
+    """/cards/ - the baseball card market screen. assets/cards.js reads
+    data/card_market.json (card_market_export.py): a derived per-player card
+    index, its trend, and the gap between what the market pays and what eFV
+    says the player is worth.
+
+    WHAT THIS PUBLISHES: derived index values only. Raw sold-listing comps are
+    stored privately and are never republished. v1 is a SCREEN, not a
+    validated signal: there is no price-history backtest yet, and the page says
+    so rather than implying a track record it does not have.
+
+    Section keys: screen | movers | watchlist | method."""
+    body = (
+        '<div class="fa-app mlbstats-app cards-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>Card Market {_stage_chip("cards")}</h1></div>'
+        '<span class="section-sub">What the hobby pays for a player against what our prospect model thinks '
+        'he is worth. The card index is a derived, grade-adjusted value built from public sold prices, '
+        'published as an index rather than a comp sheet. Treat this as a screen, not a forecast: it has no '
+        'price-history backtest behind it yet, and it will not get one until the module has collected enough '
+        'of its own history to test.</span></div>'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Card Market sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-cardssection="screen" role="tab" aria-selected="true">Buy Screen</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-cardssection="movers" role="tab" aria-selected="false">Movers</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-cardssection="watchlist" role="tab" aria-selected="false">Watchlist</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-cardssection="method" role="tab" aria-selected="false">Method</button>'
+        '</div>'
+        '<div id="cards-section" class="mlbstats-section">'
+        '<div id="cards-banner"></div>'
+        '<div id="cards-app-root"></div>'
+        '</div>'
+        '</div>'
+        f'{DIAMOND_CONFIG_SCRIPT}'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
+        f'<script src="/assets/cards.js?v={_CARDS_VER}" defer></script>'
+    )
+    return page("Card Market - eephus.io", "cards", body,
+                "Baseball card market screen from eephus.io: a derived card index for top prospects and "
+                "notable big leaguers, its trend, and where the market price sits against the eFV "
+                "prospect model. A screen, not a validated signal.",
+                url=f"{SITE_ORIGIN}/cards/")
+
+
+def build_diamond() -> str:
+    """/diamond/ - the Diamond Pass page.
+
+    A marketing page that tries very hard not to read like one. The structure
+    is server-rendered here so the page is complete with JavaScript off; the
+    LIVE numbers (the eFV scoreboard receipts and the betting record card) are
+    filled in by assets/diamond.js from the artifacts themselves, because a
+    hardcoded accuracy claim is a claim that rots.
+
+    Two copy rules the owner set, enforced here rather than in review:
+      1. Public framing is "Diamond funds the free site". The internal
+         subsidy framing does not appear on this page.
+      2. Nothing is gated today. The page says that plainly instead of
+         implying a paywall exists. window.EEPHUS_DIAMOND.gating is false and
+         diamond.js reads it rather than a second copy of the flag."""
+    money = (
+        '<div class="card diamond-price">'
+        '<h3>$15 a month, when it goes live</h3>'
+        '<p>Nothing is for sale today. When Diamond opens, it is $15 a month, and everything else on '
+        'eephus.io stays free. Not free for now. Free.</p>'
+        '<p>The first group of members gets a founding rate of $9.99 a month, held for a year. If you are '
+        'reading this during the preview, you are in that group.</p>'
+        '<p class="diamond-fine">Diamond funds the free site. The board, the projections, the free agency '
+        'model, the glossary and every article stay open to everyone, and the people paying for Diamond are '
+        'what keeps them that way.</p>'
+        '</div>'
+    )
+    gets = [
+        ("Dynasty", "/dynasty/",
+         "Full dynasty and keeper board with the eFV blend, plus the keeper calculator."),
+        ("Redraft", "/redraft/",
+         "Rest-of-season ranks in your scoring format, daily streamers, two-start pitchers, buy and sell."),
+        ("DFS", "/dfs/",
+         "Per-game projections for the slate and the lineup optimizer, run against salaries you import."),
+        ("Sports Betting", "/betting/",
+         "Model prices on every game, the pick of the day, the calculators, and the public record graded against the close."),
+        ("Card Market", "/cards/",
+         "The card index, the movers, and where the hobby price sits against the prospect model."),
+        ("Prospect models", "/prospx/",
+         "Deeper cuts of the eFV work: movement history, the model artifacts, and the receipts behind each grade."),
+    ]
+    extras = [
+        ("Data exports and a JSON API",
+         "Download the board, the eFV grades, the projections, the free agency model and the betting record "
+         "as CSV or JSON, on a documented schema."),
+        ("eFV movement alerts",
+         "Tell us which players you follow and get told when the model moves them, instead of finding out a month later."),
+        ("The DFS lineup optimizer",
+         "A salary-cap solver over our per-game projections. You bring the salaries from your own site."),
+        ("A members-only weekly newsletter",
+         "One email a week: what the models moved, how the betting record is doing, and what the card screen "
+         "flagged. Written by a person."),
+    ]
+    module_cards = "".join(
+        f'<div class="card diamond-get"><h3><a href="{href}">{html.escape(name)}</a></h3>'
+        f'<p>{html.escape(what)}</p></div>'
+        for name, href, what in gets
+    )
+    extra_cards = "".join(
+        f'<div class="card diamond-get"><h3>{html.escape(name)}</h3><p>{html.escape(what)}</p></div>'
+        for name, what in extras
+    )
+    faq = [
+        ("Is any of this gated right now?",
+         "No. Every page in the Diamond section is public and free while we build it. There is no paywall "
+         "in the code path, no card form, and no trial that quietly converts. When that changes, it will be "
+         "announced before it happens, not after."),
+        ("Will the price go up?",
+         "The list price is $15 a month. Founding members pay $9.99 and keep that for twelve months. If the "
+         "price ever moves above $15, founding members are not moved with it during that year."),
+        ("Do you guarantee I will make money betting?",
+         "No, and anyone who does is lying to you. What we promise instead is a record you can audit: every "
+         "pick posted with its timestamp, book and odds, a flat one-unit stake, nothing deleted after the "
+         "fact, and every pick graded against the closing line so you can see whether the model actually "
+         "knew something or just got lucky."),
+        ("What happens to the free site?",
+         "It stays free. The prospect board, the projections, the free agency model, the glossary and the "
+         "articles are the reason anyone shows up, and putting them behind a wall would be the fastest way "
+         "to kill the thing. Diamond funds the free site."),
+        ("Who is behind this?",
+         "One person writing the models and a small group writing the articles. The models publish their "
+         "own eval artifacts, including the experiments that failed, which is not something a marketing "
+         "page usually offers to show you."),
+    ]
+    faq_html = "".join(
+        f'<div class="card diamond-faq"><h3>{html.escape(q)}</h3><p>{html.escape(a)}</p></div>'
+        for q, a in faq
+    )
+    body = (
+        '<div class="fa-app mlbstats-app diamond-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>Diamond Pass {_stage_chip("diamond")}</h1></div>'
+        '<span class="section-sub">The paid tier that keeps the rest of eephus.io free. It is not selling '
+        'anything yet.</span></div>'
+        # The founding-preview banner. Rendered server-side so it is the first
+        # thing on the page with or without JavaScript.
+        '<div class="card diamond-banner" role="note">'
+        '<h3>Founding preview: everything is free while we build</h3>'
+        '<p>Diamond is not switched on. Every page in this section is open to everyone right now, including '
+        'the betting model and the card market screen. Use them, tell us what is wrong with them, and you '
+        'will be a founding member when the doors open.</p>'
+        '</div>'
+        '<div class="gl-intro">'
+        '<p>eephus.io is a sabermetrics site that publishes its own report card. The prospect model posts '
+        'its out-of-sample accuracy against the public consensus, and it posts the experiments that failed '
+        'too. That habit is the product.</p>'
+        '<p>Diamond is the paid tier on top of it: the fantasy, betting and card-market work, the exports, '
+        'and the alerts. Everything else on the site stays free forever. Diamond funds the free site.</p>'
+        '</div>'
+        f'{money}'
+        '<div class="section-head"><h2>What members get</h2>'
+        '<span class="section-sub">six modules, plus four things that are not a module</span></div>'
+        f'<div class="article-grid">{module_cards}</div>'
+        f'<div class="article-grid">{extra_cards}</div>'
+        # Live receipts. diamond.js fills these from the artifacts; the static
+        # fallback text says what the section IS, so an absent sidecar reads as
+        # "not loaded yet" rather than a blank rectangle.
+        '<div class="section-head"><h2>The receipts</h2>'
+        '<span class="section-sub">read live from the model artifacts, not typed in by hand</span></div>'
+        '<div id="diamond-receipts" class="diamond-receipts">'
+        '<div class="card"><p>The prospect model scoreboard loads here, straight out of the eval '
+        'artifact the model writes for itself. If this sentence is still on the page, the artifact '
+        'did not load and no accuracy number is being claimed.</p></div>'
+        '</div>'
+        '<div id="diamond-betting-record" class="diamond-record">'
+        '<div class="card"><p>The betting record loads here. If this sentence is still on the page, '
+        'the record has not published yet.</p></div>'
+        '</div>'
+        '<div class="section-head"><h2>Questions worth asking</h2>'
+        '<span class="section-sub">including the ones a sales page would skip</span></div>'
+        f'<div class="article-grid">{faq_html}</div>'
+        # Sign-in aware call to action. diamond.js swaps the copy once the
+        # account layer reports a session; without it the static text still
+        # points somewhere useful.
+        '<div id="diamond-cta" class="card diamond-cta">'
+        '<h3>There is nothing to buy yet</h3>'
+        '<p>Make a free account so your watchlist, your bets and your founding-member status follow you. '
+        'Use the sign-in control in the top bar.</p>'
+        '</div>'
+        '<p class="diamond-fine">Sports betting content on this site is informational and for entertainment. '
+        '21+. Sports betting is not legal in every state. No affiliate links. '
+        'If betting stops being fun, call 1-800-GAMBLER.</p>'
+        '</div>'
+        f'{DIAMOND_CONFIG_SCRIPT}'
+        f'<script src="/assets/diamond.js?v={_DIAMOND_VER}" defer></script>'
+    )
+    return page("Diamond Pass - eephus.io", "diamond", body,
+                "Diamond is the eephus.io paid tier: fantasy, DFS, betting and card-market tools, data "
+                "exports, and eFV movement alerts for $15 a month when it launches. Everything else on the "
+                "site stays free. Nothing is gated today.",
+                url=f"{SITE_ORIGIN}/diamond/")
 
 def build_parks() -> str:
     """The /parks/ MiLB Park Factors module - the venue context board.
@@ -4125,7 +4568,14 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/mlbstats/", "daily", "0.8"),
         ("/pal/", "daily", "0.8"),
         ("/trademachine/", "daily", "0.8"),
-        ("/fantasy/", "daily", "0.8"),
+        # /fantasy/ is a redirect stub and carries meta robots=noindex, so it
+        # is deliberately absent here (same treatment as /teams/).
+        ("/dynasty/", "daily", "0.8"),
+        ("/redraft/", "daily", "0.8"),
+        ("/dfs/", "daily", "0.8"),
+        ("/betting/", "daily", "0.8"),
+        ("/cards/", "daily", "0.7"),
+        ("/diamond/", "monthly", "0.6"),
         ("/parks/", "weekly", "0.6"),
         ("/articles/", "weekly", "0.7"),
         ("/forums/", "daily", "0.6"),
@@ -4717,6 +5167,13 @@ def main() -> None:
     _write("pal/index.html", build_pal())
     _write("trademachine/index.html", build_trademachine())
     _write("fantasy/index.html", build_fantasy())
+    # Diamond section (2026-08-05). Six public pages; the gate flag is off.
+    _write("dynasty/index.html", build_dynasty())
+    _write("redraft/index.html", build_redraft())
+    _write("dfs/index.html", build_dfs())
+    _write("betting/index.html", build_betting())
+    _write("cards/index.html", build_cards())
+    _write("diamond/index.html", build_diamond())
     _write("parks/index.html", build_parks())
     _write("glossary/index.html", build_glossary())
     _write("teams/index.html", build_teams_redirect())

@@ -312,6 +312,153 @@
       ).then(function (res) { return { merged: rows.length, error: res && res.error }; });
     },
 
+    // --- Diamond entitlement (supabase/migrations/0005_diamond.sql) ----------
+    // profiles.diamond_until is a timestamptz: NULL or past = not a member, a
+    // future timestamp = member until then. The column is service-role only
+    // (the guard_profile_privileged_cols trigger silently pins any client write
+    // to it), so a truthy answer here is a real entitlement, not something the
+    // browser talked itself into.
+    //
+    // CLIENT SIDE IS DISPLAY ONLY. This decides whether to show a members badge
+    // or an upsell. It is not a security boundary and must never be the only
+    // thing standing between a non-member and members-only DATA: on a static
+    // site that data has to arrive over RLS or an edge function. See
+    // assets/diamond-config.js for the same warning attached to the gate flag.
+    isDiamond: function () {
+      var p = _profile;
+      if (!p || !p.diamond_until) return false;
+      var t = Date.parse(p.diamond_until);
+      return isFinite(t) && t > Date.now();
+    },
+    // Expiry as a Date (or null) so a UI can render "renews on ..." without
+    // re-parsing the raw column and inventing a second date convention.
+    diamondUntil: function () {
+      var p = _profile;
+      if (!p || !p.diamond_until) return null;
+      var t = Date.parse(p.diamond_until);
+      return isFinite(t) ? new Date(t) : null;
+    },
+
+    // --- bets (personal tracker; owner-only rows) -----------------------------
+    // The same adapter shape as the watchlist, one level up: it works LOGGED
+    // OUT against localStorage and switches to the `bets` table when a session
+    // exists. A user should be able to log a bet the first time they see the
+    // page, without an account, and still have it when they make one.
+    //
+    // A bet row is {id, sport, market, selection, odds, stake, placed_at,
+    // settled_at, result, payload}. `odds` is AMERICAN odds at placement and
+    // `result` is one of open|won|lost|void, matching the bet_result enum.
+    // Local rows carry a "local:" id prefix so a caller can tell the two apart
+    // and so a merge can rewrite them without colliding with server uuids.
+    //
+    // MERGE IS NOT AUTOMATIC. mergeLocalBets() is exposed for the tracker UI to
+    // call behind a prompt, the same way the watchlist merge is never silent
+    // (supabase/FRONTEND_INTEGRATION.md Part 3).
+    _betsKey: "eephus.bets.v1",
+    _localBets: function () {
+      try {
+        var raw = window.localStorage.getItem(Account._betsKey);
+        var arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) { return []; }          // private mode / quota / bad JSON
+    },
+    _setLocalBets: function (rows) {
+      try { window.localStorage.setItem(Account._betsKey, JSON.stringify(rows || [])); }
+      catch (e) { /* storage unavailable: the session keeps working in memory */ }
+    },
+    // Strip the client-only fields before a row goes to Postgres. user_id is
+    // stamped by the caller; id is left to the table default unless a server
+    // row is being updated.
+    _betPayload: function (bet) {
+      bet = bet || {};
+      return {
+        sport: bet.sport || "mlb",
+        market: bet.market || "moneyline",
+        selection: bet.selection || "",
+        odds: bet.odds == null ? 0 : Math.round(Number(bet.odds)),
+        stake: bet.stake == null ? 1 : Number(bet.stake),
+        placed_at: bet.placed_at || new Date().toISOString(),
+        settled_at: bet.settled_at || null,
+        result: bet.result || "open",
+        payload: bet.payload || {}
+      };
+    },
+    listBets: function (limit) {
+      var c = client();
+      if (!c || !_session) {
+        var rows = Account._localBets().slice().sort(function (a, b) {
+          return String(b.placed_at || "").localeCompare(String(a.placed_at || ""));
+        });
+        return Promise.resolve(limit ? rows.slice(0, limit) : rows);
+      }
+      var q = c.from("bets").select("*").eq("user_id", _session.user.id)
+        .order("placed_at", { ascending: false });
+      if (limit) q = q.limit(limit);
+      return _safe(q).then(function (res) { return (res && res.data) || []; });
+    },
+    addBet: function (bet) {
+      var row = Account._betPayload(bet);
+      var c = client();
+      if (!c || !_session) {
+        row.id = "local:" + Date.now() + ":" + Math.random().toString(36).slice(2, 8);
+        var rows = Account._localBets();
+        rows.push(row);
+        Account._setLocalBets(rows);
+        return Promise.resolve({ data: row, error: null, local: true });
+      }
+      row.user_id = _session.user.id;
+      return _safe(c.from("bets").insert(row).select().maybeSingle());
+    },
+    updateBet: function (id, patch) {
+      var c = client();
+      if (!c || !_session) {
+        var rows = Account._localBets(), hit = null;
+        rows = rows.map(function (r) {
+          if (r.id !== id) return r;
+          hit = Object.assign({}, r, patch || {});
+          return hit;
+        });
+        if (!hit) return Promise.resolve({ data: null, error: new Error("no such bet"), local: true });
+        Account._setLocalBets(rows);
+        return Promise.resolve({ data: hit, error: null, local: true });
+      }
+      return _safe(
+        c.from("bets").update(patch || {}).eq("id", id).eq("user_id", _session.user.id)
+          .select().maybeSingle()
+      );
+    },
+    deleteBet: function (id) {
+      var c = client();
+      if (!c || !_session) {
+        Account._setLocalBets(Account._localBets().filter(function (r) { return r.id !== id; }));
+        return Promise.resolve({ error: null, local: true });
+      }
+      return _safe(
+        c.from("bets").delete().eq("id", id).eq("user_id", _session.user.id)
+      );
+    },
+    // Copy every locally-stored bet into the account, then clear local. Call it
+    // from a prompt, never on your own. Returns {merged, error}. Non-destructive
+    // server-side: it only inserts.
+    mergeLocalBets: function () {
+      var c = client();
+      if (!c || !_session) return Promise.resolve({ merged: 0 });
+      var local = Account._localBets();
+      if (!local.length) return Promise.resolve({ merged: 0 });
+      var uid = _session.user.id;
+      var rows = local.map(function (b) {
+        var row = Account._betPayload(b);
+        row.user_id = uid;                  // the "local:" id is deliberately dropped
+        return row;
+      });
+      return _safe(c.from("bets").insert(rows)).then(function (res) {
+        // Only clear the device copy once the server took the rows. A failed
+        // merge that wiped local storage would be a data-loss bug.
+        if (!(res && res.error)) Account._setLocalBets([]);
+        return { merged: rows.length, error: res && res.error };
+      });
+    },
+
     // --- threads / comments --------------------------------------------------
     // Canonical thread for an entity (prospect/farm/article); creates on demand.
     getOrCreateThread: function (scope, entityKey, title, boardSlug) {

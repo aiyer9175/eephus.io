@@ -6,6 +6,10 @@
 # from both hardcoded lists, so the live nav 404'd on whole modules.
 # Never hardcode the list again - add new page dirs HERE.
 #
+# 2026-08-05: the Diamond section landed six new page dirs (betting, cards,
+# dfs, diamond, dynasty, redraft). fantasy/ STAYS: it is now a redirect stub
+# to /redraft/, and a redirect that does not ship is just a 404.
+#
 # Directories ship recursively; bare filenames ship from the app root.
 # data/ is handled separately by both consumers (top-level *.json plus
 # the pitch_plots/ and player_detail/ per-player splits).
@@ -16,7 +20,12 @@ sitemap.xml
 favicon.ico
 articles
 assets
+betting
+cards
 collegesavant
+dfs
+diamond
+dynasty
 fa
 fantasy
 forums
@@ -29,6 +38,7 @@ parks
 player
 projections
 prospx
+redraft
 report
 sources
 team

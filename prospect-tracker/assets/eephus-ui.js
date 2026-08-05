@@ -126,8 +126,11 @@
 
   // Part 2 - userFlair: circular avatar + name + #1 team (clean logo) + #1
   // prospect chip + badges/role. Used in comments, nav, profiles.
-  var BADGE_ICON = { beta_tester: "🧪", contributor: "✍️", tenured_1y: "🎖️" };
-  var BADGE_NAME = { beta_tester: "Beta Tester", contributor: "Contributor", tenured_1y: "Charter Member" };
+  // Slugs match the badges table (supabase/migrations/0001 + 0005_diamond).
+  // An unknown slug still renders, as a generic 🏅, so a badge seeded in SQL is
+  // never invisible; these two maps only make the known ones look right.
+  var BADGE_ICON = { beta_tester: "🧪", contributor: "✍️", tenured_1y: "🎖️", diamond: "💎" };
+  var BADGE_NAME = { beta_tester: "Beta Tester", contributor: "Contributor", tenured_1y: "Charter Member", diamond: "Diamond" };
   // Beta launch date - accounts created on or after this get the computed
   // beta_tester badge; this is the one line to change if the launch date shifts.
   var BETA_START = "2026-07-09";
