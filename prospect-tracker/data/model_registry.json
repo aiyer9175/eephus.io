@@ -3037,6 +3037,39 @@
       "last_checked": "2026-08-04",
       "stale": false,
       "artifact_age_days": 0
+    },
+    {
+      "model_id": "betting_game_prob",
+      "surface": "/betting/",
+      "predicts": "MLB game win probability, runline cover and fair total from team Offense+ (HEM+ rollup), team Bullpen+ (REM+), the listed probable's SEM+, the Savant park runs index and home field, via a Poisson-difference margin",
+      "champion": "betting_runs_v1: OLS run-scoring fit (b0 4.490, b1 0.283, b2 -0.326, b3 3.211, b4 0.012) plus a fitted home-field run adjustment 0.215 and a fitted differential shrink 0.78",
+      "baseline": "flat 0.500 and the measured season home-win base rate 0.5232",
+      "metric": "Brier / log loss / 10-bin calibration on completed games; fair-total MAE",
+      "eval_artifact": null,
+      "verdict": "unvalidated",
+      "notes": "SCREEN, NOT A SIGNAL. Fitted offline on 1,705 completed 2026 games read out of .cache/game_feeds (no network). In-sample Brier 0.24164 vs 0.25 flat and 0.24946 home-base; a forward split refit before 2026-06-24 and graded after gives 0.24327 on 521 games, accuracy 55.1%, fair-total MAE 3.61. It beats both baselines and is STILL unvalidated: the team inputs are season-to-date leaderboards, so every graded game is inside its own features. The forward split removes coefficient leakage, not feature leakage. data/betting_model_eval.json carries validated:false, contaminated:true, gates_picks:false, min_edge:null, and is deliberately NOT referenced here because an unvalidated row may not carry an artifact. No pick is published: pick_of_the_day is null and stays null until vintage-dated team inputs exist and a clean forward test measures a minimum-edge threshold. Two measured corrections are worth recording: the runs regression recovers almost no home field (b4 0.012) because a home team leading after the top of the ninth never bats, so the observed 52.3% home win rate is restored as a 0.215-run differential; and a log-loss-fitted differential shrink of 0.78 corrects tail over-confidence the first calibration table caught (0.80+ bin was 0.86 predicted against 0.67 actual). Known limits: Poisson underdisperses clumped run scoring, so runline and total probabilities sit too close to the middle. Runbook docs/diamond-betting.md. FLIP PATH: once vintage-dated leaderboard snapshots exist, re-run backtest(), set eval_artifact to data/betting_model_eval.json and verdict to provisional; validated only after a season of published CLV-graded picks."
+    },
+    {
+      "model_id": "card_market_index",
+      "surface": "/cards/ Baseball Card Market (card_market_export.py -> data/card_market.json)",
+      "predicts": "per-card eephus Card Index (grade-mix adjusted trimmed median of public sold comps in a rolling 45-day window), its trend vs the prior window, and a buy/fade SCREEN from the gap between eFV talent percentile and card-price percentile within tier",
+      "champion": "card_index_v1 (descriptive index) + gap screen v1 (talent percentile minus price percentile, bands +20 / -20)",
+      "baseline": "none run yet; pre-registered baselines are a zero-information control (gap permuted across cards), momentum carry (the card's own prior-window trend), and eFV level alone",
+      "metric": "pre-registered: Spearman rho of gap vs forward 90-day index return, plus decile spread. NOT YET RUN.",
+      "eval_artifact": "",
+      "verdict": "unvalidated",
+      "notes": "STATUS: SCREEN, and shipped labeled as one (payload carries screen: true; the page repeats it on every board). There is no price-history backtest because there is no price history: the module began accumulating its own at first export (card_index_history). The pre-registration is written by card_market_export.eval_stub() to data/card_market_eval.json (run card_market_export.py with --eval); it is cited HERE rather than in eval_artifact because a row carrying an artifact cannot honestly claim unvalidated (test_model_registry), and nothing has been evaluated. Ship bar, fixed in advance: beat BOTH baselines out of sample on rho with the zero-information control outside the bootstrap CI, on at least 3 of 4 forward windows; earliest possible run is two non-overlapping forward windows after the first export with n_priced >= 30. Bands BUY_GAP +20 / FADE_GAP -20 are DISPLAY CONVENTIONS, not fitted thresholds, and must be refit or dropped if the gate ever runs. Inputs are raw sold comps stored immutably in prospects.db (card_comps, INSERT OR IGNORE on (card_id, listing_hash)) and NEVER republished; only derived values reach data/card_market.json, and test_card_market.py asserts that structurally and numerically. eFV reads go through fantasy_export._board_grade (efv_board_scale.board_value), one basis. Runbook: docs/diamond-cards.md."
+    },
+    {
+      "model_id": "dfs_slate_pricing",
+      "surface": "/dfs/",
+      "predicts": "per-game DFS fantasy points for tonight's probable starters and for the hitters whose clubs are on the slate",
+      "champion": "rest-of-season engine line re-scaled to one game (start-rate split) with an innings-weighted opponent pitching index and a park leg",
+      "baseline": "the same rest-of-season line divided by remaining team games, matchup-neutral",
+      "metric": "none yet; no scored slate history exists, and the module accumulates its own from the first run",
+      "eval_artifact": null,
+      "verdict": "unvalidated",
+      "notes": "Display-layer re-pricing, shipped LABELED as an estimate (dfs_export._NOTES renders on every board). The skill line is the Gate-1-validated FA projection engine read through data/fantasy.json and is not refit here. What is new and unmeasured: per-game playing time (start_rate = min(1, pa_per_team_game / 4.15), line scaled to pa_per_team_game / start_rate), the matchup multiplier (inverse of 0.6 * opposing SP SEM+ plus 0.4 * opposing Bullpen+, clamped 0.80-1.25 for hitters and 0.82-1.22 on the pitcher allowed side), and a park leg that is neutral today because the committed park-factor artifact covers sportIds 11-16 only. No backtest stands behind the matchup term. Contest scoring weights are transcribed from the public classic-format rules and published in the payload for audit. Relievers are excluded by construction: save chances are not knowable before lock."
     }
   ],
   "problems": []

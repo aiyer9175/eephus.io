@@ -219,6 +219,15 @@ MODEL_GLOSSARY = {
     # documents it.
     "xfv_sb_driver": "internal",
     "xfv_athleticism_blend": "internal",
+    # 2026-08-05 Diamond section. All three ship on their own pages, which
+    # carry their method and their limits in user-facing copy, so the page IS
+    # the documentation. None of them is a glossary term: the site glossary
+    # documents baseball metrics, and a betting win probability, a DFS slate
+    # price and a card index are products rather than Arkmetrics. Two of the
+    # three ship deliberately unvalidated and say so on the page.
+    "betting_game_prob": "internal",
+    "dfs_slate_pricing": "internal",
+    "card_market_index": "internal",
     # X-D1 gmLI deployment-context metric: gate passed and wired 2026-07-02
     # (bullpen_export join + /mlbstats/ column); documented by its glossary
     # entry.

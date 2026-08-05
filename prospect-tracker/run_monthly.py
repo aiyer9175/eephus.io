@@ -1619,6 +1619,36 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:
                 log.exception("daily: fantasy refresh failed — continuing")
 
+        # --- 9d-bis. DFS daily slate (dfs.json) ---------------------------
+        # Prices today's slate off the probables 9d just refreshed. Reads the
+        # fantasy corpus already on disk, so it adds no second corpus build.
+        # Empty-slate days write an honest empty payload rather than nothing.
+        # Best-effort — never aborts. Runbook: docs/diamond-fantasy.md.
+        with _step("9d-bis. DFS daily slate (dfs.json)", log):
+            try:
+                import dfs_export
+                dfs_export.refresh(log=log.info)
+            except Exception:
+                log.exception("daily: dfs slate export failed — continuing")
+
+        # --- 9e. Betting: odds snapshot + /betting/ payload ---------------
+        # Prices the same slate against the team leaderboards. The odds pull is
+        # ONE 3-credit call on The Odds API free tier and is a loud no-op when
+        # EEPHUS_ODDS_API_KEY is unset (the page then says "odds feed not
+        # configured" instead of rendering blank). Best-effort — never aborts.
+        # Runbook: docs/diamond-betting.md.
+        with _step("9e. Betting odds snapshot + payload (betting.json)", log):
+            try:
+                import betting_ingest
+                betting_ingest.run("open")
+            except Exception:
+                log.exception("daily: betting odds snapshot failed — continuing")
+            try:
+                from betting_export import refresh_live as _refresh_betting
+                _refresh_betting(log=log.info)
+            except Exception:
+                log.exception("daily: betting export failed — continuing")
+
         # --- 10. FA signing-window tracker (Nov–Mar only). ----------------
         # In-winter the class moves daily (signings, option decisions, QO
         # acceptances), so the daily job re-scrapes the current class and
@@ -3870,6 +3900,36 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.info("fantasy: %d players projected ROS", _fan_n)
             except Exception:
                 log.exception("fantasy export failed - continuing")
+
+        # --- 6f. Betting model context refit (offline) -------------------
+        # Re-fits the run-scoring coefficients and the two one-parameter
+        # corrections (home-field, run-differential shrink) on completed games
+        # read out of .cache/game_feeds, then re-runs the backtest artifact. No
+        # network. On a box with no game-feed cache this is a no-op and the
+        # model falls back to documented literature priors, which the payload
+        # and the page both report as the coefficient source. Additive; never
+        # aborts. Runbook: docs/diamond-betting.md.
+        with _step("6f. Betting model context refit", log):
+            try:
+                import betting_model
+                betting_model.build_context(log_fn=log.info)
+                betting_model.backtest(log_fn=log.info)
+            except Exception:
+                log.exception("betting model refit failed - continuing")
+
+        # --- 6g. Card market index (the /cards/ screen) ------------------
+        # Joins stored sold comps to the eFV board and republishes the derived
+        # index ONLY (raw comps never leave the DB). Ingest is separate and
+        # opt-in: the scraper needs EEPHUS_CARD_SCRAPE=1, and a CSV drop under
+        # data/drops/ is an equal first-class input. A zero-comp run publishes
+        # an honest empty screen. Additive; never aborts. Runbook:
+        # docs/diamond-cards.md.
+        with _step("6g. Card market index (card_market.json)", log):
+            try:
+                import card_market_export
+                card_market_export.export()
+            except Exception:
+                log.exception("card market export failed - continuing")
 
         # --- 6c. Organization Tendencies (farm-detail Tendencies tab) ---
         # Pure aggregation over the DB + just-written sidecars; additive.
