@@ -123,3 +123,78 @@ skipped and is the one that determines whether the split comes back next month.
 Approve, but as its own pass, not bundled with the dpw re-anchor. Both rewrite
 the board, and running them together would make it impossible to attribute a
 rank change to one or the other.
+
+---
+
+# ADDENDUM, 2026-08-04: the DB survey. A naive repoint DOES NOT WORK.
+
+The proposal above says "repoint jack_natili references to jackson_natili". That
+sentence is not executable, and the reason is the strongest argument for having
+proposed rather than executed. Surveyed against prospects.db (48 tables), the
+losing key holds **30 rows across 7 tables**, and both keys hold rows in nearly
+all of them:
+
+    table.column                    jack_natili   jackson_natili   constraint
+    players.player_key                        1                1   PK
+    roster_status.player_key                  1                1   PK
+    acquisitions.player_key                   1                1   PK
+    player_transactions.player_key            1                1   PK
+    player_photos.player_key                  0                1   (PK is mlbam_id)
+    snapshots.player_key                      1                2   UNIQUE(source, interval_label, player_key)
+    metric_snapshots.player_key              12               12   PK(player_key, snapshot_date)
+    trade_value_history.player_key           13               12   PK(player_key, snapshot_date)
+
+## Three different operations, not one
+
+  1. **PRIMARY-KEY TABLES (players, roster_status, acquisitions,
+     player_transactions).** Both keys already hold a row, so
+     `UPDATE ... SET player_key='jackson_natili'` violates the PK immediately.
+     These need a FIELD-WISE MERGE then a DELETE of the losing row, which is
+     what the body of this proposal describes and is the easy part.
+
+  2. **snapshots: SAFE REPOINT.** UNIQUE(source, interval_label, player_key),
+     jack holds 1 row, jackson 2, and **0 collide**. A straight repoint works.
+
+  3. **THE TIME SERIES ARE THE PROBLEM, and they are most of the data.**
+     Keyed PK(player_key, snapshot_date), so a repoint collides wherever both
+     keys carry the same date:
+         metric_snapshots     jack 12, jackson 12, **11 COLLIDE**
+         trade_value_history  jack 13, jackson 12, **12 COLLIDE**
+     So 23 of the 30 losing-key rows CANNOT be repointed. Only 1 of 12 and 1 of
+     13 would move; the rest would raise IntegrityError, or silently vanish under
+     an `INSERT OR REPLACE`.
+
+## What that means for the decision
+
+On 23 dates this player has TWO snapshots, because the split had him graded
+twice on different partial evidence. Merging is therefore not a data-movement
+problem, it is a CHOICE per colliding date: which of the two grades is the
+player's history for that day. That choice cannot be made by the repair tool and
+it is not implied by "canonical key = jackson_natili".
+
+Three defensible policies, none obviously right:
+  a. **Keep the canonical row** on every collision. Simple, loses whatever the
+     losing key knew, and the losing key is the one carrying the bonus and the
+     CPX level.
+  b. **Keep the row with more evidence** per date (e.g. the one whose grade is
+     backed by more sources). Defensible, needs a per-row evidence count that
+     does not currently exist.
+  c. **Drop the pre-merge history entirely** and let the series restart from the
+     merge date, so no fabricated continuity is implied. Cleanest to defend,
+     costs the history.
+
+RECOMMENDATION: (c) for `trade_value_history` and (a) for `metric_snapshots`.
+The trade-value series is a PRICE history whose two branches were priced off
+different grades, so splicing them creates a discontinuity that reads as a real
+market move and would surface in the movement engine. metric_snapshots is
+descriptive and the canonical row is the one joined to mlbam 814385.
+
+THAT IS A RECOMMENDATION, NOT A DECISION. It changes what the player's published
+history looks like, so it wants an explicit answer before anything is written.
+
+## Status
+
+Still NOT executed, and now for a better reason than caution: the operation as
+originally worded would have thrown on 23 rows. The body's step 3 ("repoint
+jack_natili references, including the GRPO history") is superseded by this
+addendum.
