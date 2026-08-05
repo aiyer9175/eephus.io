@@ -1,21 +1,152 @@
 {
- "generated_at": "2026-08-05T14:40:09+00:00",
+ "generated_at": "2026-08-05T21:03:06+00:00",
  "slate_date": "2026-08-05",
  "status": {
-  "odds_feed": "not_configured",
-  "odds_note": "odds feed not configured: set EEPHUS_ODDS_API_KEY on the build box",
+  "odds_feed": "no_snapshot",
+  "odds_note": "odds feed configured",
   "odds_captured_at": null,
   "odds_kind": null,
   "model": "unvalidated",
+  "model_mode": "contaminated",
   "empty_reasons": [
-   "odds feed not configured: set EEPHUS_ODDS_API_KEY on the build box"
+   "no slate found in data/fantasy.json; the schedule refresh has not run today",
+   "odds feed configured"
   ]
  },
  "model": {
   "version": "betting_runs_v1",
   "validated": false,
   "stage": "Diamond preview",
-  "min_edge": null
+  "min_edge": null,
+  "validation": {
+   "available": true,
+   "artifact": "data/betting_model_eval.json",
+   "generated_at": "2026-08-05T18:26:17+00:00",
+   "model_version": "betting_runs_v1",
+   "validated": false,
+   "gates_picks": false,
+   "min_edge": null,
+   "modes": [
+    "contaminated",
+    "vintage"
+   ],
+   "headline_mode": "contaminated",
+   "mode_meaning": {
+    "contaminated": "Team inputs are season-to-date leaderboards, so every graded game sits inside its own features. This measures calibration, not skill, and it cannot validate anything.",
+    "vintage": "Every game is priced on a leaderboard snapshot whose knowledge cutoff is strictly before that game. A game with no such snapshot is skipped, not graded on today's numbers. This is the only mode that can validate the model."
+   },
+   "graded_blocks": [
+    {
+     "label": "in-sample (coefficients and features both leak)",
+     "mode": "contaminated",
+     "honest": false,
+     "n": 1705,
+     "brier": 0.24198,
+     "brier_flat_500": 0.25,
+     "brier_home_base": 0.24946,
+     "accuracy": 0.5677,
+     "key": "in_sample",
+     "skill_vs_home_base": {
+      "delta": 0.007479,
+      "sd": 0.08178,
+      "t": 3.776,
+      "beats_baseline_95": true,
+      "n_for_95": 324,
+      "baseline": 0.5232
+     }
+    },
+    {
+     "label": "forward from 2026-06-24 (coefficient leakage removed, feature leakage remains)",
+     "mode": "contaminated",
+     "honest": false,
+     "n": 521,
+     "brier": 0.24416,
+     "brier_flat_500": 0.25,
+     "brier_home_base": 0.24995,
+     "accuracy": 0.5393,
+     "key": "forward",
+     "skill_vs_home_base": {
+      "delta": 0.005794,
+      "sd": 0.08647,
+      "t": 1.529,
+      "beats_baseline_95": false,
+      "n_for_95": 603,
+      "baseline": 0.5067
+     }
+    },
+    {
+     "label": "vintage (each game priced on leaderboards dated strictly before it)",
+     "mode": "vintage",
+     "honest": true,
+     "status": "no vintages",
+     "n_graded": 0,
+     "note": "no completed game has a leaderboard vintage dated strictly before it, so the honest sample is empty; run leaderboard_vintages.snapshot() nightly and this number starts climbing",
+     "key": "vintage",
+     "n": 0,
+     "skill_vs_home_base": null
+    }
+   ],
+   "vintage": {
+    "status": "no vintages",
+    "n_vintages": 1,
+    "n_gradable": 0,
+    "n_graded": 0,
+    "n_skipped_no_vintage": 1705,
+    "min_fit_games": 100,
+    "min_eval_games": 50,
+    "min_graded_games_for_min_edge": 600,
+    "first_graded_date": null,
+    "last_graded_date": null,
+    "note": "no completed game has a leaderboard vintage dated strictly before it, so the honest sample is empty; run leaderboard_vintages.snapshot() nightly and this number starts climbing"
+   },
+   "coverage": {
+    "schema": 1,
+    "n_vintages": 1,
+    "first": "2026-08-05",
+    "last": "2026-08-05",
+    "missing_dates": [],
+    "span_days": 1,
+    "latest_cutoff": "2026-08-05",
+    "earliest_gradable_game_date": "2026-08-06",
+    "note": "1 vintages, 0 missing days inside the span; a game is gradable when a vintage cutoff is strictly before it"
+   },
+   "n_games_completed": 1705,
+   "gate": {
+    "all_gates_open": false,
+    "gates": [
+     {
+      "id": "vintage_sample",
+      "need": "600 vintage-graded games",
+      "have": 0,
+      "open": false,
+      "why": "the contaminated forward margin over the home-field baseline is +0.005794 Brier with a paired sd of 0.08647, so a margin that size needs 603 games to clear one-sided 95%; 600 is that number, and a clean margin will be smaller, so this is a floor and not a pass"
+     },
+     {
+      "id": "out_of_sample_skill",
+      "need": "paired Brier vs the home-field baseline, t >= 1.645",
+      "have": null,
+      "open": false,
+      "why": "sample size is not evidence; the model has to actually beat 'always take the home team' on games it could not see"
+     },
+     {
+      "id": "graded_price_history",
+      "need": "settled bets with a taken price, enough that some edge threshold clears an ROI lower bound of zero on at least 100 of them",
+      "have": 0,
+      "open": false,
+      "why": "an edge threshold is a claim about EV against real prices; 0 dates of odds snapshots are cached and no settled-bet join exists yet"
+     }
+    ],
+    "n_open": 0,
+    "n_gates": 3,
+    "odds_snapshot_dates": 0,
+    "sweep": {
+     "n_rows": 0,
+     "reason": "no settled bets with both a model edge and a taken price; the threshold cannot be swept on data that does not exist"
+    },
+    "policy": "min_edge stays null until all three gates are open. A threshold invented to make a pick appear is the single most dishonest number this module could publish."
+   },
+   "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 0 games. A pick threshold is set from the vintage mode or from nothing."
+  }
  },
  "disclaimer": {
   "age": "21+ only.",
@@ -27,265 +158,32 @@
   "staking": "Every pick on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
  },
  "pick_of_the_day": null,
- "pick_reason": "no odds feed configured, so there is no market to price against",
- "n_games": 15,
- "team_bets": [
+ "pick_reason": "no odds feed is configured, so there is no market to have an edge against; the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 3 are closed, starting with 600 vintage-graded games against 0 in hand",
+ "pick_blockers": [
   {
-   "game_pk": 824158,
-   "date": "2026-08-05",
-   "start": "2026-08-05T18:10:00Z",
-   "venue": "Daikin Park",
-   "home": {
-    "org": "HOU",
-    "team": "Houston Astros",
-    "probable": {
-     "mlbam": 686613,
-     "name": "Hunter Brown"
-    },
-    "offense_plus": 103.0,
-    "bullpen_plus": 102.0
-   },
-   "away": {
-    "org": "TOR",
-    "team": "Toronto Blue Jays",
-    "probable": {
-     "mlbam": 592791,
-     "name": "Jameson Taillon"
-    },
-    "offense_plus": 92.0,
-    "bullpen_plus": 113.0
-   },
-   "model": {
-    "p_home": 0.62786,
-    "p_away": 0.37214,
-    "lam_home": 5.246,
-    "lam_away": 4.217,
-    "fair_total": 9.46,
-    "park_index": 1.02,
-    "home_prevention": {
-     "starter_plus": 95.0,
-     "bullpen_plus": 102.0,
-     "starter_share": 0.586,
-     "blend_plus": 97.9,
-     "source": "probable"
-    },
-    "away_prevention": {
-     "starter_plus": 77.0,
-     "bullpen_plus": 113.0,
-     "starter_share": 0.563,
-     "blend_plus": 92.7,
-     "source": "probable"
-    }
-   },
-   "moneyline": [
-    {
-     "side": "home",
-     "label": "HOU",
-     "model_prob": 0.62786,
-     "fair_odds": -169,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "kelly_full": null
-    },
-    {
-     "side": "away",
-     "label": "TOR",
-     "model_prob": 0.37214,
-     "fair_odds": 169,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "kelly_full": null
-    }
-   ],
-   "runline": null,
-   "total": {
-    "line": null,
-    "sides": null,
-    "fair_total": 9.46
-   },
-   "market": null
+   "id": "odds_feed",
+   "open": false,
+   "need": "a cached odds snapshot to price against",
+   "have": "none",
+   "reason": "no odds feed is configured, so there is no market to have an edge against"
   },
   {
-   "game_pk": 824646,
-   "date": "2026-08-05",
-   "start": "2026-08-05T18:20:00Z",
-   "venue": "Wrigley Field",
-   "home": {
-    "org": "CHC",
-    "team": "Chicago Cubs",
-    "probable": {
-     "mlbam": 684007,
-     "name": "Shota Imanaga"
-    },
-    "offense_plus": 106.0,
-    "bullpen_plus": 96.0
-   },
-   "away": {
-    "org": "LAD",
-    "team": "Los Angeles Dodgers",
-    "probable": {
-     "mlbam": 641778,
-     "name": "Eric Lauer"
-    },
-    "offense_plus": 109.0,
-    "bullpen_plus": 107.0
-   },
-   "model": {
-    "p_home": 0.54883,
-    "p_away": 0.45117,
-    "lam_home": 5.48,
-    "lam_away": 5.064,
-    "fair_total": 10.54,
-    "park_index": 0.92,
-    "home_prevention": {
-     "starter_plus": 99.0,
-     "bullpen_plus": 96.0,
-     "starter_share": 0.644,
-     "blend_plus": 97.9,
-     "source": "probable"
-    },
-    "away_prevention": {
-     "starter_plus": 80.0,
-     "bullpen_plus": 107.0,
-     "starter_share": 0.699,
-     "blend_plus": 88.1,
-     "source": "probable"
-    }
-   },
-   "moneyline": [
-    {
-     "side": "home",
-     "label": "CHC",
-     "model_prob": 0.54883,
-     "fair_odds": -122,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "kelly_full": null
-    },
-    {
-     "side": "away",
-     "label": "LAD",
-     "model_prob": 0.45117,
-     "fair_odds": 122,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "kelly_full": null
-    }
+   "id": "min_edge",
+   "open": false,
+   "need": "600 vintage-graded games",
+   "have": 0,
+   "gates_closed": [
+    "vintage_sample",
+    "out_of_sample_skill",
+    "graded_price_history"
    ],
-   "runline": null,
-   "total": {
-    "line": null,
-    "sides": null,
-    "fair_total": 10.54
-   },
-   "market": null
-  },
-  {
-   "game_pk": 822866,
-   "date": "2026-08-05",
-   "start": "2026-08-05T18:35:00Z",
-   "venue": "Globe Life Field",
-   "home": {
-    "org": "TEX",
-    "team": "Texas Rangers",
-    "probable": {
-     "mlbam": 674003,
-     "name": "Cody Bradford"
-    },
-    "offense_plus": 100.0,
-    "bullpen_plus": 101.0
-   },
-   "away": {
-    "org": "SFG",
-    "team": "San Francisco Giants",
-    "probable": {
-     "mlbam": 687931,
-     "name": "Carson Whisenhunt"
-    },
-    "offense_plus": 97.0,
-    "bullpen_plus": 92.0
-   },
-   "model": {
-    "p_home": 0.61817,
-    "p_away": 0.38183,
-    "lam_home": 4.801,
-    "lam_away": 3.889,
-    "fair_total": 8.69,
-    "park_index": 0.88,
-    "home_prevention": {
-     "starter_plus": 103.0,
-     "bullpen_plus": 101.0,
-     "starter_share": 0.6,
-     "blend_plus": 102.2,
-     "source": "rotation-average"
-    },
-    "away_prevention": {
-     "starter_plus": 86.0,
-     "bullpen_plus": 92.0,
-     "starter_share": 0.528,
-     "blend_plus": 88.8,
-     "source": "probable"
-    }
-   },
-   "moneyline": [
-    {
-     "side": "home",
-     "label": "TEX",
-     "model_prob": 0.61817,
-     "fair_odds": -162,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "kelly_full": null
-    },
-    {
-     "side": "away",
-     "label": "SFG",
-     "model_prob": 0.38183,
-     "fair_odds": 162,
-     "book": null,
-     "odds": null,
-     "decimal": null,
-     "implied_prob": null,
-     "market_fair_prob": null,
-     "edge": null,
-     "ev_per_unit": null,
-     "kelly_full": null
-    }
-   ],
-   "runline": null,
-   "total": {
-    "line": null,
-    "sides": null,
-    "fair_total": 8.69
-   },
-   "market": null
+   "n_closed": 3,
+   "n_gates": 3,
+   "reason": "the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 3 are closed, starting with 600 vintage-graded games against 0 in hand"
   }
  ],
+ "n_games": 0,
+ "team_bets": [],
  "record": {
   "n_rows": 0,
   "n_settled": 0,
