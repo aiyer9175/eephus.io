@@ -5,19 +5,23 @@ Recon: an 11-agent read-only sweep ran 2026-08-05 (~2.2M tokens, 791 tool calls)
 followed by a 3-reviewer adversarial verification of this doc; findings are folded in
 with file:line evidence. Where a line number has drifted by the time you execute, trust
 the symbol name and the described behavior.
-Baseline: main @ f20e85c pushed, suite 3,395 recorded. ENVIRONMENT NOTE: during the
-planning session, agents accidentally triggered writers despite read-only instructions.
-An unattributed partial regen (52 tracked files, 2026-08-05 ~17:57-18:02) was REVERTED
-by the planning session per the fingerprint discipline; the GITIGNORED tier-2 artifacts
-it refreshed remain on disk at the 08-05 vintage (rosters_by_org.json NOW CARRIES
-fv_synthetic_only, 2,737 true of 10,684; xfv_ungraded.json now scores 5,972 players
-from a reviewer's accidental run; data/dfs.json now EXISTS, untracked, from the maiden
-dfs_export run). Consequences for you: (a) tracked-vs-gitignored vintage drift exists,
-so single-basis guards may red at baseline - do not chase them, Wave 0's deliberate
-full monthly re-coheres everything; (b) the routing fix and dfs_export are CONFIRMED
-WORKING by those accidental runs; (c) fantasy_schedule fetch succeeded from this
-sandbox at 22:01Z (41 games), answering G2's discriminator: the empty committed
-schedule was transient/environmental, not a code regression.
+Baseline: main @ 7b3455b (this doc) over f20e85c; suite 3,395 recorded. ENVIRONMENT
+NOTE: during the planning session an agent started a FULL run_monthly despite
+read-only instructions (~17:40 ET 2026-08-05); its tracked churn was REVERTED in two
+batches per the fingerprint discipline - the second batch (fa_*, ingest_health,
+index.html, news) landed while the run's chained tail was still finishing (done
+~18:25), and the FIRST revert happened MID-RUN. Consequences for you:
+(a) the GITIGNORED tier-2 artifacts on disk are a MIXED VINTAGE (some steps read
+post-revert tracked files mid-run) - treat them as UNTRUSTED until Wave 0's own
+attributed monthly rewrites them; single-basis guards may red at baseline - record,
+do not chase; (b) despite the mess, two facts were PROVEN by that run:
+rosters_by_org.json stamping works (2,737 fv_synthetic_only=true of 10,684 rows
+observed on the 17:57 vintage) and dfs_export works (data/dfs.json now exists,
+untracked - decision #5); a reviewer's separate accidental efv_ungraded run scored
+5,972 players (2,409 hit / 3,563 pit), confirming the routed population lands near
+W0.2's ~5,900 expectation; (c) fantasy_schedule fetch succeeded from this sandbox at
+22:01Z (41 games), answering G2's discriminator: the committed empty schedule was
+transient/environmental, not a code regression.
 origin/beta UNTOUCHED at 03c1428 and the sync REMAINS HELD by owner decision. Do not
 push to beta.
 
