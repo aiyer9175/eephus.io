@@ -13108,7 +13108,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # genuine breakouts (eFV ~44-49) count toward top-end/depth alongside graded
         # prospects; filler (FV 20-30, ~0 tier points) ranks out. The displayed
         # entry["prospects"] list is NOT mutated -- only the scoring pool is augmented.
+        # DEDUP IS LOAD-BEARING (2026-08-05). This concatenation used to be safe
+        # only because the graded and provisional sets were complements: a player
+        # with a consensus point never reached the provisional model. That stopped
+        # being true when efv_ungraded started scoring constant-anchored players
+        # (they carry a fabricated FV 35 consensus point AND now a provisional
+        # grade), so a plain concat would double-count roughly 2,300 players in
+        # _top_end_points / _depth_points / provisional_in_pool. Their tier points
+        # are ~0 so the score effect is small, but a player counted twice in a
+        # depth pool is a correctness bug regardless of its magnitude. The graded
+        # row wins: it is the one the board displays.
         _prov = _prov_by_org.get(entry["org"], [])
+        if _prov:
+            _seen = {p.get("player_key") for p in entry["prospects"] if p.get("player_key")}
+            _prov = [p for p in _prov
+                     if not (p.get("player_key") and p.get("player_key") in _seen)]
         _pool = entry["prospects"] + _prov if _prov else entry["prospects"]
         entry["top_end_points"] = _top_end_points(_pool)
         entry["depth_points"]   = _depth_points(_pool)

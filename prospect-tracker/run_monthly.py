@@ -2599,10 +2599,28 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             if mid is None:
                 continue
             latest = p.points[-1] if p.points else None
+            # fv_synthetic_only: this player's ONLY contributing source is a
+            # fabricated constant anchor (performance_ingest / auto_detect), so
+            # fv_raw is a placeholder rather than anybody's published opinion.
+            #
+            # WHY THIS FLAG EXISTS. efv_ungraded.flagship_owns() partitions on
+            # `fv_raw is not None`, and its docstring states the invariant as
+            # "has a scout grade -> consensus point -> fv_raw set -> FLAGSHIP".
+            # The constant breaks that invariant: consensus folds it back in as a
+            # LAST RESORT (consensus.py CONSTANT_ANCHOR_SOURCES) so these players
+            # do not vanish from the board, which sets fv_raw, which makes them
+            # read as scouted, which routes them AWAY from the provisional model
+            # built to replace the constant. Measured 2026-08-05: 2,632 of the
+            # 2,720 constant-only players were excluded that way, every one of
+            # them carrying fv_raw exactly 35.0. The constant was blocking its own
+            # replacement. Same defect the docstring already describes for the
+            # retired baseballamerica_statcast_by_age FV 40.
+            _srcs = set(getattr(latest, "sources_contributing", None) or ()) if latest else set()
             tracked_by_mid[mid] = {
                 "player_key": p.player_key,
                 "fv_label": latest.consensus_fv_label if latest else None,
                 "fv_raw":   latest.consensus_fv_raw   if latest else None,
+                "fv_synthetic_only": bool(_srcs) and _srcs <= consensus.CONSTANT_ANCHOR_SOURCES,
                 "status":   p.status,
             }
 
@@ -2647,6 +2665,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 "player_key": tracked["player_key"] if tracked else None,
                 "fv_label":   tracked["fv_label"] if tracked else None,
                 "fv_raw":     tracked["fv_raw"]   if tracked else None,
+                # carried so efv_ungraded.flagship_owns can tell a published
+                # grade from the constant placeholder that merely looks like one
+                "fv_synthetic_only": bool(tracked and tracked.get("fv_synthetic_only")),
             }
             rosters_by_org.setdefault(org_abbr, {}).setdefault(level, []).append(player_record)
 

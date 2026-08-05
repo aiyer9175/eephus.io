@@ -623,8 +623,28 @@ def flagship_owns(roster_player: dict) -> bool:
     scout grade belongs. Nothing had to change for that to happen; what was missing
     was a test saying so. See docs/efv-2026-07-30/POSITION_ROLE_GATE.md 3.2 and
     ORPHAN_ROUTING.md.
+
+    THE CONSTANT WAS BLOCKING ITS OWN REPLACEMENT (fixed 2026-08-05). The invariant
+    above assumes fv_raw is set only by a published opinion. It is not.
+    `consensus.compute_consensus_point` folds CONSTANT_ANCHOR_SOURCES
+    (performance_ingest / auto_detect) back in as a LAST RESORT so players nobody
+    has graded do not vanish from the board, and that produces a real consensus
+    point carrying a fabricated FV. So a player with NO scout grade got fv_raw set,
+    read as "flagship-owned", and was routed away from this model, which exists to
+    grade exactly him. Measured: 2,632 of the 2,720 constant-only players were
+    excluded that way, every one of them at fv_raw exactly 35.0, while this model
+    scored only 70 of them (and those 70 only because their identity join failed,
+    which happened to leave fv_raw None). run_monthly now stamps fv_synthetic_only
+    on the roster row and this gate honors it, which restores the invariant the
+    docstring above always claimed. Same defect class the paragraph below describes
+    for the retired baseballamerica_statcast_by_age FV 40; that one was removed at
+    the source, this one cannot be, because the constant is load-bearing for board
+    coverage.
     """
-    return (roster_player or {}).get("fv_raw") is not None
+    rp = roster_player or {}
+    if rp.get("fv_synthetic_only"):
+        return False
+    return rp.get("fv_raw") is not None
 
 
 def build(persist: bool = True) -> dict:
