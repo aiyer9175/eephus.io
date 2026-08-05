@@ -403,6 +403,14 @@
       const S = 132;
       g.save();
       g.fillStyle = bg2; g.fillRect(PAD, 100, S, S);
+      // CONTRACT (2026-08-04d): `opts.headshotURL` MUST already be a SQUARE
+      // crop. Canvas drawImage has no object-fit, so this call stretches
+      // whatever it is handed into SxS - and MLB source headshots are 480x720
+      // (2:3), which came out as a vertically squashed face on every card.
+      // The fix lives at the callers, which now ask the CDN for the exact box
+      // via `c_fill,g_face,w_264,h_264` (Cloudinary crops around the detected
+      // face and returns exactly that size). Do NOT "fix" it here with cover
+      // math: that would re-crop an already-correct crop.
       g.drawImage(img, PAD, 100, S, S);
       g.strokeStyle = accent; g.lineWidth = 3;
       g.strokeRect(PAD, 100, S, S);

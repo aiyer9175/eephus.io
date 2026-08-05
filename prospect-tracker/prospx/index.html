@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=5d06f674">
+  <link rel="stylesheet" href="/assets/site.css?v=c87f43ec">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -8899,7 +8899,7 @@
       </span>
       <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-pack" type="checkbox"> card pack</label>
       <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-showval" type="checkbox" checked> value column</label>
-      <label class="gfx-ctrl gfx-ctrl-check" title="Player photos on the single-player and compare cards. List graphics (Rows / Tiles) are names-only."><input id="gfx-photos" type="checkbox" checked> card photos</label>
+      <label class="gfx-ctrl gfx-ctrl-check" title="Face-centered player photos. On the single-player, compare and pack cards, and on Rows lists wherever the row is tall enough and the column wide enough to carry one without shortening the name. Tiles lists are names-only."><input id="gfx-photos" type="checkbox" checked> photos</label>
       <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-logos" type="checkbox" checked> team logos</label>
     </div>
     <div class="gfx-preview" id="gfx-preview"></div>
@@ -10283,7 +10283,7 @@
 <script src="/assets/eephus-ui.js?v=6b17bed4" defer></script>
   <script src="/assets/eephus-gl.js?v=7b97df51" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->
-  <script src="/assets/eephus-hub.js?v=96609a05" defer></script>
+  <script src="/assets/eephus-hub.js?v=2035055e" defer></script>
 <!-- Dark-theme phosphor-starfield background - shared with the editorial
      pages (single component + token set in assets/site.css [data-theme=dark]).
      Mounts only while the dark theme is active; render() feeds it the
@@ -33611,12 +33611,16 @@ const _GFX_FORMATS = {
 // v46 (owner, 2026-08-03) - default is the COMPACT ROW list on the WIDE 16:9
 // canvas. The chip grid made the headshot the subject; the ask was a small
 // headshot beside the text with all 100 prospects on one 16:9 board.
-// v47 (owner, 2026-08-04) - player pictures come OFF the list graphics
+// v47 (owner, 2026-08-04) - player pictures came OFF the list graphics
 // entirely; the name is the subject. `count` now opens at 100 to match how the
 // owner actually uses the row board (the ask was and is "all 100 on one
 // canvas"); it had been defaulting to 50, so the top-100 board had to be
-// re-selected by hand on every open. `photos` stays true because it now governs
-// the single-subject CARDS only, which keep their headshots.
+// re-selected by hand on every open.
+// v48 (owner, 2026-08-04d) - photos come BACK to the ROWS list, but only where
+// the geometry genuinely has room (see _GFX_LIST_PHOTO_MIN_ROW_H). TILES stay
+// names-only: their charter is big legible names, and a photo there re-creates
+// the truncation v47 fixed. `photos` stays true, and now governs the cards, the
+// pack, and the gated row wells.
 const _gfxOpts = { count: 100, title: "", accent: "lilac", showValue: true, format: "wide", theme: "auto", photos: true, logos: true, variant: "compact", frame: "rarity", pack: false, layout: "rows" };
 let _gfxOrigTheme = null;
 // v38 - Force the GFX board (+ the open modal) to a chosen light/dark theme by
@@ -33994,17 +33998,40 @@ function _gfxPhotoBaseLayer(org, P) {
 // (image/gif) instead of a silhouette served at HTTP 200. That 404 is what
 // lets the <img> onerror fire so the cell degrades to our own silhouette +
 // logs the miss. (The main-site headshotURL keeps the default on purpose.)
-function _gfxHeadshotURL(mlbamId, px) {
+//
+// FACE CROP (2026-08-04d). img.mlbstatic.com is Cloudinary, and it honours
+// `c_fill,g_face`: c_fill returns EXACTLY the requested box, g_face centres
+// that crop on the detected face. Source headshots are 480x720 (2:3), so every
+// consumer that wanted a square or a 3:4 well used to crop blind - a client-side
+// "center top" guess in the DOM, and an outright vertical SQUASH on canvas,
+// where drawImage has no object-fit. Asking the CDN for the exact box removes
+// both classes of jank at the source.
+// Verified live 2026-08-04 on BOTH contexts ('67' and 'milb'): exact pixel
+// dimensions returned, Access-Control-Allow-Origin:* intact, so the crops stay
+// export-safe under html2canvas (crossorigin=anonymous + useCORS).
+// c_thumb was REJECTED: it zooms far too tight on the face.
+//
+// This is the ONE place the transform string lives. If MLB ever locks the
+// transform down, reverting to the plain `w_{r},q_auto:best` form is a one-line
+// change here and nothing else moves.
+const _GFX_FACE_CROP = "c_fill,g_face";
+function _gfxHeadshotURL(mlbamId, boxW, boxH) {
   if (!mlbamId) return "";
-  const r = Math.max(120, Math.round((px || 52) * 2));
   // Use the resolved context ('milb' fills most prospect gaps); "none" → "" so
-  // the silhouette shows. Same img.mlbstatic.com host as before, which serves
-  // Access-Control-Allow-Origin:* - so milb photos are as export-safe under
-  // html2canvas (crossorigin=anonymous + useCORS) as the 67 ones already were.
+  // the silhouette / team-logo base layer shows and we never fetch a known 404.
   const ctx = _photoCtx[mlbamId];
   if (ctx === "none") return "";
   const seg = (ctx === "67" || ctx === "milb") ? ctx : "67";
-  return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${r},q_auto:best/v1/people/${mlbamId}/headshot/${seg}/current`;
+  // Target box in CSS px. A bare width keeps the old callers' intent (a 3:4
+  // portrait well) rather than silently squaring them.
+  const bw = Math.max(20, Math.round(boxW || 52));
+  const bh = Math.max(20, Math.round(boxH || bw * 4 / 3));
+  // 2x for retina AND for the 2x html2canvas export scale, clamped
+  // PROPORTIONALLY so a large box cannot ask the CDN for an absurd render and
+  // cannot distort the aspect on the way (clamping one axis alone would).
+  const k = Math.max(1, Math.min(2, 1400 / Math.max(bw, bh)));
+  const w = Math.round(bw * k), h = Math.round(bh * k);
+  return `https://img.mlbstatic.com/mlb-photos/image/upload/${_GFX_FACE_CROP},w_${w},h_${h},q_auto:best/v1/people/${mlbamId}/headshot/${seg}/current`;
 }
 // Track + log the mlbam_ids that 404'd at GFX render time so missing photos
 // can be audited. Called from the inline <img> onerror (global scope).
@@ -34042,10 +34069,13 @@ function _gfxRowHasPhotoAvatar(r) {
   return !!(_gfxOpts.photos && r && r.mlbam);
 }
 // (The chip photo-well helper that used to live here was removed on 2026-08-04
-// when player pictures came off the list graphics. The `cover` background
-// technique it pioneered - html2canvas 1.4.1 has no object-fit, so an <img>
-// exports STRETCHED - is still the rule for any future photo well, and is
-// still in use by the single-subject cards below, which KEEP their headshots.)
+// when player pictures came off the list graphics. TILES never got theirs back:
+// their charter is big legible names. The ROWS list did, in _gfxListPhotoWell.
+// The `cover` background technique this helper pioneered - html2canvas 1.4.1
+// has no object-fit, so an <img> exports STRETCHED - is still in use by the
+// single-subject cards below. Since 2026-08-04d it is a belt-and-braces
+// measure rather than the load-bearing one: _gfxHeadshotURL now asks the CDN
+// for the exact box, so the bytes are already the right shape.)
 function _gfxAvatar(r, P) {
   const useP = _gfxRowHasPhotoAvatar(r);
   const useL = _gfxOpts.logos && r && r.org;
@@ -34062,7 +34092,9 @@ function _gfxAvatar(r, P) {
     + `background-color:${P.bg};background-image:${_avLogo ? `url('${_avLogo}')` : _gfxSilhouetteBg(P)};background-position:center;background-size:${_avLogo ? "58%" : "62%"};`
     + `background-repeat:no-repeat;overflow:hidden;display:inline-block;vertical-align:middle;`;
   if (useP) {
-    const hs = _gfxHeadshotURL(r.mlbam, h);
+    // Exact-box face crop: the returned image IS 40x52 (at 2x), so there is
+    // nothing for object-fit to do and nothing for html2canvas to stretch.
+    const hs = _gfxHeadshotURL(r.mlbam, w, h);
     // No photo on file → 404 → fall through to the cell background (team
     // logo, silhouette when org-less) and log the miss.
     // typeof guard: html2canvas rasterizes inside a cloned iframe whose global
@@ -34071,7 +34103,7 @@ function _gfxAvatar(r, P) {
     // "undefined") - in the live page it logs the miss, in the clone it no-ops,
     // and display:none always runs so the photo degrades to the silhouette.
     const onerr = `if(typeof _gfxLogMissingPhoto!=='undefined')_gfxLogMissingPhoto(${Number(r.mlbam) || 0});this.style.display='none';`;
-    return `<span style="${wrap}"><img src="${hs}" crossorigin="anonymous" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;" onerror="${onerr}"></span>`;
+    return `<span style="${wrap}"><img src="${hs}" crossorigin="anonymous" alt="" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="${onerr}"></span>`;
   }
   // Logo-as-avatar (farm rows, or photos toggled off): contain + padding. The
   // team logo IS the avatar here, not a 404 fallback, so CLEAR the silhouette
@@ -34497,8 +34529,12 @@ function buildProspectCard(snap) {
 
   // Photo - EXPORT-SAFE cover via background-image on a fixed 3:4 frame, wrapped
   // in the rarity gradient frame + a team-color top edge (matches the list).
-  const hsURL = (_gfxOpts.photos !== false && p.mlbam_id) ? _gfxHeadshotURL(p.mlbam_id, 320) : "";
   const PW = 264, PH = 352; // 3:4
+  // Exact-aspect face crop. This used to ask for a 640px-wide natural-aspect
+  // headshot and then pin it to the top of the frame, which was a guess about
+  // where the face sat in a 2:3 source. c_fill,g_face makes the CDN do it
+  // properly, so the background position is now plain `center`.
+  const hsURL = (_gfxOpts.photos !== false && p.mlbam_id) ? _gfxHeadshotURL(p.mlbam_id, PW, PH) : "";
   // A chosen frame style (chrome/retro/team) always shows a visible frame; the
   // default "rarity" style scales the frame with tier (thin/none below FV 45).
   const photoPad = (frameStyle !== "rarity") ? 7 : (rar ? (rar === "legendary" ? 9 : 7) : 3);
@@ -34506,7 +34542,7 @@ function buildProspectCard(snap) {
   const _baseLayer = _gfxPhotoBaseLayer(p.org, P);
   const headshot = `<div style="width:${PW}px;height:${PH}px;flex:none;border-radius:9px;overflow:hidden;box-sizing:border-box;padding:${photoPad}px;background:${photoFrameBg};border-top:4px solid ${orgColor};box-shadow:0 2px 10px rgba(0,0,0,0.25);">
     <div style="width:100%;height:100%;border-radius:4px;overflow:hidden;${_baseLayer}">
-      ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center top;background-repeat:no-repeat;"></div>` : ""}
+      ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center;background-repeat:no-repeat;"></div>` : ""}
     </div>
   </div>`;
 
@@ -35155,11 +35191,13 @@ function buildCompareCard(snap) {
   const NAME_BOX_H = 30;
   const colDivider = `<div style="width:1px;background:${P.border};flex:none;"></div>`;
   const cols = data.map(d => {
-    const hs = (d.p.mlbam_id) ? _gfxHeadshotURL(d.p.mlbam_id, 200) : "";
+    // Face crop at the exact 132x176 well below, so all three columns line up
+    // on the eyes instead of on "wherever center-top happened to land".
+    const hs = (d.p.mlbam_id) ? _gfxHeadshotURL(d.p.mlbam_id, 132, 176) : "";
     const meta = [d.p.position, d.p.org, d.sl.level, d.p.age != null ? "age " + d.p.age.toFixed(1) : null].filter(Boolean).join(" · ");
     const namePx = _gfxFitNamePx(d.p.player_name, 22, 16);
     return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;border-top:5px solid ${d.color};padding:16px 10px 0;">
-      <div style="width:132px;height:176px;flex:none;border:1px solid ${P.borderStrong};border-radius:6px;overflow:hidden;${_gfxPhotoBaseLayer(d.p.org, P)}">${hs ? `<div style="width:100%;height:100%;background-image:url('${hs}');background-size:cover;background-position:center top;"></div>` : ""}</div>
+      <div style="width:132px;height:176px;flex:none;border:1px solid ${P.borderStrong};border-radius:6px;overflow:hidden;${_gfxPhotoBaseLayer(d.p.org, P)}">${hs ? `<div style="width:100%;height:100%;background-image:url('${hs}');background-size:cover;background-position:center;"></div>` : ""}</div>
       <div style="display:flex;align-items:center;gap:8px;justify-content:center;height:${NAME_BOX_H}px;flex:none;max-width:100%;min-width:0;overflow:hidden;">${_gfxTeamLogo(d.p.org, P, 26)}<div style="font-family:var(--font-retro);font-size:${namePx}px;font-weight:700;color:${P.text};line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">${escapeHtml(d.p.player_name || "")}</div></div>
       <div style="font-family:var(--font-mono);font-size:12px;color:${P.text2};">${escapeHtml(meta)}</div>
       <span class="fv-badge ${fvClass(d.fvLabel)}" style="font-size:32px;padding:7px 15px;border-radius:8px;font-weight:800;">${escapeHtml(d.fvLabel)}</span>
@@ -35222,10 +35260,12 @@ function _gfxMiniCard(item, kind, P, accent, idx) {
   const grad = (typeof _gfxRarityGradient === "function") ? _gfxRarityGradient(rar) : null;
   const orgColor = (typeof ORG_COLORS !== "undefined" && p.org && ORG_COLORS[p.org]) ? ORG_COLORS[p.org] : accent;
   const PW = 116, PH = 150, pad = rar ? 5 : 3;
-  const hsURL = (_gfxOpts.photos !== false && p.mlbam_id) ? _gfxHeadshotURL(p.mlbam_id, 200) : "";
+  // Face crop at the mini card's exact well, so a sheet of 15 cards has 15
+  // faces at the same height rather than 15 different top-of-frame crops.
+  const hsURL = (_gfxOpts.photos !== false && p.mlbam_id) ? _gfxHeadshotURL(p.mlbam_id, PW, PH) : "";
   const photo = `<div style="width:${PW}px;height:${PH}px;flex:none;border-radius:7px;overflow:hidden;box-sizing:border-box;padding:${pad}px;background:${grad || P.borderStrong};border-top:3px solid ${orgColor};">
       <div style="width:100%;height:100%;border-radius:3px;overflow:hidden;${_gfxPhotoBaseLayer(p.org, P)}">
-        ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center top;background-repeat:no-repeat;"></div>` : ""}
+        ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center;background-repeat:no-repeat;"></div>` : ""}
       </div></div>`;
   const fvBadge = (r.fv != null)
     ? `<span class="fv-badge ${fvClass(String(r.fv))}" style="font-size:21px;padding:3px 10px;border-radius:6px;font-weight:800;flex:none;">${escapeHtml(String(r.fv))}</span>`
@@ -35390,12 +35430,12 @@ function _gfxTileHtml(r, i, P, accent, geo) {
 //
 // Distinct from the legacy `rowHtml` path, which is 67px tall, spends a column
 // on surplus and $DvM+, and only ever fits ~26 rows on this canvas.
-// Row heights are now TEXT-driven, not photo-driven (see the TILE LAYOUT note
-// above: player pictures are off the list graphics by owner ask). Removing the
-// 30px headshot and its 6px gutter hands 36px per row straight to the name
-// field, which is where the owner's truncated-name complaint came from.
+// Row heights stay TEXT-driven, not photo-driven. That is the 2026-08-03 win
+// and it survives 2026-08-04d: the photo well is sized FROM the row the text
+// asked for, never the other way round, and only exists where the row is
+// already tall and wide enough to carry it (see _GFX_LIST_PHOTO_MIN_ROW_H).
 const _GFX_LIST_MIN_ROW_H = 26;    // below this the 13px name starts to clip
-const _GFX_LIST_MIN_COL_W = 240;   // unchanged: the 36px freed goes to the name
+const _GFX_LIST_MIN_COL_W = 240;   // the width freed in 2026-08-03 goes to the name
 // Caps. Without them a short list stretches into 80px rows, or one 1,520px-wide
 // column that is mostly blank. Past these the surplus stays margin, which looks
 // deliberate; stretching does not.
@@ -35430,6 +35470,22 @@ const _GFX_LIST_META_INLINE_MIN_W = 320;
 // which at a 600px-wide timeline render is 3.4px on screen - unreadable, and
 // the one place the board still broke the floor the chip work set.
 const _GFX_LIST_META_PX = 11;
+// PHOTO WELL (2026-08-04d). Player pictures come BACK to the rows layout, but
+// gated by GEOMETRY rather than by list size: a well only appears where the row
+// is tall enough for a face to read (rowH >= 40) and the column is wide enough
+// that the well does not come out of the name (colW >= 320). The same rule
+// decides every case, so a Top 100 on the tall `board` canvas gets photos while
+// a Top 100 crammed onto 16:9 `wide` (28px rows) self-excludes - no per-count
+// special cases, and nothing can regress the anti-truncation win.
+//
+// The reserved width is a ~3:4 portrait well. Measured over the whole
+// (format x count) matrix on 2026-08-04: photos appear on Top 10 and Top 25 in
+// ALL SEVEN formats, on Top 50 in every format except `square` (36px rows), and
+// on Top 100 only on `board`. The narrowest name field that ends up WITH a
+// photo is 353px, comfortably above the 200px floor the redesign holds.
+const _GFX_LIST_PHOTO_MIN_ROW_H = 40;
+const _GFX_LIST_PHOTO_MIN_COL_W = 320;
+const _GFX_LIST_PHOTO_GUTTER = 6;
 
 function _gfxListGeoFor(cap, fmt, cols) {
   const rows = Math.ceil(cap / cols);
@@ -35441,18 +35497,29 @@ function _gfxListGeoFor(cap, fmt, cols) {
   if (rowH < _GFX_LIST_MIN_ROW_H) return null;
   const metaMode = rowH >= _GFX_LIST_META_STACK_MIN_H ? "stack"
                  : (colW >= _GFX_LIST_META_INLINE_MIN_W ? "inline" : "none");
+  const photoW = (rowH >= _GFX_LIST_PHOTO_MIN_ROW_H && colW >= _GFX_LIST_PHOTO_MIN_COL_W)
+    ? Math.round(rowH * 0.75) : 0;
+  // What the TEXT actually gets: the well and its gutter come off the top. The
+  // column search scores THIS, not the raw column width, so a layout can only
+  // win on space it can spend on the name. Measured 2026-08-04: subtracting the
+  // well flips no chosen column count in any of the 28 (format x count)
+  // combinations, so it costs nothing today and keeps the search honest if the
+  // constants ever move.
+  const textW = colW - (photoW ? photoW + _GFX_LIST_PHOTO_GUTTER : 0);
   // 14px where the row stacks its meta, 13px on the dense single-line rows.
-  // The old sizes were 12.5 / 11.5 beside a headshot; with the photo gone the
-  // vertical budget carries 13px comfortably at the 26px minimum row (a 13px
-  // line box is 15.3px), so the dense case gets BIGGER type and a name field
-  // roughly twice as wide, which is the whole point of the change.
-  return { cols, rows, colW, rowH, metaMode,
+  // The old sizes were 12.5 / 11.5 beside a headshot; the vertical budget
+  // carries 13px comfortably at the 26px minimum row (a 13px line box is
+  // 15.3px), so the dense case gets BIGGER type and a name field roughly twice
+  // as wide, which is the whole point of the 2026-08-03 change. The photo well
+  // only ever appears at rowH >= 40, so it cannot claw that back.
+  return { cols, rows, colW, rowH, metaMode, photoW, textW,
            name: rowH >= _GFX_LIST_META_STACK_MIN_H ? 14 : 13,
-           area: colW * rowH, empty: cols * rows - cap };
+           area: textW * rowH, empty: cols * rows - cap };
 }
 
-// Maximise the area of a single row (a bigger row is both a bigger headshot and
-// a longer un-truncated name), then break ties toward a grid with no holes.
+// Maximise the TEXT area of a single row (a bigger row is both a bigger
+// headshot and a longer un-truncated name), then break ties toward a grid with
+// no holes.
 function _gfxListColumns(cap, fmt) {
   const hi = Math.max(1, Math.min(
     Math.floor((fmt.w - _GFX_CHIP_PAD * 2 + _GFX_CHIP_GAP) / (_GFX_LIST_MIN_COL_W + _GFX_CHIP_GAP)),
@@ -35483,11 +35550,44 @@ function _gfxWarnUnnormalized(where, r) {
   } catch (e) { /* console is not guaranteed inside the html2canvas clone */ }
 }
 
-// One compact row: rank, name (+ optional meta), eFV badge, club mark.
-// The headshot that used to sit between the rank and the name is gone (owner
-// ask); its 30px well plus the 6px gutter now belong to the name field, which
-// is the only element allowed to absorb slack. Everything else is `flex:none`,
-// so nothing can push a neighbour out of the row.
+// The list row's photo well: a face-centred headshot over a team-logo (or
+// silhouette) base layer, sized to whatever box the geometry search reserved.
+//
+// The box is ALWAYS emitted when the gate passed, even for a subject with no
+// mlbam or a "none" photo context. That is deliberate: dropping the well on
+// some rows would ripple the name column in and out down the board. A subject
+// without a photo simply shows the club mark, which is the degrade the rest of
+// the GFX system already prefers on dark backgrounds.
+//
+// html2canvas 1.4.1 implements no object-fit, so an <img> whose natural aspect
+// differs from its box exports STRETCHED. We do not rely on object-fit here:
+// _gfxHeadshotURL asks the CDN for EXACTLY this box (c_fill,g_face), so the
+// bytes that arrive are already the right shape and the right crop.
+function _gfxListPhotoWell(r, P, w, h) {
+  const hs = (r && r.mlbam) ? _gfxHeadshotURL(r.mlbam, w, h) : "";
+  const logo = (typeof teamLogoURL === "function" && r && r.org) ? teamLogoURL(r.org) : null;
+  const wrap = `flex:none;width:${w}px;height:${h}px;border-radius:3px;overflow:hidden;`
+    + `border:1px solid ${P.border};background-color:${P.bg};`
+    + `background-image:${logo ? `url('${logo}')` : _gfxSilhouetteBg(P)};`
+    + `background-repeat:no-repeat;background-position:center;background-size:${logo ? "62%" : "64%"};`
+    + `display:inline-block;vertical-align:middle;`;
+  if (!hs) return `<span style="${wrap}"></span>`;
+  // typeof guard: html2canvas rasterizes inside a cloned iframe whose global
+  // scope does NOT have our functions, so a bare call would throw a
+  // ReferenceError there. display:none always runs, so a 404 degrades to the
+  // cell background (club mark, silhouette when org-less) rather than a broken
+  // image, and the miss is logged in the live page.
+  const onerr = `if(typeof _gfxLogMissingPhoto!=='undefined')_gfxLogMissingPhoto(${Number(r.mlbam) || 0});this.style.display='none';`;
+  return `<span style="${wrap}"><img src="${hs}" crossorigin="anonymous" alt="" `
+    + `style="width:100%;height:100%;object-fit:cover;display:block;" onerror="${onerr}"></span>`;
+}
+
+// One compact row: rank, optional photo well, name (+ optional meta), eFV
+// badge, club mark. The name field is the only element allowed to absorb slack;
+// everything else is `flex:none`, so nothing can push a neighbour out of the
+// row. The well is present only where _gfxListGeoFor reserved width for it
+// (geo.photoW) AND the Photos toggle is on, and its width was already taken out
+// of the budget the layout search scored, so it can never come out of the name.
 function _gfxListRowHtml(r, i, P, accent, geo) {
   const rank = (r.rank != null) ? r.rank : (i + 1);
   if (!r || r.name == null) _gfxWarnUnnormalized("list row", r);
@@ -35518,9 +35618,15 @@ function _gfxListRowHtml(r, i, P, accent, geo) {
          <span style="font-weight:700;font-size:${nameSize}px;line-height:1.18;color:${P.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name)}</span>
          ${stacked}
        </span>`;
+  // Photos default ON wherever the geometry gate passed; the checkbox turns
+  // them off. `geo.photoW` is 0 on every layout that self-excluded, so this is
+  // one test, not a per-format list. The well is inset 6px vertically so it
+  // clears the row's 1px rule at both ends.
+  const well = (geo.photoW && _gfxOpts.photos !== false)
+    ? _gfxListPhotoWell(r, P, geo.photoW, Math.max(20, geo.rowH - 6)) : "";
   return `<div style="display:flex;align-items:center;gap:6px;height:${geo.rowH}px;box-sizing:border-box;padding:0 4px;border-bottom:1px solid ${P.border};overflow:hidden;">
       <span style="flex:none;width:24px;text-align:right;font-family:var(--font-mono);font-size:${smallPx}px;font-weight:700;color:${accent};">${escapeHtml(String(rank))}</span>
-      ${nameBlock}
+      ${well}${nameBlock}
       ${badge}${logo}
     </div>`;
 }
@@ -35635,9 +35741,12 @@ function buildGfxBoard() {
   let layoutOverflow = false;
   if (useList) {
     const cols = _gfxListColumns(cap, fmt);
+    // Degenerate fallback (no geometry fits at all): explicitly photoW 0, so
+    // the row renderer's gate reads a real number rather than `undefined`.
     const geo = _gfxListGeoFor(cap, fmt, cols)
       || { cols, rows: Math.ceil(cap / cols), rowH: _GFX_LIST_MIN_ROW_H,
-           colW: Math.floor((W - _GFX_CHIP_PAD * 2) / cols), name: 12, metaMode: "none" };
+           colW: Math.floor((W - _GFX_CHIP_PAD * 2) / cols), name: 12,
+           metaMode: "none", photoW: 0 };
     layoutOverflow = (geo.rows * geo.rowH + _GFX_CHIP_CHROME) > H;
     // Column-major so ranks read top-to-bottom down a column, the way the
     // legacy multi-column row board already reads.
@@ -35837,10 +35946,15 @@ function _gfxApplyModeUI() {
   // there would be a control that silently does nothing.
   hide(ctrlOf("gfx-showval"), card || (_gfxOpts.layout === "chips" && k !== "farm"));
   hide(ctrlOf("gfx-title-input"), card);
-  // Photos are a CARD-only option since 2026-08-04: the list layouts are
-  // names-only by owner ask, so on a list this checkbox would do nothing.
-  // (farm-card has no headshot to show either.)
-  hide(ctrlOf("gfx-photos"), !card || k === "farm-card");
+  // Photos apply to: the single-subject cards (photo-first by design), the card
+  // pack's mini cards, and the ROWS list, where 2026-08-04d put geometry-gated
+  // photo wells back. They do NOT apply to the TILES list (names-only by
+  // charter), to the farm board (farm rows carry no mlbam, so the toggle would
+  // be inert), or to the farm card (no headshot to show).
+  const photoful = card
+    ? (k !== "farm-card")
+    : (k !== "farm" && (_gfxOpts.pack || _gfxOpts.layout === "rows"));
+  hide(ctrlOf("gfx-photos"), !photoful);
   // Template variants apply to player + farm cards (farm honors Compact/Detailed).
   hide(ctrlOf("gfx-variant"), k !== "prospect-card" && k !== "farm-card");
   // Frame style applies to prospect cards (rarity/chrome/retro/team).
@@ -36164,12 +36278,18 @@ document.addEventListener("change", (e) => {
     _gfxRefresh();
   } else if (e.target.id === "gfx-pack") {
     _gfxOpts.pack = e.target.checked;
+    // Which controls apply depends on pack / layout, and _gfxApplyModeUI used
+    // to run ONLY on open - so switching here left stale controls on screen
+    // (the value-column toggle on a tiles board, the photos toggle missing from
+    // a rows board). Re-apply on every switch that changes the answer.
+    _gfxApplyModeUI();
     _gfxRefresh();
   } else if (e.target.id === "gfx-frame") {
     _gfxOpts.frame = e.target.value;
     _gfxRefresh();
   } else if (e.target.id === "gfx-layout") {
     _gfxOpts.layout = e.target.value;
+    _gfxApplyModeUI();   // rows gains the photos toggle, tiles loses it
     _gfxRefresh();
   } else if (e.target.id === "gfx-variant") {
     _gfxOpts.variant = e.target.value;

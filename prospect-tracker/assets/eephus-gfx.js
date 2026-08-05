@@ -380,6 +380,17 @@
       var shot = shots[r];
       if (shot) {
         g.fillStyle = bg2; g.fillRect(x0, cy - S / 2, S, S);
+        // CONTRACT (2026-08-04d): `it.shot` MUST already be a SQUARE crop.
+        // drawImage has no object-fit, so this stretches whatever it is handed
+        // into SxS, and MLB source headshots are 480x720 (2:3) - i.e. every
+        // face here is currently squashed vertically. The fix belongs at the
+        // caller: ask the CDN for `c_fill,g_face,w_{2S},h_{2S}` (Cloudinary
+        // crops around the detected face and returns exactly that box), which
+        // needs no change to this file. STILL OUTSTANDING for the one supplier
+        // that feeds this path, build_site.py shotURL (the news module); the FA
+        // and PROSPX callers were converted on 2026-08-04d. Do NOT "fix" it
+        // here with cover math once the callers are square: that would re-crop
+        // an already-correct crop.
         g.drawImage(shot, x0, cy - S / 2, S, S);
         g.strokeStyle = line; g.lineWidth = 1;
         g.strokeRect(x0, cy - S / 2, S, S);

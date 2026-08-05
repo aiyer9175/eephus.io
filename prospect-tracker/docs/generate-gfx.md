@@ -79,18 +79,85 @@ The modal customization row re-renders the live preview on every change:
 - **Title** - overrides the auto-derived headline.
 - **Accent** - six brand accent swatches for badges/values/wordmark.
 - **card pack** - render the list as a sheet of mini collectible cards (3-across).
-- **value column / photos / team logos** - toggles (default on).
+- **value column / photos / team logos** - toggles (default on). *photos* is
+  shown for the cards, the card pack and the **Rows** list; it is hidden on the
+  Tiles list and the farm board, where it would be inert.
 
-### Photos & team logos — fallback chain
+### Photos & team logos
 
-Each row's avatar is a **rectangular** portrait crop (matches the main-site
-headshot), never a broken image:
+**Where photos appear** (2026-08-04d). The two decisions that produced today's
+behaviour, in order:
 
-1. **Prospect headshot** (`img.mlbstatic.com`) when *photos* is on and the player
-   has an `mlbam_id`.
-2. **Team logo** (`a.espncdn.com`) when the headshot 404s (or *photos* off and
-   *team logos* on).
-3. **Silhouette** - an inline-SVG person painted as the cell background.
+- 2026-08-04: player pictures came **off** the list graphics entirely. They
+  looked janky and were crushing name widths.
+- 2026-08-04d: they came **back to the Rows list only, gated by geometry**, and
+  never at the cost of the name.
+
+| Surface | Photo? |
+|---|---|
+| Rows list | **yes, where the geometry allows** (see the gate below) |
+| Tiles list | **no**, by charter: big legible names is the whole point of that layout |
+| Farm board (legacy rows) | no, farm rows carry no `mlbam` |
+| Prospect card / compare card / pack mini-card | **yes**, always |
+
+**The gate is geometry, not list size.** `_gfxListGeoFor` reserves a well only
+when the row is tall enough for a face and the column wide enough to spare the
+width:
+
+```
+photoW = (rowH >= 40 && colW >= 320) ? Math.round(rowH * 0.75) : 0
+```
+
+`photoW + 6` is then subtracted from the width the column search scores, so a
+layout can only win on space it can actually spend on the name. Measured across
+the whole format x count matrix, that subtraction changes no chosen column count
+today; it exists so the search stays honest if the constants move.
+
+Where that lands, measured 2026-08-04:
+
+| Count | Photos on |
+|---|---|
+| Top 10 | all seven formats |
+| Top 25 | all seven formats |
+| Top 50 | every format except Square (36px rows) |
+| Top 100 | Board only (52px rows, 498px columns) |
+
+Everything else self-excludes, including the owner's canonical Top 100 on Wide
+16:9 (28px rows, 371px columns). The narrowest name field that ends up **with** a
+photo is 353px, against a 200px floor. `test_gfx_chip_layout.py` pins all of it.
+
+**Face-centred crops.** `img.mlbstatic.com` is Cloudinary and honours
+`c_fill,g_face`: `c_fill` returns exactly the requested box, `g_face` centres
+that crop on the detected face. Source headshots are 480x720 (2:3), so every
+consumer that wanted a square or a 3:4 well used to crop blind, and canvas
+consumers (`drawImage` has no `object-fit`) squashed the face outright. Asking
+the CDN for the exact box fixes both at the source, and it is why nothing needs
+a client-side "center top" guess any more.
+
+The transform lives in ONE constant per module (`_GFX_FACE_CROP` in
+`prospx/index.html`, `FA_FACE_CROP` in `assets/fa.js`) so a CDN lockdown is a
+one-line revert. Verified live on both the `67` and `milb` contexts: exact pixel
+dimensions returned, `Access-Control-Allow-Origin: *` intact. `c_thumb` is not
+interchangeable, it zooms far too tight on the face.
+
+**Fallback chain.** Every photo well is a **rectangular** portrait crop, never a
+broken image:
+
+1. **Player headshot** (`img.mlbstatic.com`) when *photos* is on, the geometry
+   gate passed, and `data/photo_ctx.json` says the id has a real photo in the
+   `67` or `milb` context.
+2. **Team logo** (`a.espncdn.com`) when the context is `none`, the id is
+   missing, or the headshot 404s.
+3. **Silhouette** - an inline-SVG person painted as the cell background, for
+   subjects with no MLB org (draftees, overseas).
+
+The well is **always reserved once the gate opens**, even for a subject with no
+photo; it just shows the club mark. Dropping the element on those rows would
+ripple the name column in and out down the board.
+
+The URL builder deliberately omits Cloudinary's `d_people:generic` default,
+which serves a silhouette at HTTP 200. With it, `onerror` never fires and every
+step of this chain is dead code.
 
 Images load `crossorigin="anonymous"`; the exporter uses `useCORS: true`, so CDN
 images rasterize into the PNG rather than tainting the canvas.
@@ -118,8 +185,13 @@ images rasterize into the PNG rather than tainting the canvas.
 - Options live on `_gfxOpts` (`format`, `theme`, `accent`, `count`, `title`,
   `showValue`, `photos`, `logos`, `variant`, `frame`, `pack`).
 - Board build: `buildGfxBoard()` -> `_gfxRow()` (per-kind normalizer, now emits an
-  optional `valueSub`) + `_gfxAvatar()` (fallback chain) + `_gfxPalette()`; QR via
-  `_gfxDeepLink()`.
+  optional `valueSub`) + `_gfxAvatar()` (legacy row path) / `_gfxListPhotoWell()`
+  (Rows list, gated on `geo.photoW`) + `_gfxPalette()`; QR via `_gfxDeepLink()`.
+  Headshot URLs come from `_gfxHeadshotURL(mlbamId, boxW, boxH)`, which asks the
+  CDN for that exact box, face-centred.
+- `_gfxApplyModeUI()` decides which controls apply to the current mode. It runs
+  on open **and** on any `layout` / `pack` change, since both change the answer
+  (a rows board has a photos toggle, a tiles board does not).
 - Export: `exportElementAsImage(el, { scale: 2 })`.
 - Shared engine (`EEPHUS_GFX`): `open({kind:"board"|"card", module, title,
   subtitle?, url, filenameBase, accentToken?, board:{columns[], rows[], counts?,

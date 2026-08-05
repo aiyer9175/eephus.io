@@ -265,7 +265,37 @@
   }
 
   function playerLink(m) {
-    return `<a href="#${faHash()}player=${encodeURIComponent(m.key || "")}" class="fa-player-link"><span class="fa-row-photo" data-photo-key="${esc(m.key || "")}"></span><strong>${esc(m.name)}</strong></a>`;
+    // title carries the full name: at phone widths the shared .mlb-name box
+    // ellipsizes the trailing type tag/badges, and the tooltip is the only
+    // place the cut text can still be read.
+    return `<a href="#${faHash()}player=${encodeURIComponent(m.key || "")}" class="fa-player-link" title="${esc(m.name)}"><span class="fa-row-photo" data-photo-key="${esc(m.key || "")}"></span><strong>${esc(m.name)}</strong></a>`;
+  }
+
+  // Headshot URL builder for this module. ONE place, so a CDN transform
+  // lockdown is a one-line revert here.
+  //
+  // 2026-08-04d: every FA headshot box is SQUARE (24px board rows, the 96px
+  // hero, the 132px card hero) while the source images are 480x720 (2:3). The
+  // DOM boxes were papering over that with object-fit:cover - which crops the
+  // top of the head off, since it centres a 2:3 portrait in a square - and the
+  // shared card canvas (eephus-hub.js, `g.drawImage(img, x, y, S, S)`) could
+  // not paper over it at all: canvas drawImage has no object-fit, so it drew
+  // the 2:3 source into a square and VERTICALLY SQUASHED every face.
+  //
+  // img.mlbstatic.com is Cloudinary and honours `c_fill,g_face`: it returns
+  // EXACTLY the requested box, cropped around the detected face. Asking for the
+  // real box fixes both, and needs zero canvas-code change.
+  //
+  // The `d_people:generic` default is DELIBERATELY dropped: it serves a
+  // silhouette at HTTP 200, which means onerror never fires and the canvas
+  // draws a squashed generic body. Without it a missing photo 404s, so the row
+  // removes itself / the hero hides / the card simply omits the photo.
+  const FA_FACE_CROP = "c_fill,g_face";
+  function faHeadshotURL(mlbam, boxW, boxH) {
+    if (!mlbam) return null;
+    const w = Math.round(boxW * 2), h = Math.round((boxH || boxW) * 2);  // 2x retina + 2x canvas scale
+    return "https://img.mlbstatic.com/mlb-photos/image/upload/"
+      + `${FA_FACE_CROP},w_${w},h_${h},q_auto:best/v1/people/${mlbam}/headshot/67/current`;
   }
 
   // Board-row headshots: filled async from the cross-module links map
@@ -278,7 +308,8 @@
       (scope || document).querySelectorAll(".fa-row-photo[data-photo-key]").forEach(el => {
         const row = (L.byKey || {})[el.dataset.photoKey];
         if (row && row.mlbam) {
-          el.innerHTML = `<img class="fa-row-headshot" loading="lazy" src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_72,q_auto:best/v1/people/${row.mlbam}/headshot/67/current" alt="" onerror="this.remove()">`;
+          // .fa-row-headshot is 24x24.
+          el.innerHTML = `<img class="fa-row-headshot" loading="lazy" src="${faHeadshotURL(row.mlbam, 24)}" alt="" onerror="this.remove()">`;
         }
         el.removeAttribute("data-photo-key");
       });
@@ -1247,7 +1278,8 @@
         if (hub && row) hub.innerHTML = window.EEPHUS_HUB.stripHTML(row, "fa");
         const ph = document.getElementById("fa-hero-photo");
         if (ph && row && row.mlbam) {
-          ph.outerHTML = `<img class="mlbp-headshot" src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_240,q_auto:best/v1/people/${row.mlbam}/headshot/67/current" alt="" onerror="this.style.visibility='hidden'">`;
+          // .mlbp-headshot is 96x96.
+          ph.outerHTML = `<img class="mlbp-headshot" src="${faHeadshotURL(row.mlbam, 96)}" alt="" onerror="this.style.visibility='hidden'">`;
         }
         const btn = document.getElementById("fa-player-gfx");
         if (btn) btn.onclick = () => sharePlayerCard(m, row);
@@ -1338,8 +1370,11 @@
       name: m.name,
       meta: `${m.pos || ""} · ${m.age != null ? "age " + Math.floor(m.age) : "?"} · ${m.from || ""}`,
       sub: m.verdict ? `verdict: ${String(m.verdict).toUpperCase()}` : "",
-      headshotURL: linkRow && linkRow.mlbam
-        ? `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_240,q_auto:best/v1/people/${linkRow.mlbam}/headshot/67/current` : null,
+      // eephus-hub.js draws this hero at a 132x132 SQUARE (g.drawImage(img, x,
+      // y, S, S), S = 132) with no object-fit available, so the URL has to
+      // arrive square or the face is squashed. faHeadshotURL asks the CDN for
+      // exactly that box, face-centered.
+      headshotURL: faHeadshotURL(linkRow && linkRow.mlbam, 132),
       url: `eephus.io/fa/#player=${m.key}`,
       filename: `eephus-${m.key}-fa-card.png`,
       caption: "predicted market (projGuarantee) vs rational value - two numbers, never conflated · gate-validated, ex-ante",
