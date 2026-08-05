@@ -2934,103 +2934,6 @@ def _efv_distribution_html(players: list) -> str:
                         svg + legend + caption, full=True)
 
 
-# --------------------------------------------------------------------------- #
-# Data-driven lead story.
-#
-# The homepage lead is articles[0], and exactly one article has ever been
-# published (2026-06-05), so the front page has led with the same two-month-old
-# headline while the secondary slot showed a "more analysis soon" strip. A stale
-# lead on a daily-refreshed site reads as an abandoned site.
-#
-# When the newest article passes _LEAD_STALE_DAYS the lead is generated from the
-# data layer instead, and the real article drops into the secondary row (it is
-# never hidden). This is NOT ghost-written editorial: the card is kicker-labelled
-# "From the data", the byline says it was generated rather than written, and
-# every headline is a restatement of one published fact - an event already on the
-# wire, or the board's own top riser. No adjectives, no analysis, no voice.
-# --------------------------------------------------------------------------- #
-_LEAD_STALE_DAYS = 21
-_LEAD_EVENT_FRESH_DAYS = 2      # "the last day" of the wire, with a day of slack
-
-def _lead_event_headline(typ: str, name: str, org: str | None, val: str) -> str | None:
-    """A flat, factual restatement of one wire event. Returns None for event
-    types with no headline-worthy phrasing rather than inventing one."""
-    if not name:
-        return None
-    if typ == "debut":
-        return f"{name} makes his MLB debut" + (f" for {org}" if org else "")
-    if typ == "trade":
-        return f"{name} traded, {val}"
-    if typ == "promo":
-        return f"{name} promoted, {val}"
-    if typ == "demo":
-        return f"{name} sent down, {val}"
-    if typ == "il":
-        return f"{name} placed on the {val}"
-    if typ in ("up", "down"):
-        return f"{name} moves {val}"
-    if typ == "signing":
-        return f"{name}: {val}"
-    return None
-
-def _data_lead_html(events: list, players: list) -> str:
-    """The generated lead card. Prefers the top item on the freshest wire day;
-    falls back to the board's biggest genuine riser. Returns "" when neither
-    exists, so the caller can keep the article lead."""
-    today = date.today()
-    for ev in events[:24]:
-        d, typ, _glyph, _text, key, org, name, val = ev
-        try:
-            when = date.fromisoformat(d)
-        except (TypeError, ValueError):
-            continue
-        if (today - when).days > _LEAD_EVENT_FRESH_DAYS:
-            break                       # events are date-sorted; nothing fresher follows
-        head = _lead_event_headline(typ, name, org, val)
-        if not head:
-            continue
-        return (
-            '<article class="lead-story no-img">'
-            '<div><div class="lead-kicker">From the data</div>'
-            f'<h1>{html.escape(head)}</h1>'
-            f'<div class="byline">{html.escape(_fmt_iso_date(d))} · generated from the '
-            'eephus.io data layer</div>'
-            '<p class="excerpt">Top item on the prospect wire for that date. The wire is '
-            'assembled from the tracked board - debuts, trades, promotions, IL moves, '
-            'genuine grade changes and free-agency signings - and is not editorially '
-            'selected.</p>'
-            f'<a class="read" href="{_player_href(key)}">Open the player →</a></div>'
-            '</article>')
-
-    cands = [(step, p) for p in players
-             if p.get("status") != "debuted"
-             and (step := _genuine_mover_step(p)) is not None and step > 0]
-    if not cands:
-        return ""
-    step, p = max(cands, key=lambda t: t[0])
-    nm = p.get("player_name") or ""
-    where = _meta(p.get("position"), p.get("org"))
-    return (
-        '<article class="lead-story no-img">'
-        '<div><div class="lead-kicker">From the data</div>'
-        f'<h1>{html.escape(nm)} is the board\'s biggest riser, +{step} FV</h1>'
-        f'<div class="byline">{html.escape(where)} · generated from the eephus.io data layer</div>'
-        '<p class="excerpt">Largest genuine grade move on the board over the trailing year. '
-        'Genuine means the move survived the de-noising the Top Movers module uses: a real '
-        'eFV step, or a same-source consensus step, never a source re-publishing an old '
-        'grade or the scouting panel changing shape.</p>'
-        f'<a class="read" href="{_player_href(p.get("player_key"))}">Open the player →</a></div>'
-        '</article>')
-
-def _article_is_stale(a: dict | None, days: int = _LEAD_STALE_DAYS) -> bool:
-    """True when an article is older than `days`. An unparseable/absent date is
-    NOT stale - the article lead stays, exactly as it behaved before."""
-    try:
-        return (date.today() - date.fromisoformat(str((a or {}).get("date_sort"))[:10])).days > days
-    except (TypeError, ValueError):
-        return False
-
-
 _HOME_DRAWER_JS = '''<script>
 /* Homepage sidebar drawer (<=900px): the hamburger in .sb-brand opens the
    search + module list + wire feed; Esc / outside click close it; resizing
@@ -3175,17 +3078,13 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '.catch(function(){});}catch(e){}})();</script>'
     )
 
-    # ---- lead story (latest article, or generated when that has gone stale) ----
+    # ---- lead story (latest human-written article) ----
+    # Owner decision 2026-08-04: the homepage editorial section carries HUMAN
+    # editorials only. The generated "From the data" lead card that used to take
+    # this slot on a stale article is deleted; the same wire facts still appear on
+    # /news/, in the sidebar feed, the ticker and the movers modules.
     latest = articles[0] if articles else None
-    # A lead older than three weeks makes a daily-refreshed site look abandoned,
-    # so past that point the data layer takes the slot and EVERY article - the
-    # stale one included - shifts down into the secondary row. `articles[0:3]`
-    # vs `articles[1:4]` is the whole mechanism: nothing is hidden.
-    data_lead = _data_lead_html(events, players) if _article_is_stale(latest) else ""
-    if data_lead:
-        lead = data_lead
-        sec_from = 0
-    elif latest:
+    if latest:
         lead = (
             '<article class="lead-story no-img">'
             '<div><div class="lead-kicker">Latest</div>'
@@ -3195,11 +3094,9 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
             f'<a class="read" href="/articles/{latest["slug"]}/">Read the full story →</a></div>'
             '</article>'
         )
-        sec_from = 1
     else:
         lead = '<article class="lead-story no-img"><div><div class="lead-kicker">Latest</div><h1>No articles yet</h1></div></article>'
-        sec_from = 1
-    sec = articles[sec_from:sec_from + 3]
+    sec = articles[1:4]
     if sec:
         secondary = ('<div class="secondary-stories">' + "".join(
             f'<a href="/articles/{a["slug"]}/"><div class="s-kicker">{html.escape(a.get("date_disp", ""))}</div>'
@@ -4494,6 +4391,26 @@ def build_positional_fit_payload() -> dict | None:
             if p.get("qualified") and not p.get("c_out_of_scope")
             and p.get("current_pos") and p.get("gain_runs_per_650") is not None]
     rows.sort(key=lambda r: -(r.get("gain") or 0))
+
+    # ---- which runs/650 column the PAGE prints (owner decision 2026-08-04) ----
+    # DISPLAY ONLY. The model is untouched. `ladder.values` carries the model's
+    # own identification, an EXPOSURE-weighted sum-to-zero that
+    # positional_fit._recentre imposes exactly; every downstream consumer
+    # (prospect_def_value.py, the per-player gains in `rows` above) keeps using
+    # it and it is still forwarded here. But a reader adds the nine printed
+    # rungs, gets -3.96, and reads that as a broken table, because the identity
+    # people check by hand is the folklore one: the EIGHT FIELDING positions sum
+    # to zero. The artifact already publishes exactly that column,
+    # `identification.values_fielder_centred`, and it differs from `values` by a
+    # single constant (the fielder mean), so every difference between two
+    # positions - which is the entire content of a positional adjustment - is
+    # bit-for-bit identical. So the page prints the fielder-centred column, with
+    # DH shown against that same zero line.
+    # Absent on artifacts generated before 2026-07-31, in which case this falls
+    # back to `values` and the renderer says so instead of claiming a convention
+    # the numbers do not have.
+    _ident = ladder.get("identification") or {}
+    _vals_fc = _ident.get("values_fielder_centred") or None
     return {
         "generated_at": src.get("generated_at"),
         "model": src.get("model"),
@@ -4511,7 +4428,12 @@ def build_positional_fit_payload() -> dict | None:
         "ladder": {
             "units": ladder.get("units"),
             "method": ladder.get("method"),
+            # The model's own column (exposure-weighted zero). Kept because the
+            # CIs, the folklore diffs and every consumer are on this basis.
             "values": ladder.get("values"),
+            # The column the table PRINTS. See the block above _ident.
+            "valuesDisplay": _vals_fc or ladder.get("values"),
+            "valuesDisplayBasis": "fielder_centred" if _vals_fc else "exposure_weighted",
             "ci95": ladder.get("ci95"),
             "folklore": ladder.get("folklore_ladder"),
             "r2": ladder.get("r2"),

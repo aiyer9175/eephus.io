@@ -123,3 +123,89 @@ def test_pal_renders_the_sum_explanation_when_present():
     # Must degrade: the deployed artifact predates the block.
     assert "L.identification || null" in js, (
         "the explanation must render only when the artifact carries the block")
+
+
+# --------------------------------------------------------------------------- #
+# THE DISPLAY LAYER (owner decision 2026-08-04).
+#
+# Everything above pins the MODEL, and none of it moves: the exposure-weighted
+# sum is still the imposed identification, the two equal-weight sums are still
+# non-zero and still published. What changed is which column the /pal/ table
+# PRINTS. The owner kept reading -3.96 off the page and reading it as a broken
+# table, because the identity a reader checks by hand is the folklore one: the
+# EIGHT FIELDING rungs sum to zero. The artifact already published exactly that
+# column (`identification.values_fielder_centred`), so the page now prints it,
+# with DH shown against the same line. The two columns differ by one constant
+# (the fielder mean, 1.22 runs here), so every gap between two positions is
+# identical and nothing downstream changes basis.
+# --------------------------------------------------------------------------- #
+def test_displayed_fielder_column_sums_to_zero():
+    """The whole point of the display change. Tolerance is rounding, not slack:
+    each rung is published to 2 dp, so eight of them can drift at most
+    8 x 0.005 = 0.04 from the exact zero the centring imposes."""
+    L = _ladder("positional_fit.json", ("fit", "ladder"))
+    ident = L.get("identification")
+    if not ident:
+        pytest.skip("artifact predates the identification block (regen owed)")
+    fc = ident.get("values_fielder_centred")
+    assert fc, "the artifact must publish the fielder-centred column the page prints"
+    s8 = sum(float(fc[p]) for p in FIELDERS if p in fc)
+    assert abs(s8) < 0.05, (
+        f"the displayed runs/650 column must sum to 0.000 over the eight "
+        f"fielding positions, got {s8:.3f}")
+    # DH is NOT in that sum, and it is shown against the same line, so it must
+    # have absorbed the whole shift: fielder-centred DH sits below model DH.
+    assert float(fc["DH"]) < float(L["values"]["DH"])
+
+
+def test_display_change_is_a_level_shift_only():
+    """The guarantee that makes the display change safe: one constant separates
+    the two columns, so every DIFFERENCE between positions - which is the entire
+    content of a positional adjustment - is untouched."""
+    L = _ladder("positional_fit.json", ("fit", "ladder"))
+    ident = L.get("identification")
+    if not ident or not ident.get("values_fielder_centred"):
+        pytest.skip("artifact predates the fielder-centred column (regen owed)")
+    fc, vals = ident["values_fielder_centred"], L["values"]
+    deltas = [float(fc[p]) - float(vals[p]) for p in vals if p in fc]
+    assert max(deltas) - min(deltas) < 0.02, (
+        "fielder-centring must be a pure level shift, not a rescale")
+
+
+def test_ui_payload_selects_the_fielder_centred_column_for_display():
+    """Guards the selection itself. `values` must STILL be forwarded: the CIs,
+    the folklore diffs and every downstream valuation are on that basis."""
+    import inspect
+
+    import build_site
+    src = inspect.getsource(build_site.build_positional_fit_payload)
+    assert "values_fielder_centred" in src, (
+        "build_positional_fit_payload no longer selects the fielder-centred "
+        "column, so /pal/ prints a runs/650 table that does not add to zero")
+    assert '"valuesDisplay"' in src
+    assert '"values": ladder.get("values")' in src, (
+        "the exposure-centred column must still be forwarded for the CIs and "
+        "for downstream consumers")
+
+    js = (ROOT / "assets" / "pal.js").read_text(encoding="utf-8")
+    assert "L.valuesDisplay" in js, "the pal.js ladder does not read the display column"
+    assert "valuesDisplayBasis" in js, (
+        "pal.js must know which basis it is printing so the explainer text "
+        "matches the numbers on older artifacts")
+
+
+def test_served_payload_prints_a_zero_summing_fielder_column():
+    """The end of the chain: the file the browser actually fetches. Skips until
+    the next site build regenerates it, rather than failing on a payload that
+    predates the decision."""
+    p = ROOT / "data" / "positional_fit_ui.json"
+    if not p.exists():
+        pytest.skip("data/positional_fit_ui.json not built")
+    lad = (json.loads(p.read_text(encoding="utf-8")).get("ladder") or {})
+    if lad.get("valuesDisplayBasis") != "fielder_centred":
+        pytest.skip("served payload predates the display decision (rebuild owed)")
+    disp = lad.get("valuesDisplay") or {}
+    s8 = sum(float(disp[p_]) for p_ in FIELDERS if p_ in disp)
+    assert abs(s8) < 0.05, (
+        f"the served runs/650 column must sum to 0.000 over the eight fielding "
+        f"positions, got {s8:.3f}")
