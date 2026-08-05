@@ -35,7 +35,7 @@ happen inside the called module, so this file alone cannot split them).
 | d10b. FA re-export off fresh projections | - |
 | d10c. TJStats Live second capture | - |
 | d10d. ESPN new-article probe | timeseries.json |
-| d11. Rebuild site (build_site) | - |
+| d11. Rebuild site (build_site) | pipeline_steps_daily.json |
 
 ## Monthly pipeline (`run_monthly.main`)
 
@@ -96,7 +96,7 @@ happen inside the called module, so this file alone cannot split them).
 | 6b6. Fantasy Tools (fantasy.json) | fantasy.json |
 | 6c. Organization Tendencies (farm-detail Tendencies tab) (no _step wrapper) | - |
 | 6c / 6d: exported by the chained daily tail instead (no _step wrapper) | org_tendencies.json, trade_values.json |
-| post-export passes (best-effort: board/farm snapshots, source_backtest, consensus + draft weight A/B, eta_backtest, editorial_eval, model-registry freshness,... | debuts.json, draft_source_weights.json, draft_timeseries.json, editorial_eval.json, model_registry.json, photo_ctx.json, source_backtest.json, star_label_view.json, star_odds_eval.json, trade_values.json |
+| post-export passes (best-effort: board/farm snapshots, source_backtest, consensus + draft weight A/B, eta_backtest, editorial_eval, model-registry freshness,... | debuts.json, draft_source_weights.json, draft_timeseries.json, editorial_eval.json, model_registry.json, photo_ctx.json, pipeline_steps_latest.json, source_backtest.json, star_label_view.json, star_odds_eval.json, trade_values.json |
 
 ## Rebuild-only hook (`run_monthly.rebuild_only`)
 
