@@ -50,7 +50,7 @@
     const p = new URLSearchParams(location.hash.slice(1));
     if (p.has("view")) {
       const v = p.get("view");
-      if (["terms", "guide", "methodology", "source-comparison", "models"].includes(v)) _S.view = v;
+      if (["terms", "guide", "methodology", "source-comparison", "models", "library"].includes(v)) _S.view = v;
     }
     if (p.has("cat")) _S.cat = p.get("cat");
     if (p.has("q")) _S.q = p.get("q");
@@ -205,7 +205,7 @@
   function render() {
     const ids = { terms: "glossary-rows", guide: "guide-body",
                   methodology: "methodology-body", "source-comparison": "source-comparison-body",
-                  models: "models-body" };
+                  models: "models-body", library: "library-body" };
     document.querySelectorAll("[data-glossary-view]").forEach(b => {
       b.classList.toggle("active", b.dataset.glossaryView === _S.view);
     });
@@ -219,6 +219,7 @@
     else if (_S.view === "methodology") renderMethodology();
     else if (_S.view === "source-comparison") renderSourceComparison();
     else if (_S.view === "models") renderModels();
+    else if (_S.view === "library") renderLibrary();
     else renderTerms();
   }
 
@@ -322,6 +323,15 @@ function _methCaptureCurve(bt) {
   </div>`;
 }
 function _methProseHTML() {
+  // Tiered $/WAR for the worked example, read from the live framework snapshot
+  // (data/value_framework.js -> window.VALUE_FRAMEWORK) instead of re-hardcoded
+  // prose: the $7.7M/$9.7M/$15.1M this sentence used to carry had rotted a full
+  // config generation behind the served table (the _methAccuracyChart pattern).
+  const _dpwT = ((window.VALUE_FRAMEWORK || {}).dollars_per_war || {}).tiered_mm || {};
+  const _dpwF = v => (v == null || isNaN(Number(v)) ? null : "$" + Number(v).toFixed(2) + "M");
+  const _dpwTxt = (_dpwF(_dpwT.lt_1) && _dpwF(_dpwT["1_to_2"]) && _dpwF(_dpwT["2plus"]))
+    ? ` (about ${_dpwF(_dpwT.lt_1)} / ${_dpwF(_dpwT["1_to_2"])} / ${_dpwF(_dpwT["2plus"])} by WAR level)`
+    : "";
   return `
   <div class="meth-prose">
     <h2 class="meth-h">How eFV is built <span class="meth-sub">the site's primary grade</span></h2>
@@ -336,9 +346,10 @@ function _methProseHTML() {
     hit and speed tools. Pitchers: a multi-season peak K-rate, final-season K-rate, walk rate (the
     K-BB% completion), age-for-level, fastball. Game power is <em>omitted</em> for hitters on
     purpose: the data shows scouts over-price it and it predicts ISO, not incremental WAR, so
-    leaving it out is eFV's power-overpricing correction. It is a regularized ridge on ~3,800
-    labeled prospects (2011-2023), rate features sample-shrunk so a cup of coffee does not read as
-    a track record.</p>
+    leaving it out is eFV's power-overpricing correction. It is a regularized ridge on 3,961
+    labeled prospects (debut classes 2011-2024 plus the never-debuted bust pool; 1,917 hitter and
+    2,044 pitcher frames per the committed dataset reports), rate features sample-shrunk so a cup
+    of coffee does not read as a track record.</p>
     <p><strong>The guarded blend.</strong> The headline ranking is a guarded blend,
     rank = (1-λ)·(consensus→WAR) + λ·(model→WAR). λ is <em>pinned</em>, hitters 0.70 and pitchers
     0.57, and the pins are stability decisions rather than accuracy claims: across the whole
@@ -367,11 +378,13 @@ function _methProseHTML() {
 
     <h2 class="meth-h">How the consensus FV (eFV's prior) is built</h2>
     <p>The consensus FV is the scout-grade aggregate eFV anchors on, and the reference shown
-    alongside eFV everywhere. Every source that publishes an explicit 20-80 Future Value grade feeds an
-    <strong>accuracy-weighted</strong> consensus. Each source's vote weight comes from its
-    measured track record on resolved cohorts, shrunk hard toward equal and clamped, so the
-    weights barely move off one vote - today only MLB Pipeline (1.06) and FanGraphs (0.94)
-    differ; every other source votes at 1.0. The consensus FV is that weighted mean of the
+    alongside eFV everywhere. Every source that publishes an explicit 20-80 Future Value grade
+    feeds an <strong>equal-weight</strong> consensus: every source votes at exactly 1.0. An
+    accuracy-weighted scheme (Pipeline 1.06 / FanGraphs 0.94) shipped in June 2026 and was
+    <strong>reverted to equal weights on 2026-07-25</strong> after a hardened re-measurement
+    showed the weights were unearned: the weighted blend's edge measured d&rho; -0.0012 against
+    a minimum detectable effect of 0.0068, inside the noise floor, and only two of eight outlets
+    even have resolvable outcome history. The consensus FV is the equal-weight mean of the
     published grades (FanGraphs, ESPN, Just Baseball, TJStats, MLB Pipeline,
     and MLB Pipeline International). Two rank-only sources (Baseball America, The Athletic)
     contribute a rank→implied-FV <em>only</em> when no source has graded a player yet; once
@@ -425,7 +438,7 @@ function _methProseHTML() {
 
     <div class="meth-eg-card">
       <div class="meth-eg-title">Worked example · how a grade becomes a dollar figure</div>
-      <div class="meth-eg-row">An <b>${gTermLink("fv", "FV")} 60</b> shortstop: the FV→WAR anchor maps the grade to a per-year WAR expectation, the position multiplier nudges it for the up-the-middle profile, and the six cost-controlled years are priced at the tiered ${gTermLink("dpw_tier", "$/WAR")} (about $7.7M / $9.7M / $15.1M by WAR level) minus the league-min-plus-arb cost basis, then probability-weighted across debut and bust outcomes and discounted to present value.</div>
+      <div class="meth-eg-row">An <b>${gTermLink("fv", "FV")} 60</b> shortstop: the FV→WAR anchor maps the grade to a per-year WAR expectation, the position multiplier nudges it for the up-the-middle profile, and the six cost-controlled years are priced at the tiered ${gTermLink("dpw_tier", "$/WAR")}${_dpwTxt} minus the league-min-plus-arb cost basis, then probability-weighted across debut and bust outcomes and discounted to present value.</div>
       <div class="meth-eg-row">The result is the published ${gTermLink("surplus_value", "surplus value")} on that player's card. A higher ${gTermLink("dvm_plus", "$DvM+")} (faster-than-mean development) and stronger underlying rates (${gTermLink("k_pct", "K%")} / ${gTermLink("bb_pct", "BB%")}, ${gTermLink("ops_plus", "OPS+ vs lvl")}) lift the expectation within the FV band.</div>
       <div class="meth-eg-note">Illustrative - each player's card carries their own current figure, which moves with the FV→WAR table and the $/WAR market.</div>
     </div>
@@ -443,9 +456,16 @@ function _methProseHTML() {
     than a win on a replacement-level filler). (3) The <strong>cost basis</strong> is the three pre-arbitration
     years at the league minimum plus three arbitration years at an escalating fraction of free-agent
     value (${gTermLink("service_time", "service-time")} schedule). (4) Because a prospect is a <em>distribution</em>
-    of outcomes, not a point, the engine probability-weights a bucketed outcome set (bust → role player
-    → regular → star) rather than trusting the FV midpoint, then discounts future years to present value
-    at 9%/yr. The published per-prospect figure is ${gTermLink("surplus_value", "Surplus value")}; the per-FV-point
+    of outcomes, not a point, the engine probability-weights the five-bucket outcome set (bust → bench
+    → regular → good → star) rather than trusting the FV midpoint, then discounts future years to present value
+    at 9%/yr. The published number is an <strong>expected value</strong>, not a median: since the EV
+    reframe (calibration version isotonic-real-v6-evframe, 2026-07-31) the raw expectation is corrected
+    by a count-weighted isotonic (PAVA) map fit on resolved-cohort bin means, and the old $0 floor on
+    low-tier prospects is gone - a bottom-tier player's price is his small positive expectation, because
+    the trade engine consumes surplus as a price and a price is an expectation. Dollars are priced
+    through the production valuation set <code>clemens_2026</code> (Ben Clemens' published 2026
+    FanGraphs framework, checksummed anchors) with the FA signings-implied $/WAR re-anchor
+    <em>disabled</em> under that set. The published per-prospect figure is ${gTermLink("surplus_value", "Surplus value")}; the per-FV-point
     and per-dollar efficiency cuts are ${gTermLink("surplus_per_fv_pt", "Surplus / FV-pt")} and ${gTermLink("dollars_per_fv", "$/FV-pt")}.
     The <em>Interactive</em> tab below walks an FV through every step.</p>
 
@@ -492,6 +512,7 @@ function _methProseHTML() {
       <li><strong>Performance &amp; tracked data:</strong> MLB Stats API (MLB + MiLB statlines), Baseball Savant (Statcast) where available for upper-level / debuted players, pulled via pybaseball.</li>
       <li><strong>Contracts &amp; bonuses:</strong> published MLB draft-pool and international bonus-pool figures; Spotrac for graduate contract/AAV data.</li>
       <li><strong>Framework anchors:</strong> the FanGraphs scouting primer (FV→WAR ranges) and public $/WAR estimates (tiered, rolling multi-year average). The surplus engine's outcome buckets and discount rate are documented in <code>value_framework.py</code>.</li>
+      <li><strong>Valuation set:</strong> production prices through <code>clemens_2026</code>, the FanGraphs / Ben Clemens 2026 published prospect-valuation framework, its tier values fetched from the source posts and checksum-validated at load. Under this set the FA signings-implied $/WAR re-anchor (<code>fa_implied</code>) is disabled; served dollars sit on the published FanGraphs rate basis.</li>
     </ul>
 
     <h2 class="meth-h">Data sources &amp; attribution</h2>
@@ -515,12 +536,17 @@ function _methProseHTML() {
 
     <h2 class="meth-h">Methodology changelog</h2>
     <ul class="meth-changelog">
+      <li><span class="mc-date">2026-07-31</span> Surplus moved to an EXPECTED-VALUE objective (calibration isotonic-real-v6-evframe): the correction map is now a count-weighted isotonic (PAVA) fit on resolved-cohort bin means, targeting the conditional mean instead of the median. The $0 floor on bottom-tier prospects is gone; the board total moved up while the ordering did not. The map deliberately loses the old median-objective MAE gate and that loss is committed, not hidden.</li>
+      <li><span class="mc-date">2026-07-30</span> The eFV headline grade's outcome-implied FV mapping re-keyed to the recalibrated empirical FV→WAR anchors, so the grade and the dollars read off the same curve.</li>
+      <li><span class="mc-date">2026-07-29/30</span> Valuation recalibration: sub-45 anchors repaired, the board-scale re-expression turned off, and <code>clemens_2026</code> (the published FanGraphs / Ben Clemens 2026 framework, checksummed anchors, <code>fa_implied</code> disabled) made the default production valuation set.</li>
+      <li><span class="mc-date">2026-07-25</span> Consensus source weighting REVERTED to equal. The June accuracy weights (Pipeline 1.06 / FanGraphs 0.94) failed a hardened forward-chained re-measurement: d&rho; -0.0012 against a minimum detectable effect of 0.0068, so the weighted blend's win was inside the noise floor and unearned. Every source votes 1.0 again; the revert is committed in data/source_weights.json.</li>
+      <li><span class="mc-date">2026-07</span> Cross-source scale normalization: each source's grades are quantile-mapped onto the FanGraphs scale over the players both grade before blending, so a hot or cold outlet is de-biased by the shape of its whole distribution. Per-source grades on the card are unchanged; only the consensus scale is.</li>
       <li><span class="mc-date">2026-06</span> Historical backfill: ingested FanGraphs 2017-2020 boards (new-format CSVs) + MLB Pipeline 2017-2020 Top 100, each grade date-stamped to its year. The backtest's resolved-cohort window grew from 2021-2023 (3 base years) to 2017-2023 (7), and the common scored set grew with it. On the larger, further-resolved sample the consensus still outranks its best individual source (current common-set size and margins are in Source Comparison below).</li>
       <li><span class="mc-date">2026-06</span> Surplus engine v38: FV→WAR anchor moved from a single peak-year projection to a flat 6-year-average table; side difference carried by the position multiplier. Farm list/detail surplus consolidated on the engine aggregate.</li>
       <li><span class="mc-date">2026-06</span> Glossary reorganized into Glossary / Methodology / Source Comparison; taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.</li>
       <li><span class="mc-date">2026-06</span> Farm grade tree v40: value-tracking reweight. The org letter is now primarily driven by aggregate risk-adjusted controlled surplus (the Value branch, 65%); Development drops from the top weight to a secondary controllable-skill signal (9%), MLB Production 18%, Acquisition Strategy 8%. This stops the grade from reading as a per-prospect tool-development index decoupled from aggregate farm value.</li>
       <li><span class="mc-date">2026-05</span> Farm grade tree v7: MLB Production added a Bust-Rate (negative) leaf and a Conviction star-presence cap; Development promoted to the 40% top weight.</li>
-      <li><span class="mc-date">2026-06</span> Consensus FV moved to ACCURACY-WEIGHTED source blending after a vintage-disciplined A/B beat equal-weight on both Spearman and AUC (weights shrunk toward equal, clamped, frozen per vintage; sources without resolved history stay at 1.0). The model accountability registry below records the eval.</li>
+      <li><span class="mc-date">2026-06</span> Consensus FV moved to ACCURACY-WEIGHTED source blending after a vintage-disciplined A/B beat equal-weight on both Spearman and AUC (weights shrunk toward equal, clamped, frozen per vintage; sources without resolved history stay at 1.0). Reverted 2026-07-25, above: the hardened re-measurement could not resolve the win.</li>
       <li><span class="mc-date">2026-05</span> Source-vs-source backtest published (resolved cohorts only) as the Source Comparison area.</li>
       <li><span class="mc-date">2026-04</span> Consensus FV: equal-weight mean confirmed over weighted schemes at that window; Bayesian shrinkage + forward-fill formalized.</li>
     </ul>
@@ -529,9 +555,9 @@ function _methProseHTML() {
     <h2 class="meth-h">FAQ</h2>
     <dl class="meth-dl">
       <dt>Why a consensus instead of one source?</dt>
-      <dd>Averaging cancels idiosyncratic source error: the pooled consensus modestly but consistently beats its best individual input on resolved cohorts (see Source Comparison). Per-source edges exist but are small and unstable year to year, which is why the weighting stays shrunk toward equal rather than chasing them.</dd>
+      <dd>Averaging cancels idiosyncratic source error: the pooled consensus modestly but consistently beats its best individual input on resolved cohorts (see Source Comparison). Per-source edges exist but are small and unstable year to year, which is why the blend stays at equal weights rather than chasing them.</dd>
       <dt>How are sources weighted?</dt>
-      <dd>Accuracy-weighted, as of June 2026: per-source weights come from measured track records on resolved cohorts, shrunk heavily toward equal (so a thin history can't dominate), clamped, and frozen per vintage so grades don't jitter month to month. The weighted blend shipped only after beating equal-weight in a no-lookahead A/B on both rank correlation and AUC; sources without enough resolved history stay at exactly 1.0. The interactive below lets you test any weighting yourself.</dd>
+      <dd>Equally: every source votes at exactly 1.0. An accuracy-weighted blend (per-source weights from measured track records, shrunk toward equal and clamped) shipped in June 2026 and was reverted on 2026-07-25, when a hardened forward-chained re-measurement showed its edge was smaller than the test could resolve (d&rho; -0.0012 vs a minimum detectable effect of 0.0068) - the weights were unearned, so they came off. Only two of eight outlets even have resolvable outcome history. The interactive below lets you test any weighting yourself.</dd>
       <dt>How often does it update?</dt>
       <dd>Grades, Arkmetrics, farm grades, and the backtest refresh monthly; transactions, IL, roster status, debuts, and trades refresh daily. Each board stamps its own cadence.</dd>
       <dt>What's the track record - and its limits?</dt>
@@ -1256,7 +1282,7 @@ function _methInteractivesHTML() {
         <button class="chip" type="button" onclick="_gxConsensusReset()">Reset to equal weights</button>
         <div id="gx-consensus-out" class="gx-out gx-out-inline"></div>
       </div>
-      <p class="meth-note" style="margin-top:8px;">The live board uses ACCURACY-WEIGHTED sources (since June 2026): measured track-record weights, shrunk toward equal and frozen per vintage, shipped after beating equal-weight in a vintage-disciplined A/B. This widget starts from equal weights so you can feel how any weighting moves a consensus.</p>
+      <p class="meth-note" style="margin-top:8px;">The live board uses EQUAL WEIGHTS (the accuracy-weighted scheme shipped in June 2026 was reverted on 2026-07-25 after a hardened re-measurement showed its edge was inside the noise floor). This widget starts from equal weights - the served configuration - so you can feel how any weighting would move a consensus.</p>
     </div>
   </div>
 
@@ -1297,6 +1323,80 @@ function _loadReliability() {
     .catch(() => { _S.reliability = { __error: true }; rerender(); });
 }
 
+// Sources & Methodology ad-card GFX (owner ask 2026-08-04): one shareable card
+// that says what eFV is, shows the honest headline results, and carries the
+// no-ship discipline line. Every number is read AT CLICK TIME from the loaded
+// artifacts (xfv_scoreboard_eval.json head_to_head + disagreement receipts;
+// model_registry.json for the ledger tile), never hardcoded, so the card can
+// never carry a number the page does not. Claims match the corrected prose:
+// equal-weight consensus, EV surplus, and NO per-side margin is stated as a
+// win (the hitter rank margin sits under its own MDE floor; only the common-
+// set head-to-head and the receipts, which resolve, are shown). Returns null
+// while the scoreboard artifact has not loaded - the click is then a no-op.
+function _methAdGfxSpec() {
+  const sb = _S.scoreEval;
+  if (!sb || sb.__error || !sb.head_to_head || !sb.head_to_head.vs) return null;
+  const vs = sb.head_to_head.vs;
+  const cons = vs.prospx_consensus, fg = vs.fangraphs, mlb = vs.mlb_pipeline;
+  const spEfv = cons && cons.spearman ? cons.spearman.efv : null;
+  if (spEfv == null) return null;
+  const f3 = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(3));
+  const srcRows = key => [["prospx_consensus", cons], ["mlb_pipeline", mlb], ["fangraphs", fg]]
+    .filter(pr => pr[1] && pr[1][key] && pr[1][key].consensus != null)
+    .map(pr => ({ label: pr[1].label || _raterMeta(pr[0]).label,
+                  v: pr[1][key].consensus, isEfv: false, c: _raterMeta(pr[0]).color }));
+  const spRows = [{ label: "eFV", v: spEfv, isEfv: true }].concat(srcRows("spearman"))
+    .sort((a, b) => b.v - a.v);
+  if (spRows.length < 2) return null;
+  const aucEfv = cons && cons.auc_contributor ? cons.auc_contributor.efv : null;
+  const auRows = aucEfv == null ? []
+    : [{ label: "eFV", v: aucEfv, isEfv: true }].concat(srcRows("auc_contributor"))
+        .sort((a, b) => b.v - a.v);
+
+  const bestPub = spRows.filter(r => !r.isEfv)[0];
+  const tiles = [{
+    stat: f3(spEfv),
+    label: "eFV ordering skill (Spearman, grade vs realized WAR)",
+    sub: bestPub ? "best public source " + f3(bestPub.v) + " (" + bestPub.label + ")" : "common resolved set",
+  }];
+  const rec = sb.disagreement_receipts;
+  if (rec && rec.efv_right_share != null && rec.n_disagreements != null) tiles.push({
+    stat: Math.round(rec.efv_right_share * 100) + "%",
+    label: "closer on the biggest disagreements",
+    sub: rec.n_disagreements + " resolved eFV vs consensus splits",
+  });
+  const reg = _S.registry;
+  if (reg && !reg.__error && Array.isArray(reg.models) && reg.models.length) {
+    const counts = {};
+    reg.models.forEach(m => { counts[m.verdict] = (counts[m.verdict] || 0) + 1; });
+    tiles.push({
+      stat: String(reg.models.length),
+      label: "models on the public accountability ledger",
+      sub: (counts.validated || 0) + " validated · misses stay committed",
+    });
+  }
+
+  const panels = [{ title: "Ordering skill · Spearman, common resolved set", lo: 0, hi: 0.4, rows: spRows }];
+  if (auRows.length >= 2) panels.push({ title: "Discrimination · contributor AUC", lo: 0.5, hi: 0.85, rows: auRows });
+
+  const nH2h = cons && cons.spearman ? cons.spearman.n : null;
+  return {
+    kind: "sourcecomp",
+    module: "Sources & Methodology",
+    accentToken: "--accent-lilac",
+    format: "twitter",
+    title: "eFV: the prospect grade trained on outcomes",
+    subtitle: "Equal-weight scout consensus as the prior + outcome-validated signals, "
+      + "summarized back onto the 20-80 scale"
+      + (nH2h ? " · scored on " + Number(nH2h).toLocaleString() + " common resolved players" : ""),
+    url: "eephus.io",
+    filenameBase: "eephus-efv-methodology",
+    caption: "Forward-chained, out of sample, leakage-free · every change ships through a pre-registered gate and failed gates are committed as no-ships",
+    comp: { tiles: tiles, panels: panels,
+      note: "eFV enters every cell with its forward-chained out-of-sample grade, never an in-sample fit. Surplus dollars are calibrated expected values. Higher is better · ★ = best in metric." },
+  };
+}
+
 function renderMethodology() {
   const el = document.getElementById("methodology-body");
   if (!el) return;
@@ -1326,11 +1426,22 @@ function renderMethodology() {
       .catch(() => { _S.valcurve = { __error: true };
         if (_S.view === "methodology") renderMethodology(); });
   }
+  // Scoreboard artifact: feeds the ad-card GFX spec (numbers at click time).
+  _loadScoreboard();
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const printHead = `<div id="methodology-print-head">eephus.io - Methodology · eephus.io/glossary · ${escapeHtml(today)}</div>`;
-  const toolbar = `<div class="meth-toolbar"><button class="meth-export-btn" type="button" onclick="_printMethodology()" title="Print or save the methodology as a PDF">⎙ Export methodology (PDF)</button></div>`;
+  const gfxChip = (window.EEPHUS_GFX && window.EEPHUS_GFX.chipHTML)
+    ? window.EEPHUS_GFX.chipHTML("gl-meth-gfx", "Generate GFX") : "";
+  const toolbar = `<div class="meth-toolbar"><button class="meth-export-btn" type="button" onclick="_printMethodology()" title="Print or save the methodology as a PDF">⎙ Export methodology (PDF)</button>${gfxChip}</div>`;
   el.innerHTML = printHead + toolbar + _methProseHTML() + _methRegistryHTML() + _methReliabilityHTML() + _methValuationCurveHTML() + _methInteractivesHTML();
   if (window.EEPHUS_GL) window.EEPHUS_GL.wire(el);
+  // Ad-card GFX: spec built at click time from the loaded artifacts; a click
+  // before the scoreboard resolves (or with the engine absent) is a clean no-op.
+  const gfxBtn = document.getElementById("gl-meth-gfx");
+  if (gfxBtn) gfxBtn.onclick = () => {
+    const spec = _methAdGfxSpec();
+    if (spec && window.EEPHUS_GFX) window.EEPHUS_GFX.open(spec);
+  };
   // Populate the interactives' initial state.
   _gx2080(); _gxConsensus(); _gxSurplus();
 }
@@ -1665,12 +1776,16 @@ function _methModelUpgrades() {
 function _loadScoreboard() {
   if (!_S.scoreEval && !_S.scoreEvalLoading) {
     _S.scoreEvalLoading = true;
+    // Both consumers re-render on arrival: Source Comparison (the scoreboard
+    // panel) and Methodology (the ad-card GFX spec reads head_to_head).
+    const rerender = () => {
+      if (_S.view === "source-comparison") renderSourceComparison();
+      else if (_S.view === "methodology") renderMethodology();
+    };
     fetch("/data/xfv_scoreboard_eval.json", { cache: "no-cache" })
       .then(r => (r.ok ? r.json() : null))
-      .then(j => { _S.scoreEval = j || { __error: true };
-        if (_S.view === "source-comparison") renderSourceComparison(); })
-      .catch(() => { _S.scoreEval = { __error: true };
-        if (_S.view === "source-comparison") renderSourceComparison(); });
+      .then(j => { _S.scoreEval = j || { __error: true }; rerender(); })
+      .catch(() => { _S.scoreEval = { __error: true }; rerender(); });
   }
 }
 
@@ -2116,6 +2231,87 @@ function renderModels() {
   el.querySelectorAll("[data-gl-mfilter]").forEach(b => b.onclick = () => {
     _MODELS_FILTER = b.dataset.glMfilter; renderModels();
   });
+}
+
+// ---- Library view ----------------------------------------------------------
+// The public standalone-page index (owner ask 2026-08-04): every full page,
+// in-module artifact page, and player-page surface, each with a one-line
+// purpose. HAND-MAINTAINED here, matching the ported-prose convention -
+// every route below is cross-checked against SITE_MAP.md and the module's
+// own hash router before it is listed. PUBLIC ONLY: the dark previews
+// (#tape=1, #cards=1) and the plain module leaderboards are deliberately
+// not listed. A hoisted function (not a const) on purpose: boot() can run
+// during IIFE evaluation, and a const this far down would sit in the
+// temporal dead zone at that moment (the _RATER_META lesson, 2026-06-10).
+function _libraryGroups() {
+  return [
+  { title: "Full pages",
+    sub: "standalone destinations with their own route",
+    rows: [
+      ["/parks/", "MiLB Park Factors", "run environments for every affiliated park; the Methodology tab (/parks/#method) documents the estimator"],
+      ["/sources/", "Data Sources & Attribution", "every upstream the platform reads, what it is used for, and the editorial stance"],
+      ["/history/", "Today in Prospect History", "debut anniversaries, prospect trades, signings, and IL moves that landed on today's calendar date"],
+      ["/news/", "Prospect News", "the full de-noised event wire: debuts, trades, promotions, IL, grade changes, FA signings"],
+      ["/articles/", "Articles", "long-form editorial pieces, newest first"],
+      ["/team/", "Developers", "who builds and runs the site"],
+    ] },
+  { title: "In-module artifact pages",
+    sub: "deep-linkable views inside the module apps",
+    rows: [
+      ["/fa/#view=dpw", "FA · $/WAR by winter", "the full signings-implied price-of-a-win series and how it is estimated"],
+      ["/fa/#view=tracker", "FA · Signing Tracker", "actual vs predicted contract for every signing, in real time"],
+      ["/fa/#view=fits", "FA · Team Fits", "which clubs fit which free agents, component by component"],
+      ["/fa/#view=archive", "FA · Archive", "past winters with realized WAR and realized surplus per signing"],
+      ["/fa/#view=model", "FA · Model Accountability", "the FA market model held to its own record"],
+      ["/projections/#view=teams", "Projections · Team Outlook", "club-level projected standings built from the player projections"],
+      ["/projections/#view=accountability", "Projections · Accountability", "the projection engine scored against what actually happened"],
+      ["/prospx/#tab=timemachine", "PROSPX · Time Machine", "the board as it stood at any past snapshot, or a diff of two dates"],
+      ["/prospx/#tab=charts", "PROSPX · Scatterplots", "build-your-own X/Y charts across every prospect group"],
+      ["/prospx/#tab=draft", "PROSPX · MLB Draft/HS", "draft boards, slots, bonuses, and High School Details"],
+      ["/prospx/#tab=draft&dview=war-room", "PROSPX · Draft War Room", "pick-by-pick draft planning on the live board"],
+      ["/prospx/#tab=farm", "PROSPX · Farm Systems", "org rankings and detail pages; each org page carries a Tendencies tab (development habits by org)"],
+      ["/pal/#posfit=ladder", "Alchemy Lab · Positional Ladder", "the fielder-centred positional-fit ladder"],
+      ["/pal/#rp2sp", "Alchemy Lab · RP to SP", "relievers with starter traits, ranked by conversion fit"],
+      ["/pal/#sp2rp", "Alchemy Lab · SP to RP", "starters whose stuff plays up in relief"],
+      ["/pal/#history", "Alchemy Lab · History", "past role conversions and how they went"],
+      ["/pal/#pitchadd", "Alchemy Lab · Pitch Add", "which pitch each arm should add next"],
+      ["/pal/#platoon", "Alchemy Lab · Platoon", "platoon-split profiles and pairings"],
+      ["/pal/#prospects", "Alchemy Lab · Prospect Watch", "the pipeline read through the lab's conversion lenses"],
+      ["/glossary/#view=models", "Glossary · Models & Proofs", "the accountability ledger: every predictive model with its verdict and eval artifact"],
+    ] },
+  { title: "Player pages",
+    sub: "per-player cards, addressable by URL",
+    rows: [
+      ["/prospx/#player=", "PROSPX prospect pages", "the full prospect card: grades, history, statlines, eFV explainers (append the player key)"],
+      ["/projections/#player=", "MLB player cards", "projection cards for every MLB player (append the player key)"],
+      ["/fa/#player=", "FA player cards", "contract projection and rational value for each free agent (append the player key)"],
+    ] },
+  ];
+}
+
+function renderLibrary() {
+  const el = document.getElementById("library-body");
+  if (!el) return;
+  const group = g => {
+    const rows = g.rows.map(([href, name, purpose]) => `<tr>
+      <td class="meth-td-tier"><a href="${escapeHtml(href)}">${escapeHtml(name)}</a></td>
+      <td><code>${escapeHtml(href)}</code></td>
+      <td>${escapeHtml(purpose)}</td>
+    </tr>`).join("");
+    return `<div class="meth-table-wrap">
+      <div class="meth-table-title">${escapeHtml(g.title)} <span class="meth-sub">${escapeHtml(g.sub)}</span></div>
+      <div class="table-scroll-x"><table class="meth-table">
+        <thead><tr><th>Page</th><th>Route</th><th>What it is</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>`;
+  };
+  el.innerHTML = `<div class="source-comp-wrap">
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Library · every standalone page on the site</div>
+    <h2 class="meth-h">The page index</h2>
+    <p class="meth-note">Everything on eephus.io that has its own address, in one place: the full pages, the deep-linkable artifact views inside each module, and the per-player cards. Every route here is public and stable.</p>
+    <div class="meth-tables">${_libraryGroups().map(group).join("")}</div>
+  </div>`;
 }
 
 })();

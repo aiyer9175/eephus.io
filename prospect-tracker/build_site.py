@@ -3666,6 +3666,7 @@ def build_glossary() -> str:
         '<button class="chip" data-glossary-view="methodology">Methodology</button>'
         '<button class="chip" data-glossary-view="models">Models &amp; Proofs</button>'
         '<button class="chip" data-glossary-view="source-comparison">Source Comparison</button>'
+        '<button class="chip" data-glossary-view="library">Library</button>'
         # Outbound link (not a view toggle) to the full attribution page, so the
         # Data Sources & Attribution page is reachable from this section, not just
         # the footer. The trailing arrow signals it navigates away.
@@ -3680,6 +3681,7 @@ def build_glossary() -> str:
         '<div id="methodology-body" style="display:none;"></div>'
         '<div id="models-body" style="display:none;"></div>'
         '<div id="source-comparison-body" style="display:none;"></div>'
+        '<div id="library-body" style="display:none;"></div>'
         '<div id="glossary-rows"></div>'
         '</div>'
         # Shared GFX engine (hub + gfx, the FA / news inject pattern): powers

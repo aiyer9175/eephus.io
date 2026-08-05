@@ -153,6 +153,48 @@ def test_all_four_views_render(server, browser):
     assert "Predicts" in models_html, "Models & Proofs cards missing the Predicts row"
 
 
+def test_library_view_renders(server, browser):
+    """The Library view (2026-08-04): #view=library renders the standalone-page
+    index with all three groups and the recon-verified routes. Registered in
+    all four places (build_site chip row, whitelist, view->body map, dispatch)
+    or it silently hangs - the 2026-06-10 Source Comparison lesson. Skips
+    cleanly while the built shell predates the library-body mount div (the
+    orchestrator rebuild republishes it)."""
+    page_errors: list[str] = []
+    page = _browser_page(browser, page_errors)
+    try:
+        page.goto(server + "glossary/index.html#view=library", wait_until="load",
+                  timeout=15_000)
+        has_shell = page.evaluate("!!document.getElementById('library-body')")
+        if not has_shell:
+            page.close()
+            pytest.skip("built glossary shell predates the Library mount div "
+                        "(build_site rebuild pending)")
+        page.wait_for_function(
+            "() => { const el = document.getElementById('library-body');"
+            " return !!el && el.innerHTML.indexOf('meth-table') !== -1; }",
+            timeout=10_000)
+        html = page.evaluate("document.getElementById('library-body').innerHTML")
+        visible = page.evaluate(
+            "document.getElementById('library-body').style.display !== 'none'")
+    finally:
+        if not page.is_closed():
+            page.close()
+
+    assert not page_errors, "JS errors on library view:\n  " + "\n  ".join(page_errors)
+    assert visible, "#view=library did not unhide the library body"
+    for group in ("Full pages", "In-module artifact pages", "Player pages"):
+        assert group in html, f"library view missing the {group!r} group"
+    # Spot-check recon-verified routes from every module family.
+    for route in ("/parks/", "/fa/#view=dpw", "/projections/#view=teams",
+                  "/prospx/#tab=timemachine", "/pal/#posfit=ladder",
+                  "/glossary/#view=models"):
+        assert route in html, f"library view missing route {route}"
+    # PUBLIC ONLY: the dark previews must never be listed.
+    assert "tape=1" not in html and "cards=1" not in html, \
+        "library view leaked a dark-preview route"
+
+
 def test_deep_link_expands_and_highlights_term(server, browser):
     page_errors: list[str] = []
     page = _browser_page(browser, page_errors)
