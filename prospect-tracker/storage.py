@@ -7759,6 +7759,32 @@ def authoritative_org_map(
     return out
 
 
+def authoritative_org_by_mlbam() -> dict[int, tuple[str, str]]:
+    """mlbam id -> (canonical_org, event_date), same source as
+    authoritative_org_map but keyed for the MLB leaderboards, which join on
+    mlbam rather than on our player_key slug."""
+    by_key = authoritative_org_map()
+    if not by_key:
+        return {}
+    out: dict[int, tuple[str, str]] = {}
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT mlbam_id, player_key FROM player_photos "
+                "WHERE mlbam_id IS NOT NULL AND player_key IS NOT NULL"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    for mlbam, key in rows:
+        rec = by_key.get(key)
+        if rec:
+            try:
+                out[int(mlbam)] = rec
+            except (TypeError, ValueError):
+                continue
+    return out
+
+
 def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           statlines: dict[str, dict] | None = None,
                           pitch_arsenals: dict[str, dict] | None = None,

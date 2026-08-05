@@ -95,6 +95,78 @@ def _get_json(path: str, params: dict) -> dict:
 
 _TMAP_CACHE = Path(__file__).parent / ".cache" / "team_abbrev_map.json"
 
+# ---------------------------------------------------------------------------
+# TEAM BASIS. Owner decision 2026-08-05, overriding my recommendation.
+#
+# StatsAPI season-stat rows carry the team the stats were EARNED with, so a
+# deadline acquisition keeps his old club on every board: Tarik Skubal was
+# traded to the Dodgers on 2026-08-02 and stayed in Detroit's rotation chart,
+# while Detroit simultaneously showed the arms it had acquired. 56 rows were in
+# that state (15 of 226 starters, 41 of 464 relievers).
+#
+# "current_roster" repoints `team` at the club MLB's transaction feed says
+# employs the player TODAY, for the charts AND the aggregates.
+#
+# THE DISSENT, ON THE RECORD (I recommended a dual field instead, and the owner
+# chose this): the aggregates are computed from these same rows, so a player
+# acquired in August now has his ENTIRE season credited to his new club and
+# subtracted from the club he actually pitched for. Rotation+/Bullpen+/Offense+
+# therefore change basis, and those three feed betting_model AND the nightly
+# leaderboard_vintages the 600-game validation clock is accruing - so vintages
+# captured before this change are not on the same basis as vintages after it.
+# Flip this constant back to "stats_earned" to revert in one line.
+TEAM_BASIS = "current_roster"        # "current_roster" | "stats_earned"
+
+
+def apply_current_team(rows: list[dict], *, label: str = "") -> int:
+    """Repoint each row's `team` at the club MLB's feed says employs the player.
+
+    Returns the number of rows moved. No-op under TEAM_BASIS="stats_earned".
+
+    Two things this is careful about:
+      - It compares CANONICALISED orgs on both sides. The leaderboards speak
+        StatsAPI ("TB", "AZ", "CWS", "SF", "WSH", "KC") and the transaction feed
+        speaks Baseball-Reference ("TBR", "ARI", "CHW", "SFG", "WSN", "KCR").
+        A naive comparison reports 51 starter "moves" of which 36 are the same
+        club spelled two ways.
+      - It emits the new code in the ARTIFACT'S OWN code set, learned from the
+        codes already present in these rows, because /mlbstats/ deliberately
+        carries StatsAPI codes and rewriting TB into TBR would break its joins.
+    """
+    if TEAM_BASIS != "current_roster" or not rows:
+        return 0
+    try:
+        from storage import authoritative_org_by_mlbam
+        from trades import canonical_org
+        auth = authoritative_org_by_mlbam()
+    except Exception as e:                       # never break a board over this
+        _log.warning("current-team remap unavailable (%s); serving stats-earned teams", e)
+        return 0
+    if not auth:
+        return 0
+    # canonical -> the spelling THIS artifact already uses
+    dialect: dict[str, str] = {}
+    for r in rows:
+        code = r.get("team")
+        if code:
+            dialect.setdefault(canonical_org(code) or code, code)
+    moved = 0
+    for r in rows:
+        rec = auth.get(r.get("mlbam"))
+        if not rec:
+            continue
+        want = canonical_org(rec[0])
+        have = canonical_org(r.get("team")) if r.get("team") else None
+        if not want or want == have:
+            continue
+        r["team"] = dialect.get(want, want)
+        r["team_basis"] = "current_roster"
+        moved += 1
+    if moved:
+        _log.info("current-team remap%s: %d row(s) moved to the club MLB's "
+                  "transaction feed reports", f" [{label}]" if label else "", moved)
+    return moved
+
 
 @functools.lru_cache(maxsize=1)
 def _team_abbrev_map() -> dict:
@@ -244,6 +316,7 @@ def load_season_pitching(season: int) -> list[dict]:
             "CG": st.get("completeGames"), "GO": st.get("groundOuts"),
             "AO": st.get("airOuts"), "Strk": st.get("strikes"),
         })
+    apply_current_team(out, label=f"pitching {season}")
     return out
 
 

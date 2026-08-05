@@ -134,6 +134,11 @@ def load_season_hitting(season: int) -> list[dict]:
             "SB": st.get("stolenBases"), "CS": st.get("caughtStealing"),
             "RBI": st.get("rbi"), "R": st.get("runs"),
         })
+    # Owner decision 2026-08-05: team charts follow the current roster, not the
+    # club the stats were earned with. See bullpen_export.TEAM_BASIS for the
+    # basis note and the one-line revert.
+    from bullpen_export import apply_current_team
+    apply_current_team(out, label=f"hitting {season}")
     return out
 
 
