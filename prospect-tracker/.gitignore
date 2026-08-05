@@ -134,6 +134,10 @@ Thumbs.db
 
 # --- Misc ---------------------------------------------------------------
 *.log
+# per-step timing artifacts written by run_monthly/_daily instrumentation
+logs/*.json
+# dead_code_scan.py default output (pass --out to a scratchpad instead)
+data/dead_tools.json
 
 # xFV training + live-scoring intermediates (regenerable via xfv_export.regen_all;
 # the consumable artifact data/xfv.json is tracked).
