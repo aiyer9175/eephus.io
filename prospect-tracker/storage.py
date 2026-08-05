@@ -7687,6 +7687,78 @@ def _roster_status_with_derived_seasons(rs: dict | None,
     return out
 
 
+def authoritative_org_map(
+    keys: set[str] | None = None,
+) -> dict[str, tuple[str, str]]:
+    """player_key -> (canonical_org, event_date) from MLB's OWN transaction feed.
+
+    WHY THIS EXISTS (2026-08-05, owner-reported: Alexander Frias shown as a
+    Brewers prospect days after St. Louis traded for him).
+
+    `consensus._latest_meta` resolves org as "the org on the newest snapshot
+    that carries one", and its comment states the assumption plainly: "no
+    source has a meaningful claim to be more authoritative on org/name." That
+    is true among the SCOUTING sources, and false against MLB itself. A
+    prospect list's org is a byproduct of which page a player was printed on,
+    and those lists are refreshed on their publisher's schedule, not the
+    transaction wire. So for the day or three after a trade, the losing club's
+    Top-30 page still carries the player, and because it is scraped fresh it
+    outranks the correct org and re-stamps it.
+
+    Frias is the worked example: MLB's feed carried the trade on 2026-08-03
+    ("St. Louis Cardinals traded RHP Dustin May and LHP JoJo Romero to
+    Milwaukee Brewers for OF Alexander Frias and OF Josiah Ragsdale"), he was
+    assigned to Palm Beach (STL) the same day and activated there on 08-05 -
+    while our newest snapshot was MLB Pipeline's 08-04 *Brewers* Top 30, which
+    had not dropped him yet. Measured blast radius at the time of the fix: 178
+    players whose latest inferred trade contradicted their latest authoritative
+    one.
+
+    The rule is deliberately conservative, and only ever moves a player TOWARD
+    MLB's record: take the newest transaction whose destination resolves to a
+    parent club, and let the caller apply it only when that event is NEWER than
+    every snapshot it would override. Affiliates whose nickname does not carry
+    the parent's (Somerset Patriots, Wilson Warbirds) do not resolve and are
+    skipped rather than guessed at, so a player who cannot be placed keeps the
+    scouting org rather than acquiring a wrong one.
+    """
+    import json as _json
+    from trades import canonical_org as _canon
+
+    out: dict[str, tuple[str, str]] = {}
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, payload_json FROM player_transactions"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return out          # table absent on a fresh DB; nothing to reconcile
+
+    for player_key, payload in rows:
+        if keys is not None and player_key not in keys:
+            continue
+        try:
+            events = _json.loads(payload) or []
+        except (TypeError, ValueError):
+            continue
+        best: tuple[str, str] | None = None      # (date, org)
+        for ev in events:
+            when = (ev.get("date") or "").strip()
+            if not when:
+                continue
+            # A trade names both MLB clubs outright, so it is the cleanest
+            # signal; assignments/status changes name the affiliate, which
+            # resolves only when it carries the parent's nickname.
+            org = _canon(ev.get("to_team_name"))
+            if not org or len(org) > 4:
+                continue                          # unresolvable affiliate
+            if best is None or when >= best[0]:
+                best = (when, org)
+        if best is not None:
+            out[player_key] = (best[1], best[0])
+    return out
+
+
 def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           statlines: dict[str, dict] | None = None,
                           pitch_arsenals: dict[str, dict] | None = None,
@@ -7997,6 +8069,36 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             _ru_pos = _usage_pos_override(_p_ru.position, _ru_mlbam, _usage_season)
             if _ru_pos != _p_ru.position:
                 _p_ru.position = _ru_pos
+
+    # ORG RECONCILIATION against MLB's own transaction feed. Same seam and same
+    # reasoning as the position override above: consensus cannot do it (it has
+    # no DB access, and storage imports consensus, not the other way round), so
+    # the correction lands here, on the way out.
+    # The guard is the whole design: an authoritative event only wins when it is
+    # NEWER than every snapshot behind the current org. A stale prospect list
+    # can therefore no longer re-stamp a traded player back onto the club that
+    # traded him, while a genuinely fresher scouting org is still preferred over
+    # an old transaction. See authoritative_org_map for the worked example.
+    try:
+        _auth_orgs = authoritative_org_map({p.player_key for p in timeseries})
+    except Exception:                                   # never fail an export on it
+        log.exception("authoritative org reconciliation failed; serving scraped orgs")
+        _auth_orgs = {}
+    _org_fixed = 0
+    for _p_org in timeseries:
+        _rec = _auth_orgs.get(_p_org.player_key)
+        if not _rec:
+            continue
+        _new_org, _when = _rec
+        if not _new_org or _new_org == _p_org.org:
+            continue
+        _newest_snap = max((pt.snapshot_date for pt in _p_org.points), default="")
+        if _when > _newest_snap:
+            _p_org.org = _new_org
+            _org_fixed += 1
+    if _org_fixed:
+        log.info("org reconciliation: %d player(s) moved to the org MLB's "
+                 "transaction feed reports", _org_fixed)
 
     birth_dates = load_birth_dates()
     from stats import compute_age_decimal

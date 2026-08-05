@@ -6,7 +6,7 @@
 """
 tjstats.py — scraper for TJStats (Thomas Nestico) Top-100 MLB Prospects.
 
-  Source:  https://tjstats.ca/top-100-prospects/
+  Source:  https://tjstats.ca/top-100-prospects-tracker/
 
 The public page is a React front-end over a custom WordPress REST API
 (namespace `tjstats/v1`). We hit that JSON API directly — NO headless browser
@@ -52,7 +52,12 @@ log = logging.getLogger(__name__)
 
 # ── Endpoints ────────────────────────────────────────────────────────────────
 BASE_URL = "https://tjstats.ca/wp-json/tjstats/v1"
-SOURCE_PAGE = "https://tjstats.ca/top-100-prospects/"
+# Attribution/reader link only - ingestion goes through BASE_URL, so this string
+# has never gated a fetch. Repointed 2026-08-05: the old /top-100-prospects/ now
+# 301s to /top-100-mlb-prospects/, and TJStats has since published a separate
+# live tracker page, which is the one a reader following our credit should land
+# on. Verified the same day that all three API endpoints still answer 200.
+SOURCE_PAGE = "https://tjstats.ca/top-100-prospects-tracker/"
 PLAYER_URL = "https://tjstats.ca/player/{slug}-{mlbam}/"   # for attribution links
 
 SOURCE_KEY = "tjstats"   # per-source grade-storage key (alongside fangraphs, etc.)

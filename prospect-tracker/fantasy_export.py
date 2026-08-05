@@ -768,6 +768,25 @@ def _attach_schedule(payload: dict) -> None:
         payload["schedule"] = {"games": [], "two_start": {}}
 
 
+def _record_schedule_anomaly(n_prev: int) -> None:
+    """Raise an empty schedule fetch into the ingest-health RED ledger.
+
+    Best-effort by design: this is a reporting path, and it must never be the
+    reason a refresh fails. The ledger is what the deploy shell prints as
+    `!!! INGEST RED`, so a silent schedule outage becomes visible instead of
+    showing up days later as four empty modules."""
+    try:
+        from run_monthly import _record_ingest
+        _record_ingest(
+            "fantasy_schedule", ok=False,
+            message=(f"probables fetch returned 0 game days; kept the previous "
+                     f"{n_prev}-day schedule. Streamers, two-start, DFS and the "
+                     f"betting slate all read this schedule."),
+        )
+    except Exception:
+        log.debug("could not record the schedule anomaly", exc_info=True)
+
+
 def refresh_live(log=print) -> int:
     """DAILY cheap refresh: reuse the monthly ROS players, re-pull the probable-
     pitcher schedule, and rebuild the schedule-driven sections (streamers,
@@ -779,7 +798,31 @@ def refresh_live(log=print) -> int:
         if callable(log):
             log("fantasy: no monthly fantasy.json yet — skipping daily refresh")
         return 0
+    # Keep the schedule we already have, so an empty fetch can be told apart from
+    # a genuinely empty slate (see the guard below).
+    _prev_games = ((payload.get("schedule") or {}).get("games") or {})
     _attach_schedule(payload)
+    _new_games = ((payload.get("schedule") or {}).get("games") or {})
+    # EMPTY-FETCH GUARD (2026-08-05). A StatsAPI hiccup during the daily refresh
+    # returned zero game days mid-season, `build_sections` faithfully rebuilt
+    # streamers and two-start as empty, and the resulting artifact was published
+    # and committed - which dark-started FOUR surfaces at once (redraft streamers,
+    # redraft two-start, the DFS slate, and the betting board, all of which read
+    # this one schedule). Nothing errored, because an empty slate is a legitimate
+    # state in the off-season and on an off day.
+    # So: never let an empty fetch OVERWRITE a populated schedule. Losing a day of
+    # freshness is recoverable on the next run; publishing four empty modules is
+    # what a reader sees.
+    if _prev_games and not _new_games:
+        payload["schedule"]["games"] = _prev_games
+        payload["schedule"]["stale_schedule"] = True
+        if callable(log):
+            log("fantasy: schedule fetch returned NO game days but the previous "
+                f"payload had {len(_prev_games)} - keeping the older schedule "
+                "rather than publishing empty streamer/two-start/DFS/betting boards")
+        _record_schedule_anomaly(len(_prev_games))
+    else:
+        payload.get("schedule", {}).pop("stale_schedule", None)
     payload["sections"] = build_sections(payload)
     payload["schedule_refreshed_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     OUT_PATH.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
