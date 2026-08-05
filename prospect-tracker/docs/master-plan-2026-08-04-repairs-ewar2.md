@@ -506,3 +506,44 @@ Under this spec C1b is expected to fail (d) and everything else to fail as
 before, so the honest prediction is that R1c stays NO_SHIP and the value of the
 repair is that the gate would then be REJECTING FOR THE RIGHT REASON. Record the
 prediction now so the re-run cannot be graded generously after the fact.
+
+## RUN 1 OF THE REPAIRED GATE: VOID. The vacuity control fired on the repair.
+
+Executed 2026-08-04, immediately after pre-registration. **The gate spec above
+FAILS ITS OWN MANDATORY FIRST CONTROL and therefore cannot be used.** No
+candidate was graded, because the spec said the controls are graded FIRST and a
+spec that passes an information-free arm is disqualified before any candidate is
+touched.
+
+    VACUITY CONTROLS (all three must FAIL)
+      pure level, per-exposure, zeroes D    a=PASS b=PASS c=PASS d=PASS  -> SHIPS
+      pure level, per-row, zeroes D         a=PASS b=FAIL c=PASS d=PASS  -> no
+      pure level, per-row, half-way         a=FAIL b=PASS c=PASS d=PASS  -> no
+
+The per-exposure injection clears every leg. Two reasons, and the first is a
+design error in the repair itself:
+
+  1. **LEG (d) CANNOT SEE A LEVEL INJECTION.** It measures played-row EXPOSURE
+     bias, and a pure level injection moves the PREDICTION without touching
+     exposure, so leg (d) is trivially satisfied. Leg (d) was designed to catch
+     C1b, which buys level THROUGH exposure. Against an arm that buys level
+     directly it is orthogonal and contributes no protection at all. Adding a
+     leg that is blind to the very control it has to survive was my error.
+  2. **RMSE DID NOT REJECT IT HERE**, although the earlier probe had the same
+     arm failing RMSE at z +2.84. That is a harness discrepancy between this
+     run and the review's, not a settled fact, and it must be reconciled before
+     RMSE is trusted as the shape metric. Until it is, the evidence that "RMSE
+     keeps the controls biting" is NOT established.
+
+**STATUS: the R1c gate has now resisted TWO repair attempts.** Level-neutral MAE
+was refuted on paper (de-meaning erases a level injection, so it passes leg (b)
+by construction). RMSE plus an exposure leg is refuted in practice by the run
+above. Both failures share one cause: every repair so far fixes the leg that
+convicted the last candidate rather than asking what the gate must reject IN
+GENERAL. The next attempt should start from the control set, not from a
+candidate, and should demonstrate that every information-free arm fails BEFORE
+any shape metric is chosen.
+
+R1c therefore remains NO_SHIP on the ORIGINAL gate, and the reason it rejects is
+still not established as correct. That is worse than a clean no-ship and it is
+the honest state. Do not grade candidates against the spec above.

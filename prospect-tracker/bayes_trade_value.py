@@ -4484,6 +4484,38 @@ def _prearb_service_seasons(entry: dict | None, floor_season, thru_season) -> in
     return len(set(years))
 
 
+# The appearance-season count at which the proxy STOPS deferring to a `pre_arb`
+# roster label. Measured 2026-08-04; the owner asked for a threshold rather than
+# a guess, so here is how 6 was reached and what it costs.
+#
+# THERE IS NO SERVICE-TIME GROUND TRUTH IN THIS TREE, and the obvious candidate
+# is a trap worth naming: roster_status.active_roster_days LOOKS like MLB service
+# (service time IS active-roster days, 172 to a year) and is NOT. Measured across
+# 2,682 debuts rows, median active_roster_days by MLB-season count runs 786 at
+# ZERO seasons and 0 at six or more. It is org/minor-league roster time, and
+# calibrating on it would have been worse than not measuring at all.
+#
+# So the threshold rests on two things that ARE checkable.
+#   1. ARITHMETIC. Pre-arb means under 3 years, i.e. under 516 days. Holding N
+#      distinct appearance seasons on that budget requires averaging under 516/N
+#      days per season: N=4 -> 129 days (ordinary for an up-and-down arm),
+#      N=5 -> 103, N=6 -> 86, N=8 -> 64. Somewhere around 6 it stops being a
+#      career shape that happens and starts being one that would be remarkable.
+#   2. THE OBSERVED DISAGREEMENTS, all 11 of them. At est 4-5 they are exactly
+#      the bouncers the label exists to rescue (aj_smithshawver, joey_estes,
+#      matt_waldron, tyson_miller, isaac_mattson, vinny_capra, darren_mccaughan,
+#      cristian_pache). At est >= 6 every one is an established MLB player who
+#      cannot be pre-arb: nick_senzel (6), nestor_cortes (8), joel_payamps (8).
+#      The split is clean at 6 and there is no case on the wrong side of it.
+#
+# COST, measured, not asserted: 3 rows leave the priced set (11 would leave at
+# est >= 4, which is why the obvious rule was refused). NO PUBLISHED DOLLAR MOVES
+# - none of the three is among the 9 rows that ship as prearb_min - so this
+# corrects an intermediate census, and the census reason map shifts accordingly.
+# Board dollars touched: -0.870M, all of it inside rows the board never shows.
+_PREARB_LABEL_OVERRIDE_MAX = 6
+
+
 def _prearb_window(est_service, phase, pre_arb_years: int, n_seasons: int):
     """(pre-arb seasons left from FIRST_SEASON, is he pre-arb in the season NOW
     in progress).
@@ -4506,22 +4538,17 @@ def _prearb_window(est_service, phase, pre_arb_years: int, n_seasons: int):
     proxy ALREADY reads est=8 and the `min(svc, pre_arb_years - 1)` below caps
     it to 2, so the proxy is not the failure, the unconditional override is.
 
-    KNOWN OPEN DEFECT, deliberately NOT patched here. It does not reach the
-    board: none of the 3 is among the 9 rows that ship as prearb_min, so no
-    published dollar moves. Fixing it means choosing a threshold at which an
-    appearance count is allowed to beat the roster label, and that threshold is
-    a modelling decision with no measurement behind it yet. The obvious rule
-    (ignore `pre_arb` once est >= pre_arb_years + 1) was costed and moves ELEVEN
-    rows out of the priced set, not 3, shifting the census reason map
-    (past_prearb_window 87 -> 91, priced_but_row_excluded 14 -> 10) while
-    prearb_min stays 9. A player CAN legitimately hold 6 appearance seasons and
-    under 3 years of service by bouncing, so the rule cannot simply be "more
-    seasons wins". Pinned as-is by test_the_roster_label_overrides_the_
-    appearance_count; see the owner queue before changing the threshold."""
+    REPAIRED 2026-08-04 with a measured threshold: `_PREARB_LABEL_OVERRIDE_MAX`.
+    The label still wins where it is the only signal or where it is plausible;
+    it stops winning once the appearance count makes pre-arb status arithmetically
+    implausible. How that number was chosen is documented on the constant."""
     if phase == "arb_eligible":
         return 0, False
     svc = None if est_service is None else int(est_service)
-    if phase == "pre_arb":
+    # The label caps svc only where it is the ONLY signal (svc is None, its real
+    # job) or where the proxy does not make pre-arb status implausible. Past
+    # _PREARB_LABEL_OVERRIDE_MAX the count wins and the label is ignored.
+    if phase == "pre_arb" and (svc is None or svc < _PREARB_LABEL_OVERRIDE_MAX):
         svc = (pre_arb_years - 1) if svc is None else min(svc, pre_arb_years - 1)
     if svc is None:
         return 0, False

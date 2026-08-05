@@ -36,6 +36,30 @@ WHY THIS EXISTS
     of benefit, do NOT flip, and do not write down that the hypothesis is
     closed. It is unsupported, which is a weaker and more honest claim.
 
+    HIGHER-POWERED RE-TEST, pitching only, owner-authorised and run 2026-08-04.
+    It did NOT close the question, and it weakened the headline rather than the
+    reverse. Pre-registered design: add the 2019 fold (test n=71, train n=80),
+    taking the scored population from 434 to 505 rows, and raise the full-refit
+    paired bootstrap from B=400 to B=2000. 2024 was deliberately NOT added
+    despite being the larger fold, because a 2024 debut has only 2 of its 6
+    label seasons resolved against 6 for 2019.
+      * The base 4-fold arm REPRODUCES exactly, DELTA -0.0115.
+      * On 5 folds DELTA is -0.0001. The "moved the wrong way on pitchers"
+        reading is FOLD-DEPENDENT and should not be quoted as though it were
+        stable.
+      * sd went 0.0210 -> 0.02393, WIDER. The pre-registered prediction was
+        that +16% n would shrink it about 7%; that was wrong because it treated
+        all rows as equally informative. The 2019 fold trains on 80 rows
+        against 151+ for the folds it joins, so it carries more noise than
+        information and the pooled margin over consensus falls from +0.0286 to
+        +0.0104 on the bWAR label too.
+      * CI90 [-0.0469, +0.0311]. The upper bound is still well above the 0.016
+        floor, so a floor-sized effect remains UNEXCLUDED.
+    CONSEQUENCE FOR ANY FUTURE ATTEMPT: this cohort cannot be re-sliced into
+    enough power. The only fold that would add clean information is one whose
+    six label seasons are fully resolved, which means WAITING for debut years to
+    mature, not re-partitioning what is already here.
+
     R3b, fa_backtest Gate 1 (2026-08-04). Margin over the Marcel carry-forward
     baseline, both scored on the same labels: -0.0387 WAR on pitchers against a
     pre-registered floor of +0.020, CI95 [-0.0472, -0.0309], negative in all six

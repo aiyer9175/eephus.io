@@ -304,6 +304,7 @@ class PreArbWindowSelection(unittest.TestCase):
             vets=[_vet("rookie_a", _war(2.0)),
                   _vet("grizzled_b", _war(2.0)),
                   _vet("bounced_c", _war(2.0)),
+                  _vet("overcounted_e", _war(2.0)),
                   _vet("truncated_d", _war(2.0))],
             detail={
                 "rookie_a": {"key": "rookie_a", "career": _career(2025, 2026)},
@@ -311,15 +312,26 @@ class PreArbWindowSelection(unittest.TestCase):
                 # row simply failed to join. His salary is UNKNOWN, not minimum.
                 "grizzled_b": {"key": "grizzled_b",
                                "career": _career(*range(2016, 2027))},
-                # Six appearance seasons but the roster feed says pre_arb: he
-                # bounced through the minors, so the label wins over the proxy.
+                # FIVE appearance seasons and the roster feed says pre_arb: he
+                # bounced through the minors, so the label still wins. Five is
+                # deliberately just UNDER _PREARB_LABEL_OVERRIDE_MAX, so this
+                # and overcounted_e pin the two sides of that boundary rather
+                # than one arbitrary point. (Was six until 2026-08-04, when the
+                # threshold was measured and landed exactly on six.)
                 "bounced_c": {"key": "bounced_c",
-                              "career": _career(*range(2021, 2027))},
+                              "career": _career(*range(2022, 2027))},
+                # EIGHT appearance seasons and the roster feed ALSO says
+                # pre_arb. The label is wrong and the count wins. This is the
+                # nestor_cortes / joel_payamps shape, both of which the label
+                # was forcing into the priced set before the threshold landed.
+                "overcounted_e": {"key": "overcounted_e",
+                                  "career": _career(*range(2019, 2027))},
                 # First season on file IS the career-block floor, so the count
                 # may have been truncated and bounds nothing.
                 "truncated_d": {"key": "truncated_d", "career": _career(2014, 2026)},
             },
-            phases={"bounced_c": "pre_arb", "grizzled_b": "arb_eligible"},
+            phases={"bounced_c": "pre_arb", "overcounted_e": "pre_arb",
+                    "grizzled_b": "arb_eligible"},
         )
 
     def tearDown(self):
@@ -336,10 +348,35 @@ class PreArbWindowSelection(unittest.TestCase):
         self.assertFalse(row["prearb"]["priced"])
         self.assertEqual(row["prearb"]["reason"], "past_prearb_window")
 
-    def test_the_roster_label_overrides_the_appearance_count(self):
+    def test_the_roster_label_overrides_a_PLAUSIBLE_appearance_count(self):
+        # Five seasons: a real up-and-down career shape, so the label wins.
         m = btv._prearb_priced(self.fx.dir)["bounced_c"]["prearb"]
         self.assertTrue(m["priced"])
         self.assertEqual(m["service_source"], "debuts.roster_status.service_phase")
+
+    def test_the_roster_label_does_NOT_override_an_IMPLAUSIBLE_count(self):
+        """The other side of the boundary, added 2026-08-04.
+
+        Eight appearance seasons on a pre_arb label is the nestor_cortes /
+        joel_payamps shape. Holding 8 distinct seasons on under 3 years of
+        service needs an average under 64 days a season, so the count is
+        believed and the label is not."""
+        row = btv._prearb_priced(self.fx.dir)["overcounted_e"]
+        self.assertIsNone(row.get("surTotal"))
+        self.assertFalse(row["prearb"]["priced"])
+        self.assertEqual(row["prearb"]["reason"], "past_prearb_window")
+
+    def test_the_boundary_itself_is_pinned(self):
+        """Guards the threshold against a silent drift in either direction: the
+        constant is a measured value, not a free parameter."""
+        self.assertEqual(btv._PREARB_LABEL_OVERRIDE_MAX, 6)
+        # Label wins strictly below the threshold and loses at or above it.
+        # At est=5 the label caps svc to pre_arb_years-1 = 2, leaving a window
+        # of 3-2 = 1 season; at est=6 the count stands and the window closes.
+        self.assertEqual(btv._prearb_window(5, "pre_arb", 3, 5), (1, True))
+        self.assertEqual(btv._prearb_window(6, "pre_arb", 3, 5), (0, False))
+        # The label's REAL job is untouched: with no count at all it still wins.
+        self.assertEqual(btv._prearb_window(None, "pre_arb", 3, 5), (1, True))
 
     def test_a_truncated_career_block_is_service_unknown_not_a_guess(self):
         row = btv._prearb_priced(self.fx.dir)["truncated_d"]
