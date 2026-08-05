@@ -19,7 +19,10 @@ absence would do:
 
   3. THE MODEL DOES NOT CLAIM VALIDATION IT DOES NOT HAVE. `min_edge` stays
      None, `pick_of_the_day` stays absent, and the payload keeps saying
-     unvalidated until a clean out-of-sample test exists.
+     unvalidated until a clean out-of-sample test exists. The vintage half of
+     that claim lives in test_leaderboard_vintages.py: the store, the
+     strictly-before read, the two grading modes and the three gates on
+     `min_edge`. What is pinned HERE is the shipped artifact.
 
   4. THE LEGAL BLOCK CANNOT GO MISSING. 21+, informational only, not legal
      everywhere, 1-800-GAMBLER, no affiliate links: pinned in the payload AND
@@ -366,6 +369,53 @@ def test_backtest_never_reports_itself_validated():
     assert d["contaminated"] is True
     assert d["gates_picks"] is False
     assert d["min_edge"] is None
+
+
+def test_every_graded_block_in_the_artifact_names_its_mode():
+    """A reader must never have to remember which column was contaminated.
+    Skips on an artifact written before the vintage lane, which the next
+    `--backtest` replaces."""
+    art = ROOT / "data" / "betting_model_eval.json"
+    if not art.exists():
+        pytest.skip("backtest has not been run in this checkout")
+    d = json.loads(art.read_text(encoding="utf-8"))
+    if "modes" not in d:
+        pytest.skip("eval artifact predates the vintage lane; re-run --backtest")
+    assert d["modes"] == ["contaminated", "vintage"]
+    assert d["headline_mode"] in ("contaminated", "vintage")
+    for key in ("in_sample", "forward"):
+        if d.get(key):
+            assert d[key]["mode"] == "contaminated"
+            assert d[key]["honest"] is False
+    assert d["vintage"]["mode"] == "vintage"
+    assert d["vintage"]["honest"] is True
+
+
+def test_the_artifact_says_which_min_edge_gate_is_closed():
+    """`min_edge: null` on its own is not an explanation. The artifact has to
+    name the gate, or the next reader invents a threshold."""
+    art = ROOT / "data" / "betting_model_eval.json"
+    if not art.exists():
+        pytest.skip("backtest has not been run in this checkout")
+    d = json.loads(art.read_text(encoding="utf-8"))
+    if "min_edge_gate" not in d:
+        pytest.skip("eval artifact predates the vintage lane; re-run --backtest")
+    gate = d["min_edge_gate"]
+    assert gate["min_edge"] is None
+    assert gate["all_gates_open"] is False
+    ids = {g["id"] for g in gate["gates"]}
+    assert ids == {"vintage_sample", "out_of_sample_skill", "graded_price_history"}
+    assert any(g["open"] is False for g in gate["gates"])
+
+
+def test_min_edge_cannot_be_set_from_the_contaminated_mode():
+    """The gate reads the VINTAGE block only. Handing it a perfect contaminated
+    result must still produce no threshold."""
+    assert bm.min_edge_gate(None)["min_edge"] is None
+    assert bm.min_edge_gate({"n_graded": 0,
+                             "skill_vs_home_base": {"t": 99.0,
+                                                    "beats_baseline_95": True}}
+                            )["min_edge"] is None
 
 
 # ===========================================================================

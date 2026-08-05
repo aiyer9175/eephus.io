@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-05T14:34:13+00:00",
+ "generated_at": "2026-08-05T18:26:17+00:00",
  "model_version": "betting_runs_v1",
  "season": null,
  "validated": false,
@@ -8,78 +8,108 @@
  "gates_picks": false,
  "min_edge": null,
  "n_games": 1705,
+ "modes": [
+  "contaminated",
+  "vintage"
+ ],
+ "headline_mode": "contaminated",
+ "vintage_coverage": {
+  "dir": "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker\\.cache\\leaderboard_vintages",
+  "schema": 1,
+  "n_vintages": 1,
+  "first": "2026-08-05",
+  "last": "2026-08-05",
+  "bytes": 25413,
+  "missing_dates": [],
+  "earliest_gradable_game_date": "2026-08-06",
+  "span_days": 1,
+  "latest_cutoff": "2026-08-05",
+  "note": "1 vintages, 0 missing days inside the span; a game is gradable when a vintage cutoff is strictly before it"
+ },
  "in_sample": {
   "label": "in-sample (coefficients and features both leak)",
+  "mode": "contaminated",
+  "honest": false,
   "n": 1705,
   "coefficients": {
-   "b0": 4.489608335888872,
-   "b1": 0.28346801149824224,
-   "b2": -0.3262424150856068,
-   "b3": 3.2105859916499724,
-   "b4": 0.012008529055270672,
+   "b0": 4.4894658325092,
+   "b1": 0.28158941700121426,
+   "b2": -0.3236928443766523,
+   "b3": 3.1365788379743207,
+   "b4": 0.012533748860094321,
    "source": "fitted",
    "n_rows": 3410,
-   "rmse": 3.171821826351269,
-   "r2": 0.04541729447579368
+   "rmse": 3.172995367277387,
+   "r2": 0.04471079255195887
   },
   "home_field_runs_adj": 0.2216,
   "diff_shrink": 0.76,
-  "brier": 0.24164,
+  "extra_inning_home_rate": 0.4875,
+  "brier": 0.24198,
   "brier_flat_500": 0.25,
   "brier_home_base": 0.24946,
-  "log_loss": 0.67636,
+  "log_loss": 0.67704,
   "log_loss_flat_500": 0.69315,
-  "accuracy": 0.5672,
+  "accuracy": 0.5677,
   "home_win_rate": 0.5232,
   "mean_p_home": 0.5232,
-  "total_mae": 3.54,
+  "total_mae": 3.541,
+  "skill_vs_home_base": {
+   "delta": 0.007479,
+   "sd": 0.08178,
+   "t": 3.776,
+   "beats_baseline_95": true,
+   "n_for_95": 324,
+   "baseline": 0.5232,
+   "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
+  },
   "calibration": [
    {
     "bin": "0.1-0.2",
-    "n": 2,
-    "pred": 0.1957,
-    "actual": 0.5
+    "n": 1,
+    "pred": 0.1944,
+    "actual": 0.0
    },
    {
     "bin": "0.2-0.3",
-    "n": 11,
-    "pred": 0.2582,
-    "actual": 0.4545
+    "n": 10,
+    "pred": 0.2523,
+    "actual": 0.5
    },
    {
     "bin": "0.3-0.4",
-    "n": 108,
-    "pred": 0.3663,
-    "actual": 0.3056
+    "n": 109,
+    "pred": 0.3682,
+    "actual": 0.3028
    },
    {
     "bin": "0.4-0.5",
     "n": 546,
-    "pred": 0.4591,
+    "pred": 0.4603,
     "actual": 0.4707
    },
    {
     "bin": "0.5-0.6",
-    "n": 741,
-    "pred": 0.5475,
-    "actual": 0.5412
+    "n": 747,
+    "pred": 0.5473,
+    "actual": 0.5435
    },
    {
     "bin": "0.6-0.7",
-    "n": 260,
-    "pred": 0.6348,
-    "actual": 0.6423
+    "n": 254,
+    "pred": 0.6327,
+    "actual": 0.6417
    },
    {
     "bin": "0.7-0.8",
-    "n": 31,
-    "pred": 0.7346,
-    "actual": 0.7742
+    "n": 32,
+    "pred": 0.7302,
+    "actual": 0.75
    },
    {
     "bin": "0.8-0.9",
     "n": 6,
-    "pred": 0.8324,
+    "pred": 0.8275,
     "actual": 0.6667
    }
   ]
@@ -87,80 +117,139 @@
  "split_date": "2026-06-24",
  "forward": {
   "label": "forward from 2026-06-24 (coefficient leakage removed, feature leakage remains)",
+  "mode": "contaminated",
+  "honest": false,
   "n": 521,
   "coefficients": {
-   "b0": 4.488399749117375,
-   "b1": 0.26855701369216267,
-   "b2": -0.3549004884947132,
-   "b3": 2.8352354356995813,
-   "b4": -0.023697205718094944,
+   "b0": 4.486679231846343,
+   "b1": 0.268451670498409,
+   "b2": -0.3535810218602876,
+   "b3": 2.762090763924762,
+   "b4": -0.02237680322379471,
    "source": "fitted",
    "n_rows": 2368,
-   "rmse": 3.12265431588337,
-   "r2": 0.05101375448686285
+   "rmse": 3.123559860211456,
+   "r2": 0.05046327811180762
   },
-  "home_field_runs_adj": 0.3363,
+  "home_field_runs_adj": 0.3187,
   "diff_shrink": 0.74,
-  "brier": 0.24327,
+  "extra_inning_home_rate": 0.5,
+  "brier": 0.24416,
   "brier_flat_500": 0.25,
   "brier_home_base": 0.24995,
-  "log_loss": 0.6796,
+  "log_loss": 0.68139,
   "log_loss_flat_500": 0.69315,
-  "accuracy": 0.5509,
+  "accuracy": 0.5393,
   "home_win_rate": 0.5067,
-  "mean_p_home": 0.5297,
-  "total_mae": 3.613,
+  "mean_p_home": 0.5299,
+  "total_mae": 3.614,
+  "skill_vs_home_base": {
+   "delta": 0.005794,
+   "sd": 0.08647,
+   "t": 1.529,
+   "beats_baseline_95": false,
+   "n_for_95": 603,
+   "baseline": 0.5067,
+   "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
+  },
   "calibration": [
    {
     "bin": "0.1-0.2",
-    "n": 2,
-    "pred": 0.1865,
-    "actual": 0.5
+    "n": 1,
+    "pred": 0.1837,
+    "actual": 0.0
    },
    {
     "bin": "0.2-0.3",
-    "n": 1,
-    "pred": 0.2725,
+    "n": 2,
+    "pred": 0.2406,
     "actual": 1.0
    },
    {
     "bin": "0.3-0.4",
-    "n": 31,
-    "pred": 0.3613,
-    "actual": 0.2903
+    "n": 30,
+    "pred": 0.3623,
+    "actual": 0.3333
    },
    {
     "bin": "0.4-0.5",
-    "n": 143,
-    "pred": 0.459,
-    "actual": 0.4615
+    "n": 140,
+    "pred": 0.4583,
+    "actual": 0.4714
    },
    {
     "bin": "0.5-0.6",
-    "n": 244,
-    "pred": 0.5469,
-    "actual": 0.4959
+    "n": 248,
+    "pred": 0.5462,
+    "actual": 0.4919
    },
    {
     "bin": "0.6-0.7",
-    "n": 89,
-    "pred": 0.6357,
-    "actual": 0.6404
+    "n": 88,
+    "pred": 0.6339,
+    "actual": 0.625
    },
    {
     "bin": "0.7-0.8",
-    "n": 8,
-    "pred": 0.7411,
-    "actual": 0.75
+    "n": 9,
+    "pred": 0.7366,
+    "actual": 0.6667
    },
    {
     "bin": "0.8-0.9",
     "n": 3,
-    "pred": 0.845,
+    "pred": 0.8415,
     "actual": 1.0
    }
   ]
  },
+ "vintage": {
+  "label": "vintage (each game priced on leaderboards dated strictly before it)",
+  "mode": "vintage",
+  "honest": true,
+  "status": "no vintages",
+  "n_vintages": 1,
+  "n_gradable": 0,
+  "n_graded": 0,
+  "n_skipped_no_vintage": 1705,
+  "min_fit_games": 100,
+  "min_eval_games": 50,
+  "min_graded_games_for_min_edge": 600,
+  "note": "no completed game has a leaderboard vintage dated strictly before it, so the honest sample is empty; run leaderboard_vintages.snapshot() nightly and this number starts climbing"
+ },
+ "min_edge_gate": {
+  "min_edge": null,
+  "all_gates_open": false,
+  "gates": [
+   {
+    "id": "vintage_sample",
+    "need": "600 vintage-graded games",
+    "have": 0,
+    "open": false,
+    "why": "the contaminated forward margin over the home-field baseline is +0.005794 Brier with a paired sd of 0.08647, so a margin that size needs 603 games to clear one-sided 95%; 600 is that number, and a clean margin will be smaller, so this is a floor and not a pass"
+   },
+   {
+    "id": "out_of_sample_skill",
+    "need": "paired Brier vs the home-field baseline, t >= 1.645",
+    "have": null,
+    "open": false,
+    "why": "sample size is not evidence; the model has to actually beat 'always take the home team' on games it could not see"
+   },
+   {
+    "id": "graded_price_history",
+    "need": "settled bets with a taken price, enough that some edge threshold clears an ROI lower bound of zero on at least 100 of them",
+    "have": 0,
+    "open": false,
+    "why": "an edge threshold is a claim about EV against real prices; 0 dates of odds snapshots are cached and no settled-bet join exists yet"
+   }
+  ],
+  "odds_snapshot_dates": 0,
+  "sweep": {
+   "n_rows": 0,
+   "reason": "no settled bets with both a model edge and a taken price; the threshold cannot be swept on data that does not exist"
+  },
+  "policy": "min_edge stays null until all three gates are open. A threshold invented to make a pick appear is the single most dishonest number this module could publish."
+ },
  "status": "ran",
- "note": "A pick threshold is NOT set from these numbers. Publishing a pick needs vintage-dated team inputs and a clean forward test."
+ "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 0 games. A pick threshold is set from the vintage mode or from nothing."
 }

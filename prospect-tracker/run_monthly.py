@@ -1631,6 +1631,23 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:
                 log.exception("daily: dfs slate export failed — continuing")
 
+        # --- 9e-pre. Leaderboard vintage snapshot (the validation clock) ---
+        # Writes .cache/leaderboard_vintages/<date>.json: the team inputs the
+        # betting model consumes, stamped with the date they were true. A game
+        # on date D is then priced on the newest snapshot whose knowledge
+        # cutoff is strictly before D, which is the only thing that can make
+        # betting_model.backtest() genuinely out of sample. Idempotent (first
+        # write wins), offline, ~25KB a night, loud no-op when the leaderboards
+        # are absent. Every night this does not run is a night the honest
+        # backtest cannot buy back later. Additive; never aborts.
+        # Runbook: docs/diamond-betting.md section 5.
+        with _step("9e-pre. Leaderboard vintage snapshot (validation clock)", log):
+            try:
+                import leaderboard_vintages
+                leaderboard_vintages.run(log_fn=log.info)
+            except Exception:
+                log.exception("daily: leaderboard vintage snapshot failed — continuing")
+
         # --- 9e. Betting: odds snapshot + /betting/ payload ---------------
         # Prices the same slate against the team leaderboards. The odds pull is
         # ONE 3-credit call on The Odds API free tier and is a loud no-op when

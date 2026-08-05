@@ -53,6 +53,21 @@ WHAT THIS MODEL IS NOT, AND THE PAGE SAYS SO
     only once vintage-dated team inputs exist and a clean out-of-sample
     number does.
 
+THE VINTAGE PATH (leaderboard_vintages.py), which is how that gets fixed.
+    `inputs_as_of(date)` returns the team and pitcher inputs from the newest
+    nightly snapshot whose knowledge cutoff is STRICTLY BEFORE that date, so
+    nothing that happened on or after the game can reach its features. Until
+    the nightly snapshot has been running long enough, there is no such
+    vintage for any date, and the read falls back to the live leaderboards
+    with `contaminated: True` and a logged warning. Nothing in this module
+    silently looks forward.
+
+    `backtest()` therefore reports TWO modes and labels both: the contaminated
+    mode (the old numbers, in-sample and forward-split) and the vintage mode,
+    which grades only the games it can grade honestly and starts at n = 0. The
+    vintage sample is what gates `min_edge`; see VINTAGE_MIN_GRADED_GAMES for
+    the threshold and the measurement behind it.
+
 DE-VIGGING (`devig`) uses the PROPORTIONAL method: each side's raw implied
 probability divided by the book's overround. It is the standard, it is
 transparent, and it is the one an edge number can be audited against.
@@ -62,7 +77,8 @@ so the method name travels in the payload.
 
 CLI:
     python betting_model.py --context      # league constants + fitted coefficients
-    python betting_model.py --backtest     # the contaminated in-sample number
+    python betting_model.py --backtest     # both modes, both labelled
+    python betting_model.py --gate         # the min_edge gate state, one screen
     python betting_model.py --game NYM CLE # one matchup, hand-checkable
 """
 from __future__ import annotations
@@ -108,6 +124,55 @@ LITERATURE_TIE_HOME = 0.50       # home win rate once a game reaches extras
 # measured value is shrunk toward a coin flip on a 100-game prior.
 TIE_SHRINK_K = 100.0
 
+# --- the vintage gate ------------------------------------------------------
+# How many games the VINTAGE-mode backtest must grade before `min_edge` may be
+# fitted at all. This number is measured, not picked to look serious.
+#
+# The claim a published pick rests on is that the model beats the home-field
+# baseline out of sample. Grade that as a paired Brier difference, one game per
+# pair. In the existing forward split (2026-06-24 onward, n = 521, coefficient
+# leakage removed but feature leakage still present) that difference is
+# +0.005794 in the model's favour with a paired standard deviation of 0.08647,
+# so t = 1.529: the module's own "beats both baselines" line is NOT significant
+# even with the leak helping it. Detecting a margin that size at one-sided 95%
+# needs
+#
+#     n = (1.645 * 0.08647 / 0.005794)^2 = 603 games
+#
+# rounded to 600. Two honesty notes travel with it. First, a clean margin is
+# very likely SMALLER than the contaminated one, so 600 games makes the test
+# possible, it does not make it pass. Second, 600 is a FLOOR on the sample, not
+# a substitute for the test: `min_edge_gate` still requires the paired
+# difference to clear zero at one-sided 95% on that sample, and still requires
+# a graded price history to sweep the threshold on.
+#
+# At the measured 2026 rate of 13.1 completed games per calendar date, 600
+# games is about 46 slate days of nightly snapshots.
+VINTAGE_MIN_GRADED_GAMES = 600
+# Below these the vintage mode reports counts only and no metrics: 100 games is
+# 200 design rows, the same floor `fit_coefficients` already enforces, and 50
+# eval games is the floor the existing forward split uses.
+VINTAGE_MIN_FIT_GAMES = 100
+VINTAGE_MIN_EVAL_GAMES = 50
+# The fit half is a TARGET SIZE, not a share, and that is a deliberate choice
+# about how long this takes. A 60/40 split would put 40% of the archive in the
+# eval half, so reaching 600 graded games would need 1,500 gradable ones, about
+# 115 slate days. The fit half does not need to be large: five coefficients and
+# two one-parameter corrections are comfortably estimated on 300 games (600
+# design rows, three times the floor `fit_coefficients` enforces). Anchoring
+# the fit at 300 and giving everything later to the eval window reaches 600
+# graded games at ~900 gradable, about 69 slate days. The fit window stays
+# anchored at the earliest dates as the archive grows, which drifts the eval
+# window further from the fit over time: that is the conservative direction,
+# it makes the test harder rather than easier.
+VINTAGE_FIT_TARGET_GAMES = 300
+# ...but never more than half the covered DATES, so a young archive still
+# produces an eval window instead of one enormous fit.
+VINTAGE_FIT_MAX_DATE_SHARE = 0.5
+# One-sided 95% normal critical value, used for both the Brier-skill gate and
+# the ROI lower bound in the min_edge sweep.
+Z_95_ONE_SIDED = 1.645
+
 
 # ---------------------------------------------------------------------------
 # small io helpers
@@ -151,31 +216,14 @@ def _mean_sd(xs: list[float]) -> tuple[float, float]:
 # ---------------------------------------------------------------------------
 # team + pitcher inputs off the committed leaderboards
 # ---------------------------------------------------------------------------
-def team_inputs() -> dict:
-    """{org: {...}} team strength, standardized. Empty when the leaderboards
-    are absent (fresh checkout), which the caller degrades on."""
-    hit = _data("hitter_leaderboards.json") or {}
-    pen = _data("bullpen_leaderboards.json") or {}
-    rot = _data("starter_leaderboards.json") or {}
+def _assemble_team_inputs(off: dict, rots: dict, pens: dict,
+                          starter_ip: dict, relief_ip: dict) -> dict:
+    """The standardization, written ONCE.
 
-    off = {}
-    for t in hit.get("teams") or []:
-        o = _org(t.get("team"))
-        if o and t.get("offense_plus") is not None:
-            off[o] = float(t["offense_plus"])
-    pens, relief_ip = {}, {}
-    for t in pen.get("teams") or []:
-        o = _org(t.get("team"))
-        if o and t.get("bullpen_plus") is not None:
-            pens[o] = float(t["bullpen_plus"])
-            relief_ip[o] = float(t.get("relief_ip") or 0.0)
-    rots, starter_ip = {}, {}
-    for t in rot.get("teams") or []:
-        o = _org(t.get("team"))
-        if o and t.get("rotation_plus") is not None:
-            rots[o] = float(t["rotation_plus"])
-            starter_ip[o] = float(t.get("starter_ip") or 0.0)
-
+    The live path and the vintage path both land here, which is the point: a
+    z-score computed one way on today's leaderboards and another way on a
+    stored snapshot would make the backtest incomparable to the served model
+    for a reason nobody would ever see."""
     orgs = sorted(set(off) & set(pens) & set(rots))
     if not orgs:
         return {}
@@ -206,6 +254,36 @@ def team_inputs() -> dict:
     out["_scale"] = {"off_mu": off_mu, "off_sd": off_sd,
                      "prev_mu": prev_mu, "prev_sd": prev_sd}
     return out
+
+
+def team_inputs() -> dict:
+    """{org: {...}} team strength, standardized, from the LIVE leaderboards.
+
+    Empty when the leaderboards are absent (fresh checkout), which the caller
+    degrades on. These are season-to-date: for a backtest that must not see
+    the future, go through `inputs_as_of`."""
+    hit = _data("hitter_leaderboards.json") or {}
+    pen = _data("bullpen_leaderboards.json") or {}
+    rot = _data("starter_leaderboards.json") or {}
+
+    off = {}
+    for t in hit.get("teams") or []:
+        o = _org(t.get("team"))
+        if o and t.get("offense_plus") is not None:
+            off[o] = float(t["offense_plus"])
+    pens, relief_ip = {}, {}
+    for t in pen.get("teams") or []:
+        o = _org(t.get("team"))
+        if o and t.get("bullpen_plus") is not None:
+            pens[o] = float(t["bullpen_plus"])
+            relief_ip[o] = float(t.get("relief_ip") or 0.0)
+    rots, starter_ip = {}, {}
+    for t in rot.get("teams") or []:
+        o = _org(t.get("team"))
+        if o and t.get("rotation_plus") is not None:
+            rots[o] = float(t["rotation_plus"])
+            starter_ip[o] = float(t.get("starter_ip") or 0.0)
+    return _assemble_team_inputs(off, rots, pens, starter_ip, relief_ip)
 
 
 def starter_inputs() -> dict:
@@ -248,6 +326,168 @@ def park_index() -> dict:
         except (TypeError, ValueError):
             continue
     return out
+
+
+# ---------------------------------------------------------------------------
+# the vintage read path
+# ---------------------------------------------------------------------------
+# One warning per process, not one per game. A 1,705-game backtest with no
+# vintages would otherwise emit 1,705 identical lines and bury everything else
+# in the nightly log.
+_VINTAGE_FALLBACK_WARNED = False
+# {vintage_date: (teams, starters)}. A vintage is reduced once and reused by
+# every game it prices; without this a backtest rebuilds the same 30-team
+# standardization fifteen times a day.
+_VINTAGE_CACHE: dict[str, tuple[dict, dict]] = {}
+
+
+def reset_vintage_cache() -> None:
+    """Drop the memoized vintages, here and in the store. Tests that write
+    vintages into a tmp dir call this; the pipeline never needs it."""
+    global _VINTAGE_FALLBACK_WARNED
+    _VINTAGE_CACHE.clear()
+    _VINTAGE_FALLBACK_WARNED = False
+    lv = _vintage_module()
+    if lv:
+        lv.reset_cache()
+
+
+def _vintage_module():
+    try:
+        import leaderboard_vintages
+        return leaderboard_vintages
+    except Exception:                                            # pragma: no cover
+        return None
+
+
+def team_inputs_from_vintage(rec: dict) -> dict:
+    """A stored vintage record -> the same {org: {...}} shape `team_inputs`
+    returns, through the same standardization."""
+    cols = list(rec.get("team_columns") or ())
+    try:
+        i_off = cols.index("offense_plus")
+        i_rot = cols.index("rotation_plus")
+        i_pen = cols.index("bullpen_plus")
+        i_sip = cols.index("starter_ip")
+        i_rip = cols.index("relief_ip")
+    except ValueError:                                           # pragma: no cover
+        return {}
+    off, rots, pens, sip, rip = {}, {}, {}, {}, {}
+    for org, row in (rec.get("teams") or {}).items():
+        if not isinstance(row, list) or len(row) <= max(i_off, i_rot, i_pen, i_sip, i_rip):
+            continue
+        if row[i_off] is None or row[i_rot] is None or row[i_pen] is None:
+            continue
+        off[org] = float(row[i_off])
+        rots[org] = float(row[i_rot])
+        pens[org] = float(row[i_pen])
+        sip[org] = float(row[i_sip] or 0.0)
+        rip[org] = float(row[i_rip] or 0.0)
+    return _assemble_team_inputs(off, rots, pens, sip, rip)
+
+
+def starter_inputs_from_vintage(rec: dict) -> dict:
+    """A stored vintage record -> the same {mlbam: {...}} shape
+    `starter_inputs` returns. Names are not stored (the model never reads
+    one), so the display name comes back None."""
+    cols = list(rec.get("pitcher_columns") or ())
+    try:
+        i_plus = cols.index("plus")
+        i_ip = cols.index("ip_per_gs")
+        i_org = cols.index("org")
+        i_role = cols.index("role")
+    except ValueError:                                           # pragma: no cover
+        return {}
+    out = {}
+    for mid, row in (rec.get("pitchers") or {}).items():
+        if not isinstance(row, list) or len(row) <= max(i_plus, i_ip, i_org, i_role):
+            continue
+        if row[i_plus] is None:
+            continue
+        try:
+            key = int(mid)
+        except (TypeError, ValueError):
+            continue
+        out[key] = {"mlbam": key, "name": None, "org": row[i_org],
+                    "sem_plus": float(row[i_plus]),
+                    "ip_per_gs": float(row[i_ip]) if row[i_ip] else None,
+                    "role": row[i_role] or "SP"}
+    return out
+
+
+def inputs_as_of(game_date: str | None, *, allow_fallback: bool = True) -> dict:
+    """The team and pitcher inputs for a game on `game_date`, from the newest
+    vintage whose knowledge cutoff is STRICTLY BEFORE it.
+
+    Returns a bundle, always, with the provenance attached:
+
+        {"teams": {...}, "starters": {...}, "source": "vintage"|"live-leaderboards",
+         "vintage_date": "2026-08-05"|None, "covers_through": ...|None,
+         "contaminated": bool, "note": "..."}
+
+    THE FALLBACK IS LOUD ON PURPOSE. With no vintage for the date this returns
+    the LIVE season-to-date leaderboards, which contain the game being priced,
+    and says so: `contaminated: True` plus a once-per-process log warning. The
+    fallback is the current behaviour of the whole module, so nothing regresses
+    while the store fills up; what changes is that a caller can no longer be
+    unaware of which one it got. `allow_fallback=False` returns an empty bundle
+    instead, which is what the vintage backtest uses so it cannot accidentally
+    grade a game on contaminated features."""
+    global _VINTAGE_FALLBACK_WARNED
+    lv = _vintage_module()
+    rec = None
+    if lv and game_date:
+        try:
+            rec = lv.as_of(game_date)
+        except Exception:                                        # pragma: no cover
+            rec = None
+    if rec:
+        vd = rec.get("vintage_date")
+        if vd not in _VINTAGE_CACHE:
+            _VINTAGE_CACHE[vd] = (team_inputs_from_vintage(rec),
+                                  starter_inputs_from_vintage(rec))
+        teams, starters = _VINTAGE_CACHE[vd]
+        return {"teams": teams, "starters": starters, "source": "vintage",
+                "vintage_date": vd, "covers_through": rec.get("covers_through"),
+                "contaminated": False,
+                "note": (f"priced on the leaderboard vintage of {vd} "
+                         f"(covers through {rec.get('covers_through')})")}
+    if not allow_fallback:
+        return {"teams": {}, "starters": {}, "source": "none",
+                "vintage_date": None, "covers_through": None, "contaminated": False,
+                "note": f"no leaderboard vintage exists strictly before {game_date}"}
+    if not _VINTAGE_FALLBACK_WARNED:
+        _VINTAGE_FALLBACK_WARNED = True
+        log.warning("betting_model: no leaderboard vintage strictly before %s; "
+                    "falling back to the LIVE season-to-date leaderboards. Any "
+                    "number produced from this read is leakage-contaminated. Run "
+                    "leaderboard_vintages.snapshot() nightly to fix it.", game_date)
+    return {"teams": team_inputs(), "starters": starter_inputs(),
+            "source": "live-leaderboards", "vintage_date": None,
+            "covers_through": None, "contaminated": True,
+            "note": ("no vintage exists strictly before this date, so the live "
+                     "season-to-date leaderboards were used; they contain the game "
+                     "being priced and this number is contaminated")}
+
+
+def _vintage_resolver():
+    """(game) -> (teams, starters) or None. None means the game has no vintage
+    and must be skipped rather than graded on live leaderboards.
+
+    Memoized by GAME DATE inside the closure. The solvers evaluate the whole
+    schedule dozens of times over a grid, and every game on a slate resolves
+    to the same vintage, so this is the difference between a backtest that
+    finishes and one that does not."""
+    by_date: dict[str, tuple | None] = {}
+
+    def _resolve(g):
+        d = g.get("date")
+        if d not in by_date:
+            b = inputs_as_of(d, allow_fallback=False)
+            by_date[d] = ((b["teams"], b["starters"])
+                          if (b["source"] == "vintage" and b["teams"]) else None)
+        return by_date[d]
+    return _resolve
 
 
 # ---------------------------------------------------------------------------
@@ -607,16 +847,27 @@ def completed_games(season: str | None = None) -> list[dict]:
 # ---------------------------------------------------------------------------
 # fitting
 # ---------------------------------------------------------------------------
-def _design_rows(games: list[dict], teams: dict, parks: dict, starters: dict):
-    """Two rows per game (each side as the scoring side) -> (X, y, meta)."""
+def _design_rows(games: list[dict], teams: dict, parks: dict, starters: dict,
+                 resolve=None):
+    """Two rows per game (each side as the scoring side) -> (X, y, meta).
+
+    `resolve(game) -> (teams, starters) | None` swaps in per-game features, so
+    the SAME design code serves the live path and the vintage path. A game the
+    resolver declines is dropped, never quietly graded on the fallback."""
     X, y, meta = [], [], []
     for g in games:
-        h, a = teams.get(g["home_org"]), teams.get(g["away_org"])
+        gt, gs = teams, starters
+        if resolve is not None:
+            got = resolve(g)
+            if not got:
+                continue
+            gt, gs = got
+        h, a = gt.get(g["home_org"]), gt.get(g["away_org"])
         if not h or not a:
             continue
         park = (parks.get(g["home_org"]) or 1.0) - 1.0
-        zp_home, _ = game_prevention_z(h, starters.get(g.get("home_sp")), teams)
-        zp_away, _ = game_prevention_z(a, starters.get(g.get("away_sp")), teams)
+        zp_home, _ = game_prevention_z(h, gs.get(g.get("home_sp")), gt)
+        zp_away, _ = game_prevention_z(a, gs.get(g.get("away_sp")), gt)
         X.append([1.0, h["z_off"], zp_away, park, 1.0])
         y.append(float(g["home_runs"]))
         meta.append((g, "home"))
@@ -627,7 +878,7 @@ def _design_rows(games: list[dict], teams: dict, parks: dict, starters: dict):
 
 
 def fit_coefficients(games: list[dict] | None = None, *, teams=None, parks=None,
-                     starters=None) -> dict | None:
+                     starters=None, resolve=None) -> dict | None:
     """OLS for the five run-scoring coefficients. None when there is nothing to
     fit on (no feed cache), which is what sends `coefficients()` to the
     literature priors."""
@@ -637,9 +888,9 @@ def fit_coefficients(games: list[dict] | None = None, *, teams=None, parks=None,
     parks = parks if parks is not None else park_index()
     starters = starters if starters is not None else starter_inputs()
     games = games if games is not None else completed_games()
-    if not games or not teams:
+    if not games or (not teams and resolve is None):
         return None
-    X, y, _ = _design_rows(games, teams, parks, starters)
+    X, y, _ = _design_rows(games, teams, parks, starters, resolve)
     if len(X) < 200:
         return None
     A, b = np.asarray(X, dtype=float), np.asarray(y, dtype=float)
@@ -656,15 +907,23 @@ def fit_coefficients(games: list[dict] | None = None, *, teams=None, parks=None,
     }
 
 
-def _p_home_series(games, teams, parks, starters, coeffs, tie_home, adj, shrink):
+def _p_home_series(games, teams, parks, starters, coeffs, tie_home, adj, shrink,
+                   resolve=None):
     """(predicted p_home, observed home win) for every game. The inner loop of
-    both solvers, written once so they cannot drift apart."""
+    both solvers and of the grader, written once so they cannot drift apart.
+    `resolve` has the same contract as in `_design_rows`."""
     ps, ys = [], []
     for g in games:
+        gt, gs = teams, starters
+        if resolve is not None:
+            got = resolve(g)
+            if not got:
+                continue
+            gt, gs = got
         gp = game_probabilities(g["home_org"], g["away_org"],
-                                home_sp=starters.get(g.get("home_sp")),
-                                away_sp=starters.get(g.get("away_sp")),
-                                teams=teams, parks=parks, coeffs=coeffs,
+                                home_sp=gs.get(g.get("home_sp")),
+                                away_sp=gs.get(g.get("away_sp")),
+                                teams=gt, parks=parks, coeffs=coeffs,
                                 tie_home=tie_home, home_adj=adj, diff_shrink=shrink)
         if gp:
             ps.append(gp["p_home"])
@@ -673,13 +932,14 @@ def _p_home_series(games, teams, parks, starters, coeffs, tie_home, adj, shrink)
 
 
 def _solve_home_adj(games, teams, parks, starters, coeffs, tie_home, target: float,
-                    shrink: float = 1.0) -> float:
+                    shrink: float = 1.0, resolve=None) -> float:
     """The run-differential shift that makes the model's MEAN home win
     probability equal the observed home win rate. Bisection over a bounded
     interval; one parameter, one target, no free lunch. See the docstring on
     expected_runs for why the raw fit needs it."""
     def mean_p(adj: float) -> float:
-        ps, _ = _p_home_series(games, teams, parks, starters, coeffs, tie_home, adj, shrink)
+        ps, _ = _p_home_series(games, teams, parks, starters, coeffs, tie_home, adj,
+                               shrink, resolve)
         return sum(ps) / len(ps) if ps else 0.5
 
     lo, hi = -0.60, 1.20
@@ -695,7 +955,7 @@ def _solve_home_adj(games, teams, parks, starters, coeffs, tie_home, target: flo
 
 
 def _solve_diff_shrink(games, teams, parks, starters, coeffs, tie_home,
-                       adj: float = 0.0) -> tuple[float, float]:
+                       adj: float = 0.0, resolve=None) -> tuple[float, float]:
     """(shrink, log loss) minimizing log loss over a coarse-to-fine grid.
 
     ONE parameter. A value below 1 means the linear predictor spread the
@@ -704,7 +964,8 @@ def _solve_diff_shrink(games, teams, parks, starters, coeffs, tie_home,
     themselves shrunk estimates, and stacking them recovers less signal than
     their spread implies."""
     def ll(s: float) -> float:
-        ps, ys = _p_home_series(games, teams, parks, starters, coeffs, tie_home, adj, s)
+        ps, ys = _p_home_series(games, teams, parks, starters, coeffs, tie_home, adj, s,
+                                resolve)
         return _logloss(ps, ys) if ps else 9.9
 
     best_s, best_l = 1.0, ll(1.0)
@@ -796,6 +1057,44 @@ def _logloss(ps: list[float], ys: list[int]) -> float:
                 for p, y in zip(ps, ys)) / max(1, len(ps))
 
 
+def _paired_brier_skill(ps: list[float], ys: list[int], base: float) -> dict:
+    """Is the model's Brier better than a constant baseline's, and by enough?
+
+    The pairing matters. Comparing two Brier scores game by game removes the
+    game-to-game variance that dominates a raw difference of means, which is
+    the only reason a 0.006 margin is measurable at all. d_i is positive when
+    the model beat the baseline on that game.
+
+        delta   mean of d_i (positive = the model is better)
+        t       delta / standard error
+        beats_baseline_95  t >= 1.645, i.e. the one-sided 95% lower bound on
+                           delta clears zero
+
+    `n_for_95` is how many games a margin THIS SIZE would need to reach that
+    bar, which is where VINTAGE_MIN_GRADED_GAMES came from."""
+    n = len(ps)
+    if n < 2:
+        return {"delta": None, "sd": None, "t": None,
+                "beats_baseline_95": False, "n_for_95": None}
+    d = [((base - y) ** 2) - ((p - y) ** 2) for p, y in zip(ps, ys)]
+    mu = sum(d) / n
+    var = sum((x - mu) ** 2 for x in d) / n
+    sd = math.sqrt(var)
+    se = sd / math.sqrt(n) if sd else 0.0
+    t = (mu / se) if se else None
+    return {
+        "delta": round(mu, 6),
+        "sd": round(sd, 5),
+        "t": round(t, 3) if t is not None else None,
+        "beats_baseline_95": bool(t is not None and t >= Z_95_ONE_SIDED),
+        "n_for_95": (round((Z_95_ONE_SIDED * sd / mu) ** 2) if (sd and mu > 0) else None),
+        "baseline": round(base, 4),
+        "note": ("paired per-game Brier difference against the constant home-field "
+                 "baseline; positive means the model is better, and t >= 1.645 is the "
+                 "one-sided 95% bar"),
+    }
+
+
 def _calibration(ps: list[float], ys: list[int], bins: int = 10) -> list[dict]:
     out = []
     for i in range(bins):
@@ -809,25 +1108,183 @@ def _calibration(ps: list[float], ys: list[int], bins: int = 10) -> list[dict]:
     return out
 
 
+def sweep_min_edge(rows: list[dict], *, grid=None, z: float = Z_95_ONE_SIDED,
+                   min_bets: int = 100) -> dict:
+    """The smallest edge threshold whose graded ROI lower bound clears zero.
+
+    `rows` are SETTLED bets: {"edge": model minus de-vigged fair, "decimal":
+    the price taken, "won": bool}. For each candidate threshold the qualifying
+    bets are re-graded at flat 1 unit, and the threshold is accepted only when
+
+        mean(profit) - z * stderr(profit) > 0
+
+    which is a one-sided 95% lower bound on ROI per unit risked. The SMALLEST
+    qualifying threshold wins, because a higher one is a smaller sample
+    pretending to be a stronger result.
+
+    Returns {"min_edge": float|None, "reason": str, "candidates": [...]}.
+    None is the normal answer and stays the answer until a graded price
+    history exists: this module has never held one, since the odds ingest only
+    started caching snapshots and nothing has settled against them yet."""
+    grid = list(grid) if grid is not None else [round(0.005 * i, 3) for i in range(1, 21)]
+    if not rows:
+        return {"min_edge": None, "n_rows": 0, "candidates": [],
+                "reason": ("no settled bets with both a model edge and a taken price; "
+                           "the threshold cannot be swept on data that does not exist")}
+    cands = []
+    for thr in sorted(grid):
+        sel = [r for r in rows
+               if r.get("edge") is not None and float(r["edge"]) >= thr
+               and _pos(r.get("decimal"))]
+        n = len(sel)
+        if n < min_bets:
+            cands.append({"edge": thr, "n": n, "qualified": False,
+                          "reason": f"n < {min_bets}"})
+            continue
+        profits = [(float(r["decimal"]) - 1.0) if r.get("won") else -1.0 for r in sel]
+        mu = sum(profits) / n
+        var = sum((p - mu) ** 2 for p in profits) / n
+        se = math.sqrt(var / n) if var else 0.0
+        lower = mu - z * se
+        cands.append({"edge": thr, "n": n, "roi": round(mu, 5),
+                      "roi_lower_95": round(lower, 5), "qualified": bool(lower > 0)})
+    ok = [c for c in cands if c.get("qualified")]
+    if not ok:
+        return {"min_edge": None, "n_rows": len(rows), "candidates": cands,
+                "reason": ("no edge threshold produced an ROI whose one-sided 95% lower "
+                           "bound clears zero on the graded sample")}
+    best = ok[0]
+    return {"min_edge": best["edge"], "n_rows": len(rows), "candidates": cands,
+            "reason": (f"smallest threshold whose graded ROI lower bound clears zero "
+                       f"(n={best['n']}, ROI {best['roi']:+.3f}, "
+                       f"lower bound {best['roi_lower_95']:+.3f})")}
+
+
+def _odds_history_dates() -> list[str]:
+    """Dates with at least one cached odds snapshot. Filenames only, so this
+    costs nothing and never parses a snapshot."""
+    d = ROOT / ".cache" / "odds"
+    if not d.exists():
+        return []
+    return sorted({p.name[:10] for p in d.glob("*.json") if len(p.name) >= 10})
+
+
+def min_edge_gate(vintage_block: dict | None, *, graded_bets: list[dict] | None = None) -> dict:
+    """Whether `min_edge` may be set at all, and what it is if so.
+
+    THREE GATES, all of which must be open. Every one of them is currently
+    closed, and the honest thing is to say which:
+
+      1. VINTAGE SAMPLE. The vintage-mode backtest must have graded at least
+         VINTAGE_MIN_GRADED_GAMES games. See that constant for the derivation:
+         it is the n at which the observed (contaminated, therefore optimistic)
+         margin over the home-field baseline would be detectable at one-sided
+         95%.
+      2. OUT-OF-SAMPLE SKILL. On that sample, the paired Brier difference
+         against the home-field baseline must clear zero at one-sided 95%.
+         Sample size alone is not evidence; this is the actual claim.
+      3. A GRADED PRICE HISTORY. A threshold is a statement about EV against
+         real prices, so it can only be swept on settled bets with a taken
+         price. Cached odds snapshots accumulate nightly alongside the
+         vintages, and the join that produces settled rows is not built yet.
+
+    Gate 3 is why `min_edge` would still be None on the day gates 1 and 2 open:
+    a calibrated probability is not an edge until there is a market to have an
+    edge against."""
+    vb = vintage_block or {}
+    n_graded = int(vb.get("n_graded") or 0)
+    skill = vb.get("skill_vs_home_base") or {}
+    odds_dates = _odds_history_dates()
+    rows = list(graded_bets or [])
+    sweep = sweep_min_edge(rows)
+
+    gates = [
+        {"id": "vintage_sample",
+         "need": f"{VINTAGE_MIN_GRADED_GAMES} vintage-graded games",
+         "have": n_graded,
+         "open": n_graded >= VINTAGE_MIN_GRADED_GAMES,
+         "why": ("the contaminated forward margin over the home-field baseline is "
+                 "+0.005794 Brier with a paired sd of 0.08647, so a margin that size "
+                 "needs 603 games to clear one-sided 95%; 600 is that number, and a "
+                 "clean margin will be smaller, so this is a floor and not a pass")},
+        {"id": "out_of_sample_skill",
+         "need": "paired Brier vs the home-field baseline, t >= 1.645",
+         "have": skill.get("t"),
+         "open": bool(skill.get("beats_baseline_95")),
+         "why": ("sample size is not evidence; the model has to actually beat "
+                 "'always take the home team' on games it could not see")},
+        {"id": "graded_price_history",
+         "need": ("settled bets with a taken price, enough that some edge threshold "
+                  "clears an ROI lower bound of zero on at least 100 of them"),
+         "have": len(rows),
+         "open": bool(sweep.get("min_edge") is not None),
+         "why": ("an edge threshold is a claim about EV against real prices; "
+                 f"{len(odds_dates)} dates of odds snapshots are cached and no "
+                 "settled-bet join exists yet")},
+    ]
+    all_open = all(g["open"] for g in gates)
+    return {
+        "min_edge": sweep.get("min_edge") if all_open else None,
+        "all_gates_open": all_open,
+        "gates": gates,
+        "odds_snapshot_dates": len(odds_dates),
+        "sweep": {k: sweep[k] for k in ("n_rows", "reason") if k in sweep},
+        "policy": ("min_edge stays null until all three gates are open. A threshold "
+                   "invented to make a pick appear is the single most dishonest number "
+                   "this module could publish."),
+    }
+
+
+def _fit_tie_home(fit_games: list[dict]) -> float:
+    """The extra-innings home win rate measured on a FIT window only, shrunk
+    toward a coin flip on the same 100-game prior build_context uses. Falls
+    back to the literature constant when the window has no extra-inning games,
+    never to a season-wide number the eval window helped produce."""
+    extras = [g for g in fit_games if (g.get("innings") or 9) > 9]
+    if not extras:
+        return LITERATURE_TIE_HOME
+    wins = sum(1 for g in extras if g["home_runs"] > g["away_runs"])
+    return (wins + 0.5 * TIE_SHRINK_K) / (len(extras) + TIE_SHRINK_K)
+
+
 def backtest(*, season: str | None = None, split_date: str | None = None,
              write: bool = True, log_fn=None) -> dict:
-    """Grade the model on completed games. Runs entirely offline.
+    """Grade the model on completed games, in BOTH modes, offline.
 
-    THE HONESTY BLOCK, and it is the reason no pick ships off this number:
-    the team inputs (offense_plus / rotation_plus / bullpen_plus / SEM+) are
-    SEASON-TO-DATE aggregates as of the last leaderboard build. Every game
-    graded here contributed to the features used to predict it. `forward`
-    additionally refits the coefficients on games before `split_date` and
-    grades only games after it, which removes coefficient leakage but NOT
-    feature leakage. Both numbers are reported; both are labelled
-    contaminated; `validated` is False in every branch until vintage-dated
-    team inputs exist.
+    MODE 1, CONTAMINATED (`in_sample`, `forward`). The team inputs
+    (offense_plus / rotation_plus / bullpen_plus / SEM+) are SEASON-TO-DATE
+    aggregates as of the last leaderboard build, so every game graded here
+    contributed to the features used to predict it. `forward` refits the
+    coefficients on games before `split_date` and grades only games after it,
+    which removes coefficient leakage but NOT feature leakage. Both are
+    reported, both carry `mode: "contaminated"`, and neither can validate
+    anything.
+
+    MODE 2, VINTAGE (`vintage`). Each game is priced on the newest
+    leaderboard vintage whose knowledge cutoff is strictly before it
+    (leaderboard_vintages.as_of). Games with no such vintage are SKIPPED, not
+    graded on the fallback, and the count of skipped games is reported. Until
+    the nightly snapshot has been running, that is every game and the honest n
+    is zero. When the sample is large enough the coefficients and both
+    one-parameter corrections are refit inside the vintage window too, on
+    vintage features, so the mode leaks nothing at all.
+
+    `validated` is False, `gates_picks` is False and `min_edge` is None until
+    the vintage mode carries the sample AND the skill AND a graded price
+    history; `min_edge_gate` reports which of the three is missing.
 
     Baselines are what make the number readable: 0.500 flat, and the measured
     home-field rate. A model that cannot beat "always take the home team" has
     not earned a page."""
     games = completed_games(season)
     teams, parks, starters = team_inputs(), park_index(), starter_inputs()
+    lv = _vintage_module()
+    cov = {}
+    if lv:
+        try:
+            cov = lv.coverage()
+        except Exception:                                        # pragma: no cover
+            cov = {}
     result = {
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "model_version": MODEL_VERSION,
@@ -840,34 +1297,50 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
         "gates_picks": False,
         "min_edge": None,
         "n_games": len(games),
+        "modes": ["contaminated", "vintage"],
+        "headline_mode": "contaminated",
+        "vintage_coverage": cov,
     }
     if not games or not teams:
         result["status"] = "no data"
         result["note"] = ("no completed-game cache and/or no leaderboards; run "
                           "betting_model.build_game_cache() on a box that has "
                           ".cache/game_feeds")
+        result["vintage"] = _empty_vintage_block(cov, len(games))
+        result["min_edge_gate"] = min_edge_gate(result["vintage"])
         if write:
             EVAL_PATH.write_text(json.dumps(result, indent=1), encoding="utf-8")
         return result
 
-    def _grade(fit_games, eval_games, label):
-        coeffs = fit_coefficients(fit_games, teams=teams, parks=parks, starters=starters) \
-            or dict(LITERATURE_COEFFS)
-        tie = (league_context().get("extra_inning_home_rate") or LITERATURE_TIE_HOME)
+    def _grade(fit_games, eval_games, label, mode, resolve=None):
+        coeffs = fit_coefficients(fit_games, teams=teams, parks=parks, starters=starters,
+                                  resolve=resolve) or dict(LITERATURE_COEFFS)
+        # The extra-innings home rate is measured on the FIT window too. It used
+        # to come from league_context(), which is fitted over the WHOLE season:
+        # a small leak (one shrunk scalar off ~140 games) but a real one, and a
+        # mode that calls itself honest cannot carry it.
+        tie = _fit_tie_home(fit_games)
         # The home-field reconciliation is refit on the FIT window too, so the
         # forward split does not smuggle the evaluation window's home rate in
         # through the back door.
         fit_home_rate = (sum(1 for g in fit_games if g["home_runs"] > g["away_runs"])
                          / max(1, len(fit_games)))
-        shrink, _ = _solve_diff_shrink(fit_games, teams, parks, starters, coeffs, tie, 0.0)
+        shrink, _ = _solve_diff_shrink(fit_games, teams, parks, starters, coeffs, tie, 0.0,
+                                       resolve)
         adj = _solve_home_adj(fit_games, teams, parks, starters, coeffs, tie,
-                              fit_home_rate, shrink)
+                              fit_home_rate, shrink, resolve)
         ps, ys, tot_err, n_tot = [], [], 0.0, 0
         for g in eval_games:
+            gt, gs = teams, starters
+            if resolve is not None:
+                got = resolve(g)
+                if not got:
+                    continue
+                gt, gs = got
             gp = game_probabilities(g["home_org"], g["away_org"],
-                                    home_sp=starters.get(g.get("home_sp")),
-                                    away_sp=starters.get(g.get("away_sp")),
-                                    teams=teams, parks=parks, coeffs=coeffs, tie_home=tie,
+                                    home_sp=gs.get(g.get("home_sp")),
+                                    away_sp=gs.get(g.get("away_sp")),
+                                    teams=gt, parks=parks, coeffs=coeffs, tie_home=tie,
                                     home_adj=adj, diff_shrink=shrink)
             if not gp:
                 continue
@@ -880,10 +1353,13 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
         base_home = sum(ys) / len(ys)
         return {
             "label": label,
+            "mode": mode,
+            "honest": mode == "vintage",
             "n": len(ps),
             "coefficients": coeffs,
             "home_field_runs_adj": adj,
             "diff_shrink": shrink,
+            "extra_inning_home_rate": round(tie, 4),
             "brier": round(_brier(ps, ys), 5),
             "brier_flat_500": round(_brier([0.5] * len(ps), ys), 5),
             "brier_home_base": round(_brier([base_home] * len(ps), ys), 5),
@@ -894,10 +1370,14 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
             "home_win_rate": round(base_home, 4),
             "mean_p_home": round(sum(ps) / len(ps), 4),
             "total_mae": round(tot_err / n_tot, 3) if n_tot else None,
+            "skill_vs_home_base": _paired_brier_skill(ps, ys, base_home),
             "calibration": _calibration(ps, ys),
         }
 
-    result["in_sample"] = _grade(games, games, "in-sample (coefficients and features both leak)")
+    # --- mode 1: contaminated -------------------------------------------
+    result["in_sample"] = _grade(games, games,
+                                 "in-sample (coefficients and features both leak)",
+                                 "contaminated")
     dates = sorted({g["date"] for g in games if g.get("date")})
     sd = split_date or (dates[int(len(dates) * 0.7)] if len(dates) > 20 else None)
     if sd:
@@ -907,16 +1387,122 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
             result["split_date"] = sd
             result["forward"] = _grade(fit_g, ev_g,
                                        f"forward from {sd} (coefficient leakage removed, "
-                                       "feature leakage remains)")
+                                       "feature leakage remains)",
+                                       "contaminated")
+
+    # --- mode 2: vintage --------------------------------------------------
+    result["vintage"] = _grade_vintage(games, cov, _grade, log_fn=log_fn)
+    result["min_edge_gate"] = min_edge_gate(result["vintage"])
+    result["min_edge"] = result["min_edge_gate"]["min_edge"]
+    result["gates_picks"] = bool(result["min_edge"] is not None)
+    result["validated"] = bool(result["min_edge_gate"]["all_gates_open"])
+    result["contaminated"] = not result["validated"]
+    result["headline_mode"] = "vintage" if result["validated"] else "contaminated"
+
     result["status"] = "ran"
-    result["note"] = ("A pick threshold is NOT set from these numbers. Publishing a pick "
-                      "needs vintage-dated team inputs and a clean forward test.")
+    result["note"] = ("Two modes, both labelled. The in-sample and forward numbers are "
+                      "CONTAMINATED: their features are season-to-date leaderboards that "
+                      "contain the games being graded. The vintage number is the honest "
+                      f"one and it graded {result['vintage'].get('n_graded', 0)} games. "
+                      "A pick threshold is set from the vintage mode or from nothing.")
     if write:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         EVAL_PATH.write_text(json.dumps(result, indent=1), encoding="utf-8")
         if log_fn:
-            log_fn(f"betting_model: wrote {EVAL_PATH.name}")
+            log_fn(f"betting_model: wrote {EVAL_PATH.name} "
+                   f"(vintage-graded {result['vintage'].get('n_graded', 0)} of "
+                   f"{len(games)} games)")
     return result
+
+
+def _empty_vintage_block(cov: dict, n_games: int) -> dict:
+    return {
+        "label": "vintage (each game priced on leaderboards dated strictly before it)",
+        "mode": "vintage",
+        "honest": True,
+        "status": "no vintages",
+        "n_vintages": int((cov or {}).get("n_vintages") or 0),
+        "n_gradable": 0,
+        "n_graded": 0,
+        "n_skipped_no_vintage": n_games,
+        "min_fit_games": VINTAGE_MIN_FIT_GAMES,
+        "min_eval_games": VINTAGE_MIN_EVAL_GAMES,
+        "min_graded_games_for_min_edge": VINTAGE_MIN_GRADED_GAMES,
+        "note": ("no completed game has a leaderboard vintage dated strictly before it, "
+                 "so the honest sample is empty; run leaderboard_vintages.snapshot() "
+                 "nightly and this number starts climbing"),
+    }
+
+
+def _vintage_cut_index(gradable: list[dict], dates: list[str]) -> int:
+    """The index in `dates` where the fit window ends and the eval window
+    begins. Whole slates never straddle the boundary, because the split is by
+    date. See VINTAGE_FIT_TARGET_GAMES for why this is a target size rather
+    than a share."""
+    per_date: dict[str, int] = {}
+    for g in gradable:
+        per_date[g.get("date")] = per_date.get(g.get("date"), 0) + 1
+    cum, target_idx = 0, len(dates) - 1
+    for i, d in enumerate(dates):
+        cum += per_date.get(d, 0)
+        if cum >= VINTAGE_FIT_TARGET_GAMES:
+            target_idx = i + 1
+            break
+    half_idx = max(1, int(len(dates) * VINTAGE_FIT_MAX_DATE_SHARE))
+    return max(1, min(target_idx, half_idx, len(dates) - 1))
+
+
+def _grade_vintage(games: list[dict], cov: dict, grade_fn, *, log_fn=None) -> dict:
+    """The honest mode. Grades only games that have a vintage strictly before
+    them, and refits everything inside that window on vintage features.
+
+    The split is by DATE, not by row, so no two games from the same slate land
+    on opposite sides of the fit/eval boundary."""
+    reset_vintage_cache()
+    block = _empty_vintage_block(cov, len(games))
+    resolve = _vintage_resolver()
+    gradable = [g for g in games if resolve(g)]
+    block["n_gradable"] = len(gradable)
+    block["n_skipped_no_vintage"] = len(games) - len(gradable)
+    if not gradable:
+        return block
+    dates = sorted({g.get("date") for g in gradable if g.get("date")})
+    block["first_graded_date"] = dates[0] if dates else None
+    block["last_graded_date"] = dates[-1] if dates else None
+    need = VINTAGE_MIN_FIT_GAMES + VINTAGE_MIN_EVAL_GAMES
+    if len(gradable) < need or len(dates) < 4:
+        block["status"] = "insufficient vintage coverage"
+        block["note"] = (f"{len(gradable)} games have a vintage; the honest mode needs at "
+                         f"least {need} to split into a fit and an eval window, and "
+                         f"{VINTAGE_MIN_GRADED_GAMES} graded before min_edge may be fitted")
+        return block
+    cut = dates[_vintage_cut_index(gradable, dates)]
+    fit_g = [g for g in gradable if (g.get("date") or "") < cut]
+    ev_g = [g for g in gradable if (g.get("date") or "") >= cut]
+    if len(fit_g) < VINTAGE_MIN_FIT_GAMES or len(ev_g) < VINTAGE_MIN_EVAL_GAMES:
+        block["status"] = "insufficient vintage coverage"
+        block["note"] = (f"vintage split at {cut} leaves {len(fit_g)} fit and {len(ev_g)} "
+                         f"eval games, below the {VINTAGE_MIN_FIT_GAMES}/"
+                         f"{VINTAGE_MIN_EVAL_GAMES} floors")
+        return block
+    graded = grade_fn(fit_g, ev_g,
+                      f"vintage forward from {cut} (features dated strictly before each "
+                      "game; no leakage)", "vintage", resolve)
+    if not graded:                                               # pragma: no cover
+        block["status"] = "insufficient vintage coverage"
+        block["note"] = "the vintage split produced no gradable rows"
+        return block
+    block.update(graded)
+    block["status"] = "graded"
+    block["split_date"] = cut
+    block["n_graded"] = graded["n"]
+    block["note"] = (f"{graded['n']} games graded on vintage features; "
+                     f"{VINTAGE_MIN_GRADED_GAMES} are needed before min_edge may be "
+                     "fitted, and the paired-Brier gate must also clear")
+    if log_fn:
+        log_fn(f"betting_model: vintage mode graded {graded['n']} games "
+               f"(brier {graded['brier']} vs home base {graded['brier_home_base']})")
+    return block
 
 
 if __name__ == "__main__":                                       # pragma: no cover
@@ -926,6 +1512,8 @@ if __name__ == "__main__":                                       # pragma: no co
     ap = argparse.ArgumentParser(description="MLB game probability model (eephus.io).")
     ap.add_argument("--context", action="store_true", help="fit + write betting_model_context.json")
     ap.add_argument("--backtest", action="store_true", help="grade on completed games (offline)")
+    ap.add_argument("--gate", action="store_true",
+                    help="the min_edge gate state off the last backtest artifact")
     ap.add_argument("--game", nargs=2, metavar=("AWAY", "HOME"), help="price one matchup")
     ap.add_argument("--season", default=None)
     args = ap.parse_args()
@@ -934,12 +1522,25 @@ if __name__ == "__main__":                                       # pragma: no co
         print(json.dumps(build_context(season=args.season, log_fn=print), indent=1))
     if args.backtest:
         r = backtest(season=args.season, log_fn=print)
-        for k in ("in_sample", "forward"):
-            if r.get(k):
-                b = r[k]
-                print(f"  {b['label']}: n={b['n']} brier={b['brier']} "
-                      f"(flat .500 {b['brier_flat_500']}, home-base {b['brier_home_base']}) "
-                      f"acc={b['accuracy']} total MAE={b['total_mae']}")
+        for k in ("in_sample", "forward", "vintage"):
+            b = r.get(k)
+            if not b or b.get("n") is None:
+                continue
+            print(f"  [{b.get('mode')}] {b['label']}: n={b['n']} brier={b['brier']} "
+                  f"(flat .500 {b['brier_flat_500']}, home-base {b['brier_home_base']}) "
+                  f"acc={b['accuracy']} total MAE={b['total_mae']} "
+                  f"skill t={(b.get('skill_vs_home_base') or {}).get('t')}")
+        v = r.get("vintage") or {}
+        print(f"  vintage coverage: {v.get('n_vintages', 0)} snapshots, "
+              f"{v.get('n_graded', 0)} of {r.get('n_games', 0)} games gradable "
+              f"({v.get('status')})")
+        print(f"  min_edge: {r.get('min_edge')}")
+        for g in (r.get("min_edge_gate") or {}).get("gates") or []:
+            print(f"    gate {g['id']}: {'OPEN' if g['open'] else 'closed'} "
+                  f"(have {g['have']}, need {g['need']})")
+    if args.gate:
+        ev = _load_json(EVAL_PATH) or {}
+        print(json.dumps(min_edge_gate(ev.get("vintage")), indent=1))
     if args.game:
         away, home = _org(args.game[0]), _org(args.game[1])
         gp = game_probabilities(home, away)
