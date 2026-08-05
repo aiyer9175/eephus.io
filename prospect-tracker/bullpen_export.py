@@ -93,13 +93,48 @@ def _get_json(path: str, params: dict) -> dict:
     return resp.json()
 
 
+_TMAP_CACHE = Path(__file__).parent / ".cache" / "team_abbrev_map.json"
+
+
 @functools.lru_cache(maxsize=1)
 def _team_abbrev_map() -> dict:
+    """Team id -> abbreviation, with a LAST-GOOD disk fallback.
+
+    This used to return {} on any failure, which looked safe and was not. The
+    map is joined onto every hitter and reliever row, so an empty map does not
+    degrade gracefully - it blanks EVERY player's team, which makes the team
+    rollup produce zero team offenses, which silently drops Offense+ back to the
+    neutral 100 for every opponent on the streamer board and every DFS matchup.
+    Measured 2026-08-05: one failed fetch turned 30 team offenses into 0 and
+    nothing in the run reported an error, because "no teams" is indistinguishable
+    from "no data yet" to every consumer downstream.
+    The mapping is essentially static (30 clubs, changes on a rebrand), so the
+    correct failure behavior is the one `_active_mlbam_ids` below already uses:
+    never break the board. We persist the last good map and serve it when the
+    fetch fails, and only return {} when we have never succeeded at all."""
     try:
         data = _get_json("teams", {"sportId": 1})
-        return {t["id"]: t.get("abbreviation") for t in data.get("teams", [])}
+        m = {t["id"]: t.get("abbreviation") for t in data.get("teams", []) if t.get("id")}
+        if m:
+            try:
+                _TMAP_CACHE.parent.mkdir(parents=True, exist_ok=True)
+                _TMAP_CACHE.write_text(json.dumps(m), encoding="utf-8")
+            except OSError:
+                pass                       # cache is an optimization, not a contract
+            return m
+        _log.warning("team abbreviation map came back EMPTY; falling back to cache")
     except Exception as e:
-        _log.warning("team abbreviation map fetch failed: %s", e)
+        _log.warning("team abbreviation map fetch failed (%s); falling back to cache", e)
+    try:
+        cached = json.loads(_TMAP_CACHE.read_text(encoding="utf-8"))
+        # json object keys are strings; the callers join on int team ids
+        m = {int(k): v for k, v in cached.items()}
+        _log.warning("team abbreviation map served from cache (%d clubs) - team "
+                     "offenses and Offense+ would otherwise have been blank", len(m))
+        return m
+    except Exception:
+        _log.error("team abbreviation map unavailable AND uncached: every team "
+                   "rollup this run will be empty and Offense+ will read 100")
         return {}
 
 
