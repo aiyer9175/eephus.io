@@ -5,6 +5,16 @@
 **Status of the DB:** untouched. Every number came from a `sqlite mode=ro` handle.
 **Harness:** `tools/draft_anchor_dryrun.py`
 
+> **OUTCOME, 2026-08-05: RETIRED.** The owner accepted this recommendation and
+> `draft_anchor_backfill.py` was deleted from the tree. The backfill was written,
+> never executed, and is now closed. This page is the permanent record of why, in
+> the same spirit as the model registry's loss ledgers: the lane is refused on
+> evidence, not forgotten, so nobody rebuilds it from the same premise. The 2,608
+> players on a fabricated FV 35 remain a real and open coverage gap; what is
+> settled is that seeding prior-class draft-board grades is not the fix. The
+> harness at `tools/draft_anchor_dryrun.py` is kept so the measurement can be
+> re-run if the premise ever changes.
+
 ---
 
 ## Recommendation: RETIRE, or at minimum do not apply as written
