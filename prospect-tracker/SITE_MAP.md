@@ -19,11 +19,16 @@ fetch strings.
 | 6 | `mlbstats` | MLB Stats | `/mlbstats/` | MLB Modules |
 | 7 | `pal` | Alchemy Lab | `/pal/` | MLB Modules |
 | 8 | `trademachine` | Trade Machine | `/trademachine/` | MLB Modules |
-| 9 | `fantasy` | Fantasy | `/fantasy/` | MLB Modules |
-| 10 | `articles` | Articles | `/articles/` | - |
-| 11 | `forums` | Forums | `/forums/` | - |
-| 12 | `glossary` | Glossary | `/glossary/` | - |
-| 13 | `team` | Developers | `/team/` | - |
+| 9 | `dynasty` | Dynasty | `/dynasty/` | Diamond |
+| 10 | `redraft` | Redraft | `/redraft/` | Diamond |
+| 11 | `dfs` | DFS | `/dfs/` | Diamond |
+| 12 | `betting` | Sports Betting | `/betting/` | Diamond |
+| 13 | `cards` | Card Market | `/cards/` | Diamond |
+| 14 | `diamond` | Diamond Pass | `/diamond/` | Diamond |
+| 15 | `articles` | Articles | `/articles/` | - |
+| 16 | `forums` | Forums | `/forums/` | - |
+| 17 | `glossary` | Glossary | `/glossary/` | - |
+| 18 | `team` | Developers | `/team/` | - |
 
 ## PROSPX sub-sections (`build_site.PROSPX_SUBNAV`)
 
@@ -64,7 +69,13 @@ column below lists only what the surface's own module app fetches.
 | `/mlbstats/` | `build_site.build_mlbstats()` | `assets/mlbstats.js` | `bullpen_history.json`, `bullpen_leaderboards.json`, `hitter_history.json`, `hitter_leaderboards.json`, `leverage_consistency_eval.json`, `leverage_history.json`, `leverage_leaderboards.json`, `starter_history.json`, `starter_leaderboards.json` | MLB Stats: Bullpen Leaderboards / REM+ |
 | `/pal/` | `build_site.build_pal()` | `assets/pal.js` | `pal.json`, `player_links.json`, `positional_fit_ui.json` | Alchemy Lab |
 | `/trademachine/` | `build_site.build_trademachine()` | `assets/trademachine.js` | `grpo_public.json`, `grpo_scores.json`, `mlb_player_detail.json`, `trade_machine_eval.json`, `trade_values.json` | Trade Machine (Bayesian trade board + one-currency deal evaluator) |
-| `/fantasy/` | `build_site.build_fantasy()` | `assets/fantasy.js` | `fantasy.json` | Fantasy: ROS rankings + daily streamers, multi-format (Ottoneu) scoring |
+| `/fantasy/` | `build_site.build_fantasy()` | server-rendered | - | Fantasy: ROS rankings + daily streamers, multi-format (Ottoneu) scoring |
+| `/dynasty/` | `build_site.build_dynasty()` | `assets/dynasty.js` | `fantasy.json` |  |
+| `/redraft/` | `build_site.build_redraft()` | `assets/redraft.js` | `fantasy.json` |  |
+| `/dfs/` | `build_site.build_dfs()` | `assets/dfs.js` | `dfs.json` |  |
+| `/betting/` | `build_site.build_betting()` | `assets/betting.js` | `betting.json`, `betting_preview.json`, `betting_record.json` |  |
+| `/cards/` | `build_site.build_cards()` | `assets/cards.js` | `card_market.json`, `card_watchlist.json`, `player_links.json` |  |
+| `/diamond/` | `build_site.build_diamond()` | `assets/diamond.js` | `betting_record.json`, `xfv_scoreboard_eval.json` |  |
 | `/parks/` | `build_site.build_parks()` | `assets/parks.js` | `milb_park_factors.json`, `xfv_park_line_eval.json` | MiLB Park Factors reference table (display only; the eFV park-line lane stays gated off) |
 | `/glossary/` | `build_site.build_glossary()` | `assets/glossary.js` | `glossary.json`, `model_registry.json`, `source_backtest.json`, `source_weights.json`, `xfv_provisional_prior_eval.json`, `xfv_reliability.json`, `xfv_scoreboard_eval.json`, `xfv_statcast_line_eval.json`, `xfv_valuation_curve.json` | Unified glossary + methodology / model accountability |
 | `/teams/` | `build_site.build_teams_redirect()` | server-rendered | - | redirect stub: the old Teams module now lives in /projections/ Team Outlook |

@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-08-04**. `validate()` at generation time: **clean**.
 
-**208 models.** Verdicts: validated: 36, provisional: 74, unvalidated: 27, deprecated: 71.
+**211 models.** Verdicts: validated: 36, provisional: 74, unvalidated: 30, deprecated: 71.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -218,6 +218,9 @@ stamped as of **2026-08-04**. `validate()` at generation time: **clean**.
 | `xfv_level_blend_arms` | model-dev artifact (rendered nowhere) - loss ledger | n/a - gated experiment: exposure-weighted multi-level blending of the eFV rate features (rates arm), plus anchoring to the most... | shipped single-level feature build (efv_dataset LEVEL_BLEND_* all False), unc... | flags-off rebuild verified BYTE-IDENTICAL to the shipped xfv_hitter_matrix.js... | forward-chained pooled blend Spearman vs MDE95 0.017 hit / 0.016 pit, with pa... | **deprecated** | `data/xfv_level_blend_arms_eval.json` | 1 | no |
 | `eta_age_continuous` | model-dev artifact (rendered nowhere) - loss ledger | n/a - gated experiment: continuous age ramp replacing the ETA staircase (C3-ETA, implemented default OFF 2026-07-30, KM gate ow... | shipped v39 BASE_YEARS staircase (eta.py), unchanged | champion staircase on identical rows, n=3,450 scored | the criterion the v39 ETA ship was decided on: forward-chained debuted MAE an... | **deprecated** | `data/eta_age_continuous_eval.json` | 1 | no |
 | `ewar` | none - NOTHING consumes eWAR. data/ewar.json + data/ewar_... | eephus WAR v2: player-season wins above replacement on the Baseball-Reference run frame with ONE component replaced - pitching... | bWAR (pybaseball bwar_bat / bwar_pitch), which remains the ONE WAR source sit... | bWAR on identical rows, identical window, identical replacement re-derivation | gate 1 team wins 2016-2025 (300 team-seasons, r and zero-parameter MAE); gate... | **provisional** | `data/ewar_eval.json` | 0 | no |
+| `betting_game_prob` | /betting/ | MLB game win probability, runline cover and fair total from team Offense+ (HEM+ rollup), team Bullpen+ (REM+), the listed proba... | betting_runs_v1: OLS run-scoring fit (b0 4.490, b1 0.283, b2 -0.326, b3 3.211... | flat 0.500 and the measured season home-win base rate 0.5232 | Brier / log loss / 10-bin calibration on completed games; fair-total MAE | **unvalidated** | - | - | - |
+| `card_market_index` | /cards/ Baseball Card Market (card_market_export.py -> da... | per-card eephus Card Index (grade-mix adjusted trimmed median of public sold comps in a rolling 45-day window), its trend vs th... | card_index_v1 (descriptive index) + gap screen v1 (talent percentile minus pr... | none run yet; pre-registered baselines are a zero-information control (gap pe... | pre-registered: Spearman rho of gap vs forward 90-day index return, plus deci... | **unvalidated** | - | - | - |
+| `dfs_slate_pricing` | /dfs/ | per-game DFS fantasy points for tonight's probable starters and for the hitters whose clubs are on the slate | rest-of-season engine line re-scaled to one game (start-rate split) with an i... | the same rest-of-season line divided by remaining team games, matchup-neutral | none yet; no scored slate history exists, and the module accumulates its own... | **unvalidated** | - | - | - |
 
 Stored problems at last refresh: none.
 
