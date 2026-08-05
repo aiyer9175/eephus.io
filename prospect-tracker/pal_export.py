@@ -192,11 +192,12 @@ def load_pitch_hand(season: int) -> dict:
 def load_bref_pitcher_war() -> dict:
     """{year: {mlbam: bWAR}} - Baseball-Reference pitcher WAR by season, summed
     across in-season stints (traded pitchers), for the "WAR produced by
-    conversion" read. One bulk pull (pybaseball.bwar_pitch); best-effort, {} on
-    any failure so the history still renders without the WAR column."""
+    conversion" read. One bulk pull (war_source.stint_frame('pit'), provider
+    'bwar' = pybaseball.bwar_pitch); best-effort, {} on any failure so the
+    history still renders without the WAR column."""
     try:
-        import pybaseball as pyb
-        df = pyb.bwar_pitch(return_all=True)
+        import war_source
+        df = war_source.stint_frame("pit")
     except Exception as e:  # noqa: BLE001
         _log.warning("bref pitcher WAR unavailable: %s", e)
         return {}

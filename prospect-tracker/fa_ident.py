@@ -21,12 +21,16 @@ log = logging.getLogger(__name__)
 @lru_cache(maxsize=1)
 def war_daily_index() -> dict[str, dict[int, dict]]:
     """{normalized_name: {mlb_ID: {"years": set[int], "war": {year: WAR}}}}
-    across both war_daily tables (batting + pitching WAR summed)."""
-    import pybaseball as pyb
+    across both war_daily tables (batting + pitching WAR summed).
+
+    war_source.name_index is the facade route to this index; the raw frames
+    below come through war_source.stint_frame (provider 'bwar')."""
+    import pybaseball  # noqa: F401 - availability probe; frames come via war_source
+    import war_source
     out: dict[str, dict[int, dict]] = {}
-    for fn, label in ((pyb.bwar_bat, "bwar_bat"), (pyb.bwar_pitch, "bwar_pitch")):
+    for side, label in (("bat", "bwar_bat"), ("pit", "bwar_pitch")):
         try:
-            df = fn(return_all=True)
+            df = war_source.stint_frame(side)
         except Exception as e:                                # noqa: BLE001
             log.warning("%s unavailable: %s", label, e)
             continue

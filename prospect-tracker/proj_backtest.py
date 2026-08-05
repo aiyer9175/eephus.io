@@ -68,11 +68,12 @@ def _age_band(age) -> str:
 
 def _primary_teams() -> dict[tuple[int, int], str]:
     """(mlbam, season) -> primary org code, from the B-Ref war_daily
-    stint rows (max exposure stint wins; PA for bats, IPouts for arms)."""
-    import pybaseball as pyb
+    stint rows (max exposure stint wins; PA for bats, IPouts for arms),
+    read through the war_source facade (provider 'bwar')."""
+    import war_source
     best: dict[tuple[int, int], tuple[float, str]] = {}
-    for fn, expo_col in ((pyb.bwar_bat, "PA"), (pyb.bwar_pitch, "IPouts")):
-        df = fn(return_all=True)
+    for side, expo_col in (("bat", "PA"), ("pit", "IPouts")):
+        df = war_source.stint_frame(side)
         cols = {c.lower(): c for c in df.columns}
         team_c = cols.get("team_id")
         expo_c = cols.get(expo_col.lower()) or cols.get("g")

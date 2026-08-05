@@ -48,20 +48,21 @@ def _resolve_signed_via_war_daily(classes: dict[int, dict],
     and stints within a season. Ambiguous names (two candidates active in
     the same pre-signing window) are skipped and counted — the ledger
     never scores a guessed identity."""
-    import pybaseball as pyb
+    import pybaseball  # noqa: F401 - availability probe; frames come via war_source
+    import war_source
     from scrapers import normalize_key
     import concurrent.futures as _cf
 
-    def _safe(fn, label):
+    def _safe(side, label):
         try:
-            return fn(return_all=True)
+            return war_source.stint_frame(side)
         except Exception as e:                                # noqa: BLE001
             log.warning("%s fetch failed: %s", label, e)
             return None
 
     with _cf.ThreadPoolExecutor(max_workers=2) as ex:
-        f_bat = ex.submit(_safe, pyb.bwar_bat, "bwar_bat")
-        f_pit = ex.submit(_safe, pyb.bwar_pitch, "bwar_pitch")
+        f_bat = ex.submit(_safe, "bat", "bwar_bat")
+        f_pit = ex.submit(_safe, "pit", "bwar_pitch")
         bat_df, pit_df = f_bat.result(), f_pit.result()
     if bat_df is None and pit_df is None:
         return {}, {}, {"error": "war_daily unavailable"}

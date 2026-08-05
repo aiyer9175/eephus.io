@@ -489,7 +489,8 @@ WAR_RATE_MIN_COVERAGE = 0.50
 @functools.lru_cache(maxsize=1)
 def _side_war_by_season() -> dict:
     """{mlbam: {season: {"bat": bWAR, "pit": bWAR}}} with the two sides kept on
-    SEPARATE keys, via mlb_player_export._war_daily.
+    SEPARATE keys, via war_source.side_war_by_season (provider 'bwar', which
+    delegates to mlb_player_export._war_daily).
 
     The side split is the whole point. fa_projection._war_age_maps SUMS the two
     sides onto one number, which would divide a two-way player's PITCHING WAR by
@@ -501,8 +502,8 @@ def _side_war_by_season() -> dict:
     denominator; this one does not).
 
     Cached for the process: the three exporters each ask for it once."""
-    import mlb_player_export as mpe
-    return mpe._war_daily()
+    import war_source
+    return war_source.side_war_by_season()
 
 
 def score_war_rate(rows: list[dict], season: int, *, side: str, denom_key: str,

@@ -87,12 +87,13 @@ def _ip_to_float(raw) -> float:
 def _war_age_maps() -> tuple[dict, dict]:
     """{(mlbam, season): war} (bat+pit summed) and {(mlbam, season): age}
     from the war_daily tables — the corpus's WAR + age source."""
-    import pybaseball as pyb
+    import pybaseball  # noqa: F401 - availability probe; frames come via war_source
+    import war_source
     war: dict[tuple[int, int], float] = {}
     age: dict[tuple[int, int], int] = {}
-    for fn, label in ((pyb.bwar_bat, "bwar_bat"), (pyb.bwar_pitch, "bwar_pitch")):
+    for side, label in (("bat", "bwar_bat"), ("pit", "bwar_pitch")):
         try:
-            df = fn(return_all=True)
+            df = war_source.stint_frame(side)
         except Exception as e:                                # noqa: BLE001
             log.warning("%s unavailable: %s", label, e)
             continue

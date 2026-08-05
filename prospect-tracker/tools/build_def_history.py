@@ -47,8 +47,10 @@ def _f(v, default=0.0) -> float:
 
 
 def build() -> dict:
-    import pybaseball as pyb
-    df = pyb.bwar_bat(return_all=True)
+    # The run-value decomposition read (WAR_def / runs_position) rides the
+    # batting stint frame, via the war_source facade (provider 'bwar').
+    import war_source
+    df = war_source.run_value_frame("bat")
     # position players only: pitcher==N (the 'pitcher' column flags two-way/pitcher bats)
     cols = {"mlb_ID", "year_ID", "PA", "WAR_def", "runs_position", "pitcher"}
     missing = cols - set(df.columns)

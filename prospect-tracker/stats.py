@@ -3401,7 +3401,7 @@ def fetch_career_war_bulk(
     if not targets:
         return {}
     try:
-        import pybaseball as pyb
+        import pybaseball  # noqa: F401 - availability probe; the fetch itself goes through war_source
     except ImportError:
         log.warning("pybaseball not installed; skipping career WAR fetch")
         return {}
@@ -3437,21 +3437,24 @@ def fetch_career_war_bulk(
 
     # bwar_bat + bwar_pitch are independent ~5 MB CSV downloads from
     # baseball-reference.com. Fetching them in parallel cuts the bWAR
-    # refresh path roughly in half.
+    # refresh path roughly in half. The frames come through the war_source
+    # facade (provider 'bwar' = the same pybaseball call this used to make
+    # inline), so a future provider swap happens in ONE module.
     bat_by_id: dict[int, dict[int, float]] = {}
     pit_by_id: dict[int, dict[int, float]] = {}
     import concurrent.futures as _cf
+    import war_source
 
-    def _safe_fetch(fn, label):
+    def _safe_fetch(side, label):
         try:
-            return fn(return_all=True)
+            return war_source.stint_frame(side)
         except Exception as e:
             log.warning("%s fetch failed: %s", label, e)
             return None
 
     with _cf.ThreadPoolExecutor(max_workers=2) as ex:
-        f_bat = ex.submit(_safe_fetch, pyb.bwar_bat, "bwar_bat")
-        f_pit = ex.submit(_safe_fetch, pyb.bwar_pitch, "bwar_pitch")
+        f_bat = ex.submit(_safe_fetch, "bat", "bwar_bat")
+        f_pit = ex.submit(_safe_fetch, "pit", "bwar_pitch")
         bat_df = f_bat.result()
         pit_df = f_pit.result()
     if bat_df is not None:

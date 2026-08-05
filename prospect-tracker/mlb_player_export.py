@@ -246,12 +246,16 @@ def _war_daily() -> dict[int, dict[int, dict[str, float]]]:
     """{mlbam: {season: {"bat": bWAR, "pit": bWAR}}} -- batting and pitching bWAR kept
     on SEPARATE keys (they used to be summed onto one number and attached to both the
     hitting and pitching career rows, distorting two-way players and position-player
-    pitching cameos)."""
-    import pybaseball as pyb
+    pitching cameos).
+
+    war_source.side_war_by_season is the facade route to this map; the raw
+    frames below come through war_source.stint_frame (provider 'bwar')."""
+    import pybaseball  # noqa: F401 - availability probe; frames come via war_source
+    import war_source
     out: dict[int, dict[int, dict[str, float]]] = {}
-    for fn, side in ((pyb.bwar_bat, "bat"), (pyb.bwar_pitch, "pit")):
+    for side in ("bat", "pit"):
         try:
-            df = fn(return_all=True)
+            df = war_source.stint_frame(side)
         except Exception:                                      # noqa: BLE001
             continue
         sub = df[df["mlb_ID"].notna() & df["WAR"].notna()]
