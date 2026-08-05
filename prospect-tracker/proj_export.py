@@ -63,6 +63,181 @@ HORIZON = 5                  # 2027..2031
 # signal, and the engine's reliability buckets were fitted above this).
 MIN_PA, MIN_IP = 100, 30
 
+# ============================================================================
+# REST-OF-SEASON TALENT BASIS  (owner decision, 2026-08-05)
+# ============================================================================
+# WHICH SEASON'S TALENT the rest-of-season (rental) leg is priced on. Read in
+# exactly ONE place - `ros_talent_basis()` below - so reverting is this line and
+# nothing else. Every served row publishes the tag that basis produced
+# (`rosBasis`), and the payload root stamps `ros_talent_basis`.
+#
+#   "de_aged"       SHIPPED (owner decision, 2026-08-05). The remainder of the
+#                   IN-PROGRESS season is priced on war[0] scaled by the exact
+#                   one-year INVERSE of the platform's own aging operator
+#                   (`deaged_year1` below, the inverse of fa_market._decay_path).
+#                   war[0] is the FIRST_SEASON projection, i.e. ONE AGING YEAR
+#                   PAST the season actually being sold, so for a veteran the
+#                   un-de-aged basis is biased low.
+#   "first_season"  the pre-2026-08-05 behaviour: price the remainder on war[0]
+#                   itself, no de-aging. SET THIS TO REVERT - nothing else has
+#                   to change; rows then ship rosBasis="first_season".
+#
+# A third TAG, never a setting: rows whose de-aging is UNRESOLVED ship
+# rosBasis="first_season_unresolved" even under "de_aged". The policy and the
+# measurement behind it are documented on `ros_talent_basis` below.
+#
+# RECORDED DISSENT (carried here so it is not lost - see
+# docs/ros-talent-basis-2026-08-05/DECISION.md for the full numbers). The
+# DIRECTION is right and is measured: the de-aging multiplier is monotone in age
+# (median 0.77x at 22, 1.01x at 26, 1.22x at 30, 1.40x at 34, 1.64x at 37,
+# re-measured 2026-08-05 over 954 rest-of-season rows). The MAGNITUDE is not
+# obviously credible as a ONE-STEP operator: +40% of talent at age 34, and 124
+# of the 820 resolved rows move more than 1.5x. This is the FORWARD decay path
+# read backwards, and those curves are fitted on SURVIVORS, so inverting them
+# for an INDIVIDUAL is an assumption, not a measurement. Nothing in this tree
+# validates a one-step de-aging operator against observed same-player
+# year-over-year WAR. Shipped anyway, by owner decision.
+ROS_TALENT_BASIS = "de_aged"
+ROS_TALENT_BASES = ("de_aged", "first_season")
+
+# Per-600-PA / per-250-BF denominators: the units fa_market._decay_path carries
+# the WAR RATE in. Defined once so the inverse cannot drift from the forward.
+_PER_EXPOSURE = {"hit": 600.0, "pit": 250.0}
+
+# A champion year-1 at or below this makes the de-aging RATIO undefined (0/0,
+# and outright sign-flipping where it is negative). Those rows are UNRESOLVED
+# and fall back to the first_season basis with their own published tag - they
+# do not silently take a 1.0 multiplier. See `deaged_year1`.
+DEAGE_MIN_CHAMP_WAR = 0.05
+
+
+def recent_history(seasons_by_year: dict[int, dict],
+                   first_season: int) -> list[dict]:
+    """The three-season history window the veteran engine projects from, newest
+    first. One definition, so every caller windows identically."""
+    return [seasons_by_year[t] for t in (first_season - 1, first_season - 2,
+                                         first_season - 3)
+            if t in seasons_by_year]
+
+
+def _side_in_universe(side: str, hist: list[dict]) -> bool:
+    """The per-side exposure gate the served veteran row itself passed.
+
+    NOT optional in the de-aging operator: a position player with 10 mop-up IP
+    across three seasons has a 'pit' corpus row, and an early draft of the probe
+    de-aged that side too - Miguel Rojas came out 0.67 -> 3.50 WAR (5.2x) on a
+    pitching exposure the served row does not contain, because the pitcher pt
+    delta at 38 (-99 BF) was added back to a ~4 BF projection.
+    """
+    if side == "hit":
+        return max(h.get("pa") or 0 for h in hist) >= MIN_PA
+    return max(h.get("ip") or 0 for h in hist) >= MIN_IP
+
+
+def deaged_year1(hist_by_side: dict[str, list[dict]], first_season: int,
+                 curves: dict, war_map: dict, league: dict,
+                 in_progress: tuple[int, float] | None,
+                 rate_only: bool = False) -> dict | None:
+    """One-year de-aging of a veteran's champion year-1 WAR, as a RATIO.
+
+    THE OPERATOR IS THE PLATFORM'S OWN AGING CURVE, RUN BACKWARDS. fa_market's
+    `_decay_path` is the only WAR aging operator in the tree: moving INTO age a
+    it ADDS `fp.curve_delta(curves, side, decay_role, "war_rate", a)` to the
+    per-600-PA / per-250-BF WAR rate and `curve_delta(..., "pt", a)` to the
+    projected exposure, then re-multiplies. Both deltas are ADDITIVE, so the
+    step is exactly invertible: to walk one year BACK from age a, SUBTRACT the
+    same two deltas evaluated at a.
+
+    Returns {"ratio", "war1_champ", "war1_deaged", "sides"} or None when the
+    de-aging is UNRESOLVED (no side clears the universe gate, or the champion
+    year-1 is at/below DEAGE_MIN_CHAMP_WAR so the ratio is undefined). The
+    caller decides what an unresolved row does; it must not become 1.0 here.
+
+    `rate_only=True` un-ages the WAR RATE only, holding the Marcel exposure
+    projection fixed - the less aggressive half of the operator. Production
+    ships the full inverse (rate AND playing time); the variant exists so
+    tools/ros_talent_basis_probe.py can keep measuring both from THIS function
+    instead of a second copy of the arithmetic.
+
+    Two-way players sum both sides before the ratio is taken, matching the way
+    the served `war` path sums them.
+    """
+    tot_champ = tot_deaged = 0.0
+    sides: list[dict] = []
+    for side in ("hit", "pit"):
+        hist = hist_by_side.get(side) or []
+        if not hist or not _side_in_universe(side, hist):
+            continue
+        age_row = next((h for h in hist if h.get("age")), None)
+        if age_row is None:
+            continue
+        age = age_row["age"] + (first_season - age_row["season"])
+        try:
+            proj = fp.project_player(hist, side, first_season, curves, league,
+                                     age, in_progress=in_progress)
+            if proj is None:
+                continue
+            war1 = fp.war_from_projection(proj, side, war_map, league,
+                                          first_season)
+        except Exception:                                     # noqa: BLE001
+            continue
+        expo = float(proj["pt_proj"] or 0.0)
+        if expo <= 0.0 or war1 is None:
+            continue
+        per = _PER_EXPOSURE[side]
+        drole = fp.profile_role(hist, side, proj["role"], league)
+        rate = float(war1) / expo * per
+        d_rate = fp.curve_delta(curves, side, drole, "war_rate", int(age))
+        d_pt = fp.curve_delta(curves, side, drole, "pt", int(age))
+        expo_back = expo if rate_only else max(0.0, expo - d_pt)
+        w_back = max(0.0, rate - d_rate) * expo_back / per
+        tot_champ += float(war1)
+        tot_deaged += w_back
+        sides.append({"side": side, "role": drole, "age": round(age, 1),
+                      "expo": round(expo, 1), "war1": round(float(war1), 3),
+                      "d_war_rate": round(d_rate, 4), "d_pt": round(d_pt, 2),
+                      "deaged": round(w_back, 3)})
+    if not sides or tot_champ <= DEAGE_MIN_CHAMP_WAR:
+        return None
+    return {"ratio": tot_deaged / tot_champ,
+            "war1_champ": tot_champ, "war1_deaged": tot_deaged,
+            "sides": sides}
+
+
+def ros_talent_basis(war_now: float, deage) -> tuple[float, str]:
+    """THE ONLY READ OF ROS_TALENT_BASIS. Returns (the talent the rest-of-season
+    remainder is priced on, the tag published on the row as `rosBasis`).
+
+    `deage` is a ZERO-ARGUMENT CALLABLE returning `deaged_year1`'s result or
+    None. Lazy on purpose: flipping the constant back to "first_season" then
+    also skips the work, so the revert is genuinely one line.
+
+    UNRESOLVED ROWS (policy chosen 2026-08-05, after measuring them). The
+    de-aging ratio is undefined where the champion year-1 is ~0, and where that
+    year-1 is NEGATIVE a ratio would flip the sign of the priced talent.
+    Measured on the 2026-08-05 artifact: 134 of the 954 rest-of-season rows are
+    unresolved, ALL of them for that reason (none for a missing side), and every
+    one of them has |war[0]| <= 0.46 - the population this policy governs is
+    replacement-level and its dollars are small. Those rows FALL BACK TO THE
+    FIRST_SEASON BASIS and SAY SO (rosBasis="first_season_unresolved"), rather
+    than
+      * taking a silent 1.0 multiplier, which would publish a de-aged basis that
+        was never computed, or
+      * taking an ADDITIVE de-aging, which for these rows would assert a talent
+        change LARGER THAN THE PROJECTION ITSELF, off a denominator the model is
+        telling us is noise.
+    """
+    if ROS_TALENT_BASIS not in ROS_TALENT_BASES:
+        raise ValueError(f"ROS_TALENT_BASIS={ROS_TALENT_BASIS!r} is not one of "
+                         f"{ROS_TALENT_BASES}; a typo here would silently "
+                         "re-price every rental")
+    if ROS_TALENT_BASIS == "first_season":
+        return war_now, "first_season"
+    d = deage()
+    if d is None:
+        return war_now, "first_season_unresolved"
+    return war_now * d["ratio"], "de_aged"
+
 # Two-way "if-healthy" calibration: a two-way player cannot hold a FULL
 # dedicated-starter inning load on top of a full hitting season, so naively
 # summing each side's playing-time-held (PTH) path double-books durability and
@@ -242,6 +417,10 @@ def _ros_surplus_usd(war_now: float, cur_sal: float, ros_frac: float,
     test can pin it against hand arithmetic. The long WHY - and the measured
     size of the V(f*w) error this replaced - lives at the call site in
     `_apply_contract`. Undiscounted and un-escalated (t=0) by construction.
+
+    `war_now` is WHATEVER THE TALENT BASIS PRODUCED (see ROS_TALENT_BASIS): the
+    de-aged in-progress-season talent by default, war[0] under "first_season".
+    This function does not know or care which; it only prorates.
     """
     return float(ros_frac) * (_season_value_usd(float(war_now), 0, dpw_level)
                               - float(cur_sal))
@@ -302,6 +481,31 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
     _ct_by_mlbam, _contested = _resolve_contracts(_vet_ids, names, contracts, _teams)
     _contested_by_mlbam = {m: ck for ck, ms in _contested.items() for m in ms}
 
+    # ---- rest-of-season talent basis (see ROS_TALENT_BASIS) ----------------
+    _deage_memo: dict[int, dict | None] = {}
+
+    def _deage(mlbam: int) -> dict | None:
+        """Memoized one-year de-aging for one player. Built from the same
+        three-season window the projection itself uses, and gated per side by
+        the same universe floors, so it can never de-age a side the served row
+        does not contain."""
+        if mlbam not in _deage_memo:
+            hist_by_side = {}
+            for _s in ("hit", "pit"):
+                _h = recent_history(by_player[_s].get(mlbam) or {}, FIRST_SEASON)
+                if _h:
+                    hist_by_side[_s] = _h
+            _deage_memo[mlbam] = deaged_year1(hist_by_side, FIRST_SEASON, curves,
+                                              war_map, league, in_prog)
+        return _deage_memo[mlbam]
+
+    def _ros_talent_basis(m: dict, war_now: float) -> tuple[float, str]:
+        """Bind this row to the module-level switch (`ros_talent_basis`), which
+        is where ROS_TALENT_BASIS is read and where the unresolved-row policy is
+        documented. A row with no mlbam cannot be de-aged and is unresolved."""
+        return ros_talent_basis(
+            war_now, lambda: _deage(m["mlbam"]) if m.get("mlbam") else None)
+
     def _apply_contract(m: dict, ct: dict) -> None:
         """Stamp the contract-dependent fields (pos/team/thru/aav/sur/surNpv) onto a
         built row. Shared by the inline (unambiguous) join and the post-loop
@@ -345,33 +549,41 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         #   * UNDISCOUNTED and un-escalated (t=0). This is money and wins now,
         #     and surNpv's own discount origin is t=0 at FIRST_SEASON, so a
         #     naive t=-1 would have inflated the remainder by (1+r).
-        #   * Talent basis is war[0], the nearest full-season projection,
-        #     prorated by the share of the season left. Slightly conservative
-        #     for an aging vet (his in-season talent is a shade above next
-        #     year's) and it deliberately does not read 2026 results to date,
-        #     which measure what the SELLING club already banked.
+        #   * TALENT BASIS: the DE-AGED in-progress-season talent (owner
+        #     decision, 2026-08-05; ROS_TALENT_BASIS at the top of this file,
+        #     which is also the one-line revert). It still deliberately does not
+        #     read 2026 results to date, which measure what the SELLING club
+        #     already banked; the only question here is WHICH SEASON'S TALENT
+        #     the remainder is priced on, not whether to re-bank April.
         #
-        #     STILL war[0] AFTER MEASURING THE ALTERNATIVE (2026-08-04d, lane
-        #     A2b). war[0] is the FIRST_SEASON projection, i.e. ONE AGING YEAR
-        #     PAST the season being sold, so for a vet it is biased low. The
-        #     honest de-aging is the exact inverse of the platform's own aging
-        #     operator (fa_market._decay_path: subtract curve_delta war_rate and
-        #     pt at the player's age), and tools/ros_talent_basis_probe.py runs
-        #     it over all 969 RoS rows -> data/ros_talent_basis_probe.json.
-        #     DIRECTION IS RIGHT, MAGNITUDE IS NOT CREDIBLE FOR ONE YEAR: the
-        #     median de-aging multiplier is monotone in age (0.77x at 22, 1.00x
-        #     at 26, 1.22x at 30, 1.39x at 34, 1.61x at 37) and 100 of 784 rows
-        #     move more than 1.5x. A one-year de-aging worth +39% of talent at
-        #     34 is the FORWARD decay path's own steepness read backwards, and
-        #     that steepness has never been validated as a one-step operator on
-        #     an individual - the curves are additive rate/PT deltas fit on
-        #     survivors. Population effect would be +$0.26M median / +$0.47M
-        #     mean per row, 19 surTotal sign flips. NOT SHIPPED: it needs the
-        #     same kind of gate the R5.2 premium constant needs. The published
-        #     alternatives are worse, not better: warPTH[0] (if-healthy) is a
-        #     DIFFERENT QUANTITY and moves every row up (+$1.39M median, 54 sign
-        #     flips) - surplus prices expected value, not if-healthy; and
-        #     warY1Champ is simply the non-ML model.
+        #     WHY IT MOVED. war[0] is the FIRST_SEASON (2027) projection, i.e.
+        #     ONE AGING YEAR PAST the 2026 season actually being sold, so for a
+        #     veteran the remainder was biased low. The de-aging is the exact
+        #     inverse of the platform's OWN aging operator (fa_market._decay_path
+        #     adds curve_delta war_rate and pt at the age it is moving INTO;
+        #     `deaged_year1` subtracts the same two at the player's age), taken
+        #     as a RATIO against the champion year-1 and applied to the shipped
+        #     war[0] so the ML quantile head's information survives and only the
+        #     aging timing moves. tools/ros_talent_basis_probe.py measures the
+        #     shipped basis against the alternatives from THIS function
+        #     -> data/ros_talent_basis_probe.json.
+        #
+        #     DISSENT ON THE RECORD (executing agent, 2026-08-05; full numbers
+        #     in docs/ros-talent-basis-2026-08-05/DECISION.md). DIRECTION RIGHT,
+        #     MAGNITUDE NOT OBVIOUSLY CREDIBLE AS A ONE-STEP OPERATOR: the
+        #     median multiplier is monotone in age (0.77x at 22, 1.01x at 26,
+        #     1.22x at 30, 1.40x at 34, 1.64x at 37) but +40% of talent at 34 is
+        #     the FORWARD decay path's own steepness read backwards, and those
+        #     curves are fitted on SURVIVORS, so inverting them for an
+        #     INDIVIDUAL is an assumption rather than a measurement. 124 of 820
+        #     resolved rows move more than 1.5x. Nothing in this tree validates
+        #     a one-step de-aging operator against observed same-player
+        #     year-over-year WAR. Shipped by owner decision over that objection.
+        #
+        #     THE OTHER PUBLISHED BASES REMAIN WORSE, not better: warPTH[0]
+        #     (if-healthy) is a DIFFERENT QUANTITY and moves every row up
+        #     (+$1.39M median, 54 sign flips) - surplus prices expected value,
+        #     not if-healthy; and warY1Champ is simply the non-ML model.
         #   * BOTH LEGS PRORATE THE SAME FULL-SEASON QUANTITY: production is
         #     f * V(w_full), salary is f * salary_full. Until 2026-08-04d the
         #     production leg priced V(f * w_full) instead - it ran the SHRUNKEN
@@ -402,9 +614,11 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         #     4 surTotal sign flips (Lindor, Devers, Schwarber, Suzuki all
         #     negative -> positive). Expect trade-board reordering.
         #
-        #     `rosWar` still PUBLISHES war_now * f, because that is the WAR the
-        #     acquiring club actually receives and it is a display field. Only
-        #     the dollars changed.
+        #     `rosWar` PUBLISHES basis_war * f - the WAR the acquiring club
+        #     actually receives, on the SAME talent the dollars were priced off.
+        #     It is a display field, and it must not describe a different
+        #     quantity than surRos does; `rosBasis` names which basis produced
+        #     both, so a served row is self-describing.
         #
         #     A concentration premium may still exist in what clubs PAY; that
         #     is a different claim and it is UNMEASURED. The backtest is
@@ -427,11 +641,13 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         cur_sal = sal.get(FIRST_SEASON - 1)
         war_now = (m.get("war") or [None])[0]
         if cur_sal is not None and war_now is not None and ros_frac > 0.0:
-            ros_war = float(war_now) * ros_frac       # PUBLISHED (display) WAR
-            ros_d = _ros_surplus_usd(war_now, cur_sal, ros_frac, dpw)
+            basis_war, basis_tag = _ros_talent_basis(m, float(war_now))
+            ros_war = basis_war * ros_frac            # PUBLISHED (display) WAR
+            ros_d = _ros_surplus_usd(basis_war, cur_sal, ros_frac, dpw)
             m["surRos"] = round(ros_d / 1e6, 1)
             m["rosWar"] = round(ros_war, 2)
             m["rosFrac"] = round(ros_frac, 3)
+            m["rosBasis"] = basis_tag
         # What the player is worth to ACQUIRE right now: the balance of the
         # current season plus the NPV of every controlled season after it.
         # `surNpv` keeps its old meaning (FIRST_SEASON onward) so /projections/
@@ -1752,6 +1968,11 @@ def build_payload() -> dict:
                                                     FIRST_SEASON - 1), 3),
         "ros_fraction": round(max(0.0, min(1.0, 1.0 - fp.season_fraction(
             corpus["league"], FIRST_SEASON - 1))), 3),
+        # Which TALENT the remainder was priced on (provenance stamp, not a
+        # second behaviour read - the switch itself is read once, in
+        # `_ros_talent_basis`). Per-row `rosBasis` can differ from this where a
+        # row's de-aging was unresolved; see ROS_TALENT_BASIS.
+        "ros_talent_basis": ROS_TALENT_BASIS,
         "dpw_usd": int(dpw),
         "dpw_infl": float(cfg.get("dollars_per_war_inflation", 0.05)),
         "dpw_reanchor": re_anchor or None,
@@ -1767,6 +1988,15 @@ def build_payload() -> dict:
             f"dollars: convex tier pricing at the {FIRST_SEASON} ex-ante FA $/WAR level, escalated per season; veteran surplus only on salary-known (contracted) seasons, discounted at the platform rate",
             "two-way players project BOTH sides, summed per season (per-side paths in warHit/warPit; bands combine at assumed cross-side correlation rho=0.5 - documented)",
             f"veteran universe: >= {MIN_PA} PA or >= {MIN_IP} IP in one of the last three seasons",
+            f"rest-of-season leg: talent basis '{ROS_TALENT_BASIS}' - " + (
+                f"the remainder of the in-progress season is priced on the {FIRST_SEASON} "
+                "projection de-aged one year by the inverse of the fitted aging curves "
+                "(the platform's own decay operator, run backwards); rows whose de-aging "
+                "is unresolved keep the undecayed projection and ship "
+                "rosBasis='first_season_unresolved'"
+                if ROS_TALENT_BASIS == "de_aged" else
+                f"the remainder of the in-progress season is priced on the {FIRST_SEASON} "
+                "projection itself, one aging year past the season being sold"),
         ],
     }
 

@@ -3,34 +3,42 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""MEASUREMENT ONLY - what would change if the rest-of-season leg stopped
-pricing NEXT year's talent?  (lane A2b, 2026-08-04d)
+"""MEASUREMENT ONLY - the rest-of-season TALENT BASIS, shipped vs the
+alternatives.  (lane A2b, 2026-08-04d; re-pointed at the shipped operator
+2026-08-05.)
 
 THE QUESTION.  proj_export's rest-of-season leg prices the balance of the
-IN-PROGRESS season (2026) off `war[0]`, which is the FIRST_SEASON (2027)
-projection - one full aging year PAST the season actually being sold.  For an
-aging veteran that is a real, signed bias: his 2026 talent is a shade ABOVE his
-2027 projection, so the remainder he is traded on is systematically underpriced.
-The in-code comment chose war[0] on purpose ("deliberately does not read 2026
-results to date, which measure what the SELLING club already banked"), and that
-reasoning is sound about BANKED PRODUCTION but silent about TALENT TIMING: the
-question here is only which season's talent estimate the remainder is priced on,
-not whether to re-bank April.
+IN-PROGRESS season (2026).  Until 2026-08-05 it priced it off `war[0]`, which is
+the FIRST_SEASON (2027) projection - one full aging year PAST the season
+actually being sold.  For an aging veteran that is a real, signed bias: his 2026
+talent is a shade ABOVE his 2027 projection, so the remainder he is traded on
+was systematically underpriced.  The old in-code comment chose war[0] on purpose
+("deliberately does not read 2026 results to date, which measure what the
+SELLING club already banked"), and that reasoning is sound about BANKED
+PRODUCTION but silent about TALENT TIMING: the question here is only which
+season's talent estimate the remainder is priced on, not whether to re-bank
+April.
 
-THIS SCRIPT DOES NOT CHANGE THE SHIPPED BASIS.  It measures the move so the
-decision is made on numbers.
+WHAT SHIPPED (owner decision, 2026-08-05): the de-aged basis, i.e. `deaged_full`
+below.  See proj_export.ROS_TALENT_BASIS and
+docs/ros-talent-basis-2026-08-05/DECISION.md, which records the executing
+agent's dissent on MAGNITUDE.  THIS SCRIPT STILL CHANGES NOTHING; it measures.
 
 THE DE-AGING IS THE CODEBASE'S OWN FITTED CURVE, NOT A CONSTANT.  fa_market's
-`_decay_path` (fa_market.py:265-283) is the only WAR aging operator in the tree:
-moving INTO age a it adds `fp.curve_delta(curves, side, decay_role, "war_rate",
-a)` to the per-600-PA / per-250-BF WAR RATE and `curve_delta(..., "pt", a)` to
-the projected exposure, then re-multiplies.  Both deltas are ADDITIVE, so the
-step is exactly invertible: to walk one year BACK from age a, subtract the same
-two deltas evaluated at a.  We rebuild each veteran's year-1 (rate, exposure)
-from the same Marcel call proj_export makes, invert that one step, and take the
-ratio to his champion year-1 WAR.  The ratio is then applied to the SHIPPED
-`war[0]`, so the ML quantile head's information survives and only the aging
-timing moves.
+`_decay_path` is the only WAR aging operator in the tree: moving INTO age a it
+adds `fp.curve_delta(curves, side, decay_role, "war_rate", a)` to the
+per-600-PA / per-250-BF WAR RATE and `curve_delta(..., "pt", a)` to the
+projected exposure, then re-multiplies.  Both deltas are ADDITIVE, so the step
+is exactly invertible: to walk one year BACK from age a, subtract the same two
+deltas evaluated at a.  Each veteran's year-1 (rate, exposure) is rebuilt from
+the same Marcel call proj_export makes, that one step is inverted, and the ratio
+to his champion year-1 WAR is applied to the SHIPPED `war[0]`, so the ML
+quantile head's information survives and only the aging timing moves.
+
+ONE OPERATOR, ONE COPY.  The arithmetic above is NOT reimplemented here: it is
+`proj_export.deaged_year1`, the exact function production prices with, imported
+below.  This probe and the shipped leg cannot drift apart; if the operator
+changes, these numbers change with it.
 
 Curves and corpus are read from the on-disk caches (`.cache/fa_corpus.pkl`,
 `.cache/fa_fits_*.pkl`); nothing is refetched, refit or rewritten.  The only
@@ -39,11 +47,13 @@ file written is `data/ros_talent_basis_probe.json`.
 TWO VARIANTS, because the exposure leg is the aggressive half:
   * `deaged_full` - un-ages BOTH the WAR rate and the playing-time projection.
     Faithful inverse of `_decay_path`.  For a 34-year-old starter the fitted pt
-    delta is large (~-127 BF/yr), so this variant moves a lot.
+    delta is large (~-127 BF/yr), so this variant moves a lot.  THIS IS WHAT
+    SHIPS.
   * `deaged_rate`  - un-ages the WAR RATE only, holding the Marcel exposure
     projection fixed.  Defensible on its own terms: the year-1 PT projection is
     already fit on what the player is doing THIS season, so it is arguably not
-    stale the way the rate is.
+    stale the way the rate is.  NOT a switchable production basis - it is the
+    obvious step-down if the shipped magnitude is later gated back.
 
 Plus the two bases already published on every row, for reference:
   * `warPTH[0]`    - the if-healthy (playing-time-held) display path.
@@ -53,10 +63,17 @@ SALARY CANCELS.  Under the shipped-after-A2 convention the leg is
 f * (V(w) - salary), so changing only the talent basis moves surTotal by exactly
 f * (V(w_alt) - V(w_ship)).  That is why this probe needs no contract file.
 
-BASELINE NOTE.  data/mlb_projections.json on disk was written under the OLD
-V(f*w) production leg.  Every "shipped" number below is the served surTotal plus
-the A2a convexity correction f*V(w) - V(f*w), i.e. what the next export will
-print.  Re-run this after that export and the baseline term goes to zero.
+BASELINE.  The comparison baseline is the FIRST_SEASON basis - what the leg
+priced before 2026-08-05 - reconstructed from the served row.  If the artifact
+on disk predates the A2a proration fix (production leg V(f*w) instead of
+f*V(w)), the convexity correction f*V(w) - V(f*w) is added so the baseline is
+still "what the next export would print"; the probe DETECTS which convention the
+artifact carries instead of assuming, and reports it.
+
+UNRESOLVED ROWS are reported, never silently given a 1.0 multiplier.  Production
+falls back to the first_season basis for them and labels the served row
+`rosBasis="first_season_unresolved"`; this probe scores them at zero delta,
+which is the same thing.
 
 Usage:  python tools/ros_talent_basis_probe.py
 """
@@ -74,19 +91,12 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 import fa_projection as fp          # noqa: E402
+import proj_export as pe            # noqa: E402
 import value_framework as vf        # noqa: E402
 
 DATA = ROOT / "data"
 OUT = DATA / "ros_talent_basis_probe.json"
 CORPUS_PKL = ROOT / ".cache" / "fa_corpus.pkl"
-PER = {"hit": 600.0, "pit": 250.0}
-# proj_export's per-side universe floors (proj_export.py:64, applied at :417).
-# NOT optional here: a position player with 10 mop-up IP over three seasons has
-# a 'pit' corpus row, and the first draft of this probe de-aged that side too.
-# Miguel Rojas came out 0.67 -> 3.50 WAR (5.2x) on a pitching exposure the
-# served row does not contain, because the pitcher pt delta at 38 (-99 BF) was
-# added back to a ~4 BF projection. The served row is HIT-ONLY; so is this.
-MIN_PA, MIN_IP = 100, 30
 
 
 def _season_value_usd(war: float, dpw: float) -> float:
@@ -99,9 +109,18 @@ def _deage_ratios(first_season: int, wanted: set[int]) -> dict[int, dict]:
     """{mlbam: {ratio_full, ratio_rate, war1_champ, sides:[...]}} - the one-year
     inverse of `_decay_path` for every requested veteran.
 
-    Rebuilt from the SAME inputs proj_export uses (cached corpus, cached fits,
-    same three-season history window, same in-progress fraction) so the champion
-    year-1 this reproduces is the row's own warY1Champ.
+    THE OPERATOR IS `proj_export.deaged_year1`, the shipped one, called twice
+    per player (full inverse and rate-only). Nothing about the aging arithmetic
+    or the per-side universe gate is re-implemented here, so this probe cannot
+    measure something other than what production prices.
+
+    Inputs are the SAME ones proj_export builds from (cached corpus, cached
+    fits, same three-season history window, same in-progress fraction), so the
+    champion year-1 this reproduces is the row's own warY1Champ.
+
+    Players whose de-aging is UNRESOLVED (the champion year-1 is at or below
+    proj_export.DEAGE_MIN_CHAMP_WAR, so a multiplicative ratio is undefined) are
+    ABSENT from the returned map - never present with a 1.0 ratio.
     """
     if not CORPUS_PKL.exists():
         return {}
@@ -120,60 +139,78 @@ def _deage_ratios(first_season: int, wanted: set[int]) -> dict[int, dict]:
 
     out: dict[int, dict] = {}
     for mid in wanted:
-        tot1 = tot_full = tot_rate = 0.0
-        sides: list[dict] = []
+        hist_by_side = {}
         for side in ("hit", "pit"):
-            seasons = by.get((side, mid)) or {}
-            hist = [seasons[t] for t in (first_season - 1, first_season - 2,
-                                         first_season - 3) if t in seasons]
-            if not hist:
-                continue
-            # Same universe gate the served row passed, side by side.
-            if side == "hit":
-                if max(h.get("pa") or 0 for h in hist) < MIN_PA:
-                    continue
-            elif max(h.get("ip") or 0 for h in hist) < MIN_IP:
-                continue
-            age_row = next((h for h in hist if h.get("age")), None)
-            if age_row is None:
-                continue
-            age = age_row["age"] + (first_season - age_row["season"])
-            try:
-                proj = fp.project_player(hist, side, first_season, curves,
-                                         league, age, in_progress=in_prog)
-                if proj is None:
-                    continue
-                war1 = fp.war_from_projection(proj, side, war_map, league,
-                                              first_season)
-            except Exception:                                   # noqa: BLE001
-                continue
-            expo = float(proj["pt_proj"] or 0.0)
-            if expo <= 0.0 or war1 is None:
-                continue
-            per = PER[side]
-            drole = fp.profile_role(hist, side, proj["role"], league)
-            rate = float(war1) / expo * per
-            # INVERSE of the one-year forward step in fa_market._decay_path:
-            # forward INTO age a adds curve_delta(..., a); backward subtracts it.
-            d_rate = fp.curve_delta(curves, side, drole, "war_rate", int(age))
-            d_pt = fp.curve_delta(curves, side, drole, "pt", int(age))
-            w_full = max(0.0, rate - d_rate) * max(0.0, expo - d_pt) / per
-            w_rate = max(0.0, rate - d_rate) * expo / per
-            tot1 += float(war1)
-            tot_full += w_full
-            tot_rate += w_rate
-            sides.append({"side": side, "role": drole, "age": round(age, 1),
-                          "expo": round(expo, 1), "war1": round(float(war1), 3),
-                          "d_war_rate": round(d_rate, 4), "d_pt": round(d_pt, 2),
-                          "deaged_full": round(w_full, 3),
-                          "deaged_rate": round(w_rate, 3)})
-        if not sides or tot1 <= 0.05:
-            # A champion year-1 at ~0 makes the RATIO meaningless (0/0); the row
-            # is reported as unresolved rather than silently given ratio 1.0.
-            continue
-        out[mid] = {"ratio_full": tot_full / tot1, "ratio_rate": tot_rate / tot1,
-                    "war1_champ": round(tot1, 3), "sides": sides}
+            hist = pe.recent_history(by.get((side, mid)) or {}, first_season)
+            if hist:
+                hist_by_side[side] = hist
+        full = pe.deaged_year1(hist_by_side, first_season, curves, war_map,
+                               league, in_prog)
+        if full is None:
+            continue                       # unresolved - reported, not imputed
+        rate = pe.deaged_year1(hist_by_side, first_season, curves, war_map,
+                               league, in_prog, rate_only=True)
+        out[mid] = {"ratio_full": full["ratio"],
+                    "ratio_rate": (rate or full)["ratio"],
+                    "war1_champ": round(full["war1_champ"], 3),
+                    "sides": full["sides"]}
     return out
+
+
+def _priced_basis_war(v: dict) -> float | None:
+    """The full-season talent the served row's rest-of-season leg was priced on.
+
+    `rosWar` is published as basis_war * rosFrac under EVERY basis (that is the
+    invariant proj_export keeps: the display WAR describes the same talent the
+    dollars do), so dividing it back out recovers the basis without knowing
+    which one produced it. Falls back to war[0] for artifacts old enough to
+    predate `rosWar`.
+    """
+    f = v.get("rosFrac")
+    rw = v.get("rosWar")
+    if f and rw is not None:
+        return float(rw) / float(f)
+    war = v.get("war") or []
+    return float(war[0]) if war and war[0] is not None else None
+
+
+def _artifact_predates_the_proration_fix(vets: list[dict], dpw: float,
+                                         first: int) -> bool | None:
+    """Does the served artifact price the RoS production leg as V(f*w) (the
+    pre-2026-08-04d form) or f*V(w)?
+
+    DETECTED, NOT ASSUMED. A single-season (expiring) contract's `aav` IS its
+    current-season salary, so for those rows the leg can be recomputed from
+    published fields alone; rows where the two conventions differ by less than
+    the 0.1M publication rounding are not decisive and are skipped. Returns None
+    when too few decisive rows exist to tell, in which case no correction is
+    applied and the report says so.
+    """
+    new = old = 0
+    for v in vets:
+        f, aav, war = v.get("rosFrac"), v.get("aav"), (v.get("war") or [])
+        if (not f or aav is None or not war or war[0] is None
+                or v.get("thru") != first - 1 or v.get("surRos") is None):
+            continue
+        f, sal = float(f), float(aav)
+        # The talent the row was ACTUALLY priced on, recovered from the row
+        # itself (rosWar == basis_war * f under every basis this file knows).
+        # Reading war[0] here would misread a de-aged artifact as "neither".
+        w = _priced_basis_war(v)
+        if w is None:
+            continue
+        got = float(v["surRos"]) * 1e6
+        n_usd = f * (_season_value_usd(w, dpw) - sal)
+        o_usd = _season_value_usd(w * f, dpw) - sal * f
+        if abs(n_usd - o_usd) <= 250_000:
+            continue
+        if abs(got - n_usd) <= 60_000:
+            new += 1
+        elif abs(got - o_usd) <= 60_000:
+            old += 1
+    if new + old < 5:
+        return None
+    return old > new
 
 
 def _pct(vals: list[float], q: float) -> float:
@@ -182,6 +219,23 @@ def _pct(vals: list[float], q: float) -> float:
     s = sorted(vals)
     i = min(len(s) - 1, max(0, int(round(q * (len(s) - 1)))))
     return s[i]
+
+
+def _age_profile(vets: list[dict], ratios: dict[int, dict]) -> dict:
+    """Median de-aging multiplier by age - the shape the whole argument turns
+    on. Monotone in age is the claim the DIRECTION rests on; the LEVEL at the
+    top ages is the claim the recorded dissent is about, so both ship here
+    rather than in prose that can go stale."""
+    by_age: dict[int, list[float]] = defaultdict(list)
+    for v in vets:
+        mid, age = v.get("mlbam"), v.get("age")
+        r = ratios.get(int(mid)) if mid else None
+        if r is None or age is None:
+            continue
+        by_age[int(age)].append(r["ratio_full"])
+    return {str(a): {"n": len(vals), "median_multiplier": round(st.median(vals), 3),
+                     "n_over_1p5": sum(1 for x in vals if x > 1.5)}
+            for a, vals in sorted(by_age.items())}
 
 
 def _summary(deltas: list[float]) -> dict:
@@ -210,6 +264,8 @@ def main() -> int:
     wanted = {int(v["mlbam"]) for v in vets if v.get("mlbam")}
     ratios = _deage_ratios(first, wanted)
 
+    pre_a2a = _artifact_predates_the_proration_fix(vets, dpw, first)
+
     bases = ("deaged_full", "deaged_rate", "warPTH0", "warY1Champ")
     deltas: dict[str, list[float]] = {b: [] for b in bases}
     flips: dict[str, list] = {b: [] for b in bases}
@@ -224,10 +280,19 @@ def main() -> int:
         served = v.get("surTotal")
         if served is None:
             continue
-        # BASELINE = what the next export prints (served + the A2a convexity fix).
-        base = float(served) + (f * _season_value_usd(w0, dpw)
-                                - _season_value_usd(w0 * f, dpw))
+        # BASELINE = the FIRST_SEASON basis (war[0], un-de-aged), which is what
+        # the leg priced before 2026-08-05. Recovered from the served row rather
+        # than assumed: back out whatever talent the row was priced on and
+        # re-price it on war[0]. Salary cancels, so only the value term moves.
+        # When the artifact ALSO predates the A2a proration fix, add the
+        # convexity correction f*V(w) - V(f*w) on top, so the baseline is still
+        # "what an export of the old basis would print today".
+        w_priced = _priced_basis_war(v)
         v0 = _season_value_usd(w0, dpw)
+        base = float(served) + (v0 - _season_value_usd(w_priced, dpw)) * f
+        if pre_a2a:
+            base += (f * _season_value_usd(w_priced, dpw)
+                     - _season_value_usd(w_priced * f, dpw))
         alt_war = {
             "deaged_full": (w0 * r["ratio_full"]) if r else None,
             "deaged_rate": (w0 * r["ratio_rate"]) if r else None,
@@ -255,19 +320,36 @@ def main() -> int:
         rows.append(row)
 
     out = {
-        "generated_for": "lane A2b (2026-08-04d) - MEASUREMENT ONLY, basis unchanged",
+        "generated_for": ("lane A2b (2026-08-04d), re-pointed 2026-08-05 at the "
+                          "SHIPPED operator - MEASUREMENT ONLY, changes nothing"),
         "first_season": first,
         "ros_fraction": proj.get("ros_fraction"),
         "dpw_usd": dpw,
+        "shipped_basis": pe.ROS_TALENT_BASIS,
+        "shipped_basis_probe_name": "deaged_full",
+        "artifact_ros_talent_basis": proj.get("ros_talent_basis") or "first_season (unstamped)",
+        "artifact_predates_proration_fix": pre_a2a,
         "n_vet_rows_with_ros_leg": len(rows),
         "n_deaging_unresolved": unresolved,
-        "baseline": ("served surTotal + the A2a convexity correction "
-                     "f*V(w) - V(f*w); re-run after the next export to zero it"),
+        "unresolved_policy": ("production falls back to the first_season basis "
+                              "and ships rosBasis='first_season_unresolved'; "
+                              "here they score zero delta, which is the same "
+                              "thing. Never a silent 1.0 multiplier."),
+        "baseline": ("the FIRST_SEASON basis (war[0]), re-derived from the "
+                     "served row" + (" plus the A2a convexity correction "
+                                     "f*V(w) - V(f*w)" if pre_a2a else "")),
         "de_aging_operator": ("inverse of fa_market._decay_path at the player's "
                               "own age: rate -= curve_delta(war_rate, a), "
                               "expo -= curve_delta(pt, a) (deaged_full); "
                               "rate only (deaged_rate)"),
         "summary": {b: _summary(deltas[b]) for b in bases},
+        # The population effect of what SHIPPED, over EVERY row carrying the leg
+        # - unresolved rows included at their policy value of exactly zero. The
+        # per-basis `summary` above conditions on the basis being computable,
+        # which flatters it by dropping 134 deliberate no-ops.
+        "shipped_effect_all_rows": _summary(
+            [float(r.get("delta_deaged_full_usd", 0)) for r in rows]),
+        "deaging_multiplier_by_age": _age_profile(vets, ratios),
         "sign_flips": {b: {"n": len(flips[b]), "rows": flips[b][:25]}
                        for b in bases},
         "top_movers": {},
@@ -289,6 +371,14 @@ def main() -> int:
 
     print(f"rows with a rest-of-season leg: {len(rows)}  "
           f"(de-aging unresolved on {unresolved})")
+    print(f"shipped basis: {pe.ROS_TALENT_BASIS}  (probe name: deaged_full)   "
+          f"artifact basis stamp: {out['artifact_ros_talent_basis']}   "
+          f"pre-A2a artifact: {pre_a2a}")
+    _sa = out["shipped_effect_all_rows"]
+    print("SHIPPED effect over ALL %d rows (unresolved counted at 0): "
+          "median %+d  mean %+d  p90 %+d  max %+d  sum %+d"
+          % (_sa["n"], _sa["median_usd"], _sa["mean_usd"], _sa["p90_usd"],
+             _sa["max_usd"], _sa["sum_usd"]))
     for b in bases:
         s = out["summary"][b]
         if not s.get("n"):
