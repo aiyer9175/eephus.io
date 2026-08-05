@@ -3418,9 +3418,34 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
        of running it at exactly zero.
    test_projections_card_name_not_clipped.py pins scrollHeight <= clientHeight on
    the name so a future metric change cannot silently re-clip it. */
-.proj-app .proj-card { height: 108px; contain-intrinsic-size: auto 108px; }
-.proj-app .proj-card .proj-id > .mlb-name { line-height: 1.2; }
+/* SECOND PASS, same day: the first fix tuned NUMBERS (leading 1.2, card 108px)
+   against metrics measured in headless Chromium, and the owner still saw clipped
+   names. That is the tell that tuning was the wrong instrument: real MS Gothic
+   is a CJK face whose ascent+descent exceed its em box, so its natural line box
+   is taller than a Latin face at the same font-size, and it differs between the
+   test environment and a Windows machine with the real font installed. Any fixed
+   height chosen from one machine's metrics is a guess about every other one.
+   So stop promising a height and start guaranteeing the CONTENT fits:
+     - the card keeps 108px as a MINIMUM, not a fixed height, so a taller face
+       grows the row instead of having its text sliced,
+     - the identity rows are min-content floored, so .mlb-name - a grid item
+       whose overflow:hidden zeroes its automatic minimum size - can no longer be
+       compressed below its own line box,
+     - the name keeps its natural leading; overflow:hidden stays because it is
+       what drives the horizontal ellipsis, but it is now never asked to clip
+       vertically.
+   contain-intrinsic-size stays as the scroll-height ESTIMATE it always was;
+   content-visibility does not require the estimate to be exact. */
+.proj-app .proj-card {
+  height: auto; min-height: 108px; contain-intrinsic-size: auto 108px;
+}
+.proj-app .proj-card .proj-id {
+  grid-template-rows: minmax(min-content, auto) minmax(min-content, auto);
+}
 .proj-app .proj-card .proj-id > .mlb-name img { vertical-align: middle; }
+/* Same treatment for the FA board, which shares the primitive and the failure
+   mode (its name line measured 25px against a 108px card). */
+.fa-app .fa-card { height: auto; min-height: 108px; }
 /* Option / opt-out rows carried a gold edge on the table (.fa-row-opt td), which
    the card conversion silently dropped - there is no td any more. Same signal,
    on the stripe the card pattern already owns. */
