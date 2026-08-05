@@ -99,6 +99,10 @@
       --text-tertiary:    #706B5C;     /* sepia gray (v43: darkened #8B8474 -> ~4.7:1 on paper for WCAG AA) */
       --border:           #C9C1AE;     /* warm tan border          */
       --border-light:     #E2DCC9;     /* faint divider            */
+      /* Mirrors assets/site.css. Referenced by six inline drawer rules in this
+         file with no literal fallback; undefined it resolved to currentColor,
+         painting a text-coloured border where a hairline was intended. */
+      --border-subtle:    var(--border-light);
 
       /* Semantic accents (variable names kept for inline-JS compatibility).
          Mapped to muted, ink-on-paper baseball-card values. */

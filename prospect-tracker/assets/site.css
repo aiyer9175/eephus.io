@@ -78,6 +78,17 @@
   --text-tertiary: #706B5C;  /* v43: darkened from #8B8474 -> ~4.7:1 on warm paper (WCAG AA) */
   --border:        #C9C1AE;
   --border-light:  #E2DCC9;
+  /* BUGFIX 2026-08-05: --border-subtle was referenced in nine places and DEFINED
+     NOWHERE. A var() chain that resolves to nothing makes the whole declaration
+     invalid at computed-value time, so `border: 1px solid var(--border-subtle)`
+     did not fall back to a hairline - it fell back to currentColor, i.e. a
+     full-strength TEXT-coloured border. Visible on the Trade Machine search box
+     and group panel (build_site.py), .proj-viewnav (trademachine.css) and six
+     PROSPX drawer rules, none of which carried a literal fallback the way
+     fantasy.js's uses do. Defined as an alias rather than a new colour so it
+     inherits both themes automatically; mirrored in prospx/index.html, whose own
+     :root wins inside that app. */
+  --border-subtle: var(--border-light);
   --accent-gold:   #C9A227;
   --accent-red:    #B91C1C;
   --accent-green:  #1F7A3A;
