@@ -3357,6 +3357,9 @@ _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
     <span class="newsprint-eyebrow-meta">build + value a deal both ways: prospects on eFV surplus, MLB players on projection surplus &middot; then the full Bayesian trade-value board &middot; module by Anirudh Iyer</span>
   </div>
   <div id="trade-machine"></div>
+  <div class="tm-ros-note" style="margin:10px 0 2px;max-width:760px;color:var(--text-secondary);font-size:11px;line-height:1.55;">
+    <strong>The rental leg has no floor.</strong> It prices the fraction of the season still to be played times the full-season surplus: the dollar value of a full season of projected WAR, minus the full-season salary. A negative number means projected production is worth less than the salary still owed, so the contract is underwater for the remainder, which is why salary-retention trades exist.
+  </div>
   <div class="trademachine-board-head detail-title" style="margin:18px 0 4px;font-size:13px;">Trade-value board <span class="detail-title-sub">Bayesian surplus, contract-aware, positional scarcity, opt-out adjusted</span></div>
   <div class="filter-toggle-row">
     <button class="filter-toggle" type="button" data-collapse-target="tradeboard-filter-bar" aria-expanded="false" title="Show / hide Trade Board filters">

@@ -333,8 +333,16 @@ function renderTradeMachine() {
       // player's price is the balance of the season in progress, and therefore
       // how much of it a buyer keeps past October.
       const rest = (x.ros != null && x.mm != null) ? (x.mm - x.ros) : null;
+      // NO FLOOR (owner decision, 2026-08-05). The leg is f * (V(full-season
+      // WAR) - full-season salary), so it goes negative whenever the salary
+      // still owed outruns the projected production. That is information, not a
+      // defect, and the reader who is looking straight at the negative number is
+      // the one who needs it said, so the convention rides the chip's own tip.
+      const rosNeg = x.ros != null && Number(x.ros) < 0
+        ? " Negative is not floored: the salary still owed is worth more than the projected production, so the contract is underwater for the remainder. That is what a club is paying down when it retains salary in a deal."
+        : "";
       const rosChip = x.ros == null ? "" :
-        `<span class="tm-sub" title="Rest-of-season control ${_tbFmt(x.ros)} of ${_tbFmt(x.mm)}${rest != null ? `, ${_tbFmt(rest)} in controlled seasons after it` : ""}. The balance of the season in progress, undiscounted, with the prorated salary already netted out.">rental ${_tbFmt(x.ros)}</span>`;
+        `<span class="tm-sub" title="Rest-of-season control ${_tbFmt(x.ros)} of ${_tbFmt(x.mm)}${rest != null ? `, ${_tbFmt(rest)} in controlled seasons after it` : ""}. The balance of the season in progress, undiscounted, with the prorated salary already netted out.${rosNeg}">rental ${_tbFmt(x.ros)}</span>`;
       return `
       <div class="tm-row">
         <span class="tm-kind tm-kind--${x.kind}" title="${x.kind === "prospect" ? "Prospect (eFV surplus)" : "MLB (contract surplus)"}">${x.kind === "prospect" ? "P" : "M"}</span>
