@@ -2012,7 +2012,16 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .proj-app th.proj-sort { cursor: pointer; user-select: none; white-space: nowrap; }
 .proj-app th.proj-sort:hover { color: var(--text-primary); }
 .proj-app th.proj-sort.is-sorted { color: var(--text-primary); border-bottom: 2px solid var(--accent-gold); }
-.proj-app .proj-player { white-space: nowrap; max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+/* RESCOPED 2026-08-04. This was `.proj-app .proj-player { max-width: 320px;
+   overflow: hidden; text-overflow: ellipsis }` - the truncation box for the
+   board TABLE that the card conversion retired on 2026-07-30. The only
+   .proj-player left in the module is a Team Outlook `<td>` carrying a logo and
+   a three-letter org code, which needs nowrap and nothing else. A 320px
+   ellipsis rule still sitting in the sheet under a name-shaped class is how a
+   name silently gets clipped the next time someone reuses it, and a stale
+   deployed bundle carrying THIS rule is the most likely explanation for the
+   desktop truncation reported against a board that no longer has a table. */
+.proj-app td.proj-player { white-space: nowrap; }
 .proj-app .proj-war { font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums; cursor: help; }
 .proj-app .proj-war-elite { color: var(--accent-cyan); font-weight: 700; }
 .proj-app .proj-war-good { color: var(--accent-green); font-weight: 600; }
@@ -2045,7 +2054,81 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .proj-app .proj-warmap-svg { width: 100%; max-width: 760px; height: auto; display: block; margin: 0 auto; }
 .proj-app .proj-tag-prospect { border-color: var(--accent-gold); color: var(--accent-gold); }
 
+/* ---------------------------------------------------------------------------
+   UNSTYLED CLASSES (added 2026-08-04). projections.js has been emitting these
+   class names for months with NO rule anywhere in the sheet, so the markup
+   fell back to raw inline flow. Three of them were real defects, not just
+   plainness:
+     - .proj-legend-dot is an empty <span> whose only declaration is an inline
+       background. With no box it had zero size, so the scatter's colour legend
+       named four contract states and drew none of them.
+     - .proj-cmp-head laid a logo, a name, a sub line and a tag out as one
+       inline run, so the two compare columns did not read as a pair.
+     - .proj-cmp-name carries a comment at projections.js:1300 claiming "the
+       ellipsizing box lives on .proj-cmp-name". It did not exist.
+   Everything here reads the same tokens the rest of the module does.
+   --------------------------------------------------------------------------- */
+
+/* Head-to-head compare: two identity columns above the shared chart. */
+.proj-app .proj-cmp-heads {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px; margin-bottom: 10px;
+}
+.proj-app .proj-cmp-head {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px;
+  min-width: 0; padding: 8px 10px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+}
+/* The box projections.js:1300 always claimed was here. The per-side series
+   colour stays inline (it is computed from the chart palette); the shape is
+   this rule's job. */
+.proj-app .proj-cmp-name {
+  min-width: 0; flex: 1 1 auto;
+  font-family: var(--font-retro); font-size: 14px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.proj-app .proj-cmp-section { margin-top: 4px; }
+.proj-app .proj-cmp-table { margin-top: 10px; }
+/* Season rows are the body; the two totals are the read. */
+.proj-app .proj-cmp-table tr.proj-cmp-total td {
+  border-top: 1px solid var(--border); font-weight: 700;
+}
+.proj-app .proj-cmp-note { margin-top: 8px; }
+
+/* Accountability tables (predictions vs realized). Same house treatment as
+   every other .detail-table on the surface; only the emphasis is local. */
+.proj-app .proj-acct-table { margin: 6px 0 4px; }
+/* The column the table exists to be read on - the scored metric. */
+.proj-app .proj-acct-key { color: var(--text-primary); font-weight: 700; }
+.proj-app .proj-acct-foot { margin-top: 6px; line-height: 1.5; }
+
+/* Scatter colour legend. A flex row that wraps rather than a paragraph of
+   floating swatches, and the dots get a box so they can actually be seen. */
+.proj-app .proj-warmap-legend {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px;
+  padding: 0 12px 8px;
+}
+.proj-app .proj-warmap-legend-lede {
+  font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary);
+}
+.proj-app .proj-legend-item {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--text-secondary);
+}
+.proj-app .proj-legend-dot {
+  width: 9px; height: 9px; flex: none; border-radius: 50%;
+  border: 1px solid var(--border);
+}
+
+/* "show N more" affordance under the board, and the no-rows state. */
+.proj-app .proj-more-wrap { display: flex; justify-content: center; margin: 10px 0 4px; }
+.proj-app .proj-empty { padding: 18px 12px; text-align: center; }
+
 @media (max-width: 720px) {
+  /* One compare column per row: two 160px-wide identity blocks side by side
+     ellipsize both names to nothing. */
+  .proj-app .proj-cmp-heads { grid-template-columns: minmax(0, 1fr); }
   .fa-app .detail-table th, .fa-app .detail-table td { padding: 4px 6px; font-size: 11px; }
   .fa-app button.chip { padding: 3px 8px; font-size: 11px; }
   /* Wide board tables scroll inside their own box on phones instead of
@@ -3014,6 +3097,13 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   }
   .mlb-tape-inner::-webkit-scrollbar { height: 4px; display: block; }
   .mlb-tape-inner::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  /* And the chips themselves. `flex: 1 1 0` shares a wide card's tape evenly,
+     which is right on desktop and wrong on a phone: at 390px the labels crush
+     to noise - "deal...", "rati...", "down...", "pea...". Now that the strip
+     scrolls WITH an affordance, natural-width chips that swipe beat six
+     truncated ones that fit. The FA/Proj ellipsis rule below stays as the
+     backstop; with max-content it simply never fires here. */
+  .mlb-chip { flex: none; min-width: max-content; }
 }
 
 /* Sort headers above the list, matching the mlbstats a11y contract. */
@@ -3026,9 +3116,39 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
    .mlb-card:focus-visible above. Sort headers had no visible focus ring. */
 .mlb-card-head [role="button"]:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
 
+/* PHONE COLLAPSE. FIXED 2026-08-04; was `1fr auto`, which is backwards. Auto
+   placement put the IDENTITY block in the content-sized SECOND track and left
+   the 34px rank chip alone in the flexible FIRST one, so:
+     - the rank chip stretched to fill it (measured 129-221px at 390px on
+       /projections/; it is a 34px circle),
+     - the two tracks resolved to a different pair on nearly every card (31
+       distinct track definitions across 40 cards at 390px), so nothing lined
+       up down the list,
+     - and at 320px on /fa/, where a wide status string owns the auto track,
+       the flexible one collapsed to 14px: 27 of 228 names clipped and three
+       metric cells spilled their text over their neighbours.
+   Naming the rank rail at its real 34px and handing the remainder to the
+   identity fixes all three. .mlb-name's ellipsis (above) stays as the guard
+   for the genuinely long names, and .proj-card / .fa-card refine this to a
+   third track further down so their metric cells do not land in the rail. */
 @media (max-width: 720px) {
-  .mlb-card { grid-template-columns: 1fr auto !important; row-gap: 6px; }
+  .mlb-card { grid-template-columns: 34px minmax(0, 1fr) !important; row-gap: 6px; }
+  /* The chip is a circle, not a pill: justify-self keeps it at its own size
+     whatever the rail track measures. min-width has to be restated at this
+     specificity because `.mlb-card > *:not(.mlb-tape)` above zeroes it for
+     every row-1 child - which is why the chip has always been sized by its
+     track rather than by its own rule, and why it went ellipse-shaped (22x34)
+     the moment it stopped being stretched. */
+  .mlb-card > .mlb-rank { justify-self: start; min-width: 34px; }
   .mlb-card > .mlb-metric { text-align: left; }
+}
+/* The 320-375px tier pays for the fixed rank rail out of the identity block,
+   which is the one cell that has nothing to give. 4px off each side of the
+   card and 2px off the column gap hands 12px back to the name - measured
+   enough to clear the last clipped name on /projections/ at 320px. The 12px
+   left padding still leaves 8px of clearance over the 4px org stripe. */
+@media (max-width: 380px) {
+  .mlb-card { padding: 8px 8px 8px 12px; column-gap: 8px; }
 }
 
 /* ===========================================================================
@@ -3207,6 +3327,33 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   align-self: stretch; min-width: 0; overflow: hidden;
   display: flex; flex-direction: column; justify-content: center;
 }
+/* BOARD-ROW HEADSHOTS on /projections/ (2026-08-04). FA puts its 24px photo
+   INSIDE .mlb-name, which costs 7px of line box: its name line measures 25px
+   against a 46px row-1 budget and it fits. Projections has a 42px budget and a
+   22px sub line (the compare button is taller than FA's plain text), so the
+   same placement measured 47px and the sub would have been clipped by the
+   fixed height. Two rows and a photo RAIL instead: the identity block is a
+   24px column beside the stacked name and sub, so the photo cannot grow the
+   line box at all - measured 40px before and after - and it also sits outside
+   .mlb-name's ellipsis box, where text-overflow can never eat it.
+   No new classes: the well and the image reuse .fa-row-photo /
+   .fa-row-headshot exactly as the FA board does. The rail is declared
+   unconditionally (an empty 24px well when a row has no resolved photo) so
+   an async fill cannot shift the layout. */
+.proj-app .proj-card .proj-id {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 7px;
+  align-content: center;
+}
+/* Explicit areas rather than auto-placement: the well spans both rows, and the
+   name/sub keep their order whatever else the identity block ever carries. */
+.proj-app .proj-card .proj-id > .fa-row-photo {
+  grid-area: 1 / 1 / 3 / 2; align-self: center; margin-right: 0;
+}
+.proj-app .proj-card .proj-id > .mlb-name { grid-area: 1 / 2 / 2 / 3; }
+.proj-app .proj-card .proj-id > .mlb-sub  { grid-area: 2 / 2 / 3 / 3; }
 /* Metric children hug their content at the right edge; without this the verdict
    and contract pills would stretch to the full track width and stop reading as
    chips. */
@@ -3231,8 +3378,16 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   overflow: hidden; text-overflow: ellipsis;
 }
 /* The contract chip carries the longest string in either tape ("No multi-year
-   deal"), so it takes a wider share rather than ellipsing by default. */
-.proj-app .proj-card .mlb-chip-ct { flex: 1.8 1 0; }
+   deal"), so it takes a wider share rather than ellipsing by default.
+   MIN-WIDTH GATED 2026-08-04: a wider SHARE only means anything where the
+   chips divide one fixed row. Below 641px they no longer do (see the tape
+   block above, where every chip goes to max-content and the strip swipes),
+   and this rule is both more specific and later in the sheet, so ungated it
+   was the one chip still being crushed - which is exactly the one carrying
+   the longest string. */
+@media (min-width: 641px) {
+  .proj-app .proj-card .mlb-chip-ct { flex: 1.8 1 0; }
+}
 /* The contract status is a chip inside a chip otherwise. Flatten the pill so it
    keeps its status colour without a second border ring. */
 .proj-app .proj-card .mlb-chip .proj-ct {
@@ -3245,6 +3400,20 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .proj-app .mlb-card-head [role="button"]:not([aria-sort="none"]) {
   color: var(--text-primary); border-bottom: 2px solid var(--accent-gold);
 }
+/* Numeric headers over numeric cells (2026-08-04). Every .mlb-metric cell is
+   text-align:right, but the header labels above them were left-aligned, so a
+   column read as two strings that never touched - the same defect the
+   .mlbstats-table th rule fixed on the table surfaces. nth-child rather than a
+   per-column class for the reason above (no class, and fa.js is another lane's
+   file): child 1 is the rank, child 2 is Player, everything after is a metric
+   column on both boards. Phone width turns the header into a wrapped chip
+   strip, where alignment inside a padded chip is a no-op. */
+.fa-app .mlb-card-head > *:nth-child(n+3),
+.proj-app .mlb-card-head > *:nth-child(n+3) { text-align: right; }
+/* 13, not the shared 12: the cards carry a 1px border inside the same outer
+   width, so an equal padding leaves the header labels exactly 1px right of the
+   numbers they sit over. Measured right edges now match to the pixel. */
+.fa-app .mlb-card-head, .proj-app .mlb-card-head { padding-right: 13px; }
 
 /* Rail sparkline as a link to the $/WAR by winter view (#view=dpw). It is a real
    button: hover cue, keyboard focus ring, and an explicit destination label -
@@ -3260,17 +3429,39 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 
 @media (max-width: 720px) {
   .fa-app .fa-card, .proj-app .proj-card { height: auto; min-height: 96px; }
-  /* The shared rule collapses row 1 to `1fr auto` under 720px, but it also PINS
-     every row-1 child to grid-row 1. Pinned items do not wrap - auto-placement
-     keeps making implicit COLUMNS - so the card would scroll sideways instead of
-     reflowing. Releasing the row is what actually makes the collapse work; the
-     tape still takes the full width, last. */
+  /* The shared rule collapses row 1 under 720px, but it also PINS every row-1
+     child to grid-row 1. Pinned items do not wrap - auto-placement keeps making
+     implicit COLUMNS - so the card would scroll sideways instead of reflowing.
+     Releasing the row is what actually makes the collapse work; the tape still
+     takes the full width, last. */
   .fa-app .fa-card > *:not(.mlb-tape), .proj-app .proj-card > *:not(.mlb-tape) { grid-row: auto; }
   .fa-app .fa-card > .mlb-tape, .proj-app .proj-card > .mlb-tape { grid-row: auto; grid-column: 1 / -1; }
+  /* THREE tracks, not the shared two (2026-08-04). The shared collapse is
+     `34px minmax(0,1fr)`, which is right for row 1 and wrong for everything
+     under it: once the rows are released, auto-placement drops every other
+     metric cell into the 34px rank rail, where a 10px column label like
+     "5Y WAR" is wider than the whole track. Rail, then two equal flexible
+     tracks: the identity spans both, and the metric cells pair up 2-across
+     beneath it, aligned down the whole list instead of per card.
+     Columns are pinned by nth-child because the cells carry no per-column
+     class and fa.js belongs to another lane. The count is stable on both
+     boards: child 1 is the rank, child 2 the identity, every child after that
+     is a .mlb-metric until the tape, which spans the row on its own rule. */
+  .fa-app .fa-card, .proj-app .proj-card {
+    grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr) !important;
+  }
+  .fa-app .fa-card .fa-id, .proj-app .proj-card .proj-id { grid-column: 2 / -1; }
+  .fa-app .fa-card > .mlb-metric:nth-child(odd),
+  .proj-app .proj-card > .mlb-metric:nth-child(odd) { grid-column: 2; }
+  .fa-app .fa-card > .mlb-metric:nth-child(even),
+  .proj-app .proj-card > .mlb-metric:nth-child(even) { grid-column: 3; }
   .fa-app .fa-card .fa-id, .proj-app .proj-card .proj-id,
   .fa-app .fa-card > .mlb-metric, .proj-app .proj-card > .mlb-metric {
     align-self: auto; overflow: visible; align-items: flex-start; display: block;
   }
+  /* The identity block keeps its headshot rail (the grid below) at every
+     width; the `display: block` reset above is about the metric cells. */
+  .proj-app .proj-card .proj-id { display: grid; }
   .fa-app .fa-card .fa-statustext { display: block; }
   /* Header tracks no longer line up with a collapsed card, so the header becomes
      a chip strip rather than being dropped: hiding it would take sorting away

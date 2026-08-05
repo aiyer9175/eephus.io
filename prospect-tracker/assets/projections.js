@@ -68,6 +68,79 @@
     return `<img class="fa-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png" alt="${esc(org)}" loading="lazy" onerror="this.replaceWith('${esc(org)}')">`;
   }
 
+  // ===========================================================================
+  // Board-row headshots (2026-08-04). Ported from the FA board, which reuses
+  // .fa-row-photo / .fa-row-headshot for the well and the image.
+  //
+  // THE URL IS NOT THE FA ONE. fa.js requests the `d_people:generic` overlay
+  // set, which Cloudinary answers with a SILHOUETTE at HTTP 200 whenever the
+  // player has no photo in that context - fine for a board that is all MLB
+  // veterans, fatal here, because a 200 never fires onerror and the milb-only
+  // ids that most prospects have would be pinned to a grey outline forever.
+  // So this reads data/photo_ctx.json (the resolver's id -> '67' | 'milb' |
+  // 'none' map) and requests the context that actually HAS a photo, with no
+  // overlay, exactly as PROSPX's headshotURL does. Coverage measured on the
+  // current payload: 973 of 1324 veterans resolve directly, and all 209
+  // prospects resolve through the player-links map below (59 '67', 146 'milb',
+  // 4 'none').
+  let PHOTO_CTX = null;                 // null = not loaded yet, {} = failed
+
+  function boardPhotoURL(mlbam, px) {
+    if (!mlbam) return null;
+    const r = Math.max(60, Math.round((px || 24) * 2));   // 2x for retina
+    const ctx = PHOTO_CTX ? PHOTO_CTX[String(mlbam)] : undefined;
+    if (ctx === "none") return null;    // resolver checked: no photo on file
+    if (ctx === "67" || ctx === "milb")
+      return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${r},q_auto:best/v1/people/${mlbam}/headshot/${ctx}/current`;
+    // Unresolved: an id added since the last monthly backfill, or the map
+    // failed to load. Ask for the real 67 photo with NO overlay so a miss 404s
+    // and the one-shot MiLB retry below can recover it, instead of silently
+    // returning a silhouette that nothing can detect.
+    return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${r},q_auto:best/v1/people/${mlbam}/headshot/67/current`;
+  }
+
+  function rowPhotoImg(mlbam) {
+    // Digits only. The id is interpolated into an inline onerror string below
+    // and it arrives from a data payload, not from this file.
+    const id = String(mlbam == null ? "" : mlbam).replace(/\D/g, "");
+    if (!id) return "";
+    const url = boardPhotoURL(id, 24);
+    if (!url) return "";
+    const ctx = PHOTO_CTX ? PHOTO_CTX[id] : undefined;
+    const resolved = (ctx === "67" || ctx === "milb");
+    const milb = `https://img.mlbstatic.com/mlb-photos/image/upload/w_48,q_auto:best/v1/people/${id}/headshot/milb/current`;
+    // A resolved context is already the right set, so its onerror just drops
+    // the image and leaves the empty well - never a broken-image glyph.
+    const onerr = resolved
+      ? "this.remove()"
+      : `if(this.dataset.mt){this.remove()}else{this.dataset.mt=1;this.src='${milb}'}`;
+    return `<img class="fa-row-headshot" src="${url}" alt="" loading="lazy" decoding="async" onerror="${onerr}">`;
+  }
+
+  // The well is ALWAYS emitted, photo or not: it is a fixed 24px grid column
+  // in .proj-id, so nothing below it moves when an async fill lands.
+  function rowPhoto(m) {
+    if (m.mlbam) return `<span class="fa-row-photo">${rowPhotoImg(m.mlbam)}</span>`;
+    return `<span class="fa-row-photo" data-photo-key="${esc(m.key || "")}"></span>`;
+  }
+
+  // Second pass for rows the payload carries no mlbam on. Veteran rows all
+  // have one and render synchronously above; prospect rows are being given one
+  // in proj_export, and until that lands (and for any row it misses) the
+  // cross-module links map resolves the key. One pass per render.
+  function fillRowPhotos(scope) {
+    const pend = (scope || document).querySelectorAll(".fa-row-photo[data-photo-key]");
+    if (!pend.length || !window.EEPHUS_HUB) return;
+    window.EEPHUS_HUB.links().then(L => {
+      if (!L) return;
+      pend.forEach(el => {
+        const row = (L.byKey || {})[el.dataset.photoKey];
+        if (row && row.mlbam) el.innerHTML = rowPhotoImg(row.mlbam);
+        el.removeAttribute("data-photo-key");
+      });
+    });
+  }
+
   function posGroup(pos) {
     const head = String(pos || "").toUpperCase().split("/")[0].trim();
     if (["SP", "SP2", "P", "LHP", "RHP"].includes(head)) return "SP";
@@ -1066,9 +1139,13 @@
       const sur = _sv != null
         ? `<span class="${_sv >= 0 ? "proj-pos" : "proj-neg"}" title="${_surTitle}">${money(_sv)}</span>`
         : EM_DASH;
+      // title carries the full name because .mlb-name is an ellipsis box. The
+      // identity block measures 224px at a 320px viewport and the photo rail
+      // plus the org logo take ~51px of that, so a long name is one of the few
+      // things on the row with nowhere else to be read.
       const link = m.src === "prospect"
-        ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(m.key)}"><strong>${esc(m.name)}</strong></a>`
-        : `<a class="fa-player-link" href="#player=${encodeURIComponent(m.key)}"><strong>${esc(m.name)}</strong></a>`;
+        ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(m.key)}" title="${esc(m.name)}"><strong>${esc(m.name)}</strong></a>`
+        : `<a class="fa-player-link" href="#player=${encodeURIComponent(m.key)}" title="${esc(m.name)}"><strong>${esc(m.name)}</strong></a>`;
       const inCmp = state.cmp.includes(m.key);
       // The whole appearance (including the picked-vs-unpicked colours) is on
       // .proj-cmp-btn / .proj-cmp-btn.active - the class already encoded the
@@ -1087,6 +1164,7 @@
           data-card-href="${esc(cardHref)}"${m.orgColor ? ` style="--org-color:${esc(m.orgColor)}"` : ""}>
         <span class="mlb-rank">${i + 1}</span>
         <div class="proj-id">
+          ${rowPhoto(m)}
           <span class="mlb-name">${teamLogo(m.team)}${link}</span>
           <span class="mlb-sub">${esc(m.pos || "")}${m.team ? "" : " &middot; FA"}${tagFor(m)}<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span>${cmpBtn}</span>
         </div>
@@ -1234,6 +1312,9 @@
       syncToURL();
       if (state.cmp.length === 2) render(); else renderTable();
     });
+    // Rows the payload gave no mlbam: resolve the id and fill the (already
+    // reserved) 24px photo well.
+    fillRowPhotos(root);
     // Cross-module cohesion: FA-class members get a $ chip linking to
     // their market card (async via the links map; no layout shift).
     if (window.EEPHUS_HUB) {
@@ -1297,9 +1378,10 @@
     const chart = `<svg class="mlbp-fan" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected WAR comparison">
       ${zero}${line(wA, CA)}${line(wB, CB)}${dots(wA, CA, a.name)}${dots(wB, CB, b.name)}${ticks}</svg>`;
     // Only the name COLOUR stays inline - it is the per-side series colour the
-    // chart already draws with. The ellipsizing box lives on .proj-cmp-name.
+    // chart already draws with. The ellipsizing box lives on .proj-cmp-name
+    // (it finally does, as of 2026-08-04), so the name carries a title.
     const head = (m, color) => `<div class="proj-cmp-head">
-      ${teamLogo(m.team)}<strong class="proj-cmp-name" style="color:${color};">${esc(m.name)}</strong>
+      ${teamLogo(m.team)}<strong class="proj-cmp-name" style="color:${color};" title="${esc(m.name)}">${esc(m.name)}</strong>
       <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}</span>${tagFor(m)}</div>`;
     const seasonRows = seasons.map((s, t) => {
       const va = warAt(a, t), vb = warAt(b, t);
@@ -2044,6 +2126,20 @@
     const root = document.getElementById("proj-rows");
     if (!root) return;
     root.innerHTML = `<div class="state-message is-loading">Loading projections&hellip;</div>`;
+    // photo_ctx.json rides its OWN chain, not a Promise.all with the board:
+    // (a) its failure is non-fatal and must never reach the board's catch, and
+    // (b) the projections smoke test drives this file in py_mini_racer with
+    // synchronous fake thenables that cannot satisfy Promise.all, so gating the
+    // board render on a joined promise leaves the page stuck on "Loading" under
+    // test. If the 117KB map lands first (it usually does against the 886KB
+    // board), the first paint has photos; if it lands late, fillRowPhotos
+    // re-fills the already-rendered wells. Fetched once per session.
+    if (!PHOTO_CTX) {
+      fetch("/data/photo_ctx.json", { cache: "force-cache" })
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => { PHOTO_CTX = (d && d.ctx) || {}; if (DATA) fillRowPhotos(); })
+        .catch(() => { PHOTO_CTX = {}; });
+    }
     fetch("/data/mlb_projections.json", { cache: "no-cache" })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(d => { DATA = d; render(); })
