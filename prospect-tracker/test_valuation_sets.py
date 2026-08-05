@@ -139,7 +139,15 @@ def test_clemens_default_applies_and_context_restores():
         # on this population is $0 for two thirds of the board, which is why the old map
         # clamped a $0 bottom; the mean is not zero, so every tier lifts. Held-out bias
         # -0.028 vs +2.521 uncalibrated, slope 1.059 vs 1.239. Deliberate.
-        assert vf.surplus_value_mm(50.0, False) == pytest.approx(43.4, abs=0.1)
+        # RESTAMPED 2026-08-04 for the R7 dpw re-anchor, 43.4 -> 47.4. This is a
+        # WIN-COST move, not another objective change: the FA-signings-implied
+        # $/WAR series was regenerated and the 2026 winter went 14.92M -> 17.29M
+        # (+15.9%), trailing-3 mean 14.89M -> 16.61M (+11.6%). prospx_current
+        # leaves the FA-implied rescale ON (params.win_cost.disable_fa_implied
+        # is false), so its whole tier grid lifts about 10.5% and FV50 hit is
+        # the grid point this test happens to pin. ctrl_war did not move: the
+        # anchors are unchanged, only what a win costs.
+        assert vf.surplus_value_mm(50.0, False) == pytest.approx(47.4, abs=0.1)
     assert vf.active_valuation_set() == "clemens_2026"
     assert vf.surplus_value_mm(50.0, False) == pytest.approx(base_50, abs=0.01)
     assert vf._config()["_valuation_set"] == "clemens_2026"

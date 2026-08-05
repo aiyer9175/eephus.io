@@ -128,8 +128,13 @@ def test_cache_cleared_on_set_switch():
         # is the same fact the prospx_current tier re-capture carries.
         # Re-stamped 2026-07-31: 32.8 -> 43.4 with the v6 EV calibration
         # (docs/efv-2026-07-30/SURPLUS_EV_OBJECTIVE.md).
+        # Re-stamped 2026-08-04: 43.4 -> 47.4 for the R7 dpw re-anchor. Unlike
+        # the two moves above this is NOT a calibration change: the
+        # FA-signings-implied $/WAR series was regenerated (2026 winter
+        # 14.92M -> 17.29M, +15.9%) and prospx_current leaves the FA-implied
+        # rescale ON, so its tier grid lifts about 10.5% on win cost alone.
         base_50 = vf.surplus_value_mm(50.0, False)
-        assert base_50 == pytest.approx(43.4, abs=0.1)
+        assert base_50 == pytest.approx(47.4, abs=0.1)
     # The CACHE-CLEARING fact this test exists for, stated scale-free so a future
     # re-price restamps one literal instead of silently voiding the guard: the two
     # contexts must price differently, and leaving must restore the clemens price.

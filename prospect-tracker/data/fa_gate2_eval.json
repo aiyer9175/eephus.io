@@ -1115,32 +1115,5 @@
   "aav": true,
   "years": true
  },
- "pass": true,
- "challenger": {
-  "model_version": "fa_mkt_lgbm_v1",
-  "pooled": {
-   "guarantee": {
-    "mae": 10.371904914929107,
-    "n": 1199
-   },
-   "aav": {
-    "mae": 3.189029617766776,
-    "n": 1199
-   },
-   "years": {
-    "mae": 0.47956630525437866,
-    "n": 1199
-   },
-   "mega_guarantee": {
-    "mae": 93.8850285,
-    "n": 50
-   }
-  },
-  "ship_criteria": {
-   "guarantee_beats_champion": false,
-   "mega_not_worse": false,
-   "years_not_worse": false
-  },
-  "ship": false
- }
+ "pass": true
 }

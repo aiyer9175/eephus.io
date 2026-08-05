@@ -547,3 +547,78 @@ any shape metric is chosen.
 R1c therefore remains NO_SHIP on the ORIGINAL gate, and the reason it rejects is
 still not established as correct. That is worse than a clean no-ship and it is
 the honest state. Do not grade candidates against the spec above.
+
+---
+
+# R7 EXECUTED 2026-08-04. The flip is done and MY PREMISE FOR IT WAS WRONG.
+
+Owner chose "measure and flip in one pass". Both happened. The honest headline is
+not the flip, it is this:
+
+**"Every served surplus price is frozen on a stale winter market" is FALSE, and I
+said it when framing the decision.** It is what made this look urgent. It is not
+what the code does.
+
+    ACTIVE production valuation set : clemens_2026
+      clemens_2026   fa_implied.enabled = FALSE   rates fixed 6.97 / 8.76 / 13.63M
+      prospx_current fa_implied.enabled = TRUE    rates rescale off the series
+
+`clemens_2026` is the served set and it NEVER READS data/fa_dpw_series.json. Only
+`prospx_current`, the BASE-IDENTITY / audit set, consumes it. So a dpw re-anchor
+cannot move a served price by construction, and the correct measured outcome of
+this flip is that **data/trade_values.json came back BYTE-IDENTICAL**: 6,234 rows,
+surplus sum $26,723.1M unchanged to the cent, top-10 values and ordering
+identical. That is not a failed rebuild. It is the right answer, and it is the
+answer I should have predicted before proposing the work.
+
+## What actually moved
+
+The FA-signings-implied series was genuinely stale and is now current:
+
+    winter   before        after         change
+    2021     13,583,089    15,069,518    +10.9%
+    2022     14,663,026    14,229,892     -3.0%
+    2023     14,367,688    14,427,758     +0.4%
+    2024     14,142,807    15,092,860     +6.7%
+    2025     15,605,124    17,450,928    +11.8%
+    2026     14,919,577    17,293,779    +15.9%
+    trailing-3 mean 14,889,169 -> 16,612,522  (+11.6%)
+
+The 14.92 -> 17.29 figure that had been carried in the notes as the frozen drift
+reproduces exactly. Inside `prospx_current` that lifts the tier grid +10.5%
+(floored at 35+ and 40, +9.2% to +14.3% everywhere above); `ctrl_war` is
+untouched because the anchors did not move, only what a win costs.
+
+## What was done
+
+  * `data/fa_dpw_series.json` regenerated via `run_market_gate(persist_dpw=True)`.
+  * `config/valuation_sets/prospx_current.yaml` tier table re-captured INSIDE
+    `with vf.valuation_set("prospx_current")` (the 2026-07-24 lesson: capturing
+    on the default set silently yields a different grid). Previous grid preserved
+    in the file's audit history.
+  * TWO test literals restamped, not the 18 the plan expected: the parity test is
+    parametrized (10 FV x 2 sides) and passes automatically once table == engine.
+    The second literal (test_clemens_reconciliation) surfaced only because fixing
+    the first left it red. Both are stamped with WHY, because the previous two
+    restamps of that same literal were CALIBRATION changes and this one is a
+    WIN-COST change; a future reader would otherwise assume the same cause.
+  * Board rebuilt. Golden `_GOLDEN_XFV_SHA256` NOT restamped and did not need to
+    be: test_efv_export passes 13/13, and xfv.json's file hash moved only in
+    volatile fields that the fingerprint strips.
+  * The model/table SEPARATION invariant holds and WIDENS: the clemens model
+    price stays 40.5 against a table that moved 43.4 -> 47.4, so the board has
+    not been snapped to table scale.
+
+## What this was worth, stated plainly
+
+The audit/reference set is now anchored to a current market instead of a stale
+one, the drift is measured and recorded, and the served board is provably
+unaffected. That is a real but SMALL result, and much smaller than the framing I
+gave it. The second export pass the plan called for was not run because no served
+price moved; there is nothing for it to propagate.
+
+**The lesson worth keeping**: I inherited "the frozen +16% drift means every
+served price is stale" from an earlier note and repeated it into an owner
+decision without checking which valuation set production actually runs. One
+`vf.active_valuation_set()` call would have caught it. Check which set is active
+before claiming anything about served prices.
