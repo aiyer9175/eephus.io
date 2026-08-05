@@ -4308,13 +4308,20 @@ def _projection_band_mm(v: dict | None, dpw: float | None, disc: float):
         mid = season_value(float(war[t]), t, dpw)
         d_lo += (mid - season_value(float(p10[t]), t, dpw)) / ((1.0 + disc) ** t)
         d_hi += (season_value(float(p90[t]), t, dpw) - mid) / ((1.0 + disc) ** t)
-    # The rest-of-season leg is priced undiscounted at t=0 on a prorated share of
-    # the first projected season, so its band prorates the same fan the same way.
+    # The rest-of-season leg is priced undiscounted at t=0 as a FRACTION OF THE
+    # FULL FIRST SEASON - f * (V(w_full) - salary_full), proj_export's convention
+    # since 2026-08-04d - so its band prorates the same fan on the same basis:
+    # f * (V(w_full) - V(p10_full)), NOT V(p10_full * f). Pricing the shrunken
+    # quantile through the convex tier kernel would classify each fan edge by its
+    # PRORATED WAR and hand the band a different per-win rate than the midpoint it
+    # brackets. `rosWar` (= w_full * f) stays the row's DISPLAY field; the basis
+    # here is war[0], exactly what the priced leg used.
     ros_frac, ros_war = _safe_float(v.get("rosFrac")), _safe_float(v.get("rosWar"))
-    if ros_frac and ros_war is not None and p10 and p90:
-        mid = season_value(ros_war, 0, dpw)
-        d_lo += mid - season_value(float(p10[0]) * ros_frac, 0, dpw)
-        d_hi += season_value(float(p90[0]) * ros_frac, 0, dpw) - mid
+    ros_w0 = _safe_float(war[0]) if war else None
+    if ros_frac and ros_war is not None and ros_w0 is not None and p10 and p90:
+        mid = season_value(ros_w0, 0, dpw)
+        d_lo += ros_frac * (mid - season_value(float(p10[0]), 0, dpw))
+        d_hi += ros_frac * (season_value(float(p90[0]), 0, dpw) - mid)
     if d_lo <= 0.0 and d_hi <= 0.0:
         return None, None                      # degenerate fan: no band to show
     tot_mm = float(total) / 1e6
@@ -4638,15 +4645,19 @@ def _prearb_priced(data_dir) -> dict:
             npv += d / ((1.0 + disc) ** t)
             n_priced += 1
         # Rest-of-season control, on proj_export's conventions to the letter:
-        # undiscounted at t=0, talent = war[0] prorated by the share of the
-        # season left, salary prorated the same way. Pricing a contracted vet's
-        # remainder and not a pre-arb player's would re-open exactly the
+        # undiscounted at t=0, talent basis war[0], and ONE proration factor
+        # applied to the whole full-season surplus - f * (V(w_full) - salary) -
+        # so the production and salary legs prorate the same quantity. (Before
+        # 2026-08-04d both this mirror and proj_export priced V(f * w_full),
+        # running the shrunken remainder back through the convex tier kernel and
+        # billing it at a smaller player's per-win rate.) Pricing a contracted
+        # vet's remainder and not a pre-arb player's would re-open exactly the
         # inconsistency the ROS leg was added to close.
         ros_d = None
         w0 = _safe_float(war[0]) if war else None
         if now_prearb and ros_frac > 0.0 and w0 is not None:
-            ros_war = w0 * ros_frac
-            ros_d = season_value(ros_war, 0, dpw) - lm(first - 1) * ros_frac
+            ros_war = w0 * ros_frac                   # PUBLISHED (display) WAR
+            ros_d = ros_frac * (season_value(w0, 0, dpw) - lm(first - 1))
             shadow["surRos"] = round(ros_d / 1e6, 1)
             shadow["rosWar"] = round(ros_war, 2)
             shadow["rosFrac"] = round(ros_frac, 3)

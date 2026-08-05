@@ -96,7 +96,10 @@ def _league_min_total(war, n_seasons, ros=True):
     for t in range(n_seasons):
         total += (_season_value_usd(war[t], t, DPW) - lm(FIRST + t)) / ((1.0 + disc) ** t)
     if ros:
-        total += _season_value_usd(war[0] * ROS, 0, DPW) - lm(FIRST - 1) * ROS
+        # 2026-08-04d convention: the RoS leg prorates the full-season SURPLUS,
+        # f * (V(w) - salary), not V(f*w) - f*salary. Pricing V(f*w) charged the
+        # remainder a lower per-win tier than the season it is part of.
+        total += ROS * (_season_value_usd(war[0], 0, DPW) - lm(FIRST - 1))
     return total
 
 
@@ -116,9 +119,10 @@ def _arb_total(war, n_seasons, ros=True):
         sal = max(lm(FIRST + t), fracs[i] * mkt)
         total += (mkt - sal) / ((1.0 + disc) ** t)
     if ros:
+        # Same 2026-08-04d full-season-surplus proration as _league_min_total,
+        # so the two bases stay comparable leg for leg.
         mkt0 = _season_value_usd(war[0], 0, DPW)
-        total += (_season_value_usd(war[0] * ROS, 0, DPW)
-                  - max(lm(FIRST - 1), fracs[0] * mkt0) * ROS)
+        total += ROS * (mkt0 - max(lm(FIRST - 1), fracs[0] * mkt0))
     return total
 
 

@@ -231,6 +231,20 @@ def _season_value_usd(war: float, t: int, dpw_level: float) -> float:
     return vf.tiered_war_value_usd(war) * (dpw_level / base_flat) * ((1 + infl) ** t)
 
 
+def _ros_surplus_usd(war_now: float, cur_sal: float, ros_frac: float,
+                     dpw_level: float) -> float:
+    """The rest-of-season (rental) surplus: ONE proration factor applied to the
+    WHOLE full-season surplus, f * (V(w_full) - salary_full).
+
+    Extracted to module level so the convention has a single call site and a
+    test can pin it against hand arithmetic. The long WHY - and the measured
+    size of the V(f*w) error this replaced - lives at the call site in
+    `_apply_contract`. Undiscounted and un-escalated (t=0) by construction.
+    """
+    return float(ros_frac) * (_season_value_usd(float(war_now), 0, dpw_level)
+                              - float(cur_sal))
+
+
 def _winter_dpw(first_season: int) -> float:
     """Ex-ante $/WAR level for the first projected season, from the
     committed signings-implied series (last prior winter escalated)."""
@@ -334,21 +348,61 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         #     for an aging vet (his in-season talent is a shade above next
         #     year's) and it deliberately does not read 2026 results to date,
         #     which measure what the SELLING club already banked.
-        #   * The prorated WAR is priced through the same convex tier curve at
-        #     its own level, exactly as every full season is.
         #
-        #     THIS COMMENT USED TO SAY THAT UNDER-PRICES A STAR RENTAL. It was
-        #     asserted, never measured, and MEASURING IT REFUTED IT (2026-08-04,
-        #     lane R5.2). The shortfall against pricing at the full-season rate,
-        #     f*V(w_full), is SINGLE-PEAKED and largest for MID-tier rentals: it
-        #     peaks around a 2.5 to 3.0 WAR full-season rate at roughly +0.79,
-        #     then FALLS MONOTONICALLY across the star class (Spearman -1.0000
-        #     over n=69) and is EXACTLY ZERO at and above 8.31 WAR. The reason
-        #     is mechanical: the platform's own curve is LINEAR above about 2.5
-        #     WAR, and proration is exact on a linear segment, so there is no
-        #     convexity left to under-price at the top. The intuition had the
-        #     population backwards - if anything is mispriced here it is the
-        #     mid-tier deadline add, not the star.
+        #     STILL war[0] AFTER MEASURING THE ALTERNATIVE (2026-08-04d, lane
+        #     A2b). war[0] is the FIRST_SEASON projection, i.e. ONE AGING YEAR
+        #     PAST the season being sold, so for a vet it is biased low. The
+        #     honest de-aging is the exact inverse of the platform's own aging
+        #     operator (fa_market._decay_path: subtract curve_delta war_rate and
+        #     pt at the player's age), and tools/ros_talent_basis_probe.py runs
+        #     it over all 969 RoS rows -> data/ros_talent_basis_probe.json.
+        #     DIRECTION IS RIGHT, MAGNITUDE IS NOT CREDIBLE FOR ONE YEAR: the
+        #     median de-aging multiplier is monotone in age (0.77x at 22, 1.00x
+        #     at 26, 1.22x at 30, 1.39x at 34, 1.61x at 37) and 100 of 784 rows
+        #     move more than 1.5x. A one-year de-aging worth +39% of talent at
+        #     34 is the FORWARD decay path's own steepness read backwards, and
+        #     that steepness has never been validated as a one-step operator on
+        #     an individual - the curves are additive rate/PT deltas fit on
+        #     survivors. Population effect would be +$0.26M median / +$0.47M
+        #     mean per row, 19 surTotal sign flips. NOT SHIPPED: it needs the
+        #     same kind of gate the R5.2 premium constant needs. The published
+        #     alternatives are worse, not better: warPTH[0] (if-healthy) is a
+        #     DIFFERENT QUANTITY and moves every row up (+$1.39M median, 54 sign
+        #     flips) - surplus prices expected value, not if-healthy; and
+        #     warY1Champ is simply the non-ML model.
+        #   * BOTH LEGS PRORATE THE SAME FULL-SEASON QUANTITY: production is
+        #     f * V(w_full), salary is f * salary_full. Until 2026-08-04d the
+        #     production leg priced V(f * w_full) instead - it ran the SHRUNKEN
+        #     remainder through the convex tier kernel, which classifies a
+        #     season by its OWN WAR (value_framework.py:457-482), so a 0.69-WAR
+        #     pitcher's 30% remainder was billed at a 0.21-WAR player's per-win
+        #     rate while his salary was billed at his real rate. That is a
+        #     mechanical proration error, not a valuation choice: the two legs
+        #     were prorated on different bases.
+        #
+        #     THE SIZE OF THE ERROR WAS MEASURED FIRST (2026-08-04, lane R5.2,
+        #     re-measured at f=0.301 before this edit) and it refuted the older
+        #     intuition in this comment, which claimed the old form under-priced
+        #     a STAR rental. The gap f*V(w) - V(f*w) is SINGLE-PEAKED and dies
+        #     EXACTLY AT AND ABOVE w = 2.5/f = 8.31 WAR, because the platform's
+        #     own curve is LINEAR above the top tier center (2.5) and proration
+        #     is exact on a linear segment - there is no convexity left to
+        #     mis-price at the top. READ THE UNITS: in RELATIVE terms the gap is
+        #     worst for the MID-tier add (it peaks at 88% of the old price near
+        #     w=2.46, and is +79% at w=3.00, which is the "+0.79" R5.2 recorded);
+        #     in DOLLARS it peaks much higher up the talent scale, at +$10.09M
+        #     near w=5.36. Both statements are the same curve.
+        #     Clay Holmes (war[0]=0.69, $8,941,176, f=0.301) moves
+        #     -$762,764 -> -$715,920, i.e. +$46,844.
+        #     Population effect on the 2026-08-04 artifact: 969 vet rows carry a
+        #     RoS leg, 421 move by >= $1, NONE move down (the gap is >= 0
+        #     everywhere by Jensen), mean +$0.91M, max +$10.08M (Juan Soto), and
+        #     4 surTotal sign flips (Lindor, Devers, Schwarber, Suzuki all
+        #     negative -> positive). Expect trade-board reordering.
+        #
+        #     `rosWar` still PUBLISHES war_now * f, because that is the WAR the
+        #     acquiring club actually receives and it is a display field. Only
+        #     the dollars changed.
         #
         #     A concentration premium may still exist in what clubs PAY; that
         #     is a different claim and it is UNMEASURED. The backtest is
@@ -371,8 +425,8 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         cur_sal = sal.get(FIRST_SEASON - 1)
         war_now = (m.get("war") or [None])[0]
         if cur_sal is not None and war_now is not None and ros_frac > 0.0:
-            ros_war = float(war_now) * ros_frac
-            ros_d = _season_value_usd(ros_war, 0, dpw) - float(cur_sal) * ros_frac
+            ros_war = float(war_now) * ros_frac       # PUBLISHED (display) WAR
+            ros_d = _ros_surplus_usd(war_now, cur_sal, ros_frac, dpw)
             m["surRos"] = round(ros_d / 1e6, 1)
             m["rosWar"] = round(ros_war, 2)
             m["rosFrac"] = round(ros_frac, 3)
@@ -714,6 +768,10 @@ def _prospect_rows(dpw: float) -> list[dict]:
         prime = vf.prospect_prime_path(float(price_fv), is_pit, debut_age, reliever)
         out.append(_clean({
             "key": p.get("player_key"), "name": p.get("player_name"),
+            # Headshot join key. Veteran rows have carried `mlbam` since the
+            # board shipped; prospect rows carried none (0 of 209), so the
+            # projections board could not render a prospect photo at all.
+            "mlbam": p.get("mlbam_id"),
             "age": age, "src": "prospect", "fv": fv, "consensus_fv": cons_fv,
             "fv_source": fv_source, "eta": eta_yr,
             "pos": pos, "team": p.get("org"),
