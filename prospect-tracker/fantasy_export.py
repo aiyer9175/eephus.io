@@ -426,22 +426,75 @@ def _enrich(players: list[dict]) -> None:
     from the matching skill leaderboard (mlbam-joined). Powers the section
     signals (luck_gap/luck -> buy/sell, gmli/saves -> closers) and the card
     HEM+/SEM+/REM+ display. Only the read keys are baked: the old p['std'] block
-    and the wider skill set had zero reader (client or server) - dead payload."""
+    and the wider skill set had zero reader (client or server) - dead payload.
+
+    ALSO bakes `elig`, the fantasy position eligibility list (2026-08-05, for
+    the /dfs/ and /redraft/ split). The corpus role for a hitter is the bare
+    string "H", which is useless to a lineup slot, so eligibility is joined from
+    data/mlb_fielding_positions.json. Additive: every existing reader of `pos`
+    is untouched, and dfs_export re-reads the same artifact itself when a
+    payload predates this field."""
     hit = _lb_index("hitter_leaderboards.json", "hitters")
     sp = _lb_index("starter_leaderboards.json", "starters")
     rp = _lb_index("bullpen_leaderboards.json", "relievers")
+    elig = _elig_positions()
     for p in players:
         mid, r = p["mlbam"], None
         if p["side"] == "hit":
             r = hit.get(mid) or {}
             p["skill"] = {k: r.get(k) for k in ("hem_plus", "luck_gap")}
+            slots = elig.get(mid)
+            if slots:
+                p["elig"] = slots
         elif p["pos"] == "SP":
             r = sp.get(mid) or {}
             p["skill"] = {k: r.get(k) for k in ("sem_plus", "luck")}
+            p["elig"] = ["P"]
         else:
             r = rp.get(mid) or {}
             p["skill"] = {k: r.get(k) for k in ("rem_plus", "gmli", "saves", "luck")}
+            p["elig"] = ["P"]
         p["team"] = r.get("team")
+
+
+# StatsAPI fielding abbreviation -> fantasy lineup slot. A hitter with no
+# fielding position over the games floor gets no `elig` at all rather than a
+# guessed one; the reader falls back to UTIL and says so.
+_POS_SLOT = {"C": "C", "1B": "1B", "2B": "2B", "3B": "3B", "SS": "SS",
+             "LF": "OF", "CF": "OF", "RF": "OF", "OF": "OF", "DH": "UTIL"}
+_ELIG_MIN_GAMES = 5
+
+
+def _elig_positions() -> dict:
+    """{mlbam: [slot, ...]} from data/mlb_fielding_positions.json, most-played
+    first. A position counts at >= _ELIG_MIN_GAMES; the modal position always
+    counts so a mid-season call-up is never slotless. Empty when the artifact
+    is absent (fresh checkout), which simply leaves `elig` off the row."""
+    raw = _load_json("mlb_fielding_positions.json")
+    players = (raw or {}).get("players") if isinstance(raw, dict) else None
+    out: dict = {}
+    if not isinstance(players, dict):
+        return out
+    for rec in players.values():
+        mid = (rec or {}).get("mlbam")
+        pos = (rec or {}).get("positions") or {}
+        if not mid or not isinstance(pos, dict):
+            continue
+        counts = {p: float((v or {}).get("games") or 0)
+                  for p, v in pos.items() if p != "P"}
+        if not counts:
+            continue
+        modal = max(counts, key=lambda p: counts[p])
+        slots: list = []
+        for p, games in sorted(counts.items(), key=lambda kv: -kv[1]):
+            if games < _ELIG_MIN_GAMES and p != modal:
+                continue
+            s = _POS_SLOT.get(p)
+            if s and s not in slots:
+                slots.append(s)
+        if slots:
+            out[int(mid)] = slots
+    return out
 
 
 def _callup_watch(ts: dict | None = None) -> list:
