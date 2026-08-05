@@ -315,7 +315,14 @@
     loading = (async () => {
       // fa_meta inlines the whole series file; the direct file is the fallback
       // for a build where that inline has not run yet.
-      for (const url of ["data/fa_meta.json", "data/fa_dpw_series.json"]) {
+      //
+      // ROOT-ABSOLUTE, and that is the whole bug this view shipped with. The
+      // document is served at /fa/, so a relative "data/fa_meta.json" resolved
+      // to /fa/data/fa_meta.json and 404'd on BOTH candidates; the loop fell
+      // through, ensureData() returned null and the view rendered nothing but
+      // "The $/WAR series failed to load." It had never worked in production.
+      // The house pattern is assets/fa.js's load(): `/data/${name}.json`.
+      for (const url of ["/data/fa_meta.json", "/data/fa_dpw_series.json"]) {
         try {
           const r = await fetch(url, { cache: "no-store" });
           if (!r.ok) continue;
