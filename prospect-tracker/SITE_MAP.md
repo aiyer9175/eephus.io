@@ -66,7 +66,7 @@ column below lists only what the surface's own module app fetches.
 | `/trademachine/` | `build_site.build_trademachine()` | `assets/trademachine.js` | `grpo_public.json`, `grpo_scores.json`, `mlb_player_detail.json`, `trade_machine_eval.json`, `trade_values.json` | Trade Machine (Bayesian trade board + one-currency deal evaluator) |
 | `/fantasy/` | `build_site.build_fantasy()` | `assets/fantasy.js` | `fantasy.json` | Fantasy: ROS rankings + daily streamers, multi-format (Ottoneu) scoring |
 | `/parks/` | `build_site.build_parks()` | `assets/parks.js` | `milb_park_factors.json`, `xfv_park_line_eval.json` | MiLB Park Factors reference table (display only; the eFV park-line lane stays gated off) |
-| `/glossary/` | `build_site.build_glossary()` | `assets/glossary.js` | `glossary.json`, `model_registry.json`, `source_backtest.json`, `xfv_provisional_prior_eval.json`, `xfv_reliability.json`, `xfv_scoreboard_eval.json`, `xfv_statcast_line_eval.json`, `xfv_valuation_curve.json` | Unified glossary + methodology / model accountability |
+| `/glossary/` | `build_site.build_glossary()` | `assets/glossary.js` | `glossary.json`, `model_registry.json`, `source_backtest.json`, `source_weights.json`, `xfv_provisional_prior_eval.json`, `xfv_reliability.json`, `xfv_scoreboard_eval.json`, `xfv_statcast_line_eval.json`, `xfv_valuation_curve.json` | Unified glossary + methodology / model accountability |
 | `/teams/` | `build_site.build_teams_redirect()` | server-rendered | - | redirect stub: the old Teams module now lives in /projections/ Team Outlook |
 | `/team/` | `build_site.build_team()` | server-rendered | - | Developers page (content/team.json) |
 | `/sources/` | `build_site.build_sources()` | server-rendered | - | data-source credits page |
