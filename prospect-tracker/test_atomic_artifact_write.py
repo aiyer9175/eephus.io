@@ -125,3 +125,53 @@ def test_no_temp_files_are_left_behind(tmp_path):
     _dump_via_export({"players": []}, target)
     leftovers = [p.name for p in tmp_path.iterdir() if ".tmp" in p.name]
     assert not leftovers, f"temp files survived a successful write: {leftovers}"
+
+
+def test_the_swap_gives_up_loudly_rather_than_writing_in_place(tmp_path, monkeypatch):
+    """The deadline exists so a stuck reader cannot hang an export forever. What
+    happens when it expires is the part that matters: the helper must RAISE and
+    leave the previous file untouched. Falling back to an in-place write here
+    would rebuild the exact corruption this module exists to prevent, under
+    precisely the conditions that cause it."""
+    import os as _os
+    target = tmp_path / "artifact.json"
+    _dump_via_export({"players": [{"k": 1}]}, target)
+    before = target.read_bytes()
+
+    def always_busy(a, b):
+        raise PermissionError(5, "Access is denied")
+
+    monkeypatch.setattr(storage.os, "replace", always_busy)
+    tmp = target.with_name(target.name + ".tmpBUSY")
+    tmp.write_bytes(b'{"players": []}')
+
+    with pytest.raises(PermissionError, match="was NOT"):
+        storage._atomic_replace(tmp, target, timeout=0.3)
+
+    assert target.read_bytes() == before, (
+        "the previous artifact must survive a failed swap; overwriting it here "
+        "is the corruption, not the fix")
+    assert _os.path.exists(tmp), "the temp is left for inspection, not silently lost"
+
+
+def test_a_brief_collision_is_ridden_out(tmp_path, monkeypatch):
+    """The common case: a reader holds the file for a moment and lets go. The
+    swap must succeed rather than surfacing a transient error to the export."""
+    target = tmp_path / "artifact.json"
+    _dump_via_export({"players": [{"k": 1}]}, target)
+    real = storage.os.replace
+    calls = {"n": 0}
+
+    def busy_twice(a, b):
+        calls["n"] += 1
+        if calls["n"] <= 2:
+            raise PermissionError(5, "Access is denied")
+        return real(a, b)
+
+    monkeypatch.setattr(storage.os, "replace", busy_twice)
+    tmp = target.with_name(target.name + ".tmpBRIEF")
+    tmp.write_bytes(b'{"players": [{"k": 2}]}')
+    storage._atomic_replace(tmp, target, timeout=5.0)
+
+    assert json.loads(target.read_bytes())["players"][0]["k"] == 2
+    assert calls["n"] == 3, "it must retry, not give up on the first refusal"

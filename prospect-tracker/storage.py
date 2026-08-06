@@ -7785,9 +7785,10 @@ def authoritative_org_by_mlbam() -> dict[int, tuple[str, str]]:
     return out
 
 
-def _atomic_replace(tmp: Path, path: Path, *, attempts: int = 50,
-                    delay: float = 0.05) -> None:
-    """os.replace(tmp, path), retried on the Windows open-file case.
+def _atomic_replace(tmp: Path, path: Path, *, timeout: float = 30.0,
+                    delay: float = 0.01, max_delay: float = 0.25) -> None:
+    """os.replace(tmp, path), retried against the Windows open-file case until
+    a deadline.
 
     POSIX rename replaces an open target happily. WINDOWS DOES NOT: if any
     reader has the target open, MoveFileEx fails with PermissionError
@@ -7798,20 +7799,42 @@ def _atomic_replace(tmp: Path, path: Path, *, attempts: int = 50,
     fix, which is the entire reason that test drives real writes instead of
     asserting on the source.
 
-    Readers here hold a file only for the length of one read, so a short retry
-    covers it: 50 attempts at 50ms is 2.5s of patience against reads that take
-    milliseconds. If it still cannot swap, it RAISES rather than falling back to
-    an in-place write, because a loud export failure is recoverable on the next
-    run and a truncated 74MB artifact served to readers is not."""
+    WHY THIS IS A DEADLINE AND NOT AN ATTEMPT COUNT. The first version was 50
+    attempts at a flat 50ms and its docstring reasoned that "readers hold a file
+    only for the length of one read, so a short retry covers it". That reasoning
+    is wrong under load and the full suite proved it: the same concurrent-reader
+    test that passed alone exhausted all 2.5s on a busy box and raised. The
+    quantity that matters is not how long ONE read takes, it is whether reads
+    ever stop overlapping, and on a file being polled continuously they may not
+    for a while. 30 seconds of patience against an export that already took
+    minutes is cheap; a failed nightly is not.
+
+    The backoff starts at 10ms and grows to 250ms rather than sitting at a flat
+    50ms, so a brief collision is resolved almost immediately while a long one
+    stops spinning the CPU.
+
+    On expiry it RAISES rather than falling back to an in-place write. That is
+    deliberate and it is the whole point: an in-place fallback would reintroduce
+    the truncation under precisely the conditions that cause it. A loud export
+    failure leaves the previous good artifact in place and is recoverable on the
+    next run. A truncated 74MB file served to readers is not."""
     import time
-    for i in range(attempts):
+    deadline = time.monotonic() + timeout
+    wait, tries = delay, 0
+    while True:
         try:
             os.replace(tmp, path)
             return
         except PermissionError:
-            if i == attempts - 1:
-                raise
-            time.sleep(delay)
+            tries += 1
+            if time.monotonic() >= deadline:
+                raise PermissionError(
+                    f"could not atomically replace {path.name} after {tries} "
+                    f"attempts over {timeout:.0f}s: a reader has held it open "
+                    f"the whole time. The previous file is intact and was NOT "
+                    f"overwritten; rerun the export.") from None
+            time.sleep(wait)
+            wait = min(wait * 1.6, max_delay)
 
 
 def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
