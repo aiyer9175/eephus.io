@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-04",
+ "generated_at": "2026-08-06",
  "eval_line": "eFV 3.4 F-SIDE -- standing joint side-fairness eval (measurement-only; output-neutral)",
  "question": "do pitchers at a given joint-board slot / display grade deliver worse realized outcomes than hitters at the same slot, and does any future change widen that gap?",
  "protocol": {
@@ -36,10 +36,10 @@
  "primary_frame": "full_pool_km",
  "frames": {
   "full_pool_km": {
-   "n_hit": 796,
+   "n_hit": 797,
    "n_pit": 833,
    "per_side_spearman_rankwar_vs_war": {
-    "hit": 0.2865,
+    "hit": 0.2862,
     "pit": 0.261
    },
    "fold_counts_vs_guards": {
@@ -56,17 +56,17 @@
      },
      "2022": {
       "n_train": 1141,
-      "n_test": 251,
+      "n_test": 252,
       "passes_guards": true
      },
      "2023": {
-      "n_train": 1392,
+      "n_train": 1393,
       "n_test": 249,
       "passes_guards": true
      },
      "2024": {
-      "n_train": 1641,
-      "n_test": 242,
+      "n_train": 1642,
+      "n_test": 241,
       "passes_guards": true
      }
     },
@@ -93,7 +93,7 @@
      },
      "2024": {
       "n_train": 1724,
-      "n_test": 257,
+      "n_test": 256,
       "passes_guards": true
      }
     }
@@ -123,7 +123,7 @@
     "2023": {
      "n_hit": 13,
      "n_pit": 12,
-     "mean_diff": 0.67,
+     "mean_diff": 0.79,
      "median_diff": 2.04,
      "sign": "hit_gt_pit"
     }
@@ -133,7 +133,7 @@
      "pit_share": 0.36,
      "hit": {
       "n": 64,
-      "mean_war": 9.13,
+      "mean_war": 9.15,
       "median_war": 6.74,
       "contrib_rate": 0.734,
       "star_rate": 0.406,
@@ -148,12 +148,12 @@
       "bust_rate": 0.222
      },
      "boot": {
-      "mean_diff": 3.4,
+      "mean_diff": 3.43,
       "mean_ci90": [
-       0.81,
-       6.01
+       0.84,
+       6.02
       ],
-      "mean_se": 1.591,
+      "mean_se": 1.589,
       "median_diff": 2.97,
       "median_ci90": [
        -0.64,
@@ -169,7 +169,7 @@
      "pit_share": 0.31,
      "hit": {
       "n": 69,
-      "mean_war": 4.47,
+      "mean_war": 4.45,
       "median_war": 2.28,
       "contrib_rate": 0.478,
       "star_rate": 0.188,
@@ -184,19 +184,19 @@
       "bust_rate": 0.226
      },
      "boot": {
-      "mean_diff": 0.54,
+      "mean_diff": 0.52,
       "mean_ci90": [
-       -1.29,
-       2.38
+       -1.32,
+       2.35
       ],
-      "mean_se": 1.113,
+      "mean_se": 1.114,
       "median_diff": 0.46,
       "median_ci90": [
        -2.5,
        3.07
       ],
       "median_se": 1.682,
-      "p_hit_gt_pit": 0.699
+      "p_hit_gt_pit": 0.693
      },
      "pit_share_rank_war_frame": 0.36,
      "share_inflation_display_vs_raw": 0.86
@@ -222,20 +222,20 @@
      "boot": {
       "mean_diff": -0.1,
       "mean_ci90": [
-       -1.04,
-       0.85
+       -1.03,
+       0.86
       ],
-      "mean_se": 0.575,
+      "mean_se": 0.574,
       "median_diff": -0.48,
       "median_ci90": [
        -0.76,
        -0.04
       ],
-      "median_se": 0.25,
-      "p_hit_gt_pit": 0.424
+      "median_se": 0.249,
+      "p_hit_gt_pit": 0.434
      },
-     "pit_share_rank_war_frame": 0.49,
-     "share_inflation_display_vs_raw": 0.85
+     "pit_share_rank_war_frame": 0.485,
+     "share_inflation_display_vs_raw": 0.86
     },
     "101-200": {
      "pit_share": 0.578,
@@ -258,7 +258,7 @@
      "boot": {
       "mean_diff": -0.32,
       "mean_ci90": [
-       -0.71,
+       -0.7,
        0.09
       ],
       "mean_se": 0.24,
@@ -268,15 +268,15 @@
        0.0
       ],
       "median_se": 0.001,
-      "p_hit_gt_pit": 0.092
+      "p_hit_gt_pit": 0.095
      },
-     "pit_share_rank_war_frame": 0.642,
+     "pit_share_rank_war_frame": 0.645,
      "share_inflation_display_vs_raw": 0.9
     },
     "201+": {
      "pit_share": 0.545,
      "hit": {
-      "n": 377,
+      "n": 378,
       "mean_war": 0.09,
       "median_war": 0.0,
       "contrib_rate": 0.016,
@@ -297,16 +297,16 @@
        -0.2,
        0.06
       ],
-      "mean_se": 0.078,
+      "mean_se": 0.08,
       "median_diff": 0.0,
       "median_ci90": [
        0.0,
        0.0
       ],
       "median_se": 0.0,
-      "p_hit_gt_pit": 0.159
+      "p_hit_gt_pit": 0.169
      },
-     "pit_share_rank_war_frame": 0.52,
+     "pit_share_rank_war_frame": 0.519,
      "share_inflation_display_vs_raw": 1.05
     }
    },
@@ -332,17 +332,17 @@
      "boot": {
       "mean_diff": 2.75,
       "mean_ci90": [
-       -0.25,
-       5.48
+       -0.29,
+       5.45
       ],
-      "mean_se": 1.716,
+      "mean_se": 1.715,
       "median_diff": 1.53,
       "median_ci90": [
        -2.49,
-       4.52
+       4.55
       ],
-      "median_se": 2.178,
-      "p_hit_gt_pit": 0.934
+      "median_se": 2.179,
+      "p_hit_gt_pit": 0.935
      }
     },
     "026-050": {
@@ -380,59 +380,59 @@
      }
     },
     "051-100": {
-     "pit_share": 0.49,
+     "pit_share": 0.485,
      "hit": {
-      "n": 102,
-      "mean_war": 1.58,
+      "n": 103,
+      "mean_war": 1.55,
       "median_war": 0.0,
-      "contrib_rate": 0.245,
+      "contrib_rate": 0.243,
       "star_rate": 0.029,
-      "bust_rate": 0.618
+      "bust_rate": 0.621
      },
      "pit": {
-      "n": 98,
-      "mean_war": 2.66,
-      "median_war": 0.58,
-      "contrib_rate": 0.276,
-      "star_rate": 0.112,
-      "bust_rate": 0.469
+      "n": 97,
+      "mean_war": 2.7,
+      "median_war": 0.6,
+      "contrib_rate": 0.278,
+      "star_rate": 0.113,
+      "bust_rate": 0.464
      },
      "boot": {
-      "mean_diff": -1.08,
+      "mean_diff": -1.14,
       "mean_ci90": [
-       -2.08,
-       -0.17
+       -2.13,
+       -0.25
       ],
-      "mean_se": 0.583,
-      "median_diff": -0.58,
+      "mean_se": 0.577,
+      "median_diff": -0.6,
       "median_ci90": [
-       -1.11,
-       -0.31
+       -1.08,
+       -0.33
       ],
-      "median_se": 0.243,
-      "p_hit_gt_pit": 0.025
+      "median_se": 0.254,
+      "p_hit_gt_pit": 0.015
      }
     },
     "101-200": {
-     "pit_share": 0.642,
+     "pit_share": 0.645,
      "hit": {
-      "n": 143,
-      "mean_war": 0.64,
+      "n": 142,
+      "mean_war": 0.65,
       "median_war": 0.0,
-      "contrib_rate": 0.084,
+      "contrib_rate": 0.085,
       "star_rate": 0.014,
-      "bust_rate": 0.839
+      "bust_rate": 0.831
      },
      "pit": {
-      "n": 257,
-      "mean_war": 0.91,
+      "n": 258,
+      "mean_war": 0.9,
       "median_war": 0.0,
       "contrib_rate": 0.136,
       "star_rate": 0.016,
-      "bust_rate": 0.689
+      "bust_rate": 0.69
      },
      "boot": {
-      "mean_diff": -0.27,
+      "mean_diff": -0.25,
       "mean_ci90": [
        -0.67,
        0.16
@@ -444,18 +444,18 @@
        0.0
       ],
       "median_se": 0.0,
-      "p_hit_gt_pit": 0.143
+      "p_hit_gt_pit": 0.156
      }
     },
     "201+": {
-     "pit_share": 0.52,
+     "pit_share": 0.519,
      "hit": {
-      "n": 398,
+      "n": 399,
       "mean_war": 0.11,
       "median_war": 0.0,
       "contrib_rate": 0.018,
       "star_rate": 0.005,
-      "bust_rate": 0.955
+      "bust_rate": 0.957
      },
      "pit": {
       "n": 431,
@@ -471,7 +471,7 @@
        -0.17,
        0.09
       ],
-      "mean_se": 0.08,
+      "mean_se": 0.078,
       "median_diff": 0.0,
       "median_ci90": [
        0.0,
@@ -485,10 +485,10 @@
    "equal_display_grade": {
     "40": {
      "hit": {
-      "n": 348,
+      "n": 349,
       "mean_war": 0.52,
       "median_war": 0.0,
-      "contrib_rate": 0.078,
+      "contrib_rate": 0.077,
       "star_rate": 0.011,
       "bust_rate": 0.848
      },
@@ -501,19 +501,19 @@
       "bust_rate": 0.746
      },
      "boot": {
-      "mean_diff": -0.2,
+      "mean_diff": -0.21,
       "mean_ci90": [
-       -0.48,
-       0.08
+       -0.47,
+       0.07
       ],
-      "mean_se": 0.168,
+      "mean_se": 0.166,
       "median_diff": 0.0,
       "median_ci90": [
        0.0,
        0.0
       ],
       "median_se": 0.0,
-      "p_hit_gt_pit": 0.119
+      "p_hit_gt_pit": 0.113
      }
     },
     "45": {
@@ -671,7 +671,7 @@
    "equal_consensus_fv": {
     "40": {
      "hit": {
-      "n": 348,
+      "n": 349,
       "mean_war": 0.51,
       "median_war": 0.0,
       "contrib_rate": 0.08,
@@ -690,16 +690,16 @@
       "mean_diff": -0.15,
       "mean_ci90": [
        -0.41,
-       0.13
+       0.14
       ],
-      "mean_se": 0.162,
+      "mean_se": 0.165,
       "median_diff": 0.0,
       "median_ci90": [
        0.0,
        0.0
       ],
       "median_se": 0.0,
-      "p_hit_gt_pit": 0.183
+      "p_hit_gt_pit": 0.191
      }
     },
     "45": {
@@ -856,8 +856,8 @@
    },
    "pred_vs_realized_by_side": {
     "hit": {
-     "n": 796,
-     "mean_pred": 1.42,
+     "n": 797,
+     "mean_pred": 1.41,
      "mean_real": 1.58
     },
     "pit": {
@@ -872,7 +872,7 @@
    "n_pit": 438,
    "per_side_spearman_rankwar_vs_war": {
     "hit": 0.3884,
-    "pit": 0.3208
+    "pit": 0.3209
    },
    "fold_counts_vs_guards": {
     "hit": {
@@ -1054,10 +1054,10 @@
      "boot": {
       "mean_diff": 0.5,
       "mean_ci90": [
-       -0.47,
-       1.54
+       -0.48,
+       1.55
       ],
-      "mean_se": 0.614,
+      "mean_se": 0.615,
       "median_diff": 0.14,
       "median_ci90": [
        -0.53,
@@ -1100,7 +1100,7 @@
        0.1
       ],
       "median_se": 0.11,
-      "p_hit_gt_pit": 0.762
+      "p_hit_gt_pit": 0.76
      },
      "pit_share_rank_war_frame": 0.723,
      "share_inflation_display_vs_raw": 0.9
@@ -1232,17 +1232,17 @@
      "boot": {
       "mean_diff": -0.19,
       "mean_ci90": [
-       -1.2,
+       -1.18,
        0.8
       ],
-      "mean_se": 0.6,
+      "mean_se": 0.599,
       "median_diff": -0.08,
       "median_ci90": [
        -0.79,
-       0.55
+       0.56
       ],
-      "median_se": 0.43,
-      "p_hit_gt_pit": 0.39
+      "median_se": 0.431,
+      "p_hit_gt_pit": 0.388
      }
     },
     "101-200": {
@@ -1266,17 +1266,17 @@
      "boot": {
       "mean_diff": 0.04,
       "mean_ci90": [
-       -0.53,
+       -0.54,
        0.65
       ],
       "mean_se": 0.36,
       "median_diff": -0.1,
       "median_ci90": [
-       -0.3,
-       0.09
+       -0.29,
+       0.08
       ],
-      "median_se": 0.113,
-      "p_hit_gt_pit": 0.536
+      "median_se": 0.112,
+      "p_hit_gt_pit": 0.541
      }
     },
     "201+": {
@@ -1700,7 +1700,7 @@
    }
   },
   "ipcw_resolved_reweighted": {
-   "resolved_n": 1006,
+   "resolved_n": 1007,
    "resolved_share": 0.618,
    "weight_cap": 5.0,
    "weights": {
@@ -1823,7 +1823,7 @@
       "mean_diff": -0.05,
       "mean_ci90": [
        -0.22,
-       0.12
+       0.13
       ],
       "mean_se": 0.107,
       "median_diff": 0.0,
@@ -1832,13 +1832,13 @@
        0.0
       ],
       "median_se": 0.0,
-      "p_hit_gt_pit": 0.314
+      "p_hit_gt_pit": 0.32
      }
     },
     "201+": {
      "hit": {
-      "n": 322,
-      "effective_n": 305.3,
+      "n": 323,
+      "effective_n": 306.4,
       "mean_war": 0.0,
       "median_war": 0.0,
       "contrib_rate": 0.0,
@@ -1867,7 +1867,7 @@
        0.0
       ],
       "median_se": 0.0,
-      "p_hit_gt_pit": 0.5
+      "p_hit_gt_pit": 0.486
      }
     }
    }
@@ -1883,7 +1883,7 @@
   },
   "B2_dual_frame_sign": {
    "rule": "full-pool-KM and debuted-only top-25 mean diffs share a sign",
-   "full_pool_mean_diff": 3.4,
+   "full_pool_mean_diff": 3.43,
    "debuted_only_mean_diff": 3.88,
    "pass": true
   },
@@ -1933,8 +1933,8 @@
   "B4_ci90_excludes_zero": {
    "rule": "S1 co-primary: top-25 mean-diff AND median-diff CI90 exclude 0",
    "mean_ci90": [
-    0.81,
-    6.01
+    0.84,
+    6.02
    ],
    "median_ci90": [
     -0.64,
@@ -2020,9 +2020,9 @@
   "S1_top25_no_widening": {
    "rule": "S1: joint TOP-25 hit-minus-pit realized-WAR diff must not increase by >1 bootstrap SE (mean AND median co-primary)",
    "frame": "full_pool_km / joint_bands_display_grade / 001-025",
-   "baseline_mean_diff": 3.4,
-   "baseline_mean_se": 1.591,
-   "max_allowed_mean_diff": 4.99,
+   "baseline_mean_diff": 3.43,
+   "baseline_mean_se": 1.589,
+   "max_allowed_mean_diff": 5.02,
    "baseline_median_diff": 2.97,
    "baseline_median_se": 2.196,
    "max_allowed_median_diff": 5.17
@@ -2048,8 +2048,8 @@
   "S4_midband_pit_outperformance": {
    "rule": "S4: rank_war-frame mid-band pit-outperformance cells (51-100, 101-200, equal-FV40) must not flip sign",
    "cells": {
-    "rank_war_051-100_mean_diff": -1.08,
-    "rank_war_101-200_mean_diff": -0.27,
+    "rank_war_051-100_mean_diff": -1.14,
+    "rank_war_101-200_mean_diff": -0.25,
     "equal_fv40_mean_diff": -0.15
    },
    "expected_sign": "negative (pitchers outperform hitters at equal raw mid-board slot / equal FV40)",
@@ -2075,17 +2075,17 @@
      },
      "2022": {
       "n_train": 1141,
-      "n_test": 251,
+      "n_test": 252,
       "passes_guards": true
      },
      "2023": {
-      "n_train": 1392,
+      "n_train": 1393,
       "n_test": 249,
       "passes_guards": true
      },
      "2024": {
-      "n_train": 1641,
-      "n_test": 242,
+      "n_train": 1642,
+      "n_test": 241,
       "passes_guards": true
      }
     },
@@ -2112,7 +2112,7 @@
      },
      "2024": {
       "n_train": 1724,
-      "n_test": 257,
+      "n_test": 256,
       "passes_guards": true
      }
     }
