@@ -138,6 +138,14 @@ def test_committed_artifact_headline_alias_contract():
 # --------------------------------------------------------------------------
 # 2. Golden fingerprint tripwire
 # --------------------------------------------------------------------------
+# Updated 2026-08-05 (omnibus-2 routing regen): an ATTRIBUTED full run_monthly, taken to
+#   activate the fv_synthetic_only routing fix shipped at fbdfb1f. That fix changes no
+#   served number by itself - it only stops 2,632 constant-FV-35 players from reading as
+#   "scouted" and routes them to efv_ungraded, the model built to grade them. by_player
+#   rows 9,268 -> 9,379 (+111) and n_active 4,580 -> 4,584 as the rebuild picked up the
+#   day's ingests. Restamped from a DEV tree rather than the box, deliberately: the box
+#   runs this test in EEPHUS_DEPLOY_RUN=1 shape mode, so the exact hash is a dev-time
+#   tripwire only and a box restamp would not have exercised it.
 # GOLDEN eFV ARTIFACT FINGERPRINT (volatile-key-stripped content hash of data/xfv.json).
 # This is a deliberate tripwire: it goes red when the flagship export changes. An
 # INTENTIONAL eFV ship (model/feature/calibration change) updates this constant in the
@@ -462,7 +470,7 @@ def test_committed_artifact_headline_alias_contract():
 #   tools.pipeline_artifact_diff.fingerprint_file, per the 2026-07-30 note above:
 #   a mid-suite test regenerates xfv.json under fixtures, and stamping from that
 #   would record a fixture state as production truth.
-_GOLDEN_XFV_SHA256 = "f9d680b833913f9ce7638d4a78e40afbd76f1fc160109867adadcb519d8553fe"
+_GOLDEN_XFV_SHA256 = "469bd909ab937cf37f274edfb1642697ac5d6fa286ad370aa1e6c9bd1ea3d66f"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
@@ -472,7 +480,7 @@ _GOLDEN_XFV_SHA256 = "f9d680b833913f9ce7638d4a78e40afbd76f1fc160109867adadcb519d
 # (data/xfv.json by_player, read 2026-07-16 post-DB-repair regen). The +/-20%
 # band tolerates ordinary roster churn while still catching a gross
 # truncation / empty-artifact regression.
-_GOLDEN_XFV_ROWCOUNT = 9268
+_GOLDEN_XFV_ROWCOUNT = 9379
 
 
 def test_efv_grade_map_inverts_on_model_window():

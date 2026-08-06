@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-05T21:03:06+00:00",
+ "generated_at": "2026-08-05T23:28:19+00:00",
  "slate_date": "2026-08-05",
  "n_games": 0,
  "status": {
@@ -10,7 +10,7 @@
   "model": "unvalidated",
   "model_mode": "contaminated",
   "empty_reasons": [
-   "no slate found in data/fantasy.json; the schedule refresh has not run today",
+   "team leaderboards have not been built yet",
    "odds feed configured"
   ]
  },
@@ -26,15 +26,13 @@
    "home field"
   ],
   "coefficients": {
-   "b0": 4.489608335888872,
-   "b1": 0.28346801149824224,
-   "b2": -0.3262424150856068,
-   "b3": 3.2105859916499724,
-   "b4": 0.012008529055270672,
-   "source": "fitted",
-   "n_rows": 3410,
-   "rmse": 3.171821826351269,
-   "r2": 0.04541729447579368
+   "b0": 4.45,
+   "b1": 0.32,
+   "b2": -0.32,
+   "b3": 3.2,
+   "b4": 0.09,
+   "source": "literature-priors",
+   "n_rows": 0
   },
   "league_context": {
    "season": "2026",
@@ -43,8 +41,8 @@
    "home_win_rate": 0.5232,
    "extra_inning_home_rate": 0.4875,
    "home_logit_offset": 0.0,
-   "generated_at": "2026-08-05T14:34:13+00:00",
-   "source": "fitted"
+   "generated_at": "2026-08-05T23:10:34+00:00",
+   "source": "literature-priors"
   },
   "devig_method": "proportional",
   "margin_model": "Poisson difference (Skellam) by direct convolution",
@@ -54,7 +52,7 @@
    "no weather, no umpire, no travel, no injury news beyond what the leaderboards already absorb"
   ],
   "backtest": {
-   "generated_at": "2026-08-05T18:26:17+00:00",
+   "generated_at": "2026-08-05T23:10:34+00:00",
    "model_version": "betting_runs_v1",
    "n_games": 1705,
    "validated": false,
@@ -65,182 +63,6 @@
     "vintage"
    ],
    "headline_mode": "contaminated",
-   "in_sample": {
-    "label": "in-sample (coefficients and features both leak)",
-    "mode": "contaminated",
-    "honest": false,
-    "n": 1705,
-    "coefficients": {
-     "b0": 4.4894658325092,
-     "b1": 0.28158941700121426,
-     "b2": -0.3236928443766523,
-     "b3": 3.1365788379743207,
-     "b4": 0.012533748860094321,
-     "source": "fitted",
-     "n_rows": 3410,
-     "rmse": 3.172995367277387,
-     "r2": 0.04471079255195887
-    },
-    "home_field_runs_adj": 0.2216,
-    "diff_shrink": 0.76,
-    "extra_inning_home_rate": 0.4875,
-    "brier": 0.24198,
-    "brier_flat_500": 0.25,
-    "brier_home_base": 0.24946,
-    "log_loss": 0.67704,
-    "log_loss_flat_500": 0.69315,
-    "accuracy": 0.5677,
-    "home_win_rate": 0.5232,
-    "mean_p_home": 0.5232,
-    "total_mae": 3.541,
-    "skill_vs_home_base": {
-     "delta": 0.007479,
-     "sd": 0.08178,
-     "t": 3.776,
-     "beats_baseline_95": true,
-     "n_for_95": 324,
-     "baseline": 0.5232,
-     "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
-    },
-    "calibration": [
-     {
-      "bin": "0.1-0.2",
-      "n": 1,
-      "pred": 0.1944,
-      "actual": 0.0
-     },
-     {
-      "bin": "0.2-0.3",
-      "n": 10,
-      "pred": 0.2523,
-      "actual": 0.5
-     },
-     {
-      "bin": "0.3-0.4",
-      "n": 109,
-      "pred": 0.3682,
-      "actual": 0.3028
-     },
-     {
-      "bin": "0.4-0.5",
-      "n": 546,
-      "pred": 0.4603,
-      "actual": 0.4707
-     },
-     {
-      "bin": "0.5-0.6",
-      "n": 747,
-      "pred": 0.5473,
-      "actual": 0.5435
-     },
-     {
-      "bin": "0.6-0.7",
-      "n": 254,
-      "pred": 0.6327,
-      "actual": 0.6417
-     },
-     {
-      "bin": "0.7-0.8",
-      "n": 32,
-      "pred": 0.7302,
-      "actual": 0.75
-     },
-     {
-      "bin": "0.8-0.9",
-      "n": 6,
-      "pred": 0.8275,
-      "actual": 0.6667
-     }
-    ]
-   },
-   "forward": {
-    "label": "forward from 2026-06-24 (coefficient leakage removed, feature leakage remains)",
-    "mode": "contaminated",
-    "honest": false,
-    "n": 521,
-    "coefficients": {
-     "b0": 4.486679231846343,
-     "b1": 0.268451670498409,
-     "b2": -0.3535810218602876,
-     "b3": 2.762090763924762,
-     "b4": -0.02237680322379471,
-     "source": "fitted",
-     "n_rows": 2368,
-     "rmse": 3.123559860211456,
-     "r2": 0.05046327811180762
-    },
-    "home_field_runs_adj": 0.3187,
-    "diff_shrink": 0.74,
-    "extra_inning_home_rate": 0.5,
-    "brier": 0.24416,
-    "brier_flat_500": 0.25,
-    "brier_home_base": 0.24995,
-    "log_loss": 0.68139,
-    "log_loss_flat_500": 0.69315,
-    "accuracy": 0.5393,
-    "home_win_rate": 0.5067,
-    "mean_p_home": 0.5299,
-    "total_mae": 3.614,
-    "skill_vs_home_base": {
-     "delta": 0.005794,
-     "sd": 0.08647,
-     "t": 1.529,
-     "beats_baseline_95": false,
-     "n_for_95": 603,
-     "baseline": 0.5067,
-     "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
-    },
-    "calibration": [
-     {
-      "bin": "0.1-0.2",
-      "n": 1,
-      "pred": 0.1837,
-      "actual": 0.0
-     },
-     {
-      "bin": "0.2-0.3",
-      "n": 2,
-      "pred": 0.2406,
-      "actual": 1.0
-     },
-     {
-      "bin": "0.3-0.4",
-      "n": 30,
-      "pred": 0.3623,
-      "actual": 0.3333
-     },
-     {
-      "bin": "0.4-0.5",
-      "n": 140,
-      "pred": 0.4583,
-      "actual": 0.4714
-     },
-     {
-      "bin": "0.5-0.6",
-      "n": 248,
-      "pred": 0.5462,
-      "actual": 0.4919
-     },
-     {
-      "bin": "0.6-0.7",
-      "n": 88,
-      "pred": 0.6339,
-      "actual": 0.625
-     },
-     {
-      "bin": "0.7-0.8",
-      "n": 9,
-      "pred": 0.7366,
-      "actual": 0.6667
-     },
-     {
-      "bin": "0.8-0.9",
-      "n": 3,
-      "pred": 0.8415,
-      "actual": 1.0
-     }
-    ]
-   },
    "vintage": {
     "label": "vintage (each game priced on leaderboards dated strictly before it)",
     "mode": "vintage",
@@ -255,13 +77,12 @@
     "min_graded_games_for_min_edge": 600,
     "note": "no completed game has a leaderboard vintage dated strictly before it, so the honest sample is empty; run leaderboard_vintages.snapshot() nightly and this number starts climbing"
    },
-   "split_date": "2026-06-24",
-   "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 0 games. A pick threshold is set from the vintage mode or from nothing."
+   "note": "no completed-game cache and/or no leaderboards; run betting_model.build_game_cache() on a box that has .cache/game_feeds"
   },
   "validation": {
    "available": true,
    "artifact": "data/betting_model_eval.json",
-   "generated_at": "2026-08-05T18:26:17+00:00",
+   "generated_at": "2026-08-05T23:10:34+00:00",
    "model_version": "betting_runs_v1",
    "validated": false,
    "gates_picks": false,
@@ -276,44 +97,6 @@
     "vintage": "Every game is priced on a leaderboard snapshot whose knowledge cutoff is strictly before that game. A game with no such snapshot is skipped, not graded on today's numbers. This is the only mode that can validate the model."
    },
    "graded_blocks": [
-    {
-     "label": "in-sample (coefficients and features both leak)",
-     "mode": "contaminated",
-     "honest": false,
-     "n": 1705,
-     "brier": 0.24198,
-     "brier_flat_500": 0.25,
-     "brier_home_base": 0.24946,
-     "accuracy": 0.5677,
-     "key": "in_sample",
-     "skill_vs_home_base": {
-      "delta": 0.007479,
-      "sd": 0.08178,
-      "t": 3.776,
-      "beats_baseline_95": true,
-      "n_for_95": 324,
-      "baseline": 0.5232
-     }
-    },
-    {
-     "label": "forward from 2026-06-24 (coefficient leakage removed, feature leakage remains)",
-     "mode": "contaminated",
-     "honest": false,
-     "n": 521,
-     "brier": 0.24416,
-     "brier_flat_500": 0.25,
-     "brier_home_base": 0.24995,
-     "accuracy": 0.5393,
-     "key": "forward",
-     "skill_vs_home_base": {
-      "delta": 0.005794,
-      "sd": 0.08647,
-      "t": 1.529,
-      "beats_baseline_95": false,
-      "n_for_95": 603,
-      "baseline": 0.5067
-     }
-    },
     {
      "label": "vintage (each game priced on leaderboards dated strictly before it)",
      "mode": "vintage",
@@ -385,7 +168,7 @@
     },
     "policy": "min_edge stays null until all three gates are open. A threshold invented to make a pick appear is the single most dishonest number this module could publish."
    },
-   "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 0 games. A pick threshold is set from the vintage mode or from nothing."
+   "note": "no completed-game cache and/or no leaderboards; run betting_model.build_game_cache() on a box that has .cache/game_feeds"
   },
   "min_edge": null
  },
@@ -426,9 +209,1197 @@
  "team_bets": [],
  "props_fair_lines": {
   "model_only": true,
-  "pitchers": [],
-  "hitters": [],
-  "no_book_comparison_reason": "no slate loaded"
+  "no_book_comparison_reason": "The Odds API free tier bills player props per event; a full slate would burn the monthly budget in about two weeks. These are our fair numbers, not a market read.",
+  "method": {
+   "pitchers": "rest-of-season rate per inning from the projection engine, times the pitcher's measured innings per start",
+   "hitters": "rest-of-season rate per plate appearance times expected PA for the projected lineup slot",
+   "slot_pa": {
+    "1": 4.65,
+    "2": 4.55,
+    "3": 4.45,
+    "4": 4.35,
+    "5": 4.25,
+    "6": 4.15,
+    "7": 4.05,
+    "8": 3.95,
+    "9": 3.85
+   },
+   "lineup_assumption": "projected order against a right-handed starter; a posted lineup card beats this every time",
+   "distribution": "Poisson for counting props, which understates the tails of a clumped scoring distribution"
+  },
+  "pitchers": [
+   {
+    "mlbam": 686613,
+    "name": "Hunter Brown",
+    "org": "HOU",
+    "opp": "TOR",
+    "game_pk": 824158,
+    "expected_ip": 5.27,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 5.96,
+      "lam": 5.96,
+      "over_line": 6.5,
+      "p_over": 0.3866
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.17,
+      "lam": 2.17,
+      "over_line": 2.5,
+      "p_over": 0.3695
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.63,
+      "lam": 4.63,
+      "over_line": 4.5,
+      "p_over": 0.4919
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 15.8,
+      "lam": 15.81,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 592791,
+    "name": "Jameson Taillon",
+    "org": "TOR",
+    "opp": "HOU",
+    "game_pk": 824158,
+    "expected_ip": 5.07,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.12,
+      "lam": 4.12,
+      "over_line": 4.5,
+      "p_over": 0.3941
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.9,
+      "lam": 2.9,
+      "over_line": 3.5,
+      "p_over": 0.3312
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.38,
+      "lam": 5.38,
+      "over_line": 5.5,
+      "p_over": 0.4499
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 15.2,
+      "lam": 15.21,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 684007,
+    "name": "Shota Imanaga",
+    "org": "CHC",
+    "opp": "LAD",
+    "game_pk": 824646,
+    "expected_ip": 5.8,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 5.56,
+      "lam": 5.56,
+      "over_line": 5.5,
+      "p_over": 0.481
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.91,
+      "lam": 2.91,
+      "over_line": 3.5,
+      "p_over": 0.3319
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.95,
+      "lam": 5.95,
+      "over_line": 6.5,
+      "p_over": 0.3853
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 17.4,
+      "lam": 17.4,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 641778,
+    "name": "Eric Lauer",
+    "org": "LAD",
+    "opp": "CHC",
+    "game_pk": 824646,
+    "expected_ip": 6.29,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.92,
+      "lam": 4.92,
+      "over_line": 5.5,
+      "p_over": 0.3705
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 3.48,
+      "lam": 3.48,
+      "over_line": 3.5,
+      "p_over": 0.4595
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 6.6,
+      "lam": 6.6,
+      "over_line": 6.5,
+      "p_over": 0.4892
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 18.9,
+      "lam": 18.87,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 674003,
+    "name": "Cody Bradford",
+    "org": "TEX",
+    "opp": "SFG",
+    "game_pk": 822866,
+    "expected_ip": 5.41,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 5.21,
+      "lam": 5.21,
+      "over_line": 5.5,
+      "p_over": 0.4201
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.38,
+      "lam": 2.38,
+      "over_line": 2.5,
+      "p_over": 0.4257
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.21,
+      "lam": 5.21,
+      "over_line": 5.5,
+      "p_over": 0.4201
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 16.2,
+      "lam": 16.24,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 687931,
+    "name": "Carson Whisenhunt",
+    "org": "SFG",
+    "opp": "TEX",
+    "game_pk": 822866,
+    "expected_ip": 4.75,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 3.92,
+      "lam": 3.92,
+      "over_line": 4.5,
+      "p_over": 0.3547
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.63,
+      "lam": 2.63,
+      "over_line": 2.5,
+      "p_over": 0.4895
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.6,
+      "lam": 4.6,
+      "over_line": 4.5,
+      "p_over": 0.4868
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 14.2,
+      "lam": 14.25,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 608372,
+    "name": "Tomoyuki Sugano",
+    "org": "COL",
+    "opp": "TBR",
+    "game_pk": 824322,
+    "expected_ip": 5.4,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 3.28,
+      "lam": 3.28,
+      "over_line": 3.5,
+      "p_over": 0.4146
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 3.25,
+      "lam": 3.25,
+      "over_line": 3.5,
+      "p_over": 0.4083
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 6.07,
+      "lam": 6.07,
+      "over_line": 6.5,
+      "p_over": 0.4049
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 16.2,
+      "lam": 16.2,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 607259,
+    "name": "Nick Martinez",
+    "org": "TBR",
+    "opp": "COL",
+    "game_pk": 824322,
+    "expected_ip": 5.87,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.02,
+      "lam": 4.02,
+      "over_line": 4.5,
+      "p_over": 0.3742
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.86,
+      "lam": 2.86,
+      "over_line": 3.5,
+      "p_over": 0.3211
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 6.3,
+      "lam": 6.3,
+      "over_line": 6.5,
+      "p_over": 0.4421
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 17.6,
+      "lam": 17.61,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 669432,
+    "name": "Trevor Rogers",
+    "org": "BAL",
+    "opp": "LAA",
+    "game_pk": 824806,
+    "expected_ip": 5.48,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.72,
+      "lam": 4.72,
+      "over_line": 4.5,
+      "p_over": 0.5098
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.38,
+      "lam": 2.38,
+      "over_line": 2.5,
+      "p_over": 0.4259
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.29,
+      "lam": 5.29,
+      "over_line": 5.5,
+      "p_over": 0.4356
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 16.4,
+      "lam": 16.44,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 672282,
+    "name": "Reid Detmers",
+    "org": "LAA",
+    "opp": "BAL",
+    "game_pk": 824806,
+    "expected_ip": 5.68,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 6.87,
+      "lam": 6.87,
+      "over_line": 7.5,
+      "p_over": 0.3821
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.3,
+      "lam": 2.3,
+      "over_line": 2.5,
+      "p_over": 0.4027
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.98,
+      "lam": 4.98,
+      "over_line": 5.5,
+      "p_over": 0.381
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 17.0,
+      "lam": 17.04,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 676440,
+    "name": "Tanner Bibee",
+    "org": "CLE",
+    "opp": "NYM",
+    "game_pk": 824402,
+    "expected_ip": 5.75,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 5.25,
+      "lam": 5.25,
+      "over_line": 5.5,
+      "p_over": 0.4285
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.74,
+      "lam": 2.74,
+      "over_line": 2.5,
+      "p_over": 0.5151
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.69,
+      "lam": 5.69,
+      "over_line": 5.5,
+      "p_over": 0.5032
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 17.2,
+      "lam": 17.25,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 681035,
+    "name": "Christian Scott",
+    "org": "NYM",
+    "opp": "CLE",
+    "game_pk": 824402,
+    "expected_ip": 4.62,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 5.18,
+      "lam": 5.18,
+      "over_line": 5.5,
+      "p_over": 0.416
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 1.96,
+      "lam": 1.96,
+      "over_line": 2.5,
+      "p_over": 0.3126
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.11,
+      "lam": 4.11,
+      "over_line": 4.5,
+      "p_over": 0.3924
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 13.9,
+      "lam": 13.86,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 695076,
+    "name": "Rhett Lowder",
+    "org": "CIN",
+    "opp": "ATH",
+    "game_pk": 824482,
+    "expected_ip": 5.19,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.26,
+      "lam": 4.26,
+      "over_line": 4.5,
+      "p_over": 0.4226
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.48,
+      "lam": 2.48,
+      "over_line": 2.5,
+      "p_over": 0.4498
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.0,
+      "lam": 5.0,
+      "over_line": 5.5,
+      "p_over": 0.3838
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 15.6,
+      "lam": 15.57,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 682052,
+    "name": "Jacob Lopez",
+    "org": "ATH",
+    "opp": "CIN",
+    "game_pk": 824482,
+    "expected_ip": 5.0,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.79,
+      "lam": 4.79,
+      "over_line": 5.5,
+      "p_over": 0.3478
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.63,
+      "lam": 2.63,
+      "over_line": 2.5,
+      "p_over": 0.4884
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.67,
+      "lam": 4.67,
+      "over_line": 4.5,
+      "p_over": 0.499
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 15.0,
+      "lam": 15.0,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 691725,
+    "name": "Andrew Painter",
+    "org": "PHI",
+    "opp": "WSN",
+    "game_pk": 823429,
+    "expected_ip": 5.46,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.55,
+      "lam": 4.55,
+      "over_line": 4.5,
+      "p_over": 0.4774
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.87,
+      "lam": 2.87,
+      "over_line": 3.5,
+      "p_over": 0.3231
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.51,
+      "lam": 5.51,
+      "over_line": 5.5,
+      "p_over": 0.4731
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 16.4,
+      "lam": 16.38,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 663623,
+    "name": "Jake Irvin",
+    "org": "WSN",
+    "opp": "PHI",
+    "game_pk": 823429,
+    "expected_ip": 4.72,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 3.84,
+      "lam": 3.84,
+      "over_line": 4.5,
+      "p_over": 0.3399
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.56,
+      "lam": 2.56,
+      "over_line": 2.5,
+      "p_over": 0.4715
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.83,
+      "lam": 4.83,
+      "over_line": 5.5,
+      "p_over": 0.3537
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 14.2,
+      "lam": 14.16,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 701542,
+    "name": "Will Warren",
+    "org": "NYY",
+    "opp": "STL",
+    "game_pk": 823516,
+    "expected_ip": 5.17,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 5.22,
+      "lam": 5.22,
+      "over_line": 5.5,
+      "p_over": 0.4223
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.37,
+      "lam": 2.37,
+      "over_line": 2.5,
+      "p_over": 0.423
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.85,
+      "lam": 4.85,
+      "over_line": 5.5,
+      "p_over": 0.3584
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 15.5,
+      "lam": 15.51,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 669467,
+    "name": "Andre Pallante",
+    "org": "STL",
+    "opp": "NYY",
+    "game_pk": 823516,
+    "expected_ip": 5.65,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.15,
+      "lam": 4.15,
+      "over_line": 4.5,
+      "p_over": 0.4
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.67,
+      "lam": 2.67,
+      "over_line": 2.5,
+      "p_over": 0.4992
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.66,
+      "lam": 5.66,
+      "over_line": 5.5,
+      "p_over": 0.4988
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 17.0,
+      "lam": 16.95,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 543243,
+    "name": "Sonny Gray",
+    "org": "BOS",
+    "opp": "CHW",
+    "game_pk": 824728,
+    "expected_ip": 5.68,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 5.92,
+      "lam": 5.92,
+      "over_line": 6.5,
+      "p_over": 0.3806
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.43,
+      "lam": 2.43,
+      "over_line": 2.5,
+      "p_over": 0.4371
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.44,
+      "lam": 5.44,
+      "over_line": 5.5,
+      "p_over": 0.461
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 17.0,
+      "lam": 17.04,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 680732,
+    "name": "Sean Burke",
+    "org": "CHW",
+    "opp": "BOS",
+    "game_pk": 824728,
+    "expected_ip": 6.91,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 7.55,
+      "lam": 7.55,
+      "over_line": 7.5,
+      "p_over": 0.483
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.99,
+      "lam": 2.99,
+      "over_line": 3.5,
+      "p_over": 0.3511
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 6.27,
+      "lam": 6.27,
+      "over_line": 6.5,
+      "p_over": 0.4366
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 20.7,
+      "lam": 20.73,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 693821,
+    "name": "Bryce Elder",
+    "org": "ATL",
+    "opp": "MIA",
+    "game_pk": 824889,
+    "expected_ip": 5.7,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.87,
+      "lam": 4.87,
+      "over_line": 5.5,
+      "p_over": 0.3604
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.88,
+      "lam": 2.88,
+      "over_line": 3.5,
+      "p_over": 0.3265
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.7,
+      "lam": 5.7,
+      "over_line": 5.5,
+      "p_over": 0.505
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 17.1,
+      "lam": 17.1,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 691587,
+    "name": "Eury P\u00e9rez",
+    "org": "MIA",
+    "opp": "ATL",
+    "game_pk": 824889,
+    "expected_ip": 5.51,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 6.32,
+      "lam": 6.32,
+      "over_line": 6.5,
+      "p_over": 0.4445
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.31,
+      "lam": 2.31,
+      "over_line": 2.5,
+      "p_over": 0.4059
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.89,
+      "lam": 4.89,
+      "over_line": 5.5,
+      "p_over": 0.3651
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 16.5,
+      "lam": 16.53,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 702070,
+    "name": "Noah Cameron",
+    "org": "KCR",
+    "opp": "MIN",
+    "game_pk": 824082,
+    "expected_ip": 5.78,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 5.28,
+      "lam": 5.28,
+      "over_line": 5.5,
+      "p_over": 0.4337
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.64,
+      "lam": 2.64,
+      "over_line": 2.5,
+      "p_over": 0.492
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.59,
+      "lam": 5.59,
+      "over_line": 5.5,
+      "p_over": 0.4868
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 17.3,
+      "lam": 17.34,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 665152,
+    "name": "Dean Kremer",
+    "org": "MIN",
+    "opp": "KCR",
+    "game_pk": 824082,
+    "expected_ip": 5.14,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.69,
+      "lam": 4.69,
+      "over_line": 4.5,
+      "p_over": 0.504
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.59,
+      "lam": 2.59,
+      "over_line": 2.5,
+      "p_over": 0.4782
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.12,
+      "lam": 5.12,
+      "over_line": 5.5,
+      "p_over": 0.4057
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 15.4,
+      "lam": 15.42,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 690986,
+    "name": "Kyle Harrison",
+    "org": "MIL",
+    "opp": "PIT",
+    "game_pk": 823753,
+    "expected_ip": 4.92,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 5.55,
+      "lam": 5.55,
+      "over_line": 5.5,
+      "p_over": 0.4789
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 1.98,
+      "lam": 1.98,
+      "over_line": 2.5,
+      "p_over": 0.3178
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.5,
+      "lam": 4.5,
+      "over_line": 4.5,
+      "p_over": 0.4675
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 14.8,
+      "lam": 14.76,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 694973,
+    "name": "Paul Skenes",
+    "org": "PIT",
+    "opp": "MIL",
+    "game_pk": 823753,
+    "expected_ip": 5.42,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 7.05,
+      "lam": 7.05,
+      "over_line": 7.5,
+      "p_over": 0.4091
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 1.64,
+      "lam": 1.64,
+      "over_line": 1.5,
+      "p_over": 0.4889
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.63,
+      "lam": 4.63,
+      "over_line": 4.5,
+      "p_over": 0.4925
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 16.3,
+      "lam": 16.26,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 683352,
+    "name": "Mitch Bratt",
+    "org": "ARI",
+    "opp": "SDP",
+    "game_pk": 825052,
+    "expected_ip": 4.13,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 2.96,
+      "lam": 2.96,
+      "over_line": 3.5,
+      "p_over": 0.3435
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.28,
+      "lam": 2.28,
+      "over_line": 2.5,
+      "p_over": 0.3988
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.11,
+      "lam": 4.11,
+      "over_line": 4.5,
+      "p_over": 0.3935
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 12.4,
+      "lam": 12.39,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 663554,
+    "name": "Casey Mize",
+    "org": "SDP",
+    "opp": "ARI",
+    "game_pk": 825052,
+    "expected_ip": 5.42,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 5.1,
+      "lam": 5.1,
+      "over_line": 5.5,
+      "p_over": 0.4021
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.22,
+      "lam": 2.22,
+      "over_line": 2.5,
+      "p_over": 0.3826
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.25,
+      "lam": 5.25,
+      "over_line": 5.5,
+      "p_over": 0.4273
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 16.3,
+      "lam": 16.26,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 693433,
+    "name": "Bryan Woo",
+    "org": "SEA",
+    "opp": "DET",
+    "game_pk": 823106,
+    "expected_ip": 5.73,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 6.14,
+      "lam": 6.14,
+      "over_line": 6.5,
+      "p_over": 0.4165
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.22,
+      "lam": 2.22,
+      "over_line": 2.5,
+      "p_over": 0.3818
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.48,
+      "lam": 5.48,
+      "over_line": 5.5,
+      "p_over": 0.4669
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 17.2,
+      "lam": 17.19,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 623454,
+    "name": "Drew Anderson",
+    "org": "DET",
+    "opp": "SEA",
+    "game_pk": 823106,
+    "expected_ip": 5.2,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 5.72,
+      "lam": 5.72,
+      "over_line": 5.5,
+      "p_over": 0.5084
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.34,
+      "lam": 2.34,
+      "over_line": 2.5,
+      "p_over": 0.4145
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.71,
+      "lam": 4.71,
+      "over_line": 4.5,
+      "p_over": 0.5077
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 15.6,
+      "lam": 15.6,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   }
+  ],
+  "hitters": []
  },
  "parlay_context": {
   "rules": [

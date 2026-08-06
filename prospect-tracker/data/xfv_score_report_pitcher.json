@@ -1,14 +1,14 @@
 {
- "generated_at": "2026-08-04",
+ "generated_at": "2026-08-05",
  "scope": "PITCHERS",
- "n_scored": 1982,
+ "n_scored": 1981,
  "calibration_scale": {
   "a": -0.022,
-  "b": 1.075
+  "b": 1.076
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 0.6,
+  "mean_abs_delta": 0.61,
   "max_up": 5.4,
   "max_down": -4.4,
   "share_within_2_grades": 0.92
@@ -20,13 +20,13 @@
   "max_down": -20.5
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.1419,
+  "spearman_adj_vs_consensus_miss": 0.1411,
   "n": 530,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 14206.1,
-  "consensus": 14690.1
+  "xfv": 14201.7,
+  "consensus": 14695.5
  },
  "example_up_adjustments": [
   {

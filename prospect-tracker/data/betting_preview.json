@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-05T21:03:06+00:00",
+ "generated_at": "2026-08-05T23:28:19+00:00",
  "slate_date": "2026-08-05",
  "status": {
   "odds_feed": "no_snapshot",
@@ -9,7 +9,7 @@
   "model": "unvalidated",
   "model_mode": "contaminated",
   "empty_reasons": [
-   "no slate found in data/fantasy.json; the schedule refresh has not run today",
+   "team leaderboards have not been built yet",
    "odds feed configured"
   ]
  },
@@ -21,7 +21,7 @@
   "validation": {
    "available": true,
    "artifact": "data/betting_model_eval.json",
-   "generated_at": "2026-08-05T18:26:17+00:00",
+   "generated_at": "2026-08-05T23:10:34+00:00",
    "model_version": "betting_runs_v1",
    "validated": false,
    "gates_picks": false,
@@ -36,44 +36,6 @@
     "vintage": "Every game is priced on a leaderboard snapshot whose knowledge cutoff is strictly before that game. A game with no such snapshot is skipped, not graded on today's numbers. This is the only mode that can validate the model."
    },
    "graded_blocks": [
-    {
-     "label": "in-sample (coefficients and features both leak)",
-     "mode": "contaminated",
-     "honest": false,
-     "n": 1705,
-     "brier": 0.24198,
-     "brier_flat_500": 0.25,
-     "brier_home_base": 0.24946,
-     "accuracy": 0.5677,
-     "key": "in_sample",
-     "skill_vs_home_base": {
-      "delta": 0.007479,
-      "sd": 0.08178,
-      "t": 3.776,
-      "beats_baseline_95": true,
-      "n_for_95": 324,
-      "baseline": 0.5232
-     }
-    },
-    {
-     "label": "forward from 2026-06-24 (coefficient leakage removed, feature leakage remains)",
-     "mode": "contaminated",
-     "honest": false,
-     "n": 521,
-     "brier": 0.24416,
-     "brier_flat_500": 0.25,
-     "brier_home_base": 0.24995,
-     "accuracy": 0.5393,
-     "key": "forward",
-     "skill_vs_home_base": {
-      "delta": 0.005794,
-      "sd": 0.08647,
-      "t": 1.529,
-      "beats_baseline_95": false,
-      "n_for_95": 603,
-      "baseline": 0.5067
-     }
-    },
     {
      "label": "vintage (each game priced on leaderboards dated strictly before it)",
      "mode": "vintage",
@@ -145,7 +107,7 @@
     },
     "policy": "min_edge stays null until all three gates are open. A threshold invented to make a pick appear is the single most dishonest number this module could publish."
    },
-   "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 0 games. A pick threshold is set from the vintage mode or from nothing."
+   "note": "no completed-game cache and/or no leaderboards; run betting_model.build_game_cache() on a box that has .cache/game_feeds"
   }
  },
  "disclaimer": {

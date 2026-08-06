@@ -1,17 +1,17 @@
 {
- "generated_at": "2026-08-05T01:25:41Z",
+ "generated_at": "2026-08-05T23:20:28Z",
  "summary": {
-  "board_rows": 9646,
-  "active_board_rows": 4580,
-  "roster_rows": 10679,
-  "colliding_slugs": 197,
+  "board_rows": 9657,
+  "active_board_rows": 4584,
+  "roster_rows": 10684,
+  "colliding_slugs": 198,
   "critical_player_keys": 10,
   "critical_active_player_keys": 0,
   "c1_shared_key": 0,
   "c1_unattributed": 0,
-  "c1_shadowed": 152,
+  "c1_shadowed": 154,
   "c1_split": 7,
-  "c1_untracked": 38,
+  "c1_untracked": 37,
   "c2_double_bound": 0,
   "c3_unresolved_active": 0,
   "c4_side_conflicts": 10,
@@ -381,6 +381,15 @@
    ]
   },
   {
+   "slug": "edgar_lugo",
+   "board_key": "edgar_lugo",
+   "n_humans": 2,
+   "mlbam_ids": [
+    814812,
+    833480
+   ]
+  },
+  {
    "slug": "eduardo_herrera",
    "board_key": "eduardo_herrera",
    "n_humans": 2,
@@ -480,6 +489,15 @@
     700421,
     821657,
     829712
+   ]
+  },
+  {
+   "slug": "garrett_wright",
+   "board_key": "garrett_wright",
+   "n_humans": 2,
+   "mlbam_ids": [
+    695057,
+    835226
    ]
   },
   {
@@ -1290,7 +1308,7 @@
   },
   {
    "slug": "rafael_gonzalez",
-   "board_key": "rafael_gonzalez_835403",
+   "board_key": "rafael_gonzalez",
    "n_humans": 2,
    "mlbam_ids": [
     808003,

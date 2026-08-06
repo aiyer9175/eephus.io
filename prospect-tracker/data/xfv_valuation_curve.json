@@ -1,5 +1,5 @@
 {
-"generated_at": "2026-08-04",
+"generated_at": "2026-08-05",
 "valuation_set": "clemens_2026",
 "war_window": "7yr control window (published ctrl_war basis)",
 "star_def": {
@@ -23,9 +23,9 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 1738,
+"n": 1743,
 "surplus_mm_median": 0.7,
-"war6_median": -1.19,
+"war6_median": -1.18,
 "p_star_median": 0.001
 }
 },
@@ -43,7 +43,7 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 200,
+"n": 197,
 "surplus_mm_median": 3.8,
 "war6_median": 1.25,
 "p_star_median": 0.004
@@ -63,9 +63,9 @@
 "star_odds": 0.0001
 },
 "live": {
-"n": 51,
-"surplus_mm_median": 10.4,
-"war6_median": 2.65,
+"n": 52,
+"surplus_mm_median": 10.3,
+"war6_median": 2.62,
 "p_star_median": 0.009
 }
 },
@@ -83,10 +83,10 @@
 "star_odds": 0.0006
 },
 "live": {
-"n": 41,
+"n": 40,
 "surplus_mm_median": 19.5,
-"war6_median": 3.68,
-"p_star_median": 0.013
+"war6_median": 3.58,
+"p_star_median": 0.012
 }
 },
 "45+": {
@@ -103,9 +103,9 @@
 "star_odds": 0.0029
 },
 "live": {
-"n": 38,
+"n": 39,
 "surplus_mm_median": 29.7,
-"war6_median": 4.88,
+"war6_median": 4.91,
 "p_star_median": 0.021
 }
 },
@@ -123,9 +123,9 @@
 "star_odds": 0.0066
 },
 "live": {
-"n": 43,
+"n": 42,
 "surplus_mm_median": 38.4,
-"war6_median": 6.31,
+"war6_median": 6.37,
 "p_star_median": 0.038
 }
 },
@@ -146,7 +146,7 @@
 "n": 9,
 "surplus_mm_median": 52.8,
 "war6_median": 8.27,
-"p_star_median": 0.074
+"p_star_median": 0.066
 }
 },
 "60": {
@@ -163,10 +163,10 @@
 "star_odds": 0.0567
 },
 "live": {
-"n": 7,
-"surplus_mm_median": 72.7,
-"war6_median": 10.08,
-"p_star_median": 0.113
+"n": 6,
+"surplus_mm_median": 76.0,
+"war6_median": 10.45,
+"p_star_median": 0.128
 }
 },
 "65": {
@@ -219,7 +219,7 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 1996,
+"n": 2000,
 "surplus_mm_median": 0.7,
 "war6_median": -0.69,
 "p_star_median": 0.0
@@ -239,7 +239,7 @@
 "star_odds": 0.0
 },
 "live": {
-"n": 273,
+"n": 272,
 "surplus_mm_median": 2.6,
 "war6_median": 0.57,
 "p_star_median": 0.001
@@ -259,9 +259,9 @@
 "star_odds": 0.0001
 },
 "live": {
-"n": 70,
+"n": 73,
 "surplus_mm_median": 4.6,
-"war6_median": 1.31,
+"war6_median": 1.3,
 "p_star_median": 0.001
 }
 },
@@ -279,9 +279,9 @@
 "star_odds": 0.0003
 },
 "live": {
-"n": 59,
+"n": 57,
 "surplus_mm_median": 11.4,
-"war6_median": 2.03,
+"war6_median": 2.04,
 "p_star_median": 0.002
 }
 },
@@ -299,8 +299,8 @@
 "star_odds": 0.0012
 },
 "live": {
-"n": 30,
-"surplus_mm_median": 24.0,
+"n": 29,
+"surplus_mm_median": 24.2,
 "war6_median": 2.71,
 "p_star_median": 0.002
 }

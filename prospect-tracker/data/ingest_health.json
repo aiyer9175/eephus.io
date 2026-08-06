@@ -1,24 +1,24 @@
 {
- "generated_at": "2026-08-04T18:21:29+00:00",
+ "generated_at": "2026-08-05T23:30:04+00:00",
  "mode": "monthly",
  "sources": [
   {
    "source": "espn_article_probe",
    "scope": "",
-   "ok": true,
-   "n_rows": 1,
-   "message": "49464501 MLB trade deadline 2026: Ranking prospects who changed teams",
-   "date": "2026-08-04",
+   "ok": false,
+   "n_rows": 0,
+   "message": "HTTP 0",
+   "date": "2026-08-05",
    "last_ok_at": "2026-08-04 18:21:19",
    "last_ok_rows": 1
   },
   {
    "source": "espn_article_probe",
    "scope": "",
-   "ok": true,
-   "n_rows": 1,
-   "message": "49464501 MLB trade deadline 2026: Ranking prospects who changed teams",
-   "date": "2026-08-04",
+   "ok": false,
+   "n_rows": 0,
+   "message": "HTTP 0",
+   "date": "2026-08-05",
    "last_ok_at": "2026-08-04 18:21:19",
    "last_ok_rows": 1
   },
@@ -28,18 +28,18 @@
    "ok": true,
    "n_rows": 100,
    "message": "unchanged",
-   "date": "2026-08-04",
-   "last_ok_at": "2026-08-04 17:18:51",
+   "date": "2026-08-05",
+   "last_ok_at": "2026-08-05 22:44:30",
    "last_ok_rows": 100
   },
   {
    "source": "mlb_pipeline_live",
    "scope": "",
-   "ok": true,
-   "n_rows": 100,
-   "message": "",
-   "date": "2026-08-04",
-   "last_ok_at": "2026-08-04 18:08:56",
+   "ok": false,
+   "n_rows": 0,
+   "message": "top100: only 0 parsed rows",
+   "date": "2026-08-05",
+   "last_ok_at": "2026-08-05 22:04:40",
    "last_ok_rows": 100
   },
   {
@@ -48,30 +48,33 @@
    "ok": true,
    "n_rows": 900,
    "message": "",
-   "date": "2026-08-04",
-   "last_ok_at": "2026-08-04 18:09:04",
+   "date": "2026-08-05",
+   "last_ok_at": "2026-08-05 23:11:55",
    "last_ok_rows": 900
   },
   {
    "source": "tjstats",
    "scope": "daily-pm",
-   "ok": true,
-   "n_rows": 100,
-   "message": "",
-   "date": "2026-08-04",
-   "last_ok_at": "2026-08-04 18:21:19",
+   "ok": false,
+   "n_rows": 0,
+   "message": "major-snapshots: HTTPSConnectionPool(host='tjstats.ca', port=443): Max retries exceeded with url: /wp-json/tjstats/v1/major-snapshots (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1032)'))); rankings: HTTPSConnectionPool(host='tjstats.ca', port=443): Max retries exceeded with url: /wp-json/tjstats/v1/rankings (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1032)'))); scout-batters: HTTPSConnectionPool(host='tjstats.ca', port=443): Max retries exceeded with url: /wp-json/tjstats/v1/scout-batters (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1032)'))); scout-pitchers: HTTPSConnectionPool(host='tjstats.ca', port=443): Max retries exceeded with url: /wp-json/tjstats/v1/scout-pitchers (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1032)')))",
+   "date": "2026-08-05",
+   "last_ok_at": "2026-08-05 22:24:55",
    "last_ok_rows": 100
   },
   {
    "source": "tjstats",
    "scope": "monthly",
-   "ok": true,
-   "n_rows": 100,
-   "message": "",
-   "date": "2026-08-04",
-   "last_ok_at": "2026-08-04 17:18:49",
+   "ok": false,
+   "n_rows": 0,
+   "message": "major-snapshots: HTTPSConnectionPool(host='tjstats.ca', port=443): Max retries exceeded with url: /wp-json/tjstats/v1/major-snapshots (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1032)'))); rankings: HTTPSConnectionPool(host='tjstats.ca', port=443): Max retries exceeded with url: /wp-json/tjstats/v1/rankings (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1032)'))); scout-batters: HTTPSConnectionPool(host='tjstats.ca', port=443): Max retries exceeded with url: /wp-json/tjstats/v1/scout-batters (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1032)'))); scout-pitchers: HTTPSConnectionPool(host='tjstats.ca', port=443): Max retries exceeded with url: /wp-json/tjstats/v1/scout-pitchers (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1032)')))",
+   "date": "2026-08-05",
+   "last_ok_at": "2026-08-05 21:40:03",
    "last_ok_rows": 100
   }
  ],
- "red": []
+ "red": [
+  "mlb_pipeline_live",
+  "tjstats"
+ ]
 }

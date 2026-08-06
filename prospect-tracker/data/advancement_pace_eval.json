@@ -1,10 +1,10 @@
 {
-"generated_at": "2026-08-04",
+"generated_at": "2026-08-05",
 "artifact": "data/advancement_pace.json",
 "kind": "descriptive QC only - no predictive claim is made or permitted anywhere for this statistic",
 "methodology_version": "1.0.0-eephus",
-"n_scored_latest_asof": 9577,
-"n_asof_rows_fit": 27489,
+"n_scored_latest_asof": 9579,
+"n_asof_rows_fit": 27494,
 "distribution_ap_plus_display_latest": {
 "mean": 99.27,
 "sd": 7.69,
@@ -17,7 +17,7 @@
 "n_at_high_clip": 27
 },
 "distribution_ap_plus_model_latest": {
-"mean": 99.28,
+"mean": 99.29,
 "sd": 7.78,
 "min": 63.0,
 "max": 162.6,
@@ -38,7 +38,7 @@
 },
 "2021+": {
 "mean_ap_plus": 100.44,
-"n": 13295
+"n": 13300
 }
 },
 "position_group": {
@@ -48,11 +48,11 @@
 },
 "CIF": {
 "mean_ap_plus": 100.21,
-"n": 1539
+"n": 1543
 },
 "MIF": {
 "mean_ap_plus": 100.03,
-"n": 2145
+"n": 2149
 },
 "OF": {
 "mean_ap_plus": 100.09,
@@ -60,7 +60,7 @@
 },
 "UNK": {
 "mean_ap_plus": 99.93,
-"n": 18828
+"n": 18825
 },
 "UT": {
 "mean_ap_plus": 100.34,
@@ -78,17 +78,17 @@
 },
 "intl_amateur": {
 "mean_ap_plus": 100.72,
-"n": 15848
+"n": 15852
 },
 "undrafted_other": {
 "mean_ap_plus": 98.97,
-"n": 9578
+"n": 9579
 }
 },
 "entry_age_bucket": {
 "18": {
 "mean_ap_plus": 100.02,
-"n": 4744
+"n": 4745
 },
 "19-20": {
 "mean_ap_plus": 99.52,
@@ -100,17 +100,17 @@
 },
 "23+": {
 "mean_ap_plus": 99.34,
-"n": 2307
+"n": 2308
 },
 "<=17": {
 "mean_ap_plus": 100.96,
-"n": 10815
+"n": 10818
 }
 }
 },
 "threshold_stability": {
-"raw_pace_spearman_T20_vs_T30": 0.994,
-"n_common_players": 9577
+"raw_pace_spearman_T20_vs_T30": 0.9941,
+"n_common_players": 9579
 },
 "named_riser_sanity": [
 {
