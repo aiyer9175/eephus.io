@@ -28,11 +28,34 @@ def war_daily_index() -> dict[str, dict[int, dict]]:
     import pybaseball  # noqa: F401 - availability probe; frames come via war_source
     import war_source
     out: dict[str, dict[int, dict]] = {}
+    missing: list[str] = []
     for side, label in (("bat", "bwar_bat"), ("pit", "bwar_pitch")):
         try:
             df = war_source.stint_frame(side)
         except Exception as e:                                # noqa: BLE001
-            log.warning("%s unavailable: %s", label, e)
+            # HALF AN INDEX IS WORSE THAN NO INDEX (2026-08-05). This used to
+            # `continue` and return whatever it had, which looks safe and is the
+            # single most expensive bug of the session: a failed PITCHING frame
+            # yields a BATTING-ONLY index that is structurally valid and passes
+            # every downstream check, so every pitcher silently fails to resolve
+            # while every hitter resolves fine. On 2026-08-04 that blanked 79 of
+            # 228 free agents (and 2028: 181 -> 111, 2029: 133 -> 83) with no
+            # error anywhere. Proven by reproduction: rebuilding from the batting
+            # frame alone reproduces the served blank set with SET EQUALITY.
+            #
+            # It is ALWAYS the pitching side, and it is not luck: pybaseball
+            # decorates bwar_bat with @cache.df_cache() and bwar_pitch with
+            # NOTHING, so batting serves from a 7-day parquet cache while
+            # pitching is a live download on every process that builds this.
+            #
+            # The failure is now RECORDED rather than swallowed, and the caller
+            # is told which side is missing so a degraded index can be refused
+            # instead of published. See fa_export's identity_health block, which
+            # holds the write when this fires.
+            log.error("%s unavailable: %s. The identity index will be MISSING "
+                      "the %s side entirely, so every %s-only player will fail "
+                      "to resolve.", label, e, side, side)
+            missing.append(side)
             continue
         sub = df[df["WAR"].notna() & df["mlb_ID"].notna()]
         for row in sub.itertuples(index=False):
@@ -46,7 +69,29 @@ def war_daily_index() -> dict[str, dict[int, dict]]:
             ent = out.setdefault(nm, {}).setdefault(mid, {"years": set(), "war": {}})
             ent["years"].add(yr)
             ent["war"][yr] = ent["war"].get(yr, 0.0) + war
+    # Recorded on the MODULE, not inside the returned dict. Every caller treats
+    # this index as {name: ...} and several iterate it, so a sentinel key would
+    # be a new silent defect in the middle of fixing one. war_daily_index is
+    # lru_cache(maxsize=1), so this tracks the one live build.
+    global _SIDES_MISSING
+    _SIDES_MISSING = tuple(missing)
     return out
+
+
+# Which WAR sides were missing from the LAST war_daily_index build. Empty means
+# the index is whole. Read it through index_sides_missing().
+_SIDES_MISSING: tuple[str, ...] = ()
+
+
+def index_sides_missing() -> tuple[str, ...]:
+    """Which WAR sides ('bat', 'pit') failed to load in the live index.
+
+    () means whole. Anything else means resolution is SILENTLY partial for that
+    side, and a caller publishing a board off it is about to serve blanks that
+    look like real absences: see the comment in war_daily_index. Builds the
+    index if it has not been built, so the answer always describes a real one."""
+    war_daily_index()
+    return _SIDES_MISSING
 
 
 def resolve(name: str, active_window: range) -> int | None:
