@@ -41,23 +41,14 @@ from __future__ import annotations
 
 import pytest
 
-# SKIPPED: SPECIFICATION AHEAD OF IMPLEMENTATION (2026-08-05).
-# These assertions were written against `efv_dataset._anchor_asof_date` /
-# `_constant_anchor_sources`, which DO NOT EXIST YET - the lane that wrote this
-# file landed the spec and not the code. The tests are kept rather than deleted
-# because they are the most precise statement of the contract anyone has
-# written: they encode the per-source precedence, the constant-stamp case, and
-# the None fallback, all of which would otherwise have to be rediscovered.
-# Deleting them would throw away the only artifact of that analysis.
+# IMPLEMENTED 2026-08-06. The spec below was landed skipped on 2026-08-05 with
+# the code unwritten; efv_dataset._anchor_asof_date and _constant_anchor_sources
+# now exist and these assertions run.
 #
-# TO FINISH THE LANE: implement the source-date read in efv_dataset (read the
-# max per-source FV-BEARING snapshot_date instead of the point date), then
-# delete this skip. Treat it as BASIS-ADJACENT - fv_effective is the model's
-# dominant feature, so it needs a mover table and a named switch defaulted to
-# the current behaviour, not a silent flip. See the master plan, Lane C2.
-pytestmark = pytest.mark.skip(
-    reason="spec written, efv_dataset._anchor_asof_date not implemented yet "
-           "(Lane C2 unfinished); see the module comment to finish it")
+# The switch STAYS on "point". That is not an oversight and the tests pin it:
+# fv_effective is the model's dominant feature, so flipping the basis moves
+# served grades and needs a mover table plus an owner decision. What shipped is
+# the capability and its proof, not the flip.
 
 
 import sys

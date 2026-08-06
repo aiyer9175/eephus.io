@@ -106,6 +106,87 @@ def _stale_anchor_discount(asof_iso, fv_raw, today=None):
                / (STALE_ANCHOR_RAMP_FULL_MO - STALE_ANCHOR_RAMP_START_MO))
     return term * frac
 
+
+# --- E-STALE date basis (Lane C2) ------------------------------------------
+# Which date the staleness ramp is measured from.
+#
+#   "point"   the consensus POINT date. SHIPPED, and the default.
+#   "source"  the newest date on the source that actually SUPPLIED the anchor.
+#
+# The point date is wrong for this purpose and the reason is worth stating,
+# because it is not obvious from the field name. build_timeseries forward-fills
+# every source into a point at every event date, so the point date is the newest
+# date ANY row touched the player, including rows carrying no scouting opinion.
+# mlbam_ingest.refresh_performance_anchors re-stamps a fabricated FV 35 daily for
+# every auto-tracked player who still qualifies. A player whose real published
+# grade froze eighteen months ago therefore reads as "graded today" and takes a
+# 0.00 discount, which is exactly the Nathan Hickey class this ramp was built for.
+#
+# It defaults to "point" ON PURPOSE. fv_effective is the model's dominant
+# feature, so this is basis-adjacent and does not flip itself; flipping it needs
+# a mover table and an owner decision. See the master plan, Lane C2.
+STALE_ANCHOR_DATE_BASIS = "point"
+
+
+def _constant_anchor_sources() -> frozenset:
+    """The sources whose FV is a fabricated constant rather than an opinion.
+
+    READ from consensus rather than copied. A second literal here would drift
+    the day someone adds a third auto-tracking source, and the failure mode of
+    that drift is silent: the new source's daily stamp would start refreshing
+    frozen grades again and nothing would raise."""
+    from consensus import CONSTANT_ANCHOR_SOURCES
+    return frozenset(CONSTANT_ANCHOR_SOURCES)
+
+
+def _anchor_asof_date(pt: dict) -> str | None:
+    """The date of the row that actually supplied this player's anchor.
+
+    Follows compute_consensus_point's OWN precedence, in tiers:
+
+      1. a real published FV, from any source that is not a constant stamp
+      2. the folded-back constant, for players who have nothing else
+      3. a rank-bearing row, which feeds the rank-implied fallback
+
+    THE TIERING IS NOT COSMETIC, and this is the part a naive fix gets wrong.
+    Taking "the newest non-constant FV date, full stop" DISARMS the ramp for the
+    2,691 active rows whose only FV row IS the constant (measured 2026-08-05:
+    -182 decayed rows at +12 months, -2,691 at +24 on a frozen board). That
+    cohort is precisely the one refresh_performance_anchors intends to decay once
+    the stamp stops being re-asserted, so dropping it would invert the fix.
+
+    Returns None when nothing carries a usable date, so the caller keeps the
+    point date rather than silently losing the discount entirely."""
+    per_source = (pt or {}).get("per_source") or {}
+    if not per_source:
+        return None
+    constants = _constant_anchor_sources()
+    fv_real: list[str] = []
+    fv_const: list[str] = []
+    ranked: list[str] = []
+
+    for src, entry in per_source.items():
+        if not isinstance(entry, dict):
+            continue
+        # v10 packs a same-day second publication into `extras`. Walk them, or a
+        # newer grade could hide behind the primary and never date the anchor.
+        for e in [entry, *(entry.get("extras") or [])]:
+            if not isinstance(e, dict):
+                continue
+            d = e.get("snapshot_date")
+            if not d:
+                continue
+            d = str(d)[:10]
+            if e.get("fv_published") is not None:
+                (fv_const if src in constants else fv_real).append(d)
+            elif e.get("rank") is not None:
+                ranked.append(d)
+
+    for tier in (fv_real, fv_const, ranked):
+        if tier:
+            return max(tier)
+    return None
+
 DATA_DIR = Path(__file__).parent / "data"
 MATRIX_PATH = DATA_DIR / "xfv_hitter_matrix.json"
 REPORT_PATH = DATA_DIR / "xfv_dataset_report.json"
@@ -1150,7 +1231,16 @@ def build_live_matrix(side: str = "hit"):
         # fv_effective feeds _vec's fv feature + the scorer's consensus blend
         # leg; consensus_fv_raw is untouched so every DISPLAY of consensus
         # stays the true consensus.
-        _disc = _stale_anchor_discount(row.get("asof_date"), row.get("consensus_fv_raw"))
+        # Which date the ramp measures from. asof_date is the DECISION-POINT
+        # vintage and never moves: the labs read it as such
+        # (tools/fv_outcome_curves_lab.py, tools/efv_gradenorm_basis_lab.py) and
+        # training rows carry the same field, so rebasing it would desync them.
+        # Only the staleness read gets the source date, and only on the switch.
+        _anchor_asof = row.get("asof_date")
+        if STALE_ANCHOR_DATE_BASIS == "source":
+            _anchor_asof = _anchor_asof_date(pt) or _anchor_asof
+        row["anchor_asof_date"] = _anchor_asof
+        _disc = _stale_anchor_discount(_anchor_asof, row.get("consensus_fv_raw"))
         row["anchor_stale_discount"] = round(_disc, 2)
         row["fv_effective"] = round(row["consensus_fv_raw"] - _disc, 2) if _disc else row["consensus_fv_raw"]
         # LIVE scoring includes the CURRENT season (no leakage -- current production IS the
