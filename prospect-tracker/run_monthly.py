@@ -463,9 +463,32 @@ def _patch_export_run_summary(out_path: Path, log: logging.Logger) -> None:
             log.exception("could not compute data_freshness for %s", out_path)
         try:
             import orjson as _orjson
-            out_path.write_bytes(_orjson.dumps(payload, option=_orjson.OPT_NON_STR_KEYS))
+            blob = _orjson.dumps(payload, option=_orjson.OPT_NON_STR_KEYS)
         except ImportError:
-            out_path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
+            blob = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        # ATOMIC (2026-08-06). This used to write IN PLACE, and data/timeseries.json
+        # is 74MB with TWO writers: storage.export_timeseries_json builds it and this
+        # re-serialises it to stamp a run summary, with nothing serialising the pair.
+        # An in-place write that is interrupted, or that races the other writer,
+        # leaves a TRUNCATED file that is still structurally plausible enough to be
+        # served. That happened: the file was found with a JSON decode error 42.9MB
+        # in, and because it is gitignored there was nothing to restore from. It also
+        # produced a phantom bug, five org-test "failures" that were really the test
+        # reading a truncated file.
+        # Same directory so os.replace is a same-filesystem rename, which is atomic:
+        # a concurrent reader sees either the whole old file or the whole new one,
+        # never a half-written one. This does not make the two writers safe to run
+        # together, it makes an interrupted write survivable.
+        tmp = out_path.with_name(out_path.name + f".tmp{os.getpid()}")
+        try:
+            tmp.write_bytes(blob)
+            from storage import _atomic_replace
+            _atomic_replace(tmp, out_path)
+        finally:
+            try:
+                tmp.unlink()
+            except OSError:
+                pass                       # already renamed, which is the good path
     except Exception:
         log.exception("could not patch latest run summary into %s", out_path)
 

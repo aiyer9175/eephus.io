@@ -7785,6 +7785,35 @@ def authoritative_org_by_mlbam() -> dict[int, tuple[str, str]]:
     return out
 
 
+def _atomic_replace(tmp: Path, path: Path, *, attempts: int = 50,
+                    delay: float = 0.05) -> None:
+    """os.replace(tmp, path), retried on the Windows open-file case.
+
+    POSIX rename replaces an open target happily. WINDOWS DOES NOT: if any
+    reader has the target open, MoveFileEx fails with PermissionError
+    (WinError 5), and a naive atomic write therefore RAISES exactly where the
+    old in-place write used to succeed. That would trade a rare corruption for
+    a routine export failure, which is a worse deal. Found by
+    test_atomic_artifact_write's concurrent-reader test on the first run of the
+    fix, which is the entire reason that test drives real writes instead of
+    asserting on the source.
+
+    Readers here hold a file only for the length of one read, so a short retry
+    covers it: 50 attempts at 50ms is 2.5s of patience against reads that take
+    milliseconds. If it still cannot swap, it RAISES rather than falling back to
+    an in-place write, because a loud export failure is recoverable on the next
+    run and a truncated 74MB artifact served to readers is not."""
+    import time
+    for i in range(attempts):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if i == attempts - 1:
+                raise
+            time.sleep(delay)
+
+
 def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           statlines: dict[str, dict] | None = None,
                           pitch_arsenals: dict[str, dict] | None = None,
@@ -15830,7 +15859,30 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     return
             except OSError:
                 pass
-        path.write_bytes(data)
+        # ATOMIC (2026-08-06). This is the shared writer for EVERY exported
+        # artifact (the 74MB boot/timeseries monolith, debuts, rosters_by_org and
+        # every sidecar), so an in-place write here is the widest exposure in the
+        # pipeline. data/timeseries.json was found TRUNCATED at 42.9MB of 74MB
+        # after an interrupted write raced a second writer
+        # (run_monthly._patch_export_run_summary re-serialises the same file to
+        # stamp a run summary, and nothing serialises the pair). Nothing raised:
+        # the half-file was structurally plausible enough to serve, and it faked
+        # five org-test failures before anyone noticed it was the FILE that was
+        # wrong. It is gitignored, so there was nothing to restore from either.
+        # Temp file in the SAME directory, then os.replace, which is a
+        # same-filesystem rename and therefore atomic: a concurrent reader gets
+        # the whole old file or the whole new one, never a partial. Writing the
+        # temp beside the target rather than in the system temp dir is what keeps
+        # the rename atomic instead of a cross-device copy.
+        tmp = path.with_name(path.name + f".tmp{os.getpid()}")
+        try:
+            tmp.write_bytes(data)
+            _atomic_replace(tmp, path)
+        finally:
+            try:
+                tmp.unlink()
+            except OSError:
+                pass                    # already renamed: the success path
     _dump(boot, out_path, force=True)
     _dump(graduate_payload, out_dir / "debuts.json")
     _dump(rosters_by_org, out_dir / "rosters_by_org.json")
