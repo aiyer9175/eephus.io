@@ -42,6 +42,23 @@ LOCK="/tmp/eephus-nightly.lock"
 # inside its already-peaked heap. Raise EEPHUS_MAX_WORKERS if the box has RAM.
 export EEPHUS_MAX_WORKERS="${EEPHUS_MAX_WORKERS:-3}"
 export EEPHUS_SKIP_INPROC_BUILD="${EEPHUS_SKIP_INPROC_BUILD:-1}"
+
+# SECRETS. Without this the nightly runs with an empty environment and every
+# key-gated step is a silent no-op that looks perfectly healthy in the log.
+# MEASURED 2026-08-05: this file had ZERO references to EEPHUS_ODDS_API_KEY, so
+# run_daily step 9e ("betting odds snapshot") had never once fired on the box -
+# data/betting_status.json reported `configured: true` (the key exists in the
+# repo .env, which nothing loads) alongside `n_snapshots_cached: 0`. The betting
+# module was not waiting on a data source; it was waiting on this line. The
+# close-job crontab already sources the same file (deploy/betting-crontab.example)
+# and only the nightly was missed.
+# Root-owned, chmod 600, OUTSIDE the checkout - the deploy does `git checkout --`
+# so a secrets file inside the repo would be destroyed nightly.
+# shellcheck source=/dev/null
+[ -r /etc/eephus.env ] && . /etc/eephus.env
+if [ -z "${EEPHUS_ODDS_API_KEY:-}" ]; then
+  echo "NOTE: EEPHUS_ODDS_API_KEY is unset - the odds snapshot (9e) will no-op." >&2
+fi
 # If it STILL OOM-kills, add swap (highest-leverage ops fix on a small box):
 #   sudo fallocate -l 4G /swapfile && sudo chmod 600 /swapfile
 #   sudo mkswap /swapfile && sudo swapon /swapfile
