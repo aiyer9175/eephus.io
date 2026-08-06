@@ -31,7 +31,7 @@ from __future__ import annotations
 import json
 import logging
 import statistics
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import date
 from pathlib import Path
 
@@ -235,6 +235,141 @@ def _record_arc_outage(n_keys: int, n_loaded: int) -> None:
                  f"the Prospect-to-Payday chart on /fa/ has no data."))
 
 
+# ===========================================================================
+# WHY A CLASS MEMBER CARRIES NO PRICE (lane D-1, 2026-08-05)
+# ===========================================================================
+# THE DEFECT. The 2026-08-04 23:53 re-export (dc3e2af) published 149 of 228
+# members with a projection and 79 blank rows, 77 of the 79 pitchers, among
+# them Skubal, Imanaga, Gallen, Gausman, Bassitt, Flaherty and Scherzer. The
+# immediately preceding export (d50c1af, same day) had projected 223. No code
+# in this module changed between the two commits: dc3e2af is a pure re-run.
+# The payload said nothing about the collapse beyond n_projected going
+# 223 -> 149, so the board rendered 79 em-dashes and still read as a board.
+# fa_class_2028.json fell 181 -> 111 and fa_class_2029.json 133 -> 83 in the
+# same process, and the 2026-08-05 re-export reproduced all three.
+#
+# ROOT CAUSE, MEASURED. fa_ident.war_daily_index() builds ONE index out of TWO
+# Baseball-Reference frames (war_daily_bat + war_daily_pitch) and wraps each
+# fetch in `except Exception: log.warning(...); continue` (fa_ident.py:32-36).
+# When the PITCHING fetch fails the function still returns, with a
+# batting-only index, and every caller receives a normal-looking dict. Both
+# index variants were rebuilt against the live class tables on 2026-08-05:
+#
+#   index         2027 hit         2027 pit        2028 pit        2029 pit
+#   bat+pit   89/90  (98.9%)  135/138 (97.8%)  110/114 (96.5%)  74/79 (93.7%)
+#   bat only  89/90  (98.9%)   60/138 (43.5%)   37/114 (32.5%)  19/79 (24.1%)
+#
+# The bat-only column reproduces the served artifact EXACTLY. The 79 members
+# it cannot resolve are the same 79 members served with no price: 79 of 79,
+# zero false positives, zero false negatives. Its class totals are
+# 149 / 111 / 90 against the served 149 / 111 / 85.
+# The 60 pitchers that survived a batting-only index are simply the ones who
+# own a PLATE APPEARANCE inside the four-season resolution window, which is
+# why the survivors are almost all relievers and why the six surviving
+# starters look arbitrary: Trevor Rogers is on the board because he batted in
+# 2025, not because anything about him projects better than Skubal.
+#
+# WHY THE DEFENCE LANDS HERE AND NOT IN fa_ident. The swallow is fa_ident's,
+# but the publishing decision is this module's: it is the writer that turned a
+# degraded substrate into a served artifact and overwrote a good one. One bad
+# index build poisons every consumer in the process anyway (war_daily_index is
+# lru_cached at maxsize=1, so fa_fit.py:200's contracted-roster resolution went
+# with it), so the check belongs at the seam that publishes.
+#
+#: Reason codes stamped on every member that reaches the board without a
+#: price. Values are the on-page sentence: keep them free of em-dashes
+#: (copy_lint) and free of internal jargon, because a reader of /fa/ sees them.
+NO_PROJ_REASONS = {
+    "identity_unresolved":
+        "no Baseball-Reference major-league record in {y0}-{y1}, so there is "
+        "no history to project from. Either the player has not appeared in "
+        "the majors in that window (KBO/NPB, retired, released) or this site "
+        "spells the name differently than Baseball-Reference does.",
+    "no_recent_seasons":
+        "identified, but no major-league season inside the {y0}-{y1} "
+        "projection window, so there is nothing recent to project from.",
+    "projection_unavailable":
+        "the projection engine returned no WAR path for the seasons on file.",
+}
+
+# The pitcher-side resolution rate, as a fraction of the hitter-side rate,
+# below which the war_daily PITCHING frame is treated as missing.
+#
+# NOT TUNED, MEASURED. The two states are separated by a factor of two on the
+# WORST case of each. Healthy ratios across the three live classes are
+# 0.989 (2027), 0.991 (2028) and 0.977 (2029); the degraded ratios from the
+# same measurement are 0.440, 0.336 and 0.251. 0.70 sits 1.40x below the worst
+# healthy ratio and 1.59x above the worst degraded one. This is a monitoring
+# predicate, not a model input: it changes no price, no coefficient and no
+# member's projection.
+IDENT_COLLAPSE_RATIO = 0.70
+
+# Below this many members on a side the ratio above is noise, so the check
+# abstains rather than guesses. The three live classes carry 74-90 hitters and
+# 79-138 pitchers, so this never abstains in production; it exists so a small
+# custom class in a test or a lab cannot fire a false red.
+IDENT_MIN_SIDE_N = 20
+
+
+def _identity_health(ident: dict[str, dict[str, int]], class_year: int) -> dict:
+    """Per-side identity-resolution census plus the degraded verdict.
+
+    Published on every fa_class payload so the answer to "why is half this
+    board blank" is IN THE ARTIFACT, not in a run log nobody kept."""
+    def _rate(d: dict) -> float | None:
+        return (d["ok"] / d["n"]) if d["n"] else None
+    hit, pit = ident["hit"], ident["pit"]
+    r_hit, r_pit = _rate(hit), _rate(pit)
+    degraded = False
+    if (hit["n"] >= IDENT_MIN_SIDE_N and pit["n"] >= IDENT_MIN_SIDE_N
+            and r_hit and r_pit is not None):
+        degraded = (r_pit / r_hit) < IDENT_COLLAPSE_RATIO
+    out = {
+        "class_year": class_year,
+        "hit_n": hit["n"], "hit_resolved": hit["ok"],
+        "pit_n": pit["n"], "pit_resolved": pit["ok"],
+        "degraded": degraded,
+    }
+    if r_hit is not None:
+        out["hit_rate"] = round(r_hit, 4)
+    if r_pit is not None:
+        out["pit_rate"] = round(r_pit, 4)
+    if degraded:
+        # The verdict carries its own evidence so a reader of the JSON, the
+        # page or the ledger does not have to come back here for the numbers.
+        out["degraded_why"] = (
+            f"war_daily identity resolved {pit['ok']} of {pit['n']} pitchers "
+            f"({100 * (r_pit or 0):.1f}%) against {hit['ok']} of {hit['n']} "
+            f"hitters ({100 * (r_hit or 0):.1f}%). Both sides are drawn from "
+            f"the same league over the same window, so a gap this size means "
+            f"the war_daily PITCHING frame did not load: "
+            f"fa_ident.war_daily_index swallows a per-frame fetch failure and "
+            f"returns the half it did get.")
+    return out
+
+
+def _record_identity_outage(health: dict) -> None:
+    """File a degraded identity substrate into the ingest-health ledger.
+
+    KNOWN GAP, stated rather than papered over: "fa_class_identity" is NOT in
+    run_monthly.SCHEDULED_EXPORTS, so this row lands in the ingest-health
+    payload but is filtered out of red[] and the deploy shell will not print
+    it as `!!! INGEST RED`. Adding the name there is a one-line change in a
+    file this lane does not own; until it happens the log.error below is the
+    loud channel. Same trap as the one documented on _record_arc_health.
+
+    Best-effort by design: reporting must never be why the FA export fails."""
+    log.error("fa identity substrate DEGRADED for class %s: %s",
+              health.get("class_year"), health.get("degraded_why"))
+    try:
+        from bullpen_export import record_ingest
+        record_ingest("fa_class_identity", ok=False,
+                      n_rows=health.get("pit_resolved", 0),
+                      message=str(health.get("degraded_why") or "degraded"))
+    except Exception:                                    # noqa: BLE001
+        log.debug("could not record the FA identity health row", exc_info=True)
+
+
 def _class_supply_rows(cls: list[dict], class_year: int,
                        by_player: dict[str, dict[int, dict]]) -> list[dict]:
     """ARM supply_pop: the class-supply population under the ALIGNED
@@ -431,6 +566,12 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
     full_fits: list[tuple[dict, list[dict]]] = []   # (member, all-org fits)
     n_proj = 0
     n_arc = 0
+    # Lane D-1 instrumentation. Every member leaves this loop with a DEFINITE
+    # outcome: priced, or unpriced with a named reason. The three gates below
+    # used to be bare `if`s whose else-branch was silence, which is how 79 of
+    # 228 members went blank for two days without anything saying so.
+    drops: Counter = Counter()
+    ident = {"hit": {"n": 0, "ok": 0}, "pit": {"n": 0, "ok": 0}}
     for row in cls:
         ovr = overrides.get(row.get("player_key")) or {}
         if ovr.get("exclude"):
@@ -449,10 +590,16 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
             m["twoWay"] = True
         if ovr.get("note") or ovr.get("two_way"):
             m["note"] = ovr.get("note") or TWO_WAY_NOTE
+        # The side is decided BEFORE resolution so the per-side census below
+        # counts DENOMINATORS, not just successes. A census that only counts
+        # what worked cannot see a half-loaded index.
+        pos_grp = fm._pos_group(row.get("position"))
+        side = "pit" if pos_grp in ("SP", "RP") else "hit"
+        ident[side]["n"] += 1
         mlbam = fa_ident.resolve(row["player_name"], range(class_year - 4, class_year))
+        drop = None if mlbam else "identity_unresolved"
         if mlbam:
-            pos_grp = fm._pos_group(row.get("position"))
-            side = "pit" if pos_grp in ("SP", "RP") else "hit"
+            ident[side]["ok"] += 1
             seasons = by_player[side].get(mlbam) or {}
             hist = [seasons[t] for t in (class_year - 1, class_year - 2, class_year - 3)
                     if t in seasons]
@@ -632,6 +779,22 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                         "fits": [_compact_fit(f) for f in fits],
                     }))
                     n_proj += 1
+                else:
+                    drop = "projection_unavailable"
+            else:
+                drop = "no_recent_seasons"
+        if drop:
+            # THE DISCLOSURE. A blank price row now carries WHY it is blank,
+            # per row and in aggregate. Absence and silence are different
+            # failures: three of these reasons are legitimate (a KBO signing,
+            # a man who has not pitched since 2022, a season lost to surgery)
+            # and one of them was an outage that blanked 79 rows. A reader
+            # could not tell those apart from an em-dash.
+            drops[drop] += 1
+            m["noProj"] = drop
+            m["noProjWhy"] = NO_PROJ_REASONS[drop].format(
+                y0=class_year - 4 if drop == "identity_unresolved" else class_year - 3,
+                y1=class_year - 1)
         # Winter overrides: the reconciled pipeline status beats the stale
         # as-scraped payload status, and signed members carry their ACTUAL
         # terms next to the prediction (the tracker's whole point).
@@ -669,6 +832,17 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
     # N" are different numbers and a gap between them is worth seeing.
     log.info("fa arc: %d of %d members published an fvArc (%d resolved upstream)",
              n_arc, len(members), len(fv_hist))
+    # Lane D-1: the counts go in the RUN LOG as well as the payload, because
+    # the artifact is only read after someone already suspects a problem and
+    # the log is read on the run that caused it.
+    health = _identity_health(ident, class_year)
+    log.info("fa class %d: %d of %d members priced; unpriced by reason %s; "
+             "identity resolved hit %d/%d, pit %d/%d",
+             class_year, n_proj, len(members), dict(sorted(drops.items())),
+             ident["hit"]["ok"], ident["hit"]["n"],
+             ident["pit"]["ok"], ident["pit"]["n"])
+    if health["degraded"]:
+        _record_identity_outage(health)
     members.sort(key=lambda m: -(m.get("projGuar") or 0))
     # Per-team fit lists covering ALL 30 orgs (the member rows only carry
     # top-3, which left half the league without a Fits view). Members are
@@ -694,6 +868,17 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         "dpw_infl": round(destale, 4),
         "cba_carry_forward": bool(thr.get("carry_forward")),
         "n_members": len(members), "n_projected": n_proj,
+        # Lane D-1. n_projected alone let a board go from 223 priced to 149
+        # priced and still read as normal. The complement and its BREAKDOWN
+        # ship next to it, so "79 blank rows" is a sentence the artifact says
+        # out loud instead of something a reader has to infer by subtracting.
+        "n_unprojected": len(members) - n_proj,
+        "unprojected_by_reason": dict(sorted(drops.items())),
+        "unprojected_reason_text": {k: v for k, v in NO_PROJ_REASONS.items()
+                                    if k in drops},
+        # The per-side identity census, and the verdict on whether the
+        # war_daily substrate this whole gate depends on actually loaded.
+        "identity_health": health,
         # Published on the artifact so a dark Prospect-to-Payday is readable
         # from the served file, not only from a run log nobody kept.
         "n_fv_arc": n_arc,
@@ -971,6 +1156,36 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
 FUTURE_CLASS_YEARS = (CLASS_YEAR + 1, CLASS_YEAR + 2)
 
 
+def _keep_previous(name: str, payload: dict) -> bool:
+    """True when this payload must NOT overwrite the file already on disk.
+
+    THE FIX FOR THE 2026-08-04 OVERWRITE (lane D-1). A good 223-of-228 board
+    was replaced by a 149-of-228 one because a Baseball-Reference frame did
+    not load, and nothing in the write path had an opinion about that. The
+    posture the repo settled on this day is fantasy_export's: when the input
+    is degraded, KEEP THE PREVIOUS ARTIFACT rather than publish the damage.
+    A day-old board that prices Skubal is strictly better than a fresh one
+    that leaves him blank, and staleness is already visible on the page via
+    generated_at while a half-populated board is not visible at all.
+
+    Deliberately conditional on the file EXISTING: a first-ever export has no
+    previous version to keep, and shipping nothing is worse than shipping a
+    board that carries its own degraded_why. Only fa_class payloads are
+    gated; fa_archive and fa_meta never touch war_daily identity."""
+    if not (payload.get("identity_health") or {}).get("degraded"):
+        return False
+    if not (DATA_DIR / name).exists():
+        log.error("fa %s: identity substrate degraded and no previous file to "
+                  "keep, publishing the degraded board with its disclosure", name)
+        return False
+    log.error("fa %s: NOT overwritten. The identity substrate is degraded "
+              "(%d of %d pitchers resolved) and the file on disk is a better "
+              "board than this run can build. Re-run once war_daily is back.",
+              name, (payload.get("identity_health") or {}).get("pit_resolved", 0),
+              (payload.get("identity_health") or {}).get("pit_n", 0))
+    return True
+
+
 def export_all() -> dict[str, int]:
     sizes = {}
     exports = [("fa_class.json", build_fa_class_payload()),
@@ -981,11 +1196,17 @@ def export_all() -> dict[str, int]:
             exports.append((f"fa_class_{y}.json", build_fa_class_payload(y)))
         except Exception:                                     # noqa: BLE001
             log.exception("future class %d export failed - continuing", y)
+    kept = []
     for name, payload in exports:
+        if _keep_previous(name, payload):
+            kept.append(name)
+            continue
         raw = json.dumps(payload, separators=(",", ":"))
         (DATA_DIR / name).write_text(raw, encoding="utf-8")
         sizes[name] = len(raw)
     log.info("fa exports: %s", {k: f"{v/1024:.0f}KB" for k, v in sizes.items()})
+    if kept:
+        log.error("fa exports HELD (previous version kept): %s", kept)
     return sizes
 
 
