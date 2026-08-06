@@ -219,9 +219,18 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
         if not isinstance(d, dict):
             return None
         blobs[name] = d
+        # `as_of` is stamped with TODAY on every write, including a write that
+        # kept the previous run's block because this run produced nothing. So
+        # as_of alone cannot tell a fresh board from a carried-over one, and a
+        # staleness check built on it would never fire. The boards record the
+        # honest signal separately, in team_rollup, and that is what gets
+        # carried into the vintage.
+        _roll = d.get("team_rollup") if isinstance(d.get("team_rollup"), dict) else {}
         src_meta[name] = {
             "as_of": _iso_date(d.get("as_of")) or _iso_date(d.get("generated_at")),
             "season": str(d.get("season") or "") or None,
+            "stale": bool(_roll.get("stale")),
+            "kept_from": _roll.get("kept_from"),
         }
 
     hit = blobs["hitter_leaderboards.json"]
@@ -362,9 +371,44 @@ def snapshot(*, on_date: str | None = None, force: bool = False,
         return {"written": False, "path": str(path), "date": d,
                 "reason": "leaderboards absent or incomplete", "record": None}
 
+    # STALE SOURCE WARNING. covers_through is a MAX over the three source as_of
+    # dates and today's write date, so a board that failed to rebuild is frozen
+    # at an old as_of while the record still gets stamped with tonight's date.
+    # That is safe in the leakage direction, since the snapshot then knows LESS
+    # than its stamp claims and can never see the future. It is not safe for
+    # quality: the model would price tonight's games on a month-old view of the
+    # league, on the input it weights most, and the coverage report would call
+    # the archive perfectly healthy because it counts files and dates.
+    #
+    # So name it. A vintage whose sources lag its own date is a degraded
+    # vintage, and the only way anyone finds out is if it says so.
+    # Two ways a source can be behind, and as_of only catches the first:
+    #   1. the file was not rewritten at all, so its as_of really is older
+    #   2. the export ran, produced nothing, and KEPT the previous block while
+    #      stamping as_of with today. team_rollup.stale is the only witness.
+    _lagging = {
+        name: (m.get("kept_from") or m.get("as_of"))
+        for name, m in (rec.get("sources") or {}).items()
+        # `d` is snapshot()'s vintage date. `vintage_date` is reduce_current's
+        # local and does not exist here; using it raised NameError inside a
+        # best-effort pipeline step, which would have swallowed it silently.
+        if m.get("stale") or (m.get("as_of") and m["as_of"] < d)
+    }
+    if _lagging:
+        log.warning(
+            "leaderboard_vintages: %s is being written with STALE sources %s. "
+            "Its covers_through will still read %s, so games priced on it get a "
+            "current-looking stamp over an older view of the league. Check that "
+            "run_daily step 9e-pre0 rebuilt the boards.",
+            path.name, _lagging, rec.get("covers_through"))
+        rec["stale_sources"] = _lagging
+
     vdir.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(rec, separators=(",", ":")), encoding="utf-8")
     reset_cache()
+    if log_fn and _lagging:
+        log_fn(f"leaderboard_vintages: WARNING {path.name} has stale sources "
+               f"{_lagging}; the vintage is degraded, not fresh")
     if log_fn:
         # The park count is printed even when it is zero. "0 parks" in a nightly
         # log is the whole point of counting: a silent absence is what let the

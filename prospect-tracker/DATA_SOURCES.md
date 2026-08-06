@@ -32,7 +32,9 @@ happen inside the called module, so this file alone cannot split them).
 | d9c. Headshot resolution (photo_ctx.json) | fantasy.json, photo_ctx.json |
 | 9d. Fantasy daily refresh (fantasy.json schedule) | dfs.json, fantasy.json |
 | 9d-bis. DFS daily slate (dfs.json) | dfs.json |
-| 9e-pre. Leaderboard vintage snapshot (validation clock) | - |
+| 9e-pre0. Refresh team leaderboards (bullpen_leaderboards.json, | bullpen_leaderboards.json, hitter_leaderboards.json, starter_leaderboards.json |
+| 9e-pre. Leaderboard vintage snapshot (validation clock) | betting_model_eval.json |
+| 9e-pre1. Betting model refit (betting_model_eval.json) | betting_model_eval.json |
 | 9e. Betting odds snapshot + payload (betting.json) | betting.json, card_market.json, xfv.json |
 | 9f. Card comps ingest + market index (card_market.json) | card_market.json |
 | d10. FA signing-window refresh | mlb_projections.json |

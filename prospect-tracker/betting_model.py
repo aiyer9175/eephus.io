@@ -86,9 +86,11 @@ CLI:
 """
 from __future__ import annotations
 
+import datetime as _dt
 import json
 import logging
 import math
+import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -894,18 +896,226 @@ def _mlb_feed_paths() -> list[Path]:
     return out
 
 
-def build_game_cache(*, force: bool = False, log_fn=None) -> list[dict]:
-    """Completed MLB games as compact rows, from .cache/game_feeds.
+def _write_rows(path, rows) -> None:
+    """Sibling temp then an atomic, RETRYING replace.
 
-    OFFLINE. The feed cache is already on the box for leverage and Statcast;
-    this only reads it. The compact result is cached under .cache/betting so
-    the 1.5GB walk happens once."""
+    The results cache is read by the backtest while the nightly may be
+    rewriting it, and a half-written JSON array that still parses is the
+    failure mode this codebase spent 2026-08-06 removing from its other
+    artifacts.
+
+    The retry is not optional on Windows: os.replace raises PermissionError
+    (WinError 5) whenever a reader holds the target open, so a bare call would
+    turn a routine concurrent read into an exception that propagates out of
+    build_game_cache and discards a completed 1.5GB feed walk. storage owns the
+    hardened version, with a 30 second deadline and backoff; reuse it rather
+    than growing a second, weaker copy here.
+
+    A failed swap leaves the PREVIOUS cache intact, which is the right outcome:
+    results are regenerable, and being a run behind beats serving a truncated
+    results set to a published record."""
+    tmp = path.with_name(path.name + f".tmp{os.getpid()}")
+    try:
+        tmp.write_text(json.dumps(rows), encoding="utf-8")
+        try:
+            from storage import _atomic_replace
+        except Exception:                                     # noqa: BLE001
+            _atomic_replace = None
+        if _atomic_replace is not None:
+            _atomic_replace(tmp, path)
+        else:
+            os.replace(tmp, path)
+    finally:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+
+
+SCHEDULE_API = "https://statsapi.mlb.com/api/v1/schedule"
+
+
+def _row_from_schedule(g: dict, fallback_date: str | None) -> dict | None:
+    """One schedule game -> the SAME compact row shape the feed walk produces.
+
+    Kept byte-compatible with the feed path on purpose: the two sources have to
+    be mergeable by game_pk, and a row whose shape depends on which door it came
+    through would make the fit and the backtest quietly source-dependent."""
+    if (g.get("status") or {}).get("abstractGameState") != "Final":
+        return None
+    # gameType=R is a query parameter, not a promise about the payload. The
+    # backtest must never see spring training, exhibition or postseason games:
+    # they carry different team quality and different roster rules, and the fit
+    # would silently absorb both.
+    if (g.get("gameType") or "R") != "R":
+        return None
+    teams = g.get("teams") or {}
+    home, away = teams.get("home") or {}, teams.get("away") or {}
+    line = g.get("linescore") or {}
+    lt = line.get("teams") or {}
+    hr = (lt.get("home") or {}).get("runs", home.get("score"))
+    ar = (lt.get("away") or {}).get("runs", away.get("score"))
+    if hr is None or ar is None:
+        return None
+    ho = _org((home.get("team") or {}).get("abbreviation")
+              or (home.get("team") or {}).get("name"))
+    ao = _org((away.get("team") or {}).get("abbreviation")
+              or (away.get("team") or {}).get("name"))
+    if not ho or not ao:
+        return None
+    return {
+        "game_pk": g.get("gamePk"),
+        "season": str(g.get("season") or ""),
+        "date": g.get("officialDate") or fallback_date,
+        "home_org": ho, "away_org": ao,
+        "home_runs": int(hr), "away_runs": int(ar),
+        "innings": line.get("currentInning"),
+        "home_sp": (home.get("probablePitcher") or {}).get("id"),
+        "away_sp": (away.get("probablePitcher") or {}).get("id"),
+    }
+
+
+def fetch_finals(start_date: str, end_date: str, *, log_fn=None) -> list[dict]:
+    """Final regular-season MLB games in a date range, straight from StatsAPI.
+
+    ONE request for the whole range. This exists so the results set does not
+    depend on the Statcast feed cache filling up as a side effect of an
+    unrelated job: measured on 2026-08-06, .cache/game_feeds held 0 of 15 games
+    for 2026-08-05 and 0 of 11 for 2026-08-06, so the feed walk could not have
+    seen a single game the leaderboard vintages were able to price."""
+    import feed_cache
+    resp = feed_cache.SESSION.get(
+        SCHEDULE_API,
+        params={"sportId": 1, "startDate": start_date, "endDate": end_date,
+                "gameType": "R", "hydrate": "probablePitcher,linescore"},
+        timeout=30)
+    resp.raise_for_status()
+    data = resp.json()
+    out = []
+    for d in data.get("dates") or []:
+        for g in d.get("games") or []:
+            row = _row_from_schedule(g, d.get("date"))
+            if row and row.get("game_pk"):
+                out.append(row)
+    if log_fn:
+        log_fn(f"betting_model: StatsAPI returned {len(out)} final games "
+               f"for {start_date}..{end_date}")
+    return out
+
+
+def _topup_game_cache(cached: list[dict], *, log_fn=None) -> tuple[list[dict], bool]:
+    """Extend the cached results with anything final since the last cached date.
+
+    THE BUG THIS FIXES (2026-08-06). build_game_cache returned the cached file
+    whenever it existed and the ONLY caller passed no force, so the results set
+    could never advance past the day it was first written. It sat at
+    2026-08-04 while the first vintage-gradable game date was 2026-08-06, which
+    means every game the vintages could honestly price was outside the results
+    set and `n_graded` was structurally pinned at 0 no matter how many nightly
+    vintages accrued. The validation clock read as running and was not.
+
+    Re-fetches the LAST cached date as well as everything after it, because a
+    late-finishing game is written while that date is still the newest one and
+    would otherwise be skipped forever.
+
+    A fetch failure returns the cache untouched and says so. Results are the
+    input to a published record; degrading them silently is worse than being a
+    day behind."""
+    today = _dt.date.today().isoformat()
+    season = today[:4]
+
+    # ANCHOR TO ONE SEASON. The schedule endpoint honours a date RANGE, not a
+    # season, so a range that spans an offseason returns both: measured live,
+    # 2025-09-20..2026-04-10 came back {'2026': 206, '2025': 121}. Merging that
+    # would pool two seasons into one file, and every production caller reads
+    # completed_games(None), so the fit would regress last season's outcomes
+    # against THIS season's live team ratings and the published n_games would
+    # roughly double at the rollover.
+    #
+    # docs/diamond-betting.md is explicit that this sample must not exist: a
+    # partial 2026 tail plus an early 2027 run "should not" be accepted as one
+    # sample, "the leaderboards reset between seasons". Resuming inside the
+    # current season is what keeps the honest sample honest.
+    #
+    # Ignoring dates at or beyond today also stops a single bad or future-dated
+    # row from making `last >= today` true forever, which would silently freeze
+    # the top-up: the exact failure this function exists to fix.
+    in_season = [r.get("date") for r in cached
+                 if r.get("date") and r["date"] < today
+                 and str(r.get("season") or r["date"][:4]) == season]
+    # First run of a new season: start at the season boundary rather than
+    # reaching back across the offseason.
+    last = max(in_season) if in_season else f"{season}-01-01"
+    try:
+        fresh = fetch_finals(last, today, log_fn=log_fn)
+    except Exception as exc:                                  # noqa: BLE001
+        log.warning("betting_model: could not refresh completed games from "
+                    "StatsAPI (%s); serving the cache, last game %s", exc, last)
+        return cached, False
+
+    if not fresh:
+        # A 200 with zero usable rows is not the same as "no new games", and
+        # treating it as such is exactly the empty-but-valid failure this
+        # module keeps meeting. It happens for real when a hydrate key is
+        # renamed and _row_from_schedule starts returning None for everything.
+        # Logged through the module logger, not log_fn, because the production
+        # caller passes no log_fn and this must not be silent there.
+        log.warning("betting_model: StatsAPI returned no usable final games for "
+                    "%s..%s. If games were played in that window the response "
+                    "shape has changed and the results set is now frozen.",
+                    last, today)
+        return cached, False
+
+    by_pk = {r["game_pk"]: r for r in cached if r.get("game_pk")}
+    before = len(by_pk)
+    # CONTENT change, not just cardinality. The range deliberately re-reads the
+    # last cached date to catch a game that finished late, and a corrected score
+    # replaces a row without changing the count. Deciding to write on `added`
+    # alone would return the corrected rows to this caller and leave the wrong
+    # ones on disk, so the next process would read the stale score back.
+    changed = False
+    for r in fresh:
+        if str(r.get("season") or (r.get("date") or "")[:4]) != season:
+            continue        # belt and braces: never let a neighbouring season in
+        pk = r["game_pk"]
+        if by_pk.get(pk) != r:
+            changed = True
+        by_pk[pk] = r
+    rows = sorted(by_pk.values(),
+                  key=lambda r: (r.get("date") or "", r.get("game_pk") or 0))
+    added = len(rows) - before
+    if changed:
+        log.info("betting_model: results now through %s (+%d new, %d fetched)",
+                 max(r.get("date") or "" for r in rows), added, len(fresh))
+        if log_fn:
+            log_fn(f"betting_model: +{added} completed game(s), now through "
+                   f"{max(r.get('date') or '' for r in rows)}")
+    return rows, changed
+
+
+def build_game_cache(*, force: bool = False, refresh: bool = True,
+                     log_fn=None) -> list[dict]:
+    """Completed MLB games as compact rows.
+
+    Two doors. The FULL build walks .cache/game_feeds, which is a 1.5GB scan of
+    ~18k mostly-minor-league files, so it runs once and is cached. Every
+    subsequent call tops the cache up from the StatsAPI schedule instead, which
+    is one request.
+
+    That split is the fix for the frozen-cache bug described on _topup_game_cache.
+    Pass refresh=False for an offline read that is guaranteed not to touch the
+    network."""
     GAME_CACHE.mkdir(parents=True, exist_ok=True)
     out_path = GAME_CACHE / "completed_games.json"
     if out_path.exists() and not force:
         cached = _load_json(out_path)
         if isinstance(cached, list) and cached:
-            return cached
+            if not refresh:
+                return cached
+            rows, changed = _topup_game_cache(cached, log_fn=log_fn)
+            if changed:
+                _write_rows(out_path, rows)
+            return rows
     rows: list[dict] = []
     paths = _mlb_feed_paths()
     if log_fn:
@@ -941,15 +1151,49 @@ def build_game_cache(*, force: bool = False, log_fn=None) -> list[dict]:
             "away_sp": (pp.get("away") or {}).get("id"),
         })
     rows = [r for r in rows if r["home_org"] and r["away_org"]]
-    rows.sort(key=lambda r: (r.get("date") or "", r.get("game_pk") or 0))
-    out_path.write_text(json.dumps(rows), encoding="utf-8")
+
+    # COLD BOOTSTRAP. The feed walk finds nothing on a box whose .cache/game_feeds
+    # is empty or has been pruned, and on 2026-08-06 that was the live state:
+    # 0 of 15 feeds for 2026-08-05 and 0 of 11 for 2026-08-06. Writing that empty
+    # result and returning it would persist an empty-but-valid [] that every
+    # consumer reads as "no games have been played", and because the top-up
+    # branch above requires a NON-EMPTY cache, the StatsAPI door could never be
+    # reached to repair it. The walk would simply run again, find nothing again,
+    # and the results set would be permanently zero.
+    #
+    # So when the walk comes back empty, fall through to StatsAPI for the season
+    # rather than committing the empty answer.
+    if not rows and refresh:
+        log.warning("betting_model: the game-feed walk found no completed MLB "
+                    "games (%d MLB feeds on disk). Falling back to StatsAPI for "
+                    "the season rather than caching an empty results set.",
+                    len(paths))
+        try:
+            season = str(_dt.date.today().year)
+            rows = fetch_finals(f"{season}-01-01", _dt.date.today().isoformat(),
+                                log_fn=log_fn)
+            rows.sort(key=lambda r: (r.get("date") or "", r.get("game_pk") or 0))
+        except Exception as exc:                              # noqa: BLE001
+            log.error("betting_model: StatsAPI bootstrap failed too (%s); the "
+                      "results set stays EMPTY and every betting number "
+                      "downstream is unfitted", exc)
+
+    if not rows:
+        # Never persist an empty results set. A missing file re-tries next run;
+        # a committed [] looks like a legitimately empty season forever.
+        log.error("betting_model: refusing to cache an EMPTY completed-games "
+                  "set; leaving %s as it was so the next run retries",
+                  out_path.name)
+        return rows
+
+    _write_rows(out_path, rows)
     if log_fn:
         log_fn(f"betting_model: cached {len(rows)} completed games -> {out_path}")
     return rows
 
 
-def completed_games(season: str | None = None) -> list[dict]:
-    rows = build_game_cache()
+def completed_games(season: str | None = None, *, refresh: bool = True) -> list[dict]:
+    rows = build_game_cache(refresh=refresh)
     return [r for r in rows if not season or r.get("season") == str(season)]
 
 

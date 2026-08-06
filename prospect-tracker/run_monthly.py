@@ -1895,6 +1895,55 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:
                 log.exception("daily: dfs slate export failed — continuing")
 
+        # --- 9e-pre0. Refresh the boards the vintage is about to freeze ------
+        # WITHOUT THIS THE CLOCK TICKS ON A STILL PICTURE. The three team
+        # leaderboards were built only in main(), which the box runs monthly,
+        # while the vintage snapshot below runs nightly. covers_through is
+        # max(source as_of, write date), so it advances with the WRITE date
+        # regardless of how old the features are: thirty nightly vintages would
+        # carry thirty distinct dates and one identical feature set, and the
+        # coverage report would call that archive perfectly healthy.
+        #
+        # That is a QUALITY failure, not a leakage one. A stale board knows less
+        # than its stamp claims, never more, so nothing published off it is
+        # dishonest. It is simply a month-old view of the league pretending to
+        # be tonight's, on the one input the model weights most.
+        #
+        # Best effort per board: a leaderboard that fails to rebuild leaves
+        # yesterday's file in place, and the snapshot below records the as_of it
+        # actually found rather than the one it hoped for.
+        # Imported by name rather than through __import__ so the audit-doc
+        # generator and a human reader can both see which artifacts this step
+        # writes. A dynamic import made DATA_SOURCES.md render its outputs as
+        # "-", which is how a step goes missing from the pipeline map.
+        # `chained` skips work main() just did in this same process. Without it
+        # a full monthly night rebuilds all three boards twice, which measured
+        # 92s of pure waste (6b4 53.6s + 6b4f 19.4s + 6b4g 19.2s), and the
+        # bullpen walk is the one step that can balloon to minutes if the
+        # win_prob cache was pruned by the disk preflight.
+        with _step("9e-pre0. Refresh team leaderboards (bullpen_leaderboards.json, "
+                   "starter_leaderboards.json, hitter_leaderboards.json)", log):
+            if chained:
+                # monthly 6b4/6b4f/6b4g built all three minutes ago in THIS
+                # process. Measured cost of doing it twice: 92s (53.6 + 19.4 +
+                # 19.2), and the bullpen walk is the step that balloons to
+                # minutes when the disk preflight has pruned .cache/win_prob.
+                log.info("daily: SKIP 9e-pre0: monthly 6b4/6b4f/6b4g just built "
+                         "the three team leaderboards (chained)")
+            else:
+                for _name, _import in (
+                        ("bullpen", lambda: __import__("bullpen_export").export),
+                        ("starter", lambda: __import__("starter_export").export),
+                        ("hitter", lambda: __import__("hitter_export").export)):
+                    try:
+                        log.info("daily leaderboards: %s scored %s",
+                                 _name, _import()(log=log.info))
+                    except Exception:
+                        log.exception(
+                            "daily: %s leaderboard refresh failed; tonight's "
+                            "vintage will freeze the PREVIOUS %s file while "
+                            "stamping today's date - continuing", _name, _name)
+
         # --- 9e-pre. Leaderboard vintage snapshot (the validation clock) ---
         # Writes .cache/leaderboard_vintages/<date>.json: the team inputs the
         # betting model consumes, stamped with the date they were true. A game
@@ -1911,6 +1960,44 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 leaderboard_vintages.run(log_fn=log.info)
             except Exception:
                 log.exception("daily: leaderboard vintage snapshot failed — continuing")
+
+        # --- 9e-pre1. Betting model refit, so the validation clock TICKS ---
+        # THE DEFECT THIS CLOSES (2026-08-06). Every ingredient of the honest
+        # backtest was already nightly: the vintage snapshot at 9e-pre, the
+        # boards at 9e-pre0, and the games themselves. The one thing that reads
+        # them was not. betting_model.build_context/backtest ran ONLY at step 6f
+        # in main(), which the box runs on the 1st, so data/betting_model_eval.json
+        # and its n_graded could not move for up to a month at a time. The page
+        # would have shown a validation clock that was correct once a month and
+        # frozen the rest of the time.
+        #
+        # This is the third instance of the same shape today: a job configured,
+        # wired, and never actually reached on the path that runs.
+        #
+        # No network beyond the results top-up, and no cost when nothing is new:
+        # the completed-games cache is extended by one StatsAPI call and the
+        # refit is arithmetic over rows already on disk. Additive; never aborts.
+        with _step("9e-pre1. Betting model refit (betting_model_eval.json)", log):
+            try:
+                import betting_model
+                # Pin the CURRENT season explicitly. Both default to None, which
+                # pools every season in the cache, and docs/diamond-betting.md
+                # rules that sample out: a partial tail of one season plus an
+                # early run of the next "should not" be accepted as one sample,
+                # because the leaderboards reset between seasons. Passing the
+                # season keeps the gate counting a single season's games.
+                _season = str(date.today().year)
+                betting_model.build_context(season=_season, log_fn=log.info)
+                _bt = betting_model.backtest(season=_season, log_fn=log.info)
+                _v = (_bt or {}).get("vintage") or {}
+                # Say the number out loud every night. A clock nobody can read
+                # is how this one sat at zero without anybody noticing.
+                log.info("betting validation clock: %s of %s vintage-graded "
+                         "games (%s vintages, status %s)",
+                         _v.get("n_graded"), betting_model.VINTAGE_MIN_GRADED_GAMES,
+                         _v.get("n_vintages"), _v.get("status"))
+            except Exception:
+                log.exception("daily: betting model refit failed - continuing")
 
         # --- 9e. Betting: odds snapshot + /betting/ payload ---------------
         # Prices the same slate against the team leaderboards. The odds pull is
@@ -4270,8 +4357,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         with _step("6f. Betting model context refit", log):
             try:
                 import betting_model
-                betting_model.build_context(log_fn=log.info)
-                betting_model.backtest(log_fn=log.info)
+                # Same season pin as run_daily 9e-pre1; see the note there.
+                _season6f = str(date.today().year)
+                betting_model.build_context(season=_season6f, log_fn=log.info)
+                betting_model.backtest(season=_season6f, log_fn=log.info)
             except Exception:
                 log.exception("betting model refit failed - continuing")
 
