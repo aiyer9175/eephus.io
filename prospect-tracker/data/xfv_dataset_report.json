@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-05",
+ "generated_at": "2026-08-06",
  "scope": "HITTERS; debut 2011-2024 + never-MLB bust pool",
  "target": "first-6-season summed bWAR; resolved<= 2025",
  "no_model": true,

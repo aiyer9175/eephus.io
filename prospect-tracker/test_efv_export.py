@@ -154,6 +154,12 @@ def test_committed_artifact_headline_alias_contract():
 #   hashed payload. The FV-bearing fix underneath it: a fabricated `inferred` trade could
 #   outrank MLB's own `mlb_api` record because the display resolver took the newest trade
 #   by DATE regardless of SOURCE (the Alexander Frias bug).
+# Updated 2026-08-06 (roster-map org layer): the org reconciliation reached the FOURTH
+#   and last precedence layer. rosters_by_org is itself a build artifact, so its map was
+#   overriding the reconciled org in the display resolver's final fallback and 5 players
+#   stayed on a club MLB's feed contradicts. 1,496 players reconciled plus 163 roster-map
+#   entries corrected; test_org_authority is green for the first time. No eFV MODEL input
+#   moved: same rows, features, lambda and calibration. org rides inside the hashed payload.
 # GOLDEN eFV ARTIFACT FINGERPRINT (volatile-key-stripped content hash of data/xfv.json).
 # This is a deliberate tripwire: it goes red when the flagship export changes. An
 # INTENTIONAL eFV ship (model/feature/calibration change) updates this constant in the
@@ -478,7 +484,7 @@ def test_committed_artifact_headline_alias_contract():
 #   tools.pipeline_artifact_diff.fingerprint_file, per the 2026-07-30 note above:
 #   a mid-suite test regenerates xfv.json under fixtures, and stamping from that
 #   would record a fixture state as production truth.
-_GOLDEN_XFV_SHA256 = "b7f81e2573c62b0a88df96a77eba21634df665b8a9dd3c266137d43a4791e798"
+_GOLDEN_XFV_SHA256 = "fba5717a6c87122466fe68196b6a9091736b16c9ee07089371ff2c397ee2d3ab"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire

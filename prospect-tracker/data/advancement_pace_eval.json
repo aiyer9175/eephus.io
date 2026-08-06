@@ -1,10 +1,10 @@
 {
-"generated_at": "2026-08-05",
+"generated_at": "2026-08-06",
 "artifact": "data/advancement_pace.json",
 "kind": "descriptive QC only - no predictive claim is made or permitted anywhere for this statistic",
 "methodology_version": "1.0.0-eephus",
 "n_scored_latest_asof": 9579,
-"n_asof_rows_fit": 27494,
+"n_asof_rows_fit": 27495,
 "distribution_ap_plus_display_latest": {
 "mean": 99.27,
 "sd": 7.69,
@@ -20,7 +20,7 @@
 "mean": 99.29,
 "sd": 7.78,
 "min": 63.0,
-"max": 162.6,
+"max": 162.5,
 "p5": 88.3,
 "p50": 98.9,
 "p95": 113.8
@@ -34,7 +34,7 @@
 },
 "2017-19": {
 "mean_ap_plus": 99.45,
-"n": 8301
+"n": 8302
 },
 "2021+": {
 "mean_ap_plus": 100.44,
@@ -51,7 +51,7 @@
 "n": 1543
 },
 "MIF": {
-"mean_ap_plus": 100.03,
+"mean_ap_plus": 100.04,
 "n": 2149
 },
 "OF": {
@@ -60,7 +60,7 @@
 },
 "UNK": {
 "mean_ap_plus": 99.93,
-"n": 18825
+"n": 18826
 },
 "UT": {
 "mean_ap_plus": 100.34,
@@ -77,8 +77,8 @@
 "n": 753
 },
 "intl_amateur": {
-"mean_ap_plus": 100.72,
-"n": 15852
+"mean_ap_plus": 100.71,
+"n": 15853
 },
 "undrafted_other": {
 "mean_ap_plus": 98.97,
@@ -104,7 +104,7 @@
 },
 "<=17": {
 "mean_ap_plus": 100.96,
-"n": 10818
+"n": 10819
 }
 }
 },
@@ -115,7 +115,7 @@
 "named_riser_sanity": [
 {
 "name": "Dayson Croes",
-"ap_plus": 162.6,
+"ap_plus": 162.5,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AAA in 2 active seasons"
@@ -136,7 +136,7 @@
 },
 {
 "name": "Dub Gleed",
-"ap_plus": 139.2,
+"ap_plus": 139.4,
 "ap_percentile": 100,
 "ap_tier": "Developing",
 "path": "Rk -> AA in 2 active seasons"

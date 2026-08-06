@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-05",
+ "generated_at": "2026-08-06",
  "scope": "PITCHERS",
  "n_scored": 1981,
  "calibration_scale": {
@@ -8,10 +8,10 @@
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 0.62,
-  "max_up": 5.3,
+  "mean_abs_delta": 0.61,
+  "max_up": 5.4,
   "max_down": -4.4,
-  "share_within_2_grades": 0.918
+  "share_within_2_grades": 0.92
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
@@ -20,13 +20,13 @@
   "max_down": -20.5
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.1426,
+  "spearman_adj_vs_consensus_miss": 0.1411,
   "n": 530,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 14393.5,
-  "consensus": 14849.5
+  "xfv": 14201.7,
+  "consensus": 14695.5
  },
  "example_up_adjustments": [
   {
@@ -58,18 +58,18 @@
    "realized_war_6yr": 3.02
   },
   {
+   "player_key": "angel_perdomo",
+   "consensus_fv": 38.1,
+   "xfv_grade": 43.7,
+   "delta": 5.6,
+   "realized_war_6yr": -0.01
+  },
+  {
    "player_key": "kyle_cody",
    "consensus_fv": 37.8,
    "xfv_grade": 43.4,
    "delta": 5.6,
    "realized_war_6yr": 0.47
-  },
-  {
-   "player_key": "angel_perdomo",
-   "consensus_fv": 38.1,
-   "xfv_grade": 43.7,
-   "delta": 5.5,
-   "realized_war_6yr": -0.01
   }
  ],
  "example_down_adjustments": [

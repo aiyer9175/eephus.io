@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-05",
+ "generated_at": "2026-08-06",
  "scope": "PITCHERS; debut 2011-2024 + never-MLB bust pool",
  "target": "first-6-season summed bWAR; resolved<= 2025",
  "no_model": true,
@@ -12,38 +12,38 @@
   "bust_seen": 2382,
   "bust_hitter": 1140,
   "bust_no_fv": 47,
-  "bust_kept": 1062,
-  "bust_recent_flagged": 62,
+  "bust_kept": 1061,
+  "bust_recent_flagged": 61,
   "bust_mlb_exposure_rerouted": 0,
-  "bust_mlb_exposure_dropped": 31,
+  "bust_mlb_exposure_dropped": 32,
   "debuted_veteran_dropped": 14,
   "debuted_war_gap_dropped": 1,
   "debuted_terminal_resolved": 2,
   "bust_terminal_resolved": 1
  },
  "counts": {
-  "rows_total": 2043,
+  "rows_total": 2042,
   "debuted": 981,
-  "busts": 1062,
+  "busts": 1061,
   "resolved_debuted": 530,
   "censored_debuted": 451,
-  "bust_recent_excluded_from_label": 62
+  "bust_recent_excluded_from_label": 61
  },
  "feature_coverage": {
-  "consensus_fv_raw": "2043/2043",
-  "fv_fangraphs": "1385/2043",
-  "fv_mlb_pipeline": "1553/2043",
-  "fv_stddev": "915/2043",
-  "tool_hit": "0/2043",
-  "tool_game_pwr": "0/2043",
-  "pick_overall": "838/2043",
-  "bonus_usd": "624/2043"
+  "consensus_fv_raw": "2042/2042",
+  "fv_fangraphs": "1385/2042",
+  "fv_mlb_pipeline": "1553/2042",
+  "fv_stddev": "915/2042",
+  "tool_hit": "0/2042",
+  "tool_game_pwr": "0/2042",
+  "pick_overall": "838/2042",
+  "bonus_usd": "624/2042"
  },
  "milb_feature_coverage": {
-  "level_rank": "1030/2043",
-  "age_rel_level": "1030/2043",
-  "k_rel": "1030/2043",
-  "era_rel": "1030/2043"
+  "level_rank": "1029/2042",
+  "age_rel_level": "1029/2042",
+  "k_rel": "1029/2042",
+  "era_rel": "1029/2042"
  },
  "war_distribution_resolved_debuted": {
   "n": 530,

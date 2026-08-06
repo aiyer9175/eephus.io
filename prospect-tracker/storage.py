@@ -8461,6 +8461,29 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 if key and key not in roster_level_by_key:
                     roster_level_by_key[key] = level_name
 
+    # THE FOURTH PRECEDENCE LAYER (2026-08-05). The org reconciliation above
+    # corrects `p.org`, and _active_display_org's trade branch now prefers MLB's
+    # own record over an inferred one, but BOTH are overridden by this roster map
+    # in the resolver's final fallback: `roster_org_by_key.get(key) or p.org`.
+    # rosters_by_org is itself a build artifact, so a player whose roster entry
+    # predates his trade keeps the old club no matter how many upstream layers
+    # were fixed. That is why 5 players survived every earlier fix: their
+    # snapshots are old enough that the 365-day trade window excludes them, so
+    # the resolver falls all the way through to here.
+    # Applying the SAME authority here keeps one answer across all four layers
+    # rather than leaving the last one to contradict the other three. Only moves
+    # a player when MLB's feed names a different club, never invents one.
+    _roster_fixed = 0
+    for _k, _rec in (_auth_orgs or {}).items():
+        _new = _rec[0] if _rec else None
+        if _new and roster_org_by_key.get(_k) and roster_org_by_key[_k] != _new:
+            roster_org_by_key[_k] = _new
+            _roster_fixed += 1
+    if _roster_fixed:
+        log.info("org reconciliation: corrected %d roster-map entr%s that would "
+                 "otherwise have overridden the reconciled org",
+                 _roster_fixed, "y" if _roster_fixed == 1 else "ies")
+
     # ── Per-org promotion-phase tendency (H1 vs H2) ───────────────────────
     # Walks every promotion event across every prospect (active +
     # graduated) and buckets by which half of the season the
