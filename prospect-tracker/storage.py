@@ -8119,7 +8119,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         if not _new_org or _new_org == _p_org.org:
             continue
         _newest_snap = max((pt.snapshot_date for pt in _p_org.points), default="")
-        if _when > _newest_snap:
+        # >= not >, deliberately. Both sides are DAY-resolution, so a strict
+        # comparison hands same-day ties to the scraped list, which is exactly
+        # the case that produced the bug: MLB recorded the Frias trade and his
+        # new-affiliate activation, a prospect list published the losing club on
+        # one of those same dates, and the tie let the list win. Within a single
+        # day MLB's own transaction record is the better authority, so ties go
+        # to it. A genuinely fresher list still wins on a LATER date.
+        if _when >= _newest_snap:
             _p_org.org = _new_org
             _org_fixed += 1
     if _org_fixed:
