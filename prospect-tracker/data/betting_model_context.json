@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-05T23:10:34+00:00",
+ "generated_at": "2026-08-06T03:27:29+00:00",
  "model_version": "betting_runs_v1",
  "season": "2026",
  "n_games": 1705,
@@ -8,19 +8,21 @@
  "extra_inning_games": 140,
  "extra_inning_home_rate_raw": 0.4786,
  "extra_inning_home_rate_shrunk": 0.4875,
- "home_field_runs_adj": 0.0,
- "diff_shrink": 1.0,
- "diff_shrink_log_loss": null,
+ "home_field_runs_adj": 0.2213,
+ "diff_shrink": 0.76,
+ "diff_shrink_log_loss": 0.676779,
  "diff_shrink_note": "run-differential shrink fitted by log loss on completed games; below 1.0 means the raw predictor separated clubs further than the results did, and the fair total is untouched by it",
  "home_field_note": "the runs regression recovers almost no home field because a home team leading after the top of the ninth never bats; the adjustment restores the observed home win rate as a run differential, leaving the fair total unchanged",
  "coefficients": {
-  "b0": 4.45,
-  "b1": 0.32,
-  "b2": -0.32,
-  "b3": 3.2,
-  "b4": 0.09,
-  "source": "literature-priors",
-  "n_rows": 0
+  "b0": 4.493559273460764,
+  "b1": 0.28017565629707464,
+  "b2": -0.32418287754454506,
+  "b3": 3.209713226882493,
+  "b4": 0.013107796956067525,
+  "source": "fitted",
+  "n_rows": 3410,
+  "rmse": 3.173156662398169,
+  "r2": 0.044613668297695086
  },
  "source_note": "fit on completed games read out of .cache/game_feeds, offline; team inputs are season-to-date leaderboards, so this fit is IN-SAMPLE and cannot validate the model"
 }
