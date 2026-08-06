@@ -137,11 +137,19 @@ def test_aria_sort_reflects_state_and_enter_resorts(booted_page):
     # nowhere, and then the 10s wait below times out on a press that was never
     # delivered. Asserting focus separately means a future failure names which
     # of the two actually broke.
+    # RE-APPLY focus inside the wait. The board re-renders after load and
+    # REPLACES the header node, so a focus() called once lands on an element
+    # that is then thrown away, and document.activeElement falls back to body.
+    # Polling with a re-focus survives that; asserting once does not. Diagnosed
+    # from a full-suite failure where this wait timed out while the same test
+    # passed in isolation.
     page.wait_for_function(
         "key => { const h = document.querySelector("
         "`#active-section .sort-header[data-sort-key=\"${key}\"]`);"
-        " return !!h && document.activeElement === h; }",
-        arg=target["key"], timeout=10_000)
+        " if (!h) return false;"
+        " if (document.activeElement !== h) { h.focus(); return false; }"
+        " return true; }",
+        arg=target["key"], timeout=15_000)
 
     page.keyboard.press("Enter")
     # Condition wait replaces the old fixed 400ms sleep: the re-sort is done

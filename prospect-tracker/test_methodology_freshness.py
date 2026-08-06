@@ -122,6 +122,11 @@ MODEL_GLOSSARY = {
     # Wave G site-wide true-to-model sweep 2026-07-24b (GATES-ACCURACY C2/C3):
     "plus_metric_recal": ["krp_plus"],     # KRP+ de-clamp SHIP; family already true-to-model
     "c3_pal_fa_recal": "internal",         # PAL/FA audit, zero ships (measured on real gates)
+    # Lane E4: a pre-registered TEST of three owner claims about body type and
+    # infield position. Nothing is fitted and nothing is served, so there is no
+    # glossary term to document; the deliverable is
+    # docs/prereg-e4-anthro-position.md.
+    "anthro_position_claims": "internal",
     "c3_proj_trans_recal": ["single_a_equivalent"],  # translation band de-cap SHIP
     # Round 2 2026-07-24e:
     "xfv_injury_history": "internal",   # injury-history overlay ledger (coverage-starved)

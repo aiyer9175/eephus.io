@@ -3069,6 +3069,17 @@
    "eval_artifact": null,
    "verdict": "unvalidated",
    "notes": "Display-layer re-pricing, shipped LABELED as an estimate (dfs_export._NOTES renders on every board). The skill line is the Gate-1-validated FA projection engine read through data/fantasy.json and is not refit here. What is new and unmeasured: per-game playing time (start_rate = min(1, pa_per_team_game / 4.15), line scaled to pa_per_team_game / start_rate), the matchup multiplier (inverse of 0.6 * opposing SP SEM+ plus 0.4 * opposing Bullpen+, clamped 0.80-1.25 for hitters and 0.82-1.22 on the pitcher allowed side), and a park leg that is neutral today because the committed park-factor artifact covers sportIds 11-16 only. No backtest stands behind the matchup term. Contest scoring weights are transcribed from the public classic-format rules and published in the payload for audit. Relievers are excluded by construction: save chances are not knowable before lock."
+  },
+  {
+   "model_id": "anthro_position_claims",
+   "surface": "/pal/ posfit (measurement only; nothing served yet)",
+   "predicts": "nothing. This is a pre-registered TEST of three stated beliefs about body type and infield position, not a model. It measures whether scouted height and arm grade track where a position player's career MLB innings actually land.",
+   "champion": "none. No estimator is fitted and no output is served. The deliverable is the measurement and its refusal conditions.",
+   "baseline": "a zero-information exposure (uniform noise) through the identical pipeline, which must and does come back null",
+   "metric": "Spearman rho of exposure against career innings share at the named position, with a 2,000-resample bootstrap 95% CI and a 2,000-shuffle permutation null. SUPPORTED requires p < 0.05 AND a CI clear of zero AND the predicted sign; two of three is not a pass. Result: H1 short is a poor 1B SUPPORTED (rho +0.182, CI [0.113, 0.253], p 0.0005, n 742); H2 elite arm suits 3B NOT SUPPORTED (rho +0.049, CI crosses zero, p 0.187, n 746); H3 weak arm pushes 2B SUPPORTED (rho -0.110, CI [-0.179, -0.041], p 0.003, n 746).",
+   "eval_artifact": "data/anthro_position_eval.json",
+   "verdict": "provisional",
+   "notes": "VERDICT NOTE: 'provisional' here means a real eval artifact exists and NOTHING IS SERVED, the same shape as pal_stuff_xrv. There is no fitted estimator at all; this row exists so a measurement cannot be run and then quietly forgotten. Lane E4, the owner's arm-and-height ask. Pre-registration and full write-up at docs/prereg-e4-anthro-position.md. TWO THINGS THIS DOES NOT LICENSE. First, career innings share is an outcome of CLUB DECISIONS, so a SUPPORTED verdict means clubs behave as if the belief is true, not that it is true; the causal question is untouched. Second, no anthro term may be added to positional_fit as a bonus at observed positions: OAA already contains arm and legs, and the earlier arm gate NO-SHIPPED raw arm-by-position on throw-context confounding (1.94 mph adjusted spread against a 3.80 within-position SD) that this study does not remove. A shipping prior would have to clear conversion_accuracy and backtest as a fifth scored arm on identical rows; that gate has not run. FIRST-RUN ERROR recorded in the write-up: with pitchers left in the sample (55.4% of height rows, 2.0 inches taller, no 1B innings) H1 came back significant in the WRONG direction, and the zero-information control passed anyway because it validates the estimator, not the population."
   }
  ],
  "problems": []

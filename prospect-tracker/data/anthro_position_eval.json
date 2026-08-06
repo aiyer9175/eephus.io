@@ -1,0 +1,79 @@
+{
+ "generated_at": "2026-08-06T22:51:10+00:00",
+ "lane": "E4",
+ "what_this_is": "a pre-registered test of three stated beliefs about body type and infield position, not a shipping model",
+ "preregistration": "docs/prereg-e4-anthro-position.md",
+ "n_boot": 2000,
+ "n_perm": 2000,
+ "seed": 4137,
+ "verdict_rule": "SUPPORTED requires permutation p < 0.05 AND a 95% bootstrap CI clear of zero AND the sign the claim predicts",
+ "claims": [
+  {
+   "id": "H1_short_is_a_poor_1B",
+   "claim": "a short hitter is a poor first baseman, so height should rise with first-base share",
+   "exposure": "height_in",
+   "position": "1B",
+   "expect": "+",
+   "n": 742,
+   "rho": 0.1819,
+   "ci95": [
+    0.11282,
+    0.2534
+   ],
+   "perm_p": 0.0005,
+   "verdict": "SUPPORTED",
+   "why": "significant, interval clears zero, sign as claimed"
+  },
+  {
+   "id": "H2_elite_arm_suits_3B",
+   "claim": "an elite arm suits third base, so arm grade should rise with third-base share",
+   "exposure": "throw",
+   "position": "3B",
+   "expect": "+",
+   "n": 746,
+   "rho": 0.0489,
+   "ci95": [
+    -0.02217,
+    0.11832
+   ],
+   "perm_p": 0.18741,
+   "verdict": "NOT SUPPORTED",
+   "why": "the 95% interval includes zero"
+  },
+  {
+   "id": "H3_weak_arm_pushes_2B",
+   "claim": "a weak arm pushes a player to second base, so arm grade should FALL as second-base share rises",
+   "exposure": "throw",
+   "position": "2B",
+   "expect": "-",
+   "n": 746,
+   "rho": -0.10993,
+   "ci95": [
+    -0.17866,
+    -0.04104
+   ],
+   "perm_p": 0.003,
+   "verdict": "SUPPORTED",
+   "why": "significant, interval clears zero, sign as claimed"
+  }
+ ],
+ "zero_information_control": {
+  "n": 742,
+  "rho": 0.01281,
+  "ci95": [
+   -0.06159,
+   0.08568
+  ],
+  "perm_p": 0.74063,
+  "verdict": "NOT SUPPORTED",
+  "why": "the 95% interval includes zero"
+ },
+ "control_ok": true,
+ "population": "position players only; pitchers are excluded",
+ "caveats": [
+  "FIRST-RUN ERROR, recorded rather than hidden: with pitchers left in, 55.4% of the height sample were pitchers, 2.0 inches taller on average and with no first-base innings, which produced a spurious H1 at p = 0.0005 in the WRONG direction. The zero-information control passed on that run: it validates the estimator, not the population.",
+  "Career innings share is an OUTCOME of club decisions, not a measure of ability. A club that believes the same folk wisdom will produce exactly this correlation whether or not the wisdom is true, so a SUPPORTED verdict here means 'clubs behave as if this is true', not 'this is true'.",
+  "Scouted arm grades are known to be confounded by throw context: the earlier arm gate measured a 1.94 mph context-adjusted spread against a 3.80 within-position SD, which is why raw arm-by-position was refused before.",
+  "OAA already contains arm and legs, so nothing here may be added to the positional fit as a bonus without double counting."
+ ]
+}
