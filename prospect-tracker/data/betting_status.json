@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-05T23:28:19+00:00",
+ "generated_at": "2026-08-06T15:19:36+00:00",
  "configured": true,
  "provider": "The Odds API (free tier)",
  "sport": "baseball_mlb",
@@ -14,10 +14,15 @@
  "credits_per_snapshot": 3,
  "monthly_budget": 500,
  "planned_monthly_credits": 186,
- "n_snapshots_cached": 0,
- "latest_snapshot": null,
- "latest_kind": null,
- "latest_credits": {},
+ "n_snapshots_cached": 1,
+ "latest_snapshot": "2026-08-06T15:19:23+00:00",
+ "latest_kind": "open",
+ "latest_credits": {
+  "cost": 3,
+  "used": 6,
+  "remaining": 494,
+  "last": 3
+ },
  "props": "model fair lines only; the per-event props endpoint is not on the free-tier budget",
  "note": "odds feed configured"
 }

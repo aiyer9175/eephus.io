@@ -1,18 +1,38 @@
 {
- "generated_at": "2026-08-05T23:28:19+00:00",
- "slate_date": "2026-08-05",
- "n_games": 0,
+ "generated_at": "2026-08-06T15:19:36+00:00",
+ "slate_date": "2026-08-06",
+ "n_games": 11,
  "status": {
-  "odds_feed": "no_snapshot",
+  "odds_feed": "ok",
   "odds_note": "odds feed configured",
-  "odds_captured_at": null,
-  "odds_kind": null,
+  "odds_captured_at": "2026-08-06T15:19:23+00:00",
+  "odds_kind": "open",
   "model": "unvalidated",
   "model_mode": "contaminated",
-  "empty_reasons": [
-   "team leaderboards have not been built yet",
-   "odds feed configured"
-  ]
+  "team_input_sources": {
+   "offense": {
+    "file": "hitter_leaderboards.json",
+    "present": true,
+    "n_orgs": 30,
+    "as_of": "2026-08-06"
+   },
+   "rotation": {
+    "file": "starter_leaderboards.json",
+    "present": true,
+    "n_orgs": 30,
+    "as_of": "2026-08-06"
+   },
+   "bullpen": {
+    "file": "bullpen_leaderboards.json",
+    "present": true,
+    "n_orgs": 30,
+    "as_of": "2026-08-06"
+   },
+   "n_orgs_joined": 30
+  },
+  "n_slate_games": 11,
+  "stale_board": false,
+  "empty_reasons": []
  },
  "model": {
   "version": "betting_runs_v1",
@@ -26,13 +46,15 @@
    "home field"
   ],
   "coefficients": {
-   "b0": 4.45,
-   "b1": 0.32,
-   "b2": -0.32,
-   "b3": 3.2,
-   "b4": 0.09,
-   "source": "literature-priors",
-   "n_rows": 0
+   "b0": 4.505349858096928,
+   "b1": 0.2798429454489262,
+   "b2": -0.31931635624478816,
+   "b3": 3.2604866926800615,
+   "b4": 0.012628343241238285,
+   "source": "fitted",
+   "n_rows": 3410,
+   "rmse": 3.1728210311488456,
+   "r2": 0.04481576392921305
   },
   "league_context": {
    "season": "2026",
@@ -41,8 +63,8 @@
    "home_win_rate": 0.5232,
    "extra_inning_home_rate": 0.4875,
    "home_logit_offset": 0.0,
-   "generated_at": "2026-08-05T23:10:34+00:00",
-   "source": "literature-priors"
+   "generated_at": "2026-08-06T11:25:50+00:00",
+   "source": "fitted"
   },
   "devig_method": "proportional",
   "margin_model": "Poisson difference (Skellam) by direct convolution",
@@ -52,7 +74,7 @@
    "no weather, no umpire, no travel, no injury news beyond what the leaderboards already absorb"
   ],
   "backtest": {
-   "generated_at": "2026-08-05T23:10:34+00:00",
+   "generated_at": "2026-08-06T11:25:50+00:00",
    "model_version": "betting_runs_v1",
    "n_games": 1705,
    "validated": false,
@@ -63,6 +85,182 @@
     "vintage"
    ],
    "headline_mode": "contaminated",
+   "in_sample": {
+    "label": "in-sample (coefficients and features both leak)",
+    "mode": "contaminated",
+    "honest": false,
+    "n": 1705,
+    "coefficients": {
+     "b0": 4.505349858096928,
+     "b1": 0.2798429454489262,
+     "b2": -0.31931635624478816,
+     "b3": 3.2604866926800615,
+     "b4": 0.012628343241238285,
+     "source": "fitted",
+     "n_rows": 3410,
+     "rmse": 3.1728210311488456,
+     "r2": 0.04481576392921305
+    },
+    "home_field_runs_adj": 0.2217,
+    "diff_shrink": 0.76,
+    "extra_inning_home_rate": 0.4875,
+    "brier": 0.24156,
+    "brier_flat_500": 0.25,
+    "brier_home_base": 0.24946,
+    "log_loss": 0.67615,
+    "log_loss_flat_500": 0.69315,
+    "accuracy": 0.5607,
+    "home_win_rate": 0.5232,
+    "mean_p_home": 0.5232,
+    "total_mae": 3.545,
+    "skill_vs_home_base": {
+     "delta": 0.007903,
+     "sd": 0.08409,
+     "t": 3.881,
+     "beats_baseline_95": true,
+     "n_for_95": 306,
+     "baseline": 0.5232,
+     "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
+    },
+    "calibration": [
+     {
+      "bin": "0.1-0.2",
+      "n": 1,
+      "pred": 0.1895,
+      "actual": 0.0
+     },
+     {
+      "bin": "0.2-0.3",
+      "n": 13,
+      "pred": 0.2602,
+      "actual": 0.4615
+     },
+     {
+      "bin": "0.3-0.4",
+      "n": 109,
+      "pred": 0.3681,
+      "actual": 0.3303
+     },
+     {
+      "bin": "0.4-0.5",
+      "n": 547,
+      "pred": 0.4577,
+      "actual": 0.4771
+     },
+     {
+      "bin": "0.5-0.6",
+      "n": 727,
+      "pred": 0.5476,
+      "actual": 0.5337
+     },
+     {
+      "bin": "0.6-0.7",
+      "n": 268,
+      "pred": 0.6341,
+      "actual": 0.6418
+     },
+     {
+      "bin": "0.7-0.8",
+      "n": 32,
+      "pred": 0.728,
+      "actual": 0.7188
+     },
+     {
+      "bin": "0.8-0.9",
+      "n": 8,
+      "pred": 0.8274,
+      "actual": 0.75
+     }
+    ]
+   },
+   "forward": {
+    "label": "forward from 2026-06-24 (coefficient leakage removed, feature leakage remains)",
+    "mode": "contaminated",
+    "honest": false,
+    "n": 521,
+    "coefficients": {
+     "b0": 4.504180132025525,
+     "b1": 0.25506024939014577,
+     "b2": -0.34843769435121724,
+     "b3": 2.907857707461058,
+     "b4": -0.02242233012308366,
+     "source": "fitted",
+     "n_rows": 2368,
+     "rmse": 3.124216286324994,
+     "r2": 0.05006413980665081
+    },
+    "home_field_runs_adj": 0.3362,
+    "diff_shrink": 0.7,
+    "extra_inning_home_rate": 0.5,
+    "brier": 0.24275,
+    "brier_flat_500": 0.25,
+    "brier_home_base": 0.24995,
+    "log_loss": 0.67839,
+    "log_loss_flat_500": 0.69315,
+    "accuracy": 0.547,
+    "home_win_rate": 0.5067,
+    "mean_p_home": 0.5299,
+    "total_mae": 3.616,
+    "skill_vs_home_base": {
+     "delta": 0.00721,
+     "sd": 0.08327,
+     "t": 1.976,
+     "beats_baseline_95": true,
+     "n_for_95": 361,
+     "baseline": 0.5067,
+     "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
+    },
+    "calibration": [
+     {
+      "bin": "0.1-0.2",
+      "n": 1,
+      "pred": 0.1947,
+      "actual": 0.0
+     },
+     {
+      "bin": "0.2-0.3",
+      "n": 2,
+      "pred": 0.2521,
+      "actual": 1.0
+     },
+     {
+      "bin": "0.3-0.4",
+      "n": 27,
+      "pred": 0.3663,
+      "actual": 0.3333
+     },
+     {
+      "bin": "0.4-0.5",
+      "n": 143,
+      "pred": 0.4589,
+      "actual": 0.4545
+     },
+     {
+      "bin": "0.5-0.6",
+      "n": 247,
+      "pred": 0.5454,
+      "actual": 0.4899
+     },
+     {
+      "bin": "0.6-0.7",
+      "n": 90,
+      "pred": 0.6308,
+      "actual": 0.6444
+     },
+     {
+      "bin": "0.7-0.8",
+      "n": 8,
+      "pred": 0.7377,
+      "actual": 0.75
+     },
+     {
+      "bin": "0.8-0.9",
+      "n": 3,
+      "pred": 0.833,
+      "actual": 1.0
+     }
+    ]
+   },
    "vintage": {
     "label": "vintage (each game priced on leaderboards dated strictly before it)",
     "mode": "vintage",
@@ -75,14 +273,16 @@
     "min_fit_games": 100,
     "min_eval_games": 50,
     "min_graded_games_for_min_edge": 600,
+    "park_basis": null,
     "note": "no completed game has a leaderboard vintage dated strictly before it, so the honest sample is empty; run leaderboard_vintages.snapshot() nightly and this number starts climbing"
    },
-   "note": "no completed-game cache and/or no leaderboards; run betting_model.build_game_cache() on a box that has .cache/game_feeds"
+   "split_date": "2026-06-24",
+   "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 0 games. A pick threshold is set from the vintage mode or from nothing."
   },
   "validation": {
    "available": true,
    "artifact": "data/betting_model_eval.json",
-   "generated_at": "2026-08-05T23:10:34+00:00",
+   "generated_at": "2026-08-06T11:25:50+00:00",
    "model_version": "betting_runs_v1",
    "validated": false,
    "gates_picks": false,
@@ -94,9 +294,47 @@
    "headline_mode": "contaminated",
    "mode_meaning": {
     "contaminated": "Team inputs are season-to-date leaderboards, so every graded game sits inside its own features. This measures calibration, not skill, and it cannot validate anything.",
-    "vintage": "Every game is priced on a leaderboard snapshot whose knowledge cutoff is strictly before that game. A game with no such snapshot is skipped, not graded on today's numbers. This is the only mode that can validate the model."
+    "vintage": "Every game is priced on a leaderboard snapshot whose knowledge cutoff is strictly before that game: team offense, team run prevention, the listed probable and the park index all come out of that snapshot. A game with no such snapshot is skipped, not graded on today's numbers, and a game whose snapshot predates the stored park column is priced with the park term at neutral rather than on the live index. This is the only mode that can validate the model."
    },
    "graded_blocks": [
+    {
+     "label": "in-sample (coefficients and features both leak)",
+     "mode": "contaminated",
+     "honest": false,
+     "n": 1705,
+     "brier": 0.24156,
+     "brier_flat_500": 0.25,
+     "brier_home_base": 0.24946,
+     "accuracy": 0.5607,
+     "key": "in_sample",
+     "skill_vs_home_base": {
+      "delta": 0.007903,
+      "sd": 0.08409,
+      "t": 3.881,
+      "beats_baseline_95": true,
+      "n_for_95": 306,
+      "baseline": 0.5232
+     }
+    },
+    {
+     "label": "forward from 2026-06-24 (coefficient leakage removed, feature leakage remains)",
+     "mode": "contaminated",
+     "honest": false,
+     "n": 521,
+     "brier": 0.24275,
+     "brier_flat_500": 0.25,
+     "brier_home_base": 0.24995,
+     "accuracy": 0.547,
+     "key": "forward",
+     "skill_vs_home_base": {
+      "delta": 0.00721,
+      "sd": 0.08327,
+      "t": 1.976,
+      "beats_baseline_95": true,
+      "n_for_95": 361,
+      "baseline": 0.5067
+     }
+    },
     {
      "label": "vintage (each game priced on leaderboards dated strictly before it)",
      "mode": "vintage",
@@ -120,11 +358,14 @@
     "min_graded_games_for_min_edge": 600,
     "first_graded_date": null,
     "last_graded_date": null,
+    "park_basis": null,
     "note": "no completed game has a leaderboard vintage dated strictly before it, so the honest sample is empty; run leaderboard_vintages.snapshot() nightly and this number starts climbing"
    },
    "coverage": {
-    "schema": 1,
+    "schema": 2,
     "n_vintages": 1,
+    "n_vintages_with_parks": 0,
+    "n_vintages_neutral_park": 1,
     "first": "2026-08-05",
     "last": "2026-08-05",
     "missing_dates": [],
@@ -168,7 +409,7 @@
     },
     "policy": "min_edge stays null until all three gates are open. A threshold invented to make a pick appear is the single most dishonest number this module could publish."
    },
-   "note": "no completed-game cache and/or no leaderboards; run betting_model.build_game_cache() on a box that has .cache/game_feeds"
+   "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 0 games. A pick threshold is set from the vintage mode or from nothing."
   },
   "min_edge": null
  },
@@ -182,15 +423,8 @@
   "staking": "Every pick on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
  },
  "pick_of_the_day": null,
- "pick_reason": "no odds feed is configured, so there is no market to have an edge against; the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 3 are closed, starting with 600 vintage-graded games against 0 in hand",
+ "pick_reason": "the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 3 are closed, starting with 600 vintage-graded games against 0 in hand",
  "pick_blockers": [
-  {
-   "id": "odds_feed",
-   "open": false,
-   "need": "a cached odds snapshot to price against",
-   "have": "none",
-   "reason": "no odds feed is configured, so there is no market to have an edge against"
-  },
   {
    "id": "min_edge",
    "open": false,
@@ -206,7 +440,1790 @@
    "reason": "the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 3 are closed, starting with 600 vintage-graded games against 0 in hand"
   }
  ],
- "team_bets": [],
+ "team_bets": [
+  {
+   "game_pk": 824804,
+   "date": "2026-08-06",
+   "start": "2026-08-06T16:35:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "3b23ade05c9d38068df5e7af422bca05",
+   "odds_commence_time": "2026-08-06T16:36:00Z",
+   "venue": "Oriole Park at Camden Yards",
+   "home": {
+    "org": "BAL",
+    "team": "Baltimore Orioles",
+    "probable": {
+     "mlbam": 687064,
+     "name": "Brandon Young"
+    },
+    "offense_plus": 96.0,
+    "bullpen_plus": 100.0
+   },
+   "away": {
+    "org": "LAA",
+    "team": "Los Angeles Angels",
+    "probable": {
+     "mlbam": 696270,
+     "name": "Ryan Johnson"
+    },
+    "offense_plus": 98.0,
+    "bullpen_plus": 99.0
+   },
+   "model": {
+    "p_home": 0.57089,
+    "p_away": 0.42911,
+    "lam_home": 5.172,
+    "lam_away": 4.594,
+    "fair_total": 9.77,
+    "park_index": 1.06,
+    "home_prevention": {
+     "starter_plus": 101.0,
+     "bullpen_plus": 100.0,
+     "starter_share": 0.638,
+     "blend_plus": 100.6,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 80.0,
+     "bullpen_plus": 99.0,
+     "starter_share": 0.568,
+     "blend_plus": 88.2,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "BAL",
+     "model_prob": 0.57089,
+     "fair_odds": -133,
+     "book": "draftkings",
+     "odds": -183,
+     "decimal": 1.5464,
+     "implied_prob": 0.64666,
+     "market_fair_prob": 0.64391,
+     "edge": -0.07302,
+     "ev_per_unit": -0.11718,
+     "kelly_full": 0.0,
+     "book_title": "DraftKings",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "LAA",
+     "model_prob": 0.42911,
+     "fair_odds": 133,
+     "book": "fanduel",
+     "odds": 176,
+     "decimal": 2.76,
+     "implied_prob": 0.36232,
+     "market_fair_prob": 0.35609,
+     "edge": 0.07302,
+     "ev_per_unit": 0.18434,
+     "kelly_full": 0.10474,
+     "book_title": "FanDuel",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "BAL -1.5",
+     "model_prob": 0.38086,
+     "fair_odds": 163,
+     "book": "draftkings",
+     "odds": 106,
+     "decimal": 2.06,
+     "implied_prob": 0.48544,
+     "market_fair_prob": 0.47391,
+     "edge": -0.09305,
+     "ev_per_unit": -0.21543,
+     "kelly_full": 0.0,
+     "book_title": "DraftKings",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "LAA +1.5",
+     "model_prob": 0.61914,
+     "fair_odds": -163,
+     "book": "bovada",
+     "odds": -115,
+     "decimal": 1.8696,
+     "implied_prob": 0.53487,
+     "market_fair_prob": 0.52609,
+     "edge": 0.09305,
+     "ev_per_unit": 0.15754,
+     "kelly_full": 0.18117,
+     "book_title": "Bovada",
+     "point": 1.5
+    }
+   ],
+   "total": {
+    "line": 9.5,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 9.5",
+      "model_prob": 0.51247,
+      "fair_odds": -105,
+      "book": "betrivers",
+      "odds": -110,
+      "decimal": 1.9091,
+      "implied_prob": 0.52381,
+      "market_fair_prob": 0.51083,
+      "edge": 0.00164,
+      "ev_per_unit": -0.02164,
+      "kelly_full": 0.0,
+      "book_title": "BetRivers",
+      "point": 9.5
+     },
+     {
+      "side": "under",
+      "label": "Under 9.5",
+      "model_prob": 0.48753,
+      "fair_odds": 105,
+      "book": "lowvig",
+      "odds": -102,
+      "decimal": 1.9804,
+      "implied_prob": 0.50495,
+      "market_fair_prob": 0.48917,
+      "edge": -0.00164,
+      "ev_per_unit": -0.03449,
+      "kelly_full": 0.0,
+      "book_title": "LowVig.ag",
+      "point": 9.5
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 1.749,
+    "total_hold_pct": 4.708,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 824481,
+   "date": "2026-08-06",
+   "start": "2026-08-06T16:40:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "7c802d98715da7e739509739f8e60f5f",
+   "odds_commence_time": "2026-08-06T16:40:00Z",
+   "venue": "Great American Ball Park",
+   "home": {
+    "org": "CIN",
+    "team": "Cincinnati Reds",
+    "probable": {
+     "mlbam": 671096,
+     "name": "Andrew Abbott"
+    },
+    "offense_plus": 100.0,
+    "bullpen_plus": 93.0
+   },
+   "away": {
+    "org": "ATH",
+    "team": "Athletics",
+    "probable": {
+     "mlbam": 686930,
+     "name": "Mason Barnett"
+    },
+    "offense_plus": 102.0,
+    "bullpen_plus": 96.0
+   },
+   "model": {
+    "p_home": 0.48265,
+    "p_away": 0.51735,
+    "lam_home": 5.151,
+    "lam_away": 5.28,
+    "fair_total": 10.43,
+    "park_index": 1.04,
+    "home_prevention": {
+     "starter_plus": 88.0,
+     "bullpen_plus": 93.0,
+     "starter_share": 0.589,
+     "blend_plus": 90.1,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 94.0,
+     "bullpen_plus": 96.0,
+     "starter_share": 0.578,
+     "blend_plus": 94.8,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "CIN",
+     "model_prob": 0.48265,
+     "fair_odds": 107,
+     "book": "fanduel",
+     "odds": -158,
+     "decimal": 1.6329,
+     "implied_prob": 0.61241,
+     "market_fair_prob": 0.60104,
+     "edge": -0.11839,
+     "ev_per_unit": -0.21188,
+     "kelly_full": 0.0,
+     "book_title": "FanDuel",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "ATH",
+     "model_prob": 0.51735,
+     "fair_odds": -107,
+     "book": "betrivers",
+     "odds": 155,
+     "decimal": 2.55,
+     "implied_prob": 0.39216,
+     "market_fair_prob": 0.39896,
+     "edge": 0.11839,
+     "ev_per_unit": 0.31924,
+     "kelly_full": 0.20596,
+     "book_title": "BetRivers",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "CIN -1.5",
+     "model_prob": 0.30434,
+     "fair_odds": 229,
+     "book": "bovada",
+     "odds": 125,
+     "decimal": 2.25,
+     "implied_prob": 0.44444,
+     "market_fair_prob": 0.44248,
+     "edge": -0.13814,
+     "ev_per_unit": -0.31523,
+     "kelly_full": 0.0,
+     "book_title": "Bovada",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "ATH +1.5",
+     "model_prob": 0.69566,
+     "fair_odds": -229,
+     "book": "mybookieag",
+     "odds": -136,
+     "decimal": 1.7353,
+     "implied_prob": 0.57627,
+     "market_fair_prob": 0.55752,
+     "edge": 0.13814,
+     "ev_per_unit": 0.20718,
+     "kelly_full": 0.28176,
+     "book_title": "MyBookie.ag",
+     "point": 1.5
+    }
+   ],
+   "total": {
+    "line": 9.5,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 9.5",
+      "model_prob": 0.59477,
+      "fair_odds": -147,
+      "book": "betrivers",
+      "odds": 102,
+      "decimal": 2.02,
+      "implied_prob": 0.49505,
+      "market_fair_prob": 0.48917,
+      "edge": 0.1056,
+      "ev_per_unit": 0.20144,
+      "kelly_full": 0.19749,
+      "book_title": "BetRivers",
+      "point": 9.5
+     },
+     {
+      "side": "under",
+      "label": "Under 9.5",
+      "model_prob": 0.40523,
+      "fair_odds": 147,
+      "book": "lowvig",
+      "odds": -113,
+      "decimal": 1.885,
+      "implied_prob": 0.5305,
+      "market_fair_prob": 0.51083,
+      "edge": -0.1056,
+      "ev_per_unit": -0.23615,
+      "kelly_full": 0.0,
+      "book_title": "LowVig.ag",
+      "point": 9.5
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 1.891,
+    "total_hold_pct": 4.708,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 824401,
+   "date": "2026-08-06",
+   "start": "2026-08-06T17:10:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "311a536eb6f91726dc481b22b9ef6b79",
+   "odds_commence_time": "2026-08-06T17:11:00Z",
+   "venue": "Progressive Field",
+   "home": {
+    "org": "CLE",
+    "team": "Cleveland Guardians",
+    "probable": {
+     "mlbam": 656492,
+     "name": "Foster Griffin"
+    },
+    "offense_plus": 95.0,
+    "bullpen_plus": 105.0
+   },
+   "away": {
+    "org": "NYM",
+    "team": "New York Mets",
+    "probable": {
+     "mlbam": 690997,
+     "name": "Nolan McLean"
+    },
+    "offense_plus": 96.0,
+    "bullpen_plus": 103.0
+   },
+   "model": {
+    "p_home": 0.47896,
+    "p_away": 0.52104,
+    "lam_home": 3.808,
+    "lam_away": 3.945,
+    "fair_total": 7.75,
+    "park_index": 0.98,
+    "home_prevention": {
+     "starter_plus": 102.0,
+     "bullpen_plus": 105.0,
+     "starter_share": 0.653,
+     "blend_plus": 103.0,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 113.0,
+     "bullpen_plus": 103.0,
+     "starter_share": 0.634,
+     "blend_plus": 109.3,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "CLE",
+     "model_prob": 0.47896,
+     "fair_odds": 109,
+     "book": "betus",
+     "odds": -121,
+     "decimal": 1.8264,
+     "implied_prob": 0.54753,
+     "market_fair_prob": 0.53812,
+     "edge": -0.05916,
+     "ev_per_unit": -0.12523,
+     "kelly_full": 0.0,
+     "book_title": "BetUS",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "NYM",
+     "model_prob": 0.52104,
+     "fair_odds": -109,
+     "book": "draftkings",
+     "odds": 114,
+     "decimal": 2.14,
+     "implied_prob": 0.46729,
+     "market_fair_prob": 0.46188,
+     "edge": 0.05916,
+     "ev_per_unit": 0.11503,
+     "kelly_full": 0.1009,
+     "book_title": "DraftKings",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "CLE -1.5",
+     "model_prob": 0.27447,
+     "fair_odds": 264,
+     "book": "bovada",
+     "odds": 180,
+     "decimal": 2.8,
+     "implied_prob": 0.35714,
+     "market_fair_prob": 0.66286,
+     "edge": -0.38839,
+     "ev_per_unit": -0.23148,
+     "kelly_full": 0.0,
+     "book_title": "Bovada",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "NYM +1.5",
+     "model_prob": 0.72553,
+     "fair_odds": -264,
+     "book": "fanduel",
+     "odds": 184,
+     "decimal": 2.84,
+     "implied_prob": 0.35211,
+     "market_fair_prob": 0.33714,
+     "edge": 0.38839,
+     "ev_per_unit": 1.06051,
+     "kelly_full": 0.57636,
+     "book_title": "FanDuel",
+     "point": -1.5
+    }
+   ],
+   "total": {
+    "line": 7.5,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 7.5",
+      "model_prob": 0.51204,
+      "fair_odds": -105,
+      "book": "betrivers",
+      "odds": 102,
+      "decimal": 2.02,
+      "implied_prob": 0.49505,
+      "market_fair_prob": 0.48072,
+      "edge": 0.03132,
+      "ev_per_unit": 0.03432,
+      "kelly_full": 0.03365,
+      "book_title": "BetRivers",
+      "point": 7.5
+     },
+     {
+      "side": "under",
+      "label": "Under 7.5",
+      "model_prob": 0.48796,
+      "fair_odds": 105,
+      "book": "lowvig",
+      "odds": -114,
+      "decimal": 1.8772,
+      "implied_prob": 0.53271,
+      "market_fair_prob": 0.51928,
+      "edge": -0.03132,
+      "ev_per_unit": -0.084,
+      "kelly_full": 0.0,
+      "book_title": "LowVig.ag",
+      "point": 7.5
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 2.125,
+    "total_hold_pct": 5.041,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 823754,
+   "date": "2026-08-06",
+   "start": "2026-08-06T18:10:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "33efbfd48fbb5b3d12cc4aa1a6018b34",
+   "odds_commence_time": "2026-08-06T18:11:00Z",
+   "venue": "American Family Field",
+   "home": {
+    "org": "MIL",
+    "team": "Milwaukee Brewers",
+    "probable": {
+     "mlbam": 669160,
+     "name": "Dustin May"
+    },
+    "offense_plus": 102.0,
+    "bullpen_plus": 106.0
+   },
+   "away": {
+    "org": "PIT",
+    "team": "Pittsburgh Pirates",
+    "probable": {
+     "mlbam": 677952,
+     "name": "Braxton Ashcraft"
+    },
+    "offense_plus": 106.0,
+    "bullpen_plus": 97.0
+   },
+   "model": {
+    "p_home": 0.51055,
+    "p_away": 0.48945,
+    "lam_home": 4.228,
+    "lam_away": 4.137,
+    "fair_total": 8.36,
+    "park_index": 0.94,
+    "home_prevention": {
+     "starter_plus": 115.0,
+     "bullpen_plus": 106.0,
+     "starter_share": 0.577,
+     "blend_plus": 111.2,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 114.0,
+     "bullpen_plus": 97.0,
+     "starter_share": 0.643,
+     "blend_plus": 107.9,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "MIL",
+     "model_prob": 0.51055,
+     "fair_odds": -104,
+     "book": "fanduel",
+     "odds": -122,
+     "decimal": 1.8197,
+     "implied_prob": 0.54954,
+     "market_fair_prob": 0.54045,
+     "edge": -0.0299,
+     "ev_per_unit": -0.07095,
+     "kelly_full": 0.0,
+     "book_title": "FanDuel",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "PIT",
+     "model_prob": 0.48945,
+     "fair_odds": 104,
+     "book": "draftkings",
+     "odds": 116,
+     "decimal": 2.16,
+     "implied_prob": 0.46296,
+     "market_fair_prob": 0.45955,
+     "edge": 0.0299,
+     "ev_per_unit": 0.05721,
+     "kelly_full": 0.04932,
+     "book_title": "DraftKings",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "MIL -1.5",
+     "model_prob": 0.30939,
+     "fair_odds": 223,
+     "book": "fanduel",
+     "odds": 172,
+     "decimal": 2.72,
+     "implied_prob": 0.36765,
+     "market_fair_prob": 0.35179,
+     "edge": -0.0424,
+     "ev_per_unit": -0.15846,
+     "kelly_full": 0.0,
+     "book_title": "FanDuel",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "PIT +1.5",
+     "model_prob": 0.69061,
+     "fair_odds": -223,
+     "book": "betus",
+     "odds": -190,
+     "decimal": 1.5263,
+     "implied_prob": 0.65518,
+     "market_fair_prob": 0.64821,
+     "edge": 0.0424,
+     "ev_per_unit": 0.05408,
+     "kelly_full": 0.10275,
+     "book_title": "BetUS",
+     "point": 1.5
+    }
+   ],
+   "total": {
+    "line": 7.5,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 7.5",
+      "model_prob": 0.5967,
+      "fair_odds": -148,
+      "book": "bovada",
+      "odds": -105,
+      "decimal": 1.9524,
+      "implied_prob": 0.51219,
+      "market_fair_prob": 0.51083,
+      "edge": 0.08587,
+      "ev_per_unit": 0.16499,
+      "kelly_full": 0.17324,
+      "book_title": "Bovada",
+      "point": 7.5
+     },
+     {
+      "side": "under",
+      "label": "Under 7.5",
+      "model_prob": 0.4033,
+      "fair_odds": 148,
+      "book": "lowvig",
+      "odds": -102,
+      "decimal": 1.9804,
+      "implied_prob": 0.50495,
+      "market_fair_prob": 0.48917,
+      "edge": -0.08587,
+      "ev_per_unit": -0.2013,
+      "kelly_full": 0.0,
+      "book_title": "LowVig.ag",
+      "point": 7.5
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 1.684,
+    "total_hold_pct": 4.708,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 824664,
+   "date": "2026-08-06",
+   "start": "2026-08-06T18:20:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "da5c39e05cebb97430afb70f7ed68387",
+   "odds_commence_time": "2026-08-06T18:21:00Z",
+   "venue": "Wrigley Field",
+   "home": {
+    "org": "CHC",
+    "team": "Chicago Cubs",
+    "probable": {
+     "mlbam": 656849,
+     "name": "David Peterson"
+    },
+    "offense_plus": 106.0,
+    "bullpen_plus": 96.0
+   },
+   "away": {
+    "org": "TOR",
+    "team": "Toronto Blue Jays",
+    "probable": {
+     "mlbam": 656302,
+     "name": "Dylan Cease"
+    },
+    "offense_plus": 92.0,
+    "bullpen_plus": 112.0
+   },
+   "model": {
+    "p_home": 0.40064,
+    "p_away": 0.59936,
+    "lam_home": 3.06,
+    "lam_away": 3.714,
+    "fair_total": 6.77,
+    "park_index": 0.92,
+    "home_prevention": {
+     "starter_plus": 97.0,
+     "bullpen_plus": 96.0,
+     "starter_share": 0.801,
+     "blend_plus": 96.8,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 148.0,
+     "bullpen_plus": 112.0,
+     "starter_share": 0.663,
+     "blend_plus": 135.9,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "CHC",
+     "model_prob": 0.40064,
+     "fair_odds": 150,
+     "book": "draftkings",
+     "odds": 104,
+     "decimal": 2.04,
+     "implied_prob": 0.4902,
+     "market_fair_prob": 0.48375,
+     "edge": -0.08311,
+     "ev_per_unit": -0.18269,
+     "kelly_full": 0.0,
+     "book_title": "DraftKings",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "TOR",
+     "model_prob": 0.59936,
+     "fair_odds": -150,
+     "book": "fanduel",
+     "odds": -112,
+     "decimal": 1.8929,
+     "implied_prob": 0.52829,
+     "market_fair_prob": 0.51625,
+     "edge": 0.08311,
+     "ev_per_unit": 0.13453,
+     "kelly_full": 0.15066,
+     "book_title": "FanDuel",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "CHC +1.5",
+     "model_prob": 0.63288,
+     "fair_odds": -172,
+     "book": "betus",
+     "odds": -165,
+     "decimal": 1.6061,
+     "implied_prob": 0.62263,
+     "market_fair_prob": 0.6107,
+     "edge": 0.02218,
+     "ev_per_unit": 0.01647,
+     "kelly_full": 0.02717,
+     "book_title": "BetUS",
+     "point": 1.5
+    },
+    {
+     "side": "away",
+     "label": "TOR -1.5",
+     "model_prob": 0.36712,
+     "fair_odds": 172,
+     "book": "lowvig",
+     "odds": 148,
+     "decimal": 2.48,
+     "implied_prob": 0.40323,
+     "market_fair_prob": 0.3893,
+     "edge": -0.02218,
+     "ev_per_unit": -0.08954,
+     "kelly_full": 0.0,
+     "book_title": "LowVig.ag",
+     "point": -1.5
+    }
+   ],
+   "total": {
+    "line": 7.5,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 7.5",
+      "model_prob": 0.36754,
+      "fair_odds": 172,
+      "book": "lowvig",
+      "odds": -102,
+      "decimal": 1.9804,
+      "implied_prob": 0.50495,
+      "market_fair_prob": 0.49134,
+      "edge": -0.1238,
+      "ev_per_unit": -0.27213,
+      "kelly_full": 0.0,
+      "book_title": "LowVig.ag",
+      "point": 7.5
+     },
+     {
+      "side": "under",
+      "label": "Under 7.5",
+      "model_prob": 0.63246,
+      "fair_odds": -172,
+      "book": "betrivers",
+      "odds": -110,
+      "decimal": 1.9091,
+      "implied_prob": 0.52381,
+      "market_fair_prob": 0.50866,
+      "edge": 0.1238,
+      "ev_per_unit": 0.20744,
+      "kelly_full": 0.22818,
+      "book_title": "BetRivers",
+      "point": 7.5
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 2.335,
+    "total_hold_pct": 4.727,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 823105,
+   "date": "2026-08-06",
+   "start": "2026-08-06T20:10:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "dea6bc3b8ae0fab7dc878d04c9124070",
+   "odds_commence_time": "2026-08-06T20:11:00Z",
+   "venue": "T-Mobile Park",
+   "home": {
+    "org": "SEA",
+    "team": "Seattle Mariners",
+    "probable": {
+     "mlbam": 682243,
+     "name": "Bryce Miller"
+    },
+    "offense_plus": 100.0,
+    "bullpen_plus": 101.0
+   },
+   "away": {
+    "org": "DET",
+    "team": "Detroit Tigers",
+    "probable": {
+     "mlbam": 664285,
+     "name": "Framber Valdez"
+    },
+    "offense_plus": 102.0,
+    "bullpen_plus": 98.0
+   },
+   "model": {
+    "p_home": 0.57043,
+    "p_away": 0.42957,
+    "lam_home": 4.258,
+    "lam_away": 3.736,
+    "fair_total": 7.99,
+    "park_index": 0.83,
+    "home_prevention": {
+     "starter_plus": 111.0,
+     "bullpen_plus": 101.0,
+     "starter_share": 0.686,
+     "blend_plus": 107.9,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 96.0,
+     "bullpen_plus": 98.0,
+     "starter_share": 0.608,
+     "blend_plus": 96.8,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "SEA",
+     "model_prob": 0.57043,
+     "fair_odds": -133,
+     "book": "fanduel",
+     "odds": -122,
+     "decimal": 1.8197,
+     "implied_prob": 0.54954,
+     "market_fair_prob": 0.54045,
+     "edge": 0.02998,
+     "ev_per_unit": 0.03801,
+     "kelly_full": 0.04637,
+     "book_title": "FanDuel",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "DET",
+     "model_prob": 0.42957,
+     "fair_odds": 133,
+     "book": "draftkings",
+     "odds": 116,
+     "decimal": 2.16,
+     "implied_prob": 0.46296,
+     "market_fair_prob": 0.45955,
+     "edge": -0.02998,
+     "ev_per_unit": -0.07213,
+     "kelly_full": 0.0,
+     "book_title": "DraftKings",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "SEA -1.5",
+     "model_prob": 0.36062,
+     "fair_odds": 177,
+     "book": "betrivers",
+     "odds": 175,
+     "decimal": 2.75,
+     "implied_prob": 0.36364,
+     "market_fair_prob": 0.35358,
+     "edge": 0.00704,
+     "ev_per_unit": -0.0083,
+     "kelly_full": 0.0,
+     "book_title": "BetRivers",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "DET +1.5",
+     "model_prob": 0.63938,
+     "fair_odds": -177,
+     "book": "betonlineag",
+     "odds": -188,
+     "decimal": 1.5319,
+     "implied_prob": 0.65278,
+     "market_fair_prob": 0.64642,
+     "edge": -0.00704,
+     "ev_per_unit": -0.02053,
+     "kelly_full": 0.0,
+     "book_title": "BetOnline.ag",
+     "point": 1.5
+    }
+   ],
+   "total": {
+    "line": 8.0,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 8.0",
+      "model_prob": 0.40666,
+      "fair_odds": 146,
+      "book": "bovada",
+      "odds": 100,
+      "decimal": 2.0,
+      "implied_prob": 0.5,
+      "market_fair_prob": 0.5279,
+      "edge": -0.12124,
+      "ev_per_unit": -0.18667,
+      "kelly_full": 0.0,
+      "book_title": "Bovada",
+      "point": 8.0
+     },
+     {
+      "side": "under",
+      "label": "Under 8.0",
+      "model_prob": 0.59334,
+      "fair_odds": -146,
+      "book": "lowvig",
+      "odds": 110,
+      "decimal": 2.1,
+      "implied_prob": 0.47619,
+      "market_fair_prob": 0.4721,
+      "edge": 0.12124,
+      "ev_per_unit": 0.24601,
+      "kelly_full": 0.22364,
+      "book_title": "LowVig.ag",
+      "point": 7.5
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 1.684,
+    "total_hold_pct": 4.862,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 823430,
+   "date": "2026-08-06",
+   "start": "2026-08-06T22:05:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "e5bd0415f3218955de3af0edaea0e987",
+   "odds_commence_time": "2026-08-06T22:06:00Z",
+   "venue": "Citizens Bank Park",
+   "home": {
+    "org": "PHI",
+    "team": "Philadelphia Phillies",
+    "probable": {
+     "mlbam": 650911,
+     "name": "Cristopher S\u00e1nchez"
+    },
+    "offense_plus": 98.0,
+    "bullpen_plus": 108.0
+   },
+   "away": {
+    "org": "WSN",
+    "team": "Washington Nationals",
+    "probable": {
+     "mlbam": 571945,
+     "name": "Miles Mikolas"
+    },
+    "offense_plus": 103.0,
+    "bullpen_plus": 91.0
+   },
+   "model": {
+    "p_home": 0.67058,
+    "p_away": 0.32942,
+    "lam_home": 4.816,
+    "lam_away": 3.512,
+    "fair_total": 8.33,
+    "park_index": 1.04,
+    "home_prevention": {
+     "starter_plus": 137.0,
+     "bullpen_plus": 108.0,
+     "starter_share": 0.699,
+     "blend_plus": 128.3,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 97.0,
+     "bullpen_plus": 91.0,
+     "starter_share": 0.529,
+     "blend_plus": 94.2,
+     "source": "rotation-average"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "PHI",
+     "model_prob": 0.67058,
+     "fair_odds": -204,
+     "book": "fanduel",
+     "odds": -320,
+     "decimal": 1.3125,
+     "implied_prob": 0.7619,
+     "market_fair_prob": 0.74328,
+     "edge": -0.0727,
+     "ev_per_unit": -0.11986,
+     "kelly_full": 0.0,
+     "book_title": "FanDuel",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "WSN",
+     "model_prob": 0.32942,
+     "fair_odds": 204,
+     "book": "draftkings",
+     "odds": 304,
+     "decimal": 4.04,
+     "implied_prob": 0.24752,
+     "market_fair_prob": 0.25672,
+     "edge": 0.0727,
+     "ev_per_unit": 0.33086,
+     "kelly_full": 0.10883,
+     "book_title": "DraftKings",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "PHI -2.5",
+     "model_prob": 0.46838,
+     "fair_odds": 114,
+     "book": "mybookieag",
+     "odds": 107,
+     "decimal": 2.07,
+     "implied_prob": 0.48309,
+     "market_fair_prob": 0.57447,
+     "edge": -0.10609,
+     "ev_per_unit": -0.03045,
+     "kelly_full": 0.0,
+     "book_title": "MyBookie.ag",
+     "point": -2.5
+    },
+    {
+     "side": "away",
+     "label": "WSN +2.5",
+     "model_prob": 0.53162,
+     "fair_odds": -114,
+     "book": "lowvig",
+     "odds": 135,
+     "decimal": 2.35,
+     "implied_prob": 0.42553,
+     "market_fair_prob": 0.42553,
+     "edge": 0.10609,
+     "ev_per_unit": 0.24931,
+     "kelly_full": 0.18467,
+     "book_title": "LowVig.ag",
+     "point": 1.5
+    }
+   ],
+   "total": {
+    "line": 9.0,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 9.0",
+      "model_prob": 0.32483,
+      "fair_odds": 208,
+      "book": "betrivers",
+      "odds": 102,
+      "decimal": 2.02,
+      "implied_prob": 0.49505,
+      "market_fair_prob": 0.5279,
+      "edge": -0.20307,
+      "ev_per_unit": -0.34385,
+      "kelly_full": 0.0,
+      "book_title": "BetRivers",
+      "point": 9.0
+     },
+     {
+      "side": "under",
+      "label": "Under 9.0",
+      "model_prob": 0.67517,
+      "fair_odds": -208,
+      "book": "fanduel",
+      "odds": 102,
+      "decimal": 2.02,
+      "implied_prob": 0.49505,
+      "market_fair_prob": 0.4721,
+      "edge": 0.20307,
+      "ev_per_unit": 0.36385,
+      "kelly_full": 0.35672,
+      "book_title": "FanDuel",
+      "point": 8.5
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 2.506,
+    "total_hold_pct": 4.862,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 824729,
+   "date": "2026-08-06",
+   "start": "2026-08-06T23:10:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "ea84587619219eda157528a5519fdb38",
+   "odds_commence_time": "2026-08-06T23:11:00Z",
+   "venue": "Fenway Park",
+   "home": {
+    "org": "BOS",
+    "team": "Boston Red Sox",
+    "probable": {
+     "mlbam": 624133,
+     "name": "Ranger Suarez"
+    },
+    "offense_plus": 100.0,
+    "bullpen_plus": 106.0
+   },
+   "away": {
+    "org": "CHW",
+    "team": "Chicago White Sox",
+    "probable": {
+     "mlbam": 622491,
+     "name": "Luis Castillo"
+    },
+    "offense_plus": 101.0,
+    "bullpen_plus": 105.0
+   },
+   "model": {
+    "p_home": 0.63787,
+    "p_away": 0.36213,
+    "lam_home": 4.836,
+    "lam_away": 3.775,
+    "fair_total": 8.61,
+    "park_index": 1.04,
+    "home_prevention": {
+     "starter_plus": 130.0,
+     "bullpen_plus": 106.0,
+     "starter_share": 0.584,
+     "blend_plus": 120.0,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 93.0,
+     "bullpen_plus": 105.0,
+     "starter_share": 0.651,
+     "blend_plus": 97.2,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "BOS",
+     "model_prob": 0.63787,
+     "fair_odds": -176,
+     "book": "betrivers",
+     "odds": -177,
+     "decimal": 1.565,
+     "implied_prob": 0.63898,
+     "market_fair_prob": 0.6283,
+     "edge": 0.00957,
+     "ev_per_unit": -0.00173,
+     "kelly_full": 0.0,
+     "book_title": "BetRivers",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "CHW",
+     "model_prob": 0.36213,
+     "fair_odds": 176,
+     "book": "draftkings",
+     "odds": 167,
+     "decimal": 2.67,
+     "implied_prob": 0.37453,
+     "market_fair_prob": 0.3717,
+     "edge": -0.00957,
+     "ev_per_unit": -0.03311,
+     "kelly_full": 0.0,
+     "book_title": "DraftKings",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "BOS -1.5",
+     "model_prob": 0.43654,
+     "fair_odds": 129,
+     "book": "betrivers",
+     "odds": 120,
+     "decimal": 2.2,
+     "implied_prob": 0.45455,
+     "market_fair_prob": 0.45562,
+     "edge": -0.01908,
+     "ev_per_unit": -0.03961,
+     "kelly_full": 0.0,
+     "book_title": "BetRivers",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "CHW +1.5",
+     "model_prob": 0.56346,
+     "fair_odds": -129,
+     "book": "mybookieag",
+     "odds": -126,
+     "decimal": 1.7937,
+     "implied_prob": 0.55751,
+     "market_fair_prob": 0.54438,
+     "edge": 0.01908,
+     "ev_per_unit": 0.01068,
+     "kelly_full": 0.01345,
+     "book_title": "MyBookie.ag",
+     "point": 1.5
+    }
+   ],
+   "total": {
+    "line": 9.0,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 9.0",
+      "model_prob": 0.36146,
+      "fair_odds": 177,
+      "book": "lowvig",
+      "odds": 103,
+      "decimal": 2.03,
+      "implied_prob": 0.49261,
+      "market_fair_prob": 0.49134,
+      "edge": -0.12988,
+      "ev_per_unit": -0.26623,
+      "kelly_full": 0.0,
+      "book_title": "LowVig.ag",
+      "point": 9.0
+     },
+     {
+      "side": "under",
+      "label": "Under 9.0",
+      "model_prob": 0.63854,
+      "fair_odds": -177,
+      "book": "betrivers",
+      "odds": -112,
+      "decimal": 1.8929,
+      "implied_prob": 0.52829,
+      "market_fair_prob": 0.50866,
+      "edge": 0.12988,
+      "ev_per_unit": 0.20869,
+      "kelly_full": 0.23372,
+      "book_title": "BetRivers",
+      "point": 9.0
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 1.908,
+    "total_hold_pct": 4.727,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 824885,
+   "date": "2026-08-06",
+   "start": "2026-08-06T23:15:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "4f9df9d570d705ced380cfa799b0b640",
+   "odds_commence_time": "2026-08-06T23:16:00Z",
+   "venue": "Truist Park",
+   "home": {
+    "org": "ATL",
+    "team": "Atlanta Braves",
+    "probable": {
+     "mlbam": 527048,
+     "name": "Mart\u00edn P\u00e9rez"
+    },
+    "offense_plus": 104.0,
+    "bullpen_plus": 114.0
+   },
+   "away": {
+    "org": "MIA",
+    "team": "Miami Marlins",
+    "probable": {
+     "mlbam": 676083,
+     "name": "Janson Junk"
+    },
+    "offense_plus": 98.0,
+    "bullpen_plus": 101.0
+   },
+   "model": {
+    "p_home": 0.58068,
+    "p_away": 0.41932,
+    "lam_home": 4.983,
+    "lam_away": 4.34,
+    "fair_total": 9.32,
+    "park_index": 1.0,
+    "home_prevention": {
+     "starter_plus": 95.0,
+     "bullpen_plus": 114.0,
+     "starter_share": 0.637,
+     "blend_plus": 101.9,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 97.0,
+     "bullpen_plus": 101.0,
+     "starter_share": 0.582,
+     "blend_plus": 98.7,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "ATL",
+     "model_prob": 0.58068,
+     "fair_odds": -138,
+     "book": "draftkings",
+     "odds": -140,
+     "decimal": 1.7143,
+     "implied_prob": 0.58333,
+     "market_fair_prob": 0.57651,
+     "edge": 0.00417,
+     "ev_per_unit": -0.00454,
+     "kelly_full": 0.0,
+     "book_title": "DraftKings",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "MIA",
+     "model_prob": 0.41932,
+     "fair_odds": 138,
+     "book": "fanduel",
+     "odds": 132,
+     "decimal": 2.32,
+     "implied_prob": 0.43103,
+     "market_fair_prob": 0.42349,
+     "edge": -0.00417,
+     "ev_per_unit": -0.02718,
+     "kelly_full": 0.0,
+     "book_title": "FanDuel",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "ATL -1.5",
+     "model_prob": 0.38606,
+     "fair_odds": 159,
+     "book": "betrivers",
+     "odds": 143,
+     "decimal": 2.43,
+     "implied_prob": 0.41152,
+     "market_fair_prob": 0.41191,
+     "edge": -0.02585,
+     "ev_per_unit": -0.06187,
+     "kelly_full": 0.0,
+     "book_title": "BetRivers",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "MIA +1.5",
+     "model_prob": 0.61394,
+     "fair_odds": -159,
+     "book": "betus",
+     "odds": -150,
+     "decimal": 1.6667,
+     "implied_prob": 0.59999,
+     "market_fair_prob": 0.58809,
+     "edge": 0.02585,
+     "ev_per_unit": 0.02325,
+     "kelly_full": 0.03488,
+     "book_title": "BetUS",
+     "point": 1.5
+    }
+   ],
+   "total": {
+    "line": 9.0,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 9.0",
+      "model_prob": 0.45505,
+      "fair_odds": 120,
+      "book": "betrivers",
+      "odds": -113,
+      "decimal": 1.885,
+      "implied_prob": 0.5305,
+      "market_fair_prob": 0.51083,
+      "edge": -0.05578,
+      "ev_per_unit": -0.14224,
+      "kelly_full": 0.0,
+      "book_title": "BetRivers",
+      "point": 9.0
+     },
+     {
+      "side": "under",
+      "label": "Under 9.0",
+      "model_prob": 0.54495,
+      "fair_odds": -120,
+      "book": "lowvig",
+      "odds": 107,
+      "decimal": 2.07,
+      "implied_prob": 0.48309,
+      "market_fair_prob": 0.48917,
+      "edge": 0.05578,
+      "ev_per_unit": 0.12805,
+      "kelly_full": 0.11968,
+      "book_title": "LowVig.ag",
+      "point": 9.0
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 1.781,
+    "total_hold_pct": 4.708,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 824080,
+   "date": "2026-08-06",
+   "start": "2026-08-06T23:40:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "7ccb6905d278343fbef656a8d2664d89",
+   "odds_commence_time": "2026-08-06T23:41:00Z",
+   "venue": "Kauffman Stadium",
+   "home": {
+    "org": "KCR",
+    "team": "Kansas City Royals",
+    "probable": {
+     "mlbam": 608379,
+     "name": "Michael Wacha"
+    },
+    "offense_plus": 93.0,
+    "bullpen_plus": 89.0
+   },
+   "away": {
+    "org": "MIN",
+    "team": "Minnesota Twins",
+    "probable": {
+     "mlbam": 641927,
+     "name": "Bailey Ober"
+    },
+    "offense_plus": 100.0,
+    "bullpen_plus": 99.0
+   },
+   "model": {
+    "p_home": 0.4889,
+    "p_away": 0.5111,
+    "lam_home": 4.571,
+    "lam_away": 4.644,
+    "fair_total": 9.22,
+    "park_index": 1.02,
+    "home_prevention": {
+     "starter_plus": 102.0,
+     "bullpen_plus": 89.0,
+     "starter_share": 0.699,
+     "blend_plus": 98.1,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 92.0,
+     "bullpen_plus": 99.0,
+     "starter_share": 0.604,
+     "blend_plus": 94.8,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "KCR",
+     "model_prob": 0.4889,
+     "fair_odds": 105,
+     "book": "betus",
+     "odds": -118,
+     "decimal": 1.8475,
+     "implied_prob": 0.54127,
+     "market_fair_prob": 0.5339,
+     "edge": -0.045,
+     "ev_per_unit": -0.09676,
+     "kelly_full": 0.0,
+     "book_title": "BetUS",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "MIN",
+     "model_prob": 0.5111,
+     "fair_odds": -105,
+     "book": "betonlineag",
+     "odds": 112,
+     "decimal": 2.12,
+     "implied_prob": 0.4717,
+     "market_fair_prob": 0.4661,
+     "edge": 0.045,
+     "ev_per_unit": 0.08353,
+     "kelly_full": 0.07458,
+     "book_title": "BetOnline.ag",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "KCR -1.5",
+     "model_prob": 0.29908,
+     "fair_odds": 234,
+     "book": "fanduel",
+     "odds": 172,
+     "decimal": 2.72,
+     "implied_prob": 0.36765,
+     "market_fair_prob": 0.35179,
+     "edge": -0.05271,
+     "ev_per_unit": -0.1865,
+     "kelly_full": 0.0,
+     "book_title": "FanDuel",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "MIN +1.5",
+     "model_prob": 0.70092,
+     "fair_odds": -234,
+     "book": "betmgm",
+     "odds": 160,
+     "decimal": 2.6,
+     "implied_prob": 0.38462,
+     "market_fair_prob": 0.64821,
+     "edge": 0.05271,
+     "ev_per_unit": 0.82239,
+     "kelly_full": 0.51399,
+     "book_title": "BetMGM",
+     "point": -1.5
+    }
+   ],
+   "total": {
+    "line": 9.0,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 9.0",
+      "model_prob": 0.44099,
+      "fair_odds": 127,
+      "book": "betrivers",
+      "odds": 102,
+      "decimal": 2.02,
+      "implied_prob": 0.49505,
+      "market_fair_prob": 0.48502,
+      "edge": -0.04403,
+      "ev_per_unit": -0.1092,
+      "kelly_full": 0.0,
+      "book_title": "BetRivers",
+      "point": 9.0
+     },
+     {
+      "side": "under",
+      "label": "Under 9.0",
+      "model_prob": 0.55901,
+      "fair_odds": -127,
+      "book": "lowvig",
+      "odds": 107,
+      "decimal": 2.07,
+      "implied_prob": 0.48309,
+      "market_fair_prob": 0.51498,
+      "edge": 0.04403,
+      "ev_per_unit": 0.15715,
+      "kelly_full": 0.14687,
+      "book_title": "LowVig.ag",
+      "point": 8.5
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 2.165,
+    "total_hold_pct": 5.109,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 825053,
+   "date": "2026-08-06",
+   "start": "2026-08-07T01:40:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "ac809bf2f9ff5445c2ded443c4cc7795",
+   "odds_commence_time": "2026-08-07T01:41:00Z",
+   "venue": "Chase Field",
+   "home": {
+    "org": "ARI",
+    "team": "Arizona Diamondbacks",
+    "probable": {
+     "mlbam": 684442,
+     "name": "Kohl Drake"
+    },
+    "offense_plus": 96.0,
+    "bullpen_plus": 104.0
+   },
+   "away": {
+    "org": "SDP",
+    "team": "San Diego Padres",
+    "probable": {
+     "mlbam": 621111,
+     "name": "Walker Buehler"
+    },
+    "offense_plus": 95.0,
+    "bullpen_plus": 119.0
+   },
+   "model": {
+    "p_home": 0.48811,
+    "p_away": 0.51189,
+    "lam_home": 4.416,
+    "lam_away": 4.494,
+    "fair_total": 8.91,
+    "park_index": 1.08,
+    "home_prevention": {
+     "starter_plus": 91.0,
+     "bullpen_plus": 104.0,
+     "starter_share": 0.481,
+     "blend_plus": 97.7,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 93.0,
+     "bullpen_plus": 119.0,
+     "starter_share": 0.527,
+     "blend_plus": 105.3,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "ARI",
+     "model_prob": 0.48811,
+     "fair_odds": 105,
+     "book": "betrivers",
+     "odds": -104,
+     "decimal": 1.9615,
+     "implied_prob": 0.50981,
+     "market_fair_prob": 0.5,
+     "edge": -0.01189,
+     "ev_per_unit": -0.04257,
+     "kelly_full": 0.0,
+     "book_title": "BetRivers",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "SDP",
+     "model_prob": 0.51189,
+     "fair_odds": -105,
+     "book": "draftkings",
+     "odds": -104,
+     "decimal": 1.9615,
+     "implied_prob": 0.50981,
+     "market_fair_prob": 0.5,
+     "edge": 0.01189,
+     "ev_per_unit": 0.00407,
+     "kelly_full": 0.00424,
+     "book_title": "DraftKings",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "ARI -1.5",
+     "model_prob": 0.29533,
+     "fair_odds": 239,
+     "book": "lowvig",
+     "odds": 182,
+     "decimal": 2.82,
+     "implied_prob": 0.35461,
+     "market_fair_prob": 0.62914,
+     "edge": -0.33381,
+     "ev_per_unit": -0.16717,
+     "kelly_full": 0.0,
+     "book_title": "LowVig.ag",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "SDP +1.5",
+     "model_prob": 0.70467,
+     "fair_odds": -239,
+     "book": "fanduel",
+     "odds": 158,
+     "decimal": 2.58,
+     "implied_prob": 0.3876,
+     "market_fair_prob": 0.37086,
+     "edge": 0.33381,
+     "ev_per_unit": 0.81805,
+     "kelly_full": 0.51775,
+     "book_title": "FanDuel",
+     "point": -1.5
+    }
+   ],
+   "total": {
+    "line": 9.0,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 9.0",
+      "model_prob": 0.4007,
+      "fair_odds": 150,
+      "book": "betrivers",
+      "odds": -103,
+      "decimal": 1.9709,
+      "implied_prob": 0.50738,
+      "market_fair_prob": 0.49134,
+      "edge": -0.09064,
+      "ev_per_unit": -0.21025,
+      "kelly_full": 0.0,
+      "book_title": "BetRivers",
+      "point": 9.0
+     },
+     {
+      "side": "under",
+      "label": "Under 9.0",
+      "model_prob": 0.5993,
+      "fair_odds": -150,
+      "book": "lowvig",
+      "odds": -110,
+      "decimal": 1.9091,
+      "implied_prob": 0.52381,
+      "market_fair_prob": 0.50866,
+      "edge": 0.09064,
+      "ev_per_unit": 0.14412,
+      "kelly_full": 0.15853,
+      "book_title": "LowVig.ag",
+      "point": 9.0
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 1.961,
+    "total_hold_pct": 4.727,
+    "devig_method": "proportional"
+   }
+  }
+ ],
  "props_fair_lines": {
   "model_only": true,
   "no_book_comparison_reason": "The Odds API free tier bills player props per event; a full slate would burn the monthly budget in about two weeks. These are our fair numbers, not a market read.",
@@ -229,389 +2246,155 @@
   },
   "pitchers": [
    {
-    "mlbam": 686613,
-    "name": "Hunter Brown",
-    "org": "HOU",
-    "opp": "TOR",
-    "game_pk": 824158,
-    "expected_ip": 5.27,
+    "mlbam": 687064,
+    "name": "Brandon Young",
+    "org": "BAL",
+    "opp": "LAA",
+    "game_pk": 824804,
+    "expected_ip": 5.74,
     "props": [
      {
       "prop": "Strikeouts",
-      "fair_line": 5.96,
-      "lam": 5.96,
-      "over_line": 6.5,
-      "p_over": 0.3866
+      "fair_line": 4.77,
+      "lam": 4.77,
+      "over_line": 5.5,
+      "p_over": 0.3432
      },
      {
       "prop": "Earned runs",
-      "fair_line": 2.17,
-      "lam": 2.17,
+      "fair_line": 2.82,
+      "lam": 2.82,
+      "over_line": 3.5,
+      "p_over": 0.3124
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.67,
+      "lam": 5.67,
+      "over_line": 5.5,
+      "p_over": 0.5005
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 17.2,
+      "lam": 17.22,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 696270,
+    "name": "Ryan Johnson",
+    "org": "LAA",
+    "opp": "BAL",
+    "game_pk": 824804,
+    "expected_ip": 5.11,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.29,
+      "lam": 4.29,
+      "over_line": 4.5,
+      "p_over": 0.4271
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.8,
+      "lam": 2.8,
+      "over_line": 3.5,
+      "p_over": 0.3081
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.16,
+      "lam": 5.16,
+      "over_line": 5.5,
+      "p_over": 0.4125
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 15.3,
+      "lam": 15.33,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 671096,
+    "name": "Andrew Abbott",
+    "org": "CIN",
+    "opp": "ATH",
+    "game_pk": 824481,
+    "expected_ip": 5.3,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.48,
+      "lam": 4.48,
+      "over_line": 4.5,
+      "p_over": 0.4648
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.67,
+      "lam": 2.67,
       "over_line": 2.5,
-      "p_over": 0.3695
+      "p_over": 0.4999
      },
      {
       "prop": "Hits allowed",
-      "fair_line": 4.63,
-      "lam": 4.63,
+      "fair_line": 5.19,
+      "lam": 5.19,
+      "over_line": 5.5,
+      "p_over": 0.418
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 15.9,
+      "lam": 15.9,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 686930,
+    "name": "Mason Barnett",
+    "org": "ATH",
+    "opp": "CIN",
+    "game_pk": 824481,
+    "expected_ip": 5.2,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.69,
+      "lam": 4.69,
       "over_line": 4.5,
-      "p_over": 0.4919
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 15.8,
-      "lam": 15.81,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 592791,
-    "name": "Jameson Taillon",
-    "org": "TOR",
-    "opp": "HOU",
-    "game_pk": 824158,
-    "expected_ip": 5.07,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 4.12,
-      "lam": 4.12,
-      "over_line": 4.5,
-      "p_over": 0.3941
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.9,
-      "lam": 2.9,
-      "over_line": 3.5,
-      "p_over": 0.3312
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 5.38,
-      "lam": 5.38,
-      "over_line": 5.5,
-      "p_over": 0.4499
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 15.2,
-      "lam": 15.21,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 684007,
-    "name": "Shota Imanaga",
-    "org": "CHC",
-    "opp": "LAD",
-    "game_pk": 824646,
-    "expected_ip": 5.8,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 5.56,
-      "lam": 5.56,
-      "over_line": 5.5,
-      "p_over": 0.481
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.91,
-      "lam": 2.91,
-      "over_line": 3.5,
-      "p_over": 0.3319
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 5.95,
-      "lam": 5.95,
-      "over_line": 6.5,
-      "p_over": 0.3853
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 17.4,
-      "lam": 17.4,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 641778,
-    "name": "Eric Lauer",
-    "org": "LAD",
-    "opp": "CHC",
-    "game_pk": 824646,
-    "expected_ip": 6.29,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 4.92,
-      "lam": 4.92,
-      "over_line": 5.5,
-      "p_over": 0.3705
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 3.48,
-      "lam": 3.48,
-      "over_line": 3.5,
-      "p_over": 0.4595
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 6.6,
-      "lam": 6.6,
-      "over_line": 6.5,
-      "p_over": 0.4892
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 18.9,
-      "lam": 18.87,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 674003,
-    "name": "Cody Bradford",
-    "org": "TEX",
-    "opp": "SFG",
-    "game_pk": 822866,
-    "expected_ip": 5.41,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 5.21,
-      "lam": 5.21,
-      "over_line": 5.5,
-      "p_over": 0.4201
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.38,
-      "lam": 2.38,
-      "over_line": 2.5,
-      "p_over": 0.4257
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 5.21,
-      "lam": 5.21,
-      "over_line": 5.5,
-      "p_over": 0.4201
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 16.2,
-      "lam": 16.24,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 687931,
-    "name": "Carson Whisenhunt",
-    "org": "SFG",
-    "opp": "TEX",
-    "game_pk": 822866,
-    "expected_ip": 4.75,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 3.92,
-      "lam": 3.92,
-      "over_line": 4.5,
-      "p_over": 0.3547
+      "p_over": 0.5029
      },
      {
       "prop": "Earned runs",
       "fair_line": 2.63,
       "lam": 2.63,
       "over_line": 2.5,
-      "p_over": 0.4895
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 4.6,
-      "lam": 4.6,
-      "over_line": 4.5,
-      "p_over": 0.4868
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 14.2,
-      "lam": 14.25,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 608372,
-    "name": "Tomoyuki Sugano",
-    "org": "COL",
-    "opp": "TBR",
-    "game_pk": 824322,
-    "expected_ip": 5.4,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 3.28,
-      "lam": 3.28,
-      "over_line": 3.5,
-      "p_over": 0.4146
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 3.25,
-      "lam": 3.25,
-      "over_line": 3.5,
-      "p_over": 0.4083
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 6.07,
-      "lam": 6.07,
-      "over_line": 6.5,
-      "p_over": 0.4049
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 16.2,
-      "lam": 16.2,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 607259,
-    "name": "Nick Martinez",
-    "org": "TBR",
-    "opp": "COL",
-    "game_pk": 824322,
-    "expected_ip": 5.87,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 4.02,
-      "lam": 4.02,
-      "over_line": 4.5,
-      "p_over": 0.3742
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.86,
-      "lam": 2.86,
-      "over_line": 3.5,
-      "p_over": 0.3211
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 6.3,
-      "lam": 6.3,
-      "over_line": 6.5,
-      "p_over": 0.4421
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 17.6,
-      "lam": 17.61,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 669432,
-    "name": "Trevor Rogers",
-    "org": "BAL",
-    "opp": "LAA",
-    "game_pk": 824806,
-    "expected_ip": 5.48,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 4.72,
-      "lam": 4.72,
-      "over_line": 4.5,
-      "p_over": 0.5098
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.38,
-      "lam": 2.38,
-      "over_line": 2.5,
-      "p_over": 0.4259
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 5.29,
-      "lam": 5.29,
-      "over_line": 5.5,
-      "p_over": 0.4356
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 16.4,
-      "lam": 16.44,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 672282,
-    "name": "Reid Detmers",
-    "org": "LAA",
-    "opp": "BAL",
-    "game_pk": 824806,
-    "expected_ip": 5.68,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 6.87,
-      "lam": 6.87,
-      "over_line": 7.5,
-      "p_over": 0.3821
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.3,
-      "lam": 2.3,
-      "over_line": 2.5,
-      "p_over": 0.4027
+      "p_over": 0.4896
      },
      {
       "prop": "Hits allowed",
       "fair_line": 4.98,
       "lam": 4.98,
       "over_line": 5.5,
-      "p_over": 0.381
+      "p_over": 0.3797
      },
      {
       "prop": "Outs recorded",
-      "fair_line": 17.0,
-      "lam": 17.04,
+      "fair_line": 15.6,
+      "lam": 15.6,
       "over_line": null,
       "p_over": null,
       "note": "fair number only; outs props are priced off the same expected length"
@@ -619,38 +2402,38 @@
     ]
    },
    {
-    "mlbam": 676440,
-    "name": "Tanner Bibee",
+    "mlbam": 656492,
+    "name": "Foster Griffin",
     "org": "CLE",
     "opp": "NYM",
-    "game_pk": 824402,
-    "expected_ip": 5.75,
+    "game_pk": 824401,
+    "expected_ip": 5.88,
     "props": [
      {
       "prop": "Strikeouts",
-      "fair_line": 5.25,
-      "lam": 5.25,
+      "fair_line": 5.5,
+      "lam": 5.5,
       "over_line": 5.5,
-      "p_over": 0.4285
+      "p_over": 0.4707
      },
      {
       "prop": "Earned runs",
-      "fair_line": 2.74,
-      "lam": 2.74,
+      "fair_line": 2.71,
+      "lam": 2.71,
       "over_line": 2.5,
-      "p_over": 0.5151
+      "p_over": 0.5094
      },
      {
       "prop": "Hits allowed",
-      "fair_line": 5.69,
-      "lam": 5.69,
-      "over_line": 5.5,
-      "p_over": 0.5032
+      "fair_line": 5.84,
+      "lam": 5.84,
+      "over_line": 6.5,
+      "p_over": 0.3686
      },
      {
       "prop": "Outs recorded",
-      "fair_line": 17.2,
-      "lam": 17.25,
+      "fair_line": 17.6,
+      "lam": 17.64,
       "over_line": null,
       "p_over": null,
       "note": "fair number only; outs props are priced off the same expected length"
@@ -658,38 +2441,38 @@
     ]
    },
    {
-    "mlbam": 681035,
-    "name": "Christian Scott",
+    "mlbam": 690997,
+    "name": "Nolan McLean",
     "org": "NYM",
     "opp": "CLE",
-    "game_pk": 824402,
-    "expected_ip": 4.62,
+    "game_pk": 824401,
+    "expected_ip": 5.71,
     "props": [
      {
       "prop": "Strikeouts",
-      "fair_line": 5.18,
-      "lam": 5.18,
-      "over_line": 5.5,
-      "p_over": 0.416
+      "fair_line": 6.92,
+      "lam": 6.92,
+      "over_line": 7.5,
+      "p_over": 0.3901
      },
      {
       "prop": "Earned runs",
-      "fair_line": 1.96,
-      "lam": 1.96,
+      "fair_line": 2.15,
+      "lam": 2.15,
       "over_line": 2.5,
-      "p_over": 0.3126
+      "p_over": 0.3638
      },
      {
       "prop": "Hits allowed",
-      "fair_line": 4.11,
-      "lam": 4.11,
-      "over_line": 4.5,
-      "p_over": 0.3924
+      "fair_line": 4.91,
+      "lam": 4.91,
+      "over_line": 5.5,
+      "p_over": 0.369
      },
      {
       "prop": "Outs recorded",
-      "fair_line": 13.9,
-      "lam": 13.86,
+      "fair_line": 17.1,
+      "lam": 17.13,
       "over_line": null,
       "p_over": null,
       "note": "fair number only; outs props are priced off the same expected length"
@@ -697,33 +2480,33 @@
     ]
    },
    {
-    "mlbam": 695076,
-    "name": "Rhett Lowder",
-    "org": "CIN",
-    "opp": "ATH",
-    "game_pk": 824482,
+    "mlbam": 669160,
+    "name": "Dustin May",
+    "org": "MIL",
+    "opp": "PIT",
+    "game_pk": 823754,
     "expected_ip": 5.19,
     "props": [
      {
       "prop": "Strikeouts",
-      "fair_line": 4.26,
-      "lam": 4.26,
-      "over_line": 4.5,
-      "p_over": 0.4226
+      "fair_line": 4.89,
+      "lam": 4.89,
+      "over_line": 5.5,
+      "p_over": 0.365
      },
      {
       "prop": "Earned runs",
-      "fair_line": 2.48,
-      "lam": 2.48,
+      "fair_line": 2.3,
+      "lam": 2.3,
       "over_line": 2.5,
-      "p_over": 0.4498
+      "p_over": 0.4031
      },
      {
       "prop": "Hits allowed",
-      "fair_line": 5.0,
-      "lam": 5.0,
+      "fair_line": 4.88,
+      "lam": 4.88,
       "over_line": 5.5,
-      "p_over": 0.3838
+      "p_over": 0.3627
      },
      {
       "prop": "Outs recorded",
@@ -736,38 +2519,38 @@
     ]
    },
    {
-    "mlbam": 682052,
-    "name": "Jacob Lopez",
-    "org": "ATH",
-    "opp": "CIN",
-    "game_pk": 824482,
-    "expected_ip": 5.0,
+    "mlbam": 677952,
+    "name": "Braxton Ashcraft",
+    "org": "PIT",
+    "opp": "MIL",
+    "game_pk": 823754,
+    "expected_ip": 5.79,
     "props": [
      {
       "prop": "Strikeouts",
-      "fair_line": 4.79,
-      "lam": 4.79,
-      "over_line": 5.5,
-      "p_over": 0.3478
+      "fair_line": 6.43,
+      "lam": 6.43,
+      "over_line": 6.5,
+      "p_over": 0.4624
      },
      {
       "prop": "Earned runs",
-      "fair_line": 2.63,
-      "lam": 2.63,
+      "fair_line": 2.25,
+      "lam": 2.25,
       "over_line": 2.5,
-      "p_over": 0.4884
+      "p_over": 0.392
      },
      {
       "prop": "Hits allowed",
-      "fair_line": 4.67,
-      "lam": 4.67,
-      "over_line": 4.5,
-      "p_over": 0.499
+      "fair_line": 5.31,
+      "lam": 5.31,
+      "over_line": 5.5,
+      "p_over": 0.4383
      },
      {
       "prop": "Outs recorded",
-      "fair_line": 15.0,
-      "lam": 15.0,
+      "fair_line": 17.4,
+      "lam": 17.37,
       "over_line": null,
       "p_over": null,
       "note": "fair number only; outs props are priced off the same expected length"
@@ -775,38 +2558,155 @@
     ]
    },
    {
-    "mlbam": 691725,
-    "name": "Andrew Painter",
-    "org": "PHI",
-    "opp": "WSN",
-    "game_pk": 823429,
-    "expected_ip": 5.46,
+    "mlbam": 656849,
+    "name": "David Peterson",
+    "org": "CHC",
+    "opp": "TOR",
+    "game_pk": 824664,
+    "expected_ip": 7.21,
     "props": [
      {
       "prop": "Strikeouts",
-      "fair_line": 4.55,
-      "lam": 4.55,
-      "over_line": 4.5,
-      "p_over": 0.4774
+      "fair_line": 6.03,
+      "lam": 6.03,
+      "over_line": 6.5,
+      "p_over": 0.3989
      },
      {
       "prop": "Earned runs",
-      "fair_line": 2.87,
-      "lam": 2.87,
+      "fair_line": 3.21,
+      "lam": 3.21,
       "over_line": 3.5,
-      "p_over": 0.3231
+      "p_over": 0.4002
      },
      {
       "prop": "Hits allowed",
-      "fair_line": 5.51,
-      "lam": 5.51,
+      "fair_line": 6.87,
+      "lam": 6.87,
+      "over_line": 7.5,
+      "p_over": 0.3821
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 21.6,
+      "lam": 21.63,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 656302,
+    "name": "Dylan Cease",
+    "org": "TOR",
+    "opp": "CHC",
+    "game_pk": 824664,
+    "expected_ip": 5.97,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 8.02,
+      "lam": 8.02,
+      "over_line": 8.5,
+      "p_over": 0.4109
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.12,
+      "lam": 2.12,
+      "over_line": 2.5,
+      "p_over": 0.3569
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.8,
+      "lam": 4.8,
       "over_line": 5.5,
-      "p_over": 0.4731
+      "p_over": 0.3497
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 17.9,
+      "lam": 17.91,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 682243,
+    "name": "Bryce Miller",
+    "org": "SEA",
+    "opp": "DET",
+    "game_pk": 823105,
+    "expected_ip": 6.17,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 6.13,
+      "lam": 6.13,
+      "over_line": 6.5,
+      "p_over": 0.4149
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.85,
+      "lam": 2.85,
+      "over_line": 3.5,
+      "p_over": 0.3184
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 6.0,
+      "lam": 6.0,
+      "over_line": 6.5,
+      "p_over": 0.3934
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 18.5,
+      "lam": 18.51,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 664285,
+    "name": "Framber Valdez",
+    "org": "DET",
+    "opp": "SEA",
+    "game_pk": 823105,
+    "expected_ip": 5.47,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.89,
+      "lam": 4.89,
+      "over_line": 5.5,
+      "p_over": 0.3656
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.35,
+      "lam": 2.35,
+      "over_line": 2.5,
+      "p_over": 0.4171
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.19,
+      "lam": 5.19,
+      "over_line": 5.5,
+      "p_over": 0.4171
      },
      {
       "prop": "Outs recorded",
       "fair_line": 16.4,
-      "lam": 16.38,
+      "lam": 16.41,
       "over_line": null,
       "p_over": null,
       "note": "fair number only; outs props are priced off the same expected length"
@@ -814,38 +2714,77 @@
     ]
    },
    {
-    "mlbam": 663623,
-    "name": "Jake Irvin",
+    "mlbam": 650911,
+    "name": "Cristopher S\u00e1nchez",
+    "org": "PHI",
+    "opp": "WSN",
+    "game_pk": 823430,
+    "expected_ip": 6.29,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 6.81,
+      "lam": 6.81,
+      "over_line": 7.5,
+      "p_over": 0.3725
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.11,
+      "lam": 2.11,
+      "over_line": 2.5,
+      "p_over": 0.3517
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.75,
+      "lam": 5.75,
+      "over_line": 5.5,
+      "p_over": 0.513
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 18.9,
+      "lam": 18.87,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 571945,
+    "name": "Miles Mikolas",
     "org": "WSN",
     "opp": "PHI",
-    "game_pk": 823429,
-    "expected_ip": 4.72,
+    "game_pk": 823430,
+    "expected_ip": 5.2,
     "props": [
      {
       "prop": "Strikeouts",
-      "fair_line": 3.84,
-      "lam": 3.84,
-      "over_line": 4.5,
-      "p_over": 0.3399
+      "fair_line": 2.85,
+      "lam": 2.85,
+      "over_line": 3.5,
+      "p_over": 0.3184
      },
      {
       "prop": "Earned runs",
-      "fair_line": 2.56,
-      "lam": 2.56,
-      "over_line": 2.5,
-      "p_over": 0.4715
+      "fair_line": 3.16,
+      "lam": 3.16,
+      "over_line": 3.5,
+      "p_over": 0.3896
      },
      {
       "prop": "Hits allowed",
-      "fair_line": 4.83,
-      "lam": 4.83,
-      "over_line": 5.5,
-      "p_over": 0.3537
+      "fair_line": 5.98,
+      "lam": 5.98,
+      "over_line": 6.5,
+      "p_over": 0.3904
      },
      {
       "prop": "Outs recorded",
-      "fair_line": 14.2,
-      "lam": 14.16,
+      "fair_line": 15.6,
+      "lam": 15.6,
       "over_line": null,
       "p_over": null,
       "note": "fair number only; outs props are priced off the same expected length"
@@ -853,233 +2792,38 @@
     ]
    },
    {
-    "mlbam": 701542,
-    "name": "Will Warren",
-    "org": "NYY",
-    "opp": "STL",
-    "game_pk": 823516,
-    "expected_ip": 5.17,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 5.22,
-      "lam": 5.22,
-      "over_line": 5.5,
-      "p_over": 0.4223
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.37,
-      "lam": 2.37,
-      "over_line": 2.5,
-      "p_over": 0.423
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 4.85,
-      "lam": 4.85,
-      "over_line": 5.5,
-      "p_over": 0.3584
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 15.5,
-      "lam": 15.51,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 669467,
-    "name": "Andre Pallante",
-    "org": "STL",
-    "opp": "NYY",
-    "game_pk": 823516,
-    "expected_ip": 5.65,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 4.15,
-      "lam": 4.15,
-      "over_line": 4.5,
-      "p_over": 0.4
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.67,
-      "lam": 2.67,
-      "over_line": 2.5,
-      "p_over": 0.4992
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 5.66,
-      "lam": 5.66,
-      "over_line": 5.5,
-      "p_over": 0.4988
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 17.0,
-      "lam": 16.95,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 543243,
-    "name": "Sonny Gray",
+    "mlbam": 624133,
+    "name": "Ranger Suarez",
     "org": "BOS",
     "opp": "CHW",
-    "game_pk": 824728,
-    "expected_ip": 5.68,
+    "game_pk": 824729,
+    "expected_ip": 5.26,
     "props": [
      {
       "prop": "Strikeouts",
-      "fair_line": 5.92,
-      "lam": 5.92,
-      "over_line": 6.5,
-      "p_over": 0.3806
+      "fair_line": 5.34,
+      "lam": 5.34,
+      "over_line": 5.5,
+      "p_over": 0.4435
      },
      {
       "prop": "Earned runs",
-      "fair_line": 2.43,
-      "lam": 2.43,
+      "fair_line": 1.95,
+      "lam": 1.95,
       "over_line": 2.5,
-      "p_over": 0.4371
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 5.44,
-      "lam": 5.44,
-      "over_line": 5.5,
-      "p_over": 0.461
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 17.0,
-      "lam": 17.04,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 680732,
-    "name": "Sean Burke",
-    "org": "CHW",
-    "opp": "BOS",
-    "game_pk": 824728,
-    "expected_ip": 6.91,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 7.55,
-      "lam": 7.55,
-      "over_line": 7.5,
-      "p_over": 0.483
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.99,
-      "lam": 2.99,
-      "over_line": 3.5,
-      "p_over": 0.3511
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 6.27,
-      "lam": 6.27,
-      "over_line": 6.5,
-      "p_over": 0.4366
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 20.7,
-      "lam": 20.73,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 693821,
-    "name": "Bryce Elder",
-    "org": "ATL",
-    "opp": "MIA",
-    "game_pk": 824889,
-    "expected_ip": 5.7,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 4.87,
-      "lam": 4.87,
-      "over_line": 5.5,
-      "p_over": 0.3604
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.88,
-      "lam": 2.88,
-      "over_line": 3.5,
-      "p_over": 0.3265
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 5.7,
-      "lam": 5.7,
-      "over_line": 5.5,
-      "p_over": 0.505
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 17.1,
-      "lam": 17.1,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 691587,
-    "name": "Eury P\u00e9rez",
-    "org": "MIA",
-    "opp": "ATL",
-    "game_pk": 824889,
-    "expected_ip": 5.51,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 6.32,
-      "lam": 6.32,
-      "over_line": 6.5,
-      "p_over": 0.4445
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.31,
-      "lam": 2.31,
-      "over_line": 2.5,
-      "p_over": 0.4059
+      "p_over": 0.3096
      },
      {
       "prop": "Hits allowed",
       "fair_line": 4.89,
       "lam": 4.89,
       "over_line": 5.5,
-      "p_over": 0.3651
+      "p_over": 0.3641
      },
      {
       "prop": "Outs recorded",
-      "fair_line": 16.5,
-      "lam": 16.53,
+      "fair_line": 15.8,
+      "lam": 15.78,
       "over_line": null,
       "p_over": null,
       "note": "fair number only; outs props are priced off the same expected length"
@@ -1087,233 +2831,38 @@
     ]
    },
    {
-    "mlbam": 702070,
-    "name": "Noah Cameron",
-    "org": "KCR",
-    "opp": "MIN",
-    "game_pk": 824082,
-    "expected_ip": 5.78,
+    "mlbam": 622491,
+    "name": "Luis Castillo",
+    "org": "CHW",
+    "opp": "BOS",
+    "game_pk": 824729,
+    "expected_ip": 5.86,
     "props": [
      {
       "prop": "Strikeouts",
-      "fair_line": 5.28,
-      "lam": 5.28,
-      "over_line": 5.5,
-      "p_over": 0.4337
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.64,
-      "lam": 2.64,
-      "over_line": 2.5,
-      "p_over": 0.492
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 5.59,
-      "lam": 5.59,
-      "over_line": 5.5,
-      "p_over": 0.4868
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 17.3,
-      "lam": 17.34,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 665152,
-    "name": "Dean Kremer",
-    "org": "MIN",
-    "opp": "KCR",
-    "game_pk": 824082,
-    "expected_ip": 5.14,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 4.69,
-      "lam": 4.69,
-      "over_line": 4.5,
-      "p_over": 0.504
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.59,
-      "lam": 2.59,
-      "over_line": 2.5,
-      "p_over": 0.4782
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 5.12,
-      "lam": 5.12,
-      "over_line": 5.5,
-      "p_over": 0.4057
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 15.4,
-      "lam": 15.42,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 690986,
-    "name": "Kyle Harrison",
-    "org": "MIL",
-    "opp": "PIT",
-    "game_pk": 823753,
-    "expected_ip": 4.92,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 5.55,
-      "lam": 5.55,
-      "over_line": 5.5,
-      "p_over": 0.4789
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 1.98,
-      "lam": 1.98,
-      "over_line": 2.5,
-      "p_over": 0.3178
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 4.5,
-      "lam": 4.5,
-      "over_line": 4.5,
-      "p_over": 0.4675
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 14.8,
-      "lam": 14.76,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 694973,
-    "name": "Paul Skenes",
-    "org": "PIT",
-    "opp": "MIL",
-    "game_pk": 823753,
-    "expected_ip": 5.42,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 7.05,
-      "lam": 7.05,
-      "over_line": 7.5,
-      "p_over": 0.4091
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 1.64,
-      "lam": 1.64,
-      "over_line": 1.5,
-      "p_over": 0.4889
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 4.63,
-      "lam": 4.63,
-      "over_line": 4.5,
-      "p_over": 0.4925
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 16.3,
-      "lam": 16.26,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 683352,
-    "name": "Mitch Bratt",
-    "org": "ARI",
-    "opp": "SDP",
-    "game_pk": 825052,
-    "expected_ip": 4.13,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 2.96,
-      "lam": 2.96,
-      "over_line": 3.5,
-      "p_over": 0.3435
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.28,
-      "lam": 2.28,
-      "over_line": 2.5,
-      "p_over": 0.3988
-     },
-     {
-      "prop": "Hits allowed",
-      "fair_line": 4.11,
-      "lam": 4.11,
-      "over_line": 4.5,
-      "p_over": 0.3935
-     },
-     {
-      "prop": "Outs recorded",
-      "fair_line": 12.4,
-      "lam": 12.39,
-      "over_line": null,
-      "p_over": null,
-      "note": "fair number only; outs props are priced off the same expected length"
-     }
-    ]
-   },
-   {
-    "mlbam": 663554,
-    "name": "Casey Mize",
-    "org": "SDP",
-    "opp": "ARI",
-    "game_pk": 825052,
-    "expected_ip": 5.42,
-    "props": [
-     {
-      "prop": "Strikeouts",
-      "fair_line": 5.1,
-      "lam": 5.1,
-      "over_line": 5.5,
-      "p_over": 0.4021
-     },
-     {
-      "prop": "Earned runs",
-      "fair_line": 2.22,
-      "lam": 2.22,
-      "over_line": 2.5,
-      "p_over": 0.3826
-     },
-     {
-      "prop": "Hits allowed",
       "fair_line": 5.25,
       "lam": 5.25,
       "over_line": 5.5,
-      "p_over": 0.4273
+      "p_over": 0.4277
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.78,
+      "lam": 2.78,
+      "over_line": 3.5,
+      "p_over": 0.303
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.83,
+      "lam": 5.83,
+      "over_line": 6.5,
+      "p_over": 0.3666
      },
      {
       "prop": "Outs recorded",
-      "fair_line": 16.3,
-      "lam": 16.26,
+      "fair_line": 17.6,
+      "lam": 17.58,
       "over_line": null,
       "p_over": null,
       "note": "fair number only; outs props are priced off the same expected length"
@@ -1321,33 +2870,33 @@
     ]
    },
    {
-    "mlbam": 693433,
-    "name": "Bryan Woo",
-    "org": "SEA",
-    "opp": "DET",
-    "game_pk": 823106,
+    "mlbam": 527048,
+    "name": "Mart\u00edn P\u00e9rez",
+    "org": "ATL",
+    "opp": "MIA",
+    "game_pk": 824885,
     "expected_ip": 5.73,
     "props": [
      {
       "prop": "Strikeouts",
-      "fair_line": 6.14,
-      "lam": 6.14,
-      "over_line": 6.5,
-      "p_over": 0.4165
+      "fair_line": 4.47,
+      "lam": 4.47,
+      "over_line": 4.5,
+      "p_over": 0.4625
      },
      {
       "prop": "Earned runs",
-      "fair_line": 2.22,
-      "lam": 2.22,
-      "over_line": 2.5,
-      "p_over": 0.3818
+      "fair_line": 3.04,
+      "lam": 3.04,
+      "over_line": 3.5,
+      "p_over": 0.3616
      },
      {
       "prop": "Hits allowed",
-      "fair_line": 5.48,
-      "lam": 5.48,
+      "fair_line": 5.69,
+      "lam": 5.69,
       "over_line": 5.5,
-      "p_over": 0.4669
+      "p_over": 0.5036
      },
      {
       "prop": "Outs recorded",
@@ -1360,38 +2909,155 @@
     ]
    },
    {
-    "mlbam": 623454,
-    "name": "Drew Anderson",
-    "org": "DET",
-    "opp": "SEA",
-    "game_pk": 823106,
-    "expected_ip": 5.2,
+    "mlbam": 676083,
+    "name": "Janson Junk",
+    "org": "MIA",
+    "opp": "ATL",
+    "game_pk": 824885,
+    "expected_ip": 5.24,
     "props": [
      {
       "prop": "Strikeouts",
-      "fair_line": 5.72,
-      "lam": 5.72,
-      "over_line": 5.5,
-      "p_over": 0.5084
+      "fair_line": 3.99,
+      "lam": 3.99,
+      "over_line": 4.5,
+      "p_over": 0.37
      },
      {
       "prop": "Earned runs",
-      "fair_line": 2.34,
-      "lam": 2.34,
+      "fair_line": 2.4,
+      "lam": 2.4,
       "over_line": 2.5,
-      "p_over": 0.4145
+      "p_over": 0.4293
      },
      {
       "prop": "Hits allowed",
-      "fair_line": 4.71,
-      "lam": 4.71,
-      "over_line": 4.5,
-      "p_over": 0.5077
+      "fair_line": 5.43,
+      "lam": 5.43,
+      "over_line": 5.5,
+      "p_over": 0.4593
      },
      {
       "prop": "Outs recorded",
-      "fair_line": 15.6,
-      "lam": 15.6,
+      "fair_line": 15.7,
+      "lam": 15.72,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 608379,
+    "name": "Michael Wacha",
+    "org": "KCR",
+    "opp": "MIN",
+    "game_pk": 824080,
+    "expected_ip": 6.29,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 5.05,
+      "lam": 5.05,
+      "over_line": 5.5,
+      "p_over": 0.3926
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.86,
+      "lam": 2.86,
+      "over_line": 3.5,
+      "p_over": 0.3221
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 6.32,
+      "lam": 6.32,
+      "over_line": 6.5,
+      "p_over": 0.4447
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 18.9,
+      "lam": 18.87,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 641927,
+    "name": "Bailey Ober",
+    "org": "MIN",
+    "opp": "KCR",
+    "game_pk": 824080,
+    "expected_ip": 5.44,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 4.76,
+      "lam": 4.76,
+      "over_line": 5.5,
+      "p_over": 0.3417
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.73,
+      "lam": 2.73,
+      "over_line": 2.5,
+      "p_over": 0.5131
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 5.59,
+      "lam": 5.59,
+      "over_line": 5.5,
+      "p_over": 0.4861
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 16.3,
+      "lam": 16.32,
+      "over_line": null,
+      "p_over": null,
+      "note": "fair number only; outs props are priced off the same expected length"
+     }
+    ]
+   },
+   {
+    "mlbam": 621111,
+    "name": "Walker Buehler",
+    "org": "SDP",
+    "opp": "ARI",
+    "game_pk": 825053,
+    "expected_ip": 4.74,
+    "props": [
+     {
+      "prop": "Strikeouts",
+      "fair_line": 3.73,
+      "lam": 3.73,
+      "over_line": 3.5,
+      "p_over": 0.5115
+     },
+     {
+      "prop": "Earned runs",
+      "fair_line": 2.58,
+      "lam": 2.58,
+      "over_line": 2.5,
+      "p_over": 0.4756
+     },
+     {
+      "prop": "Hits allowed",
+      "fair_line": 4.73,
+      "lam": 4.73,
+      "over_line": 4.5,
+      "p_over": 0.5105
+     },
+     {
+      "prop": "Outs recorded",
+      "fair_line": 14.2,
+      "lam": 14.22,
       "over_line": null,
       "p_over": null,
       "note": "fair number only; outs props are priced off the same expected length"
@@ -1399,7 +3065,3418 @@
     ]
    }
   ],
-  "hitters": []
+  "hitters": [
+   {
+    "mlbam": 681297,
+    "name": "Colton Cowser",
+    "org": "BAL",
+    "game_pk": 824804,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.61,
+      "lam": 1.61,
+      "over_line": 1.5,
+      "p_over": 0.4794
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.87,
+      "lam": 0.87,
+      "over_line": 0.5,
+      "p_over": 0.6203
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.169,
+      "lam": 0.169,
+      "over_line": 0.5,
+      "p_over": 0.1581
+     }
+    ]
+   },
+   {
+    "mlbam": 624413,
+    "name": "Pete Alonso",
+    "org": "BAL",
+    "game_pk": 824804,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.88,
+      "lam": 1.88,
+      "over_line": 1.5,
+      "p_over": 0.5592
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.99,
+      "lam": 0.99,
+      "over_line": 0.5,
+      "p_over": 0.6723
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.207,
+      "lam": 0.207,
+      "over_line": 0.5,
+      "p_over": 0.191
+     }
+    ]
+   },
+   {
+    "mlbam": 683002,
+    "name": "Gunnar Henderson",
+    "org": "BAL",
+    "game_pk": 824804,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.68,
+      "lam": 1.68,
+      "over_line": 1.5,
+      "p_over": 0.5015
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.97,
+      "lam": 0.97,
+      "over_line": 0.5,
+      "p_over": 0.6667
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.159,
+      "lam": 0.159,
+      "over_line": 0.5,
+      "p_over": 0.1493
+     }
+    ]
+   },
+   {
+    "mlbam": 694212,
+    "name": "Samuel Basallo",
+    "org": "BAL",
+    "game_pk": 824804,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.61,
+      "lam": 1.61,
+      "over_line": 1.5,
+      "p_over": 0.4773
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.91,
+      "lam": 0.91,
+      "over_line": 0.5,
+      "p_over": 0.6396
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.17,
+      "lam": 0.17,
+      "over_line": 0.5,
+      "p_over": 0.1591
+     }
+    ]
+   },
+   {
+    "mlbam": 641933,
+    "name": "Tyler O'Neill",
+    "org": "BAL",
+    "game_pk": 824804,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.56,
+      "lam": 1.56,
+      "over_line": 1.5,
+      "p_over": 0.4614
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.83,
+      "lam": 0.83,
+      "over_line": 0.5,
+      "p_over": 0.6042
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.183,
+      "lam": 0.183,
+      "over_line": 0.5,
+      "p_over": 0.1703
+     }
+    ]
+   },
+   {
+    "mlbam": 694208,
+    "name": "Mois\u00e9s Ballesteros",
+    "org": "LAA",
+    "game_pk": 824804,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.66,
+      "lam": 1.66,
+      "over_line": 1.5,
+      "p_over": 0.4956
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.01,
+      "lam": 1.01,
+      "over_line": 0.5,
+      "p_over": 0.6794
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.156,
+      "lam": 0.156,
+      "over_line": 0.5,
+      "p_over": 0.1468
+     }
+    ]
+   },
+   {
+    "mlbam": 545361,
+    "name": "Mike Trout",
+    "org": "LAA",
+    "game_pk": 824804,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.66,
+      "lam": 1.66,
+      "over_line": 1.5,
+      "p_over": 0.4945
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.85,
+      "lam": 0.85,
+      "over_line": 0.5,
+      "p_over": 0.6106
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.188,
+      "lam": 0.188,
+      "over_line": 0.5,
+      "p_over": 0.1748
+     }
+    ]
+   },
+   {
+    "mlbam": 694384,
+    "name": "Nolan Schanuel",
+    "org": "LAA",
+    "game_pk": 824804,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.5,
+      "lam": 1.5,
+      "over_line": 1.5,
+      "p_over": 0.4405
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.02,
+      "lam": 1.02,
+      "over_line": 0.5,
+      "p_over": 0.6862
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.094,
+      "lam": 0.094,
+      "over_line": 0.5,
+      "p_over": 0.091
+     }
+    ]
+   },
+   {
+    "mlbam": 685133,
+    "name": "Wade Meckler",
+    "org": "LAA",
+    "game_pk": 824804,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.49,
+      "lam": 1.49,
+      "over_line": 1.5,
+      "p_over": 0.4399
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.95,
+      "lam": 0.95,
+      "over_line": 0.5,
+      "p_over": 0.6554
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.101,
+      "lam": 0.101,
+      "over_line": 0.5,
+      "p_over": 0.0971
+     }
+    ]
+   },
+   {
+    "mlbam": 687263,
+    "name": "Zach Neto",
+    "org": "LAA",
+    "game_pk": 824804,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.67,
+      "lam": 1.67,
+      "over_line": 1.5,
+      "p_over": 0.496
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.91,
+      "lam": 0.91,
+      "over_line": 0.5,
+      "p_over": 0.6388
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.169,
+      "lam": 0.169,
+      "over_line": 0.5,
+      "p_over": 0.1581
+     }
+    ]
+   },
+   {
+    "mlbam": 701398,
+    "name": "Sal Stewart",
+    "org": "CIN",
+    "game_pk": 824481,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.94,
+      "lam": 1.94,
+      "over_line": 1.5,
+      "p_over": 0.5772
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.04,
+      "lam": 1.04,
+      "over_line": 0.5,
+      "p_over": 0.6904
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.225,
+      "lam": 0.225,
+      "over_line": 0.5,
+      "p_over": 0.2059
+     }
+    ]
+   },
+   {
+    "mlbam": 668709,
+    "name": "JJ Bleday",
+    "org": "CIN",
+    "game_pk": 824481,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.65,
+      "lam": 1.65,
+      "over_line": 1.5,
+      "p_over": 0.4911
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.92,
+      "lam": 0.92,
+      "over_line": 0.5,
+      "p_over": 0.6421
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.182,
+      "lam": 0.182,
+      "over_line": 0.5,
+      "p_over": 0.1693
+     }
+    ]
+   },
+   {
+    "mlbam": 668715,
+    "name": "Spencer Steer",
+    "org": "CIN",
+    "game_pk": 824481,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.59,
+      "lam": 1.59,
+      "over_line": 1.5,
+      "p_over": 0.4728
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.93,
+      "lam": 0.93,
+      "over_line": 0.5,
+      "p_over": 0.6471
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.155,
+      "lam": 0.155,
+      "over_line": 0.5,
+      "p_over": 0.1458
+     }
+    ]
+   },
+   {
+    "mlbam": 682829,
+    "name": "Elly De La Cruz",
+    "org": "CIN",
+    "game_pk": 824481,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.7,
+      "lam": 1.7,
+      "over_line": 1.5,
+      "p_over": 0.5083
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.96,
+      "lam": 0.96,
+      "over_line": 0.5,
+      "p_over": 0.6625
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.157,
+      "lam": 0.157,
+      "over_line": 0.5,
+      "p_over": 0.1479
+     }
+    ]
+   },
+   {
+    "mlbam": 667472,
+    "name": "Dane Myers",
+    "org": "CIN",
+    "game_pk": 824481,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.35,
+      "lam": 1.35,
+      "over_line": 1.5,
+      "p_over": 0.3916
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.88,
+      "lam": 0.88,
+      "over_line": 0.5,
+      "p_over": 0.6258
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.083,
+      "lam": 0.083,
+      "over_line": 0.5,
+      "p_over": 0.0802
+     }
+    ]
+   },
+   {
+    "mlbam": 691016,
+    "name": "Tyler Soderstrom",
+    "org": "ATH",
+    "game_pk": 824481,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.82,
+      "lam": 1.82,
+      "over_line": 1.5,
+      "p_over": 0.5428
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.03,
+      "lam": 1.03,
+      "over_line": 0.5,
+      "p_over": 0.6887
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.181,
+      "lam": 0.181,
+      "over_line": 0.5,
+      "p_over": 0.1684
+     }
+    ]
+   },
+   {
+    "mlbam": 701762,
+    "name": "Nick Kurtz",
+    "org": "ATH",
+    "game_pk": 824481,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.87,
+      "lam": 1.87,
+      "over_line": 1.5,
+      "p_over": 0.5582
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.93,
+      "lam": 0.93,
+      "over_line": 0.5,
+      "p_over": 0.6474
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.245,
+      "lam": 0.245,
+      "over_line": 0.5,
+      "p_over": 0.2222
+     }
+    ]
+   },
+   {
+    "mlbam": 680869,
+    "name": "Zack Gelof",
+    "org": "ATH",
+    "game_pk": 824481,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.56,
+      "lam": 1.56,
+      "over_line": 1.5,
+      "p_over": 0.4605
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.91,
+      "lam": 0.91,
+      "over_line": 0.5,
+      "p_over": 0.6394
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.15,
+      "lam": 0.15,
+      "over_line": 0.5,
+      "p_over": 0.1418
+     }
+    ]
+   },
+   {
+    "mlbam": 669127,
+    "name": "Shea Langeliers",
+    "org": "ATH",
+    "game_pk": 824481,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.86,
+      "lam": 1.86,
+      "over_line": 1.5,
+      "p_over": 0.5537
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.0,
+      "lam": 1.0,
+      "over_line": 0.5,
+      "p_over": 0.6787
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.223,
+      "lam": 0.223,
+      "over_line": 0.5,
+      "p_over": 0.2044
+     }
+    ]
+   },
+   {
+    "mlbam": 666126,
+    "name": "Carlos Cortes",
+    "org": "ATH",
+    "game_pk": 824481,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.56,
+      "lam": 1.56,
+      "over_line": 1.5,
+      "p_over": 0.4613
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.97,
+      "lam": 0.97,
+      "over_line": 0.5,
+      "p_over": 0.6693
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.118,
+      "lam": 0.118,
+      "over_line": 0.5,
+      "p_over": 0.1126
+     }
+    ]
+   },
+   {
+    "mlbam": 683953,
+    "name": "Travis Bazzana",
+    "org": "CLE",
+    "game_pk": 824401,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.58,
+      "lam": 1.58,
+      "over_line": 1.5,
+      "p_over": 0.4687
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.96,
+      "lam": 0.96,
+      "over_line": 0.5,
+      "p_over": 0.6609
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.129,
+      "lam": 0.129,
+      "over_line": 0.5,
+      "p_over": 0.1226
+     }
+    ]
+   },
+   {
+    "mlbam": 663993,
+    "name": "Nathaniel Lowe",
+    "org": "CLE",
+    "game_pk": 824401,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.56,
+      "lam": 1.56,
+      "over_line": 1.5,
+      "p_over": 0.4616
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.95,
+      "lam": 0.95,
+      "over_line": 0.5,
+      "p_over": 0.6538
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.141,
+      "lam": 0.141,
+      "over_line": 0.5,
+      "p_over": 0.1337
+     }
+    ]
+   },
+   {
+    "mlbam": 656555,
+    "name": "Rhys Hoskins",
+    "org": "CLE",
+    "game_pk": 824401,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.44,
+      "lam": 1.44,
+      "over_line": 1.5,
+      "p_over": 0.4227
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.8,
+      "lam": 0.8,
+      "over_line": 0.5,
+      "p_over": 0.5854
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.169,
+      "lam": 0.169,
+      "over_line": 0.5,
+      "p_over": 0.1582
+     }
+    ]
+   },
+   {
+    "mlbam": 800050,
+    "name": "Chase DeLauter",
+    "org": "CLE",
+    "game_pk": 824401,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.6,
+      "lam": 1.6,
+      "over_line": 1.5,
+      "p_over": 0.4737
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.02,
+      "lam": 1.02,
+      "over_line": 0.5,
+      "p_over": 0.6873
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.131,
+      "lam": 0.131,
+      "over_line": 0.5,
+      "p_over": 0.1247
+     }
+    ]
+   },
+   {
+    "mlbam": 608070,
+    "name": "Jos\u00e9 Ram\u00edrez",
+    "org": "CLE",
+    "game_pk": 824401,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.66,
+      "lam": 1.66,
+      "over_line": 1.5,
+      "p_over": 0.4927
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.99,
+      "lam": 0.99,
+      "over_line": 0.5,
+      "p_over": 0.6754
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.163,
+      "lam": 0.163,
+      "over_line": 0.5,
+      "p_over": 0.1528
+     }
+    ]
+   },
+   {
+    "mlbam": 596019,
+    "name": "Francisco Lindor",
+    "org": "NYM",
+    "game_pk": 824401,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.84,
+      "lam": 1.84,
+      "over_line": 1.5,
+      "p_over": 0.548
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.06,
+      "lam": 1.06,
+      "over_line": 0.5,
+      "p_over": 0.6991
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.179,
+      "lam": 0.179,
+      "over_line": 0.5,
+      "p_over": 0.1668
+     }
+    ]
+   },
+   {
+    "mlbam": 665742,
+    "name": "Juan Soto",
+    "org": "NYM",
+    "game_pk": 824401,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.97,
+      "lam": 1.97,
+      "over_line": 1.5,
+      "p_over": 0.586
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.0,
+      "lam": 1.0,
+      "over_line": 0.5,
+      "p_over": 0.6758
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.245,
+      "lam": 0.245,
+      "over_line": 0.5,
+      "p_over": 0.2224
+     }
+    ]
+   },
+   {
+    "mlbam": 682626,
+    "name": "Francisco Alvarez",
+    "org": "NYM",
+    "game_pk": 824401,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.65,
+      "lam": 1.65,
+      "over_line": 1.5,
+      "p_over": 0.4914
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.95,
+      "lam": 0.95,
+      "over_line": 0.5,
+      "p_over": 0.6566
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.166,
+      "lam": 0.166,
+      "over_line": 0.5,
+      "p_over": 0.1559
+     }
+    ]
+   },
+   {
+    "mlbam": 701807,
+    "name": "Carson Benge",
+    "org": "NYM",
+    "game_pk": 824401,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.57,
+      "lam": 1.57,
+      "over_line": 1.5,
+      "p_over": 0.4669
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.97,
+      "lam": 0.97,
+      "over_line": 0.5,
+      "p_over": 0.6683
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.123,
+      "lam": 0.123,
+      "over_line": 0.5,
+      "p_over": 0.117
+     }
+    ]
+   },
+   {
+    "mlbam": 805999,
+    "name": "A.J. Ewing",
+    "org": "NYM",
+    "game_pk": 824401,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.49,
+      "lam": 1.49,
+      "over_line": 1.5,
+      "p_over": 0.4385
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.92,
+      "lam": 0.92,
+      "over_line": 0.5,
+      "p_over": 0.6439
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.123,
+      "lam": 0.123,
+      "over_line": 0.5,
+      "p_over": 0.1178
+     }
+    ]
+   },
+   {
+    "mlbam": 669003,
+    "name": "Garrett Mitchell",
+    "org": "MIL",
+    "game_pk": 823754,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.54,
+      "lam": 1.54,
+      "over_line": 1.5,
+      "p_over": 0.4554
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.91,
+      "lam": 0.91,
+      "over_line": 0.5,
+      "p_over": 0.6354
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.106,
+      "lam": 0.106,
+      "over_line": 0.5,
+      "p_over": 0.1018
+     }
+    ]
+   },
+   {
+    "mlbam": 641343,
+    "name": "Jake Bauers",
+    "org": "MIL",
+    "game_pk": 823754,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.64,
+      "lam": 1.64,
+      "over_line": 1.5,
+      "p_over": 0.4894
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.91,
+      "lam": 0.91,
+      "over_line": 0.5,
+      "p_over": 0.6392
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.178,
+      "lam": 0.178,
+      "over_line": 0.5,
+      "p_over": 0.1659
+     }
+    ]
+   },
+   {
+    "mlbam": 694192,
+    "name": "Jackson Chourio",
+    "org": "MIL",
+    "game_pk": 823754,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.85,
+      "lam": 1.85,
+      "over_line": 1.5,
+      "p_over": 0.5526
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.07,
+      "lam": 1.07,
+      "over_line": 0.5,
+      "p_over": 0.7043
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.17,
+      "lam": 0.17,
+      "over_line": 0.5,
+      "p_over": 0.1593
+     }
+    ]
+   },
+   {
+    "mlbam": 668930,
+    "name": "Brice Turang",
+    "org": "MIL",
+    "game_pk": 823754,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.55,
+      "lam": 1.55,
+      "over_line": 1.5,
+      "p_over": 0.4599
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.97,
+      "lam": 0.97,
+      "over_line": 0.5,
+      "p_over": 0.6664
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.114,
+      "lam": 0.114,
+      "over_line": 0.5,
+      "p_over": 0.1091
+     }
+    ]
+   },
+   {
+    "mlbam": 661388,
+    "name": "William Contreras",
+    "org": "MIL",
+    "game_pk": 823754,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.53,
+      "lam": 1.53,
+      "over_line": 1.5,
+      "p_over": 0.4513
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.97,
+      "lam": 0.97,
+      "over_line": 0.5,
+      "p_over": 0.6654
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.111,
+      "lam": 0.111,
+      "over_line": 0.5,
+      "p_over": 0.1062
+     }
+    ]
+   },
+   {
+    "mlbam": 668804,
+    "name": "Bryan Reynolds",
+    "org": "PIT",
+    "game_pk": 823754,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.69,
+      "lam": 1.69,
+      "over_line": 1.5,
+      "p_over": 0.5034
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.0,
+      "lam": 1.0,
+      "over_line": 0.5,
+      "p_over": 0.6751
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.127,
+      "lam": 0.127,
+      "over_line": 0.5,
+      "p_over": 0.1212
+     }
+    ]
+   },
+   {
+    "mlbam": 665833,
+    "name": "Oneil Cruz",
+    "org": "PIT",
+    "game_pk": 823754,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.65,
+      "lam": 1.65,
+      "over_line": 1.5,
+      "p_over": 0.4917
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.9,
+      "lam": 0.9,
+      "over_line": 0.5,
+      "p_over": 0.6315
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.171,
+      "lam": 0.171,
+      "over_line": 0.5,
+      "p_over": 0.1599
+     }
+    ]
+   },
+   {
+    "mlbam": 656811,
+    "name": "Ryan O'Hearn",
+    "org": "PIT",
+    "game_pk": 823754,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.63,
+      "lam": 1.63,
+      "over_line": 1.5,
+      "p_over": 0.486
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.02,
+      "lam": 1.02,
+      "over_line": 0.5,
+      "p_over": 0.6869
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.146,
+      "lam": 0.146,
+      "over_line": 0.5,
+      "p_over": 0.138
+     }
+    ]
+   },
+   {
+    "mlbam": 687462,
+    "name": "Spencer Horwitz",
+    "org": "PIT",
+    "game_pk": 823754,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.57,
+      "lam": 1.57,
+      "over_line": 1.5,
+      "p_over": 0.4646
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.97,
+      "lam": 0.97,
+      "over_line": 0.5,
+      "p_over": 0.6676
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.125,
+      "lam": 0.125,
+      "over_line": 0.5,
+      "p_over": 0.1188
+     }
+    ]
+   },
+   {
+    "mlbam": 664040,
+    "name": "Brandon Lowe",
+    "org": "PIT",
+    "game_pk": 823754,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.72,
+      "lam": 1.72,
+      "over_line": 1.5,
+      "p_over": 0.5131
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.93,
+      "lam": 0.93,
+      "over_line": 0.5,
+      "p_over": 0.6482
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.196,
+      "lam": 0.196,
+      "over_line": 0.5,
+      "p_over": 0.1821
+     }
+    ]
+   },
+   {
+    "mlbam": 683737,
+    "name": "Michael Busch",
+    "org": "CHC",
+    "game_pk": 824664,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.75,
+      "lam": 1.75,
+      "over_line": 1.5,
+      "p_over": 0.5223
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.98,
+      "lam": 0.98,
+      "over_line": 0.5,
+      "p_over": 0.6669
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.17,
+      "lam": 0.17,
+      "over_line": 0.5,
+      "p_over": 0.1589
+     }
+    ]
+   },
+   {
+    "mlbam": 691718,
+    "name": "Pete Crow-Armstrong",
+    "org": "CHC",
+    "game_pk": 824664,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.94,
+      "lam": 1.94,
+      "over_line": 1.5,
+      "p_over": 0.5761
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.04,
+      "lam": 1.04,
+      "over_line": 0.5,
+      "p_over": 0.6931
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.199,
+      "lam": 0.199,
+      "over_line": 0.5,
+      "p_over": 0.1844
+     }
+    ]
+   },
+   {
+    "mlbam": 673548,
+    "name": "Seiya Suzuki",
+    "org": "CHC",
+    "game_pk": 824664,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.72,
+      "lam": 1.72,
+      "over_line": 1.5,
+      "p_over": 0.5119
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.96,
+      "lam": 0.96,
+      "over_line": 0.5,
+      "p_over": 0.6613
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.18,
+      "lam": 0.18,
+      "over_line": 0.5,
+      "p_over": 0.1682
+     }
+    ]
+   },
+   {
+    "mlbam": 624424,
+    "name": "Michael Conforto",
+    "org": "CHC",
+    "game_pk": 824664,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.51,
+      "lam": 1.51,
+      "over_line": 1.5,
+      "p_over": 0.4445
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.84,
+      "lam": 0.84,
+      "over_line": 0.5,
+      "p_over": 0.6086
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.141,
+      "lam": 0.141,
+      "over_line": 0.5,
+      "p_over": 0.1332
+     }
+    ]
+   },
+   {
+    "mlbam": 664023,
+    "name": "Ian Happ",
+    "org": "CHC",
+    "game_pk": 824664,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.49,
+      "lam": 1.49,
+      "over_line": 1.5,
+      "p_over": 0.4402
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.82,
+      "lam": 0.82,
+      "over_line": 0.5,
+      "p_over": 0.5972
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.146,
+      "lam": 0.146,
+      "over_line": 0.5,
+      "p_over": 0.1379
+     }
+    ]
+   },
+   {
+    "mlbam": 660821,
+    "name": "Jes\u00fas S\u00e1nchez",
+    "org": "TOR",
+    "game_pk": 824664,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.74,
+      "lam": 1.74,
+      "over_line": 1.5,
+      "p_over": 0.5199
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.02,
+      "lam": 1.02,
+      "over_line": 0.5,
+      "p_over": 0.6843
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.139,
+      "lam": 0.139,
+      "over_line": 0.5,
+      "p_over": 0.1317
+     }
+    ]
+   },
+   {
+    "mlbam": 678218,
+    "name": "Brandon Valenzuela",
+    "org": "TOR",
+    "game_pk": 824664,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.62,
+      "lam": 1.62,
+      "over_line": 1.5,
+      "p_over": 0.4804
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.93,
+      "lam": 0.93,
+      "over_line": 0.5,
+      "p_over": 0.6484
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.168,
+      "lam": 0.168,
+      "over_line": 0.5,
+      "p_over": 0.157
+     }
+    ]
+   },
+   {
+    "mlbam": 543807,
+    "name": "George Springer",
+    "org": "TOR",
+    "game_pk": 824664,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.65,
+      "lam": 1.65,
+      "over_line": 1.5,
+      "p_over": 0.4916
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.96,
+      "lam": 0.96,
+      "over_line": 0.5,
+      "p_over": 0.6625
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.155,
+      "lam": 0.155,
+      "over_line": 0.5,
+      "p_over": 0.1464
+     }
+    ]
+   },
+   {
+    "mlbam": 672960,
+    "name": "Kazuma Okamoto",
+    "org": "TOR",
+    "game_pk": 824664,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.63,
+      "lam": 1.63,
+      "over_line": 1.5,
+      "p_over": 0.4842
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.87,
+      "lam": 0.87,
+      "over_line": 0.5,
+      "p_over": 0.6234
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.195,
+      "lam": 0.195,
+      "over_line": 0.5,
+      "p_over": 0.1811
+     }
+    ]
+   },
+   {
+    "mlbam": 664770,
+    "name": "Nathan Lukes",
+    "org": "TOR",
+    "game_pk": 824664,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.44,
+      "lam": 1.44,
+      "over_line": 1.5,
+      "p_over": 0.4202
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.98,
+      "lam": 0.98,
+      "over_line": 0.5,
+      "p_over": 0.6721
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.093,
+      "lam": 0.093,
+      "over_line": 0.5,
+      "p_over": 0.0901
+     }
+    ]
+   },
+   {
+    "mlbam": 621493,
+    "name": "Taylor Ward",
+    "org": "SEA",
+    "game_pk": 823105,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.56,
+      "lam": 1.56,
+      "over_line": 1.5,
+      "p_over": 0.4613
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.92,
+      "lam": 0.92,
+      "over_line": 0.5,
+      "p_over": 0.642
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.141,
+      "lam": 0.141,
+      "over_line": 0.5,
+      "p_over": 0.1337
+     }
+    ]
+   },
+   {
+    "mlbam": 686527,
+    "name": "Dominic Canzone",
+    "org": "SEA",
+    "game_pk": 823105,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.86,
+      "lam": 1.86,
+      "over_line": 1.5,
+      "p_over": 0.5541
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.02,
+      "lam": 1.02,
+      "over_line": 0.5,
+      "p_over": 0.6863
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.198,
+      "lam": 0.198,
+      "over_line": 0.5,
+      "p_over": 0.183
+     }
+    ]
+   },
+   {
+    "mlbam": 668227,
+    "name": "Randy Arozarena",
+    "org": "SEA",
+    "game_pk": 823105,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.59,
+      "lam": 1.59,
+      "over_line": 1.5,
+      "p_over": 0.4723
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.95,
+      "lam": 0.95,
+      "over_line": 0.5,
+      "p_over": 0.6548
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.14,
+      "lam": 0.14,
+      "over_line": 0.5,
+      "p_over": 0.1327
+     }
+    ]
+   },
+   {
+    "mlbam": 641487,
+    "name": "J.P. Crawford",
+    "org": "SEA",
+    "game_pk": 823105,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.34,
+      "lam": 1.34,
+      "over_line": 1.5,
+      "p_over": 0.386
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.87,
+      "lam": 0.87,
+      "over_line": 0.5,
+      "p_over": 0.6202
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.095,
+      "lam": 0.095,
+      "over_line": 0.5,
+      "p_over": 0.0916
+     }
+    ]
+   },
+   {
+    "mlbam": 677594,
+    "name": "Julio Rodr\u00edguez",
+    "org": "SEA",
+    "game_pk": 823105,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.68,
+      "lam": 1.68,
+      "over_line": 1.5,
+      "p_over": 0.5012
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.99,
+      "lam": 0.99,
+      "over_line": 0.5,
+      "p_over": 0.6744
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.159,
+      "lam": 0.159,
+      "over_line": 0.5,
+      "p_over": 0.1498
+     }
+    ]
+   },
+   {
+    "mlbam": 650402,
+    "name": "Gleyber Torres",
+    "org": "DET",
+    "game_pk": 823105,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.53,
+      "lam": 1.53,
+      "over_line": 1.5,
+      "p_over": 0.4522
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.99,
+      "lam": 0.99,
+      "over_line": 0.5,
+      "p_over": 0.6709
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.115,
+      "lam": 0.115,
+      "over_line": 0.5,
+      "p_over": 0.1096
+     }
+    ]
+   },
+   {
+    "mlbam": 805808,
+    "name": "Kevin McGonigle",
+    "org": "DET",
+    "game_pk": 823105,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.68,
+      "lam": 1.68,
+      "over_line": 1.5,
+      "p_over": 0.5015
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.04,
+      "lam": 1.04,
+      "over_line": 0.5,
+      "p_over": 0.6939
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.124,
+      "lam": 0.124,
+      "over_line": 0.5,
+      "p_over": 0.1181
+     }
+    ]
+   },
+   {
+    "mlbam": 693307,
+    "name": "Dillon Dingler",
+    "org": "DET",
+    "game_pk": 823105,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.86,
+      "lam": 1.86,
+      "over_line": 1.5,
+      "p_over": 0.5538
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.04,
+      "lam": 1.04,
+      "over_line": 0.5,
+      "p_over": 0.6961
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.177,
+      "lam": 0.177,
+      "over_line": 0.5,
+      "p_over": 0.1655
+     }
+    ]
+   },
+   {
+    "mlbam": 682985,
+    "name": "Riley Greene",
+    "org": "DET",
+    "game_pk": 823105,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.75,
+      "lam": 1.75,
+      "over_line": 1.5,
+      "p_over": 0.5223
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.95,
+      "lam": 0.95,
+      "over_line": 0.5,
+      "p_over": 0.6596
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.18,
+      "lam": 0.18,
+      "over_line": 0.5,
+      "p_over": 0.1678
+     }
+    ]
+   },
+   {
+    "mlbam": 679529,
+    "name": "Spencer Torkelson",
+    "org": "DET",
+    "game_pk": 823105,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.55,
+      "lam": 1.55,
+      "over_line": 1.5,
+      "p_over": 0.4591
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.84,
+      "lam": 0.84,
+      "over_line": 0.5,
+      "p_over": 0.6084
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.173,
+      "lam": 0.173,
+      "over_line": 0.5,
+      "p_over": 0.1616
+     }
+    ]
+   },
+   {
+    "mlbam": 669016,
+    "name": "Brandon Marsh",
+    "org": "PHI",
+    "game_pk": 823430,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.7,
+      "lam": 1.7,
+      "over_line": 1.5,
+      "p_over": 0.5074
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.04,
+      "lam": 1.04,
+      "over_line": 0.5,
+      "p_over": 0.6921
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.146,
+      "lam": 0.146,
+      "over_line": 0.5,
+      "p_over": 0.138
+     }
+    ]
+   },
+   {
+    "mlbam": 656941,
+    "name": "Kyle Schwarber",
+    "org": "PHI",
+    "game_pk": 823430,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.92,
+      "lam": 1.92,
+      "over_line": 1.5,
+      "p_over": 0.5725
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.9,
+      "lam": 0.9,
+      "over_line": 0.5,
+      "p_over": 0.6321
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.28,
+      "lam": 0.28,
+      "over_line": 0.5,
+      "p_over": 0.2514
+     }
+    ]
+   },
+   {
+    "mlbam": 650333,
+    "name": "Luis Arraez",
+    "org": "PHI",
+    "game_pk": 823430,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.59,
+      "lam": 1.59,
+      "over_line": 1.5,
+      "p_over": 0.4731
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.21,
+      "lam": 1.21,
+      "over_line": 0.5,
+      "p_over": 0.7548
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.046,
+      "lam": 0.046,
+      "over_line": 0.5,
+      "p_over": 0.0449
+     }
+    ]
+   },
+   {
+    "mlbam": 547180,
+    "name": "Bryce Harper",
+    "org": "PHI",
+    "game_pk": 823430,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.76,
+      "lam": 1.76,
+      "over_line": 1.5,
+      "p_over": 0.5238
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.94,
+      "lam": 0.94,
+      "over_line": 0.5,
+      "p_over": 0.6523
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.189,
+      "lam": 0.189,
+      "over_line": 0.5,
+      "p_over": 0.176
+     }
+    ]
+   },
+   {
+    "mlbam": 607208,
+    "name": "Trea Turner",
+    "org": "PHI",
+    "game_pk": 823430,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.56,
+      "lam": 1.56,
+      "over_line": 1.5,
+      "p_over": 0.4618
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.02,
+      "lam": 1.02,
+      "over_line": 0.5,
+      "p_over": 0.6879
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.122,
+      "lam": 0.122,
+      "over_line": 0.5,
+      "p_over": 0.1161
+     }
+    ]
+   },
+   {
+    "mlbam": 678391,
+    "name": "Jorbit Vivas",
+    "org": "WSN",
+    "game_pk": 823430,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.46,
+      "lam": 1.46,
+      "over_line": 1.5,
+      "p_over": 0.4271
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.0,
+      "lam": 1.0,
+      "over_line": 0.5,
+      "p_over": 0.6771
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.089,
+      "lam": 0.089,
+      "over_line": 0.5,
+      "p_over": 0.0861
+     }
+    ]
+   },
+   {
+    "mlbam": 695578,
+    "name": "James Wood",
+    "org": "WSN",
+    "game_pk": 823430,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.87,
+      "lam": 1.87,
+      "over_line": 1.5,
+      "p_over": 0.5563
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.94,
+      "lam": 0.94,
+      "over_line": 0.5,
+      "p_over": 0.651
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.212,
+      "lam": 0.212,
+      "over_line": 0.5,
+      "p_over": 0.1952
+     }
+    ]
+   },
+   {
+    "mlbam": 686611,
+    "name": "Dylan Crews",
+    "org": "WSN",
+    "game_pk": 823430,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.59,
+      "lam": 1.59,
+      "over_line": 1.5,
+      "p_over": 0.4704
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.93,
+      "lam": 0.93,
+      "over_line": 0.5,
+      "p_over": 0.6476
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.141,
+      "lam": 0.141,
+      "over_line": 0.5,
+      "p_over": 0.1336
+     }
+    ]
+   },
+   {
+    "mlbam": 682928,
+    "name": "CJ Abrams",
+    "org": "WSN",
+    "game_pk": 823430,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.78,
+      "lam": 1.78,
+      "over_line": 1.5,
+      "p_over": 0.5298
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.02,
+      "lam": 1.02,
+      "over_line": 0.5,
+      "p_over": 0.6856
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.18,
+      "lam": 0.18,
+      "over_line": 0.5,
+      "p_over": 0.1679
+     }
+    ]
+   },
+   {
+    "mlbam": 660688,
+    "name": "Keibert Ruiz",
+    "org": "WSN",
+    "game_pk": 823430,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.53,
+      "lam": 1.53,
+      "over_line": 1.5,
+      "p_over": 0.4536
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.02,
+      "lam": 1.02,
+      "over_line": 0.5,
+      "p_over": 0.6885
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.102,
+      "lam": 0.102,
+      "over_line": 0.5,
+      "p_over": 0.0981
+     }
+    ]
+   },
+   {
+    "mlbam": 677800,
+    "name": "Wilyer Abreu",
+    "org": "BOS",
+    "game_pk": 824729,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.79,
+      "lam": 1.79,
+      "over_line": 1.5,
+      "p_over": 0.5351
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.0,
+      "lam": 1.0,
+      "over_line": 0.5,
+      "p_over": 0.6757
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.182,
+      "lam": 0.182,
+      "over_line": 0.5,
+      "p_over": 0.169
+     }
+    ]
+   },
+   {
+    "mlbam": 575929,
+    "name": "Willson Contreras",
+    "org": "BOS",
+    "game_pk": 824729,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.82,
+      "lam": 1.82,
+      "over_line": 1.5,
+      "p_over": 0.5416
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.0,
+      "lam": 1.0,
+      "over_line": 0.5,
+      "p_over": 0.6783
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.182,
+      "lam": 0.182,
+      "over_line": 0.5,
+      "p_over": 0.1694
+     }
+    ]
+   },
+   {
+    "mlbam": 807799,
+    "name": "Masataka Yoshida",
+    "org": "BOS",
+    "game_pk": 824729,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.56,
+      "lam": 1.56,
+      "over_line": 1.5,
+      "p_over": 0.4635
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.06,
+      "lam": 1.06,
+      "over_line": 0.5,
+      "p_over": 0.7029
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.095,
+      "lam": 0.095,
+      "over_line": 0.5,
+      "p_over": 0.0917
+     }
+    ]
+   },
+   {
+    "mlbam": 678554,
+    "name": "Curtis Mead",
+    "org": "BOS",
+    "game_pk": 824729,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.61,
+      "lam": 1.61,
+      "over_line": 1.5,
+      "p_over": 0.4772
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.94,
+      "lam": 0.94,
+      "over_line": 0.5,
+      "p_over": 0.655
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.15,
+      "lam": 0.15,
+      "over_line": 0.5,
+      "p_over": 0.1418
+     }
+    ]
+   },
+   {
+    "mlbam": 668939,
+    "name": "Adley Rutschman",
+    "org": "BOS",
+    "game_pk": 824729,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.5,
+      "lam": 1.5,
+      "over_line": 1.5,
+      "p_over": 0.443
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.93,
+      "lam": 0.93,
+      "over_line": 0.5,
+      "p_over": 0.649
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.114,
+      "lam": 0.114,
+      "over_line": 0.5,
+      "p_over": 0.1093
+     }
+    ]
+   },
+   {
+    "mlbam": 695657,
+    "name": "Colson Montgomery",
+    "org": "CHW",
+    "game_pk": 824729,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.89,
+      "lam": 1.89,
+      "over_line": 1.5,
+      "p_over": 0.5642
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.94,
+      "lam": 0.94,
+      "over_line": 0.5,
+      "p_over": 0.6522
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.254,
+      "lam": 0.254,
+      "over_line": 0.5,
+      "p_over": 0.2298
+     }
+    ]
+   },
+   {
+    "mlbam": 808959,
+    "name": "Munetaka Murakami",
+    "org": "CHW",
+    "game_pk": 824729,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.82,
+      "lam": 1.82,
+      "over_line": 1.5,
+      "p_over": 0.5422
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.87,
+      "lam": 0.87,
+      "over_line": 0.5,
+      "p_over": 0.6182
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.259,
+      "lam": 0.259,
+      "over_line": 0.5,
+      "p_over": 0.234
+     }
+    ]
+   },
+   {
+    "mlbam": 678246,
+    "name": "Miguel Vargas",
+    "org": "CHW",
+    "game_pk": 824729,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.66,
+      "lam": 1.66,
+      "over_line": 1.5,
+      "p_over": 0.4942
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.91,
+      "lam": 0.91,
+      "over_line": 0.5,
+      "p_over": 0.6406
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.163,
+      "lam": 0.163,
+      "over_line": 0.5,
+      "p_over": 0.1527
+     }
+    ]
+   },
+   {
+    "mlbam": 803011,
+    "name": "Sam Antonacci",
+    "org": "CHW",
+    "game_pk": 824729,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.6,
+      "lam": 1.6,
+      "over_line": 1.5,
+      "p_over": 0.4737
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.02,
+      "lam": 1.02,
+      "over_line": 0.5,
+      "p_over": 0.688
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.11,
+      "lam": 0.11,
+      "over_line": 0.5,
+      "p_over": 0.1056
+     }
+    ]
+   },
+   {
+    "mlbam": 805367,
+    "name": "Chase Meidroth",
+    "org": "CHW",
+    "game_pk": 824729,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.35,
+      "lam": 1.35,
+      "over_line": 1.5,
+      "p_over": 0.3895
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.95,
+      "lam": 0.95,
+      "over_line": 0.5,
+      "p_over": 0.6608
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.08,
+      "lam": 0.08,
+      "over_line": 0.5,
+      "p_over": 0.0776
+     }
+    ]
+   },
+   {
+    "mlbam": 671739,
+    "name": "Michael Harris II",
+    "org": "ATL",
+    "game_pk": 824885,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.92,
+      "lam": 1.92,
+      "over_line": 1.5,
+      "p_over": 0.5709
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.13,
+      "lam": 1.13,
+      "over_line": 0.5,
+      "p_over": 0.7257
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.172,
+      "lam": 0.172,
+      "over_line": 0.5,
+      "p_over": 0.1611
+     }
+    ]
+   },
+   {
+    "mlbam": 621566,
+    "name": "Matt Olson",
+    "org": "ATL",
+    "game_pk": 824885,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.88,
+      "lam": 1.88,
+      "over_line": 1.5,
+      "p_over": 0.5604
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.0,
+      "lam": 1.0,
+      "over_line": 0.5,
+      "p_over": 0.6778
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.206,
+      "lam": 0.206,
+      "over_line": 0.5,
+      "p_over": 0.1898
+     }
+    ]
+   },
+   {
+    "mlbam": 660670,
+    "name": "Ronald Acu\u00f1a Jr.",
+    "org": "ATL",
+    "game_pk": 824885,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.64,
+      "lam": 1.64,
+      "over_line": 1.5,
+      "p_over": 0.4878
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.92,
+      "lam": 0.92,
+      "over_line": 0.5,
+      "p_over": 0.6435
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.158,
+      "lam": 0.158,
+      "over_line": 0.5,
+      "p_over": 0.1485
+     }
+    ]
+   },
+   {
+    "mlbam": 686948,
+    "name": "Drake Baldwin",
+    "org": "ATL",
+    "game_pk": 824885,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.8,
+      "lam": 1.8,
+      "over_line": 1.5,
+      "p_over": 0.5362
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.01,
+      "lam": 1.01,
+      "over_line": 0.5,
+      "p_over": 0.6827
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.197,
+      "lam": 0.197,
+      "over_line": 0.5,
+      "p_over": 0.1825
+     }
+    ]
+   },
+   {
+    "mlbam": 645277,
+    "name": "Ozzie Albies",
+    "org": "ATL",
+    "game_pk": 824885,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.51,
+      "lam": 1.51,
+      "over_line": 1.5,
+      "p_over": 0.4462
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.97,
+      "lam": 0.97,
+      "over_line": 0.5,
+      "p_over": 0.6673
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.126,
+      "lam": 0.126,
+      "over_line": 0.5,
+      "p_over": 0.1197
+     }
+    ]
+   },
+   {
+    "mlbam": 681715,
+    "name": "Heriberto Hern\u00e1ndez",
+    "org": "MIA",
+    "game_pk": 824885,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.75,
+      "lam": 1.75,
+      "over_line": 1.5,
+      "p_over": 0.5236
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.98,
+      "lam": 0.98,
+      "over_line": 0.5,
+      "p_over": 0.6667
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.193,
+      "lam": 0.193,
+      "over_line": 0.5,
+      "p_over": 0.1789
+     }
+    ]
+   },
+   {
+    "mlbam": 669065,
+    "name": "Kyle Stowers",
+    "org": "MIA",
+    "game_pk": 824885,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.76,
+      "lam": 1.76,
+      "over_line": 1.5,
+      "p_over": 0.5264
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.95,
+      "lam": 0.95,
+      "over_line": 0.5,
+      "p_over": 0.6535
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.181,
+      "lam": 0.181,
+      "over_line": 0.5,
+      "p_over": 0.1688
+     }
+    ]
+   },
+   {
+    "mlbam": 665923,
+    "name": "Esteury Ruiz",
+    "org": "MIA",
+    "game_pk": 824885,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.54,
+      "lam": 1.54,
+      "over_line": 1.5,
+      "p_over": 0.4555
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.89,
+      "lam": 0.89,
+      "over_line": 0.5,
+      "p_over": 0.6303
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.138,
+      "lam": 0.138,
+      "over_line": 0.5,
+      "p_over": 0.1306
+     }
+    ]
+   },
+   {
+    "mlbam": 691788,
+    "name": "Joe Mack",
+    "org": "MIA",
+    "game_pk": 824885,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.65,
+      "lam": 1.65,
+      "over_line": 1.5,
+      "p_over": 0.4915
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.95,
+      "lam": 0.95,
+      "over_line": 0.5,
+      "p_over": 0.659
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.179,
+      "lam": 0.179,
+      "over_line": 0.5,
+      "p_over": 0.1673
+     }
+    ]
+   },
+   {
+    "mlbam": 669364,
+    "name": "Xavier Edwards",
+    "org": "MIA",
+    "game_pk": 824885,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.37,
+      "lam": 1.37,
+      "over_line": 1.5,
+      "p_over": 0.3961
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.01,
+      "lam": 1.01,
+      "over_line": 0.5,
+      "p_over": 0.6827
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.045,
+      "lam": 0.045,
+      "over_line": 0.5,
+      "p_over": 0.0445
+     }
+    ]
+   },
+   {
+    "mlbam": 695600,
+    "name": "Carter Jensen",
+    "org": "KCR",
+    "game_pk": 824080,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.62,
+      "lam": 1.62,
+      "over_line": 1.5,
+      "p_over": 0.481
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.93,
+      "lam": 0.93,
+      "over_line": 0.5,
+      "p_over": 0.6448
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.147,
+      "lam": 0.147,
+      "over_line": 0.5,
+      "p_over": 0.1383
+     }
+    ]
+   },
+   {
+    "mlbam": 677951,
+    "name": "Bobby Witt Jr.",
+    "org": "KCR",
+    "game_pk": 824080,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.97,
+      "lam": 1.97,
+      "over_line": 1.5,
+      "p_over": 0.5854
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.13,
+      "lam": 1.13,
+      "over_line": 0.5,
+      "p_over": 0.7283
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.155,
+      "lam": 0.155,
+      "over_line": 0.5,
+      "p_over": 0.1457
+     }
+    ]
+   },
+   {
+    "mlbam": 686555,
+    "name": "Isaac Collins",
+    "org": "KCR",
+    "game_pk": 824080,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.39,
+      "lam": 1.39,
+      "over_line": 1.5,
+      "p_over": 0.4039
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.91,
+      "lam": 0.91,
+      "over_line": 0.5,
+      "p_over": 0.6374
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.086,
+      "lam": 0.086,
+      "over_line": 0.5,
+      "p_over": 0.0832
+     }
+    ]
+   },
+   {
+    "mlbam": 695506,
+    "name": "Jac Caglianone",
+    "org": "KCR",
+    "game_pk": 824080,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.69,
+      "lam": 1.69,
+      "over_line": 1.5,
+      "p_over": 0.5047
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.92,
+      "lam": 0.92,
+      "over_line": 0.5,
+      "p_over": 0.6451
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.17,
+      "lam": 0.17,
+      "over_line": 0.5,
+      "p_over": 0.1589
+     }
+    ]
+   },
+   {
+    "mlbam": 679845,
+    "name": "Nick Loftin",
+    "org": "KCR",
+    "game_pk": 824080,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.41,
+      "lam": 1.41,
+      "over_line": 1.5,
+      "p_over": 0.4101
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.91,
+      "lam": 0.91,
+      "over_line": 0.5,
+      "p_over": 0.6423
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.086,
+      "lam": 0.086,
+      "over_line": 0.5,
+      "p_over": 0.0833
+     }
+    ]
+   },
+   {
+    "mlbam": 665019,
+    "name": "Kody Clemens",
+    "org": "MIN",
+    "game_pk": 824080,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.83,
+      "lam": 1.83,
+      "over_line": 1.5,
+      "p_over": 0.5452
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.99,
+      "lam": 0.99,
+      "over_line": 0.5,
+      "p_over": 0.6724
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.195,
+      "lam": 0.195,
+      "over_line": 0.5,
+      "p_over": 0.1809
+     }
+    ]
+   },
+   {
+    "mlbam": 621439,
+    "name": "Byron Buxton",
+    "org": "MIN",
+    "game_pk": 824080,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 2.06,
+      "lam": 2.06,
+      "over_line": 1.5,
+      "p_over": 0.6108
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.05,
+      "lam": 1.05,
+      "over_line": 0.5,
+      "p_over": 0.6985
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.251,
+      "lam": 0.251,
+      "over_line": 0.5,
+      "p_over": 0.2278
+     }
+    ]
+   },
+   {
+    "mlbam": 686797,
+    "name": "Brooks Lee",
+    "org": "MIN",
+    "game_pk": 824080,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.57,
+      "lam": 1.57,
+      "over_line": 1.5,
+      "p_over": 0.4644
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.0,
+      "lam": 1.0,
+      "over_line": 0.5,
+      "p_over": 0.6763
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.142,
+      "lam": 0.142,
+      "over_line": 0.5,
+      "p_over": 0.1343
+     }
+    ]
+   },
+   {
+    "mlbam": 663616,
+    "name": "Trevor Larnach",
+    "org": "MIN",
+    "game_pk": 824080,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.54,
+      "lam": 1.54,
+      "over_line": 1.5,
+      "p_over": 0.4567
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.96,
+      "lam": 0.96,
+      "over_line": 0.5,
+      "p_over": 0.6624
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.128,
+      "lam": 0.128,
+      "over_line": 0.5,
+      "p_over": 0.1222
+     }
+    ]
+   },
+   {
+    "mlbam": 605137,
+    "name": "Josh Bell",
+    "org": "MIN",
+    "game_pk": 824080,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.56,
+      "lam": 1.56,
+      "over_line": 1.5,
+      "p_over": 0.4606
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.92,
+      "lam": 0.92,
+      "over_line": 0.5,
+      "p_over": 0.6451
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.137,
+      "lam": 0.137,
+      "over_line": 0.5,
+      "p_over": 0.1298
+     }
+    ]
+   },
+   {
+    "mlbam": 682998,
+    "name": "Corbin Carroll",
+    "org": "ARI",
+    "game_pk": 825053,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.88,
+      "lam": 1.88,
+      "over_line": 1.5,
+      "p_over": 0.5604
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.98,
+      "lam": 0.98,
+      "over_line": 0.5,
+      "p_over": 0.6686
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.173,
+      "lam": 0.173,
+      "over_line": 0.5,
+      "p_over": 0.1618
+     }
+    ]
+   },
+   {
+    "mlbam": 672695,
+    "name": "Geraldo Perdomo",
+    "org": "ARI",
+    "game_pk": 825053,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.51,
+      "lam": 1.51,
+      "over_line": 1.5,
+      "p_over": 0.4462
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.01,
+      "lam": 1.01,
+      "over_line": 0.5,
+      "p_over": 0.6812
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.098,
+      "lam": 0.098,
+      "over_line": 0.5,
+      "p_over": 0.0944
+     }
+    ]
+   },
+   {
+    "mlbam": 571448,
+    "name": "Nolan Arenado",
+    "org": "ARI",
+    "game_pk": 825053,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.49,
+      "lam": 1.49,
+      "over_line": 1.5,
+      "p_over": 0.4395
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.98,
+      "lam": 0.98,
+      "over_line": 0.5,
+      "p_over": 0.6704
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.126,
+      "lam": 0.126,
+      "over_line": 0.5,
+      "p_over": 0.1196
+     }
+    ]
+   },
+   {
+    "mlbam": 672515,
+    "name": "Gabriel Moreno",
+    "org": "ARI",
+    "game_pk": 825053,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.58,
+      "lam": 1.58,
+      "over_line": 1.5,
+      "p_over": 0.4683
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.01,
+      "lam": 1.01,
+      "over_line": 0.5,
+      "p_over": 0.682
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.107,
+      "lam": 0.107,
+      "over_line": 0.5,
+      "p_over": 0.1027
+     }
+    ]
+   },
+   {
+    "mlbam": 663457,
+    "name": "Lars Nootbaar",
+    "org": "ARI",
+    "game_pk": 825053,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.41,
+      "lam": 1.41,
+      "over_line": 1.5,
+      "p_over": 0.412
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.86,
+      "lam": 0.86,
+      "over_line": 0.5,
+      "p_over": 0.6174
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.095,
+      "lam": 0.095,
+      "over_line": 0.5,
+      "p_over": 0.0913
+     }
+    ]
+   },
+   {
+    "mlbam": 592518,
+    "name": "Manny Machado",
+    "org": "SDP",
+    "game_pk": 825053,
+    "slot": 1,
+    "expected_pa": 4.65,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.77,
+      "lam": 1.77,
+      "over_line": 1.5,
+      "p_over": 0.528
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.01,
+      "lam": 1.01,
+      "over_line": 0.5,
+      "p_over": 0.6815
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.187,
+      "lam": 0.187,
+      "over_line": 0.5,
+      "p_over": 0.174
+     }
+    ]
+   },
+   {
+    "mlbam": 657757,
+    "name": "Gavin Sheets",
+    "org": "SDP",
+    "game_pk": 825053,
+    "slot": 2,
+    "expected_pa": 4.55,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.57,
+      "lam": 1.57,
+      "over_line": 1.5,
+      "p_over": 0.4654
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.94,
+      "lam": 0.94,
+      "over_line": 0.5,
+      "p_over": 0.653
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.139,
+      "lam": 0.139,
+      "over_line": 0.5,
+      "p_over": 0.1317
+     }
+    ]
+   },
+   {
+    "mlbam": 665487,
+    "name": "Fernando Tatis Jr.",
+    "org": "SDP",
+    "game_pk": 825053,
+    "slot": 3,
+    "expected_pa": 4.45,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.64,
+      "lam": 1.64,
+      "over_line": 1.5,
+      "p_over": 0.4877
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.01,
+      "lam": 1.01,
+      "over_line": 0.5,
+      "p_over": 0.6818
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.127,
+      "lam": 0.127,
+      "over_line": 0.5,
+      "p_over": 0.1205
+     }
+    ]
+   },
+   {
+    "mlbam": 664034,
+    "name": "Ty France",
+    "org": "SDP",
+    "game_pk": 825053,
+    "slot": 4,
+    "expected_pa": 4.35,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.63,
+      "lam": 1.63,
+      "over_line": 1.5,
+      "p_over": 0.4853
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 1.01,
+      "lam": 1.01,
+      "over_line": 0.5,
+      "p_over": 0.6823
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.126,
+      "lam": 0.126,
+      "over_line": 0.5,
+      "p_over": 0.1196
+     }
+    ]
+   },
+   {
+    "mlbam": 701538,
+    "name": "Jackson Merrill",
+    "org": "SDP",
+    "game_pk": 825053,
+    "slot": 5,
+    "expected_pa": 4.25,
+    "props": [
+     {
+      "prop": "Total bases",
+      "fair_line": 1.71,
+      "lam": 1.71,
+      "over_line": 1.5,
+      "p_over": 0.5113
+     },
+     {
+      "prop": "1+ hits",
+      "fair_line": 0.98,
+      "lam": 0.98,
+      "over_line": 0.5,
+      "p_over": 0.6718
+     },
+     {
+      "prop": "1+ home runs",
+      "fair_line": 0.149,
+      "lam": 0.149,
+      "over_line": 0.5,
+      "p_over": 0.1407
+     }
+    ]
+   }
+  ]
  },
  "parlay_context": {
   "rules": [
@@ -1434,7 +6511,404 @@
     "why": "A dominant start moves both. Correlated legs price differently than the product suggests."
    }
   ],
-  "legs": [],
+  "legs": [
+   {
+    "leg_id": "824804:ml:home",
+    "game_pk": 824804,
+    "label": "BAL moneyline",
+    "market": "h2h",
+    "model_prob": 0.57089,
+    "odds": -183,
+    "book": "draftkings"
+   },
+   {
+    "leg_id": "824804:ml:away",
+    "game_pk": 824804,
+    "label": "LAA moneyline",
+    "market": "h2h",
+    "model_prob": 0.42911,
+    "odds": 176,
+    "book": "fanduel"
+   },
+   {
+    "leg_id": "824804:tot:over",
+    "game_pk": 824804,
+    "label": "LAA at BAL Over 9.5",
+    "market": "totals",
+    "model_prob": 0.51247,
+    "odds": -110,
+    "book": "betrivers"
+   },
+   {
+    "leg_id": "824804:tot:under",
+    "game_pk": 824804,
+    "label": "LAA at BAL Under 9.5",
+    "market": "totals",
+    "model_prob": 0.48753,
+    "odds": -102,
+    "book": "lowvig"
+   },
+   {
+    "leg_id": "824481:ml:home",
+    "game_pk": 824481,
+    "label": "CIN moneyline",
+    "market": "h2h",
+    "model_prob": 0.48265,
+    "odds": -158,
+    "book": "fanduel"
+   },
+   {
+    "leg_id": "824481:ml:away",
+    "game_pk": 824481,
+    "label": "ATH moneyline",
+    "market": "h2h",
+    "model_prob": 0.51735,
+    "odds": 155,
+    "book": "betrivers"
+   },
+   {
+    "leg_id": "824481:tot:over",
+    "game_pk": 824481,
+    "label": "ATH at CIN Over 9.5",
+    "market": "totals",
+    "model_prob": 0.59477,
+    "odds": 102,
+    "book": "betrivers"
+   },
+   {
+    "leg_id": "824481:tot:under",
+    "game_pk": 824481,
+    "label": "ATH at CIN Under 9.5",
+    "market": "totals",
+    "model_prob": 0.40523,
+    "odds": -113,
+    "book": "lowvig"
+   },
+   {
+    "leg_id": "824401:ml:home",
+    "game_pk": 824401,
+    "label": "CLE moneyline",
+    "market": "h2h",
+    "model_prob": 0.47896,
+    "odds": -121,
+    "book": "betus"
+   },
+   {
+    "leg_id": "824401:ml:away",
+    "game_pk": 824401,
+    "label": "NYM moneyline",
+    "market": "h2h",
+    "model_prob": 0.52104,
+    "odds": 114,
+    "book": "draftkings"
+   },
+   {
+    "leg_id": "824401:tot:over",
+    "game_pk": 824401,
+    "label": "NYM at CLE Over 7.5",
+    "market": "totals",
+    "model_prob": 0.51204,
+    "odds": 102,
+    "book": "betrivers"
+   },
+   {
+    "leg_id": "824401:tot:under",
+    "game_pk": 824401,
+    "label": "NYM at CLE Under 7.5",
+    "market": "totals",
+    "model_prob": 0.48796,
+    "odds": -114,
+    "book": "lowvig"
+   },
+   {
+    "leg_id": "823754:ml:home",
+    "game_pk": 823754,
+    "label": "MIL moneyline",
+    "market": "h2h",
+    "model_prob": 0.51055,
+    "odds": -122,
+    "book": "fanduel"
+   },
+   {
+    "leg_id": "823754:ml:away",
+    "game_pk": 823754,
+    "label": "PIT moneyline",
+    "market": "h2h",
+    "model_prob": 0.48945,
+    "odds": 116,
+    "book": "draftkings"
+   },
+   {
+    "leg_id": "823754:tot:over",
+    "game_pk": 823754,
+    "label": "PIT at MIL Over 7.5",
+    "market": "totals",
+    "model_prob": 0.5967,
+    "odds": -105,
+    "book": "bovada"
+   },
+   {
+    "leg_id": "823754:tot:under",
+    "game_pk": 823754,
+    "label": "PIT at MIL Under 7.5",
+    "market": "totals",
+    "model_prob": 0.4033,
+    "odds": -102,
+    "book": "lowvig"
+   },
+   {
+    "leg_id": "824664:ml:home",
+    "game_pk": 824664,
+    "label": "CHC moneyline",
+    "market": "h2h",
+    "model_prob": 0.40064,
+    "odds": 104,
+    "book": "draftkings"
+   },
+   {
+    "leg_id": "824664:ml:away",
+    "game_pk": 824664,
+    "label": "TOR moneyline",
+    "market": "h2h",
+    "model_prob": 0.59936,
+    "odds": -112,
+    "book": "fanduel"
+   },
+   {
+    "leg_id": "824664:tot:over",
+    "game_pk": 824664,
+    "label": "TOR at CHC Over 7.5",
+    "market": "totals",
+    "model_prob": 0.36754,
+    "odds": -102,
+    "book": "lowvig"
+   },
+   {
+    "leg_id": "824664:tot:under",
+    "game_pk": 824664,
+    "label": "TOR at CHC Under 7.5",
+    "market": "totals",
+    "model_prob": 0.63246,
+    "odds": -110,
+    "book": "betrivers"
+   },
+   {
+    "leg_id": "823105:ml:home",
+    "game_pk": 823105,
+    "label": "SEA moneyline",
+    "market": "h2h",
+    "model_prob": 0.57043,
+    "odds": -122,
+    "book": "fanduel"
+   },
+   {
+    "leg_id": "823105:ml:away",
+    "game_pk": 823105,
+    "label": "DET moneyline",
+    "market": "h2h",
+    "model_prob": 0.42957,
+    "odds": 116,
+    "book": "draftkings"
+   },
+   {
+    "leg_id": "823105:tot:over",
+    "game_pk": 823105,
+    "label": "DET at SEA Over 8.0",
+    "market": "totals",
+    "model_prob": 0.40666,
+    "odds": 100,
+    "book": "bovada"
+   },
+   {
+    "leg_id": "823105:tot:under",
+    "game_pk": 823105,
+    "label": "DET at SEA Under 8.0",
+    "market": "totals",
+    "model_prob": 0.59334,
+    "odds": 110,
+    "book": "lowvig"
+   },
+   {
+    "leg_id": "823430:ml:home",
+    "game_pk": 823430,
+    "label": "PHI moneyline",
+    "market": "h2h",
+    "model_prob": 0.67058,
+    "odds": -320,
+    "book": "fanduel"
+   },
+   {
+    "leg_id": "823430:ml:away",
+    "game_pk": 823430,
+    "label": "WSN moneyline",
+    "market": "h2h",
+    "model_prob": 0.32942,
+    "odds": 304,
+    "book": "draftkings"
+   },
+   {
+    "leg_id": "823430:tot:over",
+    "game_pk": 823430,
+    "label": "WSN at PHI Over 9.0",
+    "market": "totals",
+    "model_prob": 0.32483,
+    "odds": 102,
+    "book": "betrivers"
+   },
+   {
+    "leg_id": "823430:tot:under",
+    "game_pk": 823430,
+    "label": "WSN at PHI Under 9.0",
+    "market": "totals",
+    "model_prob": 0.67517,
+    "odds": 102,
+    "book": "fanduel"
+   },
+   {
+    "leg_id": "824729:ml:home",
+    "game_pk": 824729,
+    "label": "BOS moneyline",
+    "market": "h2h",
+    "model_prob": 0.63787,
+    "odds": -177,
+    "book": "betrivers"
+   },
+   {
+    "leg_id": "824729:ml:away",
+    "game_pk": 824729,
+    "label": "CHW moneyline",
+    "market": "h2h",
+    "model_prob": 0.36213,
+    "odds": 167,
+    "book": "draftkings"
+   },
+   {
+    "leg_id": "824729:tot:over",
+    "game_pk": 824729,
+    "label": "CHW at BOS Over 9.0",
+    "market": "totals",
+    "model_prob": 0.36146,
+    "odds": 103,
+    "book": "lowvig"
+   },
+   {
+    "leg_id": "824729:tot:under",
+    "game_pk": 824729,
+    "label": "CHW at BOS Under 9.0",
+    "market": "totals",
+    "model_prob": 0.63854,
+    "odds": -112,
+    "book": "betrivers"
+   },
+   {
+    "leg_id": "824885:ml:home",
+    "game_pk": 824885,
+    "label": "ATL moneyline",
+    "market": "h2h",
+    "model_prob": 0.58068,
+    "odds": -140,
+    "book": "draftkings"
+   },
+   {
+    "leg_id": "824885:ml:away",
+    "game_pk": 824885,
+    "label": "MIA moneyline",
+    "market": "h2h",
+    "model_prob": 0.41932,
+    "odds": 132,
+    "book": "fanduel"
+   },
+   {
+    "leg_id": "824885:tot:over",
+    "game_pk": 824885,
+    "label": "MIA at ATL Over 9.0",
+    "market": "totals",
+    "model_prob": 0.45505,
+    "odds": -113,
+    "book": "betrivers"
+   },
+   {
+    "leg_id": "824885:tot:under",
+    "game_pk": 824885,
+    "label": "MIA at ATL Under 9.0",
+    "market": "totals",
+    "model_prob": 0.54495,
+    "odds": 107,
+    "book": "lowvig"
+   },
+   {
+    "leg_id": "824080:ml:home",
+    "game_pk": 824080,
+    "label": "KCR moneyline",
+    "market": "h2h",
+    "model_prob": 0.4889,
+    "odds": -118,
+    "book": "betus"
+   },
+   {
+    "leg_id": "824080:ml:away",
+    "game_pk": 824080,
+    "label": "MIN moneyline",
+    "market": "h2h",
+    "model_prob": 0.5111,
+    "odds": 112,
+    "book": "betonlineag"
+   },
+   {
+    "leg_id": "824080:tot:over",
+    "game_pk": 824080,
+    "label": "MIN at KCR Over 9.0",
+    "market": "totals",
+    "model_prob": 0.44099,
+    "odds": 102,
+    "book": "betrivers"
+   },
+   {
+    "leg_id": "824080:tot:under",
+    "game_pk": 824080,
+    "label": "MIN at KCR Under 9.0",
+    "market": "totals",
+    "model_prob": 0.55901,
+    "odds": 107,
+    "book": "lowvig"
+   },
+   {
+    "leg_id": "825053:ml:home",
+    "game_pk": 825053,
+    "label": "ARI moneyline",
+    "market": "h2h",
+    "model_prob": 0.48811,
+    "odds": -104,
+    "book": "betrivers"
+   },
+   {
+    "leg_id": "825053:ml:away",
+    "game_pk": 825053,
+    "label": "SDP moneyline",
+    "market": "h2h",
+    "model_prob": 0.51189,
+    "odds": -104,
+    "book": "draftkings"
+   },
+   {
+    "leg_id": "825053:tot:over",
+    "game_pk": 825053,
+    "label": "SDP at ARI Over 9.0",
+    "market": "totals",
+    "model_prob": 0.4007,
+    "odds": -103,
+    "book": "betrivers"
+   },
+   {
+    "leg_id": "825053:tot:under",
+    "game_pk": 825053,
+    "label": "SDP at ARI Under 9.0",
+    "market": "totals",
+    "model_prob": 0.5993,
+    "odds": -110,
+    "book": "lowvig"
+   }
+  ],
   "featured_parlay": null,
   "featured_reason": "A featured parlay needs a backtest that survives the correlation haircut. There is not one, so there is no featured parlay.",
   "math_note": "Independent legs multiply. Same-game legs do not, and the naive product is always too generous to the bettor's story and too cheap for the book to sell at that price."

@@ -1,17 +1,37 @@
 {
- "generated_at": "2026-08-05T23:28:19+00:00",
- "slate_date": "2026-08-05",
+ "generated_at": "2026-08-06T15:19:36+00:00",
+ "slate_date": "2026-08-06",
  "status": {
-  "odds_feed": "no_snapshot",
+  "odds_feed": "ok",
   "odds_note": "odds feed configured",
-  "odds_captured_at": null,
-  "odds_kind": null,
+  "odds_captured_at": "2026-08-06T15:19:23+00:00",
+  "odds_kind": "open",
   "model": "unvalidated",
   "model_mode": "contaminated",
-  "empty_reasons": [
-   "team leaderboards have not been built yet",
-   "odds feed configured"
-  ]
+  "team_input_sources": {
+   "offense": {
+    "file": "hitter_leaderboards.json",
+    "present": true,
+    "n_orgs": 30,
+    "as_of": "2026-08-06"
+   },
+   "rotation": {
+    "file": "starter_leaderboards.json",
+    "present": true,
+    "n_orgs": 30,
+    "as_of": "2026-08-06"
+   },
+   "bullpen": {
+    "file": "bullpen_leaderboards.json",
+    "present": true,
+    "n_orgs": 30,
+    "as_of": "2026-08-06"
+   },
+   "n_orgs_joined": 30
+  },
+  "n_slate_games": 11,
+  "stale_board": false,
+  "empty_reasons": []
  },
  "model": {
   "version": "betting_runs_v1",
@@ -21,7 +41,7 @@
   "validation": {
    "available": true,
    "artifact": "data/betting_model_eval.json",
-   "generated_at": "2026-08-05T23:10:34+00:00",
+   "generated_at": "2026-08-06T11:25:50+00:00",
    "model_version": "betting_runs_v1",
    "validated": false,
    "gates_picks": false,
@@ -33,9 +53,47 @@
    "headline_mode": "contaminated",
    "mode_meaning": {
     "contaminated": "Team inputs are season-to-date leaderboards, so every graded game sits inside its own features. This measures calibration, not skill, and it cannot validate anything.",
-    "vintage": "Every game is priced on a leaderboard snapshot whose knowledge cutoff is strictly before that game. A game with no such snapshot is skipped, not graded on today's numbers. This is the only mode that can validate the model."
+    "vintage": "Every game is priced on a leaderboard snapshot whose knowledge cutoff is strictly before that game: team offense, team run prevention, the listed probable and the park index all come out of that snapshot. A game with no such snapshot is skipped, not graded on today's numbers, and a game whose snapshot predates the stored park column is priced with the park term at neutral rather than on the live index. This is the only mode that can validate the model."
    },
    "graded_blocks": [
+    {
+     "label": "in-sample (coefficients and features both leak)",
+     "mode": "contaminated",
+     "honest": false,
+     "n": 1705,
+     "brier": 0.24156,
+     "brier_flat_500": 0.25,
+     "brier_home_base": 0.24946,
+     "accuracy": 0.5607,
+     "key": "in_sample",
+     "skill_vs_home_base": {
+      "delta": 0.007903,
+      "sd": 0.08409,
+      "t": 3.881,
+      "beats_baseline_95": true,
+      "n_for_95": 306,
+      "baseline": 0.5232
+     }
+    },
+    {
+     "label": "forward from 2026-06-24 (coefficient leakage removed, feature leakage remains)",
+     "mode": "contaminated",
+     "honest": false,
+     "n": 521,
+     "brier": 0.24275,
+     "brier_flat_500": 0.25,
+     "brier_home_base": 0.24995,
+     "accuracy": 0.547,
+     "key": "forward",
+     "skill_vs_home_base": {
+      "delta": 0.00721,
+      "sd": 0.08327,
+      "t": 1.976,
+      "beats_baseline_95": true,
+      "n_for_95": 361,
+      "baseline": 0.5067
+     }
+    },
     {
      "label": "vintage (each game priced on leaderboards dated strictly before it)",
      "mode": "vintage",
@@ -59,11 +117,14 @@
     "min_graded_games_for_min_edge": 600,
     "first_graded_date": null,
     "last_graded_date": null,
+    "park_basis": null,
     "note": "no completed game has a leaderboard vintage dated strictly before it, so the honest sample is empty; run leaderboard_vintages.snapshot() nightly and this number starts climbing"
    },
    "coverage": {
-    "schema": 1,
+    "schema": 2,
     "n_vintages": 1,
+    "n_vintages_with_parks": 0,
+    "n_vintages_neutral_park": 1,
     "first": "2026-08-05",
     "last": "2026-08-05",
     "missing_dates": [],
@@ -107,7 +168,7 @@
     },
     "policy": "min_edge stays null until all three gates are open. A threshold invented to make a pick appear is the single most dishonest number this module could publish."
    },
-   "note": "no completed-game cache and/or no leaderboards; run betting_model.build_game_cache() on a box that has .cache/game_feeds"
+   "note": "Two modes, both labelled. The in-sample and forward numbers are CONTAMINATED: their features are season-to-date leaderboards that contain the games being graded. The vintage number is the honest one and it graded 0 games. A pick threshold is set from the vintage mode or from nothing."
   }
  },
  "disclaimer": {
@@ -120,15 +181,8 @@
   "staking": "Every pick on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
  },
  "pick_of_the_day": null,
- "pick_reason": "no odds feed is configured, so there is no market to have an edge against; the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 3 are closed, starting with 600 vintage-graded games against 0 in hand",
+ "pick_reason": "the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 3 are closed, starting with 600 vintage-graded games against 0 in hand",
  "pick_blockers": [
-  {
-   "id": "odds_feed",
-   "open": false,
-   "need": "a cached odds snapshot to price against",
-   "have": "none",
-   "reason": "no odds feed is configured, so there is no market to have an edge against"
-  },
   {
    "id": "min_edge",
    "open": false,
@@ -144,8 +198,495 @@
    "reason": "the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 3 are closed, starting with 600 vintage-graded games against 0 in hand"
   }
  ],
- "n_games": 0,
- "team_bets": [],
+ "n_games": 11,
+ "team_bets": [
+  {
+   "game_pk": 824804,
+   "date": "2026-08-06",
+   "start": "2026-08-06T16:35:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "3b23ade05c9d38068df5e7af422bca05",
+   "odds_commence_time": "2026-08-06T16:36:00Z",
+   "venue": "Oriole Park at Camden Yards",
+   "home": {
+    "org": "BAL",
+    "team": "Baltimore Orioles",
+    "probable": {
+     "mlbam": 687064,
+     "name": "Brandon Young"
+    },
+    "offense_plus": 96.0,
+    "bullpen_plus": 100.0
+   },
+   "away": {
+    "org": "LAA",
+    "team": "Los Angeles Angels",
+    "probable": {
+     "mlbam": 696270,
+     "name": "Ryan Johnson"
+    },
+    "offense_plus": 98.0,
+    "bullpen_plus": 99.0
+   },
+   "model": {
+    "p_home": 0.57089,
+    "p_away": 0.42911,
+    "lam_home": 5.172,
+    "lam_away": 4.594,
+    "fair_total": 9.77,
+    "park_index": 1.06,
+    "home_prevention": {
+     "starter_plus": 101.0,
+     "bullpen_plus": 100.0,
+     "starter_share": 0.638,
+     "blend_plus": 100.6,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 80.0,
+     "bullpen_plus": 99.0,
+     "starter_share": 0.568,
+     "blend_plus": 88.2,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "BAL",
+     "model_prob": 0.57089,
+     "fair_odds": -133,
+     "book": "draftkings",
+     "odds": -183,
+     "decimal": 1.5464,
+     "implied_prob": 0.64666,
+     "market_fair_prob": 0.64391,
+     "edge": -0.07302,
+     "ev_per_unit": -0.11718,
+     "kelly_full": 0.0,
+     "book_title": "DraftKings",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "LAA",
+     "model_prob": 0.42911,
+     "fair_odds": 133,
+     "book": "fanduel",
+     "odds": 176,
+     "decimal": 2.76,
+     "implied_prob": 0.36232,
+     "market_fair_prob": 0.35609,
+     "edge": 0.07302,
+     "ev_per_unit": 0.18434,
+     "kelly_full": 0.10474,
+     "book_title": "FanDuel",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "BAL -1.5",
+     "model_prob": 0.38086,
+     "fair_odds": 163,
+     "book": "draftkings",
+     "odds": 106,
+     "decimal": 2.06,
+     "implied_prob": 0.48544,
+     "market_fair_prob": 0.47391,
+     "edge": -0.09305,
+     "ev_per_unit": -0.21543,
+     "kelly_full": 0.0,
+     "book_title": "DraftKings",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "LAA +1.5",
+     "model_prob": 0.61914,
+     "fair_odds": -163,
+     "book": "bovada",
+     "odds": -115,
+     "decimal": 1.8696,
+     "implied_prob": 0.53487,
+     "market_fair_prob": 0.52609,
+     "edge": 0.09305,
+     "ev_per_unit": 0.15754,
+     "kelly_full": 0.18117,
+     "book_title": "Bovada",
+     "point": 1.5
+    }
+   ],
+   "total": {
+    "line": 9.5,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 9.5",
+      "model_prob": 0.51247,
+      "fair_odds": -105,
+      "book": "betrivers",
+      "odds": -110,
+      "decimal": 1.9091,
+      "implied_prob": 0.52381,
+      "market_fair_prob": 0.51083,
+      "edge": 0.00164,
+      "ev_per_unit": -0.02164,
+      "kelly_full": 0.0,
+      "book_title": "BetRivers",
+      "point": 9.5
+     },
+     {
+      "side": "under",
+      "label": "Under 9.5",
+      "model_prob": 0.48753,
+      "fair_odds": 105,
+      "book": "lowvig",
+      "odds": -102,
+      "decimal": 1.9804,
+      "implied_prob": 0.50495,
+      "market_fair_prob": 0.48917,
+      "edge": -0.00164,
+      "ev_per_unit": -0.03449,
+      "kelly_full": 0.0,
+      "book_title": "LowVig.ag",
+      "point": 9.5
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 1.749,
+    "total_hold_pct": 4.708,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 824481,
+   "date": "2026-08-06",
+   "start": "2026-08-06T16:40:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "7c802d98715da7e739509739f8e60f5f",
+   "odds_commence_time": "2026-08-06T16:40:00Z",
+   "venue": "Great American Ball Park",
+   "home": {
+    "org": "CIN",
+    "team": "Cincinnati Reds",
+    "probable": {
+     "mlbam": 671096,
+     "name": "Andrew Abbott"
+    },
+    "offense_plus": 100.0,
+    "bullpen_plus": 93.0
+   },
+   "away": {
+    "org": "ATH",
+    "team": "Athletics",
+    "probable": {
+     "mlbam": 686930,
+     "name": "Mason Barnett"
+    },
+    "offense_plus": 102.0,
+    "bullpen_plus": 96.0
+   },
+   "model": {
+    "p_home": 0.48265,
+    "p_away": 0.51735,
+    "lam_home": 5.151,
+    "lam_away": 5.28,
+    "fair_total": 10.43,
+    "park_index": 1.04,
+    "home_prevention": {
+     "starter_plus": 88.0,
+     "bullpen_plus": 93.0,
+     "starter_share": 0.589,
+     "blend_plus": 90.1,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 94.0,
+     "bullpen_plus": 96.0,
+     "starter_share": 0.578,
+     "blend_plus": 94.8,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "CIN",
+     "model_prob": 0.48265,
+     "fair_odds": 107,
+     "book": "fanduel",
+     "odds": -158,
+     "decimal": 1.6329,
+     "implied_prob": 0.61241,
+     "market_fair_prob": 0.60104,
+     "edge": -0.11839,
+     "ev_per_unit": -0.21188,
+     "kelly_full": 0.0,
+     "book_title": "FanDuel",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "ATH",
+     "model_prob": 0.51735,
+     "fair_odds": -107,
+     "book": "betrivers",
+     "odds": 155,
+     "decimal": 2.55,
+     "implied_prob": 0.39216,
+     "market_fair_prob": 0.39896,
+     "edge": 0.11839,
+     "ev_per_unit": 0.31924,
+     "kelly_full": 0.20596,
+     "book_title": "BetRivers",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "CIN -1.5",
+     "model_prob": 0.30434,
+     "fair_odds": 229,
+     "book": "bovada",
+     "odds": 125,
+     "decimal": 2.25,
+     "implied_prob": 0.44444,
+     "market_fair_prob": 0.44248,
+     "edge": -0.13814,
+     "ev_per_unit": -0.31523,
+     "kelly_full": 0.0,
+     "book_title": "Bovada",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "ATH +1.5",
+     "model_prob": 0.69566,
+     "fair_odds": -229,
+     "book": "mybookieag",
+     "odds": -136,
+     "decimal": 1.7353,
+     "implied_prob": 0.57627,
+     "market_fair_prob": 0.55752,
+     "edge": 0.13814,
+     "ev_per_unit": 0.20718,
+     "kelly_full": 0.28176,
+     "book_title": "MyBookie.ag",
+     "point": 1.5
+    }
+   ],
+   "total": {
+    "line": 9.5,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 9.5",
+      "model_prob": 0.59477,
+      "fair_odds": -147,
+      "book": "betrivers",
+      "odds": 102,
+      "decimal": 2.02,
+      "implied_prob": 0.49505,
+      "market_fair_prob": 0.48917,
+      "edge": 0.1056,
+      "ev_per_unit": 0.20144,
+      "kelly_full": 0.19749,
+      "book_title": "BetRivers",
+      "point": 9.5
+     },
+     {
+      "side": "under",
+      "label": "Under 9.5",
+      "model_prob": 0.40523,
+      "fair_odds": 147,
+      "book": "lowvig",
+      "odds": -113,
+      "decimal": 1.885,
+      "implied_prob": 0.5305,
+      "market_fair_prob": 0.51083,
+      "edge": -0.1056,
+      "ev_per_unit": -0.23615,
+      "kelly_full": 0.0,
+      "book_title": "LowVig.ag",
+      "point": 9.5
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 1.891,
+    "total_hold_pct": 4.708,
+    "devig_method": "proportional"
+   }
+  },
+  {
+   "game_pk": 824401,
+   "date": "2026-08-06",
+   "start": "2026-08-06T17:10:00Z",
+   "status": "Preview",
+   "double_header": false,
+   "odds_event_id": "311a536eb6f91726dc481b22b9ef6b79",
+   "odds_commence_time": "2026-08-06T17:11:00Z",
+   "venue": "Progressive Field",
+   "home": {
+    "org": "CLE",
+    "team": "Cleveland Guardians",
+    "probable": {
+     "mlbam": 656492,
+     "name": "Foster Griffin"
+    },
+    "offense_plus": 95.0,
+    "bullpen_plus": 105.0
+   },
+   "away": {
+    "org": "NYM",
+    "team": "New York Mets",
+    "probable": {
+     "mlbam": 690997,
+     "name": "Nolan McLean"
+    },
+    "offense_plus": 96.0,
+    "bullpen_plus": 103.0
+   },
+   "model": {
+    "p_home": 0.47896,
+    "p_away": 0.52104,
+    "lam_home": 3.808,
+    "lam_away": 3.945,
+    "fair_total": 7.75,
+    "park_index": 0.98,
+    "home_prevention": {
+     "starter_plus": 102.0,
+     "bullpen_plus": 105.0,
+     "starter_share": 0.653,
+     "blend_plus": 103.0,
+     "source": "probable"
+    },
+    "away_prevention": {
+     "starter_plus": 113.0,
+     "bullpen_plus": 103.0,
+     "starter_share": 0.634,
+     "blend_plus": 109.3,
+     "source": "probable"
+    }
+   },
+   "moneyline": [
+    {
+     "side": "home",
+     "label": "CLE",
+     "model_prob": 0.47896,
+     "fair_odds": 109,
+     "book": "betus",
+     "odds": -121,
+     "decimal": 1.8264,
+     "implied_prob": 0.54753,
+     "market_fair_prob": 0.53812,
+     "edge": -0.05916,
+     "ev_per_unit": -0.12523,
+     "kelly_full": 0.0,
+     "book_title": "BetUS",
+     "point": null
+    },
+    {
+     "side": "away",
+     "label": "NYM",
+     "model_prob": 0.52104,
+     "fair_odds": -109,
+     "book": "draftkings",
+     "odds": 114,
+     "decimal": 2.14,
+     "implied_prob": 0.46729,
+     "market_fair_prob": 0.46188,
+     "edge": 0.05916,
+     "ev_per_unit": 0.11503,
+     "kelly_full": 0.1009,
+     "book_title": "DraftKings",
+     "point": null
+    }
+   ],
+   "runline": [
+    {
+     "side": "home",
+     "label": "CLE -1.5",
+     "model_prob": 0.27447,
+     "fair_odds": 264,
+     "book": "bovada",
+     "odds": 180,
+     "decimal": 2.8,
+     "implied_prob": 0.35714,
+     "market_fair_prob": 0.66286,
+     "edge": -0.38839,
+     "ev_per_unit": -0.23148,
+     "kelly_full": 0.0,
+     "book_title": "Bovada",
+     "point": -1.5
+    },
+    {
+     "side": "away",
+     "label": "NYM +1.5",
+     "model_prob": 0.72553,
+     "fair_odds": -264,
+     "book": "fanduel",
+     "odds": 184,
+     "decimal": 2.84,
+     "implied_prob": 0.35211,
+     "market_fair_prob": 0.33714,
+     "edge": 0.38839,
+     "ev_per_unit": 1.06051,
+     "kelly_full": 0.57636,
+     "book_title": "FanDuel",
+     "point": -1.5
+    }
+   ],
+   "total": {
+    "line": 7.5,
+    "sides": [
+     {
+      "side": "over",
+      "label": "Over 7.5",
+      "model_prob": 0.51204,
+      "fair_odds": -105,
+      "book": "betrivers",
+      "odds": 102,
+      "decimal": 2.02,
+      "implied_prob": 0.49505,
+      "market_fair_prob": 0.48072,
+      "edge": 0.03132,
+      "ev_per_unit": 0.03432,
+      "kelly_full": 0.03365,
+      "book_title": "BetRivers",
+      "point": 7.5
+     },
+     {
+      "side": "under",
+      "label": "Under 7.5",
+      "model_prob": 0.48796,
+      "fair_odds": 105,
+      "book": "lowvig",
+      "odds": -114,
+      "decimal": 1.8772,
+      "implied_prob": 0.53271,
+      "market_fair_prob": 0.51928,
+      "edge": -0.03132,
+      "ev_per_unit": -0.084,
+      "kelly_full": 0.0,
+      "book_title": "LowVig.ag",
+      "point": 7.5
+     }
+    ]
+   },
+   "market": {
+    "moneyline_hold_pct": 2.125,
+    "total_hold_pct": 5.041,
+    "devig_method": "proportional"
+   }
+  }
+ ],
  "record": {
   "n_rows": 0,
   "n_settled": 0,
