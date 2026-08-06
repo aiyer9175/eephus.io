@@ -160,6 +160,14 @@ def test_committed_artifact_headline_alias_contract():
 #   stayed on a club MLB's feed contradicts. 1,496 players reconciled plus 163 roster-map
 #   entries corrected; test_org_authority is green for the first time. No eFV MODEL input
 #   moved: same rows, features, lambda and calibration. org rides inside the hashed payload.
+# Updated 2026-08-06 (corruption repair). data/timeseries.json was found CORRUPT (a JSON
+#   decode error 42.9MB in, from two processes writing it at once: a pytest run and a
+#   proj_export overlapping). It is gitignored, so there was nothing to restore from and
+#   the only repair is a regen. This restamp is that regen, not a model change: no eFV
+#   input moved. WORTH KNOWING: the pipeline has more than one writer of this artifact
+#   (export_timeseries_json builds it, _patch_export_run_summary re-serialises it), and
+#   nothing serialises the pair, so running an export concurrently with anything that
+#   patches the summary can truncate a 74MB served file with no error anywhere.
 # GOLDEN eFV ARTIFACT FINGERPRINT (volatile-key-stripped content hash of data/xfv.json).
 # This is a deliberate tripwire: it goes red when the flagship export changes. An
 # INTENTIONAL eFV ship (model/feature/calibration change) updates this constant in the
@@ -484,7 +492,7 @@ def test_committed_artifact_headline_alias_contract():
 #   tools.pipeline_artifact_diff.fingerprint_file, per the 2026-07-30 note above:
 #   a mid-suite test regenerates xfv.json under fixtures, and stamping from that
 #   would record a fixture state as production truth.
-_GOLDEN_XFV_SHA256 = "fba5717a6c87122466fe68196b6a9091736b16c9ee07089371ff2c397ee2d3ab"
+_GOLDEN_XFV_SHA256 = "ad57da0f6c9f910187b746a0d53080b1aadfba48ce5d6ee59ece3f0ea54ddcee"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire

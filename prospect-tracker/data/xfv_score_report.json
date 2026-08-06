@@ -20,13 +20,13 @@
   "max_down": -21.0
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.0788,
+  "spearman_adj_vs_consensus_miss": 0.0789,
   "n": 463,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 24924.9,
-  "consensus": 24194.8
+  "xfv": 24865.7,
+  "consensus": 24195.2
  },
  "example_up_adjustments": [
   {

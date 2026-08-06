@@ -1,10 +1,10 @@
 {
- "generated_at": "2026-08-05",
+ "generated_at": "2026-08-06",
  "season": 2026,
- "as_of": "2026-08-05",
+ "as_of": "2026-08-06",
  "coverage": {
-  "games": 1717,
-  "games_total": 1724
+  "games": 1720,
+  "games_total": 1727
  },
  "sources": {
   "n_hitting_rows": 685,
@@ -108,17 +108,6 @@
    "qualified": true
   },
   {
-   "mlbam": 671277,
-   "name": "Luis Garc\u00eda Jr.",
-   "team": "NYY",
-   "pa": 382,
-   "wpa": 2.813,
-   "pli": 0.97,
-   "clutch": 1.113,
-   "wpa_li": 1.801,
-   "qualified": true
-  },
-  {
    "mlbam": 682928,
    "name": "CJ Abrams",
    "team": "WSH",
@@ -127,6 +116,17 @@
    "pli": 1.0,
    "clutch": -0.001,
    "wpa_li": 2.798,
+   "qualified": true
+  },
+  {
+   "mlbam": 671277,
+   "name": "Luis Garc\u00eda Jr.",
+   "team": "NYY",
+   "pa": 386,
+   "wpa": 2.759,
+   "pli": 0.97,
+   "clutch": 1.036,
+   "wpa_li": 1.805,
    "qualified": true
   },
   {
@@ -196,6 +196,28 @@
    "qualified": true
   },
   {
+   "mlbam": 802139,
+   "name": "JJ Wetherholt",
+   "team": "STL",
+   "pa": 490,
+   "wpa": 1.893,
+   "pli": 1.04,
+   "clutch": 1.278,
+   "wpa_li": 0.54,
+   "qualified": true
+  },
+  {
+   "mlbam": 700250,
+   "name": "Ben Rice",
+   "team": "NYY",
+   "pa": 472,
+   "wpa": 1.828,
+   "pli": 0.96,
+   "clutch": -0.139,
+   "wpa_li": 2.044,
+   "qualified": true
+  },
+  {
    "mlbam": 694249,
    "name": "Cole Carrigg",
    "team": "COL",
@@ -205,17 +227,6 @@
    "clutch": 0.864,
    "wpa_li": 0.867,
    "qualified": false
-  },
-  {
-   "mlbam": 700250,
-   "name": "Ben Rice",
-   "team": "NYY",
-   "pa": 467,
-   "wpa": 1.781,
-   "pli": 0.96,
-   "clutch": -0.128,
-   "wpa_li": 1.985,
-   "qualified": true
   },
   {
    "mlbam": 669394,
@@ -251,6 +262,17 @@
    "qualified": true
   },
   {
+   "mlbam": 693307,
+   "name": "Dillon Dingler",
+   "team": "DET",
+   "pa": 442,
+   "wpa": 1.745,
+   "pli": 1.05,
+   "clutch": 0.296,
+   "wpa_li": 1.366,
+   "qualified": true
+  },
+  {
    "mlbam": 677951,
    "name": "Bobby Witt Jr.",
    "team": "KC",
@@ -259,28 +281,6 @@
    "pli": 1.0,
    "clutch": 1.115,
    "wpa_li": 0.523,
-   "qualified": true
-  },
-  {
-   "mlbam": 802139,
-   "name": "JJ Wetherholt",
-   "team": "STL",
-   "pa": 485,
-   "wpa": 1.628,
-   "pli": 1.04,
-   "clutch": 1.087,
-   "wpa_li": 0.476,
-   "qualified": true
-  },
-  {
-   "mlbam": 693307,
-   "name": "Dillon Dingler",
-   "team": "DET",
-   "pa": 438,
-   "wpa": 1.623,
-   "pli": 1.05,
-   "clutch": 0.344,
-   "wpa_li": 1.201,
    "qualified": true
   },
   {
@@ -306,17 +306,6 @@
    "qualified": true
   },
   {
-   "mlbam": 805808,
-   "name": "Kevin McGonigle",
-   "team": "DET",
-   "pa": 495,
-   "wpa": 1.429,
-   "pli": 1.0,
-   "clutch": 0.353,
-   "wpa_li": 1.073,
-   "qualified": true
-  },
-  {
    "mlbam": 624413,
    "name": "Pete Alonso",
    "team": "BAL",
@@ -325,17 +314,6 @@
    "pli": 1.04,
    "clutch": 0.848,
    "wpa_li": 0.518,
-   "qualified": true
-  },
-  {
-   "mlbam": 665487,
-   "name": "Fernando Tatis Jr.",
-   "team": "SD",
-   "pa": 495,
-   "wpa": 1.388,
-   "pli": 0.98,
-   "clutch": 1.031,
-   "wpa_li": 0.381,
    "qualified": true
   },
   {
@@ -350,14 +328,25 @@
    "qualified": true
   },
   {
-   "mlbam": 702284,
-   "name": "Cole Young",
-   "team": "SEA",
-   "pa": 461,
-   "wpa": 1.271,
+   "mlbam": 805808,
+   "name": "Kevin McGonigle",
+   "team": "DET",
+   "pa": 499,
+   "wpa": 1.324,
    "pli": 1.0,
-   "clutch": 1.293,
-   "wpa_li": -0.025,
+   "clutch": 0.326,
+   "wpa_li": 0.994,
+   "qualified": true
+  },
+  {
+   "mlbam": 665487,
+   "name": "Fernando Tatis Jr.",
+   "team": "SD",
+   "pa": 499,
+   "wpa": 1.324,
+   "pli": 0.98,
+   "clutch": 1.019,
+   "wpa_li": 0.332,
    "qualified": true
   },
   {
@@ -416,6 +405,17 @@
    "qualified": true
   },
   {
+   "mlbam": 682998,
+   "name": "Corbin Carroll",
+   "team": "AZ",
+   "pa": 483,
+   "wpa": 1.184,
+   "pli": 1.0,
+   "clutch": -0.295,
+   "wpa_li": 1.483,
+   "qualified": true
+  },
+  {
    "mlbam": 701398,
    "name": "Sal Stewart",
    "team": "CIN",
@@ -427,17 +427,6 @@
    "qualified": true
   },
   {
-   "mlbam": 669134,
-   "name": "Luis Campusano",
-   "team": "SD",
-   "pa": 122,
-   "wpa": 1.146,
-   "pli": 1.04,
-   "clutch": 0.187,
-   "wpa_li": 0.91,
-   "qualified": false
-  },
-  {
    "mlbam": 669003,
    "name": "Garrett Mitchell",
    "team": "MIL",
@@ -447,6 +436,28 @@
    "clutch": 0.824,
    "wpa_li": 0.305,
    "qualified": true
+  },
+  {
+   "mlbam": 702284,
+   "name": "Cole Young",
+   "team": "SEA",
+   "pa": 465,
+   "wpa": 1.119,
+   "pli": 1.0,
+   "clutch": 1.262,
+   "wpa_li": -0.146,
+   "qualified": true
+  },
+  {
+   "mlbam": 669134,
+   "name": "Luis Campusano",
+   "team": "SD",
+   "pa": 126,
+   "wpa": 1.116,
+   "pli": 1.02,
+   "clutch": 0.266,
+   "wpa_li": 0.827,
+   "qualified": false
   },
   {
    "mlbam": 803011,
@@ -490,17 +501,6 @@
    "pli": 1.02,
    "clutch": 0.115,
    "wpa_li": 0.928,
-   "qualified": true
-  },
-  {
-   "mlbam": 682998,
-   "name": "Corbin Carroll",
-   "team": "AZ",
-   "pa": 479,
-   "wpa": 1.06,
-   "pli": 1.0,
-   "clutch": -0.309,
-   "wpa_li": 1.371,
    "qualified": true
   },
   {
@@ -628,11 +628,11 @@
    "mlbam": 672695,
    "name": "Geraldo Perdomo",
    "team": "AZ",
-   "pa": 476,
-   "wpa": 0.834,
-   "pli": 1.0,
-   "clutch": 0.362,
-   "wpa_li": 0.475,
+   "pa": 481,
+   "wpa": 0.836,
+   "pli": 0.99,
+   "clutch": 0.345,
+   "wpa_li": 0.495,
    "qualified": true
   },
   {
@@ -669,28 +669,6 @@
    "qualified": true
   },
   {
-   "mlbam": 701678,
-   "name": "Hao-Yu Lee",
-   "team": "DET",
-   "pa": 203,
-   "wpa": 0.807,
-   "pli": 1.06,
-   "clutch": 1.053,
-   "wpa_li": -0.294,
-   "qualified": false
-  },
-  {
-   "mlbam": 672515,
-   "name": "Gabriel Moreno",
-   "team": "AZ",
-   "pa": 353,
-   "wpa": 0.805,
-   "pli": 1.06,
-   "clutch": 0.17,
-   "wpa_li": 0.593,
-   "qualified": true
-  },
-  {
    "mlbam": 669392,
    "name": "Samad Taylor",
    "team": "SD",
@@ -700,6 +678,28 @@
    "clutch": 0.567,
    "wpa_li": 0.25,
    "qualified": false
+  },
+  {
+   "mlbam": 701678,
+   "name": "Hao-Yu Lee",
+   "team": "DET",
+   "pa": 204,
+   "wpa": 0.784,
+   "pli": 1.06,
+   "clutch": 1.058,
+   "wpa_li": -0.319,
+   "qualified": false
+  },
+  {
+   "mlbam": 672515,
+   "name": "Gabriel Moreno",
+   "team": "AZ",
+   "pa": 358,
+   "wpa": 0.774,
+   "pli": 1.05,
+   "clutch": 0.142,
+   "wpa_li": 0.593,
+   "qualified": true
   },
   {
    "mlbam": 666160,
@@ -801,17 +801,6 @@
    "qualified": true
   },
   {
-   "mlbam": 682985,
-   "name": "Riley Greene",
-   "team": "DET",
-   "pa": 470,
-   "wpa": 0.69,
-   "pli": 1.06,
-   "clutch": -0.577,
-   "wpa_li": 1.226,
-   "qualified": true
-  },
-  {
    "mlbam": 687859,
    "name": "Troy Johnston",
    "team": "COL",
@@ -820,17 +809,6 @@
    "pli": 1.01,
    "clutch": 0.889,
    "wpa_li": -0.207,
-   "qualified": true
-  },
-  {
-   "mlbam": 686527,
-   "name": "Dominic Canzone",
-   "team": "SEA",
-   "pa": 325,
-   "wpa": 0.675,
-   "pli": 0.96,
-   "clutch": -0.149,
-   "wpa_li": 0.85,
    "qualified": true
   },
   {
@@ -856,6 +834,17 @@
    "qualified": true
   },
   {
+   "mlbam": 677594,
+   "name": "Julio Rodr\u00edguez",
+   "team": "SEA",
+   "pa": 452,
+   "wpa": 0.668,
+   "pli": 1.01,
+   "clutch": 0.923,
+   "wpa_li": -0.261,
+   "qualified": true
+  },
+  {
    "mlbam": 672640,
    "name": "Otto Lopez",
    "team": "MIA",
@@ -867,6 +856,17 @@
    "qualified": true
   },
   {
+   "mlbam": 502671,
+   "name": "Paul Goldschmidt",
+   "team": "NYY",
+   "pa": 323,
+   "wpa": 0.652,
+   "pli": 0.97,
+   "clutch": 0.837,
+   "wpa_li": -0.162,
+   "qualified": true
+  },
+  {
    "mlbam": 664040,
    "name": "Brandon Lowe",
    "team": "PIT",
@@ -875,6 +875,17 @@
    "pli": 1.04,
    "clutch": -0.188,
    "wpa_li": 0.815,
+   "qualified": true
+  },
+  {
+   "mlbam": 686527,
+   "name": "Dominic Canzone",
+   "team": "SEA",
+   "pa": 329,
+   "wpa": 0.649,
+   "pli": 0.96,
+   "clutch": -0.108,
+   "wpa_li": 0.783,
    "qualified": true
   },
   {
@@ -900,17 +911,6 @@
    "qualified": true
   },
   {
-   "mlbam": 502671,
-   "name": "Paul Goldschmidt",
-   "team": "NYY",
-   "pa": 321,
-   "wpa": 0.63,
-   "pli": 0.96,
-   "clutch": 0.855,
-   "wpa_li": -0.2,
-   "qualified": true
-  },
-  {
    "mlbam": 646240,
    "name": "Rafael Devers",
    "team": "SF",
@@ -919,6 +919,17 @@
    "pli": 0.97,
    "clutch": 0.141,
    "wpa_li": 0.509,
+   "qualified": true
+  },
+  {
+   "mlbam": 682985,
+   "name": "Riley Greene",
+   "team": "DET",
+   "pa": 474,
+   "wpa": 0.621,
+   "pli": 1.06,
+   "clutch": -0.584,
+   "wpa_li": 1.168,
    "qualified": true
   },
   {
@@ -1068,11 +1079,11 @@
    "mlbam": 668227,
    "name": "Randy Arozarena",
    "team": "SEA",
-   "pa": 455,
-   "wpa": 0.528,
-   "pli": 1.01,
-   "clutch": -1.121,
-   "wpa_li": 1.646,
+   "pa": 459,
+   "wpa": 0.529,
+   "pli": 1.0,
+   "clutch": -1.157,
+   "wpa_li": 1.685,
    "qualified": true
   },
   {
@@ -1084,6 +1095,17 @@
    "pli": 1.01,
    "clutch": -0.769,
    "wpa_li": 1.283,
+   "qualified": true
+  },
+  {
+   "mlbam": 665862,
+   "name": "Jazz Chisholm Jr.",
+   "team": "NYY",
+   "pa": 425,
+   "wpa": 0.51,
+   "pli": 0.98,
+   "clutch": 1.24,
+   "wpa_li": -0.719,
    "qualified": true
   },
   {
@@ -1164,28 +1186,6 @@
    "qualified": false
   },
   {
-   "mlbam": 663757,
-   "name": "Trent Grisham",
-   "team": "NYY",
-   "pa": 375,
-   "wpa": 0.446,
-   "pli": 0.95,
-   "clutch": 0.365,
-   "wpa_li": 0.104,
-   "qualified": true
-  },
-  {
-   "mlbam": 665862,
-   "name": "Jazz Chisholm Jr.",
-   "team": "NYY",
-   "pa": 421,
-   "wpa": 0.445,
-   "pli": 0.97,
-   "clutch": 1.19,
-   "wpa_li": -0.732,
-   "qualified": true
-  },
-  {
    "mlbam": 671976,
    "name": "Tristan Peters",
    "team": "CWS",
@@ -1208,17 +1208,6 @@
    "qualified": false
   },
   {
-   "mlbam": 545121,
-   "name": "Ildemaro Vargas",
-   "team": "AZ",
-   "pa": 350,
-   "wpa": 0.433,
-   "pli": 1.0,
-   "clutch": 0.544,
-   "wpa_li": -0.112,
-   "qualified": true
-  },
-  {
    "mlbam": 677587,
    "name": "Brayan Rocchio",
    "team": "CLE",
@@ -1239,6 +1228,17 @@
    "clutch": 1.04,
    "wpa_li": -0.595,
    "qualified": false
+  },
+  {
+   "mlbam": 545121,
+   "name": "Ildemaro Vargas",
+   "team": "AZ",
+   "pa": 355,
+   "wpa": 0.423,
+   "pli": 0.99,
+   "clutch": 0.498,
+   "wpa_li": -0.072,
+   "qualified": true
   },
   {
    "mlbam": 669364,
@@ -1340,14 +1340,14 @@
    "qualified": true
   },
   {
-   "mlbam": 676475,
-   "name": "Alec Burleson",
-   "team": "STL",
-   "pa": 474,
-   "wpa": 0.322,
+   "mlbam": 592518,
+   "name": "Manny Machado",
+   "team": "SD",
+   "pa": 476,
+   "wpa": 0.32,
    "pli": 1.02,
-   "clutch": -1.412,
-   "wpa_li": 1.729,
+   "clutch": 0.06,
+   "wpa_li": 0.254,
    "qualified": true
   },
   {
@@ -1371,6 +1371,17 @@
    "clutch": 0.68,
    "wpa_li": -0.348,
    "qualified": false
+  },
+  {
+   "mlbam": 676475,
+   "name": "Alec Burleson",
+   "team": "STL",
+   "pa": 478,
+   "wpa": 0.313,
+   "pli": 1.01,
+   "clutch": -1.41,
+   "wpa_li": 1.719,
+   "qualified": true
   },
   {
    "mlbam": 681481,
@@ -1439,28 +1450,6 @@
    "qualified": false
   },
   {
-   "mlbam": 677594,
-   "name": "Julio Rodr\u00edguez",
-   "team": "SEA",
-   "pa": 448,
-   "wpa": 0.29,
-   "pli": 1.01,
-   "clutch": 0.72,
-   "wpa_li": -0.432,
-   "qualified": true
-  },
-  {
-   "mlbam": 592518,
-   "name": "Manny Machado",
-   "team": "SD",
-   "pa": 473,
-   "wpa": 0.285,
-   "pli": 1.02,
-   "clutch": 0.043,
-   "wpa_li": 0.236,
-   "qualified": true
-  },
-  {
    "mlbam": 668904,
    "name": "Royce Lewis",
    "team": "MIN",
@@ -1480,6 +1469,17 @@
    "pli": 0.88,
    "clutch": -0.514,
    "wpa_li": 0.831,
+   "qualified": true
+  },
+  {
+   "mlbam": 663757,
+   "name": "Trent Grisham",
+   "team": "NYY",
+   "pa": 380,
+   "wpa": 0.27,
+   "pli": 0.96,
+   "clutch": 0.306,
+   "wpa_li": -0.024,
    "qualified": true
   },
   {
@@ -1527,26 +1527,15 @@
    "qualified": false
   },
   {
-   "mlbam": 679529,
-   "name": "Spencer Torkelson",
+   "mlbam": 703601,
+   "name": "Max Clark",
    "team": "DET",
-   "pa": 442,
-   "wpa": 0.26,
-   "pli": 1.02,
-   "clutch": 0.381,
-   "wpa_li": -0.127,
-   "qualified": true
-  },
-  {
-   "mlbam": 671056,
-   "name": "Iv\u00e1n Herrera",
-   "team": "STL",
-   "pa": 498,
-   "wpa": 0.26,
-   "pli": 1.02,
-   "clutch": 0.052,
-   "wpa_li": 0.203,
-   "qualified": true
+   "pa": 24,
+   "wpa": 0.262,
+   "pli": 0.65,
+   "clutch": 0.201,
+   "wpa_li": 0.204,
+   "qualified": false
   },
   {
    "mlbam": 621043,
@@ -1571,6 +1560,17 @@
    "qualified": false
   },
   {
+   "mlbam": 671056,
+   "name": "Iv\u00e1n Herrera",
+   "team": "STL",
+   "pa": 503,
+   "wpa": 0.254,
+   "pli": 1.02,
+   "clutch": 0.064,
+   "wpa_li": 0.185,
+   "qualified": true
+  },
+  {
    "mlbam": 665953,
    "name": "Andr\u00e9s Chaparro",
    "team": "WSH",
@@ -1579,17 +1579,6 @@
    "pli": 0.92,
    "clutch": 0.148,
    "wpa_li": 0.115,
-   "qualified": false
-  },
-  {
-   "mlbam": 703601,
-   "name": "Max Clark",
-   "team": "DET",
-   "pa": 20,
-   "wpa": 0.236,
-   "pli": 0.61,
-   "clutch": 0.214,
-   "wpa_li": 0.17,
    "qualified": false
   },
   {
@@ -1670,28 +1659,6 @@
    "qualified": true
   },
   {
-   "mlbam": 543510,
-   "name": "James McCann",
-   "team": "AZ",
-   "pa": 99,
-   "wpa": 0.18,
-   "pli": 0.9,
-   "clutch": 0.026,
-   "wpa_li": 0.174,
-   "qualified": false
-  },
-  {
-   "mlbam": 701538,
-   "name": "Jackson Merrill",
-   "team": "SD",
-   "pa": 468,
-   "wpa": 0.178,
-   "pli": 1.05,
-   "clutch": 1.084,
-   "wpa_li": -0.915,
-   "qualified": true
-  },
-  {
    "mlbam": 678011,
    "name": "Anthony Seigler",
    "team": "BOS",
@@ -1769,6 +1736,28 @@
    "qualified": true
   },
   {
+   "mlbam": 679529,
+   "name": "Spencer Torkelson",
+   "team": "DET",
+   "pa": 446,
+   "wpa": 0.147,
+   "pli": 1.02,
+   "clutch": 0.372,
+   "wpa_li": -0.228,
+   "qualified": true
+  },
+  {
+   "mlbam": 543510,
+   "name": "James McCann",
+   "team": "AZ",
+   "pa": 104,
+   "wpa": 0.145,
+   "pli": 0.87,
+   "clutch": 0.078,
+   "wpa_li": 0.089,
+   "qualified": false
+  },
+  {
    "mlbam": 672960,
    "name": "Kazuma Okamoto",
    "team": "TOR",
@@ -1832,17 +1821,6 @@
    "pli": 0.98,
    "clutch": -0.145,
    "wpa_li": 0.253,
-   "qualified": false
-  },
-  {
-   "mlbam": 806146,
-   "name": "George Lombard Jr.",
-   "team": "NYY",
-   "pa": 3,
-   "wpa": 0.105,
-   "pli": 0.67,
-   "clutch": -0.017,
-   "wpa_li": 0.174,
    "qualified": false
   },
   {
@@ -1934,6 +1912,17 @@
    "qualified": true
   },
   {
+   "mlbam": 701538,
+   "name": "Jackson Merrill",
+   "team": "SD",
+   "pa": 472,
+   "wpa": 0.082,
+   "pli": 1.05,
+   "clutch": 1.09,
+   "wpa_li": -1.012,
+   "qualified": true
+  },
+  {
    "mlbam": 592663,
    "name": "J.T. Realmuto",
    "team": "PHI",
@@ -2011,17 +2000,6 @@
    "qualified": true
   },
   {
-   "mlbam": 682987,
-   "name": "Spencer Jones",
-   "team": "NYY",
-   "pa": 117,
-   "wpa": 0.071,
-   "pli": 0.89,
-   "clutch": -0.238,
-   "wpa_li": 0.317,
-   "qualified": false
-  },
-  {
    "mlbam": 686554,
    "name": "Oliver Dunn",
    "team": "TB",
@@ -2077,17 +2055,6 @@
    "qualified": true
   },
   {
-   "mlbam": 656716,
-   "name": "Zach McKinstry",
-   "team": "DET",
-   "pa": 305,
-   "wpa": 0.06,
-   "pli": 0.91,
-   "clutch": 0.482,
-   "wpa_li": -0.416,
-   "qualified": true
-  },
-  {
    "mlbam": 571771,
    "name": "Enrique Hern\u00e1ndez",
    "team": "LAD",
@@ -2097,6 +2064,17 @@
    "clutch": 0.054,
    "wpa_li": 0.004,
    "qualified": false
+  },
+  {
+   "mlbam": 656716,
+   "name": "Zach McKinstry",
+   "team": "DET",
+   "pa": 307,
+   "wpa": 0.055,
+   "pli": 0.91,
+   "clutch": 0.464,
+   "wpa_li": -0.404,
+   "qualified": true
   },
   {
    "mlbam": 600869,
@@ -2239,6 +2217,17 @@
    "pli": 0.81,
    "clutch": -0.016,
    "wpa_li": 0.019,
+   "qualified": false
+  },
+  {
+   "mlbam": 806146,
+   "name": "George Lombard Jr.",
+   "team": "NYY",
+   "pa": 7,
+   "wpa": 0.002,
+   "pli": 1.35,
+   "clutch": -0.13,
+   "wpa_li": 0.132,
    "qualified": false
   },
   {
@@ -2393,6 +2382,17 @@
    "pli": 1.18,
    "clutch": 0.025,
    "wpa_li": -0.034,
+   "qualified": false
+  },
+  {
+   "mlbam": 663457,
+   "name": "Lars Nootbaar",
+   "team": "AZ",
+   "pa": 188,
+   "wpa": -0.01,
+   "pli": 1.0,
+   "clutch": 0.254,
+   "wpa_li": -0.264,
    "qualified": false
   },
   {
@@ -2693,28 +2693,6 @@
    "qualified": true
   },
   {
-   "mlbam": 664034,
-   "name": "Ty France",
-   "team": "SD",
-   "pa": 310,
-   "wpa": -0.056,
-   "pli": 1.13,
-   "clutch": -0.852,
-   "wpa_li": 0.803,
-   "qualified": true
-  },
-  {
-   "mlbam": 663457,
-   "name": "Lars Nootbaar",
-   "team": "AZ",
-   "pa": 183,
-   "wpa": -0.059,
-   "pli": 1.0,
-   "clutch": 0.267,
-   "wpa_li": -0.326,
-   "qualified": false
-  },
-  {
    "mlbam": 663886,
    "name": "Tyler Stephenson",
    "team": "CIN",
@@ -2723,6 +2701,17 @@
    "pli": 1.04,
    "clutch": 0.025,
    "wpa_li": -0.083,
+   "qualified": true
+  },
+  {
+   "mlbam": 664034,
+   "name": "Ty France",
+   "team": "SD",
+   "pa": 314,
+   "wpa": -0.061,
+   "pli": 1.13,
+   "clutch": -0.861,
+   "wpa_li": 0.807,
    "qualified": true
   },
   {
@@ -2748,6 +2737,17 @@
    "qualified": false
   },
   {
+   "mlbam": 694374,
+   "name": "Tim Tawa",
+   "team": "AZ",
+   "pa": 171,
+   "wpa": -0.065,
+   "pli": 0.89,
+   "clutch": -0.203,
+   "wpa_li": 0.13,
+   "qualified": false
+  },
+  {
    "mlbam": 681909,
    "name": "Justin Dean",
    "team": "CHC",
@@ -2759,17 +2759,6 @@
    "qualified": false
   },
   {
-   "mlbam": 680977,
-   "name": "Brendan Donovan",
-   "team": "SEA",
-   "pa": 105,
-   "wpa": -0.069,
-   "pli": 1.1,
-   "clutch": -0.135,
-   "wpa_li": 0.072,
-   "qualified": false
-  },
-  {
    "mlbam": 666163,
    "name": "Ben Rortvedt",
    "team": "LAD",
@@ -2778,6 +2767,17 @@
    "pli": 1.28,
    "clutch": -0.001,
    "wpa_li": -0.052,
+   "qualified": false
+  },
+  {
+   "mlbam": 680977,
+   "name": "Brendan Donovan",
+   "team": "SEA",
+   "pa": 108,
+   "wpa": -0.07,
+   "pli": 1.09,
+   "clutch": -0.096,
+   "wpa_li": 0.032,
    "qualified": false
   },
   {
@@ -3012,14 +3012,14 @@
    "qualified": true
   },
   {
-   "mlbam": 694374,
-   "name": "Tim Tawa",
-   "team": "AZ",
-   "pa": 166,
-   "wpa": -0.117,
-   "pli": 0.9,
-   "clutch": -0.018,
-   "wpa_li": -0.111,
+   "mlbam": 682987,
+   "name": "Spencer Jones",
+   "team": "NYY",
+   "pa": 121,
+   "wpa": -0.115,
+   "pli": 0.92,
+   "clutch": -0.332,
+   "wpa_li": 0.207,
    "qualified": false
   },
   {
@@ -3573,17 +3573,6 @@
    "qualified": false
   },
   {
-   "mlbam": 691026,
-   "name": "Masyn Winn",
-   "team": "STL",
-   "pa": 434,
-   "wpa": -0.238,
-   "pli": 1.03,
-   "clutch": 0.622,
-   "wpa_li": -0.853,
-   "qualified": true
-  },
-  {
    "mlbam": 672356,
    "name": "Gabriel Arias",
    "team": "CLE",
@@ -3664,12 +3653,23 @@
    "mlbam": 669398,
    "name": "Gage Workman",
    "team": "SD",
-   "pa": 40,
-   "wpa": -0.266,
-   "pli": 1.13,
-   "clutch": 0.159,
-   "wpa_li": -0.395,
+   "pa": 41,
+   "wpa": -0.265,
+   "pli": 1.1,
+   "clutch": 0.121,
+   "wpa_li": -0.362,
    "qualified": false
+  },
+  {
+   "mlbam": 691026,
+   "name": "Masyn Winn",
+   "team": "STL",
+   "pa": 435,
+   "wpa": -0.266,
+   "pli": 1.03,
+   "clutch": 0.642,
+   "wpa_li": -0.901,
+   "qualified": true
   },
   {
    "mlbam": 670231,
@@ -3702,17 +3702,6 @@
    "pli": 1.15,
    "clutch": -0.31,
    "wpa_li": 0.075,
-   "qualified": false
-  },
-  {
-   "mlbam": 680664,
-   "name": "Eduardo Valencia",
-   "team": "DET",
-   "pa": 32,
-   "wpa": -0.273,
-   "pli": 1.1,
-   "clutch": -0.829,
-   "wpa_li": 0.58,
    "qualified": false
   },
   {
@@ -3958,6 +3947,17 @@
    "qualified": false
   },
   {
+   "mlbam": 682988,
+   "name": "Tyler Locklear",
+   "team": "AZ",
+   "pa": 35,
+   "wpa": -0.31,
+   "pli": 0.98,
+   "clutch": -0.339,
+   "wpa_li": 0.022,
+   "qualified": false
+  },
+  {
    "mlbam": 694410,
    "name": "LuJames Groover",
    "team": "AZ",
@@ -4167,17 +4167,6 @@
    "qualified": false
   },
   {
-   "mlbam": 682988,
-   "name": "Tyler Locklear",
-   "team": "AZ",
-   "pa": 31,
-   "wpa": -0.353,
-   "pli": 1.07,
-   "clutch": -0.256,
-   "wpa_li": -0.073,
-   "qualified": false
-  },
-  {
    "mlbam": 701305,
    "name": "Zach Dezenzo",
    "team": "HOU",
@@ -4203,10 +4192,10 @@
    "mlbam": 657757,
    "name": "Gavin Sheets",
    "team": "SD",
-   "pa": 367,
+   "pa": 368,
    "wpa": -0.363,
    "pli": 0.98,
-   "clutch": 0.333,
+   "clutch": 0.332,
    "wpa_li": -0.701,
    "qualified": true
   },
@@ -4269,11 +4258,11 @@
    "mlbam": 701675,
    "name": "Nathan Church",
    "team": "STL",
-   "pa": 309,
-   "wpa": -0.376,
-   "pli": 0.97,
-   "clutch": 0.646,
-   "wpa_li": -1.035,
+   "pa": 313,
+   "wpa": -0.374,
+   "pli": 0.96,
+   "clutch": 0.622,
+   "wpa_li": -1.01,
    "qualified": true
   },
   {
@@ -4299,6 +4288,17 @@
    "qualified": false
   },
   {
+   "mlbam": 699625,
+   "name": "Jimmy Crooks",
+   "team": "STL",
+   "pa": 104,
+   "wpa": -0.381,
+   "pli": 1.02,
+   "clutch": 0.234,
+   "wpa_li": -0.606,
+   "qualified": false
+  },
+  {
    "mlbam": 669720,
    "name": "Austin Hays",
    "team": "CWS",
@@ -4310,14 +4310,14 @@
    "qualified": false
   },
   {
-   "mlbam": 663494,
-   "name": "Bryan Torres",
-   "team": "STL",
-   "pa": 96,
-   "wpa": -0.383,
-   "pli": 1.2,
-   "clutch": -0.172,
-   "wpa_li": -0.147,
+   "mlbam": 680664,
+   "name": "Eduardo Valencia",
+   "team": "DET",
+   "pa": 35,
+   "wpa": -0.384,
+   "pli": 1.11,
+   "clutch": -0.839,
+   "wpa_li": 0.494,
    "qualified": false
   },
   {
@@ -4395,17 +4395,6 @@
    "pli": 0.9,
    "clutch": -0.09,
    "wpa_li": -0.366,
-   "qualified": false
-  },
-  {
-   "mlbam": 699625,
-   "name": "Jimmy Crooks",
-   "team": "STL",
-   "pa": 100,
-   "wpa": -0.412,
-   "pli": 1.02,
-   "clutch": 0.252,
-   "wpa_li": -0.654,
    "qualified": false
   },
   {
@@ -4519,6 +4508,17 @@
    "qualified": false
   },
   {
+   "mlbam": 663494,
+   "name": "Bryan Torres",
+   "team": "STL",
+   "pa": 100,
+   "wpa": -0.44,
+   "pli": 1.19,
+   "clutch": -0.173,
+   "wpa_li": -0.197,
+   "qualified": false
+  },
+  {
    "mlbam": 695734,
    "name": "Daylen Lile",
    "team": "WSH",
@@ -4560,17 +4560,6 @@
    "pli": 0.99,
    "clutch": 0.103,
    "wpa_li": -0.552,
-   "qualified": false
-  },
-  {
-   "mlbam": 693409,
-   "name": "C\u00e9sar Prieto",
-   "team": "STL",
-   "pa": 17,
-   "wpa": -0.447,
-   "pli": 1.02,
-   "clutch": -0.068,
-   "wpa_li": -0.37,
    "qualified": false
   },
   {
@@ -4673,17 +4662,6 @@
    "qualified": false
   },
   {
-   "mlbam": 690993,
-   "name": "Colt Keith",
-   "team": "DET",
-   "pa": 321,
-   "wpa": -0.476,
-   "pli": 0.97,
-   "clutch": -0.429,
-   "wpa_li": -0.06,
-   "qualified": true
-  },
-  {
    "mlbam": 665489,
    "name": "Vladimir Guerrero Jr.",
    "team": "TOR",
@@ -4704,17 +4682,6 @@
    "clutch": 0.08,
    "wpa_li": -0.542,
    "qualified": false
-  },
-  {
-   "mlbam": 593428,
-   "name": "Xander Bogaerts",
-   "team": "SD",
-   "pa": 433,
-   "wpa": -0.481,
-   "pli": 1.05,
-   "clutch": 0.307,
-   "wpa_li": -0.766,
-   "qualified": true
   },
   {
    "mlbam": 694203,
@@ -4748,6 +4715,17 @@
    "clutch": -0.448,
    "wpa_li": -0.189,
    "qualified": false
+  },
+  {
+   "mlbam": 593428,
+   "name": "Xander Bogaerts",
+   "team": "SD",
+   "pa": 436,
+   "wpa": -0.507,
+   "pli": 1.04,
+   "clutch": 0.266,
+   "wpa_li": -0.751,
+   "qualified": true
   },
   {
    "mlbam": 678577,
@@ -4860,26 +4838,15 @@
    "qualified": false
   },
   {
-   "mlbam": 645305,
-   "name": "Ali S\u00e1nchez",
-   "team": "NYY",
-   "pa": 59,
-   "wpa": -0.546,
-   "pli": 1.09,
-   "clutch": -0.373,
-   "wpa_li": -0.129,
+   "mlbam": 693409,
+   "name": "C\u00e9sar Prieto",
+   "team": "STL",
+   "pa": 20,
+   "wpa": -0.541,
+   "pli": 1.06,
+   "clutch": -0.065,
+   "wpa_li": -0.444,
    "qualified": false
-  },
-  {
-   "mlbam": 641857,
-   "name": "Ryan McMahon",
-   "team": "NYY",
-   "pa": 271,
-   "wpa": -0.549,
-   "pli": 0.88,
-   "clutch": 0.072,
-   "wpa_li": -0.699,
-   "qualified": true
   },
   {
    "mlbam": 673357,
@@ -4945,6 +4912,17 @@
    "pli": 0.98,
    "clutch": 0.073,
    "wpa_li": -0.645,
+   "qualified": false
+  },
+  {
+   "mlbam": 814439,
+   "name": "Ryan Waldschmidt",
+   "team": "AZ",
+   "pa": 175,
+   "wpa": -0.563,
+   "pli": 1.02,
+   "clutch": -0.222,
+   "wpa_li": -0.33,
    "qualified": false
   },
   {
@@ -5025,6 +5003,17 @@
    "qualified": true
   },
   {
+   "mlbam": 645305,
+   "name": "Ali S\u00e1nchez",
+   "team": "NYY",
+   "pa": 60,
+   "wpa": -0.596,
+   "pli": 1.1,
+   "clutch": -0.386,
+   "wpa_li": -0.156,
+   "qualified": false
+  },
+  {
    "mlbam": 668709,
    "name": "JJ Bleday",
    "team": "CIN",
@@ -5102,17 +5091,6 @@
    "qualified": false
   },
   {
-   "mlbam": 814439,
-   "name": "Ryan Waldschmidt",
-   "team": "AZ",
-   "pa": 171,
-   "wpa": -0.616,
-   "pli": 1.03,
-   "clutch": -0.257,
-   "wpa_li": -0.339,
-   "qualified": false
-  },
-  {
    "mlbam": 694371,
    "name": "Tommy Troy",
    "team": "AZ",
@@ -5157,6 +5135,28 @@
    "qualified": false
   },
   {
+   "mlbam": 690993,
+   "name": "Colt Keith",
+   "team": "DET",
+   "pa": 325,
+   "wpa": -0.623,
+   "pli": 0.98,
+   "clutch": -0.476,
+   "wpa_li": -0.16,
+   "qualified": true
+  },
+  {
+   "mlbam": 621493,
+   "name": "Taylor Ward",
+   "team": "SEA",
+   "pa": 513,
+   "wpa": -0.627,
+   "pli": 0.99,
+   "clutch": -0.51,
+   "wpa_li": -0.123,
+   "qualified": true
+  },
+  {
    "mlbam": 596103,
    "name": "Austin Slater",
    "team": "TB",
@@ -5190,15 +5190,26 @@
    "qualified": true
   },
   {
-   "mlbam": 691458,
-   "name": "Blaze Jordan",
-   "team": "STL",
-   "pa": 140,
-   "wpa": -0.642,
-   "pli": 1.0,
-   "clutch": 0.123,
-   "wpa_li": -0.764,
-   "qualified": false
+   "mlbam": 641857,
+   "name": "Ryan McMahon",
+   "team": "NYY",
+   "pa": 275,
+   "wpa": -0.63,
+   "pli": 0.89,
+   "clutch": -0.022,
+   "wpa_li": -0.683,
+   "qualified": true
+  },
+  {
+   "mlbam": 650402,
+   "name": "Gleyber Torres",
+   "team": "DET",
+   "pa": 254,
+   "wpa": -0.658,
+   "pli": 0.97,
+   "clutch": -0.797,
+   "wpa_li": 0.12,
+   "qualified": true
   },
   {
    "mlbam": 622761,
@@ -5212,35 +5223,13 @@
    "qualified": false
   },
   {
-   "mlbam": 650402,
-   "name": "Gleyber Torres",
-   "team": "DET",
-   "pa": 250,
-   "wpa": -0.663,
-   "pli": 0.97,
-   "clutch": -0.77,
-   "wpa_li": 0.089,
-   "qualified": true
-  },
-  {
-   "mlbam": 621493,
-   "name": "Taylor Ward",
-   "team": "SEA",
-   "pa": 510,
-   "wpa": -0.668,
-   "pli": 0.99,
-   "clutch": -0.565,
-   "wpa_li": -0.109,
-   "qualified": true
-  },
-  {
    "mlbam": 823550,
    "name": "Sung-Mun Song",
    "team": "SD",
-   "pa": 124,
+   "pa": 125,
    "wpa": -0.668,
    "pli": 1.03,
-   "clutch": -0.146,
+   "clutch": -0.152,
    "wpa_li": -0.499,
    "qualified": false
   },
@@ -5256,6 +5245,17 @@
    "qualified": false
   },
   {
+   "mlbam": 691458,
+   "name": "Blaze Jordan",
+   "team": "STL",
+   "pa": 144,
+   "wpa": -0.676,
+   "pli": 1.0,
+   "clutch": 0.086,
+   "wpa_li": -0.764,
+   "qualified": false
+  },
+  {
    "mlbam": 695336,
    "name": "Thomas Saggese",
    "team": "STL",
@@ -5267,17 +5267,6 @@
    "qualified": false
   },
   {
-   "mlbam": 650859,
-   "name": "Luis Rengifo",
-   "team": "SD",
-   "pa": 277,
-   "wpa": -0.679,
-   "pli": 1.1,
-   "clutch": 0.203,
-   "wpa_li": -0.822,
-   "qualified": true
-  },
-  {
    "mlbam": 457705,
    "name": "Andrew McCutchen",
    "team": "TEX",
@@ -5286,17 +5275,6 @@
    "pli": 0.97,
    "clutch": -0.456,
    "wpa_li": -0.25,
-   "qualified": false
-  },
-  {
-   "mlbam": 687749,
-   "name": "Jase Bowen",
-   "team": "SD",
-   "pa": 72,
-   "wpa": -0.692,
-   "pli": 0.82,
-   "clutch": -0.129,
-   "wpa_li": -0.712,
    "qualified": false
   },
   {
@@ -5364,6 +5342,28 @@
    "clutch": -0.251,
    "wpa_li": -0.646,
    "qualified": false
+  },
+  {
+   "mlbam": 687749,
+   "name": "Jase Bowen",
+   "team": "SD",
+   "pa": 75,
+   "wpa": -0.732,
+   "pli": 0.81,
+   "clutch": -0.143,
+   "wpa_li": -0.758,
+   "qualified": false
+  },
+  {
+   "mlbam": 650859,
+   "name": "Luis Rengifo",
+   "team": "SD",
+   "pa": 280,
+   "wpa": -0.734,
+   "pli": 1.09,
+   "clutch": 0.242,
+   "wpa_li": -0.914,
+   "qualified": true
   },
   {
    "mlbam": 669477,
@@ -5564,17 +5564,6 @@
    "qualified": false
   },
   {
-   "mlbam": 665877,
-   "name": "Jos\u00e9 Ferm\u00edn",
-   "team": "STL",
-   "pa": 229,
-   "wpa": -0.852,
-   "pli": 1.09,
-   "clutch": -0.395,
-   "wpa_li": -0.385,
-   "qualified": false
-  },
-  {
    "mlbam": 678218,
    "name": "Brandon Valenzuela",
    "team": "TOR",
@@ -5738,6 +5727,17 @@
    "clutch": -0.455,
    "wpa_li": -0.458,
    "qualified": true
+  },
+  {
+   "mlbam": 665877,
+   "name": "Jos\u00e9 Ferm\u00edn",
+   "team": "STL",
+   "pa": 233,
+   "wpa": -0.938,
+   "pli": 1.09,
+   "clutch": -0.373,
+   "wpa_li": -0.489,
+   "qualified": false
   },
   {
    "mlbam": 668670,
@@ -5938,6 +5938,17 @@
    "qualified": false
   },
   {
+   "mlbam": 671218,
+   "name": "Heliot Ramos",
+   "team": "NYY",
+   "pa": 315,
+   "wpa": -1.039,
+   "pli": 0.95,
+   "clutch": -0.399,
+   "wpa_li": -0.696,
+   "qualified": true
+  },
+  {
    "mlbam": 677870,
    "name": "Leo Jim\u00e9nez",
    "team": "MIA",
@@ -5982,17 +5993,6 @@
    "qualified": false
   },
   {
-   "mlbam": 806068,
-   "name": "Colt Emerson",
-   "team": "SEA",
-   "pa": 219,
-   "wpa": -1.068,
-   "pli": 0.96,
-   "clutch": -0.153,
-   "wpa_li": -0.963,
-   "qualified": false
-  },
-  {
    "mlbam": 693304,
    "name": "Nick Gonzales",
    "team": "PIT",
@@ -6013,17 +6013,6 @@
    "clutch": -0.421,
    "wpa_li": -0.781,
    "qualified": false
-  },
-  {
-   "mlbam": 671218,
-   "name": "Heliot Ramos",
-   "team": "NYY",
-   "pa": 310,
-   "wpa": -1.078,
-   "pli": 0.94,
-   "clutch": -0.429,
-   "wpa_li": -0.715,
-   "qualified": true
   },
   {
    "mlbam": 805367,
@@ -6057,6 +6046,17 @@
    "clutch": -0.897,
    "wpa_li": -0.148,
    "qualified": true
+  },
+  {
+   "mlbam": 806068,
+   "name": "Colt Emerson",
+   "team": "SEA",
+   "pa": 222,
+   "wpa": -1.086,
+   "pli": 0.96,
+   "clutch": -0.246,
+   "wpa_li": -0.882,
+   "qualified": false
   },
   {
    "mlbam": 672761,
@@ -6117,10 +6117,10 @@
    "mlbam": 678489,
    "name": "Jorge Barrosa",
    "team": "AZ",
-   "pa": 149,
+   "pa": 150,
    "wpa": -1.14,
-   "pli": 0.9,
-   "clutch": -0.642,
+   "pli": 0.89,
+   "clutch": -0.65,
    "wpa_li": -0.629,
    "qualified": false
   },
@@ -6444,6 +6444,17 @@
    "qualified": false
   },
   {
+   "mlbam": 630105,
+   "name": "Jake Cronenworth",
+   "team": "SD",
+   "pa": 238,
+   "wpa": -1.379,
+   "pli": 1.02,
+   "clutch": -0.205,
+   "wpa_li": -1.152,
+   "qualified": false
+  },
+  {
    "mlbam": 543807,
    "name": "George Springer",
    "team": "TOR",
@@ -6453,17 +6464,6 @@
    "clutch": -1.527,
    "wpa_li": 0.244,
    "qualified": true
-  },
-  {
-   "mlbam": 630105,
-   "name": "Jake Cronenworth",
-   "team": "SD",
-   "pa": 234,
-   "wpa": -1.415,
-   "pli": 1.03,
-   "clutch": -0.257,
-   "wpa_li": -1.119,
-   "qualified": false
   },
   {
    "mlbam": 686555,
@@ -6686,17 +6686,6 @@
    "qualified": true
   },
   {
-   "mlbam": 647304,
-   "name": "Josh Naylor",
-   "team": "SEA",
-   "pa": 461,
-   "wpa": -1.864,
-   "pli": 1.03,
-   "clutch": -0.075,
-   "wpa_li": -1.738,
-   "qualified": true
-  },
-  {
    "mlbam": 668901,
    "name": "Mark Vientos",
    "team": "NYM",
@@ -6708,17 +6697,6 @@
    "qualified": true
   },
   {
-   "mlbam": 669224,
-   "name": "Austin Wells",
-   "team": "NYY",
-   "pa": 258,
-   "wpa": -1.893,
-   "pli": 0.9,
-   "clutch": -1.009,
-   "wpa_li": -1.085,
-   "qualified": true
-  },
-  {
    "mlbam": 683083,
    "name": "Nasim Nu\u00f1ez",
    "team": "WSH",
@@ -6727,6 +6705,28 @@
    "pli": 0.96,
    "clutch": -0.951,
    "wpa_li": -1.06,
+   "qualified": true
+  },
+  {
+   "mlbam": 669224,
+   "name": "Austin Wells",
+   "team": "NYY",
+   "pa": 260,
+   "wpa": -1.973,
+   "pli": 0.91,
+   "clutch": -1.079,
+   "wpa_li": -1.092,
+   "qualified": true
+  },
+  {
+   "mlbam": 647304,
+   "name": "Josh Naylor",
+   "team": "SEA",
+   "pa": 464,
+   "wpa": -1.975,
+   "pli": 1.03,
+   "clutch": -0.076,
+   "wpa_li": -1.845,
    "qualified": true
   },
   {
@@ -6810,11 +6810,11 @@
    "mlbam": 663728,
    "name": "Cal Raleigh",
    "team": "SEA",
-   "pa": 347,
-   "wpa": -2.308,
+   "pa": 350,
+   "wpa": -2.34,
    "pli": 1.09,
-   "clutch": -0.144,
-   "wpa_li": -1.972,
+   "clutch": -0.172,
+   "wpa_li": -1.982,
    "qualified": true
   },
   {
@@ -7161,17 +7161,6 @@
    "qualified": true
   },
   {
-   "mlbam": 663554,
-   "name": "Casey Mize",
-   "team": "SD",
-   "starts": 16,
-   "wpa": 1.577,
-   "wpa_per_start": 0.099,
-   "wpa_li": 1.384,
-   "gs": 17,
-   "qualified": true
-  },
-  {
    "mlbam": 687562,
    "name": "Jake Bennett",
    "team": "BOS",
@@ -7191,6 +7180,17 @@
    "wpa_per_start": 0.067,
    "wpa_li": 0.967,
    "gs": 23,
+   "qualified": true
+  },
+  {
+   "mlbam": 669467,
+   "name": "Andre Pallante",
+   "team": "STL",
+   "starts": 22,
+   "wpa": 1.524,
+   "wpa_per_start": 0.069,
+   "wpa_li": 1.188,
+   "gs": 22,
    "qualified": true
   },
   {
@@ -7249,6 +7249,17 @@
    "qualified": true
   },
   {
+   "mlbam": 663554,
+   "name": "Casey Mize",
+   "team": "SD",
+   "starts": 17,
+   "wpa": 1.352,
+   "wpa_per_start": 0.08,
+   "wpa_li": 0.906,
+   "gs": 17,
+   "qualified": true
+  },
+  {
    "mlbam": 657277,
    "name": "Logan Webb",
    "team": "SF",
@@ -7267,17 +7278,6 @@
    "wpa": 1.312,
    "wpa_per_start": 0.06,
    "wpa_li": 1.532,
-   "gs": 22,
-   "qualified": true
-  },
-  {
-   "mlbam": 669467,
-   "name": "Andre Pallante",
-   "team": "STL",
-   "starts": 21,
-   "wpa": 1.297,
-   "wpa_per_start": 0.062,
-   "wpa_li": 1.061,
    "gs": 22,
    "qualified": true
   },
@@ -7700,6 +7700,17 @@
    "qualified": true
   },
   {
+   "mlbam": 623454,
+   "name": "Drew Anderson",
+   "team": "DET",
+   "starts": 3,
+   "wpa": 0.53,
+   "wpa_per_start": 0.177,
+   "wpa_li": 0.378,
+   "gs": 3,
+   "qualified": false
+  },
+  {
    "mlbam": 607192,
    "name": "Tyler Glasnow",
    "team": "LAD",
@@ -7863,17 +7874,6 @@
    "wpa_li": 0.112,
    "gs": 23,
    "qualified": true
-  },
-  {
-   "mlbam": 623454,
-   "name": "Drew Anderson",
-   "team": "DET",
-   "starts": 2,
-   "wpa": 0.344,
-   "wpa_per_start": 0.172,
-   "wpa_li": 0.249,
-   "gs": 3,
-   "qualified": false
   },
   {
    "mlbam": 690928,
@@ -8536,6 +8536,17 @@
    "qualified": false
   },
   {
+   "mlbam": 693433,
+   "name": "Bryan Woo",
+   "team": "SEA",
+   "starts": 22,
+   "wpa": 0.039,
+   "wpa_per_start": 0.002,
+   "wpa_li": 1.053,
+   "gs": 22,
+   "qualified": true
+  },
+  {
    "mlbam": 663969,
    "name": "Tyler Phillips",
    "team": "MIA",
@@ -9141,6 +9152,17 @@
    "qualified": true
   },
   {
+   "mlbam": 683352,
+   "name": "Mitch Bratt",
+   "team": "AZ",
+   "starts": 6,
+   "wpa": -0.157,
+   "wpa_per_start": -0.026,
+   "wpa_li": -0.196,
+   "gs": 6,
+   "qualified": true
+  },
+  {
    "mlbam": 675848,
    "name": "Juan Mejia",
    "team": "COL",
@@ -9592,17 +9614,6 @@
    "qualified": true
   },
   {
-   "mlbam": 693433,
-   "name": "Bryan Woo",
-   "team": "SEA",
-   "starts": 21,
-   "wpa": -0.366,
-   "wpa_per_start": -0.017,
-   "wpa_li": 0.793,
-   "gs": 22,
-   "qualified": true
-  },
-  {
    "mlbam": 695034,
    "name": "Kade Morris",
    "team": "ATH",
@@ -9655,17 +9666,6 @@
    "wpa_per_start": -0.026,
    "wpa_li": 0.128,
    "gs": 15,
-   "qualified": true
-  },
-  {
-   "mlbam": 683352,
-   "name": "Mitch Bratt",
-   "team": "AZ",
-   "starts": 5,
-   "wpa": -0.399,
-   "wpa_per_start": -0.08,
-   "wpa_li": -0.471,
-   "gs": 6,
    "qualified": true
   },
   {
@@ -10021,17 +10021,6 @@
    "qualified": false
   },
   {
-   "mlbam": 701542,
-   "name": "Will Warren",
-   "team": "NYY",
-   "starts": 21,
-   "wpa": -0.72,
-   "wpa_per_start": -0.034,
-   "wpa_li": -0.935,
-   "gs": 22,
-   "qualified": true
-  },
-  {
    "mlbam": 702070,
    "name": "Noah Cameron",
    "team": "KC",
@@ -10095,6 +10084,17 @@
    "wpa_per_start": -0.054,
    "wpa_li": -0.387,
    "gs": 15,
+   "qualified": true
+  },
+  {
+   "mlbam": 701542,
+   "name": "Will Warren",
+   "team": "NYY",
+   "starts": 22,
+   "wpa": -0.815,
+   "wpa_per_start": -0.037,
+   "wpa_li": -0.935,
+   "gs": 22,
    "qualified": true
   },
   {

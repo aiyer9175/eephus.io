@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-05",
+ "generated_at": "2026-08-06",
  "vintage_years": [
   2018,
   2019,
@@ -258,12 +258,12 @@
    "bias_corrected": 445
   },
   "shippable_level_bias_adj": {
-   "AAA": 0.5,
-   "DSL": 0.5,
    "A+": 0.5,
    "AA": 0.5,
-   "A": 0.5,
-   "CPX": 0.5
+   "CPX": 0.5,
+   "AAA": 0.5,
+   "DSL": 0.5,
+   "A": 0.5
   },
   "cap": 0.5,
   "shrink_k": 10,
