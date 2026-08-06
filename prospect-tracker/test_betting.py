@@ -529,11 +529,53 @@ def payload():
     return json.loads(p.read_text(encoding="utf-8"))
 
 
-def test_payload_never_ships_a_pick_while_unvalidated(payload):
+def test_an_unvalidated_pick_is_always_labelled_provisional(payload):
+    """POLICY CHANGED BY OWNER DECISION, 2026-08-06. This test used to assert
+    that no pick may ship while the model is unvalidated. The owner decided to
+    publish one anyway rather than show an empty module for a season.
+
+    The guard is not removed, it is retargeted, and it is now STRICTER than
+    what it replaced: an unvalidated pick may ship, but it may never ship
+    UNLABELLED, and none of the honesty the module already had may be traded
+    away to get it. A quiet pick with no qualifier is the outcome this file
+    exists to prevent, and it would be far worse than the empty slot it
+    replaced.
+
+    So while `validated` is false, all five of these must hold at once."""
     if payload["model"]["validated"]:
-        return                              # a future validated build may ship one
-    assert payload["pick_of_the_day"] is None
+        return                              # a validated build ships plainly
+
+    meta = payload.get("pick_meta") or {}
+    assert meta.get("provisional") is True, (
+        "an unvalidated build must declare its pick provisional in pick_meta, "
+        "which is what every surface keys its labelling off")
+    assert meta.get("basis") == "provisional_policy_floor", (
+        "the basis must name the floor as a POLICY, not imply a measurement")
+
+    # 1. The reason is always present, pick or no pick.
     assert payload["pick_reason"]
+
+    # 2. The model still reports itself unvalidated. A provisional pick must
+    #    not launder the model's status.
+    assert payload["model"]["validated"] is False
+
+    # 3. The measured threshold is still null. The floor is not a measurement
+    #    and must never be published as one.
+    assert payload["model"].get("min_edge") is None
+
+    # 4. Every blocker is still published, unchanged. A provisional pick does
+    #    not make any of them untrue.
+    blockers = payload.get("pick_blockers") or []
+    assert blockers, "the reasons the model is ungated must stay on the page"
+
+    # 5. If a pick did ship, it carries its own label and the floor it cleared,
+    #    so a row lifted out of the payload is still self-describing.
+    pick = payload.get("pick_of_the_day")
+    if pick is not None:
+        assert pick.get("provisional") is True
+        assert pick.get("min_edge_used") == meta.get("min_edge")
+        assert pick.get("odds") is not None and pick.get("book"), (
+            "a pick without a real taken price is not a pick")
 
 
 def test_payload_carries_the_legal_block(payload):

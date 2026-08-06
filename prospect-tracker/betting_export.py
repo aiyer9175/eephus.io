@@ -570,15 +570,92 @@ def slate_games(on_date: str | None = None, *, include_unbettable: bool = False)
     return [g for g in dated if g["date"] == day]
 
 
+def _consensus_point(event: dict, market: str, sides: tuple):
+    """The line the market agrees on, or None for a market that carries no point.
+
+    WHY THIS IS NEEDED (2026-08-06). Books do not all post the same runline
+    side. Measured on a live snapshot for NYM at CLE: eight books had the home
+    side at -1.5, and FanDuel had it at +1.5. Shopping each side for its best
+    price independently then fused Bovada's -1.5 line with FanDuel's price for
+    the OTHER line, and the row that came out paired a model probability for
+    "NYM +1.5" (0.7255) with a price whose implied probability was 0.3521. That
+    is a 38.8 point edge conjured out of a line mismatch, and it was the highest
+    "edge" on the board.
+
+    Totals have the same exposure: Over 8.5 at one book and Under 9.5 at another
+    are not two sides of one bet.
+
+    So the line is decided FIRST, by book count, and prices are shopped only
+    among books posting it. Ties break toward the numerically lower point, which
+    is arbitrary but deterministic, and any tie here means the market is
+    genuinely split and the row is thin evidence either way."""
+    from collections import Counter
+    key = sides[0]
+    pts = Counter()
+    for b in (event.get("books") or {}).values():
+        m = b.get(market)
+        if not isinstance(m, dict):
+            continue
+        cell = m.get(key)
+        pt = cell.get("point") if isinstance(cell, dict) else None
+        if pt is not None:
+            pts[float(pt)] += 1
+    if not pts:
+        return None
+    top = max(pts.values())
+    return min(p for p, n in pts.items() if n == top)
+
+
+def _best_price_on_line(event: dict, market: str, side: str, want):
+    """Best price for one side, restricted to books posting `want` for it.
+
+    `want` is None for a pointless market (h2h), which reduces this to the
+    plain best price."""
+    best = None
+    for bkey, b in (event.get("books") or {}).items():
+        m = b.get(market)
+        if not isinstance(m, dict):
+            continue
+        cell = m.get(side)
+        if cell is None:
+            continue
+        price = cell.get("price") if isinstance(cell, dict) else cell
+        pt = cell.get("point") if isinstance(cell, dict) else None
+        if want is not None:
+            if pt is None or abs(float(pt) - float(want)) > 1e-9:
+                continue
+        dec = bi.american_to_decimal(price)
+        if dec is None:
+            continue
+        if best is None or dec > best["decimal"]:
+            best = {"book": bkey, "book_title": b.get("title"), "price": price,
+                    "decimal": round(dec, 4), "point": pt,
+                    "last_update": b.get("last_update")}
+    return best
+
+
 def _market_view(event: dict | None, market: str, sides: tuple) -> dict | None:
     """Best price per side + the de-vigged fair probabilities for one market.
+
+    Both sides are read off ONE agreed line; see _consensus_point for the
+    mismatch that made this necessary.
 
     De-vigging uses the SINGLE book that posted the best price on the first
     side, not a cross-book mash-up: mixing books manufactures a fake fair line
     with a negative hold. `best_of` records where each price came from."""
     if not event:
         return None
-    best = {s: bi.best_price(event, market, s) for s in sides}
+    line = _consensus_point(event, market, sides)
+    # For a two-sided spread the far side carries the mirrored point.
+    want = {}
+    for i, s in enumerate(sides):
+        if line is None:
+            want[s] = None
+        elif market == "spreads":
+            want[s] = line if i == 0 else -line
+        else:
+            want[s] = line
+    best = {s: _best_price_on_line(event, market, s, want[s]) for s in sides}
     if any(b is None for b in best.values()):
         return None
     # Fair probabilities come from ONE book's two-sided market (the first book
@@ -589,12 +666,22 @@ def _market_view(event: dict | None, market: str, sides: tuple) -> dict | None:
         if not isinstance(m, dict):
             continue
         decs = {}
+        off_line = False
         for s in sides:
             cell = m.get(s)
             price = cell.get("price") if isinstance(cell, dict) else cell
+            pt = cell.get("point") if isinstance(cell, dict) else None
+            # A book on a different line cannot supply the fair probabilities
+            # for this one: its two-sided market prices a different bet.
+            if want.get(s) is not None and (
+                    pt is None or abs(float(pt) - float(want[s])) > 1e-9):
+                off_line = True
+                break
             d = bi.american_to_decimal(price)
             if d:
                 decs[s] = d
+        if off_line:
+            continue
         if len(decs) == len(sides):
             fair, fair_book, hold = bm.devig(decs), bkey, bm.hold_pct(decs)
             break
@@ -1131,6 +1218,87 @@ def pick_blockers(*, min_edge: float | None, odds_configured: bool,
     return out
 
 
+#: THE PROVISIONAL FLOOR. Owner decision 2026-08-06: show a Pick of the Day
+#: before the model is validated, clearly labelled, rather than showing nothing
+#: for a season.
+#:
+#: This number is a POLICY, not a measurement, and the page says so in those
+#: words. It is deliberately far above anything the model can currently justify:
+#: the whole in-sample margin over the home-field baseline is 0.0079 Brier
+#: (0.24946 -> 0.24156), which is thin, and the out-of-sample margin will be
+#: thinner still. Requiring a 6 point edge means a pick appears only when the
+#: model disagrees with a de-vigged market by far more than the skill there is
+#: any evidence for, so the failure mode is showing NOTHING on most slates
+#: rather than showing something weak on all of them.
+#:
+#: It is NOT the measured `min_edge`. When the three gates open, sweep_min_edge
+#: returns a threshold with an ROI lower bound behind it and that one replaces
+#: this constant automatically. Nothing here has to be edited for that to
+#: happen; see `resolve_min_edge`.
+PROVISIONAL_MIN_EDGE = 0.06
+
+
+def resolve_min_edge(evald: dict | None) -> tuple[float | None, str, bool]:
+    """(threshold, basis, provisional) for this slate's pick.
+
+    The measured threshold wins whenever it exists. The provisional floor is
+    used only while the gates are shut, and the third element of the tuple is
+    what every surface keys its labelling off, so a provisional pick can never
+    render as a validated one by omission."""
+    gate = (evald or {}).get("min_edge_gate") or {}
+    measured = gate.get("min_edge")
+    if measured is not None and gate.get("all_gates_open"):
+        return float(measured), "measured", False
+    return PROVISIONAL_MIN_EDGE, "provisional_policy_floor", True
+
+
+def provisional_pick(bets: list[dict], *, odds_configured: bool,
+                     evald: dict | None = None) -> tuple[dict | None, str, dict]:
+    """The highest-EV side clearing whichever threshold currently applies.
+
+    Returns (pick, reason, meta). `meta` always carries `provisional` and the
+    basis, because a caller that forgets to check would otherwise publish an
+    unvalidated pick with no qualifier, which is the one outcome this module
+    exists to prevent.
+
+    An absent odds feed is still a hard stop. A provisional pick is a claim
+    about a real market price; without one there is nothing to disagree with,
+    and the model's own fair line is not a market."""
+    thr, basis, prov = resolve_min_edge(evald)
+    meta = {"provisional": prov, "min_edge": thr, "basis": basis,
+            "policy": ("a provisional pick is published against a POLICY floor, "
+                       "not a validated threshold; it is labelled as such "
+                       "everywhere it appears and it is recorded in the shadow "
+                       "ledger so it becomes evidence")}
+    if not odds_configured:
+        return None, ("no odds feed is configured, so there is no market price to "
+                      "have an edge against"), meta
+
+    cands = []
+    for b in bets:
+        for market, rows in (("moneyline", b.get("moneyline") or []),
+                             ("runline", b.get("runline") or []),
+                             ("total", (b.get("total") or {}).get("sides") or [])):
+            for row in rows or []:
+                if row.get("edge") is None or row["edge"] < thr:
+                    continue
+                if row.get("odds") is None or not row.get("book"):
+                    continue        # no real price taken, no pick
+                cands.append({**row, "market": market, "game_pk": b.get("game_pk"),
+                              "matchup": f"{b['away']['org']} at {b['home']['org']}",
+                              "start": b.get("start")})
+    if not cands:
+        return None, (f"no side cleared the {thr:.1%} "
+                      f"{'provisional floor' if prov else 'minimum edge'} "
+                      f"on this slate"), meta
+    best = max(cands, key=lambda r: r.get("ev_per_unit") or -9)
+    best["stake_units"] = STAKE_UNITS
+    best["provisional"] = prov
+    best["min_edge_used"] = thr
+    return best, ("highest expected value among sides clearing the "
+                  f"{'provisional floor' if prov else 'measured threshold'}"), meta
+
+
 def pick_of_the_day(bets: list[dict], *, min_edge: float | None,
                     odds_configured: bool,
                     gate: dict | None = None) -> tuple[dict | None, str]:
@@ -1362,8 +1530,12 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     # contradiction, and this resolves it the safe way.
     validated = bool(validation.get("validated") and min_edge is not None)
     blockers = pick_blockers(min_edge=min_edge, odds_configured=odds_configured, gate=gate)
-    pick, pick_reason = pick_of_the_day(bets, min_edge=min_edge,
-                                        odds_configured=odds_configured, gate=gate)
+    # PROVISIONAL PICK (owner decision 2026-08-06). The blockers above are kept
+    # and published UNCHANGED: they are the honest account of why the model is
+    # not validated, and a provisional pick does not make any of them untrue.
+    # What changes is that the slate no longer renders empty while they are shut.
+    pick, pick_reason, pick_meta = provisional_pick(
+        bets, odds_configured=odds_configured, evald=evald)
     record = load_record()
 
     empty_reasons = []
@@ -1442,6 +1614,10 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         "disclaimer": DISCLAIMER,
         "pick_of_the_day": pick,
         "pick_reason": pick_reason,
+        # The label the page keys off. Published even when there is no pick, so
+        # a client can render the provisional treatment around an empty slot
+        # rather than having to infer it from the pick's own fields.
+        "pick_meta": pick_meta,
         "pick_blockers": blockers,
         "team_bets": bets,
         "props_fair_lines": props_fair_lines(games, starters=starters) if games else

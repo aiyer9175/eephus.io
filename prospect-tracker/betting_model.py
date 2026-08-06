@@ -1525,6 +1525,27 @@ def _odds_history_dates() -> list[str]:
     return sorted({p.name[:10] for p in d.glob("*.json") if len(p.name) >= 10})
 
 
+def _shadow_graded_bets() -> list[dict]:
+    """Settled paper bets from the shadow ledger, or [] when it does not exist.
+
+    THE CIRCLE THIS BREAKS. sweep_min_edge needs settled bets carrying a taken
+    price, and min_edge_gate was only ever called with graded_bets=None, so the
+    third gate could never open: publishing a pick needed min_edge, and min_edge
+    needed settled picks. betting_shadow records what the model WOULD have bet at
+    the price actually on the board and settles it against the result, which
+    supplies that history without the site claiming anything.
+
+    Deliberately best effort and silent on absence: a missing ledger is the
+    normal state before the first slate is logged, and the gate already reports
+    `have: 0` in that case, which is the honest answer."""
+    try:
+        import betting_shadow
+        return betting_shadow.graded_bets()
+    except Exception:                                         # noqa: BLE001
+        log.debug("betting_model: shadow ledger unavailable", exc_info=True)
+        return []
+
+
 def min_edge_gate(vintage_block: dict | None, *, graded_bets: list[dict] | None = None) -> dict:
     """Whether `min_edge` may be set at all, and what it is if so.
 
@@ -1551,7 +1572,8 @@ def min_edge_gate(vintage_block: dict | None, *, graded_bets: list[dict] | None 
     n_graded = int(vb.get("n_graded") or 0)
     skill = vb.get("skill_vs_home_base") or {}
     odds_dates = _odds_history_dates()
-    rows = list(graded_bets or [])
+    # None means "look for them"; an explicit [] still means "none".
+    rows = list(graded_bets if graded_bets is not None else _shadow_graded_bets())
     sweep = sweep_min_edge(rows)
 
     gates = [

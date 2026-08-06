@@ -2016,6 +2016,38 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 _refresh_betting(log=log.info)
             except Exception:
                 log.exception("daily: betting export failed — continuing")
+            # --- shadow ledger: settle yesterday, then log today ------------
+            # This is the loop that breaks gate 3. sweep_min_edge needs 100+
+            # settled bets carrying a taken price, and nothing produced them:
+            # publishing a pick needed min_edge, min_edge needed settled picks.
+            # Paper bets at the real captured price close that circle without
+            # the site claiming anything.
+            #
+            # SETTLE FIRST, then record. Settling reads the completed games that
+            # step 9e-pre1 just refreshed, and recording reads the board the
+            # export above just wrote, so this order uses both while current.
+            try:
+                import json as _json
+                import betting_shadow
+                _st = betting_shadow.settle(log_fn=log.info)
+                _payload = _json.loads(
+                    (out_dir / "betting.json").read_text(encoding="utf-8"))
+                _meta = _payload.get("pick_meta") or {}
+                _rec = betting_shadow.record_slate(
+                    _payload,
+                    min_edge=_meta.get("min_edge")
+                    or __import__("betting_export").PROVISIONAL_MIN_EDGE,
+                    gate_state={"provisional": _meta.get("provisional"),
+                                "basis": _meta.get("basis")},
+                    log_fn=log.info)
+                _sum = betting_shadow.summary()
+                log.info("shadow ledger: +%s logged (%s), %s settled, %s of %s "
+                         "settled bets toward the min-edge sweep",
+                         _rec.get("written"), _rec.get("reason"),
+                         _st.get("settled"), _sum.get("n_for_min_edge_sweep"),
+                         _sum.get("min_bets_for_sweep"))
+            except Exception:
+                log.exception("daily: shadow ledger failed — continuing")
 
         # --- 9f. Card comps ingest + market index (card_market.json) ------
         # THE CADENCE THE MODULE ALWAYS DOCUMENTED AND NEVER HAD. Before this,
