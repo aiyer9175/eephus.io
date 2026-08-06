@@ -682,7 +682,6 @@
    }
   },
   {
-   "_comment": "PROPOSED replacement for the pal_conversion row in data/model_registry.json (T1-6). Not applied; owner merges.",
    "model_id": "pal_conversion",
    "surface": "/pal/ Alchemy Lab",
    "predicts": "RP<->SP role-conversion candidate FIT (0-100 screen, per direction) + a held-the-role labeled conversion history",
