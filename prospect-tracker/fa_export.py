@@ -298,7 +298,7 @@ NO_PROJ_REASONS = {
 # NOT TUNED, MEASURED. The two states are separated by a factor of two on the
 # WORST case of each. Healthy ratios across the three live classes are
 # 0.989 (2027), 0.991 (2028) and 0.977 (2029); the degraded ratios from the
-# same measurement are 0.440, 0.336 and 0.251. 0.70 sits 1.40x below the worst
+# same measurement are 0.440, 0.329 and 0.251. 0.70 sits 1.40x below the worst
 # healthy ratio and 1.59x above the worst degraded one. This is a monitoring
 # predicate, not a model input: it changes no price, no coefficient and no
 # member's projection.
@@ -791,10 +791,11 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
             # and one of them was an outage that blanked 79 rows. A reader
             # could not tell those apart from an em-dash.
             drops[drop] += 1
+            # The CODE rides the row, the sentence rides the payload once
+            # (unprojected_reason_text below). 79 copies of a 230-character
+            # sentence is 18KB on the wire for one repeated string, and this
+            # module's contract is the owner's lean wire format.
             m["noProj"] = drop
-            m["noProjWhy"] = NO_PROJ_REASONS[drop].format(
-                y0=class_year - 4 if drop == "identity_unresolved" else class_year - 3,
-                y1=class_year - 1)
         # Winter overrides: the reconciled pipeline status beats the stale
         # as-scraped payload status, and signed members carry their ACTUAL
         # terms next to the prediction (the tracker's whole point).
@@ -874,8 +875,13 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         # out loud instead of something a reader has to infer by subtracting.
         "n_unprojected": len(members) - n_proj,
         "unprojected_by_reason": dict(sorted(drops.items())),
-        "unprojected_reason_text": {k: v for k, v in NO_PROJ_REASONS.items()
-                                    if k in drops},
+        # code -> the sentence a reader of /fa/ should see next to a blank
+        # price. Only the codes this class actually produced are shipped, so
+        # the join from a member's noProj is always satisfiable.
+        "unprojected_reason_text": {
+            k: v.format(y0=class_year - (4 if k == "identity_unresolved" else 3),
+                        y1=class_year - 1)
+            for k, v in NO_PROJ_REASONS.items() if k in drops},
         # The per-side identity census, and the verdict on whether the
         # war_daily substrate this whole gate depends on actually loaded.
         "identity_health": health,
