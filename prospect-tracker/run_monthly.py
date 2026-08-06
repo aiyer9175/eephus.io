@@ -1018,6 +1018,75 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     _patch_export_run_summary(out_path, log)
 
 
+# --------------------------------------------------------------------------- #
+# secrets
+# --------------------------------------------------------------------------- #
+# Search order. /etc first because on the box that is the root-owned chmod-600
+# file OUTSIDE the checkout (the deploy runs `git checkout -- .`, so a secrets
+# file inside the repo would be destroyed nightly); the repo-local .env is the
+# developer convenience and is gitignored.
+_ENV_FILES = (Path("/etc/eephus.env"), Path(__file__).parent / ".env")
+# Names we will report on. Values are NEVER logged.
+_SECRET_KEYS = ("EEPHUS_ODDS_API_KEY", "EEPHUS_CARD_SCRAPE")
+
+
+def _load_env_files(log=None) -> list[str]:
+    """Load `KEY=value` / `export KEY=value` lines into os.environ. Returns the
+    NAMES loaded (never values).
+
+    WHY THE PIPELINE LOADS ITS OWN SECRETS (2026-08-05). Every key-gated step
+    reads os.environ directly and nothing loaded the env file, so the key had to
+    arrive from whatever shell happened to invoke the pipeline. It never did:
+    deploy/nightly-build.sh had no reference to EEPHUS_ODDS_API_KEY and did not
+    source /etc/eephus.env, so run_daily step 9e ("betting odds snapshot") had
+    NEVER fired on the box - data/betting_status.json reported `configured: true`
+    (the key exists in a file nothing reads) beside `n_snapshots_cached: 0`, and
+    the API itself confirmed 0 of 500 credits ever used. The betting module was
+    not waiting on a data feed; it was waiting on an environment.
+    The shell wrapper now sources the file, but that only fixes ONE entry point.
+    A direct `python run_monthly.py`, an `EEPHUS_FULL=1` one-off, or a cron line
+    someone writes later all still start with an empty environment, and each
+    would silently no-op exactly the same way. Loading here makes the pipeline
+    correct however it is invoked, which is where the guarantee belongs.
+
+    NEVER OVERRIDES an already-set variable: an explicit `export` in the calling
+    shell, or a per-run override, must win over a file on disk."""
+    loaded: list[str] = []
+    for path in _ENV_FILES:
+        try:
+            if not path.is_file():
+                continue
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue                       # unreadable (perms) is not fatal
+        for raw in text.splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            if line.startswith("export "):
+                line = line[len("export "):].lstrip()
+            name, _, value = line.partition("=")
+            name = name.strip()
+            if not name or not name.isidentifier():
+                continue
+            value = value.strip().strip('"').strip("'")
+            # setdefault semantics: the environment always outranks the file.
+            if name not in os.environ:
+                os.environ[name] = value
+                loaded.append(name)
+    if log:
+        if loaded:
+            # names only - a value in a log is a leaked secret, and these logs
+            # are kept 30 days and read by whoever debugs the box.
+            log(f"  secrets: loaded {len(loaded)} var(s) from disk: "
+                f"{', '.join(sorted(set(loaded)))}")
+        missing = [k for k in _SECRET_KEYS if not os.environ.get(k)]
+        if missing:
+            log(f"  secrets: NOT SET -> {', '.join(missing)}. The steps gated on "
+                f"them will no-op (betting odds snapshot, card scrape).")
+    return loaded
+
+
 def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
               no_cache: bool = False, chained: bool = False) -> None:
     """DAILY fast-moving refresh — the time-sensitive subset of the pipeline.
@@ -1064,6 +1133,10 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         stream=sys.stdout,
     )
     log = logging.getLogger("run_daily")
+    # BEFORE any step reads os.environ. Step 9e (odds snapshot) and the card
+    # scrape are gated on keys this loads; see _load_env_files for why the
+    # pipeline owns this rather than trusting the caller's shell.
+    _load_env_files(log.info)
     import stats as stats_mod
     stats_mod.FORCE_REFETCH = no_cache
 
@@ -2038,6 +2111,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         stream=sys.stdout,
     )
     log = logging.getLogger("run_monthly")
+    # BEFORE any step reads os.environ - the monthly chains run_daily, whose 9e
+    # odds snapshot is key-gated. See _load_env_files.
+    _load_env_files(log.info)
     import stats as stats_mod
     # Propagate --force to stats module so the per-run HTTP cache can be bypassed
     stats_mod.FORCE_REFETCH = force_refetch or no_cache
