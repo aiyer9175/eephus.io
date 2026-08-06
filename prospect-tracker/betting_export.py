@@ -70,6 +70,26 @@ RECORD_PATH = DATA_DIR / "betting_record.json"
 STAKE_UNITS = 1.0                 # flat, always, on the public record
 PREVIEW_GAMES = 3                 # games the free slice carries
 
+# Game states that are neither bettable nor allowed to anchor a closing window.
+# fantasy_schedule stores StatsAPI's `abstractGameState` ("Preview" / "Live" /
+# "Final" / "Other"); the detailed states are folded in because a postponement
+# reports abstractGameState "Final" on some feeds and "Other" on others, and
+# because a future producer may pass the detailed string straight through.
+# Compared case-insensitively. See `is_bettable` for why the match is a DENY
+# list and not an allow list.
+NOT_BETTABLE_STATES = frozenset({
+    "final", "game over", "completed early", "live", "in progress",
+    "postponed", "cancelled", "canceled", "suspended", "forfeit", "other",
+})
+
+# How far a parsed odds event's `commence_time` may sit from a schedule row's
+# first pitch and still be that game. The two games of a doubleheader are about
+# three and a half hours apart (game two starts roughly 30 minutes after game
+# one ends) and a split doubleheader is about seven, so three hours is wide
+# enough to absorb the routine disagreement between the book's posted start and
+# StatsAPI's, and far too narrow to cross-match the halves of a doubleheader.
+EVENT_MATCH_MAX_MINUTES = 180
+
 # Expected plate appearances by projected lineup slot. League average is about
 # 37.8 PA per team per game; leadoff sees roughly 4.65 and the nine hole about
 # 3.85, near enough to a 0.1 step. Used ONLY for prop fair lines, and the
@@ -100,7 +120,8 @@ DISCLAIMER = {
 BACKTEST_KEYS = ("generated_at", "model_version", "n_games", "validated",
                  "contaminated", "contamination", "modes", "headline_mode",
                  "in_sample", "forward", "vintage", "split_date", "note")
-COVERAGE_KEYS = ("schema", "n_vintages", "first", "last", "missing_dates",
+COVERAGE_KEYS = ("schema", "n_vintages", "n_vintages_with_parks",
+                 "n_vintages_neutral_park", "first", "last", "missing_dates",
                  "span_days", "latest_cutoff", "earliest_gradable_game_date", "note")
 # Per-block fields the client needs to print a mode-labelled row. `n` and
 # `n_graded` are both read because the vintage block reports its sample under
@@ -115,9 +136,12 @@ MODE_MEANING = {
                      "sits inside its own features. This measures calibration, not skill, "
                      "and it cannot validate anything."),
     "vintage": ("Every game is priced on a leaderboard snapshot whose knowledge cutoff is "
-                "strictly before that game. A game with no such snapshot is skipped, not "
-                "graded on today's numbers. This is the only mode that can validate the "
-                "model."),
+                "strictly before that game: team offense, team run prevention, the listed "
+                "probable and the park index all come out of that snapshot. A game with no "
+                "such snapshot is skipped, not graded on today's numbers, and a game whose "
+                "snapshot predates the stored park column is priced with the park term at "
+                "neutral rather than on the live index. This is the only mode that can "
+                "validate the model."),
 }
 
 # Correlation rules the parlay builder enforces. A naive parlay multiplies leg
@@ -317,16 +341,54 @@ def record_summary(rows: list[dict] | None = None) -> dict:
 # ===========================================================================
 # slate + market join
 # ===========================================================================
-def slate_games(on_date: str | None = None) -> list[dict]:
-    """Today's games from data/fantasy.json's schedule block. That block is
-    already refreshed by run_monthly step 9d, so /betting/ costs the pipeline
-    zero extra StatsAPI calls."""
+def is_bettable(game: dict) -> bool:
+    """Can this schedule row still be priced and still anchor a closing line?
+
+    THE DEFECT THIS CLOSES. `slate_games` filtered by DATE only, though every
+    row carries `status` (StatsAPI's abstractGameState, written by
+    fantasy_schedule). Two things went wrong with that. A finished or wiped game
+    was published on the board with live-looking prices and an edge. Worse, the
+    close job takes `min(datetime)` over the slate, so a POSTPONED 1:05 game
+    anchored the closing-snapshot window for the entire slate: the job fired six
+    hours early against a board nobody could bet, spent the credits, and the
+    real closing lines were never captured. CLV is unrecoverable after the fact,
+    so that one is not a cosmetic bug.
+
+    UNKNOWN STATES ARE BETTABLE. The list below names states we KNOW are dead;
+    anything else (including a missing status on an older payload) passes, so a
+    StatsAPI vocabulary change degrades to the previous behaviour instead of
+    blanking the board."""
+    st = str((game or {}).get("status") or "").strip().lower()
+    return st not in NOT_BETTABLE_STATES
+
+
+def slate_games(on_date: str | None = None, *, include_unbettable: bool = False) -> list[dict]:
+    """Today's BETTABLE games from data/fantasy.json's schedule block. That block
+    is already refreshed by run_monthly step 9d, so /betting/ costs the pipeline
+    zero extra StatsAPI calls.
+
+    The slate date is the earliest date that still has a bettable game, not the
+    earliest date on file: an evening build on a day whose games are all Final
+    should show tomorrow's board rather than a board of finished scores. Pass
+    `include_unbettable=True` for a raw read (nothing in the pipeline wants
+    one; it exists so a diagnosis can compare the two counts)."""
     fan = _load("fantasy.json") or {}
     games = ((fan.get("schedule") or {}).get("games")) or []
     if not games:
         return []
-    day = on_date or min(g.get("date") or "" for g in games if g.get("date"))
-    return [g for g in games if g.get("date") == day]
+    live = games if include_unbettable else [g for g in games if is_bettable(g)]
+    if on_date:
+        return [g for g in live if g.get("date") == on_date]
+    dated = [g for g in live if g.get("date")]
+    if not dated:
+        # Every game on file is Final/postponed. That is a real state (a late
+        # build on the last day of a homestand), not a missing schedule, and the
+        # caller distinguishes them by re-reading with include_unbettable.
+        log.info("betting_export: schedule holds %d games and none are bettable "
+                 "(all Final, postponed or in progress)", len(games))
+        return []
+    day = min(g["date"] for g in dated)
+    return [g for g in dated if g["date"] == day]
 
 
 def _market_view(event: dict | None, market: str, sides: tuple) -> dict | None:
@@ -400,6 +462,72 @@ def _priced_side(side_key: str, label: str, p_model: float, mv: dict | None) -> 
     return row
 
 
+def _stamp(s) -> datetime | None:
+    """An ISO stamp (either producer's) -> aware UTC, or None."""
+    if not s:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def match_event(game: dict, candidates: list[dict] | None) -> dict | None:
+    """The odds event for THIS game, not for this org pair.
+
+    THE DEFECT. `team_bets` keyed parsed events by `(home_org, away_org)` into a
+    plain dict. A doubleheader is TWO schedule rows and TWO odds events for one
+    org pair, so the second event OVERWROTE the first and both slate rows were
+    joined to the same prices. At least one of the two games then published a
+    wrong price, edge, EV and Kelly on a public page, and nothing about the row
+    looked unusual. Keying to a LIST and matching on first pitch fixes it: the
+    two games are hours apart, so the nearest `commence_time` is unambiguous.
+
+    THE SINGLE-CANDIDATE SHORTCUT IS DELIBERATE. One event for the pair on a
+    non-doubleheader date is the ordinary case and takes the event without a
+    time check, because a book that posts a start time five minutes off ours
+    must not blank an otherwise healthy row. The check is required exactly where
+    it can be wrong: two candidates, or a row the schedule flagged as a
+    doubleheader (books sometimes post only one half early, and taking it for
+    both games is the same defect wearing one event).
+
+    Returns None rather than a guess when nothing matches, which drops the game
+    to a model-only fair line. That is the safe direction: an unpriced row is
+    visibly unpriced, a mispriced row is not."""
+    cands = [c for c in (candidates or []) if c]
+    if not cands:
+        return None
+    if len(cands) == 1 and not game.get("double_header"):
+        return cands[0]
+    t0 = _stamp(game.get("datetime"))
+    if t0 is None:
+        log.warning("betting_export: %s @ %s has %d candidate odds events and no first "
+                    "pitch stamp to tell them apart; leaving the game unpriced",
+                    (game.get("away") or {}).get("org"), (game.get("home") or {}).get("org"),
+                    len(cands))
+        return None
+    scored = []
+    for c in cands:
+        t = _stamp(c.get("commence_time"))
+        if t is not None:
+            scored.append((abs((t - t0).total_seconds()) / 60.0, c))
+    if not scored:
+        log.warning("betting_export: no candidate odds event for %s @ %s carries a "
+                    "usable commence_time; leaving the game unpriced",
+                    (game.get("away") or {}).get("org"), (game.get("home") or {}).get("org"))
+        return None
+    scored.sort(key=lambda r: r[0])
+    delta, best = scored[0]
+    if delta > EVENT_MATCH_MAX_MINUTES:
+        log.warning("betting_export: nearest odds event for %s @ %s is %.0f min from "
+                    "first pitch (limit %d); refusing to price this game off it",
+                    (game.get("away") or {}).get("org"), (game.get("home") or {}).get("org"),
+                    delta, EVENT_MATCH_MAX_MINUTES)
+        return None
+    return best
+
+
 def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
               starters=None) -> list[dict]:
     """Every game on the slate: model probabilities, the market when a snapshot
@@ -407,9 +535,11 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
     teams = teams if teams is not None else bm.team_inputs()
     parks = parks if parks is not None else bm.park_index()
     starters = starters if starters is not None else bm.starter_inputs()
-    by_pair = {}
+    # A LIST per org pair, not one event. See `match_event`: a doubleheader puts
+    # two events under one key and a dict silently kept the last one parsed.
+    by_pair: dict[tuple, list] = {}
     for ev in events or []:
-        by_pair[(ev.get("home_org"), ev.get("away_org"))] = ev
+        by_pair.setdefault((ev.get("home_org"), ev.get("away_org")), []).append(ev)
 
     out = []
     for g in games:
@@ -423,7 +553,7 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
             log.info("betting_export: no model row for %s @ %s", ao, ho)
             continue
         over_fn = gp.pop("over", None)
-        ev = by_pair.get((ho, ao))
+        ev = match_event(g, by_pair.get((ho, ao)))
         ml = _market_view(ev, "h2h", ("home", "away"))
         rl = _market_view(ev, "spreads", ("home", "away"))
         tot = _market_view(ev, "totals", ("over", "under"))
@@ -455,6 +585,13 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
             "game_pk": g.get("game_pk"),
             "date": g.get("date"),
             "start": g.get("datetime"),
+            "status": g.get("status"),
+            "double_header": bool(g.get("double_header")),
+            # WHICH odds event priced this row. On a doubleheader the org pair
+            # is not a key, so the event id and its start are the only way a
+            # reader (or a test) can prove game two was not priced off game one.
+            "odds_event_id": (ev or {}).get("event_id"),
+            "odds_commence_time": (ev or {}).get("commence_time"),
             "venue": (g.get("venue") or {}).get("name"),
             "home": {"org": ho, "team": home.get("team"),
                      "probable": home.get("probable"),
@@ -744,6 +881,11 @@ def validation_state(evald: dict | None) -> dict:
             "min_graded_games_for_min_edge": vintage.get("min_graded_games_for_min_edge"),
             "first_graded_date": vintage.get("first_graded_date"),
             "last_graded_date": vintage.get("last_graded_date"),
+            # WHICH park index priced the honest sample. Null on an artifact
+            # written before the park column existed, which is the correct
+            # reading of that artifact: it does not know, and it may not claim
+            # the games were park-dated when they were not.
+            "park_basis": vintage.get("park_basis"),
             "note": vintage.get("note"),
         },
         "coverage": {k: cov[k] for k in COVERAGE_KEYS if k in cov},
@@ -845,6 +987,103 @@ def pick_of_the_day(bets: list[dict], *, min_edge: float | None,
 
 
 # ===========================================================================
+# WHY THE BOARD IS EMPTY, AND WHAT MAY BE PUBLISHED WHEN IT IS
+# ===========================================================================
+def team_input_failure_reason(sources: dict) -> str:
+    """Name WHICH team input was missing, with the counts, instead of asserting
+    a build that did happen never happened.
+
+    THE PUBLISHED FALSE DIAGNOSIS. This module shipped
+    "team leaderboards have not been built yet" on a day when
+    data/hitter_leaderboards.json, data/starter_leaderboards.json and
+    data/bullpen_leaderboards.json each held 30 teams. The claim was not a
+    measurement, it was an inference from one bit: `bm.team_inputs()` returned
+    empty. That function returns the INTERSECTION of three org sets, so it goes
+    empty for at least three different reasons that need three different fixes
+    (a file that would not parse, a source whose rows carry no plus stat, and
+    two org code sets that do not overlap), and only one of them is "not built
+    yet". A reader who acted on the published reason would have rebuilt
+    leaderboards that were already correct.
+
+    So this reports what was actually observed: the file behind each of the
+    three inputs, whether it parsed, and how many orgs it yielded."""
+    src = sources or {}
+    parts = []
+    for key in ("offense", "rotation", "bullpen"):
+        s = src.get(key) or {}
+        if not s.get("present"):
+            parts.append(f"{key}: {s.get('file')} missing or unreadable")
+        else:
+            parts.append(f"{key}: {s.get('n_orgs', 0)} orgs from {s.get('file')}")
+    empty = [k for k in ("offense", "rotation", "bullpen")
+             if not (src.get(k) or {}).get("n_orgs")]
+    if empty:
+        lead = (f"the team model needs all three team leaderboards and "
+                f"{', '.join(empty)} yielded no orgs")
+    else:
+        lead = ("all three team leaderboards yielded orgs but their org codes do not "
+                "intersect, so no club has a complete offense/rotation/bullpen row")
+    return f"{lead} ({'; '.join(parts)})"
+
+
+def _record_board_anomaly(reason: str, n_prev: int) -> None:
+    """Raise an empty board into the ingest-health RED ledger.
+
+    Best-effort by design: reporting must never be the reason a build fails. The
+    ledger is what the deploy shell prints as `!!! INGEST RED`, so a board that
+    went dark becomes visible on the run that broke it rather than whenever
+    somebody next opens /betting/."""
+    try:
+        from run_monthly import _record_ingest
+        _record_ingest(
+            "betting_export", ok=False,
+            message=(f"the betting board priced 0 games ({reason}); "
+                     f"kept the previous {n_prev}-game board rather than publishing "
+                     f"an empty one"),
+        )
+    except Exception:
+        log.debug("betting_export: could not record the empty-board anomaly", exc_info=True)
+
+
+def _carry_previous_board(payload: dict, reason: str, *, log_fn=None) -> dict:
+    """Never let an empty build OVERWRITE a populated board.
+
+    Straight off the fantasy_export EMPTY-FETCH GUARD, for the same reason and
+    with the same trade. Losing a day of freshness is recoverable on the next
+    run; publishing a blank board is what a reader sees, and a blank board with
+    a plausible-sounding empty_reason reads as "no games today" rather than as
+    "this pipeline is broken".
+
+    The MODEL, the VALIDATION STATE and the RECORD stay fresh: they are the
+    honest half of the page and they did not fail. Only the slate half is
+    carried, and it is stamped with the slate date it belongs to plus
+    `stale_board`, so nothing on the page claims to be tonight's."""
+    prev = _load(OUT_PATH.name)
+    prev_bets = (prev or {}).get("team_bets") or []
+    if not prev_bets:
+        return payload                      # nothing to protect; publish the empty state
+    payload["team_bets"] = prev_bets
+    payload["n_games"] = len(prev_bets)
+    payload["slate_date"] = prev.get("slate_date") or payload.get("slate_date")
+    payload["props_fair_lines"] = prev.get("props_fair_lines") or payload["props_fair_lines"]
+    payload["parlay_context"] = parlay_context(prev_bets)
+    payload["status"]["stale_board"] = True
+    payload["status"]["stale_board_slate_date"] = payload["slate_date"]
+    payload["status"]["stale_board_built_at"] = prev.get("generated_at")
+    payload["status"]["stale_board_reason"] = (
+        f"this build priced 0 games ({reason}), so the board below is the last one that "
+        f"could be built, for the {payload['slate_date']} slate. It is NOT tonight's "
+        f"board and no price on it should be treated as live.")
+    if log_fn:
+        log_fn(f"betting_export: priced 0 games ({reason}); kept the previous "
+               f"{len(prev_bets)}-game board rather than publishing an empty one")
+    log.error("betting_export: board priced 0 games (%s); kept the previous %d-game "
+              "board and stamped it stale", reason, len(prev_bets))
+    _record_board_anomaly(reason, len(prev_bets))
+    return payload
+
+
+# ===========================================================================
 # build
 # ===========================================================================
 def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dict:
@@ -855,7 +1094,12 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     snap = bi.latest_snapshot()
     events = bi.parse_events(snap) if snap else []
     games = slate_games(on_date)
-    teams, parks, starters = bm.team_inputs(), bm.park_index(), bm.starter_inputs()
+    # `team_inputs_detail`, not `team_inputs`: the per-source org counts are the
+    # difference between naming the broken input and guessing at it. See
+    # team_input_failure_reason for the published false diagnosis that forced it.
+    team_detail = bm.team_inputs_detail()
+    teams, team_sources = team_detail["teams"], team_detail["sources"]
+    parks, starters = bm.park_index(), bm.starter_inputs()
     ctx = bm.league_context()
     coeffs = bm.coefficients()
     evald = _load("betting_model_eval.json") or {}
@@ -878,12 +1122,31 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
 
     empty_reasons = []
     if not teams:
-        empty_reasons.append("team leaderboards have not been built yet")
+        empty_reasons.append(team_input_failure_reason(team_sources))
     if not games:
-        empty_reasons.append("no slate found in data/fantasy.json; the schedule refresh "
-                             "has not run today")
+        # Distinguish "the schedule is empty" from "every game on the schedule is
+        # already Final or postponed". The old copy asserted the first and would
+        # have sent a reader hunting a schedule refresh that ran perfectly.
+        n_raw = len(slate_games(on_date, include_unbettable=True))
+        if n_raw:
+            empty_reasons.append(f"the schedule holds {n_raw} game(s) for this date and "
+                                 "none are bettable (all Final, postponed or in progress)")
+        else:
+            empty_reasons.append("no slate found in data/fantasy.json; the schedule refresh "
+                                 "has not run today")
+    elif not bets:
+        empty_reasons.append(f"{len(games)} game(s) are on the slate and none could be "
+                             "priced; the model returned no row for any matchup")
     if not events:
-        empty_reasons.append(status.get("note") or "no odds snapshot cached")
+        # `status["note"]` reads "odds feed configured" on a configured box, which
+        # published as the literal empty_reason "odds feed configured" - a state,
+        # not a reason, and it told the reader nothing about why there are no
+        # prices. Name the missing artifact instead.
+        if status.get("configured"):
+            empty_reasons.append("the odds feed is configured but no snapshot is cached "
+                                 "yet; betting_ingest has not captured one")
+        else:
+            empty_reasons.append(status.get("note") or "no odds snapshot cached")
 
     payload = {
         "generated_at": _now(),
@@ -897,6 +1160,11 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
             "odds_kind": (snap or {}).get("kind"),
             "model": "validated" if validated else "unvalidated",
             "model_mode": validation.get("headline_mode"),
+            # The observation behind any empty-board reason, so the claim on the
+            # page can be checked against the files rather than believed.
+            "team_input_sources": team_sources,
+            "n_slate_games": len(games),
+            "stale_board": False,
             "empty_reasons": empty_reasons,
         },
         "model": {
@@ -941,6 +1209,14 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
                           "and test_betting.py pins it."),
     }
 
+    # REFUSE TO OVERWRITE A POPULATED BOARD WITH AN EMPTY ONE. This runs before
+    # the preview is sliced and before either file is written, so the preview and
+    # the full payload can never disagree about which slate is on the page.
+    if not bets:
+        payload = _carry_previous_board(
+            payload, "; ".join(empty_reasons) or "no reason recorded", log_fn=log_fn)
+    bets = payload["team_bets"]
+
     preview = {
         "generated_at": payload["generated_at"],
         "slate_date": payload["slate_date"],
@@ -968,7 +1244,8 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
             _write(RECORD_PATH, [])
         if log_fn:
             log_fn(f"betting_export: wrote {OUT_PATH.name} "
-                   f"({len(bets)} games, odds={payload['status']['odds_feed']})")
+                   f"({len(bets)} games, odds={payload['status']['odds_feed']}"
+                   f"{', STALE BOARD' if payload['status'].get('stale_board') else ''})")
     return payload
 
 

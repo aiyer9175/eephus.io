@@ -40,8 +40,9 @@ from typing import Optional
 import hem_plus
 from hem_plus import Hitter
 from bullpen_export import (_team_abbrev_map, _num, score_war_rate,
-                            join_war_rate_3yr, WAR_RATE_POOL_MIN_PA,
-                            WAR_RATE_DISPLAY_MIN_PA)
+                            join_war_rate_3yr, guard_nonempty_block,
+                            team_basis_meta, _warn_unresolved_teams, _ingest_red,
+                            WAR_RATE_POOL_MIN_PA, WAR_RATE_DISPLAY_MIN_PA)
 import fa_sources
 
 _log = logging.getLogger(__name__)
@@ -116,6 +117,7 @@ def load_season_hitting(season: int) -> list[dict]:
         return []
     tmap = _tmap()
     out = []
+    n_unresolved = 0
     for r in rows:
         st = r.get("stat") or {}
         pl = r.get("player") or {}
@@ -124,9 +126,14 @@ def load_season_hitting(season: int) -> list[dict]:
         if not pid:
             continue
         tid = tm.get("id") if isinstance(tm, dict) else None
+        # `or ""` is kept (a genuinely unassigned row must still serve a blank),
+        # but the blank is COUNTED now: see bullpen_export._warn_unresolved_teams.
+        abbr = tmap.get(tid) or ""
+        if not abbr:
+            n_unresolved += 1
         out.append({
             "mlbam": int(pid), "name": pl.get("fullName", ""),
-            "team": (tmap.get(tid) or ""),
+            "team": abbr,
             "PA": st.get("plateAppearances"), "AB": st.get("atBats"), "H": st.get("hits"),
             "2B": st.get("doubles"), "3B": st.get("triples"), "HR": st.get("homeRuns"),
             "BB": st.get("baseOnBalls"), "IBB": st.get("intentionalWalks"),
@@ -134,6 +141,7 @@ def load_season_hitting(season: int) -> list[dict]:
             "SB": st.get("stolenBases"), "CS": st.get("caughtStealing"),
             "RBI": st.get("rbi"), "R": st.get("runs"),
         })
+    _warn_unresolved_teams(n_unresolved, len(out), tmap, f"hitting {season}")
     # Owner decision 2026-08-05: team charts follow the current roster, not the
     # club the stats were earned with. See bullpen_export.TEAM_BASIS for the
     # basis note and the one-line revert.
@@ -624,23 +632,129 @@ def _backtest() -> dict:
 
 
 @functools.lru_cache(maxsize=4)
-def load_bat_side(season: int) -> dict:
+def load_bat_side(season: int) -> Optional[dict]:
     """{mlbam: 'L'|'R'|'S'} for every MLB player, one bulk StatsAPI call. Feeds the
-    handedness-aware lineup construction (build_batting_order). Best-effort: {} on
-    any failure, so lineups fall back to the HEM+-only order."""
+    handedness-aware lineup construction (hem_plus.build_batting_order).
+
+    Returns None - never {} - when the lens is unavailable, which is the
+    bullpen_export._active_mlbam_ids posture ("never break the board", with an
+    explicit sentinel the caller can act on). This used to return {} on failure
+    and the caller read that as "nothing to stamp" and shipped anyway: measured
+    2026-08-05 on the served board, `bats` was null on 618 of 618 hitters and all
+    30 teams published BYTE-IDENTICAL vs-LHP and vs-RHP orders while the page's
+    own note told the reader the two lists were staggered by handedness.
+
+    An empty map is not "no platoon data", it is "no platoon lens", and the two
+    must not be indistinguishable downstream. A parse that yields zero usable
+    codes is the same outage as a failed fetch, so it returns None too, and both
+    log the counts."""
     try:
         import bullpen_export as be
         data = be._get_json("sports/1/players", {"season": int(season)})
     except Exception as e:   # noqa: BLE001 - best-effort, network/parse anything
-        log = logging.getLogger(__name__)
-        log.warning("batSide fetch failed: %s", e)
-        return {}
+        _log.warning("batSide fetch failed for %s (%s); the platoon lineup lens "
+                     "is UNAVAILABLE this run", season, e)
+        return None
+    people = data.get("people") or []
     out = {}
-    for p in data.get("people", []):
+    for p in people:
         bs = (p.get("batSide") or {}).get("code")
         if p.get("id") and bs:
             out[int(p["id"])] = bs
+    if not out:
+        _log.warning("batSide feed for %s returned %d people and 0 usable batSide "
+                     "codes; treating the platoon lineup lens as UNAVAILABLE",
+                     season, len(people))
+        return None
+    _log.info("batSide %s: %d codes resolved from %d people", season, len(out), len(people))
     return out
+
+
+def _platoon_availability(teams: list[dict], bat_side: Optional[dict],
+                          n_stamped: int, n_hitters: int, log=print) -> dict:
+    """Publish the vs-LHP / vs-RHP orders ONLY when the bat-side lens exists, and
+    disclose the state either way. Mutates `teams` (drops `orders`) when it does
+    not. Returns the payload's bat_side block.
+
+    THE FABRICATED LENS (measured 2026-08-05). hem_plus.team_offense ALWAYS emits
+    orders["vr"] and orders["vl"]; the only thing that can make them differ is
+    Hitter.bats, which this module stamps from load_bat_side. With the bat side
+    missing, hem_plus._platoon_adj returns 0.0 for every hitter and the handedness
+    stagger has no hands to stagger, so the two orders come out byte-identical -
+    and the served file did exactly that for all 30 teams while every one of 618
+    hitters carried a null `bats`. Two identical lists under two different hand
+    labels do not read as "no data"; they read as "the split was applied and it
+    did not change anything", which is a claim this board never earned.
+
+    So when the lens is unavailable the hand-labelled orders are REMOVED rather
+    than served neutral. That degrades safely on the page: assets/mlbstats.js
+    already falls back to the plain HEM+ depth ladder (t.lineup) when t.orders is
+    absent, so the charts stay populated and only the handedness claim
+    disappears. The payload carries bat_side.available=false with the reason, so
+    a consumer can tell "no lens" from "lens applied".
+
+    The constructed order itself is NOT thrown away, it is re-keyed to
+    `order_no_platoon`. Removing the data outright would trade one silent blank
+    for another: betting_export.props_fair_lines reads teams[].orders.vr to build
+    the hitter prop rows, so an omitted `orders` dark-starts the hitter props on
+    the betting board with nothing reporting it. Under an unknown bat side vr and
+    vl are byte-identical anyway, so this is that one list under a name that
+    claims nothing about handedness. Consumers that only need "the projected
+    order" can read it; consumers that need the SPLIT correctly find nothing."""
+    n_teams = len(teams)
+    if bat_side is None:
+        reason = "batSide feed unavailable (fetch failed or returned no usable codes)"
+    elif not n_stamped:
+        reason = (f"batSide feed returned {len(bat_side)} codes but none matched "
+                  f"the {n_hitters} hitters on this board")
+    else:
+        reason = None
+    if reason is None:
+        return {
+            "available": True, "n_stamped": n_stamped, "n_hitters": n_hitters,
+            "n_feed_codes": len(bat_side or {}),
+            "n_teams_with_orders": sum(1 for t in teams if t.get("orders")),
+            "note": ("Bat side (L/R/S) drives the vs-LHP / vs-RHP order: the "
+                     "platoon term and the handedness stagger both read it."),
+        }
+    n_dropped = n_kept = 0
+    for t in teams:
+        o = t.pop("orders", None)
+        if not o:
+            continue
+        n_dropped += 1
+        neutral = (o.get("vr") or o.get("vl")) if isinstance(o, dict) else None
+        if neutral:
+            # One list, under a name that asserts nothing about handedness. The
+            # per-slot platoon_adv chip goes with it: it is False on every row
+            # without a bat side, and a "no platoon advantage" marker is itself a
+            # handedness claim.
+            for slot in neutral:
+                if isinstance(slot, dict):
+                    slot.pop("platoon_adv", None)
+            t["order_no_platoon"] = neutral
+            n_kept += 1
+    if callable(log):
+        log(f"  hitters: bat side UNAVAILABLE ({reason}); dropped the vs-LHP / "
+            f"vs-RHP orders from {n_dropped} of {n_teams} teams rather than "
+            f"serving two identical lineups as a platoon split "
+            f"({n_kept} re-keyed to order_no_platoon)")
+    _ingest_red("hitter_bat_side",
+                (f"bat side unavailable ({reason}); the vs-LHP / vs-RHP lineup "
+                 f"orders were omitted from {n_dropped} of {n_teams} team charts. "
+                 f"Without it the two orders are byte-identical."))
+    return {
+        "available": False, "reason": reason, "n_stamped": n_stamped,
+        "n_hitters": n_hitters, "n_feed_codes": len(bat_side or {}),
+        "orders_omitted": n_dropped, "n_order_no_platoon": n_kept,
+        "n_teams": n_teams,
+        "note": ("The vs-LHP / vs-RHP batting orders are OMITTED this run because "
+                 "the bat side is unknown. They are not computed neutral: with no "
+                 "handedness the two orders come out identical, which would assert "
+                 "a platoon split that was never applied. The one constructed "
+                 "order is served as teams[].order_no_platoon instead, and the "
+                 "team charts fall back to the HEM+ depth ladder."),
+    }
 
 
 def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
@@ -657,16 +771,18 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         return 0
     hitters = build_hitters(rows)
     # Stamp bat side (L/R/S) before scoring so team_offense can construct the
-    # handedness-staggered vs-LHP / vs-RHP orders. Best-effort bulk call.
+    # handedness-staggered vs-LHP / vs-RHP orders. None => the lens is
+    # unavailable, which _platoon_availability turns into an omitted-orders
+    # payload rather than two identical lineups (see load_bat_side).
     bat_side = load_bat_side(season)
+    n_bs = 0
     if bat_side:
-        n_bs = 0
         for h in hitters:
             bs = bat_side.get(int(h.mlbam)) if h.mlbam is not None else None
             if bs:
                 h.bats = bs
                 n_bs += 1
-        log(f"  hitters: bat side stamped for {n_bs} hitters")
+        log(f"  hitters: bat side stamped for {n_bs} of {len(hitters)} hitters")
     scored = hem_plus.score_pool(hitters)
     h3_meta = _join_hem_plus_3yr(scored["hitters"])
     if h3_meta.get("n_stamped"):
@@ -703,6 +819,17 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         log(f"  hitters: 3-year WAR/PA+ joined for {wr3_meta['n_stamped']} hitters "
             f"(frozen lab vintage {wr3_meta.get('generated_at')})")
 
+    # ZERO-TEAM ROLLUP GUARD. The `if not rows` check above protects the hitter
+    # rows and protected nothing else: a blanked team code leaves every row intact
+    # and empties scored["teams"], which is exactly how 0 team offenses published
+    # over 30 and Offense+ read a flat 100 everywhere. See guard_nonempty_block.
+    teams, rollup_meta = guard_nonempty_block(
+        scored["teams"], out_path, key="teams", source="hitter_leaderboards",
+        label="hitters", log=log)
+    # Orders ride ON the team rollups, so this runs on the SERVED teams (a
+    # kept-stale rollup carries orders built from the same absent bat side).
+    bs_meta = _platoon_availability(teams, bat_side, n_bs, len(hitters), log=log)
+
     payload = {
         "generated_at": today, "season": season, "as_of": today,
         "verdict": _verdict(), "backtest": _backtest(),
@@ -715,11 +842,20 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         # vintage of its FROZEN 3-year companion.
         "war_rate": wr_meta,
         "multiyear_war_rate": wr3_meta,
-        "pool": scored["pool"], "hitters": scored["hitters"], "teams": scored["teams"],
+        # Whether the vs-LHP / vs-RHP lineup split was actually applied this run
+        # (see _platoon_availability): available=false means the orders are ABSENT
+        # on purpose, not that the split found nothing.
+        "bat_side": bs_meta,
+        # Which club a row's `team` names, how many rows were repointed, and how
+        # many serve a blank team (see bullpen_export.team_basis_meta), plus the
+        # zero-rollup guard's verdict for this run.
+        "team_basis": team_basis_meta(rows, label=f"hitting {season}"),
+        "team_rollup": rollup_meta,
+        "pool": scored["pool"], "hitters": scored["hitters"], "teams": teams,
     }
     n = len(scored["hitters"])
     log(f"  hitters: {n} hitters ({scored['pool'].get('n_qualified', 0)} qualified), "
-        f"{len(scored['teams'])} team offenses")
+        f"{len(teams)} team offenses")
     if write:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = out_path.with_suffix(".json.tmp")

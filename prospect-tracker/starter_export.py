@@ -35,6 +35,7 @@ from sem_plus import Starter
 # WAR-rate machinery (bullpen_export is the base of the /mlbstats/ export chain)
 from bullpen_export import (load_season_pitching, ip_to_float, _num,
                             score_war_rate, join_war_rate_3yr,
+                            guard_nonempty_block, team_basis_meta,
                             WAR_RATE_POOL_MIN_IP, WAR_RATE_DISPLAY_MIN_SP_IP)
 
 _log = logging.getLogger(__name__)
@@ -253,6 +254,14 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         log(f"  starters: 3-year WAR/IP+ joined for {wr3_meta['n_stamped']} starters "
             f"(frozen lab vintage {wr3_meta.get('generated_at')})")
 
+    # ZERO-TEAM ROLLUP GUARD. The `if not rows` check above protects the starter
+    # rows and protected nothing else: a blanked team code leaves every row intact
+    # and empties scored["teams"], which publishes 0 rotations over the 30 that
+    # were there and drops Rotation+ to a flat 100. See guard_nonempty_block.
+    teams, rollup_meta = guard_nonempty_block(
+        scored["teams"], out_path, key="teams", source="starter_leaderboards",
+        label="starters", log=log)
+
     payload = {
         "generated_at": today, "season": season, "as_of": today,
         "verdict": _verdict(), "backtest": _backtest(),
@@ -262,11 +271,16 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         # and the vintage of its FROZEN 3-year companion.
         "war_rate": wr_meta,
         "multiyear_war_rate": wr3_meta,
-        "pool": scored["pool"], "starters": scored["starters"], "teams": scored["teams"],
+        # Which club a row's `team` names, how many rows were repointed, and how
+        # many serve a blank team (see bullpen_export.team_basis_meta), plus the
+        # zero-rollup guard's verdict for this run.
+        "team_basis": team_basis_meta(rows, label=f"pitching {season}"),
+        "team_rollup": rollup_meta,
+        "pool": scored["pool"], "starters": scored["starters"], "teams": teams,
     }
     n = len(scored["starters"])
     log(f"  starters: {n} starters ({scored['pool'].get('n_qualified', 0)} qualified), "
-        f"{len(scored['teams'])} rotations")
+        f"{len(teams)} rotations")
     if write:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = out_path.with_suffix(".json.tmp")

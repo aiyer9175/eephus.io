@@ -32,6 +32,16 @@ Best-effort and additive. An empty slate, a missing fantasy.json, or a dead
 schedule endpoint all produce a VALID payload carrying `empty_reason`, so the
 page renders a loud honest empty state instead of a blank board.
 
+AN EMPTY BOARD IS A CLAIM, AND WE ONLY MAKE THE ONES WE CAN SUPPORT. The two
+empties this module can reach are opposites and used to be the same sentence:
+"the league scheduled no games" is a fact about baseball, "the schedule feed did
+not answer" is a fact about our pipeline. `empty_reason_kind` names which one,
+`_schedule_for_day` corroborates an empty fetch against the already-guarded
+schedule in fantasy.json before it will say the day is off, and `refresh` keeps
+the previous payload rather than publishing an unverified empty or a slate that
+came out structurally impossible (games, but no hitters). The counts every join
+resolved ride in `integrity` so a thin board can be told from a broken one.
+
 Run: python dfs_export.py            (writes data/dfs.json for today)
      python dfs_export.py --date 2026-08-06
 """
@@ -63,6 +73,11 @@ _MIN_ELIG_GAMES = fe._ELIG_MIN_GAMES   # games at a position before it is eligib
 # is a guard rail, not the operative term.
 _HIT_MULT_CLAMP = (0.80, 1.25)
 _PIT_ALLOW_CLAMP = (0.82, 1.22)
+# Announced probables that must ALL fail to price before we call the pitcher
+# side collapsed rather than thin. One or two unprojected spot starters is a
+# normal night (they land in `unprojected`); four in a row that all miss is a
+# join, not a coincidence. See _slate_integrity.
+_MIN_PROBABLES_FOR_COLLAPSE = 4
 
 
 # ---------------------------------------------------------------------------
@@ -241,19 +256,42 @@ def _pitcher_line(ros: dict, allow_mult: float) -> dict:
 
 def _team_ctx_index(teams_ctx: dict) -> dict:
     """Offense+ / Bullpen+ per org, defaulting to league average (100) so a
-    missing team is neutral rather than absent."""
+    missing team is neutral rather than absent - and a flag saying which of the
+    two you are looking at.
+
+    100 STAYS THE PRICE. A league-average opponent is the honest guess for a
+    club we could not look up, and changing it would move served numbers for no
+    modelling reason. What it must stop being is INVISIBLE: five clubs genuinely
+    sit at 100, so an unlabelled 100 makes a total join failure look exactly
+    like an average lineup. `*_resolved` records whether anyone measured it, and
+    build_payload counts and reports the misses."""
     out = {}
     for org, row in (teams_ctx or {}).items():
-        out[org] = {
-            "offense_plus": (row or {}).get("offense_plus") or 100,
-            "bullpen_plus": (row or {}).get("bullpen_plus") or 100,
-        }
+        if not org:
+            # A None key answers ctx.get(None) for every game side whose org
+            # did not resolve, handing an unknown opponent a real club's numbers.
+            continue
+        entry = {}
+        for field in ("offense_plus", "bullpen_plus"):
+            v = (row or {}).get(field)
+            ok = isinstance(v, (int, float)) and bool(v)
+            entry[field] = v if ok else 100
+            entry[field + "_resolved"] = ok
+        out[org] = entry
     return out
 
 
-def _empty(day: str, season, reason: str, extra: dict | None = None) -> dict:
+def _empty(day: str, season, reason: str, extra: dict | None = None,
+           kind: str | None = None) -> dict:
     """A VALID payload that carries its own reason for being empty. The page
-    renders this loudly; it never renders a blank board."""
+    renders this loudly; it never renders a blank board.
+
+    `kind` is the MACHINE-readable half of `empty_reason`, and it exists because
+    the two empties this module can hit are opposites: "the league scheduled no
+    games" is a fact about baseball, "the schedule feed did not answer" is a
+    fact about our pipeline, and only one of them is safe to publish as an
+    assertion. Keys: no_corpus, season_over, no_games_scheduled,
+    schedule_unavailable, no_projections, collapsed_slate; None when healthy."""
     payload = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "slate_date": day,
@@ -268,6 +306,7 @@ def _empty(day: str, season, reason: str, extra: dict | None = None) -> dict:
         "roster_templates": ROSTER_TEMPLATES,
         "salaries": _SALARY_BLOCK,
         "empty_reason": reason,
+        "empty_reason_kind": kind,
         "notes": _NOTES,
     }
     if extra:
@@ -301,6 +340,75 @@ _NOTES = [
 ]
 
 
+def _schedule_for_day(day: str, fantasy: dict | None) -> tuple[list, dict]:
+    """(games on `day`, provenance) - the slate, plus how we know it.
+
+    THE DEFECT THIS EXISTS FOR (2026-08-05). build_payload used to fetch and
+    then publish, on the empty list a FAILED fetch returns, the sentence "No MLB
+    games scheduled for {day}." That is a positive claim about the league's
+    schedule, and a network error is not evidence for it. It also reads exactly
+    like a genuine off day, so the one thing a reader could have used to tell an
+    outage from a Monday in November was gone.
+
+    fsched.fetch_probables returns [] for both cases and is not this module's to
+    change, so corroborate the empty here instead:
+
+      * data/fantasy.json's schedule block is the ALREADY-GUARDED copy of this
+        same feed (fantasy_export.refresh_live keeps the previous games rather
+        than publishing an empty fetch), so it is a second witness available for
+        free, with no second network call;
+      * games for `day` in that block prove the day is NOT empty whatever the
+        fetch just said, so we price the older copy instead of blanking a board;
+      * only a POPULATED, non-stale schedule block whose window COVERS `day` and
+        still holds no game for it is evidence of a real off day. Anything else
+        is "we do not know", and we say that instead.
+    """
+    sched = (fantasy or {}).get("schedule") or {}
+    prev_all = sched.get("games") or []
+    prev_day = [g for g in prev_all if g.get("date") == day]
+    window = sched.get("streamer_window") or []
+    covers = bool(len(window) == 2 and window[0] <= day <= window[1])
+    prev_stale = bool(sched.get("stale_schedule"))
+    try:
+        s, e = fsched.date_window(1, date.fromisoformat(day))
+        games = fsched.fetch_probables(s, e)
+    except Exception:
+        _log.exception("dfs: schedule fetch raised for %s - treating as no answer", day)
+        games = []
+    meta = {"n_fetched": len(games), "n_previous_for_day": len(prev_day),
+            "previous_window": list(window) or None,
+            "previous_covers_day": covers, "previous_stale": prev_stale}
+    if games:
+        meta.update(source="statsapi", verified_empty=False, stale=False)
+        return games, meta
+    if prev_day:
+        meta.update(source="fantasy.json (kept)", verified_empty=False, stale=True)
+        _log.warning("dfs: schedule fetch returned nothing for %s but the guarded "
+                     "fantasy.json schedule holds %d game(s) that day - pricing the "
+                     "older copy rather than publishing an empty slate",
+                     day, len(prev_day))
+        fe._record_ingest_safe(
+            "dfs_schedule", ok=False, n_rows=len(prev_day),
+            message=(f"probables fetch returned 0 games for {day}; priced the "
+                     f"{len(prev_day)} game(s) already in fantasy.json instead. "
+                     "The slate on /dfs/ is as fresh as that copy, not as of now."))
+        return prev_day, meta
+    verified = bool(prev_all) and covers and not prev_stale
+    meta.update(source="statsapi (empty)", verified_empty=verified, stale=False)
+    if not verified:
+        _log.error("dfs: no games for %s from the feed AND no corroborating copy "
+                   "(fantasy.json schedule: %d games, window %s, stale=%s) - "
+                   "refusing to claim the league scheduled nothing",
+                   day, len(prev_all), window or "none", prev_stale)
+        fe._record_ingest_safe(
+            "dfs_schedule", ok=False,
+            message=(f"no games for {day} and nothing to corroborate it with: the "
+                     "probables fetch returned 0 and fantasy.json's schedule does "
+                     "not cover the day. /dfs/ says the slate is unknown rather "
+                     "than asserting an empty schedule."))
+    return [], meta
+
+
 def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                   games: list | None = None, positions: dict | None = None,
                   park: dict | None = None, teams_ctx: dict | None = None) -> dict:
@@ -308,26 +416,47 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
     runs offline in a test with a stubbed schedule.
 
     `games` is the fantasy_schedule.fetch_probables shape. Passing [] is the
-    empty-slate case and is a supported, tested path, not an error."""
+    empty-slate case and is a supported, tested path, not an error - and it is
+    the CALLER asserting the slate is empty, which is why an injected [] still
+    publishes "No MLB games scheduled" while an empty fetch has to earn that
+    sentence (see _schedule_for_day).
+
+    Pure: this only builds and diagnoses. Whether the result is fit to publish
+    is refresh()'s call, and it reads `empty_reason_kind` and `integrity`."""
     day = day or date.today().isoformat()
     if fantasy is None:
         fantasy = fe._load_json("fantasy.json")
     if not isinstance(fantasy, dict) or not fantasy.get("players"):
         return _empty(day, None,
                       "The rest-of-season projection corpus has not been built yet. "
-                      "The nightly build seeds it.")
+                      "The nightly build seeds it.", kind="no_corpus")
     season = fantasy.get("season")
     frac = float(fantasy.get("season_fraction") or 0.0)
     rem_games = int(round(_SEASON_GAMES * max(0.0, 1.0 - frac)))
     if rem_games <= 0:
         return _empty(day, season,
                       "The regular season is over. Daily slates come back on "
-                      "opening day.")
+                      "opening day.", kind="season_over")
+    # An INJECTED `games` list is the caller's own verified slate (the offline
+    # CLI, a test, a lab): [] from a caller means "there are no games", which is
+    # a supported, tested path. Only a slate we went and got ourselves can be
+    # empty for a reason we have to be careful about.
     if games is None:
-        s, e = fsched.date_window(1, date.fromisoformat(day))
-        games = fsched.fetch_probables(s, e)
+        games, sched_meta = _schedule_for_day(day, fantasy)
+    else:
+        sched_meta = {"source": "caller", "n_fetched": len(games),
+                      "verified_empty": True, "stale": False}
     if not games:
-        return _empty(day, season, f"No MLB games scheduled for {day}.")
+        if sched_meta.get("verified_empty"):
+            return _empty(day, season, f"No MLB games scheduled for {day}.",
+                          extra={"schedule_source": sched_meta},
+                          kind="no_games_scheduled")
+        return _empty(
+            day, season,
+            (f"We could not confirm the slate for {day}. The MLB schedule feed "
+             "did not answer, so we do not know whether games are scheduled, and "
+             "we will not guess. This page rebuilds on the next run."),
+            extra={"schedule_source": sched_meta}, kind="schedule_unavailable")
 
     if positions is None:
         positions = positions_by_mlbam()
@@ -342,10 +471,26 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
     # board a pitcher record.
     pool = {}
     hitters_by_team: dict = {}
+    n_hit_pool = n_hit_teamless = 0
     for p in fantasy["players"]:
         pool[(p.get("mlbam"), p.get("side"))] = p
-        if p.get("side") == "hit" and p.get("team"):
-            hitters_by_team.setdefault(p["team"], []).append(p)
+        if p.get("side") != "hit":
+            continue
+        n_hit_pool += 1
+        # CANONICAL ON BOTH SIDES OF THIS JOIN. fantasy.json carries the hitter
+        # leaderboard's raw team code (AZ, CWS, KC, SD, SF, TB, WSH) while the
+        # slate carries the schedule feed's canonical code (ARI, CHW, KCR, SDP,
+        # SFG, TBR, WSN), so `hitters_by_team.get(org)` missed for 7 of 30 clubs
+        # and every one of their bats was absent from /dfs/ with nothing said.
+        # Measured on the 2026-08-05 payload: 30 orgs on the slate, hitters for
+        # 23. Both sides go through the ONE canonicaliser (fantasy_export.
+        # _canon_org -> trades.canonical_org); neither artifact is re-keyed on
+        # disk, so no other reader of fantasy.json moves.
+        org = fe._canon_org(p.get("team"))
+        if not org:
+            n_hit_teamless += 1
+            continue
+        hitters_by_team.setdefault(org, []).append(p)
 
     slate_games: list = []
     # Keyed by (mlbam, side) so a doubleheader cannot put the same bat in a
@@ -378,7 +523,14 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
             opp_pp = opp_obj.get("probable") or {}
             opp_sp = pool.get((opp_pp.get("mlbam"), "pit")) if opp_pp.get("mlbam") else None
             opp_sem = ((opp_sp or {}).get("skill") or {}).get("sem_plus")
-            opp_bp = (ctx.get(opp_obj.get("org")) or {}).get("bullpen_plus") or 100
+            # ONE lookup, and it reports whether it hit. Both numbers below fall
+            # back to the neutral 100 exactly as before (the price does not
+            # move); `matchup_resolved` is what lets a reader, and a future
+            # audit, tell a measured 100 from a lookup that found nothing.
+            octx = ctx.get(opp_obj.get("org")) or {}
+            opp_bp = octx.get("bullpen_plus") or 100
+            matchup_resolved = bool(octx.get("offense_plus_resolved")
+                                    and octx.get("bullpen_plus_resolved"))
             # Opponent run prevention, innings weighted: the announced starter
             # covers 5.4 of 9 innings, the bullpen the rest. No starter posted
             # yet means the bullpen number carries the whole game rather than a
@@ -388,7 +540,7 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
             else:
                 opp_pitch = float(opp_bp)
             hit_mult = _clamp((100.0 / opp_pitch) * pf, *_HIT_MULT_CLAMP)
-            opp_off = (ctx.get(opp_obj.get("org")) or {}).get("offense_plus") or 100
+            opp_off = octx.get("offense_plus") or 100
             allow_mult = _clamp((float(opp_off) / 100.0) * pf, *_PIT_ALLOW_CLAMP)
             sides[me] = {
                 "org": side_obj.get("org"), "team": side_obj.get("team"),
@@ -401,6 +553,7 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                                  if opp_pp.get("mlbam") else None),
                 "opp_org": opp_obj.get("org"),
                 "opp_off": opp_off, "opp_bullpen": opp_bp,
+                "matchup_resolved": matchup_resolved,
                 "opp_sp_sem": opp_sem,
                 "opp_pitch": round(opp_pitch, 1),
                 "hit_mult": round(hit_mult, 3),
@@ -439,7 +592,9 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                         "fd": score_line(line, "fd", "pit")},
                 "sem_plus": ((rec.get("skill") or {}).get("sem_plus")),
                 "per_start_fgp": fgp.get("per_start_fgp"),
-                "ctx": {"opp_off": s["opp_off"], "park_run_pf": round(pf, 3),
+                "ctx": {"opp_off": s["opp_off"],
+                        "matchup_resolved": s["matchup_resolved"],
+                        "park_run_pf": round(pf, 3),
                         "park_source": park_source, "mult": s["allow_mult"]},
                 "est": ["h", "er", "w", "qs", "matchup", "park"],
             })
@@ -450,7 +605,7 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
             org = s.get("org")
             if not org:
                 continue
-            for rec in hitters_by_team.get(org, []):
+            for rec in hitters_by_team.get(fe._canon_org(org) or org, []):
                 mid = rec.get("mlbam")
                 line, start_rate = _hitter_line(rec.get("ros") or {}, rem_games,
                                                 s["hit_mult"])
@@ -471,6 +626,7 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                             "opp_sp_sem": s.get("opp_sp_sem"),
                             "opp_bullpen": s.get("opp_bullpen"),
                             "opp_pitch": s.get("opp_pitch"),
+                            "matchup_resolved": s["matchup_resolved"],
                             "park_run_pf": round(pf, 3), "park_source": park_source,
                             "mult": s["hit_mult"]},
                     "est": ["r", "rbi", "sb", "start_rate", "matchup", "park"],
@@ -479,6 +635,8 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
     rows = sorted(by_id.values(),
                   key=lambda r: -(r["pts"]["dk"] if r.get("pts") else -1e9))
     payload = _empty(day, season, None)
+    integrity = _slate_integrity(day, slate_games, rows, ctx,
+                                 n_hit_pool=n_hit_pool, n_hit_teamless=n_hit_teamless)
     payload.update({
         "n_games": len(slate_games),
         "n_players": len(rows),
@@ -488,6 +646,8 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
         "season_fraction": round(frac, 3),
         "fantasy_generated_at": fantasy.get("generated_at"),
         "unprojected": unprojected[:40],
+        "schedule_source": sched_meta,
+        "integrity": integrity,
         "anchors": {"pa_per_start": _PA_PER_START, "sp_ip_share": round(_SP_IP_SHARE, 3),
                     "season_games": _SEASON_GAMES, "elig_min_games": _MIN_ELIG_GAMES},
     })
@@ -495,14 +655,114 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
         payload["empty_reason"] = (
             f"{len(slate_games)} games are on the slate for {day}, but no probable "
             "starter or hitter on it has a rest-of-season projection yet.")
+        payload["empty_reason_kind"] = "no_projections"
+    elif not integrity["ok"]:
+        # A HALF BOARD IS WORSE THAN NO BOARD. The client renders `empty_reason`
+        # INSTEAD of the tables, so setting it here means a reader is told the
+        # slate did not assemble rather than being shown 29 pitchers and no
+        # hitters and left to conclude that is the day. The rows stay in the
+        # payload for an auditor; `integrity` says what is wrong with them.
+        # refresh() prefers keeping YESTERDAY's good payload over publishing
+        # this at all - this branch is the floor, for a box with no previous.
+        payload["empty_reason"] = integrity["message"]
+        payload["empty_reason_kind"] = integrity["kind"]
     return payload
+
+
+def _slate_integrity(day: str, slate_games: list, rows: list, ctx: dict, *,
+                     n_hit_pool: int, n_hit_teamless: int) -> dict:
+    """Is this board STRUCTURALLY POSSIBLE, and what did the joins resolve?
+
+    2026-08-05: /dfs/ served 15 games, 29 players and ZERO hitters. Every layer
+    behaved: the team abbreviation map came back empty, so every hitter row in
+    fantasy.json got a blank team, so the by-team hitter index was empty, so no
+    club matched, so no bat was priced. Nothing raised and nothing logged, and
+    the page rendered a tidy pitchers-only board. An MLB game cannot happen
+    without two lineups, so "games on the slate and no hitters" is not a thin
+    day, it is a broken join, and the counts have to be published for anyone to
+    tell the difference.
+
+    ZERO PITCHERS IS JUDGED DIFFERENTLY, on purpose. Two states are legitimate
+    there and neither is a defect: nobody has announced a probable yet (a real
+    early-morning slate), and a spot starter with no rest-of-season projection
+    (he is already listed in `unprojected`). So the pitcher side only counts as
+    collapsed when several arms were announced and NOT ONE of them priced, which
+    no amount of ordinary roster churn produces."""
+    n_hit = sum(1 for r in rows if r.get("side") == "hit")
+    n_pit = sum(1 for r in rows if r.get("side") == "pit")
+    n_prob = sum(1 for g in slate_games for k in ("home", "away")
+                 if (g.get(k) or {}).get("probable"))
+    slate_orgs = {(g.get(k) or {}).get("org") for g in slate_games
+                  for k in ("home", "away")}
+    slate_orgs.discard(None)
+    orgs_with_hitters = {r.get("team") for r in rows if r.get("side") == "hit"}
+    missing = sorted(slate_orgs - orgs_with_hitters)
+    n_ctx_off = sum(1 for r in ctx.values() if r.get("offense_plus_resolved"))
+    n_ctx_bp = sum(1 for r in ctx.values() if r.get("bullpen_plus_resolved"))
+    out = {
+        "ok": True, "kind": None, "message": None,
+        "n_hitters": n_hit, "n_pitchers": n_pit,
+        "n_probables_announced": n_prob,
+        "n_slate_orgs": len(slate_orgs),
+        "orgs_without_hitters": missing,
+        "hitter_pool": n_hit_pool, "hitter_pool_without_team": n_hit_teamless,
+        "matchup_orgs_resolved": {"offense_plus": n_ctx_off, "bullpen_plus": n_ctx_bp,
+                                  "expected": fe._MLB_CLUBS},
+    }
+    if slate_games and n_hit == 0:
+        out.update(ok=False, kind="collapsed_slate", message=(
+            f"{len(slate_games)} games are on the slate for {day}, but not one "
+            "hitter could be matched to a club. Two lineups play every game, so "
+            "this is a broken join in our build, not a thin day. We would rather "
+            "show you nothing than a board missing every bat."))
+    elif slate_games and n_prob >= _MIN_PROBABLES_FOR_COLLAPSE and n_pit == 0:
+        out.update(ok=False, kind="collapsed_slate", message=(
+            f"{n_prob} starters are announced for {day} but none of them could be "
+            "priced, so the pitcher side of this board is empty. That is a broken "
+            "join in our build, not a thin day."))
+    return out
+
+
+def _read_previous(path: Path) -> dict | None:
+    """The payload currently on disk, or None. Used to decide whether a bad
+    build is worth publishing over a good one."""
+    try:
+        prev = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return prev if isinstance(prev, dict) and prev.get("players") else None
+
+
+# The two build outcomes we would rather NOT publish, and why. Both are cases
+# where an older payload on disk is strictly more informative than the new one:
+# yesterday's real board (stamped stale) beats a claim we cannot support and
+# beats a board that is missing a whole side of the slate.
+_KEEP_PREVIOUS_KINDS = {
+    "schedule_unavailable": ("the schedule feed did not answer, so the new "
+                             "payload asserts nothing about today"),
+    "collapsed_slate": ("the new payload is structurally impossible (a slate "
+                        "with games but no hitters or no priced starters)"),
+}
 
 
 def refresh(log=print, *, day: str | None = None, games: list | None = None,
             out_path: Path | None = None) -> int:
-    """DAILY best-effort build of data/dfs.json. Returns the priced player
-    count. Never raises: a failure writes nothing and returns 0, and the page
-    keeps serving yesterday's payload with its own date stamp on it."""
+    """DAILY best-effort build of data/dfs.json. Returns the player count of
+    what is now SERVED (which is the previous payload's count on the keep paths
+    below). Never raises: a failure writes nothing and returns 0, and the page
+    keeps serving yesterday's payload with its own date stamp on it.
+
+    THE PUBLISH DECISION LIVES HERE, not in build_payload, so the builder stays
+    a pure function a test can drive and the writer owns the refuse-to-publish
+    rule (fantasy_export.refresh_live's EMPTY-FETCH GUARD, same shape):
+
+      * a slate we could not verify, or a board that came out structurally
+        impossible, does NOT overwrite a good payload. We restamp the previous
+        one with `stale_slate` + the reason and file a RED ledger row;
+      * with nothing to keep, we publish the honest empty/broken payload, which
+        carries its own `empty_reason` and renders as a loud state;
+      * a payload carrying a non-finite number is never written at all (see
+        fantasy_export._json_blob)."""
     try:
         payload = build_payload(day=day, games=games)
     except Exception:
@@ -510,14 +770,82 @@ def refresh(log=print, *, day: str | None = None, games: list | None = None,
         return 0
     path = Path(out_path) if out_path else OUT_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
+
+    kind = payload.get("empty_reason_kind")
+    if kind in _KEEP_PREVIOUS_KINDS:
+        prev = _read_previous(path)
+        if prev is not None:
+            why = _KEEP_PREVIOUS_KINDS[kind]
+            prev["stale_slate"] = True
+            prev["stale_reason"] = payload.get("empty_reason")
+            prev["stale_kind"] = kind
+            prev["stale_checked_at"] = datetime.now(timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%SZ")
+            blob = fe._json_blob(prev, "dfs_slate")
+            if blob is not None:
+                path.write_text(blob, encoding="utf-8")
+            msg = (f"dfs: refused to publish today's build for {payload['slate_date']} "
+                   f"because {why}; kept the {prev.get('n_players')}-player slate "
+                   f"for {prev.get('slate_date')} and stamped it stale")
+            _log.error(msg)
+            if callable(log):
+                log(msg)
+            fe._record_ingest_safe("dfs_slate", ok=False,
+                                   n_rows=int(prev.get("n_players") or 0),
+                                   message=msg)
+            return int(prev.get("n_players") or 0)
+        _log.error("dfs: %s for %s and there is no previous payload to keep - "
+                   "publishing the honest empty state instead",
+                   kind, payload.get("slate_date"))
+        fe._record_ingest_safe(
+            "dfs_slate", ok=False,
+            message=(f"{kind} for {payload.get('slate_date')} with no previous "
+                     "dfs.json to fall back on; published the empty state."))
+
+    blob = fe._json_blob(payload, "dfs_slate")
+    if blob is None:
+        return 0                    # already logged + RED; the old file stands
+    path.write_text(blob, encoding="utf-8")
+    integ = payload.get("integrity") or {}
     if callable(log):
         if payload.get("empty_reason"):
             log(f"dfs: empty slate for {payload['slate_date']} - {payload['empty_reason']}")
         else:
             log(f"dfs: {payload['n_players']} players priced across "
-                f"{payload['n_games']} games ({payload['slate_date']})")
+                f"{payload['n_games']} games ({payload['slate_date']}) - "
+                f"{integ.get('n_hitters', 0)} hitters, {integ.get('n_pitchers', 0)} "
+                f"starters, matchup context on "
+                f"{(integ.get('matchup_orgs_resolved') or {}).get('offense_plus', 0)}"
+                f"/{fe._MLB_CLUBS} clubs")
+    # Partial misses do not block the publish - a board short a few clubs still
+    # beats no board - but they do go in the ledger, because "23 of 30 orgs" is
+    # the number nobody would ever have seen otherwise.
+    _report_partial(payload, integ)
     return int(payload.get("n_players") or 0)
+
+
+def _report_partial(payload: dict, integ: dict) -> None:
+    """RED-file a board that published but did not fully resolve its joins."""
+    if not payload.get("n_players"):
+        return
+    problems = []
+    missing = integ.get("orgs_without_hitters") or []
+    if missing:
+        problems.append(f"{len(missing)} of {integ.get('n_slate_orgs')} slate orgs "
+                        f"have no hitter priced ({', '.join(missing[:8])})")
+    resolved = (integ.get("matchup_orgs_resolved") or {}).get("offense_plus")
+    if isinstance(resolved, int) and resolved < fe._MLB_CLUBS:
+        problems.append(f"opponent Offense+ resolved for {resolved} of "
+                        f"{fe._MLB_CLUBS} clubs; the rest price at a neutral 100")
+    if (payload.get("schedule_source") or {}).get("stale"):
+        problems.append("the slate came from the kept fantasy.json schedule, not "
+                        "a fresh fetch")
+    if not problems:
+        return
+    msg = "dfs slate published with unresolved joins: " + "; ".join(problems)
+    _log.warning(msg)
+    fe._record_ingest_safe("dfs_slate", ok=False,
+                           n_rows=int(payload.get("n_players") or 0), message=msg)
 
 
 if __name__ == "__main__":

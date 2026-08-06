@@ -95,6 +95,106 @@ def _get_json(path: str, params: dict) -> dict:
 
 _TMAP_CACHE = Path(__file__).parent / ".cache" / "team_abbrev_map.json"
 
+
+# --------------------------------------------------------------------------- #
+# silent-empty plumbing, shared by the four /mlbstats/ exporters
+# --------------------------------------------------------------------------- #
+def _ingest_red(source: str, message: str) -> None:
+    """File a silent-empty into the ingest-health RED ledger.
+
+    The ledger is what the deploy shell prints as `!!! INGEST RED`, so an empty
+    fetch that would otherwise publish as a valid-looking board becomes visible
+    on the same run instead of surfacing days later as a dark module.
+
+    Best-effort BY DESIGN, mirroring fantasy_export._record_schedule_anomaly:
+    this is a reporting path and must never be the reason an export fails."""
+    try:
+        from run_monthly import _record_ingest
+        _record_ingest(source, ok=False, message=message)
+    except Exception:                      # noqa: BLE001 - reporting never breaks a board
+        _log.debug("could not record the ingest anomaly for %s", source, exc_info=True)
+
+
+def _prev_payload(out_path: Path) -> dict:
+    """The artifact this run is about to replace, or {} when there is none."""
+    try:
+        return json.loads(Path(out_path).read_text(encoding="utf-8"))
+    except Exception:                      # noqa: BLE001 - missing/corrupt prior == no prior
+        return {}
+
+
+def guard_nonempty_block(fresh: list, out_path: Path, *, key: str, source: str,
+                         label: str, log=print) -> tuple[list, dict]:
+    """Never publish an EMPTY list over a populated one. Returns (list_to_serve, meta).
+
+    THE OUTAGE THIS EXISTS FOR (2026-08-05). All four /mlbstats/ exporters refuse
+    to write when the PLAYER rows come back empty, and none of them checked the
+    TEAM ROLLUP. The rollup is keyed off each row's `team` string, so one failed
+    _team_abbrev_map fetch blanks every team code, hem_plus/sem_plus/rem_plus
+    score_pool skip the empty key, and the export publishes 0 team offenses over
+    the 30 that were there. That is what made Offense+ read a flat 100 for every
+    opponent on the streamer board and every DFS matchup. Nothing raised, because
+    "no teams" and "no data yet" are the same value to every consumer downstream.
+
+    Same posture as fantasy_export.refresh_live's EMPTY-FETCH GUARD: keep the
+    PREVIOUS value, stamp it stale (carrying the vintage of what is being served,
+    so the staleness is readable and not merely flagged), and file the failure
+    into the ingest-health RED ledger. Losing a day of freshness on this block is
+    recoverable on the next run; publishing 30 empty rollups is what a reader
+    sees. When there is no populated prior to protect, the empty block is served
+    as-is - it may be a genuine first run - but the zero is logged at ERROR and
+    filed RED so it is never silent."""
+    meta = {"key": key, "n": len(fresh), "stale": False}
+    if fresh:
+        return fresh, meta
+    prev = _prev_payload(out_path)
+    prev_block = prev.get(key) or []
+    if not prev_block:
+        _log.error("%s: '%s' came back EMPTY and there is no populated prior to "
+                   "fall back on; the board will serve 0 %s", label, key, key)
+        meta["reason"] = f"'{key}' empty and no populated prior artifact"
+        _ingest_red(source, f"{label}: 0 {key} and no prior artifact to keep")
+        if callable(log):
+            log(f"  {label}: WARNING - 0 {key} and no prior to keep")
+        return fresh, meta
+    kept = prev.get("generated_at") or prev.get("as_of")
+    meta.update({
+        "stale": True, "n": len(prev_block), "n_fresh": 0, "kept_from": kept,
+        "reason": (f"this run produced 0 {key}; kept the previous run's {key} "
+                   f"rather than publishing an empty block that reads downstream "
+                   f"as a legitimately empty board"),
+    })
+    _log.error("%s: '%s' came back EMPTY but the previous artifact had %d; "
+               "keeping the older block (vintage %s) rather than publishing empty",
+               label, key, len(prev_block), kept)
+    if callable(log):
+        log(f"  {label}: {key} came back EMPTY but the previous file had "
+            f"{len(prev_block)} - keeping the older {key} (vintage {kept}) "
+            f"rather than publishing an empty board")
+    _ingest_red(source, (f"{label}: 0 {key} this run; kept the previous "
+                         f"{len(prev_block)} (vintage {kept}). A zero rollup "
+                         f"reads downstream as a flat league-average board."))
+    return list(prev_block), meta
+
+
+def _warn_unresolved_teams(n_unresolved: int, n_rows: int, tmap: dict, label: str) -> None:
+    """Make a BLANK team code visible.
+
+    `tmap.get(tid) or ""` is the exact line that manufactured the blank behind
+    the 2026-08-05 outage: an empty abbreviation map turns every row's team into
+    "", the rollup then finds no teams at all, and Offense+ / Rotation+ /
+    Bullpen+ fall back to a flat 100 with nothing in the run reporting a problem.
+    The healthy path is untouched (a genuinely unassigned row still serves ""),
+    but the count is now logged, at ERROR when EVERY row failed, so "every team
+    blank" can never again be silent."""
+    if not n_unresolved:
+        return
+    lvl = _log.error if n_unresolved >= n_rows else _log.warning
+    lvl("%s: %d of %d rows could not resolve a team abbreviation (map holds %d "
+        "clubs); those rows serve a BLANK team and drop out of the team rollup",
+        label, n_unresolved, n_rows, len(tmap))
+
+
 # ---------------------------------------------------------------------------
 # TEAM BASIS. Owner decision 2026-08-05, overriding my recommendation.
 #
@@ -143,6 +243,14 @@ def apply_current_team(rows: list[dict], *, label: str = "") -> int:
         _log.warning("current-team remap unavailable (%s); serving stats-earned teams", e)
         return 0
     if not auth:
+        # Same failure as the except branch above, arriving as an EMPTY map instead
+        # of an exception, and it used to be the one that returned silently. Under
+        # TEAM_BASIS="current_roster" that means every board quietly served
+        # stats-earned teams while the payload claimed the current-roster basis, so
+        # it gets the same log the exception path already had.
+        _log.warning("current-team remap%s: the authoritative org map is EMPTY; "
+                     "serving stats-earned teams under a current_roster basis",
+                     f" [{label}]" if label else "")
         return 0
     # canonical -> the spelling THIS artifact already uses
     dialect: dict[str, str] = {}
@@ -166,6 +274,38 @@ def apply_current_team(rows: list[dict], *, label: str = "") -> int:
         _log.info("current-team remap%s: %d row(s) moved to the club MLB's "
                   "transaction feed reports", f" [{label}]" if label else "", moved)
     return moved
+
+
+def team_basis_meta(rows: list[dict], *, label: str = "") -> dict:
+    """The team-basis disclosure block each /mlbstats/ board publishes.
+
+    TEAM_BASIS decides whether `team` means "the club the stats were earned with"
+    or "the club that employs the player today", and the aggregates
+    (Offense+/Rotation+/Bullpen+) are computed from these same rows - so the three
+    boards, betting_model, and the nightly leaderboard_vintages all change basis
+    with it. That is far too load-bearing to be readable only from a source
+    constant, so the basis, the number of rows actually moved, and the number of
+    rows serving a blank team ride in the payload where they can be audited.
+
+    The moved count is recovered from the rows themselves: apply_current_team
+    stamps `team_basis` on every row it repoints. n_team_unresolved is the same
+    blank _warn_unresolved_teams logs, carried into the file: it is the count that
+    goes to 100% of rows in the outage this pass exists for."""
+    n_moved = sum(1 for r in rows if r.get("team_basis") == "current_roster")
+    n_blank = sum(1 for r in rows if not r.get("team"))
+    return {
+        "basis": TEAM_BASIS,
+        "n_rows": len(rows),
+        "n_moved_to_current_club": n_moved,
+        "n_team_unresolved": n_blank,
+        "label": label or None,
+        "note": ("current_roster points `team` at the club MLB's transaction feed "
+                 "says employs the player today, for the charts AND the "
+                 "aggregates, so an August acquisition credits his whole season "
+                 "to his new club. stats_earned keeps the club the stats were "
+                 "earned with. n_team_unresolved counts rows serving a blank team; "
+                 "those rows are absent from every team rollup."),
+    }
 
 
 @functools.lru_cache(maxsize=1)
@@ -290,6 +430,7 @@ def load_season_pitching(season: int) -> list[dict]:
         return []
     tmap = _team_abbrev_map()
     out = []
+    n_unresolved = 0
     for s in stats[0].get("splits", []):
         st = s.get("stat") or {}
         pl = s.get("player") or {}
@@ -301,9 +442,14 @@ def load_season_pitching(season: int) -> list[dict]:
         pos = (s.get("position") or {}).get("abbreviation")
         if pos and pos != "P":
             continue
+        # `or ""` is kept (a genuinely unassigned row must still serve a blank),
+        # but the blank is COUNTED now: see _warn_unresolved_teams.
+        abbr = tmap.get(tm.get("id")) or ""
+        if not abbr:
+            n_unresolved += 1
         out.append({
             "mlbam": int(pid), "name": pl.get("fullName", ""),
-            "team": tmap.get(tm.get("id")) or "",
+            "team": abbr,
             "G": st.get("gamesPitched"), "GS": st.get("gamesStarted"),
             "SV": st.get("saves"), "HLD": st.get("holds"),
             "IP": st.get("inningsPitched"), "ER": st.get("earnedRuns"),
@@ -316,6 +462,7 @@ def load_season_pitching(season: int) -> list[dict]:
             "CG": st.get("completeGames"), "GO": st.get("groundOuts"),
             "AO": st.get("airOuts"), "Strk": st.get("strikes"),
         })
+    _warn_unresolved_teams(n_unresolved, len(out), tmap, f"pitching {season}")
     apply_current_team(out, label=f"pitching {season}")
     return out
 
@@ -859,14 +1006,23 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         log(f"  bullpen: 3-year WAR/IP+ joined for {wr3_meta['n_stamped']} relievers "
             f"(frozen lab vintage {wr3_meta.get('generated_at')})")
 
+    # ZERO-TEAM ROLLUP GUARD. The `if not rows` check above protects the reliever
+    # rows and protected nothing else: a blanked team code leaves every row intact
+    # and empties scored["teams"], which publishes 0 team pens over the 30 that
+    # were there and drops Bullpen+ to a flat 100. See guard_nonempty_block.
+    teams, rollup_meta = guard_nonempty_block(
+        scored["teams"], out_path, key="teams", source="bullpen_leaderboards",
+        label="bullpen", log=log)
+
     # Bullpen Charts should show only players actually ON the active roster; drop
     # off-roster arms (demoted / released) from the depth ladders. Roster fetch is
-    # a single guarded pass and falls back to NO filtering if it fails.
+    # a single guarded pass and falls back to NO filtering if it fails. Runs on the
+    # SERVED teams, so a kept-stale rollup is still filtered to today's rosters.
     active_ids = _active_mlbam_ids(season)
     if active_ids is None:
         log("  bullpen: active-roster feed unavailable; depth ladders left unfiltered")
     else:
-        n_off = _apply_roster_filter(scored["teams"], active_ids)
+        n_off = _apply_roster_filter(teams, active_ids)
         log(f"  bullpen: active-roster filter kept {len(active_ids)} rostered ids, "
             f"dropped {n_off} off-roster arms from depth ladders")
 
@@ -890,14 +1046,19 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
         # vintage of its FROZEN 3-year companion, same disclosure contract.
         "war_rate": wr_meta,
         "multiyear_war_rate": wr3_meta,
+        # Which club a row's `team` names, how many rows were repointed, and how
+        # many serve a blank team (see team_basis_meta), plus the zero-rollup
+        # guard's verdict for this run (see guard_nonempty_block).
+        "team_basis": team_basis_meta(rows, label=f"pitching {season}"),
+        "team_rollup": rollup_meta,
         "pool": scored["pool"],
         "relievers": scored["relievers"],
-        "teams": scored["teams"],
+        "teams": teams,
     }
 
     n = len(scored["relievers"])
     log(f"  bullpen: {n} relievers ({scored['pool'].get('n_qualified', 0)} qualified), "
-        f"{len(scored['teams'])} team pens; leverage {coverage.get('games', 0)}/"
+        f"{len(teams)} team pens; leverage {coverage.get('games', 0)}/"
         f"{coverage.get('games_total', 0)} games")
     if write:
         out_path.parent.mkdir(parents=True, exist_ok=True)

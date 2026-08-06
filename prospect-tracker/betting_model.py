@@ -54,9 +54,12 @@ WHAT THIS MODEL IS NOT, AND THE PAGE SAYS SO
     number does.
 
 THE VINTAGE PATH (leaderboard_vintages.py), which is how that gets fixed.
-    `inputs_as_of(date)` returns the team and pitcher inputs from the newest
-    nightly snapshot whose knowledge cutoff is STRICTLY BEFORE that date, so
-    nothing that happened on or after the game can reach its features. Until
+    `inputs_as_of(date)` returns the team, pitcher AND park inputs from the
+    newest nightly snapshot whose knowledge cutoff is STRICTLY BEFORE that date,
+    so nothing that happened on or after the game can reach its features. A
+    snapshot written before the park column existed returns `parks: None`, and
+    the vintage backtest prices those games on a NEUTRAL park rather than on the
+    live index; it never silently borrows today's number for a past game. Until
     the nightly snapshot has been running long enough, there is no such
     vintage for any date, and the read falls back to the live leaderboards
     with `contaminated: True` and a logged warning. Nothing in this module
@@ -226,6 +229,17 @@ def _assemble_team_inputs(off: dict, rots: dict, pens: dict,
     for a reason nobody would ever see."""
     orgs = sorted(set(off) & set(pens) & set(rots))
     if not orgs:
+        # LOG THE COUNTS, not the outcome. The board published "team
+        # leaderboards have not been built yet" while all three leaderboards
+        # held 30 clubs, because this is an INTERSECTION: one source that parses
+        # to zero orgs, or a code-set mismatch that makes the sets disjoint,
+        # empties it with every file on disk fully populated. The three counts
+        # are the only thing that separates those cases, so they go in the log
+        # and (through `team_inputs_detail`) onto the page.
+        log.error("betting_model: team inputs are EMPTY - the intersection of the "
+                  "three team leaderboards is 0 orgs (offense %d, rotation %d, "
+                  "bullpen %d). Every game on the board will fail to price.",
+                  len(off), len(rots), len(pens))
         return {}
     # Team run prevention = rotation and bullpen weighted by their ACTUAL
     # innings split, not a guessed 60/40. The split moves several points a year
@@ -256,34 +270,60 @@ def _assemble_team_inputs(off: dict, rots: dict, pens: dict,
     return out
 
 
-def team_inputs() -> dict:
-    """{org: {...}} team strength, standardized, from the LIVE leaderboards.
+def team_inputs_detail() -> dict:
+    """{"teams": {...}, "sources": {...}} - the live team inputs AND the
+    per-leaderboard org counts that produced them.
 
-    Empty when the leaderboards are absent (fresh checkout), which the caller
-    degrades on. These are season-to-date: for a backtest that must not see
-    the future, go through `inputs_as_of`."""
-    hit = _data("hitter_leaderboards.json") or {}
-    pen = _data("bullpen_leaderboards.json") or {}
-    rot = _data("starter_leaderboards.json") or {}
+    THE COUNTS EXIST SO A BLANK BOARD CAN BE DIAGNOSED RATHER THAN GUESSED AT.
+    `team_inputs` returns the INTERSECTION of three org sets, so "empty" has at
+    least three distinct causes (a missing file, a source that parsed to zero
+    rows, and two code sets that do not overlap) and they need different fixes.
+    Reporting only the outcome cost this module a published false diagnosis;
+    see `betting_export.team_input_failure_reason`."""
+    files = {"offense": "hitter_leaderboards.json",
+             "rotation": "starter_leaderboards.json",
+             "bullpen": "bullpen_leaderboards.json"}
+    blobs = {k: _data(v) for k, v in files.items()}
 
     off = {}
-    for t in hit.get("teams") or []:
+    for t in (blobs["offense"] or {}).get("teams") or []:
         o = _org(t.get("team"))
         if o and t.get("offense_plus") is not None:
             off[o] = float(t["offense_plus"])
     pens, relief_ip = {}, {}
-    for t in pen.get("teams") or []:
+    for t in (blobs["bullpen"] or {}).get("teams") or []:
         o = _org(t.get("team"))
         if o and t.get("bullpen_plus") is not None:
             pens[o] = float(t["bullpen_plus"])
             relief_ip[o] = float(t.get("relief_ip") or 0.0)
     rots, starter_ip = {}, {}
-    for t in rot.get("teams") or []:
+    for t in (blobs["rotation"] or {}).get("teams") or []:
         o = _org(t.get("team"))
         if o and t.get("rotation_plus") is not None:
             rots[o] = float(t["rotation_plus"])
             starter_ip[o] = float(t.get("starter_ip") or 0.0)
-    return _assemble_team_inputs(off, rots, pens, starter_ip, relief_ip)
+
+    parsed = {"offense": off, "rotation": rots, "bullpen": pens}
+    sources = {
+        k: {"file": files[k],
+            "present": blobs[k] is not None,
+            "n_orgs": len(parsed[k]),
+            "as_of": (blobs[k] or {}).get("as_of")}
+        for k in files
+    }
+    teams = _assemble_team_inputs(off, rots, pens, starter_ip, relief_ip)
+    sources["n_orgs_joined"] = len([o for o in teams if not o.startswith("_")])
+    return {"teams": teams, "sources": sources}
+
+
+def team_inputs() -> dict:
+    """{org: {...}} team strength, standardized, from the LIVE leaderboards.
+
+    Empty when the leaderboards are absent (fresh checkout), which the caller
+    degrades on. These are season-to-date: for a backtest that must not see
+    the future, go through `inputs_as_of`. A caller that has to EXPLAIN an
+    empty return wants `team_inputs_detail` instead."""
+    return team_inputs_detail()["teams"]
 
 
 def starter_inputs() -> dict:
@@ -335,10 +375,19 @@ def park_index() -> dict:
 # vintages would otherwise emit 1,705 identical lines and bury everything else
 # in the nightly log.
 _VINTAGE_FALLBACK_WARNED = False
-# {vintage_date: (teams, starters)}. A vintage is reduced once and reused by
-# every game it prices; without this a backtest rebuilds the same 30-team
-# standardization fifteen times a day.
-_VINTAGE_CACHE: dict[str, tuple[dict, dict]] = {}
+# {vintage_date: (teams, starters, parks|None)}. A vintage is reduced once and
+# reused by every game it prices; without this a backtest rebuilds the same
+# 30-team standardization fifteen times a day. `parks` is None (never {}) when
+# the record predates the park column: see `parks_from_vintage`.
+_VINTAGE_CACHE: dict[str, tuple[dict, dict, dict | None]] = {}
+
+# The park index a game gets when its vintage carries no park column. Empty is
+# NEUTRAL here and only here, because `expected_runs` already resolves a missing
+# org to 1.00 (ATH has no Savant park entry), so an empty index makes the park
+# term drop out of the regression entirely. It is a named constant rather than a
+# bare {} at three call sites so the fallback is greppable, and every game that
+# takes it is counted into the vintage block's `park_basis`.
+NEUTRAL_PARK_INDEX: dict[str, float] = {}
 
 
 def reset_vintage_cache() -> None:
@@ -415,15 +464,47 @@ def starter_inputs_from_vintage(rec: dict) -> dict:
     return out
 
 
+def parks_from_vintage(rec: dict) -> dict | None:
+    """A stored vintage record -> {org: runs index / 100}, or None when the
+    record has no park column.
+
+    NONE IS THE SENTINEL AND IT MATTERS. `park_index()` reads the LIVE
+    data/fa_meta.json, whose factors are `fa_fit.park_factors(CLASS_YEAR - 1)`,
+    i.e. the IN-PROGRESS season. Handing that to a vintage-mode game lets the
+    eval window contribute to the park index used to fit and to price it, which
+    is the leak leaderboard_vintages exists to close and which the mode label
+    was denying. Returning {} here would be just as bad in the other direction:
+    the caller could not tell "no park column" from "a league of neutral parks",
+    so it could not mark the games. None forces the caller to choose, out loud."""
+    parks = (rec or {}).get("parks")
+    if not isinstance(parks, dict) or not parks:
+        return None
+    out: dict[str, float] = {}
+    for org, v in parks.items():
+        try:
+            out[str(org)] = float(v)
+        except (TypeError, ValueError):
+            continue
+    return out or None
+
+
 def inputs_as_of(game_date: str | None, *, allow_fallback: bool = True) -> dict:
     """The team and pitcher inputs for a game on `game_date`, from the newest
     vintage whose knowledge cutoff is STRICTLY BEFORE it.
 
     Returns a bundle, always, with the provenance attached:
 
-        {"teams": {...}, "starters": {...}, "source": "vintage"|"live-leaderboards",
+        {"teams": {...}, "starters": {...}, "parks": {...}|None,
+         "parks_resolved": bool,
+         "source": "vintage"|"live-leaderboards",
          "vintage_date": "2026-08-05"|None, "covers_through": ...|None,
          "contaminated": bool, "note": "..."}
+
+    `parks` is None with `parks_resolved: False` when the vintage predates the
+    park column. It is NOT quietly filled from `park_index()`: that index is the
+    in-progress season's, so filling it would put the leak back on the one input
+    that had it. The caller prices those games on NEUTRAL_PARK_INDEX and counts
+    them.
 
     THE FALLBACK IS LOUD ON PURPOSE. With no vintage for the date this returns
     the LIVE season-to-date leaderboards, which contain the game being priced,
@@ -445,15 +526,21 @@ def inputs_as_of(game_date: str | None, *, allow_fallback: bool = True) -> dict:
         vd = rec.get("vintage_date")
         if vd not in _VINTAGE_CACHE:
             _VINTAGE_CACHE[vd] = (team_inputs_from_vintage(rec),
-                                  starter_inputs_from_vintage(rec))
-        teams, starters = _VINTAGE_CACHE[vd]
-        return {"teams": teams, "starters": starters, "source": "vintage",
+                                  starter_inputs_from_vintage(rec),
+                                  parks_from_vintage(rec))
+        teams, starters, parks = _VINTAGE_CACHE[vd]
+        note = (f"priced on the leaderboard vintage of {vd} "
+                f"(covers through {rec.get('covers_through')})")
+        if parks is None:
+            note += ("; that record carries no park column, so the park term must be "
+                     "taken as neutral rather than from the live index")
+        return {"teams": teams, "starters": starters, "parks": parks,
+                "parks_resolved": parks is not None, "source": "vintage",
                 "vintage_date": vd, "covers_through": rec.get("covers_through"),
-                "contaminated": False,
-                "note": (f"priced on the leaderboard vintage of {vd} "
-                         f"(covers through {rec.get('covers_through')})")}
+                "contaminated": False, "note": note}
     if not allow_fallback:
-        return {"teams": {}, "starters": {}, "source": "none",
+        return {"teams": {}, "starters": {}, "parks": None, "parks_resolved": False,
+                "source": "none",
                 "vintage_date": None, "covers_through": None, "contaminated": False,
                 "note": f"no leaderboard vintage exists strictly before {game_date}"}
     if not _VINTAGE_FALLBACK_WARNED:
@@ -463,31 +550,53 @@ def inputs_as_of(game_date: str | None, *, allow_fallback: bool = True) -> dict:
                     "number produced from this read is leakage-contaminated. Run "
                     "leaderboard_vintages.snapshot() nightly to fix it.", game_date)
     return {"teams": team_inputs(), "starters": starter_inputs(),
+            "parks": park_index(), "parks_resolved": True,
             "source": "live-leaderboards", "vintage_date": None,
             "covers_through": None, "contaminated": True,
             "note": ("no vintage exists strictly before this date, so the live "
-                     "season-to-date leaderboards were used; they contain the game "
-                     "being priced and this number is contaminated")}
+                     "season-to-date leaderboards and the live park index were used; "
+                     "they contain the game being priced and this number is "
+                     "contaminated")}
 
 
 def _vintage_resolver():
-    """(game) -> (teams, starters) or None. None means the game has no vintage
-    and must be skipped rather than graded on live leaderboards.
+    """(resolve, stats).
+
+    `resolve(game) -> (teams, starters, parks) or None`. None means the game has
+    no vintage and must be skipped rather than graded on live leaderboards.
+
+    THE THIRD ELEMENT IS THE FIX FOR THE PARK LEAK. It used to be a 2-tuple and
+    the caller reached past it for `park_index()`, the live in-progress-season
+    index, in both the coefficient fit and the pricing. A vintage with no park
+    column now yields NEUTRAL_PARK_INDEX and the date is recorded in `stats`, so
+    the eval artifact can say how many games were graded with the park term off
+    instead of quietly graded with a leaking one.
 
     Memoized by GAME DATE inside the closure. The solvers evaluate the whole
     schedule dozens of times over a grid, and every game on a slate resolves
     to the same vintage, so this is the difference between a backtest that
-    finishes and one that does not."""
+    finishes and one that does not. `stats["park_source_by_date"]` is therefore
+    keyed by date too; per-GAME counts are derived by the caller, which is the
+    only place that knows the fit/eval split."""
     by_date: dict[str, tuple | None] = {}
+    stats: dict = {"park_source_by_date": {}}
 
     def _resolve(g):
         d = g.get("date")
         if d not in by_date:
             b = inputs_as_of(d, allow_fallback=False)
-            by_date[d] = ((b["teams"], b["starters"])
-                          if (b["source"] == "vintage" and b["teams"]) else None)
+            if b["source"] == "vintage" and b["teams"]:
+                parks = b.get("parks")
+                if parks is None:
+                    parks = NEUTRAL_PARK_INDEX
+                    stats["park_source_by_date"][d] = "neutral"
+                else:
+                    stats["park_source_by_date"][d] = "vintage"
+                by_date[d] = (b["teams"], b["starters"], parks)
+            else:
+                by_date[d] = None
         return by_date[d]
-    return _resolve
+    return _resolve, stats
 
 
 # ---------------------------------------------------------------------------
@@ -851,21 +960,24 @@ def _design_rows(games: list[dict], teams: dict, parks: dict, starters: dict,
                  resolve=None):
     """Two rows per game (each side as the scoring side) -> (X, y, meta).
 
-    `resolve(game) -> (teams, starters) | None` swaps in per-game features, so
-    the SAME design code serves the live path and the vintage path. A game the
-    resolver declines is dropped, never quietly graded on the fallback."""
+    `resolve(game) -> (teams, starters, parks) | None` swaps in per-game
+    features, so the SAME design code serves the live path and the vintage path.
+    A game the resolver declines is dropped, never quietly graded on the
+    fallback. The PARK comes out of the resolver too: it is a fitted feature
+    (b3), so a resolver-supplied game whose park still came from the caller's
+    live index would leak into the coefficient itself."""
     X, y, meta = [], [], []
     for g in games:
-        gt, gs = teams, starters
+        gt, gs, gpk = teams, starters, parks
         if resolve is not None:
             got = resolve(g)
             if not got:
                 continue
-            gt, gs = got
+            gt, gs, gpk = got
         h, a = gt.get(g["home_org"]), gt.get(g["away_org"])
         if not h or not a:
             continue
-        park = (parks.get(g["home_org"]) or 1.0) - 1.0
+        park = (gpk.get(g["home_org"]) or 1.0) - 1.0
         zp_home, _ = game_prevention_z(h, gs.get(g.get("home_sp")), gt)
         zp_away, _ = game_prevention_z(a, gs.get(g.get("away_sp")), gt)
         X.append([1.0, h["z_off"], zp_away, park, 1.0])
@@ -914,16 +1026,16 @@ def _p_home_series(games, teams, parks, starters, coeffs, tie_home, adj, shrink,
     `resolve` has the same contract as in `_design_rows`."""
     ps, ys = [], []
     for g in games:
-        gt, gs = teams, starters
+        gt, gs, gpk = teams, starters, parks
         if resolve is not None:
             got = resolve(g)
             if not got:
                 continue
-            gt, gs = got
+            gt, gs, gpk = got
         gp = game_probabilities(g["home_org"], g["away_org"],
                                 home_sp=gs.get(g.get("home_sp")),
                                 away_sp=gs.get(g.get("away_sp")),
-                                teams=gt, parks=parks, coeffs=coeffs,
+                                teams=gt, parks=gpk, coeffs=coeffs,
                                 tie_home=tie_home, home_adj=adj, diff_shrink=shrink)
         if gp:
             ps.append(gp["p_home"])
@@ -1267,7 +1379,17 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
     the nightly snapshot has been running, that is every game and the honest n
     is zero. When the sample is large enough the coefficients and both
     one-parameter corrections are refit inside the vintage window too, on
-    vintage features, so the mode leaks nothing at all.
+    vintage features.
+
+    THE PARK INDEX IS PART OF "FEATURES" AND USED NOT TO BE. Until 2026-08-05
+    this function built `parks = park_index()` once and handed the LIVE index
+    (data/fa_meta.json = `fa_fit.park_factors(CLASS_YEAR - 1)`, the in-progress
+    season) to the vintage fit AND the vintage pricing, so eval-window games
+    contributed to the park factor used to grade them while the mode label said
+    "no leakage". Parks now travel in the vintage record; a record written before
+    that column existed prices its games on a NEUTRAL park and the count lands in
+    `vintage.park_basis`. The contaminated modes below are UNCHANGED: they are
+    labelled contaminated and their numbers stay comparable to the old artifact.
 
     `validated` is False, `gates_picks` is False and `min_edge` is None until
     the vintage mode carries the sample AND the skill AND a graded price
@@ -1331,16 +1453,19 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
                               fit_home_rate, shrink, resolve)
         ps, ys, tot_err, n_tot = [], [], 0.0, 0
         for g in eval_games:
-            gt, gs = teams, starters
+            gt, gs, gpk = teams, starters, parks
             if resolve is not None:
                 got = resolve(g)
                 if not got:
                     continue
-                gt, gs = got
+                # `gpk`, not the enclosing `parks`. The enclosing one is the LIVE
+                # park index (fa_meta.json = the in-progress season), and pricing
+                # a vintage-mode eval game on it is the leak this lane closed.
+                gt, gs, gpk = got
             gp = game_probabilities(g["home_org"], g["away_org"],
                                     home_sp=gs.get(g.get("home_sp")),
                                     away_sp=gs.get(g.get("away_sp")),
-                                    teams=gt, parks=parks, coeffs=coeffs, tie_home=tie,
+                                    teams=gt, parks=gpk, coeffs=coeffs, tie_home=tie,
                                     home_adj=adj, diff_shrink=shrink)
             if not gp:
                 continue
@@ -1428,6 +1553,10 @@ def _empty_vintage_block(cov: dict, n_games: int) -> dict:
         "min_fit_games": VINTAGE_MIN_FIT_GAMES,
         "min_eval_games": VINTAGE_MIN_EVAL_GAMES,
         "min_graded_games_for_min_edge": VINTAGE_MIN_GRADED_GAMES,
+        # None, not a zeroed block: "nothing was graded" and "everything graded
+        # on a neutral park" are different facts and the reader gets to tell them
+        # apart. `_grade_vintage` replaces this the moment anything resolves.
+        "park_basis": None,
         "note": ("no completed game has a leaderboard vintage dated strictly before it, "
                  "so the honest sample is empty; run leaderboard_vintages.snapshot() "
                  "nightly and this number starts climbing"),
@@ -1457,10 +1586,17 @@ def _grade_vintage(games: list[dict], cov: dict, grade_fn, *, log_fn=None) -> di
     them, and refits everything inside that window on vintage features.
 
     The split is by DATE, not by row, so no two games from the same slate land
-    on opposite sides of the fit/eval boundary."""
+    on opposite sides of the fit/eval boundary.
+
+    THE PARK BASIS IS REPORTED, not assumed. Every input this mode uses is dated
+    strictly before its game, but the park column only exists on schema 2
+    vintages; games whose record predates it are priced with the park term at a
+    flat neutral and counted here. That is a stated loss of a feature, which is
+    an honest number. Silently borrowing the live index for them, which is what
+    this did before, was not."""
     reset_vintage_cache()
     block = _empty_vintage_block(cov, len(games))
-    resolve = _vintage_resolver()
+    resolve, rstats = _vintage_resolver()
     gradable = [g for g in games if resolve(g)]
     block["n_gradable"] = len(gradable)
     block["n_skipped_no_vintage"] = len(games) - len(gradable)
@@ -1475,6 +1611,7 @@ def _grade_vintage(games: list[dict], cov: dict, grade_fn, *, log_fn=None) -> di
         block["note"] = (f"{len(gradable)} games have a vintage; the honest mode needs at "
                          f"least {need} to split into a fit and an eval window, and "
                          f"{VINTAGE_MIN_GRADED_GAMES} graded before min_edge may be fitted")
+        block["park_basis"] = _park_basis(rstats, gradable, [])
         return block
     cut = dates[_vintage_cut_index(gradable, dates)]
     fit_g = [g for g in gradable if (g.get("date") or "") < cut]
@@ -1484,25 +1621,85 @@ def _grade_vintage(games: list[dict], cov: dict, grade_fn, *, log_fn=None) -> di
         block["note"] = (f"vintage split at {cut} leaves {len(fit_g)} fit and {len(ev_g)} "
                          f"eval games, below the {VINTAGE_MIN_FIT_GAMES}/"
                          f"{VINTAGE_MIN_EVAL_GAMES} floors")
+        block["park_basis"] = _park_basis(rstats, gradable, ev_g)
         return block
-    graded = grade_fn(fit_g, ev_g,
-                      f"vintage forward from {cut} (features dated strictly before each "
-                      "game; no leakage)", "vintage", resolve)
+    park_basis = _park_basis(rstats, gradable, ev_g)
+    # THE MODE LABEL SAYS WHAT IS ACTUALLY DATED. It used to read "features dated
+    # strictly before each game; no leakage", which was false for the park index
+    # in every build, and would go on being false for any game whose vintage
+    # predates the park column even now.
+    if park_basis["n_games_neutral_park"]:
+        label = (f"vintage forward from {cut} (team, pitcher and park inputs dated "
+                 f"strictly before each game, except {park_basis['n_games_neutral_park']} "
+                 f"games whose vintage predates the park column and are priced on a "
+                 f"NEUTRAL park)")
+    else:
+        label = (f"vintage forward from {cut} (team, pitcher and park inputs all dated "
+                 f"strictly before each game; coefficients and both one-parameter "
+                 f"corrections refit inside the window)")
+    graded = grade_fn(fit_g, ev_g, label, "vintage", resolve)
     if not graded:                                               # pragma: no cover
         block["status"] = "insufficient vintage coverage"
         block["note"] = "the vintage split produced no gradable rows"
+        block["park_basis"] = park_basis
         return block
     block.update(graded)
     block["status"] = "graded"
     block["split_date"] = cut
     block["n_graded"] = graded["n"]
+    block["park_basis"] = park_basis
     block["note"] = (f"{graded['n']} games graded on vintage features; "
                      f"{VINTAGE_MIN_GRADED_GAMES} are needed before min_edge may be "
                      "fitted, and the paired-Brier gate must also clear")
+    if park_basis["n_games_neutral_park"]:
+        block["note"] += (f". {park_basis['n_eval_games_neutral_park']} of the eval "
+                          f"games carry no park term at all (their vintage predates the "
+                          f"park column); the park index is NOT borrowed from the live "
+                          f"file, which would leak the in-progress season")
     if log_fn:
         log_fn(f"betting_model: vintage mode graded {graded['n']} games "
-               f"(brier {graded['brier']} vs home base {graded['brier_home_base']})")
+               f"(brier {graded['brier']} vs home base {graded['brier_home_base']}; "
+               f"park basis {park_basis['source']}, "
+               f"{park_basis['n_games_neutral_park']} neutral-park games)")
+    if park_basis["n_games_neutral_park"]:
+        log.warning("betting_model: %d of %d vintage-gradable games have no dated park "
+                    "index and were priced on a NEUTRAL park (dates %s..%s). Nightly "
+                    "snapshots written from leaderboard_vintages schema 2 onward carry "
+                    "one; this number falls to zero on its own as the archive rolls "
+                    "forward, and it is never patched with the live index.",
+                    park_basis["n_games_neutral_park"], len(gradable),
+                    park_basis["neutral_park_first_date"],
+                    park_basis["neutral_park_last_date"])
     return block
+
+
+def _park_basis(rstats: dict, gradable: list[dict], eval_games: list[dict]) -> dict:
+    """Which park index priced the vintage sample, in counts.
+
+    The resolver memoizes by DATE (a slate shares a vintage), so the per-game
+    counts have to be derived here, where the fit/eval split is known. The eval
+    count is the one that matters for the published claim: it is the window the
+    Brier gate reads."""
+    by_date = (rstats or {}).get("park_source_by_date") or {}
+    neutral_dates = sorted(d for d, v in by_date.items() if v == "neutral")
+    n_neutral = sum(1 for g in gradable if by_date.get(g.get("date")) == "neutral")
+    n_neutral_eval = sum(1 for g in eval_games if by_date.get(g.get("date")) == "neutral")
+    n_dated = len(gradable) - n_neutral
+    return {
+        "source": ("vintage" if not n_neutral else
+                   ("neutral" if not n_dated else "mixed")),
+        "n_games_vintage_park": n_dated,
+        "n_games_neutral_park": n_neutral,
+        "n_eval_games_neutral_park": n_neutral_eval,
+        "n_dates_neutral_park": len(neutral_dates),
+        "neutral_park_first_date": neutral_dates[0] if neutral_dates else None,
+        "neutral_park_last_date": neutral_dates[-1] if neutral_dates else None,
+        "note": ("the park index is read from each game's own vintage record; a record "
+                 "written before the park column existed prices its games on a NEUTRAL "
+                 "park (the park term drops out) rather than on the live index, which "
+                 "is the in-progress season and would leak the eval window into its own "
+                 "features"),
+    }
 
 
 if __name__ == "__main__":                                       # pragma: no cover

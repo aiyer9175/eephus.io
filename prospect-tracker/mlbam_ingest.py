@@ -224,17 +224,64 @@ def _fetch_stat_leaders(sport_id: int, group: str, season: int,
 
 
 # --- affiliate -> parent org, from the API instead of a 3-letter guess -------
-# _abbr_to_org's last resort is `clean[:3]`, which turns an affiliate name into
-# a fake org code: Erie -> "ERI", Reading -> "REA", Wilmington -> "WIL". Measured
-# 2026-07-25: 1,360 of the 2,575 auto-tracked players carried an affiliate string
-# in players.org instead of an MLB org. StatsAPI publishes the real mapping
-# (`parentOrgName` on every one of the 201 affiliate teams, verified live
-# HTTP 200), so resolve by team_id first and keep the keyword table as fallback.
+# _abbr_to_org's last resort used to be `clean[:3]`, which turned an affiliate
+# name into a fake org code: Erie -> "ERI", Reading -> "REA", Wilmington -> "WIL".
+# Measured 2026-07-25: 1,360 of the 2,575 auto-tracked players carried an
+# affiliate string in players.org instead of an MLB org. StatsAPI publishes the
+# real mapping (`parentOrgName` on every one of the 201 affiliate teams, verified
+# live HTTP 200), so resolve by team_id first and keep the keyword table as
+# fallback. The truncation itself is gone (see the NO-GUESS CONTRACT below).
 _PARENT_ORG_CACHE: dict[int, str] = {}
+
+# The canonical 30 MLB org codes this pipeline serves. Every org this module
+# WRITES is gated on this allowlist, because `trades.canonical_org` PASSES
+# THROUGH any string it cannot resolve: its output is a candidate, not an
+# answer. Mirrors storage._MLB_ORG_CODES_FOR_OVERRIDE, which gates the
+# transaction-based org override for exactly the same reason.
+_MLB_ORG_CODES = frozenset({
+    "ARI", "ATH", "ATL", "BAL", "BOS", "CHC", "CHW", "CIN", "CLE",
+    "COL", "DET", "HOU", "KCR", "LAA", "LAD", "MIA", "MIL", "MIN",
+    "NYM", "NYY", "PHI", "PIT", "SDP", "SEA", "SFG", "STL", "TBR",
+    "TEX", "TOR", "WSN",
+})
+
+
+def _canonical_org_code(raw: str | None) -> str:
+    """`trades.canonical_org` gated on the canonical 30. Returns "" when the
+    string is not a real MLB org.
+
+    canonical_org owns the StatsAPI -> eephus direction (CWS->CHW, WSH->WSN,
+    AZ->ARI, KC->KCR, SD->SDP, SF->SFG, TB->TBR, OAK->ATH), so routing every
+    candidate through it is what keeps this module from writing the API's
+    spelling into a DB whose canonical spelling is the other one. The allowlist
+    then catches what canonical_org hands back unchanged."""
+    if not raw:
+        return ""
+    try:
+        from trades import canonical_org
+    except ImportError:                       # standalone use without trades.py
+        return raw if raw in _MLB_ORG_CODES else ""
+    code = canonical_org(raw)
+    return code if code in _MLB_ORG_CODES else ""
+
+
+def _record_org_map_anomaly(message: str) -> None:
+    """File an unusable affiliate -> parent-org map into the ingest-health RED
+    ledger. Best-effort (mirrors fantasy_export._record_schedule_anomaly): a
+    reporting path must never be the reason an ingest fails."""
+    try:
+        from run_monthly import _record_ingest
+        _record_ingest("mlbam_parent_org_map", ok=False, message=message)
+    except Exception:                                    # noqa: BLE001
+        log.debug("could not record the parent-org map anomaly", exc_info=True)
 
 
 def _parent_org_by_team_id(season: int) -> dict[int, str]:
-    """{affiliate team_id: canonical MLB org code} for every MiLB affiliate."""
+    """{affiliate team_id: canonical MLB org code} for every MiLB affiliate.
+
+    Returns {} on a failed or unusable fetch. That is safe here BECAUSE the
+    caller's remaining fallback no longer invents a code: an empty map means
+    orgs go unwritten, not orgs go wrong."""
     global _PARENT_ORG_CACHE
     if _PARENT_ORG_CACHE:
         return _PARENT_ORG_CACHE
@@ -243,49 +290,92 @@ def _parent_org_by_team_id(season: int) -> dict[int, str]:
                     {"sportIds": sport_ids, "season": season,
                      "fields": "teams,id,parentOrgName,parentOrgId"})
     if not data:
-        return {}
-    try:
-        from trades import canonical_org
-    except ImportError:
-        canonical_org = lambda t: t  # noqa: E731
+        log.error("mlbam_ingest: affiliate -> parent org fetch FAILED; no org "
+                  "will be written for any player this run")
+        _record_org_map_anomaly(
+            "StatsAPI /teams returned nothing; affiliate -> parent org map is "
+            "empty, so auto-tracked players keep whatever org they already had")
+        return {}                     # not cached: the next call retries
     out: dict[int, str] = {}
+    n_rejected = 0
     for t in (data.get("teams") or []):
         tid, parent = t.get("id"), t.get("parentOrgName")
         if not tid or not parent:
             continue
-        code = canonical_org(parent)
+        code = _canonical_org_code(parent)
+        # An unresolvable parentOrgName must not BECOME an org. StatsAPI files a
+        # number of clubs under the umbrella "Office of the Commissioner"
+        # (partner/independent and administrative entries), and canonical_org
+        # hands that string straight back; the old `if code:` accepted it.
+        # Measured 2026-08-05: 1,029 players rows carried the literal
+        # "Office of the Commissioner" in players.org and 294 of them reached
+        # the served data/inactive.json.
         if code:
             out[int(tid)] = code
+        else:
+            n_rejected += 1
+            log.debug("mlbam_ingest: parentOrgName %r on team %s is not one of "
+                      "the canonical 30 - no org mapping written", parent, tid)
+    if not out:
+        log.error("mlbam_ingest: affiliate -> parent org map resolved ZERO of "
+                  "%d candidate teams; no org will be written for any player "
+                  "this run", n_rejected)
+        _record_org_map_anomaly(
+            f"StatsAPI /teams returned rows but 0 of {n_rejected} resolved to a "
+            "canonical MLB org; auto-tracked players keep their existing org")
+        return {}                     # not cached: the next call retries
     _PARENT_ORG_CACHE = out
-    log.info("mlbam_ingest: resolved %d affiliate -> parent org mappings", len(out))
+    log.info("mlbam_ingest: resolved %d affiliate -> parent org mappings "
+             "(%d rejected as non-MLB org strings)", len(out), n_rejected)
     return out
 
 
-def _org_for_entry(entry: dict, season: int) -> str:
-    """Parent MLB org for one leaders row. API mapping first, keyword fallback."""
+def _org_for_entry(entry: dict, season: int) -> str | None:
+    """Parent MLB org for one leaders row, or None when it cannot be resolved.
+
+    API mapping first, keyword fallback, then NOTHING. None (never a guess) is
+    the sentinel: storage.upsert_unranked_active_player COALESCEs org, so a None
+    leaves whatever org the player already had in place instead of overwriting
+    it with an invented code, and a brand-new player is created with a NULL org
+    that reads as "unknown" rather than as a real club."""
     tid = entry.get("team_id")
     if tid:
         org = _parent_org_by_team_id(season).get(int(tid))
         if org:
             return org
-    return _abbr_to_org(entry.get("team_abbr") or "")
+    return _abbr_to_org(entry.get("team_abbr") or "") or None
 
 
 def _abbr_to_org(abbr: str) -> str:
-    """Team abbreviation or affiliate name → eephus 3-letter org code.
+    """Team abbreviation or affiliate name → eephus 3-letter org code, or ""
+    when the string does not resolve to one of the canonical 30.
 
     The MLB Stats API returns affiliate team names for CPX/DSL levels
     (e.g. "FCL Red Sox", "DSL Cardinals Red") rather than MLB org codes.
     This function maps both forms to the canonical org code.
+
+    NO-GUESS CONTRACT (2026-08-05). The last resort here was
+    `clean[:3] if len(clean) >= 3 else abbr[:3].upper()`, a truncation that
+    MANUFACTURED an org code out of whatever affiliate string arrived: Erie ->
+    "ERI", Durham -> "DUR", Lehigh Valley -> "LEH", Ontario -> "ONT". Nothing
+    raised and nothing logged, because a 3-letter uppercase string is
+    indistinguishable downstream from a real org. Measured 2026-08-05 in the DB:
+    83 distinct players.org values where 30 exist, ~90 rows sitting on a
+    fabricated affiliate code, and three of those codes (DUR, LEH, LAS) reached
+    the served data/inactive.json.
+    The result now routes through trades.canonical_org and is gated on the
+    canonical 30; an unresolved string returns "" so the caller SKIPS the org
+    write rather than inventing one. Producer-side only, by design: no DB
+    repair migration ships with this.
     """
     s = abbr.upper().strip()
-    # Direct 3-letter remap
-    _DIRECT = {
-        "WSH": "WSN", "CHW": "CWS", "KCA": "KCR", "SDP": "SDP",
-        "SFG": "SFG", "OAK": "ATH",
-    }
-    if s in _DIRECT:
-        return _DIRECT[s]
+    # StatsAPI-only spellings that trades._CODE_REMAP does not carry. This table
+    # used to run the White Sox entry BACKWARDS ("CHW": "CWS") - CWS->CHW is the
+    # canonical direction - and the 2-letter API codes (AZ, KC, SD, SF, TB) were
+    # not listed at all, so they fell through to the truncation. Everything ends
+    # at _canonical_org_code now, which owns that direction, so this table only
+    # needs the forms canonical_org does not already know.
+    _DIRECT = {"KCA": "KCR"}
     # Affiliate name → org (complex leagues return full team name)
     _AFFILIATE = {
         "RED SOX": "BOS", "YANKEES": "NYY", "METS": "NYM", "CUBS": "CHC",
@@ -293,23 +383,34 @@ def _abbr_to_org(abbr: str) -> str:
         "PHILLIES": "PHI", "BRAVES": "ATL", "MARLINS": "MIA", "NATIONALS": "WSN",
         "PADRES": "SDP", "GIANTS": "SFG", "DODGERS": "LAD", "ROCKIES": "COL",
         "DIAMONDBACKS": "ARI", "ATHLETICS": "ATH", "ASTROS": "HOU",
-        "RANGERS": "TEX", "ANGELS": "LAA", "MARINERS": "SEA", "ATHLETICS": "ATH",
-        "TWINS": "MIN", "WHITE SOX": "CWS", "TIGERS": "DET", "GUARDIANS": "CLE",
+        "RANGERS": "TEX", "ANGELS": "LAA", "MARINERS": "SEA",
+        "TWINS": "MIN", "WHITE SOX": "CHW", "TIGERS": "DET", "GUARDIANS": "CLE",
         "ROYALS": "KCR", "RAYS": "TBR", "BLUE JAYS": "TOR", "ORIOLES": "BAL",
-        "BLUE JAYS": "TOR",
     }
+    code = _DIRECT.get(s)
     # Strip "FCL ", "ACL ", "DSL " prefix and try keyword match
     clean = s.replace("FCL ", "").replace("ACL ", "").replace("DSL ", "").strip()
-    # Try multi-word match first (e.g. "RED SOX", "WHITE SOX", "BLUE JAYS")
-    for keyword, org in _AFFILIATE.items():
-        if keyword in clean:
-            return org
-    # Single-word match for simple cases
-    for keyword, org in _AFFILIATE.items():
-        if clean.startswith(keyword.split()[0]):
-            return org
-    # Fall back to first 3 letters of the cleaned name
-    return clean[:3] if len(clean) >= 3 else abbr[:3].upper()
+    if code is None:
+        # Try multi-word match first (e.g. "RED SOX", "WHITE SOX", "BLUE JAYS")
+        for keyword, org in _AFFILIATE.items():
+            if keyword in clean:
+                code = org
+                break
+    if code is None:
+        # Single-word match for simple cases
+        for keyword, org in _AFFILIATE.items():
+            if clean.startswith(keyword.split()[0]):
+                code = org
+                break
+    if code is None:
+        # Last resort is canonicalization, not truncation: canonical_org knows
+        # the full-name and alias forms ("Pittsburgh Pirates", "WSH", "AZ").
+        code = s
+    resolved = _canonical_org_code(code)
+    if not resolved and s:
+        log.debug("mlbam_ingest: team string %r resolves to no MLB org - "
+                  "skipping the org write rather than inventing a code", abbr)
+    return resolved
 
 
 def _synthetic_only_keys() -> set[str]:
@@ -373,7 +474,7 @@ def refresh_performance_anchors(season: int | None = None,
     stamp = as_of or date.today().isoformat()
 
     out = {"qualified": 0, "refreshed": 0, "skipped_real_anchor": 0,
-           "skipped_untracked": 0}
+           "skipped_untracked": 0, "org_unresolved": 0}
     seen: set[str] = set()          # a player promoted mid-season qualifies at
                                     # two levels; count him once
     for level in levels:
@@ -393,12 +494,18 @@ def refresh_performance_anchors(season: int | None = None,
                 if key in seen:
                     continue
                 seen.add(key)
+                # None = unresolved. storage COALESCEs org, so the player keeps
+                # the org he already had; the count makes "0 resolved" visible
+                # instead of letting a dead org map pass as a healthy run.
+                _org = _org_for_entry(entry, season)
+                if _org is None:
+                    out["org_unresolved"] += 1
                 if not dry_run:
                     upsert_unranked_active_player(
                         player_key   = key,
                         player_name  = entry["player_name"],
                         position     = entry["position"],
-                        org          = _org_for_entry(entry, season),
+                        org          = _org,
                         birth_date   = entry["birth_date"],
                         mlbam_id     = entry["mlbam_id"],
                         season       = season,
@@ -444,6 +551,7 @@ def ingest_unranked_active_prospects(
             continue
 
         new_count = 0
+        org_unresolved = 0
         for group, sample_floor in [("hitting", min_pa), ("pitching", min_ip)]:
             leaders = _fetch_stat_leaders(sport_id, group, season, sample_floor)
             log.info("mlbam_ingest [%s %s]: %d qualified players from API",
@@ -461,12 +569,18 @@ def ingest_unranked_active_prospects(
                 if pid in known_ids or key in known_keys:
                     continue  # already tracked
 
+                # None = the team string resolved to no MLB org. The player is
+                # still ingested (his production is the claim we are anchoring);
+                # he is created with a NULL org, which reads as "unknown", not
+                # as a real club. See the NO-GUESS CONTRACT in _abbr_to_org.
                 org = _org_for_entry(entry, season)
+                if org is None:
+                    org_unresolved += 1
                 pos = entry["position"]
                 bdate = entry["birth_date"]
 
                 log.info("mlbam_ingest: NEW prospect [%s] %s (%s %s MLBAMID=%d sample=%.0f)",
-                         level, name, pos, org, pid, entry["sample"])
+                         level, name, pos, org or "org?", pid, entry["sample"])
 
                 if not dry_run:
                     created = upsert_unranked_active_player(
@@ -488,7 +602,14 @@ def ingest_unranked_active_prospects(
                     new_count += 1
 
         summary[level] = new_count
-        log.info("mlbam_ingest [%s]: %d new prospects ingested", level, new_count)
+        log.info("mlbam_ingest [%s]: %d new prospects ingested (%d with an "
+                 "unresolved org)", level, new_count, org_unresolved)
+        if new_count and org_unresolved == new_count:
+            # Every single new player at this level failed org resolution: that
+            # is an affiliate-map outage, not a data property. Say so.
+            log.error("mlbam_ingest [%s]: ALL %d new prospects resolved to no "
+                      "MLB org - the affiliate -> parent org map is likely "
+                      "unavailable this run", level, new_count)
 
     return summary
 

@@ -62,6 +62,50 @@ def _load_json(name: str) -> dict | list | None:
         return None
 
 
+def _record_ingest_safe(source: str, *, ok: bool, message: str = "",
+                        n_rows: int = 0) -> None:
+    """File one outcome into the ingest-health RED ledger, never raising.
+
+    THE ledger call for this module and for dfs_export (which imports it rather
+    than growing a second copy). run_monthly.write_ingest_health drains it into
+    data/ingest_health.json and prints `!!! INGEST RED` in the run summary, so a
+    join or a fetch that quietly produced nothing becomes visible on the day it
+    happens instead of days later as a blank module.
+
+    Best-effort BY DESIGN: reporting must never be the reason a refresh fails,
+    and importing run_monthly is expensive enough that only anomaly paths should
+    reach this."""
+    try:
+        from run_monthly import _record_ingest
+        _record_ingest(source, ok=ok, n_rows=n_rows, message=message)
+    except Exception:
+        log.debug("could not record ingest health for %s", source, exc_info=True)
+
+
+def _json_blob(payload: dict, source: str) -> str | None:
+    """Serialize an artifact, or report and refuse to write one.
+
+    `allow_nan=False` is the whole point. json.dumps DEFAULTS to emitting the
+    bare tokens NaN / Infinity, which are not JSON at all: the browser's
+    JSON.parse throws on the first one, so a single non-finite number anywhere
+    in the tree does not degrade one section, it dark-starts the entire page.
+    Refusing to write keeps the previous (parseable) artifact served, the same
+    trade refresh_live's EMPTY-FETCH GUARD makes for an empty schedule.
+
+    Returns None after an error log AND a RED ledger row, so a caller cannot
+    swallow the failure by accident. dfs_export writes through this too."""
+    try:
+        return json.dumps(payload, separators=(",", ":"), allow_nan=False)
+    except (ValueError, TypeError) as exc:
+        msg = (f"{source}: payload is not serializable as valid JSON ({exc}); "
+               "refused to write it. A non-finite number reaches the page as a "
+               "bare NaN token that JSON.parse rejects, which blanks the whole "
+               "surface. The previous artifact stays served.")
+        log.error(msg)
+        _record_ingest_safe(source, ok=False, message=msg)
+        return None
+
+
 # ONE eFV BASIS FOR THIS WHOLE MODULE (2026-08-03). /fantasy/ used to show two
 # different eFV numbers on one page: Call-up Watch read raw `xfv_grade` while the
 # Dynasty board's eFV column read the RETIRED `xfv_grade_quantile`, so the same
@@ -398,27 +442,96 @@ def _attach_swing_trend(players: list[dict]) -> None:
                                 "from": int(yrs[-2]), "to": int(yrs[-1])}
 
 
-# hitter/bullpen leaderboards key teams by MLB-style codes (AZ, CWS, KC, SD,
-# SF, TB, WSH); the schedule feed emits canonical codes (ARI, CHW, KCR, SDP,
-# SFG, TBR, WSN). Re-key on ingest so teams_ctx.get(opp_org) resolves all 30
-# opponents (7 previously fell through to the neutral offense_plus=100 path;
-# see data/fantasy_startscore_eval.json, 23% of 2026 starts affected).
-_LB_TO_CANON = {"AZ": "ARI", "CWS": "CHW", "KC": "KCR", "SD": "SDP",
-                "SF": "SFG", "TB": "TBR", "WSH": "WSN"}
+@functools.lru_cache(maxsize=64)
+def _canon_org(code: str | None) -> str | None:
+    """THE org-code canonicaliser for this module and for dfs_export.
+
+    WHAT IT IS FOR. The hitter/bullpen leaderboards key teams by MLB-style codes
+    (AZ, CWS, KC, SD, SF, TB, WSH) while the schedule feed emits the canonical
+    codes (ARI, CHW, KCR, SDP, SFG, TBR, WSN). Re-key on ingest and
+    teams_ctx.get(opp_org) resolves all 30 opponents; do not, and 7 of them fall
+    through to the neutral offense_plus=100 path with nothing raised and nothing
+    logged (data/fantasy_startscore_eval.json: 23% of 2026 starts affected).
+
+    ONE IMPLEMENTATION, on purpose. This used to be a private 7-entry map right
+    here, which disagreed with trades.canonical_org (the site's owner of this
+    mapping) in two ways that both cost real rows: it was MISSING OAK -> ATH,
+    and any future code change would have had to be found in two places by
+    somebody who did not know the second one existed.
+
+    Lazy import: trades.py pulls requests and the scrapers, and this module sits
+    on the daily path (the same reason fantasy_schedule._org imports lazily).
+    An unavailable canonicaliser returns the code as given, which is exactly
+    what an unmapped code already did."""
+    if not code:
+        return None
+    try:
+        from trades import canonical_org
+    except Exception:                                        # pragma: no cover
+        log.warning("trades.canonical_org unavailable; org codes left as given")
+        return code
+    return canonical_org(code) or code
+
+
+# One process files at most one short-context RED: _teams_context is called by
+# build_sections AND by dfs_export inside the same run, and a ledger that
+# repeats itself is a ledger people stop reading.
+_MLB_CLUBS = 30
+_teams_ctx_reported = False
+
+
+def _teams_context_health(ctx: dict) -> dict:
+    """How much of the opponent context actually resolved, by field."""
+    def _n(field: str) -> int:
+        return sum(1 for r in (ctx or {}).values()
+                   if isinstance((r or {}).get(field), (int, float)))
+    return {"n_orgs": len(ctx or {}), "n_offense_plus": _n("offense_plus"),
+            "n_bullpen_plus": _n("bullpen_plus")}
 
 
 def _teams_context() -> dict:
-    """{org: {offense_plus, heart_hem, bullpen_plus, leverage_deploy_plus}} — the
-    opponent-quality context a streamer ranking needs."""
+    """{org: {offense_plus, heart_hem, bullpen_plus, leverage_deploy_plus}} - the
+    opponent-quality context a streamer ranking needs.
+
+    Keyed by CANONICAL org on both legs (see _canon_org). A row whose code will
+    not canonicalize is DROPPED rather than filed under a None key: a None key
+    answers `teams_ctx.get(opp_org)` for every game side whose org failed to
+    resolve, which hands an unknown opponent some real club's Offense+.
+
+    The COUNT is reported when it comes up short. Nothing downstream fails on a
+    thin context - every consumer defaults a missing club to the neutral 100 -
+    so a broken join and a league-average opponent read identically unless
+    somebody counts. That is the 2026-08-05 defect class exactly."""
     out: dict = {}
-    for t in ((_load_json("hitter_leaderboards.json") or {}).get("teams") or []):
-        out.setdefault(_LB_TO_CANON.get(t.get("team"), t.get("team")), {}).update(
-            {"offense_plus": t.get("offense_plus"), "heart_hem": t.get("heart_hem")})
-    for t in ((_load_json("bullpen_leaderboards.json") or {}).get("teams") or []):
-        out.setdefault(_LB_TO_CANON.get(t.get("team"), t.get("team")), {}).update(
-            {"bullpen_plus": t.get("bullpen_plus"),
-             "leverage_deploy_plus": t.get("leverage_deploy_plus")})
+    for fname, fields in (
+            ("hitter_leaderboards.json", ("offense_plus", "heart_hem")),
+            ("bullpen_leaderboards.json", ("bullpen_plus", "leverage_deploy_plus"))):
+        for t in ((_load_json(fname) or {}).get("teams") or []):
+            org = _canon_org(t.get("team"))
+            if not org:
+                continue
+            out.setdefault(org, {}).update({f: t.get(f) for f in fields})
+    _report_teams_context(out)
     return out
+
+
+def _report_teams_context(ctx: dict) -> None:
+    """Log (and RED, once) an opponent context that does not cover all 30 clubs."""
+    global _teams_ctx_reported
+    h = _teams_context_health(ctx)
+    if h["n_offense_plus"] >= _MLB_CLUBS and h["n_bullpen_plus"] >= _MLB_CLUBS:
+        log.info("fantasy: opponent context resolved for %d orgs (Offense+ %d, "
+                 "Bullpen+ %d)", h["n_orgs"], h["n_offense_plus"], h["n_bullpen_plus"])
+        return
+    msg = (f"opponent context covers {h['n_offense_plus']}/{_MLB_CLUBS} clubs on "
+           f"Offense+ and {h['n_bullpen_plus']}/{_MLB_CLUBS} on Bullpen+; every "
+           f"club that missed is priced at the neutral 100 on the streamer, "
+           f"two-start and DFS boards")
+    log.warning("fantasy: %s", msg)
+    if not _teams_ctx_reported:
+        _teams_ctx_reported = True
+        _record_ingest_safe("fantasy_teams_context", ok=False, message=msg,
+                            n_rows=h["n_offense_plus"])
 
 
 def _enrich(players: list[dict]) -> None:
@@ -629,7 +742,16 @@ def _dynasty_prospects(ts: dict | None, season: int, xfv: dict | None = None,
 
 def _start_score(p: dict, opp_org: str | None, teams_ctx: dict) -> dict | None:
     """Expected FGP for ONE start: per-start ROS points scaled by the opponent's
-    offense (weaker offense → better streamer)."""
+    offense (weaker offense → better streamer).
+
+    THE FALLBACK 100 IS NOW LABELLED. An opponent we cannot look up still prices
+    at Offense+ 100, because a league-average opponent is the honest guess and
+    changing that would move served numbers. What changes is that the row says
+    which kind of 100 it is: `opp_off_resolved` false means nobody measured this
+    club today. Five clubs genuinely sit at 100, so an unlabelled 100 made a
+    total join failure look exactly like an average lineup - and that is how the
+    7-org code-set miss went unnoticed for months. The multiplier math below is
+    untouched."""
     if not p:
         return None
     ros = p.get("ros") or {}
@@ -637,10 +759,13 @@ def _start_score(p: dict, opp_org: str | None, teams_ctx: dict) -> dict | None:
     if gs <= 0:
         return None
     per_start = (p.get("fpts_fgp") or 0) / gs
-    opp_off = (teams_ctx.get(opp_org) or {}).get("offense_plus") or 100
+    raw_off = ((teams_ctx or {}).get(opp_org) or {}).get("offense_plus")
+    resolved = isinstance(raw_off, (int, float)) and bool(raw_off)
+    opp_off = raw_off if resolved else 100
     mult = max(0.6, min(1.5, 100.0 / opp_off)) if opp_off else 1.0
     return {"per_start_fgp": round(per_start * mult, 1),
-            "per_start_base": round(per_start, 1), "opp_off": opp_off}
+            "per_start_base": round(per_start, 1), "opp_off": opp_off,
+            "opp_off_resolved": resolved}
 
 
 def build_sections(payload: dict) -> dict:
@@ -707,6 +832,14 @@ def build_sections(payload: dict) -> dict:
             streamers.append(sc)
     streamers.sort(key=lambda s: -(s.get("per_start_fgp") or -1e9))
     sections["daily_streamers"] = streamers
+    # Count the fallback opponents out loud. A streamer board where every row
+    # carries the neutral 100 is a board with no matchup term at all, and it
+    # renders exactly like a working one.
+    n_unres = sum(1 for s in streamers if not s.get("opp_off_resolved"))
+    if n_unres:
+        log.warning("fantasy: %d of %d streamer starts could not resolve an "
+                    "opponent Offense+ and are priced at the neutral 100",
+                    n_unres, len(streamers))
 
     # Two-Start SP — pitchers with 2 starts this week (announced + projected),
     # ranked by summed expected FGP. A projected leg scores through the same
@@ -775,16 +908,11 @@ def _record_schedule_anomaly(n_prev: int) -> None:
     reason a refresh fails. The ledger is what the deploy shell prints as
     `!!! INGEST RED`, so a silent schedule outage becomes visible instead of
     showing up days later as four empty modules."""
-    try:
-        from run_monthly import _record_ingest
-        _record_ingest(
-            "fantasy_schedule", ok=False,
-            message=(f"probables fetch returned 0 game days; kept the previous "
-                     f"{n_prev}-day schedule. Streamers, two-start, DFS and the "
-                     f"betting slate all read this schedule."),
-        )
-    except Exception:
-        log.debug("could not record the schedule anomaly", exc_info=True)
+    _record_ingest_safe(
+        "fantasy_schedule", ok=False,
+        message=(f"probables fetch returned 0 game days; kept the previous "
+                 f"{n_prev}-day schedule. Streamers, two-start, DFS and the "
+                 f"betting slate all read this schedule."))
 
 
 def refresh_live(log=print) -> int:
@@ -825,7 +953,10 @@ def refresh_live(log=print) -> int:
         payload.get("schedule", {}).pop("stale_schedule", None)
     payload["sections"] = build_sections(payload)
     payload["schedule_refreshed_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    OUT_PATH.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
+    blob = _json_blob(payload, "fantasy_export")
+    if blob is None:
+        return 0                    # already logged + RED; the old file stands
+    OUT_PATH.write_text(blob, encoding="utf-8")
     if callable(log):
         n = len((payload.get("sections") or {}).get("daily_streamers") or [])
         log(f"fantasy: daily schedule refresh — {n} streamer starts")
@@ -837,8 +968,16 @@ def export(log=print, *, limit: int | None = None) -> int:
     payload = build_players(limit=limit)
     _attach_schedule(payload)
     payload["sections"] = build_sections(payload)
+    blob = _json_blob(payload, "fantasy_export")
+    if blob is None:
+        # The monthly corpus is the source of truth for /redraft/, /dynasty/,
+        # /dfs/ and the betting slate. A corpus that will not serialize is a
+        # model failure, not a quiet day, so it is raised as well as reported:
+        # run_monthly's step wrapper logs it, and the previous fantasy.json
+        # keeps serving rather than being replaced by nothing.
+        raise ValueError("fantasy.json payload contains non-finite values")
     DATA_DIR.mkdir(exist_ok=True)
-    OUT_PATH.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
+    OUT_PATH.write_text(blob, encoding="utf-8")
     if callable(log):
         log(f"fantasy: {payload['n_players']} players projected ROS "
             f"({payload['season']} @ {payload['season_fraction']:.0%} elapsed)")

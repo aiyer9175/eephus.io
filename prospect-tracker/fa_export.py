@@ -88,36 +88,112 @@ def _load_overrides() -> dict[str, dict]:
             if not k.startswith("_") and isinstance(v, dict)}
 
 
+# Prospect-to-Payday reads BOTH boot exports, in this order.
+#
+# JOIN REPAIR 2026-08-05. This read timeseries.json ONLY, and timeseries.json is
+# the ACTIVE prospect board: a player is removed from it the moment he graduates.
+# Every member of an MLB free-agent class graduated years ago, so the join was
+# structurally impossible, not merely thin. Measured on the served artifacts:
+# 0 of 228 fa_class.json members carry fvArc, and 0 of 228 member keys exist in
+# timeseries.json - while 153 of them DO exist in debuts.json, the graduated
+# cohort's export, which carries the identical `points` shape (consensus_fv_raw +
+# snapshot_date). The whole "Prospect-to-Payday" feature on /fa/ has therefore
+# been dark since it shipped, and it looked healthy because a missing arc is
+# indistinguishable from "this veteran was never a tracked prospect".
+#
+# ORDER: the live board first, the graduated cohort second, first source wins.
+# A key in both is the same human and the active-board copy is the fresher one;
+# in practice the sets are disjoint by construction (graduation moves a player
+# from one file to the other).
+_ARC_SOURCES = ("timeseries.json", "debuts.json")
+
+
+def _load_arc_players(name: str) -> list | None:
+    """Player rows from one boot export, or NONE when the file is absent or
+    unreadable. None-as-sentinel on purpose (same contract as
+    bullpen_export._active_mlbam_ids): a load failure must not read downstream
+    as "this export legitimately contains nobody", which is the shape that let
+    a structurally-broken join publish as a quietly missing feature.
+
+    Handles both layouts: timeseries.json is {"players": [...]}, debuts.json is
+    a bare list."""
+    path = DATA_DIR / name
+    if not path.exists():
+        log.warning("fa arc: %s not found - no Prospect-to-Payday arcs from it", path)
+        return None
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.error("fa arc: %s unreadable - no Prospect-to-Payday arcs from it",
+                  path, exc_info=True)
+        return None
+    players = doc.get("players") if isinstance(doc, dict) else doc
+    return players if isinstance(players, list) else None
+
+
 def _prospect_fv_history(keys: set) -> dict[str, dict]:
     """Read-only Prospect-to-Payday source: condensed consensus-FV arcs from
-    the PROSPX boot export, for class members who were tracked prospects.
+    the PROSPX boot exports, for class members who were tracked prospects.
     mlbam rides along so the caller can id-gate name-key collisions (the FA
-    Jacob Webb is NOT the FV-40 prospect Jacob Webb)."""
-    path = DATA_DIR / "timeseries.json"
-    if not path.exists():
-        return {}
-    try:
-        players = json.loads(path.read_text(encoding="utf-8")).get("players") or []
-    except ValueError:
-        return {}
+    Jacob Webb is NOT the FV-40 prospect Jacob Webb).
+
+    Only players actually found are returned. A member we cannot resolve gets
+    no arc rather than a fabricated or borrowed one."""
     out: dict[str, dict] = {}
-    for p in players:
-        key = p.get("player_key")
-        if key not in keys or not p.get("mlbam_id"):
+    n_loaded = 0
+    per_source: list[str] = []
+    for name in _ARC_SOURCES:
+        players = _load_arc_players(name)
+        if players is None:
             continue
-        pts: list = []
-        last = None
-        for pt in (p.get("points") or []):
-            fv = pt.get("consensus_fv_raw")
-            d = (pt.get("snapshot_date") or "")[:10]
-            if fv is None or not d:
+        n_loaded += 1
+        found = 0
+        for p in players:
+            key = p.get("player_key")
+            if key not in keys or key in out or not p.get("mlbam_id"):
                 continue
-            if last is None or fv != last:
-                pts.append([d, round(fv, 1)])
-                last = fv
-        if len(pts) >= 2:
-            out[key] = {"mlbam": int(p["mlbam_id"]), "pts": pts[-40:]}
+            pts: list = []
+            last = None
+            for pt in (p.get("points") or []):
+                fv = pt.get("consensus_fv_raw")
+                d = (pt.get("snapshot_date") or "")[:10]
+                if fv is None or not d:
+                    continue
+                if last is None or fv != last:
+                    pts.append([d, round(fv, 1)])
+                    last = fv
+            if len(pts) >= 2:
+                out[key] = {"mlbam": int(p["mlbam_id"]), "pts": pts[-40:]}
+                found += 1
+        per_source.append(f"{name}={found}")
+    # ALWAYS log the resolved count. A 0 here is the exact state that hid the
+    # broken join for its whole life, and it is only visible if it is printed.
+    log.info("fa arc: resolved %d of %d class members from %d/%d sources (%s)",
+             len(out), len(keys), n_loaded, len(_ARC_SOURCES),
+             ", ".join(per_source) or "none")
+    if keys and n_loaded and not out:
+        log.error("fa arc: 0 of %d class members resolved an FV arc from %d loaded "
+                  "source(s) - Prospect-to-Payday will publish dark",
+                  len(keys), n_loaded)
+        _record_arc_outage(len(keys), n_loaded)
     return out
+
+
+def _record_arc_outage(n_keys: int, n_loaded: int) -> None:
+    """Raise a fully-empty Prospect-to-Payday join into the ingest-health RED
+    ledger. Best-effort by design: this is a reporting path and must never be
+    the reason the FA export fails. The ledger is what the deploy shell prints
+    as `!!! INGEST RED`, so a dark feature is caught on the run that darkened
+    it rather than by someone eventually noticing a missing chart."""
+    try:
+        from run_monthly import _record_ingest
+        _record_ingest(
+            "fa_prospect_arc", ok=False,
+            message=(f"0 of {n_keys} FA class members resolved an FV arc from "
+                     f"{n_loaded} loaded boot export(s) ({', '.join(_ARC_SOURCES)}); "
+                     f"the Prospect-to-Payday chart on /fa/ has no data."))
+    except Exception:
+        log.debug("could not record the FA arc outage", exc_info=True)
 
 
 def _class_supply_rows(cls: list[dict], class_year: int,
@@ -315,6 +391,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
     members = []
     full_fits: list[tuple[dict, list[dict]]] = []   # (member, all-org fits)
     n_proj = 0
+    n_arc = 0
     for row in cls:
         ovr = overrides.get(row.get("player_key")) or {}
         if ovr.get("exclude"):
@@ -545,7 +622,14 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         arc = fv_hist.get(key)
         if arc and mlbam and arc["mlbam"] == mlbam:
             m["fvArc"] = arc["pts"]
+            n_arc += 1
         members.append(m)
+    # Log what actually SHIPPED, not just what resolved. The id gate above can
+    # drop a resolved arc (name-key collision, or the class row never resolved
+    # an mlbam at all), so "resolved N" from _prospect_fv_history and "published
+    # N" are different numbers and a gap between them is worth seeing.
+    log.info("fa arc: %d of %d members published an fvArc (%d resolved upstream)",
+             n_arc, len(members), len(fv_hist))
     members.sort(key=lambda m: -(m.get("projGuar") or 0))
     # Per-team fit lists covering ALL 30 orgs (the member rows only carry
     # top-3, which left half the league without a Fits view). Members are
@@ -571,6 +655,9 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         "dpw_infl": round(destale, 4),
         "cba_carry_forward": bool(thr.get("carry_forward")),
         "n_members": len(members), "n_projected": n_proj,
+        # Published on the artifact so a dark Prospect-to-Payday is readable
+        # from the served file, not only from a run log nobody kept.
+        "n_fv_arc": n_arc,
         "n_signed": sum(1 for m in members if m.get("status") == "signed"),
         "members": members,
         "teamFits": team_fits,

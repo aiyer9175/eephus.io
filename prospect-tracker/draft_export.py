@@ -853,6 +853,21 @@ _OVERPERF_PICK_BUCKETS = [(1, 5), (6, 10), (11, 20), (21, 40),
                           (41, 75), (76, 150), (151, 10 ** 9)]
 
 
+def _record_overperf_anomaly(message: str) -> None:
+    """Raise an unusable overperformance basis into the ingest-health RED ledger.
+
+    Best-effort by design (mirrors fantasy_export._record_schedule_anomaly):
+    this is a reporting path and must never be the reason the draft export
+    fails. The ledger is what the deploy shell prints as `!!! INGEST RED`, so a
+    silently ungraded Overperformers leaderboard becomes visible on the run that
+    broke it instead of days later."""
+    try:
+        from run_monthly import _record_ingest
+        _record_ingest("draft_overperformance", ok=False, message=message)
+    except Exception:                                    # noqa: BLE001
+        log.debug("could not record the draft-overperformance anomaly", exc_info=True)
+
+
 def _attach_overperformance(classes: list[dict]) -> None:
     """Bake draft-overperformance fields onto each COMPLETED class's drafted
     prospects, in place. For every drafted pick we resolve the player's CURRENT
@@ -860,62 +875,137 @@ def _attach_overperformance(classes: list[dict]) -> None:
     reached MLB) from the main timeseries + debuts payloads, then compare it to
     the empirical median FV for that pick band:
 
-        current_fv, career_war, expected_fv_for_pick, overperf_fv
+        current_fv, current_fv_basis, current_fv_resolved,
+        career_war, expected_fv_for_pick, overperf_fv
 
     The frontend Overperformers leaderboard sorts on overperf_fv ("realized
     outcome"); the "draft-day value" lens needs no baked field (it uses the
-    already-present consensus_pick vs drafted_pick). Players we can't resolve to
-    a board record fall back to their own consensus_fv (draft-time grade)."""
+    already-present consensus_pick vs drafted_pick). A pick that resolves to no
+    board record publishes current_fv=None with current_fv_basis="unresolved"
+    and is scored by nothing - see the SELF-CONTAMINATION GUARD below. Each
+    completed class also carries an `overperf_coverage` block so a reader can
+    see how much of the leaderboard actually had a current grade behind it."""
     val: dict[str, dict] = {}   # player_key -> {"fv":..., "war":...}
 
-    def _ingest(path: Path) -> None:
+    def _ingest(path: Path) -> int:
+        """Load one board payload into `val`; returns the rows read."""
         try:
             d = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
-            log.warning("draft overperformance: could not read %s - "
-                        "current_fv falls back to draft-time grades", path.name)
-            return
+            # Loud on purpose: this used to warn and then silently degrade every
+            # pick to its own draft-time grade, which reads as a full, healthy
+            # leaderboard made entirely of zeros.
+            log.error("draft overperformance: could not read %s - every pick that "
+                      "resolves only through this payload will publish "
+                      "current_fv=null (it is NOT backfilled with the draft-time "
+                      "grade)", path.name)
+            return 0
         rows = d.get("players") if isinstance(d, dict) else d
+        n = 0
         for p in (rows or []):
             k = p.get("player_key")
             if not k:
                 continue
             war = (p.get("career_war") or {}).get("career_war")
             val[k] = {"fv": p.get("fv_close"), "war": war}
+            n += 1
+        return n
 
     # Anchor to the module dir - the pipeline runs under varying cwds
     # (the overseas_export lesson). Reading the PREVIOUS cycle's export
     # here is intentional (the draft phase runs before the re-export).
     _data_dir = Path(__file__).resolve().parent / "data"
-    _ingest(_data_dir / "timeseries.json")
-    _ingest(_data_dir / "debuts.json")
+    _n_read = _ingest(_data_dir / "timeseries.json")
+    _n_read += _ingest(_data_dir / "debuts.json")
+    _n_graded = sum(1 for v in val.values() if v.get("fv") is not None)
+    log.info("draft overperformance: board basis = %d rows read, %d distinct "
+             "player_keys, %d carrying a current FV", _n_read, len(val), _n_graded)
+    if not _n_graded:
+        # Refuse-to-publish rather than publish neutral: with no current grades
+        # on file there is no basis at all, every drafted row will read
+        # unresolved, and the leaderboard will be empty. That is the honest
+        # outcome, but it must not be a silent one.
+        log.error("draft overperformance: NO current FVs loaded from "
+                  "timeseries.json + debuts.json - the Overperformers "
+                  "leaderboard publishes EMPTY this run")
+        _record_overperf_anomaly(
+            "no current FVs in timeseries.json + debuts.json; every drafted "
+            "pick publishes current_fv=null and the Overperformers leaderboard "
+            "is empty for this run")
 
+    # SELF-CONTAMINATION GUARD (2026-08-05). This block used to read
+    #     if cur_fv is None: cur_fv = p.get("consensus_fv")
+    # so a failed board join quietly became the player's OWN draft-time grade.
+    # Two things went wrong at once and neither raised:
+    #   1. overperf_fv scores current_fv against the pick-band median, so a row
+    #      whose current_fv IS its consensus_fv is a guaranteed non-observation
+    #      sitting on the leaderboard as if it were a measurement, and
+    #   2. worse, those rows were appended to `pooled`, so the fallback SET the
+    #      median that every genuinely-resolved row was then graded against.
+    # Measured on the served data/draft_timeseries.json: 742 of 2,177 drafted
+    # rows (34.1%) published current_fv == consensus_fv, and for 2019 it was
+    # 229 of 373 (61%) - a third of the baseline was the fallback grading
+    # itself, concentrated in the oldest classes where the board join misses
+    # most often.
+    # Now: a join miss leaves current_fv None, is EXCLUDED from the pooled
+    # baseline, and is counted into the class's overperf_coverage block. The
+    # frontend already falls back to consensus_fv when it renders a null
+    # current_fv, which is the right place for a fallback - it never reaches
+    # the math.
     pooled: list[tuple[int, float]] = []   # (drafted_pick, current_fv)
+    n_drafted_all = n_resolved_all = 0
     for cls in classes:
         if cls.get("is_current"):
             continue
+        c_drafted = c_resolved = 0
         for p in cls.get("prospects", []):
             pick = p.get("drafted_pick")
             if not pick:
                 continue
+            c_drafted += 1
             cand = None
             for kk in (p.get("promoted_key"), p.get("milb_key"), p.get("player_key")):
                 if kk and kk in val:
                     cand = val[kk]
                     break
             cur_fv = (cand or {}).get("fv")
-            if cur_fv is None:
-                cur_fv = p.get("consensus_fv")   # fall back to draft-time grade
             p["current_fv"] = cur_fv
+            # Explicit sentinel rather than a magic number: a reader (and the
+            # frontend) can tell a resolved board grade from "we never found
+            # this player" without comparing current_fv to consensus_fv.
+            p["current_fv_basis"] = "board_fv" if cur_fv is not None else "unresolved"
+            p["current_fv_resolved"] = cur_fv is not None
             p["career_war"] = (cand or {}).get("war")
             if cur_fv is not None:
+                c_resolved += 1
                 pooled.append((int(pick), float(cur_fv)))
+        cls["overperf_coverage"] = {
+            "n_drafted":    c_drafted,
+            "n_resolved":   c_resolved,
+            "n_unresolved": c_drafted - c_resolved,
+            "basis":        "board_fv",
+        }
+        n_drafted_all += c_drafted
+        n_resolved_all += c_resolved
+        if c_drafted and not c_resolved:
+            log.warning("draft overperformance %s: 0 of %d drafted picks "
+                        "resolved to a board record - this class contributes "
+                        "nothing to the pooled baseline and shows no "
+                        "overperformers", cls.get("year"), c_drafted)
+    log.info("draft overperformance: %d of %d drafted picks resolved to a "
+             "current board FV (%d unresolved, excluded from the baseline)",
+             n_resolved_all, n_drafted_all, n_drafted_all - n_resolved_all)
 
     bucket_med: dict[tuple[int, int], float] = {}
     for lo, hi in _OVERPERF_PICK_BUCKETS:
         vals = [fv for pk, fv in pooled if lo <= pk <= hi]
         if vals:
             bucket_med[(lo, hi)] = statistics.median(vals)
+        else:
+            # Visible by design: a band with no resolved picks silently stops
+            # producing overperf_fv for every player in it.
+            log.warning("draft overperformance: pick band %d-%d has no resolved "
+                        "picks - no expected FV published for those picks", lo, hi)
 
     def _expected(pick: int) -> float | None:
         for (lo, hi), m in bucket_med.items():

@@ -47,6 +47,45 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
+# ── THE BOARD eFV GRADE ─────────────────────────────────────────────────────
+# ONE eFV basis for this surface, and it is the SAME one every other surface
+# serves. Mirrors proj_export._board_grade / fantasy_export._board_grade /
+# build_site._load_xfv_grades, all of which resolve storage.BOARD_GRADE_FIELD
+# ("xfv_grade") through efv_board_scale.board_value(). There is deliberately no
+# copy of the scale coefficients here.
+#
+# BASIS REPAIR 2026-08-05. This module resolved `xfv_grade_quantile` FIRST, a
+# field RETIRED as a display grade on 2026-07-25 (it survives only as the
+# surplus PRICING basis - see efv_export meta.grade_scale). Measured against
+# the served pair data/xfv.json + data/ifa_timeseries.json: 2,006 signings
+# carried fv_basis="xfv" and averaged +12.31 FV ABOVE the board grade for the
+# same player_key (max +21.3, 1,973 of them off by >= 0.5), so a prospect read
+# ~57 on /ifa/ and ~45 on PROSPX. That is the exact failure storage's
+# BOARD_GRADE_FIELD block exists to prevent, and the third surface to hit it
+# after the homepage (2026-07-25) and /fantasy/ (2026-08-03).
+#
+# The retired-quantile and realized fallbacks are NOT kept. On the live
+# artifact they are inert anyway (9,379 of 9,379 by_player rows carry
+# xfv_grade, and xfv_grade == xfv_grade_realized on all 9,379), so dropping
+# them costs nothing today and removes the only path by which a second basis
+# could reach this page tomorrow. When the board grade is genuinely absent we
+# return None and _enrich falls back to CONSENSUS, which is a declared basis
+# stamped on the row as fv_basis="consensus" - never a silent substitution of
+# one eFV scale for another.
+try:
+    from efv_board_scale import board_value as _efv_board_value
+except Exception:                                            # pragma: no cover
+    def _efv_board_value(rec):
+        return (rec or {}).get("xfv_grade")
+
+
+def _board_grade(rec: dict | None):
+    """THE board eFV grade for an xfv.json record, or None. Unrounded -
+    callers that display it round to NEAREST (eFV is not a scouting FV)."""
+    g = _efv_board_value(rec or {})
+    return float(g) if isinstance(g, (int, float)) else None
+
+
 # Bonus buckets for the class-level distribution trend (high → low).
 _BONUS_BUCKETS = (
     ("≥$3M",        3_000_000, None),
@@ -184,16 +223,11 @@ def _build_class(year: int, rows: list[dict], players_by_key: dict,
 
     def _enrich_row(r):
         tp = _lookup_tracked(players_by_key, r.get("player_key"))
-        # Look up eFV by the TRACKED (canonical) key, not the signing key.
-        # Headline precedence matches every other surface (quantile flip
-        # 2026-07-06): xfv_grade_quantile -> realized -> raw.
+        # Look up the board eFV by the TRACKED (canonical) key, not the signing
+        # key. ONE basis, resolved through _board_grade - see the BASIS REPAIR
+        # block at the top of this module for why there is no chain here.
         xrec = (xfv_by_key.get(tp["player_key"]) or {}) if tp else {}
-        xg = xrec.get("xfv_grade_quantile")
-        if xg is None:
-            xg = xrec.get("xfv_grade_realized")
-        if xg is None:
-            xg = xrec.get("xfv_grade")
-        return _enrich(r, tp, xg)
+        return _enrich(r, tp, _board_grade(xrec))
 
     signings = [_enrich_row(r) for r in rows]
     # Bonus-desc, then tracked-first, then name - deterministic.
@@ -262,12 +296,17 @@ def _build_class(year: int, rows: list[dict], players_by_key: dict,
         "position_split": dict(sorted(pos_split.items(), key=lambda kv: -kv[1])),
     }
 
+    # Publish the eFV resolution count next to the tracked count. A class where
+    # n_tracked is healthy but n_efv is 0 means the xfv join produced nothing -
+    # the whole class silently drops to consensus grades, and without this
+    # number on the artifact there is no way to see it from the outside.
     return {
         "year":        year,
         "is_current":  year >= today.year,
         "n_signings":  len(signings),
         "total_usd":   total_usd,
         "n_tracked":   sum(1 for s in signings if s["is_tracked"]),
+        "n_efv":       sum(1 for s in signings if s["fv_basis"] == "xfv"),
         "trends":      trends,
         "signings":    signings,
         "org_spending": org_spending,
@@ -291,20 +330,58 @@ def build_ifa_export(signings: list[dict], players_by_key: dict | None = None,
             by_year[y].append(s)
     classes = [_build_class(y, by_year[y], players_by_key, today, xfv_by_key)
                for y in sorted(by_year, reverse=True)]
+    # Always log the resolution counts, so "0 resolved" is visible in the run
+    # log instead of only being inferable from a page of consensus grades.
+    n_sign = sum(c["n_signings"] for c in classes)
+    n_trk = sum(c["n_tracked"] for c in classes)
+    n_efv = sum(c["n_efv"] for c in classes)
+    log.info("ifa_export: %d signings, %d tracked, %d on the board eFV basis "
+             "(%d fell back to consensus)", n_sign, n_trk, n_efv, n_trk - n_efv)
     return {"classes": classes}
 
 
-def _xfv_by_key_from_sibling(path: Path) -> dict:
+def _xfv_by_key_from_sibling(path: Path) -> dict | None:
     """Load the sibling xfv.json by_player map so the IFA list can show the
-    platform-primary eFV grade. Returns {} when absent (consensus fallback)."""
+    platform-primary eFV grade.
+
+    NONE-AS-SENTINEL, not {}. An unreadable or empty artifact is an OUTAGE and
+    must be distinguishable from "loaded fine, this player simply has no eFV" -
+    the empty dict reads as the second downstream and publishes a whole section
+    of consensus grades with nothing in the log. Same contract as
+    bullpen_export._active_mlbam_ids. Callers treat None as "eFV unavailable
+    this run" and report it; the page still renders on consensus."""
     xf = path.parent / "xfv.json"
     if not xf.exists():
-        return {}
+        log.error("ifa_export: %s not found - no eFV grades this run, the whole "
+                  "signing list falls back to consensus FV", xf)
+        return None
     try:
         with xf.open(encoding="utf-8") as fp:
-            return json.load(fp).get("by_player", {}) or {}
+            by = json.load(fp).get("by_player") or {}
     except (OSError, ValueError):
-        return {}
+        log.error("ifa_export: %s unreadable - no eFV grades this run, the whole "
+                  "signing list falls back to consensus FV", xf, exc_info=True)
+        return None
+    if not isinstance(by, dict) or not by:
+        log.error("ifa_export: %s parsed but by_player is EMPTY - treating as an "
+                  "outage rather than as 'nobody has an eFV'", xf)
+        return None
+    log.info("ifa_export: loaded %d eFV board grades from %s", len(by), xf)
+    return by
+
+
+def _record_efv_outage(message: str) -> None:
+    """Raise a failed eFV join into the ingest-health RED ledger.
+
+    Best-effort by design: this is a reporting path and must never be the
+    reason the IFA export fails. The ledger is what the deploy shell prints as
+    `!!! INGEST RED`, so an eFV join that resolved nothing becomes visible on
+    the run that broke it instead of being read off the page weeks later."""
+    try:
+        from run_monthly import _record_ingest
+        _record_ingest("ifa_efv_join", ok=False, message=message)
+    except Exception:
+        log.debug("could not record the IFA eFV join outage", exc_info=True)
 
 
 def _players_by_key_from_sibling(path: Path) -> dict:
@@ -319,9 +396,19 @@ def _players_by_key_from_sibling(path: Path) -> dict:
         with ts.open(encoding="utf-8") as fp:
             payload = json.load(fp)
     except (OSError, ValueError):
+        # Same defect class as the eFV join below: an unreadable board file
+        # used to return {} in silence, and every signing then published
+        # is_tracked=False - a page that reads as "we track none of these
+        # players" rather than as an outage. Behavior is unchanged (the
+        # signings still render), but the failure is now on the record.
+        log.error("ifa_export: %s unreadable - EVERY signing publishes untracked "
+                  "(no FV, rank or headshot)", ts, exc_info=True)
         return {}
-    return {p["player_key"]: p for p in (payload.get("players") or [])
-            if p.get("player_key")}
+    by = {p["player_key"]: p for p in (payload.get("players") or [])
+          if p.get("player_key")}
+    log.info("ifa_export: %d tracked players available for enrichment from %s",
+             len(by), ts)
+    return by
 
 
 def export_ifa_json(path, players_by_key: dict | None = None,
@@ -336,12 +423,34 @@ def export_ifa_json(path, players_by_key: dict | None = None,
     signings = scrape_spotrac_ifa_range(years, force=force)
     if players_by_key is None:
         players_by_key = _players_by_key_from_sibling(path)
-    xfv_by_key = _xfv_by_key_from_sibling(path)
+    xfv_by_key = _xfv_by_key_from_sibling(path)      # None => eFV unavailable
+    if xfv_by_key is None:
+        _record_efv_outage(
+            "xfv.json by_player missing/unreadable/empty; the IFA signing list "
+            "published on consensus FV for every player instead of the board eFV.")
     payload = build_ifa_export(signings, players_by_key, xfv_by_key=xfv_by_key)
     payload["generated_at"] = datetime.now(timezone.utc).isoformat()
+    n_tracked = sum(c["n_tracked"] for c in payload["classes"])
+    n_efv = sum(c["n_efv"] for c in payload["classes"])
+    # The join that CANNOT be seen from the artifact: the map loaded fine and
+    # tracked prospects exist, but not one of them resolved a board grade. That
+    # is a key-space break (the tracked key never appears in xfv.json), and it
+    # publishes a full page of consensus grades that looks exactly like a page
+    # of eFV grades. Refuse to let it pass silently.
+    if xfv_by_key and n_tracked and not n_efv:
+        _record_efv_outage(
+            f"xfv.json loaded {len(xfv_by_key)} board grades but 0 of {n_tracked} "
+            f"tracked IFA signings resolved one; the section published entirely "
+            f"on consensus FV.")
+        log.error("ifa_export: 0 of %d tracked signings resolved a board eFV "
+                  "grade against %d xfv.json rows - key-space break, not a data gap",
+                  n_tracked, len(xfv_by_key))
+    payload["efv_resolved"] = n_efv
+    payload["efv_available"] = xfv_by_key is not None
     with path.open("w", encoding="utf-8") as fp:
         json.dump(payload, fp, separators=(",", ":"), ensure_ascii=False)
     n = sum(c["n_signings"] for c in payload["classes"])
-    log.info("ifa_export: wrote %d signings across %d classes → %s",
-             n, len(payload["classes"]), path)
+    log.info("ifa_export: wrote %d signings across %d classes (%d of %d tracked "
+             "on the board eFV basis) → %s",
+             n, len(payload["classes"]), n_efv, n_tracked, path)
     return n

@@ -6,8 +6,8 @@
 model consumes, so a game can be priced on numbers that were true BEFORE it.
 
 THE PROBLEM THIS EXISTS TO SOLVE. `betting_model` reads the team leaderboards
-(offense_plus, rotation_plus, bullpen_plus, per-pitcher SEM+/REM+). Those are
-SEASON-TO-DATE aggregates. Grading a June game against them means the features
+(offense_plus, rotation_plus, bullpen_plus, per-pitcher SEM+/REM+) and the park
+index. Those are SEASON-TO-DATE aggregates. Grading a June game against them means the features
 already contain that June game's result. The forward split in `backtest()`
 refits the coefficients on an earlier window, which removes COEFFICIENT
 leakage, but the features stay contaminated. That is the single reason
@@ -60,6 +60,12 @@ nightly snapshot that costs nothing in steady state (a game on D uses the
 snapshot from D-1); without one it is the difference between an honest
 backtest and a dishonest one.
 
+WHAT A RECORD HOLDS: the three team columns, the per-pitcher columns, and (from
+schema 2) the PARK INDEX. The park was the one model input that was never dated,
+and betting_model read the live one for vintage games; see PARK_SOURCE below for
+the leak and why no backfill is needed. `parks` is null on schema 1 records and
+the reader must price those games on a neutral park, not on today's index.
+
 ORG CODES ARE CANONICALIZED AT WRITE TIME. The leaderboards carry StatsAPI
 abbreviations (SD, SF, TB, KC, AZ, CWS, WSH); park factors and the game feeds
 carry the Baseball-Reference set (SDP, SFG, TBR, KCR, ARI, CHW, WSN). Every
@@ -84,7 +90,10 @@ ROOT = Path(__file__).parent
 DATA_DIR = ROOT / "data"
 VINTAGE_DIR = ROOT / ".cache" / "leaderboard_vintages"
 
-SCHEMA = 1
+# SCHEMA 2 (2026-08-05) added the `parks` block. See PARK_SOURCE below for why:
+# schema 1 records carry no park column at all, and a reader must fall back to a
+# NEUTRAL park for them rather than to the live index.
+SCHEMA = 2
 
 # The reduced record keeps only what betting_model actually consumes. Column
 # order is part of the on-disk contract; a reader must go through
@@ -95,6 +104,29 @@ PITCHER_COLUMNS = ("plus", "ip_per_gs", "org", "role")
 
 SOURCES = ("hitter_leaderboards.json", "starter_leaderboards.json",
            "bullpen_leaderboards.json")
+
+# THE FOURTH INPUT, and the one that was leaking (2026-08-05).
+#
+# betting_model prices a game on four things: team offense, team run prevention,
+# the listed probable, and THE PARK. The first three were vintage-dated by this
+# module from day one; the park was not, so `backtest()` in vintage mode read
+# `park_index()` -> data/fa_meta.json -> `fa_fit.park_factors(CLASS_YEAR - 1)`,
+# which is the IN-PROGRESS season. Every eval-window game therefore contributed
+# to the park index used to fit and to price it, while the mode label claimed
+# "features dated strictly before each game; no leakage". One input made that
+# false, and the contamination grows with the 600-game validation clock rather
+# than shrinking, because a longer eval window is a larger share of the park
+# sample it is graded against.
+#
+# NO BACKFILL IS NEEDED and none is possible. Park factors are near-static
+# inside a season (they are a multi-year regressed index the FA engine rebuilds
+# monthly, not a daily aggregate), so tonight's value is a fair reading of what
+# was knowable last night. Records written before this schema bump simply have
+# no park column, and betting_model prices them on a NEUTRAL park and marks the
+# games, which is the conservative direction: it drops the park term rather than
+# inventing a dated one.
+PARK_SOURCE = "fa_meta.json park_factors"
+PARK_UNITS = "runs index / 100 (1.00 = neutral), the same units betting_model.park_index returns"
 
 
 # ---------------------------------------------------------------------------
@@ -137,6 +169,35 @@ def _iso_date(s) -> str | None:
             return None
         return head
     return None
+
+
+def park_snapshot(data_dir: Path | None = None) -> dict | None:
+    """{canonical org: runs index / 100} for the record, or None.
+
+    NONE IS A SENTINEL AND AN EMPTY DICT IS FORBIDDEN. `{}` would be written to
+    disk, read back as "these are the parks", and price every game at a flat
+    1.00 while being indistinguishable from a genuinely neutral league. None
+    says "this record has no park column", which is exactly what the reader
+    needs in order to fall back explicitly and mark the games it affected.
+    Missing a park does NOT make the whole block None: `betting_model` already
+    resolves an absent org to neutral at lookup (ATH has no Savant entry), and
+    dropping 29 measured parks over the 30th would be the same mistake in
+    reverse."""
+    dd = Path(data_dir) if data_dir else DATA_DIR
+    meta = _load_json(dd / "fa_meta.json")
+    pf = (meta or {}).get("park_factors") if isinstance(meta, dict) else None
+    if not isinstance(pf, dict) or not pf:
+        return None
+    out: dict[str, float] = {}
+    for org, v in pf.items():
+        o = _org(org)
+        if not o or not isinstance(v, dict):
+            continue
+        try:
+            out[o] = round(float(v.get("runs") or 100) / 100.0, 4)
+        except (TypeError, ValueError):
+            continue
+    return out or None
 
 
 # ---------------------------------------------------------------------------
@@ -222,6 +283,17 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
     as_ofs = [m["as_of"] for m in src_meta.values() if m["as_of"]]
     covers_through = max(as_ofs + [vintage_date])
 
+    # An absent park index does NOT abort the snapshot. The team and pitcher
+    # columns are the irreplaceable evidence (they cannot be reconstructed for a
+    # past date at all); parks are near-static, so a night without them costs a
+    # neutral park term on the games that read this record and nothing else. The
+    # reader is told which it got by the presence of the block, never by a zero.
+    parks = park_snapshot(data_dir=dd)
+    if parks is None:
+        log.warning("leaderboard_vintages: no park factors in %s/fa_meta.json; the %s "
+                    "vintage is stored WITHOUT a park column and games priced on it "
+                    "will use a neutral park", dd, vintage_date)
+
     return {
         "schema": SCHEMA,
         "vintage_date": vintage_date,
@@ -234,11 +306,18 @@ def reduce_current(*, on_date: str | None = None, data_dir: Path | None = None) 
         "sources": src_meta,
         "n_teams": len(teams),
         "n_pitchers": len(pitchers),
+        "n_parks": len(parks) if parks else 0,
         "teams": teams,
         "pitchers": pitchers,
+        "parks": parks,
+        "park_source": PARK_SOURCE if parks else None,
+        "park_units": PARK_UNITS,
         "cutoff_note": ("covers_through is the max of the source leaderboards' as_of "
                         "dates and the date this file was written; a record may price "
                         "only games dated strictly after it"),
+        "park_note": ("parks is null on schema 1 records and on any night fa_meta.json "
+                      "was unreadable; a reader must price those games on a NEUTRAL "
+                      "park and mark them, never on the live index"),
     }
 
 
@@ -287,9 +366,12 @@ def snapshot(*, on_date: str | None = None, force: bool = False,
     path.write_text(json.dumps(rec, separators=(",", ":")), encoding="utf-8")
     reset_cache()
     if log_fn:
+        # The park count is printed even when it is zero. "0 parks" in a nightly
+        # log is the whole point of counting: a silent absence is what let the
+        # vintage backtest read the live index for months.
         log_fn(f"leaderboard_vintages: wrote {path.name} "
                f"({rec['n_teams']} teams, {rec['n_pitchers']} pitchers, "
-               f"covers_through {rec['covers_through']})")
+               f"{rec['n_parks']} parks, covers_through {rec['covers_through']})")
     return {"written": True, "path": str(path), "date": d, "record": rec}
 
 
@@ -387,10 +469,20 @@ def coverage(*, vintage_dir: Path | None = None) -> dict:
             total_bytes += vintage_path(d, vintage_dir=vdir).stat().st_size
         except OSError:
             pass
+    # How many stored records actually carry a park column. A schema 1 record is
+    # priced on a NEUTRAL park, so this is the number that says how much of the
+    # archive can be graded with the park term switched on at all.
+    n_with_parks = 0
+    for d in dates:
+        rec = load_vintage(d, vintage_dir=vdir)
+        if rec and isinstance(rec.get("parks"), dict) and rec["parks"]:
+            n_with_parks += 1
     out = {
         "dir": str(vdir),
         "schema": SCHEMA,
         "n_vintages": len(dates),
+        "n_vintages_with_parks": n_with_parks,
+        "n_vintages_neutral_park": len(dates) - n_with_parks,
         "first": dates[0] if dates else None,
         "last": dates[-1] if dates else None,
         "bytes": total_bytes,

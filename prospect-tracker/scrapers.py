@@ -3707,9 +3707,21 @@ def scrape_mlb_draft_pool(year: int, force: bool = False) -> dict:
           "team_pools":  {team_short_name: usd, ...},
           "pick_values": [{pick_overall, slot_usd, team}, ...],
         }
-    Returns an empty dict on fetch failure. Returns a partial result
-    when the article is in the inline-prose format (older years) — the
-    caller can check len(team_pools) to gauge coverage.
+    Returns an empty dict on fetch failure AND on a parse that yielded
+    nothing at all. Returns a partial result when the article is in the
+    inline-prose format (older years) - the caller can check
+    len(team_pools) to gauge coverage.
+
+    TRUTHY-EMPTY FIX (2026-08-05). This used to return
+    `{"year": y, "team_pools": {}, "pick_values": []}` on a total parse
+    miss. That dict is TRUTHY, so `build_draft_pools`' `if not data:
+    continue` guard never fired, and the year was published as
+    "0 bonus pools, 0 slot values" - a club with no draft budget - rather
+    than as "we could not read this article". It logged at info, so
+    nothing looked wrong. Measured on the served cache: 2021 parses 9 team
+    pools and 0 pick values (21 clubs read as having no bonus pool at all)
+    and 2022 parses 30 and 0. A wholly-failed parse now returns {} so the
+    caller skips the year, and partial coverage warns instead of informs.
     """
     url = _MLB_DRAFT_POOL_URLS.get(year)
     if not url:
@@ -3726,8 +3738,23 @@ def scrape_mlb_draft_pool(year: int, force: bool = False) -> dict:
     if not team_pools:
         team_pools = _parse_inline_team_pools(body)
     pick_values = _parse_structured_pick_values(body)
+    if not team_pools and not pick_values:
+        log.error("mlb_draft_pool %d: article fetched OK (%d bytes) but parsed "
+                  "0 team pools and 0 pick values - the page format most likely "
+                  "changed; skipping the year rather than publishing it as a "
+                  "class with no bonus money", year, len(body))
+        return {}
     log.info("mlb_draft_pool %d: %d team pools, %d pick values",
              year, len(team_pools), len(pick_values))
+    # Partial coverage is a real state for the 2021-2023 prose articles, but it
+    # is also what a silently-broken parser looks like, so it must be visible.
+    if len(team_pools) < 30:
+        log.warning("mlb_draft_pool %d: only %d of 30 clubs resolved a bonus "
+                    "pool - the remaining %d publish with no pool",
+                    year, len(team_pools), 30 - len(team_pools))
+    if not pick_values:
+        log.warning("mlb_draft_pool %d: 0 pick slot values parsed - every pick "
+                    "in this class publishes without a slot", year)
     return {"year": year, "team_pools": team_pools, "pick_values": pick_values}
 
 
@@ -3755,7 +3782,9 @@ def build_draft_pools(years, force: bool = False) -> dict:
 
     Team names from the article are canonicalized through `canonical_org`
     (with a few short-name overrides). Years where no pools could be
-    parsed are silently skipped — caller logs the years actually on file.
+    parsed are skipped, with a warning - an absent year is honest, a year
+    present with an empty pool map reads downstream as "these clubs had no
+    bonus money". Caller logs the years actually on file.
     """
     from trades import canonical_org
     out: dict[int, dict] = {}
@@ -3764,9 +3793,11 @@ def build_draft_pools(years, force: bool = False) -> dict:
         if not data:
             continue
         canonical_pools: dict[str, int] = {}
+        n_pool_dropped = 0
         for raw, usd in (data.get("team_pools") or {}).items():
             code = _DRAFT_POOL_NAME_OVERRIDES.get(raw) or canonical_org(raw)
             if not code or len(code) > 4:
+                n_pool_dropped += 1
                 continue
             canonical_pools[code] = usd
         canonical_picks: list[dict] = []
@@ -3778,6 +3809,17 @@ def build_draft_pools(years, force: bool = False) -> dict:
                 "slot_usd":     pv.get("slot_usd"),
                 "team":         code or raw,
             })
+        if n_pool_dropped:
+            log.warning("draft_pools %d: %d parsed pool row(s) did not "
+                        "canonicalize to an org code and were dropped",
+                        year, n_pool_dropped)
+        if not canonical_pools and not canonical_picks:
+            # Same reasoning as the parser guard: an empty-but-present year is
+            # indistinguishable downstream from a real zero. Leave the year off.
+            log.warning("draft_pools %d: nothing survived canonicalization - "
+                        "omitting the year entirely rather than serving it as a "
+                        "class with no bonus pools", year)
+            continue
         out[year] = {
             "team_pools":  canonical_pools,
             "pick_values": canonical_picks,

@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Optional
 
 import mlb_leverage
-from bullpen_export import load_season_pitching
+from bullpen_export import load_season_pitching, guard_nonempty_block, _ingest_red
 from hitter_export import load_season_hitting
 
 _log = logging.getLogger(__name__)
@@ -88,11 +88,24 @@ def _build_batters(bat: dict, bat_nt: dict, pit_nt: dict | None = None) -> list[
     return batters
 
 
-def _build_starters(strt: dict, pit_nt: dict, pit_gs: dict) -> list[dict]:
-    """Starter board rows (WPA-sorted); only real starters (GS>0 on the line)."""
+def _build_starters(strt: dict, pit_nt: dict, pit_gs: Optional[dict]) -> list[dict]:
+    """Starter board rows (WPA-sorted); only real starters (GS>0 on the line).
+
+    `pit_gs` None means the season pitching line is UNAVAILABLE, and then this
+    does NOT filter - the bullpen_export._active_mlbam_ids posture, where an
+    unreachable feed leaves the board intact instead of blanking it.
+
+    Why the sentinel is needed: load_season_pitching returns [] on any failure,
+    which used to arrive here as an EMPTY GS map, and an empty map fails the
+    `GS > 0` test for every arm, so all 326 starters silently became []. Nothing
+    raised, because an empty starter board is a legitimate state (a fold with no
+    games in it), so a total source outage and a genuinely empty season published
+    the same file. With no GS line we keep every folded starter and serve gs=None
+    rather than a fabricated 0."""
     starters = []
     for mid, m in strt.items():
-        if pit_gs.get(mid, 0) <= 0:      # keep only real starters (GS>0 on the season line)
+        # filter only when we actually HAVE the season line to filter on
+        if pit_gs is not None and pit_gs.get(mid, 0) <= 0:
             continue
         nt = pit_nt.get(mid)
         starters.append({
@@ -100,7 +113,7 @@ def _build_starters(strt: dict, pit_nt: dict, pit_gs: dict) -> list[dict]:
             "team": nt[1] if nt else None,
             "starts": m.get("starts"), "wpa": m.get("wpa"),
             "wpa_per_start": m.get("wpa_per_start"), "wpa_li": m.get("wpa_li"),
-            "gs": pit_gs.get(mid, 0),
+            "gs": pit_gs.get(mid, 0) if pit_gs is not None else None,
             "qualified": (m.get("starts") or 0) >= QUAL_STARTS,
         })
     starters.sort(key=lambda r: (r["wpa"] if r["wpa"] is not None else -99), reverse=True)
@@ -109,25 +122,64 @@ def _build_starters(strt: dict, pit_nt: dict, pit_gs: dict) -> list[dict]:
 
 def _season_boards(season: int, *, leverage_limit: Optional[int] = None, log=print):
     """Load the season name/team maps + fold the winProbability feed once, and
-    return (batters, starters, coverage). Cached games make the fold free, so a
-    prior season costs one schedule + two statline calls."""
+    return (batters, starters, coverage, sources). Cached games make the fold
+    free, so a prior season costs one schedule + two statline calls.
+
+    `sources` reports what each input actually delivered (row counts, whether the
+    GS filter could run, how many served rows have no team), so a degraded run is
+    readable in the payload instead of only in the log."""
     log(f"  leverage: loading {season} name/team maps...")
     hit_rows = load_season_hitting(season)
     pit_rows = load_season_pitching(season)
     bat_nt = _name_team(hit_rows)
     pit_nt = _name_team(pit_rows)
-    pit_gs: dict[int, int] = {}
-    for r in pit_rows:
-        mid = r.get("mlbam")
-        if mid is not None:
-            pit_gs[int(mid)] = int(r.get("GS") or 0)
+    # None (not {}) when the season pitching line is missing: an empty map would
+    # filter EVERY starter off the board. See _build_starters.
+    pit_gs: Optional[dict[int, int]] = None
+    if pit_rows:
+        pit_gs = {}
+        for r in pit_rows:
+            mid = r.get("mlbam")
+            if mid is not None:
+                pit_gs[int(mid)] = int(r.get("GS") or 0)
+    else:
+        _log.warning("leverage %s: season pitching line is EMPTY, so the GS>0 "
+                     "starter filter is SKIPPED rather than dropping every "
+                     "starter off the board", season)
+        log(f"  leverage: no {season} season pitching line; the GS>0 starter "
+            f"filter is skipped (feed unavailable, not zero starters)")
+    if not hit_rows:
+        _log.warning("leverage %s: season hitting line is EMPTY; batter rows keep "
+                     "their fold names and serve a null team", season)
 
     log(f"  leverage: walking winProbability feed ({season}); cached games are free...")
     _rel, bat, strt, cov = mlb_leverage.fetch_season_all_leverage(season, limit=leverage_limit)
     log(f"  leverage: {cov.get('games')}/{cov.get('games_total')} games; "
         f"{len(bat)} batters, {len(strt)} starters folded")
-    return (_build_batters(bat, bat_nt, pit_nt),
-            _build_starters(strt, pit_nt, pit_gs), cov)
+    batters = _build_batters(bat, bat_nt, pit_nt)
+    starters = _build_starters(strt, pit_nt, pit_gs)
+    n_bat_noteam = sum(1 for b in batters if not b.get("team"))
+    n_st_noteam = sum(1 for s in starters if not s.get("team"))
+    if n_bat_noteam or n_st_noteam:
+        # Never silent: one null team is the known fold-only case (a 1-PA batter
+        # absent from the hitting rows), but ALL of them null means the name/team
+        # maps failed and the board is serving a teamless leaderboard.
+        lvl = (_log.error if (n_bat_noteam >= len(batters) and batters)
+               else _log.warning)
+        lvl("leverage %s: %d of %d batter rows and %d of %d starter rows resolved "
+            "no team", season, n_bat_noteam, len(batters), n_st_noteam, len(starters))
+    sources = {
+        "n_hitting_rows": len(hit_rows), "n_pitching_rows": len(pit_rows),
+        "n_batters_folded": len(bat), "n_starters_folded": len(strt),
+        "gs_filter_applied": pit_gs is not None,
+        "gs_filter_note": ("Starters are filtered to GS>0 on the season pitching "
+                           "line. When that line is unavailable the filter is "
+                           "SKIPPED (gs_filter_applied=false) and every folded "
+                           "starter is served with gs=null, rather than an empty "
+                           "GS map dropping the whole board."),
+        "n_batters_no_team": n_bat_noteam, "n_starters_no_team": n_st_noteam,
+    }
+    return batters, starters, cov, sources
 
 
 def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None,
@@ -136,11 +188,39 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
     season = int(season or date.today().year)
     today = today or date.today().isoformat()
 
-    batters, starters, cov = _season_boards(season, leverage_limit=leverage_limit, log=log)
+    batters, starters, cov, sources = _season_boards(
+        season, leverage_limit=leverage_limit, log=log)
+
+    # REFUSE TO PUBLISH EMPTY. This export was the one of the four with no `if not
+    # rows` guard at all, so a failed feed wrote a valid-looking file with two
+    # empty boards in it and returned 0 as if that were a normal result. Its three
+    # siblings all skip the write instead, and so does this now: the previous
+    # file stays on disk, which is strictly better than a published blank.
+    if not batters and not starters:
+        log(f"  leverage: no leverage rows for {season} (feed blocked or empty); "
+            f"skipping the write and leaving {OUT_PATH.name} as it is")
+        _ingest_red("leverage_leaderboards",
+                    (f"{season}: the winProbability fold produced 0 batters and 0 "
+                     f"starters; refused to overwrite {OUT_PATH.name} with an "
+                     f"empty board."))
+        return 0
+    # One side empty and the other populated is the partial version of the same
+    # failure (an empty GS map used to do exactly that to the starter board), so
+    # each block keeps its last good value rather than publishing empty.
+    batters, bat_guard = guard_nonempty_block(
+        batters, OUT_PATH, key="batters", source="leverage_batters",
+        label="leverage", log=log)
+    starters, st_guard = guard_nonempty_block(
+        starters, OUT_PATH, key="starters", source="leverage_starters",
+        label="leverage", log=log)
 
     payload = {
         "generated_at": today, "season": season, "as_of": today,
         "coverage": cov,
+        # What each input delivered this run, and the empty-block guard's verdict
+        # for each board, so a degraded run is auditable from the served file.
+        "sources": sources,
+        "block_guard": {"batters": bat_guard, "starters": st_guard},
         "note": ("Realized in-game leverage impact, self-computed from the MLB StatsAPI "
                  "winProbability feed (FanGraphs is blocked for autonomous pulls). Batters: "
                  "WPA, average Leverage Index faced (pLI), and Clutch (WPA/pLI minus WPA/LI). "
@@ -174,7 +254,7 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
     hist: dict[str, dict] = {}
     for y in seasons:
         try:
-            batters, starters, cov = _season_boards(y, log=log)
+            batters, starters, cov, _src = _season_boards(y, log=log)
         except Exception:
             _log.exception("leverage-history: %s failed; skipping", y)
             continue
