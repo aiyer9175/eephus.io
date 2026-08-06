@@ -9232,6 +9232,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 (t for t in trades if t.get("trade_date") and t.get("to_org")),
                 key=lambda t: t["trade_date"],
             )
+            # SOURCE OUTRANKS RECENCY (2026-08-05, the Alexander Frias bug).
+            # `trades` holds two different KINDS of row. `mlb_api` rows are
+            # parsed from MLB's own transaction feed and state a trade that
+            # happened. `inferred` rows are DEDUCED from a player appearing
+            # under a different org across two prospect-list snapshots, so a
+            # publisher that is slow to drop a traded player manufactures a
+            # phantom trade BACK to the club that traded him, dated later than
+            # the real one. Taking the newest row by date therefore let the
+            # fabrication win: Frias was traded to St. Louis on 08-03 (mlb_api,
+            # with the full description), MLB Pipeline's Brewers Top 30 still
+            # listed him on 08-04, an `inferred` STL->MIL row was written from
+            # that, and he was served as the Brewers' 5th-best prospect. 178
+            # players were in that state.
+            # So: if MLB's own feed has ever recorded a trade for this player,
+            # the latest of THOSE is the answer, and an inference cannot
+            # overrule it. Inferred rows still decide the case where the feed
+            # never saw the move at all, which is what they were added for.
+            api_trades = [t for t in sorted_trades
+                          if (t.get("source") or "") == "mlb_api"]
+            if api_trades:
+                sorted_trades = api_trades
             if sorted_trades:
                 latest_trade = sorted_trades[-1]
                 trade_to = canonical_org(latest_trade.get("to_org"))
