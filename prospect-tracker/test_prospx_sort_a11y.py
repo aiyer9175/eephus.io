@@ -127,9 +127,22 @@ def test_aria_sort_reflects_state_and_enter_resorts(booted_page):
     # Focus an inactive header and press Enter — it must become the active sort.
     target = next((s for s in before if not s["active"]), None)
     assert target, "expected at least one inactive sortable header"
-    page.eval_on_selector(
-        f'#active-section .sort-header[data-sort-key="{target["key"]}"]',
-        "el => el.focus()")
+    sel = f'#active-section .sort-header[data-sort-key="{target["key"]}"]'
+    page.eval_on_selector(sel, "el => el.focus()")
+
+    # PROVE FOCUS LANDED BEFORE PRESSING. Under full-suite load this test failed
+    # with "Enter did not activate its sort" while passing in isolation, and the
+    # message pointed at the sort handler when the real suspect is the step
+    # before it: a keypress sent at an element that does not have focus yet goes
+    # nowhere, and then the 10s wait below times out on a press that was never
+    # delivered. Asserting focus separately means a future failure names which
+    # of the two actually broke.
+    page.wait_for_function(
+        "key => { const h = document.querySelector("
+        "`#active-section .sort-header[data-sort-key=\"${key}\"]`);"
+        " return !!h && document.activeElement === h; }",
+        arg=target["key"], timeout=10_000)
+
     page.keyboard.press("Enter")
     # Condition wait replaces the old fixed 400ms sleep: the re-sort is done
     # once the pressed header advertises the active sort. Timeout swallowed

@@ -330,6 +330,27 @@ def main() -> int:
         log.exception("betting_close_job: close snapshot failed")
         return 1
     print(f"  {status.get('last_run')}")
+
+    # Grade the record against the close we just captured. This is the ONLY
+    # moment the closing line for this slate is guaranteed to be on disk, and
+    # CLV is unrecoverable after the fact, so it runs here rather than on the
+    # nightly. It writes a SIDECAR: the published record is append-only and a
+    # closing price that lands hours after a pick is posted can never be written
+    # back into the row it belongs to.
+    #
+    # Best effort on purpose. A grading failure must not make the close job
+    # report a failed CAPTURE, because the capture is the irreplaceable half and
+    # the grade can be rebuilt from it at any time.
+    try:
+        import betting_export as be
+        clv = be.grade_record_clv()
+        print(f"  clv: {clv['n_graded']} graded, {clv['n_ungraded']} ungraded")
+        if clv["n_ungraded"]:
+            log.warning("betting_close_job: %d pick(s) ungraded: %s",
+                        clv["n_ungraded"], clv["ungraded_reasons"])
+    except Exception:
+        log.exception("betting_close_job: CLV grading failed; the close snapshot "
+                      "IS captured and the grade can be rebuilt from it")
     return 0
 
 

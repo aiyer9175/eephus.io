@@ -53,6 +53,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+from collections import Counter
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -306,6 +307,141 @@ def grade_clv(odds_post, odds_close) -> dict:
         "clv_pct": round((dp / dc - 1.0) * 100.0, 3),
         "clv_prob": round((1.0 / dc) - (1.0 / dp), 5),
     }
+
+
+CLV_PATH = DATA_DIR / "betting_clv.json"
+
+
+def _close_price_for(row: dict, events: list[dict]):
+    """The closing American price for the exact side this pick was posted on.
+
+    Matched on the BOOK THE PICK WAS TAKEN AT, not the best close across books.
+    That distinction is the whole measurement: CLV asks whether the price you
+    actually got beat where that market settled. Grading a DraftKings bet
+    against FanDuel's close would manufacture value out of a book disagreement
+    the bettor never had access to.
+
+    Returns (price, why_not). Exactly one is None, so a caller can never mistake
+    "no close found" for a graded zero."""
+    market = (row.get("market") or "").strip()
+    sel = (row.get("selection") or "").strip()
+    book = (row.get("book") or "").strip().lower()
+    if not (market and sel and book):
+        return None, "row is missing market, selection or book"
+
+    # totals carry the side in the selection text ("Under 8.5"); h2h/spreads
+    # carry an org code that has to be matched against the event's two teams.
+    side, point = None, None
+    if market == "totals":
+        parts = sel.split()
+        if len(parts) >= 2 and parts[0].lower() in ("over", "under"):
+            side, point = parts[0].lower(), parts[1]
+        if side is None:
+            return None, f"could not read an over/under side from {sel!r}"
+
+    for ev in events or []:
+        if market in ("h2h", "spreads"):
+            if sel == ev.get("home_org"):
+                side = "home"
+            elif sel == ev.get("away_org"):
+                side = "away"
+            else:
+                continue
+        b = (ev.get("books") or {}).get(book)
+        if not isinstance(b, dict):
+            continue
+        m = b.get(market)
+        if not isinstance(m, dict):
+            continue
+        cell = m.get(side)
+        if cell is None:
+            continue
+        price = cell.get("price") if isinstance(cell, dict) else cell
+        if market == "totals":
+            got = cell.get("point") if isinstance(cell, dict) else None
+            # A total graded against a DIFFERENT number is not the same bet.
+            if point is not None and got is not None and str(got) != str(point):
+                continue
+        if price is not None:
+            return price, None
+    return None, f"{book} posted no closing {market} price for {sel!r}"
+
+
+def grade_record_clv(*, rows: list[dict] | None = None, write: bool = True,
+                     path: Path | None = None) -> dict:
+    """Grade every published pick against its slate's CLOSING snapshot, into a
+    SIDECAR artifact.
+
+    WHY A SIDECAR AND NOT THE RECORD ITSELF. The closing line does not exist
+    when a pick is posted; it arrives hours later. Writing it back into the
+    published row would be precisely the edit `check_append_only` exists to
+    forbid, and loosening that check to allow "only CLV fields" would put a hole
+    in the one guarantee that makes the record worth reading. So the record
+    stays immutable and the grade lives beside it, keyed by bet_id.
+
+    The sidecar is DERIVED and rebuildable from the immutable pair (the record,
+    the snapshot cache). It is never the only copy of a price, and deleting it
+    loses nothing but compute.
+
+    An ungradeable pick is RECORDED AS UNGRADED WITH ITS REASON rather than
+    skipped. A pick silently missing from this file would read as "no bets that
+    day", which is the empty-but-valid failure this codebase keeps getting bitten
+    by. The commonest real reason is a missing close snapshot, and that is
+    unrecoverable after the fact: it means the close job did not fire."""
+    rows = rows if rows is not None else load_record()
+    graded: dict[str, dict] = {}
+    reasons: Counter = Counter()
+    by_date: dict[str, list[dict]] = {}
+    for r in rows:
+        by_date.setdefault(str(r.get("slate_date") or "")[:10], []).append(r)
+
+    for day, day_rows in sorted(by_date.items()):
+        snap = bi.closing_snapshot(day) if day else None
+        events = bi.parse_events(snap) if snap else []
+        for r in day_rows:
+            bid = r.get("bet_id")
+            if not bid:
+                reasons["row carries no bet_id"] += 1
+                continue
+            if not snap:
+                graded[bid] = {"bet_id": bid, "slate_date": day, "graded": False,
+                               "reason": "no closing snapshot for this slate; the "
+                                         "close job did not fire and CLV is "
+                                         "unrecoverable after the fact"}
+                reasons["no closing snapshot"] += 1
+                continue
+            close, why = _close_price_for(r, events)
+            if close is None:
+                graded[bid] = {"bet_id": bid, "slate_date": day, "graded": False,
+                               "reason": why}
+                reasons[why or "unmatched"] += 1
+                continue
+            g = grade_clv(r.get("odds_at_post"), close)
+            graded[bid] = {"bet_id": bid, "slate_date": day, "graded": True,
+                           "book": r.get("book"), "market": r.get("market"),
+                           "selection": r.get("selection"),
+                           "odds_at_post": r.get("odds_at_post"),
+                           "odds_at_close": close, **g}
+            reasons["graded"] += 1
+
+    ok = [g for g in graded.values() if g.get("graded")]
+    beat = [g for g in ok if g.get("beat_close")]
+    clvs = [g["clv_pct"] for g in ok if isinstance(g.get("clv_pct"), (int, float))]
+    payload = {
+        "generated_at": _now(),
+        "source": "derived from betting_record.json + the closing snapshot cache",
+        "n_rows": len(rows),
+        "n_graded": len(ok),
+        "n_ungraded": len(graded) - len(ok),
+        # None, not 0.0, on an empty set: a rate over zero bets is not a rate.
+        "beat_close_rate": round(len(beat) / len(ok), 4) if ok else None,
+        "avg_clv_pct": round(sum(clvs) / len(clvs), 3) if clvs else None,
+        "ungraded_reasons": dict(sorted(reasons.items())),
+        "picks": [graded[k] for k in sorted(graded)],
+    }
+    if write:
+        _write(Path(path or CLV_PATH), payload)
+    return payload
 
 
 def record_summary(rows: list[dict] | None = None) -> dict:
