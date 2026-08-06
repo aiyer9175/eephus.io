@@ -440,22 +440,42 @@
     // Copy every locally-stored bet into the account, then clear local. Call it
     // from a prompt, never on your own. Returns {merged, error}. Non-destructive
     // server-side: it only inserts.
-    mergeLocalBets: function () {
+    // `rows` is the CALLER'S local store. Accept it, because the caller owns
+    // its own storage key and this module cannot assume they match.
+    //
+    // THE DATA-HIDING BUG THIS FIXES (plan item G5, 2026-08-06). This function
+    // ignored its argument and read Account._localBets(), keyed
+    // "eephus.bets.v1". assets/betting.js keeps its rows under "eephus_bets_v1",
+    // underscores rather than dots. So on sign-in the merge read an empty store,
+    // reported {merged: 0}, inserted nothing, and betting.js then switched its
+    // view to the account source. The user's logged-out bets were still on disk
+    // and nothing ever read them again: sign in, and your bets disappear.
+    //
+    // Nothing was lost and nothing raised, which is why it survived QA. It is
+    // fixed here rather than by renaming a key, because taking the caller's rows
+    // is the correct contract either way and a rename would strand the rows
+    // already sitting in real browsers under the old name.
+    mergeLocalBets: function (rows) {
       var c = client();
       if (!c || !_session) return Promise.resolve({ merged: 0 });
-      var local = Account._localBets();
+      var passed = Array.isArray(rows) && rows.length ? rows : null;
+      var local = passed || Account._localBets();
       if (!local.length) return Promise.resolve({ merged: 0 });
       var uid = _session.user.id;
-      var rows = local.map(function (b) {
+      var payload = local.map(function (b) {
         var row = Account._betPayload(b);
         row.user_id = uid;                  // the "local:" id is deliberately dropped
         return row;
       });
-      return _safe(c.from("bets").insert(rows)).then(function (res) {
+      return _safe(c.from("bets").insert(payload)).then(function (res) {
         // Only clear the device copy once the server took the rows. A failed
         // merge that wiped local storage would be a data-loss bug.
-        if (!(res && res.error)) Account._setLocalBets([]);
-        return { merged: rows.length, error: res && res.error };
+        //
+        // Clear only OUR store. When the caller supplied the rows they own the
+        // storage they came from, and clearing it is their call: `merged` tells
+        // them the server accepted them.
+        if (!(res && res.error) && !passed) Account._setLocalBets([]);
+        return { merged: payload.length, error: res && res.error };
       });
     },
 

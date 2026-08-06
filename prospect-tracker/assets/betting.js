@@ -1103,8 +1103,16 @@
     if (!acctLive() || !a.mergeLocalBets) return;
     var rows = localBets();
     if (!rows.length) return;
-    a.mergeLocalBets(rows).then(function () { loadBets().then(paintBets); })
-      .catch(function () { /* stay local */ });
+    a.mergeLocalBets(rows).then(function (res) {
+      // Clear THIS module's store only once the server has the rows. The
+      // account layer keys its own storage differently ("eephus.bets.v1" vs
+      // this file's "eephus_bets_v1"), which is exactly how these rows used to
+      // be orphaned on sign-in: the merge read the wrong store, inserted
+      // nothing, and the view then switched to the account source with the
+      // local rows still on disk and nothing left reading them.
+      if (res && res.merged && !res.error) saveLocal([]);
+      loadBets().then(paintBets);
+    }).catch(function () { /* stay local; the rows are untouched */ });
   }
 
   function renderMyBets() {

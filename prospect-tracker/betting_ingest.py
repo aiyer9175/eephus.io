@@ -52,7 +52,7 @@ import json
 import logging
 import os
 import re
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 log = logging.getLogger("betting_ingest")
@@ -108,6 +108,15 @@ def snapshot_path(when: datetime | None = None) -> Path:
     return CACHE_DIR / f"{when.strftime('%Y-%m-%d')}-{when.strftime('%H%M')}.json"
 
 
+def _day_delta(a: str, b: str) -> int:
+    """Whole days between two ISO dates, or a large number when either is
+    unparseable so the caller simply skips that file."""
+    try:
+        return (date.fromisoformat(a) - date.fromisoformat(b)).days
+    except ValueError:
+        return 10 ** 6
+
+
 def list_snapshots() -> list[dict]:
     """[{path, date, hhmm}] for every cached snapshot, oldest first. Reads
     filenames only, so it is cheap enough to call on every export."""
@@ -133,13 +142,21 @@ def latest_snapshot(kind: str | None = None, on_date: str | None = None) -> dict
     """The newest cached snapshot wrapper, optionally filtered by kind/date.
     Returns None when nothing is cached (the normal state before a key exists)."""
     for meta in reversed(list_snapshots()):
-        if on_date and meta["date"] != on_date:
+        # Cheap pre-filter on the filename, widened by a day on each side
+        # because a slate's capture can land under the neighbouring UTC date.
+        # The authoritative comparison is the wrapper's own slate_date below.
+        if on_date and abs(_day_delta(meta["date"], on_date)) > 1:
             continue
         wrap = load_snapshot(meta["path"])
         if not wrap:
             continue
         if kind and wrap.get("kind") != kind:
             continue
+        if on_date:
+            # Snapshots written before slate_date existed fall back to the
+            # filename date, so an old cache still resolves exactly as it did.
+            if (wrap.get("slate_date") or meta["date"]) != on_date:
+                continue
         wrap.setdefault("_path", str(meta["path"]))
         return wrap
     return None
@@ -149,6 +166,47 @@ def closing_snapshot(on_date: str) -> dict | None:
     """The close-kind snapshot for a slate date, or None. CLV grading is
     absent - not guessed - until this exists."""
     return latest_snapshot(kind="close", on_date=on_date)
+
+
+def slate_date_of(events, when: datetime | None = None) -> str:
+    """The US slate date this capture belongs to.
+
+    THE UTC-MIDNIGHT BUG THIS CLOSES (2026-08-06). Snapshot FILENAMES are stamped
+    with the UTC capture date, but a slate is identified by its US-local
+    officialDate. A West Coast game with a 10:10pm ET first pitch closes around
+    01:55 UTC the NEXT day, so its close snapshot lands under tomorrow's filename
+    while the slate it belongs to is today.
+
+    Two things then break, both silently. `closing_snapshot(slate)` filters on
+    the filename date and never finds it, so CLV for that slate is unrecoverable
+    and the grader reports "the close job did not fire" when it did. And the
+    once-per-slate guard in tools/betting_close_job.py asks the same question, so
+    it can fire a SECOND paid snapshot for a slate already captured, against a
+    500 credit monthly budget at 3 credits a call.
+
+    Derived from the EARLIEST commence_time in the capture, converted to US
+    Eastern, because that is what MLB's officialDate follows. Falls back to the
+    UTC capture date when there are no events to read, which is the old
+    behaviour and is correct for an empty board."""
+    stamps = []
+    for ev in (events or []):
+        if not isinstance(ev, dict):
+            continue
+        ct = ev.get("commence_time")
+        if not ct:
+            continue
+        try:
+            stamps.append(datetime.fromisoformat(str(ct).replace("Z", "+00:00")))
+        except ValueError:
+            continue
+    when = when or datetime.now(timezone.utc)
+    if not stamps:
+        return when.strftime("%Y-%m-%d")
+    # US Eastern without a tz database dependency: MLB's official date rolls at
+    # local midnight, and every in-season slate sits in EDT (UTC-4). Using a
+    # fixed offset is deliberate, since the alternative is a zoneinfo lookup
+    # that is not guaranteed present on the box.
+    return (min(stamps) - timedelta(hours=4)).strftime("%Y-%m-%d")
 
 
 def write_snapshot(payload: list | dict, *, kind: str, when: datetime | None = None,
@@ -167,6 +225,10 @@ def write_snapshot(payload: list | dict, *, kind: str, when: datetime | None = N
             "Wait a minute or pass an explicit `when`.")
     wrapper = {
         "captured_at": when.replace(microsecond=0).isoformat(),
+        # The SLATE this capture belongs to, which is not always the UTC date in
+        # the filename. Every date-filtered read keys off this.
+        "slate_date": slate_date_of(payload if isinstance(payload, list) else
+                                    (payload or {}).get("events"), when),
         "kind": kind,
         "sport": SPORT_KEY,
         "markets": list(MARKETS),
