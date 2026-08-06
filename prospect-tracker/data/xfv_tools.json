@@ -14,6 +14,8 @@
 "n": 347,
 "blend_rho": 0.4223,
 "grade_rho": 0.4144,
+"margin": 0.0079,
+"knife_edge": true,
 "validated": true
 },
 "adds_over_grade_oos": true
@@ -30,6 +32,8 @@
 "n": 347,
 "blend_rho": 0.5015,
 "grade_rho": 0.5054,
+"margin": -0.0039,
+"knife_edge": true,
 "validated": false
 },
 "adds_over_grade_oos": false
@@ -46,6 +50,8 @@
 "n": 347,
 "blend_rho": 0.4774,
 "grade_rho": 0.4774,
+"margin": 0.0,
+"knife_edge": true,
 "validated": false
 },
 "adds_over_grade_oos": false
@@ -62,6 +68,8 @@
 "n": 423,
 "blend_rho": 0.3106,
 "grade_rho": 0.2469,
+"margin": 0.0637,
+"knife_edge": false,
 "validated": true
 },
 "adds_over_grade_oos": true
@@ -78,6 +86,8 @@
 "n": 423,
 "blend_rho": 0.325,
 "grade_rho": 0.3968,
+"margin": -0.0718,
+"knife_edge": false,
 "validated": false
 },
 "adds_over_grade_oos": false

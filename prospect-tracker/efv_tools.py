@@ -142,7 +142,24 @@ def _oos_validate(tool, spec, rows, realized) -> dict | None:
         return None
     br = _spearman(oos_score, oos_y)
     gr = _spearman(oos_grade, oos_y)
+    # RECORD THE MARGIN. The verdict below is a bare strict inequality with no
+    # minimum detectable effect, no bootstrap and no confidence interval, and it
+    # decides whether a third of the served board gets a blended grade
+    # (3,007 of 9,382 rows carry tool_xfv). Measured 2026-08-06, three of the
+    # five gates sit inside +/-0.008 of the line and `speed` is decided on an
+    # EXACT TIE (+0.00000, which `>` resolves to False). Any rebuild can flip
+    # those and silently re-grade served rows.
+    #
+    # The rule is NOT changed here: changing it would re-grade the board without
+    # a measurement behind it, which is the thing this codebase refuses to do.
+    # What changes is that the margin is now published, so the fragility is
+    # visible and test_efv_tool_gate_margins can alarm on a flip instead of it
+    # happening quietly. See docs/prereg-e4-anthro-position.md for the house
+    # standard an actual gate is held to.
+    margin = None if (br is None or gr is None) else round(br - gr, 6)
     return {"n": len(oos_y), "blend_rho": br, "grade_rho": gr,
+            "margin": margin,
+            "knife_edge": bool(margin is not None and abs(margin) < 0.01),
             "validated": bool(br is not None and gr is not None and br > gr)}
 
 
