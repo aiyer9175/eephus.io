@@ -3698,11 +3698,27 @@ def build_pal() -> str:
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/pal.js?v={_PAL_VER}" defer></script>'
     )
+    # META PROVENANCE, corrected 2026-08-05. The old string ended "a fitted
+    # positional ladder, computed from Statcast" and page() feeds this one
+    # literal to name=description, og:description AND twitter:description, so
+    # one wrong clause was published three times. The ladder is NOT Statcast:
+    # positional_fit.fit_ladder is a no-intercept least squares of
+    # Baseball-Reference's own runs_position per 650 PA on the player's innings
+    # SHARES, which RECOVERS the constants BRef used (r2 0.9759, 4,968
+    # player-seasons 2012-2026, min 200 PA; data/positional_fit_ui.json
+    # ladder.method says exactly this, and the Position Fit tab shows it).
+    # Statcast feeds other parts of the page - arsenal shape, velocity, platoon
+    # splits, and the OAA the fielding side reads - so the attribution is split
+    # rather than deleted. The tab list also went stale: Pitch-Add Lab,
+    # Reverse-Platoon Radar and Prospect Watch all shipped after the copy was
+    # written and were invisible to a search snippet. Length 296 chars, down
+    # from 325; the house band is roughly 205-253 (/fa/, /betting/,
+    # /projections/) and this page has seven surfaces to name.
     return page("Alchemy Lab - eephus.io", "pal", body,
-                "Alchemy Lab: which MLB relievers profile as starters, which starters would shine in relief, "
-                "and which hitters are worth more runs at a different position, with a backtested history of past "
-                "role conversions. Arsenal depth, command, platoon splits, role-adjusted velocity and a fitted "
-                "positional ladder, computed from Statcast.",
+                "MLB players in the wrong job: reliever-to-starter and starter-to-relief candidates, "
+                "hitters worth more runs at another position, pitch-add, reverse-platoon and prospect "
+                "boards, and the conversion backtest. Arsenals and velocity from Statcast, the "
+                "positional ladder fitted from Baseball-Reference.",
                 url=f"{SITE_ORIGIN}/pal/")
 
 def build_fantasy() -> str:
