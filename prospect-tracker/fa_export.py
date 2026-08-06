@@ -176,24 +176,63 @@ def _prospect_fv_history(keys: set) -> dict[str, dict]:
                   "source(s) - Prospect-to-Payday will publish dark",
                   len(keys), n_loaded)
         _record_arc_outage(len(keys), n_loaded)
+    elif out:
+        # HEARTBEAT. Without an ok=True row the ledger cannot separate "the arc
+        # join ran and resolved arcs" from "the FA export never ran" - both are
+        # silence, and that ambiguity is what let the TJStats gap read as seven
+        # healthy runs. n_rows carries the resolved count, so a collapse from
+        # hundreds to a handful is legible without tripping a red.
+        _record_arc_health(
+            ok=True, n_rows=len(out),
+            message=(f"{len(out)} of {len(keys)} FA class members resolved an FV "
+                     f"arc from {n_loaded}/{len(_ARC_SOURCES)} boot export(s)"))
     return out
+
+
+def _record_arc_health(*, ok: bool, n_rows: int = 0, message: str) -> None:
+    """File this run's Prospect-to-Payday join verdict into the ingest-health
+    ledger.
+
+    WHY IT GOES THROUGH bullpen_export RATHER THAN run_monthly DIRECTLY.
+    `from run_monthly import _record_ingest` reads as though it reaches the
+    pipeline, and under the way the pipeline is actually launched
+    (deploy/nightly-build.sh runs `python run_monthly.py`) it did not: the live
+    module is sys.modules["__main__"], the name "run_monthly" is unclaimed, and
+    the import built a SECOND module object with its own empty ledger that
+    nothing ever drained. MEASURED before the fix: 0 of 1 filed rows reached
+    the drained payload. bullpen_export.record_ingest resolves the LIVE module
+    (sys.modules first, __main__ second, fresh import only as a last resort),
+    and it is one implementation instead of one per exporter.
+
+    THE SECOND HALF of making the red claim true: "fa_prospect_arc" is named in
+    run_monthly.SCHEDULED_EXPORTS. A correctly filed row under an unwatched
+    name is written into the payload and then dropped from red[], which is
+    exactly how this record was inert on both counts.
+
+    Best-effort by design: this is a reporting path and must never be the
+    reason the FA export fails."""
+    try:
+        from bullpen_export import record_ingest
+        record_ingest("fa_prospect_arc", ok=ok, n_rows=n_rows, message=message,
+                      # A clean run must not pay the whole pipeline import
+                      # graph just to log a heartbeat from a standalone run.
+                      import_fallback=not ok)
+    except Exception:
+        log.debug("could not record the FA arc health row", exc_info=True)
 
 
 def _record_arc_outage(n_keys: int, n_loaded: int) -> None:
     """Raise a fully-empty Prospect-to-Payday join into the ingest-health RED
-    ledger. Best-effort by design: this is a reporting path and must never be
-    the reason the FA export fails. The ledger is what the deploy shell prints
-    as `!!! INGEST RED`, so a dark feature is caught on the run that darkened
-    it rather than by someone eventually noticing a missing chart."""
-    try:
-        from run_monthly import _record_ingest
-        _record_ingest(
-            "fa_prospect_arc", ok=False,
-            message=(f"0 of {n_keys} FA class members resolved an FV arc from "
-                     f"{n_loaded} loaded boot export(s) ({', '.join(_ARC_SOURCES)}); "
-                     f"the Prospect-to-Payday chart on /fa/ has no data."))
-    except Exception:
-        log.debug("could not record the FA arc outage", exc_info=True)
+    ledger. The ledger is what the deploy shell prints as `!!! INGEST RED`, so
+    a dark feature is caught on the run that darkened it rather than by someone
+    eventually noticing a missing chart. That claim is true only because of the
+    two fixes documented on _record_arc_health, both landed 2026-08-05 after
+    review found every red filed here was going into a throwaway."""
+    _record_arc_health(
+        ok=False,
+        message=(f"0 of {n_keys} FA class members resolved an FV arc from "
+                 f"{n_loaded} loaded boot export(s) ({', '.join(_ARC_SOURCES)}); "
+                 f"the Prospect-to-Payday chart on /fa/ has no data."))
 
 
 def _class_supply_rows(cls: list[dict], class_year: int,

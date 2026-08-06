@@ -670,11 +670,33 @@ def load_bat_side(season: int) -> Optional[dict]:
     return out
 
 
+# WHICH KEY EACH CONSUMER READS. Published inside the bat_side block so the
+# contract lives in the artifact and not only in this file's head.
+_ORDER_KEY_CONTRACT = {
+    "split": ("teams[].orders.vr / teams[].orders.vl - the hand-labelled orders. "
+              "Trust the LABELS only when bat_side.available is true."),
+    "neutral": ("teams[].order_no_platoon - present ONLY when the split was not "
+                "applied. The one constructed nine, under a name that claims "
+                "nothing about handedness."),
+    "flag": ("teams[].platoon_applied - false means render ONE lineup and say the "
+             "split is unavailable; do not offer a vs-LHP / vs-RHP toggle."),
+}
+
+
+def _orders_identical(o: dict) -> bool:
+    """Did vs-RHP and vs-LHP come out as the same nine, in the same slots?"""
+    vr, vl = (o.get("vr") or []), (o.get("vl") or [])
+    if not vr or not vl or len(vr) != len(vl):
+        return False
+    return all((a or {}).get("key") == (b or {}).get("key") for a, b in zip(vr, vl))
+
+
 def _platoon_availability(teams: list[dict], bat_side: Optional[dict],
                           n_stamped: int, n_hitters: int, log=print) -> dict:
-    """Publish the vs-LHP / vs-RHP orders ONLY when the bat-side lens exists, and
-    disclose the state either way. Mutates `teams` (drops `orders`) when it does
-    not. Returns the payload's bat_side block.
+    """Disclose whether the vs-LHP / vs-RHP split was actually applied, and give
+    every consumer something real to render either way. Mutates `teams` (stamps
+    `platoon_applied`, and adds `order_no_platoon` when the lens is missing).
+    Returns the payload's bat_side block.
 
     THE FABRICATED LENS (measured 2026-08-05). hem_plus.team_offense ALWAYS emits
     orders["vr"] and orders["vl"]; the only thing that can make them differ is
@@ -686,21 +708,34 @@ def _platoon_availability(teams: list[dict], bat_side: Optional[dict],
     labels do not read as "no data"; they read as "the split was applied and it
     did not change anything", which is a claim this board never earned.
 
-    So when the lens is unavailable the hand-labelled orders are REMOVED rather
-    than served neutral. That degrades safely on the page: assets/mlbstats.js
-    already falls back to the plain HEM+ depth ladder (t.lineup) when t.orders is
-    absent, so the charts stay populated and only the handedness claim
-    disappears. The payload carries bat_side.available=false with the reason, so
-    a consumer can tell "no lens" from "lens applied".
+    NOTHING IS REMOVED, BECAUSE REMOVING IT TRADED ONE SILENT BLANK FOR ANOTHER.
+    The first cut of this guard popped `orders` outright. Measured on the same
+    2026-08-05 board that motivated it, `bats` is null on 618 of 618 hitters, so
+    that strip fires on EVERY run in today's data state, and both live readers of
+    the key lose their board: betting_export.props_fair_lines does
+    `(t.get("orders") or {}).get("vr")` and would have priced ZERO hitter props
+    on the betting page, and assets/mlbstats.js would have dropped all 30
+    constructed nines back to the raw HEM+ depth ladder. An empty chart is not a
+    more honest chart than a mislabelled one, it is a second outage. A lineup we
+    computed exists; only the HANDEDNESS CLAIM does not.
 
-    The constructed order itself is NOT thrown away, it is re-keyed to
-    `order_no_platoon`. Removing the data outright would trade one silent blank
-    for another: betting_export.props_fair_lines reads teams[].orders.vr to build
-    the hitter prop rows, so an omitted `orders` dark-starts the hitter props on
-    the betting board with nothing reporting it. Under an unknown bat side vr and
-    vl are byte-identical anyway, so this is that one list under a name that
-    claims nothing about handedness. Consumers that only need "the projected
-    order" can read it; consumers that need the SPLIT correctly find nothing."""
+    So the orders STAY and the claim is withdrawn instead:
+
+      * `platoon_applied` is stamped false on every team, which is the flag a
+        renderer branches on to show one lineup plus "no platoon split available"
+        rather than a two-tab toggle over identical lists;
+      * `order_no_platoon` carries that single nine under a name that asserts
+        nothing, for a consumer that would rather read an honest key than a
+        hand-labelled one it has to distrust;
+      * per-slot `platoon_adv` is dropped from both orders, because a False "no
+        platoon advantage" marker is itself a handedness claim;
+      * `orders.vr` / `orders.vl` are left in place, byte-identical, so no
+        existing reader dark-starts. bat_side.available=false is what tells a
+        reader the two labels are not earned this run.
+
+    Measuring `n_teams_identical_orders` in BOTH branches keeps the assertion
+    falsifiable: 30 of 30 identical with the lens reported available would mean
+    the stamp joined and the split still did nothing."""
     n_teams = len(teams)
     if bat_side is None:
         reason = "batSide feed unavailable (fetch failed or returned no usable codes)"
@@ -709,51 +744,64 @@ def _platoon_availability(teams: list[dict], bat_side: Optional[dict],
                   f"the {n_hitters} hitters on this board")
     else:
         reason = None
+    n_with = n_identical = 0
+    for t in teams:
+        o = t.get("orders")
+        t["platoon_applied"] = reason is None
+        if not isinstance(o, dict) or not o:
+            continue
+        n_with += 1
+        if _orders_identical(o):
+            n_identical += 1
     if reason is None:
         return {
             "available": True, "n_stamped": n_stamped, "n_hitters": n_hitters,
             "n_feed_codes": len(bat_side or {}),
-            "n_teams_with_orders": sum(1 for t in teams if t.get("orders")),
+            "n_teams_with_orders": n_with,
+            "n_teams_identical_orders": n_identical,
+            "keys": _ORDER_KEY_CONTRACT,
             "note": ("Bat side (L/R/S) drives the vs-LHP / vs-RHP order: the "
                      "platoon term and the handedness stagger both read it."),
         }
-    n_dropped = n_kept = 0
+    n_neutral = 0
     for t in teams:
-        o = t.pop("orders", None)
-        if not o:
+        o = t.get("orders")
+        if not isinstance(o, dict) or not o:
             continue
-        n_dropped += 1
-        neutral = (o.get("vr") or o.get("vl")) if isinstance(o, dict) else None
-        if neutral:
-            # One list, under a name that asserts nothing about handedness. The
-            # per-slot platoon_adv chip goes with it: it is False on every row
-            # without a bat side, and a "no platoon advantage" marker is itself a
-            # handedness claim.
-            for slot in neutral:
+        for k in ("vr", "vl"):
+            for slot in (o.get(k) or []):
                 if isinstance(slot, dict):
                     slot.pop("platoon_adv", None)
-            t["order_no_platoon"] = neutral
-            n_kept += 1
+        src = o.get("vr") or o.get("vl")
+        if src:
+            # A copy, not an alias: the neutral key must survive any later
+            # re-keying of `orders` without carrying the edit across.
+            t["order_no_platoon"] = [dict(s) if isinstance(s, dict) else s
+                                     for s in src]
+            n_neutral += 1
     if callable(log):
-        log(f"  hitters: bat side UNAVAILABLE ({reason}); dropped the vs-LHP / "
-            f"vs-RHP orders from {n_dropped} of {n_teams} teams rather than "
-            f"serving two identical lineups as a platoon split "
-            f"({n_kept} re-keyed to order_no_platoon)")
+        log(f"  hitters: bat side UNAVAILABLE ({reason}); the vs-LHP / vs-RHP "
+            f"orders on {n_with} of {n_teams} teams are IDENTICAL "
+            f"({n_identical} confirmed) and are published with "
+            f"platoon_applied=false plus order_no_platoon "
+            f"({n_neutral} teams) rather than as an earned split")
     _ingest_red("hitter_bat_side",
                 (f"bat side unavailable ({reason}); the vs-LHP / vs-RHP lineup "
-                 f"orders were omitted from {n_dropped} of {n_teams} team charts. "
-                 f"Without it the two orders are byte-identical."))
+                 f"orders on {n_with} of {n_teams} team charts are byte-identical "
+                 f"and carry platoon_applied=false. The lineups still serve; only "
+                 f"the handedness split is unavailable."))
     return {
         "available": False, "reason": reason, "n_stamped": n_stamped,
         "n_hitters": n_hitters, "n_feed_codes": len(bat_side or {}),
-        "orders_omitted": n_dropped, "n_order_no_platoon": n_kept,
-        "n_teams": n_teams,
-        "note": ("The vs-LHP / vs-RHP batting orders are OMITTED this run because "
-                 "the bat side is unknown. They are not computed neutral: with no "
-                 "handedness the two orders come out identical, which would assert "
-                 "a platoon split that was never applied. The one constructed "
-                 "order is served as teams[].order_no_platoon instead, and the "
-                 "team charts fall back to the HEM+ depth ladder."),
+        "n_teams_with_orders": n_with, "n_teams_identical_orders": n_identical,
+        "n_order_no_platoon": n_neutral, "n_teams": n_teams,
+        "keys": _ORDER_KEY_CONTRACT,
+        "note": ("The vs-LHP / vs-RHP labels are NOT earned this run: with no bat "
+                 "side the platoon term is 0.0 for every hitter, so the two orders "
+                 "come out identical. The lineups themselves are real and are "
+                 "still served - read teams[].order_no_platoon (or either half of "
+                 "teams[].orders, they are the same nine) and show one lineup with "
+                 "the split marked unavailable."),
     }
 
 
@@ -772,8 +820,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     hitters = build_hitters(rows)
     # Stamp bat side (L/R/S) before scoring so team_offense can construct the
     # handedness-staggered vs-LHP / vs-RHP orders. None => the lens is
-    # unavailable, which _platoon_availability turns into an omitted-orders
-    # payload rather than two identical lineups (see load_bat_side).
+    # unavailable, which _platoon_availability turns into a served-but-unlabelled
+    # lineup (platoon_applied=false + order_no_platoon) rather than either two
+    # identical lineups or an empty chart (see load_bat_side).
     bat_side = load_bat_side(season)
     n_bs = 0
     if bat_side:
@@ -843,8 +892,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         "war_rate": wr_meta,
         "multiyear_war_rate": wr3_meta,
         # Whether the vs-LHP / vs-RHP lineup split was actually applied this run
-        # (see _platoon_availability): available=false means the orders are ABSENT
-        # on purpose, not that the split found nothing.
+        # (see _platoon_availability): available=false means the two hand labels
+        # are NOT earned (the orders are identical), not that the lineups are
+        # missing. `keys` names the key each consumer should read.
         "bat_side": bs_meta,
         # Which club a row's `team` names, how many rows were repointed, and how
         # many serve a blank team (see bullpen_export.team_basis_meta), plus the

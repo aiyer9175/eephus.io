@@ -14,6 +14,14 @@ afternoon and evening; it exits quietly on every invocation except the one
 inside the firing window. That makes it robust to doubleheaders, rain delays,
 schedule changes and a box that was asleep, none of which a fixed cron survives.
 
+THE WINDOW HAS TWO ANCHORS, NOT ONE. The firing TARGET is read off the games
+that can still be bet, so a postponed early game cannot drag the capture hours
+forward. The refusal BOUNDARY is read off a wider list that also holds the games
+already under way, because those are the ones a snapshot taken now would price
+IN GAME. Reading both off the bettable list (which is what shipped on
+2026-08-05) let the job fire after a first pitch that had already happened, and
+an in-game price stamped "close" grades as CLV forever.
+
 WHAT IT COSTS. Nothing until it fires, then one snapshot (3 credits on the
 free tier's 500/month with the shipped market set). It refuses to fire twice for
 the same slate date, so a misconfigured cron cannot drain the quota: the guard
@@ -45,6 +53,7 @@ both are new (2026-08-05):
 from __future__ import annotations
 
 import argparse
+import inspect
 import logging
 import sys
 from datetime import datetime, timedelta, timezone
@@ -65,6 +74,9 @@ LEAD_MINUTES = 10
 # How long after the target the job may still fire. Covers a box that was
 # asleep, a cron that ran late, or a slow previous invocation. Past first pitch
 # the number stops being a closing line, so the window closes hard there.
+#
+# THE TARGET AND THE BOUNDARY ARE READ OFF DIFFERENT SLATES, and that is the
+# whole of the fix below. See `_window_games`.
 GRACE_MINUTES = 8
 
 # Hours to shift a UTC instant back by to get the SLATE DATE it belongs to.
@@ -126,6 +138,48 @@ def close_snapshot_state(day: str) -> tuple[str, str]:
     return "none", ""
 
 
+def _window_games(day: str, bettable: list[dict]) -> list[dict]:
+    """The slate whose earliest first pitch is the REFUSAL BOUNDARY, which is
+    NOT the slate that picks the firing target.
+
+    The target is chosen off the bettable games because a postponed 1:05 game
+    used to pull the whole card's capture six hours early. Reading the boundary
+    off that same list (2026-08-05) was a regression: a game that flips to Live
+    leaves the bettable slate, the earliest first pitch jumps forward past it,
+    and the job may then fire at or after a first pitch that has already
+    happened. `betting_export.anchors_close_window` carries the measurement and
+    the reasoning; here it is applied to the FULL slate for the target date, so
+    a game already under way is back in the boundary and a Final or postponed
+    one stays out of it.
+
+    The date is passed explicitly rather than left to `slate_games` to pick,
+    because an unfiltered read chooses the earliest date ON FILE and yesterday's
+    finished games are still in the schedule block. That would silently move the
+    boundary to a slate this job is not capturing.
+
+    BOTH CAPABILITIES ARE CHECKED, NOT ASSUMED. `be.slate_games` is a seam that
+    gets replaced (the close-job tests install a two-game double; a diagnosis can
+    install a fixture), and this runs inside a cron whose one job is to never
+    crash. A betting_export that predates either piece degrades to the bettable
+    slate, which is exactly the pre-fix behaviour, instead of raising TypeError
+    or AttributeError every fifteen minutes."""
+    import betting_export as be
+
+    anchors = getattr(be, "anchors_close_window", None)
+    try:
+        widened = "include_unbettable" in inspect.signature(be.slate_games).parameters
+    except (TypeError, ValueError):
+        widened = False
+    if anchors is None or not widened:
+        log.info("betting_close_job: betting_export cannot widen the slate; the refusal "
+                 "boundary falls back to the bettable games")
+        return bettable
+    wide = [g for g in (be.slate_games(day, include_unbettable=True) or []) if anchors(g)]
+    # `wide` is a superset of `bettable` by construction. An empty one means the
+    # two reads disagreed about the date, so keep the list known to be real.
+    return wide or bettable
+
+
 def decide(now: datetime | None = None) -> dict:
     """Should the close snapshot fire right now? Pure: reads artifacts, spends
     nothing, writes nothing. Returns the decision and the reasoning behind it so
@@ -140,11 +194,15 @@ def decide(now: datetime | None = None) -> dict:
         out["reason"] = f"no {bi.ENV_KEY} in the environment; nothing to pull"
         return out
 
-    # `be.slate_games` drops Final, postponed and in-progress rows. That filter
-    # is load-bearing HERE, not just on the board: the window below is anchored
-    # on min(datetime) over the slate, so one postponed 1:05 game used to pull
-    # the close capture six hours early for every other game on the card. The
-    # re-filter is belt and braces for a caller that ever hands us a raw list.
+    # THE TARGET SLATE. `be.slate_games` drops Final, postponed and in-progress
+    # rows. That filter is load-bearing HERE, not just on the board: the target
+    # below is anchored on min(datetime) over the slate, so one postponed 1:05
+    # game used to pull the close capture six hours early for every other game
+    # on the card. The re-filter is belt and braces for a caller that ever hands
+    # us a raw list. It decides WHEN TO FIRE and nothing else: the boundary that
+    # decides WHEN IT IS TOO LATE comes off the wider slate in `_window_games`,
+    # because this list also drops the games that have already started, which
+    # are precisely the ones a close capture must never be taken after.
     games = [g for g in (be.slate_games() or []) if be.is_bettable(g)]
     if not games:
         out["reason"] = "no games on the slate (off day, or fantasy.json has no schedule block)"
@@ -152,11 +210,11 @@ def decide(now: datetime | None = None) -> dict:
     out["games"] = len(games)
 
     stamp = bi.closing_window(games)
-    first = _parse_stamp(stamp)
-    if first is None:
+    target_first = _parse_stamp(stamp)
+    if target_first is None:
         out["reason"] = "slate carries no usable first-pitch stamp"
         return out
-    out["first_pitch"] = first.replace(microsecond=0).isoformat()
+    out["target_first_pitch"] = target_first.replace(microsecond=0).isoformat()
 
     day = min(g.get("date") or "" for g in games if g.get("date"))
     out["slate_date"] = day
@@ -188,15 +246,35 @@ def decide(now: datetime | None = None) -> dict:
         out["reason"] = snap_detail
         return out
 
-    target = first - timedelta(minutes=LEAD_MINUTES)
+    # THE REFUSAL BOUNDARY, off the wider slate: the earliest first pitch among
+    # the games that can still be bet PLUS the games already being played. It is
+    # always at or before `target_first`, and the gap between them is exactly the
+    # in-game window this job must not fire inside.
+    window = _window_games(day, games)
+    out["window_games"] = len(window)
+    boundary = _parse_stamp(bi.closing_window(window)) or target_first
+    out["first_pitch"] = boundary.replace(microsecond=0).isoformat()
+
+    target = target_first - timedelta(minutes=LEAD_MINUTES)
     out["fire_at"] = target.replace(microsecond=0).isoformat()
+    # THE BOUNDARY IS TESTED BEFORE THE TARGET. Once a first pitch has passed the
+    # answer is "too late" whatever the target says, and on a slate with a game
+    # already under way the target is still in the future: checking "too early"
+    # first would report a window about to open on a capture that may never be
+    # taken.
+    if now >= boundary:
+        # Named, because "too late" on a slate whose next bettable game has not
+        # started yet reads like a bug until you know a game already has.
+        started = ("" if boundary >= target_first else
+                   f" A game on this slate started at {out['first_pitch']}, ahead of the "
+                   f"{out['target_first_pitch']} game the window targets, so any capture "
+                   f"now would carry an in-game price for it.")
+        out["reason"] = ("too late: first pitch has passed, so this would not be a "
+                         "closing line. Skipping rather than recording a bad one." + started)
+        return out
     if now < target:
         mins = int((target - now).total_seconds() // 60)
         out["reason"] = f"too early: {mins} min until the window opens"
-        return out
-    if now >= first:
-        out["reason"] = ("too late: first pitch has passed, so this would not be a "
-                         "closing line. Skipping rather than recording a bad one")
         return out
     if now > target + timedelta(minutes=GRACE_MINUTES):
         # Inside the window but past the grace period: still before first pitch,

@@ -38,6 +38,12 @@ from pathlib import Path
 
 import markdown as md
 
+# Two build-time companions, both stdlib-only at import so they cost the same
+# as a constant here: the public artifact catalog rendered on /sources/#api, and
+# the eFV movement alerts feed written at the end of main().
+import data_catalog
+import efv_alerts
+
 ROOT = Path(__file__).resolve().parent
 CONTENT = ROOT / "content"
 SITE_ORIGIN = "https://eephus.io"   # absolute base for canonical + social-card (og/twitter) URLs
@@ -86,6 +92,12 @@ _GFX_VER = _asset_ver("assets/eephus-gfx.js")
 # until that carve lands.
 _FANTASY_VER = _asset_ver("assets/fantasy.js")
 _EXPORT_VER = _asset_ver("assets/eephus-export.js")
+# Per-board CSV DOWNLOAD. Separate from eephus-export.js on purpose: that module
+# owns the copy-to-clipboard chip (a share affordance), this one writes a file
+# to disk, which is the thing /diamond/ advertised as "data exports". It borrows
+# EephusExport.scrape + formats.csv rather than carrying a second serializer, and
+# it stays inert on any page with no [data-csv-export] host.
+_CSV_VER = _asset_ver("assets/eephus-csv.js")
 _PARKS_VER = _asset_ver("assets/parks.js")
 _PARKS_CSS_VER = _asset_ver("assets/parks.css")
 # Diamond section (2026-08-05): one config script, five module apps, and the
@@ -130,11 +142,34 @@ ACCOUNT_SCRIPTS = (
     f'<script>window.EEPHUS_GL_DATA_VER="{_GL_DATA_VER}";</script>\n'
     f'<script src="/assets/eephus-gl.js?v={_GL_VER}" defer></script>\n'
     # Universal copy/export: a quiet chip on every table + chart (text + image).
-    f'<script src="/assets/eephus-export.js?v={_EXPORT_VER}" defer></script>'
+    f'<script src="/assets/eephus-export.js?v={_EXPORT_VER}" defer></script>\n'
+    # Per-board CSV download. Loaded site-wide but OPT-IN per board: it only
+    # renders a control inside an element carrying data-csv-export, so a page
+    # that has not opted in pays one cached script and gains nothing visible.
+    # Loaded AFTER eephus-export.js so the shared scrape/serializer it prefers
+    # is already defined on first scan (both are deferred, and deferred scripts
+    # run in document order, so this is ordering by position not by luck).
+    f'<script src="/assets/eephus-csv.js?v={_CSV_VER}" defer></script>'
 )
 # Account/forum stylesheet - linked in <head> after site.css on every editorial
 # page (scoped under .eph-*; the circular avatar is the one sanctioned curve).
 ACCOUNT_CSS_LINK = f'<link rel="stylesheet" href="/assets/eephus-account.css?v={_ACCT_CSS_VER}">'
+
+
+def _csv_optin(name: str) -> str:
+    """The per-board CSV download opt-in: one attribute on the mount point.
+
+    The client helper watches for elements carrying `data-csv-export` and, once
+    the board has painted a table with rows inside one, adds a Download CSV
+    control that serializes exactly what is on screen (current sort, current
+    filter, the displayed number formats). `name` becomes the filename stem.
+
+    Why an attribute on the SERVER rather than a call in each board's JS: the
+    module apps are owned by their own lanes and each would have needed the same
+    edit, which is how two boards end up with two slightly different exports.
+    One attribute on the shell means no module app changed, and a board that has
+    not opted in renders exactly as before."""
+    return f' data-csv-export="{html.escape(name, quote=True)}"'
 
 # Unified prospect-photo resolution - mirrors PROSPX's headshotURL(): consult the
 # resolved context map (data/photo_ctx.json, built by headshots.py) and use the
@@ -330,6 +365,11 @@ def _footer() -> str:
         f'<a href="/history/">This Day</a>'
         f'<a href="/parks/">Park Factors</a>'
         f'<a href="/sources/">Data Sources</a>'
+        # The artifact catalog (what we publish, on what cadence, how stable)
+        # is the second half of /sources/. It gets its own footer link because
+        # nobody looking for an API looks under "Data Sources", and a page you
+        # cannot find is the same as a page that does not exist.
+        f'<a href="/sources/#api">Public Data</a>'
         f'<a href="/glossary/">Glossary</a>'
         f'<a href="/report/">Report a bug</a>'
         f'<a href="https://x.com/eephus_io" target="_blank" rel="noopener noreferrer">@eephus_io</a>'
@@ -961,6 +1001,10 @@ def load_site_data() -> dict | None:
     as_of_iso = fresh.get("transactions_updated_at") or ts.get("generated_at")
     return {
         "as_of": _fmt_iso_date(as_of_iso),
+        # The same stamp unformatted. The pages want the prose date; a derived
+        # JSON artifact wants the machine one, and re-reading the 74MB
+        # timeseries.json just to recover it is not a trade worth making.
+        "as_of_iso": as_of_iso or "",
         "players": ts.get("players") or [],
         "org_summary": ts.get("org_summary") or [],
         "graduates": grads,
@@ -3378,7 +3422,7 @@ def build_fa() -> str:
         '<div id="fa-banner"></div>'
         '<div class="filter-bar"><span class="filter-label">View</span>'
         '<span id="fa-view-chips"></span></div>'
-        '<div id="fa-rows"></div>'
+        f'<div id="fa-rows"{_csv_optin("fa-class")}></div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
@@ -3396,6 +3440,11 @@ def build_fa() -> str:
 # (was a view inside MLB Projections; originally a PROSPX module by Anirudh Iyer).
 # The board + evaluator run from assets/trademachine.js on the standalone data
 # files; this is the markup the module mounts into.
+# The CSV opt-in on #tradeboard-content is written as a literal attribute rather
+# than through _csv_optin() because this constant is a plain string, not an
+# f-string, and converting it would put every existing brace in this markup at
+# the mercy of the formatter. It rides the TRADE BOARD wrapper, not the
+# deal-builder mount above it: the board is the surface with the table.
 _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
     <span class="newsprint-eyebrow-label">Trade Machine</span>
     <span class="newsprint-eyebrow-meta">build + value a deal both ways: prospects on eFV surplus, MLB players on projection surplus &middot; then the full Bayesian trade-value board &middot; module by Anirudh Iyer</span>
@@ -3463,7 +3512,7 @@ _TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
     </div>
     <div id="tb-group-body"></div>
   </div>
-  <div id="tradeboard-content"><div class="spinner-wrap"><span class="spinner"></span></div></div>""")
+  <div id="tradeboard-content" data-csv-export="trade-board"><div class="spinner-wrap"><span class="spinner"></span></div></div>""")
 
 # Legacy redirect shim for /projections/: the Trade Machine used to live here as
 # a #view=trademachine tab. It is now its own top-level module at /trademachine/,
@@ -3511,7 +3560,7 @@ def build_projections() -> str:
         '<div id="proj-view-projections">'
         '<div id="proj-banner"></div>'
         '<div class="filter-bar" id="proj-filters"></div>'
-        '<div id="proj-rows"></div>'
+        f'<div id="proj-rows"{_csv_optin("mlb-projections")}></div>'
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
@@ -3583,7 +3632,7 @@ def build_mlbstats() -> str:
         '</div>'
         '<div id="mlbstats-section-bullpen" class="mlbstats-section">'
         '<div id="mlbstats-banner"></div>'
-        '<div id="mlbstats-app-root"></div>'
+        f'<div id="mlbstats-app-root"{_csv_optin("mlb-leaderboards")}></div>'
         '</div>'
         '<div id="mlbstats-section-starters" class="mlbstats-section" hidden>'
         '<div id="mlbstats-starters-root"></div>'
@@ -3642,7 +3691,7 @@ def build_pal() -> str:
         '</div>'
         '<div id="pal-section" class="mlbstats-section">'
         '<div id="pal-banner"></div>'
-        '<div id="pal-app-root"></div>'
+        f'<div id="pal-app-root"{_csv_optin("alchemy-lab")}></div>'
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
@@ -3721,7 +3770,7 @@ def build_dynasty() -> str:
         '</div>'
         '<div id="dynasty-section" class="mlbstats-section">'
         '<div id="dynasty-banner"></div>'
-        '<div id="dynasty-app-root"></div>'
+        f'<div id="dynasty-app-root"{_csv_optin("dynasty-board")}></div>'
         '</div>'
         '</div>'
         f'{DIAMOND_CONFIG_SCRIPT}'
@@ -3766,7 +3815,7 @@ def build_redraft() -> str:
         '</div>'
         '<div id="redraft-section" class="mlbstats-section">'
         '<div id="redraft-banner"></div>'
-        '<div id="redraft-app-root"></div>'
+        f'<div id="redraft-app-root"{_csv_optin("redraft-board")}></div>'
         '</div>'
         '</div>'
         f'{DIAMOND_CONFIG_SCRIPT}'
@@ -3809,7 +3858,7 @@ def build_dfs() -> str:
         '</div>'
         '<div id="dfs-section" class="mlbstats-section">'
         '<div id="dfs-banner"></div>'
-        '<div id="dfs-app-root"></div>'
+        f'<div id="dfs-app-root"{_csv_optin("dfs-slate")}></div>'
         '</div>'
         '</div>'
         f'{DIAMOND_CONFIG_SCRIPT}'
@@ -3857,7 +3906,7 @@ def build_betting() -> str:
         '</div>'
         '<div id="betting-section" class="mlbstats-section">'
         '<div id="betting-banner"></div>'
-        '<div id="betting-app-root"></div>'
+        f'<div id="betting-app-root"{_csv_optin("betting-board")}></div>'
         '</div>'
         '</div>'
         f'{DIAMOND_CONFIG_SCRIPT}'
@@ -3901,7 +3950,7 @@ def build_cards() -> str:
         '</div>'
         '<div id="cards-section" class="mlbstats-section">'
         '<div id="cards-banner"></div>'
-        '<div id="cards-app-root"></div>'
+        f'<div id="cards-app-root"{_csv_optin("card-market")}></div>'
         '</div>'
         '</div>'
         # The module stylesheet's permanent, cache-busted home. cards.js also
@@ -3962,27 +4011,53 @@ def build_diamond() -> str:
         ("Prospect models", "/prospx/",
          "Deeper cuts of the eFV work: movement history, the model artifacts, and the receipts behind each grade."),
     ]
+    # THE EXTRAS, REWRITTEN AGAINST WHAT EXISTS (2026-08-05).
+    #
+    # Three of these four were claims with nothing behind them on a page whose
+    # entire argument is receipts over claims, which made them the most
+    # expensive copy on the site. Each now carries a state, and the state is the
+    # truth:
+    #   live    it works today and the card links to it
+    #   partial the thing that produces the data exists and ships; the
+    #           member-facing half does not, and the card says which half
+    #   planned nothing is built. Named as an intention, never as a benefit.
+    # `href` is None for anything not yet linkable, so a "planned" card cannot
+    # accidentally become a link to a page that does not exist.
     extras = [
-        ("Data exports and a JSON API",
-         "Download the board, the eFV grades, the projections, the free agency model and the betting record "
-         "as CSV or JSON, on a documented schema."),
-        ("eFV movement alerts",
-         "Tell us which players you follow and get told when the model moves them, instead of finding out a month later."),
-        ("The DFS lineup optimizer",
-         "A salary-cap solver over our per-game projections. You bring the salaries from your own site."),
-        ("A members-only weekly newsletter",
-         "One email a week: what the models moved, how the betting record is doing, and what the card screen "
-         "flagged. Written by a person."),
+        ("Data exports and a JSON API", "live", "/sources/#api",
+         "Every model artifact the site runs on is public static JSON, now with a documented "
+         "catalog: what is in each file, how often it updates, and which parts are stable "
+         "enough to build on. Every board also carries a Download CSV control that writes "
+         "exactly the rows you are looking at."),
+        ("eFV movement alerts", "partial", "/data/efv_alerts.json",
+         "The feed is built and published on every rebuild: the biggest genuine eFV moves with "
+         "the driver behind each one. Delivery is not wired. Telling us which players you follow "
+         "needs the account layer, which is not switched on yet, so today you read the feed "
+         "rather than being told."),
+        ("The DFS lineup optimizer", "live", "/dfs/",
+         "A salary-cap solver over our per-game projections. You bring the salaries from your "
+         "own site."),
+        ("A members-only weekly newsletter", "planned", None,
+         "Not built. There is no list, no signup and no first issue, and it will not be "
+         "described as a benefit until there is."),
     ]
     module_cards = "".join(
         f'<div class="card diamond-get"><h3><a href="{href}">{html.escape(name)}</a></h3>'
         f'<p>{html.escape(what)}</p></div>'
         for name, href, what in gets
     )
-    extra_cards = "".join(
-        f'<div class="card diamond-get"><h3>{html.escape(name)}</h3><p>{html.escape(what)}</p></div>'
-        for name, what in extras
-    )
+
+    def _extra_card(name: str, state: str, href: str | None, what: str) -> str:
+        head = (f'<a href="{html.escape(href)}">{html.escape(name)}</a>'
+                if href else html.escape(name))
+        label = {"live": "live now", "partial": "feed only",
+                 "planned": "planned, not built"}[state]
+        return ('<div class="card diamond-get">'
+                f'<h3>{head}</h3>'
+                f'<p class="diamond-fine">{html.escape(label)}</p>'
+                f'<p>{html.escape(what)}</p></div>')
+
+    extra_cards = "".join(_extra_card(*e) for e in extras)
     faq = [
         ("Is any of this gated right now?",
          "No. Every page in the Diamond section is public and free while we build it. There is no paywall "
@@ -4027,12 +4102,13 @@ def build_diamond() -> str:
         '<p>eephus.io is a sabermetrics site that publishes its own report card. The prospect model posts '
         'its out-of-sample accuracy against the public consensus, and it posts the experiments that failed '
         'too. That habit is the product.</p>'
-        '<p>Diamond is the paid tier on top of it: the fantasy, betting and card-market work, the exports, '
-        'and the alerts. Everything else on the site stays free forever. Diamond funds the free site.</p>'
+        '<p>Diamond is the paid tier on top of it: the fantasy, betting and card-market work. '
+        'Everything else on the site stays free forever. Diamond funds the free site.</p>'
         '</div>'
         f'{money}'
         '<div class="section-head"><h2>What members get</h2>'
-        '<span class="section-sub">six modules, plus four things that are not a module</span></div>'
+        '<span class="section-sub">six modules, plus four things that are not a module, each '
+        'labeled with what actually exists today</span></div>'
         f'<div class="article-grid">{module_cards}</div>'
         f'<div class="article-grid">{extra_cards}</div>'
         # Live receipts. diamond.js fills these from the artifacts; the static
@@ -4068,9 +4144,9 @@ def build_diamond() -> str:
         f'<script src="/assets/diamond.js?v={_DIAMOND_VER}" defer></script>'
     )
     return page("Diamond Pass - eephus.io", "diamond", body,
-                "Diamond is the eephus.io paid tier: fantasy, DFS, betting and card-market tools, data "
-                "exports, and eFV movement alerts for $15 a month when it launches. Everything else on the "
-                "site stays free. Nothing is gated today.",
+                "Diamond is the eephus.io paid tier: fantasy, DFS, betting and card-market tools for "
+                "$15 a month when it launches. Everything else on the site stays free, including the "
+                "public data artifacts. Nothing is gated today.",
                 url=f"{SITE_ORIGIN}/diamond/")
 
 def build_parks() -> str:
@@ -4109,7 +4185,7 @@ def build_parks() -> str:
         '</div>'
         '<div id="parks-section" class="mlbstats-section">'
         '<div id="parks-banner"></div>'
-        '<div id="parks-app-root"></div>'
+        f'<div id="parks-app-root"{_csv_optin("milb-park-factors")}></div>'
         '</div>'
         '</div>'
         f'<link rel="stylesheet" href="/assets/parks.css?v={_PARKS_CSS_VER}">'
@@ -4445,6 +4521,13 @@ def build_team() -> str:
         "created by us, the development team (listed below). We are all college "
         "students actively pursuing futures in baseball. Please contact any of us "
         "for questions, feedback, or opportunities.</p>"
+        # This leaf is labeled "Developers" in the nav, so a developer arriving
+        # here looking for the data finds a pointer instead of a dead end. The
+        # catalog itself lives on /sources/ (see _sources_api_section for why).
+        "<p class=\"team-mission\">Building on our data rather than joining the team? "
+        "Every model artifact the site runs on is public JSON, catalogued at "
+        "<a href=\"/sources/#api\">the public data page</a> with its update cadence and "
+        "what each file is safe to depend on.</p>"
     )
     # Click / keyboard flip: toggles .is-flipped on a card. Clicks on the social
     # links (or any future back-face link/button) do NOT flip, so links still
@@ -4478,10 +4561,132 @@ def build_team() -> str:
 # baked farm blocks (proj_export._org_farm_blocks). The URL stays alive
 # as a redirect so bookmarks and external links keep working.
 # --------------------------------------------------------------------------- #
+def _artifact_card(row: dict) -> str:
+    """One published-artifact card for the /sources/ catalog.
+
+    Every number on the card is read off the file at build time (size, the
+    artifact's own stamped vintage) or verified against the tree (the test that
+    pins the shape). Nothing here is typed in by hand, which is the only way a
+    table of two dozen files stays true a month from now.
+
+    Styled with inline rules on the theme tokens rather than new classes:
+    assets/site.css belongs to another lane, `.card p` carries `margin: 0`, and
+    a multi-paragraph card needs its own spacing. Every value here is a var()
+    so both themes still flow through."""
+    # The literal middot is the separator the rest of the site uses in meta
+    # lines (see the module subtitles); it goes in AFTER escaping so it stays a
+    # separator rather than turning into a visible entity.
+    meta = [row["cadence"], row["size_label"]]
+    if row.get("vintage"):
+        meta.append("as of " + _fmt_iso_date(row["vintage"]))
+    meta_line = " · ".join(html.escape(m) for m in meta if m)
+    tier = row["stability"]
+    tier_note = ("field names hold, new fields can appear at any time"
+                 if tier == data_catalog.STABLE
+                 else "shape can change or the file can disappear on any run")
+    fine = ("margin-top:8px;font-family:var(--font-retro-mono);font-size:11px;"
+            "line-height:1.5;color:var(--text-tertiary);")
+    tail = [f'<strong>{html.escape(tier)}</strong>: {html.escape(tier_note)}']
+    if row.get("note"):
+        tail.append(html.escape(row["note"]))
+    if row.get("pinned_by"):
+        tail.append("Shape pinned by <code>"
+                    + html.escape(row["pinned_by"]) + "</code>")
+    return (
+        '<div class="card source-card">'
+        f'<h3>{html.escape(row["title"])}</h3>'
+        f'<p>{html.escape(row["what"])}</p>'
+        f'<p style="{fine}"><a href="{html.escape(row["url"])}"><code>'
+        f'{html.escape(row["url"])}</code></a><br>{meta_line}</p>'
+        f'<p style="{fine}">' + "<br>".join(tail) + '</p>'
+        '</div>'
+    )
+
+
+def _sources_api_section() -> str:
+    """The published-data half of /sources/: the artifact catalog.
+
+    WHY IT LIVES HERE AND NOT AT /developers/. A dedicated route was the first
+    choice and is still the right long-term home, but a new top-level page dir
+    needs a line in deploy/publish_paths.txt and a regenerated SITE_MAP.md,
+    neither of which this change owns. An unshipped page dir is exactly the
+    2026-07-14 incident (whole modules 404ing in production while every test
+    stayed green), and shipping the documentation on a page that already
+    deploys beats shipping a 404 that reads well locally. /sources/ is the
+    natural host: it already answers "where does this data come from", and the
+    catalog answers the other half of the same question. Promotion to
+    /developers/ is a redirect plus those two lines whenever someone owns them.
+
+    The catalog itself is data_catalog.ARTIFACTS, verified against the tree and
+    against deploy/data_exclude.txt before anything renders."""
+    groups = data_catalog.rows_by_group()
+    if not groups:
+        # No verified artifact in the tree (fresh checkout). Say nothing rather
+        # than render an empty promise; the attribution half of the page stands
+        # on its own.
+        return ""
+    c = data_catalog.counts()
+    blocks = []
+    for _key, label, rows in groups:
+        cards = "".join(_artifact_card(r) for r in rows)
+        n = len(rows)
+        blocks.append(
+            f'<div class="section-head"><h2>{html.escape(label)}</h2>'
+            f'<span class="section-sub">{n} file{"" if n == 1 else "s"}</span></div>'
+            f'<div class="article-grid">{cards}</div>')
+    return (
+        '<div class="section-head" id="api"><h2>The data we publish</h2>'
+        '<span class="section-sub">every artifact the site serves, what is in it, '
+        'and how much it can be trusted</span></div>'
+        '<div class="gl-intro">'
+        f'<p>Every model on eephus.io writes its output to a static JSON file under '
+        f'<code>/data/</code>, and the site itself is just a reader of those files. They are '
+        f'public. There is no key, no quota and no sign-up, because there is no server to sign '
+        f'up to: fetch the URL and you have the same payload the board is rendering from. '
+        f'{c["n"]} artifacts are documented below, {c["stable"]} of them stable.</p>'
+        '<p>What is deliberately NOT promised: a version header, a deprecation window, an '
+        'uptime target, or a stable byte layout. A nightly pipeline writes these and a nightly '
+        'pipeline sometimes fails. Fields get added without warning. What does hold is that a '
+        'field named on this page keeps its name and its meaning, because the site reads the '
+        'same field and a rename breaks us first.</p>'
+        f'<p>{c["withheld"]} more files stay local by design (model internals and pipeline '
+        'inputs that no page fetches), and they are left off this list rather than linked, so '
+        'nothing here points at a URL that does not resolve.</p>'
+        '</div>'
+        '<div class="card">'
+        '<h3>CSV, straight off any board</h3>'
+        '<p>Every board on the site now carries a Download CSV control above its table. It '
+        'writes exactly what is on screen: your current sort, your current filters, and each '
+        'number in the format the page displays it. That makes it the right tool for "the '
+        'twelve rows I am looking at" and the wrong tool for "the whole board", which is what '
+        'the artifacts above are for.</p>'
+        '</div>'
+        '<div class="card">'
+        '<h3>eFV movement alerts: the feed exists, the delivery does not</h3>'
+        '<p>The biggest genuine eFV moves from each rebuild are published to '
+        '<a href="/data/efv_alerts.json"><code>/data/efv_alerts.json</code></a> with the '
+        'driving explainer attached. Nothing is emailed or pushed from it yet: per-user '
+        'watchlists need the account layer, which is not switched on. The artifact says so '
+        'about itself in a <code>delivery</code> field, so a consumer reading the JSON alone '
+        'cannot mistake it for a live alert stream.</p>'
+        '<p>One thing worth knowing before you rank on the delta: about half the movers on a '
+        'typical rebuild have an endpoint at eFV 20, which is the model floor. Those rows are a '
+        'player entering or leaving the graded pool, not a re-grade. Each row carries an '
+        '<code>at_floor</code> flag so you can separate the two in one predicate.</p>'
+        '</div>'
+        + "".join(blocks)
+    )
+
+
 def build_sources() -> str:
-    """/sources/ - data sources and attribution. Trust page for the Open Beta:
-    names every upstream the platform reads, what it's used for, and the
-    editorial stance (consensus across sources; no single list republished)."""
+    """/sources/ - data sources and attribution, plus the published-data catalog.
+
+    Trust page for the Open Beta: names every upstream the platform reads, what
+    it's used for, and the editorial stance (consensus across sources; no single
+    list republished). The second half (anchor #api) is the other direction of
+    the same question: which artifacts the platform PUBLISHES, on what cadence,
+    and how stable each one is. See _sources_api_section for why the catalog
+    lives on this route."""
     rows = [
         ("FanGraphs", "https://www.fangraphs.com/",
          "Prospect rankings, FV grades, tool grades, and scouting reports (one of the "
@@ -4515,8 +4720,9 @@ def build_sources() -> str:
         for name, url, use in rows
     )
     body = (
-        '<div class="section-head"><h1>Data Sources &amp; Attribution</h1>'
-        '<span class="section-sub">every upstream the platform reads, and how it is used</span></div>'
+        '<div class="section-head"><h1>Data: sources, attribution and what we publish</h1>'
+        '<span class="section-sub">every upstream the platform reads, and every artifact '
+        'the platform serves back</span></div>'
         '<div class="gl-intro">'
         "<p>eephus.io is a sabermetric analysis platform. PROSPX grades are a consensus "
         "built across seven independent industry sources - the value added is the aggregation, "
@@ -4526,12 +4732,18 @@ def build_sources() -> str:
         "<p>If you represent one of these sources and have a question or concern, email "
         '<a href="mailto:arkndjl@gmail.com">arkndjl@gmail.com</a> and it will be addressed '
         "promptly.</p>"
+        '<p>Building something on top of this? Skip to <a href="#api">the data we publish</a> '
+        'for the artifact catalog, the update cadence and what each file is safe to depend on.</p>'
         "</div>"
+        '<div class="section-head"><h2>Where the data comes from</h2>'
+        '<span class="section-sub">the upstreams, and how each one is used</span></div>'
         f'<div class="article-grid">{cards}</div>'
+        f'{_sources_api_section()}'
     )
-    return page("Data Sources & Attribution - eephus.io", "", body,
+    return page("Data Sources, Attribution & the Public Data - eephus.io", "", body,
                 "Every data source behind eephus.io - prospect ranking inputs, Statcast and "
-                "league data, contracts - and how each is used.",
+                "league data, contracts - plus the catalog of public JSON artifacts the site "
+                "publishes, their update cadence and how stable each one is.",
                 url=f"{SITE_ORIGIN}/sources/")
 
 
@@ -5251,7 +5463,48 @@ def main() -> None:
             _write(rel, json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
         else:
             print(f"  skipped {rel} (source artifact missing or too thin)")
+
+    # eFV movement alerts feed (data/efv_alerts.json). Built from the players
+    # list already parsed above, so the 74MB data/timeseries.json is read once
+    # per build rather than twice. The gate is _genuine_mover_step, the SAME
+    # selector the homepage Top Movers module uses, passed in rather than
+    # copied so an alert can never fire on something the board does not call a
+    # move; the board grade rides _EFV_GRADES, the canonical map. The
+    # refuse-to-publish-empty guard lives inside efv_alerts.build_payload, so
+    # an empty run keeps the previous feed and files RED instead of publishing
+    # "nothing moved".
+    _write_efv_alerts(data)
+
     print(f"done - {len(articles)} article(s).")
+
+
+def _write_efv_alerts(data: dict | None) -> None:
+    """Write data/efv_alerts.json from the loaded board data.
+
+    Separate from the derived-payload loop above because that loop's builders
+    take no arguments and this one needs the already-parsed players. Never
+    raises: an alerts feed is an additive surface and must not be the reason a
+    site rebuild fails."""
+    players = (data or {}).get("players") or []
+    if not players:
+        print("  skipped data/efv_alerts.json (no board data loaded)")
+        return
+    try:
+        payload = efv_alerts.build_payload(
+            players, mover_step=_genuine_mover_step, board_grades=_EFV_GRADES,
+            source_as_of=(data or {}).get("as_of_iso") or None)
+    except Exception:                       # noqa: BLE001 - never fail the build
+        print("  skipped data/efv_alerts.json (builder raised; prior feed kept)")
+        return
+    guard = payload.get("guard") or {}
+    _write("data/efv_alerts.json",
+           json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+    if guard.get("stale"):
+        print(f"  efv_alerts: 0 movers this run, kept the previous "
+              f"{guard.get('n')} (vintage {guard.get('kept_from')})")
+    else:
+        print(f"  efv_alerts: {payload.get('n_alerts')} movers "
+              f"({payload.get('n_at_floor')} at the model floor)")
 
 if __name__ == "__main__":
     main()

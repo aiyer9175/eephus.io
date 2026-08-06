@@ -82,6 +82,13 @@ NOT_BETTABLE_STATES = frozenset({
     "postponed", "cancelled", "canceled", "suspended", "forfeit", "other",
 })
 
+# The SUBSET of the above that means the game is BEING PLAYED right now rather
+# than resolved or called off. A game in one of these states is still listed by
+# the book, at an IN-GAME price; a Final or postponed game has left the board
+# entirely. That difference is the whole of `anchors_close_window`, and it is
+# load-bearing nowhere else.
+IN_PROGRESS_STATES = frozenset({"live", "in progress", "suspended"})
+
 # How far a parsed odds event's `commence_time` may sit from a schedule row's
 # first pitch and still be that game. The two games of a doubleheader are about
 # three and a half hours apart (game two starts roughly 30 minutes after game
@@ -360,6 +367,42 @@ def is_bettable(game: dict) -> bool:
     blanking the board."""
     st = str((game or {}).get("status") or "").strip().lower()
     return st not in NOT_BETTABLE_STATES
+
+
+def anchors_close_window(game: dict) -> bool:
+    """Does this row's first pitch bound the close-snapshot window?
+
+    "CAN IT BE BET" AND "MAY A CLOSE SNAPSHOT BE TAKEN AFTER IT" ARE DIFFERENT
+    QUESTIONS, and the close job answered the second with `is_bettable` on
+    2026-08-05. `is_bettable` drops a game the moment StatsAPI flips it to Live,
+    so the earliest first pitch on the bettable slate JUMPS FORWARD past every
+    game already under way. The refusal boundary moved with it: with a 22:35Z
+    game and a 22:40Z game on the card, the 22:35Z game leaves the slate at
+    22:35Z, the boundary becomes 22:40Z, and the job is free to fire at 22:39Z.
+    That capture is a genuine closing line for the later games and an IN-GAME
+    line for the one being played, stamped "close" and graded as CLV. There is
+    no way to tell the two apart afterwards and no way to recapture the real
+    close, so this is not a cosmetic bug.
+
+    THE RAW SLATE IS NOT THE ANSWER EITHER. Measured on today's file:
+    data/fantasy.json's 2026-08-05 block holds 15 games, 4 of them Final with
+    first pitches from 18:10Z to 19:10Z and 11 Preview from 22:35Z on. Anchoring
+    the boundary on the unfiltered list puts it at 18:10Z, which has passed by
+    early afternoon, so every fire that evening refuses and all 11 night games
+    lose their closing lines entirely. Postponements are worse: a called-off 1:05
+    game would hold the boundary in the early afternoon forever, which is the
+    same defect that used to fire the capture six hours early, wearing the
+    opposite sign.
+
+    So the anchor set is "still bettable OR being played right now". Final,
+    postponed and cancelled games have already left the book's board and cannot
+    be captured at any price, in-game or otherwise; Live and suspended games are
+    still listed at a live price and are exactly what must stop a capture.
+    Staleness is safe in the only direction it can move: a schedule block
+    refreshed before first pitch still reads Preview, which is bettable, which
+    keeps the game in the anchor set and keeps the boundary early."""
+    st = str((game or {}).get("status") or "").strip().lower()
+    return is_bettable(game) or st in IN_PROGRESS_STATES
 
 
 def slate_games(on_date: str | None = None, *, include_unbettable: bool = False) -> list[dict]:
@@ -1045,6 +1088,14 @@ def _record_board_anomaly(reason: str, n_prev: int) -> None:
         log.debug("betting_export: could not record the empty-board anomaly", exc_info=True)
 
 
+def _hours_since(stamp) -> float | None:
+    """Hours between an ISO stamp and now, or None if it will not parse."""
+    dt = _stamp(stamp)
+    if dt is None:
+        return None
+    return round((datetime.now(timezone.utc) - dt).total_seconds() / 3600.0, 1)
+
+
 def _carry_previous_board(payload: dict, reason: str, *, log_fn=None) -> dict:
     """Never let an empty build OVERWRITE a populated board.
 
@@ -1057,7 +1108,30 @@ def _carry_previous_board(payload: dict, reason: str, *, log_fn=None) -> dict:
     The MODEL, the VALIDATION STATE and the RECORD stay fresh: they are the
     honest half of the page and they did not fail. Only the slate half is
     carried, and it is stamped with the slate date it belongs to plus
-    `stale_board`, so nothing on the page claims to be tonight's."""
+    `stale_board`, so nothing on the page claims to be tonight's.
+
+    THE STAMP WAS NOT ENOUGH, AND THAT MADE THIS GUARD LESS HONEST THAN THE
+    EMPTY BOARD IT REPLACED. Measured against assets/betting.js as it ships
+    today: `status.empty_reasons` renders ONLY through `renderTeam`'s
+    `if (!bets.length)` branch, and this function's whole purpose is to make
+    `bets.length` non-zero. `status.stale_board*` is matched by nothing in that
+    file at all. So every stale-board key landed in a payload no reader could
+    see, and a day-old set of prices rendered as an ordinary board with
+    live-looking edges. The only field that changed on screen was the slate date
+    in the banner, which reads as a date, not as a warning.
+
+    Two things fix that, and they are deliberately independent:
+
+      * `status.stale_board_notice` is ONE render-ready sentence, the field the
+        client binds (one line, guarded by `status.stale_board`). Everything
+        else here stays machine-shaped for a chip or a tooltip.
+      * the staleness is ALSO pushed into `pick_blockers` and `pick_reason`,
+        which the client already renders unconditionally on its landing tab
+        ("potd") through the `<ul class="bt-list">` blocker list. That path
+        needs no client change at all, so the honesty ships with this build
+        rather than with a future one. A carried board always has an empty
+        `bets` list at the moment the pick is decided, so `pick_of_the_day` is
+        necessarily null and the blocker list is necessarily what renders."""
     prev = _load(OUT_PATH.name)
     prev_bets = (prev or {}).get("team_bets") or []
     if not prev_bets:
@@ -1067,13 +1141,49 @@ def _carry_previous_board(payload: dict, reason: str, *, log_fn=None) -> dict:
     payload["slate_date"] = prev.get("slate_date") or payload.get("slate_date")
     payload["props_fair_lines"] = prev.get("props_fair_lines") or payload["props_fair_lines"]
     payload["parlay_context"] = parlay_context(prev_bets)
+    prev_status = (prev or {}).get("status") or {}
+    age_h = _hours_since(prev.get("generated_at"))
+    age_txt = (f"built {age_h:g} hour{'' if age_h == 1 else 's'} ago" if age_h is not None
+               else "built at an unrecorded time")
+    # The sentence a reader must not be able to miss. It leads with the fact
+    # (these are old prices), gives the age, and refuses the reading that makes
+    # a stale board dangerous: that an edge on it is an edge now.
+    notice = (f"STALE BOARD: these are the {payload['slate_date']} slate's prices, "
+              f"{age_txt}, and they are NOT live. This build could not price a single "
+              f"game, so the last board that could be built is standing in for tonight's. "
+              f"No number on it is a current market and no edge on it is a current edge.")
     payload["status"]["stale_board"] = True
+    payload["status"]["stale_board_notice"] = notice
     payload["status"]["stale_board_slate_date"] = payload["slate_date"]
     payload["status"]["stale_board_built_at"] = prev.get("generated_at")
+    payload["status"]["stale_board_age_hours"] = age_h
+    # WHICH capture produced the prices on screen. `status.odds_captured_at`
+    # describes the snapshot THIS build read, which can be minutes old while the
+    # board is a day old, and a fresh capture time next to stale prices is the
+    # exact misreading this block exists to prevent.
+    payload["status"]["stale_board_odds_captured_at"] = prev_status.get("odds_captured_at")
     payload["status"]["stale_board_reason"] = (
         f"this build priced 0 games ({reason}), so the board below is the last one that "
         f"could be built, for the {payload['slate_date']} slate. It is NOT tonight's "
         f"board and no price on it should be treated as live.")
+    # Mutated IN PLACE: build() holds this same list object and hands it to the
+    # preview slice, so the free tier and the full payload cannot disagree about
+    # whether the board is stale.
+    blockers = payload.get("pick_blockers")
+    if isinstance(blockers, list) and not any((b or {}).get("id") == "stale_board"
+                                              for b in blockers):
+        blockers.append({
+            "id": "stale_board", "open": False,
+            "need": "a board priced from tonight's slate",
+            "have": f"the {payload['slate_date']} board, {age_txt}",
+            "reason": notice,
+        })
+    # The other half of the same honesty: the client falls back to `pick_reason`
+    # whenever the blocker list is empty, so the sentence has to be in both.
+    prev_reason = str(payload.get("pick_reason") or "").strip()
+    if "STALE BOARD" not in prev_reason:
+        payload["pick_reason"] = (f"{notice} The rest of this build reports: {prev_reason}"
+                                  if prev_reason else notice)
     if log_fn:
         log_fn(f"betting_export: priced 0 games ({reason}); kept the previous "
                f"{len(prev_bets)}-game board rather than publishing an empty one")
@@ -1227,9 +1337,13 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         "model": {k: payload["model"][k] for k in
                   ("version", "validated", "stage", "min_edge", "validation")},
         "disclaimer": DISCLAIMER,
-        "pick_of_the_day": pick,
-        "pick_reason": pick_reason,
-        "pick_blockers": blockers,
+        # READ BACK OFF THE PAYLOAD, not off the locals that built it. The
+        # stale-board guard above appends a blocker and rewrites the pick
+        # reason, and a preview built from `pick_reason`/`blockers` would ship
+        # the free tier a board with the staleness edited out of it.
+        "pick_of_the_day": payload["pick_of_the_day"],
+        "pick_reason": payload["pick_reason"],
+        "pick_blockers": payload["pick_blockers"],
         "n_games": payload["n_games"],
         "team_bets": bets[:PREVIEW_GAMES],
         "record": payload["record"],

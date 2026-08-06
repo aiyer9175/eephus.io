@@ -766,13 +766,41 @@ def test_dfs_optimizer_reports_missing_salaries_instead_of_guessing():
 
 
 def test_dfs_empty_slate_renders_a_loud_state_not_a_blank_page():
+    """An off day must reassure, and it must do so on the payload production
+    actually emits. dfs_export._empty always stamps `empty_reason_kind`, so the
+    fixture carries it too; without it this asserted the old one-message
+    contract against a shape the exporter no longer produces."""
     empty = json.loads(_opt_payload())
     empty.update({"players": [], "games": [], "n_games": 0, "n_players": 0,
-                  "empty_reason": "No MLB games scheduled for 2026-01-15."})
+                  "empty_reason": "No MLB games scheduled for 2026-01-15.",
+                  "empty_reason_kind": "no_games_scheduled"})
     c = _dfs_boot(json.dumps(empty))
     html = c.eval('__go("#section=pitchers")')
-    assert "No slate to price" in html and "No MLB games scheduled" in html
+    assert "No games today" in html and "No MLB games scheduled" in html
     assert "Nothing is broken" in html
+
+
+def test_dfs_pipeline_failure_does_not_claim_nothing_is_broken():
+    """The other half of the same contract, and the reason the kinds exist. A
+    schedule feed that did not answer is OUR outage, so the page must NOT tell
+    the reader everything is fine, and must read as broken. An unknown kind gets
+    the same treatment: silence is not a promise that we are healthy."""
+    rendered = {}
+    for kind in ("schedule_unavailable", None):
+        broken = json.loads(_opt_payload())
+        broken.update({"players": [], "games": [], "n_games": 0, "n_players": 0,
+                       "empty_reason": "The schedule feed did not answer."})
+        if kind:
+            broken["empty_reason_kind"] = kind
+        c = _dfs_boot(json.dumps(broken))
+        rendered[kind] = c.eval('__go("#section=pitchers")')
+        assert "Nothing is broken" not in rendered[kind], (
+            f"kind={kind!r} wrongly reassures: {rendered[kind][:220]}")
+    # A NAMED outage also has to LOOK like one, not merely withhold the
+    # reassurance - is-broken is what styles the panel as a failure.
+    assert "is-broken" in rendered["schedule_unavailable"], rendered["schedule_unavailable"][:220]
+    assert "is-broken" not in rendered[None], (
+        "an UNKNOWN kind must not be styled as a confirmed outage either")
 
 
 def test_dfs_slate_section_renders_both_boards_and_the_selector():

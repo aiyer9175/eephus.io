@@ -105,6 +105,26 @@
     var h = hrefFor(mlbam);
     return h ? '<a class="bt-link" href="' + esc(h) + '">' + esc(name) + "</a>" : esc(name);
   }
+  // GLOSSARY TERMS. The contract is assets/eephus-gl.js: a [data-gl] span whose
+  // value is a slug that EXISTS in data/glossary.json, plus one wire() call per
+  // rendered container. A slug the artifact does not carry renders a term that
+  // looks clickable and defines nothing, which is worse than plain text, so
+  // every slug used on this page was checked against the artifact first.
+  //
+  // WHAT IS DELIBERATELY NOT WRAPPED. The betting vocabulary proper - edge,
+  // vig, hold, overround, de-vig, closing line value, unit, EV per unit, Kelly,
+  // fair line, moneyline, runline, total - has NO entry in data/glossary.json
+  // today. Those words are left as plain text rather than pointed at a
+  // near-miss slug: a tooltip that defines the wrong thing on a page about
+  // money is a worse failure than no tooltip. Add the entries in
+  // build_glossary_data.py and the spans can follow in one pass.
+  function gl(label, slug) {
+    return '<span class="g-term" data-gl="' + esc(slug) + '">' + esc(label) + "</span>";
+  }
+  function wireGl(node) {
+    try { if (node && window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(node); }
+    catch (e) { /* the glossary is enrichment; the page works without it */ }
+  }
   function note(text) { return '<div class="bt-note">' + text + "</div>"; }
   function empty(title, why) {
     return '<div class="bt-empty"><strong>' + esc(title) + "</strong>" +
@@ -297,7 +317,7 @@
 
     if ((gate.gates || []).length) {
       rows.push('<div class="bt-panel-sub">The three gates on a published pick</div>');
-      rows.push('<div class="bt-scroll"><table class="bt-table"><thead><tr>' +
+      rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr>' +
         '<th class="bt-l">Gate</th><th class="bt-l">What it needs</th><th>Have</th>' +
         "<th>State</th></tr></thead><tbody>" +
         gate.gates.map(function (g) {
@@ -340,7 +360,14 @@
     var m = S.data.model || {}, st = S.data.status || {};
     var v = vstate();
     var chips = [];
-    chips.push('<span class="bt-chip bt-chip-stage">' + esc(m.stage || "Diamond preview") + "</span>");
+    // THE STAGE CHIP IS THE ONLY CONVERSION ROUTE ON THIS PAGE, so it is a
+    // link. Before this it was inert text: a reader who wanted to know what
+    // "Diamond preview" meant had to find the last item of a nav dropdown. The
+    // chip keeps its own class, so it still reads as a chip rather than as body
+    // copy with an underline.
+    chips.push('<a class="bt-chip bt-chip-stage bt-chip-link" href="/diamond/" ' +
+      'title="What Diamond is, and what it costs when it opens">' +
+      esc(m.stage || "Diamond preview") + "</a>");
     chips.push('<span class="bt-chip ' + (m.validated ? "bt-chip-ok" : "bt-chip-warn") + '">' +
       (m.validated ? "validated" : "unvalidated model") + "</span>");
     // Which mode the numbers on this page came from, on every tab. The word
@@ -357,10 +384,13 @@
     }
     chips.push('<span class="bt-chip ' + (st.odds_feed === "ok" ? "bt-chip-ok" : "bt-chip-warn") + '">' +
       (st.odds_feed === "ok" ? "odds feed live" : "no odds feed") + "</span>");
-    if (gated()) chips.push('<span class="bt-chip bt-chip-warn">preview slice</span>');
+    if (gated()) {
+      chips.push('<a class="bt-chip bt-chip-warn bt-chip-link" href="/diamond/">preview slice</a>');
+    }
     host.innerHTML = '<div class="bt-asof">' +
       esc(S.data.slate_date || "") + " slate &middot; " + (S.data.n_games || 0) +
       " games priced &middot; " + chips.join(" ") + "</div>";
+    wireGl(host);
   }
 
   // ---- section: pick of the day ---------------------------------------------
@@ -478,10 +508,11 @@
     var rows = [];
     rows.push('<div class="bt-panel-hd">How the number is made</div>');
     rows.push("<p>Game probabilities come from the same measurements the rest of the site " +
-      "runs on: team Offense+ (the HEM+ rollup), team Bullpen+ (REM+), the listed " +
-      "starter's own SEM+ for the innings a starter covers, the park run index, and home " +
-      "field. Expected runs go into a Poisson difference for the margin, which gives the " +
-      "moneyline, the runline and the fair total together.</p>");
+      "runs on: team " + gl("Offense+", "offense_plus") + " (the " + gl("HEM+", "hem_plus") +
+      " rollup), team " + gl("Bullpen+", "bullpen_plus") + " (" + gl("REM+", "rem_plus") +
+      "), the listed starter's own " + gl("SEM+", "sem_plus") + " for the innings a starter " +
+      "covers, the park run index, and home field. Expected runs go into a Poisson difference " +
+      "for the margin, which gives the moneyline, the runline and the fair total together.</p>");
     if (m.coefficients) {
       var c = m.coefficients;
       rows.push('<div class="bt-kv">' +
@@ -501,13 +532,14 @@
     }
     var blocks = backtestBlocks(m);
     if (blocks.length) {
-      rows.push('<div class="bt-panel-sub">Backtest, and why it does not count</div>');
+      rows.push('<div class="bt-panel-sub">' + gl("Backtest", "backtest") +
+        ", and why it does not count</div>");
       rows.push("<p>" + esc(bt.contamination || "") + "</p>");
       // EVERY row names the mode that produced it. Two of these blocks are
       // contaminated and one is honest, they are not comparable, and a table
       // that stacks them without the label invites the reader to read the
       // wrong number as the result.
-      rows.push('<div class="bt-scroll"><table class="bt-table"><thead><tr><th class="bt-l">Test</th>' +
+      rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr><th class="bt-l">Test</th>' +
         "<th>Mode</th><th>Games</th>" +
         "<th>Brier</th><th>vs flat .500</th><th>vs home base</th><th>Accuracy</th></tr></thead><tbody>" +
         blocks.map(function (b) {
@@ -620,8 +652,9 @@
     }
     return '<div class="bt-sp"><span class="bt-sp-org">' + esc(sideObj.org) + "</span>" +
       '<span class="bt-sp-name">' + nameLink(pp.mlbam, pp.name) + "</span>" +
-      '<span class="bt-sp-num">SEM+ ' + num((prev || {}).starter_plus, 0) +
-      " &middot; pen " + num((prev || {}).bullpen_plus, 0) + "</span></div>";
+      '<span class="bt-sp-num">' + gl("SEM+", "sem_plus") + " " +
+      num((prev || {}).starter_plus, 0) + " &middot; " + gl("pen", "bullpen_plus") + " " +
+      num((prev || {}).bullpen_plus, 0) + "</span></div>";
   }
 
   function marketBlock(title, rows) {
@@ -646,7 +679,7 @@
       }
       return "<tr>" + cells + "</tr>";
     }).join("");
-    return '<div class="bt-market"><div class="bt-scroll"><table class="bt-table bt-market-table">' +
+    return '<div class="bt-market"><div class="bt-scroll mlbstats-scroll"><table class="bt-table bt-market-table mlbstats-table">' +
       "<thead>" + head + "</thead><tbody>" + body + "</tbody></table></div></div>";
   }
 
@@ -669,7 +702,7 @@
       kv("Distribution", esc(meth.distribution || "-")) + "</div></div>");
 
     out.push('<div class="bt-subhd">Starting pitchers</div>');
-    out.push('<div class="bt-scroll"><table class="bt-table"><thead><tr><th class="bt-l">Pitcher</th><th>Opp</th>' +
+    out.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr><th class="bt-l">Pitcher</th><th>Opp</th>' +
       "<th>Exp IP</th><th>K fair</th><th>P(over)</th><th>ER fair</th><th>H fair</th></tr></thead><tbody>" +
       (pf.pitchers || []).map(function (p) {
         var k = propOf(p, "Strikeouts"), er = propOf(p, "Earned runs"), h = propOf(p, "Hits allowed");
@@ -682,7 +715,7 @@
       }).join("") + "</tbody></table></div>");
 
     out.push('<div class="bt-subhd">Hitters</div>');
-    out.push('<div class="bt-scroll"><table class="bt-table"><thead><tr><th class="bt-l">Hitter</th><th>Slot</th>' +
+    out.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr><th class="bt-l">Hitter</th><th>Slot</th>' +
       "<th>Exp PA</th><th>TB fair</th><th>P(TB 2+)</th><th>P(hit)</th><th>P(HR)</th></tr></thead><tbody>" +
       (pf.hitters || []).map(function (p) {
         var tb = propOf(p, "Total bases"), hh = propOf(p, "1+ hits"), hr = propOf(p, "1+ home runs");
@@ -712,7 +745,7 @@
       "<p>" + esc(pc.math_note || "") + "</p></div>");
 
     out.push('<div class="bt-subhd">Correlation rules</div>');
-    out.push('<div class="bt-scroll"><table class="bt-table"><thead><tr><th class="bt-l">When</th><th class="bt-l">Why it matters</th>' +
+    out.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr><th class="bt-l">When</th><th class="bt-l">Why it matters</th>' +
       "<th>Builder</th></tr></thead><tbody>" +
       (pc.rules || []).map(function (r) {
         return '<tr><td class="bt-l">' + esc(r.when) + '</td><td class="bt-l">' + esc(r.why) +
@@ -814,7 +847,7 @@
         "</td><td>" + fmtOdds(l.odds) + '</td><td><button type="button" class="bt-btn bt-btn-x" ' +
         'data-legdrop="' + i + '">remove</button></td></tr>';
     }).join("");
-    return '<div class="bt-scroll"><table class="bt-table"><thead><tr><th class="bt-l">Leg</th>' +
+    return '<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr><th class="bt-l">Leg</th>' +
       "<th>Model</th><th>Price</th><th></th></tr></thead><tbody>" + rows +
       "</tbody></table></div>";
   }
@@ -1140,7 +1173,7 @@
       chip("Net units", signed(units, 2)) +
       chip("ROI", staked ? signed(100 * units / staked, 2) + "%" : "-") +
       chip("Open", rows.filter(function (r) { return r.result === "open"; }).length) + "</div>";
-    var body = '<div class="bt-scroll"><table class="bt-table"><thead><tr>' +
+    var body = '<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr>' +
       '<th class="bt-l">Selection</th><th>Market</th>' +
       "<th>Price</th><th>Stake</th><th>Result</th><th></th></tr></thead><tbody>" +
       rows.map(function (r) {
@@ -1242,6 +1275,10 @@
     if (S.section === "mybets") wireBets();
     if (S.section === "parlays") wireParlay();
     wireGfx();
+    // Term spans get their tooltip + aria wiring here, after the section's
+    // markup is in the DOM. wire() is idempotent and cheap on a container this
+    // size, so it runs on every paint rather than only on the first.
+    wireGl(root);
   }
 
   // The shell ships the tabs, but the module injects any it is missing so a
@@ -1288,9 +1325,16 @@
     var m = new RegExp("(?:^#|[#&])" + key + "=(" + pat + ")(?:&|$)").exec(h || "");
     return m ? m[1] : null;
   }
+  // Returns TRUE when the hash it just read was canonical. An invalid section
+  // was already refused by the alternation above, so the page rendered the
+  // default - but the ADDRESS BAR kept the bad value until the reader happened
+  // to click a tab, so a shared link named a section that does not exist and
+  // the page disagreed with its own URL. The callers rewrite on a false.
   function readHash() {
-    var s = hashParam(location.hash || "", "section", SECTION_PAT);
+    var h = location.hash || "";
+    var s = hashParam(h, "section", SECTION_PAT);
     if (s) S.section = s;
+    return !(!s && /(?:^#|[#&])section=/.test(h));
   }
   function writeHash() {
     LAST_HASH = "#section=" + S.section;
@@ -1298,7 +1342,8 @@
   }
   window.addEventListener("hashchange", function () {
     if ((location.hash || "") === LAST_HASH) return;
-    readHash(); syncTabs(); renderSection();
+    if (!readHash()) writeHash();
+    syncTabs(); renderSection();
   });
 
   // ---- boot -----------------------------------------------------------------
@@ -1310,7 +1355,7 @@
   function boot() {
     // The legal block goes up FIRST, before any fetch can fail, so it is on
     // screen even if nothing else ever arrives.
-    readHash();
+    if (!readHash()) writeHash();
     renderLegal();
     fetch(dataUrl(), { cache: "no-cache" }).then(function (r) {
       if (!r.ok) throw new Error("HTTP " + r.status);
@@ -1361,6 +1406,27 @@
     // backtest table pushed the whole document sideways on a narrow phone,
     // which drags every other element off-screen with it.
     ".bt-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}",
+    // THE SHARED DIALECT, PLUS THE TWO THINGS IT ASSUMES THAT ARE NOT TRUE
+    // HERE. Every table on this page now also carries .mlbstats-scroll /
+    // .mlbstats-table so it inherits the site-wide sticky header and frozen
+    // identity column out of assets/site.css. Two of those rules were written
+    // for the /mlbstats/ boards and need correcting for this page:
+    //
+    //   1. The frozen cell fills with --bg-primary, because on /mlbstats/ the
+    //      table sits on the page background. Every table here sits inside a
+    //      .bt-panel or .bt-game on --bg-secondary, so an unpatched freeze
+    //      paints a page-coloured stripe down the left of each panel. The two
+    //      rules below repeat site.css's selector with one extra class, which
+    //      out-specifies it (0,5,1 against 0,4,1) rather than racing it in the
+    //      cascade.
+    //   2. .mlbstats-table sets white-space:nowrap on every cell. The gate
+    //      table's "what it needs" cell is a PARAGRAPH, so it keeps its own
+    //      wrap - see the .bt-gate-need note further down, which now carries
+    //      the table class to win that specificity fight.
+    ".bt-scroll.mlbstats-scroll:has(> .mlbstats-table) .bt-table td:first-child:not([colspan])" +
+      "{background:var(--bg-secondary)}",
+    ".bt-scroll.mlbstats-scroll:has(> .mlbstats-table) .bt-table thead th:first-child" +
+      "{background:var(--bg-secondary)}",
     ".bt-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0}",
     ".bt-acts{white-space:nowrap}",
     ".bt-table th{text-align:right;font:600 10px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border,#333)}",
@@ -1403,9 +1469,11 @@
     ".bt-tag-ok{color:var(--accent-green,#3a9);border:1.5px solid var(--accent-green,#3a9)}",
     // The gate table's `why` is a paragraph, not a cell value. Without a cap
     // it stretches the row to its own length and the whole table becomes a
-    // horizontal scroll of one sentence.
-    ".bt-gate-need{max-width:46ch;white-space:normal}",
-    ".bt-gate-why{font-size:11.5px;color:var(--text-tertiary);margin-top:3px;white-space:normal}",
+    // horizontal scroll of one sentence. Both selectors are qualified by
+    // .bt-table so they out-specify .mlbstats-table td's nowrap (0,2,1 against
+    // 0,1,1); unqualified they lost it the moment the shared class went on.
+    ".bt-table td.bt-gate-need{max-width:46ch;white-space:normal}",
+    ".bt-table .bt-gate-why{font-size:11.5px;color:var(--text-tertiary);margin-top:3px;white-space:normal}",
     ".bt-tag-block{color:var(--text-on-accent,#fff);background:var(--accent-red,#c55)}",
     ".bt-block{border:1px solid var(--accent-red,#c55);padding:10px;margin:8px 0;font-size:12.5px;color:var(--text-secondary);background:var(--bg-secondary)}",
     ".bt-block strong{color:var(--text-primary);display:block;margin-bottom:4px}",
@@ -1419,7 +1487,18 @@
     ".bt-calc-out{margin:10px 0 6px;min-height:22px}",
     ".bt-calc-why{font-size:11.5px;color:var(--text-tertiary)}",
     ".bt-btn{font:600 11px/1 var(--font-retro,monospace);padding:6px 10px;border:1px solid var(--border,#3a3a3a);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;border-radius:0;margin-left:4px}",
-    ".bt-btn:hover{background:var(--bg-hover,var(--bg-secondary));transition:var(--transition-hover,none)}",
+    // --transition-hover IS NOT DEFINED ON THIS PAGE. The token lives in
+    // prospx/index.html's inline :root block and nowhere else - it is not in
+    // assets/site.css - so on /betting/ this var() always fell through to its
+    // `none` fallback and the hover transition never once ran. The declaration
+    // is written out here, matching the token's own value, rather than left as
+    // a reference to something the page cannot resolve.
+    ".bt-btn:hover{background:var(--bg-hover,var(--bg-secondary));" +
+      "transition:background-color 120ms ease,color 120ms ease,border-color 120ms ease}",
+    // Conversion chips (stage + preview slice) are anchors, so they need the
+    // chip's own colour rather than the global link colour.
+    ".bt-chip-link{text-decoration:none;cursor:pointer}",
+    ".bt-chip-link:hover{text-decoration:underline}",
     ".bt-btn-go{background:var(--accent-cyan,#2a7);color:var(--text-on-accent,#fff);border-color:transparent;margin-left:0}",
     ".bt-btn-x{color:var(--accent-red,#c55)}",
     ".bt-link{color:var(--accent-cyan,#2a7);text-decoration:none}.bt-link:hover{text-decoration:underline}",

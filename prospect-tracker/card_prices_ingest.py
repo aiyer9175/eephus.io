@@ -55,11 +55,22 @@ this module UPDATEs or DELETEs a comp row.
 
 CLI
 ---
+    python card_prices_ingest.py --scheduled             # THE pipeline/cron entry point
     python card_prices_ingest.py --drops                 # ingest every un-ingested drop
     python card_prices_ingest.py --csv path/to/file.csv  # ingest one file
     python card_prices_ingest.py --scrape --hot          # needs EEPHUS_CARD_SCRAPE=1
     python card_prices_ingest.py --build-watchlist       # regenerate data/card_watchlist.json
     python card_prices_ingest.py --stats                 # what is in the store
+
+SCHEDULING
+----------
+`run_scheduled_ingest()` is the ONE entry point the pipeline and the box crontab
+both call, so the two cannot drift apart about what the cadence is. It reads
+CADENCE, not its caller: drops every run, the hot list daily, a full sweep on
+`CADENCE['full_sweep_weekday']`. It is safe to invoke twice in a day (the
+run ledger below refuses a second fetch of the same scope on the same date), so
+the belt-and-braces cron entry and the nightly pipeline step can both exist,
+exactly like the leaderboard-vintage snapshot they sit next to.
 """
 from __future__ import annotations
 
@@ -106,6 +117,13 @@ CADENCE = {
     "long_tail_days": 7,            # everyone else: weekly
     "full_sweep_days": 60,          # a full sweep must land inside the 90-day
                                     # sold window or comps expire unseen
+    # Python weekday(), so 6 = Sunday. The long tail is ALSO covered by
+    # due_cards' 7-day rule, but that rule spreads the tail across whichever
+    # nights each card happens to age out on, which makes "did the sweep
+    # actually complete" unanswerable. Pinning the sweep to one weekday makes
+    # the 60-day guarantee above checkable: a missed Sunday is one visible gap,
+    # not a diffuse drift.
+    "full_sweep_weekday": 6,
 }
 
 GRADE_BUCKETS = ("PSA 10", "PSA 9", "BGS 9.5", "SGC 10", "RAW")
@@ -157,6 +175,33 @@ CREATE TABLE IF NOT EXISTS card_drop_files (
     rows_stored  INTEGER NOT NULL,
     ingested_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- SCRAPE RUN LEDGER. Two jobs, and the second one is the important one.
+--
+--   (1) Idempotency at the RUN level: PK (ran_on, scope) is what lets the
+--       nightly pipeline step and the belt-and-braces cron entry both exist
+--       without fetching the same pages twice in a night.
+--   (2) It is the ONLY durable record that a scrape ran at all. parse_sold_html
+--       is built to yield ZERO rows on layout drift, which means a broken parser
+--       and a genuinely quiet market write exactly the same thing to card_comps:
+--       nothing. Without these counters the export cannot tell "no comps yet"
+--       (legitimate, and the state /cards/ has been in since it shipped) from
+--       "the scrape fetched 12 pages and parsed 0 sales" (a parser regression).
+--       cards_fetched vs rows_parsed is that distinction, and
+--       card_market_export.ingest_state reads it to publish which one is true.
+CREATE TABLE IF NOT EXISTS card_scrape_runs (
+    ran_on          TEXT NOT NULL,       -- ISO yyyy-mm-dd
+    scope           TEXT NOT NULL,       -- 'hot' | 'full' | 'adhoc'
+    ran_at          TEXT NOT NULL,       -- ISO timestamp of the latest attempt that day
+    cards_attempted INTEGER NOT NULL DEFAULT 0,
+    cards_fetched   INTEGER NOT NULL DEFAULT 0,   -- pages that came back at all
+    cards_zero_rows INTEGER NOT NULL DEFAULT 0,   -- fetched but parsed nothing
+    fetch_errors    INTEGER NOT NULL DEFAULT 0,
+    rows_parsed     INTEGER NOT NULL DEFAULT 0,
+    rows_stored     INTEGER NOT NULL DEFAULT 0,   -- new rows; 0 with rows_parsed>0 is HEALTHY (re-seen sales)
+    PRIMARY KEY (ran_on, scope)
+);
+CREATE INDEX IF NOT EXISTS idx_card_scrape_runs ON card_scrape_runs(ran_on);
 """
 
 
@@ -379,6 +424,113 @@ def store_stats(con=None) -> dict:
         return _q(c)
 
 
+def store_health(con=None) -> dict:
+    """The PUBLISHABLE subset of store_stats: counts plus the date WE last stored
+    something. Deliberately not store_stats itself, which reports first_sale and
+    last_sale - those are sale dates, and a sale date is one of the raw facts
+    this module refuses to publish, aggregate or not. `last_ingest_on` is our own
+    operational timestamp, so it carries the same "is the tap on?" information
+    without quoting anybody's sale."""
+    def _q(c):
+        c.executescript(SCHEMA)
+        r = c.execute("SELECT COUNT(*) n, COUNT(DISTINCT card_id) cards, "
+                      "MAX(substr(ingested_at,1,10)) last_in FROM card_comps").fetchone()
+        return {"comps": r["n"] or 0, "cards": r["cards"] or 0,
+                "last_ingest_on": r["last_in"]}
+    if con is not None:
+        return _q(con)
+    with _connect() as c:
+        return _q(c)
+
+
+def record_scrape_run(stats: dict, con=None, today: date | None = None) -> dict:
+    """Stamp one scrape attempt into card_scrape_runs.
+
+    INSERT OR REPLACE on (ran_on, scope) so a same-day re-run corrects its own
+    row rather than accumulating; yesterday's row is never touched, exactly like
+    card_index_history's (card_id, as_of)."""
+    today = today or date.today()
+    row = {
+        "ran_on": today.isoformat(),
+        "scope": str(stats.get("scope") or "adhoc"),
+        "ran_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "cards_attempted": int(stats.get("cards") or 0),
+        "cards_fetched": int(stats.get("cards_fetched") or 0),
+        "cards_zero_rows": int(stats.get("cards_zero_rows") or 0),
+        "fetch_errors": int(stats.get("fetch_errors") or 0),
+        "rows_parsed": int(stats.get("parsed") or 0),
+        "rows_stored": int(stats.get("stored") or 0),
+    }
+
+    def _w(c):
+        c.executescript(SCHEMA)
+        c.execute(
+            "INSERT OR REPLACE INTO card_scrape_runs (ran_on, scope, ran_at, "
+            "cards_attempted, cards_fetched, cards_zero_rows, fetch_errors, "
+            "rows_parsed, rows_stored) VALUES (?,?,?,?,?,?,?,?,?)",
+            (row["ran_on"], row["scope"], row["ran_at"], row["cards_attempted"],
+             row["cards_fetched"], row["cards_zero_rows"], row["fetch_errors"],
+             row["rows_parsed"], row["rows_stored"]))
+    if con is not None:
+        _w(con)
+    else:
+        with _connect() as c:
+            _w(c)
+    return row
+
+
+def last_scrape_run(scope: str | None = None, con=None) -> dict | None:
+    """The newest recorded scrape attempt, or None when none was ever recorded.
+    None is itself an answer: it means no scrape has EVER run on this box, which
+    is what the export publishes as the legitimate empty state."""
+    def _q(c):
+        c.executescript(SCHEMA)
+        q = ("SELECT ran_on, scope, ran_at, cards_attempted, cards_fetched, "
+             "cards_zero_rows, fetch_errors, rows_parsed, rows_stored "
+             "FROM card_scrape_runs")
+        args: tuple = ()
+        if scope:
+            q += " WHERE scope = ?"
+            args = (scope,)
+        q += " ORDER BY ran_on DESC, ran_at DESC LIMIT 1"
+        r = c.execute(q, args).fetchone()
+        return dict(r) if r is not None else None
+    if con is not None:
+        return _q(con)
+    with _connect() as c:
+        return _q(c)
+
+
+def drop_health(con=None) -> dict:
+    """What the CSV drop path has done, from card_drop_files.
+
+    `last_rows_parsed` is the newest file's rows_seen, which parse_drop_csv sets
+    to the number of rows it actually understood. Zero on a file that exists is
+    the drop-side twin of a zero-row scrape: the operator dropped something and
+    the parser read none of it, which is a column-contract break, not an empty
+    market. Filenames are NOT returned: they are not raw comps, but they are also
+    not needed to answer the question, and the narrowest surface wins."""
+    def _q(c):
+        c.executescript(SCHEMA)
+        n = c.execute("SELECT COUNT(*) n, SUM(rows_seen) seen, SUM(rows_stored) stored "
+                      "FROM card_drop_files").fetchone()
+        last = c.execute("SELECT rows_seen, rows_stored, substr(ingested_at,1,10) d "
+                         "FROM card_drop_files ORDER BY ingested_at DESC, filename DESC "
+                         "LIMIT 1").fetchone()
+        return {
+            "files": n["n"] or 0,
+            "rows_parsed": n["seen"] or 0,
+            "rows_stored": n["stored"] or 0,
+            "last_rows_parsed": (last["rows_seen"] if last is not None else None),
+            "last_rows_stored": (last["rows_stored"] if last is not None else None),
+            "last_ingested_on": (last["d"] if last is not None else None),
+        }
+    if con is not None:
+        return _q(con)
+    with _connect() as c:
+        return _q(c)
+
+
 # ── (a) CSV drop path ───────────────────────────────────────────────────────
 # Column contract, documented in docs/diamond-cards.md. Aliases exist because a
 # licensed export will not use our names; unknown extra columns are ignored.
@@ -515,10 +667,15 @@ def ingest_drops(drops_dir: Path | str | None = None, watchlist: dict | None = N
     d = Path(drops_dir) if drops_dir else DROPS_DIR
     if not d.exists():
         log.info("no drops directory at %s", d)
-        return {"files": [], "stored": 0}
+        return {"files": [], "stored": 0, "parsed": 0}
     files = sorted(d.glob("card_comps_*.csv"))
     res = [ingest_csv(f, watchlist, con=con) for f in files]
-    return {"files": res, "stored": sum(r["stored"] for r in res)}
+    # `parsed` rather than only `stored`: on every run after the first, a drop
+    # file re-reads to stored=0 because every row is already on file, and a
+    # caller that only sees stored=0 cannot tell that from a file the parser
+    # could not read. parsed is the number that says the tap worked.
+    return {"files": res, "stored": sum(r["stored"] for r in res),
+            "parsed": sum(r["parsed"] for r in res)}
 
 
 # ── (b) scraper path (OFF by default) ───────────────────────────────────────
@@ -594,19 +751,31 @@ def _default_fetch(url: str) -> str:
     return r.text
 
 
-def scrape_cards(cards, fetch=None, throttle=None, con=None, source_host="marketplace") -> dict:
+def scrape_cards(cards, fetch=None, throttle=None, con=None, source_host="marketplace",
+                 scope: str = "adhoc", record: bool = True, today: date | None = None) -> dict:
     """Fetch sold comps for `cards`. Refuses to run unless EEPHUS_CARD_SCRAPE=1.
 
-    `fetch` is injected in tests (fixtures only). Nothing here runs during the
-    build: the flag is off, and the pipeline calls the drop path."""
+    `fetch` is injected in tests (fixtures only).
+
+    THE COUNTERS ARE THE POINT, not a nicety. parse_sold_html is designed to
+    yield zero rows on layout drift, and a zero-row scrape writes exactly what a
+    quiet market writes: nothing. So this returns cards_fetched (pages that came
+    back) alongside parsed (sales understood), and stamps both into
+    card_scrape_runs when `record`. cards_fetched > 0 with parsed == 0 across a
+    whole batch is a parser regression and card_market_export publishes it as
+    one; without these two numbers side by side that case is indistinguishable
+    from the honest empty state and would go on looking healthy forever."""
+    cards = list(cards or [])
     if fetch is None and not scrape_enabled():
         log.warning("card scrape requested but %s is not 1; refusing (use the CSV drop path)",
                     SCRAPE_ENV_FLAG)
-        return {"enabled": False, "cards": 0, "stored": 0, "reason": "flag off"}
+        return {"enabled": False, "cards": 0, "stored": 0, "parsed": 0,
+                "cards_fetched": 0, "cards_zero_rows": 0, "fetch_errors": 0,
+                "scope": scope, "reason": "flag off"}
     fetch = fetch or _default_fetch
     thr = throttle or Throttle()
-    stored = total = 0
-    for c in list(cards or []):
+    stored = total = fetched = zero_rows = errors = 0
+    for c in cards:
         cid = c.get("card_id")
         if not cid:
             continue
@@ -617,10 +786,13 @@ def scrape_cards(cards, fetch=None, throttle=None, con=None, source_host="market
         try:
             html = fetch(url)
         except Exception:
+            errors += 1
             log.exception("card scrape: fetch failed for %s", cid)
             continue
+        fetched += 1
         rows = parse_sold_html(html)
         if not rows:
+            zero_rows += 1
             log.warning("card scrape: zero rows parsed for %s (layout change or no sales)", cid)
         comps = [Comp(card_id=cid,
                       listing_hash=listing_fingerprint(cid, r["sold_date"], r["price"], r["grade"], r["title"]),
@@ -630,7 +802,112 @@ def scrape_cards(cards, fetch=None, throttle=None, con=None, source_host="market
         ins, _dup = store_comps(comps, con=con)
         stored += ins
         total += len(comps)
-    return {"enabled": True, "cards": len(list(cards or [])), "parsed": total, "stored": stored}
+    if fetched and zero_rows == fetched:
+        # The batch-level statement of the same warning the loop logs per card.
+        # ERROR because "every page we could read contained no sale we could
+        # read" is a parser fact, and it is the sentence somebody scanning a
+        # nightly log needs to see without counting warnings.
+        log.error("card scrape: fetched %d pages and parsed ZERO sales from all of "
+                  "them - treat this as layout drift until proven otherwise", fetched)
+    out = {"enabled": True, "cards": len(cards), "parsed": total, "stored": stored,
+           "cards_fetched": fetched, "cards_zero_rows": zero_rows,
+           "fetch_errors": errors, "scope": scope}
+    # A run that attempted nothing (nothing was due) is NOT recorded: it would
+    # replace the day's real counters with zeros and make the newest ledger row
+    # say "fetched nothing" about a scrape that never intended to fetch.
+    if record and (fetched or errors):
+        record_scrape_run(out, con=con, today=today)
+    return out
+
+
+# ── the scheduled run (ONE entry point for the pipeline and the crontab) ────
+def scrape_scope_for(today: date | None = None) -> str:
+    """'full' on the sweep weekday, 'hot' otherwise. The module decides, so the
+    box schedule stays a dumb 'call this every night' and cannot encode a second
+    opinion about the cadence."""
+    today = today or date.today()
+    return "full" if today.weekday() == int(CADENCE["full_sweep_weekday"]) else "hot"
+
+
+def run_scheduled_ingest(today: date | None = None, con=None, fetch=None,
+                         drops_dir: Path | str | None = None,
+                         watchlist: dict | None = None, log_fn=None) -> dict:
+    """THE nightly ingest. Drops always, then the scrape when it is armed and due.
+
+    Called by run_monthly (step 6g-pre and daily step 9f) and by the box crontab
+    (deploy/betting-crontab.example). Both call the SAME function on purpose:
+    when the cadence lives in one place, a cron line and a pipeline step cannot
+    quietly disagree about what "daily" meant.
+
+    SAFE TO RUN TWICE IN A DAY, which is what makes that pair legal. A monthly
+    night runs this at step 6g-pre and then again in the chained daily tail
+    fifteen minutes later; the crontab entry may add a third. The drop path is
+    already idempotent at the row and file level, and the scrape is guarded by
+    card_scrape_runs: a scope already fetched today is skipped rather than
+    re-fetched, so no marketplace sees the same page twice in a night no matter
+    how many callers fire.
+
+    NO-OPS SAFELY WITH THE FLAG UNSET, which is the state of every box today:
+    the drop path runs (it needs no network), the scrape reports enabled=False
+    with a stated reason, and nothing raises."""
+    today = today or date.today()
+    say = log_fn or log.info
+    out: dict = {"date": today.isoformat(), "scope": scrape_scope_for(today)}
+
+    try:
+        drops = ingest_drops(drops_dir, watchlist, con=con)
+    except Exception:
+        log.exception("card ingest: drop pass failed")
+        drops = {"files": [], "stored": 0, "parsed": 0, "error": True}
+    out["drops"] = drops
+    if drops.get("files"):
+        say("card drops: %d file(s), %d rows parsed, %d new"
+            % (len(drops["files"]), drops.get("parsed") or 0, drops.get("stored") or 0))
+
+    scope = out["scope"]
+    if fetch is None and not scrape_enabled():
+        out["scrape"] = {"enabled": False, "scope": scope, "cards": 0, "parsed": 0,
+                         "stored": 0, "reason": f"{SCRAPE_ENV_FLAG} is not 1"}
+        say("card scrape: not armed (%s unset); drops are the only input tonight"
+            % SCRAPE_ENV_FLAG)
+        return out
+
+    prior = last_scrape_run(scope, con=con)
+    if prior and prior.get("ran_on") == today.isoformat():
+        out["scrape"] = {"enabled": True, "scope": scope, "cards": 0, "parsed": 0,
+                         "stored": 0, "skipped": True,
+                         "reason": f"scope '{scope}' already fetched today"}
+        say("card scrape: scope '%s' already ran today (%d pages, %d sales); skipping"
+            % (scope, prior.get("cards_fetched") or 0, prior.get("rows_parsed") or 0))
+        return out
+
+    wl = watchlist if watchlist is not None else load_watchlist()
+    cards = list(wl.get("cards") or [])
+    if scope == "hot":
+        cards = [c for c in cards if c.get("hot")]
+    try:
+        cards = due_cards({"cards": cards}, today=today, last_seen=last_seen_map(con=con))
+    except Exception:
+        log.exception("card ingest: could not read the last-seen map; scraping the "
+                      "whole %s list rather than skipping the night", scope)
+    if not cards:
+        out["scrape"] = {"enabled": True, "scope": scope, "cards": 0, "parsed": 0,
+                         "stored": 0, "skipped": True,
+                         "reason": "no card is due under CADENCE"}
+        say("card scrape: nothing due in scope '%s' tonight" % scope)
+        return out
+
+    try:
+        out["scrape"] = scrape_cards(cards, fetch=fetch, con=con, scope=scope, today=today)
+    except Exception:
+        log.exception("card scrape: crashed; the drop path already ran")
+        out["scrape"] = {"enabled": True, "scope": scope, "cards": len(cards),
+                         "parsed": 0, "stored": 0, "error": True}
+    s = out["scrape"]
+    say("card scrape (%s): %d due, %d fetched, %d parsed, %d new, %d zero-row, %d errors"
+        % (scope, s.get("cards") or 0, s.get("cards_fetched") or 0, s.get("parsed") or 0,
+           s.get("stored") or 0, s.get("cards_zero_rows") or 0, s.get("fetch_errors") or 0))
+    return out
 
 
 # ── watchlist generator ─────────────────────────────────────────────────────
@@ -747,6 +1024,9 @@ def main(argv=None) -> int:
     import argparse
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
     ap = argparse.ArgumentParser(description="Card comps ingest (CSV drop + optional scraper)")
+    ap.add_argument("--scheduled", action="store_true",
+                    help="the nightly run: drops + the due scrape under CADENCE "
+                         "(what run_monthly and the crontab both call)")
     ap.add_argument("--drops", action="store_true", help="ingest every data/drops/card_comps_*.csv")
     ap.add_argument("--csv", help="ingest ONE csv file")
     ap.add_argument("--scrape", action="store_true", help=f"scrape (needs {SCRAPE_ENV_FLAG}=1)")
@@ -755,6 +1035,9 @@ def main(argv=None) -> int:
     ap.add_argument("--stats", action="store_true", help="what is in the comp store")
     a = ap.parse_args(argv)
     did = False
+    if a.scheduled:
+        print(json.dumps(run_scheduled_ingest(), indent=1))
+        did = True
     if a.build_watchlist:
         doc = build_watchlist()
         p = write_watchlist(doc)
@@ -770,7 +1053,10 @@ def main(argv=None) -> int:
         wl = load_watchlist()
         cards = [c for c in (wl.get("cards") or []) if (c.get("hot") or not a.hot)]
         cards = due_cards({"cards": cards}, last_seen=last_seen_map())
-        print(json.dumps(scrape_cards(cards), indent=1))
+        # Recorded under the SCHEDULED scope name, not 'adhoc', so a hand-run
+        # scrape suppresses tonight's automatic one instead of doubling it. A
+        # manual pull is still a real pull as far as the marketplace is concerned.
+        print(json.dumps(scrape_cards(cards, scope="hot" if a.hot else "full"), indent=1))
         did = True
     if a.stats or not did:
         print(json.dumps(store_stats(), indent=1))

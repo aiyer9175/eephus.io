@@ -33,7 +33,8 @@ happen inside the called module, so this file alone cannot split them).
 | 9d. Fantasy daily refresh (fantasy.json schedule) | dfs.json, fantasy.json |
 | 9d-bis. DFS daily slate (dfs.json) | dfs.json |
 | 9e-pre. Leaderboard vintage snapshot (validation clock) | - |
-| 9e. Betting odds snapshot + payload (betting.json) | betting.json |
+| 9e. Betting odds snapshot + payload (betting.json) | betting.json, card_market.json, xfv.json |
+| 9f. Card comps ingest + market index (card_market.json) | card_market.json |
 | d10. FA signing-window refresh | mlb_projections.json |
 | d10b. FA re-export off fresh projections | - |
 | d10c. TJStats Live second capture | - |
@@ -98,6 +99,7 @@ happen inside the called module, so this file alone cannot split them).
 | 6b5. Alchemy Lab (pal.json) | pal.json |
 | 6b6. Fantasy Tools (fantasy.json) | fantasy.json |
 | 6f. Betting model context refit | - |
+| 6g-pre. Card comps ingest (drops + gated scrape) | xfv.json |
 | 6g. Card market index (card_market.json) | card_market.json |
 | 6c. Organization Tendencies (farm-detail Tendencies tab) (no _step wrapper) | - |
 | 6c / 6d: exported by the chained daily tail instead (no _step wrapper) | org_tendencies.json, trade_values.json |

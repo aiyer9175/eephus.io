@@ -370,18 +370,46 @@ def _xfv_by_key_from_sibling(path: Path) -> dict | None:
     return by
 
 
+def _record_efv_health(*, ok: bool, n_rows: int = 0, message: str) -> None:
+    """File this run's eFV-join verdict into the ingest-health ledger.
+
+    WHY IT GOES THROUGH bullpen_export RATHER THAN run_monthly DIRECTLY.
+    `from run_monthly import _record_ingest` reads as though it reaches the
+    pipeline, and under the way the pipeline is actually launched
+    (deploy/nightly-build.sh runs `python run_monthly.py`) it did not: the live
+    module is sys.modules["__main__"], the name "run_monthly" is unclaimed, and
+    the import built a SECOND module with its own empty ledger that nothing
+    ever drained. MEASURED before the fix: 0 of 1 filed rows reached the
+    drained payload. bullpen_export.record_ingest resolves the LIVE module
+    (sys.modules first, __main__ second, fresh import only as a last resort),
+    and it is one implementation instead of one per exporter.
+
+    THE SECOND HALF of making the docstring below true: "ifa_efv_join" is named
+    in run_monthly.SCHEDULED_EXPORTS. A correctly filed row under an unwatched
+    name is written into the payload and then dropped from red[], which is
+    exactly how this record was inert on both counts.
+
+    Best-effort by design: this is a reporting path and must never be the
+    reason the IFA export fails."""
+    try:
+        from bullpen_export import record_ingest
+        record_ingest("ifa_efv_join", ok=ok, n_rows=n_rows, message=message,
+                      # A clean run must not pay the whole pipeline import
+                      # graph just to log a heartbeat from a standalone run.
+                      import_fallback=not ok)
+    except Exception:
+        log.debug("could not record the IFA eFV join health row", exc_info=True)
+
+
 def _record_efv_outage(message: str) -> None:
     """Raise a failed eFV join into the ingest-health RED ledger.
 
-    Best-effort by design: this is a reporting path and must never be the
-    reason the IFA export fails. The ledger is what the deploy shell prints as
-    `!!! INGEST RED`, so an eFV join that resolved nothing becomes visible on
-    the run that broke it instead of being read off the page weeks later."""
-    try:
-        from run_monthly import _record_ingest
-        _record_ingest("ifa_efv_join", ok=False, message=message)
-    except Exception:
-        log.debug("could not record the IFA eFV join outage", exc_info=True)
+    The ledger is what the deploy shell prints as `!!! INGEST RED`, so an eFV
+    join that resolved nothing becomes visible on the run that broke it instead
+    of being read off the page weeks later. That claim is true only because of
+    the two fixes documented on _record_efv_health, both landed 2026-08-05
+    after review found every red filed here was going into a throwaway."""
+    _record_efv_health(ok=False, message=message)
 
 
 def _players_by_key_from_sibling(path: Path) -> dict:
@@ -445,6 +473,17 @@ def export_ifa_json(path, players_by_key: dict | None = None,
         log.error("ifa_export: 0 of %d tracked signings resolved a board eFV "
                   "grade against %d xfv.json rows - key-space break, not a data gap",
                   n_tracked, len(xfv_by_key))
+    elif xfv_by_key:
+        # HEARTBEAT. Without an ok=True row, a ledger reader cannot separate
+        # "the eFV join ran and resolved grades" from "the IFA step never ran
+        # at all" - both look like silence, and that ambiguity is what let the
+        # 8-day TJStats gap pass for a week of healthy-looking runs. n_rows
+        # carries the resolved count, so a collapse from hundreds to a handful
+        # is legible in the ledger even though it never trips a red.
+        _record_efv_health(
+            ok=True, n_rows=n_efv,
+            message=(f"{n_efv} of {n_tracked} tracked IFA signings resolved a "
+                     f"board eFV grade from {len(xfv_by_key)} xfv.json rows"))
     payload["efv_resolved"] = n_efv
     payload["efv_available"] = xfv_by_key is not None
     with path.open("w", encoding="utf-8") as fp:

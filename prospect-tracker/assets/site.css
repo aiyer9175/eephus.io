@@ -76,6 +76,36 @@
   --text-primary:  #0F1B2D;
   --text-secondary:#4A5468;
   --text-tertiary: #706B5C;  /* v43: darkened from #8B8474 -> ~4.7:1 on warm paper (WCAG AA) */
+  /* DIM TEXT (2026-08-05). The site dimmed its quiet strings by dropping element
+     OPACITY on top of --text-tertiary, which is the one operation that cannot
+     preserve a contrast ratio: opacity composites the glyph back toward the
+     surface it sits on, so whatever the colour measured, the rendered text does
+     not. Measured before this token: .proj-dim 2.48:1 light / 2.71:1 dark,
+     .fa-dim and .fa-band 3.75-3.81:1 light on 11-12px data text. All of that is
+     under the 4.5:1 AA floor for normal text, and none of it is decoration:
+     .proj-dim carries chart captions, provisional markers and percentile
+     suffixes across /mlbstats/, /pal/ and /cards/.
+     --text-dim is the replacement, and it is a COLOUR, not a colour plus a
+     dimmer. One step past --text-tertiary, chosen so the ratio holds on all
+     three surfaces a dim string can land on rather than just the page field:
+     --bg-tertiary is the tightest of the three and is the one --text-tertiary
+     itself misses (4.27:1 there). Measured light #6A6456 on
+     primary / secondary / tertiary: 5.17 / 5.40 / 4.72. Rules repointed here
+     drop their opacity, because the token IS the dimming now. */
+  --text-dim:      #6A6456;
+  /* Gold is a BRAND accent and it is fine as a border, a stripe or a fill. As
+     READING TEXT on the warm paper it measures 2.13:1, so every gold string on
+     a light surface failed AA: the On This Day date stamp, the FA thin-market
+     marker, the expiring-contract and provisional-model chip labels, the FV
+     gold pill's own number. --text-gold carries the same hue down to a bronze
+     that passes (5.25 / 5.49 / 4.80 on primary / secondary / tertiary paper).
+     In dark the refractor gold already measures 11.2:1 on the near-black field,
+     so the dark override simply aliases --accent-gold and nothing moves there.
+     Only `color` is repointed at this token; borders, fills and stripes keep
+     --accent-gold, so the gold LANGUAGE is unchanged. The fixed-dark surfaces
+     (WIRE ticker, sidebar feed) are deliberately excluded: gold on near-black
+     is already high contrast and that palette is theme-fixed on purpose. */
+  --text-gold:     #7D5F08;
   --border:        #C9C1AE;
   --border-light:  #E2DCC9;
   /* BUGFIX 2026-08-05: --border-subtle was referenced in nine places and DEFINED
@@ -147,7 +177,15 @@
      Gothic / MS UI Gothic are honored next for anyone who has them; Roboto Mono
      is the last cross-platform fallback. */
   --font-logo: "DotGothic16","MS Gothic","MS UI Gothic","Osaka",ui-monospace,Consolas,monospace;
-  --byline-lilac:  #C8A2C8;   /* dev byline (build-banner) text - mirrors PROSPX */
+  /* DARKENED 2026-08-05. #C8A2C8 measured 1.95:1 on the warm paper, the worst
+     text ratio on the site: the dev byline was a pale lilac on a pale cream at
+     11px uppercase, and .build-banner then multiplied it by an opacity of .95.
+     Same hue, carried down to a plum that measures 5.33:1 on --bg-primary, so
+     the signature keeps its identity and becomes readable. The DARK value is
+     untouched: #D9B8E8 on the near-black field already measures 11.1:1.
+     PROSPX's own :root still wins inside that app, so this moves the editorial
+     and module mastheads only. */
+  --byline-lilac:  #7E5385;   /* dev byline (build-banner) text */
   /* Font aliases - the editorial pages, the /projections/ .mlbp player cards,
      and the homepage cross-module strip reference these. Without them at the
      shared :root they fell back to UA serif/sans and lost the MS-Gothic
@@ -185,7 +223,15 @@
    PROSPX templates. This does NOT touch SVG/canvas chart geometry - plotted
    curves are <path d="…"> data, not CSS border-radius - only rounded UI corners.
    SVG <rect> UI chrome is sharpened separately by removing rx/ry; chart/data-viz
-   rects keep theirs. Circular dots/avatars/pills become squares. */
+   rects keep theirs. Circular dots/avatars/pills become squares.
+   COROLLARY, and the reason 48 local `border-radius` declarations were swept
+   out of this file on 2026-08-05: a local radius below this line is DEAD on
+   arrival. Nothing in this sheet can out-rank a universal !important, so every
+   `border-radius: 4px` / `50%` / `999px` / `var(--radius-*)` that followed was
+   describing a shape the site does not render, which is worse than silence: it
+   is how a reader concludes the pills are round. Do not add one back. The only
+   radii that still mean anything are on ::-webkit-scrollbar-* pseudo-elements,
+   which `*` does not match, so those are deliberately left in place. */
 *, *::before, *::after { border-radius: 0 !important; }
 
 /* ── Keyboard focus safety net (a11y) ─────────────────────────────────────────
@@ -233,6 +279,15 @@
   --text-primary:  #ECEEF2;
   --text-secondary:#A6ABB5;
   --text-tertiary: #7C808A;  /* v43: lightened from #6E727B -> ~4.9:1 on near-black (WCAG AA) */
+  /* Dark counterpart to the light --text-dim (see the note there). Measured on
+     the three dark surfaces primary / secondary / tertiary: 6.18 / 5.49 / 4.95.
+     --text-tertiary misses the tertiary panel here too (3.96:1), which is why
+     the dim role gets its own colour on both themes rather than an opacity. */
+  --text-dim:      #8C919C;
+  /* Refractor gold already measures 11.2:1 on the near-black field, so the
+     dark theme needs no bronze; the alias keeps every repointed rule on one
+     token name across both themes. */
+  --text-gold:     var(--accent-gold);
   --border:        #2B2B31;
   --border-light:  #1D1D21;
   --accent-gold:   #FFD700;   /* refractor gold */
@@ -435,7 +490,7 @@
 .eephus-nav .eephus-links a {
   font-family: var(--font-retro); font-size: 12.5px; font-weight: 600;
   letter-spacing: .02em; color: var(--text-secondary); text-decoration: none;
-  padding: 8px 11px; border-radius: 0; white-space: nowrap;
+  padding: 8px 11px; white-space: nowrap;
   min-height: 40px; display: inline-flex; align-items: center;
   transition: background .12s, color .12s;
   /* Vertical hairline divider between adjacent links - the same
@@ -454,7 +509,7 @@
 .eephus-nav .eephus-links a.is-active { color: var(--text-primary); font-weight: 700; position: relative; }
 .eephus-nav .eephus-links a.is-active::after {
   content: ""; position: absolute; left: 9px; right: 9px; bottom: 3px;
-  height: 2px; background: var(--iridescent); border-radius: 2px;
+  height: 2px; background: var(--iridescent);
 }
 /* "MLB Modules" grouped dropdown (a native <details>). The summary reads as a
    nav link with a caret; the menu is position:fixed (placed by eephus-nav.js)
@@ -514,7 +569,7 @@
   font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
   letter-spacing: .04em; text-transform: uppercase;
   color: var(--text-secondary); background: transparent;
-  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
   padding: 0 11px; min-height: 38px; line-height: 1;
   cursor: pointer; text-decoration: none;
   transition: background .12s, color .12s, border-color .12s;
@@ -540,8 +595,8 @@
 .eephus-nav .eephus-nav-ctrl .eephus-nav-ctrl-label { white-space: nowrap; }
 .eephus-nav .eephus-nav-ctrl .global-ctrl-count {
   font-family: var(--font-retro-mono); font-size: 10px; font-weight: 800;
-  min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--radius-sm);
-  background: transparent; color: var(--accent-gold); border: 1px solid var(--accent-gold);
+  min-width: 16px; height: 16px; padding: 0 4px;
+  background: transparent; color: var(--text-gold); border: 1px solid var(--accent-gold);
   display: inline-flex; align-items: center; justify-content: center;
 }
 /* Phone hamburger (injected by eephus-nav.js). Hidden at every width above
@@ -549,29 +604,26 @@
    the end of the nav section shows + styles it. */
 .eephus-nav .eephus-nav-toggle { display: none; }
 
-/* ---- hero (Home) ---- */
-.hero { padding: 56px 0 36px; border-bottom: 3px double var(--border); margin-bottom: 32px; }
-.hero h1 {
-  font-family: var(--font-retro-mono); font-weight: 700;
-  font-size: clamp(2.2rem, 6vw, 3.6rem); letter-spacing: .03em;
-  margin: 0 0 8px; line-height: 1.05;
-}
-.hero h1 .dot { color: var(--logo-dot); }
-.hero .hero-rule { height: 4px; width: 120px; background: var(--iridescent); border-radius: 2px; margin: 14px 0 18px; }
-.hero p { font-size: 1.05rem; color: var(--text-secondary); max-width: 60ch; margin: 0; }
+/* DELETED 2026-08-05: the .hero family (.hero, .hero h1, .hero h1 .dot,
+   .hero .hero-rule, .hero p, plus its <=640px padding override) and
+   .module-grid. Both were the ORIGINAL Home page, which the newspaper masthead
+   + .home-shell portal replaced; nothing has emitted `class="hero"` or
+   `class="module-grid"` since. Verified against build_site.py, every
+   assets/*.js, prospx/index.html, collegesavant/*.html, content/ and config/:
+   zero references outside this file. */
 
-/* ---- module cards (Home) + article/team cards (shared geometry) ---- */
-.module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+/* ---- article/team cards (shared geometry) ---- */
 .card {
   display: block; text-decoration: none; color: inherit;
   background: var(--bg-secondary); border: 1px solid var(--border);
-  border-radius: var(--radius-md); box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card);
   padding: 20px 22px; transition: box-shadow .12s, transform .12s;
   position: relative; overflow: hidden;
 }
 a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px); }
 .card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--accent-navy); }
-.card.module-card::before { background: var(--accent-lilac); }
+/* DELETED 2026-08-05: .card.module-card::before, the lilac edge for the retired
+   Home module cards. .card itself stays - .article-card and .team-card ride it. */
 .card .eyebrow {
   font-family: var(--font-retro); font-size: 10px; font-weight: 700;
   letter-spacing: .12em; text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 6px;
@@ -601,41 +653,13 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .section-head--byline .section-head-titles { display: flex; flex-direction: column; min-width: 0; }
 .section-head--byline .section-head-titles .build-banner { margin: 0 0 6px; }
 .section-head--byline .section-sub { max-width: 78ch; }
-/* Lead Developer & Creator credit badge (MLB Stats + Alchemy Lab). */
-.lead-dev-badge { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
-  text-decoration: none; font-family: var(--font-retro-mono); font-size: 10.5px; letter-spacing: .03em;
-  margin: 9px 0 2px; padding: 4px 10px; border: 1px solid var(--accent-gold);
-  background: var(--bg-secondary); transition: border-color .15s, background .15s; white-space: nowrap; }
-.lead-dev-badge:hover, .lead-dev-badge:focus-visible { border-color: var(--accent-cyan); background: var(--bg-tertiary); }
-.lead-dev-badge .ldb-glyph { color: var(--accent-gold); font-size: 13px; line-height: 1; }
-.lead-dev-badge .ldb-role { color: var(--accent-gold); font-weight: 700; text-transform: uppercase; }
-.lead-dev-badge .ldb-name { color: var(--text-primary); font-weight: 600; }
-
-/* Compact "plus" developer badge - for sub-modules / models / sections. Hovers
-   open a ledger of the granular work. Counterpart to the head-module lead badge. */
-.dev-plus-badge { position: relative; display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--font-retro-mono); font-size: 9.5px; letter-spacing: .03em; cursor: help;
-  padding: 2px 8px; border: 1px solid var(--accent-gold); background: var(--bg-secondary);
-  white-space: nowrap; vertical-align: middle; transition: border-color .15s, background .15s; }
-.dev-plus-badge:hover, .dev-plus-badge:focus-visible { border-color: var(--accent-cyan); background: var(--bg-tertiary); outline: none; }
-.dev-plus-badge .dpb-glyph { color: var(--accent-gold); font-size: 11px; line-height: 1; }
-.dev-plus-badge .dpb-name { color: var(--text-primary); font-weight: 600; }
-.dev-plus-badge .dpb-plus { color: var(--accent-gold); font-weight: 700; padding-left: 1px; }
-.dev-plus-badge .dev-plus-card { position: absolute; right: 0; left: auto; top: calc(100% + 6px); z-index: 60;
-  display: none; min-width: 280px; max-width: 360px; padding: 10px 12px 8px;
-  border: 1px solid var(--accent-gold); background: var(--bg-primary);
-  box-shadow: 0 8px 26px rgba(0,0,0,.5); white-space: normal; text-align: left; cursor: default; }
-.dev-plus-badge:hover .dev-plus-card, .dev-plus-badge:focus-within .dev-plus-card { display: block; }
-.dev-plus-card .dpc-head { display: block; color: var(--accent-gold); font-weight: 700;
-  text-transform: uppercase; letter-spacing: .05em; font-size: 9px; margin-bottom: 7px;
-  padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-.dev-plus-card .dpc-item { display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
-  padding: 3px 0; font-size: 10.5px; line-height: 1.35; }
-.dev-plus-card .dpc-what { color: var(--text-primary); font-weight: 600; }
-.dev-plus-card .dpc-kind { color: var(--text-tertiary); font-style: italic; text-align: right; flex: 0 0 auto; }
-.dev-plus-card .dpc-more { display: block; margin-top: 8px; padding-top: 6px; font-size: 9.5px;
-  color: var(--accent-cyan); text-decoration: none; border-top: 1px solid var(--border); }
-.dev-plus-card .dpc-more:hover { text-decoration: underline; }
+/* DELETED 2026-08-05: the developer-badge family (.lead-dev-badge + .ldb-*,
+   .dev-plus-badge + .dpb-*, .dev-plus-card + .dpc-*). Thirty-five lines of
+   badge, hover ledger and pop-card for markup that no surface emits: the
+   credit moved onto .build-banner (the byline line the .section-head--byline
+   rules just above lay out) and onto the /team/ cards. Verified against
+   build_site.py, every assets/*.js, prospx/index.html, collegesavant/*.html,
+   content/ and config/: zero references outside this file. */
 
 /* ---- articles index grid ---- */
 .article-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
@@ -648,7 +672,8 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .article-header h1 { font-family: var(--font-retro-mono); font-size: clamp(1.6rem, 4vw, 2.4rem); line-height: 1.1; margin: 0 0 12px; letter-spacing: .02em; }
 .article-header .byline { font-size: 13px; color: var(--text-secondary); }
 .article-header .byline .author { font-weight: 700; }
-.article-header .byline .dot-sep { color: var(--text-tertiary); margin: 0 8px; }
+/* DELETED 2026-08-05: .article-header .byline .dot-sep. The byline separator is
+   plain text in the emitted markup, never a span, so the rule matched nothing. */
 /* Byline links: author → their Development Team card, handle → X profile. */
 .byline-author { color: inherit; font-weight: 700; text-decoration: none; }
 .byline-author:hover, .byline-author:focus-visible { text-decoration: underline; }
@@ -660,8 +685,8 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .article-body h2, .article-body h3 { font-family: var(--font-retro-mono); margin: 1.6em 0 .5em; letter-spacing: .02em; }
 .article-body a { color: var(--accent-navy); text-decoration: underline; }
 .article-body ul, .article-body ol { margin: 0 0 1.1em 1.4em; }
-.article-body img { max-width: 100%; height: auto; border-radius: var(--radius-sm); }
-.article-body .video-embed { position: relative; width: 100%; padding-top: 56.25%; margin: 1.4em 0; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); }
+.article-body img { max-width: 100%; height: auto; }
+.article-body .video-embed { position: relative; width: 100%; padding-top: 56.25%; margin: 1.4em 0; overflow: hidden; border: 1px solid var(--border); }
 .article-body .video-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .back-link { display: inline-block; margin-bottom: 18px; font-size: 13px; font-weight: 700; color: var(--accent-navy); text-decoration: none; }
 .back-link:hover { text-decoration: underline; }
@@ -676,7 +701,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    no photo or the file fails to load. */
 .team-card .team-photo {
   position: relative; width: 100%; height: 168px; margin: 0 0 12px;
-  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
   background: var(--bg-tertiary); overflow: hidden;
 }
 .team-card .team-photo img {
@@ -707,7 +732,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .team-card .team-badge {
   position: relative; display: inline-flex; align-items: center; justify-content: center;
   width: 40px; height: 40px; flex: none; overflow: visible; cursor: help;
-  background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
   transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
 }
 .team-card .team-badge:hover {
@@ -730,7 +755,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .team-card .team-soc {
   display: inline-flex; align-items: center; justify-content: center;
   width: 30px; height: 30px;
-  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
   background: var(--bg-tertiary); color: var(--text-secondary);
   text-decoration: none;
   transition: background .12s, color .12s, border-color .12s;
@@ -806,7 +831,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   text-transform: uppercase;
   color: var(--byline-lilac);
   margin: 0 0 8px;
-  opacity: 0.95;
+  /* The opacity: 0.95 that used to sit here is gone with the lilac re-tune: it
+     bought nothing visually and it is the same composite-toward-the-surface
+     move that put the dim text under AA (see --text-dim). */
   font-weight: 600;
   user-select: text;
 }
@@ -865,13 +892,12 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
     width: 44px; height: 44px; flex: none;
     font-size: 18px; line-height: 1; cursor: pointer;
     color: var(--text-primary); background: transparent;
-    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
   }
   .eephus-nav[data-nav-open] .eephus-nav-toggle {
     background: var(--bg-tertiary); border-color: var(--text-tertiary);
   }
   .eephus-wrap { padding: 0 1rem 3rem; }
-  .hero { padding: 36px 0 24px; }
   /* Module masthead: stack the title block above the description on phones so
      the title isn't crushed into a ~80px column beside the italic subtitle
      (e.g. "MLB Projections" wrapping to "MLB / Projec…"). Full width each.
@@ -895,7 +921,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
   letter-spacing: .05em; text-transform: uppercase; cursor: pointer;
   background: transparent; color: inherit; border: 1px solid currentColor;
-  border-radius: var(--radius-sm); padding: 3px 9px; opacity: .85;
+  padding: 3px 9px; opacity: .85;
 }
 .home-theme-toggle:hover { opacity: 1; }
 /* theme-toggle label: show the action the click will perform (CSS-driven, no JS) */
@@ -927,7 +953,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   background: linear-gradient(to right, #0B0E07 0%, rgba(11,14,7,0) 100%);
   z-index: 1; pointer-events: none;
 }
-.home-ticker .ticker-tag .blip { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: ticker-blip 1.4s steps(2) infinite; }
+.home-ticker .ticker-tag .blip { width: 7px; height: 7px; background: #fff; animation: ticker-blip 1.4s steps(2) infinite; }
 /* The tag links to /news/ (mouse convenience; the ticker is aria-hidden, so
    the accessible path is the sidebar feed header). Inherit the white-on-red. */
 .home-ticker .ticker-tag a { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
@@ -964,7 +990,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   /* Faint glow (no plate) so dark marks read on the near-black bar without a box. */
   filter: drop-shadow(0 0 0.5px rgba(255,255,255,.6)) drop-shadow(0 0 1.7px rgba(255,255,255,.35));
 }
-.home-ticker .ticker-track span.tk-logo { width: auto; height: auto; vertical-align: baseline; color: #1a1d12; padding: 1px 4px; background: rgba(245,246,238,0.92); border-radius: 3px; filter: none; }
+.home-ticker .ticker-track span.tk-logo { width: auto; height: auto; vertical-align: baseline; color: #1a1d12; padding: 1px 4px; background: rgba(245,246,238,0.92); filter: none; }
 .home-ticker .ticker-track a:hover { text-decoration: underline; }
 .home-ticker .ticker-track .up { color: #6ee7a8; } .home-ticker .ticker-track .down { color: #ff8a8a; }
 .home-ticker .ticker-track .signing { color: #b47cff; }   /* FA winter wire */
@@ -992,7 +1018,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    the old iridescent underline is gone with it). */
 .sb-brand .wm { font-family: var(--font-retro-mono); font-weight: 700; font-size: 20px; letter-spacing: .03em; color: var(--text-primary); text-decoration: none; }
 .sb-search { width: 100%; font-family: var(--font-retro); font-size: 13px; padding: 8px 10px; margin-bottom: 18px;
-  background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+  background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); }
 .sb-search::placeholder { color: var(--text-tertiary); }
 .sb-group { margin-bottom: 20px; }
 /* PROSPX baseball badge inline with its nav entry + subnav group label. */
@@ -1006,13 +1032,10 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   color: var(--text-tertiary);
 }
 .sb-nav a:hover .sb-ico, .sb-nav a.is-active .sb-ico { color: var(--text-primary); }
-/* α/β module lifecycle markers - superscript next to module names in navs;
-   the bordered .eephus-beta chip is the masthead form. */
-.mod-stage {
-  font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
-  color: var(--text-tertiary); margin-left: 2px;
-  vertical-align: super; line-height: 1; cursor: help;
-}
+/* DELETED 2026-08-05: .mod-stage, the superscript alpha/beta marker meant to sit
+   beside module names in the navs. It was never emitted; the lifecycle state
+   ships as the bordered .eephus-beta chip on the masthead and .h1-stage inside
+   PROSPX, both of which are live and stay. */
 .section-head h1 .eephus-beta { vertical-align: middle; margin-left: 10px; }
 /* PROSPX masthead stage chip (prospx h1 is a flex lockup). */
 .h1-stage { align-self: center; margin-left: 4px; }
@@ -1020,7 +1043,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .sb-nav a, .sb-subnav a {
   display: flex; align-items: center; gap: 8px; text-decoration: none;
   font-family: var(--font-retro); color: var(--text-secondary);
-  border-radius: var(--radius-sm); transition: background .12s, color .12s;
+  transition: background .12s, color .12s;
 }
 .sb-nav a { font-size: 14px; font-weight: 600; padding: 7px 9px; }
 .sb-nav a.is-active { color: var(--text-primary); font-weight: 700; background: var(--bg-tertiary); }
@@ -1044,10 +1067,10 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .sb-subnav a .px-glyph { color: var(--accent-cyan); font-family: var(--font-retro-mono); }
 
 /* sidebar terminal feed */
-.sb-feed { background: #0B0E07; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 11px; }
+.sb-feed { background: #0B0E07; border: 1px solid var(--border); padding: 10px 11px; }
 [data-theme="dark"] .sb-feed { background: #0a0c06; }
 .sb-feed .feed-head { display: flex; align-items: center; gap: 7px; font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8fe3b0; margin-bottom: 8px; }
-.sb-feed .feed-head .blip { width: 7px; height: 7px; border-radius: 50%; background: #6ee7a8; animation: ticker-blip 1.4s steps(2) infinite; }
+.sb-feed .feed-head .blip { width: 7px; height: 7px; background: #6ee7a8; animation: ticker-blip 1.4s steps(2) infinite; }
 /* Clickable section header -> /news/. Keeps the terminal-green color; an
    "all ->" affordance trails the label and brightens on hover. */
 .sb-feed .feed-head a { display: inline-flex; align-items: center; gap: 7px; color: inherit; text-decoration: none; width: 100%; }
@@ -1087,7 +1110,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 .sb-feed .feed-item span.feed-logo {
   width: auto; height: auto; font: 700 8px var(--font-retro-mono);
-  color: #1a1d12; padding: 1px 3px; background: rgba(245,246,238,0.92); border-radius: 3px;
+  color: #1a1d12; padding: 1px 3px; background: rgba(245,246,238,0.92);
 }
 .feed-item .g.up,    .feed-item .feed-val.up,
 .feed-item .g.promo, .feed-item .feed-val.promo { color: #6ee7a8; }
@@ -1102,7 +1125,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .news-app .news-intro { font-size: 13px; line-height: 1.6; color: var(--text-secondary); max-width: 760px; margin: 6px 0 4px; }
 .news-app .filter-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 12px 0 14px; }
 .news-app .filter-label { font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary); margin-right: 4px; }
-.news-app button.chip { font-family: var(--font-retro); font-size: 12px; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); border-radius: var(--radius-sm); }
+.news-app button.chip { font-family: var(--font-retro); font-size: 12px; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); }
 .news-app button.chip:hover { border-color: var(--accent-gold); }
 .news-app button.chip.active { color: var(--text-primary); border-color: var(--accent-gold); font-weight: 700; }
 /* The feed reuses the .sb-feed terminal panel; just bound its width + give
@@ -1239,7 +1262,10 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 ::-webkit-scrollbar-thumb:active { background: var(--scrollbar-thumb-hover); }
 ::-webkit-scrollbar-corner { background: transparent; }
-.masthead-follow { display: flex; justify-content: center; margin-top: 12px; }
+/* DELETED 2026-08-05: .masthead-follow, the centring wrapper for a Follow row
+   under the nameplate. The @handle chip moved into .eephus-logo-chips beside
+   the wordmark (see .eph-xlink--beta / --live above), and the wrapper was left
+   behind with nothing to wrap. */
 
 /* Shared on-theme X link: glyph + @handle. Sharp corners, opens in a new tab.
    Used on the homepage hero, the team page Follow row, and the PROSPX masthead. */
@@ -1294,7 +1320,11 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .lead-story .byline { font-family: var(--font-retro-mono); font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px; }
 .lead-story .excerpt { font-size: 1.02rem; line-height: 1.6; color: var(--text-secondary); }
 .lead-story .read { display: inline-block; margin-top: 12px; font-family: var(--font-retro); font-weight: 700; font-size: 13px; color: var(--accent-navy); text-decoration: none; }
-.lead-story .lead-img { width: 100%; height: 100%; min-height: 200px; object-fit: cover; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-tertiary); }
+/* DELETED 2026-08-05: .lead-story .lead-img (and its <=900px min/max-height
+   companion). build_site.py emits the lead article as `class="lead-story
+   no-img"` on BOTH of its two code paths, so the image half of the two-column
+   lead has never been rendered. The .no-img single-column rule above is what
+   actually runs. */
 .secondary-stories { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-bottom: 3px double var(--border); }
 .secondary-stories a { display: block; text-decoration: none; padding: 14px 16px; border-left: 1px solid var(--border); }
 .secondary-stories a:first-child { border-left: 0; }
@@ -1339,26 +1369,26 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* Neutral delta - a value that rounds to zero is not a gain or a loss. Prevents
    the "-0.0 WAG" (red) negative-zero artifact on grad rows. */
 .row-delta.flat { color: var(--text-tertiary); }
-.fv-pill { font-family: var(--font-retro-mono); font-size: 13px; font-weight: 800; flex: none; padding: 3px 9px; border-radius: var(--radius-sm); background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.fv-pill { font-family: var(--font-retro-mono); font-size: 13px; font-weight: 800; flex: none; padding: 3px 9px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .fv-pill.holo { border: 2px solid transparent; background: linear-gradient(var(--bg-secondary),var(--bg-secondary)) padding-box, var(--iridescent) border-box; }
-.fv-pill.gold { border-color: var(--accent-gold); color: var(--accent-gold); }
+.fv-pill.gold { border-color: var(--accent-gold); color: var(--text-gold); }
 /* Home-module trailing chips (Top Prospects/Recent Graduates FV, Farm grade,
    Recent Trades FV) get a uniform fixed width + centered value via border-box
    so every grid column ends in a clean, vertically-aligned chip column. */
 .home-module .row-link .fv-pill { box-sizing: border-box; min-width: 46px; text-align: center; }
 
 /* ---- spotlight prospect (baseball card) ---- */
-.spotlight { display: flex; gap: 14px; align-items: stretch; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-secondary); }
+.spotlight { display: flex; gap: 14px; align-items: stretch; padding: 14px; border: 1px solid var(--border); background: var(--bg-secondary); }
 .spotlight.holo { border: 3px solid transparent; background: linear-gradient(var(--bg-secondary),var(--bg-secondary)) padding-box, var(--iridescent) border-box; }
 /* Photo trimmed 96 → 84px: in the 292px sidebar the text column was only
    ~109px, and the "45 ▲ +15 FV" pill+delta row overflowed it under the wide
    MS-Gothic metrics, cramping the delta against the card border. */
-.spotlight .sp-photo { width: 84px; height: 128px; flex: none; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-tertiary) center top/cover no-repeat; }
+.spotlight .sp-photo { width: 84px; height: 128px; flex: none; border: 1px solid var(--border); background: var(--bg-tertiary) center top/cover no-repeat; }
 .spotlight .sp-name { font-family: var(--font-retro-mono); font-size: 1.1rem; font-weight: 700; }
 .spotlight .sp-meta { font-family: var(--font-retro-mono); font-size: 12px; color: var(--text-tertiary); margin-top: 3px; }
 
 /* ---- glossary teaser ---- */
-.glossary-teaser { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 1px dashed var(--border); border-radius: var(--radius-sm); background: var(--bg-tertiary); font-family: var(--font-retro-mono); font-size: 13px; }
+.glossary-teaser { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 1px dashed var(--border); background: var(--bg-tertiary); font-family: var(--font-retro-mono); font-size: 13px; }
 .glossary-teaser a { color: var(--accent-navy); font-weight: 700; text-decoration: none; }
 
 /* Glossary + scatterplot teasers share a row. minmax(0,1fr) so the
@@ -1366,7 +1396,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    track - and the page - past a phone viewport; the ellipsis engages. */
 .teaser-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 18px; }
 .teaser-row .glossary-teaser { margin: 0; }
-.scatter-teaser { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px dashed var(--border); border-radius: var(--radius-sm); background: var(--bg-tertiary); text-decoration: none; color: inherit; }
+.scatter-teaser { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px dashed var(--border); background: var(--bg-tertiary); text-decoration: none; color: inherit; }
 .scatter-teaser .st-svg { flex: none; width: 92px; height: 40px; }
 .scatter-teaser .st-svg svg { width: 92px; height: 40px; display: block; }
 .scatter-teaser .st-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; font-family: var(--font-retro-mono); }
@@ -1377,7 +1407,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* "This Day in Prospect History" module. */
 .otd-module .otd-row { display: flex; align-items: center; gap: 9px; text-decoration: none; padding: 5px 4px; }
 .otd-module .otd-row:hover { background: var(--bg-tertiary); }
-.otd-when { flex: none; font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--accent-gold); text-transform: uppercase; white-space: nowrap; }
+.otd-when { flex: none; font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--text-gold); text-transform: uppercase; white-space: nowrap; }
 .otd-body { flex: 1; min-width: 0; font-family: var(--font-retro); font-size: 14px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .otd-body strong { color: var(--text-primary); }
 /* WAG chip - how the player panned out vs. their grade. Reuses .row-delta
@@ -1395,7 +1425,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 
 /* Date-aware upcoming-event callout (draft / signing period). */
 .home-callout { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 14px; margin: 12px 0 0; padding: 9px 16px; border: 1px solid var(--accent-gold); background: color-mix(in srgb, var(--accent-gold) 10%, var(--bg-secondary)); text-decoration: none; color: var(--text-primary); font-family: var(--font-retro-mono); font-size: 13px; }
-.home-callout .cal-tag { font-weight: 700; color: var(--accent-gold); letter-spacing: .08em; text-transform: uppercase; font-size: 10px; flex: none; border: 1px solid color-mix(in srgb, var(--accent-gold) 45%, transparent); padding: 2px 7px; }
+.home-callout .cal-tag { font-weight: 700; color: var(--text-gold); letter-spacing: .08em; text-transform: uppercase; font-size: 10px; flex: none; border: 1px solid color-mix(in srgb, var(--accent-gold) 45%, transparent); padding: 2px 7px; }
 .home-callout .cal-msg { color: var(--text-secondary); } .home-callout .cal-msg strong { color: var(--text-primary); }
 .home-callout .cal-go { font-weight: 700; color: var(--accent-navy); flex: none; }
 .home-callout:hover .cal-go { text-decoration: underline; }
@@ -1422,13 +1452,12 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
     width: 44px; height: 44px; flex: none;
     font-size: 18px; line-height: 1; cursor: pointer;
     color: var(--text-primary); background: transparent;
-    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
   }
   .home-sidebar[data-nav-open] .home-nav-toggle { background: var(--bg-tertiary); }
   .home-main { padding: 0 16px 40px; }
   .module-cols, .lead-story, .secondary-stories { grid-template-columns: 1fr; }
   .teaser-row { grid-template-columns: minmax(0, 1fr); }
-  .lead-story .lead-img { min-height: 160px; max-height: 240px; }
   .secondary-stories a { border-left: 0; border-top: 1px solid var(--border); }
   .sb-subnav { grid-template-columns: 1fr 1fr 1fr; }
   .row-spark { display: none; }   /* keep the tight mobile row legible */
@@ -1515,7 +1544,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   background: var(--bg-tertiary); color: var(--text-primary);
   border-color: var(--text-tertiary);
 }
-.fa-app a.chip .chip-glyph { color: var(--accent-gold); margin-right: 4px; font-weight: 700; }
+.fa-app a.chip .chip-glyph { color: var(--text-gold); margin-right: 4px; font-weight: 700; }
 .fa-app button.chip.active {
   background: var(--bg-secondary); color: var(--text-primary);
   border-color: var(--accent-gold); font-weight: 700;
@@ -1556,10 +1585,15 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .fa-app .detail-table tbody tr:hover { background: var(--bg-tertiary); }
 .fa-app .detail-table td:first-child, .fa-app .detail-table th:first-child { text-align: left; }
 .fa-app .detail-table td:nth-child(2) { text-align: left; }
-.fa-app .fa-dim { opacity: 0.55; }
+/* Was `opacity: 0.55` on both, which measured 3.75-3.81:1 on the light theme
+   against an 11-12px data string. A colour instead of a dimmer: see --text-dim.
+   .fa-band keeps its 0.85em size cut, which is what actually made it a band
+   annotation rather than a value. */
+.fa-app .fa-dim { color: var(--text-dim); }
 .fa-app .fa-sub { color: var(--text-tertiary); font-weight: 400; }
-.fa-app .fa-band { opacity: 0.55; font-size: 0.85em; }
-.fa-app .fa-comps { opacity: 0.55; font-size: 0.85em; }
+.fa-app .fa-band { color: var(--text-dim); font-size: 0.85em; }
+/* DELETED 2026-08-05: .fa-app .fa-comps, a third copy of the same dim treatment
+   for a comps string fa.js does not emit. */
 .fa-app .fa-note { color: var(--text-secondary); font-size: 0.9em; margin-bottom: 6px; }
 .fa-app h3 { font-family: var(--font-retro-mono); margin: 14px 0 6px; letter-spacing: 0.02em; }
 .fa-app .fa-cba-note {
@@ -1599,12 +1633,12 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   content: ""; width: 32px; height: 32px; box-sizing: border-box;
   border: 4px solid var(--border);
   border-top-color: var(--accent-lilac); border-right-color: var(--accent-cyan);
-  border-radius: 0; animation: eephus-spin 0.8s steps(8) infinite;
+  animation: eephus-spin 0.8s steps(8) infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .state-message.is-loading::before { animation-duration: 2.4s !important; animation-iteration-count: infinite !important; }
 }
-.fa-app .fa-thin { color: var(--accent-gold); cursor: help; }
+.fa-app .fa-thin { color: var(--text-gold); cursor: help; }
 /* Handedness token on the class board (B:L bat side / T:R throwing hand). Small,
    monospaced and helpable - it is a scanning aid, not a headline number. */
 .fa-app .fa-hand { font-family: var(--font-mono); letter-spacing: .02em; cursor: help; }
@@ -1627,10 +1661,9 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 }
 .fa-app .state-message-title { font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
 .fa-app .state-message-body { max-width: 60ch; margin: 0 auto; }
-.fa-app .fa-gloss { max-width: 72ch; margin: 0 0 18px; }
-.fa-app .fa-gloss h3 { margin: 0 0 4px; }
-.fa-app .fa-gloss p { margin: 0 0 6px; color: var(--text-secondary); font-size: 0.95rem; }
-.fa-app .fa-gloss .fa-gloss-short { font-weight: 700; color: var(--text-primary); }
+/* DELETED 2026-08-05: .fa-app .fa-gloss (+ h3, p, .fa-gloss-short). The FA
+   module's private glossary block, superseded by the site-wide /glossary/ page
+   and the shared eephus-gl.js term tooltips; fa.js emits neither class. */
 
 /* ── FA v2 - logos, verdict chips, surplus coloring, sortable headers,
       board rail, season table, fit component bars ─────────────────────── */
@@ -1654,7 +1687,8 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .fa-app th.fa-sort { cursor: pointer; user-select: none; white-space: nowrap; }
 .fa-app th.fa-sort:hover { color: var(--text-primary); }
 .fa-app th.fa-sort.is-sorted { color: var(--text-primary); border-bottom: 2px solid var(--accent-gold); }
-.fa-app .fa-fitorg { white-space: nowrap; cursor: help; }
+/* DELETED 2026-08-05: .fa-app .fa-fitorg. The org column on the fits view is
+   rendered as a plain cell; nothing carries this class. */
 /* FA type tag (UFA vs the option family) + option row accent + filter bar. */
 .fa-app .fa-type {
   display: inline-block; font-family: var(--font-retro-mono); font-size: 9px;
@@ -1664,7 +1698,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 }
 .fa-app .fa-type-ufa { color: var(--text-tertiary); background: var(--bg-tertiary); }
 .fa-app .fa-type-opt {
-  color: var(--accent-gold); border-color: var(--accent-gold);
+  color: var(--text-gold); border-color: var(--accent-gold);
   background: color-mix(in srgb, var(--accent-gold) 14%, transparent);
 }
 /* DEAD since the board became cards - .fa-row-opt is only ever on a .fa-card
@@ -1709,7 +1743,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   font-weight: 700; letter-spacing: 0.06em; padding: 1px 3px; margin-left: 3px;
   border: 1px solid var(--border); color: var(--text-tertiary); vertical-align: 1px; }
 .fa-app .fa-block-mlb i { border-color: var(--accent-cyan); color: var(--accent-cyan); }
-.fa-app .fa-block-prospect i { border-color: var(--accent-gold); color: var(--accent-gold); }
+.fa-app .fa-block-prospect i { border-color: var(--accent-gold); color: var(--text-gold); }
 @media (max-width: 1100px) {
   .fa-app .fa-board-layout { grid-template-columns: 1fr; }
   .fa-app .fa-board-rail { position: static; flex-direction: row; flex-wrap: wrap; }
@@ -1726,7 +1760,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
   letter-spacing: .04em; text-transform: uppercase; cursor: pointer;
   color: var(--text-secondary); background: var(--bg-secondary);
-  border: 1px solid var(--border); padding: 8px 14px; border-radius: 0;
+  border: 1px solid var(--border); padding: 8px 14px;
 }
 .mlbstats-sectionbtn:hover { color: var(--text-primary); background: var(--bg-tertiary); }
 .mlbstats-sectionbtn.active { color: var(--text-primary); border-bottom: 2px solid var(--accent-gold); }
@@ -1789,19 +1823,61 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    page itself is the only scroll anyone expects. Below 1025px the container
    keeps its natural height and only the frozen first column applies (left
    sticky needs no height bound, because the horizontal overflow is real). */
+/* THE OTHER FOUR DIALECTS (2026-08-05). dynasty.js, redraft.js, dfs.js and
+   betting.js each inject a PRIVATE table dialect at runtime - .dyn-table,
+   .rd-table and .dfs-table at 13px, .bt-table at 12.5px - and not one of them
+   is reached by any of the machinery in this block. So four shipped surfaces
+   carry long boards whose column headings scroll away on the second screen and
+   whose identity column scrolls out of reach sideways: exactly the two defects
+   the notes above were written to close on /mlbstats/, repeated four more
+   times, and the ONE TABLE DIALECT rule (see the .fa-app .detail-table thead
+   note) broken four more times with it.
+   The dialect class names are named in every selector list from here down, so
+   the behaviour lands the moment a wrapper is a .mlbstats-scroll. This file
+   cannot do the other half - the dialects are injected from JS - so the lists
+   are written to be true whether a board is reached by its dialect name, by the
+   shared .mlbstats-table class the module lane has since added alongside it, or
+   by both. Naming the dialects is what makes the CSS side stand on its own: a
+   board that ever loses the shared class keeps its header and its identity
+   column instead of quietly reverting.
+   FONT SIZE IS NOT UNIFIED HERE. Only the scroll + sticky BEHAVIOUR is shared.
+   The dialects' own font-size rules are injected at runtime, so they land later
+   in the cascade at equal specificity and keep winning: 13px stays 13px on
+   dynasty / redraft / DFS and 12.5px stays 12.5px on betting, which is the
+   deliberate part of each module's cell density and is not this lane's to
+   flatten. */
 @media (min-width: 1025px) {
-  .mlbstats-scroll:has(> .mlbstats-table) {
+  .mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table)) {
     overflow: auto;
     max-height: calc(100dvh - 210px);
   }
 }
 @supports not (height: 100dvh) {
   @media (min-width: 1025px) {
-    .mlbstats-scroll:has(> .mlbstats-table) { max-height: calc(100vh - 210px); }
+    .mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table)) {
+      max-height: calc(100vh - 210px);
+    }
   }
 }
 /* The header needs to paint over the rows it now sits above. */
 .mlbstats-table thead th { z-index: 2; }
+/* The four injected dialects never declared a sticky header of their own (only
+   .mlbstats-table did, in its base rule below), so a bounded scrollport alone
+   would leave their headings exactly where they are. They get the same three
+   declarations here, plus the OPAQUE fill without which the rows would read
+   straight through the heading as they pass under it.
+   Keyed on the dialect name rather than the shared class, so this holds even
+   for a board that carries only its own. Scoped under the scroller on purpose:
+   outside one it is inert. The specificity (0,3,2) also clears the (0,1,1)
+   rules the modules inject at runtime, which land later in the cascade than
+   this file does. */
+.mlbstats-scroll:has(> :is(.dyn-table, .rd-table, .dfs-table, .bt-table))
+  :is(.dyn-table, .rd-table, .dfs-table, .bt-table) thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg-secondary);
+}
 /* FROZEN IDENTITY COLUMN. The reliever and hitter boards carry 23-24 nowrap
    columns and run ~1,500-1,900px wide against a 1,400px wrap, so they are
    horizontally scrolled at every desktop width. Without this, scrolling right
@@ -1824,9 +1900,15 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
       carry .mlbstats-col-rank (pal.js stamps the td to match the th), so the
       rule below pins the narrow rank at the left edge AND pins the name beside
       it. /pal/'s other tables (Conversion History, Pitch-Add) lead with the
-      name and keep the plain first-child freeze. */
-.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table th:first-child,
-.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table td:first-child:not([colspan]) {
+      name and keep the plain first-child freeze.
+
+   The four injected dialects are named in the lists below too, subject to the
+   SAME exclusion - see the un-freeze rule after the rank block, which is how
+   the ones that lead with a rank digit are kept out of it. */
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) th:first-child,
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) td:first-child:not([colspan]) {
   position: sticky;
   left: 0;
   z-index: 1;
@@ -1834,12 +1916,14 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 }
 /* The header's own first cell is sticky on BOTH axes, so it has to outrank
    the row it freezes and the header it sits in. */
-.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table thead th:first-child {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) thead th:first-child {
   z-index: 3;
   background: var(--bg-secondary);
 }
 /* Keep the row-hover tint continuous across the frozen cell. */
-.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table tbody tr:hover td:first-child:not([colspan]) {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) tbody tr:hover td:first-child:not([colspan]) {
   background: var(--bg-tertiary);
 }
 /* RANK-LED BOARDS (/pal/): freeze the rank AND the name next to it. The rank
@@ -1849,25 +1933,65 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    leaving 28px for content that is at most three tabular digits (~23px at
    12.5px mono). The width has to stay ABOVE min-content or the browser falls
    back to min-content and the `left` below stops lining up. */
-.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table .mlbstats-col-rank {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) .mlbstats-col-rank {
   width: 48px;
   min-width: 48px;
 }
-.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table th.mlbstats-col-rank + th,
-.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table td.mlbstats-col-rank + td {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) th.mlbstats-col-rank + th,
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) td.mlbstats-col-rank + td {
   position: sticky;
   left: 48px;
   z-index: 1;
   background: var(--bg-primary);
 }
-.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table thead th.mlbstats-col-rank + th {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) thead th.mlbstats-col-rank + th {
   z-index: 3;
   background: var(--bg-secondary);
 }
-.mlbstats-scroll:has(> .mlbstats-table) .mlbstats-table tbody tr:hover td.mlbstats-col-rank + td {
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table))
+  :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table, .bt-table) tbody tr:hover td.mlbstats-col-rank + td {
   background: var(--bg-tertiary);
 }
-.mlbstats-app .proj-dim { color: var(--text-tertiary); opacity: .65; font-size: 10px; font-family: var(--font-retro-mono); }
+/* UN-FREEZE THE RANK-LED BOARDS IN THE NEW DIALECTS. Point 2 of the exclusion
+   note above is not hypothetical for these four: dynasty's keeper board, the
+   redraft two-start and streamer boards and the DFS slate/stacks boards all
+   lead with a rank digit, and unlike /pal/ their cells carry the module's own
+   rank class (.dyn-rk / .rd-rk / .dfs-rk) on the TD ONLY - there is no matching
+   class on the TH. That is not enough to run the rank-rail rules above: they
+   need the class on both cells to pin the rail at a known 48px and freeze the
+   name beside it. Freezing only :first-child would therefore pin the NUMBER and
+   scroll the name away, which is the precise orphaning this whole block exists
+   to prevent, so those tables are taken back out.
+   Detected rather than assumed: :has() reads the first body cell, so a
+   name-led table in the same dialect (redraft's Buy/Sell, dynasty's stash
+   board, every .bt-table) is untouched and keeps its frozen identity column.
+   THE FIX BELONGS IN THE MODULE, not here: stamp .mlbstats-col-rank on the th
+   AND the td the way pal.js does, and the rank-rail rules above take over while
+   this rule stops matching. That is what the module lane did on the same day
+   (dynasty.js, redraft.js and dfs.js now all emit .mlbstats-col-rank on both
+   cells and cite this rule for why), so as shipped this matches NOTHING. It
+   stays as the guard that made the contract enforceable: reintroduce a bare
+   rank digit as the first cell of one of these dialects and the board loses its
+   freeze rather than silently orphaning every name on it.
+   The header keeps its sticky top and its fill; only the horizontal freeze and
+   the body cell's opaque fill are undone. */
+.mlbstats-scroll :is(.dyn-table, .rd-table, .dfs-table):has(td:first-child:is(.dyn-rk, .rd-rk, .dfs-rk))
+  :is(th, td):first-child {
+  position: static;
+}
+.mlbstats-scroll :is(.dyn-table, .rd-table, .dfs-table):has(td:first-child:is(.dyn-rk, .rd-rk, .dfs-rk))
+  tbody td:first-child {
+  background: none;
+}
+/* Was `--text-tertiary` at opacity .65, which composited to 2.48:1 light and
+   2.71:1 dark - the worst readings in the audit, on strings that are readings
+   (chart captions, provisional markers, percentile suffixes). Colour only now;
+   the font-size is deliberately untouched. */
+.mlbstats-app .proj-dim { color: var(--text-dim); font-size: 10px; font-family: var(--font-retro-mono); }
 /* shared MLB team logo (ESPN), used across the MLB modules */
 .eephus-teamlogo { width: 17px; height: 17px; object-fit: contain; vertical-align: -4px; margin-right: 5px; }
 .pal-mix-card .eephus-teamlogo, .bp-depth-team .eephus-teamlogo { width: 15px; height: 15px; }
@@ -1984,8 +2108,9 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .rem-good { color: var(--accent-green); }
 .rem-avg { color: var(--text-primary); }
 .rem-low { color: var(--text-tertiary); }
-.bp-pos { color: var(--accent-green); }
-.bp-neg { color: var(--accent-red); }
+/* DELETED 2026-08-05: .bp-pos / .bp-neg. The bullpen board's signed deltas ride
+   the shared .fa-pos / .fa-neg and .proj-pos / .proj-neg pairs; mlbstats.js
+   emits neither of these two. */
 .bp-prov { font-family: var(--font-retro-mono); font-size: 8px; font-weight: 700; color: var(--accent-orange);
   border: 1px solid var(--accent-orange); padding: 1px 3px; margin-left: 5px; vertical-align: middle; }
 .bp-role { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700; letter-spacing: .03em;
@@ -2077,7 +2202,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 /* positive accountability affordance: a validated model should advertise it */
 .bp-validated { font-family: var(--font-retro-mono); font-size: 9.5px; letter-spacing: .04em;
   text-transform: uppercase; color: var(--accent-cyan); border: 1px solid var(--accent-cyan);
-  padding: 1px 6px; border-radius: 2px; }
+  padding: 1px 6px; }
 .pal-mix-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
 .pal-mix-card { border: 1px solid var(--border); background: var(--bg-secondary); padding: 12px; }
 .pal-mix-card h4 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
@@ -2113,7 +2238,9 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .proj-app .proj-war-good { color: var(--accent-green); font-weight: 600; }
 .proj-app .proj-war-avg { color: var(--text-primary); }
 .proj-app .proj-war-low { color: var(--text-tertiary); }
-.proj-app .proj-dim { color: var(--text-tertiary); opacity: 0.6; font-size: 10px;
+/* Same class, same defect, one surface over: this one ran at opacity 0.6, i.e.
+   a shade WORSE than the /mlbstats/ copy measured above. */
+.proj-app .proj-dim { color: var(--text-dim); font-size: 10px;
   font-family: var(--font-retro-mono); }
 .proj-app .proj-pos { color: var(--accent-green); font-weight: 600; }
 .proj-app .proj-neg { color: var(--accent-red); font-weight: 600; }
@@ -2126,7 +2253,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   white-space: nowrap; cursor: help; }
 .proj-app .proj-ct-signed { color: var(--accent-green); border-color: var(--accent-green);
   background: color-mix(in srgb, var(--accent-green) 12%, transparent); }
-.proj-app .proj-ct-expiring { color: var(--accent-gold); border-color: var(--accent-gold);
+.proj-app .proj-ct-expiring { color: var(--text-gold); border-color: var(--accent-gold);
   background: color-mix(in srgb, var(--accent-gold) 12%, transparent); }
 .proj-app .proj-ct-controlled { color: var(--accent-navy); border-color: var(--accent-navy);
   background: color-mix(in srgb, var(--accent-navy) 12%, transparent); }
@@ -2138,7 +2265,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .proj-app .proj-warmap > summary:hover { color: var(--text-primary); }
 .proj-app .proj-warmap-wrap { padding: 4px 12px 12px; overflow-x: auto; }
 .proj-app .proj-warmap-svg { width: 100%; max-width: 760px; height: auto; display: block; margin: 0 auto; }
-.proj-app .proj-tag-prospect { border-color: var(--accent-gold); color: var(--accent-gold); }
+.proj-app .proj-tag-prospect { border-color: var(--accent-gold); color: var(--text-gold); }
 
 /* ---------------------------------------------------------------------------
    UNSTYLED CLASSES (added 2026-08-04). projections.js has been emitting these
@@ -2203,7 +2330,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   font-size: 11px; color: var(--text-secondary);
 }
 .proj-app .proj-legend-dot {
-  width: 9px; height: 9px; flex: none; border-radius: 50%;
+  width: 9px; height: 9px; flex: none;
   border: 1px solid var(--border);
 }
 
@@ -2290,7 +2417,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; border: 1px solid var(--border);
   color: var(--text-tertiary); white-space: nowrap; }
 .gl-app .gl-verdict--validated { color: var(--accent-green); border-color: var(--accent-green); }
-.gl-app .gl-verdict--provisional { color: var(--accent-gold); border-color: var(--accent-gold); }
+.gl-app .gl-verdict--provisional { color: var(--text-gold); border-color: var(--accent-gold); }
 .gl-app .gl-verdict--unvalidated { color: var(--accent-red); border-color: var(--accent-red); }
 .gl-app .gl-verdict--deprecated { color: var(--text-tertiary); border-color: var(--border); opacity: 0.85; }
 .gl-app .gl-model-summary { font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
@@ -2400,7 +2527,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .gl-app .gx-steps .gx-step { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: baseline;
       padding: 4px 0; border-bottom: 1px dotted var(--border-light); }
 .gl-app .gx-step-n { font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--text-tertiary);
-      text-align: center; border: 1px solid var(--border-light); border-radius: var(--radius-sm); }
+      text-align: center; border: 1px solid var(--border-light); }
 .gl-app .gx-step-t { color: var(--text-secondary); }
 .gl-app .gx-step-v { font-weight: 700; color: var(--text-primary); white-space: nowrap; }
 .gl-app .gx-step-sum .gx-step-n { color: var(--neon-cyan); border-color: var(--neon-cyan); }
@@ -2423,9 +2550,9 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
       letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary);
       margin-bottom: 6px; }
 .gl-app .source-comp-eyebrow .scx-dot { width: 7px; height: 7px; background: var(--neon-cyan);
-      border-radius: var(--radius-sm); box-shadow: 0 0 6px var(--neon-cyan); }
+      box-shadow: 0 0 6px var(--neon-cyan); }
 /* Source-comparison HERO verdict banner - leads the page with the headline result. */
-.gl-app .source-comp-hero { border: 1px solid var(--neon-cyan); border-radius: var(--radius-sm);
+.gl-app .source-comp-hero { border: 1px solid var(--neon-cyan);
       background: linear-gradient(180deg, rgba(78,224,255,0.06), transparent);
       padding: 18px 20px 20px; margin: 6px 0 22px; }
 .gl-app .source-comp-hero-kicker { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
@@ -2517,7 +2644,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .gl-app .meth-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
 .gl-app .meth-legend-key { display: inline-flex; align-items: center; gap: 5px;
       font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-secondary); }
-.gl-app .meth-legend-swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.gl-app .meth-legend-swatch { width: 12px; height: 12px; display: inline-block; }
 .gl-app .meth-metric { margin: 10px 0; }
 .gl-app .meth-metric-title { font-family: var(--font-serif); font-style: italic; font-size: 12px;
       color: var(--text-tertiary); margin-bottom: 4px; }
@@ -2549,7 +2676,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .gl-app .meth-caveats { margin: 18px 0 0; padding: 12px 16px; border: 1px solid var(--neon-amber);
       background: var(--bg-secondary); max-width: 860px; }
 .gl-app .meth-caveats-title { font-family: var(--font-sans); font-size: 12px; font-weight: 700;
-      letter-spacing: 0.06em; text-transform: uppercase; color: var(--neon-amber); margin-bottom: 6px; }
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-gold); margin-bottom: 6px; }
 .gl-app .meth-caveats ul { margin: 0; padding-left: 18px; }
 .gl-app .meth-caveats li { font-family: var(--font-serif); font-size: 13px; line-height: 1.5;
       color: var(--text-secondary); margin: 4px 0; }
@@ -2577,7 +2704,6 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
       max-width: 90vw;
       background: var(--bg-secondary);
       border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
       box-shadow: var(--shadow-card-hover);
       padding: 12px 14px;
       font-family: var(--font-sans);
@@ -2607,7 +2733,6 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
       font-size: 10.5px;
       background: var(--bg-primary);
       border: 1px solid var(--border-light);
-      border-radius: 2px;
       padding: 6px 8px;
       margin-top: 8px;
       white-space: pre-wrap;
@@ -2623,7 +2748,6 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
     .glossary-card {
       border: 1px solid var(--border-light);
       background: var(--bg-secondary);
-      border-radius: var(--radius-sm);
       padding: 10px 12px;
       margin-bottom: 10px;
       scroll-margin-top: 80px; }
@@ -2697,8 +2821,9 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .gl-tip-term { font-family: var(--font-retro-mono); font-weight: 700; font-size: 12px;
   color: var(--text-primary); margin-bottom: 3px; }
 .gl-tip-def { color: var(--text-secondary); }
-.gl-tip-link { display: inline-block; margin-top: 6px; font-family: var(--font-retro-mono);
-  font-size: 10px; color: var(--accent-cyan); text-decoration: none; }
+/* DELETED 2026-08-05: .gl-tip-link. eephus-gl.js builds the hover tooltip from
+   .gl-tip-term + .gl-tip-def only; the planned "open the glossary" link inside
+   the tip was never wired, so this styled nothing. */
 .gl-srdef { position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -2727,7 +2852,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .egfx-select { font-family: var(--font-retro-mono); font-size: 12px; color: var(--text-primary);
   background: var(--bg-secondary); border: 1px solid var(--border); padding: 3px 6px; }
 .egfx-accents { display: inline-flex; gap: 6px; }
-.egfx-accent { width: 18px; height: 18px; border-radius: 50%; border: 2px solid transparent;
+.egfx-accent { width: 18px; height: 18px; border: 2px solid transparent;
   cursor: pointer; padding: 0; }
 .egfx-accent.is-active { border-color: var(--text-primary); }
 .egfx-preview { display: flex; align-items: center; justify-content: center; min-height: 200px;
@@ -2743,7 +2868,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .egfx-chip-glyph { margin-right: 5px; opacity: .8; }
 .egfx-flash { position: absolute; bottom: 64px; left: 50%; transform: translateX(-50%);
   background: var(--text-primary); color: var(--bg-primary); font-family: var(--font-retro-mono);
-  font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 4px; opacity: 0;
+  font-size: 11px; font-weight: 700; padding: 6px 12px; opacity: 0;
   pointer-events: none; transition: opacity .2s; }
 .egfx-flash.is-show { opacity: 1; }
 
@@ -2818,7 +2943,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .position-usage-chip {
   display: inline-flex; align-items: baseline; gap: 1px;
   padding: 2px 6px; border: 1px solid var(--border-light);
-  background: var(--bg-secondary); border-radius: 3px;
+  background: var(--bg-secondary);
   font-family: var(--font-mono); font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -2859,7 +2984,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   position: absolute; top: -7px; transform: translateX(-50%);
   font-family: var(--font-mono); font-size: 11px; font-weight: 800;
   background: var(--bg-primary); border: 1px solid var(--border);
-  padding: 1px 5px; border-radius: 999px; color: var(--text-primary);
+  padding: 1px 5px; color: var(--text-primary);
 }
 .mlbp-slider-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; text-align: right; }
 /* projection fan chart */
@@ -2888,7 +3013,7 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   padding: 7px 13px; border-left: 1px solid var(--border);
 }
 .hub-chip:first-child { border-left: none; }
-.hub-chip .hub-glyph { color: var(--accent-gold); font-weight: 700; }
+.hub-chip .hub-glyph { color: var(--text-gold); font-weight: 700; }
 .hub-chip .hub-note {
   font-size: 10px; font-weight: 600; letter-spacing: .03em;
   color: var(--text-tertiary); text-transform: lowercase;
@@ -3086,7 +3211,6 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   box-sizing: border-box;
   padding: 8px 12px 8px 16px;
   border: 1px solid var(--border, rgba(128,128,128,.25));
-  border-radius: 4px;
   /* BUGFIX 2026-08-03: this was var(--panel-bg, var(--card-bg, transparent))
      and NEITHER token has ever been defined in this stylesheet, so both boards
      fell through to `transparent` and their rows sat directly on the grain
@@ -3109,7 +3233,6 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
   position: absolute;
   left: 0; top: 0; bottom: 0;
   width: 4px;
-  border-radius: 4px 0 0 4px;
   background: var(--org-color, var(--accent, currentColor));
   transition: width .12s ease, box-shadow .12s ease;
 }
@@ -3131,12 +3254,16 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .mlb-card > .mlb-tape { grid-column: 1 / -1; grid-row: 2; min-width: 0; align-self: start; }
 .mlb-card > *:not(.mlb-tape) { grid-row: 1; min-width: 0; }
 
-/* Rank chip, the PROSPX diamond read as a circle for the MLB boards (these are
-   not prospect ranks and should not borrow the prospect glyph). */
+/* Rank chip: NOT the PROSPX diamond, because these are not prospect ranks and
+   should not borrow the prospect glyph. It was authored as a circle
+   (border-radius: 50%), which the site-wide sharpener has always squared, so
+   what actually ships is a 34px box; the dead declaration went with the
+   2026-08-05 sweep. The distinction from the diamond still holds - .ff-rank
+   below is the rotated one - it is just square vs diamond, not round vs
+   diamond. */
 .mlb-rank {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 34px; height: 34px; padding: 0 6px;
-  border-radius: 50%;
   border: 1px solid var(--border, rgba(128,128,128,.3));
   font-family: var(--font-retro-mono, ui-monospace, monospace);
   font-variant-numeric: tabular-nums;
@@ -3154,7 +3281,7 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
                   overflow-x: auto; padding-top: 6px; }
 .mlb-chip {
   flex: 1 1 0; min-width: 0;
-  border-radius: 3px; padding: 3px 6px;
+  padding: 3px 6px;
   border: 1px solid var(--border, rgba(128,128,128,.22));
   font-family: var(--font-retro-mono, ui-monospace, monospace);
   font-variant-numeric: tabular-nums; font-size: 11.5px; text-align: center;
@@ -3331,7 +3458,7 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .ff-sortbar [role="button"], .mlb-sortbar [role="button"] {
   font: 600 11px/1 var(--font-retro-mono, monospace);
   padding: 5px 8px;
-  border: 1px solid var(--border); border-radius: 4px;
+  border: 1px solid var(--border);
   background: var(--bg-secondary); color: var(--text-secondary);
   cursor: pointer; user-select: none; white-space: nowrap;
 }
@@ -3549,7 +3676,7 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 /* Rail sparkline as a link to the $/WAR by winter view (#view=dpw). It is a real
    button: hover cue, keyboard focus ring, and an explicit destination label -
    a chart that silently navigates is a trap. */
-.fa-app .fa-dpw-link { display: block; cursor: pointer; border-radius: 3px; }
+.fa-app .fa-dpw-link { display: block; cursor: pointer; }
 .fa-app .fa-dpw-link:hover { background: var(--bg-tertiary); }
 .fa-app .fa-dpw-link:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
 .fa-app .fa-dpw-cue {
@@ -3602,7 +3729,7 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
     grid-template-columns: none !important; opacity: 1;
   }
   .fa-app .mlb-card-head [role="button"], .proj-app .mlb-card-head [role="button"] {
-    padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px;
+    padding: 5px 8px; border: 1px solid var(--border);
     color: var(--text-secondary);
   }
 }

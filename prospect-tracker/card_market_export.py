@@ -53,6 +53,17 @@ URLs or per-listing anything. `load_comps` already drops the local-only fields,
 and test_card_market asserts the absence on the built payload. Raw comps stay in
 prospects.db (gitignored) forever.
 
+WHY THE BOARD IS EMPTY, PUBLISHED
+---------------------------------
+`meta.ingest` states which of two very different things a zero-priced board
+means: nothing has been ingested yet (honest, and the state /cards/ shipped in),
+or the ingest RAN and understood nothing (a parser regression). parse_sold_html
+is deliberately built to yield zero rows on layout drift, which makes those two
+byte-identical in the comp store, so the counters that separate them ride into
+the payload and the second case files an ingest-health RED through
+bullpen_export._ingest_red. Counts and our own ingest dates only: no sale price,
+no sale date, nothing that would smuggle a comp in as diagnostics.
+
 ONE eFV BASIS
 -------------
 Every eFV read goes through fantasy_export._board_grade, which is
@@ -317,6 +328,163 @@ def signal_for(gap):
     return "hold"
 
 
+# ── ingest state: why is this board empty? ──────────────────────────────────
+# THE DISTINCTION THIS SECTION EXISTS FOR. Until 2026-08-05 the /cards/ board
+# served 40 tracked cards and 0 priced, forever, because card_prices_ingest had
+# no scheduled caller anywhere: run_monthly ran only the export, and the
+# EEPHUS_CARD_SCRAPE flag armed a scraper nothing invoked. The board looked
+# exactly the way it will look on the night the parser breaks.
+#
+# Those two are not the same thing and must never publish the same way:
+#
+#   "no comps yet"        nothing has been ingested. Legitimate, honest, and the
+#                         state the page already states in words.
+#   "ran and parsed none" the scrape fetched pages and understood zero sales.
+#                         parse_sold_html is BUILT to yield nothing on layout
+#                         drift (that is its whole design, chosen over a
+#                         selector parse that would yield plausible garbage), so
+#                         this is the expected shape of a marketplace redesign,
+#                         and it must be loud rather than quiet.
+#
+# The loud half of parse_sold_html currently lives in a log line, and a log line
+# on a nightly box is not a signal anybody sees. So the counters ride into the
+# artifact, and the second case files an ingest-health RED through the sanctioned
+# bullpen_export path.
+#
+# A batch this size or larger that parsed nothing at all is drift, not a quiet
+# market: forty tracked cards do not go simultaneously silent, and three is the
+# smallest batch where "every single one had no sales" stops being plausible.
+PARSE_REGRESSION_MIN_CARDS = 3
+# How long the store may go without a new row before the page says so. Longer
+# than the 7-day long-tail cadence and shorter than the 45-day index window, so
+# it fires while the index is still computable rather than after it has already
+# gone null.
+STALE_INGEST_DAYS = 14
+
+INGEST_STATES = {
+    "no_comps_yet": (
+        "No comps have been ingested yet, so every index is null by construction. "
+        "This is the honest empty state, not a failure."),
+    "ingest_ran_empty": (
+        "An ingest ran and stored nothing. Too few pages were read to call it a "
+        "parser regression, so it is reported rather than flagged."),
+    "parse_regression": (
+        "The scrape fetched pages and parsed ZERO sales from all of them. The "
+        "parser is built to yield nothing on layout drift, so this is a parser "
+        "regression until proven otherwise, not a quiet market."),
+    "drop_parse_empty": (
+        "The newest CSV drop parsed zero usable rows. That is a column-contract "
+        "break, not an empty market; see docs/diamond-cards.md section 3."),
+    "stale": (
+        f"Comps are on file but nothing new has been stored in {STALE_INGEST_DAYS} "
+        "days. The scheduled ingest is not reaching the store."),
+    "ok": "Comps are being ingested on schedule.",
+}
+
+# The states that mean SOMETHING BROKE, as opposed to the ones that mean nothing
+# has happened yet. Only these file a RED, because an ingest-health line that
+# fires on the honest empty state teaches everyone to ignore it.
+INGEST_RED_STATES = ("parse_regression", "drop_parse_empty")
+
+
+def _ingest_red(source: str, message: str) -> None:
+    """File a card-ingest failure into the ingest-health RED ledger.
+
+    Reuses bullpen_export._ingest_red rather than growing a third mechanism: it
+    is the sanctioned template from the 2026-08-05 silent-empty sweep, and it
+    already carries the "reporting must never break a board" posture. Imported
+    lazily so this module never pays for bullpen_export's feed_cache import on a
+    build that has no ingest news to file."""
+    try:
+        from bullpen_export import _ingest_red as _red
+        _red(source, message)
+    except Exception:                      # noqa: BLE001 - reporting never breaks a board
+        log.debug("card market: could not file the ingest anomaly for %s", source,
+                  exc_info=True)
+
+
+def ingest_state(store: dict | None = None, scrape: dict | None = None,
+                 drops: dict | None = None, armed: bool = False,
+                 today: date | None = None) -> dict:
+    """Classify why the store looks the way it does. Pure function of its inputs.
+
+    Ordered most-diagnostic first: a parse regression outranks an empty store,
+    because when both are true the regression is the thing that needs fixing and
+    the empty store is only its symptom."""
+    today = today or date.today()
+    store = store or {}
+    drops = drops or {}
+    n_comps = int(store.get("comps") or 0)
+    last_in = store.get("last_ingest_on")
+    days_since = None
+    if last_in:
+        try:
+            days_since = (today - date.fromisoformat(str(last_in)[:10])).days
+        except ValueError:
+            days_since = None
+
+    fetched = int((scrape or {}).get("cards_fetched") or 0)
+    parsed = int((scrape or {}).get("rows_parsed") or 0)
+    drop_files = int(drops.get("files") or 0)
+    drop_last_parsed = drops.get("last_rows_parsed")
+
+    if fetched >= PARSE_REGRESSION_MIN_CARDS and parsed <= 0:
+        state = "parse_regression"
+    elif drop_files and drop_last_parsed is not None and int(drop_last_parsed) <= 0:
+        state = "drop_parse_empty"
+    elif n_comps <= 0:
+        # Nothing on file. Whether that is honest depends entirely on whether
+        # anything ever tried: a store that has never been written to is the
+        # designed initial state, a store that something wrote nothing into is a
+        # different sentence and gets a different one.
+        state = "no_comps_yet" if (scrape is None and not drop_files) else "ingest_ran_empty"
+    elif days_since is not None and days_since > STALE_INGEST_DAYS:
+        state = "stale"
+    else:
+        state = "ok"
+
+    out = {
+        "state": state,
+        "why": INGEST_STATES[state],
+        "red": state in INGEST_RED_STATES,
+        "scrape_armed": bool(armed),
+        "comps_on_file": n_comps,
+        "cards_with_comps": int(store.get("cards") or 0),
+        "last_ingest_on": last_in,
+        "days_since_ingest": days_since,
+        "parse_regression_min_cards": PARSE_REGRESSION_MIN_CARDS,
+        "drops": {
+            "files": drop_files,
+            "rows_parsed": int(drops.get("rows_parsed") or 0),
+            "rows_stored": int(drops.get("rows_stored") or 0),
+            "last_rows_parsed": drop_last_parsed,
+            "last_ingested_on": drops.get("last_ingested_on"),
+        },
+        # None means no scrape has EVER run on this box, which is itself the
+        # answer to "why is the board empty" and reads better than zeros.
+        "last_scrape": dict(scrape) if scrape else None,
+    }
+    return out
+
+
+def collect_ingest_facts(con=None, today: date | None = None) -> dict:
+    """Read the ingest facts out of the comp store and classify them.
+
+    Best-effort in the module's house style: an unreadable store must not stop
+    the export, so a failure here publishes an explicitly unknown state rather
+    than an implicitly healthy one."""
+    try:
+        store = ci.store_health(con=con)
+        scrape = ci.last_scrape_run(con=con)
+        drops = ci.drop_health(con=con)
+    except Exception:
+        log.exception("card market: ingest ledger unreadable")
+        return {"state": "unknown", "red": False, "scrape_armed": False,
+                "why": ("The ingest ledger could not be read, so no claim is made "
+                        "about why the board looks the way it does.")}
+    return ingest_state(store, scrape, drops, armed=ci.scrape_enabled(), today=today)
+
+
 # ── payload ─────────────────────────────────────────────────────────────────
 DISCLAIMER = {
     "screen": ("This is a screen, not investment advice and not a validated "
@@ -421,9 +589,13 @@ def record_history(rows, as_of: date, con=None) -> int:
 
 def build_payload(watchlist: dict, comps_by_card: dict, xfv: dict | None = None,
                   ts: dict | None = None, as_of: date | None = None,
-                  history: dict | None = None) -> dict:
+                  history: dict | None = None, ingest: dict | None = None) -> dict:
     """The served payload. Pure function of its inputs so the tests can build it
-    from fixtures with no DB and no artifacts."""
+    from fixtures with no DB and no artifacts.
+
+    `ingest` is the ingest_state() block. It stays a parameter rather than a DB
+    read so this function keeps no side channel: a caller with no ledger to
+    report publishes null, which says "no claim made", not "healthy"."""
     as_of = as_of or date.today()
     season = as_of.year
     by_player = (xfv or {}).get("by_player") if isinstance(xfv, dict) else {}
@@ -514,6 +686,12 @@ def build_payload(watchlist: dict, comps_by_card: dict, xfv: dict | None = None,
             "min_comps": MIN_COMPS,
             "watchlist_generated_at": watchlist.get("generated_at"),
             "raw_comps_published": False,
+            # WHY the board looks the way it does. n_priced = 0 has two very
+            # different causes and this block is the only place the page can
+            # tell them apart; see the ingest-state section above. Counts and
+            # our own ingest dates only - no sale date, no price, nothing that
+            # would make this a comp in disguise.
+            "ingest": ingest,
         },
         "cards": rows,
     }
@@ -575,10 +753,11 @@ def export(out_path: Path | str | None = None, as_of: date | None = None,
     except Exception:
         log.exception("card market: index history unreadable")
         hist = {}
+    ingest = collect_ingest_facts(con=con, today=as_of)
     # No timeseries.json read: ETA is stamped onto the watchlist at build time,
     # which keeps this export off the 73MB parse and out of the OOM window.
     payload = build_payload(wl, comps, _load_json("xfv.json", d), None,
-                            as_of=as_of, history=hist)
+                            as_of=as_of, history=hist, ingest=ingest)
     try:
         record_history(payload["cards"], as_of, con=con)
         # index_history was read BEFORE today's row existed, so fold today in.
@@ -600,8 +779,30 @@ def export(out_path: Path | str | None = None, as_of: date | None = None,
     if write_eval:
         (d / EVAL_PATH.name).write_text(json.dumps(eval_stub(payload), indent=1) + "\n",
                                         encoding="utf-8")
-    log.info("card market: %d cards, %d priced -> %s",
-             payload["meta"]["n_cards"], payload["meta"]["n_priced"], p)
+    log.info("card market: %d cards, %d priced -> %s (ingest: %s)",
+             payload["meta"]["n_cards"], payload["meta"]["n_priced"], p,
+             ingest.get("state"))
+    # FILED AFTER THE WRITE, DELIBERATELY. The index itself is descriptive and
+    # correct even when the tap is broken - what is wrong is the input, not the
+    # arithmetic - so the artifact is published first and the alarm raised
+    # second. Refusing to publish here would hide the very block that explains
+    # the problem. Same posture as bullpen_export.guard_nonempty_block: keep
+    # serving, make the failure visible.
+    if ingest.get("red"):
+        sc = ingest.get("last_scrape") or {}
+        if ingest["state"] == "parse_regression":
+            msg = (f"card scrape fetched {sc.get('cards_fetched')} pages on "
+                   f"{sc.get('ran_on')} and parsed 0 sales from all of them; the "
+                   f"parser yields nothing on layout drift, so treat this as a "
+                   f"marketplace redesign rather than a quiet market")
+            _ingest_red("card_scrape", msg)
+        else:
+            dr = ingest.get("drops") or {}
+            msg = (f"the newest CSV drop (ingested {dr.get('last_ingested_on')}) "
+                   f"parsed 0 usable rows out of {dr.get('files')} file(s) on "
+                   f"file; check the column contract in docs/diamond-cards.md")
+            _ingest_red("card_drops", msg)
+        log.error("card market: INGEST %s - %s", ingest["state"].upper(), msg)
     return payload
 
 
@@ -614,8 +815,10 @@ def main(argv=None) -> int:
                     help="also write data/card_market_eval.json (the pre-registration)")
     a = ap.parse_args(argv)
     p = export(a.out, write_eval=a.eval)
+    _ing = p["meta"].get("ingest") or {}
     print(json.dumps({"cards": p["meta"]["n_cards"], "priced": p["meta"]["n_priced"],
-                      "screen": p["screen"]}, indent=1))
+                      "screen": p["screen"], "ingest": _ing.get("state"),
+                      "ingest_why": _ing.get("why")}, indent=1))
     return 0
 
 

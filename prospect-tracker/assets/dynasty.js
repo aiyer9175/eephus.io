@@ -71,10 +71,12 @@
     var n = dcfg().previewRows || 25;
     return (rows || []).slice(0, n);
   }
+  // The conversion line is a LINK. It was plain text on every Diamond page, so
+  // the only route to the pricing page was the last item of a nav dropdown.
   function gateNote(total, shown) {
     if (!gated() || shown >= total) return "";
     return '<div class="dyn-note">Diamond preview: showing the top ' + shown + " of " +
-      total + " rows. Diamond funds the free site.</div>";
+      total + ' rows. <a class="dyn-name-link" href="/diamond/">Diamond funds the free site</a>.</div>';
   }
 
   // ---- helpers --------------------------------------------------------------
@@ -366,8 +368,10 @@
         "</td><td>" + esc(c.pos) + "</td><td>" + esc(c.eta) + '</td><td class="dyn-sc">' + grade + "</td></tr>";
     }).join("");
     return '<div class="dyn-note">Prospects close to the majors with fantasy upside. Stash before the call.</div>' +
-      '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table">' +
-      '<thead><tr><th class="dyn-nm">Prospect</th><th>Org</th><th>Pos</th><th>ETA</th><th>eFV</th></tr></thead><tbody>' +
+      '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table mlbstats-table">' +
+      '<thead><tr><th class="dyn-nm">Prospect</th><th>Org</th><th>Pos</th>' +
+      "<th>" + glossLbl({ label: "ETA", term: "eta" }) + "</th>" +
+      "<th>" + glossLbl({ label: "eFV", term: "xfv" }) + "</th></tr></thead><tbody>" +
       rows + "</tbody></table></div>" + gateNote(list.length, shown.length);
   }
 
@@ -404,7 +408,12 @@
       var v = keeperVerdict(d);
       var inWindow = (d.eta && season) ? ((Number(d.eta) - Number(season)) <= k.window) : null;
       return "<tr>" +
-        '<td class="dyn-rk">' + esc(d.rank) + "</td>" +
+        // .mlbstats-col-rank rather than .dyn-rk: site.css UNDOES the frozen
+        // first column on any .dyn-table whose first cell is .dyn-rk, because
+        // freezing a rank digit pins the number and scrolls the name away. The
+        // shared class on the header AND the cell is the module-side fix that
+        // rule asks for, and it pins the rank narrow with the NAME beside it.
+        '<td class="mlbstats-col-rank">' + esc(d.rank) + "</td>" +
         '<td class="dyn-nm">' + teamLogo(d.org) + " " + nameLink(d.mlbam, d.name) + "</td>" +
         "<td>" + esc(d.pos || "") + "</td>" +
         "<td>" + f0(d.efv) + "</td>" +
@@ -419,8 +428,10 @@
     return explain + form +
       '<div class="dyn-note">Edge is the pick you spend minus his board rank. Positive means the board ranks him ' +
       "ahead of what the keeper costs. Keep by is the earliest round where that flips positive.</div>" +
-      '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table">' +
-      '<thead><tr><th>#</th><th class="dyn-nm">Prospect</th><th>Pos</th><th>eFV</th><th>ETA</th>' +
+      '<div class="mlbstats-scroll dyn-tablewrap"><table class="dyn-table mlbstats-table">' +
+      '<thead><tr><th class="mlbstats-col-rank">#</th><th class="dyn-nm">Prospect</th><th>Pos</th>' +
+      "<th>" + glossLbl({ label: "eFV", term: "xfv" }) + "</th>" +
+      "<th>" + glossLbl({ label: "ETA", term: "eta" }) + "</th>" +
       "<th>Keep by</th><th>Verdict at R" + esc(k.round) + "</th></tr></thead><tbody>" + rows + "</tbody></table></div>" +
       gateNote(list.length, shown.length);
   }
@@ -593,10 +604,17 @@
     var m = new RegExp("(?:^#|[#&])" + key + "=(" + pat + ")(?:&|$)").exec(h || "");
     return m ? m[1] : null;
   }
+  // Returns TRUE when the hash it read was canonical. An invalid #section was
+  // already refused by the alternation, so the page rendered the default - but
+  // the ADDRESS BAR kept the bad value until the reader clicked a tab, so a
+  // shared link named a section that does not exist and the page disagreed with
+  // its own URL. An ALIASED section is not canonical either: "#section=board"
+  // resolves to dynasty and the URL should say dynasty.
   function readHash() {
     var h = location.hash || "";
     var s = hashParam(h, "section", SECTIONS.join("|"));
     if (s) S.section = SECTION_ALIAS[s] || s;
+    var canonical = (!s && /(?:^#|[#&])section=/.test(h)) ? false : !(s && SECTION_ALIAS[s]);
     var l = hashParam(h, "lens", LENSES.map(function (x) { return x.id; }).join("|"));
     if (l) {
       S.lens = l;
@@ -611,6 +629,7 @@
         SORT.dynasty.asc = (v.slice(i + 1) === "a");
       }
     }
+    return canonical;
   }
   function writeHash() {
     var parts = ["section=" + S.section];
@@ -625,7 +644,7 @@
   function onHashChange() {
     if (!S.data) return;
     if ((location.hash || "") === LAST_HASH) return;
-    readHash();
+    if (!readHash()) writeHash();
     syncTabs();
     renderSection();
   }
@@ -650,10 +669,14 @@
     var b = bannerEl();
     if (b) {
       var n = (d.sections.dynasty || []).length;
+      // The stage phrase is a link: it is the only conversion route the page
+      // carries outside the nav dropdown's last item.
       b.innerHTML = '<div class="dyn-asof">' + n + " prospects · eFV board grades · " +
-        esc(d.season || "") + " season · Diamond preview, free while we build</div>";
+        esc(d.season || "") +
+        ' season · <a class="dyn-name-link" href="/diamond/">Diamond preview</a>' +
+        ", free while we build</div>";
     }
-    readHash();
+    if (!readHash()) writeHash();
     wireTabs();
     syncTabs();
     renderSection();
@@ -694,7 +717,9 @@
     "@media (max-width:640px){.dyn-tablewrap{scrollbar-width:thin;scrollbar-color:var(--border) transparent;padding-bottom:4px}",
     ".dyn-tablewrap::-webkit-scrollbar{height:4px;display:block}",
     ".dyn-tablewrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}}",
-    ".dyn-table td.dyn-rk{color:var(--text-tertiary)}",
+    // The keeper table's rank cell carries the SHARED rank class now (see the
+    // note at its markup), so the muted colour is re-declared against it.
+    ".dyn-table td.mlbstats-col-rank{color:var(--text-tertiary)}",
     ".dyn-table td.dyn-sc{font-weight:700}",
     ".dyn-pos{color:var(--accent-green)}.dyn-neg{color:var(--accent-red)}",
     ".dyn-note{font-size:12.5px;color:var(--text-secondary);background:var(--bg-secondary);border:1px solid var(--border);padding:9px 12px;margin:8px 0}",

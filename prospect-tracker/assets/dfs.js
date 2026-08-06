@@ -69,10 +69,12 @@
     if (!gated()) return rows;
     return (rows || []).slice(0, dcfg().previewRows || 25);
   }
+  // The conversion line is a LINK. It was plain text on every Diamond page, so
+  // the only route to the pricing page was the last item of a nav dropdown.
   function gateNote(total, shown) {
     if (!gated() || shown >= total) return "";
     return '<div class="dfs-note">Diamond preview: showing the top ' + shown + " of " + total +
-      " rows. Diamond funds the free site.</div>";
+      ' rows. <a class="dfs-name-link" href="/diamond/">Diamond funds the free site</a>.</div>';
   }
 
   // ---- helpers --------------------------------------------------------------
@@ -94,6 +96,14 @@
   }
   function teamLogo(team) {
     return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo && team) ? EEPHUS_HUB.teamLogo(team) : "";
+  }
+  // Glossary term span. Slugs are checked against data/glossary.json before
+  // they are used: a [data-gl] whose slug is absent renders a term that looks
+  // interactive and defines nothing. The DFS vocabulary proper (salary, value,
+  // stack, ownership, slate) has no entry in the artifact, so only the two
+  // skill indices this board actually shows are wrapped.
+  function gl(label, slug) {
+    return '<span class="g-term" data-gl="' + esc(slug) + '">' + esc(label) + "</span>";
   }
   // Name key for joining a salary sheet to our pool. Lowercase, accents folded,
   // punctuation and generational suffixes dropped, so "Ronald Acuna Jr." and
@@ -281,6 +291,124 @@
     return ((S.data && S.data.players) || []).filter(function (p) { return p.side === side; });
   }
 
+  // ---- honesty signals ------------------------------------------------------
+  // dfs_export publishes four things about how much this payload can be
+  // trusted, and the client rendered NONE of them: the page looked identical
+  // whether today's build succeeded, was refused and replaced by yesterday's,
+  // or came out with a whole side of the slate missing. Each renderer below
+  // reads one of those keys and prints what it says. Nothing here recomputes a
+  // judgement the exporter already made.
+
+  // 1. stale_slate. refresh() refuses to overwrite a good payload with one it
+  //    cannot verify (dead schedule feed) or one that is structurally
+  //    impossible (games but no hitters). It restamps YESTERDAY's board with
+  //    stale_slate + the reason and files a RED ledger row. That was invisible
+  //    here: the reader got a full, confident board carrying another day's
+  //    date in a corner of the banner.
+  function staleBanner() {
+    var d = S.data || {};
+    if (!d.stale_slate) return "";
+    var when = d.slate_date ? esc(d.slate_date) : "an earlier";
+    return '<div class="dfs-stale" role="alert">' +
+      "<strong>This is the " + when + " slate, not today's.</strong>" +
+      "<span>" + esc(d.stale_reason ||
+        "Today's build could not be verified, so it was not published.") + "</span>" +
+      "<span>We kept the last board we could stand behind rather than publishing one we " +
+      "could not. Every projection below belongs to " + when + ", and salaries imported " +
+      "for a different date are dropped rather than applied to it.</span>" +
+      (d.stale_checked_at
+        ? '<span class="dfs-stale-when">Checked ' + esc(d.stale_checked_at) + ".</span>"
+        : "") +
+      "</div>";
+  }
+
+  // 2. integrity. The counts every join resolved, so a THIN board can be told
+  //    from a BROKEN one. On 2026-08-05 this page served 15 games, 29 players
+  //    and zero hitters and looked tidy; the counts are what would have said so
+  //    out loud. Rendered on the slate tab, where the boards they describe are.
+  function integrityPanel() {
+    var g = (S.data || {}).integrity;
+    if (!g) return "";
+    var m = g.matchup_orgs_resolved || {};
+    var exp = m.expected == null ? null : m.expected;
+    var off = m.offense_plus, pen = m.bullpen_plus;
+    var missing = g.orgs_without_hitters || [];
+    // A partial join is not a failure worth blocking a board over, but it is a
+    // fact a reader is entitled to: "23 of 30 clubs" is the number nobody would
+    // ever have seen otherwise.
+    var thin = (exp != null && ((off != null && off < exp) || (pen != null && pen < exp))) ||
+               missing.length > 0;
+    var cells =
+      kvChip("Hitters priced", g.n_hitters) +
+      kvChip("Starters priced", g.n_pitchers) +
+      kvChip("Probables announced", g.n_probables_announced) +
+      (exp == null ? "" : kvChip("Clubs with Offense+", off == null ? "-" : off + " of " + exp)) +
+      (exp == null ? "" : kvChip("Clubs with Bullpen+", pen == null ? "-" : pen + " of " + exp));
+    return '<div class="dfs-integrity' + (thin ? " is-thin" : "") + '">' +
+      '<div class="dfs-integrity-h">What this build resolved</div>' +
+      '<div class="dfs-integrity-row">' + cells + "</div>" +
+      (missing.length
+        ? '<div class="dfs-integrity-note">No hitter matched ' + missing.length +
+          " club" + (missing.length === 1 ? "" : "s") + " on the slate: " +
+          esc(missing.join(", ")) + ". Two lineups play every game, so those are joins " +
+          "that missed rather than clubs with nobody to price.</div>"
+        : "") +
+      (thin && !missing.length
+        ? '<div class="dfs-integrity-note">Some clubs have no measured team context, so ' +
+          "their matchup multiplier is sitting on a neutral fallback. The rows say which.</div>"
+        : "") +
+      "</div>";
+  }
+  function kvChip(label, value) {
+    if (value == null) return "";
+    return '<span class="dfs-kv"><span class="dfs-kv-l">' + esc(label) + "</span>" +
+      '<span class="dfs-kv-v">' + esc(value) + "</span></span>";
+  }
+
+  // 3. matchup_resolved, per row. Both team-context lookups fall back to a
+  //    neutral 100 when they miss, exactly as before - the PRICE does not move.
+  //    What the payload added is the ability to tell a MEASURED 100 from a
+  //    lookup that found nothing, and unmarked those two read identically.
+  function matchupMark(ctx) {
+    if (!ctx || ctx.matchup_resolved !== false) return "";
+    return ' <span class="dfs-unres" title="The opponent Offense+ / Bullpen+ lookup found ' +
+      "nothing for this club, so the matchup multiplier fell back to a neutral 100. That is " +
+      'a missing measurement, not an average opponent.">no matchup</span>';
+  }
+
+  // 4. empty_reason_kind. Six empties reach this page and they are not the same
+  //    claim: "the league scheduled no games" is a fact about baseball, "the
+  //    schedule feed did not answer" is a fact about our pipeline, and only one
+  //    of them means nothing is broken. The reason SENTENCE always comes from
+  //    the payload; this table only chooses the headline and the closing line
+  //    around it, and whether the box reads as an outage.
+  var EMPTY_KINDS = {
+    no_games_scheduled: { head: "No games today", bad: false,
+      tail: "Nothing is broken: the league did not schedule a slate. This page rebuilds every day." },
+    season_over: { head: "The season is over", bad: false,
+      tail: "The board comes back with the schedule." },
+    schedule_unavailable: { head: "We could not verify today's slate", bad: true,
+      tail: "That is our pipeline, not the league. The schedule feed did not answer, so we " +
+            "assert nothing about today rather than publish a guess about it." },
+    no_corpus: { head: "The projection corpus is missing", bad: true,
+      tail: "That is our pipeline. Nothing on the slate can be priced without it, and a board " +
+            "of blanks would be worse than saying so." },
+    no_projections: { head: "The slate is here, the projections are not", bad: false,
+      tail: "Games are scheduled, but nobody on them carries a rest-of-season projection yet. " +
+            "The board fills in on the next build." },
+    collapsed_slate: { head: "This board did not assemble", bad: true,
+      tail: "That is a broken join in our build, not a thin day. We would rather show you " +
+            "nothing than half a slate." }
+  };
+  function emptyPanel(d) {
+    var k = EMPTY_KINDS[d.empty_reason_kind] || null;
+    return '<div class="dfs-empty' + (k && k.bad ? " is-broken" : "") + '" role="status">' +
+      "<strong>" + esc(k ? k.head : "No slate to price") + "</strong>" +
+      "<span>" + esc(d.empty_reason || "") + "</span>" +
+      "<span>" + esc(k ? k.tail : "This page rebuilds every day.") + "</span>" +
+      "</div>";
+  }
+
   // ---- boards ---------------------------------------------------------------
   var PIT_COLS = [
     { key: "rank", label: "#" },
@@ -291,7 +419,7 @@
     { key: "opp", label: "Opponent", text: true },
     { key: "ip", label: "IP", num: true },
     { key: "k", label: "K", num: true },
-    { key: "sem_plus", label: "SEM+", num: true }
+    { key: "sem_plus", label: "SEM+", num: true, term: "sem_plus" }
   ];
   var HIT_COLS = [
     { key: "rank", label: "#" },
@@ -302,7 +430,7 @@
     { key: "start_rate", label: "Start", num: true },
     { key: "opp", label: "Opponent", text: true },
     { key: "opp_sp", label: "Opp SP", text: true },
-    { key: "hem_plus", label: "HEM+", num: true }
+    { key: "hem_plus", label: "HEM+", num: true, term: "hem_plus" }
   ];
   function cellOf(p, key) {
     var line = p.line || {}, ctx = p.ctx || {};
@@ -326,6 +454,9 @@
     if (key === "name") return teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) +
       ' <span class="dfs-elig">' + esc(eligOf(p).join("/")) + "</span>";
     if (v == null || v === "") return "-";
+    // The opponent cell is where the matchup multiplier is legible, so it is
+    // where an unresolved lookup gets said out loud.
+    if (key === "opp") return esc(v) + matchupMark(p.ctx);
     if (key === "salary") return money(v);
     if (key === "value") return num(v, 2);
     if (key === "start_rate") return Math.round(v * 100) + "%";
@@ -372,19 +503,28 @@
     var board = side === "pit" ? "pitchers" : "hitters";
     var head = cols.map(function (c) {
       var on = st.key === c.key;
-      return '<th' + (c.text ? ' class="dfs-l"' : "") + '><span role="button" tabindex="0" data-dfssort="' +
+      // .mlbstats-col-rank on BOTH the header and the cell. site.css keys the
+      // frozen-column rules off it: these boards lead with a rank digit rather
+      // than the player, so the shared "freeze :first-child" would pin the
+      // number and scroll the name away, which is the orphaning the freeze
+      // exists to prevent. With the class on both, the rank pins narrow at the
+      // left edge and the NAME pins beside it.
+      var cls = c.key === "rank" ? "mlbstats-col-rank" : (c.text ? "dfs-l" : "");
+      return "<th" + (cls ? ' class="' + cls + '"' : "") +
+        '><span role="button" tabindex="0" data-dfssort="' +
         esc(c.key) + '" data-dfsboard="' + board + '" aria-sort="' +
         (on ? (st.asc ? "ascending" : "descending") : "none") + '">' +
-        esc(c.label) + (on ? (st.asc ? " ▴" : " ▾") : "") + "</span></th>";
+        (c.term ? gl(c.label, c.term) : esc(c.label)) +
+        (on ? (st.asc ? " ▴" : " ▾") : "") + "</span></th>";
     }).join("");
     var body = sorted.map(function (p, i) {
       return "<tr>" + cols.map(function (c) {
-        if (c.key === "rank") return '<td class="dfs-rk">' + (i + 1) + "</td>";
+        if (c.key === "rank") return '<td class="mlbstats-col-rank">' + (i + 1) + "</td>";
         return '<td' + (c.text ? ' class="dfs-l"' : "") + ">" + fmtCell(p, c.key) + "</td>";
       }).join("") + "</tr>";
     }).join("");
     return methodNote(side) +
-      '<div class="dfs-scroll"><table class="dfs-table"><thead><tr>' + head +
+      '<div class="dfs-scroll mlbstats-scroll"><table class="dfs-table mlbstats-table"><thead><tr>' + head +
       "</tr></thead><tbody>" + body + "</tbody></table></div>" +
       gateNote(total, sorted.length);
   }
@@ -424,10 +564,10 @@
     var total = priced.length;
     var shown = capRows(priced);
     var rows = shown.map(function (p, i) {
-      return '<tr><td class="dfs-rk">' + (i + 1) + '</td><td class="dfs-l">' +
+      return '<tr><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="dfs-l">' +
         teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) +
         ' <span class="dfs-elig">' + esc(eligOf(p).join("/")) + "</span></td><td>" +
-        esc((p.is_home ? "vs " : "@ ") + (p.opp || "")) + "</td><td>" + num(ptsOf(p), 1) +
+        esc((p.is_home ? "vs " : "@ ") + (p.opp || "")) + matchupMark(p.ctx) + "</td><td>" + num(ptsOf(p), 1) +
         "</td><td>" + money(salaryOf(p)) + "</td><td>" + num(valueOf(p), 2) + "</td><td>" +
         (p.side === "hit" && p.start_rate != null ? Math.round(p.start_rate * 100) + "%" : "-") +
         "</td></tr>";
@@ -436,7 +576,8 @@
       '<div class="dfs-note">Projected points per thousand dollars of salary, over every player you have a ' +
       "price for. Projections are ours; salaries are yours. A high value score on a low start rate is a bench " +
       "bat who happens to be cheap, not a play.</div>" +
-      '<div class="dfs-scroll"><table class="dfs-table"><thead><tr><th>#</th>' +
+      '<div class="dfs-scroll mlbstats-scroll"><table class="dfs-table mlbstats-table">' +
+      '<thead><tr><th class="mlbstats-col-rank">#</th>' +
       '<th class="dfs-l">Player</th><th>Game</th><th>Proj</th>' +
       "<th>Salary</th><th>Pts/$1k</th><th>Start</th></tr></thead><tbody>" + rows +
       "</tbody></table></div>" + gateNote(total, shown.length);
@@ -463,6 +604,10 @@
       var p0 = lst[0] || {};
       return {
         team: tm, opp: p0.opp, is_home: p0.is_home,
+        // The whole stack shares one opponent, so it shares one matchup
+        // resolution: carrying p0's ctx through is what lets the Opp index cell
+        // say whether that index was measured or fell back to a neutral 100.
+        ctx: p0.ctx || null,
         opp_sp: (p0.ctx || {}).opp_sp, opp_pitch: (p0.ctx || {}).opp_pitch,
         pts4: sum(top4, ptsOf), pts5: sum(top5, ptsOf),
         sal4: sal4, names: top4.map(function (p) { return p.name; })
@@ -470,9 +615,9 @@
     }).sort(function (a, b) { return b.pts4 - a.pts4; });
     var shown = capRows(rows);
     var body = shown.map(function (r, i) {
-      return '<tr><td class="dfs-rk">' + (i + 1) + '</td><td class="dfs-l">' + teamLogo(r.team) + " " +
+      return '<tr><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="dfs-l">' + teamLogo(r.team) + " " +
         esc(r.team) + "</td><td>" + esc((r.is_home ? "vs " : "@ ") + (r.opp || "")) + "</td><td>" +
-        esc(r.opp_sp || "TBD") + "</td><td>" + num(r.opp_pitch, 0) + "</td><td>" + num(r.pts4, 1) +
+        esc(r.opp_sp || "TBD") + "</td><td>" + num(r.opp_pitch, 0) + matchupMark(r.ctx) + "</td><td>" + num(r.pts4, 1) +
         "</td><td>" + num(r.pts5, 1) + "</td><td>" + (r.sal4 ? money(r.sal4) : "-") +
         '</td><td class="dfs-l">' + esc(r.names.join(", ")) + "</td></tr>";
     }).join("");
@@ -480,7 +625,8 @@
       "with the arm they face and that opponent's innings-weighted pitching index (lower is easier). This is a " +
       "SUM of independent per-player projections. The correlation that makes a stack worth building is real and " +
       "we do not model it, so read this as a shortlist of good spots, not as a stack projection.</div>" +
-      '<div class="dfs-scroll"><table class="dfs-table"><thead><tr><th>#</th>' +
+      '<div class="dfs-scroll mlbstats-scroll"><table class="dfs-table mlbstats-table">' +
+      '<thead><tr><th class="mlbstats-col-rank">#</th>' +
       '<th class="dfs-l">Club</th><th>Game</th><th>Opp SP</th>' +
       "<th>Opp index</th><th>Top 4</th><th>Top 5</th><th>Top 4 salary</th>" +
       '<th class="dfs-l">Bats</th></tr></thead><tbody>' + body + "</tbody></table></div>" +
@@ -789,7 +935,7 @@
       "<span><b>" + money(cap - res.salary) + "</b> left</span>" +
       "<span>" + res.pool + " players in the pool</span></div>";
     return head + summary +
-      '<div class="dfs-scroll"><table class="dfs-table"><thead><tr><th>Slot</th>' +
+      '<div class="dfs-scroll mlbstats-scroll"><table class="dfs-table mlbstats-table"><thead><tr><th>Slot</th>' +
       '<th class="dfs-l">Player</th><th>Game</th>' +
       "<th>Proj</th><th>Salary</th><th>Pts/$1k</th></tr></thead><tbody>" + rows +
       "</tbody></table></div>";
@@ -830,13 +976,12 @@
         'needs the projected pool to solve over. <button type="button" id="dfs-retry" ' +
         'class="dfs-btn">Retry</button></div>';
     } else if (d.empty_reason) {
-      html = '<div class="dfs-empty" role="status"><strong>No slate to price.</strong><span>' +
-        esc(d.empty_reason) + "</span><span>This page rebuilds every day. Nothing is broken.</span></div>";
+      html = emptyPanel(d);
     } else if (S.section === "value") html = renderValue();
     else if (S.section === "stacks") html = renderStacks();
     else if (S.section === "optimizer") html = renderOptimizer();
     else {
-      html = renderSlate() +
+      html = renderSlate() + integrityPanel() +
         '<h3 class="dfs-h">Probable starters</h3>' + renderBoard("pit") +
         '<h3 class="dfs-h">Hitters</h3>' + renderBoard("hit");
     }
@@ -844,6 +989,10 @@
     // page none, so the contest-format selector rides at the top of the
     // section when there is nowhere else to put it.
     if (!scoringBar() && !d.empty_reason && !S.error) html = selectorHTML() + html;
+    // The stale banner rides ABOVE everything, on every tab including the
+    // optimizer and the empty states. A kept slate is a fact about every number
+    // under it, not a footnote on one board.
+    if (!S.error) html = staleBanner() + html;
     r.innerHTML = html;
     var rb = r.querySelector("#dfs-retry");
     if (rb) rb.addEventListener("click", boot);
@@ -995,6 +1144,11 @@
     var m = new RegExp("(?:^#|[#&])" + key + "=(" + pat + ")(?:&|$)").exec(h || "");
     return m ? m[1] : null;
   }
+  // Returns TRUE when the hash was canonical. An invalid #section was already
+  // refused by the alternation, so the page rendered the default - but the
+  // address bar kept the bad value until the reader clicked a tab, so a shared
+  // link named a section that does not exist. An ALIASED section is not
+  // canonical either: "#section=pitchers" resolves to slate and should say so.
   function readHash() {
     var h = location.hash || "";
     var s = hashParam(h, "section", SECTIONS.join("|"));
@@ -1002,6 +1156,8 @@
     var sys = hashParam(h, "sys", "[A-Za-z0-9_]+");
     var known = ((S.data && S.data.scoring_catalog) || []).filter(function (c) { return c.id === sys; });
     if (sys && known.length) S.system = sys;
+    if (!s && /(?:^#|[#&])section=/.test(h)) return false;
+    return !(s && SECTION_ALIAS[s]);
   }
   function writeHash() {
     var parts = ["section=" + S.section];
@@ -1013,7 +1169,7 @@
   function onHashChange() {
     if (!S.data && !S.error) return;
     if ((location.hash || "") === LAST_HASH) return;
-    readHash();
+    if (!readHash()) writeHash();
     renderSelector(); syncTabs(); renderSection();
   }
   window.addEventListener("hashchange", onHashChange);
@@ -1026,7 +1182,8 @@
   function errorState(msg) {
     S.error = String(msg || "the payload did not load");
     S.data = null;
-    readHash(); wireTabs(); syncTabs(); renderSection();
+    if (!readHash()) writeHash();
+    wireTabs(); syncTabs(); renderSection();
   }
   function onData(d) {
     S.error = null;
@@ -1040,11 +1197,15 @@
     if (!S.system && def) S.system = def.id;
     var b = bannerEl();
     if (b) {
+      // The stage phrase is the page's only conversion route, so it is a link.
       b.innerHTML = '<div class="dfs-asof">' + esc(S.data.slate_date || "") + " · " +
         (S.data.n_games || 0) + " games · " + (S.data.n_players || 0) +
-        " players priced · Diamond preview, free while we build</div>";
+        ' players priced · <a class="dfs-name-link" href="/diamond/">Diamond preview</a>' +
+        ", free while we build" +
+        (S.data.stale_slate ? ' · <span class="dfs-stale-chip">kept slate</span>' : "") +
+        "</div>";
     }
-    readHash();
+    if (!readHash()) writeHash();
     renderSelector(); wireTabs(); syncTabs(); renderSection();
     if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
       EEPHUS_HUB.links().then(function (L) { LINKS = L || null; renderSection(); });
@@ -1064,12 +1225,25 @@
   css.textContent = [
     // Wide boards scroll inside their own box. The nine-column slate and stacks
     // tables were pushing the whole document sideways at phone widths.
+    // THE SHARED DIALECT. Every board also carries .mlbstats-scroll /
+    // .mlbstats-table so it inherits the site-wide sticky header and the frozen
+    // identity column out of assets/site.css. These tables sit on the page
+    // background, which is the fill those rules already use, so nothing needs
+    // correcting here beyond the rank-class rename noted further down.
     ".dfs-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}",
     ".dfs-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}",
     ".dfs-table th{text-align:right;font:600 11px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border)}",
     ".dfs-table td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--border-light);color:var(--text-primary)}",
     ".dfs-table th.dfs-l,.dfs-table td.dfs-l{text-align:left}",
-    ".dfs-table td.dfs-rk{color:var(--text-tertiary)}",
+    // THE RANK CELL'S CLASS CHANGED. It used to be .dfs-rk; it is now the
+    // shared .mlbstats-col-rank, because site.css carries a rule that UNDOES
+    // the frozen first column on any .dfs-table whose first cell is .dfs-rk
+    // (freezing a rank digit pins the number and scrolls the name away).
+    // Stamping the shared rank class on the header AND the cell is the
+    // module-side fix that rule's comment asks for: the rank-rail rules take
+    // over, the digit pins narrow at the left edge and the NAME pins beside it.
+    // The muted colour is re-declared here so the rename costs nothing.
+    ".dfs-table td.mlbstats-col-rank{color:var(--text-tertiary)}",
     ".dfs-table th [role=button]{cursor:pointer}",
     ".dfs-elig{font:600 10px/1 var(--font-retro,monospace);color:var(--text-tertiary);border:1px solid var(--border);padding:1px 4px;margin-left:4px}",
     ".dfs-note{font-size:12.5px;color:var(--text-secondary);background:var(--bg-secondary);border:1px solid var(--border);padding:9px 12px;margin:8px 0}",
@@ -1077,6 +1251,27 @@
     ".dfs-ok{font-size:12.5px;color:var(--text-primary);background:var(--bg-secondary);border:1px solid var(--accent-green);padding:9px 12px;margin:8px 0}",
     ".dfs-empty{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--text-primary);background:var(--bg-secondary);border:1px solid var(--border);padding:20px;margin:12px 0}",
     ".dfs-empty span{font-size:12.5px;color:var(--text-secondary)}",
+    // An empty that is OUR fault reads as an outage; an empty that is baseball
+    // (no games, season over) keeps the plain border. Same box, two states,
+    // chosen off empty_reason_kind rather than off the sentence.
+    ".dfs-empty.is-broken{border-color:var(--accent-red)}",
+    // The kept-slate banner is the loudest thing on the page when it fires,
+    // because every number below it belongs to a different day.
+    ".dfs-stale{display:flex;flex-direction:column;gap:5px;border:2px solid var(--accent-gold);background:var(--bg-secondary);padding:12px 14px;margin:10px 0;color:var(--text-primary);font-size:13px}",
+    ".dfs-stale span{font-size:12.5px;color:var(--text-secondary)}",
+    ".dfs-stale-when{font-size:11px;color:var(--text-tertiary)}",
+    ".dfs-stale-chip{font:700 10px/1 var(--font-retro,monospace);border:1.5px solid var(--accent-gold);padding:2px 5px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-primary)}",
+    ".dfs-integrity{border:1px solid var(--border);background:var(--bg-secondary);padding:9px 12px;margin:8px 0}",
+    ".dfs-integrity.is-thin{border-left:3px solid var(--accent-gold)}",
+    ".dfs-integrity-h{font:600 11px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}",
+    ".dfs-integrity-row{display:flex;flex-wrap:wrap;gap:6px 14px}",
+    ".dfs-integrity-note{font-size:12px;color:var(--text-secondary);margin-top:6px}",
+    ".dfs-kv{display:inline-flex;flex-direction:column;gap:2px}",
+    ".dfs-kv-l{font:600 9px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em}",
+    ".dfs-kv-v{font:700 13px/1 var(--font-retro,monospace);color:var(--text-primary)}",
+    // The unresolved-matchup mark rides in a table cell, so it has to stay
+    // small and must never wrap the column wider than the value beside it.
+    ".dfs-unres{font:600 9px/1 var(--font-retro,monospace);color:var(--text-primary);border:1px solid var(--accent-gold);padding:1px 4px;white-space:nowrap;cursor:help}",
     ".dfs-error{border:1px solid var(--accent-red);padding:12px;color:var(--text-primary);background:var(--bg-secondary)}",
     ".dfs-asof{font-size:12px;color:var(--text-tertiary);margin:4px 0}",
     ".dfs-name-link{color:var(--accent-cyan);text-decoration:none}.dfs-name-link:hover{text-decoration:underline}",

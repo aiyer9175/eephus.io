@@ -3,9 +3,15 @@
 Module owner files: `card_prices_ingest.py`, `card_market_export.py`,
 `assets/cards.js`, `assets/cards.css`, `test_card_market.py`,
 `data/card_watchlist.json`. Page shell lives in `build_site.build_cards()`.
+Scheduling lives in `run_monthly` (steps `6g-pre` and `9f`) and
+`deploy/betting-crontab.example`.
 
 Read this before dropping comps, before enabling the scraper, and before
 anyone asks why the page will not quote a sale price.
+
+If you are here because the board shows 0 priced, go to **section 4b** (what is
+wired and what the operator still owns) and **section 4c** (`meta.ingest`, which
+says which kind of empty this is).
 
 ---
 
@@ -163,19 +169,159 @@ Owned by the module (`card_prices_ingest.CADENCE`), scheduled by the box:
 
 * `hot` entries (roughly the top twelve prospects plus the MLB tier): daily
 * everyone else: every 7 days
-* a full sweep must complete inside 60 days, because marketplaces expire their
-  own sold windows at 90 and an unseen comp is gone for good
+* a full sweep on Sundays (`full_sweep_weekday`), which must complete inside 60
+  days, because marketplaces expire their own sold windows at 90 and an unseen
+  comp is gone for good. The 7-day rule alone would also cover the tail, but it
+  spreads it across whichever nights each card happens to age out on, and that
+  makes "did the sweep actually complete" unanswerable. A weekday makes a missed
+  sweep one visible gap instead of a diffuse drift.
 
-Suggested box wiring (NOT wired into `run_monthly` by this lane; see the
-followups handed to the orchestrator):
+---
 
-    # daily tail, after the leaderboards step
-    python card_prices_ingest.py --drops
-    EEPHUS_CARD_SCRAPE=1 python card_prices_ingest.py --scrape --hot   # optional
-    python card_market_export.py
+## 4b. What is wired (2026-08-05), and what the box operator still owns
 
-    # weekly (Sunday), long tail
-    EEPHUS_CARD_SCRAPE=1 python card_prices_ingest.py --scrape
+Before this date **nothing called the ingest.** `run_monthly` step 6g ran only
+`card_market_export.export()`, no schedule anywhere invoked
+`card_prices_ingest`, and this file's own crontab example documented
+`EEPHUS_CARD_SCRAPE=1` while installing no card job. The flag armed a scraper
+that nothing ran, so `/cards/` served 40 tracked cards and 0 priced, forever,
+and the export was doing its job perfectly on an empty store.
+
+### The one entry point
+
+    python card_prices_ingest.py --scheduled
+
+`run_scheduled_ingest()` is what that calls, and it is the **only** thing the
+pipeline and the crontab invoke, so the two cannot drift apart about what the
+cadence is. It reads `CADENCE`, not its caller:
+
+1. ingest every `data/drops/card_comps_*.csv` (no network, always)
+2. pick tonight's scope: `full` on the sweep weekday, otherwise `hot`
+3. scrape the cards that are due under `due_cards`, but only when
+   `EEPHUS_CARD_SCRAPE=1` and only when that scope has not already been fetched
+   today
+
+**It is safe to call more than once a day**, which is what makes the pipeline
+step and the belt-and-braces cron entry legal side by side. Drops are already
+idempotent at the row level (`INSERT OR IGNORE` on `(card_id, listing_hash)`)
+and at the file level (`card_drop_files`); the scrape is guarded by the new
+`card_scrape_runs` table, whose primary key is `(ran_on, scope)`. A scope
+already fetched today is **skipped, not re-fetched**, so no marketplace sees the
+same page twice in a night no matter how many callers fire.
+
+**It no-ops safely with the flag unset**, which is the state of every box that
+has not edited `/etc/eephus.env`: the drop path runs, the scrape returns
+`enabled: false` with a stated reason, and nothing raises.
+
+### Where it runs now
+
+| where | step | what it does |
+|---|---|---|
+| `run_monthly` (monthly) | `6g-pre` | `run_scheduled_ingest()`, then existing `6g` exports |
+| `run_monthly` (daily tail) | `9f` | `run_scheduled_ingest()`, then `card_market_export.export()` |
+| `deploy/betting-crontab.example` | `40 6 * * *` | the same two commands, sourcing `/etc/eephus.env` |
+
+`9f` sits **after** `d9` on purpose. `d9` is `rebuild_only`, which re-runs
+`efv_export.regen_all`, so the talent side of the buy signal reads the same
+`data/xfv.json` the rest of the night's site serves. Running the card export
+before the regen would screen tonight's prices against yesterday's board.
+
+Monthly `6g` is deliberately left in place as well. It makes a bare
+`run_monthly.py` self-publish, and the chained daily re-exports about fifteen
+minutes later against the post-regen board, so the served file ends the night on
+the fresher inputs either way. The file is about forty rows; the duplicate write
+costs nothing worth engineering around.
+
+### What the box operator still owns
+
+Nothing in the tree can do these four:
+
+1. **Put `EEPHUS_CARD_SCRAPE=1` in `/etc/eephus.env`** (root-owned, chmod 600) if
+   scraping is wanted. Leaving it out is a supported configuration, not a broken
+   one: drops still ingest and the payload says the scraper was not armed.
+2. **Install the cron lines** from `deploy/betting-crontab.example`. The nightly
+   pipeline already runs the ingest, so this only covers nights the pipeline
+   does not run, exactly like the leaderboard-vintage line it sits next to.
+3. **Create `data/drops/`** and drop CSVs there if the drop path is being used.
+   The directory does not exist in a fresh checkout and `ingest_drops` logs and
+   returns rather than creating it, because an empty directory that silently
+   appears is indistinguishable from one somebody meant to fill.
+4. **Decide the watchlist.** Which parallel a player's market actually trades on
+   is a hobby judgement (section 2).
+
+Until at least one of (1) or (3) happens, `data/card_market.json` will keep
+reporting `meta.ingest.state = "no_comps_yet"`, which is the truth.
+
+---
+
+## 4c. Why the board is empty, published in the payload
+
+`meta.ingest` in `data/card_market.json` exists because **a zero-priced board
+has two completely different causes and they used to look identical**:
+
+* nothing has been ingested yet, which is honest and is the state `/cards/`
+  shipped in; and
+* the ingest **ran and understood nothing**, which is a parser regression.
+
+`parse_sold_html` is deliberately built to yield zero rows on layout drift
+(section 4: it requires both a price and a sale date in the same block, so a
+redesign produces nothing rather than plausible garbage). That design is right,
+and it is exactly what makes the two cases byte-identical in `card_comps`: both
+write no rows. So `scrape_cards` now counts `cards_fetched` next to
+`rows_parsed`, stamps both into `card_scrape_runs`, and
+`card_market_export.ingest_state()` publishes the verdict.
+
+| state | meaning | files a RED? |
+|---|---|---|
+| `no_comps_yet` | nothing has ever been ingested | no, this is honest |
+| `ingest_ran_empty` | something ran and stored nothing, but fewer than `PARSE_REGRESSION_MIN_CARDS` (3) pages were read, so it is not yet a parser claim | no |
+| `parse_regression` | 3 or more pages fetched, **zero** sales parsed from all of them | **yes** |
+| `drop_parse_empty` | the newest CSV drop parsed zero usable rows: a column-contract break | **yes** |
+| `stale` | comps on file but nothing new stored in 14 days: the schedule is not reaching the store | no |
+| `ok` | comps are being ingested on schedule | no |
+
+Three is the threshold because forty tracked cards do not go simultaneously
+silent, and three is the smallest batch where "every single one had no sales"
+stops being plausible. Fourteen days is longer than the 7-day long-tail cadence
+and shorter than the 45-day index window, so `stale` fires while the index is
+still computable rather than after it has already gone null.
+
+The two RED states file through **`bullpen_export._ingest_red`**, the sanctioned
+template from the 2026-08-05 silent-empty sweep, rather than a third mechanism.
+The RED is filed **after** the artifact is written, deliberately: the index
+arithmetic is correct even when the tap is broken (what is wrong is the input),
+and refusing to publish would hide the very block that explains the problem.
+Same posture as `guard_nonempty_block`: keep serving, make the failure visible.
+
+`card_scrape` and `card_drops` are deliberately **not** in
+`run_monthly.SCHEDULED_GRADE_SOURCES`. They write comps, not grade rows, and a
+source that is legitimately switched off would otherwise print
+`!!! INGEST RED` every single night until everyone stopped reading the line.
+The verdict is loud in three other places instead: an `ERROR` from
+`scrape_cards` the moment a whole batch parses nothing, an `ERROR` from the
+export and from daily step 9f, and two rows in the ingest-health table the
+pipeline prints at the end of every run.
+
+Those two rows (`run_monthly._record_card_ingest`) are **two and not one**
+on purpose. `ingest_drops` re-parses every drop file on every run, so a single
+CSV dropped in March would keep a combined row green forever and hide a scraper
+that died in April. Split, `card_scrape`'s `last OK` answers the only question
+worth asking of it: **when did the scraper last actually parse a sale.**
+
+Both key on **rows parsed, not rows stored**. A re-read of the same 90-day sold
+window stores zero new rows and is perfectly healthy, so keying on stored would
+report a working ingest as a failure every night after the first.
+
+A scrape that is not armed records `ok=False` with `EEPHUS_CARD_SCRAPE is not 1`
+as the message. That reads as loud, and it should: an unarmed scraper with no
+scheduled caller is precisely the condition that left this board at 0 priced for
+its whole first life while nothing anywhere said so.
+
+Nothing in this block is a comp. Counts, our own ingest dates, and a state name:
+no sale price, no sale date, no title, no listing id. `store_health()` exists
+alongside `store_stats()` for exactly this reason, and returns
+`last_ingest_on` where `store_stats` returns `first_sale` / `last_sale`, because
+a sale date is a raw fact this module does not publish even in aggregate.
 
 ---
 
@@ -300,20 +446,34 @@ from beyond a `source` string it does not publish.
 Fresh box, first run:
 
 1. `python card_prices_ingest.py --build-watchlist` (or accept the committed one)
-2. drop a CSV, or arm the scraper
-3. `python card_prices_ingest.py --drops`
-4. `python card_market_export.py`
+2. `mkdir -p data/drops` and drop a CSV, or put `EEPHUS_CARD_SCRAPE=1` in
+   `/etc/eephus.env` (or both)
+3. `python card_prices_ingest.py --scheduled`
+4. `python card_market_export.py` and read the `ingest` line it prints
 5. rebuild the site; `/cards/` reads `/data/card_market.json`
+
+Steps 3 and 4 are also what the nightly pipeline runs (steps `6g-pre` / `9f`) and
+what the crontab runs, so a hand run and a scheduled run do the same thing.
 
 Health checks:
 
 * `python card_prices_ingest.py --stats` prints comps, distinct cards, and the
-  first and last sale dates on file.
+  first and last sale dates on file. **Local only:** it reports sale dates, which
+  is why the export reads `store_health()` instead.
+* `python card_market_export.py` prints `meta.ingest.state` and its one-sentence
+  reason. **Start here.** It is the difference between "nothing has been
+  ingested" and "the scrape fetched pages and parsed nothing", and section 4c
+  has the full table.
 * `meta.n_priced` in the payload is the number of cards with an index today. If
-  it drops sharply, look at the ingest log for zero-row scrape warnings before
-  concluding anything about the market.
+  it drops sharply, read `meta.ingest` before concluding anything about the
+  market: `parse_regression` means the parser broke, not that the hobby went
+  quiet.
+* The ingest-health table the pipeline prints at the end of every run carries
+  `card_drops` and `card_scrape` rows whose `last OK` column answers "when did
+  this tap last actually work". `never` on a box that has been running for weeks
+  is the signal.
 * The page's empty state is deliberate and says where the data comes from. A
-  blank board means the export has not run; it does not mean the module is
+  blank board means no comps have been ingested; it does not mean the module is
   broken.
 
 Things that must stay true:
@@ -322,3 +482,9 @@ Things that must stay true:
 * no second eFV basis on this page
 * the screen label stays until a gate actually runs
 * the throttle floor stays at 5 seconds
+* the ingest has a scheduled caller. It did not for the module's whole first
+  life, and the symptom was a board that looked exactly like a healthy board
+  with a quiet market.
+* an empty board says WHICH kind of empty it is. `meta.ingest` is not
+  decoration; it is the only thing separating the honest state from a parser
+  regression that would otherwise look identical forever.

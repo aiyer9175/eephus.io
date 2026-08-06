@@ -1,6 +1,7 @@
-# eephus.io betting jobs. Install on the production box with `crontab -e`.
+# eephus.io betting + card jobs. Install on the production box with `crontab -e`.
 #
-# Two jobs, and only one of them costs anything. Times are the BOX's local
+# Three jobs, and only one of them costs API credits (the card job spends only
+# marketplace requests, throttled to one per 5s). Times are the BOX's local
 # clock; the close job reasons in UTC internally, so the box timezone does not
 # have to match Eastern. Confirm what the box thinks the time is (`date`) before
 # trusting these windows.
@@ -35,11 +36,47 @@ PY=/opt/eephus/venv/bin/python                 # <- the interpreter with the dep
 # Idempotent by design (first write wins), so running both is harmless.
 17 6 * * *  cd $EEPHUS && $PY leaderboard_vintages.py --snapshot >> logs/vintage.log 2>&1
 
+# --- Card comps: the ingest, then the index it summarizes -------------------
+# EEPHUS_CARD_SCRAPE lives in /etc/eephus.env, so this line MUST source it the
+# same way the close job does. Until 2026-08-05 the flag was documented at the
+# bottom of this file while no card job existed anywhere: it armed a scraper
+# nothing ever ran, and /cards/ served 40 tracked cards and 0 priced forever.
+# Sourcing the env is what turns the flag from a decoration into a tap.
+#
+# ONE command decides everything. card_prices_ingest --scheduled reads the
+# module's own CADENCE: CSV drops under data/drops/ every run (no network),
+# the hot list daily, a full sweep on Sunday. The box does not schedule the
+# scope; it schedules the decision. Throttled to one request per 5s with an
+# honest User-Agent, and a loud no-op when the flag is unset (the drops still
+# ingest, which is the point of the drop path being an equal input).
+#
+# The nightly pipeline already calls the same function at daily step 9f, so
+# this is belt-and-braces exactly like the vintage line above: it covers the
+# nights the pipeline does not run. Running both is harmless because
+# card_scrape_runs refuses a second fetch of the same scope on the same date,
+# so no marketplace ever sees the same page twice in a night.
+#
+# The export runs on the SAME line and only if the ingest exits clean, because
+# the published index is a summary of the comps and a summary that predates its
+# input is the thing this module already got wrong once.
+40 6 * * *  cd $EEPHUS && . /etc/eephus.env && $PY card_prices_ingest.py --scheduled >> logs/cards.log 2>&1 && $PY card_market_export.py >> logs/cards.log 2>&1
+
 # --- Checks you can run by hand --------------------------------------------
 #   $PY tools/betting_close_job.py --why      today's window, spends nothing
 #   $PY betting_ingest.py --status            is a key configured (never prints it)
 #   $PY leaderboard_vintages.py --coverage    how many vintages exist
+#   $PY card_prices_ingest.py --stats         comps on file, cards, sale window
+#   $PY card_market_export.py                 prints the ingest STATE, which
+#                                             separates "no comps yet" (honest)
+#                                             from "the scrape parsed nothing"
+#                                             (a layout change). If the board is
+#                                             empty, read that line before
+#                                             concluding anything.
 #
 # /etc/eephus.env should be root-owned, chmod 600, and contain:
 #   export EEPHUS_ODDS_API_KEY=...
 #   export EEPHUS_CARD_SCRAPE=1
+#
+# Leaving EEPHUS_CARD_SCRAPE out is a supported configuration, not a broken
+# one: the card job still ingests CSV drops, the index still publishes, and
+# data/card_market.json says in meta.ingest that the scraper was not armed.

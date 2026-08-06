@@ -50,6 +50,17 @@
   }
   function card(inner) { return '<div class="card diamond-card">' + inner + "</div>"; }
   function note(msg) { return card("<p>" + esc(msg) + "</p>"); }
+  // Glossary term span (assets/eephus-gl.js). Slugs are checked against
+  // data/glossary.json before use: a [data-gl] whose slug the artifact does not
+  // carry renders a term that looks interactive and defines nothing, which on a
+  // page asking for money is worse than plain text.
+  function gl(label, slug) {
+    return '<span class="g-term" data-gl="' + esc(slug) + '">' + esc(label) + "</span>";
+  }
+  function wireGl(node) {
+    try { if (node && window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(node); }
+    catch (e) { /* the glossary is enrichment; the page reads fine without it */ }
+  }
 
   function getJSON(url) {
     return fetch(url, { cache: "no-cache" }).then(function (r) {
@@ -108,10 +119,14 @@
       // DIFFERENT numbers (rank correlation and contributor AUC) and named
       // neither of them. A reader had no way to tell which one the per-group
       // rows were, and the green win highlight is a Spearman win specifically.
-      archHTML = '<p class="dm-fine">Rank correlation with realized career WAR, ' +
-        "by prospect group. Green is the higher of the two.</p>" +
-        '<table class="dm-table"><thead><tr>' +
-        "<th>Group</th><th>eFV</th><th>" + esc(who) + "</th><th>n</th>" +
+      archHTML = '<p class="dm-fine">Rank correlation with realized career ' +
+        gl("WAR", "war") + ", by prospect group. Green is the higher of the two.</p>" +
+        // The shared table dialect: .mlbstats-scroll + .mlbstats-table give the
+        // sticky header, the frozen identity column and the horizontal scroller
+        // this table never had, so the archetype rows cannot pan the page
+        // sideways on a phone. .dm-table stays for the local colour rules.
+        '<div class="mlbstats-scroll"><table class="dm-table mlbstats-table"><thead><tr>' +
+        "<th>Group</th><th>" + gl("eFV", "xfv") + "</th><th>" + esc(who) + "</th><th>n</th>" +
         "</tr></thead><tbody>" +
         arch.map(function (a) {
           var win = a.spearman.win ? " dm-win" : "";
@@ -120,12 +135,13 @@
             '<td class="dm-num">' + esc(dec(a.spearman.consensus)) + "</td>" +
             '<td class="dm-num">' + esc(commas(a.n)) + "</td></tr>";
         }).join("") +
-        "</tbody></table>";
+        "</tbody></table></div>";
     }
     var protocol = h2h.protocol ? "<p class=\"dm-fine\">" + esc(h2h.protocol) + "</p>" : "";
     root.innerHTML = card(
       "<h3>The prospect model against the public consensus</h3>" +
-      "<p>Both numbers are scored on the same players, out of sample. eFV never sees a player's own " +
+      "<p>Both numbers are scored on the same players, out of sample, in a forward-chained " +
+      gl("backtest", "backtest") + ". " + gl("eFV", "xfv") + " never sees a player's own " +
       "outcome before it grades him. Higher is better in both rows.</p>" +
       '<div class="dm-tiles">' + tiles + "</div>" +
       archHTML +
@@ -133,6 +149,7 @@
       '<p class="dm-fine">Read live from data/xfv_scoreboard_eval.json on every page load. ' +
       "If the model slips, this card slips with it.</p>"
     );
+    wireGl(root);
   }
 
   function receiptsFailed(msg) {
@@ -196,6 +213,27 @@
       (reason ? '<p class="dm-fine">' + esc(reason) + "</p>" : "")
     );
   }
+  // POSTED IS NOT THE SAME AS GRADED, and the guard below used to say one
+  // sentence for both. A record file carrying picks that have not settled yet
+  // has no wins and no losses, so it fell into emptyRecord and the page said
+  // "no pick has been published yet" on a page whose own file listed picks.
+  // That is a false statement about our own record, on the page that asks for
+  // money on the strength of that record being honest.
+  function ungradedRecord(nPosted, asof) {
+    var root = el("diamond-betting-record");
+    if (!root) return;
+    root.innerHTML = card(
+      "<h3>" + esc(nPosted) + " pick" + (nPosted === 1 ? " is" : "s are") +
+        " posted and none has settled</h3>" +
+      "<p>The record file is live and carries " + esc(nPosted) + " pick" +
+        (nPosted === 1 ? "" : "s") + ", each with its timestamp, its book, the odds it was " +
+        "posted at and a flat one unit stake. None of them has a result yet, so there is no " +
+        "record to report: a win rate over zero graded picks is not a number.</p>" +
+      "<p>Every pick is also graded against the closing line once it settles. Win rate flatters " +
+      "a lucky month. Beating the close is the part that is hard to fake.</p>" +
+      (asof ? '<p class="dm-fine">Record as of ' + esc(String(asof).slice(0, 10)) + ".</p>" : "")
+    );
+  }
   function renderRecord(doc) {
     var s = (doc && (doc.summary || doc.totals)) || doc || {};
     var picks = (doc && doc.picks) || [];
@@ -203,7 +241,13 @@
     if (n == null && picks.length) n = picks.length;
     var w = pick(s, ["wins", "w", "won"]);
     var l = pick(s, ["losses", "l", "lost"]);
-    if (!n || (w == null && l == null)) { emptyRecord(""); return; }
+    var asofEarly = pick(doc || {}, ["generated_at", "as_of", "updated_at"]);
+    // Three states, three messages. Nothing posted; posted but nothing settled;
+    // and a real graded record. The middle one used to be told the first one's
+    // sentence, which was a claim about our own file that the file contradicts.
+    var nPosted = (n != null && n) ? n : picks.length;
+    if (!nPosted) { emptyRecord(""); return; }
+    if (w == null && l == null) { ungradedRecord(nPosted, asofEarly); return; }
     var p = pick(s, ["pushes", "push", "void", "voids"]);
     var units = pick(s, ["net_units", "units", "profit_units"]);
     var roi = pick(s, ["roi", "roi_pct"]);

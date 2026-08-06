@@ -39,8 +39,11 @@ not answer" is a fact about our pipeline. `empty_reason_kind` names which one,
 `_schedule_for_day` corroborates an empty fetch against the already-guarded
 schedule in fantasy.json before it will say the day is off, and `refresh` keeps
 the previous payload rather than publishing an unverified empty or a slate that
-came out structurally impossible (games, but no hitters). The counts every join
-resolved ride in `integrity` so a thin board can be told from a broken one.
+came out structurally impossible (games, but no hitters). That carry is BOUNDED
+by _MAX_STALE_CARRY_DAYS: keeping a board forever is its own dishonesty, and an
+off day has to be publishable as a real empty day. The counts every join
+resolved ride in `integrity`, measured over the orgs THIS SLATE needed, so a
+thin board can be told from a broken one.
 
 Run: python dfs_export.py            (writes data/dfs.json for today)
      python dfs_export.py --date 2026-08-06
@@ -359,9 +362,31 @@ def _schedule_for_day(day: str, fantasy: dict | None) -> tuple[list, dict]:
         free, with no second network call;
       * games for `day` in that block prove the day is NOT empty whatever the
         fetch just said, so we price the older copy instead of blanking a board;
-      * only a POPULATED, non-stale schedule block whose window COVERS `day` and
-        still holds no game for it is evidence of a real off day. Anything else
-        is "we do not know", and we say that instead.
+      * a schedule block that BRACKETS `day` with real games and still holds none
+        ON it is evidence of a real off day. Anything else is "we do not know",
+        and we say that instead.
+
+    STALE ALONE MUST NOT VOID THE CORROBORATION (fixed 2026-08-05, second pass).
+    The first cut required `not stale_schedule`, and that turns a multi-day off
+    period into an indefinite silent freeze: with the fetch down, refresh() keeps
+    the previous payload on `schedule_unavailable` forever, and a real empty day
+    can never be published because the only witness is disqualified for being a
+    copy. It is also the wrong test. refresh_live rebuilds the block wholesale
+    and only restores the GAMES, so `streamer_window` is always recomputed for
+    today while a kept games list may be older - the declared window says nothing
+    about what a stale copy actually covers.
+
+    So corroborate against the copy's OWN observed span instead. By the time
+    this test is reached the copy holds NO game on `day` (the branch above
+    already returned if it did), so a span that contains `day` means the copy
+    holds games strictly before AND strictly after it: the day is bracketed, and
+    its silence is real evidence whether the copy is stale or not. A stale copy
+    cannot invent a whole slate that appeared later; the only schedule
+    edits that reach a bracketed day are doubleheaders (which add to a day that
+    already has games) and postponements (which move TOWARD empty). The declared
+    window is still honoured for a FRESH block, which is the case where a real
+    off day sits at the leading edge of the window with no earlier game to
+    bracket it.
     """
     sched = (fantasy or {}).get("schedule") or {}
     prev_all = sched.get("games") or []
@@ -369,6 +394,8 @@ def _schedule_for_day(day: str, fantasy: dict | None) -> tuple[list, dict]:
     window = sched.get("streamer_window") or []
     covers = bool(len(window) == 2 and window[0] <= day <= window[1])
     prev_stale = bool(sched.get("stale_schedule"))
+    prev_dates = sorted({g.get("date") for g in prev_all if g.get("date")})
+    spans_day = bool(prev_dates) and prev_dates[0] <= day <= prev_dates[-1]
     try:
         s, e = fsched.date_window(1, date.fromisoformat(day))
         games = fsched.fetch_probables(s, e)
@@ -377,7 +404,10 @@ def _schedule_for_day(day: str, fantasy: dict | None) -> tuple[list, dict]:
         games = []
     meta = {"n_fetched": len(games), "n_previous_for_day": len(prev_day),
             "previous_window": list(window) or None,
-            "previous_covers_day": covers, "previous_stale": prev_stale}
+            "previous_covers_day": covers, "previous_stale": prev_stale,
+            "previous_date_span": ([prev_dates[0], prev_dates[-1]]
+                                   if prev_dates else None),
+            "previous_spans_day": spans_day}
     if games:
         meta.update(source="statsapi", verified_empty=False, stale=False)
         return games, meta
@@ -393,13 +423,19 @@ def _schedule_for_day(day: str, fantasy: dict | None) -> tuple[list, dict]:
                      f"{len(prev_day)} game(s) already in fantasy.json instead. "
                      "The slate on /dfs/ is as fresh as that copy, not as of now."))
         return prev_day, meta
-    verified = bool(prev_all) and covers and not prev_stale
-    meta.update(source="statsapi (empty)", verified_empty=verified, stale=False)
+    # A bracketing span is evidence on its own; the declared window only counts
+    # when the block is fresh (see the docstring).
+    verified = bool(prev_all) and (spans_day or (covers and not prev_stale))
+    meta.update(source="statsapi (empty)", verified_empty=verified, stale=False,
+                verified_by=("previous_date_span" if verified and spans_day
+                             else "streamer_window" if verified else None))
     if not verified:
         _log.error("dfs: no games for %s from the feed AND no corroborating copy "
-                   "(fantasy.json schedule: %d games, window %s, stale=%s) - "
-                   "refusing to claim the league scheduled nothing",
-                   day, len(prev_all), window or "none", prev_stale)
+                   "(fantasy.json schedule: %d games, span %s, window %s, "
+                   "stale=%s) - refusing to claim the league scheduled nothing",
+                   day, len(prev_all),
+                   f"{prev_dates[0]}..{prev_dates[-1]}" if prev_dates else "none",
+                   window or "none", prev_stale)
         fe._record_ingest_safe(
             "dfs_schedule", ok=False,
             message=(f"no games for {day} and nothing to corroborate it with: the "
@@ -697,8 +733,30 @@ def _slate_integrity(day: str, slate_games: list, rows: list, ctx: dict, *,
     slate_orgs.discard(None)
     orgs_with_hitters = {r.get("team") for r in rows if r.get("side") == "hit"}
     missing = sorted(slate_orgs - orgs_with_hitters)
-    n_ctx_off = sum(1 for r in ctx.values() if r.get("offense_plus_resolved"))
-    n_ctx_bp = sum(1 for r in ctx.values() if r.get("bullpen_plus_resolved"))
+    # COUNT THE CONSUMER'S KEY SPACE, NOT THE PRODUCER'S ROWS (fixed 2026-08-05,
+    # second pass). This block used to count rows in `ctx` that carried a number,
+    # which is a fact about fe._teams_context() and NOT about this slate. It is
+    # the same defect class the rest of this module exists to kill, one level up:
+    # a ctx full of resolved clubs reports "30 of 30, healthy" while every org
+    # actually on tonight's card missed the lookup and priced at a neutral 100.
+    # It cannot even see the failure mode, because the misses are keys ABSENT
+    # from ctx and an absent key contributes nothing to a count over ctx.values().
+    #
+    # The one lookup that decides a price is `ctx.get(opp_obj["org"])` in
+    # build_payload, and both sides of every game are somebody's opponent, so the
+    # needed key set is exactly `slate_orgs`. Counting with the same .get() the
+    # pricer uses means a key-space mismatch (the AZ/ARI, CWS/CHW class of bug
+    # that already cost this module 7 of 30 clubs on the hitter join) shows up as
+    # a number instead of hiding behind a healthy-looking 30.
+    ctx_needed = sorted(slate_orgs)
+
+    def _n_resolved(field: str) -> int:
+        return sum(1 for o in ctx_needed if (ctx.get(o) or {}).get(field + "_resolved"))
+
+    n_ctx_off, n_ctx_bp = _n_resolved("offense_plus"), _n_resolved("bullpen_plus")
+    ctx_unresolved = [o for o in ctx_needed
+                      if not (ctx.get(o) or {}).get("offense_plus_resolved")
+                      or not (ctx.get(o) or {}).get("bullpen_plus_resolved")]
     out = {
         "ok": True, "kind": None, "message": None,
         "n_hitters": n_hit, "n_pitchers": n_pit,
@@ -706,8 +764,19 @@ def _slate_integrity(day: str, slate_games: list, rows: list, ctx: dict, *,
         "n_slate_orgs": len(slate_orgs),
         "orgs_without_hitters": missing,
         "hitter_pool": n_hit_pool, "hitter_pool_without_team": n_hit_teamless,
+        # `needed` is the denominator that matters: the clubs ON THIS SLATE.
+        # `expected` is the SAME number under the name assets/dfs.js already
+        # reads for its "X of Y clubs" chip and its thin-board flag; it used to
+        # carry the league's 30, which made a four-game night render "8 of 30"
+        # and light the warning every off-peak day. The league size and the size
+        # of the context table stay published as context for a reader, and are
+        # never the thing resolved is judged against.
         "matchup_orgs_resolved": {"offense_plus": n_ctx_off, "bullpen_plus": n_ctx_bp,
-                                  "expected": fe._MLB_CLUBS},
+                                  "needed": len(ctx_needed),
+                                  "expected": len(ctx_needed),
+                                  "unresolved": ctx_unresolved[:12],
+                                  "n_context_rows": len(ctx),
+                                  "league_clubs": fe._MLB_CLUBS},
     }
     if slate_games and n_hit == 0:
         out.update(ok=False, kind="collapsed_slate", message=(
@@ -744,6 +813,36 @@ _KEEP_PREVIOUS_KINDS = {
                         "with games but no hitters or no priced starters)"),
 }
 
+# HOW OLD A CARRIED SLATE IS ALLOWED TO GET (2026-08-05, second pass). The keep
+# rule above had no upper bound, so an outage that lasts a week serves a
+# week-old board for a week - and the page's own copy still calls it a slate.
+# Yesterday's games, stamped stale, are a defensible substitute for a board we
+# could not verify. Games from three days ago are a different week's probables
+# priced against a different set of arms, and the honest empty state (which says,
+# in words, that we could not confirm the slate) beats them. Two days is set
+# just under the longest league-wide scheduled gap, the ~3-day All-Star break, so
+# a genuine off period can never hide entirely inside the carry window.
+_MAX_STALE_CARRY_DAYS = 2
+
+
+def _carry_age_days(prev: dict, day: str | None) -> int | None:
+    """Days between the payload on disk and the day we just tried to build.
+
+    None when either date is unreadable, and the caller treats that as EXPIRED:
+    a carry whose age cannot be established is exactly the unbounded case this
+    guard exists to end, and refusing it only ever falls back to publishing a
+    loud, self-describing empty payload.
+
+    NEGATIVE is a real answer, not an error: a `--date` backfill for an earlier
+    day finds a NEWER board on disk. The bound is one-sided on purpose so that
+    run keeps the newer board rather than overwriting it with a backfill's
+    unverifiable empty."""
+    try:
+        return (date.fromisoformat(str(day))
+                - date.fromisoformat(str((prev or {}).get("slate_date")))).days
+    except (TypeError, ValueError):
+        return None
+
 
 def refresh(log=print, *, day: str | None = None, games: list | None = None,
             out_path: Path | None = None) -> int:
@@ -759,6 +858,10 @@ def refresh(log=print, *, day: str | None = None, games: list | None = None,
       * a slate we could not verify, or a board that came out structurally
         impossible, does NOT overwrite a good payload. We restamp the previous
         one with `stale_slate` + the reason and file a RED ledger row;
+      * but the carry is BOUNDED (_MAX_STALE_CARRY_DAYS). Past the bound the
+        stale board is worse than the honest empty payload, so we publish the
+        empty one and say so, instead of freezing /dfs/ on an old slate for as
+        long as the outage lasts;
       * with nothing to keep, we publish the honest empty/broken payload, which
         carries its own `empty_reason` and renders as a loud state;
       * a payload carrying a non-finite number is never written at all (see
@@ -774,11 +877,17 @@ def refresh(log=print, *, day: str | None = None, games: list | None = None,
     kind = payload.get("empty_reason_kind")
     if kind in _KEEP_PREVIOUS_KINDS:
         prev = _read_previous(path)
-        if prev is not None:
+        age = _carry_age_days(prev, payload.get("slate_date")) if prev else None
+        expired = prev is not None and (age is None or age > _MAX_STALE_CARRY_DAYS)
+        if prev is not None and not expired:
             why = _KEEP_PREVIOUS_KINDS[kind]
             prev["stale_slate"] = True
             prev["stale_reason"] = payload.get("empty_reason")
             prev["stale_kind"] = kind
+            # How old the carried board is, and the bound it is being measured
+            # against, so the page can say "2 days old" instead of only "stale".
+            prev["stale_age_days"] = age
+            prev["stale_max_carry_days"] = _MAX_STALE_CARRY_DAYS
             prev["stale_checked_at"] = datetime.now(timezone.utc).strftime(
                 "%Y-%m-%dT%H:%M:%SZ")
             blob = fe._json_blob(prev, "dfs_slate")
@@ -786,7 +895,8 @@ def refresh(log=print, *, day: str | None = None, games: list | None = None,
                 path.write_text(blob, encoding="utf-8")
             msg = (f"dfs: refused to publish today's build for {payload['slate_date']} "
                    f"because {why}; kept the {prev.get('n_players')}-player slate "
-                   f"for {prev.get('slate_date')} and stamped it stale")
+                   f"for {prev.get('slate_date')} ({age} day(s) old, bound "
+                   f"{_MAX_STALE_CARRY_DAYS}) and stamped it stale")
             _log.error(msg)
             if callable(log):
                 log(msg)
@@ -794,13 +904,28 @@ def refresh(log=print, *, day: str | None = None, games: list | None = None,
                                    n_rows=int(prev.get("n_players") or 0),
                                    message=msg)
             return int(prev.get("n_players") or 0)
-        _log.error("dfs: %s for %s and there is no previous payload to keep - "
-                   "publishing the honest empty state instead",
-                   kind, payload.get("slate_date"))
-        fe._record_ingest_safe(
-            "dfs_slate", ok=False,
-            message=(f"{kind} for {payload.get('slate_date')} with no previous "
-                     "dfs.json to fall back on; published the empty state."))
+        if expired:
+            # The carry has run out. Fall through and publish the new payload:
+            # it is empty, but it SAYS it is empty and why, which an old slate
+            # dressed as today's board never did.
+            msg = (f"dfs: {kind} for {payload.get('slate_date')}, and the payload "
+                   f"on disk is for {prev.get('slate_date')} "
+                   f"({'unknown' if age is None else age} day(s) old, bound "
+                   f"{_MAX_STALE_CARRY_DAYS}) - the carry has expired, so we are "
+                   f"publishing the honest empty state instead of freezing /dfs/ "
+                   f"on a stale slate")
+            payload["previous_slate_dropped"] = {
+                "slate_date": prev.get("slate_date"),
+                "n_players": prev.get("n_players"),
+                "age_days": age, "max_carry_days": _MAX_STALE_CARRY_DAYS,
+            }
+        else:
+            msg = (f"dfs: {kind} for {payload.get('slate_date')} with no previous "
+                   "dfs.json to fall back on; published the empty state.")
+        _log.error(msg)
+        if callable(log):
+            log(msg)
+        fe._record_ingest_safe("dfs_slate", ok=False, message=msg)
 
     blob = fe._json_blob(payload, "dfs_slate")
     if blob is None:
@@ -811,12 +936,12 @@ def refresh(log=print, *, day: str | None = None, games: list | None = None,
         if payload.get("empty_reason"):
             log(f"dfs: empty slate for {payload['slate_date']} - {payload['empty_reason']}")
         else:
+            _mo = integ.get("matchup_orgs_resolved") or {}
             log(f"dfs: {payload['n_players']} players priced across "
                 f"{payload['n_games']} games ({payload['slate_date']}) - "
                 f"{integ.get('n_hitters', 0)} hitters, {integ.get('n_pitchers', 0)} "
-                f"starters, matchup context on "
-                f"{(integ.get('matchup_orgs_resolved') or {}).get('offense_plus', 0)}"
-                f"/{fe._MLB_CLUBS} clubs")
+                f"starters, matchup context on {_mo.get('offense_plus', 0)}"
+                f"/{_mo.get('needed', 0)} clubs on the slate")
     # Partial misses do not block the publish - a board short a few clubs still
     # beats no board - but they do go in the ledger, because "23 of 30 orgs" is
     # the number nobody would ever have seen otherwise.
@@ -833,10 +958,17 @@ def _report_partial(payload: dict, integ: dict) -> None:
     if missing:
         problems.append(f"{len(missing)} of {integ.get('n_slate_orgs')} slate orgs "
                         f"have no hitter priced ({', '.join(missing[:8])})")
-    resolved = (integ.get("matchup_orgs_resolved") or {}).get("offense_plus")
-    if isinstance(resolved, int) and resolved < fe._MLB_CLUBS:
-        problems.append(f"opponent Offense+ resolved for {resolved} of "
-                        f"{fe._MLB_CLUBS} clubs; the rest price at a neutral 100")
+    # Judged against the clubs THIS SLATE needed, not against 30. A four-game
+    # night needs eight clubs: "8 of 30" was a false alarm every off-peak day,
+    # and "30 of 30" was a false all-clear whenever the misses were keys missing
+    # from the context table entirely (see _slate_integrity).
+    mo = integ.get("matchup_orgs_resolved") or {}
+    resolved, needed = mo.get("offense_plus"), mo.get("needed")
+    if isinstance(resolved, int) and isinstance(needed, int) and resolved < needed:
+        unres = ", ".join((mo.get("unresolved") or [])[:8]) or "unnamed"
+        problems.append(f"opponent Offense+ resolved for {resolved} of {needed} "
+                        f"clubs on this slate ({unres}); the rest price at a "
+                        f"neutral 100")
     if (payload.get("schedule_source") or {}).get("stale"):
         problems.append("the slate came from the kept fantasy.json schedule, not "
                         "a fresh fetch")

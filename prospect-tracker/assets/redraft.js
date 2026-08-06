@@ -73,10 +73,12 @@
     if (!gated()) return rows;
     return (rows || []).slice(0, dcfg().previewRows || 25);
   }
+  // The conversion line is a LINK. It was plain text on every Diamond page, so
+  // the only route to the pricing page was the last item of a nav dropdown.
   function gateNote(total, shown) {
     if (!gated() || shown >= total) return "";
     return '<div class="rd-note">Diamond preview: showing the top ' + shown + " of " + total +
-      " rows. Diamond funds the free site.</div>";
+      ' rows. <a class="rd-name-link" href="/diamond/">Diamond funds the free site</a>.</div>';
   }
 
   // ---- record lookup --------------------------------------------------------
@@ -242,7 +244,14 @@
   function labelOf(c) { return typeof c.label === "function" ? c.label() : c.label; }
   function glossLbl(c) {
     var l = esc(labelOf(c));
-    return c.term ? '<span class="g-term" data-gl="' + esc(c.term) + '">' + l + "</span>" : l;
+    return c.term ? gl(labelOf(c), c.term) : l;
+  }
+  // The same span outside a column definition, for the table boards that are
+  // hand-built rather than driven by a column array. Slugs are checked against
+  // data/glossary.json first: a [data-gl] carrying a slug the artifact does not
+  // have renders a term that looks interactive and defines nothing.
+  function gl(label, slug) {
+    return '<span class="g-term" data-gl="' + esc(slug) + '">' + esc(label) + "</span>";
   }
   // Missing values sort LAST in BOTH directions so a blank never wins a board.
   function sortRowsBy(rows, cols, st) {
@@ -384,9 +393,13 @@
       return '<button type="button" class="rd-daypill' + (on ? " active" : "") + '" data-streamerday="' + esc(d) +
         '" role="tab" aria-selected="' + (on ? "true" : "false") + '">' + streamerDayLabel(d) + "</button>";
     }).join("");
+    // NO DATE COLUMN. The table only ever shows ONE day - the pill above it is
+    // the day selector and the active pill already names the date - so a Date
+    // cell repeated the same six characters down all 26 rows and cost a column
+    // on a table that was already scrolling sideways on a phone.
     var rows = (byDay[S.streamerDay] || []).slice(0, 40).map(function (st, i) {
       var p = rec(st.mlbam, "pit") || {}, s = p.skill || {};   // probables are pitchers
-      return '<tr><td class="rd-rk">' + (i + 1) + "</td><td>" + esc(st.date) + '</td><td class="rd-nm">' +
+      return '<tr><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="rd-nm">' +
         nameLink(st.mlbam, st.name) + " " + teamLogo(st.team) + "</td><td>@ " + esc(st.opp_org) +
         " (Off+ " + num(st.opp_off, 0) + ')</td><td class="rd-sc">' + num(st.per_start_fgp, 1) + "</td><td>" +
         (s.sem_plus != null ? num(s.sem_plus, 0) : "-") + "</td><td>" + esc(st.venue || "") + "</td></tr>";
@@ -395,9 +408,11 @@
       "expected points (a weaker opposing offense ranks higher). Pick a day below. Scored in FanGraphs Points; " +
       "switch formats above to re-rank the rest-of-season boards.</div>" +
       '<div class="rd-daypills" role="tablist" aria-label="Streamer day">' + pills + "</div>" +
-      '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table">' +
-      '<thead><tr><th>#</th><th>Date</th><th class="rd-nm">Pitcher</th><th>Opponent</th><th>Exp pts</th>' +
-      "<th>SEM+</th><th>Park</th></tr></thead><tbody>" + rows + "</tbody></table></div>";
+      '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table mlbstats-table">' +
+      '<thead><tr><th class="mlbstats-col-rank">#</th><th class="rd-nm">Pitcher</th>' +
+      "<th>Opponent</th><th>Exp pts</th>" +
+      "<th>" + gl("SEM+", "sem_plus") + "</th><th>Park</th></tr></thead><tbody>" +
+      rows + "</tbody></table></div>";
   }
   // STAYS A TABLE: the Matchups column is a free-text leg list that would fight
   // a fixed-height card box.
@@ -411,15 +426,16 @@
         var leg = "@" + esc(l.opp_org) + " (" + num(l.exp_fgp, 0) + ")";
         return l.projected ? '<span class="rd-proj">' + leg + " (proj)</span>" : leg;
       }).join(" · ");
-      return '<tr><td class="rd-rk">' + (i + 1) + '</td><td class="rd-nm">' + nameLink(t.mlbam, t.name) + " " +
+      return '<tr><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="rd-nm">' + nameLink(t.mlbam, t.name) + " " +
         teamLogo(t.team) + "</td><td>" + esc(t.n_starts) + '</td><td class="rd-sc">' + num(t.total_fgp, 1) +
         "</td><td>" + legs + "</td></tr>";
     }).join("");
     return '<div class="rd-note">Pitchers lined up for two starts this scoring week. MLB posts probables only ' +
       "about 5 days out, so the second start is projected from the team schedule on normal rest and marked (proj) " +
       "until it is announced.</div>" +
-      '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table">' +
-      '<thead><tr><th>#</th><th class="rd-nm">Pitcher</th><th>Starts</th><th>Total pts</th>' +
+      '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table mlbstats-table">' +
+      '<thead><tr><th class="mlbstats-col-rank">#</th><th class="rd-nm">Pitcher</th>' +
+      "<th>Starts</th><th>Total pts</th>" +
       "<th>Matchups</th></tr></thead><tbody>" + rows + "</tbody></table></div>";
   }
   // STAYS A TABLE: 30 and 30 rows in a deliberate side-by-side pair. Cards would
@@ -440,11 +456,22 @@
             esc(mt.from) + " to " + esc(mt.to) + '. Context only, never part of this ranking.">mech trend ' +
             md + "</span>";
         }
-        // Hitter luck_gap is a plus-stat (0 decimals); pitcher luck is in wOBA
-        // points (about 0.03), so it renders at 3 decimals or collapses to "0".
+        // TWO SCALES, TWO COLUMNS. Hitter luck_gap is xHEM+ minus HEM+, a
+        // plus-stat delta whose pool spread is roughly +/-50; pitcher luck is
+        // wOBA minus xwOBA, in wOBA points, spread roughly +/-0.05. They sit
+        // about 500x apart (fantasy_export._buy_sell scales each side by its
+        // own std before the combined sort for exactly that reason), and
+        // stacking them under one "Luck gap" heading produced a column that
+        // read +18, +0.041, +14, +0.038 down the page: non-monotonic, and
+        // inviting a reader to compare a number to one 500 times its size.
+        // Each row now fills the column for ITS scale and dashes the other, so
+        // every column is internally comparable and the heading names its unit.
+        var val = '<span class="rd-sc ' + cls + '">' + (gap > 0 ? "+" : "") +
+          num(gap, isHit ? 0 : 3) + "</span>";
+        var blank = '<span class="rd-dim">-</span>';
         return '<tr><td class="rd-nm">' + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) + chip + "</td><td>" +
-          esc(p.pos || "") + '</td><td class="rd-sc ' + cls + '">' + (gap > 0 ? "+" : "") +
-          num(gap, isHit ? 0 : 3) + "</td></tr>";
+          esc(p.pos || "") + "</td><td>" + (isHit ? val : blank) + "</td><td>" +
+          (isHit ? blank : val) + "</td></tr>";
       }).join("");
       // AN EMPTY SIDE IS A SENTENCE, NOT A HEADER ROW OVER NOTHING. This was
       // the one surface on the page that fell through to a bare <tbody></tbody>:
@@ -457,15 +484,23 @@
           "from the expected-stat gaps on the nightly run.</div></div>";
       }
       return '<div class="rd-half"><h3>' + label + '</h3>' +
-        '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table">' +
-        '<thead><tr><th class="rd-nm">Player</th>' +
-        "<th>Pos</th><th>Luck gap</th></tr></thead><tbody>" + rows + "</tbody></table></div></div>";
+        '<div class="mlbstats-scroll rd-tablewrap"><table class="rd-table mlbstats-table">' +
+        '<thead><tr><th class="rd-nm">Player</th><th>Pos</th>' +
+        '<th title="Hitters only: xHEM+ minus HEM+, in plus-stat points. Positive means unlucky.">Luck gap<br>' +
+        gl("xHEM+", "xhem_plus") + " pts</th>" +
+        '<th title="Pitchers only: wOBA minus xwOBA, in wOBA points. Positive means unlucky.">Luck gap<br>' +
+        gl("wOBA", "woba") + " pts</th>" +
+        "</tr></thead><tbody>" + rows + "</tbody></table></div></div>";
     }
     var sec = S.data.sections || {};
-    return '<div class="rd-note">Regression candidates from our expected-stat gaps (hitters: xHEM+ against HEM+; ' +
-      "pitchers: xERA and xwOBA against actual). A positive gap means the player has been UNLUCKY and is due to " +
+    return '<div class="rd-note">Regression candidates from our expected-stat gaps (hitters: ' +
+      gl("xHEM+", "xhem_plus") + " against " + gl("HEM+", "hem_plus") + ", in plus-stat points; " +
+      "pitchers: " + gl("xwOBA", "xwoba") + " against actual " + gl("wOBA", "woba") + ", in wOBA " +
+      "points). The two scales sit about 500x apart, so they get a column each rather than one " +
+      "column that mixes them. A positive gap means the player has been UNLUCKY and is due to " +
       "improve (buy); negative means he has been overperforming (sell). A mech trend chip flags a 5 point move in " +
-      "per-season Swing+ (Will Cahoon), swing-mechanics context only, never part of the ranking.</div>" +
+      "per-season " + gl("Swing+", "swing_plus") + " (Will Cahoon), swing-mechanics context only, " +
+      "never part of the ranking.</div>" +
       '<div class="rd-cols">' + col(sec.buy_low, "Buy-Low (unlucky)", "rd-pos", "buy-low") +
       col(sec.sell_high, "Sell-High (overperforming)", "rd-neg", "sell-high") + "</div>";
   }
@@ -502,6 +537,95 @@
     if (section === "ros_rp") return pitCols(true);
     return null;
   }
+
+  // ---- share card -----------------------------------------------------------
+  // PARITY WITH /dynasty/. The split gave the prospect half a Generate GFX chip
+  // and left the rest-of-season half without one, so the same reader on the
+  // same board machinery could share one page and not the other.
+  //
+  // The exported board follows the SECTION ON SCREEN (the cards.js rule), so
+  // the graphic can never be a different board than the one the chip sits on.
+  // Five sections export; Buy/Sell is a deliberate side-by-side PAIR and the
+  // closer grid is a 30-card grid, and neither is a single ranked list, so
+  // they get no chip rather than a graphic that misrepresents them.
+  var GFX_SECTIONS = { streamers: 1, two_start: 1, ros_sp: 1, ros_rp: 1, ros_hitter: 1 };
+  function gfxCell(c, row) {
+    var v = c.get ? c.get(row) : null;
+    if (v == null) return "-";
+    return c.fmt ? c.fmt(v) : String(v);
+  }
+  function shareWrap(title, file, subtitle, columns, rows) {
+    return {
+      kind: "board", module: "Redraft", accentToken: "--accent-cyan",
+      title: title, subtitle: subtitle,
+      url: "eephus.io/redraft", filenameBase: file,
+      caption: "Rest-of-season projections. A display ranking over served numbers.",
+      board: { columns: columns, rows: rows, counts: [10, 25, 50] }
+    };
+  }
+  function shareSpec() {
+    var sec = (S.data && S.data.sections) || {};
+    if (S.section === "streamers") {
+      var byDay = {};
+      (sec.daily_streamers || []).forEach(function (x) {
+        (byDay[x.date || ""] = byDay[x.date || ""] || []).push(x);
+      });
+      var list = byDay[S.streamerDay] || [];
+      return shareWrap("Daily Streamers",
+        "eephus-redraft-streamers-" + (S.streamerDay || "day"),
+        streamerDayLabel(S.streamerDay) + " · " + list.length +
+          " announced starts · FanGraphs Points",
+        [{ label: "#", frac: 0.07, align: "right" }, { label: "Pitcher", frac: 0.36 },
+         { label: "Opp", frac: 0.16 }, { label: "Exp pts", frac: 0.15, align: "right" },
+         { label: "SEM+", frac: 0.13, align: "right" },
+         { label: "Park", frac: 0.13, wideOnly: true }],
+        list.map(function (x, i) {
+          var p = rec(x.mlbam, "pit") || {}, s = p.skill || {};
+          return { cells: [{ t: i + 1 }, { t: x.name || "-", sub: x.team || undefined },
+                           { t: "@ " + (x.opp_org || "-") },
+                           { t: num(x.per_start_fgp, 1), c: "accent" },
+                           { t: s.sem_plus == null ? "-" : num(s.sem_plus, 0) },
+                           { t: x.venue || "-" }] };
+        }));
+    }
+    if (S.section === "two_start") {
+      var ts = sec.two_start || [];
+      return shareWrap("Two-Start Starters", "eephus-redraft-two-start",
+        ts.length + " pitchers lined up for two starts · FanGraphs Points",
+        [{ label: "#", frac: 0.08, align: "right" }, { label: "Pitcher", frac: 0.46 },
+         { label: "Starts", frac: 0.2, align: "right" },
+         { label: "Total pts", frac: 0.26, align: "right" }],
+        ts.map(function (t, i) {
+          return { cells: [{ t: i + 1 }, { t: t.name || "-", sub: t.team || undefined },
+                           { t: t.n_starts }, { t: num(t.total_fgp, 1), c: "accent" }] };
+        }));
+    }
+    var cols = colsFor(S.section);
+    if (!cols) return null;
+    var side = S.section === "ros_hitter" ? "hit" : "pit";
+    var rows = sortRowsBy(scored(sec[S.section] || [], side), cols, SORT[S.section]);
+    var pick = cols.filter(function (c) {
+      return c.key !== "rank" && c.key !== "name";
+    }).slice(0, 4);
+    var w = 0.56 / (pick.length || 1);
+    var columns = [{ label: "#", frac: 0.07, align: "right" },
+                   { label: side === "hit" ? "Player" : "Pitcher", frac: 0.37 }];
+    pick.forEach(function (c) { columns.push({ label: labelOf(c), frac: w, align: "right" }); });
+    var titles = { ros_sp: "Rest-of-Season Starters", ros_rp: "Rest-of-Season Relievers",
+                   ros_hitter: "Rest-of-Season Hitters" };
+    return shareWrap(titles[S.section] || "Rest-of-Season Board",
+      "eephus-redraft-" + S.section,
+      rows.length + " players · " + scoreLabel(),
+      columns,
+      rows.map(function (row, i) {
+        var cells = [{ t: i + 1 },
+                     { t: row.p.name || "-", sub: row.p.team || undefined }];
+        pick.forEach(function (c, j) {
+          cells.push({ t: gfxCell(c, row), c: j === 0 ? "accent" : undefined });
+        });
+        return { cells: cells };
+      }));
+  }
   function renderSection() {
     var sec = (S.data && S.data.sections) || {}, r = root();
     if (!r) return;
@@ -515,7 +639,15 @@
       case "closers": html = renderClosers(); break;
       default: html = tableStreamers(sec.daily_streamers);
     }
+    if (GFX_SECTIONS[S.section] && window.EEPHUS_GFX && EEPHUS_GFX.chipHTML) {
+      html = '<div class="rd-tools">' + EEPHUS_GFX.chipHTML("rd-gfx", "Generate GFX") + "</div>" + html;
+    }
     r.innerHTML = html;
+    var gfx = r.querySelector("#rd-gfx");
+    if (gfx) gfx.addEventListener("click", function () {
+      var spec = shareSpec();
+      if (spec && window.EEPHUS_GFX) EEPHUS_GFX.open(spec);
+    });
     r.querySelectorAll(".rd-daypill").forEach(function (b) {
       b.addEventListener("click", function () {
         S.streamerDay = b.getAttribute("data-streamerday");
@@ -634,10 +766,16 @@
     SORT[board].key = k;
     SORT[board].asc = (v.slice(i + 1) === "a");
   }
+  // Returns TRUE when the hash it read was canonical. An invalid #section was
+  // already refused by the alternation, so the page rendered the default - but
+  // the ADDRESS BAR kept the bad value until the reader happened to click a
+  // tab, so a shared link named a section that does not exist and the page
+  // disagreed with its own URL. The callers rewrite on a false.
   function readHash() {
     var h = location.hash || "";
     var s = hashParam(h, "section", SECTIONS.join("|"));
     if (s) S.section = s;
+    var canonical = !(!s && /(?:^#|[#&])section=/.test(h));
     // Validated against the SERVED catalog rather than a literal list, so a
     // format added to or dropped from fantasy_scoring.SCORING_CATALOG needs no
     // change here and a retired id cannot leave the pool scored by a weight
@@ -650,6 +788,7 @@
     readSort(h, "hsort", "ros_hitter");
     readSort(h, "spsort", "ros_sp");
     readSort(h, "rpsort", "ros_rp");
+    return canonical;
   }
   function pushSort(parts, key, board) {
     var st = SORT[board], d = SORT_DEFAULTS[board];
@@ -677,7 +816,7 @@
   function onHashChange() {
     if (!S.data) return;
     if ((location.hash || "") === LAST_HASH) return;
-    readHash();
+    if (!readHash()) writeHash();
     renderSelector(); syncTabs(); renderSection();
   }
   window.addEventListener("hashchange", onHashChange);
@@ -709,7 +848,7 @@
     }
     // Deep-link restore between the defaults and the first paint, so a restored
     // section or format renders once rather than flashing the default first.
-    readHash();
+    if (!readHash()) writeHash();
     renderSelector(); wireTabs(); syncTabs(); renderSection();
     if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
       EEPHUS_HUB.links().then(function (L) { LINKS = L || null; renderSection(); });
@@ -749,11 +888,24 @@
     // table measured 431px against a 390px phone and scrolled the PAGE
     // sideways, clipping the Park column off the right edge of the viewport.
     ".rd-tablewrap{max-width:100%}",
+    ".rd-tools{display:flex;justify-content:flex-end;margin:6px 0}",
+    // THE RANK CELL'S CLASS CHANGED, and this rule is why the colour survived.
+    // The rank td used to be .rd-rk; it is now .mlbstats-col-rank, because
+    // site.css carries a rule that UNDOES the frozen first column on any
+    // .rd-table whose first cell is .rd-rk (freezing a rank digit pins the
+    // number and scrolls the name away). Stamping the shared rank class on the
+    // header AND the cell is the module-side fix that rule's own comment asks
+    // for: the rank-rail rules take over, the digit pins narrow at the left
+    // edge and the NAME pins beside it. The muted colour is re-declared here so
+    // the rename costs nothing on screen.
+    ".rd-table td.mlbstats-col-rank{color:var(--text-tertiary)}",
     "@media (max-width:640px){.rd-tablewrap{scrollbar-width:thin;scrollbar-color:var(--border) transparent;padding-bottom:4px}",
     ".rd-tablewrap::-webkit-scrollbar{height:4px;display:block}",
     ".rd-tablewrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}}",
-    ".rd-table td.rd-rk{color:var(--text-tertiary)}",
-    ".rd-table td.rd-sc{font-weight:700}",
+    // .rd-sc is now a SPAN inside the cell on Buy/Sell (two scale columns, one
+    // filled per row) and still a cell class on the two point tables, so the
+    // rule is written unqualified rather than as `td.rd-sc`.
+    ".rd-table .rd-sc{font-weight:700}",
     ".rd-pos{color:var(--accent-green)}.rd-neg{color:var(--accent-red)}",
     ".rd-daypills{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}",
     ".rd-daypill{font:600 12px/1 var(--font-retro,monospace);padding:6px 11px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer}",

@@ -599,14 +599,34 @@ function _tbSortRows(rows) {
   return rows;
 }
 // Render a clickable, sort-aware column header with an active-direction arrow.
-function _tbTh(label, col, cls, title, noActiveMark) {
+// GLOSSARY TERM SPAN (assets/eephus-gl.js contract: a [data-gl] span carrying a
+// slug that EXISTS in data/glossary.json, plus one wire() call after render).
+// Slugs are verified against the artifact before use, because a span pointing
+// at a slug the artifact does not carry renders a term that looks interactive
+// and defines nothing.
+//
+// WHAT IS DELIBERATELY NOT WRAPPED HERE: "posterior" (as in the evaluator's
+// posterior_surplus_mm) and "Trade Value Grade" have no entry in
+// data/glossary.json. They stay plain text rather than borrowing a near-miss
+// slug; add the entries in build_glossary_data.py and the spans can follow.
+function _tmGl(label, slug) {
+  return `<span class="g-term" data-gl="${slug}">${label}</span>`;
+}
+function _tmWireGl(node) {
+  try { if (node && window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(node); }
+  catch (e) { /* the glossary is enrichment; the board works without it */ }
+}
+// `term` is optional: with it the heading text becomes a glossary span, without
+// it the label renders exactly as before.
+function _tbTh(label, col, cls, title, noActiveMark, term) {
   const [scol, sdir] = _tbSortParts();
   const active = !noActiveMark && scol === col;
   const arrow = active ? (sdir === "asc" ? " ▲" : " ▼") : "";
   const classes = ["tm-sortable", cls, active ? "tm-sorted" : ""].filter(Boolean).join(" ");
   const tt = (title ? title + " · " : "") + "click to sort";
   const ariaSort = active ? (sdir === "asc" ? "ascending" : "descending") : "none";
-  return `<th class="${classes}" data-tb-sortcol="${col}" title="${tt}" tabindex="0" role="button" aria-sort="${ariaSort}">${label}${arrow}</th>`;
+  const text = term ? _tmGl(label, term) : label;
+  return `<th class="${classes}" data-tb-sortcol="${col}" title="${tt}" tabindex="0" role="button" aria-sort="${ariaSort}">${text}${arrow}</th>`;
 }
 // Column header click: toggle direction if already sorted by it, else pick a
 // sensible default (text asc, numeric desc).
@@ -819,18 +839,18 @@ function _renderTBRows() {
   let html = `<div style="margin:6px 0 4px;color:var(--text-secondary);font-size:11px;">${rows.length} players · ${escapeHtml(_tbData.generated_at || "")}</div>
   ${_crunchBanner}
   ${topPager}
-  <div class="tm-board-tablewrap"><table class="stats-table tm-board-table">
+  <div class="tm-board-tablewrap mlbstats-scroll"><table class="stats-table tm-board-table">
   <thead><tr>
-    <th>#</th>
+    <th class="mlbstats-col-rank">#</th>
     ${_tbTh("Player", "name")}
     ${_tbTh("Age", "age", "tm-num", "Current age (decimal years)")}
     ${_tbTh("Pos", "pos")}
     ${_tbTh("Org", "org")}
-    ${_tbTh("FV", "fv", "tm-num", "Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)")}
+    ${_tbTh("FV", "fv", "tm-num", "Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)", false, "fv")}
     ${_tbTh("Grade", "grade", "tm-num tm-col-div", "Trade Value Grade - the contract-adjusted surplus on an A+ to F scale. The board ranks by the model's raw eFV grade, which orders realized value better than the dollar transform; the letter is the coarse display.", true)}
-    ${_tbTh("Surplus", "surplus", "tm-num", "Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use")}
-    ${showRisk ? _tbTh("Risk", "risk", "tm-num", "Sortino: expected surplus per unit of downside risk (higher is safer). Tooltip carries the risk-adjusted surplus and bust probability.") : ""}
-    ${_tbTh("Contract", "contract", "", "Contract: phase · salary · FA year (MLB) or remaining controlled seasons (MiLB)")}
+    ${_tbTh("Surplus", "surplus", "tm-num", "Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use", false, "surplus_value")}
+    ${showRisk ? _tbTh("Risk", "risk", "tm-num", "Sortino: expected surplus per unit of downside risk (higher is safer). Tooltip carries the risk-adjusted surplus and bust probability.", false, "risk_adjusted_surplus") : ""}
+    ${_tbTh("Contract", "contract", "", "Contract: phase · salary · FA year (MLB) or remaining controlled seasons (MiLB)", false, "service_time")}
     <th class="tm-col-div">Signals</th>
   </tr></thead><tbody>`;
 
@@ -902,7 +922,7 @@ function _renderTBRows() {
     const addBtns = "";
 
     html += `<tr class="prospect-row" ${rowClick} title="${rangeTip}">
-      <td class="tm-rank">${rank}</td>
+      <td class="tm-rank mlbstats-col-rank">${rank}</td>
       <td class="tm-player">${href ? `<a class="fa-player-link" href="${href}">${name}</a>` : name}</td>
       <td class="tm-num tm-dim">${p.age != null ? Number(p.age).toFixed(1) : "-"}</td>
       <td class="tm-dim">${pos}</td>
@@ -920,6 +940,9 @@ function _renderTBRows() {
   // pinned to the table instead of the whole board pane.
   html += `</tbody></table></div>${topPager}`;
   wrap.innerHTML = html;
+  // Term spans get their tooltip + aria wiring here, after the board is in the
+  // DOM. The table is rebuilt on every render, so this runs on every render.
+  _tmWireGl(wrap);
   // Sortable column headers (the table is rebuilt each render, so rewire here).
   wrap.querySelectorAll("th[data-tb-sortcol]").forEach(th => {
     th.addEventListener("click", () => _tbSortByCol(th.dataset.tbSortcol));

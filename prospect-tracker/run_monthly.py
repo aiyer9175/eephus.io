@@ -37,6 +37,33 @@ import concurrent.futures
 from pathlib import Path
 
 
+# ===========================================================================
+# MODULE IDENTITY (2026-08-05) - claim the name "run_monthly" for the LIVE
+# pipeline module when this file is launched as a script.
+# ===========================================================================
+# THE DEFECT THIS CLOSES. deploy/nightly-build.sh runs `python run_monthly.py`,
+# so the running pipeline IS sys.modules["__main__"] and NOTHING owns the name
+# "run_monthly". Ten helper call sites across eight modules file their
+# ingest-health rows with `from run_monthly import _record_ingest`, and with
+# that name unclaimed the import statement does not find the running pipeline -
+# it IMPORTS A SECOND, SEPARATE COPY of this file. The copy gets its own empty
+# _INGEST_HEALTH list, the row is appended there, and write_ingest_health
+# drains the FIRST module's list. MEASURED on the __main__ launch shape:
+# 0 of 1 filed rows reached the drained payload before this line, 1 of 1 after
+# (repro: tools-free script asserting the drain, run 2026-08-05).
+#
+# Fixing it HERE, at the name, is what makes every one of those call sites real
+# at once - bullpen/hitter/leverage/starter, ifa, fa, fantasy, dfs, betting,
+# draft and mlbam_ingest - rather than patching ten importers one at a time and
+# leaving the eleventh to be written wrong.
+#
+# setdefault, not assignment: under `python -m run_monthly`, a plain import, or
+# pytest, the name may already be bound to the correct object and rebinding it
+# would be the same two-module hazard in reverse.
+if __name__ == "__main__":                  # pragma: no cover - script entry
+    sys.modules.setdefault("run_monthly", sys.modules["__main__"])
+
+
 # v19 — Step timing infrastructure. Each major phase wraps itself in
 # `with _step("name"):` which logs the duration on exit and records it
 # in `_STEP_TIMES` for the end-of-run summary. The summary table sorts
@@ -173,8 +200,76 @@ def _log_step_summary(log: logging.Logger, total_runtime: float,
 # distinction the 8-day TJStats gap needed someone to make.
 SCHEDULED_GRADE_SOURCES = ("tjstats", "mlb_pipeline_live", "mlb_pipeline_org")
 
+# Scheduled EXPORTS: steps that build a served artifact and file their OWN
+# explicit ok=False when they catch a silent-empty (2026-08-05's defect class -
+# a fetch or join that fails into an empty-but-valid result and publishes a
+# blank-but-parseable board). Added because the guards shipped that day were
+# INERT: every one of these names was filed into the ledger and then dropped at
+# drain time, because `red` was computed against SCHEDULED_GRADE_SOURCES alone.
+# MEASURED: 17 of 17 filed export sources produced an empty red[].
+#
+# WHY A SECOND TUPLE RATHER THAN MORE NAMES IN THE FIRST. Two different failure
+# tests, and collapsing them would make one of the two wrong:
+#   grade source - "wrote 0 rows" IS the failure, and ABSENCE is the worst case
+#                  (the step never ran), so a missing record is itself RED.
+#   export       - the step decides for itself what broke and says so with
+#                  ok=False. Row count is not the test: a healthy export can
+#                  legitimately roll up zero rows, and several of these are
+#                  gated off on a normal night (no slate today, no odds key,
+#                  monthly-only steps), so alarming on ABSENCE here would fire
+#                  nightly and train the reader to ignore the section. Silence
+#                  from an export means "did not run"; the ok=True rows the
+#                  exports now file are what distinguish that from "ran and
+#                  found nothing", without manufacturing a red.
+# Both land in the same red[] array, because deploy/nightly-build.sh prints
+# that array and a dark board deserves the same shout as a dead ingest. They
+# stay TELLABLE APART in the payload through each row's `kind`.
+#
+# DELIBERATELY EXCLUDED: "card_drops" and "card_scrape" (steps 6g-pre and 9f,
+# filed by _record_card_ingest). Both file ok=False whenever tonight's tap
+# parsed nothing, which is the NORMAL state on a box with EEPHUS_CARD_SCRAPE
+# unset and no CSV drop - watching them would print `!!! INGEST RED` every
+# single night until the reader stopped reading the line. They stay 'unwatched'
+# and report through three other channels instead: an ERROR from scrape_cards
+# the moment a whole batch parses nothing, an ERROR from card_market_export and
+# from step 9f, and their own FAIL rows plus a frozen `last OK` in the table
+# below, which is the number that answers "when did the card tap last work".
+# The genuinely broken cases (the scrape ran and parsed nothing; a CSV drop
+# parsed nothing) are published in data/card_market.json's meta.ingest, which
+# is where a reader of the PAGE can see them. See docs/diamond-cards.md 4c.
+SCHEDULED_EXPORTS = (
+    # /mlbstats/ leaderboards: the team-rollup guard behind the Offense+ outage
+    "hitter_leaderboards", "starter_leaderboards", "bullpen_leaderboards",
+    "leverage_leaderboards", "leverage_batters", "leverage_starters",
+    "hitter_bat_side",
+    # /fantasy/ + /dfs/ + /betting/, all of which read the same probables feed
+    "fantasy_schedule", "fantasy_teams_context", "fantasy_export",
+    "dfs_schedule", "dfs_slate", "betting_export",
+    # section joins that publish a dark chart when they resolve nothing
+    "ifa_efv_join", "fa_prospect_arc", "draft_overperformance",
+    # org authority: a blank parent-org map silently re-orgs the whole board
+    "mlbam_parent_org_map",
+)
+
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
 _INGEST_HEALTH: list[dict] = []
+
+
+def _ingest_kind(source: str) -> str:
+    """Which watch-list a source belongs to: 'grade_source', 'export', or
+    'unwatched'.
+
+    Rides on each ledger row so the payload keeps the two RED classes apart
+    without growing a second top-level array (the deploy shell and the
+    payload-shape contract both read exactly {generated_at, mode, sources,
+    red}). 'unwatched' is a real answer, not a fallthrough: just_baseball and
+    espn_article_probe legitimately publish nothing for months, and they are
+    reported without ever being alarmed on."""
+    if source in SCHEDULED_GRADE_SOURCES:
+        return "grade_source"
+    if source in SCHEDULED_EXPORTS:
+        return "export"
+    return "unwatched"
 
 
 def _record_ingest(source: str, ok: bool, n_rows: int = 0, message: str = "",
@@ -205,20 +300,63 @@ def _record_ingest(source: str, ok: bool, n_rows: int = 0, message: str = "",
             log.error("ingest health: %s FAILED (%d rows) %s", source, n_rows, message)
 
 
+def _record_card_ingest(res: dict, scope: str = "",
+                        log: logging.Logger | None = None) -> None:
+    """Stamp the card comp taps into the ingest ledger. See docs/diamond-cards.md.
+
+    TWO ROWS, NOT ONE, and that is the whole point. `card_prices_ingest`
+    re-parses every drop file on every run (the ledger there is for auditing,
+    not for skipping), so a single drop dropped in March keeps a combined
+    "card_comps" row green forever and would hide a scraper that died in April.
+    Split, `card_scrape`'s last_ok_at answers the only question worth asking of
+    it: when did the scraper last actually parse a sale.
+
+    ok KEYS ON ROWS PARSED, NOT ROWS STORED. A re-read of the same 90-day sold
+    window stores zero new rows and is perfectly healthy, so keying on stored
+    would report a working ingest as a failure every night after the first.
+
+    A scrape that is not armed, or that was skipped as a duplicate of a pass
+    earlier in this same process, records ok=False with the reason stated. That
+    reads as loud, and it should: an unarmed scraper with no scheduled caller is
+    exactly the condition that left /cards/ at 0 priced for its whole first
+    life, and nothing anywhere said so."""
+    drops = res.get("drops") or {}
+    scrape = res.get("scrape") or {}
+    _record_ingest("card_drops", (drops.get("parsed") or 0) > 0,
+                   drops.get("stored") or 0,
+                   f"{len(drops.get('files') or [])} file(s), "
+                   f"{drops.get('parsed') or 0} rows parsed",
+                   scope=scope, log=log)
+    _record_ingest("card_scrape", (scrape.get("parsed") or 0) > 0,
+                   scrape.get("stored") or 0,
+                   (scrape.get("reason")
+                    or (f"scope={res.get('scope')} "
+                        f"{scrape.get('cards_fetched') or 0} fetched, "
+                        f"{scrape.get('cards_zero_rows') or 0} parsed nothing")),
+                   scope=scope, log=log)
+
+
 def write_ingest_health(out_dir: Path, mode: str,
                         log: logging.Logger | None = None) -> dict:
-    """Write data/ingest_health.json and emit a RED summary line per source
-    that was scheduled to write grade rows and wrote none.
+    """Write data/ingest_health.json and emit a RED summary line per scheduled
+    grade source that wrote no rows and per scheduled export that reported a
+    failure.
 
     Shape:
-      {generated_at, mode, sources: [{source, scope, date, ok, n_rows,
+      {generated_at, mode, sources: [{source, scope, kind, date, ok, n_rows,
                                       message, last_ok_at, last_ok_rows}],
        red: [source, ...]}
 
     `last_ok_at` comes from the durable source_checks table, so a source that
     produced nothing THIS run still reports the last date it genuinely worked
     - the single number that would have made the TJStats gap obvious on day
-    one instead of day eight."""
+    one instead of day eight.
+
+    `kind` (see _ingest_kind) is how a reader tells a dead INGEST from a dark
+    EXPORT while both share one red[] array. It rides on the row rather than in
+    a second top-level key on purpose: the deploy shell indexes `sources` by
+    name and would otherwise need a matching edit to see the new class at
+    all."""
     try:
         from storage import load_source_checks
         checks = load_source_checks()
@@ -229,25 +367,37 @@ def write_ingest_health(out_dir: Path, mode: str,
     for r in _INGEST_HEALTH:
         stamp = checks.get((r["source"], r.get("scope") or "")) or {}
         rows.append({**r,
+                     "kind": _ingest_kind(r["source"]),
                      "last_ok_at": stamp.get("checked_at"),
                      "last_ok_rows": stamp.get("n_rows")})
 
     seen = {r["source"] for r in rows}
-    # A scheduled source that produced no ledger entry AT ALL is the worst
-    # case (its step never ran, or crashed before recording) - surface it
-    # rather than letting absence read as success.
+    # A scheduled GRADE SOURCE that produced no ledger entry AT ALL is the
+    # worst case (its step never ran, or crashed before recording) - surface it
+    # rather than letting absence read as success. Deliberately NOT extended to
+    # SCHEDULED_EXPORTS: those steps are conditionally gated (daily vs monthly,
+    # no slate, no odds key) and would file a nightly false red, which is how a
+    # reader learns to skip the section. See the tuple's comment.
     for src in SCHEDULED_GRADE_SOURCES:
         if src not in seen:
             stamp = checks.get((src, "")) or {}
             rows.append({"source": src, "scope": "", "ok": False, "n_rows": 0,
+                         "kind": "grade_source",
                          "message": "no ingest attempt recorded this run",
                          "date": date.today().isoformat(),
                          "last_ok_at": stamp.get("checked_at"),
                          "last_ok_rows": stamp.get("n_rows")})
 
+    # Two tests, one array. A grade source is judged on ROW COUNT (writing zero
+    # is the TJStats outage). An export is judged on its OWN ok flag only: it
+    # files ok=False when it catches its silent-empty, and judging it on rows
+    # would turn a legitimately-zero rollup or a healthy ok=True heartbeat
+    # (n_rows defaults to 0) into a manufactured red.
     red = sorted({r["source"] for r in rows
-                  if r["source"] in SCHEDULED_GRADE_SOURCES
-                  and (not r["ok"] or r["n_rows"] <= 0)})
+                  if r["kind"] == "grade_source"
+                  and (not r["ok"] or r["n_rows"] <= 0)}
+                 | {r["source"] for r in rows
+                    if r["kind"] == "export" and not r["ok"]})
     payload = {
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "mode": mode,
@@ -265,21 +415,32 @@ def write_ingest_health(out_dir: Path, mode: str,
     if log:
         log.info("=" * 64)
         log.info("INGEST HEALTH (%s)", mode)
-        log.info("%-22s %-10s %6s  %s", "source", "status", "rows", "last OK")
+        log.info("%-22s %-12s %-10s %6s  %s",
+                 "source", "kind", "status", "rows", "last OK")
         log.info("-" * 64)
         for r in payload["sources"]:
-            status = "OK" if (r["ok"] and r["n_rows"] > 0) else "FAIL"
-            log.info("%-22s %-10s %6d  %s", (r["source"] + (
+            # The table's verdict must match red[]'s, or the two halves of this
+            # block disagree in the same log: an export that ran clean and
+            # rolled up nothing is OK here because it is not red there.
+            status = "OK" if (r["source"] not in red) else "FAIL"
+            log.info("%-22s %-12s %-10s %6d  %s", (r["source"] + (
                 f"/{r['scope']}" if r["scope"] else ""))[:22],
+                r.get("kind") or "unwatched",
                 status, r["n_rows"], r.get("last_ok_at") or "never")
         log.info("-" * 64)
         for src in red:
             hit = next((r for r in payload["sources"] if r["source"] == src), {})
-            log.error("RED: scheduled grade source %r wrote 0 rows this run "
-                      "(last OK %s). %s", src, hit.get("last_ok_at") or "never",
-                      hit.get("message") or "")
+            if hit.get("kind") == "export":
+                log.error("RED: scheduled export %r reported a failure this run "
+                          "(last OK %s). %s", src,
+                          hit.get("last_ok_at") or "never", hit.get("message") or "")
+            else:
+                log.error("RED: scheduled grade source %r wrote 0 rows this run "
+                          "(last OK %s). %s", src,
+                          hit.get("last_ok_at") or "never", hit.get("message") or "")
         if not red:
-            log.info("ingest health: all scheduled grade sources wrote rows")
+            log.info("ingest health: all scheduled grade sources wrote rows "
+                     "and every scheduled export reported clean")
         log.info("=" * 64)
     return payload
 
@@ -1739,6 +1900,59 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 _refresh_betting(log=log.info)
             except Exception:
                 log.exception("daily: betting export failed — continuing")
+
+        # --- 9f. Card comps ingest + market index (card_market.json) ------
+        # THE CADENCE THE MODULE ALWAYS DOCUMENTED AND NEVER HAD. Before this,
+        # the only card step in the pipeline was the monthly export, so a comp
+        # ingested on the 3rd could not reach the page until the 1st of the next
+        # month, and no ingest was scheduled at all. Comps move daily; the index
+        # that summarizes them has to move with them, which is why the export
+        # runs here and not only at monthly 6g.
+        #
+        # ORDER IS LOAD-BEARING. This sits after d9 (rebuild_only re-runs
+        # efv_export.regen_all), so the talent side of the buy signal reads the
+        # SAME data/xfv.json the rest of tonight's site serves. Running it before
+        # the regen would screen tonight's prices against yesterday's board.
+        #
+        # run_scheduled_ingest owns the cadence: drops every night, the hot list
+        # daily, a full sweep on Sunday. On a monthly night step 6g-pre already
+        # ran it in this process, and the card_scrape_runs guard makes this call
+        # skip the fetch instead of hitting the marketplace twice. With
+        # EEPHUS_CARD_SCRAPE unset the whole thing is drops-only and silent.
+        # Additive; never aborts. Runbook: docs/diamond-cards.md.
+        with _step("9f. Card comps ingest + market index (card_market.json)", log):
+            try:
+                import card_prices_ingest
+                _cards = card_prices_ingest.run_scheduled_ingest(log_fn=log.info)
+                # scope="daily" keeps this row distinct from 6g-pre's on a
+                # monthly night, where the scrape here is a deliberate skip: two
+                # rows that say what each pass did beats one row that overwrites
+                # the pass that actually fetched.
+                _record_card_ingest(_cards, scope="daily", log=log)
+            except Exception as e:                # noqa: BLE001
+                log.exception("daily: card comps ingest failed - continuing")
+                _record_ingest("card_scrape", False, 0, f"crashed: {e}",
+                               scope="daily", log=log)
+            try:
+                import card_market_export
+                _cm = card_market_export.export()
+                _cm_meta = _cm.get("meta") or {}
+                _cm_ing = _cm_meta.get("ingest") or {}
+                log.info("card market: %d cards, %d priced, ingest=%s",
+                         _cm_meta.get("n_cards"), _cm_meta.get("n_priced"),
+                         _cm_ing.get("state"))
+                # The export already filed the RED and logged at ERROR; this
+                # repeats the verdict in the DAILY step log because the card
+                # sources are deliberately NOT in SCHEDULED_GRADE_SOURCES (they
+                # write comps, not grade rows, and a source that is legitimately
+                # off would otherwise print `!!! INGEST RED` every single night
+                # until somebody stopped reading the line). The nightly log is
+                # therefore where a parse regression has to be visible.
+                if _cm_ing.get("red"):
+                    log.error("daily: card ingest %s - %s",
+                              _cm_ing.get("state"), _cm_ing.get("why"))
+            except Exception:
+                log.exception("daily: card market export failed - continuing")
 
         # --- 10. FA signing-window tracker (Nov–Mar only). ----------------
         # In-winter the class moves daily (signings, option decisions, QO
@@ -4032,13 +4246,46 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("betting model refit failed - continuing")
 
+        # --- 6g-pre. Card comps ingest (the tap /cards/ never had) --------
+        # THE DEFECT THIS CLOSES (2026-08-05): card_prices_ingest had no
+        # scheduled caller ANYWHERE. Step 6g below ran only the export, so
+        # /cards/ served 40 tracked cards and 0 priced forever, and
+        # EEPHUS_CARD_SCRAPE=1 in /etc/eephus.env armed a scraper that nothing
+        # invoked. The export was doing its job perfectly on an empty store.
+        #
+        # run_scheduled_ingest owns the cadence (card_prices_ingest.CADENCE:
+        # drops every run, the hot list daily, a full sweep on Sunday) so this
+        # step stays a dumb "run tonight's ingest" and cannot encode a second
+        # opinion. It is SAFE that the chained daily tail (step 9f) calls it
+        # again fifteen minutes from now: drops are idempotent at the row and
+        # file level, and the scrape is guarded by card_scrape_runs, so a scope
+        # already fetched today is skipped rather than re-fetched.
+        #
+        # NO-OPS WITH THE FLAG UNSET, which is every box today: the drop path
+        # needs no network and the scrape reports a stated reason instead of
+        # running. Additive; never aborts. Runbook: docs/diamond-cards.md.
+        with _step("6g-pre. Card comps ingest (drops + gated scrape)", log):
+            try:
+                import card_prices_ingest
+                _cards = card_prices_ingest.run_scheduled_ingest(log_fn=log.info)
+                _record_card_ingest(_cards, log=log)
+            except Exception as e:                # noqa: BLE001
+                log.exception("card comps ingest failed - continuing")
+                _record_ingest("card_scrape", False, 0, f"crashed: {e}", log=log)
+
         # --- 6g. Card market index (the /cards/ screen) ------------------
         # Joins stored sold comps to the eFV board and republishes the derived
-        # index ONLY (raw comps never leave the DB). Ingest is separate and
-        # opt-in: the scraper needs EEPHUS_CARD_SCRAPE=1, and a CSV drop under
+        # index ONLY (raw comps never leave the DB). Ingest is 6g-pre above:
+        # the scraper needs EEPHUS_CARD_SCRAPE=1, and a CSV drop under
         # data/drops/ is an equal first-class input. A zero-comp run publishes
-        # an honest empty screen. Additive; never aborts. Runbook:
-        # docs/diamond-cards.md.
+        # an honest empty screen and says in meta.ingest WHICH kind of empty it
+        # is. Additive; never aborts. Runbook: docs/diamond-cards.md.
+        #
+        # Kept here as well as in the daily tail (step 9f) on purpose: this pass
+        # makes a bare `run_monthly.py` self-publish, and the chained daily
+        # re-exports ~15 min later against the POST-regen data/xfv.json, so the
+        # served file ends the night on the fresher board either way. The file
+        # is ~40 rows, so the duplicate write costs nothing worth avoiding.
         with _step("6g. Card market index (card_market.json)", log):
             try:
                 import card_market_export

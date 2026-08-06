@@ -97,22 +97,91 @@ _TMAP_CACHE = Path(__file__).parent / ".cache" / "team_abbrev_map.json"
 
 
 # --------------------------------------------------------------------------- #
-# silent-empty plumbing, shared by the four /mlbstats/ exporters
+# silent-empty plumbing. guard_nonempty_block is shared by the four /mlbstats/
+# exporters; record_ingest / _ingest_red are the export layer's ingest-health
+# client generally (ifa_export and fa_export file through them too) so the
+# live-module resolution below exists ONCE rather than once per exporter.
 # --------------------------------------------------------------------------- #
+def _live_pipeline_module():
+    """The RUNNING run_monthly module object, or None when no pipeline is up.
+
+    THE DEFECT THIS EXISTS FOR (2026-08-05, found by review the same day the
+    guards below shipped). `from run_monthly import _record_ingest` looks like
+    it reaches the pipeline. Under the way the pipeline is actually launched -
+    deploy/nightly-build.sh runs `python run_monthly.py` - the live module is
+    sys.modules["__main__"] and the name "run_monthly" is UNCLAIMED, so that
+    import statement builds a SECOND, SEPARATE module object with its own empty
+    _INGEST_HEALTH list. write_ingest_health then drains the FIRST list. Every
+    red filed that way went into a throwaway: MEASURED 0 of 1 filed rows in the
+    drained payload before this fix, 1 of 1 after.
+
+    Resolution order, and why each step is in it:
+      1. sys.modules["run_monthly"] - the normal import case, and also the
+         script case now that run_monthly claims its own name on startup.
+      2. sys.modules["__main__"], but ONLY when that module carries the
+         pipeline's own attributes. Any script can be __main__; the
+         _record_ingest / write_ingest_health pair is the sentinel that says
+         this particular __main__ is the pipeline and owns the ledger being
+         drained.
+      3. None, and the caller falls back to a fresh import. That path is for a
+         standalone `python bullpen_export.py`, where the in-memory ledger has
+         no drain to reach anyway but _record_ingest's ok=True side effect
+         still stamps the DURABLE source_checks row, which is worth the import.
+    """
+    mod = sys.modules.get("run_monthly")
+    if mod is not None and hasattr(mod, "_record_ingest"):
+        return mod
+    main = sys.modules.get("__main__")
+    if (main is not None and hasattr(main, "_record_ingest")
+            and hasattr(main, "write_ingest_health")):
+        return main
+    return None
+
+
+def record_ingest(source: str, *, ok: bool, n_rows: int = 0, message: str = "",
+                  import_fallback: bool = True) -> None:
+    """File one outcome into the run's ingest-health ledger, never raising.
+
+    Resolves the LIVE pipeline module first (see _live_pipeline_module) and
+    only re-imports run_monthly when there is no pipeline in the process. Both
+    verdicts go through here: the HEALTHY path matters as much as the red one,
+    because a present ok=True row is the only thing that distinguishes "ran and
+    found nothing" from "never ran" when the ledger is read after the fact.
+
+    `import_fallback=False` says "log this only if a pipeline is already up".
+    The HEARTBEAT callers pass it, because importing run_monthly costs the
+    whole pipeline import graph (scrapers, storage, every exporter) and a
+    standalone `python bullpen_export.py` or a unit test must not pay that just
+    to note that a board built normally. A FAILURE still pays it: the fresh
+    import stamps nothing on its own, but it is the only way an anomaly from a
+    non-pipeline run gets recorded at all.
+
+    Best-effort BY DESIGN, mirroring fantasy_export._record_schedule_anomaly:
+    this is a reporting path and must never be the reason an export fails."""
+    try:
+        mod = _live_pipeline_module()
+        if mod is not None:
+            mod._record_ingest(source, ok=ok, n_rows=n_rows, message=message)
+            return
+        if not import_fallback:
+            return
+        from run_monthly import _record_ingest
+        _record_ingest(source, ok=ok, n_rows=n_rows, message=message)
+    except Exception:                      # noqa: BLE001 - reporting never breaks a board
+        _log.debug("could not record ingest health for %s", source, exc_info=True)
+
+
 def _ingest_red(source: str, message: str) -> None:
     """File a silent-empty into the ingest-health RED ledger.
 
     The ledger is what the deploy shell prints as `!!! INGEST RED`, so an empty
     fetch that would otherwise publish as a valid-looking board becomes visible
-    on the same run instead of surfacing days later as a dark module.
-
-    Best-effort BY DESIGN, mirroring fantasy_export._record_schedule_anomaly:
-    this is a reporting path and must never be the reason an export fails."""
-    try:
-        from run_monthly import _record_ingest
-        _record_ingest(source, ok=False, message=message)
-    except Exception:                      # noqa: BLE001 - reporting never breaks a board
-        _log.debug("could not record the ingest anomaly for %s", source, exc_info=True)
+    on the same run instead of surfacing days later as a dark module. That
+    claim is only true because record_ingest resolves the live module and
+    because the source is named in run_monthly.SCHEDULED_EXPORTS - a row filed
+    under an unwatched name is written to the payload but never reaches red[].
+    """
+    record_ingest(source, ok=False, message=message)
 
 
 def _prev_payload(out_path: Path) -> dict:
@@ -146,6 +215,14 @@ def guard_nonempty_block(fresh: list, out_path: Path, *, key: str, source: str,
     filed RED so it is never silent."""
     meta = {"key": key, "n": len(fresh), "stale": False}
     if fresh:
+        # HEARTBEAT. A ledger that only ever hears from failures cannot tell
+        # "this board built fine" from "this board's step never ran at all",
+        # which is the exact ambiguity that let the TJStats gap run 8 days.
+        # ok=True also stamps the durable source_checks row, so `last OK` on a
+        # future red line is a real date instead of "never".
+        record_ingest(source, ok=True, n_rows=len(fresh),
+                      message=f"{label}: {len(fresh)} {key}",
+                      import_fallback=False)
         return fresh, meta
     prev = _prev_payload(out_path)
     prev_block = prev.get(key) or []

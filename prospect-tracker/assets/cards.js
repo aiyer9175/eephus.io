@@ -116,6 +116,22 @@
   function teamLogo(org) {
     return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo && org) ? EEPHUS_HUB.teamLogo(org) : "";
   }
+  // ---- glossary terms -------------------------------------------------------
+  // The contract is assets/eephus-gl.js: a [data-gl] span carrying a slug that
+  // EXISTS in data/glossary.json, plus a wire() call after render. This board
+  // emits exactly ONE term, and that is not laziness: the vocabulary it invents
+  // (Card Index, Gap, Trend, talent percentile, price percentile, grade factor)
+  // has no entry in the artifact, and pointing those words at a near-miss slug
+  // would define the wrong thing on a page about prices. eFV is the one column
+  // whose term the site already documents, so it is the one that is wrapped.
+  // Add the card-market entries in build_glossary_data.py and the rest follow.
+  function gl(label, slug) {
+    return '<span class="g-term" data-gl="' + esc(slug) + '">' + esc(label) + "</span>";
+  }
+  function wireGl(node) {
+    try { if (node && window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(node); }
+    catch (e) { /* the glossary is enrichment; the board works without it */ }
+  }
 
   // ---- sparkline ------------------------------------------------------------
   // Inline SVG on resolved CSS tokens, the same shape EEPHUS_HUB.histogram /
@@ -235,7 +251,8 @@
           '<span class="mlb-sub">' + esc(c.org || "-") + " &middot; " + esc(c.set || "-") +
             " &middot; " + esc(c.grade || "-") + "</span>" +
         "</span>" +
-        '<span class="mlb-metric"><span class="mlb-metric-label">eFV</span>' + efvCell(c) + "</span>" +
+        '<span class="mlb-metric"><span class="mlb-metric-label">' + gl("eFV", "xfv") +
+          "</span>" + efvCell(c) + "</span>" +
         '<span class="mlb-metric"><span class="mlb-metric-label">Index</span>' + indexCell(c) + "</span>" +
         '<span class="mlb-metric"><span class="mlb-metric-label">Trend</span>' + trendCell(c) + "</span>" +
         '<span class="mlb-metric"><span class="mlb-metric-label">Gap</span>' +
@@ -247,7 +264,7 @@
           // exactly one of the two copies at any width, so nothing is duplicated
           // on screen and nothing is lost on a phone.
           '<div class="mlb-chip cards-chip-phone"><b>Index</b>' + indexCell(c) + "</div>" +
-          '<div class="mlb-chip cards-chip-phone"><b>eFV</b>' + efvCell(c) + "</div>" +
+          '<div class="mlb-chip cards-chip-phone"><b>' + gl("eFV", "xfv") + "</b>" + efvCell(c) + "</div>" +
           // Trend was the ONE row-1 metric with no phone twin: below 720px the
           // metric track is hidden and the only "Trend" left in the tape was the
           // sparkline, so the percentage simply vanished on a phone.
@@ -272,6 +289,15 @@
   function detailPanel(c) {
     var win = c.index_window || [];
     var link = c.mlbam ? hrefFor(c.mlbam) : null;
+    // THE PER-CARD GRAPHIC IS GATED ON A PRICE, the same rule filterBar has
+    // applied to the BOARD chip since it shipped. cardSpec draws Card Index,
+    // prior window, trend, talent and price percentiles and gap; on an unpriced
+    // card every one of those is a dash, so the dialog opens on a graphic whose
+    // only real content is a name - and its Download PNG button works. A blank
+    // shareable carrying the site's name is worse than no button. Today NOT ONE
+    // card is priced, so this button was offered on every card in the payload
+    // and produced an empty graphic every time.
+    var priced = num(c.index_usd) !== null;
     return '<div class="cards-detail" data-carddetail="' + esc(c.card_id) + '">' +
       '<div class="cards-detail-grid">' +
         '<div class="cards-detail-block">' +
@@ -297,7 +323,11 @@
           "<p>" + esc(readingFor(c)) + "</p>" +
           '<div class="cards-detail-actions">' +
             (link ? '<a class="chip" href="' + esc(link) + '">Player page</a>' : "") +
-            '<button type="button" class="chip" data-cardgfx="' + esc(c.card_id) + '">Generate GFX</button>' +
+            (priced
+              ? '<button type="button" class="chip" data-cardgfx="' + esc(c.card_id) +
+                '">Generate GFX</button>'
+              : '<span class="cards-detail-sub">No graphic yet: with no index, every number ' +
+                "on the card would be a dash.</span>") +
           "</div>" +
         "</div>" +
       "</div>" +
@@ -326,10 +356,13 @@
   // ---- boards ---------------------------------------------------------------
   function boardHead(cols) {
     return '<div class="mlb-card-head cards-head">' + cols.map(function (c) {
-      return "<span>" + esc(c) + "</span>";
+      // A column may declare a glossary slug; the rest render as plain escaped
+      // text, so a heading can never carry a tooltip that defines nothing.
+      return "<span>" + (c.term ? gl(c.label, c.term) : esc(c.label || c)) + "</span>";
     }).join("") + "</div>";
   }
-  var HEAD_COLS = ["#", "Card", "eFV", "Index", "Trend", "Gap"];
+  var HEAD_COLS = [{ label: "#" }, { label: "Card" }, { label: "eFV", term: "xfv" },
+                   { label: "Index" }, { label: "Trend" }, { label: "Gap" }];
 
   // An empty board has TWO different causes and they need two different
   // sentences. Saying "no card has a priced index yet" to a reader who just
@@ -559,12 +592,16 @@
       : section === "watchlist" ? renderWatchlist()
       : renderBuy();
     bind(root);
+    wireGl(root);
     var banner = el("cards-banner");
     if (banner) {
       var m = DATA.meta || {};
+      // "Diamond preview" is the page's only conversion route outside the nav
+      // dropdown's last item, so it is a link rather than a word.
       banner.innerHTML = '<div class="cards-meta">' +
         esc(m.n_cards || 0) + " cards tracked · " + esc(m.n_priced || 0) + " priced · as of " +
         esc(DATA.as_of || "-") + (DATA.screen ? ' · <b class="cards-screen-word">screen</b>' : "") +
+        ' · <a class="cards-name-link" href="/diamond/">Diamond preview</a>, free while we build' +
         "</div>";
     }
   }
@@ -670,14 +707,25 @@
     Array.prototype.forEach.call(document.querySelectorAll(SECTION_NODES), function (b) {
       b.addEventListener("click", function () {
         setSection(sectionOf(b));
-        try { history.replaceState(null, "", "#" + section); } catch (e) { /* file:// */ }
+        writeHash();
         render();
       });
     });
   }
+  // Returns TRUE when the hash it read was canonical. An unknown fragment was
+  // already refused by this regex, so the board rendered Buy Screen - but the
+  // ADDRESS BAR kept the bad value until the reader clicked a tab, so a shared
+  // link named a board that does not exist and the page disagreed with its own
+  // URL. "#screen" is an alias for "#buy" and is not canonical either.
   function readHash() {
-    var m = /^#(buy|screen|movers|watchlist|method)/.exec(location.hash || "");
+    var h = location.hash || "";
+    var m = /^#(buy|screen|movers|watchlist|method)$/.exec(h);
     if (m) setSection(m[1]);
+    if (!h || h === "#") return true;
+    return !!(m && m[1] === section);
+  }
+  function writeHash() {
+    try { history.replaceState(null, "", "#" + section); } catch (e) { /* file:// */ }
   }
   function loadLinks() {
     fetch("/data/player_links.json", { cache: "no-cache" })
@@ -698,12 +746,12 @@
   // all carry this and which cards.js was the only module missing.
   function onHashChange() {
     var before = section;
-    readHash();
+    if (!readHash()) writeHash();
     if (section !== before) render();
   }
   function init() {
     bindSectionNav();
-    readHash();
+    if (!readHash()) writeHash();
     render();
     load();
     loadLinks();
