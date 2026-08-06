@@ -249,6 +249,12 @@ SCHEDULED_EXPORTS = (
     "ifa_efv_join", "fa_prospect_arc", "draft_overperformance",
     # org authority: a blank parent-org map silently re-orgs the whole board
     "mlbam_parent_org_map",
+    # FA identity substrate. Added 2026-08-06, closing a gap this list caused:
+    # fa_export._record_identity_outage filed a row for the outage that blanked
+    # 79 free agents, and because the name was missing here the row was
+    # filtered out of red[] and the deploy shell never printed INGEST RED for
+    # it. The ledger knew and the operator did not.
+    "fa_class_identity",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.

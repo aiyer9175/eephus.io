@@ -324,17 +324,54 @@ def _identity_health(ident: dict[str, dict[str, int]], class_year: int) -> dict:
     if (hit["n"] >= IDENT_MIN_SIDE_N and pit["n"] >= IDENT_MIN_SIDE_N
             and r_hit and r_pit is not None):
         degraded = (r_pit / r_hit) < IDENT_COLLAPSE_RATIO
+    # A frame served from the last-good cache is degraded even when the
+    # resolution RATES look healthy, because the rates are computed against
+    # whatever loaded. war_source now keeps a per-side copy and records when it
+    # falls back to one; a stale pitching frame is the upstream half of exactly
+    # the outage the ratio test below was written to catch after the fact.
+    stale: dict = {}
+    try:
+        import war_source
+        stale = war_source.served_stale()
+    except Exception:                                        # noqa: BLE001
+        log.debug("could not read war_source.served_stale()", exc_info=True)
+    if stale:
+        degraded = True
+
     out = {
         "class_year": class_year,
         "hit_n": hit["n"], "hit_resolved": hit["ok"],
         "pit_n": pit["n"], "pit_resolved": pit["ok"],
         "degraded": degraded,
     }
+    if stale:
+        out["stale_frames"] = {
+            side: {"age_days": (None if v.get("age_days") is None
+                                else round(v["age_days"], 2)),
+                   "rows": v.get("rows"), "error": v.get("error")}
+            for side, v in stale.items()
+        }
     if r_hit is not None:
         out["hit_rate"] = round(r_hit, 4)
     if r_pit is not None:
         out["pit_rate"] = round(r_pit, 4)
-    if degraded:
+    if stale:
+        # Name the upstream cause when we know it. This is strictly better
+        # evidence than the ratio test, which can only infer the frame failed
+        # from the shape of the damage downstream.
+        def _one(side: str, v: dict) -> str:
+            age = v.get("age_days")
+            age_s = "unknown" if age is None else f"{age:.1f}"
+            return (f"{side} ({age_s} days old, {v.get('rows')} rows, "
+                    f"{v.get('error')})")
+
+        parts = ", ".join(_one(side, v) for side, v in stale.items())
+        out["degraded_why"] = (
+            f"the war_daily download failed and a cached frame was served: "
+            f"{parts}. The identity index was built on a stale substrate, so "
+            f"the resolution rates below describe the cached frame rather than "
+            f"today's league. Do not publish a board off this run.")
+    elif degraded:
         # The verdict carries its own evidence so a reader of the JSON, the
         # page or the ledger does not have to come back here for the numbers.
         out["degraded_why"] = (
