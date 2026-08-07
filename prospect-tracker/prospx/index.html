@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=27238dd4">
+  <link rel="stylesheet" href="/assets/site.css?v=e465f90d">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -8785,9 +8785,7 @@
     <details class="eephus-nav-group" data-nav-group>
       <summary aria-haspopup="true">Diamond<span class="nav-caret" aria-hidden="true">▾</span></summary>
       <div class="eephus-nav-menu" role="menu">
-        <a href="/dynasty/" role="menuitem">Dynasty</a>
-        <a href="/redraft/" role="menuitem">Redraft</a>
-        <a href="/dfs/" role="menuitem">DFS</a>
+        <a href="/fantasy/" role="menuitem">Fantasy</a>
         <a href="/betting/" role="menuitem">Sports Betting</a>
         <a href="/cards/" role="menuitem">Card Market</a>
         <a href="/diamond/" role="menuitem">Diamond Pass</a>
@@ -15612,7 +15610,7 @@ function getFilteredActives() {
   // naturally excluded by the scout-only filters (tools / Statcast / class / acq). The ungraded
   // file lazy-loads here on first board render; the board paints graded-first then folds them in.
   if (typeof ensureEfvUngraded === "function") ensureEfvUngraded();
-  pool = pool.concat(provPlayers());
+  pool = _dedupeProvPool(pool, provPlayers());
   // Game-data reality-check on primary position (corrects FG-projected OF labels for
   // players who have never played the outfield). One-time per player, only once the
   // fielding sidecar has loaded; mutates the shared record so the fix is consistent
@@ -31483,6 +31481,29 @@ function _buildProvPlayers() {
 }
 function provPlayers() { if (_PROV_PLAYERS === null) _buildProvPlayers(); return _PROV_PLAYERS || []; }
 function provPlayerByKey(key) { if (_PROV_BY_KEY === null) _buildProvPlayers(); return (_PROV_BY_KEY && _PROV_BY_KEY[key]) || null; }
+// THE SAME PLAYER WAS ON THE BOARD TWICE. 2,636 keys carry BOTH a graded row (the
+// fabricated FV-35 performance anchor, which the outcome curve maps to its floor for
+// 2,434 of them) and a synthesized provisional row, and every pool below concat-ed the
+// two lists without a dedupe: measured 10,569 rows for 7,933 distinct players, the pair
+// disagreeing by a median 6.6 FV.
+// THE GRADED ROW WINS, and that direction is not arbitrary. Measured on the 2,636: the
+// graded row carries Statcast+ on 78.8%, zone metrics on 78.7%, transactions on 99.0%
+// and level changes on 76.6%, plus points, stock, surplus, eta and acquisition; the
+// provisional twin is a nine-field synthesis. Letting the twin win would drop all of it
+// to change one number. The provisional ENTRY is merged onto the survivor instead, so
+// getEfv still reaches it and the routing decides the grade server-side.
+function _dedupeProvPool(graded, prov) {
+  const seen = new Map();
+  for (const p of graded) if (p && p.player_key) seen.set(p.player_key, p);
+  const out = graded.slice();
+  for (const q of prov || []) {
+    if (!q || !q.player_key) continue;
+    const g = seen.get(q.player_key);
+    if (!g) { out.push(q); continue; }
+    if (g._xfv_entry === undefined && q._xfv_entry) g._xfv_entry = q._xfv_entry;
+  }
+  return out;
+}
 // Rank of a prospect within their farm system's full prospect pool (graded board players +
 // provisional prospects for that org), by eFV. Used on the provisional detail page so an
 // un-scouted prospect still sees where they sit in their system. Cached per org.
@@ -31490,8 +31511,9 @@ let _PROV_ORGRANK = {};
 function provOrgRank(p) {
   if (!p || !p.org) return null;
   if (!_PROV_ORGRANK[p.org]) {
-    const pool = (DATA.players || []).filter(q => q && q.org === p.org && q.status !== "debuted" && !q.debut_date)
-      .concat(provPlayers().filter(q => q.org === p.org));
+    const pool = _dedupeProvPool(
+      (DATA.players || []).filter(q => q && q.org === p.org && q.status !== "debuted" && !q.debut_date),
+      provPlayers().filter(q => q.org === p.org));
     pool.sort((a, b) => efvRankValue(b) - efvRankValue(a));
     const m = {};
     pool.forEach((q, i) => { if (q.player_key) m[q.player_key] = i + 1; });
@@ -32510,7 +32532,7 @@ function buildEfvRankMap() {
   // Provisional (source-ungraded) prospects are first-class members of the active pool: they
   // ALWAYS rank among the graded board by their eFV grade (no toggle). provPlayers() is empty
   // until the ungraded file lands, at which point the rank map rebuilds with them folded in.
-  let pool = DATA.players.filter(p => p && p.player_key).concat(provPlayers());
+  let pool = _dedupeProvPool(DATA.players.filter(p => p && p.player_key), provPlayers());
   pool.sort((a, b) => efvRankValue(b) - efvRankValue(a)
     || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
   pool.forEach((p, i) => { _EFV_RANK[p.player_key] = i + 1; });
@@ -32553,7 +32575,7 @@ function buildEfvOrgRankMap() {
   _EFV_ORG_RANK = {};
   if (!DATA || !Array.isArray(DATA.players)) return;
   const byOrg = {};
-  DATA.players.filter(p => p && p.player_key).concat(provPlayers()).forEach(p => {
+  _dedupeProvPool(DATA.players.filter(p => p && p.player_key), provPlayers()).forEach(p => {
     const o = p.org || "?";
     (byOrg[o] = byOrg[o] || []).push(p);
   });

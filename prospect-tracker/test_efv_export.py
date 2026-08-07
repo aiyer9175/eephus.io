@@ -562,10 +562,30 @@ def test_board_grade_comes_from_the_outcome_curve_not_the_valuation_core():
     # every assignment to xfv_grade (not xfv_grade_display / _quantile / _realized)
     assigns = re.findall(r"^\s*xfv_grade = (.+)$", src, re.MULTILINE)
     assert len(assigns) >= 3, f"expected the three scoring paths, found {len(assigns)}"
+    # THE ONE SANCTIONED EXCEPTION, and it is gated. The floor-routing lane serves
+    # the PROVISIONAL grade for the fabricated-anchor cohort, whose rows the outcome
+    # curve cannot separate at all (it returns its floor knot for every non-positive
+    # WAR, which is 73% of actives). That is a deliberate second map on a named
+    # subset, so it is allowed by name here and pinned OFF by
+    # test_board_basis_coherence; what is still forbidden is a path drifting back
+    # onto the RETIRED realized_implied_fv map, which is what this guard exists for.
+    routed = 0
     for a in assigns:
+        if "_routed" in a:
+            routed += 1
+            continue
         assert "outcome_implied_fv" in a, (
             "an efv_score path assigns xfv_grade from something other than "
             f"vf.outcome_implied_fv: {a.strip()[:90]}")
+    # The routed value must come from the floor-routing predicate and NOT from the
+    # retired map. realized_implied_fv is still referenced elsewhere in this module
+    # on purpose (it is the pinned basis for _odds_grade, whose p_bucket and p_bust
+    # are ground-truthed on it), so the check is on this path, not on the file.
+    if routed:
+        assert re.search(r"_routed\s*=\s*route_floor_grade\(", src), (
+            "a routed xfv_grade path does not come from route_floor_grade")
+        assert not re.search(r"_routed\s*=.*realized_implied_fv", src), (
+            "the floor-routing path assigns from the RETIRED realized_implied_fv map")
     # score_history grades through the same map (Phase 3.2 repoint) so the FV-history
     # tail and the board are one number.
     assert "grade = vf.outcome_implied_fv(model_war" in src, (
