@@ -94,11 +94,28 @@ def index_sides_missing() -> tuple[str, ...]:
     return _SIDES_MISSING
 
 
-def resolve(name: str, active_window: range) -> int | None:
-    """MLBAM id for ``name`` if exactly one war_daily candidate was active
-    inside ``active_window``; None on no-match or ambiguity."""
-    idx = war_daily_index()
-    key = normalize_key(name)
+#: READ-TIME SPELLING BRIDGE, our normalized key -> Baseball-Reference's.
+#:
+#: Identity fixes are alias maps, never DB remaps: the DB key is what every
+#: other surface, override file and stored event references, so re-keying a
+#: player to match one upstream source silently breaks the rest.
+#:
+#: Entries are earned one at a time, each with the B-Ref spelling and the id it
+#: resolves to, because a wrong alias attaches another man's career to a free
+#: agent. Only add a row after checking the war_daily frame itself.
+#:
+#: jake_junis: B-Ref's war_daily spells him "Jakob Junis" (mlb_ID 596001,
+#: active 2017-2026). Neither spelling appeared anywhere else in this repo, so
+#: the miss was invisible: he shipped on the 2027 board with no price and a
+#: reason code that reads as "has not pitched in the majors in four years",
+#: for a pitcher who threw 40 innings this season.
+NAME_ALIASES: dict[str, str] = {
+    "jake_junis": "jakob_junis",
+}
+
+
+def _candidates(idx: dict, key: str) -> dict | None:
+    """war_daily candidates for one normalized key, with the suffix repair."""
     cands = idx.get(key)
     # SUFFIX REPAIR 2026-07-25. The FA class spells players without a generational
     # suffix while Baseball-Reference's war_daily spells them with one, so an exact
@@ -124,8 +141,39 @@ def resolve(name: str, active_window: range) -> int | None:
             if key.endswith(suf):
                 cands = idx.get(key[: -len(suf)])
                 break
+    return cands or None
+
+
+#: Why a name did not resolve. These are the THREE different failures a bare
+#: None used to flatten into one, and they are not equally interesting: a KBO
+#: entrant with no MLB career is a correct null forever, while a spelling miss
+#: is a bug with a fix. A caller that reports "unresolved" for all three tells
+#: its reader to go looking for a defect that is not there.
+NO_MLB_RECORD = "no_mlb_record"                  # absent from war_daily entirely
+NO_RECORD_IN_WINDOW = "no_record_in_window"      # played, but not in the window
+IDENTITY_AMBIGUOUS = "identity_ambiguous"        # two men fit; we refuse to guess
+RESOLVED = "resolved"
+
+
+def resolve_with_reason(name: str, active_window: range) -> tuple[int | None, str]:
+    """(mlbam_id, reason) where reason is RESOLVED or one of the three misses
+    above. resolve() is this function with the reason dropped, so the two can
+    never disagree about who resolved."""
+    idx = war_daily_index()
+    key = normalize_key(name)
+    cands = _candidates(idx, key)
     if not cands:
-        return None
+        # The alias is a FALLBACK, not a rewrite: a real match under our own
+        # spelling always wins, so adding a row can only turn a miss into a
+        # hit and can never move a player who already resolved.
+        alias = NAME_ALIASES.get(key)
+        if alias:
+            cands = _candidates(idx, alias)
+            if cands:
+                log.info("identity alias: %s resolved through the B-Ref "
+                         "spelling %r", key, alias)
+    if not cands:
+        return None, NO_MLB_RECORD
     window = set(active_window)
     plausible = [mid for mid, ent in cands.items() if ent["years"] & window]
     # WRONG-PLAYER FALLBACK REMOVED 2026-07-25. This used to read:
@@ -135,4 +183,12 @@ def resolve(name: str, active_window: range) -> int | None:
     # his father, who last pitched in 1992, because the son lives under
     # lance_mccullers_jr. Silently attaching another man's career to a free agent is
     # worse than returning None, so an out-of-window candidate is now refused.
-    return plausible[0] if len(plausible) == 1 else None
+    if len(plausible) == 1:
+        return plausible[0], RESOLVED
+    return None, (IDENTITY_AMBIGUOUS if plausible else NO_RECORD_IN_WINDOW)
+
+
+def resolve(name: str, active_window: range) -> int | None:
+    """MLBAM id for ``name`` if exactly one war_daily candidate was active
+    inside ``active_window``; None on no-match or ambiguity."""
+    return resolve_with_reason(name, active_window)[0]

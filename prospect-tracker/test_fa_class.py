@@ -10,6 +10,7 @@ from __future__ import annotations
 import pytest
 
 import fa_class as fc
+import fa_ident
 
 
 # ---- option-exercise heuristic (v1, documented) ------------------------------
@@ -138,3 +139,91 @@ def test_distinct_players_never_deduped():
         {"player_key": "c_guy", "spotrac_id": None, "fa_type": "club_option"},
     ]
     assert len(fc.dedupe_double_listings(rows)) == 3
+
+
+# ---- identity alias seam (read-time, never a DB remap) -----------------------
+#
+# Measured against the real war_daily frames on 2026-08-07: of the five 2027
+# members with no price, exactly ONE was a defect. Baseball-Reference spells
+# Jake Junis "Jakob Junis" (mlb_ID 596001, 40 IP this season), so the name-keyed
+# index missed him and he shipped looking like a man who had not pitched in the
+# majors in four years. Woo Jin An (KBO, no affiliated record) and Rowan Wick
+# (last MLB season 2022) are correct nulls, and the point of the reason codes
+# below is that the artifact now says which is which.
+
+WINDOW = range(2023, 2027)
+
+#: {normalized name: {mlbam: {"years": set, "war": {}}}}, the war_daily_index
+#: shape. Years are the real ones.
+_FAKE_INDEX = {
+    "jakob_junis": {596001: {"years": {2023, 2024, 2025, 2026}, "war": {}}},
+    "rowan_wick": {592858: {"years": {2018, 2019, 2020, 2021, 2022}, "war": {}}},
+}
+
+
+@pytest.fixture
+def fake_index(monkeypatch):
+    """No network: fa_ident's index is the only thing that touches B-Ref."""
+    monkeypatch.setattr(fa_ident, "war_daily_index", lambda: _FAKE_INDEX)
+
+
+def test_the_alias_resolves_our_spelling_to_brefs(fake_index):
+    assert fa_ident.resolve("Jakob Junis", WINDOW) == 596001, "sanity"
+    assert fa_ident.resolve("Jake Junis", WINDOW) == 596001, (
+        "our class spells him Jake; the alias map is what carries that to "
+        "B-Ref's Jakob, and without it he prices as unresolved")
+
+
+def test_an_alias_can_only_add_a_resolution_never_move_one(monkeypatch):
+    """The alias is tried ONLY after our own spelling misses. If B-Ref ever
+    carries both spellings as different men, the direct match still wins and
+    nobody's career silently migrates."""
+    idx = dict(_FAKE_INDEX)
+    idx["jake_junis"] = {111111: {"years": {2025}, "war": {}}}
+    monkeypatch.setattr(fa_ident, "war_daily_index", lambda: idx)
+    assert fa_ident.resolve("Jake Junis", WINDOW) == 111111
+
+
+def test_alias_entries_are_normalized_keys_on_both_sides():
+    """The map is keyed on normalize_key OUTPUT, not on display names. A raw
+    "Jakob Junis" value would never match an index key and would look like the
+    fix was applied when it was not. normalize_key is not idempotent (it eats
+    the separators it just wrote), so the round trip goes through the display
+    form."""
+    from scrapers import normalize_key
+    for ours, theirs in fa_ident.NAME_ALIASES.items():
+        for key in (ours, theirs):
+            assert key == key.lower() and " " not in key
+            assert normalize_key(key.replace("_", " ")) == key
+        assert ours != theirs
+
+
+def test_the_three_ways_to_miss_are_reported_apart(fake_index):
+    """A KBO entrant, a retired veteran and a spelling bug all returned a bare
+    None, so /fa/ told the reader to go looking for a defect in two cases where
+    there was none."""
+    assert fa_ident.resolve_with_reason("Woo Jin An", WINDOW) == (
+        None, fa_ident.NO_MLB_RECORD)
+    assert fa_ident.resolve_with_reason("Rowan Wick", WINDOW) == (
+        None, fa_ident.NO_RECORD_IN_WINDOW)
+    assert fa_ident.resolve_with_reason("Jake Junis", WINDOW) == (
+        596001, fa_ident.RESOLVED)
+
+
+def test_two_men_of_one_name_in_the_window_is_refused_not_guessed(monkeypatch):
+    idx = {"jake_junis": {1: {"years": {2024}, "war": {}},
+                          2: {"years": {2025}, "war": {}}}}
+    monkeypatch.setattr(fa_ident, "war_daily_index", lambda: idx)
+    assert fa_ident.resolve_with_reason("Jake Junis", WINDOW) == (
+        None, fa_ident.IDENTITY_AMBIGUOUS)
+
+
+def test_every_reason_code_has_a_reader_facing_sentence():
+    """The artifact joins a member's noProj code to unprojected_reason_text. A
+    code with no sentence ships a blank explanation next to a blank price."""
+    import fa_export
+    for code in (fa_ident.NO_MLB_RECORD, fa_ident.NO_RECORD_IN_WINDOW,
+                 fa_ident.IDENTITY_AMBIGUOUS):
+        assert code in fa_export.NO_PROJ_REASONS
+        # The sentence is served copy, and the owner's copy rule is lint-gated.
+        assert "—" not in fa_export.NO_PROJ_REASONS[code]

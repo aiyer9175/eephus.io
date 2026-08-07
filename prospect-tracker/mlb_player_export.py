@@ -368,20 +368,58 @@ def _scout_report_slice(prospx: str, reports: dict) -> dict | None:
             "text": txt, "truncated": truncated}
 
 
+def _record_skill_index_outage(missing: list[str], n_joined: int) -> None:
+    """Raise an unreadable leaderboard into the ingest-health RED ledger.
+
+    The join is silent by construction: every consumer of this index reads it
+    with `.get()`, so a leaderboard that failed to load costs the HEM+/REM+/
+    SEM+/leverage tiles on EVERY MLB player card and produces a card payload
+    that is structurally perfect. Nothing else in the pipeline reads these four
+    files, so without this row there is no other place the outage shows up.
+
+    Filed through bullpen_export.record_ingest rather than importing
+    run_monthly directly: under the deploy launch shape (`python
+    run_monthly.py`) the live pipeline is sys.modules["__main__"] and a plain
+    import builds a second module with a ledger nothing drains. The other half
+    of the claim is that "mlb_card_skill_index" is named in
+    run_monthly.SCHEDULED_EXPORTS, or the row is filed and then dropped from
+    red[] at drain time. Best-effort: reporting never fails an export."""
+    try:
+        from bullpen_export import record_ingest
+        record_ingest(
+            "mlb_card_skill_index", ok=False, n_rows=n_joined,
+            message=(f"unreadable /mlbstats/ leaderboard(s): {', '.join(missing)}. "
+                     f"Only {n_joined} players joined a skill block, so the tiles "
+                     f"those files feed are blank on every MLB player card."))
+    except Exception:                      # noqa: BLE001
+        log.debug("could not record the skill-index outage row", exc_info=True)
+
+
 def _skill_index() -> dict[int, dict]:
     """{mlbam: {"hem": {...} | "pitch": {...}}} from the /mlbstats/ leaderboards
     (hitter HEM+, reliever REM+/RIV+, starter SEM+), joined by MLBAM. Baked onto
     the card so it no longer client-fetches the whole leaderboard just to show a
     few tiles. Relievers take priority over starters for the rare swingman."""
     out: dict[int, dict] = {}
+    unreadable: list[str] = []
 
     def _load(fname):
+        """None means the file could not be READ. That is a different fact from
+        a leaderboard that legitimately holds no rows, and collapsing the two
+        into {} is what let an unreadable artifact blank the skill tiles on
+        every card with nothing anywhere saying so. The callers below still
+        tolerate the absence (a card without tiles beats no card), but the run
+        now reports it."""
         try:
             return json.loads((DATA_DIR / fname).read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            return {}
+        except (OSError, ValueError) as e:
+            log.error("mlb player export: %s is unreadable (%s); every tile it "
+                      "feeds will be blank on every MLB player card this run",
+                      fname, e)
+            unreadable.append(fname)
+            return None
 
-    hd = _load("hitter_leaderboards.json")
+    hd = _load("hitter_leaderboards.json") or {}
     for r in hd.get("hitters") or []:
         try:
             mid = int(r.get("mlbam"))
@@ -403,7 +441,7 @@ def _skill_index() -> dict[int, dict]:
             "pwoba": r.get("pwoba"), "fwdhemPlus": r.get("fwdhem_plus"),
             "wrcPlus": r.get("wrc_plus")}
 
-    bd = _load("bullpen_leaderboards.json")
+    bd = _load("bullpen_leaderboards.json") or {}
     b_season = bd.get("season")
     for r in bd.get("relievers") or []:
         try:
@@ -426,7 +464,7 @@ def _skill_index() -> dict[int, dict]:
             "saves": r.get("saves"), "holds": r.get("holds"),
             "wpa": r.get("wpa"), "sd": r.get("sd"), "md": r.get("md")}
 
-    sd = _load("starter_leaderboards.json")
+    sd = _load("starter_leaderboards.json") or {}
     s_season = sd.get("season")
     for r in sd.get("starters") or []:
         try:
@@ -452,7 +490,7 @@ def _skill_index() -> dict[int, dict]:
     # OUT of the hem/pitch blocks on purpose: it is descriptive game-context, not a
     # skill index, and bundling it into "hem" would invite a renderer to band it on
     # a plus scale it does not share.
-    ld = _load("leverage_leaderboards.json")
+    ld = _load("leverage_leaderboards.json") or {}
     for grp, key in (("batters", "bat"), ("starters", "sp")):
         for r in ld.get(grp) or []:
             try:
@@ -463,6 +501,8 @@ def _skill_index() -> dict[int, dict]:
                 "kind": key, "wpa": r.get("wpa"), "wpaLi": r.get("wpa_li"),
                 "pli": r.get("pli"), "clutch": r.get("clutch"),
                 "wpaPerStart": r.get("wpa_per_start")})
+    if unreadable:
+        _record_skill_index_outage(unreadable, len(out))
     return out
 
 

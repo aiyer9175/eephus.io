@@ -279,18 +279,38 @@ def _record_arc_outage(n_keys: int, n_loaded: int) -> None:
 #: Reason codes stamped on every member that reaches the board without a
 #: price. Values are the on-page sentence: keep them free of em-dashes
 #: (copy_lint) and free of internal jargon, because a reader of /fa/ sees them.
+#
+# SPLIT 2026-08-07. There used to be ONE code, identity_unresolved, carrying a
+# sentence that offered the reader two possibilities and made him pick. The
+# three cases behind it are not equally interesting and the code knows which
+# one it hit: Woo Jin An has no affiliated record to resolve (KBO), Rowan Wick
+# and Tyler Austin have B-Ref careers that ended before the window, and Jake
+# Junis was a spelling miss that is now aliased. Only the last of those was a
+# defect, and it was invisible while all three shared a label.
 NO_PROJ_REASONS = {
-    "identity_unresolved":
-        "no Baseball-Reference major-league record in {y0}-{y1}, so there is "
-        "no history to project from. Either the player has not appeared in "
-        "the majors in that window (KBO/NPB, retired, released) or this site "
-        "spells the name differently than Baseball-Reference does.",
+    fa_ident.NO_MLB_RECORD:
+        "no Baseball-Reference major-league record at all, so there is no "
+        "history to project from. Common and correct for a KBO/NPB entrant "
+        "who has not played affiliated ball.",
+    fa_ident.NO_RECORD_IN_WINDOW:
+        "has a Baseball-Reference career, but no major-league season in "
+        "{y0}-{y1}, so there is nothing recent enough to project from.",
+    fa_ident.IDENTITY_AMBIGUOUS:
+        "more than one Baseball-Reference player of this name was active in "
+        "{y0}-{y1}, so the identity is not decidable and this site will not "
+        "guess which career to attach.",
     "no_recent_seasons":
         "identified, but no major-league season inside the {y0}-{y1} "
         "projection window, so there is nothing recent to project from.",
     "projection_unavailable":
         "the projection engine returned no WAR path for the seasons on file.",
 }
+
+#: Codes whose sentence spans the 4-year IDENTITY window rather than the
+#: 3-year projection window.
+_IDENT_WINDOW_REASONS = frozenset(
+    {fa_ident.NO_MLB_RECORD, fa_ident.NO_RECORD_IN_WINDOW,
+     fa_ident.IDENTITY_AMBIGUOUS})
 
 # The pitcher-side resolution rate, as a fraction of the hitter-side rate,
 # below which the war_daily PITCHING frame is treated as missing.
@@ -633,8 +653,9 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         pos_grp = fm._pos_group(row.get("position"))
         side = "pit" if pos_grp in ("SP", "RP") else "hit"
         ident[side]["n"] += 1
-        mlbam = fa_ident.resolve(row["player_name"], range(class_year - 4, class_year))
-        drop = None if mlbam else "identity_unresolved"
+        mlbam, why = fa_ident.resolve_with_reason(
+            row["player_name"], range(class_year - 4, class_year))
+        drop = None if mlbam else why
         if mlbam:
             ident[side]["ok"] += 1
             seasons = by_player[side].get(mlbam) or {}
@@ -916,7 +937,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         # price. Only the codes this class actually produced are shipped, so
         # the join from a member's noProj is always satisfiable.
         "unprojected_reason_text": {
-            k: v.format(y0=class_year - (4 if k == "identity_unresolved" else 3),
+            k: v.format(y0=class_year - (4 if k in _IDENT_WINDOW_REASONS else 3),
                         y1=class_year - 1)
             for k, v in NO_PROJ_REASONS.items() if k in drops},
         # The per-side identity census, and the verdict on whether the

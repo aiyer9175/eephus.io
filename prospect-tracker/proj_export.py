@@ -1039,6 +1039,12 @@ def _cohort_intercepts() -> dict[str, float]:
     moment anyone regenerated the artifact. challenger_wins is True on the
     committed 2026-06-12 fit, so this guard is a no-op TODAY and changes no
     served number; it exists so the next refit cannot ship itself."""
+    # CONSERVATIVE-DIRECTION GUARD, verified 2026-08-07 (silent-empty sweep).
+    # Empty here means DO NOT APPLY THE CHALLENGER: the roll-up keeps the
+    # engine's own mean, which is the arm the gate validated. An unreadable
+    # artifact and a lost holdout therefore land on the same, safe side, so
+    # this is not an instance of the fetch-fails-into-empty-but-valid pattern
+    # and does not want a sentinel or a red. Do not re-flag it.
     try:
         d = json.loads((DATA_DIR / "team_outlook_eval.json").read_text(encoding="utf-8"))
         rb = (d.get("retro_backtest") or {})
@@ -1195,6 +1201,32 @@ def _depth_pool(corpus: dict, names: dict[int, str],
     return {k: [round(x, 2) for x in v] for k, v in team_war.items()}, acct
 
 
+def _record_farm_block_outage(err: Exception) -> None:
+    """Raise an unreadable timeseries.json into the ingest-health RED ledger.
+
+    NOT a conservative-direction guard, unlike _cohort_intercepts: the caller
+    reads this with `farm.get(tm)`, so an empty return drops the farm rank,
+    grade, surplus and top-prospect columns from all 30 Team Outlook rows and
+    the page renders normally without them.
+
+    timeseries.json is also the artifact that was found TRUNCATED in the middle
+    on 2026-08-06, which is a ValueError here, not an OSError: the exact shape
+    where the file exists, the pipeline looks healthy and a surface quietly
+    empties. Filed through bullpen_export.record_ingest (the live-module
+    resolution) under a name in run_monthly.SCHEDULED_EXPORTS, or the row is
+    dropped at drain time. Best-effort: reporting never fails an export."""
+    log.error("proj export: timeseries.json unreadable (%s); the farm columns "
+              "on every Team Outlook row will be absent this run", err)
+    try:
+        from bullpen_export import record_ingest
+        record_ingest("proj_team_outlook_farm", ok=False, n_rows=0,
+                      message=(f"timeseries.json unreadable ({err}); farm rank, "
+                               "grade, surplus and top prospect are missing from "
+                               "all 30 Team Outlook rows"))
+    except Exception:                      # noqa: BLE001
+        log.debug("could not record the farm-block outage row", exc_info=True)
+
+
 def _org_farm_blocks() -> dict[str, dict]:
     """Farm-system context joined onto the Team Outlook rows - the org
     dashboard columns the retired /teams/ page carried (merged into the
@@ -1202,7 +1234,8 @@ def _org_farm_blocks() -> dict[str, dict]:
     prospect surplus, and the top prospect with his FV."""
     try:
         ts = json.loads((DATA_DIR / "timeseries.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+    except (OSError, ValueError) as e:
+        _record_farm_block_outage(e)
         return {}
     out: dict[str, dict] = {}
     for o in ts.get("org_summary") or []:
@@ -1809,7 +1842,16 @@ _ACCOUNTABILITY_MODELS = [
 
 def _read_data_json(name: str) -> dict:
     """Best-effort read of a committed data/ artifact; missing or unparseable
-    degrades to {} so the accountability block surfaces whatever is present."""
+    degrades to {} so the accountability block surfaces whatever is present.
+
+    CONSERVATIVE-DIRECTION GUARD, verified 2026-08-07 (silent-empty sweep).
+    Every caller of this is the accountability surface, whose contract is that
+    it prints only verdicts it read from the committed ledger. An empty read
+    therefore omits a CARD; it can never leave a stale or unbacked verdict on
+    screen, which is the failure that would matter here. The artifacts are
+    committed to the repo and their freshness is separately gated by
+    test_methodology_freshness.py, so absence is a repo-level break with its
+    own alarm rather than a silent nightly one. Do not re-flag it."""
     try:
         return json.loads((DATA_DIR / name).read_text(encoding="utf-8"))
     except (OSError, ValueError):

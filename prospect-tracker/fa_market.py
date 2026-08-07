@@ -165,6 +165,19 @@ NOISE_SEED = 0
 #   BAND_PERMUTE_SEED   zero-information control: fit the variance function on
 #                       a row-permuted residual column. Must return a flat
 #                       sigma. Lab only.
+#   RE-GATED 2026-08-07 on a DIFFERENT criterion and failed again. T1.2 asked
+#   whether the band is sharper on average (pinball); the served board asks
+#   whether its width is allocated less wrongly, so the new gate scored
+#   |held-out P10-P90 coverage - 0.80| over the same 9-winter chain, B=40
+#   paired. Coverage closeness improved 0.00730 against an MDE95 of 0.01782,
+#   CI95 [-0.02085, +0.01502], and the PERMUTED control improved 0.00549 with
+#   an identical p_improves of 0.775 - a shuffle buys three quarters of the
+#   candidate's whole result. Point predictions are band-invariant (0 of 1,199
+#   rows differ), so accuracy carries no evidence either way.
+#   Pre-registration + numbers: docs/gate-2026-08-07-fa-guarantee-band.md,
+#   data/fa_guar_band_eval.json. TWO independent nulls now. Do not re-open with
+#   a ridge sweep over the same conditioning set; that is a six-way search on a
+#   corpus that has twice failed to separate from its own shuffle.
 BAND_SCALE_GUAR = False                     # measured null 2026-07-25 (T1.2)
 BAND_PERMUTE_SEED = 0
 BAND_RIDGE_GUAR = 3.0

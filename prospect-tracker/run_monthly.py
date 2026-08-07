@@ -255,6 +255,16 @@ SCHEDULED_EXPORTS = (
     # filtered out of red[] and the deploy shell never printed INGEST RED for
     # it. The ledger knew and the operator did not.
     "fa_class_identity",
+    # The /mlbstats/ leaderboard join that bakes the HEM+/REM+/SEM+/leverage
+    # tiles onto every MLB player card (mlb_player_export._skill_index). The
+    # four artifacts above are watched as they are WRITTEN; this row is the
+    # only watch on whether they could be READ back at bake time, which is a
+    # separate failure with the same blank result on every card.
+    "mlb_card_skill_index",
+    # Team Outlook's farm columns (proj_export._org_farm_blocks). Reads
+    # timeseries.json, the artifact that was found truncated mid-file, and a
+    # truncation empties the farm block on all 30 rows without erroring.
+    "proj_team_outlook_farm",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -497,6 +507,37 @@ def _patch_export_run_summary(out_path: Path, log: logging.Logger) -> None:
                 pass                       # already renamed, which is the good path
     except Exception:
         log.exception("could not patch latest run summary into %s", out_path)
+
+
+def _chain_daily_and_stamp(out_path: Path, log: logging.Logger, chain) -> str:
+    """Run the chained daily refresh, then leave EXACTLY ONE run-summary stamp.
+
+    The number of writers to data/timeseries.json is a correctness property,
+    not a performance one: it is 74MB and was found truncated once by a race
+    between its two writers. run_daily stamps the file itself after its own
+    finish_run, and that stamp is strictly newer than anything main() could
+    write before chaining, so the monthly path must NOT stamp first.
+
+    The stamp here covers only the path where the chain died before reaching
+    its own. Without it a failed chain would serve the step-5 export, whose
+    run block was read before finish_run and which carries no data_freshness
+    block at all, so the site would lose its "as of" line entirely.
+
+    `chain` is a zero-argument callable so the ordering above can be tested
+    without running a pipeline. Returns "chained" or "fallback".
+    """
+    try:
+        chain()
+        return "chained"
+    except Exception:
+        log.exception("chained daily refresh failed - monthly run already completed")
+        # The DB's newest run on this path is the FAILED daily, so the as-of
+        # block names it. grades_updated_at still resolves to the monthly run
+        # that did complete, and a stamp naming a failed run beats no stamp.
+        log.warning("stamping the run summary from the chain-failure fallback")
+        _patch_export_run_summary(out_path, log)
+        return "fallback"
+
 
 from scrapers import scrape_all, probe
 from storage import (
@@ -904,11 +945,19 @@ def _stage_fangraphs_articles(log) -> None:
         log.info("fangraphs_csv: staged %d committed article CSV(s) for ingest", staged)
 
 
-def rebuild_only(out_dir: Path = Path("data")) -> None:
+def rebuild_only(out_dir: Path = Path("data"), *,
+                 stamp_summary: bool = True) -> None:
     """Fast export-only path: ingest any FG drops, rebuild the timeseries
     from the current DB state, write `data/timeseries.json`. No scraping,
     no MLB API calls. Use after a fangraphs_csv drop when you don't want
-    to wait through the full monthly pipeline."""
+    to wait through the full monthly pipeline.
+
+    stamp_summary=False suppresses the closing run-summary stamp for callers
+    that stamp the same 74MB file themselves once their own run is finished
+    (run_daily's d9). Their stamp is strictly newer, so writing here first is
+    a second writer to a file a two-writer race truncated once. Standalone
+    callers keep the default: the stamp is what puts the data_freshness block
+    in the file, and export_timeseries_json does not write one."""
     _utf8_console()
     logging.basicConfig(
         level=logging.INFO,
@@ -1205,7 +1254,13 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
 
     # Stamp run + data_freshness so a manual --rebuild-only produces the same
     # "as of" freshness block as daily/monthly runs (mirrors run_daily / main).
-    _patch_export_run_summary(out_path, log)
+    # Skipped when the caller owns the stamp: run_daily reaches here at d9,
+    # before its own finish_run, so this stamp would carry a run row that is
+    # not finished yet and be superseded minutes later at the daily tail.
+    if stamp_summary:
+        _patch_export_run_summary(out_path, log)
+    else:
+        log.info("rebuild: run-summary stamp deferred to the caller")
 
 
 # --------------------------------------------------------------------------- #
@@ -1817,8 +1872,13 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         _gc.collect()
 
         # --- 9. Rebuild timeseries.json from the refreshed DB. ------------
+        # stamp_summary=False: this run is not finished yet, and the tail
+        # below stamps the same 74MB file once finish_run has closed the row.
+        # Both stamps used to run, so every nightly re-parsed and rewrote the
+        # artifact twice for one purpose. The crash path below carries the
+        # fallback stamp that this one used to provide.
         with _step("d9. Rebuild timeseries (no scrape)", log):
-            rebuild_only(out_dir)
+            rebuild_only(out_dir, stamp_summary=False)
 
         # --- 9b. Re-bake MLB Projections off the FRESH eFV grades. --------
         # rebuild_only() regenerated xfv.json (the eFV grades the PROSPX board
@@ -2272,6 +2332,12 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
     except Exception:
         log.exception("DAILY run %s failed", run_id)
         finish_run(run_id, new_snapshots=0, stat_lines=0, notes="DAILY: failed")
+        # A crash after d9 leaves a freshly exported timeseries.json whose run
+        # block was read before finish_run and which has no data_freshness
+        # block at all, because export_timeseries_json does not write one. d9
+        # no longer stamps, so this is the path that keeps the site's "as of"
+        # line from disappearing on a partial night.
+        _patch_export_run_summary(out_dir / "timeseries.json", log)
         # Same reasoning as the monthly crash path: publish what we know
         # about which sources landed before the failure.
         try:
@@ -4493,26 +4559,13 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes=f"{_n_ts} players, {len(new_trades)} trades")
-        # KNOWN REDUNDANCY, measured 2026-08-06, left in deliberately.
-        #
-        # This patch is ALWAYS superseded on a monthly night. main() chains
-        # run_daily(chained=True) further down in an unconditional try, and
-        # run_daily calls _patch_export_run_summary on the same file after its
-        # own finish_run, stamping a NEWER run summary. So data/timeseries.json,
-        # which is 74MB, gets parsed, re-serialised and atomically rewritten
-        # TWICE back to back for the same purpose.
-        #
-        # It is not removed because this call is the only stamp on the path
-        # where the chain raises, and losing the "as of" block is worse than a
-        # duplicated write. The real fix is to move the stamp to after the chain
-        # with a fallback, which is a restructure of the tail of main() and
-        # wants its own change: this file is the one that was found truncated by
-        # a two-writer race, so the number of writers to it is not something to
-        # adjust casually.
-        #
-        # Cost if you are deciding whether to bother: one extra 74MB parse plus
-        # write, once a month, on the box's slowest artifact.
-        _patch_export_run_summary(out_path, log)
+        # NO RUN-SUMMARY STAMP HERE (2026-08-07). It used to sit on this line
+        # and was always superseded within the same night by the chained
+        # daily's own stamp, so the 74MB artifact was parsed, re-serialised and
+        # replaced three times per monthly night for one purpose. The stamp now
+        # happens once, at the chain (see _chain_daily_and_stamp below), with a
+        # fallback there for the path where the chain raises. Do not re-add a
+        # stamp before the chain: this is the file a two-writer race truncated.
         # Capture the DERIVED board state (consensus rank/FV + Arkmetric
         # family) for the active board so the time-travel board (Part 2) and
         # the Arkmetric-vs-outcome backtest (Part 4) accrue monthly history.
@@ -4675,15 +4728,17 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # driver on the ~6GB box.
         import gc as _gc
         _gc.collect()
-        try:
+
+        def _chained_daily_refresh() -> None:
             log.info("monthly run: chaining the daily fast-moving refresh")
             # WS-R: chained=True elides the steps the monthly path just ran in
             # THIS process: d5c (statlines, 3a/3b), d5d (Statcast, 3d-ter),
             # and since 2026-07-14 also d0 (TJStats Live, 1c), d4 (tx), d5
-            # (IL, 2b.vii), d6 (roster), d8 (trades, step 4) — pure re-fetch
+            # (IL, 2b.vii), d6 (roster), d8 (trades, step 4) - pure re-fetch
             # duplication minutes apart. d0b (Pipeline Live), MLBAM discovery,
             # d7 (debuts), d9/d9b (final eFV regen + projections re-bake),
-            # d5e (game logs) and d11 (site build) still run.
+            # d5e (game logs) and d11 (site build) still run. run_daily owns
+            # the single run-summary stamp for the whole monthly night.
             run_daily(out_dir=out_dir, workers=workers, no_cache=no_cache,
                       chained=True)
             # Monthly-cadence trade-value snapshot, AFTER the chain so the
@@ -4696,9 +4751,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 _n_tvh = snapshot_trade_values(_tv_written.get("players") or [])
                 log.info("trade_value_history: snapshotted %d board records", _n_tvh)
             except Exception:
-                log.exception("trade_value snapshot failed — continuing")
-        except Exception:
-            log.exception("chained daily refresh failed — monthly run already completed")
+                log.exception("trade_value snapshot failed - continuing")
+
+        _chain_daily_and_stamp(out_path, log, _chained_daily_refresh)
         # Ingest health, last. The chained daily already wrote a "daily"
         # ledger; rewriting it here as "monthly" folds in this run's own
         # entries (TJStats 1c, JB 1c-bis, the ESPN probe) so the published

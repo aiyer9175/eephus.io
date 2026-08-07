@@ -27,6 +27,7 @@ import contextlib
 import hashlib
 import inspect
 import json
+import pathlib
 import sys
 import types
 
@@ -116,12 +117,30 @@ def _clear_memos() -> None:
 
 @contextlib.contextmanager
 def _patched_pybaseball():
+    """Fake pybaseball AND redirect the last-good cache to a throwaway dir.
+
+    THE CACHE REDIRECT IS NOT HYGIENE, IT IS A PRODUCTION GUARD. stint_frame
+    writes every successful read to .cache/war_daily/<side>.parquet as the
+    last-good copy it serves when Baseball-Reference fails, which is the whole
+    point of that cache: bwar_pitch has no disk cache of its own, so a failed
+    pitching download is what blanked 79 of 228 free agents once already.
+    Without this redirect these three-row fixtures overwrite that file, and
+    since the deploy gate runs the suite ON THE BOX, the next real download
+    failure there would fall back to a frame containing Trout, Ohtani and
+    Skenes and quietly price the entire class off it.
+    Measured 2026-08-07: the real cache held exactly those fixtures."""
+    import tempfile
     saved = sys.modules.get("pybaseball")
     sys.modules["pybaseball"] = _fake_pybaseball()
+    saved_cache_dir = war_source._cache_dir
+    tmp = tempfile.TemporaryDirectory()
+    war_source._cache_dir = lambda: pathlib.Path(tmp.name)
     _clear_memos()
     try:
         yield
     finally:
+        war_source._cache_dir = saved_cache_dir
+        tmp.cleanup()
         if saved is None:
             sys.modules.pop("pybaseball", None)
         else:
