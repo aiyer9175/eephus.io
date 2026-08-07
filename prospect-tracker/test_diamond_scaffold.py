@@ -6,8 +6,10 @@
 """Pins for the Diamond section scaffold (2026-08-05).
 
 Six new public pages (Dynasty, Redraft, DFS, Sports Betting, Card Market,
-Diamond Pass) landed as one nav group, with the old single Fantasy leaf
-retired to a redirect. That is four things that can drift independently:
+Diamond Pass) landed as one nav group on 2026-08-05. On 2026-08-07 the first
+three merged back into one Fantasy module and became redirect stubs, so the
+group is four leaves over six shipping dirs. That is four things that can
+drift independently:
 
   1. `build_site.NAV_ITEMS` and the three hand-maintained static nav copies.
      test_collegesavant_nav_in_sync already guards the copies against the
@@ -43,16 +45,23 @@ from build_site import MODULE_STAGE, NAV_ITEMS, nav_leaves
 
 ROOT = Path(__file__).parent
 
-# The six leaves, in nav order, exactly as the group declares them.
+# The leaves, in nav order, exactly as the group declares them.
+#
+# FOUR, not the original six. Dynasty / Redraft / DFS merged back into one
+# /fantasy/ module on 2026-08-07 (owner decision 10): they are sub-modules
+# behind one module bar now, and three of six dropdown entries being three tabs
+# of one product is what the merge was asked to fix.
 DIAMOND_LEAVES = [
-    ("dynasty", "Dynasty", "/dynasty/"),
-    ("redraft", "Redraft", "/redraft/"),
-    ("dfs", "DFS", "/dfs/"),
+    ("fantasy", "Fantasy", "/fantasy/"),
     ("betting", "Sports Betting", "/betting/"),
     ("cards", "Card Market", "/cards/"),
     ("diamond", "Diamond Pass", "/diamond/"),
 ]
-DIAMOND_DIRS = ["betting", "cards", "dfs", "diamond", "dynasty", "redraft"]
+# The page DIRS are still six, and that is the point: /dynasty/, /redraft/ and
+# /dfs/ were public addresses for two days, so they still build and still ship
+# as hash-preserving redirect stubs.
+DIAMOND_DIRS = ["betting", "cards", "dfs", "diamond", "dynasty", "fantasy", "redraft"]
+MERGED_DIRS = ["dynasty", "redraft", "dfs"]
 
 
 def _diamond_group() -> dict:
@@ -66,7 +75,7 @@ def _diamond_group() -> dict:
 # 1. Nav
 # ---------------------------------------------------------------------------
 
-def test_diamond_group_carries_the_six_leaves_in_order():
+def test_diamond_group_carries_its_leaves_in_order():
     assert list(_diamond_group()["children"]) == DIAMOND_LEAVES
 
 
@@ -76,7 +85,7 @@ def test_diamond_group_sits_after_the_mlb_modules_group():
     groups = [i["group"] for i in NAV_ITEMS if isinstance(i, dict)]
     assert groups.index("Diamond") == groups.index("MLB Modules") + 1
     keys = [k for k, _l, _h in nav_leaves()]
-    assert keys.index("dynasty") > keys.index("trademachine")
+    assert keys.index("fantasy") > keys.index("trademachine")
     assert keys.index("diamond") < keys.index("articles")
 
 
@@ -90,11 +99,16 @@ def test_group_key_does_not_collide_with_the_diamond_leaf():
                 f'group key {item["key"]!r} collides with a leaf key')
 
 
-def test_fantasy_leaf_is_gone_from_the_nav():
-    """Fantasy split into Dynasty/Redraft/DFS. A leftover leaf would point at
-    the redirect stub and read as a seventh module that is not one."""
-    assert "fantasy" not in {k for k, _l, _h in nav_leaves()}
-    assert "/fantasy/" not in {h for _k, _l, h in nav_leaves()}
+def test_the_three_split_leaves_are_gone_from_the_nav():
+    """Dynasty / Redraft / DFS merged back into /fantasy/ on 2026-08-07. A
+    leftover leaf would point at a redirect stub and read as a module of its
+    own, which is exactly the shape the merge retired."""
+    keys = {k for k, _l, _h in nav_leaves()}
+    hrefs = {h for _k, _l, h in nav_leaves()}
+    assert "fantasy" in keys and "/fantasy/" in hrefs
+    for gone in MERGED_DIRS:
+        assert gone not in keys, f"{gone} is still a nav leaf"
+        assert f"/{gone}/" not in hrefs, f"/{gone}/ is still a nav href"
 
 
 def test_nav_leaves_are_unique():
@@ -129,7 +143,8 @@ def test_static_navs_carry_the_diamond_group(page: Path):
     for _key, label, href in DIAMOND_LEAVES:
         assert f'href="{href}"' in nav, f"{page.name}: missing {href}"
         assert f">{label}<" in nav, f"{page.name}: missing the {label} label"
-    assert '"/fantasy/"' not in nav, f"{page.name}: stale /fantasy/ nav link"
+    for gone in MERGED_DIRS:
+        assert f'"/{gone}/"' not in nav, f"{page.name}: stale /{gone}/ nav link"
     assert len(_LINK_RE.findall(nav)) == len(nav_leaves())
 
 
@@ -146,14 +161,17 @@ def test_every_diamond_key_has_a_stage_chip_row(key: str):
     assert 'class="eephus-beta"' in chip and label in chip
 
 
-def test_the_five_content_modules_are_labeled_diamond_preview():
+def test_the_three_content_modules_are_labeled_diamond_preview():
     """Owner decision: ships public, labeled preview, gate flag off. The label
-    is the honest part of that arrangement, so it is pinned."""
-    for key in ("dynasty", "redraft", "dfs", "betting", "cards"):
+    is the honest part of that arrangement, so it is pinned. One row for
+    Fantasy since the merge: three sub-modules under one masthead carry one
+    chip, not three."""
+    for key in ("fantasy", "betting", "cards"):
         assert "Diamond preview" in MODULE_STAGE[key][0]
 
 
 @pytest.mark.parametrize("rel,fn", [
+    ("fantasy/index.html", "build_fantasy"),
     ("dynasty/index.html", "build_dynasty"),
     ("redraft/index.html", "build_redraft"),
     ("dfs/index.html", "build_dfs"),
@@ -174,11 +192,30 @@ def test_diamond_routes_are_in_the_sitemap():
         assert f"<loc>{build_site.SITE_ORIGIN}{href}</loc>" in sitemap
 
 
-def test_fantasy_is_a_redirect_to_redraft():
-    html = build_site.build_fantasy()
-    assert 'location.replace("/redraft/")' in html
-    assert 'content="0; url=/redraft/"' in html
+@pytest.mark.parametrize("mod", MERGED_DIRS)
+def test_the_split_dirs_are_hash_preserving_redirects_into_fantasy(mod: str):
+    """The merge reversed the 2026-08-05 direction: /fantasy/ is the module and
+    the three split dirs are the stubs. HASH-PRESERVING is the load-bearing
+    word. These three URLs carried working boards for two days and people
+    bookmarked deep links into them, so a stub that dropped the hash would
+    answer every one of those bookmarks with the module's default tab."""
+    html = getattr(build_site, f"build_{mod}")()
+    assert f'content="0; url=/fantasy/#m={mod}"' in html
+    assert f'location.replace("/fantasy/#m={mod}"' in html
+    assert 'location.hash' in html, "the stub drops the incoming hash"
     assert 'name="robots" content="noindex"' in html
+    # And it never sends the reader back to a page that is now a stub itself.
+    for other in MERGED_DIRS:
+        assert f'"/{other}/"' not in html, f"{mod} stub links at /{other}/"
+
+
+def test_the_fantasy_module_is_the_only_one_of_the_four_in_the_sitemap():
+    """A noindex redirect in the sitemap is a crawl budget spent on a 302 that
+    is not even a 302. The module page is the crawlable surface."""
+    sitemap = build_site.build_sitemap([])
+    assert f"<loc>{build_site.SITE_ORIGIN}/fantasy/</loc>" in sitemap
+    for mod in MERGED_DIRS:
+        assert f"<loc>{build_site.SITE_ORIGIN}/{mod}/</loc>" not in sitemap
 
 
 def _manifest_paths() -> list[str]:
@@ -190,16 +227,20 @@ def _manifest_paths() -> list[str]:
     return out
 
 
-def test_publish_paths_carry_the_six_dirs():
+def test_publish_paths_carry_every_diamond_dir():
     manifest = _manifest_paths()
     missing = [d for d in DIAMOND_DIRS if d not in manifest]
     assert not missing, f"deploy/publish_paths.txt is missing {missing} - they will 404 in production"
 
 
-def test_fantasy_still_ships_because_it_is_a_redirect():
-    assert "fantasy" in _manifest_paths(), (
-        "/fantasy/ is a redirect stub now; dropping it from the deploy list turns "
-        "every old bookmark into a 404")
+def test_the_retired_fantasy_dirs_still_ship():
+    """They are redirect stubs, and a redirect that does not ship is a 404.
+    This is the direction that flipped on 2026-08-07: /fantasy/ is the module
+    and /dynasty/, /redraft/ and /dfs/ are the stubs."""
+    manifest = _manifest_paths()
+    for d in MERGED_DIRS + ["fantasy"]:
+        assert d in manifest, (
+            f"/{d}/ is not on the deploy list; every bookmark to it becomes a 404")
 
 
 # ---------------------------------------------------------------------------
@@ -285,8 +326,7 @@ def test_every_diamond_page_loads_the_config_before_its_app():
     """Both tags are deferred, so order in the document IS execution order. A
     module app that ran before the flag existed would read undefined."""
     import inspect
-    for fn_name in ("build_dynasty", "build_redraft", "build_dfs",
-                    "build_betting", "build_cards", "build_diamond"):
+    for fn_name in ("build_fantasy", "build_betting", "build_cards", "build_diamond"):
         src = inspect.getsource(getattr(build_site, fn_name))
         assert "DIAMOND_CONFIG_SCRIPT" in src, f"{fn_name} does not load diamond-config.js"
         assert "diamond-config.js" in build_site.DIAMOND_CONFIG_SCRIPT

@@ -86,10 +86,10 @@ _TM_VER = _asset_ver("assets/trademachine.js")
 _TM_CSS_VER = _asset_ver("assets/trademachine.css")
 _HUB_VER = _asset_ver("assets/eephus-hub.js")
 _GFX_VER = _asset_ver("assets/eephus-gfx.js")
-# Retained through the 2026-08-05 Diamond split: /fantasy/ is a redirect now
-# and assets/fantasy.js is being carved into dynasty.js / redraft.js / dfs.js
-# by the module lane. The constant costs one md5 and keeps the stamp available
-# until that carve lands.
+# assets/fantasy.js is FROZEN and no page loads it. It is the pre-split parity
+# reference that test_fantasy_split drives assets/redraft.js against in a JS
+# engine, so it ships with the assets dir and keeps a stamp, and the stamp is
+# what makes a silent edit to it visible. Do not resurrect it as a client.
 _FANTASY_VER = _asset_ver("assets/fantasy.js")
 _EXPORT_VER = _asset_ver("assets/eephus-export.js")
 # Per-board CSV DOWNLOAD. Separate from eephus-export.js on purpose: that module
@@ -105,9 +105,18 @@ _PARKS_CSS_VER = _asset_ver("assets/parks.css")
 # file that is not on disk yet hashes to "1" here rather than raising, so the
 # scaffold builds and each page paints its own empty state until its app lands.
 _DIAMOND_CFG_VER = _asset_ver("assets/diamond-config.js")
+# The three fantasy sub-clients. They are NOT script tags on the shell any more
+# (2026-08-07 merge): the coordinator injects one of them on first activation,
+# so these stamps ride data-src attributes on the module bar instead. The stamp
+# still has to be computed here, because the injected URL needs the same
+# content hash every other asset URL carries or a client update never reaches a
+# browser that cached the old one.
 _DYNASTY_VER = _asset_ver("assets/dynasty.js")
 _REDRAFT_VER = _asset_ver("assets/redraft.js")
 _DFS_VER = _asset_ver("assets/dfs.js")
+# The /fantasy/ coordinator: module bar, the "#m=" hash namespace, lazy boot,
+# and one memoized load of the 576KB corpus for the two clients that read it.
+_FANTASY_HUB_VER = _asset_ver("assets/fantasy-hub.js")
 # The fantasy player card: one overlay shared by the fantasy board clients. It
 # holds no data of its own - the host client hands it the payload already in the
 # browser - so it loads BEFORE its host and simply publishes the API the host
@@ -252,17 +261,17 @@ NAV_ITEMS = [
         ("pal",         "Alchemy Lab", "/pal/"),
         ("trademachine", "Trade Machine", "/trademachine/"),
     ]},
-    # 2026-08-05: the Diamond section. The old single "Fantasy" leaf split into
-    # Dynasty / Redraft / DFS and moved here alongside the two new modules and
-    # the Diamond Pass page; /fantasy/ is now a redirect to /redraft/ so old
-    # links and bookmarks still land somewhere real. Every page in this group
-    # ships PUBLIC with "Diamond preview" labeling. The group key is
+    # 2026-08-05: the Diamond section. 2026-08-07: Dynasty / Redraft / DFS
+    # collapsed back into ONE "Fantasy" leaf, because three of the group's six
+    # entries were three tabs of one module and the dropdown read as six
+    # products. They are sub-modules of /fantasy/ now and /dynasty/, /redraft/
+    # and /dfs/ are hash-preserving redirect stubs, so every bookmark written
+    # against the split still lands on the board it named. Every page in this
+    # group ships PUBLIC with "Diamond preview" labeling. The group key is
     # deliberately NOT "diamond" so it cannot be confused with the leaf of that
     # name (the leaf key is what _nav() matches `active` against).
     {"group": "Diamond", "key": "diamondgrp", "children": [
-        ("dynasty",  "Dynasty",        "/dynasty/"),
-        ("redraft",  "Redraft",        "/redraft/"),
-        ("dfs",      "DFS",            "/dfs/"),
+        ("fantasy",  "Fantasy",        "/fantasy/"),
         ("betting",  "Sports Betting", "/betting/"),
         ("cards",    "Card Market",    "/cards/"),
         ("diamond",  "Diamond Pass",   "/diamond/"),
@@ -416,7 +425,6 @@ MODULE_STAGE = {
     "projections": ("β", "MLB Projections is in beta - newly launched; numbers may shift as the model matures"),
     "mlbstats": ("β", "MLB Stats is in beta - newly launched; metrics may shift as the models mature"),
     "pal": ("β", "Alchemy Lab is in beta - newly launched; the conversion models are provisional"),
-    "fantasy": ("β", "Fantasy is in beta - newly launched; ROS projections may shift as the models mature"),
     "forums": ("β", "Forums is in beta - newly launched"),
     "parks": ("β", "MiLB Park Factors is in beta - newly launched; the factors are a measured artifact, the surface is new"),
     # Diamond section (2026-08-05). These rows carry the FULL chip text in
@@ -424,9 +432,9 @@ MODULE_STAGE = {
     # the helper and their call sites still write "β beta" literally, using
     # only slot [1] for the hover title. Nothing is gated: these pages are
     # public and free while the section is built out.
-    "dynasty": ("◆ Diamond preview", "Dynasty is a Diamond preview - free and public while the Diamond section is built out"),
-    "redraft": ("◆ Diamond preview", "Redraft is a Diamond preview - free and public while the Diamond section is built out"),
-    "dfs": ("◆ Diamond preview", "DFS is a Diamond preview - free and public while the Diamond section is built out"),
+    # One row for the merged module (2026-08-07). Dynasty, Redraft and DFS are
+    # sub-modules under one masthead now, so there is one chip, not three.
+    "fantasy": ("◆ Diamond preview", "Fantasy is a Diamond preview - free and public while the Diamond section is built out"),
     "betting": ("◆ Diamond preview", "Sports Betting is a Diamond preview - free and public while the Diamond section is built out"),
     "cards": ("◆ Diamond preview", "Card Market is a Diamond preview - free and public while the Diamond section is built out"),
     "diamond": ("◆ Diamond preview", "Diamond Pass is not selling anything yet - everything on the site is free today"),
@@ -2890,14 +2898,15 @@ def _cross_module_strip() -> str:
                           'reliever-to-starter conversion screen', rows))
     except (OSError, ValueError, KeyError):
         pass
-    # Redraft - rest-of-season projected points leaders. The section lists in
-    # fantasy.json are BARE mlbam ids and the side comes from the section they
-    # sit in (assets/redraft.js resolves them the same way), so a two-way player
-    # has one record per side and the lookup has to be keyed (mlbam, side) or it
-    # prints Ohtani's pitching total on the hitter board. Rows land on /redraft/
-    # itself: the app keeps its section state in memory, not the hash, so there
-    # is no per-player deep link to honour. (Pre-2026-08-05 this pointed at
-    # /fantasy/, which is now a redirect - one hop saved, same destination.)
+    # Fantasy - rest-of-season projected points leaders off the Redraft
+    # sub-module. The section lists in fantasy.json are BARE mlbam ids and the
+    # side comes from the section they sit in (assets/redraft.js resolves them
+    # the same way), so a two-way player has one record per side and the lookup
+    # has to be keyed (mlbam, side) or it prints Ohtani's pitching total on the
+    # hitter board. The rows deep-link into the board they came from, which the
+    # 2026-08-07 merge made addressable: the namespaced hash names the module
+    # AND the tab, so the reader lands on ROS Hitters rather than on whatever
+    # tab the module opens with.
     try:
         ff = _cached_data_json("fantasy.json")
         by_side = {(p.get("mlbam"), p.get("side")): p for p in ff.get("players") or []}
@@ -2906,13 +2915,13 @@ def _cross_module_strip() -> str:
         top = sorted((c for c in cand if c and c.get("fpts_fgp") is not None),
                      key=lambda c: -c["fpts_fgp"])[:3]
         rows = "".join(
-            f'<a class="xmod-row" href="/redraft/">'
+            f'<a class="xmod-row" href="/fantasy/#m=redraft&amp;section=ros_hitter">'
             f'<span class="xmod-name">{html.escape(c.get("name") or "")}</span>'
             f'<span class="xmod-sub">{html.escape(c.get("team") or "")}</span>'
             f'<span class="xmod-val">{c["fpts_fgp"]:.0f} FG pts</span></a>'
             for c in top)
         if rows:
-            cards.append(('◈ Redraft', '/redraft/',
+            cards.append(('◈ Fantasy', '/fantasy/#m=redraft&amp;section=ros_hitter',
                           'rest-of-season hitter points leaders', rows))
     except (OSError, ValueError, KeyError):
         pass
@@ -3165,9 +3174,10 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$", "projections": "Δ",
                      "collegesavant": "✪", "glossary": "§", "forums": "❝",
                      "team": "⚒", "mlbstats": "▦", "pal": "⚗", "trademachine": "⇄",
-                     # Diamond section (the old "fantasy" ◈ went to Redraft,
-                     # which is what that card's rows actually are).
-                     "dynasty": "♛", "redraft": "◈", "dfs": "⚡",
+                     # Diamond section. One row for Fantasy again after the
+                     # 2026-08-07 merge; Dynasty / Redraft / DFS are its
+                     # sub-modules and are reached by the module bar, not here.
+                     "fantasy": "◈",
                      "betting": "⌁", "cards": "▧", "diamond": "◆"}
     def _sb_link(key, label, href, grouped=False):
         classes = []
@@ -3733,179 +3743,225 @@ def build_pal() -> str:
                 "positional ladder fitted from Baseball-Reference.",
                 url=f"{SITE_ORIGIN}/pal/")
 
-def build_fantasy() -> str:
-    """/fantasy/ - a redirect stub, same shape as build_teams_redirect().
+def _fantasy_panel(mod: str, blurb: str, bar: str, nav_label: str,
+                   tabs: list[tuple[str, str]], csv_name: str,
+                   active: bool) -> str:
+    """One sub-module panel inside the combined /fantasy/ shell.
 
-    The single Fantasy module split three ways on 2026-08-05 (Dynasty /
-    Redraft / DFS under the Diamond group). Redraft inherited the streamers,
-    two-start, ROS and buy-sell surfaces, so that is where an old /fantasy/
-    link belongs. The path STAYS in deploy/publish_paths.txt: the whole point
-    of a redirect stub is that the old URL keeps resolving."""
+    THE IDS ARE THE MODULE'S OWN, ALWAYS. Every client resolves its mount
+    through a candidate list that ends at the fantasy-era `fantasy-app-root`;
+    on three separate pages that fallback was harmless tolerance, and in one
+    document it is a triple-mount, because all three would resolve to the same
+    node and the last paint would win. The fallback ids appear nowhere in this
+    shell, and test_diamond_scaffold asserts that absence rather than trusting
+    it.
+
+    `bar` is the module's control slot above its section nav. It is a SLOT, not
+    a fixture: the client empties it on the tabs its control cannot move, and a
+    `:empty` rule takes the emptied slot out of layout."""
+    btns = "".join(
+        f'<button type="button" class="mlbstats-sectionbtn{" active" if i == 0 else ""}" '
+        f'data-{mod}section="{key}" role="tab" '
+        f'aria-selected="{"true" if i == 0 else "false"}">{label}</button>'
+        for i, (key, label) in enumerate(tabs))
+    return (
+        f'<div class="fantasy-mod" id="fantasy-mod-{mod}" data-fantasypanel="{mod}" '
+        f'role="tabpanel" aria-label="{nav_label}"{"" if active else " hidden"}>'
+        f'<span class="section-sub fantasy-modsub">{blurb}</span>'
+        f'{bar}'
+        f'<div class="mlbstats-sectionnav" role="tablist" aria-label="{nav_label} sections">{btns}</div>'
+        f'<div id="{mod}-section" class="mlbstats-section">'
+        f'<div id="{mod}-banner"></div>'
+        f'<div id="{mod}-app-root"{_csv_optin(csv_name)}></div>'
+        '</div></div>'
+    )
+
+
+def build_fantasy() -> str:
+    """/fantasy/ - one module, three sub-modules, one page.
+
+    HISTORY, because both directions of this were deliberate. /fantasy/ was one
+    page with nine tabs until 2026-08-05, when it split into /dynasty/,
+    /redraft/ and /dfs/ over three named defects: one scoring selector sitting
+    above surfaces it could not move, one flat hash namespace, and the dynasty
+    board buried behind seven rest-of-season tabs. On 2026-08-07 the owner
+    asked for one Fantasy module again. This shell is the shape that satisfies
+    both: ONE page and one nav entry, with each sub-module keeping its own
+    section nav, its own control slot and its own hash namespace, so none of
+    the three defects comes back with the merge.
+
+    WHAT MAKES IT SAFE TO PUT THREE CLIENTS IN ONE DOCUMENT:
+
+      * mount ids are per module and the shared fantasy-era fallback ids are
+        absent (see _fantasy_panel),
+      * the address bar belongs to assets/fantasy-hub.js, which owns the
+        "#m=<module>" prefix and hands each client only its own half,
+      * only the active client is downloaded, on first activation, off the
+        data-src stamps on the module bar. data/fantasy.json is 576KB and
+        data/dfs.json 253KB, and a reader who opens the ROS board should pay
+        for neither of the other two.
+
+    Section keys, which are the contract with the clients (syncTabs compares
+    the nav attribute value against the client's own canonical name):
+      redraft  streamers | two_start | ros_sp | ros_rp | ros_hitter | buysell | closers
+      dynasty  dynasty | callups | keeper
+      dfs      slate | value | optimizer | stacks
+    """
+    redraft = _fantasy_panel(
+        "redraft",
+        "Rest-of-season rankings and daily streamers, scored in YOUR league format: "
+        "Ottoneu FanGraphs Points (default), SABR Points, Old School 5x5, or Ottoneu 4x4. "
+        "The projections come from the same engine as the MLB Projections board. Matchup and "
+        "regression context comes from REM+/SEM+/HEM+, team Offense+/Bullpen+, and the gap "
+        "between real and expected stats.",
+        # redraft.js fills this from data/fantasy.json scoring_catalog, and only
+        # on the three tabs S.system can actually move.
+        '<div id="redraft-scoring" class="fantasy-scoring-bar" aria-label="League scoring format"></div>',
+        "Redraft",
+        [("streamers", "Daily Streamers"), ("two_start", "Two-Start SP"),
+         ("ros_sp", "ROS SP"), ("ros_rp", "ROS RP"), ("ros_hitter", "ROS Hitters"),
+         ("buysell", "Buy / Sell"), ("closers", "Closer Grid")],
+        "redraft-board", True)
+    dynasty = _fantasy_panel(
+        "dynasty",
+        "Dynasty and keeper value on one board. Prospect grades come from eFV, the same model "
+        "the PROSPX board runs on, blended with ETA and surplus value so a 19-year-old in A-ball "
+        "and a 27-year-old in his arbitration years can sit in the same ranking. Call-up Watch "
+        "flags who is next. The keeper calculator prices years of control against what the same "
+        "player costs in a redraft league.",
+        # dynasty.js fills this with the LENS control (board order / contending
+        # / rebuilding), not a scoring selector: this board is graded and
+        # ranked, it has no scoring formats. The class stays as-is because
+        # redraft.js and dynasty.js style .fantasy-scoring-bar and .dyn-lensbar
+        # independently.
+        '<div id="dynasty-scoring" class="fantasy-scoring-bar" aria-label="Board lens"></div>',
+        "Dynasty",
+        [("dynasty", "Dynasty Board"), ("callups", "Call-up Watch"),
+         ("keeper", "Keeper Calculator")],
+        "dynasty-board", False)
+    dfs = _fantasy_panel(
+        "dfs",
+        "Today's slate, priced per game. Projections come from the same rest-of-season engine as "
+        "the Redraft board, re-scored for one night with the probable pitcher, the park, and the "
+        "bullpen behind him. Paste or import your own salaries from your DFS site and the "
+        "optimizer builds lineups against them. We do not scrape salary feeds, so the salaries "
+        "are yours and the projections are ours.",
+        # No slot: the contest-format selector renders inline at the top of the
+        # DFS section, which is where it was before the merge.
+        "",
+        "DFS",
+        [("slate", "Today's Slate"), ("value", "Value Plays"),
+         ("optimizer", "Lineup Optimizer"), ("stacks", "Stacks")],
+        "dfs-slate", False)
+    modbar = (
+        '<div class="fantasy-modbar" role="tablist" aria-label="Fantasy modules">'
+        f'<button type="button" class="fantasy-modbtn active" data-fantasymodule="redraft" '
+        f'data-src="/assets/redraft.js?v={_REDRAFT_VER}" role="tab" aria-selected="true" '
+        'aria-controls="fantasy-mod-redraft">Redraft'
+        '<span class="fh-modsub">Rest of season</span></button>'
+        f'<button type="button" class="fantasy-modbtn" data-fantasymodule="dynasty" '
+        f'data-src="/assets/dynasty.js?v={_DYNASTY_VER}" role="tab" aria-selected="false" '
+        'aria-controls="fantasy-mod-dynasty">Dynasty'
+        '<span class="fh-modsub">Keepers and prospects</span></button>'
+        f'<button type="button" class="fantasy-modbtn" data-fantasymodule="dfs" '
+        f'data-src="/assets/dfs.js?v={_DFS_VER}" role="tab" aria-selected="false" '
+        'aria-controls="fantasy-mod-dfs">DFS'
+        "<span class=\"fh-modsub\">Tonight's slate</span></button>"
+        '</div>'
+    )
+    body = (
+        '<div class="fa-app mlbstats-app fantasy-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>Fantasy {_stage_chip("fantasy")}</h1></div>'
+        '<span class="section-sub">Three fantasy surfaces on one page, off one projection engine: '
+        'rest-of-season and daily for a redraft league, an eFV-graded dynasty and keeper board, and '
+        "tonight's DFS slate with a lineup optimizer. Pick the one you play.</span></div>"
+        f'{modbar}{redraft}{dynasty}{dfs}'
+        '</div>'
+        f'{DIAMOND_CONFIG_SCRIPT}'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
+        f'<script src="/assets/fantasy-card.js?v={_FANTASY_CARD_VER}" defer></script>'
+        # LAST, and the only client-side script the shell names. It injects one
+        # of the three module clients on first activation; their stamps ride the
+        # data-src attributes above.
+        f'<script src="/assets/fantasy-hub.js?v={_FANTASY_HUB_VER}" defer></script>'
+    )
+    return page("Fantasy - eephus.io", "fantasy", body,
+                "Fantasy baseball from eephus.io: rest-of-season and daily redraft ranks scored in your "
+                "league format, an eFV-graded dynasty and keeper board with a keeper calculator, and a "
+                "DFS slate with per-game projections and a lineup optimizer.",
+                url=f"{SITE_ORIGIN}/fantasy/")
+
+
+def _fantasy_redirect(title: str, module: str, label: str, what: str) -> str:
+    """A retired fantasy page dir, kept as a HASH-PRESERVING redirect stub.
+
+    Same shape as build_teams_redirect(), with one addition it does not need:
+    these three URLs were the addresses of working boards for two days and
+    people bookmarked deep links into them, so the stub carries the incoming
+    hash across instead of dropping the reader on the module's default tab.
+    `/redraft/#section=ros_sp&sys=sabr` becomes
+    `/fantasy/#m=redraft&section=ros_sp&sys=sabr`, and the coordinator on the
+    other side accepts the un-namespaced form too, so a hash this script cannot
+    carry (JS off, meta refresh wins the race) still resolves.
+
+    The dirs STAY in deploy/publish_paths.txt. A redirect that does not ship is
+    a 404, which is the whole reason the stub exists."""
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fantasy - eephus.io</title>
+<title>{html.escape(title)} - eephus.io</title>
 {FAVICON_LINKS}
 <meta name="robots" content="noindex">
-<meta http-equiv="refresh" content="0; url=/redraft/">
-<script>location.replace("/redraft/");</script>
+<meta http-equiv="refresh" content="0; url=/fantasy/#m={module}">
+<script>(function(){{var h=(location.hash||"").replace(/^#/,"").replace(/(^|&)m=[^&]*/g,"").replace(/^&+/,"");
+location.replace("/fantasy/#m={module}"+(h?"&"+h:""));}})();</script>
 </head><body>
-<p style="font-family:monospace;padding:2rem;">Fantasy split into
-<a href="/redraft/">Redraft</a>, <a href="/dynasty/">Dynasty</a> and
-<a href="/dfs/">DFS</a>. Redraft is where the streamers and rest-of-season
-ranks live.</p>
+<p style="font-family:monospace;padding:2rem;">{html.escape(label)} moved into
+<a href="/fantasy/#m={module}">Fantasy &rarr; {html.escape(label)}</a>. {html.escape(what)}</p>
 </body></html>
 """
 
 # --------------------------------------------------------------------------- #
-# The Diamond section (2026-08-05)
+# The Diamond section (2026-08-05, fantasy merged back 2026-08-07)
 # --------------------------------------------------------------------------- #
-# Six pages, one group in the nav, all of them PUBLIC. The gate flag exists
+# Four pages, one group in the nav, all of them PUBLIC. The gate flag exists
 # (assets/diamond-config.js) and is OFF; nothing on these pages is withheld
 # from anyone. Each shell is the build_fantasy shape it was cloned from:
 # masthead + stage chip + section nav + a banner div + an app root, then the
-# module's own deferred JS. The five module apps belong to other lanes, so
-# every shell is written to survive its app (and its data sidecar) not being
-# there yet: the app root is empty until an app fills it, and each app owns
-# its own loud empty state.
+# module's own deferred JS. Every shell is written to survive its app (and its
+# data sidecar) not being there yet: the app root is empty until an app fills
+# it, and each app owns its own loud empty state.
 #
 # Section keys are the CONTRACT between these shells and those apps. They are
-# spelled out per builder below; the data attribute is data-<module>section and
-# the three ids are <module>-section / <module>-banner / <module>-app-root.
+# spelled out per builder; the data attribute is data-<module>section and the
+# three ids are <module>-section / <module>-banner / <module>-app-root.
+#
+# /dynasty/, /redraft/ and /dfs/ were pages of their own for two days and are
+# redirect stubs now. They still BUILD and still SHIP, because the addresses
+# were public and a redirect that does not ship is a 404.
 # --------------------------------------------------------------------------- #
 
 def build_dynasty() -> str:
-    """/dynasty/ - dynasty and keeper league value. Reads data/fantasy.json
-    (the shared fantasy_export corpus) through assets/dynasty.js: the eFV +
-    ETA + surplus dynasty board, Call-up Watch, and a keeper-value calculator
-    that prices years of control against a redraft replacement.
-
-    Section keys: dynasty | callups | keeper."""
-    body = (
-        '<div class="fa-app mlbstats-app dynasty-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Dynasty {_stage_chip("dynasty")}</h1></div>'
-        '<span class="section-sub">Dynasty and keeper value on one board. Prospect grades come from eFV, '
-        'the same model the PROSPX board runs on, blended with ETA and surplus value so a 19-year-old in '
-        'A-ball and a 27-year-old in his arbitration years can sit in the same ranking. Call-up Watch flags '
-        'who is next. The keeper calculator prices years of control against what the same player costs in a '
-        'redraft league.</span></div>'
-        # assets/dynasty.js fills this slot with the LENS control (board order /
-        # contending / rebuilding), not a scoring selector: this board is graded
-        # and ranked, it has no scoring formats. The class stays as-is because
-        # redraft.js and dynasty.js style .fantasy-scoring-bar and .dyn-lensbar
-        # independently.
-        '<div id="dynasty-scoring" class="fantasy-scoring-bar" aria-label="Board lens"></div>'
-        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Dynasty sections">'
-        '<button type="button" class="mlbstats-sectionbtn active" data-dynastysection="dynasty" role="tab" aria-selected="true">Dynasty Board</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-dynastysection="callups" role="tab" aria-selected="false">Call-up Watch</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-dynastysection="keeper" role="tab" aria-selected="false">Keeper Calculator</button>'
-        '</div>'
-        '<div id="dynasty-section" class="mlbstats-section">'
-        '<div id="dynasty-banner"></div>'
-        f'<div id="dynasty-app-root"{_csv_optin("dynasty-board")}></div>'
-        '</div>'
-        '</div>'
-        f'{DIAMOND_CONFIG_SCRIPT}'
-        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
-        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
-        f'<script src="/assets/fantasy-card.js?v={_FANTASY_CARD_VER}" defer></script>'
-        f'<script src="/assets/dynasty.js?v={_DYNASTY_VER}" defer></script>'
-    )
-    return page("Dynasty - eephus.io", "dynasty", body,
-                "Dynasty and keeper league rankings from eephus.io: prospects graded by the eFV model, "
-                "blended with ETA and surplus value, plus a call-up watch list and a keeper calculator "
-                "that prices years of control.",
-                url=f"{SITE_ORIGIN}/dynasty/")
+    return _fantasy_redirect(
+        "Dynasty", "dynasty", "Dynasty",
+        "The dynasty board, Call-up Watch and the keeper calculator are the "
+        "Dynasty sub-module there.")
 
 
 def build_redraft() -> str:
-    """/redraft/ - the single-season fantasy surfaces that used to live at
-    /fantasy/: daily SP streamers, two-start pitchers, rest-of-season SP/RP/
-    hitter ranks, buy-low and sell-high candidates, and the closer grid, all
-    re-scored client-side in the user's league format by assets/redraft.js
-    off data/fantasy.json.
-
-    Section keys: streamers | two_start | ros_sp | ros_rp | ros_hitter |
-    buysell | closers."""
-    body = (
-        '<div class="fa-app mlbstats-app redraft-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Redraft {_stage_chip("redraft")}</h1></div>'
-        '<span class="section-sub">Rest-of-season rankings and daily streamers, scored in YOUR league format: '
-        'Ottoneu FanGraphs Points (default), SABR Points, Old School 5x5, or Ottoneu 4x4. The projections come '
-        'from the same engine as the MLB Projections board. Matchup and regression context comes from '
-        'REM+/SEM+/HEM+, team Offense+/Bullpen+, and the gap between real and expected stats.</span></div>'
-        # League scoring selector (redraft.js fills it from data/fantasy.json scoring_catalog; default FanGraphs Points).
-        '<div id="redraft-scoring" class="fantasy-scoring-bar" aria-label="League scoring format"></div>'
-        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Redraft sections">'
-        '<button type="button" class="mlbstats-sectionbtn active" data-redraftsection="streamers" role="tab" aria-selected="true">Daily Streamers</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-redraftsection="two_start" role="tab" aria-selected="false">Two-Start SP</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-redraftsection="ros_sp" role="tab" aria-selected="false">ROS SP</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-redraftsection="ros_rp" role="tab" aria-selected="false">ROS RP</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-redraftsection="ros_hitter" role="tab" aria-selected="false">ROS Hitters</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-redraftsection="buysell" role="tab" aria-selected="false">Buy / Sell</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-redraftsection="closers" role="tab" aria-selected="false">Closer Grid</button>'
-        '</div>'
-        '<div id="redraft-section" class="mlbstats-section">'
-        '<div id="redraft-banner"></div>'
-        f'<div id="redraft-app-root"{_csv_optin("redraft-board")}></div>'
-        '</div>'
-        '</div>'
-        f'{DIAMOND_CONFIG_SCRIPT}'
-        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
-        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
-        f'<script src="/assets/fantasy-card.js?v={_FANTASY_CARD_VER}" defer></script>'
-        f'<script src="/assets/redraft.js?v={_REDRAFT_VER}" defer></script>'
-    )
-    return page("Redraft - eephus.io", "redraft", body,
-                "Rest-of-season redraft fantasy rankings and daily SP streamers from eephus.io, scored in your "
-                "league format (Ottoneu FanGraphs Points, SABR, 5x5, 4x4): SP/RP/hitter ranks, two-start "
-                "pitchers, buy-low and sell-high candidates, and a closer depth grid.",
-                url=f"{SITE_ORIGIN}/redraft/")
+    return _fantasy_redirect(
+        "Redraft", "redraft", "Redraft",
+        "Daily streamers, two-start pitchers, the rest-of-season boards, "
+        "buy / sell and the closer grid are the Redraft sub-module there.")
 
 
 def build_dfs() -> str:
-    """/dfs/ - the daily slate. assets/dfs.js reads the dfs_export.py sidecar
-    (data/dfs.json): per-game projections priced off the same rest-of-season
-    engine with matchup context, plus a client-side lineup optimizer.
-
-    SALARY PROVENANCE, stated on the page and repeated here so it does not get
-    lost: we do not scrape DraftKings or FanDuel salary feeds. The optimizer
-    runs on salaries the user pastes or imports from a CSV they export from
-    their own DFS site. Projections are ours; salaries are theirs.
-
-    Section keys: slate | value | optimizer | stacks."""
-    body = (
-        '<div class="fa-app mlbstats-app dfs-app">'
-        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>DFS {_stage_chip("dfs")}</h1></div>'
-        '<span class="section-sub">Today\'s slate, priced per game. Projections come from the same '
-        'rest-of-season engine as the Redraft board, re-scored for one night with the probable pitcher, '
-        'the park, and the bullpen behind him. Paste or import your own salaries from your DFS site and '
-        'the optimizer builds lineups against them. We do not scrape salary feeds, so the salaries are '
-        'yours and the projections are ours.</span></div>'
-        '<div class="mlbstats-sectionnav" role="tablist" aria-label="DFS sections">'
-        '<button type="button" class="mlbstats-sectionbtn active" data-dfssection="slate" role="tab" aria-selected="true">Today\'s Slate</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-dfssection="value" role="tab" aria-selected="false">Value Plays</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-dfssection="optimizer" role="tab" aria-selected="false">Lineup Optimizer</button>'
-        '<button type="button" class="mlbstats-sectionbtn" data-dfssection="stacks" role="tab" aria-selected="false">Stacks</button>'
-        '</div>'
-        '<div id="dfs-section" class="mlbstats-section">'
-        '<div id="dfs-banner"></div>'
-        f'<div id="dfs-app-root"{_csv_optin("dfs-slate")}></div>'
-        '</div>'
-        '</div>'
-        f'{DIAMOND_CONFIG_SCRIPT}'
-        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
-        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
-        f'<script src="/assets/dfs.js?v={_DFS_VER}" defer></script>'
-    )
-    return page("DFS - eephus.io", "dfs", body,
-                "Daily fantasy baseball projections from eephus.io: per-game hitter and pitcher projections "
-                "with matchup context, value plays, stacks, and a lineup optimizer that runs on salaries you "
-                "import yourself.",
-                url=f"{SITE_ORIGIN}/dfs/")
+    return _fantasy_redirect(
+        "DFS", "dfs", "DFS",
+        "Tonight's slate, value plays, stacks and the lineup optimizer are the "
+        "DFS sub-module there.")
 
 
 def build_betting() -> str:
@@ -4033,12 +4089,14 @@ def build_diamond() -> str:
         '</div>'
     )
     gets = [
-        ("Dynasty", "/dynasty/",
-         "Full dynasty and keeper board with the eFV blend, plus the keeper calculator."),
-        ("Redraft", "/redraft/",
-         "Rest-of-season ranks in your scoring format, daily streamers, two-start pitchers, buy and sell."),
-        ("DFS", "/dfs/",
-         "Per-game projections for the slate and the lineup optimizer, run against salaries you import."),
+        # ONE card since the 2026-08-07 merge. Three of these six used to be
+        # three cards, which read as three products and was the same overcount
+        # the nav dropdown was carrying.
+        ("Fantasy", "/fantasy/",
+         "Three surfaces on one board set. Redraft: rest-of-season ranks in your scoring format, "
+         "daily streamers, two-start pitchers, buy and sell. Dynasty: the full keeper board with "
+         "the eFV blend and the keeper calculator. DFS: per-game projections for the slate and the "
+         "lineup optimizer, run against salaries you import."),
         ("Sports Betting", "/betting/",
          "Model prices on every game, the pick of the day, the calculators, and the public record graded against the close."),
         ("Card Market", "/cards/",
@@ -4069,7 +4127,7 @@ def build_diamond() -> str:
          "the driver behind each one. Delivery is not wired. Telling us which players you follow "
          "needs the account layer, which is not switched on yet, so today you read the feed "
          "rather than being told."),
-        ("The DFS lineup optimizer", "live", "/dfs/",
+        ("The DFS lineup optimizer", "live", "/fantasy/#m=dfs&section=optimizer",
          "A salary-cap solver over our per-game projections. You bring the salaries from your "
          "own site."),
         ("A members-only weekly newsletter", "planned", None,
@@ -4142,7 +4200,7 @@ def build_diamond() -> str:
         '</div>'
         f'{money}'
         '<div class="section-head"><h2>What members get</h2>'
-        '<span class="section-sub">six modules, plus four things that are not a module, each '
+        '<span class="section-sub">four modules, plus four things that are not a module, each '
         'labeled with what actually exists today</span></div>'
         f'<div class="article-grid">{module_cards}</div>'
         f'<div class="article-grid">{extra_cards}</div>'
@@ -4874,11 +4932,10 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/mlbstats/", "daily", "0.8"),
         ("/pal/", "daily", "0.8"),
         ("/trademachine/", "daily", "0.8"),
-        # /fantasy/ is a redirect stub and carries meta robots=noindex, so it
-        # is deliberately absent here (same treatment as /teams/).
-        ("/dynasty/", "daily", "0.8"),
-        ("/redraft/", "daily", "0.8"),
-        ("/dfs/", "daily", "0.8"),
+        # /dynasty/, /redraft/ and /dfs/ are redirect stubs into /fantasy/ and
+        # carry meta robots=noindex, so they are deliberately absent here (same
+        # treatment as /teams/). Their content is one crawlable page.
+        ("/fantasy/", "daily", "0.8"),
         ("/betting/", "daily", "0.8"),
         ("/cards/", "daily", "0.7"),
         ("/diamond/", "monthly", "0.6"),

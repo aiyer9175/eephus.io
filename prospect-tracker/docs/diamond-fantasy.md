@@ -1,44 +1,98 @@
-# The fantasy split: /dynasty/, /redraft/, /dfs/
+# /fantasy/: Redraft, Dynasty and DFS
 
-Wave C2, 2026-08-05. Module doc for the three surfaces that replaced the single
-`/fantasy/` page.
+Module doc for the fantasy surfaces. They were one page with nine tabs until
+2026-08-05, three pages until 2026-08-07, and are one page with three
+sub-modules now. Both moves were deliberate and the current shape is the one
+that satisfies both sets of reasons, so both are written down here.
 
-## Why it split
+## Why it split, and why the merge had to keep the split's shape
 
 `/fantasy/` carried nine tabs for three different readers. A dynasty manager and
 a DFS player share a data pipeline and nothing else: one is buying a 2029 ETA,
-the other is buying tonight. The page had one scoring selector, one hash router,
-and one nav for all of it, and the dynasty board was buried behind seven
-rest-of-season tabs.
+the other is buying tonight. The split named three defects:
 
-The split is a client split. It is not a second corpus.
+1. one scoring selector governing surfaces it could not affect,
+2. one flat hash namespace for three vocabularies,
+3. the dynasty board buried behind seven rest-of-season tabs.
 
-## Status: the merge back into one `/fantasy/` module is NOT done
+Owner decision 10 of the 2026-08-07 program is a FULL MERGE back into one
+`/fantasy/` module. A merge that put nine tabs back in one row would have
+brought all three defects back with it. So the merge is a merge of PAGES, not
+of clients: one document, one nav entry, one masthead, and inside it three
+sub-modules that each keep their own section nav, their own control slot and
+their own hash namespace. The scoring selector still renders only on the three
+Redraft tabs that read it, the hash is namespaced rather than flat, and the
+dynasty board is one click from the top of the page rather than eight.
 
-Owner decision 10 of the 2026-08-07 program is a FULL MERGE into one `/fantasy/`
-module with Redraft, Dynasty and DFS as lazy sub-modules, namespaced hashes and
-redirect stubs on the three current dirs. That is not what is in the tree. What
-landed on 2026-08-07 is the scoped selector, the slate-freshness fixes and the
-shared player card, all of which the merge inherits unchanged.
+The split is still a client split. It is still not a second corpus.
 
-The merge was not attempted because its blast radius reaches four files outside
-the fantasy module, and a half-migrated router is worse than an unstarted one:
+## The shape, and the three things that stop being safe in one document
 
-* `test_diamond_scaffold.py` pins the Diamond group's six leaves in order, pins
-  `build_fantasy()` as a redirect to `/redraft/`, and pins that
-  `build_dynasty` / `build_redraft` / `build_dfs` each load `diamond-config.js`
-  before their own app. Every one of those is a statement the merge reverses.
-* the three hand-maintained static nav copies (`prospx/index.html` and the two
-  CollegeSavant pages) carry the Diamond dropdown verbatim, and
-  `test_collegesavant_nav_in_sync.py` asserts they match `nav_leaves()` link for
-  link. Collapsing three leaves into one Fantasy leaf is a four-file change.
+| surface | what it is | client |
+|---|---|---|
+| `/fantasy/` | the page | `assets/fantasy-hub.js` (coordinator) |
+| `#m=redraft` | rest of season and daily | `assets/redraft.js` |
+| `#m=dynasty` | keepers and prospects | `assets/dynasty.js` |
+| `#m=dfs` | tonight's slate | `assets/dfs.js` |
+| `/redraft/`, `/dynasty/`, `/dfs/` | hash-preserving redirect stubs | none |
 
-Whoever picks it up should read the merge constraints in the omnibus-3 plan
-(lane I4) first: the three clients all fall back to `#fantasy-app-root`, so a
-combined shell exposing that id triple-mounts; each client registers its own
-`hashchange` listener over its own `#section=` vocabulary; and the aliases in
-this doc plus the three current page hashes all have to keep landing somewhere
-real.
+**Mount ids.** Every client resolves its root, banner, control slot and section
+nav through a candidate list that ends at the pre-split shared id
+(`fantasy-app-root`, `fantasy-banner`, `fantasy-scoring`,
+`data-fantasysection`). Across three pages that fallback was harmless
+tolerance. In one document it is a TRIPLE-MOUNT: all three clients resolve to
+the same node, all three paint into it, and the last one to finish loading
+wins. Nothing about that failure looks like a bug in any one client. The
+combined shell therefore emits per-module ids and none of the shared ones, and
+`test_fantasy_split` asserts the absence rather than trusting it.
+
+**The address bar.** Each client owns `#section=` over its own vocabulary and
+rewrote `location.hash` from its own state, with its own `hashchange` listener.
+Three of those in one window is three writers over one string.
+`assets/fantasy-hub.js` owns the hash now: it is
+`#m=<module>&<that module's own hash>`, the clients read and write only their
+own half through the host, and only the ACTIVE module's half is in the URL.
+Each client keeps its whole router; it just stops reaching for `location` and
+`window` directly. With no host on the page every one of those calls falls back
+to the plain browser one, which is not dead code: `test_fantasy_split` drives
+`redraft.js` standalone in a JS engine against the frozen `assets/fantasy.js`.
+
+**The payload.** `data/fantasy.json` is 576KB and `data/dfs.json` is 253KB.
+Only the active client is downloaded, on first activation, off the `data-src`
+stamps on the module bar, so a reader who opens the ROS board pays for neither
+of the other two. The corpus load goes through one memoized loader, so Redraft
+and Dynasty together cost one download and one parse rather than two.
+
+## Every legacy hash still lands somewhere real
+
+Four generations of link address these boards: the pre-split `/fantasy/` page
+(nine sections), the aliases that page already accepted, the three split pages,
+and the `#player=` card hash. The coordinator resolves an un-namespaced hash by
+looking the section up in a table of every name any of the three has ever
+carried. That works only because the three vocabularies are DISJOINT, which is
+worth knowing before anyone adds a section name to one of them.
+
+* redraft: `streamers`, `two_start`, `ros_sp`, `ros_rp`, `ros_hitter`,
+  `buysell`, `closers`
+* dynasty: `dynasty`, `callups`, `keeper`, plus the alias `board`
+* dfs: `slate`, `value`, `stacks`, `optimizer`, plus the aliases `pitchers`,
+  `hitters` (to `slate`) and `salaries` (to `value`, because the salary import
+  form lives on the value board)
+
+The table lookup uses `hasOwnProperty`: `#section=constructor` is inherited off
+`Object.prototype`, truthy, and a plain lookup would have resolved it to a
+module. A section nobody owns lands on the default module (Redraft) rather than
+on a blank page, and the client then refuses it and rewrites the address bar to
+its own default. Everything else in the hash rides across verbatim, because the
+module's own client is what canonicalizes an alias and it cannot do that if the
+coordinator ate it. `test_fantasy_split` enumerates every one of these.
+
+`/redraft/`, `/dynasty/` and `/dfs/` are stubs on the `/teams/` template with
+one addition: they carry the incoming hash across, so
+`/redraft/#section=ros_sp&sys=sabr` lands on
+`/fantasy/#m=redraft&section=ros_sp&sys=sabr` rather than on the module's
+default tab. All four dirs stay in `deploy/publish_paths.txt`; a redirect that
+does not ship is a 404.
 
 ## One exporter, three clients
 
@@ -46,27 +100,31 @@ real.
 the expensive, memory-budgeted part of the pipeline (run_monthly step 6b6, with
 the cheap schedule-only refresh at 9d), and nothing about it changed here.
 
-| surface | client | payload | sections |
+| sub-module | client | payload | sections |
 |---|---|---|---|
-| `/dynasty/` | `assets/dynasty.js` | `data/fantasy.json` | `dynasty`, `callup_watch` |
-| `/redraft/` | `assets/redraft.js` | `data/fantasy.json` | `daily_streamers`, `two_start`, `ros_sp`, `ros_rp`, `ros_hitter`, `buy_low`, `sell_high`, `closer_depth` |
-| `/dfs/` | `assets/dfs.js` | `data/dfs.json` | the daily slate (new, `dfs_export.py`) |
+| Dynasty | `assets/dynasty.js` | `data/fantasy.json` | `dynasty`, `callup_watch` |
+| Redraft | `assets/redraft.js` | `data/fantasy.json` | `daily_streamers`, `two_start`, `ros_sp`, `ros_rp`, `ros_hitter`, `buy_low`, `sell_high`, `closer_depth` |
+| DFS | `assets/dfs.js` | `data/dfs.json` | the daily slate (`dfs_export.py`) |
 
-`assets/fantasy.js` stays in the tree. `/fantasy/` becomes a redirect to
-`/redraft/` and keeps its publish path, so old links and old bookmarks land
-somewhere real.
+`assets/fantasy.js` stays in the tree, frozen. It is the pre-split parity
+reference that `test_fantasy_split` drives `redraft.js` against, and no page
+loads it.
 
 ## Shell contract
 
-The page shells are generated by `build_site.py` (the `build_fantasy` clone).
-Each client resolves its mount points through a candidate list, so it works
-whether the shell takes the new ids or keeps the fantasy-era ones:
+The shell is `build_site.build_fantasy()`, one panel per sub-module through
+`_fantasy_panel()`. Each client resolves its mount points through a candidate
+list, and the shell gives it only the FIRST candidate:
 
 | client | root | banner | top bar | section attribute |
 |---|---|---|---|---|
-| dynasty | `#dynasty-app-root`, else `#fantasy-app-root` | `#dynasty-banner`, else `#fantasy-banner` | `#dynasty-scoring` holds the LENS control, on the board tab only | `data-dynastysection`, else `data-fantasysection` |
-| redraft | `#redraft-app-root`, else `#fantasy-app-root` | `#redraft-banner`, else `#fantasy-banner` | `#redraft-scoring` holds the league-format selector, on the three ROS tabs only | `data-redraftsection`, else `data-fantasysection` |
-| dfs | `#dfs-app-root`, else `#fantasy-app-root` | `#dfs-banner`, else `#fantasy-banner` | none in the shipped shell, so the contest-format selector renders inline at the top of the section | `data-dfssection`, else `data-fantasysection` |
+| dynasty | `#dynasty-app-root` | `#dynasty-banner` | `#dynasty-scoring` holds the LENS control, on the board tab only | `data-dynastysection` |
+| redraft | `#redraft-app-root` | `#redraft-banner` | `#redraft-scoring` holds the league-format selector, on the three ROS tabs only | `data-redraftsection` |
+| dfs | `#dfs-app-root` | `#dfs-banner` | none, so the contest-format selector renders inline at the top of the section | `data-dfssection` |
+
+The second candidate in each list is the fantasy-era shared id. It is still in
+the clients so they mount on an older shell, and it must never appear in this
+one. See the triple-mount note above.
 
 The bar is a SLOT, not a fixture. Both clients empty it on the tabs their
 control cannot move, and the emptied slot is removed from layout by a `:empty`
@@ -85,10 +143,13 @@ lands somewhere real: `board` maps to `dynasty`; `pitchers` and `hitters` map to
 `slate`; `salaries` maps to `value` (the salary import form lives on the value
 board, which is the one surface that is meaningless without it).
 
-`test_fantasy_split.py` reads the generated shells and asserts every nav
-attribute value is a section its client knows, and that each shell loads its own
-asset plus `assets/diamond-config.js`. That test skips rather than fails when
-the shells are not in the tree, so a fresh checkout before a build stays green.
+`test_fantasy_split.py` asserts every nav attribute value is a section its
+client knows, that no client is a `<script>` tag on the shell (they ride
+`data-src` and the coordinator injects one), and that `diamond-config.js` and
+the player card are on the page before any client runs. It reads the BUILDER,
+not the generated file: these pins used to read `dynasty/index.html` and skip
+when it was absent, and a pin that skips on a fresh checkout is green for the
+wrong reason.
 
 Every client tolerates an absent payload and an absent section: it renders a
 loud note saying what is missing, never a blank page.
@@ -120,10 +181,21 @@ re-rank the hitters.
 
 ## The player card
 
-`assets/fantasy-card.js`, loaded by the `/redraft/` and `/dynasty/` shells
-BEFORE their own client (both tags deferred, so document order is execution
-order). It is an overlay, addressed as `#player=<mlbam>` inside the host's own
-hash, so a card is shareable and the browser Back button closes it.
+`assets/fantasy-card.js`, loaded by the `/fantasy/` shell before any client
+runs. It is an overlay, addressed as `#player=<mlbam>` inside the host module's
+own half of the hash, so a card is shareable and the browser Back button closes
+it.
+
+It is reachable from all THREE sub-modules now, and the third one is what the
+merge bought. The card is a lookup into `data/fantasy.json`, which the DFS
+client does not read and must not start reading: its sidecar is the slate. On
+one page the coordinator already holds that corpus for the other two modules,
+so a DFS row can open the card for the cost of a load that is either already
+done or is taken once, on the first card, and never at all for a reader who
+opens none. A DFS card carries no four-format league score line: that port
+lives in `assets/redraft.js`, a copy here would be a third implementation
+nobody is comparing, and a season points total is not what a DFS reader came
+for.
 
 It is not a client. It fetches no corpus and owns no payload: the host attaches
 with accessors (`payload()`, `links()`, and optionally `scoreLine(rec)` and
@@ -163,7 +235,7 @@ itself.
 
 ## The one eFV basis
 
-Every eFV number on `/dynasty/` is the served `efv` field, which
+Every eFV number on the Dynasty board is the served `efv` field, which
 `fantasy_export._dynasty_prospects` produced through
 `efv_board_scale.board_value`. The client does no grade arithmetic at all: no
 scale, no quantile, no blend, only rounding to nearest. `test_fantasy_split.py`
@@ -175,7 +247,7 @@ Call-up Watch read `xfv_grade` while the Dynasty column read the retired
 Display conventions, unchanged: eFV and plus-stats round to nearest, scouting
 FV grades display as a ceiling.
 
-## Keeper value calculator (/dynasty/)
+## Keeper value calculator (Dynasty)
 
 Pure client arithmetic over the served rank, persisted to `localStorage` and
 sent nowhere. Four inputs: teams, your first-round slot, the round the keeper
@@ -196,7 +268,7 @@ The contend and rebuild lenses are presets over the served columns (ETA ascendin
 and star odds descending). They re-sort. They do not re-rank: the diamond chip
 always shows the model rank.
 
-## /dfs/ and dfs_export.py
+## The DFS slate and dfs_export.py
 
 `dfs_export.py` writes `data/dfs.json`, a daily slate payload. It imports
 `fantasy_export` for the frames that module already loads and never builds a
@@ -283,7 +355,8 @@ fixture where the greedy build alone reaches 24 points and the true optimum is
 
 ## Diamond preview
 
-All three pages ship public with "Diamond preview" labelling. Each client reads
+The page ships public with "Diamond preview" labelling, one chip on one
+masthead rather than three. Each client reads
 `window.EEPHUS_DIAMOND` (published by `assets/diamond-config.js`, owned by the
 diamond-core lane) defensively, treats a missing config as gating OFF, and caps
 its boards at `previewRows` only when gating is on and the reader is not a
@@ -299,7 +372,7 @@ than raising.
 
 ## Slate freshness, and the two ways it was invisible
 
-2026-08-07. `/dfs/` served the 2026-08-05 slate at full confidence: the payload
+2026-08-07. DFS served the 2026-08-05 slate at full confidence: the payload
 carried no `stale_slate` flag, the banner never fired, and the only sign was a
 date in the corner of the header. Two independent holes produced that.
 

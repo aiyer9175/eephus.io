@@ -7,8 +7,14 @@
 # Never hardcode the list again - add new page dirs HERE.
 #
 # 2026-08-05: the Diamond section landed six new page dirs (betting, cards,
-# dfs, diamond, dynasty, redraft). fantasy/ STAYS: it is now a redirect stub
-# to /redraft/, and a redirect that does not ship is just a 404.
+# dfs, diamond, dynasty, redraft).
+#
+# 2026-08-07: the fantasy merge reversed which of those four is the module.
+# /fantasy/ is the real page again, with Redraft, Dynasty and DFS as
+# sub-modules, and dfs/ dynasty/ redraft/ are hash-preserving redirect stubs
+# into it. ALL FOUR STAY ON THIS LIST. The three stub dirs were live public
+# addresses for two days and people bookmarked deep links into them, and a
+# redirect that does not ship is just a 404.
 #
 # Directories ship recursively; bare filenames ship from the app root.
 # data/ is handled separately by both consumers (top-level *.json plus

@@ -3,7 +3,9 @@
 // Proprietary and confidential
 // Written by Noah J. Dengler (@ARKNDJL), 2026
 //
-// /dfs/ module app. Today's slate, priced per game, plus a lineup optimizer.
+// The DFS sub-module of /fantasy/. Today's slate, priced per game, plus a
+// lineup optimizer. It was the whole of /dfs/ between 2026-08-05 and
+// 2026-08-07 and that dir is a redirect stub now.
 //
 // WHERE THE NUMBERS COME FROM. data/dfs.json (dfs_export.py) carries the slate,
 // a per-game projected line for every probable starter and every hitter whose
@@ -32,9 +34,14 @@
     data: null, error: null, section: "slate", system: "dk", template: null,
     cap: null, maxPerTeam: null, minStart: 0.5, avoidOpp: false,
     salaries: {}, salaryMeta: null, lineup: null, importReport: null,
+    player: null,
     sort: { pitchers: { key: "pts", asc: false }, hitters: { key: "pts", asc: false } }
   };
   var LINKS = null;
+  // The SEASON corpus, borrowed from the coordinator for the player card only.
+  // This module's own payload is the slate; see the card block near the router.
+  var CORPUS = null;
+  var CORPUS_PENDING = false;
 
   // ---- shell binding --------------------------------------------------------
   function el(id) { return document.getElementById(id); }
@@ -55,6 +62,41 @@
   }
   function tabKey(b) {
     return b.getAttribute("data-dfssection") || b.getAttribute("data-fantasysection");
+  }
+
+  // ---- host binding (the combined /fantasy/ page, 2026-08-07) ---------------
+  // assets/fantasy-hub.js owns the address bar on /fantasy/ and hands this
+  // module its own half of the hash, because Redraft and Dynasty are in the
+  // same document with their own "#section=" vocabularies.
+  //
+  // THE HOST ALSO HOLDS THE SEASON CORPUS, and that is what finally makes the
+  // player card reachable from a DFS row. The card is a lookup into
+  // data/fantasy.json, which this module does not read and must not start
+  // reading: its own sidecar is the slate. So it asks the host for the corpus
+  // the OTHER two modules already load, and only when a reader opens a card.
+  // Off /fantasy/ there is no host, no corpus and no card, and every name falls
+  // back to the outbound link it had before.
+  var MODULE = "dfs";
+  function host() { return window.EEPHUS_FANTASY_HOST || null; }
+  function hostHash() { var H = host(); return H ? H.hash(MODULE) : (location.hash || ""); }
+  function hostWrite(h) {
+    var H = host();
+    if (H) { H.write(MODULE, h); return; }
+    try { history.replaceState(null, "", h); } catch (e) { /* the hash is a nicety */ }
+  }
+  function hostLink(h) { var H = host(); return H ? H.link(MODULE, h) : h; }
+  function hostRoute(fn) {
+    var H = host();
+    if (H) H.onChange(MODULE, fn);
+    else window.addEventListener("hashchange", fn);
+  }
+  function load(url) {
+    var H = host();
+    if (H) return H.json(url);
+    return fetch(url, { cache: "no-cache" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
   }
 
   // ---- Diamond gate (wired, OFF) -------------------------------------------
@@ -89,7 +131,13 @@
     var e = LINKS && LINKS.byMlbam && LINKS.byMlbam[String(mlbam)];
     return (e && e.key) ? ("/projections/#player=" + e.key) : null;
   }
+  // On the combined page a name opens the in-page card, which resolves for
+  // every row on the slate. The outbound /projections/ link is the fallback,
+  // and it only ever resolved for the players player_links covers.
   function nameLink(mlbam, name) {
+    if (cardable()) {
+      return '<a class="dfs-name-link" href="' + esc(cardHash(mlbam)) + '">' + esc(name) + "</a>";
+    }
     var h = hrefFor(mlbam);
     if (h) return '<a class="dfs-name-link" href="' + esc(h) + '">' + esc(name) + "</a>";
     return esc(name);
@@ -1183,35 +1231,88 @@
     var m = new RegExp("(?:^#|[#&])" + key + "=(" + pat + ")(?:&|$)").exec(h || "");
     return m ? m[1] : null;
   }
-  // Returns TRUE when the hash was canonical. An invalid #section was already
-  // refused by the alternation, so the page rendered the default - but the
-  // address bar kept the bad value until the reader clicked a tab, so a shared
-  // link named a section that does not exist. An ALIASED section is not
-  // canonical either: "#section=pitchers" resolves to slate and should say so.
+  // EVERY CALLER REWRITES THE ADDRESS BAR AFTERWARDS. An invalid #section was
+  // already refused by the alternation, so the page rendered the default - but
+  // the address bar kept the bad value until the reader clicked a tab, so a
+  // shared link named a section that does not exist. An ALIASED section is not
+  // canonical either ("#section=pitchers" resolves to slate and should say so),
+  // and since the card joined the hash there are more ways to be off canonical
+  // than one return flag could name. So normalize unconditionally, the way
+  // redraft.js and dynasty.js do.
   function readHash() {
-    var h = location.hash || "";
+    var h = hostHash();
     var s = hashParam(h, "section", SECTIONS.join("|"));
     if (s) S.section = SECTION_ALIAS[s] || s;
     var sys = hashParam(h, "sys", "[A-Za-z0-9_]+");
     var known = ((S.data && S.data.scoring_catalog) || []).filter(function (c) { return c.id === sys; });
     if (sys && known.length) S.system = sys;
-    if (!s && /(?:^#|[#&])section=/.test(h)) return false;
-    return !(s && SECTION_ALIAS[s]);
+    S.player = hashParam(h, "player", "\\d+");
   }
-  function writeHash() {
+  // The BOARD half, card left out, so onHashChange can tell a card open from a
+  // real board change and not repaint the slate underneath it.
+  function boardHash() {
     var parts = ["section=" + S.section];
     var def = ((S.data && S.data.scoring_catalog) || []).filter(function (c) { return c.default; })[0];
     if (S.system && S.system !== (def ? def.id : "dk")) parts.push("sys=" + S.system);
-    LAST_HASH = "#" + parts.join("&");
-    try { history.replaceState(null, "", LAST_HASH); } catch (e) { /* the hash is a nicety */ }
+    return "#" + parts.join("&");
+  }
+  function cardHash(mlbam) { return hostLink(boardHash() + "&player=" + mlbam); }
+  function writeHash() {
+    LAST_HASH = S.player ? (boardHash() + "&player=" + S.player) : boardHash();
+    hostWrite(LAST_HASH);
   }
   function onHashChange() {
     if (!S.data && !S.error) return;
-    if ((location.hash || "") === LAST_HASH) return;
-    if (!readHash()) writeHash();
-    renderSelector(); syncTabs(); renderSection();
+    if (hostHash() === LAST_HASH) return;
+    var before = boardHash();
+    readHash();
+    if (boardHash() !== before) { renderSelector(); syncTabs(); renderSection(); }
+    syncCard();
+    writeHash();
   }
-  window.addEventListener("hashchange", onHashChange);
+  hostRoute(onHashChange);
+
+  // ---- player card ----------------------------------------------------------
+  // The card is a lookup into the SEASON corpus (data/fantasy.json), which this
+  // module does not read for its own boards and must not start reading: its
+  // sidecar is the slate. On /fantasy/ the coordinator already holds that
+  // corpus for Redraft and Dynasty, so the card costs this page one shared
+  // load, taken on the first card a reader opens and never on a reader who
+  // opens none.
+  //
+  // NO SCORE LINE HERE. The four-format league score is the Redraft port, which
+  // test_fantasy_split drives against the frozen assets/fantasy.js; a copy in
+  // this file would be a third implementation nobody is comparing, and the
+  // season points total is not what a DFS reader came for anyway. The card
+  // renders every other block and simply omits that one.
+  function card() { return window.EEPHUS_FANTASY_CARD || null; }
+  function cardable() { return !!(host() && card()); }
+  function syncCard() {
+    var C = card();
+    if (!C) return;
+    if (S.player) ensureCorpus();
+    C.sync(S.player);
+  }
+  function attachCard() {
+    var C = card();
+    if (!C) return;
+    C.attach({
+      payload: function () { return CORPUS; },
+      links: function () { return LINKS; },
+      onClose: function () { S.player = null; writeHash(); }
+    });
+  }
+  // Lazy and once. A failed corpus load leaves the card closed rather than
+  // opening an overlay with nothing in it, and the name still carries the
+  // reader somewhere: the hash keeps the id, so a retry is a reload.
+  function ensureCorpus() {
+    if (CORPUS || CORPUS_PENDING || !host()) return;
+    CORPUS_PENDING = true;
+    host().corpus().then(function (d) {
+      CORPUS = d || null;
+      syncCard();
+    }).catch(function () { CORPUS_PENDING = false; });
+  }
 
   // ---- boot -----------------------------------------------------------------
   // A failed load used to paint one red box and stop, leaving the shell's four
@@ -1221,7 +1322,7 @@
   function errorState(msg) {
     S.error = String(msg || "the payload did not load");
     S.data = null;
-    if (!readHash()) writeHash();
+    readHash(); writeHash();
     wireTabs(); syncTabs(); renderSection();
   }
   function onData(d) {
@@ -1246,17 +1347,20 @@
         (staleInfo() ? ' · <span class="dfs-stale-chip">old slate</span>' : "") +
         "</div>";
     }
-    if (!readHash()) writeHash();
+    readHash();
+    attachCard();
     renderSelector(); wireTabs(); syncTabs(); renderSection();
+    writeHash();
+    syncCard();
     if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
-      EEPHUS_HUB.links().then(function (L) { LINKS = L || null; renderSection(); });
+      // The links sidecar is only the card's outbound "Full MLB card" leg once
+      // the card is reachable, but the boards still fall back to it off
+      // /fantasy/, so its arrival repaints both.
+      EEPHUS_HUB.links().then(function (L) { LINKS = L || null; renderSection(); syncCard(); });
     }
   }
   function boot() {
-    fetch(DATA_URL, { cache: "no-cache" }).then(function (r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
-    }).then(onData).catch(function (e) { errorState(String(e && e.message || e)); });
+    load(DATA_URL).then(onData).catch(function (e) { errorState(String(e && e.message || e)); });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();

@@ -331,6 +331,10 @@
       "second model.</div>";
     return '<div class="fc-sec"><div class="fc-sec-h">Dynasty</div>' + out + "</div>";
   }
+  // The two links out of this block are the module hash, not /dfs/. That dir is
+  // a redirect stub since the 2026-08-07 merge, so a page-absolute href would
+  // send a reader who is ALREADY on /fantasy/ out and straight back in. The
+  // coordinator resolves the namespaced form in place.
   function dfsBlock(mlbam) {
     if (S.dfsState === "loading") {
       return '<div class="fc-sec"><div class="fc-sec-h">Tonight</div>' +
@@ -339,7 +343,7 @@
     if (S.dfsState === "failed") {
       return '<div class="fc-sec"><div class="fc-sec-h">Tonight</div>' +
         '<div class="fc-fine">The daily slate did not load, so we cannot say whether he is on it. ' +
-        'The board itself is at <a class="fc-link" href="/dfs/">DFS</a>.</div></div>';
+        'The board itself is at <a class="fc-link" href="#m=dfs&amp;section=slate">DFS</a>.</div></div>';
     }
     var rows = dfsRowsFor(mlbam);
     if (!rows.length) return "";
@@ -365,7 +369,7 @@
           "belong to " + esc(d.slate_date || "an earlier day") + ". "
         : "") +
       'Per-game contest projections. The full board, with salaries and the optimizer, is at ' +
-      '<a class="fc-link" href="/dfs/">DFS</a>.</div></div>';
+      '<a class="fc-link" href="#m=dfs&amp;section=slate">DFS</a>.</div></div>';
   }
 
   // ---- render ---------------------------------------------------------------
