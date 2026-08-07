@@ -550,7 +550,39 @@ _EXPLAINER_SKIP = {"fv", "milb_missing", "is_ifa", "is_college"}
 # reader that being young cost this prospect grade. That is the identical failure the
 # pitcher side was skipped for, at a higher rate. The model is unchanged; only the
 # explanation stops being offered where it cannot be true.
-_EXPLAINER_SKIP_SIDE = {"pit": {"age"}, "hit": {"age"}}
+#
+# pit "age_rel_level" JOINS THE SKIP 2026-08-07, on the same rule: the third entry in
+# this set and the second from the pitcher age block (owner: "why does Nicolo Pinazzi,
+# 26.8 years old at High-A, show a POSITIVE Age-for-level driver?").
+#   not the cap, not the renderer  the served pitcher weight is POSITIVE (+0.0560 on
+#       the current matrix, +0.0418 when the declaration was adjudicated), so
+#       w*(x-mu)/sd is positive for exactly the arms who are OLDER for their level than
+#       the training mean, and the chip reads UP for them. Capping age_rel_level at
+#       +3.5 only bounds the magnitude; it cannot change that sign.
+#   why the sign is there  the declaration moved -1 to 0 on 2026-07-30 (efv_model,
+#       _FEATURES_PIT age_rel_level block) BECAUSE the fit contradicts the intent. The
+#       weighted marginal is -0.0823, so younger-for-level is better unconditionally
+#       and the sign flips only conditional on the fv anchor plus k_rel/bb_rel plus
+#       tool_fb. The cleanest read on WHAT conditions it: the same column fits -0.5657
+#       in the efv_ungraded provisional pitcher set, which carries no fv anchor
+#       (-0.5943 when that declaration was adjudicated, one matrix rebuild apart). That
+#       is a suppressor, a legitimate thing for the ridge to hold and an illegitimate
+#       thing to narrate to a reader as this pitcher's age for level.
+#   display consequence  1,461 of the 1,559 live pitcher cards that carry the chip read
+#       UP on it (93.7%), so the chip is a sign-inverted restatement of "this arm is old
+#       for his level". Pinazzi is one of the 1,461, at mag 0.15.
+#   what he keeps  his age is not under-penalized once the false chip is gone. The
+#       owner-directed overlays already put a 1.5 DOWN prospect age ramp (agef 0.75) and
+#       a 1.8 DOWN reliever ceiling (rolef 0.70) on that card, a 0.525x net multiplier
+#       on the model leg.
+# HITTERS KEEP THEIR age_rel_level CHIP: it serves -0.2147 against a declared -1 with
+# marginal -0.2148, so declaration, marginal and fit all agree, and the chip reads UP
+# only on hitters YOUNG for their level (361 of 1,456 live hitter cards).
+# DISPLAY ONLY. The ridge, the declaration and every served number are untouched. Replayed
+# over the live matrices: 1,559 of 2,457 pitcher factor arrays change, 116 of them by
+# promoting the next reason into the vacated slot and the rest by losing a row; zero
+# hitter arrays change.
+_EXPLAINER_SKIP_SIDE = {"pit": {"age", "age_rel_level"}, "hit": {"age"}}
 
 
 def _factors(ridge, feats, top: int = 4, side: str = "hit") -> list:

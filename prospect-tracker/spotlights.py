@@ -1710,9 +1710,15 @@ def _statcast_drivers(p: dict) -> list[dict]:
             else:
                 valence, tone = "neutral", "near pool"
             out.append({
+                # SCALE CORRECTED 2026-08-07: the tooltip said "σ × 15", true until the
+                # v-arkmetric-audit harmonised SC+ onto the 100 + 10z convention the
+                # rest of the "+" suite uses (statcast_plus._SC_PLUS_PER_SIGMA = 10,
+                # quintile cuts 110/90). It told a reader that SC+ 115 was one standard
+                # deviation above the pool when the shipped scale puts +1σ at 110.
                 "label":   f"SC+ {v}",
                 "valence": valence,
-                "tooltip": f"Statcast+ {v} - {tone} mean (100 = pool average, σ × 15)",
+                "tooltip": f"Statcast+ {v} - {tone} mean (100 = pool average, "
+                           "10 points per standard deviation)",
             })
         except (TypeError, ValueError):
             pass
