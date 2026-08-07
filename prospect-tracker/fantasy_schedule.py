@@ -38,12 +38,21 @@ import feed_cache  # hardened session (retries 429) + TTL helpers
 log = logging.getLogger("fantasy_schedule")
 
 SCHEDULE_API = "https://statsapi.mlb.com/api/v1/schedule"
+TEAMS_API = "https://statsapi.mlb.com/api/v1/teams"
 CACHE_DIR = Path(__file__).parent / ".cache" / "fantasy_schedule"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 # Probables update intraday; a short TTL keeps a nightly build fresh while making
 # repeat calls within one run free. Always < 24h so any nightly cadence re-pulls.
 SCHEDULE_TTL = 3 * 3600  # 3h
+# Lineups move on a much shorter clock than probables: they post 2-4 hours before
+# first pitch and change again when someone is scratched in batting practice. A
+# 3h cache would routinely hand back a window in which nothing had posted yet.
+LINEUP_TTL = 12 * 60     # 12 min
+# The club-to-home-park map is static inside a season (a club does not move
+# stadiums mid-year), so this one is cached for a day and the fetch is a
+# once-a-build cost at worst.
+TEAMS_TTL = 24 * 3600
 
 
 def _org(name: str | None) -> str | None:
@@ -64,32 +73,39 @@ def date_window(n_days: int = 3, from_date: date | None = None) -> tuple[str, st
     return start.isoformat(), end.isoformat()
 
 
-def _cached_schedule(start_date: str, end_date: str, game_type: str, use_cache: bool) -> dict:
-    """Raw `/schedule` JSON for the window, disk-cached (SCHEDULE_TTL) by span."""
-    path = CACHE_DIR / f"{start_date}_{end_date}_{game_type}.json"
-    if use_cache and path.exists() and time.time() - path.stat().st_mtime <= SCHEDULE_TTL:
+def _cached_get(path: Path, url: str, params: dict, ttl: int, use_cache: bool = True) -> dict:
+    """One hardened StatsAPI GET behind a TTL'd disk cache. Raises on a real
+    failure; the callers decide what a failure degrades to."""
+    if use_cache and path.exists() and time.time() - path.stat().st_mtime <= ttl:
         try:
             return json.loads(path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             pass  # corrupt cache -> refetch
     time.sleep(0.04)
-    resp = feed_cache.SESSION.get(
-        SCHEDULE_API,
-        params={
-            "sportId": 1,
-            "startDate": start_date,
-            "endDate": end_date,
-            "gameType": game_type,
-            "hydrate": "probablePitcher,linescore",
-        },
-        timeout=30,
-    )
+    resp = feed_cache.SESSION.get(url, params=params, timeout=30)
     resp.raise_for_status()
     data = resp.json()
     tmp = path.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(data), encoding="utf-8")
     tmp.replace(path)  # atomic
     return data
+
+
+def _cached_schedule(start_date: str, end_date: str, game_type: str, use_cache: bool) -> dict:
+    """Raw `/schedule` JSON for the window, disk-cached (SCHEDULE_TTL) by span.
+
+    The hydrate list is deliberately WITHOUT `lineups`. Lineups have a TTL an
+    order of magnitude shorter than probables and every caller of this function
+    wants a multi-day forward window, which is a window in which no lineup has
+    posted; hydrating them here would either make the streamer board's cache
+    churn every twelve minutes or serve lineups from a three-hour-old copy.
+    `fetch_lineups` is the separate, single-day, short-TTL call."""
+    return _cached_get(
+        CACHE_DIR / f"{start_date}_{end_date}_{game_type}.json",
+        SCHEDULE_API,
+        {"sportId": 1, "startDate": start_date, "endDate": end_date,
+         "gameType": game_type, "hydrate": "probablePitcher,linescore"},
+        SCHEDULE_TTL, use_cache)
 
 
 def _side(side_obj: dict) -> dict:
@@ -139,6 +155,86 @@ def fetch_probables(start_date: str, end_date: str, *, game_type: str = "R",
                 "home": _side(teams.get("home") or {}),
                 "away": _side(teams.get("away") or {}),
             })
+    return out
+
+
+def fetch_lineups(day: str, *, game_type: str = "R", use_cache: bool = True) -> dict:
+    """{game_pk: {"home": [mlbam, ...], "away": [...]}} for one day, batting order.
+
+    A SIDE IS THE UNIT, NOT A GAME. Measured 2026-08-07: game 823428 had nine
+    home players posted and zero away, which is the normal state for the hour
+    or so between the two clubs filing their cards. An empty list therefore
+    means "this club has not posted", never "this club has nobody", and there
+    is deliberately no game-level `posted` flag for a caller to misread as
+    covering both sides.
+
+    CONFIRMED BATTING ORDER, AND NOTHING ELSE. The `lineups` hydration on
+    /schedule returns `homePlayers`/`awayPlayers` IN BATTING ORDER once a club
+    posts its card, and returns nothing at all before that. Both halves of that
+    sentence are the feature: a posted lineup is a fact about tonight, and an
+    unposted one has to stay absent rather than be filled in with whoever
+    started yesterday. Verified 2026-08-07 against the boxscore `battingOrder`
+    field for game 824804: the array order and the batting order agree exactly,
+    which is the only reason a bare index is safe to publish as a lineup spot.
+
+    Coverage is LOW by construction and that is not a bug. Measured on
+    2026-08-07 at 14:40 ET: 1 of 15 games had a lineup posted for that night, 0
+    of 15 for the next. A nightly build will usually see none, an afternoon
+    rebuild will see some, and callers must treat the empty case as normal.
+
+    Best-effort: any failure logs and returns {}, which reads downstream as "no
+    lineup posted" and is exactly the right degradation."""
+    try:
+        data = _cached_get(CACHE_DIR / f"lineups_{day}_{game_type}.json", SCHEDULE_API,
+                           {"sportId": 1, "date": day, "gameType": game_type,
+                            "hydrate": "lineups"},
+                           LINEUP_TTL, use_cache)
+    except Exception:
+        log.exception("fantasy_schedule: lineup fetch failed for %s - returning {}", day)
+        return {}
+    out: dict = {}
+    for d in data.get("dates", []):
+        for g in d.get("games", []):
+            pk = g.get("gamePk")
+            lu = g.get("lineups") or {}
+            if not pk:
+                continue
+            side = {}
+            for key, who in (("homePlayers", "home"), ("awayPlayers", "away")):
+                ids = [p.get("id") for p in (lu.get(key) or []) if (p or {}).get("id")]
+                if ids:
+                    side[who] = ids
+            if side:
+                out[int(pk)] = {"home": side.get("home") or [], "away": side.get("away") or []}
+    return out
+
+
+def fetch_home_venues(season: int, *, use_cache: bool = True) -> dict:
+    """{venue_id: org} for the 30 clubs' own parks in `season`.
+
+    THE REASON THIS EXISTS is that park factors are published per CLUB and a
+    game is played at a VENUE, and those are the same thing until they are not.
+    An org-keyed lookup silently prices a London Series or a Field of Dreams
+    game at the nominal home club's park factor, which is the one game a year
+    where the park term is most wrong. Resolving the venue id against this map
+    and refusing the leg when it misses turns that into an absence a reader can
+    see.
+
+    Best-effort: any failure returns {}, and a caller with no map must fall
+    back to NOT applying a park factor rather than to applying one it could not
+    place."""
+    try:
+        data = _cached_get(CACHE_DIR / f"teams_{season}.json", TEAMS_API,
+                           {"sportId": 1, "season": int(season)}, TEAMS_TTL, use_cache)
+    except Exception:
+        log.exception("fantasy_schedule: teams fetch failed for %s - returning {}", season)
+        return {}
+    out: dict = {}
+    for t in data.get("teams") or []:
+        vid = ((t or {}).get("venue") or {}).get("id")
+        org = _org((t or {}).get("name"))
+        if vid is not None and org:
+            out[int(vid)] = org
     return out
 
 

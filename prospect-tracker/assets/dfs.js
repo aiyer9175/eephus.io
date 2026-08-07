@@ -422,12 +422,21 @@
     // ever have seen otherwise.
     var thin = (exp != null && ((off != null && off < exp) || (pen != null && pen < exp))) ||
                missing.length > 0;
+    var nGames = ((S.data || {}).games || []).length;
+    var sides = g.lineup_sides_possible;
     var cells =
       kvChip("Hitters priced", g.n_hitters) +
       kvChip("Starters priced", g.n_pitchers) +
       kvChip("Probables announced", g.n_probables_announced) +
       (exp == null ? "" : kvChip("Clubs with Offense+", off == null ? "-" : off + " of " + exp)) +
-      (exp == null ? "" : kvChip("Clubs with Bullpen+", pen == null ? "-" : pen + " of " + exp));
+      (exp == null ? "" : kvChip("Clubs with Bullpen+", pen == null ? "-" : pen + " of " + exp)) +
+      // The three joins added on 2026-08-07, counted the same way as the rest:
+      // what resolved over what this slate needed, never over the league's 30.
+      (g.park_sources == null ? "" : kvChip("Games with a park factor",
+        ((g.park_sources.savant_mlb || 0) + (g.park_sources.milb_park_factors || 0)) +
+        " of " + nGames)) +
+      (g.vegas_games == null ? "" : kvChip("Games with a Vegas total", g.vegas_games + " of " + nGames)) +
+      (sides == null ? "" : kvChip("Lineups posted", (g.lineup_sides_posted || 0) + " of " + sides));
     return '<div class="dfs-integrity' + (thin ? " is-thin" : "") + '">' +
       '<div class="dfs-integrity-h">What this build resolved</div>' +
       '<div class="dfs-integrity-row">' + cells + "</div>" +
@@ -504,6 +513,10 @@
     { key: "salary", label: "Salary", num: true },
     { key: "value", label: "Pts/$1k", num: true },
     { key: "opp", label: "Opponent", text: true },
+    // The runs the market expects the club he is facing to score. It is the
+    // single most-read number on a DFS pitcher card and it is pure market: no
+    // projection on this page is priced off it.
+    { key: "opp_itt", label: "Opp total", num: true },
     { key: "ip", label: "IP", num: true },
     { key: "k", label: "K", num: true },
     { key: "sem_plus", label: "SEM+", num: true, term: "sem_plus" }
@@ -515,7 +528,12 @@
     { key: "salary", label: "Salary", num: true },
     { key: "value", label: "Pts/$1k", num: true },
     { key: "start_rate", label: "Start", num: true },
+    // Sorts on the spot itself, so a click gives the reader the confirmed
+    // top-of-the-order bats. Rows with no posted card sort last, which is the
+    // honest place for "we do not know" on a column about what is known.
+    { key: "lineup", label: "Spot", num: true },
     { key: "opp", label: "Opponent", text: true },
+    { key: "itt", label: "Team total", num: true },
     { key: "opp_sp", label: "Opp SP", text: true },
     { key: "hem_plus", label: "HEM+", num: true, term: "hem_plus" }
   ];
@@ -527,7 +545,15 @@
       case "salary": return salaryOf(p);
       case "value": return valueOf(p);
       case "start_rate": return p.start_rate;
+      // The SORT value, which is the confirmed spot or nothing. A scratched bat
+      // and an unposted card both sort last, because neither is a batting order
+      // and putting "out" at the top of an ascending Spot sort would bury the
+      // nine rows the column exists to surface. The CELL still tells them
+      // apart; see lineupCell.
+      case "lineup": return p.lineup_spot || null;
       case "opp": return (p.is_home ? "vs " : "@ ") + (p.opp || "");
+      case "itt": return ctx.vegas_itt;
+      case "opp_itt": return ctx.vegas_opp_itt;
       case "opp_sp": return ctx.opp_sp || null;
       case "ip": return line.ip;
       case "k": return line.k;
@@ -540,17 +566,46 @@
     var v = cellOf(p, key);
     if (key === "name") return teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) +
       ' <span class="dfs-elig">' + esc(eligOf(p).join("/")) + "</span>";
+    // Ahead of the null guard on purpose: this column's null covers TWO states
+    // and only one of them is "-".
+    if (key === "lineup") return lineupCell(p);
     if (v == null || v === "") return "-";
     // The opponent cell is where the matchup multiplier is legible, so it is
     // where an unresolved lookup gets said out loud.
     if (key === "opp") return esc(v) + matchupMark(p.ctx);
     if (key === "salary") return money(v);
     if (key === "value") return num(v, 2);
-    if (key === "start_rate") return Math.round(v * 100) + "%";
+    // A confirmed start is a FACT and a projected one is a guess, and 100% next
+    // to 79% reads as the same kind of number unless the row says otherwise.
+    //
+    // ONLY ON THE CONFIRMED SIDE. A scratched bat is also sourced from a posted
+    // card, so the first cut chipped him too, and a green "posted" mark beside
+    // a 0% start rate reads as reassurance about a player who is not playing.
+    // His Spot cell already carries the red "out", which is the same fact in
+    // the column that is about it.
+    if (key === "start_rate") {
+      return Math.round(v * 100) + "%" +
+        (p.lineup_status === "confirmed"
+          ? ' <span class="dfs-conf" title="His club has posted its lineup, so this is not a ' +
+            'projection. Our projected start rate for him was ' +
+            Math.round((p.start_rate_projected || 0) * 100) + '%.">posted</span>'
+          : "");
+    }
+    if (key === "itt" || key === "opp_itt") return num(v, 2);
     if (key === "pts") return num(v, 1);
     if (key === "ip" || key === "k") return num(v, 1);
     if (key === "sem_plus" || key === "hem_plus") return num(v, 0);
     return esc(v);
+  }
+  var SPOT_SUFFIX = ["th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th"];
+  function lineupCell(p) {
+    if (p.lineup_status === "not_in_lineup") {
+      return '<span class="dfs-out" title="His club has posted its lineup and he is not in it. ' +
+        'He can still pinch hit, which is worth close to nothing in a DFS lineup.">out</span>';
+    }
+    var s = p.lineup_spot;
+    if (!s) return "-";
+    return s + (SPOT_SUFFIX[s % 10] || "th");
   }
   function sortPlayers(list, cols, st) {
     var col = null;
@@ -615,23 +670,40 @@
       "</tr></thead><tbody>" + body + "</tbody></table></div>" +
       gateNote(total, sorted.length);
   }
+  // THE PARK SENTENCE IS DERIVED, NOT TYPED (2026-08-07). It used to read
+  // "park factor neutral (no MLB park table on the site yet)" as a string
+  // literal, which was true right up until the exporter started resolving MLB
+  // parks off the Savant index and then became the most confident wrong line on
+  // the page. A disclosure that outlives the thing it describes is worse than
+  // none, so this one counts what the payload actually did.
+  function parkPhrase() {
+    var src = ((S.data || {}).integrity || {}).park_sources || {};
+    var applied = (src.savant_mlb || 0) + (src.milb_park_factors || 0);
+    var n = 0, k;
+    for (k in src) { if (Object.prototype.hasOwnProperty.call(src, k)) n += src[k]; }
+    if (!n) return "a park factor";
+    if (!applied) return "a park factor that is neutral on every game today";
+    if (applied === n) return "the park's run index";
+    return "the park's run index on " + applied + " of " + n +
+      " games and a neutral park on the rest";
+  }
   function methodNote(side) {
     var d = S.data || {};
-    var park = "park factor neutral (no MLB park table on the site yet)";
+    var park = parkPhrase();
     var sal = Object.keys(S.salaries).length
       ? (Object.keys(S.salaries).length + " salaries loaded from your import")
       : "no salaries loaded yet, so the value column is blank until you import them";
     if (side === "pit") {
       return '<div class="dfs-note">Announced probable starters only, projected for ONE start. The skill line ' +
         "comes from the rest-of-season engine; hits, earned runs and home runs allowed carry an opponent-offense " +
-        "and " + park + " multiplier. Relievers are not listed: save and hold chances are not knowable before " +
+        "multiplier and " + esc(park) + ". Relievers are not listed: save and hold chances are not knowable before " +
         "first pitch. " + esc(sal) + ".</div>";
     }
     return '<div class="dfs-note">Every hitter whose club is on the slate, projected for a game he STARTS. Start ' +
       "is our estimate of how often he is in the lineup, from projected playing time against a " +
-      (d.anchors ? d.anchors.pa_per_start : 4.15) + " plate appearance league anchor. The matchup multiplier is " +
-      "the inverse of an innings-weighted opponent pitching index (announced starter SEM+ plus bullpen Bullpen+), " +
-      park + ". " + esc(sal) + ".</div>";
+      (d.anchors ? d.anchors.pa_per_start : 4.15) + " plate appearance league anchor, and it is replaced by the " +
+      "posted card once his club files one. The matchup multiplier is the inverse of an innings-weighted opponent " +
+      "pitching index (announced starter SEM+ plus bullpen Bullpen+), times " + esc(park) + ". " + esc(sal) + ".</div>";
   }
 
   // ---- value board ----------------------------------------------------------
@@ -696,6 +768,10 @@
         // say whether that index was measured or fell back to a neutral 100.
         ctx: p0.ctx || null,
         opp_sp: (p0.ctx || {}).opp_sp, opp_pitch: (p0.ctx || {}).opp_pitch,
+        // The market's runs for the whole club, which is the number stacking
+        // exists to chase. It is a lineup-wide fact, so it belongs on the
+        // lineup-wide board rather than only on nine individual rows.
+        itt: (p0.ctx || {}).vegas_itt,
         pts4: sum(top4, ptsOf), pts5: sum(top5, ptsOf),
         sal4: sal4, names: top4.map(function (p) { return p.name; })
       };
@@ -704,18 +780,21 @@
     var body = shown.map(function (r, i) {
       return '<tr><td class="mlbstats-col-rank">' + (i + 1) + '</td><td class="dfs-l">' + teamLogo(r.team) + " " +
         esc(r.team) + "</td><td>" + esc((r.is_home ? "vs " : "@ ") + (r.opp || "")) + "</td><td>" +
-        esc(r.opp_sp || "TBD") + "</td><td>" + num(r.opp_pitch, 0) + matchupMark(r.ctx) + "</td><td>" + num(r.pts4, 1) +
+        esc(r.opp_sp || "TBD") + "</td><td>" + num(r.opp_pitch, 0) + matchupMark(r.ctx) +
+        "</td><td>" + (r.itt == null ? "-" : num(r.itt, 2)) + "</td><td>" + num(r.pts4, 1) +
         "</td><td>" + num(r.pts5, 1) + "</td><td>" + (r.sal4 ? money(r.sal4) : "-") +
         '</td><td class="dfs-l">' + esc(r.names.join(", ")) + "</td></tr>";
     }).join("");
     return '<div class="dfs-note">Clubs ranked by the summed projection of their four best bats on the slate, ' +
-      "with the arm they face and that opponent's innings-weighted pitching index (lower is easier). This is a " +
-      "SUM of independent per-player projections. The correlation that makes a stack worth building is real and " +
-      "we do not model it, so read this as a shortlist of good spots, not as a stack projection.</div>" +
+      "with the arm they face, that opponent's innings-weighted pitching index (lower is easier) and the runs " +
+      "the market implies for the club. The team total is Vegas, read from a cached odds snapshot; the points " +
+      "are ours and are not priced off it, so the two columns are independent reads of the same spot. The points " +
+      "are a SUM of independent per-player projections. The correlation that makes a stack worth building is real " +
+      "and we do not model it, so read this as a shortlist of good spots, not as a stack projection.</div>" +
       '<div class="dfs-scroll mlbstats-scroll"><table class="dfs-table mlbstats-table">' +
       '<thead><tr><th class="mlbstats-col-rank">#</th>' +
       '<th class="dfs-l">Club</th><th>Game</th><th>Opp SP</th>' +
-      "<th>Opp index</th><th>Top 4</th><th>Top 5</th><th>Top 4 salary</th>" +
+      "<th>Opp index</th><th>Team total</th><th>Top 4</th><th>Top 5</th><th>Top 4 salary</th>" +
       '<th class="dfs-l">Bats</th></tr></thead><tbody>' + body + "</tbody></table></div>" +
       gateNote(rows.length, shown.length);
   }
@@ -1037,14 +1116,65 @@
       function sideLine(s) {
         var pp = (s || {}).probable;
         return '<div class="dfs-slate-row"><span class="dfs-slate-team">' + teamLogo((s || {}).org) + " " +
-          esc((s || {}).org || "") + '</span><span class="dfs-slate-sp">' +
+          esc((s || {}).org || "") +
+          ((s || {}).lineup_posted ? ' <span class="dfs-conf">card</span>' : "") +
+          ((s || {}).vegas_itt != null
+            ? ' <span class="dfs-itt">' + num(s.vegas_itt, 2) + "</span>" : "") +
+          '</span><span class="dfs-slate-sp">' +
           (pp ? esc(pp.name) : "no probable posted") + "</span></div>";
       }
+      var v = g.vegas;
       return '<div class="dfs-slate-card">' + sideLine(g.away) + sideLine(g.home) +
-        '<div class="dfs-slate-meta">' + esc(g.venue || "") +
-        (g.park_source === "none" ? " · park neutral" : "") + "</div></div>";
+        '<div class="dfs-slate-meta">' + esc(g.venue || "") + parkMark(g) +
+        (v ? " · total " + num(v.total, 1) : "") + "</div></div>";
     }).join("");
-    return '<div class="dfs-slate">' + cards + "</div>";
+    return '<div class="dfs-slate">' + cards + "</div>" + vegasNote();
+  }
+  // Every park source is a different claim and the card says which one it is.
+  // "neutral" alone used to cover all of them, which meant an average park, a
+  // neutral-site game and a lookup that found nothing read identically.
+  var PARK_MARK = {
+    none: " · park neutral (no factor)",
+    neutral_site: " · neutral site, park factor not applied",
+    no_factor_for_park: " · park neutral (this park has no factor yet)"
+  };
+  function parkMark(g) {
+    var src = String(g.park_source || "");
+    if (PARK_MARK[src]) return PARK_MARK[src];
+    // A factor outside the plausible range was clamped by the exporter and the
+    // source carries the suffix. It is still applied, so the number is shown,
+    // but a clamped value must never pass for a measured one.
+    if (src.indexOf("_out_of_range") > 0) {
+      return " · park " + num(g.park_run_pf, 2) + " (out of range, clamped)";
+    }
+    if (src === "savant_mlb" || src === "milb_park_factors") {
+      return " · park " + num(g.park_run_pf, 2);
+    }
+    return " · park neutral";
+  }
+  // The market legs are read from odds snapshots the betting module already
+  // pays for. When there is no snapshot the totals are simply absent, and the
+  // page says why rather than leaving a column of dashes unexplained.
+  //
+  // THE COPY HERE AVOIDS BETTING VOCABULARY ON PURPOSE, and the guard in
+  // test_fantasy_split enforces it. A DFS board showing a market-implied team
+  // total is standard fantasy context; a DFS board that has started talking
+  // like a betting slip is a fantasy page somebody has begun treating as a
+  // betting product. The number is the same either way, so the plain-English
+  // description is strictly better: "each side's price, with the house margin
+  // taken out" is what a de-vigged two-way market IS.
+  function vegasNote() {
+    var d = S.data || {}, src = d.vegas_source || {}, integ = d.integrity || {};
+    if (integ.vegas_games) {
+      return '<div class="dfs-note">Team totals are the market\'s, not ours: the posted game total, split ' +
+        "between the clubs by each side's price with the house margin taken out. Read from an odds snapshot " +
+        "taken " + esc(src.captured_at || "earlier") +
+        ". They are context to read beside a projection. Nothing on this page is priced off them.</div>";
+    }
+    if (!src.reason) return "";
+    return '<div class="dfs-note">No Vegas team totals on this slate: ' + esc(src.reason) +
+      ". We read odds snapshots the betting module already pays for and never fetch our own, so a slate " +
+      "with no snapshot shows no total rather than an estimated one.</div>";
   }
 
   // ---- render ---------------------------------------------------------------
@@ -1094,7 +1224,9 @@
         if (!st) return;
         var k = h.getAttribute("data-dfssort");
         if (st.key === k) st.asc = !st.asc;
-        else { st.key = k; st.asc = (k === "name" || k === "opp" || k === "opp_sp"); }
+        // Ascending on first click for the columns where small is the answer a
+        // reader wants first: the names, and the batting order (1st, not 9th).
+        else { st.key = k; st.asc = (k === "name" || k === "opp" || k === "opp_sp" || k === "lineup"); }
         renderSection();
         writeHash();
       }
@@ -1417,6 +1549,14 @@
     // The unresolved-matchup mark rides in a table cell, so it has to stay
     // small and must never wrap the column wider than the value beside it.
     ".dfs-unres{font:600 9px/1 var(--font-retro,monospace);color:var(--text-primary);border:1px solid var(--accent-gold);padding:1px 4px;white-space:nowrap;cursor:help}",
+    // A CONFIRMED start and a SCRATCH are the two facts on this page, so they
+    // get the two colours that mean settled: green for the posted card, red for
+    // the bat that is not on it. Everything projected keeps the plain type.
+    ".dfs-conf{font:600 9px/1 var(--font-retro,monospace);color:var(--text-primary);border:1px solid var(--accent-green);padding:1px 4px;white-space:nowrap;cursor:help}",
+    ".dfs-out{font:600 9px/1 var(--font-retro,monospace);color:var(--text-primary);border:1px solid var(--accent-red);padding:1px 4px;white-space:nowrap;cursor:help;text-transform:uppercase}",
+    // The market number rides beside a club code on the slate card, so it has
+    // to read as an annotation and never compete with the club's own weight.
+    ".dfs-itt{font:600 10px/1 var(--font-retro,monospace);color:var(--text-tertiary);margin-left:2px}",
     ".dfs-error{border:1px solid var(--accent-red);padding:12px;color:var(--text-primary);background:var(--bg-secondary)}",
     ".dfs-asof{font-size:12px;color:var(--text-tertiary);margin:4px 0}",
     ".dfs-name-link{color:var(--accent-cyan);text-decoration:none}.dfs-name-link:hover{text-decoration:underline}",

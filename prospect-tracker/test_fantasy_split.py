@@ -243,6 +243,286 @@ def test_dfs_position_eligibility_has_one_definition():
     assert dx._MIN_ELIG_GAMES == fe._ELIG_MIN_GAMES
 
 
+# ---------------------------------------------------------------------------
+# 1b. The three DFS context joins (2026-08-07): park, Vegas, lineups.
+# ---------------------------------------------------------------------------
+def _park_index():
+    """Yankee Stadium keyed the way _park_factors builds it, plus a park the
+    Savant table does not cover."""
+    return {3313: {"pf": 1.06, "source": "savant_mlb", "org": "NYY"},
+            2529: {"pf": 1.0, "source": "no_factor_for_park", "org": "ATH"}}
+
+
+def test_dfs_park_leg_labels_every_kind_of_miss():
+    """Neutral is the answer for four different reasons and they are not the
+    same claim. An unlabelled 1.00 makes a measured average park, a neutral
+    site, an uncovered park and a failed venue map read identically."""
+    import dfs_export as dx
+    park = _park_index()
+    assert dx._park_basis(park) == "savant_mlb"
+    assert dx._park_leg(park, 3313, "savant_mlb") == (1.06, "savant_mlb")
+    assert dx._park_leg(park, 2529, "savant_mlb") == (1.0, "no_factor_for_park")
+    # A venue in a map that HAS the home parks is a neutral-site game...
+    assert dx._park_leg(park, 999, "savant_mlb") == (1.0, "neutral_site")
+    # ...and the same absence with no map is our outage, not a fact about MLB.
+    assert dx._park_leg({}, 999, "venue_map_unavailable") == (1.0, "none")
+    assert dx._park_basis({}) == "venue_map_unavailable"
+    # The bare {venue: float} shape labs and tests inject still resolves.
+    assert dx._park_leg({7: 0.95}, 7, "savant_mlb") == (0.95, "milb_park_factors")
+
+
+def test_dfs_park_factor_out_of_range_is_clamped_and_said_out_loud():
+    """A factor written as 108 rather than 1.08 would multiply a club's whole
+    slate. Clamping it silently would then look exactly like a measured 1.45."""
+    import dfs_export as dx
+    pf, src = dx._park_leg({1: {"pf": 108.0, "source": "savant_mlb"}}, 1, "savant_mlb")
+    assert pf == dx._PARK_PF_CLAMP[1]
+    assert src.endswith("_out_of_range")
+
+
+def test_dfs_park_factors_join_org_keyed_savant_through_the_venue_map():
+    """fa_meta keys park factors by CLUB and a game is played at a VENUE. Only
+    a club's OWN park may take its factor."""
+    import dfs_export as dx
+    idx = dx._park_factors(2026, raw={},
+                           meta={"park_factors": {"NYY": {"runs": 106},
+                                                  "BOS": {"runs": 94}}},
+                           home_venues={3313: "NYY", 3: "BOS", 2529: "ATH"})
+    assert idx[3313] == {"pf": 1.06, "source": "savant_mlb", "org": "NYY"}
+    assert idx[3]["pf"] == 0.94
+    # ATH is in the venue map and NOT in the Savant table. That is a covered
+    # park with no factor, which is not the same as an uncovered venue.
+    assert idx[2529] == {"pf": 1.0, "source": "no_factor_for_park", "org": "ATH"}
+    # With no venue map at all the MLB legs must NOT fall back to the org.
+    assert dx._park_factors(2026, raw={}, meta={"park_factors": {"NYY": {"runs": 106}}},
+                            home_venues={}) == {}
+
+
+def test_dfs_park_factor_multiplies_outside_the_matchup_clamp():
+    """The clamps were sized against the opponent indexes while every park leg
+    was 1.00. Folding the park inside them made the guard rail the operative
+    term for exactly the parks that carry the most park signal."""
+    import dfs_export as dx
+    park = {3313: {"pf": 0.83, "source": "savant_mlb"}}
+    p = dx.build_payload(day="2026-08-05", fantasy=_fantasy_fixture(),
+                         games=_games_fixture(), positions={}, park=park,
+                         teams_ctx={"BOS": {"offense_plus": 108, "bullpen_plus": 96},
+                                    "NYY": {"offense_plus": 104, "bullpen_plus": 101}})
+    side = p["games"][0]["home"]
+    assert side["hit_mult"] == round(side["hit_matchup_mult"] * 0.83, 3)
+    assert side["hit_mult"] < dx._HIT_MULT_CLAMP[0]     # the park is not clipped
+    assert dx._HIT_MULT_CLAMP[0] <= side["hit_matchup_mult"] <= dx._HIT_MULT_CLAMP[1]
+
+
+def test_dfs_park_composition_never_moved_a_served_number():
+    """The clamp moved outside the park multiplication on 2026-08-07. Clamping
+    before or after multiplying by exactly 1.0 is the same arithmetic, and 1.0
+    is what every MLB park leg was until that day, so no payload ever served
+    changes. This pins that equivalence rather than asserting it in a comment."""
+    import dfs_export as dx
+    for opp_pitch in (70.0, 85.0, 100.0, 118.0, 140.0):
+        assert (dx._clamp(100.0 / opp_pitch, *dx._HIT_MULT_CLAMP) * 1.0
+                == dx._clamp((100.0 / opp_pitch) * 1.0, *dx._HIT_MULT_CLAMP))
+
+
+def test_dfs_est_list_drops_the_park_when_no_park_applied():
+    """`est` is the row's list of display-layer legs that MOVED the line.
+    Carrying "park" on a row whose park leg did nothing is the honesty list
+    telling a small lie about itself."""
+    import dfs_export as dx
+    assert "park" in dx._est(["matchup"], "savant_mlb")
+    assert "park" in dx._est(["matchup"], "milb_park_factors")
+    for miss in ("none", "neutral_site", "no_factor_for_park"):
+        assert "park" not in dx._est(["matchup"], miss), miss
+
+
+def test_dfs_lineup_leg_has_three_states_and_pts_never_moves():
+    """Posted-and-on-it, posted-and-not-on-it, and not posted. The third is the
+    common case at build time and must leave the projection untouched."""
+    import dfs_export as dx
+    assert dx._lineup_leg(7, [], 0.62) == (None, None, 0.62, 0.62)
+    assert dx._lineup_leg(7, [3, 7, 9], 0.62) == (2, "confirmed", 1.0, 0.62)
+    assert dx._lineup_leg(7, [3, 9, 11], 0.62) == (None, "not_in_lineup", 0.0, 0.62)
+
+
+def test_dfs_confirmed_lineup_replaces_the_start_rate_and_leaves_est():
+    """A posted card is an OBSERVATION. It sets the start rate to a fact, keeps
+    the projection it replaced beside it, and stops calling the number an
+    estimate. `pts` is untouched: the line is already conditional on starting."""
+    import dfs_export as dx
+    games = _games_fixture()
+    base = dx.build_payload(day="2026-08-05", fantasy=_fantasy_fixture(), games=games,
+                            positions={}, park={}, teams_ctx={}, lineups={})
+    # Bat 3 leads off for NYY; bat 4 is on the same club and not on the card.
+    conf = dx.build_payload(day="2026-08-05", fantasy=_fantasy_fixture(), games=games,
+                            positions={}, park={}, teams_ctx={},
+                            lineups={1: {"home": [3], "away": []}})
+
+    def row(p, mid):
+        return [r for r in p["players"] if r["mlbam"] == mid and r["side"] == "hit"][0]
+
+    b3, b4 = row(conf, 3), row(conf, 4)
+    assert b3["lineup_spot"] == 1 and b3["lineup_status"] == "confirmed"
+    assert b3["start_rate"] == 1.0 and b3["start_rate_source"] == "confirmed_lineup"
+    assert b3["start_rate_projected"] == row(base, 3)["start_rate"]
+    assert "start_rate" not in b3["est"]
+    assert b4["lineup_status"] == "not_in_lineup" and b4["start_rate"] == 0.0
+    assert "start_rate" not in b4["est"]
+    # The BOS side posted nothing, so nothing about its bats changed. The
+    # lineup keys are OMITTED rather than written null: an explicit null on
+    # every row of a 524-row slate cost 84KB of a lazily-booted payload, and
+    # `games[].lineups_posted` already carries whether the club filed at all,
+    # so "no card yet" and "posted, not on it" stay distinguishable.
+    b1 = row(conf, 1)
+    assert "lineup_status" not in b1 and "start_rate_source" not in b1
+    assert "start_rate" in b1["est"]
+    assert b1["start_rate"] == row(base, 1)["start_rate"]
+    # THE POINT TOTAL DOES NOT MOVE. Confirming a start changes the odds of the
+    # start, not one number inside the line it is conditional on.
+    for mid in (1, 2, 3, 4):
+        assert row(conf, mid)["pts"] == row(base, mid)["pts"], mid
+    g = conf["games"][0]
+    assert g["lineups_posted"] == {"home": True, "away": False}
+    assert g["home"]["lineup_posted"] is True and g["away"]["lineup_posted"] is False
+
+
+def test_dfs_implied_team_totals_split_a_market_total():
+    """The two implied team totals must sum to the posted total and lean the
+    way the moneyline does. The split reuses the betting module's own run
+    distribution, so no new distribution enters the site."""
+    import dfs_export as dx
+    home, away, edged = dx._split_total(9.0, 0.75, 0.4875)
+    assert not edged
+    assert abs((home + away) - 9.0) < 1e-6
+    assert home > away
+    even_h, even_a, _ = dx._split_total(9.0, 0.50, 0.4875)
+    assert abs(even_h - even_a) < 0.10
+    # Monotone: a bigger favourite gets more of the same total.
+    big, _small, _ = dx._split_total(9.0, 0.85, 0.4875)
+    assert big > home
+
+
+def test_dfs_consensus_market_devigs_each_book_against_itself():
+    """Taking the best home price from one book and the best away price from
+    another and de-vigging the pair produces a market that does not exist. That
+    fusion manufactured a 0.388 edge on /betting/ and is not repeated here."""
+    import dfs_export as dx
+    ev = {"books": {
+        "a": {"h2h": {"home": -150, "away": 130}, "totals": {"over": {"price": -110, "point": 8.5},
+                                                             "under": {"price": -110, "point": 8.5}}},
+        "b": {"h2h": {"home": -160, "away": 140}, "totals": {"over": {"price": -105, "point": 9.0},
+                                                             "under": {"price": -115, "point": 9.0}}},
+        "c": {"h2h": {"home": -155, "away": 135}, "totals": {"over": {"price": -110, "point": 8.5},
+                                                             "under": {"price": -110, "point": 8.5}}},
+    }}
+    mk = dx._consensus_market(ev)
+    assert mk["n_books_ml"] == 3 and mk["n_books_total"] == 3
+    assert mk["total"] == 8.5                       # the median line, not the longest
+    # Every per-book fair probability is inside the raw pair it came from, so a
+    # cross-book fusion (which would land outside every book) cannot pass here.
+    assert 0.55 < mk["p_home"] < 0.65
+    assert mk["total_range"] == [8.5, 9.0]
+    # One book is a quote, not a market.
+    assert dx._consensus_market({"books": {"a": ev["books"]["a"]}}) is None
+
+
+def test_dfs_vegas_is_context_and_never_moves_a_price():
+    """The market legs ride in the payload and in no multiplier. Pricing our
+    own line off the moneyline would be a new model with no gate behind it."""
+    import dfs_export as dx
+    kw = dict(day="2026-08-05", fantasy=_fantasy_fixture(), games=_games_fixture(),
+              positions={}, park={}, teams_ctx={})
+    base = dx.build_payload(**kw)
+    with_v = dx.build_payload(vegas={1: {"total": 9.0, "home_itt": 5.2, "away_itt": 3.8,
+                                         "p_home": 0.66, "p_away": 0.34, "n_books": 7}},
+                              **kw)
+    assert [r["pts"] for r in with_v["players"]] == [r["pts"] for r in base["players"]]
+    g = with_v["games"][0]
+    assert g["vegas"]["total"] == 9.0
+    assert g["home"]["vegas_itt"] == 5.2 and g["away"]["vegas_itt"] == 3.8
+    hit_home = [r for r in with_v["players"]
+                if r["side"] == "hit" and r["team"] == "NYY"][0]
+    assert hit_home["ctx"]["vegas_itt"] == 5.2
+    # A starter is graded on what the OTHER club scores, so his row carries the
+    # opponent's number and not his own club's.
+    pit_home = [r for r in with_v["players"]
+                if r["side"] == "pit" and r["team"] == "NYY"][0]
+    assert pit_home["ctx"]["vegas_opp_itt"] == 3.8
+    assert with_v["integrity"]["vegas_games"] == 1
+
+
+def test_dfs_vegas_refuses_a_snapshot_from_a_different_day():
+    """Snapshot filenames are UTC and a slate is US-local, so a close capture
+    can resolve to the wrong slate date. Clubs play three-game series, so the
+    same two orgs are usually on BOTH cards and an org-only match would price
+    today's board on yesterday's close. The first pitch is what separates them."""
+    import dfs_export as dx
+    day, games = "2026-08-05", _games_fixture(day="2026-08-05")
+
+    def snapshot(commence):
+        return {"captured_at": "x", "kind": "close", "events": [{
+            "id": "e", "commence_time": commence,
+            "home_team": "New York Yankees", "away_team": "Boston Red Sox",
+            "bookmakers": [
+                {"key": bk, "title": bk, "markets": [
+                    {"key": "h2h", "outcomes": [{"name": "New York Yankees", "price": -150},
+                                                {"name": "Boston Red Sox", "price": 130}]},
+                    {"key": "totals", "outcomes": [{"name": "Over", "price": -110, "point": 9.0},
+                                                   {"name": "Under", "price": -110, "point": 9.0}]}]}
+                for bk in ("a", "b", "c")]}]}
+
+    import betting_ingest as bi
+    real = bi.latest_snapshot
+    try:
+        # Same club pair, same slate date on the wrapper, first pitch a day off.
+        bi.latest_snapshot = lambda **_k: snapshot("2026-08-04T23:05:00Z")
+        idx, meta = dx._vegas_index(day, games)
+        assert idx == {} and meta["n_rejected_on_time"] == 1
+        assert "different day's board" in meta["reason"]
+        # The real game, minutes apart, still joins.
+        bi.latest_snapshot = lambda **_k: snapshot("2026-08-05T23:06:00Z")
+        idx, meta = dx._vegas_index(day, games)
+        assert set(idx) == {1} and meta["n_rejected_on_time"] == 0
+        assert abs(idx[1]["home_itt"] + idx[1]["away_itt"] - 9.0) < 1e-6
+    finally:
+        bi.latest_snapshot = real
+
+
+def test_dfs_injected_slate_stays_offline():
+    """An injected slate is the caller's own, and going to the network behind
+    its back for a lineup it did not ask for is how an offline path stops being
+    offline. Both new joins are absent AND labelled on that path."""
+    import dfs_export as dx
+    p = dx.build_payload(day="2026-08-05", fantasy=_fantasy_fixture(),
+                         games=_games_fixture(), positions={}, park={}, teams_ctx={})
+    assert p["vegas_source"]["n_matched"] == 0
+    assert "caller supplied the slate" in p["vegas_source"]["reason"]
+    assert p["integrity"]["lineup_sides_posted"] == 0
+    assert p["games"][0]["vegas"] is None
+    # No market leg is written onto a row when no market resolved, and nothing
+    # is lost by that: the payload states the absence once, with a reason.
+    for r in p["players"]:
+        assert "vegas_itt" not in r["ctx"] and "vegas_opp_itt" not in r["ctx"], r["name"]
+
+
+def test_dfs_park_disclosure_does_not_outlive_what_it_describes():
+    """The payload note and the client sentence both said every MLB park leg
+    was neutral. The exporter now resolves them off the Savant index, and a
+    disclosure that survives the thing it describes is worse than none."""
+    import dfs_export as dx
+    notes = " ".join(dx._NOTES).lower()
+    assert "minor league ladder only" not in notes
+    assert "every mlb park leg is neutral" not in notes
+    assert "savant" in notes and "29 of 30" in notes
+    # _code, not _src: the comment above the replacement QUOTES the sentence it
+    # retired, which is the documentation working rather than a violation.
+    js = _code("dfs")
+    assert "no MLB park table on the site yet" not in js, (
+        "assets/dfs.js still hard-codes the neutral-park sentence")
+    # The client's park phrase is DERIVED from the payload's own counts.
+    assert "park_sources" in js
+
+
 def test_fantasy_export_elig_is_additive():
     """The shape addition must not disturb any existing reader: `pos` keeps its
     old value and `elig` is a new key."""
@@ -855,6 +1135,142 @@ def test_dfs_stacks_refuses_to_dress_a_sum_as_a_stack_projection():
     assert "Top 4" in html and "Top 5" in html
     assert "correlation" in html.lower(), html[:600]
     assert "we do not model it" in html
+
+
+# ---------------------------------------------------------------------------
+# The context joins, rendered (2026-08-07)
+# ---------------------------------------------------------------------------
+def _ctx_payload(**over) -> str:
+    """The optimizer payload with the three context joins populated: a resolved
+    park, a Vegas total, and a posted card on one side of the game."""
+    d = json.loads(_opt_payload())
+    d["games"][0].update({
+        "venue": "Test Park", "venue_id": 3313,
+        "park_run_pf": 1.06, "park_source": "savant_mlb",
+        "vegas": {"total": 9.0, "home_itt": 5.2, "away_itt": 3.8,
+                  "p_home": 0.66, "p_away": 0.34, "n_books": 7},
+        "lineups_posted": {"home": True, "away": False},
+    })
+    d["games"][0]["home"].update({"vegas_itt": 5.2, "lineup_posted": True})
+    d["games"][0]["away"].update({"vegas_itt": 3.8, "lineup_posted": False})
+    d["integrity"] = {"n_hitters": 6, "n_pitchers": 2, "n_probables_announced": 2,
+                      "park_basis": "savant_mlb", "park_sources": {"savant_mlb": 1},
+                      "vegas_games": 1, "lineup_sides_posted": 1,
+                      "lineup_sides_possible": 2, "orgs_without_hitters": []}
+    d["vegas_source"] = {"source": "2026-08-05-1519.json", "kind": "open",
+                         "captured_at": "2026-08-05T15:19:23+00:00",
+                         "n_events": 1, "n_matched": 1, "reason": None}
+    for i, p in enumerate(d["players"]):
+        if p["side"] != "hit":
+            p["ctx"] = {"vegas_opp_itt": 3.8}
+            continue
+        p["ctx"] = {"vegas_itt": 5.2}
+        if i == 2:                      # Star Catcher: on the posted card
+            p.update({"lineup_spot": 3, "lineup_status": "confirmed",
+                      "start_rate": 1.0, "start_rate_projected": 0.71,
+                      "start_rate_source": "confirmed_lineup"})
+        elif i == 3:                    # Cheap Catcher: posted and not on it
+            p.update({"lineup_spot": None, "lineup_status": "not_in_lineup",
+                      "start_rate": 0.0, "start_rate_projected": 0.44,
+                      "start_rate_source": "confirmed_lineup"})
+    d.update(over)
+    return json.dumps(d)
+
+
+def test_dfs_client_renders_the_three_context_joins():
+    c = _dfs_boot(_ctx_payload())
+    html = c.eval('__go("#section=slate")')
+    assert "park 1.06" in html, html[:600]
+    assert "total 9" in html and "5.20" in html and "3.80" in html
+    assert ">Team total<" in html and ">Opp total<" in html and ">Spot<" in html
+    # A confirmed start reads as a fact and a scratch reads as a scratch.
+    assert "3rd" in html and "dfs-out" in html and "dfs-conf" in html
+    # And the green "posted" mark rides ONLY the confirmed side. A scratch is
+    # also sourced from a posted card, so an unguarded chip put a settled-fact
+    # colour beside the 0% of a player who is not playing.
+    star = html[html.index("Star Catcher"):]
+    cheap = html[html.index("Cheap Catcher"):]
+    assert "dfs-conf" in star[:400] and "dfs-conf" not in cheap[:400], cheap[:400]
+    assert "dfs-out" in cheap[:400]
+    # The integrity strip counts all three joins over what THIS slate needed.
+    assert "Games with a park factor" in html and "Games with a Vegas total" in html
+    assert "Lineups posted" in html
+
+
+def test_dfs_client_park_sentence_follows_the_payload():
+    """The method note used to hard-code "no MLB park table on the site yet".
+    It now counts what the payload actually did, in all three states."""
+    c = _dfs_boot(_ctx_payload())
+    assert "the park's run index" in c.eval('__go("#section=slate")')
+    none = json.loads(_ctx_payload())
+    none["integrity"]["park_sources"] = {"neutral_site": 1}
+    none["games"][0]["park_source"] = "neutral_site"
+    html = _dfs_boot(json.dumps(none)).eval('__go("#section=slate")')
+    assert "neutral on every game today" in html
+    # The per-game card names WHICH neutral it is. One sentence covering an
+    # average park, a neutral site and a failed lookup is how the old copy
+    # managed to be wrong about all three at once.
+    assert "neutral site, park factor not applied" in html
+    mixed = json.loads(_ctx_payload())
+    mixed["integrity"]["park_sources"] = {"savant_mlb": 9, "no_factor_for_park": 1}
+    html = _dfs_boot(json.dumps(mixed)).eval('__go("#section=slate")')
+    assert "9 of 10 games" in html
+
+
+def test_dfs_client_says_why_a_slate_has_no_vegas_totals():
+    """A column of dashes with no explanation is the failure mode. The absence
+    carries its reason, and it says the budget rule out loud."""
+    d = json.loads(_ctx_payload())
+    d["games"][0]["vegas"] = None
+    d["games"][0]["home"].pop("vegas_itt")
+    d["integrity"]["vegas_games"] = 0
+    d["vegas_source"] = {"source": None, "n_matched": 0,
+                         "reason": "no odds snapshot is cached for this slate date"}
+    html = _dfs_boot(json.dumps(d)).eval('__go("#section=slate")')
+    assert "No Vegas team totals on this slate" in html
+    assert "no odds snapshot is cached" in html
+    assert "never fetch our own" in html
+
+
+def test_dfs_client_spot_column_is_sortable_and_opens_ascending():
+    """Ascending on first click, with scratches and unposted cards last: an
+    ascending Spot sort that led with "out" would bury the nine rows the column
+    exists to surface.
+
+    STRUCTURAL, and the reason is a limit of this harness rather than a choice.
+    The sort headers are wired through `root().querySelectorAll("[data-dfssort]")`
+    and the stub's querySelectorAll returns [], so no sort control exists to
+    click here and a click test would be green for the wrong reason. What is
+    pinned instead is the contract the click reads: the header is emitted with
+    the sort key on the hitters board, the key is in the ascending-on-first-
+    click set, and a scratched bat carries NO sort value so it cannot land
+    ahead of a confirmed one."""
+    c = _dfs_boot(_ctx_payload())
+    html = c.eval('__go("#section=slate")')
+    assert 'data-dfssort="lineup" data-dfsboard="hitters"' in html, html[:800]
+    js = _code("dfs")
+    assert 'k === "lineup"' in js, "the Spot column does not open ascending"
+    # p.lineup_spot is the sort value and a scratch has none, so "out" sorts
+    # with the unknowns at the bottom in both directions.
+    assert 'case "lineup": return p.lineup_spot || null;' in js
+
+
+def test_dfs_client_stacks_show_the_market_total_beside_our_points():
+    c = _dfs_boot(_ctx_payload())
+    html = c.eval('__go("#section=stacks")')
+    assert ">Team total<" in html and "5.20" in html
+    assert "not priced off it" in html
+
+
+def test_dfs_client_survives_a_payload_from_before_the_joins():
+    """The joins are additive. A payload built by yesterday's exporter has no
+    vegas, no lineup and no park_sources, and every one of those must render as
+    an absence rather than an exception."""
+    c = _dfs_boot(_opt_payload())
+    for sec in ("slate", "stacks", "value", "optimizer"):
+        html = c.eval('__go("#section=%s")' % sec)
+        assert "undefined" not in html, (sec, html[:400])
+        assert html.strip(), sec
 
 
 # ---------------------------------------------------------------------------

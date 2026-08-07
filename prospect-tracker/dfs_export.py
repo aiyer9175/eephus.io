@@ -17,6 +17,28 @@ re-pricing and nothing else:
     off the fantasy pool itself,
   * position eligibility comes from data/mlb_fielding_positions.json.
 
+THREE CONTEXT JOINS AND NOT ONE NEW MODEL (2026-08-07). Everything below reads
+an artifact somebody else already pays for, and every one of them is absent and
+labelled when it does not resolve rather than filled in:
+
+  * PARK. The Savant runs index in data/fa_meta.json, the same table /betting/
+    prices games with. It is keyed by club and a game is played at a venue, so
+    it is resolved through the StatsAPI club-venue map and applied only at a
+    club's own park. It is the one join here that MOVES a price, so it went
+    through a pre-registered gate: docs/dfs-park-leg-gate-2026-08-07.md.
+  * VEGAS. Implied team totals off the odds snapshots the betting close job
+    already bought. This module never fetches: the budget is 500 credits a
+    month at 3 a snapshot and this costs zero. Display only.
+  * LINEUPS. Confirmed batting order from the free StatsAPI lineups hydration,
+    which returns nothing until a club posts. Display only, except that a
+    posted card replaces our start-rate ESTIMATE with the fact it was
+    estimating, and the row stops listing it as an estimate.
+
+Display only means display only. Neither the market's number nor a batting
+order is paid into `pts`. Pricing our line off the market would be a new model
+with no gate behind it, and buying the half plate appearance a leadoff spot is
+worth over a ninth would be a second one.
+
 SALARIES ARE NOT HERE, ON PURPOSE. We do not scrape DraftKings or FanDuel
 salary feeds. The optimizer on /dfs/ takes salaries the USER pastes or imports
 from the CSV their own site hands them, and the payload says so in `salaries`.
@@ -74,8 +96,27 @@ _SP_IP_SHARE = 5.4 / 9.0        # starter share of a team's innings (5.4 IP per 
 _MIN_ELIG_GAMES = fe._ELIG_MIN_GAMES   # games at a position before it is eligible
 # Multiplier clamps. Wider than the observed spread of the inputs so the clamp
 # is a guard rail, not the operative term.
+#
+# THEY BOUND THE MATCHUP TERM AND NOT THE PARK (2026-08-07). They were sized
+# against the spread of the opponent pitching and offense indexes, which is the
+# only input they saw while every MLB park factor was 1.00. The day the park leg
+# started resolving, folding it inside these bounds made the guard rail the
+# operative term for exactly the parks that carry the most park signal: measured
+# on the 2026-08-07 slate, 0 of 30 game sides bound the hit clamp without the
+# park leg and 2 of 30 bound it with, both at T-Mobile Park (0.83), where the
+# honest multiplier of 0.707 was being clipped to 0.800. So the clamp now wraps
+# the matchup index alone and the park factor multiplies the clamped result.
+#
+# THIS MOVES NO NUMBER THAT WAS EVER SERVED. Clamping before or after a
+# multiplication by exactly 1.0 is the same arithmetic, and 1.0 is what every
+# MLB park leg was until the join below landed.
 _HIT_MULT_CLAMP = (0.80, 1.25)
 _PIT_ALLOW_CLAMP = (0.82, 1.22)
+# A guard rail on the park TABLE, not on the park effect. The committed Savant
+# index spans 0.83 (T-Mobile) to 1.28 (Coors), so nothing honest reaches these
+# bounds; they exist so a corrupt or mis-scaled entry (a factor written as 108
+# rather than 1.08) cannot multiply a whole club's slate by a hundred.
+_PARK_PF_CLAMP = (0.70, 1.45)
 # Announced probables that must ALL fail to price before we call the pitcher
 # side collapsed rather than thin. One or two unprojected spot starters is a
 # normal night (they land in `unprojected`); four in a row that all miss is a
@@ -163,30 +204,373 @@ def positions_by_mlbam() -> dict:
     return fe._elig_positions()
 
 
-def _park_factors(season: int, raw: dict | None = None) -> dict:
-    """{venue_id: run_pf} for the slate season, when a park-factor artifact
-    covers the venue.
+def _park_factors(season: int, raw: dict | None = None, *, meta: dict | None = None,
+                  home_venues: dict | None = None) -> dict:
+    """{venue_id: {"pf": run index, "source": str}} for the slate season.
 
-    HONEST GAP, stated on the page: the committed artifact
-    (data/milb_park_factors.json, tools/park_line_lab.py) covers sportIds
-    11-16, so no MLB venue resolves today and every park leg is neutral. The
-    lookup is interface-shaped: the day an MLB park-factor table lands under
-    the same venue-keyed shape, the DFS park leg starts working with no change
-    here beyond the filename."""
+    TWO TABLES, ONE VENUE-KEYED ANSWER. The MLB legs come from the Savant runs
+    index in data/fa_meta.json, which the FA engine already builds
+    (`fa_fit.park_factors(CLASS_YEAR - 1)`) and which /betting/ already prices
+    games with through betting_model.park_index. Nothing is fetched and no
+    second copy is kept: one park number, three readers. The minor-league
+    artifact (data/milb_park_factors.json, sportIds 11-16) stays wired because
+    it costs nothing and it is already venue-keyed, but it never resolves an
+    MLB slate.
+
+    THE ORG-TO-VENUE STEP IS NOT BOOKKEEPING. fa_meta keys park factors by
+    CLUB and a game is played at a VENUE, and those coincide until the year's
+    neutral-site game, where an org-keyed lookup would price a London or a
+    Field of Dreams game at the nominal home club's park. Only a venue that IS
+    the club's own park gets that club's factor; anything else stays neutral
+    and says so. With no venue map at all (the StatsAPI call failed) the MLB
+    legs go neutral rather than fall back to the org, because a factor we
+    cannot place is exactly the invented leg this module refuses everywhere
+    else.
+
+    ATH HAS NO ENTRY, on purpose and not by omission: the Savant table covers
+    29 of 30 clubs, and Sutter Health Park's first season is not a park factor
+    yet. Its home games take source "no_factor_for_park".
+
+    The park leg was NEUTRAL FOR EVERY MLB VENUE until 2026-08-07 and the
+    payload said so. It earns its place through the pre-registered gate in
+    docs/dfs-park-leg-gate-2026-08-07.md (tools/dfs_park_gate.py): over 1,720
+    completed 2026 games, `mu x pf` beat a neutral park on RMSE, and only 3 of
+    10,000 shuffled park assignments matched it (p = 0.0003)."""
+    out: dict = {}
     if raw is None:
         raw = fe._load_json("milb_park_factors.json")
-    out: dict = {}
     for v in ((raw or {}).get("venues") or []):
         vid = v.get("venue_id")
         win = v.get("window_run_pf") or {}
         pf = win.get(str(season)) or win.get(str(season - 1))
         if vid is not None and isinstance(pf, (int, float)):
-            out[int(vid)] = float(pf)
+            out[int(vid)] = {"pf": float(pf), "source": "milb_park_factors"}
+    if meta is None:
+        meta = fe._load_json("fa_meta.json")
+    savant = (meta or {}).get("park_factors") or {}
+    if not savant:
+        return out
+    if home_venues is None:
+        home_venues = fsched.fetch_home_venues(season)
+    for vid, org in (home_venues or {}).items():
+        row = savant.get(org)
+        runs = (row or {}).get("runs") if isinstance(row, dict) else None
+        if isinstance(runs, (int, float)) and runs:
+            out[int(vid)] = {"pf": float(runs) / 100.0, "source": "savant_mlb", "org": org}
+        else:
+            out[int(vid)] = {"pf": 1.0, "source": "no_factor_for_park", "org": org}
     return out
+
+
+def _park_basis(park: dict | None) -> str:
+    """Which world the park index came back from, which is what a MISS means.
+
+    An MLB venue absent from a map that HAS the 30 home parks is a neutral-site
+    game. The same absence from a map that never loaded is our outage. Those
+    are opposite claims and the row is neutral either way, so the only thing
+    that can tell them apart is this label."""
+    for cell in (park or {}).values():
+        if isinstance(cell, dict) and cell.get("source") in ("savant_mlb",
+                                                             "no_factor_for_park"):
+            return "savant_mlb"
+    return "venue_map_unavailable"
+
+
+def _park_leg(park: dict | None, venue_id, basis: str) -> tuple[float, str]:
+    """(multiplier, source) for one venue. Neutral and LABELLED is the answer
+    for every miss, and the label is what tells a measured 1.00 (a genuinely
+    average park sits there) from a lookup that found nothing.
+
+    Accepts the {venue_id: float} shape as well as the current
+    {venue_id: {pf, source}} one, because `build_payload(park=...)` is an
+    injection point that labs and tests hand a bare index to."""
+    cell = (park or {}).get(venue_id)
+    if cell is None:
+        return 1.0, ("neutral_site" if basis == "savant_mlb" else "none")
+    if isinstance(cell, dict):
+        pf, src = cell.get("pf"), str(cell.get("source") or "none")
+    else:
+        pf, src = cell, ("milb_park_factors" if cell else "none")
+    if not isinstance(pf, (int, float)) or not pf:
+        return 1.0, "none"
+    guarded = _clamp(float(pf), *_PARK_PF_CLAMP)
+    if guarded != float(pf):
+        # A factor outside the guard is a corrupt table, not an extreme park.
+        # It is said out loud rather than quietly clipped, because a silently
+        # clipped 108 looks exactly like a measured 1.45.
+        _log.error("dfs: park factor %.3f for venue %s is outside %s - "
+                   "clamping and marking the leg as suspect", pf, venue_id,
+                   _PARK_PF_CLAMP)
+        return guarded, src + "_out_of_range"
+    return guarded, src
 
 
 def _clamp(v: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, v))
+
+
+# ---------------------------------------------------------------------------
+# Vegas implied team totals. READ ONLY, ZERO CREDITS.
+# ---------------------------------------------------------------------------
+# THE BUDGET IS THE DESIGN CONSTRAINT. The odds feed is The Odds API's free
+# tier: 500 credits a month at 3 credits a snapshot, which the betting close job
+# already spends twice a day. This module fetches NOTHING. It reads the
+# snapshots that job already wrote to .cache/odds and joins them to the slate. A
+# game with no snapshot gets an absence with a reason, never an invented line.
+#
+# WHY THE MONEYLINE AND NOT THE SPREAD. In every other sport an implied team
+# total is (total / 2) +/- (spread / 2). MLB does not price a variable spread:
+# measured on the 2026-08-06 snapshot, 97 of 99 posted runlines were exactly
+# -1.5/+1.5 and the two exceptions were 2.5. The spread carries no information
+# about WHO scores the runs, so the split has to come off the moneyline.
+#
+# WHY THE SPLIT REUSES THE BETTING MODEL. Turning a win probability into a run
+# margin needs a run distribution. This module does not get to invent one: it
+# inverts the one /betting/ already publishes and grades (two independent
+# Poissons, `betting_runs_v1`, with the P(margin = 0) mass split by the MEASURED
+# extra-innings home win rate). So the DFS board and the betting board cannot
+# disagree about what a 62% favourite is worth in runs, and no new distribution
+# enters the site.
+#
+# WHY THE LINE AND NOT THE PRICE-SOLVED TOTAL. We could solve for the total that
+# reproduces the de-vigged over price instead of taking the posted line, and the
+# first cut did. Measured on all 11 games of the 2026-08-06 snapshot, that
+# solve came back HIGHER than the line in 11 of 11 games, by +0.40 runs on
+# average. That is not information, it is the Poisson: a right-skewed count
+# distribution puts P(X >= mean + 1) below one half, so a fair 50/50 line forces
+# lambda up. Taking the posted line has no such artifact and is the number on
+# the board a reader can check.
+_ODDS_MIN_BOOKS = 2             # one book is a quote, not a market
+_ITT_BISECT_STEPS = 40          # 10 runs / 2^40; the metric is rounded to 0.01
+# How far a snapshot event's first pitch may sit from the scheduled game's
+# before the pair is not the same game.
+#
+# THE JOIN NEEDS THIS AND THE ORG PAIR IS NOT ENOUGH. Snapshot FILENAMES carry
+# the UTC capture date while a slate is US-local, so a close snapshot taken near
+# a 10pm ET first pitch lands under TOMORROW's filename; on a snapshot written
+# before betting_ingest started stamping `slate_date`, a date-filtered read
+# resolves it to the wrong slate. Clubs play three-game series, so yesterday's
+# card and today's are usually the SAME two org pairs, and an org-only match
+# would silently price today's board on yesterday's closing line. A day apart is
+# 24 hours; six is loose enough for any schedule move and nowhere near that.
+_ODDS_TIME_TOLERANCE_S = 6 * 3600
+
+
+def _consensus_market(event: dict) -> dict | None:
+    """One event -> {p_home, total, n_books, ...} by CONSENSUS across books.
+
+    EACH BOOK IS DE-VIGGED AGAINST ITSELF and only then compared. Taking the
+    best home price from one book and the best away price from another and
+    de-vigging the pair produces a market that does not exist; that exact fusion
+    manufactured a 0.388 edge on /betting/ in August 2026 and it is not being
+    repeated one module over. `betting_ingest.best_price` is the shop-for-a-
+    price helper and is deliberately NOT what this calls.
+
+    The median, not the mean: one book posting a stale number on a late scratch
+    should not move a consensus, and with nine books a median is the robust
+    read of where the market is."""
+    import statistics as _stats
+
+    import betting_ingest as bi
+    import betting_model as bm
+
+    probs, lines = [], []
+    for b in (event.get("books") or {}).values():
+        h2h = b.get("h2h") or {}
+        dec = {k: bi.american_to_decimal(h2h.get(k)) for k in ("home", "away")}
+        if all(dec.values()):
+            fair = bm.devig({k: v for k, v in dec.items() if v})
+            if fair.get("home") is not None:
+                probs.append(float(fair["home"]))
+        pt = ((b.get("totals") or {}).get("over") or {}).get("point")
+        if isinstance(pt, (int, float)):
+            lines.append(float(pt))
+    if len(probs) < _ODDS_MIN_BOOKS or len(lines) < _ODDS_MIN_BOOKS:
+        return None
+    return {"p_home": _stats.median(probs), "total": _stats.median(lines),
+            "n_books_ml": len(probs), "n_books_total": len(lines),
+            "total_range": [min(lines), max(lines)],
+            "p_home_range": [round(min(probs), 4), round(max(probs), 4)]}
+
+
+def _split_total(total: float, p_home: float, tie_home: float) -> tuple[float, float, bool]:
+    """(home runs, away runs, hit_the_bracket) implied by a total and a home win
+    probability, under the betting module's own run distribution.
+
+    P(home wins) is strictly increasing in the home share of a fixed total, so
+    one bisection lands it. The bracket is 15%-85% of the total: outside that a
+    two-way MLB moneyline has never traded, and a solution sitting ON the
+    bracket is reported rather than quietly clipped."""
+    import betting_model as bm
+
+    lo, hi = 0.15 * total, 0.85 * total
+
+    def _p(lam_home: float) -> float:
+        dist = bm.margin_distribution(lam_home, total - lam_home)
+        return sum(p for d, p in dist.items() if d > 0) + dist.get(0, 0.0) * tie_home
+
+    if _p(hi) <= p_home:
+        return hi, total - hi, True
+    if _p(lo) >= p_home:
+        return lo, total - lo, True
+    for _ in range(_ITT_BISECT_STEPS):
+        mid = (lo + hi) / 2.0
+        if _p(mid) < p_home:
+            lo = mid
+        else:
+            hi = mid
+    home = (lo + hi) / 2.0
+    return home, total - home, False
+
+
+def _vegas_index(day: str, games: list) -> tuple[dict, dict]:
+    """({game_pk: {home_itt, away_itt, ...}}, provenance) from the cached odds.
+
+    Matching is (away org, home org) on the slate date, and the doubleheader
+    tiebreak is the nearer first pitch: the two games of a split share a club
+    pair, and the snapshot's commence_time runs about a minute later than
+    StatsAPI's (measured across all 11 games of 2026-08-06), so an exact time
+    match would find nothing at all."""
+    meta = {"source": None, "captured_at": None, "kind": None,
+            "n_events": 0, "n_matched": 0, "reason": None}
+    try:
+        import betting_ingest as bi
+        import betting_model as bm
+        wrap = bi.latest_snapshot(on_date=day)
+        if not wrap:
+            meta["reason"] = ("no odds snapshot is cached for this slate date")
+            return {}, meta
+        events = bi.parse_events(wrap)
+        tie_home = (bm.league_context().get("extra_inning_home_rate")
+                    or bm.LITERATURE_TIE_HOME)
+    except Exception:
+        _log.exception("dfs: vegas join raised - continuing without it")
+        meta["reason"] = "the odds snapshot could not be read"
+        return {}, meta
+    meta.update(source=Path(wrap.get("_path") or "").name or "odds snapshot",
+                captured_at=wrap.get("captured_at"), kind=wrap.get("kind"),
+                n_events=len(events),
+                tie_home=round(float(tie_home), 4),
+                model_version=getattr(bm, "MODEL_VERSION", None))
+    by_pair: dict = {}
+    for e in events:
+        by_pair.setdefault((e.get("away_org"), e.get("home_org")), []).append(e)
+    out: dict = {}
+    n_off_slate = 0
+    for g in games:
+        pk = g.get("game_pk")
+        cands = by_pair.get(((g.get("away") or {}).get("org"),
+                             (g.get("home") or {}).get("org")))
+        if not pk or not cands:
+            continue
+        want = _epoch(g.get("datetime"))
+        ev = min(cands, key=lambda e: abs(_epoch(e.get("commence_time")) - want))
+        gap = abs(_epoch(ev.get("commence_time")) - want)
+        if want and gap > _ODDS_TIME_TOLERANCE_S:
+            n_off_slate += 1
+            _log.warning("dfs: nearest cached odds for %s vs %s is %.1f hours from "
+                         "first pitch - treating it as a different game rather than "
+                         "pricing this one on it", (g.get("away") or {}).get("org"),
+                         (g.get("home") or {}).get("org"), gap / 3600.0)
+            continue
+        mk = _consensus_market(ev)
+        if not mk:
+            continue
+        try:
+            home, away, edge = _split_total(mk["total"], mk["p_home"], tie_home)
+        except Exception:
+            _log.exception("dfs: implied team total solve failed for %s", pk)
+            continue
+        out[int(pk)] = {
+            "total": round(mk["total"], 2),
+            "home_itt": round(home, 2), "away_itt": round(away, 2),
+            "p_home": round(mk["p_home"], 4), "p_away": round(1.0 - mk["p_home"], 4),
+            "n_books": min(mk["n_books_ml"], mk["n_books_total"]),
+            "total_range": mk["total_range"], "p_home_range": mk["p_home_range"],
+            "at_bracket": edge,
+        }
+    meta["n_matched"] = len(out)
+    meta["n_rejected_on_time"] = n_off_slate
+    if not out and events:
+        meta["reason"] = (
+            "the cached snapshot holds no game matching this slate" if not n_off_slate
+            else (f"the cached snapshot matched {n_off_slate} club pairing(s) on this "
+                  "slate but every one of them was hours from the scheduled first "
+                  "pitch, so it is a different day's board"))
+    return out, meta
+
+
+def _epoch(ts) -> float:
+    """An ISO timestamp as seconds, or 0. Only ever used to rank two candidates
+    against each other, so 0 for an unparseable stamp is a stable answer."""
+    try:
+        return datetime.fromisoformat(str(ts).replace("Z", "+00:00")).timestamp()
+    except (TypeError, ValueError):
+        return 0.0
+
+
+_OTHER = {"home": "away", "away": "home"}
+
+
+def _vg(ctx: dict, key: str, value) -> None:
+    """Write a market leg into a row's ctx, or leave the key out entirely.
+
+    An explicit null on every row of a 524-row slate cost 84KB of a payload the
+    /fantasy/ shell lazy-boots. Nothing is concealed by the omission: whether
+    the market resolved at all is stated once in `vegas_source` and counted in
+    `integrity.vegas_games`, and per game in `games[].vegas`. Repeating it on
+    every player is not disclosure, it is weight."""
+    if value is not None:
+        ctx[key] = value
+
+# The park sources that mean a factor other than 1.00 actually multiplied the
+# line. Anything else left the row untouched, and listing "park" as an estimate
+# on a row where the park leg did nothing is the honesty list telling a small
+# lie about itself.
+_PARK_APPLIED = ("savant_mlb", "milb_park_factors")
+
+
+def _est(base: list, park_source: str) -> list:
+    """The row's `est` list: every display-layer leg that MOVED this line.
+
+    The park factor is MEASURED now (Savant, gate in
+    docs/dfs-park-leg-gate-2026-08-07.md) and it still belongs here, because
+    what is heuristic about it is the APPLICATION: a flat run index multiplying
+    every counting stat alike, with no per-event elasticity, is not what a park
+    does to a home run and a single. The measurement earned its place in the
+    price; the shape of the application has not been graded and says so."""
+    return base + (["park"] if park_source in _PARK_APPLIED else [])
+
+
+def _lineup_leg(mlbam, card: list, projected: float) -> tuple:
+    """(lineup_spot, status, start_rate, projected_rate) for one bat.
+
+    THREE STATES AND THEY ARE NOT INTERCHANGEABLE:
+
+      * the club has posted and he is on the card -> spot 1-9, status
+        "confirmed", start rate 1.0. He is starting. That is not a projection
+        any more and the row stops calling it one;
+      * the club has posted and he is NOT on the card -> status
+        "not_in_lineup", start rate 0.0. He can still pinch hit, which is worth
+        approximately nothing in a DFS lineup, and the client's own minimum
+        start filter takes him out of the optimizer pool where he belongs;
+      * the club has not posted -> everything stays exactly as it was, status
+        None. An empty card is the overwhelmingly common state at build time
+        (measured 2026-08-07: 1 of 15 games), so this is the DEFAULT path and
+        it must leave the projection alone.
+
+    `pts` never moves here. The line is already conditional on starting (see
+    _hitter_line), so confirming a start changes what we say about the odds of
+    the start and not one number inside it. Batting order is published and is
+    NOT paid into the plate appearances: a leadoff spot is worth about half a
+    plate appearance over a ninth, and buying that would be a new model."""
+    if not card:
+        return None, None, projected, projected
+    try:
+        spot = list(card).index(mlbam) + 1
+    except ValueError:
+        return None, "not_in_lineup", 0.0, projected
+    return spot, "confirmed", 1.0, projected
 
 
 def _hitter_line(ros: dict, rem_games: int, mult: float) -> tuple[dict, float]:
@@ -333,13 +717,22 @@ _NOTES = [
     "Relievers are not on the slate. Save and hold chances are not knowable "
     "before first pitch, and pretending otherwise would be the least honest "
     "number on the page.",
-    "Park factors: the committed artifact covers the minor league ladder only, "
-    "so every MLB park leg is neutral today and labelled as such.",
+    "Park factors are the Savant runs index the free-agent engine already "
+    "builds, the same table the betting model prices games with. It covers 29 "
+    "of 30 parks and only applies when the game is at the home club's own park; "
+    "every other venue stays neutral and each row says which it got.",
     "The matchup multiplier is the inverse of an innings-weighted opponent "
     "pitching index (5.4 of 9 innings to the announced starter's SEM+, the rest "
     "to the bullpen's Bullpen+), clamped. It mirrors the opponent term the "
     "streamer board has always used. It is a display heuristic, not a fitted "
     "run-environment model, and no backtest stands behind it yet.",
+    "Vegas implied team totals are read from odds snapshots the betting module "
+    "already pays for, never fetched here. They are context to read beside a "
+    "projection: no line on this page is priced off the market, and a game with "
+    "no cached snapshot shows no total rather than an estimated one.",
+    "A lineup spot appears only once the club posts its card, which is usually "
+    "after this board is built. Until then a hitter carries our projected start "
+    "rate. Batting order is shown and is never paid into the projection.",
 ]
 
 
@@ -447,7 +840,8 @@ def _schedule_for_day(day: str, fantasy: dict | None) -> tuple[list, dict]:
 
 def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                   games: list | None = None, positions: dict | None = None,
-                  park: dict | None = None, teams_ctx: dict | None = None) -> dict:
+                  park: dict | None = None, teams_ctx: dict | None = None,
+                  vegas: dict | None = None, lineups: dict | None = None) -> dict:
     """Assemble data/dfs.json. Every input is injectable so the whole thing
     runs offline in a test with a stubbed schedule.
 
@@ -456,6 +850,13 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
     the CALLER asserting the slate is empty, which is why an injected [] still
     publishes "No MLB games scheduled" while an empty fetch has to earn that
     sentence (see _schedule_for_day).
+
+    AN INJECTED SLATE ALSO OWNS ITS CONTEXT. `vegas` and `lineups` resolve
+    themselves ONLY when we fetched the slate ourselves, which is the same
+    doctrine `games` already carries one paragraph up: a caller who handed us a
+    slate is a test, a lab or the offline CLI, and going to the network behind
+    its back for a lineup it did not ask for is how an offline path stops being
+    offline. Pass them explicitly to exercise the joins.
 
     Pure: this only builds and diagnoses. Whether the result is fit to publish
     is refresh()'s call, and it reads `empty_reason_kind` and `integrity`."""
@@ -477,7 +878,8 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
     # CLI, a test, a lab): [] from a caller means "there are no games", which is
     # a supported, tested path. Only a slate we went and got ourselves can be
     # empty for a reason we have to be careful about.
-    if games is None:
+    own_slate = games is None
+    if own_slate:
         games, sched_meta = _schedule_for_day(day, fantasy)
     else:
         sched_meta = {"source": "caller", "n_fetched": len(games),
@@ -501,6 +903,20 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
     if teams_ctx is None:
         teams_ctx = fe._teams_context()
     ctx = _team_ctx_index(teams_ctx)
+    park_basis = _park_basis(park)
+    if vegas is not None:
+        vegas_meta = {"source": "caller", "n_events": len(vegas),
+                      "n_matched": len(vegas), "reason": None}
+    elif own_slate:
+        vegas, vegas_meta = _vegas_index(day, games)
+    else:
+        vegas, vegas_meta = {}, {
+            "source": None, "n_matched": 0,
+            "reason": "the caller supplied the slate, so no odds were read"}
+    if lineups is None:
+        lineups = fsched.fetch_lineups(day) if own_slate else {}
+    n_lineup_sides = sum(1 for v in lineups.values() for k in ("home", "away")
+                         if (v or {}).get(k))
 
     # Pool index. Keyed by (mlbam, side) - the two-way lesson from
     # fantasy.js/S.byId: a bare mlbam is last-write-wins and hands a hitter
@@ -548,9 +964,9 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
             by_id[k] = row
     for g in games:
         venue = g.get("venue") or {}
-        pf = park.get(venue.get("id"))
-        park_source = "milb_park_factors" if pf else "none"
-        pf = float(pf) if pf else 1.0
+        pf, park_source = _park_leg(park, venue.get("id"), park_basis)
+        vg = vegas.get(g.get("game_pk"))
+        lu = lineups.get(g.get("game_pk")) or {}
         sides = {}
         for me, opp in (("home", "away"), ("away", "home")):
             side_obj = g.get(me) or {}
@@ -575,9 +991,11 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                 opp_pitch = _SP_IP_SHARE * float(opp_sem) + (1 - _SP_IP_SHARE) * float(opp_bp)
             else:
                 opp_pitch = float(opp_bp)
-            hit_mult = _clamp((100.0 / opp_pitch) * pf, *_HIT_MULT_CLAMP)
+            hit_matchup = _clamp(100.0 / opp_pitch, *_HIT_MULT_CLAMP)
+            hit_mult = hit_matchup * pf
             opp_off = octx.get("offense_plus") or 100
-            allow_mult = _clamp((float(opp_off) / 100.0) * pf, *_PIT_ALLOW_CLAMP)
+            allow_matchup = _clamp(float(opp_off) / 100.0, *_PIT_ALLOW_CLAMP)
+            allow_mult = allow_matchup * pf
             sides[me] = {
                 "org": side_obj.get("org"), "team": side_obj.get("team"),
                 "probable": ({"mlbam": pp.get("mlbam"), "name": pp.get("name")}
@@ -592,15 +1010,31 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                 "matchup_resolved": matchup_resolved,
                 "opp_sp_sem": opp_sem,
                 "opp_pitch": round(opp_pitch, 1),
+                # The two legs are published SEPARATELY as well as combined,
+                # because "why is this bat priced up" has two possible answers
+                # and one product cannot tell them apart.
+                "hit_matchup_mult": round(hit_matchup, 3),
+                "allow_matchup_mult": round(allow_matchup, 3),
                 "hit_mult": round(hit_mult, 3),
                 "allow_mult": round(allow_mult, 3),
                 "is_home": me == "home",
+                # DISPLAY ONLY, both of them. The market's read on this club and
+                # the club's posted card are the two things a DFS player most
+                # wants next to a projection, and neither is allowed anywhere
+                # near `pts`: pricing our own line off the moneyline would be a
+                # new model with no gate behind it, and paying a batting order
+                # into the plate appearances would be a second one.
+                "vegas_itt": (vg or {}).get(me + "_itt"),
+                "vegas_p_win": (vg or {}).get("p_home" if me == "home" else "p_away"),
+                "lineup_posted": bool(lu.get(me)),
             }
         slate_games.append({
             "game_pk": g.get("game_pk"), "date": g.get("date"),
             "datetime": g.get("datetime"), "status": g.get("status"),
             "venue": venue.get("name"), "venue_id": venue.get("id"),
             "park_run_pf": round(pf, 3), "park_source": park_source,
+            "vegas": vg,
+            "lineups_posted": {"home": bool(lu.get("home")), "away": bool(lu.get("away"))},
             "home": sides["home"], "away": sides["away"],
         })
 
@@ -618,7 +1052,7 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                                     "team": s.get("org"), "why": "no rest-of-season projection"})
                 continue
             fgp = fe._start_score(rec, s.get("opp_org"), teams_ctx) or {}
-            _add({
+            prow = {
                 "mlbam": pp["mlbam"], "name": rec.get("name") or pp.get("name"),
                 "team": s.get("org"), "opp": s.get("opp_org"),
                 "is_home": s["is_home"], "game_pk": g.get("game_pk"),
@@ -632,8 +1066,12 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                         "matchup_resolved": s["matchup_resolved"],
                         "park_run_pf": round(pf, 3),
                         "park_source": park_source, "mult": s["allow_mult"]},
-                "est": ["h", "er", "w", "qs", "matchup", "park"],
-            })
+                "est": _est(["h", "er", "w", "qs", "matchup"], park_source),
+            }
+            # The runs the market expects the OPPOSING club to score, which is
+            # the number a starter is graded on. Absent when no odds resolved.
+            _vg(prow["ctx"], "vegas_opp_itt", (sides[_OTHER[me]] or {}).get("vegas_itt"))
+            _add(prow)
 
         # --- hitters: everyone in the pool whose club is on the slate -------
         for me in ("home", "away"):
@@ -641,6 +1079,7 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
             org = s.get("org")
             if not org:
                 continue
+            card = lu.get(me) or []
             for rec in hitters_by_team.get(fe._canon_org(org) or org, []):
                 mid = rec.get("mlbam")
                 line, start_rate = _hitter_line(rec.get("ros") or {}, rem_games,
@@ -648,7 +1087,13 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                 if not line or start_rate <= 0:
                     continue
                 elig = rec.get("elig") or positions.get(mid) or ["UTIL"]
-                _add({
+                spot, lstatus, start_rate, projected = _lineup_leg(mid, card, start_rate)
+                row_est = ["r", "rbi", "sb", "matchup"]
+                if lstatus is None:
+                    # A confirmed card is an OBSERVATION, so it leaves this
+                    # list rather than sitting on it dressed as an estimate.
+                    row_est.append("start_rate")
+                row = {
                     "mlbam": mid, "name": rec.get("name"),
                     "team": org, "opp": s.get("opp_org"),
                     "is_home": s["is_home"], "game_pk": g.get("game_pk"),
@@ -665,15 +1110,40 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
                             "matchup_resolved": s["matchup_resolved"],
                             "park_run_pf": round(pf, 3), "park_source": park_source,
                             "mult": s["hit_mult"]},
-                    "est": ["r", "rbi", "sb", "start_rate", "matchup", "park"],
-                })
+                    "est": _est(row_est, park_source),
+                }
+                if lstatus:
+                    # ONLY WHEN A CARD IS POSTED, which is the minority of rows
+                    # and 84KB of nulls if written on all of them (measured on
+                    # the 2026-08-07 slate, 524 rows). Nothing is hidden by the
+                    # omission: `games[].lineups_posted` already says whether
+                    # the club filed, so "no card yet" and "posted, not on it"
+                    # stay distinguishable, which is the distinction that
+                    # matters. A row that says nothing about a lineup is a row
+                    # whose club has posted nothing.
+                    row.update(lineup_spot=spot, lineup_status=lstatus,
+                               # What the heuristic said, beside the fact that
+                               # replaced it. A reader comparing a 1.00 against
+                               # the 0.62 it overrode is watching our
+                               # playing-time model get graded.
+                               start_rate_projected=projected,
+                               start_rate_source="confirmed_lineup")
+                _vg(row["ctx"], "vegas_itt", s.get("vegas_itt"))
+                _vg(row["ctx"], "vegas_p_win", s.get("vegas_p_win"))
+                _add(row)
 
     rows = sorted(by_id.values(),
                   key=lambda r: -(r["pts"]["dk"] if r.get("pts") else -1e9))
     payload = _empty(day, season, None)
     integrity = _slate_integrity(day, slate_games, rows, ctx,
                                  n_hit_pool=n_hit_pool, n_hit_teamless=n_hit_teamless)
+    integrity["park_basis"] = park_basis
+    integrity["park_sources"] = _count_by(slate_games, "park_source")
+    integrity["vegas_games"] = sum(1 for g in slate_games if g.get("vegas"))
+    integrity["lineup_sides_posted"] = n_lineup_sides
+    integrity["lineup_sides_possible"] = 2 * len(slate_games)
     payload.update({
+        "vegas_source": vegas_meta,
         "n_games": len(slate_games),
         "n_players": len(rows),
         "games": slate_games,
@@ -703,6 +1173,17 @@ def build_payload(*, day: str | None = None, fantasy: dict | None = None,
         payload["empty_reason"] = integrity["message"]
         payload["empty_reason_kind"] = integrity["kind"]
     return payload
+
+
+def _count_by(rows: list, field: str) -> dict:
+    """{value: n} over a list of dicts. Used for the join-source tallies in
+    `integrity`, where the point is that a reader can see a source they did not
+    expect (a neutral site, a park with no factor) as a NUMBER."""
+    out: dict = {}
+    for r in rows:
+        k = str((r or {}).get(field))
+        out[k] = out.get(k, 0) + 1
+    return out
 
 
 def _slate_integrity(day: str, slate_games: list, rows: list, ctx: dict, *,
