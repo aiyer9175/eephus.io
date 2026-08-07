@@ -32,7 +32,7 @@
 //   EEPHUS_GFX.open(spec)   spec = {
 //     kind:"board"|"card"|"newsday"|"sourcecomp", module, accentToken?, title,
 //     subtitle?, url, filenameBase, caption?,
-//     board?: { columns:[{label, frac, align?, wideOnly?}],
+//     board?: { columns:[{label, frac, narrowFrac?, align?, wideOnly?}],
 //               rows:[{ cells:[{ t, sub?, c? }] }], counts?:[10,25,50] },
 //     card?:  <EEPHUS_HUB.drawCard opts>,
 //     items?: [{name, sub?, type?, val?, c?, shot?, logo?}] (newsday),
@@ -182,7 +182,23 @@
       return keep;
     });
     var usableW = W - 2 * PAD;
-    var totFrac = cols.reduce(function (a, col) { return a + (col.frac || 0); }, 0) || 1;
+    // A column may declare a SECOND width for the narrow column list, and the
+    // reason is arithmetic rather than taste. When wide-only columns drop out,
+    // the survivors keep their RATIO to each other and simply re-normalize, so
+    // one frac vector has to serve two very different column sets. Measured
+    // 2026-08-07 on the PAL RP->SP board: the vector that makes the 8-column
+    // 723px panel fit exactly (Tier needs 33% of the non-wide budget there)
+    // starves the same columns in the 5-column 488px panel (Tier can only have
+    // 22% before # and FIT start clipping), and tuning for the narrow list puts
+    // the 25-row flagship export back to a fully truncated Tier column. There
+    // is no single vector: 168px of Tier in a 108px track is not a rounding
+    // problem. narrowFrac is optional and falls back to frac, so every existing
+    // caller keeps its exact current geometry.
+    var narrowed = cols.length !== allCols.length;
+    function fracOf(col) {
+      return (narrowed && col.narrowFrac != null) ? col.narrowFrac : (col.frac || 0);
+    }
+    var totFrac = cols.reduce(function (a, col) { return a + fracOf(col); }, 0) || 1;
 
     // rows: fit by height, capped by the Show count. PARITY 2026-07-23 (the
     // prospx approach, implemented fresh): when the requested count outgrows a
@@ -212,7 +228,7 @@
       var px = PAD + p * (panelW + GUT);
       panelX.push(px);
       var xs = [], acc = 0;
-      cols.forEach(function (col) { xs.push(px + (acc / totFrac) * panelW); acc += (col.frac || 0); });
+      cols.forEach(function (col) { xs.push(px + (acc / totFrac) * panelW); acc += fracOf(col); });
       colX.push(xs);
       g.font = "700 14px " + MONO;
       cols.forEach(function (col, i) {

@@ -34,6 +34,37 @@ Two defects are pinned here, both found 2026-08-05.
    the proof this happens - three copies had already drifted apart before one
    constant replaced them.
 
+4. THREE LAYOUT DEFECTS ADDED 2026-08-07, all of them silent by construction -
+   nothing throws, nothing overflows a viewport, and the page keeps rendering.
+
+   4a. NAV STRIP FIT. The primary link strip is right-aligned by margin-left:auto
+       inside `overflow-x: auto`, so when it stops fitting it does not push the
+       bar wider or wrap: it just scrolls, and the tail links leave the screen
+       with no visible affordance above the <=640px hamburger. Measured
+       2026-08-07 at 1440: 799px of links in 904px of available track, i.e.
+       105px of real headroom - enough for exactly ONE more ~97px item, and the
+       second one clips. (The earlier reading of "799 in 799, zero slack" was
+       reading a content-sized flex item's own width back at itself.) The strip
+       stops overflowing at 1190px viewport, so 641-1189 is the band with no
+       affordance. The guard asserts the fit, so the next nav addition fails
+       here instead of silently amputating "Developers".
+
+   4b. THE PHONE SUBTITLE. `.section-head .section-sub` clamps to 2 lines at
+       <=640px. The mitigation used to be a `title` attribute, which is a HOVER
+       tooltip - absent on the exact device class the clamp fires on. Measured
+       at 390px: 5 of 7 lines hidden on /cards/, and the hidden run is the
+       "Treat this as a screen, not a forecast" disclaimer. The guard asserts a
+       real tap target exists wherever the clamp actually hides text.
+
+   4c. THE PROSPX COLUMN BOUNDARIES. Header and rows are INDEPENDENT grids that
+       agree only because they are handed the same track list; anything that
+       changes one side's gap, border or padding silently walks the header off
+       the data. It had: `body.density-compact .player-header { gap: 8px }`
+       named a class that occurs nowhere else in the file, so rows ran at 8px
+       and the header stayed at 14px, and the 1px row card border took another
+       2px out of the row's content box. Worst boundary drift 10.14px. The guard
+       compares USED track geometry, header against every row.
+
 Playwright/chromium are OPTIONAL; the browser tests skip cleanly when
 unavailable (mirrors test_index_html_loads.py). The stack tests are pure text
 and always run."""
@@ -204,6 +235,220 @@ def test_board_card_names_are_not_self_clipped(server, route, card, theme):
             assert not clipped, (
                 f"{route} ({theme}): {len(clipped)} name(s) clip their own line box "
                 f"- the identity block does not fit row 1. First: {clipped[:3]}"
+            )
+        finally:
+            browser.close()
+
+
+# ------------------------------------------------- 4a. the nav link-strip fit
+
+# Widths at which the whole strip must fit without scrolling. 1440 is the
+# .eephus-nav max-width and the width at which the nav-control text labels come
+# back (below it they are hidden, which is what buys the strip its room), so it
+# is the tightest of the three. 1190px was the measured first-fit width on
+# 2026-08-07; the widths below it are a horizontal-scroll band by design.
+_NAV_FIT_WIDTHS = [1440, 1366, 1280]
+
+# One generated page and one hand-authored page: build_site.py emits the nav for
+# the former and prospx/index.html carries its own copy, and they have drifted
+# apart before.
+_NAV_PAGES = ["models/", "prospx/"]
+
+
+@pytest.mark.parametrize("width", _NAV_FIT_WIDTHS)
+@pytest.mark.parametrize("route", _NAV_PAGES)
+def test_nav_link_strip_fits_without_scrolling(server, route, width):
+    """The strip must not overflow its track at desktop widths.
+
+    Deliberately `scrollWidth <= clientWidth` on .eephus-links rather than a
+    px budget: the strip is content-sized, so its own width tells you nothing
+    (that is the reading that produced a phantom "zero slack" finding). Only
+    the overflow comparison distinguishes "fits" from "silently scrolls".
+    """
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        try:
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.goto(server + route, wait_until="load", timeout=60_000)
+            page.wait_for_selector("header.eephus-nav .eephus-links", timeout=30_000)
+            page.wait_for_timeout(500)
+            m = page.evaluate(
+                """() => {
+                     const l = document.querySelector(
+                       'header.eephus-nav .eephus-links');
+                     return {scrollW: l.scrollWidth, clientW: l.clientWidth,
+                             items: l.children.length,
+                             last: (l.lastElementChild || {}).textContent || ''};
+                   }"""
+            )
+            assert m["scrollW"] <= m["clientW"], (
+                f"{route} at {width}px: the nav link strip needs {m['scrollW']}px "
+                f"but has {m['clientW']}px, so {m['scrollW'] - m['clientW']}px of "
+                f"links ({m['items']} items, last is "
+                f"{m['last'].strip()[:24]!r}) scroll off with no affordance above "
+                "the 640px hamburger. Shorten a label or move an item into the "
+                "MLB Modules / Diamond dropdown."
+            )
+        finally:
+            browser.close()
+
+
+# --------------------------------------------- 4b. the clamped phone subtitle
+
+# Every surface that emits a .section-head .section-sub. /cards/ is the one that
+# matters most (its hidden text IS the disclaimer) but the guard is the rule,
+# not the instance, so it sweeps the lot.
+_SUB_PAGES = ["cards/", "mlbstats/", "pal/", "betting/", "models/",
+              "trademachine/", "projections/", "fa/", "glossary/"]
+
+
+@pytest.mark.parametrize("route", _SUB_PAGES)
+def test_phone_clamped_subtitle_has_a_tap_target(server, route):
+    """Wherever the phone clamp hides text, a tap must reveal it.
+
+    Three separate things have to hold and each has its own failure mode:
+    the control has to EXIST, it has to be VISIBLE (a `display:none` button is
+    the same as no button), and tapping it has to actually unhide the text.
+    A `title` attribute satisfies none of them on a touch device, which is how
+    the /cards/ disclaimer came to be unreadable on a phone.
+    """
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    read = """() => [...document.querySelectorAll('.section-head .section-sub')]
+                 .map(el => {
+                   const b = el.nextElementSibling;
+                   const isBtn = !!(b && b.classList &&
+                                    b.classList.contains('section-sub-toggle'));
+                   const r = isBtn ? b.getBoundingClientRect() : null;
+                   return {hidden: el.scrollHeight - el.clientHeight,
+                           text: (el.textContent || '').trim().slice(0, 40),
+                           btn: isBtn,
+                           shown: isBtn &&
+                                  getComputedStyle(b).display !== 'none',
+                           h: r ? Math.round(r.height) : 0};
+                 })"""
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        try:
+            page = browser.new_page(viewport={"width": 390, "height": 844})
+            page.goto(server + route, wait_until="load", timeout=60_000)
+            page.wait_for_selector(".section-head .section-sub", timeout=30_000)
+            page.wait_for_timeout(600)
+
+            subs = page.evaluate(read)
+            assert subs, f"{route}: no .section-sub found - guard is mis-wired"
+
+            for i, s in enumerate(subs):
+                if s["hidden"] <= 0:
+                    continue
+                assert s["btn"] and s["shown"], (
+                    f"{route} subtitle {i} ({s['text']!r}...) hides "
+                    f"{s['hidden']}px of text at 390px with no visible control. "
+                    "A title attribute does not count: it is a hover tooltip."
+                )
+                assert s["h"] >= 44, (
+                    f"{route} subtitle {i}: expand control is {s['h']}px tall, "
+                    "below the 44px touch target the rest of the site uses."
+                )
+
+            # ...and the tap has to work, not just exist.
+            first = next((i for i, s in enumerate(subs) if s["hidden"] > 0), None)
+            if first is not None:
+                page.evaluate(
+                    """(i) => document.querySelectorAll(
+                         '.section-head .section-sub-toggle')[i].click()""",
+                    first,
+                )
+                page.wait_for_timeout(200)
+                after = page.evaluate(read)[first]
+                assert after["hidden"] == 0, (
+                    f"{route}: tapping the control left {after['hidden']}px of "
+                    "the subtitle still hidden."
+                )
+        finally:
+            browser.close()
+
+
+# ------------------------------------------ 4c. the prospx column boundaries
+
+# Column boundaries are derived from the USED (px-resolved) grid-template-columns
+# plus column-gap, padding-left and border-left. That is the rendered geometry,
+# not a proxy for it: it was checked against measured cell rects on 2026-08-07
+# (header cell 1 at 18+235.219+14 = 267.22 measured, row cell 1 at 19+244.359+8
+# = 271.36 measured). Comparing the geometry rather than the rects is what lets
+# the guard ignore a row's extra absolutely-positioned children, which is
+# exactly the false positive that made the farm list look 185px out of line
+# when its tracks were within 1px.
+_BOUNDS_JS = """(sel) => {
+  const bounds = (el) => {
+    const cs = getComputedStyle(el);
+    const tracks = cs.gridTemplateColumns.split(' ').map(parseFloat);
+    const gap = parseFloat(cs.columnGap) || 0;
+    let x = parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft);
+    const out = [];
+    tracks.forEach((t) => { out.push(x); x += t; out.push(x); x += gap; });
+    return out;
+  };
+  let rows = [...document.querySelectorAll(sel[1])]
+      .filter(r => r.getBoundingClientRect().width > 200);
+  if (!rows.length) return {err: 'no rows for ' + sel[1]};
+  const par = rows[0].parentElement;
+  rows = rows.filter(r => r.parentElement === par);
+  const h = par.querySelector(':scope > ' + sel[0]) ||
+            document.querySelector(sel[0]);
+  if (!h) return {err: 'no header for ' + sel[0]};
+  const hb = bounds(h);
+  let worst = 0, idx = -1;
+  rows.forEach((r) => {
+    const rb = bounds(r);
+    for (let i = 0; i < Math.min(hb.length, rb.length); i++) {
+      const d = Math.abs(rb[i] - hb[i]);
+      if (d > worst) { worst = d; idx = i; }
+    }
+  });
+  return {n: rows.length, worst: Math.round(worst * 1000) / 1000, idx: idx,
+          hdrGap: getComputedStyle(h).columnGap,
+          rowGap: getComputedStyle(rows[0]).columnGap};
+}"""
+
+
+@pytest.mark.parametrize("section,header,row", [
+    ("active", ".col-header", ".player-row"),
+    ("injured", ".col-header", ".player-row"),
+    ("spotlights", ".spotlight-header", ".spotlight-row"),
+])
+def test_prospx_header_shares_the_row_column_boundaries(server, section, header, row):
+    """Every column boundary in the header must land on the row's boundary.
+
+    1.0px of tolerance, not 0: it absorbs sub-pixel fr distribution, and the
+    defect this pins was an order of magnitude past it (10.14px).
+    """
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        try:
+            page = browser.new_page(viewport={"width": 1440, "height": 1200})
+            page.goto(server + "prospx/", wait_until="load", timeout=120_000)
+            page.wait_for_selector(".player-row", timeout=90_000)
+            page.wait_for_timeout(2500)
+            page.click(f'[data-section="{section}"]', timeout=30_000)
+            page.wait_for_timeout(3000)
+
+            m = page.evaluate(_BOUNDS_JS, [header, row])
+            assert not m.get("err"), f"{section}: {m.get('err')}"
+            assert m["worst"] <= 1.0, (
+                f"prospx {section}: {header} and {row} disagree by "
+                f"{m['worst']}px at column boundary {m['idx']} across {m['n']} "
+                f"rows (header column-gap {m['hdrGap']}, row {m['rowGap']}). "
+                "They are independent grids - a gap, border or padding change "
+                "on one side walks every later column off the data."
             )
         finally:
             browser.close()

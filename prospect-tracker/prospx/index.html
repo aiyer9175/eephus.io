@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=646b024c">
+  <link rel="stylesheet" href="/assets/site.css?v=dfeeb316">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -2029,7 +2029,16 @@
     .col-header {
       font-family: var(--font-sans);
       font-size: 10px;
-      padding: 9px 14px 9px 18px;
+      /* 19/15 rather than 18/14 ON PURPOSE, and it is not a nudge. The rows
+         carry `border: 1px solid var(--border)` and the header carries none,
+         so with box-sizing:border-box the row's content box is 2px narrower
+         than the header's at the same 1392px outer width and starts 1px
+         further right. The extra 1px of padding per side reproduces the row's
+         inset exactly, so header and row share one content box and one set of
+         column boundaries. Padding, not a transparent border: a border would
+         also work but the same trick has to hold for the sticky .farm-header,
+         where a transparent strip would show scrolling rows through it. */
+      padding: 9px 15px 9px 19px;
       background: var(--bg-header);
       color: var(--col-header-fg);
       border-radius: var(--radius-sm);
@@ -2960,8 +2969,21 @@
     body.density-compact .eta-cell { font-size: 10px; }
     /* Hide the row-summary stats line in compact (still on standard/expanded). */
     body.density-compact .player-row-summary { display: none !important; }
-    /* Compact header column gap matches the row gap. */
-    body.density-compact .player-header { gap: 8px; }
+    /* Compact header column gap matches the row gap.
+       THE SELECTOR WAS WRONG. `.player-header` occurs exactly once in this
+       file - in the rule it used to be - so it matched nothing and the header
+       kept the 14px base gap while every row ran at 8px. Density is pinned to
+       compact site-wide (see the render path and the Reset handler), so that
+       was every board view, not an edge case.
+       What it cost, measured 2026-08-07 at 1440/1280/1024 over 763 rendered
+       rows: 8 gaps x 6px = 48px more track budget in the row than in the
+       header, and since every non-rank track is an `fr`, the whole fr
+       distribution shifts. Worst column-boundary drift against the header was
+       10.14px (active, Player/RANK divide), 9.31px (traded), 9.73px (injured),
+       9.95px (leaderboards), 3.41px (spotlights). The correct selectors are
+       .col-header and .spotlight-header. */
+    body.density-compact .col-header,
+    body.density-compact .spotlight-header { column-gap: 8px; }
 
     /* Compact-density unification - applies the same shrunk-row
        treatment to spotlights, injured, recently acquired, and
@@ -3908,7 +3930,8 @@
       font-family: var(--font-sans);
       font-size: 10px;
       color: var(--col-header-fg);
-      padding: 9px 14px 9px 18px;
+      /* 19/15 mirrors the 1px card border on .spotlight-row - see .col-header. */
+      padding: 9px 15px 9px 19px;
       background: var(--bg-header);
       border-radius: var(--radius-sm);
       margin-bottom: 8px;
@@ -5460,7 +5483,8 @@
          tightened column widths without spilling into their neighbors. */
       font-size: 9px;
       color: var(--col-header-fg);
-      padding: 9px 14px 9px 18px;
+      /* 19/15 mirrors the 1px card border on .farm-row - see .col-header. */
+      padding: 9px 15px 9px 19px;
       background: var(--bg-header);
       border-radius: var(--radius-sm);
       margin-bottom: 8px;
@@ -10335,7 +10359,7 @@
      module self-injects the Supabase SDK and lights up the account UI. -->
 <script src="/assets/eephus-config.js?v=5e092777" defer></script>
 <script src="/assets/eephus-account.js?v=22deb404" defer></script>
-<script src="/assets/eephus-nav.js?v=3065435f" defer></script>
+<script src="/assets/eephus-nav.js?v=621caae0" defer></script>
 <script src="/assets/eephus-ui.js?v=d1d01ba2" defer></script>
   <script src="/assets/eephus-gl.js?v=7b97df51" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->

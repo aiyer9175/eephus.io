@@ -440,13 +440,20 @@
     return window.EEPHUS_GFX ? " &middot; " + EEPHUS_GFX.chipHTML(id, "Generate GFX") : "";
   }
   // Plain-text (canvas-safe) velocity cell: current FB velo -> role-projected
-  // velo with the delta. veloCell() emits HTML spans, so the board needs its own
-  // text-only builder.
+  // velo. veloCell() emits HTML spans, so the board needs its own text-only
+  // builder.
+  // THE DELTA IS DELIBERATELY NOT HERE (dropped 2026-08-07). It used to trail
+  // the pair, and it was the difference of the two numbers already printed on
+  // either side of the arrow - so it carried no information the reader did not
+  // already have, and it cost 48px of a 723px panel. Measured in the two-panel
+  // Wide 16:9 export, which is what the split board produces at the default
+  // Show=25: every one of the 25 velo cells overflowed its track and rendered
+  // as "95.2 -> 94.2..." - the ellipsis had eaten the whole delta anyway, so
+  // the column was paying full width for a run of dots. Without it the same
+  // column needs 96px against 99px of track and no cell clips, in any format.
   function veloText(r) {
     if (r.fb_velo == null) return "-";
-    var d = (r.proj_velo != null) ? (r.proj_velo - r.fb_velo) : null;
-    return f1(r.fb_velo) + (r.proj_velo != null ? " → " + f1(r.proj_velo) : "")
-      + (d != null ? "  " + (d > 0 ? "+" : "") + d.toFixed(1) : "");
+    return f1(r.fb_velo) + (r.proj_velo != null ? " → " + f1(r.proj_velo) : "");
   }
   function rp2spBoardSpec() {
     var rows = sortRows((DATA && DATA.rp2sp) || [], RP_COLS);
@@ -473,15 +480,35 @@
         legend: "FIT 0-100 = RP→SP conversion screen · Command = component score 0-100 · tiers cut at "
           + (tierRule("rp2sp").tiers || []).filter(function (t) { return t.min_fit != null; })
               .map(function (t) { return f1(t.min_fit); }).join(" / "),
+        // Fracs budgeted against the TIGHTEST layout the board produces, the
+        // 723px panel of the two-panel Wide 16:9 split (which is what the
+        // default Show=25 renders). Measured 2026-08-07 at that width, the old
+        // split cut ALL 25 Tier cells to "Prime Star..." / "Starter Up...", all
+        // 25 velo cells, and 2 names: the Tier column was carrying 168px of
+        // demand in a 108px track while FIT sat on a 65px track it filled to
+        // 32px and Command on 72px it filled to 49px. Demand here is
+        // max(header label, widest cell) + the renderer's 8px inter-track gap,
+        // and the eight columns want 694.5px of the 723px available, so the
+        // 28.5px of slack is spread in proportion to demand rather than parked
+        // in one column. NOT a fixed pixel layout: the fracs still scale with
+        // the panel, this only fixes their RATIO to what the content needs.
+        // narrowFrac restores the ORIGINAL ratios for the five-column list the
+        // 1080-wide formats render. Those panels are 488px against 532px of
+        // demand, so something has to clip there no matter what; the original
+        // split takes the hit in Tier (which is over budget by 68px on its own
+        // and cannot be rescued) and keeps #, FIT and velo whole, which is the
+        // least-bad of the vectors measured. Re-tuning that list for the 542px
+        // Twitter panel would clear 31 more cells there and cost ~370 in the
+        // 488px formats, so it was not taken.
         columns: [
-          { label: "#", frac: 0.05 },
-          { label: "Player", frac: 0.24 },
-          { label: "FIT", frac: 0.09 },
-          { label: "Tier", frac: 0.16 },
-          { label: "Arsenal", frac: 0.09, wideOnly: true },
-          { label: "FB%", frac: 0.09, wideOnly: true },
-          { label: "velo→SP", frac: 0.18 },
-          { label: "Command", frac: 0.10, wideOnly: true },
+          { label: "#", frac: 0.036, narrowFrac: 0.05 },
+          { label: "Player", frac: 0.284, narrowFrac: 0.24 },
+          { label: "FIT", frac: 0.057, narrowFrac: 0.09 },
+          { label: "Tier", frac: 0.254, narrowFrac: 0.16 },
+          { label: "Arsenal", frac: 0.082, wideOnly: true },
+          { label: "FB%", frac: 0.069, wideOnly: true },
+          { label: "velo→SP", frac: 0.148, narrowFrac: 0.18 },
+          { label: "Command", frac: 0.070, wideOnly: true },
         ], rows: brows },
     };
   }

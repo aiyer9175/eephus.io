@@ -59,8 +59,67 @@
   }, true);
 
   function reposition() { openGroups().forEach(place); }
-  window.addEventListener("resize", reposition);
+  window.addEventListener("resize", function () { reposition(); syncSubToggles(); });
   window.addEventListener("scroll", reposition, true);
+
+  // ---- phone module subtitle: tap to expand (<=640px) ------------------------
+  // site.css clamps .section-head .section-sub to 2 lines on phones. The old
+  // mitigation put the full text in a `title` attribute, which is a HOVER
+  // tooltip: on the one device class where the clamp fires, that affordance
+  // does not exist. Measured 2026-08-07 at 390px, 5 of 7 lines hidden on
+  // /cards/, 6 of 8 on /mlbstats/, 7 of 9 on /pal/ - and on /cards/ the hidden
+  // run is the "Treat this as a screen, not a forecast" disclaimer. So the
+  // clamp now hangs off [data-sub-collapsed] and comes with a real button.
+  var subSeq = 0;
+
+  function subToggleOf(el) {
+    var b = el.nextElementSibling;
+    return (b && b.classList && b.classList.contains("section-sub-toggle")) ? b : null;
+  }
+
+  function setSubOpen(el, open) {
+    if (open) el.removeAttribute("data-sub-collapsed");
+    else el.setAttribute("data-sub-collapsed", "");
+    var b = subToggleOf(el);
+    if (b) {
+      b.setAttribute("aria-expanded", open ? "true" : "false");
+      b.textContent = open ? "Show less" : "Read more";
+    }
+  }
+
+  function ensureSubToggle(el) {
+    var b = subToggleOf(el);
+    if (b) return b;                       // idempotent
+    if (!el.id) el.id = "section-sub-" + (++subSeq);
+    b = document.createElement("button");
+    b.type = "button";
+    b.className = "section-sub-toggle";
+    b.setAttribute("aria-controls", el.id);
+    b.setAttribute("aria-expanded", "false");
+    b.textContent = "Read more";
+    b.addEventListener("click", function () {
+      setSubOpen(el, el.hasAttribute("data-sub-collapsed"));
+    });
+    el.insertAdjacentElement("afterend", b);
+    return b;
+  }
+
+  // Show the control only where it buys something. The clamp is a phone-width
+  // rule, so overflow is measured in the collapsed state at the CURRENT width
+  // and re-measured on resize: a subtitle that already fits in two lines (the
+  // FA masthead, measured) never grows a button, and one that only overflows
+  // at 390px gains it when the window gets there.
+  function syncSubToggles() {
+    document.querySelectorAll(".section-head .section-sub").forEach(function (el) {
+      var b = ensureSubToggle(el);
+      // An expanded subtitle was only expandable because it overflowed, so it
+      // keeps its control (now reading "Show less") without re-measuring.
+      var overflows = el.hasAttribute("data-sub-collapsed")
+        ? el.scrollHeight - el.clientHeight > 1
+        : true;
+      b.classList.toggle("is-needed", overflows);
+    });
+  }
 
   // ---- phone hamburger (<=640px) --------------------------------------------
   function navHeader() { return document.querySelector("header.eephus-nav"); }
@@ -104,6 +163,7 @@
   function onBreakpointChange() {
     if (!isPhone()) setNavOpen(navHeader(), false);
     reposition();
+    syncSubToggles();
   }
   if (mqPhone) {
     if (mqPhone.addEventListener) mqPhone.addEventListener("change", onBreakpointChange);
@@ -134,13 +194,14 @@
 
   function init() {
     ensureNavToggle();
-    // Phone CSS clamps .section-sub to 2 lines; keep the full subtitle
-    // reachable via the title attribute (only when the page didn't set one).
+    // Collapse first (that is what arms the CSS clamp), then measure. The
+    // `title`-attribute mitigation this replaced is deliberately NOT kept: a
+    // hover tooltip duplicating text the desktop already shows in full is
+    // noise, and it was never reachable on the phone widths that clamp.
     document.querySelectorAll(".section-head .section-sub").forEach(function (el) {
-      if (!el.getAttribute("title")) {
-        el.setAttribute("title", (el.textContent || "").replace(/\s+/g, " ").trim());
-      }
+      setSubOpen(el, false);
     });
+    syncSubToggles();
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

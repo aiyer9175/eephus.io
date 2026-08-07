@@ -655,6 +655,23 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 .section-head h1 { font-family: var(--font-retro-mono); font-size: 1.5rem; margin: 0; letter-spacing: .04em; }
 .section-head .section-sub { font-size: .85rem; color: var(--text-tertiary); font-style: italic; }
+/* Tap target that expands the phone-clamped module subtitle. Hidden by default
+   and at every width above the phone breakpoint, where the subtitle is never
+   clamped and there is nothing to expand; eephus-nav.js adds .is-needed only
+   when the text ACTUALLY overflows its clamp at the current width, so a short
+   subtitle never grows a control it does not need. See the <=640px block. */
+.section-head .section-sub-toggle {
+  display: none; align-self: flex-start;
+  align-items: center; min-height: 44px; padding: 0 2px;
+  font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--accent-navy); background: transparent; border: 0;
+  cursor: pointer;
+}
+.section-head .section-sub-toggle:hover { text-decoration: underline; }
+.section-head .section-sub-toggle:focus-visible {
+  outline: 2px solid var(--accent-navy); outline-offset: 2px;
+}
 
 /* Variant for modules that carry a dev byline (FA / Projections): the byline
    stacks above the title in the left slot, so the description keeps the right
@@ -915,15 +932,27 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   /* Module masthead: stack the title block above the description on phones so
      the title isn't crushed into a ~80px column beside the italic subtitle
      (e.g. "MLB Projections" wrapping to "MLB / Projec…"). Full width each.
-     The subtitle clamps to 2 lines (full text rides the title attr, set by
-     eephus-nav.js) and the banner sheds some vertical padding. */
+     The subtitle clamps to 2 lines and the banner sheds some vertical padding.
+
+     THE CLAMP IS NOW CONDITIONAL on [data-sub-collapsed], which eephus-nav.js
+     sets alongside a Read more / Show less button. It used to be unconditional,
+     with the full text parked in a `title` attribute - and `title` is a HOVER
+     tooltip, so on the one device class where the clamp fires the mitigation
+     did not exist. Measured 2026-08-07 at 390px: /cards/ hid 5 of 7 lines,
+     /mlbstats/ 6 of 8, /pal/ 7 of 9, and the run that fell off the bottom of
+     /cards/ was the "Treat this as a screen, not a forecast" disclaimer, which
+     is the one sentence on that page that has to survive.
+     Conditional the RIGHT way round: with JS off nothing sets the attribute and
+     the subtitle renders in full, so the failure mode is a taller masthead, not
+     a silently truncated disclosure. */
   .section-head { flex-direction: column; align-items: flex-start; gap: 4px; padding: 8px 2px; margin: 18px 0 16px; }
   .section-head--byline { align-items: flex-start; }
-  .section-head .section-sub {
-    font-size: .8rem;
+  .section-head .section-sub { font-size: .8rem; }
+  .section-head .section-sub[data-sub-collapsed] {
     display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2;
     -webkit-box-orient: vertical; overflow: hidden;
   }
+  .section-head .section-sub-toggle.is-needed { display: inline-flex; }
   /* Chip/filter-row swipe treatment lives at the END of this sheet (it must
      out-cascade the base .filter-bar / .mlbstats-sectionnav rules below). */
 }
