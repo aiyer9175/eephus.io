@@ -10,6 +10,24 @@ Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
 pre-registered experiment gates), docs/audit-2026-07-18/FINDINGS.md (fresh
 audit), REVIEW_QUEUE.md (deferred work), BETA_READINESS.md (go/no-go).
 
+## 2026-08-06b (tool provenance on the board)
+
+GOLDEN FINGERPRINT RESTAMPED 344db288 -> 5430ea7b. No served GRADE moved; the
+meta block gained a field.
+
+A served tool_xfv is a bare {tool: grade}, so a reader could not tell a grade
+that BLENDS MiLB production from one that passes the consensus grade straight
+through. That distinction became material the same day: the tool gate gained a
+real paired-bootstrap MDE, `hit` failed it, and 8 of the 9 tools on the board
+are now grade-only. Nothing on any surface said so.
+
+data/xfv.json meta now carries tool_provenance, read from the gate's own
+verdicts rather than restating them so it cannot drift from what actually
+decided the grade. Per TOOL rather than per player: it is identical on every
+row, and duplicating it 3,007 times would be wire weight for no information. An
+absent tool artifact yields an empty block and the surface shows no chip, which
+is the honest failure: we do not know the basis, so we do not claim one.
+
 ## 2026-08-06 (OWNER-DECIDED protocol promotion + a real MDE on the tool gate)
 
 GOLDEN FINGERPRINT RESTAMPED. `_GOLDEN_XFV_SHA256` in test_efv_export.py moves

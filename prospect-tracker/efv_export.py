@@ -136,6 +136,17 @@ def run(persist: bool = True) -> dict:
             # served artifacts silently disagreed on 2026-07-31 because none of
             # them recorded it; test_calibration_vintage_agreement now pins it.
             "calibration": vf.calibration_stamp(),
+            # TOOL PROVENANCE (plan item J2, 2026-08-06). A served tool_xfv is a
+            # bare {tool: grade}, so a reader cannot tell a grade that BLENDS
+            # MiLB production from one that passes the consensus grade straight
+            # through. That distinction became material the same day: the tool
+            # gate gained a real paired-bootstrap MDE, `hit` failed it, and FOUR
+            # OF FIVE tools are now grade-only. Nothing on any surface said so.
+            #
+            # Published here rather than per player because it is a per-TOOL
+            # fact, identical on every row, and duplicating it 3,007 times would
+            # be wire weight for no information.
+            "tool_provenance": _tool_provenance(),
             "n_players": len(by_player),
             # bughunt SCORE d (2026-07-23): count kind=="active" rows in the
             # MERGED artifact - the backgrade contributes prior-anchored
@@ -306,6 +317,44 @@ def _valuation_curve(by_player=None) -> dict:
     }
     VALUATION_CURVE_PATH.write_text(json.dumps(out, indent=0), encoding="utf-8")
     log.info("wrote %s", VALUATION_CURVE_PATH)
+    return out
+
+
+def _tool_provenance() -> dict:
+    """{tool: {"basis": "blended"|"grade_only", ...}} from the tool artifact.
+
+    Reads the gate's own verdicts rather than restating them, so this can never
+    drift from what actually decided the served grade. An absent artifact yields
+    an empty dict and the surface simply shows no chip, which is honest: we do
+    not know the basis, so we do not claim one."""
+    try:
+        import json as _json
+        d = _json.loads((DATA_DIR / "xfv_tools.json").read_text(encoding="utf-8"))
+    except Exception:                                         # noqa: BLE001
+        return {}
+    tools = (d.get("meta") or {}).get("modeled_tools") or {}
+    out = {}
+    for name, t in tools.items():
+        oos = t.get("oos_validation") or {}
+        blended = bool(oos.get("validated"))
+        out[name] = {
+            "basis": "blended" if blended else "grade_only",
+            "label": ("grade plus MiLB production" if blended
+                      else "consensus grade only"),
+            "why": ("the MiLB blend cleared the gate for this tool"
+                    if blended else
+                    "the MiLB blend did not beat the grade alone out of sample, "
+                    "so the consensus grade is passed through unchanged"),
+            "margin": oos.get("margin"),
+            "delta_lo95": oos.get("delta_lo95"),
+        }
+    for name in (d.get("meta") or {}).get("passthrough_tools") or []:
+        out.setdefault(str(name), {
+            "basis": "grade_only",
+            "label": "consensus grade only",
+            "why": ((d.get("meta") or {}).get("passthrough_reason")
+                    or "no realized MLB metric to validate a blend against"),
+        })
     return out
 
 

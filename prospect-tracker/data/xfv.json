@@ -6,6 +6,63 @@
 "enabled": true,
 "method": "isotonic"
 },
+"tool_provenance": {
+"hit": {
+"basis": "grade_only",
+"label": "consensus grade only",
+"why": "the MiLB blend did not beat the grade alone out of sample, so the consensus grade is passed through unchanged",
+"margin": 0.0002,
+"delta_lo95": -0.0101
+},
+"game_pwr": {
+"basis": "grade_only",
+"label": "consensus grade only",
+"why": "the MiLB blend did not beat the grade alone out of sample, so the consensus grade is passed through unchanged",
+"margin": -0.0031,
+"delta_lo95": -0.0139
+},
+"speed": {
+"basis": "grade_only",
+"label": "consensus grade only",
+"why": "the MiLB blend did not beat the grade alone out of sample, so the consensus grade is passed through unchanged",
+"margin": 0.0,
+"delta_lo95": 0.0
+},
+"fb": {
+"basis": "blended",
+"label": "grade plus MiLB production",
+"why": "the MiLB blend cleared the gate for this tool",
+"margin": 0.0731,
+"delta_lo95": 0.0439
+},
+"cmd": {
+"basis": "grade_only",
+"label": "consensus grade only",
+"why": "the MiLB blend did not beat the grade alone out of sample, so the consensus grade is passed through unchanged",
+"margin": -0.0766,
+"delta_lo95": -0.1001
+},
+"raw_pwr": {
+"basis": "grade_only",
+"label": "consensus grade only",
+"why": "no clean realized MLB metric in our data; consensus grade used as-is"
+},
+"field": {
+"basis": "grade_only",
+"label": "consensus grade only",
+"why": "no clean realized MLB metric in our data; consensus grade used as-is"
+},
+"throw (arm)": {
+"basis": "grade_only",
+"label": "consensus grade only",
+"why": "no clean realized MLB metric in our data; consensus grade used as-is"
+},
+"sl/cb/ch pitch shapes": {
+"basis": "grade_only",
+"label": "consensus grade only",
+"why": "no clean realized MLB metric in our data; consensus grade used as-is"
+}
+},
 "n_players": 9382,
 "n_active": 4586,
 "live_lambda": {

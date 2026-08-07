@@ -234,3 +234,29 @@ def test_the_published_eval_is_weighted_and_says_so():
     assert blend["n_effective"] < blend["n"], (
         "effective n must be below raw n once the censored 2024 rows are "
         "down-weighted; equal values mean the weights never reached _score")
+
+
+def test_the_board_publishes_which_tool_grades_are_blended():
+    """PLAN ITEM J2. After the MDE landed, 8 of 9 tools pass the consensus grade
+    straight through, and a bare {tool: grade} cannot express that. A reader
+    comparing two tool grades has no way to know one is a model output and the
+    other is a scout's number repeated back."""
+    import json
+    from pathlib import Path
+    p = Path(__file__).parent / "data" / "xfv.json"
+    if not p.exists():
+        pytest.skip("xfv.json absent")
+    tp = (json.loads(p.read_text(encoding="utf-8")).get("meta") or {}).get(
+        "tool_provenance") or {}
+    assert tp, "the board must publish tool provenance"
+    for name, row in tp.items():
+        assert row.get("basis") in ("blended", "grade_only"), name
+        assert row.get("label") and row.get("why"), (
+            f"{name}: a chip needs both a short label and the reason behind it")
+    # It must agree with the gate rather than restating it from memory.
+    tools = _tools()
+    for name, t in tools.items():
+        want = "blended" if (t.get("oos_validation") or {}).get("validated") else "grade_only"
+        assert tp.get(name, {}).get("basis") == want, (
+            f"{name}: provenance says {tp.get(name, {}).get('basis')} but the "
+            f"gate says {want}; the two have drifted")

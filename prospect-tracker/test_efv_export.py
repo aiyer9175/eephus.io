@@ -492,11 +492,13 @@ def test_committed_artifact_headline_alias_contract():
 #   tools.pipeline_artifact_diff.fingerprint_file, per the 2026-07-30 note above:
 #   a mid-suite test regenerates xfv.json under fixtures, and stamping from that
 #   would record a fixture state as production truth.
+# RESTAMPED AGAIN 2026-08-06 (tool_provenance added to meta; no served GRADE
+# moved, only the meta block gained a field). Prior restamp note follows.
 # RESTAMPED 2026-08-06, see CHANGELOG.md for that date. Two owner-decided
 # changes moved served values: SCORED_YEARS promoted 4 folds -> 11, and the
 # tool gate gained a real paired-bootstrap MDE which failed `hit` where the
 # bare `br > gr` had passed it. 178 tool_xfv blocks moved, zero headline xfv.
-_GOLDEN_XFV_SHA256 = "344db288c8bee56976aacc90f14864486eb42eb95d774b67e6bc28233624295b"
+_GOLDEN_XFV_SHA256 = "5430ea7b444155eea68c9313941220a7e03cf48eafbe8c80b94ff661888f237b"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
