@@ -53,3 +53,25 @@ and Lane M). Notable still-open items: card_market_export.py:500-528 METHOD pros
 rendered verbatim on /cards/ Method; per-card GFX ungated on unpriced cards; Method tab
 missing the gold screen banner; the My Bets mergeLocalBets orphan (inert until Supabase
 config; fix with the account-layer enablement, not before).
+
+## Lane M6 suspect list, browser-checked 2026-08-07 (file-or-clear, with numbers)
+
+The plan asked for each of these to be reproduced or cleared with a measured
+number rather than reasoned about. Chromium, real fetches, at the named widths.
+
+1. prospx mobile `.line-chart-cell` (42px box, ~60px chart, overflow:visible) vs
+   the row below. REPRODUCES AS A SPILL, DOES NOT COLLIDE. At 390px the sparkline
+   clears its own cell by 9px and its row box by 5px, which is the documented
+   intent (the chart is meant to read in full), and it clears the TOP OF THE NEXT
+   ROW by 1px. So there is no overlap today and there is also no slack: a row-gap
+   change, a taller chart or a density tweak turns +1 into -3 with nothing else
+   failing. Left as designed and pinned instead, by
+   test_board_card_typography.py::test_phone_sparkline_spills_its_cell_but_clears_the_next_row,
+   which asserts the CLEARANCE rather than the spill.
+2. glossary `.meth-cmp` at 375px. CLEARED. One instance on the methodology view
+   and one on the models view; neither overflows its box (scrollWidth equals
+   clientWidth) and the page does not scroll sideways at 375px.
+3. betting `.bt-markets` frozen columns in 280px scrollports. CLEARED. 11 market
+   blocks, 33 scrollers, ZERO sticky cells carrying a translucent or absent
+   background (which is the failure mode that makes columns ghost through), and
+   no page-level horizontal scroll at 390px.

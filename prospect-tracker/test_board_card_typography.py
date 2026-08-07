@@ -452,3 +452,57 @@ def test_prospx_header_shares_the_row_column_boundaries(server, section, header,
             )
         finally:
             browser.close()
+
+
+# ---------------------------------------------------------------------------
+# The phone sparkline deliberately paints outside its own cell. This pins the
+# clearance it has left, which is the part nobody measured.
+# ---------------------------------------------------------------------------
+_CHART_SPILL_JS = """() => {
+  const rows = [...document.querySelectorAll('.player-row')];
+  let worstSpill = 0, minClear = 1e9, charts = 0;
+  rows.forEach((row, i) => {
+    const svg = row.querySelector('.line-chart-cell svg');
+    if (!svg) return;
+    charts++;
+    const cell = row.querySelector('.line-chart-cell');
+    const sr = svg.getBoundingClientRect();
+    worstSpill = Math.max(worstSpill, sr.bottom - cell.getBoundingClientRect().bottom);
+    const next = rows[i + 1];
+    if (next) minClear = Math.min(minClear, next.getBoundingClientRect().top - sr.bottom);
+  });
+  return {charts, worstSpill: Math.round(worstSpill),
+          minClear: minClear === 1e9 ? null : Math.round(minClear)};
+}"""
+
+
+def test_phone_sparkline_spills_its_cell_but_clears_the_next_row(server):
+    """The <=900px board gives .line-chart-cell a 42px box and lets a ~60px
+    sparkline paint out of it on purpose, so the chart reads in full. That is
+    fine right up until the spill reaches the row underneath, and the margin
+    was never measured: it is ONE pixel.
+
+    Measured 2026-08-07 at 390px: the chart clears its cell by 9px and the next
+    row by 1px. This asserts the clearance, not the spill, because the spill is
+    the intended behaviour and the collision is the bug. A row-gap change, a
+    taller chart or a density tweak turns 1 into -3 with nothing else failing.
+    """
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        try:
+            page = browser.new_page(viewport={"width": 390, "height": 900})
+            page.goto(server + "prospx/", wait_until="load", timeout=120_000)
+            page.wait_for_selector(".player-row", timeout=90_000)
+            page.wait_for_timeout(2500)
+            m = page.evaluate(_CHART_SPILL_JS)
+            if not m["charts"]:
+                pytest.skip("no sparklines rendered on the first board page")
+            assert m["minClear"] is None or m["minClear"] >= 0, (
+                f"the phone sparkline overlaps the next board row by "
+                f"{-m['minClear']}px (it clears its own cell by {m['worstSpill']}px, "
+                "which is intended). Either shorten the chart or widen the row gap."
+            )
+        finally:
+            browser.close()
