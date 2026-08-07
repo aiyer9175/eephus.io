@@ -137,24 +137,31 @@
   function rp2spViz() {
     var rows = (DATA && DATA.rp2sp) || [];
     if (rows.length < 12) return "";
+    // The highlight is the direction's TOP TIER cut, read off the payload, so
+    // the chart cannot mark a threshold the badges no longer use.
+    var cut = topCut("rp2sp");
     var hist = chart("histogram", rows.map(function (r) { return r.fit; }),
       // REFERENCE LINE RELABELLED (plan item E6). It read "starter shape" at 60
-      // while this same chart highlights 70+ and its caption calls 70+ "a real
-      // starter profile". Two different starter thresholds on one chart, so a
-      // reader could not tell which number meant what. 60 is the PROSPECT BAND
-      // edge; 70 is the starter threshold, and only one of them gets that name.
-      { height: 100, min: 0, max: 100, highlightAbove: 70,
+      // while this same chart highlights the top cut and its caption calls that
+      // band "a real starter profile". Two different starter thresholds on one
+      // chart, so a reader could not tell which number meant what. 60 is the
+      // PROSPECT BAND edge; the top cut is the starter threshold, and only one
+      // of them gets that name.
+      { height: 100, min: 0, max: 100, highlightAbove: cut,
         refs: [{ at: 60, label: "prospect band edge" }],
         aria: "RP-SP FIT distribution" });
-    return vizWrap("rp2sp-viz", gloss("RP→SP FIT", "rp_sp_fit") + ' distribution <span class="proj-dim">(cyan = 70+, a real starter profile)</span>', hist);
+    return vizWrap("rp2sp-viz", gloss("RP→SP FIT", "rp_sp_fit") + ' distribution <span class="proj-dim">(cyan = '
+      + f1(cut) + '+, a real starter profile)</span>', hist);
   }
   function sp2rpViz() {
     var rows = (DATA && DATA.sp2rp) || [];
+    var cut = topCut("sp2rp");
     var pts = rows.filter(function (r) { return r.relief_upside != null && r.components && r.components.conversion_need != null; })
       .map(function (r) {
         return { x: r.relief_upside, y: r.components.conversion_need,
                  label: r.name + "  upside " + r.relief_upside + "  need " + r.components.conversion_need + "  FIT " + r.fit,
-                 color: r.fit >= 55 ? null : "var(--text-tertiary)" };
+                 // dimmed below this direction's own top cut, read off the payload
+                 color: (cut == null || r.fit >= cut) ? null : "var(--text-tertiary)" };
       });
     if (pts.length < 8) return "";
     var sc = chart("scatter", pts, { height: 270, xMin: 0, xMax: 100, yMin: 0, yMax: 100,
@@ -183,39 +190,90 @@
     if (d.indexOf("SP->RP") >= 0 || d.indexOf("SP→RP") >= 0) return " pal-dir--sp2rp";
     return "";
   }
-  // Candidate TIER titles. The role-value logic: a starter is worth more than a
-  // reliever, so the premium RP->SP case is a SUCCESSFUL reliever who profiles as
-  // a starter; the premium SP->RP case is a starter STRUGGLING in the rotation
-  // whose stuff would play up in relief. Titles are wired off the FIT breakpoints
-  // (>=70 / >=55 / >=42) plus the server-computed `successful` flag.
-  function tierTitle(row, dir) {
-    var f = num(row.fit);
-    if (f == null) return "";
-    if (dir === "sp2rp") {
-      if (f >= 70) return "Bullpen Upside";
-      if (f >= 55) return "Relief Fit";
-      if (f >= 42) return "Marginal Move";
-      return "Keep Starting";
-    }
-    // rp2sp
-    if (f >= 70) return row.successful ? "Prime Starter Convert" : "Starter Upside";
-    if (f >= 55) return "Worth a Look";
-    if (f >= 42) return "Fringe Fit";
-    return "Reliever Profile";
+  // Candidate TIERS. The cuts, the labels and the member counts all come from
+  // the payload (pal_export.tier_rule), never from constants here, so the badge,
+  // the legend and the exported board cannot state a threshold the export is not
+  // applying. The two directions are on DIFFERENT scales and carry different
+  // cuts: sp_rp_fit multiplies relief upside by a conversion-need factor, so its
+  // pool tops out near 60 and a shared 70 cut left the top tier permanently
+  // empty. See the block comment in pal_export.py for the full argument.
+  //
+  // FALLBACK_TIERS is what a payload built before the rule shipped gets: the old
+  // shared 70/55/42. A stale payload degrades to the previous rendering rather
+  // than to a blank column, and it carries no counts, so the legend drops the
+  // membership clause instead of printing zeros.
+  var FALLBACK_TIERS = {
+    rp2sp: { tiers: [
+      { rank: 1, min_fit: 70, label: "Starter Upside",
+        premium_label: "Prime Starter Convert", premium_flag: "successful" },
+      { rank: 2, min_fit: 55, label: "Worth a Look" },
+      { rank: 3, min_fit: 42, label: "Fringe Fit" },
+      { rank: 4, min_fit: null, label: "Reliever Profile" }] },
+    sp2rp: { tiers: [
+      { rank: 1, min_fit: 70, label: "Bullpen Upside" },
+      { rank: 2, min_fit: 55, label: "Relief Fit" },
+      { rank: 3, min_fit: 42, label: "Marginal Move" },
+      { rank: 4, min_fit: null, label: "Keep Starting" }] }
+  };
+  function tierRule(dir) {
+    var r = DATA && DATA.tier_rule && DATA.tier_rule[dir];
+    return (r && r.tiers && r.tiers.length) ? r : FALLBACK_TIERS[dir];
   }
-  function tierBadge(row, dir) {
-    var t = tierTitle(row, dir);
+  function tierOf(row, dir) {
+    var f = num(row.fit);
+    if (f == null) return null;
+    var ts = tierRule(dir).tiers;
+    for (var i = 0; i < ts.length; i++) {
+      if (ts[i].min_fit == null || f >= ts[i].min_fit) return ts[i];
+    }
+    return ts[ts.length - 1];
+  }
+  // The top cut of a direction, for the chart annotations that mark it. Reading
+  // it here keeps the highlight line and the tier badge on one number.
+  function topCut(dir) {
+    var t = tierRule(dir).tiers[0];
+    return (t && t.min_fit != null) ? t.min_fit : null;
+  }
+  function tierTitle(row, dir) {
+    var t = tierOf(row, dir);
     if (!t) return "";
-    return '<div class="pal-tier pal-tier--' + dir + '">' + esc(t) + "</div>";
+    if (t.premium_label && t.premium_flag && row[t.premium_flag]) return t.premium_label;
+    return t.label;
+  }
+  // Colour carries the TIER, not the direction. It used to be all-cyan on one
+  // tab and all-orange on the other, which spent the whole colour channel
+  // repeating which tab the reader had already clicked.
+  function tierBadge(row, dir) {
+    var t = tierOf(row, dir);
+    if (!t) return "";
+    return '<div><span class="pal-tier pal-tier--t' + (t.rank || 4) + '">'
+      + esc(tierTitle(row, dir)) + "</span></div>";
   }
   function tierLegend(dir) {
-    if (dir === "sp2rp") {
-      return '<div class="pal-tier-legend">Tiers frame salvaging a struggling starter whose stuff plays up in short bursts: '
-        + '<b>Bullpen Upside</b> (70+), <b>Relief Fit</b> (55+), <b>Marginal Move</b> (42+), <b>Keep Starting</b> (below 42).</div>';
-    }
-    return '<div class="pal-tier-legend">Tiers read FIT with role value in mind (a starter is worth more than a reliever, so a '
-      + 'successful reliever who profiles as a starter is the premium case): <b>Prime Starter Convert</b> (70+, already succeeding '
-      + 'in relief), <b>Starter Upside</b> (70+), <b>Worth a Look</b> (55+), <b>Fringe Fit</b> (42+), <b>Reliever Profile</b> (below 42).</div>';
+    var r = tierRule(dir);
+    var lead = (dir === "sp2rp")
+      ? "Tiers frame salvaging a struggling starter whose stuff plays up in short bursts. "
+      : "Tiers read FIT with role value in mind (a starter is worth more than a reliever, so a "
+        + "successful reliever who profiles as a starter is the premium case). ";
+    var ts = r.tiers || [];
+    var items = ts.map(function (t, i) {
+      var prev = i ? ts[i - 1].min_fit : null;
+      var band = (t.min_fit == null)
+        ? ("below " + f1(prev))
+        : (f1(t.min_fit) + "+");
+      var name = t.premium_label
+        ? ('<b>' + esc(t.premium_label) + "</b> / <b>" + esc(t.label) + "</b>")
+        : ('<b>' + esc(t.label) + "</b>");
+      return name + " (" + band + (t.n == null ? "" : ", " + esc(t.n)) + ")";
+    }).join(", ");
+    // The SCALE is stated because the two directions do not share one: a 55 in
+    // the SP->RP tab is near the top of its pool and mid-pack in the other.
+    var scale = (r.fit_min != null && r.fit_max != null)
+      ? (" Cuts are absolute on this direction's own scale, which runs " + f1(r.fit_min)
+         + " to " + f1(r.fit_max) + " today, median " + f1(r.fit_median)
+         + ". They are not per-build quantiles, so a pitcher's tier moves when he does.")
+      : "";
+    return '<div class="pal-tier-legend">' + lead + items + "." + scale + "</div>";
   }
   function fbPct(row) {
     if (row.fb_pct != null) return row.fb_pct;
@@ -412,7 +470,10 @@
       url: "eephus.io/pal", filenameBase: "pal-rp2sp-candidates",
       caption: "a candidate screen, not a forecast · RP→SP ranking is a structural screen (not backtest-validated)",
       board: { defaultCount: 25, counts: [10, 25, 50],
-        legend: "FIT 0-100 = RP→SP conversion screen · Command = component score 0-100", columns: [
+        legend: "FIT 0-100 = RP→SP conversion screen · Command = component score 0-100 · tiers cut at "
+          + (tierRule("rp2sp").tiers || []).filter(function (t) { return t.min_fit != null; })
+              .map(function (t) { return f1(t.min_fit); }).join(" / "),
+        columns: [
           { label: "#", frac: 0.05 },
           { label: "Player", frac: 0.24 },
           { label: "FIT", frac: 0.09 },
@@ -426,16 +487,18 @@
   }
   function sp2rpBoardSpec() {
     var rows = sortRows((DATA && DATA.sp2rp) || [], SP_COLS);
+    // TIER ships on this board too. rp2sp has carried one since it was built, so
+    // without it the two shareable graphics disagreed about what a PAL board is.
     var brows = rows.map(function (r, i) {
       return { cells: [
         { t: i + 1 },
         { t: r.name, sub: r.team || undefined },
         { t: f1(r.fit), c: "accent" },
+        { t: tierTitle(r, "sp2rp") || "-" },
         { t: f2(r.starter_era) },
         { t: fPct(r.best_whiff) },
         { t: veloText(r) },
         { t: fInt(r.proj_relief_rem_plus) },
-        { t: fPct(r.bb_pct) },
       ] };
     });
     return {
@@ -446,15 +509,18 @@
       url: "eephus.io/pal", filenameBase: "pal-sp2rp-candidates",
       caption: "a candidate screen · SP→RP carries a validated directional signal vs realized WAR change",
       board: { defaultCount: 25, counts: [10, 25, 50],
-        legend: "FIT 0-100 = SP→RP relief-upside screen (gated by conversion need)", columns: [
+        legend: "FIT 0-100 = SP→RP relief-upside screen (gated by conversion need) · tiers cut at "
+          + (tierRule("sp2rp").tiers || []).filter(function (t) { return t.min_fit != null; })
+              .map(function (t) { return f1(t.min_fit); }).join(" / "),
+        columns: [
           { label: "#", frac: 0.05 },
-          { label: "Player", frac: 0.26 },
-          { label: "FIT", frac: 0.10 },
-          { label: "SP ERA", frac: 0.11 },
-          { label: "Putaway whiff", frac: 0.13, wideOnly: true },
-          { label: "velo→RP", frac: 0.16, wideOnly: true },
-          { label: "proj REM+", frac: 0.11 },
-          { label: "BB%", frac: 0.08, wideOnly: true },
+          { label: "Player", frac: 0.24 },
+          { label: "FIT", frac: 0.09 },
+          { label: "Tier", frac: 0.16 },
+          { label: "SP ERA", frac: 0.10 },
+          { label: "Putaway whiff", frac: 0.12, wideOnly: true },
+          { label: "velo→RP", frac: 0.15, wideOnly: true },
+          { label: "proj REM+", frac: 0.09 },
         ], rows: brows },
     };
   }
@@ -666,6 +732,32 @@
     // own prospect_watch_rule, so the copy cannot claim a threshold the export is not
     // applying. Degrades to the old wording on a payload built before the rule shipped.
     var rule = (DATA && DATA.prospect_watch_rule) || null;
+    // Severity bands, read off the same rule block. They are QUARTERS OF THE
+    // SWING BAND, not a fitted scale and not a probability: a full band past the
+    // boundary is a different object from the half-band listing floor, and the
+    // card printed both as the same sentence.
+    var sevCuts = (rule && rule.severity_cuts) || null;
+    function severityOf(margin) {
+      var m = num(margin);
+      if (!sevCuts || m == null) return null;
+      for (var i = 0; i < sevCuts.length; i++) {
+        if (m >= sevCuts[i].min_margin) return sevCuts[i];
+      }
+      return null;
+    }
+    function sevChip(p) {
+      var c = severityOf(p.mismatch_margin);
+      if (!c) {
+        // stale payload: no bands to read, so state the raw margin rather than
+        // invent a tier for it
+        return p.mismatch_margin == null ? ""
+          : ' <span class="pal-sev">' + f1(p.mismatch_margin) + " past the band</span>";
+      }
+      var tip = f1(p.mismatch_margin) + " shape points past the boundary, "
+        + c.label + " (band " + f1(rule.swing_band) + " points wide).";
+      return ' <span class="pal-sev pal-sev--' + esc(c.key) + '" title="' + esc(tip) + '">'
+        + esc(c.key) + " " + f1(p.mismatch_margin) + "</span>";
+    }
     var bound = "";
     if (rule) {
       bound = " Ranked by how far past the swing band the shape sits, and staged: only the "
@@ -676,6 +768,13 @@
         + (rule.best_margin_below_threshold != null
            ? " (the closest is " + f1(rule.best_margin_below_threshold) + " points past)" : "")
         + " and are kept in the payload rather than dropped.";
+      if (sevCuts) {
+        bound += " Severity is the band read in quarters: "
+          + sevCuts.map(function (c) {
+              return "<b>" + esc(c.key) + "</b> at " + f1(c.min_margin) + "+"
+                + (c.n == null ? "" : " (" + esc(c.n) + ")");
+            }).join(", ") + ".";
+      }
     }
     var note = '<div class="mlbstats-note">Prospect pitchers whose SCOUTED role may not fit their arsenal shape ('
       + gloss("arsenal depth", "arsenal_depth") + " + command, from 20-80 scout grades). A scouted starter with a thin "
@@ -701,7 +800,7 @@
         + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position)
         + " &middot; FV " + (p.fvE != null ? Math.round(p.fvE) : fCeil(p.fv))
         + " &middot; shape " + f1(p.starter_shape) + " &middot; " + esc(p.arsenal_depth) + " plus pitches"
-        + (p.mismatch_margin != null ? " &middot; " + f1(p.mismatch_margin) + " past the band" : "") + "</div>"
+        + sevChip(p) + "</div>"
         + '<div style="margin:6px 0;font-size:11px;color:var(--text-secondary)">' + esc(msg) + "</div>"
         + toolBars(p.tools) + "</div>";
     }).join("");
@@ -917,8 +1016,28 @@
   }
 
   // The fitted ladder against the folklore table it replaces. This is the piece
-  // of the model with the tightest evidence (R2 0.9779 on 9,101 player-seasons)
-  // and it is worth showing on its own.
+  // of the model with the tightest evidence, and it is worth showing on its own.
+  // NO NUMBERS IN THIS COMMENT ON PURPOSE: it used to quote an R2 and a row
+  // count that the payload had already moved past, and the note text below
+  // prints the artifact's own n, window and R2, which is the only copy that
+  // cannot go stale.
+  // Why the fit sees a handful of recent seasons instead of everything on
+  // record. Rendered only when the artifact on screen IS the short window: the
+  // payload forwards `seasons` but not the window basis, so the span is the
+  // only thing that can be checked here, and a long-window artifact must not be
+  // handed an explanation of a decision it does not reflect.
+  function pfWindowNote(L) {
+    var s = L && L.seasons;
+    if (!s || s.length !== 2 || num(s[0]) == null || num(s[1]) == null) return "";
+    var span = Number(s[1]) - Number(s[0]) + 1;
+    if (span > 8) return "";
+    return " The window is a measured choice rather than an assumption. These rungs drift by more "
+      + "than their own sampling intervals, so a long pool averages two different tables; fitted "
+      + "through one season and asked to predict the next, this short span beat the 2012-onward "
+      + "pool by 0.10 runs per 650 PA of held-out error (bootstrap interval 0.08 to 0.11, better "
+      + "in all three held-out seasons). It is paid for in precision: fewer rows, wider intervals "
+      + "in the column beside each rung.";
+  }
   function pfLadder() {
     var L = (PF && PF.ladder) || {};
     // WHICH COLUMN IS PRINTED. build_positional_fit_payload selects it: the
@@ -956,7 +1075,7 @@
       + ", residual SD " + f2(L.residSd) + " runs. This is an INVERSION: it recovers the constants Baseball-Reference "
       + "themselves used, so a rung reads as what BRef prices that position at, not as an independent measure of how "
       + "hard it is to play. The folklore column is the table everyone quotes; the difference column is "
-      + "where it is wrong.</div>";
+      + "where it is wrong." + pfWindowNote(L) + "</div>";
     // WHICH SUM IS ZERO, stated on the page rather than left to be
     // rediscovered. Only rendered when the artifact carries the identification
     // block (added 2026-07-31); older artifacts get the table with no claim
@@ -1128,7 +1247,12 @@
         ? '<div class="mlbstats-empty pal-load-error" role="alert">Data failed to load. Refresh to retry; '
           + 'if it persists the nightly build is mid-run. '
           + '<button type="button" class="chip" id="pal-retry">Retry</button></div>'
-        : empty("The Alchemy Lab conversion models are being computed from Statcast. Check back shortly.");
+        // Names the ACTUAL source mix. This read "from Statcast", which is only
+        // the arsenal and velocity half: role, rates and platoon splits are
+        // StatsAPI (through bullpen_export) and the conversion WAR column is
+        // Baseball-Reference.
+        : empty("The Alchemy Lab conversion models are being computed from Statcast arsenals, "
+                + "StatsAPI roles and platoon splits, and Baseball-Reference WAR. Check back shortly.");
       var retry = document.getElementById("pal-retry");
       if (retry) retry.addEventListener("click", function () {
         root.innerHTML = empty("Loading…");

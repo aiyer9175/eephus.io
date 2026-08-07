@@ -175,19 +175,21 @@ def test_payload_has_the_documented_blocks(payload):
 def test_ladder_is_a_real_inversion_not_a_guess(payload):
     L = payload["fit"]["ladder"]
     assert L["r2"] > 0.95
-    # REBASED 2026-08-03 onto the SHIPPED window. This read `> 5000`, which was
-    # the size of the old 2000-2026 pool (9,101 player-seasons). The shipped
-    # window deliberately starts at 2012 - era drift in these coefficients is
-    # an order of magnitude larger than the sampling CIs, so a 27-year pool is
-    # an average rather than a current read, and the universal DH arrived in
-    # 2022. That window fits ~4,970, so the old floor failed the first honest
-    # regen after the decision and made a correct artifact look degraded.
-    # Verified the corpus is not short: refitting from 2000 on this machine
-    # reproduces 9,101 exactly.
-    assert L["seasons"][0] == pf.LADDER_FIRST_SEASON, (
-        f"ladder fitted from {L['seasons'][0]}, shipped window starts at "
-        f"{pf.LADDER_FIRST_SEASON}")
-    assert L["n_player_seasons"] > 4000
+    # REBASED TWICE, and the second rebase is the reason both pins are now
+    # relative. 2026-08-03 moved the size floor off the old 2000-2026 pool
+    # (9,101 player-seasons) onto a window pinned to start at 2012, because era
+    # drift in these coefficients runs an order of magnitude above the sampling
+    # CIs. 2026-08-07 gated a ROLLING window against that fixed start and it won
+    # forward-chained, so the fitted span now moves with the data every season
+    # and a pin on an absolute first season would go red on its own the first
+    # January after any regen.
+    span = L["seasons"][1] - L["seasons"][0] + 1
+    assert span == pf.LADDER_WINDOW_SEASONS, (
+        f"ladder fitted over {span} seasons {L['seasons']}, shipped window is "
+        f"{pf.LADDER_WINDOW_SEASONS}")
+    # Six seasons of qualified player-seasons, not twelve: the floor tracks the
+    # window it is asserting about.
+    assert L["n_player_seasons"] > 1800
     v = L["values"]
     # the defensive spectrum must come out in the right order
     assert v["C"] > v["SS"] > v["2B"] > v["3B"] > v["1B"] > v["DH"]

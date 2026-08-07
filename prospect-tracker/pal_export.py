@@ -505,6 +505,42 @@ def build_prospect_watch(prospects: list, cap: int = PROSPECT_WATCH_CAP,
     return watch[:cap]
 
 
+# SEVERITY BANDS on the same structural ruler the threshold already uses. The
+# SWING band is 20 points wide, so a mismatch sitting a FULL band width past its
+# own boundary is a different object from one sitting the minimum half-band past
+# it, and the card printed both as the same plain sentence. The cuts are the band
+# read in quarters: full / three-quarter / half (the existing floor). Nothing here
+# is fitted, and nothing here is a probability - it is the one continuous quantity
+# the shape model produces, banded on its own units.
+PROSPECT_WATCH_SEVERITY = (
+    ("severe", 1.00, "a full swing band past the boundary"),
+    ("marked", 0.75, "three quarters of the band past the boundary"),
+    ("modest", 0.50, "half the band past the boundary, the listing floor"),
+)
+
+
+def prospect_watch_severity_cuts(margin_min: float = PROSPECT_WATCH_MARGIN_MIN) -> list:
+    """[{key, min_margin, label}] biggest first. `margin_min` is passed through so
+    a caller that moves the listing floor cannot leave the bottom band claiming a
+    cut the export is not applying."""
+    out = []
+    for key, frac, label in PROSPECT_WATCH_SEVERITY:
+        cut = round(pc.SHAPE_SWING_BAND * frac, 1)
+        out.append({"key": key, "min_margin": max(cut, margin_min) if key == "modest" else cut,
+                    "label": label})
+    return out
+
+
+def _severity_of(margin, cuts: list):
+    m = _num(margin)
+    if m is None:
+        return None
+    for c in cuts:
+        if m >= c["min_margin"]:
+            return c["key"]
+    return None
+
+
 def prospect_watch_rule(full: list, watch: list,
                         margin_min: float = PROSPECT_WATCH_MARGIN_MIN,
                         cap: int = PROSPECT_WATCH_CAP) -> dict:
@@ -513,6 +549,10 @@ def prospect_watch_rule(full: list, watch: list,
     qualified = [w for w in full if (w.get("mismatch_margin") or 0.0) >= margin_min]
     just_outside = [w for w in full if (w.get("mismatch_margin") or 0.0) < margin_min]
     best_outside = max((w.get("mismatch_margin") or 0.0) for w in just_outside) if just_outside else None
+    cuts = prospect_watch_severity_cuts(margin_min)
+    for c in cuts:
+        c["n"] = sum(1 for w in watch
+                     if _severity_of(w.get("mismatch_margin"), cuts) == c["key"])
     return {
         "fv_min": PROSPECT_WATCH_FV_MIN,
         "margin_min": margin_min,
@@ -524,9 +564,97 @@ def prospect_watch_rule(full: list, watch: list,
         "n_over_cap": max(0, len(qualified) - len(watch)),
         "cap_binding": len(qualified) > len(watch),
         "best_margin_below_threshold": best_outside,
+        "swing_band": pc.SHAPE_SWING_BAND,
+        "severity_cuts": cuts,
         "basis": ("severity = shape points past the SWING band "
                   f"[{pc.SHAPE_RP_MAX:.0f}, {pc.SHAPE_SP_MIN:.0f}]; threshold is half "
                   "the band width, an a-priori structural bound, not a fitted one"),
+    }
+
+
+# --------------------------------------------------------------------------- #
+# candidate TIERS: per-direction, ABSOLUTE, stamped into the payload
+# --------------------------------------------------------------------------- #
+# The tier titles used to live only in assets/pal.js, on ONE set of breakpoints
+# (70/55/42) shared by both directions. That was wrong in two ways at once.
+#
+# 1. THE TWO FIT SCORES ARE NOT ON THE SAME SCALE. sp_rp_fit multiplies relief
+#    upside by a conversion-need factor, so a starter who is succeeding scores
+#    low no matter how good the stuff is. That compression is the model working
+#    as designed, and it means the SP->RP pool tops out well short of 70: live it
+#    runs min 4.1 / median 33.2 / max 62.8, so "Bullpen Upside (70+)" had ZERO
+#    members in every build while 129 of 176 arms read "Keep Starting". A top
+#    tier that can never be reached is decoration, and a bottom tier holding
+#    three quarters of the board is not a tier.
+# 2. THE COPY COULD DRIFT FROM THE CUT. A legend hard-coded in the renderer can
+#    state a threshold the export is not applying, which is the exact failure the
+#    prospect_watch_rule block above exists to prevent.
+#
+# So: cuts per direction, in this module, stamped into the payload with their
+# live member counts, and the renderer reads them.
+#
+# RP->SP KEEPS 70/55/42. The chart annotation highlights 70+ as "a real starter
+# profile" and the `successful` split already carries the premium case, so moving
+# that direction's cuts would desynchronise two other surfaces for no gain.
+# SP->RP gets 55/45/35: ABSOLUTE cuts, informed by the measured spread but NOT
+# per-build quantiles. Quantile tiers move a pitcher's tier when the pool
+# composition changes rather than when he does, which is the one thing a tier
+# must never do.
+#
+# NAMES. The SP->RP names are ranking language because that direction's backtest
+# is the validated one (pre-conversion FIT out-ranked every same-event baseline
+# against realized WAR change). The RP->SP names stay SCREEN and PROFILE
+# language on purpose: that direction's backtest is sign-wrong (rho -0.17 at
+# n=35, a closed no-ship), so its tiers describe a shape, never a rank.
+TIER_CUTS = {
+    "rp2sp": (70.0, 55.0, 42.0),
+    "sp2rp": (55.0, 45.0, 35.0),
+}
+TIER_LABELS = {
+    "rp2sp": ("Starter Upside", "Worth a Look", "Fringe Fit", "Reliever Profile"),
+    "sp2rp": ("Bullpen Upside", "Relief Fit", "Marginal Move", "Keep Starting"),
+}
+# Top-tier variant for an arm already succeeding in his current role. Only
+# RP->SP has one: a reliever who is getting outs AND profiles as a starter is
+# the value-additive case, because a starter is worth more than a reliever.
+TIER_PREMIUM = {"rp2sp": ("Prime Starter Convert", "successful")}
+
+
+def tier_rule(rows: list, direction: str) -> dict:
+    """The tier cuts and their live membership, for one direction.
+
+    Emitted into data/pal.json so the legend, the badge and the shareable board
+    all read the same numbers. A renderer that falls back to its own constants is
+    reading a stale payload, and says so."""
+    cuts = TIER_CUTS[direction]
+    labels = TIER_LABELS[direction]
+    fits = sorted(f for f in (_num(r.get("fit")) for r in rows) if f is not None)
+    tiers = []
+    for i, cut in enumerate(cuts):
+        hi = cuts[i - 1] if i else None
+        n = sum(1 for f in fits if f >= cut and (hi is None or f < hi))
+        tiers.append({"rank": i + 1, "min_fit": cut, "label": labels[i], "n": n})
+    tiers.append({"rank": len(cuts) + 1, "min_fit": None,
+                  "label": labels[-1], "n": sum(1 for f in fits if f < cuts[-1])})
+    prem = TIER_PREMIUM.get(direction)
+    if prem:
+        label, flag = prem
+        tiers[0]["premium_label"] = label
+        tiers[0]["premium_flag"] = flag
+        tiers[0]["n_premium"] = sum(1 for r in rows
+                                    if _num(r.get("fit")) is not None
+                                    and _num(r.get("fit")) >= cuts[0] and r.get(flag))
+    return {
+        "direction": direction,
+        "tiers": tiers,
+        "n_rows": len(fits),
+        "fit_min": fits[0] if fits else None,
+        "fit_median": round(statistics.median(fits), 1) if fits else None,
+        "fit_max": fits[-1] if fits else None,
+        "basis": ("absolute cuts on this direction's own FIT scale, not per-build "
+                  "quantiles (a quantile tier moves a pitcher when the pool moves, "
+                  "not when he does). The two directions are different 0-100 "
+                  "scales and are never compared across the tab."),
     }
 
 
@@ -779,6 +907,8 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         "pitch_mix_changes": mix_changes,
         "pitch_add": pitch_add,
         "reverse_platoon": platoon_rows,
+        "tier_rule": {"rp2sp": tier_rule(rp2sp, "rp2sp"),
+                      "sp2rp": tier_rule(sp2rp, "sp2rp")},
         "prospect_watch": prospect_watch,
         "prospect_watch_all": prospect_watch_all,
         "prospect_watch_rule": watch_rule,

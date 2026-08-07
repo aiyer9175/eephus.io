@@ -1,0 +1,269 @@
+{
+ "model": "positional_ladder_recency",
+ "owner_surface": "positional_fit.fit_ladder -> data/positional_fit.json -> prospect_def_value.POS_ADJ",
+ "generated_at": "2026-08-07",
+ "prereg": "docs/gate-2026-08-07-positional-ladder-recency.md",
+ "standard": "docs/EFV_GATE_STANDARD.md",
+ "question": "Does a recency-aware ladder predict current-era BRef runs_position per 650 PA better than the shipped 2012-onward fit?",
+ "protocol": {
+  "scoring": "forward-chained: fit on year <= T-1, predict season T",
+  "target": "runs_position * 650 / PA (the quantity the ladder inverts)",
+  "solution_scored": "UNCENTRED least squares; the level is unidentified so recentring is a reporting convention, not a model",
+  "holdout_seasons": [
+   2024,
+   2025,
+   2026
+  ],
+  "n_holdout": 941,
+  "min_pa": 200,
+  "bootstrap": "2000 draws, CLUSTERED BY PLAYER"
+ },
+ "specs": {
+  "champion": "unweighted LS from 2012 (the shipped window)",
+  "challenger_w": "PRIMARY: unweighted LS, last 6 training seasons",
+  "challenger_r": "SECONDARY (cannot ship alone): weighted LS from 2012, weight 0.85 ** (T-1-season)",
+  "control": "challenger_w refit on PERMUTED training labels"
+ },
+ "pooled_mae_runs_per_650pa": {
+  "champion": 1.0515,
+  "challenger_w": 0.9545,
+  "challenger_r": 0.9824,
+  "control": 6.3627
+ },
+ "results": {
+  "challenger_w": {
+   "dmae_mean": 0.097,
+   "ci95": [
+    0.0789,
+    0.1145
+   ],
+   "p_better": 1.0
+  },
+  "challenger_r": {
+   "dmae_mean": 0.0691,
+   "ci95": [
+    0.0584,
+    0.0792
+   ],
+   "p_better": 1.0
+  },
+  "control": {
+   "dmae_mean": -5.3112,
+   "ci95": [
+    -5.6061,
+    -5.0052
+   ],
+   "p_better": 0.0
+  }
+ },
+ "per_season": {
+  "2024": {
+   "n_holdout": 365,
+   "n_train": 4027,
+   "train_seasons_champion": [
+    2012,
+    2023
+   ],
+   "train_seasons_challenger_w": [
+    2018,
+    2023
+   ],
+   "mae": {
+    "champion": 1.0088,
+    "challenger_w": 0.9297,
+    "challenger_r": 0.9443,
+    "control": 6.4807
+   },
+   "dmae_w": 0.0791,
+   "dmae_r": 0.0645
+  },
+  "2025": {
+   "n_holdout": 348,
+   "n_train": 4392,
+   "train_seasons_champion": [
+    2012,
+    2024
+   ],
+   "train_seasons_challenger_w": [
+    2019,
+    2024
+   ],
+   "mae": {
+    "champion": 0.9874,
+    "challenger_w": 0.8633,
+    "challenger_r": 0.9066,
+    "control": 6.4011
+   },
+   "dmae_w": 0.1241,
+   "dmae_r": 0.0808
+  },
+  "2026": {
+   "n_holdout": 228,
+   "n_train": 4740,
+   "train_seasons_champion": [
+    2012,
+    2025
+   ],
+   "train_seasons_challenger_w": [
+    2020,
+    2025
+   ],
+   "mae": {
+    "champion": 1.2176,
+    "challenger_w": 1.1334,
+    "challenger_r": 1.1593,
+    "control": 6.1151
+   },
+   "dmae_w": 0.0842,
+   "dmae_r": 0.0583
+  }
+ },
+ "gate": {
+  "ci_excludes_zero_above": true,
+  "sign_consistency_all_splits": true,
+  "control_scores_worse": true
+ },
+ "verdict": {
+  "ship": true,
+  "status": "validated",
+  "note": "All three pre-registered statistical clauses clear. The fourth clause is an ATOMICITY requirement, not a measurement: the window flip only becomes real when data/positional_fit.json is regenerated, and that regen must land with the test_positional_fit window and row-count pins rebased plus a build_site pass to refresh data/positional_fit_ui.json."
+ },
+ "era_splits_from_artifact": {
+  "2012-2014": {
+   "C": 10.54,
+   "1B": -8.85,
+   "2B": 4.37,
+   "3B": 3.12,
+   "SS": 8.7,
+   "LF": -6.62,
+   "CF": 3.44,
+   "RF": -6.63,
+   "DH": -14.48
+  },
+  "2015-2017": {
+   "C": 10.46,
+   "1B": -8.81,
+   "2B": 4.43,
+   "3B": 3.09,
+   "SS": 8.45,
+   "LF": -6.92,
+   "CF": 3.45,
+   "RF": -6.44,
+   "DH": -13.95
+  },
+  "2018-2020": {
+   "C": 10.48,
+   "1B": -8.56,
+   "2B": 4.53,
+   "3B": 3.31,
+   "SS": 8.62,
+   "LF": -6.58,
+   "CF": 3.52,
+   "RF": -6.26,
+   "DH": -13.19
+  },
+  "2021-2026": {
+   "C": 10.95,
+   "1B": -8.37,
+   "2B": 5.17,
+   "3B": 3.66,
+   "SS": 9.44,
+   "LF": -6.37,
+   "CF": 4.17,
+   "RF": -6.5,
+   "DH": -13.64
+  }
+ },
+ "shipped_ladder": {
+  "C": 10.67,
+  "1B": -8.6,
+  "2B": 4.73,
+  "3B": 3.37,
+  "SS": 8.92,
+  "LF": -6.59,
+  "CF": 3.74,
+  "RF": -6.47,
+  "DH": -13.73
+ },
+ "served_impact": {
+  "retired": {
+   "ladder": {
+    "C": 10.67,
+    "1B": -8.6,
+    "2B": 4.73,
+    "3B": 3.37,
+    "SS": 8.92,
+    "LF": -6.59,
+    "CF": 3.74,
+    "RF": -6.47,
+    "DH": -13.73
+   },
+   "seasons": [
+    2012,
+    2026
+   ],
+   "n_player_seasons": 4968,
+   "r2": 0.9759,
+   "resid_sd": 1.088,
+   "n_flagged_misplaced": 68,
+   "n_flagged_demotion": 33,
+   "conversion_accuracy_mae": {
+    "model": 5.682,
+    "carry_over": 6.733,
+    "d_shift": 6.654,
+    "league_avg": 6.284,
+    "permuted": 6.244
+   },
+   "demotion_auc": {
+    "model": 0.4934,
+    "control": 0.4747,
+    "ladder_only": 0.2639,
+    "raw_oaa": 0.6183
+   }
+  },
+  "shipped": {
+   "ladder": {
+    "C": 10.88,
+    "1B": -8.4,
+    "2B": 5.12,
+    "3B": 3.62,
+    "SS": 9.38,
+    "LF": -6.39,
+    "CF": 4.14,
+    "RF": -6.52,
+    "DH": -13.7
+   },
+   "seasons": [
+    2021,
+    2026
+   ],
+   "n_player_seasons": 2023,
+   "r2": 0.9737,
+   "resid_sd": 1.158,
+   "n_flagged_misplaced": 65,
+   "n_flagged_demotion": 33,
+   "conversion_accuracy_mae": {
+    "model": 5.682,
+    "carry_over": 6.733,
+    "d_shift": 6.654,
+    "league_avg": 6.284,
+    "permuted": 6.244
+   },
+   "demotion_auc": {
+    "model": 0.4809,
+    "control": 0.48,
+    "ladder_only": 0.2639,
+    "raw_oaa": 0.6184
+   }
+  },
+  "delta": {
+   "n_rows": 464,
+   "best_pos_changed": 13,
+   "misplaced_flag_changed": 4,
+   "gain_abs_delta_median": 0.05,
+   "gain_abs_delta_p90": 0.26,
+   "gain_abs_delta_max": 0.47
+  },
+  "note": "conversion_accuracy takes no ladder argument (positional_fit.py conversion_accuracy signature), so the model's VALIDATED claim - the size of a move, MAE 5.682 on 169 real movers - is measured on the fielding transfer alone and is byte-identical under the swap. data/def_home.json cannot move either: def_home_export reads only p_hold and def_home_entropy off def_value(), and both come from mlb_position_probs, which never touches POS_ADJ."
+ }
+}

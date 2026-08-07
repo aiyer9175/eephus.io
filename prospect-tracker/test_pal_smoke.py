@@ -45,7 +45,26 @@ SAMPLE = """{
    "own_ops":0.720,"opp_ops":0.560,"split":0.160,"reverse_index":0.160,"reverse":true,"extreme":true,
    "weak_hand":"RHB","min_tbf":120}],
  "prospect_watch":[{"name":"Thin Starter Prospect","org":"LAD","position":"SP","fv":50,
-   "tools":{"fb":60,"sl":55,"cmd":40},"starter_shape":27.0,"arsenal_depth":2,"role":"SP","lean":"RP","mismatch":true}],
+   "tools":{"fb":60,"sl":55,"cmd":40},"starter_shape":18.0,"arsenal_depth":2,"role":"SP","lean":"RP",
+   "mismatch":true,"mismatch_margin":22.0}],
+ "prospect_watch_rule":{"fv_min":40.0,"margin_min":10.0,"cap":60,"n_mismatches":3,"n_qualified":1,
+   "n_shown":1,"n_below_margin":2,"n_over_cap":0,"cap_binding":false,
+   "best_margin_below_threshold":8.0,"swing_band":20.0,
+   "severity_cuts":[{"key":"severe","min_margin":20.0,"label":"a full swing band past the boundary","n":1},
+                    {"key":"marked","min_margin":15.0,"label":"three quarters of the band past the boundary","n":0},
+                    {"key":"modest","min_margin":10.0,"label":"half the band past the boundary, the listing floor","n":0}]},
+ "tier_rule":{
+   "rp2sp":{"direction":"rp2sp","n_rows":1,"fit_min":85.2,"fit_median":85.2,"fit_max":85.2,"tiers":[
+     {"rank":1,"min_fit":70.0,"label":"Starter Upside","n":1,
+      "premium_label":"Prime Starter Convert","premium_flag":"successful","n_premium":0},
+     {"rank":2,"min_fit":55.0,"label":"Worth a Look","n":0},
+     {"rank":3,"min_fit":42.0,"label":"Fringe Fit","n":0},
+     {"rank":4,"min_fit":null,"label":"Reliever Profile","n":0}]},
+   "sp2rp":{"direction":"sp2rp","n_rows":1,"fit_min":78.0,"fit_median":78.0,"fit_max":78.0,"tiers":[
+     {"rank":1,"min_fit":55.0,"label":"Bullpen Upside","n":1},
+     {"rank":2,"min_fit":45.0,"label":"Relief Fit","n":0},
+     {"rank":3,"min_fit":35.0,"label":"Marginal Move","n":0},
+     {"rank":4,"min_fit":null,"label":"Keep Starting","n":0}]}},
  "n_prospects":1960,
  "backtest":{"n_labeled":44,"spearman_prefit_vs_held":0.223,"relief_k_bump_measured":0.022,
    "per_direction":{"SP->RP":{"n_war":61,"rho_prefit_vs_war_delta":0.295,"n_held":22,"rho_prefit_vs_held":0.43},
@@ -85,6 +104,15 @@ def _prelude(hash_: str) -> str:
 def _render(hash_: str) -> str:
     ctx = MiniRacer()
     ctx.eval(_prelude(hash_) + JS)
+    return ctx.eval("__html['pal-app-root'] || ''")
+
+
+def _render_payload(hash_: str, payload: str) -> str:
+    """Same shell, an arbitrary payload. Used to prove the STALE-payload
+    fallbacks, which is the only way to see them: a current export always
+    carries the rule blocks."""
+    ctx = MiniRacer()
+    ctx.eval(_prelude(hash_).replace(f"var SAMPLE={SAMPLE};", f"var SAMPLE={payload};") + JS)
     return ctx.eval("__html['pal-app-root'] || ''")
 
 
@@ -133,6 +161,85 @@ def test_prospect_watch_view():
     html = _render("#prospects")
     assert "Thin Starter Prospect" in html
     assert "profiles as a reliever" in html
+
+
+# ---------------------------------------------------------------------------
+# Candidate TIERS come from the payload, never from constants in the renderer
+# (lane K1/K2, 2026-08-07). The failure this guards is silent: a legend that
+# states a cut the export is not applying, which is exactly how the SP->RP top
+# tier came to advertise a 70+ band on a scale whose live maximum is 62.8.
+# ---------------------------------------------------------------------------
+
+def test_tier_cuts_are_read_from_the_payload_per_direction():
+    rp = _render("")
+    sp = _render("#sp2rp")
+    # SP->RP carries its OWN cuts. Its FIT is a need-gated score that tops out
+    # near 60, so a shared 70 cut left the advertised top tier permanently empty.
+    assert "Bullpen Upside</b> (55.0+" in sp
+    assert "Relief Fit</b> (45.0+" in sp
+    assert "Marginal Move</b> (35.0+" in sp
+    assert "below 35.0" in sp
+    assert "(70.0+" not in sp, "SP->RP legend is quoting the RP->SP cuts again"
+    # RP->SP keeps 70/55/42: the histogram annotation and the `successful` split
+    # both depend on that top cut.
+    assert "Worth a Look</b> (55.0+" in rp
+    assert "Fringe Fit</b> (42.0+" in rp
+    # membership counts ship with the cuts, so an empty tier is visible
+    assert "(55.0+, 1)" in sp
+
+
+def test_tier_chip_is_coloured_by_TIER_not_by_direction():
+    """The colour channel used to encode which tab the reader had already
+    clicked (all cyan on one, all orange on the other), which is zero bits about
+    the tier. Chips now carry a rank class and the severity ramp lives in CSS."""
+    rp = _render("")
+    sp = _render("#sp2rp")
+    assert "pal-tier--t1" in rp
+    assert "pal-tier--t1" in sp          # a top-tier chip on BOTH tabs
+    for stale in ("pal-tier--rp2sp", "pal-tier--sp2rp"):
+        assert stale not in rp and stale not in sp, stale
+
+
+def test_stale_payload_falls_back_to_the_old_shared_cuts_not_to_a_blank():
+    """A payload built before tier_rule shipped must degrade to the previous
+    rendering. It also must not print membership counts it does not have."""
+    import json
+    d = json.loads(SAMPLE)
+    d.pop("tier_rule")
+    html = _render_payload("#sp2rp", json.dumps(d))
+    assert "Bullpen Upside</b> (70.0+)" in html      # old shared cut, no count
+    assert "Power Starter" in html                    # and the table still renders
+
+
+def test_sp2rp_shareable_board_carries_the_tier_column():
+    """rp2sp has shipped a Tier column since it was built. Without one on
+    sp2rp the two shareable graphics disagreed about what a PAL board is."""
+    assert "sp2rpBoardSpec" in JS
+    spec = JS[JS.index("function sp2rpBoardSpec"):JS.index("// ---- sections")]
+    assert 'tierTitle(r, "sp2rp")' in spec
+    assert '{ label: "Tier"' in spec
+
+
+# ---------------------------------------------------------------------------
+# Prospect-watch SEVERITY (lane K3). The margin was printed as plain text with
+# no tiering, so a full-band mismatch read the same as one at the listing floor.
+# ---------------------------------------------------------------------------
+
+def test_prospect_watch_renders_a_severity_chip_from_the_payload_cuts():
+    html = _render("#prospects")
+    assert "pal-sev--severe" in html                  # 22.0 is a full band past
+    assert "severe</b> at 20.0+" in html              # the legend states the cut
+    assert "marked</b> at 15.0+" in html
+    assert "modest</b> at 10.0+" in html
+
+
+def test_severity_chip_degrades_to_the_plain_margin_on_a_stale_payload():
+    import json
+    d = json.loads(SAMPLE)
+    d["prospect_watch_rule"].pop("severity_cuts")
+    html = _render_payload("#prospects", json.dumps(d))
+    assert "past the band" in html                    # the old wording survives
+    assert "pal-sev--severe" not in html, "invented a severity band with no cuts"
 
 
 # ---------------------------------------------------------------------------

@@ -2204,11 +2204,32 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
    measured to do (pass) vs the question it measured as a null. */
 .pal-dir--pass { color: var(--accent-green); border-color: var(--accent-green); }
 .pal-dir--null { color: var(--accent-orange); border-color: var(--accent-orange); }
-/* conversion candidate TIER titles (under the FIT number in the candidate table) */
-.pal-tier { font-family: var(--font-retro-mono); font-size: 8.5px; font-weight: 700; letter-spacing: .02em;
-  text-transform: uppercase; margin-top: 3px; white-space: nowrap; color: var(--text-tertiary); }
-.pal-tier--rp2sp { color: var(--accent-cyan); }
-.pal-tier--sp2rp { color: var(--accent-orange); }
+/* conversion candidate TIER chips (under the FIT number in the candidate table).
+   COLOUR CARRIES THE TIER, NOT THE DIRECTION. This was all-cyan on the RP->SP
+   tab and all-orange on SP->RP, which spent the entire colour channel restating
+   which tab the reader had already clicked and left the four tiers looking
+   identical. The ramp is top cyan (the /pal/ identity colour), then green, then
+   gold, then muted, and it reuses the .pal-flag bordered-chip shape so both
+   themes resolve through the same tokens. The CUTS are not here: they come from
+   data/pal.json (pal_export.tier_rule) and differ per direction. */
+.pal-tier { display: inline-block; font-family: var(--font-retro-mono); font-size: 9px;
+  font-weight: 700; letter-spacing: .02em; text-transform: uppercase; padding: 1px 5px;
+  margin-top: 3px; border: 1px solid var(--border); color: var(--text-tertiary);
+  white-space: nowrap; }
+.pal-tier--t1 { color: var(--accent-cyan); border-color: var(--accent-cyan); }
+.pal-tier--t2 { color: var(--accent-green); border-color: var(--accent-green); }
+.pal-tier--t3 { color: var(--accent-gold); border-color: var(--accent-gold); }
+.pal-tier--t4 { color: var(--text-tertiary); border-color: var(--border); }
+/* prospect-watch SEVERITY: quarters of the 20-point swing band, so the ramp runs
+   warn-orange (a full band past the boundary), gold, then the neutral listing
+   floor. Bands and counts come from prospect_watch_rule.severity_cuts. */
+.pal-sev { font-family: var(--font-retro-mono); font-size: 8.5px; font-weight: 700;
+  letter-spacing: .03em; text-transform: uppercase; padding: 0 4px; margin-left: 2px;
+  border: 1px solid var(--border); color: var(--text-tertiary); white-space: nowrap;
+  vertical-align: middle; cursor: help; }
+.pal-sev--severe { color: var(--accent-orange); border-color: var(--accent-orange); }
+.pal-sev--marked { color: var(--accent-gold); border-color: var(--accent-gold); }
+.pal-sev--modest { color: var(--text-secondary); }
 .pal-tier-legend { font-size: 10.5px; color: var(--text-tertiary); margin: 0 0 12px;
   padding: 7px 10px; border: 1px dashed var(--border); background: var(--bg-secondary); }
 .pal-tier-legend b { color: var(--text-secondary); }

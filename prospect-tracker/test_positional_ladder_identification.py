@@ -55,9 +55,30 @@ def test_fielder_centring_is_the_folklore_convention():
     assert centred["DH"] < vals["DH"]          # DH absorbs the whole shift
 
 
-def test_shipped_window_is_the_modern_one():
-    assert pf.LADDER_FIRST_SEASON == 2012
+def test_shipped_window_is_a_rolling_recent_one():
+    """2026-08-07: the window stopped being a pinned first season and became a
+    rolling count of recent seasons, on a forward-chained gate
+    (docs/gate-2026-08-07-positional-ladder-recency.md, dMAE 0.097 runs per
+    650 PA, CI95 [0.0789, 0.1145], 3/3 splits). Six is the gated value; changing
+    it is a model change and needs its own gate, which is why it is pinned."""
+    assert pf.LADDER_WINDOW_SEASONS == 6
     assert pf.LADDER_EARLIEST_SEASON == 2000
+    assert pf.LADDER_RETIRED_FIRST_SEASON == 2012
+    # the retired window stays in the published sensitivities, so the size of
+    # the change is readable off the artifact without a git history
+    assert pf.LADDER_RETIRED_FIRST_SEASON in pf.LADDER_SENSITIVITY_WINDOWS
+
+
+def test_the_rolling_window_resolves_against_the_last_season_not_a_constant():
+    """The failure this guards is a window that silently stops rolling: a pinned
+    default would keep fitting the same six seasons as the feed advances."""
+    import inspect
+    sig = inspect.signature(pf.fit_ladder)
+    assert sig.parameters["first"].default is None, (
+        "fit_ladder pinned a default first season again; the window must be "
+        "derived from `last` so it advances with the feed")
+    src = inspect.getsource(pf.fit_ladder)
+    assert "last - LADDER_WINDOW_SEASONS + 1" in src
 
 
 def test_ladder_artifact_publishes_both_readings():

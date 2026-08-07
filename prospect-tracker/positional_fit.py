@@ -33,9 +33,11 @@ THE ANSWER SHAPE
 
 THREE THINGS THIS MODEL DOES THAT THE NAIVE VERSION DOES NOT
     1. The positional ladder is RE-ESTIMATED from Baseball-Reference's own
-       construction rather than taken from the folklore table. The folklore ladder
-       is wrong by up to 3.9 runs at 1B and treats 2B/3B/CF as one rung when the
-       data says 4.65 / 3.28 / 3.63.
+       construction rather than taken from the folklore table, on a rolling
+       six-season window that a forward-chained gate chose over the retired
+       2012-onward pool (see LADDER_WINDOW_SEASONS). The folklore ladder is wrong
+       by about 4.1 runs at 1B and treats 2B/3B/CF as one rung when the current
+       window says 5.12 / 3.62 / 4.14.
     2. Single-season OAA is shrunk toward league average with a per-position
        reliability constant measured from year-over-year persistence. First base is
        the least reliable read in baseball (k = 2539 innings), shortstop the most
@@ -81,13 +83,41 @@ IDX = {p: i for i, p in enumerate(OAA_POSITIONS)}
 
 FIRST_OAA_SEASON = 2016
 LADDER_EARLIEST_SEASON = 2000  # BRef runs_position goes back this far
-# The SHIPPED ladder window. Era drift in these coefficients (C 1.32 runs,
-# 2B 1.03 across 4 eras) is an order of magnitude larger than the sampling CIs
-# (+/-0.05), so a 2000-2026 pool is a 27-year average, not a current read. The
-# universal DH arrived in 2022 and the shift shows up in the DH rung, so the
-# shipped window starts at 2012 and the pooled + 2018 fits ride along as
-# published sensitivities.
-LADDER_FIRST_SEASON = 2012
+# The SHIPPED ladder window, as a ROLLING count of the most recent seasons
+# rather than a pinned first year. Era drift in these coefficients is larger
+# than their own sampling CIs (2021-2026 reads SS 9.44 and 2B 5.17 against the
+# retired 2012-2026 fit's 8.92 and 4.73, on CI half-widths of about 0.21), so a
+# long pool averages two different tables instead of measuring one precisely.
+#
+# SIX IS GATED, NOT CHOSEN. docs/gate-2026-08-07-positional-ladder-recency.md
+# pre-registered a forward-chained test (fit on seasons <= T-1, predict season
+# T's runs_position per 650 PA) with the last-six-seasons window as the primary
+# challenger, because 2018-onward was already a published sensitivity in this
+# artifact and so introduced no new tuned parameter. Result, in
+# data/positional_ladder_recency_eval.json: dMAE 0.097 runs per 650 PA in the
+# challenger's favour, cluster-bootstrap CI95 [0.0789, 0.1145], better in 3 of 3
+# held-out seasons, against a permuted-label control at -5.31. One attempt, one
+# window, no re-tuning after the fact.
+#
+# The cost is paid in precision: about 2,000 fitted rows instead of 4,968, so
+# the CIs widen. The window sensitivities below (2000, 2012, 2018) are published
+# so a reader can price that trade rather than take it on faith.
+LADDER_WINDOW_SEASONS = 6
+# The window this replaced, kept as a NAME so the recency lab can reproduce the
+# champion it was scored against and so the published sensitivities can show
+# what the change was worth. It is not the shipped window any more; read
+# fit.ladder.seasons off the artifact for that.
+LADDER_RETIRED_FIRST_SEASON = 2012
+LADDER_SENSITIVITY_WINDOWS = (LADDER_EARLIEST_SEASON, LADDER_RETIRED_FIRST_SEASON, 2018)
+# ARTIFACT COUPLING, and the reason this alias still exists. test_positional_fit
+# pins the artifact's fitted window against this name and its row count against
+# 4,000. data/positional_fit.json on disk is still the 2012-2026 fit, so the
+# alias reads 2012 and the suite is green as it stands. REGENERATING the
+# artifact under LADDER_WINDOW_SEASONS moves the window to 2021-2026 and the row
+# count to about 2,023, which breaks both pins: the regen and that test's rebase
+# have to land in ONE commit, together with a build_site pass to refresh the
+# served slim view (data/positional_fit_ui.json). Do not regenerate alone.
+LADDER_FIRST_SEASON = LADDER_RETIRED_FIRST_SEASON
 MIN_PAIR_INN = 100.0           # innings at BOTH positions to count as a conversion pair
 MIN_RELIABILITY_INN = 300.0    # innings floor for the year-over-year reliability fit
 LADDER_MIN_PA = 200
@@ -222,9 +252,12 @@ def _recentre(beta, exposure):
     return beta - float(exposure @ beta)
 
 
-def fit_ladder(feeds: Feeds, first=LADDER_FIRST_SEASON, last=None,
+def fit_ladder(feeds: Feeds, first=None, last=None,
                min_pa=LADDER_MIN_PA, boot=200, seed=11):
     """Recover the positional adjustment in runs per 650 PA.
+
+    `first` defaults to the rolling LADDER_WINDOW_SEASONS window ending at
+    `last`; pass it explicitly only to reproduce a retired window.
 
     This is an INVERSION, not a free fit. Baseball-Reference builds runs_position
     as a per-inning rate summed over the positions a player actually played, so
@@ -253,6 +286,8 @@ def fit_ladder(feeds: Feeds, first=LADDER_FIRST_SEASON, last=None,
         folklore-comparable reading ships as `values_fielder_centred`.
     """
     last = last or feeds.inn.get("last_season")
+    if first is None:
+        first = max(LADDER_EARLIEST_SEASON, last - LADDER_WINDOW_SEASONS + 1)
     X, y, keys, inn_per_pa = _ladder_design(feeds, first, last, min_pa)
     n = len(y)
     exposure = X.mean(axis=0)
@@ -305,9 +340,12 @@ def fit_ladder(feeds: Feeds, first=LADDER_FIRST_SEASON, last=None,
             "consequences of it." % (100 * float(exposure[LADDER_POSITIONS.index("DH")]))),
     }
     # Window sensitivity. Published, not chosen: era drift exceeds the sampling CIs,
-    # so a reader needs to see how much of any rung is the window.
+    # so a reader needs to see how much of any rung is the window. The retired
+    # 2012 window is kept in this list on purpose - it is what shipped until
+    # 2026-08-07, so the difference between it and the current rung is the size
+    # of the gated change, readable off the artifact without a git history.
     sens = {}
-    for w_first in (LADDER_EARLIEST_SEASON, 2018):
+    for w_first in LADDER_SENSITIVITY_WINDOWS:
         if w_first == first:
             continue
         Xw, yw, _kw, _ipp = _ladder_design(feeds, w_first, last, min_pa)
@@ -326,6 +364,9 @@ def fit_ladder(feeds: Feeds, first=LADDER_FIRST_SEASON, last=None,
                    "intercept, recentred to exposure-weighted sum zero"),
         "dh_exposure_spec": "residual: max(0, PA x inn_per_pa - fielded innings)",
         "n_player_seasons": n, "seasons": [first, last], "min_pa": min_pa,
+        "window_seasons": last - first + 1,
+        "window_basis": ("rolling LADDER_WINDOW_SEASONS, gated forward-chained "
+                         "2026-08-07 (data/positional_ladder_recency_eval.json)"),
         "inn_per_pa": round(inn_per_pa, 4),
         "r2": round(float(r2), 4), "resid_sd": round(float(resid.std()), 3),
         "values": values,
