@@ -32,9 +32,11 @@ WHAT MAKES IT HONEST, and each of these is load-bearing:
   3. It is stored SEPARATELY from data/betting_record.json and is never merged
      into it. The public record is bets the site stood behind; these are not.
      Anything reading the two together has to opt in.
-  4. Every row carries `provisional: true` and the gate state at the time it was
-     written, so a row logged under a policy floor can never later be
-     misread as one logged under a measured threshold.
+  4. Every row carries `provisional: true`, the gate state at the time it was
+     written, and (since 2026-08-07) the SLOT RULE that selected it, so a row
+     logged under a policy floor can never later be misread as one logged under
+     a measured threshold, and rows chosen by three different rules can never be
+     pooled into one ROI by accident.
 
 HOW THE MODEL IMPROVES FROM IT. As games resolve, three things move on their own:
 the coefficients refit nightly on completed games, the vintage-graded sample grows
@@ -63,10 +65,29 @@ SHADOW_PATH = DATA_DIR / "betting_shadow.json"
 STAKE_UNITS = 1.0
 
 #: How many sides a slate may contribute. The gate needs 100 settled bets and a
-#: season is ~180 slates, so one per slate would take two seasons. Three keeps
+#: season is ~180 slates, so one per slate would take two seasons. Five keeps
 #: the sample honest (still the top of the board, not everything) while
 #: reaching a usable n inside one season.
-MAX_PER_SLATE = 3
+#:
+#: RAISED FROM 3 ON 2026-08-07, when the page went to two published slots. The
+#: budget is two slot picks plus the top three by EV, so a slate cannot log
+#: fewer rows than it publishes: a published pick that never reached the ledger
+#: would be a claim with no evidence trail behind it, which is the failure this
+#: whole file exists to close.
+MAX_PER_SLATE = 5
+
+#: Which selection rule put a row in the ledger. Frozen at write time, on NEW
+#: rows only, and never backfilled onto the rows already on disk: those were
+#: written under a one-slot rule and stamping them now would assert a fact the
+#: writer did not know.
+#:
+#: THE POINT OF THE TAG is that the future min-edge sweep can condition on it.
+#: The three tags select on three different quantities (model probability inside
+#: a price band, EV at a long price, EV anywhere), so pooling their ROI would
+#: measure a mixture nobody bet, and a threshold fitted to that mixture would be
+#: wrong for every slot it was applied to.
+SLOT_TAGS = {"pick_of_the_day": "potd_band", "longshot_of_the_day": "longshot"}
+DEFAULT_SLOT_TAG = "ev_rank"
 
 
 class ShadowLedgerError(RuntimeError):
@@ -180,14 +201,31 @@ def write(rows: list[dict], *, path: Path | None = None) -> list[dict]:
 # ---------------------------------------------------------------------------
 # recording
 # ---------------------------------------------------------------------------
+def _row_key(r: dict) -> tuple:
+    """What makes two references to the same side the same bet."""
+    pt = r.get("point")
+    return (r.get("game_pk"), r.get("market"), r.get("side"),
+            None if pt is None else float(pt))
+
+
 def candidates_from_board(payload: dict, *, min_edge: float,
-                          max_per_slate: int = MAX_PER_SLATE) -> list[dict]:
-    """The sides this slate would have bet, highest EV first.
+                          max_per_slate: int = MAX_PER_SLATE,
+                          slots: dict | None = None) -> list[dict]:
+    """The sides this slate would have bet: the published slots, then the rest
+    by EV.
 
     Reads the SAME board the page shows, so a shadow bet is never priced on
     numbers a reader could not have seen. A side with no book price is skipped
     rather than filled in from the model's own fair line: a paper bet at a
-    price nobody offered is the one thing that would make this ledger a lie."""
+    price nobody offered is the one thing that would make this ledger a lie.
+
+    `slots` is the payload's published slots keyed by their payload key
+    (`pick_of_the_day`, `longshot_of_the_day`). They are taken FIRST, ahead of
+    the EV ranking, because a slot pick can sit outside the top of the board on
+    EV by construction: the headline slot selects on model probability inside a
+    price band, and the whole point of the ledger is to make the published
+    claims gradeable. Every other row still enters on EV and is tagged as such,
+    so the sweep can separate the two rules later."""
     slate = payload.get("slate_date")
     out: list[dict] = []
     for b in payload.get("team_bets") or []:
@@ -216,12 +254,38 @@ def candidates_from_board(payload: dict, *, min_edge: float,
                     "model_prob": r.get("model_prob"),
                     "market_fair_prob": r.get("market_fair_prob"),
                     "ev_per_unit": r.get("ev_per_unit"),
+                    "slot": DEFAULT_SLOT_TAG,
                 })
     out.sort(key=lambda r: (r.get("ev_per_unit") is None, -(r.get("ev_per_unit") or 0)))
-    return out[:max_per_slate]
+
+    tagged: dict[tuple, str] = {}
+    for key, row in (slots or {}).items():
+        tag = SLOT_TAGS.get(key)
+        if not row or not tag:
+            continue
+        tagged.setdefault(_row_key(row), tag)
+    if not tagged:
+        return out[:max_per_slate]
+
+    picked, seen = [], set()
+    for cand in out:
+        k = _row_key(cand)
+        if k in tagged and k not in seen:
+            picked.append({**cand, "slot": tagged[k]})
+            seen.add(k)
+    for cand in out:
+        if len(picked) >= max_per_slate:
+            break
+        k = _row_key(cand)
+        if k in seen:
+            continue
+        picked.append(cand)
+        seen.add(k)
+    return picked[:max_per_slate]
 
 
 def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = None,
+                 slots: dict | None = None,
                  path: Path | None = None, log_fn=None) -> dict:
     """Append this slate's shadow bets. Idempotent per (slate, game, market, side).
 
@@ -238,7 +302,9 @@ def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = No
                 "reason": "no odds snapshot for this slate; a shadow bet without "
                           "a real captured price is not evidence"}
 
-    cands = candidates_from_board(payload, min_edge=min_edge)
+    if slots is None:
+        slots = {k: payload.get(k) for k in SLOT_TAGS}
+    cands = candidates_from_board(payload, min_edge=min_edge, slots=slots)
     if not cands:
         return {"written": 0, "slate_date": slate,
                 "reason": f"no side cleared the {min_edge:.1%} floor on this slate"}
@@ -271,11 +337,16 @@ def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = No
                 "reason": "every qualifying side for this slate is already logged"}
 
     write(existing + new, path=path)
+    by_slot = {}
+    for r in new:
+        by_slot[r.get("slot") or DEFAULT_SLOT_TAG] = \
+            by_slot.get(r.get("slot") or DEFAULT_SLOT_TAG, 0) + 1
     if log_fn:
         log_fn(f"betting_shadow: logged {len(new)} paper bet(s) for {slate} "
-               f"at a {min_edge:.1%} floor")
+               f"at a {min_edge:.1%} floor "
+               f"({', '.join(f'{k} {v}' for k, v in sorted(by_slot.items()))})")
     return {"written": len(new), "slate_date": slate, "reason": "ok",
-            "rows": new}
+            "by_slot": by_slot, "rows": new}
 
 
 # ---------------------------------------------------------------------------
@@ -419,13 +490,12 @@ def graded_bets(*, path: Path | None = None) -> list[dict]:
     return out
 
 
-def summary(*, path: Path | None = None) -> dict:
-    """What the ledger has accumulated, for the page and for the gate.
+def _tally(rows: list[dict]) -> dict:
+    """Won/lost/push, net units and the two rates over one set of rows.
 
     Every rate is None until there is something to divide by. A 0% win rate over
     zero settled bets is a lie that looks like a measurement, and this module
     exists to produce evidence, so it may not manufacture any."""
-    rows = load(path)
     settled = [r for r in rows if r.get("result") in ("won", "lost", "push")]
     wins = sum(1 for r in settled if r["result"] == "won")
     losses = sum(1 for r in settled if r["result"] == "lost")
@@ -444,7 +514,25 @@ def summary(*, path: Path | None = None) -> dict:
         "net_units": net,
         "roi": (round(net / staked, 4) if net is not None and staked else None),
         "win_rate": (round(wins / len(gradeable), 4) if gradeable else None),
-        # The number the third gate is actually waiting on.
-        "n_for_min_edge_sweep": len(graded_bets(path=path)),
-        "min_bets_for_sweep": 100,
     }
+
+
+def summary(*, path: Path | None = None) -> dict:
+    """What the ledger has accumulated, for the page and for the gate.
+
+    `by_slot` splits the same tally by the selection rule that wrote each row.
+    It is reported and NOT pooled anywhere, because the tags name three
+    different selection rules and a pooled ROI would measure a mixture nobody
+    bet. Rows written before 2026-08-07 carry no tag and are counted under
+    `untagged`, which is honest about what they are: rows from the one-slot era,
+    selected on EV alone."""
+    rows = load(path)
+    out = _tally(rows)
+    buckets: dict[str, list[dict]] = {}
+    for r in rows:
+        buckets.setdefault(r.get("slot") or "untagged", []).append(r)
+    out["by_slot"] = {k: _tally(v) for k, v in sorted(buckets.items())}
+    # The number the third gate is actually waiting on.
+    out["n_for_min_edge_sweep"] = len(graded_bets(path=path))
+    out["min_bets_for_sweep"] = 100
+    return out

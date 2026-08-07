@@ -107,19 +107,25 @@
   }
   // GLOSSARY TERMS. The contract is assets/eephus-gl.js: a [data-gl] span whose
   // value is a slug that EXISTS in data/glossary.json, plus one wire() call per
-  // rendered container. A slug the artifact does not carry renders a term that
-  // looks clickable and defines nothing, which is worse than plain text, so
-  // every slug used on this page was checked against the artifact first.
+  // rendered container.
   //
-  // WHAT IS DELIBERATELY NOT WRAPPED. The betting vocabulary proper - edge,
-  // vig, hold, overround, de-vig, closing line value, unit, EV per unit, Kelly,
-  // fair line, moneyline, runline, total - has NO entry in data/glossary.json
-  // today. Those words are left as plain text rather than pointed at a
-  // near-miss slug: a tooltip that defines the wrong thing on a page about
-  // money is a worse failure than no tooltip. Add the entries in
-  // build_glossary_data.py and the spans can follow in one pass.
+  // THE SPAN NO LONGER CARRIES .g-term ITSELF, and that one change is what lets
+  // the betting vocabulary ship. eephus-gl's wire() adds the class only when it
+  // resolves the slug against the loaded artifact and returns early when it
+  // cannot; the class is what styles a term as clickable, so emitting it here
+  // was what made an unknown slug render as a term that defines nothing. Now an
+  // unresolvable slug degrades to plain text on its own, and lights up the
+  // moment the artifact carries it.
+  //
+  // The betting vocabulary (edge, vig, de-vig, fair line, implied probability,
+  // EV per unit, unit, Kelly, moneyline, runline, total, parlay, CLV,
+  // provisional pick, policy floor, Brier) is registered in
+  // build_glossary_data.BETTING_ENTRIES and merged into data/glossary.json by
+  // `python build_glossary_data.py --betting`. Until that merge runs on a given
+  // checkout, these words read as plain text rather than as a tooltip pointing
+  // at nothing.
   function gl(label, slug) {
-    return '<span class="g-term" data-gl="' + esc(slug) + '">' + esc(label) + "</span>";
+    return '<span data-gl="' + esc(slug) + '">' + esc(label) + "</span>";
   }
   function wireGl(node) {
     try { if (node && window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(node); }
@@ -393,7 +399,122 @@
     wireGl(host);
   }
 
-  // ---- section: pick of the day ---------------------------------------------
+  // ---- section: the two published slots -------------------------------------
+  // THE SLOTS ARE DECLARED, NOT HARD-CODED INTO THE RENDERER, so a third slot
+  // added server-side needs one row here and inherits the badge, the sentence
+  // and the empty state rather than a new copy of all three.
+  var SLOTS = [
+    { key: "pick_of_the_day", title: "Pick of the Day",
+      lead: "The side the model is most confident in, among prices in the normal range." },
+    { key: "longshot_of_the_day", title: "Longshot Value of the Day",
+      lead: "The best expected value at a long price. It will lose most nights; " +
+            "that is what a long price means." }
+  ];
+
+  // The per-slot block of `pick_meta`, with the top-level block as the fallback
+  // for a payload built before the slots existed. Returning the top level is
+  // safe here because the fields the callers read (provisional, min_edge,
+  // basis) have the same meaning at both levels; what the older shape cannot
+  // supply is the slot's own reason, and the callers check for that.
+  function slotMeta(key) {
+    var m = (S.data && S.data.pick_meta) || {};
+    return ((m.slots || {})[key]) || m;
+  }
+
+  function floorText(m) {
+    if (!m || m.min_edge == null) return "the minimum edge";
+    return pct(m.min_edge, 1) + (m.provisional === false ? " measured threshold"
+                                                         : " policy floor");
+  }
+
+  // The badge that carries the whole labelling contract. Before this it existed
+  // only in the payload: `provisional` appeared nowhere in this file, so the
+  // flag every surface was supposed to key its labelling off never reached a
+  // reader. A pick shown without it reads as a recommendation the site stands
+  // behind, which is the one outcome the module was built to prevent.
+  function provBadge(m) {
+    if (!m || m.provisional === false) return "";
+    return '<span class="bt-tag bt-tag-warn bt-prov" title="' +
+      esc("This pick is published against a policy floor, not a validated " +
+          "threshold. The model is unvalidated.") + '">provisional</span>';
+  }
+
+  // The sentence a reader who does not know what a de-vigged probability is can
+  // still act on. Built entirely from served fields; it computes nothing.
+  function pickSentence(p) {
+    var who = esc(p.label || p.side || "this side");
+    var s = "Our model gives " + who + " about a " + pct(p.model_prob, 0) +
+      " chance to cash. The price of " + fmtOdds(p.odds) + " " +
+      gl("implies", "implied_probability") + " " +
+      (p.implied_prob != null ? pct(p.implied_prob, 0) + ", which is " +
+        pct(p.market_fair_prob, 0) + " once the book's " + gl("cut", "vig") +
+        " is taken out" : pct(p.market_fair_prob, 0) + " after the book's " +
+        gl("cut", "vig") + " is taken out") +
+      ". The model and the market disagree by " + signed(p.edge * 100, 1) +
+      " points, and that gap is the " + gl("edge", "bet_edge") + ".";
+    return "<p>" + s + "</p>";
+  }
+
+  function unitLine(p, m) {
+    var bits = [];
+    bits.push("Shown at " + num(p.suggested_units == null ? p.stake_units
+                                                          : p.suggested_units, 1) +
+      "u flat.");
+    bits.push("Recorded on the public record at " + num(p.stake_units, 1) +
+      "u, the same as every other pick, because a record kept in variable " +
+      "stakes cannot be audited from its own rows.");
+    var kq = (p.kelly_quarter != null) ? p.kelly_quarter
+      : (p.kelly_full != null ? p.kelly_full / 4 : null);
+    var chipHtml = (kq == null) ? "" :
+      '<span class="bt-numchip bt-numchip-info"><span class="bt-numchip-l">Quarter ' +
+      gl("Kelly", "kelly_criterion") + '</span><span class="bt-numchip-v">' +
+      pct(kq, 1) + "</span></span>";
+    return "<p>" + bits.join(" ") + " Kelly is informational here and never a " +
+      "stake: full Kelly is only optimal if the probability is right, and this " +
+      "model's probabilities have not been checked out of sample.</p>" +
+      (chipHtml ? '<div class="bt-pick-nums">' + chipHtml + "</div>" : "") +
+      (m && m.provisional !== false
+        ? note("This is a " + gl("provisional pick", "provisional_pick") +
+               ". It cleared a " + pct(m.min_edge, 1) + " " +
+               gl("policy floor", "policy_floor") + ", not a measured " +
+               "threshold, because the model is not validated. Nothing on this " +
+               "page is advice.")
+        : "");
+  }
+
+  function pickCard(slot) {
+    var d = S.data;
+    var p = d[slot.key];
+    var m = slotMeta(slot.key);
+    var hd = '<div class="bt-pick-hd">' + esc(slot.title) + " " + provBadge(m) + "</div>";
+    if (!p) {
+      // THE HONEST EMPTY STATE. It names the floor it could not clear, and it
+      // says the floor is not lowered to fill the slot, because a threshold
+      // invented to make a pick appear is the single most dishonest number this
+      // module could publish.
+      var why = (m && m.reason) || d.pick_reason || "";
+      return '<div class="bt-pick bt-pick-empty">' + hd +
+        '<div class="bt-pick-sel bt-dim">Nothing qualifies today</div>' +
+        "<p>" + esc(why) + "</p>" +
+        "<p>The floor is " + pct(m.min_edge, 1) + ", the same one every other slot " +
+        "clears, and it is never lowered to make a pick appear. An empty slot is " +
+        "the honest answer to a slate with nothing on it.</p></div>";
+    }
+    var caveat = p.caveat ? note(esc(p.caveat)) : "";
+    return '<div class="bt-pick">' + hd +
+      "<p class=\"bt-pick-lead\">" + esc(slot.lead) + "</p>" +
+      '<div class="bt-pick-sel">' + esc(p.label || p.side || "") + " " +
+      fmtOdds(p.odds) + "</div>" +
+      '<div class="bt-pick-meta">' + esc(p.matchup || "") + " &middot; " +
+      esc(p.market || "") + " &middot; " + esc(p.book || "") + "</div>" +
+      pickSentence(p) +
+      '<div class="bt-pick-nums">' +
+      chip("Model", pct(p.model_prob)) + chip("Market fair", pct(p.market_fair_prob)) +
+      chip("Edge", signed(p.edge * 100, 1) + "%") +
+      chip("EV / unit", signed(p.ev_per_unit, 3)) + "</div>" +
+      caveat + unitLine(p, m) + "</div>";
+  }
+
   function renderPick() {
     var d = S.data;
     var out = [];
@@ -401,8 +522,10 @@
       return empty("Pick of the day is unavailable",
         "The betting payload has not been built yet. Check back after the next build.");
     }
-    var p = d.pick_of_the_day;
-    if (!p) {
+    var any = SLOTS.some(function (s) { return !!d[s.key]; });
+    out.push(SLOTS.map(pickCard).join(""));
+
+    if (!any) {
       // EVERY blocker, not the first one. The payload used to carry a single
       // reason, so on a day with no odds feed the page said "no odds feed" and
       // a reader walked away thinking an API key was the only thing missing.
@@ -420,25 +543,46 @@
             return "<li>" + esc(reason) + tail + "</li>";
           }).join("") + "</ul>"
         : "<p>" + esc(d.pick_reason || "") + "</p>";
-      out.push('<div class="bt-nopick"><div class="bt-nopick-hd">No pick today</div>' +
-        "<p>" + esc(noPickHeadline(vstate())) + "</p>" + lines +
-        "<p>A pick ships when two things are true: an odds feed is live, and the vintage " +
-        "mode has measured a minimum edge worth betting on games it could not see. Neither " +
-        "is true yet, so there is nothing here. That is the honest state, not a bug.</p></div>");
-    } else {
-      out.push('<div class="bt-pick">' +
-        '<div class="bt-pick-hd">Pick of the day</div>' +
-        '<div class="bt-pick-sel">' + esc(p.label || p.side || "") + " " + fmtOdds(p.odds) + "</div>" +
-        '<div class="bt-pick-meta">' + esc(p.matchup || "") + " &middot; " + esc(p.book || "") +
-        " &middot; stake " + num(p.stake_units, 1) + "u</div>" +
-        '<div class="bt-pick-nums">' +
-        chip("Model", pct(p.model_prob)) + chip("Market fair", pct(p.market_fair_prob)) +
-        chip("Edge", signed(p.edge * 100, 1) + "%") + chip("EV / unit", signed(p.ev_per_unit, 3)) +
-        "</div></div>");
+      out.push('<div class="bt-nopick"><div class="bt-nopick-hd">Why nothing is here' +
+        "</div><p>" + esc(noPickHeadline(vstate())) + "</p>" + lines +
+        "<p>These are the standing reasons the model is not validated. They stay " +
+        "on the page whether a pick ships or not, because a provisional pick does " +
+        "not make any of them untrue.</p></div>");
     }
-    out.push(validationPanel());
-    out.push(modelPanel(d.model || {}));
+
+    // THE PANELS ARE COLLAPSED, NOT REMOVED. Every word of the contamination
+    // account, the gate table and the backtest is still here, one click away
+    // and summarised in a sentence above the toggle. Leading a casual reader
+    // straight into it taught him nothing; hiding it would be dishonest. This
+    // is the only arrangement that is neither.
+    out.push(trustTopline());
+    out.push('<details class="bt-details"><summary class="bt-details-sum">' +
+      "How much should you trust this? Open the full accounting" +
+      "</summary><div class=\"bt-details-body\">" +
+      validationPanel() + modelPanel(d.model || {}) + "</div></details>");
     return out.join("");
+  }
+
+  // One sentence above the toggle, so the topline is never behind a click. It
+  // reads the same validation state the panel does, so the two cannot drift.
+  function trustTopline() {
+    var v = vstate();
+    var m = (S.data && S.data.pick_meta) || {};
+    var vin = (v || {}).vintage || {};
+    var need = vin.min_graded_games_for_min_edge;
+    var have = vin.n_graded;
+    var s = "Short version: this model is NOT validated. ";
+    if (need != null) {
+      s += "The honest backtest has graded " + (have == null ? "-" : have) +
+        " of the " + need + " games it needs before any edge threshold can be " +
+        "measured, so the picks above clear a " + pct(m.min_edge, 1) +
+        " floor that was chosen as policy, not fitted to anything. ";
+    } else {
+      s += "No minimum edge has been measured, so the picks above clear a floor " +
+        "that was chosen as policy, not fitted to anything. ";
+    }
+    s += "Treat them as a labelled experiment being logged in public.";
+    return note(s);
   }
 
   // ---- section: the record --------------------------------------------------
@@ -447,9 +591,9 @@
     return recordPanel(d ? d.record : null) + validationPanel() +
       '<div class="bt-panel"><div class="bt-panel-hd">How a pick gets graded</div>' +
       "<p>Every published pick carries the timestamp, the book, the price at post " +
-      "and a flat one unit. It settles won, lost or void, and it is then graded a " +
-      "second time against the closing line.</p>" +
-      "<p>Closing line value is the honest test. Beating the close means the market " +
+      "and a flat one " + gl("unit", "betting_unit") + ". It settles won, lost or " +
+      "void, and it is then graded a second time against the closing line.</p>" +
+      "<p>" + gl("Closing line value", "clv") + " is the honest test. Beating the close means the market " +
       "moved toward the pick after it was posted, which is evidence the pick had " +
       "information in it. Winning a bet is not evidence of anything on its own, and " +
       "one season of results is a smaller sample than it feels like.</p>" +
@@ -551,7 +695,7 @@
             "</td><td>" + num(b.brier, 5) + "</td><td>" + num(b.brier_flat_500, 5) + "</td><td>" +
             num(b.brier_home_base, 5) + "</td><td>" + pct(b.accuracy) + "</td></tr>";
         }).join("") + "</tbody></table></div>");
-      rows.push(note("Lower Brier is better. " + skillSentence(blocks) +
+      rows.push(note("Lower " + gl("Brier", "brier_score") + " is better. " + skillSentence(blocks) +
         " None of that validates the model: the team inputs in the contaminated rows are " +
         "season to date, so every graded game sits inside its own features. " +
         esc(bt.note || "")));
@@ -607,14 +751,52 @@
     var head = hasMarket ? "" : note("No odds feed is configured, so these are model fair " +
       "prices with nothing to compare them against." +
       (reason ? " The build reports: " + esc(reason) + "." : ""));
+    var thr = pickFloor();
+    if (hasMarket && thr != null) {
+      head += note("A <strong>best value</strong> badge marks the single side in a " +
+        "game with the largest " + gl("edge", "bet_edge") + " clearing the same " +
+        esc(floorText((S.data && S.data.pick_meta) || {})) + " the picks above " +
+        "use, so the badge and the picks can never disagree about the bar. A game " +
+        "with no badge had nothing clear it, and that absence is information: it " +
+        "means the model and the market agree about that game.");
+    }
     return head + bets.map(gameCard).join("");
+  }
+
+  // THE BADGE AND THE PICKS READ ONE NUMBER. The threshold comes from
+  // `pick_meta.min_edge`, which is the same resolved floor the server used to
+  // choose the slots, so a row can never be badged as value on the board while
+  // being below the bar the picks were held to. Hard-coding it here is how the
+  // two would drift the day the measured threshold replaces the policy floor.
+  function pickFloor() {
+    var m = (S.data && S.data.pick_meta) || {};
+    return (m.min_edge == null) ? null : Number(m.min_edge);
+  }
+
+  // The single best-value side in one game, or null when nothing clears the
+  // floor. Absence is the message: a game with no qualifying side gets no badge
+  // rather than a badge on its least-bad row.
+  function bestValueSide(b, thr) {
+    if (thr == null) return null;
+    var best = null;
+    [b.moneyline, b.runline, (b.total || {}).sides].forEach(function (rows) {
+      (rows || []).forEach(function (r) {
+        if (r.edge == null || r.edge < thr || r.odds == null || !r.book) return;
+        if (!best || r.edge > best.edge) best = r;
+      });
+    });
+    return best;
   }
 
   function gameCard(b) {
     var m = b.model || {};
+    var best = bestValueSide(b, pickFloor());
+    var badge = best ? ' <span class="bt-tag bt-tag-ok bt-bestval">best value ' +
+      esc(best.label || best.side || "") + " " + fmtOdds(best.odds) + "</span>" : "";
     var hd = '<div class="bt-game-hd">' +
       '<div class="bt-game-teams">' + teamLogo(b.away.org) + " " + esc(b.away.org) +
-      ' <span class="bt-at">at</span> ' + teamLogo(b.home.org) + " " + esc(b.home.org) + "</div>" +
+      ' <span class="bt-at">at</span> ' + teamLogo(b.home.org) + " " + esc(b.home.org) +
+      badge + "</div>" +
       '<div class="bt-game-sub">' + esc(b.venue || "") +
       (b.start ? " &middot; " + esc(String(b.start).slice(11, 16)) + " UTC" : "") + "</div></div>";
 
@@ -626,18 +808,22 @@
     var sp = '<div class="bt-game-sp">' +
       spLine(b.away, m.away_prevention) + spLine(b.home, m.home_prevention) + "</div>";
 
-    var blocks = [marketBlock("Moneyline", b.moneyline)];
-    if (b.runline) blocks.push(marketBlock("Runline", b.runline));
-    if (b.total && b.total.sides) blocks.push(marketBlock("Total " + b.total.line, b.total.sides));
+    var blocks = [marketBlock(gl("Moneyline", "moneyline"), b.moneyline, best)];
+    if (b.runline) blocks.push(marketBlock(gl("Runline", "runline"), b.runline, best));
+    if (b.total && b.total.sides) {
+      blocks.push(marketBlock(gl("Total", "total_line") + " " + esc(b.total.line),
+                              b.total.sides, best));
+    }
     else blocks.push('<div class="bt-market"><div class="bt-market-hd">Total</div>' +
       '<div class="bt-faironly">Model fair total ' + num(m.fair_total, 2) +
       ". No posted line to compare.</div></div>");
 
     var hold = "";
     if (b.market && (b.market.moneyline_hold_pct != null || b.market.total_hold_pct != null)) {
-      hold = '<div class="bt-hold">Book hold: moneyline ' +
+      hold = '<div class="bt-hold">Book ' + gl("hold", "vig") + ": moneyline " +
         num(b.market.moneyline_hold_pct, 2) + "%, total " + num(b.market.total_hold_pct, 2) +
-        "%. Fair probabilities de-vigged by the proportional method.</div>";
+        "%. Fair probabilities " + gl("de-vigged", "devig") +
+        " by the proportional method.</div>";
     }
     return '<div class="bt-game">' + hd + probs + sp +
       '<div class="bt-markets">' + blocks.join("") + "</div>" + hold + "</div>";
@@ -657,15 +843,20 @@
       num((prev || {}).bullpen_plus, 0) + "</span></div>";
   }
 
-  function marketBlock(title, rows) {
+  // `title` arrives as ready HTML (it carries a glossary span), so it is the one
+  // argument here that is not escaped. Every value from the payload still is.
+  function marketBlock(title, rows, best) {
     if (!rows || !rows.length) return "";
     var hasBook = rows.some(function (r) { return r.odds != null; });
-    var head = "<tr><th class=\"bt-l\">" + esc(title) + "</th><th>Model</th>" +
-      (hasBook ? "<th>Price</th><th>Fair</th><th>Edge</th><th>EV/u</th><th>Kelly</th>" :
-        "<th>Fair price</th>") + "</tr>";
+    var head = "<tr><th class=\"bt-l\">" + title + "</th><th>Model</th>" +
+      (hasBook ? "<th>Price</th><th>" + gl("Fair", "fair_line") + "</th><th>" +
+        gl("Edge", "bet_edge") +
+        "</th><th>" + gl("EV/u", "ev_per_unit") + "</th><th>" +
+        gl("Kelly", "kelly_criterion") + "</th>" : "<th>Fair price</th>") + "</tr>";
     var body = rows.map(function (r) {
-      var cells = "<td class=\"bt-l\">" + esc(r.label || r.side) + "</td>" +
-        "<td>" + pct(r.model_prob) + "</td>";
+      var cells = "<td class=\"bt-l\">" + esc(r.label || r.side) +
+        (r === best ? ' <span class="bt-tag bt-tag-ok bt-bestval">best value</span>' : "") +
+        "</td><td>" + pct(r.model_prob) + "</td>";
       if (hasBook) {
         var cls = r.edge == null ? "" : (r.edge > 0 ? " bt-pos" : " bt-neg");
         cells += "<td>" + fmtOdds(r.odds) + (r.book ? ' <span class="bt-dim">' + esc(r.book) +
@@ -677,7 +868,7 @@
       } else {
         cells += "<td>" + fmtOdds(r.fair_odds) + "</td>";
       }
-      return "<tr>" + cells + "</tr>";
+      return '<tr' + (r === best ? ' class="bt-bestrow"' : "") + ">" + cells + "</tr>";
     }).join("");
     return '<div class="bt-market"><div class="bt-scroll mlbstats-scroll"><table class="bt-table bt-market-table mlbstats-table">' +
       "<thead>" + head + "</thead><tbody>" + body + "</tbody></table></div></div>";
@@ -739,7 +930,8 @@
     var d = S.data;
     var pc = (d && d.parlay_context) || { rules: [], legs: [] };
     var out = [];
-    out.push('<div class="bt-panel"><div class="bt-panel-hd">Why there is no parlay of the day</div>' +
+    out.push('<div class="bt-panel"><div class="bt-panel-hd">Why there is no ' +
+      gl("parlay", "parlay") + " of the day</div>" +
       "<p>" + esc(pc.featured_reason ||
         "A featured parlay needs a backtest that survives the correlation haircut.") + "</p>" +
       "<p>" + esc(pc.math_note || "") + "</p></div>");
@@ -1450,9 +1642,32 @@
     ".bt-nopick-hd{font:700 14px/1 var(--font-retro,monospace);color:var(--text-primary);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}",
     ".bt-nopick p{font-size:12.5px;color:var(--text-secondary);margin:0 0 6px}",
     ".bt-pick{border:1px solid var(--accent-green,#3a9);padding:14px;margin:10px 0;background:var(--bg-secondary)}",
-    ".bt-pick-hd{font:700 11px/1 var(--font-retro,monospace);color:var(--accent-green,#3a9);text-transform:uppercase;letter-spacing:.06em}",
+    ".bt-pick-hd{font:700 11px/1 var(--font-retro,monospace);color:var(--accent-green,#3a9);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
     ".bt-pick-sel{font:700 20px/1.2 var(--font-retro,monospace);color:var(--text-primary);margin:6px 0}",
     ".bt-pick-meta{font-size:12px;color:var(--text-tertiary);margin-bottom:8px}",
+    ".bt-pick p{font-size:12.5px;color:var(--text-secondary);margin:0 0 8px}",
+    ".bt-pick-lead{color:var(--text-tertiary)}",
+    // An empty slot must not read as a failed load. It keeps the card frame and
+    // the heading, and loses only the accent that says "here is a pick".
+    ".bt-pick-empty{border-color:var(--border,#333)}",
+    ".bt-pick-empty .bt-pick-hd{color:var(--text-tertiary)}",
+    ".bt-numchip-info{border-style:dashed}",
+    // The collapsed accounting. The summary is a control, so it reads as one.
+    ".bt-details{border:1px solid var(--border,#333);background:var(--bg-secondary);margin:10px 0}",
+    ".bt-details-sum{font:700 12px/1.3 var(--font-retro,monospace);color:var(--text-primary);padding:10px 12px;cursor:pointer;list-style:none}",
+    ".bt-details-sum::-webkit-details-marker{display:none}",
+    ".bt-details-sum::before{content:'+ ';color:var(--accent-cyan,#2a7)}",
+    ".bt-details[open] .bt-details-sum::before{content:'- '}",
+    ".bt-details-sum:hover{color:var(--accent-cyan,#2a7)}",
+    ".bt-details-body{padding:0 12px 4px}",
+    ".bt-details-body .bt-panel{border:0;padding:0;margin:0 0 12px}",
+    ".bt-bestval{margin-left:6px;white-space:nowrap}",
+    ".bt-table tr.bt-bestrow td{background:var(--bg-hover,var(--bg-secondary))}",
+    // The frozen identity cell is painted by the two rules above at a higher
+    // specificity than the highlight, so without this the badged row lights up
+    // everywhere except the column carrying the badge.
+    ".bt-scroll.mlbstats-scroll:has(> .mlbstats-table) .bt-table tr.bt-bestrow " +
+      "td:first-child{background:var(--bg-hover,var(--bg-secondary))}",
     ".bt-numchip{display:inline-flex;flex-direction:column;border:1px solid var(--border,#333);padding:4px 8px;margin:0 6px 6px 0;min-width:82px}",
     ".bt-numchip-l{font:600 9px/1 var(--font-retro,monospace);color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em}",
     ".bt-numchip-v{font:700 14px/1.2 var(--font-retro,monospace);color:var(--text-primary);margin-top:3px}",

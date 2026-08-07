@@ -24,6 +24,12 @@ WHAT THEY HOLD
   5. Pushes are excluded from the min-edge sweep rather than scored as losses.
   6. Rates are None over an empty set, never 0.0.
   7. Recording is idempotent per slate, so a re-run cannot inflate the sample.
+  8. A PUBLISHED SLOT ALWAYS REACHES THE LEDGER, and carries the tag of the rule
+     that chose it. The headline slot selects on model probability inside a
+     price band, so it can sit below the top of the EV ranking by construction;
+     if the EV ranking were the only way in, the site could publish a pick that
+     never became evidence. The tag is what lets the future min-edge sweep
+     condition on the selection rule instead of pooling three of them.
 """
 from __future__ import annotations
 
@@ -175,6 +181,81 @@ def test_pushes_are_excluded_from_the_sweep_not_scored_as_losses(led):
     assert all(isinstance(g["won"], bool) for g in graded)
     assert len(graded) == len([r for r in bs.load(led)
                                if r["result"] in ("won", "lost")])
+
+
+# ---- slot tagging (2026-08-07, two published slots) ------------------------
+def _slot_payload():
+    """A board whose headline slot is NOT the top EV row.
+
+    The moneyline at +450 has the best EV and the worst model probability; the
+    runline is what the headline rule picks. That disagreement is the whole
+    reason the slots are handed in separately."""
+    p = _payload(edge=0.10, odds=450)
+    p["team_bets"][0]["moneyline"][0].update(
+        {"decimal": 5.5, "model_prob": 0.30, "ev_per_unit": 0.65})
+    p["team_bets"][0]["runline"][0].update({"model_prob": 0.70})
+    p["pick_of_the_day"] = dict(p["team_bets"][0]["runline"][0],
+                                game_pk=900, market="runline",
+                                slot="pick_of_the_day")
+    p["longshot_of_the_day"] = dict(p["team_bets"][0]["moneyline"][0],
+                                    game_pk=900, market="moneyline",
+                                    slot="longshot_of_the_day")
+    return p
+
+
+def test_a_published_slot_is_logged_even_when_it_is_not_top_of_the_ev_board(led):
+    out = bs.record_slate(_slot_payload(), min_edge=0.05, path=led)
+    by_slot = {r["slot"]: r for r in out["rows"]}
+    assert by_slot["potd_band"]["market"] == "runline"
+    assert by_slot["longshot"]["odds_at_post"] == 450
+    assert by_slot["ev_rank"], "the EV ranking still contributes rows"
+
+
+def test_slot_tags_are_the_three_selection_rules(led):
+    out = bs.record_slate(_slot_payload(), min_edge=0.05, path=led)
+    assert set(out["by_slot"]) <= {"potd_band", "longshot", "ev_rank"}
+    assert out["by_slot"]["potd_band"] == 1 and out["by_slot"]["longshot"] == 1
+
+
+def test_a_slate_with_no_published_slots_tags_everything_by_ev(led):
+    """The payload shape from before the two-slot builder. Nothing is tagged as
+    a slot pick, because nothing was published as one."""
+    out = bs.record_slate(_payload(), min_edge=0.05, path=led)
+    assert {r["slot"] for r in out["rows"]} == {"ev_rank"}
+
+
+def test_the_slate_budget_is_five(led):
+    """Two slot picks plus the top three by EV. A slate may not log fewer rows
+    than it publishes."""
+    assert bs.MAX_PER_SLATE == 5
+    cands = bs.candidates_from_board(_slot_payload(), min_edge=0.05)
+    assert len(cands) <= bs.MAX_PER_SLATE
+
+
+def test_summary_splits_by_slot_and_never_pools_the_rules(led):
+    """The three tags select on three different quantities, so a pooled ROI
+    across them measures a mixture nobody bet."""
+    bs.record_slate(_slot_payload(), min_edge=0.05, path=led)
+    bs.settle(games=[{"game_pk": 900, "home_runs": 1, "away_runs": 7}], path=led)
+    s = bs.summary(path=led)
+    assert set(s["by_slot"]) == {"potd_band", "longshot", "ev_rank"}
+    assert s["by_slot"]["potd_band"]["n_settled"] == 1
+    assert sum(v["n_rows"] for v in s["by_slot"].values()) == s["n_rows"]
+
+
+def test_existing_rows_are_never_retagged(led):
+    """Rows written before the tag existed carry none, and stamping one on now
+    would assert a fact the writer did not know. They count as `untagged`."""
+    bs.record_slate(_payload(), min_edge=0.05, path=led)
+    rows = bs.load(led)
+    rows[0] = {k: v for k, v in rows[0].items() if k != "slot"}
+    bs._write(rows, led)
+    s = bs.summary(path=led)
+    assert s["by_slot"]["untagged"]["n_rows"] == 1
+    # And re-running the slate must not rewrite it, because a settled or
+    # published row is frozen apart from its settlement fields.
+    again = bs.record_slate(_payload(), min_edge=0.05, path=led)
+    assert again["written"] == 0
 
 
 def test_rates_over_an_empty_ledger_are_none(led):

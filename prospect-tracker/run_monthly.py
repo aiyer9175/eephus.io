@@ -2059,17 +2059,25 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 _payload = _json.loads(
                     (out_dir / "betting.json").read_text(encoding="utf-8"))
                 _meta = _payload.get("pick_meta") or {}
+                # BOTH published slots are handed in, so each one is logged
+                # even when it is not among the top rows by EV. The headline
+                # slot selects on model probability inside a price band, which
+                # by construction can sit below the EV ranking, and a published
+                # pick with no ledger row is a claim with no evidence behind it.
                 _rec = betting_shadow.record_slate(
                     _payload,
                     min_edge=_meta.get("min_edge")
                     or __import__("betting_export").PROVISIONAL_MIN_EDGE,
                     gate_state={"provisional": _meta.get("provisional"),
                                 "basis": _meta.get("basis")},
+                    slots={k: _payload.get(k) for k in
+                           ("pick_of_the_day", "longshot_of_the_day")},
                     log_fn=log.info)
                 _sum = betting_shadow.summary()
-                log.info("shadow ledger: +%s logged (%s), %s settled, %s of %s "
+                log.info("shadow ledger: +%s logged (%s, %s), %s settled, %s of %s "
                          "settled bets toward the min-edge sweep",
                          _rec.get("written"), _rec.get("reason"),
+                         _rec.get("by_slot") or {},
                          _st.get("settled"), _sum.get("n_for_min_edge_sweep"),
                          _sum.get("min_bets_for_sweep"))
             except Exception:

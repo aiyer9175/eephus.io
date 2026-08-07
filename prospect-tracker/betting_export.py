@@ -27,11 +27,16 @@ re-dating a post: all three raise RecordImmutabilityError, and test_betting.py
 pins that. Rows carry odds at post, the book, a flat 1-unit stake, and CLV
 against the closing snapshot once one exists.
 
-NO PICK SHIPS TODAY. `pick_of_the_day` is null and `model.validated` is false
-because the backtest is contaminated (betting_model.backtest explains how).
-The threshold that would gate a pick is `min_edge`, and it is null until a
-clean forward test measures one. Inventing a "3% edge" threshold would be the
-single most dishonest number on the site.
+TWO PROVISIONAL SLOTS SHIP, AND `model.validated` IS STILL FALSE. The backtest
+is contaminated (betting_model.backtest explains how), so the measured
+threshold `min_edge` stays null. What the slates publish against is a POLICY
+floor, `PROVISIONAL_MIN_EDGE`, and every surface says so in that word.
+`pick_of_the_day` takes the highest model win probability inside a normal price
+band and `longshot_of_the_day` takes the highest EV at +200 or longer. Both
+read the SAME floor, `resolve_min_edge`. Inventing a second, lower floor so
+that the longshot slot always has something in it would be the single most
+dishonest number on the site, so an empty slot stays empty and names the floor
+it could not clear.
 
 AND THE PAYLOAD HAS TO SAY SO IN STRUCTURE, NOT JUST IN PROSE. betting_model
 now grades in TWO labelled modes (contaminated and vintage) and puts `min_edge`
@@ -1252,28 +1257,59 @@ def resolve_min_edge(evald: dict | None) -> tuple[float | None, str, bool]:
     return PROVISIONAL_MIN_EDGE, "provisional_policy_floor", True
 
 
-def provisional_pick(bets: list[dict], *, odds_configured: bool,
-                     evald: dict | None = None) -> tuple[dict | None, str, dict]:
-    """The highest-EV side clearing whichever threshold currently applies.
+#: THE PICK-OF-THE-DAY PRICE BAND, in american odds, inclusive on both ends.
+#: Owner decision 2026-08-07: the headline slot is the side the model is most
+#: confident in among prices a reader recognises as a normal bet, not the side
+#: with the fattest number attached to it.
+#:
+#: Selecting on EV alone, which is what the single slot did, drives the pick to
+#: the longest price on the board every time: EV is probability times payout,
+#: and payout dominates. On the 2026-08-06 board that put a +304 moneyline with
+#: a 32.9% model probability in the headline slot, which is an honest number and
+#: a terrible flagship. The band pushes those to their own slot and leaves this
+#: one to the sides the model actually likes.
+POTD_ODDS_BAND = (-199, 199)
 
-    Returns (pick, reason, meta). `meta` always carries `provisional` and the
-    basis, because a caller that forgets to check would otherwise publish an
-    unvalidated pick with no qualifier, which is the one outcome this module
-    exists to prevent.
+#: A price at or beyond this is a longshot and is judged on EV instead, because
+#: at +300 the model is never going to be the confident side and ranking those
+#: rows by probability would just pick the shortest of them.
+LONGSHOT_MIN_ODDS = 200
 
-    An absent odds feed is still a hard stop. A provisional pick is a claim
-    about a real market price; without one there is nothing to disagree with,
-    and the model's own fair line is not a market."""
-    thr, basis, prov = resolve_min_edge(evald)
-    meta = {"provisional": prov, "min_edge": thr, "basis": basis,
-            "policy": ("a provisional pick is published against a POLICY floor, "
-                       "not a validated threshold; it is labelled as such "
-                       "everywhere it appears and it is recorded in the shadow "
-                       "ledger so it becomes evidence")}
-    if not odds_configured:
-        return None, ("no odds feed is configured, so there is no market price to "
-                      "have an edge against"), meta
+#: What the page SUGGESTS per slot, in flat units. This is display only.
+#: `stake_units` on the row, on the public record and in the shadow ledger is
+#: STAKE_UNITS for every slot, because a published ROI computed over variable
+#: stakes cannot be audited from the rows: a reader would have to trust that the
+#: sizing was decided before the result and not after it. The suggestion says
+#: what a reader might do; the record says what the site is accountable for.
+SLOT_DISPLAY_UNITS = {"pick_of_the_day": 1.0, "longshot_of_the_day": 0.5}
 
+SLOT_LABELS = {"pick_of_the_day": "Pick of the Day",
+               "longshot_of_the_day": "Longshot Value of the Day"}
+
+#: Attached to any published slot on a runline or total. The Poisson-difference
+#: margin underdisperses real run scoring (docs/diamond-betting.md section 11),
+#: which pulls those two markets' probabilities toward the middle and therefore
+#: inflates the model's confidence on the side of the line the middle sits on.
+#: The moneyline is the least exposed of the three. The caveat rides the row so
+#: it cannot be lost by a client that renders the pick and not the limits list.
+POISSON_CAVEAT = ("this is a runline or total, and the margin model is a Poisson "
+                  "difference that underdisperses real run scoring, so its "
+                  "probabilities sit too close to the middle; treat this edge as "
+                  "the softest of the three markets")
+
+
+def _floor_clearing_sides(bets: list[dict], thr: float) -> list[dict]:
+    """Every side on the BOARD that clears `thr` at a real taken price.
+
+    THE ENUMERATION MAY NOT RE-PRICE ANYTHING. Each candidate is the board row
+    verbatim plus context keys (market, game, matchup, start). Re-reading the
+    odds cache here and shopping each side independently is exactly what
+    manufactured a 0.38839 edge by fusing one book's runline with another
+    book's price for the opposite side (commit 628d04e). The line is chosen
+    once, by book count, in `_consensus_point`, and priced only among the books
+    posting it, in `_best_price_on_line`. Both slots and the per-game best-value
+    badge read the rows that came out of that, so no two surfaces on the page
+    can disagree about what a side costs."""
     cands = []
     for b in bets:
         for market, rows in (("moneyline", b.get("moneyline") or []),
@@ -1287,16 +1323,130 @@ def provisional_pick(bets: list[dict], *, odds_configured: bool,
                 cands.append({**row, "market": market, "game_pk": b.get("game_pk"),
                               "matchup": f"{b['away']['org']} at {b['home']['org']}",
                               "start": b.get("start")})
-    if not cands:
-        return None, (f"no side cleared the {thr:.1%} "
-                      f"{'provisional floor' if prov else 'minimum edge'} "
-                      f"on this slate"), meta
-    best = max(cands, key=lambda r: r.get("ev_per_unit") or -9)
-    best["stake_units"] = STAKE_UNITS
-    best["provisional"] = prov
-    best["min_edge_used"] = thr
-    return best, ("highest expected value among sides clearing the "
-                  f"{'provisional floor' if prov else 'measured threshold'}"), meta
+    return cands
+
+
+def _publish_slot(row: dict, slot: str, *, thr: float, prov: bool) -> dict:
+    """Stamp a chosen candidate with everything that makes it self-describing.
+
+    A row lifted out of the payload and pasted anywhere else still carries the
+    floor it cleared, whether that floor was policy or measurement, which slot
+    rule chose it and what the recorded stake was."""
+    out = {**row, "slot": slot, "slot_label": SLOT_LABELS[slot],
+           "stake_units": STAKE_UNITS,
+           "suggested_units": SLOT_DISPLAY_UNITS[slot],
+           "provisional": prov, "min_edge_used": thr}
+    k = row.get("kelly_full")
+    # Quarter Kelly, INFORMATIONAL. Full Kelly on an unvalidated model is a way
+    # to lose a bankroll quickly, and the served number is a quarter of it so
+    # nobody has to do the division under the impression the site endorsed it.
+    out["kelly_quarter"] = round(float(k) / 4.0, 5) if k is not None else None
+    if row.get("market") in ("runline", "total"):
+        out["caveat"] = POISSON_CAVEAT
+    return out
+
+
+def _potd_rank(row: dict) -> tuple:
+    """Sort key for the headline slot: most confident first, then the price
+    closest to a standard -110, then the best EV. Every term is deterministic,
+    so two identical boards cannot publish two different picks."""
+    return (-(row.get("model_prob") or 0.0),
+            abs(float(row.get("odds") or 0) + 110.0),
+            -(row.get("ev_per_unit") if row.get("ev_per_unit") is not None else -9.0))
+
+
+def _longshot_rank(row: dict) -> tuple:
+    """Sort key for the longshot slot: best EV first, then the higher model
+    probability, so a tie on EV goes to the side the model believes more."""
+    return (-(row.get("ev_per_unit") if row.get("ev_per_unit") is not None else -9.0),
+            -(row.get("model_prob") or 0.0))
+
+
+def provisional_picks(bets: list[dict], *, odds_configured: bool,
+                      evald: dict | None = None) -> tuple[dict, str, dict]:
+    """Both published slots, chosen from ONE candidate list at ONE floor.
+
+    Returns (slots, reason, meta). `slots` maps the payload key of each slot to
+    a row or to None; `reason` is the headline slot's reason, which is what
+    `pick_reason` has always carried; `meta` carries the floor and its basis at
+    the top level (every surface keys its labelling off that) plus a sub-block
+    per slot.
+
+    THE FLOOR IS SHARED AND IT IS NOT NEGOTIABLE PER SLOT. A longshot slot that
+    quietly dropped to a lower threshold so it always had something in it would
+    be a threshold invented to make a pick appear, which docs/diamond-betting.md
+    names as the single most dishonest number this module could publish. When
+    nothing at +200 or longer clears the floor, the slot is empty and says which
+    floor it failed to clear.
+
+    An absent odds feed is still a hard stop for both slots. A provisional pick
+    is a claim about a real market price; without one there is nothing to
+    disagree with, and the model's own fair line is not a market."""
+    thr, basis, prov = resolve_min_edge(evald)
+    floor_txt = "provisional floor" if prov else "measured threshold"
+    meta = {"provisional": prov, "min_edge": thr, "basis": basis,
+            "policy": ("a provisional pick is published against a POLICY floor, "
+                       "not a validated threshold; it is labelled as such "
+                       "everywhere it appears and it is recorded in the shadow "
+                       "ledger so it becomes evidence"),
+            "shared_floor_note": ("both slots clear the same floor; no slot is "
+                                  "allowed a lower one, because a threshold "
+                                  "lowered to make a pick appear is not a "
+                                  "threshold"),
+            "slots": {}}
+
+    def _slot_meta(slot, *, rule, band, present, reason, n_cands):
+        return {"slot": slot, "label": SLOT_LABELS[slot], "rule": rule,
+                "band": band, "present": present, "reason": reason,
+                "n_candidates": n_cands,
+                "provisional": prov, "min_edge": thr, "basis": basis,
+                "stake_units": STAKE_UNITS,
+                "suggested_units": SLOT_DISPLAY_UNITS[slot]}
+
+    lo, hi = POTD_ODDS_BAND
+    potd_band = f"american odds from {lo:+d} to {hi:+d}"
+    long_band = f"american odds of {LONGSHOT_MIN_ODDS:+d} or longer"
+    potd_rule = ("highest model win probability among sides clearing the "
+                 f"{floor_txt}, restricted to {potd_band}; ties go to the price "
+                 "nearest -110, then to the higher expected value")
+    long_rule = ("highest expected value per unit among sides clearing the "
+                 f"{floor_txt} at {long_band}")
+
+    if not odds_configured:
+        why = ("no odds feed is configured, so there is no market price to have "
+               "an edge against")
+        for slot in SLOT_LABELS:
+            meta["slots"][slot] = _slot_meta(
+                slot, rule=(potd_rule if slot == "pick_of_the_day" else long_rule),
+                band=(potd_band if slot == "pick_of_the_day" else long_band),
+                present=False, reason=why, n_cands=0)
+        return {k: None for k in SLOT_LABELS}, why, meta
+
+    cands = _floor_clearing_sides(bets, thr)
+    meta["n_floor_clearing_sides"] = len(cands)
+    in_band = [c for c in cands if lo <= c["odds"] <= hi]
+    longshots = [c for c in cands if c["odds"] >= LONGSHOT_MIN_ODDS]
+
+    slots, reasons = {}, {}
+    for slot, pool, rank, band in (
+            ("pick_of_the_day", in_band, _potd_rank, potd_band),
+            ("longshot_of_the_day", longshots, _longshot_rank, long_band)):
+        if not cands:
+            why = f"no side cleared the {thr:.1%} {floor_txt} on this slate"
+            row = None
+        elif not pool:
+            why = (f"{len(cands)} side(s) cleared the {thr:.1%} {floor_txt} on this "
+                   f"slate and none of them are priced at {band}")
+            row = None
+        else:
+            row = _publish_slot(sorted(pool, key=rank)[0], slot, thr=thr, prov=prov)
+            why = (potd_rule if slot == "pick_of_the_day" else long_rule)
+        slots[slot] = row
+        reasons[slot] = why
+        meta["slots"][slot] = _slot_meta(
+            slot, rule=(potd_rule if slot == "pick_of_the_day" else long_rule),
+            band=band, present=row is not None, reason=why, n_cands=len(pool))
+    return slots, reasons["pick_of_the_day"], meta
 
 
 def pick_of_the_day(bets: list[dict], *, min_edge: float | None,
@@ -1530,12 +1680,15 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     # contradiction, and this resolves it the safe way.
     validated = bool(validation.get("validated") and min_edge is not None)
     blockers = pick_blockers(min_edge=min_edge, odds_configured=odds_configured, gate=gate)
-    # PROVISIONAL PICK (owner decision 2026-08-06). The blockers above are kept
-    # and published UNCHANGED: they are the honest account of why the model is
-    # not validated, and a provisional pick does not make any of them untrue.
-    # What changes is that the slate no longer renders empty while they are shut.
-    pick, pick_reason, pick_meta = provisional_pick(
+    # PROVISIONAL PICKS (owner decision 2026-08-06, second slot 2026-08-07). The
+    # blockers above are kept and published UNCHANGED: they are the honest
+    # account of why the model is not validated, and a provisional pick does not
+    # make any of them untrue. What changes is that the slate no longer renders
+    # empty while they are shut.
+    slots, pick_reason, pick_meta = provisional_picks(
         bets, odds_configured=odds_configured, evald=evald)
+    pick = slots["pick_of_the_day"]
+    longshot = slots["longshot_of_the_day"]
     record = load_record()
 
     empty_reasons = []
@@ -1612,7 +1765,13 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
             "min_edge": min_edge,
         },
         "disclaimer": DISCLAIMER,
+        # THE KEY NAME IS THE CONTRACT. The client, the preview slice and
+        # test_betting all read `pick_of_the_day`; the second slot is added
+        # beside it rather than the pair being nested under a new key, so an
+        # older reader of this payload keeps working and shows one slot instead
+        # of none.
         "pick_of_the_day": pick,
+        "longshot_of_the_day": longshot,
         "pick_reason": pick_reason,
         # The label the page keys off. Published even when there is no pick, so
         # a client can render the provisional treatment around an empty slot
@@ -1654,7 +1813,14 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         # reason, and a preview built from `pick_reason`/`blockers` would ship
         # the free tier a board with the staleness edited out of it.
         "pick_of_the_day": payload["pick_of_the_day"],
+        "longshot_of_the_day": payload["longshot_of_the_day"],
         "pick_reason": payload["pick_reason"],
+        # THE LABEL TRAVELS WITH THE PICK. This key was omitted from the preview
+        # for as long as the preview existed, so a free-tier reader received a
+        # pick with no `provisional` flag, no floor and no basis beside it: the
+        # one payload shape this module is built to prevent. It is the free
+        # slice's job to carry the qualifier more than anyone's.
+        "pick_meta": payload["pick_meta"],
         "pick_blockers": payload["pick_blockers"],
         "n_games": payload["n_games"],
         "team_bets": bets[:PREVIEW_GAMES],
@@ -1699,6 +1865,7 @@ if __name__ == "__main__":                                       # pragma: no co
         print(json.dumps({
             "slate_date": p["slate_date"], "n_games": p["n_games"],
             "status": p["status"], "pick": p["pick_of_the_day"],
+            "longshot": p["longshot_of_the_day"],
             "pick_reason": p["pick_reason"],
             "pick_blockers": [b["id"] for b in p["pick_blockers"]],
             "validated": v.get("validated"),

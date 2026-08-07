@@ -3,9 +3,13 @@
 Lane C3 of the 2026-08-04d omnibus plan. Everything the Sports Betting module
 needs to be operated, argued with, and eventually validated.
 
-Status at ship: **Diamond preview, public, model UNVALIDATED, no picks
-published, no odds feed configured.** That is the honest state, not a bug, and
-the page says so on every surface.
+Status at ship: **Diamond preview, public, model UNVALIDATED.** Since
+2026-08-06 the module publishes PROVISIONAL picks against a policy floor rather
+than showing nothing for a season, and since 2026-08-07 there are two slots.
+Every one of them is labelled provisional on every surface and none of it makes
+the model validated. Section 7a is the selection rule; section 7 is the gate
+that would replace the policy floor with a measured one. That is the honest
+state, not a bug.
 
 Status of the validation path: **built and empty.** `leaderboard_vintages.py`
 snapshots the model's team inputs nightly, `backtest()` grades in two modes and
@@ -463,7 +467,9 @@ Until all three are open:
 - `data/betting_model_eval.json` carries `validated: false`, `contaminated:
   true`, `gates_picks: false`, `min_edge: null`, and a `min_edge_gate` block
   naming which gate is closed.
-- `pick_of_the_day` is null and stays null.
+- The MEASURED threshold stays null. What the page publishes against is the
+  provisional POLICY floor described in section 7a; the two are different
+  numbers with different standing and the payload says which one it used.
 - The registry row is `unvalidated` with **no** eval artifact (the registry's
   own honesty rule: an unvalidated row that points at an artifact is lying).
 
@@ -473,6 +479,125 @@ live season of published, CLV-graded picks.
 
 Do not invent a threshold to make a pick appear. That is the single most
 dishonest number this module could publish.
+
+---
+
+## 7a. The two published slots (provisional)
+
+Owner decision 2026-08-06 published a provisional pick rather than showing an
+empty module for a season. Owner decision 2026-08-07 split it into TWO slots,
+because one slot ranked on EV is one slot that always shows a longshot.
+
+### The floor, which both slots share
+
+`betting_export.resolve_min_edge(evald)` is the ONLY source of a floor on this
+page. It returns the measured `min_edge` the moment all three gates in section
+7 are open, and `PROVISIONAL_MIN_EDGE` (0.06) until then, plus the basis string
+every surface keys its labelling off. Nothing has to be edited when the gates
+open.
+
+0.06 is a POLICY number, chosen to be far stricter than anything the model can
+currently justify: the whole in-sample margin over the home-field baseline is
+0.0079 Brier and the honest margin will be thinner. The intended failure mode is
+publishing NOTHING on most slates.
+
+**Both slots read that one floor and no slot may have its own.** A longshot slot
+quietly running at a lower threshold so it always has something in it is a
+threshold invented to make a pick appear, which the paragraph above names as the
+single most dishonest number this module could publish. An empty slot names the
+floor it could not clear and stays empty.
+
+### Slot 1: `pick_of_the_day`
+
+The highest MODEL WIN PROBABILITY among floor-clearing sides priced inside
+`POTD_ODDS_BAND`, currently -199 to +199 inclusive. Ties break to the price
+nearest -110, then to the higher EV per unit; both terms are deterministic, so
+two identical boards cannot publish two different picks.
+
+Why not EV: EV is probability times payout and payout dominates, so an EV
+ranking selects the longest price on the board nearly every time. On the
+2026-08-06 board that put WSN moneyline +304 at a 32.9% model probability in the
+headline slot. Honest number, terrible flagship.
+
+All three markets are eligible. A runline or total pick carries `caveat` on the
+row (`POISSON_CAVEAT`), because the Poisson-difference margin underdisperses
+real run scoring and therefore inflates those two markets' probabilities;
+section 11 is the standing account of that limit. The caveat rides the ROW, not
+a page-level list, so a client that renders the pick without the list cannot
+drop it.
+
+### Slot 2: `longshot_of_the_day`
+
+The highest EV PER UNIT among floor-clearing sides priced at
+`LONGSHOT_MIN_ODDS` (+200) or longer, tie broken by the higher model
+probability. Ranking these by probability would just pick the shortest of them,
+which is the wrong question at a long price.
+
+### Staking
+
+Display units are 1.0u for the headline slot and 0.5u for the longshot
+(`SLOT_DISPLAY_UNITS`). The RECORDED stake is `STAKE_UNITS` (1.0) for both, on
+the public record and in the shadow ledger, without exception: a published ROI
+computed over variable recorded stakes cannot be audited from its own rows,
+because a reader would have to take it on trust that the sizing was decided
+before the result and not after it. Quarter Kelly (`kelly_full / 4`) is served
+as `kelly_quarter` and shown as an information chip, never as a stake.
+
+### Candidate enumeration, and the defect it is defending against
+
+`_floor_clearing_sides` walks the BOARD ROWS `team_bets` already built. It does
+not re-read `.cache/odds` and it does not price anything. On 2026-08-06 the
+board shopped each side of a market for its best price independently, which
+fused Bovada's runline with FanDuel's price for the opposite side and produced a
+0.38839 "edge" that the provisional pick immediately selected (commit 628d04e).
+The line is now chosen first by book count (`_consensus_point`) and prices and
+the de-vig are restricted to books posting it (`_best_price_on_line`). Both
+slots and the per-game best-value badge read the output of that, so no two
+surfaces on the page can disagree about what a side costs.
+`test_betting.test_every_published_slot_is_a_row_off_the_board` pins it.
+
+### Payload shape
+
+| Key | Carries |
+|---|---|
+| `pick_of_the_day` | slot 1 row or null (the key name is a contract: client, preview and tests read it) |
+| `longshot_of_the_day` | slot 2 row or null |
+| `pick_reason` | slot 1's reason, pick or no pick |
+| `pick_meta` | `provisional`, `min_edge`, `basis`, `policy`, `shared_floor_note`, `n_floor_clearing_sides`, and `slots.<key>` sub-blocks (rule, band, present, reason, n_candidates, stake_units, suggested_units) |
+
+`pick_meta` is in the PREVIEW slice as well as the full payload, since
+2026-08-07. It was omitted for as long as the preview existed, which handed the
+free tier a pick with no provisional flag, no floor and no basis beside it.
+
+`pick_blockers` is unchanged and still published in full. A provisional pick
+does not make any blocker untrue.
+
+### Slot tags in the shadow ledger
+
+Each new shadow row carries `slot`, one of:
+
+| Tag | Written when |
+|---|---|
+| `potd_band` | the row is the published `pick_of_the_day` |
+| `longshot` | the row is the published `longshot_of_the_day` |
+| `ev_rank` | the row entered on the EV ranking alone |
+
+`MAX_PER_SLATE` went 3 -> 5 on **2026-08-07**, the date the selection rule
+changed: the budget is the two slot picks plus the top three by EV, so a slate
+can never log fewer rows than it publishes. The slot picks are taken FIRST,
+ahead of the EV ranking, because the headline slot selects on probability and
+can sit below the top of the board on EV by construction.
+
+**Rows written before 2026-08-07 carry no `slot` and are NOT backfilled.** They
+were selected by the one-slot EV rule and stamping a tag on them now would
+assert a fact the writer did not know; `betting_shadow.summary()` counts them
+under `untagged`.
+
+FOR THE FUTURE MIN-EDGE SWEEP: condition on the tag, do not pool it. The three
+tags select on three different quantities (probability inside a price band, EV
+at a long price, EV anywhere), so a pooled ROI measures a mixture nobody bet and
+a threshold fitted to that mixture is wrong for every slot it is applied to.
+`summary()["by_slot"]` reports the split and deliberately does not merge it.
 
 ---
 
@@ -536,6 +661,39 @@ Six sections, hash-routed on `#section=pick|team|props|parlays|calc|mybets`.
 **Calculators and My Bets never touch the payload.** They work with no data
 file, no odds feed, no account and no network. Pinned by
 `test_client_calculators_do_not_depend_on_the_payload`.
+
+**The picks tab renders two cards, each with a PROVISIONAL badge.** Before
+2026-08-07 the word `provisional` appeared ZERO times in `assets/betting.js`:
+the flag the whole labelling contract rests on was payload-only and never
+reached a reader, so a provisional pick rendered exactly like a validated one.
+Each card also carries a plain-English sentence built entirely from served
+fields, the unit line, a quarter-Kelly information chip, and the row's caveat
+when it is a runline or a total. A slot with nothing in it renders an empty
+card naming the floor it could not clear rather than disappearing.
+
+**The validation and model panels are COLLAPSED, not removed.** They sit behind
+a `<details>` toggle under a one-sentence topline that states the model is not
+validated and how far the honest sample has to go. Every word of the
+contamination account, the gate table and the backtest is still there. Leading
+a casual reader straight into it taught him nothing; hiding it would be
+dishonest.
+
+**Per-game best-value badges** mark the single largest floor-clearing edge in a
+game and highlight that row in the market table. The threshold comes from
+`pick_meta.min_edge`, the same resolved floor the server used to pick the slots,
+so the badge and the picks can never disagree about the bar. A game with no
+qualifying side gets NO badge; the absence is the information.
+
+**Glossary spans.** The betting vocabulary is registered in
+`build_glossary_data.BETTING_ENTRIES` (group `Betting & Markets`) and merged
+into the artifact with `python build_glossary_data.py --betting`, which is
+additive and idempotent. Do NOT run `build_glossary_data.py --rebuild`: it
+regenerates from `prospx/index.html`'s inline `GLOSSARY` block, which no longer
+exists, and `data/glossary.json` has been the canonical hand-edited artifact
+since that script ran once. `betting.js`'s `gl()` helper no longer emits the
+`g-term` class itself, so a slug the artifact does not yet carry degrades to
+plain text instead of rendering a term that looks clickable and defines
+nothing; `eephus-gl.wire()` adds the class when it resolves the slug.
 
 **Naive same-game parlay math is blocked, not warned about.** Two legs from one
 game are correlated, so their product is not a price. Both the board builder

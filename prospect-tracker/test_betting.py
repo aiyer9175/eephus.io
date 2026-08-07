@@ -449,6 +449,103 @@ def test_pick_takes_the_highest_ev_above_the_threshold():
     assert pick["stake_units"] == 1.0
 
 
+# ---- the two provisional slots --------------------------------------------
+def _slot_board():
+    """One game carrying four floor-clearing sides across the price range.
+
+    Deliberately shaped so the two selection rules disagree: the +450 longshot
+    has the best EV on the board and the worst model probability, which is the
+    exact configuration that put a +304 moneyline in the headline slot on
+    2026-08-06."""
+    return [{
+        "game_pk": 1, "start": "2026-08-06T22:05:00Z",
+        "home": {"org": "CIN"}, "away": {"org": "ATH"},
+        "moneyline": [
+            {"side": "away", "label": "ATH", "point": None, "edge": 0.10,
+             "odds": 450, "decimal": 5.5, "book": "dk", "model_prob": 0.30,
+             "ev_per_unit": 0.65, "kelly_full": 0.16},
+            {"side": "home", "label": "CIN", "point": None, "edge": 0.07,
+             "odds": -150, "decimal": 1.67, "book": "dk", "model_prob": 0.66,
+             "ev_per_unit": 0.10, "kelly_full": 0.12},
+        ],
+        "runline": [
+            {"side": "away", "label": "ATH +1.5", "point": 1.5, "edge": 0.13,
+             "odds": -136, "decimal": 1.74, "book": "dk", "model_prob": 0.70,
+             "ev_per_unit": 0.21, "kelly_full": 0.28},
+        ],
+        "total": {"line": 9.0, "sides": [
+            {"side": "under", "label": "Under 9.0", "point": 9.0, "edge": 0.02,
+             "odds": -110, "decimal": 1.91, "book": "dk", "model_prob": 0.55,
+             "ev_per_unit": 0.05, "kelly_full": 0.06},
+        ]},
+    }]
+
+
+def test_the_headline_slot_takes_confidence_not_the_longest_price():
+    slots, _, meta = be.provisional_picks(_slot_board(), odds_configured=True)
+    potd = slots["pick_of_the_day"]
+    assert potd["label"] == "ATH +1.5", (
+        "the +450 row has the best EV on this board and the worst probability; "
+        "selecting on EV is what this slot exists to stop doing")
+    assert potd["model_prob"] == 0.70
+    assert meta["slots"]["pick_of_the_day"]["present"] is True
+
+
+def test_the_longshot_slot_takes_the_long_price_by_ev():
+    slots, _, _ = be.provisional_picks(_slot_board(), odds_configured=True)
+    ls = slots["longshot_of_the_day"]
+    assert ls["label"] == "ATH" and ls["odds"] == 450
+    assert ls["suggested_units"] == 0.5 and ls["stake_units"] == be.STAKE_UNITS
+
+
+def test_a_price_band_tie_breaks_toward_a_standard_price():
+    """Two sides with the same model probability: the one priced nearest -110
+    wins, because it is the more ordinary bet and the tiebreak has to be
+    deterministic or two identical boards publish two different picks."""
+    bets = _slot_board()
+    bets[0]["moneyline"][1].update({"model_prob": 0.70, "odds": -180,
+                                    "decimal": 1.56, "edge": 0.09})
+    slots, _, _ = be.provisional_picks(bets, odds_configured=True)
+    assert slots["pick_of_the_day"]["label"] == "ATH +1.5"     # -136 beats -180
+
+
+def test_an_empty_longshot_slot_names_the_floor_it_could_not_clear():
+    """The honest empty state. A second, lower floor invented so this slot
+    always has something in it is the single most dishonest number this module
+    could publish (docs/diamond-betting.md section 7)."""
+    bets = _slot_board()
+    bets[0]["moneyline"][0]["edge"] = 0.01        # the only long price fails
+    slots, _, meta = be.provisional_picks(bets, odds_configured=True)
+    assert slots["longshot_of_the_day"] is None
+    sm = meta["slots"]["longshot_of_the_day"]
+    assert sm["present"] is False
+    assert "+200" in sm["band"]
+    assert sm["min_edge"] == meta["min_edge"], "the empty slot keeps the floor"
+    assert sm["reason"]
+
+
+def test_neither_slot_ships_without_an_odds_feed():
+    slots, why, meta = be.provisional_picks(_slot_board(), odds_configured=False)
+    assert slots == {"pick_of_the_day": None, "longshot_of_the_day": None}
+    assert "odds feed" in why
+    for sm in meta["slots"].values():
+        assert sm["present"] is False and sm["min_edge"] == meta["min_edge"]
+
+
+def test_a_slot_row_is_the_board_row_plus_context_only():
+    """The enumeration reads the board it was handed. Every priced field on the
+    published row must be the same object's value, because an independent
+    pricing pass is what fused two books into one row and produced a 0.38839
+    edge on 2026-08-06."""
+    bets = _slot_board()
+    src = bets[0]["runline"][0]
+    slots, _, _ = be.provisional_picks(bets, odds_configured=True)
+    potd = slots["pick_of_the_day"]
+    for f in ("odds", "decimal", "book", "edge", "model_prob", "ev_per_unit",
+              "kelly_full", "point"):
+        assert potd[f] == src[f], f
+
+
 def test_market_view_devigs_within_one_book():
     """Mixing books manufactures a fair line with a negative hold. The de-vig
     must come from a single two-sided market."""
@@ -541,7 +638,12 @@ def test_an_unvalidated_pick_is_always_labelled_provisional(payload):
     exists to prevent, and it would be far worse than the empty slot it
     replaced.
 
-    So while `validated` is false, all five of these must hold at once."""
+    EXTENDED 2026-08-07, when a second slot was added. The guard now iterates
+    EVERY published slot rather than the one it was written for, because a new
+    slot added beside an old one is exactly how a pick ships unlabelled: the
+    test passes on the slot it names and never looks at the other.
+
+    So while `validated` is false, all of these must hold at once."""
     if payload["model"]["validated"]:
         return                              # a validated build ships plainly
 
@@ -568,14 +670,177 @@ def test_an_unvalidated_pick_is_always_labelled_provisional(payload):
     blockers = payload.get("pick_blockers") or []
     assert blockers, "the reasons the model is ungated must stay on the page"
 
-    # 5. If a pick did ship, it carries its own label and the floor it cleared,
-    #    so a row lifted out of the payload is still self-describing.
-    pick = payload.get("pick_of_the_day")
-    if pick is not None:
-        assert pick.get("provisional") is True
-        assert pick.get("min_edge_used") == meta.get("min_edge")
+    # 5. EVERY slot that shipped a row carries its own label and the floor it
+    #    cleared, so a row lifted out of the payload is still self-describing.
+    for key in _published_slots(payload):
+        pick = payload.get(key)
+        if pick is None:
+            continue
+        assert pick.get("provisional") is True, key
+        assert pick.get("min_edge_used") == meta.get("min_edge"), key
         assert pick.get("odds") is not None and pick.get("book"), (
-            "a pick without a real taken price is not a pick")
+            f"{key}: a pick without a real taken price is not a pick")
+        if _is_two_slot_build(payload):
+            assert pick.get("slot") == key, (
+                f"{key}: a published row must name the slot that chose it, or "
+                "the shadow ledger cannot tag it and the sweep cannot condition "
+                "on it")
+
+    # 6. Every slot has a meta sub-block, present or not, reading the SAME
+    #    floor on the SAME basis. A slot that could quietly carry its own
+    #    threshold is a threshold invented to make a pick appear.
+    if not _is_two_slot_build(payload):
+        return
+    for key in PUBLISHED_SLOTS:
+        sm = (meta.get("slots") or {}).get(key)
+        assert sm, f"{key}: no pick_meta.slots entry, so a reader gets a row " \
+                   "with no provisional treatment around it"
+        assert sm.get("provisional") is True, key
+        assert sm.get("basis") == meta.get("basis"), key
+        assert sm.get("min_edge") == meta.get("min_edge"), (
+            f"{key}: slot floor {sm.get('min_edge')} differs from the shared "
+            f"floor {meta.get('min_edge')}; no slot may lower it")
+        assert sm.get("reason"), f"{key}: an empty slot must say why"
+        assert sm.get("present") is (payload.get(key) is not None), key
+        # The recorded stake is flat everywhere. A variable recorded stake makes
+        # the published ROI unauditable from the rows.
+        assert sm.get("stake_units") == be.STAKE_UNITS, key
+
+
+# The slots the payload publishes. Named once so a third slot added later is a
+# one-line change here and is then covered by every guard below.
+PUBLISHED_SLOTS = ("pick_of_the_day", "longshot_of_the_day")
+
+
+def _is_two_slot_build(payload) -> bool:
+    """Whether this artifact came from the two-slot builder (2026-08-07).
+
+    THE ARTIFACT LAGS THE CODE BY A NIGHT. data/betting.json is written by the
+    daily pipeline, not by the test suite, so a checkout can hold yesterday's
+    one-slot payload against today's two-slot source. The guards that apply to
+    BOTH shapes stay unconditional; the ones that describe the new shape say
+    which build they need instead of failing on an artifact that is merely old.
+    `pick_meta.slots` is the marker because it is the block the new builder adds
+    and the old one cannot have."""
+    return bool((payload.get("pick_meta") or {}).get("slots"))
+
+
+def _published_slots(payload) -> tuple:
+    return PUBLISHED_SLOTS if _is_two_slot_build(payload) else ("pick_of_the_day",)
+
+
+def test_each_slot_stays_inside_its_own_price_band(payload):
+    """The two slots exist BECAUSE the price bands are disjoint. Selecting on EV
+    alone drove the headline slot to the longest price on the board every time
+    (EV is probability times payout and payout dominates), which is how a +304
+    moneyline at a 32.9% model probability ended up as the flagship pick on
+    2026-08-06. If the bands ever overlap, the same row can fill both slots and
+    the page publishes one pick twice."""
+    lo, hi = be.POTD_ODDS_BAND
+    assert hi < be.LONGSHOT_MIN_ODDS, "the bands must not overlap"
+    if not _is_two_slot_build(payload):
+        pytest.skip("artifact predates the two-slot builder; re-run betting_export")
+    potd = payload.get("pick_of_the_day")
+    if potd is not None:
+        assert lo <= potd["odds"] <= hi, (
+            f"pick of the day is priced {potd['odds']}, outside {lo} to {hi}")
+    ls = payload.get("longshot_of_the_day")
+    if ls is not None:
+        assert ls["odds"] >= be.LONGSHOT_MIN_ODDS, (
+            f"longshot is priced {ls['odds']}, shorter than the "
+            f"{be.LONGSHOT_MIN_ODDS} floor of its own band")
+    if potd is not None and ls is not None:
+        assert (potd["game_pk"], potd["market"], potd["side"]) != \
+               (ls["game_pk"], ls["market"], ls["side"]), \
+               "one side cannot fill both slots"
+
+
+def test_every_published_slot_is_a_row_off_the_board(payload):
+    """NO SLOT MAY RE-PRICE ANYTHING. The 0.38839 edge that shipped on
+    2026-08-06 came from shopping each side of a market independently, which
+    fused one book's runline with another book's price for the opposite side.
+    The structural defence is that a published slot is a row that is already on
+    the board: same book, same price, same de-vigged fair probability, same
+    edge. If a slot ever computes its own, this test is what catches it."""
+    priced = ("side", "label", "point", "book", "odds", "decimal", "model_prob",
+              "implied_prob", "market_fair_prob", "edge", "ev_per_unit",
+              "kelly_full")
+    board = {}
+    for b in payload.get("team_bets") or []:
+        for market, rows in (("moneyline", b.get("moneyline") or []),
+                             ("runline", b.get("runline") or []),
+                             ("total", (b.get("total") or {}).get("sides") or [])):
+            for r in rows or []:
+                board[(b.get("game_pk"), market, r.get("side"), r.get("point"))] = r
+    for key in _published_slots(payload):
+        pick = payload.get(key)
+        if pick is None:
+            continue
+        src = board.get((pick.get("game_pk"), pick.get("market"),
+                         pick.get("side"), pick.get("point")))
+        assert src is not None, (
+            f"{key} names a side that is not on the published board, so the "
+            "reader cannot check the pick against the table it came from")
+        for f in priced:
+            assert pick.get(f) == src.get(f), (
+                f"{key}.{f} is {pick.get(f)!r} on the pick and {src.get(f)!r} on "
+                "the board; a slot that re-prices its own row is the defect "
+                "that manufactured a 38.8 point edge")
+
+
+def test_the_longshot_slot_never_lowers_the_floor(payload):
+    """The one number this module may never publish. An empty longshot slot on a
+    day when nothing long clears the floor is the honest outcome; a second,
+    lower floor invented so the slot always has something in it is a threshold
+    invented to make a pick appear."""
+    meta = payload.get("pick_meta") or {}
+    thr = meta.get("min_edge")
+    if thr is None:
+        pytest.skip("no floor resolved in this build")
+    for key in _published_slots(payload):
+        pick = payload.get(key)
+        if pick is None:
+            continue
+        assert pick["min_edge_used"] == thr, key
+        assert pick["edge"] >= thr, (
+            f"{key} cleared {pick['edge']} against a {thr} floor")
+
+
+def test_the_recorded_stake_is_flat_on_every_slot(payload):
+    """Suggested units may differ per slot; the RECORDED stake may not. A
+    published ROI over variable recorded stakes cannot be audited from the rows,
+    because a reader would have to take it on trust that the sizing was decided
+    before the result and not after it."""
+    if not _is_two_slot_build(payload):
+        pytest.skip("artifact predates the two-slot builder; re-run betting_export")
+    for key in PUBLISHED_SLOTS:
+        pick = payload.get(key)
+        if pick is None:
+            continue
+        assert pick["stake_units"] == be.STAKE_UNITS, key
+        assert pick["suggested_units"] == be.SLOT_DISPLAY_UNITS[key], key
+        if pick.get("kelly_full") is not None:
+            assert pick["kelly_quarter"] == pytest.approx(
+                pick["kelly_full"] / 4.0, abs=1e-5), key
+
+
+def test_a_runline_or_total_pick_carries_the_underdispersion_caveat(payload):
+    """All three markets are eligible for the headline slot, which means two of
+    them can be selected on a probability the model is documented to overstate.
+    The caveat rides the ROW rather than a page-level limits list, so a client
+    that renders the pick and not the list cannot drop it."""
+    if not _is_two_slot_build(payload):
+        pytest.skip("artifact predates the two-slot builder; re-run betting_export")
+    for key in PUBLISHED_SLOTS:
+        pick = payload.get(key)
+        if pick is None:
+            continue
+        if pick.get("market") in ("runline", "total"):
+            assert pick.get("caveat"), (
+                f"{key} is a {pick.get('market')} and carries no caveat about "
+                "the Poisson underdispersion that inflates its probability")
+        else:
+            assert pick.get("caveat") is None
 
 
 def test_payload_carries_the_legal_block(payload):
@@ -607,6 +872,13 @@ def test_preview_slice_exists_for_the_gating_seam():
     d = json.loads(p.read_text(encoding="utf-8"))
     assert "disclaimer" in d and "pick_of_the_day" in d
     assert len(d.get("team_bets") or []) <= be.PREVIEW_GAMES
+    # THE LABEL TRAVELS WITH THE PICK. The preview omitted `pick_meta` for as
+    # long as it existed, so a free-tier reader got a pick with no provisional
+    # flag, no floor and no basis beside it.
+    if "longshot_of_the_day" not in d:
+        pytest.skip("preview predates the two-slot builder; re-run betting_export")
+    assert "pick_meta" in d, (
+        "the free slice must carry the provisional treatment, not just the pick")
 
 
 # ===========================================================================
@@ -860,6 +1132,17 @@ def _ctx(fetch_js: str):
     return c
 
 
+def _visible_text(html: str) -> str:
+    """The rendered copy with tags removed, for assertions about what a READER
+    sees rather than about markup.
+
+    Wrapping a term in a glossary span splits the sentence in the source but not
+    on screen, so a raw substring check on the html fails on a copy improvement
+    that changed nothing a reader can perceive. Assert against this instead
+    whenever the contract is about wording."""
+    return re.sub(r"<[^>]+>", "", html)
+
+
 @pytest.fixture(scope="module")
 def ok_ctx():
     return _ctx(OK_FETCH % SMOKE_PAYLOAD)
@@ -884,7 +1167,13 @@ def test_render_legal_block_survives_a_failed_load():
 
 def test_render_pick_section_says_there_is_no_pick(ok_ctx):
     html = ok_ctx.eval("__show('potd')")
-    assert "No pick today" in html
+    text = _visible_text(html)
+    # The contract is the honest empty state, not one phrasing: the slot has to
+    # say plainly that nothing qualified AND name the floor it refused to lower.
+    # Publishing a pick by lowering the threshold is the failure this asserts
+    # against, so the second clause is the load-bearing one.
+    assert "Nothing qualifies today" in text
+    assert "never lowered to make a pick appear" in text
     assert "0.24164" in html                     # the backtest table rendered
     assert "does not count" in html or "contamination" in html or "leak" in html
 
@@ -927,4 +1216,4 @@ def test_render_my_bets_works_logged_out():
 def test_render_parlay_section_carries_the_block_rule(ok_ctx):
     html = ok_ctx.eval("__show('parlays')")
     assert "block" in html
-    assert "no parlay of the day" in html.lower()
+    assert "no parlay of the day" in _visible_text(html).lower()

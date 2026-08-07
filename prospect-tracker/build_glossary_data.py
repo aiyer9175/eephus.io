@@ -57,6 +57,7 @@ GROUPS = {
     "transactions":  "MLB Rules & Transactions",
     "financial":     "MLB Rules & Transactions",
     "fa":            "Free Agency",
+    "betting":       "Betting & Markets",
 }
 
 FOUNDATION_CATS = {"hitter-stat", "pitcher-stat", "standard-stat", "general-stat",
@@ -205,6 +206,98 @@ NEW_ENTRIES = [
      "seeAlso": ["consensus_fv", "debut_rule"]},
 ]
 
+# ---- Betting vocabulary (2026-08-07) ----------------------------------------
+# WHY THESE ARE HERE. assets/betting.js leaves every one of these words as plain
+# text, and says so in a comment at its gl() helper: pointing a tooltip at a
+# near-miss slug on a page about money is a worse failure than no tooltip. The
+# betting module is the only surface on the site where a reader can be led into
+# a decision by a term he half-understands, so the vocabulary needs its own
+# group rather than being scattered into the statistical foundations.
+#
+# EVERY DEFINITION HERE DESCRIBES WHAT THE SITE ACTUALLY DOES, not the general
+# industry meaning. `policy_floor` and `provisional_pick` in particular exist
+# because the module publishes picks against a threshold nobody has measured
+# yet, and a glossary that explained "minimum edge" in the abstract would let a
+# reader assume the number was fitted.
+BETTING_ENTRIES = [
+    {"id": "bet_edge", "term": "Edge", "category": "betting",
+     "aliases": ["edge", "model edge"], "priority": 90,
+     "definition": "Model probability minus the de-vigged market probability for the same side of the same bet. A +6% edge means the model gives the side six points more chance than the market does once the book's cut is removed. It is a disagreement, not a profit: the model has to be right about the disagreement for it to be worth anything.",
+     "methodology": "Both terms must describe the SAME wager. Books do not all post the same runline or total, so the line is chosen first by book count and prices are shopped only among the books posting it. Pairing one book's line with another book's price for the opposite side once produced a fabricated 38.8 point edge on this site, which is why the pairing is now enforced in code and pinned by a test.",
+     "seeAlso": ["devig", "implied_probability", "ev_per_unit", "policy_floor"]},
+    {"id": "vig", "term": "Vig", "category": "betting",
+     "aliases": ["vigorish", "juice", "hold", "overround"], "priority": 91,
+     "definition": "The book's cut, built into the price rather than charged as a fee. Both sides of a coin flip are priced around -110, so the two implied probabilities add to about 105% instead of 100%; that extra 5 points is the vig, also called the hold or the overround.",
+     "seeAlso": ["devig", "implied_probability", "fair_line"]},
+    {"id": "devig", "term": "De-vig", "category": "betting",
+     "aliases": ["de-vig", "devig", "no-vig", "remove the vig"], "priority": 92,
+     "definition": "Stripping the book's cut back out of a price to recover what the market actually thinks. This site uses the proportional method: divide each side's implied probability by their sum so the pair adds to 100%.",
+     "methodology": "The de-vig is always taken from ONE book's two-sided market. Mixing the best price on one side with a different book's price on the other manufactures a fair line with a negative hold, which is a number no market ever offered. The payload names the book each fair line came from for exactly this reason.",
+     "seeAlso": ["vig", "fair_line", "bet_edge"]},
+    {"id": "fair_line", "term": "Fair line", "category": "betting",
+     "aliases": ["fair price", "fair odds"], "priority": 93,
+     "definition": "The price that would exactly match a probability with no cut taken. A 60% chance is a fair line of -150. Two different fair lines appear on the betting board: the model's, from its own probability, and the market's, from the de-vigged book prices.",
+     "seeAlso": ["devig", "implied_probability", "bet_edge"]},
+    {"id": "implied_probability", "term": "Implied probability", "category": "betting",
+     "aliases": ["implied prob", "break-even rate"], "priority": 94,
+     "definition": "The win rate a price needs just to break even. -150 implies 60%, +150 implies 40%. Because the vig is inside the price, the implied probabilities of two opposite sides always sum to more than 100%, which is why they are de-vigged before anything is compared to them.",
+     "seeAlso": ["vig", "devig", "fair_line"]},
+    {"id": "ev_per_unit", "term": "EV per unit", "category": "betting",
+     "aliases": ["expected value", "EV", "EV/u"], "priority": 95,
+     "definition": "Expected profit on a one-unit bet under the MODEL's probability: p times the profit if it wins, minus (1 - p) times the unit if it loses. +0.20 means the model expects to make a fifth of a unit per bet on average over many repetitions of the same wager.",
+     "methodology": "EV is probability times payout, and payout dominates. Ranking a board by EV alone therefore selects the longest price on it almost every time, which is why the headline Pick of the Day is chosen on model probability inside a normal price band and long prices are judged on EV in their own slot. An EV computed from an unvalidated model is an expectation under an assumption, not a forecast.",
+     "seeAlso": ["bet_edge", "kelly_criterion", "betting_unit"]},
+    {"id": "betting_unit", "term": "Unit", "category": "betting",
+     "aliases": ["unit", "1u", "flat stake"], "priority": 96,
+     "definition": "One bet's worth of bankroll, whatever size a reader chooses. Results are reported in units so they mean the same thing at any bankroll. Every pick on this site's public record is a flat 1 unit.",
+     "methodology": "The stake is flat on the record on purpose. A record kept in variable stakes cannot be audited from its own rows: a reader has to take it on trust that the sizing was decided before the result and not after it. Suggested display units may differ by slot, but the RECORDED stake never does.",
+     "seeAlso": ["kelly_criterion", "ev_per_unit"]},
+    {"id": "kelly_criterion", "term": "Kelly", "category": "betting",
+     "aliases": ["Kelly criterion", "quarter Kelly", "full Kelly"], "priority": 97,
+     "definition": "The stake fraction that maximizes long-run bankroll growth given a probability and a price. This site shows it as INFORMATION and never as a recommendation, and it shows a quarter of it.",
+     "methodology": "Full Kelly is only optimal if the probability is right. It is brutally sensitive to overestimating an edge, and an unvalidated model is by definition a model whose edge estimate has not been checked, so a full-Kelly stake on one of these picks is a fast way to lose a bankroll. Quarter Kelly is served pre-divided so nobody has to do the arithmetic under the impression the site endorsed the larger number.",
+     "seeAlso": ["betting_unit", "ev_per_unit", "provisional_pick"]},
+    {"id": "moneyline", "term": "Moneyline", "category": "betting",
+     "aliases": ["money line", "ML", "h2h"], "priority": 98,
+     "definition": "A bet on which team wins the game, with no margin attached. Priced in American odds: -150 means risk 150 to win 100, +150 means risk 100 to win 150.",
+     "seeAlso": ["runline", "total_line", "implied_probability"]},
+    {"id": "runline", "term": "Runline", "category": "betting",
+     "aliases": ["run line", "spread"], "priority": 99,
+     "definition": "Baseball's spread, almost always 1.5 runs. The favourite at -1.5 has to win by two or more; the underdog at +1.5 wins the bet by losing by one or winning outright.",
+     "methodology": "Runline probabilities on this site come from a Poisson-difference margin model, which underdisperses real run scoring: baseball scores in clumps, so the true margin distribution has fatter tails than the model assumes and its runline numbers sit too close to the middle. The moneyline is the least exposed of the three markets, and any published runline pick carries that caveat on the row.",
+     "seeAlso": ["moneyline", "total_line"]},
+    {"id": "total_line", "term": "Total", "category": "betting",
+     "aliases": ["over/under", "the total"], "priority": 100,
+     "definition": "A bet on the combined runs scored by both teams, over or under a posted number. A total that lands exactly on a whole-number line is a push and returns the stake.",
+     "methodology": "Totals carry the same Poisson underdispersion as the runline, and the same caveat rides any published total pick. Over 8.5 at one book and Under 9.5 at another are not two sides of one bet, so a total is priced only across books posting the same number.",
+     "seeAlso": ["runline", "moneyline"]},
+    {"id": "parlay", "term": "Parlay", "category": "betting",
+     "aliases": ["accumulator", "same-game parlay", "SGP"], "priority": 101,
+     "definition": "One bet chaining several legs, all of which must win. The payout multiplies, and so does the book's cut: a parlay compounds the vig on every leg.",
+     "methodology": "Multiplying leg probabilities is only valid when the legs are INDEPENDENT, and legs from the same game never are. This site refuses to print a product for correlated legs rather than printing one with a warning attached, because a number that looks like a price is read as a price no matter what sits next to it.",
+     "seeAlso": ["moneyline", "ev_per_unit"]},
+    {"id": "clv", "term": "Closing line value", "category": "betting",
+     "aliases": ["CLV", "beat the close"], "priority": 102,
+     "definition": "Whether a bet's price at post beat the same bet's price at the moment the game started. Beating the close means the market moved toward the pick after it was posted.",
+     "methodology": "CLV is the honest short-run test of a betting model, because the closing line is the sharpest estimate the market produces and winning a single bet is evidence of almost nothing. This site publishes two forms side by side: price CLV, the posted decimal over the closing decimal minus one, and probability CLV, the implied probability at close minus at post.",
+     "seeAlso": ["implied_probability", "provisional_pick"]},
+    {"id": "provisional_pick", "term": "Provisional pick", "category": "betting",
+     "aliases": ["provisional"], "priority": 103,
+     "definition": "A published pick from a model that has NOT been validated. The betting model's backtest is contaminated (its team inputs are season-to-date, so every graded game sits inside its own features), so no minimum edge has been measured and no pick here has a measured threshold behind it.",
+     "methodology": "The alternative was showing nothing for a season, and the owner chose to publish with the label instead. Every provisional pick carries the flag, the floor it cleared and the basis of that floor in the payload itself, so a row lifted out of the page is still self-describing. Each one is also recorded in a paper ledger that settles against the result, which is how the evidence for a real threshold gets built.",
+     "seeAlso": ["policy_floor", "brier_score", "clv"]},
+    {"id": "policy_floor", "term": "Policy floor", "category": "betting",
+     "aliases": ["provisional floor", "minimum edge"], "priority": 104,
+     "definition": "The 6% edge a side must clear before it can be published while the model is unvalidated. It is a POLICY, chosen to be far stricter than anything the model can currently justify, and it is NOT a measurement.",
+     "methodology": "The model's whole in-sample margin over a home-field baseline is 0.0079 Brier, and the out-of-sample margin will be thinner. Requiring six points of edge means a pick appears only when the model disagrees with the market by far more than the skill there is evidence for, so the failure mode is publishing nothing on most slates rather than something weak on all of them. Every slot on the page reads this same floor: a slot allowed to quietly use a lower one would be a threshold invented to make a pick appear, which is the single most dishonest number this module could publish. When the validation gates open, a measured threshold replaces it automatically.",
+     "seeAlso": ["provisional_pick", "bet_edge", "brier_score"]},
+    {"id": "brier_score", "term": "Brier score", "category": "betting",
+     "aliases": ["Brier"], "priority": 105,
+     "definition": "The standard accuracy score for probability forecasts: the mean squared error between the stated probability and the outcome (1 or 0). Lower is better, and it rewards being confident only when confidence is warranted.",
+     "methodology": "A Brier score means nothing without the baseline it is compared against, and this site prints two: a flat 50% forecast and a home-field-only forecast. It also means nothing if the model saw the games it is being scored on, which is why every graded block on the betting page is labelled with the mode that produced it.",
+     "seeAlso": ["provisional_pick", "policy_floor"]},
+]
+
 
 def _split_wall(text: str) -> str:
     """Insert paragraph breaks every ~2 sentences for the methodology walls."""
@@ -290,6 +383,47 @@ def extract_fa() -> list[dict]:
     return out
 
 
+def merge_betting(path: Path | None = None) -> dict:
+    """Add the betting vocabulary to the EXISTING data/glossary.json in place.
+
+    WHY THIS IS NOT PART OF main(). `main()` rebuilds the whole payload from
+    prospx/index.html's inline `const GLOSSARY` block, and that block no longer
+    exists: extract_prospx() would raise on the missing match, and if it did not
+    it would replace a 288-entry hand-edited artifact with whatever it could
+    still scrape. The artifact has been the canonical source since this script
+    ran once, so the only safe way to register new terms is to merge them into
+    what is on disk.
+
+    Idempotent, and it never overwrites an entry that is already there: the
+    served copy is the one a human may have edited, and this script is
+    provenance, not authority. Returns what it did so a caller can log it."""
+    out = Path(path or (ROOT / "data" / "glossary.json"))
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    have = {e["id"] for e in payload.get("entries") or []}
+    added = []
+    for e in BETTING_ENTRIES:
+        if e["id"] in have:
+            continue
+        e = {**e, "module": e.get("module") or ["betting"]}
+        payload.setdefault("entries", []).append(e)
+        added.append(e["id"])
+    groups = payload.setdefault("groups", {})
+    for cat, label in GROUPS.items():
+        groups.setdefault(cat, label)
+    # Dangling cross-references render as a link to nothing, so they are dropped
+    # here on the same rule main() applies.
+    idset = {e["id"] for e in payload["entries"]}
+    for e in payload["entries"]:
+        if e.get("seeAlso"):
+            e["seeAlso"] = [s for s in e["seeAlso"] if s in idset]
+    if added:
+        payload["version"] = glossary_version()
+        out.write_text(json.dumps(payload, ensure_ascii=False, indent=1),
+                       encoding="utf-8")
+    return {"added": added, "n_entries": len(payload["entries"]),
+            "group": GROUPS["betting"]}
+
+
 def main() -> None:
     entries = extract_prospx() + extract_fa()
     for e in NEW_ENTRIES:
@@ -312,4 +446,22 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--betting", action="store_true",
+                    help="merge the betting vocabulary into the existing "
+                         "data/glossary.json (safe, idempotent, additive)")
+    ap.add_argument("--rebuild", action="store_true",
+                    help="DESTRUCTIVE one-time rebuild from the legacy inline "
+                         "sources; prospx/index.html no longer carries its "
+                         "GLOSSARY block, so this will fail")
+    args = ap.parse_args()
+    if args.betting:
+        print(merge_betting())
+    elif args.rebuild:
+        main()
+    else:
+        ap.error("pass --betting to register the betting terms; --rebuild is "
+                 "the legacy one-time path and would replace the canonical "
+                 "artifact")
