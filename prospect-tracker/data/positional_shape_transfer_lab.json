@@ -1,0 +1,519 @@
+{
+ "model": "positional_fit conversion transfer, shape-augmented",
+ "lane": "K6",
+ "generated_at": "2026-08-07",
+ "preregistration": "docs/gate-2026-08-07-positional-shape-transfer.md",
+ "verdict": "deprecated",
+ "one_line": "Savant directional splits do not improve the transfer prediction.",
+ "population": {
+  "n_conversions": 169,
+  "n_distinct_players": 150,
+  "seasons_scored": [
+   2017,
+   2018,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025
+  ],
+  "component_coverage": "100 percent; every source read has in/bk/l3/l1",
+  "destinations": {
+   "1B": 20,
+   "2B": 27,
+   "3B": 26,
+   "CF": 19,
+   "LF": 35,
+   "RF": 34,
+   "SS": 8
+  }
+ },
+ "primary": {
+  "statistic": "dMAE = MAE(champion) - MAE(challenger), runs per 1000 inn",
+  "mae_champion": 5.6823,
+  "mae_challenger": 5.6488,
+  "mae_carry_over_reference": 6.7326,
+  "dmae": 0.0334,
+  "cluster_bootstrap_ci95": [
+   -0.0654,
+   0.1357
+  ],
+  "bootstrap_draws": 2000,
+  "clustered_by": "player"
+ },
+ "clauses": {
+  "1_ci_excludes_zero_above": false,
+  "2_sign_consistency_6_of_8": {
+   "passed": false,
+   "wins": 3,
+   "of": 8
+  },
+  "3_beats_shape_permuted_control": {
+   "passed": false,
+   "dmae": 0.0334,
+   "control_null95": 0.0569,
+   "control_mean": -0.0133,
+   "permutations": 300
+  },
+  "4_no_demotion_auc_damage": {
+   "passed": true,
+   "n_scored": 2023,
+   "n_moved_down": 285,
+   "auc_champion": 0.4809,
+   "auc_challenger": 0.4825,
+   "auc_on_disk": 0.4809
+  }
+ },
+ "by_season": {
+  "2017": {
+   "n": 27,
+   "mae_champion": 5.546,
+   "mae_challenger": 5.546,
+   "dmae": 0.0
+  },
+  "2018": {
+   "n": 32,
+   "mae_champion": 6.027,
+   "mae_challenger": 6.027,
+   "dmae": 0.0
+  },
+  "2020": {
+   "n": 11,
+   "mae_champion": 4.87,
+   "mae_challenger": 4.987,
+   "dmae": -0.1177
+  },
+  "2021": {
+   "n": 14,
+   "mae_champion": 6.036,
+   "mae_challenger": 6.073,
+   "dmae": -0.0372
+  },
+  "2022": {
+   "n": 18,
+   "mae_champion": 6.083,
+   "mae_challenger": 5.848,
+   "dmae": 0.2343
+  },
+  "2023": {
+   "n": 16,
+   "mae_champion": 6.2,
+   "mae_challenger": 6.011,
+   "dmae": 0.1889
+  },
+  "2024": {
+   "n": 26,
+   "mae_champion": 5.593,
+   "mae_challenger": 5.598,
+   "dmae": -0.0047
+  },
+  "2025": {
+   "n": 22,
+   "mae_champion": 4.484,
+   "mae_challenger": 4.436,
+   "dmae": 0.0478
+  }
+ },
+ "by_destination": {
+  "1B": {
+   "n": 20,
+   "mae_champion": 4.826,
+   "mae_challenger": 4.848
+  },
+  "2B": {
+   "n": 27,
+   "mae_champion": 5.766,
+   "mae_challenger": 5.858
+  },
+  "3B": {
+   "n": 26,
+   "mae_champion": 6.059,
+   "mae_challenger": 6.096
+  },
+  "CF": {
+   "n": 19,
+   "mae_champion": 6.733,
+   "mae_challenger": 6.708
+  },
+  "LF": {
+   "n": 35,
+   "mae_champion": 5.465,
+   "mae_challenger": 5.292
+  },
+  "RF": {
+   "n": 34,
+   "mae_champion": 4.914,
+   "mae_challenger": 4.836
+  },
+  "SS": {
+   "n": 8,
+   "mae_champion": 8.038,
+   "mae_challenger": 7.994
+  }
+ },
+ "fitted_shape_by_training_cutoff": {
+  "2017": {
+   "g": {
+    "1B": 0.0,
+    "2B": 0.0,
+    "3B": 0.0,
+    "SS": 0.0,
+    "LF": 0.0,
+    "CF": 0.0,
+    "RF": 0.0
+   },
+   "k_u": {
+    "1B": 1200.0,
+    "2B": 1200.0,
+    "3B": 1200.0,
+    "SS": 1200.0,
+    "LF": 1200.0,
+    "CF": 1200.0,
+    "RF": 1200.0
+   },
+   "shape_yoy_r": {
+    "1B": null,
+    "2B": null,
+    "3B": null,
+    "SS": null,
+    "LF": null,
+    "CF": null,
+    "RF": null
+   },
+   "g_pairs": {
+    "1B": 27,
+    "2B": 27,
+    "3B": 26,
+    "SS": 29,
+    "LF": 19,
+    "CF": 25,
+    "RF": 27
+   }
+  },
+  "2018": {
+   "g": {
+    "1B": 0.0,
+    "2B": 0.0,
+    "3B": 0.0,
+    "SS": 0.0,
+    "LF": 0.0,
+    "CF": 0.0,
+    "RF": 0.0
+   },
+   "k_u": {
+    "1B": 17429.0,
+    "2B": 17042.0,
+    "3B": 7369.0,
+    "SS": 2101.0,
+    "LF": 14609.0,
+    "CF": 3294.0,
+    "RF": 15865.0
+   },
+   "shape_yoy_r": {
+    "1B": 0.05,
+    "2B": 0.05,
+    "3B": 0.1092,
+    "SS": 0.3162,
+    "LF": 0.05,
+    "CF": 0.2031,
+    "RF": 0.05
+   },
+   "g_pairs": {
+    "1B": 57,
+    "2B": 56,
+    "3B": 51,
+    "SS": 59,
+    "LF": 40,
+    "CF": 54,
+    "RF": 55
+   }
+  },
+  "2019": {
+   "g": {
+    "1B": -1.893,
+    "2B": 5.0345,
+    "3B": 14.6787,
+    "SS": -0.9227,
+    "LF": -12.6162,
+    "CF": 3.6193,
+    "RF": -21.2183
+   },
+   "k_u": {
+    "1B": 6134.0,
+    "2B": 16716.0,
+    "3B": 13032.0,
+    "SS": 2645.0,
+    "LF": 7104.0,
+    "CF": 3491.0,
+    "RF": 15319.0
+   },
+   "shape_yoy_r": {
+    "1B": 0.1282,
+    "2B": 0.05,
+    "3B": 0.0646,
+    "SS": 0.2724,
+    "LF": 0.0967,
+    "CF": 0.1885,
+    "RF": 0.05
+   },
+   "g_pairs": {
+    "1B": 82,
+    "2B": 79,
+    "3B": 76,
+    "SS": 85,
+    "LF": 60,
+    "CF": 81,
+    "RF": 82
+   }
+  },
+  "2020": {
+   "g": {
+    "1B": 3.0874,
+    "2B": 8.5714,
+    "3B": 9.1356,
+    "SS": 1.4384,
+    "LF": -22.9954,
+    "CF": 1.6548,
+    "RF": -12.0467
+   },
+   "k_u": {
+    "1B": 8220.0,
+    "2B": 15893.0,
+    "3B": 4186.0,
+    "SS": 4727.0,
+    "LF": 13595.0,
+    "CF": 2054.0,
+    "RF": 14555.0
+   },
+   "shape_yoy_r": {
+    "1B": 0.0949,
+    "2B": 0.05,
+    "3B": 0.1685,
+    "SS": 0.1615,
+    "LF": 0.05,
+    "CF": 0.2737,
+    "RF": 0.05
+   },
+   "g_pairs": {
+    "1B": 95,
+    "2B": 90,
+    "3B": 92,
+    "SS": 108,
+    "LF": 72,
+    "CF": 93,
+    "RF": 96
+   }
+  },
+  "2021": {
+   "g": {
+    "1B": 3.9564,
+    "2B": 7.1454,
+    "3B": 5.8083,
+    "SS": 0.7147,
+    "LF": -24.2555,
+    "CF": 2.0817,
+    "RF": -10.6803
+   },
+   "k_u": {
+    "1B": 9435.0,
+    "2B": 8933.0,
+    "3B": 2570.0,
+    "SS": 8276.0,
+    "LF": 13004.0,
+    "CF": 2271.0,
+    "RF": 13840.0
+   },
+   "shape_yoy_r": {
+    "1B": 0.0807,
+    "2B": 0.0828,
+    "3B": 0.2385,
+    "SS": 0.0947,
+    "LF": 0.05,
+    "CF": 0.2454,
+    "RF": 0.05
+   },
+   "g_pairs": {
+    "1B": 109,
+    "2B": 99,
+    "3B": 109,
+    "SS": 127,
+    "LF": 84,
+    "CF": 107,
+    "RF": 112
+   }
+  },
+  "2022": {
+   "g": {
+    "1B": 8.335,
+    "2B": 0.4993,
+    "3B": 4.9162,
+    "SS": 0.4906,
+    "LF": -23.3563,
+    "CF": 2.1614,
+    "RF": -15.7869
+   },
+   "k_u": {
+    "1B": 10368.0,
+    "2B": 4192.0,
+    "3B": 3421.0,
+    "SS": 5015.0,
+    "LF": 12989.0,
+    "CF": 2419.0,
+    "RF": 13600.0
+   },
+   "shape_yoy_r": {
+    "1B": 0.0754,
+    "2B": 0.1605,
+    "3B": 0.193,
+    "SS": 0.1499,
+    "LF": 0.05,
+    "CF": 0.2308,
+    "RF": 0.05
+   },
+   "g_pairs": {
+    "1B": 137,
+    "2B": 123,
+    "3B": 135,
+    "SS": 151,
+    "LF": 111,
+    "CF": 134,
+    "RF": 139
+   }
+  },
+  "2023": {
+   "g": {
+    "1B": 7.5329,
+    "2B": 0.4077,
+    "3B": 2.8806,
+    "SS": -3.9693,
+    "LF": -19.7434,
+    "CF": 2.9561,
+    "RF": -17.8809
+   },
+   "k_u": {
+    "1B": 16164.0,
+    "2B": 5292.0,
+    "3B": 4275.0,
+    "SS": 8998.0,
+    "LF": 10060.0,
+    "CF": 3573.0,
+    "RF": 13806.0
+   },
+   "shape_yoy_r": {
+    "1B": 0.05,
+    "2B": 0.1292,
+    "3B": 0.1604,
+    "SS": 0.0911,
+    "LF": 0.0645,
+    "CF": 0.1703,
+    "RF": 0.05
+   },
+   "g_pairs": {
+    "1B": 161,
+    "2B": 148,
+    "3B": 163,
+    "SS": 175,
+    "LF": 132,
+    "CF": 160,
+    "RF": 156
+   }
+  },
+  "2024": {
+   "g": {
+    "1B": 7.9711,
+    "2B": 1.6769,
+    "3B": -0.2506,
+    "SS": -2.4875,
+    "LF": -4.0629,
+    "CF": 3.4317,
+    "RF": -10.2802
+   },
+   "k_u": {
+    "1B": 6228.0,
+    "2B": 4632.0,
+    "3B": 5566.0,
+    "SS": 6920.0,
+    "LF": 8589.0,
+    "CF": 3668.0,
+    "RF": 13690.0
+   },
+   "shape_yoy_r": {
+    "1B": 0.1204,
+    "2B": 0.1456,
+    "3B": 0.1279,
+    "SS": 0.1168,
+    "LF": 0.075,
+    "CF": 0.1677,
+    "RF": 0.05
+   },
+   "g_pairs": {
+    "1B": 190,
+    "2B": 175,
+    "3B": 189,
+    "SS": 199,
+    "LF": 154,
+    "CF": 185,
+    "RF": 185
+   }
+  },
+  "2025": {
+   "g": {
+    "1B": 6.1505,
+    "2B": 2.18,
+    "3B": -4.0458,
+    "SS": -4.0247,
+    "LF": -2.9674,
+    "CF": 4.0377,
+    "RF": -12.0918
+   },
+   "k_u": {
+    "1B": 6870.0,
+    "2B": 5970.0,
+    "3B": 6363.0,
+    "SS": 6592.0,
+    "LF": 11645.0,
+    "CF": 3556.0,
+    "RF": 13690.0
+   },
+   "shape_yoy_r": {
+    "1B": 0.1107,
+    "2B": 0.1174,
+    "3B": 0.1134,
+    "SS": 0.1226,
+    "LF": 0.0576,
+    "CF": 0.1731,
+    "RF": 0.05
+   },
+   "g_pairs": {
+    "1B": 220,
+    "2B": 196,
+    "3B": 215,
+    "SS": 226,
+    "LF": 174,
+    "CF": 212,
+    "RF": 209
+   }
+  }
+ },
+ "shape_score_spread": {
+  "sd_of_shrunk_u_on_scored_rows": 0.1157,
+  "p05_p95": [
+   -0.2097,
+   0.1862
+  ],
+  "max_abs_prediction_shift_runs_per_1000_inn": 5.3179,
+  "median_abs_prediction_shift": 0.0445
+ },
+ "standing_finding_not_addressed": {
+  "note": "Raw OAA out-discriminates the shipped demotion score. This gate does not target that and does not fix it.",
+  "auc_raw_oaa": 0.6184,
+  "auc_model": 0.4809,
+  "auc_zero_information_control": 0.48
+ },
+ "not_tested": [
+  "platoon split rhh/lhh",
+  "4-way canonicalised directional decomposition",
+  "sr_act vs sr_exp as an opportunity control"
+ ]
+}

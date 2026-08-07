@@ -378,3 +378,55 @@ def test_arozarena_case_is_stable(payload):
     assert lad[row["best_pos"]] <= lad[row["current_pos"]]
     ev = [e for e in row["evidence"] if e["pos"] in ("LF", "RF")]
     assert ev and all(e["inn"] > 0 for e in ev)
+
+
+# ------------------------------------- lane K6: the shape-transfer null, pinned
+SHAPE_LAB = ROOT / "data" / "positional_shape_transfer_lab.json"
+
+
+def test_savant_directional_splits_are_still_unread_by_the_shipped_model():
+    """Lane K6 MEASURED that the directional splits do not help, so the shipped
+    model is entitled to ignore them, and this pins that it still does.
+
+    data/savant_oaa.json carries in / bk / l3 / l1 / rhh / lhh / sr_act / sr_exp
+    on every row. Feeds.rates consumes oaa and frp only. If a future change wires
+    a component into the rate row without re-gating, this fires and points at
+    docs/gate-2026-08-07-positional-shape-transfer.md, whose one attempt came
+    back dMAE +0.033 on a permuted-shape null of +0.057.
+
+    Hermetic: a hand-built Feeds, no data files, no network.
+    """
+    feeds = pf.Feeds.__new__(pf.Feeds)
+    feeds.oaa = {"by_mlbam": {"1": {"2024": {
+        "SS": {"oaa": 4.0, "frp": 3.0, "in": 1.0, "bk": 1.0, "l3": 1.0,
+               "l1": 1.0, "rhh": 2.0, "lhh": 2.0, "sr_act": 0.8,
+               "sr_exp": 0.78},
+        "_primary": "SS"}}}}
+    feeds.inn = {"seasons": {"2024": {"1": {"SS": {"inn": 1000.0, "g": 120}}}}}
+    row = feeds.rates()[(1, 2024)]["SS"]
+    assert set(row) == {"rate", "oaa_rate", "inn", "frp", "oaa"}, row
+    assert row["rate"] == pytest.approx(3.0)
+    assert row["oaa_rate"] == pytest.approx(4.0)
+
+
+def test_shape_transfer_gate_is_recorded_as_the_null_it_is():
+    """A measured no-ship is a deliverable, and it is pinned like one.
+
+    The gate asked whether the SHAPE of a glove (lateral range versus depth)
+    predicts how it transfers to a different position. One pre-registered arm,
+    one run, four clauses, three failed. Flipping the verdict has to come with a
+    new pre-registration, not a quiet edit.
+    """
+    if not SHAPE_LAB.exists():
+        pytest.skip("shape-transfer lab artifact not built")
+    lab = json.loads(SHAPE_LAB.read_text(encoding="utf-8"))
+    assert lab["verdict"] == "deprecated"
+    assert lab["population"]["n_conversions"] == 169
+    p = lab["primary"]
+    # the champion arm has to be the SHIPPED one, or the gate scored nothing
+    assert p["mae_champion"] == pytest.approx(5.682, abs=1e-3)
+    # clause 1: the interval straddles zero, which is a fail and not a trend
+    assert p["cluster_bootstrap_ci95"][0] < 0 < p["cluster_bootstrap_ci95"][1]
+    # clause 3: a shuffled shape score does at least as well as the real one
+    assert p["dmae"] < lab["clauses"]["3_beats_shape_permuted_control"][
+        "control_null95"]
