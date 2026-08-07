@@ -1,0 +1,198 @@
+{
+ "schema": "xfv-regen-tripwire-1",
+ "note": "Tripwire ledger for the eFV regen, one entry per VINTAGE. Reports, never gates: nothing here can block a run, move a grade or be cited as evidence for shipping or dropping a feature. Thresholds are geometric midpoints of measured gaps in the committed history, and each is gap-invariant. See tools/efv_regen_tripwire.py and docs/EFV_REGEN_TRIPWIRES_2026-08-07.md.",
+ "entries": [
+  {
+   "recorded_at": "2026-08-07T20:54:54+00:00",
+   "board_generated_at": "2026-08-06",
+   "board_basis": "xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb|roles=usage_both|feats=b747e1d3|stale=source|floorroute=on@ff60a349",
+   "fingerprint": "9f284574",
+   "compared_against": null,
+   "compared_against_generated_at": null,
+   "sides": {
+    "hit": {
+     "coverage": {
+      "observed": true,
+      "covered": 1134,
+      "rows": 1917,
+      "frac": 0.591549,
+      "report_generated_at": "2026-08-06"
+     },
+     "weights": {
+      "observed": true,
+      "n_train": 1883,
+      "intercept": 1.697592,
+      "cal_a": 0.0319,
+      "cal_b": 1.0448,
+      "features": {
+       "fv": {
+        "w": 2.50226,
+        "mu": 41.557791,
+        "sd": 6.087901
+       },
+       "obp_rel": {
+        "w": 0.047149,
+        "mu": 0.003465,
+        "sd": 0.027367
+       },
+       "k_rel": {
+        "w": 0.184377,
+        "mu": 0.001155,
+        "sd": 0.041585
+       },
+       "peak_k_rel": {
+        "w": -0.11202,
+        "mu": -0.014376,
+        "sd": 0.040045
+       },
+       "age_rel_level": {
+        "w": -0.214699,
+        "mu": 0.136219,
+        "sd": 1.06192
+       },
+       "n_milb_seasons": {
+        "w": -0.185543,
+        "mu": 1.755709,
+        "sd": 1.845554
+       },
+       "tool_hit": {
+        "w": 0.306854,
+        "mu": 48.024429,
+        "sd": 6.396107
+       },
+       "tool_speed": {
+        "w": 0.225543,
+        "mu": 47.883165,
+        "sd": 11.464156
+       },
+       "milb_missing": {
+        "w": -0.017376,
+        "mu": 0.027084,
+        "sd": 0.16233
+       },
+       "is_ifa": {
+        "w": 0.078234,
+        "mu": 0.245884,
+        "sd": 0.43061
+       },
+       "is_college": {
+        "w": 0.323139,
+        "mu": 0.191184,
+        "sd": 0.393234
+       },
+       "ops_rel": {
+        "w": 0.228939,
+        "mu": 0.014665,
+        "sd": 0.07292
+       },
+       "age": {
+        "w": 0.03761,
+        "mu": 22.097557,
+        "sd": 1.682671
+       },
+       "level_rank": {
+        "w": 0.306184,
+        "mu": 1.909187,
+        "sd": 1.933503
+       }
+      }
+     },
+     "coverage_baseline_vintage": null,
+     "weights_baseline_vintage": null,
+     "explainer_churn": {
+      "observed": false,
+      "why": "no previous digest for this side"
+     }
+    },
+    "pit": {
+     "coverage": {
+      "observed": true,
+      "covered": 1029,
+      "rows": 2042,
+      "frac": 0.503918,
+      "report_generated_at": "2026-08-06"
+     },
+     "weights": {
+      "observed": true,
+      "n_train": 1981,
+      "intercept": 1.013936,
+      "cal_a": -0.0219,
+      "cal_b": 1.0756,
+      "features": {
+       "fv": {
+        "w": 1.293148,
+        "mu": 40.683776,
+        "sd": 5.144666
+       },
+       "peak_k_rel": {
+        "w": 0.152651,
+        "mu": 0.024617,
+        "sd": 0.040836
+       },
+       "k_rel": {
+        "w": 0.174656,
+        "mu": 0.009854,
+        "sd": 0.035099
+       },
+       "bb_rel": {
+        "w": -0.059163,
+        "mu": 0.002728,
+        "sd": 0.02139
+       },
+       "age_rel_level": {
+        "w": 0.055954,
+        "mu": 0.459162,
+        "sd": 1.119838
+       },
+       "x_era_k": {
+        "w": 0.076481,
+        "mu": 0.008283,
+        "sd": 0.046803
+       },
+       "tool_fb": {
+        "w": 0.089383,
+        "mu": 56.911661,
+        "sd": 7.267984
+       },
+       "age": {
+        "w": 0.103501,
+        "mu": 22.744372,
+        "sd": 1.368465
+       },
+       "seasons_at_level": {
+        "w": -0.10509,
+        "mu": 1.079253,
+        "sd": 0.281122
+       }
+      }
+     },
+     "coverage_baseline_vintage": null,
+     "weights_baseline_vintage": null,
+     "explainer_churn": {
+      "observed": false,
+      "why": "no previous digest for this side"
+     }
+    }
+   },
+   "alerts": [],
+   "n_alerts": 0,
+   "last_seen_at": "2026-08-07T20:58:24+00:00"
+  }
+ ],
+ "thresholds": {
+  "coverage_frac": {
+   "value": 0.00502,
+   "chosen": "geometric midpoint of the gap [0.0029, 0.0087] in the 68 consecutive-vintage coverage deltas across 35 committed dataset reports; any value in that interval partitions the measured history identically"
+  },
+  "weight_scale_abs_p_minus_1": {
+   "value": 0.0858,
+   "chosen": "geometric midpoint of the gap [0.0690, 0.1066] in 95 ridge feature-vintage affine refit maps fitted on committed explainer arrays over 6 vintage pairs; 15 fire, in 2 pairs"
+  },
+  "explainer_label_set_churn": {
+   "value": 0.1683,
+   "chosen": "geometric midpoint of the gap [0.112, 0.253] in 12 measured side-vintage label-set churn shares; flags the same 2 of 6 vintage pairs the weight tripwire does"
+  }
+ },
+ "generated_at": "2026-08-07T20:58:24+00:00",
+ "latest_alerts": []
+}

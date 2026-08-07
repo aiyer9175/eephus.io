@@ -1242,6 +1242,48 @@ def fit_production_stack(rows, side: str, keys=None):
     return {"ridge": ridge, "a": a, "b": b, "ols": ols, "keys": keys, "n": len(data)}
 
 
+def served_ridge_weights(side: str, rows=None) -> dict | None:
+    """The standardized ridge weights the BOARD IS ACTUALLY SERVED FROM, flat.
+
+    Instrumentation accessor, added 2026-08-07 for the regen tripwire ledger
+    (tools/efv_regen_tripwire.py). It fits nothing new and decides nothing: it
+    is fit_production_stack, on the on-disk training matrix, which is the
+    identical call efv_score._fit_production makes to produce the shipped
+    scorer. Returns keys/w/mu/sd plus the intercept and the (a, b) output
+    calibration, or None when the pool cannot support a fit.
+
+    WHY IT EXISTS. The served weights were already computed on every regen and
+    then discarded, so when the 2026-08-04 refit moved the whole hitter
+    production block (level premium down 32 percent, on-base down 36, OPS down
+    12, age-for-level UP 46) the only way to recover WHAT had moved was to fit
+    affine maps across committed explainer arrays after the fact. That worked
+    (docs/ARIAS_ATTRIBUTION_2026-08-07.md, r2 0.994 to 0.99996 over 6,574
+    contributions) and it cost a full lab session. Emitting the weights per
+    regen makes the same question a lookup.
+
+    NOT A MODEL SURFACE. Nothing consumes the return value for scoring,
+    ranking or pricing, and adding a consumer that does would need its own
+    gate. Reading it is free of side effects: the fit is deterministic (seeded
+    alpha CV) and costs about 0.2s on the hitter matrix."""
+    if rows is None:
+        from efv_dataset import matrix_path
+        try:
+            rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+    stack = fit_production_stack(rows, side)
+    if not stack:
+        return None
+    ridge = stack["ridge"]
+    return {"side": side, "n": stack["n"],
+            "keys": list(ridge["keys"]),
+            "w": [float(x) for x in ridge["w"]],
+            "mu": [float(x) for x in ridge["mu"]],
+            "sd": [float(x) for x in ridge["sd"]],
+            "intercept": float(ridge["b"]),
+            "a": float(stack["a"]), "b": float(stack["b"])}
+
+
 def _fit_lgbm_mono(train, keys, mono):
     try:
         import lightgbm as lgb

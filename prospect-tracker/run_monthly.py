@@ -265,6 +265,16 @@ SCHEDULED_EXPORTS = (
     # timeseries.json, the artifact that was found truncated mid-file, and a
     # truncation empties the farm block on all 30 rows without erroring.
     "proj_team_outlook_farm",
+    # The eFV regen tripwires (tools/efv_regen_tripwire). Added 2026-08-07,
+    # lane T. Files ok=False ONLY when the instrument could not observe the
+    # regen at all - a missing dataset report, an unfittable production stack,
+    # an unwritable ledger. A tripwire that FIRES is not a red: it is a real
+    # data event, it rides log.warning and the ledger, and the measured base
+    # rate is about one regen in three. Named here so that the dead-watch case
+    # survives write_ingest_health's drain instead of being filed as
+    # 'unwatched' and dropped, which is exactly what happened to
+    # fa_class_identity for a day.
+    "efv_regen_tripwire",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -1145,6 +1155,38 @@ def rebuild_only(out_dir: Path = Path("data"), *,
                  _xfv["meta"]["n_players"], _xfv["meta"]["n_active"])
     except Exception:
         log.exception("eFV regen crashed in rebuild_only — continuing")
+
+    # eFV REGEN TRIPWIRES (lane T, 2026-08-07). Records, per regen, the training
+    # pool's MiLB coverage, the SERVED ridge weights, and how much of the live
+    # board's explainer output changed, into data/xfv_regen_ledger.json.
+    #
+    # WHY IT SITS HERE. The 2026-08-04 regen took hitter coverage from 48.0 to
+    # 59.2 percent and the refit moved the whole production weight block (level
+    # premium down 32 percent, on-base down 36, age-for-level up 46). Nothing
+    # gated it, because a refit is not a ship, and nothing connected the two, so
+    # the owner found it by noticing a prospect had moved.
+    # docs/ARIAS_ATTRIBUTION_2026-08-07.md is the session that cost.
+    #
+    # Immediately after regen_all on purpose: it reads the matrices and
+    # data/xfv.json this step just wrote, in this process, before anything else
+    # can touch them.
+    #
+    # REPORTS, NEVER GATES. It cannot fail the run: run() swallows its own
+    # exceptions, and the try here is belt and braces. ok=False is filed ONLY
+    # when the instrument could not observe at all, which is the one condition
+    # worth a RED - a watch that has silently stopped watching is the exact
+    # failure class it exists to catch. A tripwire FIRING leaves ok True and
+    # rides log.warning plus the ledger: the measured base rate is about one
+    # regen in three, and a RED at that rate is a RED nobody reads.
+    try:
+        from tools.efv_regen_tripwire import run as _regen_tripwire
+        _tw = _regen_tripwire(log)
+        _record_ingest("efv_regen_tripwire", bool(_tw.get("observed")),
+                       int(_tw.get("n_alerts") or 0),
+                       _tw.get("message") or "", scope="", log=log)
+    except Exception as e:                                # noqa: BLE001
+        log.exception("eFV regen tripwire crashed in rebuild_only - continuing")
+        _record_ingest("efv_regen_tripwire", False, 0, f"crashed: {e}", log=log)
 
     # MiLB -> first-MLB rate translation (K% / BB%; matched-pair, LOO-validated).
     # Needs the eFV matrices (built above) + debuts.json. Best-effort.
