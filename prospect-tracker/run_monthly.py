@@ -4485,6 +4485,25 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes=f"{_n_ts} players, {len(new_trades)} trades")
+        # KNOWN REDUNDANCY, measured 2026-08-06, left in deliberately.
+        #
+        # This patch is ALWAYS superseded on a monthly night. main() chains
+        # run_daily(chained=True) further down in an unconditional try, and
+        # run_daily calls _patch_export_run_summary on the same file after its
+        # own finish_run, stamping a NEWER run summary. So data/timeseries.json,
+        # which is 74MB, gets parsed, re-serialised and atomically rewritten
+        # TWICE back to back for the same purpose.
+        #
+        # It is not removed because this call is the only stamp on the path
+        # where the chain raises, and losing the "as of" block is worse than a
+        # duplicated write. The real fix is to move the stamp to after the chain
+        # with a fallback, which is a restructure of the tail of main() and
+        # wants its own change: this file is the one that was found truncated by
+        # a two-writer race, so the number of writers to it is not something to
+        # adjust casually.
+        #
+        # Cost if you are deciding whether to bother: one extra 74MB parse plus
+        # write, once a month, on the box's slowest artifact.
         _patch_export_run_summary(out_path, log)
         # Capture the DERIVED board state (consensus rank/FV + Arkmetric
         # family) for the active board so the time-travel board (Part 2) and
