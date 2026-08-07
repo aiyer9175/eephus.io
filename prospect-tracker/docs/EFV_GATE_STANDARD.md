@@ -15,6 +15,43 @@ Measured by paired bootstrap resampling the WHOLE pool (train AND test) and refi
 ridge + consensus OLS + calibration on every draw, under the production fit config
 (sample_weight = observed_seasons/6, full pool minus recent busts), B = 2000.
 
+**MDE95 is ONE-SIDED (1.645 sd) throughout this table.** The convention was implicit
+until 2026-08-07 and had to be recovered by re-measurement. Two-sided it would be
+1.96 sd, roughly 19% wider, and several past calls sat between the two.
+
+### 1a. 11-FOLD PAIR-WEIGHTED basis (measured 2026-08-07, CURRENT)
+
+The basis that ships: `SCORED_YEARS` = 2014-2024, headline pooled rho pair-weighted by
+`prospect_path._score`. Producer `python tools/efv_mde_lab.py mde 2000` (seed 20260807);
+ledger `data/xfv_mde_floor.json`; full write-up
+`docs/EFV_EVAL_BASIS_LEDGER_2026-08-07.md`.
+
+| statistic class | MDE95 | sd | pool |
+|---|---|---|---|
+| model vs consensus, pooled rho, pair-weighted | **0.0440 hit / 0.0436 pit** | 0.0268 / 0.0265 | 755 / 890 |
+| model vs consensus, pooled rho, unweighted | 0.0376 hit / 0.0376 pit | 0.0228 / 0.0229 | 755 / 890 |
+| model vs consensus, block-rho, pair-weighted | **0.0325** | 0.0198 | 1,645 |
+| model vs consensus, block-rho, unweighted | 0.0279 | 0.0170 | 1,645 |
+| eFV vs consensus, common-set head-to-head | **0.0352** | 0.0214 | 3,210 rows / 1,050 players |
+
+`source_backtest.XFV_VS_CONSENSUS_MDE95` publishes 0.044 (the two sides agree to
+0.0004). The head-to-head row is a DIFFERENT pool and a different statistic; it has its
+own constant, `source_backtest.XFV_HEADTOHEAD_MDE95`, and ledger
+`data/xfv_headtohead_gap.json`.
+
+**THE 11-FOLD PROMOTION DID NOT BUY POWER.** Pool n went 353/438 to 755/890 and the
+floor did not move: the bootstrap resamples the TRAIN frame, so the ridge's refit
+variance is in the delta and does not shrink with test n; the added folds are the thin
+2014-2019 cohorts plus the censored 2024 one; and pair-weighting 2024 at 0.333 returns
+the effective n the extra rows bought. Any plan that budgets a smaller floor because
+the pool grew is wrong on this eval.
+
+### 1b. 4-FOLD UNWEIGHTED basis (measured 2026-07-24, RETIRED 2026-08-06)
+
+`SCORED_YEARS` = 2020-2023, unweighted pooled rho. Kept because ledger entries dated
+before 2026-08-06 were gated against these numbers and cannot be read without them.
+Nothing new may be adjudicated here.
+
 | statistic class | MDE95 |
 |---|---|
 | model vs consensus, pooled rho | **~0.045** (all four cuts) |
@@ -22,6 +59,14 @@ ridge + consensus OLS + calibration on every draw, under the production fit conf
 | blend-lambda shift, pooled rho | **0.0076-0.011 hit / 0.005-0.008 pit** |
 | FV-45 fringe t45 | **~0.055 hit / ~0.10 pit** |
 | MAE delta | 0.20 hit-debuted / 0.06 pit WAR |
+
+The 2026-08-07 lab re-measures the model-vs-consensus row of this table at 0.0376 hit /
+0.0487 pit, which brackets the published 0.045 and is the parity check that validates
+both the method and the one-sided convention.
+
+The other four rows have NOT been re-measured on the 11-fold basis. Feature-add,
+lambda-shift, t45 and MAE gates are still running against 4-fold floors. Do not assume
+they moved in either direction; re-measure the row you need before you gate on it.
 
 **A claimed effect smaller than its row above is a NULL. Report it as a null.** It is not
 a "small win", a "directional signal", or a "fringe gain".
@@ -48,6 +93,16 @@ Pooled Spearman alone is a low-power instrument at these n. Report BOTH:
 
 - **block-rho**: (side x cohort-year) block-normalized pooled Spearman, both sides pooled
   (n = 1001 test rows vs 353/438 separately). MDE95 **0.0149**.
+  IMPLEMENTED 2026-08-07 as `efv_model.block_rho_eval()`; emitted into both
+  `data/xfv_eval*.json`, `source_backtest.xfv_vs_consensus.block_rho`, and
+  `data/xfv_scoreboard_eval.json`. On the 11-fold pair-weighted basis it reads n 1,645,
+  consensus 0.3107, blend 0.3228, delta +0.0121.
+  **The 0.0149 is the INCREMENTAL FEATURE ADD floor on this instrument** (the
+  `EFV_FRONTIER_AUDIT.md` "recommended evaluator" row), measured on the 2020-2024
+  n = 1001 pool. A MODEL-VS-CONSENSUS delta on block-rho has its own, much larger floor:
+  **0.0325** pair-weighted on the current basis (section 1a). Do not gate a
+  feature add against 0.0325, and do not gate a model-vs-consensus claim against
+  0.0149. The feature-add row has not been re-measured on the 11-fold basis.
 - **full-pool discrimination AUC** (debut / no-debut). On the two candidates known to be
   real it reads SNR **6.25 / 4.08** against block-rho's **1.72 / 1.25**, and it survives
   leak-scrubbing where block-rho does not.

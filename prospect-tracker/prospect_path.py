@@ -386,6 +386,16 @@ def _weighted_spearman(pred, obs, w):
     sw = sum(w)
     if sw <= 0:
         return None
+    # DEGENERACY IS A PROPERTY OF THE SERIES, NOT OF THE ARITHMETIC. A constant
+    # series has no ordering, so the correlation is undefined and both forms must
+    # say so. Testing the weighted variance instead lets floating point decide:
+    # the weighted rank mean lands a few ulps off the constant rank, vx stays
+    # microscopically positive, and this returned rho 0.0000 for an undefined
+    # quantity where _spearman correctly returned None. That put a 53-row cell on
+    # the eFV scoreboard reading as a WIN against a baseline that had no ordering
+    # at all, and it breaks the exact w=1 equivalence this function exists for.
+    if len(set(rx)) < 2 or len(set(ry)) < 2:
+        return None
     mx = sum(wi * a for wi, a in zip(w, rx)) / sw
     my = sum(wi * b for wi, b in zip(w, ry)) / sw
     cov = sum(wi * (a - mx) * (b - my) for wi, a, b in zip(w, rx, ry))

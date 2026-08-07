@@ -1292,6 +1292,170 @@ def _era_of(yr) -> str:
     return "<=2018" if y <= 2018 else ("2019-2021" if y <= 2021 else "2022-2023")
 
 
+# ---------------------------------------------------------------------------
+# gate floors (measured, not assumed)
+# ---------------------------------------------------------------------------
+#: Model-vs-consensus MDE95 under the protocol that SHIPS today: 11 forward-chained
+#: folds, pair-weighted pooled Spearman, debuted-KM pool. Measured 2026-08-07 by
+#: `python tools/efv_mde_lab.py mde 2000` (paired bootstrap resampling train AND test
+#: together, refit every draw, seed 20260807); ledger data/xfv_mde_floor.json.
+#:
+#: One-sided 95% (1.645 * sd), which is the convention the retired 0.045 was on: the
+#: same lab reproduces 0.0376 hit / 0.0487 pit on the legacy 4-fold pool, bracketing
+#: it. The convention was never written down before, and reading 0.045 as two-sided
+#: would have moved the bar by 18%.
+#:
+#: The 11-fold promotion did NOT lower this floor. Pool n went 353/438 -> 755/890, but
+#: the added folds are the thin 2014-2019 cohorts and the censored 2024 cohort, and
+#: pair-weighting the 2024 rows at 0.333 gives back the effective n that the extra
+#: rows bought. The planning estimate of ~0.012 is off by roughly 3.7x.
+MDE95_POOLED_RHO = {"hit": 0.044, "pit": 0.044}
+
+#: Same measurement for the two-metric gate's block-rho leg (below). Higher SNR than
+#: either side's pooled rho because the (side x cohort-year) normalization removes the
+#: between-fold level differences that pooling otherwise counts as signal.
+MDE95_BLOCK_RHO = 0.0325
+
+_BLOCK_RHO_CACHE: dict = {}
+
+
+def _block_norm(pairs):
+    """Percentile position inside one block, on [0, 1]. Uses the same average-rank
+    treatment of ties as _spearman, so a block of identical predictions contributes
+    a constant rather than an arbitrary order."""
+    from prospect_path import _rankdata
+    n = len(pairs)
+    r = _rankdata(pairs)
+    return [(x - 0.5) / n for x in r]
+
+
+def block_rho_eval() -> dict:
+    """The second leg of the two-metric gate (docs/EFV_GATE_STANDARD.md section 3).
+
+    Pooled Spearman alone is a low-power instrument at these n, and it is inflated by
+    between-fold level differences: a fold where everyone busted and a fold where
+    everyone stuck are pooled as if their WAR numbers were on one scale. block-rho
+    percentile-normalizes prediction and outcome INSIDE each (side x cohort-year)
+    block, then pools, so only within-cohort ordering counts. Both sides enter one
+    number, which is also why it is computed jointly and memoized rather than per side.
+
+    Read it WITH the pooled rho, never instead of it. Note the carve-out at
+    EFV_GATE_STANDARD.md section 3: full-pool debut AUC, the other high-SNR
+    instrument, is INADMISSIBLE for any candidate that can sense a missing MiLB
+    block, because missingness is a near-deterministic proxy for that AUC's label.
+    block-rho carries no such exclusion, which is what makes it the usable one.
+    """
+    if "v" in _BLOCK_RHO_CACHE:
+        return _BLOCK_RHO_CACHE["v"]
+    from efv_dataset import matrix_path
+    cons_all, blend_all, tgt_all, wts_all = [], [], [], []
+    per_side = {}
+    for side in ("hit", "pit"):
+        keys, _m = _feature_spec(side)
+        lam = blend_lambda(side)
+        rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
+        data = _prep([r for r in rows if r["kind"] == "debuted"], "target_censored", side)
+        n_side = 0
+        for yr in SCORED_YEARS:
+            tr = [r for r in data if r["decision_year"] < yr]
+            te = [r for r in data if r["decision_year"] == yr]
+            if len(te) < 15 or len(tr) < 60:
+                continue
+            ols = _fit_ols_fv(tr)
+            ridge = _fit_ridge(tr, keys)
+            if not (ols and ridge):
+                continue
+            cons = [max(0.0, _pred_ols(ols, r["fv"])) for r in te]
+            blend = [(1 - lam) * c + lam * _predict(ridge, r["feats"])
+                     for c, r in zip(cons, te)]
+            cons_all.extend(_block_norm(cons))
+            blend_all.extend(_block_norm(blend))
+            tgt_all.extend(_block_norm([r["target"] for r in te]))
+            wts_all.extend(float(r.get("weight") or 1.0) for r in te)
+            n_side += len(te)
+        per_side[side] = n_side
+    if len(tgt_all) < 8:
+        raise ValueError("block-rho pool too small")
+    from prospect_path import _weighted_spearman
+    c = _weighted_spearman(cons_all, tgt_all, wts_all)
+    b = _weighted_spearman(blend_all, tgt_all, wts_all)
+    delta = round((b or 0.0) - (c or 0.0), 4)
+    resolvable = abs(delta) >= MDE95_BLOCK_RHO
+    out = {
+        "instrument": "block-rho: (side x cohort-year) percentile-normalized, both sides pooled",
+        "registration": "docs/EFV_GATE_STANDARD.md section 3 (two-metric gate)",
+        "n": len(tgt_all), "n_by_side": per_side,
+        "weighting": "pair-weighted, same basis as the headline pooled rho",
+        "consensus_block_rho": c, "blend_block_rho": b, "delta": delta,
+        "mde95": MDE95_BLOCK_RHO,
+        "mde95_source": "tools/efv_mde_lab.py mde (data/xfv_mde_floor.json)",
+        "resolvable": resolvable,
+        "verdict": ("beats consensus" if (delta > 0 and resolvable)
+                    else "loses to consensus" if (delta < 0 and resolvable)
+                    else "not resolvable at this power"),
+        "note": ("identical block on both side artifacts; the instrument is joint by "
+                 "construction. Reported BESIDE the pooled rho, not instead of it."),
+    }
+    _BLOCK_RHO_CACHE["v"] = out
+    return out
+
+
+def _honest_note(evals, era, block, side) -> str:
+    """The artifact's own summary, DERIVED from the numbers beside it.
+
+    This used to be a hardcoded paragraph asserting that eFV beats consensus on rank
+    for both cuts. The 2026-08-06 promotion to 11 folds made that false in the same
+    file that printed it: hitter full_pool_km went rank-negative and every cut's
+    delta fell far under its MDE. A note that cannot be contradicted by its own
+    artifact is the only kind worth shipping, so it is now assembled from
+    verdict_vs_consensus, the era split, and the block-rho leg.
+    """
+    parts = []
+    cuts = []
+    for cut in ("debuted_km", "full_pool_km"):
+        ev = evals.get(cut) or {}
+        pooled = ev.get("pooled_oos") or {}
+        base = (pooled.get("baseline") or {}).get("spearman")
+        blend = (pooled.get("blend") or {}).get("spearman")
+        if base is None or blend is None:
+            continue
+        cuts.append((cut, round(blend - base, 4)))
+    if cuts:
+        side_mde = MDE95_POOLED_RHO.get(side)
+        wins = [c for c in cuts if c[1] > 0]
+        resolved = [c for c in cuts if abs(c[1]) >= (side_mde or 9)]
+        detail = ", ".join(f"{name} {d:+.4f}" for name, d in cuts)
+        if resolved:
+            parts.append(f"eFV's rank edge over consensus FV is measurable on {detail} "
+                         f"against an MDE95 of {side_mde}.")
+        elif len(wins) == len(cuts):
+            parts.append(f"eFV ranks ahead of consensus FV on every out-of-sample cut "
+                         f"({detail}), but no gap reaches the {side_mde} this eval can "
+                         f"resolve, so treat it as a tie, not a win.")
+        else:
+            parts.append(f"eFV does not beat consensus FV on out-of-sample rank on every "
+                         f"cut ({detail}), and no gap reaches the {side_mde} this eval can "
+                         f"resolve either way.")
+    if block:
+        parts.append(f"The higher-SNR block-rho leg reads {block.get('delta'):+.4f} against "
+                     f"{block.get('mde95')}: {block.get('verdict')}.")
+    recent = (era or {}).get("2022-2023") or {}
+    old = (era or {}).get("<=2018") or {}
+    if recent.get("consensus_spearman") is not None and old.get("consensus_spearman") is not None:
+        d_new = recent["xfv_blend_spearman"] - recent["consensus_spearman"]
+        d_old = old["xfv_blend_spearman"] - old["consensus_spearman"]
+        parts.append(f"By era the edge concentrates in recent cohorts ({d_new:+.4f} on "
+                     f"2022-2023 vs {d_old:+.4f} on <=2018), so what edge exists is not "
+                     f"an artifact of older, less accurate scouting.")
+    mae = ((evals.get("debuted_km") or {}).get("verdict_vs_consensus") or {}).get("blend") or {}
+    if mae.get("beats_mae") is False:
+        parts.append("eFV still trails on MAE (it predicts more spread; consensus regresses "
+                     "to the mean). That loss is committed.")
+    parts.append("The flagship case is the package: rank + calibrated distribution + "
+                 "uncertainty + surplus + power-correction, not a resolved rank win.")
+    return " ".join(parts)
+
+
 def _cohort_map(rows) -> dict:
     """player_key -> acquisition cohort (ifa / college / hs / draft / other), matching
     efv_dataset._cohort_flags + the eFV lab's leakage-free draft-age split (drafted at
@@ -2190,13 +2354,17 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         "era_split_debuted": _era_split(_prep(deb, "target_censored", side), keys, lam),
         "evals": evals,
         "feature_diagnostics_full_window": _importances(_prep(deb, "target_censored", side), keys, mono),
-        "honest_note": ("The lean feature set (Phase-1-earned signals only) lets eFV BEAT consensus "
-                        "FV on out-of-sample rank for both cuts -- and the edge holds/grows on recent "
-                        "2019-2023 cohorts (era_split_debuted), so it is not just exploiting older, "
-                        "less-accurate scouting. eFV still trails on MAE (it predicts more spread; "
-                        "consensus regresses to the mean) -- that loss is committed. The flagship case: "
-                        "rank edge + calibrated distribution + uncertainty + surplus + power-correction."),
     }
+    # Two-metric gate, second leg. Joint by construction, so it must never block the
+    # per-side artifact: fail soft and record why, same contract as side_fairness.
+    try:
+        out["block_rho"] = block_rho_eval()
+    except Exception as exc:
+        log.warning("block-rho leg unavailable: %s", exc)
+        out["block_rho"] = {"error": f"block-rho unavailable: {exc}"}
+    out["honest_note"] = _honest_note(
+        out["evals"], out["era_split_debuted"],
+        out["block_rho"] if "error" not in out["block_rho"] else None, side)
     # eFV 3.4 F-SIDE: joint side-fairness line (measurement-only; identical compact
     # block on both sides -- the full tables live in data/xfv_side_fairness_eval.json).
     # The line must never block the per-side eval artifact: fail soft, record why.

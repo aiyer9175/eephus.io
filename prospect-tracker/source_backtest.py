@@ -288,25 +288,43 @@ def _tier_table(rows: list[dict]) -> list[dict]:
 def _archetype_accuracy(common_rows: list[dict], raters: list[str]) -> list[dict]:
     """Per-archetype head-to-head accuracy on the COMMON set (same players each
     rater graded). AUC = grade discriminates 'became a contributor'; Spearman =
-    ordering vs realized WAR. Archetypes below ARCH_MIN_N are dropped (n disclosed)."""
+    ordering vs realized WAR. Archetypes below ARCH_MIN_N are dropped (n disclosed).
+
+    Two rater tables, because they answer two questions (2026-08-07):
+      raters            = each rater on the rows IT graded. The per-source coverage
+                          and calibration story; eFV's n is smaller than everyone's.
+      raters_efv_common = every rater on the rows eFV also graded. The ONLY basis on
+                          which an eFV-vs-source cell in this table is a contest.
+    The Diamond hub's archetype table green-highlights the higher of two numbers, and
+    on the `raters` basis those two numbers were not computed on the same players.
+    """
     out = []
     for arch in _ARCH_ORDER:
         rows = [c for c in common_rows if c.get("archetype") == arch]
         if len(rows) < ARCH_MIN_N:
             continue
-        per = {}
-        for r in raters:
-            rr = [c for c in rows if c["grades"].get(r) is not None]   # eFV may be missing
-            if len(rr) < ARCH_MIN_N:
-                continue
-            fvs = [c["grades"][r] for c in rr]
-            wars = [c["outcome"]["war"] for c in rr]
-            contrib = [c["outcome"]["contributor"] for c in rr]
-            sp, au = _spearman(fvs, wars), _auc(fvs, contrib)
-            per[r] = {"n": len(rr), "spearman": round(sp, 4) if sp is not None else None,
-                      "auc": round(au, 4) if au is not None else None}
-        out.append({"archetype": arch, "label": _ARCH_LABELS[arch],
-                    "n": len(rows), "raters": per})
+
+        def _per(pool):
+            per = {}
+            for r in raters:
+                rr = [c for c in pool if c["grades"].get(r) is not None]  # eFV may be missing
+                if len(rr) < ARCH_MIN_N:
+                    continue
+                fvs = [c["grades"][r] for c in rr]
+                wars = [c["outcome"]["war"] for c in rr]
+                contrib = [c["outcome"]["contributor"] for c in rr]
+                sp, au = _spearman(fvs, wars), _auc(fvs, contrib)
+                per[r] = {"n": len(rr), "spearman": round(sp, 4) if sp is not None else None,
+                          "auc": round(au, 4) if au is not None else None}
+            return per
+
+        efv_rows = [c for c in rows if c["grades"].get("xfv") is not None]
+        row = {"archetype": arch, "label": _ARCH_LABELS[arch],
+               "n": len(rows), "raters": _per(rows)}
+        if len(efv_rows) >= ARCH_MIN_N:
+            row["n_efv"] = len(efv_rows)
+            row["raters_efv_common"] = _per(efv_rows)
+        out.append(row)
     return out
 
 
@@ -321,6 +339,7 @@ def _xfv_vs_consensus(data_dir: Path = DATA_DIR) -> dict | None:
                         "blend (consensus prior + the model edge that survives OOS)."),
            "sides": {}}
     found = False
+    block = None
     for side, fn in (("hitters", "xfv_eval.json"), ("pitchers", "xfv_eval_pitcher.json")):
         p = data_dir / fn
         if not p.exists():
@@ -335,6 +354,11 @@ def _xfv_vs_consensus(data_dir: Path = DATA_DIR) -> dict | None:
         if base is None or blend is None:
             continue
         found = True
+        # The two-metric gate's second leg, lifted from whichever side artifact
+        # carries it. It is JOINT (both sides in one number), so both artifacts hold
+        # the identical block and reading either one is correct.
+        if block is None and isinstance(ev.get("block_rho"), dict) and "error" not in ev["block_rho"]:
+            block = ev["block_rho"]
         # HONEST VERDICT, not a bare inequality (2026-08-06).
         #
         # This published `xfv_beats` to the Methodology tab as `blend > base`,
@@ -365,12 +389,48 @@ def _xfv_vs_consensus(data_dir: Path = DATA_DIR) -> dict | None:
                         else "not resolvable at this power"),
             "era_split": ev.get("era_split_debuted") or {},
         }
+    if block is None:
+        # The eval artifacts are rebuilt on the pipeline's cadence, so on the run
+        # right after the leg lands they do not carry it yet. Computing it live
+        # keeps the Methodology surface from waiting a rebuild for its own gate.
+        try:
+            from efv_model import block_rho_eval
+            block = block_rho_eval()
+        except Exception as exc:                          # noqa: BLE001
+            log.warning("block-rho leg unavailable: %s", exc)
+    if block:
+        out["block_rho"] = block
     return out if found else None
 
 
-#: Model-versus-consensus pooled-rho MDE95, from docs/EFV_GATE_STANDARD.md:20.
+#: Model-versus-consensus pooled-rho MDE95, from docs/EFV_GATE_STANDARD.md section 1.
 #: A delta smaller than this is not a result, whichever way it points.
-XFV_VS_CONSENSUS_MDE95 = 0.045
+#:
+#: RE-DERIVED 2026-08-07 on the 11-fold pair-weighted basis (the one that ships).
+#: The previous 0.045 was measured on the RETIRED 4-fold pool, so it was a floor
+#: from a different experiment being applied to today's deltas. Fresh measurement:
+#: `python tools/efv_mde_lab.py mde 2000`, paired bootstrap resampling train AND
+#: test together with a refit per draw, seed 20260807; ledger data/xfv_mde_floor.json.
+#: 0.0440 hit / 0.0436 pit, one-sided 95% (1.645 * sd), published as one number
+#: because the two sides agree to 0.0004.
+#:
+#: THE FLOOR DID NOT FALL. The 2026-08-05 plan estimated ~0.012 on the theory that
+#: n 353/438 -> 755/890 would buy power. It does not: the added folds are the thin
+#: 2014-2019 cohorts plus the censored 2024 cohort, the bootstrap resamples the
+#: TRAIN frame too (so the ridge's own refit variance dominates, and it does not
+#: shrink with test n), and pair-weighting the 2024 rows at 0.333 gives back the
+#: effective n the extra rows bought. Same lab on the legacy 4-fold pool reproduces
+#: 0.0376 hit / 0.0487 pit, which brackets the retired 0.045 and confirms both the
+#: method and the one-sided convention that number was on.
+XFV_VS_CONSENSUS_MDE95 = 0.044
+
+#: MDE95 for the OTHER gap the site asserts: eFV's OOS grade against the PROSPX
+#: consensus on the common resolved set (accuracy.pooled_efv_common). Different
+#: statistic, different pool, so it needs its own floor and does not inherit the
+#: one above. Measured 2026-08-07, `python tools/efv_mde_lab.py headtohead 2000`,
+#: cluster paired bootstrap over the eFV matrix pool with a refit per draw;
+#: ledger data/xfv_headtohead_gap.json. One-sided 95%, sd 0.02139.
+XFV_HEADTOHEAD_MDE95 = 0.0352
 
 
 def _xfv_vs_consensus_detail(common_rows: list[dict]) -> dict | None:
@@ -619,14 +679,47 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
                     "area": round(sum(cum[1:]) / n / _tot, 4),
                     "top20": round(cum[max(1, int(round(0.2 * n)))] / _tot, 4)}
         capture_curve = {"pool_n": len(fullp), "xfv": _capture(1), "consensus": _capture(2)}
+    # HEAD-TO-HEAD BASIS (2026-08-07). `pooled` scores each rater on the rows THAT
+    # rater graded, and eFV covers only the subset of the common set its matrix
+    # reaches (3,210 of 4,259 on this vintage). Reading eFV's number against a
+    # consensus number computed on 1,049 extra rows is not a head-to-head: on this
+    # vintage it inflates the gap from +0.033 to +0.067, because the rows eFV cannot
+    # reach are rows consensus orders BADLY. `pooled_efv_common` re-scores every
+    # rater on the eFV-covered rows only, which is the sole basis a head-to-head
+    # claim can rest on. `pooled` is kept because the per-source calibration and
+    # coverage story legitimately wants each source's full common cohort.
+    efv_common = [c for c in pooled_common if c["grades"].get("xfv") is not None]
     accuracy = {
         "capture_curve": capture_curve,
         "common_n": len(pooled_common),
         "head_to_head_raters": disp_raters,   # includes "xfv" (OOS) for the bars/archetype
         "pooled": _acc(pooled_common),
+        "common_n_efv": len(efv_common),
+        "pooled_efv_common": _acc(efv_common) if len(efv_common) >= 40 else None,
+        "pooled_basis_note": ("pooled = each rater on its own rows (eFV n < the others); "
+                              "pooled_efv_common = every rater on the eFV-covered rows, "
+                              "which is the identical-rows basis for any head-to-head claim"),
         "per_year": {y: {"common_n": len(common_by_year[y]), **_acc(common_by_year[y])}
                      for y in years if common_by_year[y]},
     }
+    # The head-to-head verdict, carrying its own floor. Without this the surface
+    # renders a bare inequality, which is the pattern the 2026-08-06 resolvability
+    # gate was added to stop one level up.
+    _pec = accuracy.get("pooled_efv_common") or {}
+    _x, _c = (_pec.get("xfv") or {}), (_pec.get(CONSENSUS_KEY) or {})
+    if _x.get("spearman") is not None and _c.get("spearman") is not None:
+        _d = round(_x["spearman"] - _c["spearman"], 5)
+        _res = abs(_d) >= XFV_HEADTOHEAD_MDE95
+        accuracy["head_to_head_verdict"] = {
+            "basis": "pooled_efv_common (identical rows)",
+            "n": _pec.get("xfv", {}).get("n"),
+            "xfv_spearman": _x["spearman"], "consensus_spearman": _c["spearman"],
+            "delta": _d, "mde95": XFV_HEADTOHEAD_MDE95, "resolvable": _res,
+            "xfv_beats": bool(_d > 0 and _res),
+            "verdict": ("beats consensus" if (_d > 0 and _res)
+                        else "loses to consensus" if (_d < 0 and _res)
+                        else "not resolvable at this power"),
+        }
     # Does the consensus beat its best individual input on each metric?
     def _beats(metric: str) -> dict:
         vals = {r: accuracy["pooled"][r].get(metric) for r in raters}

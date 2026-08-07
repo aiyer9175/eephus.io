@@ -44,8 +44,9 @@ import os; os.chdir(ROOT)  # noqa: E702  (house idiom, matches efv_lab_runner)
 
 import efv_lab_runner as LAB                      # noqa: E402
 from efv_model import _feature_spec, _fit_ols_fv, _pred_ols, blend_lambda  # noqa: E402
-from prospect_path import _fit_ridge, _predict, _spearman                 # noqa: E402
-from source_backtest import _auc                  # noqa: E402
+from prospect_path import (_fit_ridge, _predict, _spearman,               # noqa: E402
+                           _weighted_spearman)
+from source_backtest import _auc, XFV_VS_CONSENSUS_MDE95   # noqa: E402
 
 DATA = ROOT / "data"
 OUT_PATH = DATA / "xfv_scoreboard_eval.json"
@@ -67,6 +68,36 @@ ERA_MIN_N = 15
 # which is the expensive path - the artifact is nightly-regenerated anyway).
 SB_MAX_AGE_DAYS = 7
 
+# The pre-2026-08-06 scoreboard, verbatim, so the Diamond hub's old numbers stay
+# readable as history instead of becoming unreproducible. Owner decision 2026-08-07:
+# 11-fold pair-weighted is the headline everywhere, legacy 4-fold survives as a
+# labeled dated footnote. Everything in here was measured on SCORED_YEARS
+# (2020, 2021, 2022, 2023) with an UNWEIGHTED pooled rho, and no re-run of any
+# current tool reproduces it, because both the fold set and the weighting changed.
+LEGACY_4FOLD_FOOTNOTE = {
+    "generated_at": "2026-07-30",
+    "basis": "SCORED_YEARS = (2020, 2021, 2022, 2023), unweighted pooled Spearman",
+    "retired_on": "2026-08-06 (owner promotion to the 11-fold chain)",
+    "why_it_cannot_be_reproduced": (
+        "efv_model.SCORED_YEARS is now the 11-fold chain and prospect_path._score "
+        "pair-weights the pooled figure, so every tool that imports either lands on "
+        "the new basis. efv_model.SCORED_YEARS_LEGACY_4FOLD is kept for archaeology."),
+    "sides": {
+        "hit": {"pooled_spearman": {"n": 353, "efv": 0.3882, "consensus": 0.3522},
+                "pooled_auc_contributor": {"n": 353, "efv": 0.7768, "consensus": 0.7556}},
+        "pit": {"pooled_spearman": {"n": 438, "efv": 0.3060, "consensus": 0.2671},
+                "pooled_auc_contributor": {"n": 438, "efv": 0.7187, "consensus": 0.7023}},
+    },
+    "head_to_head_vs_consensus": {
+        "n": 2200, "efv_spearman": 0.384, "consensus_spearman": 0.283,
+        "efv_auc_contributor": 0.7572, "consensus_auc_contributor": 0.7316,
+        "caveat": ("this pair is ALSO on the retired mixed-rows basis: eFV was scored "
+                   "on its own covered rows and consensus on the full common set, so "
+                   "the 0.101 margin is part protocol and part population"),
+    },
+    "top20_capture": {"pool_n": 1632, "efv": 0.6985, "consensus": 0.7039},
+}
+
 
 # ---------------------------------------------------------------------------
 # cells
@@ -80,11 +111,41 @@ def _cell(efv, cons, n):
             "win": efv > cons, "margin": round(efv - cons, 4)}
 
 
-def _sp_cell(rows, min_n):
+def _sp_cell(rows, min_n, weighted=True):
+    """One Spearman cell.
+
+    PAIR-WEIGHTED by default since 2026-08-07, matching the published headline
+    (prospect_path._score). Unweighted, this scoreboard read 0.3910 hit while
+    data/xfv_eval.json read 0.3993 on the identical 755 rows, and the Diamond hub
+    and the glossary printed the two numbers side by side with nothing saying that
+    the only difference was the censored 2024 cohort's 0.333 weight. With every
+    weight 1.0 _weighted_spearman is algebraically the unweighted form, so the
+    cells that carry no censored rows are unchanged.
+
+    `weighted=False` is for the era cells, which promise to reproduce
+    efv_model._era_split, and that function is unweighted by construction.
+    """
     if len(rows) < min_n:
         return None
-    b = _spearman([r["blend"] for r in rows], [r["y"] for r in rows])
-    c = _spearman([r["cons"] for r in rows], [r["y"] for r in rows])
+    y = [r["y"] for r in rows]
+    blend, cons = [r["blend"] for r in rows], [r["cons"] for r in rows]
+    # A constant leg has no rank correlation, full stop. _spearman returns None for
+    # it (vx == 0), but _weighted_spearman's weighted rank mean lands a few ulps off
+    # the constant rank, leaves vx microscopically positive, and reports rho = 0.0000
+    # for an UNDEFINED quantity. That is how a whole FV-35 hitter cell (53 rows, every
+    # consensus prediction clamped to 0 WAR) arrived on the scoreboard reading
+    # "eFV 0.1314 vs consensus 0.0000 WIN" against a baseline that never had an
+    # ordering to beat. Degeneracy is decided here, on the values, not on a variance
+    # that survived rounding.
+    if len(set(blend)) < 2 or len(set(cons)) < 2 or len(set(y)) < 2:
+        return None
+    if weighted:
+        w = [r.get("w", 1.0) for r in rows]
+        b = _weighted_spearman(blend, y, w)
+        c = _weighted_spearman(cons, y, w)
+    else:
+        b = _spearman(blend, y)
+        c = _spearman(cons, y)
     if b is None or c is None:
         return None
     return _cell(b, c, len(rows))
@@ -129,6 +190,7 @@ def _forward_read(side, years, min_train, min_test):
             cw = max(0.0, _pred_ols(ols, r["fv"]))
             out.append({"blend": (1 - lam) * cw + lam * _predict(ridge, r["feats"]),
                         "cons": cw, "fv": r["fv"], "y": r["target_censored"],
+                        "w": float(r.get("weight") or 1.0),
                         "cohort": r["cohort"], "year": yr})
     return out
 
@@ -187,7 +249,7 @@ def _side_block(side):
     era_cells = {}
     for ek in ("<=2018", "2019-2021", "2022-2023"):
         grp = eras.get(ek) or []
-        sp = _sp_cell(grp, ERA_MIN_N)
+        sp = _sp_cell(grp, ERA_MIN_N, weighted=False)
         if sp is None:
             continue
         era_cells[ek] = {"spearman": sp,
@@ -233,6 +295,18 @@ def _artifact_crosscheck(side_blocks):
 # ---------------------------------------------------------------------------
 # source_backtest consolidation (head-to-head / capture / receipts)
 # ---------------------------------------------------------------------------
+def _sb_has_identical_rows_basis(d) -> bool:
+    """Does this source_backtest artifact carry every identical-rows block this
+    consolidation reads? Checking only the pooled block is not enough: an artifact
+    written between the two 2026-08-07 commits passed that check and still fed the
+    archetype table its mixed-basis rows."""
+    acc = (d or {}).get("accuracy") or {}
+    if acc.get("pooled_efv_common") is None:
+        return False
+    arch = acc.get("by_archetype") or []
+    return bool(arch) and all(a.get("raters_efv_common") is not None for a in arch)
+
+
 def _load_source_backtest():
     p = DATA / "source_backtest.json"
     if p.exists():
@@ -241,7 +315,11 @@ def _load_source_backtest():
         except ValueError:
             d = None
         gen = (d or {}).get("generated_at")
-        if gen:
+        # A fresh artifact is not a USABLE one. The identical-rows head-to-head
+        # basis landed 2026-08-07; an artifact written before it parses fine, is
+        # inside the age window, and silently hands this consolidation the
+        # mixed-basis numbers it exists to stop publishing. Age AND schema.
+        if gen and _sb_has_identical_rows_basis(d):
             try:
                 ts = datetime.strptime(gen, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
                 if datetime.now(timezone.utc) - ts <= timedelta(days=SB_MAX_AGE_DAYS):
@@ -252,13 +330,26 @@ def _load_source_backtest():
     import source_backtest as SB
     d = SB.run_source_backtest(write=True)
     return d, {"reran": True, "artifact_generated_at": d.get("generated_at"),
-               "rule": f"reran (artifact missing or older than {SB_MAX_AGE_DAYS} days)"}
+               "rule": (f"reran (artifact missing, older than {SB_MAX_AGE_DAYS} days, "
+                        "or predating the identical-rows head-to-head basis)")}
 
 
 def _head_to_head(sb):
     """eFV vs each public rater on the common resolved set (identical players,
-    OOS eFV grades). Cells per rival: Spearman + contributor AUC."""
-    pooled = ((sb.get("accuracy") or {}).get("pooled")) or {}
+    OOS eFV grades). Cells per rival: Spearman + contributor AUC.
+
+    BASIS FIX 2026-08-07. This read `accuracy.pooled`, where each rater is scored
+    on the rows IT graded. eFV covers a subset (3,210 of 4,259), so every cell here
+    compared eFV's number against a rival's number computed on rows eFV never saw,
+    and the Diamond hub printed the difference as a head-to-head margin. It now
+    reads `pooled_efv_common`, which re-scores every rater on the eFV rows.
+    """
+    acc = sb.get("accuracy") or {}
+    pooled = acc.get("pooled_efv_common") or acc.get("pooled") or {}
+    basis = ("identical rows (accuracy.pooled_efv_common)"
+             if acc.get("pooled_efv_common") else
+             "MIXED: each rater on its own rows (accuracy.pooled); "
+             "regenerate source_backtest.json for the identical-rows basis")
     x = pooled.get("xfv") or {}
     if x.get("spearman") is None:
         return None
@@ -276,18 +367,27 @@ def _head_to_head(sb):
                                                 x.get("n"))}
     arch = []
     for a in ((sb.get("accuracy") or {}).get("by_archetype")) or []:
-        xa = (a.get("raters") or {}).get("xfv") or {}
-        ca = (a.get("raters") or {}).get("prospx_consensus") or {}
+        # Same basis rule as the tiles above: prefer the rater table scored on the
+        # eFV-covered rows. Falls back to the mixed table only on an artifact that
+        # predates it, so the hub never silently loses the archetype rows.
+        rt = a.get("raters_efv_common") or a.get("raters") or {}
+        xa = rt.get("xfv") or {}
+        ca = rt.get("prospx_consensus") or {}
         if xa.get("spearman") is None or ca.get("spearman") is None:
             continue
         arch.append({"archetype": a.get("archetype"), "label": a.get("label"),
                      "n": xa.get("n"),
+                     "basis": ("identical rows" if a.get("raters_efv_common")
+                               else "MIXED: each rater on its own rows"),
                      "spearman": _cell(xa.get("spearman"), ca.get("spearman"), xa.get("n")),
                      "auc_contributor": _cell(xa.get("auc"), ca.get("auc"), xa.get("n"))})
     return {"protocol": ("common resolved set (players every scored source graded that "
                          "preseason); eFV enters with its forward-chained OOS grade, "
                          "never an in-sample fit"),
-            "common_n": (sb.get("accuracy") or {}).get("common_n"),
+            "basis": basis,
+            "common_n": acc.get("common_n"),
+            "common_n_efv": acc.get("common_n_efv"),
+            "verdict_vs_consensus": acc.get("head_to_head_verdict"),
             "vs": rivals, "by_archetype_vs_consensus": arch}
 
 
@@ -369,6 +469,15 @@ def _collect_weak(sides, h2h, cap, rec):
 def build():
     sides = {"hit": _side_block("hit"), "pit": _side_block("pit")}
     sb, sb_fresh = _load_source_backtest()
+    # Second leg of the two-metric gate, computed live rather than lifted from
+    # data/xfv_eval*.json: those artifacts are rebuilt on the pipeline's cadence, so
+    # lifting would leave this scoreboard a rebuild behind its own gate.
+    try:
+        from efv_model import block_rho_eval
+        block = block_rho_eval()
+    except Exception as exc:                                  # noqa: BLE001
+        print(f"WARN block-rho leg unavailable: {exc}")
+        block = {"error": str(exc)}
     h2h = _head_to_head(sb)
     cap = _top20_capture(sb)
     rec = _receipts(sb)
@@ -379,6 +488,26 @@ def build():
         "generated_at": date.today().isoformat(),
         "registration": REGISTRATION,
         "regen_cmd": REGEN_CMD,
+        # WHICH PROTOCOL PRODUCED THESE NUMBERS. Without this stamp the Diamond hub
+        # printed 0.384 off a frozen 4-fold artifact while the glossary printed 0.351
+        # off the live 11-fold one, and nothing on either page said why they differed.
+        "basis": {
+            "scored_years": list(LAB.SCORED_YEARS),
+            "folds": len(LAB.SCORED_YEARS),
+            "source_of_folds": "efv_model.SCORED_YEARS (imported, never copied)",
+            "pooled_weighting": ("pair-weighted (row weight = observed_seasons/6), the "
+                                 "same basis as data/xfv_eval*.json, so the pooled / tier "
+                                 "/ cohort Spearman cells reproduce the published headline"),
+            "unweighted_cells": ("by_era (it reproduces efv_model._era_split, which is "
+                                 "unweighted by construction) and every AUC cell (no AUC "
+                                 "in this codebase is weighted)"),
+            "mde95_model_vs_consensus": XFV_VS_CONSENSUS_MDE95,
+            "mde95_source": "tools/efv_mde_lab.py (data/xfv_mde_floor.json)",
+            "note": ("descriptive scoreboard: a win flag here is a raw inequality on "
+                     "identical rows, NOT a resolved result. Check the margin against "
+                     "mde95_model_vs_consensus before quoting any cell as a win."),
+        },
+        "legacy_4fold_footnote": LEGACY_4FOLD_FOOTNOTE,
         "purpose": ("G-SCORE scoreboard: the eFV track record in one artifact, every "
                     "cell = eFV vs the consensus baseline on identical rows, win/loss "
                     "marked. Descriptive; the weak_cells list feeds the experiment "
@@ -397,6 +526,7 @@ def build():
                          "FV's"),
         },
         "sides": sides,
+        "block_rho": block,
         "head_to_head": h2h,
         "top20_capture": cap,
         "disagreement_receipts": rec,

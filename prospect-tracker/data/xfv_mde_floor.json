@@ -1,0 +1,165 @@
+{
+ "generated_at": "2026-08-07T16:20:22Z",
+ "produced_by": "tools/efv_mde_lab.py mde",
+ "purpose": "Minimum detectable effect for the model-vs-consensus pooled-rho gate, re-derived under the 11-fold pair-weighted protocol that ships today. Feeds source_backtest.XFV_VS_CONSENSUS_MDE95 and docs/EFV_GATE_STANDARD.md section 1.",
+ "basis": {
+  "scored_years": [
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "folds": 11,
+  "headline_weighting": "pair-weighted (row weight = observed_seasons/6)",
+  "pool": "debuted rows, KM-censored target; train and test both inside that pool",
+  "lambda": {
+   "hit": 0.7,
+   "pit": 0.57
+  },
+  "matrix_rows": {
+   "hit": 845,
+   "pit": 981
+  }
+ },
+ "protocol": "paired bootstrap over the WHOLE pool (train AND test resampled together, one draw per side per replicate), refitting consensus OLS and the weighted ridge on every draw; blend and baseline scored on identical rows. MDE95 = 1.96 * sd(delta).",
+ "B_requested": 2000,
+ "seed": 20260807,
+ "elapsed_s": 50.0,
+ "weighted": {
+  "hit": {
+   "B_used": 2000,
+   "point_delta": 0.0074,
+   "boot_mean_delta": -0.01895,
+   "sd": 0.02675,
+   "mde95": 0.0524,
+   "mde95_onesided": 0.044,
+   "ci95": [
+    -0.0735,
+    0.02808
+   ],
+   "p_gt_0": 0.2525,
+   "resolvable": false
+  },
+  "pit": {
+   "B_used": 2000,
+   "point_delta": 0.00669,
+   "boot_mean_delta": -0.00856,
+   "sd": 0.02648,
+   "mde95": 0.0519,
+   "mde95_onesided": 0.0436,
+   "ci95": [
+    -0.06325,
+    0.0414
+   ],
+   "p_gt_0": 0.3875,
+   "resolvable": false
+  },
+  "block": {
+   "B_used": 2000,
+   "point_delta": 0.01204,
+   "boot_mean_delta": -0.01063,
+   "sd": 0.01975,
+   "mde95": 0.0387,
+   "mde95_onesided": 0.0325,
+   "ci95": [
+    -0.05117,
+    0.02722
+   ],
+   "p_gt_0": 0.302,
+   "resolvable": false
+  }
+ },
+ "unweighted": {
+  "hit": {
+   "B_used": 2000,
+   "point_delta": 0.01127,
+   "boot_mean_delta": -0.01206,
+   "sd": 0.02283,
+   "mde95": 0.0447,
+   "mde95_onesided": 0.0376,
+   "ci95": [
+    -0.05763,
+    0.02831
+   ],
+   "p_gt_0": 0.3165,
+   "resolvable": false
+  },
+  "pit": {
+   "B_used": 2000,
+   "point_delta": 0.01076,
+   "boot_mean_delta": -0.00268,
+   "sd": 0.02285,
+   "mde95": 0.0448,
+   "mde95_onesided": 0.0376,
+   "ci95": [
+    -0.04985,
+    0.04113
+   ],
+   "p_gt_0": 0.466,
+   "resolvable": false
+  },
+  "block": {
+   "B_used": 2000,
+   "point_delta": 0.01419,
+   "boot_mean_delta": -0.00572,
+   "sd": 0.01695,
+   "mde95": 0.0332,
+   "mde95_onesided": 0.0279,
+   "ci95": [
+    -0.04042,
+    0.02772
+   ],
+   "p_gt_0": 0.373,
+   "resolvable": false
+  }
+ },
+ "point_estimates": {
+  "weighted": {
+   "hit": {
+    "n": 755,
+    "consensus": 0.39192,
+    "blend": 0.39932,
+    "delta": 0.0074
+   },
+   "pit": {
+    "n": 890,
+    "consensus": 0.24948,
+    "blend": 0.25617,
+    "delta": 0.00669
+   },
+   "block": {
+    "n": 1645,
+    "consensus": 0.31074,
+    "blend": 0.32278,
+    "delta": 0.01204
+   }
+  },
+  "unweighted": {
+   "hit": {
+    "n": 755,
+    "consensus": 0.37972,
+    "blend": 0.39098,
+    "delta": 0.01127
+   },
+   "pit": {
+    "n": 890,
+    "consensus": 0.24041,
+    "blend": 0.25117,
+    "delta": 0.01076
+   },
+   "block": {
+    "n": 1645,
+    "consensus": 0.29495,
+    "blend": 0.30914,
+    "delta": 0.01419
+   }
+  }
+ }
+}

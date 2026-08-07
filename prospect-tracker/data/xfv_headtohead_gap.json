@@ -1,0 +1,41 @@
+{
+ "generated_at": "2026-08-07T16:21:20Z",
+ "produced_by": "tools/efv_mde_lab.py headtohead",
+ "basis": {
+  "scored_years": [
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "common_set_players": 1563,
+  "scored_rows": 3210
+ },
+ "protocol": "cluster paired bootstrap: resample the eFV matrix pool by player, refit the forward chain, score both legs on the common-set rows the resampled players own. MDE95 = 1.645 * sd(delta), one-sided, the same convention as the model-vs-consensus floor.",
+ "B_requested": 2000,
+ "B_used": 2000,
+ "seed": 20260808,
+ "elapsed_s": 55.7,
+ "point": {
+  "n_rows": 3210,
+  "efv": 0.35416,
+  "consensus": 0.32143,
+  "delta": 0.03273
+ },
+ "sd": 0.02139,
+ "mde95": 0.0352,
+ "mde95_twosided": 0.0419,
+ "ci95": [
+  -0.01406,
+  0.06922
+ ],
+ "p_gt_0": 0.8965,
+ "resolvable": false
+}

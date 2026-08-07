@@ -109,6 +109,22 @@
       root.innerHTML = note("The scoreboard artifact carries no comparable metrics yet.");
       return;
     }
+    // A LEAD IS NOT A RESULT UNTIL IT CLEARS THE FLOOR. These tiles used to print
+    // two numbers and let the bigger one win, which is the bare-inequality pattern
+    // the eFV verdict gating removed everywhere else. The artifact now carries the
+    // minimum gap this backtest can resolve at 95%, so a lead inside it is
+    // reported as the tie it is.
+    var vv = h2h.verdict_vs_consensus;
+    var verdictHTML = "";
+    if (vv && vv.delta != null && vv.mde95 != null) {
+      var lead = (vv.delta >= 0 ? "+" : "") + dec(vv.delta);
+      verdictHTML = '<p class="dm-fine">On rank correlation the margin is ' + esc(lead) +
+        " over " + esc(who) + ". " + (vv.resolvable
+          ? "That clears the " + esc(dec(vv.mde95)) + " this backtest can resolve at 95%, so it is a real lead."
+          : "That sits under the " + esc(dec(vv.mde95)) + " this backtest can resolve at 95%, so read it as a tie that leans " +
+            gl("eFV", "xfv") + ", not a win. More resolved cohorts, not a better model, is what settles it.") +
+        "</p>";
+    }
     var arch = (h2h.by_archetype_vs_consensus || []).filter(function (a) {
       return a && a.spearman && a.spearman.efv != null;
     });
@@ -144,6 +160,7 @@
       gl("backtest", "backtest") + ". " + gl("eFV", "xfv") + " never sees a player's own " +
       "outcome before it grades him. Higher is better in both rows.</p>" +
       '<div class="dm-tiles">' + tiles + "</div>" +
+      verdictHTML +
       archHTML +
       protocol +
       '<p class="dm-fine">Read live from data/xfv_scoreboard_eval.json on every page load. ' +
