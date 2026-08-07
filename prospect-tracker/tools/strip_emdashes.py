@@ -90,6 +90,9 @@ TARGETS: list[str] = [
     "history/index.html",
     "parks/index.html",
     "player/index.html",
+    # /models/ renders registry `notes` prose verbatim, so its copy is only ever
+    # as clean as the registry's, and it inherits any dash a future row carries.
+    "models/index.html",
     # NOT ADDED, deliberately, and each for a reason worth recording:
     #   fantasy_export.py  carries 11 dashes, all in docstrings, comments and
     #     log lines. None reaches a reader. Adding it would rewrite internal

@@ -1487,7 +1487,7 @@ function _methRegistryHTML() {
     reg.models.forEach(m => { counts[m.verdict] = (counts[m.verdict] || 0) + 1; });
     const rows = reg.models.map(m => {
       const art = m.eval_artifact
-        ? `<a href="/${escapeHtml(m.eval_artifact)}" target="_blank" rel="noopener">${escapeHtml(m.eval_artifact.replace(/^data\//, ""))}</a>${m.stale ? " <em>(stale)</em>" : ""}`
+        ? `${_artifactHTML(m.eval_artifact)}${m.stale ? " <em>(stale)</em>" : ""}`
         : " - ";
       const mainRow = `<tr>
         <td><strong>${escapeHtml(m.model_id)}</strong><br><span class="meth-note">${escapeHtml(m.surface || "")}</span></td>
@@ -2123,10 +2123,28 @@ function _modelRow(label, val) {
 // audit-hit-list note for an unvalidated claim with no eval; the consensus /
 // source models also point at the Source Comparison head-to-head. Eval-less
 // internal rows get no Proof line at all.
+// WHAT ACTUALLY SHIPS. Both deploy paths publish data/ at DEPTH ONE only (the
+// nightly rsync takes /data/*.json; the CI workflow runs find data -maxdepth 1),
+// so an eval artifact living under docs/ or tools/, or in a data/ subdirectory,
+// is NOT on the deployed site and a link to it is a live 404. Four registry rows
+// point at such paths today. A receipts page that links a missing receipt is
+// worse than one that says where the receipt is, so those are NAMED, not linked.
+function _artifactIsPublished(path) {
+  if (!path) return false;
+  const parts = String(path).split("/");
+  return parts.length === 2 && parts[0] === "data";
+}
+function _artifactHTML(path) {
+  const p = escapeHtml(String(path));
+  return _artifactIsPublished(path)
+    ? `<a href="/${p}" target="_blank" rel="noopener">${p}</a>`
+    : `<code>${p}</code> <span class="gl-model-note">(committed to the repo, not published)</span>`;
+}
+
 function _modelProofHTML(m) {
   const bits = [];
   if (m.eval_artifact) {
-    bits.push(`<a href="/${escapeHtml(m.eval_artifact)}" target="_blank" rel="noopener">${escapeHtml(m.eval_artifact)}</a>`);
+    bits.push(_artifactHTML(m.eval_artifact));
   } else if (m.verdict === "unvalidated") {
     bits.push("No committed eval yet (this is the audit's hit list).");
   }

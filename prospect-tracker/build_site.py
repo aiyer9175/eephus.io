@@ -43,6 +43,10 @@ import markdown as md
 # the eFV movement alerts feed written at the end of main().
 import data_catalog
 import efv_alerts
+# The registry loader/validator behind /models/. Imported for load(), STALE_DAYS
+# and the artifact-date reader ONLY; refresh_stamps() is the sole writer in that
+# module and it runs under run_monthly, never here.
+import model_registry
 
 ROOT = Path(__file__).resolve().parent
 CONTENT = ROOT / "content"
@@ -100,6 +104,10 @@ _EXPORT_VER = _asset_ver("assets/eephus-export.js")
 _CSV_VER = _asset_ver("assets/eephus-csv.js")
 _PARKS_VER = _asset_ver("assets/parks.js")
 _PARKS_CSS_VER = _asset_ver("assets/parks.css")
+# /models/ - the model accountability hub. Client is filter-only: every row,
+# count and date on that page is server-rendered here at build time, so the
+# surface still tells the truth with JavaScript off.
+_ACCT_HUB_VER = _asset_ver("assets/accountability.js")
 # Diamond section (2026-08-05): one config script, five module apps, and the
 # Diamond Pass client. The five module apps are owned by their own lanes. A
 # file that is not on disk yet hashes to "1" here rather than raising, so the
@@ -378,6 +386,9 @@ def _footer() -> str:
         # module's "See all" kicker, so it was unreachable from every other page.
         f'<a href="/history/">This Day</a>'
         f'<a href="/parks/">Park Factors</a>'
+        # The model ledger carries no nav row (the nav has three hand-maintained
+        # static copies), so the footer is its primary address on every page.
+        f'<a href="/models/">Model Accountability</a>'
         f'<a href="/sources/">Data Sources</a>'
         # The artifact catalog (what we publish, on what cadence, how stable)
         # is the second half of /sources/. It gets its own footer link because
@@ -2951,6 +2962,29 @@ def _cross_module_strip() -> str:
                           f'MiLB venues that add the most offense ({year} window)', rows))
     except (OSError, ValueError, KeyError, TypeError):
         pass
+    # Model Accountability - the verdict split, counted off the registry at build
+    # time. Deprecated is on the card on purpose: a ledger that teases only its
+    # wins on the homepage is the thing the ledger exists to argue against.
+    try:
+        reg = _cached_data_json("model_registry.json")
+        tally: dict = {}
+        for m in reg.get("models") or []:
+            tally[m.get("verdict")] = tally.get(m.get("verdict"), 0) + 1
+        rows = "".join(
+            f'<a class="xmod-row" href="/models/">'
+            f'<span class="xmod-name">{html.escape(lab)}</span>'
+            f'<span class="xmod-sub">{html.escape(sub)}</span>'
+            f'<span class="xmod-val">{tally.get(key, 0)}</span></a>'
+            for key, lab, sub in (
+                ("validated", "Validated", "beat their stated baseline"),
+                ("deprecated", "Deprecated", "measured, failed, retired"),
+                ("unvalidated", "Unvalidated", "serving, not yet gated")))
+        if tally:
+            cards.append(('✓ Model Ledger', '/models/',
+                          f'{sum(tally.values())} models with a predictive claim, verdicts included',
+                          rows))
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
     body = "".join(
         f'<div class="xmod-card"><div class="xmod-head"><span class="xmod-title">{title}</span>'
         f'<a class="xmod-link" href="{href}">open →</a></div>'
@@ -4292,6 +4326,428 @@ def build_parks() -> str:
                 "and sample-shrunk. Display only, no model reads them.",
                 url=f"{SITE_ORIGIN}/parks/")
 
+# --------------------------------------------------------------------------- #
+# /models/ - the model accountability hub
+# --------------------------------------------------------------------------- #
+# Nothing on this page is typed in. Every row, count, date and link is read at
+# build time out of data/model_registry.json and out of the eval artifacts
+# themselves, because a hand-written verdict on an accountability page is the
+# one lie the page exists to prevent.
+#
+# The glossary already carries a Models & Proofs view over the same registry
+# (assets/glossary.js, /glossary/#view=models) and this page does NOT replace
+# it. That view is a browsable card per model with the full accountability
+# note. This one answers the three questions that view cannot, because they
+# need the filesystem at build time rather than the registry alone:
+#   1. does the proof link actually resolve on the deployed site
+#   2. what does the artifact say about itself, in its own words
+#   3. how old is the measurement, by the artifact's own stamp
+# The long `notes` field (322KB across the registry, one row alone is 16KB) is
+# deliberately NOT duplicated here; the page links the glossary card for it.
+_ACCT_VERDICTS = (
+    ("validated", "Validated",
+     "A forward-chained out-of-sample backtest is committed and the champion "
+     "beats the baseline the row names."),
+    ("provisional", "Provisional",
+     "Measured, but only partly. A synthetic-only harness, a short window, or a "
+     "descriptive correlation rather than a forward test."),
+    ("unvalidated", "Unvalidated",
+     "Registered and serving, with no measurement yet. This is the audit's own "
+     "hit list, not a defect list: an unvalidated row is a model whose gate has "
+     "not been run, which is not the same thing as a model that is wrong."),
+    ("deprecated", "Deprecated",
+     "It was measured, it failed its gate, and it was retired or demoted. These "
+     "are the losses, and they are kept on the ledger on purpose."),
+)
+
+# Parse ceiling for reading an artifact's own stamp, mirroring
+# model_registry._MAX_STAMP_PARSE_BYTES. A file over this reads as undated
+# rather than costing the build a multi-megabyte parse.
+_ACCT_MAX_PARSE_BYTES = 4_000_000
+
+
+@functools.lru_cache(maxsize=1)
+def _acct_data_excludes() -> frozenset:
+    """The data/ basenames deploy/data_exclude.txt holds back from the webroot."""
+    out = set()
+    path = ROOT / "deploy" / "data_exclude.txt"
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                out.add(line)
+    except OSError:
+        pass
+    return frozenset(out)
+
+
+def _acct_artifact_url(rel: str) -> tuple:
+    """(public URL, reason there is none) for one registry eval_artifact path.
+
+    BOTH deploy consumers ship data/ at depth one only: the nightly rsync
+    include list is `/data/*.json` plus three named shard dirs, and the CI
+    workflow runs `find data -maxdepth 1`. An artifact under docs/ or tools/,
+    or one nested in a data/ subdirectory, exists in this tree and does not
+    exist on the webroot. Linking it would put a 404 on the page whose entire
+    claim is that its receipts resolve, so those rows are rendered as unlinked
+    with the reason stated instead."""
+    p = (rel or "").strip().replace("\\", "/")
+    if not p:
+        return None, "no eval artifact is registered for this row"
+    if not p.startswith("data/") or p.count("/") != 1:
+        return None, "the artifact lives outside the published data directory"
+    if p.split("/", 1)[1] in _acct_data_excludes():
+        return None, "deploy/data_exclude.txt holds this file back from the webroot"
+    if not (ROOT / p).exists():
+        return None, "the artifact is not in this tree"
+    return "/" + p, ""
+
+
+def _acct_artifact_facts(rel: str) -> dict:
+    """Everything the page says about one eval artifact, read off the file.
+
+    `date` is the artifact's SELF-DECLARED production stamp, via the registry's
+    own reader, never the file mtime: the deploy box runs `git checkout -- .`
+    every night, which rewrites every tracked mtime to the moment of checkout,
+    so an mtime age would read "brand new" exactly where staleness matters. An
+    artifact with no stamp of its own gets no age here at all rather than a
+    flattering one, and reads as undated on the page.
+
+    `verdict` is a TOP-LEVEL string field only. Several artifacts carry `gate`,
+    `gates`, `ship` or a `verdicts` map instead, in shapes that differ per lane;
+    inferring a verdict from those would be this page writing the verdict rather
+    than reading it."""
+    url, why = _acct_artifact_url(rel)
+    out = {"path": (rel or "").strip().replace("\\", "/"),
+           "url": url, "why": why, "date": None, "age": None,
+           "verdict": None, "size": None}
+    if not out["path"]:
+        return out
+    path = ROOT / out["path"]
+    try:
+        out["size"] = path.stat().st_size
+    except OSError:
+        return out
+    try:
+        stamped = model_registry._artifact_date(path)
+    except Exception:                       # noqa: BLE001 - undated, never fatal
+        stamped = None
+    if stamped is not None:
+        out["date"] = stamped.date().isoformat()
+        out["age"] = (datetime.now() - stamped).days
+    if path.suffix == ".json" and (out["size"] or 0) <= _ACCT_MAX_PARSE_BYTES:
+        try:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            doc = None
+        if isinstance(doc, dict) and isinstance(doc.get("verdict"), str):
+            out["verdict"] = doc["verdict"].strip()
+    return out
+
+
+def _acct_orphan_artifacts(claimed: set) -> list:
+    """data/*_eval.json files that ship but that NO registry row claims.
+
+    The registry is the ledger; an eval nobody registered is measured work the
+    ledger cannot show you. Listing them is the only way that gap is visible,
+    and the list is a glob so it closes itself when a row is added."""
+    out = []
+    for path in sorted((ROOT / "data").glob("*_eval.json")):
+        rel = f"data/{path.name}"
+        if rel in claimed:
+            continue
+        if _acct_artifact_url(rel)[0] is None:
+            continue
+        out.append(_acct_artifact_facts(rel))
+    return out
+
+
+def _acct_chip(verdict: str) -> str:
+    v = verdict if verdict in {k for k, _l, _d in _ACCT_VERDICTS} else "unknown"
+    return f'<b data-v="{html.escape(v)}">{html.escape(verdict or "unknown")}</b>'
+
+
+def _acct_kv(label: str, value: str, raw: bool = False) -> str:
+    """One field of an open row. Bare dt/dd, no classes: the ledger renders
+    around 1,300 of these and a class attribute per element cost ~85KB of
+    markup on a page that is already the largest thing build_site writes."""
+    if not value:
+        return ""
+    body = value if raw else html.escape(value)
+    return f"<dt>{html.escape(label)}</dt><dd>{body}</dd>"
+
+
+def _acct_age_html(f: dict) -> str:
+    """The freshness stamp for one artifact, as a bare <time>.
+
+    A datetime attribute means the artifact dated itself and the client may
+    recompute the age against the reader's clock; no datetime means it did not,
+    and the page says undated rather than reading a file timestamp the deploy
+    box rewrites nightly. The stale threshold rides the app root, not 200 copies
+    of the same attribute."""
+    if not f.get("date"):
+        return '<time>undated</time>'
+    stale = f.get("age") is not None and f["age"] > model_registry.STALE_DAYS
+    days = "" if f.get("age") is None else f'{f["age"]}d'
+    cls = ' class="is-stale"' if stale else ""
+    return f'<time datetime="{html.escape(f["date"])}"{cls}>{html.escape(days)}</time>'
+
+
+def _acct_row_flags(f: dict) -> list:
+    """The audit flags on one row, which are the same thing the gap counts at
+    the top of the page are counting. One definition so a chip that says 12
+    cannot show 11 rows."""
+    flags = []
+    if not f.get("path"):
+        flags.append("noeval")
+    else:
+        if not f.get("date"):
+            flags.append("undated")
+        if not f.get("url"):
+            flags.append("nolink")
+        if f.get("age") is not None and f["age"] > model_registry.STALE_DAYS:
+            flags.append("stale")
+    return flags
+
+
+_ACCT_FLAG_LABELS = (
+    ("noeval", "No eval artifact"),
+    ("nolink", "Artifact not published"),
+    ("undated", "Undated artifact"),
+    ("stale", "Stale eval"),
+)
+
+
+def _acct_row(m: dict, f: dict) -> str:
+    """One registry row, server-rendered. `notes` is left to the glossary card
+    on purpose (see the section header comment)."""
+    if f.get("url"):
+        proof = (f'<a href="{html.escape(f["url"])}"><code>{html.escape(f["path"])}</code></a>'
+                 + (f' · produced {html.escape(_fmt_iso_date(f["date"]))}' if f.get("date") else ""))
+    elif f.get("path"):
+        proof = (f'<code>{html.escape(f["path"])}</code> '
+                 f'<span class="acct-nolink">not published: {html.escape(f["why"])}</span>')
+    else:
+        proof = f'<span class="acct-nolink">{html.escape(f["why"])}</span>'
+    flags = _acct_row_flags(f)
+    # `champion` and the long `notes` field are the glossary card's job, and
+    # duplicating them here would have made this page a second copy of that view
+    # rather than the thing it adds. What stays is the minimum a verdict needs to
+    # be auditable: the claim, the bar it had to clear, how it was measured, the
+    # receipt, and whatever the receipt says about itself.
+    body = (
+        _acct_kv("Predicts", m.get("predicts") or "")
+        + _acct_kv("Baseline it must beat", m.get("baseline") or "")
+        + _acct_kv("How it is measured", m.get("metric") or "")
+        + _acct_kv("Proof", proof, raw=True)
+        + _acct_kv("The artifact's own words", m.get("__artifact_verdict") or "")
+    )
+    flag_attr = f' data-acct-flags="{html.escape(" ".join(flags))}"' if flags else ""
+    return (
+        f'<details class="acct-row"{flag_attr}>'
+        f'<summary class="acct-sum">'
+        f'<code>{html.escape(m.get("model_id") or "")}</code>'
+        f'{_acct_chip(m.get("verdict") or "")}'
+        f'<i>{html.escape(m.get("surface") or "")}</i>'
+        f'{_acct_age_html(f)}'
+        f'</summary>'
+        f'<dl class="acct-body">{body}</dl>'
+        f'</details>'
+    )
+
+
+def build_models() -> str:
+    """/models/ - the model accountability hub.
+
+    Server-rendered end to end. assets/accountability.js only filters what is
+    already in the DOM and re-derives the artifact ages against the reader's
+    clock, so with JavaScript off the page still shows every row, every verdict
+    and every link.
+
+    Not in NAV_ITEMS, for the same reason /parks/ is not: the nav definition is
+    mirrored by three hand-maintained static copies that
+    test_collegesavant_nav_in_sync pins, and those copies belong to other
+    lanes. Discovery rides the footer link, the homepage Across-eephus.io strip
+    and sitemap.xml, which is exactly the /parks/ pattern."""
+    reg = model_registry.load()
+    models = list(reg.get("models") or [])
+    facts = {}
+    for m in models:
+        rel = (m.get("eval_artifact") or "").strip()
+        if rel not in facts:
+            facts[rel] = _acct_artifact_facts(rel)
+        m["__artifact_verdict"] = facts[rel].get("verdict") or ""
+
+    counts = {}
+    for m in models:
+        counts[m.get("verdict")] = counts.get(m.get("verdict"), 0) + 1
+    n_models = len(models)
+    with_art = [m for m in models if (m.get("eval_artifact") or "").strip()]
+    art_facts = [f for k, f in facts.items() if k]
+    dated = [f for f in art_facts if f.get("date")]
+    undated = [f for f in art_facts if not f.get("date")]
+    stale = [f for f in dated if f["age"] > model_registry.STALE_DAYS]
+    unlinkable = [f for f in art_facts if not f.get("url")]
+    unlinkable_rows = [m for m in with_art
+                       if not facts[(m.get("eval_artifact") or "").strip()].get("url")]
+    orphans = _acct_orphan_artifacts({k for k in facts if k})
+    oldest = max((f["age"] for f in dated), default=None)
+
+    tiles = "".join(
+        f'<div class="acct-tile acct-tile--{key}">'
+        f'<div class="acct-tilen">{counts.get(key, 0)}</div>'
+        f'<div class="acct-tilelab">{html.escape(label)}</div>'
+        f'<div class="acct-tiledef">{html.escape(desc)}</div></div>'
+        for key, label, desc in _ACCT_VERDICTS)
+
+    # The registry's own notes, rendered verbatim. The first one is the caveat
+    # that matters most on this page: a verdict is hand-committed next to its
+    # eval, so the label is a claim by the author and the artifact beside it is
+    # the evidence for that claim. Saying so here is cheaper than pretending the
+    # verdict column is machine-derived.
+    reg_notes = "".join(f"<li>{html.escape(str(n))}</li>"
+                        for n in (reg.get("notes") or []))
+    problems = reg.get("problems") or []
+    problems_html = (
+        '<div class="card acct-note"><h3>The registry validator is reporting problems</h3>'
+        '<ul class="acct-list">'
+        + "".join(f"<li>{html.escape(str(p))}</li>" for p in problems)
+        + "</ul></div>") if problems else ""
+
+    fresh_bits = [
+        f"{len(with_art)} of the {n_models} rows name an eval artifact, pointing at "
+        f"{len(art_facts)} distinct files.",
+        f"{len(dated)} of those files carry a production date of their own.",
+    ]
+    if oldest is not None:
+        fresh_bits.append(f"The oldest dated artifact is {oldest} days old.")
+    fresh_bits.append(
+        f"The pipeline calls an eval stale past {model_registry.STALE_DAYS} days; "
+        f"{len(stale)} {'is' if len(stale) == 1 else 'are'} past that bar today.")
+    if undated:
+        fresh_bits.append(
+            f"{len(undated)} files do not date themselves, so this page states no age "
+            "for them rather than reading the file timestamp, which the deploy box "
+            "rewrites on every checkout.")
+
+    gaps = []
+    no_eval = [m for m in models if not (m.get("eval_artifact") or "").strip()]
+    if no_eval:
+        by_v = {}
+        for m in no_eval:
+            by_v[m.get("verdict")] = by_v.get(m.get("verdict"), 0) + 1
+        split = ", ".join(f"{n} {html.escape(str(v))}"
+                          for v, n in sorted(by_v.items(), key=lambda kv: -kv[1]))
+        gaps.append(f"{len(no_eval)} rows carry no eval artifact at all ({split}).")
+    if unlinkable:
+        gaps.append(
+            f"{len(unlinkable)} artifacts behind {len(unlinkable_rows)} rows are not "
+            "published, so this page names them without linking them. A dead receipt "
+            "is worse than an absent one.")
+    if orphans:
+        gaps.append(
+            f"{len(orphans)} eval artifacts ship in /data/ that no registry row claims. "
+            "They are listed at the foot of this page.")
+
+    orphan_html = ""
+    if orphans:
+        rows = "".join(
+            f'<li><a href="{html.escape(f["url"])}"><code>{html.escape(f["path"])}</code></a>'
+            + (f' · {html.escape(_fmt_iso_date(f["date"]))}' if f.get("date") else "")
+            + (f'<div class="acct-verbatim">{html.escape(f["verdict"])}</div>'
+               if f.get("verdict") else "")
+            + "</li>"
+            for f in orphans)
+        orphan_html = (
+            '<div class="section-head"><h2>Measured, but not on the ledger</h2>'
+            '<span class="section-sub">eval artifacts that ship with no registry row '
+            'pointing at them</span></div>'
+            f'<div class="card acct-note"><ul class="acct-list acct-orphans">{rows}</ul></div>')
+
+    # The last group is a catch-all for a verdict outside the enum. It should
+    # always be empty (model_registry.validate() rejects one), but grouping by a
+    # fixed list means an off-enum row would otherwise vanish from the ledger
+    # without failing anything, which is the exact behaviour this page exists to
+    # make impossible.
+    off_enum = sorted({m.get("verdict") for m in models}
+                      - {k for k, _l, _d in _ACCT_VERDICTS})
+    plan = list(_ACCT_VERDICTS) + [
+        (v, str(v) if v else "(no verdict)",
+         "This verdict is not one of the four the registry declares. It is "
+         "shown here rather than dropped.") for v in off_enum]
+    groups = []
+    for key, label, desc in plan:
+        rows = sorted((m for m in models if m.get("verdict") == key),
+                      key=lambda m: (m.get("model_id") or ""))
+        if not rows:
+            continue
+        groups.append(
+            f'<div class="acct-group" data-acct-group="{html.escape(str(key))}">'
+            f'<div class="acct-grouphead"><span class="acct-grouptitle">{html.escape(label)}</span>'
+            f'<span class="acct-groupn">{len(rows)}</span></div>'
+            f'<p class="acct-groupdef">{html.escape(desc)}</p>'
+            + "".join(_acct_row(m, facts[(m.get("eval_artifact") or "").strip()])
+                      for m in rows)
+            + '</div>')
+
+    flag_counts = {}
+    for m in models:
+        for fl in _acct_row_flags(facts[(m.get("eval_artifact") or "").strip()]):
+            flag_counts[fl] = flag_counts.get(fl, 0) + 1
+    filters = ([("all", "All", n_models)]
+               + [(k, lab, counts.get(k, 0)) for k, lab, _d in _ACCT_VERDICTS]
+               + [(k, lab, flag_counts[k]) for k, lab in _ACCT_FLAG_LABELS
+                  if flag_counts.get(k)])
+    chips = "".join(
+        f'<button class="chip{" active" if k == "all" else ""}" type="button" '
+        f'data-acct-filter="{k}">{html.escape(lab)} <span class="acct-count">{n}</span></button>'
+        for k, lab, n in filters)
+
+    body = (
+        f'<div class="fa-app mlbstats-app acct-app" data-acct-stale-days="{model_registry.STALE_DAYS}">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        '<h1>Model Accountability</h1></div>'
+        '<span class="section-sub">Every model on eephus.io that makes a predictive claim, the '
+        'verdict it carries, and the eval artifact behind that verdict. Read out of the registry '
+        'and out of the artifacts themselves when this page was built.</span></div>'
+        '<div class="acct-intro">'
+        '<p>A model that only publishes its wins is publishing an advertisement. This ledger lists '
+        'the losses on the same footing as the wins, because the losses are the part that tells you '
+        'whether the wins were measured or asserted.</p>'
+        f'<p>Registry vintage: <strong>{html.escape(_fmt_iso_date(reg.get("checked_at")))}</strong>. '
+        f'Registry version <code>{html.escape(str(reg.get("version") or ""))}</code>. The source file '
+        'is <a href="/data/model_registry.json"><code>data/model_registry.json</code></a> and the full '
+        'accountability note for each row is on the '
+        '<a href="/glossary/#view=models">glossary ledger</a>.</p>'
+        '</div>'
+        f'<div class="acct-tiles">{tiles}</div>'
+        '<div class="section-head"><h2>Freshness</h2>'
+        '<span class="section-sub">how old the measurement is, by the artifact\'s own stamp</span></div>'
+        '<div class="card acct-note"><ul class="acct-list">'
+        + "".join(f"<li>{html.escape(b)}</li>" for b in fresh_bits)
+        + '</ul></div>'
+        + ('<div class="section-head"><h2>What the ledger cannot show you</h2>'
+           '<span class="section-sub">the gaps, counted rather than omitted</span></div>'
+           '<div class="card acct-note"><ul class="acct-list">'
+           + "".join(f"<li>{html.escape(g)}</li>" for g in gaps)
+           + '</ul></div>' if gaps else "")
+        + ('<div class="card acct-note"><h3>What the registry says about itself</h3>'
+           f'<ul class="acct-list">{reg_notes}</ul></div>' if reg_notes else "")
+        + problems_html
+        + '<div class="section-head"><h2>The ledger</h2>'
+          '<span class="section-sub">open a row for the claim, the baseline, and the receipt</span></div>'
+        + f'<div class="filter-bar acct-filters">{chips}</div>'
+        + f'<div id="acct-rows">{"".join(groups)}</div>'
+        + orphan_html
+        + '</div>'
+        f'<script src="/assets/accountability.js?v={_ACCT_HUB_VER}" defer></script>'
+    )
+    return page("Model Accountability - eephus.io", "models", body,
+                "The eephus.io model ledger: every model that makes a predictive claim, its "
+                "verdict, the baseline it had to beat, and the committed eval artifact behind it. "
+                "Failed models are listed with the same weight as validated ones.",
+                url=f"{SITE_ORIGIN}/models/")
+
 def build_glossary() -> str:
     """The /glossary/ unified Glossary & Methodology module - the canonical
     definition layer's page. Static shell + assets/glossary.js; definitions
@@ -4940,6 +5396,7 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/cards/", "daily", "0.7"),
         ("/diamond/", "monthly", "0.6"),
         ("/parks/", "weekly", "0.6"),
+        ("/models/", "daily", "0.6"),
         ("/articles/", "weekly", "0.7"),
         ("/forums/", "daily", "0.6"),
         ("/glossary/", "weekly", "0.7"),
@@ -5538,6 +5995,7 @@ def main() -> None:
     _write("cards/index.html", build_cards())
     _write("diamond/index.html", build_diamond())
     _write("parks/index.html", build_parks())
+    _write("models/index.html", build_models())
     _write("glossary/index.html", build_glossary())
     _write("teams/index.html", build_teams_redirect())
     _write("team/index.html", build_team())

@@ -16,6 +16,11 @@
 # addresses for two days and people bookmarked deep links into them, and a
 # redirect that does not ship is just a 404.
 #
+# 2026-08-07: models/ is the model accountability hub. It deep-links the
+# eval artifacts under /data/, which both consumers ship at depth one only,
+# so build_site._acct_artifact_url() re-derives that rule at build time and
+# refuses to emit a link the deploy cannot serve.
+#
 # Directories ship recursively; bare filenames ship from the app root.
 # data/ is handled separately by both consumers (top-level *.json plus
 # the pitch_plots/ and player_detail/ per-player splits).
@@ -38,6 +43,7 @@ forums
 glossary
 history
 mlbstats
+models
 news
 pal
 parks
