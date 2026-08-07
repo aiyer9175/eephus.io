@@ -239,6 +239,12 @@ Nothing in the tree can do these four:
 1. **Put `EEPHUS_CARD_SCRAPE=1` in `/etc/eephus.env`** (root-owned, chmod 600) if
    scraping is wanted. Leaving it out is a supported configuration, not a broken
    one: drops still ingest and the payload says the scraper was not armed.
+   **As of 2026-08-07 this flag is deliberately UNSET and arming it does
+   nothing useful.** eBay 403s every request from this module (measured twice,
+   1832 byte block page, identical for our UA and a plain browser UA), so the
+   two armed nights produced 22 attempts and 22 errors and zero comps. Do not
+   re-arm it against `SEARCH_URL_TEMPLATE`'s default host until a source has
+   been cleared. See `docs/card-price-source-survey-2026-08-07.md`.
 2. **Install the cron lines** from `deploy/betting-crontab.example`. The nightly
    pipeline already runs the ingest, so this only covers nights the pipeline
    does not run, exactly like the leaderboard-vintage line it sits next to.
@@ -257,36 +263,53 @@ reporting `meta.ingest.state = "no_comps_yet"`, which is the truth.
 ## 4c. Why the board is empty, published in the payload
 
 `meta.ingest` in `data/card_market.json` exists because **a zero-priced board
-has two completely different causes and they used to look identical**:
+has three completely different causes and they used to look identical**:
 
 * nothing has been ingested yet, which is honest and is the state `/cards/`
-  shipped in; and
-* the ingest **ran and understood nothing**, which is a parser regression.
+  shipped in;
+* the ingest **ran and understood nothing**, which is a parser regression; and
+* **nothing ever came back**, which is a blocked source and is the state this
+  module has actually been in since the fetcher was first armed.
 
 `parse_sold_html` is deliberately built to yield zero rows on layout drift
 (section 4: it requires both a price and a sale date in the same block, so a
 redesign produces nothing rather than plausible garbage). That design is right,
-and it is exactly what makes the two cases byte-identical in `card_comps`: both
-write no rows. So `scrape_cards` now counts `cards_fetched` next to
-`rows_parsed`, stamps both into `card_scrape_runs`, and
-`card_market_export.ingest_state()` publishes the verdict.
+and it is exactly what makes all three cases byte-identical in `card_comps`:
+every one of them writes no rows. So `scrape_cards` counts `cards_attempted`,
+`cards_fetched` and `fetch_errors` next to `rows_parsed`, stamps all of them
+into `card_scrape_runs`, and `card_market_export.ingest_state()` publishes the
+verdict.
 
 | state | meaning | files a RED? |
 |---|---|---|
 | `no_comps_yet` | nothing has ever been ingested | no, this is honest |
-| `ingest_ran_empty` | something ran and stored nothing, but fewer than `PARSE_REGRESSION_MIN_CARDS` (3) pages were read, so it is not yet a parser claim | no |
+| `ingest_ran_empty` | something ran and stored nothing, but too small or too mixed a batch to be a claim about the parser or the source | no |
+| `fetch_blocked` | 3 or more cards attempted, **zero** pages fetched, every attempt an error: the source is refusing us | **yes** |
 | `parse_regression` | 3 or more pages fetched, **zero** sales parsed from all of them | **yes** |
 | `drop_parse_empty` | the newest CSV drop parsed zero usable rows: a column-contract break | **yes** |
 | `stale` | comps on file but nothing new stored in 14 days: the schedule is not reaching the store | no |
 | `ok` | comps are being ingested on schedule | no |
 
-Three is the threshold because forty tracked cards do not go simultaneously
-silent, and three is the smallest batch where "every single one had no sales"
-stops being plausible. Fourteen days is longer than the 7-day long-tail cadence
-and shorter than the 45-day index window, so `stale` fires while the index is
-still computable rather than after it has already gone null.
+`fetch_blocked` and `parse_regression` cannot both be true: the first needs zero
+pages back, the second needs three or more. The distinction is the one that
+decides who has work to do. A parse regression is ours to fix in
+`parse_sold_html`; a blocked fetch cannot be fixed by any parser, any watchlist
+edit or any retry, and the only move is to change the source. It was added
+2026-08-07 after two armed nights (22 attempted, 0 fetched, 22 errors) had
+classified as `ingest_ran_empty` with `red: false`, because `ingest_state` read
+`cards_fetched` and `rows_parsed` and never `fetch_errors`. The board would have
+stayed dark indefinitely while reporting the honest empty state.
 
-The two RED states file through **`bullpen_export._ingest_red`**, the sanctioned
+Three is the threshold because forty tracked cards do not go simultaneously
+silent, and three is the smallest batch where "every single one had no sales" or
+"every single one failed" stops being plausible. Both rules share the constant
+(`FETCH_BLOCKED_MIN_CARDS` is an alias of `PARSE_REGRESSION_MIN_CARDS`) so they
+cannot drift into disagreeing about how many failures make a pattern. Fourteen
+days is longer than the 7-day long-tail cadence and shorter than the 45-day
+index window, so `stale` fires while the index is still computable rather than
+after it has already gone null.
+
+The three RED states file through **`bullpen_export._ingest_red`**, the sanctioned
 template from the 2026-08-05 silent-empty sweep, rather than a third mechanism.
 The RED is filed **after** the artifact is written, deliberately: the index
 arithmetic is correct even when the tap is broken (what is wrong is the input),
@@ -420,24 +443,50 @@ The index itself is descriptive and survives a failed signal gate.
 
 ---
 
-## 7. The licensed swap
+## 7. The licensed swap, surveyed 2026-08-07
 
-If scraping breaks, becomes unacceptable, or simply is not worth the exposure:
+**Read `docs/card-price-source-survey-2026-08-07.md` before acting on this
+section.** Every source below was actually requested with the module's own UA at
+the pinned 5s floor on 2026-08-07; the status codes are measured, not assumed.
+The short version: **no source passes today**, and the recommendation this
+section used to make was wrong.
 
-* **SportsCardsPro** sells a documented CSV / price-guide product aimed at small
-  sites. This is the clean swap. Map its export onto the column contract in
-  section 3 (the aliases already cover most of it), drop it at
-  `data/drops/card_comps_YYYY-MM-DD.csv`, and delete the scraper call from the
-  box schedule. **No model change, no page change, no schema change.**
-* **PSA APR** has a paid API (contact `collectors-apis@collectors.com`); the free
-  web tier is throttled to roughly one call a day and is not a pipeline.
-* **Card Ladder** is enterprise-only. **eBay Marketplace Insights** is closed to
-  new users (Limited Release, 90-day window). **130point** is a free manual tool
-  with no API and its own ToS fragility. **Market Movers** is consumer-app only.
+* **SportsCardsPro** is the only near miss. Its public card pages are fetchable
+  (200, server rendered, `robots.txt` allows them) and carry per grade sold rows
+  with a date, a title and a price, which is the section 3 column contract
+  exactly. It fails on TERMS: their Price Data Acceptable Use clause forbids
+  using their price data "in any software, application, or system that is
+  accessible to third parties ... without express written permission", and a
+  derived index on a public page is exactly that. The terms name a contact for
+  permission. **Asking is the recommended next move, and it is one email.**
+* **RETRACTED, and this correction is why the survey exists.** This section used
+  to call the SportsCardsPro CSV price guide "the clean swap ... no model
+  change, no page change, no schema change". **It is not a swap at all.** Their
+  own API and CSV documentation states: *"The API and CSV only support current
+  item values in various grades and conditions. Historic prices and historic
+  sales are not supported."* The CSV is one current value per grade per card. It
+  has no `sold_date` and no per sale `price_usd`, so `parse_drop_csv` would skip
+  every row; and even reshaped, feeding daily guide snapshots into `card_index`
+  would publish a median of somebody else's medians under a method block that
+  says "trimmed median of sold comps". The Legendary tier ($49/month) buys that
+  CSV plus API access, and its data rights are explicitly internal use only.
+  Nobody had ever fetched it. A fallback nobody has fetched is a plan.
+* **PSA APR** is now behind a login: both the set and the card pages redirect to
+  `app.collectors.com/signin`, for our UA and for an unrelated one. There is a
+  paid API (contact `collectors-apis@collectors.com`), terms unknown until asked.
+* **130point**, **COMC** and **Heritage** all return 403 behind a JavaScript
+  challenge, which only a browser emulation would pass, and passing it is the
+  banned move. **Goldin** serves a client-rendered shell with no results in the
+  HTML. **Card Ladder** is enterprise-only. **eBay Marketplace Insights** is a
+  Limited Release API that eBay's own docs describe as closed to new users.
+  **Market Movers** is consumer-app only.
 
-The ingest is interface-shaped for exactly this: `parse_drop_csv` produces `Comp`
-rows, `store_comps` appends them, and the export never knows where a comp came
-from beyond a `source` string it does not publish.
+What survives all of that is the path that never needed a source: **manual CSV
+drops.** The ingest is interface-shaped for exactly this: `parse_drop_csv`
+produces `Comp` rows, `store_comps` appends them, and the export never knows
+where a comp came from beyond a `source` string it does not publish. The honest
+cost is operator time, a few hundred rows a month to keep forty cards inside a
+45-day window at `MIN_COMPS = 5`.
 
 ---
 

@@ -55,12 +55,14 @@ prospects.db (gitignored) forever.
 
 WHY THE BOARD IS EMPTY, PUBLISHED
 ---------------------------------
-`meta.ingest` states which of two very different things a zero-priced board
+`meta.ingest` states which of three very different things a zero-priced board
 means: nothing has been ingested yet (honest, and the state /cards/ shipped in),
-or the ingest RAN and understood nothing (a parser regression). parse_sold_html
-is deliberately built to yield zero rows on layout drift, which makes those two
-byte-identical in the comp store, so the counters that separate them ride into
-the payload and the second case files an ingest-health RED through
+the ingest RAN and understood nothing (a parser regression), or every request
+was refused before a page came back (a blocked source, which is what eBay does
+to this module today). parse_sold_html is deliberately built to yield zero rows
+on layout drift, and a blocked fetch stores nothing either, which makes all
+three byte-identical in the comp store; so the counters that separate them ride
+into the payload and the two broken cases file an ingest-health RED through
 bullpen_export._ingest_red. Counts and our own ingest dates only: no sale price,
 no sale date, nothing that would smuggle a comp in as diagnostics.
 
@@ -335,7 +337,7 @@ def signal_for(gap):
 # EEPHUS_CARD_SCRAPE flag armed a scraper nothing invoked. The board looked
 # exactly the way it will look on the night the parser breaks.
 #
-# Those two are not the same thing and must never publish the same way:
+# Those three are not the same thing and must never publish the same way:
 #
 #   "no comps yet"        nothing has been ingested. Legitimate, honest, and the
 #                         state the page already states in words.
@@ -345,6 +347,12 @@ def signal_for(gap):
 #                         selector parse that would yield plausible garbage), so
 #                         this is the expected shape of a marketplace redesign,
 #                         and it must be loud rather than quiet.
+#   "nothing came back"   every request errored before a page arrived. Measured
+#                         2026-08-06: eBay 403s this module on both armed nights,
+#                         22 attempted and 22 errors, identically for the honest
+#                         module UA and for a plain browser UA. A different
+#                         parser cannot fix a page that was never served, so this
+#                         is the one state that says the SOURCE has to change.
 #
 # The loud half of parse_sold_html currently lives in a log line, and a log line
 # on a nightly box is not a signal anybody sees. So the counters ride into the
@@ -355,6 +363,12 @@ def signal_for(gap):
 # market: forty tracked cards do not go simultaneously silent, and three is the
 # smallest batch where "every single one had no sales" stops being plausible.
 PARSE_REGRESSION_MIN_CARDS = 3
+# The same floor, for the same reason, applied one step further upstream: a batch
+# where every single request failed before a page came back. Below three attempts
+# "they all failed" is a coincidence; at or above it, it is a wall. Aliased rather
+# than re-typed so the two thresholds cannot drift into disagreeing about how many
+# failures constitute a pattern.
+FETCH_BLOCKED_MIN_CARDS = PARSE_REGRESSION_MIN_CARDS
 # How long the store may go without a new row before the page says so. Longer
 # than the 7-day long-tail cadence and shorter than the 45-day index window, so
 # it fires while the index is still computable rather than after it has already
@@ -372,6 +386,11 @@ INGEST_STATES = {
         "The scrape fetched pages and parsed ZERO sales from all of them. The "
         "parser is built to yield nothing on layout drift, so this is a parser "
         "regression until proven otherwise, not a quiet market."),
+    "fetch_blocked": (
+        f"Every one of at least {FETCH_BLOCKED_MIN_CARDS} scrape requests failed "
+        "before a page came back. Nothing was fetched, so no parser change can "
+        "help: the source is refusing the fetcher and the board stays dark until "
+        "a reachable source is wired."),
     "drop_parse_empty": (
         "The newest CSV drop parsed zero usable rows. That is a column-contract "
         "break, not an empty market; see docs/diamond-cards.md section 3."),
@@ -384,7 +403,7 @@ INGEST_STATES = {
 # The states that mean SOMETHING BROKE, as opposed to the ones that mean nothing
 # has happened yet. Only these file a RED, because an ingest-health line that
 # fires on the honest empty state teaches everyone to ignore it.
-INGEST_RED_STATES = ("parse_regression", "drop_parse_empty")
+INGEST_RED_STATES = ("parse_regression", "drop_parse_empty", "fetch_blocked")
 
 
 def _ingest_red(source: str, message: str) -> None:
@@ -423,12 +442,25 @@ def ingest_state(store: dict | None = None, scrape: dict | None = None,
         except ValueError:
             days_since = None
 
+    attempted = int((scrape or {}).get("cards_attempted") or 0)
     fetched = int((scrape or {}).get("cards_fetched") or 0)
+    errors = int((scrape or {}).get("fetch_errors") or 0)
     parsed = int((scrape or {}).get("rows_parsed") or 0)
     drop_files = int(drops.get("files") or 0)
     drop_last_parsed = drops.get("last_rows_parsed")
 
-    if fetched >= PARSE_REGRESSION_MIN_CARDS and parsed <= 0:
+    # A WHOLLY BLOCKED FETCHER OUTRANKS EVERY OTHER READING, and it is checked
+    # first because it is the most upstream one: nothing was read, so nothing
+    # downstream of the read can be diagnosed from this run. Until 2026-08-07 this
+    # case had no state of its own - fetch_errors was not even read here - so two
+    # nights of 22 attempted / 0 fetched / 22 errors classified as
+    # ingest_ran_empty with red:false, and the board could have stayed dark
+    # forever while reporting the honest empty state. It is mutually exclusive
+    # with parse_regression by construction (that one needs pages that came back).
+    if (attempted >= FETCH_BLOCKED_MIN_CARDS and fetched <= 0
+            and errors >= attempted):
+        state = "fetch_blocked"
+    elif fetched >= PARSE_REGRESSION_MIN_CARDS and parsed <= 0:
         state = "parse_regression"
     elif drop_files and drop_last_parsed is not None and int(drop_last_parsed) <= 0:
         state = "drop_parse_empty"
@@ -497,34 +529,43 @@ DISCLAIMER = {
                     "grading, condition and taste as much as on performance."),
 }
 
+# EVERY PROSE VALUE IN HERE IS PAGE COPY, not a label. cards.js renderMethod
+# prints index / talent / gap / sources verbatim into their own <p> directly
+# under an <h2>, so a value that reads as a fragment in the source renders as a
+# fragment on the page. Four of them did: the Method tab opened with
+# "grade-mix adjusted trimmed median of sold comps..." in lowercase under the
+# heading, with no closing period, and three more like it. Full sentences,
+# capitalized, terminated. `publish_grid` is the exception and stays a lowercase
+# noun phrase because it renders INSIDE a parenthetical, mid-sentence.
 METHOD = {
-    "index": ("grade-mix adjusted trimmed median of sold comps in a rolling "
-              f"{INDEX_WINDOW_DAYS}-day window. The trim is by VALUE, not by count: "
-              f"sales outside {TRIM_LOW_MULT:g}x to {TRIM_HIGH_MULT:g}x the window's raw "
-              "median are dropped before the median is taken, because symmetric "
-              "count-trimming cannot move a median at all while lot listings and "
-              "mis-parsed prices arrive in clusters"),
+    "index": ("The Card Index is a grade-mix adjusted trimmed median of sold comps "
+              f"in a rolling {INDEX_WINDOW_DAYS}-day window. The trim is by VALUE, not "
+              f"by count: sales outside {TRIM_LOW_MULT:g}x to {TRIM_HIGH_MULT:g}x the "
+              "window's raw median are dropped before the median is taken, because "
+              "symmetric count-trimming cannot move a median at all, while lot listings "
+              "and mis-parsed prices arrive in clusters."),
     "grade_factors": GRADE_FACTORS,
     "min_comps": MIN_COMPS,
     "window_days": INDEX_WINDOW_DAYS,
     "prior_window_days": PRIOR_WINDOW_DAYS,
     "trim_band": [TRIM_LOW_MULT, TRIM_HIGH_MULT],
     "publish_grid": "nearest $1 under $100, nearest $5 under $1,000, nearest $25 above",
-    "talent": ("eFV blend cloned from fantasy_export._dynasty_prospects: "
-               f"grade quantile + {DYN_W_STAR:.0f} x P(star) - {abs(DYN_W_BUST):.0f} x P(bust) "
-               f"+ {DYN_W_ETA:.0f} x ETA proximity + {DYN_W_SURPLUS:.0f} x normalized surplus"),
-    "efv_basis": ("efv_board_scale.board_value through fantasy_export._board_grade; "
-                  "one basis site-wide"),
-    "gap": ("talent percentile minus market percentile, both computed WITHIN TIER "
-            "(prospect cards against prospect cards, MLB cards against MLB cards) "
-            "because a forward eFV and a debuted player's cohort grade are not the "
-            "same quantity"),
+    "talent": ("Talent is an eFV blend cloned from fantasy_export._dynasty_prospects: "
+               f"the grade quantile, plus {DYN_W_STAR:.0f} x P(star), minus "
+               f"{abs(DYN_W_BUST):.0f} x P(bust), plus {DYN_W_ETA:.0f} x ETA proximity, "
+               f"plus {DYN_W_SURPLUS:.0f} x normalized surplus."),
+    "efv_basis": ("Every eFV on this page comes from efv_board_scale.board_value "
+                  "through fantasy_export._board_grade, one basis site-wide."),
+    "gap": ("The gap is the talent percentile minus the market percentile, both "
+            "computed WITHIN TIER (prospect cards against prospect cards, MLB cards "
+            "against MLB cards), because a forward eFV and a debuted player's cohort "
+            "grade are not the same quantity."),
     "bands": {"buy": BUY_GAP, "fade": FADE_GAP,
-              "note": ("CONVENTIONS chosen for legibility, not fitted thresholds. "
-                       "There is no backtest to fit them on yet.")},
-    "sources": ("manual CSV drops and, when explicitly enabled, throttled reads "
-                "of publicly visible sold listings. Raw comps are stored locally "
-                "and never republished."),
+              "note": ("These are CONVENTIONS chosen for legibility, not fitted "
+                       "thresholds. There is no backtest to fit them on yet.")},
+    "sources": ("Comps come from manual CSV drops and, when explicitly enabled, "
+                "throttled reads of publicly visible sold listings. Raw comps are "
+                "stored locally and never republished."),
 }
 
 
@@ -790,7 +831,14 @@ def export(out_path: Path | str | None = None, as_of: date | None = None,
     # serving, make the failure visible.
     if ingest.get("red"):
         sc = ingest.get("last_scrape") or {}
-        if ingest["state"] == "parse_regression":
+        if ingest["state"] == "fetch_blocked":
+            msg = (f"card scrape attempted {sc.get('cards_attempted')} cards on "
+                   f"{sc.get('ran_on')} and every request failed "
+                   f"({sc.get('fetch_errors')} errors, 0 pages fetched); the source "
+                   f"is refusing the fetcher, so this is a SOURCE problem and no "
+                   f"parser or watchlist change can clear it")
+            _ingest_red("card_scrape", msg)
+        elif ingest["state"] == "parse_regression":
             msg = (f"card scrape fetched {sc.get('cards_fetched')} pages on "
                    f"{sc.get('ran_on')} and parsed 0 sales from all of them; the "
                    f"parser yields nothing on layout drift, so treat this as a "

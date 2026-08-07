@@ -20,8 +20,10 @@ TWO INPUT PATHS, ONE STORAGE
     Drop a file at data/drops/card_comps_YYYY-MM-DD.csv with the columns
     documented in docs/diamond-cards.md and run `python card_prices_ingest.py
     --drops`. This path needs no network, no scraper and no ToS exposure. It is
-    also the seam a licensed feed plugs into: SportsCardsPro sells a documented
-    CSV price-guide product, and swapping it in is a file drop, not a rewrite.
+    also the seam a licensed feed plugs into, though NOT the one this file used
+    to name: measured 2026-08-07, the SportsCardsPro CSV carries current values
+    only, with no sale date and no per-sale price, so it cannot populate a Comp
+    at all. Section 7 of docs/diamond-cards.md carries the retraction.
 
 (b) SCRAPER - OFF BY DEFAULT. `EEPHUS_CARD_SCRAPE=1` is required to arm it, and
     even armed it throttles to one request every MIN_REQUEST_INTERVAL seconds
@@ -37,6 +39,15 @@ TWO INPUT PATHS, ONE STORAGE
     index is the only thing published, and docs/diamond-cards.md documents the
     licensed swap. If the scraper breaks or has to be switched off, the module
     keeps working off drops with no code change.
+
+    AND IT HAS BEEN SWITCHED OFF. As of 2026-08-07 SEARCH_URL_TEMPLATE's default
+    host 403s every request from this module: 22 attempted and 22 errors on each
+    of the two nights the flag was armed, with a byte-identical block page for
+    this file's honest UA and for a plain browser UA. UA spoofing is therefore a
+    MEASURED dead end, not an untried idea, and it is banned. The alternative
+    sources were surveyed on 2026-08-07 and none of them passes: read
+    docs/card-price-source-survey-2026-08-07.md before re-arming the flag or
+    repointing the URL. The drop path is the only input that works today.
 
 IDENTITY
 --------
@@ -105,6 +116,12 @@ USER_AGENT = (
 # change, or a decision to point at a licensed feed, is a single edit. Empty by
 # default in a fresh checkout would be a silent no-op, so it carries the
 # documented target and the flag above is what actually arms it.
+#
+# THIS DEFAULT IS DEAD as of 2026-08-07: the host 403s every request from this
+# module, and repointing it needs a source that has cleared the survey in
+# docs/card-price-source-survey-2026-08-07.md. Left in place rather than blanked
+# so the fetch_blocked RED keeps naming a real target instead of failing on an
+# empty string, which would report the same dark board for a different reason.
 SEARCH_URL_TEMPLATE = os.environ.get(
     "EEPHUS_CARD_SCRAPE_URL",
     "https://www.ebay.com/sch/i.html?_nkw={query}&_sacat=0&LH_Sold=1&LH_Complete=1&_ipg=60",

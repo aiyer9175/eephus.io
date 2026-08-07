@@ -543,6 +543,78 @@ def test_broken_layout_yields_zero_rows_not_garbage():
 
 
 # ---------------------------------------------------------------------------
+# ingest health: a dark board must say WHICH kind of dark it is
+# ---------------------------------------------------------------------------
+# The measured counters from the two nights the eBay fetcher was armed
+# (2026-08-06, prospects.db card_scrape_runs). Every request 403'd, identically
+# for the module's honest UA and for a plain browser UA, so nothing was fetched
+# and nothing could be parsed.
+BLOCKED_RUN = {"ran_on": "2026-08-06", "scope": "hot", "ran_at": "2026-08-06T11:27:51Z",
+               "cards_attempted": 22, "cards_fetched": 0, "cards_zero_rows": 0,
+               "fetch_errors": 22, "rows_parsed": 0, "rows_stored": 0}
+
+
+def test_a_fully_blocked_scrape_is_red_not_the_honest_empty_state():
+    """THE silent-failure shape this state exists to kill.
+
+    Before fetch_blocked existed, ingest_state read cards_fetched and
+    rows_parsed and never fetch_errors, so 22 attempts that all failed landed in
+    ingest_ran_empty with red:false: the board could stay dark forever while
+    reporting the state it legitimately shipped in."""
+    st = cme.ingest_state({"comps": 0, "cards": 0}, BLOCKED_RUN, {},
+                          armed=True, today=date(2026, 8, 7))
+    assert st["state"] == "fetch_blocked"
+    assert st["red"] is True
+    assert "fetch_blocked" in cme.INGEST_RED_STATES
+    # the sentence has to name the thing that has to change
+    assert "source" in st["why"].lower()
+
+
+def test_the_honest_empty_states_are_not_swept_into_the_new_red():
+    """A RED that fires on the legitimate empty state teaches everyone to
+    ignore it, so the three near-misses are pinned alongside the hit."""
+    never_ran = cme.ingest_state({"comps": 0}, None, {}, armed=False)
+    assert never_ran["state"] == "no_comps_yet" and never_ran["red"] is False
+
+    # below the floor, "they all failed" is still a coincidence
+    small = dict(BLOCKED_RUN, cards_attempted=2, fetch_errors=2)
+    assert cme.ingest_state({"comps": 0}, small, {})["state"] == "ingest_ran_empty"
+
+    # pages DID come back on a mixed run, so the parser is the thing on trial
+    mixed = dict(BLOCKED_RUN, cards_attempted=10, cards_fetched=4, fetch_errors=6)
+    assert cme.ingest_state({"comps": 0}, mixed, {})["state"] == "parse_regression"
+
+
+def test_the_export_files_the_blocked_fetch_as_a_source_problem(
+        monkeypatch, tmp_path, con, watchlist, xfv):
+    """End to end: the counters in the store reach the RED ledger, and the
+    message says SOURCE rather than parser, because a page that was never served
+    cannot be re-parsed."""
+    ci.record_scrape_run({"scope": "hot", "cards": 22, "cards_fetched": 0,
+                          "cards_zero_rows": 0, "fetch_errors": 22,
+                          "parsed": 0, "stored": 0},
+                         con=con, today=date(2026, 8, 6))
+    filed = []
+    monkeypatch.setattr(cme, "_ingest_red", lambda src, msg: filed.append((src, msg)))
+
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "card_watchlist.json").write_text(json.dumps(watchlist), encoding="utf-8")
+    (data_dir / "xfv.json").write_text(json.dumps(xfv), encoding="utf-8")
+    payload = cme.export(out_path=data_dir / "card_market.json", as_of=date(2026, 8, 7),
+                         data_dir=data_dir, con=con)
+
+    ing = payload["meta"]["ingest"]
+    assert ing["state"] == "fetch_blocked" and ing["red"] is True
+    assert len(filed) == 1, "a fully blocked scrape must file exactly one RED"
+    src, msg = filed[0]
+    assert src == "card_scrape"
+    assert "22" in msg and "source" in msg.lower()
+    # and the board still publishes: the arithmetic is fine, the tap is not
+    assert payload["meta"]["n_cards"] == len(watchlist["cards"])
+
+
+# ---------------------------------------------------------------------------
 # committed watchlist + payload contract
 # ---------------------------------------------------------------------------
 def test_committed_watchlist_is_well_formed():

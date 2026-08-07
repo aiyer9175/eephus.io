@@ -429,7 +429,11 @@
     var rows = Object.keys(gf).map(function (k) {
       return "<tr><td>" + esc(k) + "</td><td>" + esc(gf[k]) + "</td></tr>";
     }).join("");
-    return '<div class="cards-method">' +
+    // The banner leads here too, the way it leads the other three boards. Method
+    // was the one section that omitted it, which put the least qualified copy on
+    // the most explanatory tab: a reader who lands on /cards/#method direct from
+    // a link met the arithmetic before the word "screen".
+    return screenBanner() + '<div class="cards-method">' +
       "<h2>What the Card Index is</h2>" +
       "<p>" + esc(m.index || "A grade-mix adjusted trimmed median of sold comps in a rolling window.") + "</p>" +
       "<p>Prices are published on a coarse grid (" +
