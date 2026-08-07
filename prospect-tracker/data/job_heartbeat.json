@@ -1,0 +1,27 @@
+{
+ "generated_at": "2026-08-07T03:09:25+00:00",
+ "what_this_is": "when each scheduled job last actually ran. A job that is configured but never fires looks healthy in its own artifact; this is the file that would have caught it.",
+ "jobs": {
+  "betting_model_refit": {
+   "last_attempt_at": "2026-08-07T03:09:25+00:00",
+   "n_attempts": 1,
+   "last_result": "n_graded=0, 2 vintages",
+   "last_success_at": "2026-08-07T03:09:25+00:00",
+   "n_successes": 1
+  },
+  "betting_odds_snapshot": {
+   "last_attempt_at": "2026-08-07T03:09:25+00:00",
+   "n_attempts": 1,
+   "last_result": "2026-08-06-1519.json, 11 events",
+   "last_success_at": "2026-08-07T03:09:25+00:00",
+   "n_successes": 1
+  },
+  "leaderboard_vintage": {
+   "last_attempt_at": "2026-08-07T03:09:25+00:00",
+   "n_attempts": 1,
+   "last_result": "2026-08-06.json, 30 teams",
+   "last_success_at": "2026-08-07T03:09:25+00:00",
+   "n_successes": 1
+  }
+ }
+}

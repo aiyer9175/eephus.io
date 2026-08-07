@@ -1956,10 +1956,17 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # Runbook: docs/diamond-betting.md section 5.
         with _step("9e-pre. Leaderboard vintage snapshot (validation clock)", log):
             try:
+                import job_heartbeat as _hb
                 import leaderboard_vintages
                 leaderboard_vintages.run(log_fn=log.info)
-            except Exception:
+                _hb.record("leaderboard_vintage", ok=True)
+            except Exception as _e:
                 log.exception("daily: leaderboard vintage snapshot failed — continuing")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("leaderboard_vintage", ok=False, result=str(_e)[:120])
+                except Exception:
+                    pass
 
         # --- 9e-pre1. Betting model refit, so the validation clock TICKS ---
         # THE DEFECT THIS CLOSES (2026-08-06). Every ingredient of the honest
@@ -1996,8 +2003,16 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                          "games (%s vintages, status %s)",
                          _v.get("n_graded"), betting_model.VINTAGE_MIN_GRADED_GAMES,
                          _v.get("n_vintages"), _v.get("status"))
-            except Exception:
+                import job_heartbeat as _hb
+                _hb.record("betting_model_refit", ok=True,
+                           result=f"n_graded={_v.get('n_graded')}")
+            except Exception as _e:
                 log.exception("daily: betting model refit failed - continuing")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("betting_model_refit", ok=False, result=str(_e)[:120])
+                except Exception:
+                    pass
 
         # --- 9e. Betting: odds snapshot + /betting/ payload ---------------
         # Prices the same slate against the team leaderboards. The odds pull is
@@ -2008,9 +2023,20 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         with _step("9e. Betting odds snapshot + payload (betting.json)", log):
             try:
                 import betting_ingest
-                betting_ingest.run("open")
-            except Exception:
+                import job_heartbeat as _hb
+                _st = betting_ingest.run("open")
+                # THE ORIGINAL OFFENDER. This step existed, was reached, and had
+                # never once produced a snapshot. `configured: true` in its own
+                # status file said nothing about whether it FIRED.
+                _hb.record("betting_odds_snapshot", ok=True,
+                           result=str((_st or {}).get("last_run"))[:120])
+            except Exception as _e:
                 log.exception("daily: betting odds snapshot failed — continuing")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("betting_odds_snapshot", ok=False, result=str(_e)[:120])
+                except Exception:
+                    pass
             try:
                 from betting_export import refresh_live as _refresh_betting
                 _refresh_betting(log=log.info)
