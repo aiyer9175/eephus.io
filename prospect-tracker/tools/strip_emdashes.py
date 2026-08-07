@@ -75,6 +75,29 @@ TARGETS: list[str] = [
     "data/draft_timeseries.json",
     "data/ifa_timeseries.json",
     "data/overseas_timeseries.json",
+    # COVERAGE-GAP FIX (plan item F2.6, 2026-08-06). Ten user-facing pages that
+    # the gate had never scanned, every Diamond-era surface among them. All ten
+    # measured CLEAN when they were added, so this is a guard against future
+    # copy rather than a cleanup; a page nobody scans is one bad paste away from
+    # shipping a dash the owner's rule forbids.
+    "betting/index.html",
+    "cards/index.html",
+    "dfs/index.html",
+    "diamond/index.html",
+    "dynasty/index.html",
+    "redraft/index.html",
+    "fantasy/index.html",
+    "history/index.html",
+    "parks/index.html",
+    "player/index.html",
+    # NOT ADDED, deliberately, and each for a reason worth recording:
+    #   fantasy_export.py  carries 11 dashes, all in docstrings, comments and
+    #     log lines. None reaches a reader. Adding it would rewrite internal
+    #     prose to satisfy a rule about user-facing copy.
+    #   mlb_player_export.py  line 60 is `text.replace("<em dash>", "-")`, the
+    #     sanitizer itself. The gate would strip the very character that
+    #     function exists to remove and quietly break it.
+    #   test_*.py  fixtures assert on dashes on purpose.
     # exporter-emitted copy (labels/notes that land in frontend JSON)
     "draft_export.py",
     "ifa_export.py",

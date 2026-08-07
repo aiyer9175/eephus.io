@@ -54,3 +54,37 @@ def test_copy_lint_check_is_clean():
         "copy_lint --check failed (em-dashes or LLM terms in pure copy):\n"
         f"{r.stdout}\n{r.stderr}"
     )
+
+
+def test_the_emdash_gate_covers_every_user_facing_page():
+    """PLAN ITEM F2.6, closed 2026-08-06. Ten pages users load had never been
+    scanned by the gate, every Diamond-era surface among them: betting, cards,
+    dfs, diamond, dynasty, redraft, plus fantasy, history, parks and player.
+
+    All ten measured clean when they were added, so nothing shipped wrong. The
+    defect was the coverage, not the copy: a page nobody scans is one bad paste
+    away from breaking a rule the owner treats as absolute, and it would break
+    it silently because no gate was looking.
+
+    This test fails when a NEW page appears without being added, which is the
+    only way the gap recurs."""
+    import fnmatch
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).parent
+    src = (root / "tools" / "strip_emdashes.py").read_text(encoding="utf-8")
+    block = src[src.index("TARGETS"):src.index("def ")]
+    targets = set(re.findall(r'"([^"]+)"', block))
+
+    pages = sorted(p.relative_to(root).as_posix()
+                   for p in root.glob("*/index.html"))
+    assert pages, "no section pages found; has the layout changed?"
+
+    uncovered = [p for p in pages
+                 if not any(fnmatch.fnmatch(p, t) for t in targets)]
+    assert not uncovered, (
+        "user-facing pages the em-dash gate does not scan: "
+        f"{uncovered}\nAdd them to TARGETS in tools/strip_emdashes.py. If one "
+        "genuinely must be excluded, say why there, the way the exporter "
+        "exclusions are documented.")
