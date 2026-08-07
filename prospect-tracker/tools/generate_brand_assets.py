@@ -109,13 +109,16 @@ def _font(px: int, bold: bool = True) -> ImageFont.FreeTypeFont:
     return ImageFont.load_default(px)
 
 
-_LOGO_TTF = str(ROOT / "branding" / "fonts" / "DotGothic16-Regular.ttf")
+# The BOLD cut, not the regular: PIL has no synthetic-bold path, so pointing this
+# at a regular face would silently render the wordmark at 400 while the site logo
+# renders at 700 (2026-08-07 swap from DotGothic16, which only ever had a 400).
+_LOGO_TTF = str(ROOT / "branding" / "fonts" / "PixelMplus12-Bold.ttf")
 
 
 def _logo_font(px: int) -> ImageFont.FreeTypeFont:
-    """The brand wordmark face: self-hosted DotGothic16 (the same pixel-gothic the
-    site logo uses), so the cards / gif match the in-site logo exactly. Falls back
-    to the mono face if the vendored ttf is missing."""
+    """The brand wordmark face: self-hosted PixelMplus12 Bold (the same pixel-gothic
+    the site logo uses), so the cards / gif match the in-site logo exactly. Falls
+    back to the mono face if the vendored ttf is missing."""
     try:
         return ImageFont.truetype(_LOGO_TTF, px)
     except OSError:
@@ -268,15 +271,22 @@ def make_share_card() -> None:
     img = _y2k_field(W, H, origin=(0.30, 0.18)).convert("RGBA")
     d = ImageDraw.Draw(img, "RGBA")
     _pixel_stars(d, W, H, 90)
-    # Wordmark (DotGothic16) + ramp rule + tagline.
+    # Wordmark + ramp rule + tagline. 108 and 36 are 9x and 3x the face's native
+    # 12px grid, so the pixel rows land whole.
     f_brand = _logo_font(108)
-    f_tag = _logo_font(34)
+    f_tag = _logo_font(36)
     f_mods = _font(24, bold=False)
-    d.text((PAD, 196), "EEPHUS", font=f_brand, fill=DARK_FG[:3])
+    # Placed by INK top, not by PIL's default ascender anchor: the gap between a
+    # face's ascender line and its cap line is 23px at this size, so a literal y
+    # slides the whole lockup on any face change while the ramp rule at 348 and
+    # the ball at 86 stay put. Anchoring the ink keeps the composition fixed.
+    y_brand = 237 - d.textbbox((0, 0), "EEPHUS", font=f_brand)[1]
+    d.text((PAD, y_brand), "EEPHUS", font=f_brand, fill=DARK_FG[:3])
     we = d.textlength("EEPHUS", font=f_brand)
-    d.text((PAD + we, 196), ".IO", font=f_brand, fill=LILAC[:3])
+    d.text((PAD + we, y_brand), ".IO", font=f_brand, fill=LILAC[:3])
     _ramp_rule(d, PAD, W - PAD, 348, 5)
-    d.text((PAD, 376), "sabermetrics", font=f_tag, fill=DARK_FG[:3])
+    y_tag = 392 - d.textbbox((0, 0), "sabermetrics", font=f_tag)[1]
+    d.text((PAD, y_tag), "sabermetrics", font=f_tag, fill=DARK_FG[:3])
     d.text((PAD, 436),
            "PROSPX consensus board / MLB free agency / projections / collegesavant",
            font=f_mods, fill=DARK_SUB[:3])
@@ -308,7 +318,7 @@ def make_twitter() -> None:
         d = ImageDraw.Draw(img, "RGBA")
         _pixel_stars(d, W, H, 120)
         f_brand = _logo_font(120)
-        f_tag = _logo_font(34)
+        f_tag = _logo_font(36)   # 10x and 3x the face's native 12px grid
         cy = 275
         wm_w = d.textlength(title, font=f_brand)
         wm_x0 = (W - wm_w) / 2
@@ -397,7 +407,10 @@ def _animation_frame(prog: float, W: int, H: int, sc: float) -> Image.Image:
         cx, cy = x * sc, y * sc
         d.ellipse([cx - w / 2, cy - w / 2, cx + w / 2, cy + w / 2], fill=col)
     # --- wordmark fade-in (auto-fit to ~74% of the width; baseline raised so
-    #     the 'p' descender clears the bottom edge) ---
+    #     the 'p' descender clears the bottom edge). The .22 reserve is set by
+    #     the face: PixelMplus12 drops its 'p' a full .20em under the baseline,
+    #     more than twice the .09em the previous logo face used, and the old .16
+    #     reserve left only ~1px before the frame edge. ---
     tp = max(0.0, min(1.0, (prog - 0.25) / 0.40))
     if tp > 0:
         layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -409,7 +422,7 @@ def _animation_frame(prog: float, W: int, H: int, sc: float) -> Image.Image:
         a = int(255 * tp)
         total_w = ld.textlength("eephus.io", font=f)
         x0 = (W - total_w) / 2
-        baseline = H - int(0.16 * fs) - 6
+        baseline = H - int(0.22 * fs) - 6
         ld.text((x0, baseline), "eephus", font=f, anchor="ls", fill=DARK_FG[:3] + (a,))
         w_e = ld.textlength("eephus", font=f)
         ld.text((x0 + w_e, baseline), ".io", font=f, anchor="ls", fill=LILAC[:3] + (a,))
@@ -474,7 +487,10 @@ def assemble_branding() -> None:
         (ROOT / "assets" / "icon-maskable-512.png",  B / "icons" / "icon-maskable-512.png"),
         (ROOT / "assets" / "site.webmanifest",       B / "site.webmanifest"),
         (ROOT / "assets" / "share-default.png",      B / "social" / "share-default.png"),
-        (ROOT / "assets" / "fonts" / "dotgothic16-latin.woff2", B / "fonts" / "dotgothic16-latin.woff2"),
+        # The served subsets of the brand face. Both weights ship because the
+        # logo is drawn at 700 and the copy tokens use 400.
+        (ROOT / "assets" / "fonts" / "pixelmplus12-regular.woff2", B / "fonts" / "pixelmplus12-regular.woff2"),
+        (ROOT / "assets" / "fonts" / "pixelmplus12-bold.woff2",    B / "fonts" / "pixelmplus12-bold.woff2"),
     ]
     n = 0
     for src, dst in pairs:

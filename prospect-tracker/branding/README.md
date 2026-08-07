@@ -78,17 +78,32 @@ always a thin accent, never a fill.
 
 ## Typography
 
-The wordmark and all chrome are set in a retro monospace stack led by **MS
-Gothic**. This is the brand type. There is no Poppins, no Inter, no serif on
-the marks.
+The wordmark and all chrome are set in a Japanese screen-gothic pixel type.
+This is the brand type. There is no Poppins, no Inter, no serif on the marks.
 
-- `--font-retro-mono`: `"MS Gothic","Osaka-Mono","Roboto Mono","VT323","Press Start 2P",…`
-  The blocky variant. Wordmark, FV badges, headings, nameplate.
-- `--font-retro`: `"MS UI Gothic","MS Gothic","Osaka","Roboto Mono",…`
-  The legibility variant. Body and UI.
+Three tokens, and they do NOT share a rule. Live values are in
+`assets/site.css`; treat that file, not this list, as the source of truth.
 
-The faces are system fonts, not bundled, so rendering is platform-aware: MS
-Gothic on Windows and Mac, Roboto Mono (Google) as the cross-platform fallback.
+- `--font-logo`: led by **PixelMplus12**, the bundled face, on every platform.
+  Wordmark, nameplate, page H1. One identical letterform everywhere is the
+  point, so this token deliberately outranks the system faces.
+- `--font-retro-mono`: led by **MS Gothic**, then MS UI Gothic, then
+  PixelMplus12. The blocky variant: FV badges, headings, chrome.
+- `--font-retro`: led by **MS UI Gothic**, then MS Gothic, then PixelMplus12.
+  The legibility variant: body and UI.
+
+The two copy tokens lead with the Windows system faces so a Windows reader
+renders body text from a system font. PixelMplus12 sits behind them for Mac,
+iPhone and Linux, where MS Gothic does not exist. It is self-hosted as a Latin
+subset in both weights (`assets/fonts/pixelmplus12-*.woff2`, mirrored into
+`fonts/` here); the source TTFs and the M+ license live in `fonts/` too.
+
+The logo face was DotGothic16 until 2026-08-07. It shipped a single 400 weight
+and the site sets `font-synthesis: none`, so the wordmark rendered at regular
+no matter what weight was asked for. PixelMplus12 has a real 700, so the
+wordmark is now genuinely bold. `fonts/DotGothic16-Regular.ttf` and its OFL
+license stay here for provenance only; nothing serves them.
+
 Numbers are tabular (`font-variant-numeric: tabular-nums`). Corners are square
 everywhere; radius is `0` by rule.
 
@@ -97,8 +112,8 @@ everywhere; radius is `0` by rule.
 Two marks, one system.
 
 **Full lockup, the eephus.io merged wordmark.** The lob arc is part of the
-lettering: it spans the word with the ball at its apex, the word set in MS
-Gothic, the `.io` in gold. It is live text plus inline SVG in the site
+lettering: it spans the word with the ball at its apex, the word set in
+PixelMplus12 Bold, the `.io` in gold. It is live text plus inline SVG in the site
 (`build_site.py:eephus_merged_wordmark`); the portable twin is
 `marks/eephus-wordmark.svg` (and `-dark`). Use it in mastheads, the nav, and
 footers.

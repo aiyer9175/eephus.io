@@ -216,7 +216,11 @@
       accent: _tok(accentTok || "--accent-cyan", dark ? "#00D9FF" : "#0E7C86"),
       pos: dark ? "#4FFF9E" : "#1F7A3A",
       neg: dark ? "#FF6B6B" : "#B91C1C",
-      MONO: '"DotGothic16","MS Gothic","MS UI Gothic","Osaka-Mono",monospace',
+      // A canvas 2d context cannot resolve var(--font-logo), so the logo stack is
+      // repeated here as a literal and MUST be kept in step with the
+      // --font-logo token in assets/site.css.
+      // test_board_card_typography.py fails the build if it drifts.
+      MONO: '"PixelMplus12","MS Gothic","MS UI Gothic","Osaka-Mono",monospace',
       ramp: dark
         ? [[0, "#00D9FF"], [0.3, "#B47CFF"], [0.55, "#FF4FD8"], [0.78, "#FFD700"], [1, "#4FFF9E"]]
         : [[0, "#B91C1C"], [0.35, "#C9A227"], [0.65, "#1F7A3A"], [1, "#0E2B4D"]],
@@ -369,7 +373,33 @@
   //        sections: [{title, rows: [[label, value, color?], ...]}] (<=2),
   //        caption?}
   //        - or the declarative {template, data} form (see templates above).
+  // Canvas text never waits for a webfont: an unloaded face falls silently
+  // through to the next family in MONO, so a cold first card rasterises in a
+  // different letterform than every card after it. Since 2026-08-07 that is a
+  // Windows risk too, not just an Apple one - PixelMplus12 leads --font-logo, so
+  // every platform now downloads it instead of matching a system face.
+  // Deliberately awaited in drawCard rather than in shareCard: the GFX modal and
+  // the legacy direct-download path both land here, and only one of them used to
+  // wait. Resolves on failure - a missing webfont should degrade, not block.
+  // Two specs cover the surface: fonts.load matches family and weight, never the
+  // size its shorthand syntax forces you to supply.
+  let _fontsReady = null;
+  function awaitFonts() {
+    if (_fontsReady) return _fontsReady;
+    if (!document.fonts || !document.fonts.load) return (_fontsReady = Promise.resolve());
+    const jobs = ["700 26px PixelMplus12", "400 26px PixelMplus12"].map(s => {
+      try { return document.fonts.load(s).catch(() => {}); }
+      catch (e) { return Promise.resolve(); }
+    });
+    if (document.fonts.ready) jobs.push(document.fonts.ready.catch(() => {}));
+    // Never let a hung font request hold an export hostage.
+    const timeout = new Promise(r => setTimeout(r, 4000));
+    _fontsReady = Promise.race([Promise.all(jobs), timeout]);
+    return _fontsReady;
+  }
+
   async function drawCard(opts) {
+    await awaitFonts();
     opts = resolveTemplate(opts);
     const W = 1200, H = 675, PAD = 48;
     // 2x supersample (the EEPHUS_GFX board treatment): backing store at 2x,

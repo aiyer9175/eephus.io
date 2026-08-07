@@ -427,6 +427,42 @@
     stops.forEach(function (c, i) { grad.addColorStop(i / (stops.length - 1), c); });
     g.fillStyle = grad; g.fillRect(x, y, w, h);
   }
+  // A canvas 2d context cannot resolve var(--font-logo), so the logo stack is
+  // repeated here as a literal and MUST be kept in step with the
+  // --font-logo token in assets/site.css.
+  // test_board_card_typography.py fails the build if it drifts. One constant
+  // for all three draws below: they used to be three separate literals, which is
+  // exactly how _GFX_SVG_MONO in prospx drifted out of step unnoticed.
+  var _LOGO = '"PixelMplus12", "MS Gothic", monospace';
+
+  // Canvas text never waits for a webfont, and neither does html2canvas: an
+  // unloaded face falls silently through to the next family, so a cold first
+  // export rasterises in a different letterform than every export after it.
+  // Since 2026-08-07 that is a Windows risk too, not just an Apple one -
+  // PixelMplus12 leads --font-logo, so every platform now downloads it instead
+  // of matching a system face. This module ships site-wide while EEPHUS_HUB does
+  // not, so it cannot borrow the hub's copy of this.
+  // Resolves on failure - a missing webfont should degrade, not block an export.
+  // Two specs cover the surface: fonts.load matches family and weight, never the
+  // size its shorthand syntax forces you to supply.
+  var _fontsReady = null;
+  function _awaitFonts() {
+    if (_fontsReady) return _fontsReady;
+    if (!document.fonts || !document.fonts.load) {
+      _fontsReady = Promise.resolve();
+      return _fontsReady;
+    }
+    var jobs = ["700 26px PixelMplus12", "400 26px PixelMplus12"].map(function (s) {
+      try { return document.fonts.load(s).catch(function () {}); }
+      catch (e) { return Promise.resolve(); }
+    });
+    if (document.fonts.ready) jobs.push(document.fonts.ready.catch(function () {}));
+    // Never let a hung font request hold an export hostage.
+    var timeout = new Promise(function (r) { setTimeout(r, 4000); });
+    _fontsReady = Promise.race([Promise.all(jobs), timeout]);
+    return _fontsReady;
+  }
+
   // Wrap a rasterized content canvas in the branded frame (wordmark + title +
   // ramp rule + url), the newspaper/share-card language.
   function _brandCompose(content, title, dark) {
@@ -440,7 +476,7 @@
     // wordmark
     var fs = 30 * S;
     g.textBaseline = "alphabetic";
-    g.font = "700 " + fs + 'px "DotGothic16", "MS Gothic", monospace';
+    g.font = "700 " + fs + "px " + _LOGO;
     g.fillStyle = dark ? "#ECEEF2" : "#0F1B2D";
     var by = pad + fs;
     g.fillText("eephus", pad, by);
@@ -449,7 +485,7 @@
     g.fillText(".io", pad + ew, by);
     // title (right-aligned)
     if (title) {
-      g.font = "700 " + (15 * S) + 'px "DotGothic16", "MS Gothic", monospace';
+      g.font = "700 " + (15 * S) + "px " + _LOGO;
       g.fillStyle = dark ? "#A6ABB5" : "#4A5468";
       g.textAlign = "right";
       g.fillText(_clip(title, 64), W - pad, by - 3 * S);
@@ -460,7 +496,7 @@
     // ramp rule + footer url
     var ry = pad + headH + content.height + 12 * S;
     _rampRule(g, pad, ry, W - pad * 2, 4 * S, dark);
-    g.font = (12 * S) + 'px "DotGothic16", "MS Gothic", monospace';
+    g.font = (12 * S) + "px " + _LOGO;
     g.fillStyle = dark ? "#7C808A" : "#706B5C";
     g.fillText(SITE, pad, ry + 22 * S);
     return c;
@@ -470,7 +506,8 @@
 
   function exportImage(host, action, kind) {
     toast("Rendering image…");
-    return _ensureH2C().then(function (h2c) {
+    return Promise.all([_ensureH2C(), _awaitFonts()]).then(function (r) {
+      var h2c = r[0];
       var target = kind === "chart" ? (host.querySelector("svg") || host)
                                     : (host.matches("table") ? host : (host.querySelector("table") || host));
       var dark = _dark();

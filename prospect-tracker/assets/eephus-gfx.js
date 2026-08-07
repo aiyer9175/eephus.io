@@ -103,7 +103,11 @@
       accent: tok(accentTok || "--accent-lilac", dark ? "#00D9FF" : "#0E7C86"),
       pos: dark ? "#4FFF9E" : "#1F7A3A",
       neg: dark ? "#FF6B6B" : "#B91C1C",
-      MONO: '"DotGothic16","MS Gothic","MS UI Gothic","Osaka-Mono",monospace',
+      // A canvas 2d context cannot resolve var(--font-logo), so the logo stack is
+      // repeated here as a literal and MUST be kept in step with the
+      // --font-logo token in assets/site.css.
+      // test_board_card_typography.py fails the build if it drifts.
+      MONO: '"PixelMplus12","MS Gothic","MS UI Gothic","Osaka-Mono",monospace',
       ramp: dark
         ? [[0, "#00D9FF"], [0.3, "#B47CFF"], [0.55, "#FF4FD8"], [0.78, "#FFD700"], [1, "#4FFF9E"]]
         : [[0, "#B91C1C"], [0.35, "#C9A227"], [0.65, "#1F7A3A"], [1, "#0E2B4D"]],
@@ -602,12 +606,19 @@
   }
 
   // ---- render dispatch -------------------------------------------------------
-  // Canvas text does NOT wait for a webfont. `g.font = "700 26px DotGothic16"`
+  // Canvas text does NOT wait for a webfont. `g.font = "700 26px PixelMplus12"`
   // silently falls back to the next family in the stack if the face has not
   // loaded, and every face here is declared font-display:swap - so the FIRST
   // graphic generated in a session could rasterise in a different face than
   // every later one, with nothing in the console to say so. The DOM engine in
   // prospx awaits document.fonts before capture; this one never did.
+  //
+  // Since 2026-08-07 this matters on Windows too: PixelMplus12 leads
+  // --font-logo, so a Windows visitor downloads it rather than matching a
+  // system face, and a cold first export is the likeliest moment to miss it.
+  //
+  // Two specs, not one per size: document.fonts.load matches on family and
+  // weight, never on the size the shorthand syntax forces you to supply.
   //
   // Resolves rather than rejects on failure: a missing webfont should degrade
   // to the fallback face, not block the export.
@@ -618,8 +629,7 @@
       _fontsReady = Promise.resolve();
       return _fontsReady;
     }
-    var specs = ["700 34px DotGothic16", "700 26px DotGothic16", "700 17px DotGothic16",
-                 "700 14px DotGothic16", "15px DotGothic16", "12px DotGothic16"];
+    var specs = ["700 26px PixelMplus12", "400 26px PixelMplus12"];
     var jobs = specs.map(function (s) {
       try { return document.fonts.load(s).catch(function () {}); }
       catch (e) { return Promise.resolve(); }

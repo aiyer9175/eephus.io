@@ -24,6 +24,16 @@ Two defects are pinned here, both found 2026-08-05.
    Apple renders PROSPX and the editorial pages in two different faces. Both
    files' comments say "mirrors the other"; this asserts it.
 
+3. THE LOGO STACK AND ITS FOUR UNRESOLVABLE COPIES (added 2026-08-07 with the
+   DotGothic16 -> PixelMplus12 swap). A canvas 2d context and a serialized
+   standalone SVG cannot resolve `var(--font-logo)`, so the logo stack is
+   repeated as a LITERAL in eephus-gfx.js, eephus-hub.js and eephus-export.js,
+   and the fonts.load warmups name the family a fifth and sixth time. Nothing
+   links those copies to the token: a stale one does not throw, it silently
+   rasterises the wordmark in the next family down. prospx's _GFX_SVG_MONO is
+   the proof this happens - three copies had already drifted apart before one
+   constant replaced them.
+
 Playwright/chromium are OPTIONAL; the browser tests skip cleanly when
 unavailable (mirrors test_index_html_loads.py). The stack tests are pure text
 and always run."""
@@ -42,6 +52,25 @@ PROSPX = ROOT / "prospx" / "index.html"
 # The two faces that must lead every copy stack, in order: Windows first (so a
 # Windows reader never downloads a webfont), then the self-hosted stand-in.
 _EXPECTED_HEAD = ["MS UI Gothic", "MS Gothic", "PixelMplus12"]
+
+# Every file that repeats the logo stack somewhere a var() cannot reach.
+_LOGO_COPIES = [
+    ROOT / "assets" / "eephus-gfx.js",
+    ROOT / "assets" / "eephus-hub.js",
+    ROOT / "assets" / "eephus-export.js",
+    ROOT / "prospx" / "index.html",
+]
+
+# DotGothic16 named as a FACE rather than in prose: quoted inside a family list
+# ("DotGothic16") or trailing a canvas / fonts.load shorthand ("26px DotGothic16").
+# Deliberately not a bare-substring search - the comments that record WHY the
+# face was retired have to keep naming it, and losing that history is how the
+# omnibus-2 record and the shipped CSS ended up contradicting each other.
+_RETIRED_AS_A_FACE = re.compile(r"""["']DotGothic16["']|\d\s*px\s+DotGothic16""")
+
+# The head of a canvas font stack: the self-hosted face, then the Windows system
+# face behind it (what a reader sees while the webfont is still swapping in).
+_CANVAS_LOGO_HEAD = re.compile(r"""["']PixelMplus12["']\s*,\s*["']MS Gothic["']""")
 
 
 def _token(text: str, name: str) -> str:
@@ -86,6 +115,46 @@ def test_copy_stacks_lead_with_windows_then_the_selfhosted_face(token):
         assert head[0] == "MS UI Gothic" and head[1] == "MS Gothic"
     assert head[2] == "PixelMplus12", f"{token} must fall to PixelMplus12, got {head}"
     assert "monospace" in css[-1], "the monospace ladder must remain as last resort"
+
+
+def test_logo_token_leads_with_the_selfhosted_face():
+    """--font-logo is the ONE token that must not lead with the Windows system
+    faces the copy tokens lead with. The wordmark has to be the same letterform
+    on every platform, which means every platform downloads PixelMplus12."""
+    fams = _families(_token(SITE_CSS.read_text(encoding="utf-8"), "--font-logo"))
+    assert fams[0] == "PixelMplus12", f"--font-logo must lead PixelMplus12, got {fams}"
+    assert "monospace" in fams[-1], "the monospace ladder must remain as last resort"
+
+
+@pytest.mark.parametrize("path", _LOGO_COPIES + [SITE_CSS], ids=lambda p: p.name)
+def test_no_file_still_names_the_retired_logo_face(path):
+    """A stale copy does not throw - it rasterises the wordmark in the next family
+    down, which stays invisible until someone compares two exports side by side."""
+    stale = _RETIRED_AS_A_FACE.findall(path.read_text(encoding="utf-8"))
+    assert not stale, f"{path.name} still names the retired logo face: {stale[:3]}"
+
+
+@pytest.mark.parametrize("path", _LOGO_COPIES[:3], ids=lambda p: p.name)
+def test_canvas_logo_literals_lead_with_the_same_face(path):
+    """These three carry the logo stack as a literal because a canvas 2d context
+    cannot read var(--font-logo). Nothing but this test links them to the token."""
+    assert _CANVAS_LOGO_HEAD.search(path.read_text(encoding="utf-8")), (
+        f"{path.name} has no PixelMplus12-led canvas font stack")
+
+
+def test_prospx_export_warms_the_logo_face():
+    """prospx awaits document.fonts.load before an html2canvas capture. If the
+    warmup names a face the page no longer uses, the wait resolves against
+    nothing and a cold first export captures the fallback."""
+    text = PROSPX.read_text(encoding="utf-8")
+    assert re.search(r"\d\s*px\s+PixelMplus12", text), "prospx warms no logo weight"
+
+
+def test_font_face_does_not_declare_a_retired_family():
+    css = SITE_CSS.read_text(encoding="utf-8")
+    for block in re.findall(r"@font-face\s*\{[^}]*\}", css, re.S):
+        fam = re.search(r"font-family:\s*\"([^\"]+)\"", block)
+        assert fam and fam.group(1) == "PixelMplus12", f"unexpected @font-face: {block[:80]}"
 
 
 @pytest.mark.parametrize("token", ["--font-retro", "--font-retro-mono"])

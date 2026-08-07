@@ -10,21 +10,8 @@
    own :root wins the cascade - here we only need it for `.eephus-nav`.
    ========================================================================== */
 
-/* DotGothic16 - the brand logo/display face. A pixel/bitmap gothic that
-   recreates the MS-Gothic look and renders identically on every device (real
-   MS Gothic is a Windows-only system font, often absent, and proprietary so it
-   can't be self-hosted). Self-hosted as a ~11KB Latin-subset woff2; SIL OFL,
-   license in branding/fonts/OFL.txt. The PIL brand generator uses the same
-   face, so the site logo and the share cards / animated gif match exactly. */
-@font-face {
-  font-family: "DotGothic16";
-  src: url("/assets/fonts/dotgothic16-latin.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* PixelMplus12 - the MS Gothic STAND-IN for Apple (2026-08-05).
+/* PixelMplus12 - the MS Gothic STAND-IN for Apple (2026-08-05), and since
+   2026-08-07 the brand LOGO face as well (see --font-logo below).
    MS Gothic / MS UI Gothic are Windows-only system faces, so before this every
    Mac and iPhone visitor read the whole site - body, headings, tables, even the
    nav wordmark - in SF Mono, i.e. none of the brand's type identity survived
@@ -35,22 +22,23 @@
    Why THIS one, against the two constraints that killed the alternatives:
      - It ships a REAL 700. `font-synthesis: none` is set on body (see below), so
        a single-weight face would have silently flattened every 700/800 on the
-       site for Apple readers - that alone disqualified Ark Pixel, Fusion Pixel
-       and DotGothic16 itself.
-     - It is 12px-native, and the site's copy sits at 12-14px. DotGothic16 was
-       tried as body copy once and pulled (see the token comment below): it is
-       16px-native, so at 12-13px it renders at 0.75-0.8x of its grid and the
-       pixel rows collapse. 12px-native at 12-13px is 1.0-1.08x.
-   Latin+symbol subset only: 276 codepoints, 6.2KB + 5.4KB for the two weights,
-   which is less than the single-weight DotGothic16 subset above. The census was
-   taken from the built pages and the served payloads, and confirmed the data
-   uses NO Latin Extended-A (only Latin-1 accents: ÉÓáéíñóú).
+       site for Apple readers - that alone disqualified Ark Pixel and Fusion
+       Pixel, and it is also why the logo left DotGothic16 (single 400 weight).
+     - It is 12px-native, and the site's copy sits at 12-14px. A 16px-native face
+       renders at 0.75-0.8x of its grid there and the pixel rows collapse;
+       12px-native at 12-13px is 1.0-1.08x.
+   Latin+symbol subset only: 276 codepoints in BOTH weights, 6.2KB + 5.4KB. The
+   census was taken from the built pages and the served payloads, and confirmed
+   the data uses NO Latin Extended-A (only Latin-1 accents: ÉÓáéíñóú). Do not
+   re-subset to chase the logo change: the logo string is already covered.
    Six symbols the UI uses are NOT in the face (>=, <=, the compare glyph, minus,
    check, command) and fall through per-glyph to the next family. That is not a
    regression: on Apple those characters already render from the fallback today,
    because the whole stack does.
-   NOT preloaded, deliberately: Windows matches MS Gothic first, so lazy font
-   loading means a Windows visitor never downloads these files at all.
+   Still not preloaded, but the download is no longer Apple-only: --font-logo
+   leads with this face, and the wordmark is on every page, so a Windows visitor
+   now fetches these two files too. Retiring the 10.8KB DotGothic16 subset that
+   used to carry the logo roughly pays for the pair.
    M+ FONT LICENSE (commercial use permitted, no attribution burden); license
    text and the source TTFs are vendored in branding/fonts/. */
 @font-face {
@@ -153,16 +141,18 @@
   --paper-dot:        rgba(14,43,77,.055);   /* navy newsprint halftone ink   */
   --paper-dot2:       rgba(178,75,40,.035);  /* warm registration-offset dot  */
   --paper-pinstripe:  rgba(14,43,77,.028);   /* faint baseball pinstripe / column rule */
-  /* MS UI Gothic / MS Gothic still lead, so Windows renders EXACTLY as before and
-     never downloads a webfont. PixelMplus12 (self-hosted, @font-face above) now
-     sits directly behind them, so Apple and Linux get a real Japanese-screen-
-     gothic pixel face instead of dropping all the way to SF Mono.
-     HISTORY, so the earlier fix is not misread as a reversal: DotGothic16 was
-     once put in this position and pulled, because it is 16px-native and the
-     site's copy is 12-14px, which renders it at 0.75-0.8x of its pixel grid and
-     turns body text to mush. PixelMplus12 is 12px-native, so the same copy sits
-     ON its grid rather than under it, and it ships a real bold. DotGothic16
-     stays what it became: logo only (--font-logo).
+  /* COPY tokens. MS UI Gothic / MS Gothic MUST keep leading these two: Windows
+     then renders every body/table/heading run from a system face, exactly as it
+     always has. PixelMplus12 (self-hosted, @font-face above) sits directly
+     behind them, so Apple and Linux get a real Japanese-screen-gothic pixel face
+     instead of dropping all the way to SF Mono. That ordering is pinned by
+     test_board_card_typography.py; --font-logo below deliberately does NOT
+     follow it, because the logo has to look identical on every platform.
+     HISTORY, so the earlier fix is not misread as a reversal: a 16px-native
+     pixel face was once put in this position and pulled, because the site's copy
+     is 12-14px, which renders it at 0.75-0.8x of its pixel grid and turns body
+     text to mush. PixelMplus12 is 12px-native, so the same copy sits ON its grid
+     rather than under it, and it ships a real bold.
      The monospace ladder is kept intact behind PixelMplus12 - it is still what
      renders the six symbols the subset does not carry. Mirrors prospx/index.html;
      the two definitions must be edited together. */
@@ -172,11 +162,22 @@
   --font-retro-mono: "MS Gothic","MS UI Gothic","PixelMplus12",
                      ui-monospace,"SF Mono","SFMono-Regular",Consolas,Menlo,
                      "Liberation Mono","DejaVu Sans Mono","Roboto Mono",monospace;
-  /* The eephus.io wordmark + headings. DotGothic16 (self-hosted pixel-gothic)
-     leads so the logo renders the MS-Gothic/Y2K look on EVERY device; real MS
-     Gothic / MS UI Gothic are honored next for anyone who has them; Roboto Mono
-     is the last cross-platform fallback. */
-  --font-logo: "DotGothic16","MS Gothic","MS UI Gothic","Osaka",ui-monospace,Consolas,monospace;
+  /* The eephus.io wordmark + headings. Self-hosted PixelMplus12 leads so the
+     logo renders one identical MS-Gothic/Y2K letterform on EVERY device,
+     Windows included - the opposite rule from the copy tokens above, and the
+     reason Windows now downloads the face at all.
+     SWAPPED 2026-08-07 from DotGothic16, on the owner decision that overrides
+     the omnibus-2 plan's recorded "default NO, logo stays DotGothic16 pending
+     owner veto". This IS that veto. It buys a real bold: DotGothic16 shipped a
+     single 400 and `font-synthesis: none` is inherited from body, so the
+     font-weight:700 on every selector below has never produced bold on any
+     platform. PixelMplus12 has a real 700, so the wordmark is genuinely bold
+     for the first time.
+     Real MS Gothic / MS UI Gothic / Osaka are honored next, which is what a
+     reader sees while the webfont is still swapping in; the generic monospace
+     ladder is the last resort. (This token has never carried Roboto Mono, only
+     the copy tokens above do.) */
+  --font-logo: "PixelMplus12","MS Gothic","MS UI Gothic","Osaka",ui-monospace,Consolas,monospace;
   /* DARKENED 2026-08-05. #C8A2C8 measured 1.95:1 on the warm paper, the worst
      text ratio on the site: the dev byline was a pale lilac on a pale cream at
      11px uppercase, and .build-banner then multiplied it by an opacity of .95.
@@ -1151,8 +1152,22 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* Merged brand mark - the signature lob is PART of the lettering: the arc
    spans the wordmark with the ball at apex (replaces the old mark-above-text
    lockup). Arc + ball are em-scaled off the nameplate's own font-size, so
-   the masthead (clamp 2.4-4rem) and the sidebar (20px) share one mark. */
-.eephus-wordmark-merged { position: relative; display: inline-block; line-height: 1; padding-top: .5em; margin: 0; font-family: var(--font-logo); }
+   the masthead (clamp 2.4-4rem) and the sidebar (20px) share one mark.
+   padding-top is what reserves the arc's airspace: the arc and the ball are
+   absolutely positioned off this box's TOP edge, so this number, not their own
+   offsets, sets how far the lob rides above the lettering.
+   RAISED .5em -> .67em with the 2026-08-07 PixelMplus12 swap. The two faces
+   differ in ASCENDER, not the cap height you would reach for first: the
+   wordmark has no capitals, so what the arc has to clear is the 'h' stem and
+   the 'i' dot of ".io". PixelMplus12 puts that dot at .800em over a baseline
+   that line-height:1 seats .094em higher than DotGothic16's, so the ink top
+   rose .168em and the closest arc-to-ink gap fell 45% (.376em -> .206em), with
+   the arc's right-hand descent crowding the ".io". Adding the same .168em back
+   here restores the shipped clearance exactly and leaves the arc/ball offsets
+   below untouched. Measured cost: the homepage masthead grows 8px (179 -> 187).
+   The nav bar does NOT move - at 22px the taller lockup is still shorter than
+   the nav's own link row, so 69px is unchanged on every page. */
+.eephus-wordmark-merged { position: relative; display: inline-block; line-height: 1; padding-top: .67em; margin: 0; font-family: var(--font-logo); }
 .eephus-wordmark-merged .ew-arc { position: absolute; left: -1%; width: 102%; top: .04em; height: .48em; overflow: visible; }
 .eephus-wordmark-merged .ew-ball { position: absolute; left: 50%; top: -.08em; width: .26em; height: .26em; transform: translateX(-50%); color: var(--text-primary); }
 .masthead .eephus-logo { display: inline-flex; align-items: flex-end; gap: 14px; }
