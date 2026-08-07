@@ -649,12 +649,28 @@ function _methAccuracyChart(bt) {
   };
   const sp = metric("spearman", "Ordering skill - Spearman ρ (grade vs realized WAR)", 0, 0.4, v => v.toFixed(3));
   const au = metric("auc", "Discrimination - AUC (grade predicts ‘became a contributor’)", 0.5, 0.85, v => v.toFixed(3));
-  const pld = bt.accuracy.pooled || {};
+  // SAME ROWS OR THE COMPARISON IS NOT ONE. accuracy.pooled scores each rater on
+  // whatever it covers, so the eFV bar ran on 3,210 players and the board bars on
+  // 4,259; roughly half the gap that pairing showed was the row difference, not
+  // ordering skill. pooled_efv_common re-scores every rater on the rows eFV
+  // covers. Falls back only for an artifact written before that block existed.
+  const pld = bt.accuracy.pooled_efv_common || bt.accuracy.pooled || {};
   const x = pld.xfv, c = pld.prospx_consensus, fg = pld.fangraphs, mlb = pld.mlb_pipeline;
+  const hh = bt.accuracy.head_to_head_verdict || null;
   let verdict;
   if (x && x.spearman != null && c && c.spearman != null) {
     const f3 = v => (v == null ? "-" : v.toFixed(3));
-    verdict = `<p class="meth-verdict is-good">Out of sample, leakage-free, on the players it grades, <strong>eFV orders realized WAR better than every grade on the board</strong>: Spearman ${f3(x.spearman)}, against ${f3(c.spearman)} for the PROSPX consensus, ${f3(mlb && mlb.spearman)} for MLB Pipeline, ${f3(fg && fg.spearman)} for FanGraphs; it also leads on contributor AUC, ${f3(x.auc)} to ${f3(c.auc)}. The consensus is the strongest public-style input, but eFV beats the consensus itself, and that gap is the reason it is the primary grade, not the consensus's edge over its inputs. The lead holds across recent cohorts and FV tiers; it is bounded, a few Spearman points (see caveats).</p>`;
+    const n = (bt.accuracy.common_n_efv || 0).toLocaleString();
+    const gap = x.spearman - c.spearman;
+    // A bare inequality is not a result. The gap is reported against the floor
+    // this backtest can actually resolve, so a lead inside the floor reads as
+    // the tie it is.
+    const resolvable = hh && hh.resolvable === true;
+    const cls = resolvable ? "is-good" : "";
+    const call = resolvable
+      ? `That gap clears the ${f3(hh.mde95)} this backtest can resolve at 95%, so it is a real lead.`
+      : `That gap sits under the ${f3(hh && hh.mde95)} this backtest can resolve at 95%, so read it as a tie that leans eFV, not a win.`;
+    verdict = `<p class="meth-verdict ${cls}">Out of sample and leakage-free, on the ${n} players eFV and the boards both grade, eFV orders realized WAR ahead of the field: Spearman ${f3(x.spearman)}, against ${f3(c.spearman)} for the PROSPX consensus, ${f3(mlb && mlb.spearman)} for MLB Pipeline and ${f3(fg && fg.spearman)} for FanGraphs, a margin of ${gap >= 0 ? "+" : ""}${f3(gap)} over the consensus. ${call} Broken out by prospect group it is closer still. A wider gap you may have seen quoted compares eFV on its own rows against the boards on all of theirs, and about half of that one is the row difference rather than the ordering.</p>`;
   } else {
     verdict = `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric (reported as measured, not cherry-picked).</p>`;
   }
@@ -1484,13 +1500,13 @@ function _methRegistryHTML() {
       // surprise findings, the committed losing challengers. Render them in an
       // expandable row so the strongest honesty signal isn't dropped.
       const notesRow = m.notes
-        ? `<tr class="meth-registry-notes"><td colspan="5"><details><summary>methodology notes &amp; committed results</summary><div class="meth-note" style="margin-top:6px;white-space:normal;">${escapeHtml(m.notes)}</div></details></td></tr>`
+        ? `<tr class="meth-registry-notes"><td colspan="5"><details><summary>methodology notes &amp; committed results</summary><div class="meth-note">${escapeHtml(m.notes)}</div></details></td></tr>`
         : "";
       return mainRow + notesRow;
     }).join("");
     body = `
       <p class="meth-note">Every predictive model on the platform, with its verdict and committed eval artifact. <strong>${counts.validated || 0} validated · ${counts.provisional || 0} provisional · ${counts.unvalidated || 0} unvalidated · ${counts.deprecated || 0} deprecated</strong>${reg.checked_at ? ` · last checked ${escapeHtml(reg.checked_at)}` : ""}. Unvalidated rows are listed precisely so they can't hide; losing challengers stay committed.</p>
-      <div class="meth-tables"><table class="meth-tier-table meth-registry-table">
+      <div class="meth-registry-scroll"><table class="meth-table meth-registry-table">
         <thead><tr><th>Model · surface</th><th>Champion</th><th>Baseline</th><th>Verdict</th><th>Eval artifact</th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>`;
@@ -1562,8 +1578,8 @@ function _methReliabilityHTML() {
     : "Calibration error by outcome bucket, before recalibration";
   const bucketTable = bucketRows ? `<div class="meth-table-wrap">
       <div class="meth-table-title">${bucketTitle}</div>
-      <table class="meth-table"><thead><tr><th>Outcome</th><th>ECE</th></tr></thead>
-      <tbody>${bucketRows}</tbody></table></div>` : "";
+      <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Outcome</th><th>ECE</th></tr></thead>
+      <tbody>${bucketRows}</tbody></table></div></div>` : "";
 
   // --- Predicted vs realized by consensus-FV tier (fresh artifact only) -----
   const tiers = rel.per_tier_reliability;
@@ -1582,9 +1598,9 @@ function _methReliabilityHTML() {
       }).join("");
       tierTable = `<div class="meth-table-wrap">
         <div class="meth-table-title">Predicted vs realized outcome, by consensus-FV tier</div>
-        <table class="meth-table"><thead><tr><th>Tier</th><th>n</th>
+        <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Tier</th><th>n</th>
           <th>Star pred</th><th>Star obs</th><th>Bust pred</th><th>Bust obs</th><th>Mean gap</th></tr></thead>
-        <tbody>${rows}</tbody></table></div>`;
+        <tbody>${rows}</tbody></table></div></div>`;
     }
   }
 

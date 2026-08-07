@@ -468,18 +468,23 @@
   // module DOES tag: club / player / mutual / opt-out) are not modelled for the
   // league-wide vet pool - the cost-controlled bucket says so plainly rather
   // than guessing.
+  // `short` is the same call with the YEAR taken out. It exists because the
+  // wide board carries the year in its own "signed thru" column, and a row that
+  // says 2033 twice reads like two facts. Both strings are emitted; site.css
+  // shows exactly one, by width.
   function contractStatus(m) {
     const first = DATA.first_season;
     if (m.src === "prospect")
-      return { key: "prospect", label: "Prospect", cls: "proj-ct-prospect",
+      return { key: "prospect", label: "Prospect", short: "Prospect", cls: "proj-ct-prospect",
         tip: "Pre-MLB - the six cost-controlled years (3 pre-arb + 3 arb) start at debut" };
     if (m.thru && m.thru > first)
-      return { key: "signed", label: `Signed · ${m.thru}`, cls: "proj-ct-signed",
+      return { key: "signed", label: `Signed · ${m.thru}`, short: "Signed", cls: "proj-ct-signed",
         tip: `Guaranteed contract through ${m.thru}${m.aav ? ` at ${money(m.aav)}/yr` : ""}` };
     if (m.thru && m.thru === first)
-      return { key: "expiring", label: `Expiring ${m.thru}`, cls: "proj-ct-expiring",
+      return { key: "expiring", label: `Expiring ${m.thru}`, short: "Expiring", cls: "proj-ct-expiring",
         tip: "Final guaranteed year - reaches arbitration or free agency after this season" };
-    return { key: "controlled", label: "No multi-year deal", cls: "proj-ct-controlled",
+    return { key: "controlled", label: "No multi-year deal", short: "No multi-year deal",
+      cls: "proj-ct-controlled",
       tip: "No guaranteed multi-year deal on file: pre-arbitration or arbitration salary (the service-time split needs data not fetched league-wide), or an unsigned free agent (so it is not necessarily cost-controlled). FA-class members carry their option / UFA kind in the Free Agency module." };
   }
 
@@ -1148,8 +1153,13 @@
       // AGE, which is the kind of mismatch nobody discovers except by testing a
       // sort they did not ask for. AAV came out of it into a column of its own,
       // which is also what finally made AAV sortable at all.
-      const ctChip = `<div class="mlb-chip mlb-chip-ct" title="${esc(cs.tip)}"><b>contract</b><span class="proj-ct ${cs.cls}">${esc(cs.label)}</span></div>`;
+      const ctChip = `<div class="mlb-chip mlb-chip-ct" title="${esc(cs.tip)}"><b>contract</b><span class="proj-ct ${cs.cls}"><span class="proj-ct-full">${esc(cs.label)}</span><span class="proj-ct-short">${esc(cs.short)}</span></span></div>`;
       const aavCell = m.aav != null ? money(m.aav) : EM_DASH;
+      // Stays a CHIP and does not become a column, which was the plan until it
+      // was measured against the live payload: warPeak is carried by 203 of 203
+      // prospects and 0 of 1,326 veterans, so a row-1 column for it would be a
+      // dash on six of every seven rows of the default board. A chip can be
+      // omitted per row; a column cannot.
       const peakChip = m.warPeak != null
         ? `<div class="mlb-chip" title="Prime projection: roughly this per year at peak age on the talent path. Surplus prices the attrition-discounted expected value, not this."><b>peak WAR</b>${fmtWar(m.warPeak)}</div>`
         : "";
@@ -1193,11 +1203,12 @@
           <span class="mlb-name">${teamLogo(m.team)}${link}</span>
           <span class="mlb-sub">${esc(m.pos || "")}${m.team ? "" : " &middot; FA"}${tagFor(m)}<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span>${cmpBtn}</span>
         </div>
-        <span class="mlb-metric" title="Projected bWAR over the window on the playing-time-held (if-healthy) path. Peak-age rate is in the tape.">
+        <span class="mlb-metric" title="Projected bWAR over the window on the playing-time-held (if-healthy) path. The peak-age rate is a separate number.">
           <span class="mlb-metric-label">${DATA.horizon}y WAR</span>${tot}</span>
         <span class="mlb-metric" title="Average annual value of the guaranteed contract on file. Prospects and players without a multi-year deal carry none."><span class="mlb-metric-label">AAV</span>${aavCell}</span>
         <span class="mlb-metric" title="Player age as carried on the projection row (the aging curves run forward from it)"><span class="mlb-metric-label">Age</span>${m.age != null ? Math.floor(m.age) : "?"}</span>
         <span class="mlb-metric"><span class="mlb-metric-label">Surplus</span>${sur}</span>
+        <span class="mlb-metric proj-col-wide" title="Final guaranteed season on the contract on file. Prospects and players without a multi-year deal carry none and sort last. The contract STATUS - signed, expiring, no multi-year deal - is the chip in the tape; this is only the year."><span class="mlb-metric-label">signed thru</span>${m.thru ? m.thru : EM_DASH}</span>
         ${seasonTape}
       </div>`;
     }).join("");
@@ -1254,19 +1265,38 @@
       return `<aside class="fa-board-rail">${stampMod}${warMod}${surMod}${supplyMod}</aside>`;
     }
     // Card-head columns must mirror the .proj-card grid exactly, so the two
-    // share one track definition rather than two that can drift apart.
+    // read from the same source rather than from two that can drift apart.
     // minmax(0,...) on the one flexible track: a bare fr refuses to shrink below
     // min-content, so a long name would push the numbers off the card.
-    const CARD_TRACKS = "34px minmax(0,1.9fr) 92px 84px 52px 96px";
+    //
+    // TWO track strings since 2026-08-07, still one source. The identity track
+    // measured 670px at the 1400px wrap for content that needs about half of it
+    // (longest rendered name 189px, longest sub line 161px), so the contract's
+    // final guaranteed season becomes a real column where there is room, and
+    // stays a tape chip where there is not. site.css owns the threshold; below
+    // it the cell is display:none and the narrow string is restored, so the
+    // header and the cards can never disagree about the track count.
+    //
+    // ONE new column, not the two originally planned: see the peak WAR chip
+    // above for why that one failed its coverage check.
+    //
+    // The new cell sits LAST in the markup rather than beside AAV, and that is
+    // structural. Under 720px both boards collapse to a 2-across grid by
+    // nth-child parity on the metric cells, so a hidden cell inserted anywhere
+    // in the middle flips the odd/even column of everything after it. Appended,
+    // it shifts nothing.
+    const CARD_TRACKS = "34px minmax(0,1.9fr) 92px 84px 52px 96px 78px";
+    const CARD_TRACKS_NARROW = "34px minmax(0,1.9fr) 92px 84px 52px 96px";
+    const _trackStyle = `grid-template-columns:${CARD_TRACKS};--card-tracks-narrow:${CARD_TRACKS_NARROW};`;
     // Every header is sortable now, including rank and name, and each is a real
     // keyboard button with aria-sort. The old board exposed sorting on the
     // season cells, 5y WAR and Surplus only, and none of them were reachable by
     // keyboard, which made Projections the one module below the a11y contract
     // that fa.js, mlbstats.js and prospx all already met.
-    const cardHead = (label, key, title) => {
+    const cardHead = (label, key, title, cls) => {
       const active = state.sort === key;
       const aria = active ? (state.dir < 0 ? "descending" : "ascending") : "none";
-      return `<span role="button" tabindex="0" data-psort="${key}" aria-sort="${aria}"${title ? ` title="${esc(title)}"` : ""}>${label}${active ? (state.dir < 0 ? " ▾" : " ▴") : ""}</span>`;
+      return `<span role="button" tabindex="0"${cls ? ` class="${cls}"` : ""} data-psort="${key}" aria-sort="${aria}"${title ? ` title="${esc(title)}"` : ""}>${label}${active ? (state.dir < 0 ? " ▾" : " ▴") : ""}</span>`;
     };
     // The row-2 tape chips are NOT track-aligned with the header (they live in
     // the reserved band at the card bottom and scroll inside their own box), so
@@ -1282,19 +1312,32 @@
       ${cardHead("peak WAR", "warPeak", "Talent-path projection at peak age")}
       ${cardHead("contract thru", "thru", "Final guaranteed season on the contract on file. Prospects and unsigned players sort last.")}
     </div>`;
-    root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main">` + warMap + tapeSortbar + `
-      <div class="mlb-card-head" style="grid-template-columns:${CARD_TRACKS};">
+    // The board's masthead, the same newsprint eyebrow the FA class board
+    // carries. The scope prose stays in #proj-banner above; this only names the
+    // board and its window, so the two modules open the same way.
+    const boardHead = `<div class="newsprint-eyebrow" style="margin-top:4px;">
+      <span class="newsprint-eyebrow-label">${DATA.horizon}-Year Projection Board</span>
+      <span class="newsprint-eyebrow-meta">${seasons[0]}&ndash;${seasons[seasons.length - 1]} &middot; ${list.length} shown &middot; mean bWAR on the playing-time-held path</span>
+    </div>`;
+    root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main">` + boardHead + warMap + tapeSortbar + `
+      <div class="mlb-card-head" style="${_trackStyle}">
         ${cardHead("#", "rank", "Board position under the current sort")}
         ${cardHead("Player", "name", "Sort by name")}
         ${cardHead(`${DATA.horizon}y WAR`, "warTotal", "Projected bWAR over the window, playing-time-held (if-healthy) path, with the P10-P90 outcome band. Surplus prices the attrition-discounted expected value, not this path.")}
         ${cardHead("AAV", "aav", "Average annual value of the guaranteed contract on file. Prospects and players without a multi-year deal carry none.")}
         ${cardHead("Age", "age", "Sort by age - the aging curves run forward from it")}
         ${cardHead("Surplus", "sur", "Veterans: production value minus salary, salary-known seasons only. Prospects: platform surplus value.")}
+        ${cardHead("signed thru", "thru", "Final guaranteed season on the contract on file. Prospects and unsigned players carry none and sort last.", "proj-col-wide")}
       </div>
-      <div class="mlb-card-list" style="--card-tracks:${CARD_TRACKS};">${body || `<div class="fa-sub proj-empty">No players match.</div>`}</div>
+      <div class="mlb-card-list">${body || `<div class="fa-sub proj-empty">No players match.</div>`}</div>
       ${list.length > state.limit ? `<div class="proj-more-wrap"><button class="chip" id="proj-more">show ${Math.min(100, list.length - state.limit)} more (${list.length - state.limit} hidden)</button></div>` : ""}</div>${projBoardSidebar(list)}</div>`;
     // One place sets the card grid, from the same string the header uses.
-    root.querySelectorAll(".proj-card").forEach(c => { c.style.gridTemplateColumns = CARD_TRACKS; });
+    // (The --card-tracks custom property that used to sit on .mlb-card-list went
+    // with this change: nothing in the repo ever read it.)
+    root.querySelectorAll(".proj-card").forEach(c => {
+      c.style.gridTemplateColumns = CARD_TRACKS;
+      c.style.setProperty("--card-tracks-narrow", CARD_TRACKS_NARROW);
+    });
     // Keyboard parity for EVERY sort affordance (click is wired below). This
     // selector was scoped to .mlb-card-head, which would have left the new tape
     // sort bar mouse-only - the exact a11y hole this pattern exists to close.
@@ -1400,14 +1443,36 @@
       ? `<circle cx="${x(t)}" cy="${y(v)}" r="3" fill="${color}"><title>${esc(nm)} ${seasons[t]}: ${fmtWar(v)}</title></circle>` : "").join("");
     const ticks = seasons.map((s, t) => `<text x="${x(t)}" y="${H - 6}" text-anchor="middle" class="mlbp-fan-tick">${s}</text>`).join("");
     const zero = mn < 0 ? `<line x1="${PX}" x2="${W - 8}" y1="${y(0)}" y2="${y(0)}" class="mlbp-fan-zero"/>` : "";
-    const chart = `<svg class="mlbp-fan" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected WAR comparison">
-      ${zero}${line(wA, CA)}${line(wB, CB)}${dots(wA, CA, a.name)}${dots(wB, CB, b.name)}${ticks}</svg>`;
-    // Only the name COLOUR stays inline - it is the per-side series colour the
-    // chart already draws with. The ellipsizing box lives on .proj-cmp-name
-    // (it finally does, as of 2026-08-04), so the name carries a title.
-    const head = (m, color) => `<div class="proj-cmp-head">
-      ${teamLogo(m.team)}<strong class="proj-cmp-name" style="color:${color};" title="${esc(m.name)}">${esc(m.name)}</strong>
-      <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}</span>${tagFor(m)}</div>`;
+    // The chart drew SEASON ticks only, so both paths were shapes with no
+    // magnitude: nothing on it said whether the gap between them was half a win
+    // or four. Three WAR labels - axis floor, midpoint, ceiling - in the 36px
+    // left gutter the x scale already reserves. Labels only, no gridlines: the
+    // one rule on this chart is the dashed zero line, and three more dashes at
+    // the same weight would stop it reading as the baseline. One decimal, the
+    // precision the table below and every WAR cell on the board use.
+    const yTicks = [mx, (mn + mx) / 2, mn].map(v =>
+      `<text x="${PX - 6}" y="${y(v) + 3.5}" text-anchor="end" class="mlbp-fan-tick">${v.toFixed(1)}</text>`
+    ).join("");
+    const chart = `<svg class="mlbp-fan" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected WAR comparison, ${esc(a.name)} and ${esc(b.name)}, ${seasons[0]} to ${seasons[seasons.length - 1]}, vertical axis ${mn.toFixed(1)} to ${mx.toFixed(1)} bWAR">
+      ${yTicks}${zero}${line(wA, CA)}${line(wB, CB)}${dots(wA, CA, a.name)}${dots(wB, CB, b.name)}${ticks}</svg>`;
+    // Only the per-side SERIES COLOUR is inline, twice: on the name, and on the
+    // stripe the head borrowed from .mlb-card. The ellipsizing box lives on
+    // .proj-cmp-name (it finally does, as of 2026-08-04), so the name carries a
+    // title.
+    //
+    // The stripe takes the series colour rather than an org colour on purpose.
+    // The payload has no orgColor field at all - measured, 0 of 1,326 veteran
+    // rows - so a --org-color stripe here would be a decorative bar claiming an
+    // identity it does not carry, and it would be identical on both sides. The
+    // series colour is the fact this view actually has: it says which line on
+    // the chart below is whose. The photo well is emitted unconditionally and
+    // filled by fillRowPhotos, exactly as it is on the board.
+    const head = (m, color) => `<div class="proj-cmp-head" style="--org-color:${color}">
+      ${rowPhoto(m)}
+      <span class="proj-cmp-id">
+        <strong class="proj-cmp-name" style="color:${color};" title="${esc(m.name)}">${teamLogo(m.team)}${esc(m.name)}</strong>
+        <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}${tagFor(m)}</span>
+      </span></div>`;
     const seasonRows = seasons.map((s, t) => {
       const va = warAt(a, t), vb = warAt(b, t);
       const edge = (va != null && vb != null) ? va - vb : null;
@@ -1422,9 +1487,15 @@
       return `<tr class="proj-cmp-total"><td>${label}</td><td>${va != null ? fmt(va) : EM_DASH}</td><td>${vb != null ? fmt(vb) : EM_DASH}</td>
         <td class="${d == null ? "proj-dim" : d >= 0 ? "proj-pos" : "proj-neg"}">${d == null ? EM_DASH : (d >= 0 ? "+" : "") + (fmt === fmtWar ? d.toFixed(1) : money(d))}</td></tr>`;
     };
+    // The newsprint eyebrow the board and the FA class board open with, in place
+    // of .mlbp-section-title - that is the PLAYER PAGE's section dialect, and
+    // this view is a board view reached from the board.
     root.innerHTML = `<div class="mlbp-page">
       <div class="mlbp-section proj-cmp-section">
-        <div class="mlbp-section-title">Head-to-Head <span class="fa-sub">projected mean bWAR, season-aligned${(a.src === "prospect" || b.src === "prospect") ? " · prospects join at their PROSPX ETA" : ""}</span></div>
+        <div class="newsprint-eyebrow">
+          <span class="newsprint-eyebrow-label">Head-to-Head</span>
+          <span class="newsprint-eyebrow-meta">projected mean bWAR, season-aligned ${seasons[0]}&ndash;${seasons[seasons.length - 1]}${(a.src === "prospect" || b.src === "prospect") ? " &middot; prospects join at their PROSPX ETA" : ""}</span>
+        </div>
         <div class="proj-cmp-heads">${head(a, CA)}${head(b, CB)}</div>
         ${chart}
         <table class="detail-table proj-table proj-cmp-table">
@@ -1454,6 +1525,9 @@
         caption: "eephus projection engine (proj_lgbm_v1) · season-aligned mean bWAR",
       });
     };
+    // Same async well fill the board rows use, so a compare opened on two
+    // prospect rows (which carry no mlbam in the payload) still gets faces.
+    fillRowPhotos(root);
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(root);
   }
 

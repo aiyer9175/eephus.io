@@ -89,9 +89,71 @@
   }
   function surplusSpan(usd, p10, p90) {
     if (usd == null) return EM_DASH;
-    const band = (p10 != null && p90 != null)
-      ? ` title="Floor/ceiling surplus from the P10/P90 WAR paths: ${formatMetric(p10 / 1e6, "surplusM")} … ${formatMetric(p90 / 1e6, "surplusM")}"` : "";
-    return `<span class="${usd >= 0 ? "fa-pos" : "fa-neg"}"${band}>${formatMetric(usd / 1e6, "surplusM")}</span>`;
+    const cls = usd >= 0 ? "fa-pos" : "fa-neg";
+    const val = formatMetric(usd / 1e6, "surplusM");
+    if (p10 == null || p90 == null) return `<span class="${cls}">${val}</span>`;
+    // Same treatment the AAV and Yrs/Guar cells got: the band was hover-only
+    // here, which is invisible on a phone and inconsistent for screen readers.
+    const band = `Surplus ${val}. Floor to ceiling from the P10 and P90 WAR `
+      + `paths: ${formatMetric(p10 / 1e6, "surplusM")} to ${formatMetric(p90 / 1e6, "surplusM")}.`;
+    return `<span class="${cls}" data-band tabindex="0" aria-label="${esc(band)}" title="${esc(band)}">${val}</span>`;
+  }
+
+  // TAP-TO-OPEN BANDS (2026-08-07). The P10-P90 ranges got aria-label plus
+  // tabindex last pass, which closed the keyboard and screen-reader half of the
+  // gap and said so; the visible half was still a `title`, and no touch device
+  // shows one. So a phone reader could not see a band at all.
+  //
+  // The panel text is READ OFF the cell's aria-label rather than rebuilt here.
+  // That is the whole design: the aavWild disclosure (the bands are a flat ratio
+  // rather than a per-tier fit, so the top of the market gets a P90 no contract
+  // has ever reached) is composed once, at the cell, and cannot drift out of
+  // sync with the copy assistive tech reads. Rebuilding it here would be a
+  // second copy of a known-wrong number's warning label.
+  let _bandPop = null;
+  let _bandDismissWired = false;
+  function closeBand() { if (_bandPop) _bandPop.hidden = true; }
+  function openBand(cell) {
+    const text = cell.getAttribute("aria-label");
+    if (!text) return;
+    if (!_bandPop) {
+      _bandPop = document.createElement("div");
+      _bandPop.className = "fa-band-pop";
+      // aria-hidden, not role="dialog": this panel is the VISUAL half of a
+      // disclosure whose text is already the cell's own aria-label. Exposing it
+      // would read the same sentence twice, and a dialog role would promise
+      // focus management it does not do.
+      _bandPop.setAttribute("aria-hidden", "true");
+      _bandPop.hidden = true;
+      document.body.appendChild(_bandPop);
+    }
+    _bandPop.textContent = text;
+    _bandPop.hidden = false;
+    const r = cell.getBoundingClientRect();
+    // Page coordinates, not viewport: the panel is absolutely positioned so it
+    // rides the document. Any scroll closes it (below) because the cell can
+    // also move inside .fa-board-main's own scroller.
+    const w = _bandPop.offsetWidth;
+    const left = Math.max(8, Math.min(r.left + window.scrollX,
+                                      window.scrollX + document.documentElement.clientWidth - w - 8));
+    _bandPop.style.left = `${left}px`;
+    _bandPop.style.top = `${r.bottom + window.scrollY + 6}px`;
+  }
+  // Dismissal is wired ONCE for the module, not per render: renderBoard replaces
+  // the rows wholesale and would otherwise stack a listener per repaint.
+  function wireBandDismiss() {
+    if (_bandDismissWired) return;
+    _bandDismissWired = true;
+    // Bubble phase. A cell's own handler calls stopPropagation, so a click that
+    // opened a panel never reaches this and cannot close what it just opened.
+    document.addEventListener("click", e => {
+      if (!_bandPop || _bandPop.hidden) return;
+      if (e.target.closest && e.target.closest(".fa-band-pop")) return;
+      closeBand();
+    });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeBand(); });
+    window.addEventListener("resize", closeBand);
+    document.addEventListener("scroll", closeBand, true);
   }
 
   function load(name) {
@@ -264,11 +326,22 @@
     return `<span class="fa-hand" title="${esc(handLabel(m))}">${isPitcherRow(m) ? "T" : "B"}:${h}</span>`;
   }
 
-  function playerLink(m) {
+  // The 24px headshot well, always emitted so an async fill cannot shift the
+  // layout. Two placements, and the difference is not cosmetic: inside
+  // .mlb-name it is an inline box that costs 7px of LINE BOX and sits inside
+  // the ellipsis box, where text-overflow can eat it (measured and written up
+  // on .proj-id in site.css). On the board card it is a grid RAIL beside the
+  // name instead; the tracker and fits TABLES keep it inline, where there is no
+  // line-box budget to protect.
+  function rowPhoto(m) {
+    return `<span class="fa-row-photo" data-photo-key="${esc(m.key || "")}"></span>`;
+  }
+  function playerLink(m, opts) {
     // title carries the full name: at phone widths the shared .mlb-name box
     // ellipsizes the trailing type tag/badges, and the tooltip is the only
     // place the cut text can still be read.
-    return `<a href="#${faHash()}player=${encodeURIComponent(m.key || "")}" class="fa-player-link" title="${esc(m.name)}"><span class="fa-row-photo" data-photo-key="${esc(m.key || "")}"></span><strong>${esc(m.name)}</strong></a>`;
+    const photo = opts && opts.noPhoto ? "" : rowPhoto(m);
+    return `<a href="#${faHash()}player=${encodeURIComponent(m.key || "")}" class="fa-player-link" title="${esc(m.name)}">${photo}<strong>${esc(m.name)}</strong></a>`;
   }
 
   // Headshot URL builder for this module. ONE place, so a CDN transform
@@ -636,10 +709,9 @@
       // states it for assistive tech, and tabindex makes the cell keyboard
       // focusable so it is not mouse-only.
       //
-      // NOT FIXED HERE, and worth saying plainly: a phone user still cannot see
-      // the band. That needs a tap-to-open tooltip component, which is a real UI
-      // build rather than an attribute. This closes the keyboard and screen
-      // reader half of the gap.
+      // data-band completes it (2026-08-07): openBand above reads this cell's
+      // aria-label into a tap-to-open panel, so the touch half is no longer
+      // missing either. Inlining the band into the cell stays rejected.
       // KNOWN BAND DEFECT, disclosed rather than hidden (plan item D6). The
       // bands come from a FLAT ratio applied to the point estimate, not from a
       // per-tier fit, so at the top of the market the upper end goes somewhere
@@ -655,10 +727,10 @@
                      + " per-tier fit, so the upper end is unrealistically wide"
                      + " at the top of the market." : "");
       const aavCell = m.projAav == null ? EM_DASH
-        : `<span tabindex="0" aria-label="${esc(aavBand)}" title="${esc(aavBand)}">${money(m.projAav)}</span>`;
+        : `<span data-band tabindex="0" aria-label="${esc(aavBand)}" title="${esc(aavBand)}">${money(m.projAav)}</span>`;
       const guarBand = `Predicted term and total guarantee. Length P10 to P90 ${m.projYearsP10 ?? "?"} to ${m.projYearsP90 ?? "?"} years; guarantee P10 to P90 ${money(m.projGuarP10)} to ${money(m.projGuarP90)}.`;
       const guarCell = m.projGuar == null ? EM_DASH
-        : `<span tabindex="0" aria-label="${esc(guarBand)}" title="${esc(guarBand)}">${m.projYears != null ? m.projYears + "y / " : ""}${money(m.projGuar)}</span>`;
+        : `<span data-band tabindex="0" aria-label="${esc(guarBand)}" title="${esc(guarBand)}">${m.projYears != null ? m.projYears + "y / " : ""}${money(m.projGuar)}</span>`;
       const trCls = [
         (m.projGuar == null || m.status === "option_exercised") ? "fa-dim" : "",
         isOption(m) ? "fa-row-opt" : "",
@@ -695,7 +767,8 @@
           data-card-href="#player=${encodeURIComponent(m.key)}">
         <span class="mlb-rank">${i + 1}</span>
         <div class="fa-id">
-          <span class="mlb-name">${playerLink(m)}${noteBadge(m)}${thinBadge(m)} ${typeTag(m)}</span>
+          ${rowPhoto(m)}
+          <span class="mlb-name">${playerLink(m, { noPhoto: true })}${noteBadge(m)}${thinBadge(m)} ${typeTag(m)}</span>
           <span class="mlb-sub">${esc(m.pos || "")} &middot; ${m.age != null ? m.age.toFixed(1) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")}${handOf(m) ? " &middot; " + handShort(m) : ""}${m.qo ? ` &middot; <span title="Received a qualifying offer: signing him costs the new club draft compensation">QO</span>` : ""}</span>
         </div>
         <span class="mlb-metric"><span class="mlb-metric-label">Status</span><span class="fa-statustext">${statusChip(m)}</span></span>
@@ -734,9 +807,9 @@
         ${sHead("#", "rank", "Board position under the current sort. The default order is the predicted guarantee.")}
         ${sHead("Player", "name", "Sort by name")}
         ${sHead("Status", "status", "Where the player is in the market")}
-        ${sHead("proj AAV", "projAav", "Predicted average annual value. Hover a cell for its P10-P90 band.")}
-        ${sHead("Yrs / Guar", "projGuar", "Predicted term and total guarantee. Hover a cell for the P10-P90 bands.")}
-        ${sHead(`<span data-gl="contract_surplus">Surplus</span>`, "surplus", "Rational value minus predicted price (hover for the floor/ceiling range)")}
+        ${sHead("proj AAV", "projAav", "Predicted average annual value. Tap or click a cell for its P10-P90 band.")}
+        ${sHead("Yrs / Guar", "projGuar", "Predicted term and total guarantee. Tap or click a cell for the P10-P90 bands.")}
+        ${sHead(`<span data-gl="contract_surplus">Surplus</span>`, "surplus", "Rational value minus predicted price. Tap or click a cell for the floor/ceiling range.")}
         ${sHead(`<span data-gl="deal_plus">Verdict</span>`, "verdict", "The deal call, from surplus banded within the player's own group")}
       </div>
       <div class="mlb-card-list">${body || '<div class="fa-sub" style="padding:2rem;text-align:center;">No free agents match these filters.</div>'}</div></div>
@@ -744,9 +817,20 @@
     rows.querySelectorAll(".fa-card").forEach(c => { c.style.gridTemplateColumns = FA_TRACKS; });
     rows.querySelectorAll(".fa-card[data-card-href]").forEach(c => {
       const open = () => { location.hash = c.dataset.cardHref.replace(/^#/, ""); };
-      c.onclick = e => { if (!e.target.closest("a,button")) open(); };
+      // [data-band] joins the a/button guard: those cells are their own control
+      // now, and a tap on one must show the band rather than leave the board.
+      c.onclick = e => { if (!e.target.closest("a,button,[data-band]")) open(); };
       c.onkeydown = e => {
-        if ((e.key === "Enter" || e.key === " ") && !e.target.closest("a,button")) { e.preventDefault(); open(); }
+        if ((e.key === "Enter" || e.key === " ") && !e.target.closest("a,button,[data-band]")) { e.preventDefault(); open(); }
+      };
+    });
+    wireBandDismiss();
+    rows.querySelectorAll("[data-band]").forEach(el => {
+      el.onclick = e => { e.stopPropagation(); openBand(el); };
+      el.onkeydown = e => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+          e.preventDefault(); e.stopPropagation(); openBand(el);
+        }
       };
     });
     rows.querySelectorAll("[data-fsort]").forEach(h => {
