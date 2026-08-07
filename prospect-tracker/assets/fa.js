@@ -1565,6 +1565,20 @@
                 : (v.bias_base > 0 ? "+" : "") + v.bias_base.toFixed(2)}</td>
           <td>${v.n}</td><td>${lean}</td></tr>`;
       }).join("")}</tbody></table>` : ""}
+      ${(meta.war_input_divergence && meta.war_input_divergence.before_after) ? `
+      <h3>What changed, and what it cost</h3>
+      <div class="fa-note">${esc(meta.war_input_divergence.before_after.change)},
+        shipped ${esc(meta.war_input_divergence.before_after.shipped)}. Same rows
+        on both sides. ${esc(meta.war_input_divergence.before_after.note || "")}</div>
+      <table class="detail-table"><thead><tr><th>Metric</th><th>Before</th>
+        <th>After</th><th>Change</th></tr></thead>
+      <tbody>${(meta.war_input_divergence.before_after.rows || []).map(r => {
+        const d = r.after - r.before;
+        const good = r.better === "lower" ? d < 0 : d > 0;
+        return `<tr><td>${esc(r.metric)} <span class="proj-dim">${esc(r.unit)}</span></td>
+          <td>${r.before.toFixed(3)}</td><td>${r.after.toFixed(3)}</td>
+          <td>${(d > 0 ? "+" : "") + d.toFixed(3)} ${good ? "better" : "worse"}</td></tr>`;
+      }).join("")}</tbody></table>` : ""}
       <h3>Biggest misses (published, not hidden)</h3>
       <div class="fa-filter-bar" style="margin-bottom:8px;">${missTabBar}</div>
       <table class="detail-table"><thead><tr><th>Winter</th><th>Player</th><th>To</th><th>Actual</th><th>Model</th><th>Err</th></tr></thead>

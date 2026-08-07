@@ -1207,6 +1207,27 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
                             "show different WAR for the same player. Both are "
                             "doing the job they were measured for."),
             "measured": "docs/fa-gate2-attribution-2026-08-06.md",
+            # J4: the before/after, as a public receipt rather than prose. The
+            # receipts culture is the point of this panel, and a change that
+            # improved accuracy should be as visible as the errors above it.
+            # Numbers from the four-arm attribution run, same rows both sides.
+            "before_after": {
+                "shipped": "2026-08-06",
+                "change": "F-DEF removed from free agent pricing only",
+                "rows": [
+                    {"metric": "AAV", "before": 3.135, "after": 2.909,
+                     "unit": "$M mean absolute error", "better": "lower"},
+                    {"metric": "Guarantee", "before": 10.207, "after": 9.690,
+                     "unit": "$M mean absolute error", "better": "lower"},
+                    {"metric": "Mega deals", "before": 86.065, "after": 79.814,
+                     "unit": "$M mean absolute error", "better": "lower"},
+                    {"metric": "Length", "before": 0.429, "after": 0.433,
+                     "unit": "years mean absolute error", "better": "lower"},
+                ],
+                "note": ("Length got slightly worse and is shown anyway. A "
+                         "before and after that only lists the wins is an "
+                         "advertisement, not a receipt."),
+            },
         },
         "park_factors": fa_fit.park_factors(class_year - 1),
         "teams": teams,
