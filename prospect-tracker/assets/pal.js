@@ -512,15 +512,21 @@
         legend: "FIT 0-100 = SP→RP relief-upside screen (gated by conversion need) · tiers cut at "
           + (tierRule("sp2rp").tiers || []).filter(function (t) { return t.min_fit != null; })
               .map(function (t) { return f1(t.min_fit); }).join(" / "),
+        // Every column header must fit its own track, because the renderer now
+        // clamps rather than overflows and a clipped header ("PUTAWAY ...")
+        // destroys the column's meaning in a way a clipped cell does not.
+        // Measured demand at the tightest layout the split board produces, a
+        // 723px panel: Putaway whiff 99px and proj REM+ 71px were short, funded
+        // here from FIT (65px track, 40px demand) and SP ERA (72/50).
         columns: [
           { label: "#", frac: 0.05 },
           { label: "Player", frac: 0.24 },
-          { label: "FIT", frac: 0.09 },
-          { label: "Tier", frac: 0.16 },
-          { label: "SP ERA", frac: 0.10 },
-          { label: "Putaway whiff", frac: 0.12, wideOnly: true },
+          { label: "FIT", frac: 0.075 },
+          { label: "Tier", frac: 0.158 },
+          { label: "SP ERA", frac: 0.09 },
+          { label: "Putaway whiff", frac: 0.137, wideOnly: true },
           { label: "velo→RP", frac: 0.15, wideOnly: true },
-          { label: "proj REM+", frac: 0.09 },
+          { label: "proj REM+", frac: 0.10 },
         ], rows: brows },
     };
   }

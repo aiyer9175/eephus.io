@@ -516,12 +516,12 @@
     var brows = rows.map(function (c, i) {
       return { cells: [
         { t: i + 1 },
-        // KEEP THE SUB SHORT. The board renderer in eephus-gfx.js draws a
-        // cell's `sub` at its natural width with no fitTxt() clamp, so anything
-        // long runs straight over the next column: "WSH Topps Chrome Rookie
-        // Refractor" collided with the eFV number on every row of the 16:9
-        // two-column layout. Org plus grade identifies the row and fits; the
-        // set name lives on the page, which is where the link points.
+        // Org plus grade identifies the row and fits; the set name lives on the
+        // page, which is where the link points. This started as a workaround for
+        // an unclamped board renderer, which no longer applies (eephus-gfx.js
+        // clamps every cell to its track), so a longer sub would now ellipsize
+        // rather than collide. It stays short because the whole set name would
+        // ellipsize to nothing useful, not because the renderer forces it.
         { t: c.name || c.player_key,
           sub: [c.org, c.grade].filter(Boolean).join(" ") },
         { t: fEfv(c.efv) },

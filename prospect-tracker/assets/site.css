@@ -471,15 +471,20 @@
   overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
 }
 .eephus-nav .eephus-links::-webkit-scrollbar { display: none; }
-/* 641-1024px is the band with no nav affordance at all: the hamburger only
-   takes over at <=640, so between those widths the strip is a silent
-   horizontal swipe - 10 links plus a dropdown at 12.5px need roughly 900px,
-   and the ones past the fold have nothing to suggest they exist. That is the
-   same failure the <=640 hamburger was built to fix.
+/* 641px up to the width where the strip stops overflowing is the band with no
+   nav affordance at all: the hamburger only takes over at <=640, so across that
+   band the strip is a silent horizontal swipe and the links past the fold have
+   nothing to suggest they exist. That is the same failure the <=640 hamburger
+   was built to fix.
+   The upper bound is 1440, not 1024. 1024 was an estimate of where the strip
+   starts fitting; measured, it still overflowed by 118px at 1101 and 39px at
+   1180, and that band had no affordance at all. Raising the bound is safe
+   because overflow-x:auto paints nothing when the content fits, so the widths
+   that do fit are unaffected.
    A thin scrollbar rather than a fade mask on purpose: the strip is
    right-aligned by margin-left:auto, so when the links DO fit, a mask would
    dim the last one. A scrollbar is drawn only when there is real overflow. */
-@media (min-width: 641px) and (max-width: 1024px) {
+@media (min-width: 641px) and (max-width: 1439.98px) {
   .eephus-nav .eephus-links {
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
@@ -500,10 +505,18 @@
   border-left: 1px solid var(--border);
 }
 .eephus-nav .eephus-links a:first-of-type { border-left: none; }
-/* Keep the controls pinned on the line; below 1100px their text labels
-   drop (icons remain) so links + controls still share one row. */
+/* Keep the controls pinned on the line; below the width where the FULL lockup
+   fits, the control text labels drop (icons remain) so links + controls still
+   share one row.
+   That width is 1440, not 1100. The labels are worth 197px and the link strip
+   only stops overflowing at 1440 (.eephus-nav is max-width:1440), so a 1100px
+   bound handed the labels back 340px early and the strip paid for them: at
+   1101px overflow JUMPED to 315px, worse than the 169px at 1050px, and
+   "Developers" was still cut by 50px at 1366px. Measured 2026-08-07 across
+   1024/1050/1101/1180/1280/1366/1439/1440; with the bound at 1440 the cliff is
+   gone and 1280 and up are clean. */
 .eephus-nav .eephus-nav-controls { flex: none; }
-@media (max-width: 1100px) {
+@media (max-width: 1439.98px) {
   .eephus-nav .eephus-nav-ctrl .eephus-nav-ctrl-label { display: none; }
 }
 .eephus-nav .eephus-links a:hover { background: var(--bg-tertiary); color: var(--text-primary); }
@@ -1877,6 +1890,25 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
       max-height: calc(100vh - 210px);
     }
   }
+}
+/* The starfield (#eephus-bg) is position:fixed at z-index:-1, so it paints ABOVE
+   the canvas background and shows through anything transparent. These tables are
+   transparent everywhere EXCEPT the frozen first column, which carries an opaque
+   freeze fill, so in dark mode star glyphs sat on top of the numbers and the
+   frozen column read as a different tone from the rest of its own row. One
+   opaque fill on the scrollport answers both.
+   Measured 2026-08-07: on /mlbstats/, /pal/, /dfs/ and /redraft/ the first
+   opaque ancestor of the scrollport IS the page canvas, so nothing between the
+   table and the root paints.
+   Betting is excluded by an explicit :not, NOT by leaving .bt-table out of the
+   list, because betting.js emits class="bt-table mlbstats-table" and the naive
+   version matched it anyway: measured, it painted --bg-primary inside .bt-panel
+   and cut a visibly darker rectangle into that panel. .bt-panel is already
+   opaque (--bg-secondary), so betting never had the bleed to begin with.
+   A fill, never an opacity: a translucent value here would make the freeze
+   column ghost, which is the failure this table already carries a scar for. */
+.mlbstats-scroll:has(> :is(.mlbstats-table, .dyn-table, .rd-table, .dfs-table)):not(:has(> .bt-table)) {
+  background: var(--bg-primary);
 }
 /* The header needs to paint over the rows it now sits above. */
 .mlbstats-table thead th { z-index: 2; }

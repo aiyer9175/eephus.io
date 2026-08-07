@@ -123,6 +123,13 @@
   }
 
   // ---- canvas board renderer -------------------------------------------------
+  // Right edge of column i's track: the next column's origin less an 8px gutter,
+  // or in the last column the PANEL edge. The panel edge is not the canvas edge:
+  // in the two-panel layout the left panel ends mid-canvas, and clamping its last
+  // column to the canvas let it paint through the gutter and over the right panel.
+  function trackEnd(xs, panelRight, i) {
+    return i + 1 < xs.length ? xs[i + 1] - 8 : panelRight;
+  }
   function renderBoard(spec, fmt) {
     var W = fmt.w, H = fmt.h;
     var PAD = Math.round(W * 0.033);
@@ -210,7 +217,8 @@
       g.font = "700 14px " + MONO;
       cols.forEach(function (col, i) {
         g.fillStyle = sub;
-        g.fillText(String(col.label || "").toUpperCase(), xs[i], headY);
+        g.fillText(fitTxt(g, String(col.label || "").toUpperCase(),
+                          trackEnd(xs, px + panelW, i) - xs[i]), xs[i], headY);
       });
       g.strokeStyle = line; g.lineWidth = 1;
       g.beginPath(); g.moveTo(px, headY + 10); g.lineTo(px + panelW, headY + 10); g.stroke();
@@ -224,23 +232,24 @@
       for (var i = 0; i < cols.length; i++) {
         var cell = cells[origIdx[i]] || {};
         var t = cell.t == null ? "" : String(cell.t);
+        var colEnd = trackEnd(x0, panelX[pi] + panelW, i);
         if (cell.sub) {
           g.fillStyle = fg; g.font = "700 17px " + MONO;
-          g.fillText(t, x0[i], y);
-          var nameW = g.measureText(t).width;
+          var name = fitTxt(g, t, colEnd - x0[i]);
+          g.fillText(name, x0[i], y);
+          var subX = x0[i] + g.measureText(name).width + 9;
           g.fillStyle = sub; g.font = "12px " + MONO;
-          // Clamp the sub-text to the gap before the next column origin. The
-          // tile renderer has always done this via fitTxt(); the board renderer
-          // did not, so any spec with a long `sub` painted straight over the
-          // next column. Found by the /cards/ board, which worked around it by
-          // shortening its own sub, but the defect belonged here.
-          var subX = x0[i] + nameW + 9;
-          var subLimit = (i + 1 < x0.length ? x0[i + 1] - 8 : W - PAD) - subX;
-          if (subLimit > 0) g.fillText(fitTxt(g, String(cell.sub), subLimit), subX, y);
+          // The sub is decoration, so it yields the whole remainder of the track
+          // to the name and is dropped outright when nothing is left. The name
+          // is data and is only ever shortened.
+          if (colEnd - subX > 0) {
+            var st = fitTxt(g, String(cell.sub), colEnd - subX);
+            if (st) g.fillText(st, subX, y);
+          }
         } else {
           g.fillStyle = cell.c ? colorOf(cell.c) : fg;
           g.font = (cell.c === "accent" || cell.bold ? "700 " : "") + "16px " + MONO;
-          g.fillText(t, x0[i], y);
+          g.fillText(fitTxt(g, t, colEnd - x0[i]), x0[i], y);
         }
       }
       if (r % perCol < perCol - 1 && r < n - 1) {
@@ -302,11 +311,17 @@
     var b = (parts.length > 1 ? parts[parts.length - 1] : "").charAt(0);
     return ((a + b) || "?").toUpperCase();
   }
+  // Contract: the result NEVER measures wider than max. Callers rely on that to
+  // guarantee containment, so the ellipsis floor cannot be one character: on a
+  // track too narrow for even "X..." the marker itself overhung, which is how an
+  // already-clamped board sub still crossed its column by 8px.
   function fitTxt(g, t, max) {
     t = String(t == null ? "" : t);
     if (g.measureText(t).width <= max) return t;
     while (t.length > 1 && g.measureText(t + "...").width > max) t = t.slice(0, -1);
-    return t + "...";
+    if (g.measureText(t + "...").width <= max) return t + "...";
+    while (t.length && g.measureText(t).width > max) t = t.slice(0, -1);
+    return t;
   }
   async function renderNewsDay(spec) {
     var W = 1200, PAD = Math.round(W * 0.033);
