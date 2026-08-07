@@ -205,6 +205,22 @@ Items 1, 3, 11, 12 unchanged. New items 13, 14 added below.
   (2023->24, 23+24->25, 23+24+25->26), pre-register a gate (both-sides gain
   >= 0.05 at n >= 40/side, no cohort-year reversal), and ship through the
   standing triple if it passes.
+- MEASUREMENT-BASIS WARNING, added 2026-08-07. The +0.14 / +0.28 above were
+  measured against the SC+ composite as it stood then: an unshrunk, equal-weight
+  mean of the component z-scores, rescaled by a nominal 10 points per sigma
+  (statcast_plus.py compute_statcast_plus). omnibus-3 lane E is recalibrating
+  that composite in two gated steps, an empirical-Bayes shrink with volume
+  gates first and then a true 10-per-sigma re-standardization
+  (docs/master-plan-2026-08-07-omnibus3.md lane E). Whichever of those lands,
+  the thing being reweighted here is no longer the thing that was measured, so
+  whoever picks this item up after the season closes must RE-MEASURE the top-2
+  blend against the composite that is live at that point. Do not read the
+  queued deltas forward. Two reasons they will not carry: shrink changes each
+  component's spread, and therefore its weight inside an equal-weight mean of
+  z-scores, before any reweight is applied; and the decision already flipped
+  between "keep" and "reweight" on whether the in-progress 2026 season was
+  included, at n=23 per side, which is not a sample that survives a basis
+  change either. Re-derive the floor in the same run rather than reusing one.
 - Rollback: none needed until attempted.
 
 ## 13. Per-year WAR quantile marginal recalibration (the real F-01 fix)

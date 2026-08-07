@@ -224,6 +224,29 @@ MODEL_GLOSSARY = {
     # documents it.
     "xfv_sb_driver": "internal",
     "xfv_athleticism_blend": "internal",
+    # 2026-08-07 driver program (docs/efv-drivers-2026-08-07/GATE_RECORD.md):
+    # six arms re-gated on the 11-fold pair-weighted basis, six nulls. These four
+    # had no prior registry home; the sb-rate and wRC+ re-gates and the lambda
+    # re-sweep ride the existing xfv_sb_driver / xfv_wrc / xfv_lambda_reselect
+    # rows instead of taking near-duplicate ids. Nothing shipped and no served
+    # grade, rank or dollar moved, so none of the four names a number a reader
+    # could look up. xfv_pos_census is the odd one and is internal for a
+    # different reason: it measures a COVERAGE blocker rather than fitting
+    # anything, and what it found is a wiring defect (efv_model._observed_pos_map
+    # reads the pre-debut census, not the as-of rebuild). If that repoint is ever
+    # taken and POS_PREMIUM_USES_OBSERVED flips, the premium becomes a live
+    # scoring behaviour and this line changes with it.
+    "xfv_handedness": "internal",
+    "xfv_gated_pairs": "internal",
+    "xfv_elite_band": "internal",
+    "xfv_pos_census": "internal",
+    # 2026-08-07 FA guarantee/AAV band gate (docs/gate-2026-08-07-fa-guarantee-band.md):
+    # a measured no-ship, and the SECOND independent null on the same arm after
+    # T1.2 (2026-07-25) on a pinball criterion. BAND_SCALE_GUAR stays False, so
+    # the served band is still the flat one the fa_projection_engine entry
+    # already describes and the >2.5x disclosure still fires; nothing new became
+    # user-facing, which is what makes this internal rather than a doc owed.
+    "fa_guar_band": "internal",
     # 2026-08-05 Diamond section. All three ship on their own pages, which
     # carry their method and their limits in user-facing copy, so the page IS
     # the documentation. None of them is a glossary term: the site glossary

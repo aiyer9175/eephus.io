@@ -1,0 +1,79 @@
+{
+ "_provenance": "Authored at docs/fa_guar_band_eval.json by the omnibus-3 lane-N executor and moved here 2026-08-07 in the same commit as the fa_guar_band registry row and its MODEL_GLOSSARY mapping. The three land together because the enforcement is bidirectional: a data/*_eval*.json with no registry row fails test_model_registry.test_every_eval_artifact_is_registered, and a registry row with no glossary decision fails test_methodology_freshness.test_every_registry_model_has_a_documentation_decision.",
+ "experiment": "fa_guar_band",
+ "generated_at": "2026-08-07",
+ "gates_doc": "docs/gate-2026-08-07-fa-guarantee-band.md",
+ "verdict": "deprecated",
+ "decision": "NO-SHIP. BAND_SCALE_GUAR stays False; the flat band and the >2.5x disclosure stay served.",
+ "champion": "flat band (unconditional deciles of the training log-guarantee residual pool)",
+ "challenger": "location-scale band, fa_bands.fit on the restricted z, BAND_RIDGE_GUAR=3.0 fixed in advance",
+ "protocol": {
+  "harness": "tools/_fa_guarband.py chain() + a paired bootstrap on the same draws",
+  "corpus": "fa_market.enriched_signings(2015, 2026), 1528 rows, cached lab corpus",
+  "scored_rows": 1199,
+  "folds": "9 forward-chained held-out winters, 2018-2026",
+  "bootstrap_B": 40,
+  "control": "BAND_PERMUTE_SEED per draw: the same estimator on a row-permuted residual column"
+ },
+ "point_chain": {
+  "flat": {"cov": 0.82485, "abs_cov_minus_80": 0.02485, "pin_avg": 0.16046,
+           "cond_rmse": 0.05355, "ratio_mean": 12.137, "ratio_sd": 1.4426},
+  "scale": {"cov": 0.82235, "abs_cov_minus_80": 0.02235, "pin_avg": 0.16074,
+            "cond_rmse": 0.0565, "ratio_mean": 12.4028, "ratio_sd": 2.7379},
+  "perm_control": {"cov": 0.81818, "abs_cov_minus_80": 0.01818, "pin_avg": 0.16121,
+                   "cond_rmse": 0.05742, "ratio_mean": 11.7827, "ratio_sd": 2.145}
+ },
+ "bootstrap": {
+  "metric": "abs(coverage - 0.80), lower is better",
+  "scale_vs_flat": {"flat_mean": 0.024457, "arm_mean": 0.017161,
+                    "delta_mean": -0.0072968, "delta_sd": 0.0090941,
+                    "ci95": [-0.02085, 0.01502], "p_improves": 0.775,
+                    "mde95": 0.0178245},
+  "perm_vs_flat": {"flat_mean": 0.024457, "arm_mean": 0.01897,
+                   "delta_mean": -0.0054873, "delta_sd": 0.0079527,
+                   "ci95": [-0.01668, 0.01418], "p_improves": 0.775,
+                   "mde95": 0.0155873},
+  "pin_avg": {"delta_mean": 0.000702, "mde95": 0.00268,
+              "ci95": [-0.002134, 0.004745], "p_improves": 0.275},
+  "cond_rmse": {"delta_mean": -0.0020788, "mde95": 0.011962,
+                "ci95": [-0.011105, 0.016015], "p_improves": 0.775},
+  "ratio_sd": {"delta_mean": 2.3204, "mde95": 3.9583,
+               "ci95": [-0.119353, 7.931908], "p_improves": 0.05}
+ },
+ "criteria": {
+  "primary_interval_calibration": {
+   "rule": "abs(cov_scale - 0.80) < abs(cov_flat - 0.80) by more than this run's MDE95",
+   "improvement": 0.0072968,
+   "mde95": 0.0178245,
+   "ci95_contains_zero": true,
+   "pass": false
+  },
+  "secondary_no_accuracy_regression": {
+   "rule": "guarantee and AAV MAE within the champion's MDE",
+   "point_predictions_that_differ_between_arms": 0,
+   "of_rows": 1199,
+   "guarantee_mae_usd_millions": {"flat": 9.7177, "scale": 9.7177},
+   "aav_mae_usd_millions": {"flat": 3.1258, "scale": 3.1258},
+   "pass": true,
+   "note": "Invariant by construction and verified numerically: the band writes only proj_guarantee_p10_usd / proj_guarantee_p90_usd and their AAV siblings. This criterion cannot fail, so it carries no evidence for the ship."
+  },
+  "control_separation": {
+   "rule": "the permuted zero-information arm must not score as well as the candidate",
+   "point_chain": "the control is CLOSER to nominal coverage than the candidate (0.01818 vs 0.02235)",
+   "bootstrap": "the control improves by 0.00549 against the candidate's 0.00730, with an IDENTICAL p_improves of 0.775 and overlapping CI95",
+   "pass": false
+  }
+ },
+ "served_consequence_that_motivated_the_gate": {
+  "artifact": "data/fa_class.json generated 2026-08-06, class 2027",
+  "priced_members": 223,
+  "guarantee_p90_over_p10": 10.861,
+  "aav_p90_over_p10": 10.861,
+  "identical_across_members": true,
+  "aav_p90_over_point": 3.5601,
+  "members_firing_the_2.5x_disclosure": 223,
+  "worked_example": "Tarik Skubal: AAV 39.4M, P10 12.9M, P90 140.4M"
+ },
+ "what_this_result_means": "Two independent criteria say the signing corpus does not support a conditional variance function for the guarantee band. The fit does change the widths (ratio_sd 1.44 -> 2.74, p_improves 0.05, i.e. the widths reliably spread), but the spread does not land where the errors are: coverage-closeness moves less than the noise floor and a row-permuted residual column buys three quarters of the same movement. This is the second independent no-result on the same arm, after T1.2 (2026-07-25) on a pinball criterion. The band width is not a per-player quantity this corpus can estimate; the honest served treatment stays a flat band plus a stated disclosure.",
+ "do_not_re_run_without": "a materially larger signing corpus, or a different conditioning set than fa_bands.GUAR_Z_NAMES. A ridge sweep over the existing arm is NOT a new experiment: it is a six-way search on a corpus that has now twice failed to separate from its own permutation."
+}
