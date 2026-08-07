@@ -70,8 +70,8 @@ column below lists only what the surface's own module app fetches.
 | `/pal/` | `build_site.build_pal()` | `assets/pal.js` | `pal.json`, `player_links.json`, `positional_fit_ui.json` | Alchemy Lab |
 | `/trademachine/` | `build_site.build_trademachine()` | `assets/trademachine.js` | `glossary.json`, `grpo_public.json`, `grpo_scores.json`, `mlb_player_detail.json`, `trade_machine_eval.json`, `trade_values.json` | Trade Machine (Bayesian trade board + one-currency deal evaluator) |
 | `/fantasy/` | `build_site.build_fantasy()` | server-rendered | - | Fantasy: ROS rankings + daily streamers, multi-format (Ottoneu) scoring |
-| `/dynasty/` | `build_site.build_dynasty()` | `assets/dynasty.js` | `fantasy.json` |  |
-| `/redraft/` | `build_site.build_redraft()` | `assets/redraft.js` | `fantasy.json`, `glossary.json` |  |
+| `/dynasty/` | `build_site.build_dynasty()` | `assets/dynasty.js`, `assets/fantasy-card.js` | `dfs.json`, `fantasy.json`, `glossary.json` |  |
+| `/redraft/` | `build_site.build_redraft()` | `assets/fantasy-card.js`, `assets/redraft.js` | `dfs.json`, `fantasy.json`, `glossary.json` |  |
 | `/dfs/` | `build_site.build_dfs()` | `assets/dfs.js` | `dfs.json`, `glossary.json` |  |
 | `/betting/` | `build_site.build_betting()` | `assets/betting.js` | `betting.json`, `betting_preview.json`, `betting_record.json`, `glossary.json` |  |
 | `/cards/` | `build_site.build_cards()` | `assets/cards.js` | `card_market.json`, `card_watchlist.json`, `glossary.json`, `player_links.json` |  |
