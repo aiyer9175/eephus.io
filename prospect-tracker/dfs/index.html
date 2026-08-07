@@ -1,22 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<script>(function(){try{var t=localStorage.getItem("prospect-tracker.theme");if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();function eephusToggleTheme(){try{var c=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";document.documentElement.setAttribute("data-theme",c);localStorage.setItem("prospect-tracker.theme",c);}catch(e){}}</script>
-<meta charset="utf-8">
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DFS - eephus.io</title>
-<meta name="description" content="Daily fantasy baseball projections from eephus.io: per-game hitter and pitcher projections with matchup context, value plays, stacks, and a lineup optimizer that runs on salaries you import yourself.">
-<meta property="og:type" content="website">
-<meta property="og:title" content="DFS - eephus.io">
-<meta property="og:description" content="Daily fantasy baseball projections from eephus.io: per-game hitter and pitcher projections with matchup context, value plays, stacks, and a lineup optimizer that runs on salaries you import yourself.">
-<meta property="og:site_name" content="eephus.io">
-<meta property="og:url" content="https://eephus.io/dfs/">
-<link rel="canonical" href="https://eephus.io/dfs/">
-<meta property="og:image" content="https://eephus.io/assets/share-default.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="DFS - eephus.io">
-<meta name="twitter:description" content="Daily fantasy baseball projections from eephus.io: per-game hitter and pitcher projections with matchup context, value plays, stacks, and a lineup optimizer that runs on salaries you import yourself.">
-<meta name="twitter:image" content="https://eephus.io/assets/share-default.png">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32">
@@ -24,27 +9,11 @@
 <link rel="manifest" href="/assets/site.webmanifest">
 <meta name="theme-color" content="#0E2B4D" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0C0C0E" media="(prefers-color-scheme: dark)">
-<link rel="stylesheet" href="/assets/site.css?v=27238dd4">
-<script src="/assets/eephus-nav.js?v=3065435f" defer></script>
-<link rel="stylesheet" href="/assets/eephus-account.css?v=83b9b043">
-</head>
-<body class="eephus-page">
-<header class="eephus-nav"><span class="eephus-brand"><a class="eephus-wordmark" href="/" aria-label="eephus.io home"><span class="nameplate eephus-wordmark-merged"><svg class="ew-arc" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="eephus-arc-nav" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#B91C1C"/><stop offset="38%" stop-color="#C9A227"/><stop offset="68%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/></linearGradient></defs><path d="M 3 30 Q 50 -24 97 30" pathLength="100" fill="none" stroke="url(#eephus-arc-nav)" stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg><svg class="ew-ball" viewBox="0 0 24 24" aria-hidden="true"><circle class="eephus-logo-ball" cx="12" cy="12" r="8.5" stroke="url(#eephus-arc-nav)" stroke-width="3"/><path class="eephus-logo-seam" d="M 16 5.6 Q 20.5 12 16 18.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path class="eephus-logo-seam" d="M 8 5.6 Q 3.5 12 8 18.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>eephus<span class="dot">.io</span></span></a></span><nav class="eephus-links"><a href="/">Home</a><a href="/prospx/">PROSPX</a><a href="/collegesavant/">CollegeSavant</a><details class="eephus-nav-group" data-nav-group><summary aria-haspopup="true">MLB Modules<span class="nav-caret" aria-hidden="true">▾</span></summary><div class="eephus-nav-menu" role="menu"><a href="/fa/" role="menuitem">Free Agency</a><a href="/projections/" role="menuitem">Projections</a><a href="/mlbstats/" role="menuitem">MLB Stats</a><a href="/pal/" role="menuitem">Alchemy Lab</a><a href="/trademachine/" role="menuitem">Trade Machine</a></div></details><details class="eephus-nav-group is-active" data-nav-group><summary aria-haspopup="true">Diamond<span class="nav-caret" aria-hidden="true">▾</span></summary><div class="eephus-nav-menu" role="menu"><a href="/dynasty/" role="menuitem">Dynasty</a><a href="/redraft/" role="menuitem">Redraft</a><a href="/dfs/" role="menuitem" class="is-active">DFS</a><a href="/betting/" role="menuitem">Sports Betting</a><a href="/cards/" role="menuitem">Card Market</a><a href="/diamond/" role="menuitem">Diamond Pass</a></div></details><a href="/articles/">Articles</a><a href="/forums/">Forums</a><a href="/glossary/">Glossary</a><a href="/team/">Developers</a></nav><div class="eephus-nav-controls"><button class="eephus-nav-ctrl" type="button" data-qk-open aria-label="Quick search (Ctrl+K)" title="Search any term or metric - Ctrl+K / ⌘K"><span aria-hidden="true">⌘K</span><span class="eephus-nav-ctrl-label">Search</span></button><a class="eephus-nav-ctrl" href="/prospx/#tab=watchlist" aria-label="Watchlist"><span aria-hidden="true">★</span><span class="eephus-nav-ctrl-label">Watchlist</span></a><button class="eephus-nav-ctrl" type="button" data-theme-toggle onclick="eephusToggleTheme()" aria-label="Toggle dark mode"><span class="theme-icon lbl-dark" aria-hidden="true">☾</span><span class="theme-icon lbl-light" aria-hidden="true">☀</span><span class="eephus-nav-ctrl-label"><span class="lbl-dark">Dark Mode</span><span class="lbl-light">Light Mode</span></span></button></div></header>
-<main class="eephus-wrap">
-<div class="fa-app mlbstats-app dfs-app"><div class="section-head section-head--byline"><div class="section-head-titles"><div class="build-banner" aria-label="Build version">Created by <span aria-hidden="true">🜎</span> Noah J. Dengler / @ARKNDJL</div><h1>DFS <span class="eephus-beta" title="DFS is a Diamond preview - free and public while the Diamond section is built out">◆ Diamond preview</span></h1></div><span class="section-sub">Today's slate, priced per game. Projections come from the same rest-of-season engine as the Redraft board, re-scored for one night with the probable pitcher, the park, and the bullpen behind him. Paste or import your own salaries from your DFS site and the optimizer builds lineups against them. We do not scrape salary feeds, so the salaries are yours and the projections are ours.</span></div><div class="mlbstats-sectionnav" role="tablist" aria-label="DFS sections"><button type="button" class="mlbstats-sectionbtn active" data-dfssection="slate" role="tab" aria-selected="true">Today's Slate</button><button type="button" class="mlbstats-sectionbtn" data-dfssection="value" role="tab" aria-selected="false">Value Plays</button><button type="button" class="mlbstats-sectionbtn" data-dfssection="optimizer" role="tab" aria-selected="false">Lineup Optimizer</button><button type="button" class="mlbstats-sectionbtn" data-dfssection="stacks" role="tab" aria-selected="false">Stacks</button></div><div id="dfs-section" class="mlbstats-section"><div id="dfs-banner"></div><div id="dfs-app-root" data-csv-export="dfs-slate"></div></div></div><script src="/assets/diamond-config.js?v=1b6adeb8" defer></script><script src="/assets/eephus-hub.js?v=48f6afe9" defer></script><script src="/assets/eephus-gfx.js?v=0fdf4fa9" defer></script><script src="/assets/dfs.js?v=055f2a94" defer></script>
-</main>
-<footer class="eephus-footer">
-  <span><img src="/assets/favicon.svg" alt="" aria-hidden="true" style="width:18px;height:18px;vertical-align:-4px;margin-right:7px">eephus.io - sabermetrics · β v1.0</span>
-  <nav class="eephus-footer-links" aria-label="Footer"><a href="/team/">About</a><a href="/news/">Prospect News</a><a href="/history/">This Day</a><a href="/parks/">Park Factors</a><a href="/sources/">Data Sources</a><a href="/sources/#api">Public Data</a><a href="/glossary/">Glossary</a><a href="/report/">Report a bug</a><a href="https://x.com/eephus_io" target="_blank" rel="noopener noreferrer">@eephus_io</a><a href="https://discord.gg/UdC4C34uA" target="_blank" rel="noopener noreferrer">Discord</a></nav>
-  <span>© 2026 eephus.io</span>
-</footer>
-<script src="/assets/eephus-config.js" defer></script>
-<script src="/assets/eephus-account.js?v=22deb404" defer></script>
-<script src="/assets/eephus-ui.js?v=d1d01ba2" defer></script>
-<script src="/assets/eephus-bg.js?v=619ab847" defer></script>
-<script>window.EEPHUS_GL_DATA_VER="23a3a18a";</script>
-<script src="/assets/eephus-gl.js?v=7b97df51" defer></script>
-<script src="/assets/eephus-export.js?v=abf28509" defer></script>
-<script src="/assets/eephus-csv.js?v=eb564a66" defer></script>
-</body>
-</html>
+<meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="0; url=/fantasy/#m=dfs">
+<script>(function(){var h=(location.hash||"").replace(/^#/,"").replace(/(^|&)m=[^&]*/g,"").replace(/^&+/,"");
+location.replace("/fantasy/#m=dfs"+(h?"&"+h:""));})();</script>
+</head><body>
+<p style="font-family:monospace;padding:2rem;">DFS moved into
+<a href="/fantasy/#m=dfs">Fantasy &rarr; DFS</a>. Tonight&#x27;s slate, value plays, stacks and the lineup optimizer are the DFS sub-module there.</p>
+</body></html>
