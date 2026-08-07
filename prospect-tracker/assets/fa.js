@@ -1515,6 +1515,30 @@
       <div class="fa-note">forward-chained winters ${g2.test_winters ? g2.test_winters.join(", ") : ""} vs nearest-comps baseline &middot; guarantee/AAV in $M</div>
       <table class="detail-table"><thead><tr><th>Metric</th><th>Model MAE</th><th>Comps baseline</th><th>n</th><th>Verdict</th></tr></thead>
       <tbody>${pooledRows(g2.pooled, v => v == null ? EM_DASH : v.toFixed(2))}</tbody></table>
+      ${g2.pooled_by_pos_group ? `
+      <h3>Where the model is systematically wrong</h3>
+      <div class="fa-note">MAE says how far off the model is; BIAS says which
+        way. A negative bias means the model UNDER-prices that group on average,
+        so the error is not noise, it is a lean. Positive means it over-prices.
+        This block was exported for a while before anything rendered it.</div>
+      <table class="detail-table"><thead><tr><th>Group</th><th>Model MAE</th>
+        <th>Model bias</th><th>Baseline bias</th><th>n</th><th>Lean</th></tr></thead>
+      <tbody>${Object.entries(g2.pooled_by_pos_group).map(([k, v]) => {
+        const b = v.bias_model;
+        const lean = b == null ? EM_DASH
+          : Math.abs(b) < 0.25 ? "no material lean"
+          // Plain magnitude, NOT formatMetric: that helper prepends a sign for
+          // "rate", which rendered "under-prices by +1.53M" and put a plus sign
+          // directly after the word telling you the error is negative.
+          : (b < 0 ? "under-prices" : "over-prices")
+            + " by $" + Math.abs(b).toFixed(2) + "M";
+        return `<tr><td>${esc(k)}</td>
+          <td>${v.mae_model == null ? EM_DASH : v.mae_model.toFixed(2)}</td>
+          <td>${b == null ? EM_DASH : (b > 0 ? "+" : "") + b.toFixed(2)}</td>
+          <td>${v.bias_base == null ? EM_DASH
+                : (v.bias_base > 0 ? "+" : "") + v.bias_base.toFixed(2)}</td>
+          <td>${v.n}</td><td>${lean}</td></tr>`;
+      }).join("")}</tbody></table>` : ""}
       <h3>Biggest misses (published, not hidden)</h3>
       <div class="fa-filter-bar" style="margin-bottom:8px;">${missTabBar}</div>
       <table class="detail-table"><thead><tr><th>Winter</th><th>Player</th><th>To</th><th>Actual</th><th>Model</th><th>Err</th></tr></thead>
