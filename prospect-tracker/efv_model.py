@@ -1194,6 +1194,10 @@ def _run_eval(data, label, keys=None, mono=None, lam=None):
     keys = keys or _KEYS
     mono = mono or _MONO
     pairs = {m: [] for m in ("baseline", "ridge", "blend", "lgbm", "comps", "ensemble")}
+    # Row weights parallel to `pairs`. A censored 2024 row carries 0.333, and
+    # pooling it unweighted put two thirds of an extrapolated label into the
+    # published figure at full strength. Owner decision 2026-08-06.
+    wts = {m: [] for m in pairs}
     fold_map = {m: {} for m in ("ridge", "ensemble")}   # for LOFO calibration
     per_year = {}
     for yr in SCORED_YEARS:
@@ -1206,31 +1210,47 @@ def _run_eval(data, label, keys=None, mono=None, lam=None):
         gbm = _fit_lgbm_mono(train, keys, mono)
         cm = _fit_comps(train, keys)
         yp = {m: [] for m in pairs}
+        # WEIGHTS, parallel to yp. Kept as a separate list rather than folded
+        # into the tuples so _lofo_calibrate and every other pair consumer keep
+        # their existing shape; only _score learns about weights.
+        yw = {m: [] for m in pairs}
         for r in test:
             t = r["target"]
+            # A censored 2024 row carries 0.333. Pooling it at full strength put
+            # two thirds of an extrapolated label into the published number.
+            _w = float(r.get("weight") or 1.0)
             if ols:
                 yp["baseline"].append((max(0.0, _pred_ols(ols, r["fv"])), t))
+                yw["baseline"].append(_w)
             if ridge:
                 yp["ridge"].append((_predict(ridge, r["feats"]), t))
+                yw["ridge"].append(_w)
             # blend == the SHIPPED headline rank: (1-lam)*consensus_OLS + lam*model
             # (consensus anchor floored at 0 WAR, matching the baseline).
             if ridge and ols and lam is not None:
                 yp["blend"].append(((1 - lam) * max(0.0, _pred_ols(ols, r["fv"]))
                                     + lam * _predict(ridge, r["feats"]), t))
+                yw["blend"].append(_w)
             if gbm:
                 yp["lgbm"].append((_pred_lgbm(gbm, r["feats"]), t))
+                yw["lgbm"].append(_w)
             if cm:
                 p, _ = _pred_comps(cm, r["feats"])
                 yp["comps"].append((p, t))
+                yw["comps"].append(_w)
             if ridge and gbm:
                 yp["ensemble"].append(
                     ((_predict(ridge, r["feats"]) + _pred_lgbm(gbm, r["feats"])) / 2, t))
+                yw["ensemble"].append(_w)
         for m in pairs:
             pairs[m].extend(yp[m])
+            wts[m].extend(yw[m])
         for m in fold_map:
             fold_map[m][yr] = yp[m]
-        per_year[str(yr)] = {m: _score(yp[m]) for m in pairs if len(yp[m]) >= 8}
-    pooled = {m: (_score(pairs[m]) if pairs[m] else {"n": 0}) for m in pairs}
+        per_year[str(yr)] = {m: _score(yp[m], yw[m])
+                             for m in pairs if len(yp[m]) >= 8}
+    pooled = {m: (_score(pairs[m], wts[m]) if pairs[m] else {"n": 0})
+              for m in pairs}
     # calibrated (rank-preserving) variants — the Pass-3 step that should
     # close the MAE gap without surrendering the rank edge.
     pooled["ridge_cal"] = _score(_lofo_calibrate(fold_map["ridge"])) if fold_map["ridge"] else {"n": 0}

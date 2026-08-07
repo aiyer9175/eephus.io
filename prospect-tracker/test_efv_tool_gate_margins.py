@@ -175,3 +175,62 @@ def test_a_positive_margin_is_no_longer_enough_on_its_own():
             "hit passes again on a positive point margin; if the bootstrap now "
             "genuinely clears zero that is a real change worth recording, but a "
             "bare positive margin must not be sufficient")
+
+
+# --- the weighted headline (owner decision 2026-08-06) ---------------------
+
+def test_weighting_reproduces_the_unweighted_number_at_w_equals_one():
+    """THE PROPERTY THAT MAKES THE SWITCH AUDITABLE. Weighting the PAIRS was
+    chosen over weighting the ranks or resampling precisely because w=1
+    everywhere is algebraically identical to the unweighted statistic, so the
+    published figure before and after can be compared directly and any movement
+    is the weighting rather than the method."""
+    import prospect_path as pp
+    pairs = [(1, 2), (2, 1), (3, 4), (4, 3), (5, 6), (6, 5), (7, 8), (8, 7)]
+    pred = [p for p, _ in pairs]
+    obs = [o for _, o in pairs]
+
+    # Compare the two ESTIMATORS directly. Going through _score with all-ones
+    # weights would take the unweighted branch and compare that path to itself,
+    # which is a test that cannot fail. This one can.
+    plain = pp._spearman(pred, obs)
+    weighted_at_one = pp._weighted_spearman(pred, obs, [1.0] * len(pairs))
+    assert plain == weighted_at_one, (
+        f"w=1 must reproduce the unweighted statistic exactly, got {plain} "
+        f"against {weighted_at_one}; the guard and the rounding have to match")
+
+    # And the n guard must agree, or the two disagree for 3 <= n < 8.
+    short = pairs[:5]
+    assert pp._spearman([p for p, _ in short], [o for _, o in short]) is None
+    assert pp._weighted_spearman([p for p, _ in short],
+                                 [o for _, o in short], [1.0] * 5) is None
+
+
+def test_a_down_weighted_row_counts_less():
+    import prospect_path as pp
+    pairs = [(1, 1), (2, 2), (3, 3), (4, 40), (5, 5), (6, 6), (7, 7), (8, 8)]
+    full = pp._score(pairs, [1.0] * 8)
+    damped = pp._score(pairs, [1.0, 1.0, 1.0, 0.1, 1.0, 1.0, 1.0, 1.0])
+    assert damped["spearman"] > full["spearman"], (
+        "down-weighting the outlier pair must reduce its drag on the rank "
+        "correlation")
+    assert damped["n_effective"] < full["n"]
+
+
+def test_the_published_eval_is_weighted_and_says_so():
+    """A weighted figure that does not declare itself is indistinguishable from
+    an unweighted one, and the two are no longer comparable across vintages."""
+    import json
+    from pathlib import Path
+    p = Path(__file__).parent / "data" / "xfv_eval.json"
+    if not p.exists():
+        pytest.skip("eval artifact absent")
+    pooled = (((json.loads(p.read_text(encoding="utf-8")).get("evals") or {})
+               .get("debuted_km") or {}).get("pooled_oos") or {})
+    blend = pooled.get("blend") or {}
+    assert blend.get("weighted") is True, (
+        "the headline must declare that it is weighted")
+    assert blend.get("n_effective") is not None
+    assert blend["n_effective"] < blend["n"], (
+        "effective n must be below raw n once the censored 2024 rows are "
+        "down-weighted; equal values mean the weights never reached _score")

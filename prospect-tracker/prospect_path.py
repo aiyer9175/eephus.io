@@ -363,9 +363,88 @@ def _calibration(pred, obs):
             "bias": round(mp - mo, 3)}
 
 
-def _score(pairs):
+def _weighted_spearman(pred, obs, w):
+    """Spearman with the PAIRS weighted, not the ranks.
+
+    Rank both series the ordinary way, then weight each pair's contribution to
+    the correlation. Chosen over the alternatives (weighting the ranks
+    themselves, or resampling by weight) for one property that makes the change
+    auditable: with every weight equal to 1 this is ALGEBRAICALLY IDENTICAL to
+    the unweighted Spearman, so the published figure before and after the switch
+    are directly comparable and any movement is the weighting, not the method.
+
+    Resampling was rejected for being stochastic: the published number would
+    move slightly on every rebuild unless seeded, and a headline that drifts for
+    no reason trains people to ignore it."""
+    # SAME minimum and SAME rounding as _spearman. They must agree exactly or
+    # the w=1 equivalence this function is chosen for is false in the very
+    # cases nobody checks: n between the two guards, and the fourth decimal.
+    n = len(pred)
+    if n < 8:
+        return None
+    rx, ry = _rankdata(pred), _rankdata(obs)
+    sw = sum(w)
+    if sw <= 0:
+        return None
+    mx = sum(wi * a for wi, a in zip(w, rx)) / sw
+    my = sum(wi * b for wi, b in zip(w, ry)) / sw
+    cov = sum(wi * (a - mx) * (b - my) for wi, a, b in zip(w, rx, ry))
+    vx = sum(wi * (a - mx) ** 2 for wi, a in zip(w, rx))
+    vy = sum(wi * (b - my) ** 2 for wi, b in zip(w, ry))
+    if vx <= 0 or vy <= 0:
+        return None
+    return round(cov / ((vx * vy) ** 0.5), 4)
+
+
+def _rankdata(xs):
+    """Average ranks, ties shared. Split out of _spearman so the weighted form
+    ranks IDENTICALLY to the unweighted one; two different rankers would make
+    the w=1 equivalence above untrue in exactly the tie cases nobody checks."""
+    order = sorted(range(len(xs)), key=lambda i: xs[i])
+    ranks = [0.0] * len(xs)
+    i = 0
+    while i < len(order):
+        j = i
+        while j + 1 < len(order) and xs[order[j + 1]] == xs[order[i]]:
+            j += 1
+        avg = (i + j) / 2.0 + 1.0
+        for k in range(i, j + 1):
+            ranks[order[k]] = avg
+        i = j + 1
+    return ranks
+
+
+def _score(pairs, weights=None):
+    """Score a set of (prediction, observation) pairs.
+
+    `weights` is optional and parallel to `pairs`. WHY IT EXISTS (owner decision,
+    2026-08-06): promoting the eFV eval to 11 folds brought in 210 rows from the
+    2024 cohort that carry weight=0.333, censored labels whose target is exactly
+    3x the observed two-season bWAR. Pooling them unweighted put those rows into
+    the published number at FULL strength with two thirds of each label
+    extrapolated.
+
+    Absent or all-ones weights reproduce the unweighted result exactly, which is
+    the property that makes the switch auditable against the previously
+    published figure."""
     pred = [p for p, _ in pairs]
     obs = [o for _, o in pairs]
+    if weights is not None and len(weights) == len(pairs) and any(
+            abs(float(w) - 1.0) > 1e-12 for w in weights):
+        w = [max(0.0, float(x)) for x in weights]
+        sw = sum(w)
+        return {
+            "n": len(pairs),
+            "n_effective": round(sw, 1),
+            "weighted": True,
+            "mae": (round(sum(wi * abs(p - o) for wi, (p, o) in zip(w, pairs)) / sw, 3)
+                    if sw > 0 else None),
+            "spearman": _weighted_spearman(pred, obs, w),
+            # Calibration stays UNWEIGHTED and says so: it is a diagnostic, not
+            # a ranking claim, and quietly changing its basis would make the
+            # series incomparable to every earlier vintage of this artifact.
+            "calibration": _calibration(pred, obs),
+        }
     return {
         "n": len(pairs),
         "mae": round(sum(abs(p - o) for p, o in pairs) / len(pairs), 3),
