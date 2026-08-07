@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=91dd4284">
+  <link rel="stylesheet" href="/assets/site.css?v=709f65d8">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -2092,16 +2092,35 @@
     .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) {
       box-sizing: border-box;
       height: 136px;
-      /* minmax(0, ...) on row 1 lets it shrink to its share so the row-2 tape
-         ALWAYS keeps its own reserved band at the card bottom. Without the 0
-         floor, a data-rich row-1 cell (the multi-level MiLB stat cell, a long
-         identity block) forced row 1 to its min-content and shoved the tape
-         past the fixed card bottom = the clip. Tall cells clip inside their own
-         box (see .milb-cell / .player-row-col1 min-height:0) instead. */
+      /* minmax(0, ...) on row 1 lets the TRACK shrink to its share so the row-2
+         tape always keeps its own reserved band at the card bottom. The track
+         floor alone is not the clip guard, though: row-1 cells are centered grid
+         items (align-items:center above), so each cell's own box is content-sized
+         and a data-rich one (the multi-level MiLB stat cell, a 4-line identity
+         block with the pitch-mix line) grows straight through the track and paints
+         over the tape and the card border. The cell rules below cap and clip it;
+         overflow:hidden here is the last backstop so nothing escapes the card.
+         The phone layout re-opens all of this - see the mobile block, where the
+         card is height:auto and the sparkline overflows its cell by design. */
+      overflow: hidden;
       grid-template-rows: minmax(0, 1fr) auto;
     }
+    /* Cap the row-1 cells that can outgrow their share. max-height:100% resolves
+       against the grid AREA (definite here, because the card height is fixed), so
+       overgrown content truncates inside its own cell instead of bleeding. Both
+       cells keep their centering, so this only bites once content exceeds the box -
+       and when it does the trim is symmetric (col1 centers its own children), which
+       is the trade for not moving the whole board off center in the normal case. */
+    .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) > .milb-cell,
+    .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) > .player-row-col1 {
+      min-height: 0;
+      max-height: 100%;
+      overflow: hidden;
+    }
     /* Expanded rows open an accordion below the card - they must grow, so the
-       fixed height only applies while collapsed. */
+       fixed height only applies while collapsed. The expand control is phone-only
+       (.row-expand-btn is display:none until the 720px block), so this pairs with
+       the mobile overrides rather than firing on desktop. */
     .player-row.is-expanded { height: auto; }
     /* Hover state widens + glows the org-color stripe so the row the
        mouse is on reads "I'm clickable" louder than the lift alone. */
@@ -6943,6 +6962,12 @@
         height: auto;
         grid-template-rows: auto auto auto;
         row-gap: 6px;
+        /* Re-open the desktop clip guard. Those guards exist to hold content
+           inside a FIXED 136px card; this card is height:auto, and the sparkline
+           below deliberately draws ~60px inside a 42px cell, which a card-level
+           overflow:hidden would crop. Nothing here is over budget, so nothing
+           needs clipping. */
+        overflow: visible;
       }
       .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) > .line-chart-cell {
         /* overflow:visible re-opens the cell on mobile: the desktop base rule now
@@ -6954,6 +6979,15 @@
       }
       .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) > .player-row-toolstrip {
         grid-column: 1 / 6; grid-row: 2;
+      }
+      /* Cell caps off for the same reason as the card: they guard a fixed height
+         budget the phone layout does not have, and clipping here would only ever
+         hide something (the row controls at the end of the identity row) that
+         currently just wraps or overlaps harmlessly. */
+      .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) > .milb-cell,
+      .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) > .player-row-col1 {
+        max-height: none;
+        overflow: visible;
       }
       /* Row variants collapse to a name + key-stat layout on mobile so
          the wide desktop grids don't squish columns into illegibility. */
@@ -9119,7 +9153,7 @@
            the surface stats - useful for finding regression
            candidates the FV consensus hasn't caught up to yet. -->
       <div class="filter-group">
-        <span class="filter-label" title="Statcast composite (100 = pool mean, σ × 15). Filter for prospects with elite, above-mean, or below-mean tracked-data signal.">Statcast</span>
+        <span class="filter-label" title="Statcast composite (100 = pool mean, 10 points per standard deviation). Filter for prospects with elite, above-mean, or below-mean tracked-data signal.">Statcast</span>
         <button class="chip is-multi" data-filter-statcast="elite" title="Statcast+ ≥ 120 - elite tier. Composite of contact quality + zone discipline for hitters; pitch velo + induced whiffs + contact suppression for pitchers.">SC+ elite</button>
         <button class="chip is-multi" data-filter-statcast="above" title="Statcast+ ≥ 105 - above pool mean. Even a modest +5 vs pool is a real signal: tracked-data contact quality / pitch quality clears the league baseline.">SC+ above</button>
         <button class="chip is-multi" data-filter-statcast="below" title="Statcast+ ≤ 95 - below pool mean. Surfaces prospects whose tracked data lags the surface stats; useful for regression-watch.">SC+ below</button>
@@ -9877,8 +9911,8 @@
       </div>
       <div class="filter-group">
         <span class="filter-label">View</span>
-        <button class="chip active" data-farm-view="table">Table</button>
-        <button class="chip"        data-farm-view="cards">Cards</button>
+        <button class="chip active" data-farm-view="table" title="The full 16-column board. Its fixed tracks need about 1300px of window width; narrower windows fall back to cards until you pick Table here.">Table</button>
+        <button class="chip"        data-farm-view="cards" title="One card per organization. Reads at any width, and the layout narrow windows fall back to.">Cards</button>
       </div>
       <!-- v18 - Reset chip for the farm page -->
       <div class="filter-group">
@@ -12846,16 +12880,20 @@ function transactionEvents(player) {
 // =============================================================================
 // SVG CHARTS
 // =============================================================================
-// Y-axis is anchored to the published-prospect FV range (35-75) across both
+// Y-axis is anchored to the published-prospect FV range (35-70) across both
 // line charts and candles so a 50 FV always sits in the same vertical
-// position regardless of prospect. The 35 floor + 75 ceiling reflect the
+// position regardless of prospect. The 35 floor + 70 ceiling reflect the
 // band where prospects actually get published - sub-35 grades don't make
-// it onto lists, and FV 80 is a once-in-a-generation grade that doesn't
-// occur in practice. Trimming both ends gives roughly 1.7× more vertical
-// resolution for the meaningful 35-75 range.
+// it onto lists, and nothing chartable has ever reached the old 75 top:
+// measured 2026-08-07, the highest eFV history point is 61.4 and the
+// highest per-source overlay point is 65.0, so the top 10 grades of the
+// old frame were dead space every series paid for. Trimming both ends
+// gives roughly 2× more vertical resolution for the meaningful range.
+// A series that ever does exceed FV_MAX pins at the frame (the yScale
+// clamps) rather than drawing off the top of the viewBox.
 // The X-axis is per-prospect: starts at the player's first recorded FV
 // grade and ends at debut_date (for graduates) or the last snapshot.
-const FV_MIN = 35, FV_MAX = 75;
+const FV_MIN = 35, FV_MAX = 70;
 
 // Adaptive FV-axis floor. The line charts default to the 35 floor above so a
 // 50 FV sits in a consistent vertical position from prospect to prospect, but
@@ -12901,9 +12939,11 @@ function fvCloseLabel(p) {
 // Compact eFV-over-seasons chart for provisional (source-ungraded, no-snapshot) prospects:
 // the grade the production-only model would have given AS-OF each MiLB season, so an un-scouted
 // prospect still gets an eFV trajectory. Cyan line on the FV scale; one labeled dot per season.
+// A single-point series is legal here: first-pro-season prospects have one grade and no
+// trajectory, and one dot on the frame reads their level honestly where an empty slot did not.
 function makeProvisionalEfvChart(series, dims) {
   const s = (series || []).filter(h => h && h.d && h.x != null);
-  if (s.length < 2) return "";
+  if (!s.length) return "";
   const W = Math.max(160, Math.round((dims && dims.width) || 340));
   const H = Math.max(90, Math.round((dims && dims.height) || 140));
   const PAD = 6, LABEL_H = 14, Y_LABEL_W = 16;
@@ -12912,7 +12952,12 @@ function makeProvisionalEfvChart(series, dims) {
   const ts = s.map(h => new Date(h.d).getTime());
   const minT = Math.min(...ts), maxT = Math.max(...ts), span = (maxT - minT) || 1;
   const X_LEFT = PAD + Y_LABEL_W;
-  const xS = d => X_LEFT + ((new Date(d).getTime() - minT) / span) * (W - X_LEFT - PAD);
+  const X_RIGHT = W - PAD;
+  // One point carries no time span, so it centers in the plot area instead of
+  // pinning to the left axis where it would read as the start of a missing line.
+  const xS = d => (s.length < 2)
+    ? (X_LEFT + X_RIGHT) / 2
+    : X_LEFT + ((new Date(d).getTime() - minT) / span) * (X_RIGHT - X_LEFT);
   const yS = fv => CHART_BOTTOM - ((Math.max(FMIN, Math.min(FMAX, fv)) - FMIN) / (FMAX - FMIN)) * (CHART_BOTTOM - PAD);
   const grid = [];
   for (let fv = FMIN; fv <= FMAX; fv += 10) {
@@ -12921,13 +12966,17 @@ function makeProvisionalEfvChart(series, dims) {
     grid.push(`<text x="${(X_LEFT - 3).toFixed(1)}" y="${(Number(y) + 3).toFixed(1)}" text-anchor="end" font-size="8" fill="var(--text-tertiary)" font-family="var(--font-mono)">${fv}</text>`);
   }
   const pts = s.map(h => `${xS(h.d).toFixed(1)},${yS(h.x).toFixed(1)}`).join(" ");
+  const R = s.length < 2 ? 3.6 : 2.6;
   const dots = s.map(h => {
     const x = xS(h.d).toFixed(1), y = yS(h.x).toFixed(1), yr = String(h.d).slice(0, 4);
-    return `<circle cx="${x}" cy="${y}" r="2.6" fill="var(--neon-cyan)"><title>${yr}: eFV ${Math.round(h.x)}</title></circle>`
-      + `<text x="${x}" y="${(Number(y) - 5).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="var(--neon-cyan)" font-family="var(--font-mono)">${Math.round(h.x)}</text>`;
+    return `<circle cx="${x}" cy="${y}" r="${R}" fill="var(--neon-cyan)"><title>${yr}: eFV ${Math.round(h.x)}</title></circle>`
+      + `<text x="${x}" y="${(Number(y) - 5 - (R - 2.6)).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="var(--neon-cyan)" font-family="var(--font-mono)">${Math.round(h.x)}</text>`;
   }).join("");
   const xlabels = s.map(h => `<text x="${xS(h.d).toFixed(1)}" y="${(H - 3).toFixed(1)}" text-anchor="middle" font-size="8" fill="var(--text-tertiary)" font-family="var(--font-mono)">${String(h.d).slice(0, 4)}</text>`).join("");
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;max-width:${W}px;">${grid.join("")}<polyline points="${pts}" fill="none" stroke="var(--neon-cyan)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}${xlabels}</svg>`;
+  const line = s.length >= 2
+    ? `<polyline points="${pts}" fill="none" stroke="var(--neon-cyan)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`
+    : "";
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;max-width:${W}px;">${grid.join("")}${line}${dots}${xlabels}</svg>`;
 }
 function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player, dims) {
   if (!points || points.length === 0) return "";
@@ -12963,7 +13012,10 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player, dims) 
   // Floor adapts down toward 20 only when this prospect carries sub-35 grades.
   const fvLo = fvAxisFloor(points.map(pt => pt.consensus_fv_raw));
   const xScale = d => X_LEFT + ((new Date(d).getTime() - minT) / timeSpan) * (W - X_LEFT - PAD);
-  const yScale = fv => CHART_BOTTOM - ((fv - fvLo) / (FV_MAX - fvLo)) * (CHART_BOTTOM - PAD);
+  // Clamped to the frame: an out-of-range grade pins at the top/bottom edge
+  // instead of drawing at a negative y outside the viewBox. Tooltips and the
+  // H:/L: labels read the raw value, so the clamp costs no information.
+  const yScale = fv => CHART_BOTTOM - ((Math.max(fvLo, Math.min(FV_MAX, fv)) - fvLo) / (FV_MAX - fvLo)) * (CHART_BOTTOM - PAD);
 
   // Per-segment direction coloring - each consecutive pair of points
   // gets its own colored Catmull-Rom Bezier curve so the line reads as
@@ -13420,7 +13472,10 @@ function syncToURL(push) {
   if (state.density     && state.density !== "compact") p.set("density", state.density);
   if (state.search)                       p.set("q",     state.search);
   if (state.farmSort    !== "farm_rank") p.set("farm",  state.farmSort);
-  if (state.farmViewMode && state.farmViewMode !== "table") p.set("farmview", state.farmViewMode);
+  // "table" is the default value, so it normally stays out of the URL - but once the
+  // user has PINNED a view it has to survive a reload, or a narrow window would
+  // auto-fall-back to cards again and silently undo the choice.
+  if (state.farmViewMode && (state.farmViewMode !== "table" || state.farmViewPinned)) p.set("farmview", state.farmViewMode);
   if (state.farmTendencyFilter && state.farmTendencyFilter.size) p.set("ftend", [...state.farmTendencyFilter].join(","));
   if (state.farmTendencyMode === "or") p.set("ftmode", "or");
   if (state.rosterSort  && state.rosterSort  !== "fv")    p.set("rsort", state.rosterSort);
@@ -13621,7 +13676,9 @@ function _syncFromURLBody() {
   if (p.has("density")) state.density   = p.get("density");
   if (p.has("q"))     state.search      = p.get("q");
   if (p.has("farm"))  state.farmSort    = p.get("farm");
-  if (p.has("farmview")) state.farmViewMode = p.get("farmview");
+  // An explicit farmview in the link is a choice, from this user or whoever shared
+  // it, so it pins and the width fallback leaves it alone.
+  if (p.has("farmview")) { state.farmViewMode = p.get("farmview"); state.farmViewPinned = true; }
   state.farmTendencyFilter = new Set(p.has("ftend") ? p.get("ftend").split(",").filter(Boolean) : []);
   state.farmTendencyMode = p.get("ftmode") === "or" ? "or" : "and";
   if (p.has("rsort")) state.rosterSort   = p.get("rsort");
@@ -15229,6 +15286,11 @@ const state = {
   // v17 - Default farm-list view back to table (was cards). Table is the
   // info-dense view; cards are an alternative for quick browsing.
   farmViewMode: "table",
+  // Did the user PICK this view, or is it just the default? The board falls back
+  // to cards on windows too narrow for the 16-column table (farmViewEffective),
+  // and that fallback must never override a deliberate choice. Set by the View
+  // chips and by an explicit ?farmview= in the URL; cleared by Reset filters.
+  farmViewPinned: false,
   // Farm-system board tendency filter. A Set of org-tendency badge kinds
   // (e.g. "aggressive", "trade-happy", "over-slot", "high-il") sourced
   // from org_tendencies.json. Empty = no filter. farmTendencyMode controls
@@ -31336,6 +31398,23 @@ function getEfvHistory(p) {
   const s = _EFV_HIST[p.player_key];
   return (s && s.length >= 2) ? s : null;
 }
+// Single-season provisional prospects: efv_ungraded.py nulls any series under 2 points, so
+// 1,635 of the 5,983 provisional rows carry xfv_history = null - and every one of them has
+// exactly one distinct career season (measured 2026-08-07). That is structural, not a data
+// gap: a first-pro-season prospect has one grade and cannot have a trajectory. Synthesize
+// that one point from the entry the client already holds so the page shows WHERE the grade
+// sits instead of an empty slot. Mid-season stamp matches the exporter's own YYYY-07-01
+// series convention. Returns null for anything with a real (multi-season) history.
+function provSingleEfvPoint(p) {
+  const e = p && p._xfv_entry;
+  if (!e || e.xfv_grade == null) return null;
+  if (Array.isArray(e.xfv_history) && e.xfv_history.length >= 2) return null;
+  const seasons = [...new Set((e.career_stats || [])
+    .map(c => c && c.season).filter(s => s != null))];
+  if (seasons.length !== 1) return null;
+  const x = Number(e.xfv_grade);
+  return isFinite(x) ? [{ d: `${seasons[0]}-07-01`, x }] : null;
+}
 // Direction of a prospect's eFV movement for the active-list "Up / Down" filter (owner: stock =
 // eFV delta). PRIMARY = the eFV "since last real change" step computed from getEfvHistory (mirrors
 // movement.py xfv_movement: walk back to the last point differing by >= the 0.5-grade dead-band).
@@ -32908,6 +32987,25 @@ function efvXlineNoteHTML(x) {
   const seas = n.season ? `${n.season} AAA` : "AAA";
   return `<div class="xline-measure-note" title="S-XLINE measurement layer, gate passed 2026-07-23: AAA seasons 2023+ with 100+ tracked Savant PA get the Statcast expected-vs-actual gap blended into the stat line eFV reads (half weight, capped) before the level-relative conversion. A measurement correction to the input line, not a model factor, so it carries no arrow or bar above." style="margin-top:7px;padding:5px 8px;border-left:2px solid var(--neon-cyan);border-radius:3px;background:var(--bg-tertiary);font-size:10px;color:var(--text-secondary);line-height:1.5;cursor:help;"><strong style="color:var(--neon-cyan);">Measurement</strong>: ${seas} line blended with Statcast expected stats (${what}).</div>`;
 }
+// Explainer bar width for one factor magnitude. FIXED log scale, deliberately not
+// linear and deliberately not per-card. The magnitudes are continuous end to end
+// (150 distinct values, 0.01 to 5.0 in xfv.json) but heavily right-skewed: median
+// 0.20, p90 0.62, p99 2.52, measured 2026-08-07. The previous linear mag/1.6 ramp
+// spent the whole bar on the bottom 98% of the distribution and rendered every
+// factor at or above 1.6 identically full, so a 5.0 and a 1.6 looked the same.
+// log1p(mag / 0.25) normalized at the 5.0 ceiling separates the Pinazzi set
+// (0.04 / 0.15 / 0.56 / 0.98 / 1.5 / 1.8) as 5 / 15 / 39 / 52 / 64 / 69%.
+// A per-card max was the alternative and was rejected: it would paint a 0.05 top
+// factor full-width on the 56% of cards whose largest factor is under 0.5, which
+// is the same lie in the other direction. The 3% floor keeps a real-but-tiny
+// contribution visible; the printed number is the value itself, so the bar only
+// has to carry the comparison.
+const _FACT_BAR_KNEE = 0.25;
+const _FACT_BAR_TOP = Math.log1p(5.0 / _FACT_BAR_KNEE);
+function factorBarPct(mag) {
+  const v = Math.max(0, Number(mag) || 0);
+  return Math.max(3, Math.min(100, (Math.log1p(v / _FACT_BAR_KNEE) / _FACT_BAR_TOP) * 100));
+}
 // Detail-page card: eFV's outcome read -- 5-bucket mix, expected surplus vs consensus,
 // and the simulated P10-P90 surplus fan. The honest (outcome-implied) view.
 function efvDetailCard(p) {
@@ -32934,14 +33032,16 @@ function efvDetailCard(p) {
   const xlineHTML = efvXlineNoteHTML(x);
   const factorsHTML = (x.factors && x.factors.length) ? `
       <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
-        <div title="Signals that moved eFV off the consensus prior, biggest first. Game power is intentionally not a driver (scouts over-price it vs realized WAR)." style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How eFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${efvDeltaText(d)}</span> &rarr; eFV ${xg}` : ""}</div>
-        ${x.factors.map(f => {
+        <div title="Signals that moved eFV off the consensus prior, biggest first. The number is that signal's contribution size on the model's own scale, and the bar is the same number on a log scale so the large ones stay apart. They rank against each other; they do not sum to the eFV-minus-consensus gap. Game power is intentionally not a driver (scouts over-price it vs realized WAR)." style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How eFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${efvDeltaText(d)}</span> &rarr; eFV ${xg}` : ""}</div>
+        ${x.factors.slice().sort((a, b) => (Number(b && b.mag) || 0) - (Number(a && a.mag) || 0)).map(f => {
           const up = f.dir === "up";
           const col = up ? "var(--up)" : "var(--down)";
-          const w = Math.min(100, Math.max(8, (Number(f.mag) / 1.6) * 100));
+          const w = factorBarPct(f.mag);
+          const magTxt = isFinite(Number(f.mag)) ? Number(f.mag).toFixed(2) : " - ";
           return `<div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;font-size:11px;">
             <span style="color:${col};font-weight:700;width:10px;text-align:center;">${up ? "▲" : "▼"}</span>
             <span style="flex:1;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(f.label)}</span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;flex-shrink:0;">${magTxt}</span>
             <span style="width:56px;height:5px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden;flex-shrink:0;"><span style="display:block;height:100%;width:${w.toFixed(0)}%;background:${col};"></span></span>
           </div>`;
         }).join("")}${xlineHTML}
@@ -42650,6 +42750,27 @@ function makeToolDvmCell(org) {
   </div>`;
 }
 
+// The farm table's 16 columns are 1178px of FIXED tracks plus 15 6px gutters = a
+// 1268px hard minimum (.farm-header/.farm-row above), and the v45 layout has no
+// overflow wrapper on purpose: the sticky column header needs a real scrollport,
+// so a wrapper would break it. Below the threshold the board therefore pushes
+// page-level horizontal scroll. The cards view is the same data in a layout that
+// reads at any width, so it is the fallback. 1300 (not 1268) leaves room for the
+// page gutters that sit outside the grid itself.
+const FARM_TABLE_MIN_PX = 1300;
+function farmTableFitsViewport() {
+  const w = (typeof window !== "undefined") ? window.innerWidth : 0;
+  return !w || w >= FARM_TABLE_MIN_PX;
+}
+// Which farm layout to actually render. A pinned choice always wins: the fallback
+// exists to stop the board overflowing a window the user never chose to be narrow,
+// not to overrule someone who asked for the table anyway.
+function farmViewEffective() {
+  const mode = state.farmViewMode || "table";
+  if (mode !== "table" || state.farmViewPinned) return mode;
+  return farmTableFitsViewport() ? "table" : "cards";
+}
+
 function renderFarmSystems() {
   let orgs = farmSortedOrgs();
   // Tendency-filter chips (always rendered; active state from the Set).
@@ -42682,15 +42803,19 @@ function renderFarmSystems() {
   // down from the top of the function) so an exported farm graphic reflects the
   // active filters, matching every other section's snapshot-after-filter contract.
   _gfxSet("farm", "farm", orgs, { sortLabel: (state.farmSort && state.farmSort !== "farm_rank") ? "by " + String(state.farmSort).replace(/_/g, " ") : "by composite grade" });
-  // Apply card-mode class based on state.farmViewMode. The class flips
-  // #farm-section into a CSS grid of cards via the .farm-rows-cards
-  // stylesheet rules; .table-mode is the default no-op.
+  // Apply card-mode class based on the EFFECTIVE view (see farmViewEffective:
+  // state.farmViewMode unless the window is too narrow for the table and the user
+  // never pinned it). The class flips #farm-section into a CSS grid of cards via
+  // the .farm-rows-cards stylesheet rules; .table-mode is the default no-op.
+  const _farmView = farmViewEffective();
   const farmSection = document.getElementById("farm-section");
   if (farmSection) {
-    farmSection.classList.toggle("farm-rows-cards", state.farmViewMode === "cards");
+    farmSection.classList.toggle("farm-rows-cards", _farmView === "cards");
   }
+  // Chips stamp the EFFECTIVE view so the control never claims a layout that is
+  // not on screen. Clicking either chip pins it and ends the auto-fallback.
   document.querySelectorAll("[data-farm-view]").forEach(b =>
-    b.classList.toggle("active", b.dataset.farmView === (state.farmViewMode || "table")));
+    b.classList.toggle("active", b.dataset.farmView === _farmView));
   if (!orgs.length) {
     const msg = (state.farmTendencyFilter && state.farmTendencyFilter.size)
       ? `No farm systems match the selected tendency ${state.farmTendencyFilter.size > 1 ? "filters" : "filter"}.`
@@ -43109,7 +43234,10 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
   // Floor adapts down toward 20 only when this prospect carries sub-35 grades
   // (we now grade prospects below 30 FV); stays at 35 for the common case.
   const fvLo = fvAxisFloor(points.map(pt => pt.consensus_fv_raw));
-  const yScale = fv => PAD_T + innerH - ((fv - fvLo) / (FV_MAX - fvLo)) * innerH;
+  // Clamped to the frame: a per-source overlay point above FV_MAX (or below the
+  // adaptive floor) pins at the edge instead of drawing outside the viewBox.
+  // Labels and tooltips keep the raw value.
+  const yScale = fv => PAD_T + innerH - ((Math.max(fvLo, Math.min(FV_MAX, fv)) - fvLo) / (FV_MAX - fvLo)) * innerH;
 
   // Per-segment direction coloring + non-scaling strokes - same
   // pattern as the minichart. Each consecutive pair of points gets
@@ -47443,6 +47571,8 @@ function renderPlayerDetail(key) {
     return `<div class="tm-src-legend"><span class="tm-src-key"><span class="tm-src-swatch tm-src-swatch-consensus"></span>PROSPX consensus</span>${items}</div>`;
   })() : "";
   const _provEfvHist = (typeof getEfvHistory === "function") ? getEfvHistory(p) : null;
+  const _provSingle = (p._is_provisional && !(_provEfvHist && _provEfvHist.length >= 2))
+    ? provSingleEfvPoint(p) : null;
   const chartSection = (p.points && p.points.length >= 2)
     ? `<div class="detail-title">FV history <span style="margin-left:8px;vertical-align:middle;">${_srcToggle}</span></div>${makeBigLineChart(p.points, p.fv_open, p.fv_close, p.debut_date, p.trades, p.career_stats, p, { showSources: _showSrc })}
        ${_srcLegend}
@@ -47452,7 +47582,15 @@ function renderPlayerDetail(key) {
       // Provisional prospects have no scout snapshots, but DO have a per-season eFV trajectory
       // (the production-only grade as-of each MiLB season). Plot that instead.
       ? `<div class="detail-title">eFV history <span class="detail-title-sub">production-only grade as-of each MiLB season · no source grades to chart</span></div>${makeProvisionalEfvChart(_provEfvHist, { width: 360, height: 150 })}`
-      : `<div style="color:var(--text-tertiary);font-size:12px;">Not enough FV updates yet for a chart.</div>`;
+      : _provSingle
+        // One pro season on record: a single dot on the same frame. The old text fallback
+        // ("not enough FV updates") described a scouting cadence these players are not on -
+        // no source has graded them at all, so no number of updates was ever coming.
+        ? `<div class="detail-title">eFV <span class="detail-title-sub">production-only grade from his first pro season · no source grades to chart</span></div>${makeProvisionalEfvChart(_provSingle, { width: 360, height: 150 })}
+           <div style="color:var(--text-tertiary);font-size:11px;margin-top:4px;">One pro season on record, so there is no trajectory yet. A second season turns this dot into a line.</div>`
+        : p._is_provisional
+          ? `<div style="color:var(--text-tertiary);font-size:12px;">No season-by-season eFV to chart yet. No scouting source has graded this prospect, so the trajectory has to come from his own pro seasons.</div>`
+          : `<div style="color:var(--text-tertiary);font-size:12px;">Not enough FV updates yet for a chart.</div>`;
 
   // Career section - v7 renders BOTH raw stats AND level-relative
   // deltas stacked (was a toggle chip; the user explicitly asked for
@@ -52259,7 +52397,12 @@ function _renderFarmDetailBody(orgCode, org, root) {
     const items = cands.slice(0, 10).map(c => {
       const g = Math.round(c.g);
       const click = c.pl.player_key ? ` onclick="goToPlayer('${escapeHtml(c.pl.player_key)}');" style="cursor:pointer;"` : "";
-      const topF = (c.factors || []).filter(f => f.dir === "up").slice(0, 2).map(f => f.label).join(" · ");
+      // Sorted by magnitude, not payload order: the exporter prepends overlay chips
+      // regardless of size, so taking the first two here named a 0.04 Statcast chip
+      // as the reason a prospect is on this list ahead of a 0.98 strikeout chip.
+      const topF = (c.factors || []).filter(f => f.dir === "up")
+        .slice().sort((a, b) => (Number(b && b.mag) || 0) - (Number(a && a.mag) || 0))
+        .slice(0, 2).map(f => f.label).join(" · ");
       return `<div class="graded-prospect-row"${click}>
         <span class="fv-badge ${fvClass(String(g))} size-sm" style="border-style:dashed;opacity:0.85;" title="Provisional eFV ${g} - production-only, no source grade yet">${g}<sup style="font-size:7px;font-weight:700;">p</sup></span>
         <span style="color:${c.pl.player_key ? "var(--neon-cyan)" : "var(--text-primary)"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.pl.fullName)}</span>
@@ -55707,8 +55850,30 @@ function attachHandlers() {
     // the cart stays in sync with the rest of the app.
     renderCompareCart();
   });
-  // Farm view-mode toggle (table / cards) - flips state + re-renders.
-  attachChipGroup("farm-view", "farmViewMode", () => renderFarmSystems());
+  // Farm view-mode toggle (table / cards) - flips state + re-renders. Clicking
+  // either chip PINS the choice, which switches off the narrow-window fallback to
+  // cards. attachChipGroup has already written state.farmViewMode by the time this
+  // runs, and syncToURL runs after it, so both the render and the URL see the pin.
+  attachChipGroup("farm-view", "farmViewMode", () => {
+    state.farmViewPinned = true;
+    renderFarmSystems();
+  });
+  // Width fallback for the farm board. The 16-column table cannot fit under
+  // FARM_TABLE_MIN_PX (fixed tracks, no overflow wrapper by design), so an
+  // unpinned board re-renders as cards when the window crosses that line. Only
+  // fires on an actual crossing, and never against a pinned choice.
+  let _farmFits = farmTableFitsViewport();
+  let _farmFitTimer = null;
+  window.addEventListener("resize", () => {
+    const fits = farmTableFitsViewport();
+    if (fits === _farmFits) return;
+    _farmFits = fits;
+    if (state.farmViewPinned) return;
+    clearTimeout(_farmFitTimer);
+    _farmFitTimer = setTimeout(() => {
+      if (state.section === "farm" && !state.view) renderFarmSystems();
+    }, 120);
+  });
 
   // v18 - Reset filters chip. Per-page scope - each chip carries
   // `data-reset-page` and clears only the state keys relevant to that
@@ -55763,6 +55928,7 @@ function _resetPageFilters(page) {
     state.farmSort      = "farm_rank";
     state.formWindow    = "7y";   // 7y is the documented default (matches the ★ chip + state initializer)
     state.farmViewMode  = "table";
+    state.farmViewPinned = false;   // back to the default, which includes the width fallback
     state.farmCompareOrg = "";
     state.farmTreeView  = "expanded";
     state.farmTendencyFilter = new Set();
