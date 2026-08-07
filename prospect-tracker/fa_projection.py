@@ -332,6 +332,46 @@ def _era_adjust(rows: list[dict], league: dict, comp: str, side: str) -> dict:
     return out
 
 
+def _corpus_sig(corpus: dict) -> str:
+    """Eight hex chars identifying the corpus CONTENT.
+
+    THE STALENESS THIS CLOSES (plan item F1.5). The fits cache was keyed on
+    (max_season, corpus.first, corpus.last) and nothing else, so it carried no
+    information about the ROWS. Baseball-Reference revises bWAR, signings get
+    added to a winter already in range, and identity repairs move players
+    between rows. Every one of those changes the fit and none of them changes
+    the key, so the cache kept serving the previous vintage and the only symptom
+    was numbers that quietly refused to move.
+
+    Cheap enough to be unconditional: a full refit measures 0.5s against a 0.01s
+    cached read, so invalidating on real change costs almost nothing, and a
+    stale WAR map costs a wrong price on every free agent.
+
+    MEMOISED ONTO THE CORPUS. fa_backtest calls fitted_models once per target
+    year over one corpus, so without this the digest would be recomputed over
+    36k rows a dozen times per gate run. The key is underscore-prefixed and
+    never serialised."""
+    cached = corpus.get("_sig")
+    if cached:
+        return cached
+    import hashlib
+    h = hashlib.md5()
+    for side in ("hit", "pit"):
+        rows = corpus.get(side) or []
+        h.update(f"{side}:{len(rows)}|".encode())
+        # Digest the fields the fit actually consumes. Hashing whole dicts would
+        # make the key depend on incidental columns and on dict ordering, so it
+        # would churn for changes that cannot move a coefficient.
+        for r in rows:
+            h.update(f"{r.get('mlbam')},{r.get('season')},{r.get('war')},"
+                     f"{r.get('pa') or r.get('ip')}|".encode())
+    lg = corpus.get("league") or {}
+    h.update(repr(sorted(lg.items()))[:4000].encode())
+    sig = h.hexdigest()[:8]
+    corpus["_sig"] = sig
+    return sig
+
+
 def fitted_models(corpus: dict, max_season: int, use_cache: bool = True,
                   *, use_def: bool | None = None) -> tuple[dict, dict]:
     """(curves, war_map) fitted on seasons <= max_season, disk-cached per
@@ -352,7 +392,8 @@ def fitted_models(corpus: dict, max_season: int, use_cache: bool = True,
     _use_def = _def_enabled() if use_def is None else bool(use_def)
     _suffix = "_def" if _use_def else ""
     cache = (CACHE_DIR /
-             f"fa_fits_{max_season}_{corpus['first']}_{corpus['last']}{_suffix}.pkl")
+             f"fa_fits_{max_season}_{corpus['first']}_{corpus['last']}"
+             f"_{_corpus_sig(corpus)}{_suffix}.pkl")
     if use_cache and cache.exists():
         with open(cache, "rb") as fh:
             return pickle.load(fh)

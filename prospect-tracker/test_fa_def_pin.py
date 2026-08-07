@@ -119,3 +119,50 @@ def test_the_divergence_is_disclosed_to_readers():
     assert "Projections" in d["consequence"], (
         "the consequence must name the other surface a reader would compare "
         "against, or the disclosure does not help them")
+
+
+# --- F1.5: the fits cache must notice when the data changes ----------------
+
+def test_the_fits_cache_key_carries_the_corpus_content():
+    """PLAN ITEM F1.5. The key was (max_season, first, last) and nothing else,
+    so it said nothing about the ROWS. bWAR gets revised, signings land in a
+    winter already inside the span, identity repairs move players between rows.
+    Each changes the fit; none changed the key. The cache went on serving the
+    previous vintage and the only symptom was numbers that refused to move."""
+    import inspect
+    src = inspect.getsource(fp.fitted_models)
+    assert "_corpus_sig(corpus)" in src, (
+        "the cache filename must include a content signature, or a data change "
+        "inside the same season span serves a stale fit")
+
+
+def test_the_signature_moves_when_the_data_moves():
+    corpus = {"hit": [{"mlbam": 1, "season": 2020, "war": 2.0, "pa": 500}],
+              "pit": [], "league": {"a": 1}, "first": 2000, "last": 2026}
+    a = fp._corpus_sig(dict(corpus))
+
+    revised = dict(corpus, hit=[{"mlbam": 1, "season": 2020, "war": 2.5, "pa": 500}])
+    assert fp._corpus_sig(revised) != a, (
+        "a revised bWAR must change the signature; this is the exact case that "
+        "kept serving a stale WAR map")
+
+    added = dict(corpus, hit=corpus["hit"] + [
+        {"mlbam": 2, "season": 2020, "war": 1.0, "pa": 400}])
+    assert fp._corpus_sig(added) != a, "an added row must change the signature"
+
+    same = fp._corpus_sig(dict(corpus))
+    assert same == a, "identical data must give an identical signature"
+
+
+def test_the_signature_is_memoised_onto_the_corpus():
+    """fa_backtest calls fitted_models once per target year over ONE corpus.
+    Without memoisation the digest would walk 36k rows a dozen times per gate
+    run, which would turn a correctness fix into a visible slowdown."""
+    corpus = {"hit": [{"mlbam": 1, "season": 2020, "war": 2.0, "pa": 500}],
+              "pit": [], "league": {}, "first": 2000, "last": 2026}
+    sig = fp._corpus_sig(corpus)
+    assert corpus.get("_sig") == sig
+    corpus["hit"] = []                      # changed, but the memo stands
+    assert fp._corpus_sig(corpus) == sig, (
+        "the memo must be honoured within one corpus object; callers that want "
+        "a fresh signature build a fresh corpus")
