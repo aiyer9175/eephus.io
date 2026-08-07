@@ -629,10 +629,36 @@
       // Row-1 deal cells. The P10-P90 bands moved into the title: rendering a
       // point estimate AND its band inside a ~110px track is exactly what made
       // the old cells unreadable, and a band is hover-depth, not scan-depth.
+      // The band is carried on `title`, which is HOVER ONLY: it never appears on
+      // a touch device and screen readers treat it inconsistently. Inlining the
+      // band was already rejected above for good reason (it is what made these
+      // cells unreadable), so the band is instead made REACHABLE: aria-label
+      // states it for assistive tech, and tabindex makes the cell keyboard
+      // focusable so it is not mouse-only.
+      //
+      // NOT FIXED HERE, and worth saying plainly: a phone user still cannot see
+      // the band. That needs a tap-to-open tooltip component, which is a real UI
+      // build rather than an attribute. This closes the keyboard and screen
+      // reader half of the gap.
+      // KNOWN BAND DEFECT, disclosed rather than hidden (plan item D6). The
+      // bands come from a FLAT ratio applied to the point estimate, not from a
+      // per-tier fit, so at the top of the market the upper end goes somewhere
+      // no contract has ever been. Making the band reachable above would
+      // otherwise surface an absurd number with nothing telling a reader it is
+      // known to be wrong. The proper fix is per-tier band scaling behind a lab
+      // gate, which is not done; this is the honest interim.
+      const aavWild = m.projAav > 0 && m.projAavP90 != null
+                      && m.projAavP90 > m.projAav * 2.5;
+      const aavBand = `Predicted average annual value ${money(m.projAav)}. `
+        + `P10 to P90 ${money(m.projAavP10)} to ${money(m.projAavP90)}.`
+        + (aavWild ? " Note: this band comes from a flat ratio rather than a"
+                     + " per-tier fit, so the upper end is unrealistically wide"
+                     + " at the top of the market." : "");
       const aavCell = m.projAav == null ? EM_DASH
-        : `<span title="Predicted average annual value. P10-P90 ${money(m.projAavP10)} to ${money(m.projAavP90)}.">${money(m.projAav)}</span>`;
+        : `<span tabindex="0" aria-label="${esc(aavBand)}" title="${esc(aavBand)}">${money(m.projAav)}</span>`;
+      const guarBand = `Predicted term and total guarantee. Length P10 to P90 ${m.projYearsP10 ?? "?"} to ${m.projYearsP90 ?? "?"} years; guarantee P10 to P90 ${money(m.projGuarP10)} to ${money(m.projGuarP90)}.`;
       const guarCell = m.projGuar == null ? EM_DASH
-        : `<span title="Predicted term and total guarantee. Length P10-P90 ${m.projYearsP10 ?? "?"} to ${m.projYearsP90 ?? "?"} years; guarantee P10-P90 ${money(m.projGuarP10)} to ${money(m.projGuarP90)}.">${m.projYears != null ? m.projYears + "y / " : ""}${money(m.projGuar)}</span>`;
+        : `<span tabindex="0" aria-label="${esc(guarBand)}" title="${esc(guarBand)}">${m.projYears != null ? m.projYears + "y / " : ""}${money(m.projGuar)}</span>`;
       const trCls = [
         (m.projGuar == null || m.status === "option_exercised") ? "fa-dim" : "",
         isOption(m) ? "fa-row-opt" : "",
