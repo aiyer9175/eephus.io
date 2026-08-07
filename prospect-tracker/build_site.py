@@ -4276,7 +4276,14 @@ def build_glossary() -> str:
         # glossary.js so window.EEPHUS_GFX exists when the view renders.
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
-        '<script src="/data/value_framework.js" defer></script>'
+        # STAMPED 2026-08-06 (plan item H8). This was the last local asset on
+        # the site shipping unversioned, so a CDN could serve a stale
+        # value_framework.js beside a fresh /glossary/ page and the surplus
+        # numbers a reader saw would come from a different vintage than the
+        # prose explaining them. Every other asset here is content-hashed;
+        # this one is generated into data/ rather than assets/, which is the
+        # only reason it was missed.
+        f'<script src="/data/value_framework.js?v={_asset_ver("data/value_framework.js")}" defer></script>'
         f'<script src="/assets/glossary.js?v={_GLAPP_VER}" defer></script>'
     )
     return page("Glossary & Methodology - eephus.io", "glossary", body,
