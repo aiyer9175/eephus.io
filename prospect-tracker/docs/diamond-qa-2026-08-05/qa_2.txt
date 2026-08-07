@@ -1,0 +1,228 @@
+=== LANE ===
+/cards/ and /diamond/ (assets/cards.js, assets/cards.css, assets/diamond.js)
+
+=== STATUS ===
+done
+
+=== VERIFICATION ===
+Rendered in real Chromium (Playwright 148.0.7778.96) over the repo's own conftest.serve_site threaded HTTP/1.1 server (protocol_version="HTTP/1.1"; site.css arrived intact every run, no truncation). Final sweep: 5 targets (/cards/ #buy, #movers, #watchlist, #method, and /diamond/) x 3 widths (390, 768, 1366) x 2 themes = 30 renders, ALL GREEN: zero console errors, zero pageerrors, document.scrollWidth == clientWidth everywhere (no page-level horizontal scroll), zero real overflow outside a scrolling container, zero ellipsized data labels, zero occurrences of undefined/NaN/Infinity/[object Object], zero em dashes. Interactions exercised for real: all 4 section tabs, the 3 tier chips, the search box (match, zero-match, clear, focus retention), row expand/collapse via click AND keyboard, the per-card GFX button, the board GFX button (dialog rendered and inspected), the Diamond CTA button (opens the real auth modal). Degraded paths forced via in-page fetch patching: card_market.json 404, card_market.json with an empty cards array, xfv_scoreboard_eval.json 404 / no head_to_head / empty head_to_head, and betting_record.json in four shapes (fraction-encoded rates, percent-encoded rates, picks-only, garbage). /diamond/ rendered with java_script_enabled=False. CTA load-order verified by installing a stub EephusAccount behind a defineProperty getter that records document readiness at read time. Both JS files parse-checked in a real V8 (new Function). NOT run: pytest, build_site.py, any pipeline (per brief); confirmed by grep that no test_*.py references cards.js, cards.css or diamond.js.
+
+=== FINDINGS ===
+{
+ "page": "/cards/",
+ "width": "all (390/768/1366, both themes)",
+ "severity": "broken",
+ "what": "The four section tabs were completely dead. The page shell emits data-cardSSection=\"screen|movers|watchlist|method\"; cards.js queried [data-cardSection] and keyed on \"buy\". querySelectorAll matched zero nodes, so no click handler was ever bound and setSection could never fire. Movers, Watchlist and Method were UNREACHABLE, including Watchlist, which is the only board with content in this zero-comp run, and Method, which carries the disclaimers. Nothing threw, so it looked fine under a stubbed DOM. Verified dead by clicking each tab: active class stayed on Buy Screen, hash stayed empty, root HTML never changed.",
+ "fixed": true
+}
+{
+ "page": "/cards/",
+ "width": "all (390/768/1366, both themes)",
+ "severity": "broken",
+ "what": "assets/cards.css was an ORPHAN: referenced by nothing at all. Not in build_site.py, not in the emitted <head> or <body>, not by any script (grep for \"cards.css\" across .py/.html/.js returned zero hits), and site.css contains zero .cards-* selectors. All 176 lines were dead. Measured consequences before the fix: .cards-screen-banner computed 16px/--text-primary instead of 12px/--text-secondary with no gold rule; .cards-screen-tag had no gold border; .cards-sig computed 11.5px instead of 10.5px with no colour; .cards-spark-empty 11.5px instead of 10px; the detail drawer had no background, no border, no grid and NO refractor hairline (its whole reason to exist); and worst, .cards-chip-phone { display:none } never applied, so the row-1 metric cells AND their phone twins both rendered at 1366px, printing Index/eFV/Gap twice on every card.",
+ "fixed": true
+}
+{
+ "page": "/cards/",
+ "width": "all",
+ "severity": "bad",
+ "what": "\"Generate GFX\" was offered on the Buy Screen while that board had zero rows. Clicking it opened the export dialog on a graphic with the eephus.io wordmark, a title, a legend, a column rule and NOTHING underneath, subtitled \"0 priced cards\", and the Download PNG / Copy buttons in that dialog work. A visitor could download and post a blank branded graphic. Screenshotted.",
+ "fixed": true
+}
+{
+ "page": "/cards/",
+ "width": "all",
+ "severity": "bad",
+ "what": "The board GFX button always exported the BUY SCREEN rows regardless of which section you were on. From Watchlist or Movers it silently handed you a different board than the one on screen, and in this zero-comp export that different board was empty.",
+ "fixed": true
+}
+{
+ "page": "/cards/",
+ "width": "all",
+ "severity": "bad",
+ "what": "Filtering to zero matches printed the wrong reason. Typing a name that matches nothing on Watchlist produced \"The watchlist is empty. Regenerate data/card_watchlist.json\" on a board that had been showing 40 cards one keystroke earlier. Buy Screen and Movers had the same defect. The empty state could not distinguish \"nothing is priced\" from \"your filter excluded everything\".",
+ "fixed": true
+}
+{
+ "page": "/cards/",
+ "width": "all",
+ "severity": "bad",
+ "what": "Public-facing empty-state copy was operator instructions. The Buy Screen's primary state, which is what EVERY visitor sees today, read \"No card has a priced index yet. Drop comps or run the ingest, then re-export.\" The watchlist's read \"Regenerate data/card_watchlist.json.\" This is a public Diamond-preview page; a stranger was being handed build commands as the main text.",
+ "fixed": true
+}
+{
+ "page": "/cards/",
+ "width": "all",
+ "severity": "bad",
+ "what": "The hard-error card was titled \"Card Market is not built yet\" for BOTH failure causes. That is false in the LOAD_ERROR case: a reader on a flaky connection or hitting a brief CDN failure was told the module does not exist. The body also led with /data/card_market.json, card_market_export.py and data/card_watchlist.json as its main text.",
+ "fixed": true
+}
+{
+ "page": "/cards/",
+ "width": "1366 (GFX export, both themes)",
+ "severity": "bad",
+ "what": "The exported board graphic overlapped on every row: the Card cell's sub-text (\"WSH Topps Chrome Rookie Refractor\") ran straight through the eFV number in both halves of the two-column 16:9 layout. Screenshotted before and after. ROOT CAUSE IS NOT IN MY LANE: eephus-gfx.js line 228 draws cell.sub with g.fillText(String(cell.sub), ...) and no fitTxt() clamp, unlike the tile renderer at line 535 which does clamp. Any module putting a long sub on a board will overlap. I mitigated from my side only (shorter sub, wider identity column); the shared renderer is still unclamped.",
+ "fixed": true
+}
+{
+ "page": "/cards/",
+ "width": "390 and 768",
+ "severity": "polish",
+ "what": "Trend was the one row-1 metric with no phone twin. Below 720px the metric track is hidden and the only chip labelled Trend in the tape was the sparkline, so the trend PERCENTAGE simply vanished on a phone.",
+ "fixed": true
+}
+{
+ "page": "/cards/",
+ "width": "1366",
+ "severity": "polish",
+ "what": "Two cells on the same card were both labelled \"Trend\": the row-1 metric (the percentage) and the tape chip (the sparkline). Renamed the sparkline chip to \"History\", which also matches what the detail drawer calls it (\"Index history\").",
+ "fixed": true
+}
+{
+ "page": "/cards/",
+ "width": "all",
+ "severity": "polish",
+ "what": "The eFV column was ragged. fEfv used String(Math.round(n*10)/10), which drops the trailing zero, so a tabular-nums right-aligned column read 61.9 / 61 / 60.2 / 58.7 / 58 / 57.4 with whole numbers a digit short of their neighbours. Same rounding, now printed at fixed width.",
+ "fixed": true
+}
+{
+ "page": "/cards/",
+ "width": "all",
+ "severity": "polish",
+ "what": "cards.js had no hashchange listener. It was the ONLY module in the codebase missing one (dfs.js, betting.js, dynasty.js, fa.js, fa_dpw.js, glossary.js, projections.js, redraft.js and fantasy.js all have it), so an in-page navigation to /cards/#method from elsewhere did nothing.",
+ "fixed": true
+}
+{
+ "page": "/diamond/",
+ "width": "all, LIGHT theme worst",
+ "severity": "bad",
+ "what": "--border-subtle IS NOT A TOKEN ON THIS SITE. getComputedStyle(document.documentElement).getPropertyValue('--border-subtle') returns \"\" in both themes, so every rule in diamond.js's injected sheet fell through to its hardcoded fallback: #333 for cards, tiles, stat boxes and table headers, #222 for table rows. In DARK that is close to the real --border (#2B2B31) and passed unnoticed. In LIGHT it painted a near-black 1px rule around every card on a cream page where --border is #C9C1AE. The tell: the SAME cards render correctly with JavaScript off, because site.css's own .card rule uses --border and this sheet was overriding it with a worse value. This is exactly the \"hardcoded colour that survived\" case.",
+ "fixed": true
+}
+{
+ "page": "/diamond/",
+ "width": "all, both themes",
+ "severity": "bad",
+ "what": "The page had no fine print, only more body copy. site.css's `.card p` (specificity 0,1,1) beats `.dm-fine` (0,1,0), so the provenance line, the protocol line and the \"Diamond funds the free site\" line inside the price card all computed 15.2px / --text-secondary instead of 12px / --text-tertiary. Measured via CDP CSS.getMatchedStylesForNode. Only the one .diamond-fine that sits OUTSIDE a card rendered correctly at 12px, which is what made the inconsistency visible.",
+ "fixed": true
+}
+{
+ "page": "/diamond/",
+ "width": "all",
+ "severity": "polish",
+ "what": "The per-archetype receipts table never said which metric it reports. It sits directly beneath two tiles carrying two DIFFERENT numbers (rank correlation and contributor AUC) and its headers are just Group / eFV / PROSPX consensus / n. It reads by_archetype_vs_consensus[].spearman only, and its green win highlight is a Spearman win specifically, so a reader could easily take those rows for the AUC. Added a caption naming the metric.",
+ "fixed": true
+}
+{
+ "page": "/cards/",
+ "width": "390 and 768",
+ "severity": "polish",
+ "what": "NOT MINE, NOT FIXED (site.css, orchestrator-owned): the page description in .section-sub is line-clamped and ellipsizes mid-word at 390px, reading \"...The card index is a derived, grade-\" with no way to expand it. The clamped sentence is the one that tells a reader this is a screen and not a forecast.",
+ "fixed": false
+}
+{
+ "page": "/cards/ and /diamond/",
+ "width": "768 and 1366",
+ "severity": "polish",
+ "what": "NOT MINE, NOT FIXED (shared nav in site.css): the last nav link, \"Developers\", is clipped by the .eephus-nav-controls block and renders as \"Deve\". The page itself does not scroll horizontally (the nav is its own overflow container), so this is cosmetic, but a nav item is unreadable at both desktop widths. Measured 176px of overrun at 768px.",
+ "fixed": false
+}
+{
+ "page": "/cards/ (Method)",
+ "width": "all",
+ "severity": "polish",
+ "what": "NOT MINE, NOT FIXED (data-side, card_market_export.py): the Method prose comes out of card_market.json as sentence fragments. Several paragraphs start lowercase directly under a heading (\"grade-mix adjusted trimmed median of sold comps...\", \"talent percentile minus market percentile...\", \"eFV blend cloned from fantasy_export._dynasty_prospects...\", \"manual CSV drops and, when explicitly enabled...\") and several have no terminal period. The page renders exactly what the artifact says, which is correct behaviour; the artifact's strings need capitalising and terminating.",
+ "fixed": false
+}
+{
+ "page": "/cards/",
+ "width": "all",
+ "severity": "polish",
+ "what": "OBSERVED, LEFT ALONE: the per-card \"Generate GFX\" button in the detail drawer is not gated on the card being priced, so on an unpriced card it produces a graphic titled \"<Player> \u00b7 Card Index\" whose Card Index, Prior window, Trend, Price percentile and Gap all read \"-\". Unlike the board case it is not blank (eFV, talent percentile and comp count carry real values) and it is honest, so I did not gate it. Flagging it as a judgement call the owner may want to revisit.",
+ "fixed": false
+}
+{
+ "page": "/cards/ (Method)",
+ "width": "all",
+ "severity": "polish",
+ "what": "OBSERVED, LEFT ALONE: renderMethod() does not emit the gold SCREEN banner that renderBuy / renderMovers / renderWatchlist all emit. The Method section instead carries its own \"What this is not\" list with all three disclaimer strings, and the persistent #cards-banner above it shows \"\u00b7 screen\" in gold on every section, so the label is not actually absent. Noting it because the brief asked for the SCREEN disclaimer to be prominent and this is the one board that does not repeat the banner.",
+ "fixed": false
+}
+{
+ "page": "/diamond/",
+ "width": "1366",
+ "severity": "polish",
+ "what": "NOT MINE, NOT FIXED (site.css .article-grid): the first \"What members get\" grid holds 6 cards in a 4-column grid, so the second row is two cards wide against a full-width first row. Purely cosmetic ragged edge.",
+ "fixed": false
+}
+{
+ "page": "/diamond/",
+ "width": "all",
+ "severity": "polish",
+ "what": "OBSERVED, LEFT ALONE: renderRecord's guard is `if (!n || (w == null && l == null))`, so a betting_record.json carrying picks but no graded wins/losses falls to the empty card and says \"No pick has been published yet\" when picks in fact exist but are ungraded. Verified with a synthetic picks-only payload. The card's own next sentence is \"there is nothing to grade\", which is true, so I judged this honest enough to leave rather than churn copy on an unpublished path.",
+ "fixed": false
+}
+
+=== CHANGES ===
+{
+ "path": "c:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker\\assets\\cards.js",
+ "what": "Nine fixes. (1) Section nav accepts BOTH data-cardsection and data-cardssection and aliases \"screen\" -> \"buy\", via a SECTION_NODES selector and a sectionOf() reader, so the four tabs work; readHash also accepts #screen. (2) A guarded ensureCSS() IIFE at the top of the module appends <link rel=stylesheet href=/assets/cards.css> when no such link is already present, so the orphaned module stylesheet actually loads; the guard makes it a no-op once a versioned link lands in the shell. (3) filterBar() now takes a rowCount and only emits #cards-board-gfx when there is at least one row. (4) New sectionRows() drives boardSpec(), so the exported graphic is the board you are looking at (title, filename and row noun all follow the section). (5) New filtering() / noMatchMsg() give renderList a filter-aware empty state naming the query and the tier. (6) Buy Screen and Watchlist empty-state copy rewritten reader-facing, with the operator instructions removed. (7) emptyStateHTML() now has two titles (\"The card market did not load\" vs \"No cards are being tracked yet\") and demotes the file/script names to a muted .cards-meta diagnostic line under the Retry button. (8) Added a phone-only Trend chip and renamed the sparkline chip from \"Trend\" to \"History\". (9) fEfv now uses (Math.round(n*10)/10).toFixed(1) so the column is fixed-width. Plus: extracted byEfvThenName so the watchlist order is defined once and cannot diverge between screen and export; shortened the GFX Card sub to org + grade and rebalanced the board column fracs to 0.05/0.47/0.10/0.14/0.12/0.12; added a hashchange listener matching the redraft.js/fantasy.js pattern."
+}
+{
+ "path": "c:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker\\assets\\diamond.js",
+ "what": "Three fixes, all in the injected stylesheet plus one in renderReceipts. Replaced every var(--border-subtle,#333) with var(--border,#c9c1ae) (cards, tiles, stat boxes, table header rule) and the table row rule with var(--border-light,var(--border,#e2dcc9)), because --border-subtle is not defined on this site and every rule was silently using its hardcoded fallback. Added a higher-specificity rule (.diamond-app .card p.dm-fine etc.) so the fine print out-specifies site.css's `.card p` and renders at 12px/--text-tertiary. Added a caption above the per-archetype table naming the metric it reports (rank correlation with realized career WAR) and explaining the green highlight."
+}
+
+=== SHARED_FILE_EDITS ===
+OPTIONAL BUT RECOMMENDED - build_site.py, two hunks. This is the permanent, cache-correct home for the /cards/ stylesheet link. My cards.js self-loads the sheet with a guard, so /cards/ is correct WITH OR WITHOUT this edit, and applying it turns my JS injection into a no-op (the guard matches on href*="cards.css", which the versioned URL satisfies). The only thing this edit buys is a cache-busted ?v= hash and no post-parse injection. Placement copies build_trademachine(), which already puts its module <link> in the body after the app div (build_site.py line 3502).
+
+HUNK 1 - after line 100, next to the other module asset-version constants:
+
+     _CARDS_VER = _asset_ver("assets/cards.js")
++    _CARDS_CSS_VER = _asset_ver("assets/cards.css")
+
+HUNK 2 - inside build_cards(), between the closing app </div> and DIAMOND_CONFIG_SCRIPT (currently lines 3862-3863):
+
+             '</div>'
++            f'<link rel="stylesheet" href="/assets/cards.css?v={_CARDS_CSS_VER}">'
+             f'{DIAMOND_CONFIG_SCRIPT}'
+
+DO NOT ALSO rename data-cardssection -> data-cardsection or "screen" -> "buy" in build_cards() unless you want to; cards.js now accepts both attribute spellings and both section values, so the shell can stay exactly as it is. If you do normalise it, either value keeps working.
+
+NOT REQUESTED, FLAGGED FOR ANOTHER LANE - assets/eephus-gfx.js line 228 (board renderer) draws a cell's sub-text with no width clamp:
+    g.fillText(String(cell.sub), x0[i] + nameW + 9, y);
+while the tile renderer at line 535 correctly uses fitTxt(). Any board spec with a long `sub` overlaps the next column. I worked around it inside cards.js by shortening my sub and widening the identity column, but the shared renderer is still unclamped and other modules' boards will hit it. Whoever owns eephus-gfx.js should clamp it to the distance to the next column origin.
+
+assets/site.css - NO edits needed from me. Two site.css-owned cosmetic defects are reported in findings (the .section-sub mid-word ellipsis at 390px and the clipped "Developers" nav link at 768/1366) but I am not proposing diffs for them, since both are global and belong to whoever owns the shared chrome.
+
+=== NOTES ===
+RECEIPTS, EXACT NUMBERS RENDERED, ALL MATCH data/xfv_scoreboard_eval.json:
+
+Tile 1 "Rank correlation with realized career WAR": eFV 0.384, PROSPX consensus 0.283, "2,200 players, same set". Artifact head_to_head.vs.prospx_consensus.spearman = {n: 2200, efv: 0.384, consensus: 0.283, win: true, margin: 0.101}. MATCH.
+Tile 2 "Picking out the players who became contributors": eFV 0.757, PROSPX consensus 0.732, "2,200 players, same set". Artifact auc_contributor = {n: 2200, efv: 0.7572, consensus: 0.7316, win: true, margin: 0.0256}; diamond.js dec(v,3) gives 0.757 / 0.732. MATCH.
+Archetype table, rendered eFV / consensus / n vs artifact spearman values:
+  HS bats      0.541 / 0.379 / 137   (0.5409, 0.3793, 137)  MATCH
+  HS arms      0.374 / 0.269 / 114   (0.3743, 0.2693, 114)  MATCH
+  College bats 0.307 / 0.266 / 80    (0.3067, 0.2655, 80)   MATCH
+  College arms 0.390 / 0.267 / 140   (0.3903, 0.2670, 140)  MATCH
+  Int'l bats   0.384 / 0.369 / 92    (0.3837, 0.3689, 92)   MATCH
+  Int'l arms   0.285 / 0.188 / 77    (0.2855, 0.1879, 77)   MATCH
+All six rows carry spearman.win == true and all six render the eFV cell green, correctly. The picker is vs.prospx_consensus (first of the three the code tries), so the label reads "PROSPX consensus" and not FanGraphs or MLB Pipeline. The protocol line prints verbatim from head_to_head.protocol. Note the artifact also carries common_n: 4235, which the page does not show; the tiles correctly show the per-comparison n of 2,200 instead.
+
+CTA LOAD-ORDER, THE CRITICAL CHECK: IT HOLDS, verified rather than assumed. I installed a stub window.EephusAccount behind Object.defineProperty at document-start, with a getter that records whether DOMContentLoaded had already fired at the moment of the read. Result: reads = ['BEFORE-DCL', 'AFTER-DCL'] and the CTA rendered the SIGNED-IN variant both times. The BEFORE-DCL read belongs to another module (eephus-ui.js); diamond.js's read is the AFTER-DCL one, which is provable because the signed-in copy can only render if the account object was visible at read time. With isDiamond() true the CTA reads "Thanks for keeping this free / Your Diamond membership is active..."; with isDiamond() false it reads "You are signed in as ArkTester / ... founding members pay $9.99 a month...". No errors either way. afterScripts() is correct: deferred scripts execute at readyState "interactive", so the else-branch registers the DOMContentLoaded listener, which fires after eephus-account.js has run.
+
+/diamond/ COPY AUDIT (java_script_enabled=False and True, both identical on the server-rendered parts): "$15" appears 5 times with JS on / 4 with JS off, "$9.99" 3 / 2 (the CTA adds one of each), founding-preview banner present ("Founding preview: everything is free while we build"), "Diamond funds the free site" appears 3 times, "1-800-GAMBLER" once, "21+" once. Occurrences of "subsidize", "subsidise", "subsidy" and "betting and fantasy": ZERO. Em dashes: ZERO on both pages, all widths, all themes. En dashes: zero.
+
+/diamond/ WITH JAVASCRIPT OFF: complete. Every section, all six module cards, all four extras, all five FAQ entries, the price card, the founding banner, the CTA fallback and the legal block are all in the served HTML. The two JS-filled regions degrade to honest sentences that say so out loud ("If this sentence is still on the page, the artifact did not load and no accuracy number is being claimed" / "If this sentence is still on the page, the record has not published yet"). Nothing blank, no spinner. Incidentally this is how I caught the --border-subtle bug: the cards look BETTER with JS off, because site.css's .card uses the real token and the injected sheet was overriding it with a worse one.
+
+/cards/ ZERO-COMP RENDER IS CORRECT after the fixes: banner reads "40 cards tracked · 0 priced · as of 2026-08-05 · screen" with "screen" in gold; the gold-ruled SCREEN block sits above every board; Buy Screen shows its named empty state; Movers shows "No card has two priced windows yet. Movers fill in as history accumulates."; Watchlist lists all 40 with "0 of 40 carry an index today" and each row's index cell shows a dotted-underlined "none" with a tooltip explaining why. NO SPARKLINE SVG RENDERS ANYWHERE: I counted svg.cards-spark == 0 on every board and in the detail drawer; with fewer than 2 points the code returns the text span "not enough history yet" instead, so there is no broken or zero-height chart element. Tier chips partition correctly (40 all / 30 prospect / 10 MLB). Method explains the value-based trim verbatim from the artifact, including "The trim is by VALUE, not by count: sales outside 0.2x to 5x the window's raw median are dropped before the median is taken, because symmetric count-trimming cannot move a median at all while lot listings and mis-parsed prices arrive in clusters", and the grade-factor table scrolls inside .mlbstats-scroll at 390px without pushing the page.
+
+REFRACTOR IN BOTH THEMES: the drawer's --iridescent hairline resolves to linear-gradient(90deg, #00D9FF 0%, #B47CFF 30%, #FF4FD8 55%, #FFD7...) and renders at 2px in both themes. It reads strongly in dark and is present but muted in light. Signal chips, the gold SCREEN tag and the org stripe all resolve from tokens in both themes; no same-on-same text and no unstyled element found in any of the 30 renders.
+
+WHAT I COULD NOT VERIFY, stated plainly:
+1. A REAL signed-in Supabase session. The account layer is unconfigured on this build (the auth modal itself says "Accounts go live when the Supabase backend is configured"), so I could not sign in for real. I verified the load-order property and both signed-in CTA branches with a stubbed account object installed before the deferred scripts, which reproduces the exact failure mode described in the brief, but a live session was not exercised.
+2. The post-rebuild page. build_site.py will re-stamp the ?v= hashes and, if the shared edit is applied, add the cards.css link. I wrote the ensureCSS guard so both outcomes are correct, but I could not run the build to confirm (forbidden).
+3. Real iOS/Safari. Everything here is Chromium. The .mlb-tape-inner swipe mask and the -webkit-overflow-scrolling affordance are site.css's and were not exercised on a real touch device.
+4. The betting record with a genuine published artifact. data/betting_record.json does not exist; I exercised renderRecord with four synthetic payloads instead.
+5. I did not run pytest. No test file references cards.js, cards.css or diamond.js (grepped), and no test asserts on any string I changed, so I expect the suite to be unaffected, but that is an inference and not a run.
+

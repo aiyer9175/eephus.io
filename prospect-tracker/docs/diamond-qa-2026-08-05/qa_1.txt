@@ -1,0 +1,163 @@
+=== LANE ===
+/dfs/ and /betting/ (assets/dfs.js, assets/betting.js)
+
+=== STATUS ===
+done
+
+=== FINDINGS ===
+{
+ "page": "/dfs/",
+ "width": "all",
+ "severity": "broken",
+ "what": "THE LINEUP OPTIMIZER REFUSED TO BUILD A LINEUP THAT EXISTS. With a 4-game/120-player slate and 120 salaries imported, clicking Optimize returned 'No lineup satisfies these constraints.' I computed the minimum-cost legal lineup by hand from the same pool: $33,800 against a $50,000 cap (2 cheapest P $6,700+$6,800, then C $2,800, 1B $2,500, 2B $2,300, 3B $2,200, SS $2,600, OF $2,300/$2,800/$2,800). ROOT CAUSE, traced by instrumenting a served copy of greedy(): the budget reservation summed minSal PER SLOT, so all three OF slots reserved the SAME cheapest outfielder ($2,300 x3 = $6,900 instead of $2,300+$2,800+$2,800 = $7,900). The under-reservation let greedy overspend, and the last OF slot ended with a $2,700 budget after the two cheapest OFs were already used (blockedBudget=29 of 31 candidates). The file's own comment warns about exactly this failure mode. FIX: reserveFor() now takes the max of two valid lower bounds, the per-slot minimum over UNUSED candidates and the sum of the n cheapest DISTINCT players in the union of the remaining slots' pools; plus a cheapest-first second pass so 'no lineup exists' is only claimed after trying to build the cheapest one. Post-fix: 114.7 pts, $49,800/$50,000, all 10 slots correctly eligible, no duplicate players, 3 games spanned, team limits held. Re-verified at caps 50k/45k/40k/35k/34k, max-per-team 5/2, min-start 0/50/95%, and avoid-opposing-hitters on. Every remaining refusal is genuine (cap 30k is below the $33,800 floor; max 1 per team cannot fill 10 slots from 8 teams; a 95% start floor empties the 2B pool).",
+ "fixed": true
+}
+{
+ "page": "/betting/",
+ "width": "all",
+ "severity": "broken",
+ "what": "PARLAY BUILDER PRINTED A FABRICATED EV. With no odds feed the payload's 30 legs carry odds:null. Adding two independent legs showed 'Parlay price -', 'Implied -', and 'EV / UNIT -0.655'. The fold was `a * (amToDec(l.odds) || 1)`, substituting decimal 1.0 for each unpriced leg, so the EV was just -(1 - model probability) wearing three decimal places. FIX: legs are counted, and if any leg is unpriced the price/implied/EV chips are withheld and the block says which legs have no odds and why. Model probability (0.62786 x 0.54883 = 34.46%) still shows, correctly.",
+ "fixed": true
+}
+{
+ "page": "/dfs/",
+ "width": "all",
+ "severity": "broken",
+ "what": "ALL FOUR SECTION TABS WERE DEAD CONTROLS ON THE LIVE PAGE. wireTabs() was only called from onData(), so a failed fetch painted one red box and bound nothing. This is the page's actual state in production right now, because data/dfs.json does not exist. Clicking Value / Stacks / Lineup Optimizer did literally nothing. FIX: errorState() now sets S.error, wires the tabs (idempotently, via a data-dfswired guard so Retry cannot double-bind) and lets renderSection carry the message; hashchange also works in the error state. Verified at 390 and 1366: the active tab tracks every click, the message stays, and Retry recovers into the correct section when the payload later arrives.",
+ "fixed": true
+}
+{
+ "page": "/dfs/",
+ "width": "390px",
+ "severity": "bad",
+ "what": "THE PAGE SCROLLED HORIZONTALLY. Slate tab document.scrollWidth 581 vs clientWidth 390; Stacks 497 vs 390 (both themes). The 9-column boards had no scroll container. FIX: .dfs-scroll wrapper (overflow-x:auto) around all four tables. Post-fix the document is 390/390 on every tab and the wrapper itself scrolls (482/358 and 565/358 measured), names wrap instead of ellipsizing.",
+ "fixed": true
+}
+{
+ "page": "/betting/",
+ "width": "320px",
+ "severity": "bad",
+ "what": "The Pick of the Day backtest table pushed the document to 355px at a 320px viewport. Betting never overflowed at 390/768/1366, so this only bites the narrowest phones. FIX: .bt-scroll wrapper on all six betting tables. Re-measured clean at 320, 360 and 390.",
+ "fixed": true
+}
+{
+ "page": "/betting/",
+ "width": "all",
+ "severity": "bad",
+ "what": "MY BETS HAD NO DELETE, AND GRADING WAS IRREVERSIBLE. The won/lost/void buttons rendered only while result === 'open' and vanished on click, and there was no remove control anywhere, so one misclick left a wrong row in the reader's private log forever. FIX: every row now carries a delete button, and settled rows carry reopen. removeBet() calls the account layer's existing deleteBet when signed in and filters localStorage otherwise. Verified end to end logged out: 3 rows added, survived reload, graded (-140 at 2u won = +1.43 net, ROI +71.43%; adding a lost 1u leg gives 1-1, +0.43, +14.29% on 3u staked, all hand-checked), reopened back to 0-1, deleted one row, reloaded and confirmed it stayed gone, deleted the rest and got the honest empty state back.",
+ "fixed": true
+}
+{
+ "page": "/betting/",
+ "width": "all",
+ "severity": "bad",
+ "what": "--border-subtle IS NOT A DEFINED TOKEN. site.css defines --border and --border-light; grep for --border-subtle across site.css returns 0. betting.js used it 12 times, so every one of those borders fell through to a hardcoded #333 / #222 / #3a3a3a. In light mode that painted near-black borders on cream while the rest of the page used the warm tan token. The repo's own guard (test_no_hardcoded_colors / test_client_uses_theme_tokens_for_colour) cannot catch this because the hex sits legally inside var(). FIX: mapped to --border (structure, inputs, buttons) and --border-light (row separators).",
+ "fixed": true
+}
+{
+ "page": "/betting/",
+ "width": "390px and 1366px",
+ "severity": "bad",
+ "what": "GOLD-ON-CREAM TEXT WAS UNREADABLE IN LIGHT MODE. Measured contrast: the 'warn' correlation tags 2.13:1, the banner chips 'unvalidated model' and 'no odds feed' 2.13:1, the 'NO PICK TODAY' heading 2.22:1, and the 21+ badge in the fallback legal block 2.28:1 (near-white on a gold fill). --accent-gold is #C9A227 in light against #F4F0E6, and --text-on-accent is #FBF8F0 in light, so filling with gold makes it worse rather than better. Dark mode was fine (12-14:1). FIX: gold moves to the border, which carries the same signal at any contrast, and the label moves to --text-primary (15.2:1 light, 14.9:1 dark). A programmatic sweep of every text node on all 11 sections in both themes now returns zero elements under 3:1.",
+ "fixed": true
+}
+{
+ "page": "/betting/",
+ "width": "all",
+ "severity": "bad",
+ "what": "The odds converter left stale numbers next to unparseable input. Typing 'abc' or '0' into the American box printed 'Enter a price.' in the output area while the DECIMAL box still read 2.0000 and IMPLIED still read 52.38% from the previous entry, so the page displayed a conversion of a price nobody had typed. FIX: the two boxes the reader is not typing in are cleared on invalid input.",
+ "fixed": true
+}
+{
+ "page": "/betting/",
+ "width": "all",
+ "severity": "bad",
+ "what": "amToDec accepted American prices inside the impossible -100..+100 gap. '-1' converted to decimal 101 and printed '+10000' and '0.99%' as though a book had posted it. FIX: a |odds| >= 100 floor in the one shared converter, so the boards, the calculators and the parlay parser all reject it identically. -110, +150, +100, -200 and bare '100' all still convert.",
+ "fixed": true
+}
+{
+ "page": "/dfs/",
+ "width": "all",
+ "severity": "bad",
+ "what": "Importing a salary CSV from the Lineup Optimizer tab gave zero confirmation. renderOptimizer returned early when no salaries were loaded, so the moment the import succeeded the importer AND the 'Read 120 priced rows, matched 120 to the slate' report both vanished and the reader saw nothing change. FIX: salaryStatus() split out of renderSalaries and rendered on the optimizer tab too. Verified the report now persists after import.",
+ "fixed": true
+}
+{
+ "page": "/betting/",
+ "width": "all",
+ "severity": "bad",
+ "what": "A single parlay leg rendered a full parlay summary (LEGS 1, model probability, price) rather than the 'add two or more' state the standalone calculator uses. FIX: the builder requires two legs, still shows the one-leg table so the leg can be removed.",
+ "fixed": true
+}
+{
+ "page": "/betting/",
+ "width": "n/a",
+ "severity": "bad",
+ "what": "NOT FIXED, AND I COULD NOT VERIFY IT LIVE. The My Bets sign-in merge will silently orphan every logged-out row. betting.js stores under localStorage key 'eephus_bets_v1'; eephus-account.js's mergeLocalBets() takes NO argument, reads its OWN key 'eephus.bets.v1', uploads that, and then clears it. betting.js calls a.mergeLocalBets(rows) and the argument is discarded, so nothing is uploaded; loadBets() then flips to the server list and the local rows disappear from the UI while still sitting in storage. I left it alone deliberately: the account layer is inert in this build (no Supabase config, so acctLive() is false and the path never executes, which is also why I could not exercise it in a browser), and every available fix crosses a line I was told not to cross. Changing LS_KEY to the account's key is pinned by test_betting.py's test_client_calls_the_account_api_it_does_not_own, and fixing mergeLocalBets means editing eephus-account.js, which is not my lane. Needs an owner decision.",
+ "fixed": false
+}
+{
+ "page": "/betting/",
+ "width": "all",
+ "severity": "polish",
+ "what": "The vig calculator's 'Hold' chip shows 4.76% for -110/-110, which is the overround minus 100%, not what the book keeps. On balanced action at -110 both ways the book takes $220 and pays $210, keeping $10, which is 4.55% of handle. I did NOT change the number: betting_model.hold_pct is defined the same way, test_betting.py:264 pins it at 4.7619, and the game cards publish it, so changing the client would break the file's stated invariant that a calculator number can never disagree with a board number. Fixed instead by correcting the explanatory copy (which had claimed 4.76% was what the book keeps) and adding a correctly-labelled 'Book keeps' chip: 4.55% / 4.35% / 4.11% for the -110-110, -120+100 and +150-180 cases, all hand-checked.",
+ "fixed": true
+}
+{
+ "page": "/betting/",
+ "width": "all",
+ "severity": "polish",
+ "what": "On Pick of the Day the payload's pick_reason renders as a bare lowercase fragment with no terminal period under the heading: 'no odds feed configured, so there is no market to price against'. The string is owned by betting_export.py, outside my lane. The related Team Bets note WAS fixed in my file: it used to read '...compare them against. odds feed not configured: set EEPHUS_ODDS_API_KEY...' with a lowercase sentence after a full stop, and now reads '...compare them against. The build reports: <note>.'",
+ "fixed": false
+}
+{
+ "page": "/dfs/",
+ "width": "all",
+ "severity": "polish",
+ "what": "In dark mode the site starfield (eephus-bg.js) shows through the board tables, so star glyphs sit visually on top of the numbers. The betting game cards do not have this because they set background:var(--bg-secondary); the dfs tables are transparent. Site-wide background behaviour rather than a defect in my lane, and cosmetic. Not changed.",
+ "fixed": false
+}
+{
+ "page": "/betting/",
+ "width": "all",
+ "severity": "polish",
+ "what": "betting.js references var(--transition-hover,none), another token that does not exist in site.css. It resolves to transition:none, so it is harmless dead code. Left alone.",
+ "fixed": false
+}
+{
+ "page": "/dfs/",
+ "width": "all",
+ "severity": "broken",
+ "what": "DATA GAP, NOT A CODE FIX, FOR THE ORCHESTRATOR. data/dfs.json does not exist in the repo at all. The artifact run_monthly step '9d-bis. DFS daily slate' / `python dfs_export.py` writes has never been produced, so /dfs/ serves nothing but its failure state in production. Everything else on the page is unreachable until that runs. I did not run any export. Because of this I exercised /dfs/ against route-injected payloads built to dfs_export.build_payload's exact shape, both an empty-slate payload and a 4-game / 120-player slate, plus a DraftKings-shaped salary CSV. The empty-slate payload renders its honest 'No slate to price' block with no overflow and no errors at every width and theme.",
+ "fixed": false
+}
+
+=== CHANGES ===
+{
+ "path": "c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/assets/dfs.js",
+ "what": "Optimizer: new reserveFor() computing a correct lower bound on the unfilled slots (max of the per-slot minimum over UNUSED candidates and the sum of the n cheapest DISTINCT players in the union of the remaining pools), replacing the per-slot minSal sum that reserved one cheap outfielder three times; greedy() gains a byCost ordering and optimize() runs a cheapest-first feasibility pass before claiming no lineup exists. Added .dfs-scroll wrappers (overflow-x:auto) around the slate, value, stacks and lineup tables plus the CSS rule. Split salaryStatus() out of renderSalaries() and rendered it on the optimizer tab so a CSV import confirms itself. Added S.error, moved the failed-load message into renderSection, and made errorState wire the tabs; wireTabs is now idempotent via a data-dfswired guard; onHashChange works in the error state."
+}
+{
+ "path": "c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/assets/betting.js",
+ "what": "Parlay builder: withholds parlay price / implied / EV when any leg is unpriced instead of folding decimal 1.0 into the product; requires two legs; legTable() and wireLegDrops() factored out. amToDec floors at |odds| >= 100. Odds converter clears the other two boxes on invalid input. Vig box gains a correctly-labelled 'Book keeps' chip and corrected explanatory copy (the 'Hold' value is unchanged and still matches betting_model.hold_pct). My Bets rows gain delete on every row and reopen on settled rows, backed by a new removeBet() that uses the account layer's deleteBet when signed in. Replaced 12 uses of the undefined --border-subtle token with --border / --border-light. Moved four gold-on-cream surfaces (warn tags, banner warn chips, 'No pick today' heading, 21+ fallback badge) off gold text onto --text-primary with gold borders. Added .bt-scroll wrappers around all six tables plus the CSS rule. Reworded the Team Bets no-odds-feed note so the build's reason is not a lowercase sentence after a full stop."
+}
+
+=== SHARED_FILE_EDITS ===
+None. No change to assets/site.css or build_site.py was needed. Every fix landed inside the two JS files I own, including the table scroll containers (each module injects its own CSS) and the contrast repairs (done by re-mapping to tokens site.css already defines, not by adding tokens). One caveat worth passing on rather than acting on: --border-subtle and --transition-hover are referenced by module CSS but defined nowhere in site.css. I removed betting.js's uses of --border-subtle; if you want the tokens to exist instead, that is a site.css decision.
+
+=== VERIFICATION ===
+Served the repo over a Playwright-driven HTTP/1.1 server (protocol_version set explicitly; no truncated-CSS symptoms observed). Rendered /betting/ and /dfs/ at 390, 768 and 1366 in both light and dark, clicking every tab: 7 betting sections and 4 DFS sections, 11 sections x 6 viewport/theme combinations. Zero uncaught page errors and zero console errors on either page after the fixes; the only remaining console event anywhere is the expected 404 for the missing data/dfs.json. document.scrollWidth equals clientWidth on every section at every width, re-confirmed at 320 and 360 for betting. ARITHMETIC HAND-CHECKED IN THE BROWSER: converter -110 -> 1.9091 / 52.38%, +150 -> 2.5000 / 40.00%, +100 -> 2.0000 / 50.00%, -200 -> 1.5000 / 66.67%, and all three boxes round-trip (dec 2.5 -> +150 -> 40.00, imp 52.38 -> -110 -> 1.9091). Vig -110/-110 -> overround 104.76%, hold 4.76%, book keeps 4.55%, fair 50.00/50.00, fair prices +100/+100; -120/+100 -> 104.55 / 4.55 / 4.35 / 52.17 / 47.83 / -109 / +109; +150/-180 -> 104.29 / 4.29 / 4.11 / 38.36 / 61.64 / +161 / -161. EV p=.55 at -110 -> +0.0500 per unit, +0.1500 on 3u, break-even 52.38%, edge +2.62%; p=.40 at +150 -> exactly 0.0000 and 0.00% edge, as it should be at a fair price. Kelly p=.55 at -110 -> 5.50% full, 2.75% half, 1.38% quarter; p=.60 at +150 -> 33.33%; p below break-even -> 0.00%, never negative. Parlay -110/-110 -> 3.6446 decimal, +264 American (matching the brief's expected value), 27.44% implied, 52.38% break-even leg rate; -110/+150/-130 -> 8.4441, +744, 11.84%, 49.11% break-even leg rate. Same-game refusal fires on 'yes', 'YES' and 'y' in the calculator and on a repeated game_pk in the builder. My Bets exercised LOGGED OUT: added, persisted to localStorage, survived a full page reload, graded (-140 at 2u won = +1.43 net / +71.43% ROI, hand-checked), reopened, deleted, reload-confirmed gone, and emptied back to the honest empty state. The 21+ disclaimer block is present, visible, contains '21+' and appears exactly once on all 7 betting sections in both themes; the Diamond preview chip is present on both pages. A regex sweep for 'undefined', 'NaN', 'null' and '[object Object]' across all 11 sections in both themes returns nothing. A computed-style contrast sweep of every text node in both app roots and both banners returns zero elements under 3:1 in either theme. The Generate GFX chip opens without error on Pick of the Day and Team Bets at 390 and 1366. DFS optimizer output validated programmatically against the source payload and the salary sheet on 11 constraint configurations: slot eligibility, no duplicate players, salary total vs cap, max per team, min games, min start rate, and the avoid-opposing-hitters rule (starters faced SDP and BOS; no rostered hitter came from either). Per the hard rules I ran no pytest, no build_site.py and no export, and made no git write; I instead grep-verified both files against every assertion in test_betting.py and test_fantasy_split.py that pins their source: no absolute URL and no affiliate token in betting.js, bt-block count 4 (needs >= 3), the same-game refusal strings intact, renderCalc/wireCalc/renderMyBets still free of S.data, every hex in the injected CSS still inside a var() fallback, SECTIONS unchanged, renderLegal still ordered before fetch, no em or en dashes in either file, dfs.js still carrying no betting copy and no salary-feed reference, DATA_URL and the single fetch(DATA_URL) unchanged in both.
+
+=== NOTES ===
+Read this first: /dfs/ has no data. data/dfs.json is absent from the repo, so in production that page is a red failure box and nothing else. Whatever else ships, someone needs to run the DFS daily slate step; until then a reader sees only the error state, which is now at least a working error state rather than four dead tabs.
+
+The headline bug is the optimizer. It was not a rendering problem or an empty-state problem, it was wrong: it told the reader no lineup satisfied his constraints while a legal lineup costing 68% of his cap sat in the pool, and it would have done that on real slates too, because three outfield slots sharing one pool is the normal shape of a DFS roster, not an edge case. That one only surfaces if you actually import salaries and press the button.
+
+The second-worst was quieter. The parlay builder printed 'EV / unit -0.655' for a ticket with no prices on it. Nothing was undefined or NaN, nothing threw; it just multiplied missing odds as though they were even money and published the result to three decimals on a gambling page. Both of those are exactly the class of defect a stubbed DOM cannot see.
+
+Three judgement calls I want on the record. First, I did not change the 'Hold' number in the vig calculator even though its label was arguably wrong, because betting_model.hold_pct defines it the same way, a test pins it at 4.7619, and the game cards publish it; desyncing the calculator from the board to win a definitional argument would have been the worse trade. I corrected the copy and added the balanced-handle figure beside it instead. Second, I did not touch the My Bets sign-in merge, which is genuinely broken and will orphan a logged-out reader's rows: every fix crosses into a file or a pinned test that is not mine, and the path is inert in this build so I could not exercise it either way. It needs an owner decision, not a guess from me. Third, the gold-on-cream contrast failures resolved from real tokens, so they were not 'hardcoded colours that survived' in the letter of the brief, but 2.13:1 on 9px uppercase text is unreadable and it is my module's CSS, so I fixed it by moving the colour to the border rather than by inventing a token.
+
+What I could not verify: the signed-in account path for My Bets (no Supabase config), and /dfs/ against real data (the artifact does not exist, so I used route-injected payloads built to dfs_export.build_payload's exact shape plus a DraftKings-shaped salary CSV). The optimizer fix is validated against synthetic salaries with realistic spreads, not against a real DraftKings export; the join logic itself is unchanged and matched 120 of 120 rows.
+
+One thing I found and discarded as an artifact of my own test data, in case it resurfaces: dfs.js's nameKey strips digits, so my first synthetic pool of 'NYM Bat 1' through 'NYM Bat 14' all collapsed onto one key and the salary import silently matched a single player per team. Real MLB names contain no digits, so this is not a product bug, but it did cost me a debugging pass and it would bite anyone else generating test names the same way.
+

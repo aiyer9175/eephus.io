@@ -1,0 +1,158 @@
+=== LANE ===
+/dynasty/ and /redraft/ (assets/dynasty.js, assets/redraft.js)
+
+=== STATUS ===
+done
+
+=== FINDINGS ===
+{
+ "page": "/redraft/ Daily Streamers",
+ "width": "390 (both themes)",
+ "severity": "bad",
+ "what": "The 7-column streamers table measured 431px against a 390px viewport and scrolled the PAGE horizontally (documentElement.scrollWidth 431 vs clientWidth 390). The Park column sat off the right edge of the viewport with no way to reach it. Fixed by wrapping the table in `.mlbstats-scroll .rd-tablewrap` so it scrolls inside its own box; verified after: page scrollWidth == clientWidth at 390/768/1366 in both themes, wrapper scrollWidth 415 vs clientWidth 358.",
+ "fixed": true
+}
+{
+ "page": "/dynasty/ Keeper Calculator",
+ "width": "390 (both themes)",
+ "severity": "bad",
+ "what": "Same failure: the 7-column keeper table measured 430px and scrolled the page sideways, clipping the 'Verdict at R5' column off the viewport. Fixed with the same wrapper; verified wrapper scrollWidth 414 vs clientWidth 358 and no page overflow.",
+ "fixed": true
+}
+{
+ "page": "/dynasty/ Dynasty Board + /redraft/ ROS SP, ROS RP, ROS Hitters",
+ "width": "390, 768, 1366 (both themes)",
+ "severity": "bad",
+ "what": "The /fantasy/ split renamed the board-card classes from ff-* to dyn-*/rd-*, which silently dropped the ENTIRE shared card block assets/site.css defines for exactly these four boards. Measured losses before the fix: card heights ragged at 110/112/118px instead of a uniform 104px; contain-intrinsic-size resolved to `auto 92px` instead of the matching `auto 104px` the stylesheet's own comment says the virtualization estimate must carry; the rotated rank diamond (.ff-rank, 45deg, bordered, 28px) rendered as bare 11px text with no glyph and no border; .ff-card:hover shadow gone; the phone sort-bar swipe strip (nowrap + overflow-x:auto + fade mask) replaced by a bar that wraps. The module <style> blocks had re-declared .dyn-sortbar/.rd-sortbar/.dyn-rank/.rd-rank/.dyn-strong/.rd-strong at equal specificity but LATER in the cascade than site.css, so they beat it. Fixed by emitting the shared names (ff-card, ff-card-list, ff-card-head, ff-rank, ff-rank-i, ff-sortbar, ff-sortbar-lbl, ff-id, ff-strong) and deleting the local duplicates. Verified after: uniform 104px at 768/1366, `auto 104px` intrinsic size, rank chip 40x40 with matrix(0.707,0.707,...) and a 1px border, sortbar flex-wrap:nowrap + overflow-x:auto at 390, zero clipped children across 40 cards at every width.",
+ "fixed": true
+}
+{
+ "page": "/dynasty/ Call-up Watch and /redraft/ Buy / Sell",
+ "width": "all (390, 768, 1366)",
+ "severity": "bad",
+ "what": "`.dyn-table th:nth-child(2)` / `.rd-table th:nth-child(2)` hard-coded the name column's position, which is only correct on the keeper and two-start tables. On Call-up Watch the name is column 1, so 'Prospect' was right-aligned over left-aligned names while 'Org' was left-aligned over right-aligned orgs; on Buy / Sell 'Player' was right-aligned over left-aligned names and 'Pos' left over right. Fixed by giving the heading the same .dyn-nm/.rd-nm class its cells carry. Verified: header text-align now matches cell text-align on all five table surfaces (callups, keeper, streamers, two_start, buysell x2).",
+ "fixed": true
+}
+{
+ "page": "/redraft/ Buy / Sell",
+ "width": "all",
+ "severity": "bad",
+ "what": "The only empty state on either page that was NOT an honest sentence. On an empty payload the surface rendered the explainer, then 'Buy-Low (unlucky)' and three column headings over an empty <tbody> on each side: a blank region under headings. The same thing fires when the ids ARE served but none resolves to a player record. Reproduced by intercepting /data/fantasy.json with zeroed sections. Fixed: each side now emits 'No buy-low / sell-high candidates in this build. The list comes from the expected-stat gaps on the nightly run.' Verified against the stubbed payload.",
+ "fixed": true
+}
+{
+ "page": "/redraft/ ROS SP, ROS RP, ROS Hitters",
+ "width": "all",
+ "severity": "bad",
+ "what": "The '#' sort header carried `get: o => o.score`, i.e. the Score column's comparator under a different name, and its default direction (desc) matched the board's default sort. The FIRST click therefore re-sorted the board into the order it was already in while moving the sort arrow off 'FG pts' onto '#' and writing spsort=rank.d into the URL: a control that appears to do nothing and mislabels the active sort. Fixed by dropping the column's get() and teaching sortBtn to render a column with no comparator as plain text rather than role=button/tabindex=0. Dynasty's '#' keeps its get() because there it is the served MODEL rank, a real field. Verified: redraft head is now ['#-', 'Pitcher button', 'FG pts button', 'SEM+ button']; a stale spsort=rank.d hash is rejected by readSort and degrades to the default.",
+ "fixed": true
+}
+{
+ "page": "/redraft/ Closer Grid",
+ "width": "all",
+ "severity": "polish",
+ "what": "A team whose five depth ids all miss the player index would render as a logo over nothing. Not reproducible on current data (0 of 150 ids unresolved), so this is a guard against the same blank-region class, not an observed break. Fixed with a one-line honest note.",
+ "fixed": true
+}
+{
+ "page": "/dynasty/ Dynasty Board vs Call-up Watch (data/fantasy.json)",
+ "width": "all",
+ "severity": "bad",
+ "what": "THE SERVED PAYLOAD IS INTERNALLY INCONSISTENT: 17 of the 60 Call-up Watch rows display a different eFV than the same prospect's Dynasty Board row on the same page. Worst cases: Caleb Bonemer 53 (board) vs 55 (call-up), Josiah Hartshorn 52 vs 54, Eric Hartman 52 vs 54, Walker Jenkins 57 vs 58. The CLIENT is right: it does no grade arithmetic, rounds efv with toFixed(0) and fvE with Math.round, and I verified those two agree in V8 at exact .5 (58.5 -> 59 both ways). The stale value is `sections.callup_watch.fvE`: recomputing fantasy_export._callup_watch(timeseries) read-only against the committed artifacts changes fvE on 50 of 60 rows and reconciles every one of them with sections.dynasty.efv (Walker Jenkins served 57.5, recomputed 57.4, dynasty efv 57.4). So the Call-up Watch grades were written from an older xfv.json than the dynasty section. NOT FIXED: it is an exporter/artifact-freshness problem, out of my lane, and dynasty.js's stated contract is that a disagreement means the exporter is wrong and the client must not paper over it. The orchestrator's rebuild should clear it; please confirm the two tabs agree afterward.",
+ "fixed": false
+}
+{
+ "page": "/redraft/ Daily Streamers",
+ "width": "390",
+ "severity": "polish",
+ "what": "The 'Date' column repeats the active day pill's date on all 27 rows of the slate (the table only ever renders one day) and eats roughly 60px of a 358px phone scrollport. It is the single biggest reason the table has to scroll at 390; dropping it would make the table fit outright. NOT changed: removing a served column is a content decision, not a rendering bug, and the scroll wrapper already removes the page overflow.",
+ "fixed": false
+}
+{
+ "page": "/redraft/ Buy / Sell",
+ "width": "all",
+ "severity": "polish",
+ "what": "The 'Luck gap' column mixes two incomparable scales: hitter luck_gap is a plus-stat (renders '+45') and pitcher luck is in wOBA points (renders '+0.100'), so the column reads non-monotonic down the page (0.100, 0.087, 0.075, +45, 0.072). The client's own comment documents the two decimal treatments and the row order is the server's. NOT changed: reconciling the scales is an exporter decision.",
+ "fixed": false
+}
+{
+ "page": "/redraft/ ROS Hitters",
+ "width": "all",
+ "severity": "polish",
+ "what": "VERIFIED CORRECT, recorded so it is not re-reported as a bug: FanGraphs Points and SABR Points produce identical hitter values. fantasy_scoring._HITTER_POINTS is shared by both Ottoneu points systems by design (only pitching differs), and the score column label does change (FG PTS -> SABR PTS) so the control is visibly live. The pitcher boards and both roto formats all re-score and re-sort correctly: ROS RP #1 flips Mason Miller -> Cade Smith between fgp and sabr, and 5x5/4x4 reorder the hitter board top four three different ways.",
+ "fixed": false
+}
+{
+ "page": "/dynasty/ vs /redraft/",
+ "width": "all",
+ "severity": "polish",
+ "what": "/dynasty/ carries a 'Generate GFX' share chip (verified: opens EEPHUS_GFX without error); /redraft/ has none and no shareSpec. Asymmetry between two sibling pages that split out of the same module.",
+ "fixed": false
+}
+{
+ "page": "/dynasty/ and /redraft/ hash router",
+ "width": "all",
+ "severity": "polish",
+ "what": "An invalid or non-canonical hash is honoured in the address bar rather than rewritten. #section=bogus and #lens=nope&sort=zzz.a correctly fall back to the default board (readHash validates every key), and #section=board correctly renders and activates the Dynasty Board, but the URL keeps the bogus/alias text because writeHash only runs on interaction. Cosmetic only. NOT changed.",
+ "fixed": false
+}
+{
+ "page": "/dynasty/ and /redraft/ masthead",
+ "width": "390",
+ "severity": "polish",
+ "what": "VERIFIED BY DESIGN, not a defect: the .section-sub standfirst clamps to 2 of ~7 lines at 390 (scrollHeight 139 vs clientHeight 40, -webkit-line-clamp:2). site.css documents this as deliberate and says the full text rides the title attribute; I confirmed the title attribute IS populated with the full string on both pages. Shell/site.css territory in any case.",
+ "fixed": false
+}
+{
+ "page": "/fantasy/ redirect",
+ "width": "1366",
+ "severity": "polish",
+ "what": "VERIFIED WORKING: loading /fantasy/ in a real browser lands on /redraft/ (location.replace fires, url resolves to /redraft/), zero console errors.",
+ "fixed": false
+}
+
+=== CHANGES ===
+{
+ "path": "c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/assets/dynasty.js",
+ "what": "Emit the shared site.css board-card classes instead of dyn-* copies (ff-card, ff-card-list, ff-card-head, ff-rank/ff-rank-i, ff-sortbar/ff-sortbar-lbl, ff-id, ff-strong) and delete the local .dyn-sortbar/.dyn-rank/.dyn-strong rules that were beating the stylesheet from a later cascade position. Wrap the Call-up Watch and Keeper tables in `.mlbstats-scroll .dyn-tablewrap` so wide tables scroll inside their own box instead of scrolling the page at 390px. Replace `.dyn-table th:nth-child(2)` with a class-based `.dyn-table th.dyn-nm` and tag the Prospect heading on both tables. Add the phone thin-scrollbar affordance for the wrapper. No change to any grade, sort comparator, hash key or the keeper arithmetic."
+}
+{
+ "path": "c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/assets/redraft.js",
+ "what": "Same shared-class adoption (ff-card / ff-card-list / ff-card-head / ff-rank / ff-sortbar / ff-id / ff-strong) with the local rd-* duplicates removed. Wrap the Daily Streamers, Two-Start SP and both Buy/Sell tables in `.mlbstats-scroll .rd-tablewrap`. Replace `.rd-table th:nth-child(2)` with `.rd-table th.rd-nm` and tag the Pitcher/Player headings on all three surfaces. Give Buy / Sell an honest per-side empty state instead of a header-only table, and the Closer Grid a note when a team has no resolvable arms. Drop the fake `get()` off the '#' column on all three card boards and make sortBtn render a comparator-less column as plain text rather than a role=button. Scoring, weight tables, roto z-scores and hash keys untouched."
+}
+
+=== SHARED_FILE_EDITS ===
+NONE REQUIRED. Nothing in my lane needs assets/site.css or build_site.py. The card-geometry fix works by naming the .ff-* classes site.css already defines, and the table scroll wrappers reuse the existing .mlbstats-scroll class (its bounded-height desktop rule is scoped `:has(> .mlbstats-table)`, so it does not apply to .dyn-table/.rd-table and no nested scroll trap is introduced).
+
+Optional, NOT proposed as a diff because it is cosmetic and cross-lane: the site.css block at lines 3182-3277 is now consumed by three modules whose names no longer contain "fantasy". If you ever rename `.ff-*` to something neutral there, assets/dynasty.js, assets/redraft.js and assets/fantasy.js all need the same rename in the same commit.
+
+=== VERIFICATION ===
+Rendered both pages in real Chromium via Playwright over the repo's conftest.serve_site harness (HTTP/1.1, threaded), at 390 / 768 / 1366 in both light and dark, on EVERY section tab (3 dynasty, 7 redraft) = 60 render states.
+
+AFTER the fixes: zero console errors, zero page errors, zero failed requests, and documentElement.scrollWidth == clientWidth in all 60 states (before: /redraft/ streamers 431 vs 390 and /dynasty/ keeper 430 vs 390). Zero "undefined"/"NaN"/"null"/"Infinity" strings in either app root. Zero children escaping their card box across the first 40 cards at every width.
+
+Interactive: clicked all 10 section tabs and confirmed every nav key maps to the board the client renders and to the tab it marks active (data-dynastysection dynasty/callups/keeper, data-redraftsection streamers/two_start/ros_sp/ros_rp/ros_hitter/buysell/closers - all 10 correct, none renders the wrong board). Clicked all four scoring formats on all three redraft card boards and confirmed values AND order change (ROS RP #1 flips Miller->Smith fgp->sabr; 5x5 and 4x4 reorder the hitter top four differently). Clicked 9 dynasty sort headers and 9 redraft sort headers plus all 3 lenses; each re-sorts and stamps the hash. Keyboard sorting (Enter on a focused header) works and restores focus. Whole-card click navigates (verified landing on /projections/#player=shohei_ohtani).
+
+Keeper calculator: probed defaults, 12/6/5/3, 20/20/30/12, blank, zeros, negatives and 99999 in all four fields. No division by zero (teams clamps to [2,40] so the divisor is never 0), no NaN/Infinity anywhere in the DOM, every input clamps to its range and persists to localStorage, break-even round and pick arithmetic correct (12 teams/pick 6/round 5 -> pick 54; 10 teams -> 46; 20 teams -> 86), Reset restores defaults.
+
+Hash routing by DIRECT LOAD (not clicking): 7 dynasty deep links and 9 redraft deep links including the "board" alias, invalid sections, an invalid lens/sort pair, an unknown sys id and an out-of-window day. All render the right board with the right tab active; every invalid key degrades to the default. /fantasy/ redirects to /redraft/ in the browser.
+
+Empty states: intercepted /data/fantasy.json with four stubbed responses (zeroed sections, no sections key, garbage object, HTTP 500) and read every tab's rendered text. All are honest sentences; no spinner, no blank region, no "undefined". The one exception found (Buy / Sell) is fixed and re-verified.
+
+Regression safety (no pytest run): re-ran the fantasy.js <-> redraft.js score parity by hand in MiniRacer through test_fantasy_split's own PARITY_PRELUDE - 8 of 8 section x format combinations match cell for cell. Executed the 28 parameterless test functions in test_fantasy_split.py directly: 28 pass, 0 fail. Re-checked the module's static gates by hand: no em-dash or en-dash in either file, DATA_URL unchanged, no arithmetic on .efv or .fvE, Math.round(c.fvE) and Math.ceil(c.fv) intact, breakEvenRound and localStorage intact, EEPHUS_DIAMOND present with gating off, SECTIONS lists unchanged and every shell nav key still known to its client. Both files parse in V8.
+
+COULD NOT VERIFY: real iOS/Safari behaviour (Chromium only, so the -webkit-overflow-scrolling and mask affordances are inferred from the same pattern site.css already ships); the Diamond gate's capped-preview path (gating is off site-wide, so capRows and gateNote never fired); the consensus-FV ceiling fallback on Call-up Watch (0 of 60 served rows have a null fvE, so only the eFV round-to-nearest branch executed against real data - the ceiling branch is covered by the unit test I ran and by source inspection); and whether the stale callup_watch.fvE actually clears on your rebuild.
+
+=== NOTES ===
+Both boards render fully populated (300 dynasty rows, 250/180/350 ROS rows, 60 call-ups, 65 streamers over 3 day slates, 62 two-start, 30 closer cards, 50+50 buy/sell), so no empty board here masked a real defect.
+
+The biggest find is #3, and it is worth flagging to whoever owns the other split pages: the /fantasy/ split renamed every board-card class, and assets/site.css holds ~95 lines of geometry written specifically for those boards under the OLD names. It is not just cosmetic - the fixed card height, the contain-intrinsic-size that must match it for the virtualization estimate, the rank glyph, the hover state and the phone sort-bar swipe strip were all silently inert on both pages. If /dfs/, /betting/ or /cards/ also renamed shared classes on the way out of an older module, they will have the same class of dead styling and it is invisible under a stubbed DOM, which is exactly why this survived to a browser.
+
+Second point worth the orchestrator's attention: finding #8 is a real inconsistency a reader can see on one screen (the same prospect graded 53 on one tab and 55 on the next), but the client is not at fault and I deliberately did not hide it. It should disappear on your rebuild; if it does not, fantasy_export's callup_watch path is reading a different xfv.json than the dynasty path.
+
+Everything I changed is presentation and empty-state copy. No grade, no scoring weight, no comparator semantics, no hash key and no keeper arithmetic moved. The one behavioural change is #6 (the '#' header on redraft stops being a button), which removes a control rather than altering a result.
+
+Note for the rebuild: the page shells reference /assets/dynasty.js?v=18633786 and /assets/redraft.js?v=7fd1a02a. Those content hashes are now stale and build_site.py will re-stamp them.
+
+Working artifacts (screenshots at every width/theme/tab, before and after, plus the audit scripts) are under C:\Users\noah\AppData\Local\Temp\claude\c--Users-noah-baseball-projects-BaseballR\b288db78-dd0e-4852-a112-85566e12c99e\scratchpad if you want to eyeball anything.
+
