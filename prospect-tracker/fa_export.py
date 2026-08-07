@@ -1186,6 +1186,28 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
         "dpw_series": dpw_series,
         "gate1": _gate("fa_gate1_eval.json"),
         "gate2": _gate("fa_gate2_eval.json"),
+        # DISCLOSURE, required by the owner decision that created the pin
+        # (2026-08-06). FA pricing deliberately reads a DIFFERENT WAR than
+        # /projections/ does for the same player. A reader who finds two figures
+        # and no explanation has found a bug even when both numbers are right,
+        # so the divergence ships with the numbers rather than living in a
+        # commit message.
+        "war_input_divergence": {
+            "diverges": bool(not fm.FA_PRICING_USE_DEF),
+            "pinned_off": "F-DEF, the fitted defensive and positional column",
+            "why": ("F-DEF wins the WAR projection gate and loses the money "
+                    "gate. Dropping it from pricing only takes AAV error from "
+                    "3.135 to 2.909 (about 2.5 times the smallest difference "
+                    "this test can resolve) and widens the model's edge over "
+                    "its baseline from 0.224 to 0.340. It also improves the "
+                    "guarantee and the mega-deal error."),
+            "consequence": ("Free agent prices on this page are built on a WAR "
+                            "projection that excludes defense. The MLB "
+                            "Projections module includes it, so the two can "
+                            "show different WAR for the same player. Both are "
+                            "doing the job they were measured for."),
+            "measured": "docs/fa-gate2-attribution-2026-08-06.md",
+        },
         "park_factors": fa_fit.park_factors(class_year - 1),
         "teams": teams,
     }

@@ -105,7 +105,10 @@ def test_fitted_models_cache_key_invalidates_on_corpus_refresh(tmp_path, monkeyp
         calls.append(("curves", corpus["last"]))
         return {"vintage": corpus["last"]}
 
-    def _fake_war(corpus, max_season=None):
+    # **kw absorbs use_def, added 2026-08-06 when /fa/ pricing gained a scoped
+    # F-DEF pin. This stub stands in for the real fit and does not care which
+    # arm it is; a fixed signature here would break every future keyword too.
+    def _fake_war(corpus, max_season=None, **kw):
         calls.append(("war", corpus["last"]))
         return {"vintage": corpus["last"]}
 

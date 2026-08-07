@@ -363,6 +363,13 @@ def _ml_active() -> bool:
     return proj_ml.load() is not None
 
 
+#: Whether /fa/ PRICING uses the F-DEF term. False by owner decision on
+#: 2026-08-06. A PIN, not a global setting: fa_projection.DEF_FEATURE_DEFAULT
+#: stays True so /projections/ is unaffected and only the money model
+#: diverges. The FA page must disclose the divergence.
+FA_PRICING_USE_DEF = False
+
+
 def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
                       age: int | None, curves: dict, war_map: dict,
                       league: dict, in_progress: tuple[int, float] | None = None,
@@ -2047,7 +2054,17 @@ def enriched_signings(first_year: int = 2015, last_year: int = 2026) -> list[dic
     out: list[dict] = []
     skipped = 0
     for year in range(first_year, last_year + 1):
-        curves, war_map = fp.fitted_models(corpus, year - 1)
+        # F-DEF PINNED OFF FOR /fa/ PRICING (owner decision 2026-08-06).
+        # THIS is the Gate-2 seam. An earlier attempt pinned fa_backtest:247
+        # instead, which is GATE 1 (the WAR projection gate), and the money
+        # numbers did not move at all. Gate 2 never calls fitted_models in its
+        # own loop; it scores a MarketModel built from these enriched rows.
+        # Attribution: dropping F-DEF takes AAV MAE 3.135 -> 2.909, about 2.5x
+        # the 0.091 MDE95, and widens the edge over baseline +0.224 -> +0.340.
+        # It wins Gate 1 and loses Gate 2, so the pin is SCOPED: /projections/
+        # keeps it via DEF_FEATURE_DEFAULT. docs/fa-gate2-attribution-2026-08-06.md
+        curves, war_map = fp.fitted_models(corpus, year - 1,
+                                           use_def=FA_PRICING_USE_DEF)
         # MEASURED (Phase-1 ship attempt, 2026-06-11): feeding ML paths into
         # the market model FAILED Gate 2 (guarantee 11.08 vs 10.56, AAV
         # 3.53 vs its 3.51 baseline) even with point-in-time bundles

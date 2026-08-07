@@ -332,7 +332,8 @@ def _era_adjust(rows: list[dict], league: dict, comp: str, side: str) -> dict:
     return out
 
 
-def fitted_models(corpus: dict, max_season: int, use_cache: bool = True) -> tuple[dict, dict]:
+def fitted_models(corpus: dict, max_season: int, use_cache: bool = True,
+                  *, use_def: bool | None = None) -> tuple[dict, dict]:
     """(curves, war_map) fitted on seasons <= max_season, disk-cached per
     max_season — Gate 2 and the live market model reuse Gate 1's twelve
     point-in-time fits instead of recomputing them (load-time ask)."""
@@ -344,14 +345,19 @@ def fitted_models(corpus: dict, max_season: int, use_cache: bool = True) -> tupl
     # nothing about model settings, so without this suffix an A/B of the arm
     # would silently read the other arm's map off disk. Off = the historical
     # filename, so no existing cache is invalidated.
-    _suffix = "_def" if _def_enabled() else ""
+    # `use_def` is a CALL-SCOPED override. run_monthly builds /fa/ and
+    # /projections/ in ONE process, so a module-level flip would contaminate
+    # whichever ran second. The cache key already carries the arm in its
+    # suffix, so the two fits coexist on disk.
+    _use_def = _def_enabled() if use_def is None else bool(use_def)
+    _suffix = "_def" if _use_def else ""
     cache = (CACHE_DIR /
              f"fa_fits_{max_season}_{corpus['first']}_{corpus['last']}{_suffix}.pkl")
     if use_cache and cache.exists():
         with open(cache, "rb") as fh:
             return pickle.load(fh)
     curves = fit_aging_curves(corpus, max_season=max_season, write=False)
-    war_map = fit_war_map(corpus, max_season=max_season)
+    war_map = fit_war_map(corpus, max_season=max_season, use_def=_use_def)
     # P-FITCACHE: use_cache=False must not WRITE either. The cache key is
     # (max_season, corpus.first, corpus.last) and carries nothing about the
     # ROWS, so a caller that passes a modified corpus - a bootstrap resample, a
@@ -1534,7 +1540,8 @@ def _assemble_hitter(p: dict, league: dict, season: int) -> dict:
 # WAR map — transparent OLS on the TRAIN corpus (coefficients published)
 # ============================================================================
 
-def fit_war_map(corpus: dict, max_season: int) -> dict:
+def fit_war_map(corpus: dict, max_season: int, *,
+                use_def: bool | None = None) -> dict:
     """Least-squares WAR maps per side, fitted on seasons <= max_season:
       hitters:  WAR ~ b0 + b1·(PA/600) + b2·(wRAA_proxy·PA/600) + b3·C·(PA/600)
       pitchers: WAR ~ b0 + b1·(IP/100) + b2·((lgFIP−FIP)·IP/100) + b3·SP·(IP/100)
@@ -1543,7 +1550,11 @@ def fit_war_map(corpus: dict, max_season: int) -> dict:
     import numpy as np
     league = corpus["league"]
     out: dict = {}
-    _def = _def_enabled()
+    # Call-scoped so the FIT and the SCORE agree. Scoring without a term the
+    # map was fitted WITH is incoherent: the other coefficients absorbed its
+    # contribution. Measured 2026-08-06, that mismatch was WORSE than either
+    # arm (guarantee 10.385 against 10.207 with it and 9.690 without).
+    _def = _def_enabled() if use_def is None else bool(use_def)
     # hitters
     X, y = [], []
     a = _pcfg()["assembly"]
