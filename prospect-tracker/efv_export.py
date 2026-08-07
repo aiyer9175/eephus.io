@@ -83,6 +83,34 @@ def _entry(s, side, kind):
         e["krp_plus"] = s["krp_plus"]
     if s.get("factors"):                                 # per-prospect eFV explainer
         e["factors"] = s["factors"]
+    if s.get("factors_more"):                            # groups the top-4 cut dropped
+        e["factors_more"] = s["factors_more"]            # ({n, mag}); see efv_score._factors
+    # ── THE WHITELIST GAP, closed 2026-08-07 (Lane F2) ─────────────────────────
+    # This function is a field WHITELIST, so anything efv_score writes and this does not
+    # name reaches data/xfv_scored_live_*.json and stops there. Both fields below were
+    # emitted on 2026-08-07 and neither reached data/xfv.json, which is the file the
+    # board actually reads, so the disclosure had nothing to read and the ordering had
+    # no key to break ties on.
+    #   grade_basis      WHICH WAR-to-FV map produced xfv_grade on this row:
+    #                    "outcome_pooled" (the flagship pooled outcome curve) or
+    #                    "provisional_capped" (efv_ungraded._GRADE_MAP, served under the
+    #                    floor routing). The two disagree by -7.0 FV at WAR 0.0 and +11
+    #                    to +12 through the 0.5-1.5 band, so a surface showing both owes
+    #                    the reader a label, and prospx efvScaleNote reads this field.
+    #   board_sort_key   ORDER-ONLY, never displayed: the model's unrounded PRE-clamp
+    #                    predicted WAR. outcome_implied_fv maps every non-positive
+    #                    prediction to one knot, so the floor is a single enormous tie
+    #                    block; this lets storage._active_key and prospx fvCmpDesc break
+    #                    it by the model instead of by name. Both readers must see the
+    #                    SAME key or the baked overall_rank and the rendered order
+    #                    diverge, which is the three-orderings bug BOARD_GRADE_FIELD
+    #                    exists to prevent.
+    # Emitted only where present, so backgraded/resolved rows (which carry neither) are
+    # byte-identical and the artifact does not grow a wall of nulls.
+    if s.get("grade_basis") is not None:
+        e["grade_basis"] = s["grade_basis"]
+    if s.get("board_sort_key") is not None:
+        e["board_sort_key"] = s["board_sort_key"]
     if s.get("xline_note"):                              # S-XLINE measurement note (annotation only,
         e["xline_note"] = s["xline_note"]                # live covered players; never a ranked factor)
     if s.get("xfv_provisional"):                          # prior-anchored (no pro track record)

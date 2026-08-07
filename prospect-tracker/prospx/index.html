@@ -11506,7 +11506,15 @@ function fvCmpDesc(a, b) {
   };
   const ag = _g(a), bg = _g(b);
   if (bg !== ag) return bg - ag;                 // pure eFV-decimal (consensus-fallback) order
-  // exact tie DOWN TO THE DECIMAL -> '+' upside flag (consensus nuance) -> TBS -> name
+  // EXACT TIE DOWN TO THE DECIMAL -> the model's own sub-decimal order, THEN the
+  // '+' upside flag -> TBS -> name. board_sort_key is the unrounded PRE-clamp predicted
+  // WAR (see efvBoardSortKey); it goes FIRST among the tiebreaks because it is the only
+  // term in this chain that carries model information about these players, and the block
+  // it breaks is enormous rather than incidental. storage._active_key inserts it at the
+  // SAME position, which is not a nicety: a key applied by one reader and not the other
+  // is the rendered-order-vs-baked-rank divergence BOARD_GRADE_FIELD exists to prevent.
+  const ak = efvBoardSortKey(a), bk = efvBoardSortKey(b);
+  if (bk !== ak) return bk - ak;
   const ap = (a && a.fv_close_plus) ? 1 : 0;
   const bp = (b && b.fv_close_plus) ? 1 : 0;
   if (bp !== ap) return bp - ap;
@@ -31361,8 +31369,16 @@ function getEfvHistory(p) {
   if (!p) return null;
   // Provisional (source-ungraded) prospects carry their own per-season eFV trajectory inline
   // (no scout snapshots to overlay), so the FV-history chart can still plot their grade over time.
-  if (p._xfv_entry && Array.isArray(p._xfv_entry.xfv_history) && p._xfv_entry.xfv_history.length >= 2) {
-    return p._xfv_entry.xfv_history;
+  // A ROUTED row is the second case: it is a GRADED row whose served number comes from the
+  // provisional map (grade_basis "provisional_capped"), and _EFV_HIST is on the flagship
+  // outcome scale. Plotting that series under a provisional badge would put the chart and
+  // the number it explains on two scales that disagree by 7 to 12 FV, which is the exact
+  // thing the disclosure exists to stop. Prefer the provisional series where one exists.
+  const _pe = p._xfv_entry
+    || ((((typeof getEfv === "function" ? getEfv(p) : null) || {}).grade_basis
+         === "provisional_capped") ? p._prov_entry : null);
+  if (_pe && Array.isArray(_pe.xfv_history) && _pe.xfv_history.length >= 2) {
+    return _pe.xfv_history;
   }
   if (!_EFV_HIST || !p.player_key) return null;
   const s = _EFV_HIST[p.player_key];
@@ -31459,8 +31475,23 @@ function provPlayerByKey(key) { if (_PROV_BY_KEY === null) _buildProvPlayers(); 
 // graded row carries Statcast+ on 78.8%, zone metrics on 78.7%, transactions on 99.0%
 // and level changes on 76.6%, plus points, stock, surplus, eta and acquisition; the
 // provisional twin is a nine-field synthesis. Letting the twin win would drop all of it
-// to change one number. The provisional ENTRY is merged onto the survivor instead, so
-// getEfv still reaches it and the routing decides the grade server-side.
+// to change one number.
+//
+// WHICH FIELD THE TWIN'S ENTRY LANDS ON DECIDES THE BOARD GRADE, and the first version
+// of this function put it on the wrong one. It assigned the provisional entry to
+// _xfv_entry, and getEfv() returns _xfv_entry BEFORE it looks at _EFV - so every one of
+// the 2,636 survivors served the provisional grade, with no scope whatsoever. Measured
+// against the shipped source 2026-08-07 (tools/efv_board_serve_probe.py): 2,636 rows
+// served the provisional number and 183 of them grade ABOVE FV30 on the flagship map,
+// demoted by up to 14.0 FV (ryan_bourassa 38.1 -> 24.1, nicolo_pinazzi 42.6 -> 30.0).
+// That is exactly the demotion the server-side routing is scoped to prevent, arriving
+// through the front door.
+//
+// So the twin's entry lands on _prov_entry, which nothing resolves a GRADE from. The
+// board number goes back to being whatever data/xfv.json says (see efvBoardValue), and
+// the ONE place that decides whether a row serves the flagship or the provisional map
+// is efv_score.route_floor_grade, server-side, scoped to rows where the outcome curve
+// is abstaining at its floor knot. One decision, one owner.
 function _dedupeProvPool(graded, prov) {
   const seen = new Map();
   for (const p of graded) if (p && p.player_key) seen.set(p.player_key, p);
@@ -31469,7 +31500,7 @@ function _dedupeProvPool(graded, prov) {
     if (!q || !q.player_key) continue;
     const g = seen.get(q.player_key);
     if (!g) { out.push(q); continue; }
-    if (g._xfv_entry === undefined && q._xfv_entry) g._xfv_entry = q._xfv_entry;
+    if (g._prov_entry === undefined && q._xfv_entry) g._prov_entry = q._xfv_entry;
   }
   return out;
 }
@@ -32478,6 +32509,45 @@ const _PROV_RANK_PENALTY = 0;
 function efvBoardValue(x) {
   return (x && x.xfv_grade != null) ? Number(x.xfv_grade) : null;
 }
+// ORDER-ONLY sub-decimal tiebreak, and the one number in this file that is deliberately
+// NEVER rendered. board_sort_key is the eFV model's unrounded PRE-clamp predicted WAR.
+// It exists because vf.outcome_implied_fv maps every non-positive prediction to exactly
+// the outcome curve's first knot, so the board floor is a single tie block of ~3.1k rows
+// that the '+'/TBS/name chain then orders by proxies carrying no model information.
+// It is NOT a grade. A reader shown -1.83 would read it as one, which is why it has no
+// display path and why fvCmpDesc is its only consumer here.
+// The sentinel MUST equal storage._NO_BOARD_SORT_KEY (-1e9): a row with no key sorts to
+// the BACK of its tie block on both readers, so the Python tuple sort and this
+// comparator agree by construction instead of by coincidence. Measured 2026-08-07: zero
+// live actives lack an xfv.json entry, so the sentinel is unreachable on the board today
+// and the provisional-only rows (which legitimately have no key) are the only users.
+const _NO_SORT_KEY = -1e9;
+function efvBoardSortKey(p) {
+  const x = (typeof getEfv === "function") ? getEfv(p) : null;
+  const v = (x && x.board_sort_key != null) ? Number(x.board_sort_key) : null;
+  return (v != null && isFinite(v)) ? v : _NO_SORT_KEY;
+}
+// ── THE TWO-SCALE DISCLOSURE (Lane F1, 2026-08-07) ─────────────────────────────
+// The board serves numbers from TWO different WAR-to-FV maps and has done since the
+// provisional cohort was folded in. They disagree, recomputed from the committed
+// constants 2026-08-07 (tools/efv_board_floor_sim.py, two_scale_disagreement):
+//   predicted WAR   0.0     flagship 20.0   provisional 27.0 hit / 25.0 pit   INVERTED
+//   predicted WAR   0.5     flagship 40.3   provisional 28.9 hit / 27.3 pit   +11.4 / +13.1
+//   predicted WAR   1.0     flagship 42.8   provisional 30.8 hit / 29.5 pit   +12.0 / +13.3
+//   predicted WAR   3.5     flagship 47.6   provisional 40.3 hit / 37.7 pit   +7.3 / +9.9
+// So "eFV 27" means two different things depending on which map produced it, and until
+// now nothing on the page said so. grade_basis (efv_score, whitelisted through
+// efv_export._entry) names the map per row.
+// Returns "" for the flagship basis: a label on every row would be noise, and the
+// flagship map is the one the rest of the page's copy already describes.
+function efvScaleNote(x) {
+  if (!x || x.grade_basis !== "provisional_capped") return "";
+  return "Provisional scale: no source has graded this player, so his grade comes from "
+       + "the production-only provisional map, not the outcome curve the rest of the "
+       + "board is on. The two maps disagree by up to 13 FV, and they swap direction "
+       + "below zero projected WAR, so read this number against other provisional "
+       + "grades rather than against a scouted one.";
+}
 function efvRankValue(p) {
   const x = getEfv(p);
   // Board ordering = the board number, decimal (so same-integer players order by the
@@ -32676,8 +32746,18 @@ function gradeBlock(p, opts) {
 // grade space consistently with the displayed grade. Endpoints round to NEAREST (an outcome
 // band, not a consensus FV). Returns {lo, hi} or null when the payload lacks the fields or the
 // band is degenerate/provisional (caller hides it).
+// A ROUTED row is hidden for the same reason a provisional one is, and it is the same
+// reason: the band is inverted from surplus_mm, which is priced through the FLAGSHIP
+// odds grade (efv_score keeps p_bucket / p_bust on the basis they were ground-truthed
+// on and deliberately does not re-key them onto the routed number). So on a routed row
+// the badge is on the provisional scale and the band beside it would be on the outcome
+// scale, and the reader would see "eFV 33 · outcome band 20-22" with nothing to explain
+// it. 68 of the 2,434 routed rows carry a non-degenerate surplus pair today, so this is
+// a real population, not a hypothetical. Hiding it is the honest option; re-pricing the
+// band onto the provisional map would be inventing a distribution nothing measured.
 function efvGradeBand(x) {
   if (!x || x.xfv_ungraded || x.xfv_grade == null) return null;
+  if (x.grade_basis === "provisional_capped") return null;
   const d = x.dist || {};
   const p10 = (d.p10_mm != null) ? d.p10_mm : x.band_p10_mm;
   const p90 = (d.p90_mm != null) ? d.p90_mm : x.band_p90_mm;
@@ -32774,6 +32854,11 @@ function efvTooltip(x) {
   }
   if (x.xfv_provisional && !x.xfv_ungraded)
     parts.push("Prior-anchored: no pro track record yet - the grade starts at the consensus prior, and any small gap vs consensus FV is 20-80 rank placement, not a penalty");
+  // TWO-SCALE DISCLOSURE. This is the row-level surface: the board mixes the flagship
+  // and provisional maps in one column, and the tooltip is where a reader asks what a
+  // given number means. See efvScaleNote for the measured disagreement.
+  const _scaleNote = (typeof efvScaleNote === "function") ? efvScaleNote(x) : "";
+  if (_scaleNote) parts.push(_scaleNote);
   // Secondary transparency line. The headline is the RAW model grade (2026-07-25); the
   // quantile is the same grade mapped onto the population's 20-80 shape, which is what
   // surplus is priced through. Surfaced when the two round differently so the number on
@@ -32944,9 +33029,16 @@ function efvDetailHeaderHTML(p, fvBadge) {
   // Provisional (source-ungraded): label as provisional, dashed badge, and NO consensus-FV
   // reference line (there is no source grade to compare against).
   const prov = gb.provisional;
+  // TWO-SCALE DISCLOSURE, visible rather than hover-only on the detail page: this is
+  // the one screen where a reader compares this grade against a scouted prospect's.
+  const scaleNote = (typeof efvScaleNote === "function") ? efvScaleNote(x) : "";
+  const scaleHTML = scaleNote
+    ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.35;max-width:280px;margin-left:auto;text-align:right;" title="${escapeHtml(scaleNote)}">Provisional scale <b style="color:var(--text-secondary);">not the outcome curve</b> · the two differ by up to 13 FV</div>`
+    : "";
   return `<div style="${labelStyle}"><span>${prov ? "Provisional eFV" : "eFV"}</span></div>`
     + `<span class="fv-badge ${fvClass(String(g))} size-lg" title="${escapeHtml(efvTooltip(x))}" style="margin-top:4px;${prov ? "border-style:dashed;" : ""}">${g}</span>`
     + efvGradeBandHTML(x)
+    + scaleHTML
     + (prov
         ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">production-only · no source grade</div>`
         : gb.priorAnchored
@@ -33024,6 +33116,19 @@ function efvDetailCard(p) {
   const xg = efvGradeDisplay(x);
   const d = efvMinusConsensusDisplay(x);
   const xlineHTML = efvXlineNoteHTML(x);
+  // WHAT THE TOP-4 CUT DROPPED (Lane F5, 2026-08-07). The card shows the four largest
+  // model-driver groups and used to stop there with no sign that a fifth existed, so a
+  // reader had no way to know the list was a selection rather than the ledger. The cut
+  // itself is kept and the reasoning is on efv_score._factors: the card ranks by
+  // contribution size on THIS player today, which is a different question from "which
+  // feature moved the most between two model vintages", and widening it would only
+  // lengthen the 83% of cards that already fill four slots with larger numbers.
+  // factors_more is a server-measured count, not an inference, and is absent when
+  // nothing was cut.
+  const fm = x.factors_more;
+  const moreHTML = (fm && Number(fm.n) > 0)
+    ? `<div style="margin-top:5px;font-size:10px;color:var(--text-tertiary);font-style:italic;" title="Only the four largest model drivers are listed. ${Number(fm.n)} more cleared the reporting floor and were smaller; their magnitudes total ${Number(fm.mag).toFixed(2)} against the ${Number(((x.factors || [])[0] || {}).mag || 0).toFixed(2)} of the largest one shown. Overlay factors (Statcast+, age, injury, role) are not subject to this cut and are always listed.">and ${Number(fm.n)} smaller factor${Number(fm.n) === 1 ? "" : "s"} (combined ${Number(fm.mag).toFixed(2)})</div>`
+    : "";
   const factorsHTML = (x.factors && x.factors.length) ? `
       <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
         <div title="Signals that moved eFV off the consensus prior, biggest first. The number is that signal's contribution size on the model's own scale, and the bar is the same number on a log scale so the large ones stay apart. They rank against each other; they do not sum to the eFV-minus-consensus gap. Game power is intentionally not a driver (scouts over-price it vs realized WAR)." style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How eFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${efvDeltaText(d)}</span> &rarr; eFV ${xg}` : ""}</div>
@@ -33038,7 +33143,7 @@ function efvDetailCard(p) {
             <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;flex-shrink:0;">${magTxt}</span>
             <span style="width:56px;height:5px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden;flex-shrink:0;"><span style="display:block;height:100%;width:${w.toFixed(0)}%;background:${col};"></span></span>
           </div>`;
-        }).join("")}${xlineHTML}
+        }).join("")}${moreHTML}${xlineHTML}
       </div>` : (xlineHTML ? `
       <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">${xlineHTML}</div>` : "");
   // Visible healthy-eFV line for an injured prospect. The "Injury penalty" bar
@@ -33052,7 +33157,7 @@ function efvDetailCard(p) {
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       ${provBanner}
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-        <div class="detail-title" style="margin:0;">${x.xfv_ungraded ? "Provisional eFV · production-only" : x.xfv_provisional ? "eFV · prior-anchored (awaiting pro debut)" : "eFV · outcome-grounded grade"}</div>
+        <div class="detail-title" style="margin:0;"${x.grade_basis === "provisional_capped" ? ` title="${escapeHtml(efvScaleNote(x))}"` : ""}>${x.xfv_ungraded ? "Provisional eFV · production-only" : x.grade_basis === "provisional_capped" ? "eFV · provisional scale (no source grade)" : x.xfv_provisional ? "eFV · prior-anchored (awaiting pro debut)" : "eFV · outcome-grounded grade"}</div>
         <span class="fv-badge ${fvClass(String(efvGradeDisplay(x)))} size-sm"${x.xfv_ungraded ? ' style="border-style:dashed;"' : ""} title="${escapeHtml(efvTooltip(x))}">${efvGradeDisplay(x)}</span>
       </div>
       ${x.krp_plus != null ? `<div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:11px;color:var(--text-tertiary);">

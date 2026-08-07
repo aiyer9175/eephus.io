@@ -499,6 +499,14 @@ def test_committed_artifact_headline_alias_contract():
 # tool gate gained a real paired-bootstrap MDE which failed `hit` where the
 # bare `br > gr` had passed it. 178 tool_xfv blocks moved, zero headline xfv.
 _GOLDEN_XFV_SHA256 = "5430ea7b444155eea68c9313941220a7e03cf48eafbe8c80b94ff661888f237b"
+# OWED RESTAMP, and it cannot be paid from a dev box. On 2026-08-07 _entry started
+# whitelisting three fields efv_score already emitted (grade_basis, board_sort_key,
+# factors_more) and efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT flipped True, which
+# moves 2,434 served grades. The committed artifact predates all of it, so this hash is
+# still correct TODAY and this test still passes. The FIRST regen that writes those
+# fields moves the hash, and whoever commits that artifact restamps this constant and
+# records it. Not a drift alarm when it happens; it is this ship arriving.
+# Ship record: docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_SHIP.md.
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire

@@ -4839,12 +4839,37 @@ def _fv_to_points(fv: float | int | None) -> float:
 #               resolves to exactly the raw grade and nothing moves.
 BOARD_GRADE_FIELD = "xfv_grade"
 
+# The SUB-DECIMAL tiebreak that orders rows INSIDE an exact board-grade tie (see
+# _board_sort_key in the serializer). Order-only, never displayed, never a grade.
+# The sentinel is the value a row with no key sorts at: it must be lower than any
+# real predicted WAR so a keyless row lands at the BACK of its tie block, and it must
+# be the same number prospx uses (_NO_SORT_KEY there) or the two orderings diverge.
+BOARD_SORT_KEY_FIELD = "board_sort_key"
+_NO_BOARD_SORT_KEY = -1e9
+
 # The board re-ranked once when the basis moved to BOARD_GRADE_FIELD. Board-rank
 # history written BEFORE this date is on the old quantile basis, so comparing it
 # to a post-epoch rank would report the one-time re-rank as real player movement.
 # Every reader of metric_snapshots.overall_rank filters on this date; rank
 # movement and the rank-trend arrow read empty until post-epoch history accrues.
-BOARD_RANK_BASIS_EPOCH = "2026-07-30"   # STRICTLY-AFTER gate: see load_rank_history.
+BOARD_RANK_BASIS_EPOCH = "2026-08-07"   # STRICTLY-AFTER gate: see load_rank_history.
+# 2026-08-07 BUMP (omnibus-3 Lane F, the floor routing going live). TWO board inputs
+# moved in one commit and the epoch applies to both, which is the judgement the
+# 2026-08-04 note below deliberately declined to make for a declaration-only change.
+#   the routing   2,434 constant-anchor rows stop serving the outcome curve's floor knot
+#                 and serve efv_ungraded's grade instead (median 27.1, p90 33.3, max
+#                 46.7; 624 land above FV30). Those rows re-rank the 100-1000 band
+#                 wholesale. No routed row reaches the top 100 (best rank 182), so the
+#                 part of the board anyone screenshots is untouched, but "the top is
+#                 stable" is not the epoch's test - "did ranks re-base" is, and they did.
+#   the sort key  board_sort_key enters the tiebreak chain on BOTH readers, which
+#                 re-orders the residual floor block (924 genuinely-graded rows whose
+#                 single tie block the key cuts to 180) by the model instead of by the
+#                 '+'/TBS/name proxies. Every one of those moves is a re-base, and the
+#                 movement engine would otherwise publish them as player movement.
+# This is the mirror of the STALE_ANCHOR flip, which correctly did NOT bump: that one
+# measured zero movers, so there was no re-rank to mistake for movement. Here there are
+# thousands, so the suppression is the point.
 # F1 repair 2026-07-25: metric_snapshots already holds 4,467 rows STAMPED 2026-07-25 that were
 # ranked on the RETIRED quantile basis (they were written before the flip landed the same day).
 # A ">=" gate let those through, so the first post-flip export would have published 1,185 phantom
@@ -4949,7 +4974,11 @@ BOARD_RANK_BASIS_EPOCH = "2026-07-30"   # STRICTLY-AFTER gate: see load_rank_his
 # 2026-07-29 incident.
 BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
                            "|roles=usage_both|feats=b747e1d3|stale=source"
-                           "|floorroute=off@ff60a349")
+                           "|floorroute=on@ff60a349")
+# floorroute off -> on 2026-08-07: efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT was
+# flipped once the prospx dedupe and the two-scale disclosure landed. Ship record and
+# re-run gates: docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_SHIP.md. The map hash is
+# unchanged because efv_ungraded._GRADE_MAP was not touched; only the switch moved.
 # feats dbb1bc2a -> b747e1d3 on 2026-08-04: the hitter `age` SIGN DECLARATION moved
 # -1 -> 0 (docs/efv-2026-08-04/HIT_AGE_SIGN_GATE.md). The hash covers declared signs
 # ON PURPOSE, so this trip is the coordination check working as designed.
@@ -8074,6 +8103,34 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             return float(g)
         return float(cons) if cons is not None else None
 
+    def _board_sort_key(pk):
+        """ORDER-ONLY sub-decimal tiebreak INSIDE a board-grade tie block. Never a
+        displayed number and never a grade.
+
+        vf.outcome_implied_fv maps every non-positive predicted WAR to exactly the
+        outcome curve's first knot, so the floor is one enormous exact-decimal tie
+        (3,358 of 4,586 actives on the 2026-08-06 board) that the '+' / TBS / avg_rank
+        chain then orders by proxies that carry no model information. board_sort_key is
+        the model's own UNROUNDED PRE-CLAMP predicted WAR (efv_score, emitted per live
+        row), so those rows can order by the model instead. Pre-clamp on purpose: the
+        -2.0 guard would re-tie the largest block the key exists to break.
+
+        MUST STAY IDENTICAL TO prospx fvCmpDesc's sort-key term. A key that only one of
+        the two readers applies re-creates the rendered-order-vs-baked-rank divergence
+        BOARD_GRADE_FIELD was introduced to prevent (three prior incidents). The missing
+        value is a fixed sentinel rather than a skip so the Python tuple sort and the JS
+        comparator agree by construction: a row with no key sorts LAST within its tie
+        block on both sides. Measured 2026-08-07: zero actives lack an xfv.json active
+        entry, so the sentinel branch is unreachable on the live board today and the two
+        rules cannot disagree even in principle until that changes."""
+        v = (_xfv_by_key.get(pk) or {}).get("board_sort_key")
+        if v is None:
+            return _NO_BOARD_SORT_KEY
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return _NO_BOARD_SORT_KEY
+
     # Model-input alias. Farm score, $DvM+ and the movement `stock` have always read
     # the raw grade; now that the board reads the same field, they are the same call.
     # Kept as a name so those call sites stay self-documenting.
@@ -11020,6 +11077,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         upside = 1 if getattr(latest, "consensus_fv_plus", False) else 0
         return (
             -surfaced_fv,        # RAW eFV grade desc (decimal) — the board number
+            -_board_sort_key(p.player_key),   # sub-decimal model order INSIDE a tie block
             -upside,             # '+' upside flag — ranks above same-grade non-'+'
             -_tbs_proxy(p),      # Tiebreaker Score desc — ARBITER on exact ties
             rank_key,            # avg_rank asc — final stable separator

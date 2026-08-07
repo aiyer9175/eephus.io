@@ -256,3 +256,60 @@ def test_statcast_factor_bounded_pm18pct(side):
     assert efv_score._statcast_factor({}, side) == 1.0
     assert efv_score._statcast_factor({"statcast_plus": None}, side) == 1.0
     assert efv_score._statcast_factor({"statcast_plus": "n/a"}, side) == 1.0
+
+
+# ── the explainer top-N cut, adjudicated 2026-08-07 (Lane F5) ───────────────
+# The owner's question, from the Arias attribution replay: obp_rel is the third-largest
+# term in his ledger and almost never clears the top-4 cut, so a reader cannot see a
+# feature that moved a board grade. The cut is KEPT (the card ranks by contribution size
+# on this player today; the replay ranks by movement between two model vintages, and
+# obp_rel clears the 0.05 reporting floor on only 154 of 4,586 live actives, so widening
+# would not surface it) and the admission that something WAS cut is what shipped. These
+# pin the two properties that decision rests on.
+
+
+def _ridge_stub(keys, weights):
+    return {"keys": list(keys), "mu": [0.0] * len(keys), "sd": [1.0] * len(keys),
+            "w": list(weights)}
+
+
+def test_the_top_cut_is_exactly_a_slice_of_the_uncut_list():
+    """run_live computes the groups UNCUT and slices, so the remainder it reports is a
+    measured quantity rather than an inference. That is only sound if slicing the uncut
+    list reproduces the cut list exactly, which holds because collapse() sorts by
+    magnitude BEFORE it truncates. If a future collapse() ever filtered after the cut,
+    factors_more would start counting rows that were never candidates."""
+    keys = ["obp_rel", "bb_rel", "iso_rel", "level_rank", "n_sources", "fv_stddev"]
+    ridge = _ridge_stub(keys, [0.90, 0.70, 0.50, 0.30, 0.20, 0.10])
+    feats = {k: 1.0 for k in keys}
+    uncut = efv_score._factors(ridge, feats, top=None, side="hit")
+    cut = efv_score._factors(ridge, feats, side="hit")
+    assert len(uncut) == 6, f"the stub should clear the 0.05 floor six times: {uncut}"
+    assert cut == uncut[:efv_score._EXPLAINER_TOP]
+    assert len(cut) == efv_score._EXPLAINER_TOP
+
+
+def test_the_cut_list_is_ordered_biggest_first_so_the_remainder_is_the_small_end():
+    """"and N smaller factors" is a claim about magnitude, not just about count. It is
+    only true if the cut takes the LARGEST groups, so the hidden set can never contain a
+    group bigger than one that was shown."""
+    keys = ["obp_rel", "bb_rel", "iso_rel", "level_rank", "n_sources", "fv_stddev"]
+    ridge = _ridge_stub(keys, [0.10, 0.90, 0.20, 0.70, 0.30, 0.50])
+    feats = {k: 1.0 for k in keys}
+    uncut = efv_score._factors(ridge, feats, top=None, side="hit")
+    mags = [f["mag"] for f in uncut]
+    assert mags == sorted(mags, reverse=True), mags
+    shown, hidden = uncut[:efv_score._EXPLAINER_TOP], uncut[efv_score._EXPLAINER_TOP:]
+    assert hidden, "the stub is meant to overflow the cut"
+    assert min(f["mag"] for f in shown) >= max(f["mag"] for f in hidden)
+
+
+def test_a_short_ledger_reports_no_remainder_at_all():
+    """A reader must never be told "and 0 smaller factors". Fewer groups than the cut
+    depth means nothing was dropped and the payload field is absent."""
+    keys = ["obp_rel", "bb_rel"]
+    ridge = _ridge_stub(keys, [0.40, 0.20])
+    feats = {k: 1.0 for k in keys}
+    uncut = efv_score._factors(ridge, feats, top=None, side="hit")
+    assert len(uncut) == 2
+    assert uncut[efv_score._EXPLAINER_TOP:] == []

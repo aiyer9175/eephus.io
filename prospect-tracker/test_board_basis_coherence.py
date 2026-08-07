@@ -38,6 +38,7 @@ that is WRONG is therefore unknown within a wide band, which is exactly why this
 change-detector rather than a bound.
 """
 import json
+import re
 import statistics
 from pathlib import Path
 
@@ -255,14 +256,99 @@ def test_history_median_tail_is_on_the_board_basis():
 # the term, and the scoping predicate that decides who is eligible.
 
 
-def test_floor_routing_switch_is_pinned_off():
-    """Implemented and gated. Serving it needs the prospx board dedupe and the
-    two-scale disclosure to land first; without the dedupe the same player prints
-    the SAME grade twice instead of two contradictory ones, which reads worse than
-    the defect. If this fails, confirm both frontend pieces shipped, then update
-    docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_GATE.md section 4 in the same commit."""
+def test_floor_routing_switch_is_pinned_on():
+    """FLIPPED ON 2026-08-07 once both preconditions landed: the prospx board dedupe
+    (9b7272c) and the two-scale disclosure (prospx efvScaleNote, same commit as this
+    flip). Ship record docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_SHIP.md.
+
+    The pin did not become decoration when it flipped, it changed which direction it
+    guards. Turning this back OFF returns 2,434 constant-anchor rows to the outcome
+    curve's floor knot and re-ranks the 100-1000 band a second time, so it needs the
+    same fingerprint restamp and epoch bump in reverse.
+    """
     import efv_score
-    assert efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT is False
+    assert efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT is True
+
+
+def test_the_flip_restamped_the_fingerprint_and_bumped_the_epoch():
+    """The three-part coordination the flip owes, asserted as one unit.
+
+    The fingerprint says WHICH basis; the epoch says ranks re-based. Landing the switch
+    without the term would let the next provisional-map edit inherit a fingerprint that
+    already lied; landing either without the epoch republishes a 2,434-row re-rank as
+    player movement, which is the 2026-07-29 incident verbatim."""
+    import efv_score
+    fp = storage.board_basis_fingerprint()
+    state = fp.split("|floorroute=")[1].split("@")[0]
+    assert state == ("on" if efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT else "off"), (
+        f"the floorroute term disagrees with the switch: {fp!r}")
+    assert storage.BOARD_RANK_BASIS_EPOCH >= "2026-08-07", (
+        f"the routing re-ranks the 100-1000 band and the sort key re-orders the floor "
+        f"block, so the epoch must cover them; it reads "
+        f"{storage.BOARD_RANK_BASIS_EPOCH!r}")
+
+
+# ── the sub-decimal sort key (Lane F3, 2026-08-07) ──────────────────────────
+# board_sort_key breaks the exact-grade tie block the outcome curve's floor knot
+# creates. It is read by TWO orderings that must never disagree: storage._active_key
+# (which bakes overall_rank) and prospx fvCmpDesc (which renders the board). A key one
+# reader applies and the other does not IS the three-orderings bug BOARD_GRADE_FIELD was
+# introduced to prevent, so the pins below are on the contract, not on the values.
+
+
+def test_the_sort_key_sentinel_is_one_number_both_readers_can_agree_on():
+    """A python tuple sort cannot 'skip' a term, so the two readers can only agree if a
+    missing key resolves to the SAME sentinel on both sides rather than to a skip on one
+    and a value on the other. prospx declares it as `const _NO_SORT_KEY`; if that literal
+    and this constant ever diverge, a keyless row sorts to the front of its tie block in
+    one reader and the back in the other."""
+    src = (Path(__file__).parent / "prospx" / "index.html").read_text(encoding="utf-8")
+    m = re.search(r"^const _NO_SORT_KEY = (-?[0-9.e+]+);", src, re.M)
+    assert m, "prospx/index.html no longer declares _NO_SORT_KEY"
+    assert float(m.group(1)) == storage._NO_BOARD_SORT_KEY, (
+        f"sentinel drift: prospx {m.group(1)} vs storage "
+        f"{storage._NO_BOARD_SORT_KEY}. The two board orderings will disagree on every "
+        f"row that has no board_sort_key.")
+    assert storage._NO_BOARD_SORT_KEY < -100.0, (
+        "the sentinel must sort BELOW any real predicted WAR, or a keyless row jumps "
+        "the model-ordered rows in its tie block")
+
+
+def test_prospx_consults_the_sort_key_before_the_plus_tbs_name_chain():
+    """Position in the chain is the whole point. The '+' flag, TBS and name carry no
+    model information about a floor row; the key is the model's own prediction, so it
+    goes first among the tiebreaks. Asserted against the shipped source text because
+    the ordering lives in one comparator and nothing else would catch a re-order."""
+    src = (Path(__file__).parent / "prospx" / "index.html").read_text(encoding="utf-8")
+    body = src.split("function fvCmpDesc(a, b) {", 1)
+    assert len(body) == 2, "prospx no longer defines fvCmpDesc(a, b)"
+    body = body[1].split("\n}\n", 1)[0]
+    i_key = body.find("efvBoardSortKey")
+    i_plus = body.find("fv_close_plus")
+    i_tbs = body.find("tiebreakerScore")
+    assert i_key != -1, "fvCmpDesc no longer consults board_sort_key"
+    assert -1 < i_key < i_plus < i_tbs, (
+        f"the sort key must be the FIRST tiebreak after the exact-grade tie "
+        f"(key@{i_key}, plus@{i_plus}, tbs@{i_tbs}); storage._active_key puts it at "
+        f"that position and the two orderings have to match")
+
+
+def test_the_export_whitelist_carries_the_fields_the_board_reads():
+    """efv_export._entry is a field WHITELIST, so a field efv_score emits and _entry
+    does not name reaches data/xfv_scored_live_*.json and stops there. Both of these
+    did exactly that on 2026-08-07: grade_basis (which the two-scale disclosure reads)
+    and board_sort_key (which both orderings read) never reached data/xfv.json, so the
+    disclosure had nothing to show and the tiebreak had nothing to break on."""
+    import efv_export
+    row = {"player_key": "pk", "xfv_grade": 20.0, "grade_basis": "provisional_capped",
+           "board_sort_key": -1.234567, "factors_more": {"n": 2, "mag": 0.31}}
+    e = efv_export._entry(row, "hit", "active")
+    assert e["grade_basis"] == "provisional_capped"
+    assert e["board_sort_key"] == -1.234567
+    assert e["factors_more"] == {"n": 2, "mag": 0.31}
+    bare = efv_export._entry({"player_key": "pk", "xfv_grade": 40.0}, "hit", "resolved")
+    assert "grade_basis" not in bare and "board_sort_key" not in bare, (
+        "rows that carry neither field must stay byte-identical, not grow nulls")
 
 
 def test_fingerprint_names_the_routing_and_the_provisional_map():

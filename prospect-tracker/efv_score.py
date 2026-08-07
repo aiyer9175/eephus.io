@@ -94,16 +94,29 @@ except Exception:  # pragma: no cover - optional sidecar module
 # board ALREADY mixes them for the 5,983 rows provPlayers() synthesizes, so this does
 # not create the mixing, but it moves 2,434 players across the seam.
 #
-# DEFAULT OFF, and this is the whole reason the flag exists rather than the change just
-# landing. Serving it needs two things in prospx/index.html, which this lane does not
-# own: the board pool dedupe (without it both rows print the SAME number and the same
-# player appears twice at one grade, which reads worse than today's contradictory pair),
-# and the two-scale disclosure. Flipping this constant before those land ships an
-# undisclosed scale swap on 2,434 rows.
+# ON since 2026-08-07, and the two things it was waiting on both landed first. The board
+# pool dedupe shipped in 9b7272c (prospx _dedupeProvPool; 10,569 rows -> 7,933, zero
+# duplicates) and the two-scale disclosure ships in the same commit as this flip
+# (efvScaleNote in prospx, wired into the row tooltip, the detail header and the
+# explainer head). Ship record: docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_SHIP.md.
+#
+# THE DEDUPE ALSO CARRIED A DEFECT THIS FLIP EXISTS TO CORRECT, measured at runtime
+# 2026-08-07 with the shipped prospx source (tools/efv_board_serve_probe.py). getEfv
+# returns p._xfv_entry FIRST, and the dedupe was assigning the provisional twin's entry
+# to that field on the surviving graded row, so the board served the provisional grade
+# for ALL 2,636 dual-listed rows with NO scope at all: 183 rows whose flagship grade is
+# above FV30 were demoted by up to 14.0 FV (ryan_bourassa 38.1 -> 24.1, nicolo_pinazzi
+# 42.6 -> 30.0), which is precisely the gate-4 violation the scoping exists to prevent.
+# The merge now lands on p._prov_entry, the board reads the SERVER's number again, and
+# the scope below is the only thing that decides who gets routed.
+#
+# ONE-CYCLE LAG, stated rather than discovered. data/xfv.json is written by the nightly
+# box, so between this commit and the next regen the routed cohort serves the flagship
+# floor knot again. That is the pre-dedupe behaviour, honest and disclosed, not a hole.
 #
 # BANNED, not attempted: re-pointing efv_ungraded._grade onto the outcome map (recorded
 # no-ship, 3 of 6 stop conditions).
-SERVE_PROVISIONAL_FOR_CONSTANT_COHORT = False
+SERVE_PROVISIONAL_FOR_CONSTANT_COHORT = True
 
 # ONE-RUN LAG, and it is structural rather than a shortcut. efv_export.regen_all runs
 # efv_score.run_live BEFORE efv_ungraded.build, because the provisional model needs
@@ -693,7 +706,29 @@ _EXPLAINER_SKIP = {"fv", "milb_missing", "is_ifa", "is_college"}
 _EXPLAINER_SKIP_SIDE = {"pit": {"age", "age_rel_level"}, "hit": {"age"}}
 
 
-def _factors(ridge, feats, top: int = 4, side: str = "hit") -> list:
+# How many MODEL-driver groups reach a card. The overlay factors (Statcast+ quality,
+# prospect age penalty, injury, reliever ceiling, stale coverage) are appended AFTER this
+# cut and are not subject to it, which is why live arrays run to 9 rows against a top of 4.
+_EXPLAINER_TOP = 4
+
+# THE TOP-4 CUT, ADJUDICATED 2026-08-07 (owner, via the Arias attribution replay: obp_rel
+# is the third-largest term in his ledger and "almost never clears the explainer top-4
+# cut, so no reader can see a feature that moved a board grade").
+#
+# THE CUT IS KEPT, and the reason is that the two rankings answer different questions.
+# The replay ranks features by how much a feature MOVED between two vintages; the card
+# ranks them by |w * (x - mu) / sd| on THIS player TODAY. A feature can be the largest
+# mover and a small contributor at the same time, and obp_rel is exactly that: it clears
+# the 0.05 magnitude floor on 154 of 4,586 live actives (3.4%), so on 96.6% of cards
+# there is no obp_rel contribution to show at any cut depth. Widening the cut would not
+# surface it there; it would only lengthen the 83% of cards that already fill four slots
+# with larger numbers, and the ordering the reader sees would stop being "biggest first".
+#
+# WHAT WAS MISSING IS THE ADMISSION THAT ANYTHING WAS CUT, and that is what ships:
+# `factors_more` carries the count of groups the cut dropped and their summed magnitude,
+# so the card can say "and N smaller factors" instead of presenting four rows as the
+# whole ledger. Display-only; no grade, rank, dollar or ordering moves.
+def _factors(ridge, feats, top: int | None = _EXPLAINER_TOP, side: str = "hit") -> list:
     """Per-prospect explainer: the non-FV ridge contributions (weight * standardized
     feature, in raw ridge units) that moved eFV off the consensus-FV prior, largest
     first. DOCSTRING CORRECTED 2026-07-14 (audit): the mags are DIRECTIONAL raw-model
@@ -1887,7 +1922,14 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         _cons_anchor = float(_fv_eff) if _fv_eff is not None else cons_fv
         cons_war = max(0.0, _pred_ols(ols, _cons_anchor)) if ols else xfv_war
         rank_war = (1 - lam) * cons_war + lam * xfv_war   # guarded blend -> headline rank
-        factors = _factors(ridge, feats, side=side)       # explainer: why eFV != consensus
+        # Explainer: why eFV != consensus. Computed UNCUT and sliced here, so the
+        # remainder is a measured quantity rather than an inference - collapse() sorts
+        # by magnitude before it truncates, so _all_groups[:_EXPLAINER_TOP] is
+        # byte-identical to _factors(top=_EXPLAINER_TOP). See the adjudication note on
+        # _factors for why the cut stays and only the admission is new.
+        _all_groups = _factors(ridge, feats, top=None, side=side)
+        factors = _all_groups[:_EXPLAINER_TOP]
+        _hidden = _all_groups[_EXPLAINER_TOP:]
         factors = _relabel_pace_factor(factors, r.get("milb"))
         _stale_disc = float(r.get("anchor_stale_discount") or 0.0)
         # B4 (2026-08-07): the chip fires only where the discount actually reached
@@ -2114,6 +2156,14 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             # -1.83 here should read "ordered below -1.82", nothing more.
             "board_sort_key": round(_war_unclamped, 6),
             "factors": factors,
+            # WHAT THE TOP-N CUT DROPPED (2026-08-07 adjudication, see _factors). Count
+            # and summed magnitude of the model-driver groups that cleared the 0.05
+            # floor and lost the cut, so the card can say "and N smaller factors"
+            # instead of implying four rows are the whole ledger. None when nothing was
+            # cut, so a reader never sees "and 0 smaller factors".
+            "factors_more": ({"n": len(_hidden),
+                              "mag": round(sum(float(f["mag"]) for f in _hidden), 2)}
+                             if _hidden else None),
         }
         # S-XLINE measurement annotation (efv_dataset._milb_features, live
         # builds only): a SEPARATE metadata field, deliberately NOT a ranked
