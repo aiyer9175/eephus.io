@@ -1,0 +1,31 @@
+SHIP 2 gate, adjudicated against shipped code
+      hit:3leg     n=1024  served sd 10.01
+      hit:6leg     n=615   served sd 10.00
+      pit:2leg     n=1082  served sd 10.00
+      pit:3leg     n=160   served sd 9.98
+      pit:5leg     n=683   served sd 10.02
+  [PASS] S2.1 every coverage class 9.5-10.5: worst deviation 0.024
+  [PASS] S2.2 top-10 legs all above floor: violations []
+  [PASS] S2.2 site max in [125,150]: max 143 (yordani_martinez)
+      populations, ship1 threshold -> ship2 threshold
+      eta_elite   130->143     1 -> 1     delta +0 (+0.0%) within tol; best integer 143 gives +0
+      eta_top     115->122    43 -> 40    delta -3 (-7.0%) OVER tol; best integer 122 gives -3
+      eta_bot      85->77     56 -> 60    delta +4 (+7.1%) OVER tol; best integer 77 gives +4
+      brk         115->122    43 -> 40    delta -3 (-7.0%) OVER tol; best integer 122 gives -3
+      brk_stat    130->143     1 -> 1     delta +0 (+0.0%) within tol; best integer 143 gives +0
+      spot_elite  120->130    12 -> 12    delta +0 (+0.0%) within tol; best integer 130 gives +0
+      spot_above  105->107   865 -> 918   delta +53 (+6.1%) OVER tol; best integer 107 gives +53
+      spot_below   95->92    762 -> 739   delta -23 (-3.0%) within tol; best integer 92 gives -23
+  [FAIL] S2.3 within the REGISTERED tolerance: see table (this is the criterion as written)
+  [PASS] S2.3 no integer threshold preserves populations better: shipped cuts are the grid optimum
+  [PASS] S2.4 TBS base mean move < 0.005: mean 0.0031 max 0.0213
+  [PASS] S2.5 tilt sd preserved (hit): 0.01044 -> 0.01039 (-0.44%)
+  [PASS] S2.5 tilt sd preserved (pit): 0.00777 -> 0.00779 (+0.27%)
+  [PASS] eta band edges wired: 143 -> -0.50, 142 -> -0.25
+
+SHIP 1 gate
+  [PASS] S1.3 carriers lost under 2%: 18 of 3,582
+  [PASS] S1.4 Spearman(S0,S1) in [0.85,0.98]: 0.9078
+  [PASS] S1.2 Kreiling is not the site max: Kreiling 125 vs max 143
+
+OVERALL: FAIL

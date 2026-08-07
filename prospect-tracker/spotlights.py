@@ -22,9 +22,28 @@ from __future__ import annotations
 from datetime import date
 from statistics import mean
 
+from statcast_plus import _SC_PLUS_PER_SIGMA
+
 
 TOP_N = 60
 MAX_DRIVERS_PER_CARD = 8 # v15 - was 4 (cycle 14)
+
+
+# Statcast+ tier cuts. RE-MAPPED 2026-08-07 with the SC+ re-standardization to
+# a true 10 points per sigma (statcast_plus.py). Every number moved to hold the
+# POPULATION it selects on the live board, not to stay recognisable: measured
+# 143 keeps 1 row where 130 kept 1, 130 keeps 12 where 120 kept 12, 122 keeps
+# 40 where 115 kept 43, 107 keeps 918 where 105 kept 865, 92 keeps 739 where 95
+# kept 762. They are named rather than inlined because the same five cuts are
+# spelled into six separate blocks below and the scoring nudge, the chip colour
+# and the tooltip text have to agree; when they drifted apart before, a reader
+# saw a green chip on a score the code had already penalised.
+# The prospx filter chips and pill colours carry the SAME five numbers.
+_SC_TOP    = 143   # was 130
+_SC_ELITE  = 130   # was 120
+_SC_STRONG = 122   # was 115
+_SC_ABOVE  = 107   # was 105
+_SC_BELOW  = 92    # was 95
 
 
 # v15 - Per-stat polarity table. "up_good" means the stat is better when it
@@ -1352,21 +1371,21 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             except (TypeError, ValueError):
                 _scpv_r = None
             if _scpv_r is not None:
-                if _scpv_r >= 120:
+                if _scpv_r >= _SC_ELITE:
                     score += 2.0
                     drivers.append({"label": f"SC+ {int(_scpv_r)} confirms rebound",
                                     "valence": "good",
-                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≥120, elite) strongly supports the rebound - underlying contact / pitch quality is back to peak."})
-                elif _scpv_r >= 105:
+                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≥{_SC_ELITE}, elite) strongly supports the rebound - underlying contact / pitch quality is back to peak."})
+                elif _scpv_r >= _SC_ABOVE:
                     score += 1.0
                     drivers.append({"label": f"SC+ {int(_scpv_r)} supports rebound",
                                     "valence": "good",
-                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≥105, above pool) supports the rebound narrative."})
-                elif _scpv_r <= 95:
+                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≥{_SC_ABOVE}, above pool) supports the rebound narrative."})
+                elif _scpv_r <= _SC_BELOW:
                     score -= 1.5
                     drivers.append({"label": f"SC+ {int(_scpv_r)} undercuts rebound",
                                     "valence": "bad",
-                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≤95, below pool) undercuts the rebound - surface bounce isn't backed by tracked data."})
+                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≤{_SC_BELOW}, below pool) undercuts the rebound - surface bounce isn't backed by tracked data."})
             # v12 - same xMetric gate as risers. AAA-only.
             verif = _xmetric_verification(p, "up")
             if verif == "unsupported":
@@ -1513,9 +1532,9 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
         except (TypeError, ValueError):
             _scpv = None
         if _scpv is not None:
-            if _scpv >= 130:
+            if _scpv >= _SC_TOP:
                 score += 2.0
-            elif _scpv >= 115:
+            elif _scpv >= _SC_STRONG:
                 score += 1.0
         # v12 - xMetric verification gate for AAA risers. If the
         # surface jump isn't supported by underlying Statcast (wOBA
@@ -1635,9 +1654,9 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
         drivers.append(f"{lp:.0f}% vs level mean")
     # v30.5 - Statcast+ adjustment on the faller path. Tracked-data
     # signal either CONFIRMS or COUNTERS the surface decline:
-    #   - SC+ ≤ 95 (below pool): underlying contact / pitch quality is
-    #     also below mean → deepen the faller score (decline is real).
-    #   - SC+ ≥ 105 (above pool): tracked data contradicts the surface
+    #   - at or under _SC_BELOW: underlying contact / pitch quality is
+    #     also below mean, so deepen the faller score (decline is real).
+    #   - at or over _SC_ABOVE: tracked data contradicts the surface
     #     dip → soften the faller score (slump is likely BABIP /
     #     sequencing noise; underlying tools still strong).
     # Mirrors the _statcast_drivers tier breakpoints so the score
@@ -1648,16 +1667,16 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     except (TypeError, ValueError):
         _scpv_f = None
     if _scpv_f is not None:
-        if _scpv_f <= 95:
+        if _scpv_f <= _SC_BELOW:
             score -= 1.0
             drivers.append({"label": f"SC+ {int(_scpv_f)} confirms decline",
                             "valence": "bad",
-                            "tooltip": f"Statcast+ {int(_scpv_f)} (≤95, below pool mean) reinforces the surface decline - underlying contact / pitch quality is below pool too."})
-        elif _scpv_f >= 105:
+                            "tooltip": f"Statcast+ {int(_scpv_f)} (≤{_SC_BELOW}, below pool mean) reinforces the surface decline - underlying contact / pitch quality is below pool too."})
+        elif _scpv_f >= _SC_ABOVE:
             score += 1.5
             drivers.append({"label": f"SC+ {int(_scpv_f)} counters decline",
                             "valence": "good",
-                            "tooltip": f"Statcast+ {int(_scpv_f)} (≥105, above pool mean) counters the surface dip - tracked-data signal suggests the slump is BABIP / sequencing noise rather than a real decline."})
+                            "tooltip": f"Statcast+ {int(_scpv_f)} (≥{_SC_ABOVE}, above pool mean) counters the surface dip - tracked-data signal suggests the slump is BABIP / sequencing noise rather than a real decline."})
     # v12 - xMetric verification gate for AAA fallers. If the surface
     # dip isn't supported by underlying Statcast (wOBA under xWOBA,
     # ERA over xFIP), demote to "none" - the cold streak is bad luck
@@ -1694,31 +1713,30 @@ def _statcast_drivers(p: dict) -> list[dict]:
     if sc_plus is not None:
         try:
             v = int(sc_plus)
-            # v30.5 - Tighter color thresholds per user feedback: even
-            # mild above-pool / below-pool values should read green /
-            # red instead of falling into the neutral band. Anything
-            # ≥ 105 is meaningfully above mean (the user's example:
-            # SC+ 110 should clearly read as a positive signal), and
-            # ≤ 95 is meaningfully below. Elite tier promoted up to
-            # 120 so it stays an exclusive call-out.
-            if v >= 120:
+            # v30.5 - Tighter colour thresholds per user feedback: even mild
+            # above-pool / below-pool values should read green / red instead
+            # of falling into the neutral band, and the elite tier stays an
+            # exclusive call-out. Cuts re-mapped 2026-08-07 with the SC+
+            # re-standardization; each holds the population it held before.
+            if v >= _SC_ELITE:
                 valence, tone = "good", "elite"
-            elif v >= 105:
+            elif v >= _SC_ABOVE:
                 valence, tone = "good", "above pool"
-            elif v <= 95:
+            elif v <= _SC_BELOW:
                 valence, tone = "bad", "below pool"
             else:
                 valence, tone = "neutral", "near pool"
             out.append({
-                # SCALE CORRECTED 2026-08-07: the tooltip said "σ × 15", true until the
-                # v-arkmetric-audit harmonised SC+ onto the 100 + 10z convention the
-                # rest of the "+" suite uses (statcast_plus._SC_PLUS_PER_SIGMA = 10,
-                # quintile cuts 110/90). It told a reader that SC+ 115 was one standard
-                # deviation above the pool when the shipped scale puts +1σ at 110.
+                # SCALE: this said "σ × 15" until 2026-08-07, and then "10 points
+                # per standard deviation" while the served index actually moved
+                # 6.1 points per pool sigma. The claim is TRUE as of the
+                # re-standardization and is now pinned to the constant rather
+                # than retyped, so the next scale change cannot leave it behind
+                # a third time.
                 "label":   f"SC+ {v}",
                 "valence": valence,
                 "tooltip": f"Statcast+ {v} - {tone} mean (100 = pool average, "
-                           "10 points per standard deviation)",
+                           f"{_SC_PLUS_PER_SIGMA} points per standard deviation)",
             })
         except (TypeError, ValueError):
             pass

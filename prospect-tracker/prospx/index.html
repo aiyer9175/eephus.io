@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=e465f90d">
+  <link rel="stylesheet" href="/assets/site.css?v=646b024c">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -9148,16 +9148,18 @@
         <button class="chip is-multi" data-filter-fvind="breakout" title="Breakout - DvM+ / FV velocity ≥ threshold AND a strong performance gate (RPS+ ≥ 110 for hitters, Stuff+ ≥ 105 or FIP- ≤ 90 for pitchers)">Breakout ★</button>
         <button class="chip is-multi" data-filter-fvind="upside" title="Upside (^) - at least one source published a '+' upside mark on the latest snapshot (capped at FV ≤ 50; 55+/60+ are suppressed since those tiers have already realized their upside). Rendered on the FV chip as a ^ glyph so it doesn't collide with the health '+' pill.">Upside ^</button>
       </div>
-      <!-- v30.8 - Statcast filter chips now span all 3 SC+ tiers
-           (elite ≥120 / above ≥105 / below ≤95). The below-tier
-           chip surfaces prospects whose tracked-data signal lags
-           the surface stats - useful for finding regression
-           candidates the FV consensus hasn't caught up to yet. -->
+      <!-- v30.8 - Statcast filter chips span all 3 SC+ tiers. Cuts re-mapped
+           2026-08-07 (120/105/95 -> 130/107/92) with the SC+
+           re-standardization to a true 10 points per sigma; each chip selects
+           the same population it selected before. The below-tier chip
+           surfaces prospects whose tracked-data signal lags the surface
+           stats - useful for finding regression candidates the FV consensus
+           hasn't caught up to yet. -->
       <div class="filter-group">
         <span class="filter-label" title="Statcast composite (100 = pool mean, 10 points per standard deviation). Filter for prospects with elite, above-mean, or below-mean tracked-data signal.">Statcast</span>
-        <button class="chip is-multi" data-filter-statcast="elite" title="Statcast+ ≥ 120 - elite tier. Composite of contact quality + zone discipline for hitters; pitch velo + induced whiffs + contact suppression for pitchers.">SC+ elite</button>
-        <button class="chip is-multi" data-filter-statcast="above" title="Statcast+ ≥ 105 - above pool mean. Even a modest +5 vs pool is a real signal: tracked-data contact quality / pitch quality clears the league baseline.">SC+ above</button>
-        <button class="chip is-multi" data-filter-statcast="below" title="Statcast+ ≤ 95 - below pool mean. Surfaces prospects whose tracked data lags the surface stats; useful for regression-watch.">SC+ below</button>
+        <button class="chip is-multi" data-filter-statcast="elite" title="Statcast+ ≥ 130 - elite tier (+3 standard deviations). Composite of contact quality + zone discipline for hitters; pitch velo + induced whiffs + contact suppression for pitchers.">SC+ elite</button>
+        <button class="chip is-multi" data-filter-statcast="above" title="Statcast+ ≥ 107 - above pool mean. Tracked-data contact quality / pitch quality clears the league baseline.">SC+ above</button>
+        <button class="chip is-multi" data-filter-statcast="below" title="Statcast+ ≤ 92 - below pool mean. Surfaces prospects whose tracked data lags the surface stats; useful for regression-watch.">SC+ below</button>
       </div>
       <div class="filter-group">
         <span class="filter-label" title="Filter by the SHAPE of the modeled eFV outcome (not its level): the outcome-bucket distribution each graded prospect already carries. Empty = show all. Multiple selected = OR (union). Prior-anchored / provisional grades (no pro track record yet) are excluded since their band is the consensus prior, not a model read.">Risk profile</span>
@@ -10443,6 +10445,27 @@ function toolAbbrev(key) {
 // for signed types, so a value that rounds to 0 can never render as "-0.0"/"+0"
 // (the negative-zero defect the audit flagged on the homepage grad rows).
 const EM_DASH = " - ";
+
+// Statcast+ tier cuts, the browser half of the pair. These MUST equal
+// spotlights.py _SC_ELITE / _SC_ABOVE / _SC_BELOW: the server colours a
+// spotlight driver chip and the client colours the pill and the filter for
+// the same player, and when the two drifted a reader saw a green chip on a
+// score the server had already scored as neutral. RE-MAPPED 2026-08-07 from
+// 120/105/95 with the SC+ re-standardization to a true 10 points per sigma;
+// every cut holds the population it selected before (12 / 918 / 739 rows).
+// notableHi / notableLo are the "worth a chip at all" pair, previously the
+// quintile constants 110 / 90. Those two numbers are now genuinely plus or
+// minus one sigma, which is a THIRD of the pool rather than the 6% they used to
+// select, so the fallback chip would have gone from rare to routine. 115 / 85
+// hold the population (225 -> 240 and 252 -> 246 rows).
+const SC_TIER = { elite: 130, above: 107, below: 92, notableHi: 115, notableLo: 85 };
+// TBS band for SC+, re-banded in the same change. The old 80-130 spanned
+// -3.0 to +4.5 sigma on the pre-rescale scale; 70-145 is the SAME sigma span
+// on the new one. Left at 80-130 the term would have saturated 119 rows
+// instead of 19 and pushed a measured mean 0.011 into the TBS base, which
+// reaches _tbsSurplusMult and therefore reaches served dollars.
+const SC_TBS_BAND = { lo: 70, hi: 145 };
+
 function formatMetric(value, type = "int") {
   const n = Number(value);
   if (value == null || value === "" || !Number.isFinite(n)) return EM_DASH;
@@ -11401,7 +11424,7 @@ function _tiebreakerScoreRaw(p, opts) {
       // 20, so _tbsNorm(v, 80, 130) saturates roughly 23% of rows, 15% at the floor and
       // 7% at the ceiling, contributing no discrimination), and a revival moves served
       // ordering so it needs a gate. Registered as a candidate, not shipped.
-      [_tbsNorm(sc,   80, 130),  0.20],   // perf ↑ (was 0.16)
+      [_tbsNorm(sc,   SC_TBS_BAND.lo, SC_TBS_BAND.hi),  0.20],   // perf ↑ (was 0.16)
       [_tbsNorm(tmax, 40, 70),   0.10],
       [_tbsNorm(stf,  80, 130),  0.08],
       [ageBoost,                 0.10],   // was 0.08
@@ -11631,7 +11654,15 @@ function fvBadgeBreakoutMarkHTML(player) {
   const gate = meta.perf_gate === "wrc_plus" ? "wRC+ ≥ 130"
              : meta.perf_gate === "wrc_plus_level" ? "wRC+ vs level ≥ 150"
              : meta.perf_gate === "stf_plus_periph" ? "Peripheral Stuff+ ≥ 115"
-             : meta.perf_gate === "statcast_plus" ? "SC+ ≥ 130"
+             // Both SC+ breakout paths stamp perf_gate "statcast_plus" but they
+             // are DIFFERENT bars: the stat-only path (reason "stats", the only
+             // path that emits that reason with this gate) needs the elite cut,
+             // the tool/FV path needs the lower one. This branch printed the
+             // elite number for both, so a player flagged at the lower bar was
+             // shown a threshold he had not cleared. Numbers re-mapped
+             // 2026-08-07 with the SC+ re-standardization (was 115 / 130).
+             : meta.perf_gate === "statcast_plus"
+                 ? (meta.reason === "stats" ? "SC+ ≥ 143" : "SC+ ≥ 122")
              : "performance gate";
   return `<span class="fv-breakout-mark" title="Breakout - ${why}, plus ${gate} this season.">★</span>`;
 }
@@ -12351,10 +12382,10 @@ function _statcastStripHTML(p) {
   // average; ≥115 reads green, ≤85 reads orange.
   const sPlus = getStatcastPlus(p);
   if (sPlus != null) {
-    // v30.5 - Match the spotlights-driver tier breakpoints (≥105
-    // above pool reads green; ≤95 below pool reads red). Even a
-    // modest +5 vs pool mean is a real signal worth surfacing.
-    const sPlusColor = sPlus >= 105 ? "var(--up)" : sPlus <= 95 ? "var(--down)" : "var(--text-primary)";
+    // Tier breakpoints come from SC_TIER, shared with the spotlights driver
+    // chips (spotlights.py _SC_ABOVE / _SC_BELOW) so the server-coloured chip
+    // and this one cannot disagree about the same player.
+    const sPlusColor = sPlus >= SC_TIER.above ? "var(--up)" : sPlus <= SC_TIER.below ? "var(--down)" : "var(--text-primary)";
     chips.unshift(chip("SC+", String(sPlus), sPlusColor, `Statcast+ composite (${isP ? "pitcher" : "hitter"} blend) · pool-anchored at 100 (10 pts = 1σ)`));
   }
   // Swing+ (Will Cahoon's bat-tracking model, data/swing_plus.json).
@@ -14377,11 +14408,12 @@ function _milbStatcastOutlierChips(p) {
   });
   const picks = candidates.slice(0, 2);
   // No component outliers? Fall back to a single SC+ chip when the
-  // composite itself is notable (≥110 or ≤90).
+  // composite itself is notable. Cuts re-mapped 2026-08-07 with the SC+
+  // re-standardization; see SC_TIER for why they are not 110 / 90 any more.
   if (!picks.length) {
     const sp = getStatcastPlus(p);
-    if (sp != null && (sp >= 110 || sp <= 90)) {
-      const color = sp >= 110 ? "var(--up)" : "var(--down)";
+    if (sp != null && (sp >= SC_TIER.notableHi || sp <= SC_TIER.notableLo)) {
+      const color = sp >= SC_TIER.notableHi ? "var(--up)" : "var(--down)";
       return `<span class="milb-sc-chip" style="color:${color};border-color:${color};" title="Statcast+ composite - ${sp} (100 = pool average)">SC+ ${sp}</span>`;
     }
     return "";
@@ -14566,18 +14598,17 @@ function makeMilbCell(p) {
   // change). At most 2 chips per row.
   const scOutlierChips = _milbStatcastOutlierChips(p);
   // v30.7 - SC+ pill always surfaced when the prospect carries the
-  // composite. Color tier mirrors the SC+ color convention: ≥120
-  // cyan (elite), ≥105 green (above pool), ≤95 red (below), else
-  // neutral. Lives in the top pill row so the user gets the
-  // Statcast read at a glance.
+  // composite. Colour tiers come from SC_TIER so the pill, the filter chips
+  // and the server-side spotlight driver cannot drift apart. Lives in the
+  // top pill row so the user gets the Statcast read at a glance.
   const scPlusPill = (() => {
     const sp = getStatcastPlus(p);
     if (sp == null) return "";
-    const color = sp >= 120 ? "var(--neon-cyan)"
-                : sp >= 105 ? "var(--up)"
-                : sp <= 95  ? "var(--down)"
-                :             "var(--text-secondary)";
-    return `<span class="stat-pill" style="color:${color};border-color:${color};" title="Statcast+ composite (100 = pool average; ≥105 above, ≤95 below, ≥120 elite)">SC+ ${sp}</span>`;
+    const color = sp >= SC_TIER.elite ? "var(--neon-cyan)"
+                : sp >= SC_TIER.above ? "var(--up)"
+                : sp <= SC_TIER.below ? "var(--down)"
+                :                       "var(--text-secondary)";
+    return `<span class="stat-pill" style="color:${color};border-color:${color};" title="Statcast+ composite (100 = pool average, 10 points per standard deviation; ≥${SC_TIER.above} above, ≤${SC_TIER.below} below, ≥${SC_TIER.elite} elite)">SC+ ${sp}</span>`;
   })();
   // KRP+ (K-backed Run Prevention) pill on pitcher rows: the eFV run-prevention x
   // missing-bats index, baked into xfv.json. Pitchers the model scored only.
@@ -15715,14 +15746,13 @@ function getFilteredActives() {
     pool = pool.filter(p => {
       const sp = getStatcastPlus(p);
       if (sp == null) return false;
-      // v30.5 - Match the spotlights tier breakpoints (elite ≥ 120,
-      // above pool ≥ 105). User feedback: SC+ 110 is meaningfully
-      // above mean and should qualify for the "above pool" chip.
-      // v30.8 - Below-tier (SC+ ≤ 95) added so the filter can find
-      // tracked-data laggers (regression-watch candidates).
-      if (state.statcastFilter.has("elite") && sp >= 120) return true;
-      if (state.statcastFilter.has("above") && sp >= 105) return true;
-      if (state.statcastFilter.has("below") && sp <= 95)  return true;
+      // Tier breakpoints are shared with spotlights.py (_SC_ELITE / _SC_ABOVE
+      // / _SC_BELOW) so a chip and the server-side driver that colours the
+      // same player never disagree. Re-mapped 2026-08-07 from 120/105/95 with
+      // the SC+ re-standardization; the chip titles above carry the numbers.
+      if (state.statcastFilter.has("elite") && sp >= SC_TIER.elite) return true;
+      if (state.statcastFilter.has("above") && sp >= SC_TIER.above) return true;
+      if (state.statcastFilter.has("below") && sp <= SC_TIER.below) return true;
       return false;
     });
   }
@@ -16732,7 +16762,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
     const sp = getStatcastPlus(p);
     const swp = (typeof getSwingPlus === "function" && !isPit) ? getSwingPlus(p) : null;
     const signals = [
-      sp != null ? { key: "SC+", value: sp, valColor: sp >= 105 ? "var(--up)" : sp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
+      sp != null ? { key: "SC+", value: sp, valColor: sp >= SC_TIER.above ? "var(--up)" : sp <= SC_TIER.below ? "var(--down)" : "var(--text-primary)" } : null,
       swp != null ? { key: "Swing+", value: Math.round(swp), valColor: swp >= 105 ? "var(--up)" : swp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
       // 2026-07-29: was `sl.rps_plus`, populated for 0 of 4,505 players, so this
       // chip never rendered. Reads the live RPS+ (_rpsPlusValue) instead - the
@@ -31130,78 +31160,17 @@ function _computeBmi(heightInches, weightLb) {
 // for individual missing fields; the cluster itself always renders so
 // the grid column doesn't collapse. Used by the standard / expanded
 // density row renderers. Compact density has its own minified version.
-// v29 - Statcast+ composite. A single 0-200 index (100 = pool average)
-// summarizing each prospect's tracked Statcast / zone signals. For
-// hitters it blends contact quality (EV / HH% / Barrel%) with plate-
-// discipline / contact-ability (Z-Contact%, Whiff% inverted, Chase%
-// inverted). For pitchers it blends pitch quality (top-pitch velo)
-// with induced swing-and-miss (Whiff%, Chase%) and contact suppression
-// (HH%/Barrel% allowed, both inverted). Each component is z-scored
-// against the side-matched active pool, averaged, and rescaled to a
-// 100-anchored index. Returns null when the prospect has no tracked
-// data on any component. Cached per render via _resetStatcastPlusCache.
-let _scPoolCache = null;
-function _resetStatcastPlusCache() { _scPoolCache = null; }
-function _scExtractHitter(p) {
-  const cq = (p.statcast_metrics && p.statcast_metrics.contact_quality) || {};
-  const z = (() => {
-    const zm = p.zone_metrics;
-    if (!zm) return null;
-    const arr = (zm.level_splits && zm.level_splits.length) ? zm.level_splits : (Object.keys(zm).length ? [zm] : []);
-    if (!arr.length) return null;
-    return arr.slice().sort((a, b) => (b.pitches || 0) - (a.pitches || 0))[0] || null;
-  })();
-  return {
-    avg_ev:       cq.avg_ev != null ? cq.avg_ev : null,
-    hard_hit_pct: cq.hard_hit_pct != null ? cq.hard_hit_pct : null,
-    barrel_pct:   cq.barrel_pct != null ? cq.barrel_pct : null,
-    z_contact:    z && z.z_contact_pct != null ? z.z_contact_pct : null,
-    whiff_inv:    z && z.whiff_pct != null ? -z.whiff_pct : null,
-    chase_inv:    z && z.chase_pct != null ? -z.chase_pct : null,
-  };
-}
-function _scExtractPitcher(p) {
-  const cq = (p.statcast_metrics && p.statcast_metrics.contact_quality) || {};
-  const pm = (p.statcast_metrics && p.statcast_metrics.pitch_movement) || {};
-  const top = (pm.pitch_summary || [])[0] || {};
-  const z = (() => {
-    const zm = p.zone_metrics;
-    if (!zm) return null;
-    const arr = (zm.level_splits && zm.level_splits.length) ? zm.level_splits : (Object.keys(zm).length ? [zm] : []);
-    if (!arr.length) return null;
-    return arr.slice().sort((a, b) => (b.pitches || 0) - (a.pitches || 0))[0] || null;
-  })();
-  return {
-    top_velo:    top.avg_velo != null ? top.avg_velo : null,
-    whiff:       z && z.whiff_pct != null ? z.whiff_pct : null,
-    chase:       z && z.chase_pct != null ? z.chase_pct : null,
-    hh_inv:      cq.hard_hit_pct != null ? -cq.hard_hit_pct : null,
-    barrel_inv:  cq.barrel_pct != null ? -cq.barrel_pct : null,
-  };
-}
-function _scPool() {
-  if (_scPoolCache) return _scPoolCache;
-  const hitters = [], pitchers = [];
-  for (const p of (DATA.players || [])) {
-    const isP = !!(p.statline && p.statline.is_pitcher);
-    if (isP) pitchers.push(_scExtractPitcher(p));
-    else     hitters.push(_scExtractHitter(p));
-  }
-  const stats = (rows) => {
-    const out = {};
-    if (!rows.length) return out;
-    for (const k of Object.keys(rows[0])) {
-      const vals = rows.map(r => r[k]).filter(v => v != null && isFinite(v));
-      if (!vals.length) { out[k] = { mean: null, sd: 1 }; continue; }
-      const m = vals.reduce((s, v) => s + v, 0) / vals.length;
-      const variance = vals.reduce((s, v) => s + (v - m) * (v - m), 0) / vals.length;
-      out[k] = { mean: m, sd: Math.sqrt(variance) || 1 };
-    }
-    return out;
-  };
-  _scPoolCache = { hit: stats(hitters), pit: stats(pitchers) };
-  return _scPoolCache;
-}
+// POOL BUILDER DELETED 2026-08-07 along with the browser-side recomputation it
+// fed (see getStatcastPlus). It had drifted into a second, WRONG definition of
+// a served metric: it read `zone_metrics.chase_pct`, a key production rows have
+// never carried (the Python extractors read o_swing_pct and say so), so its
+// chase leg was silently dead; and it had none of the shrink, volume floors or
+// coverage-conditional divisor the server composite now carries. Reviving a
+// client-side SC+ means porting statcast_plus.build_pool whole, not the
+// z-average, and there is no reason to: the field is on 100% of served rows.
+// The reset hook stays because render() calls it and a per-render cache reset
+// is the right shape for whatever caches here next.
+function _resetStatcastPlusCache() { /* no client-side SC+ pool to clear */ }
 // Swing+ sidecar (data/swing_plus.json - Will Cahoon's bat-tracking
 // model, scored by swing_plus_ingest.py). Keyed by MLBAM id; only MLB
 // swings exist (bat tracking has never run below MLB), so the lookup
@@ -33102,29 +33071,23 @@ function efvDetailCard(p) {
 
 function getStatcastPlus(p) {
   if (!p) return null;
-  // v29 - Prefer the server-computed Statcast+ when present. Storage
-  // attaches it to every active + graduate payload via statcast_plus.py;
-  // the JS path below stays as a fallback for legacy exports (or for
-  // synthetic test payloads) that ship without the field.
-  if (p.statcast_plus !== undefined && p.statcast_plus !== null) {
-    return Number(p.statcast_plus);
-  }
-  const isP = !!(p.statline && p.statline.is_pitcher);
-  const row = isP ? _scExtractPitcher(p) : _scExtractHitter(p);
-  const pool = isP ? _scPool().pit : _scPool().hit;
-  const zs = [];
-  for (const k of Object.keys(row)) {
-    const v = row[k];
-    const ps = pool[k];
-    if (v == null || !isFinite(v) || !ps || ps.mean == null) continue;
-    zs.push((v - ps.mean) / (ps.sd || 1));
-  }
-  if (!zs.length) return null;
-  const avgZ = zs.reduce((s, v) => s + v, 0) / zs.length;
-  // Anchor at 100; each σ moves 10 points (the house "+" convention shared by
-  // RPS+ / DvM+ / pStuff+ / CS+). The comment used to say 15 points, one line
-  // above code that has multiplied by 10 since v-audit finding 6.
-  return Math.round(100 + avgZ * 10);
+  // The server value is the ONLY value. statcast_plus.py attaches it to every
+  // active + graduate payload (present on 4,586 of 4,586 served rows), and a
+  // null there is an ANSWER, not a gap: it means the composite had no leg with
+  // a usable sample behind it.
+  //
+  // SECOND SCALE REMOVED 2026-08-07. A browser-side recomputation lived here.
+  // It carried neither the empirical-Bayes shrink, the volume floors, nor the
+  // coverage-conditional divisor the server gained in this change, so it
+  // produced a number about 1.6x too narrow and the page then judged it
+  // against the re-mapped thresholds. Worse, it fired precisely on the rows
+  // the volume floors had just excluded (server null, raw components still on
+  // the payload), so the fallback would have quietly reinstated the one-batted
+  // -ball profiles the floors exist to remove. Two definitions of one metric,
+  // with the wrong one winning exactly where the right one had abstained.
+  // Any revival must port the whole pool build, not the z-average alone.
+  return (p.statcast_plus === undefined || p.statcast_plus === null)
+    ? null : Number(p.statcast_plus);
 }
 
 // v29 - Pool-wide stats for the physical-profile (HT/WT/BMI) chips.
@@ -34542,7 +34505,9 @@ function _gfxInsight(p) {
   let best = null; for (const k in lbl) { const v = get(k); if (v != null && (!best || v > best.v)) best = { k, v }; }
   if (best && best.v >= 60) return `Standout ${lbl[best.k]} - ${fvCeil(best.v)} grade`;
   const sc = (typeof getStatcastPlus === "function") ? getStatcastPlus(p) : null;
-  if (sc != null && sc >= 110) return `Statcast+ ${sc} - tracked data backs the profile`; // +1σ top-quintile (10 pts/σ)
+  // notableHi rather than a bare 110: 110 is now exactly +1 sigma, which is a
+  // third of the pool, and this line is a headline claim about one player.
+  if (sc != null && sc >= SC_TIER.notableHi) return `Statcast+ ${sc} - tracked data backs the profile`;
   return null;
 }
 
@@ -34922,7 +34887,8 @@ function buildProspectCard(snap) {
     }
     if (p.statcast_plus != null && isFinite(p.statcast_plus)) {
       const v = Math.round(p.statcast_plus);
-      tile("SC+", String(v), v >= 105 ? "var(--up)" : v <= 95 ? "var(--down)" : P.text);
+      tile("SC+", String(v),
+           v >= SC_TIER.above ? "var(--up)" : v <= SC_TIER.below ? "var(--down)" : P.text);
     }
     {
       const swp = (typeof getSwingPlus === "function") ? getSwingPlus(p) : null;
@@ -37981,10 +37947,10 @@ function _buildDetailChipRibbon(p) {
     // Statcast+ composite pill.
     const sp = getStatcastPlus(p);
     if (sp != null) {
-      const c = sp >= 120 ? "var(--neon-cyan)"
-              : sp >= 105 ? "var(--up)"
-              : sp <= 95  ? "var(--down)"
-              :             "var(--text-secondary)";
+      const c = sp >= SC_TIER.elite ? "var(--neon-cyan)"
+              : sp >= SC_TIER.above ? "var(--up)"
+              : sp <= SC_TIER.below ? "var(--down)"
+              :                       "var(--text-secondary)";
       bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="Statcast+ composite (100 = pool average)">SC+ ${sp}</span>`);
     }
     // Swing+ pill (Will Cahoon bat-tracking model; hitters with MLB swings).
@@ -47412,7 +47378,7 @@ function renderPlayerDetail(key) {
         const max = topPitch.max_velo;
         sub = `${escapeHtml(topPitch.pitch_name || topPitch.pitch_type || "")}${max != null ? ` · max ${max.toFixed(1)}` : ""}${sp != null ? ` · SC+ ${sp}` : ""}`;
       } else if (sp != null) {
-        const c = sp >= 105 ? "var(--up)" : sp <= 95 ? "var(--down)" : "var(--text-primary)";
+        const c = sp >= SC_TIER.above ? "var(--up)" : sp <= SC_TIER.below ? "var(--down)" : "var(--text-primary)";
         label = "SC+ composite";
         value = `<span style="color:${c};font-weight:800;">${sp}</span>`;
         sub = "100 = pool average";
@@ -47433,7 +47399,7 @@ function renderPlayerDetail(key) {
         value = `<span style="color:${c};font-weight:800;">${v.toFixed(1)} mph</span>`;
         sub = `${cq.batted_balls != null ? `${cq.batted_balls} BBE` : ""}${cq.hard_hit_pct != null ? ` · ${cq.hard_hit_pct.toFixed(0)}% HH` : ""}${sp != null ? ` · SC+ ${sp}` : ""}`;
       } else if (sp != null) {
-        const c = sp >= 105 ? "var(--up)" : sp <= 95 ? "var(--down)" : "var(--text-primary)";
+        const c = sp >= SC_TIER.above ? "var(--up)" : sp <= SC_TIER.below ? "var(--down)" : "var(--text-primary)";
         label = "SC+ composite";
         value = `<span style="color:${c};font-weight:800;">${sp}</span>`;
         sub = "100 = pool average";

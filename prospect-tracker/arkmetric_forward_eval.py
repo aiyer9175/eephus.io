@@ -18,7 +18,8 @@ analog from Baseball Savant's minors statcast-search player aggregates
   ANALOG     z-blend of avg EV / HardHit% / Barrel%/BBE / SwingMiss%
              (inverted for hitters, positive for pitchers — pitchers
              additionally invert the contact components) within the
-             season's AAA pool, scaled 100 + 10z. That's four of SC+'s
+             season's AAA pool, standardized so 10 points is one
+             composite sd (see sc_analog_index). That's four of SC+'s
              six components; the Z-Contact/Chase zone splits have no
              historical source (documented gap). Pool restricted to
              players whose highest MiLB level that season was AAA (the
@@ -154,12 +155,26 @@ def sc_analog_index(season: int, side: str) -> dict[int, float]:
         return {}
     stats = {c: (statistics.mean(v), statistics.pstdev(v) or 1.0)
              for c, v in cols.items()}
-    out = {}
+    comps = {}
     for mid, vals in per:
         zs = [signs[c] * (vals[c] - stats[c][0]) / stats[c][1]
               for c in COMPONENTS]
-        out[mid] = round(100 + 10 * (sum(zs) / len(zs)), 1)
-    return out
+        comps[mid] = sum(zs) / len(zs)
+    # SCALE 2026-08-07: divide by the composite's own sd, exactly as
+    # statcast_plus.build_pool now does. storage.py:10935 OVERRIDES the served
+    # statcast_plus with this index for AAA prospects (349 of 3,603 served
+    # carriers on the 2026-08-06 board), so if only one of the two paths is
+    # re-standardized the served field carries two different sigmas under one
+    # name and no reader can tell which one he is looking at. Measured before
+    # the fix: 7.08 sd on the overridden rows against 6.08 on the rest.
+    # Every row here has all four components by construction (rows with any
+    # None are skipped above) and clears MIN_POOL_PA, so there is ONE coverage
+    # class and one divisor; the per-class conditioning statcast_plus needs
+    # has nothing to condition on.
+    sd = statistics.pstdev(list(comps.values())) if len(comps) > 1 else 1.0
+    if sd <= 1e-9:
+        sd = 1.0
+    return {mid: round(100 + 10 * (z / sd), 1) for mid, z in comps.items()}
 
 
 def _pearson(xs: list[float], ys: list[float]) -> float | None:

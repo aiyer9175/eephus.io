@@ -999,6 +999,21 @@ def _injury_factor(r) -> float:
 # rarely binds, because the calibrated slope is far gentler than the old 0.008).
 _SC_TILT_PER_PT_AT_R1 = 0.01
 
+# HOLD-AT-SHIP 2026-08-07. The paragraph above described the INTENT and was wrong about the
+# fact: until today SC+ moved 6.08 (hit) / 5.93 (pit) points per pool sigma, not 10, so this
+# slope delivered r × 6.1% per sigma against a documented r × 10%. Re-standardizing SC+
+# (statcast_plus.py) fixed the index and would, on its own, have grown the served tilt by ~1.6x
+# on every carrier -- an eFV grade and rank move on the whole board, riding along on a
+# calibration fix that was not gated to make it. These per-side constants are the post-shrink
+# points-per-sigma (6.77/10.04 hit, 6.44/10.06 pit) and they hold the tilt's SPREAD where it was.
+# What they do NOT hold is each player's individual tilt: the re-standardization deliberately
+# moves spread between coverage classes, so a full-coverage player's tilt grows and a
+# zone-only player's shrinks. That redistribution IS the fix and is gated in
+# docs/SC_PLUS_RECALIBRATION_GATE.md; the aggregate scale is what is being preserved.
+# Raising these to 1.0 is the intent-sized tilt. It is a SEPARATE registered question and it
+# does not ride along with a scale correction.
+_SC_TILT_SCALE_HOLD = {"hit": 0.675, "pit": 0.641}
+
 
 def _sc_forward_r() -> dict:
     try:
@@ -1025,7 +1040,8 @@ def _statcast_factor(r, side: str = "hit") -> float:
         sc = float(sc)
     except (TypeError, ValueError):
         return 1.0
-    slope = max(0.0, _SC_FWD_R.get(side, 0.13)) * _SC_TILT_PER_PT_AT_R1
+    slope = (max(0.0, _SC_FWD_R.get(side, 0.13)) * _SC_TILT_PER_PT_AT_R1
+             * _SC_TILT_SCALE_HOLD.get(side, 0.66))
     return round(min(1.18, max(0.82, 1.0 + (sc - 100.0) * slope)), 3)
 
 

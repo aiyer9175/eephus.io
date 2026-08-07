@@ -279,9 +279,10 @@ class ETAResult:
     perf_adj: float           # performance adjustment applied
     age_adj: float            # age-for-level adjustment applied
     fv_adj: float             # FV grade adjustment applied
-    # v29 — Statcast+ adjustment in years. Top-quintile (≥115) shaves
-    # 0.25; elite-tier (≥130) shaves 0.5; bottom-quintile (≤85) adds
-    # 0.25. 0.0 when the prospect has no tracked Statcast data.
+    # v29: Statcast+ adjustment in years. Strong (>=122) shaves 0.25;
+    # elite (≥143) shaves 0.5; weak (≤77) adds 0.25. 0.0 when the prospect
+    # has no tracked Statcast data. Cuts re-mapped 2026-08-07 with the SC+
+    # re-standardization; the populations they select are unchanged.
     statcast_plus_adj: float = 0.0
     # Health adjustment in years. Positive = ETA pushed back due to
     # recent injuries / post-TJ recovery; 0 = no impact.
@@ -532,20 +533,29 @@ def estimate_eta(
         signals += 1
 
     # ── Statcast+ adjustment ───────────────────────────────────────────────
-    # v29 — Statcast+ as a soft ETA modifier. Top-quintile (≥115) shaves
-    # 0.25y off the forecast; elite-tier (≥130) shaves a full 0.5y;
-    # bottom-quintile (≤85) adds 0.25y. Capped so the modifier never
-    # dominates the FV / age signals — it's a tiebreaker, not a re-write.
-    # Players without tracked Statcast data get no nudge (a None
-    # statcast_plus is treated as "no signal").
+    # v29: Statcast+ as a soft ETA modifier. Strong composite shaves 0.25y
+    # off the forecast; elite-tier shaves a full 0.5y; weak adds 0.25y.
+    # Capped so the modifier never dominates the FV / age signals; it is a
+    # tiebreaker, not a re-write. Players without tracked Statcast data get
+    # no nudge (a None statcast_plus is treated as "no signal").
+    #
+    # THRESHOLDS RE-MAPPED 2026-08-07 (130/115/85 -> 143/122/77) because SC+
+    # was re-standardized to a true 10 points per sigma and a point is now
+    # worth ~1.6x what it was. These numbers are chosen to hold the POPULATION
+    # each gate selects, not to look familiar: measured against the same board,
+    # 143 keeps 1 player where 130 kept 1, 122 keeps 40 where 115 kept 43, and
+    # 77 keeps 60 where 85 kept 56. Leaving them at 130/115/85 would have taken
+    # the elite-nudge population from 43 to 589. Widening who gets an ETA nudge
+    # is a policy change and needs its own eta_backtest evidence; this is not
+    # that. Full map: docs/SC_PLUS_RECALIBRATION_GATE.md section 2.
     if statcast_plus is not None:
         try:
             sc = float(statcast_plus)
-            if sc >= 130:
+            if sc >= 143:
                 statcast_plus_adj = -0.50
-            elif sc >= 115:
+            elif sc >= 122:
                 statcast_plus_adj = -0.25
-            elif sc <= 85:
+            elif sc <= 77:
                 statcast_plus_adj = +0.25
             signals += 1
         except (TypeError, ValueError):

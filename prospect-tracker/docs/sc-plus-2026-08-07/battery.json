@@ -1,0 +1,721 @@
+{
+  "stages": {
+    "S0_shipped": {
+      "n_carriers": 3582,
+      "hit": {
+        "n": 1656,
+        "mean": 99.89,
+        "sd": 6.084,
+        "min": 52,
+        "max": 128
+      },
+      "pit": {
+        "n": 1926,
+        "mean": 100.24,
+        "sd": 5.928,
+        "min": 66,
+        "max": 130
+      },
+      "top10": [
+        {
+          "key": "harrison_kreiling",
+          "sc": 130,
+          "legs": 2,
+          "min_contributing_n": 87,
+          "bbe": null,
+          "pitches": 87,
+          "velo_n": null
+        },
+        {
+          "key": "kenni_gomez",
+          "sc": 128,
+          "legs": 6,
+          "min_contributing_n": 1,
+          "bbe": 1,
+          "pitches": 512,
+          "velo_n": null
+        },
+        {
+          "key": "evan_estevez",
+          "sc": 127,
+          "legs": 6,
+          "min_contributing_n": 2,
+          "bbe": 2,
+          "pitches": 899,
+          "velo_n": null
+        },
+        {
+          "key": "wyatt_sanford",
+          "sc": 125,
+          "legs": 6,
+          "min_contributing_n": 1,
+          "bbe": 1,
+          "pitches": 885,
+          "velo_n": null
+        },
+        {
+          "key": "jacob_kmatz",
+          "sc": 123,
+          "legs": 2,
+          "min_contributing_n": 436,
+          "bbe": null,
+          "pitches": 436,
+          "velo_n": null
+        },
+        {
+          "key": "fulton_lockhart",
+          "sc": 123,
+          "legs": 2,
+          "min_contributing_n": 740,
+          "bbe": null,
+          "pitches": 740,
+          "velo_n": null
+        },
+        {
+          "key": "yeremmy_cabeza",
+          "sc": 121,
+          "legs": 2,
+          "min_contributing_n": 68,
+          "bbe": null,
+          "pitches": 68,
+          "velo_n": null
+        },
+        {
+          "key": "jorgelys_mota",
+          "sc": 120,
+          "legs": 6,
+          "min_contributing_n": 2,
+          "bbe": 2,
+          "pitches": 219,
+          "velo_n": null
+        },
+        {
+          "key": "franyerber_montilla",
+          "sc": 120,
+          "legs": 3,
+          "min_contributing_n": 33,
+          "bbe": null,
+          "pitches": 33,
+          "velo_n": null
+        },
+        {
+          "key": "jacob_lombard",
+          "sc": 119,
+          "legs": 6,
+          "min_contributing_n": 4,
+          "bbe": 4,
+          "pitches": 16,
+          "velo_n": null
+        }
+      ]
+    },
+    "S1_shrink": {
+      "n_carriers": 3564,
+      "hit": {
+        "n": 1639,
+        "mean": 99.84,
+        "sd": 6.773,
+        "min": 70,
+        "max": 133
+      },
+      "pit": {
+        "n": 1925,
+        "mean": 100.23,
+        "sd": 6.44,
+        "min": 58,
+        "max": 129
+      },
+      "top10": [
+        {
+          "key": "yordani_martinez",
+          "sc": 133,
+          "legs": 3,
+          "min_contributing_n": 501,
+          "bbe": 2,
+          "pitches": 501,
+          "velo_n": null
+        },
+        {
+          "key": "francis_marte",
+          "sc": 129,
+          "legs": 2,
+          "min_contributing_n": 326,
+          "bbe": 1,
+          "pitches": 326,
+          "velo_n": 7
+        },
+        {
+          "key": "juan_alva",
+          "sc": 129,
+          "legs": 3,
+          "min_contributing_n": 530,
+          "bbe": 6,
+          "pitches": 530,
+          "velo_n": null
+        },
+        {
+          "key": "sam_white",
+          "sc": 129,
+          "legs": 3,
+          "min_contributing_n": 292,
+          "bbe": 1,
+          "pitches": 292,
+          "velo_n": null
+        },
+        {
+          "key": "fulton_lockhart",
+          "sc": 125,
+          "legs": 2,
+          "min_contributing_n": 740,
+          "bbe": null,
+          "pitches": 740,
+          "velo_n": null
+        },
+        {
+          "key": "josueth_quinonez",
+          "sc": 125,
+          "legs": 3,
+          "min_contributing_n": 294,
+          "bbe": 3,
+          "pitches": 294,
+          "velo_n": null
+        },
+        {
+          "key": "luis_gomez",
+          "sc": 125,
+          "legs": 2,
+          "min_contributing_n": 528,
+          "bbe": 2,
+          "pitches": 528,
+          "velo_n": 5
+        },
+        {
+          "key": "yoralbert_cadiz",
+          "sc": 124,
+          "legs": 2,
+          "min_contributing_n": 430,
+          "bbe": 4,
+          "pitches": 430,
+          "velo_n": 7
+        },
+        {
+          "key": "leonardo_rossell",
+          "sc": 124,
+          "legs": 2,
+          "min_contributing_n": 311,
+          "bbe": 2,
+          "pitches": 311,
+          "velo_n": 7
+        },
+        {
+          "key": "jacob_kmatz",
+          "sc": 123,
+          "legs": 2,
+          "min_contributing_n": 436,
+          "bbe": null,
+          "pitches": 436,
+          "velo_n": null
+        }
+      ]
+    },
+    "S2_shrink_rescale": {
+      "n_carriers": 3564,
+      "hit": {
+        "n": 1639,
+        "mean": 99.75,
+        "sd": 9.994,
+        "min": 56,
+        "max": 148
+      },
+      "pit": {
+        "n": 1925,
+        "mean": 100.35,
+        "sd": 10.007,
+        "min": 35,
+        "max": 145
+      },
+      "top10": [
+        {
+          "key": "yordani_martinez",
+          "sc": 148,
+          "legs": 3,
+          "min_contributing_n": 501,
+          "bbe": 2,
+          "pitches": 501,
+          "velo_n": null
+        },
+        {
+          "key": "francis_marte",
+          "sc": 145,
+          "legs": 2,
+          "min_contributing_n": 326,
+          "bbe": 1,
+          "pitches": 326,
+          "velo_n": 7
+        },
+        {
+          "key": "sam_white",
+          "sc": 143,
+          "legs": 3,
+          "min_contributing_n": 292,
+          "bbe": 1,
+          "pitches": 292,
+          "velo_n": null
+        },
+        {
+          "key": "juan_alva",
+          "sc": 142,
+          "legs": 3,
+          "min_contributing_n": 530,
+          "bbe": 6,
+          "pitches": 530,
+          "velo_n": null
+        },
+        {
+          "key": "fulton_lockhart",
+          "sc": 139,
+          "legs": 2,
+          "min_contributing_n": 740,
+          "bbe": null,
+          "pitches": 740,
+          "velo_n": null
+        },
+        {
+          "key": "luis_gomez",
+          "sc": 139,
+          "legs": 2,
+          "min_contributing_n": 528,
+          "bbe": 2,
+          "pitches": 528,
+          "velo_n": 5
+        },
+        {
+          "key": "leonardo_rossell",
+          "sc": 138,
+          "legs": 2,
+          "min_contributing_n": 311,
+          "bbe": 2,
+          "pitches": 311,
+          "velo_n": 7
+        },
+        {
+          "key": "josueth_quinonez",
+          "sc": 137,
+          "legs": 3,
+          "min_contributing_n": 294,
+          "bbe": 3,
+          "pitches": 294,
+          "velo_n": null
+        },
+        {
+          "key": "yoralbert_cadiz",
+          "sc": 137,
+          "legs": 2,
+          "min_contributing_n": 430,
+          "bbe": 4,
+          "pitches": 430,
+          "velo_n": 7
+        },
+        {
+          "key": "jacob_kmatz",
+          "sc": 136,
+          "legs": 2,
+          "min_contributing_n": 436,
+          "bbe": null,
+          "pitches": 436,
+          "velo_n": null
+        }
+      ]
+    },
+    "S3_shrink_coverage": {
+      "n_carriers": 3564,
+      "hit": {
+        "n": 1639,
+        "mean": 99.87,
+        "sd": 10.039,
+        "min": 60,
+        "max": 143
+      },
+      "pit": {
+        "n": 1925,
+        "mean": 100.28,
+        "sd": 10.055,
+        "min": 39,
+        "max": 142
+      },
+      "top10": [
+        {
+          "key": "yordani_martinez",
+          "sc": 143,
+          "legs": 3,
+          "min_contributing_n": 501,
+          "bbe": 2,
+          "pitches": 501,
+          "velo_n": null
+        },
+        {
+          "key": "francis_marte",
+          "sc": 142,
+          "legs": 2,
+          "min_contributing_n": 326,
+          "bbe": 1,
+          "pitches": 326,
+          "velo_n": 7
+        },
+        {
+          "key": "sam_white",
+          "sc": 139,
+          "legs": 3,
+          "min_contributing_n": 292,
+          "bbe": 1,
+          "pitches": 292,
+          "velo_n": null
+        },
+        {
+          "key": "juan_alva",
+          "sc": 138,
+          "legs": 3,
+          "min_contributing_n": 530,
+          "bbe": 6,
+          "pitches": 530,
+          "velo_n": null
+        },
+        {
+          "key": "fulton_lockhart",
+          "sc": 137,
+          "legs": 2,
+          "min_contributing_n": 740,
+          "bbe": null,
+          "pitches": 740,
+          "velo_n": null
+        },
+        {
+          "key": "luis_gomez",
+          "sc": 136,
+          "legs": 2,
+          "min_contributing_n": 528,
+          "bbe": 2,
+          "pitches": 528,
+          "velo_n": 5
+        },
+        {
+          "key": "yoralbert_cadiz",
+          "sc": 135,
+          "legs": 2,
+          "min_contributing_n": 430,
+          "bbe": 4,
+          "pitches": 430,
+          "velo_n": 7
+        },
+        {
+          "key": "leonardo_rossell",
+          "sc": 135,
+          "legs": 2,
+          "min_contributing_n": 311,
+          "bbe": 2,
+          "pitches": 311,
+          "velo_n": 7
+        },
+        {
+          "key": "josueth_quinonez",
+          "sc": 134,
+          "legs": 3,
+          "min_contributing_n": 294,
+          "bbe": 3,
+          "pitches": 294,
+          "velo_n": null
+        },
+        {
+          "key": "jacob_kmatz",
+          "sc": 133,
+          "legs": 2,
+          "min_contributing_n": 436,
+          "bbe": null,
+          "pitches": 436,
+          "velo_n": null
+        }
+      ]
+    }
+  },
+  "populations_at_shipped_thresholds": {
+    "S0_shipped": {
+      "eta_elite_130": 1,
+      "eta_top_115": 29,
+      "eta_bottom_85": 45,
+      "breakout_115": 29,
+      "breakout_stat_130": 1,
+      "quintile_top_110": 168,
+      "quintile_bot_90": 192,
+      "spot_elite_120": 9,
+      "spot_above_105": 757,
+      "spot_below_95": 660
+    },
+    "S1_shrink": {
+      "eta_elite_130": 1,
+      "eta_top_115": 43,
+      "eta_bottom_85": 56,
+      "breakout_115": 43,
+      "breakout_stat_130": 1,
+      "quintile_top_110": 225,
+      "quintile_bot_90": 252,
+      "spot_elite_120": 12,
+      "spot_above_105": 865,
+      "spot_below_95": 762
+    },
+    "S2_shrink_rescale": {
+      "eta_elite_130": 12,
+      "eta_top_115": 225,
+      "eta_bottom_85": 246,
+      "breakout_115": 225,
+      "breakout_stat_130": 12,
+      "quintile_top_110": 549,
+      "quintile_bot_90": 532,
+      "spot_elite_120": 75,
+      "spot_above_105": 1150,
+      "spot_below_95": 1078
+    },
+    "S3_shrink_coverage": {
+      "eta_elite_130": 12,
+      "eta_top_115": 240,
+      "eta_bottom_85": 246,
+      "breakout_115": 240,
+      "breakout_stat_130": 12,
+      "quintile_top_110": 589,
+      "quintile_bot_90": 554,
+      "spot_elite_120": 77,
+      "spot_above_105": 1185,
+      "spot_below_95": 1093
+    }
+  },
+  "composite_sd": {
+    "S2_shrink_rescale": {
+      "hit": 0.6763,
+      "pit": 0.6441
+    },
+    "S0_shipped": {
+      "hit": 0.6084,
+      "pit": 0.5928
+    },
+    "S1_shrink": {
+      "hit": 0.6773,
+      "pit": 0.644
+    }
+  },
+  "spearman": {
+    "S0_shipped->S1_shrink": {
+      "n_common": 3564,
+      "rho": 0.9078,
+      "dropped": 18,
+      "added": 0
+    },
+    "S1_shrink->S2_shrink_rescale": {
+      "n_common": 3564,
+      "rho": 0.9981,
+      "dropped": 0,
+      "added": 0
+    },
+    "S1_shrink->S3_shrink_coverage": {
+      "n_common": 3564,
+      "rho": 0.9931,
+      "dropped": 0,
+      "added": 0
+    },
+    "S0_shipped->S3_shrink_coverage": {
+      "n_common": 3564,
+      "rho": 0.903,
+      "dropped": 18,
+      "added": 0
+    }
+  },
+  "thin_samples_in_shipped_pool": {
+    "bbe_lt10": 419,
+    "pitches_lt25": 18,
+    "velo_lt10": 33
+  },
+  "coverage_classes": {
+    "S0_shipped": {
+      "pit:chase|whiff": {
+        "n": 1050,
+        "pts_per_sigma": 6.51
+      },
+      "pit:barrel_inv|chase|hh_inv|top_velo|whiff": {
+        "n": 872,
+        "pts_per_sigma": 5.09
+      },
+      "hit:avg_ev|barrel_pct|chase_inv|hard_hit_pct|whiff_inv|z_contact": {
+        "n": 845,
+        "pts_per_sigma": 5.41
+      },
+      "hit:chase_inv|whiff_inv|z_contact": {
+        "n": 810,
+        "pts_per_sigma": 6.61
+      },
+      "pit:chase|top_velo|whiff": {
+        "n": 4,
+        "pts_per_sigma": 4.81
+      }
+    },
+    "S1_shrink": {
+      "pit:chase|whiff": {
+        "n": 1082,
+        "pts_per_sigma": 6.9
+      },
+      "hit:chase_inv|whiff_inv|z_contact": {
+        "n": 1024,
+        "pts_per_sigma": 7.52
+      },
+      "pit:barrel_inv|chase|hh_inv|top_velo|whiff": {
+        "n": 683,
+        "pts_per_sigma": 5.08
+      },
+      "hit:avg_ev|barrel_pct|chase_inv|hard_hit_pct|whiff_inv|z_contact": {
+        "n": 615,
+        "pts_per_sigma": 5.2
+      },
+      "pit:chase|top_velo|whiff": {
+        "n": 160,
+        "pts_per_sigma": 7.86
+      }
+    },
+    "S3_shrink_coverage": {
+      "pit:chase|whiff": {
+        "n": 1082,
+        "pts_per_sigma": 6.9
+      },
+      "hit:chase_inv|whiff_inv|z_contact": {
+        "n": 1024,
+        "pts_per_sigma": 7.52
+      },
+      "pit:barrel_inv|chase|hh_inv|top_velo|whiff": {
+        "n": 683,
+        "pts_per_sigma": 5.08
+      },
+      "hit:avg_ev|barrel_pct|chase_inv|hard_hit_pct|whiff_inv|z_contact": {
+        "n": 615,
+        "pts_per_sigma": 5.2
+      },
+      "pit:chase|top_velo|whiff": {
+        "n": 160,
+        "pts_per_sigma": 7.86
+      }
+    }
+  },
+  "served_pts_per_sigma_by_class": {
+    "S0_shipped": {
+      "hit:avg_ev|barrel_pct|chase_inv|hard_hit_pct|whiff_inv|z_contact": 5.42,
+      "hit:chase_inv|whiff_inv|z_contact": 6.61,
+      "pit:barrel_inv|chase|hh_inv|top_velo|whiff": 5.1,
+      "pit:chase|top_velo|whiff": 4.82,
+      "pit:chase|whiff": 6.5
+    },
+    "S1_shrink": {
+      "hit:avg_ev|barrel_pct|chase_inv|hard_hit_pct|whiff_inv|z_contact": 5.21,
+      "hit:chase_inv|whiff_inv|z_contact": 7.53,
+      "pit:barrel_inv|chase|hh_inv|top_velo|whiff": 5.09,
+      "pit:chase|top_velo|whiff": 7.87,
+      "pit:chase|whiff": 6.89
+    },
+    "S2_shrink_rescale": {
+      "hit:avg_ev|barrel_pct|chase_inv|hard_hit_pct|whiff_inv|z_contact": 7.67,
+      "hit:chase_inv|whiff_inv|z_contact": 11.12,
+      "pit:barrel_inv|chase|hh_inv|top_velo|whiff": 7.89,
+      "pit:chase|top_velo|whiff": 12.23,
+      "pit:chase|whiff": 10.72
+    },
+    "S3_shrink_coverage": {
+      "hit:avg_ev|barrel_pct|chase_inv|hard_hit_pct|whiff_inv|z_contact": 10.0,
+      "hit:chase_inv|whiff_inv|z_contact": 10.01,
+      "pit:barrel_inv|chase|hh_inv|top_velo|whiff": 10.02,
+      "pit:chase|top_velo|whiff": 9.98,
+      "pit:chase|whiff": 10.0
+    }
+  },
+  "crossings": {
+    "S1_shrink": {
+      "eta_nudge_changed": 94,
+      "breakout_115_flipped": 46,
+      "breakout_130_flipped": 2,
+      "tbs_term_mean_abs_delta": 0.0307,
+      "tbs_term_max_abs_delta": 0.7,
+      "tbs_base_mean_abs_delta_x_w20": 0.0061
+    },
+    "S2_shrink_rescale": {
+      "eta_nudge_changed": 441,
+      "breakout_115_flipped": 216,
+      "breakout_130_flipped": 13,
+      "tbs_term_mean_abs_delta": 0.073,
+      "tbs_term_max_abs_delta": 0.8,
+      "tbs_base_mean_abs_delta_x_w20": 0.0146
+    },
+    "S3_shrink_coverage": {
+      "eta_nudge_changed": 458,
+      "breakout_115_flipped": 231,
+      "breakout_130_flipped": 13,
+      "tbs_term_mean_abs_delta": 0.0772,
+      "tbs_term_max_abs_delta": 0.76,
+      "tbs_base_mean_abs_delta_x_w20": 0.0154
+    }
+  },
+  "tilt": {
+    "S0_shipped": {
+      "hit": {
+        "sd": 0.00938,
+        "min": 0.926,
+        "max": 1.0431,
+        "n_clamped": 0
+      },
+      "pit": {
+        "sd": 0.00715,
+        "min": 0.959,
+        "max": 1.0362,
+        "n_clamped": 0
+      }
+    },
+    "S1_shrink": {
+      "hit": {
+        "sd": 0.01044,
+        "min": 0.9538,
+        "max": 1.0509,
+        "n_clamped": 0
+      },
+      "pit": {
+        "sd": 0.00777,
+        "min": 0.9493,
+        "max": 1.035,
+        "n_clamped": 0
+      }
+    },
+    "S2_shrink_rescale": {
+      "hit": {
+        "sd": 0.0154,
+        "min": 0.9322,
+        "max": 1.074,
+        "n_clamped": 0
+      },
+      "pit": {
+        "sd": 0.01207,
+        "min": 0.9216,
+        "max": 1.0543,
+        "n_clamped": 0
+      }
+    },
+    "S3_shrink_coverage": {
+      "hit": {
+        "sd": 0.01547,
+        "min": 0.9384,
+        "max": 1.0663,
+        "n_clamped": 0
+      },
+      "pit": {
+        "sd": 0.01213,
+        "min": 0.9264,
+        "max": 1.0507,
+        "n_clamped": 0
+      }
+    },
+    "preservation_constant_S1_over_S3": {
+      "hit": 0.6749,
+      "pit": 0.6406
+    }
+  }
+}

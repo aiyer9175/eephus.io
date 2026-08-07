@@ -628,19 +628,21 @@ _BREAKOUT_TOOL_VELOCITY_THRESHOLD = 3.0  # avg tool grade improvement
 _BREAKOUT_HITTER_WRC_PLUS_GATE = 130
 _BREAKOUT_PITCHER_STF_PLUS_GATE = 105
 _BREAKOUT_PITCHER_FIP_MINUS_GATE = 90
-# v29 — Statcast+ as a perf gate. ≥115 is the top-quintile threshold
-# both sides agree on (mirrors the JS filter chip). It picks up
-# prospects whose contact-quality + zone discipline (or pitch-quality
-# + induced whiffs) is elite even when the scout-published indices
-# (Stuff+, wRC+, RPS+) haven't been computed yet. Same gate for
-# hitters and pitchers since Statcast+ is already side-aware.
-_BREAKOUT_STATCAST_PLUS_GATE = 115
-# v29 — Stat-only Statcast+ bar. Higher than the perf-gate (115) since
-# the stat-only path bypasses the tool/FV velocity requirement: only
-# elite-tier Statcast composites should trigger breakout without ANY
-# scout-side movement signal. 130 mirrors the wRC+ / RPS+ stat-only
-# bar (≈+2σ on each metric's pool).
-_BREAKOUT_STAT_STATCAST_PLUS_GATE = 130
+# v29: Statcast+ as a perf gate. It picks up prospects whose
+# contact-quality + zone discipline (or pitch-quality + induced whiffs) is
+# elite even when the scout-published indices (Stuff+, wRC+, RPS+) haven't
+# been computed yet. Same gate for hitters and pitchers since Statcast+ is
+# already side-aware.
+# RE-MAPPED 2026-08-07 from 115: SC+ was re-standardized to a true 10 points
+# per sigma, so these numbers move to hold the POPULATION they gate on rather
+# than their appearance. 122 selects 40 players where 115 selected 43; leaving
+# it at 115 would have taken it to 589. docs/SC_PLUS_RECALIBRATION_GATE.md.
+_BREAKOUT_STATCAST_PLUS_GATE = 122
+# v29: Stat-only Statcast+ bar. Higher than the perf-gate since the stat-only
+# path bypasses the tool/FV velocity requirement: only elite-tier Statcast
+# composites should trigger breakout without ANY scout-side movement signal.
+# RE-MAPPED 2026-08-07 from 130 (same reason); 143 selects the same 1 player.
+_BREAKOUT_STAT_STATCAST_PLUS_GATE = 143
 # v15 — Age caps. Breakouts are forward-looking signals; aging relievers
 # putting up a hot 90-day stretch aren't really "breaking out" in the
 # prospect-development sense. Caps below align with typical prospect-window
@@ -10902,7 +10904,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # to land here (post-dedup, pre-org-aggregation, pre-_serialize) so
     # downstream readers all see the same value:
     #   - estimate_eta inside _serialize → +/- 0.25y ETA nudge
-    #   - _compute_breakout_flag → SC+ ≥ 115 perf gate / ≥ 130 stat-only
+    #   - _compute_breakout_flag: SC+ perf gate / stat-only gate, thresholds
+    #     at _BREAKOUT_STATCAST_PLUS_GATE and _BREAKOUT_STAT_STATCAST_PLUS_GATE
     #   - org_map per-prospect loop → per-org SC+ aggregate (+ indicator
     #     counts) for the new farm-grade leaf
     # Players without tracked Statcast data are absent from the map →
@@ -15304,8 +15307,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # 6 months (or last 4 source updates, whichever spans more time) +
     # a performance gate (RPS+ for hitters, stf_plus_periph / fip_minus
     # for pitchers). Rare-but-possible — expects ~10-40 prospects to
-    # qualify league-wide. v29 — Statcast+ ≥ 115 also passes the perf
-    # gate now (see _compute_breakout_flag).
+    # qualify league-wide. v29: Statcast+ also passes the perf gate now
+    # (threshold at _BREAKOUT_STATCAST_PLUS_GATE, see _compute_breakout_flag).
     _attach_breakout_flags(active_payload)
 
     # v30.7 — Surface the breakout flag as a driver chip on the
