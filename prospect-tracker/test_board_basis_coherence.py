@@ -244,3 +244,95 @@ def test_history_median_tail_is_on_the_board_basis():
         f"median |history tail - board grade| is {med:.2f} FV over {len(pairs)} players. "
         f"A tilt gap moves a minority of rows; a number this size means the SCALE moved. "
         f"Re-read efv_score.score_history's grading line before re-recording anything.")
+
+
+# ── the floor-routing basis (Lane B2, 2026-08-07) ───────────────────────────
+# The board number for the constant-anchor cohort may come from EITHER the pooled
+# outcome curve or efv_ungraded's capped provisional map, and those two maps
+# disagree by -7.0 FV at WAR 0.0 and +11 to +12 through the 0.5-1.5 band. Which map
+# produced a row is therefore part of the board's identity, and the fingerprint gap
+# the plan registered is closed by the floorroute= term. These tests pin the switch,
+# the term, and the scoping predicate that decides who is eligible.
+
+
+def test_floor_routing_switch_is_pinned_off():
+    """Implemented and gated. Serving it needs the prospx board dedupe and the
+    two-scale disclosure to land first; without the dedupe the same player prints
+    the SAME grade twice instead of two contradictory ones, which reads worse than
+    the defect. If this fails, confirm both frontend pieces shipped, then update
+    docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_GATE.md section 4 in the same commit."""
+    import efv_score
+    assert efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT is False
+
+
+def test_fingerprint_names_the_routing_and_the_provisional_map():
+    """A fingerprint only guards what it names, and naming the SWITCH alone would
+    not have been enough: the routed grade is efv_ungraded._GRADE_MAP's output, so a
+    BASE / SLOPE / KNEE / CEIL / SOFT edit re-grades every routed row while the
+    switch reads True the whole time. The term carries the map's hash for the same
+    reason grademap= carries the outcome curve's."""
+    fp = storage.board_basis_fingerprint()
+    assert "|floorroute=" in fp, fp
+    term = fp.split("|floorroute=")[1]
+    state, _, map_hash = term.partition("@")
+    assert state in ("on", "off"), fp
+    assert len(map_hash) == 8, f"provisional map hash missing from {fp!r}"
+    assert fp == storage.BOARD_BASIS_FINGERPRINT
+
+
+def test_the_provisional_map_hash_actually_moves_with_the_map():
+    """The failure mode this term exists to prevent, exercised directly: a hash that
+    does not respond to the map is decoration."""
+    import efv_ungraded
+    before = storage.board_basis_fingerprint()
+    original = efv_ungraded._GRADE_MAP["hit"]["SLOPE"]
+    try:
+        efv_ungraded._GRADE_MAP["hit"]["SLOPE"] = original + 0.1
+        after = storage.board_basis_fingerprint()
+    finally:
+        efv_ungraded._GRADE_MAP["hit"]["SLOPE"] = original
+    assert after != before, (
+        "the provisional grade map changed and the board fingerprint did not move")
+    assert storage.board_basis_fingerprint() == before, "restore failed"
+
+
+def test_routing_predicate_is_scoped_to_the_abstaining_floor():
+    """Both halves of the scope are load-bearing and both are pinned.
+
+    constant_only  a published grade is an opinion and is never overridden.
+    at the floor   vf.outcome_implied_fv maps every non-positive prediction to the
+                   curve's first knot, so at the floor the flagship map is ABSTAINING
+                   rather than disagreeing. Above it the curve resolved a real
+                   prediction. This is not a technicality: 184 rows in this cohort
+                   grade above FV30 on the flagship map and a median 7.7 FV LOWER on
+                   the provisional one, so an unscoped routing would demote 184
+                   visible board rows.
+    """
+    import efv_score
+    floor = efv_score._outcome_floor_knot()
+    saved = efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT
+    saved_cache = efv_score._prov_grades_cache
+    try:
+        efv_score._prov_grades_cache = {"pk": 31.4}
+        efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT = False
+        assert efv_score.route_floor_grade("pk", floor, True) is None, "gated off"
+        efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT = True
+        assert efv_score.route_floor_grade("pk", floor, True) == 31.4
+        assert efv_score.route_floor_grade("pk", floor + 0.1, True) is None
+        assert efv_score.route_floor_grade("pk", 38.0, True) is None
+        assert efv_score.route_floor_grade("pk", floor, False) is None
+        assert efv_score.route_floor_grade("pk", None, True) is None
+        assert efv_score.route_floor_grade("absent", floor, True) is None
+    finally:
+        efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT = saved
+        efv_score._prov_grades_cache = saved_cache
+
+
+def test_floor_knot_is_read_from_the_curve_not_written_as_20():
+    """A literal 20.0 here would keep matching rows the map no longer produces if the
+    curve is ever refit with a different first knot."""
+    import efv_score
+    import value_framework as vf
+    assert efv_score._outcome_floor_knot() == float(vf._outcome_curve()["knots"][0])
+    assert vf.outcome_implied_fv(-1.0, exposure_seasons=6) == efv_score._outcome_floor_knot()
+    assert vf.outcome_implied_fv(0.0, exposure_seasons=6) == efv_score._outcome_floor_knot()

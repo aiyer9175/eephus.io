@@ -122,10 +122,45 @@ def _stale_anchor_discount(asof_iso, fv_raw, today=None):
 # grade froze eighteen months ago therefore reads as "graded today" and takes a
 # 0.00 discount, which is exactly the Nathan Hickey class this ramp was built for.
 #
-# It defaults to "point" ON PURPOSE. fv_effective is the model's dominant
-# feature, so this is basis-adjacent and does not flip itself; flipping it needs
-# a mover table and an owner decision. See the master plan, Lane C2.
-STALE_ANCHOR_DATE_BASIS = "point"
+# FLIPPED to "source" 2026-08-07 (owner decision 3, master plan omnibus-3 Lane B3)
+# after the mover table it was blocked on was finally built:
+#   tools/efv_stale_anchor_mover_table.py -> docs/efv-2026-08-07/STALE_ANCHOR_MOVER_TABLE.json
+#
+# THE MOVER TABLE REFUTED THE PREMISE THAT MOTIVATED THE FLIP, and the number is
+# recorded here because the next person to read the paragraph above will otherwise
+# believe it. The spec predicted ~182 more decayed rows at +12 months and ~2,691 at
+# +24 on a frozen board. MEASURED on the 2026-08-06 board, 4,586 active rows:
+#
+#     +0mo    point 279  source 279   net 0    movers 0
+#     +12mo   point 701  source 701   net 0    movers 0
+#     +24mo   point 4473 source 4473  net 0    movers 16, max delta 0.11 FV
+#
+# The source date differs from the point date on 16 of 4,586 rows. The reason is
+# mlbam_ingest.refresh_performance_anchors itself: it stamps only players in
+# `_synthetic_only_keys()` and its own docstring says it "never touches a player who
+# has a real published anchor". So the Nathan Hickey class this basis was built for -
+# a real grade frozen 18 months ago under a daily constant stamp - is 13 rows on the
+# current board, and their real grade is ONE DAY older than the point date, not
+# eighteen months. The forward-fill the paragraph above describes is real; the daily
+# re-stamp that would have exploited it is scoped out at the source.
+#
+# IT SHIPS ANYWAY, and the argument is not "it is free" but "it is correct and this
+# is the cheapest moment it will ever be". The point date answers "when did anything
+# touch this player", the ramp asks "when did somebody last form an opinion", and
+# those are different questions whose answers coincide today only because one
+# ingest module happens to be careful. The flip costs 16 rows at +24 months now; it
+# costs the whole auto-tracked cohort the first time a source starts stamping without
+# that guard. Correctness changes are cheap to make while they measure zero.
+#
+# EPOCH DELIBERATELY NOT BUMPED. BOARD_RANK_BASIS_EPOCH has one job: stop the
+# movement engine publishing a one-time RE-RANK as player movement. Measured movers
+# at +0mo is 0, so there is no re-rank to suppress, and bumping would blank a night
+# of genuine movement to hide a change that did not happen. Same judgement, and the
+# same reasoning, as the 2026-08-04 feats-hash note at storage.py.
+# The FINGERPRINT does move: this is a board-ordering input (it feeds fv_effective,
+# the model's dominant feature) and it was not named there before, which was a
+# registered gap. storage.board_basis_fingerprint now carries a stale= term.
+STALE_ANCHOR_DATE_BASIS = "source"
 
 
 def _constant_anchor_sources() -> frozenset:
@@ -186,6 +221,29 @@ def _anchor_asof_date(pt: dict) -> str | None:
         if tier:
             return max(tier)
     return None
+
+
+def _anchor_is_constant_only(pt: dict) -> bool:
+    """Is every source behind this consensus point a fabricated constant stamp?
+
+    The same predicate run_monthly writes onto the roster row as
+    `fv_synthetic_only` (`bool(srcs) and srcs <= CONSTANT_ANCHOR_SOURCES`), read
+    off the point instead of the roster so the live matrix carries it without a
+    file-ordering dependency on the site export.
+
+    True means NOBODY has published an opinion about this player: consensus folded
+    the placeholder back in as a last resort so he would not vanish from the board
+    (consensus.CONSTANT_ANCHOR_SOURCES), and his consensus_fv_raw is that
+    placeholder, not a grade. efv_ungraded.flagship_owns already refuses to claim
+    these players; this is the same partition, stated on the side that scores them.
+
+    An EMPTY source set reads False on purpose: "no sources at all" is a different
+    condition from "only constant sources", and calling it constant-only would
+    route a row with no provenance into a substitution built for one with known
+    provenance."""
+    srcs = set((pt or {}).get("sources_contributing") or ())
+    return bool(srcs) and srcs <= _constant_anchor_sources()
+
 
 DATA_DIR = Path(__file__).parent / "data"
 MATRIX_PATH = DATA_DIR / "xfv_hitter_matrix.json"
@@ -1240,6 +1298,14 @@ def build_live_matrix(side: str = "hit"):
         if STALE_ANCHOR_DATE_BASIS == "source":
             _anchor_asof = _anchor_asof_date(pt) or _anchor_asof
         row["anchor_asof_date"] = _anchor_asof
+        # Is this row's anchor an OPINION or a placeholder? Derived here, from the
+        # same test run_monthly uses to stamp the roster's fv_synthetic_only
+        # (sources_contributing against consensus.CONSTANT_ANCHOR_SOURCES), so the
+        # scorer does not have to reach into rosters_by_org.json and inherit its
+        # build ordering. Verified 2026-08-07 to reproduce the roster stamp exactly
+        # on the committed board: 2,642 actives, of which the 2,636 that also carry
+        # a provisional row are precisely the runtime double-listing set.
+        row["anchor_constant_only"] = _anchor_is_constant_only(pt)
         _disc = _stale_anchor_discount(_anchor_asof, row.get("consensus_fv_raw"))
         row["anchor_stale_discount"] = round(_disc, 2)
         row["fv_effective"] = round(row["consensus_fv_raw"] - _disc, 2) if _disc else row["consensus_fv_raw"]

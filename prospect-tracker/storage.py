@@ -4909,8 +4909,45 @@ BOARD_RANK_BASIS_EPOCH = "2026-07-30"   # STRICTLY-AFTER gate: see load_rank_his
 # order, while leaving all four prior terms identical. That is the same failure mode the
 # roles note above describes, one layer deeper, so the feature spec itself is now hashed
 # into the fingerprint and named here.
+# EXTENDED 2026-08-07 (omnibus-3 Lane B) with TWO terms, and the reason is the same
+# lesson for the fifth and sixth time: a fingerprint only guards what it NAMES.
+#
+#   stale=       efv_dataset.STALE_ANCHOR_DATE_BASIS. Which date the staleness ramp
+#                measures from decides anchor_stale_discount, which decides
+#                fv_effective, which is the eFV model's DOMINANT feature. It has been
+#                a board-ordering input since 2026-07-14 and the fingerprint has
+#                never named it. The 2026-08-07 flip point -> source moves 0 rows
+#                today (docs/efv-2026-08-07/STALE_ANCHOR_MOVER_TABLE.json), so it
+#                would have slipped past this device unnoticed - which is precisely
+#                the case where an unnamed input is most dangerous, because the next
+#                change to it inherits a fingerprint that already lied once.
+#   floorroute=  efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT plus the identity of
+#                the PROVISIONAL grade map it routes onto. The plan called the missing
+#                provisional-scale term a registered gap and it is closed here. Naming
+#                the switch alone would not have been enough: the routed grade is
+#                efv_ungraded._GRADE_MAP's output, so a change to BASE / SLOPE / KNEE /
+#                CEIL / SOFT re-grades and re-ranks every routed row while the switch
+#                stays True. The term hashes the map itself for the same reason the
+#                grademap term hashes the outcome curve.
+#
+# The switch is False today, so the term reads floorroute=off and the map hash is
+# still carried: a provisional-map edit trips the check whether or not the routing is
+# live, which is what stops the map drifting under a gate that was measured against it.
+#
+# THE PRICE OF EXTENDING THIS STRING, paid knowingly. data/xfv_history.json carries
+# the fingerprint it was built under, and xfv_history_is_on_board_basis() gates the
+# eFV-delta MOVEMENT signal on an exact match. The committed history artifact matched
+# the pre-2026-08-07 string exactly, so extending the fingerprint flips that gate to
+# False and the eFV movement chips read empty until score_history restamps the
+# artifact on the next nightly regen. One cycle, and it is the suppression working as
+# designed rather than a side effect: neither new term moves a grade today (the stale
+# flip measured 0 movers, the routing is off), but a coordination device that only
+# fires when it is convenient is not one. The alternative - leaving the two inputs
+# unnamed to protect one night of chips - is the exact trade that produced the
+# 2026-07-29 incident.
 BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
-                           "|roles=usage_both|feats=b747e1d3")
+                           "|roles=usage_both|feats=b747e1d3|stale=source"
+                           "|floorroute=off@ff60a349")
 # feats dbb1bc2a -> b747e1d3 on 2026-08-04: the hitter `age` SIGN DECLARATION moved
 # -1 -> 0 (docs/efv-2026-08-04/HIT_AGE_SIGN_GATE.md). The hash covers declared signs
 # ON PURPOSE, so this trip is the coordination check working as designed.
@@ -4974,8 +5011,31 @@ def board_basis_fingerprint() -> str:
         feats = _hashlib.sha256(_spec.encode()).hexdigest()[:8]
     except Exception:
         feats = "unavailable"
+    # STALE-ANCHOR DATE BASIS, added 2026-08-07. See the note above the constant.
+    try:
+        import efv_dataset as _ed
+        stale = str(_ed.STALE_ANCHOR_DATE_BASIS)
+    except Exception:
+        stale = "unavailable"
+    # FLOOR ROUTING + the provisional grade map it routes onto, added 2026-08-07.
+    # Imported lazily and hashed the same way the feature spec is: the map is a plain
+    # constant dict, so a stable repr over sorted keys is the whole identity.
+    try:
+        import hashlib as _hashlib
+        import efv_score as _es
+        import efv_ungraded as _eu
+        _map = "".join(
+            f"{s}:" + ",".join(f"{k}={_eu._GRADE_MAP[s][k]:g}"
+                               for k in sorted(_eu._GRADE_MAP[s]))
+            for s in sorted(_eu._GRADE_MAP))
+        _map += f"|uncapped={bool(_eu.UNCAPPED_GRADE)}|subfloor={_eu._SUBFLOOR_GRADE:g}"
+        _mh = _hashlib.sha256(_map.encode()).hexdigest()[:8]
+        _on = "on" if _es.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT else "off"
+        floorroute = f"{_on}@{_mh}"
+    except Exception:
+        floorroute = "unavailable"
     return (f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}|roles={roles}"
-            f"|feats={feats}")
+            f"|feats={feats}|stale={stale}|floorroute={floorroute}")
 
 
 # ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /

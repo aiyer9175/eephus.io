@@ -1,0 +1,177 @@
+{
+ "line": "LANE-B: eFV board floor routing + double-listing gate simulation",
+ "generated_at": "2026-08-07",
+ "lab": "tools/efv_board_floor_sim.py",
+ "pre_registration": "docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_GATE.md",
+ "plan": "docs/master-plan-2026-08-07-omnibus3.md Lane B",
+ "gate_standard": "docs/EFV_GATE_STANDARD.md",
+ "registry_row": "efv_board_floor_routing",
+ "changes_served_output": false,
+ "ship_state": "implemented, gated OFF. efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT is False: the flip is blocked on the prospx board dedupe and the two-scale disclosure, which live in a file this lane does not own.",
+ "board_source": {
+  "timeseries_generated_at": "2026-08-06T11:51:00Z",
+  "xfv_active_rows": 4586,
+  "provisional_rows": 5983,
+  "outcome_curve_floor_knot": 20.0
+ },
+ "scope": {
+  "synthetic_only_actives": 2642,
+  "at_the_floor_routed": 2434,
+  "above_the_floor_kept_on_flagship": 202,
+  "above_fv30_kept_on_flagship": 184,
+  "no_provisional_row_kept_on_flagship": 6
+ },
+ "G1_dedupe": {
+  "board_pool_rows_today": 10569,
+  "distinct_player_keys": 7933,
+  "duplicate_player_keys": 2636,
+  "rows_removed_by_dedupe": 2636,
+  "measured_at_runtime": true,
+  "harness": "prospx/index.html inline script evaluated in a Node VM against the real artifacts; getFilteredActives() returned 10,569 rows / 7,933 distinct / 2,636 duplicated, every pair one graded + one provisional"
+ },
+ "gates": {
+  "label": "routing",
+  "routed_rows": 2434,
+  "G2_floor_actives_before": 3358,
+  "G2_floor_actives_after": 1185,
+  "G3_spearman_pooled": 0.982926,
+  "G3_spearman_per_side": {
+   "H": {
+    "n": 1098,
+    "rho": 0.995662,
+    "inversions": 2751,
+    "n_above_floor": 862,
+    "rho_above_floor": 0.99464
+   },
+   "P": {
+    "n": 1336,
+    "rho": 0.997466,
+    "inversions": 3437,
+    "n_above_floor": 1311,
+    "rho_above_floor": 0.997321
+   }
+  },
+  "G4_rows_above_fv30_that_moved": 0,
+  "G5_top25_membership_changed": [],
+  "G5_top100_membership_changed": [],
+  "G5_routed_rows_entering_top100": [],
+  "G3_corrected_passthrough_mismatches": 0,
+  "G3_corrected_rows_at_the_subfloor_exposure_cap": 55
+ },
+ "zero_information_control": {
+  "label": "permuted-control",
+  "routed_rows": 2434,
+  "G2_floor_actives_before": 3358,
+  "G2_floor_actives_after": 1185,
+  "G3_spearman_pooled": 0.008029,
+  "G3_spearman_per_side": {
+   "H": {
+    "n": 1098,
+    "rho": -0.00719,
+    "inversions": 286605,
+    "n_above_floor": 979,
+    "rho_above_floor": 0.019013
+   },
+   "P": {
+    "n": 1336,
+    "rho": 0.03244,
+    "inversions": 427597,
+    "n_above_floor": 1194,
+    "rho_above_floor": 0.00535
+   }
+  },
+  "G4_rows_above_fv30_that_moved": 0,
+  "G5_top25_membership_changed": [],
+  "G5_top100_membership_changed": [],
+  "G5_routed_rows_entering_top100": []
+ },
+ "G6_sort_key": {
+  "tie_block_before": 1185,
+  "graded_residual": {
+   "rows": 924,
+   "rows_with_a_sort_value": 924,
+   "distinct_sort_values": 190,
+   "largest_tie_block_after": 180,
+   "largest_block_is_the_war_clamp": true,
+   "reduction_pct": 80.5
+  },
+  "routed_at_provisional_floor": {
+   "rows": 261,
+   "rows_with_a_sort_value": 261,
+   "distinct_sort_values": 39,
+   "largest_tie_block_after": 205,
+   "largest_block_is_the_war_clamp": true,
+   "reduction_pct": 21.5
+  },
+  "note": "measured on the 2dp WAR the ARTIFACTS carry. The shipped key is the unrounded PRE-CLAMP model WAR, so these block counts are an upper bound on the residual ties: at full precision the -2.0 clamp block resolves too, since the clamp is a safety guard on the served WAR and the key is minted before it."
+ },
+ "routed_landing_distribution": {
+  "min": 20.0,
+  "p10": 20.0,
+  "median": 27.1,
+  "p90": 33.3,
+  "max": 46.7,
+  "above_fv30": 624,
+  "above_fv35": 150,
+  "above_fv40": 15,
+  "best_rank_reached": 182
+ },
+ "two_scale_disagreement": [
+  {
+   "war": 0.0,
+   "flagship_outcome_curve": 20.0,
+   "provisional_hit": 27.0,
+   "flagship_minus_provisional_hit": -7.0,
+   "provisional_pit": 25.0,
+   "flagship_minus_provisional_pit": -5.0
+  },
+  {
+   "war": 0.25,
+   "flagship_outcome_curve": 38.54,
+   "provisional_hit": 27.95,
+   "flagship_minus_provisional_hit": 10.59,
+   "provisional_pit": 26.12,
+   "flagship_minus_provisional_pit": 12.41
+  },
+  {
+   "war": 0.5,
+   "flagship_outcome_curve": 40.3,
+   "provisional_hit": 28.9,
+   "flagship_minus_provisional_hit": 11.4,
+   "provisional_pit": 27.25,
+   "flagship_minus_provisional_pit": 13.05
+  },
+  {
+   "war": 1.0,
+   "flagship_outcome_curve": 42.78,
+   "provisional_hit": 30.8,
+   "flagship_minus_provisional_hit": 11.98,
+   "provisional_pit": 29.5,
+   "flagship_minus_provisional_pit": 13.28
+  },
+  {
+   "war": 1.5,
+   "flagship_outcome_curve": 43.66,
+   "provisional_hit": 32.7,
+   "flagship_minus_provisional_hit": 10.96,
+   "provisional_pit": 31.75,
+   "flagship_minus_provisional_pit": 11.91
+  },
+  {
+   "war": 2.5,
+   "flagship_outcome_curve": 45.52,
+   "provisional_hit": 36.5,
+   "flagship_minus_provisional_hit": 9.02,
+   "provisional_pit": 36.37,
+   "flagship_minus_provisional_pit": 9.15
+  },
+  {
+   "war": 3.5,
+   "flagship_outcome_curve": 47.62,
+   "provisional_hit": 40.3,
+   "flagship_minus_provisional_hit": 7.32,
+   "provisional_pit": 37.73,
+   "flagship_minus_provisional_pit": 9.89
+  }
+ ]
+}

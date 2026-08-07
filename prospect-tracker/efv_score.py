@@ -61,6 +61,114 @@ except Exception:  # pragma: no cover - optional sidecar module
     _xoverlay = None
 
 
+# ── FLOOR ROUTING: the constant-anchor cohort (Lane B2, owner decision 2) ─────
+# Pre-registration docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_GATE.md
+# Simulation   tools/efv_board_floor_sim.py -> BOARD_FLOOR_ROUTING_SIM.json
+#
+# THE DEFECT. 2,642 active board rows have no published scouting opinion at all:
+# consensus folds a fabricated FV 35 back in as a last resort (CONSTANT_ANCHOR_SOURCES)
+# so they do not vanish, and that placeholder becomes their consensus_fv_raw. The model
+# reads the placeholder, predicts a non-positive WAR, and vf.outcome_implied_fv maps
+# EVERY non-positive prediction to exactly the curve's first knot. 2,440 of them
+# therefore serve exactly 20.0. Meanwhile efv_ungraded - the model built for precisely
+# these players - grades the same 2,636 of them with a real spread (median 27.4), and
+# the board renders BOTH rows, so the same player appears twice at two grades on two
+# scales. Measured at runtime 2026-08-07: pool 10,569 rows, 7,933 distinct, 2,636
+# duplicated, every pair one graded + one provisional.
+#
+# WHAT ROUTING DOES. A live row serves the provisional grade instead of the flagship
+# grade when its anchor is constant-only AND its flagship grade sits exactly on the
+# outcome curve's floor knot. Both conditions are load-bearing:
+#   condition 1  no source published an opinion, so there is no grade to override.
+#   condition 2  the flagship map ABSTAINS there rather than disagreeing. The curve's
+#                own schema note says the FV20/25/30 knots are below the data floor and
+#                are NOT a measurement. Above the floor the curve resolved a positive
+#                predicted WAR and keeps it - which is not a technicality: 184 rows in
+#                this cohort grade above FV30 on the flagship map and a median 7.7 FV
+#                LOWER on the provisional one, so routing the whole cohort would demote
+#                184 visible board rows.
+#
+# THE TWO MAPS DISAGREE, and serving both on one board is a disclosure obligation, not
+# a detail. Recomputed from the committed constants 2026-08-07 (flagship minus
+# provisional-hitter): -7.0 FV at WAR 0.0, +11.4 at 0.5, +12.0 at 1.0, +9.0 at 2.5. The
+# board ALREADY mixes them for the 5,983 rows provPlayers() synthesizes, so this does
+# not create the mixing, but it moves 2,434 players across the seam.
+#
+# DEFAULT OFF, and this is the whole reason the flag exists rather than the change just
+# landing. Serving it needs two things in prospx/index.html, which this lane does not
+# own: the board pool dedupe (without it both rows print the SAME number and the same
+# player appears twice at one grade, which reads worse than today's contradictory pair),
+# and the two-scale disclosure. Flipping this constant before those land ships an
+# undisclosed scale swap on 2,434 rows.
+#
+# BANNED, not attempted: re-pointing efv_ungraded._grade onto the outcome map (recorded
+# no-ship, 3 of 6 stop conditions).
+SERVE_PROVISIONAL_FOR_CONSTANT_COHORT = False
+
+# ONE-RUN LAG, and it is structural rather than a shortcut. efv_export.regen_all runs
+# efv_score.run_live BEFORE efv_ungraded.build, because the provisional model needs
+# rosters_by_org.json from the site export, which runs after the board. So the newest
+# provisional grade a live scoring pass can see is last night's. Same trade
+# storage._load_xfv_join already makes and documents for the eFV join. It is acceptable
+# HERE specifically because the routed population is org filler whose provisional grade
+# is driven by season-to-date rate stats: a one-day-stale grade for a DSL arm is not a
+# material claim. A player who enters the cohort with no provisional row yet keeps the
+# flagship floor for one night, which is the pre-change behavior, not a hole.
+_PROV_GRADE_PATH = Path(__file__).parent / "data" / "xfv_ungraded.json"
+_prov_grades_cache: dict | None = None
+
+
+def _provisional_grades() -> dict:
+    """{player_key: provisional grade} from the PREVIOUS run's xfv_ungraded.json.
+
+    Returns {} on any failure. A missing or malformed sidecar must degrade the
+    routing to a no-op (every row keeps its flagship grade), never take the scoring
+    pass down: this is a display-basis substitution, not a correctness dependency."""
+    global _prov_grades_cache
+    if _prov_grades_cache is not None:
+        return _prov_grades_cache
+    out: dict = {}
+    try:
+        doc = json.loads(_PROV_GRADE_PATH.read_text(encoding="utf-8"))
+        for pk, entry in (doc.get("by_player") or {}).items():
+            g = (entry or {}).get("xfv_grade")
+            if g is not None:
+                out[pk] = float(g)
+    except Exception:
+        log.warning("provisional grades unavailable (%s); floor routing is a no-op",
+                    _PROV_GRADE_PATH.name)
+        out = {}
+    _prov_grades_cache = out
+    return out
+
+
+def _outcome_floor_knot() -> float:
+    """The grade vf.outcome_implied_fv returns for every non-positive prediction.
+
+    Read from the curve rather than written as 20.0 so a re-fit that moves the first
+    knot cannot leave this test silently pointing at a value the map no longer
+    produces. Falls back to 20.0, the 20-80 scale minimum, if the curve is
+    unreadable."""
+    try:
+        return float(vf._outcome_curve()["knots"][0])
+    except Exception:
+        return 20.0
+
+
+def route_floor_grade(player_key, flagship_grade, constant_only: bool):
+    """The routed board grade, or None to keep the flagship grade.
+
+    Pure and side-effect free so the gate simulation and the tests exercise the
+    SHIPPED predicate instead of a copy of it."""
+    if not SERVE_PROVISIONAL_FOR_CONSTANT_COHORT or not constant_only:
+        return None
+    if flagship_grade is None:
+        return None
+    if abs(float(flagship_grade) - _outcome_floor_knot()) > 1e-9:
+        return None                      # the curve resolved a real prediction: keep it
+    return _provisional_grades().get(player_key)
+
+
 # P1 V2 clause-2 baseline floor. See the ANCHOR DECOUPLING note in
 # _provisional_prior_war._ref_war. The sub-45 empirical anchors were amended on
 # 2026-07-29 (0.19 WAR/yr flat -> measured 0.019 at FV35 / 0.086 at FV40), which drags
@@ -1751,7 +1859,8 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             skipped_no_track += 1
             continue
         feats = _vec(r, side)
-        xfv_war = max(-2.0, a + b * _predict(ridge, feats))
+        _war_unclamped = a + b * _predict(ridge, feats)
+        xfv_war = max(-2.0, _war_unclamped)
         # E-STALE: the blend's consensus leg prices the DECAYED anchor
         # (fv_effective, efv_dataset._stale_anchor_discount) - the ground-truth
         # study shows a long-unlisted FV45 carries ~FV35 of credible consensus
@@ -1765,11 +1874,46 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         factors = _factors(ridge, feats, side=side)       # explainer: why eFV != consensus
         factors = _relabel_pace_factor(factors, r.get("milb"))
         _stale_disc = float(r.get("anchor_stale_discount") or 0.0)
+        # B4 (2026-08-07): the chip fires only where the discount actually reached
+        # the grade. It is inserted at position 0, so it reads as THE explanation for
+        # the number beside it, and on the 2026-08-06 board 257 of the 278 rows
+        # carrying it graded exactly 20.0 - a floor that 3,101 chip-free actives also
+        # printed, for reasons the discount had nothing to do with. The chip was
+        # taking credit for the outcome_implied_fv floor knot.
+        #
+        # THE COUNTERFACTUAL, and mind which channel it tests. The board grade is
+        # outcome_implied_fv(xfv_war), which comes from the MODEL leg alone, so the
+        # discount reaches it through the `fv` FEATURE (efv_model._vec reads
+        # fv_effective, efv_model.py:941) and NOT through the blend's consensus leg,
+        # which only feeds the retired quantile display. So the honest test re-runs
+        # the ridge with the anchor un-decayed and asks whether the grade changes.
+        #
+        # Compared PRE-TILT on purpose. The injury / Statcast / age / role factors
+        # and the S-XLINE lean are applied identically to both branches below, and
+        # each multiplicative tilt is a penalty in [0, 1], so a row that already
+        # grades at the floor without the discount cannot be lifted off it by them.
+        # That is exactly the 257-row population this gate exists for.
+        #
+        # Computed only for rows carrying a discount (about 278 of 4,586), so it is
+        # one extra ridge dot product on 6% of the board rather than on all of it.
+        # THE DISCOUNT ITSELF IS UNCHANGED; what is withheld is the claim that it
+        # explains this row.
+        _stale_shown = 0.0
         if _stale_disc > 0:
+            _r_undecayed = dict(r)
+            _r_undecayed["fv_effective"] = r.get("consensus_fv_raw")
+            _war_undecayed = max(-2.0, a + b * _predict(ridge, _vec(_r_undecayed, side)))
+            _g_with = vf.outcome_implied_fv(xfv_war, exposure_seasons=TARGET_SEASONS)
+            _g_without = vf.outcome_implied_fv(_war_undecayed,
+                                               exposure_seasons=TARGET_SEASONS)
+            if (_g_with is None or _g_without is None
+                    or round(_g_with, 1) != round(_g_without, 1)):
+                _stale_shown = _stale_disc
+        if _stale_shown > 0:
             # surfaced like the other live overlays so the card explains WHY the
             # grade sits under a stale consensus (the Hickey complaint).
             factors.insert(0, {"label": "Stale list coverage", "dir": "down",
-                               "mag": round(_stale_disc / 2.0, 2)})
+                               "mag": round(_stale_shown / 2.0, 2)})
         inj = _injury_factor(r)                           # owner-directed live injury penalty
         agef = _age_factor(r)                              # owner-directed live prospect-age penalty
         rolef = _role_factor(r, xfv_war)                   # owner-directed reliever-ceiling penalty
@@ -1852,6 +1996,19 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         xfv_grade_healthy = (vf.outcome_implied_fv(xfv_war_healthy,
                                                    exposure_seasons=TARGET_SEASONS)
                              if xfv_war_healthy is not None else None)
+        # FLOOR ROUTING (Lane B2). Applied to the BOARD GRADE only, and deliberately
+        # AFTER the odds grade is taken: p_bucket / p_bust were ground-truthed on the
+        # realized_implied_fv basis and a re-key has never been measured, so the odds
+        # keep reading the flagship model's own prediction. The routed number answers
+        # "what does the model built for un-scouted players say"; the odds answer
+        # "how often does a player like this bust". Substituting one into the other
+        # would silently re-base validated probabilities.
+        _grade_basis = "outcome_pooled"
+        _routed = route_floor_grade(r["player_key"], xfv_grade,
+                                    bool(r.get("anchor_constant_only")))
+        if _routed is not None:
+            xfv_grade = float(_routed)
+            _grade_basis = "provisional_capped"
         probs = vf.p_bucket_given_fv(_odds_grade, is_pit) or []
         # ODDS DISPERSION CALIBRATION, wired 2026-07-31 after the lane cleared its
         # pre-registered gate (docs/efv-2026-07-30/ODDS_CALIBRATION_SLOPE_GATE.md;
@@ -1913,6 +2070,33 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             "p_bust": round(probs[0], 3) if probs else None,
             "injury_factor": inj if inj < 1.0 else None,
             "statcast_factor": sc if sc != 1.0 else None,
+            # WHICH WAR-TO-FV MAP produced xfv_grade on this row. "outcome_pooled" is
+            # the flagship inverse of the empirical curve; "provisional_capped" is
+            # efv_ungraded._GRADE_MAP, served under the floor routing above. The two
+            # disagree by -7.0 FV at WAR 0.0 and +11 to +12 through the 0.5-1.5 band,
+            # so any surface that shows both must say which it is showing. The field
+            # is emitted UNCONDITIONALLY, including while the routing is gated off:
+            # a disclosure that only appears once the thing it discloses is already
+            # live gives the frontend nothing to build against.
+            #
+            # STOPS AT THE CONSOLIDATOR TODAY. efv_export._entry is a field WHITELIST,
+            # so this and board_sort_key below reach data/xfv_scored_live_*.json and no
+            # further; data/xfv.json will not carry them until _entry passes them
+            # through. The ROUTED GRADE itself is unaffected, because it rides
+            # s["xfv_grade"], which is already whitelisted. Recorded here rather than
+            # left to be rediscovered from an absent field.
+            "grade_basis": _grade_basis,
+            # ORDER-ONLY tiebreak, never displayed. vf.outcome_implied_fv maps every
+            # non-positive prediction to exactly the curve's first knot, so the floor
+            # is one enormous tie block (3,358 actives on the 2026-08-06 board) that
+            # the board then orders by the plus-flag / TBS / NAME chain. This is the
+            # model's own unrounded prediction, so those rows can order by the model
+            # instead. PRE-CLAMP on purpose: `max(-2.0, ...)` is a safety guard on the
+            # served WAR, and applying it here would re-tie the 306 floor rows sitting
+            # exactly on the clamp - the single largest block the key exists to break.
+            # It is NOT a grade and must never be rendered as one; a reader who sees
+            # -1.83 here should read "ordered below -1.82", nothing more.
+            "board_sort_key": round(_war_unclamped, 6),
             "factors": factors,
         }
         # S-XLINE measurement annotation (efv_dataset._milb_features, live

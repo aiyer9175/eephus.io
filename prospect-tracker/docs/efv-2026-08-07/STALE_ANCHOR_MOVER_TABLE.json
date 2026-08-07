@@ -1,0 +1,307 @@
+{
+ "line": "LANE-B3: STALE_ANCHOR_DATE_BASIS point -> source mover table",
+ "generated_at": "2026-08-07",
+ "lab": "tools/efv_stale_anchor_mover_table.py",
+ "plan": "docs/master-plan-2026-08-07-omnibus3.md Lane B3",
+ "board_source": {
+  "path": "data/timeseries.json",
+  "generated_at": "2026-08-06T11:51:00Z",
+  "active_rows_considered": 4586
+ },
+ "ramp_constants": {
+  "STALE_ANCHOR_RAMP_START_MO": 18,
+  "STALE_ANCHOR_RAMP_FULL_MO": 30,
+  "STALE_ANCHOR_TERMINAL": {
+   "35": 10.0,
+   "40": 10.0,
+   "45": 10.0
+  },
+  "pinned_by": "data/xfv_stale_anchor_eval.json (test_efv_stale_anchor.py)"
+ },
+ "basis_before": "point",
+ "basis_after": "source",
+ "date_disagreement": {
+  "rows_where_source_date_differs": 16,
+  "source_tier_census": {
+   "fv_real": 1944,
+   "fv_const": 2642
+  }
+ },
+ "horizons": {
+  "+0mo": {
+   "clock": "2026-08-07",
+   "decayed_under_point": 279,
+   "decayed_under_source": 279,
+   "net_newly_decayed": 0,
+   "movers": 0,
+   "mover_fv_band": {},
+   "mover_source_tier": {},
+   "delta_fv_max": 0.0,
+   "delta_fv_median": 0.0,
+   "delta_fv_min": 0.0,
+   "top_movers": []
+  },
+  "+12mo": {
+   "clock": "2027-08-07",
+   "decayed_under_point": 701,
+   "decayed_under_source": 701,
+   "net_newly_decayed": 0,
+   "movers": 0,
+   "mover_fv_band": {},
+   "mover_source_tier": {},
+   "delta_fv_max": 0.0,
+   "delta_fv_median": 0.0,
+   "delta_fv_min": 0.0,
+   "top_movers": []
+  },
+  "+24mo": {
+   "clock": "2028-08-07",
+   "decayed_under_point": 4473,
+   "decayed_under_source": 4473,
+   "net_newly_decayed": 0,
+   "movers": 16,
+   "mover_fv_band": {
+    "35": 10,
+    "40": 5,
+    "45": 1
+   },
+   "mover_source_tier": {
+    "fv_real": 16
+   },
+   "delta_fv_max": 0.11,
+   "delta_fv_median": 0.03,
+   "delta_fv_min": 0.03,
+   "top_movers": [
+    {
+     "player_key": "moises_chace",
+     "player_name": "Mois\u00e9s Chace",
+     "org": "PHI",
+     "consensus_fv_raw": 45.0,
+     "point_date": "2026-08-06",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.04,
+     "discount_source": 5.15,
+     "delta_fv": 0.11,
+     "months_point": 24.0,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "randy_santana",
+     "player_name": "Randy Santana",
+     "org": "DET",
+     "consensus_fv_raw": 38.2,
+     "point_date": "2026-08-06",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.04,
+     "discount_source": 5.15,
+     "delta_fv": 0.11,
+     "months_point": 24.0,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "ronny_munoz",
+     "player_name": "Ronny Mu\u00f1oz",
+     "org": "MIA",
+     "consensus_fv_raw": 36.4,
+     "point_date": "2026-08-06",
+     "source_date": "2026-08-04",
+     "source_tier": "fv_real",
+     "discount_point": 5.04,
+     "discount_source": 5.09,
+     "delta_fv": 0.05,
+     "months_point": 24.0,
+     "months_source": 24.1
+    },
+    {
+     "player_key": "yostin_pena",
+     "player_name": "Yostin Pena",
+     "org": "NYY",
+     "consensus_fv_raw": 38.33,
+     "point_date": "2026-08-03",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.12,
+     "discount_source": 5.15,
+     "delta_fv": 0.03,
+     "months_point": 24.1,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "jacob_frost",
+     "player_name": "Jacob Frost",
+     "org": "LAD",
+     "consensus_fv_raw": 38.33,
+     "point_date": "2026-08-03",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.12,
+     "discount_source": 5.15,
+     "delta_fv": 0.03,
+     "months_point": 24.1,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "tegan_cain",
+     "player_name": "Tegan Cain",
+     "org": "PHI",
+     "consensus_fv_raw": 35.0,
+     "point_date": "2026-08-03",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.12,
+     "discount_source": 5.15,
+     "delta_fv": 0.03,
+     "months_point": 24.1,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "angel_rivero",
+     "player_name": "Angel Rivero",
+     "org": "LAA",
+     "consensus_fv_raw": 38.33,
+     "point_date": "2026-08-03",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.12,
+     "discount_source": 5.15,
+     "delta_fv": 0.03,
+     "months_point": 24.1,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "marty_gair",
+     "player_name": "Marty Gair",
+     "org": "SFG",
+     "consensus_fv_raw": 35.0,
+     "point_date": "2026-08-03",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.12,
+     "discount_source": 5.15,
+     "delta_fv": 0.03,
+     "months_point": 24.1,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "marino_santy",
+     "player_name": "Marino Santy",
+     "org": "CHC",
+     "consensus_fv_raw": 35.0,
+     "point_date": "2026-08-03",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.12,
+     "discount_source": 5.15,
+     "delta_fv": 0.03,
+     "months_point": 24.1,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "kyle_nevin",
+     "player_name": "Kyle Nevin",
+     "org": "LAD",
+     "consensus_fv_raw": 38.33,
+     "point_date": "2026-08-03",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.12,
+     "discount_source": 5.15,
+     "delta_fv": 0.03,
+     "months_point": 24.1,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "wande_torres",
+     "player_name": "Wande Torres",
+     "org": "MIL",
+     "consensus_fv_raw": 35.0,
+     "point_date": "2026-08-03",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.12,
+     "discount_source": 5.15,
+     "delta_fv": 0.03,
+     "months_point": 24.1,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "max_martin",
+     "player_name": "Max Martin",
+     "org": "HOU",
+     "consensus_fv_raw": 35.0,
+     "point_date": "2026-08-03",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.12,
+     "discount_source": 5.15,
+     "delta_fv": 0.03,
+     "months_point": 24.1,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "luke_gabrysh",
+     "player_name": "Luke Gabrysh",
+     "org": "NYM",
+     "consensus_fv_raw": 35.0,
+     "point_date": "2026-08-03",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.12,
+     "discount_source": 5.15,
+     "delta_fv": 0.03,
+     "months_point": 24.1,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "zane_barnhart",
+     "player_name": "Zane Barnhart",
+     "org": "DET",
+     "consensus_fv_raw": 35.0,
+     "point_date": "2026-08-03",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.12,
+     "discount_source": 5.15,
+     "delta_fv": 0.03,
+     "months_point": 24.1,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "leanders_matos",
+     "player_name": "Leanders Matos",
+     "org": "MIL",
+     "consensus_fv_raw": 35.0,
+     "point_date": "2026-08-03",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.12,
+     "discount_source": 5.15,
+     "delta_fv": 0.03,
+     "months_point": 24.1,
+     "months_source": 24.2
+    },
+    {
+     "player_key": "jay_mcqueen",
+     "player_name": "Jay McQueen",
+     "org": "TEX",
+     "consensus_fv_raw": 35.0,
+     "point_date": "2026-08-03",
+     "source_date": "2026-08-02",
+     "source_tier": "fv_real",
+     "discount_point": 5.12,
+     "discount_source": 5.15,
+     "delta_fv": 0.03,
+     "months_point": 24.1,
+     "months_source": 24.2
+    }
+   ]
+  }
+ },
+ "gate_ramp_start_leak": {
+  "rule": "a mover's source-basis age must exceed STALE_ANCHOR_RAMP_START_MO",
+  "violations": []
+ },
+ "reads_as": "FV-point moves on the model's fv_effective input, not served grade deltas. The grade response runs through the ridge fv feature and the blend consensus leg and is only observable after a box regen."
+}

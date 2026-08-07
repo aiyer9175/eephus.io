@@ -45,10 +45,28 @@ import pytest
 # the code unwritten; efv_dataset._anchor_asof_date and _constant_anchor_sources
 # now exist and these assertions run.
 #
-# The switch STAYS on "point". That is not an oversight and the tests pin it:
-# fv_effective is the model's dominant feature, so flipping the basis moves
-# served grades and needs a mover table plus an owner decision. What shipped is
-# the capability and its proof, not the flip.
+# FLIPPED TO "source" 2026-08-07 (owner decision 3, omnibus-3 Lane B3), and the
+# pin below moved with it in the same commit, which is the whole point of pinning
+# a default: a flip cannot be silent.
+#
+# THE MOVER TABLE THE FLIP OWED REFUTED THE PREMISE ABOVE, and the docstring's
+# numbers are left standing with this correction beneath them rather than quietly
+# edited, because the discrepancy is the finding. Paragraph 1 of "WHAT THIS FILE
+# PINS" quotes -182 decayed rows at +12 months and -2,691 at +24 as the cost of
+# the naive fix, which is a real property of the TIERING. The flip's own effect is
+# a different quantity and it is approximately zero: measured on the 2026-08-06
+# board (4,586 active rows, tools/efv_stale_anchor_mover_table.py), point and
+# source decay the SAME 279 rows today, the same 701 at +12 months, the same 4,473
+# at +24, and the two bases disagree on 16 rows with a maximum delta of 0.11 FV.
+#
+# The reason is mlbam_ingest.refresh_performance_anchors, which stamps only
+# `_synthetic_only_keys()` and states in its own docstring that it "never touches a
+# player who has a real published anchor". The headline defect this file describes
+# is therefore already scoped out at the ingest, and the class it was built for is
+# 13 rows whose real grade is ONE DAY older than the point date. The flip ships as
+# a correctness change made while it is free, not as a measured improvement, and
+# the tests below still pin the BEHAVIOUR because that is what has to keep holding
+# if a future ingest stops being careful.
 
 
 import sys
@@ -165,10 +183,48 @@ class TestDiscountUnderEachBasis(unittest.TestCase):
 
 class TestBasisSwitchAndWiring(unittest.TestCase):
 
-    def test_switch_defaults_to_shipped_behavior(self):
-        """Basis-adjacent change: fv_effective is the model's dominant feature,
-        so the source read ships only on an owner decision."""
-        self.assertEqual(ed.STALE_ANCHOR_DATE_BASIS, "point")
+    def test_switch_pins_the_shipped_basis(self):
+        """Basis-adjacent: fv_effective is the model's dominant feature, so this
+        constant does not move without an owner decision, a mover table and a
+        fingerprint bump. Flipped point -> source on 2026-08-07 (owner decision 3);
+        the mover table it was blocked on is
+        docs/efv-2026-08-07/STALE_ANCHOR_MOVER_TABLE.json and it measured 0 movers
+        at +0 and +12 months, 16 at +24.
+
+        If this fails you changed the basis. Rebuild the mover table, restamp
+        storage.BOARD_BASIS_FINGERPRINT's stale= term, and decide the epoch
+        question (it was deliberately NOT bumped for this flip: zero movers means
+        there is no re-rank to hide from the movement engine)."""
+        self.assertEqual(ed.STALE_ANCHOR_DATE_BASIS, "source")
+
+    def test_the_fingerprint_names_this_basis(self):
+        """The gap this flip closed. STALE_ANCHOR_DATE_BASIS has decided
+        fv_effective since 2026-07-14 and the board fingerprint never named it, so
+        a flip could not trip the coordination check at all. A fingerprint only
+        guards what it names."""
+        import storage
+        self.assertIn(f"stale={ed.STALE_ANCHOR_DATE_BASIS}",
+                      storage.board_basis_fingerprint())
+        self.assertIn("stale=", storage.BOARD_BASIS_FINGERPRINT)
+
+    def test_constant_only_predicate_matches_the_roster_stamp_rule(self):
+        """run_monthly stamps fv_synthetic_only as
+        `bool(srcs) and srcs <= CONSTANT_ANCHOR_SOURCES`. The live matrix derives
+        the same thing off the point so the scorer does not inherit the site
+        export's file ordering. The EMPTY set must read False: "no sources at all"
+        is not "only constant sources"."""
+        self.assertTrue(ed._anchor_is_constant_only(
+            {"sources_contributing": ["performance_ingest"]}))
+        self.assertTrue(ed._anchor_is_constant_only(
+            {"sources_contributing": list(CONSTANT_ANCHOR_SOURCES)}))
+        self.assertFalse(ed._anchor_is_constant_only(
+            {"sources_contributing": ["performance_ingest", "fangraphs"]}))
+        self.assertFalse(ed._anchor_is_constant_only({"sources_contributing": []}))
+        self.assertFalse(ed._anchor_is_constant_only({}))
+
+    def test_live_path_stamps_the_constant_only_flag(self):
+        src = (ROOT / "efv_dataset.py").read_text(encoding="utf-8")
+        self.assertIn('row["anchor_constant_only"] = _anchor_is_constant_only(pt)', src)
 
     def test_live_path_reads_the_switch_and_falls_back_to_the_point_date(self):
         src = (ROOT / "efv_dataset.py").read_text(encoding="utf-8")
