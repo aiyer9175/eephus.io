@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-06T15:19:36+00:00",
+ "generated_at": "2026-08-06T19:38:21+00:00",
  "slate_date": "2026-08-06",
  "n_games": 11,
  "status": {
@@ -74,9 +74,9 @@
    "no weather, no umpire, no travel, no injury news beyond what the leaderboards already absorb"
   ],
   "backtest": {
-   "generated_at": "2026-08-06T11:25:50+00:00",
+   "generated_at": "2026-08-06T19:02:09+00:00",
    "model_version": "betting_runs_v1",
-   "n_games": 1705,
+   "n_games": 1720,
    "validated": false,
    "contaminated": true,
    "contamination": "team inputs are season-to-date leaderboards, so every graded game is inside its own features; this measures calibration, not out-of-sample skill",
@@ -89,86 +89,86 @@
     "label": "in-sample (coefficients and features both leak)",
     "mode": "contaminated",
     "honest": false,
-    "n": 1705,
+    "n": 1720,
     "coefficients": {
-     "b0": 4.505349858096928,
-     "b1": 0.2798429454489262,
-     "b2": -0.31931635624478816,
-     "b3": 3.2604866926800615,
-     "b4": 0.012628343241238285,
+     "b0": 4.493370707892756,
+     "b1": 0.27804366244007633,
+     "b2": -0.31758320851087635,
+     "b3": 3.1711852914682837,
+     "b4": 0.021546518518499196,
      "source": "fitted",
-     "n_rows": 3410,
-     "rmse": 3.1728210311488456,
-     "r2": 0.04481576392921305
+     "n_rows": 3440,
+     "rmse": 3.1692306850047074,
+     "r2": 0.04415175788643688
     },
-    "home_field_runs_adj": 0.2217,
+    "home_field_runs_adj": 0.2341,
     "diff_shrink": 0.76,
-    "extra_inning_home_rate": 0.4875,
-    "brier": 0.24156,
+    "extra_inning_home_rate": 0.4815,
+    "brier": 0.24163,
     "brier_flat_500": 0.25,
-    "brier_home_base": 0.24946,
-    "log_loss": 0.67615,
+    "brier_home_base": 0.2494,
+    "log_loss": 0.6763,
     "log_loss_flat_500": 0.69315,
-    "accuracy": 0.5607,
-    "home_win_rate": 0.5232,
-    "mean_p_home": 0.5232,
+    "accuracy": 0.5622,
+    "home_win_rate": 0.5244,
+    "mean_p_home": 0.5244,
     "total_mae": 3.545,
     "skill_vs_home_base": {
-     "delta": 0.007903,
-     "sd": 0.08409,
-     "t": 3.881,
+     "delta": 0.00777,
+     "sd": 0.08355,
+     "t": 3.857,
      "beats_baseline_95": true,
-     "n_for_95": 306,
-     "baseline": 0.5232,
+     "n_for_95": 313,
+     "baseline": 0.5244,
      "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
     },
     "calibration": [
      {
       "bin": "0.1-0.2",
       "n": 1,
-      "pred": 0.1895,
+      "pred": 0.1921,
       "actual": 0.0
      },
      {
       "bin": "0.2-0.3",
-      "n": 13,
-      "pred": 0.2602,
-      "actual": 0.4615
+      "n": 12,
+      "pred": 0.2594,
+      "actual": 0.5
      },
      {
       "bin": "0.3-0.4",
-      "n": 109,
-      "pred": 0.3681,
-      "actual": 0.3303
+      "n": 102,
+      "pred": 0.3669,
+      "actual": 0.3431
      },
      {
       "bin": "0.4-0.5",
-      "n": 547,
-      "pred": 0.4577,
-      "actual": 0.4771
+      "n": 544,
+      "pred": 0.4572,
+      "actual": 0.4706
      },
      {
       "bin": "0.5-0.6",
-      "n": 727,
-      "pred": 0.5476,
-      "actual": 0.5337
+      "n": 746,
+      "pred": 0.5473,
+      "actual": 0.5349
      },
      {
       "bin": "0.6-0.7",
-      "n": 268,
-      "pred": 0.6341,
-      "actual": 0.6418
+      "n": 274,
+      "pred": 0.6339,
+      "actual": 0.6423
      },
      {
       "bin": "0.7-0.8",
-      "n": 32,
-      "pred": 0.728,
-      "actual": 0.7188
+      "n": 33,
+      "pred": 0.7274,
+      "actual": 0.7273
      },
      {
       "bin": "0.8-0.9",
       "n": 8,
-      "pred": 0.8274,
+      "pred": 0.827,
       "actual": 0.75
      }
     ]
@@ -177,7 +177,7 @@
     "label": "forward from 2026-06-24 (coefficient leakage removed, feature leakage remains)",
     "mode": "contaminated",
     "honest": false,
-    "n": 521,
+    "n": 536,
     "coefficients": {
      "b0": 4.504180132025525,
      "b1": 0.25506024939014577,
@@ -192,22 +192,22 @@
     "home_field_runs_adj": 0.3362,
     "diff_shrink": 0.7,
     "extra_inning_home_rate": 0.5,
-    "brier": 0.24275,
+    "brier": 0.24284,
     "brier_flat_500": 0.25,
-    "brier_home_base": 0.24995,
-    "log_loss": 0.67839,
+    "brier_home_base": 0.24987,
+    "log_loss": 0.6786,
     "log_loss_flat_500": 0.69315,
-    "accuracy": 0.547,
-    "home_win_rate": 0.5067,
-    "mean_p_home": 0.5299,
-    "total_mae": 3.616,
+    "accuracy": 0.5485,
+    "home_win_rate": 0.5112,
+    "mean_p_home": 0.5298,
+    "total_mae": 3.617,
     "skill_vs_home_base": {
-     "delta": 0.00721,
-     "sd": 0.08327,
-     "t": 1.976,
+     "delta": 0.007032,
+     "sd": 0.08183,
+     "t": 1.99,
      "beats_baseline_95": true,
-     "n_for_95": 361,
-     "baseline": 0.5067,
+     "n_for_95": 366,
+     "baseline": 0.5112,
      "note": "paired per-game Brier difference against the constant home-field baseline; positive means the model is better, and t >= 1.645 is the one-sided 95% bar"
     },
     "calibration": [
@@ -225,27 +225,27 @@
      },
      {
       "bin": "0.3-0.4",
-      "n": 27,
-      "pred": 0.3663,
-      "actual": 0.3333
+      "n": 28,
+      "pred": 0.3671,
+      "actual": 0.3571
      },
      {
       "bin": "0.4-0.5",
-      "n": 143,
-      "pred": 0.4589,
-      "actual": 0.4545
+      "n": 147,
+      "pred": 0.4594,
+      "actual": 0.4558
      },
      {
       "bin": "0.5-0.6",
-      "n": 247,
+      "n": 255,
       "pred": 0.5454,
-      "actual": 0.4899
+      "actual": 0.498
      },
      {
       "bin": "0.6-0.7",
-      "n": 90,
-      "pred": 0.6308,
-      "actual": 0.6444
+      "n": 92,
+      "pred": 0.6305,
+      "actual": 0.6413
      },
      {
       "bin": "0.7-0.8",
@@ -266,10 +266,10 @@
     "mode": "vintage",
     "honest": true,
     "status": "no vintages",
-    "n_vintages": 1,
+    "n_vintages": 2,
     "n_gradable": 0,
     "n_graded": 0,
-    "n_skipped_no_vintage": 1705,
+    "n_skipped_no_vintage": 1720,
     "min_fit_games": 100,
     "min_eval_games": 50,
     "min_graded_games_for_min_edge": 600,
@@ -282,7 +282,7 @@
   "validation": {
    "available": true,
    "artifact": "data/betting_model_eval.json",
-   "generated_at": "2026-08-06T11:25:50+00:00",
+   "generated_at": "2026-08-06T19:02:09+00:00",
    "model_version": "betting_runs_v1",
    "validated": false,
    "gates_picks": false,
@@ -301,38 +301,38 @@
      "label": "in-sample (coefficients and features both leak)",
      "mode": "contaminated",
      "honest": false,
-     "n": 1705,
-     "brier": 0.24156,
+     "n": 1720,
+     "brier": 0.24163,
      "brier_flat_500": 0.25,
-     "brier_home_base": 0.24946,
-     "accuracy": 0.5607,
+     "brier_home_base": 0.2494,
+     "accuracy": 0.5622,
      "key": "in_sample",
      "skill_vs_home_base": {
-      "delta": 0.007903,
-      "sd": 0.08409,
-      "t": 3.881,
+      "delta": 0.00777,
+      "sd": 0.08355,
+      "t": 3.857,
       "beats_baseline_95": true,
-      "n_for_95": 306,
-      "baseline": 0.5232
+      "n_for_95": 313,
+      "baseline": 0.5244
      }
     },
     {
      "label": "forward from 2026-06-24 (coefficient leakage removed, feature leakage remains)",
      "mode": "contaminated",
      "honest": false,
-     "n": 521,
-     "brier": 0.24275,
+     "n": 536,
+     "brier": 0.24284,
      "brier_flat_500": 0.25,
-     "brier_home_base": 0.24995,
-     "accuracy": 0.547,
+     "brier_home_base": 0.24987,
+     "accuracy": 0.5485,
      "key": "forward",
      "skill_vs_home_base": {
-      "delta": 0.00721,
-      "sd": 0.08327,
-      "t": 1.976,
+      "delta": 0.007032,
+      "sd": 0.08183,
+      "t": 1.99,
       "beats_baseline_95": true,
-      "n_for_95": 361,
-      "baseline": 0.5067
+      "n_for_95": 366,
+      "baseline": 0.5112
      }
     },
     {
@@ -349,10 +349,10 @@
    ],
    "vintage": {
     "status": "no vintages",
-    "n_vintages": 1,
+    "n_vintages": 2,
     "n_gradable": 0,
     "n_graded": 0,
-    "n_skipped_no_vintage": 1705,
+    "n_skipped_no_vintage": 1720,
     "min_fit_games": 100,
     "min_eval_games": 50,
     "min_graded_games_for_min_edge": 600,
@@ -363,18 +363,18 @@
    },
    "coverage": {
     "schema": 2,
-    "n_vintages": 1,
-    "n_vintages_with_parks": 0,
+    "n_vintages": 2,
+    "n_vintages_with_parks": 1,
     "n_vintages_neutral_park": 1,
     "first": "2026-08-05",
-    "last": "2026-08-05",
+    "last": "2026-08-06",
     "missing_dates": [],
-    "span_days": 1,
-    "latest_cutoff": "2026-08-05",
+    "span_days": 2,
+    "latest_cutoff": "2026-08-06",
     "earliest_gradable_game_date": "2026-08-06",
-    "note": "1 vintages, 0 missing days inside the span; a game is gradable when a vintage cutoff is strictly before it"
+    "note": "2 vintages, 0 missing days inside the span; a game is gradable when a vintage cutoff is strictly before it"
    },
-   "n_games_completed": 1705,
+   "n_games_completed": 1720,
    "gate": {
     "all_gates_open": false,
     "gates": [
@@ -397,12 +397,12 @@
       "need": "settled bets with a taken price, enough that some edge threshold clears an ROI lower bound of zero on at least 100 of them",
       "have": 0,
       "open": false,
-      "why": "an edge threshold is a claim about EV against real prices; 0 dates of odds snapshots are cached and no settled-bet join exists yet"
+      "why": "an edge threshold is a claim about EV against real prices; 1 dates of odds snapshots are cached and no settled-bet join exists yet"
      }
     ],
     "n_open": 0,
     "n_gates": 3,
-    "odds_snapshot_dates": 0,
+    "odds_snapshot_dates": 1,
     "sweep": {
      "n_rows": 0,
      "reason": "no settled bets with both a model edge and a taken price; the threshold cannot be swept on data that does not exist"
@@ -422,8 +422,36 @@
   "affiliates": "eephus.io takes no affiliate money from any sportsbook and links to none.",
   "staking": "Every pick on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
  },
- "pick_of_the_day": null,
- "pick_reason": "the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 3 are closed, starting with 600 vintage-graded games against 0 in hand",
+ "pick_of_the_day": {
+  "side": "away",
+  "label": "WSN",
+  "model_prob": 0.32942,
+  "fair_odds": 204,
+  "book": "draftkings",
+  "odds": 304,
+  "decimal": 4.04,
+  "implied_prob": 0.24752,
+  "market_fair_prob": 0.25672,
+  "edge": 0.0727,
+  "ev_per_unit": 0.33086,
+  "kelly_full": 0.10883,
+  "book_title": "DraftKings",
+  "point": null,
+  "market": "moneyline",
+  "game_pk": 823430,
+  "matchup": "WSN at PHI",
+  "start": "2026-08-06T22:05:00Z",
+  "stake_units": 1.0,
+  "provisional": true,
+  "min_edge_used": 0.06
+ },
+ "pick_reason": "highest expected value among sides clearing the provisional floor",
+ "pick_meta": {
+  "provisional": true,
+  "min_edge": 0.06,
+  "basis": "provisional_policy_floor",
+  "policy": "a provisional pick is published against a POLICY floor, not a validated threshold; it is labelled as such everywhere it appears and it is recorded in the shadow ledger so it becomes evidence"
+ },
  "pick_blockers": [
   {
    "id": "min_edge",
@@ -860,8 +888,8 @@
      "odds": 180,
      "decimal": 2.8,
      "implied_prob": 0.35714,
-     "market_fair_prob": 0.66286,
-     "edge": -0.38839,
+     "market_fair_prob": 0.34816,
+     "edge": -0.07369,
      "ev_per_unit": -0.23148,
      "kelly_full": 0.0,
      "book_title": "Bovada",
@@ -872,16 +900,16 @@
      "label": "NYM +1.5",
      "model_prob": 0.72553,
      "fair_odds": -264,
-     "book": "fanduel",
-     "odds": 184,
-     "decimal": 2.84,
-     "implied_prob": 0.35211,
-     "market_fair_prob": 0.33714,
-     "edge": 0.38839,
-     "ev_per_unit": 1.06051,
-     "kelly_full": 0.57636,
-     "book_title": "FanDuel",
-     "point": -1.5
+     "book": "lowvig",
+     "odds": -204,
+     "decimal": 1.4902,
+     "implied_prob": 0.67105,
+     "market_fair_prob": 0.65184,
+     "edge": 0.07369,
+     "ev_per_unit": 0.08118,
+     "kelly_full": 0.16562,
+     "book_title": "LowVig.ag",
+     "point": 1.5
     }
    ],
    "total": {
@@ -1382,8 +1410,8 @@
       "odds": 100,
       "decimal": 2.0,
       "implied_prob": 0.5,
-      "market_fair_prob": 0.5279,
-      "edge": -0.12124,
+      "market_fair_prob": 0.48816,
+      "edge": -0.0815,
       "ev_per_unit": -0.18667,
       "kelly_full": 0.0,
       "book_title": "Bovada",
@@ -1394,22 +1422,22 @@
       "label": "Under 8.0",
       "model_prob": 0.59334,
       "fair_odds": -146,
-      "book": "lowvig",
-      "odds": 110,
-      "decimal": 2.1,
-      "implied_prob": 0.47619,
-      "market_fair_prob": 0.4721,
-      "edge": 0.12124,
-      "ev_per_unit": 0.24601,
-      "kelly_full": 0.22364,
-      "book_title": "LowVig.ag",
-      "point": 7.5
+      "book": "draftkings",
+      "odds": -111,
+      "decimal": 1.9009,
+      "implied_prob": 0.52607,
+      "market_fair_prob": 0.51184,
+      "edge": 0.0815,
+      "ev_per_unit": 0.12787,
+      "kelly_full": 0.14194,
+      "book_title": "DraftKings",
+      "point": 8.0
      }
     ]
    },
    "market": {
     "moneyline_hold_pct": 1.684,
-    "total_hold_pct": 4.862,
+    "total_hold_pct": 4.923,
     "devig_method": "proportional"
    }
   },
@@ -1501,23 +1529,23 @@
    "runline": [
     {
      "side": "home",
-     "label": "PHI -2.5",
+     "label": "PHI -1.5",
      "model_prob": 0.46838,
      "fair_odds": 114,
-     "book": "mybookieag",
-     "odds": 107,
-     "decimal": 2.07,
-     "implied_prob": 0.48309,
+     "book": "betrivers",
+     "odds": -148,
+     "decimal": 1.6757,
+     "implied_prob": 0.59677,
      "market_fair_prob": 0.57447,
      "edge": -0.10609,
-     "ev_per_unit": -0.03045,
+     "ev_per_unit": -0.21514,
      "kelly_full": 0.0,
-     "book_title": "MyBookie.ag",
-     "point": -2.5
+     "book_title": "BetRivers",
+     "point": -1.5
     },
     {
      "side": "away",
-     "label": "WSN +2.5",
+     "label": "WSN +1.5",
      "model_prob": 0.53162,
      "fair_odds": -114,
      "book": "lowvig",
@@ -1544,8 +1572,8 @@
       "odds": 102,
       "decimal": 2.02,
       "implied_prob": 0.49505,
-      "market_fair_prob": 0.5279,
-      "edge": -0.20307,
+      "market_fair_prob": 0.48045,
+      "edge": -0.15562,
       "ev_per_unit": -0.34385,
       "kelly_full": 0.0,
       "book_title": "BetRivers",
@@ -1556,22 +1584,22 @@
       "label": "Under 9.0",
       "model_prob": 0.67517,
       "fair_odds": -208,
-      "book": "fanduel",
-      "odds": 102,
-      "decimal": 2.02,
-      "implied_prob": 0.49505,
-      "market_fair_prob": 0.4721,
-      "edge": 0.20307,
-      "ev_per_unit": 0.36385,
-      "kelly_full": 0.35672,
-      "book_title": "FanDuel",
-      "point": 8.5
+      "book": "lowvig",
+      "odds": -115,
+      "decimal": 1.8696,
+      "implied_prob": 0.53487,
+      "market_fair_prob": 0.51955,
+      "edge": 0.15562,
+      "ev_per_unit": 0.26231,
+      "kelly_full": 0.30164,
+      "book_title": "LowVig.ag",
+      "point": 9.0
      }
     ]
    },
    "market": {
     "moneyline_hold_pct": 2.506,
-    "total_hold_pct": 4.862,
+    "total_hold_pct": 4.587,
     "devig_method": "proportional"
    }
   },
@@ -2006,16 +2034,16 @@
      "label": "MIN +1.5",
      "model_prob": 0.70092,
      "fair_odds": -234,
-     "book": "betmgm",
-     "odds": 160,
-     "decimal": 2.6,
-     "implied_prob": 0.38462,
+     "book": "lowvig",
+     "odds": -188,
+     "decimal": 1.5319,
+     "implied_prob": 0.65278,
      "market_fair_prob": 0.64821,
      "edge": 0.05271,
-     "ev_per_unit": 0.82239,
-     "kelly_full": 0.51399,
-     "book_title": "BetMGM",
-     "point": -1.5
+     "ev_per_unit": 0.07374,
+     "kelly_full": 0.13863,
+     "book_title": "LowVig.ag",
+     "point": 1.5
     }
    ],
    "total": {
@@ -2042,16 +2070,16 @@
       "label": "Under 9.0",
       "model_prob": 0.55901,
       "fair_odds": -127,
-      "book": "lowvig",
-      "odds": 107,
-      "decimal": 2.07,
-      "implied_prob": 0.48309,
+      "book": "mybookieag",
+      "odds": -115,
+      "decimal": 1.8696,
+      "implied_prob": 0.53487,
       "market_fair_prob": 0.51498,
       "edge": 0.04403,
-      "ev_per_unit": 0.15715,
-      "kelly_full": 0.14687,
-      "book_title": "LowVig.ag",
-      "point": 8.5
+      "ev_per_unit": 0.04513,
+      "kelly_full": 0.05189,
+      "book_title": "MyBookie.ag",
+      "point": 9.0
      }
     ]
    },
@@ -2149,33 +2177,33 @@
    "runline": [
     {
      "side": "home",
-     "label": "ARI -1.5",
-     "model_prob": 0.29533,
-     "fair_odds": 239,
-     "book": "lowvig",
-     "odds": 182,
-     "decimal": 2.82,
-     "implied_prob": 0.35461,
+     "label": "ARI +1.5",
+     "model_prob": 0.68649,
+     "fair_odds": -219,
+     "book": "bovada",
+     "odds": -175,
+     "decimal": 1.5714,
+     "implied_prob": 0.63638,
      "market_fair_prob": 0.62914,
-     "edge": -0.33381,
-     "ev_per_unit": -0.16717,
-     "kelly_full": 0.0,
-     "book_title": "LowVig.ag",
-     "point": -1.5
+     "edge": 0.05735,
+     "ev_per_unit": 0.07875,
+     "kelly_full": 0.13782,
+     "book_title": "Bovada",
+     "point": 1.5
     },
     {
      "side": "away",
-     "label": "SDP +1.5",
-     "model_prob": 0.70467,
-     "fair_odds": -239,
+     "label": "SDP -1.5",
+     "model_prob": 0.31351,
+     "fair_odds": 219,
      "book": "fanduel",
      "odds": 158,
      "decimal": 2.58,
      "implied_prob": 0.3876,
      "market_fair_prob": 0.37086,
-     "edge": 0.33381,
-     "ev_per_unit": 0.81805,
-     "kelly_full": 0.51775,
+     "edge": -0.05735,
+     "ev_per_unit": -0.19114,
+     "kelly_full": 0.0,
      "book_title": "FanDuel",
      "point": -1.5
     }
@@ -6725,8 +6753,8 @@
     "label": "DET at SEA Under 8.0",
     "market": "totals",
     "model_prob": 0.59334,
-    "odds": 110,
-    "book": "lowvig"
+    "odds": -111,
+    "book": "draftkings"
    },
    {
     "leg_id": "823430:ml:home",
@@ -6761,8 +6789,8 @@
     "label": "WSN at PHI Under 9.0",
     "market": "totals",
     "model_prob": 0.67517,
-    "odds": 102,
-    "book": "fanduel"
+    "odds": -115,
+    "book": "lowvig"
    },
    {
     "leg_id": "824729:ml:home",
@@ -6869,8 +6897,8 @@
     "label": "MIN at KCR Under 9.0",
     "market": "totals",
     "model_prob": 0.55901,
-    "odds": 107,
-    "book": "lowvig"
+    "odds": -115,
+    "book": "mybookieag"
    },
    {
     "leg_id": "825053:ml:home",

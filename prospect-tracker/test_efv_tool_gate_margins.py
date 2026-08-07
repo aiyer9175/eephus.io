@@ -15,7 +15,7 @@ No minimum detectable effect, no bootstrap, no confidence interval, no margin.
 It is the only thing standing between a tool eFV being grade-only and being a
 blend, and 3,007 of the 9,382 rows in data/xfv.json carry tool_xfv.
 
-Measured margins on 2026-08-06:
+Margins as first measured, on the old 4-fold basis and the old bare rule:
 
     hit        +0.00790   validated   <- applied to served grades
     game_pwr   -0.00390   not
@@ -23,14 +23,17 @@ Measured margins on 2026-08-06:
     fb         +0.06370   validated
     cmd        -0.07180   not
 
-Three of five are inside a hundredth of the line and one is a coin flip. A
-routine rebuild on new data can flip any of them, and nothing anywhere would say
-so: the board would simply re-grade.
+Three of five were inside a hundredth of the line and one was a coin flip. A
+routine rebuild could flip any of them and nothing would say so: the board would
+simply re-grade.
 
-WHY THE RULE IS NOT CHANGED HERE. Raising the bar to a real MDE would re-grade
-served rows, and doing that without a measurement behind it is the move this
-codebase exists to refuse. So the margin is published and this file alarms on a
-flip. Fixing the gate properly is a pre-registered change of its own.
+THE RULE HAS SINCE BEEN CHANGED, by owner decision on the same day. The gate now
+requires a paired bootstrap on br - gr with the one-sided 95% lower bound above
+zero. `hit` failed it and reverted to grade-only. The current verdicts and the
+reason are in RECORDED below; the cost is recorded in CHANGELOG.md 2026-08-06.
+
+This file remains the tripwire either way. A gate flipping is a change to what
+the board serves, whatever rule decided it.
 
 WHAT THESE TESTS HOLD
   1. Every gate publishes its margin, so the fragility is legible in the artifact
@@ -54,12 +57,21 @@ pytestmark = pytest.mark.skipif(not ART.exists(), reason="tool artifact absent")
 #: The verdicts as measured on 2026-08-06. This is a TRIPWIRE, not a target: if a
 #: rebuild moves one, that is a real change to what the board serves and it needs
 #: a human decision, not a quiet update to this dict.
+# UPDATED 2026-08-06, with the reason, per this file's own instruction not to
+# touch it casually. TWO owner-decided changes landed together:
+#   1. SCORED_YEARS promoted 4 folds -> 11, which moved every gate's OOS window
+#      and collapsed the hit margin from +0.0079 to +0.0002.
+#   2. The gate itself gained a real paired-bootstrap MDE (one-sided 95% lower
+#      bound on br - gr above zero), replacing a bare `br > gr`.
+# `hit` consequently FLIPPED from validated to not, reverting that tool to
+# grade-only. 178 players' tool_xfv blocks moved, median 1.0 grade point, and
+# zero headline xfv values changed. See CHANGELOG.md 2026-08-06.
 RECORDED = {
-    "hit":      {"validated": True,  "margin": 0.0079},
-    "game_pwr": {"validated": False, "margin": -0.0039},
+    "hit":      {"validated": False, "margin": 0.0002},
+    "game_pwr": {"validated": False, "margin": -0.0031},
     "speed":    {"validated": False, "margin": 0.0},
-    "fb":       {"validated": True,  "margin": 0.0637},
-    "cmd":      {"validated": False, "margin": -0.0718},
+    "fb":       {"validated": True,  "margin": 0.0731},
+    "cmd":      {"validated": False, "margin": -0.0766},
 }
 
 KNIFE_EDGE = 0.01
@@ -136,3 +148,30 @@ def test_the_served_footprint_is_what_we_think_it_is():
     n = sum(1 for v in bp.values() if isinstance(v, dict) and v.get("tool_xfv") is not None)
     assert n > 0, "no served row carries tool_xfv; has the join broken?"
     assert n < len(bp), "every row carrying tool_xfv would be a change worth noticing"
+
+
+def test_the_gate_now_carries_a_real_mde():
+    """OWNER DECISION 2026-08-06. The bare `br > gr` was replaced by a paired
+    bootstrap on the difference with a one-sided 95% lower bound above zero.
+    Paired because the two arms score identical rows, so resampling them
+    independently would discard the pairing and inflate the interval."""
+    for name, t in _tools().items():
+        oos = t.get("oos_validation") or {}
+        assert "delta_lo95" in oos, (
+            f"{name}: the gate must publish the bootstrap lower bound it is now "
+            "decided on, not just the point margin")
+        if oos.get("validated"):
+            assert oos["delta_lo95"] is not None and oos["delta_lo95"] > 0, (
+                f"{name}: validated with a lower bound of {oos.get('delta_lo95')}, "
+                "which is not a pass under the MDE this gate now claims to use")
+
+
+def test_a_positive_margin_is_no_longer_enough_on_its_own():
+    """The whole point of the change: `hit` has a POSITIVE margin and still
+    fails, because the interval around it includes zero."""
+    hit = (_tools().get("hit") or {}).get("oos_validation") or {}
+    if hit.get("margin", 0) > 0:
+        assert hit.get("validated") is False, (
+            "hit passes again on a positive point margin; if the bootstrap now "
+            "genuinely clears zero that is a real change worth recording, but a "
+            "bare positive margin must not be sufficient")

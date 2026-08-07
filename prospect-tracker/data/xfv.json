@@ -252,7 +252,7 @@
 ],
 "realized_war": 0.8,
 "tool_xfv": {
-"hit": 47.5,
+"hit": 46.5,
 "game_pwr": 45.0,
 "speed": 60.0
 }
@@ -1373,7 +1373,7 @@
 ],
 "realized_war": -0.2,
 "tool_xfv": {
-"hit": 51.5,
+"hit": 52.5,
 "game_pwr": 42.5,
 "speed": 30.0
 }
@@ -2199,7 +2199,7 @@
 ],
 "realized_war": 8.9,
 "tool_xfv": {
-"hit": 45.0,
+"hit": 46.5,
 "game_pwr": 73.5,
 "speed": 56.5
 }
@@ -2730,7 +2730,7 @@
 ],
 "realized_war": -1.4,
 "tool_xfv": {
-"hit": 46.5,
+"hit": 45.0,
 "game_pwr": 55.0,
 "speed": 35.0
 }
@@ -3669,7 +3669,7 @@
 ],
 "realized_war": -0.3,
 "tool_xfv": {
-"hit": 42.5,
+"hit": 43.5,
 "game_pwr": 55.0,
 "speed": 53.5
 }
@@ -4436,7 +4436,7 @@
 ],
 "realized_war": 1.9,
 "tool_xfv": {
-"hit": 43.5,
+"hit": 42.5,
 "game_pwr": 42.5,
 "speed": 20.0
 }
@@ -4495,7 +4495,7 @@
 ],
 "realized_war": -0.3,
 "tool_xfv": {
-"hit": 58.5,
+"hit": 57.5,
 "game_pwr": 42.5,
 "speed": 32.5
 }
@@ -4967,7 +4967,7 @@
 ],
 "realized_war": 7.6,
 "tool_xfv": {
-"hit": 55.0,
+"hit": 53.5,
 "game_pwr": 63.5,
 "speed": 70.0
 }
@@ -5203,7 +5203,7 @@
 ],
 "realized_war": -1.3,
 "tool_xfv": {
-"hit": 51.5,
+"hit": 50.0,
 "game_pwr": 45.0,
 "speed": 50.0
 }
@@ -5616,7 +5616,7 @@
 ],
 "realized_war": -0.3,
 "tool_xfv": {
-"hit": 46.5,
+"hit": 47.5,
 "game_pwr": 47.5,
 "speed": 45.0
 }
@@ -5793,7 +5793,7 @@
 ],
 "realized_war": 6.3,
 "tool_xfv": {
-"hit": 60.0,
+"hit": 58.5,
 "game_pwr": 48.5,
 "speed": 60.0
 }
@@ -5970,7 +5970,7 @@
 ],
 "realized_war": 1.1,
 "tool_xfv": {
-"hit": 47.5,
+"hit": 46.5,
 "game_pwr": 56.5,
 "speed": 55.0
 }
@@ -6383,7 +6383,7 @@
 ],
 "realized_war": 12.5,
 "tool_xfv": {
-"hit": 47.5,
+"hit": 46.5,
 "game_pwr": 50.0,
 "speed": 60.0
 }
@@ -6678,7 +6678,7 @@
 ],
 "realized_war": 3.5,
 "tool_xfv": {
-"hit": 43.5,
+"hit": 42.5,
 "game_pwr": 50.0,
 "speed": 60.0
 }
@@ -7018,7 +7018,7 @@
 ],
 "realized_war": 3.2,
 "tool_xfv": {
-"hit": 46.5,
+"hit": 47.5,
 "game_pwr": 57.5,
 "speed": 52.5
 }
@@ -7254,7 +7254,7 @@
 ],
 "realized_war": 1.9,
 "tool_xfv": {
-"hit": 60.0,
+"hit": 61.5,
 "game_pwr": 53.5,
 "speed": 40.0
 }
@@ -7431,7 +7431,7 @@
 ],
 "realized_war": -0.3,
 "tool_xfv": {
-"hit": 52.5,
+"hit": 51.5,
 "game_pwr": 63.5,
 "speed": 43.5
 }
@@ -8139,7 +8139,7 @@
 ],
 "realized_war": 4.1,
 "tool_xfv": {
-"hit": 53.5,
+"hit": 55.0,
 "game_pwr": 53.5,
 "speed": 55.0
 }
@@ -8375,7 +8375,7 @@
 ],
 "realized_war": 5.1,
 "tool_xfv": {
-"hit": 45.0,
+"hit": 43.5,
 "game_pwr": 55.0,
 "speed": 53.5
 }
@@ -8847,7 +8847,7 @@
 ],
 "realized_war": 2.3,
 "tool_xfv": {
-"hit": 46.5,
+"hit": 45.0,
 "game_pwr": 47.5,
 "speed": 57.5
 }
@@ -9378,7 +9378,7 @@
 ],
 "realized_war": -1.7,
 "tool_xfv": {
-"hit": 41.5,
+"hit": 40.0,
 "game_pwr": 52.5,
 "speed": 30.0
 }
@@ -10322,7 +10322,7 @@
 ],
 "realized_war": 1.5,
 "tool_xfv": {
-"hit": 42.5,
+"hit": 41.5,
 "game_pwr": 60.0,
 "speed": 63.5
 }
@@ -10440,7 +10440,7 @@
 ],
 "realized_war": 9.3,
 "tool_xfv": {
-"hit": 57.5,
+"hit": 58.5,
 "game_pwr": 60.0,
 "speed": 50.0
 }
@@ -10499,7 +10499,7 @@
 ],
 "realized_war": 0.7,
 "tool_xfv": {
-"hit": 52.5,
+"hit": 51.5,
 "game_pwr": 70.0,
 "speed": 46.5
 }
@@ -11089,7 +11089,7 @@
 ],
 "realized_war": 5.4,
 "tool_xfv": {
-"hit": 58.5,
+"hit": 57.5,
 "game_pwr": 40.0,
 "speed": 47.5
 }
@@ -12151,7 +12151,7 @@
 ],
 "realized_war": 22.5,
 "tool_xfv": {
-"hit": 57.5,
+"hit": 58.5,
 "game_pwr": 60.0,
 "speed": 50.0
 }
@@ -12623,7 +12623,7 @@
 ],
 "realized_war": -0.2,
 "tool_xfv": {
-"hit": 42.5,
+"hit": 40.0,
 "game_pwr": 35.0,
 "speed": 30.0
 }
@@ -13154,7 +13154,7 @@
 ],
 "realized_war": -2.7,
 "tool_xfv": {
-"hit": 65.0,
+"hit": 63.5,
 "game_pwr": 33.5,
 "speed": 50.0
 }
@@ -13331,7 +13331,7 @@
 ],
 "realized_war": -0.5,
 "tool_xfv": {
-"hit": 56.5,
+"hit": 57.5,
 "game_pwr": 40.0,
 "speed": 52.5
 }
@@ -13390,7 +13390,7 @@
 ],
 "realized_war": 1.9,
 "tool_xfv": {
-"hit": 45.0,
+"hit": 43.5,
 "game_pwr": 53.5,
 "speed": 43.5
 }
@@ -13803,7 +13803,7 @@
 ],
 "realized_war": 4.8,
 "tool_xfv": {
-"hit": 48.5,
+"hit": 47.5,
 "game_pwr": 47.5,
 "speed": 52.5
 }
@@ -14157,7 +14157,7 @@
 ],
 "realized_war": -0.8,
 "tool_xfv": {
-"hit": 40.0,
+"hit": 37.5,
 "game_pwr": 50.0,
 "speed": 45.0
 }
@@ -14629,7 +14629,7 @@
 ],
 "realized_war": -0.0,
 "tool_xfv": {
-"hit": 48.5,
+"hit": 50.0,
 "game_pwr": 47.5,
 "speed": 45.0
 }
@@ -15219,7 +15219,7 @@
 ],
 "realized_war": 12.8,
 "tool_xfv": {
-"hit": 58.5,
+"hit": 60.0,
 "game_pwr": 60.0,
 "speed": 46.5
 }
@@ -16281,7 +16281,7 @@
 ],
 "realized_war": -0.5,
 "tool_xfv": {
-"hit": 48.5,
+"hit": 47.5,
 "game_pwr": 45.0,
 "speed": 42.5
 }
@@ -16399,7 +16399,7 @@
 ],
 "realized_war": 3.4,
 "tool_xfv": {
-"hit": 47.5,
+"hit": 46.5,
 "game_pwr": 60.0,
 "speed": 40.0
 }
@@ -16812,7 +16812,7 @@
 ],
 "realized_war": -1.5,
 "tool_xfv": {
-"hit": 45.0,
+"hit": 43.5,
 "game_pwr": 60.0,
 "speed": 40.0
 }
@@ -16871,7 +16871,7 @@
 ],
 "realized_war": 2.0,
 "tool_xfv": {
-"hit": 60.0,
+"hit": 58.5,
 "game_pwr": 53.5,
 "speed": 36.5
 }
@@ -17166,7 +17166,7 @@
 ],
 "realized_war": 1.4,
 "tool_xfv": {
-"hit": 42.5,
+"hit": 41.5,
 "game_pwr": 53.5,
 "speed": 48.5
 }
@@ -19028,7 +19028,7 @@
 ],
 "realized_war": -0.0,
 "tool_xfv": {
-"hit": 56.5,
+"hit": 55.0,
 "game_pwr": 30.0,
 "speed": 20.0
 }
@@ -19795,7 +19795,7 @@
 ],
 "realized_war": 1.9,
 "tool_xfv": {
-"hit": 48.5,
+"hit": 47.5,
 "game_pwr": 45.0,
 "speed": 57.5
 }
@@ -20031,7 +20031,7 @@
 ],
 "realized_war": -1.1,
 "tool_xfv": {
-"hit": 58.5,
+"hit": 57.5,
 "game_pwr": 37.5,
 "speed": 57.5
 }
@@ -20793,7 +20793,7 @@
 ],
 "realized_war": 9.4,
 "tool_xfv": {
-"hit": 58.5,
+"hit": 57.5,
 "game_pwr": 27.5,
 "speed": 65.0
 }
@@ -23021,7 +23021,7 @@
 ],
 "realized_war": -0.1,
 "tool_xfv": {
-"hit": 58.5,
+"hit": 57.5,
 "game_pwr": 45.0,
 "speed": 37.5
 }
@@ -23080,7 +23080,7 @@
 ],
 "realized_war": 0.6,
 "tool_xfv": {
-"hit": 40.0,
+"hit": 41.5,
 "game_pwr": 58.5,
 "speed": 33.5
 }
@@ -23257,7 +23257,7 @@
 ],
 "realized_war": 0.6,
 "tool_xfv": {
-"hit": 57.5,
+"hit": 56.5,
 "game_pwr": 53.5,
 "speed": 33.5
 }
@@ -23370,7 +23370,7 @@
 ],
 "realized_war": 7.9,
 "tool_xfv": {
-"hit": 43.5,
+"hit": 45.0,
 "game_pwr": 60.0,
 "speed": 45.0
 }
@@ -23547,7 +23547,7 @@
 ],
 "realized_war": 13.6,
 "tool_xfv": {
-"hit": 42.5,
+"hit": 43.5,
 "game_pwr": 55.0,
 "speed": 56.5
 }
@@ -23606,7 +23606,7 @@
 ],
 "realized_war": 2.6,
 "tool_xfv": {
-"hit": 51.5,
+"hit": 52.5,
 "game_pwr": 37.5,
 "speed": 60.0
 }
@@ -24019,7 +24019,7 @@
 ],
 "realized_war": -1.3,
 "tool_xfv": {
-"hit": 52.5,
+"hit": 51.5,
 "game_pwr": 48.5,
 "speed": 68.5
 }
@@ -24137,7 +24137,7 @@
 ],
 "realized_war": 3.9,
 "tool_xfv": {
-"hit": 47.5,
+"hit": 48.5,
 "game_pwr": 60.0,
 "speed": 36.5
 }
@@ -24314,7 +24314,7 @@
 ],
 "realized_war": 13.6,
 "tool_xfv": {
-"hit": 58.5,
+"hit": 57.5,
 "game_pwr": 47.5,
 "speed": 32.5
 }
@@ -24432,7 +24432,7 @@
 ],
 "realized_war": 5.7,
 "tool_xfv": {
-"hit": 61.5,
+"hit": 60.0,
 "game_pwr": 45.0,
 "speed": 33.5
 }
@@ -24845,7 +24845,7 @@
 ],
 "realized_war": 0.9,
 "tool_xfv": {
-"hit": 50.0,
+"hit": 51.5,
 "game_pwr": 63.5,
 "speed": 60.0
 }
@@ -25199,7 +25199,7 @@
 ],
 "realized_war": 16.0,
 "tool_xfv": {
-"hit": 47.5,
+"hit": 48.5,
 "game_pwr": 56.5,
 "speed": 66.5
 }
@@ -25435,7 +25435,7 @@
 ],
 "realized_war": -0.4,
 "tool_xfv": {
-"hit": 51.5,
+"hit": 52.5,
 "game_pwr": 47.5,
 "speed": 42.5
 }
@@ -25789,7 +25789,7 @@
 ],
 "realized_war": -0.7,
 "tool_xfv": {
-"hit": 46.5,
+"hit": 47.5,
 "game_pwr": 55.0,
 "speed": 32.5
 }
@@ -25848,7 +25848,7 @@
 ],
 "realized_war": -0.5,
 "tool_xfv": {
-"hit": 46.5,
+"hit": 47.5,
 "game_pwr": 55.0,
 "speed": 35.0
 }
@@ -26676,7 +26676,7 @@
 ],
 "realized_war": -0.8,
 "tool_xfv": {
-"hit": 43.5,
+"hit": 45.0,
 "game_pwr": 47.5,
 "speed": 40.0
 }
@@ -26735,7 +26735,7 @@
 ],
 "realized_war": 2.6,
 "tool_xfv": {
-"hit": 41.5,
+"hit": 42.5,
 "game_pwr": 52.5,
 "speed": 55.0
 }
@@ -27148,7 +27148,7 @@
 ],
 "realized_war": -2.9,
 "tool_xfv": {
-"hit": 51.5,
+"hit": 52.5,
 "game_pwr": 52.5,
 "speed": 45.0
 }
@@ -27443,7 +27443,7 @@
 ],
 "realized_war": 0.0,
 "tool_xfv": {
-"hit": 43.5,
+"hit": 45.0,
 "game_pwr": 55.0,
 "speed": 45.0
 }
@@ -27738,7 +27738,7 @@
 ],
 "realized_war": -0.1,
 "tool_xfv": {
-"hit": 41.5,
+"hit": 42.5,
 "game_pwr": 57.5,
 "speed": 20.0
 }
@@ -28210,7 +28210,7 @@
 ],
 "realized_war": 23.8,
 "tool_xfv": {
-"hit": 40.0,
+"hit": 42.5,
 "game_pwr": 52.5,
 "speed": 52.5
 }
@@ -28387,7 +28387,7 @@
 ],
 "realized_war": 15.6,
 "tool_xfv": {
-"hit": 50.0,
+"hit": 48.5,
 "game_pwr": 50.0,
 "speed": 33.5
 }
@@ -28446,7 +28446,7 @@
 ],
 "realized_war": 20.0,
 "tool_xfv": {
-"hit": 58.5,
+"hit": 57.5,
 "game_pwr": 30.0,
 "speed": 47.5
 }
@@ -28505,7 +28505,7 @@
 ],
 "realized_war": 5.8,
 "tool_xfv": {
-"hit": 57.5,
+"hit": 58.5,
 "game_pwr": 55.0,
 "speed": 45.0
 }
@@ -28564,7 +28564,7 @@
 ],
 "realized_war": 22.9,
 "tool_xfv": {
-"hit": 47.5,
+"hit": 48.5,
 "game_pwr": 60.0,
 "speed": 40.0
 }
@@ -29331,7 +29331,7 @@
 ],
 "realized_war": -2.0,
 "tool_xfv": {
-"hit": 57.5,
+"hit": 58.5,
 "game_pwr": 56.5,
 "speed": 48.5
 }
@@ -29994,7 +29994,7 @@
 ],
 "realized_war": 28.8,
 "tool_xfv": {
-"hit": 55.0,
+"hit": 56.5,
 "game_pwr": 60.0,
 "speed": 58.5
 }
@@ -31056,7 +31056,7 @@
 ],
 "realized_war": 27.7,
 "tool_xfv": {
-"hit": 57.5,
+"hit": 58.5,
 "game_pwr": 60.0,
 "speed": 46.5
 }
@@ -31233,7 +31233,7 @@
 ],
 "realized_war": -0.2,
 "tool_xfv": {
-"hit": 37.5,
+"hit": 40.0,
 "game_pwr": 60.0,
 "speed": 37.5
 }
@@ -31646,7 +31646,7 @@
 ],
 "realized_war": 29.4,
 "tool_xfv": {
-"hit": 57.5,
+"hit": 58.5,
 "game_pwr": 65.0,
 "speed": 65.0
 }
@@ -31705,7 +31705,7 @@
 ],
 "realized_war": 20.6,
 "tool_xfv": {
-"hit": 63.5,
+"hit": 65.0,
 "game_pwr": 55.0,
 "speed": 46.5
 }
@@ -31764,7 +31764,7 @@
 ],
 "realized_war": 12.6,
 "tool_xfv": {
-"hit": 45.0,
+"hit": 46.5,
 "game_pwr": 58.5,
 "speed": 48.5
 }
@@ -32448,7 +32448,7 @@
 ],
 "realized_war": -0.4,
 "tool_xfv": {
-"hit": 55.0,
+"hit": 56.5,
 "game_pwr": 50.0,
 "speed": 66.5
 }
@@ -32979,7 +32979,7 @@
 ],
 "realized_war": 0.0,
 "tool_xfv": {
-"hit": 52.5,
+"hit": 51.5,
 "game_pwr": 43.5,
 "speed": 53.5
 }
@@ -33864,7 +33864,7 @@
 ],
 "realized_war": 24.5,
 "tool_xfv": {
-"hit": 57.5,
+"hit": 58.5,
 "game_pwr": 50.0,
 "speed": 55.0
 }
@@ -34159,7 +34159,7 @@
 ],
 "realized_war": -0.5,
 "tool_xfv": {
-"hit": 56.5,
+"hit": 55.0,
 "game_pwr": 35.0,
 "speed": 55.0
 }
@@ -36385,7 +36385,7 @@
 ],
 "realized_war": 44.1,
 "tool_xfv": {
-"hit": 58.5,
+"hit": 60.0,
 "game_pwr": 60.0,
 "speed": 40.0
 }
@@ -221312,7 +221312,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 55.0,
+"hit": 56.0,
 "game_pwr": 56.0,
 "speed": 55.0
 }
@@ -221507,7 +221507,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 52.5,
+"hit": 52.0,
 "game_pwr": 61.0,
 "speed": 34.0
 }
@@ -221650,7 +221650,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 50.0,
+"hit": 49.0,
 "game_pwr": 58.5,
 "speed": 58.5
 }
@@ -221715,7 +221715,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 52.5,
+"hit": 53.0,
 "game_pwr": 55.0,
 "speed": 59.0
 }
@@ -221975,7 +221975,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 50.0,
+"hit": 49.0,
 "game_pwr": 52.0,
 "speed": 42.0
 }
@@ -222040,7 +222040,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 55.0,
+"hit": 56.0,
 "game_pwr": 54.0,
 "speed": 67.0
 }
@@ -222177,7 +222177,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 47.5,
+"hit": 46.0,
 "game_pwr": 63.0,
 "speed": 42.0
 }
@@ -222242,7 +222242,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 47.5,
+"hit": 48.0,
 "game_pwr": 57.0,
 "speed": 51.0
 }
@@ -222372,7 +222372,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 52.5,
+"hit": 53.0,
 "game_pwr": 53.0,
 "speed": 45.0
 }
@@ -222445,7 +222445,7 @@
 "d_iso": 0.023
 },
 "tool_xfv": {
-"hit": 50.0,
+"hit": 49.0,
 "game_pwr": 62.0,
 "speed": 32.0
 }
@@ -222783,7 +222783,7 @@
 "d_iso": -0.039
 },
 "tool_xfv": {
-"hit": 57.5,
+"hit": 57.0,
 "game_pwr": 43.0,
 "speed": 56.0
 }
@@ -222972,7 +222972,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 58.0,
+"hit": 59.0,
 "game_pwr": 49.0,
 "speed": 48.0
 }
@@ -223042,7 +223042,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 57.5,
+"hit": 58.0,
 "game_pwr": 53.0,
 "speed": 48.0
 }
@@ -223166,7 +223166,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 45.0,
+"hit": 46.0,
 "game_pwr": 54.0,
 "speed": 40.0
 }
@@ -223361,7 +223361,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 51.5,
+"hit": 51.0,
 "game_pwr": 54.0,
 "speed": 51.0
 }
@@ -223433,7 +223433,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 45.0,
+"hit": 46.0,
 "game_pwr": 51.0,
 "speed": 60.0
 }
@@ -223498,7 +223498,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 50.0,
+"hit": 51.5,
 "game_pwr": 43.5,
 "speed": 60.0
 }
@@ -223576,7 +223576,7 @@
 "d_iso": -0.042
 },
 "tool_xfv": {
-"hit": 45.0,
+"hit": 46.0,
 "game_pwr": 60.0,
 "speed": 40.0
 }
@@ -223648,7 +223648,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 47.5,
+"hit": 48.0,
 "game_pwr": 64.0,
 "speed": 55.0
 }
@@ -223726,7 +223726,7 @@
 "d_iso": -0.042
 },
 "tool_xfv": {
-"hit": 52.5,
+"hit": 53.0,
 "game_pwr": 49.0,
 "speed": 53.0
 }
@@ -223921,7 +223921,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 55.0,
+"hit": 53.5,
 "game_pwr": 50.0,
 "speed": 50.0
 }
@@ -223986,7 +223986,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 57.5,
+"hit": 58.0,
 "game_pwr": 50.0,
 "speed": 59.0
 }
@@ -224181,7 +224181,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 48.5,
+"hit": 49.0,
 "game_pwr": 52.5,
 "speed": 66.0
 }
@@ -224312,7 +224312,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 52.5,
+"hit": 52.0,
 "game_pwr": 59.0,
 "speed": 55.0
 }
@@ -224377,7 +224377,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 46.0,
+"hit": 47.0,
 "game_pwr": 60.0,
 "speed": 49.0
 }
@@ -224520,7 +224520,7 @@
 "d_iso": -0.016
 },
 "tool_xfv": {
-"hit": 47.5,
+"hit": 48.5,
 "game_pwr": 50.0,
 "speed": 43.5
 }
@@ -225200,7 +225200,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 52.0,
+"hit": 51.5,
 "game_pwr": 55.0,
 "speed": 40.0
 }
@@ -225324,7 +225324,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 47.5,
+"hit": 46.5,
 "game_pwr": 56.5,
 "speed": 55.0
 }
@@ -225459,7 +225459,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 48.0,
+"hit": 48.5,
 "game_pwr": 45.0,
 "speed": 70.0
 }
@@ -225744,7 +225744,7 @@
 "d_iso": -0.025
 },
 "tool_xfv": {
-"hit": 47.5,
+"hit": 47.0,
 "game_pwr": 49.0,
 "speed": 64.0
 }
@@ -225887,7 +225887,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 42.5,
+"hit": 43.5,
 "game_pwr": 51.5,
 "speed": 66.5
 }
@@ -226029,7 +226029,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 45.0,
+"hit": 43.0,
 "game_pwr": 54.0,
 "speed": 50.0
 }
@@ -226169,7 +226169,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 47.5,
+"hit": 46.5,
 "game_pwr": 52.5,
 "speed": 54.0
 }
@@ -226376,7 +226376,7 @@
 "d_iso": -0.022
 },
 "tool_xfv": {
-"hit": 40.0,
+"hit": 39.0,
 "game_pwr": 64.0,
 "speed": 54.0
 }
@@ -226566,7 +226566,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 53.0,
+"hit": 53.5,
 "game_pwr": 40.0,
 "speed": 58.5
 }
@@ -226696,7 +226696,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 45.0,
+"hit": 46.0,
 "game_pwr": 60.0,
 "speed": 32.0
 }
@@ -227870,7 +227870,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 45.0,
+"hit": 46.0,
 "game_pwr": 63.0,
 "speed": 47.0
 }
@@ -228278,7 +228278,7 @@
 "d_iso": -0.042
 },
 "tool_xfv": {
-"hit": 50.0,
+"hit": 48.5,
 "game_pwr": 51.5,
 "speed": 38.5
 }
@@ -228343,7 +228343,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 50.0,
+"hit": 51.0,
 "game_pwr": 55.0,
 "speed": 39.0
 }
@@ -229731,7 +229731,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 40.0,
+"hit": 38.5,
 "game_pwr": 55.0,
 "speed": 30.0
 }
@@ -230200,7 +230200,7 @@
 "d_iso": -0.011
 },
 "tool_xfv": {
-"hit": 39.0,
+"hit": 40.0,
 "game_pwr": 60.0,
 "speed": 38.5
 }
@@ -230846,7 +230846,7 @@
 "d_iso": -0.031
 },
 "tool_xfv": {
-"hit": 46.5,
+"hit": 45.0,
 "game_pwr": 50.0,
 "speed": 40.0
 }
@@ -231700,7 +231700,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 47.0,
+"hit": 45.0,
 "game_pwr": 42.5,
 "speed": 50.0
 }
@@ -232515,7 +232515,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 37.5,
+"hit": 35.0,
 "game_pwr": 50.0,
 "speed": 55.0
 }
@@ -233034,7 +233034,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 59.0,
+"hit": 57.5,
 "game_pwr": 40.0,
 "speed": 50.0
 }
@@ -233701,7 +233701,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 53.0,
+"hit": 52.5,
 "game_pwr": 47.5,
 "speed": 55.0
 }
@@ -234213,7 +234213,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 60.0,
+"hit": 57.5,
 "game_pwr": 30.0,
 "speed": 40.0
 }
@@ -235222,7 +235222,7 @@
 "d_iso": -0.01
 },
 "tool_xfv": {
-"hit": 56.0,
+"hit": 55.0,
 "game_pwr": 35.0,
 "speed": 47.5
 }
@@ -235622,7 +235622,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 45.0,
+"hit": 42.5,
 "game_pwr": 45.0,
 "speed": 52.5
 }
@@ -238478,7 +238478,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 53.5,
+"hit": 52.5,
 "game_pwr": 37.5,
 "speed": 55.0
 }
@@ -239082,7 +239082,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 40.0,
+"hit": 42.5,
 "game_pwr": 55.0,
 "speed": 55.0
 }
@@ -239212,7 +239212,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 51.0,
+"hit": 50.0,
 "game_pwr": 40.0,
 "speed": 35.0
 }
@@ -239359,7 +239359,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 47.0,
+"hit": 47.5,
 "game_pwr": 45.0,
 "speed": 50.0
 }
@@ -239423,7 +239423,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 50.0,
+"hit": 52.5,
 "game_pwr": 50.0,
 "speed": 57.5
 }
@@ -241191,7 +241191,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 35.0,
+"hit": 37.5,
 "game_pwr": 55.0,
 "speed": 45.0
 }
@@ -241699,7 +241699,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 48.5,
+"hit": 47.5,
 "game_pwr": 52.5,
 "speed": 45.0
 }
@@ -242254,7 +242254,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 45.0,
+"hit": 47.5,
 "game_pwr": 40.0,
 "speed": 55.0
 }
@@ -243281,7 +243281,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 45.0,
+"hit": 42.5,
 "game_pwr": 37.5,
 "speed": 40.0
 }
@@ -246540,7 +246540,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 49.0,
+"hit": 50.0,
 "game_pwr": 40.0,
 "speed": 60.0
 }
@@ -246610,7 +246610,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 53.0,
+"hit": 52.5,
 "game_pwr": 32.5,
 "speed": 47.5
 }
@@ -246817,7 +246817,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 52.0,
+"hit": 50.0,
 "game_pwr": 30.0,
 "speed": 60.0
 }
@@ -247609,7 +247609,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 51.0,
+"hit": 50.0,
 "game_pwr": 37.5,
 "speed": 62.5
 }
@@ -248198,7 +248198,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 37.5,
+"hit": 40.0,
 "game_pwr": 55.0,
 "speed": 60.0
 }
@@ -248485,7 +248485,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 48.0,
+"hit": 47.5,
 "game_pwr": 42.5,
 "speed": 57.5
 }
@@ -248939,7 +248939,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 49.0,
+"hit": 47.5,
 "game_pwr": 42.5,
 "speed": 50.0
 }
@@ -254707,7 +254707,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 56.0,
+"hit": 55.0,
 "game_pwr": 30.0,
 "speed": 45.0
 }
@@ -254906,7 +254906,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 47.5,
+"hit": 45.0,
 "game_pwr": 37.5,
 "speed": 30.0
 }
@@ -255305,7 +255305,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 53.5,
+"hit": 55.0,
 "game_pwr": 45.0,
 "speed": 47.5
 }
@@ -255928,7 +255928,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 42.5,
+"hit": 45.0,
 "game_pwr": 45.0,
 "speed": 55.0
 }
@@ -256485,7 +256485,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 40.0,
+"hit": 37.5,
 "game_pwr": 35.0,
 "speed": 60.0
 }
@@ -260185,7 +260185,7 @@
 "d_iso": -0.036
 },
 "tool_xfv": {
-"hit": 45.0,
+"hit": 42.5,
 "game_pwr": 37.0,
 "speed": 57.5
 }
@@ -260666,7 +260666,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 38.5,
+"hit": 37.5,
 "game_pwr": 47.5,
 "speed": 52.5
 }
@@ -262591,7 +262591,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 43.5,
+"hit": 42.5,
 "game_pwr": 45.0,
 "speed": 52.5
 }
@@ -262655,7 +262655,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 50.0,
+"hit": 52.5,
 "game_pwr": 45.0,
 "speed": 47.5
 }
@@ -264116,7 +264116,7 @@
 "d_iso": -0.008
 },
 "tool_xfv": {
-"hit": 48.5,
+"hit": 47.5,
 "game_pwr": 47.5,
 "speed": 40.0
 }
@@ -264586,7 +264586,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 30.0,
+"hit": 32.5,
 "game_pwr": 55.0,
 "speed": 35.0
 }
@@ -264726,7 +264726,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 51.5,
+"hit": 52.5,
 "game_pwr": 40.0,
 "speed": 45.0
 }
@@ -268466,7 +268466,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 32.5,
+"hit": 30.0,
 "game_pwr": 45.0,
 "speed": 20.0
 }
@@ -269169,7 +269169,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 46.0,
+"hit": 45.0,
 "game_pwr": 40.0,
 "speed": 40.0
 }
@@ -269327,7 +269327,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 46.0,
+"hit": 47.5,
 "game_pwr": 47.5,
 "speed": 45.0
 }
@@ -271364,7 +271364,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 42.5,
+"hit": 45.0,
 "game_pwr": 30.0,
 "speed": 50.0
 }
@@ -272068,7 +272068,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 42.5,
+"hit": 45.0,
 "game_pwr": 50.0,
 "speed": 50.0
 }
@@ -282143,7 +282143,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 47.5,
+"hit": 50.0,
 "game_pwr": 50.0,
 "speed": 60.0
 }
@@ -284964,7 +284964,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 49.0,
+"hit": 47.5,
 "game_pwr": 25.0,
 "speed": 57.5
 }
@@ -285292,7 +285292,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 57.0,
+"hit": 57.5,
 "game_pwr": 45.0,
 "speed": 55.0
 }
@@ -287697,7 +287697,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 42.5,
+"hit": 40.0,
 "game_pwr": 52.5,
 "speed": 45.0
 }
@@ -296621,7 +296621,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 58.0,
+"hit": 60.0,
 "game_pwr": 35.0,
 "speed": 47.5
 }
@@ -301467,7 +301467,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 43.0,
+"hit": 45.0,
 "game_pwr": 50.0,
 "speed": 60.0
 }
@@ -310591,7 +310591,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 42.5,
+"hit": 45.0,
 "game_pwr": 55.0,
 "speed": 55.0
 }
@@ -310731,7 +310731,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 46.0,
+"hit": 47.5,
 "game_pwr": 52.5,
 "speed": 47.5
 }
@@ -316290,7 +316290,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 52.5,
+"hit": 50.0,
 "game_pwr": 30.0,
 "speed": 20.0
 }
@@ -319827,7 +319827,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 46.5,
+"hit": 45.0,
 "game_pwr": 45.0,
 "speed": 50.0
 }
@@ -320119,7 +320119,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 47.5,
+"hit": 50.0,
 "game_pwr": 45.0,
 "speed": 60.0
 }
@@ -323382,7 +323382,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 45.0,
+"hit": 42.5,
 "game_pwr": 42.5,
 "speed": 35.0
 }
@@ -328220,7 +328220,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 46.0,
+"hit": 45.0,
 "game_pwr": 45.0,
 "speed": 40.0
 }
@@ -328508,7 +328508,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 49.0,
+"hit": 50.0,
 "game_pwr": 55.0,
 "speed": 45.0
 }
@@ -330091,7 +330091,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 46.0,
+"hit": 47.5,
 "game_pwr": 47.5,
 "speed": 42.5
 }
@@ -332826,7 +332826,7 @@
 }
 ],
 "tool_xfv": {
-"hit": 37.5,
+"hit": 40.0,
 "game_pwr": 50.0,
 "speed": 40.0
 }

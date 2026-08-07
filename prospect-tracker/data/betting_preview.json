@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-06T15:19:36+00:00",
+ "generated_at": "2026-08-06T19:38:21+00:00",
  "slate_date": "2026-08-06",
  "status": {
   "odds_feed": "ok",
@@ -41,7 +41,7 @@
   "validation": {
    "available": true,
    "artifact": "data/betting_model_eval.json",
-   "generated_at": "2026-08-06T11:25:50+00:00",
+   "generated_at": "2026-08-06T19:02:09+00:00",
    "model_version": "betting_runs_v1",
    "validated": false,
    "gates_picks": false,
@@ -60,38 +60,38 @@
      "label": "in-sample (coefficients and features both leak)",
      "mode": "contaminated",
      "honest": false,
-     "n": 1705,
-     "brier": 0.24156,
+     "n": 1720,
+     "brier": 0.24163,
      "brier_flat_500": 0.25,
-     "brier_home_base": 0.24946,
-     "accuracy": 0.5607,
+     "brier_home_base": 0.2494,
+     "accuracy": 0.5622,
      "key": "in_sample",
      "skill_vs_home_base": {
-      "delta": 0.007903,
-      "sd": 0.08409,
-      "t": 3.881,
+      "delta": 0.00777,
+      "sd": 0.08355,
+      "t": 3.857,
       "beats_baseline_95": true,
-      "n_for_95": 306,
-      "baseline": 0.5232
+      "n_for_95": 313,
+      "baseline": 0.5244
      }
     },
     {
      "label": "forward from 2026-06-24 (coefficient leakage removed, feature leakage remains)",
      "mode": "contaminated",
      "honest": false,
-     "n": 521,
-     "brier": 0.24275,
+     "n": 536,
+     "brier": 0.24284,
      "brier_flat_500": 0.25,
-     "brier_home_base": 0.24995,
-     "accuracy": 0.547,
+     "brier_home_base": 0.24987,
+     "accuracy": 0.5485,
      "key": "forward",
      "skill_vs_home_base": {
-      "delta": 0.00721,
-      "sd": 0.08327,
-      "t": 1.976,
+      "delta": 0.007032,
+      "sd": 0.08183,
+      "t": 1.99,
       "beats_baseline_95": true,
-      "n_for_95": 361,
-      "baseline": 0.5067
+      "n_for_95": 366,
+      "baseline": 0.5112
      }
     },
     {
@@ -108,10 +108,10 @@
    ],
    "vintage": {
     "status": "no vintages",
-    "n_vintages": 1,
+    "n_vintages": 2,
     "n_gradable": 0,
     "n_graded": 0,
-    "n_skipped_no_vintage": 1705,
+    "n_skipped_no_vintage": 1720,
     "min_fit_games": 100,
     "min_eval_games": 50,
     "min_graded_games_for_min_edge": 600,
@@ -122,18 +122,18 @@
    },
    "coverage": {
     "schema": 2,
-    "n_vintages": 1,
-    "n_vintages_with_parks": 0,
+    "n_vintages": 2,
+    "n_vintages_with_parks": 1,
     "n_vintages_neutral_park": 1,
     "first": "2026-08-05",
-    "last": "2026-08-05",
+    "last": "2026-08-06",
     "missing_dates": [],
-    "span_days": 1,
-    "latest_cutoff": "2026-08-05",
+    "span_days": 2,
+    "latest_cutoff": "2026-08-06",
     "earliest_gradable_game_date": "2026-08-06",
-    "note": "1 vintages, 0 missing days inside the span; a game is gradable when a vintage cutoff is strictly before it"
+    "note": "2 vintages, 0 missing days inside the span; a game is gradable when a vintage cutoff is strictly before it"
    },
-   "n_games_completed": 1705,
+   "n_games_completed": 1720,
    "gate": {
     "all_gates_open": false,
     "gates": [
@@ -156,12 +156,12 @@
       "need": "settled bets with a taken price, enough that some edge threshold clears an ROI lower bound of zero on at least 100 of them",
       "have": 0,
       "open": false,
-      "why": "an edge threshold is a claim about EV against real prices; 0 dates of odds snapshots are cached and no settled-bet join exists yet"
+      "why": "an edge threshold is a claim about EV against real prices; 1 dates of odds snapshots are cached and no settled-bet join exists yet"
      }
     ],
     "n_open": 0,
     "n_gates": 3,
-    "odds_snapshot_dates": 0,
+    "odds_snapshot_dates": 1,
     "sweep": {
      "n_rows": 0,
      "reason": "no settled bets with both a model edge and a taken price; the threshold cannot be swept on data that does not exist"
@@ -180,8 +180,30 @@
   "affiliates": "eephus.io takes no affiliate money from any sportsbook and links to none.",
   "staking": "Every pick on the public record is a flat 1 unit. Kelly is shown as information, never as a stake."
  },
- "pick_of_the_day": null,
- "pick_reason": "the model is unvalidated: the minimum-edge threshold sits behind 3 gates and 3 are closed, starting with 600 vintage-graded games against 0 in hand",
+ "pick_of_the_day": {
+  "side": "away",
+  "label": "WSN",
+  "model_prob": 0.32942,
+  "fair_odds": 204,
+  "book": "draftkings",
+  "odds": 304,
+  "decimal": 4.04,
+  "implied_prob": 0.24752,
+  "market_fair_prob": 0.25672,
+  "edge": 0.0727,
+  "ev_per_unit": 0.33086,
+  "kelly_full": 0.10883,
+  "book_title": "DraftKings",
+  "point": null,
+  "market": "moneyline",
+  "game_pk": 823430,
+  "matchup": "WSN at PHI",
+  "start": "2026-08-06T22:05:00Z",
+  "stake_units": 1.0,
+  "provisional": true,
+  "min_edge_used": 0.06
+ },
+ "pick_reason": "highest expected value among sides clearing the provisional floor",
  "pick_blockers": [
   {
    "id": "min_edge",
@@ -619,8 +641,8 @@
      "odds": 180,
      "decimal": 2.8,
      "implied_prob": 0.35714,
-     "market_fair_prob": 0.66286,
-     "edge": -0.38839,
+     "market_fair_prob": 0.34816,
+     "edge": -0.07369,
      "ev_per_unit": -0.23148,
      "kelly_full": 0.0,
      "book_title": "Bovada",
@@ -631,16 +653,16 @@
      "label": "NYM +1.5",
      "model_prob": 0.72553,
      "fair_odds": -264,
-     "book": "fanduel",
-     "odds": 184,
-     "decimal": 2.84,
-     "implied_prob": 0.35211,
-     "market_fair_prob": 0.33714,
-     "edge": 0.38839,
-     "ev_per_unit": 1.06051,
-     "kelly_full": 0.57636,
-     "book_title": "FanDuel",
-     "point": -1.5
+     "book": "lowvig",
+     "odds": -204,
+     "decimal": 1.4902,
+     "implied_prob": 0.67105,
+     "market_fair_prob": 0.65184,
+     "edge": 0.07369,
+     "ev_per_unit": 0.08118,
+     "kelly_full": 0.16562,
+     "book_title": "LowVig.ag",
+     "point": 1.5
     }
    ],
    "total": {

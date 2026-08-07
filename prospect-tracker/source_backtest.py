@@ -335,14 +335,42 @@ def _xfv_vs_consensus(data_dir: Path = DATA_DIR) -> dict | None:
         if base is None or blend is None:
             continue
         found = True
+        # HONEST VERDICT, not a bare inequality (2026-08-06).
+        #
+        # This published `xfv_beats` to the Methodology tab as `blend > base`,
+        # with no minimum detectable effect anywhere near it. That was tolerable
+        # while the pitcher delta was +0.0533 against an MDE95 of about 0.045.
+        # It stopped being tolerable when SCORED_YEARS was promoted from 4 folds
+        # to 11 by owner decision: the deltas fell to +0.0113 hit and +0.0108
+        # pit, roughly a quarter of the floor, and a bare `>` would have gone on
+        # printing a star next to a difference the eval cannot resolve.
+        #
+        # A claim the evidence cannot support is worse than no claim, so the
+        # boolean is now gated on resolvability and the numbers behind it travel
+        # with it.
+        delta = blend - base
+        resolvable = abs(delta) >= XFV_VS_CONSENSUS_MDE95
         out["sides"][side] = {
             "n": (pooled.get("blend") or {}).get("n"),
             "consensus_spearman": base,
             "xfv_spearman": blend,
-            "xfv_beats": blend > base,
+            "delta": round(delta, 5),
+            "mde95": XFV_VS_CONSENSUS_MDE95,
+            "resolvable": resolvable,
+            # True ONLY when the gap is both positive and large enough to be a
+            # measurement. The UI keys its star off this.
+            "xfv_beats": bool(delta > 0 and resolvable),
+            "verdict": ("beats consensus" if (delta > 0 and resolvable)
+                        else "loses to consensus" if (delta < 0 and resolvable)
+                        else "not resolvable at this power"),
             "era_split": ev.get("era_split_debuted") or {},
         }
     return out if found else None
+
+
+#: Model-versus-consensus pooled-rho MDE95, from docs/EFV_GATE_STANDARD.md:20.
+#: A delta smaller than this is not a result, whichever way it points.
+XFV_VS_CONSENSUS_MDE95 = 0.045
 
 
 def _xfv_vs_consensus_detail(common_rows: list[dict]) -> dict | None:

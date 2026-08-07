@@ -10,6 +10,51 @@ Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
 pre-registered experiment gates), docs/audit-2026-07-18/FINDINGS.md (fresh
 audit), REVIEW_QUEUE.md (deferred work), BETA_READINESS.md (go/no-go).
 
+## 2026-08-06 (OWNER-DECIDED protocol promotion + a real MDE on the tool gate)
+
+GOLDEN FINGERPRINT RESTAMPED. `_GOLDEN_XFV_SHA256` in test_efv_export.py moves
+ad57da0f -> 344db288. Two deliberate changes moved served values; neither is a
+bug fix and both were taken by the owner with the costs in front of them.
+
+1. SCORED_YEARS PROMOTED, 4 folds to 11 (Lane C3). (2020..2023) becomes
+   (2014..2024). Pooled n rises 353 -> 755 hit and 438 -> 890 pit.
+   THE COST, and it is the headline: model-minus-consensus pooled rho falls from
+   +0.0361 hit / +0.0533 pit to +0.0113 / +0.0108, against a model-vs-consensus
+   MDE95 of about 0.045. Pitchers CLEARED that floor at 4 folds; at 11 folds both
+   sides are NULLS. "eFV beats consensus" is no longer RESOLVABLE at this power.
+   It is not shown false, it is unmeasurable, and the published surface now says
+   so instead of asserting it.
+   The pitcher two-metric win also flips: blend MAE was 2.372 against a baseline
+   2.381, and is now 2.762 against 2.711.
+   CAVEAT THAT TRAVELS WITH EVERY NUMBER THIS PRODUCES: each 2024 debuted row is
+   observed_seasons=2, censored, weight=0.333, with target_censored exactly 3x
+   the observed two-season bWAR, while prospect_path._score pools UNWEIGHTED. So
+   210 rows enter the published figure at full weight with two thirds of each
+   label extrapolated.
+   SCORED_YEARS_LEGACY_4FOLD is kept so a ledger number recorded on the old basis
+   can still be reproduced. About thirty lab tools import this constant; any
+   ledger entry dated before today is on the 4-fold basis and must be read that
+   way.
+
+2. THE TOOL GATE GOT A REAL MDE. efv_tools._oos_validate decided whether a
+   tool's MiLB blend reaches the served grade with a bare `bool(br > gr)`: no
+   minimum detectable effect, no bootstrap, no interval, on a quantity that
+   controls 3,007 of 9,382 served rows. Measured before the change, three of the
+   five gates sat inside 0.008 of the line and `speed` was an exact tie at
+   +0.00000 decided purely by the choice of `>` over `>=`.
+   It now requires a PAIRED bootstrap on the difference (B=2000, seeded) with the
+   one-sided 95% lower bound above zero. Paired because the arms are scored on
+   identical rows.
+   VERDICTS MOVED: `hit` fails (margin +0.0002 under the new folds, lo95 -0.0101)
+   where it previously passed at +0.0079, so that tool reverts to grade-only.
+   `fb` survives comfortably (margin +0.0731, lo95 +0.0439). game_pwr, speed and
+   cmd were already failing and still fail.
+
+BLAST RADIUS, measured against the previous commit rather than estimated:
+178 players' tool_xfv blocks changed, median move 1.0 grade point and max 2.5.
+ZERO headline xfv values changed. The re-grade is real but contained to the tool
+column.
+
 ## 2026-07-18 (fresh audit fixes + Generate-GFX overhaul & site-wide rollout + eFV improvement sweep)
 
 Owner-directed pass: a fresh 8-lane adversarial audit of the least-recently-audited

@@ -102,6 +102,13 @@ def _partial_after_grade(grade, feat, realized):
     return round(float(cov / ((vf * vy) ** 0.5)) if vf and vy else 0.0, 4)
 
 
+#: Paired-bootstrap settings for the tool gate. Seeded so a rebuild on the same
+#: rows gives the same verdict; a gate that wandered run to run would be worse
+#: than the bare inequality it replaced.
+_GATE_BOOT = 2000
+_GATE_SEED = 8641
+
+
 def _oos_validate(tool, spec, rows, realized) -> dict | None:
     """Forward-chained OOS check: fit the blend on cohorts < test year, score the
     test year, pool. Returns OOS blend-rho vs grade-only-rho so the platform's
@@ -142,25 +149,52 @@ def _oos_validate(tool, spec, rows, realized) -> dict | None:
         return None
     br = _spearman(oos_score, oos_y)
     gr = _spearman(oos_grade, oos_y)
-    # RECORD THE MARGIN. The verdict below is a bare strict inequality with no
-    # minimum detectable effect, no bootstrap and no confidence interval, and it
-    # decides whether a third of the served board gets a blended grade
-    # (3,007 of 9,382 rows carry tool_xfv). Measured 2026-08-06, three of the
-    # five gates sit inside +/-0.008 of the line and `speed` is decided on an
-    # EXACT TIE (+0.00000, which `>` resolves to False). Any rebuild can flip
-    # those and silently re-grade served rows.
+
+    # A REAL MINIMUM DETECTABLE EFFECT (owner decision, 2026-08-06).
     #
-    # The rule is NOT changed here: changing it would re-grade the board without
-    # a measurement behind it, which is the thing this codebase refuses to do.
-    # What changes is that the margin is now published, so the fragility is
-    # visible and test_efv_tool_gate_margins can alarm on a flip instead of it
-    # happening quietly. See docs/prereg-e4-anthro-position.md for the house
-    # standard an actual gate is held to.
-    margin = None if (br is None or gr is None) else round(br - gr, 6)
+    # This gate used to be `bool(br > gr)`: a bare strict inequality with no MDE,
+    # no bootstrap and no interval, deciding whether a third of the served board
+    # (3,007 of 9,382 rows carry tool_xfv) gets a blended grade. Measured on
+    # 2026-08-06 three of the five gates sat inside 0.008 of the line and `speed`
+    # was an exact tie at +0.00000, resolved purely by the choice of `>`.
+    #
+    # It now has to clear the same bar every other model change on this platform
+    # clears: a PAIRED bootstrap on the DIFFERENCE, with the one-sided 95% lower
+    # bound above zero. Paired on purpose. The two arms are scored on identical
+    # rows, so resampling them independently would throw away the pairing and
+    # inflate the interval; the quantity with an interval on it is br - gr, not
+    # br and gr separately.
+    #
+    # This is STRICTER than what it replaced and it re-grades served rows the day
+    # it ships. That is the accepted cost of the decision, not a side effect.
+    delta = None if (br is None or gr is None) else br - gr
+    lo95 = None
+    if delta is not None and len(oos_y) >= 15:
+        import random as _rnd
+        rng = _rnd.Random(_GATE_SEED)
+        n = len(oos_y)
+        diffs = []
+        for _ in range(_GATE_BOOT):
+            idx = [rng.randrange(n) for _ in range(n)]
+            sb = [oos_score[k] for k in idx]
+            sg = [oos_grade[k] for k in idx]
+            sy = [oos_y[k] for k in idx]
+            a, b = _spearman(sb, sy), _spearman(sg, sy)
+            if a is not None and b is not None:
+                diffs.append(a - b)
+        if diffs:
+            diffs.sort()
+            lo95 = diffs[int(0.05 * len(diffs))]      # one-sided 95% lower bound
+
+    validated = bool(lo95 is not None and lo95 > 0.0)
+    margin = None if delta is None else round(delta, 6)
     return {"n": len(oos_y), "blend_rho": br, "grade_rho": gr,
             "margin": margin,
+            "delta_lo95": None if lo95 is None else round(lo95, 6),
+            "gate": "paired bootstrap on br - gr, one-sided 95% lower bound > 0",
+            "boot": _GATE_BOOT,
             "knife_edge": bool(margin is not None and abs(margin) < 0.01),
-            "validated": bool(br is not None and gr is not None and br > gr)}
+            "validated": validated}
 
 
 def run(persist: bool = True) -> dict:

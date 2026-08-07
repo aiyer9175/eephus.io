@@ -46,8 +46,43 @@ DATA_DIR = Path(__file__).parent / "data"
 MATRIX_PATH = DATA_DIR / "xfv_hitter_matrix.json"
 OUT_PATH = DATA_DIR / "xfv_eval.json"
 
-# forward-chained test cohorts (>= ~30 test rows each; earlier years seed the first fold)
-SCORED_YEARS = (2020, 2021, 2022, 2023)
+# Forward-chained test cohorts (>= ~30 test rows each; earlier years seed the first fold).
+#
+# PROMOTED 2026-08-06 BY OWNER DECISION, from (2020, 2021, 2022, 2023) to the full
+# 11-fold chain. Lane C3. This is a deliberate protocol change, not a fix, and the
+# owner took it with the costs below in front of them.
+#
+# WHAT IT BUYS. Fold count 4 -> 11 and pooled n 353 hit / 438 pit -> 755 / 890.
+# The 2024 fold is trainable and has been since 2026-07-15 (the
+# S5_fold_guards_and_2024_tripwire block below still reports tripped=true, hit and
+# pit both passing the >=60 train / >=15 test guards).
+#
+# WHAT IT COSTS, measured before the change:
+#   model minus consensus, pooled rho (debuted_km)
+#     4-fold  2020-23    hit +0.0361   pit +0.0533   <- the shipped claim
+#     11-fold 2014-24    hit +0.0113   pit +0.0108
+#   Against a model-vs-consensus MDE95 of ~0.045, pit CLEARED at 4 folds and both
+#   become NULLS at 11. The published "eFV beats consensus" therefore stops being
+#   RESOLVABLE. It does not become false; it becomes unmeasurable at this power,
+#   and the Methodology surface has to say so rather than keep asserting it.
+#   The pitcher two-metric win (blend MAE 2.372 < baseline 2.381) also flips.
+#
+# TWO CONSEQUENCES A READER OF THIS CONSTANT MUST KNOW.
+#   1. LABEL MATURITY. Every 2024 debuted row carries observed_seasons=2,
+#      censored=true, weight=0.333, and target_censored is exactly 3x the observed
+#      two-season bWAR. prospect_path._score computes the headline Spearman and MAE
+#      UNWEIGHTED, so those rows enter the published number at FULL weight with two
+#      thirds of each label extrapolated. That is a real caveat on every number
+#      this constant now produces.
+#   2. HISTORICAL LAB NUMBERS STOP REPRODUCING. About thirty lab tools import this
+#      constant, so re-running any of them no longer reproduces the figure recorded
+#      in the ledger against it. Ledger entries dated before 2026-08-06 are on the
+#      4-fold basis and must be read that way.
+SCORED_YEARS = (2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024)
+
+#: The pre-promotion basis, kept so a reader can reproduce a ledger number that was
+#: recorded against it, and so the two can be compared without archaeology.
+SCORED_YEARS_LEGACY_4FOLD = (2020, 2021, 2022, 2023)
 
 # Feature keys + monotone direction (LightGBM; ridge ignores the sign, regularizes only).
 # LEAN, theory-motivated sets (Phase-1 verdict + an OOS feature search). The earlier

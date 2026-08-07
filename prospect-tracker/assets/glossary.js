@@ -674,6 +674,13 @@ function _methEfvPanel(bt) {
     const s = xc.sides[key];
     if (!s) return "";
     const win = s.xfv_beats;
+    // The star is only earned when the gap is a MEASUREMENT. When the eval
+    // cannot resolve the difference the page says so, rather than quietly
+    // dropping the star and leaving two bars that look like a tie nobody
+    // explained. See source_backtest XFV_VS_CONSENSUS_MDE95.
+    const verdictNote = (s.resolvable === false && s.delta != null)
+      ? `<div class="meth-sub" style="margin-top:4px;">Gap ${s.delta > 0 ? "+" : ""}${s.delta.toFixed(4)} is smaller than the ${s.mde95} this eval can resolve, so neither grade is shown as the winner.</div>`
+      : "";
     const eras = s.era_split || {};
     const eraRows = Object.keys(eras).map(k => {
       const e = eras[k];
@@ -686,6 +693,7 @@ function _methEfvPanel(bt) {
       <div class="meth-metric-title">${escapeHtml(label)} <span class="meth-sub">n=${s.n}</span></div>
       <div class="meth-bar-row"><span class="meth-bar-label">Consensus FV</span><span class="meth-bar-track"><span class="meth-bar-fill" style="width:${W(s.consensus_spearman)}%;background:var(--text-secondary);"></span></span><span class="meth-bar-val">${s.consensus_spearman.toFixed(3)}</span></div>
       <div class="meth-bar-row"><span class="meth-bar-label">eFV</span><span class="meth-bar-track"><span class="meth-bar-fill is-consensus" style="width:${W(s.xfv_spearman)}%;background:var(--neon-cyan);"></span></span><span class="meth-bar-val${win ? " is-best" : ""}">${s.xfv_spearman.toFixed(3)}${win ? " ★" : ""}</span></div>
+      ${verdictNote}
       ${eraRows ? `<div class="table-scroll-x" style="margin-top:6px;"><table class="meth-table"><thead><tr><th>Debut era</th><th>n</th><th>Consensus ρ</th><th>eFV ρ</th></tr></thead><tbody>${eraRows}</tbody></table></div>` : ""}
     </div>`;
   };
