@@ -13,6 +13,33 @@ rest-of-season tabs.
 
 The split is a client split. It is not a second corpus.
 
+## Status: the merge back into one `/fantasy/` module is NOT done
+
+Owner decision 10 of the 2026-08-07 program is a FULL MERGE into one `/fantasy/`
+module with Redraft, Dynasty and DFS as lazy sub-modules, namespaced hashes and
+redirect stubs on the three current dirs. That is not what is in the tree. What
+landed on 2026-08-07 is the scoped selector, the slate-freshness fixes and the
+shared player card, all of which the merge inherits unchanged.
+
+The merge was not attempted because its blast radius reaches four files outside
+the fantasy module, and a half-migrated router is worse than an unstarted one:
+
+* `test_diamond_scaffold.py` pins the Diamond group's six leaves in order, pins
+  `build_fantasy()` as a redirect to `/redraft/`, and pins that
+  `build_dynasty` / `build_redraft` / `build_dfs` each load `diamond-config.js`
+  before their own app. Every one of those is a statement the merge reverses.
+* the three hand-maintained static nav copies (`prospx/index.html` and the two
+  CollegeSavant pages) carry the Diamond dropdown verbatim, and
+  `test_collegesavant_nav_in_sync.py` asserts they match `nav_leaves()` link for
+  link. Collapsing three leaves into one Fantasy leaf is a four-file change.
+
+Whoever picks it up should read the merge constraints in the omnibus-3 plan
+(lane I4) first: the three clients all fall back to `#fantasy-app-root`, so a
+combined shell exposing that id triple-mounts; each client registers its own
+`hashchange` listener over its own `#section=` vocabulary; and the aliases in
+this doc plus the three current page hashes all have to keep landing somewhere
+real.
+
 ## One exporter, three clients
 
 `fantasy_export.py` still builds `data/fantasy.json` on one corpus. That build is
@@ -37,9 +64,13 @@ whether the shell takes the new ids or keeps the fantasy-era ones:
 
 | client | root | banner | top bar | section attribute |
 |---|---|---|---|---|
-| dynasty | `#dynasty-app-root`, else `#fantasy-app-root` | `#dynasty-banner`, else `#fantasy-banner` | `#dynasty-scoring` holds the LENS control | `data-dynastysection`, else `data-fantasysection` |
-| redraft | `#redraft-app-root`, else `#fantasy-app-root` | `#redraft-banner`, else `#fantasy-banner` | `#redraft-scoring` holds the league-format selector | `data-redraftsection`, else `data-fantasysection` |
+| dynasty | `#dynasty-app-root`, else `#fantasy-app-root` | `#dynasty-banner`, else `#fantasy-banner` | `#dynasty-scoring` holds the LENS control, on the board tab only | `data-dynastysection`, else `data-fantasysection` |
+| redraft | `#redraft-app-root`, else `#fantasy-app-root` | `#redraft-banner`, else `#fantasy-banner` | `#redraft-scoring` holds the league-format selector, on the three ROS tabs only | `data-redraftsection`, else `data-fantasysection` |
 | dfs | `#dfs-app-root`, else `#fantasy-app-root` | `#dfs-banner`, else `#fantasy-banner` | none in the shipped shell, so the contest-format selector renders inline at the top of the section | `data-dfssection`, else `data-fantasysection` |
+
+The bar is a SLOT, not a fixture. Both clients empty it on the tabs their
+control cannot move, and the emptied slot is removed from layout by a `:empty`
+rule rather than left as a 10px band above the nav.
 
 The nav attribute values ARE the canonical section names, because `syncTabs`
 compares them directly: a client that canonicalizes a different string renders
@@ -62,14 +93,82 @@ the shells are not in the tree, so a fresh checkout before a build stays green.
 Every client tolerates an absent payload and an absent section: it renders a
 loud note saying what is missing, never a blank page.
 
+## The league-format selector, and where it is allowed to appear
+
+2026-08-07. The selector was reported as broken. It is not: switching to SABR
+re-ranks 230 of the 250 rest-of-season starters, and switching to 5x5 re-ranks
+342 of the 350 hitters. What was broken was where it rendered. The shell
+reserves one bar above the section nav, `redraft.js` filled it once at boot, and
+it then sat over all seven tabs, including the default landing tab.
+
+Only three tabs read `S.system`: ROS SP, ROS RP and ROS Hitters. Daily Streamers
+and Two-Start ride `per_start_fgp` and `total_fgp` off the server, Buy / Sell
+sorts on the expected-stat gap, and the Closer Grid ranks on gmLI. A reader
+landing on Daily Streamers therefore met a four-button control that did nothing
+to the board under it, which is indistinguishable from a control that is dead.
+
+The bar now renders on those three tabs and is emptied on the other four.
+`test_fantasy_split.py` pins both halves per tab.
+
+One thing the scoping does NOT fix, because it is not a defect: FanGraphs Points
+and SABR Points produce the same hitter board. `fantasy.json` carries a single
+`scoring.hitter` dict because the two Ottoneu formats differ only in how
+PITCHERS are scored. ROS Hitters says that in a line above the board, and the
+player card shows the two identical totals side by side, so a reader who
+switches formats there knows why nothing moved. The two category formats do
+re-rank the hitters.
+
+## The player card
+
+`assets/fantasy-card.js`, loaded by the `/redraft/` and `/dynasty/` shells
+BEFORE their own client (both tags deferred, so document order is execution
+order). It is an overlay, addressed as `#player=<mlbam>` inside the host's own
+hash, so a card is shareable and the browser Back button closes it.
+
+It is not a client. It fetches no corpus and owns no payload: the host attaches
+with accessors (`payload()`, `links()`, and optionally `scoreLine(rec)` and
+`keeperRound(rank)`) and every block is a lookup into the payload already in the
+browser. There is no new exporter and no page-per-player build.
+
+| block | source |
+|---|---|
+| identity, eligibility, two-way mark | the player records in `players` |
+| four-format score line | the HOST, through `scoreLine` |
+| projected line | `ros`, with the exporter's own `_est` legs marked |
+| HEM+ / SEM+ / REM+ / gmLI | `skill`, wrapped in glossary terms |
+| luck gap, buy / sell, Swing+ trend | `skill` plus `buy_low` / `sell_high` membership |
+| upcoming starts | `daily_streamers` rows, then `two_start` legs |
+| bullpen role | the index into `closer_depth[org]` |
+| dynasty block | the `dynasty` row, plus `callup_watch` membership |
+| tonight's line | `data/dfs.json`, the one lazy fetch |
+| Full MLB card | `player_links.byMlbam` |
+
+Two rules it inherits. The score line is NOT reimplemented here: the port lives
+in `assets/redraft.js`, which `test_fantasy_split.py` drives against the frozen
+`assets/fantasy.js` in a JS engine, and a second copy would be a third
+implementation nobody is comparing. And a category value is a position in a
+POOL, so a player the served board does not carry gets no roto row rather than a
+z-score against a pool of one.
+
+`data/dfs.json` is fetched once per session, on the first card a reader opens,
+and cached whatever the outcome. A slate that will not load is a note on that
+block, because a reader who knows the player is on tonight's slate and sees
+nothing would read the silence as "not playing". A slate dated before the
+viewer's own today is labelled with its date instead of "Tonight".
+
+Every name on both boards now opens the card rather than linking straight out.
+That resolves for every row, where the outbound link only resolved for the 1,234
+of 1,249 players `player_links` covers, and the card carries the outbound link
+itself.
+
 ## The one eFV basis
 
 Every eFV number on `/dynasty/` is the served `efv` field, which
 `fantasy_export._dynasty_prospects` produced through
 `efv_board_scale.board_value`. The client does no grade arithmetic at all: no
 scale, no quantile, no blend, only rounding to nearest. `test_fantasy_split.py`
-greps all three clients for a raw grade field or arithmetic on a served grade
-and fails on either. This is the rule that `/fantasy/` broke in July, when
+greps all three clients AND the player card for a raw grade field or arithmetic
+on a served grade and fails on either. This is the rule that `/fantasy/` broke in July, when
 Call-up Watch read `xfv_grade` while the Dynasty column read the retired
 `xfv_grade_quantile` and one prospect carried two grades a tab apart.
 
@@ -197,6 +296,33 @@ the free site".
 fantasy schedule refresh, and must run AFTER it (it reads the fantasy payload
 that step keeps current). It is best-effort by construction and returns 0 rather
 than raising.
+
+## Slate freshness, and the two ways it was invisible
+
+2026-08-07. `/dfs/` served the 2026-08-05 slate at full confidence: the payload
+carried no `stale_slate` flag, the banner never fired, and the only sign was a
+date in the corner of the header. Two independent holes produced that.
+
+FIRST, the exporter's crash path. `refresh()` wraps `build_payload` and returned
+0 from the `except` without touching the file. The keep-previous rule right
+below it exists precisely so that a board we cannot replace gets STAMPED before
+it is served for another day, and the one route that skipped it was the route a
+crash takes. A build that raised is now converted into a `build_failed` payload
+and routed through that same decision: the carried board gets `stale_slate`, the
+reason, the age and the bound, and a carry past `_MAX_STALE_CARRY_DAYS` publishes
+the honest empty state instead of freezing the page on an old slate.
+
+SECOND, the client trusted the stamp. `stale_slate` only exists on the paths
+that REACHED a publish decision, so a daily job that never ran at all leaves an
+unstamped payload behind and nothing downstream can tell. `assets/dfs.js` now
+does its own check: a `slate_date` behind the VIEWER's calendar day renders the
+banner, with its own wording, because nobody decided to keep that board and the
+page must not claim otherwise. Both sides of the date comparison are built from
+local date parts; a bare ISO string through `new Date()` is parsed as UTC and
+would fire the banner a day early every North American evening.
+
+The header chip and the banner read the same predicate, so they cannot disagree
+about whether the board is today's.
 
 ## Tests
 

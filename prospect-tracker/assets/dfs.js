@@ -305,19 +305,55 @@
   //    stale_slate + the reason and files a RED ledger row. That was invisible
   //    here: the reader got a full, confident board carrying another day's
   //    date in a corner of the banner.
-  function staleBanner() {
+  //
+  //    AND THE STAMP IS NOT ENOUGH ON ITS OWN. stale_slate is written by the
+  //    publish decision, so it only exists on the paths that REACHED that
+  //    decision. A daily job that never ran, or one that died before it, leaves
+  //    the old payload on disk carrying no flag at all: on 2026-08-07 this page
+  //    served the 2026-08-05 slate at full confidence for exactly that reason.
+  //    A slate date in the past is enough to know, and the reader's own clock is
+  //    the only clock that matters here, so the client checks it itself rather
+  //    than trusting a stamp only the healthy paths write.
+  function todayLocal() {
+    // The VIEWER's calendar day. A bare ISO string through new Date() is parsed
+    // as UTC and reads as the previous day anywhere west of Greenwich, which
+    // would fire this banner a day early every North American evening, so both
+    // sides of the comparison are built from local date parts.
+    var t = new Date();
+    return t.getFullYear() + "-" + ("0" + (t.getMonth() + 1)).slice(-2) +
+      "-" + ("0" + t.getDate()).slice(-2);
+  }
+  function staleInfo() {
     var d = S.data || {};
-    if (!d.stale_slate) return "";
-    var when = d.slate_date ? esc(d.slate_date) : "an earlier";
+    if (d.stale_slate) {
+      return { date: d.slate_date,
+               reason: d.stale_reason ||
+                 "Today's build could not be verified, so it was not published.",
+               kept: true, checked: d.stale_checked_at || null };
+    }
+    if (d.slate_date && String(d.slate_date) < todayLocal()) {
+      return { date: d.slate_date,
+               reason: "Today's build has not published a slate yet, so this is the last " +
+                 "board on disk. The payload carries no staleness stamp, which means the " +
+                 "daily run did not reach the point where it would have written one.",
+               kept: false, checked: null };
+    }
+    return null;
+  }
+  function staleBanner() {
+    var st = staleInfo();
+    if (!st) return "";
+    var when = st.date ? esc(st.date) : "an earlier";
     return '<div class="dfs-stale" role="alert">' +
       "<strong>This is the " + when + " slate, not today's.</strong>" +
-      "<span>" + esc(d.stale_reason ||
-        "Today's build could not be verified, so it was not published.") + "</span>" +
-      "<span>We kept the last board we could stand behind rather than publishing one we " +
-      "could not. Every projection below belongs to " + when + ", and salaries imported " +
+      "<span>" + esc(st.reason) + "</span>" +
+      "<span>" + (st.kept
+        ? "We kept the last board we could stand behind rather than publishing one we could not. "
+        : "") +
+      "Every projection below belongs to " + when + ", and salaries imported " +
       "for a different date are dropped rather than applied to it.</span>" +
-      (d.stale_checked_at
-        ? '<span class="dfs-stale-when">Checked ' + esc(d.stale_checked_at) + ".</span>"
+      (st.checked
+        ? '<span class="dfs-stale-when">Checked ' + esc(st.checked) + ".</span>"
         : "") +
       "</div>";
   }
@@ -398,7 +434,10 @@
             "The board fills in on the next build." },
     collapsed_slate: { head: "This board did not assemble", bad: true,
       tail: "That is a broken join in our build, not a thin day. We would rather show you " +
-            "nothing than half a slate." }
+            "nothing than half a slate." },
+    build_failed: { head: "Today's build did not finish", bad: true,
+      tail: "That is our pipeline. The run raised before it could price anything, so there is " +
+            "no board to stand behind for today and we are not dressing an older one up as one." }
   };
   function emptyPanel(d) {
     var k = EMPTY_KINDS[d.empty_reason_kind] || null;
@@ -1202,7 +1241,9 @@
         (S.data.n_games || 0) + " games · " + (S.data.n_players || 0) +
         ' players priced · <a class="dfs-name-link" href="/diamond/">Diamond preview</a>' +
         ", free while we build" +
-        (S.data.stale_slate ? ' · <span class="dfs-stale-chip">kept slate</span>' : "") +
+        // Same predicate as the banner, so the header chip and the banner can
+        // never disagree about whether the board is today's.
+        (staleInfo() ? ' · <span class="dfs-stale-chip">old slate</span>' : "") +
         "</div>";
     }
     if (!readHash()) writeHash();

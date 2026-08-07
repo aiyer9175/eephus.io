@@ -108,6 +108,11 @@ _DIAMOND_CFG_VER = _asset_ver("assets/diamond-config.js")
 _DYNASTY_VER = _asset_ver("assets/dynasty.js")
 _REDRAFT_VER = _asset_ver("assets/redraft.js")
 _DFS_VER = _asset_ver("assets/dfs.js")
+# The fantasy player card: one overlay shared by the fantasy board clients. It
+# holds no data of its own - the host client hands it the payload already in the
+# browser - so it loads BEFORE its host and simply publishes the API the host
+# attaches to. There is no page-per-player build behind it.
+_FANTASY_CARD_VER = _asset_ver("assets/fantasy-card.js")
 _BETTING_VER = _asset_ver("assets/betting.js")
 _CARDS_VER = _asset_ver("assets/cards.js")
 _CARDS_CSS_VER = _asset_ver("assets/cards.css")
@@ -3804,6 +3809,7 @@ def build_dynasty() -> str:
         f'{DIAMOND_CONFIG_SCRIPT}'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
+        f'<script src="/assets/fantasy-card.js?v={_FANTASY_CARD_VER}" defer></script>'
         f'<script src="/assets/dynasty.js?v={_DYNASTY_VER}" defer></script>'
     )
     return page("Dynasty - eephus.io", "dynasty", body,
@@ -3849,6 +3855,7 @@ def build_redraft() -> str:
         f'{DIAMOND_CONFIG_SCRIPT}'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
+        f'<script src="/assets/fantasy-card.js?v={_FANTASY_CARD_VER}" defer></script>'
         f'<script src="/assets/redraft.js?v={_REDRAFT_VER}" defer></script>'
     )
     return page("Redraft - eephus.io", "redraft", body,

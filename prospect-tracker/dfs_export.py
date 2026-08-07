@@ -811,6 +811,12 @@ _KEEP_PREVIOUS_KINDS = {
                              "payload asserts nothing about today"),
     "collapsed_slate": ("the new payload is structurally impossible (a slate "
                         "with games but no hitters or no priced starters)"),
+    # A build that RAISED is the same publish decision as a build we refused:
+    # there is no new board, and whatever is on disk is about to be served. It
+    # earns a row here so the crash path cannot silently skip the stamping the
+    # other two get (2026-08-07: the except below returned 0 without touching
+    # the file, and /dfs/ served a two-day-old slate carrying no stale flag).
+    "build_failed": ("today's build raised before it produced a payload"),
 }
 
 # HOW OLD A CARRIED SLATE IS ALLOWED TO GET (2026-08-05, second pass). The keep
@@ -848,8 +854,9 @@ def refresh(log=print, *, day: str | None = None, games: list | None = None,
             out_path: Path | None = None) -> int:
     """DAILY best-effort build of data/dfs.json. Returns the player count of
     what is now SERVED (which is the previous payload's count on the keep paths
-    below). Never raises: a failure writes nothing and returns 0, and the page
-    keeps serving yesterday's payload with its own date stamp on it.
+    below). Never raises: a build that raises is converted into a `build_failed`
+    payload and routed through the same publish decision as a build we refused,
+    so the board that stays on disk is STAMPED rather than served as today's.
 
     THE PUBLISH DECISION LIVES HERE, not in build_payload, so the builder stays
     a pure function a test can drive and the writer owns the refuse-to-publish
@@ -866,13 +873,24 @@ def refresh(log=print, *, day: str | None = None, games: list | None = None,
         carries its own `empty_reason` and renders as a loud state;
       * a payload carrying a non-finite number is never written at all (see
         fantasy_export._json_blob)."""
+    path = Path(out_path) if out_path else OUT_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
     try:
         payload = build_payload(day=day, games=games)
     except Exception:
         _log.exception("dfs: payload build failed - continuing")
-        return 0
-    path = Path(out_path) if out_path else OUT_PATH
-    path.parent.mkdir(parents=True, exist_ok=True)
+        # NOT a bare `return 0`. Returning here left the previous payload on
+        # disk untouched, which means unstamped, which means the page renders an
+        # older slate at full confidence: the exact failure the keep-previous
+        # rule below was written to prevent, reached by the one route that
+        # skipped it. Falling through routes the crash through that rule, so the
+        # carried board gets the stale stamp and the bound, and a carry past the
+        # bound publishes the honest empty state instead.
+        payload = _empty(
+            day or date.today().isoformat(), None,
+            "Today's slate build did not finish, so no new board was published. "
+            "The next daily run rebuilds it.",
+            kind="build_failed")
 
     kind = payload.get("empty_reason_kind")
     if kind in _KEEP_PREVIOUS_KINDS:

@@ -20,7 +20,7 @@
 (function () {
   "use strict";
   var DATA_URL = "/data/fantasy.json";
-  var S = { data: null, section: "dynasty", lens: "board", keeper: null };
+  var S = { data: null, section: "dynasty", lens: "board", keeper: null, player: null };
   var SORT = { dynasty: { key: "rank", asc: true } };
   var SORT_DEFAULTS = { dynasty: { key: "rank", asc: true } };
   var LINKS = null;
@@ -87,14 +87,13 @@
   }
   function num(v, d) { return (v == null || isNaN(v)) ? "-" : Number(v).toFixed(d == null ? 1 : d); }
   function f0(v) { return num(v, 0); }
-  function hrefFor(mlbam) {
-    var e = LINKS && LINKS.byMlbam && LINKS.byMlbam[String(mlbam)];
-    return (e && e.key) ? ("/projections/#player=" + e.key) : null;
-  }
+  // EVERY NAME OPENS THE IN-PAGE CARD. It is assembled from the payload this
+  // browser already holds, so it resolves for every row rather than only the
+  // ones player_links covers, and the card itself carries the outbound link to
+  // the merged MLB page. The href is the FULL hash, so a card link copied out
+  // of the page restores the board and lens it was opened from.
   function nameLink(mlbam, name) {
-    var h = hrefFor(mlbam);
-    if (h) return '<a class="dyn-name-link" href="' + esc(h) + '">' + esc(name) + "</a>";
-    return esc(name);
+    return '<a class="dyn-name-link" href="' + esc(hashFor(mlbam)) + '">' + esc(name) + "</a>";
   }
   function teamLogo(team) {
     return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo && team) ? EEPHUS_HUB.teamLogo(team) : "";
@@ -347,7 +346,7 @@
       renderCards(list, DYN_COLS, SORT.dynasty, {
         rankOf: function (d) { return d.rank; },
         stripeOf: dynStripe,
-        hrefOf: function (d) { return hrefFor(d.mlbam); },
+        hrefOf: function (d) { return hashFor(d.mlbam); },
         empty: "The dynasty board populates from the eFV model on the nightly build."
       });
   }
@@ -591,6 +590,7 @@
   //   #section=dynasty|callups|keeper   ("board" is accepted as an alias)
   //   #lens=board|contend|rebuild
   //   #sort=<column>.<a|d>
+  //   #player=<mlbam>   the fantasy player card, over whatever board is under it
   // Every key is optional and validated; a stale or hand-edited URL degrades to
   // the default rather than to a broken board.
   //
@@ -604,17 +604,15 @@
     var m = new RegExp("(?:^#|[#&])" + key + "=(" + pat + ")(?:&|$)").exec(h || "");
     return m ? m[1] : null;
   }
-  // Returns TRUE when the hash it read was canonical. An invalid #section was
-  // already refused by the alternation, so the page rendered the default - but
-  // the ADDRESS BAR kept the bad value until the reader clicked a tab, so a
-  // shared link named a section that does not exist and the page disagreed with
-  // its own URL. An ALIASED section is not canonical either: "#section=board"
-  // resolves to dynasty and the URL should say dynasty.
+  // EVERY CALLER REWRITES THE ADDRESS BAR AFTERWARDS, so an invalid section, an
+  // ALIASED one ("#section=board" resolves to dynasty and the URL should say
+  // dynasty), and a hash carrying a card all normalize the same way. This used
+  // to return a "was it canonical" flag and the callers rewrote on a false; the
+  // flag could not name every case once the card joined the hash.
   function readHash() {
     var h = location.hash || "";
     var s = hashParam(h, "section", SECTIONS.join("|"));
     if (s) S.section = SECTION_ALIAS[s] || s;
-    var canonical = (!s && /(?:^#|[#&])section=/.test(h)) ? false : !(s && SECTION_ALIAS[s]);
     var l = hashParam(h, "lens", LENSES.map(function (x) { return x.id; }).join("|"));
     if (l) {
       S.lens = l;
@@ -629,26 +627,53 @@
         SORT.dynasty.asc = (v.slice(i + 1) === "a");
       }
     }
-    return canonical;
+    S.player = hashParam(h, "player", "\\d+");
   }
-  function writeHash() {
+  // The BOARD half of the hash, card left out: hashFor() builds a card link
+  // over the current board, and onHashChange compares before against after so
+  // opening a card does not re-render the board underneath it.
+  function boardHash() {
     var parts = ["section=" + S.section];
     if (S.lens !== "board") parts.push("lens=" + S.lens);
     var st = SORT.dynasty, d = SORT_DEFAULTS.dynasty;
     if (st.key && !(st.key === d.key && !!st.asc === !!d.asc)) {
       parts.push("sort=" + st.key + "." + (st.asc ? "a" : "d"));
     }
-    LAST_HASH = "#" + parts.join("&");
+    return "#" + parts.join("&");
+  }
+  function hashFor(mlbam) { return boardHash() + "&player=" + mlbam; }
+  function writeHash() {
+    LAST_HASH = S.player ? hashFor(S.player) : boardHash();
     try { history.replaceState(null, "", LAST_HASH); } catch (e) { /* the hash is a nicety */ }
   }
   function onHashChange() {
     if (!S.data) return;
     if ((location.hash || "") === LAST_HASH) return;
-    if (!readHash()) writeHash();
-    syncTabs();
-    renderSection();
+    var before = boardHash();
+    readHash();
+    if (boardHash() !== before) { syncTabs(); renderSection(); }
+    syncCard();
+    writeHash();
   }
   window.addEventListener("hashchange", onHashChange);
+
+  // ---- player card ----------------------------------------------------------
+  // The card module owns the overlay; this file hands it the payload and the
+  // one piece of arithmetic that belongs to this page, the keeper break-even
+  // round. No score line: the league-format port lives in assets/redraft.js and
+  // a second copy here would be a second implementation nobody is comparing.
+  function card() { return window.EEPHUS_FANTASY_CARD || null; }
+  function syncCard() { var C = card(); if (C) C.sync(S.player); }
+  function attachCard() {
+    var C = card();
+    if (!C) return;
+    C.attach({
+      payload: function () { return S.data; },
+      links: function () { return LINKS; },
+      keeperRound: breakEvenRound,
+      onClose: function () { S.player = null; writeHash(); }
+    });
+  }
 
   // ---- boot -----------------------------------------------------------------
   function errorState(msg) {
@@ -676,12 +701,17 @@
         ' season · <a class="dyn-name-link" href="/diamond/">Diamond preview</a>' +
         ", free while we build</div>";
     }
-    if (!readHash()) writeHash();
+    readHash();
+    attachCard();
     wireTabs();
     syncTabs();
     renderSection();
+    writeHash();
+    syncCard();
     if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
-      EEPHUS_HUB.links().then(function (L) { LINKS = L || null; renderSection(); });
+      // The board reads no links now: names open the in-page card, and the card
+      // is what carries the outbound link to the merged MLB page.
+      EEPHUS_HUB.links().then(function (L) { LINKS = L || null; syncCard(); });
     }
   }
   function boot() {

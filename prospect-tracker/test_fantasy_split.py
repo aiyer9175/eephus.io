@@ -41,10 +41,16 @@ JS_FILES = {
 }
 SIDECAR = {"dynasty": "/data/fantasy.json", "redraft": "/data/fantasy.json",
            "dfs": "/data/dfs.json"}
+# The shared player-card overlay. It is not a board CLIENT (it fetches no
+# corpus and owns no payload; the host hands it one), so it stays out of
+# JS_FILES and its own contract is pinned separately. It IS held to the same
+# copy and single-eFV-basis rules, which is what GUARDED is for.
+CARD_JS = ASSETS / "fantasy-card.js"
+GUARDED = dict(JS_FILES, card=CARD_JS)
 
 
 def _src(name: str) -> str:
-    return JS_FILES[name].read_text(encoding="utf-8")
+    return GUARDED[name].read_text(encoding="utf-8")
 
 
 def _code(name: str) -> str:
@@ -287,14 +293,14 @@ def test_each_client_fetches_its_own_sidecar(name):
         assert f.strip() == "DATA_URL", (name, f)
 
 
-@pytest.mark.parametrize("name", sorted(JS_FILES))
+@pytest.mark.parametrize("name", sorted(GUARDED))
 def test_no_em_or_en_dashes(name):
     src = _src(name)
     assert "—" not in src, f"{name}.js carries an em-dash"
     assert "–" not in src, f"{name}.js carries an en-dash"
 
 
-@pytest.mark.parametrize("name", sorted(JS_FILES))
+@pytest.mark.parametrize("name", sorted(GUARDED))
 def test_fantasy_pages_carry_no_betting_copy(name):
     """The betting rails belong to the betting surfaces. A fantasy page that
     starts carrying a gambling disclaimer is a fantasy page somebody has begun
@@ -305,7 +311,7 @@ def test_fantasy_pages_carry_no_betting_copy(name):
         assert term not in low, f"{name}.js carries betting copy: {term}"
 
 
-@pytest.mark.parametrize("name", sorted(JS_FILES))
+@pytest.mark.parametrize("name", sorted(GUARDED))
 def test_no_local_efv_basis(name):
     """THE SINGLE-BASIS RULE. Every eFV number on the site comes out of
     efv_board_scale.board_value on the server. A client that reaches for a raw
@@ -980,6 +986,302 @@ def test_dynasty_empty_payload_is_a_note_not_a_blank():
     c.eval((ASSETS / "dynasty.js").read_text(encoding="utf-8"))
     html = c.eval('__go("#section=board")')
     assert "nightly build" in html and "Nothing is broken" in html
+
+
+# ===========================================================================
+# 6. The scoring control is SCOPED to the tabs it can move (2026-08-07)
+# ===========================================================================
+# The owner reported the league-format selector as broken. It was not: it
+# re-ranks 230 of 250 SP under SABR and 342 of 350 hitters under 5x5. What was
+# broken was WHERE it rendered. The shell reserves a bar above the section nav
+# and redraft.js filled it on all seven tabs, including the default landing tab
+# (Daily Streamers), which is scored server-side in FanGraphs Points and cannot
+# move. A control that visibly does nothing is indistinguishable from a broken
+# one, so these pin the scoping rather than the re-ranking.
+SCORED_TABS = ["ros_sp", "ros_rp", "ros_hitter"]
+UNSCORED_TABS = ["streamers", "two_start", "buysell", "closers"]
+
+
+def _redraft_ctx():
+    c = MiniRacer()
+    c.eval(PARITY_PRELUDE)
+    c.eval(CARD_JS.read_text(encoding="utf-8"))
+    c.eval((ASSETS / "redraft.js").read_text(encoding="utf-8"))
+    return c
+
+
+def _bar(c) -> str:
+    return c.eval("__html['redraft-scoring'] || __html['fantasy-scoring'] || ''")
+
+
+@pytest.mark.parametrize("section", SCORED_TABS)
+def test_format_bar_renders_on_the_sections_it_moves(section):
+    c = _redraft_ctx()
+    c.eval('__go("#section=%s")' % section)
+    assert "rd-scorebtn" in _bar(c), section
+
+
+@pytest.mark.parametrize("section", UNSCORED_TABS)
+def test_format_bar_is_absent_where_it_would_do_nothing(section):
+    c = _redraft_ctx()
+    c.eval('__go("#section=%s")' % section)
+    assert "rd-scorebtn" not in _bar(c), (
+        f"the league-format bar renders on {section}, which does not read it")
+
+
+def test_leaving_a_scored_tab_clears_the_bar():
+    """The bar is emptied on the way OUT, not merely skipped on the way in. A
+    tab change that only re-rendered the section left the previous tab's bar
+    sitting above a board that ignores it."""
+    c = _redraft_ctx()
+    c.eval('__go("#section=ros_sp")')
+    assert "rd-scorebtn" in _bar(c)
+    c.eval('__go("#section=closers")')
+    assert "rd-scorebtn" not in _bar(c)
+
+
+def test_ros_hitters_says_the_two_points_formats_share_one_table():
+    """fantasy.json carries ONE scoring.hitter dict, because FanGraphs Points
+    and SABR Points differ only on the pitching side. That is Ottoneu's rule,
+    not a gap in ours, and the board says so rather than leaving a reader to
+    conclude the selector is dead."""
+    c = _redraft_ctx()
+    html = c.eval('__go("#section=ros_hitter")')
+    assert "share one hitter table" in html, html[:400]
+
+
+def test_streamer_copy_does_not_point_at_a_bar_that_is_not_there():
+    c = _redraft_ctx()
+    html = c.eval('__go("#section=streamers")')
+    assert "switch formats above" not in html
+
+
+# ===========================================================================
+# 7. The fantasy player card
+# ===========================================================================
+def test_card_is_not_a_second_corpus():
+    """It fetches ONE thing, tonight's slate, and only when a reader opens a
+    card. The rest is a lookup into the payload the host already downloaded, so
+    there is no page-per-player build and no second copy of fantasy.json."""
+    src = _src("card")
+    urls = re.findall(r'DFS_URL\s*=\s*"([^"]+)"', src)
+    assert urls == ["/data/dfs.json"], urls
+    fetches = [f.strip() for f in re.findall(r"fetch\(\s*([^,)]+)", src)]
+    assert fetches == ["DFS_URL"], fetches
+    assert "/data/fantasy.json" not in _code("card")
+
+
+def test_card_does_not_carry_a_second_scoring_port():
+    """The four-format line comes from the HOST, because the port lives in
+    assets/redraft.js and test_redraft_scoring_matches_fantasy drives THAT file
+    against the frozen assets/fantasy.js. A copy here would be a third
+    implementation nobody is comparing."""
+    src = _code("card")
+    for bad in ("function scorePoints", "function rotoValue", "scoring.hitter",
+                "scoring_catalog[", "fpts_fgp"):
+        assert bad not in src, f"fantasy-card.js grew its own scoring: {bad}"
+    assert "HOST.scoreLine" in src
+
+
+def _card_html(c) -> str:
+    """The overlay is created through document.createElement, which both JS
+    harnesses register under the id 'c'."""
+    return c.eval("__html['c'] || ''")
+
+
+def test_card_renders_a_pitcher_with_every_format_and_his_line():
+    c = _redraft_ctx()
+    c.eval('__go("#section=ros_sp&player=694973")')
+    assert c.eval("window.EEPHUS_FANTASY_CARD.isOpen()") is True
+    html = _card_html(c)
+    assert "Paul Skenes" in html
+    labels = re.findall(r'fc-score-l">([^<]+)', html)
+    assert labels == ["FanGraphs Points", "SABR Points",
+                      "Old School (5x5)", "Ottoneu Classic (4x4)"], labels
+    # The served projection, not a recomputation of it.
+    assert re.search(r'fc-stat-l">IP</span>62\.0', html), html[:900]
+    assert 'data-gl="sem_plus"' in html
+
+
+def test_card_renders_a_hitter_with_the_luck_and_buy_signal():
+    c = _redraft_ctx()
+    c.eval('__go("#section=ros_hitter&player=660271")')
+    html = _card_html(c)
+    assert "Shohei Ohtani" in html
+    assert 'data-gl="hem_plus"' in html and 'data-gl="xhem_plus"' in html
+    assert "buy low" in html
+    # The two POINTS formats agree on a hitter, which is the same Ottoneu fact
+    # the board note states. Seeing it on the card is the point of the row.
+    vals = re.findall(r'fc-score-v">([^<]+)', html)
+    assert vals[0] == vals[1], vals
+
+
+def test_card_never_scores_a_category_format_against_a_pool_of_one():
+    """A category value is a POSITION IN A POOL. A player the served board does
+    not carry has no pool, so the two roto rows are left off rather than
+    computed against a pool that does not contain him. The points rows still
+    render: those are a dot product and need nobody else."""
+    payload = json.loads(PARITY_PAYLOAD)
+    payload["sections"]["ros_sp"] = [694973, 434378]      # Cease dropped
+    c = MiniRacer()
+    c.eval(PARITY_PRELUDE.replace(PARITY_PAYLOAD, json.dumps(payload)))
+    c.eval(CARD_JS.read_text(encoding="utf-8"))
+    c.eval((ASSETS / "redraft.js").read_text(encoding="utf-8"))
+    c.eval('__go("#section=ros_sp&player=656302")')
+    html = _card_html(c)
+    assert "Dylan Cease" in html, html[:400]
+    labels = re.findall(r'fc-score-l">([^<]+)', html)
+    assert labels == ["FanGraphs Points", "SABR Points"], labels
+
+
+def test_card_falls_back_to_the_dynasty_row_for_a_prospect():
+    """A prospect on the dynasty board has no rest-of-season record, which is
+    not an error: he has not played in the majors. The card is still a card."""
+    c = MiniRacer()
+    c.eval(APP_PRELUDE % DYN_PAYLOAD)
+    c.eval(CARD_JS.read_text(encoding="utf-8"))
+    c.eval((ASSETS / "dynasty.js").read_text(encoding="utf-8"))
+    c.eval('__go("#section=dynasty&player=102")')
+    html = _card_html(c)
+    assert "Middle Kid" in html
+    # eFV 51.6 displays to NEAREST (52), served verbatim, never recomputed.
+    assert re.search(r'data-gl="xfv">eFV</span></b>52<', html), html[:900]
+    # The keeper break-even is this page's own arithmetic, handed in by the host.
+    assert "Keep by" in html and "R3" in html
+
+
+def test_card_link_carries_the_whole_board_state():
+    """A card link copied out of the page has to restore the board it was
+    opened from, so the href is the full hash and not a bare #player=."""
+    c = _redraft_ctx()
+    board = c.eval('__go("#section=ros_sp&sys=sabr")')
+    hrefs = re.findall(r'href="(#[^"]*player=694973)"', board)
+    assert hrefs, board[:600]
+    assert "section=ros_sp" in hrefs[0] and "sys=sabr" in hrefs[0], hrefs[0]
+
+
+# ===========================================================================
+# 8. DFS freshness: the client self-check and the exporter's crash path
+# ===========================================================================
+def test_dfs_client_flags_a_past_slate_that_carries_no_stamp():
+    """stale_slate is written by the PUBLISH DECISION, so it only exists on the
+    paths that reached one. A run that never happened, or one that died before
+    it, leaves an old payload on disk with no flag: on 2026-08-07 /dfs/ served
+    the 2026-08-05 slate at full confidence for exactly that reason. A slate
+    date in the past is enough to know."""
+    payload = json.loads(_opt_payload())
+    payload["slate_date"] = "2020-04-01"      # unambiguously behind any clock
+    payload.pop("stale_slate", None)
+    c = _dfs_boot(json.dumps(payload))
+    html = c.eval('__go("#section=slate")')
+    assert "This is the 2020-04-01 slate, not today's." in html, html[:400]
+    # The exporter's own claim must NOT be borrowed here: nobody decided to keep
+    # this board, the build simply never replaced it.
+    assert "We kept the last board" not in html
+    assert "old slate" in c.eval("__html['dfs-banner'] || ''")
+
+
+def test_dfs_client_leaves_todays_slate_alone():
+    import datetime
+    payload = json.loads(_opt_payload())
+    payload["slate_date"] = datetime.date.today().isoformat()
+    c = _dfs_boot(json.dumps(payload))
+    html = c.eval('__go("#section=slate")')
+    assert "not today's" not in html
+    assert "old slate" not in c.eval("__html['dfs-banner'] || ''")
+
+
+def test_dfs_client_still_prefers_the_exporters_own_reason():
+    """When the exporter DID make the call, its sentence and its checked-at
+    stamp are what the reader sees. The self-check is a floor, not a rewrite."""
+    payload = json.loads(_opt_payload())
+    payload.update({"slate_date": "2020-04-01", "stale_slate": True,
+                    "stale_reason": "the schedule feed did not answer",
+                    "stale_checked_at": "2020-04-02T00:00:00Z"})
+    c = _dfs_boot(json.dumps(payload))
+    html = c.eval('__go("#section=slate")')
+    assert "the schedule feed did not answer" in html
+    assert "We kept the last board" in html
+    assert "Checked 2020-04-02T00:00:00Z" in html
+
+
+def _crash_refresh(monkeypatch, out, day, prev=None):
+    import dfs_export as dx
+    if prev is not None:
+        out.write_text(json.dumps(prev), encoding="utf-8")
+
+    def boom(**_kw):
+        raise RuntimeError("simulated build crash")
+
+    monkeypatch.setattr(dx, "build_payload", boom)
+    n = dx.refresh(log=lambda *_a, **_k: None, day=day, out_path=out)
+    return n, json.loads(out.read_text(encoding="utf-8"))
+
+
+def test_dfs_crash_path_stamps_the_board_it_leaves_serving(tmp_path, monkeypatch):
+    """The `except` around build_payload used to return 0 without touching the
+    file, so a crashed run left the previous payload UNSTAMPED and the page
+    served it as today's. A build that died is the same publish decision as a
+    build we refused."""
+    import datetime
+    today = datetime.date.today()
+    prev = {"slate_date": (today - datetime.timedelta(days=1)).isoformat(),
+            "n_players": 42, "players": [{"mlbam": 1}]}
+    n, got = _crash_refresh(monkeypatch, tmp_path / "dfs.json", today.isoformat(), prev)
+    assert n == 42                       # what is SERVED, which is the old board
+    assert got["stale_slate"] is True
+    assert got["stale_kind"] == "build_failed"
+    assert got["stale_age_days"] == 1
+    assert got["stale_checked_at"]
+
+
+def test_dfs_crash_path_respects_the_carry_bound(tmp_path, monkeypatch):
+    """Past the bound the stale board is worse than the honest empty state, and
+    the crash path gets that rule too rather than freezing /dfs/ forever."""
+    import datetime
+    import dfs_export as dx
+    today = datetime.date.today()
+    old = (today - datetime.timedelta(days=dx._MAX_STALE_CARRY_DAYS + 5)).isoformat()
+    prev = {"slate_date": old, "n_players": 42, "players": [{"mlbam": 1}]}
+    n, got = _crash_refresh(monkeypatch, tmp_path / "dfs.json", today.isoformat(), prev)
+    assert n == 0
+    assert got["empty_reason_kind"] == "build_failed"
+    assert got["slate_date"] == today.isoformat()
+    assert got["previous_slate_dropped"]["slate_date"] == old
+
+
+def test_dfs_crash_path_with_nothing_on_disk_publishes_the_empty_state(tmp_path, monkeypatch):
+    import datetime
+    n, got = _crash_refresh(monkeypatch, tmp_path / "dfs.json",
+                            datetime.date.today().isoformat())
+    assert n == 0
+    assert got["empty_reason_kind"] == "build_failed"
+    assert got["players"] == []
+
+
+def test_the_client_knows_the_build_failed_kind():
+    """Every kind the exporter can stamp needs a headline here, or the payload
+    says one thing and the page renders the generic fallback."""
+    import dfs_export as dx
+    src = _src("dfs")
+    for kind in dx._KEEP_PREVIOUS_KINDS:
+        assert kind + ":" in src, f"dfs.js has no empty-state copy for {kind}"
+
+
+# ---------------------------------------------------------------------------
+# The shells load the card module
+# ---------------------------------------------------------------------------
+@pytest.mark.parametrize("name", ["dynasty", "redraft"])
+def test_card_hosts_ship_the_card_module(name):
+    """Both fantasy board shells load it, and BEFORE their own client: the host
+    attaches to an API that has to already exist. Both tags are deferred, so
+    document order is execution order."""
+    path = ROOT / name / "index.html"
+    if not path.exists():
+        pytest.skip(f"{path.name} is generated by build_site and is not in the tree yet")
+    html = path.read_text(encoding="utf-8")
+    assert re.search(r"/assets/fantasy-card\.js\?v=", html), name
+    assert html.index("fantasy-card.js") < html.index("/assets/%s.js" % name), name
 
 
 if __name__ == "__main__":
