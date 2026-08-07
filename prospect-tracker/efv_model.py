@@ -929,54 +929,136 @@ _MID_POS = ("C", "SS", "2B", "CF")
 # (docs/EFV_GATE_STANDARD.md) on the refit. Until then this is unmeasurable, not
 # merely unmeasured.
 #
-# ── CORRECTION 2026-08-07: THE DATA JOB IS DONE AND THIS MODULE CANNOT SEE IT ──
-# The paragraph above is still the right verdict and the wrong instruction. Measured
-# today (data/xfv_driver_pos_census.json):
+# ── CORRECTION 2026-08-07: THE DATA JOB WAS DONE AND THIS MODULE READ PAST IT ──
+# The verdict above is still right. Its INSTRUCTION was wrong: the rebuild it asks for
+# already existed on disk, and this module was pointed at the older artifact beside it.
+# Repointed below. Every number here was re-measured on the current tree by
+# tools/pos_census_repoint_lab.py; the write-up is
+# docs/efv-pos-census-repoint-2026-08-07/RESULTS.md.
 #
-#   * data/positions_played.json is UNCHANGED and still the per-player, career-to-date,
-#     pre-debut census. Its coverage on the current hitter matrix is 33.5% overall,
-#     5.1% debuted, 55.9% bust, i.e. the split above is intact.
-#   * data/positions_played_seasons.json (3,827 players, built 2026-07-30) IS the
-#     rebuild the paragraph asks for: league-wide, per-season, NO debut filter, with
-#     the as-of rule in fielding_positions.season_visible_through.
-#   * _observed_pos_map below reads the FIRST file. The as-of census is not wired into
-#     this model anywhere, so the flag is gated against the worse of two artifacts
-#     that are both already on disk.
+#   * data/positions_played.json (2,756 players carrying an observation, built
+#     2026-08-04) is the per-player, career-to-BUILD-DATE, pre-debut census. On the
+#     current 1,917-row hitter matrix: 33.5% overall, 5.1% debuted, 55.9% bust. The
+#     split described above is intact.
+#   * data/positions_played_seasons.json (3,827 players, built 2026-07-30) is the
+#     league-wide per-season census: no debut filter, with the as-of rule in
+#     fielding_positions.season_visible_through.
 #
-# Coverage the as-of route actually delivers, via
-# fielding_positions.observed_positions_as_of with the census-scoped bindings in
-# data/fielding_census_ids.json: training matrix 91.8%, DEBUTED 99.3%, BUST 85.8%.
+# WHY THE REPOINT IS A CORRECTNESS FIX ON ITS OWN, whether or not the flag ever
+# flips. Read the SAME census both ways over the same 1,759 bound training rows and
+# the career-to-date read disagrees with the as-of read on 330 of them (18.8%). The
+# median training row has 63.0% of its career fielding games AFTER its own decision
+# date, and 1,325 of 1,831 rows are over half. The old artifact answers "where does he
+# play now". The feature claims to ask "where had he played when the grade was set".
+# On four rows in five those are different questions, and the old one is unanswerable
+# without importing the future.
 #
-# THE FLAG STILL DOES NOT FLIP, and that is a measured answer, not a deferral. The
-# pre-registered criterion is that coverage no longer separates debuted rows from
-# busts. The gap goes -50.8pp to +13.5pp (+6.5pp restricted to id-resolved rows): 3.8x
-# smaller, opposite in sign, and still label-correlated. A ridge can learn 13.5pp. So
-# no fit was run: fitting here would have measured the residual leak and reported it as
-# a feature. What the flag now waits on is (a) repointing this consumer at the as-of
-# census and (b) a decision on the 87 rows that carry no resolvable identity, which are
-# dominated by NPB/KBO players who never played affiliated ball and for whom null is
-# the permanently correct value. Both are modelling decisions with their own gate.
-# Scale if it is ever unblocked: 414 of 1,759 covered training rows change pos_prem on
-# the as-of route (355 gain the premium, 59 lose it).
-# Ledger: data/xfv_driver_pos_census.json, docs/efv-2026-07-30/POSITION_CENSUS_ASOF.md,
+# WHAT THE FLAG WOULD MEAN AFTER THE REPOINT, stated plainly because it changed.
+# Flipping POS_PREMIUM_USES_OBSERVED no longer means "use the career census". It means
+# "use games played in seasons COMPLETE at this row's own asof_date, for rows carrying
+# an mlbam id, and the listed position for everyone else". Coverage is lower and the
+# quantity is different, which is the point.
+#
+# THE FLAG STILL DOES NOT FLIP, and that is a measurement, not a deferral:
+#
+#   1. COVERAGE THROUGH THIS MODULE'S OWN INPUTS IS 58.6%, NOT 91.8%. The 91.8%
+#      figure in data/xfv_driver_pos_census.json is real but is reached through
+#      data/fielding_census_ids.json, a census-scoped name-join binding that adds 646
+#      ids the matrix rows do not carry. That file has NO builder anywhere in the tree
+#      (committed as a one-off in fef6599), is frozen at 2026-07-30, and is excluded
+#      from deploy. A model input cannot depend on an artifact nothing can rebuild, so
+#      the route below binds on the row's own mlbam_id only: 58.6% overall, 68.6%
+#      debuted, 50.8% bust, gap +17.9pp. With the lab binding it would be +13.5pp
+#      (+6.5pp among id-resolved rows). Neither clears the pre-registered criterion,
+#      which is that coverage stop separating the label classes.
+#   2. THE RESIDUAL GAP IS 100% IDENTITY FAILURE, ALL OF IT ON ONE LABEL CLASS. Of the
+#      86 matrix rows that cannot bind an id at all, 86 are BUST and 0 are DEBUTED.
+#   3. THE 86 ARE NOT A PERMANENT NULL, which is what the driver lane assumed. Checked
+#      name by name against the affiliated census: only about 10 are NPB/KBO players
+#      who never played affiliated ball. 33 carry an AMBIGUOUS name and were dropped
+#      by design; the remaining ~41 ARE in the census under a formal-name variant the
+#      join does not fold (Josh Mears is there as "Joshua Mears", Mike Carico as
+#      "Michael Carico"), plus mojibake and suffix mangling. So the honest label is an
+#      unfixed identity defect, not a correct absence, and dropping those rows would
+#      remove 86 busts and no debuts from the fit.
+#
+# NO MISSING-INDICATOR. The gate standard forbids one for exactly this candidate
+# class: with missingness sitting 100% on the bust rows, the indicator would sense the
+# label through its own absence.
+#
+# CONDITION TO UNGATE, written so the next session does not have to re-derive it. Not
+# "rebuild the census" - that is done. It is: (a) a REPRODUCIBLE player_key -> mlbam
+# binding with a builder in the tree and a deployed artifact, closing the 86; then
+# (b) re-measure the debuted-minus-bust coverage gap and clear the pre-registered
+# criterion; then (c) the full eFV accuracy battery (docs/EFV_GATE_STANDARD.md) as its
+# OWN commit, because a coverage change and a model change together are unauditable.
+# Scale if it is ever unblocked, measured through the route below: 271 of 1,124 covered
+# training rows change pos_prem (230 gain the premium, 41 lose it) and 342 of 1,619
+# covered live rows (249 gain, 93 lose). With the flag OFF, 0 of 4,046 train+live rows
+# move, verified in tools/pos_census_repoint_lab.py flips.
+# Ledger: docs/efv-pos-census-repoint-2026-08-07/RESULTS.md,
+# data/xfv_driver_pos_census.json, docs/efv-2026-07-30/POSITION_CENSUS_ASOF.md,
 # docs/efv-drivers-2026-08-07/GATE_RECORD.md section 4.
 POS_PREMIUM_USES_OBSERVED = False
 
 _OBSERVED_POS_CACHE: dict | None = None
+_SEASON_CENSUS_CACHE: dict | None = None
 
 
-def _observed_pos_map() -> dict:
-    """{player_key: observed position}, loaded once. Empty on any failure - a missing
-    sidecar must degrade to the projection, never raise inside feature extraction."""
-    global _OBSERVED_POS_CACHE
-    if _OBSERVED_POS_CACHE is None:
+def _season_census() -> dict:
+    """The as-of census, {mlbam(str): {season(str): {POS: [g, gs]}}}, loaded once.
+
+    Empty on any failure - a missing sidecar must degrade to the projection, never
+    raise inside feature extraction."""
+    global _SEASON_CENSUS_CACHE
+    if _SEASON_CENSUS_CACHE is None:
         try:
             from pathlib import Path as _P
             import fielding_positions as _fp
-            _OBSERVED_POS_CACHE = _fp.load_observed_positions(
-                _P(__file__).parent / "data" / "positions_played.json")
+            _SEASON_CENSUS_CACHE = _fp.load_season_census(
+                _P(__file__).parent / _fp.SEASON_CENSUS_PATH)
         except Exception:
-            _OBSERVED_POS_CACHE = {}
+            _SEASON_CENSUS_CACHE = {}
+    return _SEASON_CENSUS_CACHE
+
+
+def _observed_pos_as_of(r) -> str | None:
+    """The row's observed position AS OF ITS OWN DECISION DATE, or None.
+
+    Both an mlbam id and an asof_date are required. Either one missing is "no
+    observation" and never a career total: fielding_positions.as_of_by_pos returns {}
+    rather than falling through, and this mirrors it, because a career total on a row
+    dated 2019 is the leak this whole block exists to avoid."""
+    mid, as_of = r.get("mlbam_id"), r.get("asof_date")
+    if not mid or not as_of:
+        return None
+    entry = _season_census().get(str(mid))
+    if not entry:
+        return None
+    try:
+        import fielding_positions as _fp
+        return _fp.observed_position_as_of(entry, as_of)
+    except Exception:
+        return None
+
+
+def _observed_pos_map() -> dict:
+    """{player_key: observed position} fallback seam, EMPTY by default. DEPRECATED.
+
+    It used to load data/positions_played.json. That artifact is keyed by player_key
+    and is career-to-BUILD-DATE, so it cannot answer the as-of question at all, and it
+    was the wrong input for this model (see the block above). It is NOT re-pointed at
+    the season census, because that census is keyed by MLBAM id and there is no
+    reproducible player_key binding in the tree to key it back over. The default is
+    therefore empty: rows the as-of route cannot answer get the listed position, which
+    is the same degradation this function always promised.
+
+    The seam stays so a caller can inject a hand-bound map, and because the consumer
+    split is pinned by test_position_role_phase5.TestObservedPositionConsumers. Delete
+    it once the reproducible binding in the ungating condition exists."""
+    global _OBSERVED_POS_CACHE
+    if _OBSERVED_POS_CACHE is None:
+        _OBSERVED_POS_CACHE = {}
     return _OBSERVED_POS_CACHE
 
 
@@ -993,12 +1075,16 @@ def _pos_premium(pos, side: str) -> float:
 
 def _pos_premium_for_row(r, side: str) -> float:
     """_pos_premium with the row in hand, so the observed position can be used when
-    POS_PREMIUM_USES_OBSERVED is on. Falls back to the row's listed position wherever
-    there is no observation. Identical to _pos_premium(r['position'], side) with the
-    flag off - see the block above for why it is off."""
+    POS_PREMIUM_USES_OBSERVED is on. The as-of census answers first; _observed_pos_map
+    is the injectable fallback for rows it cannot bind; the row's LISTED position is
+    the last resort, so a row with no observation scores exactly as it does today.
+    Identical to _pos_premium(r['position'], side) with the flag off - see the block
+    above for why it is off."""
     pos = r.get("position")
     if POS_PREMIUM_USES_OBSERVED and side != "pit":
-        pos = _observed_pos_map().get(r.get("player_key")) or pos
+        pos = (_observed_pos_as_of(r)
+               or _observed_pos_map().get(r.get("player_key"))
+               or pos)
     return _pos_premium(pos, side)
 
 

@@ -362,5 +362,135 @@ class TestTheOldCensusIsUntouched(unittest.TestCase):
             "SS")
 
 
+class TestEfvModelReadsTheAsOfCensus(unittest.TestCase):
+    """The 2026-08-07 repoint (LANE P, docs/efv-pos-census-repoint-2026-08-07/).
+
+    efv_model used to resolve the observed position out of
+    data/positions_played.json, which is career-to-BUILD-DATE and pre-debut
+    scoped. Measured on the current hitter matrix, the career read disagrees with
+    the as-of read on 18.8% of bound training rows and the median row has 63% of
+    its career fielding games AFTER its own decision date. What is pinned here is
+    the SHAPE of the fix, not the coverage number: the model asks the census a
+    DATED question, a row that cannot answer it degrades to its listed position,
+    and none of it can fire while the flag is off.
+    """
+
+    # SS through 2023, then a move to 1B. A 2024 decision must see the SS.
+    CENSUS = {"111": {"2022": {"SS": [80, 78]}, "2023": {"SS": [90, 88]},
+                      "2024": {"1B": [120, 118]}, "2025": {"1B": [130, 128]}}}
+
+    def _model(self):
+        import efv_model as em
+        em._SEASON_CENSUS_CACHE = dict(self.CENSUS)
+        em._OBSERVED_POS_CACHE = None
+        return em
+
+    def tearDown(self):
+        import efv_model as em
+        em._SEASON_CENSUS_CACHE = None
+        em._OBSERVED_POS_CACHE = None
+        em.POS_PREMIUM_USES_OBSERVED = False
+
+    def test_the_flag_is_still_off(self):
+        import efv_model as em
+        self.assertFalse(em.POS_PREMIUM_USES_OBSERVED)
+
+    def test_as_of_read_ignores_seasons_after_the_decision(self):
+        em = self._model()
+        row = {"player_key": "x", "mlbam_id": 111, "asof_date": "2024-01-22"}
+        self.assertEqual(em._observed_pos_as_of(row), "SS")
+
+    def test_a_later_decision_sees_the_move(self):
+        em = self._model()
+        row = {"player_key": "x", "mlbam_id": 111, "asof_date": "2026-02-01"}
+        self.assertEqual(em._observed_pos_as_of(row), "1B")
+
+    def test_a_row_with_no_id_or_no_date_is_no_observation_not_a_career_total(self):
+        em = self._model()
+        self.assertIsNone(em._observed_pos_as_of(
+            {"player_key": "x", "asof_date": "2024-01-22"}))
+        self.assertIsNone(em._observed_pos_as_of(
+            {"player_key": "x", "mlbam_id": 111}))
+        self.assertIsNone(em._observed_pos_as_of(
+            {"player_key": "x", "mlbam_id": 111, "asof_date": "not-a-date"}))
+
+    def test_an_id_outside_the_census_is_no_observation(self):
+        em = self._model()
+        self.assertIsNone(em._observed_pos_as_of(
+            {"player_key": "x", "mlbam_id": 999, "asof_date": "2024-01-22"}))
+
+    def test_the_deprecated_player_key_map_is_empty_by_default(self):
+        em = self._model()
+        self.assertEqual(em._observed_pos_map(), {})
+
+    def test_the_model_no_longer_reads_the_pre_debut_artifact(self):
+        """The whole defect in one assertion: a career-to-build-date map keyed by
+        player_key must not be able to reach pos_prem any more. Asserted on the
+        EXECUTABLE body (the docstring still names the artifact it retired) and
+        again behaviourally, by making the old loader fatal."""
+        import inspect
+        import efv_model as em
+        # Cut the docstring out by delimiter. __doc__ is not usable for this:
+        # Python 3.13 dedents docstrings at compile time, so it no longer matches
+        # the text inspect.getsource returns.
+        head, _, rest = inspect.getsource(em._observed_pos_map).partition('"""')
+        body = head + rest.partition('"""')[2]
+        self.assertNotIn("load_observed_positions", body)
+        self.assertNotIn("positions_played.json", body)
+
+        def _boom(*a, **k):
+            raise AssertionError("efv_model reached the pre-debut census")
+        orig = fp.load_observed_positions
+        fp.load_observed_positions = _boom
+        try:
+            em._OBSERVED_POS_CACHE = None
+            self.assertEqual(em._observed_pos_map(), {})
+        finally:
+            fp.load_observed_positions = orig
+
+    def test_pos_prem_prefers_the_as_of_census_when_the_flag_is_on(self):
+        em = self._model()
+        row = {"player_key": "x", "mlbam_id": 111, "asof_date": "2024-01-22",
+               "position": "1B"}                      # listed 1B, observed SS
+        self.assertEqual(em._pos_premium(row["position"], "hit"), 0.0)
+        em.POS_PREMIUM_USES_OBSERVED = True
+        self.assertEqual(em._pos_premium_for_row(row, "hit"), 1.0)
+
+    def test_pos_prem_falls_back_to_the_listed_position_with_no_observation(self):
+        em = self._model()
+        row = {"player_key": "x", "mlbam_id": 999, "asof_date": "2024-01-22",
+               "position": "SS"}
+        em.POS_PREMIUM_USES_OBSERVED = True
+        self.assertEqual(em._pos_premium_for_row(row, "hit"), 1.0)
+
+    def test_the_flag_off_is_an_exact_no_op_even_where_the_census_disagrees(self):
+        em = self._model()
+        for pos in ("1B", "SS", None, "SS/2B", "3B"):
+            row = {"player_key": "x", "mlbam_id": 111, "asof_date": "2024-01-22",
+                   "position": pos}
+            for side in ("hit", "pit"):
+                self.assertEqual(em._pos_premium_for_row(row, side),
+                                 em._pos_premium(pos, side))
+
+    def test_pitchers_are_never_repointed(self):
+        em = self._model()
+        em.POS_PREMIUM_USES_OBSERVED = True
+        row = {"player_key": "x", "mlbam_id": 111, "asof_date": "2024-01-22",
+               "position": "RP"}
+        self.assertEqual(em._pos_premium_for_row(row, "pit"), 0.0)
+
+    def test_a_missing_census_file_degrades_and_never_raises(self):
+        import efv_model as em
+        em._SEASON_CENSUS_CACHE = None
+        with tempfile.TemporaryDirectory() as d:
+            missing = Path(d) / "nope.json"
+            self.assertEqual(fp.load_season_census(missing), {})
+        em._SEASON_CENSUS_CACHE = {}
+        em.POS_PREMIUM_USES_OBSERVED = True
+        row = {"player_key": "x", "mlbam_id": 111, "asof_date": "2024-01-22",
+               "position": "3B"}
+        self.assertEqual(em._pos_premium_for_row(row, "hit"), 0.0)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
