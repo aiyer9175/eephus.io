@@ -138,7 +138,14 @@
     var rows = (DATA && DATA.rp2sp) || [];
     if (rows.length < 12) return "";
     var hist = chart("histogram", rows.map(function (r) { return r.fit; }),
-      { height: 100, min: 0, max: 100, highlightAbove: 70, refs: [{ at: 60, label: "starter shape" }], aria: "RP-SP FIT distribution" });
+      // REFERENCE LINE RELABELLED (plan item E6). It read "starter shape" at 60
+      // while this same chart highlights 70+ and its caption calls 70+ "a real
+      // starter profile". Two different starter thresholds on one chart, so a
+      // reader could not tell which number meant what. 60 is the PROSPECT BAND
+      // edge; 70 is the starter threshold, and only one of them gets that name.
+      { height: 100, min: 0, max: 100, highlightAbove: 70,
+        refs: [{ at: 60, label: "prospect band edge" }],
+        aria: "RP-SP FIT distribution" });
     return vizWrap("rp2sp-viz", gloss("RP→SP FIT", "rp_sp_fit") + ' distribution <span class="proj-dim">(cyan = 70+, a real starter profile)</span>', hist);
   }
   function sp2rpViz() {
@@ -540,7 +547,13 @@
       + '<span class="pal-sc-stat"><b>' + esc(DATA.n_conversions) + "</b> conversions</span>"
       + dirStat("SP->RP", gloss("SP→RP FIT", "sp_rp_fit"), "validated vs baselines")
       + dirStat("RP->SP", gloss("RP→SP FIT", "rp_sp_fit"), "does not validate ranking")
-      + '<span class="pal-sc-stat">converters at <b>' + esc(b.converter_median_fit_pool_pctile) + "th</b> pct of the field</span>"
+      // NULL GUARD (plan item E6). rp2sp can be empty, and esc(null) renders
+      // nothing, so this printed the literal "converters at th pct of the
+      // field". A sentence with a hole in it reads as a rendering bug to a
+      // reader and tells them nothing either way; say there is no sample.
+      + (b.converter_median_fit_pool_pctile == null
+          ? '<span class="pal-sc-stat">no converter sample yet</span>'
+          : '<span class="pal-sc-stat">converters at <b>' + esc(b.converter_median_fit_pool_pctile) + "th</b> pct of the field</span>")
       + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
       + "</div>";
   }
