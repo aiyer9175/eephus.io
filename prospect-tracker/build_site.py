@@ -2018,11 +2018,15 @@ def _spotlight_html(players: list, spotlights: dict | None = None) -> str:
             why = (e or {}).get("why") or "Hot sample"
             slots.append((
                 "Spotlight - Hot Sample", p,
-                # The stat line is far wider than an FV delta, so this chip
-                # wraps (the row is already flex-wrap) instead of nowrapping
-                # itself out through the card border.
+                # .row-delta is flex:none + min-width:46px + text-align:right,
+                # so white-space:normal alone never wrapped: a flex item that
+                # cannot shrink is laid out at max-content even on its own flex
+                # line, and a 26-char statline pushed through the card border of
+                # the ~124px sidebar text column. flex:1 1 100% + min-width:0
+                # give the statline its own full-width row under the FV pill.
                 f'<span class="row-delta up" title="{html.escape(str(why))} - current-season sample" '
-                f'style="font-family:var(--font-retro-mono);font-size:11px;white-space:normal;">'
+                f'style="font-family:var(--font-retro-mono);font-size:11px;white-space:normal;'
+                f'flex:1 1 100%;min-width:0;text-align:left;">'
                 f'{html.escape(str(line))}</span>',
                 "var(--accent-green)"))
             break
@@ -2862,7 +2866,10 @@ def _cross_module_strip() -> str:
                           'realized win-probability added', rows))
     except (OSError, ValueError, KeyError):
         pass
-    # Alchemy Lab - top RP->SP conversion candidates by FIT score
+    # Alchemy Lab - highest RP->SP fit scores. The copy says "screen", not
+    # "candidates": the rp2sp direction's backtest came back sign-wrong
+    # (rho -0.17, n=35, no-ship), so the page frames fit as a structural screen
+    # and this teaser must not promote it to a ranking claim on the way out.
     try:
         pal = _cached_data_json("pal.json")
         top = sorted((c for c in pal.get("rp2sp") or [] if c.get("fit") is not None),
@@ -2875,7 +2882,7 @@ def _cross_module_strip() -> str:
             for c in top)
         if rows:
             cards.append(('⚗ Alchemy Lab', '/pal/',
-                          'top reliever-to-starter conversion candidates', rows))
+                          'reliever-to-starter conversion screen', rows))
     except (OSError, ValueError, KeyError):
         pass
     # Redraft - rest-of-season projected points leaders. The section lists in
@@ -3778,7 +3785,12 @@ def build_dynasty() -> str:
         'A-ball and a 27-year-old in his arbitration years can sit in the same ranking. Call-up Watch flags '
         'who is next. The keeper calculator prices years of control against what the same player costs in a '
         'redraft league.</span></div>'
-        '<div id="dynasty-scoring" class="fantasy-scoring-bar" aria-label="League scoring format"></div>'
+        # assets/dynasty.js fills this slot with the LENS control (board order /
+        # contending / rebuilding), not a scoring selector: this board is graded
+        # and ranked, it has no scoring formats. The class stays as-is because
+        # redraft.js and dynasty.js style .fantasy-scoring-bar and .dyn-lensbar
+        # independently.
+        '<div id="dynasty-scoring" class="fantasy-scoring-bar" aria-label="Board lens"></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Dynasty sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-dynastysection="dynasty" role="tab" aria-selected="true">Dynasty Board</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-dynastysection="callups" role="tab" aria-selected="false">Call-up Watch</button>'
