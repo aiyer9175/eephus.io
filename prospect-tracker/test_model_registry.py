@@ -99,6 +99,21 @@ def test_stale_threshold_is_reachable():
     real artifact ages: it should exceed today's oldest (no false alarm on a
     healthy tree) but stay inside 3x of it, so a genuinely neglected eval
     trips it in a plausible amount of time.
+
+    DO NOT LOWER STALE_DAYS AGAIN LOOKING FOR A FINDING. That was tried on
+    2026-08-03 (240 -> 90) and re-opened on 2026-08-07 on the grounds that
+    `stale` still fires on nothing. It fires on nothing because nothing IS
+    neglected: measured 2026-08-07, the oldest dated artifact in the tree is
+    58 days and the median is 15. The first clause below FORBIDS any value
+    that would fire today, so "lower it until something trips" is not a move
+    this test permits, and a bar tuned to produce an alarm on a healthy tree
+    is a false alarm rather than a finding.
+
+    The freshness defect that IS real, and is a defect somebody can fix, is
+    the undated artifact: see test_no_new_undated_eval_artifact below and
+    docs/decision-2026-08-07-freshness-bar.md. One freshness concept, not
+    three: this test guards the bar's VALUE, that one guards the INPUT the
+    bar is computed from, and /models/ states the distribution for a reader.
     """
     fresh = mr.freshness()
     oldest = max(f["artifact_age_days"] for f in fresh.values())
@@ -109,6 +124,83 @@ def test_stale_threshold_is_reachable():
         f"STALE_DAYS={mr.STALE_DAYS} is more than 3x the oldest artifact "
         f"({oldest}d) and cannot realistically fire; lower it so the freshness "
         "map reports a finding rather than a tautology")
+
+
+# Every registry eval_artifact that declares NO production date of its own,
+# measured 2026-08-07: 28 files behind 33 of the 180 freshness rows. For each
+# of these, model_registry.freshness() falls back to the file mtime, and the
+# deploy box runs `git checkout -- .` nightly, which rewrites every tracked
+# mtime to the moment of checkout. So on the box that serves the site these
+# rows report an age of roughly zero no matter how old the measurement really
+# is, which is the one place a stale eval would matter.
+#
+# This is a RATCHET, not an allowlist to grow. A new entry here means a new
+# row whose age the registry cannot honestly state. When an artifact learns to
+# stamp itself (any of generated_at / run_at / fit_date / as_of / date at the
+# top level), delete its line; the test stays green as the set shrinks.
+UNDATED_EVAL_ARTIFACTS = frozenset({
+    "data/_am_crossmodel_agelevel_eval.json",
+    "data/college_translation_eval.json",
+    "data/fa_gate1_eval.json",
+    "data/fa_gate2_eval.json",
+    "data/proj_def_feature_eval.json",
+    "data/proj_horizon_eval.json",
+    "data/prospect_def_value_eval.json",
+    "data/surplus_sensitivity.json",
+    "data/total_band_eval.json",
+    "data/trade_machine_eval.json",
+    "data/value_framework_fitted.json",
+    "data/xfv_cap_sweep_eval.json",
+    "data/xfv_generality_eval.json",
+    "data/xfv_gradenorm_basis_eval.json",
+    "data/xfv_injury_history_eval.json",
+    "data/xfv_lambda_reselect_eval.json",
+    "data/xfv_odds_calibration_slope_eval.json",
+    "data/xfv_overlay_uncapped_eval.json",
+    "data/xfv_peak_war_eval.json",
+    "data/xfv_proxy_eval.json",
+    "data/xfv_surrogate_eval.json",
+    "data/xfv_tbs2_eval.json",
+    "data/xfv_tools.json",
+    "data/xfv_weight_recal_eval.json",
+    "data/xfv_wrc_eval.json",
+    # Not JSON, so _artifact_date cannot read a stamp out of it at all.
+    "docs/efv-2026-07-30/EFV_LANE_GATES.md",
+    "docs/efv-sb-athleticism-2026-08-05/results.json",
+    "tools/_comb_out/nested_hit_TRACK_R_cal.json",
+})
+
+
+def _undated_artifacts() -> set:
+    """Registry eval_artifact paths that exist but declare no date of their own."""
+    out = set()
+    for m in mr.load()["models"]:
+        art = (m.get("eval_artifact") or "").strip()
+        if not art:
+            continue
+        p = ROOT / art
+        if p.exists() and mr._artifact_date(p) is None:
+            out.add(art)
+    return out
+
+
+def test_no_new_undated_eval_artifact():
+    """THE FRESHNESS FINDING (decided 2026-08-07, docs/decision-2026-08-07-
+    freshness-bar.md). An eval artifact that does not date itself cannot be
+    aged honestly on the deploy box, so the registry silently substitutes a
+    checkout timestamp. Ship a new one and this goes red, naming the file.
+
+    The fix when it fires is to stamp the artifact at the top level, not to
+    add it to the set: every generator on this platform already knows when it
+    ran, and writing that down costs one key."""
+    new = sorted(_undated_artifacts() - UNDATED_EVAL_ARTIFACTS)
+    assert not new, (
+        "eval artifacts with NO production date of their own: "
+        f"{new}. model_registry.freshness() will age these by file mtime, and "
+        "the deploy box rewrites every mtime on its nightly `git checkout -- .`, "
+        "so the age it reports there is the checkout, not the measurement. Add a "
+        "top-level generated_at (or run_at / fit_date / as_of / date) to the "
+        "artifact's generator. Extending UNDATED_EVAL_ARTIFACTS is not the fix.")
 
 
 def test_freshness_prefers_the_artifacts_own_stamp_over_mtime():

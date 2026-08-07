@@ -2290,6 +2290,7 @@ function _libraryGroups() {
   { title: "Full pages",
     sub: "standalone destinations with their own route",
     rows: [
+      ["/models/", "Model Accountability", "the full ledger: every model that makes a predictive claim, its verdict, and the eval artifact behind that verdict, plus the gaps counted rather than omitted"],
       ["/parks/", "MiLB Park Factors", "run environments for every affiliated park; the Methodology tab (/parks/#method) documents the estimator"],
       ["/sources/", "Data Sources & Attribution", "every upstream the platform reads, what it is used for, and the editorial stance"],
       ["/history/", "Today in Prospect History", "debut anniversaries, prospect trades, signings, and IL moves that landed on today's calendar date"],
@@ -2319,7 +2320,7 @@ function _libraryGroups() {
       ["/pal/#pitchadd", "Alchemy Lab · Pitch Add", "which pitch each arm should add next"],
       ["/pal/#platoon", "Alchemy Lab · Platoon", "platoon-split profiles and pairings"],
       ["/pal/#prospects", "Alchemy Lab · Prospect Watch", "the pipeline read through the lab's conversion lenses"],
-      ["/glossary/#view=models", "Glossary · Models & Proofs", "the accountability ledger: every predictive model with its verdict and eval artifact"],
+      ["/glossary/#view=models", "Glossary · Models & Proofs", "the same ledger as /models/, read inside the glossary: every predictive model with its verdict and eval artifact, next to the terms it defines"],
     ] },
   { title: "Player pages",
     sub: "per-player cards, addressable by URL",

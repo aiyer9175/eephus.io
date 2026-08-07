@@ -461,12 +461,20 @@ MODEL_GLOSSARY = {
     "ifa_step_prior": ["xfv"],
     "provisional_calibration": "internal",
     # F-SIDE-FIX (2026-07-23, owner-authorized fairness-fix attempt under the
-    # queued G1-as-NO-HARM re-registration): loss ledger - the capped top-band
-    # joint recalibration fixes pit over-representation (F1a) but fails the
-    # equal-slot gap clause F1b (pit tail has no realized-WAR gradient, the
-    # TOP-QUANT root cause). Defaults OFF, hook dead-by-default, rendered
-    # nowhere.
-    "xfv_side_fairness_fix": "internal",
+    # queued G1-as-NO-HARM re-registration): the 07-23 attempt is a loss ledger
+    # - the capped top-band joint recalibration fixes pit over-representation
+    # (F1a) but fails the equal-slot gap clause F1b (pit tail has no
+    # realized-WAR gradient, the TOP-QUANT root cause).
+    # MAPPING CORRECTED 2026-08-07. This said "internal ... defaults OFF, hook
+    # dead-by-default, rendered nowhere", which was true on 07-23 and stopped
+    # being true on 07-24: the W-FSIDE-SHIP re-registration passed on repaired
+    # labels and SHIPPED default ON (efv_score.py:1222
+    # SIDE_FAIRNESS_FIX_DEFAULT = True), moving 467 board rows by up to 3.0 FV
+    # (kade_anderson 62->59). It rewrites xfv_grade_display, so it is live eFV
+    # scoring behaviour and documents through the eFV entry exactly like
+    # efv_board_side_scale and xfv_role_ceiling, rather than hiding behind
+    # "internal".
+    "xfv_side_fairness_fix": ["xfv"],
     # --- 2026-07-29 display-index registration -----------------------------
     # The standing rule says every shipped model carries a registry row. These
     # rows close a long-standing gap for the user-facing plus-metrics: they are
