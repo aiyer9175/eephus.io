@@ -1,0 +1,84 @@
+{
+ "census": {
+  "path": "data/positions_played.json",
+  "players": 2756,
+  "mtime": "2026-08-04T20:23:48Z",
+  "seasons_sidecar": {
+   "mtime": "2026-07-30T23:43:41Z",
+   "bytes": 1050228
+  }
+ },
+ "coverage": {
+  "all": {
+   "n": 1917,
+   "covered": 642,
+   "frac": 0.3349
+  },
+  "debuted": {
+   "n": 845,
+   "covered": 43,
+   "frac": 0.0509
+  },
+  "bust": {
+   "n": 1072,
+   "covered": 599,
+   "frac": 0.5588
+  },
+  "live": {
+   "n": 2129,
+   "covered": 1998,
+   "frac": 0.9385
+  }
+ },
+ "label_gap": {
+  "debuted_minus_bust": -0.5079,
+  "prior_2026_07_30": {
+   "train": 0.318,
+   "debuted": 0.051,
+   "bust": 0.527,
+   "live": 0.93
+  }
+ },
+ "flip_counts_train": {
+  "gain": 73,
+  "lose": 49,
+  "same": 520
+ },
+ "asof_route": {
+  "census": "data/positions_played_seasons.json via fielding_positions.observed_positions_as_of",
+  "id_bindings": "data/fielding_census_ids.json (census-scoped, not a global id override)",
+  "coverage": {
+   "all": {
+    "n": 1917,
+    "covered": 1759,
+    "frac": 0.9176,
+    "id_resolved": 1836,
+    "frac_of_id_resolved": 0.9581
+   },
+   "debuted": {
+    "n": 845,
+    "covered": 839,
+    "frac": 0.9929,
+    "id_resolved": 845,
+    "frac_of_id_resolved": 0.9929
+   },
+   "bust": {
+    "n": 1072,
+    "covered": 920,
+    "frac": 0.8582,
+    "id_resolved": 991,
+    "frac_of_id_resolved": 0.9284
+   }
+  },
+  "label_gap_debuted_minus_bust": 0.1347,
+  "label_gap_conditional_on_id": 0.0645,
+  "consumer_today": "efv_model._observed_pos_map reads data/positions_played.json, the OLD career-to-date pre-debut artifact; the as-of census is not wired into the model at all",
+  "flip_counts_train": {
+   "gain": 355,
+   "lose": 59,
+   "same": 1345
+  }
+ },
+ "generated_at": "2026-08-07T18:05:33Z",
+ "produced_by": "tools/efv_driver_lab.py"
+}

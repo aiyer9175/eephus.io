@@ -1,0 +1,173 @@
+{
+ "tag": "C1a:sb_rate_rel:hit",
+ "n_pool": 845,
+ "n_scored_base": 755,
+ "n_scored_cand": 755,
+ "baseline": {
+  "rho": 0.39932,
+  "cons_rho": 0.39192,
+  "block_rho": 0.40019,
+  "cons_block_rho": 0.37816
+ },
+ "candidate": {
+  "rho": 0.402,
+  "cons_rho": 0.39192,
+  "block_rho": 0.40126,
+  "cons_block_rho": 0.37816
+ },
+ "delta": {
+  "rho": 0.00268,
+  "block_rho": 0.00108
+ },
+ "control_delta": {
+  "rho": 6e-05,
+  "block_rho": -0.00102
+ },
+ "folds_scored": 11,
+ "fold_rho_wins": 4,
+ "fold_delta": {
+  "2014": 0.0,
+  "2015": 0.0,
+  "2016": -0.0156,
+  "2017": -0.0077,
+  "2018": 0.0032,
+  "2019": -0.0019,
+  "2020": 0.0,
+  "2021": 0.0076,
+  "2022": -0.0033,
+  "2023": 0.0203,
+  "2024": 0.0151
+ },
+ "bootstrap": {
+  "rho": {
+   "B_used": 2000,
+   "point": 0.00268,
+   "boot_mean": 0.00287,
+   "sd": 0.01225,
+   "mde95_onesided": 0.0202,
+   "mde95_twosided": 0.024,
+   "x_floor": 0.133,
+   "ci95": [
+    -0.023,
+    0.02946
+   ],
+   "p_gt_0": 0.6285,
+   "resolvable": false
+  },
+  "block_rho": {
+   "B_used": 2000,
+   "point": 0.00108,
+   "boot_mean": 0.00274,
+   "sd": 0.01292,
+   "mde95_onesided": 0.0213,
+   "mde95_twosided": 0.0253,
+   "x_floor": 0.051,
+   "ci95": [
+    -0.02481,
+    0.03055
+   ],
+   "p_gt_0": 0.599,
+   "resolvable": false
+  }
+ },
+ "coverage": {
+  "sb_rate_rel": {
+   "observed": 581,
+   "n": 845,
+   "frac": 0.6876,
+   "impute": "zero",
+   "impute_value": 0.0,
+   "observed_mean": 6.3316,
+   "observed_sd": 12.85737
+  }
+ },
+ "elapsed_s": 43.4,
+ "permutation_null": {
+  "draws": 200,
+  "mean": -0.0001,
+  "sd": 0.00354,
+  "p95": 0.00722,
+  "p_value": 0.1493
+ },
+ "live": {
+  "side": "hit",
+  "n_live": 2129,
+  "rank_spearman_old_new": 0.95243,
+  "max_abs_rank_shift": 1247,
+  "p99_abs_rank_shift": 672,
+  "median_abs_rank_shift": 71.0,
+  "max_abs_war_delta": 1.3996,
+  "p99_abs_war_delta": 0.6183,
+  "top_movers": [
+   {
+    "player_key": "sandy_presbot",
+    "fv": 35.0,
+    "rank_shift": 1247,
+    "war_delta": 1.09
+   },
+   {
+    "player_key": "cam_lee",
+    "fv": 35.0,
+    "rank_shift": 1140,
+    "war_delta": 0.925
+   },
+   {
+    "player_key": "vladi_gomez",
+    "fv": 35.0,
+    "rank_shift": 1070,
+    "war_delta": 0.96
+   },
+   {
+    "player_key": "landon_arroyos",
+    "fv": 35.0,
+    "rank_shift": 962,
+    "war_delta": 0.753
+   },
+   {
+    "player_key": "yensi_de_la_cruz",
+    "fv": 35.0,
+    "rank_shift": 956,
+    "war_delta": 0.728
+   },
+   {
+    "player_key": "raymond_mola",
+    "fv": 35.0,
+    "rank_shift": 894,
+    "war_delta": 0.694
+   },
+   {
+    "player_key": "israfell_bautista",
+    "fv": 35.0,
+    "rank_shift": 863,
+    "war_delta": 0.633
+   },
+   {
+    "player_key": "euris_acosta",
+    "fv": 35.0,
+    "rank_shift": 833,
+    "war_delta": 0.603
+   },
+   {
+    "player_key": "tevin_tucker",
+    "fv": 35.0,
+    "rank_shift": 828,
+    "war_delta": 0.601
+   },
+   {
+    "player_key": "jhoan_peguero",
+    "fv": 35.0,
+    "rank_shift": 825,
+    "war_delta": 0.618
+   }
+  ]
+ },
+ "prior_run": {
+  "doc": "docs/efv-sb-athleticism-2026-08-05/RESULTS.md",
+  "basis": "4-fold unweighted, n 353",
+  "delta_rho": 0.0076,
+  "x_floor_then": 0.45,
+  "verdict_then": "NO-SHIP (sub-floor null)"
+ },
+ "generated_at": "2026-08-07T18:14:09Z",
+ "produced_by": "tools/efv_driver_lab.py"
+}

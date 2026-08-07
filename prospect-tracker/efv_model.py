@@ -357,6 +357,18 @@ _FEATURES_PIT = [
     # that wrecks absolute-grade robustness is not a clean gain -> reverted. (Hitter cohort
     # indicators stay -- bounded 0/1, robust +0.030 gain.)
     #
+    # RE-MEASURED AND RE-CLOSED 2026-08-07 on the 11-fold pair-weighted basis, on five NEW
+    # threshold interactions chosen to be the most defensible ones available (power 60 x
+    # contact, hit 60 x on-base, power 60 x hit 55, fastball 60 x K-rate, fastball 60 x
+    # command 55). All five are rank NULLS: best is power 60 x hit 55 at +0.0029 = 0.20x its
+    # own re-derived feature-add floor on a 5-of-11 fold minority, and the only other
+    # point-positive arm is NEGATIVE on block-rho, so it fails the two-metric gate on sign.
+    # The LIVE signature above reproduced exactly on all five: scoring the live matrix moves
+    # a low-FV thin-sample player 320 / 436 / 629 / 921 / 1644 rank places (jesus_tillero
+    # FV 33.3 +0.95 WAR on fb60 x cmd55; elijah_green FV 37.7 +0.90 WAR on pwr60 x contact).
+    # The family is now closed on its own measurement rather than by inheritance.
+    # Ledger: data/xfv_driver_gated_pairs.json, docs/efv-drivers-2026-08-07/GATE_RECORD.md.
+    #
     # seasons_at_level: consecutive seasons on the CURRENT level (1 = arrived this year).
     # SHIPPED PITCHERS ONLY, 2026-07-30, owner decision on the E1 gate
     # (docs/efv-2026-07-30/E1_REPEAT_LEVEL_GATE.md, ledger data/xfv_repeat_level_eval.json).
@@ -385,6 +397,72 @@ _FEATURES_PIT = [
     #                 _FEATURES_HIT.
     ("seasons_at_level", -1),
 ]
+
+
+# ── CLOSED DRIVER ARMS, 2026-08-07 (lane C of the omnibus-3 program) ──────────
+# Six candidate drivers were gated under the full docs/EFV_GATE_STANDARD.md battery on
+# the 11-fold pair-weighted basis. ALL SIX ARE NULLS and none of them touches the two
+# feature lists above. Recorded here so the next reader does not re-spend an arm; the
+# per-arm numbers, controls and permutation nulls are in
+# docs/efv-drivers-2026-08-07/GATE_RECORD.md.
+#
+# THE FLOOR THEY WERE GATED AGAINST, re-derived first because the registered 0.017 hit /
+# 0.016 pit feature-add floor is a RETIRED-4-fold number (data/xfv_driver_floors.json):
+#     feature add, pooled rho ....  0.0193 hit / 0.0127 pit
+#     feature add, block-rho .....  0.0216 hit / 0.0182 pit
+# The promotion to 11 folds bought NO POWER on this statistic class either, for the same
+# reason wave 1 found on model-vs-consensus: the paired bootstrap resamples the training
+# frame and ridge refit variance dominates. Note also that adding a PURE-NOISE column
+# costs -0.0016 to -0.0078 pooled rho, so a candidate landing at +0.000 has not tied the
+# baseline, it has merely paid its own dilution cost.
+#
+#   sb_rate_rel (hit)      +0.0027 = 0.13x floor, 4 of 11 folds, block-rho +0.0011,
+#                          permutation p 0.149. The 11-fold re-power SHRANK it (the
+#                          2026-08-05 4-fold run had +0.0076 = 0.45x), and the live
+#                          matrix reorders at Spearman 0.952 with a max shift of 1,247
+#                          of 2,129 rows. The column is on disk in the milb block but
+#                          _vec deliberately does not emit it. ARM SPENT: the re-powered
+#                          protocol was the one condition it was re-opened under.
+#                          Ledger data/xfv_driver_sb_rate.json.
+#   handedness IDENTITY    the one never-tested primitive, built from a StatsAPI
+#                          /people batch (6,840 of 6,840 ids resolved, cached at
+#                          .cache/xfv_handedness.json). pit is_lhp -0.0196 with its
+#                          zero-information control SCORING BETTER and permutation
+#                          p 1.000 (all 200 broken-link draws matched or beat it);
+#                          hit bats-side -0.0007, p 0.413. Both 3 of 11 folds.
+#                          The pre-registered id-missingness stop clause never had to
+#                          fire. Coverage finding worth more than the arms: FanGraphs
+#                          per_source _extras carries bats/throws for 5,384 player_keys
+#                          and covers ZERO debuted rows a resolved id does not already
+#                          cover, so the eval pool's 69% hit / 73% pit handedness
+#                          ceiling is a property of the pool, not a fixable ingest gap.
+#                          Platoon-split PRODUCTION features stay banned regardless.
+#                          Ledger data/xfv_driver_handedness.json.
+#   gated tool pairs       five arms, all null on rank and all disqualified on live
+#                          robustness. See the col_x_k note below, which they reproduce.
+#   elite-band conviction  BOTH arms null, and the reason is sample size, not modelling:
+#                          restricted to consensus FV >= 55 the eval scores 76 hitter and
+#                          26 pitcher rows, whose model-vs-consensus MDE95 is 0.1598 and
+#                          0.3543. That is 3.6x and 8.1x the full-pool floor and roughly
+#                          10x to 25x any feature effect measured anywhere in this file.
+#                          No candidate could pass there. A lambda band RAISE on FV >= 55
+#                          goes NEGATIVE on hitters and wins 0 of 11 folds on pitchers.
+#                          No monotone tail transform was attempted: committed losses, and
+#                          Spearman is invariant to them by construction.
+#                          Ledger data/xfv_driver_elite_band.json.
+#   wRC+ add arm           re-opened by owner instruction, ONE attempt, FAIL. -0.0014
+#                          pooled and -0.0043 block-rho (both negative on an ADD), 1 of 11
+#                          folds, and the row-permuted control scores -0.0017, i.e. it
+#                          reproduces the candidate's entire margin. The a-priori null
+#                          recorded before the July run is CONFIRMED on an independent
+#                          fold basis. The 11-fold re-run WAS the re-open condition and it
+#                          is now spent. Do not build the park layer (W2 M-FAIL).
+#                          Ledger data/xfv_driver_wrc.json.
+#
+# The pattern across all six, stated so it is not rediscovered: every one was chosen
+# because its prior pointed positive, and four of the six land point-NEGATIVE. That is
+# the same conclusion EFV_GATE_STANDARD.md section 6 reached from backward elimination,
+# arrived at from the opposite direction. Do not add and do not remove on this evidence.
 
 
 # PACE FROM ENTRY (2026-07-31, owner ask: franklin_arias / josue_de_paula).
@@ -480,6 +558,26 @@ _WAG_LAMBDA_CACHE: dict[str, float] = {}
 # Stability/correctness change, not an accuracy change. Revert = set this back to None (the
 # dynamic rank_calibration reselect). If a future rebuild claims a better lambda, it has to
 # clear MDE95 on pooled rho first, not win the composite argmax.
+#
+# RE-SWEEP 2026-08-07 on the 11-fold pair-weighted basis, run under exactly the reopening
+# rule in the sentence above. BOTH PINS HOLD. Grid 0.35 to 0.90 across the clamp, per side
+# (data/xfv_driver_lambda_sweep.json):
+#   * both pooled-rho curves are MONOTONE DECREASING in lambda over the whole grid, so the
+#     argmax on each side is the grid edge, which is also the _BLEND_LAMBDA_CLAMP floor.
+#   * hit 0.70 -> 0.35 is +0.00522 against a freshly measured lambda-shift floor, CI95
+#     [-0.0033, +0.0430]; pit 0.57 -> 0.40 is +0.00286, CI95 [-0.0042, +0.0216]. Both 0.27x
+#     their floor with a CI straddling zero.
+#   * the lambda-shift floor was itself re-derived on this basis and it SCALES WITH THE STEP,
+#     which the retired single number (0.0076-0.011 hit / 0.005-0.008 pit) hid: 0.0025 hit /
+#     0.0030 pit for a 0.05 move, 0.0046 / 0.0055 for 0.10.
+#   * the whole hitter band spans 0.0079 in pooled rho, which is smaller than one
+#     feature-add floor (0.0193), and its block-rho leg is FLAT and non-monotone, so the
+#     "less model weight ranks better" reading does not survive block-normalization. On
+#     pitchers the two legs agree.
+# Churn cost, quoted as the rule requires: hit 0.70 -> 0.35 re-blends and re-prints every
+# hitter grade on the board and halves the model's weight in the headline, for a 0.27x-floor
+# claim that one of the two required instruments does not support.
+# Doc: docs/efv-drivers-2026-08-07/GATE_RECORD.md section 8.
 _BLEND_LAMBDA_RESELECT: dict[str, float | None] = {"hit": 0.70, "pit": 0.57}
 
 # WAG sizes the blend ONLY when its predicted-edge -> realized-WAG regression is meaningful.
@@ -830,6 +928,38 @@ _MID_POS = ("C", "SS", "2B", "CF")
 # the training pool is covered, then re-run the eFV accuracy gate
 # (docs/EFV_GATE_STANDARD.md) on the refit. Until then this is unmeasurable, not
 # merely unmeasured.
+#
+# ── CORRECTION 2026-08-07: THE DATA JOB IS DONE AND THIS MODULE CANNOT SEE IT ──
+# The paragraph above is still the right verdict and the wrong instruction. Measured
+# today (data/xfv_driver_pos_census.json):
+#
+#   * data/positions_played.json is UNCHANGED and still the per-player, career-to-date,
+#     pre-debut census. Its coverage on the current hitter matrix is 33.5% overall,
+#     5.1% debuted, 55.9% bust, i.e. the split above is intact.
+#   * data/positions_played_seasons.json (3,827 players, built 2026-07-30) IS the
+#     rebuild the paragraph asks for: league-wide, per-season, NO debut filter, with
+#     the as-of rule in fielding_positions.season_visible_through.
+#   * _observed_pos_map below reads the FIRST file. The as-of census is not wired into
+#     this model anywhere, so the flag is gated against the worse of two artifacts
+#     that are both already on disk.
+#
+# Coverage the as-of route actually delivers, via
+# fielding_positions.observed_positions_as_of with the census-scoped bindings in
+# data/fielding_census_ids.json: training matrix 91.8%, DEBUTED 99.3%, BUST 85.8%.
+#
+# THE FLAG STILL DOES NOT FLIP, and that is a measured answer, not a deferral. The
+# pre-registered criterion is that coverage no longer separates debuted rows from
+# busts. The gap goes -50.8pp to +13.5pp (+6.5pp restricted to id-resolved rows): 3.8x
+# smaller, opposite in sign, and still label-correlated. A ridge can learn 13.5pp. So
+# no fit was run: fitting here would have measured the residual leak and reported it as
+# a feature. What the flag now waits on is (a) repointing this consumer at the as-of
+# census and (b) a decision on the 87 rows that carry no resolvable identity, which are
+# dominated by NPB/KBO players who never played affiliated ball and for whom null is
+# the permanently correct value. Both are modelling decisions with their own gate.
+# Scale if it is ever unblocked: 414 of 1,759 covered training rows change pos_prem on
+# the as-of route (355 gain the premium, 59 lose it).
+# Ledger: data/xfv_driver_pos_census.json, docs/efv-2026-07-30/POSITION_CENSUS_ASOF.md,
+# docs/efv-drivers-2026-08-07/GATE_RECORD.md section 4.
 POS_PREMIUM_USES_OBSERVED = False
 
 _OBSERVED_POS_CACHE: dict | None = None

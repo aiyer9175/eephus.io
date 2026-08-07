@@ -1,0 +1,868 @@
+{
+ "registration": "five threshold interactions, fixed before any fit; no threshold search, no post-hoc arms",
+ "live_clause": "mandatory: the served-move bound is reported for every arm and a live blow-up disqualifies regardless of rank",
+ "arms": {
+  "P1": {
+   "tag": "C3:P1:pwr60_x_contact:hit",
+   "n_pool": 845,
+   "n_scored_base": 755,
+   "n_scored_cand": 755,
+   "baseline": {
+    "rho": 0.39932,
+    "cons_rho": 0.39192,
+    "block_rho": 0.40019,
+    "cons_block_rho": 0.37816
+   },
+   "candidate": {
+    "rho": 0.39537,
+    "cons_rho": 0.39192,
+    "block_rho": 0.39464,
+    "cons_block_rho": 0.37816
+   },
+   "delta": {
+    "rho": -0.00395,
+    "block_rho": -0.00554
+   },
+   "control_delta": {
+    "rho": -0.00098,
+    "block_rho": -0.00488
+   },
+   "folds_scored": 11,
+   "fold_rho_wins": 4,
+   "fold_delta": {
+    "2014": 0.0,
+    "2015": 0.0,
+    "2016": 0.0004,
+    "2017": -0.0033,
+    "2018": -0.034,
+    "2019": -0.0245,
+    "2020": 0.0109,
+    "2021": 0.0028,
+    "2022": -0.0083,
+    "2023": -0.0005,
+    "2024": 0.0012
+   },
+   "bootstrap": {
+    "rho": {
+     "B_used": 1000,
+     "point": -0.00395,
+     "boot_mean": -0.00637,
+     "sd": 0.01664,
+     "mde95_onesided": 0.0274,
+     "mde95_twosided": 0.0326,
+     "x_floor": 0.144,
+     "ci95": [
+      -0.04339,
+      0.02344
+     ],
+     "p_gt_0": 0.329,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 1000,
+     "point": -0.00554,
+     "boot_mean": -0.00677,
+     "sd": 0.01708,
+     "mde95_onesided": 0.0281,
+     "mde95_twosided": 0.0335,
+     "x_floor": 0.197,
+     "ci95": [
+      -0.04484,
+      0.02479
+     ],
+     "p_gt_0": 0.322,
+     "resolvable": false
+    }
+   },
+   "coverage": {
+    "pwr60_x_contact": {
+     "observed": 845,
+     "n": 845,
+     "frac": 1.0,
+     "impute": "zero",
+     "impute_value": 0.0,
+     "observed_mean": -0.00012,
+     "observed_sd": 0.01355
+    }
+   },
+   "elapsed_s": 21.9,
+   "permutation_null": {
+    "draws": 200,
+    "mean": -0.00011,
+    "sd": 0.00393,
+    "p95": 0.00962,
+    "p_value": 0.9055
+   },
+   "rationale": "power at or above 60 crossed with contact (negated strikeout rate)",
+   "column": {
+    "nonzero": 54,
+    "n": 845,
+    "frac_nonzero": 0.0639,
+    "mean": -0.00012,
+    "sd": 0.01355
+   },
+   "live": {
+    "side": "hit",
+    "n_live": 2129,
+    "rank_spearman_old_new": 0.99911,
+    "max_abs_rank_shift": 629,
+    "p99_abs_rank_shift": 60,
+    "median_abs_rank_shift": 7.0,
+    "max_abs_war_delta": 0.904,
+    "p99_abs_war_delta": 0.158,
+    "top_movers": [
+     {
+      "player_key": "elijah_green",
+      "fv": 37.7,
+      "rank_shift": 629,
+      "war_delta": 0.904
+     },
+     {
+      "player_key": "easton_shelton",
+      "fv": 35.0,
+      "rank_shift": 451,
+      "war_delta": 0.439
+     },
+     {
+      "player_key": "pedro_gomez",
+      "fv": 36.9,
+      "rank_shift": 408,
+      "war_delta": 0.282
+     },
+     {
+      "player_key": "tony_blanco_jr",
+      "fv": 38.2,
+      "rank_shift": 130,
+      "war_delta": 0.232
+     },
+     {
+      "player_key": "ivan_melendez",
+      "fv": 32.9,
+      "rank_shift": 96,
+      "war_delta": 0.041
+     },
+     {
+      "player_key": "noah_myers",
+      "fv": 35.0,
+      "rank_shift": 88,
+      "war_delta": -0.02
+     },
+     {
+      "player_key": "alfonzo_martinez",
+      "fv": 35.0,
+      "rank_shift": 85,
+      "war_delta": 0.016
+     },
+     {
+      "player_key": "aeverson_arteaga",
+      "fv": 35.5,
+      "rank_shift": 80,
+      "war_delta": -0.001
+     },
+     {
+      "player_key": "jose_anderson",
+      "fv": 35.5,
+      "rank_shift": 80,
+      "war_delta": -0.05
+     },
+     {
+      "player_key": "marcelo_alcala",
+      "fv": 35.0,
+      "rank_shift": 75,
+      "war_delta": -0.047
+     }
+    ]
+   }
+  },
+  "P2": {
+   "tag": "C3:P2:hit60_x_obp:hit",
+   "n_pool": 845,
+   "n_scored_base": 755,
+   "n_scored_cand": 755,
+   "baseline": {
+    "rho": 0.39932,
+    "cons_rho": 0.39192,
+    "block_rho": 0.40019,
+    "cons_block_rho": 0.37816
+   },
+   "candidate": {
+    "rho": 0.39781,
+    "cons_rho": 0.39192,
+    "block_rho": 0.39808,
+    "cons_block_rho": 0.37816
+   },
+   "delta": {
+    "rho": -0.00151,
+    "block_rho": -0.00211
+   },
+   "control_delta": {
+    "rho": 8e-05,
+    "block_rho": 0.00111
+   },
+   "folds_scored": 11,
+   "fold_rho_wins": 3,
+   "fold_delta": {
+    "2014": 0.0,
+    "2015": 0.0,
+    "2016": -0.0136,
+    "2017": 0.0015,
+    "2018": 0.0038,
+    "2019": -0.0051,
+    "2020": 0.006,
+    "2021": -0.0026,
+    "2022": -0.0032,
+    "2023": -0.0045,
+    "2024": -0.0066
+   },
+   "bootstrap": {
+    "rho": {
+     "B_used": 1000,
+     "point": -0.00151,
+     "boot_mean": -0.00439,
+     "sd": 0.01038,
+     "mde95_onesided": 0.0171,
+     "mde95_twosided": 0.0203,
+     "x_floor": 0.088,
+     "ci95": [
+      -0.02816,
+      0.01348
+     ],
+     "p_gt_0": 0.297,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 1000,
+     "point": -0.00211,
+     "boot_mean": -0.00361,
+     "sd": 0.01079,
+     "mde95_onesided": 0.0178,
+     "mde95_twosided": 0.0212,
+     "x_floor": 0.119,
+     "ci95": [
+      -0.02924,
+      0.01628
+     ],
+     "p_gt_0": 0.335,
+     "resolvable": false
+    }
+   },
+   "coverage": {
+    "hit60_x_obp": {
+     "observed": 845,
+     "n": 845,
+     "frac": 1.0,
+     "impute": "zero",
+     "impute_value": 0.0,
+     "observed_mean": 0.00257,
+     "observed_sd": 0.01282
+    }
+   },
+   "elapsed_s": 21.7,
+   "permutation_null": {
+    "draws": 200,
+    "mean": -0.00019,
+    "sd": 0.00367,
+    "p95": 0.00821,
+    "p_value": 0.6766
+   },
+   "rationale": "hit tool at or above 60 crossed with on-base skill",
+   "column": {
+    "nonzero": 65,
+    "n": 845,
+    "frac_nonzero": 0.0769,
+    "mean": 0.00257,
+    "sd": 0.01282
+   },
+   "live": {
+    "side": "hit",
+    "n_live": 2129,
+    "rank_spearman_old_new": 0.98934,
+    "max_abs_rank_shift": 921,
+    "p99_abs_rank_shift": 272,
+    "median_abs_rank_shift": 32.0,
+    "max_abs_war_delta": 2.2524,
+    "p99_abs_war_delta": 0.2996,
+    "top_movers": [
+     {
+      "player_key": "nikau_pouakagrego",
+      "fv": 32.9,
+      "rank_shift": 921,
+      "war_delta": -0.701
+     },
+     {
+      "player_key": "victor_ortega",
+      "fv": 35.0,
+      "rank_shift": 818,
+      "war_delta": 1.966
+     },
+     {
+      "player_key": "caleb_ricketts",
+      "fv": 35.7,
+      "rank_shift": 413,
+      "war_delta": 0.273
+     },
+     {
+      "player_key": "josueth_quinonez",
+      "fv": 35.0,
+      "rank_shift": 408,
+      "war_delta": 2.252
+     },
+     {
+      "player_key": "luke_ritter",
+      "fv": 35.0,
+      "rank_shift": 390,
+      "war_delta": 0.278
+     },
+     {
+      "player_key": "benny_montgomery",
+      "fv": 35.5,
+      "rank_shift": 360,
+      "war_delta": 0.244
+     },
+     {
+      "player_key": "jorel_ortega",
+      "fv": 35.0,
+      "rank_shift": 356,
+      "war_delta": 0.234
+     },
+     {
+      "player_key": "austin_machado",
+      "fv": 35.0,
+      "rank_shift": 345,
+      "war_delta": -0.242
+     },
+     {
+      "player_key": "cade_fergus",
+      "fv": 35.0,
+      "rank_shift": 338,
+      "war_delta": 0.247
+     },
+     {
+      "player_key": "antonio_gomez",
+      "fv": 38.0,
+      "rank_shift": 337,
+      "war_delta": 0.225
+     }
+    ]
+   }
+  },
+  "P3": {
+   "tag": "C3:P3:pwr60_x_hit55:hit",
+   "n_pool": 845,
+   "n_scored_base": 755,
+   "n_scored_cand": 755,
+   "baseline": {
+    "rho": 0.39932,
+    "cons_rho": 0.39192,
+    "block_rho": 0.40019,
+    "cons_block_rho": 0.37816
+   },
+   "candidate": {
+    "rho": 0.40223,
+    "cons_rho": 0.39192,
+    "block_rho": 0.40376,
+    "cons_block_rho": 0.37816
+   },
+   "delta": {
+    "rho": 0.00291,
+    "block_rho": 0.00357
+   },
+   "control_delta": {
+    "rho": -0.00153,
+    "block_rho": -0.00209
+   },
+   "folds_scored": 11,
+   "fold_rho_wins": 5,
+   "fold_delta": {
+    "2014": 0.0,
+    "2015": 0.0338,
+    "2016": 0.0,
+    "2017": -0.0064,
+    "2018": -0.002,
+    "2019": 0.003,
+    "2020": 0.0003,
+    "2021": 0.0003,
+    "2022": -0.0001,
+    "2023": 0.0052,
+    "2024": -0.0002
+   },
+   "bootstrap": {
+    "rho": {
+     "B_used": 1000,
+     "point": 0.00291,
+     "boot_mean": 0.00196,
+     "sd": 0.00898,
+     "mde95_onesided": 0.0148,
+     "mde95_twosided": 0.0176,
+     "x_floor": 0.197,
+     "ci95": [
+      -0.01401,
+      0.02147
+     ],
+     "p_gt_0": 0.624,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 1000,
+     "point": 0.00357,
+     "boot_mean": 0.00207,
+     "sd": 0.00968,
+     "mde95_onesided": 0.0159,
+     "mde95_twosided": 0.019,
+     "x_floor": 0.224,
+     "ci95": [
+      -0.01456,
+      0.02229
+     ],
+     "p_gt_0": 0.595,
+     "resolvable": false
+    }
+   },
+   "coverage": {
+    "pwr60_x_hit55": {
+     "observed": 845,
+     "n": 845,
+     "frac": 1.0,
+     "impute": "zero",
+     "impute_value": 0.0,
+     "observed_mean": 0.04615,
+     "observed_sd": 0.20982
+    }
+   },
+   "elapsed_s": 21.3,
+   "permutation_null": {
+    "draws": 200,
+    "mean": -0.0001,
+    "sd": 0.00352,
+    "p95": 0.0079,
+    "p_value": 0.1493
+   },
+   "rationale": "the two-way bat: power 60+ AND hit 55+",
+   "column": {
+    "nonzero": 39,
+    "n": 845,
+    "frac_nonzero": 0.0462,
+    "mean": 0.04615,
+    "sd": 0.20982
+   },
+   "live": {
+    "side": "hit",
+    "n_live": 2129,
+    "rank_spearman_old_new": 0.99601,
+    "max_abs_rank_shift": 320,
+    "p99_abs_rank_shift": 177,
+    "median_abs_rank_shift": 22.0,
+    "max_abs_war_delta": 1.9933,
+    "p99_abs_war_delta": 0.3191,
+    "top_movers": [
+     {
+      "player_key": "juan_corniel",
+      "fv": 35.0,
+      "rank_shift": 320,
+      "war_delta": 0.31
+     },
+     {
+      "player_key": "jud_fabian",
+      "fv": 35.5,
+      "rank_shift": 291,
+      "war_delta": 0.305
+     },
+     {
+      "player_key": "benny_montgomery",
+      "fv": 35.5,
+      "rank_shift": 286,
+      "war_delta": 0.283
+     },
+     {
+      "player_key": "kevin_kilpatrick_jr",
+      "fv": 35.0,
+      "rank_shift": 272,
+      "war_delta": 0.292
+     },
+     {
+      "player_key": "rj_austin",
+      "fv": 35.0,
+      "rank_shift": 264,
+      "war_delta": 0.254
+     },
+     {
+      "player_key": "cj_hughes",
+      "fv": 35.0,
+      "rank_shift": 240,
+      "war_delta": -0.081
+     },
+     {
+      "player_key": "ismael_munguia",
+      "fv": 35.0,
+      "rank_shift": 238,
+      "war_delta": 0.247
+     },
+     {
+      "player_key": "dasan_brown",
+      "fv": 35.5,
+      "rank_shift": 229,
+      "war_delta": 0.257
+     },
+     {
+      "player_key": "david_mershon",
+      "fv": 35.0,
+      "rank_shift": 226,
+      "war_delta": 0.222
+     },
+     {
+      "player_key": "jax_biggers",
+      "fv": 35.0,
+      "rank_shift": 222,
+      "war_delta": 0.232
+     }
+    ]
+   }
+  },
+  "P4": {
+   "tag": "C3:P4:fb60_x_k:pit",
+   "n_pool": 981,
+   "n_scored_base": 890,
+   "n_scored_cand": 890,
+   "baseline": {
+    "rho": 0.25617,
+    "cons_rho": 0.24948,
+    "block_rho": 0.25667,
+    "cons_block_rho": 0.2514
+   },
+   "candidate": {
+    "rho": 0.24935,
+    "cons_rho": 0.24948,
+    "block_rho": 0.24703,
+    "cons_block_rho": 0.2514
+   },
+   "delta": {
+    "rho": -0.00683,
+    "block_rho": -0.00964
+   },
+   "control_delta": {
+    "rho": -0.00092,
+    "block_rho": -0.00201
+   },
+   "folds_scored": 11,
+   "fold_rho_wins": 3,
+   "fold_delta": {
+    "2014": 0.0,
+    "2015": 0.0,
+    "2016": -0.0018,
+    "2017": 0.0082,
+    "2018": 0.0041,
+    "2019": -0.0053,
+    "2020": -0.0575,
+    "2021": -0.0027,
+    "2022": -0.0045,
+    "2023": 0.0001,
+    "2024": -0.0012
+   },
+   "bootstrap": {
+    "rho": {
+     "B_used": 1000,
+     "point": -0.00683,
+     "boot_mean": -0.00589,
+     "sd": 0.00846,
+     "mde95_onesided": 0.0139,
+     "mde95_twosided": 0.0166,
+     "x_floor": 0.491,
+     "ci95": [
+      -0.0239,
+      0.01028
+     ],
+     "p_gt_0": 0.23,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 1000,
+     "point": -0.00964,
+     "boot_mean": -0.00575,
+     "sd": 0.00897,
+     "mde95_onesided": 0.0148,
+     "mde95_twosided": 0.0176,
+     "x_floor": 0.653,
+     "ci95": [
+      -0.02666,
+      0.01063
+     ],
+     "p_gt_0": 0.25,
+     "resolvable": false
+    }
+   },
+   "coverage": {
+    "fb60_x_k": {
+     "observed": 981,
+     "n": 981,
+     "frac": 1.0,
+     "impute": "zero",
+     "impute_value": 0.0,
+     "observed_mean": 0.01014,
+     "observed_sd": 0.03014
+    }
+   },
+   "elapsed_s": 21.6,
+   "permutation_null": {
+    "draws": 200,
+    "mean": -0.00226,
+    "sd": 0.00443,
+    "p95": 0.00444,
+    "p_value": 0.9055
+   },
+   "rationale": "fastball at or above 60 crossed with strikeout rate",
+   "column": {
+    "nonzero": 290,
+    "n": 981,
+    "frac_nonzero": 0.2956,
+    "mean": 0.01014,
+    "sd": 0.03014
+   },
+   "live": {
+    "side": "pit",
+    "n_live": 2457,
+    "rank_spearman_old_new": 0.99288,
+    "max_abs_rank_shift": 436,
+    "p99_abs_rank_shift": 256,
+    "median_abs_rank_shift": 40.0,
+    "max_abs_war_delta": 0.248,
+    "p99_abs_war_delta": 0.184,
+    "top_movers": [
+     {
+      "player_key": "ryan_forcucci",
+      "fv": 38.8,
+      "rank_shift": 436,
+      "war_delta": -0.186
+     },
+     {
+      "player_key": "eddy_peralta",
+      "fv": 35.0,
+      "rank_shift": 387,
+      "war_delta": -0.159
+     },
+     {
+      "player_key": "dennis_colleran_jr",
+      "fv": 36.3,
+      "rank_shift": 359,
+      "war_delta": -0.149
+     },
+     {
+      "player_key": "samir_chires",
+      "fv": 35.0,
+      "rank_shift": 358,
+      "war_delta": -0.147
+     },
+     {
+      "player_key": "yilmar_samudio",
+      "fv": 35.0,
+      "rank_shift": 344,
+      "war_delta": -0.162
+     },
+     {
+      "player_key": "calvin_ziegler",
+      "fv": 35.9,
+      "rank_shift": 342,
+      "war_delta": -0.149
+     },
+     {
+      "player_key": "kelvin_zapata",
+      "fv": 35.0,
+      "rank_shift": 340,
+      "war_delta": -0.148
+     },
+     {
+      "player_key": "jose_olivares",
+      "fv": 36.3,
+      "rank_shift": 326,
+      "war_delta": -0.145
+     },
+     {
+      "player_key": "randel_clemente",
+      "fv": 35.0,
+      "rank_shift": 316,
+      "war_delta": 0.21
+     },
+     {
+      "player_key": "victor_duarte_835994",
+      "fv": 35.0,
+      "rank_shift": 309,
+      "war_delta": -0.131
+     }
+    ]
+   }
+  },
+  "P5": {
+   "tag": "C3:P5:fb60_x_cmd55:pit",
+   "n_pool": 981,
+   "n_scored_base": 890,
+   "n_scored_cand": 890,
+   "baseline": {
+    "rho": 0.25617,
+    "cons_rho": 0.24948,
+    "block_rho": 0.25667,
+    "cons_block_rho": 0.2514
+   },
+   "candidate": {
+    "rho": 0.25955,
+    "cons_rho": 0.24948,
+    "block_rho": 0.25496,
+    "cons_block_rho": 0.2514
+   },
+   "delta": {
+    "rho": 0.00338,
+    "block_rho": -0.0017
+   },
+   "control_delta": {
+    "rho": -0.00192,
+    "block_rho": -0.00171
+   },
+   "folds_scored": 11,
+   "fold_rho_wins": 5,
+   "fold_delta": {
+    "2014": 0.0149,
+    "2015": -0.0277,
+    "2016": 0.0061,
+    "2017": 0.0748,
+    "2018": -0.004,
+    "2019": -0.0073,
+    "2020": 0.001,
+    "2021": 0.0027,
+    "2022": -0.0229,
+    "2023": -0.0077,
+    "2024": -0.0026
+   },
+   "bootstrap": {
+    "rho": {
+     "B_used": 1000,
+     "point": 0.00338,
+     "boot_mean": 0.00168,
+     "sd": 0.00813,
+     "mde95_onesided": 0.0134,
+     "mde95_twosided": 0.0159,
+     "x_floor": 0.253,
+     "ci95": [
+      -0.01231,
+      0.01994
+     ],
+     "p_gt_0": 0.56,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 1000,
+     "point": -0.0017,
+     "boot_mean": -0.0009,
+     "sd": 0.01137,
+     "mde95_onesided": 0.0187,
+     "mde95_twosided": 0.0223,
+     "x_floor": 0.091,
+     "ci95": [
+      -0.02178,
+      0.02384
+     ],
+     "p_gt_0": 0.441,
+     "resolvable": false
+    }
+   },
+   "coverage": {
+    "fb60_x_cmd55": {
+     "observed": 981,
+     "n": 981,
+     "frac": 1.0,
+     "impute": "zero",
+     "impute_value": 0.0,
+     "observed_mean": 0.05301,
+     "observed_sd": 0.22405
+    }
+   },
+   "elapsed_s": 21.8,
+   "permutation_null": {
+    "draws": 200,
+    "mean": -0.00249,
+    "sd": 0.00474,
+    "p95": 0.00465,
+    "p_value": 0.0796
+   },
+   "rationale": "velocity with command: fastball 60+ AND command 55+",
+   "column": {
+    "nonzero": 52,
+    "n": 981,
+    "frac_nonzero": 0.053,
+    "mean": 0.05301,
+    "sd": 0.22405
+   },
+   "live": {
+    "side": "pit",
+    "n_live": 2457,
+    "rank_spearman_old_new": 0.99669,
+    "max_abs_rank_shift": 1644,
+    "p99_abs_rank_shift": 147,
+    "median_abs_rank_shift": 21.0,
+    "max_abs_war_delta": 0.9476,
+    "p99_abs_war_delta": 0.1265,
+    "top_movers": [
+     {
+      "player_key": "jesus_tillero",
+      "fv": 33.3,
+      "rank_shift": 1644,
+      "war_delta": 0.948
+     },
+     {
+      "player_key": "chris_kean",
+      "fv": 35.0,
+      "rank_shift": 307,
+      "war_delta": 0.913
+     },
+     {
+      "player_key": "gavin_adams",
+      "fv": 35.0,
+      "rank_shift": 203,
+      "war_delta": 0.128
+     },
+     {
+      "player_key": "tyler_cleveland",
+      "fv": 36.3,
+      "rank_shift": 191,
+      "war_delta": 0.096
+     },
+     {
+      "player_key": "kc_hunt",
+      "fv": 36.5,
+      "rank_shift": 186,
+      "war_delta": 0.096
+     },
+     {
+      "player_key": "collin_baumgartner",
+      "fv": 35.0,
+      "rank_shift": 183,
+      "war_delta": 0.102
+     },
+     {
+      "player_key": "ryan_forcucci",
+      "fv": 38.8,
+      "rank_shift": 178,
+      "war_delta": 0.118
+     },
+     {
+      "player_key": "manuel_gamez",
+      "fv": 35.0,
+      "rank_shift": 177,
+      "war_delta": -0.053
+     },
+     {
+      "player_key": "kenny_serwa",
+      "fv": 35.0,
+      "rank_shift": 170,
+      "war_delta": 0.134
+     },
+     {
+      "player_key": "drew_dowd",
+      "fv": 35.0,
+      "rank_shift": 168,
+      "war_delta": 0.102
+     }
+    ]
+   }
+  }
+ },
+ "generated_at": "2026-08-07T18:19:48Z",
+ "produced_by": "tools/efv_driver_lab.py"
+}

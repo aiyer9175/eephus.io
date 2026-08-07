@@ -1,0 +1,197 @@
+{
+ "reopening_rule": "efv_model.py:480-483 (pins move only on a floor-clearing win)",
+ "sides": {
+  "hit": {
+   "base_lambda": 0.7,
+   "curve": {
+    "0.35": {
+     "rho": 0.40454,
+     "block_rho": 0.4014
+    },
+    "0.40": {
+     "rho": 0.40405,
+     "block_rho": 0.40147
+    },
+    "0.45": {
+     "rho": 0.40368,
+     "block_rho": 0.40069
+    },
+    "0.50": {
+     "rho": 0.40303,
+     "block_rho": 0.40019
+    },
+    "0.55": {
+     "rho": 0.40203,
+     "block_rho": 0.40014
+    },
+    "0.57": {
+     "rho": 0.40184,
+     "block_rho": 0.39991
+    },
+    "0.60": {
+     "rho": 0.40151,
+     "block_rho": 0.40113
+    },
+    "0.65": {
+     "rho": 0.40065,
+     "block_rho": 0.40051
+    },
+    "0.70": {
+     "rho": 0.39932,
+     "block_rho": 0.40019
+    },
+    "0.75": {
+     "rho": 0.39852,
+     "block_rho": 0.40088
+    },
+    "0.80": {
+     "rho": 0.39791,
+     "block_rho": 0.40081
+    },
+    "0.85": {
+     "rho": 0.3972,
+     "block_rho": 0.39804
+    },
+    "0.90": {
+     "rho": 0.39664,
+     "block_rho": 0.39681
+    }
+   },
+   "argmax_lambda": 0.35,
+   "argmax_minus_base": {
+    "rho": 0.00522,
+    "block_rho": 0.00122
+   },
+   "bootstrap": {
+    "rho": {
+     "B_used": 2000,
+     "point": 0.00522,
+     "boot_mean": 0.01701,
+     "sd": 0.01162,
+     "mde95_onesided": 0.0191,
+     "mde95_twosided": 0.0228,
+     "x_floor": 0.273,
+     "ci95": [
+      -0.0033,
+      0.043
+     ],
+     "p_gt_0": 0.9515,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 2000,
+     "point": 0.00122,
+     "boot_mean": 0.01475,
+     "sd": 0.01226,
+     "mde95_onesided": 0.0202,
+     "mde95_twosided": 0.024,
+     "x_floor": 0.06,
+     "ci95": [
+      -0.0076,
+      0.04162
+     ],
+     "p_gt_0": 0.902,
+     "resolvable": false
+    }
+   },
+   "band_span_rho": 0.0079
+  },
+  "pit": {
+   "base_lambda": 0.57,
+   "curve": {
+    "0.35": {
+     "rho": 0.25799,
+     "block_rho": 0.26111
+    },
+    "0.40": {
+     "rho": 0.25904,
+     "block_rho": 0.25988
+    },
+    "0.45": {
+     "rho": 0.25898,
+     "block_rho": 0.25961
+    },
+    "0.50": {
+     "rho": 0.258,
+     "block_rho": 0.25718
+    },
+    "0.55": {
+     "rho": 0.25647,
+     "block_rho": 0.25717
+    },
+    "0.57": {
+     "rho": 0.25617,
+     "block_rho": 0.25667
+    },
+    "0.60": {
+     "rho": 0.25438,
+     "block_rho": 0.25433
+    },
+    "0.65": {
+     "rho": 0.2524,
+     "block_rho": 0.25215
+    },
+    "0.70": {
+     "rho": 0.25046,
+     "block_rho": 0.24993
+    },
+    "0.75": {
+     "rho": 0.2483,
+     "block_rho": 0.24787
+    },
+    "0.80": {
+     "rho": 0.24628,
+     "block_rho": 0.24585
+    },
+    "0.85": {
+     "rho": 0.24504,
+     "block_rho": 0.24467
+    },
+    "0.90": {
+     "rho": 0.24301,
+     "block_rho": 0.24308
+    }
+   },
+   "argmax_lambda": 0.4,
+   "argmax_minus_base": {
+    "rho": 0.00286,
+    "block_rho": 0.00321
+   },
+   "bootstrap": {
+    "rho": {
+     "B_used": 2000,
+     "point": 0.00286,
+     "boot_mean": 0.00754,
+     "sd": 0.00652,
+     "mde95_onesided": 0.0107,
+     "mde95_twosided": 0.0128,
+     "x_floor": 0.267,
+     "ci95": [
+      -0.00423,
+      0.0216
+     ],
+     "p_gt_0": 0.885,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 2000,
+     "point": 0.00321,
+     "boot_mean": 0.0083,
+     "sd": 0.00786,
+     "mde95_onesided": 0.0129,
+     "mde95_twosided": 0.0154,
+     "x_floor": 0.248,
+     "ci95": [
+      -0.00554,
+      0.02488
+     ],
+     "p_gt_0": 0.8715,
+     "resolvable": false
+    }
+   },
+   "band_span_rho": 0.01603
+  }
+ },
+ "generated_at": "2026-08-07T18:23:46Z",
+ "produced_by": "tools/efv_driver_lab.py"
+}

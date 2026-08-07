@@ -1,0 +1,335 @@
+{
+ "purpose": "feature-add and lambda-shift MDE95 on the 11-fold pair-weighted basis. The registered 0.017 hit / 0.016 pit feature-add floor and the 0.0076-0.011 / 0.005-0.008 lambda floors are 4-fold-basis numbers (EFV_GATE_STANDARD.md section 1b) and must not be used to gate an 11-fold result.",
+ "basis": {
+  "scored_years": [
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "lambda": {
+   "hit": 0.7,
+   "pit": 0.57
+  }
+ },
+ "protocol": "paired bootstrap, train AND test resampled together, ridge and consensus OLS refit on every draw, baseline and candidate scored on identical rows. MDE95 one-sided = 1.645 sd.",
+ "B": 2000,
+ "seed": 20260807,
+ "feature_add": {
+  "hit": {
+   "noise_seed_0": {
+    "point_rho": -0.00162,
+    "point_block": -0.00285,
+    "rho": {
+     "B_used": 2000,
+     "point": -0.00162,
+     "boot_mean": -0.00039,
+     "sd": 0.00989,
+     "mde95_onesided": 0.0163,
+     "mde95_twosided": 0.0194,
+     "x_floor": 0.1,
+     "ci95": [
+      -0.01668,
+      0.02224
+     ],
+     "p_gt_0": 0.4075,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 2000,
+     "point": -0.00285,
+     "boot_mean": -0.00042,
+     "sd": 0.01013,
+     "mde95_onesided": 0.0167,
+     "mde95_twosided": 0.0199,
+     "x_floor": 0.171,
+     "ci95": [
+      -0.01673,
+      0.0215
+     ],
+     "p_gt_0": 0.4325,
+     "resolvable": false
+    },
+    "fold_rho_wins": 4,
+    "folds": 11
+   },
+   "noise_seed_1": {
+    "point_rho": -0.00167,
+    "point_block": -0.0051,
+    "rho": {
+     "B_used": 2000,
+     "point": -0.00167,
+     "boot_mean": -0.0028,
+     "sd": 0.01172,
+     "mde95_onesided": 0.0193,
+     "mde95_twosided": 0.023,
+     "x_floor": 0.087,
+     "ci95": [
+      -0.02633,
+      0.02072
+     ],
+     "p_gt_0": 0.3855,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 2000,
+     "point": -0.0051,
+     "boot_mean": -0.00139,
+     "sd": 0.01267,
+     "mde95_onesided": 0.0208,
+     "mde95_twosided": 0.0248,
+     "x_floor": 0.245,
+     "ci95": [
+      -0.02628,
+      0.02619
+     ],
+     "p_gt_0": 0.428,
+     "resolvable": false
+    },
+    "fold_rho_wins": 6,
+    "folds": 11
+   },
+   "noise_seed_2": {
+    "point_rho": -0.00703,
+    "point_block": -0.01952,
+    "rho": {
+     "B_used": 2000,
+     "point": -0.00703,
+     "boot_mean": -0.00529,
+     "sd": 0.01146,
+     "mde95_onesided": 0.0189,
+     "mde95_twosided": 0.0225,
+     "x_floor": 0.373,
+     "ci95": [
+      -0.03041,
+      0.01605
+     ],
+     "p_gt_0": 0.281,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 2000,
+     "point": -0.01952,
+     "boot_mean": -0.01209,
+     "sd": 0.01311,
+     "mde95_onesided": 0.0216,
+     "mde95_twosided": 0.0257,
+     "x_floor": 0.905,
+     "ci95": [
+      -0.03899,
+      0.01152
+     ],
+     "p_gt_0": 0.168,
+     "resolvable": false
+    },
+    "fold_rho_wins": 3,
+    "folds": 11
+   },
+   "MDE95_pooled_rho": 0.0193,
+   "MDE95_block_rho": 0.0216,
+   "note": "MDE95 quoted at the MAX of three noise seeds: the floor is a bound, so the conservative seed is the one that binds."
+  },
+  "pit": {
+   "noise_seed_0": {
+    "point_rho": -0.00355,
+    "point_block": 0.00372,
+    "rho": {
+     "B_used": 2000,
+     "point": -0.00355,
+     "boot_mean": -0.00213,
+     "sd": 0.0077,
+     "mde95_onesided": 0.0127,
+     "mde95_twosided": 0.0151,
+     "x_floor": 0.28,
+     "ci95": [
+      -0.01835,
+      0.01393
+     ],
+     "p_gt_0": 0.38,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 2000,
+     "point": 0.00372,
+     "boot_mean": -0.00149,
+     "sd": 0.01043,
+     "mde95_onesided": 0.0172,
+     "mde95_twosided": 0.0204,
+     "x_floor": 0.217,
+     "ci95": [
+      -0.02308,
+      0.01827
+     ],
+     "p_gt_0": 0.438,
+     "resolvable": false
+    },
+    "fold_rho_wins": 4,
+    "folds": 11
+   },
+   "noise_seed_1": {
+    "point_rho": -0.00775,
+    "point_block": -0.0049,
+    "rho": {
+     "B_used": 2000,
+     "point": -0.00775,
+     "boot_mean": -0.00604,
+     "sd": 0.00667,
+     "mde95_onesided": 0.011,
+     "mde95_twosided": 0.0131,
+     "x_floor": 0.706,
+     "ci95": [
+      -0.01928,
+      0.00799
+     ],
+     "p_gt_0": 0.155,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 2000,
+     "point": -0.0049,
+     "boot_mean": -0.00815,
+     "sd": 0.01109,
+     "mde95_onesided": 0.0182,
+     "mde95_twosided": 0.0217,
+     "x_floor": 0.269,
+     "ci95": [
+      -0.03341,
+      0.01232
+     ],
+     "p_gt_0": 0.2,
+     "resolvable": false
+    },
+    "fold_rho_wins": 2,
+    "folds": 11
+   },
+   "noise_seed_2": {
+    "point_rho": -0.00601,
+    "point_block": 0.00493,
+    "rho": {
+     "B_used": 2000,
+     "point": -0.00601,
+     "boot_mean": -0.0021,
+     "sd": 0.00644,
+     "mde95_onesided": 0.0106,
+     "mde95_twosided": 0.0126,
+     "x_floor": 0.568,
+     "ci95": [
+      -0.01543,
+      0.01188
+     ],
+     "p_gt_0": 0.3455,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 2000,
+     "point": 0.00493,
+     "boot_mean": -0.00069,
+     "sd": 0.00919,
+     "mde95_onesided": 0.0151,
+     "mde95_twosided": 0.018,
+     "x_floor": 0.326,
+     "ci95": [
+      -0.01991,
+      0.018
+     ],
+     "p_gt_0": 0.4715,
+     "resolvable": false
+    },
+    "fold_rho_wins": 5,
+    "folds": 11
+   },
+   "MDE95_pooled_rho": 0.0127,
+   "MDE95_block_rho": 0.0182,
+   "note": "MDE95 quoted at the MAX of three noise seeds: the floor is a bound, so the conservative seed is the one that binds."
+  }
+ },
+ "lambda_shift": {
+  "hit": {
+   "base_lambda": 0.7,
+   "plus_0.05": {
+    "point_rho": -0.0008,
+    "rho": {
+     "B_used": 2000,
+     "point": -0.0008,
+     "boot_mean": -0.00264,
+     "sd": 0.00153,
+     "mde95_onesided": 0.0025,
+     "mde95_twosided": 0.003,
+     "x_floor": 0.317,
+     "ci95": [
+      -0.00577,
+      0.0001
+     ],
+     "p_gt_0": 0.029,
+     "resolvable": false
+    }
+   },
+   "plus_0.1": {
+    "point_rho": -0.00141,
+    "rho": {
+     "B_used": 2000,
+     "point": -0.00141,
+     "boot_mean": -0.00535,
+     "sd": 0.00281,
+     "mde95_onesided": 0.0046,
+     "mde95_twosided": 0.0055,
+     "x_floor": 0.305,
+     "ci95": [
+      -0.01126,
+      -0.00046
+     ],
+     "p_gt_0": 0.016,
+     "resolvable": false
+    }
+   }
+  },
+  "pit": {
+   "base_lambda": 0.57,
+   "plus_0.05": {
+    "point_rho": -0.00276,
+    "rho": {
+     "B_used": 2000,
+     "point": -0.00276,
+     "boot_mean": -0.00236,
+     "sd": 0.00181,
+     "mde95_onesided": 0.003,
+     "mde95_twosided": 0.0035,
+     "x_floor": 0.927,
+     "ci95": [
+      -0.00622,
+      0.0009
+     ],
+     "p_gt_0": 0.0825,
+     "resolvable": false
+    }
+   },
+   "plus_0.1": {
+    "point_rho": -0.00462,
+    "rho": {
+     "B_used": 2000,
+     "point": -0.00462,
+     "boot_mean": -0.00474,
+     "sd": 0.00334,
+     "mde95_onesided": 0.0055,
+     "mde95_twosided": 0.0065,
+     "x_floor": 0.842,
+     "ci95": [
+      -0.0118,
+      0.00125
+     ],
+     "p_gt_0": 0.0635,
+     "resolvable": false
+    }
+   }
+  }
+ },
+ "generated_at": "2026-08-07T18:12:59Z",
+ "produced_by": "tools/efv_driver_lab.py"
+}

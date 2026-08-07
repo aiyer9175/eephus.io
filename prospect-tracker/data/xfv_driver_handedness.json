@@ -1,0 +1,423 @@
+{
+ "stop_clause": "neutral imputation, NO missing indicator; the arm FAILS if the id-missingness twin reproduces the candidate's margin",
+ "sidecar": {
+  "generated_at": "2026-08-07T18:14:34Z",
+  "n_ids_requested": 6840,
+  "n_resolved": 6840,
+  "codes": {
+   "bats": {
+    "R": 4513,
+    "L": 1873,
+    "S": 452,
+    "none": 2
+   },
+   "throws": {
+    "R": 5751,
+    "L": 1083,
+    "none": 2,
+    "S": 4
+   }
+  }
+ },
+ "arms": {
+  "a_is_lhp_pit": {
+   "tag": "C2a:is_lhp:pit",
+   "n_pool": 981,
+   "n_scored_base": 890,
+   "n_scored_cand": 890,
+   "baseline": {
+    "rho": 0.25617,
+    "cons_rho": 0.24948,
+    "block_rho": 0.25667,
+    "cons_block_rho": 0.2514
+   },
+   "candidate": {
+    "rho": 0.2366,
+    "cons_rho": 0.24948,
+    "block_rho": 0.24301,
+    "cons_block_rho": 0.2514
+   },
+   "delta": {
+    "rho": -0.01958,
+    "block_rho": -0.01366
+   },
+   "control_delta": {
+    "rho": -0.00159,
+    "block_rho": 0.00228
+   },
+   "folds_scored": 11,
+   "fold_rho_wins": 3,
+   "fold_delta": {
+    "2014": -0.0434,
+    "2015": 0.0226,
+    "2016": -0.0107,
+    "2017": -0.1337,
+    "2018": -0.0091,
+    "2019": 0.0119,
+    "2020": -0.0385,
+    "2021": -0.0075,
+    "2022": -0.0035,
+    "2023": -0.0003,
+    "2024": 0.0002
+   },
+   "bootstrap": {
+    "rho": {
+     "B_used": 2000,
+     "point": -0.01958,
+     "boot_mean": -0.01429,
+     "sd": 0.01324,
+     "mde95_onesided": 0.0218,
+     "mde95_twosided": 0.026,
+     "x_floor": 0.899,
+     "ci95": [
+      -0.04401,
+      0.0088
+     ],
+     "p_gt_0": 0.1095,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 2000,
+     "point": -0.01366,
+     "boot_mean": -0.0126,
+     "sd": 0.01295,
+     "mde95_onesided": 0.0213,
+     "mde95_twosided": 0.0254,
+     "x_floor": 0.641,
+     "ci95": [
+      -0.04072,
+      0.01081
+     ],
+     "p_gt_0": 0.146,
+     "resolvable": false
+    }
+   },
+   "coverage": {
+    "is_lhp": {
+     "observed": 714,
+     "n": 981,
+     "frac": 0.7278,
+     "impute": "mean",
+     "impute_value": 0.221289,
+     "observed_mean": 0.22129,
+     "observed_sd": 0.41511
+    },
+    "id_missing": {
+     "observed": 981,
+     "n": 981,
+     "frac": 1.0,
+     "impute": "zero",
+     "impute_value": 0.0,
+     "observed_mean": 0.27217,
+     "observed_sd": 0.44508
+    }
+   },
+   "elapsed_s": 43.9,
+   "permutation_null": {
+    "draws": 200,
+    "mean": -0.00319,
+    "sd": 0.00428,
+    "p95": 0.0032,
+    "p_value": 1.0
+   },
+   "id_missingness_twin": {
+    "delta": {
+     "rho": -0.00518,
+     "block_rho": -0.0076
+    },
+    "bootstrap_rho": {
+     "B_used": 500,
+     "point": -0.00518,
+     "boot_mean": -0.00603,
+     "sd": 0.01063,
+     "mde95_onesided": 0.0175,
+     "mde95_twosided": 0.0208,
+     "x_floor": 0.296,
+     "ci95": [
+      -0.02613,
+      0.01616
+     ],
+     "p_gt_0": 0.26,
+     "resolvable": false
+    }
+   },
+   "live": {
+    "side": "pit",
+    "n_live": 2457,
+    "rank_spearman_old_new": 0.99999,
+    "max_abs_rank_shift": 15,
+    "p99_abs_rank_shift": 10,
+    "median_abs_rank_shift": 1.0,
+    "max_abs_war_delta": 0.0038,
+    "p99_abs_war_delta": 0.0035,
+    "top_movers": [
+     {
+      "player_key": "jeremy_pilon",
+      "fv": 35.0,
+      "rank_shift": 15,
+      "war_delta": 0.003
+     },
+     {
+      "player_key": "mason_olson",
+      "fv": 35.0,
+      "rank_shift": 14,
+      "war_delta": 0.003
+     },
+     {
+      "player_key": "michael_watson",
+      "fv": 35.0,
+      "rank_shift": 14,
+      "war_delta": 0.003
+     },
+     {
+      "player_key": "devin_futrell",
+      "fv": 35.0,
+      "rank_shift": 13,
+      "war_delta": 0.003
+     },
+     {
+      "player_key": "evan_shaw",
+      "fv": 35.0,
+      "rank_shift": 13,
+      "war_delta": 0.003
+     },
+     {
+      "player_key": "jordan_carr",
+      "fv": 35.0,
+      "rank_shift": 12,
+      "war_delta": 0.003
+     },
+     {
+      "player_key": "jack_bowery",
+      "fv": 35.0,
+      "rank_shift": 12,
+      "war_delta": 0.003
+     },
+     {
+      "player_key": "lucas_gordon",
+      "fv": 35.0,
+      "rank_shift": 12,
+      "war_delta": 0.003
+     },
+     {
+      "player_key": "hayden_frank",
+      "fv": 35.0,
+      "rank_shift": 12,
+      "war_delta": 0.003
+     },
+     {
+      "player_key": "jesus_broca",
+      "fv": 35.0,
+      "rank_shift": 12,
+      "war_delta": 0.003
+     }
+    ]
+   }
+  },
+  "b_bats_side_hit": {
+   "tag": "C2b:bats_side:hit",
+   "n_pool": 845,
+   "n_scored_base": 755,
+   "n_scored_cand": 755,
+   "baseline": {
+    "rho": 0.39932,
+    "cons_rho": 0.39192,
+    "block_rho": 0.40019,
+    "cons_block_rho": 0.37816
+   },
+   "candidate": {
+    "rho": 0.39864,
+    "cons_rho": 0.39192,
+    "block_rho": 0.39802,
+    "cons_block_rho": 0.37816
+   },
+   "delta": {
+    "rho": -0.00068,
+    "block_rho": -0.00217
+   },
+   "control_delta": {
+    "rho": 0.00103,
+    "block_rho": -0.00603
+   },
+   "folds_scored": 11,
+   "fold_rho_wins": 3,
+   "fold_delta": {
+    "2014": 0.0005,
+    "2015": -0.0003,
+    "2016": -0.0198,
+    "2017": -0.0354,
+    "2018": 0.0011,
+    "2019": -0.0044,
+    "2020": 0.0308,
+    "2021": -0.0017,
+    "2022": -0.0009,
+    "2023": -0.0035,
+    "2024": -0.0004
+   },
+   "bootstrap": {
+    "rho": {
+     "B_used": 2000,
+     "point": -0.00068,
+     "boot_mean": -0.00406,
+     "sd": 0.01519,
+     "mde95_onesided": 0.025,
+     "mde95_twosided": 0.0298,
+     "x_floor": 0.027,
+     "ci95": [
+      -0.03616,
+      0.02754
+     ],
+     "p_gt_0": 0.345,
+     "resolvable": false
+    },
+    "block_rho": {
+     "B_used": 2000,
+     "point": -0.00217,
+     "boot_mean": -0.00508,
+     "sd": 0.01524,
+     "mde95_onesided": 0.0251,
+     "mde95_twosided": 0.0299,
+     "x_floor": 0.087,
+     "ci95": [
+      -0.03609,
+      0.0286
+     ],
+     "p_gt_0": 0.325,
+     "resolvable": false
+    }
+   },
+   "coverage": {
+    "bats_l": {
+     "observed": 586,
+     "n": 845,
+     "frac": 0.6935,
+     "impute": "mean",
+     "impute_value": 0.358362,
+     "observed_mean": 0.35836,
+     "observed_sd": 0.47952
+    },
+    "bats_s": {
+     "observed": 586,
+     "n": 845,
+     "frac": 0.6935,
+     "impute": "mean",
+     "impute_value": 0.102389,
+     "observed_mean": 0.10239,
+     "observed_sd": 0.30316
+    },
+    "id_missing": {
+     "observed": 845,
+     "n": 845,
+     "frac": 1.0,
+     "impute": "zero",
+     "impute_value": 0.0,
+     "observed_mean": 0.30651,
+     "observed_sd": 0.46104
+    }
+   },
+   "elapsed_s": 43.3,
+   "permutation_null": {
+    "draws": 200,
+    "mean": -0.0008,
+    "sd": 0.00371,
+    "p95": 0.00774,
+    "p_value": 0.4129
+   },
+   "id_missingness_twin": {
+    "delta": {
+     "rho": 0.00024,
+     "block_rho": -0.00029
+    },
+    "bootstrap_rho": {
+     "B_used": 500,
+     "point": 0.00024,
+     "boot_mean": -0.0003,
+     "sd": 0.00795,
+     "mde95_onesided": 0.0131,
+     "mde95_twosided": 0.0156,
+     "x_floor": 0.018,
+     "ci95": [
+      -0.01701,
+      0.01695
+     ],
+     "p_gt_0": 0.4,
+     "resolvable": false
+    }
+   },
+   "live": {
+    "side": "hit",
+    "n_live": 2129,
+    "rank_spearman_old_new": 0.99731,
+    "max_abs_rank_shift": 107,
+    "p99_abs_rank_shift": 89,
+    "median_abs_rank_shift": 39.0,
+    "max_abs_war_delta": 0.0688,
+    "p99_abs_war_delta": 0.0634,
+    "top_movers": [
+     {
+      "player_key": "eddinson_paulino",
+      "fv": 38.0,
+      "rank_shift": 107,
+      "war_delta": 0.065
+     },
+     {
+      "player_key": "thomas_sosa",
+      "fv": 35.7,
+      "rank_shift": 105,
+      "war_delta": 0.065
+     },
+     {
+      "player_key": "eduarlin_tejeda",
+      "fv": 35.0,
+      "rank_shift": 98,
+      "war_delta": 0.042
+     },
+     {
+      "player_key": "nathan_humphreys",
+      "fv": 35.9,
+      "rank_shift": 98,
+      "war_delta": 0.06
+     },
+     {
+      "player_key": "deward_tovar",
+      "fv": 35.0,
+      "rank_shift": 98,
+      "war_delta": 0.061
+     },
+     {
+      "player_key": "jesmaylin_arias",
+      "fv": 35.0,
+      "rank_shift": 98,
+      "war_delta": 0.06
+     },
+     {
+      "player_key": "ronald_hernandez",
+      "fv": 35.5,
+      "rank_shift": 97,
+      "war_delta": 0.037
+     },
+     {
+      "player_key": "gian_zapata",
+      "fv": 35.5,
+      "rank_shift": 97,
+      "war_delta": 0.064
+     },
+     {
+      "player_key": "maicor_degollado",
+      "fv": 35.0,
+      "rank_shift": 97,
+      "war_delta": 0.06
+     },
+     {
+      "player_key": "kai_murphy",
+      "fv": 35.0,
+      "rank_shift": 96,
+      "war_delta": 0.034
+     }
+    ]
+   }
+  }
+ },
+ "generated_at": "2026-08-07T18:17:26Z",
+ "produced_by": "tools/efv_driver_lab.py"
+}

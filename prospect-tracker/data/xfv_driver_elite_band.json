@@ -1,0 +1,208 @@
+{
+ "registration": "both arms pre-registered as probably unresolvable; the FV>=55 band is smaller than the t45 cohort whose floors are already 0.055 hit / 0.10 pit",
+ "banned": "no monotone tail transform (committed loss; Spearman-invariant)",
+ "arms": {
+  "hit": {
+   "pool": {
+    "n": 845,
+    "n_fv55plus": 105,
+    "base_lambda": 0.7
+   },
+   "a_band_raise_dip-0.2": {
+    "delta": {
+     "rho": -0.00027,
+     "block_rho": -0.0004
+    },
+    "bootstrap": {
+     "rho": {
+      "B_used": 1000,
+      "point": -0.00027,
+      "boot_mean": -0.0014,
+      "sd": 0.00171,
+      "mde95_onesided": 0.0028,
+      "mde95_twosided": 0.0034,
+      "x_floor": 0.096,
+      "ci95": [
+       -0.00641,
+       0.00022
+      ],
+      "p_gt_0": 0.082,
+      "resolvable": false
+     },
+     "block_rho": {
+      "B_used": 1000,
+      "point": -0.0004,
+      "boot_mean": -0.00124,
+      "sd": 0.00236,
+      "mde95_onesided": 0.0039,
+      "mde95_twosided": 0.0046,
+      "x_floor": 0.103,
+      "ci95": [
+       -0.00762,
+       0.00175
+      ],
+      "p_gt_0": 0.274,
+      "resolvable": false
+     }
+    },
+    "fold_rho_wins": 4,
+    "folds": 11,
+    "effective_lambda_in_band": 0.84
+   },
+   "a_band_raise_dip-0.4": {
+    "delta": {
+     "rho": -0.00069,
+     "block_rho": -0.0017
+    },
+    "bootstrap": {
+     "rho": {
+      "B_used": 1000,
+      "point": -0.00069,
+      "boot_mean": -0.0029,
+      "sd": 0.00333,
+      "mde95_onesided": 0.0055,
+      "mde95_twosided": 0.0065,
+      "x_floor": 0.126,
+      "ci95": [
+       -0.0121,
+       0.00043
+      ],
+      "p_gt_0": 0.072,
+      "resolvable": false
+     },
+     "block_rho": {
+      "B_used": 1000,
+      "point": -0.0017,
+      "boot_mean": -0.00257,
+      "sd": 0.00407,
+      "mde95_onesided": 0.0067,
+      "mde95_twosided": 0.008,
+      "x_floor": 0.254,
+      "ci95": [
+       -0.01323,
+       0.00242
+      ],
+      "p_gt_0": 0.22,
+      "resolvable": false
+     }
+    },
+    "fold_rho_wins": 4,
+    "folds": 11,
+    "effective_lambda_in_band": 0.98
+   },
+   "b_elite_eval": {
+    "n_scored": 76,
+    "consensus_rho": 0.24043,
+    "blend_rho": 0.17497,
+    "delta": -0.06546,
+    "sd": 0.09712,
+    "mde95_onesided": 0.1598,
+    "resolvable": false,
+    "B_used": 1000,
+    "note": "model-vs-consensus inside the elite band; compare to the 0.0440 hit / 0.0436 pit full-pool floor to see what restricting the pool costs"
+   }
+  },
+  "pit": {
+   "pool": {
+    "n": 981,
+    "n_fv55plus": 58,
+    "base_lambda": 0.57
+   },
+   "a_band_raise_dip-0.2": {
+    "delta": {
+     "rho": 0.00092,
+     "block_rho": -1e-05
+    },
+    "bootstrap": {
+     "rho": {
+      "B_used": 1000,
+      "point": 0.00092,
+      "boot_mean": 0.00024,
+      "sd": 0.00081,
+      "mde95_onesided": 0.0013,
+      "mde95_twosided": 0.0016,
+      "x_floor": 0.693,
+      "ci95": [
+       -0.0006,
+       0.00283
+      ],
+      "p_gt_0": 0.541,
+      "resolvable": false
+     },
+     "block_rho": {
+      "B_used": 1000,
+      "point": -1e-05,
+      "boot_mean": 8e-05,
+      "sd": 0.00106,
+      "mde95_onesided": 0.0017,
+      "mde95_twosided": 0.0021,
+      "x_floor": 0.006,
+      "ci95": [
+       -0.00187,
+       0.00239
+      ],
+      "p_gt_0": 0.32,
+      "resolvable": false
+     }
+    },
+    "fold_rho_wins": 0,
+    "folds": 11,
+    "effective_lambda_in_band": 0.684
+   },
+   "a_band_raise_dip-0.4": {
+    "delta": {
+     "rho": 0.00123,
+     "block_rho": 0.00034
+    },
+    "bootstrap": {
+     "rho": {
+      "B_used": 1000,
+      "point": 0.00123,
+      "boot_mean": 0.00039,
+      "sd": 0.00138,
+      "mde95_onesided": 0.0023,
+      "mde95_twosided": 0.0027,
+      "x_floor": 0.541,
+      "ci95": [
+       -0.00125,
+       0.00461
+      ],
+      "p_gt_0": 0.531,
+      "resolvable": false
+     },
+     "block_rho": {
+      "B_used": 1000,
+      "point": 0.00034,
+      "boot_mean": 0.0001,
+      "sd": 0.00175,
+      "mde95_onesided": 0.0029,
+      "mde95_twosided": 0.0034,
+      "x_floor": 0.118,
+      "ci95": [
+       -0.00379,
+       0.00338
+      ],
+      "p_gt_0": 0.423,
+      "resolvable": false
+     }
+    },
+    "fold_rho_wins": 1,
+    "folds": 11,
+    "effective_lambda_in_band": 0.798
+   },
+   "b_elite_eval": {
+    "n_scored": 26,
+    "consensus_rho": 0.09142,
+    "blend_rho": 0.24911,
+    "delta": 0.1577,
+    "sd": 0.2154,
+    "mde95_onesided": 0.3543,
+    "resolvable": false,
+    "B_used": 1000,
+    "note": "model-vs-consensus inside the elite band; compare to the 0.0440 hit / 0.0436 pit full-pool floor to see what restricting the pool costs"
+   }
+  }
+ },
+ "generated_at": "2026-08-07T18:21:56Z",
+ "produced_by": "tools/efv_driver_lab.py"
+}
