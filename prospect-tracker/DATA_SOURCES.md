@@ -111,7 +111,7 @@ happen inside the called module, so this file alone cannot split them).
 
 | phase | data/*.json referenced in the phase block |
 |---|---|
-| rebuild-only hook (no scrape): rebuild timeseries + movement + eFV consolidation + GRPO rescore | advancement_pace.json, contract_overrides.json, debuts.json, def_home.json, draft_timeseries.json, graduates.json, grpo_scores.json, identity_collisions.json, ifa_timeseries.json, milb_translation.json, overseas_timeseries.json, rosters_by_org.json, timeseries.json, trade_values.json, xfv.json, xfv_proxy_eval.json |
+| rebuild-only hook (no scrape): rebuild timeseries + movement + eFV consolidation + GRPO rescore | advancement_pace.json, contract_overrides.json, debuts.json, def_home.json, draft_timeseries.json, graduates.json, grpo_scores.json, identity_collisions.json, ifa_timeseries.json, milb_translation.json, overseas_timeseries.json, rosters_by_org.json, timeseries.json, trade_values.json, xfv.json, xfv_proxy_eval.json, xfv_regen_ledger.json |
 
 ## Scraper / feed modules (first docstring paragraph)
 
