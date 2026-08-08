@@ -1,0 +1,860 @@
+{
+ "generated_at": "2026-08-08T02:34:55Z",
+ "produced_by": "tools/efv_power_lab.py all",
+ "registration": "docs/efv-2026-08-07b/POWER_GATE.md parts 0-4, written in full BEFORE this lab existed; part 5 is a placeholder filled after the run",
+ "lane": "A1 (which bootstrap is the published claim about)",
+ "scope_note": "registers an instrument and reports a verdict. Changes NO shipped floor constant, retires nothing, reopens no closed arm, and retroactively resolves no past null.",
+ "seed": 20260807,
+ "repro": {
+  "artifact_hit_full_pool_km": {
+   "n": 1792,
+   "consensus": 0.3002,
+   "blend": 0.2787,
+   "delta": -0.0215,
+   "source": "data/xfv_eval.json evals.full_pool_km.pooled_oos (baseline.spearman vs blend.spearman)"
+  },
+  "wave1_refit_floor": {
+   "sd": 0.01806,
+   "mde95_onesided": 0.0297,
+   "margin_over_floor": 0.722,
+   "verdict": "NULL",
+   "source": "data/xfv_cohort_floors.json i4_full_pool.hit.weighted"
+  },
+  "wave1_null_coverage": {
+   "pooled_sd_ratio": 1.175,
+   "pooled_coverage_95": 0.975,
+   "cell_sd_ratio": 1.292,
+   "cell_coverage_95": 1.0,
+   "gate_as_coded": "coverage_95 >= 0.90, NO UPPER BOUND",
+   "source": "data/xfv_cohort_floors.json null_coverage_check"
+  }
+ },
+ "onesided_gate_defect": {
+  "defect": "tools/efv_cohort_floor_lab.py nullcov codes passes = coverage_95 >= 0.90 with no upper bound. An over-wide floor therefore reads as PASS. For a program whose product is NULL verdicts, over-wide is the PERMISSIVE direction.",
+  "legs": [
+   {
+    "leg": "pooled",
+    "coverage_95": 0.975,
+    "sd_ratio_boot_over_true": 1.175,
+    "one_sided_gate_verdict": "PASS",
+    "two_sided_binomial_verdict": "PASS",
+    "n_checked": 40
+   },
+   {
+    "leg": "cell_restricted",
+    "coverage_95": 1.0,
+    "sd_ratio_boot_over_true": 1.292,
+    "one_sided_gate_verdict": "PASS",
+    "two_sided_binomial_verdict": "PASS",
+    "n_checked": 40
+   }
+  ],
+  "note": "n_checked was 40 in wave 1, so even a two-sided binomial region has a weak upper edge there; the defect is the missing upper bound, not the sample size alone."
+ },
+ "dgp_design_match": {
+  "real": {
+   "n": 1883,
+   "target_zero_share": 0.725,
+   "target_sd": 5.108,
+   "consensus_rho_oos": 0.3002,
+   "folds": 11,
+   "k_features": 14,
+   "boot_sd_shipped": 0.01756,
+   "boot_sd_test_only": 0.01255,
+   "shipped_over_test_sd_ratio": 1.399
+  },
+  "synthetic": {
+   "n": 1883,
+   "target_zero_share": 0.717,
+   "target_sd": 5.395,
+   "consensus_rho_oos": 0.3155,
+   "folds": 11,
+   "k_features": 14,
+   "boot_sd_shipped": 0.01068,
+   "boot_sd_test_only": 0.00802,
+   "shipped_over_test_sd_ratio": 1.333
+  },
+  "params": {
+   "a": 0.7,
+   "c": 50.0,
+   "s": 8.0,
+   "t_df": 5.0,
+   "alt_gain": 0.2
+  },
+  "limitation": "the synthetic matches the real design on n, folds, k, lambda, the fv and weight marginals, the target's zero share, sd and consensus rho, and it reproduces the shipped-over-test sd RATIO, which is the structural quantity this lane is about. Its ABSOLUTE bootstrap sds run about 0.7x the real ones. Coverage is a relative property so the part-2 gate is unaffected, but the sd_ratio correction transported to the real pool inherits this as its main limitation."
+ },
+ "variance_decomposition": {
+  "B": 1200,
+  "sd_shipped_both_resampled": 0.01829,
+  "sd_test_rows_only": 0.01258,
+  "sd_train_refit_only": 0.01132,
+  "additive_reconstruction": 0.01692,
+  "reconstruction_over_shipped": 0.925,
+  "refit_variance_share_of_shipped": 0.527,
+  "additivity_holds": true,
+  "reading": "if the reconstruction ratio is far from 1 the '53% refit noise' framing is not a variance decomposition and must not be used"
+ },
+ "detection_fv": {
+  "cells": {
+   "full.blend": {
+    "pool": "full",
+    "leg": "blend",
+    "n_scored": 1792,
+    "rho_full_spec": 0.27873,
+    "rho_spec_minus_fv": 0.28174,
+    "point": -0.00301,
+    "refit": {
+     "B_used": 2000,
+     "point_delta": -0.00301,
+     "boot_mean_delta": 0.00729,
+     "sd": 0.01581,
+     "MDE95": 0.026,
+     "mde95_twosided": 0.031,
+     "ci95": [
+      -0.02501,
+      0.03772
+     ],
+     "p_gt_0": 0.694,
+     "margin_over_floor": 0.116,
+     "resolvable": false,
+     "verdict": "NULL",
+     "detects": false
+    },
+    "cond_iid": {
+     "B_used": 2000,
+     "point_delta": -0.00301,
+     "boot_mean_delta": -0.00304,
+     "sd": 0.0128,
+     "MDE95": 0.0211,
+     "mde95_twosided": 0.0251,
+     "ci95": [
+      -0.02865,
+      0.02226
+     ],
+     "p_gt_0": 0.4095,
+     "margin_over_floor": 0.143,
+     "resolvable": false,
+     "verdict": "NULL",
+     "detects": false
+    },
+    "cond_strat": {
+     "B_used": 2000,
+     "point_delta": -0.00301,
+     "boot_mean_delta": -0.00278,
+     "sd": 0.01285,
+     "MDE95": 0.0211,
+     "mde95_twosided": 0.0252,
+     "ci95": [
+      -0.02725,
+      0.02109
+     ],
+     "p_gt_0": 0.4235,
+     "margin_over_floor": 0.142,
+     "resolvable": false,
+     "verdict": "NULL",
+     "detects": false
+    }
+   },
+   "full.ridge": {
+    "pool": "full",
+    "leg": "ridge",
+    "n_scored": 1792,
+    "rho_full_spec": 0.2749,
+    "rho_spec_minus_fv": 0.25118,
+    "point": 0.02372,
+    "refit": {
+     "B_used": 2000,
+     "point_delta": 0.02372,
+     "boot_mean_delta": 0.03602,
+     "sd": 0.01924,
+     "MDE95": 0.0317,
+     "mde95_twosided": 0.0377,
+     "ci95": [
+      -0.00405,
+      0.07405
+     ],
+     "p_gt_0": 0.968,
+     "margin_over_floor": 0.749,
+     "resolvable": false,
+     "verdict": "NULL",
+     "detects": false
+    },
+    "cond_iid": {
+     "B_used": 2000,
+     "point_delta": 0.02372,
+     "boot_mean_delta": 0.02353,
+     "sd": 0.01612,
+     "MDE95": 0.0265,
+     "mde95_twosided": 0.0316,
+     "ci95": [
+      -0.00723,
+      0.05526
+     ],
+     "p_gt_0": 0.9285,
+     "margin_over_floor": 0.894,
+     "resolvable": false,
+     "verdict": "NULL",
+     "detects": false
+    },
+    "cond_strat": {
+     "B_used": 2000,
+     "point_delta": 0.02372,
+     "boot_mean_delta": 0.02402,
+     "sd": 0.01612,
+     "MDE95": 0.0265,
+     "mde95_twosided": 0.0316,
+     "ci95": [
+      -0.00673,
+      0.05478
+     ],
+     "p_gt_0": 0.9295,
+     "margin_over_floor": 0.894,
+     "resolvable": false,
+     "verdict": "NULL",
+     "detects": false
+    }
+   },
+   "debuted.blend": {
+    "pool": "debuted",
+    "leg": "blend",
+    "n_scored": 755,
+    "rho_full_spec": 0.39933,
+    "rho_spec_minus_fv": 0.37861,
+    "point": 0.02073,
+    "refit": {
+     "B_used": 2000,
+     "point_delta": 0.02073,
+     "boot_mean_delta": 0.02869,
+     "sd": 0.02146,
+     "MDE95": 0.0353,
+     "mde95_twosided": 0.0421,
+     "ci95": [
+      -0.01255,
+      0.07507
+     ],
+     "p_gt_0": 0.925,
+     "margin_over_floor": 0.587,
+     "resolvable": false,
+     "verdict": "NULL",
+     "detects": false
+    },
+    "cond_iid": {
+     "B_used": 2000,
+     "point_delta": 0.02073,
+     "boot_mean_delta": 0.02129,
+     "sd": 0.01467,
+     "MDE95": 0.0241,
+     "mde95_twosided": 0.0288,
+     "ci95": [
+      -0.0072,
+      0.05081
+     ],
+     "p_gt_0": 0.927,
+     "margin_over_floor": 0.859,
+     "resolvable": false,
+     "verdict": "NULL",
+     "detects": false
+    },
+    "cond_strat": {
+     "B_used": 2000,
+     "point_delta": 0.02073,
+     "boot_mean_delta": 0.02091,
+     "sd": 0.01494,
+     "MDE95": 0.0246,
+     "mde95_twosided": 0.0293,
+     "ci95": [
+      -0.00825,
+      0.05053
+     ],
+     "p_gt_0": 0.912,
+     "margin_over_floor": 0.844,
+     "resolvable": false,
+     "verdict": "NULL",
+     "detects": false
+    }
+   },
+   "debuted.ridge": {
+    "pool": "debuted",
+    "leg": "ridge",
+    "n_scored": 755,
+    "rho_full_spec": 0.39591,
+    "rho_spec_minus_fv": 0.33571,
+    "point": 0.0602,
+    "refit": {
+     "B_used": 2000,
+     "point_delta": 0.0602,
+     "boot_mean_delta": 0.06396,
+     "sd": 0.02754,
+     "MDE95": 0.0453,
+     "mde95_twosided": 0.054,
+     "ci95": [
+      0.01541,
+      0.12179
+     ],
+     "p_gt_0": 0.9945,
+     "margin_over_floor": 1.329,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN",
+     "detects": true
+    },
+    "cond_iid": {
+     "B_used": 2000,
+     "point_delta": 0.0602,
+     "boot_mean_delta": 0.06094,
+     "sd": 0.02046,
+     "MDE95": 0.0337,
+     "mde95_twosided": 0.0401,
+     "ci95": [
+      0.02213,
+      0.10115
+     ],
+     "p_gt_0": 0.998,
+     "margin_over_floor": 1.789,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN",
+     "detects": true
+    },
+    "cond_strat": {
+     "B_used": 2000,
+     "point_delta": 0.0602,
+     "boot_mean_delta": 0.06017,
+     "sd": 0.02087,
+     "MDE95": 0.0343,
+     "mde95_twosided": 0.0409,
+     "ci95": [
+      0.01911,
+      0.10165
+     ],
+     "p_gt_0": 0.998,
+     "margin_over_floor": 1.753,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN",
+     "detects": true
+    }
+   }
+  },
+  "preregistered_cell": "full.blend",
+  "preregistered_result": {
+   "refit": false,
+   "cond_iid": false,
+   "cond_strat": false
+  },
+  "preregistered_cell_is_misspecified": true,
+  "why_misspecified": "blend = (1-lam)*consensus + lam*ridge and the consensus leg is an OLS on `fv`, so deleting `fv` from the ridge leaves `fv` in the blend at weight 1-lam = 0.30. The contrast's truth is near zero by construction. Applying the pre-registered PASS clause literally would de-register the SHIPPED estimator as well, which is a reductio on the check.",
+  "amended_primary_cell": "full.ridge",
+  "amendment_is_post_hoc_and_disclosed": true,
+  "amended_result": {
+   "refit": false,
+   "cond_iid": false,
+   "cond_strat": false
+  },
+  "amendment_selection_disclosure": "the point estimates of all four cells were seen before the amended primary was designated; the FLOORS were not. full.ridge was chosen because it matches the lane's primary pool, and it is the SMALLER of the two ridge-leg effects, so the choice is the conservative one, not the flattering one.",
+  "discriminative_reading": "the purpose of 3.1 is to rule out a never-rejecting instrument. All three estimators fire on debuted.ridge, the cell where EFV_GATE_STANDARD.md section 6 locates the known-real `fv` effect, and none fires where another does not. The check therefore does not discriminate between the estimators; it confirms none of them is inert. Registration rests on the part-2 coverage gate and the 3.2 simulated power table."
+ },
+ "coverage": {
+  "design": {
+   "n_rows": 1883,
+   "k_features": 14,
+   "folds": 11,
+   "lam": 0.7,
+   "S_truth_datasets": 400,
+   "n_check": 200,
+   "B": 300,
+   "M_fresh_test_sets": 300,
+   "null": "model features are noisy copies of the consensus column, so the model carries no information the consensus lacks",
+   "seed": 20260807
+  },
+  "estimands": {
+   "unconditional": {
+    "truth_mean_delta": -0.0109,
+    "true_sd": 0.0087,
+    "question": "what would we conclude from a different dataset with the SAME cohort sizes"
+   },
+   "unconditional_varfolds": {
+    "truth_mean_delta": -0.01069,
+    "true_sd": 0.00873,
+    "question": "what would we conclude from a different dataset whose cohort SIZES also redraw",
+    "role": "CONTROL for the refit leg, see the code comment in EXP-1"
+   },
+   "conditional": {
+    "truth_mean_delta": -0.01184,
+    "true_sd": 0.00854,
+    "question": "given this training corpus, is this margin real"
+   }
+  },
+  "gate_level": "central 95% binomial acceptance region for p=0.95",
+  "legs": {
+   "refit": {
+    "own_estimand": "unconditional",
+    "mean_bootstrap_sd": 0.01274,
+    "true_sd_of_own_estimand": 0.0087,
+    "sd_ratio_boot_over_true": 1.465,
+    "sd_ratio_in_band": false,
+    "gate_two_sided": {
+     "k": 194,
+     "n": 200,
+     "coverage": 0.97,
+     "accept_lo": 184,
+     "accept_hi": 196,
+     "accept_coverage_band": [
+      0.92,
+      0.98
+     ],
+     "verdict": "PASS"
+    },
+    "one_sided_gate_as_currently_coded": "PASS",
+    "cross_check_other_estimand": {
+     "coverage": 0.98,
+     "note": "DIAGNOSTIC ONLY, never a gate: it is the wrong question for this estimator"
+    },
+    "coverage_all_three_estimands": {
+     "uncond": 0.97,
+     "uncond_varfolds": 0.965,
+     "cond": 0.98
+    },
+    "varfolds_control": {
+     "gate_two_sided": {
+      "k": 193,
+      "n": 200,
+      "coverage": 0.965,
+      "accept_lo": 184,
+      "accept_hi": 196,
+      "accept_coverage_band": [
+       0.92,
+       0.98
+      ],
+      "verdict": "PASS"
+     },
+     "sd_ratio_boot_over_true": 1.46,
+     "reading": "if the refit leg fails against the fixed-fold truth but passes here, its extra width is cohort-size resampling, not refit noise, and the 'over-wide floor' claim is wrong"
+    }
+   },
+   "cond_iid": {
+    "own_estimand": "conditional",
+    "mean_bootstrap_sd": 0.00853,
+    "true_sd_of_own_estimand": 0.00854,
+    "sd_ratio_boot_over_true": 0.999,
+    "sd_ratio_in_band": true,
+    "gate_two_sided": {
+     "k": 186,
+     "n": 200,
+     "coverage": 0.93,
+     "accept_lo": 184,
+     "accept_hi": 196,
+     "accept_coverage_band": [
+      0.92,
+      0.98
+     ],
+     "verdict": "PASS"
+    },
+    "one_sided_gate_as_currently_coded": "PASS",
+    "cross_check_other_estimand": {
+     "coverage": 0.93,
+     "note": "DIAGNOSTIC ONLY, never a gate: it is the wrong question for this estimator"
+    },
+    "coverage_all_three_estimands": {
+     "uncond": 0.93,
+     "uncond_varfolds": 0.93,
+     "cond": 0.93
+    }
+   },
+   "cond_strat": {
+    "own_estimand": "conditional",
+    "mean_bootstrap_sd": 0.00851,
+    "true_sd_of_own_estimand": 0.00854,
+    "sd_ratio_boot_over_true": 0.995,
+    "sd_ratio_in_band": true,
+    "gate_two_sided": {
+     "k": 184,
+     "n": 200,
+     "coverage": 0.92,
+     "accept_lo": 184,
+     "accept_hi": 196,
+     "accept_coverage_band": [
+      0.92,
+      0.98
+     ],
+     "verdict": "PASS"
+    },
+    "one_sided_gate_as_currently_coded": "PASS",
+    "cross_check_other_estimand": {
+     "coverage": 0.925,
+     "note": "DIAGNOSTIC ONLY, never a gate: it is the wrong question for this estimator"
+    },
+    "coverage_all_three_estimands": {
+     "uncond": 0.925,
+     "uncond_varfolds": 0.935,
+     "cond": 0.92
+    }
+   }
+  },
+  "sd_band_reported_not_gating": [
+   0.9,
+   1.1
+  ],
+  "registration": "E_cond_iid REGISTERED (primary, as pre-registered)",
+  "elapsed_s": 993.0
+ },
+ "power": {
+  "null": {
+   "n_sim": 120,
+   "B": 200,
+   "mean_point_delta": -0.01091,
+   "sd_point_delta": 0.00911,
+   "fire_rate_vs_zero": {
+    "refit": 0.125,
+    "cond_iid": 0.3333,
+    "cond_strat": 0.3417
+   },
+   "fire_rate_centered": {
+    "refit": 0.0167,
+    "cond_iid": 0.125,
+    "cond_strat": 0.0917
+   },
+   "mean_floor": {
+    "refit": 0.021,
+    "cond_iid": 0.0141,
+    "cond_strat": 0.0142
+   },
+   "elapsed_s": 522.9
+  },
+  "alternative": {
+   "n_sim": 120,
+   "B": 200,
+   "mean_point_delta": 0.03096,
+   "sd_point_delta": 0.01241,
+   "fire_rate_vs_zero": {
+    "refit": 0.75,
+    "cond_iid": 0.8417,
+    "cond_strat": 0.8333
+   },
+   "fire_rate_centered": {
+    "refit": 0.0333,
+    "cond_iid": 0.1167,
+    "cond_strat": 0.0917
+   },
+   "mean_floor": {
+    "refit": 0.0253,
+    "cond_iid": 0.0191,
+    "cond_strat": 0.0192
+   },
+   "elapsed_s": 752.9
+  },
+  "reading": "fire_rate_centered under 'null' is the instrument's false-positive rate and the calibrated target is about 0.10, since MDE95 is one-sided 1.645*sd applied to an absolute margin. fire_rate_vs_zero under 'null' is NOT a type-I rate: the null's true delta is not zero. fire_rate_vs_zero under 'alternative' is power.",
+  "zero_information_blend_cost": "the null's mean point delta is the rho a blend loses by mixing in a predictor that carries NO information the consensus lacks. It is the dumbest available explanation for a negative full-pool margin and it is quantified here rather than assumed away. It is a property of this synthetic design and its magnitude does not transfer to the real pool as a point estimate."
+ },
+ "verdict": {
+  "hit.full_pool_km": {
+   "rank": "PRIMARY",
+   "legs": {
+    "n": 1792,
+    "consensus": 0.30016,
+    "blend": 0.27873,
+    "delta": -0.02143
+   },
+   "n_scored": 1792,
+   "refit": {
+    "B_used": 2000,
+    "point_delta": -0.02143,
+    "boot_mean_delta": -0.01748,
+    "sd": 0.01754,
+    "MDE95": 0.0289,
+    "mde95_twosided": 0.0344,
+    "ci95": [
+     -0.0522,
+     0.01602
+    ],
+    "p_gt_0": 0.1575,
+    "margin_over_floor": 0.743,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde95_bonferroni_k4": 0.0393,
+    "resolvable_bonferroni_k4": false,
+    "sd_ratio_applied": 1.465,
+    "mde95_coverage_corrected": 0.0197,
+    "margin_over_corrected_floor": 1.086,
+    "resolvable_corrected": true
+   },
+   "cond_iid": {
+    "B_used": 2000,
+    "point_delta": -0.02143,
+    "boot_mean_delta": -0.02118,
+    "sd": 0.01243,
+    "MDE95": 0.0204,
+    "mde95_twosided": 0.0244,
+    "ci95": [
+     -0.04539,
+     0.00301
+    ],
+    "p_gt_0": 0.0415,
+    "margin_over_floor": 1.049,
+    "resolvable": true,
+    "verdict": "RESOLVABLE LOSS",
+    "mde95_bonferroni_k4": 0.0279,
+    "resolvable_bonferroni_k4": false,
+    "sd_ratio_applied": 0.999,
+    "mde95_coverage_corrected": 0.0204,
+    "margin_over_corrected_floor": 1.05,
+    "resolvable_corrected": true
+   },
+   "cond_strat": {
+    "B_used": 2000,
+    "point_delta": -0.02143,
+    "boot_mean_delta": -0.02142,
+    "sd": 0.01227,
+    "MDE95": 0.0202,
+    "mde95_twosided": 0.024,
+    "ci95": [
+     -0.04486,
+     0.00231
+    ],
+    "p_gt_0": 0.0345,
+    "margin_over_floor": 1.062,
+    "resolvable": true,
+    "verdict": "RESOLVABLE LOSS",
+    "mde95_bonferroni_k4": 0.0275,
+    "resolvable_bonferroni_k4": false,
+    "sd_ratio_applied": 0.995,
+    "mde95_coverage_corrected": 0.0203,
+    "margin_over_corrected_floor": 1.056,
+    "resolvable_corrected": true
+   }
+  },
+  "pit.full_pool_km": {
+   "rank": "secondary",
+   "legs": {
+    "n": 1885,
+    "consensus": 0.2015,
+    "blend": 0.21721,
+    "delta": 0.01571
+   },
+   "n_scored": 1885,
+   "refit": {
+    "B_used": 2000,
+    "point_delta": 0.01571,
+    "boot_mean_delta": 0.00386,
+    "sd": 0.01629,
+    "MDE95": 0.0268,
+    "mde95_twosided": 0.0319,
+    "ci95": [
+     -0.02959,
+     0.03472
+    ],
+    "p_gt_0": 0.612,
+    "margin_over_floor": 0.587,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde95_bonferroni_k4": 0.0365,
+    "resolvable_bonferroni_k4": false,
+    "sd_ratio_applied": 1.465,
+    "mde95_coverage_corrected": 0.0183,
+    "margin_over_corrected_floor": 0.859,
+    "resolvable_corrected": false
+   },
+   "cond_iid": {
+    "B_used": 2000,
+    "point_delta": 0.01571,
+    "boot_mean_delta": 0.01568,
+    "sd": 0.01326,
+    "MDE95": 0.0218,
+    "mde95_twosided": 0.026,
+    "ci95": [
+     -0.0103,
+     0.04172
+    ],
+    "p_gt_0": 0.8885,
+    "margin_over_floor": 0.72,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde95_bonferroni_k4": 0.0297,
+    "resolvable_bonferroni_k4": false,
+    "sd_ratio_applied": 0.999,
+    "mde95_coverage_corrected": 0.0218,
+    "margin_over_corrected_floor": 0.72,
+    "resolvable_corrected": false
+   },
+   "cond_strat": {
+    "B_used": 2000,
+    "point_delta": 0.01571,
+    "boot_mean_delta": 0.01618,
+    "sd": 0.01332,
+    "MDE95": 0.0219,
+    "mde95_twosided": 0.0261,
+    "ci95": [
+     -0.00924,
+     0.04354
+    ],
+    "p_gt_0": 0.8845,
+    "margin_over_floor": 0.717,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde95_bonferroni_k4": 0.0299,
+    "resolvable_bonferroni_k4": false,
+    "sd_ratio_applied": 0.995,
+    "mde95_coverage_corrected": 0.022,
+    "margin_over_corrected_floor": 0.714,
+    "resolvable_corrected": false
+   }
+  },
+  "hit.debuted_km": {
+   "rank": "secondary",
+   "legs": {
+    "n": 755,
+    "consensus": 0.39192,
+    "blend": 0.39933,
+    "delta": 0.00741
+   },
+   "n_scored": 755,
+   "refit": {
+    "B_used": 2000,
+    "point_delta": 0.00741,
+    "boot_mean_delta": -0.01885,
+    "sd": 0.02706,
+    "MDE95": 0.0445,
+    "mde95_twosided": 0.053,
+    "ci95": [
+     -0.07812,
+     0.03218
+    ],
+    "p_gt_0": 0.243,
+    "margin_over_floor": 0.166,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde95_bonferroni_k4": 0.0607,
+    "resolvable_bonferroni_k4": false,
+    "sd_ratio_applied": 1.465,
+    "mde95_coverage_corrected": 0.0304,
+    "margin_over_corrected_floor": 0.244,
+    "resolvable_corrected": false
+   },
+   "cond_iid": {
+    "B_used": 2000,
+    "point_delta": 0.00741,
+    "boot_mean_delta": 0.00789,
+    "sd": 0.01296,
+    "MDE95": 0.0213,
+    "mde95_twosided": 0.0254,
+    "ci95": [
+     -0.01763,
+     0.0337
+    ],
+    "p_gt_0": 0.7455,
+    "margin_over_floor": 0.348,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde95_bonferroni_k4": 0.029,
+    "resolvable_bonferroni_k4": false,
+    "sd_ratio_applied": 0.999,
+    "mde95_coverage_corrected": 0.0213,
+    "margin_over_corrected_floor": 0.348,
+    "resolvable_corrected": false
+   },
+   "cond_strat": {
+    "B_used": 2000,
+    "point_delta": 0.00741,
+    "boot_mean_delta": 0.0069,
+    "sd": 0.01308,
+    "MDE95": 0.0215,
+    "mde95_twosided": 0.0256,
+    "ci95": [
+     -0.01792,
+     0.03305
+    ],
+    "p_gt_0": 0.7025,
+    "margin_over_floor": 0.344,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde95_bonferroni_k4": 0.0293,
+    "resolvable_bonferroni_k4": false,
+    "sd_ratio_applied": 0.995,
+    "mde95_coverage_corrected": 0.0216,
+    "margin_over_corrected_floor": 0.343,
+    "resolvable_corrected": false
+   }
+  },
+  "pit.debuted_km": {
+   "rank": "secondary",
+   "legs": {
+    "n": 890,
+    "consensus": 0.24937,
+    "blend": 0.25606,
+    "delta": 0.00669
+   },
+   "n_scored": 890,
+   "refit": {
+    "B_used": 2000,
+    "point_delta": 0.00669,
+    "boot_mean_delta": -0.00776,
+    "sd": 0.02582,
+    "MDE95": 0.0425,
+    "mde95_twosided": 0.0506,
+    "ci95": [
+     -0.05951,
+     0.04334
+    ],
+    "p_gt_0": 0.3875,
+    "margin_over_floor": 0.158,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde95_bonferroni_k4": 0.0579,
+    "resolvable_bonferroni_k4": false,
+    "sd_ratio_applied": 1.465,
+    "mde95_coverage_corrected": 0.029,
+    "margin_over_corrected_floor": 0.231,
+    "resolvable_corrected": false
+   },
+   "cond_iid": {
+    "B_used": 2000,
+    "point_delta": 0.00669,
+    "boot_mean_delta": 0.00697,
+    "sd": 0.01832,
+    "MDE95": 0.0301,
+    "mde95_twosided": 0.0359,
+    "ci95": [
+     -0.02871,
+     0.04234
+    ],
+    "p_gt_0": 0.637,
+    "margin_over_floor": 0.222,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde95_bonferroni_k4": 0.0411,
+    "resolvable_bonferroni_k4": false,
+    "sd_ratio_applied": 0.999,
+    "mde95_coverage_corrected": 0.0301,
+    "margin_over_corrected_floor": 0.222,
+    "resolvable_corrected": false
+   },
+   "cond_strat": {
+    "B_used": 2000,
+    "point_delta": 0.00669,
+    "boot_mean_delta": 0.00664,
+    "sd": 0.01881,
+    "MDE95": 0.0309,
+    "mde95_twosided": 0.0369,
+    "ci95": [
+     -0.03118,
+     0.04391
+    ],
+    "p_gt_0": 0.6465,
+    "margin_over_floor": 0.216,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde95_bonferroni_k4": 0.0422,
+    "resolvable_bonferroni_k4": false,
+    "sd_ratio_applied": 0.995,
+    "mde95_coverage_corrected": 0.0311,
+    "margin_over_corrected_floor": 0.215,
+    "resolvable_corrected": false
+   }
+  },
+  "multiplicity": {
+   "primary": "hit.full_pool_km, named in the lane brief before measurement",
+   "secondary_k": 4,
+   "bonferroni_z_one_sided": 2.2414,
+   "note": "no secondary cut is called resolvable on its unadjusted floor alone"
+  }
+ },
+ "elapsed_s": 2134.8,
+ "power_note": "power block RE-RUN 2026-08-08 with the centered false-positive rate added; the first run printed only fire_rate_vs_zero, which is not a type-I rate under this null."
+}

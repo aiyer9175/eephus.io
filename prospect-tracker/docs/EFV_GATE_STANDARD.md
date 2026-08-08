@@ -204,3 +204,89 @@ every depth (-0.0137 hit / -0.0159 pit), so the lean sets are already near the r
 complexity and the eval simply cannot adjudicate their composition. **Do not add and do not
 remove features on sub-floor evidence.** The block as a whole is real (block-permutation
 null p <= 0.003 on all four cuts); its composition is not measurable.
+
+## 7. SECOND INSTRUMENT: the conditional-on-train floor (added 2026-08-07b, Lane A1)
+
+**This section ADDS a row. It retires nothing above it, changes no constant above it, and
+retroactively resolves no past null.** Section 1's floors and `XFV_VS_CONSENSUS_MDE95`
+(0.044) / `XFV_HEADTOHEAD_MDE95` (0.0352) are unchanged.
+
+Registration `docs/efv-2026-08-07b/POWER_GATE.md` (parts 0-4 written before the lab
+existed), producer `python tools/efv_power_lab.py all 2000`, ledger
+`data/xfv_power_eval.json`, seed 20260807.
+
+### 7.1 Two estimators, two questions. Say which one your claim is about.
+
+| estimator | resampling | estimand | the question it answers |
+|---|---|---|---|
+| **E_refit** (section 1, shipped) | whole pool, train AND test, refit per draw | Var over redraws of the training corpus AND the scored sample | *what would we conclude from a different dataset* |
+| **E_cond** (registered here) | scored rows only, per-fold fits held FIXED | Var over redraws of the scored sample given this training corpus | *given this training corpus, is this margin real* |
+
+Both are legitimate. They are not competing estimates of one number. A published claim that
+does not name its estimator is incomplete, because on at least one shipped cut the two
+disagree about the verdict.
+
+### 7.2 Registered floors, hitter and pitcher, 11-fold basis
+
+Paired, B = 2,000, weighted pooled rho, same primitives as `tools/efv_mde_lab.py`.
+
+| cut | n | E_refit MDE95 | **E_cond MDE95** |
+|---|---|---|---|
+| hit full_pool_km | 1,792 | 0.0289 | **0.0204** |
+| pit full_pool_km | 1,885 | 0.0268 | **0.0218** |
+| hit debuted_km | 755 | 0.0445 | **0.0213** |
+| pit debuted_km | 890 | 0.0425 | **0.0301** |
+
+MDE95 is ONE-SIDED (1.645 sd) here, the same convention as section 1. The gap is widest on
+the small-train debuted pools, where refit variance dominates.
+
+### 7.3 What earned the registration, and the trap it was built against
+
+A tighter floor makes an improvement CERTIFIABLE. It does not CREATE one. So the criterion
+was nominal coverage of the estimator's OWN estimand, not tightness, and the gate was coded
+TWO-SIDED. Design-matched simulation, n_check = 200, acceptance region [0.920, 0.980]:
+
+| estimator | own estimand | boot sd / true sd | coverage | gate |
+|---|---|---|---|---|
+| E_refit | unconditional | **1.465** | 0.970 | PASS |
+| E_cond (iid) | conditional | **0.999** | 0.930 | PASS, REGISTERED |
+| E_cond (fold-stratified) | conditional | 0.995 | 0.920 | PASS, sensitivity |
+
+Centered false-positive rate at each estimator's own floor, nominal 0.10 for this
+convention: E_refit **0.0167**, E_cond_iid **0.1250**, E_cond_strat 0.0917. Power against a
+known alternative: 0.750 / 0.842 / 0.833. Both conditional estimators detect the known-real
+hitter `fv` effect wherever the shipped one does.
+
+Controls that could have killed the result and did not: the variance decomposition is
+additive to within 8% (0.01258 test-only and 0.01132 train-only reconstruct 0.925x of the
+0.01829 shipped sd), and the refit leg's extra width survives a truth whose cohort SIZES
+also redraw (1.460 against 1.465).
+
+### 7.4 THE ONE-SIDED COVERAGE GATE IS A DEFECT. Fix it where you find it.
+
+`tools/efv_cohort_floor_lab.py` `nullcov` codes `passes = coverage_95 >= 0.90` with **no
+upper bound**. An over-wide floor therefore reads as PASS. For a program whose product is
+NULL verdicts, over-wide is the PERMISSIVE direction: it manufactures nulls. That gate
+returns PASS for an estimator measured at 1.465x its true width.
+
+**Any coverage check written from here on must be two-sided.** Use a central binomial
+acceptance region for p = 0.95 at the checked n, and size n so the upper edge is strictly
+below 1.000; at n = 40 it is not, so wave 1's `null_coverage_check` could not have failed
+on over-coverage even if it had been coded correctly.
+
+### 7.5 Consequence on a shipped cut
+
+Hitter `full_pool_km` reads consensus 0.3002 against blend 0.2787, delta **-0.02143** on
+n = 1,792. Under E_refit that is 0.743x its floor, a NULL. Under the registered E_cond it is
+**1.049x its floor, a RESOLVABLE LOSS**, bootstrap p(delta > 0) = 0.0415. The coverage
+correction is 0.999, so the verdict does not depend on it.
+
+The margin is thin and the qualifications are part of the claim: it resolves ONE-SIDED and
+does not resolve two-sided (0.878x of a 0.0244 floor); it is a conditional claim about this
+training corpus; and a zero-information blend costs about -0.011 in the design-matched
+simulation, roughly half the observed margin.
+
+**No eFV WIN becomes resolvable under E_cond anywhere in the four pre-registered cuts.** The
+instrument resolved exactly one cell and it was a loss. That is the check that it is not
+power laundering, and it is the reason this section can be read as an instrument rather than
+as an argument.

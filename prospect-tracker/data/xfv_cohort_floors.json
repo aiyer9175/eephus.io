@@ -1002,29 +1002,892 @@
    "pool_mde95_onesided": 0.0352,
    "source": "data/xfv_headtohead_gap.json",
    "method": "sqrt(n_pool / n_cell) scaling; LOWER BOUND on the cell floor",
-   "admissible_for": "closing a cell only"
+   "admissible_for": "closing a cell only",
+   "floor_kind": "LOWER BOUND (sqrt-n rescale of a different instrument, NO bootstrap)",
+   "superseded_by": "waveb_q5b_archetype_cells (real cluster paired bootstrap)"
   },
   "head_to_head.archetype.hs_bat": {
    "n": 168,
    "margin": -0.0277,
    "floor_lower_bound": 0.1539,
    "closed_by_lower_bound": true,
-   "floor_over_margin_at_least": 5.55
+   "floor_over_margin_at_least": 5.55,
+   "floor_kind": "LOWER BOUND (NO bootstrap was run for this cell in wave 1)",
+   "floor_lower_bound_label": "LOWER BOUND, admissible only to CLOSE a cell",
+   "superseded_by": "waveb_q5b_archetype_cells"
   },
   "head_to_head.archetype.hs_arm": {
    "n": 144,
    "margin": -0.0183,
    "floor_lower_bound": 0.1662,
    "closed_by_lower_bound": true,
-   "floor_over_margin_at_least": 9.08
+   "floor_over_margin_at_least": 9.08,
+   "floor_kind": "LOWER BOUND (NO bootstrap was run for this cell in wave 1)",
+   "floor_lower_bound_label": "LOWER BOUND, admissible only to CLOSE a cell",
+   "superseded_by": "waveb_q5b_archetype_cells"
   },
   "head_to_head.archetype.college_arm": {
    "n": 244,
    "margin": -0.012,
    "floor_lower_bound": 0.1277,
    "closed_by_lower_bound": true,
-   "floor_over_margin_at_least": 10.64
+   "floor_over_margin_at_least": 10.64,
+   "floor_kind": "LOWER BOUND (NO bootstrap was run for this cell in wave 1)",
+   "floor_lower_bound_label": "LOWER BOUND, admissible only to CLOSE a cell",
+   "superseded_by": "waveb_q5b_archetype_cells"
   }
  },
- "elapsed_s": 208.6
+ "elapsed_s": 208.6,
+ "waveb": {
+  "generated_at": "2026-08-08T02:15:09Z",
+  "produced_by": "tools/efv_cohort_floor_lab.py waveb",
+  "lane": "wave 2 Lane B: the five weak_cells rows wave 1 never floored",
+  "registration": "docs/efv-2026-08-07b/COHORT_FLOORS.md PART 0B (written in full before this code existed)",
+  "correction_to_wave_1": "Part 6 row I5-a says 'eleven weak cells ... ALL NULL, ALL CLOSED'. weak_cells has SIXTEEN rows. Five had no floor of any kind and are floored here.",
+  "estimators": {
+   "e1_refit_inclusive": "the shipped gate protocol: whole per-side pool resampled, consensus OLS + weighted ridge + linear output calibration refit on every draw. GOVERNS the verdict.",
+   "e2_fits_held_fixed": "shipped OOS grades frozen, scored rows resampled only.",
+   "note": "the two can disagree; a disagreement is reported as CONTESTED, not resolved."
+  },
+  "multiplicity": {
+   "k_cells": 5,
+   "bonferroni_one_sided_z": 2.326,
+   "rule": "every cell carries mde_bonferroni_k5 and a survives flag"
+  },
+  "seed": 20260807,
+  "coverage_gate": {
+   "design": {
+    "S_datasets": 100,
+    "B": 200,
+    "n_rows": 900,
+    "k_features": 4,
+    "folds": 6,
+    "statistic": "capture curve_area delta (eFV board minus consensus board)",
+    "null": "model features are noisy copies of the consensus column"
+   },
+   "true_mean_delta": -0.00159,
+   "true_sampling_sd": 0.00441,
+   "mean_bootstrap_sd": 0.00494,
+   "sd_ratio_boot_over_true": 1.119,
+   "coverage_95": 0.95,
+   "n_checked": 40,
+   "registered_band": {
+    "coverage_95_min": 0.9,
+    "sd_ratio_max": 1.6,
+    "source": "COHORT_FLOORS.md 0B.5"
+   },
+   "passes_undercoverage_guard": true,
+   "passes_overwidth_guard": true,
+   "verdict": "PASS"
+  },
+  "q4_capture_curve_area": {
+   "cell": "capture.curve_area",
+   "published": {
+    "n": 3678,
+    "efv": 0.8148,
+    "consensus": 0.8229,
+    "margin": -0.0081,
+    "source": "data/xfv_scoreboard_eval.json top20_capture.curve_area"
+   },
+   "replica": {
+    "n": 3677,
+    "efv_area": 0.8148,
+    "consensus_area": 0.82294,
+    "margin": -0.00814,
+    "efv_top20": 0.71572,
+    "consensus_top20": 0.71547,
+    "gap_vs_published": -4.2e-05
+   },
+   "e1_refit_inclusive": {
+    "B_used": 2000,
+    "point_delta": -0.00814,
+    "boot_mean_delta": -0.01369,
+    "sd": 0.00811,
+    "mde95_onesided": 0.0133,
+    "mde95_twosided": 0.0159,
+    "ci95": [
+     -0.03096,
+     0.00039
+    ],
+    "p_gt_0": 0.031,
+    "margin_over_floor": 0.61,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde_bonferroni_k5": 0.0189,
+    "survives_bonferroni_k5": false,
+    "bonferroni_k": 5
+   },
+   "e2_fits_held_fixed": {
+    "B_used": 2000,
+    "point_delta": -0.00814,
+    "boot_mean_delta": -0.0071,
+    "sd": 0.00509,
+    "mde95_onesided": 0.0084,
+    "mde95_twosided": 0.01,
+    "ci95": [
+     -0.01719,
+     0.00265
+    ],
+    "p_gt_0": 0.081,
+    "margin_over_floor": 0.971,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde_bonferroni_k5": 0.0118,
+    "survives_bonferroni_k5": false,
+    "bonferroni_k": 5
+   },
+   "combined_verdict": "NULL, CLOSED",
+   "elapsed_s": 49.1,
+   "B": 2000
+  },
+  "q4_controls": {
+   "k1_permutation_null": {
+    "R": 400,
+    "no_information_value_(n+1)/2n": 0.50014,
+    "efv_board_permuted_mean": 0.5004,
+    "efv_board_permuted_sd": 0.01491,
+    "consensus_board_permuted_mean": 0.50404,
+    "efv_point_area": 0.8148,
+    "abs_gap_to_no_information": 0.00026,
+    "passes": true
+   },
+   "k2_rank_identity": {
+    "statement": "area = (n+1)/n - sum_i war_i * rank_i / (n * total_war)",
+    "efv_direct": 0.814797134,
+    "efv_identity": 0.814797134,
+    "consensus_direct": 0.822938713,
+    "consensus_identity": 0.822938713,
+    "max_abs_error": 0.0,
+    "passes": true
+   },
+   "k3_tie_resolution": {
+    "R": 400,
+    "consensus_distinct_values": 230,
+    "consensus_largest_tie_block": 462,
+    "consensus_rows_inside_a_tie": 3636,
+    "efv_distinct_values": 2912,
+    "efv_largest_tie_block": 103,
+    "consensus_area_as_published": 0.82294,
+    "consensus_area_random_tiebreak_mean": 0.82186,
+    "consensus_area_random_tiebreak_sd": 0.000198,
+    "consensus_area_random_tiebreak_max": 0.82249,
+    "consensus_tie_credit": 0.00108,
+    "consensus_z_vs_random_tiebreak": 5.48,
+    "efv_area_as_published": 0.8148,
+    "efv_area_random_tiebreak_mean": 0.81478,
+    "efv_tie_credit": 2e-05,
+    "margin_as_published": -0.00814,
+    "margin_at_equal_resolution": -0.00708,
+    "share_of_margin_that_is_tie_credit": 0.1329
+   },
+   "k4_cross_side_pooling": {
+    "pooled_margin": -0.00814,
+    "hit": {
+     "n": 1792,
+     "efv_area": 0.84567,
+     "consensus_area": 0.84896,
+     "margin": -0.00329
+    },
+    "pit": {
+     "n": 1885,
+     "efv_area": 0.76727,
+     "consensus_area": 0.78135,
+     "margin": -0.01409
+    },
+    "loss_survives_within_side": true
+   },
+   "k5_outcome_definition": {
+    "rows_on_universe_career_war": 1645,
+    "rows_on_matrix_six_season_label": 2032,
+    "corr_career_vs_six_season_on_shared_rows": 0.8896,
+    "mean_career_war_on_shared_rows": 3.251,
+    "mean_six_season_label_on_shared_rows": 2.848,
+    "margin_as_published_mixed_outcome": -0.00814,
+    "margin_on_six_season_label_everywhere": 0.00203,
+    "loss_survives_single_outcome": false,
+    "universe_rows_only": {
+     "n": 1645,
+     "margin_on_career_war": -0.00883,
+     "margin_on_six_season_label": -0.0009
+    },
+    "matrix_rows_only": {
+     "n": 2032,
+     "total_six_season_war": 0.0,
+     "total_capture_war_as_published": 0.0,
+     "margin_undefined_reason": "these rows carry zero total WAR under either definition, so a capture curve over them alone has no denominator"
+    }
+   },
+   "k6_top_reordering": {
+    "hypothesis": "eFV re-orders the TOP of the board in a way that helps rank correlation and hurts value capture",
+    "identity": "margin = -(1/(n*tot)) * sum_i war_i * (rank_efv_i - rank_cons_i)",
+    "attribution_sums_to_margin": -0.00814,
+    "by_consensus_rank_decile": [
+     {
+      "consensus_rank_decile": 1,
+      "n": 368,
+      "war_share": 0.5249,
+      "contribution_to_margin": -0.0049,
+      "mean_rank_move_efv_minus_cons": 54.3
+     },
+     {
+      "consensus_rank_decile": 2,
+      "n": 368,
+      "war_share": 0.1906,
+      "contribution_to_margin": 0.0008,
+      "mean_rank_move_efv_minus_cons": 40.4
+     },
+     {
+      "consensus_rank_decile": 3,
+      "n": 368,
+      "war_share": 0.0941,
+      "contribution_to_margin": -0.01229,
+      "mean_rank_move_efv_minus_cons": 380.8
+     },
+     {
+      "consensus_rank_decile": 4,
+      "n": 367,
+      "war_share": 0.0302,
+      "contribution_to_margin": -0.0009,
+      "mean_rank_move_efv_minus_cons": 300.4
+     },
+     {
+      "consensus_rank_decile": 5,
+      "n": 368,
+      "war_share": 0.0505,
+      "contribution_to_margin": -0.00136,
+      "mean_rank_move_efv_minus_cons": 69.7
+     },
+     {
+      "consensus_rank_decile": 6,
+      "n": 368,
+      "war_share": 0.0446,
+      "contribution_to_margin": 0.00069,
+      "mean_rank_move_efv_minus_cons": -109.0
+     },
+     {
+      "consensus_rank_decile": 7,
+      "n": 367,
+      "war_share": 0.0193,
+      "contribution_to_margin": 0.00301,
+      "mean_rank_move_efv_minus_cons": -85.5
+     },
+     {
+      "consensus_rank_decile": 8,
+      "n": 368,
+      "war_share": 0.029,
+      "contribution_to_margin": 0.00413,
+      "mean_rank_move_efv_minus_cons": -134.0
+     },
+     {
+      "consensus_rank_decile": 9,
+      "n": 368,
+      "war_share": 0.009,
+      "contribution_to_margin": 0.00104,
+      "mean_rank_move_efv_minus_cons": -25.7
+     },
+     {
+      "consensus_rank_decile": 10,
+      "n": 367,
+      "war_share": 0.0079,
+      "contribution_to_margin": 0.00165,
+      "mean_rank_move_efv_minus_cons": -492.2
+     }
+    ],
+    "top_two_deciles_contribution": -0.0041,
+    "top_two_deciles_share_of_margin": 0.5036,
+    "worst_10_rows_for_efv": [
+     {
+      "consensus_rank": 824,
+      "efv_rank": 2599,
+      "war": 19.11,
+      "cost_to_margin": -0.00161
+     },
+     {
+      "consensus_rank": 1637,
+      "efv_rank": 3519,
+      "war": 17.12,
+      "cost_to_margin": -0.00153
+     },
+     {
+      "consensus_rank": 1049,
+      "efv_rank": 3461,
+      "war": 11.13,
+      "cost_to_margin": -0.00128
+     },
+     {
+      "consensus_rank": 802,
+      "efv_rank": 3331,
+      "war": 9.51,
+      "cost_to_margin": -0.00114
+     },
+     {
+      "consensus_rank": 2042,
+      "efv_rank": 3057,
+      "war": 22.42,
+      "cost_to_margin": -0.00108
+     },
+     {
+      "consensus_rank": 726,
+      "efv_rank": 3089,
+      "war": 9.28,
+      "cost_to_margin": -0.00104
+     },
+     {
+      "consensus_rank": 925,
+      "efv_rank": 1319,
+      "war": 49.21,
+      "cost_to_margin": -0.00092
+     },
+     {
+      "consensus_rank": 1050,
+      "efv_rank": 2872,
+      "war": 10.6,
+      "cost_to_margin": -0.00092
+     },
+     {
+      "consensus_rank": 1056,
+      "efv_rank": 3465,
+      "war": 6.8,
+      "cost_to_margin": -0.00078
+     },
+     {
+      "consensus_rank": 1633,
+      "efv_rank": 3219,
+      "war": 10.29,
+      "cost_to_margin": -0.00078
+     }
+    ],
+    "best_10_rows_for_efv": [
+     {
+      "consensus_rank": 883,
+      "efv_rank": 300,
+      "war": 16.25,
+      "gain_to_margin": 0.00045
+     },
+     {
+      "consensus_rank": 3269,
+      "efv_rank": 2277,
+      "war": 9.75,
+      "gain_to_margin": 0.00046
+     },
+     {
+      "consensus_rank": 2559,
+      "efv_rank": 1492,
+      "war": 9.39,
+      "gain_to_margin": 0.00048
+     },
+     {
+      "consensus_rank": 156,
+      "efv_rank": 14,
+      "war": 76.06,
+      "gain_to_margin": 0.00051
+     },
+     {
+      "consensus_rank": 1838,
+      "efv_rank": 941,
+      "war": 12.19,
+      "gain_to_margin": 0.00052
+     },
+     {
+      "consensus_rank": 2368,
+      "efv_rank": 985,
+      "war": 11.7,
+      "gain_to_margin": 0.00077
+     },
+     {
+      "consensus_rank": 515,
+      "efv_rank": 124,
+      "war": 43.24,
+      "gain_to_margin": 0.0008
+     },
+     {
+      "consensus_rank": 1953,
+      "efv_rank": 928,
+      "war": 16.72,
+      "gain_to_margin": 0.00081
+     },
+     {
+      "consensus_rank": 2733,
+      "efv_rank": 981,
+      "war": 10.22,
+      "gain_to_margin": 0.00085
+     },
+     {
+      "consensus_rank": 1532,
+      "efv_rank": 577,
+      "war": 20.51,
+      "gain_to_margin": 0.00093
+     }
+    ],
+    "worst_10_rows_share_of_margin": 1.3609,
+    "hybrid_boards": {
+     "top5pct": {
+      "cut_rows": 184,
+      "consensus_top_then_efv_margin": -0.00743,
+      "efv_top_then_consensus_margin": 0.00123
+     },
+     "top10pct": {
+      "cut_rows": 368,
+      "consensus_top_then_efv_margin": -0.00744,
+      "efv_top_then_consensus_margin": 0.00167
+     },
+     "top20pct": {
+      "cut_rows": 735,
+      "consensus_top_then_efv_margin": -0.00625,
+      "efv_top_then_consensus_margin": 0.0006
+     },
+     "top50pct": {
+      "cut_rows": 1838,
+      "consensus_top_then_efv_margin": 0.00091,
+      "efv_top_then_consensus_margin": -0.0008
+     }
+    }
+   }
+  },
+  "q5a_pit_era_auc": {
+   "cell": "pit.era.<=2018",
+   "metric": "auc_contributor",
+   "published": {
+    "n": 132,
+    "efv": 0.774,
+    "consensus": 0.7841,
+    "margin": -0.0101,
+    "source": "data/xfv_scoreboard_eval.json weak_cells"
+   },
+   "replica": {
+    "n": 132,
+    "efv": 0.77405,
+    "consensus": 0.7841,
+    "margin": -0.01005,
+    "n_contributor": 40
+   },
+   "e1_refit_inclusive": {
+    "B_used": 2000,
+    "point_delta": -0.01005,
+    "boot_mean_delta": -0.04925,
+    "sd": 0.05306,
+    "mde95_onesided": 0.0873,
+    "mde95_twosided": 0.104,
+    "ci95": [
+     -0.16427,
+     0.04445
+    ],
+    "p_gt_0": 0.18,
+    "margin_over_floor": 0.115,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde_bonferroni_k5": 0.1234,
+    "survives_bonferroni_k5": false,
+    "bonferroni_k": 5
+   },
+   "e2_fits_held_fixed": {
+    "B_used": 2000,
+    "point_delta": -0.01005,
+    "boot_mean_delta": -0.00925,
+    "sd": 0.03322,
+    "mde95_onesided": 0.0546,
+    "mde95_twosided": 0.0651,
+    "ci95": [
+     -0.07369,
+     0.05588
+    ],
+    "p_gt_0": 0.389,
+    "margin_over_floor": 0.184,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde_bonferroni_k5": 0.0773,
+    "survives_bonferroni_k5": false,
+    "bonferroni_k": 5
+   },
+   "combined_verdict": "NULL, CLOSED",
+   "B": 2000,
+   "elapsed_s": 11.8
+  },
+  "q5b_archetype_cells": {
+   "basis": {
+    "archetype_players_with_all_sources": 1511,
+    "protocol": "one row per player, latest PRE-DEBUT all-source common read (source_backtest.py:740-750); cluster paired bootstrap resampling the eFV matrix pool and refitting the forward chain on every draw",
+    "replica_note": "the published eFV leg is rounded to 0.1 FV by the display remap at source_backtest.py:588, which adds ties; this replica uses the raw OOS score, so the replica eFV leg runs 0.002-0.003 HIGH"
+   },
+   "hs_bat": {
+    "auc_contributor": {
+     "published": {
+      "n": 168,
+      "efv": 0.7705,
+      "consensus": 0.7744,
+      "margin": -0.0039
+     },
+     "replica": {
+      "n": 168,
+      "efv": 0.7725,
+      "consensus": 0.77443,
+      "margin": -0.00193
+     },
+     "e1_refit_inclusive": {
+      "B_used": 1000,
+      "point_delta": -0.00193,
+      "boot_mean_delta": -0.00086,
+      "sd": 0.01675,
+      "mde95_onesided": 0.0276,
+      "mde95_twosided": 0.0328,
+      "ci95": [
+       -0.03799,
+       0.02736
+      ],
+      "p_gt_0": 0.511,
+      "margin_over_floor": 0.07,
+      "resolvable": false,
+      "verdict": "NULL",
+      "mde_bonferroni_k5": 0.039,
+      "survives_bonferroni_k5": false,
+      "bonferroni_k": 5
+     },
+     "e2_fits_held_fixed": {
+      "B_used": 1000,
+      "point_delta": -0.00193,
+      "boot_mean_delta": -0.00184,
+      "sd": 0.01232,
+      "mde95_onesided": 0.0203,
+      "mde95_twosided": 0.0241,
+      "ci95": [
+       -0.02642,
+       0.02371
+      ],
+      "p_gt_0": 0.439,
+      "margin_over_floor": 0.095,
+      "resolvable": false,
+      "verdict": "NULL",
+      "mde_bonferroni_k5": 0.0287,
+      "survives_bonferroni_k5": false,
+      "bonferroni_k": 5
+     },
+     "combined_verdict": "NULL, CLOSED"
+    },
+    "spearman": {
+     "published": {
+      "n": 168,
+      "efv": 0.4495,
+      "consensus": 0.4772,
+      "margin": -0.0277
+     },
+     "replica": {
+      "n": 168,
+      "efv": 0.45481,
+      "consensus": 0.47716,
+      "margin": -0.02234
+     },
+     "e1_refit_inclusive": {
+      "B_used": 1000,
+      "point_delta": -0.02234,
+      "boot_mean_delta": -0.01517,
+      "sd": 0.03217,
+      "mde95_onesided": 0.0529,
+      "mde95_twosided": 0.063,
+      "ci95": [
+       -0.08066,
+       0.03995
+      ],
+      "p_gt_0": 0.352,
+      "margin_over_floor": 0.422,
+      "resolvable": false,
+      "verdict": "NULL",
+      "mde_bonferroni_k5": 0.0748,
+      "survives_bonferroni_k5": false,
+      "bonferroni_k": 5
+     },
+     "e2_fits_held_fixed": {
+      "B_used": 1000,
+      "point_delta": -0.02234,
+      "boot_mean_delta": -0.02317,
+      "sd": 0.02267,
+      "mde95_onesided": 0.0373,
+      "mde95_twosided": 0.0444,
+      "ci95": [
+       -0.06714,
+       0.0209
+      ],
+      "p_gt_0": 0.152,
+      "margin_over_floor": 0.599,
+      "resolvable": false,
+      "verdict": "NULL",
+      "mde_bonferroni_k5": 0.0527,
+      "survives_bonferroni_k5": false,
+      "bonferroni_k": 5
+     },
+     "combined_verdict": "NULL, CLOSED"
+    }
+   },
+   "hs_arm": {
+    "auc_contributor": {
+     "published": {
+      "n": 144,
+      "efv": 0.6903,
+      "consensus": 0.7149,
+      "margin": -0.0246
+     },
+     "replica": {
+      "n": 144,
+      "efv": 0.69335,
+      "consensus": 0.71489,
+      "margin": -0.02155
+     },
+     "e1_refit_inclusive": {
+      "B_used": 1000,
+      "point_delta": -0.02155,
+      "boot_mean_delta": -0.0326,
+      "sd": 0.03718,
+      "mde95_onesided": 0.0612,
+      "mde95_twosided": 0.0729,
+      "ci95": [
+       -0.10826,
+       0.03773
+      ],
+      "p_gt_0": 0.189,
+      "margin_over_floor": 0.352,
+      "resolvable": false,
+      "verdict": "NULL",
+      "mde_bonferroni_k5": 0.0865,
+      "survives_bonferroni_k5": false,
+      "bonferroni_k": 5
+     },
+     "e2_fits_held_fixed": {
+      "B_used": 1000,
+      "point_delta": -0.02155,
+      "boot_mean_delta": -0.02126,
+      "sd": 0.02436,
+      "mde95_onesided": 0.0401,
+      "mde95_twosided": 0.0477,
+      "ci95": [
+       -0.06782,
+       0.02688
+      ],
+      "p_gt_0": 0.19,
+      "margin_over_floor": 0.538,
+      "resolvable": false,
+      "verdict": "NULL",
+      "mde_bonferroni_k5": 0.0567,
+      "survives_bonferroni_k5": false,
+      "bonferroni_k": 5
+     },
+     "combined_verdict": "NULL, CLOSED"
+    },
+    "spearman": {
+     "published": {
+      "n": 144,
+      "efv": 0.3617,
+      "consensus": 0.38,
+      "margin": -0.0183
+     },
+     "replica": {
+      "n": 144,
+      "efv": 0.36576,
+      "consensus": 0.3838,
+      "margin": -0.01804
+     },
+     "e1_refit_inclusive": {
+      "B_used": 1000,
+      "point_delta": -0.01804,
+      "boot_mean_delta": -0.03928,
+      "sd": 0.05823,
+      "mde95_onesided": 0.0958,
+      "mde95_twosided": 0.1141,
+      "ci95": [
+       -0.15762,
+       0.07224
+      ],
+      "p_gt_0": 0.243,
+      "margin_over_floor": 0.188,
+      "resolvable": false,
+      "verdict": "NULL",
+      "mde_bonferroni_k5": 0.1354,
+      "survives_bonferroni_k5": false,
+      "bonferroni_k": 5
+     },
+     "e2_fits_held_fixed": {
+      "B_used": 1000,
+      "point_delta": -0.01804,
+      "boot_mean_delta": -0.01712,
+      "sd": 0.04167,
+      "mde95_onesided": 0.0685,
+      "mde95_twosided": 0.0817,
+      "ci95": [
+       -0.09732,
+       0.06114
+      ],
+      "p_gt_0": 0.347,
+      "margin_over_floor": 0.263,
+      "resolvable": false,
+      "verdict": "NULL",
+      "mde_bonferroni_k5": 0.0969,
+      "survives_bonferroni_k5": false,
+      "bonferroni_k": 5
+     },
+     "combined_verdict": "NULL, CLOSED"
+    }
+   },
+   "college_arm": {
+    "auc_contributor": {
+     "published": {
+      "n": 244,
+      "efv": 0.6514,
+      "consensus": 0.7078,
+      "margin": -0.0564
+     },
+     "replica": {
+      "n": 244,
+      "efv": 0.65297,
+      "consensus": 0.70781,
+      "margin": -0.05484
+     },
+     "e1_refit_inclusive": {
+      "B_used": 1000,
+      "point_delta": -0.05484,
+      "boot_mean_delta": -0.04886,
+      "sd": 0.02926,
+      "mde95_onesided": 0.0481,
+      "mde95_twosided": 0.0574,
+      "ci95": [
+       -0.10737,
+       0.00719
+      ],
+      "p_gt_0": 0.045,
+      "margin_over_floor": 1.139,
+      "resolvable": true,
+      "verdict": "RESOLVABLE LOSS",
+      "mde_bonferroni_k5": 0.0681,
+      "survives_bonferroni_k5": false,
+      "bonferroni_k": 5
+     },
+     "e2_fits_held_fixed": {
+      "B_used": 1000,
+      "point_delta": -0.05484,
+      "boot_mean_delta": -0.05386,
+      "sd": 0.02784,
+      "mde95_onesided": 0.0458,
+      "mde95_twosided": 0.0546,
+      "ci95": [
+       -0.11096,
+       -0.00051
+      ],
+      "p_gt_0": 0.024,
+      "margin_over_floor": 1.197,
+      "resolvable": true,
+      "verdict": "RESOLVABLE LOSS",
+      "mde_bonferroni_k5": 0.0648,
+      "survives_bonferroni_k5": false,
+      "bonferroni_k": 5
+     },
+     "combined_verdict": "RESOLVABLE LOSS"
+    },
+    "spearman": {
+     "published": {
+      "n": 244,
+      "efv": 0.2778,
+      "consensus": 0.2898,
+      "margin": -0.012
+     },
+     "replica": {
+      "n": 244,
+      "efv": 0.27673,
+      "consensus": 0.28857,
+      "margin": -0.01184
+     },
+     "e1_refit_inclusive": {
+      "B_used": 1000,
+      "point_delta": -0.01184,
+      "boot_mean_delta": -0.00912,
+      "sd": 0.04172,
+      "mde95_onesided": 0.0686,
+      "mde95_twosided": 0.0818,
+      "ci95": [
+       -0.0932,
+       0.0742
+      ],
+      "p_gt_0": 0.408,
+      "margin_over_floor": 0.173,
+      "resolvable": false,
+      "verdict": "NULL",
+      "mde_bonferroni_k5": 0.097,
+      "survives_bonferroni_k5": false,
+      "bonferroni_k": 5
+     },
+     "e2_fits_held_fixed": {
+      "B_used": 1000,
+      "point_delta": -0.01184,
+      "boot_mean_delta": -0.0113,
+      "sd": 0.03692,
+      "mde95_onesided": 0.0607,
+      "mde95_twosided": 0.0724,
+      "ci95": [
+       -0.08038,
+       0.06625
+      ],
+      "p_gt_0": 0.375,
+      "margin_over_floor": 0.195,
+      "resolvable": false,
+      "verdict": "NULL",
+      "mde_bonferroni_k5": 0.0859,
+      "survives_bonferroni_k5": false,
+      "bonferroni_k": 5
+     },
+     "combined_verdict": "NULL, CLOSED"
+    }
+   },
+   "selection_control": {
+    "pool_rows_all_archetypes": 1005,
+    "note": "UNREGISTERED, added after the run; it can only weaken the one resolvable cell, never strengthen it",
+    "whole_pool_auc_delta": -0.0003,
+    "hs_bat": {
+     "cell_n": 168,
+     "observed_auc_delta": -0.00193,
+     "random_subset_mean": -0.00025,
+     "random_subset_sd": 0.0207,
+     "share_of_random_subsets_at_least_this_negative": 0.4708,
+     "share_at_least_this_extreme_either_side": 0.9387
+    },
+    "hs_arm": {
+     "cell_n": 144,
+     "observed_auc_delta": -0.02155,
+     "random_subset_mean": -0.00022,
+     "random_subset_sd": 0.023,
+     "share_of_random_subsets_at_least_this_negative": 0.176,
+     "share_at_least_this_extreme_either_side": 0.353
+    },
+    "college_arm": {
+     "cell_n": 244,
+     "observed_auc_delta": -0.05484,
+     "random_subset_mean": -0.00016,
+     "random_subset_sd": 0.01625,
+     "share_of_random_subsets_at_least_this_negative": 0.0005,
+     "share_at_least_this_extreme_either_side": 0.0008
+    }
+   },
+   "_B": 1000,
+   "_elapsed_s": 28.2
+  },
+  "wave1_sqrt_bound_check": {
+   "claim": "COHORT_FLOORS.md 0.2 item 2: sqrt(n_pool/n_cell) rescaling ignores refit and composition variance, so it is a LOWER BOUND on the cell floor",
+   "test": "compare it to the measured E1 refit-inclusive spearman floor for the same cell",
+   "head_to_head.archetype.hs_bat": {
+    "wave1_claimed_lower_bound": 0.1539,
+    "measured_e1_floor": 0.0529,
+    "bound_over_measured": 2.91,
+    "is_actually_a_lower_bound": false
+   },
+   "head_to_head.archetype.hs_arm": {
+    "wave1_claimed_lower_bound": 0.1662,
+    "measured_e1_floor": 0.0958,
+    "bound_over_measured": 1.73,
+    "is_actually_a_lower_bound": false
+   },
+   "head_to_head.archetype.college_arm": {
+    "wave1_claimed_lower_bound": 0.1277,
+    "measured_e1_floor": 0.0686,
+    "bound_over_measured": 1.86,
+    "is_actually_a_lower_bound": false
+   },
+   "verdict": "the sqrt(n) bound is NOT a lower bound; it OVERSTATES the measured floor, which is the permissive direction for a NULL"
+  },
+  "elapsed_s": 121.1
+ }
 }

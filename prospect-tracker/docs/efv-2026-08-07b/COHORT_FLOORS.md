@@ -529,3 +529,512 @@ exactly the power laundering part 0.2 bans.
 | I5-c | the cell-restricted bootstrap covers nominally | **PASS, conservative** | coverage 100%, boot sd 1.29x the truth |
 | Q3 | pair-weighted vs unweighted | **REPORTED, NOT SWITCHED** | unweighted 6-15% tighter, zero verdicts change |
 | side | the shipped eval artifacts assert a claim their own numbers contradict | **DEFECT, regen owed** | `data/xfv_eval*.json honest_note` says "BEAT consensus for both cuts", the file's own hitter `full_pool_km` is -0.0215 |
+
+---
+---
+
+# WAVE 2 EXTENSION (2026-08-07b, Lane B): the five cells wave 1 never floored
+
+Producer: `python tools/efv_cohort_floor_lab.py waveb`
+Ledger: the `waveb_*` blocks of `data/xfv_cohort_floors.json`
+Everything below this line was added in wave 2. Parts 0-6 above are wave 1 and are
+unedited except for the two corrections logged in Part 6B.
+
+## PART 0B. PRE-REGISTRATION (written BEFORE the wave-2 lab existed)
+
+Registered 2026-08-07, wave 2. The file `tools/efv_cohort_floor_lab.py` did not yet
+contain a `waveb`, `capture`, `archcells` or `eracells` mode when this part was
+written; the placeholder at PART 5B was the last line of this document at that moment,
+and nothing in Part 0B was edited after a floor was seen.
+
+### 0B.0 Why this part exists, and what wave 1 got wrong
+
+`data/xfv_scoreboard_eval.json` `weak_cells` has **SIXTEEN** rows. Wave 1's Part 6
+ledger row I5-a says "eleven weak cells ... ALL NULL, ALL CLOSED". Eleven is the
+number wave 1 measured. Five rows were never floored and appear nowhere in Parts 1-6:
+
+| cell | metric | n | eFV | consensus | margin |
+|---|---|---|---|---|---|
+| `capture.curve_area` | `war_capture` | 3,678 | 0.8148 | 0.8229 | **-0.0081** |
+| `head_to_head.archetype.college_arm` | `auc_contributor` | 244 | 0.6514 | 0.7078 | -0.0564 |
+| `head_to_head.archetype.hs_arm` | `auc_contributor` | 144 | 0.6903 | 0.7149 | -0.0246 |
+| `pit.era.<=2018` | `auc_contributor` | 132 | 0.7740 | 0.7841 | -0.0101 |
+| `head_to_head.archetype.hs_bat` | `auc_contributor` | 168 | 0.7705 | 0.7744 | -0.0039 |
+
+Wave 1 also closed the three `head_to_head.archetype.*` **spearman** cells with a
+`sqrt(n_pool / n_cell)` rescale of a DIFFERENT instrument's floor and no bootstrap of
+their own. Those numbers remain admissible only as LOWER BOUNDS; wave 2 relabels them
+so in the artifact and then replaces them with a real bootstrap.
+
+`capture.curve_area` is the target. It is n = 3,678, an order of magnitude larger than
+any cell wave 1 floored and about twice the pool whose floor came in at 0.0297, so it
+is the one cell on the list with a real chance of being adjudicable. It is plan item
+**D11**. The site sells surplus DOLLARS, a value-weighted quantity; `curve_area` is the
+value-weighted instrument, and the published headline is a rank correlation, which is
+not.
+
+### 0B.1 What was already known when this was registered
+
+Honesty about the timeline, because three wave-1 lanes could not support their
+pre-registration claims. Before writing this part I ran read-only replica probes in a
+scratchpad outside the repo. What they established, and nothing more:
+
+- the capture pool reproduces exactly outside `source_backtest.py` (3,677 rows against
+  the published 3,678; areas 0.8148 / 0.8229 to 4 dp);
+- the `pit.era.<=2018` AUC pair reproduces exactly (0.7740 / 0.7841, n = 132) from
+  `load_cellpool("pit")` plus the era chain;
+- the three archetype cells reproduce at exactly the published n (168 / 144 / 244) with
+  the consensus leg exact and the eFV leg 0.0016 to 0.0030 high, because the published
+  eFV grade is rounded to 0.1 FV by a display remap and mine is not;
+- `curve_area` is algebraically a WAR-weighted mean rank (see 0B.4 K2);
+- the consensus board has 230 distinct values over 3,677 rows and its largest tie block
+  is 462 rows.
+
+**No floor, no bootstrap, no MDE, no coverage check and no verdict existed at
+registration time.** The K3 tie control and the K1 permutation null were each run once
+in that probe, which is why they are registered below as MANDATORY rather than
+optional: they had already shown they were live, and registering them here removes any
+option to drop them if they came back inconvenient.
+
+### 0B.2 Quantities
+
+| id | quantity | pool |
+|---|---|---|
+| Q4 | `curve_area` delta (eFV minus consensus) on the pooled hit+pit capture board | 3,677 OOS-graded matrix rows carrying a consensus FV |
+| Q5a | `auc_contributor` delta on `pit.era.<=2018` | the scoreboard era chain, unweighted |
+| Q5b | `auc_contributor` AND `spearman` delta on the three archetype cells | one row per player, latest pre-debut all-source common read |
+
+### 0B.3 Estimators. Both are reported for every cell.
+
+The lane brief requires both, and they can disagree.
+
+- **E1 REFIT-INCLUSIVE.** The shipped gate-standard protocol
+  (`docs/EFV_GATE_STANDARD.md` section 2.1): resample the WHOLE per-side eFV matrix pool
+  with replacement, train and test together, refit consensus OLS plus weighted ridge plus
+  the linear output calibration on every draw, re-run the forward chain, then recompute
+  the statistic on whatever rows the resampled pool scores. Primitives imported from
+  `tools/efv_mde_lab.py`, never reimplemented.
+- **E2 FITS-HELD-FIXED.** The shipped OOS grades are frozen at their point values and
+  only the scored rows are resampled with replacement.
+
+E1 and E2 measure different things. E1 carries refit variance and E2 does not, so E1 is
+expected to be the wider; `tools/efv_mde_lab.py:11-14` records a test-only bootstrap
+understating sd by 1.6-1.8x on the rank instrument. Both are reported for every cell.
+**Registered tie-break: E1 governs the verdict**, because it is the estimator the
+shipped gate uses, and any disagreement goes in the headline rather than being resolved
+silently.
+
+Resampling unit, registered explicitly for Q4: **the PLAYER, not the pair.**
+`curve_area` is a whole-board statistic, so a draw must resample the board's rows and
+re-rank them; there is no pair to resample. Each matrix row is one player-cohort and
+enters at most one fold, so a draw duplicates a player into the same fold and never
+splits one across train and test.
+
+### 0B.4 Mandatory controls. All six are reported whatever they say.
+
+- **K1 PERMUTATION NULL (required by the brief).** Shuffle the eFV board order within
+  the pool, R = 400. `curve_area` must collapse toward its no-information value. That
+  value is derived, not guessed: under a uniformly random order E[area] = (n+1)/(2n),
+  which is 0.50014 at n = 3,677. PASS if the permuted mean is within 0.01 of it.
+- **K2 EXACT RANK IDENTITY.** area = (n+1)/n - (1/(n\*tot)) \* sum_i war_i \* rank_i, so
+  delta_area = -(1/(n\*tot)) \* sum_i war_i \* (rank_i^eFV - rank_i^cons). Checked to
+  1e-9. Every attribution in Part 3B rests on this identity; if it fails, the
+  attribution is withdrawn.
+- **K3 TIE-RESOLUTION CONTROL (rule D, the dumbest explanation).** `consensus_fv_raw` is
+  coarse and `source_backtest.py:673` sorts with a STABLE sort, so inside a consensus tie
+  block the arbitrary input order decides who ranks first. That input order is the
+  `oos_grades` dict order, which is side then cohort year, and older cohorts have had
+  more years to accumulate career WAR. Control: recompute both areas with a RANDOM
+  within-tie order over R = 400 seeds, and report where the published value sits in that
+  distribution. If the published consensus area sits above the top of the random
+  distribution, part of the margin is a zero-information ordering credit and the honest
+  comparison is the one at equal resolution.
+- **K4 CROSS-SIDE POOLING CONTROL.** The pooled board interleaves hitters and pitchers.
+  eFV enters on a WAR scale, which is cross-side comparable; consensus enters on raw FV,
+  which the `efv-fa-execution-2026-07-30` record says is NOT cross-side comparable.
+  Report the delta computed WITHIN each side. If the loss is absent within side, it is a
+  side-mixing artifact and not an ordering defect.
+- **K5 OUTCOME-DEFINITION CONTROL.** `source_backtest.py:641-652` gives a row the
+  universe's FULL CAREER WAR when the player is in the universe and the matrix's
+  first-six-season label otherwise: two different outcome variables in one pool. Report
+  the split, and recompute the delta with the six-season label on every row.
+- **K6 THE TOP-REORDERING TEST (the brief's directional ask).** Hypothesis: eFV
+  re-orders the top of the board in a way that helps rank correlation and hurts value
+  capture. Registered test, not an assertion: the K2 identity gives an EXACT per-player
+  attribution war_i \* delta_rank_i. Bucket it by consensus-rank decile and report which
+  deciles carry the loss. Plus hybrid boards, consensus order for the top q% with eFV
+  below and the mirror, for q in 5 / 10 / 20 / 50%. The hypothesis is CONFIRMED only if
+  the loss is concentrated in the top deciles AND the consensus-top hybrid closes most
+  of it. If the loss is spread across the board the hypothesis is REFUTED and must be
+  reported as refuted.
+
+### 0B.5 Coverage gate, two-sided
+
+Rule F: when the product is a NULL, a floor that is too WIDE is the permissive
+direction. So the coverage check is registered with a BAND, not a floor.
+
+`curve_area` is a new statistic for this bootstrap, so it may not quote a number until
+it passes a nominal coverage check under a synthetic null where the truth is known by
+construction: wave 1's `nullcov` design with the capture area substituted for the rank
+delta. Registered PASS band, in advance:
+
+- `coverage_95` >= 0.90 (under-coverage guard; would make a RESOLVABLE verdict too easy);
+- `sd_ratio_boot_over_true` <= 1.60 (over-width guard; would make a NULL verdict too easy).
+
+If coverage fails low, no floor may be quoted at all. If the sd ratio fails high, floors
+may be quoted but any NULL from them is downgraded to **NULL AT AN OVER-WIDE FLOOR** and
+the over-width is stated in the headline.
+
+### 0B.6 Success criteria, registered in advance
+
+Per cell, per estimator: **RESOLVABLE LOSS** if |point| >= MDE95 one-sided
+(1.645 \* sd) and the point is negative; **NULL** otherwise. Combined verdict:
+
+- **RESOLVABLE LOSS** if E1 and E2 both resolve;
+- **CONTESTED** if exactly one resolves. E1 governs, and the disagreement goes in the
+  headline;
+- **NULL, CLOSED** if neither resolves.
+
+**Multiplicity (rule C).** This lane tests five cells. Alongside every MDE95 the lane
+reports the Bonferroni floor at k = 5, MDE_bonf = 2.326 \* sd (one-sided alpha 0.01),
+and a `survives_bonferroni_k5` flag. A cell that resolves at MDE95 but not at MDE_bonf
+is reported as resolving only unadjusted, in those words.
+
+### 0B.7 What this wave may NOT do
+
+- **BLOCKED, and not re-proposable in any form:** the wave-1 proposal to write into
+  `tools/efv_scoreboard.py` `weak_cells_note` a sentence declaring that every cell was
+  given its own paired-bootstrap floor and that all of them are NULLs, or any sentence
+  closing the weak-cell experiment queue. Five of the sixteen rows had no floor when
+  that sentence was drafted, including the one most likely to be adjudicable.
+- May not write any file outside the OWNS block: `tools/efv_cohort_floor_lab.py`,
+  `data/xfv_cohort_floors.json`, this document.
+- May not run pytest, and may not run git.
+- May not quote a number that does not reproduce from `data/xfv_cohort_floors.json`.
+- Wave 1's `sqrt(n)` archetype bounds may not be quoted anywhere, in prose or in an
+  artifact string, without the words LOWER BOUND attached.
+
+### 0B.8 If `curve_area` resolvably loses
+
+Registered in advance so the answer is not written after the number is seen. If Q4
+resolves as a loss, then consensus beats eFV on the value-weighted instrument on the
+largest pool on the scoreboard. Placement and wording are drafted in PART 4B and bind
+this lane's recommendation whichever way the number falls.
+
+---
+
+## 5B. RESULT (appended after the run)
+
+Run: `python tools/efv_cohort_floor_lab.py waveb 2000`, 143 s. Every number below is a
+key of `data/xfv_cohort_floors.json` under `waveb`, and nothing in Part 0B was touched
+after the run.
+
+### 5B.1 Verdict table
+
+| cell | metric | n | margin | E1 refit floor | E2 fixed floor | verdict |
+|---|---|---|---|---|---|---|
+| `capture.curve_area` | war_capture | 3,677 | -0.00814 | 0.0133 (0.61x) | 0.0084 (0.97x) | **NULL, CLOSED** |
+| `head_to_head.archetype.college_arm` | auc_contributor | 244 | -0.05484 | 0.0481 (1.14x) | 0.0458 (1.20x) | **RESOLVABLE LOSS, unadjusted only** |
+| `head_to_head.archetype.hs_arm` | auc_contributor | 144 | -0.02155 | 0.0612 (0.35x) | 0.0401 (0.54x) | NULL, CLOSED |
+| `pit.era.<=2018` | auc_contributor | 132 | -0.01005 | 0.0873 (0.12x) | 0.0546 (0.18x) | NULL, CLOSED |
+| `head_to_head.archetype.hs_bat` | auc_contributor | 168 | -0.00193 | 0.0276 (0.07x) | 0.0203 (0.10x) | NULL, CLOSED |
+
+Bonus re-measurements, replacing wave 1's LOWER BOUNDS with real bootstraps:
+
+| cell | metric | n | margin | E1 refit floor | E2 fixed floor | verdict |
+|---|---|---|---|---|---|---|
+| `head_to_head.archetype.hs_bat` | spearman | 168 | -0.02234 | 0.0529 (0.42x) | 0.0373 (0.60x) | NULL, CLOSED |
+| `head_to_head.archetype.hs_arm` | spearman | 144 | -0.01804 | 0.0958 (0.19x) | 0.0685 (0.26x) | NULL, CLOSED |
+| `head_to_head.archetype.college_arm` | spearman | 244 | -0.01184 | 0.0686 (0.17x) | 0.0607 (0.20x) | NULL, CLOSED |
+
+**Four of the five never-floored cells are NULLs. One is not.** `college_arm`
+`auc_contributor` clears its own floor under both estimators, at 1.14x (E1) and 1.20x
+(E2). It does **NOT** survive the multiplicity adjustment registered in 0B.6: the
+Bonferroni floor at k = 5 is 0.0681 (E1) and 0.0648 (E2), and the margin is 0.0548. It
+therefore **resolves only unadjusted**, in those words, and that is how it must be
+quoted.
+
+### 5B.2 Reproduction, before any floor
+
+| cell | published | replica | gap |
+|---|---|---|---|
+| `curve_area` | eFV 0.8148 / cons 0.8229, n 3,678 | eFV 0.81480 / cons 0.82294, n 3,677 | margin -4.2e-05 |
+| `pit.era.<=2018` auc | 0.7740 / 0.7841, n 132 | 0.77400 / 0.78405, n 132 | exact |
+| `hs_bat` auc | 0.7705 / 0.7744, n 168 | 0.77248 / 0.77441, n 168 | eFV +0.0020 |
+| `hs_arm` auc | 0.6903 / 0.7149, n 144 | 0.69334 / 0.71489, n 144 | eFV +0.0030 |
+| `college_arm` auc | 0.6514 / 0.7078, n 244 | 0.65297 / 0.70781, n 244 | eFV +0.0016 |
+
+Two reproduction notes, both real and both worth someone's time:
+
+1. The replica pool is 3,677 against a published 3,678, one row, on identical areas to
+   4 dp. The matrix on disk has moved since the scoreboard was stamped.
+2. Every archetype consensus leg is EXACT and every eFV leg is 0.0016 to 0.0030 HIGH.
+   The cause is `source_backtest.py:588`: eFV's raw OOS score is remapped onto the
+   consensus FV scale and **rounded to 0.1 FV** so it can be tier-binned for display.
+   Spearman survives a monotone remap; a tie-corrected AUC does not survive the ROUNDING,
+   because rounding manufactures ties and ties cost AUC. The published archetype AUCs
+   understate eFV by roughly 0.002 to 0.003 for a display reason. That is small next to
+   every floor here and changes no verdict, but it is a measurement being degraded by a
+   presentation step.
+
+### 5B.3 The coverage gate (0B.5), two-sided
+
+`waveb.coverage_gate`, S = 100 synthetic datasets, 40 checked, B = 200, n = 900.
+
+- truth -0.00159, true sampling sd 0.00441, mean bootstrap sd 0.00494
+- `sd_ratio_boot_over_true` **1.119** (registered maximum 1.60): PASS the over-width guard
+- `coverage_95` **0.95** (registered minimum 0.90): PASS the under-coverage guard
+
+Both directions pass, so the `curve_area` floors are quotable as measured and the NULL at
+5B.1 is not a NULL bought with an over-wide floor.
+
+### 5B.4 Q4: the `curve_area` floor
+
+`waveb.q4_capture_curve_area`. Point margin -0.00814 on n = 3,677.
+
+| estimator | sd | MDE95 one-sided | \|margin\|/floor | CI95 | p(delta > 0) | Bonferroni k5 |
+|---|---|---|---|---|---|---|
+| E1 refit-inclusive | 0.00811 | **0.0133** | 0.61x | [-0.03096, +0.00039] | 0.031 | 0.0189 |
+| E2 fits-held-fixed | 0.00509 | **0.0084** | 0.97x | [-0.01719, +0.00265] | 0.081 | 0.0118 |
+
+**Both estimators return NULL, so there is no CONTESTED branch to report.** They agree on
+the verdict and disagree on the width by a factor of 1.59, which is inside the 1.6-1.8x
+that `tools/efv_mde_lab.py:11-14` predicted for a test-only bootstrap.
+
+**A tension this lane will not paper over.** E2 misses by 3 percent of its own floor
+(0.97x), and E1's percentile interval only just contains zero at +0.00039 with a
+`p_gt_0` of 0.031. Read as a percentile test, E1 would call this significant. Read
+against the registered criterion, |point| >= 1.645 \* sd, it is not. The two disagree
+because the E1 bootstrap distribution is centred at -0.01369 while the point is
+-0.00814, a bootstrap bias of -0.00555; a naive percentile interval inherits that shift,
+and a bias correction would move it back UP, further from significance, not closer. The
+registered criterion governs, and it was registered before the number existed.
+
+**So `curve_area` is a NULL. It is also the closest thing to a resolvable cell anywhere
+on the weak-cell list, and it should not be filed next to a 0.07x cell.**
+
+### 5B.5 Q4 controls: what the -0.00814 is actually made of
+
+All six ran. `waveb.q4_controls`.
+
+**K1 permutation null: PASS.** The eFV board shuffled 400 times gives a mean area of
+0.50040 against the derived no-information value (n+1)/2n = 0.50014, a gap of 0.00026.
+The consensus board shuffles to 0.50404. The statistic collapses to no-information under
+permutation, so it is measuring ordering and not an artifact of its own construction.
+
+**K2 exact rank identity: PASS at machine zero.** area = (n+1)/n - sum_i war_i \* rank_i /
+(n \* total). Maximum absolute error 0.0. Everything in K6 is licensed by this.
+
+The identity is worth stating plainly because it changes what `curve_area` IS:
+**`curve_area` is a WAR-weighted mean rank.** It is not a curve statistic that needs a
+curve; it is one linear functional of the ranks, weighted by realized WAR. That is
+exactly why it is the value-weighted instrument, and it is also why it is fragile: a
+handful of high-WAR players carry it.
+
+**K3 tie resolution: the published consensus number contains a zero-information credit.**
+The consensus board has 230 distinct values over 3,677 rows, its largest tie block is
+462 rows, and **3,636 of 3,677 rows sit inside a tie block.** `source_backtest.py:673`
+sorts with a stable sort, so inside a tie block the input order decides who is ranked
+first, and that input order is side then cohort year. Under 400 random within-tie
+orderings the consensus area is 0.82186 (sd 0.000198, max 0.82249); as published it is
+0.82294, which is **5.48 sd above the random mean and above the maximum of 400 draws.**
+The eFV board, with 2,912 distinct values, gets a tie credit of 0.00002, i.e. none.
+
+At equal resolution the margin is -0.00708 instead of -0.00814. **13.3% of the published
+loss is the arbitrary order inside consensus tie blocks**, and it is arbitrary in a
+direction that is not accidental: older cohorts sort first and older cohorts have had
+more years to accumulate career WAR.
+
+**K4 cross-side pooling: the loss survives within side, so it is not a side-mixing
+artifact.** hit -0.00329 on n = 1,792, pit -0.01409 on n = 1,885, pooled -0.00814. This
+control was run because eFV enters the pooled board on a WAR scale and consensus on raw
+FV, which is not cross-side comparable, and the answer is that the confound is not the
+explanation. It does relocate the loss: it is four times larger on the pitching side.
+
+**K5 outcome definition: this is the largest single explanation, and it is definitional.**
+`source_backtest.py:641-652` gives a row the universe's FULL CAREER WAR when the player
+is in the universe and the matrix's first-six-season label otherwise. The split is 1,645
+career-WAR rows and 2,032 label rows, and **the 2,032 label rows carry a total WAR of
+exactly 0.0 under either definition.** So the published capture curve is scored, in
+substance, on CAREER WAR, with 2,032 zero-value rows acting as rank ballast.
+
+That is not the quantity eFV is fit to. eFV and its consensus OLS anchor are both fit to
+`target_censored`, the first-six-season label. On the 1,645 rows that carry all of the
+WAR:
+
+| outcome variable | margin |
+|---|---|
+| career WAR (as published) | **-0.00883** |
+| first-six-season label (the model's own target) | **-0.00090** |
+| first-six-season label, full 3,677-row pool | **+0.00203** |
+
+The correlation between the two outcome variables on those rows is 0.8896 and the means
+are 3.251 against 2.848. **Changing the outcome variable, and nothing else, removes 90%
+of the loss on the rows that carry the value, and flips the sign on the full pool.**
+
+**K6 top reordering: the brief's hypothesis is REFUTED.** The registered test was whether
+the loss is concentrated in the top deciles AND whether a consensus-top hybrid closes
+most of it. Neither holds.
+
+Attribution by consensus-rank decile (sums to -0.00814, which is the margin):
+
+| consensus decile | n | share of pool WAR | contribution to margin | mean rank move, eFV minus consensus |
+|---|---|---|---|---|
+| 1 | 368 | 0.525 | -0.00490 | +54 |
+| 2 | 368 | 0.191 | +0.00080 | +40 |
+| 3 | 368 | 0.094 | **-0.01229** | +381 |
+| 4 | 367 | 0.030 | -0.00090 | +300 |
+| 5 | 368 | 0.051 | -0.00136 | +70 |
+| 6 | 368 | 0.045 | +0.00069 | -109 |
+| 7 | 367 | 0.019 | +0.00301 | -86 |
+| 8 | 368 | 0.029 | +0.00413 | -134 |
+| 9 | 368 | 0.009 | +0.00104 | -26 |
+| 10 | 367 | 0.008 | +0.00165 | -492 |
+
+The top two deciles carry 50.4% of the margin, but the single largest contributor is
+**decile 3 at -0.01229, which is 151% of the entire margin on its own**, and deciles 6
+through 10 hand +0.01052 back. The hybrid boards say the same thing more directly:
+
+| hybrid | margin vs consensus |
+|---|---|
+| consensus order for the top 5%, eFV below | -0.00743 |
+| consensus order for the top 10%, eFV below | -0.00744 |
+| consensus order for the top 20%, eFV below | -0.00625 |
+| consensus order for the top 50%, eFV below | **+0.00091** |
+| eFV order for the top 5%, consensus below | +0.00123 |
+| eFV order for the top 10%, consensus below | +0.00167 |
+| eFV order for the top 20%, consensus below | +0.00060 |
+| eFV order for the top 50%, consensus below | -0.00080 |
+
+Handing consensus the top 20% and letting eFV order everything below still leaves 77% of
+the loss. Handing eFV the top 20% and letting consensus order everything below is a
+small eFV WIN. **eFV's ordering of the top of the board is not the problem; it is
+marginally better than consensus's.** The loss lives between roughly the 20th and 50th
+percentile of the consensus board, where eFV demotes decile-3 players by an average of
+381 places and some of them turn out to be worth a lot.
+
+**And it is ten players.** The ten single worst rows for eFV account for **136%** of the
+whole margin. The worst is a player consensus ranked 824th and eFV ranked 2,599th who
+went on to 19.11 career WAR, costing 0.00161 by himself, one fifth of the published
+margin. A statistic that ten rows out of 3,677 can move by more than its own value is a
+statistic whose 0.0133 floor is not surprising.
+
+### 5B.6 Q5 cells
+
+`waveb.q5a_pit_era_auc`: replica exact at 0.7740 / 0.7841 on n = 132, margin -0.01005,
+E1 floor 0.0873 (8.7x the margin), E2 floor 0.0546. **NULL, CLOSED**, and not close.
+
+`waveb.q5b_archetype_cells`: a real cluster paired bootstrap on 1,005 archetype rows
+(one row per player, latest pre-debut all-source common read), resampling the eFV matrix
+pool and refitting the forward chain on every draw. This is the first bootstrap these
+cells have ever had.
+
+`college_arm` `auc_contributor` is the exception on the list: margin -0.05484 against an
+E1 floor of 0.0481 and an E2 floor of 0.0458. It resolves under both, at 1.14x and 1.20x.
+
+**The control that could have killed it, and did not.** One cell out of eight clearing
+its floor is what selection looks like, so an UNREGISTERED control was added after the
+run (disclosed as unregistered here and in the artifact): draw random 244-row subsets
+without replacement from all 1,005 archetype rows on the same fixed fits, and ask how
+often a random cell of that size is at least that negative. The whole-pool AUC delta is
+-0.00030, random 244-row subsets average -0.00016 with sd 0.01625, and **0.05% of 4,000
+random subsets are at least as negative as -0.05484**. The same control puts `hs_arm` at
+17.6% and `hs_bat` at 47.1%, which is what a nothing cell looks like. So `college_arm`
+is not an artefact of cell size or of testing eight cells.
+
+It still does not survive the registered Bonferroni floor. Reported as: **resolves only
+unadjusted.** It is the first thing on the weak-cell list with a claim on the experiment
+queue, and it is a college-pitcher discrimination problem, not a value-capture problem.
+
+### 5B.7 Correction: wave 1's sqrt(n) bound was not a lower bound
+
+`waveb.wave1_sqrt_bound_check`. Wave 1 closed the three archetype SPEARMAN cells with
+`sqrt(n_pool / n_cell)` applied to a different instrument's floor, and Part 0.2 item 2
+of this document claims that number is a LOWER BOUND on the true cell floor because it
+ignores refit and composition variance. Q5b measured those same floors, so the claim is
+now checkable:
+
+| cell | wave 1 claimed lower bound | measured E1 floor | bound / measured |
+|---|---|---|---|
+| `hs_bat` spearman | 0.1539 | 0.0529 | **2.91x** |
+| `hs_arm` spearman | 0.1662 | 0.0958 | **1.73x** |
+| `college_arm` spearman | 0.1277 | 0.0686 | **1.86x** |
+
+**It is not a lower bound. It OVERSTATES the measured floor by 1.7x to 2.9x**, and by
+rule F that is the permissive direction for a NULL: it closes cells more easily than a
+real floor does. The three verdicts happen to survive, because all three margins are
+below the measured floors too. The METHOD does not survive and must not be reused. The
+likely cause is that the base floor (0.0352 at n = 3,210, `data/xfv_headtohead_gap.json`)
+was measured on 3,210 ROWS belonging to only 1,563 players, so it already carried the
+repeat-measurement inflation that `sqrt(n)` then scaled up again, while these cells are
+one row per player.
+
+Every row of `i5_archetype_bounds` in the artifact now carries
+`"floor_kind": "LOWER BOUND (NO bootstrap was run for this cell in wave 1)"` and a
+`superseded_by` pointer, per the brief.
+
+---
+
+## PART 4B. WHERE THE `curve_area` RESULT GOES, AND IN WHAT WORDS
+
+Registered at 0B.8 to be written whichever way the number fell. It fell NULL, so the
+"resolvable loss" branch does not fire, and this lane does **not** get to say consensus
+beats eFV on value capture. What it does get to say is bounded, and all four of these
+are supported by `data/xfv_cohort_floors.json`:
+
+1. **`curve_area` is a NULL at 0.61x its floor (E1).** It joins the closed list, but it
+   is the only cell on that list within a factor of 1.7 of resolving, and the only one
+   where a modest increase in pool size would change the answer. It should be recorded
+   as CLOSED AT CURRENT n, not as CLOSED.
+2. **The published -0.0081 overstates whatever is there.** 13.3% of it is a
+   zero-information tie credit inside the consensus board (K3), and swapping the outcome
+   variable to the model's own target removes 90% of the rest on the rows that carry the
+   WAR (K5). What survives both is a small negative number well inside the floor.
+3. **The instrument has two defects that are worth fixing regardless of the verdict**,
+   because the site quotes this curve. They are listed as `edits_requested` for the
+   owner of `source_backtest.py`, which this lane does not own: the stable-sort tie
+   order, and the outcome variable.
+4. **The brief's directional hypothesis is refuted and should not be repeated.** eFV
+   does not lose value capture by re-ordering the top of the board. Its top-20% ordering
+   beats consensus's. The loss sits at consensus ranks 700 to 1,800 and is carried by
+   about ten players.
+
+**Wording, if any of this reaches a page.** Not "eFV loses the value-capture
+instrument". The supported sentence is: *"On the 3,677-player capture pool the two
+boards are within the measurement floor of each other on value capture (margin -0.008
+against a floor of 0.013); eFV's published rank win and its published capture loss are
+both smaller than what this pool can measure."*
+
+---
+
+## PART 6B. CORRECTIONS TO WAVE 1, AND THE WAVE-2 LEDGER
+
+Two corrections to Parts 1-6 above. Neither is re-litigated, both are recorded.
+
+- **Part 6 row I5-a said "eleven weak cells ... ALL NULL, ALL CLOSED".** `weak_cells`
+  has SIXTEEN rows. Eleven were measured, five were not, and one of the five is not a
+  null. The row should read: eleven of sixteen, and see 5B.1 for the rest.
+- **Part 0.2 item 2's "LOWER BOUND" claim is empirically false**, see 5B.7.
+
+**BLOCKED AND NOT RE-PROPOSABLE.** The wave-1 draft sentence for
+`tools/efv_scoreboard.py` `weak_cells_note`, asserting that every cell was given its own
+paired-bootstrap floor, that all of them are nulls, that no cell can be adjudicated at
+current n, and that no per-cohort fix may be proposed from the list, is wrong on all four
+clauses as of this run. Five cells had no floor when it was drafted; one of the five
+adjudicates; and the fix it would have foreclosed (`college_arm` discrimination) is the
+one live item the weak-cell list has produced.
+
+| id | claim | verdict | evidence |
+|---|---|---|---|
+| B-1 | `capture.curve_area` -0.0081 is resolvable | **FALSE, NULL** | 0.61x the E1 floor 0.0133; both estimators agree; `waveb.q4_capture_curve_area` |
+| B-2 | the capture bootstrap covers nominally in both directions | **PASS** | coverage 0.95, sd ratio 1.119 against a registered band of 0.90 / 1.60 |
+| B-3 | `curve_area` collapses to no-information under permutation | **CONFIRMED** | 0.50040 against (n+1)/2n = 0.50014, R = 400 |
+| B-4 | part of the margin is a consensus tie-order credit | **NEW, CONFIRMED** | 3,636 of 3,677 rows in a tie block; +0.00108, z = 5.48; margin -0.00814 to -0.00708 |
+| B-5 | the margin is an outcome-definition artifact | **NEW, CONFIRMED IN LARGE PART** | career WAR -0.00883 vs the model's own target -0.00090 on the same 1,645 value-carrying rows |
+| B-6 | eFV loses value capture by re-ordering the TOP of the board | **REFUTED** | eFV-top-20% hybrid is +0.00060; consensus-top-20% hybrid still -0.00625 |
+| B-7 | the loss is a cross-side pooling artifact | **FALSE** | survives within side: hit -0.00329, pit -0.01409 |
+| B-8 | `pit.era.<=2018` auc is resolvable | **FALSE, NULL** | 0.12x the E1 floor 0.0873 |
+| B-9 | `hs_bat` and `hs_arm` auc are resolvable | **FALSE, NULL** | 0.07x and 0.35x their E1 floors |
+| B-10 | `college_arm` auc_contributor is resolvable | **CONFIRMED, UNADJUSTED ONLY** | 1.14x E1 / 1.20x E2; fails Bonferroni k5 (0.0681); 0.05% of random 244-row cells are this negative |
+| B-11 | wave 1's sqrt(n) archetype number is a LOWER BOUND on the cell floor | **FALSE** | 1.73x to 2.91x ABOVE the measured floors; permissive direction for a NULL |
+| B-12 | the published archetype eFV AUCs are degraded by a display rounding step | **NEW, CONFIRMED** | replica eFV legs +0.0016 to +0.0030 with the same consensus legs; `source_backtest.py:588` rounds the remapped grade to 0.1 FV |
