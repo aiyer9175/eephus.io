@@ -1,51 +1,780 @@
 {
- "generated_at": "2026-07-14",
- "model": "eFV ungraded (no-FV production ridge)",
- "by_side": {
+ "population": {
+  "labeled_pool_by_level": {
+   "AAA": 480,
+   "A+": 377,
+   "AA": 722,
+   "A": 323,
+   "CPX": 164,
+   "DSL": 54
+  },
+  "labeled_pool_n": 2120,
+  "served_provisional_by_level": {
+   "AA": 651,
+   "AAA": 612,
+   "A+": 840,
+   "A": 1038,
+   "CPX": 772,
+   "DSL": 2080
+  },
+  "served_provisional_n": 5993,
+  "labeled_pool_share": {
+   "AAA": 0.2264,
+   "A+": 0.1778,
+   "AA": 0.3406,
+   "A": 0.1524,
+   "CPX": 0.0774,
+   "DSL": 0.0255
+  },
+  "served_share": {
+   "AA": 0.1086,
+   "AAA": 0.1021,
+   "A+": 0.1402,
+   "A": 0.1732,
+   "CPX": 0.1288,
+   "DSL": 0.3471
+  },
+  "note": "THE MAPPING CAVEAT. Everything in this artifact is measured on the labeled pool and applied to the served population, which sits about two rungs lower on the ladder. Not repairable inside this lane."
+ },
+ "generated_at": "2026-08-08",
+ "model": "eFV ungraded (no-FV production ridge), PROVISIONAL grades",
+ "producer": "python tools/efv_ungraded_gate_lab.py all 2000",
+ "registration": "docs/efv-2026-08-07b/PROVISIONAL_GATE.md",
+ "seed": 20260808,
+ "B": 2000,
+ "standard": "docs/EFV_GATE_STANDARD.md sections 2, 3 and 7",
+ "estimators": {
+  "E_refit": "whole-pool paired bootstrap, provisional ridge + linear calibration refit on every draw (gate standard section 1)",
+  "E_cond": "per-fold fits held fixed, scored rows resampled i.i.d. (gate standard section 7 / POWER_GATE.md, E_cond_iid)",
+  "convention": "MDE95 is ONE-SIDED (1.645 sd); two-sided and Bonferroni k=4 figures are printed beside every one"
+ },
+ "harness_parity": {
   "hit": {
-   "features": [
-    "obp_rel",
-    "ops_rel",
-    "k_rel",
-    "peak_k_rel",
-    "peak_obp_rel",
-    "iso_rel",
-    "age_rel_level",
-    "level_rank",
-    "n_milb_seasons"
+   "fold": 2024,
+   "n_test": 216,
+   "cal_shipped": [
+    -0.0628,
+    1.1112
    ],
-   "cohorts": {
+   "cal_lab": [
+    -0.0628,
+    1.1112
+   ],
+   "max_abs_war_diff": 0.0,
+   "max_abs_grade_diff": 0.0,
+   "rho_shipped": 0.054233,
+   "rho_lab": 0.054233,
+   "pass": true
+  },
+  "pit": {
+   "fold": 2024,
+   "n_test": 217,
+   "cal_shipped": [
+    -0.1653,
+    1.145
+   ],
+   "cal_lab": [
+    -0.1653,
+    1.145
+   ],
+   "max_abs_war_diff": 0.0,
+   "max_abs_grade_diff": 0.0,
+   "rho_shipped": -0.018927,
+   "rho_lab": -0.018927,
+   "pass": true
+  }
+ },
+ "legacy_2026_07_14": {
+  "published": {
+   "hit": {
+    "low_minors_age_le21": 0.2369,
+    "all_levels": 0.2985
+   },
+   "pit": {
+    "low_minors_age_le21": 0.0867,
+    "all_levels": 0.1854
+   }
+  },
+  "reproduced_on_current_code_and_corpus": {
+   "hit": {
     "low_minors_age_le21": {
-     "n": 105,
-     "spearman_vs_realized_war": 0.2369
+     "n": 163,
+     "spearman_vs_realized_war": 0.1122
     },
     "all_levels": {
-     "n": 621,
-     "spearman_vs_realized_war": 0.2985
+     "n": 740,
+     "spearman_vs_realized_war": 0.2807
+    }
+   },
+   "pit": {
+    "low_minors_age_le21": {
+     "n": 58,
+     "spearman_vs_realized_war": 0.1012
+    },
+    "all_levels": {
+     "n": 678,
+     "spearman_vs_realized_war": 0.1496
     }
    }
   },
-  "pit": {
-   "features": [
-    "k_rel",
-    "peak_k_rel",
-    "bb_rel",
-    "era_rel",
-    "x_era_k",
-    "age_rel_level",
-    "n_milb_seasons"
-   ],
-   "cohorts": {
-    "low_minors_age_le21": {
-     "n": 62,
-     "spearman_vs_realized_war": 0.0867
+  "note": "the incumbent protocol scores efv_ungraded._war unweighted; the battery below scores the SERVED GRADE pair-weighted, which is what the board actually publishes"
+ },
+ "battery": {
+  "by_side": {
+   "hit": {
+    "n_scored": 1032,
+    "folds_used": [
+     2018,
+     2019,
+     2020,
+     2021,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_grade_weighted": 0.26729,
+    "rho_grade_unweighted": 0.24715,
+    "rho_war_weighted": 0.26772,
+    "rho_war_unweighted": 0.24757,
+    "share_on_floor_20": 0.0891,
+    "E_refit": {
+     "B_used": 2000,
+     "point": 0.26729,
+     "boot_mean": 0.25468,
+     "sd": 0.03514,
+     "MDE95": 0.0578,
+     "mde95_twosided": 0.0689,
+     "mde95_bonferroni_k4": 0.0788,
+     "ci95": [
+      0.18423,
+      0.32444
+     ],
+     "p_le_0": 0.0,
+     "margin_over_floor": 4.625,
+     "resolvable": true,
+     "clears_bonferroni_k4": true,
+     "verdict": "RESOLVABLE WIN"
     },
-    "all_levels": {
-     "n": 627,
-     "spearman_vs_realized_war": 0.1854
-    }
+    "E_cond": {
+     "B_used": 2000,
+     "point": 0.26729,
+     "boot_mean": 0.26692,
+     "sd": 0.03504,
+     "MDE95": 0.0576,
+     "mde95_twosided": 0.0687,
+     "mde95_bonferroni_k4": 0.0785,
+     "ci95": [
+      0.1954,
+      0.33225
+     ],
+     "p_le_0": 0.0,
+     "margin_over_floor": 4.637,
+     "resolvable": true,
+     "clears_bonferroni_k4": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "A1_pass": true,
+    "A2_pass": true,
+    "A3_zero_information_twin": {
+     "rho": 0.04446,
+     "margin_over_refit_floor": 0.769,
+     "pass": true
+    },
+    "A4_permutation_null": {
+     "B": 2000,
+     "p_two_sided": 0.0,
+     "null_p95": 0.04753,
+     "null_sd": 0.0299,
+     "pass": true
+    },
+    "A5_folds": {
+     "per_fold": {
+      "2018": {
+       "n": 76,
+       "rho": 0.32006
+      },
+      "2019": {
+       "n": 119,
+       "rho": 0.45769
+      },
+      "2020": {
+       "n": 113,
+       "rho": 0.31962
+      },
+      "2021": {
+       "n": 102,
+       "rho": 0.0879
+      },
+      "2022": {
+       "n": 200,
+       "rho": 0.26392
+      },
+      "2023": {
+       "n": 206,
+       "rho": 0.25775
+      },
+      "2024": {
+       "n": 216,
+       "rho": 0.05423
+      }
+     },
+     "k": 7,
+     "mean": 0.2516,
+     "n_positive": 7,
+     "pass": true
+    },
+    "auc_track_record": {
+     "B_used": 2000,
+     "point": 0.7801,
+     "boot_mean": 0.76434,
+     "sd": 0.0309,
+     "MDE95": 0.0508,
+     "mde95_twosided": 0.0606,
+     "mde95_bonferroni_k4": 0.0693,
+     "ci95": [
+      0.7037,
+      0.82624
+     ],
+     "p_le_0": 0.0,
+     "margin_over_floor": 15.345,
+     "resolvable": true,
+     "clears_bonferroni_k4": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "auc_ci_excludes_half": true,
+    "seconds": 23.6,
+    "A6_pass": true
+   },
+   "pit": {
+    "n_scored": 895,
+    "folds_used": [
+     2019,
+     2020,
+     2021,
+     2022,
+     2023,
+     2024
+    ],
+    "rho_grade_weighted": 0.11476,
+    "rho_grade_unweighted": 0.11409,
+    "rho_war_weighted": 0.11461,
+    "rho_war_unweighted": 0.11384,
+    "share_on_floor_20": 0.0201,
+    "E_refit": {
+     "B_used": 2000,
+     "point": 0.11476,
+     "boot_mean": 0.1088,
+     "sd": 0.04273,
+     "MDE95": 0.0703,
+     "mde95_twosided": 0.0838,
+     "mde95_bonferroni_k4": 0.0958,
+     "ci95": [
+      0.02141,
+      0.18616
+     ],
+     "p_le_0": 0.008,
+     "margin_over_floor": 1.632,
+     "resolvable": true,
+     "clears_bonferroni_k4": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "E_cond": {
+     "B_used": 2000,
+     "point": 0.11476,
+     "boot_mean": 0.11407,
+     "sd": 0.03503,
+     "MDE95": 0.0576,
+     "mde95_twosided": 0.0687,
+     "mde95_bonferroni_k4": 0.0785,
+     "ci95": [
+      0.04753,
+      0.18189
+     ],
+     "p_le_0": 0.0005,
+     "margin_over_floor": 1.991,
+     "resolvable": true,
+     "clears_bonferroni_k4": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "A1_pass": true,
+    "A2_pass": true,
+    "A3_zero_information_twin": {
+     "rho": 0.00414,
+     "margin_over_refit_floor": 0.059,
+     "pass": true
+    },
+    "A4_permutation_null": {
+     "B": 2000,
+     "p_two_sided": 0.0015,
+     "null_p95": 0.05349,
+     "null_sd": 0.03334,
+     "pass": true
+    },
+    "A5_folds": {
+     "per_fold": {
+      "2019": {
+       "n": 88,
+       "rho": 0.01974
+      },
+      "2020": {
+       "n": 114,
+       "rho": 0.0447
+      },
+      "2021": {
+       "n": 117,
+       "rho": 0.10871
+      },
+      "2022": {
+       "n": 151,
+       "rho": 0.28812
+      },
+      "2023": {
+       "n": 208,
+       "rho": 0.15713
+      },
+      "2024": {
+       "n": 217,
+       "rho": -0.01893
+      }
+     },
+     "k": 6,
+     "mean": 0.09991,
+     "n_positive": 5,
+     "pass": true
+    },
+    "auc_track_record": {
+     "B_used": 2000,
+     "point": 0.57634,
+     "boot_mean": 0.57198,
+     "sd": 0.03417,
+     "MDE95": 0.0562,
+     "mde95_twosided": 0.067,
+     "mde95_bonferroni_k4": 0.0766,
+     "ci95": [
+      0.50344,
+      0.63442
+     ],
+     "p_le_0": 0.0,
+     "margin_over_floor": 10.255,
+     "resolvable": true,
+     "clears_bonferroni_k4": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "auc_ci_excludes_half": true,
+    "seconds": 19.6,
+    "A6_pass": true
+   }
+  },
+  "two_metric": {
+   "block_rho": {
+    "B_used": 2000,
+    "point": 0.17633,
+    "boot_mean": 0.16996,
+    "sd": 0.02631,
+    "MDE95": 0.0433,
+    "mde95_twosided": 0.0516,
+    "mde95_bonferroni_k4": 0.059,
+    "ci95": [
+     0.11847,
+     0.22204
+    ],
+    "p_le_0": 0.0,
+    "margin_over_floor": 4.075,
+    "resolvable": true,
+    "clears_bonferroni_k4": true,
+    "verdict": "RESOLVABLE WIN"
+   },
+   "n_blocks_pooled": 1927,
+   "block_rho_ci_excludes_zero": true
+  },
+  "B": 2000
+ },
+ "routed": {
+  "hit": {
+   "n_scored_joint": 1032,
+   "n_routed": 570,
+   "routed_share": 0.5523,
+   "routed_debut_rate": 0.3491,
+   "mapping_caveat": "the analog's debut rate is that of labeled prospects; the SERVED routed cohort is org filler two rungs lower on the ladder. PROVISIONAL_GATE.md part 1.",
+   "B0_incumbent": {
+    "n": 570,
+    "distinct_values": 1,
+    "value": 20.0,
+    "predictor_variance": 0.0,
+    "spearman_raw": null,
+    "spearman_convention": 0.0,
+    "note": "a constant has zero rank information by construction; its Spearman is undefined, not zero, and the 0.0 is a convention this lane names",
+    "real_anchor_flagship_rho_on_same_rows": 0.26998,
+    "real_anchor_note": "routing fires only where no source published an opinion, so this column does not exist for a live routed player; it is reported to size the analog's selection, not as an alternative"
+   },
+   "rho_provisional_weighted": 0.205,
+   "rho_provisional_unweighted": 0.198,
+   "E_refit": {
+    "B_used": 2000,
+    "point": 0.205,
+    "boot_mean": 0.17862,
+    "sd": 0.06789,
+    "MDE95": 0.1117,
+    "mde95_twosided": 0.1331,
+    "mde95_bonferroni_k4": 0.1522,
+    "ci95": [
+     0.04238,
+     0.31056
+    ],
+    "p_le_0": 0.0045,
+    "margin_over_floor": 1.836,
+    "resolvable": true,
+    "clears_bonferroni_k4": true,
+    "verdict": "RESOLVABLE WIN"
+   },
+   "E_cond": {
+    "B_used": 2000,
+    "point": 0.205,
+    "boot_mean": 0.20311,
+    "sd": 0.04933,
+    "MDE95": 0.0812,
+    "mde95_twosided": 0.0967,
+    "mde95_bonferroni_k4": 0.1106,
+    "ci95": [
+     0.10401,
+     0.2997
+    ],
+    "p_le_0": 0.0,
+    "margin_over_floor": 2.526,
+    "resolvable": true,
+    "clears_bonferroni_k4": true,
+    "verdict": "RESOLVABLE WIN"
+   },
+   "B1_pass": true,
+   "B2_pass": true,
+   "B3_permutation_band": {
+    "B": 2000,
+    "null_p95": 0.06967,
+    "null_sd": 0.04167,
+    "p_two_sided": 0.0,
+    "pass": true
+   },
+   "B4_zero_information_twin": {
+    "rho": -0.07346,
+    "margin_over_refit_floor": 0.658,
+    "pass": true
+   },
+   "B5_dumb_controls": {
+    "rho_provisional": 0.205,
+    "rho_level_rank_only": 0.13436,
+    "rho_neg_age_rel_only": 0.13476,
+    "paired_delta_prov_minus_level": {
+     "B_used": 2000,
+     "point": 0.07064,
+     "boot_mean": 0.07071,
+     "sd": 0.04665,
+     "MDE95": 0.0767,
+     "mde95_twosided": 0.0914,
+     "mde95_bonferroni_k4": 0.1046,
+     "ci95": [
+      -0.02302,
+      0.16215
+     ],
+     "p_le_0": 0.068,
+     "margin_over_floor": 0.921,
+     "resolvable": false,
+     "clears_bonferroni_k4": false,
+     "verdict": "NULL"
+    },
+    "level_lookup_matches_model": true
+   },
+   "B6_bonferroni_k4": {
+    "z": 2.2414,
+    "E_refit_floor": 0.1522,
+    "E_cond_floor": 0.1106,
+    "clears_refit": true,
+    "clears_cond": true
+   },
+   "anchor_sensitivity": {
+    "35.0": {
+     "n_routed": 570,
+     "rho": 0.205,
+     "B_sens": 500,
+     "E_refit": {
+      "MDE95": 0.1061,
+      "x": 1.931,
+      "verdict": "RESOLVABLE WIN"
+     },
+     "E_cond": {
+      "MDE95": 0.0827,
+      "x": 2.477,
+      "verdict": "RESOLVABLE WIN"
+     }
+    },
+    "30.0": {
+     "n_routed": 951,
+     "rho": 0.21084,
+     "B_sens": 500,
+     "E_refit": {
+      "MDE95": 0.076,
+      "x": 2.775,
+      "verdict": "RESOLVABLE WIN"
+     },
+     "E_cond": {
+      "MDE95": 0.0589,
+      "x": 3.579,
+      "verdict": "RESOLVABLE WIN"
+     }
+    },
+    "40.0": {
+     "n_routed": 73,
+     "rho": 0.11983,
+     "B_sens": 500,
+     "E_refit": {
+      "MDE95": 0.3049,
+      "x": 0.393,
+      "verdict": "NULL"
+     },
+     "E_cond": {
+      "MDE95": 0.2249,
+      "x": 0.533,
+      "verdict": "NULL"
+     }
+    },
+    "_note": "35.0 is the value consensus.CONSTANT_ANCHOR_SOURCES actually stamps, verified in-repo (efv_ungraded.flagship_owns: 2,632 constant-only players 'every one of them at fv_raw exactly 35.0'; efv_score's FLOOR ROUTING block says the same). 30.0 and 40.0 are counterfactuals reported because the cohort SIZE is highly sensitive to this value and a self-added threshold that can move a verdict must be shown to move it or not."
+   },
+   "estimators_agree": true,
+   "seconds": 44.6
+  },
+  "pit": {
+   "n_scored_joint": 895,
+   "n_routed": 411,
+   "routed_share": 0.4592,
+   "routed_debut_rate": 0.6399,
+   "mapping_caveat": "the analog's debut rate is that of labeled prospects; the SERVED routed cohort is org filler two rungs lower on the ladder. PROVISIONAL_GATE.md part 1.",
+   "B0_incumbent": {
+    "n": 411,
+    "distinct_values": 1,
+    "value": 20.0,
+    "predictor_variance": 0.0,
+    "spearman_raw": null,
+    "spearman_convention": 0.0,
+    "note": "a constant has zero rank information by construction; its Spearman is undefined, not zero, and the 0.0 is a convention this lane names",
+    "real_anchor_flagship_rho_on_same_rows": 0.21316,
+    "real_anchor_note": "routing fires only where no source published an opinion, so this column does not exist for a live routed player; it is reported to size the analog's selection, not as an alternative"
+   },
+   "rho_provisional_weighted": 0.10858,
+   "rho_provisional_unweighted": 0.12061,
+   "E_refit": {
+    "B_used": 2000,
+    "point": 0.10858,
+    "boot_mean": 0.09117,
+    "sd": 0.07728,
+    "MDE95": 0.1271,
+    "mde95_twosided": 0.1515,
+    "mde95_bonferroni_k4": 0.1732,
+    "ci95": [
+     -0.0658,
+     0.23628
+    ],
+    "p_le_0": 0.1165,
+    "margin_over_floor": 0.854,
+    "resolvable": false,
+    "clears_bonferroni_k4": false,
+    "verdict": "NULL"
+   },
+   "E_cond": {
+    "B_used": 2000,
+    "point": 0.10858,
+    "boot_mean": 0.10771,
+    "sd": 0.05032,
+    "MDE95": 0.0828,
+    "mde95_twosided": 0.0986,
+    "mde95_bonferroni_k4": 0.1128,
+    "ci95": [
+     0.0112,
+     0.20381
+    ],
+    "p_le_0": 0.0165,
+    "margin_over_floor": 1.312,
+    "resolvable": true,
+    "clears_bonferroni_k4": false,
+    "verdict": "RESOLVABLE WIN"
+   },
+   "B1_pass": false,
+   "B2_pass": true,
+   "B3_permutation_band": {
+    "B": 2000,
+    "null_p95": 0.08358,
+    "null_sd": 0.04878,
+    "p_two_sided": 0.025,
+    "pass": true
+   },
+   "B4_zero_information_twin": {
+    "rho": 0.02713,
+    "margin_over_refit_floor": 0.213,
+    "pass": true
+   },
+   "B5_dumb_controls": {
+    "rho_provisional": 0.10858,
+    "rho_level_rank_only": 0.0613,
+    "rho_neg_age_rel_only": 0.14331,
+    "paired_delta_prov_minus_level": {
+     "B_used": 2000,
+     "point": 0.04728,
+     "boot_mean": 0.04386,
+     "sd": 0.06265,
+     "MDE95": 0.1031,
+     "mde95_twosided": 0.1228,
+     "mde95_bonferroni_k4": 0.1404,
+     "ci95": [
+      -0.07507,
+      0.16969
+     ],
+     "p_le_0": 0.2445,
+     "margin_over_floor": 0.459,
+     "resolvable": false,
+     "clears_bonferroni_k4": false,
+     "verdict": "NULL"
+    },
+    "level_lookup_matches_model": true
+   },
+   "B6_bonferroni_k4": {
+    "z": 2.2414,
+    "E_refit_floor": 0.1732,
+    "E_cond_floor": 0.1128,
+    "clears_refit": false,
+    "clears_cond": false
+   },
+   "anchor_sensitivity": {
+    "35.0": {
+     "n_routed": 411,
+     "rho": 0.10858,
+     "B_sens": 500,
+     "E_refit": {
+      "MDE95": 0.1269,
+      "x": 0.855,
+      "verdict": "NULL"
+     },
+     "E_cond": {
+      "MDE95": 0.0827,
+      "x": 1.313,
+      "verdict": "RESOLVABLE WIN"
+     }
+    },
+    "30.0": {
+     "n_routed": 854,
+     "rho": 0.09299,
+     "B_sens": 500,
+     "E_refit": {
+      "MDE95": 0.0716,
+      "x": 1.298,
+      "verdict": "RESOLVABLE WIN"
+     },
+     "E_cond": {
+      "MDE95": 0.0561,
+      "x": 1.656,
+      "verdict": "RESOLVABLE WIN"
+     }
+    },
+    "40.0": {
+     "n_routed": 27,
+     "rho": 0.26598,
+     "B_sens": 500,
+     "E_refit": {
+      "MDE95": 0.4667,
+      "x": 0.57,
+      "verdict": "NULL"
+     },
+     "E_cond": {
+      "MDE95": 0.3096,
+      "x": 0.859,
+      "verdict": "NULL"
+     }
+    },
+    "_note": "35.0 is the value consensus.CONSTANT_ANCHOR_SOURCES actually stamps, verified in-repo (efv_ungraded.flagship_owns: 2,632 constant-only players 'every one of them at fv_raw exactly 35.0'; efv_score's FLOOR ROUTING block says the same). 30.0 and 40.0 are counterfactuals reported because the cohort SIZE is highly sensitive to this value and a self-added threshold that can move a verdict must be shown to move it or not."
+   },
+   "estimators_agree": false,
+   "seconds": 36.7
+  }
+ },
+ "penalty": {
+  "shipped": {
+   "value": 0.0,
+   "file_line": "prospx/index.html:32495",
+   "uncapped_grade": false,
+   "brief_claimed_value": 4,
+   "brief_claimed_line": "prospx/index.html:31243",
+   "brief_claimed_decap": true,
+   "premises_hold": false
+  },
+  "estimator_b": {
+   "pool_P_routed_n": 981,
+   "pool_G_graded_n": 946,
+   "cross_pool_pairs": 793763,
+   "grid": [
+    -4.0,
+    16.0,
+    0.25
+   ],
+   "argmax_delta": -4.0,
+   "concordance_at_argmax": 0.57311,
+   "plateau_within_1e4": [
+    -4.0,
+    -4.0
+   ],
+   "concordance_at_shipped_0": 0.56362,
+   "concordance_at_retired_4": 0.55515,
+   "concordance_at_2026_07_23_argmax_3_75": 0.55566,
+   "bootstrap": {
+    "B": 1000,
+    "pairs_per_draw": 60000,
+    "ci95_argmax": [
+     -4.0,
+     -4.0
+    ],
+    "median_argmax": -4.0,
+    "share_argmax_le_0": 0.999,
+    "note": "bootstrap draws use a random subsample of cross-pool pairs for tractability; that adds Monte-Carlo noise to the CI, which widens it, the conservative direction"
+   },
+   "argmax_on_grid_boundary": true,
+   "curve": {
+    "-4.0": 0.57311,
+    "-2.0": 0.56747,
+    "0.0": 0.56362,
+    "2.0": 0.55949,
+    "4.0": 0.55515,
+    "6.0": 0.54983,
+    "8.0": 0.54782,
+    "10.0": 0.54522,
+    "12.0": 0.54311,
+    "14.0": 0.54315,
+    "16.0": 0.54217
+   },
+   "pool_diagnostics": {
+    "pool_P_mean_display_grade": 29.63,
+    "pool_G_mean_display_grade": 43.63,
+    "pool_P_mean_realized_war": 1.046,
+    "pool_G_mean_realized_war": 2.105,
+    "pool_P_debut_rate": 0.471,
+    "pool_G_debut_rate": 0.732,
+    "note": "THE POOL-MAPPING DEFECT, quantified. Pool P here is real-anchored labeled players re-scored AS IF constant-anchored, so its debut rate is that of graded prospects, not of the org filler routing actually serves. Any penalty this estimator returns is contaminated by that selection in the direction of its own answer."
+   },
+   "shipped_value_inside_ci95": false,
+   "widened_grid_post_hoc": {
+    "grid": [
+     -20.0,
+     16.0,
+     0.25
+    ],
+    "argmax_delta": -10.0,
+    "concordance_at_argmax": 0.58922,
+    "on_boundary": false,
+    "disclosure": "the pre-registered grid [-4, 16] returned its LOWER boundary, so it did not contain the optimum. Widened once, post hoc, and disclosed. Both grids agree the optimum is NEGATIVE, i.e. neither supports the retired value 4 nor any positive penalty, so the recommendation is the same under either."
    }
   }
  },
- "note": "Production-only (no consensus FV) ranks realized WAR among un-graded-analog low-minors players; this is the signal the provisional ungraded grade rests on. Hitters ~0.22 low-minors / ~0.31 all-levels; pitchers ~0.24 low-minors (level_rank dropped). These are PROVISIONAL leading-indicator grades, not the flagship."
+ "caveats": [
+  "POOL MAPPING: measured on the labeled matrix, which is AA/AAA-heavy, and applied to a served population that is DSL/CPX-heavy org filler. PROVISIONAL_GATE.md part 1.",
+  "The exposure sub-floor clamp (min(grade,30) below _MIN_EXPO_PA/_MIN_EXPO_BF) cannot be reproduced historically (no PA/BF column in the matrix) and is NOT applied to the served-grade analog.",
+  "Forward-chained folds share training rows and are sequentially nested, not independent; clause A5 is a stability check, not a replication.",
+  "The corpus moved this session (Baseball America, 1,535 rows), so every number here is a fresh measurement rather than a replication of the 2026-07-14 one.",
+  "This lane changed no shipped constant and flipped no switch."
+ ],
+ "runtime_seconds": 180.6
 }

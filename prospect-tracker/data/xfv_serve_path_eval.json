@@ -1,0 +1,681 @@
+{
+ "generated_at": "2026-08-08",
+ "gate_doc": "docs/efv-2026-08-07b/SERVE_PATH_INTEGRITY.md",
+ "lane": "G",
+ "clauses": {
+  "G1_reproduction": {
+   "per_side": {
+    "hit": true,
+    "pit": true
+   },
+   "pass": true
+  },
+  "G2_serve_equivalence": {
+   "per_side": {
+    "hit": {
+     "rho_blend": 0.3993,
+     "rho_served": 0.4001,
+     "rho_baseline": 0.3919,
+     "gap": 0.0008,
+     "mde95": 0.044,
+     "pass": true,
+     "served_loses_to_consensus": false
+    },
+    "pit": {
+     "rho_blend": 0.2561,
+     "rho_served": 0.2389,
+     "rho_baseline": 0.2494,
+     "gap": -0.0172,
+     "mde95": 0.044,
+     "pass": true,
+     "served_loses_to_consensus": true
+    }
+   },
+   "pass": true,
+   "n_tests": 2
+  },
+  "G3_attribution": {
+   "hit": {
+    "rho": {
+     "baseline": 0.3919,
+     "ridge": 0.3959,
+     "blend": 0.3993,
+     "cal_affine": 0.3963,
+     "grade_unrounded": 0.4006,
+     "served_grade": 0.4001,
+     "blend_graded": 0.3999
+    },
+    "tie_and_round_cost_vs_blend": 0.0006,
+    "total_serve_cost_vs_blend": 0.0008,
+    "causes_separable_at_mde": false
+   },
+   "pit": {
+    "rho": {
+     "baseline": 0.2494,
+     "ridge": 0.2387,
+     "blend": 0.2561,
+     "cal_affine": 0.2369,
+     "grade_unrounded": 0.2388,
+     "served_grade": 0.2389,
+     "blend_graded": 0.2551
+    },
+    "tie_and_round_cost_vs_blend": -0.001,
+    "total_serve_cost_vs_blend": -0.0172,
+    "causes_separable_at_mde": false
+   }
+  },
+  "G4_controls": {
+   "per_side": {
+    "hit": {
+     "C_a_permutation_rho": 0.0396,
+     "C_a_pass": true,
+     "C_b_floor_share": 0.1722,
+     "C_b_distinct_served_values": 235,
+     "C_b_pass": true,
+     "C_c_affine_rho": 0.3963,
+     "C_c_ridge_rho": 0.3959,
+     "C_c_pass": false,
+     "C_c_bad_slope_folds": [],
+     "C_d_blend_graded_rho": 0.3999
+    },
+    "pit": {
+     "C_a_permutation_rho": 0.0407,
+     "C_a_pass": true,
+     "C_b_floor_share": 0.136,
+     "C_b_distinct_served_values": 176,
+     "C_b_pass": true,
+     "C_c_affine_rho": 0.2369,
+     "C_c_ridge_rho": 0.2387,
+     "C_c_pass": false,
+     "C_c_bad_slope_folds": [],
+     "C_d_blend_graded_rho": 0.2551
+    }
+   },
+   "n_controls": 4,
+   "n_sides": 2
+  },
+  "G5_live_only_containment": {
+   "L1_fields": {
+    "hit": {
+     "n_train": 1917,
+     "n_live": 2136,
+     "train_rows_carrying": {
+      "statcast_plus": 0,
+      "age_now": 0,
+      "il_on": 0,
+      "il_type": 0,
+      "il_days_12mo": 0,
+      "il_stints_12mo": 0,
+      "eta_years": 0,
+      "fv_effective": 0,
+      "anchor_stale_discount": 0,
+      "anchor_constant_only": 0
+     },
+     "live_rows_carrying": {
+      "statcast_plus": 2136,
+      "age_now": 2136,
+      "il_on": 2136,
+      "il_type": 2136,
+      "il_days_12mo": 2136,
+      "il_stints_12mo": 2136,
+      "eta_years": 2136,
+      "fv_effective": 2136,
+      "anchor_stale_discount": 2136,
+      "anchor_constant_only": 2136
+     }
+    },
+    "pit": {
+     "n_train": 2040,
+     "n_live": 2465,
+     "train_rows_carrying": {
+      "statcast_plus": 0,
+      "age_now": 0,
+      "il_on": 0,
+      "il_type": 0,
+      "il_days_12mo": 0,
+      "il_stints_12mo": 0,
+      "eta_years": 0,
+      "fv_effective": 0,
+      "anchor_stale_discount": 0,
+      "anchor_constant_only": 0
+     },
+     "live_rows_carrying": {
+      "statcast_plus": 2465,
+      "age_now": 2465,
+      "il_on": 2465,
+      "il_type": 2465,
+      "il_days_12mo": 2465,
+      "il_stints_12mo": 2465,
+      "eta_years": 2465,
+      "fv_effective": 2465,
+      "anchor_stale_discount": 2465,
+      "anchor_constant_only": 2465
+     }
+    }
+   },
+   "L1_pass": true,
+   "L2_call_sites": {
+    "_injury_factor": [
+     "run_backgrade",
+     "run_live"
+    ],
+    "_age_factor": [
+     "run_backgrade",
+     "run_live"
+    ],
+    "_role_factor": [
+     "run_backgrade",
+     "run_live"
+    ],
+    "_statcast_factor": [
+     "run_live"
+    ],
+    "overlay_fv": [
+     "run_live"
+    ],
+    "route_floor_grade": [
+     "run_live"
+    ]
+   },
+   "L2_violations": {
+    "_injury_factor": [],
+    "_age_factor": [],
+    "_role_factor": [],
+    "_statcast_factor": [],
+    "overlay_fv": [],
+    "route_floor_grade": []
+   },
+   "L2_pass": true,
+   "L3_xline": {
+    "defaults": {
+     "XLINE_HIT_DEFAULT": true,
+     "XLINE_PIT_DEFAULT": true,
+     "XISO_HIT_DEFAULT": true
+    },
+    "per_side": {
+     "hit": {
+      "checked": 229,
+      "n_differ": 25,
+      "committed_matches_flag_on": 25,
+      "committed_matches_flag_off": 0,
+      "examples": [
+       "aaron_schunk",
+       "addison_barger",
+       "adrian_del_castillo",
+       "andres_chaparro",
+       "angel_martinez"
+      ]
+     },
+     "pit": {
+      "checked": 400,
+      "n_differ": 23,
+      "committed_matches_flag_on": 23,
+      "committed_matches_flag_off": 0,
+      "examples": [
+       "adam_kloffenstein",
+       "anthony_maldonado",
+       "anthony_molina",
+       "bailey_horn",
+       "ben_brown"
+      ]
+     }
+    }
+   },
+   "L3_pass": true,
+   "L4_estale_pass": true
+  },
+  "G6_abstention": {
+   "per_side": {
+    "hit": {
+     "n_live": 2136,
+     "n_no_milb": 75,
+     "n_scored_live": 2061,
+     "arithmetic_ok": true,
+     "n_leaked_into_scored": 0,
+     "leaked_examples": []
+    },
+    "pit": {
+     "n_live": 2465,
+     "n_no_milb": 112,
+     "n_scored_live": 2353,
+     "arithmetic_ok": true,
+     "n_leaked_into_scored": 0,
+     "leaked_examples": []
+    }
+   },
+   "milb_missing_weight": {
+    "hit": -0.0174,
+    "pit": null
+   },
+   "A1_pass": true,
+   "A2_pass": true,
+   "A3_pass": true
+  },
+  "G7_pool_relative_display": {
+   "vintages": {
+    "d1": "2026-08-02",
+    "d2": "2026-08-07"
+   },
+   "movement_eps": 0.5,
+   "material_share_threshold": 0.05,
+   "material_share_threshold_is_self_added": true,
+   "per_side": {
+    "hit": {
+     "n_pool_d1": 1064,
+     "n_pool_d2": 2055,
+     "n_in_both": 1064,
+     "n_unchanged": 1045,
+     "underpowered": false,
+     "pool_only_abs_delta_fv": {
+      "median": 0.0,
+      "p90": 0.7,
+      "max": 1.3,
+      "n_over_eps": 219,
+      "share_over_eps": 0.2096
+     },
+     "pool_only_abs_delta_surplus_mm": {
+      "median": 0.0,
+      "p90": 0.1,
+      "max": 0.397,
+      "n": 1045
+     },
+     "decomposition_share_of_total_abs_movement": {
+      "own_rank": 0.1268,
+      "pool_composition": 0.8821,
+      "interaction_residual": 0.0178,
+      "total_abs_fv": 202.7
+     },
+     "replay_fidelity": {
+      "n_common": 2039,
+      "spearman_vs_production": 0.8832,
+      "pass": true
+     }
+    },
+    "pit": {
+     "n_pool_d1": 998,
+     "n_pool_d2": 2353,
+     "n_in_both": 998,
+     "n_unchanged": 970,
+     "underpowered": false,
+     "pool_only_abs_delta_fv": {
+      "median": 0.0,
+      "p90": 0.9,
+      "max": 1.5,
+      "n_over_eps": 185,
+      "share_over_eps": 0.1907
+     },
+     "pool_only_abs_delta_surplus_mm": {
+      "median": 0.0,
+      "p90": 0.154,
+      "max": 1.456,
+      "n": 970
+     },
+     "decomposition_share_of_total_abs_movement": {
+      "own_rank": 0.2025,
+      "pool_composition": 0.8166,
+      "interaction_residual": 0.036,
+      "total_abs_fv": 272.6
+     },
+     "replay_fidelity": {
+      "n_common": 2347,
+      "spearman_vs_production": 0.888,
+      "pass": true
+     }
+    }
+   },
+   "material": {
+    "hit": true,
+    "pit": true
+   },
+   "sensitivity_quiet_pair": {
+    "vintages": {
+     "d1": "2026-08-05",
+     "d2": "2026-08-06"
+    },
+    "movement_eps": 0.5,
+    "material_share_threshold": 0.05,
+    "material_share_threshold_is_self_added": true,
+    "per_side": {
+     "hit": {
+      "n_pool_d1": 1084,
+      "n_pool_d2": 1096,
+      "n_in_both": 1084,
+      "n_unchanged": 1084,
+      "underpowered": false,
+      "pool_only_abs_delta_fv": {
+       "median": 0.0,
+       "p90": 0.0,
+       "max": 0.3,
+       "n_over_eps": 0,
+       "share_over_eps": 0.0
+      },
+      "pool_only_abs_delta_surplus_mm": {
+       "median": 0.0,
+       "p90": 0.0,
+       "max": 0.042,
+       "n": 1084
+      },
+      "decomposition_share_of_total_abs_movement": {
+       "own_rank": 0.0,
+       "pool_composition": 1.0,
+       "interaction_residual": 0.0,
+       "total_abs_fv": 4.2
+      },
+      "replay_fidelity": {
+       "n_common": 1080,
+       "spearman_vs_production": 0.8869,
+       "pass": true
+      }
+     },
+     "pit": {
+      "n_pool_d1": 1016,
+      "n_pool_d2": 1031,
+      "n_in_both": 1016,
+      "n_unchanged": 1016,
+      "underpowered": false,
+      "pool_only_abs_delta_fv": {
+       "median": 0.0,
+       "p90": 0.0,
+       "max": 0.5,
+       "n_over_eps": 1,
+       "share_over_eps": 0.001
+      },
+      "pool_only_abs_delta_surplus_mm": {
+       "median": 0.0,
+       "p90": 0.0,
+       "max": 0.063,
+       "n": 1016
+      },
+      "decomposition_share_of_total_abs_movement": {
+       "own_rank": 0.0,
+       "pool_composition": 1.0,
+       "interaction_residual": 0.0,
+       "total_abs_fv": 2.6
+      },
+      "replay_fidelity": {
+       "n_common": 1025,
+       "spearman_vs_production": 0.8669,
+       "pass": true
+      }
+     }
+    },
+    "role": "SUPPLEMENTARY sensitivity, added after the pre-registered pair returned. Decides no verdict. The pre-registered pair brackets the 2026-08-07 refresh; this pair is a routine adjacent day."
+   }
+  }
+ },
+ "serve_chain": {
+  "hit": {
+   "side": "hit",
+   "lambda": 0.7,
+   "arms": {
+    "baseline": {
+     "n": 755,
+     "n_effective": 594.0,
+     "weighted": true,
+     "mae": 4.064,
+     "spearman": 0.3919,
+     "calibration": {
+      "slope": 0.932,
+      "bias": 0.104
+     }
+    },
+    "ridge": {
+     "n": 755,
+     "n_effective": 594.0,
+     "weighted": true,
+     "mae": 4.422,
+     "spearman": 0.3959,
+     "calibration": {
+      "slope": 0.74,
+      "bias": 0.408
+     }
+    },
+    "blend": {
+     "n": 755,
+     "n_effective": 594.0,
+     "weighted": true,
+     "mae": 4.257,
+     "spearman": 0.3993,
+     "calibration": {
+      "slope": 0.818,
+      "bias": 0.317
+     }
+    },
+    "cal_affine": {
+     "n": 755,
+     "n_effective": 594.0,
+     "weighted": true,
+     "mae": 4.481,
+     "spearman": 0.3963,
+     "calibration": {
+      "slope": 0.665,
+      "bias": 0.33
+     }
+    },
+    "grade_unrounded": {
+     "n": 755,
+     "n_effective": 594.0,
+     "weighted": true,
+     "mae": 40.972,
+     "spearman": 0.4006,
+     "calibration": {
+      "slope": 0.206,
+      "bias": 40.911
+     }
+    },
+    "served_grade": {
+     "n": 755,
+     "n_effective": 594.0,
+     "weighted": true,
+     "mae": 40.973,
+     "spearman": 0.4001,
+     "calibration": {
+      "slope": 0.206,
+      "bias": 40.911
+     }
+    },
+    "blend_graded": {
+     "n": 755,
+     "n_effective": 594.0,
+     "weighted": true,
+     "mae": 41.121,
+     "spearman": 0.3999,
+     "calibration": {
+      "slope": 0.218,
+      "bias": 41.037
+     }
+    },
+    "served_perm": {
+     "n": 755,
+     "n_effective": 594.0,
+     "weighted": true,
+     "mae": 40.982,
+     "spearman": 0.0396,
+     "calibration": {
+      "slope": 0.035,
+      "bias": 40.911
+     }
+    }
+   },
+   "published": {
+    "baseline": {
+     "n": 755,
+     "spearman": 0.3919
+    },
+    "ridge": {
+     "n": 755,
+     "spearman": 0.3959
+    },
+    "blend": {
+     "n": 755,
+     "spearman": 0.3993
+    }
+   },
+   "floor_knot": 20.0,
+   "floor_share": 0.1722,
+   "distinct_served_values": 235,
+   "folds_with_nonpositive_calibration_slope": [],
+   "within_fold_affine_invariance_holds": true,
+   "supplementary_permutation_200_draws": {
+    "n": 200,
+    "mean": 0.0138,
+    "p05": -0.0443,
+    "p95": 0.0705,
+    "max_abs": 0.1283,
+    "note": "supplementary, added after the pre-registered single draw passed; decides nothing"
+   },
+   "mde95": 0.044
+  },
+  "pit": {
+   "side": "pit",
+   "lambda": 0.57,
+   "arms": {
+    "baseline": {
+     "n": 890,
+     "n_effective": 696.5,
+     "weighted": true,
+     "mae": 2.741,
+     "spearman": 0.2494,
+     "calibration": {
+      "slope": 1.2,
+      "bias": -0.219
+     }
+    },
+    "ridge": {
+     "n": 890,
+     "n_effective": 696.5,
+     "weighted": true,
+     "mae": 2.976,
+     "spearman": 0.2387,
+     "calibration": {
+      "slope": 0.598,
+      "bias": -0.21
+     }
+    },
+    "blend": {
+     "n": 890,
+     "n_effective": 696.5,
+     "weighted": true,
+     "mae": 2.801,
+     "spearman": 0.2561,
+     "calibration": {
+      "slope": 0.895,
+      "bias": -0.214
+     }
+    },
+    "cal_affine": {
+     "n": 890,
+     "n_effective": 696.5,
+     "weighted": true,
+     "mae": 2.988,
+     "spearman": 0.2369,
+     "calibration": {
+      "slope": 0.577,
+      "bias": -0.242
+     }
+    },
+    "grade_unrounded": {
+     "n": 890,
+     "n_effective": 696.5,
+     "weighted": true,
+     "mae": 39.083,
+     "spearman": 0.2388,
+     "calibration": {
+      "slope": 0.104,
+      "bias": 39.23
+     }
+    },
+    "served_grade": {
+     "n": 890,
+     "n_effective": 696.5,
+     "weighted": true,
+     "mae": 39.082,
+     "spearman": 0.2389,
+     "calibration": {
+      "slope": 0.104,
+      "bias": 39.229
+     }
+    },
+    "blend_graded": {
+     "n": 890,
+     "n_effective": 696.5,
+     "weighted": true,
+     "mae": 39.82,
+     "spearman": 0.2551,
+     "calibration": {
+      "slope": 0.126,
+      "bias": 39.932
+     }
+    },
+    "served_perm": {
+     "n": 890,
+     "n_effective": 696.5,
+     "weighted": true,
+     "mae": 39.124,
+     "spearman": 0.0407,
+     "calibration": {
+      "slope": 0.02,
+      "bias": 39.229
+     }
+    }
+   },
+   "published": {
+    "baseline": {
+     "n": 890,
+     "spearman": 0.2495
+    },
+    "ridge": {
+     "n": 890,
+     "spearman": 0.2387
+    },
+    "blend": {
+     "n": 890,
+     "spearman": 0.2562
+    }
+   },
+   "floor_knot": 20.0,
+   "floor_share": 0.136,
+   "distinct_served_values": 176,
+   "folds_with_nonpositive_calibration_slope": [],
+   "within_fold_affine_invariance_holds": true,
+   "supplementary_permutation_200_draws": {
+    "n": 200,
+    "mean": 0.0134,
+    "p05": -0.0404,
+    "p95": 0.0753,
+    "max_abs": 0.1003,
+    "note": "supplementary, added after the pre-registered single draw passed; decides nothing"
+   },
+   "mde95": 0.044
+  }
+ },
+ "live_board_census": {
+  "floor_knot": 20.0,
+  "per_side": {
+   "hit": {
+    "n_scored": 2061,
+    "n_flagship_grade_at_floor_knot": 1590,
+    "share_flagship_at_floor_knot": 0.7715,
+    "n_served_on_provisional_map": 1096,
+    "share_served_on_provisional_map": 0.5318,
+    "n_served_flat_at_knot": 494,
+    "n_carrying_statcast_tilt": 1591,
+    "n_carrying_injury_tilt": 199,
+    "n_carrying_xline_note": 108,
+    "distinct_served_grades": 324
+   },
+   "pit": {
+    "n_scored": 2353,
+    "n_flagship_grade_at_floor_knot": 1729,
+    "share_flagship_at_floor_knot": 0.7348,
+    "n_served_on_provisional_map": 1332,
+    "share_served_on_provisional_map": 0.5661,
+    "n_served_flat_at_knot": 397,
+    "n_carrying_statcast_tilt": 1861,
+    "n_carrying_injury_tilt": 320,
+    "n_carrying_xline_note": 90,
+    "distinct_served_grades": 284
+   }
+  }
+ }
+}
