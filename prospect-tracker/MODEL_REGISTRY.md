@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-08-06**. `validate()` at generation time: **clean**.
 
-**234 models.** Verdicts: validated: 47, provisional: 81, unvalidated: 30, deprecated: 76.
+**235 models.** Verdicts: validated: 48, provisional: 81, unvalidated: 30, deprecated: 76.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -244,6 +244,7 @@ stamped as of **2026-08-06**. `validate()` at generation time: **clean**.
 | `xhem_plus` | /mlbstats/ Hitter Leaderboards, xHEM+ + Luck columns (Sav... | a hitter's DESERVED offensive rate: the HEM+ ratio scale applied to Savant expected wOBA (xwOBA) instead of actual wOBA; xwOBA... | xhem_plus (100 * xwOBA / PA-weighted pool xwOBA; tracked hitters, min 100 Sav... | actual wOBA forward rho vs wOBA(Y+1) | forward-chained Spearman: xwOBA(Y) vs wOBA(Y+1) beats actual wOBA(Y) (seeded... | **validated** | `data/xhem_plus_eval.json` | 22 | no |
 | `xrem_plus` | /mlbstats/ Bullpen Leaderboards, xREM+ + Luck columns (Sa... | a reliever's DESERVED run prevention: the REM+ (100-anchored) scale applied to Savant expected wOBA allowed (xwOBA-against) ins... | xrem_plus (100 * pool_xwOBA_against / player_xwOBA_against, INVERTED so lower... | n/a - a DESCRIPTIVE companion to the FIP-based REM+, not a predictive replace... | descriptive; the REM+ skill core it companions is gated by rem_plus_eval / le... | **provisional** | - | - | no |
 | `xsem_plus` | /mlbstats/ Starter Leaderboards, xSEM+ + Luck columns (Sa... | a starter's DESERVED run prevention: the SEM+ (100-anchored) scale applied to Savant expected wOBA allowed (xwOBA-against) inst... | xsem_plus (100 * pool_xwOBA_against / player_xwOBA_against, INVERTED so lower... | n/a - a DESCRIPTIVE companion to the FIP-based SEM+, not a predictive replace... | descriptive; the SEM+ skill core it companions is gated by sem_plus_eval | **provisional** | - | - | no |
+| `consensus_coverage_shrinkage` | model-dev artifact (rendered nowhere) - consensus single-... | n/a - measurement: whether the correct shrinkage of an observed consensus FV depends on how many publishers graded the player | n/a - NOTHING SHIPS. The incumbent hand-set SINGLE_SOURCE_K=0.5 / SINGLE_SOUR... | the incumbent constant, entered as the NULL HYPOTHESIS rather than as the cha... | coefficient on the interaction of observed consensus with publisher coverage,... | **validated** | `data/consensus_shrink_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 
