@@ -89,6 +89,51 @@ def test_efv_grade_matches_prospx_board():
     if not xfv_path.exists():
         pytest.skip("xfv.json not present")
     xj = json.loads(xfv_path.read_text(encoding="utf-8"))
+    # VINTAGE GUARD, measured DIRECTLY off the build stamps both artifacts already
+    # carry (both are date.today().isoformat(): proj_export.build_payload ~:2001
+    # writes the sidecar's top-level generated_at, efv_export.run ~:162 writes
+    # xfv.json's meta.generated_at), instead of being inferred from a mismatch
+    # count. Note proj_export.py carries three date.today() stamps (:1489, :1957,
+    # :2001) and efv_export.py two (:162, :333); the two cited here are the ones
+    # this test actually reads, so a line-number drift is checkable.
+    #
+    # The count-based guard this replaces ("skip when >5% of rows differ") could
+    # never detect the skew it was written for, because its denominator was EVERY
+    # row in the sidecar while only a small slice is comparable at all: a row has
+    # to carry fv_source == "xfv" AND appear in xfv.json's by_player. Measured
+    # 2026-08-07 on a genuinely skewed pair: 1,528 rows, 201 comparable, 60 of
+    # those 201 drifted 0.1 to 1.1 FV and 8 broke the round-to-nearest tolerance.
+    # The guard therefore saw 8 against a 76.4-row threshold (0.5%) and let a
+    # whole-vintage skew fail as though it were a same-vintage regression.
+    #
+    # REFUTED, do not re-chase: this is NOT floor routing reaching one side and
+    # not the other. route_floor_grade overwrites xfv_grade inside
+    # efv_score.run_live (~:2068) BEFORE the served entry dict is built (~:2110);
+    # efv_export._entry then copies that one value into both xfv_grade and
+    # xfv_grade_realized (identical on 9,382 of 9,382 rows); 0 rows carry
+    # xfv_grade_model_raw and ENABLED_DEFAULT is False, so efv_board_scale.
+    # board_value cannot diverge either. proj_export._board_grade (~:872) and the
+    # PROSPX board (prospx/index.html ~:32534) resolve the SAME field, so
+    # proj_export inherits routing and needs no rule of its own.
+    #
+    # The real driver is artifact vintage. data/xfv.json is committed, so the
+    # standing post-wave "revert data/" discipline git-restores it, while
+    # data/mlb_projections.json is gitignored (.gitignore:46) and is not, which
+    # leaves the sidecar one local rebuild ahead of the board it is compared to.
+    proj_vintage = d.get("generated_at")
+    xfv_vintage = (xj.get("meta") or {}).get("generated_at")
+    if not proj_vintage or not xfv_vintage:
+        # Cannot establish the single-vintage precondition, so the invariant is
+        # undefined. The reason string names the missing stamp so a renamed key
+        # shows up as a readable skip rather than as a silently passing test.
+        pytest.skip(f"cannot establish a single eFV vintage: mlb_projections.json "
+                    f"generated_at={proj_vintage!r}, xfv.json meta.generated_at="
+                    f"{xfv_vintage!r}")
+    if proj_vintage != xfv_vintage:
+        pytest.skip(f"different eFV vintages: mlb_projections.json generated_at="
+                    f"{proj_vintage}, xfv.json meta.generated_at={xfv_vintage}. "
+                    f"The projections/PROSPX parity invariant is only defined on a "
+                    f"single vintage; reconciles on the next full rebuild.")
     xf = xj.get("by_player", {})
     rows = (d.get("vets") or []) + (d.get("prospects") or [])
     mism = []
@@ -102,12 +147,9 @@ def test_efv_grade_matches_prospx_board():
         want = rec.get("xfv_grade") if want is None else want
         if want is not None and round(r["fv"]) != round(want):
             mism.append((r.get("key"), r["fv"], want))
-    # >5% mismatch => genuinely different vintages (proj_export not re-run after an
-    # eFV regen); skip. A same-vintage drift (a real regression) shows near-zero
-    # mismatch normally, so any nonzero count under the threshold still fails.
-    if rows and len(mism) > 0.05 * len(rows):
-        pytest.skip(f"mlb_projections.json is a different eFV vintage than xfv.json "
-                    f"({len(mism)}/{len(rows)} rows differ); reconciles on next full rebuild")
+    # Vintage was already established as single above, so ANY mismatch here is a
+    # real same-vintage regression. No count tolerance: one drifted row means the
+    # two surfaces would show a user two different eFV grades for one player.
     assert not mism, f"projections eFV drifted from PROSPX (same vintage) for {len(mism)} rows: {mism[:5]}"
 
 

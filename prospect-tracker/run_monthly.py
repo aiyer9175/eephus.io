@@ -1225,6 +1225,55 @@ def rebuild_only(out_dir: Path = Path("data"), *,
     except Exception:
         log.exception("eFV proxy crashed in rebuild_only — continuing")
 
+    # MLB Projections re-bake. THIS BLOCK IS ORDER-CRITICAL IN BOTH DIRECTIONS,
+    # and it is here (not in the daily tail) because it sits between its two
+    # neighbours, which both live inside rebuild_only:
+    #
+    #   AFTER  efv_export.regen_all (above): proj_export bakes each post-ETA
+    #          prospect's eFV off data/xfv.json, so exporting before the regen
+    #          publishes a /projections/ eFV the PROSPX board has already moved
+    #          past (e.g. 63 vs 62 for the same prospect). This is the staleness
+    #          the old daily step d9b was added to fix.
+    #   BEFORE export_trade_values_json (below): bayes_trade_value's
+    #          apply_platform_surplus re-points EVERY MLB board row onto the
+    #          contract surplus it reads out of data/mlb_projections.json ON
+    #          DISK. d9b used to run after d9, i.e. after the board had already
+    #          been written, so the board was deterministically priced off the
+    #          PREVIOUS cycle's projections, every single run. Measured on the
+    #          2026-08-07 tree: 968 board rows carry surplus_source ==
+    #          "projection" and 474 of them (49.0 percent) disagreed with the
+    #          projections artifact by more than the 0.15M test tolerance, worst
+    #          case 26.46M (kyle_harrison, 64.6 vs 91.06). The copy is verbatim,
+    #          so an in-sync pair can differ by at most 0.05M of rounding.
+    #
+    # Placed ahead of the 66MB timeseries.json parse below on purpose: proj_export
+    # holds its own timeseries copy, and running it after _ts_payload exists would
+    # stack that peak on the trade-value peak on the ~6GB box.
+    #
+    # OOM: while it lived in the daily tail this ran with rebuild_only's frame
+    # already popped, so it paid for its own timeseries copy and nothing else.
+    # Inside the frame it would otherwise sit on top of the in-memory `timeseries`
+    # this function built at the top. That dict is DEAD from here: its last read is
+    # the export_timeseries_json call above, and everything downstream re-reads the
+    # written file (_ts_payload below). Dropping it more than covers proj_export's
+    # own copy. Mirrors the same del run_daily does before it calls us. all_snaps
+    # stays: _post_export_summary at the tail still reads it.
+    import gc as _gc
+    del timeseries
+    _gc.collect()
+
+    # Best-effort in the same shape as every other step here: it reads cached
+    # FA/contract inputs, and a cache miss must not abort the rebuild. If it does
+    # fail, the trade board below prices off the LAST GOOD projections file, which
+    # is exactly the (bad) behaviour this move replaces, not a new failure mode.
+    try:
+        from proj_export import export as _export_proj
+        _n_proj = _export_proj()   # returns the payload size in bytes, not a row count
+        log.info("mlb projections (rebuild): %dKB -> data/mlb_projections.json "
+                 "(post eFV regen, pre trade-value export)", int(_n_proj) // 1024)
+    except Exception:
+        log.exception("proj_export crashed in rebuild_only - continuing")
+
     # GRPO breakout scores — runs before trade values so scores can adjust FV priors.
     # Parse the 66MB timeseries.json ONCE; reused by the GRPO + trade-value blocks below
     # (was parsed 3x in immediate succession -- ~0.68s each).
@@ -1922,20 +1971,22 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         with _step("d9. Rebuild timeseries (no scrape)", log):
             rebuild_only(out_dir, stamp_summary=False)
 
-        # --- 9b. Re-bake MLB Projections off the FRESH eFV grades. --------
-        # rebuild_only() regenerated xfv.json (the eFV grades the PROSPX board
-        # reads live), but mlb_projections.json's per-prospect eFV is baked by
-        # proj_export, which otherwise only runs monthly -- so /projections/
-        # showed a STALE eFV vs PROSPX (e.g. 63 vs 62 for the same prospect).
-        # Re-running proj_export here after the eFV regen keeps the two surfaces
-        # in lock-step. Best-effort (reads the same cached FA/contract inputs the
-        # monthly step 6b uses); a cache miss must not abort the daily run.
-        with _step("d9b. Re-bake MLB Projections off fresh eFV", log):
-            try:
-                from proj_export import export as _export_proj
-                _export_proj()
-            except Exception:
-                log.exception("daily: proj_export re-bake failed — continuing")
+        # --- 9b: moved INSIDE d9 (rebuild_only) 2026-08-07. ---------------
+        # The re-bake still exists and still runs on this chain, one frame down:
+        # rebuild_only now exports mlb_projections.json between the eFV regen (which
+        # writes the data/xfv.json grades proj_export bakes in) and the trade-value
+        # export. It had to move because a step that runs AFTER d9 cannot feed d9,
+        # and bayes_trade_value.apply_platform_surplus prices every MLB board row
+        # off data/mlb_projections.json ON DISK, so running the re-bake out here
+        # left trade_values.json built from the PREVIOUS cycle's projections on
+        # every run (474 of 968 projection-sourced rows off by more than 0.15M,
+        # worst case 26.46M). Not re-run here: proj_export is ~2 minutes and would
+        # be pure duplication, and a second write of the same file is a second
+        # writer to an artifact this repo has already lost once to a race.
+        # Standalone `--rebuild-only` picks the re-bake up for free now, which it
+        # never did while the step lived out here.
+        log.info("d9b SKIP: proj_export now runs inside d9 rebuild_only "
+                 "(post eFV regen, pre trade-value export)")
 
         # --- 9b2. Re-bake MLB player detail off the fresh projections. ----
         # mlb_player_detail.json (the /projections/#player= cards) used to
@@ -1944,7 +1995,10 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # same staleness class d9b fixed for mlb_projections.json). Re-baking
         # in the daily tail keeps cards, board, and projections in lock-step
         # nightly, and makes the artifact fully daily-regenerated (so the
-        # repo no longer tracks it). Best-effort like d9b.
+        # repo no longer tracks it). Best-effort in its own right: d9b is now
+        # a log-only skip and no longer models anything, so the try/except
+        # below is the only thing keeping a detail-bake failure from aborting
+        # the daily tail.
         with _step("d9b2. Re-bake MLB player detail (mlb_player_detail.json)", log):
             try:
                 from mlb_player_export import export as _export_mlbp
@@ -2259,15 +2313,16 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             # ORDERING REPAIR 2026-07-25. fa_fit.team_baselines now reads
             # team_outlook out of data/mlb_projections.json (T1.0), but the
             # monthly step 6 exports the FA sidecars BEFORE the projections are
-            # rebuilt: monthly 6b is a documented SKIP because d9b re-bakes
-            # projections post-eFV-regen, and d9b runs in this daily tail, i.e.
-            # AFTER step 6. Outside the Nov-Mar window nothing re-exported FA
-            # afterwards, so baseSrc advertised "mlb_projections" while baseWins
+            # rebuilt: monthly 6b is a documented SKIP because the daily tail
+            # re-bakes projections post-eFV-regen (in d9's rebuild_only since
+            # 2026-08-07, in d9b before that), i.e. AFTER step 6 either way.
+            # Outside the Nov-Mar window nothing re-exported FA afterwards, so
+            # baseSrc advertised "mlb_projections" while baseWins
             # carried the PREVIOUS run's outlook (measured: 0 of 30 clubs equal,
             # mean |delta| 1.483 wins). Attributing a number to a source it does
             # not equal is worse than the old honest fallback. Re-exporting here
             # costs one cached export and makes the attribution true. Inside the
-            # window d10 above already runs after d9b and covers this.
+            # window d10 above already runs after the re-bake and covers this.
             with _step("d10b. FA re-export off fresh projections", log):
                 try:
                     from fa_export import export_all as _export_fa
@@ -4283,12 +4338,22 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # the corpus cache, Spotrac contract pages (cached) and the
         # just-written timeseries.json. Additive; never aborts the run.
         with _step("6b. MLB projections export (mlb_projections.json)", log):
-            # WS-R merge (2026-07-14): main() always chains run_daily, whose
-            # d9b re-runs proj_export AFTER the d9 eFV regen - the export here
-            # was overwritten ~15 min later every monthly night (and, being
-            # pre-regen, was the STALER of the two). Skipped as duplication;
-            # standalone --daily keeps its own d9b export.
-            log.info("6b SKIP: chained d9b re-exports mlb_projections post-regen")
+            # WS-R merge (2026-07-14): main() always chains run_daily, which
+            # re-runs proj_export AFTER the eFV regen - the export here was
+            # overwritten ~15 min later every monthly night (and, being pre-regen,
+            # was the STALER of the two). Skipped as duplication; standalone
+            # --daily and standalone --rebuild-only both get the re-bake.
+            #
+            # STILL CORRECT after the 2026-08-07 write-order fix, and now for a
+            # second reason: the re-bake moved OUT of daily step d9b and INTO
+            # rebuild_only, where it lands between the eFV regen and the
+            # trade-value export. Exporting here as well would put a pre-regen
+            # mlb_projections.json on disk for the ~15 minutes before the chain
+            # reaches d9, which is precisely the window in which anything pricing
+            # off that file (bayes_trade_value.apply_platform_surplus) would read
+            # the stale copy. Leaving it skipped keeps ONE writer per night.
+            log.info("6b SKIP: chained d9 rebuild_only re-exports mlb_projections "
+                     "post-regen, ahead of the trade-value export")
 
         # --- 6b2. Swing+ scoring (Will Cahoon's model, vendored) ---------
         # Per-player MLB bat-tracking pulls (cached; closed seasons
@@ -4778,7 +4843,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             # and since 2026-07-14 also d0 (TJStats Live, 1c), d4 (tx), d5
             # (IL, 2b.vii), d6 (roster), d8 (trades, step 4) - pure re-fetch
             # duplication minutes apart. d0b (Pipeline Live), MLBAM discovery,
-            # d7 (debuts), d9/d9b (final eFV regen + projections re-bake),
+            # d7 (debuts), d9 (final eFV regen + projections re-bake + board),
             # d5e (game logs) and d11 (site build) still run. run_daily owns
             # the single run-summary stamp for the whole monthly night.
             run_daily(out_dir=out_dir, workers=workers, no_cache=no_cache,

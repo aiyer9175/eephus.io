@@ -26,8 +26,7 @@ happen inside the called module, so this file alone cannot split them).
 | d6. Roster status | - |
 | d7. Auto-debut detection | - |
 | d8. Trade detection | timeseries.json |
-| d9. Rebuild timeseries (no scrape) | mlb_projections.json, xfv.json |
-| d9b. Re-bake MLB Projections off fresh eFV | mlb_player_detail.json, mlb_projections.json |
+| d9. Rebuild timeseries (no scrape) | mlb_player_detail.json, mlb_projections.json, trade_values.json, xfv.json |
 | d9b2. Re-bake MLB player detail (mlb_player_detail.json) | mlb_player_detail.json, photo_ctx.json |
 | d9c. Headshot resolution (photo_ctx.json) | fantasy.json, photo_ctx.json |
 | 9d. Fantasy daily refresh (fantasy.json schedule) | dfs.json, fantasy.json |
@@ -111,7 +110,7 @@ happen inside the called module, so this file alone cannot split them).
 
 | phase | data/*.json referenced in the phase block |
 |---|---|
-| rebuild-only hook (no scrape): rebuild timeseries + movement + eFV consolidation + GRPO rescore | advancement_pace.json, contract_overrides.json, debuts.json, def_home.json, draft_timeseries.json, graduates.json, grpo_scores.json, identity_collisions.json, ifa_timeseries.json, milb_translation.json, overseas_timeseries.json, rosters_by_org.json, timeseries.json, trade_values.json, xfv.json, xfv_proxy_eval.json, xfv_regen_ledger.json |
+| rebuild-only hook (no scrape): rebuild timeseries + movement + eFV consolidation + GRPO rescore | advancement_pace.json, contract_overrides.json, debuts.json, def_home.json, draft_timeseries.json, graduates.json, grpo_scores.json, identity_collisions.json, ifa_timeseries.json, milb_translation.json, mlb_projections.json, overseas_timeseries.json, rosters_by_org.json, timeseries.json, trade_values.json, xfv.json, xfv_proxy_eval.json, xfv_regen_ledger.json |
 
 ## Scraper / feed modules (first docstring paragraph)
 
