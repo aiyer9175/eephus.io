@@ -48,7 +48,18 @@ def test_normalized_consensus_deterministic_and_diffed():
     assert len(nc) > 100
     assert nc == gn.normalized_consensus(_CYCLE)      # reproducible
     for pk, p in list(nc.items())[:20]:
-        assert p["diff"] == pytest.approx(p["norm_consensus"] - p["raw_consensus"], abs=0.01)
+        # TOLERANCE WIDENED 0.01 -> 0.016 (2026-08-07b). This was a latent test
+        # defect, not a regression: normalized_consensus rounds all THREE values
+        # independently (grade_normalization.py:317-319 rounds raw_consensus,
+        # norm_consensus and diff separately, and `diff` is rounded from the
+        # UNROUNDED difference). Each rounding contributes up to 0.005, so the
+        # largest honest discrepancy between `diff` and the difference of the
+        # two published values is 0.015, and the old bar of 0.01 was inside
+        # that. It only ever failed once a player landed on the boundary, which
+        # the Baseball America ingest happened to cause: -0.16 against
+        # -0.14999999999999858, over by 1.4e-15.
+        assert p["diff"] == pytest.approx(
+            p["norm_consensus"] - p["raw_consensus"], abs=0.016)
         assert p["n_sources"] >= 2
 
 

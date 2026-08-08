@@ -108,6 +108,39 @@
    "artifact_age_days": 11
   },
   {
+   "model_id": "ba_consensus_integration",
+   "surface": "the displayed consensus (Baseball America votes in it today)",
+   "predicts": "n/a - measurement: whether Baseball America should vote in the consensus, and whether its quality-selected coverage contaminates consensus_fv_raw",
+   "champion": "n/a (measurement)",
+   "baseline": "permuted BA coverage, holding the covered count and the grade distribution fixed",
+   "metric": "consensus Spearman and AUC with and without BA against realized WAR, plus corr(consensus delta, debuted) against a permuted-coverage band",
+   "eval_artifact": "data/ba_consensus_eval.json",
+   "verdict": "provisional",
+   "notes": "Audit 2026-08-07b, Baseball America lane BA1. THE LEAK HYPOTHESIS IS FALSE, and this is the load-bearing result: BA org Top 30s are quality-selected and coverage lifts the debuted rate +30.4 (hit) and +33.8 (pit) points, but the MANDATORY permutation control over WHICH players get coverage reproduces the entire effect. Real corr(delta, debuted) -0.3785 sits INSIDE the permuted band [-0.4497, -0.2286], a random draw of the same size lifts +19.95/+23.34, and the correlation runs the wrong direction for a leak anyway. So BA reaching the model through the consensus is not a contamination finding. ACCURACY IS A NULL AT 23x UNDERPOWER (d_spearman -0.00258 against a 0.0597 placebo half-width), so no claim either way is supported and the lane explicitly does not claim a gain. The org guard holds on 52 of 52 labels with zero rank-implied exposure. grade_normalization fits a separate offset per (source, role, cycle-year) and absorbs the 11.4 FV Adjusted-Grade era break. PROVISIONAL because two of four verifiers refuted parts of the headline and the lane's single load-bearing BLOCKER (the 2023 position gap) was already fixed before verification ran. Two findings outlive the lane: cross-year pooling is NOT BA-specific (138 of 176 live build_remapper cells pool, and (mlb_pipeline_international, hitter) 2021-2023 both pools AND fires on real rows), and the served eFV matrices no longer reproduce from the current corpus (74.8 percent of rows, 53.6 percent on busts). A player's vote count is now club-dependent: the 13 BA clubs average +0.252 more contributing sources."
+  },
+  {
+   "model_id": "ba_source_classification",
+   "surface": "source_backtest source classification, and the /sources/ glossary copy",
+   "predicts": "which grading sources have enough resolvable forward-chained history to be scored as raters, derived from the data rather than hardcoded",
+   "champion": "classify_sources (>=100 resolvable rows AND >=0.75 common-set retention)",
+   "baseline": "the hardcoded insufficient_history string list at source_backtest.py:781",
+   "metric": "resolvable row count per vintage, and common-set retention after admitting the source",
+   "eval_artifact": "data/ba_source_class_eval.json",
+   "verdict": "validated",
+   "notes": "Audit 2026-08-07b, Baseball America integration lane BA3. Verifier reproduced the headline independently from its own probe. THE HARDCODED CLASSIFICATION WAS FALSE: baseballamerica was listed as having too little history to score, and it has 332 resolvable 2023 rows, 3.3x the 100-row floor. BA STILL STAYS OUT, for a much better reason: admitting it to SCORED_SOURCES collapses the common set from 4,284 to 295 (2017-2022 go to zero, since BA has no vintage before 2023), moves mlb_pipeline pooled Spearman -0.0475 which is 7.0x the module's own 0.0068 A/B floor, and FLIPS accuracy.consensus_vs_inputs.consensus_wins from True to False on BOTH metrics, inverting the site's headline claim about the consensus. The deliverable is that the classification is now DERIVED and self-corrects when a vintage resolves, and the incumbent numbers are verified byte-identical against a run of the unmodified code. Two self-added bars (0.75 retention, 0.02 restatement) determined the verdict and are disclosed; gate 3 also fails against the repo's own 0.0068 floor at 7.0x. This lane also found the 2023 BA position gap that lane BA1 independently confirmed, since fixed."
+  },
+  {
+   "model_id": "ba_tool_grade_weight",
+   "surface": "model-dev artifact (rendered nowhere) - per-source tool-grade accuracy",
+   "predicts": "n/a - measurement: whether per-source tool grades earn an accuracy weight, scored against the realized MLB quantity each tool predicts",
+   "champion": "n/a (measurement)",
+   "baseline": "permuted source labels within a (player, tool, date) cell",
+   "metric": "per (source, tool) precision against the realized quantity, forward-chained, shrunk toward equal",
+   "eval_artifact": "data/ba_tool_grade_eval.json",
+   "verdict": "provisional",
+   "notes": "Audit 2026-08-07b, Baseball America lane BA2, verdict SHIP_SOME. PROVISIONAL AND NOT ADVERSARIALLY VERIFIED: the workflow was stopped during its verification phase, so unlike every other lane in this program no independent check ran on it. Given that 12 of 24 verified lane headlines in this program did NOT survive, treat every claim in this artifact as unconfirmed until someone re-derives it. What is independently established outside the lane is the premise: plan lane K0 records Baseball America as carrying ZERO tool grades and concludes the BA question and the tool-weighting lane are disjoint. That is FALSE by 7,285 tool observations across 1,502 rows (field/game_pwr/hit/speed/throw 821 each, fb 684, cmd 683, ch 635, sl 624, cb 400, ct 154), measured directly from the ingested boards. Doc docs/efv-2026-08-07b/TOOL_GRADE_WEIGHT_GATE.md."
+  },
+  {
    "model_id": "bat_tracking_hitters",
    "surface": "model-dev artifact (rendered nowhere) - loss ledger; BT-1 MLB bat-tracking lane (hitters): pWOBA residual arm + fwdHEM-style blend arm (2026-07-23)",
    "predicts": "n/a - gated experiment: Savant bat-tracking leaderboard fields (bat speed, squared-up/blast rates, swing length, attack angle/direction, swing-path tilt) as (A) a cross-fitted residual correction on pWOBA and (B) a blend candidate vs the fwdHEM+ incumbent, target wOBA(Y+1)",
@@ -255,6 +288,17 @@
      }
     ]
    }
+  },
+  {
+   "model_id": "consensus_org_rank_split",
+   "surface": "consensus avg_rank, and the PROSPX spotlight rank-jump driver",
+   "predicts": "which rows of a hybrid FanGraphs board carry a GLOBAL rank and which carry a per-organization position, detected from rank structure rather than from the interval_label",
+   "champion": "value-level classifier (contiguous global prefix, org positions restarting at g+1, ranks repeating across orgs)",
+   "baseline": "the shipped label-only guard, which cannot separate them because both kinds share one label",
+   "metric": "n/a (correctness repair; the served consensus grade moves on zero rows)",
+   "eval_artifact": "data/consensus_repair_eval.json",
+   "verdict": "validated",
+   "notes": "Audit 2026-08-07b lane C, C-1. A P0 with production consequences, reproduced exactly and independently by all three verifiers from raw SQL before touching lane code. FanGraphs stores two quantities in one rank column under one interval_label: on the 2026-08-02 board the FV>=50 prefix is one contiguous global sequence 1..114 and FV45 restarts at 1 per org, so 1,270 of 1,384 rows are org positions. Canary: jesus_made (MIL, FV65, global #1) and jd_dix (ARI, FV45, Arizona #1) both at rank 1. Blast radius 27,418 point rows across 4,760 players; one spotlight driver fires spuriously (ryan_sloan) and five print wrong numbers (theo_gillen 40 against 85). consensus_fv_raw moves on ZERO rows, which is why this is safe. A verifier added corroboration the lane missed: the 114 global rows are exactly the FV>=50 set, symmetric difference 0. C-2 (as-of FV instance counting, ASOF_FV_INSTANCES=True) ships with it and reproduced from an independently written implementation. C-3, the dead drop-off detector, is repaired but DEFAULTS OFF: enabling it moves 838 live grades. NOT SURVIVING: the lane's accusation that wave 1 misreported tyler_skaggs is FALSE, established by two verifiers (wave 1's -7.93 is its asof_all arm, the lane's -10.42 is asof_c1; both are correct). Its 8.2 control table contradicts its own artifact on 10 of 12 cells because _c1_controls iterates a set, so seeds buy nothing under hash randomization. Doc docs/efv-2026-08-07b/CONSENSUS_REPAIR.md."
   },
   {
    "model_id": "consensus_rank",
@@ -413,6 +457,17 @@
    "last_checked": "2026-08-06",
    "stale": false,
    "artifact_age_days": 12
+  },
+  {
+   "model_id": "efv_conditional_floor",
+   "surface": "model-dev artifact (rendered nowhere) - second power instrument for the eFV gate",
+   "predicts": "n/a - measurement: the minimum detectable effect for an eFV-vs-consensus margin, CONDITIONAL on the training corpus, beside the shipped estimator that resamples train and test together",
+   "champion": "E_cond_iid, forward-chain fits held fixed and scored rows resampled i.i.d.",
+   "baseline": "the shipped paired bootstrap with a refit per draw (retained, not retired)",
+   "metric": "nominal coverage under a design-matched null, plus detection of a known-real feature",
+   "eval_artifact": "data/xfv_power_eval.json",
+   "verdict": "provisional",
+   "notes": "Audit 2026-08-07b lane A. The INSTRUMENT survives: the conditional bootstrap is nominally calibrated (bootstrap sd 0.00853 against a true conditional sd 0.00854, ratio 0.999) where the shipped refit estimator runs 1.359 to 1.465 wide for its own estimand, and a verifier confirmed calibration a second way with a synthetic-free subsampling identity on the real pool (ratios 1.00 to 1.03). The variance decomposition reproduced on three independent seeds: refit noise is 0.527 of the shipped floor. It is registered as a SECOND row and retires nothing. THE HEADLINE DOES NOT SURVIVE and the row is provisional for that reason. The lane reported eFV as resolvably losing the hitter full_pool_km cut at 1.049x; converged at B=40k it is 1.038x, and it is NULL two-sided (0.87x), NULL under Bonferroni k=4 (0.77x), NULL under the shipped estimator, and NULL under a year-cluster bootstrap (0.83x). A zero-information blend reproduces about half the margin. Report the cut as UNRESOLVED. The pre-registered detection clause also failed for all three estimators on the pre-registered cell, so registration proceeded on an amended one; the lane disclosed this but graded it non-determining, and two verifiers judged it load-bearing. Do NOT hardcode the floor constant: 0.0204 is one B=2000 draw against a converged 0.0207. Doc docs/efv-2026-08-07b/POWER_GATE.md."
   },
   {
    "model_id": "efv_il_severity",
@@ -2136,6 +2191,17 @@
    "artifact_age_days": 22
   },
   {
+   "model_id": "xfv_dist_calibration",
+   "surface": "model-dev artifact (rendered nowhere) - eFV served outcome distribution",
+   "predicts": "n/a - measurement: whether the reliability diagnostic's miscalibration is an artifact of the censored label it grades against",
+   "champion": "n/a (measurement)",
+   "baseline": "n/a (measurement; the metric IS the verdict)",
+   "metric": "pooled bust ECE and n-weighted per-tier gap, recomputed on an identical pool with predictions held fixed and the realized bucket corrected",
+   "eval_artifact": "data/xfv_dist_calibration_eval.json",
+   "verdict": "validated",
+   "notes": "Audit 2026-08-07b plan lane C1. The cleanest result of the wave: both verifiers re-derived the entire primary from the raw matrices with their own code and matched digit for digit. PLAN ITEM D4 IS FALSE. Correcting the censored realized bucket moves pooled bust ECE 0.07908 to 0.07660 (3.1 percent) and the tier gap 0.04068 to 0.03883 (4.5 percent), against a 0.20 PARTIAL bar. Three measured reasons: the worst-biased span (observed_seasons=2) has NO row in CHAIN_YEARS at all, and a verifier upgraded that from empirical to PROVEN (censoring requires debut>=2021, so n_obs=2 means debut 2024, which CHAIN_YEARS 2016-2023 cannot contain); only 35 of 2,822 rows change bucket; and tiers 35 and 40, 78 percent of the pool, are never-debuted busts labelled exactly 0.0 and uncensored. CTRL-4 matters for anyone tempted to 'clean' this by restricting to resolved rows: that pool is MORE miscalibrated (0.10208) and would trip the 0.10 wire on cohort composition alone. SO C2 RECALIBRATION IS UNBLOCKED AND REQUIRED, with a sound two-defect brief (bottom of board under-predicts p_bust on 2,516 rows; tier 60 predicts star 0.2143 against realized 0.0000 on n=32). NOT SURVIVING: the lane's secondary proposal to tighten BUST_ECE_TRIPWIRE to 0.09, blocked unanimously. It fails the lane's OWN pre-registered held-out-fold FPR estimator at 0.500 against a 0.25 ceiling, and the 0.199 that licensed it came from a block bootstrap substituted after the pre-registered number came back unfavourable. Under the pre-registered rule the incumbent 0.10 also fails and only 0.11/0.12 clear, so the test is uninformative at this sample size. Doc docs/efv-2026-08-07b/DISTRIBUTION_CALIBRATION_GATE.md."
+  },
+  {
    "model_id": "xfv_elite_band",
    "surface": "model-dev artifact (rendered nowhere) - loss ledger; omnibus-3 lane C4, the owner's elite-conviction ask",
    "predicts": "n/a - two gated arms, both PRE-REGISTERED as probably unresolvable: (a) a blend-lambda band RAISE restricted to consensus FV>=55, dips -0.20 and -0.40, both sides; (b) an elite-cohort-restricted eval that trains on everything and scores only FV>=55 rows",
@@ -2159,6 +2225,17 @@
    "last_checked": "2026-08-06",
    "stale": false,
    "artifact_age_days": 22
+  },
+  {
+   "model_id": "xfv_feature_leak",
+   "surface": "model-dev artifact (rendered nowhere) - eFV hitter feature audit",
+   "predicts": "n/a - measurement: whether the bust label reaches the served hitter model through n_milb_seasons or the as-of anchor",
+   "champion": "n/a (measurement)",
+   "baseline": "permute-within-kind (destroys individual signal, preserves between-group separation)",
+   "metric": "drop-and-refit and permute-within-kind deltas in pooled and block rho against their own paired-bootstrap floors",
+   "eval_artifact": "data/xfv_feature_leak_eval.json",
+   "verdict": "provisional",
+   "notes": "Audit 2026-08-07b wave 2 lane D. THE SUBSTANTIVE ANSWER IS PROBABLY RIGHT: no leak found through n_milb_seasons, and a verifier extended the arm menu to all 14 hitter and 9 pitcher features, a control the lane did not run, with nothing firing on the hitter side. Wave 1's reading of `stale` is FALSE: `stale == cut_lag - 1[debuted]` is an algebraic identity of _decision_year, not a measurement, and `stale` is in neither feature spec. The MiLB window OFFSET is kind-invariant, confirmed exactly. PROVISIONAL because the instrument that produced the null is weak where it matters: on hit/full, dropping the DOMINANT feature `fv` moves blend rho by only +0.00301, below the 0.01076 floor and SMALLER than dropping the candidate, so the frame cannot resolve deleting the most important column. The lane's stated mechanism for its own control failure is also empirically wrong (a verifier ran all-noise and all-zeros arms: destroying information LOWERS the score, it does not raise it). And the one non-underpowered Part B verdict turns on an undisclosed denominator swap, 62/581 rather than the registered 62/845. E1 is only PARTLY refuted: the offset is kind-invariant but the cutoff DATE is still label-selected and remains untested. Doc docs/efv-2026-08-07b/FEATURE_LEAK_GATE.md."
   },
   {
    "model_id": "xfv_gated_pairs",

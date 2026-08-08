@@ -21,6 +21,24 @@ ROOT = Path(__file__).parent
 # models with no user-facing methodology surface). EVERY registry row
 # must appear; a new model ships with its documentation decision.
 MODEL_GLOSSARY = {
+    # Audit 2026-08-07b measurement artifacts. All are model-dev only, rendered
+    # on no surface, so they take the "internal" documentation decision the same
+    # way war_cohort_diagnostic and surplus_sensitivity_diagnostic do. Each row's
+    # own notes field carries what survived adversarial verification.
+    "xfv_label_censoring": "internal",
+    "consensus_contamination": "internal",
+    "consensus_rank": "internal",
+    "xfv_cohort_floors": "internal",
+    "efv_conditional_floor": "internal",
+    "xfv_dist_calibration": "internal",
+    "xfv_feature_leak": "internal",
+    "ba_consensus_integration": "internal",
+    "ba_tool_grade_weight": "internal",
+    # BA3 changes the /sources/ classification copy, and C-1 changes the served
+    # avg_rank and the spotlight driver text, so both reach a reader.
+    "ba_source_classification": ["consensus_fv"],
+    "consensus_org_rank_split": ["consensus_fv"],
+
     # 2026-07-04 research-sweep Tier-1 features (each has its own glossary entry).
     "draft_war_room": ["draft_war_room"],
     "farm_window_alignment": ["window_alignment"],
