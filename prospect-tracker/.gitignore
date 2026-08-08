@@ -68,6 +68,14 @@ data/player_detail/
 data/debuts_full/
 # FanGraphs CSV drop folder — user-supplied exports + processed archive
 data/fangraphs_imports/
+# Baseball America drop folder - owner-supplied board pastes + processed archive.
+# NEVER commit and NEVER deploy: BA boards are licensed subscription material used
+# here only as model TRAINING input, never as displayed content. Ignoring the tree
+# keeps it out of git and, because deploy/nightly-build.sh only rsyncs data/*.json
+# at depth 1, out of the public webroot as well. If a derived artifact is ever
+# written from this data it must be added to deploy/data_exclude.txt in the same
+# commit and may not be a model_registry eval_artifact (test_publish_manifest.py).
+data/baseballamerica_imports/
 # Tracked exception to the global *.csv ignore: scraped FanGraphs ARTICLE
 # boards (e.g. Marlins 2026 Top 53). FanGraphs is Cloudflare-blocked so the
 # deploy box can't re-scrape, and these aren't otherwise reproducible — commit
