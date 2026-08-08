@@ -127,24 +127,59 @@ three:
   risk), that class is reported as UNFLOORED rather than floored on the incumbent's
   registration.
 
-## 8. RESULTS (literal placeholders; the lab fills these in)
+## 8. RESULTS
 
 ```
-STATUS: NOT RUN
-X1_parity_four_cuts:            <PENDING>
-X2_coverage_per_class:          <PENDING>
-X3_detection_known_effect:      <PENDING>
-X4_resolves_losses:             <PENDING>
+STATUS: PART A COMPLETE (the section 7.5 obligation, discharged 2026-08-08).
+        PART B NOT RUN (the new statistic classes; the extension lab is unwritten).
+```
 
-floors_refit:                   <PENDING>
-floors_cond:                    <PENDING>
+### Part A: the re-derivation obligation from section 6, DISCHARGED
+
+Producer `python tools/efv_power_lab.py all 2000`, seed 20260807, 4,089s, artifact
+`data/xfv_power_eval.json`, on matrices and evals regenerated 2026-08-08.
+
+```
+X2_coverage_two_sided:   PASS. refit sd_ratio 1.454 cov 0.970; cond_iid 1.000 cov 0.930;
+                         cond_strat 0.995 cov 0.925; acceptance [0.920, 0.980].
+                         E_cond_iid re-registers as primary, as pre-registered.
+X3_detection:            PASS, unchanged. debuted.ridge on hitter `fv` DETECTS under all
+                         three estimators (point +0.05721 against 0.0443 / 0.0322 / 0.0330);
+                         the three weaker arms miss under all three. The instrument still
+                         sees the known-real effect.
+X4_resolves_losses:      NOT DEMONSTRABLE ON CURRENT DATA. E_cond now resolves NOTHING in
+                         either direction, so the previous "it resolved one cell and it was
+                         a loss" evidence for non-laundering no longer applies as written.
+                         Recorded as a limitation, not papered over.
+
+refit_share_of_variance: 0.541  (shipped sd 0.01848, test-only 0.01253, train-only 0.01112)
+
+hit_full_pool_verdict:   delta -0.01894, E_cond MDE95 0.0206 -> 0.921x -> NULL
+                         (was -0.02143 against 0.0204 -> 1.049x -> RESOLVABLE LOSS)
+section_7_5_disposition: SUPERSEDED, with an EXPLICIT RETRACTION written into
+                         docs/EFV_GATE_STANDARD.md section 7.5.
+```
+
+All four cuts are NULL under both estimators on the rebuilt basis:
+hit full_pool 0.921x, pit full_pool 0.660x, hit debuted 0.536x, pit debuted 0.211x (E_cond).
+
+**The pre-registered three-outcome clause resolves to the second branch**: the cell no
+longer resolves, and the retraction is explicit because the claim had been published.
+**The floor barely moved (0.0204 to 0.0206); the DELTA moved.** The verdict flipped on the
+data, not on the instrument, and the instrument re-validated on the new basis.
+
+### Part B: the statistic-class extension, STILL PENDING
+
+```
+X1_parity_four_cuts:            <PENDING>
+floors_cond:
   headtohead_common:            <PENDING>
   block_rho:                    <PENDING>
   feature_add:                  <PENDING>
   lambda_shift_0.05/0.10/0.19:  <PENDING>
-
 adjudication_holm:              <PENDING>
-hit_full_pool_verdict:          <PENDING>
-section_7_5_disposition:        <PENDING>
-VERDICT:                        <PENDING>
 ```
+
+Note for whoever writes it: Part A leaves the head-to-head claim (+0.0297 against an
+E_refit floor of 0.0352) still unfloored under E_cond, which is the single number the site's
+conviction claim rests on. That remains the highest-value item in this lane.

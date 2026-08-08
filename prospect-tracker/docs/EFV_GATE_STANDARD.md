@@ -312,17 +312,41 @@ on over-coverage even if it had been coded correctly.
 
 ### 7.5 Consequence on a shipped cut
 
-Hitter `full_pool_km` reads consensus 0.3002 against blend 0.2787, delta **-0.02143** on
-n = 1,792. Under E_refit that is 0.743x its floor, a NULL. Under the registered E_cond it is
-**1.049x its floor, a RESOLVABLE LOSS**, bootstrap p(delta > 0) = 0.0415. The coverage
-correction is 0.999, so the verdict does not depend on it.
+> **SUPERSEDED 2026-08-08, and the earlier claim is RETRACTED.** This section previously
+> published hitter `full_pool_km` as **1.049x its floor, a RESOLVABLE LOSS** with bootstrap
+> p(delta > 0) = 0.0415, on delta -0.02143 at n = 1,792. **That cell no longer resolves.**
+> It is retracted explicitly rather than quietly amended because it was published as the
+> one cell the conditional instrument could resolve, and other work may have leaned on it.
 
-The margin is thin and the qualifications are part of the claim: it resolves ONE-SIDED and
-does not resolve two-sided (0.878x of a 0.0244 floor); it is a conditional claim about this
-training corpus; and a zero-information blend costs about -0.011 in the design-matched
-simulation, roughly half the observed margin.
+**Re-derivation on the rebuilt basis** (producer `python tools/efv_power_lab.py all 2000`,
+seed 20260807, artifact `data/xfv_power_eval.json`; matrices and evals regenerated
+2026-08-08 against a current consensus, record `docs/efv-2026-08-08/WAVE0_RECORD.md`):
 
-**No eFV WIN becomes resolvable under E_cond anywhere in the four pre-registered cuts.** The
-instrument resolved exactly one cell and it was a loss. That is the check that it is not
-power laundering, and it is the reason this section can be read as an instrument rather than
-as an argument.
+| cut | delta | n | E_refit MDE95 | E_cond MDE95 | margin/floor (cond) | verdict |
+|---|---|---|---|---|---|---|
+| hit `full_pool_km` | **-0.01894** | 1,792 | 0.0296 | **0.0206** | **0.921x** | NULL |
+| pit `full_pool_km` | +0.01398 | 1,883 | 0.0259 | 0.0212 | 0.660x | NULL |
+| hit `debuted_km` | +0.01121 | 755 | 0.0437 | 0.0209 | 0.536x | NULL |
+| pit `debuted_km` | +0.00612 | 889 | 0.0423 | 0.0290 | 0.211x | NULL |
+
+**The floor barely moved (0.0204 to 0.0206). The DELTA moved**, from -0.02143 to -0.01894,
+because the eval artifacts had been two days staler than the matrices and three days staler
+than the consensus they read. The verdict flipped on the data, not on the instrument.
+
+**The instrument re-validates on the new basis.** Two-sided coverage passes for all three
+estimators (E_refit sd ratio 1.454, coverage 0.970; E_cond_iid ratio 1.000, coverage 0.930;
+E_cond_strat 0.995, coverage 0.925, acceptance [0.920, 0.980]), and E_cond_iid re-registers
+as primary exactly as pre-registered. Refit variance is **54.1%** of shipped variance
+(shipped sd 0.01848, test-only 0.01253, train-only 0.01112), which is the measured reason
+the 4-to-11-fold promotion bought no power and why more cohorts cannot buy it either.
+
+**E_cond now resolves NOTHING in the four pre-registered cuts, in either direction.** The
+"it resolved exactly one cell and it was a loss" argument for the instrument's honesty no
+longer applies as written; the standing check is instead that its detection behaviour is
+unchanged (it still detects the known-real hitter `fv` effect wherever E_refit does, and
+misses where E_refit misses). **A tighter floor still does not create a result**, and on
+current data it certifies neither a win nor a loss.
+
+**Standing lesson, worth more than the number.** Every margin in this document is a
+function of a regen. Adjudicating a cell against artifacts that are even two days stale can
+cross a verdict boundary. Re-read the margins after any regen, before publishing.

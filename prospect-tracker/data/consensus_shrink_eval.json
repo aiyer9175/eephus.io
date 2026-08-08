@@ -1,0 +1,264 @@
+{
+  "generated_at": "2026-08-08T23:13:08Z",
+  "produced_by": "python tools/consensus_shrink_lab.py",
+  "registration": "docs/efv-2026-08-08/SHRINK_GATE.md",
+  "lane": "M4",
+  "seed": 20260808,
+  "B": 2000,
+  "primary": "interaction of observed consensus with publisher coverage",
+  "note": "The primary is NOT pooled delta-R^2. Per the registration that test would be pre-registering a null: effect ~0.007 against an MDE ~0.054.",
+  "sides": {
+    "hit|consensus_fv_pre_shrinkage": {
+      "n": 1904,
+      "k_distribution": {
+        "1": 941,
+        "2": 898,
+        "3": 65
+      },
+      "interaction_beta": 0.007519,
+      "interaction_se": 0.003955,
+      "interaction_t": 1.901,
+      "boot_ci95": [
+        -0.001605,
+        0.016687
+      ],
+      "boot_excludes_zero": false,
+      "permuted_k_null_ci95": [
+        -0.009407,
+        0.009033
+      ],
+      "permutation_p": 0.107,
+      "resolved_only": {
+        "beta": 0.003656,
+        "t": 0.824
+      },
+      "per_year": {
+        "2017": {
+          "n": 176,
+          "beta": -0.006458,
+          "t": -0.636
+        },
+        "2018": {
+          "n": 171,
+          "beta": -0.003415,
+          "t": -0.254
+        },
+        "2019": {
+          "n": 182,
+          "beta": 0.008967,
+          "t": 0.471
+        },
+        "2021": {
+          "n": 198,
+          "beta": -0.003298,
+          "t": -0.269
+        },
+        "2022": {
+          "n": 283,
+          "beta": -0.002311,
+          "t": -0.191
+        },
+        "2023": {
+          "n": 243,
+          "beta": 0.014916,
+          "t": 1.721
+        }
+      },
+      "per_year_sign_agreement": 0.6666666666666666
+    },
+    "hit|consensus_fv_raw": {
+      "n": 1904,
+      "k_distribution": {
+        "1": 941,
+        "2": 898,
+        "3": 65
+      },
+      "interaction_beta": 0.000325,
+      "interaction_se": 0.004049,
+      "interaction_t": 0.08,
+      "boot_ci95": [
+        -0.009133,
+        0.010076
+      ],
+      "boot_excludes_zero": false,
+      "permuted_k_null_ci95": [
+        -0.008554,
+        0.008944
+      ],
+      "permutation_p": 0.944,
+      "resolved_only": {
+        "beta": -0.003929,
+        "t": -0.869
+      },
+      "per_year": {
+        "2017": {
+          "n": 176,
+          "beta": -0.014764,
+          "t": -1.358
+        },
+        "2018": {
+          "n": 171,
+          "beta": -0.015837,
+          "t": -1.151
+        },
+        "2019": {
+          "n": 182,
+          "beta": 0.00612,
+          "t": 0.317
+        },
+        "2021": {
+          "n": 198,
+          "beta": -0.004587,
+          "t": -0.362
+        },
+        "2022": {
+          "n": 283,
+          "beta": -0.005464,
+          "t": -0.448
+        },
+        "2023": {
+          "n": 243,
+          "beta": 0.013731,
+          "t": 1.545
+        }
+      },
+      "per_year_sign_agreement": 0.6666666666666666
+    },
+    "pit|consensus_fv_pre_shrinkage": {
+      "n": 2030,
+      "k_distribution": {
+        "1": 1110,
+        "2": 859,
+        "3": 61
+      },
+      "interaction_beta": 0.006527,
+      "interaction_se": 0.002946,
+      "interaction_t": 2.215,
+      "boot_ci95": [
+        -7.1e-05,
+        0.013131
+      ],
+      "boot_excludes_zero": false,
+      "permuted_k_null_ci95": [
+        -0.006416,
+        0.006449
+      ],
+      "permutation_p": 0.048,
+      "resolved_only": {
+        "beta": 0.001305,
+        "t": 0.383
+      },
+      "per_year": {
+        "2017": {
+          "n": 191,
+          "beta": -0.002186,
+          "t": -0.267
+        },
+        "2018": {
+          "n": 171,
+          "beta": -0.009952,
+          "t": -0.808
+        },
+        "2019": {
+          "n": 175,
+          "beta": 0.011316,
+          "t": 0.837
+        },
+        "2020": {
+          "n": 151,
+          "beta": -0.011105,
+          "t": -0.797
+        },
+        "2021": {
+          "n": 225,
+          "beta": 0.008453,
+          "t": 0.934
+        },
+        "2022": {
+          "n": 228,
+          "beta": -0.006084,
+          "t": -0.628
+        },
+        "2023": {
+          "n": 264,
+          "beta": 0.009883,
+          "t": 1.742
+        },
+        "2024": {
+          "n": 135,
+          "beta": -0.023524,
+          "t": -1.829
+        }
+      },
+      "per_year_sign_agreement": 0.625
+    },
+    "pit|consensus_fv_raw": {
+      "n": 2030,
+      "k_distribution": {
+        "1": 1110,
+        "2": 859,
+        "3": 61
+      },
+      "interaction_beta": 0.001298,
+      "interaction_se": 0.002982,
+      "interaction_t": 0.435,
+      "boot_ci95": [
+        -0.005303,
+        0.007736
+      ],
+      "boot_excludes_zero": false,
+      "permuted_k_null_ci95": [
+        -0.006742,
+        0.006697
+      ],
+      "permutation_p": 0.712,
+      "resolved_only": {
+        "beta": -0.004294,
+        "t": -1.252
+      },
+      "per_year": {
+        "2017": {
+          "n": 191,
+          "beta": -0.006871,
+          "t": -0.797
+        },
+        "2018": {
+          "n": 171,
+          "beta": -0.018288,
+          "t": -1.436
+        },
+        "2019": {
+          "n": 175,
+          "beta": 0.007953,
+          "t": 0.574
+        },
+        "2020": {
+          "n": 151,
+          "beta": -0.013054,
+          "t": -0.912
+        },
+        "2021": {
+          "n": 225,
+          "beta": 0.007776,
+          "t": 0.847
+        },
+        "2022": {
+          "n": 228,
+          "beta": -0.008283,
+          "t": -0.841
+        },
+        "2023": {
+          "n": 264,
+          "beta": 0.008752,
+          "t": 1.522
+        },
+        "2024": {
+          "n": 135,
+          "beta": -0.024466,
+          "t": -1.887
+        }
+      },
+      "per_year_sign_agreement": 0.625
+    }
+  }
+}

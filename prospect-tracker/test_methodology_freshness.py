@@ -27,6 +27,9 @@ MODEL_GLOSSARY = {
     "xfv_dist_recalibration": "internal",
 
     "consensus_recency_decay": "internal",
+    # measurement of the single-source shrinkage; nothing shipped, the incumbent
+    # constant was tested against the mechanism it approximates and survived
+    "consensus_coverage_shrinkage": "internal",
     "xfv_serve_path": "internal",
 
     # Audit 2026-08-07b measurement artifacts. All are model-dev only, rendered

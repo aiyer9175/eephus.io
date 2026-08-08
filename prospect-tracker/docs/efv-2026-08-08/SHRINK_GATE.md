@@ -112,20 +112,58 @@ two-sided coverage check if a new floor is derived here.
 - **No arm is promoted after the fact.** If A3 wins only under a specification not listed
   in section 2, that is a post-hoc finding and must be labelled one in the headline.
 
-## 7. RESULTS (literal placeholders; the lab fills these in)
+## 7. RESULTS
 
 ```
-STATUS: NOT RUN
-primary_interaction_t:        <PENDING>
-primary_interaction_p:        <PENDING>
-control_C2_permuted_k_band:   <PENDING>
-control_C1_permuted_source:   <PENDING>
-reference_reconstruction:     <PENDING>
-per_year_sign:                <PENDING>
-oos_consensus_delta:          <PENDING>
-live_board_churn:             <PENDING>
-VERDICT:                      <PENDING>
+STATUS: RUN 2026-08-08. Producer `python tools/consensus_shrink_lab.py 2000`,
+        seed 20260808, artifact data/consensus_shrink_eval.json.
+VERDICT: A2 IS A NULL AND IS CLOSED. The incumbent constant is VINDICATED.
 ```
+
+**The x-field is the whole question, and running only one of them would have
+inverted the answer.** `consensus_fv_raw` already carries the incumbent shrink, so an
+interaction on it tests the RESIDUAL. `consensus_fv_pre_shrinkage` is the unshrunk input
+and tests the raw claim. Both were run.
+
+| frame | side | beta | t | paired boot CI95 | permuted-k p |
+|---|---|---|---|---|---|
+| PRE-shrinkage | hit | +0.007519 | +1.901 | [-0.00161, +0.01669] | 0.107 |
+| PRE-shrinkage | pit | +0.006527 | +2.215 | [-0.00007, +0.01313] | **0.048** |
+| POST-shrinkage | hit | +0.000325 | +0.080 | [-0.00913, +0.01008] | **0.944** |
+| POST-shrinkage | pit | +0.001298 | +0.435 | [-0.00530, +0.00774] | 0.712 |
+
+n = 1,904 hit / 2,030 pit. Coverage k: hit {1: 941, 2: 898, 3: 65}, pit {1: 1110, 2: 859,
+3: 61}.
+
+**What this says.** A coverage dependence IS visible in the raw un-shrunk consensus, same
+sign on both sides, reaching permutation p 0.048 on pitchers. **It is then absorbed almost
+exactly by the incumbent shrinkage**: on the served frame the interaction collapses to
++0.0003 and +0.0013 with permutation p 0.944 and 0.712, i.e. the observed value sits dead
+centre of its own null band. `SINGLE_SOURCE_K = 0.5` with `SINGLE_SOURCE_PRIOR = 35.0`,
+never fitted, is doing very nearly the right job, and **is not detectably wrong.**
+
+**Against the pre-registered clauses**: P1 FAILS even on the pre-shrinkage frame, because
+the paired bootstrap CI includes zero on both sides and per-year sign agreement is 0.67 hit
+/ 0.63 pit against a "3 of 4 years" bar. Section 6's stop clause therefore applies: record
+the NULL and close A2 rather than hunting a gate that passes.
+
+**Honest limits, stated because they bound the verdict rather than excuse it.**
+1. **The design has almost no k=3 mass** (65 and 61 rows). The contrast is effectively
+   k=1 against k=2, where lambda_k differs least (about 0.705 against 0.82) and the test
+   has least leverage. A null here is NOT evidence that coverage is irrelevant at k=3.
+2. **The two instruments disagree in emphasis** on the pre-shrinkage pitcher cell
+   (permutation p 0.048 against a bootstrap CI whose lower bound is -0.00007, essentially
+   touching zero). Both are reported. Per the standard, that is a null leaning positive,
+   not a win, and no threshold was moved after seeing it.
+3. **Resolved-only estimates attenuate** (+0.0037 hit, +0.0013 pit), so part of the
+   pre-shrinkage signal rides on censored rows whose label is a known-biased projection.
+
+**Consequences for the plan.** A1 (per-source precision weighting) is untouched by this
+result and is still live, but wave 0 already lowered its expectation: the within-year sigma
+ratio is 1.19 to 1.58 and straddles its own 1.25 bar. A2 is closed. R3 should NOT ship a
+refit of `SINGLE_SOURCE_K`; the honest action is to record that the constant was tested
+against the mechanism it approximates and survived, which converts an "unfitted constant"
+liability in the defect ledger into a measured result.
 
 ## 8. What this lane may NOT conclude
 

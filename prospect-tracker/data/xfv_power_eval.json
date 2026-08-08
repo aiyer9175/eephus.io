@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-08T02:34:55Z",
+ "generated_at": "2026-08-08T23:13:36Z",
  "produced_by": "tools/efv_power_lab.py all",
  "registration": "docs/efv-2026-08-07b/POWER_GATE.md parts 0-4, written in full BEFORE this lab existed; part 5 is a placeholder filled after the run",
  "lane": "A1 (which bootstrap is the published claim about)",
@@ -8,9 +8,9 @@
  "repro": {
   "artifact_hit_full_pool_km": {
    "n": 1792,
-   "consensus": 0.3002,
-   "blend": 0.2787,
-   "delta": -0.0215,
+   "consensus": 0.2954,
+   "blend": 0.2764,
+   "delta": -0.019,
    "source": "data/xfv_eval.json evals.full_pool_km.pooled_oos (baseline.spearman vs blend.spearman)"
   },
   "wave1_refit_floor": {
@@ -56,23 +56,23 @@
    "n": 1883,
    "target_zero_share": 0.725,
    "target_sd": 5.108,
-   "consensus_rho_oos": 0.3002,
+   "consensus_rho_oos": 0.2954,
    "folds": 11,
    "k_features": 14,
-   "boot_sd_shipped": 0.01756,
-   "boot_sd_test_only": 0.01255,
-   "shipped_over_test_sd_ratio": 1.399
+   "boot_sd_shipped": 0.01829,
+   "boot_sd_test_only": 0.01274,
+   "shipped_over_test_sd_ratio": 1.436
   },
   "synthetic": {
    "n": 1883,
-   "target_zero_share": 0.717,
-   "target_sd": 5.395,
-   "consensus_rho_oos": 0.3155,
+   "target_zero_share": 0.719,
+   "target_sd": 5.356,
+   "consensus_rho_oos": 0.3168,
    "folds": 11,
    "k_features": 14,
-   "boot_sd_shipped": 0.01068,
-   "boot_sd_test_only": 0.00802,
-   "shipped_over_test_sd_ratio": 1.333
+   "boot_sd_shipped": 0.01075,
+   "boot_sd_test_only": 0.00814,
+   "shipped_over_test_sd_ratio": 1.321
   },
   "params": {
    "a": 0.7,
@@ -85,12 +85,12 @@
  },
  "variance_decomposition": {
   "B": 1200,
-  "sd_shipped_both_resampled": 0.01829,
-  "sd_test_rows_only": 0.01258,
-  "sd_train_refit_only": 0.01132,
-  "additive_reconstruction": 0.01692,
-  "reconstruction_over_shipped": 0.925,
-  "refit_variance_share_of_shipped": 0.527,
+  "sd_shipped_both_resampled": 0.01848,
+  "sd_test_rows_only": 0.01253,
+  "sd_train_refit_only": 0.01112,
+  "additive_reconstruction": 0.01675,
+  "reconstruction_over_shipped": 0.906,
+  "refit_variance_share_of_shipped": 0.541,
   "additivity_holds": true,
   "reading": "if the reconstruction ratio is far from 1 the '53% refit noise' framing is not a variance decomposition and must not be used"
  },
@@ -100,56 +100,56 @@
     "pool": "full",
     "leg": "blend",
     "n_scored": 1792,
-    "rho_full_spec": 0.27873,
-    "rho_spec_minus_fv": 0.28174,
-    "point": -0.00301,
+    "rho_full_spec": 0.27645,
+    "rho_spec_minus_fv": 0.28064,
+    "point": -0.00419,
     "refit": {
      "B_used": 2000,
-     "point_delta": -0.00301,
-     "boot_mean_delta": 0.00729,
-     "sd": 0.01581,
-     "MDE95": 0.026,
-     "mde95_twosided": 0.031,
+     "point_delta": -0.00419,
+     "boot_mean_delta": 0.00606,
+     "sd": 0.01547,
+     "MDE95": 0.0254,
+     "mde95_twosided": 0.0303,
      "ci95": [
-      -0.02501,
-      0.03772
+      -0.0257,
+      0.03488
      ],
-     "p_gt_0": 0.694,
-     "margin_over_floor": 0.116,
+     "p_gt_0": 0.6665,
+     "margin_over_floor": 0.165,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
     },
     "cond_iid": {
      "B_used": 2000,
-     "point_delta": -0.00301,
-     "boot_mean_delta": -0.00304,
-     "sd": 0.0128,
-     "MDE95": 0.0211,
-     "mde95_twosided": 0.0251,
+     "point_delta": -0.00419,
+     "boot_mean_delta": -0.00436,
+     "sd": 0.01227,
+     "MDE95": 0.0202,
+     "mde95_twosided": 0.024,
      "ci95": [
-      -0.02865,
-      0.02226
+      -0.02844,
+      0.01953
      ],
-     "p_gt_0": 0.4095,
-     "margin_over_floor": 0.143,
+     "p_gt_0": 0.365,
+     "margin_over_floor": 0.208,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
     },
     "cond_strat": {
      "B_used": 2000,
-     "point_delta": -0.00301,
-     "boot_mean_delta": -0.00278,
-     "sd": 0.01285,
-     "MDE95": 0.0211,
-     "mde95_twosided": 0.0252,
+     "point_delta": -0.00419,
+     "boot_mean_delta": -0.00404,
+     "sd": 0.01242,
+     "MDE95": 0.0204,
+     "mde95_twosided": 0.0243,
      "ci95": [
-      -0.02725,
-      0.02109
+      -0.02832,
+      0.01904
      ],
-     "p_gt_0": 0.4235,
-     "margin_over_floor": 0.142,
+     "p_gt_0": 0.3855,
+     "margin_over_floor": 0.205,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
@@ -159,56 +159,56 @@
     "pool": "full",
     "leg": "ridge",
     "n_scored": 1792,
-    "rho_full_spec": 0.2749,
-    "rho_spec_minus_fv": 0.25118,
-    "point": 0.02372,
+    "rho_full_spec": 0.27385,
+    "rho_spec_minus_fv": 0.25112,
+    "point": 0.02272,
     "refit": {
      "B_used": 2000,
-     "point_delta": 0.02372,
-     "boot_mean_delta": 0.03602,
-     "sd": 0.01924,
-     "MDE95": 0.0317,
-     "mde95_twosided": 0.0377,
+     "point_delta": 0.02272,
+     "boot_mean_delta": 0.03406,
+     "sd": 0.01888,
+     "MDE95": 0.0311,
+     "mde95_twosided": 0.037,
      "ci95": [
-      -0.00405,
-      0.07405
+      -0.00261,
+      0.07163
      ],
      "p_gt_0": 0.968,
-     "margin_over_floor": 0.749,
+     "margin_over_floor": 0.732,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
     },
     "cond_iid": {
      "B_used": 2000,
-     "point_delta": 0.02372,
-     "boot_mean_delta": 0.02353,
-     "sd": 0.01612,
-     "MDE95": 0.0265,
-     "mde95_twosided": 0.0316,
+     "point_delta": 0.02272,
+     "boot_mean_delta": 0.02239,
+     "sd": 0.01551,
+     "MDE95": 0.0255,
+     "mde95_twosided": 0.0304,
      "ci95": [
-      -0.00723,
-      0.05526
+      -0.00763,
+      0.0527
      ],
-     "p_gt_0": 0.9285,
-     "margin_over_floor": 0.894,
+     "p_gt_0": 0.9235,
+     "margin_over_floor": 0.891,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
     },
     "cond_strat": {
      "B_used": 2000,
-     "point_delta": 0.02372,
-     "boot_mean_delta": 0.02402,
-     "sd": 0.01612,
-     "MDE95": 0.0265,
-     "mde95_twosided": 0.0316,
+     "point_delta": 0.02272,
+     "boot_mean_delta": 0.0229,
+     "sd": 0.01559,
+     "MDE95": 0.0256,
+     "mde95_twosided": 0.0306,
      "ci95": [
-      -0.00673,
-      0.05478
+      -0.00728,
+      0.05248
      ],
-     "p_gt_0": 0.9295,
-     "margin_over_floor": 0.894,
+     "p_gt_0": 0.9285,
+     "margin_over_floor": 0.886,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
@@ -218,56 +218,56 @@
     "pool": "debuted",
     "leg": "blend",
     "n_scored": 755,
-    "rho_full_spec": 0.39933,
-    "rho_spec_minus_fv": 0.37861,
-    "point": 0.02073,
+    "rho_full_spec": 0.39563,
+    "rho_spec_minus_fv": 0.37659,
+    "point": 0.01903,
     "refit": {
      "B_used": 2000,
-     "point_delta": 0.02073,
-     "boot_mean_delta": 0.02869,
-     "sd": 0.02146,
-     "MDE95": 0.0353,
-     "mde95_twosided": 0.0421,
+     "point_delta": 0.01903,
+     "boot_mean_delta": 0.02545,
+     "sd": 0.02112,
+     "MDE95": 0.0347,
+     "mde95_twosided": 0.0414,
      "ci95": [
-      -0.01255,
-      0.07507
+      -0.01431,
+      0.07285
      ],
-     "p_gt_0": 0.925,
-     "margin_over_floor": 0.587,
+     "p_gt_0": 0.8965,
+     "margin_over_floor": 0.548,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
     },
     "cond_iid": {
      "B_used": 2000,
-     "point_delta": 0.02073,
-     "boot_mean_delta": 0.02129,
-     "sd": 0.01467,
-     "MDE95": 0.0241,
-     "mde95_twosided": 0.0288,
+     "point_delta": 0.01903,
+     "boot_mean_delta": 0.01953,
+     "sd": 0.0139,
+     "MDE95": 0.0229,
+     "mde95_twosided": 0.0272,
      "ci95": [
-      -0.0072,
-      0.05081
+      -0.00671,
+      0.04796
      ],
-     "p_gt_0": 0.927,
-     "margin_over_floor": 0.859,
+     "p_gt_0": 0.9185,
+     "margin_over_floor": 0.832,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
     },
     "cond_strat": {
      "B_used": 2000,
-     "point_delta": 0.02073,
-     "boot_mean_delta": 0.02091,
-     "sd": 0.01494,
-     "MDE95": 0.0246,
-     "mde95_twosided": 0.0293,
+     "point_delta": 0.01903,
+     "boot_mean_delta": 0.01908,
+     "sd": 0.01424,
+     "MDE95": 0.0234,
+     "mde95_twosided": 0.0279,
      "ci95": [
-      -0.00825,
-      0.05053
+      -0.00813,
+      0.04725
      ],
-     "p_gt_0": 0.912,
-     "margin_over_floor": 0.844,
+     "p_gt_0": 0.9085,
+     "margin_over_floor": 0.812,
      "resolvable": false,
      "verdict": "NULL",
      "detects": false
@@ -277,56 +277,56 @@
     "pool": "debuted",
     "leg": "ridge",
     "n_scored": 755,
-    "rho_full_spec": 0.39591,
-    "rho_spec_minus_fv": 0.33571,
-    "point": 0.0602,
+    "rho_full_spec": 0.39254,
+    "rho_spec_minus_fv": 0.33533,
+    "point": 0.05721,
     "refit": {
      "B_used": 2000,
-     "point_delta": 0.0602,
-     "boot_mean_delta": 0.06396,
-     "sd": 0.02754,
-     "MDE95": 0.0453,
-     "mde95_twosided": 0.054,
+     "point_delta": 0.05721,
+     "boot_mean_delta": 0.05867,
+     "sd": 0.02695,
+     "MDE95": 0.0443,
+     "mde95_twosided": 0.0528,
      "ci95": [
-      0.01541,
-      0.12179
+      0.00964,
+      0.11486
      ],
-     "p_gt_0": 0.9945,
-     "margin_over_floor": 1.329,
+     "p_gt_0": 0.9915,
+     "margin_over_floor": 1.291,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN",
      "detects": true
     },
     "cond_iid": {
      "B_used": 2000,
-     "point_delta": 0.0602,
-     "boot_mean_delta": 0.06094,
-     "sd": 0.02046,
-     "MDE95": 0.0337,
-     "mde95_twosided": 0.0401,
+     "point_delta": 0.05721,
+     "boot_mean_delta": 0.05788,
+     "sd": 0.01958,
+     "MDE95": 0.0322,
+     "mde95_twosided": 0.0384,
      "ci95": [
-      0.02213,
-      0.10115
+      0.0208,
+      0.09677
      ],
      "p_gt_0": 0.998,
-     "margin_over_floor": 1.789,
+     "margin_over_floor": 1.776,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN",
      "detects": true
     },
     "cond_strat": {
      "B_used": 2000,
-     "point_delta": 0.0602,
-     "boot_mean_delta": 0.06017,
-     "sd": 0.02087,
-     "MDE95": 0.0343,
-     "mde95_twosided": 0.0409,
+     "point_delta": 0.05721,
+     "boot_mean_delta": 0.05699,
+     "sd": 0.02008,
+     "MDE95": 0.033,
+     "mde95_twosided": 0.0394,
      "ci95": [
-      0.01911,
-      0.10165
+      0.01775,
+      0.09727
      ],
-     "p_gt_0": 0.998,
-     "margin_over_floor": 1.753,
+     "p_gt_0": 0.9975,
+     "margin_over_floor": 1.732,
      "resolvable": true,
      "verdict": "RESOLVABLE WIN",
      "detects": true
@@ -366,19 +366,19 @@
   },
   "estimands": {
    "unconditional": {
-    "truth_mean_delta": -0.0109,
-    "true_sd": 0.0087,
+    "truth_mean_delta": -0.01133,
+    "true_sd": 0.00885,
     "question": "what would we conclude from a different dataset with the SAME cohort sizes"
    },
    "unconditional_varfolds": {
-    "truth_mean_delta": -0.01069,
-    "true_sd": 0.00873,
+    "truth_mean_delta": -0.01114,
+    "true_sd": 0.0089,
     "question": "what would we conclude from a different dataset whose cohort SIZES also redraw",
     "role": "CONTROL for the refit leg, see the code comment in EXP-1"
    },
    "conditional": {
-    "truth_mean_delta": -0.01184,
-    "true_sd": 0.00854,
+    "truth_mean_delta": -0.0122,
+    "true_sd": 0.00865,
     "question": "given this training corpus, is this margin real"
    }
   },
@@ -386,9 +386,9 @@
   "legs": {
    "refit": {
     "own_estimand": "unconditional",
-    "mean_bootstrap_sd": 0.01274,
-    "true_sd_of_own_estimand": 0.0087,
-    "sd_ratio_boot_over_true": 1.465,
+    "mean_bootstrap_sd": 0.01287,
+    "true_sd_of_own_estimand": 0.00885,
+    "sd_ratio_boot_over_true": 1.454,
     "sd_ratio_in_band": false,
     "gate_two_sided": {
      "k": 194,
@@ -404,19 +404,19 @@
     },
     "one_sided_gate_as_currently_coded": "PASS",
     "cross_check_other_estimand": {
-     "coverage": 0.98,
+     "coverage": 0.97,
      "note": "DIAGNOSTIC ONLY, never a gate: it is the wrong question for this estimator"
     },
     "coverage_all_three_estimands": {
      "uncond": 0.97,
-     "uncond_varfolds": 0.965,
-     "cond": 0.98
+     "uncond_varfolds": 0.97,
+     "cond": 0.97
     },
     "varfolds_control": {
      "gate_two_sided": {
-      "k": 193,
+      "k": 194,
       "n": 200,
-      "coverage": 0.965,
+      "coverage": 0.97,
       "accept_lo": 184,
       "accept_hi": 196,
       "accept_coverage_band": [
@@ -425,15 +425,15 @@
       ],
       "verdict": "PASS"
      },
-     "sd_ratio_boot_over_true": 1.46,
+     "sd_ratio_boot_over_true": 1.446,
      "reading": "if the refit leg fails against the fixed-fold truth but passes here, its extra width is cohort-size resampling, not refit noise, and the 'over-wide floor' claim is wrong"
     }
    },
    "cond_iid": {
     "own_estimand": "conditional",
-    "mean_bootstrap_sd": 0.00853,
-    "true_sd_of_own_estimand": 0.00854,
-    "sd_ratio_boot_over_true": 0.999,
+    "mean_bootstrap_sd": 0.00865,
+    "true_sd_of_own_estimand": 0.00865,
+    "sd_ratio_boot_over_true": 1.0,
     "sd_ratio_in_band": true,
     "gate_two_sided": {
      "k": 186,
@@ -449,25 +449,25 @@
     },
     "one_sided_gate_as_currently_coded": "PASS",
     "cross_check_other_estimand": {
-     "coverage": 0.93,
+     "coverage": 0.925,
      "note": "DIAGNOSTIC ONLY, never a gate: it is the wrong question for this estimator"
     },
     "coverage_all_three_estimands": {
-     "uncond": 0.93,
-     "uncond_varfolds": 0.93,
+     "uncond": 0.925,
+     "uncond_varfolds": 0.925,
      "cond": 0.93
     }
    },
    "cond_strat": {
     "own_estimand": "conditional",
-    "mean_bootstrap_sd": 0.00851,
-    "true_sd_of_own_estimand": 0.00854,
+    "mean_bootstrap_sd": 0.0086,
+    "true_sd_of_own_estimand": 0.00865,
     "sd_ratio_boot_over_true": 0.995,
     "sd_ratio_in_band": true,
     "gate_two_sided": {
-     "k": 184,
+     "k": 185,
      "n": 200,
-     "coverage": 0.92,
+     "coverage": 0.925,
      "accept_lo": 184,
      "accept_hi": 196,
      "accept_coverage_band": [
@@ -478,13 +478,13 @@
     },
     "one_sided_gate_as_currently_coded": "PASS",
     "cross_check_other_estimand": {
-     "coverage": 0.925,
+     "coverage": 0.92,
      "note": "DIAGNOSTIC ONLY, never a gate: it is the wrong question for this estimator"
     },
     "coverage_all_three_estimands": {
-     "uncond": 0.925,
-     "uncond_varfolds": 0.935,
-     "cond": 0.92
+     "uncond": 0.92,
+     "uncond_varfolds": 0.925,
+     "cond": 0.925
     }
    }
   },
@@ -493,52 +493,52 @@
    1.1
   ],
   "registration": "E_cond_iid REGISTERED (primary, as pre-registered)",
-  "elapsed_s": 993.0
+  "elapsed_s": 2258.9
  },
  "power": {
   "null": {
    "n_sim": 120,
    "B": 200,
-   "mean_point_delta": -0.01091,
-   "sd_point_delta": 0.00911,
+   "mean_point_delta": -0.01128,
+   "sd_point_delta": 0.00919,
    "fire_rate_vs_zero": {
-    "refit": 0.125,
+    "refit": 0.1083,
     "cond_iid": 0.3333,
     "cond_strat": 0.3417
    },
    "fire_rate_centered": {
-    "refit": 0.0167,
-    "cond_iid": 0.125,
-    "cond_strat": 0.0917
+    "refit": 0.0083,
+    "cond_iid": 0.1167,
+    "cond_strat": 0.1167
    },
    "mean_floor": {
-    "refit": 0.021,
-    "cond_iid": 0.0141,
-    "cond_strat": 0.0142
+    "refit": 0.0212,
+    "cond_iid": 0.0142,
+    "cond_strat": 0.0143
    },
-   "elapsed_s": 522.9
+   "elapsed_s": 858.8
   },
   "alternative": {
    "n_sim": 120,
    "B": 200,
-   "mean_point_delta": 0.03096,
-   "sd_point_delta": 0.01241,
+   "mean_point_delta": 0.03124,
+   "sd_point_delta": 0.01255,
    "fire_rate_vs_zero": {
-    "refit": 0.75,
-    "cond_iid": 0.8417,
-    "cond_strat": 0.8333
+    "refit": 0.7167,
+    "cond_iid": 0.8333,
+    "cond_strat": 0.825
    },
    "fire_rate_centered": {
-    "refit": 0.0333,
+    "refit": 0.025,
     "cond_iid": 0.1167,
     "cond_strat": 0.0917
    },
    "mean_floor": {
-    "refit": 0.0253,
-    "cond_iid": 0.0191,
-    "cond_strat": 0.0192
+    "refit": 0.0256,
+    "cond_iid": 0.0194,
+    "cond_strat": 0.0194
    },
-   "elapsed_s": 752.9
+   "elapsed_s": 533.7
   },
   "reading": "fire_rate_centered under 'null' is the instrument's false-positive rate and the calibrated target is about 0.10, since MDE95 is one-sided 1.645*sd applied to an absolute margin. fire_rate_vs_zero under 'null' is NOT a type-I rate: the null's true delta is not zero. fire_rate_vs_zero under 'alternative' is power.",
   "zero_information_blend_cost": "the null's mean point delta is the rho a blend loses by mixing in a predictor that carries NO information the consensus lacks. It is the dumbest available explanation for a negative full-pool margin and it is quantified here rather than assumed away. It is a property of this synthetic design and its magnitude does not transfer to the real pool as a point estimate."
@@ -548,151 +548,151 @@
    "rank": "PRIMARY",
    "legs": {
     "n": 1792,
-    "consensus": 0.30016,
-    "blend": 0.27873,
-    "delta": -0.02143
+    "consensus": 0.29539,
+    "blend": 0.27645,
+    "delta": -0.01894
    },
    "n_scored": 1792,
    "refit": {
     "B_used": 2000,
-    "point_delta": -0.02143,
-    "boot_mean_delta": -0.01748,
-    "sd": 0.01754,
-    "MDE95": 0.0289,
-    "mde95_twosided": 0.0344,
+    "point_delta": -0.01894,
+    "boot_mean_delta": -0.01525,
+    "sd": 0.01802,
+    "MDE95": 0.0296,
+    "mde95_twosided": 0.0353,
     "ci95": [
-     -0.0522,
-     0.01602
+     -0.05105,
+     0.01908
     ],
-    "p_gt_0": 0.1575,
-    "margin_over_floor": 0.743,
+    "p_gt_0": 0.2015,
+    "margin_over_floor": 0.639,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0393,
+    "mde95_bonferroni_k4": 0.0404,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 1.465,
-    "mde95_coverage_corrected": 0.0197,
-    "margin_over_corrected_floor": 1.086,
-    "resolvable_corrected": true
+    "sd_ratio_applied": 1.454,
+    "mde95_coverage_corrected": 0.0204,
+    "margin_over_corrected_floor": 0.93,
+    "resolvable_corrected": false
    },
    "cond_iid": {
     "B_used": 2000,
-    "point_delta": -0.02143,
-    "boot_mean_delta": -0.02118,
-    "sd": 0.01243,
-    "MDE95": 0.0204,
-    "mde95_twosided": 0.0244,
+    "point_delta": -0.01894,
+    "boot_mean_delta": -0.01865,
+    "sd": 0.0125,
+    "MDE95": 0.0206,
+    "mde95_twosided": 0.0245,
     "ci95": [
-     -0.04539,
-     0.00301
+     -0.04356,
+     0.00606
     ],
-    "p_gt_0": 0.0415,
-    "margin_over_floor": 1.049,
-    "resolvable": true,
-    "verdict": "RESOLVABLE LOSS",
-    "mde95_bonferroni_k4": 0.0279,
+    "p_gt_0": 0.069,
+    "margin_over_floor": 0.921,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde95_bonferroni_k4": 0.028,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 0.999,
-    "mde95_coverage_corrected": 0.0204,
-    "margin_over_corrected_floor": 1.05,
-    "resolvable_corrected": true
+    "sd_ratio_applied": 1.0,
+    "mde95_coverage_corrected": 0.0206,
+    "margin_over_corrected_floor": 0.92,
+    "resolvable_corrected": false
    },
    "cond_strat": {
     "B_used": 2000,
-    "point_delta": -0.02143,
-    "boot_mean_delta": -0.02142,
-    "sd": 0.01227,
-    "MDE95": 0.0202,
-    "mde95_twosided": 0.024,
+    "point_delta": -0.01894,
+    "boot_mean_delta": -0.01897,
+    "sd": 0.01218,
+    "MDE95": 0.02,
+    "mde95_twosided": 0.0239,
     "ci95": [
-     -0.04486,
-     0.00231
+     -0.04238,
+     0.00405
     ],
-    "p_gt_0": 0.0345,
-    "margin_over_floor": 1.062,
-    "resolvable": true,
-    "verdict": "RESOLVABLE LOSS",
-    "mde95_bonferroni_k4": 0.0275,
+    "p_gt_0": 0.06,
+    "margin_over_floor": 0.945,
+    "resolvable": false,
+    "verdict": "NULL",
+    "mde95_bonferroni_k4": 0.0273,
     "resolvable_bonferroni_k4": false,
     "sd_ratio_applied": 0.995,
-    "mde95_coverage_corrected": 0.0203,
-    "margin_over_corrected_floor": 1.056,
-    "resolvable_corrected": true
+    "mde95_coverage_corrected": 0.0201,
+    "margin_over_corrected_floor": 0.942,
+    "resolvable_corrected": false
    }
   },
   "pit.full_pool_km": {
    "rank": "secondary",
    "legs": {
-    "n": 1885,
-    "consensus": 0.2015,
-    "blend": 0.21721,
-    "delta": 0.01571
+    "n": 1883,
+    "consensus": 0.19896,
+    "blend": 0.21293,
+    "delta": 0.01398
    },
-   "n_scored": 1885,
+   "n_scored": 1883,
    "refit": {
     "B_used": 2000,
-    "point_delta": 0.01571,
-    "boot_mean_delta": 0.00386,
-    "sd": 0.01629,
-    "MDE95": 0.0268,
-    "mde95_twosided": 0.0319,
+    "point_delta": 0.01398,
+    "boot_mean_delta": 0.00302,
+    "sd": 0.01573,
+    "MDE95": 0.0259,
+    "mde95_twosided": 0.0308,
     "ci95": [
-     -0.02959,
-     0.03472
+     -0.02718,
+     0.03414
     ],
-    "p_gt_0": 0.612,
-    "margin_over_floor": 0.587,
+    "p_gt_0": 0.576,
+    "margin_over_floor": 0.54,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0365,
+    "mde95_bonferroni_k4": 0.0353,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 1.465,
-    "mde95_coverage_corrected": 0.0183,
-    "margin_over_corrected_floor": 0.859,
+    "sd_ratio_applied": 1.454,
+    "mde95_coverage_corrected": 0.0178,
+    "margin_over_corrected_floor": 0.785,
     "resolvable_corrected": false
    },
    "cond_iid": {
     "B_used": 2000,
-    "point_delta": 0.01571,
-    "boot_mean_delta": 0.01568,
-    "sd": 0.01326,
-    "MDE95": 0.0218,
-    "mde95_twosided": 0.026,
+    "point_delta": 0.01398,
+    "boot_mean_delta": 0.01367,
+    "sd": 0.01288,
+    "MDE95": 0.0212,
+    "mde95_twosided": 0.0252,
     "ci95": [
-     -0.0103,
-     0.04172
+     -0.01121,
+     0.03868
     ],
-    "p_gt_0": 0.8885,
-    "margin_over_floor": 0.72,
+    "p_gt_0": 0.8465,
+    "margin_over_floor": 0.66,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0297,
+    "mde95_bonferroni_k4": 0.0289,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 0.999,
-    "mde95_coverage_corrected": 0.0218,
-    "margin_over_corrected_floor": 0.72,
+    "sd_ratio_applied": 1.0,
+    "mde95_coverage_corrected": 0.0212,
+    "margin_over_corrected_floor": 0.659,
     "resolvable_corrected": false
    },
    "cond_strat": {
     "B_used": 2000,
-    "point_delta": 0.01571,
-    "boot_mean_delta": 0.01618,
-    "sd": 0.01332,
-    "MDE95": 0.0219,
-    "mde95_twosided": 0.0261,
+    "point_delta": 0.01398,
+    "boot_mean_delta": 0.01403,
+    "sd": 0.01295,
+    "MDE95": 0.0213,
+    "mde95_twosided": 0.0254,
     "ci95": [
-     -0.00924,
-     0.04354
+     -0.01107,
+     0.03965
     ],
-    "p_gt_0": 0.8845,
-    "margin_over_floor": 0.717,
+    "p_gt_0": 0.854,
+    "margin_over_floor": 0.656,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0299,
+    "mde95_bonferroni_k4": 0.029,
     "resolvable_bonferroni_k4": false,
     "sd_ratio_applied": 0.995,
-    "mde95_coverage_corrected": 0.022,
-    "margin_over_corrected_floor": 0.714,
+    "mde95_coverage_corrected": 0.0214,
+    "margin_over_corrected_floor": 0.653,
     "resolvable_corrected": false
    }
   },
@@ -700,151 +700,151 @@
    "rank": "secondary",
    "legs": {
     "n": 755,
-    "consensus": 0.39192,
-    "blend": 0.39933,
-    "delta": 0.00741
+    "consensus": 0.38442,
+    "blend": 0.39563,
+    "delta": 0.01121
    },
    "n_scored": 755,
    "refit": {
     "B_used": 2000,
-    "point_delta": 0.00741,
-    "boot_mean_delta": -0.01885,
-    "sd": 0.02706,
-    "MDE95": 0.0445,
-    "mde95_twosided": 0.053,
+    "point_delta": 0.01121,
+    "boot_mean_delta": -0.01719,
+    "sd": 0.02654,
+    "MDE95": 0.0437,
+    "mde95_twosided": 0.052,
     "ci95": [
-     -0.07812,
-     0.03218
+     -0.07326,
+     0.03
     ],
-    "p_gt_0": 0.243,
-    "margin_over_floor": 0.166,
+    "p_gt_0": 0.2515,
+    "margin_over_floor": 0.257,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0607,
+    "mde95_bonferroni_k4": 0.0595,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 1.465,
-    "mde95_coverage_corrected": 0.0304,
-    "margin_over_corrected_floor": 0.244,
+    "sd_ratio_applied": 1.454,
+    "mde95_coverage_corrected": 0.0301,
+    "margin_over_corrected_floor": 0.373,
     "resolvable_corrected": false
    },
    "cond_iid": {
     "B_used": 2000,
-    "point_delta": 0.00741,
-    "boot_mean_delta": 0.00789,
-    "sd": 0.01296,
-    "MDE95": 0.0213,
-    "mde95_twosided": 0.0254,
+    "point_delta": 0.01121,
+    "boot_mean_delta": 0.01166,
+    "sd": 0.0127,
+    "MDE95": 0.0209,
+    "mde95_twosided": 0.0249,
     "ci95": [
-     -0.01763,
-     0.0337
+     -0.01382,
+     0.03586
     ],
-    "p_gt_0": 0.7455,
-    "margin_over_floor": 0.348,
+    "p_gt_0": 0.83,
+    "margin_over_floor": 0.536,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.029,
+    "mde95_bonferroni_k4": 0.0285,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 0.999,
-    "mde95_coverage_corrected": 0.0213,
-    "margin_over_corrected_floor": 0.348,
+    "sd_ratio_applied": 1.0,
+    "mde95_coverage_corrected": 0.0209,
+    "margin_over_corrected_floor": 0.536,
     "resolvable_corrected": false
    },
    "cond_strat": {
     "B_used": 2000,
-    "point_delta": 0.00741,
-    "boot_mean_delta": 0.0069,
-    "sd": 0.01308,
-    "MDE95": 0.0215,
-    "mde95_twosided": 0.0256,
+    "point_delta": 0.01121,
+    "boot_mean_delta": 0.01129,
+    "sd": 0.01204,
+    "MDE95": 0.0198,
+    "mde95_twosided": 0.0236,
     "ci95": [
-     -0.01792,
-     0.03305
+     -0.01246,
+     0.03388
     ],
-    "p_gt_0": 0.7025,
-    "margin_over_floor": 0.344,
+    "p_gt_0": 0.8285,
+    "margin_over_floor": 0.566,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0293,
+    "mde95_bonferroni_k4": 0.027,
     "resolvable_bonferroni_k4": false,
     "sd_ratio_applied": 0.995,
-    "mde95_coverage_corrected": 0.0216,
-    "margin_over_corrected_floor": 0.343,
+    "mde95_coverage_corrected": 0.0199,
+    "margin_over_corrected_floor": 0.563,
     "resolvable_corrected": false
    }
   },
   "pit.debuted_km": {
    "rank": "secondary",
    "legs": {
-    "n": 890,
-    "consensus": 0.24937,
-    "blend": 0.25606,
-    "delta": 0.00669
+    "n": 889,
+    "consensus": 0.2512,
+    "blend": 0.25732,
+    "delta": 0.00612
    },
-   "n_scored": 890,
+   "n_scored": 889,
    "refit": {
     "B_used": 2000,
-    "point_delta": 0.00669,
-    "boot_mean_delta": -0.00776,
-    "sd": 0.02582,
-    "MDE95": 0.0425,
-    "mde95_twosided": 0.0506,
+    "point_delta": 0.00612,
+    "boot_mean_delta": -0.00953,
+    "sd": 0.02573,
+    "MDE95": 0.0423,
+    "mde95_twosided": 0.0504,
     "ci95": [
-     -0.05951,
-     0.04334
+     -0.06041,
+     0.0415
     ],
-    "p_gt_0": 0.3875,
-    "margin_over_floor": 0.158,
+    "p_gt_0": 0.3565,
+    "margin_over_floor": 0.145,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0579,
+    "mde95_bonferroni_k4": 0.0577,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 1.465,
-    "mde95_coverage_corrected": 0.029,
-    "margin_over_corrected_floor": 0.231,
+    "sd_ratio_applied": 1.454,
+    "mde95_coverage_corrected": 0.0291,
+    "margin_over_corrected_floor": 0.21,
     "resolvable_corrected": false
    },
    "cond_iid": {
     "B_used": 2000,
-    "point_delta": 0.00669,
-    "boot_mean_delta": 0.00697,
-    "sd": 0.01832,
-    "MDE95": 0.0301,
-    "mde95_twosided": 0.0359,
+    "point_delta": 0.00612,
+    "boot_mean_delta": 0.00643,
+    "sd": 0.01764,
+    "MDE95": 0.029,
+    "mde95_twosided": 0.0346,
     "ci95": [
-     -0.02871,
-     0.04234
+     -0.02911,
+     0.04109
     ],
-    "p_gt_0": 0.637,
-    "margin_over_floor": 0.222,
+    "p_gt_0": 0.6475,
+    "margin_over_floor": 0.211,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0411,
+    "mde95_bonferroni_k4": 0.0395,
     "resolvable_bonferroni_k4": false,
-    "sd_ratio_applied": 0.999,
-    "mde95_coverage_corrected": 0.0301,
-    "margin_over_corrected_floor": 0.222,
+    "sd_ratio_applied": 1.0,
+    "mde95_coverage_corrected": 0.029,
+    "margin_over_corrected_floor": 0.211,
     "resolvable_corrected": false
    },
    "cond_strat": {
     "B_used": 2000,
-    "point_delta": 0.00669,
-    "boot_mean_delta": 0.00664,
-    "sd": 0.01881,
-    "MDE95": 0.0309,
-    "mde95_twosided": 0.0369,
+    "point_delta": 0.00612,
+    "boot_mean_delta": 0.0056,
+    "sd": 0.0177,
+    "MDE95": 0.0291,
+    "mde95_twosided": 0.0347,
     "ci95": [
-     -0.03118,
-     0.04391
+     -0.0292,
+     0.04059
     ],
-    "p_gt_0": 0.6465,
-    "margin_over_floor": 0.216,
+    "p_gt_0": 0.6285,
+    "margin_over_floor": 0.21,
     "resolvable": false,
     "verdict": "NULL",
-    "mde95_bonferroni_k4": 0.0422,
+    "mde95_bonferroni_k4": 0.0397,
     "resolvable_bonferroni_k4": false,
     "sd_ratio_applied": 0.995,
-    "mde95_coverage_corrected": 0.0311,
-    "margin_over_corrected_floor": 0.215,
+    "mde95_coverage_corrected": 0.0292,
+    "margin_over_corrected_floor": 0.209,
     "resolvable_corrected": false
    }
   },
@@ -855,6 +855,5 @@
    "note": "no secondary cut is called resolvable on its unadjusted floor alone"
   }
  },
- "elapsed_s": 2134.8,
- "power_note": "power block RE-RUN 2026-08-08 with the centered false-positive rate added; the first run printed only fire_rate_vs_zero, which is not a type-I rate under this null."
+ "elapsed_s": 4089.4
 }
