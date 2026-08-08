@@ -1010,6 +1010,59 @@ def process_file(path: Path, *, resolve: bool = True) -> dict:
     return board
 
 
+def insert_ba_snapshots(snaps: list[Snapshot]) -> int:
+    """Write BA rows into `snapshots` ONLY, never into `players`.
+
+    This deliberately does NOT reuse storage.insert_snapshots, and the reason is
+    a live hazard rather than a style preference. That helper also upserts the
+    `players` identity row with
+
+        org         = COALESCE(excluded.org, players.org)
+        player_name = excluded.player_name
+
+    so the INCOMING value wins in both cases. These are HISTORICAL boards: a
+    2023 org list carries each player's 2023 club, and pushing that through
+    would rewrite `players.org` to a three-year-old team for everyone who has
+    since been traded. The corpus is full of them (Arjun Nimmala reads TOR on
+    the 2026 Blue Jays board and LAA in the database today, which is correct on
+    both counts). It would also overwrite accented names with BA's ASCII
+    spelling, turning "Jose Rodriguez" into the stored form of a player the
+    database currently has as "Jose Rodriguez" with the accents.
+
+    Writing only `snapshots` is safe because `org` there is a per-row,
+    per-source, per-date fact, which is exactly what a board publishes. And no
+    `players` row ever needs creating: resolve_identities settles onto keys that
+    already exist and sends everything else to the unresolved report, so an
+    unknown player is never written at all.
+    """
+    import storage
+    n = 0
+    with storage.connect() as con:
+        for s in snaps:
+            tools_json = json.dumps(s.tools) if s.tools else None
+            cur = con.execute(
+                """INSERT INTO snapshots
+                     (source, snapshot_date, interval_label, player_key,
+                      player_name, position, org, rank, fv, status,
+                      tools_json, fv_plus)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(source, interval_label, player_key) DO UPDATE SET
+                     snapshot_date = excluded.snapshot_date,
+                     position      = COALESCE(excluded.position, snapshots.position),
+                     org           = COALESCE(excluded.org, snapshots.org),
+                     rank          = excluded.rank,
+                     fv            = excluded.fv,
+                     status        = excluded.status,
+                     tools_json    = COALESCE(excluded.tools_json, snapshots.tools_json),
+                     fv_plus       = excluded.fv_plus""",
+                (s.source, s.snapshot_date, s.interval_label, s.player_key,
+                 s.player_name, s.position, s.org, s.rank, s.fv, s.status,
+                 tools_json, 1 if s.fv_plus else 0),
+            )
+            n += cur.rowcount
+    return n
+
+
 def ingest_drops(*, apply: bool = False, resolve: bool = True,
                  inbox: Path | None = None) -> dict:
     """Walk the inbox. Parse, report, and only write to the DB under apply."""
@@ -1062,9 +1115,8 @@ def ingest_drops(*, apply: bool = False, resolve: bool = True,
         entry["normalized_csv"] = str(out_csv.relative_to(_BASE))
 
         if apply and not board["refusals"]:
-            import storage
             snaps = to_snapshots(board)
-            wrote += storage.insert_snapshots(snaps)
+            wrote += insert_ba_snapshots(snaps)
             entry["inserted"] = len(snaps)
             archived = PROCESSED_DIR / path.name
             shutil.move(str(path), str(archived))
