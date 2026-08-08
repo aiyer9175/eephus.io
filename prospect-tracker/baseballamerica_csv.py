@@ -77,7 +77,14 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from scrapers import Snapshot, fix_mojibake, normalize_key, strip_name_markers
+from scrapers import (
+    HITTER_TOOL_KEYS as _HITTER_TOOL_KEYS,
+    PITCHER_TOOL_KEYS as _PITCHER_TOOL_KEYS,
+    Snapshot,
+    fix_mojibake,
+    normalize_key,
+    strip_name_markers,
+)
 
 log = logging.getLogger(__name__)
 
@@ -676,6 +683,7 @@ def parse_board(text: str, meta: dict) -> dict:
                 position = pm.group(1)
             break
 
+
         gr = _GRADE_RISK_RE.search(block)
         adj = _ADJUSTED_RE.search(block)
         prev = _PREV_RANK_RE.search(block)
@@ -690,6 +698,38 @@ def parse_board(text: str, meta: dict) -> dict:
         tools, ba_tools_raw, tool_issues = ({}, {}, [])
         if grades:
             tools, ba_tools_raw, tool_issues = _map_tools(grades.group(1))
+
+        # THE 2023 BOARDS CARRY NO POSITION LINE AT ALL (22 of 389 rows have
+        # one, against 390 of 390 in every later season), and that is not
+        # cosmetic. grade_normalization splits its paired cells by ROLE through
+        # _is_pitcher(position), and a null position reads as HITTER. Measured
+        # consequence before this fix: a 43.4 percent role error, which left the
+        # (baseballamerica, pitcher, 2023) cell with ZERO cycle pairs, tripped
+        # the _MIN_N fallback at grade_normalization.py:121, and pooled an
+        # offset ACROSS ERAS out of 2024+2025+2026. That gave +1.920 against a
+        # true within-2023 pitcher offset of +6.955, a 5.0 FV error, and a
+        # cross-year pooled cell is leak D1 of the audit plan reproduced on a
+        # brand new source.
+        #
+        # Role is recoverable EXACTLY from data already parsed. BA publishes
+        # tool sets by role and the two vocabularies are disjoint: measured on
+        # the 2023 corpus, 222 rows carry hitter-only tools, 162 carry
+        # pitcher-only tools, and ZERO are mixed. Handedness comes from the B-T
+        # field, populated on 389 of 389.
+        #
+        # Only the PITCHER side is emitted, because RHP and LHP are exactly what
+        # the data says. A hitter's fielding position is NOT inferable from a
+        # tool set, so it stays null rather than invented, which is also the
+        # correct role split since _is_pitcher(None) is False.
+        role_inferred = False
+        if position is None and tools:
+            keys = set(tools)
+            if keys and keys <= set(_PITCHER_TOOL_KEYS):
+                throws = phys.group(4) if phys else None
+                position = {"R": "RHP", "L": "LHP"}.get(throws or "", "P")
+                role_inferred = True
+            elif keys and keys <= set(_HITTER_TOOL_KEYS):
+                role_inferred = True   # hitter, position deliberately left null
 
         # Recompute rather than trust. See the module docstring.
         # Three states, and collapsing them loses the distinction that matters.
@@ -726,6 +766,7 @@ def parse_board(text: str, meta: dict) -> dict:
             # later positional-fit consumer is not stuck with the truncation.
             "position": position.split("/")[0].strip() if position else None,
             "position_full": position,
+            "role_inferred": role_inferred,
             "ba_raw_grade": raw_grade,
             "ba_risk": risk,
             # Era-dependent, see ADJUSTED_GRADE_FIRST_SEASON. 2026+ takes the
