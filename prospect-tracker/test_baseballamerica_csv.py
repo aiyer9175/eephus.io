@@ -86,10 +86,37 @@ def test_rank_lines_anchor_and_prose_numbers_do_not():
         "Trey Yesavage", "Arjun Nimmala", "JoJo Parker"]
 
 
-def test_non_contiguous_ranks_are_refused_rather_than_ingested_partially():
+def test_a_large_rank_gap_is_refused_as_a_truncated_paste():
+    """Two of five ranks absent is not a publishing quirk."""
     broken = _BOARD.replace("3\\. JoJo Parker", "5\\. JoJo Parker")
-    with pytest.raises(ba.BoardFormatError, match="contiguous"):
+    with pytest.raises(ba.BoardFormatError, match="truncated paste"):
         ba.parse_board(broken, _META)
+
+
+def test_duplicate_ranks_are_always_refused():
+    """A duplicate is how a player reaches the board twice, which is the Jack
+    Natili failure (ranks 155 and 320, surplus double counted)."""
+    dupe = _BOARD.replace("3\\. JoJo Parker", "2\\. JoJo Parker")
+    with pytest.raises(ba.BoardFormatError, match="duplicated rank"):
+        ba.parse_board(dupe, _META)
+
+
+def test_one_missing_rank_is_kept_verbatim_and_still_labels_as_a_top_30():
+    """The real 2023 Twins board: 29 players across ranks 1..30 with slot 18
+    vacant, and BA's own header says 29 where every other board says 30.
+
+    The published ranks are kept as published. Renumbering 19..30 down to
+    18..29 would close the gap but invent ranks BA never issued, and rank is
+    the whole reason this data is worth having. Labelling it "Top 29" would
+    also leave consensus._ORG_LIST_LABEL_RE unmatched and drop its ranks into
+    implied_fv_from_rank, which is the Bryan Sanchez failure."""
+    board = ba.parse_board(_full_board(30).replace("18\\. Filler Player18\n", ""), _META)
+    meta = board["meta"]
+    assert meta["n_players"] == 29
+    assert meta["missing_ranks"] == [18]
+    assert meta["interval_label"] == "Baseball America 2026 Blue Jays Top 30"
+    assert ba.validate_org_label(meta["interval_label"]) is None
+    assert [r["rank"] for r in board["rows"]][16:19] == [17, 19, 20]
 
 
 def test_a_header_count_that_disagrees_with_the_rows_is_refused():
@@ -118,6 +145,36 @@ def test_fv_is_the_adjusted_grade_and_the_raw_grade_is_kept_beside_it():
     assert row["fv"] == 55.0
     assert row["ba_raw_grade"] == 60.0
     assert row["ba_risk"] == "Mild"
+
+
+@pytest.mark.parametrize("season,expected", [
+    (2022, "raw"), (2023, "raw"), (2024, "raw"), (2025, "raw"),
+    (2026, "adjusted"), (2027, "adjusted"),
+])
+def test_the_fv_basis_switches_at_the_season_ba_introduced_adjusted_grades(season, expected):
+    """BA introduced the Grade/Risk-to-Adjusted-Grade system for 2026. Measured
+    in this corpus: an Adjusted Grade line appears on 390 of 390 rows in 2026
+    and 0 of 1,140 in 2023-2025. So each era has exactly one FV-equivalent and
+    using the BA Grade before 2026 is not a fallback, it is the only grade that
+    existed."""
+    assert ba.fv_basis(season) == expected
+
+
+def test_a_pre_2026_board_takes_the_raw_grade_as_its_fv():
+    meta = {**_META, "season": 2025}
+    row = ba.parse_board(_BOARD.replace("Adjusted Grade: 55\n", "", 1), meta)["rows"][0]
+    assert row["fv"] == 60.0 and row["ba_raw_grade"] == 60.0
+    assert row["fv_basis"] == "raw"
+
+
+def test_a_2026_board_still_takes_the_adjusted_grade_and_not_the_raw_one():
+    """The eras must not bleed. A 2026 row has both numbers present and the
+    adjusted one is 15 points lower here, so picking the wrong field is a
+    15-point FV error that nothing downstream could detect."""
+    row = ba.parse_board(_BOARD, _META)["rows"][1]
+    assert row["ba_raw_grade"] == 60.0
+    assert row["fv"] == 45.0
+    assert row["fv_basis"] == "adjusted"
 
 
 def test_the_adjusted_grade_identity_is_recomputed_not_trusted():

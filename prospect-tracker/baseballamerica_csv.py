@@ -95,6 +95,42 @@ SOURCE = "baseballamerica"
 
 BOARDS = ("preseason", "midseason", "offseason")
 
+# WHICH PUBLISHED NUMBER IS THE FV, and it depends on the season.
+#
+# Baseball America introduced the Grade/Risk-to-Adjusted-Grade system for the
+# 2026 boards (owner-sourced:
+# baseballamerica.com/stories/explaining-baseball-americas-updated-mlb-prospect-grades-risk-system/).
+# Measured in this tree, the data agrees exactly: an "Adjusted Grade" line
+# appears on 390 of 390 rows in 2026 and on 0 of 1,140 rows in 2023-2025.
+#
+# So there are two eras and each has exactly one FV-equivalent:
+#   2026 and later:  the Adjusted Grade. BA does the risk discount for you.
+#   2025 and earlier: the BA Grade. There was no adjustment to apply, so the
+#                     published grade IS the grade, and using it is not a
+#                     fallback.
+#
+# This is NOT the "never fall back to the raw grade" case the module docstring
+# warns about. That rule exists for a row whose Adjusted Grade is MISSING while
+# its siblings have one, where a raw grade in an FV column would be a silent
+# scale error. Here the whole era has no adjusted grade because the concept did
+# not exist yet, and the two numbers are not competing measurements of the same
+# thing.
+#
+# THE CONSEQUENCE, stated rather than buried: this puts a scale break in BA's
+# own series at 2026, because a 2026 FV is discounted by 0 to 20 points and a
+# 2025 FV is not. grade_normalization keys its correction by (source, role,
+# cycle-year) and therefore fits a SEPARATE offset per year, which absorbs the
+# level part of the break automatically. What it cannot absorb is the
+# risk-dependent spread, since the discount varies per player. Both eras keep
+# raw and risk under _extras so the break stays measurable and the decision
+# stays reversible.
+ADJUSTED_GRADE_FIRST_SEASON = 2026
+
+
+def fv_basis(season: int) -> str:
+    """Which published field is the FV for this season: 'adjusted' or 'raw'."""
+    return "adjusted" if season >= ADJUSTED_GRADE_FIRST_SEASON else "raw"
+
 _REPORT_MAX_CHARS = 8000
 
 
@@ -579,18 +615,50 @@ def parse_board(text: str, meta: dict) -> dict:
             "before pasting? Paste it raw.")
 
     ranks = [b[0] for b in blocks]
-    expected = list(range(1, len(blocks) + 1))
-    if ranks != expected:
-        missing = sorted(set(expected) - set(ranks))
-        dupes = sorted({r for r in ranks if ranks.count(r) > 1})
+    dupes = sorted({r for r in ranks if ranks.count(r) > 1})
+    if dupes:
         raise BoardFormatError(
-            f"ranks are not a contiguous 1..{len(blocks)}. "
-            f"got {ranks[:12]}{'...' if len(ranks) > 12 else ''}, "
-            f"missing {missing[:8]}, duplicated {dupes[:8]}")
+            f"duplicated rank(s) {dupes}. Two players cannot hold one rank, and "
+            f"a duplicate is how a player reaches the board twice.")
+    if ranks != sorted(ranks):
+        raise BoardFormatError(f"ranks are not in ascending order: {ranks[:15]}")
+    if ranks[0] != 1:
+        raise BoardFormatError(f"board does not start at rank 1 (starts at {ranks[0]})")
     if declared is not None and declared != len(blocks):
         raise BoardFormatError(
             f"board header claims {declared} players but {len(blocks)} rank "
             f"lines parsed. Refusing a partial board.")
+
+    # A GAP IS NOT A PARTIAL PASTE, and the difference is worth getting right.
+    #
+    # Real case: the 2023 Twins board runs 1..17, 19..30. There is no rank 18
+    # and no rank 31 anywhere in the file, in any format, and BA's own header
+    # says "29 players" where every other board says 30. So BA published 29
+    # players across a Top 30, with slot 18 vacated, almost certainly an entry
+    # deleted from their CMS.
+    #
+    # The published ranks are kept VERBATIM. Renumbering 19..30 down to 18..29
+    # would close the gap, but it would also invent ranks BA never published:
+    # that player was BA's 19th, not its 18th. Rank is precisely the quantity
+    # this ingest exists to capture (it is the only thing that orders the 30
+    # players BA sorts onto four or five distinct grades), so fabricating it is
+    # the worst available option.
+    #
+    # The board is labelled by its published EXTENT rather than its row count,
+    # so a Top 30 with one hole is still a Top 30 and still trips the org-list
+    # guard. Labelling it "Top 29" would leave the guard unmatched and drop its
+    # ranks into implied_fv_from_rank, which is the Bryan Sanchez failure.
+    max_rank = ranks[-1]
+    missing = sorted(set(range(1, max_rank + 1)) - set(ranks))
+    # SELF-ADDED BAR, disclosed: refuse above 10 percent missing. One hole in
+    # thirty (3.3 percent) is a publishing quirk; a third of the board absent is
+    # a truncated paste, and the two need different answers. No board in the
+    # 2023-2026 corpus exceeds 3.3 percent.
+    if missing and len(missing) > 0.10 * max_rank:
+        raise BoardFormatError(
+            f"{len(missing)} of {max_rank} ranks are missing ({missing[:12]}). "
+            f"That is too many to be a publishing gap; it reads as a truncated "
+            f"paste. Re-copy the board.")
 
     rows: list[dict] = []
     for rank, raw_name, block in blocks:
@@ -646,9 +714,13 @@ def parse_board(text: str, meta: dict) -> dict:
             if pm:
                 prose[field] = pm.group(1).strip()[:_REPORT_MAX_CHARS]
 
+        basis = fv_basis(meta["season"])
+        fv = adjusted if basis == "adjusted" else raw_grade
+
         rows.append({
             "rank": rank,
             "player_name": name,
+            "fv_basis": basis,
             # "OF / C" -> OF. A multi-position line lists the primary first on
             # both probed boards; the full string is preserved beside it so a
             # later positional-fit consumer is not stuck with the truncation.
@@ -656,7 +728,10 @@ def parse_board(text: str, meta: dict) -> dict:
             "position_full": position,
             "ba_raw_grade": raw_grade,
             "ba_risk": risk,
-            "fv": adjusted,          # owner instruction: FV is the ADJUSTED grade
+            # Era-dependent, see ADJUSTED_GRADE_FIRST_SEASON. 2026+ takes the
+            # Adjusted Grade; 2025 and earlier take the BA Grade, which was the
+            # only grade BA published in that era.
+            "fv": fv,
             "adjusted_expected": expected_adj,
             "adjusted_identity_ok": identity_ok,
             "previous_rank": int(prev.group(1)) if prev else None,
@@ -672,11 +747,17 @@ def parse_board(text: str, meta: dict) -> dict:
         })
 
     n = len(rows)
+    # Label by published EXTENT, not row count, so a Top 30 with a hole in it
+    # still reads as a Top 30 to consensus._ORG_LIST_LABEL_RE.
+    board_size = max_rank if max_rank >= n else n
     return {
         "meta": {
             **meta,
             "n_players": n,
             "declared_players": declared,
+            "board_size": board_size,
+            "missing_ranks": missing,
+            "fv_basis": fv_basis(meta["season"]),
             # THE TRAP. consensus._ORG_LIST_LABEL_RE is
             # r"\bTop\s+(?:10|20|25|30)\b\s*$" and it is the only thing keeping
             # an org list out of implied_fv_from_rank. Get this label wrong and
@@ -687,7 +768,7 @@ def parse_board(text: str, meta: dict) -> dict:
             # convention this matches is literally
             # "MLB Pipeline 2011 Angels Top 30".
             "interval_label": f"Baseball America {meta['season']} "
-                              f"{meta['team_name']} Top {declared or n}",
+                              f"{meta['team_name']} Top {board_size}",
         },
         "rows": rows,
     }
