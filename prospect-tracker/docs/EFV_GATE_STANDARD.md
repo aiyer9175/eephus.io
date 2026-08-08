@@ -140,31 +140,44 @@ data and harms at full data).
 
 Convert any rank claim into dollars before deciding it matters:
 
-> **SUPERSEDED 2026-08-07b. Do not quote the figure below on its own.**
-> The value measured here was **-$0.0704M**, CI95 [-0.0878, -0.0550], P(improves) = 1.000,
-> n = 2,236 resolved listings. It was fitted on the PRE-v6 frame.
+> **THE POINT ESTIMATE IS WITHDRAWN, 2026-08-07b. There is no single number here.**
+> The value published here was **-$0.0704M**, CI95 [-0.0878, -0.0550], n = 2,236 resolved
+> listings, fitted on the pre-v6 frame.
 
-**Re-derived on the v6 EV frame (`data/surplus_decomposition_v6.json`,
-`docs/efv-2026-08-07b/SURPLUS_DECOMPOSITION_V6.md`):**
+**What a re-derivation on the v6 EV frame actually supports** (`data/surplus_decomposition_v6.json`,
+`docs/efv-2026-08-07b/SURPLUS_DECOMPOSITION_V6.md`):
 
-> **+0.01 pooled eFV Spearman = -$0.117M surplus MAE per prospect**
-> CI95 [-0.139, -0.096], like-for-like against the same estimator on the v6 frame.
+> **+0.01 pooled eFV Spearman is worth somewhere in -$0.06M to -$0.17M of surplus MAE
+> per prospect, and the position within that range depends on the instrument, the FV
+> scale and the segment. The withdrawn -$0.0704M lies inside it.**
 
-That is roughly **1.66x** the superseded figure, so every dollar-denominated argument
-built on -$0.0704M understated the value of a rank point by about two thirds.
+**This is not a conversion rate and must not be used as one.** Three separate sweeps break
+it, and they are the reason a point estimate is refused rather than replaced:
 
-**It is not a single number, and quoting it as one is the error this section now warns
-about.** A pre-registered sweep across five mixing segments gives a **2.23x spread** in the
-slope (production cell, price-ranked: -0.154 / -0.134 / -0.110 / -0.069 / -0.075) against a
-2.0x stability bar, so the currency FAILED its own stability clause. Quote it as a range
-with the segment attached.
+- **By segment**: a **2.23x spread** across five mixing segments (production cell,
+  price-ranked: -0.154 / -0.134 / -0.110 / -0.069 / -0.075) against a 2.0x stability bar.
+- **By instrument**: the two instruments disagree in SIGN about what the v6 re-fit did.
+  Price-ranked, all four cells read raw_v5 -0.155, raw_v6 -0.135, normalized_v5 -0.158,
+  normalized_v6 -0.134, i.e. the v6 frame makes a rank point worth 13 to 15 percent LESS.
+  A served-FV-ranked reading suggests the opposite. The 2x2 was never completed for the
+  second instrument, so neither direction is established.
+- **By mechanism**: tie-breaking is worth about -$0.058M and cross-grade movement about
+  -$0.232M INSIDE the published segment, so "a rank point" is not one quantity.
 
-Two further findings from the same lane bound how hard this conversion can be leaned on:
-a **zero-information constant board** (every player at the pool median FV) BEATS the
-production board on MAE (11.560 against 12.202) while losing on MSE (483.24 against
-617.16), so MAE alone is the wrong arbiter for a board; and the decomposition is both PATH
-DEPENDENT and OBJECTIVE DEPENDENT (the level share reads 0.232 in MAE against 0.032 in MSE,
-indistinguishable from zero under the EV-consistent loss).
+An earlier draft of this section installed **-$0.117M** and a "1.66x understatement"
+claim. That was withdrawn on adversarial review: it replaced one non-reproducible point
+estimate with another, on the instrument whose 2x2 was never finished, while the
+pre-registered instrument pointed the other way.
+
+Bounding facts to read before leaning on any dollar conversion. A **near-zero-rank-information
+board** (median FV for everyone, but still carrying age, eta and position through
+`expected_surplus_usd`, giving 150 distinct prices and Spearman 0.023 against truth) beats
+the production board on MAE **on the v6 frame** (11.560 against 12.202) and LOSES on the v5
+frame (9.860 against 9.837), and loses on MSE either way. So MAE alone cannot arbitrate a
+board. The error decomposition is also PATH DEPENDENT (rank/level 0.382/0.232 under one
+removal order, 0.712/-0.098 under the other, interaction 0.330) and OBJECTIVE DEPENDENT
+(level share 0.232 in MAE against 0.032 in MSE, CI spanning zero under the EV-consistent
+loss). Quote shares only with the order and the objective attached.
 
 Served eFV surplus is a function of **rank only** with respect to `rank_war`: a monotone
 rescale of `rank_war` moves served grades by exactly 0.000000, so recalibrating the WAR

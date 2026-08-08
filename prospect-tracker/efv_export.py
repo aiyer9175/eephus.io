@@ -39,7 +39,28 @@ def _entry(s, side, kind):
         # build_site, proj_export, fa_fit all read it first) and surplus_mm is
         # priced on it -- see meta.grade_scale. xfv_grade / xfv_grade_realized
         # is the honest pure-model reference (realized_implied_fv(E[6yr WAR]),
-        # deflated), which still drives p_bucket / p_bust (validated odds).
+        # deflated).
+        #
+        # THAT LINE USED TO SAY "which still drives p_bucket / p_bust (validated
+        # odds)". IT IS FALSE and was corrected 2026-08-07b (audit lane C2, two
+        # verifiers confirming at source). The odds are keyed on `_odds_grade`,
+        # which efv_score.py:1480 sets from vf.realized_implied_fv and reads at
+        # :1488. This field is set from the OUTCOME-implied grade at
+        # efv_score.py:1473. They are different maps and NEITHER odds key is
+        # exported here, so nothing in this artifact identifies the grade the
+        # published odds were computed on.
+        #
+        # Measured disagreement between the two, broken out by display grade:
+        # 76.8 percent agreement below FV40, 1.6 percent in (40,45), and 0.0
+        # percent above FV45. So they agree exactly where the board is dense and
+        # dull, and disagree totally at the top, which is where an odds claim
+        # matters. A verifier tested whether the ~50 percent pooled agreement
+        # was an artifact of an unidentifiable inversion and it is not: the
+        # plateau width at 3dp is median 0.050 FV, p95 0.091, max 0.170.
+        #
+        # Consequence for whoever audits served odds next: do NOT read p_bucket
+        # or p_bust off any grade in this file. Recompute _odds_grade from
+        # vf.realized_implied_fv, or export it.
         # The artifact shape (xfv_grade == realized alias) is test-pinned.
         "xfv_grade": s.get("xfv_grade"),                 # realized (pure model) reference
         "xfv_grade_realized": s.get("xfv_grade"),        # alias (identical; kept for back-compat reads)
