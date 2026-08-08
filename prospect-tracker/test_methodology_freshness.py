@@ -21,6 +21,9 @@ ROOT = Path(__file__).parent
 # models with no user-facing methodology surface). EVERY registry row
 # must appear; a new model ships with its documentation decision.
 MODEL_GLOSSARY = {
+    "consensus_recency_decay": "internal",
+    "xfv_serve_path": "internal",
+
     # Audit 2026-08-07b measurement artifacts. All are model-dev only, rendered
     # on no surface, so they take the "internal" documentation decision the same
     # way war_cohort_diagnostic and surplus_sensitivity_diagnostic do. Each row's
