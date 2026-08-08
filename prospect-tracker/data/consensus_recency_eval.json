@@ -1,0 +1,260 @@
+{
+ "lane": "D-3 consensus recency decay",
+ "generated_at": "2026-08-08T16:55:24Z",
+ "gate_doc": "docs/efv-2026-08-07b/CONSENSUS_RECENCY_GATE.md",
+ "seed": 20260807,
+ "verdict": "NULL",
+ "pool": {
+  "rows": 4233,
+  "players": 1561,
+  "rows_by_year": {
+   "2017": 312,
+   "2018": 449,
+   "2019": 590,
+   "2020": 659,
+   "2021": 685,
+   "2022": 728,
+   "2023": 810
+  },
+  "oos_rows": 3472,
+  "oos_players": 1444,
+  "served_common_n_reference": 4259
+ },
+ "fidelity_vs_served": {
+  "n": 4233,
+  "pct_within_0.005": 0.9712,
+  "mean_abs": 0.0058,
+  "max_abs": 0.2,
+  "note": "served timeseries.json predates this session's Baseball America ingest; the residual is BA rows entering the average"
+ },
+ "fastpath_check": {
+  "arms_checked": 26,
+  "max_abs_delta": 0.0,
+  "tolerance": 1e-09,
+  "passed": true
+ },
+ "leverage": {
+  "votes": 8759,
+  "median_age_days": 22,
+  "p90": 35,
+  "p99": 766,
+  "max": 2954,
+  "share_votes_over_365d": 0.0481,
+  "rows_with_a_vote_over_180d": 449,
+  "rows_with_a_vote_over_365d": 411
+ },
+ "leverage_move": {
+  "exp_H180": {
+   "n": 4233,
+   "pct_moved_ge_0.005": 0.932,
+   "pct_moved_ge_0.5fv": 0.0704,
+   "mean_abs": 0.2038,
+   "max_abs": 5.3
+  },
+  "exp_H365": {
+   "n": 4233,
+   "pct_moved_ge_0.005": 0.8335,
+   "pct_moved_ge_0.5fv": 0.056,
+   "mean_abs": 0.12,
+   "max_abs": 3.46
+  },
+  "exp_H730": {
+   "n": 4233,
+   "pct_moved_ge_0.005": 0.7616,
+   "pct_moved_ge_0.5fv": 0.0352,
+   "mean_abs": 0.0666,
+   "max_abs": 2.64
+  },
+  "exp_H1460": {
+   "n": 4233,
+   "pct_moved_ge_0.005": 0.7016,
+   "pct_moved_ge_0.5fv": 0.0142,
+   "mean_abs": 0.0345,
+   "max_abs": 1.81
+  },
+  "degenerate": {
+   "n": 4233,
+   "pct_moved_ge_0.005": 0.9998,
+   "pct_moved_ge_0.5fv": 0.5842,
+   "mean_abs": 1.5623,
+   "max_abs": 9.64
+  }
+ },
+ "ceiling_vs_floor": {
+  "note": "the whole mechanism's CEILING is the best in-sample H with full hindsight and no fitting penalty; the FLOOR is what this design can resolve",
+  "in_sample_ceiling_d_rho": 0.0011184147531764776,
+  "mde95_floor_d_rho": 0.0019258967690910424,
+  "ceiling_over_floor": 0.581
+ },
+ "exploratory_stale_slice": {
+  "definition": "OOS rows whose oldest contributing vote is older than 365 days",
+  "status": "POST-HOC, appended after the headline was seen; NOT a gate clause",
+  "rows": 394,
+  "share_of_oos": 0.1135,
+  "rho_nodecay": 0.015044637052326419,
+  "rho_exp_global": 0.023411675595562887,
+  "d_rho": 0.008367038543236468,
+  "d_auc": -0.0019140483929216412,
+  "perm_null_d_rho": {
+   "draws": 500,
+   "mean": 0.005473132774751666,
+   "sd": 0.006914874970052462,
+   "p99": 0.023086964678738726
+  },
+  "perm_one_sided_p": 0.29740518962075846,
+  "mde95": 0.013553154941302825
+ },
+ "results": {
+  "nodecay": {
+   "rho": 0.2811843191749288,
+   "auc": 0.7315284890603083
+  },
+  "exp_global": {
+   "rho": 0.2813199136297795,
+   "auc": 0.7313880114778448,
+   "d_rho": 0.00013559445485067378,
+   "d_auc": -0.00014047758246349407,
+   "chosen_halflife_by_fold": {
+    "2019": 2190,
+    "2020": 730,
+    "2021": 730,
+    "2022": 240,
+    "2023": 2190
+   },
+   "halflife_span": 9.125
+  },
+  "degenerate": {
+   "rho": 0.26816244759608143,
+   "auc": 0.710954462538967,
+   "d_rho": -0.013021871578847377,
+   "d_auc": -0.020574026521341326
+  },
+  "cliff": {
+   "rho": 0.2812850151678639,
+   "auc": 0.7302804593616946,
+   "d_rho": 0.000100695992935107,
+   "d_auc": -0.0012480296986137063,
+   "chosen_by_fold": {
+    "2019": [
+     365,
+     0.25
+    ],
+    "2020": [
+     365,
+     0.0
+    ],
+    "2021": [
+     730,
+     0.0
+    ],
+    "2022": [
+     730,
+     0.0
+    ],
+    "2023": [
+     730,
+     0.25
+    ]
+   }
+  },
+  "exp_persource": {
+   "rho": 0.2800620386246701,
+   "auc": 0.731674131259774,
+   "d_rho": -0.001122280550258703,
+   "d_auc": 0.0001456421994656676,
+   "chosen_by_fold": {
+    "2019": [
+     240,
+     1460,
+     30
+    ],
+    "2020": [
+     30,
+     730,
+     30
+    ],
+    "2021": [
+     30,
+     730,
+     30
+    ],
+    "2022": [
+     240,
+     365,
+     30
+    ],
+    "2023": [
+     2190,
+     2190,
+     30
+    ]
+   }
+  }
+ },
+ "in_sample_reference": {
+  "note": "full-pool in-sample best H, reported only to show the ceiling",
+  "best_H": 365,
+  "rho_nodecay": 0.28379736415435364,
+  "rho_best": 0.2849157789075301
+ },
+ "controls": {
+  "permuted_date_null": {
+   "draws": 500,
+   "d_rho": {
+    "mean": -0.0004073674374530707,
+    "sd": 0.000982600392393389,
+    "p2.5": -0.0024471067451842477,
+    "p50": -0.00033309208484791353,
+    "p97.5": 0.0013878808157605762,
+    "p99": 0.0015470784522828677,
+    "max": 0.0036092256362824093
+   },
+   "d_auc": {
+    "mean": 0.00010818374880950566,
+    "sd": 0.0007190632450960677,
+    "p97.5": 0.0014488041845792524,
+    "p99": 0.002211101654123455
+   },
+   "one_sided_p_rho": 0.2894211576846307,
+   "one_sided_p_auc": 0.626746506986028
+  },
+  "cluster_bootstrap_d_rho": {
+   "draws": 500,
+   "p2.5": -0.0038797000344174518,
+   "p50": 0.00016548391265824858,
+   "p97.5": 0.004059131445505151
+  },
+  "mde95_d_rho": 0.0019258967690910424,
+  "incumbent_mde95_reference": 0.0068
+ },
+ "gate_clauses": {
+  "1_above_perm_p99": false,
+  "2_above_mde95": false,
+  "3_cluster_boot_p2.5_above_0": false,
+  "4_d_auc_positive": false,
+  "5_halflife_span_le_10x": true
+ },
+ "multiplicity": {
+  "families_measured": 3,
+  "families_gated": 1,
+  "gated": "exp_global",
+  "note": "cliff and exp_persource are reported, not promotable"
+ },
+ "estale_overlap": {
+  "basis": "data/timeseries.json latest point per active player",
+  "live_rows": 4609,
+  "estale_discount_gt_0": 6,
+  "materially_decayed_hl365": 1096,
+  "both": 6,
+  "training_rows_affected_by_estale": 0,
+  "note": "_stale_anchor_discount has ONE call site, efv_dataset.py:1331, in the live-rows builder; it never fires on a training row, so the overlap on this lane's 2017-2023 pool is structurally zero"
+ },
+ "self_added_thresholds": [
+  {
+   "threshold": "clause 5: forward-chained half-life span <= 10x",
+   "source": "lane, not the brief",
+   "binding": false
+  }
+ ],
+ "runtime_s": 103.9
+}
