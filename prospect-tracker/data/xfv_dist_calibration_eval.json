@@ -1,0 +1,1519 @@
+{
+ "generated_at": "2026-08-08T01:59:15+00:00",
+ "lane": "C1 (master plan 2026-08-07b)",
+ "gate_doc": "docs/efv-2026-08-07b/DISTRIBUTION_CALIBRATION_GATE.md",
+ "what": "how much of the D3 served-distribution miscalibration is the reliability diagnostic grading the model against its own censored label (D4)",
+ "recalibrated_anything": false,
+ "chain": {
+  "years": [
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023
+  ],
+  "min_train": 60,
+  "min_test": 10,
+  "min_tier_n": 15,
+  "bucket_edges_annual": [
+   0.5,
+   1.5,
+   2.5,
+   4.0
+  ],
+  "target_seasons_divisor": 6.0,
+  "resolved_through": 2025,
+  "predictions_held_fixed_in_arms_abc": true
+ },
+ "self_added_thresholds": {
+  "confirm_R": 0.5,
+  "partial_R": 0.2,
+  "ctrl1_share_bar": 0.8,
+  "tripwire_fpr_bar": 0.25,
+  "note": "the master plan says 'shrinks materially' without a number; these bars are added by this gate and were fixed before the run"
+ },
+ "season_share_profile": {
+  "hit": {
+   "n": 460,
+   "mean_war_by_season_index": [
+    0.3779,
+    0.6542,
+    0.8793,
+    1.0529,
+    0.973,
+    0.8496
+   ],
+   "share": [
+    0.078943,
+    0.136665,
+    0.183682,
+    0.219963,
+    0.20326,
+    0.177487
+   ],
+   "cum_share": [
+    0.0,
+    0.078943,
+    0.215608,
+    0.39929,
+    0.619253,
+    0.822513,
+    1.0
+   ],
+   "factor_by_n_obs": {
+    "1": 2.11122,
+    "2": 1.546016,
+    "3": 1.252224,
+    "4": 1.076566,
+    "5": 1.013156
+   }
+  },
+  "pit": {
+   "n": 528,
+   "mean_war_by_season_index": [
+    0.2105,
+    0.359,
+    0.4791,
+    0.5267,
+    0.5081,
+    0.4639
+   ],
+   "share": [
+    0.082649,
+    0.140925,
+    0.188064,
+    0.206785,
+    0.199462,
+    0.182116
+   ],
+   "cum_share": [
+    0.0,
+    0.082649,
+    0.223574,
+    0.411637,
+    0.618423,
+    0.817884,
+    1.0
+   ],
+   "factor_by_n_obs": {
+    "1": 2.016568,
+    "2": 1.490932,
+    "3": 1.214661,
+    "4": 1.078011,
+    "5": 1.018889
+   }
+  }
+ },
+ "correction_factors_by_n_obs": {
+  "hit": {
+   "1": 2.11122,
+   "2": 1.546016,
+   "3": 1.252224,
+   "4": 1.076566,
+   "5": 1.013156
+  },
+  "pit": {
+   "1": 2.016568,
+   "2": 1.490932,
+   "3": 1.214661,
+   "4": 1.078011,
+   "5": 1.018889
+  }
+ },
+ "pool_composition": {
+  "per_tier_censored_share": {
+   "35": {
+    "n": 626,
+    "n_censored": 94,
+    "censored_share": 0.1502,
+    "n_never_debuted_bust_kind": 512,
+    "n_realized_bust": 614,
+    "share_of_realized_bust_that_is_never_debuted": 0.8339
+   },
+   "40": {
+    "n": 1586,
+    "n_censored": 295,
+    "censored_share": 0.186,
+    "n_never_debuted_bust_kind": 998,
+    "n_realized_bust": 1483,
+    "share_of_realized_bust_that_is_never_debuted": 0.673
+   },
+   "45": {
+    "n": 304,
+    "n_censored": 102,
+    "censored_share": 0.3355,
+    "n_never_debuted_bust_kind": 86,
+    "n_realized_bust": 223,
+    "share_of_realized_bust_that_is_never_debuted": 0.3857
+   },
+   "50": {
+    "n": 186,
+    "n_censored": 86,
+    "censored_share": 0.4624,
+    "n_never_debuted_bust_kind": 20,
+    "n_realized_bust": 85,
+    "share_of_realized_bust_that_is_never_debuted": 0.2353
+   },
+   "55": {
+    "n": 77,
+    "n_censored": 28,
+    "censored_share": 0.3636,
+    "n_never_debuted_bust_kind": 6,
+    "n_realized_bust": 34,
+    "share_of_realized_bust_that_is_never_debuted": 0.1765
+   },
+   "60": {
+    "n": 32,
+    "n_censored": 13,
+    "censored_share": 0.4062,
+    "n_never_debuted_bust_kind": 0,
+    "n_realized_bust": 10,
+    "share_of_realized_bust_that_is_never_debuted": 0.0
+   },
+   "65": {
+    "n": 7,
+    "n_censored": 3,
+    "censored_share": 0.4286,
+    "n_never_debuted_bust_kind": 0,
+    "n_realized_bust": 0,
+    "share_of_realized_bust_that_is_never_debuted": null
+   },
+   "70": {
+    "n": 3,
+    "n_censored": 1,
+    "censored_share": 0.3333,
+    "n_never_debuted_bust_kind": 0,
+    "n_realized_bust": 0,
+    "share_of_realized_bust_that_is_never_debuted": null
+   },
+   "75": {
+    "n": 1,
+    "n_censored": 1,
+    "censored_share": 1.0,
+    "n_never_debuted_bust_kind": 0,
+    "n_realized_bust": 0,
+    "share_of_realized_bust_that_is_never_debuted": null
+   }
+  },
+  "n_censored_in_eval_pool": 623
+ },
+ "arms": {
+  "a_shipped": {
+   "n": 2822,
+   "ece_after": {
+    "bust": 0.07908,
+    "bench": 0.01437,
+    "regular": 0.03338,
+    "good": 0.02295,
+    "star": 0.00642
+   },
+   "ece_before": {
+    "bust": 0.12748,
+    "bench": 0.02785,
+    "regular": 0.0484,
+    "good": 0.03958,
+    "star": 0.0085
+   },
+   "bust_ece": 0.07908,
+   "tier_gap_weighted": 0.04068,
+   "tier_gap_unweighted": 0.06016,
+   "per_tier": {
+    "35": {
+     "n": 626,
+     "gap": 0.02023,
+     "realized_freq": {
+      "bust": 0.9808,
+      "bench": 0.016,
+      "regular": 0.0032,
+      "good": 0.0,
+      "star": 0.0
+     },
+     "mean_p": {
+      "bust": 0.9302,
+      "bench": 0.0446,
+      "regular": 0.0182,
+      "good": 0.0065,
+      "star": 0.0005
+     }
+    },
+    "40": {
+     "n": 1586,
+     "gap": 0.04184,
+     "realized_freq": {
+      "bust": 0.9351,
+      "bench": 0.0511,
+      "regular": 0.0113,
+      "good": 0.0025,
+      "star": 0.0
+     },
+     "mean_p": {
+      "bust": 0.8305,
+      "bench": 0.0965,
+      "regular": 0.05,
+      "good": 0.0211,
+      "star": 0.0019
+     }
+    },
+    "45": {
+     "n": 304,
+     "gap": 0.0537,
+     "realized_freq": {
+      "bust": 0.7336,
+      "bench": 0.1809,
+      "regular": 0.0493,
+      "good": 0.0296,
+      "star": 0.0066
+     },
+     "mean_p": {
+      "bust": 0.6167,
+      "bench": 0.1636,
+      "regular": 0.1342,
+      "good": 0.0764,
+      "star": 0.0091
+     }
+    },
+    "50": {
+     "n": 186,
+     "gap": 0.05125,
+     "realized_freq": {
+      "bust": 0.457,
+      "bench": 0.2634,
+      "regular": 0.1559,
+      "good": 0.1183,
+      "star": 0.0054
+     },
+     "mean_p": {
+      "bust": 0.5013,
+      "bench": 0.1353,
+      "regular": 0.1722,
+      "good": 0.1601,
+      "star": 0.0311
+     }
+    },
+    "55": {
+     "n": 77,
+     "gap": 0.07231,
+     "realized_freq": {
+      "bust": 0.4416,
+      "bench": 0.2597,
+      "regular": 0.1688,
+      "good": 0.1039,
+      "star": 0.026
+     },
+     "mean_p": {
+      "bust": 0.4635,
+      "bench": 0.0935,
+      "regular": 0.1543,
+      "good": 0.2245,
+      "star": 0.0642
+     }
+    },
+    "60": {
+     "n": 32,
+     "gap": 0.12163,
+     "realized_freq": {
+      "bust": 0.3125,
+      "bench": 0.25,
+      "regular": 0.1875,
+      "good": 0.25,
+      "star": 0.0
+     },
+     "mean_p": {
+      "bust": 0.3522,
+      "bench": 0.036,
+      "regular": 0.0975,
+      "good": 0.3001,
+      "star": 0.2143
+     }
+    }
+   },
+   "signed_tier_residual": {
+    "35": {
+     "bust": 0.0506,
+     "good": -0.0065,
+     "star": -0.0005
+    },
+    "40": {
+     "bust": 0.1046,
+     "good": -0.0186,
+     "star": -0.0019
+    },
+    "45": {
+     "bust": 0.1169,
+     "good": -0.0468,
+     "star": -0.0025
+    },
+    "50": {
+     "bust": -0.0443,
+     "good": -0.0418,
+     "star": -0.0257
+    },
+    "55": {
+     "bust": -0.0219,
+     "good": -0.1206,
+     "star": -0.0382
+    },
+    "60": {
+     "bust": -0.0397,
+     "good": -0.0501,
+     "star": -0.2143
+    }
+   },
+   "bucket_counts": {
+    "bust": 2449,
+    "bench": 224,
+    "regular": 85,
+    "good": 54,
+    "star": 10
+   }
+  },
+  "b_resolved_only": {
+   "n": 2199,
+   "ece_after": {
+    "bust": 0.10208,
+    "bench": 0.04043,
+    "regular": 0.03511,
+    "good": 0.02069,
+    "star": 0.00457
+   },
+   "ece_before": {
+    "bust": 0.12675,
+    "bench": 0.04061,
+    "regular": 0.04403,
+    "good": 0.03208,
+    "star": 0.00684
+   },
+   "bust_ece": 0.10208,
+   "tier_gap_weighted": 0.04567,
+   "tier_gap_unweighted": 0.07034,
+   "per_tier": {
+    "35": {
+     "n": 532,
+     "gap": 0.02272,
+     "realized_freq": {
+      "bust": 0.9981,
+      "bench": 0.0019,
+      "regular": 0.0,
+      "good": 0.0,
+      "star": 0.0
+     },
+     "mean_p": {
+      "bust": 0.9413,
+      "bench": 0.0377,
+      "regular": 0.0152,
+      "good": 0.0053,
+      "star": 0.0004
+     }
+    },
+    "40": {
+     "n": 1291,
+     "gap": 0.0488,
+     "realized_freq": {
+      "bust": 0.9644,
+      "bench": 0.0256,
+      "regular": 0.0085,
+      "good": 0.0015,
+      "star": 0.0
+     },
+     "mean_p": {
+      "bust": 0.8424,
+      "bench": 0.0898,
+      "regular": 0.0462,
+      "good": 0.0198,
+      "star": 0.0019
+     }
+    },
+    "45": {
+     "n": 202,
+     "gap": 0.06642,
+     "realized_freq": {
+      "bust": 0.7723,
+      "bench": 0.1535,
+      "regular": 0.0347,
+      "good": 0.0347,
+      "star": 0.005
+     },
+     "mean_p": {
+      "bust": 0.6062,
+      "bench": 0.1714,
+      "regular": 0.1363,
+      "good": 0.0771,
+      "star": 0.009
+     }
+    },
+    "50": {
+     "n": 100,
+     "gap": 0.0506,
+     "realized_freq": {
+      "bust": 0.55,
+      "bench": 0.19,
+      "regular": 0.13,
+      "good": 0.12,
+      "star": 0.01
+     },
+     "mean_p": {
+      "bust": 0.4651,
+      "bench": 0.1484,
+      "regular": 0.182,
+      "good": 0.1689,
+      "star": 0.0356
+     }
+    },
+    "55": {
+     "n": 49,
+     "gap": 0.0716,
+     "realized_freq": {
+      "bust": 0.4286,
+      "bench": 0.2449,
+      "regular": 0.1837,
+      "good": 0.1224,
+      "star": 0.0204
+     },
+     "mean_p": {
+      "bust": 0.4487,
+      "bench": 0.0954,
+      "regular": 0.1542,
+      "good": 0.2307,
+      "star": 0.071
+     }
+    },
+    "60": {
+     "n": 19,
+     "gap": 0.16187,
+     "realized_freq": {
+      "bust": 0.3158,
+      "bench": 0.2632,
+      "regular": 0.2632,
+      "good": 0.1579,
+      "star": 0.0
+     },
+     "mean_p": {
+      "bust": 0.3346,
+      "bench": 0.0335,
+      "regular": 0.0882,
+      "good": 0.2877,
+      "star": 0.256
+     }
+    }
+   },
+   "signed_tier_residual": {
+    "35": {
+     "bust": 0.0568,
+     "good": -0.0053,
+     "star": -0.0004
+    },
+    "40": {
+     "bust": 0.122,
+     "good": -0.0183,
+     "star": -0.0019
+    },
+    "45": {
+     "bust": 0.1661,
+     "good": -0.0424,
+     "star": -0.004
+    },
+    "50": {
+     "bust": 0.0849,
+     "good": -0.0489,
+     "star": -0.0256
+    },
+    "55": {
+     "bust": -0.0201,
+     "good": -0.1083,
+     "star": -0.0506
+    },
+    "60": {
+     "bust": -0.0188,
+     "good": -0.1298,
+     "star": -0.256
+    }
+   },
+   "bucket_counts": {
+    "bust": 2014,
+    "bench": 102,
+    "regular": 46,
+    "good": 32,
+    "star": 5
+   }
+  },
+  "c_corrected": {
+   "n": 2822,
+   "ece_after": {
+    "bust": 0.0766,
+    "bench": 0.01685,
+    "regular": 0.02983,
+    "good": 0.02224,
+    "star": 0.005
+   },
+   "ece_before": {
+    "bust": 0.125,
+    "bench": 0.03033,
+    "regular": 0.04486,
+    "good": 0.03887,
+    "star": 0.00708
+   },
+   "bust_ece": 0.0766,
+   "tier_gap_weighted": 0.03883,
+   "tier_gap_unweighted": 0.05826,
+   "per_tier": {
+    "35": {
+     "n": 626,
+     "gap": 0.01959,
+     "realized_freq": {
+      "bust": 0.9792,
+      "bench": 0.016,
+      "regular": 0.0048,
+      "good": 0.0,
+      "star": 0.0
+     },
+     "mean_p": {
+      "bust": 0.9302,
+      "bench": 0.0446,
+      "regular": 0.0182,
+      "good": 0.0065,
+      "star": 0.0005
+     }
+    },
+    "40": {
+     "n": 1586,
+     "gap": 0.04058,
+     "realized_freq": {
+      "bust": 0.9319,
+      "bench": 0.0511,
+      "regular": 0.0139,
+      "good": 0.0032,
+      "star": 0.0
+     },
+     "mean_p": {
+      "bust": 0.8305,
+      "bench": 0.0965,
+      "regular": 0.05,
+      "good": 0.0211,
+      "star": 0.0019
+     }
+    },
+    "45": {
+     "n": 304,
+     "gap": 0.04975,
+     "realized_freq": {
+      "bust": 0.727,
+      "bench": 0.1776,
+      "regular": 0.0592,
+      "good": 0.0296,
+      "star": 0.0066
+     },
+     "mean_p": {
+      "bust": 0.6167,
+      "bench": 0.1636,
+      "regular": 0.1342,
+      "good": 0.0764,
+      "star": 0.0091
+     }
+    },
+    "50": {
+     "n": 186,
+     "gap": 0.0405,
+     "realized_freq": {
+      "bust": 0.457,
+      "bench": 0.2366,
+      "regular": 0.1559,
+      "good": 0.129,
+      "star": 0.0215
+     },
+     "mean_p": {
+      "bust": 0.5013,
+      "bench": 0.1353,
+      "regular": 0.1722,
+      "good": 0.1601,
+      "star": 0.0311
+     }
+    },
+    "55": {
+     "n": 77,
+     "gap": 0.0775,
+     "realized_freq": {
+      "bust": 0.4286,
+      "bench": 0.2597,
+      "regular": 0.1818,
+      "good": 0.1039,
+      "star": 0.026
+     },
+     "mean_p": {
+      "bust": 0.4635,
+      "bench": 0.0935,
+      "regular": 0.1543,
+      "good": 0.2245,
+      "star": 0.0642
+     }
+    },
+    "60": {
+     "n": 32,
+     "gap": 0.12163,
+     "realized_freq": {
+      "bust": 0.3125,
+      "bench": 0.2188,
+      "regular": 0.2188,
+      "good": 0.2188,
+      "star": 0.0312
+     },
+     "mean_p": {
+      "bust": 0.3522,
+      "bench": 0.036,
+      "regular": 0.0975,
+      "good": 0.3001,
+      "star": 0.2143
+     }
+    }
+   },
+   "signed_tier_residual": {
+    "35": {
+     "bust": 0.049,
+     "good": -0.0065,
+     "star": -0.0005
+    },
+    "40": {
+     "bust": 0.1014,
+     "good": -0.0179,
+     "star": -0.0019
+    },
+    "45": {
+     "bust": 0.1103,
+     "good": -0.0468,
+     "star": -0.0025
+    },
+    "50": {
+     "bust": -0.0443,
+     "good": -0.0311,
+     "star": -0.0096
+    },
+    "55": {
+     "bust": -0.0349,
+     "good": -0.1206,
+     "star": -0.0382
+    },
+    "60": {
+     "bust": -0.0397,
+     "good": -0.0813,
+     "star": -0.1831
+    }
+   },
+   "bucket_counts": {
+    "bust": 2440,
+    "bench": 217,
+    "regular": 95,
+    "good": 56,
+    "star": 14
+   }
+  }
+ },
+ "primary": {
+  "R1_bust_ece_reduction": 0.03136,
+  "R2_tier_gap_reduction": 0.04548,
+  "bust_ece": {
+   "a": 0.07908,
+   "c": 0.0766
+  },
+  "tier_gap_weighted": {
+   "a": 0.04068,
+   "c": 0.03883
+  }
+ },
+ "controls": {
+  "ctrl0_noop_on_resolved": {
+   "checked": 3030,
+   "violations": 0,
+   "examples": [],
+   "pass": true
+  },
+  "ctrl1_zero_information_constant": {
+   "constant": 1.176419,
+   "bust_ece": 0.07589,
+   "tier_gap_weighted": 0.03814,
+   "R1": 0.04034,
+   "R2": 0.06244,
+   "share_of_R1": 1.2864,
+   "share_of_R2": 1.3729,
+   "bar": 0.8,
+   "level_effect_only": true
+  },
+  "ctrl2_permuted_factors": {
+   "B": 200,
+   "seed": 20260807,
+   "R1_mean": 0.05512,
+   "R1_p05": 0.03591,
+   "R1_p95": 0.07625,
+   "R2_mean": 0.07847,
+   "R2_p05": 0.06136,
+   "R2_p95": 0.0952,
+   "actual_R1": 0.03136,
+   "actual_R2": 0.04548,
+   "R1_outside_band": true,
+   "R2_outside_band": true,
+   "perm_p_R1": 0.97512,
+   "perm_p_R2": 1.0
+  },
+  "ctrl3_wrong_direction": {
+   "bust_ece": 0.08227,
+   "tier_gap_weighted": 0.04281,
+   "R1": -0.04034,
+   "R2": -0.05236,
+   "pass": true
+  },
+  "ctrl4_composition_decomposition": {
+   "bust_ece": {
+    "a": 0.07908,
+    "b_resolved_only": 0.10208,
+    "c_corrected": 0.0766,
+    "delta_label_only_a_to_c": -0.00248,
+    "delta_composition_only_c_to_b": 0.02548,
+    "delta_total_a_to_b": 0.023,
+    "identity_ok": true
+   },
+   "tier_gap_weighted": {
+    "a": 0.04068,
+    "b_resolved_only": 0.04567,
+    "c_corrected": 0.03883,
+    "delta_label_only_a_to_c": -0.00185,
+    "delta_composition_only_c_to_b": 0.00684,
+    "delta_total_a_to_b": 0.00499,
+    "identity_ok": true
+   },
+   "note": "a->b is CONFOUNDED (pool composition plus label); a->c is the label-only measurement on an identical pool"
+  },
+  "ctrl5_ceiling": {
+   "n_pool": 2822,
+   "n_censored_in_pool": 623,
+   "n_bucket_changed": 35,
+   "pct_of_pool": 1.24,
+   "pct_of_censored": 5.618,
+   "direction": {
+    "up": 35
+   },
+   "observed_seasons_in_eval_pool": {
+    "3": 218,
+    "4": 228,
+    "5": 177
+   }
+  },
+  "ctrl6_oracle_upper_bound": {
+   "oracle_bust_ece": 0.00643,
+   "bins": [
+    {
+     "bin": [
+      0.1,
+      0.2
+     ],
+     "n": 12,
+     "n_censored": 1,
+     "mean_p": 0.1548,
+     "freq_shipped": 0.5,
+     "freq_oracle": 0.5
+    },
+    {
+     "bin": [
+      0.2,
+      0.3
+     ],
+     "n": 23,
+     "n_censored": 5,
+     "mean_p": 0.2551,
+     "freq_shipped": 0.3913,
+     "freq_oracle": 0.3913
+    },
+    {
+     "bin": [
+      0.3,
+      0.4
+     ],
+     "n": 74,
+     "n_censored": 16,
+     "mean_p": 0.3567,
+     "freq_shipped": 0.5405,
+     "freq_oracle": 0.4865
+    },
+    {
+     "bin": [
+      0.4,
+      0.5
+     ],
+     "n": 114,
+     "n_censored": 36,
+     "mean_p": 0.4597,
+     "freq_shipped": 0.5439,
+     "freq_oracle": 0.4561
+    },
+    {
+     "bin": [
+      0.5,
+      0.6
+     ],
+     "n": 158,
+     "n_censored": 71,
+     "mean_p": 0.5524,
+     "freq_shipped": 0.5316,
+     "freq_oracle": 0.5506
+    },
+    {
+     "bin": [
+      0.6,
+      0.7
+     ],
+     "n": 369,
+     "n_censored": 148,
+     "mean_p": 0.6534,
+     "freq_shipped": 0.7561,
+     "freq_oracle": 0.6531
+    },
+    {
+     "bin": [
+      0.7,
+      0.8
+     ],
+     "n": 472,
+     "n_censored": 154,
+     "mean_p": 0.752,
+     "freq_shipped": 0.8983,
+     "freq_oracle": 0.7521
+    },
+    {
+     "bin": [
+      0.8,
+      0.9
+     ],
+     "n": 686,
+     "n_censored": 146,
+     "mean_p": 0.8639,
+     "freq_shipped": 0.9431,
+     "freq_oracle": 0.8644
+    },
+    {
+     "bin": [
+      0.9,
+      1.0
+     ],
+     "n": 910,
+     "n_censored": 46,
+     "mean_p": 0.9527,
+     "freq_shipped": 0.9835,
+     "freq_oracle": 0.9527
+    }
+   ],
+   "arm_a_bust_ece": 0.07908,
+   "arm_c_bust_ece": 0.0766,
+   "max_possible_R1": 0.91869,
+   "note": "upper bound on R1 over EVERY relabelling of the censored rows. If this is below the CONFIRMED bar, no censored-label correction of any kind can make D3 a censoring artifact."
+  },
+  "ctrl7_required_label_error": {
+   "uniform_factor_scan": [
+    {
+     "factor": 1.0,
+     "bust_ece": 0.07908,
+     "tier_gap_weighted": 0.04068,
+     "R1": 0.0
+    },
+    {
+     "factor": 1.1,
+     "bust_ece": 0.07695,
+     "tier_gap_weighted": 0.03914,
+     "R1": 0.02693
+    },
+    {
+     "factor": 1.25,
+     "bust_ece": 0.07412,
+     "tier_gap_weighted": 0.03687,
+     "R1": 0.06272
+    },
+    {
+     "factor": 1.5,
+     "bust_ece": 0.06951,
+     "tier_gap_weighted": 0.03372,
+     "R1": 0.12102
+    },
+    {
+     "factor": 1.75,
+     "bust_ece": 0.06703,
+     "tier_gap_weighted": 0.0333,
+     "R1": 0.15238
+    },
+    {
+     "factor": 2.0,
+     "bust_ece": 0.06242,
+     "tier_gap_weighted": 0.03316,
+     "R1": 0.21067
+    },
+    {
+     "factor": 2.5,
+     "bust_ece": 0.05427,
+     "tier_gap_weighted": 0.03227,
+     "R1": 0.31373
+    },
+    {
+     "factor": 3.0,
+     "bust_ece": 0.05108,
+     "tier_gap_weighted": 0.03213,
+     "R1": 0.35407
+    },
+    {
+     "factor": 4.0,
+     "bust_ece": 0.04648,
+     "tier_gap_weighted": 0.03485,
+     "R1": 0.41224
+    },
+    {
+     "factor": 6.0,
+     "bust_ece": 0.04406,
+     "tier_gap_weighted": 0.0381,
+     "R1": 0.44284
+    },
+    {
+     "factor": 10.0,
+     "bust_ece": 0.03981,
+     "tier_gap_weighted": 0.04282,
+     "R1": 0.49659
+    },
+    {
+     "factor": 25.0,
+     "bust_ece": 0.03626,
+     "tier_gap_weighted": 0.05036,
+     "R1": 0.54148
+    }
+   ],
+   "best_factor": {
+    "factor": 25.0,
+    "bust_ece": 0.03626,
+    "tier_gap_weighted": 0.05036,
+    "R1": 0.54148
+   },
+   "b1_measured_factors_by_n_obs": {
+    "hit": {
+     "1": 2.11122,
+     "2": 1.546016,
+     "3": 1.252224,
+     "4": 1.076566,
+     "5": 1.013156
+    },
+    "pit": {
+     "1": 2.016568,
+     "2": 1.490932,
+     "3": 1.214661,
+     "4": 1.078011,
+     "5": 1.018889
+    }
+   },
+   "n_obs_present_in_eval_pool": {
+    "3": 218,
+    "4": 228,
+    "5": 177
+   },
+   "n_censored_eval_rows_with_zero_observed_war": 2,
+   "pct_of_censored_eval_rows_immovable": 0.321,
+   "note": "the immovable share is the structural ceiling of every multiplicative tail-projection correction, the family _label_6yr belongs to"
+  }
+ },
+ "sensitivities": {
+  "sens1_cohort_profile_drift": {
+   "debut_2011_2015": {
+    "profile_n": {
+     "hit": 200,
+     "pit": 216
+    },
+    "factor_by_n_obs": {
+     "hit": {
+      "1": 1.919804,
+      "2": 1.337792,
+      "3": 1.228695,
+      "4": 1.093482,
+      "5": 1.020581
+     },
+     "pit": {
+      "1": 1.938956,
+      "2": 1.34625,
+      "3": 1.108369,
+      "4": 0.99359,
+      "5": 0.965467
+     }
+    },
+    "bust_ece": 0.07766,
+    "tier_gap_weighted": 0.03997,
+    "R1": 0.01796,
+    "R2": 0.01745
+   },
+   "debut_2016_2020": {
+    "profile_n": {
+     "hit": 260,
+     "pit": 312
+    },
+    "factor_by_n_obs": {
+     "hit": {
+      "1": 2.342328,
+      "2": 1.827496,
+      "3": 1.27641,
+      "4": 1.060334,
+      "5": 1.005913
+     },
+     "pit": {
+      "1": 2.085356,
+      "2": 1.635807,
+      "3": 1.318892,
+      "4": 1.159176,
+      "5": 1.067569
+     }
+    },
+    "bust_ece": 0.07518,
+    "tier_gap_weighted": 0.03811,
+    "R1": 0.04932,
+    "R2": 0.06318
+   },
+   "R1_spread_between_cohort_profiles": 0.03136,
+   "stable": true
+  },
+  "sens2_refit_arm_d": {
+   "mirror_check": {
+    "hit": {
+     "identical_length": true,
+     "row_order_ok": true,
+     "max_abs_p_after_delta": 0.0,
+     "n_y_differences": 0,
+     "pass": true
+    },
+    "pit": {
+     "identical_length": true,
+     "row_order_ok": true,
+     "max_abs_p_after_delta": 0.0,
+     "n_y_differences": 0,
+     "pass": true
+    }
+   },
+   "mirror_pass": true,
+   "n": 2822,
+   "bust_ece": 0.07653,
+   "tier_gap_weighted": 0.03894,
+   "R1": 0.03225,
+   "R2": 0.04277,
+   "per_tier": {
+    "35": {
+     "n": 626,
+     "gap": 0.01971,
+     "realized_freq": {
+      "bust": 0.9792,
+      "bench": 0.016,
+      "regular": 0.0048,
+      "good": 0.0,
+      "star": 0.0
+     },
+     "mean_p": {
+      "bust": 0.93,
+      "bench": 0.0448,
+      "regular": 0.0183,
+      "good": 0.0065,
+      "star": 0.0005
+     }
+    },
+    "40": {
+     "n": 1586,
+     "gap": 0.04068,
+     "realized_freq": {
+      "bust": 0.9319,
+      "bench": 0.0511,
+      "regular": 0.0139,
+      "good": 0.0032,
+      "star": 0.0
+     },
+     "mean_p": {
+      "bust": 0.8302,
+      "bench": 0.0966,
+      "regular": 0.0501,
+      "good": 0.0212,
+      "star": 0.0019
+     }
+    },
+    "45": {
+     "n": 304,
+     "gap": 0.04989,
+     "realized_freq": {
+      "bust": 0.727,
+      "bench": 0.1776,
+      "regular": 0.0592,
+      "good": 0.0296,
+      "star": 0.0066
+     },
+     "mean_p": {
+      "bust": 0.6164,
+      "bench": 0.1635,
+      "regular": 0.1343,
+      "good": 0.0766,
+      "star": 0.0092
+     }
+    },
+    "50": {
+     "n": 186,
+     "gap": 0.04063,
+     "realized_freq": {
+      "bust": 0.457,
+      "bench": 0.2366,
+      "regular": 0.1559,
+      "good": 0.129,
+      "star": 0.0215
+     },
+     "mean_p": {
+      "bust": 0.5006,
+      "bench": 0.135,
+      "regular": 0.1721,
+      "good": 0.1609,
+      "star": 0.0314
+     }
+    },
+    "55": {
+     "n": 77,
+     "gap": 0.07766,
+     "realized_freq": {
+      "bust": 0.4286,
+      "bench": 0.2597,
+      "regular": 0.1818,
+      "good": 0.1039,
+      "star": 0.026
+     },
+     "mean_p": {
+      "bust": 0.4629,
+      "bench": 0.0933,
+      "regular": 0.1541,
+      "good": 0.2251,
+      "star": 0.0645
+     }
+    },
+    "60": {
+     "n": 32,
+     "gap": 0.12193,
+     "realized_freq": {
+      "bust": 0.3125,
+      "bench": 0.2188,
+      "regular": 0.2188,
+      "good": 0.2188,
+      "star": 0.0312
+     },
+     "mean_p": {
+      "bust": 0.3514,
+      "bench": 0.0357,
+      "regular": 0.0969,
+      "good": 0.3005,
+      "star": 0.2154
+     }
+    }
+   },
+   "signed_tier_residual": {
+    "35": {
+     "bust": 0.0492,
+     "good": -0.0065,
+     "star": -0.0005
+    },
+    "40": {
+     "bust": 0.1017,
+     "good": -0.018,
+     "star": -0.0019
+    },
+    "45": {
+     "bust": 0.1106,
+     "good": -0.047,
+     "star": -0.0026
+    },
+    "50": {
+     "bust": -0.0436,
+     "good": -0.0319,
+     "star": -0.0099
+    },
+    "55": {
+     "bust": -0.0343,
+     "good": -0.1212,
+     "star": -0.0385
+    },
+    "60": {
+     "bust": -0.0389,
+     "good": -0.0817,
+     "star": -0.1842
+    }
+   },
+   "note": "NON-PRIMARY. Refits the model on the corrected label, so predictions move too."
+  }
+ },
+ "stop_conditions": {
+  "arm_a_reproduces_shipped": {
+   "shipped_bust_ece": 0.07907,
+   "shipped_pooled_n": 2823,
+   "arm_a_bust_ece": 0.07908,
+   "arm_a_n": 2822,
+   "abs_delta": 1e-05,
+   "pass": true
+  },
+  "obs_sum_reconciliation": {
+   "checked": 833,
+   "match": 833,
+   "mismatch": 0,
+   "mismatch_examples": [],
+   "mismatch_rate": 0.0,
+   "pass": true
+  },
+  "ctrl0_noop_on_resolved": {
+   "checked": 3030,
+   "violations": 0,
+   "examples": [],
+   "pass": true
+  },
+  "ctrl3_wrong_direction": {
+   "bust_ece": 0.08227,
+   "tier_gap_weighted": 0.04281,
+   "R1": -0.04034,
+   "R2": -0.05236,
+   "pass": true
+  },
+  "any_tripped": false
+ },
+ "tripwire_study": {
+  "question": "BUST_ECE_TRIPWIRE watches POOLED bust ECE. D3 is a defect that is monotone IN TIER. These are not the same statistic.",
+  "shipped_threshold": 0.1,
+  "pooled_stats": {
+   "arm_a": {
+    "bust_ece": 0.07908,
+    "max_tier_gap": 0.12163,
+    "tier_gap_weighted": 0.04068,
+    "mean_signed_bust_residual_tier_le_45": 0.0907,
+    "n_tiers": 6
+   },
+   "arm_c": {
+    "bust_ece": 0.0766,
+    "max_tier_gap": 0.12163,
+    "tier_gap_weighted": 0.03883,
+    "mean_signed_bust_residual_tier_le_45": 0.0869,
+    "n_tiers": 6
+   }
+  },
+  "block_bootstrap_pooled": {
+   "B": 1000,
+   "seed": 20260807,
+   "resampled": "chain-year folds, with replacement",
+   "after": {
+    "mean": 0.08111,
+    "p05": 0.06461,
+    "p95": 0.10146
+   },
+   "before": {
+    "mean": 0.12771,
+    "p05": 0.108,
+    "p95": 0.15197
+   },
+   "fpr_by_bar": {
+    "0.060": 0.986,
+    "0.070": 0.85,
+    "0.075": 0.668,
+    "0.080": 0.484,
+    "0.090": 0.199,
+    "0.100": 0.069,
+    "0.110": 0.019,
+    "0.120": 0.005
+   },
+   "detection_if_platt_dropped_by_bar": {
+    "0.060": 1.0,
+    "0.070": 1.0,
+    "0.075": 1.0,
+    "0.080": 1.0,
+    "0.090": 1.0,
+    "0.100": 0.998,
+    "0.110": 0.923,
+    "0.120": 0.685
+   },
+   "note": "ADDED after the primary run. Estimates the nuisance-alarm rate of a POOLED bar, which is what the shipped tripwire actually judges. Does not enter the section 4.1 verdict."
+  },
+  "defect_injection": {
+   "what": "flip realized non-bust outcomes to bust inside a tier band, which is the realistic worsening (over-priced good/star mass), and watch the POOLED bust ECE the tripwire reads",
+   "top_of_board_tier_ge_50": [
+    {
+     "frac_flipped": 0.0,
+     "n_eligible": 177,
+     "n_flipped": 0,
+     "pooled_bust_ece": 0.07908,
+     "mean_signed_bust_residual_in_band": -0.0353
+    },
+    {
+     "frac_flipped": 0.25,
+     "n_eligible": 177,
+     "n_flipped": 44,
+     "pooled_bust_ece": 0.09235,
+     "mean_signed_bust_residual_in_band": 0.14773
+    },
+    {
+     "frac_flipped": 0.5,
+     "n_eligible": 177,
+     "n_flipped": 88,
+     "pooled_bust_ece": 0.10794,
+     "mean_signed_bust_residual_in_band": 0.2846
+    },
+    {
+     "frac_flipped": 0.75,
+     "n_eligible": 177,
+     "n_flipped": 133,
+     "pooled_bust_ece": 0.12388,
+     "mean_signed_bust_residual_in_band": 0.4413
+    },
+    {
+     "frac_flipped": 1.0,
+     "n_eligible": 177,
+     "n_flipped": 177,
+     "pooled_bust_ece": 0.13912,
+     "mean_signed_bust_residual_in_band": 0.561
+    }
+   ],
+   "low_tiers_le_45": [
+    {
+     "frac_flipped": 0.0,
+     "n_eligible": 196,
+     "n_flipped": 0,
+     "pooled_bust_ece": 0.07908,
+     "mean_signed_bust_residual_in_band": 0.0907
+    },
+    {
+     "frac_flipped": 0.05,
+     "n_eligible": 196,
+     "n_flipped": 10,
+     "pooled_bust_ece": 0.08191,
+     "mean_signed_bust_residual_in_band": 0.0981
+    },
+    {
+     "frac_flipped": 0.1,
+     "n_eligible": 196,
+     "n_flipped": 20,
+     "pooled_bust_ece": 0.08404,
+     "mean_signed_bust_residual_in_band": 0.10403
+    },
+    {
+     "frac_flipped": 0.25,
+     "n_eligible": 196,
+     "n_flipped": 49,
+     "pooled_bust_ece": 0.09412,
+     "mean_signed_bust_residual_in_band": 0.12257
+    }
+   ],
+   "note": "ADDED after the primary run, for gate 4.2 question 1 only. Does not enter the section 4.1 verdict."
+  },
+  "held_out_folds": {
+   "2016": {
+    "n": 213,
+    "bust_ece_after": 0.10308,
+    "bust_ece_before": 0.13984,
+    "max_tier_gap": 0.05317
+   },
+   "2017": {
+    "n": 199,
+    "bust_ece_after": 0.12368,
+    "bust_ece_before": 0.17191,
+    "max_tier_gap": 0.06485
+   },
+   "2018": {
+    "n": 388,
+    "bust_ece_after": 0.14467,
+    "bust_ece_before": 0.20555,
+    "max_tier_gap": 0.15021
+   },
+   "2019": {
+    "n": 393,
+    "bust_ece_after": 0.06697,
+    "bust_ece_before": 0.12638,
+    "max_tier_gap": 0.08535
+   },
+   "2020": {
+    "n": 373,
+    "bust_ece_after": 0.06733,
+    "bust_ece_before": 0.09362,
+    "max_tier_gap": 0.1144
+   },
+   "2021": {
+    "n": 279,
+    "bust_ece_after": 0.0535,
+    "bust_ece_before": 0.11806,
+    "max_tier_gap": 0.13599
+   },
+   "2022": {
+    "n": 474,
+    "bust_ece_after": 0.09644,
+    "bust_ece_before": 0.10469,
+    "max_tier_gap": 0.12894
+   },
+   "2023": {
+    "n": 503,
+    "bust_ece_after": 0.07557,
+    "bust_ece_before": 0.10403,
+    "max_tier_gap": 0.06263
+   }
+  },
+  "fold_summary": {
+   "bust_ece_after": {
+    "min": 0.0535,
+    "median": 0.086,
+    "max": 0.14467,
+    "sd": 0.03141
+   },
+   "bust_ece_before": {
+    "min": 0.09362,
+    "max": 0.20555
+   },
+   "max_tier_gap": {
+    "min": 0.05317,
+    "max": 0.15021
+   }
+  },
+  "candidate_bars": {
+   "0.060": {
+    "fires_on_pooled_shipped": true,
+    "held_out_fold_fpr": 0.875,
+    "fires_if_platt_dropped_pooled": true,
+    "held_out_fold_detection_if_platt_dropped": 1.0
+   },
+   "0.070": {
+    "fires_on_pooled_shipped": true,
+    "held_out_fold_fpr": 0.625,
+    "fires_if_platt_dropped_pooled": true,
+    "held_out_fold_detection_if_platt_dropped": 1.0
+   },
+   "0.075": {
+    "fires_on_pooled_shipped": true,
+    "held_out_fold_fpr": 0.625,
+    "fires_if_platt_dropped_pooled": true,
+    "held_out_fold_detection_if_platt_dropped": 1.0
+   },
+   "0.080": {
+    "fires_on_pooled_shipped": false,
+    "held_out_fold_fpr": 0.5,
+    "fires_if_platt_dropped_pooled": true,
+    "held_out_fold_detection_if_platt_dropped": 1.0
+   },
+   "0.090": {
+    "fires_on_pooled_shipped": false,
+    "held_out_fold_fpr": 0.5,
+    "fires_if_platt_dropped_pooled": true,
+    "held_out_fold_detection_if_platt_dropped": 1.0
+   },
+   "0.100": {
+    "fires_on_pooled_shipped": false,
+    "held_out_fold_fpr": 0.375,
+    "fires_if_platt_dropped_pooled": true,
+    "held_out_fold_detection_if_platt_dropped": 0.875
+   },
+   "0.110": {
+    "fires_on_pooled_shipped": false,
+    "held_out_fold_fpr": 0.25,
+    "fires_if_platt_dropped_pooled": true,
+    "held_out_fold_detection_if_platt_dropped": 0.625
+   },
+   "0.120": {
+    "fires_on_pooled_shipped": false,
+    "held_out_fold_fpr": 0.25,
+    "fires_if_platt_dropped_pooled": true,
+    "held_out_fold_detection_if_platt_dropped": 0.5
+   }
+  },
+  "fpr_bar": 0.25
+ },
+ "verdict": "SURVIVES",
+ "verdict_reason": "D3 is not a censoring artifact of the realized bucket"
+}

@@ -80,6 +80,41 @@ TARGET_SEASONS = 6.0
 # the point: if the Platt map is ever silently dropped from the scoring seams,
 # the served curve reverts to ~0.128 and this wire TRIPS. The tripwire now
 # regression-tests the calibration it reports on. Rank-neutral: only a flag.
+#
+# RE-MEASURED 2026-08-07b (plan lane C1, data/xfv_dist_calibration_eval.json).
+#
+# THE BAR IS NOT STRUCTURALLY BLIND, which corrects the plan's D3 write-up.
+# Injecting a top-of-board defect (flipping realized non-bust outcomes to bust
+# among tier-50-and-above rows) drives pooled bust ECE to 0.09235 at a +0.148
+# signed in-band bust residual and to 0.10794 at +0.285, which TRIPS 0.10. Read
+# +0.285 as an UPPER BOUND on the trip point, not the trip point: the injection
+# takes the first k eligible rows in list order with no seed and no repetition,
+# and the residual grid is coarse.
+#
+# A 0.09 BAR WAS PROPOSED AND IS WITHDRAWN. Recorded because the withdrawal is
+# the more useful result. The lane pre-registered the ESTIMATOR, not just the
+# ceiling: a false-positive rate on HELD-OUT FOLDS, leave-one-chain-year-out,
+# with any bar above a 0.25 alarm rate not proposable. Under that estimator 0.09
+# scores 0.500 and is therefore not proposable. The 0.199 that would have
+# licensed it came from a block bootstrap substituted after the pre-registered
+# number came back unfavourable, and a block bootstrap over 8 chain-year blocks
+# measures the dispersion of today's estimate, not the rate at which a future
+# regeneration crosses the bar.
+#
+# The contrapositive settles it, and it was not reported by the lane: under the
+# same pre-registered estimator the INCUMBENT 0.10 also fails (0.375), and only
+# 0.11 and 0.12 clear 0.25. A procedure that would loosen the wire cannot be
+# used to tighten it. The honest reading is that an 8-fold held-out FPR test is
+# uninformative at this sample size and neither bar can be defended by it. 0.10
+# stays because nothing has displaced it, not because it was re-validated.
+#
+# STILL OPEN, and unaffected by any of the above: no bar on a POOLED statistic
+# can be sensitive to a top-of-board defect at an acceptable alarm rate. Tiers
+# 50 and above are 306 of 2,822 rows, 10.84 percent, so they cannot move a
+# pooled figure far. (The 295 / 10.5 percent quoted in an earlier draft of this
+# block counted tiers 50-60 only, the MIN_TIER_N survivors, which is not the
+# frame the pooled bust ECE uses; the lane's own injection code reports
+# n_eligible on the 306 basis.) The wire wants a second, tier-located statistic.
 BUST_ECE_TRIPWIRE = 0.10
 
 
@@ -90,7 +125,26 @@ def _tier(fv: float) -> int:
 
 def _realized_bucket(target_war_6yr: float) -> int:
     """The shipped 5-bucket realized-outcome map (matches the isotonic lab):
-    bin the 6yr-AVERAGE annual WAR by the config band edges."""
+    bin the 6yr-AVERAGE annual WAR by the config band edges.
+
+    THE DIVISOR IS A CONSTANT 6 ON A RIGHT-CENSORED LABEL, AND THAT WAS MEASURED
+    (plan 2026-08-07b D4/C1, docs/efv-2026-08-07b/DISTRIBUTION_CALIBRATION_GATE.md,
+    data/xfv_dist_calibration_eval.json). The pool below is
+    `_prep(pool, "target_censored", side)`, whose censored rows carry a flat-rate tail
+    projection that Lane B1 showed is biased pessimistic. A pessimistic label inflates
+    realized bust and deflates realized good/star, which is the sign of the
+    miscalibration this module reports, so the obvious worry was that the diagnostic
+    was grading the model against its own label error. IT IS NOT. Re-running this chain
+    with the realized bucket recomputed on a season-share-corrected label, on an
+    IDENTICAL pool with predictions held fixed, moves pooled bust ECE 0.07908 -> 0.07660
+    (3.1 percent) and the n-weighted per-tier gap 0.04068 -> 0.03883 (4.5 percent).
+    Three reasons, all measured: the worst-biased span (observed_seasons = 2) has no row
+    in CHAIN_YEARS at all (the 623 censored eval rows are n_obs 3/4/5); only 35 of 2,822
+    rows change bucket; and tiers 35 and 40, which are 78 percent of the pool, are 83 and
+    67 percent never-debuted `kind == "bust"` rows whose label is exactly 0.0 and
+    uncensored. Reaching a 50 percent reduction would need a label error 10x to 25x the
+    one B1 measured. DO NOT REOPEN THIS. The remaining miscalibration is real and belongs
+    to the distribution (plan lane C2), not to the label."""
     import bisect
     return bisect.bisect_right(BUCKET_EDGES, float(target_war_6yr) / TARGET_SEASONS)
 
