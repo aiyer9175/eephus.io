@@ -845,7 +845,11 @@
   // The bat is position-independent, so it cancels out of any comparison BETWEEN
   // positions: only fielding + the ladder decide where a hitter belongs. Every
   // number rendered here is copied off the model artifact; the section adds no
-  // arithmetic of its own beyond formatting.
+  // arithmetic of its own beyond formatting, with ONE exception, the ladder
+  // table's subtotal row (pfLadder). That row adds the cells printed directly
+  // above it, and it has to do its own arithmetic precisely because the check it
+  // offers is only worth anything if it is computed from the same digits the
+  // reader is adding, not from the payload behind them.
   var POS_ORDER = ["C", "SS", "2B", "CF", "3B", "LF", "RF", "1B", "DH"];
 
   // Thousands separator, so a four-digit COUNT never reads as a season year
@@ -1092,15 +1096,99 @@
     function shift(p) {
       return (vals[p] != null && model[p] != null) ? vals[p] - model[p] : 0;
     }
-    var rows = POS_ORDER.filter(function (p) { return vals[p] != null; }).map(function (p) {
+    // WHY THIS TABLE IS SPLIT (owner report 2026-08-07: "the fitted runs/650
+    // still is not summing to 0, which it should by definition").
+    //
+    // The fit was never the defect and is not touched. Re-derived from the live
+    // feeds on the shipped 2021-2026 window, n=2023, the recentred ladder's
+    // weighted sum is -1.1e-16, machine zero, and the eight fielding rungs in
+    // the column printed here sum to -0.01, which is 2 dp rounding across eight
+    // cells. THE DEFECT WAS ON SCREEN: the nine POS_ORDER rungs went into one
+    // undivided column, and DH, which the printed column is NOT centred over,
+    // sat in that column at -15.18 with nothing marking it. So the only sum a
+    // reader could take off the page was -15.19, and the only thing saying
+    // otherwise was prose below the table.
+    //
+    // The fix is arithmetic the reader can redo: the eight centred rungs, a
+    // subtotal of THOSE PRINTED CELLS, then DH below the line and labelled out.
+    // The subtotal parses the formatted cell rather than reading the payload, so
+    // it can never disagree with the column it is a check on.
+    var sum8 = 0, sum8Folk = 0, sum8Diff = 0, nField8 = 0, nFolk8 = 0;
+    // One row formatter for both groups. DH below the subtotal is the same five
+    // cells as a rung above it and must stay that way, so it is built here too,
+    // with `collect` false and a tag that says why it is standing apart.
+    function ladderRow(p, collect, tag) {
       var d = (folk[p] != null) ? vals[p] - folk[p] : null;
       var c = ci[p], k = shift(p);
-      return "<tr><td><strong>" + esc(p) + "</strong></td>"
-        + "<td>" + pfSigned(vals[p], 2) + "</td>"
+      var vCell = pfSigned(vals[p], 2);
+      var fCell = (folk[p] != null) ? pfSigned(folk[p], 1) : "-";
+      var dCell = (d == null) ? "-" : pfSigned(d, 2);
+      // Parse back off the formatted cell, and take only what parsed. pfSigned
+      // renders a bad payload value as "-", and Number("-") is NaN, which would
+      // turn the whole subtotal into "NaN" and lose the eight good rungs with
+      // it. A skipped cell makes the subtotal disagree with the column, which is
+      // the one thing it must not do, so `nField8` counts what actually went in
+      // and the row says so when that is not eight.
+      if (collect) {
+        if (isFinite(Number(vCell))) { sum8 += Number(vCell); nField8 += 1; }
+        if (folk[p] != null && isFinite(Number(fCell)) && isFinite(Number(dCell))) {
+          sum8Folk += Number(fCell);
+          sum8Diff += Number(dCell);
+          nFolk8 += 1;
+        }
+      }
+      return "<tr><td><strong>" + esc(p) + "</strong>" + (tag || "") + "</td>"
+        + "<td>" + vCell + "</td>"
         + "<td>" + (c ? '<span class="proj-dim">' + pfSigned(c[0] + k, 2) + " to " + pfSigned(c[1] + k, 2) + "</span>" : "-") + "</td>"
-        + "<td>" + (folk[p] != null ? pfSigned(folk[p], 1) : "-") + "</td>"
-        + "<td>" + (d == null ? "-" : '<span class="' + (Math.abs(d) >= 1.5 ? "pal-hit" : "") + '">' + pfSigned(d, 2) + "</span>") + "</td></tr>";
-    }).join("");
+        + "<td>" + fCell + "</td>"
+        + "<td>" + (d == null ? "-" : '<span class="' + (Math.abs(d) >= 1.5 ? "pal-hit" : "") + '">' + dCell + "</span>") + "</td></tr>";
+    }
+    // POS_ORDER is shared with the rest of this file and is NOT mutated: the
+    // split below is a filter over a copy, so the display order of the rungs is
+    // unchanged. Excluding DH mirrors positional_fit._FIELDERS, which is
+    // LADDER_POSITIONS minus DH and is exactly the set the printed column is
+    // centred over.
+    var shown = POS_ORDER.filter(function (p) { return vals[p] != null; });
+    var rows = shown.filter(function (p) { return p !== "DH"; })
+      .map(function (p) { return ladderRow(p, true); }).join("");
+    // Inline styles on EVERY cell of the subtotal, on purpose: site.css freezes
+    // td:first-child with its own opaque fill at a specificity this file cannot
+    // reach from a class, so an un-inlined band would leave the frozen Pos cell
+    // untinted and let the columns underneath slide through it on a horizontal
+    // scroll. Rules above AND below close the block, which is what puts DH
+    // outside it.
+    var subTd = ' style="border-top:2px solid var(--border);border-bottom:2px solid var(--border);background:var(--bg-secondary)"';
+    // The claim attached to the subtotal branches with the basis, because on a
+    // pre-2026-07-31 artifact this column is the model's own and its eight-rung
+    // sum is a CONSEQUENCE of the weighted zero, not a constraint. Printing
+    // "0 by construction" over +11.83 would be the same kind of wrong the split
+    // exists to end.
+    //
+    // The residue band is arithmetic, not slack: each cell is printed to 2 dp,
+    // so n of them can drift at most n x 0.005 from the exact zero the centring
+    // imposes, which is 0.04 over the usual eight. The served column lands at
+    // -0.01. ANYTHING OUTSIDE THAT BAND is a real mismatch between the column
+    // and the basis it claims, and the row says so on the page rather than
+    // explaining it away as rounding, which is the failure mode that let this
+    // table read as broken while every number in it was right.
+    var subNote = !fielderCentred ? "not the imposed zero"
+      : (Math.abs(sum8) < 0.005 ? "0 by construction"
+        : (Math.abs(sum8) <= nField8 * 0.005 + 1e-9 ? "0 by construction, 2 dp rounding"
+          : "DOES NOT ADD UP, off by " + pfSigned(sum8, 2)));
+    rows += "<tr>"
+      + "<td" + subTd + "><strong>Sum of the " + fInt(nField8) + "</strong></td>"
+      + "<td" + subTd + "><strong>" + pfSigned(sum8, 2) + "</strong></td>"
+      + "<td" + subTd + '><span class="proj-dim">' + subNote + "</span></td>"
+      + "<td" + subTd + ">" + (nFolk8 ? "<strong>" + pfSigned(sum8Folk, 1) + "</strong>" : "-") + "</td>"
+      + "<td" + subTd + ">" + (nFolk8 ? "<strong>" + pfSigned(sum8Diff, 2) + "</strong>" : "-") + "</td>"
+      + "</tr>";
+    // DH stays on the page: the owner needs the number, and it is the rung that
+    // decides whether a bat is worth carrying with no glove attached. It just
+    // stops being an unmarked ninth term in a sum of eight.
+    rows += shown.filter(function (p) { return p === "DH"; })
+      .map(function (p) {
+        return ladderRow(p, false, '<span class="proj-dim"> not in the sum</span>');
+      }).join("");
     var note = '<div class="mlbstats-note">The positional adjustment, re-estimated from Baseball-Reference&rsquo;s own '
       + "construction rather than taken from the folklore table: least squares of positional runs per 650 PA on innings "
       + "shares, no intercept, " + fThou(L.nPlayerSeasons) + " player-seasons from " + esc((L.seasons || [])[0])
@@ -1127,12 +1215,14 @@
           ? id.sum_equal_weight_fielders / 8 : null;
         sums = '<div class="mlbstats-note"><strong>How this column is centred.</strong> '
           + "The eight FIELDING positions are centred to add to zero, which is the line the folklore "
-          + "table is drawn against, so the difference column compares like with like. DH is shown "
-          + "against that same line"
+          + "table is drawn against, so the difference column compares like with like, and the subtotal "
+          + "row above adds the eight cells printed over it so the check can be redone by hand. DH sits "
+          + "below that line, on the same scale"
           + (vals.DH != null ? " at " + pfSigned(vals.DH, 2) + " runs" : "")
-          + " and is not part of the sum: DH is " + wDH + " of league play, not a ninth of it, so "
+          + ", and is not part of the sum: DH is " + wDH + " of league play, not a ninth of it, so "
           + "adding all nine rungs is not a check of anything. The model itself uses a different zero, "
-          + "the league&rsquo;s own deployment weighted by innings played, and that sum is <strong>"
+          + "the average positional mix of a qualified player-season with every fitted season counted "
+          + "once, and that sum is <strong>"
           + f2(id.sum_exposure_weighted) + "</strong> by construction"
           + (lvl == null ? ""
              : "; on that basis every rung sits " + f2(Math.abs(lvl)) + " runs "
@@ -1145,14 +1235,16 @@
       } else {
         sums = '<div class="mlbstats-note"><strong>Why the column does not add to zero.</strong> '
           + "This artifact predates the fielder-centred column, so the rungs below are on the "
-          + "model&rsquo;s own basis: a WEIGHTED identity, centred so that the league&rsquo;s own "
-          + "deployment averages zero, and that sum is <strong>" + f2(id.sum_exposure_weighted)
-          + "</strong> here, imposed by construction. Adding the nine rungs with EQUAL weight gives "
-          + f2(id.sum_equal_weight_9) + ", which is not an error: it weights DH like a fielding "
+          + "model&rsquo;s own basis: a WEIGHTED identity, centred so that the average positional mix "
+          + "of a qualified player-season reads zero, and that sum is <strong>"
+          + f2(id.sum_exposure_weighted)
+          + "</strong> here, imposed by construction. That is why the subtotal row above is "
+          + f2(id.sum_equal_weight_fielders) + " and not zero, and it is a consequence rather than an "
+          + "error. Adding the nine rungs with EQUAL weight gives "
+          + f2(id.sum_equal_weight_9) + ", which is not an error either: it weights DH like a fielding "
           + "position when DH is " + wDH + " of league exposure, so the large negative DH rung gets "
-          + "counted nine times too heavily. With the weighted sum pinned at zero, the eight fielding "
-          + "rungs are then forced to " + f2(id.sum_equal_weight_fielders) + ". Only the weighted sum "
-          + "is a constraint; the other two are consequences of it.</div>";
+          + "counted nine times too heavily. Only the weighted sum is a constraint; the other two are "
+          + "consequences of it.</div>";
       }
     }
     return note + '<div class="mlbstats-scroll"><table class="mlbstats-table">'

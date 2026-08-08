@@ -109,15 +109,21 @@ LADDER_WINDOW_SEASONS = 6
 # fit.ladder.seasons off the artifact for that.
 LADDER_RETIRED_FIRST_SEASON = 2012
 LADDER_SENSITIVITY_WINDOWS = (LADDER_EARLIEST_SEASON, LADDER_RETIRED_FIRST_SEASON, 2018)
-# ARTIFACT COUPLING, and the reason this alias still exists. test_positional_fit
-# pins the artifact's fitted window against this name and its row count against
-# 4,000. data/positional_fit.json on disk is still the 2012-2026 fit, so the
-# alias reads 2012 and the suite is green as it stands. REGENERATING the
-# artifact under LADDER_WINDOW_SEASONS moves the window to 2021-2026 and the row
-# count to about 2,023, which breaks both pins: the regen and that test's rebase
-# have to land in ONE commit, together with a build_site pass to refresh the
-# served slim view (data/positional_fit_ui.json). Do not regenerate alone.
-LADDER_FIRST_SEASON = LADDER_RETIRED_FIRST_SEASON
+# ARTIFACT COUPLING, settled. This block used to warn that the on-disk artifact
+# was still the 2012-2026 fit and that a regen would break two pins in
+# test_positional_fit at once. THAT REGEN LANDED: data/positional_fit.json now
+# reads fit.ladder.seasons [2021, 2026] and n_player_seasons 2023, the served
+# slim view (data/positional_fit_ui.json) was rebuilt with it, and the test was
+# rebased off any absolute first season onto a SPAN check against
+# LADDER_WINDOW_SEASONS with a row floor of 1,800. Nothing here pins 2012 any
+# more, so a future regen moves the window on its own without a code change.
+#
+# The dead alias that used to sit on this line, LADDER_FIRST_SEASON = 2012, is
+# DELETED rather than deprecated: with the pins rebased it had no reader left in
+# the tree, and a name that reads like "the window this model fits" while
+# holding a retired value is exactly what made the warning above go stale
+# unnoticed. LADDER_RETIRED_FIRST_SEASON carries the 2012 constant and has a
+# live reader in LADDER_SENSITIVITY_WINDOWS, so nothing was lost.
 MIN_PAIR_INN = 100.0           # innings at BOTH positions to count as a conversion pair
 MIN_RELIABILITY_INN = 300.0    # innings floor for the year-over-year reliability fit
 LADDER_MIN_PA = 200
@@ -246,9 +252,13 @@ def _recentre(beta, exposure):
     runs_position per 650 PA, which BRef ran at about -1 run through 2021 and ~0
     from 2022. So the fitted ladder's level is whatever the source data's level
     happened to be in the fitted window - it is a property of the window, not of
-    the positions. Subtracting it makes the convention explicit and stable:
-    'average defensive position, weighted by how the league actually deploys
-    players' is the zero."""
+    the positions. Subtracting it makes the convention explicit and stable: the
+    zero is 'the average defensive position of a qualified player-season', with
+    every fitted player-season counted once. Say it that way and not 'weighted by
+    the innings the league deploys': `exposure` is the column mean of the per-row
+    innings SHARES, so a 200 PA season and a 700 PA season carry equal weight.
+    See the note above `ident` in fit_ladder for what a true innings weighting
+    would change (-0.0401 runs) and why the level is not worth re-weighting."""
     return beta - float(exposure @ beta)
 
 
@@ -319,10 +329,32 @@ def fit_ladder(feeds: Feeds, first=None, last=None,
 
     values = {p: round(float(v), 2) for p, v in zip(LADDER_POSITIONS, beta)}
     s_field = sum(values[p] for p in _FIELDERS)
+    # WHAT "exposure" IS, stated exactly, because the prose used to overclaim it.
+    # `exposure` is X.mean(axis=0): the mean over fitted rows of each position's
+    # share of THAT ROW's innings. Every qualified player-season therefore counts
+    # once, whether it is 200 PA or 700. That is NOT "weighted by the innings the
+    # league actually deploys" - a genuine innings weighting would weight each row
+    # by its own inning total, and it is a different set of weights.
+    #
+    # MEASURED, so the difference is priced rather than asserted (2021-2026,
+    # n=2023): the shipped per-row-share weighting puts the recentred ladder's
+    # sum at -1.1e-16, machine zero, and the same ladder under a true
+    # innings weighting sums to -0.0401 runs per 650 PA. The rungs' own bootstrap
+    # CI95 half-widths run 0.315 (CF) to 0.430 (DH), so that gap is an eighth of
+    # the narrowest of them.
+    #
+    # We do NOT re-weight, and the small gap is not the reason. The reason is
+    # that this level is UNIDENTIFIED and nothing reads it: recentring shifts
+    # every rung by one constant, so every position-to-position gap, which is the
+    # entire content of a positional adjustment, is bit-identical under any
+    # choice of weights. Re-weighting would move a number no consumer uses and
+    # invalidate the pinned artifact for nothing.
     ident = {
         "convention": "exposure-weighted sum-to-zero",
-        "zero_means": ("the league-average defensive position, weighted by the innings "
-                       "shares the league actually deploys"),
+        "zero_means": ("the average defensive position of a qualified player-season, "
+                       "every fitted player-season counted once: the weights are the "
+                       "column means of the per-row innings shares, not league innings "
+                       "totals"),
         "sum_exposure_weighted": round(float(exposure @ beta), 6),
         "sum_equal_weight_9": round(sum(values.values()), 3),
         "sum_equal_weight_fielders": round(s_field, 3),
