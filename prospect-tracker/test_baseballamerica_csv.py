@@ -193,47 +193,148 @@ def test_a_tool_slot_collision_is_surfaced_and_never_silently_overwritten():
 
 
 # --------------------------------------------------------------------------
+# FORMAT DRIFT. Every case below is a real variation measured across the 52
+# owner-supplied 2023-2026 org boards, and every one of them silently lost a
+# whole season's worth of a field before it was handled.
+# --------------------------------------------------------------------------
+
+def test_the_scouting_grades_colon_is_optional():
+    """11 of 13 2026 boards write 'Scouting Grades Hit: 45 | ...' with no
+    colon. Requiring it lost their tools entirely, same season, same
+    publisher."""
+    nocolon = _BOARD.replace("Scouting Grades: Fastball:", "Scouting Grades Fastball:")
+    row = ba.parse_board(nocolon, _META)["rows"][0]
+    assert row["tools"] == {"fb": 60.0, "sl": 55.0, "ch": 70.0, "cmd": 50.0}
+
+
+def test_the_2023_period_separator_parses():
+    """2023 separates tools with a markdown-escaped period rather than a pipe:
+    'Hitting: 60\\. Power: 60\\. Speed: 55\\. Fielding: 50\\. Arm: 45\\.'
+    Splitting on the pipe returned nothing for the whole season."""
+    line = "Scouting Grades: Hitting: 60\\. Power: 60\\. Speed: 55\\. Fielding: 50\\. Arm: 45\\."
+    board = _BOARD.replace(
+        "Scouting Grades: Hit: 45 | Power: 55 | Run: 55 | Field: 55 | Arm: 60", line)
+    row = ba.parse_board(board, _META)["rows"][1]
+    assert row["tools"] == {"hit": 60.0, "game_pwr": 60.0, "speed": 55.0,
+                            "field": 50.0, "throw": 45.0}
+
+
+@pytest.mark.parametrize("label,canonical", [
+    ("Hitting", "hit"), ("Fielding", "field"), ("Speed", "speed"),
+    ("Throw", "throw"), ("Splitter", "ch"), ("Comtrol", "cmd"), ("CUT", "ct"),
+])
+def test_label_variants_and_ba_typos_map_to_canonical_keys(label, canonical):
+    """BA's own labels drift by season and include two real typos, Comtrol and
+    FIeld. Dropping those rows' grades to keep a tidy table is the wrong
+    trade: a human wrote them and the grade is still a grade."""
+    tools, raw, issues = ba._map_tools(f"{label}: 55")
+    assert tools == {canonical: 55.0}
+    assert not [i for i in issues if i["kind"] == "unmapped_label"]
+
+
+@pytest.mark.parametrize("line,expect_risk", [
+    ("BA Grade/Risk: 60/High", "High"),        # 2023 and 2026
+    ("BA Grade/Risk: 60/High.", "High"),       # 2025 adds a trailing period
+    ("BA Grade: 60/High", "High"),             # 2024 renames the field
+    ("BA Grade/Risk: 60/Very High", "Very High"),   # two-word label
+])
+def test_the_grade_field_survives_every_season_spelling(line, expect_risk):
+    """Four seasons, four spellings. A single-word risk capture truncated
+    'Very High' to 'Very' on 11 boards, and the anchored form rejected 2025's
+    trailing period, dropping its raw grade from 390 rows to 2."""
+    board = _BOARD.replace("BA Grade/Risk: 60/Mild", line)
+    row = ba.parse_board(board, _META)["rows"][0]
+    assert row["ba_raw_grade"] == 60.0
+    assert row["ba_risk"] == expect_risk
+
+
+def test_the_older_risk_vocabulary_is_known_but_carries_no_invented_penalty():
+    """2023-2025 use Low/Medium/High/Very High/Extreme; 2026 uses
+    Low/Mild/Average/High/Extreme. The 2026 ladder is verified exactly (390 of
+    390). The older one cannot be verified, because those seasons publish no
+    Adjusted Grade to solve against, so no penalty is guessed for it."""
+    assert {"medium", "very high"} <= ba.KNOWN_RISK_LABELS
+    assert ba.risk_penalty("Medium") is None
+    assert ba.risk_penalty("Very High") is None
+    assert ba.risk_penalty("Average") == 10.0
+
+
+def test_a_row_with_no_adjusted_grade_is_not_counted_as_an_identity_failure():
+    """Not checkable is a different fact from checked-and-wrong. Collapsing
+    them reported 927 phantom failures across the 2023-2025 boards, which
+    publish a raw grade and a risk but no adjusted grade at all."""
+    no_adj = _BOARD.replace("Adjusted Grade: 55\n", "", 1)
+    row = ba.parse_board(no_adj, _META)["rows"][0]
+    assert row["adjusted_identity_ok"] is None
+    # The expectation is still computed and stored, so the row stays auditable.
+    assert row["adjusted_expected"] == 55.0
+    assert row["fv"] is None and row["ba_raw_grade"] == 60.0
+
+
+# --------------------------------------------------------------------------
 # Dating. Boards are dated by CONTENT, never by label.
 # --------------------------------------------------------------------------
 
-def test_a_preseason_board_carrying_in_season_prose_is_refused():
-    """The real hazard, caught on a real file: a board named for Preseason 2026
-    carried mid-season content (2 of 30 said 'through mid-May', 4 said 'this
-    year', 12 referenced 2026 in-season)."""
+def test_in_season_prose_warns_and_does_not_block():
+    """DEMOTED FROM A REFUSAL, on evidence. This shipped as a hard refusal on
+    the strength of one known-bad file, and then refused 39 of 52 genuinely
+    preseason org boards. Every hit that could be read by hand was legitimate:
+    a preseason board describing the season just finished ("Through April and
+    May, he produced an OPS of .621") or projecting the one about to start
+    ("in the Dominican Summer League later this year"). Those are the two
+    things a preseason board is for, so the phrasing cannot separate them from
+    a mis-dated file, and density does not either (the known-bad file carried
+    6 markers, a genuine 2023 board carries 5)."""
     dirty = _BOARD.replace(
         "Track Record: Over three seasons",
         "Track Record: Through mid-May he has hit .310 this year. Over three seasons")
     ev = ba.scan_content_dates(dirty, 2026)
     assert ev["in_season_count"] >= 2
-    _, refusals = ba.resolve_snapshot_date(dict(_META), ev)
-    assert refusals and "preseason" in refusals[0]
+    _, refusals, warnings = ba.resolve_snapshot_date(dict(_META), ev)
+    assert refusals == [], "in-season prose must not block ingestion"
+    assert warnings and "in-season prose marker" in warnings[0]
 
 
-def test_the_genuinely_preseason_board_is_not_refused():
-    """The discriminator has to be in-season PHRASING, not month names. This
-    board says a player 'made his major league debut on Sept. 15' two
-    paragraphs from 'enters 2026', and a naive month-plus-year scanner invents
-    a phantom 2026-09-15 and rejects a good file."""
+def test_the_genuinely_preseason_board_is_not_flagged_at_all():
+    """The board says a player 'made his major league debut on Sept. 15' two
+    paragraphs from 'enters 2026'. A month-plus-year scanner would invent a
+    phantom 2026-09-15 and reject a good file."""
     ev = ba.scan_content_dates(_BOARD, 2026)
     assert ev["in_season_count"] == 0
-    date_str, refusals = ba.resolve_snapshot_date(dict(_META), ev)
-    assert refusals == []
+    date_str, refusals, warnings = ba.resolve_snapshot_date(dict(_META), ev)
+    assert refusals == [] and warnings == []
     assert date_str == "2026-02-15"
 
 
 def test_a_snapshot_date_earlier_than_an_explicit_in_content_date_is_refused():
+    """The one date check that DOES still refuse, because it is unambiguous:
+    an explicit 'June 12, 2026' inside a board dated 2026-02-15 is a
+    contradiction, not a turn of phrase. Zero false positives across 52 real
+    boards."""
     dated = _BOARD.replace("The Future: Yesavage enters 2026",
                            "The Future: As of June 12, 2026 he is healthy. Yesavage enters 2026")
     ev = ba.scan_content_dates(dated, 2026)
     assert ev["latest_explicit_date"] == "2026-06-12"
-    _, refusals = ba.resolve_snapshot_date(dict(_META), ev)
+    _, refusals, _w = ba.resolve_snapshot_date(dict(_META), ev)
     assert any("EARLIER than an explicit date" in r for r in refusals)
+
+
+def test_a_future_year_in_the_prose_is_not_a_refusal():
+    """Removed rather than softened. Scouting prose names future years
+    constantly (Rule 5 eligibility, free agency, club control), and refusing on
+    it cost 17 of 52 boards. One real board legitimately mentions 2034."""
+    fut = _BOARD.replace("The Future: Yesavage enters 2026",
+                         "The Future: He is under club control through 2034. Yesavage enters 2026")
+    ev = ba.scan_content_dates(fut, 2026)
+    assert ev["max_year_referenced"] == 2034
+    _, refusals, _w = ba.resolve_snapshot_date(dict(_META), ev)
+    assert refusals == []
 
 
 def test_an_explicit_publication_date_in_the_filename_beats_the_convention():
     meta = ba.parse_filename("ba__2026__preseason__blue-jays__2026-02-03.md")
     assert meta["pubdate"] == "2026-02-03"
-    date_str, refusals = ba.resolve_snapshot_date(meta, ba.scan_content_dates(_BOARD, 2026))
+    date_str, refusals, _w = ba.resolve_snapshot_date(meta, ba.scan_content_dates(_BOARD, 2026))
     assert date_str == "2026-02-03" and refusals == []
 
 
@@ -242,7 +343,7 @@ def test_the_pre_2017_scale_hazard_is_stamped():
     no contemporaneous reference for grade_normalization and the thin-cell
     fallback pools across FUTURE years. That is leak D1 on a new source."""
     meta = ba.parse_filename("ba__2015__preseason__blue-jays.md")
-    date_str, _ = ba.resolve_snapshot_date(meta, ba.scan_content_dates("", 2015))
+    date_str, _r, _w = ba.resolve_snapshot_date(meta, ba.scan_content_dates("", 2015))
     assert date_str < "2017-02-15"
 
 

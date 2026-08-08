@@ -115,8 +115,33 @@ RISK_PENALTY: dict[str, float] = {
     "extreme": 20.0,
 }
 
+# BA CHANGED ITS RISK VOCABULARY, measured across 2023-2026 (1,530 rows, 52 org
+# boards). The 2023 and 2025 boards use a DIFFERENT five-level ladder:
+#
+#   2023 / 2025:  Low, Medium, High, Very High, Extreme
+#   2026:         Low, Mild,   Average, High,   Extreme
+#
+# The 2026 ladder above is verified exactly: 390 of 390 rows satisfy
+# adjusted = raw - penalty(risk), zero exceptions.
+#
+# The older ladder CANNOT be verified and no penalty is guessed for it, because
+# those seasons publish NO Adjusted Grade at all (0 of 750 rows), so there is
+# nothing to solve the penalty against. Inventing one would put a fabricated
+# number in the FV column of 750 rows with no way for any downstream layer to
+# detect it. These labels are recognised so the risk value is STORED as data
+# and so an unknown-vocabulary warning can tell a genuine format change apart
+# from a known older format.
+KNOWN_RISK_LABELS: frozenset[str] = frozenset(
+    set(RISK_PENALTY) | {"medium", "very high"}
+)
+
 
 def risk_penalty(risk: str | None) -> float | None:
+    """Penalty in FV points, or None when it is not derivable for this label.
+
+    None means "not checkable", which is a different fact from a wrong answer,
+    and the adjusted-grade identity check distinguishes them on purpose.
+    """
     if not risk:
         return None
     return RISK_PENALTY.get(risk.strip().lower())
@@ -146,28 +171,52 @@ def risk_penalty(risk: str | None) -> float | None:
 # PITCHER_TOOL_KEYS, so consumers iterating the canonical tuple skip it. That
 # is a pre-existing defect in the tool taxonomy, it is not created here, and it
 # is worth an owner decision separately from this ingest.
+# LABEL VOCABULARY ALSO DRIFTS BY SEASON. Measured across 2023-2026:
+#   2023 writes Hitting / Fielding / Speed / Throw beside Hit / Field / Run / Arm,
+#        and contains two genuine BA typos, "Comtrol" and "FIeld".
+#   2025 adds the abbreviations CH and CUT.
+#   2026 settles on Hit / Power / Run / Field / Arm and the pitch names.
+# All variants map onto the same canonical keys. The typos are included
+# deliberately: they are in the source data, a human wrote them, and dropping
+# those rows' command grades to protect a tidy table would be the wrong trade.
 BA_TOOL_KEY: dict[str, str] = {
     # hitters
     "hit": "hit",
+    "hitting": "hit",
     "power": "game_pwr",       # BA publishes ONE power grade; FG splits raw/game
     "run": "speed",
     "speed": "speed",
     "field": "field",
     "fielding": "field",
+    "fieid": "field",
     "arm": "throw",
+    "throw": "throw",
+    "throwing": "throw",
     # pitchers
     "fastball": "fb",
+    "fb": "fb",
     "slider": "sl",
     "sweeper": "sl",           # sweeper = slider variant (JB precedent)
+    "sl": "sl",
     "curveball": "cb",
     "curve": "cb",
+    "cb": "cb",
     "changeup": "ch",
+    "change": "ch",
+    "ch": "ch",
     "split": "ch",             # splitter = changeup variant (JB precedent)
     "splitter": "ch",
     "cutter": "ct",
+    "cut": "ct",
     "control": "cmd",
+    "comtrol": "cmd",          # BA typo, present in the 2023 boards
     "command": "cmd",
+    "cmd": "cmd",
 }
+
+# Labels that appear inside a Scouting Grades line but are NOT tools. Listed so
+# they are skipped silently instead of being reported as unmapped every row.
+_NON_TOOL_LABELS: frozenset[str] = frozenset({"ba grade", "adjusted grade", "risk"})
 
 # BA's single `Power` maps onto game_pwr rather than raw_pwr. Recorded because
 # it is a real modelling choice and not an obvious one: BA's power grade is a
@@ -332,6 +381,7 @@ def resolve_snapshot_date(meta: dict, evidence: dict) -> tuple[str | None, list[
     that gets RECORDED as a convention, never a measurement.
     """
     refusals: list[str] = []
+    warnings: list[str] = []
     season = meta["season"]
     board = meta["board"]
 
@@ -344,14 +394,38 @@ def resolve_snapshot_date(meta: dict, evidence: dict) -> tuple[str | None, list[
     snapshot_date = meta.get("pubdate") or convention
     basis = "filename" if meta.get("pubdate") else "convention"
 
-    # A preseason board must not contain in-season prose.
+    # IN-SEASON PROSE IS A WARNING, NOT A REFUSAL. Demoting it is a correction
+    # to this module, not a concession, and the measurement is worth recording.
+    #
+    # It shipped as a refusal on the strength of ONE known-bad file: a board
+    # labelled Preseason 2026 that carried mid-season content. Run against 52
+    # genuinely-preseason org boards it refused 39 of them, and every hit that
+    # could be read by hand was legitimate prose:
+    #
+    #   "Through April and May, he produced an OPS of .621"  2023 board, 2022 season
+    #   "in the Dominican Summer League later this year"     forward-looking
+    #   "one of the top pitchers available this year"        forward-looking, draft class
+    #   "at an astounding 78% clip through August"           the completed season
+    #
+    # Describing the season just finished and projecting the season about to
+    # start are the two things a preseason board is FOR, so phrasing alone
+    # cannot separate them from a mis-dated file. Requiring the board's own
+    # season year near the marker does not fix it either (tested: 9 of 52 still
+    # flag, all false). Density does not separate it: the known-bad file carried
+    # 6 markers and a genuine 2023 board carries 5.
+    #
+    # A guard that blocks three quarters of good data to catch a hazard it
+    # cannot reliably identify is worse than no guard, because it trains the
+    # operator to bypass it. So this reports and does not block. The unambiguous
+    # half of the check, the explicit-date contradiction below, still refuses:
+    # it had zero false positives across all 52 boards.
     if board == "preseason" and evidence["in_season_count"] > 0:
         tags = sorted({m["tag"] for m in evidence["in_season_markers"]})
-        refusals.append(
-            f"board is labelled preseason but carries {evidence['in_season_count']} "
-            f"in-season prose markers ({', '.join(tags)}). Boards are dated by "
-            f"content, never by label. Re-export the correct board, or rename the "
-            f"file to the board it actually is and add the real publication date."
+        warnings.append(
+            f"{evidence['in_season_count']} in-season prose marker(s) "
+            f"({', '.join(tags)}) on a board labelled preseason. Usually this is "
+            f"the board describing the season just finished, which is normal. "
+            f"Worth a look only if several rows read as written mid-season."
         )
 
     # No snapshot_date may precede a date the content itself states.
@@ -363,15 +437,12 @@ def resolve_snapshot_date(meta: dict, evidence: dict) -> tuple[str | None, list[
             f"date to the filename."
         )
 
-    # A board cannot have been written before the season it discusses.
-    max_year = evidence["max_year_referenced"]
-    if max_year and max_year > season:
-        refusals.append(
-            f"board is labelled season {season} but references {max_year}. "
-            f"Check the file is the board you think it is."
-        )
-
-    return snapshot_date, refusals
+    # A LATER YEAR IS NOT EVIDENCE OF ANYTHING, and refusing on it cost 17 of
+    # the 52 boards. Scouting prose names future years constantly: Rule 5
+    # eligibility, free agency, club control, "should reach Double-A in 2027".
+    # One board legitimately mentions 2034. The rule is removed rather than
+    # softened, because there is no version of it that is right.
+    return snapshot_date, refusals, warnings
 
 
 # ---------------------------------------------------------------------------
@@ -383,13 +454,23 @@ def resolve_snapshot_date(meta: dict, evidence: dict) -> tuple[str | None, list[
 # matching. The name is captured loosely and cleaned afterwards.
 _RANK_LINE_RE = re.compile(r"^(\d{1,3})\\?\.\s+(\S.*?)\s*$")
 _HEADER_COUNT_RE = re.compile(r"^(\d{1,3})\s+players\s*$", re.IGNORECASE)
-_GRADE_RISK_RE = re.compile(r"BA Grade\s*/\s*Risk:\s*(\d{2})\s*/\s*([A-Za-z]+)")
+# The risk label can be TWO WORDS. "Very High" is real BA vocabulary on the
+# 2023 and 2025 boards, and a single-word capture silently truncated it to
+# "Very", which then failed the known-vocabulary check on 11 of 52 boards.
+# Anchored to end of line so it cannot run past the field.
+_GRADE_RISK_RE = re.compile(
+    r"^BA Grade(?:\s*/\s*Risk)?:\s*(\d{2})\s*/\s*([A-Za-z][A-Za-z ]*?)\s*\\?\.?\s*$",
+    re.MULTILINE)
 _ADJUSTED_RE = re.compile(r"Adjusted Grade:\s*(\d{2})")
 _PREV_RANK_RE = re.compile(r"Previous Rank:\s*(\d{1,3})")
 _AGE_RE = re.compile(r"^Age:\s*(\d{1,2})\s*$", re.MULTILINE)
 _PHYS_RE = re.compile(
     r"Ht:\s*([0-9]'[0-9]{1,2}\")\s*\|\s*Wt:\s*(\d{2,3})\s*\|\s*B-T:\s*([A-Z])-([A-Z])")
-_SCOUT_GRADES_RE = re.compile(r"Scouting Grades:\s*(.+?)\s*$", re.MULTILINE)
+# THE COLON IS OPTIONAL, and requiring it lost 11 of 13 2026 boards. Measured:
+# only blue-jays and yankees write "Scouting Grades:"; the other eleven write
+# "Scouting Grades Hit: 45 | Power: 65 | ...". Same field, same season, same
+# publisher. This is why the README says paste it raw.
+_SCOUT_GRADES_RE = re.compile(r"Scouting Grades:?\s*(.+?)\s*$", re.MULTILINE)
 _PROSE_RE = {
     "track_record": re.compile(r"^Track Record:\s*(.+?)\s*$", re.MULTILINE),
     "report": re.compile(r"^Scouting Report:\s*(.+?)\s*$", re.MULTILINE),
@@ -453,13 +534,15 @@ def _map_tools(raw_grades: str) -> tuple[dict, dict, list[dict]]:
     tools: dict[str, float] = {}
     raw: dict[str, float] = {}
     collisions: list[dict] = []
-    for part in raw_grades.split("|"):
-        if ":" not in part:
-            continue
-        label, _, value = part.partition(":")
+    # SEPARATOR VARIES BY SEASON and splitting on one of them silently drops a
+    # whole season's tools. 2025 and 2026 use " | "; 2023 uses a markdown-escaped
+    # period, "Hitting: 60\. Power: 60\. Speed: 55\.". Rather than split, pull
+    # the (label, grade) pairs out directly, which is separator-agnostic and
+    # therefore does not need updating the next time BA changes punctuation.
+    # Safe against prose because this only ever runs on a Scouting Grades line.
+    for label, value in re.findall(r"([A-Za-z][A-Za-z ]*?)\s*:\s*(\d{2})\b", raw_grades):
         label = label.strip().lower()
-        value = value.strip()
-        if not re.fullmatch(r"\d{2}", value):
+        if label in _NON_TOOL_LABELS:
             continue
         grade = float(value)
         raw[label] = grade
@@ -541,12 +624,21 @@ def parse_board(text: str, meta: dict) -> dict:
             tools, ba_tools_raw, tool_issues = _map_tools(grades.group(1))
 
         # Recompute rather than trust. See the module docstring.
+        # Three states, and collapsing them loses the distinction that matters.
+        #   True  = published an Adjusted Grade and it satisfies the identity
+        #   False = published one and it does NOT (a format change, investigate)
+        #   None  = nothing to check, because this season publishes no Adjusted
+        #           Grade at all (2023-2025) or the risk label has no derivable
+        #           penalty. NOT a failure.
+        # Treating None as False reported 927 phantom failures on the 2023-2025
+        # boards, which publish raw grade and risk but no adjusted grade.
         expected_adj = None
         identity_ok = None
         pen = risk_penalty(risk)
         if raw_grade is not None and pen is not None:
             expected_adj = raw_grade - pen
-            identity_ok = (adjusted is not None and adjusted == expected_adj)
+            if adjusted is not None:
+                identity_ok = (adjusted == expected_adj)
 
         prose = {}
         for field, rx in _PROSE_RE.items():
@@ -785,17 +877,31 @@ def process_file(path: Path, *, resolve: bool = True) -> dict:
 
     text = path.read_text(encoding="utf-8")
     evidence = scan_content_dates(text, meta["season"])
-    snapshot_date, refusals = resolve_snapshot_date(meta, evidence)
+    snapshot_date, refusals, warnings = resolve_snapshot_date(meta, evidence)
     meta["snapshot_date"] = snapshot_date
     meta["snapshot_date_basis"] = "filename" if meta.get("pubdate") else "convention"
 
     board = parse_board(text, meta)
     board["content_evidence"] = evidence
     board["refusals"] = refusals
+    board["warnings"] = warnings
 
     label_problem = validate_org_label(board["meta"]["interval_label"])
     if label_problem:
         refusals.append(label_problem)
+
+    # An unknown risk label is a genuine format change and must not pass
+    # silently: it means either a new BA vocabulary or a parse landing in the
+    # wrong field, and both put a wrong number in an FV column downstream.
+    unknown_risks = sorted({
+        r["ba_risk"] for r in board["rows"]
+        if r["ba_risk"] and r["ba_risk"].strip().lower() not in KNOWN_RISK_LABELS})
+    if unknown_risks:
+        refusals.append(
+            f"unrecognised risk label(s) {unknown_risks}. Known vocabulary is "
+            f"{sorted(KNOWN_RISK_LABELS)}. A new label needs its penalty derived "
+            f"against a board that publishes an Adjusted Grade before it is used.")
+    board["unknown_risks"] = unknown_risks
 
     # Adjusted-grade identity audit over the whole board.
     broken = [r for r in board["rows"] if r["adjusted_identity_ok"] is False]
@@ -842,6 +948,15 @@ def ingest_drops(*, apply: bool = False, resolve: bool = True,
             "status": "REFUSED" if board["refusals"] else "PARSED",
             "meta": board["meta"],
             "refusals": board["refusals"],
+            "warnings": board["warnings"],
+            "unknown_risks": board["unknown_risks"],
+            # What this board actually carries, so a season whose format lost a
+            # whole field shows up as a number rather than as silence.
+            "coverage": {
+                k: sum(1 for r in board["rows"] if r.get(k) not in (None, "", {}))
+                for k in ("fv", "ba_raw_grade", "ba_risk", "tools", "position",
+                          "age", "previous_rank")
+            },
             "n_rows": len(board["rows"]),
             "adjusted_identity_failures": board["adjusted_identity_failures"],
             "tool_issues": board["tool_issues"],
@@ -911,9 +1026,15 @@ def main(argv: list[str] | None = None) -> int:
               f"{r['n_rows']} rows, snapshot_date {m.get('snapshot_date')} "
               f"({m.get('snapshot_date_basis')})")
         print(f"    label: {m.get('interval_label')!r}")
+        cov = r.get("coverage") or {}
+        if cov:
+            print("    coverage: " + "  ".join(
+                f"{k}={v}/{r['n_rows']}" for k, v in cov.items()))
         for msg in r.get("refusals") or []:
             refused += 1
             print(f"    REFUSED: {msg}")
+        for msg in r.get("warnings") or []:
+            print(f"    warn: {msg}")
         if r.get("pre_fangraphs_era"):
             print("    NOTE pre-2017: no contemporaneous FanGraphs reference to "
                   "normalize against. Basis is a gated modelling decision.")
