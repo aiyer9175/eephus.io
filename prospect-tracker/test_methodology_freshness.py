@@ -21,6 +21,11 @@ ROOT = Path(__file__).parent
 # models with no user-facing methodology surface). EVERY registry row
 # must appear; a new model ships with its documentation decision.
 MODEL_GLOSSARY = {
+    "xfv_label_replacement": "internal",
+    "xfv_rank_objective": "internal",
+    "surplus_decomposition_v6": "internal",
+    "xfv_dist_recalibration": "internal",
+
     "consensus_recency_decay": "internal",
     "xfv_serve_path": "internal",
 
