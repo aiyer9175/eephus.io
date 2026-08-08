@@ -1,0 +1,1262 @@
+{
+  "generated_at": "2026-08-07",
+  "lane": "J1",
+  "question": "within a (source, org|global, snapshot_date, interval_label, fv) cell, does that source's own rank predict realized WAR?",
+  "preregistration": "docs/efv-2026-08-07b/CONSENSUS_RANK_GATE.md",
+  "db": "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker\\prospects.db",
+  "label_basis": {
+    "source": "data/xfv_hitter_matrix.json + data/xfv_pitcher_matrix.json",
+    "headline": "full_pool_resolved / target_resolved (efv_dataset.py:1372); censored debuted rows EXCLUDED because target_censored rides the flat-rate tail projection Lane B is measuring",
+    "secondary": "full_pool_censored / target_censored (efv_dataset.py:1373)",
+    "asof_rule": "snapshot_date <= matrix cutoff (the eFV decision point)",
+    "n_labeled_players": 3957
+  },
+  "min_cell_n": 5,
+  "n_perm": 1000,
+  "n_boot": 500,
+  "seed": 20260807,
+  "sign_convention": "score = -rank; positive statistic = rank predicts WAR",
+  "j0_reproduction": {
+    "fangraphs": {
+      "ranked_rows_with_fv": 24300,
+      "rank_only_rows": 0,
+      "rows_in_fv_tie": 24274,
+      "ties_with_distinct_ranks": 24274,
+      "org_rows": 0,
+      "global_rows": 24300
+    },
+    "mlb_pipeline": {
+      "ranked_rows_with_fv": 18240,
+      "rank_only_rows": 538,
+      "rows_in_fv_tie": 18232,
+      "ties_with_distinct_ranks": 18226,
+      "org_rows": 13051,
+      "global_rows": 5727
+    },
+    "tjstats": {
+      "ranked_rows_with_fv": 4498,
+      "rank_only_rows": 4,
+      "rows_in_fv_tie": 4498,
+      "ties_with_distinct_ranks": 4498,
+      "org_rows": 0,
+      "global_rows": 4502
+    },
+    "espn": {
+      "ranked_rows_with_fv": 252,
+      "rank_only_rows": 0,
+      "rows_in_fv_tie": 251,
+      "ties_with_distinct_ranks": 251,
+      "org_rows": 0,
+      "global_rows": 252
+    },
+    "just_baseball": {
+      "ranked_rows_with_fv": 126,
+      "rank_only_rows": 0,
+      "rows_in_fv_tie": 125,
+      "ties_with_distinct_ranks": 125,
+      "org_rows": 0,
+      "global_rows": 126
+    },
+    "baseballamerica": {
+      "ranked_rows_with_fv": 0,
+      "rank_only_rows": 100,
+      "rows_in_fv_tie": 0,
+      "ties_with_distinct_ranks": 0,
+      "org_rows": 0,
+      "global_rows": 100
+    }
+  },
+  "j0_verdict": "REPRODUCES EXACTLY (all five plan rows + largest tie cell)",
+  "owner_premises": {
+    "just_baseball_publishes_fv": {
+      "verdict": "CONFIRMED",
+      "rows": 126,
+      "rank_but_no_fv": 0
+    },
+    "rank_only_population_is_small": {
+      "verdict": "CONFIRMED",
+      "total": 642,
+      "by_source": {
+        "mlb_pipeline": 538,
+        "tjstats": 4,
+        "baseballamerica": 100
+      }
+    }
+  },
+  "results": {
+    "resolved": {
+      "by_segment": {
+        "fangraphs/global": {
+          "segment": "fangraphs/global",
+          "n_cells": 56,
+          "n_rows": 5949,
+          "n_players": 1784,
+          "pairs_total": 591058,
+          "pairs_comparable": 173717,
+          "pairs_tied": 417341,
+          "gamma_pooled": -0.00985,
+          "spearman_wmean": -0.00443,
+          "n_cells_with_spearman": 50,
+          "permuted_control": {
+            "n_perm": 1000,
+            "mean": 0.00049,
+            "sd": 0.02107,
+            "p2.5": -0.03884,
+            "p50": 0.00099,
+            "p97.5": 0.04071,
+            "p99": 0.04762,
+            "max": 0.06975
+          },
+          "perm_p_one_sided": 0.69031,
+          "excess_over_null_median": -0.01084,
+          "cluster_bootstrap": {
+            "n_boot": 500,
+            "mean": -0.00944,
+            "p2.5": -0.06724,
+            "p50": -0.00786,
+            "p97.5": 0.04931
+          }
+        },
+        "mlb_pipeline/global": {
+          "segment": "mlb_pipeline/global",
+          "n_cells": 36,
+          "n_rows": 614,
+          "n_players": 357,
+          "pairs_total": 8237,
+          "pairs_comparable": 7657,
+          "pairs_tied": 580,
+          "gamma_pooled": 0.09338,
+          "spearman_wmean": 0.05693,
+          "n_cells_with_spearman": 36,
+          "permuted_control": {
+            "n_perm": 1000,
+            "mean": 0.00139,
+            "sd": 0.03569,
+            "p2.5": -0.07092,
+            "p50": 0.00144,
+            "p97.5": 0.07196,
+            "p99": 0.08789,
+            "max": 0.10017
+          },
+          "perm_p_one_sided": 0.00799,
+          "excess_over_null_median": 0.09194,
+          "cluster_bootstrap": {
+            "n_boot": 500,
+            "mean": 0.09213,
+            "p2.5": 0.01506,
+            "p50": 0.092,
+            "p97.5": 0.16411
+          }
+        },
+        "mlb_pipeline/org": {
+          "segment": "mlb_pipeline/org",
+          "n_cells": 401,
+          "n_rows": 3864,
+          "n_players": 2043,
+          "pairs_total": 21090,
+          "pairs_comparable": 10984,
+          "pairs_tied": 10106,
+          "gamma_pooled": 0.02549,
+          "spearman_wmean": 0.03494,
+          "n_cells_with_spearman": 354,
+          "permuted_control": {
+            "n_perm": 1000,
+            "mean": -3e-05,
+            "sd": 0.01916,
+            "p2.5": -0.03769,
+            "p50": -0.00055,
+            "p97.5": 0.03587,
+            "p99": 0.04334,
+            "max": 0.0661
+          },
+          "perm_p_one_sided": 0.0999,
+          "excess_over_null_median": 0.02604,
+          "cluster_bootstrap": {
+            "n_boot": 500,
+            "mean": 0.02336,
+            "p2.5": -0.02941,
+            "p50": 0.02334,
+            "p97.5": 0.0702
+          }
+        }
+      },
+      "by_fv_tier": {
+        "fangraphs/global": {
+          "<=40": {
+            "segment": "fangraphs/global fv<=40",
+            "n_cells": 24,
+            "n_rows": 4864,
+            "n_players": 1573,
+            "pairs_total": 555932,
+            "pairs_comparable": 147224,
+            "pairs_tied": 408708,
+            "gamma_pooled": -0.02483,
+            "spearman_wmean": -0.02681,
+            "n_cells_with_spearman": 22,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": 8e-05,
+              "sd": 0.02433,
+              "p2.5": -0.04415,
+              "p50": -0.0005,
+              "p97.5": 0.04711,
+              "p99": 0.05332,
+              "max": 0.07324
+            },
+            "perm_p_one_sided": 0.83056,
+            "excess_over_null_median": -0.02433
+          },
+          "45": {
+            "segment": "fangraphs/global fv45",
+            "n_cells": 11,
+            "n_rows": 662,
+            "n_players": 362,
+            "pairs_total": 28272,
+            "pairs_comparable": 20042,
+            "pairs_tied": 8230,
+            "gamma_pooled": 0.07105,
+            "spearman_wmean": 0.07887,
+            "n_cells_with_spearman": 7,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": -0.00146,
+              "sd": 0.03544,
+              "p2.5": -0.06902,
+              "p50": -0.0034,
+              "p97.5": 0.07141,
+              "p99": 0.08001,
+              "max": 0.10174
+            },
+            "perm_p_one_sided": 0.0299,
+            "excess_over_null_median": 0.07445
+          },
+          "50": {
+            "segment": "fangraphs/global fv50",
+            "n_cells": 7,
+            "n_rows": 250,
+            "n_players": 135,
+            "pairs_total": 5308,
+            "pairs_comparable": 4983,
+            "pairs_tied": 325,
+            "gamma_pooled": 0.07044,
+            "spearman_wmean": 0.07843,
+            "n_cells_with_spearman": 7,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": -0.00402,
+              "sd": 0.05098,
+              "p2.5": -0.0988,
+              "p50": -0.00643,
+              "p97.5": 0.09361,
+              "p99": 0.09843,
+              "max": 0.14446
+            },
+            "perm_p_one_sided": 0.08638,
+            "excess_over_null_median": 0.07687
+          },
+          "55+": {
+            "segment": "fangraphs/global fv55+",
+            "n_cells": 14,
+            "n_rows": 173,
+            "n_players": 90,
+            "pairs_total": 1546,
+            "pairs_comparable": 1468,
+            "pairs_tied": 78,
+            "gamma_pooled": 0.1158,
+            "spearman_wmean": 0.20364,
+            "n_cells_with_spearman": 14,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": -0.00095,
+              "sd": 0.07304,
+              "p2.5": -0.14986,
+              "p50": 0.0,
+              "p97.5": 0.13624,
+              "p99": 0.17711,
+              "max": 0.21526
+            },
+            "perm_p_one_sided": 0.04983,
+            "excess_over_null_median": 0.1158
+          }
+        },
+        "mlb_pipeline/global": {
+          "45": {
+            "segment": "mlb_pipeline/global fv45",
+            "n_cells": 4,
+            "n_rows": 48,
+            "n_players": 44,
+            "pairs_total": 330,
+            "pairs_comparable": 278,
+            "pairs_tied": 52,
+            "gamma_pooled": -0.1295,
+            "spearman_wmean": -0.1142,
+            "n_cells_with_spearman": 4,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": -0.00839,
+              "sd": 0.12703,
+              "p2.5": -0.28058,
+              "p50": 0.00719,
+              "p97.5": 0.21583,
+              "p99": 0.23741,
+              "max": 0.31655
+            },
+            "perm_p_one_sided": 0.85714,
+            "excess_over_null_median": -0.13669
+          },
+          "50": {
+            "segment": "mlb_pipeline/global fv50",
+            "n_cells": 8,
+            "n_rows": 97,
+            "n_players": 92,
+            "pairs_total": 648,
+            "pairs_comparable": 561,
+            "pairs_tied": 87,
+            "gamma_pooled": -0.01961,
+            "spearman_wmean": 0.02575,
+            "n_cells_with_spearman": 8,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": 0.00845,
+              "sd": 0.08789,
+              "p2.5": -0.15508,
+              "p50": 0.01248,
+              "p97.5": 0.17647,
+              "p99": 0.20499,
+              "max": 0.21925
+            },
+            "perm_p_one_sided": 0.6412,
+            "excess_over_null_median": -0.03209
+          },
+          "55+": {
+            "segment": "mlb_pipeline/global fv55+",
+            "n_cells": 24,
+            "n_rows": 469,
+            "n_players": 269,
+            "pairs_total": 7259,
+            "pairs_comparable": 6818,
+            "pairs_tied": 441,
+            "gamma_pooled": 0.11176,
+            "spearman_wmean": 0.0809,
+            "n_cells_with_spearman": 24,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": -0.00223,
+              "sd": 0.03698,
+              "p2.5": -0.08478,
+              "p50": -0.00205,
+              "p97.5": 0.06776,
+              "p99": 0.07422,
+              "max": 0.0968
+            },
+            "perm_p_one_sided": 0.00332,
+            "excess_over_null_median": 0.11381
+          }
+        },
+        "mlb_pipeline/org": {
+          "<=40": {
+            "segment": "mlb_pipeline/org fv<=40",
+            "n_cells": 42,
+            "n_rows": 276,
+            "n_players": 239,
+            "pairs_total": 805,
+            "pairs_comparable": 100,
+            "pairs_tied": 705,
+            "gamma_pooled": 0.1,
+            "spearman_wmean": 0.10769,
+            "n_cells_with_spearman": 14,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": -0.00067,
+              "sd": 0.15979,
+              "p2.5": -0.3,
+              "p50": 0.0,
+              "p97.5": 0.32,
+              "p99": 0.38,
+              "max": 0.5
+            },
+            "perm_p_one_sided": 0.26246,
+            "excess_over_null_median": 0.1
+          },
+          "45": {
+            "segment": "mlb_pipeline/org fv45",
+            "n_cells": 210,
+            "n_rows": 2511,
+            "n_players": 1458,
+            "pairs_total": 16435,
+            "pairs_comparable": 7729,
+            "pairs_tied": 8706,
+            "gamma_pooled": 0.02808,
+            "spearman_wmean": 0.02912,
+            "n_cells_with_spearman": 194,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": -0.00032,
+              "sd": 0.02566,
+              "p2.5": -0.05033,
+              "p50": -0.00116,
+              "p97.5": 0.05525,
+              "p99": 0.06042,
+              "max": 0.06611
+            },
+            "perm_p_one_sided": 0.14618,
+            "excess_over_null_median": 0.02924
+          },
+          "50": {
+            "segment": "mlb_pipeline/org fv50",
+            "n_cells": 116,
+            "n_rows": 866,
+            "n_players": 662,
+            "pairs_total": 3236,
+            "pairs_comparable": 2588,
+            "pairs_tied": 648,
+            "gamma_pooled": 0.00232,
+            "spearman_wmean": 0.02625,
+            "n_cells_with_spearman": 113,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": 0.00351,
+              "sd": 0.0354,
+              "p2.5": -0.06105,
+              "p50": 0.00232,
+              "p97.5": 0.07573,
+              "p99": 0.07651,
+              "max": 0.10124
+            },
+            "perm_p_one_sided": 0.48837,
+            "excess_over_null_median": 0.0
+          },
+          "55+": {
+            "segment": "mlb_pipeline/org fv55+",
+            "n_cells": 33,
+            "n_rows": 211,
+            "n_players": 194,
+            "pairs_total": 614,
+            "pairs_comparable": 567,
+            "pairs_tied": 47,
+            "gamma_pooled": 0.08289,
+            "spearman_wmean": 0.10457,
+            "n_cells_with_spearman": 33,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": 0.00281,
+              "sd": 0.06123,
+              "p2.5": -0.11817,
+              "p50": 0.00529,
+              "p97.5": 0.13228,
+              "p99": 0.15697,
+              "max": 0.18871
+            },
+            "perm_p_one_sided": 0.10631,
+            "excess_over_null_median": 0.0776
+          }
+        }
+      },
+      "pool_rows": 12278,
+      "pool_players": 3005
+    },
+    "censored": {
+      "by_segment": {
+        "fangraphs/global": {
+          "segment": "fangraphs/global",
+          "n_cells": 84,
+          "n_rows": 10251,
+          "n_players": 2581,
+          "pairs_total": 1390588,
+          "pairs_comparable": 940900,
+          "pairs_tied": 449688,
+          "gamma_pooled": -0.00377,
+          "spearman_wmean": 0.00801,
+          "n_cells_with_spearman": 84,
+          "permuted_control": {
+            "n_perm": 1000,
+            "mean": -0.00034,
+            "sd": 0.01,
+            "p2.5": -0.02058,
+            "p50": -4e-05,
+            "p97.5": 0.01978,
+            "p99": 0.02293,
+            "max": 0.03412
+          },
+          "perm_p_one_sided": 0.64735,
+          "excess_over_null_median": -0.00373
+        },
+        "mlb_pipeline/global": {
+          "segment": "mlb_pipeline/global",
+          "n_cells": 52,
+          "n_rows": 930,
+          "n_players": 522,
+          "pairs_total": 14494,
+          "pairs_comparable": 13893,
+          "pairs_tied": 601,
+          "gamma_pooled": 0.03174,
+          "spearman_wmean": 0.01164,
+          "n_cells_with_spearman": 52,
+          "permuted_control": {
+            "n_perm": 1000,
+            "mean": -0.00047,
+            "sd": 0.02867,
+            "p2.5": -0.0578,
+            "p50": 0.00036,
+            "p97.5": 0.05449,
+            "p99": 0.06442,
+            "max": 0.09364
+          },
+          "perm_p_one_sided": 0.12288,
+          "excess_over_null_median": 0.03138
+        },
+        "mlb_pipeline/org": {
+          "segment": "mlb_pipeline/org",
+          "n_cells": 599,
+          "n_rows": 5655,
+          "n_players": 2757,
+          "pairs_total": 30178,
+          "pairs_comparable": 19660,
+          "pairs_tied": 10518,
+          "gamma_pooled": 0.03255,
+          "spearman_wmean": 0.03609,
+          "n_cells_with_spearman": 594,
+          "permuted_control": {
+            "n_perm": 1000,
+            "mean": -0.00081,
+            "sd": 0.01391,
+            "p2.5": -0.02737,
+            "p50": -0.00061,
+            "p97.5": 0.02482,
+            "p99": 0.03072,
+            "max": 0.05748
+          },
+          "perm_p_one_sided": 0.00699,
+          "excess_over_null_median": 0.03316
+        }
+      },
+      "by_fv_tier": {
+        "fangraphs/global": {
+          "<=40": {
+            "segment": "fangraphs/global fv<=40",
+            "n_cells": 28,
+            "n_rows": 7549,
+            "n_players": 2253,
+            "pairs_total": 1268074,
+            "pairs_comparable": 832658,
+            "pairs_tied": 435416,
+            "gamma_pooled": -0.00892,
+            "spearman_wmean": -0.01404,
+            "n_cells_with_spearman": 28,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": -0.0006,
+              "sd": 0.01128,
+              "p2.5": -0.0227,
+              "p50": -0.00068,
+              "p97.5": 0.02136,
+              "p99": 0.02309,
+              "max": 0.02938
+            },
+            "perm_p_one_sided": 0.77409,
+            "excess_over_null_median": -0.00824
+          },
+          "45": {
+            "segment": "fangraphs/global fv45",
+            "n_cells": 15,
+            "n_rows": 1555,
+            "n_players": 677,
+            "pairs_total": 97068,
+            "pairs_comparable": 83299,
+            "pairs_tied": 13769,
+            "gamma_pooled": 0.02479,
+            "spearman_wmean": 0.03163,
+            "n_cells_with_spearman": 15,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": 0.0006,
+              "sd": 0.02034,
+              "p2.5": -0.03773,
+              "p50": 0.00186,
+              "p97.5": 0.03748,
+              "p99": 0.047,
+              "max": 0.05074
+            },
+            "perm_p_one_sided": 0.12625,
+            "excess_over_null_median": 0.02293
+          },
+          "50": {
+            "segment": "fangraphs/global fv50",
+            "n_cells": 14,
+            "n_rows": 759,
+            "n_players": 323,
+            "pairs_total": 22129,
+            "pairs_comparable": 21704,
+            "pairs_tied": 425,
+            "gamma_pooled": 0.06994,
+            "spearman_wmean": 0.10975,
+            "n_cells_with_spearman": 14,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": 0.00206,
+              "sd": 0.02706,
+              "p2.5": -0.05267,
+              "p50": 0.00263,
+              "p97.5": 0.05895,
+              "p99": 0.06411,
+              "max": 0.08945
+            },
+            "perm_p_one_sided": 0.00997,
+            "excess_over_null_median": 0.06731
+          },
+          "55+": {
+            "segment": "fangraphs/global fv55+",
+            "n_cells": 27,
+            "n_rows": 388,
+            "n_players": 170,
+            "pairs_total": 3317,
+            "pairs_comparable": 3239,
+            "pairs_tied": 78,
+            "gamma_pooled": 0.09231,
+            "spearman_wmean": 0.14351,
+            "n_cells_with_spearman": 27,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": 0.00094,
+              "sd": 0.03993,
+              "p2.5": -0.07749,
+              "p50": 0.00278,
+              "p97.5": 0.0849,
+              "p99": 0.09478,
+              "max": 0.11701
+            },
+            "perm_p_one_sided": 0.01661,
+            "excess_over_null_median": 0.08953
+          }
+        },
+        "mlb_pipeline/global": {
+          "45": {
+            "segment": "mlb_pipeline/global fv45",
+            "n_cells": 4,
+            "n_rows": 52,
+            "n_players": 48,
+            "pairs_total": 377,
+            "pairs_comparable": 325,
+            "pairs_tied": 52,
+            "gamma_pooled": -0.06462,
+            "spearman_wmean": 0.00563,
+            "n_cells_with_spearman": 4,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": -0.00199,
+              "sd": 0.11805,
+              "p2.5": -0.21231,
+              "p50": -0.00308,
+              "p97.5": 0.27385,
+              "p99": 0.28615,
+              "max": 0.34154
+            },
+            "perm_p_one_sided": 0.701,
+            "excess_over_null_median": -0.06154
+          },
+          "50": {
+            "segment": "mlb_pipeline/global fv50",
+            "n_cells": 11,
+            "n_rows": 132,
+            "n_players": 125,
+            "pairs_total": 892,
+            "pairs_comparable": 802,
+            "pairs_tied": 90,
+            "gamma_pooled": -0.00998,
+            "spearman_wmean": -0.0109,
+            "n_cells_with_spearman": 11,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": -0.00601,
+              "sd": 0.07331,
+              "p2.5": -0.14214,
+              "p50": -0.00249,
+              "p97.5": 0.14464,
+              "p99": 0.17456,
+              "max": 0.21945
+            },
+            "perm_p_one_sided": 0.53488,
+            "excess_over_null_median": -0.00749
+          },
+          "55+": {
+            "segment": "mlb_pipeline/global fv55+",
+            "n_cells": 37,
+            "n_rows": 746,
+            "n_players": 412,
+            "pairs_total": 13225,
+            "pairs_comparable": 12766,
+            "pairs_tied": 459,
+            "gamma_pooled": 0.03682,
+            "spearman_wmean": 0.01604,
+            "n_cells_with_spearman": 37,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": -0.00019,
+              "sd": 0.02978,
+              "p2.5": -0.06141,
+              "p50": 0.0011,
+              "p97.5": 0.05718,
+              "p99": 0.06752,
+              "max": 0.10403
+            },
+            "perm_p_one_sided": 0.11296,
+            "excess_over_null_median": 0.03572
+          }
+        },
+        "mlb_pipeline/org": {
+          "<=40": {
+            "segment": "mlb_pipeline/org fv<=40",
+            "n_cells": 98,
+            "n_rows": 697,
+            "n_players": 554,
+            "pairs_total": 2325,
+            "pairs_comparable": 1428,
+            "pairs_tied": 897,
+            "gamma_pooled": 0.05462,
+            "spearman_wmean": 0.0549,
+            "n_cells_with_spearman": 95,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": 0.0023,
+              "sd": 0.04119,
+              "p2.5": -0.07983,
+              "p50": 0.0014,
+              "p97.5": 0.08683,
+              "p99": 0.10084,
+              "max": 0.12045
+            },
+            "perm_p_one_sided": 0.11628,
+            "excess_over_null_median": 0.05322
+          },
+          "45": {
+            "segment": "mlb_pipeline/org fv45",
+            "n_cells": 280,
+            "n_rows": 3412,
+            "n_players": 1927,
+            "pairs_total": 22603,
+            "pairs_comparable": 13705,
+            "pairs_tied": 8898,
+            "gamma_pooled": 0.03699,
+            "spearman_wmean": 0.03459,
+            "n_cells_with_spearman": 279,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": -0.0011,
+              "sd": 0.01882,
+              "p2.5": -0.03904,
+              "p50": -0.00139,
+              "p97.5": 0.03845,
+              "p99": 0.04166,
+              "max": 0.05494
+            },
+            "perm_p_one_sided": 0.03322,
+            "excess_over_null_median": 0.03838
+          },
+          "50": {
+            "segment": "mlb_pipeline/org fv50",
+            "n_cells": 171,
+            "n_rows": 1241,
+            "n_players": 882,
+            "pairs_total": 4415,
+            "pairs_comparable": 3739,
+            "pairs_tied": 676,
+            "gamma_pooled": 0.00562,
+            "spearman_wmean": 0.02557,
+            "n_cells_with_spearman": 170,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": -0.00063,
+              "sd": 0.02739,
+              "p2.5": -0.05429,
+              "p50": -0.00027,
+              "p97.5": 0.05376,
+              "p99": 0.06339,
+              "max": 0.08639
+            },
+            "perm_p_one_sided": 0.40864,
+            "excess_over_null_median": 0.00589
+          },
+          "55+": {
+            "segment": "mlb_pipeline/org fv55+",
+            "n_cells": 50,
+            "n_rows": 305,
+            "n_players": 267,
+            "pairs_total": 835,
+            "pairs_comparable": 788,
+            "pairs_tied": 47,
+            "gamma_pooled": 0.04315,
+            "spearman_wmean": 0.05387,
+            "n_cells_with_spearman": 50,
+            "permuted_control": {
+              "n_perm": 300,
+              "mean": 0.00156,
+              "sd": 0.04911,
+              "p2.5": -0.08629,
+              "p50": 0.0,
+              "p97.5": 0.09391,
+              "p99": 0.12944,
+              "max": 0.17513
+            },
+            "perm_p_one_sided": 0.21927,
+            "excess_over_null_median": 0.04315
+          }
+        }
+      },
+      "pool_rows": 18961,
+      "pool_players": 3838
+    }
+  },
+  "gate_clauses": {
+    "c1_above_perm_p99": false,
+    "c2_boot_lo_above_perm_p975": false,
+    "c3_two_segments_same_sign": false,
+    "c4_spearman_agrees": true
+  },
+  "gate_verdict": "NULL / FAIL",
+  "posthoc": {
+    "_note": "NOT pre-registered. Does not change the gate verdict above. Motivated by a data-semantics defect found while inspecting the largest tie cell.",
+    "fangraphs_rank_semantics": {
+      "per_snapshot": {
+        "2017-02-15|2017report": {
+          "n": 670,
+          "global_fv_threshold": 55.0,
+          "global_ranked": 72,
+          "org_ranked": 598
+        },
+        "2018-02-15|2018report": {
+          "n": 735,
+          "global_fv_threshold": 55.0,
+          "global_ranked": 42,
+          "org_ranked": 693
+        },
+        "2018-08-01|2018updated": {
+          "n": 988,
+          "global_fv_threshold": 55.0,
+          "global_ranked": 45,
+          "org_ranked": 943
+        },
+        "2019-02-13|2019report": {
+          "n": 990,
+          "global_fv_threshold": 50.0,
+          "global_ranked": 132,
+          "org_ranked": 858
+        },
+        "2019-07-31|2019updated": {
+          "n": 1234,
+          "global_fv_threshold": 50.0,
+          "global_ranked": 106,
+          "org_ranked": 1128
+        },
+        "2020-02-13|2020report": {
+          "n": 1184,
+          "global_fv_threshold": 50.0,
+          "global_ranked": 120,
+          "org_ranked": 1064
+        },
+        "2020-08-01|2020updated": {
+          "n": 1265,
+          "global_fv_threshold": 50.0,
+          "global_ranked": 115,
+          "org_ranked": 1150
+        },
+        "2021-11-08|2021graduates": {
+          "n": 161,
+          "global_fv_threshold": 80.0,
+          "global_ranked": 1,
+          "org_ranked": 160
+        },
+        "2021-02-26|2021report": {
+          "n": 1251,
+          "global_fv_threshold": 50.0,
+          "global_ranked": 137,
+          "org_ranked": 1114
+        },
+        "2021-07-30|2021updated": {
+          "n": 1281,
+          "global_fv_threshold": 55.0,
+          "global_ranked": 29,
+          "org_ranked": 1252
+        },
+        "2022-11-09|2022graduates": {
+          "n": 164,
+          "global_fv_threshold": 65.0,
+          "global_ranked": 3,
+          "org_ranked": 161
+        },
+        "2022-02-24|2022report": {
+          "n": 1252,
+          "global_fv_threshold": 60.0,
+          "global_ranked": 18,
+          "org_ranked": 1234
+        },
+        "2022-08-02|2022updated": {
+          "n": 1288,
+          "global_fv_threshold": 60.0,
+          "global_ranked": 16,
+          "org_ranked": 1272
+        },
+        "2023-11-06|2023graduates": {
+          "n": 172,
+          "global_fv_threshold": 65.0,
+          "global_ranked": 2,
+          "org_ranked": 170
+        },
+        "2023-02-23|2023report": {
+          "n": 1181,
+          "global_fv_threshold": 50.0,
+          "global_ranked": 125,
+          "org_ranked": 1056
+        },
+        "2023-08-01|2023updated": {
+          "n": 1194,
+          "global_fv_threshold": 60.0,
+          "global_ranked": 9,
+          "org_ranked": 1185
+        },
+        "2024-11-13|2024graduates": {
+          "n": 142,
+          "global_fv_threshold": null,
+          "global_ranked": 0,
+          "org_ranked": 142
+        },
+        "2024-02-14|2024report": {
+          "n": 1161,
+          "global_fv_threshold": 50.0,
+          "global_ranked": 112,
+          "org_ranked": 1049
+        },
+        "2024-08-01|2024updated": {
+          "n": 1157,
+          "global_fv_threshold": 50.0,
+          "global_ranked": 92,
+          "org_ranked": 1065
+        },
+        "2025-11-13|2025graduates": {
+          "n": 154,
+          "global_fv_threshold": 65.0,
+          "global_ranked": 1,
+          "org_ranked": 153
+        },
+        "2025-02-13|2025report": {
+          "n": 1284,
+          "global_fv_threshold": 60.0,
+          "global_ranked": 10,
+          "org_ranked": 1274
+        },
+        "2025-07-31|2025updated": {
+          "n": 1318,
+          "global_fv_threshold": 50.0,
+          "global_ranked": 95,
+          "org_ranked": 1223
+        },
+        "2026-02-12|2026report": {
+          "n": 1005,
+          "global_fv_threshold": 50.0,
+          "global_ranked": 113,
+          "org_ranked": 892
+        },
+        "2026-07-23|2026tradedeadline": {
+          "n": 1372,
+          "global_fv_threshold": 50.0,
+          "global_ranked": 111,
+          "org_ranked": 1261
+        },
+        "2026-08-02|2026updated": {
+          "n": 1384,
+          "global_fv_threshold": 50.0,
+          "global_ranked": 114,
+          "org_ranked": 1270
+        },
+        "2026-06-04|FanGraphs 2026 Pirates Top 50": {
+          "n": 50,
+          "global_fv_threshold": 35.0,
+          "global_ranked": 50,
+          "org_ranked": 0
+        },
+        "2026-06-12|FanGraphs 2026 Twins Top 50": {
+          "n": 50,
+          "global_fv_threshold": 35.0,
+          "global_ranked": 50,
+          "org_ranked": 0
+        },
+        "2026-06-05|SFG Top 50": {
+          "n": 50,
+          "global_fv_threshold": 35.0,
+          "global_ranked": 50,
+          "org_ranked": 0
+        },
+        "2026-05-22|bos2026may": {
+          "n": 48,
+          "global_fv_threshold": 35.0,
+          "global_ranked": 48,
+          "org_ranked": 0
+        },
+        "2026-06-15|miami_marlins_2026": {
+          "n": 53,
+          "global_fv_threshold": 35.0,
+          "global_ranked": 53,
+          "org_ranked": 0
+        },
+        "2026-06-26|tampa_bay_rays_2026": {
+          "n": 62,
+          "global_fv_threshold": 35.0,
+          "global_ranked": 62,
+          "org_ranked": 0
+        }
+      },
+      "total_rows": 24300,
+      "globally_ranked_rows": 1933,
+      "org_ranked_rows": 22367,
+      "org_ranked_share": 0.9205
+    },
+    "measurements": {
+      "resolved": {
+        "fangraphs/GLOBAL_RANK (cell=date,label,fv)": {
+          "segment": "fg_global_rank",
+          "n_cells": 18,
+          "n_rows": 269,
+          "n_players": 132,
+          "pairs_total": 2908,
+          "pairs_comparable": 2823,
+          "pairs_tied": 85,
+          "gamma_pooled": 0.09033,
+          "spearman_wmean": 0.15155,
+          "n_cells_with_spearman": 18,
+          "permuted_control": {
+            "n_perm": 1000,
+            "mean": -0.00044,
+            "sd": 0.05253,
+            "p2.5": -0.09954,
+            "p50": -0.00035,
+            "p97.5": 0.10946,
+            "p99": 0.12221,
+            "max": 0.17747
+          },
+          "perm_p_one_sided": 0.03996,
+          "excess_over_null_median": 0.09068,
+          "cluster_bootstrap": {
+            "n_boot": 500,
+            "mean": 0.09382,
+            "p2.5": -0.04277,
+            "p50": 0.09673,
+            "p97.5": 0.22405
+          }
+        },
+        "fangraphs/ORG_RANK (cell=date,label,ORG,fv)": {
+          "segment": "fg_org_rank",
+          "n_cells": 538,
+          "n_rows": 4516,
+          "n_players": 1563,
+          "pairs_total": 18927,
+          "pairs_comparable": 5492,
+          "pairs_tied": 13435,
+          "gamma_pooled": -0.03168,
+          "spearman_wmean": -0.03708,
+          "n_cells_with_spearman": 258,
+          "permuted_control": {
+            "n_perm": 1000,
+            "mean": 0.0007,
+            "sd": 0.02637,
+            "p2.5": -0.0515,
+            "p50": 0.00109,
+            "p97.5": 0.05024,
+            "p99": 0.0557,
+            "max": 0.08955
+          },
+          "perm_p_one_sided": 0.88811,
+          "excess_over_null_median": -0.03277,
+          "cluster_bootstrap": {
+            "n_boot": 500,
+            "mean": -0.02859,
+            "p2.5": -0.10028,
+            "p50": -0.03095,
+            "p97.5": 0.04568
+          }
+        },
+        "mlb_pipeline/global fv55+ (bootstrapped)": {
+          "segment": "mp_global_55plus",
+          "n_cells": 24,
+          "n_rows": 469,
+          "n_players": 269,
+          "pairs_total": 7259,
+          "pairs_comparable": 6818,
+          "pairs_tied": 441,
+          "gamma_pooled": 0.11176,
+          "spearman_wmean": 0.0809,
+          "n_cells_with_spearman": 24,
+          "permuted_control": {
+            "n_perm": 1000,
+            "mean": -0.00015,
+            "sd": 0.03935,
+            "p2.5": -0.0792,
+            "p50": 0.0,
+            "p97.5": 0.07862,
+            "p99": 0.0924,
+            "max": 0.12936
+          },
+          "perm_p_one_sided": 0.004,
+          "excess_over_null_median": 0.11176,
+          "cluster_bootstrap": {
+            "n_boot": 500,
+            "mean": 0.11178,
+            "p2.5": 0.02549,
+            "p50": 0.114,
+            "p97.5": 0.19679
+          }
+        },
+        "fangraphs/GLOBAL_RANK fv50": {
+          "segment": "fg_global_50",
+          "n_cells": 4,
+          "n_rows": 96,
+          "n_players": 59,
+          "pairs_total": 1362,
+          "pairs_comparable": 1355,
+          "pairs_tied": 7,
+          "gamma_pooled": 0.06273,
+          "spearman_wmean": 0.05769,
+          "n_cells_with_spearman": 4,
+          "permuted_control": {
+            "n_perm": 1000,
+            "mean": -0.00101,
+            "sd": 0.08065,
+            "p2.5": -0.16162,
+            "p50": -0.00221,
+            "p97.5": 0.16605,
+            "p99": 0.19114,
+            "max": 0.23542
+          },
+          "perm_p_one_sided": 0.2038,
+          "excess_over_null_median": 0.06494,
+          "cluster_bootstrap": {
+            "n_boot": 500,
+            "mean": 0.05857,
+            "p2.5": -0.11702,
+            "p50": 0.05247,
+            "p97.5": 0.24903
+          }
+        },
+        "fangraphs/GLOBAL_RANK fv55+": {
+          "segment": "fg_global_55+",
+          "n_cells": 14,
+          "n_rows": 173,
+          "n_players": 90,
+          "pairs_total": 1546,
+          "pairs_comparable": 1468,
+          "pairs_tied": 78,
+          "gamma_pooled": 0.1158,
+          "spearman_wmean": 0.20364,
+          "n_cells_with_spearman": 14,
+          "permuted_control": {
+            "n_perm": 1000,
+            "mean": 0.00066,
+            "sd": 0.07014,
+            "p2.5": -0.14169,
+            "p50": 0.0,
+            "p97.5": 0.1376,
+            "p99": 0.16757,
+            "max": 0.22343
+          },
+          "perm_p_one_sided": 0.05195,
+          "excess_over_null_median": 0.1158,
+          "cluster_bootstrap": {
+            "n_boot": 500,
+            "mean": 0.11775,
+            "p2.5": -0.05761,
+            "p50": 0.1192,
+            "p97.5": 0.28149
+          }
+        }
+      },
+      "censored": {
+        "fangraphs/GLOBAL_RANK (cell=date,label,fv)": {
+          "segment": "fg_global_rank",
+          "n_cells": 31,
+          "n_rows": 714,
+          "n_players": 309,
+          "pairs_total": 13137,
+          "pairs_comparable": 13031,
+          "pairs_tied": 106,
+          "gamma_pooled": 0.09953,
+          "spearman_wmean": 0.15609,
+          "n_cells_with_spearman": 31,
+          "permuted_control": {
+            "n_perm": 1000,
+            "mean": -0.00044,
+            "sd": 0.03037,
+            "p2.5": -0.05947,
+            "p50": 8e-05,
+            "p97.5": 0.05825,
+            "p99": 0.07068,
+            "max": 0.08787
+          },
+          "perm_p_one_sided": 0.001,
+          "excess_over_null_median": 0.09945
+        },
+        "fangraphs/ORG_RANK (cell=date,label,ORG,fv)": {
+          "segment": "fg_org_rank",
+          "n_cells": 809,
+          "n_rows": 8217,
+          "n_players": 2382,
+          "pairs_total": 45730,
+          "pairs_comparable": 31658,
+          "pairs_tied": 14072,
+          "gamma_pooled": 0.00948,
+          "spearman_wmean": 0.00931,
+          "n_cells_with_spearman": 778,
+          "permuted_control": {
+            "n_perm": 1000,
+            "mean": 4e-05,
+            "sd": 0.01189,
+            "p2.5": -0.02309,
+            "p50": 0.00022,
+            "p97.5": 0.02369,
+            "p99": 0.02757,
+            "max": 0.03585
+          },
+          "perm_p_one_sided": 0.21079,
+          "excess_over_null_median": 0.00926
+        }
+      }
+    },
+    "prize_sizing": {
+      "fangraphs": 1933,
+      "mlb_pipeline": 5727,
+      "tjstats": 4502,
+      "espn": 252,
+      "just_baseball": 126,
+      "baseballamerica": 100,
+      "TOTAL_globally_ordered": 12640,
+      "plan_claimed": 47000,
+      "rank_only_rows": 642,
+      "multiple_vs_rank_only": 19.7,
+      "plan_claimed_multiple": 70,
+      "verdict": "plan premise FALSE: the globally-ordered pool is 12640, not ~47000, and the multiple over the rank-only pool is 19.7x, not ~70x"
+    },
+    "consensus_py_org_guard_defect": {
+      "regex": "consensus.py:336 _ORG_LIST_LABEL_RE",
+      "guard_site": "consensus.py:693",
+      "avg_rank_site": "consensus.py:732",
+      "implied_fv_fallback_site": "consensus.py:757 (fires only with zero explicit FVs)",
+      "downstream_live_consumer": "spotlights.py:407 (avg_rank -> rank-jump driver)",
+      "problem_1_label_miss": {
+        "labels": [
+          "FanGraphs 2026 Pirates Top 50",
+          "FanGraphs 2026 Twins Top 50",
+          "SFG Top 50",
+          "bos2026may",
+          "miami_marlins_2026",
+          "tampa_bay_rays_2026"
+        ],
+        "rows": 313
+      },
+      "problem_2_in_board_org_ranks": {
+        "rows_passing_the_guard": 22367,
+        "distinct_players": 5282
+      },
+      "severity": "LATENT for the rank-implied-FV path (every affected row carries an fv, so the :757 fallback never fires); LIVE for avg_rank and the spotlights rank-jump driver",
+      "canary_2026_08_02": "two rows at rank 1 on the same board: jesus_made MIL FV 65 (global #1) and jd_dix ARI FV 45 (Arizona org #1)"
+    },
+    "headline": "92.0 percent of FanGraphs ranked+FV rows (22367 of 24300) carry a per-ORG rank, not a global board rank. The plan's ~47k discarded-global-ordering prize does not exist at that size."
+  },
+  "gate_note": "A PASS does NOT authorize a build in this wave (plan :882 stop clause). It also does not establish incremental value over the eFV feature set; that is Lane J3 Route 1, gated at the feature-add floor 0.0193 hit / 0.0127 pit."
+}
