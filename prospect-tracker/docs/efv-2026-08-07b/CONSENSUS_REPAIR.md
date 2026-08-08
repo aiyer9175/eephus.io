@@ -287,7 +287,7 @@ positions. That is the lane brief's number to the row.
 |--------|--------|
 | C1-P1 canary | PASS |
 | C1-P2 no false positive on a global board | PASS, zero violations |
-| C1-P3 already-guarded boards agree | PASS, zero disagreements |
+| C1-P3 already-guarded boards agree | **VACUOUS, not a pass.** Of 602 to 627 label-guarded org boards, ZERO reach the comparison, so the clause inspects an empty set. It should be rewritten or dropped, not counted. |
 | C1-P4 no consensus regression | PASS, `consensus_fv_raw` moves on **0** rows |
 | C1-P5 fallback reachable and counted | PASS, 695 of 714 boards fall back |
 
@@ -334,7 +334,7 @@ board, plus an INVERTED arm excluding exactly the rows the detector calls global
 This CUTS BOTH WAYS and I am reporting both directions.
 
 * It does NOT rescue the claim "`ryan_sloan` fires because the contamination was hiding
-  him". A random exclusion fires `ryan_sloan` in 2 of 3 seeds, and every control arm fires
+  him". A random exclusion fires `ryan_sloan` in 3 of 3 seeds (this section originally read 2 of 3; the artifact says 3 of 3 and verifiers measured 6 of 6 and 3 of 3, so the control is NON-SPECIFIC to the repair and the P0 rests on the correctness argument alone), and every control arm fires
   `noah_schultz`, which the detector arm does not. Any single driver appearing is weak
   evidence on its own.
 * It DOES separate the detector from noise on the thing that matters. Every control arm
@@ -364,21 +364,49 @@ and this lane edits the file in place. What stands in for it: the as-of path is 
 arms run the same shipped code, and with the flag off the arm is identical to the shipped
 arm on every field measured.
 
-**C2-P3 fails and wave 1 is the reason.** Skaggs moves 66.26 -> 55.84, a delta of -10.42,
-not the -7.93 wave 1's prose claims. The mechanism is exactly as wave 1 described (full
-history 2 instances so the pull is suppressed, as-of 1 instance so it fires) and the
-arithmetic checks by hand: `2/3 * 66.26 + 1/3 * 35 = 55.84`. Wave 1's own artifact reports a
-pitcher-side `max_abs_delta` of **10.42**, which is this row, so its prose contradicts its
-own JSON four keys away. This is failure mode E from the wave-1 post-mortem, recurring. I
-re-ran C-2 with the C-1 detector OFF in both arms to rule out my own repair as the cause:
-identical, 66.26 -> 55.84.
+**C2-P3 fails as written, and the accusation this section originally made against
+wave 1 is WITHDRAWN. It was false.**
+
+What this lane measured is correct: Skaggs moves 66.26 -> 55.84, a delta of -10.42, and
+the arithmetic checks by hand (`2/3 * 66.26 + 1/3 * 35 = 55.84`). What was wrong was the
+conclusion drawn from it. This section originally read "C2-P3 fails and wave 1 is the
+reason", charged wave 1's prose with contradicting its own JSON, and filed it as a
+recurring failure mode. Two adversarial verifiers established independently that wave 1
+is internally consistent and that this lane compared two different arms:
+
+* wave 1's **-7.93** is its `asof_all` arm, and its table is captioned "Worst movers
+  under asof_all". `channels.asof_all.by_side.both.max_abs_delta` is 7.93 exactly.
+* this lane's **-10.42** is the `asof_c1` arm, which changes ONLY the instance count.
+
+Both are right, and the difference is the pre-2017 grade-normalization behaviour. Raw MLB
+Pipeline FV is 70.0 and normalizes to 66.26. Correcting instances alone gives
+`2/3 * 66.26 + 1/3 * 35 = 55.84` (this lane). Correcting all three channels, where the
+as-of remapper returns None before 2017 and leaves the raw 70 in place, gives
+`2/3 * 70 + 1/3 * 35 = 58.33` (wave 1). The C2-P3 clause was written against the wrong
+arm's number, so it failed for a reason that had nothing to do with wave 1.
+
+That pre-2017 None is also exactly the unresolved C-4 blocker, so this disagreement was a
+symptom of a known open question rather than a defect in either wave.
+
+Recorded in full rather than quietly deleted: an unfounded accusation that reaches a
+program's permanent record is worse than the error it alleges, and the next reader needs
+to know this one was retracted.
+
+> **CAVEAT ON THE CONTROL TABLES ABOVE (added after adversarial review).**
+> `_c1_controls` builds its per-board sample by iterating a SET of string tuples, so
+> Python hash randomization reorders the assignment on every process and the fixed
+> seeds 11/22/33 buy nothing. Verifiers reproduced four further distinct tables. The
+> counts in this section are therefore NOT reproducible and must not be quoted; the
+> qualitative conclusion (random exclusion destroys drivers, the detector does not)
+> survives and was confirmed independently. Fix the iteration order to a sorted list
+> before re-running.
 
 ### 8.4 C-3 lands with C-2, and the shrink itself defaults OFF
 
 | clause | result |
 |--------|--------|
 | C3-P1 non-empty, no Midseason | PASS. 463 pairs. 30 org tokens, all real clubs. |
-| C3-P2 as-of at latest == full corpus | PASS |
+| C3-P2 as-of at latest == full corpus | **VACUOUS, not a pass.** This is f(X) == f(X) by construction and cannot fail. |
 | C3-P3 the as-of set actually varies | PASS. 24 distinct pair sets over time. |
 | C3-P4 served effect sized before the default is chosen | PASS, and it decided the default |
 
