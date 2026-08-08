@@ -36,7 +36,7 @@ from typing import Iterable
 log = logging.getLogger(__name__)
 
 from scrapers import (
-    Snapshot, canonical_player_key,
+    Snapshot, canonical_player_key, strip_name_markers,
     HITTER_TOOL_KEYS, PITCHER_TOOL_KEYS, ALL_TOOL_KEYS,
 )
 from consensus import PlayerTimeseries, stock_movement
@@ -2382,6 +2382,15 @@ def load_all_snapshots() -> list[Snapshot]:
     for r in rows:
         d = dict(r)
         d["player_key"] = canonical_player_key(d["player_key"])
+        # Same idea as the player_key canonicalization above, one field over.
+        # FanGraphs ships draft-eligibility markers inside the Name column
+        # ("Derek Curiel*" = sophomore, "**Noah Song" = senior) and the CSV
+        # paths only run fix_mojibake, which does not know about them. Doing
+        # it HERE rather than at ingest fixes every downstream surface at once
+        # (board, timeseries, exports) with no re-ingest, and stays fixed when
+        # the next FanGraphs drop re-mints a dirty row.
+        if d.get("player_name"):
+            d["player_name"] = strip_name_markers(d["player_name"])
         d["fv_plus"] = bool(d.pop("fv_plus", 0) or 0)
         tools_json = d.pop("tools_json", None)
         tools = None
@@ -2958,6 +2967,14 @@ def load_draft_snapshots(draft_year: int | None = None) -> list[dict]:
     out: list[dict] = []
     for r in rows:
         d = dict(r)
+        # draft_timeseries.json is built off THIS loader, not
+        # load_all_snapshots, so it needs its own copy of the
+        # asterisk-marker strip. The draft board is where the markers are
+        # densest: the FanGraphs draft CSV writes a leading "**" for a
+        # senior and a trailing "*" for a draft-eligible sophomore, and 47
+        # distinct names in draft_snapshots carried one (2018-2020 classes).
+        if d.get("player_name"):
+            d["player_name"] = strip_name_markers(d["player_name"])
         if d.get("tools_json"):
             try:
                 d["tools"] = json.loads(d["tools_json"])
@@ -2985,7 +3002,16 @@ def load_draft_players(draft_year: int | None = None) -> dict[str, dict]:
             rows = con.execute(q, params).fetchall()
     except sqlite3.OperationalError:
         return {}
-    return {r["player_key"]: dict(r) for r in rows}
+    out: dict[str, dict] = {}
+    for r in rows:
+        d = dict(r)
+        # Identity table for the draft board. Same marker strip as the
+        # snapshot loader above: several draft pages fall back to this
+        # row's player_name when a class has no snapshot for the player.
+        if d.get("player_name"):
+            d["player_name"] = strip_name_markers(d["player_name"])
+        out[d["player_key"]] = d
+    return out
 
 
 def upsert_draft_results(rows: Iterable[dict]) -> int:

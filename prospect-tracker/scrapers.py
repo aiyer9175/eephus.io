@@ -446,6 +446,73 @@ def _backfill_writeup_cleanup(
     return results
 
 
+# FanGraphs board CSVs encode draft eligibility INSIDE the Name column
+# rather than in a column of its own: a single TRAILING asterisk marks a
+# draft-eligible sophomore and a leading "**" marks a senior. That is a
+# source-format footnote, not part of the human's name, and it leaked all
+# the way to the served board. Measured in prospects.db before this fix
+# (distinct names per table, trailing "*" / leading "**"):
+#   snapshots        4 / 0   (Derek Curiel, Ty Head, Chris Rembert,
+#                             Sawyer Strosnider; 7 rows)
+#   players          3 / 0   (3 rows)
+#   draft_snapshots  5 / 42  (51 rows)
+#   draft_players    0 / 38  (38 rows)
+# The 42 leading-"**" draft_snapshots names are the 2018-2020 classes
+# ("**Jake Mangum", "**Noah Song") and they are exactly the 42 that
+# reached draft_timeseries.json.
+#
+# fix_mojibake() is the only cleaner the CSV paths apply (fangraphs_csv.py
+# :304, draft_csv.py:134, overseas_csv.py:129) and it is a latin-1 round
+# trip plus whitespace collapse, so it has no concept of a marker and
+# carried the character straight into Snapshot.player_name.
+#
+# What the strip costs, scoped to where it was actually measured. On the
+# three ACTIVE-BOARD rows the marker is redundant: the FanGraphs board path
+# stores class standing structurally on tools._extras (fangraphs_csv.py
+# :760-763 carries sign_year, sign_market, signed_from and age), and all
+# four were measured present on each of those three rows, so sophomore /
+# senior is recoverable without the asterisk.
+#
+# That argument does NOT extend to the 42 leading-"**" DRAFT rows, and the
+# claim is deliberately not made for them. draft_csv.py:255-256 builds its
+# own _extras from age, height, weight, bats, throws, fg_player_id, trend,
+# pick_overall, pick_team, top_100 and video_url -- no sign_year, no
+# sign_market, no signed_from. For those rows the marker is the only place
+# the senior flag was recorded, and stripping it drops that bit. Accepted:
+# it is a source-format footnote on a 2018-2020 draft display name, the
+# FanGraphs CSV can re-supply it, and a footnote character rendering inside
+# a human's name on the served board is the larger defect.
+#
+# Unaffected either way: normalize_key() below drops every non-alphanumeric,
+# so the player_key was always clean, which is exactly why no identity guard
+# ever tripped on this in the first place.
+#
+# Deliberately conservative: only asterisk runs at the very START or the
+# very END are removed. An asterisk sitting INSIDE a name would be a
+# different and unknown case, so it is left alone rather than guessed at.
+# Measured: zero such rows across snapshots, players, draft_snapshots and
+# draft_players. A name that is nothing BUT markers is also returned
+# untouched, since blanking a display name is worse than showing the mark.
+_NAME_MARKER_RE = re.compile(r"^\*+\s*|\s*\*+$")
+
+
+def strip_name_markers(name: str) -> str:
+    """Strip FanGraphs draft-eligibility asterisk markers off a display name.
+
+    Leading "**" (senior) and trailing "*" (draft-eligible sophomore) go;
+    an interior asterisk stays. Applied at the DB read boundary in
+    storage.load_all_snapshots(), so it is durable even if a fresh
+    FanGraphs drop re-mints a dirty row into the snapshots table.
+    """
+    if not name or "*" not in name:
+        return name
+    # Trim the ends FIRST. The marker anchors on the true start/end of the
+    # string, so a stray leading space ("  **Noah Song") would otherwise
+    # leave the marker in place and make the function non-idempotent.
+    cleaned = _NAME_MARKER_RE.sub("", re.sub(r"\s+", " ", name).strip())
+    return cleaned.strip() or name
+
+
 def normalize_key(name: str) -> str:
     s = unicodedata.normalize("NFKD", name)
     s = "".join(c for c in s if not unicodedata.combining(c))
