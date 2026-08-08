@@ -1,0 +1,1351 @@
+{
+ "generated_at": "2026-08-08T05:09:20Z",
+ "run_year": 2026,
+ "preregistration": "docs/efv-2026-08-07b/BA_SOURCE_CLASS_GATE.md",
+ "constants": {
+  "MIN_LAG_YEARS": 3,
+  "CANDIDATE_YEARS": [
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "window": [
+   "-01-01",
+   "-05-01"
+  ],
+  "SCORED_SOURCES": [
+   "fangraphs",
+   "mlb_pipeline"
+  ]
+ },
+ "resolved_years": [
+  2017,
+  2018,
+  2019,
+  2020,
+  2021,
+  2022,
+  2023
+ ],
+ "vintages": [
+  {
+   "snapshot_date": "2023-02-15",
+   "base_year": 2023,
+   "rows_db": 385,
+   "rows_with_fv": 385,
+   "in_preseason_window": true,
+   "rows_in_window": 385,
+   "rows_joined": 332,
+   "rows_resolvable": 332,
+   "lag_years": 3,
+   "min_lag_years": 3,
+   "lag_satisfied": true,
+   "in_candidate_years": true,
+   "scoreable_from_run_year": 2026,
+   "blocked_by_candidate_years_tuple": false,
+   "blocked_by_lag_only": false,
+   "orgs": [
+    "ATH",
+    "BAL",
+    "BOS",
+    "CHW",
+    "CLE",
+    "DET",
+    "HOU",
+    "KCR",
+    "LAA",
+    "MIN",
+    "NYY",
+    "TBR",
+    "TOR"
+   ]
+  },
+  {
+   "snapshot_date": "2024-02-15",
+   "base_year": 2024,
+   "rows_db": 383,
+   "rows_with_fv": 383,
+   "in_preseason_window": true,
+   "rows_in_window": 383,
+   "rows_joined": 375,
+   "rows_resolvable": 0,
+   "lag_years": 2,
+   "min_lag_years": 3,
+   "lag_satisfied": false,
+   "in_candidate_years": true,
+   "scoreable_from_run_year": 2027,
+   "blocked_by_candidate_years_tuple": false,
+   "blocked_by_lag_only": true,
+   "orgs": [
+    "ATH",
+    "BAL",
+    "BOS",
+    "CHW",
+    "CLE",
+    "DET",
+    "HOU",
+    "KCR",
+    "LAA",
+    "MIN",
+    "NYY",
+    "TBR",
+    "TOR"
+   ]
+  },
+  {
+   "snapshot_date": "2025-02-15",
+   "base_year": 2025,
+   "rows_db": 384,
+   "rows_with_fv": 384,
+   "in_preseason_window": true,
+   "rows_in_window": 384,
+   "rows_joined": 382,
+   "rows_resolvable": 0,
+   "lag_years": 1,
+   "min_lag_years": 3,
+   "lag_satisfied": false,
+   "in_candidate_years": false,
+   "scoreable_from_run_year": 2028,
+   "blocked_by_candidate_years_tuple": true,
+   "blocked_by_lag_only": false,
+   "orgs": [
+    "ATH",
+    "BAL",
+    "BOS",
+    "CHW",
+    "CLE",
+    "DET",
+    "HOU",
+    "KCR",
+    "LAA",
+    "MIN",
+    "NYY",
+    "TBR",
+    "TOR"
+   ]
+  },
+  {
+   "snapshot_date": "2026-02-15",
+   "base_year": 2026,
+   "rows_db": 383,
+   "rows_with_fv": 383,
+   "in_preseason_window": true,
+   "rows_in_window": 383,
+   "rows_joined": 378,
+   "rows_resolvable": 0,
+   "lag_years": 0,
+   "min_lag_years": 3,
+   "lag_satisfied": false,
+   "in_candidate_years": false,
+   "scoreable_from_run_year": 2029,
+   "blocked_by_candidate_years_tuple": true,
+   "blocked_by_lag_only": false,
+   "orgs": [
+    "ATH",
+    "BAL",
+    "BOS",
+    "CHW",
+    "CLE",
+    "DET",
+    "HOU",
+    "KCR",
+    "LAA",
+    "MIN",
+    "NYY",
+    "TBR",
+    "TOR"
+   ]
+  },
+  {
+   "snapshot_date": "2026-06-03",
+   "base_year": 2026,
+   "rows_db": 100,
+   "rows_with_fv": 0,
+   "in_preseason_window": false,
+   "rows_in_window": 0,
+   "rows_joined": 0,
+   "rows_resolvable": 0,
+   "lag_years": 0,
+   "min_lag_years": 3,
+   "lag_satisfied": false,
+   "in_candidate_years": false,
+   "scoreable_from_run_year": 2029,
+   "blocked_by_candidate_years_tuple": true,
+   "blocked_by_lag_only": false,
+   "orgs": [
+    "ARI",
+    "ATH",
+    "ATL",
+    "BAL",
+    "BOS",
+    "CHC",
+    "CHW",
+    "CIN",
+    "CLE",
+    "COL",
+    "DET",
+    "HOU",
+    "KCR",
+    "LAA",
+    "LAD",
+    "MIA",
+    "MIL",
+    "MIN",
+    "NYM",
+    "NYY",
+    "PHI",
+    "PIT",
+    "SDP",
+    "SEA",
+    "SFG",
+    "STL",
+    "TBR",
+    "TEX",
+    "TOR",
+    "WSN"
+   ]
+  }
+ ],
+ "control_f_harness_fidelity": {
+  "leg_f1_vs_served_artifact": {
+   "checks": [
+    {
+     "quantity": "common_n",
+     "lab": 4284,
+     "shipped": 4259,
+     "match": false
+    },
+    {
+     "quantity": "window.years",
+     "lab": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "shipped": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "match": true
+    },
+    {
+     "quantity": "fangraphs.spearman",
+     "lab": 0.249,
+     "shipped": 0.2505,
+     "match": false
+    },
+    {
+     "quantity": "fangraphs.auc",
+     "lab": 0.7013,
+     "shipped": 0.7007,
+     "match": false
+    },
+    {
+     "quantity": "mlb_pipeline.spearman",
+     "lab": 0.2806,
+     "shipped": 0.2824,
+     "match": false
+    },
+    {
+     "quantity": "mlb_pipeline.auc",
+     "lab": 0.7189,
+     "shipped": 0.7184,
+     "match": false
+    },
+    {
+     "quantity": "prospx_consensus.spearman",
+     "lab": 0.2837,
+     "shipped": 0.2849,
+     "match": false
+    },
+    {
+     "quantity": "prospx_consensus.auc",
+     "lab": 0.7308,
+     "shipped": 0.7301,
+     "match": false
+    }
+   ],
+   "served_generated_at": "2026-08-07T21:59:21Z",
+   "universe_export_mtime_utc": "2026-08-08T05:05:44.500035+00:00",
+   "pass": false,
+   "reference_is_same_vintage": false
+  },
+  "leg_f2_vs_live_recompute": {
+   "checks": [
+    {
+     "quantity": "common_n",
+     "lab": 4284,
+     "live": 4284,
+     "match": true
+    },
+    {
+     "quantity": "window.years",
+     "lab": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "live": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "match": true
+    },
+    {
+     "quantity": "fangraphs.spearman",
+     "lab": 0.249,
+     "live": 0.249,
+     "match": true
+    },
+    {
+     "quantity": "fangraphs.auc",
+     "lab": 0.7013,
+     "live": 0.7013,
+     "match": true
+    },
+    {
+     "quantity": "mlb_pipeline.spearman",
+     "lab": 0.2806,
+     "live": 0.2806,
+     "match": true
+    },
+    {
+     "quantity": "mlb_pipeline.auc",
+     "lab": 0.7189,
+     "live": 0.7189,
+     "match": true
+    },
+    {
+     "quantity": "prospx_consensus.spearman",
+     "lab": 0.2837,
+     "live": 0.2837,
+     "match": true
+    },
+    {
+     "quantity": "prospx_consensus.auc",
+     "lab": 0.7308,
+     "live": 0.7308,
+     "match": true
+    }
+   ],
+   "pass": true
+  },
+  "derived_classification_live": [
+   {
+    "source": "baseballamerica",
+    "scoreable_now": false,
+    "blocked_by": "common_set_collapse",
+    "history_ok": true,
+    "common_set_ok": false,
+    "resolvable_rows_best_year": 331,
+    "resolvable_best_base_year": 2023,
+    "resolvable_rows_total": 331,
+    "rows_by_base_year": {
+     "2023": 331,
+     "2024": 420,
+     "2025": 470,
+     "2026": 471
+    },
+    "rank_only_rows_by_base_year": {},
+    "out_of_window_rows_by_year": {
+     "2023": 276,
+     "2024": 345,
+     "2025": 403,
+     "2026": 513
+    },
+    "resolvable_base_years": [
+     2023
+    ],
+    "common_set_rows_covered": 295,
+    "common_set_n": 4284,
+    "common_set_retention": 0.0689,
+    "min_rows": 100,
+    "min_common_retention": 0.75,
+    "scoreable_from_run_year": 2027,
+    "base_years_blocked_by_candidate_years": [
+     2025,
+     2026
+    ],
+    "as_of_run_year": 2026
+   },
+   {
+    "source": "espn",
+    "scoreable_now": false,
+    "blocked_by": "insufficient_history",
+    "history_ok": false,
+    "common_set_ok": false,
+    "resolvable_rows_best_year": 0,
+    "resolvable_best_base_year": null,
+    "resolvable_rows_total": 0,
+    "rows_by_base_year": {
+     "2026": 113
+    },
+    "rank_only_rows_by_base_year": {},
+    "out_of_window_rows_by_year": {
+     "2025": 100,
+     "2026": 100
+    },
+    "resolvable_base_years": [],
+    "common_set_rows_covered": 0,
+    "common_set_n": 4284,
+    "common_set_retention": 0.0,
+    "min_rows": 100,
+    "min_common_retention": 0.75,
+    "scoreable_from_run_year": null,
+    "base_years_blocked_by_candidate_years": [
+     2026
+    ],
+    "as_of_run_year": 2026
+   },
+   {
+    "source": "just_baseball",
+    "scoreable_now": false,
+    "blocked_by": "insufficient_history",
+    "history_ok": false,
+    "common_set_ok": false,
+    "resolvable_rows_best_year": 0,
+    "resolvable_best_base_year": null,
+    "resolvable_rows_total": 0,
+    "rows_by_base_year": {
+     "2026": 26
+    },
+    "rank_only_rows_by_base_year": {},
+    "out_of_window_rows_by_year": {
+     "2026": 111
+    },
+    "resolvable_base_years": [],
+    "common_set_rows_covered": 0,
+    "common_set_n": 4284,
+    "common_set_retention": 0.0,
+    "min_rows": 100,
+    "min_common_retention": 0.75,
+    "scoreable_from_run_year": null,
+    "base_years_blocked_by_candidate_years": [],
+    "as_of_run_year": 2026
+   },
+   {
+    "source": "tjstats",
+    "scoreable_now": false,
+    "blocked_by": "insufficient_history",
+    "history_ok": false,
+    "common_set_ok": false,
+    "resolvable_rows_best_year": 0,
+    "resolvable_best_base_year": null,
+    "resolvable_rows_total": 0,
+    "rows_by_base_year": {
+     "2026": 110
+    },
+    "rank_only_rows_by_base_year": {},
+    "out_of_window_rows_by_year": {
+     "2026": 142
+    },
+    "resolvable_base_years": [],
+    "common_set_rows_covered": 0,
+    "common_set_n": 4284,
+    "common_set_retention": 0.0,
+    "min_rows": 100,
+    "min_common_retention": 0.75,
+    "scoreable_from_run_year": null,
+    "base_years_blocked_by_candidate_years": [
+     2026
+    ],
+    "as_of_run_year": 2026
+   }
+  ],
+  "insufficient_history_live": [
+   "baseballamerica",
+   "espn",
+   "just_baseball",
+   "tjstats"
+  ],
+  "pass": true
+ },
+ "control_e_export_equivalence": {
+  "common_n_db_overlay": 295,
+  "common_n_exported_per_source": 295,
+  "acc_db_overlay": {
+   "fangraphs": {
+    "n": 295,
+    "spearman": 0.2818,
+    "auc": 0.7248
+   },
+   "mlb_pipeline": {
+    "n": 295,
+    "spearman": 0.2331,
+    "auc": 0.7043
+   },
+   "prospx_consensus": {
+    "n": 295,
+    "spearman": 0.2719,
+    "auc": 0.7095
+   },
+   "baseballamerica": {
+    "n": 295,
+    "spearman": 0.2261,
+    "auc": 0.6231
+   }
+  },
+  "acc_exported_per_source": {
+   "fangraphs": {
+    "n": 295,
+    "spearman": 0.2818,
+    "auc": 0.7248
+   },
+   "mlb_pipeline": {
+    "n": 295,
+    "spearman": 0.2331,
+    "auc": 0.7043
+   },
+   "prospx_consensus": {
+    "n": 295,
+    "spearman": 0.2719,
+    "auc": 0.7095
+   },
+   "baseballamerica": {
+    "n": 295,
+    "spearman": 0.2261,
+    "auc": 0.6231
+   }
+  },
+  "agrees": true,
+  "note": "the export forward-fills a source across later snapshot dates, so a BA grade can appear on in-window dates the database has no row for; any disagreement here is that forward-fill, and the exported figure is the one the shipped code would compute"
+ },
+ "gate1_resolvability": {
+  "resolvable_vintages": 1,
+  "max_rows_resolvable": 332,
+  "total_rows_resolvable": 332,
+  "threshold_rows": 100,
+  "pass": true
+ },
+ "gate2_common_set_integrity": {
+  "common_n_before": 4284,
+  "common_n_after": 295,
+  "retention": 0.0689,
+  "threshold_retention": 0.75,
+  "per_year_before": {
+   "2017": 315,
+   "2018": 459,
+   "2019": 603,
+   "2020": 665,
+   "2021": 691,
+   "2022": 737,
+   "2023": 814
+  },
+  "per_year_after": {
+   "2017": 0,
+   "2018": 0,
+   "2019": 0,
+   "2020": 0,
+   "2021": 0,
+   "2022": 0,
+   "2023": 295
+  },
+  "pass": false
+ },
+ "gate2_year_matched": {
+  "years": [
+   2023
+  ],
+  "common_n_before": 814,
+  "common_n_after": 295,
+  "retention": 0.3624,
+  "acc_before": {
+   "fangraphs": {
+    "n": 814,
+    "spearman": 0.265,
+    "auc": 0.7476
+   },
+   "mlb_pipeline": {
+    "n": 814,
+    "spearman": 0.2115,
+    "auc": 0.7062
+   },
+   "prospx_consensus": {
+    "n": 814,
+    "spearman": 0.2616,
+    "auc": 0.7379
+   }
+  },
+  "acc_after": {
+   "fangraphs": {
+    "n": 295,
+    "spearman": 0.2818,
+    "auc": 0.7248
+   },
+   "mlb_pipeline": {
+    "n": 295,
+    "spearman": 0.2331,
+    "auc": 0.7043
+   },
+   "prospx_consensus": {
+    "n": 295,
+    "spearman": 0.2719,
+    "auc": 0.7095
+   },
+   "baseballamerica": {
+    "n": 295,
+    "spearman": 0.2261,
+    "auc": 0.6231
+   }
+  }
+ },
+ "gate3_no_silent_restatement": {
+  "threshold": 0.02,
+  "moves": {
+   "fangraphs": {
+    "before": {
+     "n": 4284,
+     "spearman": 0.249,
+     "auc": 0.7013
+    },
+    "after": {
+     "n": 295,
+     "spearman": 0.2818,
+     "auc": 0.7248
+    },
+    "d_spearman": 0.0328,
+    "d_auc": 0.0235
+   },
+   "mlb_pipeline": {
+    "before": {
+     "n": 4284,
+     "spearman": 0.2806,
+     "auc": 0.7189
+    },
+    "after": {
+     "n": 295,
+     "spearman": 0.2331,
+     "auc": 0.7043
+    },
+    "d_spearman": -0.0475,
+    "d_auc": -0.0146
+   },
+   "prospx_consensus": {
+    "before": {
+     "n": 4284,
+     "spearman": 0.2837,
+     "auc": 0.7308
+    },
+    "after": {
+     "n": 295,
+     "spearman": 0.2719,
+     "auc": 0.7095
+    },
+    "d_spearman": -0.0118,
+    "d_auc": -0.0213
+   }
+  },
+  "pass": false
+ },
+ "gate4_era_purity": {
+  "scored_ba_base_years": [
+   2023
+  ],
+  "era_by_year": {
+   "2023": "ba_grade"
+  },
+  "distinct_eras_in_pool": 1,
+  "fv_field_scored": "per_source.baseballamerica.fv_published == snapshots.fv (RAW)",
+  "pass": true
+ },
+ "gate3b_downstream_consensus_claim": {
+  "before": {
+   "spearman": {
+    "consensus": 0.2837,
+    "best_input": 0.2806,
+    "consensus_wins": true
+   },
+   "auc": {
+    "consensus": 0.7308,
+    "best_input": 0.7189,
+    "consensus_wins": true
+   }
+  },
+  "after": {
+   "spearman": {
+    "consensus": 0.2719,
+    "best_input": 0.2818,
+    "consensus_wins": false
+   },
+   "auc": {
+    "consensus": 0.7095,
+    "best_input": 0.7248,
+    "consensus_wins": false
+   }
+  },
+  "flips": {
+   "spearman": true,
+   "auc": true
+  },
+  "note": "accuracy.consensus_vs_inputs is the site's core defence of blending. It is computed on accuracy.pooled, so it moves with the common set.",
+  "rater_order_before": [
+   "prospx_consensus",
+   "mlb_pipeline",
+   "fangraphs"
+  ],
+  "rater_order_after": [
+   "fangraphs",
+   "prospx_consensus",
+   "mlb_pipeline"
+  ],
+  "rater_order_flips": true
+ },
+ "gate5_gradenorm_absorption": [
+  {
+   "role": "hitter",
+   "year": 2023,
+   "n_cycle_pairs": 169,
+   "min_n": 30,
+   "below_min_n": false,
+   "pooled_across_years": false,
+   "n_used": 169,
+   "offset_fv": 6.361,
+   "mappable": true
+  },
+  {
+   "role": "pitcher",
+   "year": 2023,
+   "n_cycle_pairs": 0,
+   "min_n": 30,
+   "below_min_n": true,
+   "pooled_across_years": true,
+   "n_used": 461,
+   "offset_fv": 1.92,
+   "mappable": true
+  },
+  {
+   "role": "hitter",
+   "year": 2024,
+   "n_cycle_pairs": 175,
+   "min_n": 30,
+   "below_min_n": false,
+   "pooled_across_years": false,
+   "n_used": 175,
+   "offset_fv": 6.686,
+   "mappable": true
+  },
+  {
+   "role": "pitcher",
+   "year": 2024,
+   "n_cycle_pairs": 134,
+   "min_n": 30,
+   "below_min_n": false,
+   "pooled_across_years": false,
+   "n_used": 134,
+   "offset_fv": 6.754,
+   "mappable": true
+  },
+  {
+   "role": "hitter",
+   "year": 2025,
+   "n_cycle_pairs": 166,
+   "min_n": 30,
+   "below_min_n": false,
+   "pooled_across_years": false,
+   "n_used": 166,
+   "offset_fv": 7.47,
+   "mappable": true
+  },
+  {
+   "role": "pitcher",
+   "year": 2025,
+   "n_cycle_pairs": 159,
+   "min_n": 30,
+   "below_min_n": false,
+   "pooled_across_years": false,
+   "n_used": 159,
+   "offset_fv": 5.094,
+   "mappable": true
+  },
+  {
+   "role": "hitter",
+   "year": 2026,
+   "n_cycle_pairs": 171,
+   "min_n": 30,
+   "below_min_n": false,
+   "pooled_across_years": false,
+   "n_used": 171,
+   "offset_fv": -5.175,
+   "mappable": true
+  },
+  {
+   "role": "pitcher",
+   "year": 2026,
+   "n_cycle_pairs": 168,
+   "min_n": 30,
+   "below_min_n": false,
+   "pooled_across_years": false,
+   "n_used": 168,
+   "offset_fv": -4.94,
+   "mappable": true
+  }
+ ],
+ "control_p_position_basis": [
+  {
+   "snapshot_date": "2023-02-15",
+   "n_rows": 385,
+   "n_position_null": 363,
+   "distinct_position_tokens": [
+    "CP"
+   ],
+   "role_assigned_by_gradenorm": {
+    "hitter": 385
+   },
+   "role_from_other_sources": {
+    "hitter": 198,
+    "pitcher": 152
+   },
+   "n_role_mismatch": 152,
+   "mismatch_rate": 0.4343,
+   "within_year_offset_by_true_role": {
+    "hitter": {
+     "n": 170,
+     "ba_minus_fg_mean": 6.324
+    },
+    "pitcher": {
+     "n": 133,
+     "ba_minus_fg_mean": 6.955
+    }
+   }
+  },
+  {
+   "snapshot_date": "2024-02-15",
+   "n_rows": 383,
+   "n_position_null": 0,
+   "distinct_position_tokens": [
+    "1B",
+    "2B",
+    "3B",
+    "C",
+    "LHP",
+    "OF",
+    "RHP",
+    "SS"
+   ],
+   "role_assigned_by_gradenorm": {
+    "pitcher": 158,
+    "hitter": 225
+   },
+   "role_from_other_sources": {
+    "pitcher": 145,
+    "hitter": 205
+   },
+   "n_role_mismatch": 1,
+   "mismatch_rate": 0.0029,
+   "within_year_offset_by_true_role": {
+    "hitter": {
+     "n": 176,
+     "ba_minus_fg_mean": 6.705
+    },
+    "pitcher": {
+     "n": 134,
+     "ba_minus_fg_mean": 6.754
+    }
+   }
+  },
+  {
+   "snapshot_date": "2025-02-15",
+   "n_rows": 384,
+   "n_position_null": 0,
+   "distinct_position_tokens": [
+    "1B",
+    "2B",
+    "3B",
+    "C",
+    "LHP",
+    "OF",
+    "RHP",
+    "SS"
+   ],
+   "role_assigned_by_gradenorm": {
+    "hitter": 200,
+    "pitcher": 184
+   },
+   "role_from_other_sources": {
+    "pitcher": 176,
+    "hitter": 181
+   },
+   "n_role_mismatch": 1,
+   "mismatch_rate": 0.0028,
+   "within_year_offset_by_true_role": {
+    "hitter": {
+     "n": 166,
+     "ba_minus_fg_mean": 7.47
+    },
+    "pitcher": {
+     "n": 160,
+     "ba_minus_fg_mean": 5.125
+    }
+   }
+  },
+  {
+   "snapshot_date": "2026-02-15",
+   "n_rows": 383,
+   "n_position_null": 0,
+   "distinct_position_tokens": [
+    "1B",
+    "2B",
+    "3B",
+    "C",
+    "LHP",
+    "OF",
+    "RHP",
+    "SS"
+   ],
+   "role_assigned_by_gradenorm": {
+    "pitcher": 191,
+    "hitter": 192
+   },
+   "role_from_other_sources": {
+    "pitcher": 185,
+    "hitter": 182
+   },
+   "n_role_mismatch": 0,
+   "mismatch_rate": 0.0,
+   "within_year_offset_by_true_role": {
+    "hitter": {
+     "n": 171,
+     "ba_minus_fg_mean": -5.175
+    },
+    "pitcher": {
+     "n": 168,
+     "ba_minus_fg_mean": -4.94
+    }
+   }
+  }
+ ],
+ "control_c_coverage_not_skill": {
+  "own_rows": {
+   "n": 331,
+   "spearman": 0.2173,
+   "auc": 0.6239,
+   "debut_rate": 0.6979
+  },
+  "common_set": {
+   "n": 295,
+   "spearman": 0.2261,
+   "auc": 0.6231
+  },
+  "own_rows_flatters": false
+ },
+ "control_r_rank_only": {
+  "ba_rows_with_null_fv": 100,
+  "null_fv_snapshot_dates": [
+   "2026-06-03"
+  ],
+  "null_fv_rows_entering_any_fv_stat": 0,
+  "note": "rows with fv IS NULL are dropped before by_year is built and before grade_normalization's query, so none can be read as FV 0"
+ },
+ "control_s_scale_break": {
+  "consecutive_board_delta": [
+   {
+    "from": "2023",
+    "to": "2024",
+    "n": 194,
+    "mean": -0.64,
+    "sd": 4.49
+   },
+   {
+    "from": "2024",
+    "to": "2025",
+    "n": 198,
+    "mean": -0.83,
+    "sd": 4.56
+   },
+   {
+    "from": "2025",
+    "to": "2026",
+    "n": 196,
+    "mean": -11.89,
+    "sd": 5.66
+   }
+  ],
+  "ba_minus_fangraphs": [
+   {
+    "year": 2023,
+    "n": 302,
+    "mean": 6.61,
+    "sd": 4.54
+   },
+   {
+    "year": 2024,
+    "n": 310,
+    "mean": 6.73,
+    "sd": 4.76
+   },
+   {
+    "year": 2025,
+    "n": 326,
+    "mean": 6.32,
+    "sd": 5.06
+   },
+   {
+    "year": 2026,
+    "n": 339,
+    "mean": -5.06,
+    "sd": 4.03
+   }
+  ]
+ },
+ "control_l_league_selection": {
+  "cycle_year": 2026,
+  "ba_orgs": [
+   "ATH",
+   "BAL",
+   "BOS",
+   "CHW",
+   "CLE",
+   "DET",
+   "HOU",
+   "KCR",
+   "LAA",
+   "MIN",
+   "NYY",
+   "TBR",
+   "TOR"
+  ],
+  "n_ba_orgs": 13,
+  "n_players_with_a_ba_vote": 507,
+  "ba_already_voting": true,
+  "without_ba_vote": {
+   "ba_covered_orgs": {
+    "n_players": 730,
+    "mean_sources": 1.875,
+    "median_sources": 2
+   },
+   "other_orgs": {
+    "n_players": 977,
+    "mean_sources": 1.895,
+    "median_sources": 2
+   },
+   "asymmetry_pts": -0.02
+  },
+  "with_ba_vote": {
+   "ba_covered_orgs": {
+    "n_players": 730,
+    "mean_sources": 2.489,
+    "median_sources": 3
+   },
+   "other_orgs": {
+    "n_players": 977,
+    "mean_sources": 1.955,
+    "median_sources": 2
+   },
+   "asymmetry_pts": 0.534
+  },
+  "note": "BA votes only for players in ba_orgs, so its presence raises the vote count for covered-org players and not for anyone else. Both columns are measured, not assumed: the WITHOUT column is the counterfactual and the WITH column is what the export currently serves."
+ },
+ "control_x_selection_hazard": {
+  "hitter": {
+   "pool_n": 1917,
+   "pool_debuted": 845,
+   "pool_debuted_rate": 0.4408,
+   "ba_covered_n": 145,
+   "ba_covered_debuted": 108,
+   "ba_covered_debuted_rate": 0.7448,
+   "lift_pts": 30.4
+  },
+  "pitcher": {
+   "pool_n": 2040,
+   "pool_debuted": 981,
+   "pool_debuted_rate": 0.4809,
+   "ba_covered_n": 127,
+   "ba_covered_debuted": 104,
+   "ba_covered_debuted_rate": 0.8189,
+   "lift_pts": 33.8
+  }
+ },
+ "derived_classification_crosscheck": {
+  "before_export": {
+   "common_n": 4284,
+   "records": [
+    {
+     "source": "baseballamerica",
+     "scoreable_now": false,
+     "blocked_by": "common_set_collapse",
+     "history_ok": true,
+     "common_set_ok": false,
+     "resolvable_rows_best_year": 331,
+     "resolvable_best_base_year": 2023,
+     "resolvable_rows_total": 331,
+     "rows_by_base_year": {
+      "2023": 331,
+      "2024": 420,
+      "2025": 470,
+      "2026": 471
+     },
+     "rank_only_rows_by_base_year": {},
+     "out_of_window_rows_by_year": {
+      "2023": 276,
+      "2024": 345,
+      "2025": 403,
+      "2026": 513
+     },
+     "resolvable_base_years": [
+      2023
+     ],
+     "common_set_rows_covered": 295,
+     "common_set_n": 4284,
+     "common_set_retention": 0.0689,
+     "min_rows": 100,
+     "min_common_retention": 0.75,
+     "scoreable_from_run_year": 2027,
+     "base_years_blocked_by_candidate_years": [
+      2025,
+      2026
+     ],
+     "as_of_run_year": 2026
+    },
+    {
+     "source": "espn",
+     "scoreable_now": false,
+     "blocked_by": "insufficient_history",
+     "history_ok": false,
+     "common_set_ok": false,
+     "resolvable_rows_best_year": 0,
+     "resolvable_best_base_year": null,
+     "resolvable_rows_total": 0,
+     "rows_by_base_year": {
+      "2026": 113
+     },
+     "rank_only_rows_by_base_year": {},
+     "out_of_window_rows_by_year": {
+      "2025": 100,
+      "2026": 100
+     },
+     "resolvable_base_years": [],
+     "common_set_rows_covered": 0,
+     "common_set_n": 4284,
+     "common_set_retention": 0.0,
+     "min_rows": 100,
+     "min_common_retention": 0.75,
+     "scoreable_from_run_year": null,
+     "base_years_blocked_by_candidate_years": [
+      2026
+     ],
+     "as_of_run_year": 2026
+    },
+    {
+     "source": "just_baseball",
+     "scoreable_now": false,
+     "blocked_by": "insufficient_history",
+     "history_ok": false,
+     "common_set_ok": false,
+     "resolvable_rows_best_year": 0,
+     "resolvable_best_base_year": null,
+     "resolvable_rows_total": 0,
+     "rows_by_base_year": {
+      "2026": 26
+     },
+     "rank_only_rows_by_base_year": {},
+     "out_of_window_rows_by_year": {
+      "2026": 111
+     },
+     "resolvable_base_years": [],
+     "common_set_rows_covered": 0,
+     "common_set_n": 4284,
+     "common_set_retention": 0.0,
+     "min_rows": 100,
+     "min_common_retention": 0.75,
+     "scoreable_from_run_year": null,
+     "base_years_blocked_by_candidate_years": [],
+     "as_of_run_year": 2026
+    },
+    {
+     "source": "tjstats",
+     "scoreable_now": false,
+     "blocked_by": "insufficient_history",
+     "history_ok": false,
+     "common_set_ok": false,
+     "resolvable_rows_best_year": 0,
+     "resolvable_best_base_year": null,
+     "resolvable_rows_total": 0,
+     "rows_by_base_year": {
+      "2026": 110
+     },
+     "rank_only_rows_by_base_year": {},
+     "out_of_window_rows_by_year": {
+      "2026": 142
+     },
+     "resolvable_base_years": [],
+     "common_set_rows_covered": 0,
+     "common_set_n": 4284,
+     "common_set_retention": 0.0,
+     "min_rows": 100,
+     "min_common_retention": 0.75,
+     "scoreable_from_run_year": null,
+     "base_years_blocked_by_candidate_years": [
+      2026
+     ],
+     "as_of_run_year": 2026
+    }
+   ]
+  },
+  "after_export_simulated": {
+   "common_n": 4284,
+   "records": [
+    {
+     "source": "baseballamerica",
+     "scoreable_now": false,
+     "blocked_by": "common_set_collapse",
+     "history_ok": true,
+     "common_set_ok": false,
+     "resolvable_rows_best_year": 331,
+     "resolvable_best_base_year": 2023,
+     "resolvable_rows_total": 331,
+     "rows_by_base_year": {
+      "2023": 331,
+      "2024": 420,
+      "2025": 470,
+      "2026": 471
+     },
+     "rank_only_rows_by_base_year": {},
+     "out_of_window_rows_by_year": {
+      "2023": 276,
+      "2024": 345,
+      "2025": 403,
+      "2026": 513
+     },
+     "resolvable_base_years": [
+      2023
+     ],
+     "common_set_rows_covered": 295,
+     "common_set_n": 4284,
+     "common_set_retention": 0.0689,
+     "min_rows": 100,
+     "min_common_retention": 0.75,
+     "scoreable_from_run_year": 2027,
+     "base_years_blocked_by_candidate_years": [
+      2025,
+      2026
+     ],
+     "as_of_run_year": 2026
+    },
+    {
+     "source": "espn",
+     "scoreable_now": false,
+     "blocked_by": "insufficient_history",
+     "history_ok": false,
+     "common_set_ok": false,
+     "resolvable_rows_best_year": 0,
+     "resolvable_best_base_year": null,
+     "resolvable_rows_total": 0,
+     "rows_by_base_year": {
+      "2026": 113
+     },
+     "rank_only_rows_by_base_year": {},
+     "out_of_window_rows_by_year": {
+      "2025": 100,
+      "2026": 100
+     },
+     "resolvable_base_years": [],
+     "common_set_rows_covered": 0,
+     "common_set_n": 4284,
+     "common_set_retention": 0.0,
+     "min_rows": 100,
+     "min_common_retention": 0.75,
+     "scoreable_from_run_year": null,
+     "base_years_blocked_by_candidate_years": [
+      2026
+     ],
+     "as_of_run_year": 2026
+    },
+    {
+     "source": "just_baseball",
+     "scoreable_now": false,
+     "blocked_by": "insufficient_history",
+     "history_ok": false,
+     "common_set_ok": false,
+     "resolvable_rows_best_year": 0,
+     "resolvable_best_base_year": null,
+     "resolvable_rows_total": 0,
+     "rows_by_base_year": {
+      "2026": 26
+     },
+     "rank_only_rows_by_base_year": {},
+     "out_of_window_rows_by_year": {
+      "2026": 111
+     },
+     "resolvable_base_years": [],
+     "common_set_rows_covered": 0,
+     "common_set_n": 4284,
+     "common_set_retention": 0.0,
+     "min_rows": 100,
+     "min_common_retention": 0.75,
+     "scoreable_from_run_year": null,
+     "base_years_blocked_by_candidate_years": [],
+     "as_of_run_year": 2026
+    },
+    {
+     "source": "tjstats",
+     "scoreable_now": false,
+     "blocked_by": "insufficient_history",
+     "history_ok": false,
+     "common_set_ok": false,
+     "resolvable_rows_best_year": 0,
+     "resolvable_best_base_year": null,
+     "resolvable_rows_total": 0,
+     "rows_by_base_year": {
+      "2026": 110
+     },
+     "rank_only_rows_by_base_year": {},
+     "out_of_window_rows_by_year": {
+      "2026": 142
+     },
+     "resolvable_base_years": [],
+     "common_set_rows_covered": 0,
+     "common_set_n": 4284,
+     "common_set_retention": 0.0,
+     "min_rows": 100,
+     "min_common_retention": 0.75,
+     "scoreable_from_run_year": null,
+     "base_years_blocked_by_candidate_years": [
+      2026
+     ],
+     "as_of_run_year": 2026
+    }
+   ],
+   "common_n_note": "spliced points carry no consensus_fv_raw, so a few rows drop out of the common set; the gate numbers above use the grade-merge harness instead, which passes CONTROL F at 4259"
+  },
+  "live_universe_already_carries_ba": true,
+  "ba_blocked_by_live": "common_set_collapse",
+  "ba_blocked_by_after_splice": "common_set_collapse",
+  "reaches_measured_verdict": true,
+  "names_preserved": [
+   "baseballamerica",
+   "espn",
+   "just_baseball",
+   "tjstats"
+  ]
+ },
+ "verdict": {
+  "gate1_pass": true,
+  "gate2_pass": false,
+  "gate3_pass": false,
+  "gate4_pass": true,
+  "ba_enters_scored_sources": false
+ }
+}

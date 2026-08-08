@@ -64,6 +64,59 @@ _WINDOW_END_MMDD = "-05-01"
 SCORED_SOURCES = ("fangraphs", "mlb_pipeline")
 CONSENSUS_KEY = "prospx_consensus"
 
+# --------------------------------------------------------------------------
+# Source classification: DERIVED, not asserted (Lane BA3, 2026-08-07b).
+# --------------------------------------------------------------------------
+# `insufficient_history` used to be a literal list of four source names. It was
+# written when Baseball America had one rank-only snapshot in the database, and
+# it went on asserting "no resolvable cohorts" after BA acquired four preseason
+# org-board vintages (2023-02-15 through 2026-02-15, 383-385 rows each, every row
+# carrying an FV). The 2023 vintage joins the outcome universe on 332 rows and IS
+# resolvable at MIN_LAG_YEARS=3. The string was simply out of date, and being a
+# string it could not notice.
+#
+# Everything below is now counted from the same universe the backtest scores, so
+# the classification self-corrects the day a vintage resolves. See
+# docs/efv-2026-08-07b/BA_SOURCE_CLASS_GATE.md for the pre-registration and
+# data/ba_source_class_eval.json for the measurement.
+#
+# TWO conditions, because history alone is not the binding one:
+#
+#   1. HISTORY. At least SOURCE_CLASS_MIN_ROWS resolvable preseason rows in a
+#      single base year. 100 is the smallest count that leaves a pooled Spearman
+#      with any precision once the common-set intersection has cut it down
+#      (compare ARCH_MIN_N = 40 below).
+#
+#   2. COMMON-SET RETENTION. `run_source_backtest` admits a player to the common
+#      set only when EVERY scored rater graded him, so a new rater does not add a
+#      bar to the chart, it redefines the population every other bar is computed
+#      on. Measured for BA on the 2026-08-08 export: admitting it takes the common
+#      set from 4,284 rows to 295 (6.9% retention; 36.2% even year-matched to 2023,
+#      the only year BA can contribute). On that shrunken population MLB Pipeline's
+#      pooled Spearman moves -0.0475, which is 7.0x the 0.0068 MDE95 this module
+#      already uses to gate the consensus-weight A/B (line ~908) and 1.35x
+#      XFV_HEADTOHEAD_MDE95; 4 of 6 incumbent cells move by more than 0.02; the
+#      rater ORDER flips (mlb_pipeline > fangraphs becomes fangraphs >
+#      mlb_pipeline); and `accuracy.consensus_vs_inputs` flips True -> False on
+#      BOTH metrics, negating the site's defence of blending at all. None of that
+#      requires a single grade to change. A source that costs 93% of the evidence
+#      has to be kept out for THAT reason, which is measured and does not expire,
+#      rather than for "insufficient history", which was neither.
+#
+# Promotion into SCORED_SOURCES stays an explicit edit, because it restates every
+# published accuracy number. What the code no longer does is assert the answer:
+# when a source clears both conditions the classification says `scoreable_now`
+# and a warning is logged, so the promotion is a data event someone is told about.
+SOURCE_CLASS_MIN_ROWS = 100
+SOURCE_CLASS_MIN_COMMON_RETENTION = 0.75
+
+# Synthetic / derived per_source keys that are not outlets with a grading scale.
+# performance_ingest hands every auto-tracked player the same provisional FV floor
+# and draft_signing is a bonus-derived anchor (both are pass-through in
+# grade_normalization for the same reason); *_statcast_by_age is a derived overlay,
+# not a published board. None of them is a rater, so none is classifiable as one.
+_NON_RATER_SOURCES = frozenset({"performance_ingest", "draft_signing", "auto_detect"})
+
 # Outcome thresholds (cumulative career WAR, censored at run date).
 CONTRIBUTOR_WAR = 3.0
 STAR_WAR = 10.0
@@ -153,6 +206,148 @@ def _outcome(p: dict) -> dict:
         "regular_pace": (wpy is not None and wpy >= REGULAR_WPY),
         "allstar_pace": (wpy is not None and wpy >= ALLSTAR_WPY),
     }
+
+
+def _all_source_grades_by_year(p: dict) -> tuple[dict, dict]:
+    """(in_window, out_of_window) source coverage for `p`, one pass over points[].
+
+    in_window     = {base_year: {source: max published preseason FV, or None}}
+    out_of_window = {year: {source}}: the source published on this player OUTSIDE
+                    the preseason window (midseason boards, e.g. Baseball America's
+                    June Top 100 and Just Baseball's in-season lists)
+
+    Same window and same max-across-the-window rule as `_rater_grades_for_year`,
+    but not restricted to SCORED_SOURCES, and this is what lets the classification
+    below count a source the backtest does not (yet) score, including vintages too
+    recent to be scoreable and boards that fall outside the window entirely.
+
+    An in-window value of None means the source APPEARED but published a rank with
+    no FV. Those rows are counted so the source can be classified as rank-only
+    rather than silently disappearing, and they never contribute a number: a null
+    grade must not be read as an FV of zero.
+    """
+    inw: dict = {}
+    outw: dict = {}
+    for pt in (p.get("points") or []):
+        sd = pt.get("snapshot_date")
+        if not sd:
+            continue
+        try:
+            year = int(sd[:4])
+        except (TypeError, ValueError):
+            continue
+        # The window is [YYYY-01-01, YYYY-05-01) of the snapshot's OWN year, so the
+        # year prefix cancels and membership is decided by the "-MM-DD" suffix alone.
+        # Identical test to _rater_grades_for_year's `lo <= sd < hi`.
+        in_window = _WINDOW_START_MMDD <= sd[4:] < _WINDOW_END_MMDD
+        bucket = inw.setdefault(year, {}) if in_window else None
+        for src, ps in (pt.get("per_source") or {}).items():
+            if src in _NON_RATER_SOURCES or src.endswith("_statcast_by_age"):
+                continue
+            if not in_window:
+                outw.setdefault(year, set()).add(src)
+                continue
+            v = (ps or {}).get("fv_published")
+            if v is None:
+                bucket.setdefault(src, None)
+                continue
+            v = float(v)
+            prev = bucket.get(src)
+            bucket[src] = v if prev is None else max(prev, v)
+    return inw, outw
+
+
+def classify_sources(source_year_rows: dict, source_year_rank_only: dict,
+                     source_year_out_of_window: dict,
+                     common_cover: dict, common_n: int,
+                     years: list[int], as_of_year: int) -> list[dict]:
+    """Derive each non-scored source's classification from counted rows.
+
+    source_year_rows[source][year]          = preseason rows it published an FV on.
+    source_year_rank_only[source][year]     = preseason rows with a rank but no FV.
+    source_year_out_of_window[source][year] = rows outside the preseason window.
+    common_cover[source]                    = how many of the CURRENT common-set rows
+                                              that source also graded, i.e. exactly
+                                              the population that would survive
+                                              admitting it as a rater.
+
+    Returns one record per candidate source carrying the numbers behind its
+    classification, so the served artifact can cite a row count and a year instead
+    of a bare string. Sorted scoreable-first, then by resolvable row count.
+    """
+    out: list[dict] = []
+    seen = set(source_year_rows) | set(source_year_rank_only) | set(source_year_out_of_window)
+    for src in sorted(seen):
+        if src in SCORED_SOURCES or src == CONSENSUS_KEY:
+            continue
+        by_year = {y: n for y, n in sorted(source_year_rows.get(src, {}).items()) if n}
+        rank_only = {y: n for y, n in sorted(source_year_rank_only.get(src, {}).items()) if n}
+        off_window = {y: n for y, n in sorted(source_year_out_of_window.get(src, {}).items()) if n}
+        resolvable = {y: n for y, n in by_year.items()
+                      if y in years}                     # years[] is already lag-filtered
+        best_year, best_rows = None, 0
+        for y, n in resolvable.items():
+            if n > best_rows:
+                best_year, best_rows = y, n
+        history_ok = best_rows >= SOURCE_CLASS_MIN_ROWS
+        retention = (common_cover.get(src, 0) / common_n) if common_n else 0.0
+        common_ok = retention >= SOURCE_CLASS_MIN_COMMON_RETENTION
+
+        # When does the next unresolved vintage become scoreable? A vintage needs
+        # BOTH the development lag AND membership in CANDIDATE_YEARS, and the
+        # second is a hardcoded tuple that can block a cohort physics has already
+        # resolved. Report the two separately so the tuple cannot fail silently.
+        pending = [(y, n) for y, n in by_year.items()
+                   if y not in years and n >= SOURCE_CLASS_MIN_ROWS]
+        first_year, needs_tuple = None, []
+        for y, _n in sorted(pending):
+            if y not in CANDIDATE_YEARS:
+                needs_tuple.append(y)
+                continue
+            cand = y + MIN_LAG_YEARS
+            if first_year is None or cand < first_year:
+                first_year = cand
+        if history_ok and not common_ok:
+            # The BA case: the history exists, admitting it is what costs.
+            reason = "common_set_collapse"
+        elif not by_year and rank_only:
+            # Publishes a board but no grades, so there is nothing to score and
+            # no amount of waiting changes that.
+            reason = "no_published_fv"
+        elif not by_year and not rank_only and off_window:
+            # Publishes only outside Jan 1 to Apr 30, so the preseason window this
+            # backtest is defined on never sees it. Not a history problem.
+            reason = "no_preseason_board"
+        elif not history_ok and best_rows:
+            reason = "thin_resolvable_cohort"
+        elif not history_ok:
+            reason = "insufficient_history"
+        else:
+            reason = None
+        out.append({
+            "source": src,
+            "scoreable_now": bool(history_ok and common_ok),
+            "blocked_by": reason,
+            "history_ok": bool(history_ok),
+            "common_set_ok": bool(common_ok),
+            "resolvable_rows_best_year": best_rows,
+            "resolvable_best_base_year": best_year,
+            "resolvable_rows_total": sum(resolvable.values()),
+            "rows_by_base_year": by_year,
+            "rank_only_rows_by_base_year": rank_only,
+            "out_of_window_rows_by_year": off_window,
+            "resolvable_base_years": sorted(resolvable),
+            "common_set_rows_covered": common_cover.get(src, 0),
+            "common_set_n": common_n,
+            "common_set_retention": round(retention, 4),
+            "min_rows": SOURCE_CLASS_MIN_ROWS,
+            "min_common_retention": SOURCE_CLASS_MIN_COMMON_RETENTION,
+            "scoreable_from_run_year": first_year,
+            "base_years_blocked_by_candidate_years": needs_tuple,
+            "as_of_run_year": as_of_year,
+        })
+    out.sort(key=lambda r: (not r["scoreable_now"], -r["resolvable_rows_best_year"], r["source"]))
+    return out
 
 
 def _rater_grades_for_year(p: dict, year: int) -> dict:
@@ -534,9 +729,28 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     rows_by_rater: dict[str, list[dict]] = {r: [] for r in raters}
     # common[year] = [{key, grades:{rater:fv}, outcome}] for players ALL raters graded.
     common_by_year: dict[int, list[dict]] = {y: [] for y in years}
+    # Tallies for the DERIVED source classification (see SOURCE_CLASS_MIN_ROWS).
+    # source_year_rows[source][base_year] = graded preseason rows; common_cover
+    # [source] = how many of the CURRENT common-set rows that source also graded,
+    # i.e. exactly the population that would survive admitting it as a rater.
+    source_year_rows: dict[str, dict[int, int]] = {}
+    source_year_rank_only: dict[str, dict[int, int]] = {}
+    source_year_out_of_window: dict[str, dict[int, int]] = {}
+    common_cover: dict[str, int] = {}
 
     for p in universe:
         out = _outcome(p)
+        all_grades, off_window = _all_source_grades_by_year(p)
+        for y, srcs in all_grades.items():
+            for src, fv in srcs.items():
+                tgt = source_year_rows if fv is not None else source_year_rank_only
+                tgt.setdefault(src, {})
+                tgt[src][y] = tgt[src].get(y, 0) + 1
+        for y, srcs in off_window.items():
+            for src in srcs:
+                source_year_out_of_window.setdefault(src, {})
+                source_year_out_of_window[src][y] = \
+                    source_year_out_of_window[src].get(y, 0) + 1
         for y in years:
             grades = _rater_grades_for_year(p, y)
             if not grades:
@@ -549,6 +763,9 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
                                           "name": p.get("player_name"), "year": y,
                                           "grades": {r: grades[r] for r in raters},
                                           "outcome": out, "archetype": _archetype(p)})
+                for src, fv in all_grades.get(y, {}).items():
+                    if fv is not None:      # a rank-only row could not act as a rater
+                        common_cover[src] = common_cover.get(src, 0) + 1
 
     # Per-rater cohort/calibration tables (full cohort, pooled across years).
     cohorts = {}
@@ -765,6 +982,23 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     accuracy["xfv_vs_consensus_detail"] = _xfv_vs_consensus_detail(
         cons_xfv_rows if len(cons_xfv_rows) >= 50 else pooled_common)
 
+    # DERIVED source classification. Replaces a literal list that had gone stale.
+    source_classification = classify_sources(
+        source_year_rows, source_year_rank_only, source_year_out_of_window,
+        common_cover, len(pooled_common), years, as_of.year)
+    # Self-correcting tripwire: promotion into SCORED_SOURCES restates every
+    # published accuracy number, so it stays a deliberate edit, but the code is
+    # now the thing that notices, instead of a string that could not.
+    for _sc in source_classification:
+        if _sc["scoreable_now"]:
+            log.warning(
+                "source %s now clears both classification conditions "
+                "(%d resolvable rows in %s, common-set retention %.3f) but is not in "
+                "SCORED_SOURCES; promoting it restates every published accuracy number, "
+                "so review docs/efv-2026-08-07b/BA_SOURCE_CLASS_GATE.md before adding it",
+                _sc["source"], _sc["resolvable_rows_best_year"],
+                _sc["resolvable_best_base_year"], _sc["common_set_retention"])
+
     result = {
         "xfv_vs_consensus": _xfv_vs_consensus(data_dir),
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -778,7 +1012,26 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         },
         "raters": raters,
         "scored_sources": list(SCORED_SOURCES),
-        "insufficient_history": ["espn", "tjstats", "just_baseball", "baseballamerica"],
+        # Kept as a list of NAMES because assets/glossary.js renders it with
+        # `.join(", ")`, but it is now DERIVED from source_classification below
+        # rather than typed in. Every entry's row count, base years and
+        # first-scoreable year live in `source_classification`; the flat list is a
+        # projection of it, so the two cannot disagree.
+        "insufficient_history": [s["source"] for s in source_classification
+                                 if not s["scoreable_now"]],
+        "source_classification": source_classification,
+        "scoreable_now": [s["source"] for s in source_classification if s["scoreable_now"]],
+        "source_class_rules": {
+            "min_resolvable_rows_in_a_base_year": SOURCE_CLASS_MIN_ROWS,
+            "min_common_set_retention": SOURCE_CLASS_MIN_COMMON_RETENTION,
+            "note": ("A source is scoreable only if it has enough resolvable preseason "
+                     "rows AND admitting it would not collapse the common set every "
+                     "other source is reported on. Baseball America clears the first "
+                     "(332 resolvable rows in the 2023 preseason) and fails the second "
+                     "(common set 4,284 -> 295, 6.9% retention). Measured in "
+                     "data/ba_source_class_eval.json; pre-registered in "
+                     "docs/efv-2026-08-07b/BA_SOURCE_CLASS_GATE.md."),
+        },
         "outcome_defs": {
             "contributor_war": CONTRIBUTOR_WAR,
             "star_war": STAR_WAR,

@@ -1,0 +1,4020 @@
+{
+ "generated_at": "2026-08-08T05:41:05Z",
+ "lane": "BA2",
+ "pre_registration": "docs/efv-2026-08-07b/TOOL_GRADE_WEIGHT_GATE.md",
+ "constants": {
+  "MIN_LAG_YEARS": 3,
+  "WEIGHT_SHRINK_K": 150,
+  "WEIGHT_CLAMP": [
+   0.6,
+   1.5
+  ],
+  "SPEARMAN_FLOOR": 0.05,
+  "boot": 2000,
+  "perm": 1000,
+  "seed": 8641
+ },
+ "tool_outcome_map": {
+  "hit": {
+   "stat": "avg",
+   "hi": true
+  },
+  "game_pwr": {
+   "stat": "iso",
+   "hi": true
+  },
+  "speed": {
+   "stat": "sb",
+   "hi": true
+  },
+  "fb": {
+   "stat": "k_pct",
+   "hi": true
+  },
+  "cmd": {
+   "stat": "bb_pct",
+   "hi": false
+  }
+ },
+ "passthrough_tools_unscoreable": [
+  "raw_pwr",
+  "field",
+  "throw (arm)",
+  "sl/cb/ch pitch shapes"
+ ],
+ "B1_premise": {
+  "plan_K0_claim": "Baseball America carries ZERO tool grades",
+  "verdict": "FALSE",
+  "brief_stated": {
+   "observations": 7285,
+   "rows": 1502
+  },
+  "measured_observations_by_key": {
+   "hit": 836,
+   "game_pwr": 836,
+   "speed": 836,
+   "field": 836,
+   "throw": 835,
+   "fb": 696,
+   "cmd": 695,
+   "ch": 647,
+   "sl": 634,
+   "cb": 404,
+   "ct": 155
+  },
+  "measured_observations_total": 7410,
+  "scoreable_share": {
+   "scoreable_tools": [
+    "hit",
+    "game_pwr",
+    "speed",
+    "fb",
+    "cmd"
+   ],
+   "n_scoreable_obs": 3899,
+   "pct_of_ba_obs": 52.6181
+  },
+  "all_sources": {
+   "fangraphs": {
+    "total": 124880,
+    "years": [
+     2017,
+     2018,
+     2019,
+     2020,
+     2021,
+     2022,
+     2023,
+     2024,
+     2025,
+     2026
+    ],
+    "by_key": {
+     "fb": 12015,
+     "cmd": 11984,
+     "speed": 11597,
+     "raw_pwr": 11596,
+     "hit": 11595,
+     "game_pwr": 11594,
+     "field": 11594,
+     "sl": 9233,
+     "ch": 9215,
+     "bat_ctrl": 7646,
+     "pitch_sel": 7099,
+     "cb": 6295,
+     "throw": 3402,
+     "ct": 15
+    }
+   },
+   "mlb_pipeline": {
+    "total": 81177,
+    "years": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2020,
+     2021,
+     2022,
+     2023,
+     2024,
+     2025,
+     2026
+    ],
+    "by_key": {
+     "speed": 10171,
+     "throw": 10170,
+     "game_pwr": 10169,
+     "hit": 10168,
+     "field": 10168,
+     "cmd": 7141,
+     "fb": 7135,
+     "ch": 6402,
+     "sl": 5435,
+     "cb": 4218
+    }
+   },
+   "tjstats": {
+    "total": 18321,
+    "years": [
+     2026
+    ],
+    "by_key": {
+     "hit": 2636,
+     "game_pwr": 2636,
+     "speed": 2636,
+     "field": 2636,
+     "fb": 1652,
+     "cmd": 1652,
+     "sl": 1566,
+     "ch": 1437,
+     "cb": 971,
+     "ct": 284,
+     "sp": 215
+    }
+   },
+   "baseballamerica": {
+    "total": 7410,
+    "years": [
+     2023,
+     2024,
+     2025,
+     2026
+    ],
+    "by_key": {
+     "hit": 836,
+     "game_pwr": 836,
+     "speed": 836,
+     "field": 836,
+     "throw": 835,
+     "fb": 696,
+     "cmd": 695,
+     "ch": 647,
+     "sl": 634,
+     "cb": 404,
+     "ct": 155
+    }
+   },
+   "just_baseball": {
+    "total": 622,
+    "years": [
+     2026
+    ],
+    "by_key": {
+     "hit": 83,
+     "pitch_sel": 83,
+     "game_pwr": 83,
+     "speed": 83,
+     "field": 83,
+     "fb": 43,
+     "cmd": 43,
+     "ch": 41,
+     "sl": 38,
+     "cb": 28,
+     "ct": 14
+    }
+   },
+   "espn": {
+    "total": 205,
+    "years": [
+     2025,
+     2026
+    ],
+    "by_key": {
+     "speed": 45,
+     "game_pwr": 44,
+     "raw_pwr": 38,
+     "field": 19,
+     "throw": 15,
+     "ch": 11,
+     "sl": 8,
+     "cmd": 8,
+     "fb": 7,
+     "cb": 6,
+     "ct": 2,
+     "hit": 2
+    }
+   }
+  },
+  "multi_year_sources": [
+   "baseballamerica",
+   "espn",
+   "fangraphs",
+   "mlb_pipeline"
+  ],
+  "single_year_sources": [
+   "just_baseball",
+   "tjstats"
+  ],
+  "ba_rows_with_tools": 1535
+ },
+ "C66_aaa_savant_widening": {
+  "statcast_metrics_rows": 3277,
+  "by_season_level": {
+   "2026|A": 518,
+   "2026|A+": 219,
+   "2026|AA": 133,
+   "2026|AAA": 1043,
+   "2026|CPX": 409,
+   "2026|MLB": 955
+  },
+  "seasons_present": [
+   2026
+  ],
+  "feasible": false
+ },
+ "arms": {
+  "A_fg_vs_pipeline": {
+   "sources": [
+    "fangraphs",
+    "mlb_pipeline"
+   ],
+   "tools": {
+    "hit": {
+     "common_set_by_year_chained": {
+      "2017": 161,
+      "2018": 210,
+      "2019": 247,
+      "2020": 269,
+      "2021": 257,
+      "2022": 239,
+      "2023": 211,
+      "2024": 169,
+      "2025": 115
+     },
+     "common_set_by_year_unchained_efv_tools_basis": {
+      "2017": 161,
+      "2018": 210,
+      "2019": 248,
+      "2020": 272,
+      "2021": 265,
+      "2022": 255,
+      "2023": 220,
+      "2024": 177,
+      "2025": 137,
+      "2026": 44
+     },
+     "pooled_n_chained": 1878,
+     "pooled_n_unchained": 1989,
+     "forward_chain_cost_rows": 111,
+     "primary": {
+      "n": 1260,
+      "equal": {
+       "spearman": 0.275,
+       "auc": 0.6417
+      },
+      "weighted": {
+       "spearman": 0.2884,
+       "auc": 0.6483
+      },
+      "d_rho": 0.013416,
+      "d_auc": 0.006575
+     },
+     "per_year": [
+      {
+       "year": 2017,
+       "n": 161,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2018,
+       "n": 210,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2019,
+       "n": 247,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2020,
+       "n": 269,
+       "weights_vintage_max_base": 2017,
+       "weights": {
+        "fangraphs": 0.9602,
+        "mlb_pipeline": 1.0398
+       },
+       "weight_base_n": 161,
+       "weight_source_rho": {
+        "fangraphs": 0.3023,
+        "mlb_pipeline": 0.3527
+       },
+       "equal_spearman": 0.2968,
+       "weighted_spearman": 0.3096
+      },
+      {
+       "year": 2021,
+       "n": 257,
+       "weights_vintage_max_base": 2018,
+       "weights": {
+        "fangraphs": 0.9136,
+        "mlb_pipeline": 1.0864
+       },
+       "weight_base_n": 371,
+       "weight_source_rho": {
+        "fangraphs": 0.2545,
+        "mlb_pipeline": 0.3248
+       },
+       "equal_spearman": 0.3065,
+       "weighted_spearman": 0.3167
+      },
+      {
+       "year": 2022,
+       "n": 239,
+       "weights_vintage_max_base": 2019,
+       "weights": {
+        "fangraphs": 0.8778,
+        "mlb_pipeline": 1.1222
+       },
+       "weight_base_n": 618,
+       "weight_source_rho": {
+        "fangraphs": 0.258,
+        "mlb_pipeline": 0.3504
+       },
+       "equal_spearman": 0.2748,
+       "weighted_spearman": 0.2803
+      },
+      {
+       "year": 2023,
+       "n": 211,
+       "weights_vintage_max_base": 2020,
+       "weights": {
+        "fangraphs": 0.8577,
+        "mlb_pipeline": 1.1423
+       },
+       "weight_base_n": 887,
+       "weight_source_rho": {
+        "fangraphs": 0.2487,
+        "mlb_pipeline": 0.3479
+       },
+       "equal_spearman": 0.2138,
+       "weighted_spearman": 0.2247
+      },
+      {
+       "year": 2024,
+       "n": 169,
+       "weights_vintage_max_base": 2021,
+       "weights": {
+        "fangraphs": 0.8549,
+        "mlb_pipeline": 1.1451
+       },
+       "weight_base_n": 1144,
+       "weight_source_rho": {
+        "fangraphs": 0.2482,
+        "mlb_pipeline": 0.3456
+       },
+       "equal_spearman": 0.3232,
+       "weighted_spearman": 0.344
+      },
+      {
+       "year": 2025,
+       "n": 115,
+       "weights_vintage_max_base": 2022,
+       "weights": {
+        "fangraphs": 0.8575,
+        "mlb_pipeline": 1.1425
+       },
+       "weight_base_n": 1383,
+       "weight_source_rho": {
+        "fangraphs": 0.2427,
+        "mlb_pipeline": 0.3337
+       },
+       "equal_spearman": 0.2876,
+       "weighted_spearman": 0.3002
+      }
+     ],
+     "evaluable_years": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "C0_numpy_equivalence_check": {
+      "d_rho_pure": 0.013416,
+      "d_rho_numpy": 0.013416,
+      "d_auc_pure": 0.006575,
+      "d_auc_numpy": 0.006575,
+      "max_abs_diff": 0.0,
+      "identical_to_1e12": true
+     },
+     "C0_array_ab_equivalence": {
+      "d_rho_pure": 0.013416,
+      "d_rho_array": 0.013416,
+      "d_auc_pure": 0.006575,
+      "d_auc_array": 0.006575,
+      "identical_to_1e12": true
+     },
+     "C61_permuted_source_null": {
+      "draws": 1000,
+      "n_nonflat_rho": 1000,
+      "n_nonflat_auc": 1000,
+      "abs_d_rho_p95": 0.006049,
+      "abs_d_auc_p95": 0.003078,
+      "abs_d_rho_max": 0.010387,
+      "abs_d_auc_max": 0.005765,
+      "perm_weight_spread_median": 0.051,
+      "perm_weight_spread_p95": 0.1418,
+      "p_rho": 0.000999,
+      "p_auc": 0.000999
+     },
+     "bootstrap": {
+      "draws": 2000,
+      "d_rho_lo95": 0.007728,
+      "d_auc_lo95": 0.003466,
+      "d_rho_sd": 0.003488,
+      "d_auc_sd": 0.001945
+     },
+     "C65_seed_stability": {
+      "boot_seed1337": {
+       "draws": 2000,
+       "d_rho_lo95": 0.007631,
+       "d_auc_lo95": 0.003383,
+       "d_rho_sd": 0.00349,
+       "d_auc_sd": 0.001957
+      },
+      "perm_seed1337_200": {
+       "draws": 200,
+       "n_nonflat_rho": 200,
+       "n_nonflat_auc": 200,
+       "abs_d_rho_p95": 0.006799,
+       "abs_d_auc_p95": 0.003231,
+       "abs_d_rho_max": 0.008493,
+       "abs_d_auc_max": 0.006721,
+       "perm_weight_spread_median": 0.0578,
+       "perm_weight_spread_p95": 0.1692,
+       "p_rho": 0.004975,
+       "p_auc": 0.00995
+      }
+     },
+     "C63_shuffled_outcome_null": {
+      "n": 1260,
+      "equal": {
+       "spearman": -0.0117,
+       "auc": 0.4864
+      },
+      "weighted": {
+       "spearman": -0.0093,
+       "auc": 0.4871
+      }
+     },
+     "C64_forced_equal_identity": {
+      "vacuous_form_n": 0,
+      "vacuous_form_note": "0 rows: flat-weight years are skipped, so this form of the control cannot fail. Not used.",
+      "n": 1878,
+      "d_rho": 0.0,
+      "d_auc": 0.0,
+      "passes": true
+     },
+     "C61b_perm_null_degeneracy": {
+      "perm_weight_spread_median": 0.051,
+      "perm_weight_spread_p95": 0.1418,
+      "real_weight_spread_by_year": {
+       "2017": 0.0,
+       "2018": 0.0,
+       "2019": 0.0,
+       "2020": 0.0796,
+       "2021": 0.1728,
+       "2022": 0.2444,
+       "2023": 0.2846,
+       "2024": 0.2902,
+       "2025": 0.285
+      },
+      "degenerate": false
+     },
+     "C67_player_disjoint_weights": {
+      "n": 1260,
+      "equal": {
+       "spearman": 0.275,
+       "auc": 0.6417
+      },
+      "weighted": {
+       "spearman": 0.2867,
+       "auc": 0.6477
+      },
+      "d_rho": 0.011754,
+      "d_auc": 0.006006,
+      "per_year": [
+       {
+        "year": 2017,
+        "n": 161,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2018,
+        "n": 210,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2019,
+        "n": 247,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2020,
+        "n": 269,
+        "weights": {
+         "fangraphs": 0.9613,
+         "mlb_pipeline": 1.0387
+        },
+        "weight_base_n": 100
+       },
+       {
+        "year": 2021,
+        "n": 257,
+        "weights": {
+         "fangraphs": 0.8966,
+         "mlb_pipeline": 1.1034
+        },
+        "weight_base_n": 266
+       },
+       {
+        "year": 2022,
+        "n": 239,
+        "weights": {
+         "fangraphs": 0.8983,
+         "mlb_pipeline": 1.1017
+        },
+        "weight_base_n": 530
+       },
+       {
+        "year": 2023,
+        "n": 211,
+        "weights": {
+         "fangraphs": 0.9013,
+         "mlb_pipeline": 1.0987
+        },
+        "weight_base_n": 779
+       },
+       {
+        "year": 2024,
+        "n": 169,
+        "weights": {
+         "fangraphs": 0.8542,
+         "mlb_pipeline": 1.1458
+        },
+        "weight_base_n": 1058
+       },
+       {
+        "year": 2025,
+        "n": 115,
+        "weights": {
+         "fangraphs": 0.8635,
+         "mlb_pipeline": 1.1365
+        },
+        "weight_base_n": 1324
+       }
+      ],
+      "bootstrap": {
+       "draws": 1000,
+       "d_rho_lo95": 0.005925,
+       "d_auc_lo95": 0.002952,
+       "d_rho_sd": 0.003441,
+       "d_auc_sd": 0.001922
+      }
+     },
+     "context_single_source": {
+      "pooled_n": 1260,
+      "years": [
+       2020,
+       2021,
+       2022,
+       2023,
+       2024,
+       2025
+      ],
+      "fangraphs": {
+       "spearman": 0.2049
+      },
+      "mlb_pipeline": {
+       "spearman": 0.3215
+      },
+      "equal_mean": {
+       "spearman": 0.275
+      }
+     },
+     "gate": {
+      "F_rho": 0.006049,
+      "F_auc": 0.003078,
+      "margin_over_F_rho": 2.2179,
+      "margin_over_F_auc": 2.1361,
+      "G1_rho_resolvable": true,
+      "G2_auc_resolvable": true,
+      "G3_rho_lo95_pos": true,
+      "G4_auc_lo95_pos": true,
+      "G5_not_knife_edge": true,
+      "PREREGISTERED_SHIP": true,
+      "G6_bootstrap_MDE95_selfadded": true,
+      "G6_mde95_rho": 0.005738,
+      "G6_mde95_auc": 0.0032,
+      "G6_margin_rho": 2.3382,
+      "G6_margin_auc": 2.055,
+      "G7_survives_player_disjoint_weights_selfadded": true,
+      "SHIP": true,
+      "verdict": "SHIP"
+     },
+     "C66_survivorship": {
+      "common_set_graded_rows": 3740,
+      "with_realized_outcome_rows": 1878,
+      "implied_debut_rate_pct": 50.2139,
+      "boundary": "tool accuracy AMONG DEBUTS, not tool accuracy overall"
+     }
+    },
+    "game_pwr": {
+     "common_set_by_year_chained": {
+      "2017": 161,
+      "2018": 210,
+      "2019": 247,
+      "2020": 268,
+      "2021": 256,
+      "2022": 237,
+      "2023": 211,
+      "2024": 169,
+      "2025": 115
+     },
+     "common_set_by_year_unchained_efv_tools_basis": {
+      "2017": 161,
+      "2018": 210,
+      "2019": 248,
+      "2020": 271,
+      "2021": 264,
+      "2022": 253,
+      "2023": 220,
+      "2024": 177,
+      "2025": 137,
+      "2026": 44
+     },
+     "pooled_n_chained": 1874,
+     "pooled_n_unchained": 1985,
+     "forward_chain_cost_rows": 111,
+     "primary": {
+      "n": 1256,
+      "equal": {
+       "spearman": 0.3656,
+       "auc": 0.7068
+      },
+      "weighted": {
+       "spearman": 0.3695,
+       "auc": 0.7095
+      },
+      "d_rho": 0.003933,
+      "d_auc": 0.002698
+     },
+     "per_year": [
+      {
+       "year": 2017,
+       "n": 161,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2018,
+       "n": 210,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2019,
+       "n": 247,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2020,
+       "n": 268,
+       "weights_vintage_max_base": 2017,
+       "weights": {
+        "fangraphs": 0.9788,
+        "mlb_pipeline": 1.0212
+       },
+       "weight_base_n": 161,
+       "weight_source_rho": {
+        "fangraphs": 0.4043,
+        "mlb_pipeline": 0.4389
+       },
+       "equal_spearman": 0.39,
+       "weighted_spearman": 0.3901
+      },
+      {
+       "year": 2021,
+       "n": 256,
+       "weights_vintage_max_base": 2018,
+       "weights": {
+        "fangraphs": 0.954,
+        "mlb_pipeline": 1.046
+       },
+       "weight_base_n": 371,
+       "weight_source_rho": {
+        "fangraphs": 0.3829,
+        "mlb_pipeline": 0.4357
+       },
+       "equal_spearman": 0.3771,
+       "weighted_spearman": 0.3772
+      },
+      {
+       "year": 2022,
+       "n": 237,
+       "weights_vintage_max_base": 2019,
+       "weights": {
+        "fangraphs": 0.9656,
+        "mlb_pipeline": 1.0344
+       },
+       "weight_base_n": 618,
+       "weight_source_rho": {
+        "fangraphs": 0.3917,
+        "mlb_pipeline": 0.4267
+       },
+       "equal_spearman": 0.3621,
+       "weighted_spearman": 0.374
+      },
+      {
+       "year": 2023,
+       "n": 211,
+       "weights_vintage_max_base": 2020,
+       "weights": {
+        "fangraphs": 0.979,
+        "mlb_pipeline": 1.021
+       },
+       "weight_base_n": 886,
+       "weight_source_rho": {
+        "fangraphs": 0.3891,
+        "mlb_pipeline": 0.4087
+       },
+       "equal_spearman": 0.3979,
+       "weighted_spearman": 0.4055
+      },
+      {
+       "year": 2024,
+       "n": 169,
+       "weights_vintage_max_base": 2021,
+       "weights": {
+        "fangraphs": 0.9851,
+        "mlb_pipeline": 1.0149
+       },
+       "weight_base_n": 1142,
+       "weight_source_rho": {
+        "fangraphs": 0.3815,
+        "mlb_pipeline": 0.3946
+       },
+       "equal_spearman": 0.3724,
+       "weighted_spearman": 0.3809
+      },
+      {
+       "year": 2025,
+       "n": 115,
+       "weights_vintage_max_base": 2022,
+       "weights": {
+        "fangraphs": 0.9639,
+        "mlb_pipeline": 1.0361
+       },
+       "weight_base_n": 1379,
+       "weight_source_rho": {
+        "fangraphs": 0.3671,
+        "mlb_pipeline": 0.3978
+       },
+       "equal_spearman": 0.2843,
+       "weighted_spearman": 0.2984
+      }
+     ],
+     "evaluable_years": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "C0_numpy_equivalence_check": {
+      "d_rho_pure": 0.003933,
+      "d_rho_numpy": 0.003933,
+      "d_auc_pure": 0.002698,
+      "d_auc_numpy": 0.002698,
+      "max_abs_diff": 0.0,
+      "identical_to_1e12": true
+     },
+     "C0_array_ab_equivalence": {
+      "d_rho_pure": 0.003933,
+      "d_rho_array": 0.003933,
+      "d_auc_pure": 0.002698,
+      "d_auc_array": 0.002698,
+      "identical_to_1e12": true
+     },
+     "C61_permuted_source_null": {
+      "draws": 1000,
+      "n_nonflat_rho": 1000,
+      "n_nonflat_auc": 1000,
+      "abs_d_rho_p95": 0.005136,
+      "abs_d_auc_p95": 0.002697,
+      "abs_d_rho_max": 0.010618,
+      "abs_d_auc_max": 0.004664,
+      "perm_weight_spread_median": 0.0273,
+      "perm_weight_spread_p95": 0.073,
+      "p_rho": 0.135864,
+      "p_auc": 0.050949
+     },
+     "bootstrap": {
+      "draws": 2000,
+      "d_rho_lo95": -0.00092,
+      "d_auc_lo95": -0.000179,
+      "d_rho_sd": 0.002912,
+      "d_auc_sd": 0.00168
+     },
+     "C65_seed_stability": {
+      "boot_seed1337": {
+       "draws": 2000,
+       "d_rho_lo95": -0.000639,
+       "d_auc_lo95": 0.00012,
+       "d_rho_sd": 0.002822,
+       "d_auc_sd": 0.00162
+      },
+      "perm_seed1337_200": {
+       "draws": 200,
+       "n_nonflat_rho": 200,
+       "n_nonflat_auc": 200,
+       "abs_d_rho_p95": 0.005327,
+       "abs_d_auc_p95": 0.00242,
+       "abs_d_rho_max": 0.007069,
+       "abs_d_auc_max": 0.003296,
+       "perm_weight_spread_median": 0.0251,
+       "perm_weight_spread_p95": 0.076,
+       "p_rho": 0.119403,
+       "p_auc": 0.039801
+      }
+     },
+     "C63_shuffled_outcome_null": {
+      "n": 1256,
+      "equal": {
+       "spearman": -0.0299,
+       "auc": 0.488
+      },
+      "weighted": {
+       "spearman": -0.0345,
+       "auc": 0.4859
+      }
+     },
+     "C64_forced_equal_identity": {
+      "vacuous_form_n": 0,
+      "vacuous_form_note": "0 rows: flat-weight years are skipped, so this form of the control cannot fail. Not used.",
+      "n": 1874,
+      "d_rho": 0.0,
+      "d_auc": 0.0,
+      "passes": true
+     },
+     "C61b_perm_null_degeneracy": {
+      "perm_weight_spread_median": 0.0273,
+      "perm_weight_spread_p95": 0.073,
+      "real_weight_spread_by_year": {
+       "2017": 0.0,
+       "2018": 0.0,
+       "2019": 0.0,
+       "2020": 0.0424,
+       "2021": 0.092,
+       "2022": 0.0688,
+       "2023": 0.042,
+       "2024": 0.0298,
+       "2025": 0.0722
+      },
+      "degenerate": false
+     },
+     "C67_player_disjoint_weights": {
+      "n": 1256,
+      "equal": {
+       "spearman": 0.3656,
+       "auc": 0.7068
+      },
+      "weighted": {
+       "spearman": 0.3706,
+       "auc": 0.7099
+      },
+      "d_rho": 0.004979,
+      "d_auc": 0.003116,
+      "per_year": [
+       {
+        "year": 2017,
+        "n": 161,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2018,
+        "n": 210,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2019,
+        "n": 247,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2020,
+        "n": 268,
+        "weights": {
+         "fangraphs": 0.9824,
+         "mlb_pipeline": 1.0176
+        },
+        "weight_base_n": 100
+       },
+       {
+        "year": 2021,
+        "n": 256,
+        "weights": {
+         "fangraphs": 0.9509,
+         "mlb_pipeline": 1.0491
+        },
+        "weight_base_n": 266
+       },
+       {
+        "year": 2022,
+        "n": 237,
+        "weights": {
+         "fangraphs": 0.9577,
+         "mlb_pipeline": 1.0423
+        },
+        "weight_base_n": 530
+       },
+       {
+        "year": 2023,
+        "n": 211,
+        "weights": {
+         "fangraphs": 0.9792,
+         "mlb_pipeline": 1.0208
+        },
+        "weight_base_n": 778
+       },
+       {
+        "year": 2024,
+        "n": 169,
+        "weights": {
+         "fangraphs": 0.9978,
+         "mlb_pipeline": 1.0022
+        },
+        "weight_base_n": 1056
+       },
+       {
+        "year": 2025,
+        "n": 115,
+        "weights": {
+         "fangraphs": 0.966,
+         "mlb_pipeline": 1.034
+        },
+        "weight_base_n": 1320
+       }
+      ],
+      "bootstrap": {
+       "draws": 1000,
+       "d_rho_lo95": 0.000218,
+       "d_auc_lo95": 0.000242,
+       "d_rho_sd": 0.002916,
+       "d_auc_sd": 0.001659
+      }
+     },
+     "context_single_source": {
+      "pooled_n": 1256,
+      "years": [
+       2020,
+       2021,
+       2022,
+       2023,
+       2024,
+       2025
+      ],
+      "fangraphs": {
+       "spearman": 0.328
+      },
+      "mlb_pipeline": {
+       "spearman": 0.3738
+      },
+      "equal_mean": {
+       "spearman": 0.3656
+      }
+     },
+     "gate": {
+      "F_rho": 0.005136,
+      "F_auc": 0.002697,
+      "margin_over_F_rho": 0.7658,
+      "margin_over_F_auc": 1.0004,
+      "G1_rho_resolvable": false,
+      "G2_auc_resolvable": true,
+      "G3_rho_lo95_pos": false,
+      "G4_auc_lo95_pos": false,
+      "G5_not_knife_edge": false,
+      "PREREGISTERED_SHIP": false,
+      "G6_bootstrap_MDE95_selfadded": false,
+      "G6_mde95_rho": 0.00479,
+      "G6_mde95_auc": 0.002764,
+      "G6_margin_rho": 0.821,
+      "G6_margin_auc": 0.9763,
+      "G7_survives_player_disjoint_weights_selfadded": true,
+      "SHIP": false,
+      "verdict": "NO_SHIP"
+     },
+     "C66_survivorship": {
+      "common_set_graded_rows": 3739,
+      "with_realized_outcome_rows": 1874,
+      "implied_debut_rate_pct": 50.1204,
+      "boundary": "tool accuracy AMONG DEBUTS, not tool accuracy overall"
+     }
+    },
+    "speed": {
+     "common_set_by_year_chained": {
+      "2017": 161,
+      "2018": 210,
+      "2019": 247,
+      "2020": 269,
+      "2021": 257,
+      "2022": 239,
+      "2023": 211,
+      "2024": 169,
+      "2025": 115
+     },
+     "common_set_by_year_unchained_efv_tools_basis": {
+      "2017": 161,
+      "2018": 210,
+      "2019": 248,
+      "2020": 272,
+      "2021": 265,
+      "2022": 255,
+      "2023": 220,
+      "2024": 177,
+      "2025": 137,
+      "2026": 44
+     },
+     "pooled_n_chained": 1878,
+     "pooled_n_unchained": 1989,
+     "forward_chain_cost_rows": 111,
+     "primary": {
+      "n": 1260,
+      "equal": {
+       "spearman": 0.4249,
+       "auc": 0.691
+      },
+      "weighted": {
+       "spearman": 0.4291,
+       "auc": 0.6946
+      },
+      "d_rho": 0.004258,
+      "d_auc": 0.003521
+     },
+     "per_year": [
+      {
+       "year": 2017,
+       "n": 161,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2018,
+       "n": 210,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2019,
+       "n": 247,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2020,
+       "n": 269,
+       "weights_vintage_max_base": 2017,
+       "weights": {
+        "fangraphs": 0.982,
+        "mlb_pipeline": 1.018
+       },
+       "weight_base_n": 161,
+       "weight_source_rho": {
+        "fangraphs": 0.4634,
+        "mlb_pipeline": 0.4968
+       },
+       "equal_spearman": 0.4636,
+       "weighted_spearman": 0.4699
+      },
+      {
+       "year": 2021,
+       "n": 257,
+       "weights_vintage_max_base": 2018,
+       "weights": {
+        "fangraphs": 0.9556,
+        "mlb_pipeline": 1.0444
+       },
+       "weight_base_n": 371,
+       "weight_source_rho": {
+        "fangraphs": 0.4341,
+        "mlb_pipeline": 0.4918
+       },
+       "equal_spearman": 0.4687,
+       "weighted_spearman": 0.4748
+      },
+      {
+       "year": 2022,
+       "n": 239,
+       "weights_vintage_max_base": 2019,
+       "weights": {
+        "fangraphs": 0.9608,
+        "mlb_pipeline": 1.0392
+       },
+       "weight_base_n": 618,
+       "weight_source_rho": {
+        "fangraphs": 0.4434,
+        "mlb_pipeline": 0.4888
+       },
+       "equal_spearman": 0.4923,
+       "weighted_spearman": 0.5007
+      },
+      {
+       "year": 2023,
+       "n": 211,
+       "weights_vintage_max_base": 2020,
+       "weights": {
+        "fangraphs": 0.9513,
+        "mlb_pipeline": 1.0487
+       },
+       "weight_base_n": 887,
+       "weight_source_rho": {
+        "fangraphs": 0.4354,
+        "mlb_pipeline": 0.4879
+       },
+       "equal_spearman": 0.4087,
+       "weighted_spearman": 0.4106
+      },
+      {
+       "year": 2024,
+       "n": 169,
+       "weights_vintage_max_base": 2021,
+       "weights": {
+        "fangraphs": 0.951,
+        "mlb_pipeline": 1.049
+       },
+       "weight_base_n": 1144,
+       "weight_source_rho": {
+        "fangraphs": 0.4364,
+        "mlb_pipeline": 0.4877
+       },
+       "equal_spearman": 0.3433,
+       "weighted_spearman": 0.3445
+      },
+      {
+       "year": 2025,
+       "n": 115,
+       "weights_vintage_max_base": 2022,
+       "weights": {
+        "fangraphs": 0.9523,
+        "mlb_pipeline": 1.0477
+       },
+       "weight_base_n": 1383,
+       "weight_source_rho": {
+        "fangraphs": 0.4395,
+        "mlb_pipeline": 0.4886
+       },
+       "equal_spearman": 0.3372,
+       "weighted_spearman": 0.3373
+      }
+     ],
+     "evaluable_years": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "C0_numpy_equivalence_check": {
+      "d_rho_pure": 0.004258,
+      "d_rho_numpy": 0.004258,
+      "d_auc_pure": 0.003521,
+      "d_auc_numpy": 0.003521,
+      "max_abs_diff": 0.0,
+      "identical_to_1e12": true
+     },
+     "C0_array_ab_equivalence": {
+      "d_rho_pure": 0.004258,
+      "d_rho_array": 0.004258,
+      "d_auc_pure": 0.003521,
+      "d_auc_array": 0.003521,
+      "identical_to_1e12": true
+     },
+     "C61_permuted_source_null": {
+      "draws": 1000,
+      "n_nonflat_rho": 1000,
+      "n_nonflat_auc": 1000,
+      "abs_d_rho_p95": 0.003328,
+      "abs_d_auc_p95": 0.001775,
+      "abs_d_rho_max": 0.005441,
+      "abs_d_auc_max": 0.00412,
+      "perm_weight_spread_median": 0.0184,
+      "perm_weight_spread_p95": 0.0502,
+      "p_rho": 0.014985,
+      "p_auc": 0.001998
+     },
+     "bootstrap": {
+      "draws": 2000,
+      "d_rho_lo95": 0.000501,
+      "d_auc_lo95": 0.001509,
+      "d_rho_sd": 0.002157,
+      "d_auc_sd": 0.001196
+     },
+     "C65_seed_stability": {
+      "boot_seed1337": {
+       "draws": 2000,
+       "d_rho_lo95": 0.000728,
+       "d_auc_lo95": 0.001512,
+       "d_rho_sd": 0.002099,
+       "d_auc_sd": 0.001187
+      },
+      "perm_seed1337_200": {
+       "draws": 200,
+       "n_nonflat_rho": 200,
+       "n_nonflat_auc": 200,
+       "abs_d_rho_p95": 0.003198,
+       "abs_d_auc_p95": 0.001799,
+       "abs_d_rho_max": 0.005065,
+       "abs_d_auc_max": 0.002488,
+       "perm_weight_spread_median": 0.0153,
+       "perm_weight_spread_p95": 0.0502,
+       "p_rho": 0.014925,
+       "p_auc": 0.004975
+      }
+     },
+     "C63_shuffled_outcome_null": {
+      "n": 1260,
+      "equal": {
+       "spearman": -0.0105,
+       "auc": 0.4893
+      },
+      "weighted": {
+       "spearman": -0.0101,
+       "auc": 0.4902
+      }
+     },
+     "C64_forced_equal_identity": {
+      "vacuous_form_n": 0,
+      "vacuous_form_note": "0 rows: flat-weight years are skipped, so this form of the control cannot fail. Not used.",
+      "n": 1878,
+      "d_rho": 0.0,
+      "d_auc": 0.0,
+      "passes": true
+     },
+     "C61b_perm_null_degeneracy": {
+      "perm_weight_spread_median": 0.0184,
+      "perm_weight_spread_p95": 0.0502,
+      "real_weight_spread_by_year": {
+       "2017": 0.0,
+       "2018": 0.0,
+       "2019": 0.0,
+       "2020": 0.036,
+       "2021": 0.0888,
+       "2022": 0.0784,
+       "2023": 0.0974,
+       "2024": 0.098,
+       "2025": 0.0954
+      },
+      "degenerate": true
+     },
+     "C67_player_disjoint_weights": {
+      "n": 1260,
+      "equal": {
+       "spearman": 0.4249,
+       "auc": 0.691
+      },
+      "weighted": {
+       "spearman": 0.4285,
+       "auc": 0.6949
+      },
+      "d_rho": 0.003612,
+      "d_auc": 0.003837,
+      "per_year": [
+       {
+        "year": 2017,
+        "n": 161,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2018,
+        "n": 210,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2019,
+        "n": 247,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2020,
+        "n": 269,
+        "weights": {
+         "fangraphs": 0.9581,
+         "mlb_pipeline": 1.0419
+        },
+        "weight_base_n": 100
+       },
+       {
+        "year": 2021,
+        "n": 257,
+        "weights": {
+         "fangraphs": 0.9503,
+         "mlb_pipeline": 1.0497
+        },
+        "weight_base_n": 266
+       },
+       {
+        "year": 2022,
+        "n": 239,
+        "weights": {
+         "fangraphs": 0.9624,
+         "mlb_pipeline": 1.0376
+        },
+        "weight_base_n": 530
+       },
+       {
+        "year": 2023,
+        "n": 211,
+        "weights": {
+         "fangraphs": 0.9487,
+         "mlb_pipeline": 1.0513
+        },
+        "weight_base_n": 779
+       },
+       {
+        "year": 2024,
+        "n": 169,
+        "weights": {
+         "fangraphs": 0.9497,
+         "mlb_pipeline": 1.0503
+        },
+        "weight_base_n": 1058
+       },
+       {
+        "year": 2025,
+        "n": 115,
+        "weights": {
+         "fangraphs": 0.9435,
+         "mlb_pipeline": 1.0565
+        },
+        "weight_base_n": 1324
+       }
+      ],
+      "bootstrap": {
+       "draws": 1000,
+       "d_rho_lo95": -0.000116,
+       "d_auc_lo95": 0.001877,
+       "d_rho_sd": 0.002209,
+       "d_auc_sd": 0.001189
+      }
+     },
+     "context_single_source": {
+      "pooled_n": 1260,
+      "years": [
+       2020,
+       2021,
+       2022,
+       2023,
+       2024,
+       2025
+      ],
+      "fangraphs": {
+       "spearman": 0.3905
+      },
+      "mlb_pipeline": {
+       "spearman": 0.4339
+      },
+      "equal_mean": {
+       "spearman": 0.4249
+      }
+     },
+     "gate": {
+      "F_rho": 0.003328,
+      "F_auc": 0.001775,
+      "margin_over_F_rho": 1.2794,
+      "margin_over_F_auc": 1.9837,
+      "G1_rho_resolvable": true,
+      "G2_auc_resolvable": true,
+      "G3_rho_lo95_pos": true,
+      "G4_auc_lo95_pos": true,
+      "G5_not_knife_edge": false,
+      "PREREGISTERED_SHIP": false,
+      "G6_bootstrap_MDE95_selfadded": true,
+      "G6_mde95_rho": 0.003548,
+      "G6_mde95_auc": 0.001967,
+      "G6_margin_rho": 1.2,
+      "G6_margin_auc": 1.7897,
+      "G7_survives_player_disjoint_weights_selfadded": false,
+      "SHIP": false,
+      "verdict": "MARGINAL->FAIL"
+     },
+     "C66_survivorship": {
+      "common_set_graded_rows": 3741,
+      "with_realized_outcome_rows": 1878,
+      "implied_debut_rate_pct": 50.2005,
+      "boundary": "tool accuracy AMONG DEBUTS, not tool accuracy overall"
+     }
+    },
+    "fb": {
+     "common_set_by_year_chained": {
+      "2017": 123,
+      "2018": 183,
+      "2019": 215,
+      "2020": 245,
+      "2021": 226,
+      "2022": 217,
+      "2023": 208,
+      "2024": 167,
+      "2025": 117
+     },
+     "common_set_by_year_unchained_efv_tools_basis": {
+      "2017": 126,
+      "2018": 187,
+      "2019": 221,
+      "2020": 252,
+      "2021": 245,
+      "2022": 228,
+      "2023": 225,
+      "2024": 179,
+      "2025": 156,
+      "2026": 59
+     },
+     "pooled_n_chained": 1701,
+     "pooled_n_unchained": 1878,
+     "forward_chain_cost_rows": 177,
+     "primary": {
+      "n": 1180,
+      "equal": {
+       "spearman": 0.2566,
+       "auc": 0.6294
+      },
+      "weighted": {
+       "spearman": 0.2498,
+       "auc": 0.6266
+      },
+      "d_rho": -0.006744,
+      "d_auc": -0.002765
+     },
+     "per_year": [
+      {
+       "year": 2017,
+       "n": 123,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2018,
+       "n": 183,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2019,
+       "n": 215,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2020,
+       "n": 245,
+       "weights_vintage_max_base": 2017,
+       "weights": {
+        "fangraphs": 1.023,
+        "mlb_pipeline": 0.977
+       },
+       "weight_base_n": 123,
+       "weight_source_rho": {
+        "fangraphs": 0.1603,
+        "mlb_pipeline": 0.1448
+       },
+       "equal_spearman": 0.274,
+       "weighted_spearman": 0.263
+      },
+      {
+       "year": 2021,
+       "n": 226,
+       "weights_vintage_max_base": 2018,
+       "weights": {
+        "fangraphs": 0.9977,
+        "mlb_pipeline": 1.0023
+       },
+       "weight_base_n": 306,
+       "weight_source_rho": {
+        "fangraphs": 0.157,
+        "mlb_pipeline": 0.1581
+       },
+       "equal_spearman": 0.1753,
+       "weighted_spearman": 0.1676
+      },
+      {
+       "year": 2022,
+       "n": 217,
+       "weights_vintage_max_base": 2019,
+       "weights": {
+        "fangraphs": 0.9933,
+        "mlb_pipeline": 1.0067
+       },
+       "weight_base_n": 521,
+       "weight_source_rho": {
+        "fangraphs": 0.152,
+        "mlb_pipeline": 0.1546
+       },
+       "equal_spearman": 0.3221,
+       "weighted_spearman": 0.316
+      },
+      {
+       "year": 2023,
+       "n": 208,
+       "weights_vintage_max_base": 2020,
+       "weights": {
+        "fangraphs": 0.9545,
+        "mlb_pipeline": 1.0455
+       },
+       "weight_base_n": 766,
+       "weight_source_rho": {
+        "fangraphs": 0.1737,
+        "mlb_pipeline": 0.1937
+       },
+       "equal_spearman": 0.2217,
+       "weighted_spearman": 0.2152
+      },
+      {
+       "year": 2024,
+       "n": 167,
+       "weights_vintage_max_base": 2021,
+       "weights": {
+        "fangraphs": 1.0035,
+        "mlb_pipeline": 0.9965
+       },
+       "weight_base_n": 992,
+       "weight_source_rho": {
+        "fangraphs": 0.1769,
+        "mlb_pipeline": 0.1755
+       },
+       "equal_spearman": 0.2973,
+       "weighted_spearman": 0.3037
+      },
+      {
+       "year": 2025,
+       "n": 117,
+       "weights_vintage_max_base": 2022,
+       "weights": {
+        "fangraphs": 1.0253,
+        "mlb_pipeline": 0.9747
+       },
+       "weight_base_n": 1209,
+       "weight_source_rho": {
+        "fangraphs": 0.2063,
+        "mlb_pipeline": 0.1949
+       },
+       "equal_spearman": 0.2293,
+       "weighted_spearman": 0.2225
+      }
+     ],
+     "evaluable_years": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "C0_numpy_equivalence_check": {
+      "d_rho_pure": -0.006744,
+      "d_rho_numpy": -0.006744,
+      "d_auc_pure": -0.002765,
+      "d_auc_numpy": -0.002765,
+      "max_abs_diff": 0.0,
+      "identical_to_1e12": true
+     },
+     "C0_array_ab_equivalence": {
+      "d_rho_pure": -0.006744,
+      "d_rho_array": -0.006744,
+      "d_auc_pure": -0.002765,
+      "d_auc_array": -0.002765,
+      "identical_to_1e12": true
+     },
+     "C61_permuted_source_null": {
+      "draws": 1000,
+      "n_nonflat_rho": 1000,
+      "n_nonflat_auc": 1000,
+      "abs_d_rho_p95": 0.005806,
+      "abs_d_auc_p95": 0.003268,
+      "abs_d_rho_max": 0.009463,
+      "abs_d_auc_max": 0.00489,
+      "perm_weight_spread_median": 0.0563,
+      "perm_weight_spread_p95": 0.1758,
+      "p_rho": 0.021978,
+      "p_auc": 0.084915
+     },
+     "bootstrap": {
+      "draws": 2000,
+      "d_rho_lo95": -0.011016,
+      "d_auc_lo95": -0.005413,
+      "d_rho_sd": 0.002554,
+      "d_auc_sd": 0.001559
+     },
+     "C65_seed_stability": {
+      "boot_seed1337": {
+       "draws": 2000,
+       "d_rho_lo95": -0.01107,
+       "d_auc_lo95": -0.005516,
+       "d_rho_sd": 0.002599,
+       "d_auc_sd": 0.001619
+      },
+      "perm_seed1337_200": {
+       "draws": 200,
+       "n_nonflat_rho": 200,
+       "n_nonflat_auc": 200,
+       "abs_d_rho_p95": 0.006007,
+       "abs_d_auc_p95": 0.003024,
+       "abs_d_rho_max": 0.008323,
+       "abs_d_auc_max": 0.004263,
+       "perm_weight_spread_median": 0.0565,
+       "perm_weight_spread_p95": 0.158,
+       "p_rho": 0.034826,
+       "p_auc": 0.089552
+      }
+     },
+     "C63_shuffled_outcome_null": {
+      "n": 1180,
+      "equal": {
+       "spearman": 0.0012,
+       "auc": 0.4996
+      },
+      "weighted": {
+       "spearman": -0.0004,
+       "auc": 0.5001
+      }
+     },
+     "C64_forced_equal_identity": {
+      "vacuous_form_n": 0,
+      "vacuous_form_note": "0 rows: flat-weight years are skipped, so this form of the control cannot fail. Not used.",
+      "n": 1701,
+      "d_rho": 0.0,
+      "d_auc": 0.0,
+      "passes": true
+     },
+     "C61b_perm_null_degeneracy": {
+      "perm_weight_spread_median": 0.0563,
+      "perm_weight_spread_p95": 0.1758,
+      "real_weight_spread_by_year": {
+       "2017": 0.0,
+       "2018": 0.0,
+       "2019": 0.0,
+       "2020": 0.046,
+       "2021": 0.0046,
+       "2022": 0.0134,
+       "2023": 0.091,
+       "2024": 0.007,
+       "2025": 0.0506
+      },
+      "degenerate": false
+     },
+     "C67_player_disjoint_weights": {
+      "n": 1180,
+      "equal": {
+       "spearman": 0.2566,
+       "auc": 0.6294
+      },
+      "weighted": {
+       "spearman": 0.2536,
+       "auc": 0.6292
+      },
+      "d_rho": -0.002963,
+      "d_auc": -0.000217,
+      "per_year": [
+       {
+        "year": 2017,
+        "n": 123,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2018,
+        "n": 183,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2019,
+        "n": 215,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2020,
+        "n": 245,
+        "weights": {
+         "fangraphs": 1.0558,
+         "mlb_pipeline": 0.9442
+        },
+        "weight_base_n": 73
+       },
+       {
+        "year": 2021,
+        "n": 226,
+        "weights": {
+         "fangraphs": 1.0764,
+         "mlb_pipeline": 0.9236
+        },
+        "weight_base_n": 217
+       },
+       {
+        "year": 2022,
+        "n": 217,
+        "weights": {
+         "fangraphs": 1.0443,
+         "mlb_pipeline": 0.9557
+        },
+        "weight_base_n": 444
+       },
+       {
+        "year": 2023,
+        "n": 208,
+        "weights": {
+         "fangraphs": 0.9486,
+         "mlb_pipeline": 1.0514
+        },
+        "weight_base_n": 686
+       },
+       {
+        "year": 2024,
+        "n": 167,
+        "weights": {
+         "fangraphs": 0.9806,
+         "mlb_pipeline": 1.0194
+        },
+        "weight_base_n": 934
+       },
+       {
+        "year": 2025,
+        "n": 117,
+        "weights": {
+         "fangraphs": 1.0106,
+         "mlb_pipeline": 0.9894
+        },
+        "weight_base_n": 1165
+       }
+      ],
+      "bootstrap": {
+       "draws": 1000,
+       "d_rho_lo95": -0.007797,
+       "d_auc_lo95": -0.002881,
+       "d_rho_sd": 0.003071,
+       "d_auc_sd": 0.001731
+      }
+     },
+     "context_single_source": {
+      "pooled_n": 1180,
+      "years": [
+       2020,
+       2021,
+       2022,
+       2023,
+       2024,
+       2025
+      ],
+      "fangraphs": {
+       "spearman": 0.2533
+      },
+      "mlb_pipeline": {
+       "spearman": 0.2257
+      },
+      "equal_mean": {
+       "spearman": 0.2566
+      }
+     },
+     "gate": {
+      "F_rho": 0.005806,
+      "F_auc": 0.003268,
+      "margin_over_F_rho": -1.1616,
+      "margin_over_F_auc": -0.8461,
+      "G1_rho_resolvable": false,
+      "G2_auc_resolvable": false,
+      "G3_rho_lo95_pos": false,
+      "G4_auc_lo95_pos": false,
+      "G5_not_knife_edge": false,
+      "PREREGISTERED_SHIP": false,
+      "G6_bootstrap_MDE95_selfadded": false,
+      "G6_mde95_rho": 0.004201,
+      "G6_mde95_auc": 0.002565,
+      "G6_margin_rho": -1.6052,
+      "G6_margin_auc": -1.0782,
+      "G7_survives_player_disjoint_weights_selfadded": false,
+      "SHIP": false,
+      "verdict": "NO_SHIP"
+     },
+     "C66_survivorship": {
+      "common_set_graded_rows": 3183,
+      "with_realized_outcome_rows": 1701,
+      "implied_debut_rate_pct": 53.4402,
+      "boundary": "tool accuracy AMONG DEBUTS, not tool accuracy overall"
+     }
+    },
+    "cmd": {
+     "common_set_by_year_chained": {
+      "2017": 123,
+      "2018": 181,
+      "2019": 215,
+      "2020": 245,
+      "2021": 229,
+      "2022": 217,
+      "2023": 209,
+      "2024": 167,
+      "2025": 118
+     },
+     "common_set_by_year_unchained_efv_tools_basis": {
+      "2017": 126,
+      "2018": 185,
+      "2019": 221,
+      "2020": 252,
+      "2021": 249,
+      "2022": 228,
+      "2023": 226,
+      "2024": 179,
+      "2025": 157,
+      "2026": 59
+     },
+     "pooled_n_chained": 1704,
+     "pooled_n_unchained": 1882,
+     "forward_chain_cost_rows": 178,
+     "primary": {
+      "n": 1185,
+      "equal": {
+       "spearman": 0.2689,
+       "auc": 0.6449
+      },
+      "weighted": {
+       "spearman": 0.273,
+       "auc": 0.6476
+      },
+      "d_rho": 0.004104,
+      "d_auc": 0.002691
+     },
+     "per_year": [
+      {
+       "year": 2017,
+       "n": 123,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2018,
+       "n": 181,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2019,
+       "n": 215,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2020,
+       "n": 245,
+       "weights_vintage_max_base": 2017,
+       "weights": {
+        "fangraphs": 0.9524,
+        "mlb_pipeline": 1.0476
+       },
+       "weight_base_n": 123,
+       "weight_source_rho": {
+        "fangraphs": 0.4329,
+        "mlb_pipeline": 0.5352
+       },
+       "equal_spearman": 0.2914,
+       "weighted_spearman": 0.3166
+      },
+      {
+       "year": 2021,
+       "n": 229,
+       "weights_vintage_max_base": 2018,
+       "weights": {
+        "fangraphs": 0.9388,
+        "mlb_pipeline": 1.0612
+       },
+       "weight_base_n": 304,
+       "weight_source_rho": {
+        "fangraphs": 0.4189,
+        "mlb_pipeline": 0.5032
+       },
+       "equal_spearman": 0.2683,
+       "weighted_spearman": 0.2784
+      },
+      {
+       "year": 2022,
+       "n": 217,
+       "weights_vintage_max_base": 2019,
+       "weights": {
+        "fangraphs": 0.9177,
+        "mlb_pipeline": 1.0823
+       },
+       "weight_base_n": 519,
+       "weight_source_rho": {
+        "fangraphs": 0.3874,
+        "mlb_pipeline": 0.4794
+       },
+       "equal_spearman": 0.2476,
+       "weighted_spearman": 0.2428
+      },
+      {
+       "year": 2023,
+       "n": 209,
+       "weights_vintage_max_base": 2020,
+       "weights": {
+        "fangraphs": 0.8558,
+        "mlb_pipeline": 1.1442
+       },
+       "weight_base_n": 764,
+       "weight_source_rho": {
+        "fangraphs": 0.3146,
+        "mlb_pipeline": 0.4457
+       },
+       "equal_spearman": 0.3297,
+       "weighted_spearman": 0.3351
+      },
+      {
+       "year": 2024,
+       "n": 167,
+       "weights_vintage_max_base": 2021,
+       "weights": {
+        "fangraphs": 0.8395,
+        "mlb_pipeline": 1.1605
+       },
+       "weight_base_n": 993,
+       "weight_source_rho": {
+        "fangraphs": 0.2827,
+        "mlb_pipeline": 0.4108
+       },
+       "equal_spearman": 0.2475,
+       "weighted_spearman": 0.2586
+      },
+      {
+       "year": 2025,
+       "n": 118,
+       "weights_vintage_max_base": 2022,
+       "weights": {
+        "fangraphs": 0.8548,
+        "mlb_pipeline": 1.1452
+       },
+       "weight_base_n": 1210,
+       "weight_source_rho": {
+        "fangraphs": 0.2676,
+        "mlb_pipeline": 0.372
+       },
+       "equal_spearman": 0.2059,
+       "weighted_spearman": 0.2014
+      }
+     ],
+     "evaluable_years": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "C0_numpy_equivalence_check": {
+      "d_rho_pure": 0.004104,
+      "d_rho_numpy": 0.004104,
+      "d_auc_pure": 0.002691,
+      "d_auc_numpy": 0.002691,
+      "max_abs_diff": 0.0,
+      "identical_to_1e12": true
+     },
+     "C0_array_ab_equivalence": {
+      "d_rho_pure": 0.004104,
+      "d_rho_array": 0.004104,
+      "d_auc_pure": 0.002691,
+      "d_auc_array": 0.002691,
+      "identical_to_1e12": true
+     },
+     "C61_permuted_source_null": {
+      "draws": 1000,
+      "n_nonflat_rho": 1000,
+      "n_nonflat_auc": 1000,
+      "abs_d_rho_p95": 0.006618,
+      "abs_d_auc_p95": 0.003404,
+      "abs_d_rho_max": 0.012627,
+      "abs_d_auc_max": 0.006042,
+      "perm_weight_spread_median": 0.0414,
+      "perm_weight_spread_p95": 0.117,
+      "p_rho": 0.236763,
+      "p_auc": 0.116883
+     },
+     "bootstrap": {
+      "draws": 2000,
+      "d_rho_lo95": -0.001934,
+      "d_auc_lo95": -0.000799,
+      "d_rho_sd": 0.003641,
+      "d_auc_sd": 0.002177
+     },
+     "C65_seed_stability": {
+      "boot_seed1337": {
+       "draws": 2000,
+       "d_rho_lo95": -0.002012,
+       "d_auc_lo95": -0.000992,
+       "d_rho_sd": 0.003571,
+       "d_auc_sd": 0.002204
+      },
+      "perm_seed1337_200": {
+       "draws": 200,
+       "n_nonflat_rho": 200,
+       "n_nonflat_auc": 200,
+       "abs_d_rho_p95": 0.006184,
+       "abs_d_auc_p95": 0.003539,
+       "abs_d_rho_max": 0.008916,
+       "abs_d_auc_max": 0.005851,
+       "perm_weight_spread_median": 0.0457,
+       "perm_weight_spread_p95": 0.1234,
+       "p_rho": 0.218905,
+       "p_auc": 0.164179
+      }
+     },
+     "C63_shuffled_outcome_null": {
+      "n": 1185,
+      "equal": {
+       "spearman": 0.0374,
+       "auc": 0.5292
+      },
+      "weighted": {
+       "spearman": 0.035,
+       "auc": 0.5283
+      }
+     },
+     "C64_forced_equal_identity": {
+      "vacuous_form_n": 0,
+      "vacuous_form_note": "0 rows: flat-weight years are skipped, so this form of the control cannot fail. Not used.",
+      "n": 1704,
+      "d_rho": 0.0,
+      "d_auc": 0.0,
+      "passes": true
+     },
+     "C61b_perm_null_degeneracy": {
+      "perm_weight_spread_median": 0.0414,
+      "perm_weight_spread_p95": 0.117,
+      "real_weight_spread_by_year": {
+       "2017": 0.0,
+       "2018": 0.0,
+       "2019": 0.0,
+       "2020": 0.0952,
+       "2021": 0.1224,
+       "2022": 0.1646,
+       "2023": 0.2884,
+       "2024": 0.321,
+       "2025": 0.2904
+      },
+      "degenerate": false
+     },
+     "C67_player_disjoint_weights": {
+      "n": 1185,
+      "equal": {
+       "spearman": 0.2689,
+       "auc": 0.6449
+      },
+      "weighted": {
+       "spearman": 0.273,
+       "auc": 0.6476
+      },
+      "d_rho": 0.004113,
+      "d_auc": 0.002681,
+      "per_year": [
+       {
+        "year": 2017,
+        "n": 123,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2018,
+        "n": 181,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2019,
+        "n": 215,
+        "skipped": "flat weights",
+        "weight_base_n": 0
+       },
+       {
+        "year": 2020,
+        "n": 245,
+        "weights": {
+         "fangraphs": 0.9426,
+         "mlb_pipeline": 1.0574
+        },
+        "weight_base_n": 73
+       },
+       {
+        "year": 2021,
+        "n": 229,
+        "weights": {
+         "fangraphs": 0.9415,
+         "mlb_pipeline": 1.0585
+        },
+        "weight_base_n": 216
+       },
+       {
+        "year": 2022,
+        "n": 217,
+        "weights": {
+         "fangraphs": 0.9097,
+         "mlb_pipeline": 1.0903
+        },
+        "weight_base_n": 442
+       },
+       {
+        "year": 2023,
+        "n": 209,
+        "weights": {
+         "fangraphs": 0.8706,
+         "mlb_pipeline": 1.1294
+        },
+        "weight_base_n": 683
+       },
+       {
+        "year": 2024,
+        "n": 167,
+        "weights": {
+         "fangraphs": 0.8613,
+         "mlb_pipeline": 1.1387
+        },
+        "weight_base_n": 934
+       },
+       {
+        "year": 2025,
+        "n": 118,
+        "weights": {
+         "fangraphs": 0.8589,
+         "mlb_pipeline": 1.1411
+        },
+        "weight_base_n": 1165
+       }
+      ],
+      "bootstrap": {
+       "draws": 1000,
+       "d_rho_lo95": -0.00216,
+       "d_auc_lo95": -0.000926,
+       "d_rho_sd": 0.003604,
+       "d_auc_sd": 0.0022
+      }
+     },
+     "context_single_source": {
+      "pooled_n": 1185,
+      "years": [
+       2020,
+       2021,
+       2022,
+       2023,
+       2024,
+       2025
+      ],
+      "fangraphs": {
+       "spearman": 0.2224
+      },
+      "mlb_pipeline": {
+       "spearman": 0.2842
+      },
+      "equal_mean": {
+       "spearman": 0.2689
+      }
+     },
+     "gate": {
+      "F_rho": 0.006618,
+      "F_auc": 0.003404,
+      "margin_over_F_rho": 0.6201,
+      "margin_over_F_auc": 0.7905,
+      "G1_rho_resolvable": false,
+      "G2_auc_resolvable": false,
+      "G3_rho_lo95_pos": false,
+      "G4_auc_lo95_pos": false,
+      "G5_not_knife_edge": false,
+      "PREREGISTERED_SHIP": false,
+      "G6_bootstrap_MDE95_selfadded": false,
+      "G6_mde95_rho": 0.005989,
+      "G6_mde95_auc": 0.003581,
+      "G6_margin_rho": 0.6852,
+      "G6_margin_auc": 0.7514,
+      "G7_survives_player_disjoint_weights_selfadded": false,
+      "SHIP": false,
+      "verdict": "NO_SHIP"
+     },
+     "C66_survivorship": {
+      "common_set_graded_rows": 3187,
+      "with_realized_outcome_rows": 1704,
+      "implied_debut_rate_pct": 53.4672,
+      "boundary": "tool accuracy AMONG DEBUTS, not tool accuracy overall"
+     }
+    }
+   }
+  },
+  "B_fg_pipeline_ba": {
+   "sources": [
+    "fangraphs",
+    "mlb_pipeline",
+    "baseballamerica"
+   ],
+   "tools": {
+    "hit": {
+     "common_set_by_year_chained": {
+      "2023": 96,
+      "2024": 79,
+      "2025": 48
+     },
+     "common_set_by_year_unchained_efv_tools_basis": {
+      "2023": 100,
+      "2024": 83,
+      "2025": 59,
+      "2026": 19
+     },
+     "pooled_n_chained": 223,
+     "pooled_n_unchained": 261,
+     "forward_chain_cost_rows": 38,
+     "primary": {
+      "n": 0,
+      "equal": {},
+      "weighted": {},
+      "d_rho": null,
+      "d_auc": null
+     },
+     "per_year": [
+      {
+       "year": 2023,
+       "n": 96,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2024,
+       "n": 79,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2025,
+       "n": 48,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      }
+     ],
+     "evaluable_years": [],
+     "gate": {
+      "SHIP": false,
+      "verdict": "NULL_NO_EVALUABLE_YEAR",
+      "reason": "no board-year has both a non-flat weight vintage and resolvable outcomes at MIN_LAG_YEARS=3"
+     },
+     "C66_survivorship": {
+      "common_set_graded_rows": 575,
+      "with_realized_outcome_rows": 223,
+      "implied_debut_rate_pct": 38.7826,
+      "boundary": "tool accuracy AMONG DEBUTS, not tool accuracy overall"
+     }
+    },
+    "game_pwr": {
+     "common_set_by_year_chained": {
+      "2023": 96,
+      "2024": 79,
+      "2025": 48
+     },
+     "common_set_by_year_unchained_efv_tools_basis": {
+      "2023": 100,
+      "2024": 83,
+      "2025": 59,
+      "2026": 19
+     },
+     "pooled_n_chained": 223,
+     "pooled_n_unchained": 261,
+     "forward_chain_cost_rows": 38,
+     "primary": {
+      "n": 0,
+      "equal": {},
+      "weighted": {},
+      "d_rho": null,
+      "d_auc": null
+     },
+     "per_year": [
+      {
+       "year": 2023,
+       "n": 96,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2024,
+       "n": 79,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2025,
+       "n": 48,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      }
+     ],
+     "evaluable_years": [],
+     "gate": {
+      "SHIP": false,
+      "verdict": "NULL_NO_EVALUABLE_YEAR",
+      "reason": "no board-year has both a non-flat weight vintage and resolvable outcomes at MIN_LAG_YEARS=3"
+     },
+     "C66_survivorship": {
+      "common_set_graded_rows": 575,
+      "with_realized_outcome_rows": 223,
+      "implied_debut_rate_pct": 38.7826,
+      "boundary": "tool accuracy AMONG DEBUTS, not tool accuracy overall"
+     }
+    },
+    "speed": {
+     "common_set_by_year_chained": {
+      "2023": 96,
+      "2024": 79,
+      "2025": 48
+     },
+     "common_set_by_year_unchained_efv_tools_basis": {
+      "2023": 100,
+      "2024": 83,
+      "2025": 59,
+      "2026": 19
+     },
+     "pooled_n_chained": 223,
+     "pooled_n_unchained": 261,
+     "forward_chain_cost_rows": 38,
+     "primary": {
+      "n": 0,
+      "equal": {},
+      "weighted": {},
+      "d_rho": null,
+      "d_auc": null
+     },
+     "per_year": [
+      {
+       "year": 2023,
+       "n": 96,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2024,
+       "n": 79,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2025,
+       "n": 48,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      }
+     ],
+     "evaluable_years": [],
+     "gate": {
+      "SHIP": false,
+      "verdict": "NULL_NO_EVALUABLE_YEAR",
+      "reason": "no board-year has both a non-flat weight vintage and resolvable outcomes at MIN_LAG_YEARS=3"
+     },
+     "C66_survivorship": {
+      "common_set_graded_rows": 575,
+      "with_realized_outcome_rows": 223,
+      "implied_debut_rate_pct": 38.7826,
+      "boundary": "tool accuracy AMONG DEBUTS, not tool accuracy overall"
+     }
+    },
+    "fb": {
+     "common_set_by_year_chained": {
+      "2023": 76,
+      "2024": 63,
+      "2025": 46
+     },
+     "common_set_by_year_unchained_efv_tools_basis": {
+      "2023": 79,
+      "2024": 68,
+      "2025": 59,
+      "2026": 18
+     },
+     "pooled_n_chained": 185,
+     "pooled_n_unchained": 224,
+     "forward_chain_cost_rows": 39,
+     "primary": {
+      "n": 0,
+      "equal": {},
+      "weighted": {},
+      "d_rho": null,
+      "d_auc": null
+     },
+     "per_year": [
+      {
+       "year": 2023,
+       "n": 76,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2024,
+       "n": 63,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2025,
+       "n": 46,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      }
+     ],
+     "evaluable_years": [],
+     "gate": {
+      "SHIP": false,
+      "verdict": "NULL_NO_EVALUABLE_YEAR",
+      "reason": "no board-year has both a non-flat weight vintage and resolvable outcomes at MIN_LAG_YEARS=3"
+     },
+     "C66_survivorship": {
+      "common_set_graded_rows": 472,
+      "with_realized_outcome_rows": 185,
+      "implied_debut_rate_pct": 39.1949,
+      "boundary": "tool accuracy AMONG DEBUTS, not tool accuracy overall"
+     }
+    },
+    "cmd": {
+     "common_set_by_year_chained": {
+      "2023": 76,
+      "2024": 63,
+      "2025": 46
+     },
+     "common_set_by_year_unchained_efv_tools_basis": {
+      "2023": 79,
+      "2024": 68,
+      "2025": 59,
+      "2026": 18
+     },
+     "pooled_n_chained": 185,
+     "pooled_n_unchained": 224,
+     "forward_chain_cost_rows": 39,
+     "primary": {
+      "n": 0,
+      "equal": {},
+      "weighted": {},
+      "d_rho": null,
+      "d_auc": null
+     },
+     "per_year": [
+      {
+       "year": 2023,
+       "n": 76,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2024,
+       "n": 63,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      },
+      {
+       "year": 2025,
+       "n": 46,
+       "skipped": "flat weights",
+       "weights": {
+        "fangraphs": 1.0,
+        "mlb_pipeline": 1.0,
+        "baseballamerica": 1.0
+       },
+       "weight_base_n": 0
+      }
+     ],
+     "evaluable_years": [],
+     "gate": {
+      "SHIP": false,
+      "verdict": "NULL_NO_EVALUABLE_YEAR",
+      "reason": "no board-year has both a non-flat weight vintage and resolvable outcomes at MIN_LAG_YEARS=3"
+     },
+     "C66_survivorship": {
+      "common_set_graded_rows": 473,
+      "with_realized_outcome_rows": 185,
+      "implied_debut_rate_pct": 39.1121,
+      "boundary": "tool accuracy AMONG DEBUTS, not tool accuracy overall"
+     }
+    }
+   }
+  }
+ },
+ "S51_lag_sensitivity_CANNOT_SHIP": {
+  "lag_2": {
+   "A_fg_vs_pipeline": {
+    "hit": {
+     "n": 1507,
+     "equal": {
+      "spearman": 0.2831,
+      "auc": 0.6457
+     },
+     "weighted": {
+      "spearman": 0.2972,
+      "auc": 0.6529
+     },
+     "d_rho": 0.014114,
+     "d_auc": 0.007162,
+     "F_rho_perm300": 0.005571,
+     "F_auc_perm300": 0.002759,
+     "p_rho_perm300": 0.003322,
+     "d_rho_lo95": 0.008131,
+     "d_auc_lo95": 0.004008,
+     "evaluable_years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.8395,
+      "mlb_pipeline": 1.1605
+     }
+    },
+    "game_pwr": {
+     "n": 1503,
+     "equal": {
+      "spearman": 0.3754,
+      "auc": 0.7094
+     },
+     "weighted": {
+      "spearman": 0.3782,
+      "auc": 0.7115
+     },
+     "d_rho": 0.002785,
+     "d_auc": 0.002056,
+     "F_rho_perm300": 0.004718,
+     "F_auc_perm300": 0.002176,
+     "p_rho_perm300": 0.272425,
+     "d_rho_lo95": -0.001397,
+     "d_auc_lo95": -0.000386,
+     "evaluable_years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.959,
+      "mlb_pipeline": 1.041
+     }
+    },
+    "speed": {
+     "n": 1507,
+     "equal": {
+      "spearman": 0.4348,
+      "auc": 0.698
+     },
+     "weighted": {
+      "spearman": 0.4396,
+      "auc": 0.7012
+     },
+     "d_rho": 0.00479,
+     "d_auc": 0.003194,
+     "F_rho_perm300": 0.002711,
+     "F_auc_perm300": 0.00157,
+     "p_rho_perm300": 0.003322,
+     "d_rho_lo95": 0.001502,
+     "d_auc_lo95": 0.001396,
+     "evaluable_years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.9521,
+      "mlb_pipeline": 1.0479
+     }
+    },
+    "fb": {
+     "n": 1395,
+     "equal": {
+      "spearman": 0.2433,
+      "auc": 0.622
+     },
+     "weighted": {
+      "spearman": 0.2418,
+      "auc": 0.6214
+     },
+     "d_rho": -0.001495,
+     "d_auc": -0.000548,
+     "F_rho_perm300": 0.005942,
+     "F_auc_perm300": 0.002847,
+     "p_rho_perm300": 0.677741,
+     "d_rho_lo95": -0.006529,
+     "d_auc_lo95": -0.003345,
+     "evaluable_years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 1.0338,
+      "mlb_pipeline": 0.9662
+     }
+    },
+    "cmd": {
+     "n": 1400,
+     "equal": {
+      "spearman": 0.2869,
+      "auc": 0.6569
+     },
+     "weighted": {
+      "spearman": 0.2949,
+      "auc": 0.6617
+     },
+     "d_rho": 0.008025,
+     "d_auc": 0.004783,
+     "F_rho_perm300": 0.006408,
+     "F_auc_perm300": 0.00316,
+     "p_rho_perm300": 0.0299,
+     "d_rho_lo95": 0.002468,
+     "d_auc_lo95": 0.001765,
+     "evaluable_years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.8708,
+      "mlb_pipeline": 1.1292
+     }
+    }
+   },
+   "B_fg_pipeline_ba": {
+    "hit": {
+     "n": 48,
+     "equal": {
+      "spearman": 0.335,
+      "auc": 0.6565
+     },
+     "weighted": {
+      "spearman": 0.34,
+      "auc": 0.6635
+     },
+     "d_rho": 0.005005,
+     "d_auc": 0.006957,
+     "F_rho_perm300": 0.019039,
+     "F_auc_perm300": 0.009565,
+     "p_rho_perm300": 0.641196,
+     "d_rho_lo95": -0.011596,
+     "d_auc_lo95": -0.000907,
+     "evaluable_years": [
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 1.0222,
+      "mlb_pipeline": 1.0511,
+      "baseballamerica": 0.9267
+     }
+    },
+    "game_pwr": {
+     "n": 48,
+     "equal": {
+      "spearman": 0.33,
+      "auc": 0.717
+     },
+     "weighted": {
+      "spearman": 0.3229,
+      "auc": 0.7127
+     },
+     "d_rho": -0.007121,
+     "d_auc": -0.00434,
+     "F_rho_perm300": 0.023324,
+     "F_auc_perm300": 0.013021,
+     "p_rho_perm300": 0.584718,
+     "d_rho_lo95": -0.044125,
+     "d_auc_lo95": -0.021853,
+     "evaluable_years": [
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.9917,
+      "mlb_pipeline": 0.9941,
+      "baseballamerica": 1.0142
+     }
+    },
+    "speed": {
+     "n": 48,
+     "equal": {
+      "spearman": 0.3028,
+      "auc": null
+     },
+     "weighted": {
+      "spearman": 0.3113,
+      "auc": null
+     },
+     "d_rho": 0.008518,
+     "d_auc": null,
+     "F_rho_perm300": 0.010516,
+     "F_auc_perm300": null,
+     "p_rho_perm300": 0.13289,
+     "d_rho_lo95": -0.005695,
+     "d_auc_lo95": null,
+     "evaluable_years": [
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.9639,
+      "mlb_pipeline": 1.0222,
+      "baseballamerica": 1.0139
+     }
+    },
+    "fb": {
+     "n": 46,
+     "equal": {
+      "spearman": 0.2283,
+      "auc": 0.6087
+     },
+     "weighted": {
+      "spearman": 0.2321,
+      "auc": 0.6068
+     },
+     "d_rho": 0.003726,
+     "d_auc": -0.00189,
+     "F_rho_perm300": 0.017139,
+     "F_auc_perm300": 0.011342,
+     "p_rho_perm300": 0.69103,
+     "d_rho_lo95": -0.016992,
+     "d_auc_lo95": -0.015152,
+     "evaluable_years": [
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.9444,
+      "mlb_pipeline": 0.9461,
+      "baseballamerica": 1.1096
+     }
+    },
+    "cmd": {
+     "n": 46,
+     "equal": {
+      "spearman": 0.1005,
+      "auc": 0.6392
+     },
+     "weighted": {
+      "spearman": 0.1025,
+      "auc": 0.642
+     },
+     "d_rho": 0.001955,
+     "d_auc": 0.002841,
+     "F_rho_perm300": 0.023202,
+     "F_auc_perm300": 0.013258,
+     "p_rho_perm300": 0.883721,
+     "d_rho_lo95": -0.02347,
+     "d_auc_lo95": -0.0125,
+     "evaluable_years": [
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.9916,
+      "mlb_pipeline": 1.0125,
+      "baseballamerica": 0.9959
+     }
+    }
+   }
+  },
+  "lag_1": {
+   "A_fg_vs_pipeline": {
+    "hit": {
+     "n": 1717,
+     "equal": {
+      "spearman": 0.2834,
+      "auc": 0.6481
+     },
+     "weighted": {
+      "spearman": 0.2966,
+      "auc": 0.6549
+     },
+     "d_rho": 0.013164,
+     "d_auc": 0.00677,
+     "F_rho_perm300": 0.005532,
+     "F_auc_perm300": 0.002457,
+     "p_rho_perm300": 0.003322,
+     "d_rho_lo95": 0.007777,
+     "d_auc_lo95": 0.003923,
+     "evaluable_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.8213,
+      "mlb_pipeline": 1.1787
+     }
+    },
+    "game_pwr": {
+     "n": 1713,
+     "equal": {
+      "spearman": 0.3819,
+      "auc": 0.7131
+     },
+     "weighted": {
+      "spearman": 0.3854,
+      "auc": 0.7157
+     },
+     "d_rho": 0.00351,
+     "d_auc": 0.002627,
+     "F_rho_perm300": 0.004533,
+     "F_auc_perm300": 0.001891,
+     "p_rho_perm300": 0.129568,
+     "d_rho_lo95": -0.000698,
+     "d_auc_lo95": 0.000228,
+     "evaluable_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.9546,
+      "mlb_pipeline": 1.0454
+     }
+    },
+    "speed": {
+     "n": 1717,
+     "equal": {
+      "spearman": 0.4382,
+      "auc": 0.7025
+     },
+     "weighted": {
+      "spearman": 0.443,
+      "auc": 0.7055
+     },
+     "d_rho": 0.004851,
+     "d_auc": 0.00298,
+     "F_rho_perm300": 0.002824,
+     "F_auc_perm300": 0.00149,
+     "p_rho_perm300": 0.009967,
+     "d_rho_lo95": 0.001971,
+     "d_auc_lo95": 0.001292,
+     "evaluable_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.9522,
+      "mlb_pipeline": 1.0478
+     }
+    },
+    "fb": {
+     "n": 1578,
+     "equal": {
+      "spearman": 0.2368,
+      "auc": 0.615
+     },
+     "weighted": {
+      "spearman": 0.2379,
+      "auc": 0.6167
+     },
+     "d_rho": 0.001084,
+     "d_auc": 0.001681,
+     "F_rho_perm300": 0.005128,
+     "F_auc_perm300": 0.002687,
+     "p_rho_perm300": 0.72093,
+     "d_rho_lo95": -0.002939,
+     "d_auc_lo95": -0.000544,
+     "evaluable_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 1.0484,
+      "mlb_pipeline": 0.9516
+     }
+    },
+    "cmd": {
+     "n": 1581,
+     "equal": {
+      "spearman": 0.305,
+      "auc": 0.6676
+     },
+     "weighted": {
+      "spearman": 0.3143,
+      "auc": 0.673
+     },
+     "d_rho": 0.009294,
+     "d_auc": 0.005364,
+     "F_rho_perm300": 0.006707,
+     "F_auc_perm300": 0.003157,
+     "p_rho_perm300": 0.006645,
+     "d_rho_lo95": 0.003777,
+     "d_auc_lo95": 0.001989,
+     "evaluable_years": [
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.8677,
+      "mlb_pipeline": 1.1323
+     }
+    }
+   },
+   "B_fg_pipeline_ba": {
+    "hit": {
+     "n": 127,
+     "equal": {
+      "spearman": 0.3815,
+      "auc": 0.7138
+     },
+     "weighted": {
+      "spearman": 0.384,
+      "auc": 0.714
+     },
+     "d_rho": 0.002442,
+     "d_auc": 0.000248,
+     "F_rho_perm300": 0.011633,
+     "F_auc_perm300": 0.006576,
+     "p_rho_perm300": 0.704319,
+     "d_rho_lo95": -0.008254,
+     "d_auc_lo95": -0.006188,
+     "evaluable_years": [
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.9615,
+      "mlb_pipeline": 1.1093,
+      "baseballamerica": 0.9292
+     }
+    },
+    "game_pwr": {
+     "n": 127,
+     "equal": {
+      "spearman": 0.3387,
+      "auc": 0.7
+     },
+     "weighted": {
+      "spearman": 0.3401,
+      "auc": 0.6994
+     },
+     "d_rho": 0.001421,
+     "d_auc": -0.00062,
+     "F_rho_perm300": 0.012536,
+     "F_auc_perm300": 0.006944,
+     "p_rho_perm300": 0.843854,
+     "d_rho_lo95": -0.012569,
+     "d_auc_lo95": -0.008309,
+     "evaluable_years": [
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.9402,
+      "mlb_pipeline": 1.0376,
+      "baseballamerica": 1.0222
+     }
+    },
+    "speed": {
+     "n": 127,
+     "equal": {
+      "spearman": 0.3465,
+      "auc": 0.6576
+     },
+     "weighted": {
+      "spearman": 0.35,
+      "auc": 0.6617
+     },
+     "d_rho": 0.003441,
+     "d_auc": 0.004079,
+     "F_rho_perm300": 0.007885,
+     "F_auc_perm300": 0.005682,
+     "p_rho_perm300": 0.435216,
+     "d_rho_lo95": -0.006447,
+     "d_auc_lo95": -0.002914,
+     "evaluable_years": [
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.9651,
+      "mlb_pipeline": 1.0141,
+      "baseballamerica": 1.0208
+     }
+    },
+    "fb": {
+     "n": 109,
+     "equal": {
+      "spearman": 0.3048,
+      "auc": 0.6109
+     },
+     "weighted": {
+      "spearman": 0.3037,
+      "auc": 0.6126
+     },
+     "d_rho": -0.001175,
+     "d_auc": 0.001684,
+     "F_rho_perm300": 0.011331,
+     "F_auc_perm300": 0.006734,
+     "p_rho_perm300": 0.837209,
+     "d_rho_lo95": -0.012989,
+     "d_auc_lo95": -0.005303,
+     "evaluable_years": [
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.9961,
+      "mlb_pipeline": 0.901,
+      "baseballamerica": 1.1028
+     }
+    },
+    "cmd": {
+     "n": 109,
+     "equal": {
+      "spearman": 0.1399,
+      "auc": 0.6164
+     },
+     "weighted": {
+      "spearman": 0.1334,
+      "auc": 0.6127
+     },
+     "d_rho": -0.006496,
+     "d_auc": -0.003706,
+     "F_rho_perm300": 0.017031,
+     "F_auc_perm300": 0.010613,
+     "p_rho_perm300": 0.458472,
+     "d_rho_lo95": -0.025707,
+     "d_auc_lo95": -0.013794,
+     "evaluable_years": [
+      2024,
+      2025
+     ],
+     "weights_last_scored_year": {
+      "fangraphs": 0.9058,
+      "mlb_pipeline": 0.9937,
+      "baseballamerica": 1.1005
+     }
+    }
+   }
+  }
+ },
+ "C62_pooled_tool_control": {
+  "A_fg_vs_pipeline": {
+   "pooled_weight": {
+    "fangraphs": 0.9713,
+    "mlb_pipeline": 1.0287
+   },
+   "pooled_n": 9035,
+   "pooled_rho": {
+    "fangraphs": 0.282,
+    "mlb_pipeline": 0.299
+   },
+   "per_source_per_tool_rho_spread": {
+    "fangraphs": {
+     "per_tool_rho": {
+      "hit": 0.2178,
+      "game_pwr": 0.3461,
+      "speed": 0.4079,
+      "fb": 0.2251,
+      "cmd": 0.2557
+     },
+     "min": 0.2178,
+     "max": 0.4079
+    },
+    "mlb_pipeline": {
+     "per_tool_rho": {
+      "hit": 0.3295,
+      "game_pwr": 0.3858,
+      "speed": 0.4539,
+      "fb": 0.2036,
+      "cmd": 0.3364
+     },
+     "min": 0.2036,
+     "max": 0.4539
+    }
+   }
+  },
+  "B_fg_pipeline_ba": {
+   "pooled_weight": {
+    "fangraphs": 0.9331,
+    "mlb_pipeline": 1.0256,
+    "baseballamerica": 1.0413
+   },
+   "pooled_n": 1039,
+   "pooled_rho": {
+    "fangraphs": 0.2811,
+    "mlb_pipeline": 0.3134,
+    "baseballamerica": 0.3188
+   },
+   "per_source_per_tool_rho_spread": {
+    "fangraphs": {
+     "per_tool_rho": {
+      "hit": 0.285,
+      "game_pwr": 0.3184,
+      "speed": 0.3264,
+      "fb": 0.2698,
+      "cmd": 0.1768
+     },
+     "min": 0.1768,
+     "max": 0.3264
+    },
+    "mlb_pipeline": {
+     "per_tool_rho": {
+      "hit": 0.3781,
+      "game_pwr": 0.3868,
+      "speed": 0.3913,
+      "fb": 0.2221,
+      "cmd": 0.2088
+     },
+     "min": 0.2088,
+     "max": 0.3913
+    },
+    "baseballamerica": {
+     "per_tool_rho": {
+      "hit": 0.286,
+      "game_pwr": 0.3595,
+      "speed": 0.3821,
+      "fb": 0.2919,
+      "cmd": 0.2871
+     },
+     "min": 0.286,
+     "max": 0.3821
+    }
+   }
+  }
+ },
+ "B2_era_scale_break": {
+  "brief_consecutive": {
+   "2023->2024": [
+    194,
+    -0.64,
+    4.48
+   ],
+   "2024->2025": [
+    198,
+    -0.83,
+    4.54
+   ],
+   "2025->2026": [
+    196,
+    -11.89,
+    5.65
+   ]
+  },
+  "measured_consecutive": {
+   "2023->2024": {
+    "n": 194,
+    "mean": -0.6701,
+    "sd": 4.4623
+   },
+   "2024->2025": {
+    "n": 198,
+    "mean": -0.8333,
+    "sd": 4.5436
+   },
+   "2025->2026": {
+    "n": 196,
+    "mean": -11.8878,
+    "sd": 5.6476
+   }
+  },
+  "brief_ba_minus_fg": {
+   "2023": [
+    302,
+    6.57,
+    4.56
+   ],
+   "2024": [
+    310,
+    6.8,
+    4.59
+   ],
+   "2025": [
+    326,
+    6.38,
+    4.93
+   ],
+   "2026": [
+    339,
+    -4.98,
+    3.89
+   ]
+  },
+  "measured_ba_minus_fg": {
+   "2023": {
+    "n": 302,
+    "mean": 6.5563,
+    "sd": 4.6101
+   },
+   "2024": {
+    "n": 310,
+    "mean": 6.871,
+    "sd": 4.5134
+   },
+   "2025": {
+    "n": 324,
+    "mean": 6.4506,
+    "sd": 4.9902
+   },
+   "2026": {
+    "n": 251,
+    "mean": -4.9602,
+    "sd": 3.9163
+   }
+  },
+  "note": "2026 BA fv is the Adjusted Grade; 2023-2025 fv is the BA Grade."
+ },
+ "B3_grade_normalization_absorption": {
+  "_MIN_N": 30,
+  "cells": [
+   {
+    "source": "baseballamerica",
+    "role": "hitter",
+    "year": 2023,
+    "n": 169,
+    "median_raw": 50.0,
+    "median_fg_overlap": 40.0,
+    "median_shift": -10.0,
+    "pooled": false,
+    "material": true,
+    "pooled_across_years": false,
+    "clears_MIN_N": true,
+    "overlap_pairs": 169
+   },
+   {
+    "source": "baseballamerica",
+    "role": "pitcher",
+    "year": 2023,
+    "n": 130,
+    "median_raw": 45.0,
+    "median_fg_overlap": 40.0,
+    "median_shift": -5.0,
+    "pooled": false,
+    "material": true,
+    "pooled_across_years": false,
+    "clears_MIN_N": true,
+    "overlap_pairs": 130
+   },
+   {
+    "source": "baseballamerica",
+    "role": "hitter",
+    "year": 2024,
+    "n": 175,
+    "median_raw": 50.0,
+    "median_fg_overlap": 40.0,
+    "median_shift": -10.0,
+    "pooled": false,
+    "material": true,
+    "pooled_across_years": false,
+    "clears_MIN_N": true,
+    "overlap_pairs": 175
+   },
+   {
+    "source": "baseballamerica",
+    "role": "pitcher",
+    "year": 2024,
+    "n": 134,
+    "median_raw": 45.0,
+    "median_fg_overlap": 40.0,
+    "median_shift": -5.0,
+    "pooled": false,
+    "material": true,
+    "pooled_across_years": false,
+    "clears_MIN_N": true,
+    "overlap_pairs": 134
+   },
+   {
+    "source": "baseballamerica",
+    "role": "hitter",
+    "year": 2025,
+    "n": 166,
+    "median_raw": 50.0,
+    "median_fg_overlap": 40.0,
+    "median_shift": -10.0,
+    "pooled": false,
+    "material": true,
+    "pooled_across_years": false,
+    "clears_MIN_N": true,
+    "overlap_pairs": 166
+   },
+   {
+    "source": "baseballamerica",
+    "role": "pitcher",
+    "year": 2025,
+    "n": 159,
+    "median_raw": 45.0,
+    "median_fg_overlap": 40.0,
+    "median_shift": -5.0,
+    "pooled": false,
+    "material": true,
+    "pooled_across_years": false,
+    "clears_MIN_N": true,
+    "overlap_pairs": 159
+   },
+   {
+    "source": "baseballamerica",
+    "role": "hitter",
+    "year": 2026,
+    "n": 171,
+    "median_raw": 35.0,
+    "median_fg_overlap": 40.0,
+    "median_shift": 5.0,
+    "pooled": false,
+    "material": true,
+    "pooled_across_years": false,
+    "clears_MIN_N": true,
+    "overlap_pairs": 171
+   },
+   {
+    "source": "baseballamerica",
+    "role": "pitcher",
+    "year": 2026,
+    "n": 168,
+    "median_raw": 35.0,
+    "median_fg_overlap": 40.0,
+    "median_shift": 5.0,
+    "pooled": false,
+    "material": true,
+    "pooled_across_years": false,
+    "clears_MIN_N": true,
+    "overlap_pairs": 168
+   }
+  ],
+  "absorbs_break": true
+ },
+ "B3b_position_null_root_cause": {
+  "by_snapshot": {
+   "2023-02-15": {
+    "positions": {
+     "None": 202,
+     "RHP": 129,
+     "LHP": 32,
+     "CP": 22
+    },
+    "n_position_null": 202,
+    "role_from_position_vs_role_from_tools": {
+     "hitter|hitter": 224,
+     "pitcher|pitcher": 161
+    },
+    "misrouted_rows": 0
+   },
+   "2024-02-15": {
+    "positions": {
+     "RHP": 127,
+     "OF": 81,
+     "SS": 58,
+     "LHP": 31,
+     "C": 26,
+     "3B": 26,
+     "2B": 25,
+     "1B": 9
+    },
+    "n_position_null": 0,
+    "role_from_position_vs_role_from_tools": {
+     "hitter|hitter": 225,
+     "pitcher|hitter": 1,
+     "pitcher|pitcher": 157
+    },
+    "misrouted_rows": 1
+   },
+   "2025-02-15": {
+    "positions": {
+     "RHP": 144,
+     "OF": 63,
+     "SS": 57,
+     "LHP": 40,
+     "C": 30,
+     "2B": 22,
+     "3B": 21,
+     "1B": 7
+    },
+    "n_position_null": 0,
+    "role_from_position_vs_role_from_tools": {
+     "hitter|hitter": 197,
+     "hitter|pitcher": 3,
+     "pitcher|hitter": 1,
+     "pitcher|pitcher": 183
+    },
+    "misrouted_rows": 4
+   },
+   "2026-02-15": {
+    "positions": {
+     "RHP": 143,
+     "OF": 75,
+     "SS": 58,
+     "LHP": 48,
+     "C": 30,
+     "2B": 18,
+     "3B": 7,
+     "1B": 4
+    },
+    "n_position_null": 0,
+    "role_from_position_vs_role_from_tools": {
+     "hitter|hitter": 191,
+     "hitter|pitcher": 1,
+     "pitcher|pitcher": 191
+    },
+    "misrouted_rows": 1
+   }
+  },
+  "finding": "BA 2023-02-15 carries position NULL on 363 of 385 rows and the non-token 'CP' on the other 22 (all catchers). _is_pitcher(None) is False, so all 385 rows land in the HITTER cell. Two consequences: (1) the (baseballamerica, pitcher, 2023) cell has ZERO FanGraphs-overlap pairs, falls below _MIN_N=30 and falls back to POOLING BA ACROSS ALL YEARS, which drags the 2026 Adjusted-Grade era into the 2023-2025 BA-Grade era and re-opens the ~11.4 FV break that per-year keying exists to remove; (2) the (baseballamerica, hitter, 2023) cell is fitted on a role-MIXED distribution. The role is fully recoverable from tools_json (pitcher keys fb/sl/cb/ch/cmd/ct vs hitter keys).",
+  "cells_pooled_across_years": [],
+  "cells_clean": [
+   "baseballamerica|hitter|2023",
+   "baseballamerica|pitcher|2023",
+   "baseballamerica|hitter|2024",
+   "baseballamerica|pitcher|2024",
+   "baseballamerica|hitter|2025",
+   "baseballamerica|pitcher|2025",
+   "baseballamerica|hitter|2026",
+   "baseballamerica|pitcher|2026"
+  ]
+ },
+ "B4_ba_power_game_or_raw": {
+  "alignment_overlap_n": 634,
+  "alignment": {
+   "spearman_BApower_vs_FG_game_pwr": 0.7426,
+   "spearman_BApower_vs_FG_raw_pwr": 0.7706,
+   "mean_BA_power": 50.1577,
+   "mean_FG_game_pwr": 48.0126,
+   "mean_FG_raw_pwr": 53.9196,
+   "mean_BA_minus_FG_game": 2.1451,
+   "mean_BA_minus_FG_raw": -3.7618
+  },
+  "outcome_vs_realized_iso_COMMON_SET": {
+   "n": 228,
+   "BA_power_spearman": 0.3646,
+   "FG_game_pwr_spearman": 0.3106,
+   "FG_raw_pwr_spearman": 0.256
+  },
+  "intervals": {
+   "alignment_d_rho_raw_minus_game": 0.028,
+   "alignment_ci95": [
+    -0.0019,
+    0.0588
+   ],
+   "alignment_excludes_zero": false,
+   "outcome_d_rho_BA_minus_FGgame": 0.054,
+   "outcome_ci95": [
+    -0.0349,
+    0.1461
+   ],
+   "outcome_excludes_zero": false,
+   "boot": 2000,
+   "seed": 8641
+  },
+  "outcome_vs_realized_iso_DIFFERENT_POOLS_NOT_COMPARABLE": {
+   "BA_power": {
+    "n": 261,
+    "spearman": 0.3761
+   },
+   "FG_game_pwr": {
+    "n": 228,
+    "spearman": 0.3106
+   },
+   "FG_raw_pwr": {
+    "n": 228,
+    "spearman": 0.256
+   },
+   "caveat": "no realized MLB raw-power quantity exists in _TOOLS; the outcome read is indirect and the alignment read carries the weight"
+  }
+ },
+ "B5_fold_collisions": {
+  "collision_rows": {
+   "sl|slider+sweeper": 20,
+   "ch|changeup+split": 10,
+   "ch|changeup+splitter": 1
+  },
+  "observations_destroyed_sl": 20,
+  "observations_destroyed_ch": 11,
+  "kept_minus_family_mean": {
+   "n": 31,
+   "mean": -0.3226,
+   "sd": 4.3876
+  },
+  "finding": "the sweeper->sl and splitter->ch folds are NOT free: a pitcher graded on both members of a folded family keeps ONE canonical grade and the other observation is destroyed at ingest. Reconciles the label counts exactly: slider 606 + sweeper 48 = 654 against sl 634 (20 lost); changeup 609 + ch 6 + split 38 + splitter 5 = 658 against ch 647 (11 lost). Both are PASSTHROUGH tools, so the loss cannot be scored for accuracy, only counted."
+ },
+ "B5_fold_cost": {
+  "raw_label_counts": {
+   "power": 836,
+   "arm": 834,
+   "hit": 759,
+   "fastball": 696,
+   "control": 694,
+   "run": 672,
+   "field": 672,
+   "changeup": 609,
+   "slider": 606,
+   "curveball": 402,
+   "speed": 164,
+   "fielding": 164,
+   "cutter": 152,
+   "hitting": 77,
+   "sweeper": 48,
+   "split": 38,
+   "ch": 6,
+   "splitter": 5,
+   "cut": 3,
+   "cb": 2,
+   "comtrol": 1,
+   "throw": 1,
+   "knuckleball": 1
+  },
+  "label_to_canonical_reconciliation": {
+   "hit": "hit 759 + hitting 77 = 836 == canonical hit",
+   "speed": "run 672 + speed 164 = 836 == canonical speed",
+   "field": "field 672 + fielding 164 = 836 == canonical field",
+   "throw": "arm 834 + throw 1 = 835 == canonical throw",
+   "cmd": "control 694 + comtrol 1 = 695 == canonical cmd (the typo maps)",
+   "ct": "cutter 152 + cut 3 = 155 == canonical ct",
+   "cb": "curveball 402 + cb 2 = 404 == canonical cb; knuckleball 1 is DROPPED (no canonical key)",
+   "sl": "slider 606 + sweeper 48 = 654 against canonical sl 634 -> 20 lost to fold",
+   "ch": "changeup 609 + ch 6 + split 38 + splitter 5 = 658 against canonical ch 647 -> 11 lost to fold"
+  },
+  "sl_folded_sweeper": {
+   "n": 48,
+   "mean": 52.1875,
+   "sd": 6.607
+  },
+  "sl_plain_slider": {
+   "n": 586,
+   "mean": 54.0188,
+   "sd": 6.0234
+  },
+  "ch_folded_splitter": {
+   "n": 43,
+   "mean": 50.4651,
+   "sd": 6.3625
+  },
+  "ch_plain_changeup": {
+   "n": 604,
+   "mean": 48.2864,
+   "sd": 7.4475
+  },
+  "note": "sl and ch are PASSTHROUGH tools with no realized MLB target (efv_tools._PASSTHROUGH), so this can only ever be a distributional comparison, never an accuracy one."
+ },
+ "B6_league_selection": {
+  "ba_orgs_by_year": {
+   "2023": [
+    "ATH",
+    "BAL",
+    "BOS",
+    "CHW",
+    "CLE",
+    "DET",
+    "HOU",
+    "KCR",
+    "LAA",
+    "MIN",
+    "NYY",
+    "TBR",
+    "TOR"
+   ],
+   "2024": [
+    "ATH",
+    "BAL",
+    "BOS",
+    "CHW",
+    "CLE",
+    "DET",
+    "HOU",
+    "KCR",
+    "LAA",
+    "MIN",
+    "NYY",
+    "TBR",
+    "TOR"
+   ],
+   "2025": [
+    "ATH",
+    "BAL",
+    "BOS",
+    "CHW",
+    "CLE",
+    "DET",
+    "HOU",
+    "KCR",
+    "LAA",
+    "MIN",
+    "NYY",
+    "TBR",
+    "TOR"
+   ],
+   "2026": [
+    "ATH",
+    "BAL",
+    "BOS",
+    "CHW",
+    "CLE",
+    "DET",
+    "HOU",
+    "KCR",
+    "LAA",
+    "MIN",
+    "NYY",
+    "TBR",
+    "TOR"
+   ]
+  },
+  "cycle": 2026,
+  "players_in_cycle": 1660,
+  "gain_a_ba_vote": 383,
+  "mean_n_sources_with_ba": 2.7781,
+  "mean_n_sources_without_ba": 1.4503,
+  "consequence": "a player's number of voting sources depends on his league; all BA org boards ingested are American League clubs, so AL prospects get one more vote than NL prospects and the consensus mean is shrunk over a different denominator by league"
+ },
+ "B7_selection_hazard": {
+  "hit": {
+   "pool_n": 1917,
+   "pool_debuted": 845,
+   "pool_debuted_pct": 44.0793,
+   "ba_covered_n": 145,
+   "ba_covered_debuted": 108,
+   "ba_covered_debuted_pct": 74.4828,
+   "lift_pts": 30.4035
+  },
+  "pit": {
+   "pool_n": 2040,
+   "pool_debuted": 981,
+   "pool_debuted_pct": 48.0882,
+   "ba_covered_n": 127,
+   "ba_covered_debuted": 104,
+   "ba_covered_debuted_pct": 81.8898,
+   "lift_pts": 33.8015
+  },
+  "brief_stated": {
+   "hitter": [
+    845,
+    1917,
+    104,
+    139
+   ],
+   "pitcher": [
+    981,
+    2040,
+    100,
+    121
+   ]
+  }
+ },
+ "multiplicity": {
+  "n_gate_cells": 10,
+  "n_ship": 1,
+  "k_of_n": "1 of 10",
+  "k_of_n_powered_arm": "1 of 5",
+  "holm_armA_on_d_rho": [
+   {
+    "tool": "hit",
+    "p_rho": 0.000999,
+    "holm_adj_p": 0.005,
+    "survives_holm_0.05": true
+   },
+   {
+    "tool": "speed",
+    "p_rho": 0.014985,
+    "holm_adj_p": 0.0599,
+    "survives_holm_0.05": false
+   },
+   {
+    "tool": "fb",
+    "p_rho": 0.021978,
+    "holm_adj_p": 0.0659,
+    "survives_holm_0.05": false
+   },
+   {
+    "tool": "game_pwr",
+    "p_rho": 0.135864,
+    "holm_adj_p": 0.2717,
+    "survives_holm_0.05": false
+   },
+   {
+    "tool": "cmd",
+    "p_rho": 0.236763,
+    "holm_adj_p": 0.2717,
+    "survives_holm_0.05": false
+   }
+  ],
+  "note": "permutation p is add-one corrected on 1000 draws, so the smallest reportable p is 0.000999",
+  "cells": [
+   {
+    "arm": "A_fg_vs_pipeline",
+    "tool": "hit",
+    "verdict": "SHIP",
+    "d_rho": 0.013416,
+    "d_auc": 0.006575,
+    "F_rho": 0.006049,
+    "F_auc": 0.003078,
+    "n": 1260,
+    "p_rho": 0.000999,
+    "p_auc": 0.000999
+   },
+   {
+    "arm": "A_fg_vs_pipeline",
+    "tool": "game_pwr",
+    "verdict": "NO_SHIP",
+    "d_rho": 0.003933,
+    "d_auc": 0.002698,
+    "F_rho": 0.005136,
+    "F_auc": 0.002697,
+    "n": 1256,
+    "p_rho": 0.135864,
+    "p_auc": 0.050949
+   },
+   {
+    "arm": "A_fg_vs_pipeline",
+    "tool": "speed",
+    "verdict": "MARGINAL->FAIL",
+    "d_rho": 0.004258,
+    "d_auc": 0.003521,
+    "F_rho": 0.003328,
+    "F_auc": 0.001775,
+    "n": 1260,
+    "p_rho": 0.014985,
+    "p_auc": 0.001998
+   },
+   {
+    "arm": "A_fg_vs_pipeline",
+    "tool": "fb",
+    "verdict": "NO_SHIP",
+    "d_rho": -0.006744,
+    "d_auc": -0.002765,
+    "F_rho": 0.005806,
+    "F_auc": 0.003268,
+    "n": 1180,
+    "p_rho": 0.021978,
+    "p_auc": 0.084915
+   },
+   {
+    "arm": "A_fg_vs_pipeline",
+    "tool": "cmd",
+    "verdict": "NO_SHIP",
+    "d_rho": 0.004104,
+    "d_auc": 0.002691,
+    "F_rho": 0.006618,
+    "F_auc": 0.003404,
+    "n": 1185,
+    "p_rho": 0.236763,
+    "p_auc": 0.116883
+   },
+   {
+    "arm": "B_fg_pipeline_ba",
+    "tool": "hit",
+    "verdict": "NULL_NO_EVALUABLE_YEAR",
+    "d_rho": null,
+    "d_auc": null,
+    "F_rho": null,
+    "F_auc": null,
+    "n": 0,
+    "p_rho": null,
+    "p_auc": null
+   },
+   {
+    "arm": "B_fg_pipeline_ba",
+    "tool": "game_pwr",
+    "verdict": "NULL_NO_EVALUABLE_YEAR",
+    "d_rho": null,
+    "d_auc": null,
+    "F_rho": null,
+    "F_auc": null,
+    "n": 0,
+    "p_rho": null,
+    "p_auc": null
+   },
+   {
+    "arm": "B_fg_pipeline_ba",
+    "tool": "speed",
+    "verdict": "NULL_NO_EVALUABLE_YEAR",
+    "d_rho": null,
+    "d_auc": null,
+    "F_rho": null,
+    "F_auc": null,
+    "n": 0,
+    "p_rho": null,
+    "p_auc": null
+   },
+   {
+    "arm": "B_fg_pipeline_ba",
+    "tool": "fb",
+    "verdict": "NULL_NO_EVALUABLE_YEAR",
+    "d_rho": null,
+    "d_auc": null,
+    "F_rho": null,
+    "F_auc": null,
+    "n": 0,
+    "p_rho": null,
+    "p_auc": null
+   },
+   {
+    "arm": "B_fg_pipeline_ba",
+    "tool": "cmd",
+    "verdict": "NULL_NO_EVALUABLE_YEAR",
+    "d_rho": null,
+    "d_auc": null,
+    "F_rho": null,
+    "F_auc": null,
+    "n": 0,
+    "p_rho": null,
+    "p_auc": null
+   }
+  ]
+ },
+ "verdict": "SHIP_SOME"
+}
