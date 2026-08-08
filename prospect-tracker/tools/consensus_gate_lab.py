@@ -1065,5 +1065,374 @@ def _count(it):
     return d
 
 
+# ===========================================================================
+# WAVE 2 -- Lane C repair. Gate doc: docs/efv-2026-08-07b/CONSENSUS_REPAIR.md
+# Artifact: data/consensus_repair_eval.json
+# Run: python tools/consensus_gate_lab.py --wave2
+#
+# Everything below measures the SHIPPED code in consensus.py by flipping its
+# three v27 repair flags to build comparison arms. It does not re-implement the
+# repair, so a divergence between lab and production is impossible by
+# construction.
+# ===========================================================================
+
+OUT_W2 = DATA / "consensus_repair_eval.json"
+
+GLOBAL_BOARD_LABEL_RE = re.compile(r"\bTop\s+(?:100|200|250|300)\s*$")
+
+
+def _pt_dicts(ts):
+    """PlayerTimeseries -> the dict shape spotlights.py consumes."""
+    out = {}
+    for p in ts:
+        out[p.player_key] = {
+            "player_key": p.player_key,
+            "player_name": p.player_name,
+            "fv_high": p.fv_high,
+            "points": [
+                {"snapshot_date": pt.snapshot_date,
+                 "avg_rank": pt.avg_rank,
+                 "consensus_fv_raw": pt.consensus_fv_raw,
+                 "consensus_fv": pt.consensus_fv,
+                 "avg_rank_n": pt.avg_rank_n,
+                 "rank_implied_fv": pt.rank_implied_fv,
+                 "avg_fv_n": pt.avg_fv_n}
+                for pt in p.points
+            ],
+        }
+    return out
+
+
+def _build_arm(snaps, *, org_det, asof, dropoff):
+    C.ORG_RANK_VALUE_DETECTOR = org_det
+    C.ASOF_FV_INSTANCES = asof
+    C.DROPOFF_SHRINK_ENABLED = dropoff
+    t = time.time()
+    ts = C.build_timeseries(snaps, normalize=C.ADOPT_NORMALIZED_CONSENSUS)
+    return _pt_dicts(ts), round(time.time() - t, 2)
+
+
+def _diff_points(a, b, field):
+    """Rows where `field` differs between two arms, keyed (player, date)."""
+    # NOTE: a name-merged player can carry MORE THAN ONE point on the same
+    # date (build_timeseries pools points from both keys and dedupes on
+    # (date, interval_label), not on date). Keying a diff on (player, date)
+    # therefore compares whichever point happened to land last and invents
+    # differences that are not there. Compare the per-date MULTISET instead.
+    rows = []
+    for pk, pa in a.items():
+        pb = b.get(pk)
+        if pb is None:
+            continue
+        ga, gb = defaultdict(list), defaultdict(list)
+        for pt in pa["points"]:
+            ga[pt["snapshot_date"]].append(pt.get(field))
+        for pt in pb["points"]:
+            gb[pt["snapshot_date"]].append(pt.get(field))
+        for dt, va in ga.items():
+            if dt not in gb:
+                continue
+            ka = sorted((-1e18 if v is None else v) for v in va)
+            kb = sorted((-1e18 if v is None else v) for v in gb[dt])
+            if len(ka) != len(kb) or any(abs(x - y) > 1e-9 for x, y in zip(ka, kb)):
+                rows.append({"player_key": pk, "date": dt,
+                             "shipped": va[0] if len(va) == 1 else va,
+                             "repaired": (gb[dt][0] if len(gb[dt]) == 1
+                                          else gb[dt])})
+    return rows
+
+
+def _drivers(pdicts):
+    from spotlights import _baseline_to_now_list_jump
+    out = {}
+    for pk, p in pdicts.items():
+        _score, drv = _baseline_to_now_list_jump(p)
+        if drv:
+            out[pk] = drv
+    return out
+
+
+def _c1_detector_report(snaps):
+    """C1-P1..P5. Board-by-board classification over the whole corpus."""
+    boards = defaultdict(list)
+    for s in snaps:
+        if s.rank is None:
+            continue
+        boards[(s.source, s.interval_label or "", s.snapshot_date)].append(
+            ((s.player_key, s.source, s.interval_label or "", s.snapshot_date),
+             s.org or "", int(s.rank), s.fv))
+    rep = {"n_boards": len(boards), "n_boards_reclassified": 0,
+           "n_boards_fell_back": 0, "n_rows_reclassified": 0,
+           "fallback_reasons": defaultdict(int), "boards": [],
+           "p2_global_board_violations": [], "p3_org_board_disagreements": [],
+           "canary": {}}
+    for key, rows in sorted(boards.items()):
+        ids, diag = C.classify_board_org_ranks(rows)
+        src, lbl, dt = key
+        if diag["validated"]:
+            rep["n_boards_reclassified"] += 1
+            rep["n_rows_reclassified"] += len(ids)
+            rep["boards"].append({"source": src, "label": lbl, "date": dt, **diag})
+        else:
+            rep["n_boards_fell_back"] += 1
+            rep["fallback_reasons"][diag["reason"]] += 1
+        if GLOBAL_BOARD_LABEL_RE.search(lbl) and ids:
+            rep["p2_global_board_violations"].append(
+                {"source": src, "label": lbl, "date": dt, "n": len(ids)})
+        if ("_org_" in lbl) or C._ORG_LIST_LABEL_RE.search(lbl):
+            if diag["validated"] and len(ids) != len(rows):
+                rep["p3_org_board_disagreements"].append(
+                    {"source": src, "label": lbl, "date": dt,
+                     "n_org": len(ids), "n_rows": len(rows)})
+    ck = ("fangraphs", "2026updated", "2026-08-02")
+    ids, diag = C.classify_board_org_ranks(boards[ck])
+    rep["canary"] = {
+        "board": "|".join(ck), **diag,
+        "jd_dix_is_org": ("jd_dix", "fangraphs", "2026updated", "2026-08-02") in ids,
+        "jesus_made_is_org": ("jesus_made", "fangraphs", "2026updated", "2026-08-02") in ids,
+    }
+    rep["fallback_reasons"] = dict(rep["fallback_reasons"])
+    rep["boards"] = sorted(rep["boards"], key=lambda b: -b["n_org_rows"])[:25]
+    return rep
+
+
+def _source_flag_default(name):
+    """Read a flag's DEFAULT from consensus.py source, not from the live module
+    (the arms mutate the module, so the live value is whatever ran last)."""
+    txt = (_ROOT / "consensus.py").read_text(encoding="utf-8")
+    m = re.search(r"^" + name + r"\s*=\s*(True|False)\s*$", txt, re.M)
+    return m.group(1) if m else None
+
+
+def _c1_controls(snaps, arm_ship, drv_ship, real_keys, seeds=(11, 22, 33)):
+    """The control that would embarrass me.
+
+    The P0 claim is that a published spotlight driver moves when the org ranks
+    stop contaminating avg_rank. The dumbest competing explanation is that the
+    driver set is simply unstable: remove ANY 19,772 rank rows and a driver
+    moves. So: rebuild with the SAME NUMBER of rows excluded per board, chosen
+    at random, and with the classification INVERTED (exclude exactly the rows
+    the detector calls global). If random exclusion moves drivers as much as the
+    detector does, the driver movement is not evidence about this defect.
+    """
+    boards = defaultdict(list)
+    for s_ in snaps:
+        if s_.rank is None:
+            continue
+        boards[(s_.source, s_.interval_label or "", s_.snapshot_date)].append(
+            (s_.player_key, s_.source, s_.interval_label or "", s_.snapshot_date))
+    per_board_n = defaultdict(int)
+    for k in real_keys:
+        per_board_n[(k[1], k[2], k[3])] += 1
+
+    real = C._org_ranked_snapshot_keys
+    out = {}
+    try:
+        for seed in seeds:
+            rng = random.Random(seed)
+            pick = set()
+            for bk, n in per_board_n.items():
+                pool = boards[bk]
+                pick |= set(rng.sample(pool, min(n, len(pool))))
+            C._org_ranked_snapshot_keys = lambda _s, _p=pick: (_p, {})
+            arm, _t = _build_arm(snaps, org_det=True, asof=False, dropoff=False)
+            drv = _drivers(arm)
+            out["random_seed_%d" % seed] = {
+                "n_excluded": len(pick),
+                "drivers": len(drv),
+                "fired": sorted(set(drv) - set(drv_ship)),
+                "lost": sorted(set(drv_ship) - set(drv)),
+                "text_changed": sorted(k for k in set(drv) & set(drv_ship)
+                                       if drv[k] != drv_ship[k]),
+            }
+        inv = set()
+        for bk, n in per_board_n.items():
+            inv |= {k for k in boards[bk] if k not in real_keys}
+        C._org_ranked_snapshot_keys = lambda _s, _p=inv: (_p, {})
+        arm, _t = _build_arm(snaps, org_det=True, asof=False, dropoff=False)
+        drv = _drivers(arm)
+        out["inverted"] = {
+            "n_excluded": len(inv),
+            "drivers": len(drv),
+            "fired": sorted(set(drv) - set(drv_ship)),
+            "lost": sorted(set(drv_ship) - set(drv)),
+            "text_changed": sorted(k for k in set(drv) & set(drv_ship)
+                                   if drv[k] != drv_ship[k]),
+        }
+    finally:
+        C._org_ranked_snapshot_keys = real
+    return out
+
+
+def _c2_isolated(snaps):
+    """C-2 with the C-1 detector OFF in both arms, so wave 1's hand-derived
+    tyler_skaggs case is reproduced on wave 1's own basis."""
+    a, _ = _build_arm(snaps, org_det=False, asof=False, dropoff=False)
+    b, _ = _build_arm(snaps, org_det=False, asof=True, dropoff=False)
+    d = _diff_points(a, b, "consensus_fv_raw")
+    return {"n_point_rows_changed": len(d),
+            "tyler_skaggs": [r for r in d if r["player_key"] == "tyler_skaggs"]}
+
+
+def main_wave2():
+    t0 = time.time()
+    print("loading snapshots ...", flush=True)
+    raw = storage.load_all_snapshots()
+    snaps = [C._canonicalize_player_snapshot(s) for s in raw]
+    art = {"generated_at": time.strftime("%Y-%m-%dT%H:%M:%S"), "lane": "C-wave2",
+           "gate_doc": "docs/efv-2026-08-07b/CONSENSUS_REPAIR.md",
+           "n_snapshots": len(snaps),
+           "bars": {"MIN_GLOBAL_PREFIX": C.MIN_GLOBAL_PREFIX,
+                    "MIN_PREFIX_COVERAGE": C.MIN_PREFIX_COVERAGE,
+                    "MIN_OFFSET_EXACT_FRAC": C.MIN_OFFSET_EXACT_FRAC,
+                    "MAX_OFFSET_UNDER": C.MAX_OFFSET_UNDER}}
+
+    print("C-1 detector report ...", flush=True)
+    art["c1_detector"] = _c1_detector_report(snaps)
+
+    print("building arms ...", flush=True)
+    arm_ship, t_ship = _build_arm(snaps, org_det=False, asof=False, dropoff=False)
+    arm_c1, t_c1 = _build_arm(snaps, org_det=True, asof=False, dropoff=False)
+    arm_c12, t_c12 = _build_arm(snaps, org_det=True, asof=True, dropoff=False)
+    arm_c123, t_c123 = _build_arm(snaps, org_det=True, asof=True, dropoff=True)
+    art["runtime_by_arm_sec"] = {"shipped": t_ship, "c1": t_c1,
+                                 "c1_c2": t_c12, "c1_c2_c3": t_c123}
+
+    # ---- C-1 blast radius ----
+    d_rank = _diff_points(arm_ship, arm_c1, "avg_rank")
+    d_cfv = _diff_points(arm_ship, arm_c1, "consensus_fv_raw")
+    def _scal(v):
+        return v if not isinstance(v, list) else (v[0] if len(v) == 1 else None)
+    served_moved = []
+    for r in d_rank:
+        sa, sb = _scal(r["shipped"]), _scal(r["repaired"])
+        if sa is None or sb is None or abs(sa - sb) >= 0.05:
+            served_moved.append(r)
+    drv_ship, drv_c1 = _drivers(arm_ship), _drivers(arm_c1)
+    fired = sorted(set(drv_c1) - set(drv_ship))
+    lost = sorted(set(drv_ship) - set(drv_c1))
+    changed = sorted(pk for pk in set(drv_ship) & set(drv_c1)
+                     if drv_ship[pk] != drv_c1[pk])
+    if fired or lost:
+        severity = "P0"
+    elif served_moved:
+        severity = "P1"
+    else:
+        severity = "CORRECTNESS_ONLY"
+    art["c1_blast_radius"] = {
+        "n_point_rows_avg_rank_changed": len(d_rank),
+        "n_players_avg_rank_changed": len({r["player_key"] for r in d_rank}),
+        "n_served_avg_rank_moves_ge_0p05": len(served_moved),
+        "n_point_rows_consensus_fv_raw_changed": len(d_cfv),
+        "n_players_consensus_fv_raw_changed": len({r["player_key"] for r in d_cfv}),
+        "consensus_fv_raw_sample": d_cfv[:15],
+        "drivers_shipped": len(drv_ship), "drivers_repaired": len(drv_c1),
+        "drivers_lost": [{"player_key": pk, "driver": drv_ship[pk]} for pk in lost],
+        "drivers_fired": [{"player_key": pk, "driver": drv_c1[pk]} for pk in fired],
+        "drivers_text_changed": [{"player_key": pk, "shipped": drv_ship[pk],
+                                  "repaired": drv_c1[pk]} for pk in changed],
+        "severity": severity,
+        "severity_rule": "P0 if any driver fires or disappears; P1 if a served "
+                         "avg_rank moves >= 0.05; else correctness only.",
+        "avg_rank_sample": d_rank[:15],
+    }
+
+    print("C-1 controls ...", flush=True)
+    real_keys, _d = C._org_ranked_snapshot_keys(snaps)
+    art["c1_controls"] = _c1_controls(snaps, arm_ship, drv_ship, real_keys)
+    art["c1_controls"]["detector_arm_for_comparison"] = {
+        "n_excluded": len(real_keys),
+        "drivers": len(drv_c1),
+        "fired": fired, "lost": lost, "text_changed": changed,
+    }
+
+    # ---- C-2 ----
+    print("C-2 isolated ...", flush=True)
+    art["c2_isolated_no_c1"] = _c2_isolated(snaps)
+    arm_c1, t_c1 = _build_arm(snaps, org_det=True, asof=False, dropoff=False)
+    arm_c12, t_c12 = _build_arm(snaps, org_det=True, asof=True, dropoff=False)
+    d_c2 = _diff_points(arm_c1, arm_c12, "consensus_fv_raw")
+    mats = {}
+    for side, fn in (("hit", "xfv_hitter_matrix.json"), ("pit", "xfv_pitcher_matrix.json")):
+        mats[side] = json.load(open(DATA / fn, encoding="utf-8"))
+    want = set()
+    for _side, rws in mats.items():
+        for r in rws:
+            if r.get("asof_date") and r.get("player_key"):
+                want.add((r["player_key"], r["asof_date"]))
+    on_matrix = [r for r in d_c2 if (r["player_key"], r["date"]) in want]
+    deltas = [abs(r["repaired"] - r["shipped"]) for r in on_matrix
+              if isinstance(r["repaired"], float) and isinstance(r["shipped"], float)]
+    sk = [r for r in d_c2 if r["player_key"] == "tyler_skaggs"]
+    art["c2_asof_instances"] = {
+        "n_point_rows_changed_all_history": len(d_c2),
+        "n_matrix_rows_changed": len(on_matrix),
+        "matrix_join_size": len(want),
+        "mean_abs_fv_affected": round(sum(deltas) / len(deltas), 4) if deltas else 0.0,
+        "max_abs_fv": round(max(deltas), 4) if deltas else 0.0,
+        "wave1_reference": {"n": 117, "mean_abs": 3.10, "max_abs": 10.42},
+        "tyler_skaggs": sk,
+        "runtime_delta_pct": round(100 * (t_c12 - t_c1) / t_c1, 2),
+    }
+
+    # ---- C-3 ----
+    fixed_pairs = C._dropped_off_pairs(snaps)
+    tl = C._dropped_off_timeline(snaps)
+    dates = sorted(tl)
+    orgs_in_pairs = sorted({
+        C.org_slug_from_label(s.interval_label) for s in snaps
+        if C.org_slug_from_label(s.interval_label)
+    })
+    d_c3 = _diff_points(arm_c12, arm_c123, "consensus_fv_raw")
+    lab_ch = _diff_points(arm_c12, arm_c123, "consensus_fv")
+    live_rows = []
+    for pk in arm_c123:
+        a = arm_c12[pk]["points"][-1] if arm_c12[pk]["points"] else None
+        b = arm_c123[pk]["points"][-1] if arm_c123[pk]["points"] else None
+        if a and b and a["consensus_fv"] != b["consensus_fv"]:
+            live_rows.append({"player_key": pk, "shipped": a["consensus_fv"],
+                              "repaired": b["consensus_fv"]})
+    art["c3_dropoff"] = {
+        "legacy_slug_occurrences": sum(
+            1 for s in snaps if s.interval_label and "_org_" in s.interval_label),
+        "repaired_pairs_full_corpus": len(fixed_pairs),
+        "org_tokens_accepted": orgs_in_pairs,
+        "midseason_rejected": "Midseason" not in orgs_in_pairs,
+        "asof_latest_equals_full": tl[dates[-1]] == fixed_pairs,
+        "n_distinct_pair_sets_over_time": len({frozenset(v) for v in tl.values()}),
+        "asof_varies_over_time": len({frozenset(v) for v in tl.values()}) > 1,
+        "n_point_rows_changed": len(d_c3),
+        "n_label_changes": len(lab_ch),
+        "n_live_board_grade_changes": len(live_rows),
+        "live_sample": live_rows[:15],
+        "flag_default_in_source": _source_flag_default("DROPOFF_SHRINK_ENABLED"),
+    }
+
+    # ---- C-5 ----
+    cols = C.same_name_collisions(snaps)
+    hard = [c for c in cols if c["provably_different_players"]]
+    art["c5_collisions"] = {
+        "allowlist_is_empty": True,
+        "n_colliding_names": len(cols),
+        "n_keys_involved": sum(len(c["keys"]) for c in cols),
+        "n_provably_different": len(hard),
+        "n_overlapping_windows": sum(1 for c in cols if c["windows_overlap"]),
+        "hard_cases": hard,
+        "d5_hygiene": "apply_shrinkage / compute_prior_mean_fv commented as dead, "
+                      "NOT deleted (test_consensus.py imports them).",
+    }
+
+    C.ORG_RANK_VALUE_DETECTOR = True
+    C.ASOF_FV_INSTANCES = True
+    C.DROPOFF_SHRINK_ENABLED = False
+    art["runtime_sec"] = round(time.time() - t0, 1)
+    OUT_W2.write_text(json.dumps(art, indent=2, default=str), encoding="utf-8")
+    print("wrote " + str(OUT_W2) + "  severity=" + art["c1_blast_radius"]["severity"],
+          flush=True)
+
+
 if __name__ == "__main__":
-    main()
+    if "--wave2" in sys.argv:
+        main_wave2()
+    else:
+        main()

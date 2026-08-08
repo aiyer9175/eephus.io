@@ -1,0 +1,1268 @@
+{
+  "generated_at": "2026-08-07T22:12:56",
+  "lane": "C-wave2",
+  "gate_doc": "docs/efv-2026-08-07b/CONSENSUS_REPAIR.md",
+  "n_snapshots": 54061,
+  "bars": {
+    "MIN_GLOBAL_PREFIX": 20,
+    "MIN_PREFIX_COVERAGE": 0.95,
+    "MIN_OFFSET_EXACT_FRAC": 0.9,
+    "MAX_OFFSET_UNDER": 1
+  },
+  "c1_detector": {
+    "n_boards": 714,
+    "n_boards_reclassified": 19,
+    "n_boards_fell_back": 695,
+    "n_rows_reclassified": 19772,
+    "fallback_reasons": {
+      "no rank value shared across orgs": 538,
+      "no usable 1..G global prefix": 5,
+      "org start-offset fingerprint did not hold": 16,
+      "fewer than 2 orgs": 136
+    },
+    "boards": [
+      {
+        "source": "fangraphs",
+        "label": "2026updated",
+        "date": "2026-08-02",
+        "n_rows": 1384,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1270,
+        "n_global_rows": 114,
+        "global_prefix_G": 114,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 0.9667,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2026tradedeadline",
+        "date": "2026-07-23",
+        "n_rows": 1372,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1261,
+        "n_global_rows": 111,
+        "global_prefix_G": 111,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 1.0,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2025updated",
+        "date": "2025-07-31",
+        "n_rows": 1318,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1223,
+        "n_global_rows": 95,
+        "global_prefix_G": 95,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 1.0,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2021updated",
+        "date": "2021-07-30",
+        "n_rows": 1281,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1170,
+        "n_global_rows": 111,
+        "global_prefix_G": 112,
+        "prefix_coverage": 0.9911,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 0.9,
+        "offset_worst_under": 1,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2025report",
+        "date": "2025-02-13",
+        "n_rows": 1284,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1163,
+        "n_global_rows": 121,
+        "global_prefix_G": 121,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 0.9667,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2020updated",
+        "date": "2020-08-01",
+        "n_rows": 1265,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1150,
+        "n_global_rows": 115,
+        "global_prefix_G": 115,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 1.0,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2022report",
+        "date": "2022-02-24",
+        "n_rows": 1252,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1132,
+        "n_global_rows": 120,
+        "global_prefix_G": 121,
+        "prefix_coverage": 0.9917,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 1.0,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2019updated",
+        "date": "2019-07-31",
+        "n_rows": 1234,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1128,
+        "n_global_rows": 106,
+        "global_prefix_G": 106,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 1.0,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2023updated",
+        "date": "2023-08-01",
+        "n_rows": 1194,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1115,
+        "n_global_rows": 79,
+        "global_prefix_G": 79,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 0.9333,
+        "offset_worst_under": 1,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2021report",
+        "date": "2021-02-26",
+        "n_rows": 1251,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1114,
+        "n_global_rows": 137,
+        "global_prefix_G": 137,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 0.9333,
+        "offset_worst_under": 1,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2024updated",
+        "date": "2024-08-01",
+        "n_rows": 1157,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1065,
+        "n_global_rows": 92,
+        "global_prefix_G": 92,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 1.0,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2020report",
+        "date": "2020-02-13",
+        "n_rows": 1184,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1064,
+        "n_global_rows": 120,
+        "global_prefix_G": 120,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 1.0,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2023report",
+        "date": "2023-02-23",
+        "n_rows": 1181,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1056,
+        "n_global_rows": 125,
+        "global_prefix_G": 125,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 1.0,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2024report",
+        "date": "2024-02-14",
+        "n_rows": 1161,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 1049,
+        "n_global_rows": 112,
+        "global_prefix_G": 112,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 1.0,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2026report",
+        "date": "2026-02-12",
+        "n_rows": 1005,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 892,
+        "n_global_rows": 113,
+        "global_prefix_G": 113,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 24,
+        "offset_exact_frac": 1.0,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2019report",
+        "date": "2019-02-13",
+        "n_rows": 990,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 858,
+        "n_global_rows": 132,
+        "global_prefix_G": 132,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 1.0,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2018updated",
+        "date": "2018-08-01",
+        "n_rows": 988,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 857,
+        "n_global_rows": 131,
+        "global_prefix_G": 132,
+        "prefix_coverage": 0.9924,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 1.0,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2018report",
+        "date": "2018-02-15",
+        "n_rows": 735,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 635,
+        "n_global_rows": 100,
+        "global_prefix_G": 100,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 1.0,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      },
+      {
+        "source": "fangraphs",
+        "label": "2017report",
+        "date": "2017-02-15",
+        "n_rows": 670,
+        "n_orgs": 30,
+        "eligible": true,
+        "validated": true,
+        "n_org_rows": 570,
+        "n_global_rows": 100,
+        "global_prefix_G": 100,
+        "prefix_coverage": 1.0,
+        "offset_orgs_checked": 30,
+        "offset_exact_frac": 0.9667,
+        "offset_worst_under": 0,
+        "reason": "ok",
+        "n_null_fv": 0
+      }
+    ],
+    "p2_global_board_violations": [],
+    "p3_org_board_disagreements": [],
+    "canary": {
+      "board": "fangraphs|2026updated|2026-08-02",
+      "n_rows": 1384,
+      "n_orgs": 30,
+      "eligible": true,
+      "validated": true,
+      "n_org_rows": 1270,
+      "n_global_rows": 114,
+      "global_prefix_G": 114,
+      "prefix_coverage": 1.0,
+      "offset_orgs_checked": 30,
+      "offset_exact_frac": 0.9667,
+      "offset_worst_under": 0,
+      "reason": "ok",
+      "n_null_fv": 0,
+      "jd_dix_is_org": true,
+      "jesus_made_is_org": false
+    }
+  },
+  "runtime_by_arm_sec": {
+    "shipped": 4.93,
+    "c1": 4.92,
+    "c1_c2": 4.8,
+    "c1_c2_c3": 5.01
+  },
+  "c1_blast_radius": {
+    "n_point_rows_avg_rank_changed": 27418,
+    "n_players_avg_rank_changed": 4760,
+    "n_served_avg_rank_moves_ge_0p05": 27418,
+    "n_point_rows_consensus_fv_raw_changed": 0,
+    "n_players_consensus_fv_raw_changed": 0,
+    "consensus_fv_raw_sample": [],
+    "drivers_shipped": 19,
+    "drivers_repaired": 20,
+    "drivers_lost": [],
+    "drivers_fired": [
+      {
+        "player_key": "ryan_sloan",
+        "driver": [
+          "rank up 35 spots from baseline lists"
+        ]
+      }
+    ],
+    "drivers_text_changed": [
+      {
+        "player_key": "franklin_arias",
+        "shipped": [
+          "rank up 52 spots from baseline lists"
+        ],
+        "repaired": [
+          "rank up 72 spots from baseline lists"
+        ]
+      },
+      {
+        "player_key": "jesus_made",
+        "shipped": [
+          "rank up 46 spots from baseline lists"
+        ],
+        "repaired": [
+          "rank up 55 spots from baseline lists"
+        ]
+      },
+      {
+        "player_key": "termarr_johnson",
+        "shipped": [
+          "rank up 55 spots from baseline lists"
+        ],
+        "repaired": [
+          "rank up 35 spots from baseline lists"
+        ]
+      },
+      {
+        "player_key": "theo_gillen",
+        "shipped": [
+          "rank up 40 spots from baseline lists"
+        ],
+        "repaired": [
+          "rank up 85 spots from baseline lists"
+        ]
+      },
+      {
+        "player_key": "xavier_isaac",
+        "shipped": [
+          "rank up 57 spots from baseline lists"
+        ],
+        "repaired": [
+          "rank up 44 spots from baseline lists"
+        ]
+      }
+    ],
+    "severity": "P0",
+    "severity_rule": "P0 if any driver fires or disappears; P1 if a served avg_rank moves >= 0.05; else correctness only.",
+    "avg_rank_sample": [
+      {
+        "player_key": "wander_franco",
+        "date": "2018-02-15",
+        "shipped": 6.0,
+        "repaired": null
+      },
+      {
+        "player_key": "julio_rodriguez",
+        "date": "2018-08-01",
+        "shipped": 4.0,
+        "repaired": null
+      },
+      {
+        "player_key": "julio_rodriguez",
+        "date": "2019-01-22",
+        "shipped": 4.0,
+        "repaired": null
+      },
+      {
+        "player_key": "julio_rodriguez",
+        "date": "2019-02-13",
+        "shipped": 7.0,
+        "repaired": null
+      },
+      {
+        "player_key": "gavin_lux",
+        "date": "2017-02-15",
+        "shipped": 12.0,
+        "repaired": null
+      },
+      {
+        "player_key": "gavin_lux",
+        "date": "2018-01-22",
+        "shipped": 12.0,
+        "repaired": null
+      },
+      {
+        "player_key": "gavin_lux",
+        "date": "2018-02-15",
+        "shipped": 18.0,
+        "repaired": null
+      },
+      {
+        "player_key": "gavin_lux",
+        "date": "2018-08-01",
+        "shipped": 8.0,
+        "repaired": null
+      },
+      {
+        "player_key": "gavin_lux",
+        "date": "2019-01-22",
+        "shipped": 39.0,
+        "repaired": 70.0
+      },
+      {
+        "player_key": "konnor_griffin",
+        "date": "2024-08-01",
+        "shipped": 3.0,
+        "repaired": null
+      },
+      {
+        "player_key": "konnor_griffin",
+        "date": "2025-01-22",
+        "shipped": 23.0,
+        "repaired": 43.0
+      },
+      {
+        "player_key": "corbin_carroll",
+        "date": "2019-07-31",
+        "shipped": 7.0,
+        "repaired": null
+      },
+      {
+        "player_key": "corbin_carroll",
+        "date": "2020-01-22",
+        "shipped": 47.5,
+        "repaired": 88.0
+      },
+      {
+        "player_key": "gunnar_henderson",
+        "date": "2019-07-31",
+        "shipped": 12.0,
+        "repaired": null
+      },
+      {
+        "player_key": "gunnar_henderson",
+        "date": "2020-01-22",
+        "shipped": 12.0,
+        "repaired": null
+      }
+    ]
+  },
+  "c1_controls": {
+    "random_seed_11": {
+      "n_excluded": 19772,
+      "drivers": 13,
+      "fired": [
+        "noah_schultz",
+        "ryan_sloan"
+      ],
+      "lost": [
+        "bryce_eldridge",
+        "carson_benge",
+        "colt_emerson",
+        "kade_anderson",
+        "leo_de_vries",
+        "payton_tolle",
+        "rainiel_rodriguez",
+        "xavier_isaac"
+      ],
+      "text_changed": [
+        "ethan_salas",
+        "franklin_arias",
+        "george_lombard_jr",
+        "jesus_made",
+        "josue_de_paula",
+        "konnor_griffin",
+        "seth_hernandez",
+        "termarr_johnson",
+        "theo_gillen",
+        "thomas_white"
+      ]
+    },
+    "random_seed_22": {
+      "n_excluded": 19772,
+      "drivers": 14,
+      "fired": [
+        "noah_schultz",
+        "ryan_sloan"
+      ],
+      "lost": [
+        "bryce_eldridge",
+        "carson_benge",
+        "kade_anderson",
+        "leo_de_vries",
+        "payton_tolle",
+        "rainiel_rodriguez",
+        "xavier_isaac"
+      ],
+      "text_changed": [
+        "ethan_salas",
+        "franklin_arias",
+        "george_lombard_jr",
+        "jesus_made",
+        "josue_de_paula",
+        "konnor_griffin",
+        "seth_hernandez",
+        "termarr_johnson",
+        "theo_gillen",
+        "thomas_white"
+      ]
+    },
+    "random_seed_33": {
+      "n_excluded": 19772,
+      "drivers": 13,
+      "fired": [
+        "noah_schultz",
+        "ryan_sloan"
+      ],
+      "lost": [
+        "bryce_eldridge",
+        "carson_benge",
+        "colt_emerson",
+        "kade_anderson",
+        "leo_de_vries",
+        "payton_tolle",
+        "rainiel_rodriguez",
+        "xavier_isaac"
+      ],
+      "text_changed": [
+        "ethan_salas",
+        "franklin_arias",
+        "george_lombard_jr",
+        "jesus_made",
+        "josue_de_paula",
+        "konnor_griffin",
+        "termarr_johnson",
+        "theo_gillen",
+        "thomas_white"
+      ]
+    },
+    "inverted": {
+      "n_excluded": 2134,
+      "drivers": 13,
+      "fired": [
+        "noah_schultz"
+      ],
+      "lost": [
+        "bryce_eldridge",
+        "carson_benge",
+        "colt_emerson",
+        "kade_anderson",
+        "leo_de_vries",
+        "payton_tolle",
+        "rainiel_rodriguez"
+      ],
+      "text_changed": [
+        "ethan_salas",
+        "franklin_arias",
+        "george_lombard_jr",
+        "jesus_made",
+        "josue_de_paula",
+        "konnor_griffin",
+        "seth_hernandez",
+        "termarr_johnson",
+        "thomas_white",
+        "xavier_isaac"
+      ]
+    },
+    "detector_arm_for_comparison": {
+      "n_excluded": 19772,
+      "drivers": 20,
+      "fired": [
+        "ryan_sloan"
+      ],
+      "lost": [],
+      "text_changed": [
+        "franklin_arias",
+        "jesus_made",
+        "termarr_johnson",
+        "theo_gillen",
+        "xavier_isaac"
+      ]
+    }
+  },
+  "c2_isolated_no_c1": {
+    "n_point_rows_changed": 4532,
+    "tyler_skaggs": [
+      {
+        "player_key": "tyler_skaggs",
+        "date": "2012-01-22",
+        "shipped": 66.26,
+        "repaired": 55.84
+      },
+      {
+        "player_key": "tyler_skaggs",
+        "date": "2012-04-01",
+        "shipped": 66.26,
+        "repaired": 55.84
+      }
+    ]
+  },
+  "c2_asof_instances": {
+    "n_point_rows_changed_all_history": 4532,
+    "n_matrix_rows_changed": 117,
+    "matrix_join_size": 3957,
+    "mean_abs_fv_affected": 3.1035,
+    "max_abs_fv": 10.42,
+    "wave1_reference": {
+      "n": 117,
+      "mean_abs": 3.1,
+      "max_abs": 10.42
+    },
+    "tyler_skaggs": [
+      {
+        "player_key": "tyler_skaggs",
+        "date": "2012-01-22",
+        "shipped": 66.26,
+        "repaired": 55.84
+      },
+      {
+        "player_key": "tyler_skaggs",
+        "date": "2012-04-01",
+        "shipped": 66.26,
+        "repaired": 55.84
+      }
+    ],
+    "runtime_delta_pct": -0.21
+  },
+  "c3_dropoff": {
+    "legacy_slug_occurrences": 0,
+    "repaired_pairs_full_corpus": 463,
+    "org_tokens_accepted": [
+      "Angels",
+      "Astros",
+      "Athletics",
+      "Blue Jays",
+      "Braves",
+      "Brewers",
+      "Cardinals",
+      "Cubs",
+      "Diamondbacks",
+      "Dodgers",
+      "Giants",
+      "Guardians",
+      "Mariners",
+      "Marlins",
+      "Mets",
+      "Nationals",
+      "Orioles",
+      "Padres",
+      "Phillies",
+      "Pirates",
+      "Rangers",
+      "Rays",
+      "Red Sox",
+      "Reds",
+      "Rockies",
+      "Royals",
+      "Tigers",
+      "Twins",
+      "White Sox",
+      "Yankees"
+    ],
+    "midseason_rejected": true,
+    "asof_latest_equals_full": true,
+    "n_distinct_pair_sets_over_time": 24,
+    "asof_varies_over_time": true,
+    "n_point_rows_changed": 7514,
+    "n_label_changes": 7514,
+    "n_live_board_grade_changes": 746,
+    "live_sample": [
+      {
+        "player_key": "konnor_griffin",
+        "shipped": 66.0,
+        "repaired": 62.0
+      },
+      {
+        "player_key": "nolan_mclean",
+        "shipped": 61.0,
+        "repaired": 59.0
+      },
+      {
+        "player_key": "yoan_moncada",
+        "shipped": 66.0,
+        "repaired": 58.0
+      },
+      {
+        "player_key": "kevin_mcgonigle",
+        "shipped": 62.0,
+        "repaired": 58.0
+      },
+      {
+        "player_key": "bubba_chandler",
+        "shipped": 58.0,
+        "repaired": 56.0
+      },
+      {
+        "player_key": "leo_de_vries",
+        "shipped": 60.0,
+        "repaired": 56.0
+      },
+      {
+        "player_key": "jj_wetherholt",
+        "shipped": 58.0,
+        "repaired": 55.0
+      },
+      {
+        "player_key": "andrew_painter",
+        "shipped": 55.0,
+        "repaired": 53.0
+      },
+      {
+        "player_key": "payton_tolle",
+        "shipped": 55.0,
+        "repaired": 53.0
+      },
+      {
+        "player_key": "carson_benge",
+        "shipped": 55.0,
+        "repaired": 52.0
+      },
+      {
+        "player_key": "lucas_giolito",
+        "shipped": 56.0,
+        "repaired": 51.0
+      },
+      {
+        "player_key": "lewis_brinson",
+        "shipped": 56.0,
+        "repaired": 51.0
+      },
+      {
+        "player_key": "luis_patino",
+        "shipped": 56.0,
+        "repaired": 51.0
+      },
+      {
+        "player_key": "chase_delauter",
+        "shipped": 54.0,
+        "repaired": 51.0
+      },
+      {
+        "player_key": "sal_stewart",
+        "shipped": 53.0,
+        "repaired": 50.0
+      }
+    ],
+    "flag_default_in_source": "False"
+  },
+  "c5_collisions": {
+    "allowlist_is_empty": true,
+    "n_colliding_names": 436,
+    "n_keys_involved": 939,
+    "n_provably_different": 7,
+    "n_overlapping_windows": 128,
+    "hard_cases": [
+      {
+        "normalized_name": "adrian martinez",
+        "keys": [
+          "adrian_martinez_834255",
+          "adrian_martinez_837701"
+        ],
+        "distinct_numeric_ids": [
+          "834255",
+          "837701"
+        ],
+        "windows_overlap": false,
+        "any_noid_key": false,
+        "provably_different_players": true,
+        "detail": [
+          {
+            "player_key": "adrian_martinez_834255",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "PIT"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          },
+          {
+            "player_key": "adrian_martinez_837701",
+            "n_snaps": 1,
+            "first": "2026-08-04",
+            "last": "2026-08-04",
+            "orgs": [
+              "MIN"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          }
+        ]
+      },
+      {
+        "normalized_name": "carlos rodriguez",
+        "keys": [
+          "carlos_rodriguez",
+          "carlos_rodriguez_692025",
+          "carlos_rodriguez_823864",
+          "carlos_rodriguez__noid",
+          "carlos_rodriguez__sa3005478"
+        ],
+        "distinct_numeric_ids": [
+          "692025",
+          "823864"
+        ],
+        "windows_overlap": true,
+        "any_noid_key": true,
+        "provably_different_players": true,
+        "detail": [
+          {
+            "player_key": "carlos_rodriguez",
+            "n_snaps": 24,
+            "first": "2018-01-22",
+            "last": "2026-08-02",
+            "orgs": [
+              "MIL",
+              "SDP"
+            ],
+            "sources": [
+              "auto_detect",
+              "fangraphs",
+              "mlb_pipeline"
+            ]
+          },
+          {
+            "player_key": "carlos_rodriguez_692025",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "SDP"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          },
+          {
+            "player_key": "carlos_rodriguez_823864",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "DET"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          },
+          {
+            "player_key": "carlos_rodriguez__noid",
+            "n_snaps": 1,
+            "first": "2018-02-15",
+            "last": "2018-02-15",
+            "orgs": [
+              "MIL"
+            ],
+            "sources": [
+              "fangraphs"
+            ]
+          },
+          {
+            "player_key": "carlos_rodriguez__sa3005478",
+            "n_snaps": 4,
+            "first": "2021-02-26",
+            "last": "2022-08-02",
+            "orgs": [
+              "MIL"
+            ],
+            "sources": [
+              "fangraphs"
+            ]
+          }
+        ]
+      },
+      {
+        "normalized_name": "gabriel rodriguez",
+        "keys": [
+          "gabriel_rodriguez",
+          "gabriel_rodriguez_676082",
+          "gabriel_rodriguez_700421",
+          "gabriel_rodriguez_829712",
+          "gabriel_rodriguez__noid",
+          "gabriel_rodriguez__sa3008744"
+        ],
+        "distinct_numeric_ids": [
+          "676082",
+          "700421",
+          "829712"
+        ],
+        "windows_overlap": true,
+        "any_noid_key": true,
+        "provably_different_players": true,
+        "detail": [
+          {
+            "player_key": "gabriel_rodriguez",
+            "n_snaps": 14,
+            "first": "2019-01-22",
+            "last": "2026-08-07",
+            "orgs": [
+              "CLE",
+              "Office of the Commissioner"
+            ],
+            "sources": [
+              "fangraphs",
+              "mlb_pipeline"
+            ]
+          },
+          {
+            "player_key": "gabriel_rodriguez_676082",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "NYM"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          },
+          {
+            "player_key": "gabriel_rodriguez_700421",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "CHW"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          },
+          {
+            "player_key": "gabriel_rodriguez_829712",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "PIT"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          },
+          {
+            "player_key": "gabriel_rodriguez__noid",
+            "n_snaps": 2,
+            "first": "2018-08-01",
+            "last": "2019-02-13",
+            "orgs": [
+              "CLE"
+            ],
+            "sources": [
+              "fangraphs"
+            ]
+          },
+          {
+            "player_key": "gabriel_rodriguez__sa3008744",
+            "n_snaps": 2,
+            "first": "2021-02-26",
+            "last": "2021-07-30",
+            "orgs": [
+              "CLE"
+            ],
+            "sources": [
+              "fangraphs"
+            ]
+          }
+        ]
+      },
+      {
+        "normalized_name": "jose gonzalez",
+        "keys": [
+          "jose_gonzalez",
+          "jose_gonzalez_806919",
+          "jose_gonzalez_837212"
+        ],
+        "distinct_numeric_ids": [
+          "806919",
+          "837212"
+        ],
+        "windows_overlap": true,
+        "any_noid_key": false,
+        "provably_different_players": true,
+        "detail": [
+          {
+            "player_key": "jose_gonzalez",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "LAA"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          },
+          {
+            "player_key": "jose_gonzalez_806919",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "LAD"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          },
+          {
+            "player_key": "jose_gonzalez_837212",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "CHC"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          }
+        ]
+      },
+      {
+        "normalized_name": "luis de leon",
+        "keys": [
+          "luis_de_leon_808029",
+          "luis_de_leon_825479"
+        ],
+        "distinct_numeric_ids": [
+          "808029",
+          "825479"
+        ],
+        "windows_overlap": true,
+        "any_noid_key": false,
+        "provably_different_players": true,
+        "detail": [
+          {
+            "player_key": "luis_de_leon_808029",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "SDP"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          },
+          {
+            "player_key": "luis_de_leon_825479",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "HOU"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          }
+        ]
+      },
+      {
+        "normalized_name": "luis garcia",
+        "keys": [
+          "luis_garcia_829731",
+          "luis_garcia__23735",
+          "luis_garcia__noid"
+        ],
+        "distinct_numeric_ids": [
+          "23735",
+          "829731"
+        ],
+        "windows_overlap": false,
+        "any_noid_key": true,
+        "provably_different_players": true,
+        "detail": [
+          {
+            "player_key": "luis_garcia_829731",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "CLE"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          },
+          {
+            "player_key": "luis_garcia__23735",
+            "n_snaps": 2,
+            "first": "2020-09-04",
+            "last": "2021-02-26",
+            "orgs": [
+              "HOU"
+            ],
+            "sources": [
+              "auto_detect",
+              "fangraphs"
+            ]
+          },
+          {
+            "player_key": "luis_garcia__noid",
+            "n_snaps": 2,
+            "first": "2017-02-15",
+            "last": "2018-02-15",
+            "orgs": [
+              "PHI",
+              "WSN"
+            ],
+            "sources": [
+              "fangraphs"
+            ]
+          }
+        ]
+      },
+      {
+        "normalized_name": "luis hernandez",
+        "keys": [
+          "luis_hernandez_801346",
+          "luis_hernandez_815211"
+        ],
+        "distinct_numeric_ids": [
+          "801346",
+          "815211"
+        ],
+        "windows_overlap": true,
+        "any_noid_key": false,
+        "provably_different_players": true,
+        "detail": [
+          {
+            "player_key": "luis_hernandez_801346",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "MIN"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          },
+          {
+            "player_key": "luis_hernandez_815211",
+            "n_snaps": 1,
+            "first": "2026-08-07",
+            "last": "2026-08-07",
+            "orgs": [
+              "SFG"
+            ],
+            "sources": [
+              "performance_ingest"
+            ]
+          }
+        ]
+      }
+    ],
+    "d5_hygiene": "apply_shrinkage / compute_prior_mean_fv commented as dead, NOT deleted (test_consensus.py imports them)."
+  },
+  "runtime_sec": 60.0
+}

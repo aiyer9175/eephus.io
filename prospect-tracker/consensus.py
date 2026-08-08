@@ -128,6 +128,32 @@ DEFAULT_SHRINKAGE_K = 1.5
 DEFAULT_N_FULL = 4
 FALLBACK_PRIOR_FV = 45.0
 
+# v27 repair flags. Each is a one-line revert and each is exercised by the
+# wave-2 lab (tools/consensus_gate_lab.py --wave2), which flips them to build
+# the comparison arms. Gate doc: docs/efv-2026-08-07b/CONSENSUS_REPAIR.md.
+#
+# ORG_RANK_VALUE_DETECTOR -- split org positions from global ranks by their
+#   arithmetic structure instead of by interval_label, which cannot express the
+#   split because a FanGraphs board carries both under ONE label.
+# ASOF_FV_INSTANCES — count a player's published-FV instances as of the point
+#   being computed, not over their whole future history.
+# DROPOFF_SHRINK_ENABLED — master switch for the (fv+30)/2 drop-off shrink,
+#   which has never fired in production because its detector was matching a
+#   slug that does not exist. Turning it on is a live grade change, so it is
+#   kept separately revertible from the detector repair itself.
+# Detector acceptance bars. A board that misses any of them keeps today's
+# behaviour (every rank treated as global), which is the conservative
+# direction. These are NOT in the lane plan; they are mine, and section 8 of
+# the gate doc records what they were set from.
+MIN_GLOBAL_PREFIX = 20          # a board with a tiny top block is not a board
+MIN_PREFIX_COVERAGE = 0.95      # 1..G may have holes; a sparse "prefix" is not one
+MIN_OFFSET_EXACT_FRAC = 0.90    # orgs whose first position is exactly g+1
+MAX_OFFSET_UNDER = 1            # a position EARLIER than g+1 is a contradiction
+
+ORG_RANK_VALUE_DETECTOR = True
+ASOF_FV_INSTANCES = True
+DROPOFF_SHRINK_ENABLED = False
+
 # Single-source uncertainty pull-down — applied inside
 # compute_consensus_point when exactly one source published an explicit
 # FV. Bayesian shrinkage toward FV 35 with k=0.5:
@@ -333,7 +359,221 @@ def implied_fv_from_rank(rank: int | None) -> float | None:
 # "MLB Pipeline 2021 Nationals Top 30". The `\b` word-boundary +
 # end-of-string anchor lets "Top 30" / "Top 25" / "Top 20" / "Top 10"
 # match without false-positives on "Top 100" / "Top 200" / "Top 300".
+#
+# DO NOT WIDEN THIS. The narrowness is deliberate and is relied on as a
+# bad-paste tripwire at baseballamerica_csv.py:604-625; widening the digit
+# alternation to a generic 2-digit form breaks
+# test_baseballamerica_csv.py::test_a_board_whose_size_the_guard_does_not_accept_is_refused_loudly,
+# which is parametrized over n = 3/29/31/100. The org/global split that this
+# regex CANNOT see is handled at the VALUE level instead, by
+# _org_ranked_snapshot_keys below.
 _ORG_LIST_LABEL_RE = re.compile(r"\bTop\s+(?:10|20|25|30)\b\s*$")
+
+# v27 -- Org-list slug extraction for the drop-off detector. Two label formats
+# exist in the corpus and only the LEGACY one was ever matched (see
+# _dropped_off_pairs). The human-readable grammar is
+# "<source> <yyyy> <org> Top <n>". The org token is BOUNDED to the 30 real club
+# nicknames rather than to the Top-N suffix, for two reasons:
+#   * an unbounded org token classifies "JustBaseball 2026 Midseason Top 100"
+#     as org "Midseason", which is harmless only until a second midseason list
+#     lands and the two get diffed against each other, and
+#   * two clubs publish a "Top 50" org list, so bounding the SUFFIX to
+#     {10,20,25,30} would silently drop real org lists.
+_CLUB_NICKNAMES = frozenset({
+    "Angels", "Astros", "Athletics", "Blue Jays", "Braves", "Brewers",
+    "Cardinals", "Cubs", "Diamondbacks", "Dodgers", "Giants", "Guardians",
+    "Mariners", "Marlins", "Mets", "Nationals", "Orioles", "Padres",
+    "Phillies", "Pirates", "Rangers", "Rays", "Red Sox", "Reds", "Rockies",
+    "Royals", "Tigers", "Twins", "White Sox", "Yankees",
+})
+_ORG_LABEL_HUMAN_RE = re.compile(
+    r"^(?P<src>.*?)\s+(?P<yr>\d{4})\s+(?P<org>.+?)\s+Top\s+(?P<n>\d+)$"
+)
+
+
+def org_slug_from_label(label: str | None) -> str | None:
+    """Return the org slug for a team-specific list label, else None.
+
+    Accepts the legacy internal slug ("<source>_<year>_org_<slug>") and the
+    human-readable grammar with a bounded club nickname. Anything else,
+    including a global Top 100 and a non-club token like "Midseason", is None.
+    """
+    if not label:
+        return None
+    if "_org_" in label:
+        try:
+            return label.split("_org_", 1)[1]
+        except IndexError:
+            return None
+    m = _ORG_LABEL_HUMAN_RE.match(label)
+    if m is None:
+        return None
+    org = m.group("org").strip()
+    return org if org in _CLUB_NICKNAMES else None
+
+
+# ---------------------------------------------------------------------------
+# v27 -- VALUE-LEVEL org/global rank split.
+#
+# The problem the label guard structurally cannot solve. A FanGraphs board
+# stores TWO DIFFERENT QUANTITIES in one `rank` column under ONE interval_label
+# (e.g. "2026updated" on 2026-08-02 carries 1,384 ranked rows). The board is a
+# set of per-org Top-N lists; for the players in an org who ALSO make the global
+# board, FanGraphs prints the GLOBAL rank in place of that player's org
+# position. So on a single label, rank 1 means "best prospect in baseball" for
+# one row and "best prospect in Arizona" for another.
+#
+# The generating rule leaves two independent fingerprints that have to agree:
+#
+#   1. The global rows are a COMPLETE PREFIX. Their ranks are exactly
+#      {1, ..., G}, each value once, board-wide.
+#   2. The org rows are OFFSET BY the org's own global count. If an org has g
+#      globally-ranked players, its own positions start at g + 1, because those
+#      g players occupy org slots 1..g and are printed at their global rank
+#      instead. Checked per org, on every org that has any org rows.
+#
+# The split is carried by FV: the global prefix is the top of the board by FV,
+# so the detector searches the board's own FV values for the threshold where
+# BOTH fingerprints hold, and prefers the threshold that leaves the MOST rows
+# classified global, which is the least aggressive, closest-to-unrepaired
+# answer. If no threshold satisfies both, the board falls back to "everything
+# is global", which is the pre-v27 served behaviour.
+#
+# NOTE ON A REJECTED SIMPLER RULE. The obvious version of fingerprint 2 is
+# "inside an org the positions run g+1 .. n and the two kinds of value tile
+# 1..n exactly once". That is what three hand-read orgs (MIL, ARI, BAL) look
+# like and it is WRONG on the full board: real org lists have holes (PHI is
+# missing position 36) and can run past n (SEA carries a position 41 in a
+# 31-row org). Seven of thirty orgs fail it. Only the START offset is reliable.
+#
+# This reads `rank`, `org` and `fv`. It never reads interval_label, so it
+# composes with the label guard instead of replacing it.
+# ---------------------------------------------------------------------------
+
+def classify_board_org_ranks(rows: list[tuple]) -> tuple[set, dict]:
+    """Split one board's ranked rows into org positions and global ranks.
+
+    `rows` is a list of (row_id, org, rank, fv) for a single
+    (source, interval_label, snapshot_date) board. Returns
+    (set_of_row_ids_that_are_ORG_positions, diagnostics).
+    """
+    diag = {
+        "n_rows": len(rows), "n_orgs": 0, "eligible": False, "validated": False,
+        "n_org_rows": 0, "n_global_rows": 0, "global_prefix_G": None,
+        "prefix_coverage": None, "offset_orgs_checked": 0,
+        "offset_exact_frac": None, "offset_worst_under": 0, "reason": "",
+    }
+    by_org: dict[str, list[tuple]] = defaultdict(list)
+    for row in rows:
+        by_org[row[1]].append(row)
+    diag["n_orgs"] = len(by_org)
+    diag["n_null_fv"] = sum(1 for r in rows if r[3] is None)
+    if len(by_org) < 2:
+        diag["reason"] = "fewer than 2 orgs"
+        return set(), diag
+
+    # Step 1 — eligibility. A rank value carried by two DISTINCT orgs is
+    # impossible on a single global list, so it is the board-level tell.
+    orgs_per_rank: dict[int, set] = defaultdict(set)
+    for _rid, org, rank, _fv in rows:
+        orgs_per_rank[rank].add(org)
+    if not any(len(v) > 1 for v in orgs_per_rank.values()):
+        diag["reason"] = "no rank value shared across orgs"
+        return set(), diag
+    diag["eligible"] = True
+
+    # Step 2 — the global prefix runs 1..G. G is the largest rank on the board:
+    # no org's own list is anywhere near as long as the global board, and the
+    # coverage check below refuses the board if that ever stops being true.
+    ranked = [r for r in rows if r[2] > 0]
+    if not ranked:
+        diag["reason"] = "no positive ranks"
+        return set(), diag
+    g_max = max(r[2] for r in ranked)
+    present = {r[2] for r in ranked}
+    coverage = sum(1 for v in range(1, g_max + 1) if v in present) / g_max
+    diag["global_prefix_G"] = g_max
+    diag["prefix_coverage"] = round(coverage, 4)
+    if g_max < MIN_GLOBAL_PREFIX or coverage < MIN_PREFIX_COVERAGE:
+        diag["reason"] = "no usable 1..G global prefix"
+        return set(), diag
+
+    # Step 3 — at each rank value in the prefix, exactly one row is the global
+    # one. FanGraphs orders an org list by FV descending and the org's
+    # globally-ranked players are its best, so at a shared value the higher FV
+    # is the global row. Ties resolve on row id, purely for determinism.
+    by_rank: dict[int, list[tuple]] = defaultdict(list)
+    for r in ranked:
+        by_rank[r[2]].append(r)
+    global_ids: set = set()
+    for v in range(1, g_max + 1):
+        grp = by_rank.get(v)
+        if not grp:
+            continue
+        global_ids.add(max(
+            grp, key=lambda r: ((r[3] if r[3] is not None else -1e9), str(r[0]))
+        )[0])
+
+    # Step 4 — fingerprint 2, the independent check. An org whose g players are
+    # printed at their global rank has vacated its own slots 1..g, so its first
+    # remaining position is g+1. A hole in the org list can push that later; a
+    # position EARLIER than g+1 is a logical contradiction and is counted
+    # separately.
+    n_exact = n_off = 0
+    worst_under = 0
+    for org, items in by_org.items():
+        pos = [r for r in items if r[0] not in global_ids and r[2] > 0]
+        if not pos:
+            continue
+        g_here = sum(1 for r in items if r[0] in global_ids)
+        lo = min(r[2] for r in pos)
+        if lo == g_here + 1:
+            n_exact += 1
+        else:
+            n_off += 1
+            if lo < g_here + 1:
+                worst_under = max(worst_under, (g_here + 1) - lo)
+    n_checked = n_exact + n_off
+    frac = (n_exact / n_checked) if n_checked else 0.0
+    diag["offset_orgs_checked"] = n_checked
+    diag["offset_exact_frac"] = round(frac, 4)
+    diag["offset_worst_under"] = worst_under
+    if n_checked < 2 or frac < MIN_OFFSET_EXACT_FRAC or worst_under > MAX_OFFSET_UNDER:
+        diag["reason"] = "org start-offset fingerprint did not hold"
+        return set(), diag
+
+    # A rank <= 0 is not a rank at all (it occurs on two boards). It is neither
+    # global nor a real org position; excluding it is strictly better than the
+    # status quo, where implied_fv_from_rank(0) hands it FV 60.
+    org_ids = {r[0] for r in rows if r[0] not in global_ids}
+    diag["validated"] = True
+    diag["n_org_rows"] = len(org_ids)
+    diag["n_global_rows"] = len(global_ids)
+    diag["reason"] = "ok"
+    return org_ids, diag
+
+
+def _org_ranked_snapshot_keys(snapshots: list[Snapshot]) -> tuple[set, dict]:
+    """Run classify_board_org_ranks over every board in the corpus.
+
+    Returns (set of (player_key, source, interval_label, snapshot_date) whose
+    `rank` is an ORG position, per-board diagnostics).
+    """
+    boards: dict[tuple, list[tuple]] = defaultdict(list)
+    for s in snapshots:
+        if s.rank is None:
+            continue
+        boards[(s.source, s.interval_label or "", s.snapshot_date)].append(
+            ((s.player_key, s.source, s.interval_label or "", s.snapshot_date),
+             s.org or "", int(s.rank), s.fv)
+        )
+    org_keys: set = set()
+    diags: dict = {}
+    for board_key, rows in boards.items():
+        ids, diag = classify_board_org_ranks(rows)
+        org_keys |= ids
+        diags["|".join(board_key)] = diag
+    return org_keys, diags
 
 
 # ---------------------------------------------------------------------------
@@ -552,6 +792,7 @@ def compute_consensus_point(
     dropped_off_pairs: set[tuple[str, str]] | None = None,
     source_weights: dict[str, float] | None = None,
     grade_norm=None,
+    org_ranked_rows: set | None = None,
 ) -> ConsensusPoint | None:
     """
     Aggregate one player's snapshots into a ConsensusPoint.
@@ -689,8 +930,19 @@ def compute_consensus_point(
             # signal was rank 30 on the 2021 Nationals Top-30, and the
             # legacy check missed the label format → rank 30 inflated
             # to FV 55 → he sorted #19 overall despite zero published FVs.
+            #
+            # v27 -- a THIRD case the label cannot express: a FanGraphs board
+            # carries org positions and global ranks under ONE label, so no
+            # label test can separate them. `org_ranked_rows` is the
+            # value-level classification from _org_ranked_snapshot_keys; it
+            # only ever ADDS exclusions, so the two label formats above keep
+            # working exactly as before.
             _lbl = s.interval_label or ""
             is_org_list = ("_org_" in _lbl) or _ORG_LIST_LABEL_RE.search(_lbl) is not None
+            if not is_org_list and org_ranked_rows:
+                is_org_list = (
+                    s.player_key, s.source, _lbl, s.snapshot_date
+                ) in org_ranked_rows
             if not is_org_list:
                 implied = implied_fv_from_rank(s.rank)
                 if implied is not None:
@@ -904,6 +1156,13 @@ def _shrinkage_n(point: ConsensusPoint) -> int:
     return len(point.sources_contributing)
 
 
+# DEAD CODE, DELIBERATELY KEPT (v27). Neither apply_shrinkage nor
+# compute_prior_mean_fv has a production caller: build_timeseries stopped
+# calling them in 2026-05 when the population prior was removed, and the
+# three constants they default from (DEFAULT_SHRINKAGE_K, DEFAULT_N_FULL,
+# FALLBACK_PRIOR_FV) are inert for the same reason. They are NOT deleted:
+# test_consensus.py imports them at module scope, so removing them breaks a
+# test and buys nothing. Do not wire them back in without a gate.
 def apply_shrinkage(
     point: ConsensusPoint,
     mean_fv: float,
@@ -947,6 +1206,7 @@ def apply_shrinkage(
     point.shrinkage_weight = round(weight, 4)
 
 
+# DEAD CODE, DELIBERATELY KEPT (v27). See the note above apply_shrinkage.
 def compute_prior_mean_fv(
     timeseries: list["PlayerTimeseries"],
     fallback: float = FALLBACK_PRIOR_FV,
@@ -975,9 +1235,18 @@ def _dropped_off_pairs(snapshots: list[Snapshot]) -> set[tuple[str, str]]:
     """Detect (player_key, source) pairs that fell off a source's most recent
     team-Top-30 list relative to that source's prior team-Top-30 list.
 
-    Only team-specific lists (interval_label contains '_org_') are scoped —
-    a global Top 100 dropping a player isn't an "off the org list" event
-    and is captured by the existing single-source / freshness signals.
+    Only team-specific lists are scoped: a global Top 100 dropping a player
+    isn't an "off the org list" event and is captured by the existing
+    single-source / freshness signals.
+
+    v27 -- this used to require the LEGACY internal slug "_org_" literally, and
+    that slug occurs zero times in the snapshot corpus, so this function
+    returned the empty set on every run and the (fv+30)/2 drop-off shrink in
+    compute_consensus_point had never once fired in production. It is the same
+    two-label-format hazard that was found and fixed for the rank-implied-FV
+    path ~300 lines above and never propagated down here. Slug extraction now
+    goes through org_slug_from_label, which accepts both formats and bounds the
+    org token to a real club.
 
     Algorithm:
       1. Group snapshots by (source, org-slug-from-interval-label).
@@ -999,12 +1268,8 @@ def _dropped_off_pairs(snapshots: list[Snapshot]) -> set[tuple[str, str]]:
     # group: {(source, org_slug): {interval_label: (latest_date, set(player_keys))}}
     grouped: dict[tuple[str, str], dict[str, tuple[str, set[str]]]] = {}
     for s in snapshots:
-        if not s.interval_label or "_org_" not in s.interval_label:
-            continue
-        # interval_label shape: "<source>_<year>_org_<slug>" — take the slug.
-        try:
-            org_slug = s.interval_label.split("_org_", 1)[1]
-        except IndexError:
+        org_slug = org_slug_from_label(s.interval_label)
+        if org_slug is None:
             continue
         key = (s.source, org_slug)
         bucket = grouped.setdefault(key, {})
@@ -1031,6 +1296,110 @@ def _dropped_off_pairs(snapshots: list[Snapshot]) -> set[tuple[str, str]]:
         for pk in prior_players - latest_players:
             pairs.add((pk, source))
     return pairs
+
+
+def _dropped_off_timeline(snapshots: list[Snapshot]) -> dict[str, set]:
+    """As-of pair sets: {event_date -> pairs known using data up to that date}.
+
+    v27 -- _dropped_off_pairs takes the two most recent org lists over the WHOLE
+    corpus and the result was applied to every historical point, so a 2019
+    consensus point would have been shrunk on the basis of a 2025 list. That was
+    inert while the detector was dead; the moment the detector works it is a
+    future-derived input to the dominant eFV feature, so it is fixed in the same
+    change rather than left as a fresh leak.
+
+    Cost: the pair set can only change on a date that actually carries org-list
+    rows, so the diff runs on those dates only (a few hundred) and every other
+    date forward-fills the same set object. It is NOT one recompute per player,
+    which is what would make this quadratic.
+    """
+    org_rows = [s for s in snapshots if org_slug_from_label(s.interval_label)]
+    all_dates = sorted({s.snapshot_date for s in snapshots})
+    if not org_rows:
+        return {d: set() for d in all_dates}
+    by_date: dict[str, list[Snapshot]] = defaultdict(list)
+    for s in org_rows:
+        by_date[s.snapshot_date].append(s)
+
+    timeline: dict[str, set] = {}
+    cur: set = set()
+    running: list[Snapshot] = []
+    for d in all_dates:
+        if d in by_date:
+            running.extend(by_date[d])
+            cur = _dropped_off_pairs(running)
+        timeline[d] = cur
+    return timeline
+
+
+def normalize_name_for_dedup(name: str) -> str:
+    """Module-level twin of the name key build_timeseries dedupes on."""
+    if not name:
+        return ""
+    cleaned = name.lower().replace(",", "").replace(".", "")
+    cleaned = cleaned.replace("’", "'").replace("‘", "'")
+    return " ".join(cleaned.split())
+
+
+def same_name_collisions(snapshots: list[Snapshot]) -> list[dict]:
+    """REPORT same-name player_key clusters that build_timeseries would merge.
+
+    v27 (D16). `_SAME_NAME_NOT_DUPES` is empty, so every same-name pair is
+    merged unconditionally and one player's points land on another's consensus.
+    This function does NOT change that: it reports, so the allowlist can be
+    populated by hand. It never merges and never splits.
+
+    A cluster is flagged `provably_different_players` when two of its keys carry
+    DIFFERENT trailing numeric ids, which are external player ids, not slug
+    disambiguators. `windows_overlap` says whether the two keys were graded in
+    overlapping date ranges, which is the softer tell.
+
+    Counts are deliberately NOT written into this docstring. They move with the
+    corpus; read them from the artifact.
+    """
+    by_key: dict[str, list[Snapshot]] = defaultdict(list)
+    for s in snapshots:
+        by_key[s.player_key].append(s)
+    by_name: dict[str, set] = defaultdict(set)
+    for key, snaps in by_key.items():
+        nm = normalize_name_for_dedup(_canonical_player_name(key, snaps[-1].player_name))
+        if nm:
+            by_name[nm].add(key)
+
+    out: list[dict] = []
+    for nm, keys in sorted(by_name.items()):
+        if len(keys) < 2:
+            continue
+        detail = []
+        for key in sorted(keys):
+            snaps = by_key[key]
+            dates = sorted(s.snapshot_date for s in snaps)
+            detail.append({
+                "player_key": key,
+                "n_snaps": len(snaps),
+                "first": dates[0],
+                "last": dates[-1],
+                "orgs": sorted({s.org for s in snaps if s.org}),
+                "sources": sorted({s.source for s in snaps}),
+            })
+        ids = sorted({
+            k.rsplit("_", 1)[-1] for k in keys
+            if k.rsplit("_", 1)[-1].isdigit()
+        })
+        overlap = any(
+            a["first"] <= b["last"] and b["first"] <= a["last"]
+            for i, a in enumerate(detail) for b in detail[i + 1:]
+        )
+        out.append({
+            "normalized_name": nm,
+            "keys": sorted(keys),
+            "distinct_numeric_ids": ids,
+            "windows_overlap": overlap,
+            "any_noid_key": any(k.endswith("__noid") for k in keys),
+            "provably_different_players": len(ids) >= 2,
+            "detail": detail,
+        })
+    return out
 
 
 def _latest_meta(snaps: list[Snapshot]) -> tuple[str, str | None, str | None]:
@@ -1209,7 +1578,19 @@ def build_timeseries(
     # every player-level compute_consensus_point call shares the same view
     # of "which (player, source) pairs lost a Top-30 spot." Stays out of
     # the per-player loop to avoid O(N×M) recomputation.
-    dropped_off = _dropped_off_pairs(snapshots)
+    #
+    # v27 -- the pair set is now an as-of TIMELINE (see _dropped_off_timeline),
+    # and it is gated behind DROPOFF_SHRINK_ENABLED because repairing the
+    # detector turns a shrink that has never fired into a live grade change.
+    dropped_timeline: dict[str, set] = {}
+    if DROPOFF_SHRINK_ENABLED:
+        dropped_timeline = _dropped_off_timeline(snapshots)
+    # v27 -- value-level org/global rank split, computed ONCE over the whole
+    # corpus for the same reason the drop-off pass is: it is a board-level
+    # property and recomputing it per player would be O(N*M).
+    org_ranked_rows: set = set()
+    if ORG_RANK_VALUE_DETECTOR:
+        org_ranked_rows, _org_rank_diags = _org_ranked_snapshot_keys(snapshots)
     by_player: dict[str, list[Snapshot]] = defaultdict(list)
     for s in snapshots:
         by_player[s.player_key].append(s)
@@ -1245,11 +1626,23 @@ def build_timeseries(
         # ONLY rows are synthetic lands at 0 instances, which still trips the
         # pull - and pulling 35 toward a prior of 35 is a no-op, so nothing
         # moves for that cohort.
+        #
+        # 2026-08-07 (v27) - AS-OF. This count used to be taken over the
+        # player's ENTIRE history and then handed unchanged to every event
+        # date, so whether the FV-35 pull fired on a 2019 point depended on
+        # whether the player happened to be re-graded in 2024. Computing a
+        # historical point from the future is wrong on its own terms, so the
+        # count is now accumulated inside the chronological event-date walk
+        # below. The accumulation is one set insertion per snapshot, i.e. the
+        # same asymptotic cost as this pre-pass; a naive recount inside the
+        # loop would have been quadratic. Measured effect at adoption: 117 of
+        # 3,933 eFV matrix rows, mean abs 3.10 FV, max 10.42 FV.
         seen_fv_keys: set[tuple[str, str]] = set()
         for s in player_snaps:
             if s.fv is not None and s.source not in CONSTANT_ANCHOR_SOURCES:
                 seen_fv_keys.add((s.source, s.snapshot_date))
         total_fv_instances = len(seen_fv_keys)
+        asof_fv_keys: set[tuple[str, str]] = set()
 
         # Walk event dates chronologically, forward-filling per source.
         # `latest_by_source` holds the most recent Snapshot(s) seen from
@@ -1266,6 +1659,8 @@ def build_timeseries(
         latest_by_source: dict[str, list[Snapshot]] = {}
         for snap_date in sorted(by_date):
             for s in by_date[snap_date]:
+                if s.fv is not None and s.source not in CONSTANT_ANCHOR_SOURCES:
+                    asof_fv_keys.add((s.source, s.snapshot_date))
                 prev_list = latest_by_source.get(s.source)
                 if not prev_list:
                     latest_by_source[s.source] = [s]
@@ -1295,10 +1690,13 @@ def build_timeseries(
                 event_date=snap_date,
                 event_label=event_label,
                 single_source_k=single_source_k,
-                total_fv_instances=total_fv_instances,
-                dropped_off_pairs=dropped_off,
+                total_fv_instances=(
+                    len(asof_fv_keys) if ASOF_FV_INSTANCES else total_fv_instances
+                ),
+                dropped_off_pairs=dropped_timeline.get(snap_date) or set(),
                 source_weights=_SOURCE_WEIGHTS,
                 grade_norm=grade_norm,
+                org_ranked_rows=org_ranked_rows,
             )
             if pt is not None:
                 points.append(pt)
@@ -1354,8 +1752,14 @@ def build_timeseries(
         cleaned = cleaned.replace("’", "'").replace("‘", "'")
         return " ".join(cleaned.split())
 
-    # Future: a `_SAME_NAME_NOT_DUPES` allowlist can carve out legit
-    # same-name pairs if any surface. Empty for now.
+    # A `_SAME_NAME_NOT_DUPES` allowlist carves out legit same-name pairs.
+    # It is EMPTY, and the merge below is therefore unconditional on a name
+    # collision. That is not free: same-name pairs DO surface in this corpus and
+    # a merge pools one player's points onto another's consensus. v27 adds
+    # same_name_collisions() as a REPORT so the population is visible; it
+    # deliberately does not auto-merge or auto-split, because deciding which
+    # same-name pairs are one person is an identity question, not a
+    # consensus-engine question. Populate this set from that report, by hand.
     _SAME_NAME_NOT_DUPES: set[tuple[str, str]] = set()
 
     by_name: dict[str, PlayerTimeseries] = {}

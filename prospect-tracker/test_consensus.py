@@ -11,12 +11,14 @@ Run: python -m pytest tests/ -v
 
 from __future__ import annotations
 
+import sqlite3
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
+import consensus
 from scrapers import Snapshot, _parse_fv, _parse_espn_tools, _parse_pipeline_tools
 from consensus import (
     snap_to_grade,
@@ -692,23 +694,39 @@ class TestConsensusIsSourceMean:
         assert pt.consensus_fv_raw == 60.0
         assert pt.shrinkage_weight == 1.0
 
-    def test_multi_point_single_source_not_pulled(self):
-        # Same source publishing across 3 snapshots — the player has 3
-        # FV instances even though only 1 source contributed. Under the
-        # single-INSTANCE semantics, this player is well-observed and
-        # escapes the FV-35 pull. Each point's consensus equals the raw
-        # published value at that snapshot.
+    def test_instance_count_is_as_of_the_point_not_the_whole_history(self):
+        # REWRITTEN 2026-08-07b with ASOF_FV_INSTANCES (audit lane C, C-2).
+        #
+        # This test used to assert that all three points read consensus 60.0,
+        # on the reasoning that the player has "3 FV instances" and is
+        # therefore well observed. That was the DEFECT, not the contract:
+        # total_fv_instances was counted over the player's ENTIRE snapshot
+        # history with no date filter and handed unchanged to every event
+        # date, so the 2024 point escaped the FV-35 single-instance pull
+        # because of grades published in 2025 and 2026. A historical point
+        # was being computed from the player's future.
+        #
+        # As-of, the 2024 point has seen exactly one instance, so the pull
+        # fires: (2/3)*60 + (1/3)*35 = 51.67, which the ceiling display rule
+        # renders 52. By 2026 three instances have accumulated and the value
+        # returns to the published 60.0. The final point is unchanged, which
+        # is why this was invisible on the live board and only ever wrong in
+        # history.
         snaps = [
             _snap("fangraphs", "Smith", fv=60.0, date_="2024-02-15"),
             _snap("fangraphs", "Smith", fv=60.0, date_="2025-02-15"),
             _snap("fangraphs", "Smith", fv=60.0, date_="2026-02-15"),
         ]
         p = build_timeseries(snaps)[0]
-        assert p.fv_total_instances == 3
-        for pt in p.points:
-            assert pt.consensus_fv == 60.0
-            assert pt.consensus_fv_raw == 60.0
-            assert pt.shrinkage_weight == 1.0
+        assert p.fv_total_instances == 3, "the player-level total is still lifetime"
+        first, last = p.points[0], p.points[-1]
+        assert first.consensus_fv_raw == pytest.approx(51.667, abs=0.01), (
+            "the earliest point must be pulled: as of that date it is a single "
+            "instance, whatever the player was graded afterwards")
+        assert last.consensus_fv_raw == 60.0, (
+            "by the final point three instances have accumulated, so the pull "
+            "releases and the published grade stands")
+        assert first.consensus_fv < last.consensus_fv
 
     def test_pool_doesnt_drag_individual_consensus(self):
         # The old "prior_mean_fv pulled from pool average" path is gone.
@@ -1077,3 +1095,137 @@ def test_collision_guard_spares_same_side_re_emergence():
         _csnap("2024-02-01", "fangraphs", "CF", 50.0, key="kev", name="Kev"),
     ], single_source_k=0)
     assert len(ts[0].points) >= 2, "both clusters kept for a same-side re-emergence"
+
+
+# ---------------------------------------------------------------------------
+# v27 -- value-level org/global rank split (Lane C, C-1).
+# Gate doc: docs/efv-2026-08-07b/CONSENSUS_REPAIR.md
+#
+# A FanGraphs board stores TWO quantities in one `rank` column under ONE
+# interval_label: a global rank for the players who make the overall board and
+# an org position for everyone else. The label guard cannot separate them
+# because both kinds of row carry the same label, so the split is detected from
+# the rank structure instead.
+# ---------------------------------------------------------------------------
+
+def _board_rows(spec):
+    """spec: {org: [(rank, fv), ...]} -> the (row_id, org, rank, fv) tuples
+    classify_board_org_ranks consumes."""
+    out = []
+    for org, items in spec.items():
+        for i, (rank, fv) in enumerate(items):
+            out.append((f"{org}-{i}", org, rank, fv))
+    return out
+
+
+def _hybrid_board():
+    """Three orgs. Ranks 1..30 are one global sequence dealt round-robin, so
+    each org has 10 globally-ranked players and its OWN positions therefore
+    start at 11. Positions 11..25 repeat in all three orgs, which is the thing
+    a single global list can never do."""
+    spec = {}
+    for k, org in enumerate(("AAA", "BBB", "CCC")):
+        globals_ = [(r, 60.0) for r in range(1 + k, 31, 3)]
+        positions = [(r, 40.0) for r in range(11, 26)]
+        spec[org] = globals_ + positions
+    return spec
+
+
+def test_org_and_global_ranks_split_by_value_not_by_label():
+    spec = _hybrid_board()
+    rows = _board_rows(spec)
+    org_ids, diag = consensus.classify_board_org_ranks(rows)
+    assert diag["validated"], diag["reason"]
+    assert diag["global_prefix_G"] == 30
+    assert diag["n_global_rows"] == 30
+    assert diag["n_org_rows"] == 45
+    assert diag["offset_exact_frac"] == 1.0
+    # every FV-60 row is global, every FV-40 row is an org position
+    for rid, _org, _rank, fv in rows:
+        assert (rid in org_ids) is (fv == 40.0)
+
+
+def test_a_pure_global_board_is_left_completely_alone():
+    """The conservative direction. One row per org, ranks 1..30, no rank shared
+    across orgs -- so nothing may be reclassified and the served output is
+    byte-identical to the pre-v27 behaviour."""
+    spec = {f"O{i:02d}": [(i, 55.0)] for i in range(1, 31)}
+    org_ids, diag = consensus.classify_board_org_ranks(_board_rows(spec))
+    assert org_ids == set()
+    assert not diag["validated"]
+    assert diag["reason"] == "no rank value shared across orgs"
+
+
+def test_a_board_that_fails_the_offset_fingerprint_falls_back():
+    """Duplicated ranks alone are NOT enough. If the org positions do not start
+    at g+1 the board is refused rather than half-classified."""
+    spec = {
+        "AAA": [(r, 60.0) for r in range(1, 31, 2)] + [(r, 40.0) for r in range(1, 16)],
+        "BBB": [(r, 60.0) for r in range(2, 31, 2)] + [(r, 40.0) for r in range(1, 16)],
+    }
+    org_ids, diag = consensus.classify_board_org_ranks(_board_rows(spec))
+    assert org_ids == set()
+    assert diag["eligible"] and not diag["validated"]
+
+
+def test_org_ranked_rows_are_kept_out_of_avg_rank():
+    """The consequence the split exists for: an org position must not be
+    averaged into avg_rank, which spotlights.py turns into the rank-jump
+    'riser' driver."""
+    day = [
+        _snap("fangraphs", "X", rank=4, fv=45.0),
+        _snap("mlb_pipeline", "X", rank=60, fv=45.0),
+    ]
+    both = compute_consensus_point(day)
+    assert both.avg_rank == 32.0 and both.avg_rank_n == 2
+
+    key = (day[0].player_key, day[0].source, day[0].interval_label or "",
+           day[0].snapshot_date)
+    scoped = compute_consensus_point(day, org_ranked_rows={key})
+    assert scoped.avg_rank == 60.0, "the org position must not vote"
+    assert scoped.avg_rank_n == 1
+
+
+def test_the_canary_two_rows_at_rank_one_on_one_real_board():
+    """The reproduction that opened Lane C. On the 2026-08-02 FanGraphs board,
+    jesus_made (MIL, FV 65) is global #1 and jd_dix (ARI, FV 45) is Arizona's
+    org #1, both under interval_label '2026updated'. Skipped when the DB is
+    not present."""
+    db = Path(__file__).resolve().parent / "prospects.db"
+    if not db.exists():
+        pytest.skip("prospects.db not available")
+    con = sqlite3.connect(str(db))
+    try:
+        rows = [
+            ((pk, "fangraphs", "2026updated", "2026-08-02"), org, rank, fv)
+            for pk, org, rank, fv in con.execute(
+                "SELECT player_key, org, rank, fv FROM snapshots "
+                "WHERE source='fangraphs' AND snapshot_date='2026-08-02' "
+                "AND rank IS NOT NULL")
+        ]
+    finally:
+        con.close()
+    if not rows:
+        pytest.skip("2026-08-02 FanGraphs board not in this DB")
+    org_ids, diag = consensus.classify_board_org_ranks(rows)
+    assert diag["validated"], diag["reason"]
+    assert ("jd_dix", "fangraphs", "2026updated", "2026-08-02") in org_ids
+    assert ("jesus_made", "fangraphs", "2026updated", "2026-08-02") not in org_ids
+    # NOT asserted: n_global_rows == global_prefix_G. Two independent
+    # verifiers showed that identity is true by construction of the
+    # classifier, so it pins nothing and would read as coverage it is not.
+    share = diag["n_org_rows"] / (diag["n_org_rows"] + diag["n_global_rows"])
+    assert share > 0.85, "the overwhelming majority of the board is org-ranked"
+
+
+def test_the_dropoff_org_slug_accepts_both_label_formats_and_bounds_the_org():
+    """C-3. The shipped detector required a legacy '_org_' slug that occurs zero
+    times, so the (fv+30)/2 drop-off shrink never fired. The repaired extractor
+    reads the human-readable format too, and bounds the org token to a real
+    club so a second midseason list can never be diffed as an org."""
+    assert consensus.org_slug_from_label("mlb_pipeline_2021_org_nationals") == "nationals"
+    assert consensus.org_slug_from_label("MLB Pipeline 2021 Nationals Top 30") == "Nationals"
+    assert consensus.org_slug_from_label("MLB Pipeline 2024 Pirates Top 50") == "Pirates"
+    assert consensus.org_slug_from_label("JustBaseball 2026 Midseason Top 100") is None
+    assert consensus.org_slug_from_label("Baseball America 2026 Top 100") is None
+    assert consensus.org_slug_from_label(None) is None
