@@ -148,6 +148,12 @@ Usable deliverable: a **gate currency** - +0.01 pooled eFV Spearman is worth **-
 surplus MAE per prospect, CI95 [-0.0878,-0.0550], P=1.000. That converts every future rank
 claim into dollars.
 
+> **SUPERSEDED 2026-08-07b.** Re-derived like-for-like on the v6 EV frame the slope is
+> **-$0.117M**, CI95 [-0.139, -0.096], roughly 1.66x the figure above, and it FAILS a
+> stability sweep (2.23x spread across mixing segments against a 2.0x bar). See
+> `docs/efv-2026-08-07b/SURPLUS_DECOMPOSITION_V6.md` and section 4 of
+> `EFV_GATE_STANDARD.md`. Do not use the number above to price a rank claim.
+
 ## 5. What to do (ranked, none of the top three is an accuracy claim)
 
 1. **Repair the as-of contract** (1b). Validity, not accuracy. Attach the prior completed
