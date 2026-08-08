@@ -1,0 +1,6784 @@
+{
+ "generated_at": "2026-08-07T21:05:13",
+ "generated": "2026-08-07T21:05:13",
+ "lane": "D1",
+ "gate_doc": "docs/efv-2026-08-07b/CONSENSUS_CONTAMINATION.md",
+ "pre_registered": {
+  "tol_fv": 0.005,
+  "bar_fidelity_pct": 99.0,
+  "bar_pct_ge_0p5_fv": 1.0,
+  "bar_mean_abs_affected_fv": 0.25,
+  "n_bootstrap": 2000,
+  "seed": 20260807
+ },
+ "inputs": {
+  "n_snapshots": 54061,
+  "n_matrix_rows": 3957,
+  "n_asof_dates": 45,
+  "dropped_off_pairs_full_corpus": 0,
+  "adopt_normalized_consensus": true,
+  "single_source_k": 0.5,
+  "grade_norm_min_n": 30
+ },
+ "fidelity": {
+  "basis": "replay baseline arm vs data/xfv_*_matrix.json consensus_fv_raw",
+  "n_joined": 3934,
+  "n_within_tol": 3455,
+  "pct_within_tol": 87.824,
+  "bar_pct": 99.0,
+  "passes": false,
+  "n_mismatch": 479,
+  "n_mismatch_le_0p02": 478,
+  "n_mismatch_gt_0p02": 1,
+  "pct_within_0p02": 99.975,
+  "mismatch_sample": [
+   {
+    "player_key": "jose_briceno",
+    "asof_date": "2015-01-22",
+    "side": "hit",
+    "shipped": 35.63,
+    "replay": 35.64,
+    "delta": 0.01
+   },
+   {
+    "player_key": "willson_contreras",
+    "asof_date": "2016-01-22",
+    "side": "hit",
+    "shipped": 45.63,
+    "replay": 45.64,
+    "delta": 0.01
+   },
+   {
+    "player_key": "jefry_marte",
+    "asof_date": "2013-01-22",
+    "side": "hit",
+    "shipped": 35.63,
+    "replay": 35.64,
+    "delta": 0.01
+   },
+   {
+    "player_key": "juan_carlos_perez",
+    "asof_date": "2013-01-22",
+    "side": "hit",
+    "shipped": 35.63,
+    "replay": 35.64,
+    "delta": 0.01
+   },
+   {
+    "player_key": "bj_murray",
+    "asof_date": "2026-08-07",
+    "side": "hit",
+    "shipped": 35.69,
+    "replay": 35.7,
+    "delta": 0.01
+   },
+   {
+    "player_key": "carlos_sanchez",
+    "asof_date": "2026-08-07",
+    "side": "hit",
+    "shipped": 35.0,
+    "replay": 40.7,
+    "delta": 5.7
+   },
+   {
+    "player_key": "jake_yacinich",
+    "asof_date": "2016-01-22",
+    "side": "hit",
+    "shipped": 35.63,
+    "replay": 35.64,
+    "delta": 0.01
+   },
+   {
+    "player_key": "shane_zeile",
+    "asof_date": "2015-01-22",
+    "side": "hit",
+    "shipped": 35.63,
+    "replay": 35.64,
+    "delta": 0.01
+   },
+   {
+    "player_key": "kody_eaves",
+    "asof_date": "2015-01-22",
+    "side": "hit",
+    "shipped": 35.63,
+    "replay": 35.64,
+    "delta": 0.01
+   },
+   {
+    "player_key": "yeison_asencio",
+    "asof_date": "2015-01-22",
+    "side": "hit",
+    "shipped": 35.63,
+    "replay": 35.64,
+    "delta": 0.01
+   },
+   {
+    "player_key": "jose_espada",
+    "asof_date": "2016-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "akeem_bostick",
+    "asof_date": "2021-04-01",
+    "side": "pit",
+    "shipped": 39.16,
+    "replay": 39.17,
+    "delta": 0.01
+   },
+   {
+    "player_key": "jake_brentz",
+    "asof_date": "2021-02-26",
+    "side": "pit",
+    "shipped": 40.62,
+    "replay": 40.63,
+    "delta": 0.01
+   },
+   {
+    "player_key": "aaron_northcraft",
+    "asof_date": "2014-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "jose_mujica",
+    "asof_date": "2020-04-01",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "angel_perdomo",
+    "asof_date": "2020-08-01",
+    "side": "pit",
+    "shipped": 38.12,
+    "replay": 38.13,
+    "delta": 0.01
+   },
+   {
+    "player_key": "domingo_tapia",
+    "asof_date": "2014-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "brandon_leibrandt",
+    "asof_date": "2015-01-22",
+    "side": "pit",
+    "shipped": 39.16,
+    "replay": 39.17,
+    "delta": 0.01
+   },
+   {
+    "player_key": "robinson_leyer",
+    "asof_date": "2016-01-22",
+    "side": "pit",
+    "shipped": 39.16,
+    "replay": 39.17,
+    "delta": 0.01
+   },
+   {
+    "player_key": "brandon_brennan",
+    "asof_date": "2016-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "sam_selman",
+    "asof_date": "2015-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "brady_lail",
+    "asof_date": "2016-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "matt_ramsey",
+    "asof_date": "2015-01-22",
+    "side": "pit",
+    "shipped": 39.16,
+    "replay": 39.17,
+    "delta": 0.01
+   },
+   {
+    "player_key": "miguel_del_pozo",
+    "asof_date": "2015-01-22",
+    "side": "pit",
+    "shipped": 39.16,
+    "replay": 39.17,
+    "delta": 0.01
+   },
+   {
+    "player_key": "jose_castillo",
+    "asof_date": "2016-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "jesse_biddle",
+    "asof_date": "2015-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "jason_adam",
+    "asof_date": "2014-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "drew_gagnon",
+    "asof_date": "2015-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "stephen_tarpley",
+    "asof_date": "2016-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "brett_graves",
+    "asof_date": "2015-01-22",
+    "side": "pit",
+    "shipped": 39.16,
+    "replay": 39.17,
+    "delta": 0.01
+   },
+   {
+    "player_key": "justin_hancock",
+    "asof_date": "2015-01-22",
+    "side": "pit",
+    "shipped": 39.16,
+    "replay": 39.17,
+    "delta": 0.01
+   },
+   {
+    "player_key": "jimmy_cordero",
+    "asof_date": "2016-01-22",
+    "side": "pit",
+    "shipped": 39.16,
+    "replay": 39.17,
+    "delta": 0.01
+   },
+   {
+    "player_key": "austen_williams",
+    "asof_date": "2016-01-22",
+    "side": "pit",
+    "shipped": 39.16,
+    "replay": 39.17,
+    "delta": 0.01
+   },
+   {
+    "player_key": "zack_weiss",
+    "asof_date": "2016-01-22",
+    "side": "pit",
+    "shipped": 39.16,
+    "replay": 39.17,
+    "delta": 0.01
+   },
+   {
+    "player_key": "justin_anderson",
+    "asof_date": "2016-01-22",
+    "side": "pit",
+    "shipped": 35.83,
+    "replay": 35.84,
+    "delta": 0.01
+   },
+   {
+    "player_key": "jenho_tseng",
+    "asof_date": "2016-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "jamie_callahan",
+    "asof_date": "2014-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "jackson_stephens",
+    "asof_date": "2015-01-22",
+    "side": "pit",
+    "shipped": 41.25,
+    "replay": 41.26,
+    "delta": 0.01
+   },
+   {
+    "player_key": "ronald_herrera",
+    "asof_date": "2017-02-15",
+    "side": "pit",
+    "shipped": 40.62,
+    "replay": 40.63,
+    "delta": 0.01
+   },
+   {
+    "player_key": "deck_mcguire",
+    "asof_date": "2013-01-22",
+    "side": "pit",
+    "shipped": 46.25,
+    "replay": 46.26,
+    "delta": 0.01
+   }
+  ],
+  "mismatch_gt_0p02": [
+   {
+    "player_key": "carlos_sanchez",
+    "asof_date": "2026-08-07",
+    "side": "hit",
+    "shipped": 35.0,
+    "replay": 40.7,
+    "delta": 5.7
+   }
+  ],
+  "n_unjoined": 23,
+  "unjoined_sample": [
+   {
+    "side": "hit",
+    "player_key": "josh_smith__sa3009923",
+    "asof_date": "2022-02-24",
+    "kind": "debuted",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "hit",
+    "player_key": "junior_garcia",
+    "asof_date": "2026-08-07",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "hit",
+    "player_key": "luis_meza",
+    "asof_date": "2023-08-01",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "hit",
+    "player_key": "daniel_vasquez",
+    "asof_date": "2022-08-02",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "hit",
+    "player_key": "alexander_ramirez__sa3008757",
+    "asof_date": "2022-08-02",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "hit",
+    "player_key": "abdidas_de_la_cruz",
+    "asof_date": "2022-08-02",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "hit",
+    "player_key": "logan_simmons__sa3006867",
+    "asof_date": "2022-08-02",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "hit",
+    "player_key": "juan_olmos",
+    "asof_date": "2022-08-02",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "hit",
+    "player_key": "matthew_barefoot__sa3010145",
+    "asof_date": "2022-01-22",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "hit",
+    "player_key": "jhon_diaz",
+    "asof_date": "2021-07-30",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "hit",
+    "player_key": "tre_fletcher__sa3010709",
+    "asof_date": "2021-01-22",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "hit",
+    "player_key": "jake_sanford__sa3010585",
+    "asof_date": "2021-01-22",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "pit",
+    "player_key": "dj_herz__26389",
+    "asof_date": "2024-02-14",
+    "kind": "debuted",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "pit",
+    "player_key": "hayden_wesneski__27581",
+    "asof_date": "2022-08-02",
+    "kind": "debuted",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "pit",
+    "player_key": "kevin_smith",
+    "asof_date": "2021-07-30",
+    "kind": "debuted",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "pit",
+    "player_key": "ryan_weathers",
+    "asof_date": "2020-08-01",
+    "kind": "debuted",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "pit",
+    "player_key": "luis_garcia__23735",
+    "asof_date": "2018-02-15",
+    "kind": "debuted",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "pit",
+    "player_key": "eduardo_herrera",
+    "asof_date": "2024-08-01",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "pit",
+    "player_key": "jc_flowers__sa3011493",
+    "asof_date": "2023-08-01",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "pit",
+    "player_key": "colin_peluse__sa3011126",
+    "asof_date": "2023-01-22",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "pit",
+    "player_key": "stephen_gingery__sa3011747",
+    "asof_date": "2021-07-30",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "pit",
+    "player_key": "graeme_stinson__sa3011900",
+    "asof_date": "2021-07-30",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   },
+   {
+    "side": "pit",
+    "player_key": "holden_powell",
+    "asof_date": "2021-07-30",
+    "kind": "bust",
+    "reason": "no point at asof_date"
+   }
+  ],
+  "unjoined_by_kind": {
+   "debuted": 6,
+   "bust": 17
+  },
+  "unjoined_by_reason": {
+   "no point at asof_date": 23
+  }
+ },
+ "fidelity_replay": {
+  "basis": "replay baseline arm vs consensus.build_timeseries on the same snapshots",
+  "added_post_hoc": true,
+  "why": "the pre-registered check compares against a matrix artifact of unknown vintage; this one isolates whether the replay copies production",
+  "n_compared": 3934,
+  "n_within_tol": 3933,
+  "pct_within_tol": 99.975,
+  "n_mismatch": 1,
+  "mismatch_sample": [
+   {
+    "player_key": "carlos_sanchez",
+    "asof_date": "2026-08-07",
+    "build_timeseries": 35.0,
+    "replay": 40.7,
+    "delta": 5.7
+   }
+  ],
+  "n_point_absent_from_build_timeseries": 0,
+  "build_timeseries_sec": 7.2
+ },
+ "c2_detector": {
+  "shipped_detector_pairs_full_corpus": 0,
+  "corrected_detector_pairs_full_corpus": 463,
+  "shipped_requires": "'_org_' in interval_label (consensus.py:1001)",
+  "occurrences_of_legacy_slug_in_corpus": 0,
+  "occurrences_of_human_org_label_in_corpus": 13251,
+  "note": "The legacy slug occurs ZERO times, so the shipped detector returns the empty set and the (fv+30)/2 drop-off shrink at consensus.py:606-636 NEVER FIRES in production."
+ },
+ "channels": {
+  "asof_c1": {
+   "by_side": {
+    "hit": {
+     "n_rows": 1904,
+     "n_differ": 41,
+     "pct_differ": 2.153,
+     "mean_delta_all": -0.07,
+     "sd_delta_all": 0.5498,
+     "mean_abs_delta_affected": 3.2524,
+     "max_abs_delta": 8.65,
+     "n_abs_gt_0p5": 38,
+     "n_abs_gt_1p0": 38,
+     "pct_abs_gt_0p5": 1.996
+    },
+    "pit": {
+     "n_rows": 2029,
+     "n_differ": 76,
+     "pct_differ": 3.746,
+     "mean_delta_all": -0.1132,
+     "sd_delta_all": 0.6739,
+     "mean_abs_delta_affected": 3.0232,
+     "max_abs_delta": 10.42,
+     "n_abs_gt_0p5": 74,
+     "n_abs_gt_1p0": 74,
+     "pct_abs_gt_0p5": 3.647
+    },
+    "both": {
+     "n_rows": 3933,
+     "n_differ": 117,
+     "pct_differ": 2.975,
+     "mean_delta_all": -0.0923,
+     "sd_delta_all": 0.6173,
+     "mean_abs_delta_affected": 3.1035,
+     "max_abs_delta": 10.42,
+     "n_abs_gt_0p5": 112,
+     "n_abs_gt_1p0": 112,
+     "pct_abs_gt_0p5": 2.848
+    }
+   },
+   "folds": {
+    "hit:2024": {
+     "n": 240,
+     "n_differ": 2,
+     "max_abs": 1.67,
+     "mean_delta": -0.0084,
+     "pct_differ": 0.83
+    },
+    "hit:2023": {
+     "n": 243,
+     "n_differ": 4,
+     "max_abs": 3.33,
+     "mean_delta": -0.0343,
+     "pct_differ": 1.65
+    },
+    "hit:2022": {
+     "n": 248,
+     "n_differ": 3,
+     "max_abs": 1.67,
+     "mean_delta": -0.0202,
+     "pct_differ": 1.21
+    },
+    "hit:2021": {
+     "n": 127,
+     "n_differ": 2,
+     "max_abs": 5.0,
+     "mean_delta": -0.055,
+     "pct_differ": 1.57
+    },
+    "hit:2020": {
+     "n": 169,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2019": {
+     "n": 199,
+     "n_differ": 1,
+     "max_abs": 1.95,
+     "mean_delta": -0.0098,
+     "pct_differ": 0.5
+    },
+    "hit:2018": {
+     "n": 174,
+     "n_differ": 1,
+     "max_abs": 1.89,
+     "mean_delta": -0.0109,
+     "pct_differ": 0.57
+    },
+    "hit:2017": {
+     "n": 112,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2016": {
+     "n": 95,
+     "n_differ": 2,
+     "max_abs": 8.65,
+     "mean_delta": -0.1821,
+     "pct_differ": 2.11
+    },
+    "hit:2015": {
+     "n": 78,
+     "n_differ": 6,
+     "max_abs": 6.98,
+     "mean_delta": -0.2592,
+     "pct_differ": 7.69
+    },
+    "hit:2014": {
+     "n": 96,
+     "n_differ": 7,
+     "max_abs": 3.65,
+     "mean_delta": -0.214,
+     "pct_differ": 7.29
+    },
+    "hit:2013": {
+     "n": 56,
+     "n_differ": 1,
+     "max_abs": 3.65,
+     "mean_delta": -0.0652,
+     "pct_differ": 1.79
+    },
+    "hit:2012": {
+     "n": 25,
+     "n_differ": 7,
+     "max_abs": 6.98,
+     "mean_delta": -1.0216,
+     "pct_differ": 28.0
+    },
+    "hit:2011": {
+     "n": 10,
+     "n_differ": 5,
+     "max_abs": 5.31,
+     "mean_delta": -1.991,
+     "pct_differ": 50.0
+    },
+    "hit:2027": {
+     "n": 19,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2026": {
+     "n": 1,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2025": {
+     "n": 12,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2024": {
+     "n": 253,
+     "n_differ": 1,
+     "max_abs": 3.33,
+     "mean_delta": -0.0132,
+     "pct_differ": 0.4
+    },
+    "pit:2023": {
+     "n": 254,
+     "n_differ": 6,
+     "max_abs": 2.09,
+     "mean_delta": -0.0358,
+     "pct_differ": 2.36
+    },
+    "pit:2022": {
+     "n": 218,
+     "n_differ": 7,
+     "max_abs": 1.67,
+     "mean_delta": -0.0534,
+     "pct_differ": 3.21
+    },
+    "pit:2021": {
+     "n": 150,
+     "n_differ": 6,
+     "max_abs": 1.67,
+     "mean_delta": -0.056,
+     "pct_differ": 4.0
+    },
+    "pit:2020": {
+     "n": 203,
+     "n_differ": 5,
+     "max_abs": 1.71,
+     "mean_delta": -0.0413,
+     "pct_differ": 2.46
+    },
+    "pit:2019": {
+     "n": 194,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2018": {
+     "n": 214,
+     "n_differ": 3,
+     "max_abs": 1.98,
+     "mean_delta": -0.0247,
+     "pct_differ": 1.4
+    },
+    "pit:2017": {
+     "n": 87,
+     "n_differ": 2,
+     "max_abs": 2.09,
+     "mean_delta": -0.0468,
+     "pct_differ": 2.3
+    },
+    "pit:2016": {
+     "n": 118,
+     "n_differ": 1,
+     "max_abs": 5.42,
+     "mean_delta": -0.0459,
+     "pct_differ": 0.85
+    },
+    "pit:2015": {
+     "n": 95,
+     "n_differ": 7,
+     "max_abs": 3.76,
+     "mean_delta": -0.1892,
+     "pct_differ": 7.37
+    },
+    "pit:2014": {
+     "n": 89,
+     "n_differ": 7,
+     "max_abs": 3.76,
+     "mean_delta": -0.2207,
+     "pct_differ": 7.87
+    },
+    "pit:2013": {
+     "n": 56,
+     "n_differ": 11,
+     "max_abs": 7.09,
+     "mean_delta": -0.7979,
+     "pct_differ": 19.64
+    },
+    "pit:2012": {
+     "n": 30,
+     "n_differ": 15,
+     "max_abs": 10.42,
+     "mean_delta": -2.379,
+     "pct_differ": 50.0
+    },
+    "pit:2011": {
+     "n": 8,
+     "n_differ": 5,
+     "max_abs": 7.09,
+     "mean_delta": -2.5575,
+     "pct_differ": 62.5
+    },
+    "pit:2027": {
+     "n": 43,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2026": {
+     "n": 2,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2025": {
+     "n": 15,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    }
+   },
+   "worst_folds": [
+    {
+     "fold": "pit:2011",
+     "n": 8,
+     "n_differ": 5,
+     "max_abs": 7.09,
+     "mean_delta": -2.5575,
+     "pct_differ": 62.5
+    },
+    {
+     "fold": "pit:2012",
+     "n": 30,
+     "n_differ": 15,
+     "max_abs": 10.42,
+     "mean_delta": -2.379,
+     "pct_differ": 50.0
+    },
+    {
+     "fold": "hit:2011",
+     "n": 10,
+     "n_differ": 5,
+     "max_abs": 5.31,
+     "mean_delta": -1.991,
+     "pct_differ": 50.0
+    },
+    {
+     "fold": "hit:2012",
+     "n": 25,
+     "n_differ": 7,
+     "max_abs": 6.98,
+     "mean_delta": -1.0216,
+     "pct_differ": 28.0
+    },
+    {
+     "fold": "pit:2013",
+     "n": 56,
+     "n_differ": 11,
+     "max_abs": 7.09,
+     "mean_delta": -0.7979,
+     "pct_differ": 19.64
+    },
+    {
+     "fold": "hit:2015",
+     "n": 78,
+     "n_differ": 6,
+     "max_abs": 6.98,
+     "mean_delta": -0.2592,
+     "pct_differ": 7.69
+    }
+   ],
+   "leak": {
+    "hit_censored": {
+     "n": 41,
+     "rho_baseline": 0.2825,
+     "rho_asof": 0.2825,
+     "d_rho": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "hit_resolved": {
+     "n": 41,
+     "rho_baseline": 0.2662,
+     "rho_asof": 0.2662,
+     "d_rho": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_censored": {
+     "n": 76,
+     "rho_baseline": 0.2175,
+     "rho_asof": 0.2175,
+     "d_rho": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_resolved": {
+     "n": 76,
+     "rho_baseline": 0.2412,
+     "rho_asof": 0.2412,
+     "d_rho": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    }
+   },
+   "leak_fullpool": {
+    "hit_censored": {
+     "n": 1904,
+     "rho_baseline": 0.275,
+     "rho_asof": 0.2726,
+     "d_rho": 0.0025,
+     "ci95": [
+      -0.0025,
+      0.0077
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "hit_resolved": {
+     "n": 1904,
+     "rho_baseline": 0.2741,
+     "rho_asof": 0.2715,
+     "d_rho": 0.0026,
+     "ci95": [
+      -0.0021,
+      0.0078
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_censored": {
+     "n": 2029,
+     "rho_baseline": 0.2121,
+     "rho_asof": 0.2091,
+     "d_rho": 0.003,
+     "ci95": [
+      -0.0049,
+      0.0102
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_resolved": {
+     "n": 2029,
+     "rho_baseline": 0.2132,
+     "rho_asof": 0.2102,
+     "d_rho": 0.003,
+     "ci95": [
+      -0.0044,
+      0.0106
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    }
+   },
+   "criteria": {
+    "a_pct_ge_0p5": true,
+    "b_mean_abs_affected": true,
+    "c_leak_ci_excludes_zero": false
+   },
+   "verdict": "CONFIRMED-MATERIAL"
+  },
+  "asof_c2": {
+   "by_side": {
+    "hit": {
+     "n_rows": 1904,
+     "n_differ": 0,
+     "pct_differ": 0.0,
+     "mean_delta_all": 0.0,
+     "sd_delta_all": 0.0,
+     "mean_abs_delta_affected": 0.0,
+     "max_abs_delta": 0.0,
+     "n_abs_gt_0p5": 0,
+     "n_abs_gt_1p0": 0,
+     "pct_abs_gt_0p5": 0.0
+    },
+    "pit": {
+     "n_rows": 2029,
+     "n_differ": 0,
+     "pct_differ": 0.0,
+     "mean_delta_all": 0.0,
+     "sd_delta_all": 0.0,
+     "mean_abs_delta_affected": 0.0,
+     "max_abs_delta": 0.0,
+     "n_abs_gt_0p5": 0,
+     "n_abs_gt_1p0": 0,
+     "pct_abs_gt_0p5": 0.0
+    },
+    "both": {
+     "n_rows": 3933,
+     "n_differ": 0,
+     "pct_differ": 0.0,
+     "mean_delta_all": 0.0,
+     "sd_delta_all": 0.0,
+     "mean_abs_delta_affected": 0.0,
+     "max_abs_delta": 0.0,
+     "n_abs_gt_0p5": 0,
+     "n_abs_gt_1p0": 0,
+     "pct_abs_gt_0p5": 0.0
+    }
+   },
+   "folds": {
+    "hit:2024": {
+     "n": 240,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2023": {
+     "n": 243,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2022": {
+     "n": 248,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2021": {
+     "n": 127,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2020": {
+     "n": 169,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2019": {
+     "n": 199,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2018": {
+     "n": 174,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2017": {
+     "n": 112,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2016": {
+     "n": 95,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2015": {
+     "n": 78,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2014": {
+     "n": 96,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2013": {
+     "n": 56,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2012": {
+     "n": 25,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2011": {
+     "n": 10,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2027": {
+     "n": 19,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2026": {
+     "n": 1,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2025": {
+     "n": 12,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2024": {
+     "n": 253,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2023": {
+     "n": 254,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2022": {
+     "n": 218,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2021": {
+     "n": 150,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2020": {
+     "n": 203,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2019": {
+     "n": 194,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2018": {
+     "n": 214,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2017": {
+     "n": 87,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2016": {
+     "n": 118,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2015": {
+     "n": 95,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2014": {
+     "n": 89,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2013": {
+     "n": 56,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2012": {
+     "n": 30,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2011": {
+     "n": 8,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2027": {
+     "n": 43,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2026": {
+     "n": 2,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2025": {
+     "n": 15,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    }
+   },
+   "worst_folds": [
+    {
+     "fold": "hit:2024",
+     "n": 240,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    {
+     "fold": "hit:2023",
+     "n": 243,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    {
+     "fold": "hit:2022",
+     "n": 248,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    {
+     "fold": "hit:2021",
+     "n": 127,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    {
+     "fold": "hit:2020",
+     "n": 169,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    {
+     "fold": "hit:2019",
+     "n": 199,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    }
+   ],
+   "leak": {
+    "hit_censored": {
+     "n": 0,
+     "resolvable": false,
+     "note": "n < 10, not measured"
+    },
+    "hit_resolved": {
+     "n": 0,
+     "resolvable": false,
+     "note": "n < 10, not measured"
+    },
+    "pit_censored": {
+     "n": 0,
+     "resolvable": false,
+     "note": "n < 10, not measured"
+    },
+    "pit_resolved": {
+     "n": 0,
+     "resolvable": false,
+     "note": "n < 10, not measured"
+    }
+   },
+   "leak_fullpool": {
+    "hit_censored": {
+     "n": 1904,
+     "rho_baseline": 0.275,
+     "rho_asof": 0.275,
+     "d_rho": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "hit_resolved": {
+     "n": 1904,
+     "rho_baseline": 0.2741,
+     "rho_asof": 0.2741,
+     "d_rho": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_censored": {
+     "n": 2029,
+     "rho_baseline": 0.2121,
+     "rho_asof": 0.2121,
+     "d_rho": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_resolved": {
+     "n": 2029,
+     "rho_baseline": 0.2132,
+     "rho_asof": 0.2132,
+     "d_rho": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    }
+   },
+   "criteria": {
+    "a_pct_ge_0p5": false,
+    "b_mean_abs_affected": false,
+    "c_leak_ci_excludes_zero": false
+   },
+   "verdict": "FALSE"
+  },
+  "asof_c3": {
+   "by_side": {
+    "hit": {
+     "n_rows": 1904,
+     "n_differ": 1169,
+     "pct_differ": 61.397,
+     "mean_delta_all": 0.9647,
+     "sd_delta_all": 1.6572,
+     "mean_abs_delta_affected": 1.6361,
+     "max_abs_delta": 4.29,
+     "n_abs_gt_0p5": 515,
+     "n_abs_gt_1p0": 514,
+     "pct_abs_gt_0p5": 27.048
+    },
+    "pit": {
+     "n_rows": 2029,
+     "n_differ": 1117,
+     "pct_differ": 55.052,
+     "mean_delta_all": 0.9176,
+     "sd_delta_all": 1.5238,
+     "mean_abs_delta_affected": 1.7517,
+     "max_abs_delta": 4.06,
+     "n_abs_gt_0p5": 627,
+     "n_abs_gt_1p0": 584,
+     "pct_abs_gt_0p5": 30.902
+    },
+    "both": {
+     "n_rows": 3933,
+     "n_differ": 2286,
+     "pct_differ": 58.124,
+     "mean_delta_all": 0.9404,
+     "sd_delta_all": 1.5898,
+     "mean_abs_delta_affected": 1.6926,
+     "max_abs_delta": 4.29,
+     "n_abs_gt_0p5": 1142,
+     "n_abs_gt_1p0": 1098,
+     "pct_abs_gt_0p5": 29.036
+    }
+   },
+   "folds": {
+    "hit:2024": {
+     "n": 240,
+     "n_differ": 119,
+     "max_abs": 0.41,
+     "mean_delta": -0.014,
+     "pct_differ": 49.58
+    },
+    "hit:2023": {
+     "n": 243,
+     "n_differ": 127,
+     "max_abs": 3.46,
+     "mean_delta": -0.0073,
+     "pct_differ": 52.26
+    },
+    "hit:2022": {
+     "n": 248,
+     "n_differ": 157,
+     "max_abs": 4.05,
+     "mean_delta": -0.022,
+     "pct_differ": 63.31
+    },
+    "hit:2021": {
+     "n": 127,
+     "n_differ": 71,
+     "max_abs": 4.05,
+     "mean_delta": 0.0569,
+     "pct_differ": 55.91
+    },
+    "hit:2020": {
+     "n": 169,
+     "n_differ": 49,
+     "max_abs": 4.05,
+     "mean_delta": 0.0212,
+     "pct_differ": 28.99
+    },
+    "hit:2019": {
+     "n": 199,
+     "n_differ": 114,
+     "max_abs": 4.05,
+     "mean_delta": 0.0962,
+     "pct_differ": 57.29
+    },
+    "hit:2018": {
+     "n": 174,
+     "n_differ": 91,
+     "max_abs": 4.29,
+     "mean_delta": 1.3749,
+     "pct_differ": 52.3
+    },
+    "hit:2017": {
+     "n": 112,
+     "n_differ": 88,
+     "max_abs": 4.29,
+     "mean_delta": 2.7297,
+     "pct_differ": 78.57
+    },
+    "hit:2016": {
+     "n": 95,
+     "n_differ": 95,
+     "max_abs": 4.05,
+     "mean_delta": 3.3959,
+     "pct_differ": 100.0
+    },
+    "hit:2015": {
+     "n": 78,
+     "n_differ": 78,
+     "max_abs": 4.05,
+     "mean_delta": 3.721,
+     "pct_differ": 100.0
+    },
+    "hit:2014": {
+     "n": 96,
+     "n_differ": 96,
+     "max_abs": 4.05,
+     "mean_delta": 3.7406,
+     "pct_differ": 100.0
+    },
+    "hit:2013": {
+     "n": 56,
+     "n_differ": 56,
+     "max_abs": 4.05,
+     "mean_delta": 3.7846,
+     "pct_differ": 100.0
+    },
+    "hit:2012": {
+     "n": 25,
+     "n_differ": 17,
+     "max_abs": 4.05,
+     "mean_delta": 2.754,
+     "pct_differ": 68.0
+    },
+    "hit:2011": {
+     "n": 10,
+     "n_differ": 5,
+     "max_abs": 4.05,
+     "mean_delta": 2.025,
+     "pct_differ": 50.0
+    },
+    "hit:2027": {
+     "n": 19,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2026": {
+     "n": 1,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2025": {
+     "n": 12,
+     "n_differ": 6,
+     "max_abs": 0.22,
+     "mean_delta": -0.0458,
+     "pct_differ": 50.0
+    },
+    "pit:2024": {
+     "n": 253,
+     "n_differ": 135,
+     "max_abs": 0.82,
+     "mean_delta": -0.0928,
+     "pct_differ": 53.36
+    },
+    "pit:2023": {
+     "n": 254,
+     "n_differ": 110,
+     "max_abs": 3.74,
+     "mean_delta": -0.0077,
+     "pct_differ": 43.31
+    },
+    "pit:2022": {
+     "n": 218,
+     "n_differ": 100,
+     "max_abs": 1.06,
+     "mean_delta": -0.0085,
+     "pct_differ": 45.87
+    },
+    "pit:2021": {
+     "n": 150,
+     "n_differ": 33,
+     "max_abs": 3.74,
+     "mean_delta": 0.0245,
+     "pct_differ": 22.0
+    },
+    "pit:2020": {
+     "n": 203,
+     "n_differ": 39,
+     "max_abs": 3.74,
+     "mean_delta": 0.0471,
+     "pct_differ": 19.21
+    },
+    "pit:2019": {
+     "n": 194,
+     "n_differ": 107,
+     "max_abs": 4.06,
+     "mean_delta": 0.2982,
+     "pct_differ": 55.15
+    },
+    "pit:2018": {
+     "n": 214,
+     "n_differ": 129,
+     "max_abs": 4.06,
+     "mean_delta": 1.4738,
+     "pct_differ": 60.28
+    },
+    "pit:2017": {
+     "n": 87,
+     "n_differ": 73,
+     "max_abs": 4.06,
+     "mean_delta": 2.5437,
+     "pct_differ": 83.91
+    },
+    "pit:2016": {
+     "n": 118,
+     "n_differ": 118,
+     "max_abs": 3.74,
+     "mean_delta": 3.0882,
+     "pct_differ": 100.0
+    },
+    "pit:2015": {
+     "n": 95,
+     "n_differ": 94,
+     "max_abs": 3.74,
+     "mean_delta": 3.296,
+     "pct_differ": 98.95
+    },
+    "pit:2014": {
+     "n": 89,
+     "n_differ": 89,
+     "max_abs": 3.74,
+     "mean_delta": 3.3081,
+     "pct_differ": 100.0
+    },
+    "pit:2013": {
+     "n": 56,
+     "n_differ": 56,
+     "max_abs": 3.74,
+     "mean_delta": 3.4964,
+     "pct_differ": 100.0
+    },
+    "pit:2012": {
+     "n": 30,
+     "n_differ": 26,
+     "max_abs": 3.74,
+     "mean_delta": 3.2413,
+     "pct_differ": 86.67
+    },
+    "pit:2011": {
+     "n": 8,
+     "n_differ": 5,
+     "max_abs": 3.74,
+     "mean_delta": 2.3375,
+     "pct_differ": 62.5
+    },
+    "pit:2027": {
+     "n": 43,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2026": {
+     "n": 2,
+     "n_differ": 1,
+     "max_abs": 1.04,
+     "mean_delta": -0.52,
+     "pct_differ": 50.0
+    },
+    "pit:2025": {
+     "n": 15,
+     "n_differ": 2,
+     "max_abs": 0.82,
+     "mean_delta": -0.0953,
+     "pct_differ": 13.33
+    }
+   },
+   "worst_folds": [
+    {
+     "fold": "hit:2013",
+     "n": 56,
+     "n_differ": 56,
+     "max_abs": 4.05,
+     "mean_delta": 3.7846,
+     "pct_differ": 100.0
+    },
+    {
+     "fold": "hit:2014",
+     "n": 96,
+     "n_differ": 96,
+     "max_abs": 4.05,
+     "mean_delta": 3.7406,
+     "pct_differ": 100.0
+    },
+    {
+     "fold": "hit:2015",
+     "n": 78,
+     "n_differ": 78,
+     "max_abs": 4.05,
+     "mean_delta": 3.721,
+     "pct_differ": 100.0
+    },
+    {
+     "fold": "pit:2013",
+     "n": 56,
+     "n_differ": 56,
+     "max_abs": 3.74,
+     "mean_delta": 3.4964,
+     "pct_differ": 100.0
+    },
+    {
+     "fold": "hit:2016",
+     "n": 95,
+     "n_differ": 95,
+     "max_abs": 4.05,
+     "mean_delta": 3.3959,
+     "pct_differ": 100.0
+    },
+    {
+     "fold": "pit:2014",
+     "n": 89,
+     "n_differ": 89,
+     "max_abs": 3.74,
+     "mean_delta": 3.3081,
+     "pct_differ": 100.0
+    }
+   ],
+   "leak": {
+    "hit_censored": {
+     "n": 1169,
+     "rho_baseline": 0.3171,
+     "rho_asof": 0.3226,
+     "d_rho": -0.0054,
+     "ci95": [
+      -0.0201,
+      0.0097
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "hit_resolved": {
+     "n": 1169,
+     "rho_baseline": 0.3137,
+     "rho_asof": 0.3189,
+     "d_rho": -0.0053,
+     "ci95": [
+      -0.0196,
+      0.0095
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_censored": {
+     "n": 1117,
+     "rho_baseline": 0.2599,
+     "rho_asof": 0.2449,
+     "d_rho": 0.015,
+     "ci95": [
+      -0.0029,
+      0.0329
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_resolved": {
+     "n": 1117,
+     "rho_baseline": 0.2626,
+     "rho_asof": 0.2486,
+     "d_rho": 0.014,
+     "ci95": [
+      -0.0028,
+      0.0321
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    }
+   },
+   "leak_fullpool": {
+    "hit_censored": {
+     "n": 1904,
+     "rho_baseline": 0.275,
+     "rho_asof": 0.2739,
+     "d_rho": 0.0011,
+     "ci95": [
+      -0.0083,
+      0.0103
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "hit_resolved": {
+     "n": 1904,
+     "rho_baseline": 0.2741,
+     "rho_asof": 0.273,
+     "d_rho": 0.0011,
+     "ci95": [
+      -0.0085,
+      0.0105
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_censored": {
+     "n": 2029,
+     "rho_baseline": 0.2121,
+     "rho_asof": 0.2038,
+     "d_rho": 0.0082,
+     "ci95": [
+      -0.0029,
+      0.0196
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_resolved": {
+     "n": 2029,
+     "rho_baseline": 0.2132,
+     "rho_asof": 0.2053,
+     "d_rho": 0.0079,
+     "ci95": [
+      -0.0036,
+      0.0191
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    }
+   },
+   "criteria": {
+    "a_pct_ge_0p5": true,
+    "b_mean_abs_affected": true,
+    "c_leak_ci_excludes_zero": false
+   },
+   "verdict": "CONFIRMED-MATERIAL"
+  },
+  "asof_all": {
+   "by_side": {
+    "hit": {
+     "n_rows": 1904,
+     "n_differ": 1178,
+     "pct_differ": 61.87,
+     "mean_delta_all": 0.8741,
+     "sd_delta_all": 1.6649,
+     "mean_abs_delta_affected": 1.5847,
+     "max_abs_delta": 5.95,
+     "n_abs_gt_0p5": 527,
+     "n_abs_gt_1p0": 503,
+     "pct_abs_gt_0p5": 27.679
+    },
+    "pit": {
+     "n_rows": 2029,
+     "n_differ": 1138,
+     "pct_differ": 56.087,
+     "mean_delta_all": 0.7733,
+     "sd_delta_all": 1.5408,
+     "mean_abs_delta_affected": 1.6564,
+     "max_abs_delta": 7.93,
+     "n_abs_gt_0p5": 633,
+     "n_abs_gt_1p0": 586,
+     "pct_abs_gt_0p5": 31.198
+    },
+    "both": {
+     "n_rows": 3933,
+     "n_differ": 2316,
+     "pct_differ": 58.886,
+     "mean_delta_all": 0.8221,
+     "sd_delta_all": 1.6027,
+     "mean_abs_delta_affected": 1.6199,
+     "max_abs_delta": 7.93,
+     "n_abs_gt_0p5": 1160,
+     "n_abs_gt_1p0": 1089,
+     "pct_abs_gt_0p5": 29.494
+    }
+   },
+   "folds": {
+    "hit:2024": {
+     "n": 240,
+     "n_differ": 120,
+     "max_abs": 1.67,
+     "mean_delta": -0.0221,
+     "pct_differ": 50.0
+    },
+    "hit:2023": {
+     "n": 243,
+     "n_differ": 131,
+     "max_abs": 3.46,
+     "mean_delta": -0.0416,
+     "pct_differ": 53.91
+    },
+    "hit:2022": {
+     "n": 248,
+     "n_differ": 160,
+     "max_abs": 4.05,
+     "mean_delta": -0.0422,
+     "pct_differ": 64.52
+    },
+    "hit:2021": {
+     "n": 127,
+     "n_differ": 72,
+     "max_abs": 5.0,
+     "mean_delta": -0.0087,
+     "pct_differ": 56.69
+    },
+    "hit:2020": {
+     "n": 169,
+     "n_differ": 49,
+     "max_abs": 4.05,
+     "mean_delta": 0.0212,
+     "pct_differ": 28.99
+    },
+    "hit:2019": {
+     "n": 199,
+     "n_differ": 114,
+     "max_abs": 4.05,
+     "mean_delta": 0.0867,
+     "pct_differ": 57.29
+    },
+    "hit:2018": {
+     "n": 174,
+     "n_differ": 91,
+     "max_abs": 4.29,
+     "mean_delta": 1.364,
+     "pct_differ": 52.3
+    },
+    "hit:2017": {
+     "n": 112,
+     "n_differ": 88,
+     "max_abs": 4.29,
+     "mean_delta": 2.7297,
+     "pct_differ": 78.57
+    },
+    "hit:2016": {
+     "n": 95,
+     "n_differ": 95,
+     "max_abs": 5.95,
+     "mean_delta": 3.1854,
+     "pct_differ": 100.0
+    },
+    "hit:2015": {
+     "n": 78,
+     "n_differ": 78,
+     "max_abs": 4.28,
+     "mean_delta": 3.3578,
+     "pct_differ": 100.0
+    },
+    "hit:2014": {
+     "n": 96,
+     "n_differ": 96,
+     "max_abs": 4.05,
+     "mean_delta": 3.4282,
+     "pct_differ": 100.0
+    },
+    "hit:2013": {
+     "n": 56,
+     "n_differ": 56,
+     "max_abs": 4.05,
+     "mean_delta": 3.6954,
+     "pct_differ": 100.0
+    },
+    "hit:2012": {
+     "n": 25,
+     "n_differ": 17,
+     "max_abs": 4.28,
+     "mean_delta": 1.354,
+     "pct_differ": 68.0
+    },
+    "hit:2011": {
+     "n": 10,
+     "n_differ": 5,
+     "max_abs": 2.62,
+     "mean_delta": -0.642,
+     "pct_differ": 50.0
+    },
+    "hit:2027": {
+     "n": 19,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2026": {
+     "n": 1,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2025": {
+     "n": 12,
+     "n_differ": 6,
+     "max_abs": 0.22,
+     "mean_delta": -0.0458,
+     "pct_differ": 50.0
+    },
+    "pit:2024": {
+     "n": 253,
+     "n_differ": 136,
+     "max_abs": 3.33,
+     "mean_delta": -0.106,
+     "pct_differ": 53.75
+    },
+    "pit:2023": {
+     "n": 254,
+     "n_differ": 114,
+     "max_abs": 1.67,
+     "mean_delta": -0.0477,
+     "pct_differ": 44.88
+    },
+    "pit:2022": {
+     "n": 218,
+     "n_differ": 106,
+     "max_abs": 1.67,
+     "mean_delta": -0.0635,
+     "pct_differ": 48.62
+    },
+    "pit:2021": {
+     "n": 150,
+     "n_differ": 38,
+     "max_abs": 3.74,
+     "mean_delta": -0.0321,
+     "pct_differ": 25.33
+    },
+    "pit:2020": {
+     "n": 203,
+     "n_differ": 43,
+     "max_abs": 3.74,
+     "mean_delta": 0.0053,
+     "pct_differ": 21.18
+    },
+    "pit:2019": {
+     "n": 194,
+     "n_differ": 107,
+     "max_abs": 4.06,
+     "mean_delta": 0.2982,
+     "pct_differ": 55.15
+    },
+    "pit:2018": {
+     "n": 214,
+     "n_differ": 130,
+     "max_abs": 4.06,
+     "mean_delta": 1.4412,
+     "pct_differ": 60.75
+    },
+    "pit:2017": {
+     "n": 87,
+     "n_differ": 73,
+     "max_abs": 4.06,
+     "mean_delta": 2.4671,
+     "pct_differ": 83.91
+    },
+    "pit:2016": {
+     "n": 118,
+     "n_differ": 118,
+     "max_abs": 3.74,
+     "mean_delta": 3.0317,
+     "pct_differ": 100.0
+    },
+    "pit:2015": {
+     "n": 95,
+     "n_differ": 94,
+     "max_abs": 3.74,
+     "mean_delta": 3.0155,
+     "pct_differ": 98.95
+    },
+    "pit:2014": {
+     "n": 89,
+     "n_differ": 89,
+     "max_abs": 3.74,
+     "mean_delta": 2.9899,
+     "pct_differ": 100.0
+    },
+    "pit:2013": {
+     "n": 56,
+     "n_differ": 56,
+     "max_abs": 4.59,
+     "mean_delta": 2.455,
+     "pct_differ": 100.0
+    },
+    "pit:2012": {
+     "n": 30,
+     "n_differ": 26,
+     "max_abs": 7.93,
+     "mean_delta": 0.2417,
+     "pct_differ": 86.67
+    },
+    "pit:2011": {
+     "n": 8,
+     "n_differ": 5,
+     "max_abs": 4.59,
+     "mean_delta": -0.995,
+     "pct_differ": 62.5
+    },
+    "pit:2027": {
+     "n": 43,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2026": {
+     "n": 2,
+     "n_differ": 1,
+     "max_abs": 1.04,
+     "mean_delta": -0.52,
+     "pct_differ": 50.0
+    },
+    "pit:2025": {
+     "n": 15,
+     "n_differ": 2,
+     "max_abs": 0.82,
+     "mean_delta": -0.0953,
+     "pct_differ": 13.33
+    }
+   },
+   "worst_folds": [
+    {
+     "fold": "hit:2013",
+     "n": 56,
+     "n_differ": 56,
+     "max_abs": 4.05,
+     "mean_delta": 3.6954,
+     "pct_differ": 100.0
+    },
+    {
+     "fold": "hit:2014",
+     "n": 96,
+     "n_differ": 96,
+     "max_abs": 4.05,
+     "mean_delta": 3.4282,
+     "pct_differ": 100.0
+    },
+    {
+     "fold": "hit:2015",
+     "n": 78,
+     "n_differ": 78,
+     "max_abs": 4.28,
+     "mean_delta": 3.3578,
+     "pct_differ": 100.0
+    },
+    {
+     "fold": "hit:2016",
+     "n": 95,
+     "n_differ": 95,
+     "max_abs": 5.95,
+     "mean_delta": 3.1854,
+     "pct_differ": 100.0
+    },
+    {
+     "fold": "pit:2016",
+     "n": 118,
+     "n_differ": 118,
+     "max_abs": 3.74,
+     "mean_delta": 3.0317,
+     "pct_differ": 100.0
+    },
+    {
+     "fold": "pit:2015",
+     "n": 95,
+     "n_differ": 94,
+     "max_abs": 3.74,
+     "mean_delta": 3.0155,
+     "pct_differ": 98.95
+    }
+   ],
+   "leak": {
+    "hit_censored": {
+     "n": 1178,
+     "rho_baseline": 0.3171,
+     "rho_asof": 0.3189,
+     "d_rho": -0.0018,
+     "ci95": [
+      -0.0173,
+      0.0146
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "hit_resolved": {
+     "n": 1178,
+     "rho_baseline": 0.3139,
+     "rho_asof": 0.3154,
+     "d_rho": -0.0015,
+     "ci95": [
+      -0.0167,
+      0.0148
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_censored": {
+     "n": 1138,
+     "rho_baseline": 0.256,
+     "rho_asof": 0.2295,
+     "d_rho": 0.0265,
+     "ci95": [
+      0.0045,
+      0.0475
+     ],
+     "excludes_zero": true,
+     "resolvable": true
+    },
+    "pit_resolved": {
+     "n": 1138,
+     "rho_baseline": 0.259,
+     "rho_asof": 0.2335,
+     "d_rho": 0.0254,
+     "ci95": [
+      0.0041,
+      0.0469
+     ],
+     "excludes_zero": true,
+     "resolvable": true
+    }
+   },
+   "leak_fullpool": {
+    "hit_censored": {
+     "n": 1904,
+     "rho_baseline": 0.275,
+     "rho_asof": 0.2727,
+     "d_rho": 0.0024,
+     "ci95": [
+      -0.007,
+      0.0126
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "hit_resolved": {
+     "n": 1904,
+     "rho_baseline": 0.2741,
+     "rho_asof": 0.2717,
+     "d_rho": 0.0025,
+     "ci95": [
+      -0.0077,
+      0.012
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_censored": {
+     "n": 2029,
+     "rho_baseline": 0.2121,
+     "rho_asof": 0.2008,
+     "d_rho": 0.0113,
+     "ci95": [
+      -0.0005,
+      0.0227
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_resolved": {
+     "n": 2029,
+     "rho_baseline": 0.2132,
+     "rho_asof": 0.2023,
+     "d_rho": 0.0109,
+     "ci95": [
+      -0.0001,
+      0.0225
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    }
+   },
+   "criteria": {
+    "a_pct_ge_0p5": true,
+    "b_mean_abs_affected": true,
+    "c_leak_ci_excludes_zero": true
+   },
+   "verdict": "CONFIRMED-MATERIAL"
+  },
+  "fix_c2_detector": {
+   "by_side": {
+    "hit": {
+     "n_rows": 1904,
+     "n_differ": 32,
+     "pct_differ": 1.681,
+     "mean_delta_all": -0.0606,
+     "sd_delta_all": 0.5014,
+     "mean_abs_delta_affected": 3.605,
+     "max_abs_delta": 6.49,
+     "n_abs_gt_0p5": 32,
+     "n_abs_gt_1p0": 32,
+     "pct_abs_gt_0p5": 1.681
+    },
+    "pit": {
+     "n_rows": 2029,
+     "n_differ": 42,
+     "pct_differ": 2.07,
+     "mean_delta_all": -0.0654,
+     "sd_delta_all": 0.4924,
+     "mean_abs_delta_affected": 3.1593,
+     "max_abs_delta": 6.72,
+     "n_abs_gt_0p5": 42,
+     "n_abs_gt_1p0": 42,
+     "pct_abs_gt_0p5": 2.07
+    },
+    "both": {
+     "n_rows": 3933,
+     "n_differ": 74,
+     "pct_differ": 1.882,
+     "mean_delta_all": -0.0631,
+     "sd_delta_all": 0.4967,
+     "mean_abs_delta_affected": 3.352,
+     "max_abs_delta": 6.72,
+     "n_abs_gt_0p5": 74,
+     "n_abs_gt_1p0": 74,
+     "pct_abs_gt_0p5": 1.882
+    }
+   },
+   "folds": {
+    "hit:2024": {
+     "n": 240,
+     "n_differ": 28,
+     "max_abs": 6.49,
+     "mean_delta": -0.3885,
+     "pct_differ": 11.67
+    },
+    "hit:2023": {
+     "n": 243,
+     "n_differ": 4,
+     "max_abs": 6.47,
+     "mean_delta": -0.0911,
+     "pct_differ": 1.65
+    },
+    "hit:2022": {
+     "n": 248,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2021": {
+     "n": 127,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2020": {
+     "n": 169,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2019": {
+     "n": 199,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2018": {
+     "n": 174,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2017": {
+     "n": 112,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2016": {
+     "n": 95,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2015": {
+     "n": 78,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2014": {
+     "n": 96,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2013": {
+     "n": 56,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2012": {
+     "n": 25,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2011": {
+     "n": 10,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2027": {
+     "n": 19,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2026": {
+     "n": 1,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2025": {
+     "n": 12,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2024": {
+     "n": 253,
+     "n_differ": 34,
+     "max_abs": 6.72,
+     "mean_delta": -0.4159,
+     "pct_differ": 13.44
+    },
+    "pit:2023": {
+     "n": 254,
+     "n_differ": 3,
+     "max_abs": 5.34,
+     "mean_delta": -0.0483,
+     "pct_differ": 1.18
+    },
+    "pit:2022": {
+     "n": 218,
+     "n_differ": 2,
+     "max_abs": 5.24,
+     "mean_delta": -0.0425,
+     "pct_differ": 0.92
+    },
+    "pit:2021": {
+     "n": 150,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2020": {
+     "n": 203,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2019": {
+     "n": 194,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2018": {
+     "n": 214,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2017": {
+     "n": 87,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2016": {
+     "n": 118,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2015": {
+     "n": 95,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2014": {
+     "n": 89,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2013": {
+     "n": 56,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2012": {
+     "n": 30,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2011": {
+     "n": 8,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2027": {
+     "n": 43,
+     "n_differ": 2,
+     "max_abs": 1.98,
+     "mean_delta": -0.0921,
+     "pct_differ": 4.65
+    },
+    "pit:2026": {
+     "n": 2,
+     "n_differ": 1,
+     "max_abs": 1.98,
+     "mean_delta": -0.99,
+     "pct_differ": 50.0
+    },
+    "pit:2025": {
+     "n": 15,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    }
+   },
+   "worst_folds": [
+    {
+     "fold": "pit:2026",
+     "n": 2,
+     "n_differ": 1,
+     "max_abs": 1.98,
+     "mean_delta": -0.99,
+     "pct_differ": 50.0
+    },
+    {
+     "fold": "pit:2024",
+     "n": 253,
+     "n_differ": 34,
+     "max_abs": 6.72,
+     "mean_delta": -0.4159,
+     "pct_differ": 13.44
+    },
+    {
+     "fold": "hit:2024",
+     "n": 240,
+     "n_differ": 28,
+     "max_abs": 6.49,
+     "mean_delta": -0.3885,
+     "pct_differ": 11.67
+    },
+    {
+     "fold": "pit:2027",
+     "n": 43,
+     "n_differ": 2,
+     "max_abs": 1.98,
+     "mean_delta": -0.0921,
+     "pct_differ": 4.65
+    },
+    {
+     "fold": "hit:2023",
+     "n": 243,
+     "n_differ": 4,
+     "max_abs": 6.47,
+     "mean_delta": -0.0911,
+     "pct_differ": 1.65
+    },
+    {
+     "fold": "pit:2023",
+     "n": 254,
+     "n_differ": 3,
+     "max_abs": 5.34,
+     "mean_delta": -0.0483,
+     "pct_differ": 1.18
+    }
+   ],
+   "leak": {
+    "hit_censored": {
+     "n": 32,
+     "rho_baseline": -0.0017,
+     "rho_asof": 0.0276,
+     "d_rho": -0.0292,
+     "ci95": [
+      -0.0872,
+      0.0131
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "hit_resolved": {
+     "n": 32,
+     "rho_baseline": -0.0125,
+     "rho_asof": 0.0171,
+     "d_rho": -0.0296,
+     "ci95": [
+      -0.09,
+      0.0117
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_censored": {
+     "n": 42,
+     "rho_baseline": -0.0383,
+     "rho_asof": -0.0194,
+     "d_rho": -0.0189,
+     "ci95": [
+      -0.0745,
+      0.0316
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_resolved": {
+     "n": 42,
+     "rho_baseline": -0.0242,
+     "rho_asof": -0.0054,
+     "d_rho": -0.0188,
+     "ci95": [
+      -0.0743,
+      0.0342
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    }
+   },
+   "leak_fullpool": {
+    "hit_censored": {
+     "n": 1904,
+     "rho_baseline": 0.275,
+     "rho_asof": 0.2814,
+     "d_rho": -0.0064,
+     "ci95": [
+      -0.0128,
+      -0.0005
+     ],
+     "excludes_zero": true,
+     "resolvable": true
+    },
+    "hit_resolved": {
+     "n": 1904,
+     "rho_baseline": 0.2741,
+     "rho_asof": 0.2801,
+     "d_rho": -0.0059,
+     "ci95": [
+      -0.012,
+      -0.0001
+     ],
+     "excludes_zero": true,
+     "resolvable": true
+    },
+    "pit_censored": {
+     "n": 2029,
+     "rho_baseline": 0.2121,
+     "rho_asof": 0.2175,
+     "d_rho": -0.0055,
+     "ci95": [
+      -0.0126,
+      0.002
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_resolved": {
+     "n": 2029,
+     "rho_baseline": 0.2132,
+     "rho_asof": 0.2184,
+     "d_rho": -0.0052,
+     "ci95": [
+      -0.0115,
+      0.0014
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    }
+   },
+   "criteria": {
+    "a_pct_ge_0p5": true,
+    "b_mean_abs_affected": true,
+    "c_leak_ci_excludes_zero": false
+   },
+   "verdict": "CONFIRMED-MATERIAL"
+  },
+  "fix_c2_detector_asof": {
+   "by_side": {
+    "hit": {
+     "n_rows": 1904,
+     "n_differ": 142,
+     "pct_differ": 7.458,
+     "mean_delta_all": -0.2561,
+     "sd_delta_all": 1.1269,
+     "mean_abs_delta_affected": 3.4339,
+     "max_abs_delta": 15.47,
+     "n_abs_gt_0p5": 142,
+     "n_abs_gt_1p0": 142,
+     "pct_abs_gt_0p5": 7.458
+    },
+    "pit": {
+     "n_rows": 2029,
+     "n_differ": 214,
+     "pct_differ": 10.547,
+     "mean_delta_all": -0.3589,
+     "sd_delta_all": 1.2845,
+     "mean_abs_delta_affected": 3.4032,
+     "max_abs_delta": 13.13,
+     "n_abs_gt_0p5": 214,
+     "n_abs_gt_1p0": 214,
+     "pct_abs_gt_0p5": 10.547
+    },
+    "both": {
+     "n_rows": 3933,
+     "n_differ": 356,
+     "pct_differ": 9.052,
+     "mean_delta_all": -0.3092,
+     "sd_delta_all": 1.2117,
+     "mean_abs_delta_affected": 3.4154,
+     "max_abs_delta": 15.47,
+     "n_abs_gt_0p5": 356,
+     "n_abs_gt_1p0": 356,
+     "pct_abs_gt_0p5": 9.052
+    }
+   },
+   "folds": {
+    "hit:2024": {
+     "n": 240,
+     "n_differ": 21,
+     "max_abs": 5.24,
+     "mean_delta": -0.1936,
+     "pct_differ": 8.75
+    },
+    "hit:2023": {
+     "n": 243,
+     "n_differ": 23,
+     "max_abs": 5.22,
+     "mean_delta": -0.227,
+     "pct_differ": 9.47
+    },
+    "hit:2022": {
+     "n": 248,
+     "n_differ": 15,
+     "max_abs": 5.27,
+     "mean_delta": -0.1649,
+     "pct_differ": 6.05
+    },
+    "hit:2021": {
+     "n": 127,
+     "n_differ": 22,
+     "max_abs": 5.22,
+     "mean_delta": -0.4313,
+     "pct_differ": 17.32
+    },
+    "hit:2020": {
+     "n": 169,
+     "n_differ": 11,
+     "max_abs": 5.23,
+     "mean_delta": -0.1905,
+     "pct_differ": 6.51
+    },
+    "hit:2019": {
+     "n": 199,
+     "n_differ": 20,
+     "max_abs": 5.33,
+     "mean_delta": -0.3351,
+     "pct_differ": 10.05
+    },
+    "hit:2018": {
+     "n": 174,
+     "n_differ": 8,
+     "max_abs": 5.47,
+     "mean_delta": -0.1535,
+     "pct_differ": 4.6
+    },
+    "hit:2017": {
+     "n": 112,
+     "n_differ": 4,
+     "max_abs": 7.85,
+     "mean_delta": -0.2166,
+     "pct_differ": 3.57
+    },
+    "hit:2016": {
+     "n": 95,
+     "n_differ": 5,
+     "max_abs": 10.47,
+     "mean_delta": -0.3405,
+     "pct_differ": 5.26
+    },
+    "hit:2015": {
+     "n": 78,
+     "n_differ": 4,
+     "max_abs": 15.47,
+     "mean_delta": -0.4408,
+     "pct_differ": 5.13
+    },
+    "hit:2014": {
+     "n": 96,
+     "n_differ": 2,
+     "max_abs": 7.97,
+     "mean_delta": -0.166,
+     "pct_differ": 2.08
+    },
+    "hit:2013": {
+     "n": 56,
+     "n_differ": 5,
+     "max_abs": 12.97,
+     "mean_delta": -0.9795,
+     "pct_differ": 8.93
+    },
+    "hit:2012": {
+     "n": 25,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2011": {
+     "n": 10,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2027": {
+     "n": 19,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "hit:2026": {
+     "n": 1,
+     "n_differ": 1,
+     "max_abs": 1.49,
+     "mean_delta": -1.49,
+     "pct_differ": 100.0
+    },
+    "hit:2025": {
+     "n": 12,
+     "n_differ": 1,
+     "max_abs": 1.47,
+     "mean_delta": -0.1225,
+     "pct_differ": 8.33
+    },
+    "pit:2024": {
+     "n": 253,
+     "n_differ": 35,
+     "max_abs": 5.47,
+     "mean_delta": -0.2989,
+     "pct_differ": 13.83
+    },
+    "pit:2023": {
+     "n": 254,
+     "n_differ": 25,
+     "max_abs": 5.34,
+     "mean_delta": -0.2437,
+     "pct_differ": 9.84
+    },
+    "pit:2022": {
+     "n": 218,
+     "n_differ": 16,
+     "max_abs": 3.99,
+     "mean_delta": -0.1762,
+     "pct_differ": 7.34
+    },
+    "pit:2021": {
+     "n": 150,
+     "n_differ": 23,
+     "max_abs": 3.95,
+     "mean_delta": -0.3111,
+     "pct_differ": 15.33
+    },
+    "pit:2020": {
+     "n": 203,
+     "n_differ": 22,
+     "max_abs": 3.87,
+     "mean_delta": -0.2615,
+     "pct_differ": 10.84
+    },
+    "pit:2019": {
+     "n": 194,
+     "n_differ": 24,
+     "max_abs": 5.12,
+     "mean_delta": -0.4028,
+     "pct_differ": 12.37
+    },
+    "pit:2018": {
+     "n": 214,
+     "n_differ": 37,
+     "max_abs": 5.47,
+     "mean_delta": -0.6292,
+     "pct_differ": 17.29
+    },
+    "pit:2017": {
+     "n": 87,
+     "n_differ": 6,
+     "max_abs": 5.63,
+     "mean_delta": -0.382,
+     "pct_differ": 6.9
+    },
+    "pit:2016": {
+     "n": 118,
+     "n_differ": 9,
+     "max_abs": 10.63,
+     "mean_delta": -0.5777,
+     "pct_differ": 7.63
+    },
+    "pit:2015": {
+     "n": 95,
+     "n_differ": 4,
+     "max_abs": 10.63,
+     "mean_delta": -0.3423,
+     "pct_differ": 4.21
+    },
+    "pit:2014": {
+     "n": 89,
+     "n_differ": 5,
+     "max_abs": 13.13,
+     "mean_delta": -0.4848,
+     "pct_differ": 5.62
+    },
+    "pit:2013": {
+     "n": 56,
+     "n_differ": 5,
+     "max_abs": 13.13,
+     "mean_delta": -0.9045,
+     "pct_differ": 8.93
+    },
+    "pit:2012": {
+     "n": 30,
+     "n_differ": 1,
+     "max_abs": 8.13,
+     "mean_delta": -0.271,
+     "pct_differ": 3.33
+    },
+    "pit:2011": {
+     "n": 8,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2027": {
+     "n": 43,
+     "n_differ": 2,
+     "max_abs": 1.98,
+     "mean_delta": -0.0921,
+     "pct_differ": 4.65
+    },
+    "pit:2026": {
+     "n": 2,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    },
+    "pit:2025": {
+     "n": 15,
+     "n_differ": 0,
+     "max_abs": 0.0,
+     "mean_delta": 0.0,
+     "pct_differ": 0.0
+    }
+   },
+   "worst_folds": [
+    {
+     "fold": "hit:2026",
+     "n": 1,
+     "n_differ": 1,
+     "max_abs": 1.49,
+     "mean_delta": -1.49,
+     "pct_differ": 100.0
+    },
+    {
+     "fold": "hit:2013",
+     "n": 56,
+     "n_differ": 5,
+     "max_abs": 12.97,
+     "mean_delta": -0.9795,
+     "pct_differ": 8.93
+    },
+    {
+     "fold": "pit:2013",
+     "n": 56,
+     "n_differ": 5,
+     "max_abs": 13.13,
+     "mean_delta": -0.9045,
+     "pct_differ": 8.93
+    },
+    {
+     "fold": "pit:2018",
+     "n": 214,
+     "n_differ": 37,
+     "max_abs": 5.47,
+     "mean_delta": -0.6292,
+     "pct_differ": 17.29
+    },
+    {
+     "fold": "pit:2016",
+     "n": 118,
+     "n_differ": 9,
+     "max_abs": 10.63,
+     "mean_delta": -0.5777,
+     "pct_differ": 7.63
+    },
+    {
+     "fold": "pit:2014",
+     "n": 89,
+     "n_differ": 5,
+     "max_abs": 13.13,
+     "mean_delta": -0.4848,
+     "pct_differ": 5.62
+    }
+   ],
+   "leak": {
+    "hit_censored": {
+     "n": 142,
+     "rho_baseline": 0.2114,
+     "rho_asof": 0.2254,
+     "d_rho": -0.014,
+     "ci95": [
+      -0.0901,
+      0.0543
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "hit_resolved": {
+     "n": 142,
+     "rho_baseline": 0.2068,
+     "rho_asof": 0.2226,
+     "d_rho": -0.0158,
+     "ci95": [
+      -0.089,
+      0.0573
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_censored": {
+     "n": 214,
+     "rho_baseline": 0.0777,
+     "rho_asof": 0.1215,
+     "d_rho": -0.0438,
+     "ci95": [
+      -0.1194,
+      0.0278
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_resolved": {
+     "n": 214,
+     "rho_baseline": 0.0736,
+     "rho_asof": 0.1194,
+     "d_rho": -0.0458,
+     "ci95": [
+      -0.1258,
+      0.0299
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    }
+   },
+   "leak_fullpool": {
+    "hit_censored": {
+     "n": 1904,
+     "rho_baseline": 0.275,
+     "rho_asof": 0.2735,
+     "d_rho": 0.0016,
+     "ci95": [
+      -0.0098,
+      0.0122
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "hit_resolved": {
+     "n": 1904,
+     "rho_baseline": 0.2741,
+     "rho_asof": 0.2725,
+     "d_rho": 0.0016,
+     "ci95": [
+      -0.0098,
+      0.0134
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_censored": {
+     "n": 2029,
+     "rho_baseline": 0.2121,
+     "rho_asof": 0.2174,
+     "d_rho": -0.0053,
+     "ci95": [
+      -0.0186,
+      0.0068
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    },
+    "pit_resolved": {
+     "n": 2029,
+     "rho_baseline": 0.2132,
+     "rho_asof": 0.2185,
+     "d_rho": -0.0053,
+     "ci95": [
+      -0.0172,
+      0.0079
+     ],
+     "excludes_zero": false,
+     "resolvable": true
+    }
+   },
+   "criteria": {
+    "a_pct_ge_0p5": true,
+    "b_mean_abs_affected": true,
+    "c_leak_ci_excludes_zero": false
+   },
+   "verdict": "CONFIRMED-MATERIAL"
+  }
+ },
+ "pairwise": {
+  "c2_corrected_asof_vs_corrected_full": {
+   "basis": "delta = fix_c2_detector_asof - fix_c2_detector. Isolates the D1 channel-2 contamination on a detector that actually fires.",
+   "both": {
+    "n_rows": 3933,
+    "n_differ": 410,
+    "pct_differ": 10.425,
+    "mean_delta_all": -0.2461,
+    "sd_delta_all": 1.308,
+    "mean_abs_delta_affected": 3.4406,
+    "max_abs_delta": 15.47,
+    "n_abs_gt_0p5": 410,
+    "n_abs_gt_1p0": 410,
+    "pct_abs_gt_0p5": 10.425
+   },
+   "hit": {
+    "n_rows": 1904,
+    "n_differ": 168,
+    "pct_differ": 8.824,
+    "mean_delta_all": -0.1955,
+    "sd_delta_all": 1.2351,
+    "mean_abs_delta_affected": 3.4913,
+    "max_abs_delta": 15.47,
+    "n_abs_gt_0p5": 168,
+    "n_abs_gt_1p0": 168,
+    "pct_abs_gt_0p5": 8.824
+   },
+   "pit": {
+    "n_rows": 2029,
+    "n_differ": 242,
+    "pct_differ": 11.927,
+    "mean_delta_all": -0.2935,
+    "sd_delta_all": 1.3716,
+    "mean_abs_delta_affected": 3.4055,
+    "max_abs_delta": 13.13,
+    "n_abs_gt_0p5": 242,
+    "n_abs_gt_1p0": 242,
+    "pct_abs_gt_0p5": 11.927
+   },
+   "leak_hit_censored": {
+    "n": 168,
+    "rho_baseline": 0.1742,
+    "rho_asof": 0.0556,
+    "d_rho": 0.1186,
+    "ci95": [
+     -0.0019,
+     0.2367
+    ],
+    "excludes_zero": false,
+    "resolvable": true
+   },
+   "leak_pit_censored": {
+    "n": 242,
+    "rho_baseline": 0.0876,
+    "rho_asof": 0.0466,
+    "d_rho": 0.041,
+    "ci95": [
+     -0.0951,
+     0.1717
+    ],
+    "excludes_zero": false,
+    "resolvable": true
+   }
+  }
+ },
+ "repair_prototype": {
+  "cells_compared": 1323,
+  "n_mismatch": 0,
+  "exact": true,
+  "mismatch_sample": [],
+  "naive_sec_for_45_dates": 1.78,
+  "incremental_sec_for_all_dates": 0.18,
+  "n_dates_incremental": 994,
+  "naive_sec_extrapolated_to_all_dates": 39.2
+ },
+ "top_movers_asof_all": [
+  {
+   "player_key": "tyler_skaggs",
+   "asof_date": "2012-01-22",
+   "side": "pit",
+   "kind": "debuted",
+   "baseline": 66.26,
+   "asof_all": 58.33,
+   "delta": -7.93
+  },
+  {
+   "player_key": "dansby_swanson",
+   "asof_date": "2016-01-22",
+   "side": "hit",
+   "kind": "debuted",
+   "baseline": 60.95,
+   "asof_all": 55.0,
+   "delta": -5.95
+  },
+  {
+   "player_key": "andrew_benintendi",
+   "asof_date": "2016-01-22",
+   "side": "hit",
+   "kind": "debuted",
+   "baseline": 60.95,
+   "asof_all": 55.0,
+   "delta": -5.95
+  },
+  {
+   "player_key": "haseong_kim",
+   "asof_date": "2021-02-26",
+   "side": "hit",
+   "kind": "debuted",
+   "baseline": 50.0,
+   "asof_all": 45.0,
+   "delta": -5.0
+  },
+  {
+   "player_key": "kevin_gausman",
+   "asof_date": "2013-01-22",
+   "side": "pit",
+   "kind": "debuted",
+   "baseline": 56.26,
+   "asof_all": 51.67,
+   "delta": -4.59
+  },
+  {
+   "player_key": "onelki_garcia",
+   "asof_date": "2013-01-22",
+   "side": "pit",
+   "kind": "debuted",
+   "baseline": 56.26,
+   "asof_all": 51.67,
+   "delta": -4.59
+  },
+  {
+   "player_key": "carter_capps",
+   "asof_date": "2012-01-22",
+   "side": "pit",
+   "kind": "debuted",
+   "baseline": 56.26,
+   "asof_all": 51.67,
+   "delta": -4.59
+  },
+  {
+   "player_key": "stephen_pryor",
+   "asof_date": "2012-01-22",
+   "side": "pit",
+   "kind": "debuted",
+   "baseline": 56.26,
+   "asof_all": 51.67,
+   "delta": -4.59
+  },
+  {
+   "player_key": "trevor_rosenthal",
+   "asof_date": "2012-01-22",
+   "side": "pit",
+   "kind": "debuted",
+   "baseline": 56.26,
+   "asof_all": 51.67,
+   "delta": -4.59
+  },
+  {
+   "player_key": "julio_teheran",
+   "asof_date": "2011-01-22",
+   "side": "pit",
+   "kind": "debuted",
+   "baseline": 56.26,
+   "asof_all": 51.67,
+   "delta": -4.59
+  },
+  {
+   "player_key": "engelb_vielma",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "debuted",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "ryder_jones",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "debuted",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "luis_torrens",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "debuted",
+   "baseline": 45.71,
+   "asof_all": 50.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "barrett_barnes",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "bust",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "joey_wendle",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "bust",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "dj_peterson",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "bust",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "tyler_marlette",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "bust",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "yeyson_yrizarri",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "bust",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "jacob_hannemann",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "bust",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "boog_powell",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "bust",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "nellie_rodriguez",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "bust",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "marten_gasparini",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "bust",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "michael_de_leon",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "bust",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "braxton_davidson",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "bust",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  },
+  {
+   "player_key": "justin_twine",
+   "asof_date": "2017-01-22",
+   "side": "hit",
+   "kind": "bust",
+   "baseline": 40.71,
+   "asof_all": 45.0,
+   "delta": 4.29
+  }
+ ],
+ "d16": {
+  "allowlist_is_empty": true,
+  "n_colliding_names": 436,
+  "n_keys_involved": 939,
+  "n_keys_merged_away": 503,
+  "n_noid_case": 357,
+  "n_non_noid": 79,
+  "n_non_noid_overlapping_windows": 32,
+  "n_provably_different_players": 4,
+  "non_noid": [
+   {
+    "normalized_name": "adrian martinez",
+    "keys": [
+     "adrian_martinez_837701",
+     "adrian_martinez_834255"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "834255",
+     "837701"
+    ],
+    "provably_different_players": true,
+    "detail": [
+     {
+      "player_key": "adrian_martinez_837701",
+      "n_snaps": 1,
+      "first": "2026-08-04",
+      "last": "2026-08-04",
+      "orgs": [
+       "MIN"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "adrian_martinez_834255",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "PIT"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "adrian rodriguez",
+    "keys": [
+     "adrian_rodriguez",
+     "adrian_rodriguez_703641"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "703641"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "adrian_rodriguez",
+      "n_snaps": 6,
+      "first": "2023-02-23",
+      "last": "2025-07-31",
+      "orgs": [
+       "TEX"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "adrian_rodriguez_703641",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "ARI"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "adrian santana",
+    "keys": [
+     "adrian_santana__sa3018876",
+     "adrian_santana"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "adrian_santana__sa3018876",
+      "n_snaps": 1,
+      "first": "2023-08-01",
+      "last": "2023-08-01",
+      "orgs": [
+       "TBR"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "adrian_santana",
+      "n_snaps": 11,
+      "first": "2024-01-22",
+      "last": "2026-08-07",
+      "orgs": [
+       "MIA",
+       "TBR"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "alexis hernandez",
+    "keys": [
+     "alexis_hernandez",
+     "alexis_hernandez_703161"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "703161"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "alexis_hernandez",
+      "n_snaps": 7,
+      "first": "2022-01-15",
+      "last": "2024-01-22",
+      "orgs": [
+       "CHC"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline",
+       "mlb_pipeline_international"
+      ]
+     },
+     {
+      "player_key": "alexis_hernandez_703161",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "CHC"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "andrew saalfrank",
+    "keys": [
+     "andrew_saalfrank__26203",
+     "andrew_saalfrank"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "26203"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "andrew_saalfrank__26203",
+      "n_snaps": 1,
+      "first": "2019-07-31",
+      "last": "2019-07-31",
+      "orgs": [
+       "ARI"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "andrew_saalfrank",
+      "n_snaps": 6,
+      "first": "2023-09-05",
+      "last": "2025-11-13",
+      "orgs": [
+       "ARI"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "angel de jesus",
+    "keys": [
+     "angel_de_jesus",
+     "angel_de_jesus_835037"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "835037"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "angel_de_jesus",
+      "n_snaps": 9,
+      "first": "2019-07-31",
+      "last": "2022-08-02",
+      "orgs": [
+       "DET",
+       "Office of the Commissioner"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "angel_de_jesus_835037",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "BAL"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "angel guzman",
+    "keys": [
+     "angel_guzman",
+     "angel_guzman_815917"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "815917"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "angel_guzman",
+      "n_snaps": 7,
+      "first": "2023-02-23",
+      "last": "2025-07-31",
+      "orgs": [
+       "SFG",
+       "TOR"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline_international"
+      ]
+     },
+     {
+      "player_key": "angel_guzman_815917",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "TOR"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "antonio jimenez",
+    "keys": [
+     "antonio_jimenez",
+     "antonio_jimenez__sa3034692"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "antonio_jimenez",
+      "n_snaps": 10,
+      "first": "2021-07-30",
+      "last": "2026-08-04",
+      "orgs": [
+       "NYM",
+       "TBR"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "antonio_jimenez__sa3034692",
+      "n_snaps": 2,
+      "first": "2025-07-31",
+      "last": "2026-02-12",
+      "orgs": [
+       "NYM"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "austin smith",
+    "keys": [
+     "austin_smith",
+     "austin_smith_801563"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "801563"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "austin_smith",
+      "n_snaps": 11,
+      "first": "2016-01-22",
+      "last": "2026-08-02",
+      "orgs": [
+       "ATL",
+       "COL",
+       "SDP"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "austin_smith_801563",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "TOR"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "braydon fisher",
+    "keys": [
+     "braydon_fisher__24609",
+     "braydon_fisher"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "24609"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "braydon_fisher__24609",
+      "n_snaps": 2,
+      "first": "2018-08-01",
+      "last": "2025-05-11",
+      "orgs": [
+       "LAD"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "braydon_fisher",
+      "n_snaps": 1,
+      "first": "2019-01-22",
+      "last": "2019-01-22",
+      "orgs": [
+       "TOR"
+      ],
+      "sources": [
+       "mlb_pipeline"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "cade smith",
+    "keys": [
+     "cade_smith",
+     "cade_smith__sa3023371",
+     "cade_smith_694696"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "694696"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "cade_smith",
+      "n_snaps": 9,
+      "first": "2024-01-22",
+      "last": "2026-08-07",
+      "orgs": [
+       "CLE",
+       "NYY"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "cade_smith__sa3023371",
+      "n_snaps": 1,
+      "first": "2026-02-12",
+      "last": "2026-02-12",
+      "orgs": [
+       "NYY"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "cade_smith_694696",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "NYY"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "carlos castillo",
+    "keys": [
+     "carlos_castillo",
+     "carlos_castillo_laa"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "carlos_castillo",
+      "n_snaps": 2,
+      "first": "2024-02-14",
+      "last": "2024-08-01",
+      "orgs": [
+       "PIT"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "carlos_castillo_laa",
+      "n_snaps": 3,
+      "first": "2026-02-12",
+      "last": "2026-08-02",
+      "orgs": [
+       "LAA"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "carlos done",
+    "keys": [
+     "carlos_done",
+     "carlos_done_837969"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "837969"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "carlos_done",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "MIL"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "carlos_done_837969",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "TEX"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "carlos gutierrez",
+    "keys": [
+     "carlos_gutierrez",
+     "carlos_gutierrez_806872"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "806872"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "carlos_gutierrez",
+      "n_snaps": 7,
+      "first": "2025-02-13",
+      "last": "2026-08-07",
+      "orgs": [
+       "BOS",
+       "SFG"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "carlos_gutierrez_806872",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "BOS"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "carlos martinez",
+    "keys": [
+     "carlos_martinez",
+     "carlos_martinez_837695"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "837695"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "carlos_martinez",
+      "n_snaps": 6,
+      "first": "2011-01-22",
+      "last": "2013-04-01",
+      "orgs": [
+       "Office of the Commissioner"
+      ],
+      "sources": [
+       "auto_detect",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "carlos_martinez_837695",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "CLE"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "carlos p\u00e9rez",
+    "keys": [
+     "carlos_perez",
+     "carlos_perez_542208"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "542208"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "carlos_perez",
+      "n_snaps": 9,
+      "first": "2011-01-22",
+      "last": "2023-08-01",
+      "orgs": [
+       "ATL",
+       "CHW",
+       "Office of the Commissioner"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "carlos_perez_542208",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "DET"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "carlos sanchez",
+    "keys": [
+     "carlos_sanchez",
+     "carlos_sanchez_801522"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "801522"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "carlos_sanchez",
+      "n_snaps": 6,
+      "first": "2023-02-23",
+      "last": "2026-08-07",
+      "orgs": [
+       "CIN"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "carlos_sanchez_801522",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "MIA"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "cesar acosta",
+    "keys": [
+     "cesar_acosta",
+     "cesar_acosta_831048"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "831048"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "cesar_acosta",
+      "n_snaps": 5,
+      "first": "2025-02-13",
+      "last": "2026-08-02",
+      "orgs": [
+       "NYM"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "cesar_acosta_831048",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "NYY"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "christian cairo",
+    "keys": [
+     "christian_cairo__sa3010028",
+     "christian_cairo"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "christian_cairo__sa3010028",
+      "n_snaps": 1,
+      "first": "2019-07-31",
+      "last": "2019-07-31",
+      "orgs": [
+       "CLE"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "christian_cairo",
+      "n_snaps": 2,
+      "first": "2025-02-13",
+      "last": "2025-07-31",
+      "orgs": [
+       "CLE"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "cody freeman",
+    "keys": [
+     "cody_freeman__25629",
+     "cody_freeman"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "25629"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "cody_freeman__25629",
+      "n_snaps": 1,
+      "first": "2019-07-31",
+      "last": "2019-07-31",
+      "orgs": [
+       "TEX"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "cody_freeman",
+      "n_snaps": 7,
+      "first": "2021-02-26",
+      "last": "2025-07-18",
+      "orgs": [
+       "TEX"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "colin peluse",
+    "keys": [
+     "colin_peluse__sa3011126",
+     "colin_peluse"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "colin_peluse__sa3011126",
+      "n_snaps": 1,
+      "first": "2019-07-31",
+      "last": "2019-07-31",
+      "orgs": [
+       "OAK"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "colin_peluse",
+      "n_snaps": 7,
+      "first": "2021-01-22",
+      "last": "2023-01-22",
+      "orgs": [
+       "OAK",
+       "PHI"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "dj herz",
+    "keys": [
+     "dj_herz__26389",
+     "dj_herz"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "26389"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "dj_herz__26389",
+      "n_snaps": 1,
+      "first": "2019-07-31",
+      "last": "2019-07-31",
+      "orgs": [
+       "CHC"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "dj_herz",
+      "n_snaps": 11,
+      "first": "2021-01-22",
+      "last": "2024-11-13",
+      "orgs": [
+       "CHC",
+       "WSN"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "drew smith",
+    "keys": [
+     "drew_smith",
+     "drew_smith_622098"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "622098"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "drew_smith",
+      "n_snaps": 2,
+      "first": "2016-01-22",
+      "last": "2017-01-22",
+      "orgs": [
+       "MIN"
+      ],
+      "sources": [
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "drew_smith_622098",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "MIN"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "eduardo herrera",
+    "keys": [
+     "eduardo_herrera",
+     "eduardo_herrera__sa3023889"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "eduardo_herrera",
+      "n_snaps": 8,
+      "first": "2019-07-31",
+      "last": "2024-02-01",
+      "orgs": [
+       "ARI",
+       "CHW",
+       "KCR"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline",
+       "mlb_pipeline_international"
+      ]
+     },
+     {
+      "player_key": "eduardo_herrera__sa3023889",
+      "n_snaps": 2,
+      "first": "2024-02-14",
+      "last": "2024-08-01",
+      "orgs": [
+       "CHW"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "edwin d\u00edaz",
+    "keys": [
+     "edwin_diaz",
+     "edwin_diaz_641521"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "641521"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "edwin_diaz",
+      "n_snaps": 4,
+      "first": "2014-01-22",
+      "last": "2016-06-06",
+      "orgs": [
+       "LAD"
+      ],
+      "sources": [
+       "auto_detect",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "edwin_diaz_641521",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "HOU"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "edwin jimenez",
+    "keys": [
+     "edwin_jimenez",
+     "edwin_jimenez_683720"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "683720"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "edwin_jimenez",
+      "n_snaps": 2,
+      "first": "2022-02-24",
+      "last": "2022-08-02",
+      "orgs": [
+       "MIL"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "edwin_jimenez_683720",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "MIL"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "esteban mejia",
+    "keys": [
+     "esteban_mejia",
+     "esteban_mejia_800354"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "800354"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "esteban_mejia",
+      "n_snaps": 6,
+      "first": "2025-02-13",
+      "last": "2026-08-07",
+      "orgs": [
+       "BAL"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "esteban_mejia_800354",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "TEX"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "fabian gonzalez",
+    "keys": [
+     "fabian_gonzalez",
+     "fabian_gonzalez_835648"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "835648"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "fabian_gonzalez",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "SEA"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "fabian_gonzalez_835648",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "TOR"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "garrett crochet",
+    "keys": [
+     "garrett_crochet__27463",
+     "garrett_crochet"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "27463"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "garrett_crochet__27463",
+      "n_snaps": 1,
+      "first": "2020-08-01",
+      "last": "2020-08-01",
+      "orgs": [
+       "CHW"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "garrett_crochet",
+      "n_snaps": 5,
+      "first": "2020-09-18",
+      "last": "2021-11-08",
+      "orgs": [
+       "BOS",
+       "CHW"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "hayden wesneski",
+    "keys": [
+     "hayden_wesneski__27581",
+     "hayden_wesneski"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "27581"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "hayden_wesneski__27581",
+      "n_snaps": 1,
+      "first": "2019-07-31",
+      "last": "2019-07-31",
+      "orgs": [
+       "NYY"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "hayden_wesneski",
+      "n_snaps": 8,
+      "first": "2021-01-22",
+      "last": "2023-11-06",
+      "orgs": [
+       "CHC",
+       "HOU",
+       "NYY"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "hunter dobbins",
+    "keys": [
+     "hunter_dobbins",
+     "hunter_dobbins_701493"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "701493"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "hunter_dobbins",
+      "n_snaps": 7,
+      "first": "2024-01-22",
+      "last": "2025-11-13",
+      "orgs": [
+       "BOS",
+       "STL"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "hunter_dobbins_701493",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "DET"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "jake miller",
+    "keys": [
+     "jake_miller",
+     "jake_miller__sa3020408",
+     "jake_miller_681313"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "681313"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "jake_miller",
+      "n_snaps": 8,
+      "first": "2023-02-23",
+      "last": "2026-08-07",
+      "orgs": [
+       "CLE",
+       "DET"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "jake_miller__sa3020408",
+      "n_snaps": 3,
+      "first": "2025-02-13",
+      "last": "2026-02-12",
+      "orgs": [
+       "DET"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "jake_miller_681313",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "CLE"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "jake sanford",
+    "keys": [
+     "jake_sanford__sa3010585",
+     "jake_sanford"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "jake_sanford__sa3010585",
+      "n_snaps": 1,
+      "first": "2019-07-31",
+      "last": "2019-07-31",
+      "orgs": [
+       "NYY"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "jake_sanford",
+      "n_snaps": 1,
+      "first": "2021-01-22",
+      "last": "2021-01-22",
+      "orgs": [
+       "NYY"
+      ],
+      "sources": [
+       "mlb_pipeline"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "jared jones",
+    "keys": [
+     "jared_jones",
+     "jared_jones__sa3034881",
+     "jared_jones_702262"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "702262"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "jared_jones",
+      "n_snaps": 18,
+      "first": "2020-08-01",
+      "last": "2026-08-02",
+      "orgs": [
+       "PIT"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "jared_jones__sa3034881",
+      "n_snaps": 1,
+      "first": "2025-07-31",
+      "last": "2025-07-31",
+      "orgs": [
+       "PIT"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "jared_jones_702262",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "PIT"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "jason bilous",
+    "keys": [
+     "jason_bilous__sa875998",
+     "jason_bilous"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "jason_bilous__sa875998",
+      "n_snaps": 1,
+      "first": "2018-08-01",
+      "last": "2018-08-01",
+      "orgs": [
+       "CHW"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "jason_bilous",
+      "n_snaps": 1,
+      "first": "2022-01-22",
+      "last": "2022-01-22",
+      "orgs": [
+       "Office of the Commissioner"
+      ],
+      "sources": [
+       "mlb_pipeline"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "jc flowers",
+    "keys": [
+     "jc_flowers__sa3011493",
+     "jc_flowers"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "jc_flowers__sa3011493",
+      "n_snaps": 1,
+      "first": "2019-07-31",
+      "last": "2019-07-31",
+      "orgs": [
+       "PIT"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "jc_flowers",
+      "n_snaps": 4,
+      "first": "2022-02-24",
+      "last": "2023-08-01",
+      "orgs": [
+       "PIT"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "jesus lopez",
+    "keys": [
+     "jesus_lopez",
+     "jesus_lopez_808362"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "808362"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "jesus_lopez",
+      "n_snaps": 3,
+      "first": "2023-02-23",
+      "last": "2024-01-22",
+      "orgs": [
+       "TEX"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "jesus_lopez_808362",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "SFG"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "johan rodriguez",
+    "keys": [
+     "johan_rodriguez",
+     "johan_rodriguez_830455"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "830455"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "johan_rodriguez",
+      "n_snaps": 2,
+      "first": "2025-02-13",
+      "last": "2025-07-31",
+      "orgs": [
+       "CLE"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "johan_rodriguez_830455",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "ATL"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "jose gonzalez",
+    "keys": [
+     "jose_gonzalez",
+     "jose_gonzalez_806919",
+     "jose_gonzalez_837212"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "806919",
+     "837212"
+    ],
+    "provably_different_players": true,
+    "detail": [
+     {
+      "player_key": "jose_gonzalez",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "LAA"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "jose_gonzalez_806919",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "LAD"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "jose_gonzalez_837212",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "CHC"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "jose martinez",
+    "keys": [
+     "jose_martinez",
+     "jose_martinez_814715"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "814715"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "jose_martinez",
+      "n_snaps": 7,
+      "first": "2014-01-22",
+      "last": "2021-07-30",
+      "orgs": [
+       "LAD",
+       "Office of the Commissioner"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "jose_martinez_814715",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "NYY"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "jose ramos",
+    "keys": [
+     "jose_ramos",
+     "jose_ramos__sa3024111",
+     "jose_ramos_815927"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "815927"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "jose_ramos",
+      "n_snaps": 11,
+      "first": "2021-02-26",
+      "last": "2024-02-01",
+      "orgs": [
+       "ATH",
+       "LAD",
+       "NYM"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline",
+       "mlb_pipeline_international"
+      ]
+     },
+     {
+      "player_key": "jose_ramos__sa3024111",
+      "n_snaps": 2,
+      "first": "2024-02-14",
+      "last": "2024-08-01",
+      "orgs": [
+       "OAK"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "jose_ramos_815927",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "ATH"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "jose romero",
+    "keys": [
+     "jose_romero",
+     "jose_romero_808487"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "808487"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "jose_romero",
+      "n_snaps": 2,
+      "first": "2024-02-14",
+      "last": "2024-08-01",
+      "orgs": [
+       "CHC"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "jose_romero_808487",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "SEA"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "jose tovar",
+    "keys": [
+     "jose_tovar",
+     "jose_tovar_832154"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "832154"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "jose_tovar",
+      "n_snaps": 1,
+      "first": "2026-07-27",
+      "last": "2026-07-27",
+      "orgs": [
+       "TBR"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "jose_tovar_832154",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "PHI"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "josh smith",
+    "keys": [
+     "josh_smith__sa3009923",
+     "josh_smith"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "josh_smith__sa3009923",
+      "n_snaps": 1,
+      "first": "2019-07-31",
+      "last": "2019-07-31",
+      "orgs": [
+       "NYY"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "josh_smith",
+      "n_snaps": 10,
+      "first": "2020-01-22",
+      "last": "2022-11-09",
+      "orgs": [
+       "NYY",
+       "TEX",
+       "TOR"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "jos\u00e9 fermin",
+    "keys": [
+     "jose_fermin",
+     "jose_fermin__33908"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "33908"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "jose_fermin",
+      "n_snaps": 8,
+      "first": "2019-01-22",
+      "last": "2025-11-13",
+      "orgs": [
+       "CLE",
+       "LAA",
+       "STL"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "jose_fermin__33908",
+      "n_snaps": 1,
+      "first": "2025-02-13",
+      "last": "2025-02-13",
+      "orgs": [
+       "LAA"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "jos\u00e9 rodr\u00edguez",
+    "keys": [
+     "jose_rodriguez",
+     "jose_rodriguez__sa3015437",
+     "jose_rodriguez_836624"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "836624"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "jose_rodriguez",
+      "n_snaps": 18,
+      "first": "2020-02-13",
+      "last": "2026-08-07",
+      "orgs": [
+       "CHW",
+       "LAD",
+       "MIL",
+       "MIN"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline",
+       "mlb_pipeline_international"
+      ]
+     },
+     {
+      "player_key": "jose_rodriguez__sa3015437",
+      "n_snaps": 5,
+      "first": "2024-02-14",
+      "last": "2026-02-12",
+      "orgs": [
+       "LAD"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "jose_rodriguez_836624",
+      "n_snaps": 4,
+      "first": "2026-01-15",
+      "last": "2026-08-04",
+      "orgs": [
+       "MIL"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline",
+       "mlb_pipeline_international",
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "juan martinez",
+    "keys": [
+     "juan_martinez",
+     "juan_martinez_837831"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "837831"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "juan_martinez",
+      "n_snaps": 2,
+      "first": "2026-08-04",
+      "last": "2026-08-07",
+      "orgs": [
+       "COL",
+       "MIL"
+      ],
+      "sources": [
+       "mlb_pipeline",
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "juan_martinez_837831",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "NYY"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "juan rojas",
+    "keys": [
+     "juan_rojas",
+     "juan_rojas_829863"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "829863"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "juan_rojas",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "BAL"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "juan_rojas_829863",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "HOU"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "juan sanchez",
+    "keys": [
+     "juan_sanchez",
+     "juan_sanchez__sa3005444"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "juan_sanchez",
+      "n_snaps": 7,
+      "first": "2025-02-01",
+      "last": "2026-08-07",
+      "orgs": [
+       "TOR"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "juan_sanchez__sa3005444",
+      "n_snaps": 2,
+      "first": "2024-02-14",
+      "last": "2024-08-01",
+      "orgs": [
+       "SFG"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "junior garcia",
+    "keys": [
+     "junior_garcia",
+     "junior_garcia_815010"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "815010"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "junior_garcia",
+      "n_snaps": 2,
+      "first": "2024-02-14",
+      "last": "2024-08-01",
+      "orgs": [
+       "ATL"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "junior_garcia_815010",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "ATL"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "kevin smith",
+    "keys": [
+     "kevin_smith",
+     "kevin_smith__sa3007710",
+     "kevin_smith__20242"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "20242"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "kevin_smith",
+      "n_snaps": 16,
+      "first": "2017-01-22",
+      "last": "2022-11-09",
+      "orgs": [
+       "BAL",
+       "NYY",
+       "OAK",
+       "TOR"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "kevin_smith__sa3007710",
+      "n_snaps": 1,
+      "first": "2020-02-13",
+      "last": "2020-02-13",
+      "orgs": [
+       "NYM"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "kevin_smith__20242",
+      "n_snaps": 3,
+      "first": "2021-02-26",
+      "last": "2022-02-24",
+      "orgs": [
+       "OAK",
+       "TOR"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "kyle wright",
+    "keys": [
+     "kyle_wright",
+     "kyle_wright__sa293098"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "kyle_wright",
+      "n_snaps": 11,
+      "first": "2018-01-22",
+      "last": "2020-02-13",
+      "orgs": [
+       "ATL",
+       "CHC"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "kyle_wright__sa293098",
+      "n_snaps": 1,
+      "first": "2018-02-15",
+      "last": "2018-02-15",
+      "orgs": [
+       "ATL"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "logan allen",
+    "keys": [
+     "logan_allen",
+     "logan_allen_663531"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "663531"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "logan_allen",
+      "n_snaps": 23,
+      "first": "2016-01-22",
+      "last": "2023-11-06",
+      "orgs": [
+       "CLE",
+       "LAD",
+       "SDP"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "logan_allen_663531",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "LAD"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "logan simmons",
+    "keys": [
+     "logan_simmons__sa3006867",
+     "logan_simmons"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "logan_simmons__sa3006867",
+      "n_snaps": 1,
+      "first": "2018-08-01",
+      "last": "2018-08-01",
+      "orgs": [
+       "PHI"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "logan_simmons",
+      "n_snaps": 2,
+      "first": "2022-02-24",
+      "last": "2022-08-02",
+      "orgs": [
+       "PHI"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "luis de la cruz",
+    "keys": [
+     "luis_de_la_cruz",
+     "luis_de_la_cruz_806927"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "806927"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "luis_de_la_cruz",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "CLE"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "luis_de_la_cruz_806927",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "MIA"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "luis de leon",
+    "keys": [
+     "luis_de_leon_808029",
+     "luis_de_leon_825479"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "808029",
+     "825479"
+    ],
+    "provably_different_players": true,
+    "detail": [
+     {
+      "player_key": "luis_de_leon_808029",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "SDP"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "luis_de_leon_825479",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "HOU"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "luis hernandez",
+    "keys": [
+     "luis_hernandez_801346",
+     "luis_hernandez_815211"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "801346",
+     "815211"
+    ],
+    "provably_different_players": true,
+    "detail": [
+     {
+      "player_key": "luis_hernandez_801346",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "MIN"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "luis_hernandez_815211",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "SFG"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "luis martinez",
+    "keys": [
+     "luis_martinez",
+     "luis_martinez_832327"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "832327"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "luis_martinez",
+      "n_snaps": 4,
+      "first": "2015-01-22",
+      "last": "2017-02-15",
+      "orgs": [
+       "CHW",
+       "Office of the Commissioner"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "luis_martinez_832327",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "COL"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "luis meza",
+    "keys": [
+     "luis_meza",
+     "luis_meza__sa3018423"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "luis_meza",
+      "n_snaps": 6,
+      "first": "2022-01-15",
+      "last": "2023-01-22",
+      "orgs": [
+       "TOR"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline",
+       "mlb_pipeline_international"
+      ]
+     },
+     {
+      "player_key": "luis_meza__sa3018423",
+      "n_snaps": 2,
+      "first": "2023-02-23",
+      "last": "2023-08-01",
+      "orgs": [
+       "TOR"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "luis ortiz",
+    "keys": [
+     "luis_ortiz",
+     "luis_ortiz__16942"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "16942"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "luis_ortiz",
+      "n_snaps": 19,
+      "first": "2015-01-22",
+      "last": "2023-11-06",
+      "orgs": [
+       "BAL",
+       "MIL",
+       "NYM",
+       "PHI"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "luis_ortiz__16942",
+      "n_snaps": 1,
+      "first": "2023-08-01",
+      "last": "2023-08-01",
+      "orgs": [
+       "PHI"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "luis rodriguez",
+    "keys": [
+     "luis_rodriguez",
+     "luis_rodriguez__sa3014689"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "luis_rodriguez",
+      "n_snaps": 11,
+      "first": "2019-07-31",
+      "last": "2023-08-01",
+      "orgs": [
+       "LAD",
+       "NYM",
+       "STL"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline",
+       "mlb_pipeline_international"
+      ]
+     },
+     {
+      "player_key": "luis_rodriguez__sa3014689",
+      "n_snaps": 2,
+      "first": "2021-02-26",
+      "last": "2021-07-30",
+      "orgs": [
+       "LAD"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "mason miller",
+    "keys": [
+     "mason_miller",
+     "mason_miller_692223"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "692223"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "mason_miller",
+      "n_snaps": 10,
+      "first": "2022-01-22",
+      "last": "2024-11-13",
+      "orgs": [
+       "OAK",
+       "SDP"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "mason_miller_692223",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "KCR"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "matthew barefoot",
+    "keys": [
+     "matthew_barefoot__sa3010145",
+     "matthew_barefoot"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "matthew_barefoot__sa3010145",
+      "n_snaps": 1,
+      "first": "2019-07-31",
+      "last": "2019-07-31",
+      "orgs": [
+       "HOU"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "matthew_barefoot",
+      "n_snaps": 1,
+      "first": "2022-01-22",
+      "last": "2022-01-22",
+      "orgs": [
+       "HOU"
+      ],
+      "sources": [
+       "mlb_pipeline"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "mikey romero",
+    "keys": [
+     "mikey_romero",
+     "mikey_romero__sa3020216"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "mikey_romero",
+      "n_snaps": 13,
+      "first": "2022-08-02",
+      "last": "2026-08-07",
+      "orgs": [
+       "BOS"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "mikey_romero__sa3020216",
+      "n_snaps": 1,
+      "first": "2026-05-22",
+      "last": "2026-05-22",
+      "orgs": [
+       "BOS"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "mitch white",
+    "keys": [
+     "mitch_white",
+     "mitch_white_813266"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "813266"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "mitch_white",
+      "n_snaps": 15,
+      "first": "2017-01-22",
+      "last": "2021-11-08",
+      "orgs": [
+       "LAD",
+       "MIL"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "mitch_white_813266",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "SFG"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "mj melendez",
+    "keys": [
+     "mj_melendez",
+     "mj_melendez__sa828329"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "mj_melendez",
+      "n_snaps": 16,
+      "first": "2018-01-22",
+      "last": "2022-11-09",
+      "orgs": [
+       "KCR",
+       "NYM"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "mj_melendez__sa828329",
+      "n_snaps": 1,
+      "first": "2018-02-15",
+      "last": "2018-02-15",
+      "orgs": [
+       "KCR"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "rafael gonzalez",
+    "keys": [
+     "rafael_gonzalez",
+     "rafael_gonzalez_835403"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "835403"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "rafael_gonzalez",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "HOU"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "rafael_gonzalez_835403",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "DET"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "randy guzman",
+    "keys": [
+     "randy_guzman",
+     "randy_guzman_837102"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "837102"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "randy_guzman",
+      "n_snaps": 4,
+      "first": "2026-02-12",
+      "last": "2026-08-07",
+      "orgs": [
+       "NYM"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "randy_guzman_837102",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "NYM"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "raynel delgado",
+    "keys": [
+     "raynel_delgado__sa3007288",
+     "raynel_delgado"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "raynel_delgado__sa3007288",
+      "n_snaps": 2,
+      "first": "2018-08-01",
+      "last": "2026-06-14",
+      "orgs": [
+       "CLE"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "raynel_delgado",
+      "n_snaps": 1,
+      "first": "2019-01-22",
+      "last": "2019-01-22",
+      "orgs": [
+       "HOU"
+      ],
+      "sources": [
+       "mlb_pipeline"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "sam howard",
+    "keys": [
+     "sam_howard",
+     "sam_howard__sa602898"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "sam_howard",
+      "n_snaps": 5,
+      "first": "2016-01-22",
+      "last": "2018-08-01",
+      "orgs": [
+       "COL",
+       "DET"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "sam_howard__sa602898",
+      "n_snaps": 1,
+      "first": "2018-02-15",
+      "last": "2018-02-15",
+      "orgs": [
+       "COL"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "sean sullivan",
+    "keys": [
+     "sean_sullivan__sa3018185",
+     "sean_sullivan",
+     "sean_sullivan_807743"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "807743"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "sean_sullivan__sa3018185",
+      "n_snaps": 1,
+      "first": "2023-08-01",
+      "last": "2023-08-01",
+      "orgs": [
+       "COL"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "sean_sullivan",
+      "n_snaps": 10,
+      "first": "2024-01-22",
+      "last": "2026-08-07",
+      "orgs": [
+       "COL"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "sean_sullivan_807743",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "COL"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "sebastian rojas",
+    "keys": [
+     "sebastian_rojas",
+     "sebastian_rojas_821121"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "821121"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "sebastian_rojas",
+      "n_snaps": 1,
+      "first": "2026-01-01",
+      "last": "2026-01-01",
+      "orgs": [
+       "STL"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "sebastian_rojas_821121",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "ATH"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "steven cruz",
+    "keys": [
+     "steven_cruz",
+     "steven_cruz_821161"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "821161"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "steven_cruz",
+      "n_snaps": 8,
+      "first": "2022-02-24",
+      "last": "2024-11-13",
+      "orgs": [
+       "KCR",
+       "MIN"
+      ],
+      "sources": [
+       "auto_detect",
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "steven_cruz_821161",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "CLE"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "tanner smith",
+    "keys": [
+     "tanner_smith",
+     "tanner_smith_695659"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "695659"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "tanner_smith",
+      "n_snaps": 3,
+      "first": "2026-02-12",
+      "last": "2026-08-02",
+      "orgs": [
+       "BAL"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "tanner_smith_695659",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "ATL"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "tre fletcher",
+    "keys": [
+     "tre_fletcher__sa3010709",
+     "tre_fletcher"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "tre_fletcher__sa3010709",
+      "n_snaps": 1,
+      "first": "2019-07-31",
+      "last": "2019-07-31",
+      "orgs": [
+       "STL"
+      ],
+      "sources": [
+       "fangraphs"
+      ]
+     },
+     {
+      "player_key": "tre_fletcher",
+      "n_snaps": 2,
+      "first": "2020-01-22",
+      "last": "2021-01-22",
+      "orgs": [
+       "STL"
+      ],
+      "sources": [
+       "mlb_pipeline"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "victor duarte",
+    "keys": [
+     "victor_duarte_835994",
+     "victor_duarte"
+    ],
+    "windows_overlap": false,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "835994"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "victor_duarte_835994",
+      "n_snaps": 1,
+      "first": "2026-01-01",
+      "last": "2026-01-01",
+      "orgs": [
+       "ATL"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "victor_duarte",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "SDP"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "victor rodriguez",
+    "keys": [
+     "victor_rodriguez",
+     "victor_rodriguez_828349"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "828349"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "victor_rodriguez",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "LAA"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "victor_rodriguez_828349",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "MIA"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "wuilliams rodriguez",
+    "keys": [
+     "wuilliams_rodriguez",
+     "wuilliams_rodriguez_805777"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": true,
+    "distinct_numeric_ids": [
+     "805777"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "wuilliams_rodriguez",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "BOS"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     },
+     {
+      "player_key": "wuilliams_rodriguez_805777",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "SEA"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   },
+   {
+    "normalized_name": "yunior marte",
+    "keys": [
+     "yunior_marte",
+     "yunior_marte_628708"
+    ],
+    "windows_overlap": true,
+    "orgs_disjoint": false,
+    "distinct_numeric_ids": [
+     "628708"
+    ],
+    "provably_different_players": false,
+    "detail": [
+     {
+      "player_key": "yunior_marte",
+      "n_snaps": 9,
+      "first": "2016-01-22",
+      "last": "2026-08-07",
+      "orgs": [
+       "KCR",
+       "PIT",
+       "SFG"
+      ],
+      "sources": [
+       "fangraphs",
+       "mlb_pipeline"
+      ]
+     },
+     {
+      "player_key": "yunior_marte_628708",
+      "n_snaps": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "orgs": [
+       "PIT"
+      ],
+      "sources": [
+       "performance_ingest"
+      ]
+     }
+    ]
+   }
+  ],
+  "matrix_impact": {
+   "n_matrix_rows_whose_asof_point_is_not_the_player_own": 23,
+   "n_matrix_rows_whose_value_the_merge_changed": 1,
+   "total_matrix_rows_touched": 24,
+   "of_matrix_rows": 3957,
+   "mechanism": "consensus.py:1381-1391 pools points across the merged keys and _asof_point (efv_dataset.py:409-418) then selects one; when the merged-in key owns the point at that date, the training row's consensus_fv_raw is a DIFFERENT player's grade.",
+   "worked_examples": [
+    {
+     "matrix_key": "josh_smith__sa3009923",
+     "asof_date": "2022-02-24",
+     "kind": "debuted",
+     "value_came_from": "josh_smith (fangraphs FV 50.0, org TEX)"
+    },
+    {
+     "matrix_key": "carlos_sanchez",
+     "asof_date": "2026-08-07",
+     "kind": "bust",
+     "value_came_from": "carlos_sanchez_801522 (performance_ingest FV 35.0, org MIA); the Reds prospect's own point is FV 45.0, org CIN"
+    },
+    {
+     "matrix_key": "luis_meza",
+     "asof_date": "2023-08-01",
+     "kind": "bust",
+     "value_came_from": "luis_meza__sa3018423 (fangraphs FV 35.0, org TOR)"
+    }
+   ]
+  }
+ },
+ "d5_hygiene": {
+  "apply_shrinkage_production_callers": 0,
+  "compute_prior_mean_fv_production_callers": 0,
+  "only_importer": "test_consensus.py:24",
+  "constants_inert": [
+   "DEFAULT_SHRINKAGE_K",
+   "DEFAULT_N_FULL",
+   "FALLBACK_PRIOR_FV"
+  ],
+  "constants_lines": "consensus.py:127-129",
+  "note": "Grepped tree-wide. The three constants appear only as defaults on apply_shrinkage/compute_prior_mean_fv and on three build_timeseries kwargs (consensus.py:1159-1161) whose names never recur in the body. The docstring at consensus.py:1173-1180 is accurate."
+ },
+ "runtime_sec": 216.8
+}
