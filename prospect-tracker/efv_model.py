@@ -11,8 +11,13 @@ Honest by mandate: the loser is committed either way (program rule), and we expe
 on rank per the Phase-1 verdict -- the flagship case rests on the distribution/surplus
 (Pass 3), not a rank win.
 
-  TARGET     first-6-season summed bWAR, KM-censored (target_censored), sample-weighted by
-             observed fraction; resolved-only run as the sensitivity check.
+  TARGET     first-6-season summed bWAR, right-censored with an OBSERVED-RATE TAIL
+             PROJECTION (target_censored), sample-weighted by observed fraction;
+             resolved-only run as the sensitivity check. NOT Kaplan-Meier: there is no
+             survival fit, risk set or hazard anywhere on this path, and the phrase
+             "KM-censored" that used to sit here was wrong. See efv_dataset._label_6yr
+             and docs/efv-2026-08-07b/LABEL_CENSORING_GATE.md, which measures the
+             projection's bias at -1.69 WAR (hit) / -0.84 (pit) at observed_seasons 2.
   COHORT     hitters; decision-year = debut_year (debuted) or last-prospect-point year + 1
              (bust). Forward-chained: predict cohort year Y with models fit on rows whose
              decision_year < Y. Two evals: DEBUTED-ONLY (clean WAR regression, the
@@ -580,6 +585,21 @@ _WAG_LAMBDA_CACHE: dict[str, float] = {}
 # Doc: docs/efv-drivers-2026-08-07/GATE_RECORD.md section 8.
 _BLEND_LAMBDA_RESELECT: dict[str, float | None] = {"hit": 0.70, "pit": 0.57}
 
+# D14 GUARD (audit 2026-08-07b). Both entries above are PINNED, and that pin is the
+# only thing keeping a current-state read off the lambda that sizes the served blend.
+#
+# _load_wag() below reads debuted_value.wag out of data/debuts.json, which is a
+# CURRENT-STATE block: it is rewritten every cycle from the player's career to date,
+# with no as-of filter of any kind. wag_calibration() regresses on it. So the moment
+# either entry here becomes None, the served lambda starts being re-derived each run
+# from a quantity that has seen the future of every player in the fit.
+#
+# Dead today, live on a one-word edit, and the failure is silent because a lambda has
+# no obvious provenance once it is a float. Anyone removing a pin owes an as-of
+# rebuild of the WAG block first, or an explicit decision to accept the leak with a
+# gate doc that says so.
+_WAG_LAMBDA_IS_ASOF = False
+
 # WAG sizes the blend ONLY when its predicted-edge -> realized-WAG regression is meaningful.
 # When that regression is non-significant (|spearman| below this / too few rows), its slope is
 # noise and would shrink the blend to a rank-SUBOPTIMAL weight. Pitchers already land here (WAG
@@ -627,7 +647,16 @@ def wag_calibration(side: str) -> dict:
     on eFV's PREDICTED per-season rate adjustment (model - consensus, /6), weighted by WAG
     reliability (w_obs), through the origin. The slope is how much realized over/under-
     performance you actually get per unit of predicted edge -> the trust factor for the
-    blend. Returns {lambda, slope_wobs, slope_unweighted, spearman, n}. Leakage-free."""
+    blend. Returns {lambda, slope_wobs, slope_unweighted, spearman, n}.
+
+    NOT leakage-free, despite what this docstring claimed until 2026-08-07b. The
+    FEATURES are forward-chained, but the REGRESSAND is not: _load_wag reads
+    debuted_value.wag from debuts.json, a current-state block recomputed each cycle
+    from the player's whole career, so a fold's target has seen its own future. See
+    _WAG_LAMBDA_IS_ASOF above. This does not move a served grade while both lambdas
+    are pinned, but the result still reaches data/xfv_eval*.json through run(), so
+    the number is published and should be read as a diagnostic, not as an OOS
+    measurement."""
     from efv_dataset import matrix_path
     keys, _m = _feature_spec(side)
     wag = _load_wag()

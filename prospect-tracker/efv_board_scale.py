@@ -31,8 +31,9 @@ HOW THE COEFFICIENTS WERE FIT (provenance)
 ------------------------------------------
 Fit data: the labeled (resolved-outcome) eFV pools, data/xfv_scored.json (hitters)
 + data/xfv_scored_pitcher.json (pitchers), joined to the cohort matrices for the
-as-of year. Outcome = `realized_war_6yr`, first-6yr summed bWAR on the KM-censored
-target -- the same WAR metric the standing F-SIDE line uses, and the model's own
+as-of year. Outcome = `realized_war_6yr`, first-6yr summed bWAR on the tail-projected
+target (observed-rate projection, NOT Kaplan-Meier; see efv_dataset._label_6yr)
+-- the same WAR metric the standing F-SIDE line uses, and the model's own
 currency (`xfv_grade` is `realized_implied_fv(E[6yr WAR])`).
 
 Method -- equating on OUTCOMES, not on distribution shape:

@@ -3,7 +3,7 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""eFV Pass 1 -- leakage-clean as-of feature matrix + KM-censored labels (HITTERS).
+"""eFV Pass 1 -- leakage-clean as-of feature matrix + right-censored labels (HITTERS).
 
 This is the training SUBSTRATE for the eFV flagship model. It assembles one row per
 resolved/censored prospect with features built strictly as-of a pre-outcome decision
@@ -11,7 +11,9 @@ point, attaches a first-6-MLB-season bWAR label with censoring handling, and rep
 the consensus-FV-only baseline that the model must match or beat. NO MODEL IS FIT HERE.
 
 Design (per docs/xfv-phase1-plan.md, owner sign-off 2026-06-21):
-  COHORT     HITTERS only. Debuted (debuts.json) debut years 2017-2023 + the bust pool
+  COHORT     HITTERS only. Debuted (debuts.json) debut years 2011-2024 (DEBUT_YEARS
+             below is the live value; this line read 2017-2023 until 2026-08-07b and
+             had been stale since the cohort was widened) + the bust pool
              (inactive.json, never reached MLB). Busts are real 0-WAR outcomes, kept in
              to avoid survivorship bias (the prospect_path / source_backtest house rule).
   VINTAGE    consensus FV strictly pre-outcome: the LATEST points[] entry dated before
@@ -27,13 +29,28 @@ Design (per docs/xfv-phase1-plan.md, owner sign-off 2026-06-21):
              pick/bonus and pre-decision IL history. NO Statcast (no historical depth;
              Tier-2 overlay is a later pass).
   TARGET     first-6-MLB-season summed bWAR (career_war seasons debut..debut+5).
-  CENSORING  KM-from-the-start (owner call): 2017-2020 debuts resolve fully (window ends
-             <= 2025); 2021-2023 debuts are right-censored -- carried with a rate
-             projection of the unobserved tail + an observed-fraction weight. Busts = 0.
-             We emit BOTH the resolved-only and the censored-included targets so the
-             baseline's sensitivity to the censoring assumption is measurable.
+  CENSORING  OBSERVED-RATE TAIL PROJECTION WITH AN EXPOSURE WEIGHT (owner call). Debuts
+             whose window ends <= RESOLVED_THROUGH resolve fully; later debuts are
+             right-censored -- carried with a FLAT per-season rate projection of the
+             unobserved tail (obs_sum / n_obs, see _label_6yr) plus an observed-fraction
+             weight n_obs/6. Busts = 0. We emit BOTH the resolved-only and the
+             censored-included targets so the baseline's sensitivity to the censoring
+             assumption is measurable.
+             NAMING (2026-08-07b, plan Lane B4): this was previously called
+             "KM-from-the-start". It is NOT a Kaplan-Meier estimator. There is no
+             survival function, no risk set and no hazard anywhere on this path. Some
+             artifact KEYS still spell "km_censored" and are kept for consumers.
+             MEASURED BIAS (Lane B1, data/xfv_label_censoring_eval.json,
+             docs/efv-2026-08-07b/LABEL_CENSORING_GATE.md): the flat rate UNDER-states
+             the six-year total, because seasons 4 to 6 carry ~59.6% of WAR mass.
+             Mean signed error on 988 fully resolved debuts truncated to n observed
+             seasons: n=2 -1.69 hit / -0.84 pit, n=3 -0.96 / -0.45, n=4 -0.34 / -0.18,
+             n=5 -0.06 / -0.05 WAR. The error scales with realized magnitude (hit rows
+             with a true 15 to 24 WAR window lose 7.03 WAR at n=2), so this label
+             compresses the top of its own outcome distribution.
   BASELINE   consensus_fv_raw rank vs realized WAR (Spearman) -- THE bar. Reported for
-             debuted-only, full-pool resolved, and KM-censored full pool.
+             debuted-only, full-pool resolved, and the tail-projected full pool (still
+             emitted under the legacy key full_pool_km_censored).
 
 Artifacts: data/xfv_hitter_matrix.json (the matrix) + data/xfv_dataset_report.json.
 Run: python efv_dataset.py
@@ -878,7 +895,12 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit",
 
 def _label_6yr(seasons: dict, debut_year: int):
     """(target_resolved, target_censored, censored_flag, weight, observed_seasons).
-    seasons: {int year: war}."""
+    seasons: {int year: war}.
+
+    The censored branch is an OBSERVED-RATE TAIL PROJECTION WITH AN EXPOSURE WEIGHT,
+    not a Kaplan-Meier estimator (naming corrected 2026-08-07b, plan Lane B4). It
+    assumes a FLAT per-season WAR rate, which is measurably wrong in one direction:
+    see the module header's CENSORING note and data/xfv_label_censoring_eval.json."""
     window = [debut_year + i for i in range(TARGET_SEASONS)]
     observed = [y for y in window if y <= RESOLVED_THROUGH]
     obs_sum = round(sum(seasons.get(y, 0.0) for y in observed), 3)

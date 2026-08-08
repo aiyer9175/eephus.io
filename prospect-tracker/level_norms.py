@@ -162,6 +162,18 @@ FALLBACK_PITCHER_BB_PCT_NORM: dict[str, float] = {
 # (computed 2026-08-05, docs/efv-sb-athleticism-2026-08-05/PREREG.md section 2).
 # The gradient is real and steep: rookie-ball runs ~4x the MLB rate, which is
 # exactly why the feature must be level-relative.
+# D19 VINTAGE TRIPWIRE (audit 2026-08-07b). These are ALL-TIME POOLED constants, so
+# they are not contemporaneous with any row that reads them. That is a leak the moment
+# they reach a training feature.
+#
+# INERT TODAY, and only for one reason: their sole consumer is `sb_rate_rel`, which is
+# NOT in _FEATURES_HIT or _FEATURES_PIT. The sb_rate_rel arm is CLOSED in the driver
+# ledger (docs/efv-drivers-2026-08-07/GATE_RECORD.md), so nothing trained reads this.
+#
+# Anyone reviving sb_rate_rel as a feature MUST replace these with as-of norms first,
+# or the revived feature will carry 2015-2024 information into a 2016 decision row.
+# Recorded here rather than in the closed-arm ledger because this is where a reviver
+# will actually be looking.
 FALLBACK_SB600_NORM: dict[str, float] = {
     "DSL": 20.4, "CPX": 15.6, "A": 11.4, "A+": 10.9,
     "AA": 9.4, "AAA": 7.4, "MLB": 4.8,
