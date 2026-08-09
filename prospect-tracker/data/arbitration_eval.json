@@ -1,0 +1,92 @@
+{
+ "generated_at": "2026-08-08",
+ "produced_by": "python tools/arb_gate_a.py --write --B 1500",
+ "model": "arb_award_v1",
+ "gate": "docs/ARBITRATION_GATE.md section 4 (GATE A)",
+ "purpose": "Does the two-stage arbitration award model beat the class-appropriate baseline by more than its own measured floor, and is the margin production information rather than structure?",
+ "conventions": {
+  "metric": "MdAPE on deflated dollars is the adjudicating headline; MSE in deflated dollars is reported alongside because the downstream consumer needs an expectation",
+  "protocol": "forward-chained by arbitration class year; paired bootstrap resampling train AND test, clustered on PLAYER, refitting the deflator and both stages every draw",
+  "floor": "MDE95 one-sided (1.645 sd), measured per statistic class",
+  "pool": "only seasons whose arbitration step comes from MLBTR published service time; substitute sources measure 0.66 and 0.70 agreement against it and cannot carry a scored backtest",
+  "smearing": "served point is the Duan smearing-corrected conditional MEAN, never exp(mu_hat)"
+ },
+ "pool": {
+  "rows": 1043,
+  "players": 585,
+  "seasons": [
+   2022,
+   2023,
+   2024,
+   2025,
+   2026
+  ],
+  "folds": 4
+ },
+ "B": 1500,
+ "seed": 20260808,
+ "results": {
+  "arb1": {
+   "bar": "bar2",
+   "bar_description": "arb-1 intercept plus one WAR term (a lag baseline is the wrong bar for the first trip)",
+   "n_paired": 409,
+   "mdape_champion": 0.2545252503658592,
+   "mdape_bar": 0.4283960231424486,
+   "mdape_gain": 0.1738707727765894,
+   "mse_gain": 1241184640962.7046,
+   "mde95_onesided": 0.053486367372176505,
+   "gain_over_floor": 3.250749327706944,
+   "resolvable": true,
+   "p_gt_0": 1.0,
+   "a3_control": {
+    "permuted_mean": 0.06613917091073486,
+    "permuted_p95": 0.0881962727506932,
+    "real_over_p95": 1.9714072642057636,
+    "p_perm_ge_real": 0.0,
+    "beats_control": true
+   },
+   "a5_deflator_leak_twin": {
+    "gain_with_panel_wide_deflator": 0.19241554671992003,
+    "delta": 0.018544773943330622,
+    "leak_smaller_than_margin": true
+   },
+   "verdict": "PASS"
+  },
+  "arb2plus": {
+   "bar": "bar",
+   "bar_description": "median deflated step multiplier off prior salary, floored at the max cut and the minimum",
+   "n_paired": 379,
+   "mdape_champion": 0.1579793838685334,
+   "mdape_bar": 0.18120929850039916,
+   "mdape_gain": 0.023229914631865745,
+   "mse_gain": -121565780134.96094,
+   "mde95_onesided": 0.02764910289415178,
+   "gain_over_floor": 0.8401688373324849,
+   "resolvable": false,
+   "p_gt_0": 0.8526666666666667,
+   "a3_control": {
+    "permuted_mean": -0.02172824901571559,
+    "permuted_p95": -0.01074448239593499,
+    "real_over_p95": null,
+    "p_perm_ge_real": 0.0,
+    "beats_control": true
+   },
+   "a5_deflator_leak_twin": {
+    "gain_with_panel_wide_deflator": 0.036638712266144374,
+    "delta": 0.01340879763427863,
+    "leak_smaller_than_margin": true
+   },
+   "verdict": "NULL"
+  }
+ },
+ "verdict": "provisional",
+ "loss_ledger": [
+  {
+   "claim": "the model beats the step-multiplier baseline on arb 2/3/4",
+   "measured_mdape_gain": 0.023229914631865745,
+   "floor": 0.02764910289415178,
+   "verdict": "NULL",
+   "statement": "The arb-2-and-later model is a NULL. Its margin over a median step multiplier off the prior salary is below the floor measured for this basis. The A3 control shows the production block does carry signal there - permuting it makes the model WORSE than the baseline - so this is a power limit, not an absence of information, and it is still reported as a null."
+  }
+ ]
+}

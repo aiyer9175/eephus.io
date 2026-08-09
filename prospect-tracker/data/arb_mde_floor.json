@@ -1,0 +1,104 @@
+{
+ "generated_at": "2026-08-08",
+ "produced_by": "python tools/arb_mde_lab.py mde 2000",
+ "purpose": "Minimum detectable effect for GATE A. Floors are basis-specific and one is measured per statistic class.",
+ "protocol": "paired bootstrap resampling TRAIN AND TEST, clustered on PLAYER, refitting the deflator, both stages and the B1 step multipliers on every draw; forward-chained by arbitration class year",
+ "convention": "MDE95 is ONE-SIDED (1.645 sd) throughout",
+ "seed": 20260808,
+ "B_requested": 2000,
+ "pool": {
+  "rows": 1043,
+  "players": 585,
+  "seasons": [
+   2022,
+   2023,
+   2024,
+   2025,
+   2026
+  ]
+ },
+ "floors": {
+  "arb1": {
+   "n_paired_rows": 409,
+   "mse": {
+    "label": "arb1 champion-minus-bar MSE",
+    "B_used": 2000,
+    "point_delta": 1666153688015.1494,
+    "boot_mean_delta": 1606072557806.3308,
+    "sd": 446541533370.907,
+    "mde95_onesided": 734560822395.142,
+    "mde95_twosided": 875221405406.9777,
+    "ci95": [
+     807068813898.0148,
+     2599609539894.784
+    ],
+    "p_gt_0": 1.0,
+    "resolvable_onesided": true
+   },
+   "mdape": {
+    "label": "arb1 champion-minus-bar MdAPE",
+    "B_used": 2000,
+    "point_delta": 0.21427365145504645,
+    "boot_mean_delta": 0.2137734805798505,
+    "sd": 0.03223922521121884,
+    "mde95_onesided": 0.05303352547245499,
+    "mde95_twosided": 0.06318888141398891,
+    "ci95": [
+     0.15175525141174165,
+     0.27625118906510787
+    ],
+    "p_gt_0": 1.0,
+    "resolvable_onesided": true
+   },
+   "elapsed_s": 71.3
+  },
+  "arb2plus": {
+   "n_paired_rows": 379,
+   "mse": {
+    "label": "arb2plus champion-minus-bar MSE",
+    "B_used": 2000,
+    "point_delta": -121565780134.96094,
+    "boot_mean_delta": -1405744902633.3093,
+    "sd": 3123252385384.1665,
+    "mde95_onesided": 5137750173956.954,
+    "mde95_twosided": 6121574675352.966,
+    "ci95": [
+     -8655181745741.791,
+     1529553053507.5803
+    ],
+    "p_gt_0": 0.288,
+    "resolvable_onesided": false
+   },
+   "mdape": {
+    "label": "arb2plus champion-minus-bar MdAPE",
+    "B_used": 2000,
+    "point_delta": 0.023229914631865745,
+    "boot_mean_delta": 0.01715989480723481,
+    "sd": 0.017079966448351754,
+    "mde95_onesided": 0.028096544807538634,
+    "mde95_twosided": 0.033476734238769436,
+    "ci95": [
+     -0.016588213383218555,
+     0.05162002064451448
+    ],
+    "p_gt_0": 0.85,
+    "resolvable_onesided": false
+   },
+   "elapsed_s": 71.9
+  }
+ },
+ "detection_check": {
+  "arb1": {
+   "plant": 0.25,
+   "mdape_delta_with_plant": 0.2779049640465113,
+   "mdape_delta_without": 0.21427365145504645,
+   "detected": true
+  },
+  "arb2plus": {
+   "plant": 0.25,
+   "mdape_delta_with_plant": 0.06272476059899904,
+   "mdape_delta_without": 0.023229914631865745,
+   "detected": true
+  }
+ }
+}
