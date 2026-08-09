@@ -193,6 +193,70 @@ def fit_step_multipliers(rows: list[dict], defl: dict) -> dict[int, float]:
     return {k: float(np.median(v)) for k, v in by.items() if v}
 
 
+SALARY_BANDS = ((0, 2e6), (2e6, 5e6), (5e6, 10e6), (10e6, float("inf")))
+
+
+def _band(prior_usd: float) -> int:
+    for i, (lo, hi) in enumerate(SALARY_BANDS):
+        if lo <= prior_usd < hi:
+            return i
+    return len(SALARY_BANDS) - 1
+
+
+def fit_banded_multipliers(rows: list[dict], defl: dict) -> dict:
+    """Median observed raise multiplier by (arb step, prior-salary band).
+
+    THIS IS WHAT THE BOARD SERVES FOR ARB 2/3/4, because GATE A ruled the
+    per-player model a NULL there: it does not beat a step multiplier by more
+    than the measured floor, so serving the model would be serving a more
+    complex estimator the evidence does not support.
+
+    The band matters and is measured, not assumed. Observed median ratios on
+    the scored pool fall steeply with the prior salary:
+        prior < $2M   1.70 (n=183)
+        $2-5M         1.56 (n=202)
+        $5-10M        1.43 (n=69)
+        $10M+         1.37 (n=20)
+    A step-only multiplier ignores that and compounds a small-salary raise onto
+    a large one. Chaining it three times took a $4.15M arb-1 player to $48M,
+    which is above the largest arbitration award ever made.
+    """
+    by: dict[tuple, list[float]] = {}
+    for r in rows:
+        p, s = r.get("prior_salary"), r.get("salary")
+        step = int(r.get("arb_year") or 0)
+        if not p or not s or step < 2:
+            continue
+        a = deflate(s, r["season"], defl)
+        b = deflate(p, r["season"] - 1, defl)
+        if b > 0:
+            by.setdefault((step, _band(p)), []).append(a / b)
+    out = {}
+    for k, v in by.items():
+        if len(v) >= 8:
+            out[k] = float(np.median(v))
+    # Band-only fallback for thin (step, band) cells.
+    byband: dict[int, list[float]] = {}
+    for (step, band), v in by.items():
+        byband.setdefault(band, []).extend(v)
+    return {"cells": out,
+            "by_band": {b: float(np.median(v)) for b, v in byband.items() if v}}
+
+
+def banded_predict(row: dict, mult: dict, defl: dict) -> float | None:
+    """Served arb2+ estimate: prior salary times the empirical multiplier for
+    its (step, band), floored at the max cut and the league minimum."""
+    p = row.get("prior_salary")
+    step = int(row.get("arb_year") or 0)
+    if not p or step < 2 or not mult:
+        return None
+    band = _band(p)
+    m = mult["cells"].get((step, band)) or mult["by_band"].get(band) or 1.4
+    base = deflate(p, row["season"] - 1, defl)
+    lm = deflate(_f(row.get("league_min"), 700_000.0), row["season"], defl)
+    return max(base * m, base * 0.80, lm)
+
+
 def baseline_b1(row: dict, mult: dict[int, float], defl: dict) -> float | None:
     """Predicted DEFLATED salary under the step-multiplier baseline, floored at
     both the maximum cut and the league minimum."""
@@ -366,6 +430,7 @@ def forward_chain(rows, metrics_by, *, seasons, keys=CHAMPION_KEYS,
         defl_rows = rows if leak_deflator else tr
         defl = fit_deflator(defl_rows, base_year=seasons[0])
         mult = fit_step_multipliers(tr, defl)
+        banded = fit_banded_multipliers(tr, defl)
         a_base = fit_arb1_baselines(tr, defl)
         s1 = fit_stage1(tr, metrics_by, defl, keys)
         s2 = fit_stage2(tr, metrics_by, defl, keys)
@@ -393,6 +458,14 @@ def forward_chain(rows, metrics_by, *, seasons, keys=CHAMPION_KEYS,
                 rec["bar2"] = None
                 rec["bar_name"] = "b1_step_multiplier"
             rec["b1"] = baseline_b1(r, mult, defl)
+            # THE SERVED ESTIMATOR, which is what the board actually shows and
+            # therefore what the history must score. GATE A selects it per step:
+            # the model for arb-1 (PASSED at 3.25x its floor), the empirical
+            # banded multiplier for arb2+ (the model is a NULL there). Scoring
+            # the history against something the board does not serve would make
+            # the accuracy panel describe a different product.
+            rec["served"] = (rec["champion"] if step == 1
+                             else banded_predict(r, banded, defl))
             out.append(rec)
     return out
 
