@@ -494,7 +494,17 @@ def _apply_roster_filter(teams: list, active_ids: Optional[frozenset]) -> int:
 def load_season_pitching(season: int) -> list[dict]:
     """All MLB pitchers' season lines from the StatsAPI leaderboard (playerPool
     'all' so relievers are included). One combined row per player. [] on any
-    failure (offline / API change)."""
+    failure (offline / API change).
+
+    LIVE CALL. The hitter analog (hitter_export.load_season_hitting) reads the
+    disk-cached fa_sources fetcher instead, so the hitter side runs offline and
+    this one does not - the same asymmetry as pybaseball's cached bwar_bat vs
+    uncached bwar_pitch. Callers that need an offline historical sweep should
+    fetch splits themselves via fa_sources.fetch_statsapi_season_stats(season,
+    "pitching") (disk-cached, 2000-2026 on hand) and hand them to
+    rows_from_pitching_splits below, which is the same mapping this function
+    applies. arb_metrics does exactly that.
+    """
     try:
         data = _get_json("stats", {
             "stats": "season", "group": "pitching", "season": int(season),
@@ -505,10 +515,20 @@ def load_season_pitching(season: int) -> list[dict]:
     stats = data.get("stats") or []
     if not stats:
         return []
+    return rows_from_pitching_splits(stats[0].get("splits", []), season)
+
+
+def rows_from_pitching_splits(splits: list[dict], season: int) -> list[dict]:
+    """StatsAPI pitching `splits` records -> the flat row shape build_starters
+    and build_relievers consume. Split out of load_season_pitching so an
+    offline caller can supply cached splits and get a byte-identical mapping
+    instead of re-implementing 25 field names that would drift."""
+    if not splits:
+        return []
     tmap = _team_abbrev_map()
     out = []
     n_unresolved = 0
-    for s in stats[0].get("splits", []):
+    for s in splits:
         st = s.get("stat") or {}
         pl = s.get("player") or {}
         tm = s.get("team") or {}
