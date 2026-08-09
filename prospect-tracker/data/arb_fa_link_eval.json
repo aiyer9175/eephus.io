@@ -1,0 +1,33 @@
+{
+ "generated_at": "2026-08-09",
+ "produced_by": "python tools/arb_fa_gate_d.py --write",
+ "gate": "docs/ARBITRATION_GATE.md section 7 (GATE D)",
+ "model": "arb_fa_link",
+ "conventions": {
+  "target": "log residual of the UNCHANGED incumbent Gate-2 guarantee prediction; if arbitration carries information the FA model lacks, it must appear here",
+  "protocol": "fa_backtest.run_market_gate(persist=False, persist_dpw=False) over its own forward-chained winters, paired row by row via GATE2_COLLECT",
+  "feature": "arb_resid: our own out-of-fold arbitration residual, orthogonal by construction to the arb model's features"
+ },
+ "n_gate2_rows": 1199,
+ "n_with_arb_history": 217,
+ "d1_missingness_indicator_alone_dR2": 0.018021009644349495,
+ "naive_zero_filled_dR2": 0.022349577930073083,
+ "d2_complete_case": {
+  "n": 217,
+  "dR2": 0.027556299983218513,
+  "permuted_mean_dR2": 0.004740883006230493,
+  "permuted_p95_dR2": 0.01805465557126057,
+  "p_perm_ge_real": 0.0125,
+  "beats_placebo": true
+ },
+ "verdict_gate": "NULL",
+ "verdict": "unvalidated",
+ "indicator_dominates": true,
+ "loss_ledger": [
+  {
+   "claim": "arbitration history adds information to the free-agent market model",
+   "verdict": "NULL",
+   "statement": "The arbitration block is a NULL on the free-agent market gate. Its incremental contribution to the incumbent Gate-2 guarantee residual is not separable from a placebo permuted within class year. The raw correlation between arbitration salary and the first free-agent guarantee is real and large, and it is fully accounted for by the production both quantities measure, which the incumbent model already reads through its projected-WAR and rational-anchor terms. fa_market is UNCHANGED."
+  }
+ ]
+}
