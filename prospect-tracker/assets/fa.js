@@ -19,7 +19,7 @@
 (function () {
   "use strict";
 
-  const EM_DASH = " - ";
+  const DASH = " - ";
   const D = {};            // loaded sidecars by name
   const _inflight = {};
 
@@ -28,7 +28,7 @@
   // the FA page never imports PROSPX script.
   function formatMetric(value, type = "int") {
     const n = Number(value);
-    if (value == null || value === "" || !Number.isFinite(n)) return EM_DASH;
+    if (value == null || value === "" || !Number.isFinite(n)) return DASH;
     const z = n === 0 ? 0 : n;                       // collapse -0 -> 0
     const sign = z > 0 ? "+" : (z < 0 ? "-" : "");   // zero is unsigned
     const abs = Math.abs(z);
@@ -53,7 +53,7 @@
   }
 
   function money(usd, type = "moneyM") {
-    return usd == null ? EM_DASH : formatMetric(usd / 1e6, type);
+    return usd == null ? DASH : formatMetric(usd / 1e6, type);
   }
 
   function esc(s) {
@@ -84,11 +84,11 @@
   };
   function verdictChip(m) {
     const v = VERDICT_META[m.verdict];
-    if (!v) return EM_DASH;
+    if (!v) return DASH;
     return `<span class="fa-verdict fa-verdict-${m.verdict}" data-gl="deal_plus" title="${v[1]} Underlying Deal+ ${m.dealPlus ?? "?"} (100 × rational / predicted price).">${v[0]}</span>`;
   }
   function surplusSpan(usd, p10, p90) {
-    if (usd == null) return EM_DASH;
+    if (usd == null) return DASH;
     const cls = usd >= 0 ? "fa-pos" : "fa-neg";
     const val = formatMetric(usd / 1e6, "surplusM");
     if (p10 == null || p90 == null) return `<span class="${cls}">${val}</span>`;
@@ -726,10 +726,10 @@
         + (aavWild ? " Note: this band comes from a flat ratio rather than a"
                      + " per-tier fit, so the upper end is unrealistically wide"
                      + " at the top of the market." : "");
-      const aavCell = m.projAav == null ? EM_DASH
+      const aavCell = m.projAav == null ? DASH
         : `<span data-band tabindex="0" aria-label="${esc(aavBand)}" title="${esc(aavBand)}">${money(m.projAav)}</span>`;
       const guarBand = `Predicted term and total guarantee. Length P10 to P90 ${m.projYearsP10 ?? "?"} to ${m.projYearsP90 ?? "?"} years; guarantee P10 to P90 ${money(m.projGuarP10)} to ${money(m.projGuarP90)}.`;
-      const guarCell = m.projGuar == null ? EM_DASH
+      const guarCell = m.projGuar == null ? DASH
         : `<span data-band tabindex="0" aria-label="${esc(guarBand)}" title="${esc(guarBand)}">${m.projYears != null ? m.projYears + "y / " : ""}${money(m.projGuar)}</span>`;
       const trCls = [
         (m.projGuar == null || m.status === "option_exercised") ? "fa-dim" : "",
@@ -740,7 +740,7 @@
       // tape carrying the PREDICTED DEAL, which is the thing a reader actually
       // came for and which the table had squeezed into four cells alongside their
       // own P10-P90 bands.
-      const chip = (label, val, title) => (val == null || val === EM_DASH ? "" :
+      const chip = (label, val, title) => (val == null || val === DASH ? "" :
         `<div class="mlb-chip"${title ? ` title="${title}"` : ""}><b>${label}</b>${val}</div>`);
       // Phase H (docs/master-plan-2026-07-29-efv-fa.md): these were computed and
       // carried in the payload but rendered nowhere. warCvar10 is the mean of the
@@ -1003,7 +1003,7 @@
     const pace = railStat("signed", `${signed.length} / ${cls.n_members}`)
       + railStat("guaranteed", money(spent))
       + railStat("scored deals", String(scored.length))
-      + railStat("guarantee MAE", mae != null ? money(mae) : EM_DASH);
+      + railStat("guarantee MAE", mae != null ? money(mae) : DASH);
     // Signed magnitude, not absolute: the direction is the interesting half.
     // Deliberately uncoloured - "the market paid above the model" is a miss in
     // both directions, and tinting one of them green would say otherwise.
@@ -1146,19 +1146,19 @@
       .map(m => {
         const actual = m.signedMilb ? "MiLB deal"
           : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)}${m.signedGuarNpv != null ? `<span class="fa-band" title="Deferral-adjusted NPV at the platform 9% rate - the basis the prediction speaks"> (${money(m.signedGuarNpv)} NPV)</span>` : ""}`;
-        const pred = m.projGuar != null ? `${m.projYears}y / ${money(m.projGuar)}` : EM_DASH;
+        const pred = m.projGuar != null ? `${m.projYears}y / ${money(m.projGuar)}` : DASH;
         const dGuar = (m.signedGuar != null && m.projGuar != null && !m.signedMilb)
-          ? formatMetric((actGuar(m) - m.projGuar) / 1e6, "surplusM") : EM_DASH;
+          ? formatMetric((actGuar(m) - m.projGuar) / 1e6, "surplusM") : DASH;
         const realized = (m.rational != null && m.signedGuar > 0 && !m.signedMilb)
           ? Math.round(100 * m.rational / actGuar(m)) : null;
         return `<tr>
-          <td>${m.signedDate || EM_DASH}</td>
+          <td>${m.signedDate || DASH}</td>
           <td>${playerLink(m)} <span class="fa-sub">${esc(m.pos || "")}</span>${m.qoAccepted ? ' <span title="Accepted the qualifying offer">QO accepted</span>' : ""}</td>
           <td>${teamLogo(m.from)}${esc(m.from || "")} &rarr; ${teamLogo(m.signedTo)}${esc(m.signedTo || "")}</td>
           <td>${actual}</td>
           <td title="The model's pre-winter prediction - frozen, not re-fit">${pred}</td>
           <td title="Actual guarantee minus predicted (positive = market paid above model)">${dGuar}</td>
-          <td title="Deal+ at the ACTUAL price - 100 = rational value">${realized ?? EM_DASH}</td>
+          <td title="Deal+ at the ACTUAL price - 100 = rational value">${realized ?? DASH}</td>
         </tr>`;
       }).join("");
     const evRows = evs.filter(e => e.type !== "signing").slice(0, 30).map(e => {
@@ -1248,7 +1248,7 @@
       rows.innerHTML = `<div class="state-message">No class member &ldquo;${esc(key)}&rdquo;. <a href="#${faHash()}view=board">Back to the board</a>.</div>`;
       return;
     }
-    const band = (v, p10, p90, fmt) => v == null ? EM_DASH
+    const band = (v, p10, p90, fmt) => v == null ? DASH
       : `${fmt(v)}<span class="fa-band"> (${fmt(p10)}&ndash;${fmt(p90)})</span>`;
     // Year-by-year projection table: calendar season, age, floor/mean/
     // ceiling bWAR, and that season's escalated $/WAR level. The mean bars
@@ -1262,10 +1262,10 @@
       const inTerm = m.projYears != null && i < m.projYears;
       return `<tr${inTerm ? "" : ' class="fa-dim"'}>
         <td>${season}${inTerm ? "" : '<span class="fa-sub" title="Beyond the predicted term - shown because any longer offer prices these seasons"> +</span>'}</td>
-        <td>${m.age != null ? Math.floor(m.age) + i : EM_DASH}</td>
-        <td>${lo != null ? formatMetric(lo, "war") : EM_DASH}</td>
+        <td>${m.age != null ? Math.floor(m.age) + i : DASH}</td>
+        <td>${lo != null ? formatMetric(lo, "war") : DASH}</td>
         <td><strong>${formatMetric(w, "war")}</strong></td>
-        <td>${hi != null ? formatMetric(hi, "war") : EM_DASH}</td>
+        <td>${hi != null ? formatMetric(hi, "war") : DASH}</td>
         <td title="The winter's ex-ante $/WAR escalated ${(infl * 100).toFixed(0)}%/yr to this season">${money(dpwT)}</td>
       </tr>`;
     }).join("");
@@ -1315,7 +1315,7 @@
         <td>${band(m.projGuar, m.projGuarP10, m.projGuarP90, money)}</td>
         <td>${band(m.projAav, m.projAavP10, m.projAavP90, money)}</td>
         <td>${m.warTotal == null ? "?" : formatMetric(m.warTotal, "war")}</td>
-        <td>${m.rational != null ? money(m.rational) : EM_DASH}</td>
+        <td>${m.rational != null ? money(m.rational) : DASH}</td>
         <td>${surplusSpan(m.surplus, m.surplusP10, m.surplusP90)}</td>
         <td>${verdictChip(m)}</td>
       </tr></tbody></table>
@@ -1514,13 +1514,13 @@
     const cbar = (v, label) => `<div class="fa-cbar" title="${label} ${v}"><div style="width:${Math.round((v || 0) * 100)}%"></div><span>${v}</span></div>`;
     const blockedCell = bb => bb && bb.length
       ? bb.map(b => `<span class="fa-block fa-block-${b.t}" title="${b.t === "mlb" ? "MLB incumbent already producing at the slot the signing would displace" : "PROSPX prospect (FV ≥ 50, near ETA)"}">${esc(b.n)}<i>${b.t === "mlb" ? "MLB" : "PX"}</i></span>`).join(" ")
-      : EM_DASH;
+      : DASH;
     const body = list.map(({ m, f }) => `<tr>
         <td><strong>${playerLink(m)}</strong> <span class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"}</span></td>
         <td><strong>${f.fit.toFixed(2)}</strong></td>
         <td>${cbar(f.need, "need")}</td><td>${cbar(f.window, "window")}</td><td>${cbar(f.afford, "afford")}</td><td>${cbar(f.park, "park")}</td><td>${cbar(f.behavior, "behavior")}</td>
         <td>${blockedCell(f.blockedBy)}</td>
-        <td>${m.projGuar != null ? `${m.projYears}y / ${money(m.projGuar)}` : EM_DASH}</td>
+        <td>${m.projGuar != null ? `${m.projYears}y / ${money(m.projGuar)}` : DASH}</td>
         <td>${verdictChip(m)}</td>
       </tr>`).join("");
     const blockedLine = (t.blocked || []).length
@@ -1534,7 +1534,7 @@
       <tbody>${body || `<tr><td colspan="10">No scored fits for ${state.team} in this class.</td></tr>`}</tbody></table>`;
     rows.innerHTML = `<div class="filter-bar"><span class="filter-label">Team</span>${chips}</div>
       <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${teamLogo(state.team)}${state.team} fits</span>
-      <span class="newsprint-eyebrow-meta">CBT payroll ${money(t.taxPayroll ?? t.committed)} &middot; tax space ${t.space != null ? formatMetric(t.space / 1e6, "surplusM") : EM_DASH}${t.payor ? ` &middot; ${esc(t.payor)}` : ""} &middot; baseline ${t.baseWins ?? "?"}w ${t.baseSrc === "mlb_projections" ? "(projected)" : "(contracted core)"} &middot; biggest deal ever ${money(t.maxGuar)} &middot; last-3-winter outlay ${money(t.recentSpend)}${fitsGfx}</span></div>
+      <span class="newsprint-eyebrow-meta">CBT payroll ${money(t.taxPayroll ?? t.committed)} &middot; tax space ${t.space != null ? formatMetric(t.space / 1e6, "surplusM") : DASH}${t.payor ? ` &middot; ${esc(t.payor)}` : ""} &middot; baseline ${t.baseWins ?? "?"}w ${t.baseSrc === "mlb_projections" ? "(projected)" : "(contracted core)"} &middot; biggest deal ever ${money(t.maxGuar)} &middot; last-3-winter outlay ${money(t.recentSpend)}${fitsGfx}</span></div>
       ${railLayout(fitsMain, fitsRail(byOrg, meta, state.team))}`;
     rows.querySelectorAll("[data-fa-team]").forEach(b => b.onclick = () => {
       state.team = b.dataset.faTeam; syncToURL(); render();
@@ -1559,12 +1559,12 @@
     const body = w.signings.map(s => `<tr${s.milb ? ' class="fa-dim"' : ""}>
         <td><strong>${esc(s.name)}</strong> <span class="fa-sub">${esc(s.pos || "")}</span>${s.qo ? ' <span title="Received a qualifying offer">QO</span>' : ""}</td>
         <td>${esc(s.from || "")} &rarr; ${teamLogo(s.to)}${esc(s.to || "")}</td>
-        <td>${s.years ?? EM_DASH}</td>
+        <td>${s.years ?? DASH}</td>
         <td>${s.milb ? "MiLB deal" : money(s.guar)}</td>
         <td>${money(s.aav)}</td>
-        <td title="Realized bWAR over the contract's elapsed seasons">${s.warTd != null ? formatMetric(s.warTd, "war") : EM_DASH}</td>
-        <td title="Realized surplus to date: WAR delivered x that season's estimated $/WAR minus prorated money paid">${s.surplusTd != null ? formatMetric(s.surplusTd / 1e6, "surplusM") : EM_DASH}</td>
-        <td>${s.done ? "complete" : (s.warTd != null ? "running" : EM_DASH)}</td>
+        <td title="Realized bWAR over the contract's elapsed seasons">${s.warTd != null ? formatMetric(s.warTd, "war") : DASH}</td>
+        <td title="Realized surplus to date: WAR delivered x that season's estimated $/WAR minus prorated money paid">${s.surplusTd != null ? formatMetric(s.surplusTd / 1e6, "surplusM") : DASH}</td>
+        <td>${s.done ? "complete" : (s.warTd != null ? "running" : DASH)}</td>
       </tr>`).join("");
     const arcGfx = (window.EEPHUS_GFX && w.signings.length)
       ? ` &middot; ${window.EEPHUS_GFX.chipHTML("fa-archive-gfx")}` : "";
@@ -1620,11 +1620,11 @@
       ${g1 ? `<h3>Gate 1 - projection engine (${g1.pass ? "PASSED" : "FAILING"})</h3>
       <div class="fa-note">train &le; N&minus;1, predict N, ten held-out seasons ${g1.targets ? g1.targets.join(", ") : ""} &middot; P10&ndash;P90 coverage ${g1.coverage_p10_p90 != null ? g1.coverage_p10_p90.toFixed(3) : "?"} (target 0.75&ndash;0.85)</div>
       <table class="detail-table"><thead><tr><th>Metric</th><th>Model MAE</th><th>Naive baseline</th><th>n</th><th>Verdict</th></tr></thead>
-      <tbody>${pooledRows(g1.pooled, v => v == null ? EM_DASH : v.toFixed(3))}</tbody></table>` : ""}
+      <tbody>${pooledRows(g1.pooled, v => v == null ? DASH : v.toFixed(3))}</tbody></table>` : ""}
       ${g2 ? `<h3>Gate 2 - market model (${g2.pass ? "PASSED" : "FAILING"})</h3>
       <div class="fa-note">forward-chained winters ${g2.test_winters ? g2.test_winters.join(", ") : ""} vs nearest-comps baseline &middot; guarantee/AAV in $M</div>
       <table class="detail-table"><thead><tr><th>Metric</th><th>Model MAE</th><th>Comps baseline</th><th>n</th><th>Verdict</th></tr></thead>
-      <tbody>${pooledRows(g2.pooled, v => v == null ? EM_DASH : v.toFixed(2))}</tbody></table>
+      <tbody>${pooledRows(g2.pooled, v => v == null ? DASH : v.toFixed(2))}</tbody></table>
       ${g2.pooled_by_pos_group ? `
       <h3>Where the model is systematically wrong</h3>
       <div class="fa-note">MAE says how far off the model is; BIAS says which
@@ -1635,7 +1635,7 @@
         <th>Model bias</th><th>Baseline bias</th><th>n</th><th>Lean</th></tr></thead>
       <tbody>${Object.entries(g2.pooled_by_pos_group).map(([k, v]) => {
         const b = v.bias_model;
-        const lean = b == null ? EM_DASH
+        const lean = b == null ? DASH
           : Math.abs(b) < 0.25 ? "no material lean"
           // Plain magnitude, NOT formatMetric: that helper prepends a sign for
           // "rate", which rendered "under-prices by +1.53M" and put a plus sign
@@ -1643,9 +1643,9 @@
           : (b < 0 ? "under-prices" : "over-prices")
             + " by $" + Math.abs(b).toFixed(2) + "M";
         return `<tr><td>${esc(k)}</td>
-          <td>${v.mae_model == null ? EM_DASH : v.mae_model.toFixed(2)}</td>
-          <td>${b == null ? EM_DASH : (b > 0 ? "+" : "") + b.toFixed(2)}</td>
-          <td>${v.bias_base == null ? EM_DASH
+          <td>${v.mae_model == null ? DASH : v.mae_model.toFixed(2)}</td>
+          <td>${b == null ? DASH : (b > 0 ? "+" : "") + b.toFixed(2)}</td>
+          <td>${v.bias_base == null ? DASH
                 : (v.bias_base > 0 ? "+" : "") + v.bias_base.toFixed(2)}</td>
           <td>${v.n}</td><td>${lean}</td></tr>`;
       }).join("")}</tbody></table>` : ""}
