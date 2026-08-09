@@ -236,12 +236,29 @@ ARTIFACTS = (
         "cadence": "monthly", "stability": STABLE, "pinned_by": "test_pal_smoke.py",
         "note": "",
     },
-    {"file": "arbitration.json", "group": "mlb",
-     "what": "Projected arbitration salaries and the remaining arbitration ladder for every eligible player.",
-     "pinned_by": "test_arb_export.py"},
-    {"file": "arb_history.json", "group": "mlb",
-     "what": "Per-season arbitration awards: actual, this model, and the MLB Trade Rumors projection, with both over/under columns.",
-     "pinned_by": "test_arb_export.py"},
+    {
+        "file": "arbitration.json", "group": "mlb",
+        "title": "Arbitration projections",
+        "what": ("Projected arbitration salaries and the remaining arbitration "
+                 "ladder for every player a club still controls."),
+        "cadence": "monthly", "stability": STABLE,
+        "pinned_by": "test_arb_export.py",
+        "note": ("First-year projections come from a gated model; second and "
+                 "later years come from an empirical raise multiplier, because "
+                 "the model was a measured null there. Seasons past 2026 assume "
+                 "the current CBA structure survives its expiry."),
+    },
+    {
+        "file": "arb_history.json", "group": "mlb",
+        "title": "Arbitration award history",
+        "what": ("Per-season arbitration awards: the actual figure, this model, "
+                 "and the MLB Trade Rumors projection, with the market and "
+                 "value residuals kept as separate columns."),
+        "cadence": "monthly", "stability": STABLE,
+        "pinned_by": "test_arb_export.py",
+        "note": ("The two residuals are never combined: one sums to roughly "
+                 "zero by construction and the other does not."),
+    },
     {
         "file": "milb_park_factors.json", "group": "mlb",
         "title": "MiLB park factors",

@@ -30,17 +30,17 @@
   // The site's null marker. fa.js and projections.js both render an absent
   // value as this; mlbstats rendered an EMPTY CELL, so a missing number and a
   // rendering bug looked identical on the only surface where whole columns
-  // are legitimately absent for unqualified players. Named EM_DASH to match
+  // are legitimately absent for unqualified players. Named DASH to match
   // fa.js, and like fa.js it is a spaced hyphen: real em-dashes are banned in
   // user-facing copy and tools/strip_emdashes.py lints assets/*.js.
-  var EM_DASH = " - ";
+  var DASH = " - ";
 
   // Mirror of PROSPX's formatMetric for the types this surface renders -
   // same precision rules, same null token, same -0 collapse. Kept local so
   // the MLB Stats page never imports the 2.4MB PROSPX script.
   function formatMetric(value, type = "int") {
     const n = Number(value);
-    if (value == null || value === "" || !Number.isFinite(n)) return EM_DASH;
+    if (value == null || value === "" || !Number.isFinite(n)) return DASH;
     const z = n === 0 ? 0 : n;                       // collapse -0 -> 0
     const sign = z > 0 ? "+" : (z < 0 ? "-" : "");   // zero is unsigned
     const abs = Math.abs(z);
@@ -67,7 +67,7 @@
   // assets/projections.js, including the comments and the FA-specific docstring
   // above it: test_number_format_parity.py compares the extracted text, so a
   // "tidied" copy is a failing copy. This surface was outside that contract
-  // entirely until 2026-08-03 - it carried its own EM_DASH and six one-off
+  // entirely until 2026-08-03 - it carried its own DASH and six one-off
   // formatters, two of which rendered an absent number as a bare "-" while
   // every other board on the site rendered " - ". Extending the test's MIRRORS
   // list to cover this file is a follow-up for the orchestrator; until then
@@ -83,13 +83,13 @@
   //   fSigned - one decimal, signed. "rate" is two decimals.
   function fInt(v) { return formatMetric(v, "int"); }
   function f1(v) { return formatMetric(v, "war"); }
-  function f2(v) { var n = num(v); return n == null ? EM_DASH : n.toFixed(2); }
+  function f2(v) { var n = num(v); return n == null ? DASH : n.toFixed(2); }
   // 3-decimal baseball slash formatter: .300 (drops the leading zero; OPS>1 keeps it).
-  function f3(v) { var n = num(v); return n == null ? EM_DASH : n.toFixed(3).replace(/^0\./, "."); }
+  function f3(v) { var n = num(v); return n == null ? DASH : n.toFixed(3).replace(/^0\./, "."); }
   // The payload carries rates as fractions and the contract's "pct" type
   // formats an already-scaled percentage, so scale first, then hand it over.
-  function fPct(v) { var n = num(v); return n == null ? EM_DASH : formatMetric(n * 100, "pct"); }
-  function fSigned(v) { var n = num(v); if (n == null) return EM_DASH; return (n > 0 ? "+" : "") + n.toFixed(1); }
+  function fPct(v) { var n = num(v); return n == null ? DASH : formatMetric(n * 100, "pct"); }
+  function fSigned(v) { var n = num(v); if (n == null) return DASH; return (n > 0 ? "+" : "") + n.toFixed(1); }
   function logo(team) {
     try { return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo) ? EEPHUS_HUB.teamLogo(team) : ""; }
     catch (e) { return ""; }
@@ -589,7 +589,7 @@
       body += "<tr" + prov + ">";
       cols.forEach(function (c) {
         if (c.kind === "name") { body += nameCell(r); return; }
-        if (c.kind === "team") { body += '<td class="mlbstats-name">' + logo(r.team) + esc(r.team || EM_DASH) + "</td>"; return; }
+        if (c.kind === "team") { body += '<td class="mlbstats-name">' + logo(r.team) + esc(r.team || DASH) + "</td>"; return; }
         if (c.cell) { body += "<td>" + c.cell(r) + "</td>"; return; }
         var v = getVal(c, r);
         // An absent value reads as the site-wide null marker rather than a
@@ -599,7 +599,7 @@
         // falls through to escaped text rather than the contract, which would
         // read it as absent.
         var rendered = c.fmt ? c.fmt(v, c.term)
-                     : (v == null || v === "" ? EM_DASH : esc(v));
+                     : (v == null || v === "" ? DASH : esc(v));
         body += "<td>" + rendered + "</td>";
       });
       body += "</tr>";
@@ -630,7 +630,7 @@
     var role = r.role ? ' <span class="bp-role">' + esc(r.role) + "</span>" : "";
     var team = r.team ? '<span class="proj-dim"> ' + esc(r.team) + "</span>" : "";
     var prov = (r.qualified === false) ? '<span class="bp-prov" title="below the qualifying sample - shown but provisional">prov</span>' : "";
-    var nm = esc(r.name || EM_DASH);
+    var nm = esc(r.name || DASH);
     // A row with no name at all gets no title rather than a title of null
     // markers: an empty tooltip is worse than none.
     var full = [r.name, r.team, r.role].filter(Boolean).join(" - ");
@@ -852,8 +852,8 @@
     var cards = sorted.map(function (t) {
       var slots = teamDepth(t).map(function (r) {
         return '<div class="bp-slot">'
-          + '<span class="bp-slot-role">' + esc(r.role || EM_DASH) + "</span>"
-          + '<span class="bp-slot-name"' + (r.name ? ' title="' + esc(r.name) + '"' : "") + ">" + esc(r.name || EM_DASH)
+          + '<span class="bp-slot-role">' + esc(r.role || DASH) + "</span>"
+          + '<span class="bp-slot-name"' + (r.name ? ' title="' + esc(r.name) + '"' : "") + ">" + esc(r.name || DASH)
           + (r.gmli != null ? '<span class="proj-dim"> gmLI ' + f2(r.gmli) + "</span>" : "") + "</span>"
           + '<span class="bp-slot-rem ' + remClass(r.rem_plus) + '">' + fInt(r.rem_plus) + "</span>"
           + "</div>";
@@ -909,8 +909,8 @@
     if (b.rho_rem_plus == null) return "";
     return '<div class="mlbstats-scorecard">'
       + '<span class="pal-sc-stat">' + gloss("REM+", "rem_plus") + ' forward &rho; <b>'
-      + b.rho_rem_plus + '</b><span class="proj-dim"> vs FIP ' + (b.rho_fip == null ? EM_DASH : b.rho_fip)
-      + ", ERA " + (b.rho_era == null ? EM_DASH : b.rho_era) + "</span></span>"
+      + b.rho_rem_plus + '</b><span class="proj-dim"> vs FIP ' + (b.rho_fip == null ? DASH : b.rho_fip)
+      + ", ERA " + (b.rho_era == null ? DASH : b.rho_era) + "</span></span>"
       + '<span class="pal-sc-stat"><b>' + esc(b.n_pairs) + "</b> out-of-sample year pairs"
       + (b.seasons ? '<span class="proj-dim"> (' + esc(b.seasons) + " seasons)</span>" : "") + "</span>"
       + (b.market_rho == null ? "" : '<span class="pal-sc-stat">market fit &rho; <b>' + b.market_rho + '</b><span class="proj-dim"> vs AAV</span></span>')
@@ -1330,8 +1330,8 @@
     if (b.rho_sem_plus == null) return "";
     return '<div class="mlbstats-scorecard">'
       + '<span class="pal-sc-stat">' + gloss("SEM+", "sem_plus") + ' forward &rho; <b>'
-      + b.rho_sem_plus + '</b><span class="proj-dim"> vs FIP ' + (b.rho_fip == null ? EM_DASH : b.rho_fip)
-      + ", ERA " + (b.rho_era == null ? EM_DASH : b.rho_era) + "</span></span>"
+      + b.rho_sem_plus + '</b><span class="proj-dim"> vs FIP ' + (b.rho_fip == null ? DASH : b.rho_fip)
+      + ", ERA " + (b.rho_era == null ? DASH : b.rho_era) + "</span></span>"
       + '<span class="pal-sc-stat"><b>' + esc(b.n_pairs) + "</b> out-of-sample year pairs"
       + (b.seasons ? '<span class="proj-dim"> (' + esc(b.seasons) + " seasons)</span>" : "") + "</span>"
       + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
@@ -1548,7 +1548,7 @@
       var slots = rot.map(function (r, i) {
         return '<div class="bp-slot">'
           + '<span class="bp-slot-role">SP' + (i + 1) + "</span>"
-          + '<span class="bp-slot-name"' + (r.name ? ' title="' + esc(r.name) + '"' : "") + ">" + esc(r.name || EM_DASH)
+          + '<span class="bp-slot-name"' + (r.name ? ' title="' + esc(r.name) + '"' : "") + ">" + esc(r.name || DASH)
           + (r.ip_per_gs != null ? '<span class="proj-dim"> ' + f1(r.ip_per_gs) + " IP/GS</span>" : "") + "</span>"
           + '<span class="bp-slot-rem ' + remClass(r.sem_plus) + '">' + fInt(r.sem_plus) + "</span>"
           + "</div>";
@@ -1860,8 +1860,8 @@
     if (b.rho_hem_plus == null) return "";
     return '<div class="mlbstats-scorecard">'
       + '<span class="pal-sc-stat">' + gloss("HEM+", "hem_plus") + ' forward &rho; <b>'
-      + b.rho_hem_plus + '</b><span class="proj-dim"> vs raw wOBA ' + (b.rho_woba == null ? EM_DASH : b.rho_woba)
-      + ", OPS " + (b.rho_ops == null ? EM_DASH : b.rho_ops) + ", AVG " + (b.rho_avg == null ? EM_DASH : b.rho_avg)
+      + b.rho_hem_plus + '</b><span class="proj-dim"> vs raw wOBA ' + (b.rho_woba == null ? DASH : b.rho_woba)
+      + ", OPS " + (b.rho_ops == null ? DASH : b.rho_ops) + ", AVG " + (b.rho_avg == null ? DASH : b.rho_avg)
       + "</span></span>"
       + '<span class="pal-sc-stat"><b>' + esc(b.n_pairs) + "</b> out-of-sample year pairs"
       + (b.seasons ? '<span class="proj-dim"> (' + esc(b.seasons) + " seasons)</span>" : "") + "</span>"
@@ -2067,7 +2067,7 @@
     var hand = h.bats ? '<span class="proj-dim"> ' + esc(h.bats) + "HB</span>" : "";
     return '<div class="bp-slot">'
       + '<span class="bp-slot-role">' + slotNum + "</span>"
-      + '<span class="bp-slot-name"' + (h.name ? ' title="' + esc(h.name) + '"' : "") + ">" + esc(h.name || EM_DASH) + hand + adv
+      + '<span class="bp-slot-name"' + (h.name ? ' title="' + esc(h.name) + '"' : "") + ">" + esc(h.name || DASH) + hand + adv
       + (h.pa != null ? '<span class="proj-dim"> ' + fInt(h.pa) + " PA</span>" : "") + "</span>"
       + '<span class="bp-slot-rem ' + hemClass(h.hem_plus) + '">' + fInt(h.hem_plus) + "</span>"
       + "</div>";
@@ -2094,7 +2094,7 @@
               var hand = h.bats ? '<span class="proj-dim"> ' + esc(h.bats) + "HB</span>" : "";
               return '<div class="bp-slot bp-slot--bench">'
                 + '<span class="bp-slot-role">&mdash;</span>'
-                + '<span class="bp-slot-name"' + (h.name ? ' title="' + esc(h.name) + '"' : "") + ">" + esc(h.name || EM_DASH) + hand
+                + '<span class="bp-slot-name"' + (h.name ? ' title="' + esc(h.name) + '"' : "") + ">" + esc(h.name || DASH) + hand
                 + (h.pa != null ? '<span class="proj-dim"> ' + fInt(h.pa) + " PA</span>" : "") + "</span>"
                 + '<span class="bp-slot-rem ' + hemClass(h.hem_plus) + '">' + fInt(h.hem_plus) + "</span>"
                 + "</div>";
@@ -2274,7 +2274,7 @@
   // negative reads down, a neutral band stays quiet.
   function levSignedCell(v, digits, band) {
     var n = num(v);
-    if (n == null) return EM_DASH;
+    if (n == null) return DASH;
     var d = (digits == null) ? 2 : digits;
     var b = band || 0;
     var col = n > b ? "var(--up)" : n < -b ? "var(--down)" : "var(--text-tertiary)";
@@ -2291,7 +2291,7 @@
       cell: function (r) { return levSignedCell(r.wpa, 2, 0); } },
     { key: "pli", label: "pLI", term: "pli", num: true, desc: true,
       title: "Average Leverage Index faced (1.0 = neutral). How high-stakes his plate appearances were on average.",
-      cell: function (r) { return r.pli == null ? EM_DASH : f2(r.pli); } },
+      cell: function (r) { return r.pli == null ? DASH : f2(r.pli); } },
     { key: "clutch", label: "Clutch", term: "clutch", num: true, desc: true,
       title: "WPA/pLI minus WPA/LI: how much more (or less) win probability he added in high-leverage spots than his own rate predicts. A timing read, not a skill.",
       cell: function (r) { return levSignedCell(r.clutch, 2, 0.5); } },
@@ -2424,7 +2424,7 @@
       var col = (c == null) ? "var(--text-tertiary)" : (c >= 0.5 ? "var(--up)" : (c <= -0.5 ? "var(--down)" : "var(--text-tertiary)"));
       return { x: r.wpa_li, y: r.pli, color: col,
                label: r.name + "  WPA/LI " + fSigned(r.wpa_li) + "  pLI " + f2(r.pli)
-                 + "  Clutch " + (c == null ? EM_DASH : fSigned(c)) };
+                 + "  Clutch " + (c == null ? DASH : fSigned(c)) };
     });
     sc = chart("scatter", pts, { height: 250, xLabel: "WPA/LI (context-neutral) →", yLabel: "↑ pLI (leverage faced)",
       xRef: 0, yRef: 1, aria: "production vs leverage faced" });
@@ -2655,7 +2655,7 @@
       var relRows = rows.map(function (r, i) {
         return { cells: [
           { t: i + 1 },
-          { t: r.name || EM_DASH, sub: r.team || undefined },
+          { t: r.name || DASH, sub: r.team || undefined },
           { t: fInt(r.rem_plus), c: "accent" },
           { t: fInt(r.rem_plus_3yr) },
           { t: fPct(r.k_bb_pct) },
@@ -2684,7 +2684,7 @@
       var bpRows = rows.map(function (t, i) {
         return { cells: [
           { t: i + 1 },
-          { t: t.team || EM_DASH },
+          { t: t.team || DASH },
           { t: fInt(t.bullpen_plus), c: "accent" },
           { t: fInt(t.high_lev_core_rem) },
           { t: f1(t.relief_ip) },
@@ -2707,7 +2707,7 @@
       var spRows = rows.map(function (r, i) {
         return { cells: [
           { t: i + 1 },
-          { t: r.name || EM_DASH, sub: r.team || undefined },
+          { t: r.name || DASH, sub: r.team || undefined },
           { t: fInt(r.sem_plus), c: "accent" },
           { t: fInt(r.sem_plus_3yr) },
           { t: fPct(r.k_bb_pct) },
@@ -2736,7 +2736,7 @@
       var hitRows = rows.map(function (r, i) {
         return { cells: [
           { t: i + 1 },
-          { t: r.name || EM_DASH, sub: r.team || undefined },
+          { t: r.name || DASH, sub: r.team || undefined },
           { t: fInt(r.hem_plus), c: "accent" },
           { t: fInt(r.hem_plus_3yr) },
           { t: f3(r.woba) },
@@ -2764,11 +2764,11 @@
       var levRows = rows.map(function (r, i) {
         var cells = [
           { t: i + 1 },
-          { t: r.name || EM_DASH, sub: r.team || undefined },
+          { t: r.name || DASH, sub: r.team || undefined },
           { t: fSigned(r.wpa), c: "accent" },
         ];
         if (isStart) {
-          cells.push({ t: r.wpa_per_start == null ? EM_DASH
+          cells.push({ t: r.wpa_per_start == null ? DASH
             : (r.wpa_per_start > 0 ? "+" : "") + Number(r.wpa_per_start).toFixed(2) });
           cells.push({ t: fSigned(r.wpa_li) });
         } else {

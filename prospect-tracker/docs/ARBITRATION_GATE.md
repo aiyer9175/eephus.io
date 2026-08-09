@@ -303,6 +303,39 @@ Scope split by population, because the consuming populations are not the same:
   and extrapolating a model fit on observed awards onto them is the shape of a
   prior failure in this repo. **For that population Lane C reduces to GATE B.**
 
+### GATE C IS BLOCKED, and the blocker is upstream of the model
+
+**Measured 2026-08-09. Not run, because its population is empty today.**
+
+The arbitration board can price 619 players. The projection board has 356
+unpriced veterans. **The overlap is ZERO.** (The board does overlap 514 of the
+*priced* vets, so the join itself works.)
+
+Root cause, traced to one player and confirmed: Anthony Volpe was optioned to
+the minors on 2026-08-04, and Spotrac lists optioned players in a FOURTH table
+(`id="table"`) that `spotrac.scrape_spotrac_team_contracts` never reads - it
+parses `dataTable-active`, `dataTable-injured` and `dataTable-dead` only. So the
+players with no contract dollars are exactly the players absent from the tables
+the contract scraper consumes, and they are absent for the same reason they are
+unpriced.
+
+That is why the platform's own diagnostic says `service_time_source: "PROXY -
+the pipeline carries no service time"` and reports `unpriceable 356`: the rows
+are not merely unpriced, they are **not in the contract set at all**.
+
+**Consequence for this gate.** GATE C cannot be adjudicated on the current
+Spotrac cache. Extending the parser to the minors table would change
+`scrape_spotrac_team_contracts` output for every consumer by adding
+minor-league contract rows, which has its own blast radius and needs its own
+gate; it is not a ride-along on this one. A pricing pass was written, measured
+at **0 rows priced**, and REVERTED rather than shipped, because a pass that
+prices nothing is not a deliverable and leaving it in the tree would suggest
+otherwise.
+
+**Registered next step, in order:** (1) widen the Spotrac table set behind its
+own byte-diff guard and measure how many of the 356 it recovers; (2) only then
+run C1-C6 below.
+
 - **C1** per-player beats the fitted ladder and the incumbent on the eligible
   population by more than its floor.
 - **C2** realized-surplus MAE on `surplus_backtest_real`'s resolved cohorts does
