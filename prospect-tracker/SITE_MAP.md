@@ -19,14 +19,15 @@ fetch strings.
 | 6 | `mlbstats` | MLB Stats | `/mlbstats/` | MLB Modules |
 | 7 | `pal` | Alchemy Lab | `/pal/` | MLB Modules |
 | 8 | `trademachine` | Trade Machine | `/trademachine/` | MLB Modules |
-| 9 | `fantasy` | Fantasy | `/fantasy/` | Diamond |
-| 10 | `betting` | Sports Betting | `/betting/` | Diamond |
-| 11 | `cards` | Card Market | `/cards/` | Diamond |
-| 12 | `diamond` | Diamond Pass | `/diamond/` | Diamond |
-| 13 | `articles` | Articles | `/articles/` | - |
-| 14 | `forums` | Forums | `/forums/` | - |
-| 15 | `glossary` | Glossary | `/glossary/` | - |
-| 16 | `team` | Developers | `/team/` | - |
+| 9 | `arbitration` | Arbitration | `/arbitration/` | MLB Modules |
+| 10 | `fantasy` | Fantasy | `/fantasy/` | Diamond |
+| 11 | `betting` | Sports Betting | `/betting/` | Diamond |
+| 12 | `cards` | Card Market | `/cards/` | Diamond |
+| 13 | `diamond` | Diamond Pass | `/diamond/` | Diamond |
+| 14 | `articles` | Articles | `/articles/` | - |
+| 15 | `forums` | Forums | `/forums/` | - |
+| 16 | `glossary` | Glossary | `/glossary/` | - |
+| 17 | `team` | Developers | `/team/` | - |
 
 ## PROSPX sub-sections (`build_site.PROSPX_SUBNAV`)
 
@@ -67,6 +68,7 @@ column below lists only what the surface's own module app fetches.
 | `/mlbstats/` | `build_site.build_mlbstats()` | `assets/mlbstats.js` | `bullpen_history.json`, `bullpen_leaderboards.json`, `hitter_history.json`, `hitter_leaderboards.json`, `leverage_consistency_eval.json`, `leverage_history.json`, `leverage_leaderboards.json`, `starter_history.json`, `starter_leaderboards.json` | MLB Stats: Bullpen Leaderboards / REM+ |
 | `/pal/` | `build_site.build_pal()` | `assets/pal.js` | `pal.json`, `player_links.json`, `positional_fit_ui.json` | Alchemy Lab |
 | `/trademachine/` | `build_site.build_trademachine()` | `assets/trademachine.js` | `glossary.json`, `grpo_public.json`, `grpo_scores.json`, `mlb_player_detail.json`, `trade_machine_eval.json`, `trade_values.json` | Trade Machine (Bayesian trade board + one-currency deal evaluator) |
+| `/arbitration/` | `build_site.build_arbitration()` | `assets/arbitration.js` | `arb_history.json`, `arbitration.json` | Arbitration Predictor - projected arbitration salaries for every eligible player, and a per-season record of who the arbitration market overpaid and underpaid. |
 | `/fantasy/` | `build_site.build_fantasy()` | `assets/dfs.js`, `assets/dynasty.js`, `assets/fantasy-card.js`, `assets/fantasy-hub.js`, `assets/redraft.js` | `dfs.json`, `fantasy.json`, `glossary.json` | Fantasy: ROS rankings + daily streamers, multi-format (Ottoneu) scoring |
 | `/dynasty/` | `build_site.build_dynasty()` | server-rendered | - | redirect stub: Dynasty is a sub-module of /fantasy/ (hash-preserving) |
 | `/redraft/` | `build_site.build_redraft()` | server-rendered | - | redirect stub: Redraft is a sub-module of /fantasy/ (hash-preserving) |

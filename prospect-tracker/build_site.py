@@ -86,6 +86,7 @@ _GL_DATA_VER = _asset_ver("data/glossary.json")
 _PROJ_VER = _asset_ver("assets/projections.js")
 _MLBSTATS_VER = _asset_ver("assets/mlbstats.js")
 _PAL_VER = _asset_ver("assets/pal.js")
+_ARB_VER = _asset_ver("assets/arbitration.js")
 _TM_VER = _asset_ver("assets/trademachine.js")
 _TM_CSS_VER = _asset_ver("assets/trademachine.css")
 _HUB_VER = _asset_ver("assets/eephus-hub.js")
@@ -268,6 +269,7 @@ NAV_ITEMS = [
         ("mlbstats",    "MLB Stats",   "/mlbstats/"),
         ("pal",         "Alchemy Lab", "/pal/"),
         ("trademachine", "Trade Machine", "/trademachine/"),
+        ("arbitration", "Arbitration", "/arbitration/"),
     ]},
     # 2026-08-05: the Diamond section. 2026-08-07: Dynasty / Redraft / DFS
     # collapsed back into ONE "Fantasy" leaf, because three of the group's six
@@ -436,6 +438,7 @@ MODULE_STAGE = {
     "projections": ("β", "MLB Projections is in beta - newly launched; numbers may shift as the model matures"),
     "mlbstats": ("β", "MLB Stats is in beta - newly launched; metrics may shift as the models mature"),
     "pal": ("β", "Alchemy Lab is in beta - newly launched; the conversion models are provisional"),
+    "arbitration": ("β", "Arbitration Predictor is in beta - newly launched; the arb-1 model is gated, the arb-2-and-later projection is a population multiplier"),
     "forums": ("β", "Forums is in beta - newly launched"),
     "parks": ("β", "MiLB Park Factors is in beta - newly launched; the factors are a measured artifact, the surface is new"),
     # Diamond section (2026-08-05). These rows carry the FULL chip text in
@@ -3206,6 +3209,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
                       "collegesavant": "CollegeSavant",
                       "glossary": "Glossary & Methodology"}
     sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$", "projections": "Δ",
+                     "arbitration": "⚖",
                      "collegesavant": "✪", "glossary": "§", "forums": "❝",
                      "team": "⚒", "mlbstats": "▦", "pal": "⚗", "trademachine": "⇄",
                      # Diamond section. One row for Fantasy again after the
@@ -3629,6 +3633,172 @@ def build_projections() -> str:
                 "buckets, aging-curve decay, contract surplus on salary-known seasons, and PROSPX "
                 "prospects joining at their projected ETA.",
                 url=f"{SITE_ORIGIN}/projections/")
+
+
+
+def _arb_model_panel() -> str:
+    """The Model section, SERVER-RENDERED so it is complete with JavaScript off.
+
+    An accountability surface that needs a script to say what it measured is not
+    an accountability surface. Same argument as assets/accountability.js:8-14.
+    Reads data/arbitration_eval.json at BUILD time, so the artifact costs zero
+    bytes on the wire.
+    """
+    import json as _json
+    src = ROOT / "data" / "arbitration_eval.json"
+    if not src.exists():
+        return ('<div class="card arb-note"><p><strong>The gate has not been '
+                'run.</strong> This module ships its evaluation with it. Until '
+                'the eval artifact exists there is nothing to report here, and '
+                'nothing above should be read as validated.</p></div>')
+    try:
+        ev = _json.loads(src.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ('<div class="card arb-note"><p>The evaluation artifact is '
+                'unreadable.</p></div>')
+
+    res = ev.get("results") or {}
+    a6 = ev.get("a6_swartz") or {}
+    pool = ev.get("pool") or {}
+
+    def tile(num, lab, defn, tone="navy"):
+        return (f'<div class="arb-tile arb-tile--{tone}">'
+                f'<div class="arb-tilen">{html.escape(str(num))}</div>'
+                f'<div class="arb-tilelab">{html.escape(lab)}</div>'
+                f'<div class="arb-tiledef">{html.escape(defn)}</div></div>')
+
+    tiles = []
+    a1 = res.get("arb1") or {}
+    a2 = res.get("arb2plus") or {}
+    if a1:
+        tiles.append(tile(
+            "%.2fx" % (a1.get("gain_over_floor") or 0), "arb-1 vs its floor",
+            "the first-trip model beats an intercept-plus-WAR bar by this "
+            "multiple of its own minimum detectable effect",
+            "green" if a1.get("resolvable") else "orange"))
+    if a2:
+        tiles.append(tile(
+            "%.2fx" % (a2.get("gain_over_floor") or 0), "arb-2+ vs its floor",
+            "below 1.00 is a NULL: the model does not beat a step multiplier by "
+            "more than the floor", "orange"))
+    if a6.get("n"):
+        tiles.append(tile(
+            "%.1fx" % (a6.get("ratio_ours_over_swartz") or 0),
+            "Swartz is more accurate",
+            "on the %d settled seasons where MLB Trade Rumors published a "
+            "projection" % a6["n"], "red"))
+    tiles.append(tile(
+        pool.get("rows", "-"), "scored player-seasons",
+        "%s players over %s forward-chained folds"
+        % (pool.get("players", "-"), pool.get("folds", "-"))))
+
+    rows = []
+    for name, r in res.items():
+        ctl = r.get("a3_control") or {}
+        rows.append(
+            '<details class="arb-row"><summary class="arb-sum">'
+            '<span class="arb-vd arb-vd--%s">%s</span> %s</summary><dl>'
+            '<dt>baseline</dt><dd>%s</dd>'
+            '<dt>MdAPE, model</dt><dd>%.4f</dd>'
+            '<dt>MdAPE, baseline</dt><dd>%.4f</dd>'
+            '<dt>gain</dt><dd>%+.5f</dd>'
+            '<dt>floor (MDE95, one-sided)</dt><dd>%.5f</dd>'
+            '<dt>gain over floor</dt><dd>%.2fx</dd>'
+            '<dt>zero-information control</dt><dd>permuted p95 %+.5f, '
+            'P(permuted at or above real) = %.3f</dd>'
+            '<dt>paired rows</dt><dd>%d</dd></dl></details>'
+            % ("pass" if r.get("verdict") == "PASS" else "null",
+               html.escape(str(r.get("verdict", "?"))), html.escape(name),
+               html.escape(str(r.get("bar_description", ""))),
+               r.get("mdape_champion") or 0, r.get("mdape_bar") or 0,
+               r.get("mdape_gain") or 0, r.get("mde95_onesided") or 0,
+               r.get("gain_over_floor") or 0,
+               ctl.get("permuted_p95") or 0, ctl.get("p_perm_ge_real") or 0,
+               r.get("n_paired") or 0))
+
+    losses = []
+    for entry in ev.get("loss_ledger") or []:
+        losses.append('<li><strong>%s</strong>: %s</li>'
+                      % (html.escape(str(entry.get("claim", ""))),
+                         html.escape(str(entry.get("statement", "")))))
+
+    gaps = (
+        "<ul>"
+        "<li>It prices the SYSTEM, not the hearing. There is no access to filed "
+        "figures, so a case that went to a panel is scored on its award alone.</li>"
+        "<li>Arbitration steps before 2022 are reconstructed, and the substitute "
+        "sources measure 0.66 and 0.70 agreement against published service time. "
+        "Those seasons are reported and NOT scored.</li>"
+        "<li>2020 is never a label year. Salaries were paid at 60/162 of contract "
+        "and the sources disagree on which basis they report.</li>"
+        "<li>The collective bargaining agreement in force expires 2026-12-01. "
+        "Every projected season from 2027 assumes its arbitration structure "
+        "survives unchanged. That is not estimated from data and no interval "
+        "here covers it.</li>"
+        "<li>Non-tendered players are absent by construction. They are the "
+        "bottom of the award distribution, so summing these projections "
+        "OVERSTATES what a club actually owes.</li>"
+        "</ul>")
+
+    return (
+        '<div class="arb-scorecard">%s</div>'
+        '<div class="section-head"><h2>What was measured</h2>'
+        '<span class="section-sub">Registered before the numbers were read</span></div>'
+        '%s'
+        '<div class="section-head"><h2>Losses</h2>'
+        '<span class="section-sub">On the same footing as the wins</span></div>'
+        '<ul class="arb-losses">%s</ul>'
+        '<div class="section-head"><h2>What this model cannot tell you</h2></div>'
+        '<div class="card arb-note">%s</div>'
+        % ("".join(tiles), "".join(rows),
+           "".join(losses) or "<li>No rejected variants are recorded, which "
+                              "means the gate has been run once.</li>",
+           gaps))
+
+
+def build_arbitration() -> str:
+    """The /arbitration/ module: what a club still owes its arbitration-eligible
+    players, and how the arbitration market has priced them.
+
+    Four sections. Projections and Team View read data/arbitration.json;
+    Arbitration History lazily fetches data/arb_history.json on first open,
+    because it is the bigger payload and most visits never open it; the Model
+    section is server-rendered and needs no script at all."""
+    stage = MODULE_STAGE["arbitration"]
+    body = (
+        '<div class="fa-app mlbstats-app arb-app">'
+        '<div class="section-head section-head--byline"><div class="section-head-titles">'
+        + CREATED_BY_BANNER
+        + '<h1>Arbitration Predictor <span class="eephus-beta" title="'
+        + html.escape(stage[1]) + '">&beta; beta</span></h1></div>'
+        '<span class="section-sub">What every arbitration-eligible player is '
+        'still owed, and what the arbitration market paid him against comparable '
+        'players and against his own production. The first-trip model is gated '
+        'and beats its baseline; the second-and-later projection is a population '
+        'multiplier, because the model did not beat one.</span></div>'
+        '<div id="arb-caveatbar"></div>'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Arbitration sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-arbsection="projections" role="tab" aria-selected="true" aria-controls="arb-panel-projections">Projections</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-arbsection="history" role="tab" aria-selected="false" aria-controls="arb-panel-history">Arbitration History</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-arbsection="teams" role="tab" aria-selected="false" aria-controls="arb-panel-teams">Team View</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-arbsection="model" role="tab" aria-selected="false" aria-controls="arb-panel-model">Model</button>'
+        '</div>'
+        '<div id="arb-panel-projections" class="mlbstats-section" role="tabpanel" aria-label="Projections">'
+        '<div id="arb-app-root"' + _csv_optin("arbitration") + '></div>'
+        '</div>'
+        '<div id="arb-panel-history" class="mlbstats-section" role="tabpanel" aria-label="Arbitration History" hidden></div>'
+        '<div id="arb-panel-teams" class="mlbstats-section" role="tabpanel" aria-label="Team View" hidden></div>'
+        '<div id="arb-panel-model" class="mlbstats-section" role="tabpanel" aria-label="Model" hidden>'
+        + _arb_model_panel() + '</div>'
+        '</div>'
+        '<script src="/assets/eephus-hub.js?v=' + _HUB_VER + '" defer></script>'
+        '<script src="/assets/arbitration.js?v=' + _ARB_VER + '" defer></script>'
+    )
+    return page("Arbitration Predictor - eephus.io", "arbitration", body,
+                "Projected arbitration salaries for every eligible MLB player, "
+                "and a per-season record of who the arbitration market overpaid "
+                "and underpaid.",
+                url=SITE_ORIGIN + "/arbitration/")
 
 
 def build_trademachine() -> str:
@@ -5388,6 +5558,7 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/mlbstats/", "daily", "0.8"),
         ("/pal/", "daily", "0.8"),
         ("/trademachine/", "daily", "0.8"),
+        ("/arbitration/", "daily", "0.8"),
         # /dynasty/, /redraft/ and /dfs/ are redirect stubs into /fantasy/ and
         # carry meta robots=noindex, so they are deliberately absent here (same
         # treatment as /teams/). Their content is one crawlable page.
@@ -5986,6 +6157,7 @@ def main() -> None:
     _write("mlbstats/index.html", build_mlbstats())
     _write("pal/index.html", build_pal())
     _write("trademachine/index.html", build_trademachine())
+    _write("arbitration/index.html", build_arbitration())
     _write("fantasy/index.html", build_fantasy())
     # Diamond section (2026-08-05). Six public pages; the gate flag is off.
     _write("dynasty/index.html", build_dynasty())

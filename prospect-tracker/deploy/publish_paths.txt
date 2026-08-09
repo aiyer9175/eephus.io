@@ -29,6 +29,7 @@ index.html
 robots.txt
 sitemap.xml
 favicon.ico
+arbitration
 articles
 assets
 betting

@@ -236,6 +236,12 @@ ARTIFACTS = (
         "cadence": "monthly", "stability": STABLE, "pinned_by": "test_pal_smoke.py",
         "note": "",
     },
+    {"file": "arbitration.json", "group": "mlb",
+     "what": "Projected arbitration salaries and the remaining arbitration ladder for every eligible player.",
+     "pinned_by": "test_arb_export.py"},
+    {"file": "arb_history.json", "group": "mlb",
+     "what": "Per-season arbitration awards: actual, this model, and the MLB Trade Rumors projection, with both over/under columns.",
+     "pinned_by": "test_arb_export.py"},
     {
         "file": "milb_park_factors.json", "group": "mlb",
         "title": "MiLB park factors",

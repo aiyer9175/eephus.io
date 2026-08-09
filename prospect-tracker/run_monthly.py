@@ -275,6 +275,9 @@ SCHEDULED_EXPORTS = (
     # 'unwatched' and dropped, which is exactly what happened to
     # fa_class_identity for a day.
     "efv_regen_tripwire",
+    # The /arbitration/ board. Watched because a silent failure
+    # here empties a whole module rather than erroring.
+    "arbitration_export",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -4570,6 +4573,25 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.info("pal: %d conversion candidates scored", _pal_n)
             except Exception:
                 log.exception("alchemy lab export failed - continuing")
+
+        # --- 6b7. Arbitration Predictor (arbitration.json) ---------------
+        # Projected arbitration salaries for every eligible player plus the
+        # per-season award history. Reads the committed arbitration ledger,
+        # the Spotrac status grid and the projection board; the one-time
+        # MLBTR ingest is NOT part of this and never runs from the pipeline.
+        # Additive; never aborts.
+        with _step("6b7. Arbitration Predictor (arbitration.json)", log):
+            try:
+                from arb_export import export as _export_arb
+                _arb = _export_arb(log=log.info)
+                _arb_n = len((_arb.get("board") or {}).get("rows") or [])
+                log.info("arbitration: %d players with remaining arb years", _arb_n)
+                _record_ingest("arbitration_export", True, _arb_n,
+                               "arbitration board", "mlb", log)
+            except Exception:
+                log.exception("arbitration export failed - continuing")
+                _record_ingest("arbitration_export", False, 0,
+                               "arbitration export raised", "mlb", log)
 
         # --- 6b6. Fantasy Tools (the /fantasy/ surface) -----------------
         # ROS fantasy projections (reuse the FA/Projections engine) scored in the

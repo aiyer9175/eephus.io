@@ -21,6 +21,8 @@ ROOT = Path(__file__).parent
 # models with no user-facing methodology surface). EVERY registry row
 # must appear; a new model ships with its documentation decision.
 MODEL_GLOSSARY = {
+    "arb_award": ["arb_award_model", "arb_market_residual"],
+    "arb_label_set": "internal",
     "xfv_label_replacement": "internal",
     "xfv_rank_objective": "internal",
     "surplus_decomposition_v6": "internal",

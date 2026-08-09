@@ -180,6 +180,7 @@ _ROUTE_NOTES = {
     "mlbstats/index.html": "MLB Stats: Bullpen Leaderboards / REM+",
     "pal/index.html": "Alchemy Lab",
     "trademachine/index.html": "Trade Machine (Bayesian trade board + one-currency deal evaluator)",
+    "arbitration/index.html": "Arbitration Predictor - projected arbitration salaries for every eligible player, and a per-season record of who the arbitration market overpaid and underpaid.",
     "fantasy/index.html": "Fantasy: ROS rankings + daily streamers, multi-format (Ottoneu) scoring",
     "dynasty/index.html": "redirect stub: Dynasty is a sub-module of /fantasy/ (hash-preserving)",
     "redraft/index.html": "redirect stub: Redraft is a sub-module of /fantasy/ (hash-preserving)",

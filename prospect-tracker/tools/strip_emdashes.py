@@ -60,6 +60,7 @@ TARGETS: list[str] = [
     # coverage-gap fix (copy audit 2026-07-16): pages users load that the
     # gate never scanned - clean today, guarded from here on
     "trademachine/index.html",
+    "arbitration/index.html",
     "news/index.html",
     "sources/index.html",
     "teams/index.html",
