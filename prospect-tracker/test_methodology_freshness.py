@@ -24,6 +24,7 @@ MODEL_GLOSSARY = {
     "arb_award": ["arb_award_model", "arb_market_residual"],
     "arb_label_set": "internal",
     "arb_fa_link": "internal",
+    "arb_ladder": "internal",
     "xfv_label_replacement": "internal",
     "xfv_rank_objective": "internal",
     "surplus_decomposition_v6": "internal",

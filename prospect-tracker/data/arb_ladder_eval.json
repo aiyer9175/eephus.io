@@ -1,0 +1,63 @@
+{
+ "generated_at": "2026-08-09",
+ "produced_by": "python tools/arb_gate_b.py --write",
+ "model": "arb_ladder",
+ "gate": "docs/ARBITRATION_GATE.md section 5 (GATE B)",
+ "conventions": {
+  "target": "OBSERVED arbitration dollars, never surplus_backtest_real, whose realized side is computed from the same constant being fitted",
+  "metric": "MAE of the DISCOUNTED arbitration-window salary total per player",
+  "basis": "prior_season, matching the shipped clemens_2026 set",
+  "floor": "paired bootstrap clustered on PLAYER, refitting the ladder on every draw, one-sided MDE95"
+ },
+ "n_players": 285,
+ "n_per_step": {
+  "1": 196,
+  "2": 196,
+  "3": 114
+ },
+ "fitted_ladder": [
+  0.15178942178111696,
+  0.34960700819833324,
+  0.5896178147779022,
+  0.5896178147779022
+ ],
+ "incumbents": {
+  "clemens_2026": [
+   0.15,
+   0.35,
+   0.5,
+   0.75
+  ],
+  "prospx_current": [
+   0.4,
+   0.6,
+   0.8
+  ]
+ },
+ "mae_usd": {
+  "fitted": 5436123.793423032,
+  "clemens_2026": 4996932.018610516,
+  "prospx_current": 11182253.868322365
+ },
+ "b1_gain_vs_clemens_usd": -439191.77481251676,
+ "mde95_onesided_usd": 829198.1077774048,
+ "gain_over_floor": -0.5296584383070205,
+ "resolvable": false,
+ "b2_one_parameter_twin": {
+  "best_scalar": 0.6700000000000004,
+  "mae_usd": 4053861.6824750784,
+  "share_of_fitted_gain_captured": 1.0,
+  "level_only": true
+ },
+ "b3_rank_identical_twins_beating_fit": 139,
+ "verdict_gate": "NULL",
+ "verdict": "unvalidated",
+ "config_changed": false,
+ "loss_ledger": [
+  {
+   "claim": "the fitted arbitration ladder should replace the shipped constant",
+   "verdict": "NULL",
+   "statement": "The fitted ladder is a LEVEL correction, not a shape correction. A single global scalar applied to the shipped clemens_2026 ladder captures 100.0% of the fitted ladder's improvement, against a pre-registered 75% rule. It ships, if it ships, as one parameter. The three- and four-number ladders are NOT supported by this measurement, and value_framework_config.yaml is UNCHANGED."
+  }
+ ]
+}
