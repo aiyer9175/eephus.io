@@ -1,0 +1,416 @@
+{
+ "generated_at": "2026-08-08",
+ "version": "arb_panel_v1",
+ "produced_by": "arb_dataset.build_panel",
+ "window": [
+  2008,
+  2026
+ ],
+ "label_window": [
+  2011,
+  2026
+ ],
+ "scored_seasons": [
+  2022,
+  2023,
+  2024,
+  2025,
+  2026
+ ],
+ "ledger_present": true,
+ "super_two_verified": false,
+ "conventions": {
+  "spine": "war_daily bat+pit parquet, stints collapsed, salary MAX not SUM, two-way merge OUTER",
+  "label": "Baseball Reference season salary, fused with the MLBTR settled figure where present",
+  "arb_step": "fused from mlbtr_service > spotrac_backprop(>=2024) > fa_class_backcount > debut_heuristic",
+  "max_cut": "CBA Article VI: a ratio below 0.80 is not an award, so those rows are EXCLUDED by definition",
+  "2020": "never a label year; war_daily's 2020 salary is the UNPRORATED award"
+ },
+ "audit": {
+  "by_season": {
+   "2011": {
+    "rows": 1295,
+    "labelled": 561,
+    "labelled_with_salary": 533,
+    "clean": 462,
+    "salary_coverage": 0.9501,
+    "max_cut_removed": 71,
+    "max_cut_removal_rate": 0.1332,
+    "excluded": {
+     "sub_max_cut_not_an_award": 71
+    },
+    "source_mix": {
+     "debut_heuristic": 561
+    }
+   },
+   "2012": {
+    "rows": 1284,
+    "labelled": 362,
+    "labelled_with_salary": 328,
+    "clean": 304,
+    "salary_coverage": 0.9061,
+    "max_cut_removed": 24,
+    "max_cut_removal_rate": 0.0732,
+    "excluded": {
+     "sub_max_cut_not_an_award": 24
+    },
+    "source_mix": {
+     "debut_heuristic": 302,
+     "fa_class_backcount": 60
+    }
+   },
+   "2013": {
+    "rows": 1304,
+    "labelled": 360,
+    "labelled_with_salary": 324,
+    "clean": 309,
+    "salary_coverage": 0.9,
+    "max_cut_removed": 15,
+    "max_cut_removal_rate": 0.0463,
+    "excluded": {
+     "sub_max_cut_not_an_award": 15
+    },
+    "source_mix": {
+     "debut_heuristic": 225,
+     "fa_class_backcount": 135
+    }
+   },
+   "2014": {
+    "rows": 1320,
+    "labelled": 365,
+    "labelled_with_salary": 337,
+    "clean": 324,
+    "salary_coverage": 0.9233,
+    "max_cut_removed": 13,
+    "max_cut_removal_rate": 0.0386,
+    "excluded": {
+     "sub_max_cut_not_an_award": 13
+    },
+    "source_mix": {
+     "debut_heuristic": 191,
+     "fa_class_backcount": 174
+    }
+   },
+   "2015": {
+    "rows": 1348,
+    "labelled": 364,
+    "labelled_with_salary": 332,
+    "clean": 310,
+    "salary_coverage": 0.9121,
+    "max_cut_removed": 12,
+    "max_cut_removal_rate": 0.0373,
+    "excluded": {
+     "multiyear_extension": 37,
+     "sub_max_cut_not_an_award": 12
+    },
+    "source_mix": {
+     "debut_heuristic": 212,
+     "fa_class_backcount": 152
+    }
+   },
+   "2016": {
+    "rows": 1353,
+    "labelled": 350,
+    "labelled_with_salary": 320,
+    "clean": 272,
+    "salary_coverage": 0.9143,
+    "max_cut_removed": 26,
+    "max_cut_removal_rate": 0.0872,
+    "excluded": {
+     "multiyear_extension": 78,
+     "sub_max_cut_not_an_award": 26
+    },
+    "source_mix": {
+     "debut_heuristic": 210,
+     "fa_class_backcount": 140
+    }
+   },
+   "2017": {
+    "rows": 1358,
+    "labelled": 353,
+    "labelled_with_salary": 324,
+    "clean": 290,
+    "salary_coverage": 0.9178,
+    "max_cut_removed": 16,
+    "max_cut_removal_rate": 0.0523,
+    "excluded": {
+     "multiyear_extension": 93,
+     "sub_max_cut_not_an_award": 16
+    },
+    "source_mix": {
+     "debut_heuristic": 207,
+     "fa_class_backcount": 146
+    }
+   },
+   "2018": {
+    "rows": 1379,
+    "labelled": 360,
+    "labelled_with_salary": 323,
+    "clean": 296,
+    "salary_coverage": 0.8972,
+    "max_cut_removed": 9,
+    "max_cut_removal_rate": 0.0295,
+    "excluded": {
+     "multiyear_extension": 110,
+     "sub_max_cut_not_an_award": 9
+    },
+    "source_mix": {
+     "debut_heuristic": 196,
+     "fa_class_backcount": 164
+    }
+   },
+   "2019": {
+    "rows": 1410,
+    "labelled": 361,
+    "labelled_with_salary": 336,
+    "clean": 291,
+    "salary_coverage": 0.9307,
+    "max_cut_removed": 27,
+    "max_cut_removal_rate": 0.0849,
+    "excluded": {
+     "multiyear_extension": 108,
+     "sub_max_cut_not_an_award": 27
+    },
+    "source_mix": {
+     "debut_heuristic": 212,
+     "fa_class_backcount": 149
+    }
+   },
+   "2020": {
+    "rows": 1289,
+    "labelled": 344,
+    "labelled_with_salary": 282,
+    "clean": 0,
+    "salary_coverage": 0.8198,
+    "max_cut_removed": 0,
+    "max_cut_removal_rate": null,
+    "excluded": {
+     "season_2020_not_a_label_year": 1196,
+     "multiyear_extension": 93
+    },
+    "source_mix": {
+     "debut_heuristic": 200,
+     "fa_class_backcount": 144
+    }
+   },
+   "2021": {
+    "rows": 1508,
+    "labelled": 376,
+    "labelled_with_salary": 317,
+    "clean": 269,
+    "salary_coverage": 0.8431,
+    "max_cut_removed": 33,
+    "max_cut_removal_rate": 0.1093,
+    "excluded": {
+     "multiyear_extension": 92,
+     "sub_max_cut_not_an_award": 33
+    },
+    "source_mix": {
+     "debut_heuristic": 216,
+     "fa_class_backcount": 160
+    }
+   },
+   "2022": {
+    "rows": 1495,
+    "labelled": 400,
+    "labelled_with_salary": 330,
+    "clean": 284,
+    "salary_coverage": 0.825,
+    "max_cut_removed": 20,
+    "max_cut_removal_rate": 0.0658,
+    "excluded": {
+     "multiyear_extension": 103,
+     "sub_max_cut_not_an_award": 20
+    },
+    "source_mix": {
+     "mlbtr_service": 218,
+     "debut_heuristic": 124,
+     "fa_class_backcount": 58
+    }
+   },
+   "2023": {
+    "rows": 1457,
+    "labelled": 428,
+    "labelled_with_salary": 379,
+    "clean": 332,
+    "salary_coverage": 0.8855,
+    "max_cut_removed": 15,
+    "max_cut_removal_rate": 0.0432,
+    "excluded": {
+     "multiyear_extension": 120,
+     "sub_max_cut_not_an_award": 15
+    },
+    "source_mix": {
+     "mlbtr_service": 262,
+     "debut_heuristic": 107,
+     "fa_class_backcount": 59
+    }
+   },
+   "2024": {
+    "rows": 1454,
+    "labelled": 400,
+    "labelled_with_salary": 365,
+    "clean": 316,
+    "salary_coverage": 0.9125,
+    "max_cut_removed": 20,
+    "max_cut_removal_rate": 0.0595,
+    "excluded": {
+     "multiyear_extension": 116,
+     "sub_max_cut_not_an_award": 20
+    },
+    "source_mix": {
+     "mlbtr_service": 246,
+     "debut_heuristic": 124,
+     "fa_class_backcount": 28,
+     "spotrac_backprop": 2
+    }
+   },
+   "2025": {
+    "rows": 1470,
+    "labelled": 368,
+    "labelled_with_salary": 316,
+    "clean": 272,
+    "salary_coverage": 0.8587,
+    "max_cut_removed": 19,
+    "max_cut_removal_rate": 0.0653,
+    "excluded": {
+     "multiyear_extension": 115,
+     "sub_max_cut_not_an_award": 19
+    },
+    "source_mix": {
+     "mlbtr_service": 235,
+     "debut_heuristic": 120,
+     "fa_class_backcount": 12,
+     "spotrac_backprop": 1
+    }
+   },
+   "2026": {
+    "rows": 1362,
+    "labelled": 366,
+    "labelled_with_salary": 302,
+    "clean": 198,
+    "salary_coverage": 0.8251,
+    "max_cut_removed": 15,
+    "max_cut_removal_rate": 0.0704,
+    "excluded": {
+     "multiyear_extension": 235,
+     "sub_max_cut_not_an_award": 15
+    },
+    "source_mix": {
+     "mlbtr_service": 236,
+     "debut_heuristic": 119,
+     "spotrac_backprop": 11
+    }
+   }
+  },
+  "totals": {
+   "rows": 25892,
+   "labelled": 7709,
+   "clean": 4529,
+   "max_cut_removed": 479,
+   "max_cut_removal_rate": 0.0956,
+   "post_filter_violation_rate": 0.0,
+   "post_filter_note": "0 by construction: the maximum-cut rule is a definitional exclusion, so this number is not evidence. Read max_cut_removal_rate instead."
+  },
+  "disagreement": {
+   "by_pair": {
+    "mlbtr_service|spotrac_backprop": {
+     "n": 195,
+     "agree": 166,
+     "rate": 0.8513,
+     "confusion": {
+      "1->1": 127,
+      "2->2": 38,
+      "1->2": 17,
+      "2->3": 9,
+      "2->1": 3,
+      "3->3": 1
+     }
+    },
+    "mlbtr_service|fa_class_backcount": {
+     "n": 386,
+     "agree": 253,
+     "rate": 0.6554,
+     "confusion": {
+      "3->3": 109,
+      "2->2": 82,
+      "1->1": 62,
+      "1->2": 47,
+      "2->3": 42,
+      "1->3": 30,
+      "2->1": 9,
+      "3->2": 3,
+      "3->1": 2
+     }
+    },
+    "mlbtr_service|debut_heuristic": {
+     "n": 1033,
+     "agree": 727,
+     "rate": 0.7038,
+     "confusion": {
+      "1->1": 355,
+      "2->2": 213,
+      "3->3": 159,
+      "1->2": 89,
+      "2->3": 70,
+      "3->4": 68,
+      "2->1": 49,
+      "3->2": 22,
+      "3->1": 7,
+      "2->4": 1
+     }
+    },
+    "spotrac_backprop|fa_class_backcount": {
+     "n": 3,
+     "agree": 0,
+     "rate": 0.0,
+     "confusion": {
+      "1->3": 3
+     }
+    },
+    "spotrac_backprop|debut_heuristic": {
+     "n": 169,
+     "agree": 150,
+     "rate": 0.8876,
+     "confusion": {
+      "1->1": 98,
+      "2->2": 47,
+      "2->1": 7,
+      "3->3": 5,
+      "2->3": 4,
+      "1->2": 4,
+      "3->1": 3,
+      "3->2": 1
+     }
+    },
+    "fa_class_backcount|debut_heuristic": {
+     "n": 1459,
+     "agree": 777,
+     "rate": 0.5326,
+     "confusion": {
+      "1->1": 265,
+      "2->2": 259,
+      "3->3": 253,
+      "3->2": 129,
+      "2->1": 127,
+      "1->2": 92,
+      "2->3": 87,
+      "3->4": 87,
+      "3->1": 64,
+      "1->3": 38,
+      "2->4": 36,
+      "1->4": 22
+     }
+    }
+   },
+   "source_mix": {
+    "debut_heuristic": 4917,
+    "fa_class_backcount": 1581,
+    "mlbtr_service": 1197,
+    "spotrac_backprop": 14
+   },
+   "n_rows": 25892,
+   "n_labelled": 7709
+  }
+ }
+}

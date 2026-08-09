@@ -318,10 +318,12 @@ def load_ledger() -> dict[int, dict[int, dict]]:
         return {}
     out: dict[str, dict[int, dict]] = {}
     for e in doc.get("entries") or []:
-        bid = e.get("bbref_id")
-        if not bid:
-            continue
-        out.setdefault(bid, {})[int(e["class_year"])] = e
+        # Posts before 2023 link no player to Baseball Reference, so those rows
+        # carry an mlbam resolved through fa_ident instead. Both key shapes are
+        # indexed; the panel looks up bbref first and falls back to mlbam.
+        for key in (e.get("bbref_id"), e.get("mlbam")):
+            if key:
+                out.setdefault(str(key), {})[int(e["class_year"])] = e
     return out
 
 
@@ -334,6 +336,29 @@ def load_ledger() -> dict[int, dict[int, dict]]:
 EXCL_EXTENSION = "multiyear_extension"
 EXCL_POSTED_FA = "posted_foreign_fa"
 EXCL_SEASON_2020 = "season_2020_not_a_label_year"
+EXCL_SUB_MAX_CUT = "sub_max_cut_not_an_award"
+
+# CBA Article VI: a club may not cut an arbitration-eligible player's salary by
+# more than 20% from the prior season. So a year-over-year ratio below 0.80 is
+# not an arbitration award AT ALL - it is a new contract signed after a
+# non-tender or a release, and the prior figure was the last arbitration salary
+# rather than this one's basis.
+#
+# This is a DEFINITIONAL exclusion, not a fit convenience, and the distinction
+# matters because excluding rows that fail your own meter is how a meter gets
+# laundered into passing. Two consequences are stated rather than hidden:
+#   1. After the rule, the post-filter violation rate is 0% BY CONSTRUCTION and
+#      is not evidence of anything.
+#   2. The reported contamination quantity is therefore the REMOVAL RATE - how
+#      many candidate rows the rule deletes - which is also the non-tender /
+#      broken-chain meter this panel otherwise had no way to see.
+#
+# Measured before the rule existed: 5.16% of rows carrying MLBTR service-time
+# GROUND TRUTH still violated it, and the worst offenders are Ty France 2025
+# ($6,775,000 -> $1,000,000), Nicky Lopez and Luis Urias - all non-tendered and
+# re-signed. That proved the residual violations were a missing exclusion, not a
+# step-reconstruction error.
+MAX_CUT_RATIO = 0.80
 
 
 def contamination(row: dict, *, fa_rows, spotrac_span, posted: set[int]) -> dict:
@@ -419,8 +444,10 @@ def build_panel(*, first: int = FIRST_SEASON, last: int = LAST_SEASON,
     faback: dict[int, dict[int, dict]] = {}
     for mlbam, rows_ in fa.items():
         if rows_:
+            seasons_ = careers.get(mlbam, set())
             faback[mlbam] = arb_service.from_fa_class(
-                rows_[0]["class_year"], careers.get(mlbam, set()))
+                rows_[0]["class_year"], seasons_,
+                debut_year=min(seasons_) if seasons_ else None)
 
     out: list[dict] = []
     for r in spine.itertuples(index=False):
@@ -430,7 +457,12 @@ def build_panel(*, first: int = FIRST_SEASON, last: int = LAST_SEASON,
         debut = min(seasons) if seasons else season
 
         votes: dict[str, dict] = {}
-        led = (ledger.get(r.bbref_id) or {}).get(season) if r.bbref_id else None
+        led = None
+        for key in (r.bbref_id, str(mlbam)):
+            if key and key in ledger:
+                led = ledger[key].get(season)
+                if led:
+                    break
         if led and led.get("service_years") is not None:
             v = arb_service.arb_year_from_service(
                 int(led["service_years"]), int(led.get("service_days") or 0), season)
@@ -452,13 +484,20 @@ def build_panel(*, first: int = FIRST_SEASON, last: int = LAST_SEASON,
 
         salary = (float(r.salary)
                   if r.salary == r.salary and r.salary is not None else None)
+        prior = sal_path.get(mlbam, {}).get(season - 1)
+        # The maximum-cut rule, applied as a definition. Only meaningful when
+        # the player was labelled arb-eligible and both figures exist.
+        if (flags["exclude_reason"] is None and lab["arb_year"] and salary
+                and prior and salary / prior < MAX_CUT_RATIO):
+            flags["exclude_reason"] = EXCL_SUB_MAX_CUT
+            flags["cut_ratio"] = round(salary / prior, 3)
         out.append({
             "mlbam": mlbam, "bbref": r.bbref_id, "name": r.name,
             "season": season,
             "age": None if r.age != r.age else float(r.age),
             "team": r.team, "debut": debut,
             "salary": salary,
-            "prior_salary": sal_path.get(mlbam, {}).get(season - 1),
+            "prior_salary": prior,
             "league_min": lm.get(season),
             "war": round(float(r.war), 2),
             "pa": int(r.pa), "ipouts": int(r.ipouts), "gs": int(r.gs),
@@ -490,6 +529,56 @@ def clean_arb_rows(rows: list[dict]) -> list[dict]:
             and FIRST_LABEL_SEASON <= r["season"] <= LAST_SEASON]
 
 
+# Seasons whose arb-step labels rest on MLBTR-published service time. Measured
+# agreement of the substitute sources against that ground truth is 0.6067
+# (fa_class_backcount) and 0.6861 (debut_heuristic) - roughly a third of their
+# labels are wrong - against a G2 criterion of 0.95. Spotrac reaches 0.8588 but
+# only exists from 2024 and is survivor-only before that.
+#
+# So seasons outside this window are REPORTED AND NOT SCORED. That is the
+# pre-registered consequence in docs/ARBITRATION_GATE.md section 2, and it
+# withdraws the plan's "2011-2026 backtest" description.
+SCORED_SEASONS = (2022, 2023, 2024, 2025, 2026)
+
+
+def scored_rows(rows: list[dict]) -> list[dict]:
+    """Clean rows whose arb step came from MLBTR service time, in the scored
+    window. This is the pool any gate may adjudicate on."""
+    return [r for r in clean_arb_rows(rows)
+            if r["season"] in SCORED_SEASONS
+            and r.get("arb_year_source") == "mlbtr_service"]
+
+
+def write_panel(doc: dict, audit: dict) -> Path:
+    """Commit the panel audit. The panel ROWS are not committed - 25,892 rows
+    would be a large artifact nothing serves - but the census, the meters and
+    the source mix are, because they are the evidence the label set is what it
+    claims to be."""
+    out = {
+        "generated_at": doc["generated_at"],
+        "version": doc["version"],
+        "produced_by": "arb_dataset.build_panel",
+        "window": doc["window"],
+        "label_window": doc["label_window"],
+        "scored_seasons": list(SCORED_SEASONS),
+        "ledger_present": doc["ledger_present"],
+        "super_two_verified": doc["super_two_verified"],
+        "conventions": {
+            "spine": "war_daily bat+pit parquet, stints collapsed, salary MAX not SUM, two-way merge OUTER",
+            "label": "Baseball Reference season salary, fused with the MLBTR settled figure where present",
+            "arb_step": "fused from mlbtr_service > spotrac_backprop(>=2024) > fa_class_backcount > debut_heuristic",
+            "max_cut": "CBA Article VI: a ratio below 0.80 is not an award, so those rows are EXCLUDED by definition",
+            "2020": "never a label year; war_daily's 2020 salary is the UNPRORATED award",
+        },
+        "audit": audit,
+    }
+    PANEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+    tmp = PANEL_PATH.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(out, indent=1), encoding="utf-8")
+    tmp.replace(PANEL_PATH)
+    return PANEL_PATH
+
+
 def _count(rows, key: str) -> dict:
     out: dict[str, int] = {}
     for r in rows:
@@ -502,9 +591,13 @@ def _count(rows, key: str) -> dict:
 def coverage_audit(rows: list[dict]) -> dict:
     """Per-season census plus the label-quality meters.
 
-    G3 (maximum-cut): a real award cannot cut more than 20%, so the share of
-    the pool below 0.80x prior salary is a direct contamination meter. The
-    naive pre-filter pool measured 11.52%; the clean pool must reach under 1%.
+    G3 RESTATED. The maximum-cut rule is now applied as a DEFINITION (see
+    EXCL_SUB_MAX_CUT), so the post-filter violation rate is 0% by construction
+    and proves nothing. The reported quantity is the REMOVAL RATE - the share of
+    otherwise-clean candidate rows the rule deletes - which is simultaneously
+    the non-tender / broken-salary-chain meter this panel had no other way to
+    see. A rising removal rate means more of the population is leaving
+    arbitration by non-tender, not that the model got worse.
 
     G5 (coverage): a season below 70% label coverage is REPORTED AND NOT
     SCORED, never quietly dropped.
@@ -515,31 +608,35 @@ def coverage_audit(rows: list[dict]) -> dict:
         labelled = [r for r in ys if r.get("arb_year")]
         clean = clean_arb_rows(ys)
         withsal = [r for r in labelled if r.get("salary")]
-        cuts = [r for r in clean
-                if r.get("prior_salary") and r["salary"] / r["prior_salary"] < 0.80]
+        removed = [r for r in ys if r.get("exclude_reason") == EXCL_SUB_MAX_CUT]
+        denom = len(clean) + len(removed)
         by_season[str(y)] = {
             "rows": len(ys), "labelled": len(labelled),
             "labelled_with_salary": len(withsal), "clean": len(clean),
             "salary_coverage": (round(len(withsal) / len(labelled), 4)
                                 if labelled else None),
-            "sub_max_cut": len(cuts),
-            "sub_max_cut_rate": (round(len(cuts) / len(clean), 4)
-                                 if clean else None),
+            "max_cut_removed": len(removed),
+            "max_cut_removal_rate": (round(len(removed) / denom, 4)
+                                     if denom else None),
             "excluded": _count(ys, "exclude_reason"),
             "source_mix": _count(labelled, "arb_year_source"),
         }
     clean_all = clean_arb_rows(rows)
-    cuts_all = [r for r in clean_all
-                if r.get("prior_salary") and r["salary"] / r["prior_salary"] < 0.80]
+    removed_all = [r for r in rows if r.get("exclude_reason") == EXCL_SUB_MAX_CUT]
+    denom_all = len(clean_all) + len(removed_all)
     return {
         "by_season": by_season,
         "totals": {
             "rows": len(rows),
             "labelled": sum(1 for r in rows if r.get("arb_year")),
             "clean": len(clean_all),
-            "sub_max_cut": len(cuts_all),
-            "sub_max_cut_rate": (round(len(cuts_all) / len(clean_all), 4)
-                                 if clean_all else None),
+            "max_cut_removed": len(removed_all),
+            "max_cut_removal_rate": (round(len(removed_all) / denom_all, 4)
+                                     if denom_all else None),
+            "post_filter_violation_rate": 0.0,
+            "post_filter_note": ("0 by construction: the maximum-cut rule is a "
+                                 "definitional exclusion, so this number is not "
+                                 "evidence. Read max_cut_removal_rate instead."),
         },
         "disagreement": arb_service.disagreement_report(rows),
     }

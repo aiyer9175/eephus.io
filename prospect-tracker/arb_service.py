@@ -190,7 +190,8 @@ def backpropagate(status_by_year: dict[int, str], *,
 
 
 def from_fa_class(fa_class_year: int, appearance_seasons: set[int],
-                  *, control_years: int = CONTROL_YEARS) -> dict[int, dict]:
+                  *, debut_year: int | None = None,
+                  control_years: int = CONTROL_YEARS) -> dict[int, dict]:
     """First free-agent class year -> the arb seasons that preceded it.
 
     A player who first reached free agency for class year Y finished six
@@ -199,10 +200,37 @@ def from_fa_class(fa_class_year: int, appearance_seasons: set[int],
     have since left the league, which is what makes it the counterweight to
     Spotrac's survivor-only grid.
 
-    Assumes an unbroken service path, which is why it is precedence 3: a
-    player who lost a year to the minors or the IL shifts every step.
+    PLAUSIBILITY GUARD, added after measurement. Agreement with MLBTR ground
+    truth was 61.6%, and the errors were not noise: 88 of 98 were +1 or +2, i.e.
+    this source systematically assigned a HIGHER step than truth. The cause is
+    that `fa_signings` only covers class years 2015+, so for a player whose real
+    first free agency predates the table, its earliest row is his SECOND or
+    THIRD trip, and walking back from it lands three to six years too late.
+
+    So the derived arb-1 season must sit where an arb-1 season can actually be:
+    at least two and at most six seasons after the player's debut. A window that
+    fails is rejected outright rather than emitted with a caveat, because a
+    wrong step corrupts the target, the feature and the derived ladder at once.
+
+    THE GUARD DID NOT FIX THE AGREEMENT RATE, and that is recorded here so it is
+    not later read as a win. Measured before: 0.6157 (n=255). Measured after:
+    0.6067 (n=239). The hypothesis that the pre-2015 table boundary was the
+    dominant error source is REFUTED. The guard is kept because the rows it
+    removes are definitionally impossible, not because it bought accuracy, and
+    it costs about 500 rows of clean pool to do it.
+
+    The surviving conclusion is the important one: this source, and the debut
+    heuristic at 0.6861, are roughly two-thirds accurate against ground truth,
+    so seasons that depend on them cannot carry a scored backtest.
     """
     walk_year = int(fa_class_year) - 1
+    first_arb = walk_year - 2
+    if debut_year is not None:
+        gap = first_arb - int(debut_year)
+        # 3 is the standard pre-arb window; Super Two reaches arb a year early
+        # and a broken path can push it out, so 2..6 is the admissible band.
+        if gap < 2 or gap > 6:
+            return {}
     out: dict[int, dict] = {}
     for step in (3, 2, 1):
         year = walk_year - (3 - step)
