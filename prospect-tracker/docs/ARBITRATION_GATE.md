@@ -30,6 +30,46 @@ Every number in this section was measured before any model was written.
 | MLBTR entries carrying K not MM | not considered | 20 of 191 on the 2026 tracker | a MM-only regex drops the arb-1 population |
 | MLBTR tracker contains non-arbitration rows | not considered | 1 extension, 3 club options, 4 split deals, 16 unresolved | must be classified out |
 
+### 0a. GATE 0.1 - the blast-radius bound, run before any model was fit
+
+`tools/arb_ladder_blast_lab.py` -> `data/arb_blast_bound.json`. It prices the
+board grid under the two EXTREMES of the admissible ladder range
+(`[0.10,0.20,0.35,0.50]` against `[0.55,0.75,0.90,0.95]`), both deliberately
+beyond anything a fit could return, to bound the effect rather than guess it.
+
+| quantity | extreme low vs extreme high | the two SHIPPING ladders |
+|---|---|---|
+| mean absolute move | $17.3M | $7.6M |
+| median absolute move | $11.5M | $5.1M |
+| max absolute move | $55.0M | $24.4M |
+| mean relative move | 27.5% | 13.6% |
+| **Spearman, before vs after** | **1.0000** | **1.0000** |
+
+**GATE B is NOT closed on economic grounds.** This is the opposite of the
+`PITCHER_LABEL_LEDGER` precedent, where the maximum possible perturbation moved
+the board less than a rounding change. Here the admissible range is worth up to
+$55M on a single top-FV cell and 27.5% in relative terms. The money is real and
+the ladder is worth fitting.
+
+**But the ladder is a pure LEVEL effect and never reorders anything.** Spearman
+is exactly 1.0000 across the entire admissible range. Two consequences, both
+binding:
+
+1. **The C4 criterion (`Spearman >= 0.97`) is trivially satisfied and therefore
+   cannot discriminate.** It is retained as a regression guard - a swap that DID
+   reorder the board would mean something broke - but it is not evidence for the
+   swap and must not be cited as such.
+2. **Any claim about the fitted ladder must be denominated in DOLLARS, not in
+   ordering.** The trade board's ranking is untouched by construction, so
+   "improves the board" is only ever a pricing claim here.
+
+**Scope, measured on the same grid: the ladder does not move FV 35 or FV 40 at
+all** ($0.90M and $2.00M identical under all four ladders). Sub-45 prospects
+never reach arbitration on the model's expected path - they bust first - so the
+ladder never binds on them. The prospect board is about 98% sub-50 FV, so the
+ladder's effect is concentrated in roughly the top 2% of that board plus the 356
+unpriceable MLB veterans. Small population, large per-row dollars.
+
 **The plan's headline incumbent was wrong and the correction matters.** GATE B is
 scored against the ladder that actually ships (`clemens_2026`, four steps, prior
 season basis, seven control years) AND against the base-identity

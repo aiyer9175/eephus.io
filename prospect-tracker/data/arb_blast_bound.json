@@ -1,0 +1,179 @@
+{
+ "generated_at": "2026-08-08",
+ "produced_by": "python tools/arb_ladder_blast_lab.py",
+ "purpose": "GATE 0.1 blast-radius bound. Measures how far ANY admissible arbitration ladder can move the served board, BEFORE any model is fit. If the whole admissible range moves it less than a rounding change, GATE B is closed on economic grounds.",
+ "active_valuation_set": "clemens_2026",
+ "ladders": {
+  "low": [
+   0.1,
+   0.2,
+   0.35,
+   0.5
+  ],
+  "high": [
+   0.55,
+   0.75,
+   0.9,
+   0.95
+  ],
+  "clemens_2026": [
+   0.15,
+   0.35,
+   0.5,
+   0.75
+  ],
+  "prospx_current": [
+   0.4,
+   0.6,
+   0.8
+  ]
+ },
+ "bound_low_vs_high": {
+  "n_cells": 16,
+  "mean_abs_move_usd": 17065275.0,
+  "median_abs_move_usd": 11516132.0,
+  "max_abs_move_usd": 54970886.0,
+  "mean_rel_move": 0.2752,
+  "spearman_lo_vs_hi": 1.0,
+  "top_decile_mean_abs_move_usd": 54970886.0
+ },
+ "shipping_ladders_compared": {
+  "n_cells": 16,
+  "mean_abs_move_usd": 7579727.0,
+  "median_abs_move_usd": 5121497.0,
+  "max_abs_move_usd": 24412399.0,
+  "mean_rel_move": 0.1362,
+  "spearman_lo_vs_hi": 1.0,
+  "top_decile_mean_abs_move_usd": 24412399.0
+ },
+ "grid": [
+  {
+   "fv": 35,
+   "is_pitcher": false,
+   "low": 898657.9282344431,
+   "clemens_2026": 898657.9282344431,
+   "prospx_current": 898657.9282344431,
+   "high": 898657.9282344431
+  },
+  {
+   "fv": 35,
+   "is_pitcher": true,
+   "low": 808792.1354109988,
+   "clemens_2026": 808792.1354109988,
+   "prospx_current": 808792.1354109988,
+   "high": 808792.1354109988
+  },
+  {
+   "fv": 40,
+   "is_pitcher": false,
+   "low": 2000000.0,
+   "clemens_2026": 2000000.0,
+   "prospx_current": 2000000.0,
+   "high": 2000000.0
+  },
+  {
+   "fv": 40,
+   "is_pitcher": true,
+   "low": 1800000.0,
+   "clemens_2026": 1800000.0,
+   "prospx_current": 1800000.0,
+   "high": 1800000.0
+  },
+  {
+   "fv": 45,
+   "is_pitcher": false,
+   "low": 10192940.356096461,
+   "clemens_2026": 9160261.679693893,
+   "prospx_current": 7481327.881116707,
+   "high": 6414365.768870887
+  },
+  {
+   "fv": 45,
+   "is_pitcher": true,
+   "low": 6770069.823692845,
+   "clemens_2026": 6091716.292132981,
+   "prospx_current": 5000232.496857218,
+   "high": 4278155.932553953
+  },
+  {
+   "fv": 50,
+   "is_pitcher": false,
+   "low": 25830352.490987986,
+   "clemens_2026": 23124058.961203255,
+   "prospx_current": 18918531.382955026,
+   "high": 16333898.417435873
+  },
+  {
+   "fv": 50,
+   "is_pitcher": true,
+   "low": 18605518.698072508,
+   "clemens_2026": 16687083.962235166,
+   "prospx_current": 13649825.347306471,
+   "high": 11744231.73435882
+  },
+  {
+   "fv": 55,
+   "is_pitcher": false,
+   "low": 40627562.29127337,
+   "clemens_2026": 36368499.339848146,
+   "prospx_current": 29757551.865925156,
+   "high": 25729444.179088958
+  },
+  {
+   "fv": 55,
+   "is_pitcher": true,
+   "low": 31039691.31126253,
+   "clemens_2026": 27796363.637566652,
+   "prospx_current": 22674866.52540319,
+   "high": 19523559.466410335
+  },
+  {
+   "fv": 60,
+   "is_pitcher": false,
+   "low": 68908703.64665309,
+   "clemens_2026": 61693483.62157329,
+   "prospx_current": 50439694.269373536,
+   "high": 43641479.934288345
+  },
+  {
+   "fv": 60,
+   "is_pitcher": true,
+   "low": 56221021.34948003,
+   "clemens_2026": 50211359.36192821,
+   "prospx_current": 40742233.67822365,
+   "high": 34997851.11728828
+  },
+  {
+   "fv": 65,
+   "is_pitcher": false,
+   "low": 111625669.7813132,
+   "clemens_2026": 99968241.63099176,
+   "prospx_current": 81808496.911476,
+   "high": 70839967.18020634
+  },
+  {
+   "fv": 65,
+   "is_pitcher": true,
+   "low": 94419855.32883719,
+   "clemens_2026": 84485165.74978703,
+   "prospx_current": 69085194.05113754,
+   "high": 59700158.80444318
+  },
+  {
+   "fv": 70,
+   "is_pitcher": false,
+   "low": 153423690.13082588,
+   "clemens_2026": 137665379.6519984,
+   "prospx_current": 113252980.24388611,
+   "high": 98452803.67980064
+  },
+  {
+   "fv": 70,
+   "is_pitcher": true,
+   "low": 132354422.40907788,
+   "clemens_2026": 118843457.86640169,
+   "prospx_current": 98008512.53744227,
+   "high": 85319175.76345675
+  }
+ ]
+}
