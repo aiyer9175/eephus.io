@@ -6532,27 +6532,35 @@
    "id": "arb_award_model",
    "term": "Arbitration Award Model",
    "category": "Valuation",
-   "module": "arbitration",
+   "module": [
+    "arbitration"
+   ],
    "aliases": [
     "arbitration predictor",
     "arb model"
    ],
    "priority": 5,
    "definition": "The model behind /arbitration/. It estimates the one-year salary an arbitration-eligible player receives for a season in which his club tenders him a contract and the figure is settled or awarded through arbitration.",
-   "methodology": "Two stages, because a first trip and a later trip are different problems. The first arbitration year has no prior arbitration salary to raise from, so it is a level model on log deflated salary, fit by ridge on projectable features only - WAR, playing time, age, position, service class and the Arkmetric skill indices - with a Duan smearing correction so the served figure is a conditional mean rather than a median. Second and later years are a raise problem, and the collective agreement caps a cut at 20% of the prior salary, so the target is transformed rather than clamped: the model predicts the log of the raise above that floor, which makes every prediction and every band endpoint legal by construction. On measurement the per-player model did not beat a simple empirical raise multiplier for those later years, so the board serves the multiplier there and the model only where it earned its place. Only seasons whose arbitration year comes from published service time are scored. Arkmetric, created by Noah J. Dengler, original to eephus.io."
+   "methodology": "Two stages, because a first trip and a later trip are different problems. The first arbitration year has no prior arbitration salary to raise from, so it is a level model on log deflated salary, fit by ridge on projectable features only - WAR, playing time, age, position, service class and the Arkmetric skill indices - with a Duan smearing correction so the served figure is a conditional mean rather than a median. Second and later years are a raise problem, and the collective agreement caps a cut at 20% of the prior salary, so the target is transformed rather than clamped: the model predicts the log of the raise above that floor, which makes every prediction and every band endpoint legal by construction. On measurement the per-player model did not beat a simple empirical raise multiplier for those later years, so the board serves the multiplier there and the model only where it earned its place. Only seasons whose arbitration year comes from published service time are scored. Arkmetric, created by Noah J. Dengler, original to eephus.io.",
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "arb_market_residual",
    "term": "Over/Under vs the Arbitration Market",
    "category": "Valuation",
-   "module": "arbitration",
+   "module": [
+    "arbitration"
+   ],
    "aliases": [
     "vs market",
     "arbitration residual"
    ],
    "priority": 4,
    "definition": "Actual arbitration salary minus what this model expected. It asks whether the arbitration system paid a player more or less than players with a comparable case.",
-   "methodology": "This is the model's own residual, so it sums to roughly zero across the league by construction, and a negative value means the model expected a higher salary than the player received. It is a statement about the model, not a verdict that a player is underpaid. It is deliberately kept separate from the value residual, which compares salary to on-field production priced at that winter's dollars per win and does not sum to zero, because arbitration systematically pays below the open market. Averaging a quantity centred on zero with one that is not centred on zero produces neither of them, so the two are never combined anywhere on the surface. Arkmetric, created by Noah J. Dengler, original to eephus.io."
+   "methodology": "This is the model's own residual, so it sums to roughly zero across the league by construction, and a negative value means the model expected a higher salary than the player received. It is a statement about the model, not a verdict that a player is underpaid. It is deliberately kept separate from the value residual, which compares salary to on-field production priced at that winter's dollars per win and does not sum to zero, because arbitration systematically pays below the open market. Averaging a quantity centred on zero with one that is not centred on zero produces neither of them, so the two are never combined anywhere on the surface. Arkmetric, created by Noah J. Dengler, original to eephus.io.",
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   }
  ]
 }
