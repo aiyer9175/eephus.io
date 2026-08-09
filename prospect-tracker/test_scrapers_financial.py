@@ -151,7 +151,7 @@ SPOTRAC_FIXTURE = """
 <table id="dataTable-active">
   <thead>
     <tr>
-      <th>Player (3)</th>
+      <th>Player (6)</th>
       <th>Pos</th>
       <th>Age</th>
       <th>2026</th>
@@ -189,6 +189,36 @@ SPOTRAC_FIXTURE = """
       <td data-export="760000"><a href="javascript:void(0)">$760,000 0.3%</a></td>
       <td data-export=" "></td>
       <td data-export=" "></td>
+    </tr>
+    <tr>
+      <td data-export="Arb Placeholder Player">
+        <a href="https://www.spotrac.com/mlb/player/_/id/54321/arb-placeholder-player">Arb Placeholder Player</a>
+      </td>
+      <td data-export="SS">SS</td>
+      <td data-export="27">27</td>
+      <td data-export="9475000"><a href="javascript:void(0)">$9,475,000 3.9%</a></td>
+      <td data-export="0">ARB 3</td>
+      <td data-export=" ">UFA</td>
+    </tr>
+    <tr>
+      <td data-export="Super Two Player">
+        <a href="https://www.spotrac.com/mlb/player/_/id/54322/super-two-player">Super Two Player</a>
+      </td>
+      <td data-export="SP">SP</td>
+      <td data-export="26">26</td>
+      <td data-export="0">-2PRE-ARB</td>
+      <td data-export="0">ARB 2 (S2)</td>
+      <td data-export="0">ARB 3 (S2)</td>
+    </tr>
+    <tr>
+      <td data-export="Genuine Zero Player">
+        <a href="https://www.spotrac.com/mlb/player/_/id/54323/genuine-zero-player">Genuine Zero Player</a>
+      </td>
+      <td data-export="RP">RP</td>
+      <td data-export="33">33</td>
+      <td data-export="2000000"><a href="javascript:void(0)">$2,000,000 0.8%</a></td>
+      <td data-export="0"><a href="javascript:void(0)">$0 0.0%</a></td>
+      <td data-export=" ">UFA</td>
     </tr>
   </tbody>
 </table>
@@ -229,6 +259,84 @@ class TestSpotracTeamContractParser:
         assert pre_arb["years_remaining"] == 1
         assert pre_arb["aav_usd"] == 760000
         assert pre_arb["salary_by_year"] == {2026: 760000}
+
+
+class TestSpotracStatusPlaceholders:
+    """DEFECT FIXED 2026-08-08 -- a contract-STATUS year cell ("ARB 2",
+    "PRE-ARB", "UFA") renders with data-export="0" and the token in the cell
+    TEXT. The old guard was `not raw.isdigit()`, and "0" IS a digit, so every
+    such cell became `salary_by_year[year] = 0`. Measured on the 30 cached
+    team pages: 700 of 1,405 rows (49.8%) carried a phantom zero, producing
+    $478.7M of absolute AAV error and inflating years_remaining /
+    signed_through on all of them. Those fields feed
+    bayes_trade_value._estimate_salary_mm, so it reached served trade values.
+    """
+
+    def _rows(self):
+        soup = BeautifulSoup(SPOTRAC_FIXTURE, "html.parser")
+        table = soup.find("table", id="dataTable-active")
+        rows = _parse_team_contract_table(table, "los-angeles-dodgers")
+        return {r["player_name"]: r for r in rows}
+
+    def test_arb_placeholder_is_not_a_zero_salary(self):
+        r = self._rows()["Arb Placeholder Player"]
+        # THE DEFECT: this used to be {2026: 9475000, 2027: 0}.
+        assert r["salary_by_year"] == {2026: 9475000}
+        assert 2027 not in r["salary_by_year"]
+
+    def test_derived_fields_price_real_dollars_only(self):
+        r = self._rows()["Arb Placeholder Player"]
+        # Was years_remaining 2 / signed_through 2027 / aav $4,737,500.
+        assert r["years_remaining"] == 1
+        assert r["signed_through"] == 2026
+        assert r["aav_usd"] == 9475000
+        assert r["total_usd"] == 9475000
+
+    def test_status_token_is_retained_as_the_arb_label(self):
+        r = self._rows()["Arb Placeholder Player"]
+        assert r["status_by_year"] == {2027: "ARB 3", 2028: "UFA"}
+        assert r["control_years"] == [2027]
+
+    def test_super_two_and_sort_prefixed_tokens_are_recognized(self):
+        # "-2PRE-ARB" carries a numeric sort prefix in the cell text; the
+        # real pages render 510 cells that way alongside 665 bare ones.
+        r = self._rows()["Super Two Player"]
+        assert r["salary_by_year"] == {}
+        assert r["status_by_year"] == {
+            2026: "PRE-ARB", 2027: "ARB 2 (S2)", 2028: "ARB 3 (S2)"}
+        assert r["control_years"] == [2026, 2027, 2028]
+
+    def test_status_only_row_is_kept_not_dropped(self):
+        # Row inclusion is a strict SUPERSET of the old behavior: this row
+        # previously survived on a phantom all-zero salary map, so dropping
+        # it would have removed a player from the contract set.
+        r = self._rows()["Super Two Player"]
+        assert r["years_remaining"] == 0
+        assert r["signed_through"] is None
+        assert r["current_year"] is None
+        assert r["salary_usd"] is None
+        assert r["aav_usd"] == 0
+
+    def test_a_genuine_zero_dollar_year_still_prices_as_zero(self):
+        # 23 of the 1,370 data-export="0" cells on the real pages are a
+        # literal "$0". The discriminator is the TEXT, not data-export, so
+        # this must NOT be swallowed as a status placeholder.
+        r = self._rows()["Genuine Zero Player"]
+        assert r["salary_by_year"] == {2026: 2000000, 2027: 0}
+        assert r["years_remaining"] == 2
+        assert r["signed_through"] == 2027
+
+    def test_ufa_is_captured_but_is_not_a_control_year(self):
+        r = self._rows()["Kyle Tucker"]
+        assert r["status_by_year"] == {2028: "UFA"}
+        assert r["control_years"] == []
+        # And the money years are untouched by the fix.
+        assert r["salary_by_year"] == {2026: 57195000, 2027: 57195000}
+
+    def test_blank_cells_produce_neither_salary_nor_status(self):
+        r = self._rows()["Pre-Arb Player"]
+        assert r["salary_by_year"] == {2026: 760000}
+        assert r["status_by_year"] == {}
 
 
 class TestBuildContractsByKey:

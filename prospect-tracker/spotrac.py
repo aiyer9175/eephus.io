@@ -311,11 +311,64 @@ def _parse_year_header(th_text: str) -> int | None:
     return None
 
 
+# Contract-STATUS placeholders that occupy a year cell instead of a dollar
+# figure. Spotrac renders these with data-export="0" while the token itself
+# lives in the cell TEXT, so a digit-only guard reads them as a $0 salary.
+# See _parse_team_contract_table for the defect this exists to close.
+#
+# Cell text can carry a leading numeric sort key ("-2PRE-ARB", "5UFA",
+# "-1ARB 1"), so the prefix is stripped before matching.
+_YEAR_CELL_SORT_PREFIX_RE = re.compile(r"^-?\d+(?=[A-Za-z])")
+_YEAR_CELL_STATUS_RE = re.compile(
+    r"^(PRE-ARB|ARB\s*[1-4](?:\s*\(S2\))?|ARB|UFA|RFA|TBD)$", re.I)
+
+
+def _year_cell_status(cell_text: str) -> str | None:
+    """The contract-status token in a year cell, or None when the cell is a
+    money cell (including a genuine "$0"). Normalized to upper case with
+    single spaces so "arb 2 (s2)" and "ARB 2 (S2)" agree."""
+    s = _YEAR_CELL_SORT_PREFIX_RE.sub("", (cell_text or "").strip())
+    s = re.sub(r"\s+", " ", s).strip()
+    if not s or not _YEAR_CELL_STATUS_RE.match(s):
+        return None
+    return s.upper()
+
+
 def _parse_team_contract_table(table, team_slug: str) -> list[dict]:
     """Parse one Spotrac yearly contract table (dataTable-active /
     dataTable-injured / dataTable-dead share the same structure).
-    Returns one dict per row with the per-year salary map plus derived
-    AAV / total / years_remaining / signed_through fields."""
+    Returns one dict per row with the per-year salary map, the per-year
+    contract-STATUS map, plus derived AAV / total / years_remaining /
+    signed_through fields.
+
+    DEFECT FIXED 2026-08-08. A year cell holding a contract-status
+    placeholder ("PRE-ARB", "ARB 2", "ARB 3 (S2)", "UFA", "TBD") renders
+    with data-export="0" and the token in the cell text. The old guard was
+    `if not raw or not raw.isdigit(): continue`, and "0" IS a digit, so
+    every such cell was stored as `salary_by_year[year] = 0`. Measured on
+    the 30 cached team pages: 700 of 1,405 rows (49.8%) carried at least
+    one phantom zero, which inflated `years_remaining` and `signed_through`
+    on all of them and produced $478.7M of absolute AAV error (Ke'Bryan
+    Hayes read 5 years / signed_through 2030 / $7.08M AAV against a true
+    4 / 2029 / $8.85M). Those fields feed
+    bayes_trade_value._estimate_salary_mm, so the error reached served
+    trade values.
+
+    The discriminator is the cell TEXT, not data-export: across the cached
+    pages 1,347 of the 1,370 data-export="0" cells are status tokens and 23
+    are a genuine "$0". Money cells are the ones that do NOT match
+    _YEAR_CELL_STATUS_RE, so a real $0 still prices as $0.
+
+    Status tokens are RETAINED rather than dropped: they are the only
+    per-player arbitration-year labels available anywhere in this tree
+    (there is no service-time ground truth -- see
+    bayes_trade_value.py:4498), and the /arbitration/ module reads them.
+
+    Row inclusion is a strict SUPERSET of the old behavior: a row is kept
+    when it has any real salary OR any status year. Previously a row whose
+    only year cells were placeholders was kept with a phantom all-zero
+    salary map, so dropping it here would have removed players; instead it
+    is kept with an empty salary map and a populated status map."""
     rows: list[dict] = []
     thead = table.find("thead")
     if not thead:
@@ -359,24 +412,34 @@ def _parse_team_contract_table(table, team_slug: str) -> list[dict]:
         position = None
         if len(tds) > 1:
             position = (tds[1].get("data-export") or "").strip() or None
-        # Per-year salary — walk header_years map, pull data-export
-        # (integer dollar amount) from each year column. Empty values
-        # ("UFA", " ", None) skipped.
+        # Per-year cells — walk header_years. A cell is either MONEY
+        # (data-export = integer dollars) or a contract-STATUS placeholder
+        # (data-export "0" with the token in the text). The text decides;
+        # see the docstring for why data-export alone cannot.
         salary_by_year: dict[int, int] = {}
+        status_by_year: dict[int, str] = {}
         for col_idx, year in header_years.items():
             if col_idx >= len(tds):
                 continue
-            raw = (tds[col_idx].get("data-export") or "").strip()
+            cell = tds[col_idx]
+            status = _year_cell_status(cell.get_text(strip=True))
+            if status is not None:
+                status_by_year[year] = status
+                continue
+            raw = (cell.get("data-export") or "").strip()
             if not raw or not raw.isdigit():
                 continue
             try:
                 salary_by_year[year] = int(raw)
             except ValueError:
                 continue
-        if not salary_by_year:
-            # No future-year salary on file — player is either on a
+        if not salary_by_year and not status_by_year:
+            # Neither money nor a status on file — player is either on a
             # 1-year deal that already ended (rare) or unsigned. Skip.
             continue
+        # Every derived field below prices REAL DOLLARS ONLY. A status year
+        # is a year the club controls at a price not yet set; counting it as
+        # a $0 contract year is what produced the phantom AAV/term above.
         years_remaining = len(salary_by_year)
         total_usd = sum(salary_by_year.values())
         # AAV — the canonical "annual average value" is total / years.
@@ -384,14 +447,19 @@ def _parse_team_contract_table(table, team_slug: str) -> list[dict]:
         # cash flow shown here already reflects the present-value
         # smoothing, so the simple mean is consistent with what the
         # site reports as AAV.
-        aav_usd = total_usd // max(1, years_remaining)
-        # Signed-through year = max year on file.
-        signed_through = max(salary_by_year.keys()) if salary_by_year else None
-        # Current-year salary — picked off the lowest year in the map
+        aav_usd = total_usd // years_remaining if years_remaining else 0
+        # Signed-through year = max PRICED year on file. A club-control year
+        # with no figure yet is not a year the player is signed through.
+        signed_through = max(salary_by_year) if salary_by_year else None
+        # Current-year salary — picked off the lowest priced year in the map
         # so the consumer doesn't need to know what the "current" year
         # is at scrape time.
-        current_year = min(salary_by_year.keys())
-        salary_usd = salary_by_year.get(current_year)
+        current_year = min(salary_by_year) if salary_by_year else None
+        salary_usd = salary_by_year.get(current_year) if current_year else None
+        # Club-control years carrying an arbitration label, earliest first.
+        # The /arbitration/ module's Spotrac label source.
+        arb_years = sorted(y for y, s in status_by_year.items()
+                           if s.startswith("ARB") or s == "PRE-ARB")
         rows.append({
             "player_name":      name,
             "player_key":       canonical_player_key(normalize_key(name)),
@@ -402,6 +470,8 @@ def _parse_team_contract_table(table, team_slug: str) -> list[dict]:
             "aav_usd":          aav_usd,
             "total_usd":        total_usd,
             "salary_by_year":   salary_by_year,
+            "status_by_year":   status_by_year,
+            "control_years":    arb_years,
             "years_remaining":  years_remaining,
             "signed_through":   signed_through,
             "current_year":     current_year,

@@ -1488,10 +1488,22 @@ def _estimate_salary_mm(player: dict, year: int, svc_ctrl: float,
     league_min   = 0.78  # $M
 
     # Only use AAV as the salary estimate for genuine long-term extensions
-    # (AAV > $5M). Pre-arb/arb one-year deals often have salary_by_year=0 for
-    # future option years and an AAV that averages in those $0 years — for
-    # Volpe ($3.475M/1yr averaged to $1.16M/3 "yrs"), using $1.16M as the
-    # 2027-2028 salary massively understates the real ~$12-20M arb cost.
+    # (AAV > $5M).
+    #
+    # HISTORY, corrected 2026-08-08. This guard was written against a parser
+    # defect, not against Spotrac. spotrac._parse_team_contract_table stored
+    # a contract-STATUS placeholder ("ARB 2", "PRE-ARB") as a $0 salary year,
+    # so a one-year arb deal averaged its real figure across phantom zeros and
+    # produced a diluted AAV with an inflated signed_through. Gunnar Henderson
+    # read AAV $2.83M / signed_through 2028; he is on a one-year $8.5M deal
+    # with 2027-28 unpriced arb years. The parser now keeps status years out of
+    # the money map, so aav_usd and signed_through are correct at the source.
+    #
+    # The guard STAYS, because it still does real work: it separates a genuine
+    # multi-year extension (price the whole window at AAV) from a one-year deal
+    # (price only the signed year, then fall through to the service-time
+    # ladder). What changed is that signed_through is now the last PRICED year,
+    # so the AAV branch no longer reaches into unpriced club-control years.
     if signed_thru and aav_raw and float(aav_raw) > 5_000_000:
         if year <= int(signed_thru):
             return round(float(aav_raw) / 1e6, 2)
