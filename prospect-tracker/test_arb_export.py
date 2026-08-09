@@ -167,6 +167,65 @@ def test_every_ladder_step_is_non_decreasing_except_at_the_max_cut():
     assert not bad, f"ladder steps below the maximum cut: {bad[:5]}"
 
 
+# --------------------------------------------------------------------------- #
+# GATE C: pricing the club-control years the contract join leaves blank
+# --------------------------------------------------------------------------- #
+
+def test_gate_c_never_overwrites_a_real_contract():
+    """It runs last and only touches rows that carry no surplus at all, so a
+    projected arbitration salary can never displace a signed one."""
+    import proj_export as PX
+    rows = [
+        {"mlbam": 1, "surNpv": 5, "war": [1.0] * 5},          # already priced
+        {"mlbam": 2, "surTotal": 7, "war": [1.0] * 5},        # already priced
+    ]
+    PX._apply_arbitration_paths(rows, 1e7, 0.07)
+    assert rows[0]["surNpv"] == 5 and rows[0]["salSrc"] == "contract"
+    assert rows[1]["surTotal"] == 7 and rows[1]["salSrc"] == "contract"
+
+
+def test_gate_c_stamps_provenance_on_everything_it_prices():
+    """A reader must be able to tell a signed contract from a projection."""
+    import inspect
+
+    import proj_export as PX
+    src = inspect.getsource(PX._apply_arbitration_paths)
+    assert '"arb_projection"' in src and '"contract"' in src
+
+
+def test_gate_c_runs_last_in_the_vet_builder():
+    import inspect
+
+    import proj_export as PX
+    src = inspect.getsource(PX._veteran_rows)
+    i = src.index("_apply_arbitration_paths(out, dpw, r)")
+    # Every contract application must already have happened.
+    assert src.rindex("_apply_contract(") < i
+
+
+def test_gate_c_scope_limit_is_stated():
+    """It prices players with an observed MLB record only. A never-debuted
+    prospect has no prior salary, the raise model cannot run, and extrapolating
+    a model fit on observed awards onto him is a documented prior failure."""
+    import inspect
+
+    import proj_export as PX
+    doc = inspect.getdoc(PX._apply_arbitration_paths) or ""
+    assert "never touches a prospect" in doc
+
+
+def test_the_status_tables_never_grow_the_contract_set():
+    """The Minor / retained tables are read for ARB tokens only. Folding them
+    into contracts moves Nolan Arenado's AAV $5.5M -> $27.36M and Nick
+    Castellanos's $0.3M -> $19.7M through the highest-AAV tiebreak, which is a
+    contract-semantics question with its own blast radius on served trade
+    values, not an arbitration one."""
+    import spotrac
+    assert "table" not in spotrac.CONTRACT_TABLE_IDS
+    assert "table" in spotrac.STATUS_TABLE_IDS
+    assert set(spotrac.CONTRACT_TABLE_IDS).isdisjoint(spotrac.STATUS_TABLE_IDS)
+
+
 def test_the_eval_artifact_records_its_nulls():
     ev = _doc("arbitration_eval.json")
     assert ev.get("generated_at")

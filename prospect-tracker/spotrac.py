@@ -479,6 +479,53 @@ def _parse_team_contract_table(table, team_slug: str) -> list[dict]:
     return rows
 
 
+# The three tables that carry CONTRACT money. This set is deliberately narrow
+# and is the one build_contracts_by_key consumes.
+CONTRACT_TABLE_IDS = ("dataTable-active", "dataTable-injured", "dataTable-dead")
+
+# Tables that carry club-control STATUS but not (usually) contract money: the
+# "Minor" roster where optioned players live, plus the small retained /
+# restricted / reserve tables. 428 rows across the 30 cached pages.
+#
+# READ FOR STATUS ONLY, never folded into the contract set. Measured 2026-08-09:
+# widening scrape_spotrac_team_contracts to include them adds 300 players (289
+# with no salary dollars at all) but CHANGES three existing served contracts,
+# two of them large - Nolan Arenado's AAV moves $5.5M -> $27.36M and Nick
+# Castellanos's $0.3M -> $19.7M, because their retained-salary rows outrank
+# their active rows under build_contracts_by_key's highest-AAV tiebreak.
+#
+# Whether an acquiring club should be charged the retained portion is a contract
+# question with its own blast radius on served trade values, and it is NOT an
+# arbitration question. So the arbitration module reads these tables for their
+# ARB / PRE-ARB tokens and the contract set stays byte-identical.
+#
+# OPEN, for a future session: those two AAVs may be wrong TODAY on the narrow
+# set. The retained-salary semantics were never adjudicated.
+STATUS_TABLE_IDS = ("table", "dataTable-retained", "dataTable-restricted",
+                    "dataTable-reserve-personal")
+
+
+def scrape_spotrac_team_statuses(team_slug: str,
+                                 force: bool = False) -> list[dict]:
+    """Rows from the club-control tables that carry STATUS but not money.
+
+    Same parser, different tables, and deliberately a different function: the
+    contract set must not grow by a side effect of an arbitration change. See
+    STATUS_TABLE_IDS for the measurement that motivated the split.
+    """
+    url = f"https://www.spotrac.com/mlb/{team_slug}/yearly/"
+    fr = _fetch(url, f"spotrac_team_{team_slug}", force=force)
+    if fr.status != 200 or not fr.body:
+        return []
+    soup = BeautifulSoup(fr.body, "html.parser")
+    out: list[dict] = []
+    for table_id in STATUS_TABLE_IDS:
+        t = soup.find("table", id=table_id)
+        if t is not None:
+            out.extend(_parse_team_contract_table(t, team_slug))
+    return out
+
+
 def scrape_spotrac_team_contracts(team_slug: str,
                                    force: bool = False) -> list[dict]:
     """Fetch + parse one team's Spotrac yearly contract page. Returns a

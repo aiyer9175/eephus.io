@@ -237,7 +237,16 @@ def spotrac_status_by_mlbam() -> dict[int, dict[int, str]]:
     out: dict[int, dict[int, str]] = {}
     unresolved = 0
     for _code, slug in spotrac._SPOTRAC_TEAM_SLUGS.items():
-        for row in spotrac.scrape_spotrac_team_contracts(slug):
+        # Contract tables first, then the club-control tables where OPTIONED
+        # players live. Optioned players are exactly the arbitration and pre-arb
+        # population, and reading only the contract tables is why 356 veterans
+        # on the projection board carry no salary and therefore no surplus:
+        # they are absent from the tables the contract scraper consumes.
+        # Measured: the extra tables recover 127 of those 356 (35.7%), 124 of
+        # them carrying an ARB or PRE-ARB token.
+        rows = (spotrac.scrape_spotrac_team_contracts(slug)
+                + spotrac.scrape_spotrac_team_statuses(slug))
+        for row in rows:
             status = row.get("status_by_year") or {}
             if not status:
                 continue
@@ -245,7 +254,9 @@ def spotrac_status_by_mlbam() -> dict[int, dict[int, str]]:
             if not mlbam:
                 unresolved += 1
                 continue
-            out[int(mlbam)] = {int(y): s for y, s in status.items()}
+            # A contract-table row wins over a club-control row for the same
+            # player: if he has both, the contract row is the current one.
+            out.setdefault(int(mlbam), {int(y): s for y, s in status.items()})
     if unresolved:
         _log.info("arb_dataset: %d Spotrac status rows unresolved to an mlbam",
                   unresolved)

@@ -827,8 +827,106 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         _apply_contract(winner, ct)   # mutates the row already in `out`
         if winner["key"].split("__")[0] == _ck:
             winner["key"] = _ck       # flagship keeps the plain key (links/joins)
+    # GATE C. Price the club-control years the contract join left blank. Runs
+    # LAST so it can never overwrite a real contract: it only touches rows that
+    # still carry no surplus at all.
+    _apply_arbitration_paths(out, dpw, r)
     out.sort(key=lambda m: -(m.get("warTotal") or 0))
     return out
+
+
+
+def _arb_salary_paths() -> dict:
+    """{mlbam: {season: projected_usd}} from data/arbitration.json.
+
+    GATE C. The projection board prices surplus ONLY from a Spotrac
+    salary_by_year, so a player whose club controls him through arbitration but
+    has not yet signed him for those years gets no salary, and therefore no
+    surplus at all. Measured on the shipped board: 357 of 358 arbitration and
+    pre-arbitration rows carried sur = None and surTotal = None. Anthony Volpe
+    projected 2.12/1.96/1.45/1.56/1.5 WAR over five seasons and was priced at
+    nothing, on /projections/ AND on the trade board, which prices the same
+    surTotal and is required to agree with it.
+
+    data/trade_values.json already states the gap in its own diagnostics:
+    "The arbitration years the club also controls are NOT priced, so a
+    prearb_min value is a FLOOR on the row's true control-window surplus", with
+    unpriceable 356 and service_time_source "PROXY - the pipeline carries no
+    service time". The platform had the diagnosis and was missing the model.
+
+    Returns {} when the arbitration board has not been exported, so this is a
+    pure addition that cannot break the existing path.
+    """
+    p = DATA_DIR / "arbitration.json"
+    if not p.exists():
+        return {}
+    try:
+        doc = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    out: dict[int, dict[int, int]] = {}
+    for row in doc.get("rows") or []:
+        m = row.get("m")
+        if not m:
+            continue
+        per = {}
+        for step in row.get("l") or []:
+            if len(step) >= 2 and step[0] and step[1]:
+                per[int(step[0])] = int(step[1])
+        if per:
+            out[int(m)] = per
+    return out
+
+
+def _apply_arbitration_paths(rows, dpw, r, log=None) -> dict:
+    """Price the club-control years for rows the contract join left blank.
+
+    SCOPE LIMIT, and it is deliberate. This runs ONLY for players who already
+    have an observed MLB record and a resolved arbitration step - the population
+    the model was fit on. It never touches a prospect. A never-debuted player's
+    arbitration years are four to seven seasons out, he has no prior salary, the
+    raise model cannot run at all, and extrapolating a model fit on observed
+    awards onto him is the exact shape of a prior failure in this tree.
+
+    Every priced row is stamped `salSrc` so a reader can tell a contract from a
+    projection, and the counts are returned for the caller to log.
+    """
+    paths = _arb_salary_paths()
+    if not paths:
+        return {"priced": 0, "reason": "arbitration board not exported"}
+    priced = 0
+    for m in rows:
+        if m.get("surNpv") is not None or m.get("surTotal") is not None:
+            m.setdefault("salSrc", "contract")
+            continue
+        per = paths.get(m.get("mlbam"))
+        if not per:
+            continue
+        sur = []
+        npv = 0.0
+        any_sal = False
+        for t in range(HORIZON):
+            season = FIRST_SEASON + t
+            s_usd = per.get(season)
+            if s_usd is None:
+                sur.append(None)
+                continue
+            any_sal = True
+            v_usd = _season_value_usd(m["war"][t], t, dpw)
+            d_usd = v_usd - s_usd
+            sur.append(round(d_usd / 1e6, 1))
+            npv += d_usd / ((1 + r) ** t)
+        if not any_sal:
+            continue
+        m["sur"] = sur
+        m["surNpv"] = int(npv)
+        if m.get("surTotal") is None:
+            m["surTotal"] = int(npv)
+        m["salSrc"] = "arb_projection"
+        priced += 1
+    if log:
+        log("  gate C: priced %d rows off the arbitration projection" % priced)
+    return {"priced": priced}
 
 
 # ============================================================================
