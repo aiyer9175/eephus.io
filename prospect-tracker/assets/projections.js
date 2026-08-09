@@ -14,7 +14,7 @@
 (function () {
   "use strict";
 
-  const DASH = " - ";
+  const EM_DASH = " - ";
   let DATA = null;
 
   // Mirror of PROSPX's formatMetric, character-identical to the copy in fa.js -
@@ -27,7 +27,7 @@
   // pins the two copies identical so they cannot drift again.
   function formatMetric(value, type = "int") {
     const n = Number(value);
-    if (value == null || value === "" || !Number.isFinite(n)) return DASH;
+    if (value == null || value === "" || !Number.isFinite(n)) return EM_DASH;
     const z = n === 0 ? 0 : n;                       // collapse -0 -> 0
     const sign = z > 0 ? "+" : (z < 0 ? "-" : "");   // zero is unsigned
     const abs = Math.abs(z);
@@ -47,7 +47,7 @@
   // Signature kept at one argument: every call site here passes dollars and
   // wants the millions form. The old body emitted "-$1.6M" for negatives,
   // which `moneyM` now does too (it used to drop the sign).
-  const money = usd => (usd == null ? DASH : formatMetric(usd / 1e6, "moneyM"));
+  const money = usd => (usd == null ? EM_DASH : formatMetric(usd / 1e6, "moneyM"));
   function esc(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -661,7 +661,7 @@
     if (!nowAvail) state.teamMode = "proj";
     const nowMode = nowAvail && state.teamMode === "now";
     const curSeason = DATA.current_season || (DATA.first_season ? DATA.first_season - 1 : "");
-    const pctStr = (p) => p == null ? DASH : (p * 100).toFixed(1) + "%";
+    const pctStr = (p) => p == null ? EM_DASH : (p * 100).toFixed(1) + "%";
     const wlOf = (w, l) => `${Math.round(w)}-${Math.round(l)}`;
     // Window cell: an arrival-curve sparkline (share of farm surplus landing
     // each 2027-31 season + a later bucket) plus etaAlignYears, colored by
@@ -669,7 +669,7 @@
     const windowCell = (r) => {
       const f = r.farm || {};
       const a = f.etaAlignYears;
-      if (a == null) return DASH;
+      if (a == null) return EM_DASH;
       const by = Array.isArray(f.etaByYear) ? f.etaByYear : [];
       let spark = "";
       if (by.length) {
@@ -691,17 +691,17 @@
       return `<span class="proj-cell-inline" title="${esc(tip)}">${spark}<span class="proj-cell-num" style="color:${col};">${sign}${a.toFixed(1)}y</span></span>`;
     };
     // ---- Current (2026) cell-builders. All read r.current (the exporter's
-    // nested block) and DASH per-field when absent, so a partial payload
+    // nested block) and EM_DASH per-field when absent, so a partial payload
     // degrades cleanly. No math here beyond display formatting + bar widths. ----
     const currentCell = (r) => {
-      const c = r.current; if (!c || c.record == null) return DASH;
-      const pc = c.actualPct != null ? (c.actualPct * 100).toFixed(1) + "%" : DASH;
+      const c = r.current; if (!c || c.record == null) return EM_DASH;
+      const pc = c.actualPct != null ? (c.actualPct * 100).toFixed(1) + "%" : EM_DASH;
       const gb = c.gb != null ? (c.gb === 0 ? "div lead" : `${c.gb} GB`) : "";
       const tip = `Actual ${curSeason} record: ${c.record} (${pc})${gb ? " · " + gb : ""}${c.ilOut60 ? ` · ${c.ilOut60} on the 60-day IL` : ""}.`;
       return `<span class="proj-cell-nowrap" title="${esc(tip)}"><strong>${esc(c.record)}</strong> <span class="fa-sub">${pc}</span></span>`;
     };
     const pythagCell = (r) => {
-      const c = r.current; if (!c || c.pythagPct == null) return DASH;
+      const c = r.current; if (!c || c.pythagPct == null) return EM_DASH;
       const delta = (c.actualPct != null) ? c.actualPct - c.pythagPct : null;
       const col = delta == null ? "var(--text-primary)"
         : delta >= 0.020 ? "var(--up)" : delta <= -0.020 ? "var(--down)" : "var(--text-primary)";
@@ -709,12 +709,12 @@
       return `<span class="proj-cell-mono" title="${esc(tip)}" style="color:${col};">${(c.pythagPct * 100).toFixed(1)}%</span>`;
     };
     const blendCell = (r) => {
-      const c = r.current; if (!c || c.curWins == null) return DASH;
+      const c = r.current; if (!c || c.curWins == null) return EM_DASH;
       const tip = `Projected full-season ${curSeason} record: ${wlOf(c.curWins, c.curLosses)} (${(c.curPct * 100).toFixed(1)}%). Bayesian blend of the roster-talent prior (${pctStr(c.talentPriorPct)}), actual record (${pctStr(c.actualPct)}), and Pythag (${pctStr(c.pythagPct)}); weights prior/actual/pythag = ${c.blendWeights ? [c.blendWeights.prior, c.blendWeights.actual, c.blendWeights.pythag].map(x => x.toFixed(2)).join("/") : "?"} at ${c.gamesPlayed} games played.`;
       return `<span class="proj-cell-nowrap" title="${esc(tip)}"><strong>${wlOf(c.curWins, c.curLosses)}</strong> <span class="fa-sub">${(c.curPct * 100).toFixed(1)}%</span></span>`;
     };
     const playoffCell = (r) => {
-      const c = r.current; if (!c || c.playoffPct == null) return DASH;
+      const c = r.current; if (!c || c.playoffPct == null) return EM_DASH;
       const div = c.divisionPct || 0, wc = c.wildcardPct || 0, play = c.playoffPct || 0;
       const divW = Math.round(div * 100), wcW = Math.round(wc * 100);
       const missW = Math.max(0, 100 - divW - wcW);
@@ -730,7 +730,7 @@
       return `<span class="proj-cell-inline" title="${esc(tip)}">${bar}<span class="proj-cell-num">${(play * 100).toFixed(0)}%</span></span>`;
     };
     const sosCell = (r) => {
-      const c = r.current; if (!c || c.sos == null) return DASH;
+      const c = r.current; if (!c || c.sos == null) return EM_DASH;
       const rk = c.sosRank != null ? `#${c.sosRank}` : "";
       const col = c.sos >= 0.520 ? "var(--down)" : c.sos <= 0.480 ? "var(--up)" : "var(--text-primary)";
       const tip = `Remaining strength of schedule (log5): avg opponent talent ${(c.sos * 100).toFixed(1)}% over ${c.remGames} unplayed games; rank ${rk} (1 = hardest). Expected ~${c.remWinExp} added wins the rest of the way.`;
@@ -749,10 +749,10 @@
     const controlCell = (r) => {
       const by = Array.isArray(r.byYear) ? r.byYear : [];
       const pct = r.lockedPct != null ? Math.round(r.lockedPct * 100) : null;
-      if (!by.length && pct == null) return DASH;
+      if (!by.length && pct == null) return EM_DASH;
       const pctCol = pct == null ? "var(--text-secondary)"
         : pct >= 75 ? "var(--up)" : pct <= 45 ? "var(--down)" : "var(--text-primary)";
-      const pctStr = pct == null ? DASH : `${pct}%`;
+      const pctStr = pct == null ? EM_DASH : `${pct}%`;
       let spark = "";
       if (by.length) {
         spark = miniTrendSVG(
@@ -814,13 +814,13 @@
       const f = r.farm || {};
       const farmCell = f.farmRank != null
         ? `<a href="/prospx/#farm-org=${encodeURIComponent(r.team)}" title="PROSPX farm system detail">#${f.farmRank}</a> <span class="fa-sub">${f.farmScore != null ? Math.round(f.farmScore) : ""}</span>`
-        : DASH;
+        : EM_DASH;
       const surCell = f.farmSurplusMM != null
         ? `<span class="${f.farmSurplusMM >= 0 ? "proj-pos" : "proj-neg"}" title="Net control-window NPV over the org's active prospect pool">$${Math.round(f.farmSurplusMM)}M</span>`
-        : DASH;
+        : EM_DASH;
       const topCell = f.topProspect
         ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(f.topProspect.key || "")}">${esc(f.topProspect.name)}</a> <span class="fa-sub">FV ${esc(String(f.topProspect.fv || "?"))}</span>`
-        : DASH;
+        : EM_DASH;
       const openCell = `<a href="/prospx/#farm-org=${encodeURIComponent(r.team)}">farm</a> · <a href="/prospx/#farm-org=${encodeURIComponent(r.team)}&ftab=tendencies" title="Open the Org Tendencies tab">tendencies</a> · <a href="/fa/#view=fits&team=${encodeURIComponent(r.team)}">FA fits</a> · <a href="#team=${encodeURIComponent(r.team)}" data-team-filter="${esc(r.team)}">roster</a>`;
       const w = Math.round(r.wins);
       const wl = `${w}-${162 - w}`;
@@ -925,15 +925,15 @@
     return `<span class="proj-verdict" style="background:${m.col};">${esc(m.label)}</span>`;
   }
   function _num(v, d) {
-    return v == null || !Number.isFinite(Number(v)) ? DASH : Number(v).toFixed(d == null ? 2 : d);
+    return v == null || !Number.isFinite(Number(v)) ? EM_DASH : Number(v).toFixed(d == null ? 2 : d);
   }
   function _signed(v, d) {
-    if (v == null || !Number.isFinite(Number(v))) return DASH;
+    if (v == null || !Number.isFinite(Number(v))) return EM_DASH;
     const n = Number(v);
     return (n >= 0 ? "+" : "") + n.toFixed(d == null ? 2 : d);
   }
   function _pct0(v) {
-    return v == null || !Number.isFinite(Number(v)) ? DASH : (Number(v) * 100).toFixed(0) + "%";
+    return v == null || !Number.isFinite(Number(v)) ? EM_DASH : (Number(v) * 100).toFixed(0) + "%";
   }
 
   // Team win totals - the retro backtest per season (cohort-recentered roll-up
@@ -943,7 +943,7 @@
     if (!tw || !(tw.per_season || []).length) return "";
     const rows = tw.per_season.map(s => `<tr>
       <td>${s.season}${s.is_holdout ? ` <span class="proj-tag" title="Held out of the cohort-intercept fit" data-gl="holdout">holdout</span>` : ""}</td>
-      <td>${s.n_assigned_players ?? DASH}</td>
+      <td>${s.n_assigned_players ?? EM_DASH}</td>
       <td class="proj-acct-key">${_num(s.mae)}</td>
       <td>${_num(s.r)}</td>
       <td class="fa-sub">${_num(s.baseline_mae)}</td>
@@ -975,10 +975,10 @@
       return `<tr>
         <td>h${r.h}</td>
         <td class="proj-acct-key">${_num(r.mae)}</td>
-        <td class="fa-sub">${b.mae != null ? _num(b.mae) : DASH}</td>
+        <td class="fa-sub">${b.mae != null ? _num(b.mae) : EM_DASH}</td>
         <td>${_signed(r.bias)}</td>
         <td>${_pct0(r.coverage)}</td>
-        <td class="fa-sub">${b.coverage != null ? _pct0(b.coverage) : DASH}</td>
+        <td class="fa-sub">${b.coverage != null ? _pct0(b.coverage) : EM_DASH}</td>
       </tr>`;
     }).join("");
     return `<table class="detail-table proj-table proj-acct-table">
@@ -1000,8 +1000,8 @@
     return `<table class="detail-table proj-table proj-acct-table">
       <thead><tr><th>Model</th><th>n</th><th><span data-gl="mae">MAE</span> (WAR)</th><th title="Rank correlation vs realized first-3y WAR (the ship metric)">Spearman</th></tr></thead>
       <tbody>
-        <tr><td>${esc(c.label || "champion")} <span class="proj-tag">champion</span></td><td>${c.n ?? DASH}</td><td>${_num(c.mae)}</td><td class="proj-acct-key">${_num(c.spearman, 3)}</td></tr>
-        <tr><td class="fa-sub">${esc(ch.label || "challenger")}</td><td>${ch.n ?? DASH}</td><td>${_num(ch.mae)}</td><td>${_num(ch.spearman, 3)}</td></tr>
+        <tr><td>${esc(c.label || "champion")} <span class="proj-tag">champion</span></td><td>${c.n ?? EM_DASH}</td><td>${_num(c.mae)}</td><td class="proj-acct-key">${_num(c.spearman, 3)}</td></tr>
+        <tr><td class="fa-sub">${esc(ch.label || "challenger")}</td><td>${ch.n ?? EM_DASH}</td><td>${_num(ch.mae)}</td><td>${_num(ch.spearman, 3)}</td></tr>
       </tbody></table>
       <div class="fa-sub proj-acct-foot">Forward-chained debut cohorts ${esc((pp.scored_years || []).join(", "))}. The scouting-consensus FV model ranks better (higher Spearman); stat-line challengers lost the pre-registered dual gate and are committed as losses.</div>`;
   }
@@ -1017,8 +1017,8 @@
       const vl = VERDICT_META[m.verdict] ? VERDICT_META[m.verdict].label : (m.verdict || "?");
       return { cells: [
         { t: m.label || m.model_id || "?" },
-        { t: m.surface || DASH, c: "muted" },
-        { t: m.metric || DASH },
+        { t: m.surface || EM_DASH, c: "muted" },
+        { t: m.metric || EM_DASH },
         { t: vl, c: vcol[m.verdict] || "muted", bold: true },
       ] };
     });
@@ -1122,7 +1122,7 @@
           const v = rateAt(m, t);
           if (v == null) {
             const milb = m.src === "prospect" && s < m.eta;
-            return chip("proj-dim", milb ? "MiLB" : DASH);
+            return chip("proj-dim", milb ? "MiLB" : EM_DASH);
           }
           const mm = RATE_META[state.cells];
           return chip("proj-war" + rateClass(v), mm.fmt(v),
@@ -1131,7 +1131,7 @@
         const w = warAt(m, t);
         if (w == null) {
           const milb = m.src === "prospect" && s < m.eta;
-          return chip("proj-dim", milb ? "MiLB" : DASH);
+          return chip("proj-dim", milb ? "MiLB" : EM_DASH);
         }
         const lo = bandAt(m, t, "lo"), hi = bandAt(m, t, "hi");
         return chip("proj-war" + warClass(w), fmtWar(w),
@@ -1154,7 +1154,7 @@
       // sort they did not ask for. AAV came out of it into a column of its own,
       // which is also what finally made AAV sortable at all.
       const ctChip = `<div class="mlb-chip mlb-chip-ct" title="${esc(cs.tip)}"><b>contract</b><span class="proj-ct ${cs.cls}"><span class="proj-ct-full">${esc(cs.label)}</span><span class="proj-ct-short">${esc(cs.short)}</span></span></div>`;
-      const aavCell = m.aav != null ? money(m.aav) : DASH;
+      const aavCell = m.aav != null ? money(m.aav) : EM_DASH;
       // Stays a CHIP and does not become a column, which was the plan until it
       // was measured against the live payload: warPeak is carried by 203 of 203
       // prospects and 0 of 1,326 veterans, so a row-1 column for it would be a
@@ -1173,7 +1173,7 @@
                 : "NPV of (convex production value − salary) over salary-known seasons"));
       const sur = _sv != null
         ? `<span class="${_sv >= 0 ? "proj-pos" : "proj-neg"}" title="${_surTitle}">${money(_sv)}</span>`
-        : DASH;
+        : EM_DASH;
       // title carries the full name because .mlb-name is an ellipsis box. The
       // identity block measures 224px at a 320px viewport and the photo rail
       // plus the org logo take ~51px of that, so a long name is one of the few
@@ -1208,7 +1208,7 @@
         <span class="mlb-metric" title="Average annual value of the guaranteed contract on file. Prospects and players without a multi-year deal carry none."><span class="mlb-metric-label">AAV</span>${aavCell}</span>
         <span class="mlb-metric" title="Player age as carried on the projection row (the aging curves run forward from it)"><span class="mlb-metric-label">Age</span>${m.age != null ? Math.floor(m.age) : "?"}</span>
         <span class="mlb-metric"><span class="mlb-metric-label">Surplus</span>${sur}</span>
-        <span class="mlb-metric proj-col-wide" title="Final guaranteed season on the contract on file. Prospects and players without a multi-year deal carry none and sort last. The contract STATUS - signed, expiring, no multi-year deal - is the chip in the tape; this is only the year."><span class="mlb-metric-label">signed thru</span>${m.thru ? m.thru : DASH}</span>
+        <span class="mlb-metric proj-col-wide" title="Final guaranteed season on the contract on file. Prospects and players without a multi-year deal carry none and sort last. The contract STATUS - signed, expiring, no multi-year deal - is the chip in the tape; this is only the year."><span class="mlb-metric-label">signed thru</span>${m.thru ? m.thru : EM_DASH}</span>
         ${seasonTape}
       </div>`;
     }).join("");
@@ -1477,15 +1477,15 @@
       const va = warAt(a, t), vb = warAt(b, t);
       const edge = (va != null && vb != null) ? va - vb : null;
       const cell = (v, m) => v == null
-        ? `<td class="proj-dim">${m.src === "prospect" && s < m.eta ? "MiLB" : DASH}</td>`
+        ? `<td class="proj-dim">${m.src === "prospect" && s < m.eta ? "MiLB" : EM_DASH}</td>`
         : `<td class="proj-war${warClass(v)}">${fmtWar(v)}</td>`;
       return `<tr><td>${s}</td>${cell(va, a)}${cell(vb, b)}
-        <td class="${edge == null ? "proj-dim" : edge >= 0 ? "proj-pos" : "proj-neg"}">${edge == null ? DASH : (edge >= 0 ? "+" : "") + edge.toFixed(1)}</td></tr>`;
+        <td class="${edge == null ? "proj-dim" : edge >= 0 ? "proj-pos" : "proj-neg"}">${edge == null ? EM_DASH : (edge >= 0 ? "+" : "") + edge.toFixed(1)}</td></tr>`;
     }).join("");
     const totRow = (label, va, vb, fmt) => {
       const d = (va != null && vb != null) ? va - vb : null;
-      return `<tr class="proj-cmp-total"><td>${label}</td><td>${va != null ? fmt(va) : DASH}</td><td>${vb != null ? fmt(vb) : DASH}</td>
-        <td class="${d == null ? "proj-dim" : d >= 0 ? "proj-pos" : "proj-neg"}">${d == null ? DASH : (d >= 0 ? "+" : "") + (fmt === fmtWar ? d.toFixed(1) : money(d))}</td></tr>`;
+      return `<tr class="proj-cmp-total"><td>${label}</td><td>${va != null ? fmt(va) : EM_DASH}</td><td>${vb != null ? fmt(vb) : EM_DASH}</td>
+        <td class="${d == null ? "proj-dim" : d >= 0 ? "proj-pos" : "proj-neg"}">${d == null ? EM_DASH : (d >= 0 ? "+" : "") + (fmt === fmtWar ? d.toFixed(1) : money(d))}</td></tr>`;
     };
     // The newsprint eyebrow the board and the FA class board open with, in place
     // of .mlbp-section-title - that is the PLAYER PAGE's section dialect, and
@@ -1595,9 +1595,9 @@
     if (!ar || !ar.length) return "";
     return `<div class="mlbp-section"><div class="mlbp-section-title">Pitch Arsenal <span class="fa-sub">usage · run value /100 · whiff%</span></div>
       <table class="detail-table"><thead><tr><th>Pitch</th><th>Usage</th><th>RV/100</th><th>Whiff%</th><th>BA against</th></tr></thead>
-      <tbody>${ar.map(a => `<tr><td>${esc(a.pitch || "")}</td><td>${a.usage != null ? a.usage.toFixed(1) + "%" : DASH}</td>
-        <td class="${a.rv100 != null && a.rv100 < 0 ? "proj-pos" : a.rv100 > 0 ? "proj-neg" : ""}">${a.rv100 != null ? a.rv100.toFixed(1) : DASH}</td>
-        <td>${a.whiff != null ? a.whiff.toFixed(1) + "%" : DASH}</td><td>${a.ba != null ? String(a.ba) : DASH}</td></tr>`).join("")}</tbody></table></div>`;
+      <tbody>${ar.map(a => `<tr><td>${esc(a.pitch || "")}</td><td>${a.usage != null ? a.usage.toFixed(1) + "%" : EM_DASH}</td>
+        <td class="${a.rv100 != null && a.rv100 < 0 ? "proj-pos" : a.rv100 > 0 ? "proj-neg" : ""}">${a.rv100 != null ? a.rv100.toFixed(1) : EM_DASH}</td>
+        <td>${a.whiff != null ? a.whiff.toFixed(1) + "%" : EM_DASH}</td><td>${a.ba != null ? String(a.ba) : EM_DASH}</td></tr>`).join("")}</tbody></table></div>`;
   }
   function careerTable(p) {
     const c = p.career || [];
@@ -1606,8 +1606,8 @@
       ? "<th>Year</th><th>IP</th><th>ERA</th><th>K%</th><th>BB%</th><th>bWAR</th>"
       : "<th>Year</th><th>PA</th><th>AVG/OBP/SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th><th>ISO</th><th>bWAR</th>";
     const rows = c.slice().reverse().map(r => p.isPit
-      ? `<tr><td>${r.y}</td><td>${r.ip ?? DASH}</td><td>${r.era != null ? r.era.toFixed(2) : DASH}</td><td>${r.kPct != null ? r.kPct + "%" : DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : DASH}</td><td>${r.war != null ? r.war.toFixed(1) : DASH}</td></tr>`
-      : `<tr><td>${r.y}</td><td>${r.pa ?? DASH}</td><td>${esc(r.avg || "-")}/${esc(r.obp || "-")}/${esc(r.slg || "-")}</td><td>${esc(r.ops || DASH)}</td><td>${r.hr ?? DASH}</td><td>${r.sb ?? DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : DASH}</td><td>${r.kPct != null ? r.kPct + "%" : DASH}</td><td>${r.iso != null ? String(r.iso).replace(/^0(?=\.)/, "") : DASH}</td><td>${r.war != null ? r.war.toFixed(1) : DASH}</td></tr>`).join("");
+      ? `<tr><td>${r.y}</td><td>${r.ip ?? EM_DASH}</td><td>${r.era != null ? r.era.toFixed(2) : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td><td>${r.war != null ? r.war.toFixed(1) : EM_DASH}</td></tr>`
+      : `<tr><td>${r.y}</td><td>${r.pa ?? EM_DASH}</td><td>${esc(r.avg || "-")}/${esc(r.obp || "-")}/${esc(r.slg || "-")}</td><td>${esc(r.ops || EM_DASH)}</td><td>${r.hr ?? EM_DASH}</td><td>${r.sb ?? EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.iso != null ? String(r.iso).replace(/^0(?=\.)/, "") : EM_DASH}</td><td>${r.war != null ? r.war.toFixed(1) : EM_DASH}</td></tr>`).join("");
     return `<div class="mlbp-section"><div class="mlbp-section-title">Career <span class="fa-sub">MLB seasons · bWAR (Baseball-Reference)</span></div>
       <table class="detail-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
@@ -1616,12 +1616,12 @@
     if (!f) return "";
     const verd = f.verdict ? `<span class="mlbp-tile-chip">${esc(f.verdict)}</span>` : "";
     const cells = [
-      ["Projected", f.projYears != null ? `${f.projYears}y / ${money(f.projGuar)}` : DASH],
-      ["Proj AAV", f.projAav != null ? `${money(f.projAav)}${f.projAavP10 != null ? ` <span class="fa-band">(${money(f.projAavP10)}-${money(f.projAavP90)})</span>` : ""}` : DASH],
-      ["Rational value", f.rational != null ? money(f.rational) : DASH],
-      ["Contract surplus", f.surplus != null ? money(f.surplus) : DASH],
-      ["Deal+", f.dealPlus != null ? String(Math.round(f.dealPlus)) : DASH],
-      ["Prior AAV", f.prevAav != null ? money(f.prevAav) : DASH],
+      ["Projected", f.projYears != null ? `${f.projYears}y / ${money(f.projGuar)}` : EM_DASH],
+      ["Proj AAV", f.projAav != null ? `${money(f.projAav)}${f.projAavP10 != null ? ` <span class="fa-band">(${money(f.projAavP10)}-${money(f.projAavP90)})</span>` : ""}` : EM_DASH],
+      ["Rational value", f.rational != null ? money(f.rational) : EM_DASH],
+      ["Contract surplus", f.surplus != null ? money(f.surplus) : EM_DASH],
+      ["Deal+", f.dealPlus != null ? String(Math.round(f.dealPlus)) : EM_DASH],
+      ["Prior AAV", f.prevAav != null ? money(f.prevAav) : EM_DASH],
     ];
     return `<div class="mlbp-section"><div class="mlbp-section-title">Free Agency <span class="fa-sub">${esc(f.status || "")} · gate-validated market model</span> ${verd}</div>
       <div class="mlbp-grid">${cells.map(([l, v]) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${l}</span><span class="mlbp-cell-val">${v}</span></div>`).join("")}</div>
