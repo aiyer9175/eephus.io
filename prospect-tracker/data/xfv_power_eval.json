@@ -855,5 +855,3269 @@
    "note": "no secondary cut is called resolvable on its unadjusted floor alone"
   }
  },
- "elapsed_s": 4089.4
+ "elapsed_s": 4089.4,
+ "x1_parity": {
+  "gate": "X1 parity",
+  "verdict": "PASS",
+  "B": 2000,
+  "seed": 20260816,
+  "generated_at": "2026-08-09T19:51:25Z",
+  "produced_by": "tools/efv_power_lab.py parity_x1",
+  "draws_identical_all": true,
+  "draws": {
+   "hit.full_pool_km.refit": {
+    "B": 2000,
+    "identical": true,
+    "max_abs_diff": 0.0
+   },
+   "hit.full_pool_km.cond_iid": {
+    "B": 2000,
+    "identical": true,
+    "max_abs_diff": 0.0
+   },
+   "hit.full_pool_km.cond_strat": {
+    "B": 2000,
+    "identical": true,
+    "max_abs_diff": 0.0
+   },
+   "pit.full_pool_km.refit": {
+    "B": 2000,
+    "identical": true,
+    "max_abs_diff": 0.0
+   },
+   "pit.full_pool_km.cond_iid": {
+    "B": 2000,
+    "identical": true,
+    "max_abs_diff": 0.0
+   },
+   "pit.full_pool_km.cond_strat": {
+    "B": 2000,
+    "identical": true,
+    "max_abs_diff": 0.0
+   },
+   "hit.debuted_km.refit": {
+    "B": 2000,
+    "identical": true,
+    "max_abs_diff": 0.0
+   },
+   "hit.debuted_km.cond_iid": {
+    "B": 2000,
+    "identical": true,
+    "max_abs_diff": 0.0
+   },
+   "hit.debuted_km.cond_strat": {
+    "B": 2000,
+    "identical": true,
+    "max_abs_diff": 0.0
+   },
+   "pit.debuted_km.refit": {
+    "B": 2000,
+    "identical": true,
+    "max_abs_diff": 0.0
+   },
+   "pit.debuted_km.cond_iid": {
+    "B": 2000,
+    "identical": true,
+    "max_abs_diff": 0.0
+   },
+   "pit.debuted_km.cond_strat": {
+    "B": 2000,
+    "identical": true,
+    "max_abs_diff": 0.0
+   }
+  },
+  "verdict_rows_identical": true,
+  "row_mode_is_degenerate_cluster": {
+   "identical": true,
+   "B": 300
+  },
+  "sd_ratios_applied": {
+   "refit": 1.454,
+   "cond_iid": 1.0,
+   "cond_strat": 0.995
+  },
+  "checked_against": "the incumbent code path run in the same process on the same pools, NOT the stored artifact: floors are functions of the data, so a moved basis is a separate finding",
+  "basis_drift": {
+   "part_a_generated_at": "2026-08-08T23:13:36Z",
+   "cuts": {
+    "hit.full_pool_km": {
+     "registered": {
+      "n": 1792,
+      "consensus": 0.29539,
+      "blend": 0.27645,
+      "delta": -0.01894
+     },
+     "today": {
+      "n": 1786,
+      "consensus": 0.29554,
+      "blend": 0.27695,
+      "delta": -0.01859
+     },
+     "identical": false,
+     "delta_shift": 0.00035
+    },
+    "pit.full_pool_km": {
+     "registered": {
+      "n": 1883,
+      "consensus": 0.19896,
+      "blend": 0.21293,
+      "delta": 0.01398
+     },
+     "today": {
+      "n": 1881,
+      "consensus": 0.19862,
+      "blend": 0.21353,
+      "delta": 0.01491
+     },
+     "identical": false,
+     "delta_shift": 0.00093
+    },
+    "hit.debuted_km": {
+     "registered": {
+      "n": 755,
+      "consensus": 0.38442,
+      "blend": 0.39563,
+      "delta": 0.01121
+     },
+     "today": {
+      "n": 755,
+      "consensus": 0.38442,
+      "blend": 0.39563,
+      "delta": 0.01121
+     },
+     "identical": true,
+     "delta_shift": 0.0
+    },
+    "pit.debuted_km": {
+     "registered": {
+      "n": 889,
+      "consensus": 0.2512,
+      "blend": 0.25732,
+      "delta": 0.00612
+     },
+     "today": {
+      "n": 890,
+      "consensus": 0.25074,
+      "blend": 0.25776,
+      "delta": 0.00702
+     },
+     "identical": false,
+     "delta_shift": 0.0009
+    }
+   },
+   "basis_unchanged": false
+  },
+  "elapsed_s": 1045.3
+ },
+ "headtohead_frame": {
+  "class": "headtohead_common",
+  "status": "UNFLOORED. No floor is quoted until this class passes its own two-sided coverage gate against its own conditional estimand.",
+  "target_column": "war",
+  "legs": {
+   "n": 3224,
+   "consensus": 0.3207,
+   "efv": 0.35387,
+   "delta": 0.03318
+  },
+  "n_rows": 3224,
+  "n_clusters_scored": 1051,
+  "common_set_players": 1568,
+  "rows_per_cluster": 3.068,
+  "rows_per_cluster_max": 7,
+  "cond_sd_cluster": 0.01956,
+  "cond_sd_cluster_side_stratified": 0.01955,
+  "cond_sd_row_iid_DIAGNOSTIC": 0.01288,
+  "iid_row_narrowing_ratio": 1.519,
+  "diagnostic_reading": "the row variant is the size of the clustering violation, never a gate. A frame with 3.07 rows per player scored as 3.07 independent rows narrows the sd by the ratio above, all of it in the anti-conservative direction.",
+  "B": 2000,
+  "seed": 20260848
+ },
+ "partb_floors": {
+  "produced_by": "tools/efv_power_lab.py floors",
+  "generated_at": "2026-08-09T22:12:01Z",
+  "registration": "docs/efv-2026-08-08/POWER_EXTENSION_GATE.md sections 2 and 5; X1 parity discharged 2026-08-09, X2 in the block x2_coverage_h2h",
+  "convention": "MDE95 is ONE-SIDED 1.645*sd on |delta|, the convention in docs/EFV_GATE_STANDARD.md section 1. MDE95 is E_refit, MDE95_COND is E_cond. Neither is quoted without its estimator.",
+  "B_pool": 1000,
+  "B_h2h": 2000,
+  "B_weak": 500,
+  "seeds": {
+   "h2h_cluster": 20260848,
+   "block_rho": 20260850,
+   "feature_add": 20260852,
+   "lambda_shift": 20260854,
+   "feature_add_block": 20260853,
+   "feature_add_weak": 20260854,
+   "h2h_cover": 20260856,
+   "h2h_cover_pe": 20260857,
+   "x3_detect": 20260858,
+   "h2h_cover_sigma": 20260859,
+   "x4_sign": 20260860,
+   "x4_loss": 20260861,
+   "fold_series": 20260862,
+   "pooled_today": 20260864,
+   "x3_block": 20260868,
+   "x3_lambda": 20260870
+  },
+  "cells": {
+   "pooled_rho.hit.full_pool_km": {
+    "label": "pooled_rho.hit.full_pool_km",
+    "target_column": "target_censored",
+    "n_rows": 1786,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 1786,
+     "consensus": 0.29554,
+     "blend": 0.27695,
+     "delta": -0.01859
+    },
+    "point_delta": -0.01859,
+    "MDE95": 0.0295,
+    "MDE95_COND": 0.0208,
+    "margin_over_MDE95": 0.63,
+    "margin_over_MDE95_COND": 0.894,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "NULL",
+    "E_refit": {
+     "B_used": 1000,
+     "point_delta": -0.01859,
+     "boot_mean_delta": -0.01573,
+     "sd": 0.01794,
+     "MDE95": 0.0295,
+     "mde95_twosided": 0.0352,
+     "ci95": [
+      -0.05094,
+      0.02003
+     ],
+     "p_gt_0": 0.182,
+     "margin_over_floor": 0.63,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 1000,
+     "point_delta": -0.01859,
+     "boot_mean_delta": -0.01838,
+     "sd": 0.01264,
+     "MDE95": 0.0208,
+     "mde95_twosided": 0.0248,
+     "ci95": [
+      -0.04248,
+      0.00766
+     ],
+     "p_gt_0": 0.073,
+     "margin_over_floor": 0.894,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "refit_share_of_variance": 0.504,
+    "fit_fixed_share_of_variance": 0.496,
+    "floor_share_removable_by_infinite_test_n": 0.29,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0209,
+    "permanently_undecidable_under_E_refit": true,
+    "B": 1000,
+    "rank": "PRIMARY",
+    "basis": "re-derived 2026-08-09, NOT the registered part-A numbers"
+   },
+   "pooled_rho.pit.full_pool_km": {
+    "label": "pooled_rho.pit.full_pool_km",
+    "target_column": "target_censored",
+    "n_rows": 1881,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 1881,
+     "consensus": 0.19862,
+     "blend": 0.21353,
+     "delta": 0.01491
+    },
+    "point_delta": 0.01491,
+    "MDE95": 0.0265,
+    "MDE95_COND": 0.0207,
+    "margin_over_MDE95": 0.562,
+    "margin_over_MDE95_COND": 0.719,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "NULL",
+    "E_refit": {
+     "B_used": 1000,
+     "point_delta": 0.01491,
+     "boot_mean_delta": 0.00309,
+     "sd": 0.01612,
+     "MDE95": 0.0265,
+     "mde95_twosided": 0.0316,
+     "ci95": [
+      -0.02902,
+      0.03561
+     ],
+     "p_gt_0": 0.575,
+     "margin_over_floor": 0.562,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 1000,
+     "point_delta": 0.01491,
+     "boot_mean_delta": 0.01597,
+     "sd": 0.01259,
+     "MDE95": 0.0207,
+     "mde95_twosided": 0.0247,
+     "ci95": [
+      -0.0091,
+      0.04077
+     ],
+     "p_gt_0": 0.893,
+     "margin_over_floor": 0.719,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "refit_share_of_variance": 0.39,
+    "fit_fixed_share_of_variance": 0.61,
+    "floor_share_removable_by_infinite_test_n": 0.375,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0166,
+    "permanently_undecidable_under_E_refit": true,
+    "B": 1000,
+    "rank": "secondary",
+    "basis": "re-derived 2026-08-09, NOT the registered part-A numbers"
+   },
+   "pooled_rho.hit.debuted_km": {
+    "label": "pooled_rho.hit.debuted_km",
+    "target_column": "target_censored",
+    "n_rows": 755,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 755,
+     "consensus": 0.38442,
+     "blend": 0.39563,
+     "delta": 0.01121
+    },
+    "point_delta": 0.01121,
+    "MDE95": 0.045,
+    "MDE95_COND": 0.0204,
+    "margin_over_MDE95": 0.249,
+    "margin_over_MDE95_COND": 0.549,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "NULL",
+    "E_refit": {
+     "B_used": 1000,
+     "point_delta": 0.01121,
+     "boot_mean_delta": -0.01749,
+     "sd": 0.02737,
+     "MDE95": 0.045,
+     "mde95_twosided": 0.0537,
+     "ci95": [
+      -0.0732,
+      0.03205
+     ],
+     "p_gt_0": 0.272,
+     "margin_over_floor": 0.249,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 1000,
+     "point_delta": 0.01121,
+     "boot_mean_delta": 0.01081,
+     "sd": 0.0124,
+     "MDE95": 0.0204,
+     "mde95_twosided": 0.0243,
+     "ci95": [
+      -0.01305,
+      0.03552
+     ],
+     "p_gt_0": 0.806,
+     "margin_over_floor": 0.549,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "refit_share_of_variance": 0.795,
+    "fit_fixed_share_of_variance": 0.205,
+    "floor_share_removable_by_infinite_test_n": 0.109,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0401,
+    "permanently_undecidable_under_E_refit": true,
+    "B": 1000,
+    "rank": "secondary",
+    "basis": "re-derived 2026-08-09, NOT the registered part-A numbers"
+   },
+   "pooled_rho.pit.debuted_km": {
+    "label": "pooled_rho.pit.debuted_km",
+    "target_column": "target_censored",
+    "n_rows": 890,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 890,
+     "consensus": 0.25074,
+     "blend": 0.25776,
+     "delta": 0.00702
+    },
+    "point_delta": 0.00702,
+    "MDE95": 0.0431,
+    "MDE95_COND": 0.0295,
+    "margin_over_MDE95": 0.163,
+    "margin_over_MDE95_COND": 0.238,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "NULL",
+    "E_refit": {
+     "B_used": 1000,
+     "point_delta": 0.00702,
+     "boot_mean_delta": -0.00736,
+     "sd": 0.0262,
+     "MDE95": 0.0431,
+     "mde95_twosided": 0.0514,
+     "ci95": [
+      -0.06238,
+      0.04225
+     ],
+     "p_gt_0": 0.41,
+     "margin_over_floor": 0.163,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 1000,
+     "point_delta": 0.00702,
+     "boot_mean_delta": 0.00724,
+     "sd": 0.01791,
+     "MDE95": 0.0295,
+     "mde95_twosided": 0.0351,
+     "ci95": [
+      -0.0276,
+      0.04064
+     ],
+     "p_gt_0": 0.647,
+     "margin_over_floor": 0.238,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "refit_share_of_variance": 0.533,
+    "fit_fixed_share_of_variance": 0.467,
+    "floor_share_removable_by_infinite_test_n": 0.27,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0315,
+    "permanently_undecidable_under_E_refit": true,
+    "B": 1000,
+    "rank": "secondary",
+    "basis": "re-derived 2026-08-09, NOT the registered part-A numbers"
+   },
+   "headtohead_common": {
+    "label": "headtohead_common",
+    "target_column": "war",
+    "n_rows": 3224,
+    "n_clusters": 1051,
+    "cond_resampling_unit": "player cluster",
+    "legs": {
+     "n": 3224,
+     "consensus": 0.3207,
+     "efv": 0.35387,
+     "delta": 0.03318
+    },
+    "point_delta": 0.03318,
+    "MDE95": 0.0345,
+    "MDE95_COND": 0.0322,
+    "margin_over_MDE95": 0.963,
+    "margin_over_MDE95_COND": 1.031,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "RESOLVABLE WIN",
+    "E_refit": {
+     "B_used": 2000,
+     "point_delta": 0.03318,
+     "sd": 0.02095,
+     "MDE95": 0.0345,
+     "mde95_twosided": 0.0411,
+     "ci95": [
+      -0.01272,
+      0.06908
+     ],
+     "p_gt_0": 0.9095,
+     "margin_over_floor": 0.963,
+     "resolvable": false,
+     "verdict": "NULL",
+     "producer": "efv_mde_lab.headtohead(B, write=False), seed SEED+1",
+     "note": "its own point delta is on the SAME frame; any difference from this cell's point_delta is the unrounded-vs-published primitive"
+    },
+    "E_cond": {
+     "B_used": 2000,
+     "point_delta": 0.03318,
+     "boot_mean_delta": 0.03347,
+     "sd": 0.01956,
+     "MDE95": 0.0322,
+     "mde95_twosided": 0.0383,
+     "ci95": [
+      -0.00394,
+      0.07263
+     ],
+     "p_gt_0": 0.958,
+     "margin_over_floor": 1.031,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "refit_share_of_variance": 0.128,
+    "fit_fixed_share_of_variance": 0.872,
+    "floor_share_removable_by_infinite_test_n": 0.642,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0123,
+    "permanently_undecidable_under_E_refit": false,
+    "sensitivity_cluster_side_stratified": {
+     "B_used": 2000,
+     "point_delta": 0.03318,
+     "boot_mean_delta": 0.03298,
+     "sd": 0.01955,
+     "MDE95": 0.0322,
+     "mde95_twosided": 0.0383,
+     "ci95": [
+      -0.00393,
+      0.07246
+     ],
+     "p_gt_0": 0.961,
+     "margin_over_floor": 1.032,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "DIAGNOSTIC_row_iid_NOT_A_GATE": {
+     "B_used": 2000,
+     "point_delta": 0.03318,
+     "boot_mean_delta": 0.03283,
+     "sd": 0.01288,
+     "MDE95": 0.0212,
+     "mde95_twosided": 0.0252,
+     "ci95": [
+      0.00817,
+      0.05773
+     ],
+     "p_gt_0": 0.9945,
+     "margin_over_floor": 1.566,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "iid_row_narrowing_ratio": 1.519,
+    "clustering_note": "3.07 rows per player. The row-iid variant is published as the SIZE OF THE VIOLATION, never as a gate: scoring 3.07 correlated rows as 3.07 independent ones narrows the sd by the ratio above, entirely in the anti-conservative direction.",
+    "B": 2000
+   },
+   "block_rho": {
+    "label": "block_rho.debuted",
+    "target_column": "target_censored",
+    "n_rows": 1645,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 1645,
+     "consensus": 0.30815,
+     "blend": 0.31728,
+     "delta": 0.00912
+    },
+    "point_delta": 0.00912,
+    "MDE95": 0.0317,
+    "MDE95_COND": 0.0203,
+    "margin_over_MDE95": 0.288,
+    "margin_over_MDE95_COND": 0.45,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "NULL",
+    "E_refit": {
+     "B_used": 1000,
+     "point_delta": 0.00912,
+     "boot_mean_delta": -0.01105,
+     "sd": 0.01928,
+     "MDE95": 0.0317,
+     "mde95_twosided": 0.0378,
+     "ci95": [
+      -0.05165,
+      0.0233
+     ],
+     "p_gt_0": 0.3,
+     "margin_over_floor": 0.288,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 1000,
+     "point_delta": 0.00912,
+     "boot_mean_delta": 0.00791,
+     "sd": 0.01231,
+     "MDE95": 0.0203,
+     "mde95_twosided": 0.0241,
+     "ci95": [
+      -0.01652,
+      0.03136
+     ],
+     "p_gt_0": 0.741,
+     "margin_over_floor": 0.45,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "refit_share_of_variance": 0.592,
+    "fit_fixed_share_of_variance": 0.408,
+    "floor_share_removable_by_infinite_test_n": 0.23,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0244,
+    "permanently_undecidable_under_E_refit": true,
+    "sensitivity_block_stratified": {
+     "B_used": 1000,
+     "point_delta": 0.00912,
+     "boot_mean_delta": 0.00851,
+     "sd": 0.01315,
+     "MDE95": 0.0216,
+     "mde95_twosided": 0.0258,
+     "ci95": [
+      -0.01528,
+      0.03488
+     ],
+     "p_gt_0": 0.736,
+     "margin_over_floor": 0.422,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "DIAGNOSTIC_frozen_normalization": {
+     "B_used": 1000,
+     "point_delta": 0.00912,
+     "boot_mean_delta": 0.00898,
+     "sd": 0.01141,
+     "MDE95": 0.0188,
+     "mde95_twosided": 0.0224,
+     "ci95": [
+      -0.01265,
+      0.03088
+     ],
+     "p_gt_0": 0.786,
+     "margin_over_floor": 0.486,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "normalization_note": "the percentile-inside-block transform is RECOMPUTED on every resample, because a fresh scored sample would recompute it. Freezing it at the observed sample drops that component; the diagnostic above is how much.",
+    "B": 1000
+   },
+   "feature_add.fv.pooled.ridge": {
+    "label": "feature_add.fv.pooled.ridge",
+    "target_column": "target_censored",
+    "n_rows": 1786,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 1786,
+     "minus_fv": 0.25139,
+     "full_spec": 0.27432,
+     "delta": 0.02293
+    },
+    "point_delta": 0.02293,
+    "MDE95": 0.0302,
+    "MDE95_COND": 0.025,
+    "margin_over_MDE95": 0.759,
+    "margin_over_MDE95_COND": 0.918,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "NULL",
+    "E_refit": {
+     "B_used": 1000,
+     "point_delta": 0.02293,
+     "boot_mean_delta": 0.0346,
+     "sd": 0.01837,
+     "MDE95": 0.0302,
+     "mde95_twosided": 0.036,
+     "ci95": [
+      -0.00133,
+      0.07228
+     ],
+     "p_gt_0": 0.971,
+     "margin_over_floor": 0.759,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 1000,
+     "point_delta": 0.02293,
+     "boot_mean_delta": 0.02261,
+     "sd": 0.01519,
+     "MDE95": 0.025,
+     "mde95_twosided": 0.0298,
+     "ci95": [
+      -0.00704,
+      0.0517
+     ],
+     "p_gt_0": 0.944,
+     "margin_over_floor": 0.918,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "refit_share_of_variance": 0.316,
+    "fit_fixed_share_of_variance": 0.684,
+    "floor_share_removable_by_infinite_test_n": 0.438,
+    "E_refit_floor_asymptote_infinite_test_n": 0.017,
+    "permanently_undecidable_under_E_refit": false,
+    "B": 1000,
+    "primary": true,
+    "leg_note": "ridge leg is the AMENDED PRIMARY for `fv`: blend = (1-lam)*consensus + lam*ridge and the consensus leg is an OLS on `fv`, so the blend contrast leaves `fv` in at weight 0.30 and its truth is near zero by construction."
+   },
+   "feature_add.fv.pooled.blend": {
+    "label": "feature_add.fv.pooled.blend",
+    "target_column": "target_censored",
+    "n_rows": 1786,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 1786,
+     "minus_fv": 0.28102,
+     "full_spec": 0.27695,
+     "delta": -0.00408
+    },
+    "point_delta": -0.00408,
+    "MDE95": 0.0248,
+    "MDE95_COND": 0.0205,
+    "margin_over_MDE95": 0.165,
+    "margin_over_MDE95_COND": 0.198,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "NULL",
+    "E_refit": {
+     "B_used": 1000,
+     "point_delta": -0.00408,
+     "boot_mean_delta": 0.00685,
+     "sd": 0.01505,
+     "MDE95": 0.0248,
+     "mde95_twosided": 0.0295,
+     "ci95": [
+      -0.02333,
+      0.03805
+     ],
+     "p_gt_0": 0.681,
+     "margin_over_floor": 0.165,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 1000,
+     "point_delta": -0.00408,
+     "boot_mean_delta": -0.00442,
+     "sd": 0.01248,
+     "MDE95": 0.0205,
+     "mde95_twosided": 0.0245,
+     "ci95": [
+      -0.02881,
+      0.0196
+     ],
+     "p_gt_0": 0.359,
+     "margin_over_floor": 0.198,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "refit_share_of_variance": 0.312,
+    "fit_fixed_share_of_variance": 0.688,
+    "floor_share_removable_by_infinite_test_n": 0.441,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0138,
+    "permanently_undecidable_under_E_refit": true,
+    "B": 1000,
+    "primary": false,
+    "leg_note": "blend leg is the SHIPPED output. For `fv` it is mis-specified (see the ridge cell); for a general driver feature it is the right contrast."
+   },
+   "feature_add.fv.block.ridge": {
+    "label": "feature_add.fv.block.ridge",
+    "target_column": "target_censored",
+    "n_rows": 3667,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 3667,
+     "minus_fv": 0.18937,
+     "full_spec": 0.20486,
+     "delta": 0.01549
+    },
+    "point_delta": 0.01549,
+    "MDE95": 0.0185,
+    "MDE95_COND": 0.0166,
+    "margin_over_MDE95": 0.839,
+    "margin_over_MDE95_COND": 0.935,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "NULL",
+    "E_refit": {
+     "B_used": 1000,
+     "point_delta": 0.01549,
+     "boot_mean_delta": 0.01622,
+     "sd": 0.01122,
+     "MDE95": 0.0185,
+     "mde95_twosided": 0.022,
+     "ci95": [
+      -0.00489,
+      0.03928
+     ],
+     "p_gt_0": 0.928,
+     "margin_over_floor": 0.839,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 1000,
+     "point_delta": 0.01549,
+     "boot_mean_delta": 0.01442,
+     "sd": 0.01008,
+     "MDE95": 0.0166,
+     "mde95_twosided": 0.0197,
+     "ci95": [
+      -0.00595,
+      0.03356
+     ],
+     "p_gt_0": 0.919,
+     "margin_over_floor": 0.935,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "refit_share_of_variance": 0.193,
+    "fit_fixed_share_of_variance": 0.807,
+    "floor_share_removable_by_infinite_test_n": 0.561,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0081,
+    "permanently_undecidable_under_E_refit": false,
+    "B": 1000,
+    "primary": true,
+    "leg_note": "ridge leg is the AMENDED PRIMARY for `fv`: blend = (1-lam)*consensus + lam*ridge and the consensus leg is an OLS on `fv`, so the blend contrast leaves `fv` in at weight 0.30 and its truth is near zero by construction."
+   },
+   "feature_add.fv.block.blend": {
+    "label": "feature_add.fv.block.blend",
+    "target_column": "target_censored",
+    "n_rows": 3667,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 3667,
+     "minus_fv": 0.20266,
+     "full_spec": 0.20389,
+     "delta": 0.00122
+    },
+    "point_delta": 0.00122,
+    "MDE95": 0.0136,
+    "MDE95_COND": 0.0124,
+    "margin_over_MDE95": 0.09,
+    "margin_over_MDE95_COND": 0.099,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "NULL",
+    "E_refit": {
+     "B_used": 1000,
+     "point_delta": 0.00122,
+     "boot_mean_delta": 0.0029,
+     "sd": 0.00826,
+     "MDE95": 0.0136,
+     "mde95_twosided": 0.0162,
+     "ci95": [
+      -0.01319,
+      0.0194
+     ],
+     "p_gt_0": 0.642,
+     "margin_over_floor": 0.09,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 1000,
+     "point_delta": 0.00122,
+     "boot_mean_delta": 0.00013,
+     "sd": 0.00754,
+     "MDE95": 0.0124,
+     "mde95_twosided": 0.0148,
+     "ci95": [
+      -0.01487,
+      0.01448
+     ],
+     "p_gt_0": 0.5,
+     "margin_over_floor": 0.099,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "refit_share_of_variance": 0.167,
+    "fit_fixed_share_of_variance": 0.833,
+    "floor_share_removable_by_infinite_test_n": 0.592,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0055,
+    "permanently_undecidable_under_E_refit": true,
+    "B": 1000,
+    "primary": false,
+    "leg_note": "blend leg is the SHIPPED output. For `fv` it is mis-specified (see the ridge cell); for a general driver feature it is the right contrast."
+   },
+   "feature_add.tool_speed.pooled.ridge": {
+    "label": "feature_add.tool_speed.pooled.ridge",
+    "target_column": "target_censored",
+    "n_rows": 1786,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 1786,
+     "minus_tool_speed": 0.26942,
+     "full_spec": 0.27432,
+     "delta": 0.0049
+    },
+    "point_delta": 0.0049,
+    "MDE95": 0.0108,
+    "MDE95_COND": 0.0045,
+    "margin_over_MDE95": 0.452,
+    "margin_over_MDE95_COND": 1.1,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "RESOLVABLE WIN",
+    "E_refit": {
+     "B_used": 500,
+     "point_delta": 0.0049,
+     "boot_mean_delta": 0.00493,
+     "sd": 0.00659,
+     "MDE95": 0.0108,
+     "mde95_twosided": 0.0129,
+     "ci95": [
+      -0.00676,
+      0.02089
+     ],
+     "p_gt_0": 0.804,
+     "margin_over_floor": 0.452,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 500,
+     "point_delta": 0.0049,
+     "boot_mean_delta": 0.00494,
+     "sd": 0.00271,
+     "MDE95": 0.0045,
+     "mde95_twosided": 0.0053,
+     "ci95": [
+      -0.00066,
+      0.01005
+     ],
+     "p_gt_0": 0.956,
+     "margin_over_floor": 1.1,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "refit_share_of_variance": 0.831,
+    "fit_fixed_share_of_variance": 0.169,
+    "floor_share_removable_by_infinite_test_n": 0.088,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0099,
+    "permanently_undecidable_under_E_refit": true,
+    "B": 500,
+    "role": "feature-dependence control. A feature-add floor is a property of the FEATURE as well as the frame; quoting the `fv` floor for a weak candidate would understate it."
+   },
+   "lambda_shift.0.05": {
+    "label": "lambda_shift.0.05",
+    "target_column": "target_censored",
+    "n_rows": 1786,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 1786,
+     "blend_lam0.65": 0.2772,
+     "blend_lam0.7": 0.27695,
+     "delta": -0.00025
+    },
+    "point_delta": -0.00025,
+    "MDE95": 0.0014,
+    "MDE95_COND": 0.0009,
+    "margin_over_MDE95": 0.18,
+    "margin_over_MDE95_COND": 0.281,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "NULL",
+    "E_refit": {
+     "B_used": 1000,
+     "point_delta": -0.00025,
+     "boot_mean_delta": -0.00074,
+     "sd": 0.00085,
+     "MDE95": 0.0014,
+     "mde95_twosided": 0.0017,
+     "ci95": [
+      -0.00263,
+      0.00075
+     ],
+     "p_gt_0": 0.183,
+     "margin_over_floor": 0.18,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 1000,
+     "point_delta": -0.00025,
+     "boot_mean_delta": -0.00022,
+     "sd": 0.00054,
+     "MDE95": 0.0009,
+     "mde95_twosided": 0.0011,
+     "ci95": [
+      -0.0013,
+      0.00081
+     ],
+     "p_gt_0": 0.334,
+     "margin_over_floor": 0.281,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "refit_share_of_variance": 0.596,
+    "fit_fixed_share_of_variance": 0.404,
+    "floor_share_removable_by_infinite_test_n": 0.228,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0011,
+    "permanently_undecidable_under_E_refit": true,
+    "B": 1000,
+    "lambda_pin": 0.7,
+    "lambda_shifted": 0.65
+   },
+   "lambda_shift.0.1": {
+    "label": "lambda_shift.0.1",
+    "target_column": "target_censored",
+    "n_rows": 1786,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 1786,
+     "blend_lam0.6": 0.2776,
+     "blend_lam0.7": 0.27695,
+     "delta": -0.00066
+    },
+    "point_delta": -0.00066,
+    "MDE95": 0.0028,
+    "MDE95_COND": 0.0017,
+    "margin_over_MDE95": 0.235,
+    "margin_over_MDE95_COND": 0.384,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "NULL",
+    "E_refit": {
+     "B_used": 1000,
+     "point_delta": -0.00066,
+     "boot_mean_delta": -0.00146,
+     "sd": 0.0017,
+     "MDE95": 0.0028,
+     "mde95_twosided": 0.0033,
+     "ci95": [
+      -0.00507,
+      0.0014
+     ],
+     "p_gt_0": 0.181,
+     "margin_over_floor": 0.235,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 1000,
+     "point_delta": -0.00066,
+     "boot_mean_delta": -0.00068,
+     "sd": 0.00104,
+     "MDE95": 0.0017,
+     "mde95_twosided": 0.002,
+     "ci95": [
+      -0.00275,
+      0.00132
+     ],
+     "p_gt_0": 0.26,
+     "margin_over_floor": 0.384,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "refit_share_of_variance": 0.626,
+    "fit_fixed_share_of_variance": 0.374,
+    "floor_share_removable_by_infinite_test_n": 0.209,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0022,
+    "permanently_undecidable_under_E_refit": true,
+    "B": 1000,
+    "lambda_pin": 0.7,
+    "lambda_shifted": 0.6
+   },
+   "lambda_shift.0.19": {
+    "label": "lambda_shift.0.19",
+    "target_column": "target_censored",
+    "n_rows": 1786,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 1786,
+     "blend_lam0.51": 0.27845,
+     "blend_lam0.7": 0.27695,
+     "delta": -0.0015
+    },
+    "point_delta": -0.0015,
+    "MDE95": 0.0056,
+    "MDE95_COND": 0.0033,
+    "margin_over_MDE95": 0.269,
+    "margin_over_MDE95_COND": 0.454,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "NULL",
+    "E_refit": {
+     "B_used": 1000,
+     "point_delta": -0.0015,
+     "boot_mean_delta": -0.00274,
+     "sd": 0.00339,
+     "MDE95": 0.0056,
+     "mde95_twosided": 0.0066,
+     "ci95": [
+      -0.00961,
+      0.00297
+     ],
+     "p_gt_0": 0.199,
+     "margin_over_floor": 0.269,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 1000,
+     "point_delta": -0.0015,
+     "boot_mean_delta": -0.00141,
+     "sd": 0.00201,
+     "MDE95": 0.0033,
+     "mde95_twosided": 0.0039,
+     "ci95": [
+      -0.00544,
+      0.00238
+     ],
+     "p_gt_0": 0.24,
+     "margin_over_floor": 0.454,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "refit_share_of_variance": 0.648,
+    "fit_fixed_share_of_variance": 0.352,
+    "floor_share_removable_by_infinite_test_n": 0.195,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0045,
+    "permanently_undecidable_under_E_refit": true,
+    "B": 1000,
+    "lambda_pin": 0.7,
+    "lambda_shifted": 0.51
+   }
+  },
+  "notes": {
+   "block_rho_class_parity": {
+    "class_delta": 0.00912,
+    "efv_mde_lab_stats_from_delta": 0.00912,
+    "identical": true,
+    "n_class": 1645,
+    "n_stats_from": 1645
+   },
+   "lambda_shift_note": "one refit stream serves all three shifts: the legs are algebraic reads of the SAME chain, so three streams would charge three independent refits to one refit. A POSITIVE delta means the pinned 0.70 outranks the shifted value."
+  },
+  "elapsed_s": 352.7
+ },
+ "x3_detection_classes": {
+  "gate": "X3 detection of the known-real hitter `fv` effect",
+  "B": 600,
+  "seed": 20260858,
+  "cells": {
+   "headtohead": {
+    "label": "x3.headtohead.fv_drop",
+    "target_column": "war",
+    "n_rows": 3224,
+    "n_clusters": 1051,
+    "cond_resampling_unit": "player cluster",
+    "legs": {
+     "n": 3224,
+     "efv_minus_fv": 0.33272,
+     "efv_full_spec": 0.35387,
+     "delta": 0.02115
+    },
+    "point_delta": 0.02115,
+    "MDE95": 0.0203,
+    "MDE95_COND": 0.0192,
+    "margin_over_MDE95": 1.044,
+    "margin_over_MDE95_COND": 1.102,
+    "verdict_E_refit": "RESOLVABLE WIN",
+    "verdict_E_cond": "RESOLVABLE WIN",
+    "E_refit": {
+     "B_used": 600,
+     "point_delta": 0.02115,
+     "boot_mean_delta": 0.02431,
+     "sd": 0.01232,
+     "MDE95": 0.0203,
+     "mde95_twosided": 0.0241,
+     "ci95": [
+      0.00067,
+      0.04743
+     ],
+     "p_gt_0": 0.9783,
+     "margin_over_floor": 1.044,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "E_cond": {
+     "B_used": 600,
+     "point_delta": 0.02115,
+     "boot_mean_delta": 0.02174,
+     "sd": 0.01167,
+     "MDE95": 0.0192,
+     "mde95_twosided": 0.0229,
+     "ci95": [
+      -0.0016,
+      0.04443
+     ],
+     "p_gt_0": 0.965,
+     "margin_over_floor": 1.102,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "refit_share_of_variance": 0.103,
+    "fit_fixed_share_of_variance": 0.897,
+    "floor_share_removable_by_infinite_test_n": 0.679,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0065,
+    "permanently_undecidable_under_E_refit": false,
+    "DIAGNOSTIC_row_iid_NOT_A_GATE": {
+     "B_used": 600,
+     "point_delta": 0.02115,
+     "boot_mean_delta": 0.02128,
+     "sd": 0.00622,
+     "MDE95": 0.0102,
+     "mde95_twosided": 0.0122,
+     "ci95": [
+      0.01012,
+      0.03295
+     ],
+     "p_gt_0": 1.0,
+     "margin_over_floor": 2.069,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
+    }
+   },
+   "block_rho": {
+    "label": "x3.block_rho.fv_drop",
+    "target_column": "target_censored",
+    "n_rows": 1645,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 1645,
+     "minus_fv": 0.28628,
+     "full_spec": 0.30672,
+     "delta": 0.02044
+    },
+    "point_delta": 0.02044,
+    "MDE95": 0.025,
+    "MDE95_COND": 0.0156,
+    "margin_over_MDE95": 0.816,
+    "margin_over_MDE95_COND": 1.311,
+    "verdict_E_refit": "NULL",
+    "verdict_E_cond": "RESOLVABLE WIN",
+    "E_refit": {
+     "B_used": 600,
+     "point_delta": 0.02044,
+     "boot_mean_delta": 0.0217,
+     "sd": 0.01523,
+     "MDE95": 0.025,
+     "mde95_twosided": 0.0298,
+     "ci95": [
+      -0.00554,
+      0.05614
+     ],
+     "p_gt_0": 0.9433,
+     "margin_over_floor": 0.816,
+     "resolvable": false,
+     "verdict": "NULL"
+    },
+    "E_cond": {
+     "B_used": 600,
+     "point_delta": 0.02044,
+     "boot_mean_delta": 0.0203,
+     "sd": 0.00948,
+     "MDE95": 0.0156,
+     "mde95_twosided": 0.0186,
+     "ci95": [
+      0.00072,
+      0.03859
+     ],
+     "p_gt_0": 0.975,
+     "margin_over_floor": 1.311,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "refit_share_of_variance": 0.613,
+    "fit_fixed_share_of_variance": 0.387,
+    "floor_share_removable_by_infinite_test_n": 0.217,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0196,
+    "permanently_undecidable_under_E_refit": false
+   },
+   "lambda_shift_geometry": {
+    "label": "x3.lambda_shifted.fv_drop",
+    "target_column": "target_censored",
+    "n_rows": 755,
+    "n_clusters": null,
+    "cond_resampling_unit": "scored row",
+    "legs": {
+     "n": 755,
+     "minus_fv": 0.33533,
+     "full_spec": 0.39254,
+     "delta": 0.05721
+    },
+    "point_delta": 0.05721,
+    "MDE95": 0.0464,
+    "MDE95_COND": 0.0321,
+    "margin_over_MDE95": 1.233,
+    "margin_over_MDE95_COND": 1.78,
+    "verdict_E_refit": "RESOLVABLE WIN",
+    "verdict_E_cond": "RESOLVABLE WIN",
+    "E_refit": {
+     "B_used": 600,
+     "point_delta": 0.05721,
+     "boot_mean_delta": 0.05932,
+     "sd": 0.02821,
+     "MDE95": 0.0464,
+     "mde95_twosided": 0.0553,
+     "ci95": [
+      0.00776,
+      0.11503
+     ],
+     "p_gt_0": 0.985,
+     "margin_over_floor": 1.233,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "E_cond": {
+     "B_used": 600,
+     "point_delta": 0.05721,
+     "boot_mean_delta": 0.05738,
+     "sd": 0.01954,
+     "MDE95": 0.0321,
+     "mde95_twosided": 0.0383,
+     "ci95": [
+      0.02027,
+      0.09716
+     ],
+     "p_gt_0": 0.9983,
+     "margin_over_floor": 1.78,
+     "resolvable": true,
+     "verdict": "RESOLVABLE WIN"
+    },
+    "refit_share_of_variance": 0.52,
+    "fit_fixed_share_of_variance": 0.48,
+    "floor_share_removable_by_infinite_test_n": 0.279,
+    "E_refit_floor_asymptote_infinite_test_n": 0.0335,
+    "permanently_undecidable_under_E_refit": false,
+    "lambda_used": 0.51,
+    "note": "shares pooled_rho's frame geometry; not an independent resampler"
+   }
+  },
+  "verdict": "PASS",
+  "criterion": "each class must DETECT wherever E_refit detects. A class that detects where E_refit does not is not a failure of this gate, but it is reported.",
+  "elapsed_s": 79.4
+ },
+ "adjudication_bl2": {
+  "produced_by": "tools/efv_power_lab.py adjudicate",
+  "generated_at": "2026-08-09T21:20:19Z",
+  "equivalence_margin": 0.02,
+  "margin_source": "owner registration 2026-08-08, 0.02 Spearman",
+  "interval_convention": "delta +/- 1.645*sd, the same one-sided alpha 0.05 the floors use, which is the TOST interval at that alpha",
+  "cells": {
+   "pooled_rho.hit.full_pool_km": {
+    "family": "partb_2026_08_09",
+    "delta": -0.01859,
+    "MDE95_COND": 0.0208,
+    "MDE95": 0.0295,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": -0.01859,
+     "sd": 0.01264,
+     "ci90": [
+      -0.03938,
+      0.0022
+     ],
+     "p_tost": 0.45559,
+     "equivalence_established": false
+    },
+    "tost_E_refit": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": -0.01859,
+     "sd": 0.01794,
+     "ci90": [
+      -0.0481,
+      0.01092
+     ],
+     "p_tost": 0.46868,
+     "equivalence_established": false
+    },
+    "decidability": {
+     "n_rows": 1786,
+     "accrual_rows_per_year": 169.0,
+     "E_cond": {
+      "n_multiplier_required": 1.25,
+      "extra_rows_required": 448,
+      "years_at_current_accrual": 2.7,
+      "decidable_by_year": 2029,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0209,
+      "permanently_undecidable": true,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RETIRE under E_refit; E_cond only, by 2029"
+    }
+   },
+   "pooled_rho.pit.full_pool_km": {
+    "family": "partb_2026_08_09",
+    "delta": 0.01491,
+    "MDE95_COND": 0.0207,
+    "MDE95": 0.0265,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.01491,
+     "sd": 0.01259,
+     "ci90": [
+      -0.0058,
+      0.03562
+     ],
+     "p_tost": 0.343,
+     "equivalence_established": false
+    },
+    "tost_E_refit": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.01491,
+     "sd": 0.01612,
+     "ci90": [
+      -0.01161,
+      0.04143
+     ],
+     "p_tost": 0.37609,
+     "equivalence_established": false
+    },
+    "decidability": {
+     "n_rows": 1881,
+     "accrual_rows_per_year": 194.0,
+     "E_cond": {
+      "n_multiplier_required": 1.93,
+      "extra_rows_required": 1748,
+      "years_at_current_accrual": 9.0,
+      "decidable_by_year": 2035,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0166,
+      "permanently_undecidable": true,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RETIRE under E_refit; E_cond only, by 2035"
+    }
+   },
+   "pooled_rho.hit.debuted_km": {
+    "family": "partb_2026_08_09",
+    "delta": 0.01121,
+    "MDE95_COND": 0.0204,
+    "MDE95": 0.045,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.01121,
+     "sd": 0.0124,
+     "ci90": [
+      -0.00919,
+      0.03161
+     ],
+     "p_tost": 0.2392,
+     "equivalence_established": false
+    },
+    "tost_E_refit": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.01121,
+     "sd": 0.02737,
+     "ci90": [
+      -0.03381,
+      0.05623
+     ],
+     "p_tost": 0.37405,
+     "equivalence_established": false
+    },
+    "decidability": {
+     "n_rows": 755,
+     "accrual_rows_per_year": 62.0,
+     "E_cond": {
+      "n_multiplier_required": 3.31,
+      "extra_rows_required": 1745,
+      "years_at_current_accrual": 28.1,
+      "decidable_by_year": 2054,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0401,
+      "permanently_undecidable": true,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RETIRE under E_refit; E_cond only, by 2054"
+    }
+   },
+   "pooled_rho.pit.debuted_km": {
+    "family": "partb_2026_08_09",
+    "delta": 0.00702,
+    "MDE95_COND": 0.0295,
+    "MDE95": 0.0431,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.00702,
+     "sd": 0.01791,
+     "ci90": [
+      -0.02244,
+      0.03648
+     ],
+     "p_tost": 0.23431,
+     "equivalence_established": false
+    },
+    "tost_E_refit": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.00702,
+     "sd": 0.0262,
+     "ci90": [
+      -0.03608,
+      0.05012
+     ],
+     "p_tost": 0.31015,
+     "equivalence_established": false
+    },
+    "decidability": {
+     "n_rows": 890,
+     "accrual_rows_per_year": 76.0,
+     "E_cond": {
+      "n_multiplier_required": 17.61,
+      "extra_rows_required": 14786,
+      "years_at_current_accrual": 194.6,
+      "decidable_by_year": 2221,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0315,
+      "permanently_undecidable": true,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RETIRE under E_refit; E_cond only, by 2221"
+    }
+   },
+   "headtohead_common": {
+    "family": "partb_2026_08_09",
+    "delta": 0.03318,
+    "MDE95_COND": 0.0322,
+    "MDE95": 0.0345,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.03318,
+     "sd": 0.01956,
+     "ci90": [
+      0.001,
+      0.06536
+     ],
+     "p_tost": 0.74979,
+     "equivalence_established": false
+    },
+    "tost_E_refit": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.03318,
+     "sd": 0.02095,
+     "ci90": [
+      -0.00128,
+      0.06764
+     ],
+     "p_tost": 0.73536,
+     "equivalence_established": false
+    },
+    "decidability": {
+     "n_rows": 3224,
+     "accrual_rows_per_year": 372.0,
+     "E_cond": {
+      "n_multiplier_required": 0.94,
+      "extra_rows_required": 0,
+      "years_at_current_accrual": -0.5,
+      "decidable_by_year": 2025,
+      "already_resolved": true
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0123,
+      "permanently_undecidable": false,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "DECIDED at current n"
+    }
+   },
+   "block_rho": {
+    "family": "partb_2026_08_09",
+    "delta": 0.00912,
+    "MDE95_COND": 0.0202,
+    "MDE95": 0.0317,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.00912,
+     "sd": 0.01231,
+     "ci90": [
+      -0.01113,
+      0.02937
+     ],
+     "p_tost": 0.18839,
+     "equivalence_established": false
+    },
+    "tost_E_refit": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.00912,
+     "sd": 0.01928,
+     "ci90": [
+      -0.0226,
+      0.04084
+     ],
+     "p_tost": 0.28627,
+     "equivalence_established": false
+    },
+    "decidability": {
+     "n_rows": 1645,
+     "accrual_rows_per_year": 169.0,
+     "E_cond": {
+      "n_multiplier_required": 4.93,
+      "extra_rows_required": 6465,
+      "years_at_current_accrual": 38.3,
+      "decidable_by_year": 2064,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0244,
+      "permanently_undecidable": true,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RETIRE under E_refit; E_cond only, by 2064"
+    }
+   },
+   "feature_add.fv.pooled.ridge": {
+    "family": "partb_2026_08_09",
+    "delta": 0.02293,
+    "MDE95_COND": 0.025,
+    "MDE95": 0.0302,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.02293,
+     "sd": 0.01519,
+     "ci90": [
+      -0.00206,
+      0.04792
+     ],
+     "p_tost": 0.57648,
+     "equivalence_established": false
+    },
+    "tost_E_refit": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.02293,
+     "sd": 0.01837,
+     "ci90": [
+      -0.00729,
+      0.05315
+     ],
+     "p_tost": 0.56336,
+     "equivalence_established": false
+    },
+    "decidability": {
+     "n_rows": 1786,
+     "accrual_rows_per_year": 169.0,
+     "E_cond": {
+      "n_multiplier_required": 1.19,
+      "extra_rows_required": 335,
+      "years_at_current_accrual": 2.0,
+      "decidable_by_year": 2028,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.017,
+      "permanently_undecidable": false,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RE-TEST at 2028"
+    }
+   },
+   "feature_add.fv.pooled.blend": {
+    "family": "partb_2026_08_09",
+    "delta": -0.00408,
+    "MDE95_COND": 0.0205,
+    "MDE95": 0.0248,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": -0.00408,
+     "sd": 0.01248,
+     "ci90": [
+      -0.02461,
+      0.01645
+     ],
+     "p_tost": 0.10104,
+     "equivalence_established": false
+    },
+    "tost_E_refit": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": -0.00408,
+     "sd": 0.01505,
+     "ci90": [
+      -0.02884,
+      0.02068
+     ],
+     "p_tost": 0.14507,
+     "equivalence_established": false
+    },
+    "decidability": {
+     "n_rows": 1786,
+     "accrual_rows_per_year": 169.0,
+     "E_cond": {
+      "n_multiplier_required": 25.32,
+      "extra_rows_required": 43433,
+      "years_at_current_accrual": 257.0,
+      "decidable_by_year": 2283,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0138,
+      "permanently_undecidable": true,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RETIRE under E_refit; E_cond only, by 2283"
+    }
+   },
+   "feature_add.fv.block.ridge": {
+    "family": "partb_2026_08_09",
+    "delta": 0.01549,
+    "MDE95_COND": 0.0166,
+    "MDE95": 0.0185,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.01549,
+     "sd": 0.01008,
+     "ci90": [
+      -0.00109,
+      0.03207
+     ],
+     "p_tost": 0.32729,
+     "equivalence_established": false
+    },
+    "tost_E_refit": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.01549,
+     "sd": 0.01122,
+     "ci90": [
+      -0.00297,
+      0.03395
+     ],
+     "p_tost": 0.34386,
+     "equivalence_established": false
+    },
+    "decidability": {
+     "n_rows": 3667,
+     "accrual_rows_per_year": 169.0,
+     "E_cond": {
+      "n_multiplier_required": 1.15,
+      "extra_rows_required": 535,
+      "years_at_current_accrual": 3.2,
+      "decidable_by_year": 2029,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0081,
+      "permanently_undecidable": false,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RE-TEST at 2029"
+    }
+   },
+   "feature_add.fv.block.blend": {
+    "family": "partb_2026_08_09",
+    "delta": 0.00122,
+    "MDE95_COND": 0.0124,
+    "MDE95": 0.0136,
+    "tost_E_cond": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": 0.00122,
+     "sd": 0.00754,
+     "ci90": [
+      -0.01118,
+      0.01362
+     ],
+     "p_tost": 0.00637,
+     "equivalence_established": true
+    },
+    "tost_E_refit": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": 0.00122,
+     "sd": 0.00826,
+     "ci90": [
+      -0.01237,
+      0.01481
+     ],
+     "p_tost": 0.01149,
+     "equivalence_established": true
+    },
+    "decidability": {
+     "n_rows": 3667,
+     "accrual_rows_per_year": 169.0,
+     "E_cond": {
+      "n_multiplier_required": 103.36,
+      "extra_rows_required": 375356,
+      "years_at_current_accrual": 2221.0,
+      "decidable_by_year": 4247,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0055,
+      "permanently_undecidable": true,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RETIRE under E_refit; E_cond only, by 4247"
+    }
+   },
+   "feature_add.tool_speed.pooled.ridge": {
+    "family": "control",
+    "delta": 0.0049,
+    "MDE95_COND": 0.0045,
+    "MDE95": 0.0108,
+    "tost_E_cond": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": 0.0049,
+     "sd": 0.00271,
+     "ci90": [
+      0.00044,
+      0.00936
+     ],
+     "p_tost": 0.0,
+     "equivalence_established": true
+    },
+    "tost_E_refit": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": 0.0049,
+     "sd": 0.00659,
+     "ci90": [
+      -0.00594,
+      0.01574
+     ],
+     "p_tost": 0.01097,
+     "equivalence_established": true
+    },
+    "decidability": {
+     "n_rows": 1786,
+     "accrual_rows_per_year": 169.0,
+     "E_cond": {
+      "n_multiplier_required": 0.83,
+      "extra_rows_required": 0,
+      "years_at_current_accrual": -1.8,
+      "decidable_by_year": 2024,
+      "already_resolved": true
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0099,
+      "permanently_undecidable": true,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "DECIDED at current n"
+    }
+   },
+   "lambda_shift.0.05": {
+    "family": "partb_2026_08_09",
+    "delta": -0.00025,
+    "MDE95_COND": 0.0009,
+    "MDE95": 0.0014,
+    "tost_E_cond": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": -0.00025,
+     "sd": 0.00054,
+     "ci90": [
+      -0.00114,
+      0.00064
+     ],
+     "p_tost": 0.0,
+     "equivalence_established": true
+    },
+    "tost_E_refit": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": -0.00025,
+     "sd": 0.00085,
+     "ci90": [
+      -0.00165,
+      0.00115
+     ],
+     "p_tost": 0.0,
+     "equivalence_established": true
+    },
+    "decidability": {
+     "n_rows": 1786,
+     "accrual_rows_per_year": 169.0,
+     "E_cond": {
+      "n_multiplier_required": 12.63,
+      "extra_rows_required": 20763,
+      "years_at_current_accrual": 122.9,
+      "decidable_by_year": 2149,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0011,
+      "permanently_undecidable": true,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RETIRE under E_refit; E_cond only, by 2149"
+    }
+   },
+   "lambda_shift.0.1": {
+    "family": "partb_2026_08_09",
+    "delta": -0.00066,
+    "MDE95_COND": 0.0017,
+    "MDE95": 0.0028,
+    "tost_E_cond": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": -0.00066,
+     "sd": 0.00104,
+     "ci90": [
+      -0.00237,
+      0.00105
+     ],
+     "p_tost": 0.0,
+     "equivalence_established": true
+    },
+    "tost_E_refit": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": -0.00066,
+     "sd": 0.0017,
+     "ci90": [
+      -0.00346,
+      0.00214
+     ],
+     "p_tost": 0.0,
+     "equivalence_established": true
+    },
+    "decidability": {
+     "n_rows": 1786,
+     "accrual_rows_per_year": 169.0,
+     "E_cond": {
+      "n_multiplier_required": 6.72,
+      "extra_rows_required": 10214,
+      "years_at_current_accrual": 60.4,
+      "decidable_by_year": 2086,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0022,
+      "permanently_undecidable": true,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RETIRE under E_refit; E_cond only, by 2086"
+    }
+   },
+   "lambda_shift.0.19": {
+    "family": "partb_2026_08_09",
+    "delta": -0.0015,
+    "MDE95_COND": 0.0033,
+    "MDE95": 0.0056,
+    "tost_E_cond": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": -0.0015,
+     "sd": 0.00201,
+     "ci90": [
+      -0.00481,
+      0.00181
+     ],
+     "p_tost": 0.0,
+     "equivalence_established": true
+    },
+    "tost_E_refit": {
+     "verdict": "RULED_OUT",
+     "margin": 0.02,
+     "delta": -0.0015,
+     "sd": 0.00339,
+     "ci90": [
+      -0.00708,
+      0.00408
+     ],
+     "p_tost": 0.0,
+     "equivalence_established": true
+    },
+    "decidability": {
+     "n_rows": 1786,
+     "accrual_rows_per_year": 169.0,
+     "E_cond": {
+      "n_multiplier_required": 4.86,
+      "extra_rows_required": 6892,
+      "years_at_current_accrual": 40.8,
+      "decidable_by_year": 2067,
+      "already_resolved": false
+     },
+     "E_refit": {
+      "floor_asymptote_infinite_test_n": 0.0045,
+      "permanently_undecidable": true,
+      "reading": "more cohorts cannot close this cell under E_refit: the refit component of the floor does not shrink with test n"
+     },
+     "triage": "RETIRE under E_refit; E_cond only, by 2067"
+    }
+   }
+  },
+  "registered_cells_2026_08_08_for_reference": {
+   "hit.full_pool_km": {
+    "basis": "part A registration, 2026-08-08 pools",
+    "delta": -0.01894,
+    "MDE95_COND": 0.0206,
+    "MDE95": 0.0296,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": -0.01894,
+     "sd": 0.0125,
+     "ci90": [
+      -0.0395,
+      0.00162
+     ],
+     "p_tost": 0.46621,
+     "equivalence_established": false
+    }
+   },
+   "pit.full_pool_km": {
+    "basis": "part A registration, 2026-08-08 pools",
+    "delta": 0.01398,
+    "MDE95_COND": 0.0212,
+    "MDE95": 0.0259,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.01398,
+     "sd": 0.01288,
+     "ci90": [
+      -0.00721,
+      0.03517
+     ],
+     "p_tost": 0.32011,
+     "equivalence_established": false
+    }
+   },
+   "hit.debuted_km": {
+    "basis": "part A registration, 2026-08-08 pools",
+    "delta": 0.01121,
+    "MDE95_COND": 0.0209,
+    "MDE95": 0.0437,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.01121,
+     "sd": 0.0127,
+     "ci90": [
+      -0.00968,
+      0.0321
+     ],
+     "p_tost": 0.24443,
+     "equivalence_established": false
+    }
+   },
+   "pit.debuted_km": {
+    "basis": "part A registration, 2026-08-08 pools",
+    "delta": 0.00612,
+    "MDE95_COND": 0.029,
+    "MDE95": 0.0423,
+    "tost_E_cond": {
+     "verdict": "UNDECIDED",
+     "margin": 0.02,
+     "delta": 0.00612,
+     "sd": 0.01764,
+     "ci90": [
+      -0.0229,
+      0.03514
+     ],
+     "p_tost": 0.21569,
+     "equivalence_established": false
+    }
+   }
+  },
+  "tally_E_cond": {
+   "UNDECIDED": 9,
+   "RULED_OUT": 4
+  },
+  "family_note": "the Holm family is the cells a decision could be made on. The feature-dependence control is adjudicated but excluded, because padding a family with instrument checks makes every real cell harder to reject for no reason.",
+  "holm_family_E_cond": {
+   "k": 13,
+   "alpha": 0.05,
+   "procedure": "Holm step-down, one-sided on |delta|/sd",
+   "bonferroni_z_one_sided": 2.6653,
+   "reduction_check": {
+    "z_at_0.05": 1.6449,
+    "z_at_0.0125": 2.2414,
+    "matches_Z95_ONE": true,
+    "matches_Z_BONF4_ONE": true
+   },
+   "note": "uniformly more powerful than Bonferroni and valid under arbitrary dependence. Step 1 uses alpha/k, so a family where nothing clears Bonferroni also clears nothing here.",
+   "cells": [
+    {
+     "key": "pooled_rho.hit.full_pool_km",
+     "delta": -0.01859,
+     "sd": 0.01264,
+     "abs_t": 1.471,
+     "p_one_sided": 0.07068,
+     "holm_step": 4,
+     "holm_alpha": 0.005,
+     "holm_z_one_sided": 2.5758,
+     "mde95_holm_k13": 0.0326,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "pooled_rho.pit.full_pool_km",
+     "delta": 0.01491,
+     "sd": 0.01259,
+     "abs_t": 1.184,
+     "p_one_sided": 0.11815,
+     "holm_step": 5,
+     "holm_alpha": 0.005556,
+     "holm_z_one_sided": 2.5392,
+     "mde95_holm_k13": 0.032,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "pooled_rho.hit.debuted_km",
+     "delta": 0.01121,
+     "sd": 0.0124,
+     "abs_t": 0.904,
+     "p_one_sided": 0.18299,
+     "holm_step": 6,
+     "holm_alpha": 0.00625,
+     "holm_z_one_sided": 2.4977,
+     "mde95_holm_k13": 0.031,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "pooled_rho.pit.debuted_km",
+     "delta": 0.00702,
+     "sd": 0.01791,
+     "abs_t": 0.392,
+     "p_one_sided": 0.34754,
+     "holm_step": 11,
+     "holm_alpha": 0.016667,
+     "holm_z_one_sided": 2.128,
+     "mde95_holm_k13": 0.0381,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "headtohead_common",
+     "delta": 0.03318,
+     "sd": 0.01956,
+     "abs_t": 1.696,
+     "p_one_sided": 0.04491,
+     "holm_step": 1,
+     "holm_alpha": 0.003846,
+     "holm_z_one_sided": 2.6653,
+     "mde95_holm_k13": 0.0521,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "block_rho",
+     "delta": 0.00912,
+     "sd": 0.01231,
+     "abs_t": 0.741,
+     "p_one_sided": 0.22939,
+     "holm_step": 8,
+     "holm_alpha": 0.008333,
+     "holm_z_one_sided": 2.394,
+     "mde95_holm_k13": 0.0295,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "feature_add.fv.pooled.ridge",
+     "delta": 0.02293,
+     "sd": 0.01519,
+     "abs_t": 1.51,
+     "p_one_sided": 0.06558,
+     "holm_step": 3,
+     "holm_alpha": 0.004545,
+     "holm_z_one_sided": 2.6086,
+     "mde95_holm_k13": 0.0396,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "feature_add.fv.pooled.blend",
+     "delta": -0.00408,
+     "sd": 0.01248,
+     "abs_t": 0.327,
+     "p_one_sided": 0.37186,
+     "holm_step": 12,
+     "holm_alpha": 0.025,
+     "holm_z_one_sided": 1.96,
+     "mde95_holm_k13": 0.0245,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "feature_add.fv.block.ridge",
+     "delta": 0.01549,
+     "sd": 0.01008,
+     "abs_t": 1.537,
+     "p_one_sided": 0.06218,
+     "holm_step": 2,
+     "holm_alpha": 0.004167,
+     "holm_z_one_sided": 2.6383,
+     "mde95_holm_k13": 0.0266,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "feature_add.fv.block.blend",
+     "delta": 0.00122,
+     "sd": 0.00754,
+     "abs_t": 0.162,
+     "p_one_sided": 0.43573,
+     "holm_step": 13,
+     "holm_alpha": 0.05,
+     "holm_z_one_sided": 1.6449,
+     "mde95_holm_k13": 0.0124,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "lambda_shift.0.05",
+     "delta": -0.00025,
+     "sd": 0.00054,
+     "abs_t": 0.463,
+     "p_one_sided": 0.3217,
+     "holm_step": 10,
+     "holm_alpha": 0.0125,
+     "holm_z_one_sided": 2.2414,
+     "mde95_holm_k13": 0.0012,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "lambda_shift.0.1",
+     "delta": -0.00066,
+     "sd": 0.00104,
+     "abs_t": 0.635,
+     "p_one_sided": 0.26284,
+     "holm_step": 9,
+     "holm_alpha": 0.01,
+     "holm_z_one_sided": 2.3263,
+     "mde95_holm_k13": 0.0024,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    },
+    {
+     "key": "lambda_shift.0.19",
+     "delta": -0.0015,
+     "sd": 0.00201,
+     "abs_t": 0.746,
+     "p_one_sided": 0.22775,
+     "holm_step": 7,
+     "holm_alpha": 0.007143,
+     "holm_z_one_sided": 2.45,
+     "mde95_holm_k13": 0.0049,
+     "clears_own_holm_step": false,
+     "reject_holm": false
+    }
+   ]
+  },
+  "per_fold": {
+   "hit.full_pool_km": {
+    "series": [
+     {
+      "fold": 2014,
+      "n_test": 96,
+      "n_train": 91,
+      "delta": 0.10708,
+      "sd": 0.05974
+     },
+     {
+      "fold": 2015,
+      "n_test": 78,
+      "n_train": 187,
+      "delta": -0.05299,
+      "sd": 0.02306
+     },
+     {
+      "fold": 2016,
+      "n_test": 95,
+      "n_train": 265,
+      "delta": 0.00656,
+      "sd": 0.03611
+     },
+     {
+      "fold": 2017,
+      "n_test": 112,
+      "n_train": 360,
+      "delta": -0.03129,
+      "sd": 0.05119
+     },
+     {
+      "fold": 2018,
+      "n_test": 174,
+      "n_train": 472,
+      "delta": -0.02805,
+      "sd": 0.05794
+     },
+     {
+      "fold": 2019,
+      "n_test": 199,
+      "n_train": 646,
+      "delta": 0.05189,
+      "sd": 0.03835
+     },
+     {
+      "fold": 2020,
+      "n_test": 169,
+      "n_train": 845,
+      "delta": -0.04621,
+      "sd": 0.03034
+     },
+     {
+      "fold": 2021,
+      "n_test": 127,
+      "n_train": 1014,
+      "delta": 0.06578,
+      "sd": 0.04456
+     },
+     {
+      "fold": 2022,
+      "n_test": 251,
+      "n_train": 1141,
+      "delta": -0.07332,
+      "sd": 0.01967
+     },
+     {
+      "fold": 2023,
+      "n_test": 248,
+      "n_train": 1392,
+      "delta": -0.00746,
+      "sd": 0.0283
+     },
+     {
+      "fold": 2024,
+      "n_test": 237,
+      "n_train": 1640,
+      "delta": -0.01184,
+      "sd": 0.02037
+     }
+    ],
+    "folds_used": 11,
+    "folds_dropped": 0,
+    "reml_hksj": {
+     "label": "hit.full_pool_km",
+     "k_folds": 11,
+     "tau2_reml": 0.00123463,
+     "tau2_dersimonian_laird_DO_NOT_SHIP": 0.00121007,
+     "Q": 22.632,
+     "pooled_delta": -0.01271,
+     "se_random_effects": 0.0149,
+     "se_hksj": 0.01523,
+     "hksj_widening_ratio": 1.162,
+     "t_quantile_975": 2.2281,
+     "z_quantile_975": 1.96,
+     "ci95_hksj": [
+      -0.04665,
+      0.02123
+     ],
+     "ci95_random_effects_normal_NOT_SHIPPED": [
+      -0.04192,
+      0.0165
+     ],
+     "i_squared": "SUPPRESSED: near 0.99 mechanically at this per-fold n",
+     "hksj_q": 1.0449
+    },
+    "meta_regression_log_n_train": {
+     "label": "hit.full_pool_km",
+     "k_folds": 11,
+     "tau2_mandel_paule": 0.00152708,
+     "intercept": 0.06457,
+     "slope_per_log_n_train": -0.01185,
+     "slope_se": 0.01879,
+     "slope_ci95_knapp_hartung": [
+      -0.05435,
+      0.03065
+     ],
+     "slope_resolves": false,
+     "n_train_range": [
+      91,
+      1640
+     ],
+     "n_train_deployed": 1877,
+     "predicted_delta_at_deployed_n": -0.02473,
+     "predicted_ci95": [
+      -0.08391,
+      0.03445
+     ],
+     "extrapolation_warning": "the deployed n_train is OUTSIDE the fold range, so this is an extrapolation and its interval is the honest width of that extrapolation, not a measurement"
+    },
+    "sign_enumeration": {
+     "k_folds": 11,
+     "n_sign_vectors": 2048,
+     "exhaustive": true,
+     "observed_inverse_variance_weighted_mean": -0.02426,
+     "p_two_sided_inverse_variance": 0.24121,
+     "observed_unweighted_mean": -0.0018,
+     "p_two_sided_unweighted": 0.91797,
+     "note": "exact by enumeration, not simulated. The two weightings are reported because the inverse-variance weights are themselves estimated."
+    }
+   },
+   "pit.full_pool_km": {
+    "series": [
+     {
+      "fold": 2014,
+      "n_test": 89,
+      "n_train": 94,
+      "delta": 0.00275,
+      "sd": 0.0412
+     },
+     {
+      "fold": 2015,
+      "n_test": 95,
+      "n_train": 183,
+      "delta": -0.03899,
+      "sd": 0.03029
+     },
+     {
+      "fold": 2016,
+      "n_test": 118,
+      "n_train": 278,
+      "delta": 0.0104,
+      "sd": 0.04226
+     },
+     {
+      "fold": 2017,
+      "n_test": 87,
+      "n_train": 396,
+      "delta": -0.10546,
+      "sd": 0.14243
+     },
+     {
+      "fold": 2018,
+      "n_test": 214,
+      "n_train": 483,
+      "delta": 0.03635,
+      "sd": 0.06325
+     },
+     {
+      "fold": 2019,
+      "n_test": 194,
+      "n_train": 697,
+      "delta": -0.05447,
+      "sd": 0.05868
+     },
+     {
+      "fold": 2020,
+      "n_test": 203,
+      "n_train": 891,
+      "delta": 0.01053,
+      "sd": 0.04119
+     },
+     {
+      "fold": 2021,
+      "n_test": 152,
+      "n_train": 1094,
+      "delta": 0.05457,
+      "sd": 0.04779
+     },
+     {
+      "fold": 2022,
+      "n_test": 221,
+      "n_train": 1246,
+      "delta": 0.02821,
+      "sd": 0.03777
+     },
+     {
+      "fold": 2023,
+      "n_test": 252,
+      "n_train": 1467,
+      "delta": 0.0092,
+      "sd": 0.02306
+     },
+     {
+      "fold": 2024,
+      "n_test": 256,
+      "n_train": 1719,
+      "delta": -0.01455,
+      "sd": 0.01904
+     }
+    ],
+    "folds_used": 11,
+    "folds_dropped": 0,
+    "reml_hksj": {
+     "label": "pit.full_pool_km",
+     "k_folds": 11,
+     "tau2_reml": 0.0,
+     "tau2_dersimonian_laird_DO_NOT_SHIP": 0.0,
+     "Q": 6.089,
+     "pooled_delta": -0.00217,
+     "se_random_effects": 0.01043,
+     "se_hksj": 0.00814,
+     "hksj_widening_ratio": 0.887,
+     "t_quantile_975": 2.2281,
+     "z_quantile_975": 1.96,
+     "ci95_hksj": [
+      -0.0203,
+      0.01596
+     ],
+     "ci95_random_effects_normal_NOT_SHIPPED": [
+      -0.02261,
+      0.01827
+     ],
+     "i_squared": "SUPPRESSED: near 0.99 mechanically at this per-fold n",
+     "hksj_q": 0.6089
+    },
+    "meta_regression_log_n_train": {
+     "label": "pit.full_pool_km",
+     "k_folds": 11,
+     "tau2_mandel_paule": 0.0,
+     "intercept": -0.04358,
+     "slope_per_log_n_train": 0.00618,
+     "slope_se": 0.0088,
+     "slope_ci95_knapp_hartung": [
+      -0.01372,
+      0.02609
+     ],
+     "slope_resolves": false,
+     "n_train_range": [
+      94,
+      1719
+     ],
+     "n_train_deployed": 1976,
+     "predicted_delta_at_deployed_n": 0.00336,
+     "predicted_ci95": [
+      -0.02259,
+      0.0293
+     ],
+     "extrapolation_warning": "the deployed n_train is OUTSIDE the fold range, so this is an extrapolation and its interval is the honest width of that extrapolation, not a measurement"
+    },
+    "sign_enumeration": {
+     "k_folds": 11,
+     "n_sign_vectors": 2048,
+     "exhaustive": true,
+     "observed_inverse_variance_weighted_mean": -0.00217,
+     "p_two_sided_inverse_variance": 0.79297,
+     "observed_unweighted_mean": -0.00559,
+     "p_two_sided_unweighted": 0.7041,
+     "note": "exact by enumeration, not simulated. The two weightings are reported because the inverse-variance weights are themselves estimated."
+    }
+   },
+   "hit.debuted_km": {
+    "series": [
+     {
+      "fold": 2014,
+      "n_test": 48,
+      "n_train": 90,
+      "delta": 0.04508,
+      "sd": 0.05519
+     },
+     {
+      "fold": 2015,
+      "n_test": 62,
+      "n_train": 138,
+      "delta": -0.0251,
+      "sd": 0.02707
+     },
+     {
+      "fold": 2016,
+      "n_test": 39,
+      "n_train": 200,
+      "delta": 0.08882,
+      "sd": 0.04624
+     },
+     {
+      "fold": 2017,
+      "n_test": 46,
+      "n_train": 239,
+      "delta": -0.01027,
+      "sd": 0.08241
+     },
+     {
+      "fold": 2018,
+      "n_test": 44,
+      "n_train": 285,
+      "delta": -0.01287,
+      "sd": 0.07871
+     },
+     {
+      "fold": 2019,
+      "n_test": 72,
+      "n_train": 329,
+      "delta": 0.05079,
+      "sd": 0.04475
+     },
+     {
+      "fold": 2020,
+      "n_test": 59,
+      "n_train": 401,
+      "delta": -0.00906,
+      "sd": 0.037
+     },
+     {
+      "fold": 2021,
+      "n_test": 74,
+      "n_train": 460,
+      "delta": 0.08398,
+      "sd": 0.04592
+     },
+     {
+      "fold": 2022,
+      "n_test": 127,
+      "n_train": 534,
+      "delta": -0.01716,
+      "sd": 0.02292
+     },
+     {
+      "fold": 2023,
+      "n_test": 93,
+      "n_train": 661,
+      "delta": 0.03651,
+      "sd": 0.02973
+     },
+     {
+      "fold": 2024,
+      "n_test": 91,
+      "n_train": 754,
+      "delta": -0.03448,
+      "sd": 0.04179
+     }
+    ],
+    "folds_used": 11,
+    "folds_dropped": 0,
+    "reml_hksj": {
+     "label": "hit.debuted_km",
+     "k_folds": 11,
+     "tau2_reml": 0.00048239,
+     "tau2_dersimonian_laird_DO_NOT_SHIP": 0.00032006,
+     "Q": 12.142,
+     "pooled_delta": 0.01229,
+     "se_random_effects": 0.01377,
+     "se_hksj": 0.01303,
+     "hksj_widening_ratio": 1.076,
+     "t_quantile_975": 2.2281,
+     "z_quantile_975": 1.96,
+     "ci95_hksj": [
+      -0.01673,
+      0.04131
+     ],
+     "ci95_random_effects_normal_NOT_SHIPPED": [
+      -0.01469,
+      0.03927
+     ],
+     "i_squared": "SUPPRESSED: near 0.99 mechanically at this per-fold n",
+     "hksj_q": 0.8953
+    },
+    "meta_regression_log_n_train": {
+     "label": "hit.debuted_km",
+     "k_folds": 11,
+     "tau2_mandel_paule": 0.00046179,
+     "intercept": 0.04007,
+     "slope_per_log_n_train": -0.00477,
+     "slope_se": 0.02139,
+     "slope_ci95_knapp_hartung": [
+      -0.05316,
+      0.04362
+     ],
+     "slope_resolves": false,
+     "n_train_range": [
+      90,
+      754
+     ],
+     "n_train_deployed": 845,
+     "predicted_delta_at_deployed_n": 0.00792,
+     "predicted_ci95": [
+      -0.04522,
+      0.06106
+     ],
+     "extrapolation_warning": "the deployed n_train is OUTSIDE the fold range, so this is an extrapolation and its interval is the honest width of that extrapolation, not a measurement"
+    },
+    "sign_enumeration": {
+     "k_folds": 11,
+     "n_sign_vectors": 2048,
+     "exhaustive": true,
+     "observed_inverse_variance_weighted_mean": 0.00848,
+     "p_two_sided_inverse_variance": 0.4873,
+     "observed_unweighted_mean": 0.01784,
+     "p_two_sided_unweighted": 0.21582,
+     "note": "exact by enumeration, not simulated. The two weightings are reported because the inverse-variance weights are themselves estimated."
+    }
+   },
+   "pit.debuted_km": {
+    "series": [
+     {
+      "fold": 2014,
+      "n_test": 53,
+      "n_train": 91,
+      "delta": -0.06219,
+      "sd": 0.05984
+     },
+     {
+      "fold": 2015,
+      "n_test": 72,
+      "n_train": 144,
+      "delta": -0.01059,
+      "sd": 0.02733
+     },
+     {
+      "fold": 2016,
+      "n_test": 49,
+      "n_train": 216,
+      "delta": 0.00447,
+      "sd": 0.05082
+     },
+     {
+      "fold": 2017,
+      "n_test": 30,
+      "n_train": 265,
+      "delta": -0.20683,
+      "sd": 0.21986
+     },
+     {
+      "fold": 2018,
+      "n_test": 53,
+      "n_train": 295,
+      "delta": 0.03019,
+      "sd": 0.08664
+     },
+     {
+      "fold": 2019,
+      "n_test": 76,
+      "n_train": 348,
+      "delta": -0.08621,
+      "sd": 0.081
+     },
+     {
+      "fold": 2020,
+      "n_test": 104,
+      "n_train": 424,
+      "delta": 0.00201,
+      "sd": 0.04861
+     },
+     {
+      "fold": 2021,
+      "n_test": 106,
+      "n_train": 528,
+      "delta": 0.09068,
+      "sd": 0.04724
+     },
+     {
+      "fold": 2022,
+      "n_test": 101,
+      "n_train": 634,
+      "delta": 0.05005,
+      "sd": 0.04912
+     },
+     {
+      "fold": 2023,
+      "n_test": 127,
+      "n_train": 735,
+      "delta": 0.05288,
+      "sd": 0.03238
+     },
+     {
+      "fold": 2024,
+      "n_test": 119,
+      "n_train": 862,
+      "delta": -0.02716,
+      "sd": 0.03711
+     }
+    ],
+    "folds_used": 11,
+    "folds_dropped": 0,
+    "reml_hksj": {
+     "label": "pit.debuted_km",
+     "k_folds": 11,
+     "tau2_reml": 0.00027477,
+     "tau2_dersimonian_laird_DO_NOT_SHIP": 0.00018534,
+     "Q": 10.836,
+     "pooled_delta": 0.00937,
+     "se_random_effects": 0.01508,
+     "se_hksj": 0.01477,
+     "hksj_widening_ratio": 1.113,
+     "t_quantile_975": 2.2281,
+     "z_quantile_975": 1.96,
+     "ci95_hksj": [
+      -0.02355,
+      0.04229
+     ],
+     "ci95_random_effects_normal_NOT_SHIPPED": [
+      -0.0202,
+      0.03893
+     ],
+     "i_squared": "SUPPRESSED: near 0.99 mechanically at this per-fold n",
+     "hksj_q": 0.9593
+    },
+    "meta_regression_log_n_train": {
+     "label": "pit.debuted_km",
+     "k_folds": 11,
+     "tau2_mandel_paule": 0.0,
+     "intercept": -0.15399,
+     "slope_per_log_n_train": 0.02781,
+     "slope_se": 0.01772,
+     "slope_ci95_knapp_hartung": [
+      -0.01228,
+      0.06791
+     ],
+     "slope_resolves": false,
+     "n_train_range": [
+      91,
+      862
+     ],
+     "n_train_deployed": 981,
+     "predicted_delta_at_deployed_n": 0.0376,
+     "predicted_ci95": [
+      -0.01306,
+      0.08827
+     ],
+     "extrapolation_warning": "the deployed n_train is OUTSIDE the fold range, so this is an extrapolation and its interval is the honest width of that extrapolation, not a measurement"
+    },
+    "sign_enumeration": {
+     "k_folds": 11,
+     "n_sign_vectors": 2048,
+     "exhaustive": true,
+     "observed_inverse_variance_weighted_mean": 0.00942,
+     "p_two_sided_inverse_variance": 0.5332,
+     "observed_unweighted_mean": -0.01479,
+     "p_two_sided_unweighted": 0.60156,
+     "note": "exact by enumeration, not simulated. The two weightings are reported because the inverse-variance weights are themselves estimated."
+    }
+   },
+   "headtohead_common": {
+    "series": [
+     {
+      "fold": 2015,
+      "n_test": 1,
+      "n_clusters": 1,
+      "n_train": 370,
+      "delta": null,
+      "sd": null
+     },
+     {
+      "fold": 2016,
+      "n_test": 19,
+      "n_clusters": 13,
+      "n_train": 543,
+      "delta": -0.12123,
+      "sd": 0.31565
+     },
+     {
+      "fold": 2017,
+      "n_test": 76,
+      "n_clusters": 42,
+      "n_train": 756,
+      "delta": -0.20253,
+      "sd": 0.17209
+     },
+     {
+      "fold": 2018,
+      "n_test": 171,
+      "n_clusters": 70,
+      "n_train": 955,
+      "delta": -0.00393,
+      "sd": 0.06147
+     },
+     {
+      "fold": 2019,
+      "n_test": 385,
+      "n_clusters": 128,
+      "n_train": 1343,
+      "delta": 0.01967,
+      "sd": 0.04098
+     },
+     {
+      "fold": 2020,
+      "n_test": 497,
+      "n_clusters": 138,
+      "n_train": 1736,
+      "delta": 0.02336,
+      "sd": 0.04519
+     },
+     {
+      "fold": 2021,
+      "n_test": 534,
+      "n_clusters": 148,
+      "n_train": 2108,
+      "delta": 0.04016,
+      "sd": 0.04648
+     },
+     {
+      "fold": 2022,
+      "n_test": 648,
+      "n_clusters": 194,
+      "n_train": 2387,
+      "delta": 0.1014,
+      "sd": 0.05121
+     },
+     {
+      "fold": 2023,
+      "n_test": 534,
+      "n_clusters": 178,
+      "n_train": 2859,
+      "delta": 0.07924,
+      "sd": 0.04368
+     },
+     {
+      "fold": 2024,
+      "n_test": 359,
+      "n_clusters": 139,
+      "n_train": 3359,
+      "delta": -0.03839,
+      "sd": 0.09937
+     }
+    ],
+    "folds_used": 9,
+    "folds_dropped": 1,
+    "reml_hksj": {
+     "label": "headtohead_common",
+     "k_folds": 9,
+     "tau2_reml": 0.0,
+     "tau2_dersimonian_laird_DO_NOT_SHIP": 0.0,
+     "Q": 5.996,
+     "pooled_delta": 0.03805,
+     "se_random_effects": 0.01869,
+     "se_hksj": 0.01618,
+     "hksj_widening_ratio": 1.019,
+     "t_quantile_975": 2.306,
+     "z_quantile_975": 1.96,
+     "ci95_hksj": [
+      0.00075,
+      0.07536
+     ],
+     "ci95_random_effects_normal_NOT_SHIPPED": [
+      0.00142,
+      0.07468
+     ],
+     "i_squared": "SUPPRESSED: near 0.99 mechanically at this per-fold n",
+     "hksj_q": 0.7495
+    },
+    "meta_regression_log_n_train": {
+     "label": "headtohead_common",
+     "k_folds": 9,
+     "tau2_mandel_paule": 0.0,
+     "intercept": -0.5735,
+     "slope_per_log_n_train": 0.08127,
+     "slope_se": 0.03548,
+     "slope_ci95_knapp_hartung": [
+      -0.00264,
+      0.16517
+     ],
+     "slope_resolves": false,
+     "n_train_range": [
+      543,
+      3359
+     ],
+     "n_train_deployed": 3853,
+     "predicted_delta_at_deployed_n": 0.09748,
+     "predicted_ci95": [
+      0.02877,
+      0.16619
+     ],
+     "extrapolation_warning": "the deployed n_train is OUTSIDE the fold range, so this is an extrapolation and its interval is the honest width of that extrapolation, not a measurement"
+    },
+    "sign_enumeration": {
+     "k_folds": 9,
+     "n_sign_vectors": 512,
+     "exhaustive": true,
+     "observed_inverse_variance_weighted_mean": 0.03805,
+     "p_two_sided_inverse_variance": 0.08594,
+     "observed_unweighted_mean": -0.01136,
+     "p_two_sided_unweighted": 0.74219,
+     "note": "exact by enumeration, not simulated. The two weightings are reported because the inverse-variance weights are themselves estimated."
+    }
+   }
+  },
+  "accrual_rows_per_year": {
+   "hit.full_pool_km": 169.0,
+   "pit.full_pool_km": 194.0,
+   "hit.debuted_km": 62.0,
+   "pit.debuted_km": 76.0,
+   "headtohead_common": 372.0
+  },
+  "accrual_note": "median per-fold test n, i.e. one new decision-year cohort. The date columns assume that rate continues and assume nothing about label maturation, which is a second and slower clock.",
+  "elapsed_s": 7.9
+ },
+ "x2_coverage_h2h": {
+  "gate": "X2 coverage, headtohead_common",
+  "verdict": "PASS",
+  "registration": "POWER_EXTENSION_GATE.md sections 3.3 and 4.2. A class that cannot be given an honest clustered coverage check is reported UNFLOORED, not floored on the incumbent's registration.",
+  "design": {
+   "n_check": 200,
+   "M_fresh_samples": 300,
+   "B": 300,
+   "n_rows": 3277,
+   "n_clusters": 1051,
+   "rows_per_cluster": 3.118,
+   "seed": 20260856,
+   "dataset_stream_base": 25260807
+  },
+  "dgp_match": {
+   "real": {
+    "rho_a_t": 0.3539,
+    "rho_c_t": 0.3207,
+    "rho_a_c": 0.6971,
+    "icc_c": 0.6599,
+    "spearman_k_vs_target": -0.1289
+   },
+   "synthetic": {
+    "rho_a_t": 0.3488,
+    "rho_c_t": 0.3211,
+    "rho_a_c": 0.6971,
+    "icc_c": 0.6585,
+    "delta": 0.02768
+   },
+   "params": {
+    "pe": 0.3708,
+    "pc": 0.3475,
+    "g": 0.5695,
+    "qa": 0.7881,
+    "qc": 0.7449,
+    "qa_at_bound": false
+   },
+   "n_rows": 3277,
+   "n_clusters": 1051,
+   "rows_per_cluster": 3.118,
+   "cluster_sizes_frozen": {
+    "1": 182,
+    "2": 206,
+    "3": 268,
+    "4": 174,
+    "5": 159,
+    "6": 46,
+    "7": 16
+   },
+   "real_cluster_sizes": {
+    "1": 178,
+    "2": 224,
+    "3": 264,
+    "4": 185,
+    "5": 144,
+    "6": 46,
+    "7": 10
+   },
+   "limitation": "matched on rows per player, the cluster-size distribution, the target marginal conditional on k, both legs' rho against the target, the two legs' rho against each other, and the consensus within-player ICC. NOT matched: the eFV leg carries no vintage structure at all, because in the real frame it has none."
+  },
+  "conditional_estimand": {
+   "truth_mean_delta": 0.02306,
+   "true_sd": 0.01899,
+   "mean_point_delta": 0.02299,
+   "question": "given this training corpus, is this margin real",
+   "fit_component_sd_targeted": 0.0075,
+   "sigma_pe_calibrated": 0.00623,
+   "fit_component_note": "the eFV leg is the only leg that is fitted (the consensus leg is the raw published grade), so the training corpus is represented by that leg's loading alone. That is also why POWER_EXTENSION_GATE.md section 1 pre-registers a SMALLER conditional shrink here than on the pooled cuts."
+  },
+  "legs": {
+   "cluster": {
+    "resampling_unit": "player cluster",
+    "role": "PRIMARY, the registered estimator for this class",
+    "mean_bootstrap_sd": 0.01907,
+    "true_sd_of_conditional_estimand": 0.01899,
+    "sd_ratio_boot_over_true": 1.004,
+    "sd_ratio_in_band": true,
+    "gate_two_sided": {
+     "k": 193,
+     "n": 200,
+     "coverage": 0.965,
+     "accept_lo": 184,
+     "accept_hi": 196,
+     "accept_coverage_band": [
+      0.92,
+      0.98
+     ],
+     "verdict": "PASS"
+    },
+    "one_sided_gate_as_currently_coded": "PASS"
+   },
+   "row": {
+    "resampling_unit": "scored row",
+    "role": "DIAGNOSTIC ONLY, never a gate: it is the clustering violation",
+    "mean_bootstrap_sd": 0.01291,
+    "true_sd_of_conditional_estimand": 0.01899,
+    "sd_ratio_boot_over_true": 0.68,
+    "sd_ratio_in_band": false,
+    "gate_two_sided": {
+     "k": 160,
+     "n": 200,
+     "coverage": 0.8,
+     "accept_lo": 184,
+     "accept_hi": 196,
+     "accept_coverage_band": [
+      0.92,
+      0.98
+     ],
+     "verdict": "FAIL UNDER-COVERS"
+    },
+    "one_sided_gate_as_currently_coded": "FAIL"
+   }
+  },
+  "clustering_violation_in_coverage_terms": {
+   "cluster_coverage": 0.965,
+   "row_iid_coverage": 0.8,
+   "row_iid_sd_ratio": 0.68,
+   "reading": "the row variant's coverage is what a one-row-per-player simulator would have called a pass. Publishing it is the check that clustering was preserved."
+  },
+  "elapsed_s": 1094.5
+ },
+ "x4_sign_symmetry": {
+  "gate": "X4 the extension resolves losses as readily as wins",
+  "arms": {
+   "win": {
+    "pe": 0.3819,
+    "n_sim": 200,
+    "B": 300,
+    "true_delta": 0.03387,
+    "mean_floor_cluster": 0.0312,
+    "fire_rate_cluster": 0.585,
+    "fire_rate_row_DIAGNOSTIC": 0.77,
+    "sign_correct_rate": 0.585
+   },
+   "loss": {
+    "pe": 0.3132,
+    "n_sim": 200,
+    "B": 300,
+    "true_delta": -0.03213,
+    "mean_floor_cluster": 0.0338,
+    "fire_rate_cluster": 0.45,
+    "fire_rate_row_DIAGNOSTIC": 0.71,
+    "sign_correct_rate": 0.45
+   }
+  },
+  "standardized_effect_DIAGNOSTIC": {
+   "win": {
+    "mean_sd": 0.01897,
+    "z_true": 1.786,
+    "normal_theory_fire_rate": 0.556,
+    "observed_fire_rate": 0.585
+   },
+   "loss": {
+    "mean_sd": 0.02055,
+    "z_true": 1.564,
+    "normal_theory_fire_rate": 0.4676,
+    "observed_fire_rate": 0.45
+   }
+  },
+  "magnitude_matched": {
+   "target_abs_delta": 0.03318,
+   "target_source": "the real head-to-head margin on today's frame",
+   "win_true_delta": 0.03387,
+   "loss_true_delta": -0.03213,
+   "abs_gap": 0.00174,
+   "method": "both arms are solved by bisection to put the TRUE delta at +/- the real margin, so they are compared at equal |effect| rather than at mirrored parameters"
+  },
+  "fire_rate_ratio_loss_over_win": 0.769,
+  "verdict": "FAIL: asymmetric",
+  "criterion": "PASS when the loss arm's fire rate is within 0.80x-1.25x of the win arm's at matched |effect|. The band is stated here before the numbers are read and is wide because n_sim = 200 gives a binomial se of about 0.035 at a rate of 0.5.",
+  "verdict_registered_clause": "PASS",
+  "registered_clause": "POWER_EXTENSION_GATE.md section 4.4 as written: the extension is REFUSED if it resolves only wins. The 0.80-1.25 band above is this lab's own tighter operationalization of that clause, and it is NOT relaxed after the fact.",
+  "real_data_leg": "see partb_floors: which cells resolve, and in which direction",
+  "elapsed_s": 1415.5
+ },
+ "x2_coverage_h2h_sensitivity": {
+  "gate": "X2 coverage, headtohead_common",
+  "verdict": "PASS",
+  "registration": "POWER_EXTENSION_GATE.md sections 3.3 and 4.2. A class that cannot be given an honest clustered coverage check is reported UNFLOORED, not floored on the incumbent's registration.",
+  "design": {
+   "n_check": 200,
+   "M_fresh_samples": 300,
+   "B": 300,
+   "n_rows": 3277,
+   "n_clusters": 1051,
+   "rows_per_cluster": 3.118,
+   "seed": 20260856,
+   "dataset_stream_base": 25260807
+  },
+  "dgp_match": {
+   "real": {
+    "rho_a_t": 0.3539,
+    "rho_c_t": 0.3207,
+    "rho_a_c": 0.6971,
+    "icc_c": 0.6599,
+    "spearman_k_vs_target": -0.1289
+   },
+   "synthetic": {
+    "rho_a_t": 0.3488,
+    "rho_c_t": 0.3211,
+    "rho_a_c": 0.6971,
+    "icc_c": 0.6585,
+    "delta": 0.02768
+   },
+   "params": {
+    "pe": 0.3708,
+    "pc": 0.3475,
+    "g": 0.5695,
+    "qa": 0.7881,
+    "qc": 0.7449,
+    "qa_at_bound": false
+   },
+   "n_rows": 3277,
+   "n_clusters": 1051,
+   "rows_per_cluster": 3.118,
+   "cluster_sizes_frozen": {
+    "1": 182,
+    "2": 206,
+    "3": 268,
+    "4": 174,
+    "5": 159,
+    "6": 46,
+    "7": 16
+   },
+   "real_cluster_sizes": {
+    "1": 178,
+    "2": 224,
+    "3": 264,
+    "4": 185,
+    "5": 144,
+    "6": 46,
+    "7": 10
+   },
+   "limitation": "matched on rows per player, the cluster-size distribution, the target marginal conditional on k, both legs' rho against the target, the two legs' rho against each other, and the consensus within-player ICC. NOT matched: the eFV leg carries no vintage structure at all, because in the real frame it has none."
+  },
+  "conditional_estimand": {
+   "truth_mean_delta": 0.02318,
+   "true_sd": 0.01898,
+   "mean_point_delta": 0.02311,
+   "question": "given this training corpus, is this margin real",
+   "fit_component_sd_targeted": 0.00896,
+   "sigma_pe_calibrated": 0.00746,
+   "fit_component_note": "the eFV leg is the only leg that is fitted (the consensus leg is the raw published grade), so the training corpus is represented by that leg's loading alone. That is also why POWER_EXTENSION_GATE.md section 1 pre-registers a SMALLER conditional shrink here than on the pooled cuts."
+  },
+  "legs": {
+   "cluster": {
+    "resampling_unit": "player cluster",
+    "role": "PRIMARY, the registered estimator for this class",
+    "mean_bootstrap_sd": 0.01907,
+    "true_sd_of_conditional_estimand": 0.01898,
+    "sd_ratio_boot_over_true": 1.004,
+    "sd_ratio_in_band": true,
+    "gate_two_sided": {
+     "k": 193,
+     "n": 200,
+     "coverage": 0.965,
+     "accept_lo": 184,
+     "accept_hi": 196,
+     "accept_coverage_band": [
+      0.92,
+      0.98
+     ],
+     "verdict": "PASS"
+    },
+    "one_sided_gate_as_currently_coded": "PASS"
+   },
+   "row": {
+    "resampling_unit": "scored row",
+    "role": "DIAGNOSTIC ONLY, never a gate: it is the clustering violation",
+    "mean_bootstrap_sd": 0.01291,
+    "true_sd_of_conditional_estimand": 0.01898,
+    "sd_ratio_boot_over_true": 0.68,
+    "sd_ratio_in_band": false,
+    "gate_two_sided": {
+     "k": 160,
+     "n": 200,
+     "coverage": 0.8,
+     "accept_lo": 184,
+     "accept_hi": 196,
+     "accept_coverage_band": [
+      0.92,
+      0.98
+     ],
+     "verdict": "FAIL UNDER-COVERS"
+    },
+    "one_sided_gate_as_currently_coded": "FAIL"
+   }
+  },
+  "clustering_violation_in_coverage_terms": {
+   "cluster_coverage": 0.965,
+   "row_iid_coverage": 0.8,
+   "row_iid_sd_ratio": 0.68,
+   "reading": "the row variant's coverage is what a one-row-per-player simulator would have called a pass. Publishing it is the check that clustering was preserved."
+  },
+  "elapsed_s": 858.6,
+  "fit_component_measured_here": {
+   "sd_refit_B600": 0.02152,
+   "sd_cond_B2000": 0.01956,
+   "fit_sd": 0.00896
+  },
+  "role": "SENSITIVITY for x2_coverage_h2h: identical design, fit component set from a B=600 E_refit sd (0.00896) instead of the stored B=2000 pair (0.00751). Published so the coverage verdict's dependence on that calibration is visible rather than assumed away."
+ }
 }

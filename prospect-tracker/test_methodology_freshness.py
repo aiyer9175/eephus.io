@@ -29,6 +29,33 @@ MODEL_GLOSSARY = {
     "xfv_rank_objective": "internal",
     "surplus_decomposition_v6": "internal",
     "xfv_dist_recalibration": "internal",
+    # Opportunity/quality decomposition of eFV (lane B-L3). Model-dev only:
+    # 0 of 7 arms promoted, no feature and no constant moved, and nothing on
+    # any page changed, so it takes the same "internal" decision the rest of
+    # the eFV loss ledger does. The reader-facing consequence of the finding
+    # (that eFV orders opportunity better than it orders rate) would need a
+    # glossary entry of its own before it could be stated on a surface.
+    "xfv_opportunity": "internal",
+
+    # WAVE-Z 2026-08-10. Both of these RENDER at /glossary/#view=source-accuracy
+    # and the verdict column of the source-comparison view, so neither may take
+    # the "internal" decision. They point at the two entries that carry the
+    # reader-facing method: consensus_fv states that the consensus is an
+    # equal-weight mean and that accuracy weights were reverted as unearned,
+    # which is exactly the claim these two measurements adjudicate, and
+    # normalized_source_grade carries the cross-source scale step the label-free
+    # precision route would reweight if it ever identified.
+    "source_cohort_accuracy": ["consensus_fv"],
+    "source_precision_label_free": ["consensus_fv", "normalized_source_grade"],
+
+    # B-L6 2026-08-10. This one CANNOT take the "internal" decision either, and
+    # for a stronger reason than the two above: it does not merely render, it is
+    # the measurement the head-to-head conviction copy is now written to. The
+    # hero headline on the source-comparison view was rewritten because of this
+    # row's result, and its panel prints the gap-closure share. It points at
+    # consensus_fv (what the rebuilt baseline is a rebuild OF) and at xfv (the
+    # grade whose lead over that baseline is the thing being adjudicated).
+    "efv_denoised_baseline_control": ["consensus_fv", "xfv"],
 
     "consensus_recency_decay": "internal",
     # measurement of the single-source shrinkage; nothing shipped, the incumbent

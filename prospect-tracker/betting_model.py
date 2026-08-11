@@ -40,10 +40,21 @@ THE SCORING MODEL (two rows per game, one per scoring side)
     total (Poisson on the run sum).
 
 WHAT THIS MODEL IS NOT, AND THE PAGE SAYS SO
-    Poisson underdisperses real run scoring: baseball scores in clumps, so the
-    true margin distribution has fatter tails than the convolution assumes.
-    That pushes runline and total probabilities toward the middle. The
-    moneyline is the least exposed of the three.
+    THE RUN DISTRIBUTION IS WRONG, not soft. Poisson asserts var = mean;
+    measured over 3,532 scoring-side rows it is 2.3385, and the margin carries
+    2.3748x the Skellam-implied variance. P(|margin| >= 5) is 0.2990 in the
+    games and 0.1390 in the model. Runline and total probabilities therefore
+    sit far too close to the middle, and the moneyline is the least exposed of
+    the three only because `diff_shrink` was fitted to absorb it there.
+
+    A one-parameter NB2 correction was built and PRE-REGISTERED against a
+    four-criterion held-out gate (docs/diamond-betting.md section 11a). The
+    verdict is INDETERMINATE, not a pass: the amended criterion 2 clears the
+    bar at split quantiles 0.6 and 0.7 and misses it at 0.8, and a verdict that
+    moves with the split point is a verdict about the split point. It is not
+    served. Until a correction passes, the runline and the total are excluded
+    from both published slots, from the public record and from the paper bet
+    ledger. See SERVE_RUN_DISPERSION.
 
     Worse, and this is the reason the module ships UNVALIDATED: the team
     inputs are SEASON-TO-DATE aggregates. Backtesting 2026 games against
@@ -129,27 +140,227 @@ LITERATURE_TIE_HOME = 0.50       # home win rate once a game reaches extras
 # measured value is shrunk toward a coin flip on a 100-game prior.
 TIE_SHRINK_K = 100.0
 
+# --- run dispersion --------------------------------------------------------
+# THE DEFECT THE MODULE SHIPPED WITH, measured 2026-08-09 on all 1,766 cached
+# completed games (3,532 scoring-side rows). Poisson asserts var = mean. Team
+# runs come in at mean 4.4853, var 10.4889, so var/mean = 2.3385. The margin is
+# worse because the error compounds across two sides: observed margin variance
+# 21.3057 against a Skellam-implied 8.9714, a ratio of 2.3748. In tail terms,
+# P(|margin| >= 5) is 0.2990 in the games and 0.1390 under the model the games
+# were priced by. That is not a caveat about softness, it is the wrong
+# distribution: the model is short 2.15x of the mass that decides every runline.
+#
+# It is NOT lambda heterogeneity. Under a Poisson mixture var(Y) = E[lam] +
+# var(lam), and the model's own lambdas have sd 0.6128 across the 3,532 rows,
+# so var(lam) = 0.3755 of the 6.0036 of excess variance: 6.25%. The other
+# 93.75% is within-game clumping, which is a scoring-process fact (a rally
+# scores runs in a correlated burst) and no amount of better features touches
+# it.
+#
+# NB2 is the one-parameter answer: var = lam + alpha*lam^2, with r = 1/alpha
+# the size parameter. Conditional MLE given the model's own per-row lambda
+# lands alpha = 0.28425 (r = 3.5181) and buys +725.71 nats of held-in
+# log-likelihood over Poisson for that single parameter. Whether it SHIPS is
+# not a function of that number: the pre-registered four-criterion gate in
+# docs/diamond-betting.md section 11a decides it, on a held-out half. It did
+# not ship. See SERVE_RUN_DISPERSION.
+RUN_DISPERSION_MIN_ALPHA = 1e-4
+RUN_DISPERSION_MAX_ALPHA = 2.0
+# Whether the fitted alpha is SERVED. `build_context` always measures it and
+# always publishes the measurement; this flag is the only thing that lets it
+# reach a price. Set from the section 11 gate, never from a fit statistic.
+#
+# FALSE, AND THE REASON IS "INDETERMINATE", NOT "FAILED". Run 2026-08-09 on the
+# 1,775-game completed cache, under the criterion actually in force:
+# DISPERSION_GATE_CRITERIA as amended, criterion 2 scored on BOTH runline sides
+# (RUNLINE_SIDE_AMENDMENT), and the verdict taken from
+# `dispersion_gate_sensitivity` across DISPERSION_SPLIT_QUANTILES rather than
+# from any single split. The persisted grid is
+# data/betting_model_eval.json -> run_dispersion.sensitivity.
+#
+#   split  date        n_fit  n_eval   home d/t          away d/t         both d/t
+#   0.6    2026-06-14   1054     721   -0.003628 -0.972  +0.015004 3.860  +0.011376 3.069 PASS
+#   0.7    2026-06-27   1223     552   -0.003280 -0.769  +0.015018 3.367  +0.011738 2.799 PASS
+#   0.8    2026-07-11   1413     362   -0.004701 -0.886  +0.011155 2.034  +0.006454 1.224 FAIL
+#
+# The other three criteria pass at all three splits. So the amended criterion 2
+# passes at 0.6 and 0.7 and misses the t >= 1.645 bar at 0.8, where the delta is
+# still POSITIVE (+0.006454) and it is the standard error that runs out: n_eval
+# drops from 721 to 362. Under the ship rule declared before the sweep ran -
+# every quantile or nothing - that is INDETERMINATE, and indeterminate does not
+# ship. The flag stays False.
+#
+# TWO THINGS THIS SUPERSEDES, both of which pointed the other way:
+#   * The FIRST reading of this gate was home-side only and reported the runline
+#     at -0.003075, t = -0.717. That is the `home` column above and it is a real
+#     number, but "margin >= 2" names neither side, alpha moves both tails at
+#     once, and the defect was stated in absolute margin everywhere it was
+#     measured. The home reading is not the estimand. It FAILS at all three
+#     splits; the away reading PASSES at all three.
+#   * The pre-registered single split, 0.7, now PASSES all four criteria under
+#     the amended criterion 2. If the verdict were taken from that one split the
+#     flag would be True. It is not taken from one split, on purpose, and that
+#     rule was fixed in DISPERSION_SPLIT_QUANTILES before the sweep ran.
+#
+# WHY THE HOME SIDE LOSES, AND IT IS MECHANICAL RATHER THAN A SAMPLE-SIZE
+# PROBLEM: NB2 fixes the tail and OVERCORRECTS THE MIDDLE. On the 1,775-game
+# cache priced from the served context, P(|margin| >= 5) goes 0.1390 -> 0.2897
+# against 0.2986 observed, which is the repair, and P(|margin| = 1) goes
+# 0.2503 -> 0.1917 against 0.2721 observed, which is worse than what it
+# replaced. Real baseball concentrates at one run because a tied home ninth ends
+# the moment the run scores, so the home team's two-run-plus tail is clipped in
+# a way the away team's is not - the eval half bears that out, home -1.5 lands
+# 0.3442 of the time against away -1.5 at 0.3768. No product of two INDEPENDENT
+# count distributions can represent that asymmetry, and the runline is priced
+# exactly on the band NB2 damages.
+#
+# Criterion 3 (total over 9.0, +0.010709 at t = +2.545) and criterion 4
+# (+0.2190 nats/row) are kept on the record for whoever tries next: the
+# dispersion is REAL and NB2 does capture it for the TOTAL, where the two sides
+# add and the walk-off structure does not bite. A correction scoped to the
+# total, or a bivariate model with a one-run atom, is the live direction. A
+# wider symmetric margin is not.
+#
+# TO FLIP THIS FLAG: re-run `dispersion_gate_sensitivity`, get `ship` True (all
+# three quantiles), and change this constant, the tripwire in
+# test_betting_dispersion.py and the persisted `run_dispersion` block in the
+# same commit. The three move together or not at all.
+SERVE_RUN_DISPERSION = False
+# The gate itself, verbatim, so the artifact carries its own pre-registration
+# and a reader never has to trust that the doc and the code agree. Written into
+# docs/diamond-betting.md section 11a BEFORE the gate was run.
+#
+# THIS IS THE ORIGINAL TEXT AND IT IS KEPT UNEDITED. Criterion 2 says "margin
+# >= 2" and does not say WHOSE margin. That is an under-specification, it is
+# load-bearing, and it is not fixed by pretending the original said something
+# else. See DISPERSION_GATE_CRITERIA below for the amendment and
+# RUNLINE_SIDE_AMENDMENT for the argument.
+DISPERSION_GATE_CRITERIA_V1 = (
+    "fit {coefficients, alpha, diff_shrink, home_field_runs_adj} on the fit half of a "
+    "70% date split; on the HELD-OUT half all four must hold: (1) home win, paired "
+    "Brier, non-inferiority, one-sided 95% lower bound on delta >= -0.001; (2) margin "
+    ">= 2, paired log loss, delta > 0 at t >= 1.645; (3) total over 9.0, paired log "
+    "loss, delta > 0 at t >= 1.645; (4) runs both sides, out-of-sample log-likelihood "
+    "per row, NB > Poisson. Moneyline is non-inferiority because diff_shrink already "
+    "absorbs its calibration and NB must not be credited for beating it there."
+)
+
+# WHICH RUNLINE SIDE CRITERION 2 SCORES. Decided 2026-08-09, and the decision
+# changes the verdict, so the argument is written here rather than implied by
+# the code that implements it.
+#
+# THE AMBIGUITY IS REAL. The board publishes four runline prices per game:
+# p_home_minus_1_5, p_away_minus_1_5, p_home_plus_1_5, p_away_plus_1_5. They are
+# TWO binary events, because p_home_plus_1_5 == 1 - p_away_minus_1_5 and
+# p_away_plus_1_5 == 1 - p_home_minus_1_5, and log loss is invariant under
+# complementation. The two distinct events are the two TAILS of one margin
+# distribution: home margin >= +2, and home margin <= -2. "margin >= 2" names
+# neither. The first implementation scored the home tail only.
+#
+# THE DECISION IS BOTH SIDES, and the argument is about the estimand, not about
+# the number it returns:
+#
+#   1. The criterion exists to decide whether a distribution SHAPE may be served
+#      to the runline market. The runline market is both sides. Every board row
+#      carries all four prices, every one of them is a published probability,
+#      and a criterion that scores one of the two events measures less than what
+#      ships. An estimand should be the loss on what is published.
+#   2. alpha is ONE symmetric widening parameter. It moves both tails at once
+#      and by construction cannot move only the home one. Reading its effect off
+#      a single tail measures half the effect and throws away half the data for
+#      no gain in interpretability.
+#   3. The DEFECT this correction was built for was stated symmetrically and in
+#      absolute terms everywhere it was measured: P(|margin| >= 5) 0.1390 vs
+#      0.2990, P(|margin| >= 2) 0.6171 vs 0.7276, P(|margin| == 1) 0.2503 vs
+#      0.2724. A test for a symmetric defect that reads one tail is not the test
+#      the defect asked for.
+#   4. The home-only reading is not a neutral default. It is home-referenced
+#      because the rest of the module is, which is a naming convention, not a
+#      measurement decision.
+#
+# AND THE CHOICE FLIPS THE GATE. On the pre-registered 70% split the home tail
+# fails criterion 2 and the away tail and the both-sides sum pass it, with the
+# other three criteria passing under every reading. That is stated up front so
+# nobody has to discover it: this is a specification that decides a verdict, and
+# picking it after seeing the numbers is exactly the failure mode. The reasoning
+# above is why both-sides is right, and it would be the same argument if
+# both-sides had failed.
+#
+# THE VERDICT IS DECIDED BY ROBUSTNESS, NOT BY ONE SPLIT. `dispersion_gate_
+# sensitivity` runs every side against split quantiles 0.6, 0.7 and 0.8 and the
+# gate ships only if the honest specification holds across all of them. If it
+# does not, the gate is INDETERMINATE and dispersion stays off. See
+# SERVE_RUN_DISPERSION for what that sweep returned.
+RUNLINE_SIDE_AMENDMENT = "both"
+RUNLINE_SIDES = ("home", "away", "both")
+_RUNLINE_SIDE_LABEL = {
+    "home": "home margin >= 2, i.e. home -1.5 / away +1.5",
+    "away": "home margin <= -2, i.e. away -1.5 / home +1.5",
+    "both": "both sides, per-game sum of the two log losses",
+}
+# The split quantiles the verdict must hold across. 0.7 is the pre-registered
+# one and the other two bracket it. Fixed here so the sweep cannot be widened
+# or narrowed after the fact to reach a verdict.
+DISPERSION_SPLIT_QUANTILES = (0.6, 0.7, 0.8)
+
+# The amended pre-registration, criterion 2 now unambiguous. V1 is kept above,
+# unedited, because an amendment that overwrites the text it amends is not an
+# amendment.
+DISPERSION_GATE_CRITERIA = (
+    "fit {coefficients, alpha, diff_shrink, home_field_runs_adj} on the fit half of a "
+    "70% date split; on the HELD-OUT half all four must hold: (1) home win, paired "
+    "Brier, non-inferiority, one-sided 95% lower bound on delta >= -0.001; (2) THE "
+    "RUNLINE, BOTH SIDES, scored as the per-game SUM of the log loss on home margin "
+    ">= 2 and the log loss on home margin <= -2 (equivalently home -1.5 and away -1.5; "
+    "the +1.5 sides are their complements and score identically), paired, delta > 0 at "
+    "t >= 1.645; (3) total over 9.0, paired log loss, delta > 0 at t >= 1.645; "
+    "(4) runs both sides, out-of-sample log-likelihood per row, NB > Poisson. "
+    "Moneyline is non-inferiority because diff_shrink already absorbs its calibration "
+    "and NB must not be credited for beating it there. AMENDED 2026-08-09: V1 said "
+    "only 'margin >= 2' and did not name a side, the first run scored the home side "
+    "alone, and the side changes the verdict; see RUNLINE_SIDE_AMENDMENT. The verdict "
+    "is taken from `dispersion_gate_sensitivity`, which requires the amended criterion "
+    "to hold at split quantiles 0.6, 0.7 and 0.8, not from any single split."
+)
+
 # --- the vintage gate ------------------------------------------------------
 # How many games the VINTAGE-mode backtest must grade before `min_edge` may be
 # fitted at all. This number is measured, not picked to look serious.
 #
 # The claim a published pick rests on is that the model beats the home-field
 # baseline out of sample. Grade that as a paired Brier difference, one game per
-# pair. In the existing forward split (2026-06-24 onward, n = 521, coefficient
-# leakage removed but feature leakage still present) that difference is
-# +0.005794 in the model's favour with a paired standard deviation of 0.08647,
-# so t = 1.529: the module's own "beats both baselines" line is NOT significant
-# even with the leak helping it. Detecting a margin that size at one-sided 95%
-# needs
+# pair. When this floor was derived, the forward split (2026-06-24 onward,
+# n = 521, coefficient leakage removed but feature leakage still present) gave
+# +0.005794 at a paired sd of 0.08647, so t = 1.529, and detecting a margin
+# that size at one-sided 95% needs
 #
 #     n = (1.645 * 0.08647 / 0.005794)^2 = 603 games
 #
-# rounded to 600. Two honesty notes travel with it. First, a clean margin is
-# very likely SMALLER than the contaminated one, so 600 games makes the test
-# possible, it does not make it pass. Second, 600 is a FLOOR on the sample, not
-# a substitute for the test: `min_edge_gate` still requires the paired
-# difference to clear zero at one-sided 95% on that sample, and still requires
-# a graded price history to sweep the threshold on.
+# rounded to 600.
+#
+# THOSE THREE NUMBERS HAVE ALREADY DRIFTED AND WILL KEEP DRIFTING, and the
+# constant does NOT follow them. The same split on the 1,766-game cache reads
+# n = 543, delta +0.006624, sd 0.07994, t = 1.931, n_for_95 = 394; a reading
+# taken between the two said n = 543, delta 0.007866, t = 2.332, n_for_95 = 270.
+# Re-deriving the floor from whichever value the artifact happens to hold is
+# how a sample-size requirement becomes a function of the result it is meant to
+# discipline: every month the contaminated margin looks better, the bar it has
+# to clear gets lower. The number is pinned at 600.
+#
+# 600 IS THE RIGHT ORDER FOR A REASON THAT DOES NOT MOVE: a clean margin will
+# be SMALLER than a contaminated one, and a smaller margin needs a larger
+# sample, so a floor derived from the contaminated estimate is a LOWER BOUND on
+# what the honest test will need. That is now measured rather than asserted.
+# The vintage mode grades 211 games at a paired skill of -0.001224 (t = -0.332):
+# the honest margin is not merely smaller, it is on the wrong side of zero, and
+# no finite n_for_95 exists for a negative effect. 600 games makes the test
+# possible. It does not make it pass, and nothing in the current honest sample
+# suggests it will.
+#
+# 600 is also a FLOOR on the sample, not a substitute for the test:
+# `min_edge_gate` still requires the paired difference to clear zero at
+# one-sided 95% on that sample, and still requires a graded price history to
+# sweep the threshold on.
 #
 # At the measured 2026 rate of 13.1 completed games per calendar date, 600
 # games is about 46 slate days of nightly snapshots.
@@ -623,9 +834,38 @@ def league_context() -> dict:
         "home_win_rate": ctx.get("home_win_rate"),
         "extra_inning_home_rate": ctx.get("extra_inning_home_rate_shrunk") or LITERATURE_TIE_HOME,
         "home_logit_offset": float(ctx.get("home_logit_offset") or 0.0),
+        "run_dispersion_alpha": run_dispersion_alpha(),
         "generated_at": ctx.get("generated_at"),
         "source": (coefficients() or {}).get("source"),
     }
+
+
+def run_dispersion_alpha() -> float | None:
+    """The SERVED NB2 dispersion, or None for Poisson.
+
+    A missing key, a null, or a non-positive value all mean Poisson, so a
+    checkout with an old context file prices exactly as it did before. The
+    fitted value lives beside it under `run_dispersion_alpha_fitted` and is a
+    MEASUREMENT, published whether or not it is served."""
+    ctx = _load_json(CONTEXT_PATH) or {}
+    a = ctx.get("run_dispersion_alpha")
+    try:
+        a = float(a)
+    except (TypeError, ValueError):
+        return None
+    return a if a > 0 else None
+
+
+def _alpha_to_r(alpha: float | None) -> float | None:
+    """alpha -> the NB2 size parameter r = 1/alpha. None (Poisson) for a
+    missing or non-positive alpha, so every call site has one switch."""
+    if alpha is None:
+        return None
+    try:
+        a = float(alpha)
+    except (TypeError, ValueError):
+        return None
+    return (1.0 / a) if a > 0 else None
 
 
 # ---------------------------------------------------------------------------
@@ -737,44 +977,263 @@ def _poisson_pmf(lam: float, k_max: int) -> list[float]:
     return out
 
 
-def margin_distribution(lam_home: float, lam_away: float, k_max: int = 24) -> dict:
-    """P(home runs - away runs = d) for d in [-k_max, k_max], by direct
-    convolution of two Poissons (a Skellam, computed without Bessel functions
-    so the serving path has no scipy dependency)."""
-    ph = _poisson_pmf(lam_home, k_max)
-    pa = _poisson_pmf(lam_away, k_max)
+def _nb2_pmf(lam: float, r: float, k_max: int) -> list[float]:
+    """pmf[0..k_max] for NB2 with MEAN lam and dispersion r = 1/alpha, so
+    var = lam + lam^2/r. Same recurrence idiom as `_poisson_pmf` and for the
+    same reason: no factorials, no overflow, and no gamma function, therefore
+    no scipy in the serving path.
+
+        p(0)   = (r / (r + lam))^r
+        p(k)   = p(k-1) * (k-1+r)/k * lam/(r+lam)
+
+    The ratio form is exact, not an approximation of the gamma expression: the
+    Gamma(k+r)/Gamma(r) product telescopes into the (k-1+r)/k factors. As
+    r -> infinity the recurrence converges to the Poisson one term by term,
+    which is why `r=None` (not a large r) is the Poisson switch below: a limit
+    reached numerically would not be bit-identical and the A/B would not be
+    clean."""
+    q = lam / (r + lam)
+    out = [math.exp(r * math.log(r / (r + lam)))]
+    for k in range(1, k_max + 1):
+        out.append(out[-1] * (k - 1 + r) / k * q)
+    return out
+
+
+def _nb2_side_pmf(lam: float, r: float, k_max: int) -> list[float]:
+    """NB2 side pmf over [0, k_max], RENORMALIZED to sum to 1.
+
+    THE TRUNCATION IS NOT THE POISSON TRUNCATION AND WAS MEASURED, not assumed.
+    Poisson at the shipped per-side k_max of 24 loses at most 2.09e-05 of mass
+    at the lam ceiling of 9.5. NB2 at alpha 0.284 loses 2.12e-02 there - three
+    orders of magnitude worse - because the NB tail is geometric in
+    lam/(r+lam) = 0.729 rather than factorial. Reaching a 1e-12 tail would need
+    k = 110 per side and a 110x110 joint grid, which is 30x the work for
+    accuracy nothing published can see.
+
+    So the support runs to `k_max` and the remainder is REDISTRIBUTED
+    proportionally instead of leaked. Leaking is the worse of the two: the
+    caller computes p_away as 1 - p_home, so every unassigned unit of mass
+    silently becomes an away win. At the k_max = 40 this module uses the
+    discarded mass is 4.00e-04 at lam 9.5, 1.81e-05 at the league mean 4.5, and
+    renormalizing turns that into a proportional reshaping of the retained
+    support rather than a one-sided error. The residual bias is a slight
+    UNDERSTATEMENT of extreme margins, the direction that keeps this correction
+    conservative about the thing it is claiming to fix."""
+    p = _nb2_pmf(lam, r, k_max)
+    s = sum(p)
+    return p if s <= 0 else [v / s for v in p]
+
+
+def _side_pmf(lam: float, r: float | None, k_max: int) -> list[float]:
+    """One scoring side's run pmf. `r is None` means Poisson, EXACTLY."""
+    return _poisson_pmf(lam, k_max) if r is None else _nb2_side_pmf(lam, r, k_max)
+
+
+def _score_joint(lam_home: float, lam_away: float, r: float | None = None,
+                 k_max: int = 24, total_k_max: int = 40) -> tuple[dict, list[float]]:
+    """(margin distribution, total pmf) from ONE pass over the joint grid.
+
+    WHY THEY ARE COMPUTED TOGETHER NOW. Under Poisson the total had a closed
+    form - the sum of two independent Poissons is Poisson - so the two markets
+    could be priced from two independent one-liners. Two NB2s with DIFFERENT
+    means do not sum to an NB2 (they only do when the two success probabilities
+    lam/(r+lam) agree, which happens only when lam_home == lam_away), so the
+    total loses its closed form the moment dispersion is switched on. The
+    honest fix is the joint grid, which prices margin and total off the same
+    convolution and cannot let them disagree about the same game.
+
+    `k_max` is the PER-SIDE truncation for the MARGIN and, on the Poisson
+    branch, `total_k_max` is the length of the returned total pmf. On the NB
+    branch the per-side support is raised to `total_k_max`, because a side index
+    above it cannot reach a total of 40 at all while a side index below 40 very
+    much can: see `_nb2_side_pmf` for the measured tail.
+
+    THE TWO BRANCHES RETURN TOTALS OF DIFFERENT LENGTHS, AND THAT IS THE FIX.
+    Poisson returns exactly `total_k_max + 1` cells and NB returns the FULL
+    convolution support, `2 * side_k + 1`. Every cell on both branches means the
+    same thing, P(total == k). Nothing is top-coded, nothing is renormalized,
+    nothing is dropped. Both callers of the total (`total_side_probabilities`
+    and the `over` closure in `game_probabilities`) read `len(pmf)`, so a longer
+    array is simply a longer sum.
+
+    THE DEFECT THAT FORCED IT. The loop used to drop every joint cell with
+    i + j > total_k_max on the floor. That leaves an array that does not sum to
+    1, and `total_side_probabilities` prices a half-point Under as `1 - p_over`,
+    so the whole deficit landed on the UNDER. Measured at alpha 0.28425, side
+    support 40:
+
+        lam 4.50/4.50   residual 4.98e-06   Under 8.5 overstated by 2.45e-06
+        lam 7.50/1.50   residual 3.02e-05   Under 8.5 overstated by 1.43e-05
+        lam 9.50/1.50   residual 2.44e-04   Under 8.5 overstated by 1.48e-04
+        lam 9.50/9.50   residual 1.55e-02   Under 8.5 overstated by 1.42e-02
+
+    1.42e-02 at the lambda ceiling is a QUARTER of the 0.06 provisional edge
+    floor, handed to one side of the market for free. Carrying the full support
+    takes the NB residual at those same four shapes to 1.11e-16, 1.33e-12,
+    1.33e-12 and 0.0, the floor set by the loop's own 1e-12 prune rather than
+    by the support, and it costs NOTHING in the loop:
+    the pairs visited are identical, only the array they are binned into is
+    longer.
+
+    TOP-CODING WAS TRIED AND WITHDRAWN, and the reason is not taste. Writing
+    P(total >= total_k_max) into the last cell also sums to 1, but it changes
+    what that cell MEANS, and the NB total is checked against the exact
+    equal-mean closed form cell by cell. A cell that carries a tail is off that
+    closed form by the whole tail, 4.98e-06 at lam 4.5/4.5. Carrying the tail
+    explicitly keeps every cell exact and keeps the check meaningful.
+
+    THE POISSON BRANCH IS UNTOUCHED, INCLUDING ITS OWN LEAK. Its truncated
+    closed form is short 8.09e-06 at the lam ceiling of 19.0 total and 6.11e-15
+    at the league-typical 9.0, and that mass still lands on a half-point Under.
+    It stays, on purpose. 8.09e-06 is under the 5th decimal every published
+    probability is rounded to, it only appears at a total no board posts, and
+    the alternative costs the one invariant that makes the section 11 gate a
+    true A/B on one flag: r is None reproduces the shipped Skellam BIT FOR BIT,
+    margin and total, every cell. A repair worth less than one ulp of a
+    published digit is not worth buying with the incumbent's identity."""
+    if r is None:
+        ph = _poisson_pmf(lam_home, k_max)
+        pa = _poisson_pmf(lam_away, k_max)
+        dist: dict = {}
+        # Closed form, and it is exact - do not spend the grid on it. NOT
+        # adjusted: see the docstring, this array is the shipped Skellam.
+        total = _poisson_pmf(lam_home + lam_away, total_k_max)
+        for i, p_i in enumerate(ph):
+            if p_i < 1e-12:
+                continue
+            for j, p_j in enumerate(pa):
+                if p_j < 1e-12:
+                    continue
+                d = i - j
+                dist[d] = dist.get(d, 0.0) + p_i * p_j
+        return dist, total
+    side_k = max(k_max, total_k_max)
+    ph = _nb2_side_pmf(lam_home, r, side_k)
+    pa = _nb2_side_pmf(lam_away, r, side_k)
     dist = {}
+    # The FULL convolution support. Every (i, j) the loop visits has a cell to
+    # land in, so nothing is dropped and nothing has to be top-coded. See the
+    # docstring: dropping put up to 1.55e-02 of mass on the Under.
+    total = [0.0] * (2 * side_k + 1)
     for i, p_i in enumerate(ph):
         if p_i < 1e-12:
             continue
         for j, p_j in enumerate(pa):
             if p_j < 1e-12:
                 continue
+            w = p_i * p_j
             d = i - j
-            dist[d] = dist.get(d, 0.0) + p_i * p_j
-    return dist
+            dist[d] = dist.get(d, 0.0) + w
+            total[i + j] += w
+    return dist, total
 
 
-def total_distribution(lam_home: float, lam_away: float, k_max: int = 40) -> list[float]:
-    """P(total runs = k) - the sum of two independent Poissons is Poisson."""
-    return _poisson_pmf(lam_home + lam_away, k_max)
+def margin_distribution(lam_home: float, lam_away: float, k_max: int = 24,
+                        r: float | None = None) -> dict:
+    """P(home runs - away runs = d) for d in [-k_max, k_max], by direct
+    convolution of the two scoring sides (no Bessel functions, so the serving
+    path has no scipy dependency).
+
+    `r=None` is the Skellam this module shipped with. `r` is the NB2
+    dispersion, r = 1/alpha; see `_score_joint`. Thin wrapper, kept so every
+    existing caller (dfs_export's implied-team-total bisection among them)
+    keeps its exact signature and its exact numbers."""
+    return _score_joint(lam_home, lam_away, r, k_max)[0]
+
+
+def total_distribution(lam_home: float, lam_away: float, k_max: int = 40,
+                       r: float | None = None) -> list[float]:
+    """P(total runs = k) for k in [0, k_max].
+
+    Poisson (`r=None`) keeps the closed form: the sum of two independent
+    Poissons is Poisson. NB2 has no such form and goes through the joint grid.
+    Thin wrapper over `_score_joint` so the two markets cannot drift apart.
+
+    `k_max` IS THE POISSON LENGTH, NOT A UNIVERSAL ONE. On the NB branch the
+    returned array runs to the full convolution support (2 * k_max) instead,
+    because the NB tail above 40 is real mass - up to 1.55e-02 at the lambda
+    ceiling - and truncating it hands that mass to the Under. Every cell on
+    both branches is P(total == k); read the length off the array, never assume
+    it. See `_score_joint`."""
+    return _score_joint(lam_home, lam_away, r, 24, k_max)[1]
+
+
+def total_side_probabilities(total_pmf: list[float], line: float) -> dict:
+    """Over, Under and PUSH for one posted total.
+
+    THE DEFECT (2026-08-09, found replaying .cache/odds/2026-08-09-0133.json).
+    betting_export priced the Under as `1.0 - p_over`, and p_over is
+    P(total >= floor(L) + 1). On an INTEGER line that reads
+    Under L = 1 - P(>= L+1) = P(<= L), which hands the Under the whole push mass
+    P(total == L). Measured on COL at STL with lam_total 9.380: Under 9.0 came
+    out 0.53745 against a true P(<= 8) of 0.40671. The 0.13073 error IS
+    P(total = 9) and is more than double the 0.06 provisional floor. Four of the
+    23 events on that board carried a whole-number total (7.0, 8.0, 8.0, 10.0),
+    and betting_shadow already grades a landed integer total as a push, so the
+    ledger knew about mass the price did not.
+
+    THE RETURNED PAIR IS CONDITIONAL ON NO PUSH. The de-vigged two-way market an
+    edge is measured against is itself a no-push market: on a whole number the
+    book returns the stake when the total lands, so its two prices describe the
+    game GIVEN it does not push. Scoring an unconditional model probability
+    against a conditional market one is the same class of mismatch as pricing
+    two different lines against each other.
+
+    A half-point line cannot push. Its p_over is computed by the identical
+    expression the `over` callable uses and its p_under is the identical
+    `1.0 - p_over`, so nothing already on the board moves by a single bit.
+
+    `p_push` is the raw pmf mass at the line, unconditioned, because that is the
+    number a reader wants: how often this bet is a refund.
+
+    THIS FUNCTION IS ONLY AS HONEST AS THE pmf IT IS HANDED. `1.0 - p_over` on a
+    half point is correct exactly when the pmf sums to 1, so `_score_joint`
+    returns the NB total over its FULL convolution support rather than dropping
+    the tail above 40; before that fix the NB branch put up to 1.55e-02 of
+    unassigned mass on the Under at the lambda ceiling. The Poisson branch is
+    still its own truncated closed form and is short by at most 8.09e-06, kept
+    deliberately so `r=None` stays bit-identical to what shipped."""
+    n = len(total_pmf or [])
+    if not n:
+        return {"p_over": None, "p_under": None, "p_push": None}
+    if float(line) != int(line):
+        need = math.floor(line) + 1
+        p_over = sum(total_pmf[k] for k in range(need, n))
+        return {"p_over": p_over, "p_under": 1.0 - p_over, "p_push": 0.0}
+    k = int(line)
+    p_push = total_pmf[k] if 0 <= k < n else 0.0
+    p_over = sum(total_pmf[j] for j in range(k + 1, n))
+    p_under = sum(total_pmf[j] for j in range(0, max(0, min(k, n))))
+    s = p_over + p_under
+    if s <= 0:
+        return {"p_over": None, "p_under": None, "p_push": p_push}
+    return {"p_over": p_over / s, "p_under": p_under / s, "p_push": p_push}
 
 
 def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=None,
                        teams=None, parks=None, coeffs=None, tie_home=None,
-                       home_adj=None, diff_shrink=None) -> dict | None:
+                       home_adj=None, diff_shrink=None,
+                       run_alpha: float | None = None) -> dict | None:
     """The full model view of one game: moneyline, runline, fair total.
 
     Ties do not exist in MLB, so the P(margin = 0) mass is split by the
     MEASURED extra-innings home win rate (league_context, shrunk toward a coin
-    flip on a 100-game prior), not by an invented constant."""
+    flip on a 100-game prior), not by an invented constant.
+
+    `run_alpha` is the NB2 run dispersion. None reads the served value out of
+    the context file (`run_dispersion_alpha`, absent until the section 11 gate
+    opened it); 0.0 forces Poisson. Both markets are priced off ONE joint pass
+    so the margin and the total cannot disagree about the same game."""
     er = expected_runs(home_org, away_org, home_sp=home_sp, away_sp=away_sp,
                        teams=teams, parks=parks, coeffs=coeffs, home_adj=home_adj,
                        diff_shrink=diff_shrink)
     if not er:
         return None
+    if run_alpha is None:
+        run_alpha = run_dispersion_alpha()
+    r = _alpha_to_r(run_alpha)
     lam_h, lam_a = er["lam_home"], er["lam_away"]
-    dist = margin_distribution(lam_h, lam_a)
+    dist, tot = _score_joint(lam_h, lam_a, r)
     p_tie = dist.get(0, 0.0)
     th = tie_home if tie_home is not None else (league_context().get("extra_inning_home_rate")
                                                or LITERATURE_TIE_HOME)
@@ -784,12 +1243,14 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
     # inside one run OR an outright win, which is 1 - P(margin >= 2).
     p_home_minus15 = sum(p for d, p in dist.items() if d >= 2)
     p_away_minus15 = sum(p for d, p in dist.items() if d <= -2)
-    tot = total_distribution(lam_h, lam_a)
     fair_total = lam_h + lam_a
 
     def over(line: float) -> float:
         need = math.floor(line) + 1 if line != int(line) else int(line) + 1
         return sum(tot[k] for k in range(need, len(tot)))
+
+    def total_sides(line: float) -> dict:
+        return total_side_probabilities(tot, line)
 
     return {
         "home_org": home_org, "away_org": away_org,
@@ -800,7 +1261,12 @@ def game_probabilities(home_org: str, away_org: str, *, home_sp=None, away_sp=No
         "p_home_plus_1_5": round(1.0 - p_away_minus15, 5),
         "p_away_plus_1_5": round(1.0 - p_home_minus15, 5),
         "fair_total": round(fair_total, 2),
+        "run_dispersion_alpha": (round(float(run_alpha), 5)
+                                 if r is not None else None),
         "over": over,                      # callable; the export resolves a line
+        # callable; over/under/push on ONE line, push-conditioned. `over` alone
+        # cannot price the Under of a whole number: see total_side_probabilities.
+        "total_sides": total_sides,
         "components": er,
         "model_version": MODEL_VERSION,
     }
@@ -1263,8 +1729,92 @@ def fit_coefficients(games: list[dict] | None = None, *, teams=None, parks=None,
     }
 
 
+def _lambda_rows(games, teams, parks, starters, coeffs, adj, shrink, resolve=None):
+    """[(lam, observed runs)] over both scoring sides of every game, at the
+    given corrections. This is the design the dispersion is fitted CONDITIONAL
+    on: alpha answers "given the mean this model already predicts, how much
+    more variance is there", so it must see the same lambdas the pricer will,
+    home adjustment and differential shrink included."""
+    rows = []
+    for g in games:
+        gt, gs, gpk = teams, starters, parks
+        if resolve is not None:
+            got = resolve(g)
+            if not got:
+                continue
+            gt, gs, gpk = got
+        er = expected_runs(g["home_org"], g["away_org"],
+                           home_sp=gs.get(g.get("home_sp")),
+                           away_sp=gs.get(g.get("away_sp")),
+                           teams=gt, parks=gpk, coeffs=coeffs,
+                           home_adj=adj, diff_shrink=shrink)
+        if not er:
+            continue
+        rows.append((er["lam_home"], int(g["home_runs"])))
+        rows.append((er["lam_away"], int(g["away_runs"])))
+    return rows
+
+
+def _nb2_loglik(rows, alpha: float | None) -> float:
+    """Sum of log p(k | lam) over side rows. `alpha=None` is Poisson.
+
+    Both branches walk the SAME recurrence they price with, in log space, so
+    the likelihood being maximized and the distribution being served cannot be
+    two different objects."""
+    r = _alpha_to_r(alpha)
+    s = 0.0
+    if r is None:
+        for lam, k in rows:
+            lp = -lam
+            for j in range(1, k + 1):
+                lp += math.log(lam / j)
+            s += lp
+        return s
+    for lam, k in rows:
+        lp = r * math.log(r / (r + lam))
+        lr = math.log(lam / (r + lam))
+        for j in range(1, k + 1):
+            lp += math.log((j - 1 + r) / j) + lr
+        s += lp
+    return s
+
+
+def fit_run_alpha(rows, *, tol: float = 1e-5) -> tuple[float | None, float, float]:
+    """(alpha, NB2 log-likelihood, Poisson log-likelihood) by conditional MLE.
+
+    ONE parameter, golden-section over a bounded interval, no derivatives and
+    no library: the objective is unimodal in alpha for fixed means, and the
+    bracket is the physical range (alpha 0 is Poisson, alpha 2 is a variance
+    ten times the mean at league scale). Deterministic: the section is a fixed
+    contraction on a fixed interval, so two runs on the same rows return the
+    same digits.
+
+    Returns alpha None when the search lands on the floor, which is the honest
+    way to say "no dispersion detected" rather than serving a fake 1e-4."""
+    if not rows:
+        return None, 0.0, 0.0
+    lo, hi = RUN_DISPERSION_MIN_ALPHA, RUN_DISPERSION_MAX_ALPHA
+    inv_phi = (math.sqrt(5.0) - 1.0) / 2.0
+    x1, x2 = hi - inv_phi * (hi - lo), lo + inv_phi * (hi - lo)
+    f1, f2 = _nb2_loglik(rows, x1), _nb2_loglik(rows, x2)
+    while hi - lo > tol:
+        if f1 < f2:
+            lo, x1, f1 = x1, x2, f2
+            x2 = lo + inv_phi * (hi - lo)
+            f2 = _nb2_loglik(rows, x2)
+        else:
+            hi, x2, f2 = x2, x1, f1
+            x1 = hi - inv_phi * (hi - lo)
+            f1 = _nb2_loglik(rows, x1)
+    alpha = round((lo + hi) / 2.0, 5)
+    ll_pois = _nb2_loglik(rows, None)
+    if alpha <= RUN_DISPERSION_MIN_ALPHA:
+        return None, ll_pois, ll_pois
+    return alpha, _nb2_loglik(rows, alpha), ll_pois
+
+
 def _p_home_series(games, teams, parks, starters, coeffs, tie_home, adj, shrink,
-                   resolve=None):
+                   resolve=None, run_alpha=None):
     """(predicted p_home, observed home win) for every game. The inner loop of
     both solvers and of the grader, written once so they cannot drift apart.
     `resolve` has the same contract as in `_design_rows`."""
@@ -1280,7 +1830,8 @@ def _p_home_series(games, teams, parks, starters, coeffs, tie_home, adj, shrink,
                                 home_sp=gs.get(g.get("home_sp")),
                                 away_sp=gs.get(g.get("away_sp")),
                                 teams=gt, parks=gpk, coeffs=coeffs,
-                                tie_home=tie_home, home_adj=adj, diff_shrink=shrink)
+                                tie_home=tie_home, home_adj=adj, diff_shrink=shrink,
+                                run_alpha=run_alpha)
         if gp:
             ps.append(gp["p_home"])
             ys.append(1 if g["home_runs"] > g["away_runs"] else 0)
@@ -1288,14 +1839,18 @@ def _p_home_series(games, teams, parks, starters, coeffs, tie_home, adj, shrink,
 
 
 def _solve_home_adj(games, teams, parks, starters, coeffs, tie_home, target: float,
-                    shrink: float = 1.0, resolve=None) -> float:
+                    shrink: float = 1.0, resolve=None, run_alpha=None) -> float:
     """The run-differential shift that makes the model's MEAN home win
     probability equal the observed home win rate. Bisection over a bounded
     interval; one parameter, one target, no free lunch. See the docstring on
-    expected_runs for why the raw fit needs it."""
+    expected_runs for why the raw fit needs it.
+
+    `run_alpha` is threaded because widening the run distribution flattens
+    P(home) at a fixed differential, so the adjustment that hits the observed
+    home rate under Poisson is not the one that hits it under NB2."""
     def mean_p(adj: float) -> float:
         ps, _ = _p_home_series(games, teams, parks, starters, coeffs, tie_home, adj,
-                               shrink, resolve)
+                               shrink, resolve, run_alpha)
         return sum(ps) / len(ps) if ps else 0.5
 
     lo, hi = -0.60, 1.20
@@ -1311,17 +1866,25 @@ def _solve_home_adj(games, teams, parks, starters, coeffs, tie_home, target: flo
 
 
 def _solve_diff_shrink(games, teams, parks, starters, coeffs, tie_home,
-                       adj: float = 0.0, resolve=None) -> tuple[float, float]:
+                       adj: float = 0.0, resolve=None,
+                       run_alpha=None) -> tuple[float, float]:
     """(shrink, log loss) minimizing log loss over a coarse-to-fine grid.
 
     ONE parameter. A value below 1 means the linear predictor spread the
     league further apart than the results did, which is the normal failure
     mode for a model built out of season-long rate stats: the inputs are
     themselves shrunk estimates, and stacking them recovers less signal than
-    their spread implies."""
+    their spread implies.
+
+    `run_alpha` is threaded because this shrink was fitted to fix moneyline
+    OVERCONFIDENCE UNDER POISSON, and a wider run distribution is itself a
+    de-confidencing device. Leaving it pinned at its Poisson value and then
+    switching dispersion on would double-shrink the moneyline and would rig a
+    Poisson-versus-NB comparison in the wrong direction: a tuned incumbent
+    against an untuned challenger."""
     def ll(s: float) -> float:
         ps, ys = _p_home_series(games, teams, parks, starters, coeffs, tie_home, adj, s,
-                                resolve)
+                                resolve, run_alpha)
         return _logloss(ps, ys) if ps else 9.9
 
     best_s, best_l = 1.0, ll(1.0)
@@ -1331,9 +1894,9 @@ def _solve_diff_shrink(games, teams, parks, starters, coeffs, tie_home,
             s = round(centre + i * step, 4)
             if s < 0.2 or s > 1.6:
                 continue
-            l = ll(s)
-            if l < best_l:
-                best_s, best_l = s, l
+            loss = ll(s)
+            if loss < best_l:
+                best_s, best_l = s, loss
     return best_s, round(best_l, 6)
 
 
@@ -1352,21 +1915,33 @@ def build_context(*, season: str | None = None, write: bool = True, log_fn=None)
     tie_raw = (x_wins / len(extras)) if extras else None
     tie_shrunk = ((x_wins + 0.5 * TIE_SHRINK_K) / (len(extras) + TIE_SHRINK_K)
                   if extras else LITERATURE_TIE_HOME)
-    # Two one-parameter corrections, solved in sequence and then refined once,
-    # because they interact: shrinking the differential moves the mean home
-    # probability, and shifting home field moves the log loss the shrink is
-    # minimizing. Two passes is enough; the second changes the shrink in the
-    # third decimal.
+    # THREE one-parameter corrections, solved in sequence and then refined
+    # once, because all three interact. Order is alpha, shrink, adj, and it is
+    # not arbitrary:
+    #   alpha  is a statement about RUNS given a mean, so it moves first and is
+    #          the only one that can be read off the scoring rows directly.
+    #   shrink minimizes moneyline log loss, and a wider run distribution is
+    #          itself a de-confidencing device, so the shrink that was right
+    #          under Poisson over-shrinks under NB2.
+    #   adj    targets the observed home win rate, and both of the above move
+    #          the mean P(home) it is chasing.
+    # Leaving shrink and adj at their Poisson values while switching dispersion
+    # on would compare a TUNED incumbent against an UNTUNED challenger, which
+    # is rigged against the challenger and would make a pass meaningless.
+    # One refinement pass, same argument as before: the second changes shrink
+    # in the third decimal.
     adj, shrink, shrink_ll = 0.0, 1.0, None
+    alpha, ll_nb, ll_pois, n_disp_rows = None, None, None, 0
     if n and coeffs:
-        shrink, shrink_ll = _solve_diff_shrink(games, teams, parks, starters, coeffs,
-                                               tie_shrunk, 0.0)
-        adj = _solve_home_adj(games, teams, parks, starters, coeffs, tie_shrunk,
-                              home_rate, shrink)
-        shrink, shrink_ll = _solve_diff_shrink(games, teams, parks, starters, coeffs,
-                                               tie_shrunk, adj)
-        adj = _solve_home_adj(games, teams, parks, starters, coeffs, tie_shrunk,
-                              home_rate, shrink)
+        for i in range(2):
+            rows = _lambda_rows(games, teams, parks, starters, coeffs, adj, shrink)
+            alpha, ll_nb, ll_pois = fit_run_alpha(rows)
+            n_disp_rows = len(rows)
+            serve_alpha = alpha if SERVE_RUN_DISPERSION else None
+            shrink, shrink_ll = _solve_diff_shrink(games, teams, parks, starters, coeffs,
+                                                   tie_shrunk, adj, None, serve_alpha)
+            adj = _solve_home_adj(games, teams, parks, starters, coeffs, tie_shrunk,
+                                  home_rate, shrink, None, serve_alpha)
     ctx = {
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "model_version": MODEL_VERSION,
@@ -1383,6 +1958,22 @@ def build_context(*, season: str | None = None, write: bool = True, log_fn=None)
         "diff_shrink_note": ("run-differential shrink fitted by log loss on completed games; "
                              "below 1.0 means the raw predictor separated clubs further than "
                              "the results did, and the fair total is untouched by it"),
+        # The SERVED dispersion. Null means Poisson and the module prices
+        # exactly as it did before this key existed.
+        "run_dispersion_alpha": (alpha if SERVE_RUN_DISPERSION else None),
+        # The MEASUREMENT, published whether or not it is served, so a reader
+        # can always see how far the served distribution is from the fitted one.
+        "run_dispersion_alpha_fitted": alpha,
+        "run_dispersion_rows": n_disp_rows,
+        "run_dispersion_loglik_nb2": round(ll_nb, 3) if ll_nb is not None else None,
+        "run_dispersion_loglik_poisson": round(ll_pois, 3) if ll_pois is not None else None,
+        "run_dispersion_note": ("NB2 run dispersion, var = lam + alpha*lam^2, by conditional "
+                                "MLE on both scoring sides given the model's own lambda; "
+                                "Poisson (alpha 0) underdisperses real run scoring by a "
+                                "measured var/mean of 2.34 per side and 2.37 on the margin. "
+                                "Served only because the pre-registered four-criterion gate "
+                                "in docs/diamond-betting.md section 11 passed on a held-out "
+                                "half; `run_dispersion` in betting_model_eval.json carries it"),
         "home_field_note": ("the runs regression recovers almost no home field because a "
                             "home team leading after the top of the ninth never bats; the "
                             "adjustment restores the observed home win rate as a run "
@@ -1448,6 +2039,336 @@ def _paired_brier_skill(ps: list[float], ys: list[int], base: float) -> dict:
         "note": ("paired per-game Brier difference against the constant home-field "
                  "baseline; positive means the model is better, and t >= 1.645 is the "
                  "one-sided 95% bar"),
+    }
+
+
+def _paired_delta(incumbent: list[float], challenger: list[float]) -> dict:
+    """Paired per-row loss difference, incumbent minus challenger.
+
+    Positive means the CHALLENGER is better, on every loss this module uses
+    (Brier and log loss are both smaller-is-better). `lb95` is the one-sided
+    95% lower bound on the mean, which is what a non-inferiority criterion
+    reads and what a superiority criterion compares to zero through `t`."""
+    n = len(incumbent)
+    if n < 2:
+        return {"n": n, "delta": None, "sd": None, "t": None, "lb95": None}
+    d = [a - b for a, b in zip(incumbent, challenger)]
+    mu = sum(d) / n
+    sd = math.sqrt(sum((x - mu) ** 2 for x in d) / n)
+    se = sd / math.sqrt(n) if sd else 0.0
+    return {
+        "n": n,
+        "delta": round(mu, 6),
+        "sd": round(sd, 6),
+        "t": round(mu / se, 3) if se else None,
+        "lb95": round(mu - Z_95_ONE_SIDED * se, 6) if se else None,
+    }
+
+
+def _dispersion_arm(fit_games, eval_games, teams, parks, starters, coeffs, tie,
+                    fit_home_rate, *, alpha_fit: bool):
+    """One arm of the section 11 gate: solve every free parameter on the FIT
+    half, then price the EVAL half and return the per-row losses.
+
+    `alpha_fit` is the only difference between the two arms. Both arms re-solve
+    diff_shrink and home_adj from scratch under their own distribution, in the
+    same alpha -> shrink -> adj order with the same single refinement pass
+    build_context uses. That is the whole reason this function exists rather
+    than two ad hoc call sequences: a gate that compared a TUNED Poisson to an
+    UNTUNED NB would be rigged toward the incumbent and a pass would mean
+    nothing."""
+    alpha, adj, shrink = None, 0.0, 1.0
+    for _ in range(2):
+        if alpha_fit:
+            alpha, _, _ = fit_run_alpha(_lambda_rows(fit_games, teams, parks, starters,
+                                                     coeffs, adj, shrink))
+        shrink, _ = _solve_diff_shrink(fit_games, teams, parks, starters, coeffs, tie,
+                                       adj, None, alpha)
+        adj = _solve_home_adj(fit_games, teams, parks, starters, coeffs, tie,
+                              fit_home_rate, shrink, None, alpha)
+    ml, tl = [], []               # per-row losses on the three published markets
+    rl_home, rl_away = [], []     # the runline, one series per SIDE
+    ys_ml, ys_rl, ys_rl_away, ys_tl = [], [], [], []
+    n_over = 0
+    for g in eval_games:
+        gp = game_probabilities(g["home_org"], g["away_org"],
+                                home_sp=starters.get(g.get("home_sp")),
+                                away_sp=starters.get(g.get("away_sp")),
+                                teams=teams, parks=parks, coeffs=coeffs, tie_home=tie,
+                                home_adj=adj, diff_shrink=shrink, run_alpha=alpha)
+        if not gp:
+            continue
+        hr, ar = g["home_runs"], g["away_runs"]
+        y_ml = 1 if hr > ar else 0
+        p_ml = gp["p_home"]
+        ml.append((p_ml - y_ml) ** 2)
+        ys_ml.append(y_ml)
+        # THE RUNLINE, BOTH SIDES. The board publishes four runline prices per
+        # game and they are two binary events, not four: p_home_plus_1_5 is
+        # 1 - p_away_minus_1_5 and p_away_plus_1_5 is 1 - p_home_minus_1_5. Log
+        # loss is invariant under complementation, so scoring "home -1.5" and
+        # scoring "away +1.5" produce the IDENTICAL per-row number. The two
+        # distinct series are the two tails of the margin distribution:
+        #   home -1.5 / away +1.5   home margin >= +2   (the right tail)
+        #   away -1.5 / home +1.5   home margin <= -2   (the left tail)
+        # Both are priced, both ship, and `runline_side` decides which the gate
+        # reads. See DISPERSION_GATE_CRITERIA.
+        y_rl = 1 if (hr - ar) >= 2 else 0
+        p_rl = min(max(gp["p_home_minus_1_5"], 1e-9), 1.0 - 1e-9)
+        rl_home.append(-(math.log(p_rl) if y_rl else math.log(1.0 - p_rl)))
+        ys_rl.append(y_rl)
+        y_rl_a = 1 if (ar - hr) >= 2 else 0
+        p_rl_a = min(max(gp["p_away_minus_1_5"], 1e-9), 1.0 - 1e-9)
+        rl_away.append(-(math.log(p_rl_a) if y_rl_a else math.log(1.0 - p_rl_a)))
+        ys_rl_away.append(y_rl_a)
+        # Over 9.0. The model's `over` callable reads P(total >= 10) on a whole
+        # number, so the graded event is total >= 10 and a game landing exactly
+        # on 9 scores as a non-over. That is the UNCONDITIONAL probability, the
+        # right object for a scoring rule; the push-conditioned pair the board
+        # prices is a separate transformation of the same pmf.
+        y_tl = 1 if (hr + ar) >= 10 else 0
+        p_tl = min(max(gp["over"](9.0), 1e-9), 1.0 - 1e-9)
+        tl.append(-(math.log(p_tl) if y_tl else math.log(1.0 - p_tl)))
+        ys_tl.append(y_tl)
+        n_over += y_tl
+    rows = _lambda_rows(eval_games, teams, parks, starters, coeffs, adj, shrink)
+    return {
+        "alpha": alpha,
+        "diff_shrink": shrink,
+        "home_field_runs_adj": adj,
+        "brier_ml": ml, "logloss_total": tl,
+        "logloss_rl_home": rl_home,
+        "logloss_rl_away": rl_away,
+        # Both sides of the same game, one row per game, so the pairing stays
+        # one pair per game and the sd is a per-game sd.
+        "logloss_rl_both": [a + b for a, b in zip(rl_home, rl_away)],
+        "runs_ll_per_row": (_nb2_loglik(rows, alpha) / len(rows)) if rows else None,
+        "n_runs_rows": len(rows),
+        "n_eval": len(ml),
+        "base_rates": {"home_win": round(sum(ys_ml) / max(1, len(ys_ml)), 4),
+                       "home_minus_1_5": round(sum(ys_rl) / max(1, len(ys_rl)), 4),
+                       "away_minus_1_5": round(sum(ys_rl_away) / max(1, len(ys_rl_away)), 4),
+                       "over_9": round(sum(ys_tl) / max(1, len(ys_tl)), 4)},
+    }
+
+
+def run_dispersion_gate(games=None, *, teams=None, parks=None, starters=None,
+                        split_date: str | None = None, split_q: float = 0.7,
+                        runline_side: str = RUNLINE_SIDE_AMENDMENT) -> dict:
+    """The pre-registered four-criterion dispersion gate, written into
+    docs/diamond-betting.md section 11 BEFORE it was run.
+
+    Split the completed-game cache by DATE at the same 70% point `backtest`
+    already uses. Fit {coefficients, alpha, diff_shrink, home_field_runs_adj}
+    on the fit half. On the HELD-OUT half all four must hold:
+
+      home win        paired Brier    non-inferiority, lb95(delta) >= -0.001
+      runline         paired log loss delta > 0 at t >= 1.645
+      total over 9.0  paired log loss delta > 0 at t >= 1.645
+      runs both sides out-of-sample log-likelihood per row, NB > Poisson
+
+    `runline_side` is criterion 2's estimand and it is NOT cosmetic: on the
+    pre-registered split the home tail fails and the away tail and the sum pass.
+    The default is the amended specification (both sides, per-game sum). All
+    three readings are returned in `runline_by_side` on every run, so the number
+    the gate did not headline is never hidden. See RUNLINE_SIDE_AMENDMENT for
+    why both-sides is the estimand and for the plain statement that the choice
+    moves the verdict.
+
+    Moneyline is NON-INFERIORITY on purpose. `diff_shrink` was fitted to fix
+    moneyline overconfidence under Poisson and already absorbs that market's
+    calibration, so crediting NB for beating it there would be crediting it for
+    work the incumbent had already done. The two markets the distribution's
+    SHAPE actually decides - the runline and the total - carry the superiority
+    tests.
+
+    This mode is the CONTAMINATED forward split: its features are
+    season-to-date leaderboards. That is deliberate and it is not a leak that
+    can flatter one arm, because both arms see the identical features and the
+    identical fit window. The question here is only which distribution shape
+    fits run scoring better, and the vintage sample (221 graded games) is far
+    too small to answer it."""
+    games = games if games is not None else completed_games()
+    teams = teams if teams is not None else team_inputs()
+    parks = parks if parks is not None else park_index()
+    starters = starters if starters is not None else starter_inputs()
+    if runline_side not in RUNLINE_SIDES:
+        raise ValueError(f"runline_side must be one of {RUNLINE_SIDES}, got {runline_side!r}")
+    dates = sorted({g["date"] for g in games if g.get("date")})
+    sd = split_date or (dates[int(len(dates) * split_q)] if len(dates) > 20 else None)
+    out = {
+        "status": "not run",
+        "split_date": sd,
+        "split_q": round(float(split_q), 3),
+        "runline_side": runline_side,
+        "criteria": DISPERSION_GATE_CRITERIA,
+        "criteria_v1": DISPERSION_GATE_CRITERIA_V1,
+    }
+    if not sd:
+        out["status"] = "no split"
+        return out
+    fit_g = [g for g in games if (g.get("date") or "") < sd]
+    ev_g = [g for g in games if (g.get("date") or "") >= sd]
+    out["n_fit"], out["n_eval_games"] = len(fit_g), len(ev_g)
+    if len(fit_g) <= 200 or len(ev_g) <= 50:
+        out["status"] = "insufficient sample"
+        return out
+    coeffs = fit_coefficients(fit_g, teams=teams, parks=parks, starters=starters)
+    if not coeffs:
+        out["status"] = "no coefficients"
+        return out
+    tie = _fit_tie_home(fit_g)
+    fit_home_rate = (sum(1 for g in fit_g if g["home_runs"] > g["away_runs"])
+                     / max(1, len(fit_g)))
+    pois = _dispersion_arm(fit_g, ev_g, teams, parks, starters, coeffs, tie,
+                           fit_home_rate, alpha_fit=False)
+    nb = _dispersion_arm(fit_g, ev_g, teams, parks, starters, coeffs, tie,
+                         fit_home_rate, alpha_fit=True)
+    ml = _paired_delta(pois["brier_ml"], nb["brier_ml"])
+    # ALL THREE READINGS, ALWAYS. The gate headlines one of them; the other two
+    # go into the artifact beside it so a reader can see what the choice of
+    # estimand did and does not have to take the headline on trust.
+    by_side = {s: _paired_delta(pois[f"logloss_rl_{s}"], nb[f"logloss_rl_{s}"])
+               for s in RUNLINE_SIDES}
+    for s, d in by_side.items():
+        d["passes_criterion_2"] = bool(d.get("delta") is not None and d["delta"] > 0
+                                       and d.get("t") is not None
+                                       and d["t"] >= Z_95_ONE_SIDED)
+    rl = by_side[runline_side]
+    tl = _paired_delta(pois["logloss_total"], nb["logloss_total"])
+    runs_delta = ((nb["runs_ll_per_row"] - pois["runs_ll_per_row"])
+                  if (nb["runs_ll_per_row"] is not None
+                      and pois["runs_ll_per_row"] is not None) else None)
+    checks = [
+        {"criterion": "moneyline (home win), paired Brier, non-inferiority",
+         "test": "lb95(poisson - nb) >= -0.001",
+         "value": ml.get("lb95"), "threshold": -0.001,
+         "pass": bool(ml.get("lb95") is not None and ml["lb95"] >= -0.001)},
+        {"criterion": f"runline ({_RUNLINE_SIDE_LABEL[runline_side]}), paired log loss, "
+                      "superiority",
+         "test": "delta > 0 and t >= 1.645",
+         "side": runline_side,
+         "value": rl.get("delta"), "t": rl.get("t"), "threshold": 0.0,
+         "pass": bool(rl.get("passes_criterion_2"))},
+        {"criterion": "total (over 9.0), paired log loss, superiority",
+         "test": "delta > 0 and t >= 1.645",
+         "value": tl.get("delta"), "t": tl.get("t"), "threshold": 0.0,
+         "pass": bool(tl.get("delta") is not None and tl["delta"] > 0
+                      and tl.get("t") is not None and tl["t"] >= Z_95_ONE_SIDED)},
+        {"criterion": "runs, both scoring sides, out-of-sample log-likelihood per row",
+         "test": "nb > poisson",
+         "value": round(runs_delta, 6) if runs_delta is not None else None,
+         "threshold": 0.0,
+         "pass": bool(runs_delta is not None and runs_delta > 0)},
+    ]
+    out.update({
+        "status": "ran",
+        "passed": all(c["pass"] for c in checks),
+        "checks": checks,
+        "alpha": nb["alpha"],
+        "poisson_arm": {k: pois[k] for k in
+                        ("diff_shrink", "home_field_runs_adj", "runs_ll_per_row",
+                         "n_runs_rows", "n_eval", "base_rates")},
+        "nb2_arm": {k: nb[k] for k in
+                    ("alpha", "diff_shrink", "home_field_runs_adj", "runs_ll_per_row",
+                     "n_runs_rows", "n_eval", "base_rates")},
+        "moneyline_brier": ml,
+        "runline_logloss": rl,
+        "runline_by_side": by_side,
+        "runline_side_note": ("criterion 2's estimand. `home` is the log loss on home "
+                              "margin >= 2 (home -1.5, equivalently away +1.5), `away` "
+                              "the log loss on home margin <= -2 (away -1.5, "
+                              "equivalently home +1.5), `both` their per-game sum. The "
+                              "board publishes all four prices and they are these two "
+                              "events; V1 of the pre-registration named no side and the "
+                              "first run scored `home` alone. See "
+                              "betting_model.RUNLINE_SIDE_AMENDMENT"),
+        "total_logloss": tl,
+        "runs_loglik_per_row_delta": round(runs_delta, 6) if runs_delta is not None else None,
+        "mode": "contaminated",
+        "mode_note": ("forward split on season-to-date features. Both arms see the "
+                      "identical features and the identical fit window, so the "
+                      "contamination cannot favour one distribution over the other; "
+                      "this gate asks about SHAPE, not about skill"),
+    })
+    return out
+
+
+def dispersion_gate_sensitivity(games=None, *, teams=None, parks=None, starters=None,
+                                quantiles=DISPERSION_SPLIT_QUANTILES) -> dict:
+    """The gate verdict as a function of the two things that were never pinned:
+    WHICH runline side criterion 2 scores, and WHERE the date split falls.
+
+    One gate run per split quantile. Both arms are fitted once per split and all
+    three side readings come off the same per-row losses, so the grid costs
+    len(quantiles) gate runs and not 3x that, and the three sides at one split
+    are exactly comparable because they are the same two fitted models.
+
+    THE SHIP RULE, and it is decided before the numbers: dispersion ships only
+    if the amended criterion 2 (RUNLINE_SIDE_AMENDMENT) passes at EVERY
+    quantile, together with the other three. If the amended reading passes at
+    some quantiles and fails at others the gate is INDETERMINATE, and
+    indeterminate does not ship. A verdict that depends on where the split lands
+    is not a verdict about the distribution, it is a verdict about the split.
+
+    Returns the full grid, including the readings the ship rule does not use.
+    Nothing here is filtered by which way it resolves."""
+    games = games if games is not None else completed_games()
+    teams = teams if teams is not None else team_inputs()
+    parks = parks if parks is not None else park_index()
+    starters = starters if starters is not None else starter_inputs()
+    runs, grid = [], []
+    for q in quantiles:
+        g = run_dispersion_gate(games, teams=teams, parks=parks, starters=starters,
+                                split_q=q, runline_side=RUNLINE_SIDE_AMENDMENT)
+        if g.get("status") != "ran":
+            grid.append({"split_q": round(float(q), 3), "status": g.get("status")})
+            continue
+        others = [c for c in g["checks"] if not c["criterion"].startswith("runline")]
+        row = {
+            "split_q": round(float(q), 3),
+            "split_date": g["split_date"],
+            "n_fit": g["n_fit"], "n_eval_games": g["n_eval_games"],
+            "alpha": g["alpha"],
+            "other_three_pass": all(c["pass"] for c in others),
+            "by_side": {s: {"delta": g["runline_by_side"][s]["delta"],
+                            "t": g["runline_by_side"][s]["t"],
+                            "pass": g["runline_by_side"][s]["passes_criterion_2"]}
+                        for s in RUNLINE_SIDES},
+        }
+        row["gate_by_side"] = {s: bool(row["other_three_pass"] and row["by_side"][s]["pass"])
+                               for s in RUNLINE_SIDES}
+        grid.append(row)
+        runs.append(row)
+    ran = [r for r in runs if "gate_by_side" in r]
+    amend = RUNLINE_SIDE_AMENDMENT
+    verdicts = [r["gate_by_side"][amend] for r in ran]
+    if not ran:
+        verdict, ship = "not run", False
+    elif all(verdicts):
+        verdict, ship = "pass", True
+    elif not any(verdicts):
+        verdict, ship = "fail", False
+    else:
+        verdict, ship = "indeterminate", False
+    robust = {s: ("pass" if all(r["gate_by_side"][s] for r in ran)
+                  else "fail" if not any(r["gate_by_side"][s] for r in ran)
+                  else "indeterminate") for s in RUNLINE_SIDES} if ran else {}
+    return {
+        "status": "ran" if ran else "not run",
+        "quantiles": [round(float(q), 3) for q in quantiles],
+        "runline_side_shipped": amend,
+        "grid": grid,
+        "verdict_by_side": robust,
+        "verdict": verdict,
+        "ship": ship,
+        "rule": ("the amended criterion 2 must pass at EVERY split quantile, with the "
+                 "other three criteria, or the gate is INDETERMINATE and dispersion "
+                 "stays off; a verdict that moves with the split point is a verdict "
+                 "about the split point"),
+        "note": ("side-by-split sensitivity for the section 11a gate. `home` was the "
+                 "only reading the first run reported and V1 of the pre-registration "
+                 "did not name a side"),
     }
 
 
@@ -1526,7 +2447,7 @@ def _odds_history_dates() -> list[str]:
 
 
 def _shadow_graded_bets() -> list[dict]:
-    """Settled paper bets from the shadow ledger, or [] when it does not exist.
+    """Settled paper bets from the shadow ledger, POOLED across every tag.
 
     THE CIRCLE THIS BREAKS. sweep_min_edge needs settled bets carrying a taken
     price, and min_edge_gate was only ever called with graded_bets=None, so the
@@ -1534,6 +2455,10 @@ def _shadow_graded_bets() -> list[dict]:
     needed settled picks. betting_shadow records what the model WOULD have bet at
     the price actually on the board and settles it against the result, which
     supplies that history without the site claiming anything.
+
+    THIS POOLED LIST IS A COUNT AND NOTHING ELSE. `min_edge_gate` reports its
+    length as gate 3's `have` and never sweeps it: see
+    `_shadow_graded_bets_by_tag`.
 
     Deliberately best effort and silent on absence: a missing ledger is the
     normal state before the first slate is logged, and the gate already reports
@@ -1544,6 +2469,49 @@ def _shadow_graded_bets() -> list[dict]:
     except Exception:                                         # noqa: BLE001
         log.debug("betting_model: shadow ledger unavailable", exc_info=True)
         return []
+
+
+def _shadow_graded_bets_by_tag() -> dict:
+    """{tag: settled paper bets} - the shape gate 3 is allowed to sweep.
+
+    The per-tag API existed in betting_shadow from the day the fourth tag
+    shipped and had no caller, so the gate went on sweeping the pooled set the
+    docs forbid (docs/diamond-betting.md section 7a: "a pooled ROI measures a
+    mixture nobody bet"). This is that caller."""
+    try:
+        import betting_shadow
+        return betting_shadow.graded_bets_by_tag()
+    except Exception:                                         # noqa: BLE001
+        log.debug("betting_model: shadow ledger unavailable", exc_info=True)
+        return {}
+
+
+#: The tag a caller's EXPLICIT `graded_bets=` list is swept under.
+#:
+#: A caller that hands in rows has already decided what population they are -
+#: that is what handing them in means - so they are one tag, not a mixture, and
+#: they sweep as one. Naming it keeps the per-tag table honest about where the
+#: rows came from instead of laundering them through a real tag's name.
+EXPLICIT_TAG = "explicit"
+
+#: Tags that may accumulate evidence but may NOT set a threshold.
+#:
+#: `untagged` is the pre-2026-08-07 era: one slot a slate, chosen on EV alone.
+#: The rows are real and their ROI is real, but the selection rule that produced
+#: them is not a rule this site still runs (it publishes two slots now), so a
+#: threshold fitted to them would be applied to a rule that no longer exists.
+#: That is the pooling defect with a smaller n, not an exception to it.
+TAGS_THAT_MAY_NOT_SET_A_THRESHOLD = frozenset({"untagged"})
+
+
+def sweep_min_edge_by_tag(rows_by_tag: dict, **kw) -> dict:
+    """`sweep_min_edge` run ONCE PER TAG, never over their union.
+
+    Returns {tag: sweep result}. A tag with four settled rows stays shut while
+    another with a hundred and twenty opens, which is the correct behaviour and
+    the reason the pooled version looked further along than it was."""
+    return {t: sweep_min_edge(list(rws or []), **kw)
+            for t, rws in sorted((rows_by_tag or {}).items())}
 
 
 def min_edge_gate(vintage_block: dict | None, *, graded_bets: list[dict] | None = None) -> dict:
@@ -1560,21 +2528,60 @@ def min_edge_gate(vintage_block: dict | None, *, graded_bets: list[dict] | None 
       2. OUT-OF-SAMPLE SKILL. On that sample, the paired Brier difference
          against the home-field baseline must clear zero at one-sided 95%.
          Sample size alone is not evidence; this is the actual claim.
-      3. A GRADED PRICE HISTORY. A threshold is a statement about EV against
-         real prices, so it can only be swept on settled bets with a taken
-         price. Cached odds snapshots accumulate nightly alongside the
-         vintages, and the join that produces settled rows is not built yet.
+      3. A GRADED PRICE HISTORY, SWEPT PER SELECTION RULE. A threshold is a
+         statement about EV against real prices, so it can only be swept on
+         settled bets with a taken price. The shadow ledger tags every row with
+         the rule that chose it, and those tags select on four different
+         quantities, so the sweep runs ONCE PER TAG and a tag opens only if it
+         individually clears. Pooling them would fit a threshold to a mixture
+         nobody bet (docs/diamond-betting.md section 7a).
 
     Gate 3 is why `min_edge` would still be None on the day gates 1 and 2 open:
     a calibrated probability is not an edge until there is a market to have an
-    edge against."""
+    edge against.
+
+    THE SCALAR `min_edge` IS THE STRICTEST CLEARED TAG'S THRESHOLD. One number
+    has to serve the whole board, and the tags disagree about what an edge is
+    worth, so the only safe reduction is the largest: a floor above a tag's own
+    measured threshold is stricter than that tag's evidence requires and can
+    never be looser. `min_edge_by_tag` ships beside it so a per-slot consumer
+    can condition on its own rule instead of on the reduction."""
     vb = vintage_block or {}
     n_graded = int(vb.get("n_graded") or 0)
     skill = vb.get("skill_vs_home_base") or {}
     odds_dates = _odds_history_dates()
     # None means "look for them"; an explicit [] still means "none".
-    rows = list(graded_bets if graded_bets is not None else _shadow_graded_bets())
-    sweep = sweep_min_edge(rows)
+    explicit = graded_bets is not None
+    rows = list(graded_bets if explicit else _shadow_graded_bets())
+    by_tag = {EXPLICIT_TAG: rows} if explicit else _shadow_graded_bets_by_tag()
+    # ONE SWEEP PER TAG. `rows` above is only ever counted, never swept: it is
+    # the union of four selection rules and a threshold fitted to it is wrong
+    # for every one of them separately.
+    sweeps = sweep_min_edge_by_tag(by_tag)
+    cleared = {t: s["min_edge"] for t, s in sweeps.items()
+               if s.get("min_edge") is not None
+               and t not in TAGS_THAT_MAY_NOT_SET_A_THRESHOLD}
+    price_open = bool(cleared)
+    sweep_min = max(cleared.values()) if cleared else None
+    tag_table = {
+        t: {"n": s.get("n_rows"), "min_edge": s.get("min_edge"),
+            "open": bool(s.get("min_edge") is not None
+                         and t not in TAGS_THAT_MAY_NOT_SET_A_THRESHOLD),
+            "may_set_a_threshold": t not in TAGS_THAT_MAY_NOT_SET_A_THRESHOLD,
+            "reason": s.get("reason")}
+        for t, s in sweeps.items()
+    }
+    if cleared:
+        sweep_reason = (f"{len(cleared)} of {len(sweeps)} tag(s) cleared on their own "
+                        f"evidence ({', '.join(f'{t} at {v:.3f}' for t, v in sorted(cleared.items()))}); "
+                        f"the published floor is the strictest of them")
+    elif sweeps:
+        sweep_reason = (f"no tag cleared: {len(sweeps)} tag(s) present and none of them "
+                        "produced an ROI lower bound above zero on 100+ of its own "
+                        "settled rows")
+    else:
+        sweep_reason = ("no settled bets with both a model edge and a taken price; "
+                        "the threshold cannot be swept on data that does not exist")
 
     gates = [
         {"id": "vintage_sample",
@@ -1593,20 +2600,38 @@ def min_edge_gate(vintage_block: dict | None, *, graded_bets: list[dict] | None 
                  "'always take the home team' on games it could not see")},
         {"id": "graded_price_history",
          "need": ("settled bets with a taken price, enough that some edge threshold "
-                  "clears an ROI lower bound of zero on at least 100 of them"),
+                  "clears an ROI lower bound of zero on at least 100 of them, "
+                  "WITHIN ONE TAG"),
+         # `have` stays the POOLED count and is a count only. It is what a
+         # reader wants when asking how much evidence exists at all, and it is
+         # explicitly not what the sweep ran on.
          "have": len(rows),
-         "open": bool(sweep.get("min_edge") is not None),
+         "have_by_tag": {t: b["n"] for t, b in tag_table.items()},
+         "open": price_open,
+         "by_tag": tag_table,
          "why": ("an edge threshold is a claim about EV against real prices; "
-                 f"{len(odds_dates)} dates of odds snapshots are cached and no "
-                 "settled-bet join exists yet")},
+                 f"{len(odds_dates)} dates of odds snapshots are cached. The sweep "
+                 "runs per tag and a tag opens only if it individually clears - a "
+                 "pooled ROI measures a mixture nobody bet"),
+         "pooled_is_not_sweepable": ("`have` is the union of every tag and is never "
+                                     "swept; see by_tag for the four clocks that are")},
     ]
     all_open = all(g["open"] for g in gates)
     return {
-        "min_edge": sweep.get("min_edge") if all_open else None,
+        "min_edge": sweep_min if all_open else None,
+        "min_edge_by_tag": ({t: b["min_edge"] for t, b in tag_table.items()}
+                            if all_open else {}),
+        "min_edge_reduction": ("max over the tags that cleared; a floor above a tag's "
+                               "own measured threshold is stricter than that tag's "
+                               "evidence requires and can never be looser"),
         "all_gates_open": all_open,
         "gates": gates,
         "odds_snapshot_dates": len(odds_dates),
-        "sweep": {k: sweep[k] for k in ("n_rows", "reason") if k in sweep},
+        # POOLED n, PER-TAG verdict. The count is the union; the reason is never
+        # a statement about the union's ROI, because nothing swept it.
+        "sweep": {"n_rows": len(rows), "reason": sweep_reason,
+                  "n_tags": len(sweeps), "n_tags_cleared": len(cleared)},
+        "sweep_by_tag": sweeps,
         "policy": ("min_edge stays null until all three gates are open. A threshold "
                    "invented to make a pick appear is the single most dishonest number "
                    "this module could publish."),
@@ -1670,7 +2695,16 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
     cov = {}
     if lv:
         try:
-            cov = lv.coverage()
+            # GAME weighted, not calendar weighted. Without `game_dates` the age
+            # distribution weights an off day the same as a 15-game Saturday,
+            # and the number sitting beside `n_graded` is then not the one a
+            # reader of `n_graded` is asking about. Measured on this archive the
+            # two differ: calendar gives median 2 / p90 10 / max 13 over 36
+            # covered days, game weighting gives median 3 / p90 11 / max 13 over
+            # 414 graded game dates. The published vintage is STALER than the
+            # calendar view says, because the archive's holes fall on days that
+            # carry games.
+            cov = lv.coverage(game_dates=[g.get("date") for g in games if g.get("date")])
         except Exception:                                        # pragma: no cover
             cov = {}
     result = {
@@ -1713,10 +2747,19 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
         # through the back door.
         fit_home_rate = (sum(1 for g in fit_games if g["home_runs"] > g["away_runs"])
                          / max(1, len(fit_games)))
+        # Dispersion is refit on the FIT window for the same reason the tie rate
+        # and the home adjustment are: a shape parameter read off the whole
+        # season is a leak into every eval game, small but real. Then shrink and
+        # adj are solved UNDER it, so this mode never grades a tuned Poisson
+        # against an untuned NB.
+        alpha = None
+        if SERVE_RUN_DISPERSION:
+            alpha, _, _ = fit_run_alpha(_lambda_rows(fit_games, teams, parks, starters,
+                                                     coeffs, 0.0, 1.0, resolve))
         shrink, _ = _solve_diff_shrink(fit_games, teams, parks, starters, coeffs, tie, 0.0,
-                                       resolve)
+                                       resolve, alpha)
         adj = _solve_home_adj(fit_games, teams, parks, starters, coeffs, tie,
-                              fit_home_rate, shrink, resolve)
+                              fit_home_rate, shrink, resolve, alpha)
         ps, ys, tot_err, n_tot = [], [], 0.0, 0
         for g in eval_games:
             gt, gs, gpk = teams, starters, parks
@@ -1732,7 +2775,7 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
                                     home_sp=gs.get(g.get("home_sp")),
                                     away_sp=gs.get(g.get("away_sp")),
                                     teams=gt, parks=gpk, coeffs=coeffs, tie_home=tie,
-                                    home_adj=adj, diff_shrink=shrink)
+                                    home_adj=adj, diff_shrink=shrink, run_alpha=alpha)
             if not gp:
                 continue
             ps.append(gp["p_home"])
@@ -1750,6 +2793,7 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
             "coefficients": coeffs,
             "home_field_runs_adj": adj,
             "diff_shrink": shrink,
+            "run_dispersion_alpha": alpha,
             "extra_inning_home_rate": round(tie, 4),
             "brier": round(_brier(ps, ys), 5),
             "brier_flat_500": round(_brier([0.5] * len(ps), ys), 5),
@@ -1780,6 +2824,33 @@ def backtest(*, season: str | None = None, split_date: str | None = None,
                                        f"forward from {sd} (coefficient leakage removed, "
                                        "feature leakage remains)",
                                        "contaminated")
+
+    # --- the dispersion gate ---------------------------------------------
+    # Lives inside this artifact rather than in an eval file of its own,
+    # because it is a property of the SAME split this function already grades
+    # and a second file would be a second clock to keep in sync.
+    result["run_dispersion"] = run_dispersion_gate(games, teams=teams, parks=parks,
+                                                   starters=starters, split_date=sd)
+    # The verdict does NOT come from the line above. It comes from the sweep,
+    # because criterion 2's estimand and the split point were both unpinned and
+    # both move the answer. The single-split run stays as the pre-registered
+    # headline; `sensitivity` is what SERVE_RUN_DISPERSION is set from.
+    result["run_dispersion"]["sensitivity"] = dispersion_gate_sensitivity(
+        games, teams=teams, parks=parks, starters=starters)
+    # `passed` above is ONE split and is not the verdict. `verdict` is, and it
+    # is lifted to the top of the block so the two can never be confused by a
+    # reader who stops at the first boolean. They genuinely disagree right now:
+    # the pre-registered 0.7 split passes all four criteria and the sweep is
+    # INDETERMINATE because 0.8 does not.
+    sens = result["run_dispersion"]["sensitivity"]
+    result["run_dispersion"]["verdict"] = sens.get("verdict")
+    result["run_dispersion"]["verdict_note"] = (
+        "`passed` is the pre-registered single split under the amended criterion 2. "
+        "`verdict` is the ship decision and comes from `sensitivity`, which requires "
+        "that criterion to hold at every split quantile. Where they disagree, "
+        "`verdict` governs and `served` follows it")
+    result["run_dispersion"]["served"] = SERVE_RUN_DISPERSION
+    result["run_dispersion"]["served_alpha"] = run_dispersion_alpha()
 
     # --- mode 2: vintage --------------------------------------------------
     result["vintage"] = _grade_vintage(games, cov, _grade, log_fn=log_fn)
@@ -1977,6 +3048,8 @@ if __name__ == "__main__":                                       # pragma: no co
     ap.add_argument("--backtest", action="store_true", help="grade on completed games (offline)")
     ap.add_argument("--gate", action="store_true",
                     help="the min_edge gate state off the last backtest artifact")
+    ap.add_argument("--dispersion", action="store_true",
+                    help="re-run the section 11a run-dispersion gate on its own")
     ap.add_argument("--game", nargs=2, metavar=("AWAY", "HOME"), help="price one matchup")
     ap.add_argument("--season", default=None)
     args = ap.parse_args()
@@ -2004,6 +3077,16 @@ if __name__ == "__main__":                                       # pragma: no co
     if args.gate:
         ev = _load_json(EVAL_PATH) or {}
         print(json.dumps(min_edge_gate(ev.get("vintage")), indent=1))
+    if args.dispersion:
+        # Standalone so the gate can be re-run against a grown cache without
+        # rewriting the whole eval artifact. It writes nothing.
+        d = run_dispersion_gate()
+        print(json.dumps(d, indent=1))
+        print(f"  served: {SERVE_RUN_DISPERSION} (alpha {run_dispersion_alpha()})")
+        for c in d.get("checks") or []:
+            print(f"    {'PASS' if c['pass'] else 'FAIL'}  {c['criterion']}: "
+                  f"{c['value']} against {c['threshold']}"
+                  + (f" at t={c['t']}" if c.get("t") is not None else ""))
     if args.game:
         away, home = _org(args.game[0]), _org(args.game[1])
         gp = game_probabilities(home, away)
@@ -2011,4 +3094,5 @@ if __name__ == "__main__":                                       # pragma: no co
             print(f"no leaderboard rows for {away} / {home}")
         else:
             gp.pop("over", None)
+            gp.pop("total_sides", None)      # callable; not JSON-serializable
             print(json.dumps(gp, indent=1))

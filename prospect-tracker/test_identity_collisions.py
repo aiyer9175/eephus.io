@@ -361,6 +361,24 @@ KNOWN_MERGED_INACTIVE = frozenset({
     "jose_carlos_urena", "jose_gomez", "jose_martinez", "jose_rondon",
     "junior_garcia", "luis_garcia", "luis_valdez", "manuel_rodriguez",
     "michael_perez", "miguel_gomez",
+    # C7 adjudication queue, added 2026-08-10 when the name-variant detector
+    # first ran. These are SURFACED, not new: each is one human whose history
+    # sits under two spellings, and every pair predates the detector. The
+    # C1-C6 gates cannot see this class because the two keys carry different
+    # slugs. Four originally-queued names already left the list the sanctioned
+    # ways: jaiden_lore and zachary_root via PLAYER_KEY_ALIASES (the Root pair
+    # binds ONE mlbam id, 702539, on both keys), and edwin_jimenez plus
+    # luis_ramon_king because their pairs bind two DISTINCT mlbam ids, which
+    # is two humans (the Kings are b.2007-12-04 KCR twins, ids 830428/830443)
+    # and which C7 now auto-resolves. Each remaining entry leaves the same
+    # ways: an alias verified on two independent signals, or a
+    # distinct-mlbam-id proof. Do NOT bulk-alias them: the two-signal rule
+    # exists because a wrong alias merges two humans.
+    "alex_santos", "ben_cowles", "bj_murray_jr", "dennis_colleran",
+    "dennis_colleran__noid", "dominic_keegan",
+    "jared_jones__sa3034881", "javi_vaz", "jay_allen",
+    "leonardo_bernal__noid", "lonnie_jr_white",
+    "zach_thornton__noid",
 })
 
 
@@ -370,10 +388,19 @@ def live_report():
     roster = ia.load_roster_rows()
     if not board or not roster:
         pytest.skip("data/timeseries.json or data/rosters_by_org.json not built")
+    # Mirrors build() exactly, C7 included: this fixture is what the
+    # committed-artifact staleness test compares against, so a detector
+    # present in one and not the other reads as spurious staleness.
+    try:
+        from consensus import PLAYER_KEY_ALIASES as aliases
+    except Exception:
+        aliases = {}
     return ia.audit(board_rows=board, roster_rows=roster,
                     photo_bindings=ia.load_photo_bindings(),
                     positions_played=ia.load_positions_played(),
-                    snapshot_orgs=ia.load_snapshot_orgs())
+                    snapshot_orgs=ia.load_snapshot_orgs(),
+                    players_rows=ia.load_players_rows(),
+                    aliases=aliases)
 
 
 def test_no_new_merged_identity_on_the_active_board(live_report):

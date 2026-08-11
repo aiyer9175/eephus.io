@@ -1,0 +1,1582 @@
+{
+ "generated_at": "2026-08-10T20:40:51Z",
+ "produced_by": "tools/efv_opportunity_lab.py all",
+ "registration": "docs/efv-2026-08-09/OPPORTUNITY_DECOMP_GATE.md sections 0-9, written in full BEFORE this lab existed; section 10 is a placeholder filled after the run",
+ "lane": "B-L3 (WAR-per-opportunity as an eFV driver)",
+ "scope_note": "CLOSURE. Adds and removes NO feature, changes no shipped constant, retires nothing, and retroactively resolves no past null. efv_model.py and efv_dataset.py are imported, never edited.",
+ "not_a_banned_reanalysis": "the closed target-transform cell (data/xfv_rank_objective_eval.json, 20 of 20 fail) tested rank_normal, signed_log1p, ipcw, sqrt and uniform. EVERY ONE IS A MONOTONE RELABEL of the same cumulative target: none is a decomposition and none introduces a new outcome column. Six-year PA/IP accrual has NEVER been in either matrix and is not derivable from target_censored, target_resolved, observed_seasons or weight. The ledger's own reopening condition is NEW DATA rather than re-analysis.",
+ "seed": 20260809,
+ "identity_join": {
+  "override_files": {
+   "data/sources/mlbam_id_overrides.json": 735,
+   "data/sources/mlbam_id_overrides_busts.json": 283
+  },
+  "spine": "arb_dataset.war_daily_spine basis (arb_dataset.py:119), stints collapsed by (mlb_ID, year_ID)",
+  "censoring_parity": "window debut_year..debut_year+5, observed capped at RESOLVED_THROUGH=2025, censored tail projected at the observed per-season rate. IDENTICAL to efv_dataset._label_6yr; a decomposition with two censoring rules manufactures itself.",
+  "deploy_hazard": "SOURCE IS .cache/war_daily/*.parquet, GITIGNORED and rebuilt from pybaseball. Lab-only. MUST NEVER become a model input without a durable deploy-reachable artifact: the box runs `git checkout -- .` nightly, so a feature reading this path imputes to zero in production and scores fine in every local test.",
+  "sides": {
+   "hit": {
+    "n_matrix_rows": 1917,
+    "n_debuted": 845,
+    "n_debuted_no_inline_id": 259,
+    "n_debuted_no_inline_id_covered_by_overrides": 250,
+    "n_debuted_joined": 836,
+    "debuted_join_rate": 0.9893,
+    "n_debuted_joined_with_nonzero_opportunity": 831,
+    "n_debuted_full_six_season_window": 454,
+    "n_bust_opportunity_zero_by_construction": 1072,
+    "n_bust_rows_with_any_mlb_exposure_in_frame": 0,
+    "unit": "PA"
+   },
+   "pit": {
+    "n_matrix_rows": 2037,
+    "n_debuted": 981,
+    "n_debuted_no_inline_id": 267,
+    "n_debuted_no_inline_id_covered_by_overrides": 258,
+    "n_debuted_joined": 972,
+    "debuted_join_rate": 0.9908,
+    "n_debuted_joined_with_nonzero_opportunity": 960,
+    "n_debuted_full_six_season_window": 520,
+    "n_bust_opportunity_zero_by_construction": 1056,
+    "n_bust_rows_with_any_mlb_exposure_in_frame": 0,
+    "unit": "IPouts"
+   }
+  }
+ },
+ "decomposition": {
+  "registration": "OPPORTUNITY_DECOMP_GATE.md sections 2, 3 and 6",
+  "sides": {
+   "hit": {
+    "decomposition": {
+     "pool": "debuted rows with a successful opportunity join",
+     "n": 836,
+     "unit": "PA",
+     "rho_fv_opportunity": 0.5074,
+     "rho_fv_war_shipped_target": 0.3779,
+     "rho_fv_war_bbref_observed_window": 0.3735,
+     "rho_opportunity_war": 0.7549,
+     "quality_primary": {
+      "threshold": 200.0,
+      "n": 655,
+      "rho": 0.3014
+     },
+     "quality_sensitivity": [
+      {
+       "threshold": 100.0,
+       "n": 723,
+       "rho": 0.3049
+      },
+      {
+       "threshold": 300.0,
+       "n": 610,
+       "rho": 0.3005
+      }
+     ],
+     "quality_threshold_stability": {
+      "gap_rho_opp_minus_rho_quality": [
+       0.206,
+       0.2025,
+       0.2069
+      ],
+      "signs_agree": true,
+      "reading": "threshold is not doing the work"
+     },
+     "SELECTION_HAZARD": {
+      "applies_to": "quality_primary and quality_sensitivity ONLY",
+      "statement": "the quality leg is fit on a subpopulation SELECTED ON the very denominator it divides by, and that denominator correlates with FV. This is a CONDITIONAL-ON-SELECTION read.",
+      "never_quote": "'the board correlates X with quality'. The true sentence carries 'among players who reached the threshold'.",
+      "bias_direction": "conditioning on high exposure among low-FV players selects the ones who earned it with a high rate, which biases the within-stratum FV-to-rate association DOWNWARD. The figure is bounded-below, not a point estimate."
+     },
+     "planning_read": {
+      "rho_fv_opportunity": 0.584,
+      "rho_fv_war": 0.278,
+      "rho_fv_quality": 0.316
+     },
+     "reproduction_grade": {
+      "rho_fv_opportunity": "CLOSE",
+      "rho_fv_war": "CLOSE",
+      "rho_fv_quality": "MATCHED",
+      "band": {
+       "MATCHED": "<= 0.05",
+       "CLOSE": "<= 0.1",
+       "DIFFERENT": "> 0.1"
+      }
+     },
+     "refutation_clause": {
+      "registered": "refuted if rho_opp <= rho_war, or rho_opp - rho_quality < 0.10",
+      "triggered": [],
+      "verdict": "SURVIVES"
+     }
+    },
+    "basis_sensitivity": {
+     "debuted_PRE_REGISTERED_PRIMARY": {
+      "n": 836,
+      "rho_fv_opportunity_unweighted": 0.5074,
+      "rho_fv_war_unweighted": 0.3779,
+      "rho_fv_opportunity_pair_weighted": 0.4947,
+      "rho_fv_war_pair_weighted": 0.3819
+     },
+     "full_modelled_pool": {
+      "n": 1874,
+      "rho_fv_opportunity_unweighted": 0.5822,
+      "rho_fv_war_unweighted": 0.2766,
+      "rho_fv_opportunity_pair_weighted": 0.597,
+      "rho_fv_war_pair_weighted": 0.2826
+     },
+     "note": "on the full pool the bust rows carry a structural zero on BOTH the opportunity and the target, which mechanically raises rho_fv_opportunity: the board's ability to tell a never-MLB player from a major leaguer is counted as opportunity skill. The qualitative reading is identical on both pools and both sides - rho_fv_opportunity far exceeds rho_fv_war - so the decomposition does not depend on the choice.",
+     "identifies_planning_basis": true
+    },
+    "cosine_bound": {
+     "n": 1874,
+     "keys": [
+      "fv",
+      "obp_rel",
+      "k_rel",
+      "peak_k_rel",
+      "age_rel_level",
+      "n_milb_seasons",
+      "tool_hit",
+      "tool_speed",
+      "milb_missing",
+      "is_ifa",
+      "is_college",
+      "ops_rel",
+      "age",
+      "level_rank"
+     ],
+     "cosine_war_vs_opportunity": 0.9485,
+     "orthogonal_linear_extent_sqrt_1_minus_cos2": 0.3169,
+     "orthogonal_variance_share_1_minus_cos2": 0.1004,
+     "alpha_war": 100.0,
+     "alpha_opportunity": 100.0,
+     "weights_war": {
+      "fv": 2.4765,
+      "obp_rel": 0.0439,
+      "k_rel": 0.1867,
+      "peak_k_rel": -0.1143,
+      "age_rel_level": -0.2066,
+      "n_milb_seasons": -0.1955,
+      "tool_hit": 0.3288,
+      "tool_speed": 0.2345,
+      "milb_missing": -0.0148,
+      "is_ifa": 0.0699,
+      "is_college": 0.3118,
+      "ops_rel": 0.2387,
+      "age": 0.0453,
+      "level_rank": 0.3044
+     },
+     "weights_opportunity": {
+      "fv": 455.2237,
+      "obp_rel": -12.0826,
+      "k_rel": -21.1129,
+      "peak_k_rel": -6.9782,
+      "age_rel_level": -128.6456,
+      "n_milb_seasons": 18.2488,
+      "tool_hit": 53.5972,
+      "tool_speed": 11.4277,
+      "milb_missing": -18.2209,
+      "is_ifa": -11.3055,
+      "is_college": 74.4066,
+      "ops_rel": 66.0841,
+      "age": 89.6478,
+      "level_rank": 95.2153
+     },
+     "reading": "within the span of the EXISTING feature set, the best linear predictor of opportunity and the best linear predictor of WAR point in very nearly the same direction. This is why the twenty closed objective-lane cells had to fail: they were twenty reweightings of a space with one dominant direction.",
+     "SCOPE": "the cosine bounds REWEIGHTINGS OF THE EXISTING FEATURE SET. It does NOT bound what a genuinely new feature could buy, it does not bound a nonlinear model, and it is a statement about linear predictors of the two targets, not about the targets themselves. Quoted without this scope note it is a stronger claim than the measurement supports.",
+     "planning_read": 0.979,
+     "reproduction_grade": "MATCHED"
+    }
+   },
+   "pit": {
+    "decomposition": {
+     "pool": "debuted rows with a successful opportunity join",
+     "n": 972,
+     "unit": "IPouts",
+     "rho_fv_opportunity": 0.3803,
+     "rho_fv_war_shipped_target": 0.2669,
+     "rho_fv_war_bbref_observed_window": 0.2667,
+     "rho_opportunity_war": 0.6408,
+     "quality_primary": {
+      "threshold": 150.0,
+      "n": 731,
+      "rho": 0.1796
+     },
+     "quality_sensitivity": [
+      {
+       "threshold": 90.0,
+       "n": 816,
+       "rho": 0.1783
+      },
+      {
+       "threshold": 300.0,
+       "n": 594,
+       "rho": 0.1475
+      }
+     ],
+     "quality_threshold_stability": {
+      "gap_rho_opp_minus_rho_quality": [
+       0.2007,
+       0.202,
+       0.2328
+      ],
+      "signs_agree": true,
+      "reading": "threshold is not doing the work"
+     },
+     "SELECTION_HAZARD": {
+      "applies_to": "quality_primary and quality_sensitivity ONLY",
+      "statement": "the quality leg is fit on a subpopulation SELECTED ON the very denominator it divides by, and that denominator correlates with FV. This is a CONDITIONAL-ON-SELECTION read.",
+      "never_quote": "'the board correlates X with quality'. The true sentence carries 'among players who reached the threshold'.",
+      "bias_direction": "conditioning on high exposure among low-FV players selects the ones who earned it with a high rate, which biases the within-stratum FV-to-rate association DOWNWARD. The figure is bounded-below, not a point estimate."
+     },
+     "planning_read": {
+      "rho_fv_opportunity": 0.44,
+      "rho_fv_war": 0.214,
+      "rho_fv_quality": 0.14
+     },
+     "reproduction_grade": {
+      "rho_fv_opportunity": "CLOSE",
+      "rho_fv_war": "CLOSE",
+      "rho_fv_quality": "MATCHED",
+      "band": {
+       "MATCHED": "<= 0.05",
+       "CLOSE": "<= 0.1",
+       "DIFFERENT": "> 0.1"
+      }
+     },
+     "refutation_clause": {
+      "registered": "refuted if rho_opp <= rho_war, or rho_opp - rho_quality < 0.10",
+      "triggered": [],
+      "verdict": "SURVIVES"
+     }
+    },
+    "basis_sensitivity": {
+     "debuted_PRE_REGISTERED_PRIMARY": {
+      "n": 972,
+      "rho_fv_opportunity_unweighted": 0.3803,
+      "rho_fv_war_unweighted": 0.2669,
+      "rho_fv_opportunity_pair_weighted": 0.3934,
+      "rho_fv_war_pair_weighted": 0.2767
+     },
+     "full_modelled_pool": {
+      "n": 1969,
+      "rho_fv_opportunity_unweighted": 0.4319,
+      "rho_fv_war_unweighted": 0.2122,
+      "rho_fv_opportunity_pair_weighted": 0.463,
+      "rho_fv_war_pair_weighted": 0.2219
+     },
+     "note": "on the full pool the bust rows carry a structural zero on BOTH the opportunity and the target, which mechanically raises rho_fv_opportunity: the board's ability to tell a never-MLB player from a major leaguer is counted as opportunity skill. The qualitative reading is identical on both pools and both sides - rho_fv_opportunity far exceeds rho_fv_war - so the decomposition does not depend on the choice.",
+     "identifies_planning_basis": true
+    },
+    "cosine_bound": {
+     "n": 1969,
+     "keys": [
+      "fv",
+      "peak_k_rel",
+      "k_rel",
+      "bb_rel",
+      "age_rel_level",
+      "x_era_k",
+      "tool_fb",
+      "age",
+      "seasons_at_level"
+     ],
+     "cosine_war_vs_opportunity": 0.9605,
+     "orthogonal_linear_extent_sqrt_1_minus_cos2": 0.2783,
+     "orthogonal_variance_share_1_minus_cos2": 0.0775,
+     "alpha_war": 100.0,
+     "alpha_opportunity": 100.0,
+     "weights_war": {
+      "fv": 1.2914,
+      "peak_k_rel": 0.1434,
+      "k_rel": 0.177,
+      "bb_rel": -0.0605,
+      "age_rel_level": 0.0595,
+      "x_era_k": 0.0752,
+      "tool_fb": 0.0936,
+      "age": 0.1066,
+      "seasons_at_level": -0.1102
+     },
+     "weights_opportunity": {
+      "fv": 284.1145,
+      "peak_k_rel": 71.4326,
+      "k_rel": 2.2208,
+      "bb_rel": -37.6107,
+      "age_rel_level": -13.8483,
+      "x_era_k": 10.5585,
+      "tool_fb": -8.4081,
+      "age": 61.676,
+      "seasons_at_level": -2.0553
+     },
+     "reading": "within the span of the EXISTING feature set, the best linear predictor of opportunity and the best linear predictor of WAR point in very nearly the same direction. This is why the twenty closed objective-lane cells had to fail: they were twenty reweightings of a space with one dominant direction.",
+     "SCOPE": "the cosine bounds REWEIGHTINGS OF THE EXISTING FEATURE SET. It does NOT bound what a genuinely new feature could buy, it does not bound a nonlinear model, and it is a statement about linear predictors of the two targets, not about the targets themselves. Quoted without this scope note it is a stronger claim than the measurement supports.",
+     "planning_read": 0.979,
+     "reproduction_grade": "MATCHED"
+    }
+   }
+  }
+ },
+ "exploitation_arms": {
+  "registration": "OPPORTUNITY_DECOMP_GATE.md sections 7 and 8",
+  "headline_metric": "pair-weighted pooled Spearman on cumulative WAR (target_censored), forward-chained over SCORED_YEARS, on debuted_km and full_pool_km, plus block-rho. The SHIPPED instrument, unchanged. No arm gets a metric of its own.",
+  "incumbent_rule": "delta = rho(arm) - rho(the shipped leg it replaces), on the SAME rows in the SAME folds. Blended arms vs the shipped blend; the multiplicative pure leg vs the shipped ridge leg.",
+  "floors": {
+   "hit.full_pool_km": {
+    "mde95": 0.0295,
+    "mde95_cond": 0.0208,
+    "source_cell": "pooled_rho.hit.full_pool_km",
+    "n_rows": 1786
+   },
+   "pit.full_pool_km": {
+    "mde95": 0.0265,
+    "mde95_cond": 0.0207,
+    "source_cell": "pooled_rho.pit.full_pool_km",
+    "n_rows": 1881
+   },
+   "hit.debuted_km": {
+    "mde95": 0.045,
+    "mde95_cond": 0.0204,
+    "source_cell": "pooled_rho.hit.debuted_km",
+    "n_rows": 755
+   },
+   "pit.debuted_km": {
+    "mde95": 0.0431,
+    "mde95_cond": 0.0295,
+    "source_cell": "pooled_rho.pit.debuted_km",
+    "n_rows": 890
+   },
+   "block_rho": {
+    "mde95": 0.0317,
+    "mde95_cond": 0.0203,
+    "source_cell": "block_rho",
+    "n_rows": 1645
+   }
+  },
+  "floor_convention": "MDE95 is ONE-SIDED 1.645*sd on |delta| (docs/EFV_GATE_STANDARD.md section 1). MDE95 is E_refit, MDE95_COND is E_cond. Neither is quoted without its estimator.",
+  "promotion_bar": "gain >= 1.0x the floor under BOTH estimators on the PRIMARY cell (hit.full_pool_km) with no resolvable loss elsewhere.",
+  "pool_ns": {
+   "hit.full_pool_km": {
+    "n": 1783,
+    "n_effective": 1622.7
+   },
+   "hit.debuted_km": {
+    "n": 746,
+    "n_effective": 585.7
+   },
+   "pit.full_pool_km": {
+    "n": 1874,
+    "n_effective": 1680.6
+   },
+   "pit.debuted_km": {
+    "n": 881,
+    "n_effective": 687.6
+   }
+  },
+  "pool_n_vs_floor_basis": {
+   "hit.full_pool_km": {
+    "n_scored_here": 1783,
+    "n_rows_floor_was_derived_on": 1786,
+    "shortfall_share": 0.0017
+   },
+   "hit.debuted_km": {
+    "n_scored_here": 746,
+    "n_rows_floor_was_derived_on": 755,
+    "shortfall_share": 0.0119
+   },
+   "pit.full_pool_km": {
+    "n_scored_here": 1874,
+    "n_rows_floor_was_derived_on": 1881,
+    "shortfall_share": 0.0037
+   },
+   "pit.debuted_km": {
+    "n_scored_here": 881,
+    "n_rows_floor_was_derived_on": 890,
+    "shortfall_share": 0.0101
+   }
+  },
+  "arms": {
+   "multiplicative_blend": {
+    "incumbent_leg": "shipped_blend",
+    "cells": {
+     "hit.full_pool_km": {
+      "point_delta": -0.0565,
+      "mde95": 0.0295,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0208,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 1.915,
+      "margin_over_mde95_cond": 2.716,
+      "resolvable_E_refit": true,
+      "resolvable_E_cond": true,
+      "verdict": "RESOLVABLE LOSS",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.full_pool_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 1783,
+      "n_effective": 1622.7,
+      "arm_rho": 0.2215,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.278,
+      "consensus_rho": 0.2978,
+      "arm_minus_consensus": -0.0763,
+      "planning_read": -0.0164,
+      "reproduction_grade": "MATCHED"
+     },
+     "hit.debuted_km": {
+      "point_delta": -0.1045,
+      "mde95": 0.045,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0204,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 2.322,
+      "margin_over_mde95_cond": 5.123,
+      "resolvable_E_refit": true,
+      "resolvable_E_cond": true,
+      "verdict": "RESOLVABLE LOSS",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.debuted_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 746,
+      "n_effective": 585.7,
+      "arm_rho": 0.2918,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.3963,
+      "consensus_rho": 0.3844,
+      "arm_minus_consensus": -0.0926,
+      "planning_read": -0.0172,
+      "reproduction_grade": "CLOSE"
+     },
+     "pit.full_pool_km": {
+      "point_delta": -0.1335,
+      "mde95": 0.0265,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0207,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 5.038,
+      "margin_over_mde95_cond": 6.449,
+      "resolvable_E_refit": true,
+      "resolvable_E_cond": true,
+      "verdict": "RESOLVABLE LOSS",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.full_pool_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 1874,
+      "n_effective": 1680.6,
+      "arm_rho": 0.0795,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.213,
+      "consensus_rho": 0.1984,
+      "arm_minus_consensus": -0.1189,
+      "planning_read": -0.0271,
+      "reproduction_grade": "DIFFERENT"
+     },
+     "pit.debuted_km": {
+      "point_delta": -0.1948,
+      "mde95": 0.0431,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0295,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 4.52,
+      "margin_over_mde95_cond": 6.603,
+      "resolvable_E_refit": true,
+      "resolvable_E_cond": true,
+      "verdict": "RESOLVABLE LOSS",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.debuted_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 881,
+      "n_effective": 687.6,
+      "arm_rho": 0.0601,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.2549,
+      "consensus_rho": 0.2451,
+      "arm_minus_consensus": -0.185,
+      "planning_read": -0.002,
+      "reproduction_grade": "DIFFERENT"
+     },
+     "block_rho": {
+      "point_delta": -0.0926,
+      "mde95": 0.0317,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0203,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 2.921,
+      "margin_over_mde95_cond": 4.562,
+      "resolvable_E_refit": true,
+      "resolvable_E_cond": true,
+      "verdict": "RESOLVABLE LOSS",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> block_rho",
+      "note": "arm leg vs shipped_blend, (side x cohort-year) block-normalized",
+      "n": 1627,
+      "arm_rho": 0.2249,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.3175
+     }
+    },
+    "n_cells": 5,
+    "any_resolvable_gain": false,
+    "any_resolvable_loss": true,
+    "promoted": false,
+    "verdict": "NO SHIP",
+    "failure_mechanism": {
+     "statement": "the rate leg is a least-squares fit and goes NEGATIVE on part of the pool. A product with a negative factor is not monotone in either factor: a row with a large predicted opportunity and a slightly negative predicted rate sorts BELOW a bust with predicted opportunity of zero. Rank is destroyed at the top of the board.",
+     "unfixable_in_family": "clipping the rate at zero replaces an inverted order with a TIE at the top of the board, which is also a rank loss.",
+     "measured": {
+      "hit.full_pool_km": {
+       "n_rate_pred_negative": 585,
+       "n_rate_pred": 1783,
+       "n_inversions_high_opp_negative_rate": 109,
+       "share_rate_pred_negative": 0.3281
+      },
+      "hit.debuted_km": {
+       "n_rate_pred_negative": 244,
+       "n_rate_pred": 746,
+       "n_inversions_high_opp_negative_rate": 43,
+       "share_rate_pred_negative": 0.3271
+      },
+      "pit.full_pool_km": {
+       "n_rate_pred_negative": 947,
+       "n_rate_pred": 1874,
+       "n_inversions_high_opp_negative_rate": 158,
+       "share_rate_pred_negative": 0.5053
+      },
+      "pit.debuted_km": {
+       "n_rate_pred_negative": 339,
+       "n_rate_pred": 881,
+       "n_inversions_high_opp_negative_rate": 53,
+       "share_rate_pred_negative": 0.3848
+      }
+     },
+     "status": "CLOSED FOR CAUSE, not merely unlucky"
+    }
+   },
+   "multiplicative_blend_cal": {
+    "incumbent_leg": "shipped_blend",
+    "cells": {
+     "hit.full_pool_km": {
+      "point_delta": -0.0247,
+      "mde95": 0.0295,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0208,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.837,
+      "margin_over_mde95_cond": 1.188,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": true,
+      "verdict": "RESOLVABLE LOSS",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.full_pool_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 1783,
+      "n_effective": 1622.7,
+      "arm_rho": 0.2533,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.278,
+      "consensus_rho": 0.2978,
+      "arm_minus_consensus": -0.0445,
+      "planning_read": -0.0164,
+      "reproduction_grade": "MATCHED"
+     },
+     "hit.debuted_km": {
+      "point_delta": -0.0402,
+      "mde95": 0.045,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0204,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.893,
+      "margin_over_mde95_cond": 1.971,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": true,
+      "verdict": "RESOLVABLE LOSS",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.debuted_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 746,
+      "n_effective": 585.7,
+      "arm_rho": 0.3561,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.3963,
+      "consensus_rho": 0.3844,
+      "arm_minus_consensus": -0.0283,
+      "planning_read": -0.0172,
+      "reproduction_grade": "MATCHED"
+     },
+     "pit.full_pool_km": {
+      "point_delta": -0.0203,
+      "mde95": 0.0265,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0207,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.766,
+      "margin_over_mde95_cond": 0.981,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.full_pool_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 1874,
+      "n_effective": 1680.6,
+      "arm_rho": 0.1927,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.213,
+      "consensus_rho": 0.1984,
+      "arm_minus_consensus": -0.0057,
+      "planning_read": -0.0271,
+      "reproduction_grade": "MATCHED"
+     },
+     "pit.debuted_km": {
+      "point_delta": -0.026,
+      "mde95": 0.0431,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0295,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.603,
+      "margin_over_mde95_cond": 0.881,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.debuted_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 881,
+      "n_effective": 687.6,
+      "arm_rho": 0.2289,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.2549,
+      "consensus_rho": 0.2451,
+      "arm_minus_consensus": -0.0162,
+      "planning_read": -0.002,
+      "reproduction_grade": "MATCHED"
+     },
+     "block_rho": {
+      "point_delta": -0.0265,
+      "mde95": 0.0317,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0203,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.836,
+      "margin_over_mde95_cond": 1.305,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": true,
+      "verdict": "RESOLVABLE LOSS",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> block_rho",
+      "note": "arm leg vs shipped_blend, (side x cohort-year) block-normalized",
+      "n": 1627,
+      "arm_rho": 0.291,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.3175
+     }
+    },
+    "n_cells": 5,
+    "any_resolvable_gain": false,
+    "any_resolvable_loss": true,
+    "promoted": false,
+    "verdict": "NO SHIP"
+   },
+   "multiplicative_pure": {
+    "incumbent_leg": "shipped_ridge",
+    "cells": {
+     "hit.full_pool_km": {
+      "point_delta": -0.0892,
+      "mde95": 0.0295,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0208,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 3.024,
+      "margin_over_mde95_cond": 4.288,
+      "resolvable_E_refit": true,
+      "resolvable_E_cond": true,
+      "verdict": "RESOLVABLE LOSS",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.full_pool_km",
+      "note": "arm leg vs shipped_ridge on identical rows and folds",
+      "n": 1783,
+      "n_effective": 1622.7,
+      "arm_rho": 0.1863,
+      "incumbent_leg": "shipped_ridge",
+      "incumbent_rho": 0.2755,
+      "consensus_rho": 0.2978,
+      "arm_minus_consensus": -0.1115,
+      "planning_read": -0.1284,
+      "reproduction_grade": "MATCHED"
+     },
+     "hit.debuted_km": {
+      "point_delta": -0.1452,
+      "mde95": 0.045,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0204,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 3.227,
+      "margin_over_mde95_cond": 7.118,
+      "resolvable_E_refit": true,
+      "resolvable_E_cond": true,
+      "verdict": "RESOLVABLE LOSS",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.debuted_km",
+      "note": "arm leg vs shipped_ridge on identical rows and folds",
+      "n": 746,
+      "n_effective": 585.7,
+      "arm_rho": 0.2477,
+      "incumbent_leg": "shipped_ridge",
+      "incumbent_rho": 0.3929,
+      "consensus_rho": 0.3844,
+      "arm_minus_consensus": -0.1367,
+      "planning_read": -0.0634,
+      "reproduction_grade": "CLOSE"
+     },
+     "pit.full_pool_km": {
+      "point_delta": -0.1794,
+      "mde95": 0.0265,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0207,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 6.77,
+      "margin_over_mde95_cond": 8.667,
+      "resolvable_E_refit": true,
+      "resolvable_E_cond": true,
+      "verdict": "RESOLVABLE LOSS",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.full_pool_km",
+      "note": "arm leg vs shipped_ridge on identical rows and folds",
+      "n": 1874,
+      "n_effective": 1680.6,
+      "arm_rho": 0.0313,
+      "incumbent_leg": "shipped_ridge",
+      "incumbent_rho": 0.2107,
+      "consensus_rho": 0.1984,
+      "arm_minus_consensus": -0.1671,
+      "planning_read": -0.092,
+      "reproduction_grade": "CLOSE"
+     },
+     "pit.debuted_km": {
+      "point_delta": -0.2174,
+      "mde95": 0.0431,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0295,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 5.044,
+      "margin_over_mde95_cond": 7.369,
+      "resolvable_E_refit": true,
+      "resolvable_E_cond": true,
+      "verdict": "RESOLVABLE LOSS",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.debuted_km",
+      "note": "arm leg vs shipped_ridge on identical rows and folds",
+      "n": 881,
+      "n_effective": 687.6,
+      "arm_rho": 0.0228,
+      "incumbent_leg": "shipped_ridge",
+      "incumbent_rho": 0.2402,
+      "consensus_rho": 0.2451,
+      "arm_minus_consensus": -0.2223,
+      "planning_read": -0.0047,
+      "reproduction_grade": "DIFFERENT"
+     },
+     "block_rho": {
+      "point_delta": -0.109,
+      "mde95": 0.0317,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0203,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 3.438,
+      "margin_over_mde95_cond": 5.369,
+      "resolvable_E_refit": true,
+      "resolvable_E_cond": true,
+      "verdict": "RESOLVABLE LOSS",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> block_rho",
+      "note": "arm leg vs shipped_ridge, (side x cohort-year) block-normalized",
+      "n": 1627,
+      "arm_rho": 0.199,
+      "incumbent_leg": "shipped_ridge",
+      "incumbent_rho": 0.308
+     }
+    },
+    "n_cells": 5,
+    "any_resolvable_gain": false,
+    "any_resolvable_loss": true,
+    "promoted": false,
+    "verdict": "NO SHIP"
+   },
+   "hurdle_blend": {
+    "incumbent_leg": "shipped_blend",
+    "cells": {
+     "hit.full_pool_km": {
+      "point_delta": -0.0039,
+      "mde95": 0.0295,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0208,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.132,
+      "margin_over_mde95_cond": 0.188,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.full_pool_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 1783,
+      "n_effective": 1622.7,
+      "arm_rho": 0.2741,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.278,
+      "consensus_rho": 0.2978,
+      "arm_minus_consensus": -0.0237,
+      "planning_read": 0.0014,
+      "reproduction_grade": "MATCHED"
+     },
+     "hit.debuted_km": {
+      "point_delta": -0.0136,
+      "mde95": 0.045,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0204,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.302,
+      "margin_over_mde95_cond": 0.667,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.debuted_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 746,
+      "n_effective": 585.7,
+      "arm_rho": 0.3827,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.3963,
+      "consensus_rho": 0.3844,
+      "arm_minus_consensus": -0.0017,
+      "planning_read": -0.0021,
+      "reproduction_grade": "MATCHED"
+     },
+     "pit.full_pool_km": {
+      "point_delta": -0.008,
+      "mde95": 0.0265,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0207,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.302,
+      "margin_over_mde95_cond": 0.386,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.full_pool_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 1874,
+      "n_effective": 1680.6,
+      "arm_rho": 0.205,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.213,
+      "consensus_rho": 0.1984,
+      "arm_minus_consensus": 0.0066,
+      "planning_read": -0.0085,
+      "reproduction_grade": "MATCHED"
+     },
+     "pit.debuted_km": {
+      "point_delta": -0.0014,
+      "mde95": 0.0431,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0295,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.032,
+      "margin_over_mde95_cond": 0.047,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.debuted_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 881,
+      "n_effective": 687.6,
+      "arm_rho": 0.2535,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.2549,
+      "consensus_rho": 0.2451,
+      "arm_minus_consensus": 0.0084,
+      "planning_read": -0.0069,
+      "reproduction_grade": "MATCHED"
+     },
+     "block_rho": {
+      "point_delta": -0.0065,
+      "mde95": 0.0317,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0203,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.205,
+      "margin_over_mde95_cond": 0.32,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> block_rho",
+      "note": "arm leg vs shipped_blend, (side x cohort-year) block-normalized",
+      "n": 1627,
+      "arm_rho": 0.311,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.3175
+     }
+    },
+    "n_cells": 5,
+    "any_resolvable_gain": false,
+    "any_resolvable_loss": false,
+    "promoted": false,
+    "verdict": "NO SHIP"
+   },
+   "hurdle_blend_cal": {
+    "incumbent_leg": "shipped_blend",
+    "cells": {
+     "hit.full_pool_km": {
+      "point_delta": -0.0018,
+      "mde95": 0.0295,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0208,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.061,
+      "margin_over_mde95_cond": 0.087,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.full_pool_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 1783,
+      "n_effective": 1622.7,
+      "arm_rho": 0.2762,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.278,
+      "consensus_rho": 0.2978,
+      "arm_minus_consensus": -0.0216,
+      "planning_read": 0.0014,
+      "reproduction_grade": "MATCHED"
+     },
+     "hit.debuted_km": {
+      "point_delta": -0.016,
+      "mde95": 0.045,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0204,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.356,
+      "margin_over_mde95_cond": 0.784,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.debuted_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 746,
+      "n_effective": 585.7,
+      "arm_rho": 0.3803,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.3963,
+      "consensus_rho": 0.3844,
+      "arm_minus_consensus": -0.0041,
+      "planning_read": -0.0021,
+      "reproduction_grade": "MATCHED"
+     },
+     "pit.full_pool_km": {
+      "point_delta": -0.0076,
+      "mde95": 0.0265,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0207,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.287,
+      "margin_over_mde95_cond": 0.367,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.full_pool_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 1874,
+      "n_effective": 1680.6,
+      "arm_rho": 0.2054,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.213,
+      "consensus_rho": 0.1984,
+      "arm_minus_consensus": 0.007,
+      "planning_read": -0.0085,
+      "reproduction_grade": "MATCHED"
+     },
+     "pit.debuted_km": {
+      "point_delta": -0.002,
+      "mde95": 0.0431,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0295,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.046,
+      "margin_over_mde95_cond": 0.068,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.debuted_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 881,
+      "n_effective": 687.6,
+      "arm_rho": 0.2529,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.2549,
+      "consensus_rho": 0.2451,
+      "arm_minus_consensus": 0.0078,
+      "planning_read": -0.0069,
+      "reproduction_grade": "MATCHED"
+     },
+     "block_rho": {
+      "point_delta": -0.0075,
+      "mde95": 0.0317,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0203,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.237,
+      "margin_over_mde95_cond": 0.369,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> block_rho",
+      "note": "arm leg vs shipped_blend, (side x cohort-year) block-normalized",
+      "n": 1627,
+      "arm_rho": 0.31,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.3175
+     }
+    },
+    "n_cells": 5,
+    "any_resolvable_gain": false,
+    "any_resolvable_loss": false,
+    "promoted": false,
+    "verdict": "NO SHIP"
+   },
+   "auxiliary_gamma_1.0": {
+    "incumbent_leg": "shipped_blend",
+    "cells": {
+     "hit.full_pool_km": {
+      "point_delta": -0.0096,
+      "mde95": 0.0295,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0208,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.325,
+      "margin_over_mde95_cond": 0.462,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.full_pool_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 1783,
+      "n_effective": 1622.7,
+      "arm_rho": 0.2684,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.278,
+      "consensus_rho": 0.2978,
+      "arm_minus_consensus": -0.0294,
+      "planning_read": -0.018,
+      "reproduction_grade": "MATCHED"
+     },
+     "hit.debuted_km": {
+      "point_delta": -0.015,
+      "mde95": 0.045,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0204,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.333,
+      "margin_over_mde95_cond": 0.735,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.debuted_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 746,
+      "n_effective": 585.7,
+      "arm_rho": 0.3813,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.3963,
+      "consensus_rho": 0.3844,
+      "arm_minus_consensus": -0.0031,
+      "planning_read": -0.019,
+      "reproduction_grade": "MATCHED"
+     },
+     "pit.full_pool_km": {
+      "point_delta": -0.0026,
+      "mde95": 0.0265,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0207,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.098,
+      "margin_over_mde95_cond": 0.126,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.full_pool_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 1874,
+      "n_effective": 1680.6,
+      "arm_rho": 0.2104,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.213,
+      "consensus_rho": 0.1984,
+      "arm_minus_consensus": 0.012,
+      "planning_read": -0.0113,
+      "reproduction_grade": "MATCHED"
+     },
+     "pit.debuted_km": {
+      "point_delta": 0.0025,
+      "mde95": 0.0431,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0295,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.058,
+      "margin_over_mde95_cond": 0.085,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.debuted_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 881,
+      "n_effective": 687.6,
+      "arm_rho": 0.2574,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.2549,
+      "consensus_rho": 0.2451,
+      "arm_minus_consensus": 0.0123,
+      "planning_read": 0.0086,
+      "reproduction_grade": "MATCHED"
+     },
+     "block_rho": {
+      "point_delta": -0.0092,
+      "mde95": 0.0317,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0203,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.29,
+      "margin_over_mde95_cond": 0.453,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> block_rho",
+      "note": "arm leg vs shipped_blend, (side x cohort-year) block-normalized",
+      "n": 1627,
+      "arm_rho": 0.3083,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.3175
+     }
+    },
+    "n_cells": 5,
+    "any_resolvable_gain": false,
+    "any_resolvable_loss": false,
+    "promoted": false,
+    "verdict": "NO SHIP"
+   },
+   "auxiliary_gamma_1.0_cal": {
+    "incumbent_leg": "shipped_blend",
+    "cells": {
+     "hit.full_pool_km": {
+      "point_delta": -0.0108,
+      "mde95": 0.0295,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0208,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.366,
+      "margin_over_mde95_cond": 0.519,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.full_pool_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 1783,
+      "n_effective": 1622.7,
+      "arm_rho": 0.2672,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.278,
+      "consensus_rho": 0.2978,
+      "arm_minus_consensus": -0.0306,
+      "planning_read": -0.018,
+      "reproduction_grade": "MATCHED"
+     },
+     "hit.debuted_km": {
+      "point_delta": -0.0117,
+      "mde95": 0.045,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0204,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.26,
+      "margin_over_mde95_cond": 0.574,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.hit.debuted_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 746,
+      "n_effective": 585.7,
+      "arm_rho": 0.3846,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.3963,
+      "consensus_rho": 0.3844,
+      "arm_minus_consensus": 0.0002,
+      "planning_read": -0.019,
+      "reproduction_grade": "MATCHED"
+     },
+     "pit.full_pool_km": {
+      "point_delta": -0.0045,
+      "mde95": 0.0265,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0207,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.17,
+      "margin_over_mde95_cond": 0.217,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.full_pool_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 1874,
+      "n_effective": 1680.6,
+      "arm_rho": 0.2085,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.213,
+      "consensus_rho": 0.1984,
+      "arm_minus_consensus": 0.0101,
+      "planning_read": -0.0113,
+      "reproduction_grade": "MATCHED"
+     },
+     "pit.debuted_km": {
+      "point_delta": -0.0025,
+      "mde95": 0.0431,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0295,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.058,
+      "margin_over_mde95_cond": 0.085,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> pooled_rho.pit.debuted_km",
+      "note": "arm leg vs shipped_blend on identical rows and folds",
+      "n": 881,
+      "n_effective": 687.6,
+      "arm_rho": 0.2524,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.2549,
+      "consensus_rho": 0.2451,
+      "arm_minus_consensus": 0.0073,
+      "planning_read": 0.0086,
+      "reproduction_grade": "MATCHED"
+     },
+     "block_rho": {
+      "point_delta": -0.009,
+      "mde95": 0.0317,
+      "mde95_estimator": "E_refit (paired bootstrap, refit per draw)",
+      "mde95_cond": 0.0203,
+      "mde95_cond_estimator": "E_cond (fits held fixed, scored rows resampled)",
+      "margin_over_mde95": 0.284,
+      "margin_over_mde95_cond": 0.443,
+      "resolvable_E_refit": false,
+      "resolvable_E_cond": false,
+      "verdict": "NULL",
+      "floor_source": "data/xfv_power_eval.json partb_floors -> block_rho",
+      "note": "arm leg vs shipped_blend, (side x cohort-year) block-normalized",
+      "n": 1627,
+      "arm_rho": 0.3085,
+      "incumbent_leg": "shipped_blend",
+      "incumbent_rho": 0.3175
+     }
+    },
+    "n_cells": 5,
+    "any_resolvable_gain": false,
+    "any_resolvable_loss": false,
+    "promoted": false,
+    "verdict": "NO SHIP"
+   }
+  },
+  "auxiliary_gamma_sweep": {
+   "hit.full_pool_km": {
+    "deltas_by_gamma_blend": {
+     "0.0": 0.0,
+     "0.25": -0.007,
+     "0.5": -0.0086,
+     "1.0": -0.0096,
+     "2.0": -0.0112
+    },
+    "deltas_by_gamma_pure": {
+     "0.0": 0.0,
+     "0.25": -0.0099,
+     "0.5": -0.0123,
+     "1.0": -0.013,
+     "2.0": -0.0148
+    },
+    "monotone_non_increasing": true,
+    "gamma0_parity_blend": true,
+    "gamma0_parity_pure": true,
+    "parity_note": "gamma=0 IS the shipped fit by construction, so both deltas must be exactly 0. A non-zero here is a defect in the arm, not a result: it means the arm's model leg is not on the shipped scale. That check FAILED on the first implementation and is why the mixed target is rescaled to the WAR target's mean and sd.",
+    "argmax_gamma": "0.0"
+   },
+   "hit.debuted_km": {
+    "deltas_by_gamma_blend": {
+     "0.0": 0.0,
+     "0.25": -0.0028,
+     "0.5": -0.0127,
+     "1.0": -0.015,
+     "2.0": -0.0226
+    },
+    "deltas_by_gamma_pure": {
+     "0.0": 0.0,
+     "0.25": -0.0033,
+     "0.5": -0.0178,
+     "1.0": -0.0219,
+     "2.0": -0.0327
+    },
+    "monotone_non_increasing": true,
+    "gamma0_parity_blend": true,
+    "gamma0_parity_pure": true,
+    "parity_note": "gamma=0 IS the shipped fit by construction, so both deltas must be exactly 0. A non-zero here is a defect in the arm, not a result: it means the arm's model leg is not on the shipped scale. That check FAILED on the first implementation and is why the mixed target is rescaled to the WAR target's mean and sd.",
+    "argmax_gamma": "0.0"
+   },
+   "pit.full_pool_km": {
+    "deltas_by_gamma_blend": {
+     "0.0": 0.0,
+     "0.25": -0.0003,
+     "0.5": -0.0014,
+     "1.0": -0.0026,
+     "2.0": -0.004
+    },
+    "deltas_by_gamma_pure": {
+     "0.0": 0.0,
+     "0.25": 0.0013,
+     "0.5": 0.0009,
+     "1.0": -0.0014,
+     "2.0": -0.0049
+    },
+    "monotone_non_increasing": true,
+    "gamma0_parity_blend": true,
+    "gamma0_parity_pure": true,
+    "parity_note": "gamma=0 IS the shipped fit by construction, so both deltas must be exactly 0. A non-zero here is a defect in the arm, not a result: it means the arm's model leg is not on the shipped scale. That check FAILED on the first implementation and is why the mixed target is rescaled to the WAR target's mean and sd.",
+    "argmax_gamma": "0.0"
+   },
+   "pit.debuted_km": {
+    "deltas_by_gamma_blend": {
+     "0.0": 0.0,
+     "0.25": 0.0021,
+     "0.5": 0.0026,
+     "1.0": 0.0025,
+     "2.0": 0.0024
+    },
+    "deltas_by_gamma_pure": {
+     "0.0": 0.0,
+     "0.25": 0.0033,
+     "0.5": 0.0035,
+     "1.0": 0.0049,
+     "2.0": 0.0042
+    },
+    "monotone_non_increasing": false,
+    "gamma0_parity_blend": true,
+    "gamma0_parity_pure": true,
+    "parity_note": "gamma=0 IS the shipped fit by construction, so both deltas must be exactly 0. A non-zero here is a defect in the arm, not a result: it means the arm's model leg is not on the shipped scale. That check FAILED on the first implementation and is why the mixed target is rescaled to the WAR target's mean and sd.",
+    "argmax_gamma": "0.5"
+   }
+  }
+ },
+ "dispersion_diagnostic": {
+  "registration": "OPPORTUNITY_DECOMP_GATE.md section 9",
+  "statistic": "OLS slope of realized target_censored on the forward-chained OOS blend prediction, BOTH centered within decision-year cohort. 1.0 == calibrated in level.",
+  "question": "the flat-rate censoring fill (efv_dataset._label_6yr, censored branch) substitutes a conditional mean for a draw, removing within-player variance from the label of every censored row. Does the within-cohort dispersion shortfall survive on COMPLETE-WINDOW ROWS ONLY?",
+  "boundary": "efv_reliability._realized_bucket:126-149 forbids re-running the season-share-corrected relabel and re-reporting the same 3.1 percent pooled-bust-ECE movement. This measures label DISPERSION, not bucket assignment; it reports no ECE and re-runs no relabel. Its own closing sentence, 'The remaining miscalibration is real and belongs to the distribution, not to the label', is the side of the line this stays on.",
+  "material_threshold": 0.05,
+  "sides": {
+   "hit": {
+    "n_full_pool": 755,
+    "slope_full_pool": 0.8302,
+    "n_complete_window": 370,
+    "slope_complete_window": 0.7803,
+    "movement": -0.0499,
+    "reading_unrestricted": "SLOPE UNCHANGED",
+    "unrestricted_comparison_is_CONFOUNDED": true,
+    "censored_share_of_scored_rows": 0.506,
+    "cohort_matched_control": {
+     "status": "INFEASIBLE ON THIS DESIGN",
+     "cohorts_with_both_kinds": [
+      2021,
+      2023
+     ],
+     "n_complete_window_rows_in_those_cohorts": 3,
+     "n_full": 167,
+     "slope_full": 0.5766,
+     "n_complete": 0,
+     "slope_complete": null,
+     "reading": "NOT MEASURED",
+     "censoring_cohort_collinearity": {
+      "minority_kind_rows": 3,
+      "n_rows": 755,
+      "share": 0.004,
+      "statement": "`censored` is a near-deterministic function of debut cohort: 2011-2020 resolved, 2021-2024 censored. Dropping the censored rows IS dropping the recent cohorts, so the confound cannot be removed by restriction and the unrestricted comparison above CANNOT adjudicate the question. Reported, not worked around."
+     },
+     "why": "complete-window rows are OLDER cohorts; without a control any slope movement is confounded with cohort era."
+    },
+    "synthetic_censoring_IDENTIFIED_LEG": {
+     "n": 367,
+     "identified": true,
+     "join_label_agreement": {
+      "n": 367,
+      "within_0.05_of_target_resolved": 365,
+      "share": 0.9946,
+      "max_abs_diff": 1.71,
+      "why": "an instrument built on a label the matrix does not recognise would measure the join, not the fill."
+     },
+     "true_label": {
+      "within_cohort_slope": 0.7805,
+      "label_sd": 6.954
+     },
+     "by_observed_seasons": {
+      "2": {
+       "within_cohort_slope": 0.6074,
+       "slope_minus_true": -0.173,
+       "label_sd": 6.357,
+       "label_sd_ratio_vs_true": 0.9142
+      },
+      "3": {
+       "within_cohort_slope": 0.7615,
+       "slope_minus_true": -0.0189,
+       "label_sd": 7.018,
+       "label_sd_ratio_vs_true": 1.0092
+      },
+      "4": {
+       "within_cohort_slope": 0.7587,
+       "slope_minus_true": -0.0218,
+       "label_sd": 7.141,
+       "label_sd_ratio_vs_true": 1.0269
+      },
+      "5": {
+       "within_cohort_slope": 0.7765,
+       "slope_minus_true": -0.004,
+       "label_sd": 7.093,
+       "label_sd_ratio_vs_true": 1.02
+      }
+     },
+     "reading": {
+      "signed_slope_movement_by_k": {
+       "2": -0.173,
+       "3": -0.0189,
+       "4": -0.0218,
+       "5": -0.004
+      },
+      "largest_signed_movement": -0.173,
+      "max_abs_slope_movement": 0.173,
+      "direction": "the fill DEPRESSES the slope, so part of the measured dispersion shortfall on censored cohorts is manufactured by the label rather than by the model",
+      "monotone_in_k": false,
+      "material_threshold": 0.05,
+      "fill_moves_the_slope": true,
+      "label_sd_ratio_range": [
+       0.9142,
+       1.0269
+      ],
+      "fill_compresses_the_label_at_k2": true
+     }
+    },
+    "verdict_class": "ONE DEFECT",
+    "verdict": "ONE DEFECT: holding rows, cohorts and predictions fixed, the flat-rate fill moves the within-cohort dispersion slope by -0.173 at its worst k, against a 0.05 bar. The fill is causally implicated in the dispersion shortfall; the fill DEPRESSES the slope, so part of the measured dispersion shortfall on censored cohorts is manufactured by the label rather than by the model"
+   },
+   "pit": {
+    "n_full_pool": 890,
+    "slope_full_pool": 0.8632,
+    "n_complete_window": 437,
+    "slope_complete_window": 0.7328,
+    "movement": -0.1304,
+    "reading_unrestricted": "SLOPE MOVES MATERIALLY AWAY FROM 1.0",
+    "unrestricted_comparison_is_CONFOUNDED": true,
+    "censored_share_of_scored_rows": 0.5067,
+    "cohort_matched_control": {
+     "status": "INFEASIBLE ON THIS DESIGN",
+     "cohorts_with_both_kinds": [
+      2021,
+      2023
+     ],
+     "n_complete_window_rows_in_those_cohorts": 2,
+     "n_full": 233,
+     "slope_full": 0.9654,
+     "n_complete": 0,
+     "slope_complete": null,
+     "reading": "NOT MEASURED",
+     "censoring_cohort_collinearity": {
+      "minority_kind_rows": 2,
+      "n_rows": 890,
+      "share": 0.0022,
+      "statement": "`censored` is a near-deterministic function of debut cohort: 2011-2020 resolved, 2021-2024 censored. Dropping the censored rows IS dropping the recent cohorts, so the confound cannot be removed by restriction and the unrestricted comparison above CANNOT adjudicate the question. Reported, not worked around."
+     },
+     "why": "complete-window rows are OLDER cohorts; without a control any slope movement is confounded with cohort era."
+    },
+    "synthetic_censoring_IDENTIFIED_LEG": {
+     "n": 431,
+     "identified": true,
+     "join_label_agreement": {
+      "n": 431,
+      "within_0.05_of_target_resolved": 426,
+      "share": 0.9884,
+      "max_abs_diff": 1.82,
+      "why": "an instrument built on a label the matrix does not recognise would measure the join, not the fill."
+     },
+     "true_label": {
+      "within_cohort_slope": 0.7278,
+      "label_sd": 4.773
+     },
+     "by_observed_seasons": {
+      "2": {
+       "within_cohort_slope": 0.4135,
+       "slope_minus_true": -0.3143,
+       "label_sd": 4.495,
+       "label_sd_ratio_vs_true": 0.9417
+      },
+      "3": {
+       "within_cohort_slope": 0.4595,
+       "slope_minus_true": -0.2683,
+       "label_sd": 4.537,
+       "label_sd_ratio_vs_true": 0.9506
+      },
+      "4": {
+       "within_cohort_slope": 0.5553,
+       "slope_minus_true": -0.1725,
+       "label_sd": 4.561,
+       "label_sd_ratio_vs_true": 0.9555
+      },
+      "5": {
+       "within_cohort_slope": 0.6371,
+       "slope_minus_true": -0.0906,
+       "label_sd": 4.692,
+       "label_sd_ratio_vs_true": 0.983
+      }
+     },
+     "reading": {
+      "signed_slope_movement_by_k": {
+       "2": -0.3143,
+       "3": -0.2683,
+       "4": -0.1725,
+       "5": -0.0906
+      },
+      "largest_signed_movement": -0.3143,
+      "max_abs_slope_movement": 0.3143,
+      "direction": "the fill DEPRESSES the slope, so part of the measured dispersion shortfall on censored cohorts is manufactured by the label rather than by the model",
+      "monotone_in_k": true,
+      "material_threshold": 0.05,
+      "fill_moves_the_slope": true,
+      "label_sd_ratio_range": [
+       0.9417,
+       0.983
+      ],
+      "fill_compresses_the_label_at_k2": true
+     }
+    },
+    "verdict_class": "ONE DEFECT",
+    "verdict": "ONE DEFECT: holding rows, cohorts and predictions fixed, the flat-rate fill moves the within-cohort dispersion slope by -0.3143 at its worst k, against a 0.05 bar. The fill is causally implicated in the dispersion shortfall; the fill DEPRESSES the slope, so part of the measured dispersion shortfall on censored cohorts is manufactured by the label rather than by the model"
+   }
+  },
+  "verdict_class": "ONE DEFECT",
+  "verdict": "ONE DEFECT. hit: worst signed slope movement -0.173 at observed_seasons=2 | pit: worst signed slope movement -0.3143 at observed_seasons=2",
+  "instrument_note": "The pre-registered comparison (complete-window rows versus the full pool) is reported and is CONFOUNDED beyond repair on this design; see cohort_matched_control.censoring_cohort_collinearity. The verdict is taken from the synthetic-censoring leg, which holds rows, cohorts and predictions fixed and moves only the label. That leg was NOT pre-registered - it was built after the registered control failed - and it is labelled as such rather than presented as the original plan.",
+  "brief_rule_discrepancy": "The lane brief states 'IF THE SLOPE IS UNCHANGED, the censoring defect and the elite-tier under-dispersion are ONE defect, not two.' That reads inverted against the mechanism the same brief describes: an unchanged slope on full-variance-label rows is evidence the fill is NOT doing the work, which SEPARATES the defects. This lane pre-registered the rule in the direction the mechanism implies (OPPORTUNITY_DECOMP_GATE.md section 9) and publishes the raw slopes so either rule can be applied by a reader."
+ },
+ "verdict": {
+  "arms_run": [
+   "auxiliary_gamma_1.0",
+   "auxiliary_gamma_1.0_cal",
+   "hurdle_blend",
+   "hurdle_blend_cal",
+   "multiplicative_blend",
+   "multiplicative_blend_cal",
+   "multiplicative_pure"
+  ],
+  "arms_promoted": [],
+  "arms_with_a_resolvable_loss": [
+   "multiplicative_blend",
+   "multiplicative_blend_cal",
+   "multiplicative_pure"
+  ],
+  "headline": "CLOSED. No arm clears its floor on the primary cell; the cosine bound explains why any reweighting of the existing feature set had to fail.",
+  "harness_liveness": "the battery RESOLVES: multiplicative_blend, multiplicative_blend_cal, multiplicative_pure resolve as losses under both estimators, so the NULL verdicts on the other arms are informative rather than inert.",
+  "cosine_bound": {
+   "hit": 0.9485,
+   "pit": 0.9605
+  },
+  "cosine_orthogonal_linear_extent": {
+   "hit": 0.3169,
+   "pit": 0.2783
+  },
+  "dispersion_verdict": "ONE DEFECT. hit: worst signed slope movement -0.173 at observed_seasons=2 | pit: worst signed slope movement -0.3143 at observed_seasons=2",
+  "ships": "nothing"
+ }
+}

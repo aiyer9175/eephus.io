@@ -13,12 +13,45 @@ refits the coefficients on an earlier window, which removes COEFFICIENT
 leakage, but the features stay contaminated. That is the single reason
 /betting/ ships with `min_edge: null` and no pick of the day.
 
-There is no way to reconstruct what the leaderboards said on 2026-05-14. The
-leaderboards are a full recompute over the season to date; nothing keeps the
-intermediate states. So the fix is not a backfill, it is a CLOCK: start
-writing down what the inputs say each night, and wait. A game on date D is
-then priced on the newest snapshot whose knowledge cutoff is strictly before
-D, and nothing that happened on or after D can reach it.
+There is no way to RECOMPUTE what the leaderboards said on 2026-05-14: they are
+a full recompute over the season to date and nothing keeps the intermediate
+states. So the fix is a CLOCK: start writing down what the inputs say each
+night, and wait. A game on date D is then priced on the newest snapshot whose
+knowledge cutoff is strictly before D, and nothing that happened on or after D
+can reach it.
+
+THE ARCHIVE THAT WAS ALREADY THERE (2026-08-09). The paragraph above was true
+about recomputation and wrong about reconstruction. data/*_leaderboards.json is
+TRACKED, so every rebuild since 2026-07-05 is a blob in git history, and a blob
+committed at time T provably cannot contain information created after T. A
+vintage reduced from those blobs and stamped with the GIT COMMIT DATE is
+therefore leak-free by construction, on the same argument the nightly clock
+runs on. `tools/backfill_vintages.py` does exactly that and wrote 10 vintages
+back to 2026-07-05, which moved the honest sample from 41 gradable games to
+414 and the first possible grade from 2027 to about 2026-09-16.
+
+The commit date is the cutoff, never the blob's own `as_of`, and that is a rule
+of CONSTRUCTION rather than a repair for an observed divergence. `as_of`
+describes the data a board was built from and a rebuild may stamp it with
+anything; the commit date is a fact about this tree that no rebuild can move
+backwards. Measured 2026-08-09 over all 55 board commits in the 2026 history:
+0 carry an `as_of` past their own commit date and 2 sit one day behind it
+(f3b6338a, 017d3bc2), so the rule costs at most one day of coverage here. The
+guarantee does not rest on that measurement, which is the point of taking it
+from the commit.
+
+SEASONS DO NOT POOL. `as_of` will not hand a 2027 game a 2026 vintage even
+though a September 2026 cutoff is strictly before an April 2027 date. The
+leaderboards are a within-season aggregate, so a September vintage and an April
+vintage are not measuring the same quantity (docs/diamond-betting.md caveat 1),
+and the strictly-before test alone cannot see that. A cross-season request
+returns None, the same answer as an empty archive, and the caller treats it as
+"no honest features".
+
+Backfilled records carry `provenance.source = "git-backfill"` and are counted
+SEPARATELY by `coverage()`, because a reader grading the two arms against each
+other is the leakage check that keeps the backfill honest
+(docs/diamond-betting.md section 5a).
 
 THE STORE: ONE FILE PER DATE, under .cache/, never in git.
 
@@ -76,6 +109,7 @@ CLI:
     python leaderboard_vintages.py --snapshot     # write tonight's vintage
     python leaderboard_vintages.py --coverage     # how far from an honest grade
     python leaderboard_vintages.py --as-of 2026-08-07
+    python tools/backfill_vintages.py --dry-run   # what git history can rebuild
 """
 from __future__ import annotations
 
@@ -128,6 +162,39 @@ SOURCES = ("hitter_leaderboards.json", "starter_leaderboards.json",
 PARK_SOURCE = "fa_meta.json park_factors"
 PARK_UNITS = "runs index / 100 (1.00 = neutral), the same units betting_model.park_index returns"
 
+# WHICH CLOCK WROTE A RECORD. "live" is the nightly snapshot off the working
+# tree; "git-backfill" is tools/backfill_vintages.py reducing a historical blob.
+#
+# THE SCHEMA IS DELIBERATELY NOT BUMPED FOR THIS. SCHEMA exists to tell a reader
+# it must BRANCH: schema 1 has no `parks`, so a reader that ignores the version
+# prices a game on a park term that is not there. `provenance` carries no model
+# input at all. A reader that has never heard of it reads the same teams, the
+# same pitchers, the same parks and the same covers_through, and prices the game
+# identically. Bumping to 3 would also relabel the five records already on disk
+# as a version they were not written under, or force a migration to avoid it,
+# and would buy nothing either way.
+#
+# AN ABSENT BLOCK READS AS UNKNOWN, NOT AS LIVE. The five records written before
+# provenance shipped really are live, but "no block" and "live" are different
+# facts and defaulting one to the other points the ambiguity the wrong way: it
+# would file any future recordless writer inside the LIVE arm, which is the one
+# arm the leakage check compares against and the one that must stay clean. So
+# the five are grandfathered BY DATE below, which is evidence, and everything
+# else that arrives without a block is named `unknown` and counted on its own
+# line. Measured 2026-08-09: 10 backfilled, 5 live (all five grandfathered),
+# 0 unknown, so naming it moves no published number today.
+PROVENANCE_LIVE = "live"
+PROVENANCE_BACKFILL = "git-backfill"
+PROVENANCE_UNKNOWN = "unknown"
+
+# The exact records on disk when the provenance block shipped (2026-08-09).
+# Each was written by the nightly `run()` path off the working tree; the list is
+# closed and must never grow, because anything written after 2026-08-09 goes
+# through a `snapshot()` that always stamps a block.
+PROVENANCE_GRANDFATHERED_LIVE = frozenset({
+    "2026-08-05", "2026-08-06", "2026-08-07", "2026-08-08", "2026-08-09",
+})
+
 
 # ---------------------------------------------------------------------------
 # io helpers
@@ -168,6 +235,81 @@ def _iso_date(s) -> str | None:
         except ValueError:
             return None
         return head
+    return None
+
+
+def provenance_source(rec: dict | None) -> str:
+    """Which clock wrote this record: LIVE, BACKFILL, or UNKNOWN.
+
+    An absent block is UNKNOWN, never live. The five pre-provenance records are
+    live and are named by date in PROVENANCE_GRANDFATHERED_LIVE, which is
+    evidence about those five files; silently directing every other absent block
+    into the live arm would hide a backfill inside the arm the leakage check
+    grades against, which is the one thing the split cannot tolerate."""
+    p = (rec or {}).get("provenance")
+    if isinstance(p, dict) and p.get("source"):
+        return str(p["source"])
+    d = _iso_date((rec or {}).get("vintage_date"))
+    if d and d in PROVENANCE_GRANDFATHERED_LIVE:
+        return PROVENANCE_LIVE
+    return PROVENANCE_UNKNOWN
+
+
+def record_season(rec: dict | None) -> str | None:
+    """The season a stored record describes, as a 4-digit string.
+
+    The `season` field comes off the hitter leaderboard. It falls back to the
+    year of `vintage_date` because a board that omitted the field was still
+    written inside the season it was aggregating; the fallback never crosses a
+    boundary, since a record stamped 2027-04-11 is a 2027 record whatever its
+    sources forgot to say."""
+    s = str((rec or {}).get("season") or "").strip()
+    if len(s) == 4 and s.isdigit():
+        return s
+    d = _iso_date((rec or {}).get("vintage_date"))
+    return d[:4] if d else None
+
+
+def game_season(on_date: str) -> str | None:
+    """The season a game on this date belongs to: its calendar year.
+
+    An MLB season is contained in one calendar year, spring training through the
+    World Series, and that is the label the leaderboards themselves carry
+    ("2026"). No offseason date is ever inside a season, which is exactly why a
+    request from one has to come back empty rather than reach backwards."""
+    d = _iso_date(on_date)
+    return d[:4] if d else None
+
+
+def archive_feature_date(rec: dict | None) -> str | None:
+    """The newest feature date the ARCHIVE demonstrably holds for this record,
+    or None when the record cannot say.
+
+    `tools/backfill_vintages.py` compares this against a candidate's git
+    feature_cutoff to decide whether a date adds any leaderboard information.
+    Two units meet here and the difference is deliberate:
+
+      * a backfilled record carries `provenance.feature_cutoff`, which IS a git
+        commit date, so the comparison is exact;
+      * a live record has no commit at all, so the honest answer is the newest
+        `as_of` among its three sources. That is at or behind the commit date of
+        the equivalent blob (measured over all 55 board commits in the 2026
+        history: 0 as_of ahead of its commit, 2 one day behind), so a live
+        record can only UNDERSTATE what the archive holds. Understating makes
+        the backfill write a day it might have skipped, which costs a fresher
+        stamp over near-identical features. Overstating would skip a day whose
+        features the archive never held, which loses evidence."""
+    p = (rec or {}).get("provenance")
+    if isinstance(p, dict):
+        fc = _iso_date(p.get("feature_cutoff"))
+        if fc:
+            return fc
+    src = (rec or {}).get("sources")
+    if isinstance(src, dict):
+        seen = [_iso_date(m.get("as_of")) for m in src.values() if isinstance(m, dict)]
+        seen = [d for d in seen if d]
+        if seen:
+            return max(seen)
     return None
 
 
@@ -339,9 +481,16 @@ def vintage_path(on_date: str, *, vintage_dir: Path | None = None) -> Path:
 
 def snapshot(*, on_date: str | None = None, force: bool = False,
              vintage_dir: Path | None = None, data_dir: Path | None = None,
-             log_fn=None) -> dict:
+             provenance: dict | None = None, log_fn=None) -> dict:
     """Write one dated vintage. IDEMPOTENT: a date that already has a file is
     a no-op returning the record on disk.
+
+    `provenance` is merged into the record as its own block and defaults to
+    the live nightly stamp. It is descriptive only: nothing in the pricing path
+    reads it, and the SCHEMA is not bumped for it (see PROVENANCE_LIVE). The
+    one thing it is load-bearing for is the arm split - `coverage()` counts
+    backfilled and live records separately so the two can be graded against
+    each other, and a blended count would make that check unaskable.
 
     Returns {"written": bool, "path": str, "date": ..., "record": {...}} or a
     {"written": False, "reason": ...} when the leaderboards cannot be reduced.
@@ -371,6 +520,10 @@ def snapshot(*, on_date: str | None = None, force: bool = False,
         return {"written": False, "path": str(path), "date": d,
                 "reason": "leaderboards absent or incomplete", "record": None}
 
+    rec["provenance"] = (dict(provenance) if isinstance(provenance, dict) and provenance
+                         else {"source": PROVENANCE_LIVE, "cutoff_basis": "write date"})
+    _backfilled = rec["provenance"].get("source") == PROVENANCE_BACKFILL
+
     # STALE SOURCE WARNING. covers_through is a MAX over the three source as_of
     # dates and today's write date, so a board that failed to rebuild is frozen
     # at an old as_of while the record still gets stamped with tonight's date.
@@ -395,27 +548,40 @@ def snapshot(*, on_date: str | None = None, force: bool = False,
         if m.get("stale") or (m.get("as_of") and m["as_of"] < d)
     }
     if _lagging:
-        log.warning(
-            "leaderboard_vintages: %s is being written with STALE sources %s. "
-            "Its covers_through will still read %s, so games priced on it get a "
-            "current-looking stamp over an older view of the league. Check that "
-            "run_daily step 9e-pre0 rebuilt the boards.",
-            path.name, _lagging, rec.get("covers_through"))
         rec["stale_sources"] = _lagging
+        if _backfilled:
+            # A backfill LAGS BY DESIGN and the operator instruction above would
+            # be nonsense for it: the 2026-07-29 blob carries as_of 2026-07-28
+            # because that is the board that was committed on the 29th. The lag
+            # is still recorded on the record, because it is the honest measure
+            # of how old the features are behind the stamp, but it is not a
+            # pipeline fault and must not read like one at WARNING.
+            log.info("leaderboard_vintages: %s is a git-backfill whose sources lag its "
+                     "stamp %s; covers_through %s is the conservative direction",
+                     path.name, _lagging, rec.get("covers_through"))
+        else:
+            log.warning(
+                "leaderboard_vintages: %s is being written with STALE sources %s. "
+                "Its covers_through will still read %s, so games priced on it get a "
+                "current-looking stamp over an older view of the league. Check that "
+                "run_daily step 9e-pre0 rebuilt the boards.",
+                path.name, _lagging, rec.get("covers_through"))
 
     vdir.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(rec, separators=(",", ":")), encoding="utf-8")
     reset_cache()
-    if log_fn and _lagging:
+    if log_fn and _lagging and not _backfilled:
         log_fn(f"leaderboard_vintages: WARNING {path.name} has stale sources "
                f"{_lagging}; the vintage is degraded, not fresh")
     if log_fn:
         # The park count is printed even when it is zero. "0 parks" in a nightly
         # log is the whole point of counting: a silent absence is what let the
-        # vintage backtest read the live index for months.
+        # vintage backtest read the live index for months. The provenance rides
+        # the same line so a backfill can never be mistaken for a night's work.
         log_fn(f"leaderboard_vintages: wrote {path.name} "
                f"({rec['n_teams']} teams, {rec['n_pitchers']} pitchers, "
-               f"{rec['n_parks']} parks, covers_through {rec['covers_through']})")
+               f"{rec['n_parks']} parks, covers_through {rec['covers_through']}, "
+               f"provenance {rec['provenance'].get('source')})")
     return {"written": True, "path": str(path), "date": d, "record": rec}
 
 
@@ -425,7 +591,7 @@ def snapshot(*, on_date: str | None = None, force: bool = False,
 # finishes. Keyed by directory so a test pointing at a tmp dir is not served
 # the production store. `reset_cache()` clears them; every write goes through
 # `snapshot`, which clears them itself.
-_INDEX_CACHE: dict[str, list[tuple[str, str]]] = {}
+_INDEX_CACHE: dict[str, list[tuple[str, str, str | None]]] = {}
 _REC_CACHE: dict[tuple[str, str], dict | None] = {}
 
 
@@ -457,12 +623,15 @@ def load_vintage(on_date: str, *, vintage_dir: Path | None = None) -> dict | Non
     return _REC_CACHE[key]
 
 
-def _index(vintage_dir: Path | None = None) -> list[tuple[str, str]]:
-    """[(covers_through, vintage_date)] for every readable record, ascending by
-    cutoff. Built by reading the files: an index sidecar would be one more
-    thing that can disagree with the archive it describes, and 180 x 24 KB is
-    not worth defending against. Memoized, because the backtest asks for a
-    vintage once per game per solver step."""
+def _index(vintage_dir: Path | None = None) -> list[tuple[str, str, str | None]]:
+    """[(covers_through, vintage_date, season)] for every readable record,
+    ascending by cutoff. Built by reading the files: an index sidecar would be
+    one more thing that can disagree with the archive it describes, and 180 x
+    24 KB is not worth defending against. Memoized, because the backtest asks
+    for a vintage once per game per solver step.
+
+    The season rides along because `as_of` has to fence on it and must not
+    reopen every record to find out."""
     key = str(vintage_dir or VINTAGE_DIR)
     if key in _INDEX_CACHE:
         return _INDEX_CACHE[key]
@@ -472,24 +641,39 @@ def _index(vintage_dir: Path | None = None) -> list[tuple[str, str]]:
         if not rec:
             continue
         ct = _iso_date(rec.get("covers_through")) or d
-        out.append((ct, d))
+        out.append((ct, d, record_season(rec)))
     out.sort()
     _INDEX_CACHE[key] = out
     return out
 
 
 def as_of(on_date: str, *, vintage_dir: Path | None = None) -> dict | None:
-    """The newest vintage whose knowledge cutoff is STRICTLY BEFORE `on_date`.
+    """The newest vintage of the SAME SEASON whose knowledge cutoff is STRICTLY
+    BEFORE `on_date`.
 
     None when no such vintage exists, which is every date until the nightly
     snapshot has been running for a while. Callers must treat None as "I have
     no honest features for this game" and say so; silently falling back to the
     live leaderboards is the leak this module was written to close, so the
-    fallback lives in `betting_model.inputs_as_of` where it is flagged."""
+    fallback lives in `betting_model.inputs_as_of` where it is flagged.
+
+    THE SEASON FENCE. Strictly-before is necessary and not sufficient. A
+    2026-10-01 vintage is strictly before every 2027 game, so without this fence
+    the first backfill run after an offseason would price April 2027 on the
+    final week of 2026 and the leakage check would pass, because there is no
+    leak: the failure is pooling, not leakage, and the two look identical to a
+    date comparison. A vintage is a within-season aggregate (offense_plus is
+    season to date), so a September vintage and an April vintage are not
+    measuring the same quantity - docs/diamond-betting.md caveat 1 forbids
+    exactly this. A cross-season request therefore returns None rather than
+    raising: None is already this function's defined answer for "no honest
+    features", every caller handles it, and raising would turn a January date
+    inside a backtest loop into a pipeline crash instead of an unpriced game."""
     q = _iso_date(on_date)
     if not q:
         return None
-    eligible = [(ct, d) for ct, d in _index(vintage_dir) if ct < q]
+    want = game_season(q)
+    eligible = [(ct, d) for ct, d, s in _index(vintage_dir) if ct < q and s == want]
     if not eligible:
         return None
     return load_vintage(eligible[-1][1], vintage_dir=vintage_dir)
@@ -498,13 +682,87 @@ def as_of(on_date: str, *, vintage_dir: Path | None = None) -> dict | None:
 # ---------------------------------------------------------------------------
 # coverage
 # ---------------------------------------------------------------------------
-def coverage(*, vintage_dir: Path | None = None) -> dict:
-    """How much history the store holds, and where the holes are.
+def _percentile(sorted_vals: list[int], q: float) -> float | int:
+    """Linear-interpolation percentile on an ASCENDING list, the numpy "linear"
+    convention: position (n-1)*q, interpolated between its neighbours.
+
+    The nearest-rank shortcut this replaced was `vals[int(n*q)]`, which at q=0.9
+    and n=10 lands on index 9, the MAXIMUM. Harmless at n=414 (index 372, the
+    90.1th percentile, 11 days against a true 10.7) and badly wrong on a small
+    store, which is where a p90 that silently reports the max is most likely to
+    be believed. An integral result is returned as an int so a distribution that
+    really is flat still prints "3 days" rather than "3.0 days"; JSON has one
+    number type and every consumer compares numerically."""
+    n = len(sorted_vals)
+    if n == 1:
+        return sorted_vals[0]
+    pos = (n - 1) * q
+    lo = int(pos)
+    hi = min(lo + 1, n - 1)
+    v = round(sorted_vals[lo] + (sorted_vals[hi] - sorted_vals[lo]) * (pos - lo), 1)
+    return int(v) if v == int(v) else v
+
+
+def _age_distribution(cutoffs: list[tuple[str, str | None]], targets: list[str],
+                      basis: str) -> dict:
+    """How stale the vintage that prices a date is, in days.
+
+    For each target date, the age is target minus the newest cutoff strictly
+    before it. This is the number a reader is owed alongside "n games graded":
+    a backfilled archive is not nightly, so the features a game is priced on can
+    be a fortnight old, and a graded count alone hides that completely.
+
+    `cutoffs` is [(cutoff date, season)] and the search is fenced on season, so
+    this reports exactly the vintage `as_of` would return and never the other
+    side of an offseason. Without the fence an April 2027 date would report an
+    age of ~190 days off a September 2026 cutoff, which is not a stale vintage
+    but no usable vintage at all; a target with no same-season prior is dropped
+    from the distribution, the same way it is dropped from the gradable set."""
+    ages = []
+    cs = sorted(cutoffs)
+    for t in sorted(targets):
+        prior = [c for c, s in cs if c < t and s == t[:4]]
+        if not prior:
+            continue
+        ages.append((datetime.strptime(t, "%Y-%m-%d").date()
+                     - datetime.strptime(max(prior), "%Y-%m-%d").date()).days)
+    if not ages:
+        return {"basis": basis, "n": 0, "note": "no date in the window has a vintage before it"}
+    ages.sort()
+    return {
+        "basis": basis,
+        "n": len(ages),
+        "median_days": _percentile(ages, 0.5),
+        "p90_days": _percentile(ages, 0.9),
+        "max_days": ages[-1],
+        "mean_days": round(sum(ages) / len(ages), 2),
+    }
+
+
+def coverage(*, vintage_dir: Path | None = None,
+             game_dates: list[str] | None = None) -> dict:
+    """How much history the store holds, where the holes are, and how stale the
+    vintage that prices a date is.
 
     `missing_dates` counts calendar days inside the captured span with no
     file. A hole is not fatal (a game just falls back to an older vintage,
     which is still strictly-before and therefore still honest) but a run of
-    them means the nightly step is not firing."""
+    them means the nightly step is not firing.
+
+    `n_vintages_backfilled`, `n_vintages_live` and
+    `n_vintages_unknown_provenance` are reported SEPARATELY and deliberately
+    never merged into one another. They are different clocks with different
+    failure modes: a live record is evidence that the nightly step fired, a
+    backfilled one is evidence about a git blob, and the leakage check in
+    docs/diamond-betting.md section 5a grades the two against each other. The
+    third is neither and must not be silently added to either; a reader running
+    the arm split either excludes it or reports it as its own arm. A caller that
+    could only see the total could not run that check and could not tell a
+    nightly outage from a healthy archive.
+
+    `game_dates` makes the age distribution GAME weighted rather than calendar
+    weighted. Without it the window is every day the archive can price, which
+    weights an off day the same as a 15-game Saturday."""
     vdir = Path(vintage_dir) if vintage_dir else VINTAGE_DIR
     dates = vintage_dates(vintage_dir=vdir)
     total_bytes = 0
@@ -517,14 +775,33 @@ def coverage(*, vintage_dir: Path | None = None) -> dict:
     # priced on a NEUTRAL park, so this is the number that says how much of the
     # archive can be graded with the park term switched on at all.
     n_with_parks = 0
+    n_backfilled = n_live = n_unknown = 0
     for d in dates:
         rec = load_vintage(d, vintage_dir=vdir)
         if rec and isinstance(rec.get("parks"), dict) and rec["parks"]:
             n_with_parks += 1
+        # Three arms, counted explicitly. `n_vintages_live` used to be
+        # len(dates) - n_backfilled, which is the same unsafe default in
+        # arithmetic form: anything unclassifiable landed in the live arm.
+        src = provenance_source(rec)
+        if src == PROVENANCE_BACKFILL:
+            n_backfilled += 1
+        elif src == PROVENANCE_LIVE:
+            n_live += 1
+        else:
+            n_unknown += 1
     out = {
         "dir": str(vdir),
         "schema": SCHEMA,
         "n_vintages": len(dates),
+        # Three clocks, never blended. See the docstring.
+        "n_vintages_backfilled": n_backfilled,
+        "n_vintages_live": n_live,
+        # Named, not folded into live. Zero on the archive as it stands
+        # (2026-08-09: 10 backfilled, 5 live, 0 unknown); a nonzero value means
+        # a record arrived with no provenance block after 2026-08-09, which
+        # should be impossible and must not be graded as either arm.
+        "n_vintages_unknown_provenance": n_unknown,
         "n_vintages_with_parks": n_with_parks,
         "n_vintages_neutral_park": len(dates) - n_with_parks,
         "first": dates[0] if dates else None,
@@ -532,6 +809,7 @@ def coverage(*, vintage_dir: Path | None = None) -> dict:
         "bytes": total_bytes,
         "missing_dates": [],
         "earliest_gradable_game_date": None,
+        "vintage_age_days": None,
     }
     if not dates:
         out["note"] = ("no vintages captured yet; every backtest is contaminated "
@@ -556,8 +834,28 @@ def coverage(*, vintage_dir: Path | None = None) -> dict:
         first_cut = datetime.strptime(idx[0][0], "%Y-%m-%d").date()
         out["earliest_gradable_game_date"] = (first_cut + timedelta(days=1)).isoformat()
         out["latest_cutoff"] = idx[-1][0]
-    out["note"] = (f"{len(dates)} vintages, {len(missing)} missing days inside the span; "
-                   "a game is gradable when a vintage cutoff is strictly before it")
+        cutoffs = [(ct, s) for ct, _, s in idx]
+        if game_dates:
+            targets, basis = [g for g in game_dates if g], "graded game dates"
+        else:
+            # Every calendar day the archive can price, from the first gradable
+            # day through the day after the newest cutoff. It deliberately stops
+            # there rather than at today: a window that runs to the wall clock
+            # would make this number change without the store changing.
+            targets, basis = [], "calendar days inside the archive"
+            cur = first_cut + timedelta(days=1)
+            end = datetime.strptime(idx[-1][0], "%Y-%m-%d").date() + timedelta(days=1)
+            while cur <= end:
+                targets.append(cur.isoformat())
+                cur += timedelta(days=1)
+        out["vintage_age_days"] = _age_distribution(cutoffs, targets, basis)
+    # The unknown arm is named only when it is nonzero, so the sentence a reader
+    # has been seeing does not change on an archive where nothing is unknown.
+    _unk = f", {n_unknown} UNKNOWN provenance" if n_unknown else ""
+    out["note"] = (f"{len(dates)} vintages ({n_backfilled} backfilled, "
+                   f"{n_live} live{_unk}), {len(missing)} missing days inside "
+                   "the span; a game is gradable when a vintage cutoff of the SAME SEASON "
+                   "is strictly before it")
     return out
 
 

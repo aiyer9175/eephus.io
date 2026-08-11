@@ -592,6 +592,15 @@ _SPLIT_KEYS: dict[tuple[str, int], str] = {
     # on the 2026-07-23 trade-deadline board and lives under the split
     # key. Found by test_identity_collisions on 2026-07-29.
     ("carlos_castillo", 837825): "carlos_castillo_laa",
+    # The Angels C Garrett Wright (mlbam 835226, Tennessee, drafted 2026
+    # round 8) collides with the White Sox RHP Garrett Wright (mlbam
+    # 695057, b. 2002-02-11, TCU, drafted 2023 round 20) - both slug to
+    # "garrett_wright". The pitcher is the incumbent (players row,
+    # statline, career line, transaction log, 37 metric_snapshots); the
+    # catcher arrived on the BA 2026 midseason Angels board and lives
+    # under the split key. Found by the 2026-08-09 BA-ingest adversarial
+    # verification; repaired by tools/repair_garrett_wright_collision.py.
+    ("garrett_wright", 835226): "garrett_wright_laa",
 }
 
 

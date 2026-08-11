@@ -1,27 +1,48 @@
 {
- "generated_at": "2026-08-07T03:09:25+00:00",
+ "generated_at": "2026-08-10T23:12:23+00:00",
  "what_this_is": "when each scheduled job last actually ran. A job that is configured but never fires looks healthy in its own artifact; this is the file that would have caught it.",
  "jobs": {
-  "betting_model_refit": {
-   "last_attempt_at": "2026-08-07T03:09:25+00:00",
+  "betting_calibration_ledger": {
+   "last_attempt_at": "2026-08-10T23:12:23+00:00",
    "n_attempts": 1,
-   "last_result": "n_graded=0, 2 vintages",
-   "last_success_at": "2026-08-07T03:09:25+00:00",
+   "last_result": "+90 priced side(s), 6 settled",
+   "last_success_at": "2026-08-10T23:12:23+00:00",
    "n_successes": 1
   },
-  "betting_odds_snapshot": {
-   "last_attempt_at": "2026-08-07T03:09:25+00:00",
+  "betting_learning": {
+   "last_attempt_at": "2026-08-10T23:12:23+00:00",
    "n_attempts": 1,
-   "last_result": "2026-08-06-1519.json, 11 events",
-   "last_success_at": "2026-08-07T03:09:25+00:00",
+   "last_result": "vintage 221/600, 1 history row(s), min_edge=None",
+   "last_success_at": "2026-08-10T23:12:23+00:00",
+   "n_successes": 1
+  },
+  "betting_model_refit": {
+   "last_attempt_at": "2026-08-10T23:12:22+00:00",
+   "n_attempts": 4,
+   "last_result": "n_graded=221",
+   "last_success_at": "2026-08-10T23:12:22+00:00",
+   "n_successes": 4
+  },
+  "betting_odds_snapshot": {
+   "last_attempt_at": "2026-08-10T23:12:22+00:00",
+   "n_attempts": 4,
+   "last_result": "ok: 2026-08-10-2312.json",
+   "last_success_at": "2026-08-10T23:12:22+00:00",
+   "n_successes": 4
+  },
+  "betting_shadow_ledger": {
+   "last_attempt_at": "2026-08-10T23:12:23+00:00",
+   "n_attempts": 1,
+   "last_result": "+27 logged, 1 settled, per-tag {'board_all': 0, 'ev_rank': 4, 'longshot': 0, 'potd_band': 2} of 100",
+   "last_success_at": "2026-08-10T23:12:23+00:00",
    "n_successes": 1
   },
   "leaderboard_vintage": {
-   "last_attempt_at": "2026-08-07T03:09:25+00:00",
-   "n_attempts": 1,
-   "last_result": "2026-08-06.json, 30 teams",
-   "last_success_at": "2026-08-07T03:09:25+00:00",
-   "n_successes": 1
+   "last_attempt_at": "2026-08-10T23:05:21+00:00",
+   "n_attempts": 4,
+   "last_result": "ok",
+   "last_success_at": "2026-08-10T23:05:21+00:00",
+   "n_successes": 4
   }
  }
 }

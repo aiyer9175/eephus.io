@@ -11,6 +11,7 @@ scorecard, the pitch-add recommendation). Skips when py_mini_racer is absent.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -389,3 +390,17 @@ def test_rng_plus_is_display_only_and_never_reaches_the_model():
         assert {"plus", "fts", "season"} <= set(g), g
         # A read must never be silently invented for a player with no tracking.
         assert g["fts"] and g["plus"], g
+
+
+# ---------------------------------------------------------------------------
+# CATALOG PIN for pal.json. data_catalog.py names this file as the shape pin;
+# every other test here reads SAMPLE, so nothing mentioned the served artifact
+# and the /sources/ row rendered no receipt.
+def test_pal_json_carries_the_shape_the_catalog_promises():
+    """pal.json: both conversion directions plus the pitch-mix change history."""
+    p = ROOT / "data" / "pal.json"
+    if not p.exists():
+        pytest.skip("pal.json not built in this tree")
+    d = json.loads(p.read_text(encoding="utf-8"))
+    for k in ("rp2sp", "sp2rp", "pitch_mix_changes"):
+        assert k in d, f"pal.json lost {k}; the catalog row promises it"

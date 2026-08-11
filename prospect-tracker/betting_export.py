@@ -58,8 +58,9 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 from collections import Counter
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import betting_ingest as bi
@@ -71,7 +72,44 @@ ROOT = Path(__file__).parent
 DATA_DIR = ROOT / "data"
 OUT_PATH = DATA_DIR / "betting.json"
 PREVIEW_PATH = DATA_DIR / "betting_preview.json"
+
+#: THE RECORD LIVES OUTSIDE data/ AND THAT IS THE WHOLE POINT (2026-08-09).
+#:
+#: data/betting_record.json is GIT-TRACKED and deploy/nightly-build.sh runs
+#: `git checkout -- .` before every pipeline. So a row appended on production at
+#: 21:00 was DESTROYED at 03:10 the next morning, silently and with no error
+#: anywhere: the checkout restored the committed `[]`, `load_record` read that as
+#: "the record is empty", and `check_append_only` then waved through a one-row
+#: proposal as a perfectly legal append. The immutability guarantee held on every
+#: individual write and the ledger still could not survive a night.
+#:
+#: The fix is a storage seam, not a looser check. `.cache/betting/record.jsonl`
+#: is the SOURCE OF TRUTH: untracked (`.cache/` is gitignored), append-only one
+#: JSON object per line, each line carrying the chain hash of everything before
+#: it. `data/betting_record.json` becomes DERIVED - re-rendered from the JSONL on
+#: every build, published by rsync, and safe to lose.
+BETTING_CACHE_DIR = ROOT / ".cache" / "betting"
+RECORD_JSONL = BETTING_CACHE_DIR / "record.jsonl"
 RECORD_PATH = DATA_DIR / "betting_record.json"
+
+#: THE CHAIN ANCHOR, AND WHY IT IS NOT IN data/ EITHER (2026-08-09).
+#:
+#: `record_publish_blockers` asks whether the record still contains the chain
+#: hash the LAST build published, which is the only check that can tell an append
+#: apart from a quiet rewrite. That previous value was read back out of
+#: data/betting.json, which is GIT-TRACKED, so on production the nightly
+#: `git checkout -- .` restored a committed board whose `record` block has no
+#: `chain_sha` at all. `published_chain_sha` then arrived as None on every single
+#: build, `chain_extends(None, rows)` returns True by construction, and the half
+#: of the `record_storage` blocker that detects a rewrite was permanently
+#: disarmed while reporting itself open.
+#:
+#: The anchor therefore lives beside the record it anchors, under `.cache/`,
+#: which the checkout cannot touch and which deploy/WEBMASTER.md tells the
+#: webmaster to back up. data/betting.json stays the fallback for a box that has
+#: never written an anchor, so nothing regresses on a first build.
+PUBLISHED_CHAIN_PATH = BETTING_CACHE_DIR / "published_chain.json"
+SETTLEMENT_PATH = DATA_DIR / "betting_settlement.json"
 
 STAKE_UNITS = 1.0                 # flat, always, on the public record
 PREVIEW_GAMES = 3                 # games the free slice carries
@@ -95,6 +133,20 @@ NOT_BETTABLE_STATES = frozenset({
 # load-bearing nowhere else.
 IN_PROGRESS_STATES = frozenset({"live", "in progress", "suspended"})
 
+# States that mean THE DAY HAS ALREADY STARTED, so the date they sit on can no
+# longer be a whole board. Read by `_slate_is_open`; see `resolve_slate` for the
+# 1-of-15 board that forced it.
+#
+# Postponed, cancelled and "other" are deliberately NOT here. A called-off game
+# is not evidence that the rest of its card is under way - the 2026-08-05 close
+# window analysis in `anchors_close_window` turns on exactly that distinction -
+# and treating one postponement as a started slate would push the board a day
+# forward on a card that has not thrown a pitch.
+SLATE_STARTED_STATES = frozenset({
+    "live", "in progress", "suspended", "final", "game over",
+    "completed early", "forfeit",
+})
+
 # How far a parsed odds event's `commence_time` may sit from a schedule row's
 # first pitch and still be that game. The two games of a doubleheader are about
 # three and a half hours apart (game two starts roughly 30 minutes after game
@@ -102,6 +154,74 @@ IN_PROGRESS_STATES = frozenset({"live", "in progress", "suspended"})
 # enough to absorb the routine disagreement between the book's posted start and
 # StatsAPI's, and far too narrow to cross-match the halves of a doubleheader.
 EVENT_MATCH_MAX_MINUTES = 180
+
+# The hold band a two-sided quote must sit in to be trusted as THE de-vig source
+# for a market. See `_market_view`. Below zero is an arbitrage, which no single
+# book posts on purpose and which means one of the two prices is stale; above
+# the ceiling is a quote the book is not really making.
+#
+# WHERE 12 COMES FROM. .cache/odds/2026-08-09-0133.json holds 466 two-sided
+# book-markets. The widest hold on a PREGAME event is 6.268%, and the four above
+# 12% (19.010%, 15.957%, 15.320%, 12.715%) are all one book on games already in
+# progress. So on the board this module actually prices, the ceiling rejects
+# nothing and exists for the stale quote that has not happened yet. Inclusive at
+# both ends.
+DEVIG_HOLD_MIN_PCT = 0.0
+DEVIG_HOLD_MAX_PCT = 12.0
+
+# HOW FAR BEHIND THE MARKET A QUOTE MAY BE AND STILL SET THE DENOMINATOR.
+#
+# The min-hold rule shipped on 2026-08-09 rewards the tightest two-sided quote,
+# and a book that simply has not reposted looks tight for free: its two prices
+# are a snapshot of a market that has since moved, and nothing in a hold
+# calculation can tell that apart from a genuinely efficient price. The fair
+# probabilities that come out then set every edge in the game.
+#
+# WHERE 15 COMES FROM. Measured across both cached snapshots, on the PREGAME
+# events - the only population `team_bets` ever prices - and per book-market,
+# as minutes behind the FRESHEST book on that same market:
+#   .cache/odds/2026-08-09-0133.json, 298 candidate book-markets: p50 0.20,
+#     p90 1.02, max 1.017.
+#   .cache/odds/2026-08-09-1822.json, 166 candidate book-markets: p50 0.58,
+#     p95 1.35, max 5.083 (2 of 166 above 3 minutes).
+# So 15 is roughly three times the largest lag either real board contains and
+# rejects nothing on them. Like DEVIG_HOLD_MAX_PCT it exists for the stale quote
+# that has not happened yet, and it is deliberately loose because the books that
+# WIN this rule are the reduced-juice books (lowvig, betonlineag, betus) and
+# those are also the slowest to repost: on the in-progress half of the 1822 file
+# they run 5.8 to 11.5 minutes behind. A tight threshold would hand the
+# denominator to a 6.5% hold book, which is the defect wearing the other sign.
+#
+# A book with no `last_update` is NOT rejected. The stamp is the book's own and a
+# missing one is the parser's silence, not evidence of staleness.
+STALE_BOOK_MAX_LAG_MINUTES = 15.0
+
+# HOW FAR A QUOTE MAY SIT FROM THE MARKET'S OWN CONSENSUS.
+#
+# The second half of the same defect, and the half a timestamp cannot catch: a
+# book can repost a price this second and still be quoting a game nobody else is
+# quoting. Its de-vigged fair probability is then far from every other book's,
+# the hold can still be tight, and the edge that comes out is manufactured by the
+# denominator rather than found in the market.
+#
+# WHERE 0.05 COMES FROM. Same population, |fair(side 0) - median fair across the
+# books on the agreed line|, only where at least CONSENSUS_MIN_BOOKS books are on
+# it (with two books the median IS the midpoint and every book is equidistant, so
+# the test is vacuous):
+#   0133, 298 book-markets: p50 0.0019, p95 0.0139, p99 0.0202, max 0.0253.
+#   1822, 166 book-markets: p50 0.0014, p95 0.0145, p99 0.0215, max 0.0242.
+# Zero of the 464 exceed 0.03. 0.05 is about twice the largest real disagreement
+# and rejects nothing on either board, while capping how much of an edge a single
+# rogue denominator can invent at well under the 0.06 provisional floor.
+#
+# The measurement is deliberately taken on PREGAME markets only. On the
+# in-progress half of the 1822 file the same statistic reaches 0.155 (CLE at CHW
+# h2h: betus/lowvig/betonlineag at fair_home 0.456-0.459 against a median of
+# 0.304, 11.3 to 11.5 minutes behind the freshest book), which is what a real
+# stale quote looks like and is why both guards exist. Those events never reach
+# the board: `team_bets` drops them.
+CONSENSUS_FAIR_MAX_DISTANCE = 0.05
+CONSENSUS_MIN_BOOKS = 3
 
 # Expected plate appearances by projected lineup slot. League average is about
 # 37.8 PA per team per game; leadoff sees roughly 4.65 and the nine hole about
@@ -133,9 +253,24 @@ DISCLAIMER = {
 BACKTEST_KEYS = ("generated_at", "model_version", "n_games", "validated",
                  "contaminated", "contamination", "modes", "headline_mode",
                  "in_sample", "forward", "vintage", "split_date", "note")
-COVERAGE_KEYS = ("schema", "n_vintages", "n_vintages_with_parks",
+# The provenance counts and `vintage_age_days` are on this list because leaving
+# them off SILENTLY DROPPED THEM. leaderboard_vintages.coverage() grew them, this
+# allowlist did not, and /betting/ kept serving the blended `n_vintages` that
+# docs/diamond-betting.md section 6 says a reader must never quote alone: a
+# backfilled vintage is evidence about a git blob, a live one is evidence that
+# the nightly step fired, and the leakage check in section 5a grades the two arms
+# against each other. Measured 2026-08-09: the live store holds 15 vintages, 10
+# backfilled and 5 live, and the page said "15".
+#
+# `n_vintages_unknown_provenance` is here for the same reason: without it the two
+# named arms need not add up to the total and a reader cannot tell whether the
+# remainder is live or unclassified. Every key is guarded by `if k in cov`, so an
+# artifact written before any of them existed still publishes cleanly.
+COVERAGE_KEYS = ("schema", "n_vintages", "n_vintages_backfilled", "n_vintages_live",
+                 "n_vintages_unknown_provenance", "n_vintages_with_parks",
                  "n_vintages_neutral_park", "first", "last", "missing_dates",
-                 "span_days", "latest_cutoff", "earliest_gradable_game_date", "note")
+                 "span_days", "latest_cutoff", "earliest_gradable_game_date",
+                 "vintage_age_days", "note")
 # Per-block fields the client needs to print a mode-labelled row. `n` and
 # `n_graded` are both read because the vintage block reports its sample under
 # `n_graded` and only grows an `n` on the day it actually grades something.
@@ -220,15 +355,152 @@ class RecordImmutabilityError(RuntimeError):
     the caller built an array that rewrites history."""
 
 
+def _canon(row) -> str:
+    """Byte-stable form of one row, so comparison catches a re-ordered dict as
+    equal and a changed value as different."""
+    return json.dumps(row, sort_keys=True, separators=(",", ":"), default=str)
+
+
+#: The chain hash of an EMPTY record. Published as `chain_sha` on a record with
+#: no rows, so "nothing has been claimed yet" is a value a reader can archive
+#: and compare against, not an absent field.
+CHAIN_GENESIS = "0" * 64
+
+
+def chain_sha(rows: list[dict]) -> str:
+    """A rolling hash over the record, folded row by row.
+
+        h(0) = CHAIN_GENESIS
+        h(i) = sha256( h(i-1) + "|" + canonical(row i) )
+
+    WHAT IT BUYS A READER. `check_append_only` protects a write inside this
+    process. It cannot help somebody reading the published file, who has no way
+    to tell an append from a quiet rewrite of a record he saw yesterday: both
+    arrive as a longer JSON array. The chain hash closes that. Archive today's
+    value, and tomorrow's record either still contains it as one of its prefix
+    hashes (an append: every earlier row is byte-identical) or it does not (a
+    rewrite, whatever the row count says). `chain_extends` is that check.
+
+    Deterministic by construction: `_canon` sorts keys, so a re-serialized row
+    hashes the same, and no set or dict iteration order enters the fold."""
+    h = CHAIN_GENESIS
+    for row in rows or []:
+        h = hashlib.sha256(f"{h}|{_canon(row)}".encode("utf-8")).hexdigest()
+    return h
+
+
+def chain_history(rows: list[dict]) -> list[str]:
+    """Every prefix hash, oldest first, starting at CHAIN_GENESIS. len is
+    len(rows) + 1: element i is the chain hash of the first i rows."""
+    out = [CHAIN_GENESIS]
+    for row in rows or []:
+        out.append(hashlib.sha256(f"{out[-1]}|{_canon(row)}".encode("utf-8")).hexdigest())
+    return out
+
+
+def chain_extends(prev_sha: str | None, rows: list[dict]) -> bool:
+    """Does `rows` extend a record whose chain hash was `prev_sha`?
+
+    True when prev_sha is absent (nothing to extend), is the genesis value, or
+    appears among this record's prefix hashes. False is a REWRITE: some row a
+    reader has already seen is no longer byte-identical."""
+    if not prev_sha or prev_sha == CHAIN_GENESIS:
+        return True
+    return prev_sha in chain_history(rows)
+
+
+def _read_jsonl(path: Path) -> tuple[list[dict], list[dict]]:
+    """(rows, envelopes) from the append-only JSONL, oldest first.
+
+    An envelope is {seq, appended_at, prev_sha, chain_sha, row}. The chain is
+    VERIFIED on read, not trusted: a line whose recorded chain_sha does not
+    match the hash recomputed from the rows before it means the file was edited
+    in place, and that raises rather than returning a plausible list. A blank
+    line is skipped (a half-flushed append); a line that will not parse raises,
+    for the same reason an unreadable JSON record does."""
+    p = Path(path)
+    if not p.exists():
+        return [], []
+    rows: list[dict] = []
+    envs: list[dict] = []
+    h = CHAIN_GENESIS
+    for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), start=1):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            env = json.loads(line)
+        except ValueError as exc:
+            raise RecordImmutabilityError(
+                f"{p.name} line {n} will not parse ({exc}); refusing to treat a corrupt "
+                "append-only log as an empty record") from exc
+        if not isinstance(env, dict) or not isinstance(env.get("row"), dict):
+            raise RecordImmutabilityError(
+                f"{p.name} line {n} is not an envelope carrying a `row` object")
+        nxt = hashlib.sha256(f"{h}|{_canon(env['row'])}".encode("utf-8")).hexdigest()
+        got = env.get("chain_sha")
+        if got and got != nxt:
+            raise RecordImmutabilityError(
+                f"{p.name} line {n} carries chain_sha {got[:12]}... but the rows before it "
+                f"hash to {nxt[:12]}...; the log was edited in place, which is the one "
+                "thing an append-only record may never survive silently")
+        rows.append(env["row"])
+        envs.append({**env, "chain_sha": nxt, "prev_sha": h})
+        h = nxt
+    return rows, envs
+
+
+def _append_jsonl(path: Path, existing: list[dict], new_rows: list[dict]) -> None:
+    """Append `new_rows` to the log, chained onto `existing`.
+
+    APPEND MODE, one line at a time, flushed per line. The file is never
+    rewritten and never truncated, so a crash midway leaves a shorter valid log
+    rather than a corrupt one, and a process that dies between two rows loses
+    the second row and nothing else. This is deliberately NOT the atomic
+    tmp-then-replace `_write` uses for derived artifacts: replacing the record
+    wholesale is exactly the operation that must be impossible."""
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    h = chain_sha(existing)
+    seq = len(existing)
+    with p.open("a", encoding="utf-8") as fh:
+        for row in new_rows:
+            prev = h
+            h = hashlib.sha256(f"{prev}|{_canon(row)}".encode("utf-8")).hexdigest()
+            fh.write(json.dumps({"seq": seq, "appended_at": _now(),
+                                 "prev_sha": prev, "chain_sha": h, "row": row},
+                                sort_keys=True, separators=(",", ":"),
+                                default=str) + "\n")
+            fh.flush()
+            seq += 1
+
+
 def load_record(path: Path | None = None) -> list[dict]:
     """The published record as a list.
+
+    TWO BACKENDS, ONE ANSWER. With no explicit path, the append-only JSONL at
+    `.cache/betting/record.jsonl` wins whenever it exists, because it is the
+    copy that survives the nightly `git checkout -- .`. When it does not exist
+    the committed data/betting_record.json is read instead, which is what keeps
+    a fresh box (and the two committed test fixtures) working unchanged: the
+    first build on a box with rows in the JSON migrates nothing and loses
+    nothing, it simply reads them and re-renders.
+
+    An explicit `path` is honoured verbatim - tests write a JSON array into
+    tmp_path and expect it back - and a `.jsonl` suffix selects the log reader.
 
     A MISSING file is an empty record, which is correct: there is nothing to
     protect yet. A file that exists but will not parse RAISES, because
     returning [] there would hand the caller a blank baseline and let the next
     write overwrite a record it could not read. Corruption must stop the
     pipeline, not silently reset the ledger."""
-    p = Path(path or RECORD_PATH)
+    if path is None:
+        if RECORD_JSONL.exists():
+            return _read_jsonl(RECORD_JSONL)[0]
+        path = RECORD_PATH
+    p = Path(path)
+    if p.suffix == ".jsonl":
+        return _read_jsonl(p)[0]
     if not p.exists():
         return []
     try:
@@ -242,10 +514,118 @@ def load_record(path: Path | None = None) -> list[dict]:
     return rows
 
 
-def _canon(row) -> str:
-    """Byte-stable form of one row, so comparison catches a re-ordered dict as
-    equal and a changed value as different."""
-    return json.dumps(row, sort_keys=True, separators=(",", ":"), default=str)
+def ensure_record_log() -> dict:
+    """Make the durable log EXIST, migrating whatever the JSON fallback holds.
+
+    THIS IS NOT A PUBLISH AND IT CANNOT BECOME ONE. It creates a log with
+    exactly as many rows as the record already has (today: zero), which is why
+    it can run unconditionally on every build. Without it the `record_storage`
+    blocker deadlocks: the log is created by the first append, and the first
+    append is refused because there is no log.
+
+    Migration is one-way and one-time. Rows sitting in the committed
+    data/betting_record.json are moved INTO the log, because that file is the
+    one a nightly checkout reverts and rows left there are already living on
+    borrowed time."""
+    if RECORD_JSONL.exists():
+        return {"created": False, "migrated": 0, "path": str(RECORD_JSONL)}
+    legacy = load_record(RECORD_PATH)
+    BETTING_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    RECORD_JSONL.touch()
+    if legacy:
+        _append_jsonl(RECORD_JSONL, [], legacy)
+    log.info("betting_export: created the append-only record log at %s "
+             "(migrated %d row(s) out of the git-tracked JSON)",
+             RECORD_JSONL, len(legacy))
+    return {"created": True, "migrated": len(legacy), "path": str(RECORD_JSONL)}
+
+
+def read_published_chain() -> dict:
+    """The chain hash the previous build published, and where it came from.
+
+    Returns {"chain_sha", "source", "published_at", "n_rows"}. `chain_sha` is
+    None when nothing has ever been published, which is the honest answer and
+    the one `chain_extends` treats as "nothing to extend".
+
+    THE FALLBACK IS DELIBERATELY KEPT and is not a hedge: a box upgrading to the
+    durable anchor has a real previous value sitting in data/betting.json and
+    throwing it away would lose one build's worth of rewrite detection. It is
+    used ONLY while no anchor file exists, and the source is reported so a reader
+    can tell which one answered."""
+    p = PUBLISHED_CHAIN_PATH
+    if p.exists():
+        try:
+            obj = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            log.warning("betting_export: unreadable %s; falling back to the board",
+                        p.name)
+            obj = None
+        if isinstance(obj, dict) and obj.get("chain_sha"):
+            return {"chain_sha": obj.get("chain_sha"), "source": str(p),
+                    "published_at": obj.get("published_at"),
+                    "n_rows": obj.get("n_rows")}
+    board = (_load("betting.json") or {}).get("record") or {}
+    return {"chain_sha": board.get("chain_sha"),
+            "source": ("data/betting.json (git-tracked fallback; a nightly "
+                       "`git checkout -- .` reverts it, so this value is absent on "
+                       "production until the durable anchor is written)"),
+            "published_at": None, "n_rows": board.get("n_rows")}
+
+
+def write_published_chain(rows: list[dict], *, path: Path | None = None) -> dict:
+    """Stamp the anchor with the chain hash this build is publishing.
+
+    Called at the END of a build, after the publish decision has already been
+    made against the PREVIOUS value. Writing it earlier would make the blocker a
+    tautology: it would be comparing the record against itself."""
+    p = Path(path or PUBLISHED_CHAIN_PATH)
+    out = {"chain_sha": chain_sha(rows), "n_rows": len(rows),
+           "published_at": _now(),
+           "what": ("the chain hash of the public betting record as of the build "
+                    "that wrote this file. record_publish_blockers checks the NEXT "
+                    "build's record against it, which is how a rewrite is told "
+                    "apart from an append.")}
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_name(p.name + f".tmp{os.getpid()}")
+    try:
+        tmp.write_text(json.dumps(out, indent=1), encoding="utf-8")
+        os.replace(tmp, p)
+    finally:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+    return out
+
+
+def record_storage() -> dict:
+    """WHICH copy of the record is authoritative right now, and its chain hash.
+
+    Published on the payload and read by `record_publish_blockers`, because
+    "the record is stored somewhere a nightly checkout can delete" is a
+    publish blocker and not a footnote."""
+    jsonl = RECORD_JSONL.exists()
+    rows = load_record()
+    return {
+        "backend": "jsonl" if jsonl else "json_fallback",
+        "authoritative_path": str(RECORD_JSONL if jsonl else RECORD_PATH),
+        "durable": bool(jsonl),
+        "n_rows": len(rows),
+        "chain_sha": chain_sha(rows),
+        "derived_path": str(RECORD_PATH),
+        "why": ("the append-only log under .cache/ is untracked, so the nightly "
+                "`git checkout -- .` cannot revert it; data/betting_record.json is "
+                "re-rendered from it every build"
+                if jsonl else
+                "no append-only log exists yet; the record is being read from "
+                "data/betting_record.json. That file was git-tracked until "
+                "2026-08-09, when a nightly `git checkout -- .` would have reverted "
+                "a row appended there to the committed `[]`; it is now untracked "
+                "and gitignored, so the checkout can no longer destroy it, but it "
+                "is still not on the backup list and a box rebuild takes it with "
+                "everything else under data/. `ensure_record_log` creates the log "
+                "on the next build that writes"),
+    }
 
 
 def check_append_only(existing: list[dict], proposed: list[dict]) -> None:
@@ -274,19 +654,45 @@ def check_append_only(existing: list[dict], proposed: list[dict]) -> None:
         seen.add(bid)
 
 
+def render_record(rows: list[dict] | None = None, *, path: Path | None = None) -> list[dict]:
+    """Re-render the DERIVED data/betting_record.json from the log.
+
+    Idempotent and safe to run on every build. It is not a publish and it
+    cannot be one: it writes whatever the authoritative log already says. The
+    nightly checkout reverting this file between builds costs nothing because
+    of that."""
+    rows = list(rows if rows is not None else load_record())
+    _write(Path(path or RECORD_PATH), rows)
+    return rows
+
+
 def write_record(rows: list[dict], *, path: Path | None = None) -> list[dict]:
-    """Publish the record after proving the write is append-only."""
-    path = path or RECORD_PATH
-    existing = load_record(path)
+    """Publish the record after proving the write is append-only.
+
+    With no explicit path the append lands in the JSONL log and the derived
+    JSON is re-rendered from it, so the two can never disagree. An explicit
+    path keeps the old single-file behaviour (a `.jsonl` suffix selects the
+    log), which is what the tmp_path tests exercise."""
+    if path is not None:
+        p = Path(path)
+        existing = load_record(p)
+        check_append_only(existing, list(rows))
+        if p.suffix == ".jsonl":
+            _append_jsonl(p, existing, list(rows)[len(existing):])
+        else:
+            _write(p, list(rows))
+        return list(rows)
+
+    existing = load_record()
     check_append_only(existing, list(rows))
-    _write(path, list(rows))
+    _append_jsonl(RECORD_JSONL, existing, list(rows)[len(existing):])
+    render_record(list(rows))
     return list(rows)
 
 
 def append_record(new_rows: list[dict], *, path: Path | None = None) -> list[dict]:
     """The only sanctioned way to add to the record."""
-    path = path or RECORD_PATH
-    existing = load_record(path)
+    existing = load_record(path) if path is not None else load_record()
     return write_record(existing + list(new_rows or []), path=path)
 
 
@@ -316,6 +722,92 @@ def grade_clv(odds_post, odds_close) -> dict:
 
 CLV_PATH = DATA_DIR / "betting_clv.json"
 
+#: THE TWO MARKET VOCABULARIES, AND THE MAP BETWEEN THEM (2026-08-09).
+#:
+#: The board and the shadow ledger speak moneyline|runline|total. The odds feed,
+#: the snapshot cache and therefore the CLV grader speak h2h|spreads|totals.
+#: Nothing translated. A published slot stamped `market: "runline"` reached
+#: `_close_price_for`, which branches on the feed's names, matched no branch, and
+#: fell through to "no closing price" forever: SPREADS COULD NEVER BE GRADED, on
+#: any row, and the sidecar reported it as a missing price rather than as a
+#: vocabulary mismatch. The record now carries the FEED name in `market` (which
+#: is what the two committed fixtures already used) and the BOARD name in
+#: `board_market`, so each consumer reads the one it speaks.
+BOARD_TO_FEED_MARKET = {"moneyline": "h2h", "runline": "spreads", "total": "totals"}
+FEED_TO_BOARD_MARKET = {v: k for k, v in BOARD_TO_FEED_MARKET.items()}
+
+
+def feed_market(row: dict) -> str | None:
+    """The odds-feed market key for a row written in either vocabulary."""
+    m = (row.get("market") or "").strip()
+    if m in FEED_TO_BOARD_MARKET:
+        return m
+    return BOARD_TO_FEED_MARKET.get(m)
+
+
+def board_market(row: dict) -> str | None:
+    """The board/ledger market key for a row written in either vocabulary."""
+    m = (row.get("board_market") or row.get("market") or "").strip()
+    if m in BOARD_TO_FEED_MARKET:
+        return m
+    return FEED_TO_BOARD_MARKET.get(m)
+
+
+def _side_and_point(row: dict, ev: dict | None):
+    """(side, point, why_not) for one record row against one event.
+
+    MACHINE FIELDS FIRST, LABEL ONLY AS A FALLBACK. `selection` is DISPLAY copy
+    ("TBR +1.5", "Under 8.5", "NYM") and parsing it was the source of two
+    separate grading failures: a runline selection is a label the h2h/spreads
+    branch tried to match against an org code and never could, and a total's
+    number had to be recovered from text. A row that carries `side` is read
+    directly and its label is never touched.
+
+    The fallback exists for LEGACY ROWS ONLY - anything published before the
+    machine fields shipped - and it is exactly the old parser, so those rows
+    keep grading exactly as they did."""
+    mk = feed_market(row)
+    side = (row.get("side") or "").strip().lower() or None
+    point = row.get("point")
+
+    if side:
+        if mk == "totals" and side not in ("over", "under"):
+            return None, None, f"side {side!r} is not over/under on a total"
+        if mk in ("h2h", "spreads") and side not in ("home", "away"):
+            return None, None, f"side {side!r} is not home/away on a {mk}"
+        return side, point, None
+
+    # ---- legacy label parsing -------------------------------------------
+    sel = (row.get("selection") or "").strip()
+    if not sel:
+        return None, None, "row carries neither a machine `side` nor a selection label"
+    if mk == "totals":
+        parts = sel.split()
+        if len(parts) >= 2 and parts[0].lower() in ("over", "under"):
+            return parts[0].lower(), parts[1], None
+        return None, None, f"could not read an over/under side from {sel!r}"
+    if ev is None:
+        return None, None, "legacy row needs an event to resolve its org label"
+    if sel == ev.get("home_org"):
+        return "home", point, None
+    if sel == ev.get("away_org"):
+        return "away", point, None
+    return None, None, f"{sel!r} is neither team on this event"
+
+
+def _same_point(want, got) -> bool:
+    """Is a closing line the SAME NUMBER the pick was taken at?
+
+    Absent on either side is not a mismatch (a moneyline has no number, and a
+    legacy row may not carry one). Compared numerically, so 8.5 and "8.5" and
+    8.50 are one line and -1.5 and +1.5 are two different bets."""
+    if want is None or got is None:
+        return True
+    try:
+        return abs(float(want) - float(got)) < 1e-9
+    except (TypeError, ValueError):
+        return str(want) == str(got)
+
 
 def _close_price_for(row: dict, events: list[dict]):
     """The closing American price for the exact side this pick was posted on.
@@ -326,50 +818,62 @@ def _close_price_for(row: dict, events: list[dict]):
     against FanDuel's close would manufacture value out of a book disagreement
     the bettor never had access to.
 
+    AND ON THE SAME NUMBER, IN EVERY MARKET. The totals branch always checked
+    the point; the spreads branch never did. A +1.5 pick would therefore have
+    graded against a -1.5 close - two opposite bets, one of them roughly +130
+    and the other roughly -160 - and produced a CLV figure with no relationship
+    to the wager. `_same_point` is now applied to spreads and totals alike.
+
     Returns (price, why_not). Exactly one is None, so a caller can never mistake
     "no close found" for a graded zero."""
-    market = (row.get("market") or "").strip()
-    sel = (row.get("selection") or "").strip()
+    mk = feed_market(row)
     book = (row.get("book") or "").strip().lower()
-    if not (market and sel and book):
-        return None, "row is missing market, selection or book"
+    if not (mk and book):
+        return None, "row is missing a recognised market or a book"
+    what = row.get("selection") or row.get("side") or "?"
 
-    # totals carry the side in the selection text ("Under 8.5"); h2h/spreads
-    # carry an org code that has to be matched against the event's two teams.
-    side, point = None, None
-    if market == "totals":
-        parts = sel.split()
-        if len(parts) >= 2 and parts[0].lower() in ("over", "under"):
-            side, point = parts[0].lower(), parts[1]
-        if side is None:
-            return None, f"could not read an over/under side from {sel!r}"
+    # A row carrying machine fields resolves ONCE, with no event needed. Only a
+    # legacy label row has to be re-resolved per event, because an org code only
+    # means "home" or "away" relative to a particular matchup.
+    fixed = None
+    if (row.get("side") or "").strip() or feed_market(row) == "totals":
+        side0, point0, why0 = _side_and_point(row, None)
+        if side0 is None and (row.get("side") or "").strip():
+            return None, why0
+        if side0 is not None:
+            fixed = (side0, point0)
 
+    last_why = None
     for ev in events or []:
-        if market in ("h2h", "spreads"):
-            if sel == ev.get("home_org"):
-                side = "home"
-            elif sel == ev.get("away_org"):
-                side = "away"
-            else:
-                continue
+        if fixed is not None:
+            side, point, why = fixed[0], fixed[1], None
+        else:
+            side, point, why = _side_and_point(row, ev)
+        if side is None:
+            last_why = why
+            continue
         b = (ev.get("books") or {}).get(book)
         if not isinstance(b, dict):
             continue
-        m = b.get(market)
+        m = b.get(mk)
         if not isinstance(m, dict):
             continue
         cell = m.get(side)
         if cell is None:
             continue
         price = cell.get("price") if isinstance(cell, dict) else cell
-        if market == "totals":
+        if mk in ("spreads", "totals"):
             got = cell.get("point") if isinstance(cell, dict) else None
-            # A total graded against a DIFFERENT number is not the same bet.
-            if point is not None and got is not None and str(got) != str(point):
+            # A spread or a total graded against a DIFFERENT number is not the
+            # same bet. This is a `continue`, not a match, so a book that moved
+            # the line reads as "no close for THIS bet" rather than as value.
+            if not _same_point(point, got):
                 continue
         if price is not None:
             return price, None
-    return None, f"{book} posted no closing {market} price for {sel!r}"
+    if last_why:
+        return None, f"{book} posted no closing {mk} price for {what!r}: {last_why}"
+    return None, f"{book} posted no closing {mk} price for {what!r}"
 
 
 def grade_record_clv(*, rows: list[dict] | None = None, write: bool = True,
@@ -449,12 +953,181 @@ def grade_record_clv(*, rows: list[dict] | None = None, write: bool = True,
     return payload
 
 
-def record_summary(rows: list[dict] | None = None) -> dict:
+# ===========================================================================
+# THE SETTLEMENT SIDECAR
+# ===========================================================================
+#: A row older than this with no settlement is a publish blocker. Every MLB game
+#: is final inside 12 hours of first pitch and the settling job runs nightly, so
+#: 36 hours is two clear chances to grade and a wide margin for a late West
+#: Coast finish. Past it, an ungraded row means the settling path is broken and
+#: the published record is quietly reporting fewer results than it has.
+SETTLE_STALE_HOURS = 36.0
+
+
+def load_settlement(path: Path | None = None) -> dict:
+    """The settlement sidecar as {bet_id: entry}. Missing or unreadable is an
+    empty dict: settlement is DERIVED and rebuildable from the record plus the
+    completed-game cache, so losing it costs compute and nothing else."""
+    p = Path(path or SETTLEMENT_PATH)
+    if not p.exists():
+        return {}
+    try:
+        payload = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("betting_export: unreadable %s", p.name)
+        return {}
+    return {e["bet_id"]: e for e in (payload.get("picks") or [])
+            if isinstance(e, dict) and e.get("bet_id")}
+
+
+def settle_record(*, rows: list[dict] | None = None, games: list[dict] | None = None,
+                  write: bool = True, path: Path | None = None) -> dict:
+    """Grade every published pick against its final score, into a SIDECAR.
+
+    WHY A SIDECAR AND NOT THE RECORD ITSELF, again. The result does not exist
+    when a pick is posted. Writing it back into the published row is the exact
+    edit `check_append_only` forbids, and loosening that check for "only the
+    result field" would put a hole in the one guarantee that makes the record
+    worth reading. So the record stays byte-immutable and `record_summary` joins
+    record + settlement + CLV at read time.
+
+    THE GRADING ITSELF IS NOT DUPLICATED. The shadow ledger's `_settle_one` and
+    `_profit` were extracted into betting_settle (as `grade_side` and
+    `profit_units`) so every ledger grades a runline the same way. If that
+    module is not on the box yet this function reports the missing dependency
+    and settles NOTHING: a second implementation of "did a +1.5 cover" is how
+    two surfaces end up disagreeing about the same bet."""
+    rows = rows if rows is not None else load_record()
+    try:
+        import betting_settle as bs
+    except ImportError as exc:
+        payload = {
+            "generated_at": _now(),
+            "source": "derived from the record + the completed-game cache",
+            "available": False,
+            "n_rows": len(rows), "n_settled": 0,
+            "n_open": len(rows), "n_ungradeable": 0,
+            "blocked_reason": (f"betting_settle is not importable ({exc}); the record "
+                               "cannot be settled without it and this module will not "
+                               "reimplement _settle_one, because two implementations of "
+                               "'did the runline cover' is how two surfaces come to "
+                               "disagree about one bet"),
+            "unsettled_reasons": {"betting_settle missing": len(rows)},
+            "picks": [],
+        }
+        if write:
+            _write(Path(path or SETTLEMENT_PATH), payload)
+        return payload
+
+    if games is None:
+        games = bs.load_completed()
+    by_pk = bs.index_games(games)
+
+    picks: list[dict] = []
+    reasons: Counter = Counter()
+    for r in rows:
+        bid = r.get("bet_id")
+        if not bid:
+            reasons["row carries no bet_id"] += 1
+            continue
+        g = by_pk.get(r.get("game_pk"))
+        if not g:
+            picks.append({"bet_id": bid, "slate_date": r.get("slate_date"),
+                          "settled": False,
+                          "reason": ("no completed game on file for game_pk "
+                                     f"{r.get('game_pk')!r}; either it has not finished "
+                                     "or the completed-game cache has not refreshed")})
+            reasons["game not final"] += 1
+            continue
+        # `grade_side` speaks the BOARD vocabulary (moneyline/runline/total) and
+        # the record row's `market` is the FEED key, so the translation happens
+        # here rather than in either module. See BOARD_TO_FEED_MARKET.
+        res = bs.grade_side(market=board_market(r), side=r.get("side"),
+                            point=r.get("point"),
+                            home_runs=g.get("home_runs"), away_runs=g.get("away_runs"))
+        if not res:
+            picks.append({"bet_id": bid, "slate_date": r.get("slate_date"),
+                          "settled": False,
+                          "reason": ("betting_settle cannot grade this market, side and "
+                                     "point combination; it is recorded ungraded rather "
+                                     "than guessed")})
+            reasons["market not gradeable"] += 1
+            continue
+        stake = float(r.get("stake_units") or STAKE_UNITS)
+        picks.append({
+            "bet_id": bid, "slate_date": r.get("slate_date"), "settled": True,
+            "result": res, "settled_at": _now(),
+            "profit_units": bs.profit_units(result=res, decimal=r.get("decimal"),
+                                            odds=r.get("odds_at_post"),
+                                            stake_units=stake),
+            "stake_units": stake,
+            "final_home_runs": g.get("home_runs"), "final_away_runs": g.get("away_runs"),
+        })
+        reasons["settled"] += 1
+
+    done = [p for p in picks if p.get("settled")]
+    payload = {
+        "generated_at": _now(),
+        "source": "derived from the record + the completed-game cache",
+        "available": True,
+        "grader": "betting_settle.grade_side / profit_units (shared with every ledger)",
+        "n_rows": len(rows),
+        "n_settled": len(done),
+        "n_open": len(rows) - len(done),
+        "n_ungradeable": len(picks) - len(done),
+        "unsettled_reasons": dict(sorted(reasons.items())),
+        "picks": sorted(picks, key=lambda p: p["bet_id"]),
+    }
+    if write:
+        _write(Path(path or SETTLEMENT_PATH), payload)
+    return payload
+
+
+def _merged_rows(rows: list[dict], clv: dict | None, settlement: dict | None) -> list[dict]:
+    """Record rows with their sidecars joined on bet_id, for READING only.
+
+    The sidecar wins where it has an answer, and the row's own legacy fields
+    (records published before the sidecars existed carry `result`, `beat_close`
+    and `clv_pct` inline) are the fallback. Nothing here is ever written back."""
+    out = []
+    for r in rows:
+        bid = r.get("bet_id")
+        merged = dict(r)
+        s = (settlement or {}).get(bid) or {}
+        if s.get("settled") and s.get("result"):
+            merged["result"] = s["result"]
+            if s.get("profit_units") is not None:
+                merged["profit_units"] = s["profit_units"]
+        c = (clv or {}).get(bid) or {}
+        if c.get("graded"):
+            for k in ("beat_close", "clv_pct", "clv_prob", "odds_at_close"):
+                if c.get(k) is not None:
+                    merged[k] = c[k]
+        out.append(merged)
+    return out
+
+
+def record_summary(rows: list[dict] | None = None, clv: dict | None = None,
+                   settlement: dict | None = None) -> dict:
     """W-L, net units, ROI, beat-close rate and average CLV. Every field is
     None or zero until the record actually has rows: an empty record reports
-    an empty record, it does not report a 0% ROI as if 0 bets were graded."""
+    an empty record, it does not report a 0% ROI as if 0 bets were graded.
+
+    THE JOIN IS THE FIX (2026-08-09). This function read `r["beat_close"]` and
+    `r["clv_pct"]` off the record, and by construction neither key can ever be
+    on a record row: the record is byte-immutable and CLV lands hours after the
+    pick is posted, which is why the sidecar exists at all. So `n_clv_graded`
+    counted 0 forever and the page printed "not graded yet" over a fully graded
+    record. Both sidecars are now joined on bet_id before anything is counted.
+
+    `clv` and `settlement` are {bet_id: entry} maps; passing None loads them
+    from disk, and passing {} deliberately measures the record alone."""
     rows = rows if rows is not None else load_record()
-    settled = [r for r in rows if r.get("result") in ("won", "lost", "push", "void")]
+    clv = load_clv() if clv is None else clv
+    settlement = load_settlement() if settlement is None else settlement
+    merged = _merged_rows(rows, clv, settlement)
+
+    settled = [r for r in merged if r.get("result") in ("won", "lost", "push", "void")]
     wins = sum(1 for r in settled if r.get("result") == "won")
     losses = sum(1 for r in settled if r.get("result") == "lost")
     pushes = sum(1 for r in settled if r.get("result") in ("push", "void"))
@@ -469,8 +1142,8 @@ def record_summary(rows: list[dict] | None = None) -> dict:
         elif r.get("result") == "lost":
             units -= stake
             staked += stake
-    graded = [r for r in rows if r.get("beat_close") is not None]
-    clvs = [r.get("clv_pct") for r in rows if isinstance(r.get("clv_pct"), (int, float))]
+    graded = [r for r in merged if r.get("beat_close") is not None]
+    clvs = [r.get("clv_pct") for r in merged if isinstance(r.get("clv_pct"), (int, float))]
     return {
         "n_rows": len(rows),
         "n_settled": len(settled),
@@ -483,7 +1156,452 @@ def record_summary(rows: list[dict] | None = None) -> dict:
                             if graded else None),
         "avg_clv_pct": round(sum(clvs) / len(clvs), 3) if clvs else None,
         "stake_policy": "flat 1 unit",
+        # The rolling hash of the record these numbers were computed over, so a
+        # reader who archived yesterday's value can prove today's record extends
+        # it rather than having been quietly rewritten. See `chain_sha`.
+        "chain_sha": chain_sha(rows),
+        "chain_note": ("sha256 folded row by row over the record; a record that "
+                       "still contains an archived value as one of its prefix "
+                       "hashes is an append, and one that does not is a rewrite"),
     }
+
+
+def load_clv(path: Path | None = None) -> dict:
+    """The CLV sidecar as {bet_id: entry}. Same derived-and-rebuildable status
+    as the settlement sidecar, so missing is empty rather than fatal."""
+    p = Path(path or CLV_PATH)
+    if not p.exists():
+        return {}
+    try:
+        payload = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("betting_export: unreadable %s", p.name)
+        return {}
+    return {e["bet_id"]: e for e in (payload.get("picks") or [])
+            if isinstance(e, dict) and e.get("bet_id")}
+
+
+# ===========================================================================
+# CLOSE-CAPTURE HEALTH, MEASURED OFF THE CACHE THAT SURVIVES THE NIGHT
+# ===========================================================================
+#: A close capture older than this means the close job has not fired for a
+#: slate that has already been played, and CLV for it is unrecoverable.
+CLOSE_STALE_HOURS = 36.0
+
+
+def _hours_between(a: datetime | None, b: datetime | None) -> float | None:
+    if a is None or b is None:
+        return None
+    return round((b - a).total_seconds() / 3600.0, 2)
+
+
+def snapshot_health(days: int = 14, *, now: datetime | None = None) -> dict:
+    """Per-slate open/close snapshot coverage off `.cache/odds/`.
+
+    WHY THE CACHE AND NOT A HEARTBEAT. data/job_heartbeat.json is GIT-TRACKED,
+    so `git checkout -- .` reverts it before every pipeline: a heartbeat written
+    by the 19:00 close job is gone by the time the 03:10 build could read it,
+    and the artifact would report the job as never having run whether it ran or
+    not. The odds cache is under `.cache/`, which is gitignored and untouched by
+    the checkout, and it is the same evidence CLV grading reads. Health measured
+    off the evidence cannot disagree with the grade.
+
+    `diagnosis` names the REPAIR, not the symptom. "0 close snapshots" is a
+    symptom; "the close cron is not installed or is running in the wrong
+    timezone window" is something an operator can act on tonight."""
+    now = now or datetime.now(timezone.utc)
+    cutoff = (now - timedelta(days=max(1, int(days)))).date().isoformat()
+
+    slates: dict[str, dict] = {}
+    n_unreadable = 0
+    last_close: datetime | None = None
+    last_open: datetime | None = None
+    for meta in bi.list_snapshots():
+        # Filename dates are UTC and a slate can straddle UTC midnight, so widen
+        # by a day before deciding a file is outside the window. See
+        # betting_ingest.slate_date_of for the same one-day widening.
+        if bi._day_delta(meta["date"], cutoff) < -1:
+            continue
+        wrap = bi.load_snapshot(meta["path"])
+        if not wrap:
+            n_unreadable += 1
+            continue
+        slate = wrap.get("slate_date") or meta["date"]
+        kind = wrap.get("kind") or "unknown"
+        cap = _stamp(wrap.get("captured_at"))
+        s = slates.setdefault(slate, {"slate_date": slate, "open": 0, "close": 0,
+                                      "unknown": 0, "first_capture": None,
+                                      "last_capture": None})
+        s[kind if kind in ("open", "close") else "unknown"] += 1
+        if cap:
+            iso = cap.replace(microsecond=0).isoformat()
+            if s["first_capture"] is None or iso < s["first_capture"]:
+                s["first_capture"] = iso
+            if s["last_capture"] is None or iso > s["last_capture"]:
+                s["last_capture"] = iso
+            if kind == "close" and (last_close is None or cap > last_close):
+                last_close = cap
+            if kind == "open" and (last_open is None or cap > last_open):
+                last_open = cap
+
+    rows = [dict(s, clv_gradable=bool(s["close"])) for s in
+            sorted(slates.values(), key=lambda r: r["slate_date"])]
+    n_with_close = sum(1 for r in rows if r["close"])
+    n_missing = len(rows) - n_with_close
+    hours_since_close = _hours_between(last_close, now)
+    hours_since_open = _hours_between(last_open, now)
+
+    if not rows:
+        diagnosis = ("no odds snapshot of any kind is cached in the window, so the "
+                     "open pull is not running either: check EEPHUS_ODDS_API_KEY is "
+                     "visible to the pipeline and that run_monthly step 9e reached "
+                     "betting_ingest.run")
+    elif n_with_close == 0:
+        diagnosis = ("no close snapshot has ever been captured, CLV is unrecoverable "
+                     "for every slate above, and the close cron is either not "
+                     "installed or is running in the wrong timezone window")
+    elif hours_since_close is not None and hours_since_close > CLOSE_STALE_HOURS:
+        diagnosis = (f"the newest close snapshot is {hours_since_close:.1f} hours old and "
+                     f"{n_missing} slate(s) in the window have none; CLV for those is "
+                     "unrecoverable. Re-install the close cron entry from "
+                     "deploy/betting-crontab.example (TZ=UTC, every 15 minutes, all day) "
+                     "and check `tools/betting_close_job.py --why` on the box")
+    elif n_missing:
+        diagnosis = (f"{n_missing} of {len(rows)} slate(s) in the window carry an open "
+                     "snapshot and no close; those are ungradeable for CLV. Check "
+                     "logs/betting-close.log for the STALE SLATE and unreadable-snapshot "
+                     "exits, which are the two the job reports non-zero")
+    else:
+        diagnosis = (f"every one of the {len(rows)} slate(s) in the window carries a close "
+                     "snapshot; CLV is gradeable throughout")
+
+    return {
+        "generated_at": now.replace(microsecond=0).isoformat(),
+        "window_days": int(days),
+        "source": str(bi.CACHE_DIR),
+        "n_slates": len(rows),
+        "n_slates_with_close": n_with_close,
+        "n_slates_missing_close": n_missing,
+        "n_unreadable_files": n_unreadable,
+        "ever_captured_close": bool(n_with_close),
+        "hours_since_last_close": hours_since_close,
+        "hours_since_last_open": hours_since_open,
+        "close_stale_hours": CLOSE_STALE_HOURS,
+        "red": bool(n_with_close == 0 or n_missing or
+                    (hours_since_close is not None and hours_since_close > CLOSE_STALE_HOURS)),
+        "slates": rows,
+        "diagnosis": diagnosis,
+        "why_not_a_heartbeat": ("data/job_heartbeat.json is git-tracked and "
+                                "deploy/nightly-build.sh reverts it before every "
+                                "pipeline, so a close-job heartbeat cannot survive to "
+                                "be read; this is measured off .cache/odds/ instead"),
+    }
+
+
+# ===========================================================================
+# THE PROVISIONAL LABEL AND THE PUBLISH BLOCKERS
+# ===========================================================================
+def honest_backtest_progress(evald: dict | None) -> dict:
+    """(graded, needed) for the honest backtest, READ FROM THE ARTIFACT.
+
+    Neither number may be hardcoded. `n` moves every night the vintage snapshot
+    runs, and a label carrying a frozen count is a false claim about how much
+    evidence exists the moment the next vintage lands."""
+    evald = evald or {}
+    vint = evald.get("vintage") or {}
+    gate = evald.get("min_edge_gate") or {}
+    graded = vint.get("n_graded")
+    needed = vint.get("min_graded_games_for_min_edge")
+    if graded is None or needed is None:
+        for g in gate.get("gates") or []:
+            if g.get("id") == "vintage_sample":
+                if graded is None:
+                    graded = g.get("have")
+                if needed is None:
+                    # "600 vintage-graded games" -> 600. Read, never assumed.
+                    tok = str(g.get("need") or "").split()
+                    needed = next((int(t) for t in tok if t.isdigit()), None)
+    return {"n_graded": graded, "n_needed": needed,
+            "source": "data/betting_model_eval.json vintage block"}
+
+
+def provisional_record_label(evald: dict | None, *, min_edge: float,
+                             provisional: bool) -> str | None:
+    """The sentence that rides on the row AND on the record header.
+
+    It is one string in one place so the two surfaces cannot drift, and the
+    counts inside it come out of the eval artifact on every build."""
+    if not provisional:
+        return None
+    prog = honest_backtest_progress(evald)
+    n, need = prog["n_graded"], prog["n_needed"]
+    if n is None or need is None:
+        got = ("the eval artifact does not report how many games the honest backtest "
+               "has graded")
+    else:
+        got = f"{n} of the {need} games the honest backtest needs are graded"
+    return (f"Provisional. This pick clears a {min_edge:.1%} floor that was chosen as "
+            f"policy, not measured. The model is unvalidated: {got}, and no "
+            "minimum-edge threshold exists. This row is in the public record because "
+            "a claim that is not written down before the result is not a claim.")
+
+
+def record_publish_blockers(*, payload: dict | None = None,
+                            rows: list[dict] | None = None,
+                            evald: dict | None = None,
+                            health: dict | None = None,
+                            settlement: dict | None = None,
+                            published_chain_sha: str | None = None,
+                            now: datetime | None = None) -> list[dict]:
+    """EVERY condition a pick must clear before it enters the PUBLIC record.
+
+    Pre-registered on purpose, and shipped in the payload whether it passes or
+    not: the list is a claim about what the site refuses to publish, and a
+    reader can only hold it to that if he can see it before the first row
+    exists. All five are returned with an `open` flag; publishing needs all
+    five open, and `record_publish_ok` is that conjunction.
+
+    THE FIVE:
+      close_snapshot     a close capture exists for this slate. Without it the
+                         pick can never be CLV-graded, and CLV is the only
+                         honest read on an unvalidated model's decisions.
+      odds_slate         the board is priced against ITS OWN slate. A pick
+                         taken off another slate's snapshot is not a pick.
+      dispersion_gate    betting_model's dispersion gate has RUN. Not passed:
+                         run. An unrun gate means nobody knows which margin
+                         model the published probability came from.
+      record_storage     the authoritative record is the untracked JSONL and
+                         its chain extends the last published hash. This is
+                         the go-live blocker, and BOTH halves of it are real:
+                         on the JSON alone the row lives only under data/,
+                         which no backup covers and which a `git add -A` could
+                         re-track into the checkout defect that deleted it
+                         before; and without a DURABLE anchor for the last
+                         published hash the chain half passes by construction,
+                         because `chain_extends(None, rows)` is True. The
+                         anchor is `.cache/betting/published_chain.json` - it
+                         used to be read out of the git-tracked
+                         data/betting.json, which the nightly checkout reverted
+                         to a committed copy carrying no chain_sha at all.
+      settlement_current every row older than SETTLE_STALE_HOURS has a
+                         settlement entry, or the reason it does not is named.
+    """
+    now = now or datetime.now(timezone.utc)
+    payload = payload or {}
+    rows = rows if rows is not None else load_record()
+    health = snapshot_health() if health is None else health
+    settlement = load_settlement() if settlement is None else settlement
+    status = payload.get("status") or {}
+    slate = payload.get("slate_date")
+
+    out: list[dict] = []
+
+    snap = bi.closing_snapshot(slate) if slate else None
+    out.append({
+        "id": "close_snapshot", "open": bool(snap),
+        "need": f"a close odds snapshot for slate {slate}",
+        "have": ((snap or {}).get("captured_at") if snap else
+                 f"{health.get('n_slates_with_close')} of {health.get('n_slates')} "
+                 f"slates in the last {health.get('window_days')} days have one"),
+        "reason": ("a close snapshot exists, so this pick can be CLV-graded"
+                   if snap else
+                   "no close snapshot for this slate, so the pick could never be "
+                   "CLV-graded and the only honest read on an unvalidated model's "
+                   "decisions would be missing. " + str(health.get("diagnosis") or "")),
+    })
+
+    mismatch = bool(status.get("odds_slate_mismatch"))
+    out.append({
+        "id": "odds_slate", "open": not mismatch,
+        "need": "the board priced against its own slate's snapshot",
+        "have": (status.get("odds_slate") or {}).get("reason") if mismatch else "matched",
+        "reason": ("the snapshot the board was priced from belongs to this slate"
+                   if not mismatch else
+                   "the cached snapshot cannot price this board's slate; a pick "
+                   "against another slate's prices is worse than no pick"),
+    })
+
+    disp = ((evald or {}).get("run_dispersion") or {})
+    disp_ran = disp.get("status") == "ran"
+    out.append({
+        "id": "dispersion_gate", "open": bool(disp_ran),
+        "need": "betting_model's run-dispersion gate to have RUN (not to have passed)",
+        "have": disp.get("status") or "never run",
+        "reason": (f"the dispersion gate ran on {disp.get('n_eval_games')} held-out "
+                   f"games and reported passed={disp.get('passed')}, so the margin "
+                   "model behind the published probability is known"
+                   if disp_ran else
+                   "the dispersion gate has not run, so nobody knows whether the "
+                   "published probability came from the Poisson or the negative "
+                   "binomial margin model"),
+    })
+
+    store = record_storage()
+    chain_ok = chain_extends(published_chain_sha, rows)
+    store_open = bool(store["durable"] and chain_ok)
+    out.append({
+        "id": "record_storage", "open": store_open,
+        "need": ("the append-only JSONL under .cache/betting/ to be authoritative, "
+                 "and its chain to extend the last published chain_sha"),
+        "have": {"backend": store["backend"], "chain_sha": store["chain_sha"],
+                 "published_chain_sha": published_chain_sha,
+                 "chain_extends": chain_ok},
+        "reason": (store["why"] if not store["durable"] else
+                   ("the record is the untracked append-only log and its chain extends "
+                    "the last published value"
+                    if chain_ok else
+                    f"the last published chain_sha {str(published_chain_sha)[:12]}... is "
+                    "not a prefix hash of the current record; something rewrote history "
+                    "rather than appending to it")),
+    })
+
+    stale = []
+    for r in rows:
+        if (r.get("bet_id") or "") in settlement and settlement[r["bet_id"]].get("settled"):
+            continue
+        posted = _stamp(r.get("posted_at"))
+        age = _hours_between(posted, now)
+        if age is not None and age > SETTLE_STALE_HOURS:
+            entry = settlement.get(r.get("bet_id")) or {}
+            stale.append({"bet_id": r.get("bet_id"), "age_hours": age,
+                          "why_not": entry.get("reason") or "no settlement entry at all"})
+    named = [s for s in stale if s["why_not"] != "no settlement entry at all"]
+    unnamed = [s for s in stale if s["why_not"] == "no settlement entry at all"]
+    out.append({
+        "id": "settlement_current", "open": not unnamed,
+        "need": (f"every record row older than {SETTLE_STALE_HOURS:.0f}h settled, or the "
+                 "reason it is not settled named on the sidecar"),
+        "have": {"n_rows": len(rows), "n_stale": len(stale),
+                 "n_stale_named": len(named), "n_stale_unnamed": len(unnamed)},
+        "reason": ("every row past the settlement deadline is graded or carries a named "
+                   "reason it is not"
+                   if not unnamed else
+                   f"{len(unnamed)} row(s) are past {SETTLE_STALE_HOURS:.0f}h with no "
+                   "settlement entry at all; the record would report fewer results than "
+                   "it has and the ROI on the page would be wrong"),
+        "stale": sorted(stale, key=lambda s: -(s["age_hours"] or 0))[:10],
+    })
+    return out
+
+
+def record_publish_ok(blockers: list[dict]) -> bool:
+    """Publishing needs EVERY blocker open. One conjunction, one place."""
+    return bool(blockers) and all(b.get("open") for b in blockers)
+
+
+def record_row(slot_row: dict, *, slate_date: str, evald: dict | None,
+               posted_at: str | None = None) -> dict:
+    """One published slot -> one record row, with MACHINE FIELDS.
+
+    `selection` is display copy from here on and nothing parses it. `market` is
+    the ODDS-FEED key so the CLV grader matches; `board_market` is the board key
+    so betting_settle grades the same bet; `side` and `point` are the machine
+    pair both of them actually branch on. That triple is the whole of D8: a
+    runline row used to carry the label "TBR +1.5" into a grader that compared
+    it against org codes, so spreads could never be graded at all.
+
+    `bet_id` is a hash of the bet's identity, NOT of its price, so the same side
+    of the same game cannot enter the record twice under two ids if a rebuild
+    re-reads a moved line."""
+    bm_key = slot_row.get("market")
+    point = slot_row.get("point")
+    return {
+        "bet_id": bet_id(slate_date, slot_row.get("game_pk"), bm_key,
+                         slot_row.get("side"), point),
+        "posted_at": posted_at or _now(),
+        "slate_date": slate_date,
+        "game_pk": slot_row.get("game_pk"),
+        "matchup": slot_row.get("matchup"),
+        "start": slot_row.get("start"),
+        # THE TWO VOCABULARIES, BOTH ON THE ROW. See BOARD_TO_FEED_MARKET.
+        "market": BOARD_TO_FEED_MARKET.get(bm_key, bm_key),
+        "board_market": bm_key,
+        "side": slot_row.get("side"),
+        "point": point,
+        # DISPLAY ONLY. Never parsed when `side` is present.
+        "selection": slot_row.get("label"),
+        "book": slot_row.get("book"),
+        "book_title": slot_row.get("book_title"),
+        "odds_at_post": slot_row.get("odds"),
+        "decimal": slot_row.get("decimal"),
+        "stake_units": STAKE_UNITS,
+        "slot": slot_row.get("slot"),
+        "edge": slot_row.get("edge"),
+        "model_prob": slot_row.get("model_prob"),
+        "market_fair_prob": slot_row.get("market_fair_prob"),
+        "ev_per_unit": slot_row.get("ev_per_unit"),
+        "min_edge_used": slot_row.get("min_edge_used"),
+        "provisional": bool(slot_row.get("provisional")),
+        "model_version": bm.MODEL_VERSION,
+        "label": provisional_record_label(
+            evald, min_edge=float(slot_row.get("min_edge_used") or PROVISIONAL_MIN_EDGE),
+            provisional=bool(slot_row.get("provisional"))),
+    }
+    # NOTE: no `result`, no `beat_close`, no `clv_pct`. Those arrive hours later
+    # and live in the two sidecars; putting a placeholder here would invite the
+    # in-place edit `check_append_only` exists to forbid.
+
+
+def maybe_publish_record(payload: dict, *, evald: dict | None = None,
+                         health: dict | None = None,
+                         settlement: dict | None = None,
+                         published_chain_sha: str | None = None,
+                         write: bool = True, now: datetime | None = None,
+                         log_fn=None) -> dict:
+    """Evaluate the blockers and, ONLY if every one is open, append this slate's
+    published slots to the record.
+
+    THE FIRST ROW IS WRITTEN BY THE FIRST NIGHTLY THAT CLEARS EVERY BLOCKER.
+    Nothing here is armed by a flag or a date; the machinery is live and the
+    blocker list is the authority. That is deliberate: a human deciding when the
+    record starts is a human deciding which slate looked good enough to start
+    it on.
+
+    Idempotent per (slate, game, market, side, point) through `bet_id`, so a
+    rebuild of the same slate re-proposes the same rows and
+    `check_append_only` sees nothing new."""
+    rows = load_record()
+    blockers = record_publish_blockers(
+        payload=payload, rows=rows, evald=evald, health=health,
+        settlement=settlement, published_chain_sha=published_chain_sha, now=now)
+    slate = payload.get("slate_date")
+    slots = [payload.get(k) for k in ("pick_of_the_day", "longshot_of_the_day")]
+    cands = [record_row(s, slate_date=slate, evald=evald) for s in slots if s]
+    seen = {r.get("bet_id") for r in rows}
+    fresh = [c for c in cands if c["bet_id"] not in seen]
+
+    state = {
+        "blockers": blockers,
+        "n_blockers": len(blockers),
+        "n_closed": sum(1 for b in blockers if not b.get("open")),
+        "closed": [b["id"] for b in blockers if not b.get("open")],
+        "ok": record_publish_ok(blockers),
+        "n_candidates": len(cands),
+        "n_new": len(fresh),
+        "written": 0,
+        "policy": ("a pick enters the public record only when every blocker is open; "
+                   "the first row is written by the first nightly that clears all of "
+                   "them, and nothing else arms it"),
+    }
+    if not state["ok"]:
+        state["reason"] = ("blocked: " + "; ".join(
+            f"{b['id']} ({b['reason']})" for b in blockers if not b.get("open")))
+        return state
+    if not fresh:
+        state["reason"] = ("every blocker is open and this slate's published slots are "
+                           "already on the record" if cands else
+                           "every blocker is open and no slot was published on this slate")
+        return state
+    if not write:
+        state["reason"] = f"every blocker is open; {len(fresh)} row(s) would be appended"
+        return state
+    append_record(fresh)
+    state["written"] = len(fresh)
+    state["reason"] = f"appended {len(fresh)} row(s) to the public record"
+    if log_fn:
+        log_fn(f"betting_export: PUBLIC RECORD +{len(fresh)} row(s) for {slate} "
+               f"(chain {chain_sha(rows + fresh)[:12]})")
+    return state
 
 
 # ===========================================================================
@@ -575,6 +1693,195 @@ def slate_games(on_date: str | None = None, *, include_unbettable: bool = False)
     return [g for g in dated if g["date"] == day]
 
 
+def _slate_is_open(day: str, games: list[dict], now: datetime | None = None) -> tuple[bool, str | None]:
+    """Is this calendar date's card still WHOLE, judged on the UNFILTERED rows?
+
+    `slate_games` asks "which rows can be bet" and answers it row by row. That is
+    the right question for the close job and the wrong one for the board, because
+    a date whose card is nine tenths played still has a bettable row on it and
+    still wins `min(date)`. Measured on the 2026-08-08 local build: the board
+    priced ONE game of fifteen and said nothing about the other fourteen.
+
+    So the date is judged as a whole, on every row it carries, and two things
+    close it:
+      * a row in SLATE_STARTED_STATES: the card is under way or over,
+      * a first pitch at or before `now`: the same fact read off the clock rather
+        than off StatsAPI, which catches a schedule block refreshed before a game
+        started and not since.
+
+    Returns (open, why_not). `why_not` is None exactly when open is True."""
+    now = now or datetime.now(timezone.utc)
+    rows = [g for g in (games or []) if g.get("date") == day]
+    if not rows:
+        return False, f"{day} carries no games on the schedule"
+    n_started = 0
+    for g in rows:
+        st = str(g.get("status") or "").strip().lower()
+        t = _stamp(g.get("datetime"))
+        if st in SLATE_STARTED_STATES or (t is not None and t <= now):
+            n_started += 1
+    if n_started:
+        return False, (f"{day} holds {len(rows)} game(s) and {n_started} have already "
+                       f"started or finished, so what is left of it is a fragment "
+                       f"rather than a board")
+    return True, None
+
+
+def resolve_slate(on_date: str | None = None, *, now: datetime | None = None,
+                  stats: dict | None = None) -> tuple[str | None, list[dict]]:
+    """(slate date, bettable rows) for the board, and the audit trail behind it.
+
+    THE DEFECT THIS CLOSES. `build` took whatever `slate_games` returned, which
+    is `min(date)` over the bettable rows, so ONE straggler Preview game on a
+    date whose card is otherwise finished wins the whole board. The 2026-08-08
+    local build priced 1 game of 15 and the payload carried no field that said
+    so: `n_slate_games` read 1, which is indistinguishable from a one-game
+    Monday.
+
+    THE WALK. Candidate dates in order; the first one that is still whole wins.
+    A date that has started is skipped WITH ITS REASON RECORDED, so the choice
+    can be argued with instead of inferred. If no date is whole the old
+    behaviour stands - the earliest date with a bettable game - and `stats`
+    carries `partial_slate` naming what the board is a fragment of, because a
+    fragment that says so is worth more than an empty page.
+
+    `slate_games` IS DELIBERATELY NOT CHANGED. tools/betting_close_job.py calls
+    it with no date and takes `min(date)` over the result to decide which slate
+    to capture a closing line for. Rolling that forward to tomorrow whenever
+    tonight has a game in progress would make `decide()` report "the next
+    bettable slate is tomorrow" and never fire, and a missed close is CLV that
+    cannot be recovered afterwards. The two callers are asking different
+    questions - "what can still be bet" against "what is a whole board" - which
+    is the same split `is_bettable` and `anchors_close_window` already carry."""
+    now = now or datetime.now(timezone.utc)
+    if stats is None:
+        stats = {}
+    if on_date:
+        stats["slate_rule"] = "explicit_date"
+        stats["slate_candidates"] = []
+        stats["partial_slate"] = None
+        return on_date, slate_games(on_date)
+
+    fan = _load("fantasy.json") or {}
+    allg = ((fan.get("schedule") or {}).get("games")) or []
+    days = sorted({g["date"] for g in allg if g.get("date")})
+    cands, chosen, rule = [], None, None
+    for day in days:
+        rows = [g for g in allg if g.get("date") == day]
+        bettable = [g for g in rows if is_bettable(g)]
+        is_open, why_not = _slate_is_open(day, allg, now)
+        cands.append({"date": day, "n_games": len(rows),
+                      "n_bettable": len(bettable), "open": is_open,
+                      "why_not": why_not})
+        # An open date with nothing bettable on it is every game postponed. It
+        # is open and it is not a board, so the walk keeps going.
+        if is_open and bettable and chosen is None:
+            chosen, rule = day, "first_open_slate"
+
+    stats["slate_candidates"] = cands
+    stats["partial_slate"] = None
+    if chosen is None:
+        dated = [g for g in allg if is_bettable(g) and g.get("date")]
+        if dated:
+            chosen, rule = min(g["date"] for g in dated), "earliest_bettable_partial"
+            row = next((c for c in cands if c["date"] == chosen), {})
+            stats["partial_slate"] = {
+                "slate_date": chosen,
+                "n_games_on_date": row.get("n_games"),
+                "n_bettable": row.get("n_bettable"),
+                "reason": (f"no date on the schedule is still a whole card, so the board "
+                           f"is the earliest date with a bettable game. {row.get('why_not')}"),
+            }
+    stats["slate_rule"] = rule
+    if chosen is None:
+        return None, []
+    return chosen, [g for g in allg if g.get("date") == chosen and is_bettable(g)]
+
+
+def _event_slate_date(ev: dict) -> str | None:
+    """The US slate an odds event belongs to, on betting_ingest.slate_date_of's
+    fixed EDT offset. Same convention on purpose: a board slate and a snapshot
+    slate compared under two different rules would disagree at midnight."""
+    t = _stamp((ev or {}).get("commence_time"))
+    return None if t is None else (t - timedelta(hours=4)).strftime("%Y-%m-%d")
+
+
+def resolve_snapshot(slate: str | None, *, now: datetime | None = None
+                     ) -> tuple[dict | None, list[dict], dict]:
+    """The odds snapshot FOR THIS BOARD SLATE, plus what it took to get one.
+
+    THE DEFECT THIS CLOSES. `build` called `bi.latest_snapshot()` with no filter
+    and joined whatever came back to whatever slate the board had resolved to.
+    Nothing compared the two. When the morning ingest fails, the newest cached
+    snapshot is last night's and tonight's board is priced off it; the only thing
+    on the page that changes is a timestamp, which reads as a timestamp and not
+    as a warning.
+
+    THREE OUTCOMES, and the second is the ordinary one:
+      * `slate_label`: a cached snapshot's own `slate_date` is this board's
+        slate. Nothing more to check.
+      * `carries_slate_events`: no snapshot is LABELLED with this slate, but the
+        newest one lists games on it that have not started. That is not a defect,
+        it is how the feed works: a capture is labelled by its EARLIEST event, so
+        an evening capture is stamped today while carrying tomorrow's card, and a
+        board that has rolled forward to tomorrow can never match a label. The
+        prices are the market at capture time and are legitimate.
+      * `mismatch`: the snapshot lists NO pregame game on the board slate, so
+        there is no market for this board at all. Both slots are emptied and the
+        reason is named. A pick against yesterday's prices is worse than no pick.
+
+    WHAT THIS DOES NOT CATCH, stated because a reader is entitled to it: a
+    snapshot that carries tonight's games but was captured many hours ago passes
+    `carries_slate_events` while every price on it is old. The honest test for
+    that is capture age, and the four captures in .cache/odds are 31.2, 27.1 and
+    16.8 hours apart, which is a development box's cadence and not a number a
+    production threshold can be derived from. `snapshot_age_hours` is published
+    instead of being gated on."""
+    now = now or datetime.now(timezone.utc)
+    state = {"board_slate": slate, "snapshot_slate": None,
+             "snapshot_captured_at": None, "snapshot_age_hours": None,
+             "matched": False, "match_rule": None,
+             "n_pregame_events_on_board_slate": 0, "mismatch": False, "reason": None}
+    snap = bi.latest_snapshot(on_date=slate) if slate else None
+    labelled = snap is not None
+    if snap is None:
+        snap = bi.latest_snapshot()
+    if snap is None:
+        state["reason"] = "no odds snapshot is cached, so there is nothing to price against"
+        return None, [], state
+
+    events = bi.parse_events(snap)
+    state["snapshot_slate"] = snap.get("slate_date")
+    state["snapshot_captured_at"] = snap.get("captured_at")
+    state["snapshot_age_hours"] = _hours_since(snap.get("captured_at"))
+    n_pre = 0
+    for e in events:
+        t = _stamp(e.get("commence_time"))
+        if slate and _event_slate_date(e) == slate and t is not None and t > now:
+            n_pre += 1
+    state["n_pregame_events_on_board_slate"] = n_pre
+
+    if labelled:
+        state.update(matched=True, match_rule="slate_label")
+        state["reason"] = f"the cached snapshot is stamped for the {slate} slate"
+    elif slate and n_pre:
+        state.update(matched=True, match_rule="carries_slate_events")
+        state["reason"] = (f"the newest snapshot is stamped for the "
+                           f"{state['snapshot_slate']} slate and carries {n_pre} game(s) "
+                           f"on the {slate} board that have not started; a capture is "
+                           f"labelled by its earliest event, so this is the normal shape "
+                           f"of an evening board")
+    else:
+        state["mismatch"] = True
+        state["reason"] = (
+            f"ODDS SLATE MISMATCH: the board is the {slate} slate and the newest cached "
+            f"snapshot is stamped {state['snapshot_slate']}, captured "
+            f"{state['snapshot_captured_at']}, and carries no game on the board slate that "
+            f"has not already started. Every price below is for a different slate, so no "
+            f"pick is published against it")
+    return snap, events, state
+
+
 def _consensus_point(event: dict, market: str, sides: tuple):
     """The line the market agrees on, or None for a market that carries no point.
 
@@ -645,9 +1952,45 @@ def _market_view(event: dict | None, market: str, sides: tuple) -> dict | None:
     Both sides are read off ONE agreed line; see _consensus_point for the
     mismatch that made this necessary.
 
-    De-vigging uses the SINGLE book that posted the best price on the first
-    side, not a cross-book mash-up: mixing books manufactures a fake fair line
-    with a negative hold. `best_of` records where each price came from."""
+    De-vigging uses a SINGLE book's two-sided market, not a cross-book mash-up:
+    mixing books manufactures a fake fair line with a negative hold.
+
+    WHICH book was decided by dict iteration order until 2026-08-09, which is
+    API response order. That book sets the denominator of every edge on the
+    page. Measured on .cache/odds/2026-08-09-0133.json: h2h hold ranged from
+    1.00% to 6.38% inside a single game, and on CHC at KCR the book that
+    happened to be first (draftkings, 6.377% hold) gave fair_home 0.9277 while
+    the tightest book on the same market (fanduel, 1.000%) gave 0.9505. A 2.28
+    point swing in the denominator, decided by nothing, against a 6 point floor.
+
+    So the de-vig book is now the MINIMUM-HOLD book among those posting both
+    sides ON THE AGREED LINE, ties broken by book key so the choice is fixed for
+    a fixed snapshot. Tight hold is the closest thing a two-way quote gives to
+    an efficient price; it is not a claim that the book is right.
+
+    A quote whose hold falls outside DEVIG_HOLD_MIN_PCT..DEVIG_HOLD_MAX_PCT is
+    rejected as stale or bogus rather than treated as a market: the same file
+    carries betrivers at a 19.010% hold on CIN at WSN totals (Over +400 against
+    Under -10000) and a negative hold is an arbitrage, which no single book
+    posts on purpose. If every candidate is rejected the block falls back to the
+    old first-book choice and says so in `fair_book_rule`.
+
+    A TIGHT HOLD CAN BE A BOOK THAT HAS NOT UPDATED (2026-08-09, second pass).
+    Hold measures the two prices against each other and nothing else, so a quote
+    frozen before the market moved scores as efficient for free and then sets the
+    denominator of every edge in the game. Two guards close that, and they catch
+    different failures:
+      * STALENESS, `last_update` against the freshest book on the same market.
+        The stamp was parsed and carried into `best` all along and was never read
+        for this decision. See STALE_BOOK_MAX_LAG_MINUTES.
+      * CONSENSUS DISTANCE, this book's de-vigged fair probability against the
+        median of the books on the agreed line. A quote can be a second old and
+        still price a game nobody else is pricing, which a timestamp cannot see.
+        See CONSENSUS_FAIR_MAX_DISTANCE.
+    Both thresholds are set above anything either cached snapshot contains on a
+    pregame market, so neither rejects a real book on today's board; the
+    measurements are on the constants. Each rejection is counted and published,
+    because a rule that silently drops a book is a rule a reader cannot check."""
     if not event:
         return None
     line = _consensus_point(event, market, sides)
@@ -663,9 +2006,10 @@ def _market_view(event: dict | None, market: str, sides: tuple) -> dict | None:
     best = {s: _best_price_on_line(event, market, s, want[s]) for s in sides}
     if any(b is None for b in best.values()):
         return None
-    # Fair probabilities come from ONE book's two-sided market (the first book
-    # that posted both sides), so the de-vig is arithmetically meaningful.
-    fair, fair_book, hold = None, None, None
+    # Fair probabilities come from ONE book's two-sided market, so the de-vig is
+    # arithmetically meaningful. Candidates are collected in snapshot order and
+    # the choice is made below on hold, not on arrival.
+    cands = []
     for bkey, b in (event.get("books") or {}).items():
         m = b.get(market)
         if not isinstance(m, dict):
@@ -685,33 +2029,129 @@ def _market_view(event: dict | None, market: str, sides: tuple) -> dict | None:
             d = bi.american_to_decimal(price)
             if d:
                 decs[s] = d
-        if off_line:
+        if off_line or len(decs) != len(sides):
             continue
-        if len(decs) == len(sides):
-            fair, fair_book, hold = bm.devig(decs), bkey, bm.hold_pct(decs)
-            break
+        f = bm.devig(decs)
+        cands.append({"book": bkey, "decs": decs, "hold": bm.hold_pct(decs),
+                      "stamp": _stamp(b.get("last_update")),
+                      "fair0": (f or {}).get(sides[0])})
+    if not cands:
+        return None
+    holds = [c["hold"] for c in cands if c["hold"] is not None]
+
+    # STALENESS, relative to the market and not to the wall clock. The freshest
+    # book on THIS market is the reference, so a snapshot taken at any hour is
+    # judged against itself.
+    stamps = [c["stamp"] for c in cands if c["stamp"] is not None]
+    freshest = max(stamps) if stamps else None
+    for c in cands:
+        c["lag_min"] = (round((freshest - c["stamp"]).total_seconds() / 60.0, 3)
+                        if freshest is not None and c["stamp"] is not None else None)
+
+    # CONSENSUS DISTANCE. The median is taken over EVERY candidate on the line,
+    # including the wide ones: it is a rank statistic, so one rogue quote cannot
+    # drag it, and using the full set keeps n as large as it can be.
+    fairs = sorted(c["fair0"] for c in cands if c["fair0"] is not None)
+    med = None
+    if len(fairs) >= CONSENSUS_MIN_BOOKS:
+        n = len(fairs)
+        med = fairs[n // 2] if n % 2 else 0.5 * (fairs[n // 2 - 1] + fairs[n // 2])
+    for c in cands:
+        c["consensus_distance"] = (round(abs(c["fair0"] - med), 5)
+                                   if med is not None and c["fair0"] is not None else None)
+
+    # ONE reason per rejected candidate, in a fixed order, so the three counts
+    # sum to the number rejected and a reader can add them up.
+    def _why_not(c):
+        if c["lag_min"] is not None and c["lag_min"] > STALE_BOOK_MAX_LAG_MINUTES:
+            return "stale"
+        if c["hold"] is None or not (DEVIG_HOLD_MIN_PCT <= c["hold"] <= DEVIG_HOLD_MAX_PCT):
+            return "hold"
+        if (c["consensus_distance"] is not None
+                and c["consensus_distance"] > CONSENSUS_FAIR_MAX_DISTANCE):
+            return "consensus"
+        return None
+
+    for c in cands:
+        c["rejected"] = _why_not(c)
+    ok = [c for c in cands if c["rejected"] is None]
+    n_rej = Counter(c["rejected"] for c in cands if c["rejected"])
+    if ok:
+        # (hold, book key): the key is the tiebreak, so two books at an
+        # identical hold resolve the same way on every rebuild.
+        win = min(ok, key=lambda c: (c["hold"], c["book"]))
+        rule = "min_hold"
+    else:
+        win = cands[0]
+        # The historical name is kept for the historical case, so a reader who
+        # has seen it before is not told a new rule fired.
+        rule = ("first_book_all_holds_rejected"
+                if set(n_rej) == {"hold"} else "first_book_all_candidates_rejected")
+    fair_book, decs, hold = win["book"], win["decs"], win["hold"]
+    fair = bm.devig(decs)
     if not fair:
         return None
+    lags = [c["lag_min"] for c in cands if c["lag_min"] is not None]
     return {
         "best": {s: best[s] for s in sides},
         "fair": {s: round(fair[s], 5) for s in sides},
         "fair_book": fair_book,
         "hold_pct": round(hold, 3) if hold is not None else None,
+        # The audit trail for the choice above: how many books could have set
+        # this denominator, how far apart they were, and how many were refused
+        # for each of the three reasons. Before 2026-08-09 the hold count was
+        # computed and never published, which made a rejection invisible.
+        "fair_book_rule": rule,
+        "n_books_on_line": len(cands),
+        "n_books_hold_rejected": n_rej.get("hold", 0),
+        "n_books_stale_rejected": n_rej.get("stale", 0),
+        "n_books_consensus_rejected": n_rej.get("consensus", 0),
+        "hold_range": ([round(min(holds), 3), round(max(holds), 3)] if holds else None),
+        "max_book_lag_minutes": (max(lags) if lags else None),
+        "fair_book_lag_minutes": win.get("lag_min"),
+        "fair_book_consensus_distance": win.get("consensus_distance"),
         "devig_method": "proportional",
     }
 
 
-def _priced_side(side_key: str, label: str, p_model: float, mv: dict | None) -> dict:
+def _priced_side(side_key: str, label: str, p_model: float, mv: dict | None,
+                 *, p_push: float | None = None) -> dict:
     """One bettable side: model probability, market fair probability, edge, EV,
     Kelly. With no market attached, everything market-shaped is None and the
-    row is a fair line, which is still worth showing."""
+    row is a fair line, which is still worth showing.
+
+    `p_push` IS PART OF THE BET, NOT PART OF THE ODDS (2026-08-09). On a
+    whole-number total the book returns the stake when the total lands, and
+    `bm.ev_per_unit` is a pure two-argument odds primitive that cannot know
+    that: given (p, decimal) it charges a full unit for every outcome that is
+    not a win, so it prices a refund as a loss. `p_model` here is already
+    CONDITIONAL on no push (betting_model.total_side_probabilities returns the
+    conditioned pair), so the honest EV is the conditional EV scaled by the
+    chance the bet resolves at all:
+
+        (1 - p_push) * [ p_cond * (decimal - 1) - (1 - p_cond) ]
+
+    The overstatement is exactly 1 / (1 - p_push), which measured 1.140x to
+    1.163x on the three whole-number totals of the 2026-08-09 board. That is not
+    a display error: `_longshot_rank` and `pick_of_the_day` both select on
+    `ev_per_unit`, so a whole number outranked a half point at the same edge and
+    a different pick was published.
+
+    The adjustment lands HERE and not inside `bm.ev_per_unit`, which is correct
+    as written. Kelly is left alone: `bm.kelly_fraction` is a ratio of the same
+    two terms and the (1 - p_push) factor cancels out of it."""
     row = {
         "side": side_key, "label": label,
         "model_prob": round(p_model, 5),
         "fair_odds": bi.decimal_to_american(1.0 / p_model) if p_model > 0 else None,
+        # The push mass on THIS side's bet, carried on the row so a slot lifted
+        # out of the payload still says how often it is a refund. None on a
+        # market that cannot push (a moneyline, a half-point line).
+        "p_push": (round(float(p_push), 5) if p_push else None),
         "book": None, "odds": None, "decimal": None,
         "implied_prob": None, "market_fair_prob": None,
-        "edge": None, "ev_per_unit": None, "kelly_full": None,
+        "edge": None, "ev_per_unit": None, "ev_per_unit_if_no_push": None,
+        "kelly_full": None,
     }
     if not mv:
         return row
@@ -728,7 +2168,15 @@ def _priced_side(side_key: str, label: str, p_model: float, mv: dict | None) -> 
     })
     if fair is not None and b.get("decimal"):
         row["edge"] = round(bm.edge(p_model, fair), 5)
-        row["ev_per_unit"] = round(bm.ev_per_unit(p_model, b["decimal"]), 5)
+        # `ev_per_unit` is the PUBLISHED number every consumer reads (the two
+        # slot rankers, the legacy pick_of_the_day, the board table, the shadow
+        # ledger), so the push adjustment goes in it rather than beside it. The
+        # unadjusted number ships too, under a name that says what it is, so the
+        # arithmetic can be checked without recomputing it.
+        ev_no_push = bm.ev_per_unit(p_model, b["decimal"])
+        pp = float(p_push) if p_push else 0.0
+        row["ev_per_unit_if_no_push"] = round(ev_no_push, 5)
+        row["ev_per_unit"] = round((1.0 - pp) * ev_no_push, 5)
         row["kelly_full"] = round(bm.kelly_fraction(p_model, b["decimal"]), 5)
     return row
 
@@ -755,13 +2203,19 @@ def match_event(game: dict, candidates: list[dict] | None) -> dict | None:
     looked unusual. Keying to a LIST and matching on first pitch fixes it: the
     two games are hours apart, so the nearest `commence_time` is unambiguous.
 
-    THE SINGLE-CANDIDATE SHORTCUT IS DELIBERATE. One event for the pair on a
-    non-doubleheader date is the ordinary case and takes the event without a
-    time check, because a book that posts a start time five minutes off ours
-    must not blank an otherwise healthy row. The check is required exactly where
-    it can be wrong: two candidates, or a row the schedule flagged as a
-    doubleheader (books sometimes post only one half early, and taking it for
-    both games is the same defect wearing one event).
+    THE SINGLE-CANDIDATE SHORTCUT WAS A BYPASS, NOT A TOLERANCE (2026-08-09,
+    found replaying .cache/odds/2026-08-09-0133.json). It ran no time check at
+    all, and one candidate for an org pair does not mean "this game": a snapshot
+    legitimately spans two slate dates (that file holds 11 events on the 8/8
+    slate and 12 on 8/9), so it means "the only event for this SERIES in the
+    file". Measured on that file: TBR at SEA matched an event 1099 minutes
+    (18h19m) from first pitch, and HOU at SDP matched one 1504 minutes (25h04m)
+    off that was already 2h17m into play. Both then priced the wrong game.
+
+    The TOLERANCE is kept and is the point: a book posting a start time a few
+    minutes off ours must not blank an otherwise healthy row, so the gap may run
+    to EVENT_MATCH_MAX_MINUTES. Past that, a single candidate is a different
+    game in the same series, not a posted-time disagreement.
 
     Returns None rather than a guess when nothing matches, which drops the game
     to a model-only fair line. That is the safe direction: an unpriced row is
@@ -770,7 +2224,22 @@ def match_event(game: dict, candidates: list[dict] | None) -> dict | None:
     if not cands:
         return None
     if len(cands) == 1 and not game.get("double_header"):
-        return cands[0]
+        c = cands[0]
+        t0, t = _stamp(game.get("datetime")), _stamp(c.get("commence_time"))
+        if t0 is None or t is None:
+            # Nothing to compare. One event for the pair is still the ordinary
+            # case, and refusing it on a missing stamp would blank healthy rows.
+            return c
+        delta = abs((t - t0).total_seconds()) / 60.0
+        if delta > EVENT_MATCH_MAX_MINUTES:
+            log.warning("betting_export: the only odds event for %s @ %s starts %.0f min "
+                        "from first pitch (limit %d), so it is a DIFFERENT GAME IN THE "
+                        "SAME SERIES and not a posted-time disagreement; leaving the "
+                        "game unpriced",
+                        (game.get("away") or {}).get("org"), (game.get("home") or {}).get("org"),
+                        delta, EVENT_MATCH_MAX_MINUTES)
+            return None
+        return c
     t0 = _stamp(game.get("datetime"))
     if t0 is None:
         log.warning("betting_export: %s @ %s has %d candidate odds events and no first "
@@ -800,19 +2269,43 @@ def match_event(game: dict, candidates: list[dict] | None) -> dict | None:
 
 
 def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
-              starters=None) -> list[dict]:
+              starters=None, now=None, stats=None) -> list[dict]:
     """Every game on the slate: model probabilities, the market when a snapshot
-    exists, and the edge between them."""
+    exists, and the edge between them.
+
+    `now` is injectable so a test can pin the pregame filter below. `stats`, if
+    given, is filled with the counts build() publishes under status."""
     teams = teams if teams is not None else bm.team_inputs()
     parks = parks if parks is not None else bm.park_index()
     starters = starters if starters is not None else bm.starter_inputs()
+    now = now or datetime.now(timezone.utc)
     # A LIST per org pair, not one event. See `match_event`: a doubleheader puts
     # two events under one key and a dict silently kept the last one parsed.
+    #
+    # AN EVENT THAT HAS ALREADY STARTED CANNOT PRICE THIS BOARD (2026-08-09).
+    # A book keeps a game listed once it is under way, at an IN-GAME price. That
+    # price is real; it is just not the bet this page describes, and the model
+    # probability beside it is a pregame number. Measured on
+    # .cache/odds/2026-08-09-0133.json: FanDuel had HOU +1100 and a total of 4.5
+    # on a game 2h17m old, and those three sides came out as the largest edges
+    # on the whole board. The filter is separate from `match_event` on purpose:
+    # game one of a doubleheader being under way is a genuine two-candidate
+    # case, and the time-nearest match would still take the started half.
+    n_in_progress = 0
     by_pair: dict[tuple, list] = {}
     for ev in events or []:
+        t = _stamp(ev.get("commence_time"))
+        if t is not None and t <= now:
+            n_in_progress += 1
+            log.info("betting_export: odds event %s (%s @ %s) started %.0f min ago; "
+                     "its prices are in-game and cannot price a pregame board",
+                     ev.get("event_id"), ev.get("away_org"), ev.get("home_org"),
+                     (now - t).total_seconds() / 60.0)
+            continue
         by_pair.setdefault((ev.get("home_org"), ev.get("away_org")), []).append(ev)
 
     out = []
+    n_time_refused = 0                     # games that had a candidate and lost it
     for g in games:
         home, away = (g.get("home") or {}), (g.get("away") or {})
         ho, ao = home.get("org"), away.get("org")
@@ -823,8 +2316,12 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
         if not gp:
             log.info("betting_export: no model row for %s @ %s", ao, ho)
             continue
-        over_fn = gp.pop("over", None)
-        ev = match_event(g, by_pair.get((ho, ao)))
+        gp.pop("over", None)                   # callable; superseded by total_sides
+        sides_fn = gp.pop("total_sides", None)
+        cands = by_pair.get((ho, ao)) or []
+        ev = match_event(g, cands)
+        if cands and ev is None:
+            n_time_refused += 1
         ml = _market_view(ev, "h2h", ("home", "away"))
         rl = _market_view(ev, "spreads", ("home", "away"))
         tot = _market_view(ev, "totals", ("over", "under"))
@@ -843,15 +2340,27 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
                 _priced_side("away", f"{ao} {-hp_point:+.1f}" if hp_point is not None else ao,
                              p_away_rl, rl),
             ]
-        tot_rows, tot_line = None, None
-        if tot and over_fn:
+        # The Under is NOT 1 - p_over. On a whole number that hands the Under
+        # the push mass; betting_model.total_side_probabilities carries the
+        # measurement and returns the push-conditioned pair.
+        tot_rows, tot_line, tot_push = None, None, None
+        if tot and sides_fn:
             tot_line = ((tot["best"].get("over") or {}).get("point"))
             if tot_line is not None:
-                p_over = over_fn(float(tot_line))
-                tot_rows = [
-                    _priced_side("over", f"Over {tot_line}", p_over, tot),
-                    _priced_side("under", f"Under {tot_line}", 1.0 - p_over, tot),
-                ]
+                ts = sides_fn(float(tot_line))
+                p_over, p_under = ts.get("p_over"), ts.get("p_under")
+                tot_push = (round(ts["p_push"], 5) if ts.get("p_push") is not None
+                            else None)
+                if p_over is not None and p_under is not None:
+                    # BOTH sides carry the push into their EV. A refund is not a
+                    # loss, and pricing it as one overstated the EV of every
+                    # whole-number total by 1 / (1 - p_push); see _priced_side.
+                    tot_rows = [
+                        _priced_side("over", f"Over {tot_line}", p_over, tot,
+                                     p_push=tot_push),
+                        _priced_side("under", f"Under {tot_line}", p_under, tot,
+                                     p_push=tot_push),
+                    ]
         out.append({
             "game_pk": g.get("game_pk"),
             "date": g.get("date"),
@@ -883,12 +2392,53 @@ def team_bets(games: list[dict], events: list[dict], *, teams=None, parks=None,
             "moneyline": ([_priced_side("home", ho, gp["p_home"], ml),
                            _priced_side("away", ao, gp["p_away"], ml)]),
             "runline": rl_rows,
-            "total": ({"line": tot_line, "sides": tot_rows} if tot_rows else
-                      {"line": None, "sides": None, "fair_total": gp["fair_total"]}),
+            # `p_push` is the model's P(total lands exactly on the line): zero on
+            # a half point, and the number the page needs to say a whole number
+            # refunds some of the time. The two sides beside it are already
+            # conditional on it not happening.
+            "total": ({"line": tot_line, "sides": tot_rows, "p_push": tot_push}
+                      if tot_rows else
+                      {"line": None, "sides": None, "p_push": None,
+                       "fair_total": gp["fair_total"]}),
+            # WHICH book set the denominator of every edge in this game, how
+            # many could have, and how far apart they were. Before 2026-08-09
+            # the choice was API response order and none of it was published.
             "market": {"moneyline_hold_pct": (ml or {}).get("hold_pct"),
                        "total_hold_pct": (tot or {}).get("hold_pct"),
+                       "moneyline_fair_book": (ml or {}).get("fair_book"),
+                       "moneyline_hold_range": (ml or {}).get("hold_range"),
+                       "moneyline_n_books_on_line": (ml or {}).get("n_books_on_line"),
+                       "total_fair_book": (tot or {}).get("fair_book"),
+                       "total_hold_range": (tot or {}).get("hold_range"),
+                       "total_n_books_on_line": (tot or {}).get("n_books_on_line"),
+                       "runline_fair_book": (rl or {}).get("fair_book"),
+                       "runline_hold_pct": (rl or {}).get("hold_pct"),
+                       "fair_book_rule": ((ml or {}).get("fair_book_rule")
+                                          or (tot or {}).get("fair_book_rule")),
+                       # HOW MANY BOOKS THE DE-VIG RULES REFUSED, per market.
+                       # `n_books_hold_rejected` was computed from the day the
+                       # hold band shipped and published nowhere, so a market
+                       # that lost four of its five candidate books looked
+                       # identical to one that lost none. A rejection nobody can
+                       # see is a rule nobody can check.
+                       "n_books_rejected": {
+                           m: {"hold": (v or {}).get("n_books_hold_rejected"),
+                               "stale": (v or {}).get("n_books_stale_rejected"),
+                               "consensus": (v or {}).get("n_books_consensus_rejected"),
+                               "on_line": (v or {}).get("n_books_on_line")}
+                           for m, v in (("moneyline", ml), ("runline", rl),
+                                        ("total", tot)) if v},
+                       "max_book_lag_minutes": {
+                           m: (v or {}).get("max_book_lag_minutes")
+                           for m, v in (("moneyline", ml), ("runline", rl),
+                                        ("total", tot)) if v},
+                       "stale_book_max_lag_minutes": STALE_BOOK_MAX_LAG_MINUTES,
+                       "consensus_fair_max_distance": CONSENSUS_FAIR_MAX_DISTANCE,
                        "devig_method": "proportional"} if ml or tot else None,
         })
+    if stats is not None:
+        stats["n_events_dropped_in_progress"] = n_in_progress
+        stats["n_games_unpriced_time_mismatch"] = n_time_refused
     return out
 
 
@@ -1363,7 +2913,8 @@ def _longshot_rank(row: dict) -> tuple:
 
 
 def provisional_picks(bets: list[dict], *, odds_configured: bool,
-                      evald: dict | None = None) -> tuple[dict, str, dict]:
+                      evald: dict | None = None,
+                      block_reason: str | None = None) -> tuple[dict, str, dict]:
     """Both published slots, chosen from ONE candidate list at ONE floor.
 
     Returns (slots, reason, meta). `slots` maps the payload key of each slot to
@@ -1381,7 +2932,14 @@ def provisional_picks(bets: list[dict], *, odds_configured: bool,
 
     An absent odds feed is still a hard stop for both slots. A provisional pick
     is a claim about a real market price; without one there is nothing to
-    disagree with, and the model's own fair line is not a market."""
+    disagree with, and the model's own fair line is not a market.
+
+    `block_reason` is the same hard stop for a market that exists and is the
+    WRONG ONE. `resolve_snapshot` passes it when the cached snapshot cannot
+    price this board's slate: the board still renders, because a fair line and a
+    priced market are worth reading, and both slots stay empty carrying that
+    sentence, because a pick against another slate's prices is worse than no
+    pick."""
     thr, basis, prov = resolve_min_edge(evald)
     floor_txt = "provisional floor" if prov else "measured threshold"
     meta = {"provisional": prov, "min_edge": thr, "basis": basis,
@@ -1412,9 +2970,11 @@ def provisional_picks(bets: list[dict], *, odds_configured: bool,
     long_rule = ("highest expected value per unit among sides clearing the "
                  f"{floor_txt} at {long_band}")
 
-    if not odds_configured:
-        why = ("no odds feed is configured, so there is no market price to have "
-               "an edge against")
+    if not odds_configured or block_reason:
+        why = block_reason or ("no odds feed is configured, so there is no market price "
+                               "to have an edge against")
+        meta["blocked"] = True
+        meta["blocked_reason"] = why
         for slot in SLOT_LABELS:
             meta["slots"][slot] = _slot_meta(
                 slot, rule=(potd_rule if slot == "pick_of_the_day" else long_rule),
@@ -1655,9 +3215,12 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     absent leaderboards each degrade to a stated empty state rather than an
     exception."""
     status = bi.write_status()
-    snap = bi.latest_snapshot()
-    events = bi.parse_events(snap) if snap else []
-    games = slate_games(on_date)
+    # THE SLATE IS RESOLVED FIRST AND THE SNAPSHOT IS REQUESTED FOR IT. The old
+    # order took an unfiltered `latest_snapshot()` and joined it to whatever
+    # slate came back, with nothing comparing the two. See `resolve_snapshot`.
+    slate_stats: dict = {}
+    slate_date, games = resolve_slate(on_date, stats=slate_stats)
+    snap, events, odds_slate = resolve_snapshot(slate_date)
     # `team_inputs_detail`, not `team_inputs`: the per-source org counts are the
     # difference between naming the broken input and guessing at it. See
     # team_input_failure_reason for the published false diagnosis that forced it.
@@ -1668,7 +3231,12 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     coeffs = bm.coefficients()
     evald = _load("betting_model_eval.json") or {}
 
-    bets = team_bets(games, events, teams=teams, parks=parks, starters=starters) if games else []
+    # Zeroed up front so the two counts are always integers on the status block,
+    # including on a build with no slate: a missing key reads as "not measured".
+    bet_stats = {"n_events_dropped_in_progress": 0,
+                 "n_games_unpriced_time_mismatch": 0}
+    bets = (team_bets(games, events, teams=teams, parks=parks, starters=starters,
+                      stats=bet_stats) if games else [])
     min_edge = evald.get("min_edge")          # None until a clean test measures one
     gate = evald.get("min_edge_gate")
     odds_configured = bool(status.get("configured") and events)
@@ -1686,19 +3254,56 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     # make any of them untrue. What changes is that the slate no longer renders
     # empty while they are shut.
     slots, pick_reason, pick_meta = provisional_picks(
-        bets, odds_configured=odds_configured, evald=evald)
+        bets, odds_configured=odds_configured, evald=evald,
+        block_reason=(odds_slate["reason"] if odds_slate.get("mismatch") else None))
     pick = slots["pick_of_the_day"]
     longshot = slots["longshot_of_the_day"]
+    # STORAGE FIRST, BEFORE ANYTHING READS THE RECORD. `ensure_record_log`
+    # creates a log holding exactly the rows the record already has, so it makes
+    # no claim; it exists because the `record_storage` blocker would otherwise
+    # deadlock on a log that only an append could create.
+    if write:
+        try:
+            ensure_record_log()
+        except OSError:
+            log.warning("betting_export: could not create the append-only record log; "
+                        "the record_storage blocker will stay closed")
     record = load_record()
+    # THE LAST PUBLISHED CHAIN HASH, read off the DURABLE anchor under .cache/.
+    # It is what `record_storage` is checked against: a record that no longer
+    # contains yesterday's hash as one of its prefix hashes was rewritten, not
+    # appended to, and that is a publish blocker rather than a warning.
+    #
+    # It used to be read off data/betting.json, which is git-tracked, so the
+    # nightly `git checkout -- .` restored a committed board with no chain_sha
+    # and this arrived as None on every production build - and
+    # `chain_extends(None, rows)` is True by construction, so the rewrite half of
+    # the blocker was disarmed while reporting itself open.
+    prev_chain_src = read_published_chain()
+    prev_chain = prev_chain_src.get("chain_sha")
+    feed_health = snapshot_health()
+    # The label rides on the row AND on the record header, from one builder, so
+    # the two cannot drift. `provisional_picks` has already resolved the floor.
+    record_label = provisional_record_label(
+        evald, min_edge=float(pick_meta.get("min_edge") or PROVISIONAL_MIN_EDGE),
+        provisional=bool(pick_meta.get("provisional")))
 
     empty_reasons = []
     if not teams:
         empty_reasons.append(team_input_failure_reason(team_sources))
+    # NAMED, not implied. A board priced against another slate's snapshot looks
+    # exactly like a healthy board apart from a capture timestamp, which is why
+    # this is a reason on the page and a hard stop on both slots rather than a
+    # field somebody has to notice.
+    if odds_slate.get("mismatch"):
+        empty_reasons.append(odds_slate["reason"])
+    if slate_stats.get("partial_slate"):
+        empty_reasons.append(slate_stats["partial_slate"]["reason"])
     if not games:
         # Distinguish "the schedule is empty" from "every game on the schedule is
         # already Final or postponed". The old copy asserted the first and would
         # have sent a reader hunting a schedule refresh that ran perfectly.
-        n_raw = len(slate_games(on_date, include_unbettable=True))
+        n_raw = len(slate_games(slate_date or on_date, include_unbettable=True))
         if n_raw:
             empty_reasons.append(f"the schedule holds {n_raw} game(s) for this date and "
                                  "none are bettable (all Final, postponed or in progress)")
@@ -1721,7 +3326,7 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
 
     payload = {
         "generated_at": _now(),
-        "slate_date": (games[0].get("date") if games else (on_date or date.today().isoformat())),
+        "slate_date": (slate_date or on_date or date.today().isoformat()),
         "n_games": len(bets),
         "status": {
             "odds_feed": ("ok" if events else ("not_configured" if not status.get("configured")
@@ -1735,7 +3340,27 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
             # page can be checked against the files rather than believed.
             "team_input_sources": team_sources,
             "n_slate_games": len(games),
+            # Odds events the snapshot carried that were already under way, so a
+            # reader can see why a game on the slate has no prices instead of
+            # assuming the feed failed. See team_bets for the in-game measurement.
+            "n_events_dropped_in_progress": bet_stats["n_events_dropped_in_progress"],
+            "n_games_unpriced_time_mismatch": bet_stats["n_games_unpriced_time_mismatch"],
+            # WHICH DATE THE BOARD IS, AND WHY IT IS NOT THE OTHER ONE. Every
+            # candidate date with its game count and its disqualifying reason, so
+            # a one-game board can be read as a fragment instead of as a Monday.
+            "slate_rule": slate_stats.get("slate_rule"),
+            "slate_candidates": slate_stats.get("slate_candidates"),
+            "partial_slate": slate_stats.get("partial_slate"),
+            # WHICH SLATE THE PRICES BELONG TO. `odds_captured_at` above says
+            # when; this says what for.
+            "odds_slate": odds_slate,
+            "odds_slate_mismatch": bool(odds_slate.get("mismatch")),
+            "odds_snapshot_age_hours": odds_slate.get("snapshot_age_hours"),
             "stale_board": False,
+            # OPEN/CLOSE CAPTURE COVERAGE, measured off .cache/odds/ rather than
+            # off a heartbeat the nightly checkout would have reverted. The
+            # `diagnosis` string names the repair, not the symptom.
+            "feed_health": feed_health,
             "empty_reasons": empty_reasons,
         },
         "model": {
@@ -1788,7 +3413,17 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         "record_policy": ("Append only. Rows are never edited or deleted; a correction is "
                           "a new row. betting_export.write_record refuses any other write "
                           "and test_betting.py pins it."),
+        # THE HEADER SENTENCE, identical to the one on every provisional row.
+        "record_label": record_label,
+        "record_storage": record_storage(),
+        "honest_backtest": honest_backtest_progress(evald),
     }
+    # VERBATIM ON THE ROW TOO. A slot lifted out of this payload and rendered
+    # anywhere else still carries the qualifier; a client that shows the pick
+    # and not the record header cannot drop it.
+    for _slot in (pick, longshot):
+        if _slot and record_label:
+            _slot["provisional_label"] = record_label
 
     # REFUSE TO OVERWRITE A POPULATED BOARD WITH AN EMPTY ONE. This runs before
     # the preview is sliced and before either file is written, so the preview and
@@ -1797,6 +3432,55 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         payload = _carry_previous_board(
             payload, "; ".join(empty_reasons) or "no reason recorded", log_fn=log_fn)
     bets = payload["team_bets"]
+
+    # SETTLE FIRST, THEN PUBLISH, THEN SUMMARIZE.
+    #
+    # Settling first is not cosmetic: the `settlement_current` blocker asks
+    # whether every row past 36 hours is graded, and running it after the
+    # publish decision would answer that question off the PREVIOUS build's
+    # sidecar. A settling path that broke this afternoon would then let one more
+    # row onto the record before anything noticed. Nothing new can be settled by
+    # this pass anyway (a row posted tonight has no final score), so the order
+    # costs nothing and closes a one-build blind spot.
+    settlement = settle_record(rows=record, write=write)
+    settle_map = {e["bet_id"]: e for e in settlement.get("picks") or [] if e.get("bet_id")}
+    # THE PUBLIC RECORD. Evaluated after the stale-board guard, which nulls both
+    # slots on a carried board by construction, so a day-old price can never be
+    # published as tonight's claim. `maybe_publish_record` writes ONLY when every
+    # blocker is open; the blocker list ships either way.
+    publish = maybe_publish_record(payload, evald=evald, health=feed_health,
+                                   settlement=settle_map,
+                                   published_chain_sha=prev_chain,
+                                   write=write, log_fn=log_fn)
+    payload["record_publish"] = {k: v for k, v in publish.items() if k != "blockers"}
+    payload["record_publish_blockers"] = publish["blockers"]
+    if publish.get("written"):
+        record = load_record()
+    payload["record"] = record_summary(record, settlement=settle_map)
+    payload["record_storage"] = record_storage()
+    # WHERE THE ANCHOR CAME FROM, on the payload, so "the rewrite check is armed"
+    # is a claim a reader can check instead of one he has to believe. A `source`
+    # still naming data/betting.json means no durable anchor exists yet.
+    payload["record_chain_anchor"] = prev_chain_src
+    payload["settlement_url"] = "/data/betting_settlement.json"
+    payload["clv_url"] = "/data/betting_clv.json"
+    # The DERIVED copy, re-rendered from the log on every build. It is published
+    # by rsync and it is safe to lose: `git checkout -- .` reverting it between
+    # builds costs nothing, which is the whole reason the log exists.
+    if write:
+        try:
+            render_record(record)
+        except OSError:
+            log.warning("betting_export: could not re-render %s", RECORD_PATH.name)
+        # STAMP THE ANCHOR LAST. The publish decision above was already made
+        # against the PREVIOUS value; writing it any earlier would compare the
+        # record against itself and the blocker would pass by construction.
+        try:
+            write_published_chain(record)
+        except OSError:
+            log.warning("betting_export: could not write %s; the next build will "
+                        "fall back to the git-tracked board and the rewrite check "
+                        "will be unarmed for one night", PUBLISHED_CHAIN_PATH.name)
 
     preview = {
         "generated_at": payload["generated_at"],
@@ -1822,6 +3506,13 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
         # slice's job to carry the qualifier more than anyone's.
         "pick_meta": payload["pick_meta"],
         "pick_blockers": payload["pick_blockers"],
+        # PRE-REGISTERED, IN THE FREE SLICE. What the site refuses to publish is
+        # a claim a reader can only hold it to if he can see it before the first
+        # row exists, so it is not behind any gate.
+        "record_publish_blockers": payload["record_publish_blockers"],
+        "record_label": payload["record_label"],
+        "record_storage": payload["record_storage"],
+        "honest_backtest": payload["honest_backtest"],
         "n_games": payload["n_games"],
         "team_bets": bets[:PREVIEW_GAMES],
         "record": payload["record"],
@@ -1832,12 +3523,13 @@ def build(*, on_date: str | None = None, write: bool = True, log_fn=None) -> dic
     if write:
         _write(OUT_PATH, payload)
         _write(PREVIEW_PATH, preview)
-        if not RECORD_PATH.exists():
-            _write(RECORD_PATH, [])
         if log_fn:
             log_fn(f"betting_export: wrote {OUT_PATH.name} "
                    f"({len(bets)} games, odds={payload['status']['odds_feed']}"
                    f"{', STALE BOARD' if payload['status'].get('stale_board') else ''})")
+            log_fn(f"betting_export: public record {payload['record']['n_rows']} row(s), "
+                   f"chain {payload['record']['chain_sha'][:12]}, "
+                   f"publish {publish['reason']}")
     return payload
 
 

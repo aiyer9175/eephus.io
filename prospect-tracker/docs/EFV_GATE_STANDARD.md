@@ -64,9 +64,20 @@ The 2026-08-07 lab re-measures the model-vs-consensus row of this table at 0.037
 0.0487 pit, which brackets the published 0.045 and is the parity check that validates
 both the method and the one-sided convention.
 
-The other four rows have NOT been re-measured on the 11-fold basis. Feature-add,
-lambda-shift, t45 and MAE gates are still running against 4-fold floors. Do not assume
-they moved in either direction; re-measure the row you need before you gate on it.
+**Two of the other four rows WERE re-measured on the 11-fold basis, 2026-08-09, and both
+moved a long way. See section 7.6.**
+
+- **incremental feature add**: the retired row quotes ~0.017 hit as one number. There is no
+  one number. On the 11-fold basis, dropping `fv` gives E_refit 0.0302 / E_cond 0.0250,
+  and dropping `tool_speed` gives E_refit 0.0108 / E_cond 0.0045. **5.5x apart on E_cond**,
+  because a feature that barely moves the model leaves the two legs nearly identical.
+  Measure the floor for YOUR candidate feature; do not quote this row.
+- **blend-lambda shift**: 0.0014 / 0.0028 / 0.0056 (E_refit) at shifts 0.05 / 0.10 / 0.19,
+  against the retired 0.0076-0.011. **2x-5x smaller**, i.e. the retired row was far too
+  permissive for this contrast.
+
+t45 and MAE have NOT been re-measured. Do not assume they moved in either direction;
+re-measure the row you need before you gate on it.
 
 **A claimed effect smaller than its row above is a NULL. Report it as a null.** It is not
 a "small win", a "directional signal", or a "fringe gain".
@@ -350,3 +361,125 @@ current data it certifies neither a win nor a loss.
 **Standing lesson, worth more than the number.** Every margin in this document is a
 function of a regen. Adjudicating a cell against artifacts that are even two days stale can
 cross a verdict boundary. Re-read the margins after any regen, before publishing.
+
+### 7.6 THIRD REGISTRATION: E_cond extended to the classes the claims actually live on (2026-08-09)
+
+**This section ADDS rows. It retires nothing above it and changes no constant above it.**
+Sections 7.2 through 7.5 stand as written.
+
+Registration `docs/efv-2026-08-08/POWER_EXTENSION_GATE.md` sections 0-7, written before the
+extension lab existed. Producers `python tools/efv_power_lab.py floors 1000 2000`,
+`x2cover 200`, `x3detect 600`, `x4sign 200`, `adjudicate 500`. Ledger
+`data/xfv_power_eval.json`, blocks `partb_floors`, `x2_coverage_h2h`,
+`x3_detection_classes`, `x4_sign_symmetry`, `adjudication_bl2`. Seed 20260807 with unspent
+offsets. Basis: matrices rebuilt 2026-08-09 14:08.
+
+E_cond previously existed for FOUR cuts, none of which is a statistic the site makes a
+claim on. It now exists for the head-to-head common set, the block instrument, feature-add
+on both instruments, and the lambda shift.
+
+| statistic class | n | delta | **MDE95** (E_refit) | **MDE95_COND** (E_cond) | verdicts |
+|---|---|---|---|---|---|
+| eFV vs consensus, head-to-head | 3,224 rows / 1,051 players | +0.03318 | 0.0345 | **0.0322** | NULL 0.963x / **RESOLVABLE 1.031x** |
+| model vs consensus, block-rho | 1,645 | +0.00912 | 0.0317 | 0.0203 | NULL / NULL |
+| feature add `fv`, pooled, ridge leg | 1,786 | +0.02293 | 0.0302 | 0.0250 | NULL / NULL |
+| feature add `fv`, block, ridge leg | 3,667 | +0.01549 | 0.0185 | 0.0166 | NULL / NULL |
+| feature add `tool_speed`, pooled, ridge | 1,786 | +0.00490 | 0.0108 | 0.0045 | NULL / RESOLVABLE |
+| lambda shift 0.70 -> 0.65 / 0.60 / 0.51 | 1,786 | -0.00025 / -0.00066 / -0.00150 | 0.0014 / 0.0028 / 0.0056 | 0.0009 / 0.0017 / 0.0033 | NULL / NULL |
+
+**No claim without its estimator.** Both columns are one-sided 1.645 sd. A cell quoted with
+one of them is incomplete.
+
+**THE FEATURE-ADD FLOOR IS A PROPERTY OF THE FEATURE.** 0.0250 for `fv`, 0.0045 for
+`tool_speed`, on the same pool with the same estimator. Any driver lane that quotes a
+generic feature-add floor is quoting a number from a different experiment.
+
+#### What earned the registration for the clustered class
+
+The head-to-head frame is 3.068 rows per player. Row-level i.i.d. resampling narrows its sd
+by **1.519x in the anti-conservative direction**, so it needed a clustered coverage check
+against a clustered simulator, not an inherited registration. Design-matched clustered DGP,
+n_check = 200, M = 300, B = 300, central binomial acceptance [0.920, 0.980]:
+
+| estimator | boot sd / true sd | coverage | gate |
+|---|---|---|---|
+| **cluster (players resampled)** | **1.004** | **0.965** | **PASS, REGISTERED** |
+| row i.i.d. | 0.680 | 0.800 | **FAIL UNDER-COVERS**, published as the size of the violation |
+
+X3: every class detects the known-real hitter `fv` effect wherever E_refit does (the block
+instrument detects where E_refit does not). X4: the instrument DOES resolve losses (fire
+rates 0.585 win / 0.450 loss at matched |effect|), so the registered refusal clause does
+not fire; the lab's own tighter 0.80-1.25 band does fail at 0.769, and the gap is fully
+accounted for by the two arms' unequal STANDARDIZED effects (z 1.786 against 1.564, with
+both observed rates within 0.03 of normal theory).
+
+#### The one cell that resolves, and why it is not a green light
+
+The head-to-head margin clears its E_cond floor **by 3%**. It is NULL under E_refit
+(0.963x); it does not survive Holm over the 13-cell family (smallest p 0.0449 against a
+step-1 alpha of 0.00385); on the currently SERVED delta (+0.0297, n 3,210) it is a NULL at
+0.923x; and its 90% interval [+0.0010, +0.0654] does not clear the owner's registered
+0.02 shipping margin. **It is a resolvably non-zero margin that is not resolvably large
+enough to ship a claim on.**
+
+#### AND THE FRAME CARRIES THE MARGIN. Measured 2026-08-09, not previously known.
+
+The head-to-head frame scores ONE eFV grade per player against UP TO SEVEN consensus
+vintages (3,224 rows over 1,051 players). That geometry, not the model, is where the margin
+comes from.
+
+| frame | rows | delta | E_cond |
+|---|---|---|---|
+| pooled, all vintages (SHIPPED) | 3,224 | +0.03318 | 1.031x resolves |
+| one row per player, LATEST vintage | 1,051 | -0.04918 | 1.732x resolves as a LOSS |
+| **one row per player, latest PRE-DEBUT** | **1,003** | **+0.00567** | **0.232x NULL** |
+
+Consensus rho against career WAR is 0.280 on each player's earliest read and 0.420 on the
+latest, while eFV is fixed at the debut-year decision. And **554 of the 4,284 common-set
+rows (12.9%) carry a consensus read taken AFTER the player debuted**, where the consensus
+scores 0.402 against 0.261 pre-debut. `source_backtest._xfv_vs_consensus_detail` already
+strips post-debut reads from the RECEIPTS table (audit fix 2026-07-15); the pooled
+statistic behind the served verdict does not.
+
+**On the like-for-like frame the two are tied.** Detail and method in
+`docs/efv-2026-08-08/POWER_EXTENSION_GATE.md` part B step 3. No served statistic was
+changed by that lane; it is a reported finding with a named next measurement.
+
+#### The triage this registration makes possible
+
+With both estimators on the same cell, the fit component is sqrt(sd_refit^2 - sd_cond^2),
+and 1.645 times it is the floor that survives infinite test n with the training corpus
+held. **Ten of the thirteen family cells sit below their own E_refit asymptote**, which
+means no number of new cohorts can resolve them under E_refit. Under E_cond the dates run
+2028 (feature add `fv` pooled) to 2283. Retire the far ones; do not re-report them as fresh
+nulls each cycle.
+
+The refit share of variance is NOT a constant of the program: **0.504 on hit full_pool,
+0.128 on the head-to-head**, a 3.9x spread on two claims that sit on the same page. The
+"more cohorts cannot fix power" argument must name its cut. On the head-to-head, 64% of the
+floor IS removable by more resolved cohorts.
+
+## 8. Equivalence margin: every open cell resolves three ways (registered 2026-08-08)
+
+**Delta = 0.02 Spearman**, registered by the owner. A NULL answers a question nobody asked.
+With a margin, every cell has three possible dispositions and two of them are knowledge:
+
+- **SHIP** - the interval lies entirely above +Delta.
+- **RULED OUT** - the interval lies entirely inside +/- Delta. The effect may be real, and
+  it is smaller than anything worth shipping. This is a RESULT, not a null.
+- **UNDECIDED** - neither. Only this one is an absence of knowledge.
+
+The interval is delta +/- 1.645 sd, the same one-sided alpha 0.05 the floors use. A large
+adverse effect (interval entirely below -Delta) is reported as RESOLVED_LOSS, not as
+UNDECIDED.
+
+First application, 2026-08-09, over the 13-cell part-B family: **4 RULED OUT, 9 UNDECIDED,
+0 SHIP.** The three lambda shifts are RULED OUT, which closes the standing question of the
+0.70 pin against the selector's own 0.51 argmax: the move is worth -0.0015 pooled rho with
+a 90% interval inside +/- 0.005.
+
+**Know what the margin can and cannot do.** TOST decides a cell only when
+|delta| + floor < Delta. Nine of these thirteen cells have an E_cond floor of 0.0203-0.0322
+on its own, so at Delta = 0.02 they cannot be decided in either direction no matter what
+the point estimate is. Deciding the pooled cuts or the head-to-head would need a margin
+near 0.045. That is a fact about the registration, not about eFV.

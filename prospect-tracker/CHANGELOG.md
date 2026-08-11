@@ -10,6 +10,82 @@ Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
 pre-registered experiment gates), docs/audit-2026-07-18/FINDINGS.md (fresh
 audit), REVIEW_QUEUE.md (deferred work), BETA_READINESS.md (go/no-go).
 
+## 2026-08-10 (betting go-live, eFV conviction, consensus: the results are negative)
+
+Nothing in this program moved a served grade, a source weight or a published
+price. Four measurements resolved and three of them resolved against us.
+
+1. THE BETTING MODEL GRADES FOR THE FIRST TIME, AND LOSES TO "ALWAYS TAKE THE
+   HOME TEAM". Vintage-dated inputs (team, pitcher and park stamped strictly
+   before each game) took the gradable pool to 429 games and graded 221,
+   2026-07-06 to 2026-08-09. Brier 0.24865 against 0.24774 for the constant
+   home-field baseline and 0.25 for flat 0.500. Paired skill delta -0.000907 at
+   t -0.248, so this is a NULL at n=221, not a resolved defeat. Accuracy 0.5249
+   against a 0.5475 home-win rate; log loss 0.69041 vs 0.69315 flat; total MAE
+   3.577. 600 graded games are required before min_edge may be fitted, so the
+   sample is 37% of its own gate. min_edge stays null and pick_of_the_day stays
+   null. `betting_game_prob` moves unvalidated -> provisional along the flip
+   path that row pre-registered, and now carries data/betting_model_eval.json.
+   The in-sample and forward-split blocks in that artifact remain contaminated
+   by construction and are labelled so; only `vintage` is out of sample.
+
+2. THE RUN-DISPERSION GATE IS INDETERMINATE, NOT PASSED. Criterion 2 named no
+   runline side in V1 and the first run scored the home side alone; the side
+   decides the verdict (home t -0.679, away t +3.345 at the shipped split).
+   Under the amended both-sides criterion the gate passes at split quantiles
+   0.6 (t 3.076) and 0.7 (t 2.849) and fails at 0.8 (t 1.244). The
+   all-three-splits rule was declared before the sweep, so the verdict is
+   INDETERMINATE, SERVE_RUN_DISPERSION stays False and the NB2 alpha 0.277 is
+   measured but not served.
+
+3. SOURCE ACCURACY BY COHORT IS UNANSWERABLE IN MOST CELLS. NO WEIGHT SHIPS.
+   1,514 deduped players, base years 2017-2023 at lag 3. The global FanGraphs
+   minus MLB Pipeline head-to-head does not resolve: d_rho -0.02911 against
+   MDE95 0.03624. 4 of 25 scored cells clear their own MDE95 against 1.25
+   expected by construction at alpha 0.05, only 3 survive per-partition Holm,
+   and those 3 are largely the same players seen through three partitions.
+   Heterogeneity does not reject one common difference (Cochran Q p 0.2793,
+   label permutation p 0.2629, I2 20.5%). All six cohort-weight arms lose to
+   equal weight, random cohort labels do no worse (permutation p 0.4378), and
+   the in-sample global oracle gain 0.00132 sits below the 0.0068 ship gate, so
+   estimation error is not the binding constraint: two predictors correlated
+   0.7134 at similar scale have a nearly flat response surface in the mixing
+   weight, which is geometry that more base years cannot change. Published at
+   /glossary/#view=source-accuracy with every cell's MDE95 beside it.
+   The label-free precision route that would sidestep the label power problem
+   returns identified=false: Baseball America carries 0 usable rows against a
+   30-row floor, and two sources cannot identify a measurement-error model.
+   Nothing was estimated. It restores with no code change when BA re-ingests.
+
+4. THE DISTRIBUTIONAL RECALIBRATION IS NO_SHIP, on both attempts. The
+   parametric cumulative-logit Platt families (lane C2) and the IDR / EasyUQ
+   family of four PAVA fits on the threshold indicators (lane B-L5, n=1,328
+   non-provisional scored rows, 9 folds) both fail their gates. IDR beats both
+   climatologies and does no per-threshold harm, but G1 fails under E_refit
+   (Holm p 0.055 against 0.002 under E_cond) and G3 fails on the decomposition:
+   it buys calibration (MCB 0.0250 -> 0.0060) by spending discrimination
+   (DSC 0.0687 -> 0.0615), which is the trade the gate was written to refuse.
+
+5. eFV IS LARGELY AN OPPORTUNITY MODEL, AND NO REWEIGHTING CAN EXPLOIT IT.
+   rho(FV, six-year PA) 0.5074 against rho(FV, WAR) 0.3779 on 836 debuted
+   hitters; 0.3803 against 0.2669 on 972 pitchers. Seven arms tried to trade on
+   the split and none was promoted: three are resolvable losses (worst
+   -0.0892, 3.02x its floor) and four are nulls. The reason is geometric: the
+   cosine between ridge weights fitted to WAR and to opportunity on the same
+   features is 0.9485 hit and 0.9605 pit, leaving 10.0% and 7.8% of the weight
+   variance orthogonal. A new feature can move this; a new weighting cannot.
+
+REGISTRY AND CATALOG. Three rows added (`xfv_opportunity`,
+`source_cohort_accuracy`, `source_precision_label_free`), one amended
+(`betting_game_prob`), each with its methodology-freshness mapping.
+data/source_cohort_accuracy.json enters the published catalog and runs on the
+pipeline between run_source_backtest and run_consensus_weight_ab, which is the
+order its reproduction leg and the weight eval's sidecar both require.
+test_data_catalog.py is new: every catalog row's stability, group and cadence
+are read with a bare subscript on the /sources/ render path, a missing one kills
+the page rather than degrading, and no test asserted the property over the
+rendered rows.
+
 ## 2026-08-06b (tool provenance on the board)
 
 GOLDEN FINGERPRINT RESTAMPED 344db288 -> 5430ea7b. No served GRADE moved; the

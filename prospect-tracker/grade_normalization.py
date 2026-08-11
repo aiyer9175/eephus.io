@@ -28,6 +28,68 @@ Still reproducible and diff-able (normalized_consensus below is the analysis vie
 No fabricated grades: a (source, role, cycle) cell below `min_n` falls back to the
 source's pooled all-year distribution (flagged), and a cell with no FanGraphs
 reference is skipped.
+
+AS-OF (2026-08-09)
+------------------
+That pooled fallback reads the FUTURE. `_paired_dists` pools a thin cell across
+ALL years for the role, so the 2021 mapping was estimated partly off 2024 to 2026
+pairs, and `build_remapper` inherited it. Measured on the 2026-08-09 DB: 3,577 of
+14,788 normalized (source, player, role, year) units, 24.19%, are served by a
+pooled cell. Only 99 of them are actually contaminated in the 2017+ window, since
+every (source, role, year) cell from 2017 on already clears n_pair >= 30 EXCEPT
+mlb_pipeline_international hitter 2021 (18), 2022 (19) and 2023 (28), plus that
+list's pitcher cells, which are so thin (1 to 4 pairs) that even the all-year pool
+misses min_n and they already fall to the mlb_pipeline alias cell.
+
+`as_of_year` (threaded through _pairs, _paired_dists, build_remapper and the three
+analysis views) caps every cell at min(cell_year, as_of_year), so a cell can never
+pool a cycle that had not happened yet. Default None reproduces the pre-2026-08-09
+behaviour exactly. Effect of turning it on, in FV: +6.9875 on the 25
+mlb_pipeline_international hitter 2021 units (that cell loses its own pool and drops
+to the mlb_pipeline alias cell), +1.3692 on the 40 in 2022, +0.7912 on the 34 in 2023.
+
+THE AS-OF VIEW IS YEAR GRANULAR: it does not remove within-cycle pooling, and the
+size of what it leaves behind is measured, not hand-waved. On the 2026-08-09 DB,
+10,361 of 30,911 (source, player, year) groups carrying an FV (33.52%) hold more
+than one dated snapshot, so a February point is still normalized against a cell
+built from that cycle's LATEST grades, December included. The bound is small but
+not zero: the grade itself moves inside the cycle on 789 of those 10,361 groups
+(7.62%; mean |last - first| 0.4338 FV, max 15.0), and refitting every min_n-clearing
+cell from each source's FIRST dated grade instead of its latest moves the offset on
+32 of 39 cells, mean 0.2760 FV, max 1.9118 FV (espn pitcher 2025, +2.3529 ->
++0.4412). Closing that needs a DATE-granular cap, which is its own lane.
+
+PRE-2017 IS DELIBERATELY NOT FIXED. FanGraphs, the REFERENCE scale, has no row
+before 2017-02-15, so the 3,478 mlb_pipeline units in 2011 through 2016 have
+n_pair = 0 and there is no as-of reference to pool against AT ALL. A strict as-of
+would drop their offset entirely: +3.89 to +3.91 FV on all 3,478, a much larger
+basis move than the leak it repairs, so cells earlier than _REFERENCE_FIRST_YEAR
+keep today's all-year pooling. Correcting them is its own gated lane, not a side
+effect of this one.
+
+THAT EXEMPTION MEANS as_of_year IS NOT A CORPUS TRUNCATION, SO A CUTOFF BELOW
+_REFERENCE_FIRST_YEAR NOW RAISES (2026-08-09b). Measured on the 2026-08-09 DB by
+building the table at as_of_year=2013: ALL 120 of the 2017+ cells empty (cap 2013,
+no reference row at or before 2016) and fall to raw, while 66 pre-2017 cells
+survive on their uncapped pools, and those pools are 100% LATER than the cutoff -
+mlb_pipeline hitter 2013 is estimated off 3,982 pairs, every one from 2017 through
+2026, i.e. 4 to 13 years after it, and the pitcher cell off 3,325 the same way. A
+pre-reference cutoff therefore INVERTS the intent: the only cells that keep an
+offset are the ones whose offset is entirely future, a strictly worse leak than
+the 99-unit one the cap closes. A docstring caveat is skippable and an exception
+is not, so this is a ValueError rather than a documented footgun. The 3,478
+pre-2017 SERVED units (all mlb_pipeline; the other pre-2017 cells exist in the
+table but no player is graded by those sources that early) keep the uncapped pool
+at any LEGAL cutoff. That is the exemption, unchanged.
+
+A cell LATER than the cutoff is NOT dropped, it CARRIES FORWARD. cap =
+min(cell_year, as_of_year) leaves it no own-year pairs, and the thin-cell fallback
+then pools every cycle at or before the cutoff. Measured: build_remapper(
+as_of_year=2019) maps remap(50, mlb_pipeline, SS, 2026) to 45.7388 off a 1,076-pair
+2017-2019 pool, against 46.4069 under the uncapped table and 50.0 raw. Carry-forward
+is the right as-of answer (it is the last mapping a 2019 observer could have fitted,
+where raw would reinstate a known ~+4 FV bias), and it never fires in production:
+consensus passes the newest year in the corpus, so no cell is later than the cutoff.
 """
 from __future__ import annotations
 
@@ -42,6 +104,10 @@ _DB = _HERE / "prospects.db"
 
 REFERENCE = "fangraphs"          # the scale everything is mapped onto
 _MIN_N = 30                      # below this, pool the source across years (flagged)
+# First year the REFERENCE exists: min(snapshot_date) for fangraphs is 2017-02-15
+# (24,503 rows, 24,501 with an FV). Earlier cells have n_pair = 0 and no as-of
+# reference at all, so they are exempt from the as-of cap. See the module docstring.
+_REFERENCE_FIRST_YEAR = 2017
 _MATERIAL_DRIFT_FV = 2.0         # |median shift| >= this FV is "material"
 _PITCHER_TOKENS = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP", "CL", "P"}
 
@@ -101,28 +167,40 @@ def _all_latest() -> dict:
     return out
 
 
-def _pairs(source: str, role: str, year: int) -> list[tuple[float, float]]:
+def _pairs(source: str, role: str, year: int,
+           as_of_year: int | None = None) -> list[tuple[float, float]]:
     """(source_fv, reference_fv) for players graded by BOTH the source and the
-    reference in a (role, year) cycle -- the overlap that controls for coverage."""
+    reference in a (role, year) cycle -- the overlap that controls for coverage.
+
+    `as_of_year` is the knowledge cutoff: a cycle later than the cutoff had not
+    been published yet, so it contributes nothing. None = every cycle (default)."""
+    if as_of_year is not None and year > as_of_year:
+        return []
     m = _all_latest().get((role, year), {})
     return [(d[source], d[REFERENCE]) for d in m.values()
             if source in d and REFERENCE in d]
 
 
 @functools.lru_cache(maxsize=256)
-def _paired_dists(source: str, role: str, year: int) -> tuple:
+def _paired_dists(source: str, role: str, year: int,
+                  as_of_year: int | None = None) -> tuple:
     """(source_sorted, reference_sorted, pooled_flag) over the SAME players. When
     the cycle overlap is thinner than min_n, pool the overlap across all years for
     that source and role (flagged). Comparing a source to FanGraphs on the same
     players separates a genuine scale bias from a coverage difference (a top-only
-    source is not treated as 'hot' just because it skips the low tiers)."""
-    pairs = _pairs(source, role, year)
+    source is not treated as 'hot' just because it skips the low tiers).
+
+    `as_of_year` bounds that pool to cycles <= the cutoff. Without it the pool
+    reads the future: measured 2026-08-09, the mlb_pipeline_international hitter
+    2021 cell (n_pair 18) was estimated off 182 pooled pairs that run through 2026.
+    None (default) keeps the all-year pool, i.e. the pre-2026-08-09 behaviour."""
+    pairs = _pairs(source, role, year, as_of_year)
     pooled = False
     if len(pairs) < _MIN_N:
         allp: list = []
         for (r, y) in list(_all_latest().keys()):
-            if r == role:
-                allp.extend(_pairs(source, r, y))
+            if r == role and (as_of_year is None or y <= as_of_year):
+                allp.extend(_pairs(source, r, y, as_of_year))
         if len(allp) >= _MIN_N:
             pairs, pooled = allp, True
     if not pairs:
@@ -158,26 +236,37 @@ def _apply_offset(fv: float, src, ref) -> float:
     return float(min(80.0, max(20.0, fv - offset)))
 
 
-def quantile_map(fv: float, source: str, role: str, year: int) -> float | None:
+def quantile_map(fv: float, source: str, role: str, year: int,
+                 as_of_year: int | None = None) -> float | None:
     """Map a source grade onto the FanGraphs FV scale by matching quantiles on the
     two sources' PAIRED (same-player) distributions. The reference maps to itself.
-    None if there is no usable overlap distribution."""
+    None if there is no usable overlap distribution.
+
+    `as_of_year` is threaded so this analysis view reports the SAME scale the live
+    consensus is on. It was not, and that was a latent divergence: if
+    consensus.GRADE_NORM_AS_OF is ever flipped, an untreaded view would keep
+    publishing the uncapped mapping beside a capped board. Default None, so the
+    caller opts in exactly as build_remapper's caller does."""
     if fv is None:
         return None
     if source == REFERENCE or source in _SYNTHETIC_SOURCES:
         return float(fv)
-    src, ref, _pooled = _paired_dists(source, role, year)
+    src, ref, _pooled = _paired_dists(source, role, year, as_of_year)
     if len(src) == 0 or len(ref) == 0 or not _mappable(src, ref):
         return None
     return _apply_offset(float(fv), src, ref)
 
 
-def drift_row(source: str, role: str, year: int) -> dict | None:
+def drift_row(source: str, role: str, year: int,
+              as_of_year: int | None = None) -> dict | None:
     """Per (source, role, cycle) drift on the OVERLAP with FanGraphs: the source's
     raw grade median vs the FanGraphs grade median for the same players, and the
     median mapping shift. `material` flags a scale that grades materially hot or
-    cold relative to FanGraphs (a genuine scale bias, coverage controlled for)."""
-    src, ref, pooled = _paired_dists(source, role, year)
+    cold relative to FanGraphs (a genuine scale bias, coverage controlled for).
+
+    `as_of_year` capped for the same reason quantile_map is: the drift table has to
+    describe the mapping the board actually applied. Default None."""
+    src, ref, pooled = _paired_dists(source, role, year, as_of_year)
     if len(src) == 0:
         return None
     if source == REFERENCE:
@@ -224,7 +313,8 @@ def _latest_player_grades(year: int) -> dict:
             for pk, rec in latest.items()}
 
 
-def build_remapper(years: list[int] | None = None, aliases: dict | None = None):
+def build_remapper(years: list[int] | None = None, aliases: dict | None = None,
+                   as_of_year: int | None = None):
     """Precompute the per-(source, role, cycle) quantile-mapping distributions in a
     SINGLE DB pass and return a PURE closure remap(fv, source, position, year) -> fv
     on the FanGraphs scale. Lets consensus.py ADOPT the normalized consensus without
@@ -244,7 +334,38 @@ def build_remapper(years: list[int] | None = None, aliases: dict | None = None):
     positive), while every OTHER pair of co-published Pipeline lists agrees to
     0.035 FV mean absolute on 1,564 same-date rows. So a list gets its own cell
     when one is measurable, and falls back to its canonical outlet's cell (NOT to
-    the raw scale) when it does not. Passing aliases=None keeps the old behaviour."""
+    the raw scale) when it does not. Passing aliases=None keeps the old behaviour.
+
+    `as_of_year` (2026-08-09) closes the pooled-fallback leak: each cell is built
+    at cap = min(cell_year, as_of_year), so the 2021 mapping cannot be estimated
+    off 2024-2026 pairs. None (default) is today's behaviour, cell for cell.
+
+    IT IS NOT A CORPUS TRUNCATION, because cells earlier than _REFERENCE_FIRST_YEAR
+    are EXEMPT and keep the all-year pool (the reference does not exist before
+    2017-02-15, and a strict cap would silently drop the offset on 3,478
+    mlb_pipeline units, +3.89 to +3.91 FV each). Two consequences, both measured on
+    the 2026-08-09 DB and both spelled out because the earlier wording promised a
+    backtest view this argument does not deliver:
+
+      * as_of_year < _REFERENCE_FIRST_YEAR RAISES. At as_of_year=2013 all 120 of the
+        2017+ cells emptied and fell to raw while 66 exempt pre-2017 cells survived
+        on pools that are 100% later than the cutoff (mlb_pipeline hitter 2013: 3,982
+        pairs, all 2017-2026), so the only surviving offsets would be entirely
+        future. See the module docstring.
+      * a cell LATER than the cutoff CARRIES FORWARD rather than dropping to raw:
+        it has no own-year pairs under the cap, so the thin-cell fallback pools
+        every cycle at or before the cutoff. build_remapper(as_of_year=2019) maps
+        remap(50, mlb_pipeline, SS, 2026) to 45.7388 off a 1,076-pair 2017-2019
+        pool (uncapped table 46.4069, raw 50.0). Intended: that is the newest
+        mapping the cutoff could have fitted. It cannot fire in production, where
+        consensus passes the newest year in the corpus."""
+    if as_of_year is not None and as_of_year < _REFERENCE_FIRST_YEAR:
+        raise ValueError(
+            f"as_of_year={as_of_year} is before _REFERENCE_FIRST_YEAR="
+            f"{_REFERENCE_FIRST_YEAR}: the pre-reference exemption would serve those "
+            "cells a pool that is 100% LATER than the cutoff (3,982 pairs, all "
+            "2017-2026, for mlb_pipeline hitter 2013) while every 2017+ cell fell "
+            "to raw. Cap at _REFERENCE_FIRST_YEAR or later.")
     latest = _all_latest()
     sources: set[str] = set()
     for players in latest.values():
@@ -254,10 +375,15 @@ def build_remapper(years: list[int] | None = None, aliases: dict | None = None):
     for (role, yr) in list(latest.keys()):
         if years is not None and yr not in years:
             continue
+        # Pre-reference cells are exempt from the cap (see the docstring): capping
+        # them removes the only pool they have instead of removing a leak.
+        cap = None
+        if as_of_year is not None and yr >= _REFERENCE_FIRST_YEAR:
+            cap = min(yr, as_of_year)
         for src in sources:
             if src == REFERENCE or src in _SYNTHETIC_SOURCES:
                 continue
-            s_sorted, r_sorted, _pooled = _paired_dists(src, role, yr)
+            s_sorted, r_sorted, _pooled = _paired_dists(src, role, yr, cap)
             if not (len(s_sorted) and len(r_sorted) and _mappable(s_sorted, r_sorted)):
                 continue
             if len(s_sorted) < _MIN_N:
@@ -295,17 +421,21 @@ def build_remapper(years: list[int] | None = None, aliases: dict | None = None):
     return remap
 
 
-def normalized_consensus(year: int, min_sources: int = 2) -> dict:
+def normalized_consensus(year: int, min_sources: int = 2,
+                         as_of_year: int | None = None) -> dict:
     """Per player in a cycle: the RAW mean of per-source grades vs the mean of
     the NORMALIZED (FanGraphs-scale) grades, and the difference. Deterministic
-    and reproducible. Only players with >= min_sources sources are included."""
+    and reproducible. Only players with >= min_sources sources are included.
+
+    `as_of_year` passes straight to quantile_map so this diff view and the live
+    board can be put on one basis. Default None."""
     players = {}
     for pk, rec in _latest_player_grades(year).items():
         role = rec["role"]
         raws, norms, used = [], [], []
         for src, fv in rec["sources"].items():
             raws.append(fv)
-            nm = quantile_map(fv, src, role, year)
+            nm = quantile_map(fv, src, role, year, as_of_year)
             if nm is not None:
                 norms.append(nm)
                 used.append(src)

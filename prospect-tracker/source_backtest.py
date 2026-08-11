@@ -139,7 +139,28 @@ FV_TIERS = (
 # (draft_year - birth_year), which matches explicit scouting HS/college labels
 # ~99% of the time and needs no extra data source (self-contained on the
 # exported universe).
-_PITCH_POS = {"P", "RHP", "LHP", "SP", "RP", "SIRP", "MIRP"}
+# CP and CL added 2026-08-09 (lane C-A2). The set was written against the
+# FanGraphs / MLB Pipeline role vocabulary (SIRP / MIRP) and never learned the
+# closer token Baseball America uses: prospects.db carries 22 snapshot rows at
+# position CP, all on the 2023 BA org boards, and they reach the published table
+# through the player-level `position` the export carries. On the current universe
+# that mislabelled 6 distinct players as BATS: 23 rows of the 4,284-row pooled
+# common set (13 college_bat, 8 hs_bat, 2 intl_bat) and, after the one-row-per-
+# player dedup the archetype table runs on, 6 of 1,517 (3 college_bat, 2 hs_bat,
+# 1 intl_bat). CL is not in the database today and is added with CP because it is
+# the same role in the other common spelling: a closer must not be able to enter
+# the bat/arm split as a bat because of which outlet typed the row.
+# The intl_arm cell is 196 rows, so 1 misrouted row is 0.5% of it.
+_PITCH_POS = {"P", "RHP", "LHP", "SP", "RP", "SIRP", "MIRP", "CP", "CL"}
+# TWP (two-way) is EXCLUDED from the split, not guessed into it. The archetype
+# axis is bat-vs-arm and a two-way player is a member of both, so any assignment
+# is a coin flip that a reader would nonetheless read as a measurement, and the
+# cell it lands in is one of the thin ones (intl_arm n=195). 6 players in the
+# universe carry TWP and NONE of them is in today's common set, so excluding them
+# moves no published number now and prevents a silent miscount when one arrives.
+# 4C (four-corners) stays a bat by falling through: it is a corner-infield /
+# corner-outfield label, not a pitching role.
+_TWO_WAY_POS = frozenset({"TWP"})
 _ARCH_ORDER = ("hs_bat", "hs_arm", "college_bat", "college_arm", "intl_bat", "intl_arm")
 _ARCH_LABELS = {
     "hs_bat": "HS bats", "hs_arm": "HS arms",
@@ -148,9 +169,31 @@ _ARCH_LABELS = {
 }
 ARCH_MIN_N = 40   # don't score a thinly-populated archetype
 
+# --------------------------------------------------------------------------
+# Which protocol produced a rater's number (F3, 2026-08-09).
+# --------------------------------------------------------------------------
+# The per-source bars are scored IN SAMPLE on the common set: the boards were not
+# fit to these outcomes, but they are not held out from them either, and the same
+# rows both define the population and score it. eFV enters with its forward-chained
+# out-of-sample grade, which is the HARDER bar. The module has always said so in
+# prose (`_xfv_vs_consensus`'s docstring, the surface's "more conservative test than
+# the in-sample common-set bars above"), and the served numbers carried no field a
+# renderer could key off, so the marker on the surface was a hardcoded rater name.
+# That breaks silently the day a second out-of-sample model joins the table. The
+# basis now travels WITH the number.
+_OOS_RATERS = frozenset({"xfv"})
+BASIS_IN_SAMPLE = "in_sample_common_set"
+BASIS_OOS = "forward_chained_oos"
+
+
+def _rater_basis(rater: str) -> str:
+    return BASIS_OOS if rater in _OOS_RATERS else BASIS_IN_SAMPLE
+
 
 def _archetype(p: dict) -> str | None:
     pos = (p.get("position") or "").upper().split("/")[0]
+    if pos in _TWO_WAY_POS:
+        return None
     side = "arm" if pos in _PITCH_POS else "bat"
     a = p.get("acquisition") or {}
     method = a.get("method")
@@ -509,7 +552,8 @@ def _archetype_accuracy(common_rows: list[dict], raters: list[str]) -> list[dict
                 wars = [c["outcome"]["war"] for c in rr]
                 contrib = [c["outcome"]["contributor"] for c in rr]
                 sp, au = _spearman(fvs, wars), _auc(fvs, contrib)
-                per[r] = {"n": len(rr), "spearman": round(sp, 4) if sp is not None else None,
+                per[r] = {"n": len(rr), "basis": _rater_basis(r),
+                          "spearman": round(sp, 4) if sp is not None else None,
                           "auc": round(au, 4) if au is not None else None}
             return per
 
@@ -626,6 +670,77 @@ XFV_VS_CONSENSUS_MDE95 = 0.044
 #: cluster paired bootstrap over the eFV matrix pool with a refit per draw;
 #: ledger data/xfv_headtohead_gap.json. One-sided 95%, sd 0.02139.
 XFV_HEADTOHEAD_MDE95 = 0.0352
+
+#: MDE95 for the THIRD gap the site asserts, and the one it defends blending with:
+#: the PROSPX consensus against its best single input on the pooled common set
+#: (accuracy.consensus_vs_inputs). Per metric, because the two legs do not have the
+#: same precision and one of them is resolvable while the other is not.
+#:
+#: Measured 2026-08-09 on the shipped pooled common set (4,284 rows, 1,568 distinct
+#: players, base years 2017-2023): cluster bootstrap BY PLAYER, B=2000, seed
+#: 20260809, with the max-over-inputs recomputed inside every draw so the argmax is
+#: resampled honestly rather than pinned to today's winner. One-sided 95%
+#: (1.645 * sd), the same convention as the two floors above.
+#:
+#:   Spearman  consensus 0.2825  best input 0.2810 (mlb_pipeline)  delta +0.00153
+#:             sd 0.007342  CI95 [-0.01291, +0.01558]  MDE95 0.0121
+#:   AUC       consensus 0.7334  best input 0.7218 (mlb_pipeline)  delta +0.01158
+#:             sd 0.004757  CI95 [+0.00224, +0.02109]  MDE95 0.0078
+#:
+#: WHAT THIS CHANGES. `consensus_wins` was a bare `cons >= best_input`, so the
+#: surface rendered "the blend wins" on BOTH legs. The AUC leg earns it: +0.01158
+#: is 1.48x its floor and its CI excludes zero. The Spearman leg does NOT: +0.00153
+#: is 0.13x its floor and its CI straddles zero, so the ordering claim was a coin
+#: flip printed as a result. The defensible statement is narrower and is the one the
+#: measurement supports: BLENDING BUYS DISCRIMINATION, NOT ORDERING. The consensus
+#: separates future contributors from non-contributors better than any single input,
+#: and it does not order realized WAR better than MLB Pipeline alone.
+#:
+#: The `>=` also handed the blend an exact tie. A tie is not a win, so the test is
+#: now a strict `>` gated on resolvability.
+CONSENSUS_VS_INPUTS_MDE95 = {"spearman": 0.0121, "auc": 0.0078}
+
+
+def _beats(pooled: dict, metric: str, sources: tuple | None = None) -> dict:
+    """Does the consensus beat its best individual input on `metric`?
+
+    `pooled` is an accuracy.pooled-shaped {rater: {metric: value}} block. Returns the
+    two numbers, the delta, the floor this backtest can resolve, and a three-valued
+    verdict. `consensus_wins` is True only when the delta is BOTH positive under a
+    strict `>` and larger than CONSENSUS_VS_INPUTS_MDE95[metric]; everything else,
+    including an exact tie and any lead inside the floor, is False.
+
+    `sources` overrides SCORED_SOURCES for counterfactual labs that ask what an extra
+    rater would do to this claim (tools/ba_source_class_lab.py). Those labs run on a
+    DIFFERENT common set, so the floor below is a lower bound there, not the floor:
+    admitting Baseball America cuts the population hard (4,284 -> 295 when measured
+    2026-08-07b at 13-club coverage; 4,299 -> 666 after the 30-club backfill of
+    2026-08-10, i.e. 15.5% retention against a 75% gate) and the MDE95 grows with
+    1/sqrt(n), so a verdict computed on the shrunken pool is more conservative than
+    it looks, never less. The live figures are in `source_classification`.
+    """
+    sources = tuple(sources) if sources else tuple(SCORED_SOURCES)
+    vals = {r: (pooled.get(r) or {}).get(metric) for r in sources + (CONSENSUS_KEY,)}
+    cons = vals.get(CONSENSUS_KEY)
+    best_input = max((vals[r] for r in sources if vals[r] is not None), default=None)
+    mde95 = CONSENSUS_VS_INPUTS_MDE95.get(metric)
+    if cons is None or best_input is None or mde95 is None:
+        return {"consensus": cons, "best_input": best_input, "delta": None,
+                "mde95": mde95, "resolvable": False, "consensus_wins": False,
+                "verdict": "not measurable"}
+    delta = round(cons - best_input, 5)
+    resolvable = abs(delta) >= mde95
+    return {
+        "consensus": cons,
+        "best_input": best_input,
+        "delta": delta,
+        "mde95": mde95,
+        "resolvable": bool(resolvable),
+        "consensus_wins": bool(delta > 0 and resolvable),
+        "verdict": ("the blend wins" if (delta > 0 and resolvable)
+                    else "the best input wins" if (delta < 0 and resolvable)
+                    else "not resolvable at this power"),
+    }
 
 
 def _xfv_vs_consensus_detail(common_rows: list[dict]) -> dict | None:
@@ -820,12 +935,14 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
             fvs = [c["grades"][rater] for c in rr]
             wars = [c["outcome"]["war"] for c in rr]
             contrib = [c["outcome"]["contributor"] for c in rr]
+            sp, au = _spearman(fvs, wars), _auc(fvs, contrib)
             res[rater] = {
                 "n": len(rr),
-                "spearman": (round(_spearman(fvs, wars), 4)
-                             if _spearman(fvs, wars) is not None else None),
-                "auc": (round(_auc(fvs, contrib), 4)
-                        if _auc(fvs, contrib) is not None else None),
+                # The protocol behind the number, so the surface marks the
+                # in-sample bars off a FIELD and not off a rater name (F3).
+                "basis": _rater_basis(rater),
+                "spearman": round(sp, 4) if sp is not None else None,
+                "auc": round(au, 4) if au is not None else None,
             }
         return res
 
@@ -937,17 +1054,22 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
                         else "loses to consensus" if (_d < 0 and _res)
                         else "not resolvable at this power"),
         }
-    # Does the consensus beat its best individual input on each metric?
-    def _beats(metric: str) -> dict:
-        vals = {r: accuracy["pooled"][r].get(metric) for r in raters}
-        cons = vals.get(CONSENSUS_KEY)
-        best_input = max((vals[r] for r in SCORED_SOURCES if vals[r] is not None),
-                         default=None)
-        return {"consensus": cons, "best_input": best_input,
-                "consensus_wins": (cons is not None and best_input is not None and cons >= best_input)}
+    # Does the consensus beat its best individual input on each metric? Each leg
+    # carries its own measured floor (CONSENSUS_VS_INPUTS_MDE95) because the two do
+    # not have the same precision: on this vintage the AUC leg clears its floor by
+    # 1.48x and the Spearman leg reaches 0.13x of its own, so a bare inequality
+    # published a coin flip as a result on the ordering leg.
     accuracy["consensus_vs_inputs"] = {
-        "spearman": _beats("spearman"),
-        "auc": _beats("auc"),
+        "spearman": _beats(accuracy["pooled"], "spearman"),
+        "auc": _beats(accuracy["pooled"], "auc"),
+        "basis": ("pooled common set, every scored rater on identical rows; cluster "
+                  "bootstrap by player B=2000 seed 20260809, MDE95 = 1.645 * sd of the "
+                  "consensus-minus-best-input delta with the argmax over inputs "
+                  "recomputed inside each draw"),
+        "reading": ("Blending buys DISCRIMINATION, not ORDERING. The consensus separates "
+                    "future contributors from non-contributors better than any single "
+                    "input, and it does not order realized WAR better than MLB Pipeline "
+                    "alone: that gap is inside the floor this backtest can resolve."),
     }
     # OBS-1 (L4 bughunt-2, 2026-07-24e measurement fix): score archetypes on ONE row
     # per player (latest pre-debut read), matching _xfv_vs_consensus_detail's dedup.
@@ -1024,13 +1146,23 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         "source_class_rules": {
             "min_resolvable_rows_in_a_base_year": SOURCE_CLASS_MIN_ROWS,
             "min_common_set_retention": SOURCE_CLASS_MIN_COMMON_RETENTION,
+            # THIS NOTE IS PROSE ABOUT A MEASUREMENT, SO IT GOES STALE THE WAY
+            # THE THING IT REPLACED DID. The classification above is computed
+            # every run; this sentence is not. It was written when Baseball
+            # America held about 385 rows a vintage over 13 clubs and quoted
+            # "332 resolvable rows, common set 4,284 -> 295, 6.9% retention".
+            # A full 30-club backfill on 2026-08-10 moved every one of those
+            # numbers (749 resolvable, 4,299 -> 666, 15.5%) and the sentence went
+            # on asserting the old ones - the exact failure the block comment at
+            # the top of this file describes, reproduced by the fix for it.
+            # So the numbers now come from the computed rows, and only the RULE
+            # is prose.
             "note": ("A source is scoreable only if it has enough resolvable preseason "
                      "rows AND admitting it would not collapse the common set every "
-                     "other source is reported on. Baseball America clears the first "
-                     "(332 resolvable rows in the 2023 preseason) and fails the second "
-                     "(common set 4,284 -> 295, 6.9% retention). Measured in "
-                     "data/ba_source_class_eval.json; pre-registered in "
-                     "docs/efv-2026-08-07b/BA_SOURCE_CLASS_GATE.md."),
+                     "other source is reported on. Per-source counts, retention and "
+                     "the blocking condition are in `source_classification` above and "
+                     "are recomputed every run; do not restate them here. "
+                     "Pre-registered in docs/efv-2026-08-07b/BA_SOURCE_CLASS_GATE.md."),
         },
         "outcome_defs": {
             "contributor_war": CONTRIBUTOR_WAR,
@@ -1093,6 +1225,34 @@ def derive_source_weights(universe: list[dict], max_base_year: int) -> dict:
         shrunk = (n * raw + WEIGHT_SHRINK_K * 1.0) / (n + WEIGHT_SHRINK_K)
         out[s] = round(min(WEIGHT_CLAMP[1], max(WEIGHT_CLAMP[0], shrunk)), 4)
     return out
+
+
+def _cohort_ab_sidecar(data_dir: Path = DATA_DIR) -> dict | None:
+    """The cohort-weight A/B block, lifted from data/source_cohort_accuracy.json.
+
+    APPENDED, NOT REFIT. source_cohort_accuracy.py owns the estimator, the arms, the
+    permutation control and the shrink sensitivity; this reads the block it wrote and
+    stamps where it came from. If the sidecar is missing (a fresh checkout, or a run
+    ordered before it) the key is simply absent, which is honest: the global A/B does
+    not depend on it and must not fabricate it.
+    """
+    p = data_dir / "source_cohort_accuracy.json"
+    if not p.exists():
+        return None
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:                      # noqa: BLE001
+        log.warning("cohort_ab sidecar unreadable (%s); omitting from the weight eval", exc)
+        return None
+    ab = d.get("cohort_ab")
+    if not isinstance(ab, dict):
+        return None
+    # Provenance keys go LAST so a future block key cannot shadow them.
+    return {**ab,
+            "appended_from": "data/source_cohort_accuracy.json",
+            "produced_by": d.get("produced_by"),
+            "produced_at": d.get("generated_at"),
+            "ships_a_weight": d.get("ships_a_weight")}
 
 
 def run_consensus_weight_ab(data_dir: Path = DATA_DIR, write: bool = True) -> dict:
@@ -1179,8 +1339,18 @@ def run_consensus_weight_ab(data_dir: Path = DATA_DIR, write: bool = True) -> di
             "two-source A/B: only FanGraphs + MLB Pipeline have resolvable multi-year history; all other sources stay at weight 1.0 (equal) in the live blend — new sources are never punished for being new",
             f"weights shrunk toward equal with k={WEIGHT_SHRINK_K} pseudo-n, clamped {WEIGHT_CLAMP}",
             "ship rule (hardened 2026-07-25): weighted must beat equal by more than the gate can RESOLVE on BOTH metrics (d_rho >= 0.0068 = the measured MDE95, d_auc >= 0.0052); anything smaller is inside the noise floor and equal-weight retains",
+            "cohort_ab is APPENDED from data/source_cohort_accuracy.json, not refit here: it asks whether a PER-COHORT weight can do what one global weight cannot, and all of its arms are scored against these same two gate constants",
         ],
     }
+    # The cohort-weight A/B travels WITH the global A/B it extends (2026-08-09). Both
+    # ask the same ship question against the same two constants, and reading the
+    # global "ship: false" without the per-cohort arms invites the obvious follow-up
+    # ("would a weight per archetype work?") that has already been measured and
+    # answered no. Appended verbatim, never recomputed: source_cohort_accuracy.py owns
+    # that estimator and refitting it here would create a second number under one name.
+    cohort_ab = _cohort_ab_sidecar(data_dir)
+    if cohort_ab:
+        out["cohort_ab"] = cohort_ab
     if write:
         (data_dir / "consensus_weight_eval.json").write_text(
             json.dumps(out, indent=1), encoding="utf-8")

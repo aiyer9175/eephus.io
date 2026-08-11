@@ -278,6 +278,16 @@ SCHEDULED_EXPORTS = (
     # The /arbitration/ board. Watched because a silent failure
     # here empties a whole module rather than erroring.
     "arbitration_export",
+    # THE CLOSE-ODDS CAPTURE. Not an export this pipeline runs at all: it is
+    # tools/betting_close_job.py, on its own cron, and that is exactly why it is
+    # watched from here. The job exits 0 on every legitimate no-op, so a cron
+    # that was never installed, or is installed in the wrong timezone window,
+    # looks identical in the log to a healthy evening before first pitch.
+    # Measured 2026-08-09: 4 open snapshots cached, ZERO close snapshots ever,
+    # so CLV was ungradeable for every slate on record and nothing said so.
+    # The row is filed off .cache/odds/ (which survives `git checkout -- .`),
+    # never off a heartbeat (data/job_heartbeat.json does not).
+    "betting_close_capture",
 )
 
 # Recorded by _record_ingest during a run; drained by write_ingest_health.
@@ -2200,21 +2210,64 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 from betting_export import refresh_live as _refresh_betting
                 _refresh_betting(log=log.info)
             except Exception:
-                log.exception("daily: betting export failed — continuing")
-            # --- shadow ledger: settle yesterday, then log today ------------
+                log.exception("daily: betting export failed - continuing")
+            # --- close-capture health, off the cache that survives the night ---
+            # NOT a heartbeat. data/job_heartbeat.json is git-tracked and
+            # `git checkout -- .` reverts it before this pipeline runs, so a
+            # heartbeat written by the 19:00 close job is gone before the 03:10
+            # build could read it: the artifact would report the job as never
+            # having run whether it ran or not. This reads .cache/odds/, which
+            # is gitignored, survives the checkout, and is the same evidence CLV
+            # grading uses. `diagnosis` names the REPAIR, not the symptom.
+            try:
+                import betting_export as _be
+                _fh = _be.snapshot_health(days=14)
+                _msg = ("!!! BETTING RED: " + _fh["diagnosis"]) if _fh["red"] else _fh["diagnosis"]
+                _record_ingest("betting_close_capture", not _fh["red"],
+                               _fh.get("n_slates_with_close", 0), _msg, log=log)
+                if _fh["red"]:
+                    log.error("!!! BETTING RED: %s", _fh["diagnosis"])
+            except Exception as _e:
+                _record_ingest("betting_close_capture", False, 0,
+                               f"!!! BETTING RED: snapshot_health crashed: {_e}", log=log)
+            # --- the two ledgers: settle yesterday, then log today -----------
             # This is the loop that breaks gate 3. sweep_min_edge needs 100+
-            # settled bets carrying a taken price, and nothing produced them:
-            # publishing a pick needed min_edge, min_edge needed settled picks.
-            # Paper bets at the real captured price close that circle without
-            # the site claiming anything.
+            # settled bets carrying a taken price PER TAG, and nothing produced
+            # them: publishing a pick needed min_edge, min_edge needed settled
+            # picks. Paper bets at the real captured price close that circle
+            # without the site claiming anything, and the calibration ledger
+            # records every priced side with no floor at all so the probability
+            # curve is measured somewhere other than where the model disagrees
+            # with the market.
             #
             # SETTLE FIRST, then record. Settling reads the completed games that
             # step 9e-pre1 just refreshed, and recording reads the board the
             # export above just wrote, so this order uses both while current.
+            #
+            # BOTH LEDGERS SETTLE THROUGH betting_settle.run, on ONE read of the
+            # schedule. That is not an optimisation: two reads a few seconds
+            # apart can straddle a feed update and grade the same game two ways,
+            # and two ledgers over the same slate may never disagree about
+            # whether a side covered.
             try:
                 import json as _json
+                import betting_settle
                 import betting_shadow
-                _st = betting_shadow.settle(log_fn=log.info)
+                from tools import betting_calibration
+                # Move the paper ledger to .cache/betting/ before anything reads
+                # it. It used to sit in data/ untracked AND unignored, one
+                # `git add -A` away from the defect that destroyed the public
+                # record, and outside the one directory the runbook says to back
+                # up. Migrates whatever data/betting_shadow.json holds; a no-op
+                # once the durable copy exists.
+                _mig = betting_shadow.ensure_ledger()
+                if _mig.get("created"):
+                    log.info("shadow ledger: created the durable store at %s "
+                             "(migrated %s row(s))", _mig.get("path"),
+                             _mig.get("migrated"))
+                _settled = betting_settle.run(log_fn=log.info)
+                _st = _settled.get("shadow") or {}
+                _cst = _settled.get("calibration") or {}
                 _payload = _json.loads(
                     (out_dir / "betting.json").read_text(encoding="utf-8"))
                 _meta = _payload.get("pick_meta") or {}
@@ -2223,6 +2276,20 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 # slot selects on model probability inside a price band, which
                 # by construction can sit below the EV ranking, and a published
                 # pick with no ledger row is a claim with no evidence behind it.
+                #
+                # include_board_all=True IS THE VOLUME POLICY, DECIDED HERE
+                # (2026-08-09) because betting_shadow keeps it off by default and
+                # says the cost belongs at the call site. Gate 3 now sweeps PER
+                # TAG and needs 100 settled rows in one tag, not 100 pooled: at
+                # the measured 8.6 clearing sides a slate day the uncapped tag
+                # reaches that in roughly 7 to 12 slate days, ev_rank at 3 a day
+                # needs 34, and each single-pick slot needs about 100 - i.e. more
+                # slate days than remain in this season. Without this flag the
+                # per-tag gate is strictly harder to open than the pooled one it
+                # replaced and the module would have gone backwards. It is also
+                # the only tag whose ROI is a statement about the population the
+                # published floor is actually applied to, because it is the only
+                # one whose membership is not truncated by a cap.
                 _rec = betting_shadow.record_slate(
                     _payload,
                     min_edge=_meta.get("min_edge")
@@ -2231,16 +2298,80 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                                 "basis": _meta.get("basis")},
                     slots={k: _payload.get(k) for k in
                            ("pick_of_the_day", "longshot_of_the_day")},
+                    include_board_all=True,
                     log_fn=log.info)
+                # NO FLOOR on this one, by design. A side the model rated 0.31
+                # against a market fair 0.33 is worthless as a bet and exactly as
+                # informative about calibration as the one it liked.
+                _cal = betting_calibration.record_slate(_payload, log_fn=log.info)
                 _sum = betting_shadow.summary()
-                log.info("shadow ledger: +%s logged (%s, %s), %s settled, %s of %s "
-                         "settled bets toward the min-edge sweep",
+                _ready = _sum.get("sweep_readiness") or {}
+                # PER TAG, never pooled. docs/diamond-betting.md section 7a: a
+                # pooled ROI measures a mixture nobody bet, and a pooled COUNT
+                # in the log reads as one clock when there are four.
+                _per_tag = {t: b.get("n") for t, b in _ready.items()}
+                log.info("shadow ledger: +%s logged (%s, %s), %s settled; "
+                         "per-tag toward the sweep (need %s): %s",
                          _rec.get("written"), _rec.get("reason"),
-                         _rec.get("by_slot") or {},
-                         _st.get("settled"), _sum.get("n_for_min_edge_sweep"),
-                         _sum.get("min_bets_for_sweep"))
-            except Exception:
-                log.exception("daily: shadow ledger failed — continuing")
+                         _rec.get("by_slot") or {}, _st.get("settled"),
+                         _sum.get("min_bets_for_sweep"), _per_tag)
+                log.info("calibration ledger: +%s priced side(s), %s settled",
+                         _cal.get("written"), _cst.get("settled"))
+                _store = _sum.get("storage") or {}
+                if not _store.get("durable"):
+                    log.error("!!! BETTING RED: the paper ledger is not on the "
+                              "durable path: %s", _store.get("why"))
+                # THE MISSING HEARTBEAT. Every other tap in this step stamps one
+                # and this one never did, so the single loop that can open gate 3
+                # was the only betting job with no record that it ran. A shadow
+                # ledger that silently stops logging looks exactly like a slate
+                # on which nothing cleared the floor.
+                import job_heartbeat as _hb
+                _hb.record("betting_shadow_ledger", ok=True,
+                           result=(f"+{_rec.get('written')} logged, "
+                                   f"{_st.get('settled')} settled, per-tag "
+                                   f"{_per_tag} of "
+                                   f"{_sum.get('min_bets_for_sweep')}")[:120])
+                _hb.record("betting_calibration_ledger", ok=True,
+                           result=(f"+{_cal.get('written')} priced side(s), "
+                                   f"{_cst.get('settled')} settled")[:120])
+            except Exception as _e:
+                log.exception("daily: betting ledgers failed - continuing")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("betting_shadow_ledger", ok=False, result=str(_e)[:120])
+                    _hb.record("betting_calibration_ledger", ok=False,
+                               result=str(_e)[:120])
+                except Exception:
+                    pass
+            # --- the learning series (data/betting_learning.json) ------------
+            # LAST IN THE STEP, and the order is the whole point: it reads the
+            # eval 9e-pre1 refit, the board the export wrote, and both ledgers
+            # after tonight's rows landed in them. Run any earlier and the
+            # published series would be a day behind the numbers beside it.
+            #
+            # data_catalog advertises this file at cadence "daily" and nothing
+            # wrote it - the copy in the tree was produced BY HAND, so on
+            # production the row would have advertised a URL that 404s forever.
+            # Additive; never aborts.
+            try:
+                import betting_learning
+                import job_heartbeat as _hb
+                _lrn = betting_learning.run(log_fn=log.info)
+                _lat = (_lrn.get("latest") or {})
+                _vc = ((_lat.get("clocks") or {}).get("vintage_sample") or {})
+                _hb.record("betting_learning", ok=True,
+                           result=(f"vintage {_vc.get('have')}/{_vc.get('need')}, "
+                                   f"{_lrn.get('n_history')} history row(s), "
+                                   f"min_edge={(_lat.get('gates') or {}).get('min_edge')}"
+                                   )[:120])
+            except Exception as _e:
+                log.exception("daily: betting learning series failed - continuing")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("betting_learning", ok=False, result=str(_e)[:120])
+                except Exception:
+                    pass
 
         # --- 9f. Card comps ingest + market index (card_market.json) ------
         # THE CADENCE THE MODULE ALWAYS DOCUMENTED AND NEVER HAD. Before this,
@@ -4733,6 +4864,31 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                      len(_bt["window"]["years"]), _bt["accuracy"]["common_n"])
         except Exception:
             log.exception("source_backtest failed — continuing")
+        # Cohort-conditioned source accuracy (data/source_cohort_accuracy.json,
+        # served at /glossary/#view=source-accuracy). ORDER IS LOAD-BEARING and
+        # is why this sits exactly here, between its two neighbours:
+        #   AFTER  run_source_backtest, because the reproduction leg compares
+        #          its recomputed per-archetype Spearmans against the SERVED
+        #          data/source_backtest.json; run it first and that leg grades
+        #          the previous cycle's artifact.
+        #   BEFORE run_consensus_weight_ab, because source_backtest.
+        #          _cohort_ab_sidecar (source_backtest.py:1218, called at :1339)
+        #          reads this file and appends its cohort_ab block to the weight
+        #          eval. Missing file = key simply absent, which is honest but
+        #          silently drops the cohort arms from the eval every run.
+        # Ships NOTHING: it writes no source_weights.json and changes nothing in
+        # consensus.py. Same try/except-and-continue as its neighbours, and no
+        # heartbeat, because none of the backtests in this block has one.
+        try:
+            from source_cohort_accuracy import run_source_cohort_accuracy
+            _ca = run_source_cohort_accuracy(data_dir=out_dir, write=True)
+            log.info("source cohort accuracy: n=%d cells=%d answerable=%d ships_a_weight=%s",
+                     _ca["basis"]["deduped_players"],
+                     _ca["multiplicity"]["cells_tested"],
+                     _ca["multiplicity"]["cells_flagged_answerable"],
+                     _ca["ships_a_weight"])
+        except Exception:
+            log.exception("source cohort accuracy failed - continuing")
         # WS-5 — consensus weight A/B + vintage-frozen source weights. The
         # weights only move when a NEW base year resolves (yearly), so the
         # monthly rerun is a freshness pass, not a jitter source; they take

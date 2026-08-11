@@ -1,5 +1,15 @@
 """Tests for source_backtest.py — the source-vs-source predictive track record."""
+import pytest
+
 import source_backtest as sb
+
+
+@pytest.fixture(scope="module")
+def backtest():
+    """One live recompute for the whole module. run_source_backtest re-reads the
+    140MB universe and the eFV OOS grades, so calling it per test would dominate
+    the suite's runtime."""
+    return sb.run_source_backtest(write=False)
 
 
 class TestStatsHelpers:
@@ -51,9 +61,103 @@ class TestTierTable:
         assert tbl["50"]["debut_rate"] == 0.0
 
 
+class TestArchetype:
+    """F6 (2026-08-09). `_PITCH_POS` was written against the FanGraphs / MLB Pipeline
+    role vocabulary (SIRP / MIRP) and never learned the closer token Baseball America
+    types: prospects.db carries 22 snapshot rows at position CP, and 23 rows of the
+    pooled common set (6 of the deduped per-player set) were archetyped as BATS."""
+
+    def _p(self, pos, method="draft", year=2021, birth="2000-05-01"):
+        return {"position": pos, "birth_date": birth,
+                "acquisition": {"method": method, "year": year}}
+
+    def test_closer_tokens_are_arms(self):
+        assert "CP" in sb._PITCH_POS
+        assert "CL" in sb._PITCH_POS
+        assert sb._archetype(self._p("CP")).endswith("_arm")
+        assert sb._archetype(self._p("CL")).endswith("_arm")
+
+    def test_catcher_is_still_a_bat(self):
+        # The closer tokens must not drag the catcher token in behind them.
+        assert "C" not in sb._PITCH_POS
+        assert sb._archetype(self._p("C")).endswith("_bat")
+
+    def test_two_way_is_excluded_not_guessed(self):
+        # A two-way player is a member of BOTH sides of a bat/arm split, so any
+        # assignment is a coin flip a reader would read as a measurement.
+        assert sb._archetype(self._p("TWP")) is None
+
+    def test_four_corners_stays_a_bat(self):
+        assert sb._archetype(self._p("4C")).endswith("_bat")
+
+    def test_side_fix_does_not_touch_the_hs_college_split(self):
+        assert sb._archetype(self._p("CP", year=2018, birth="2000-05-01")) == "hs_arm"
+        assert sb._archetype(self._p("CP", year=2021, birth="2000-05-01")) == "college_arm"
+
+
+class TestConsensusVsInputsGate:
+    """F2 (2026-08-09). `consensus_wins` was a bare `cons >= best_input`, so the
+    surface rendered "the blend wins" on both legs. Measured on the shipped pooled
+    common set (cluster bootstrap by player, B=2000): the AUC delta is +0.0116
+    against a 0.0078 floor and IS a result, the Spearman delta is +0.0015 against a
+    0.0121 floor and is NOT. These assert the PROPERTY on constructed inputs, so they
+    keep holding when the vintage moves the numbers."""
+
+    def _pooled(self, metric, consensus, best_input):
+        srcs = list(sb.SCORED_SOURCES)
+        pooled = {sb.CONSENSUS_KEY: {metric: consensus}, srcs[0]: {metric: best_input}}
+        for s in srcs[1:]:
+            pooled[s] = {metric: best_input - 0.05}   # never the argmax
+        return pooled
+
+    def test_both_legs_carry_a_floor(self):
+        for m in ("spearman", "auc"):
+            assert sb.CONSENSUS_VS_INPUTS_MDE95[m] > 0
+
+    def test_exact_tie_is_not_a_win(self):
+        for m in ("spearman", "auc"):
+            r = sb._beats(self._pooled(m, 0.30, 0.30), m)
+            assert r["delta"] == 0
+            assert r["resolvable"] is False
+            assert r["consensus_wins"] is False
+
+    def test_positive_but_unresolvable_is_not_a_win(self):
+        # The exact defect: the blend IS ahead, by less than the backtest can
+        # resolve, and the old `>=` published that as a win.
+        for m in ("spearman", "auc"):
+            mde = sb.CONSENSUS_VS_INPUTS_MDE95[m]
+            r = sb._beats(self._pooled(m, 0.30 + mde / 2, 0.30), m)
+            assert r["delta"] > 0
+            assert r["resolvable"] is False
+            assert r["consensus_wins"] is False
+            assert r["verdict"] == "not resolvable at this power"
+
+    def test_resolvable_lead_is_a_win(self):
+        for m in ("spearman", "auc"):
+            mde = sb.CONSENSUS_VS_INPUTS_MDE95[m]
+            r = sb._beats(self._pooled(m, 0.30 + mde * 2, 0.30), m)
+            assert r["resolvable"] is True
+            assert r["consensus_wins"] is True
+            assert r["verdict"] == "the blend wins"
+
+    def test_resolvable_deficit_reads_as_a_loss(self):
+        for m in ("spearman", "auc"):
+            mde = sb.CONSENSUS_VS_INPUTS_MDE95[m]
+            r = sb._beats(self._pooled(m, 0.30 - mde * 2, 0.30), m)
+            assert r["consensus_wins"] is False
+            assert r["verdict"] == "the best input wins"
+
+    def test_missing_leg_claims_nothing(self):
+        pooled = {s: {"spearman": None} for s in sb.SCORED_SOURCES}
+        pooled[sb.CONSENSUS_KEY] = {"spearman": 0.30}
+        r = sb._beats(pooled, "spearman")
+        assert r["delta"] is None
+        assert r["consensus_wins"] is False
+
+
 class TestEndToEnd:
-    def test_runs_on_real_data(self):
-        r = sb.run_source_backtest(write=False)
+    def test_runs_on_real_data(self, backtest):
+        r = backtest
         # Resolved window present and conservative.
         assert r["window"]["years"], "expected at least one resolved base year"
         assert all((2026 - y) >= sb.MIN_LAG_YEARS for y in r["window"]["years"])
@@ -71,3 +175,31 @@ class TestEndToEnd:
             assert "auc" in acc["pooled"][rater]
         # Newer sources disclosed as unscored.
         assert "espn" in r["insufficient_history"]
+
+    def test_every_rater_declares_the_protocol_behind_its_number(self, backtest):
+        """F3. The per-source bars are scored IN SAMPLE on the common set and eFV
+        enters with a forward-chained out-of-sample grade. The surface has to mark
+        that off a FIELD: keying it off a hardcoded rater name breaks silently the
+        day a second out-of-sample model joins the table."""
+        acc = backtest["accuracy"]
+        for block in ("pooled", "pooled_efv_common"):
+            for rater, cell in (acc.get(block) or {}).items():
+                assert cell["basis"] == sb._rater_basis(rater), (block, rater)
+        assert acc["pooled"]["xfv"]["basis"] == sb.BASIS_OOS
+        assert acc["pooled"][sb.CONSENSUS_KEY]["basis"] == sb.BASIS_IN_SAMPLE
+        for row in acc["by_archetype"]:
+            for block in ("raters", "raters_efv_common"):
+                for rater, cell in (row.get(block) or {}).items():
+                    assert cell["basis"] == sb._rater_basis(rater), (row["archetype"], rater)
+
+    def test_published_consensus_verdict_never_outruns_its_floor(self, backtest):
+        """Whatever the vintage says, a published win has to be positive AND bigger
+        than the measured floor. Asserts the invariant, not today's answer."""
+        cvi = backtest["accuracy"]["consensus_vs_inputs"]
+        for metric in ("spearman", "auc"):
+            leg = cvi[metric]
+            assert leg["mde95"] == sb.CONSENSUS_VS_INPUTS_MDE95[metric]
+            if leg["consensus_wins"]:
+                assert leg["delta"] > 0 and abs(leg["delta"]) >= leg["mde95"]
+            if leg["delta"] is not None:
+                assert leg["resolvable"] == (abs(leg["delta"]) >= leg["mde95"])

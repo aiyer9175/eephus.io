@@ -4,7 +4,7 @@
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
 """
-Consensus engine — v5 (forward-filled, Bayesian-shrunk).
+Consensus engine, v5 (forward-filled, Bayesian-shrunk).
 
 Anchored to the FanGraphs scouting primer:
   https://blogs.fangraphs.com/the-new-fangraphs-scouting-primer/
@@ -21,24 +21,41 @@ measured d_rho -0.0012 against an MDE95 of 0.0068, i.e. nothing to weight on.
 The ship gate in source_backtest.py now demands a gain larger than the test can
 resolve. (The same question was measured again at the TOOL level on 2026-07-31
 and refused for a different reason, non-replication:
-docs/efv-2026-07-30/TOOL_NORMALIZATION_VERDICT.md.)
-Sources that publish an explicit FV grade:
+docs/efv-2026-07-30/TOOL_NORMALIZATION_VERDICT.md.) The cohort-conditioned
+variant of the same question was tested 2026-08-09 and is also closed; the
+weighting question is not re-narrated here, it lives in
+data/source_cohort_accuracy.json.
 
-  * FanGraphs            (Eric Longenhagen + team)
-  * ESPN                 (McDaniel)
-  * Just Baseball
-  * TJStats
-  * MLB Pipeline         ("Overall" grade in each prospect bio)
-  * MLB Pipeline Intl.   (International prospects ranking)
+FV-PUBLISHING SOURCES. Counted off `snapshots` on 2026-08-09; `rows` is snapshot
+rows (not players), `fv` is the subset carrying an explicit FV.
 
-Two sources are still rank-only (no public FV):
-  * Baseball America
-  * The Athletic
+  source                        rows      fv    first        last
+  fangraphs                   24,503  24,501   2017-02-15   2026-08-02
+  mlb_pipeline                18,978  18,440   2011-01-22   2026-08-09
+  tjstats                      4,702   4,698   2026-01-22   2026-08-09
+  baseballamerica              1,635   1,535   2023-02-15   2026-06-03
+  espn                           252     252   2025-08-20   2026-05-22
+  mlb_pipeline_international     246     246   2021-01-15   2026-08-09
+  draft_signing                  138     138   2026-07-23   2026-08-09
+  just_baseball                  126     126   2026-03-04   2026-06-04
 
-These contribute via rank → implied-FV mapping ONLY when a player has no
-explicit FV grades from any source; once at least one source has graded
-the player, the FV mean wins and the ranks are used only for the
-informational avg_rank field.
+BASEBALL AMERICA VOTES AS AN FV SOURCE. Not rank-only: 1,535 of its 1,635 rows
+(93.9%) carry an FV over four February vintages (2023 through 2026, 383 to 385
+rows each, distinct FV 30 through 70). Only the single 2026-06-03 list is
+rank-only, 100 rows. This docstring asserted the opposite until 2026-08-09.
+
+THE ATHLETIC IS NOT A SOURCE HERE, and never was: 0 rows, as are Keith Law and
+Prospects Live. `SELECT DISTINCT source FROM snapshots` returns exactly eleven
+values, the eight above plus three that publish no opinion:
+performance_ingest (2,893 rows, a constant FV 35 auto-track anchor, see
+CONSTANT_ANCHOR_SOURCES), auto_detect (2,504 rows, 0 with an FV) and
+baseballamerica_statcast_by_age (41 rows, 0 with an FV).
+
+Rank-only ROWS survive inside FV-publishing sources (538 mlb_pipeline, 100
+baseballamerica, 4 tjstats). They contribute via rank -> implied-FV mapping ONLY
+when a player has no explicit FV grades from any source; once at least one
+source has graded the player, the FV mean wins and the ranks are used only for
+the informational avg_rank field.
 
 Forward-fill (v5)
 -----------------
@@ -178,6 +195,53 @@ SINGLE_SOURCE_K = 0.5
 # and eFV (which reads consensus_fv_raw) settles over one run.
 ADOPT_NORMALIZED_CONSENSUS = True
 
+# As-of grade normalization. OFF, and it is off on purpose.
+#
+# The remapper's thin-cell fallback pools a (source, role, year) cell across ALL
+# years including years later than the point being computed, so a 2021 grade is
+# normalized partly off 2026 information. grade_normalization gained an
+# as_of_year cap on 2026-08-09 (see that module's docstring for the full
+# measurement); this flag is the only thing that would turn it on IN THIS FILE.
+#
+# FLIP CHECKLIST (call sites verified 2026-08-09b). The flag reaches exactly one
+# construction, build_timeseries below. FIVE other places build the remapper
+# DIRECTLY and would keep the uncapped basis, which is how the board and the
+# analysis end up on two different normalizations:
+#   surplus_backtest_real.py:133      build_remapper(aliases=_cons.SOURCE_ALIASES)
+#   tools/consensus_recency_lab.py:319
+#   tools/efv_gradenorm_basis_lab.py:658
+#   tools/ba_consensus_lab.py:139
+#   tools/consensus_gate_lab.py:660
+# surplus_backtest_real is the binding one: it prices the backtest prospect_surplus
+# is validated against, so flipping here alone puts the SERVED BOARD and the SURPLUS
+# BACKTEST on two different normalization bases. tools/consensus_gate_lab.py also
+# carries its own re-implementation of the remapper (:73-139, _paired_dists_from at
+# :104 and build_remapper_asof at :122) that mirrors the uncapped pooling cell for
+# cell and needs the same cap.
+# All five take as_of_year, so the flip is: pass the cutoff into all six, then
+# rebuild. grade_normalization's three analysis views (quantile_map, drift_row,
+# normalized_consensus) take as_of_year too, and any caller of those that is meant
+# to describe the served scale has to pass it as well.
+#
+# It is a BASIS CHANGE, not a no-op. consensus_fv_raw is simultaneously eFV's
+# dominant feature and eFV's baseline, so anything that moves it must be gated
+# on its own. Measured 2026-08-09 by rebuilding the timeseries of the 98
+# affected players under both remappers: 183 of their 1,401 historical
+# consensus points move, mean +1.3407 FV (max +4.66), and the LATEST (served)
+# point moves for 11 players, mean +0.8927 FV, flipping the displayed
+# consensus_fv on 6 of them. All 11 are 2021-2023 MLB Pipeline International
+# hitters, which is the only cohort the cap reaches. Pre-2017 is exempt inside
+# grade_normalization and is a separate, larger question (3,478 units, ~+3.9 FV).
+# RE-MEASURED 2026-08-09b on the full 56,018-snapshot pool (9,721 players, both
+# remappers): 5 served consensus_fv values flip, not 6. The corpus moved, the cap
+# did not. Treat the size of this basis change as a per-vintage measurement, not a
+# constant, and re-measure before flipping.
+#
+# When it is on, build_timeseries caps at the newest snapshot year in the pool,
+# which yields a per-cell as-of table (cap = each cell's own year). The cutoff is
+# taken from the data, never from the clock, so a rebuild is reproducible.
+GRADE_NORM_AS_OF = False
+
 # Source aliases — outlets that publish multiple separate lists but
 # count as one editorial voice. MLB Pipeline splits its yearly coverage
 # into the Top 100 (`mlb_pipeline`) and the International Top 50
@@ -232,6 +296,207 @@ PLAYER_KEY_ALIASES = {
     "jack_natili": {
         "player_key": "jackson_natili",
         "player_name": "Jackson Natili",
+    },
+    # 2026-08-10 - four live spelling/suffix splits found by the BA midseason
+    # verification sweep. Each pair shares an identical stored birth_date and
+    # an identical org, and each is one human whose history fragmented across
+    # two keys when a source changed the printed form of the name.
+    #
+    # The White Sox SS, b. 2004-10-20. FanGraphs and BA print "William
+    # Bergolla" while MLB Pipeline prints "William Bergolla Jr."; both keys
+    # were live in August 2026. The suffixed key is canonical per the
+    # eric_booth_jr / george_lombard_jr convention. NOTE the 2026-07 incident
+    # ledger records a DIFFERENT bergolla failure (resolution to William
+    # Contreras); this entry is the same human on both sides, verified on
+    # DOB + org + club position.
+    "william_bergolla": {
+        "player_key": "william_bergolla_jr",
+        "player_name": "William Bergolla Jr.",
+    },
+    # The Phillies RHP reliever, b. 2002-09-19. FanGraphs itself moved from
+    # "Wen Hui Pan" (last row 2024-08-01) to "Wen-Hui Pan" (2026-08-02), the
+    # same shape as yeremi_cabrera above. The BA 2026-08-01 row landed on the
+    # stale key and folds in here at read time.
+    "wen_hui_pan": {
+        "player_key": "wenhui_pan",
+        "player_name": "Wen-Hui Pan",
+    },
+    # The Mets LHP, b. 2002-01-17. Current FanGraphs and Pipeline print
+    # "Zac"; the stale key carries the "Zach" form plus the BA 2026-08-01 row.
+    "zach_thornton": {
+        "player_key": "zac_thornton",
+        "player_name": "Zac Thornton",
+    },
+    # The Rangers INF/OF, b. 2003-02-06. Current FanGraphs and Pipeline print
+    # "Cam"; the stale key carries the "Cameron" form plus the BA row.
+    "cameron_cauley": {
+        "player_key": "cam_cauley",
+        "player_name": "Cam Cauley",
+    },
+    # The Orioles 3B, b. 2007-02-10. One human in two spacings: "Jaiden
+    # Lo Re" carries mlbam 828318, the statline, and four live sources
+    # (Pipeline 2026-08-09, FanGraphs 2026-08-02, BA 2026-08-01); "Jaiden
+    # LoRe" is a single stale 2025-07-31 FanGraphs row.
+    "jaiden_lore": {
+        "player_key": "jaiden_lo_re",
+        "player_name": "Jaiden Lo Re",
+    },
+    # The Dodgers LHP, b. 2004-02-06. BOTH keys bind mlbam 702539, which
+    # settles one-human beyond argument. Pipeline and BA print "Zach" and
+    # hold the statline; FanGraphs prints "Zachary". The Pipeline form wins
+    # incumbency (statline plus two current sources).
+    "zachary_root": {
+        "player_key": "zach_root",
+        "player_name": "Zach Root",
+    },
+
+    # 2026-08-09 - the Baseball America 2026 MIDSEASON org Top 30 drop, 30
+    # boards, 900 rows. BA prints the SHORT form of a name where this database
+    # holds the suffixed or fuller form, so 15 correctly-parsed rows for players
+    # the database already knows would otherwise have been reported unresolved
+    # and never ingested.
+    #
+    # ADMISSION BAR, applied to all 18 unresolved rows and failed by 3 of them:
+    # the board org must match, AND at least one signal independent of the name
+    # must agree. In practice every entry below cleared more than that. The
+    # physicals are FanGraphs' own bats/throws/height/weight off tools._extras,
+    # published by a different outlet than BA and never keyed on either spelling,
+    # so they are a genuinely independent check rather than a restatement.
+    #
+    # BA's "Age" is a SEASON age, measured here against a ~2026-06-01 reference:
+    # over the 829 rows of this drop that resolved AND carry a DB birth_date, it
+    # is exact on 787 (94.93%) at that reference and on only 644 (77.68%) at the
+    # board's own 2026-08-01 date. So an age one year under the board-date
+    # arithmetic is the NORM, not a red flag, and it is read that way below.
+    #
+    # THE THREE THAT DID NOT CLEAR THE BAR ARE DELIBERATELY ABSENT, and the
+    # nearest miss is the reason the bar exists: BA's Pirates rank 7 "Triston
+    # Gray" (3B/1B, age 22, R-R, Fresno State) is NOT the database's
+    # `tristan_gray`, who is a 30-year-old L-R 1B last seen at TBR in 2023. The
+    # spelling is one letter away and everything else disagrees. BA's own capsule
+    # even says "Gray, whose first name is Triston". Michael Addari (HOU 25) and
+    # Kyle Jones (MIL 23, a 2026 third-rounder) have no candidate in `players` at
+    # all. All three stay unresolved.
+    "eric_booth": {
+        # BAL = BAL. FanGraphs has him L-L at 6'0", BA has L-L at 6'0". BA's own
+        # prose settles the suffix twice: "Booth Jr. is a lefthanded hitter", and
+        # the same capsule names his father, "Eric Booth Sr. was a running back".
+        "player_key": "eric_booth_jr",
+        "player_name": "Eric Booth Jr.",
+    },
+    "enrique_bradfield": {
+        # BAL = BAL, OF = OF, L-L = L-L, age 24 = 24. Vanderbilt, signed by the
+        # Orioles, on both sides.
+        "player_key": "enrique_bradfield_jr",
+        "player_name": "Enrique Bradfield Jr.",
+    },
+    "james_tibbs": {
+        # 41 of his 44 stored snapshots carry LAD, matching the board org; the
+        # `players.org` on this key reads "Okla. City", the Dodgers' Triple-A
+        # affiliate, which is a separate pre-existing wart and not a contradiction.
+        # L-L at 6'0" on both sides. BA settles the suffix itself: its GIANTS
+        # board writes "After selecting James Tibbs III in the first round" about
+        # the same 2024 pick the Dodgers capsule describes.
+        "player_key": "james_tibbs_iii",
+        "player_name": "James Tibbs III",
+    },
+    "eli_serrano": {
+        # NYM = NYM, OF = OF, L-L = L-L, 6'5" = 6'5", age 23 = 23.
+        "player_key": "eli_serrano_iii",
+        "player_name": "Eli Serrano III",
+    },
+    "miguel_sime": {
+        # WSN = WSN, RHP = RHP, R-R and 235 lb on both sides. BA settles the
+        # suffix itself: its own Nationals board names "Miguel Sime Jr." inside
+        # another capsule's account of the draft class.
+        "player_key": "miguel_sime_jr",
+        "player_name": "Miguel Sime Jr.",
+    },
+    "kamden_durnin": {
+        # HOU = HOU, SS = SS, R-R = R-R, 6'1" and 200 lb match exactly, age
+        # 21 = 21. Kam is the short form of Kamden.
+        "player_key": "kam_durnin",
+        "player_name": "Kam Durnin",
+    },
+    "danny_thompson": {
+        # TOR = TOR, RHP = RHP, age 23 = 23. The decisive signal is prose from a
+        # DIFFERENT outlet: MLB Pipeline's stored report for `danny_thompson_jr`
+        # says "Division III North Carolina Wesleyan and transferred to UNC
+        # Greensboro", and BA's capsule says "two seasons with D-III North
+        # Carolina Wesleyan before transferring to UNC Greensboro".
+        "player_key": "danny_thompson_jr",
+        "player_name": "Danny Thompson Jr.",
+    },
+    "nicolas_perez": {
+        # LAD = LAD, 2B/3B = 2B/3B, R-R = R-R, 175 lb = 175 lb, age 21 = 21.
+        "player_key": "nico_perez",
+        "player_name": "Nico Perez",
+    },
+    "camden_kozeal": {
+        # MIA = MIA, age 21 = 21, and L-R on both sides, an uncommon pairing.
+        # BA lists SS against the database's 2B, the same middle infield.
+        "player_key": "cam_kozeal",
+        "player_name": "Cam Kozeal",
+    },
+    "tyler_head": {
+        # BAL = BAL, L-L = L-L, 6'3" and 205 lb match exactly, and BA ranks him
+        # 9th in an org where FanGraphs ranks Ty Head 11th and 13th. He is the
+        # only Head in the Baltimore system.
+        # DISCLOSED DISCREPANCY, the only one in this batch: BA prints age 20
+        # against a stored DOB of 2005-05-25, which is 21 even at the ~June
+        # reference. That is a BA age error of one year, inside the 32 of 829
+        # rows that miss by one at that reference. Every other signal is exact,
+        # so the row is admitted and the discrepancy is recorded rather than
+        # smoothed over.
+        "player_key": "ty_head",
+        "player_name": "Ty Head",
+    },
+    "kevin_roberts": {
+        # BAL = BAL, R-R = R-R, 6'5" and 220 lb match exactly, age 17 = 17 at
+        # BA's reference. BA lists OF against the database's 1B.
+        "player_key": "kevin_roberts_jr",
+        "player_name": "Kevin Roberts Jr.",
+    },
+    "gabriel_rincones": {
+        # PHI = PHI, L-R = L-R, 6'3" and 225 lb match exactly, age 25 = 25.
+        # Florida Atlantic and the 2022 draft on both sides.
+        "player_key": "gabriel_rincones_jr",
+        "player_name": "Gabriel Rincones Jr.",
+    },
+    "charles_king": {
+        # PHI = PHI, age 28 = 28 against a stored DOB of 1998-01-06, and P
+        # against BA's RHP. He is the ONLY King in the Philadelphia system, and
+        # Chuck is the standard short form of Charles. This is the thinnest entry
+        # here: the key holds a single snapshot, from performance_ingest, with no
+        # physicals to check, so it rests on org plus age plus role.
+        "player_key": "chuck_king",
+        "player_name": "Chuck King",
+    },
+    "rafael_flores": {
+        # PIT = PIT, C/1B = C/1B, R-R = R-R, age 25 = 25. His stored history
+        # carries 3 NYY snapshots before 7 PIT ones, matching BA's account that
+        # the Yankees signed him undrafted out of junior college.
+        "player_key": "rafael_flores_jr",
+        "player_name": "Rafael Flores Jr.",
+    },
+    "leonardo_balcazar": {
+        # CIN = CIN, R-R = R-R, 190 lb = 190 lb, age 21 = 21. BA lists 3B against
+        # the database's SS/2B, the same infield.
+        "player_key": "leo_balcazar",
+        "player_name": "Leo Balcazar",
+    },
+    "lamar_king": {
+        # SDP = SDP, catcher on both sides, R-R = R-R, 6'3" and 215 lb match
+        # exactly, age 22 = 22. BA settles the suffix in prose without printing
+        # it: "the son of a former NFL defensive end of the same name". He is the
+        # only King in the San Diego system other than Michael King, an RHP.
+        #
+        # This row only became visible once the unpopulated-header carve-out let
+        # the Padres board parse at all. It is the 19th unresolved name of a drop
+        # whose first pass reported 18, which is worth stating: a refused board
+        # hides its identity work as well as its grades.
+        "player_key": "lamar_king_jr",
+        "player_name": "Lamar King Jr.",
     },
 }
 
@@ -1571,7 +1836,17 @@ def build_timeseries(
     if normalize:
         try:
             from grade_normalization import build_remapper
-            grade_norm = build_remapper(aliases=SOURCE_ALIASES)
+            # as_of_year = the newest snapshot year in this pool, so every cell is
+            # capped at its own year and none pools a cycle that had not happened.
+            # Data-derived, not clock-derived, so the build stays reproducible.
+            # None unless GRADE_NORM_AS_OF is flipped: see the flag for the
+            # measured basis move.
+            as_of = None
+            if GRADE_NORM_AS_OF:
+                _yrs = [int(str(s.snapshot_date)[:4]) for s in snapshots
+                        if s.snapshot_date and str(s.snapshot_date)[:4].isdigit()]
+                as_of = max(_yrs) if _yrs else None
+            grade_norm = build_remapper(aliases=SOURCE_ALIASES, as_of_year=as_of)
         except Exception:
             grade_norm = None   # degrade to the raw scale rather than crash the build
     # v14 — drop-off detection runs ONCE across the full snapshot pool so

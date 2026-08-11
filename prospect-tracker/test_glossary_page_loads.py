@@ -17,6 +17,7 @@ Playwright is an OPTIONAL dependency; tests skip cleanly without it."""
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -108,6 +109,13 @@ def test_all_four_views_render(server, browser):
             " && (el.innerHTML.indexOf('The full head-to-head') !== -1"
             " || el.innerHTML.indexOf('A different kind of Future Value') !== -1"
             " || el.innerHTML.indexOf('no resolved cohorts') !== -1)"),
+        # Source Accuracy lazy-fetches source_cohort_accuracy.json; it is ready
+        # once the sub-tab bar and the read-first tiles have rendered, never on
+        # the loading placeholder.
+        "source-accuracy": (
+            " && el.innerHTML.indexOf('sacc-tabs') !== -1"
+            " && (el.innerHTML.indexOf('meth-find-card') !== -1"
+            " || el.innerHTML.indexOf('could not be loaded') !== -1)"),
     }
     page = _browser_page(browser, page_errors)
     try:
@@ -116,7 +124,8 @@ def test_all_four_views_render(server, browser):
         for view, body_id in [("guide", "guide-body"),
                               ("methodology", "methodology-body"),
                               ("models", "models-body"),
-                              ("source-comparison", "source-comparison-body")]:
+                              ("source-comparison", "source-comparison-body"),
+                              ("source-accuracy", "source-accuracy-body")]:
             page.click(f'[data-glossary-view="{view}"]')
             try:
                 page.wait_for_function(
@@ -137,6 +146,8 @@ def test_all_four_views_render(server, browser):
         # not strand on loading (same lesson).
         models_html = page.evaluate(
             "document.getElementById('models-body').innerHTML")
+        sacc_html = page.evaluate(
+            "document.getElementById('source-accuracy-body').innerHTML")
     finally:
         page.close()
 
@@ -146,11 +157,165 @@ def test_all_four_views_render(server, browser):
     assert "Loading backtest" not in sc_html, "source comparison stranded on its loading state"
     # 2026-07-06: the data-state header is "The full head-to-head", led by the hero
     # verdict banner ("A different kind of Future Value"); the empty-state text is unchanged.
-    assert ("The full head-to-head" in sc_html
-            or "A different kind of Future Value" in sc_html
-            or "no resolved cohorts" in sc_html), "source comparison rendered neither data nor empty-state"
+    # COVERAGE GAP CLOSED 2026-08-10. This used to accept the EMPTY-STATE string
+    # as a pass, which is how a genuinely broken view shipped green: a
+    # ReferenceError inside _hhFloorClause took out _methHeroBanner and blanked
+    # the whole view, and "no resolved cohorts" satisfied the assertion. An
+    # empty state is only a correct outcome when the artifact is actually empty,
+    # so the branch is now chosen by the DATA rather than accepted either way.
+    _sb = ROOT / "data" / "source_backtest.json"
+    _has_data = False
+    if _sb.exists():
+        _acc = (json.loads(_sb.read_text(encoding="utf-8")) or {}).get("accuracy") or {}
+        _has_data = bool((_acc.get("pooled") or {}).get("xfv"))
+    if _has_data:
+        assert "A different kind of Future Value" in sc_html, (
+            "source_backtest.json carries pooled accuracy, so the hero banner MUST "
+            "render; a blank or empty-state view here is the 2026-08-10 failure")
+        assert "no resolved cohorts" not in sc_html, (
+            "source comparison fell back to its empty state while the artifact has data")
+    else:
+        assert ("The full head-to-head" in sc_html
+                or "no resolved cohorts" in sc_html), \
+            "source comparison rendered neither data nor empty-state"
     assert "gl-verdict" in models_html, "Models & Proofs stranded (no verdict badges rendered)"
     assert "Predicts" in models_html, "Models & Proofs cards missing the Predicts row"
+    # Source Accuracy (C-A4): the sub-tab bar plus the read-first tiles, never
+    # the loading placeholder.
+    assert "Loading the cohort accuracy measurement" not in sacc_html, \
+        "source accuracy stranded on its loading state"
+    assert "sacc-tabs" in sacc_html, "source accuracy rendered no sub-tab bar"
+    assert "weights ship from this measurement" in sacc_html, \
+        "source accuracy missing the zero-weights tile"
+
+
+def test_source_accuracy_subtabs_render(server, browser):
+    """Every one of the six sub-tabs renders real content, the verdict column
+    is three-valued (a source name only where the artifact says the cell is
+    answerable), and the precision block honours BOTH branches of
+    precision_label_free.identified."""
+    art = json.loads(
+        (ROOT / "data" / "source_cohort_accuracy.json").read_text(encoding="utf-8"))
+    page_errors: list[str] = []
+    page = _browser_page(browser, page_errors)
+    html: dict[str, str] = {}
+    try:
+        page.goto(server + "glossary/index.html#view=source-accuracy",
+                  wait_until="load", timeout=15_000)
+        page.wait_for_function(
+            "() => { const el = document.getElementById('source-accuracy-body');"
+            " return !!el && el.innerHTML.indexOf('sacc-tabs') !== -1"
+            " && el.innerHTML.indexOf('Loading the cohort') === -1; }",
+            timeout=15_000)
+        for tab in ("read-first", "side", "archetype", "cuts", "precision", "coverage"):
+            page.click(f'[data-sacc-tab="{tab}"]')
+            page.wait_for_timeout(120)
+            html[tab] = page.evaluate(
+                "document.getElementById('source-accuracy-body').innerHTML")
+    finally:
+        page.close()
+
+    assert not page_errors, "JS errors on source accuracy:\n  " + "\n  ".join(page_errors)
+    for tab, body in html.items():
+        assert len(body) >= 1200, f"sub-tab {tab} rendered near-empty ({len(body)})"
+
+    # The verdict column is the point. Every unanswerable cell carries the
+    # literal string, and a source name renders ONLY where answerable is true.
+    acc = art["accuracy"]
+    side = html["side"]
+    assert "not resolvable at this power" in side
+    assert acc["by_acquisition"]["draft_hs"]["answerable"] is True
+    assert "MLB Pipeline" in side, "the one answerable acquisition cell lost its winner"
+    for key in ("bat", "arm"):
+        assert acc["by_side"][key]["answerable"] is False, \
+            "by_side became answerable; the copy on this tab needs re-reading"
+    # Archetype tab carries the family test and the A/B receipt, not just rows.
+    arch = html["archetype"]
+    het = art["multiplicity"]["archetype_heterogeneity"]
+    assert f"{het['chi2_p']:.4f}" in arch, "Cochran Q p missing from the archetype tab"
+    assert f"{het['permutation_p_labels']:.4f}" in arch, "label-permutation p missing"
+    assert "no ship" in arch, "the six-arm A/B receipt did not render its verdicts"
+    # The two range/level warnings are artifact fields and must be rendered.
+    cuts = html["cuts"]
+    assert acc["by_fv_tier_range_restriction_warning"][:60] in cuts
+    assert acc["level_at_grading"]["note"][:60] in cuts
+    # Precision: the wording block is verbatim and at the TOP of the tab.
+    prec = html["precision"]
+    assert "Precision is not accuracy." in prec
+    assert prec.index("Precision is not accuracy.") < len(prec) // 2, \
+        "the precision wording block must lead the tab, not trail it"
+    p = art["precision_label_free"]
+    if p.get("identified") is False or not p.get("estimator_primary_em_fiml"):
+        # UNIDENTIFIED branch: reason + restores_when, and NO table, sigma or alpha.
+        assert p["reason"][:50] in prec, "unidentified precision hid its reason"
+        assert p["restores_when"][:40] in prec, "unidentified precision hid its restore condition"
+        assert "sacc-empty" in prec, "unidentified precision skipped its empty-state"
+        # NO table, NO sigma, NO alpha. Matched on the identified branch's own
+        # markers, not on loose words: the artifact's `reason` string itself
+        # says "no GLS weight and no alpha are computed", so a bare substring
+        # check on those words passes for the wrong reason.
+        assert "Per-outlet precision" not in prec, \
+            "unidentified precision rendered an estimate table"
+        for th in ("<th>Sigma</th>", "<th>GLS weight</th>", "<th>Loading b</th>"):
+            assert th not in prec, f"unidentified precision rendered {th}"
+    else:
+        assert "<th>GLS weight</th>" in prec, \
+            "identified precision did not render its source table"
+    # Coverage tab names the exclusion and its size.
+    cov = html["coverage"]
+    cs = acc["coverage_selection"]
+    assert f"{cs['union_player_year_slots']:,}" in cov, "coverage tab lost the union slot count"
+    assert cs["selection_model"]["why_not"][:50] in cov
+
+
+def test_view_chips_match_whitelist():
+    """THE MISSING GATE. A view is registered in FOUR places and there was no
+    test that they agree, so a chip without a whitelist entry rendered a dead
+    button while the suite stayed green (the 2026-06-10 Source Comparison
+    lesson, documented at the top of this module). All four are asserted here:
+
+      (a) the URL whitelist in assets/glossary.js syncFromURL
+      (b) the view-id -> container-id map in render()
+      (c) the render() dispatch chain
+      (d) the chip row in the built glossary/index.html
+
+    Pure file parsing, no browser: this must fail on a mismatch even where
+    playwright is absent."""
+    js = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
+    shell = (ROOT / "glossary" / "index.html").read_text(encoding="utf-8")
+
+    m = re.search(r"\[((?:\s*\"[a-z0-9-]+\"\s*,?)+)\]\s*\.includes\(v\)", js)
+    assert m, "could not find the URL view whitelist in assets/glossary.js"
+    whitelist = set(re.findall(r"\"([a-z0-9-]+)\"", m.group(1)))
+
+    m = re.search(r"const ids = \{(.*?)\};", js, re.S)
+    assert m, "could not find the view -> container id map in assets/glossary.js"
+    id_map = dict(re.findall(r"\"?([a-z0-9-]+)\"?\s*:\s*\"([a-z0-9-]+)\"", m.group(1)))
+
+    chips = set(re.findall(r'data-glossary-view="([a-z0-9-]+)"', shell))
+    assert chips, "the built glossary shell has no view chips"
+
+    assert chips == whitelist, (
+        "view chips and the URL whitelist disagree - a chip with no whitelist "
+        f"entry is a dead button.\n  chips only: {sorted(chips - whitelist)}"
+        f"\n  whitelist only: {sorted(whitelist - chips)}")
+    assert set(id_map) == whitelist, (
+        "the view -> container map and the whitelist disagree.\n"
+        f"  map only: {sorted(set(id_map) - whitelist)}"
+        f"\n  whitelist only: {sorted(whitelist - set(id_map))}")
+    for view, body_id in id_map.items():
+        assert f'id="{body_id}"' in shell, \
+            f"view {view!r} maps to #{body_id}, which the built shell does not contain"
+        # Every non-default view needs its own dispatch arm; terms is the else.
+        if view != "terms":
+            assert f'_S.view === "{view}"' in js, \
+                f"view {view!r} is whitelisted and mounted but never dispatched"
+    # Every non-terms container ships hidden, so the router owns visibility.
+    for view, body_id in id_map.items():
+        if view == "terms":
+            continue
+        assert f'<div id="{body_id}" style="display:none;">' in shell, \
+            f"#{body_id} does not ship hidden; it will render stacked under Terms"
 
 
 def test_library_view_renders(server, browser):

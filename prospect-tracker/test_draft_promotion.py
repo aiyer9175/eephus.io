@@ -229,8 +229,8 @@ class SeedSignedDraftees(unittest.TestCase):
                 "FROM snapshots WHERE source='draft_signing'"
             ).fetchall()
         self.assertEqual(first, second)
-        # The seed count is the rows re-stamped by THIS run, not the size of the
-        # table.
+        # The seed count is the CURRENTLY ELIGIBLE set: signed current-class
+        # picks whose identity no real outlet has taken over yet.
         #
         # CORRECTED 2026-07-25. This asserted len(rows) == first, which only holds
         # if the eligible set never shrinks. It does shrink, by design: a signed
@@ -241,9 +241,58 @@ class SeedSignedDraftees(unittest.TestCase):
         # ALL 79 of those players now carry a real graded source, so every stale row
         # is outvoted and not one player is stranded on a synthetic anchor. The
         # invariant was wrong, the data was right.
-        newest = max(r["snapshot_date"] for r in rows)
-        self.assertEqual(sum(1 for r in rows if r["snapshot_date"] == newest), first,
-                         "the newest stamp must hold exactly this run's seeds")
+        #
+        # CORRECTED AGAIN 2026-08-09, and this time the DATE PROXY itself is what
+        # broke. The 2026-07-25 rewrite still identified "this run's seeds" as
+        # "the rows carrying the newest snapshot_date", which assumes the eligible
+        # set can only shrink ACROSS days. It shrank WITHIN one. Measured: an
+        # earlier run today re-stamped 59 rows to 2026-08-09; the Baseball America
+        # 2026 midseason drop then landed (897 rows, as-of 2026-08-01, INSERTED
+        # 2026-08-10 00:20Z) and graded 20 of those 59, so the guard now blocks
+        # them and the run seeds 39. All 20 blockers are BA rows and nothing else.
+        # The 20 keep the 2026-08-09 stamp because they really were written today,
+        # so "newest stamp" holds 59 while the run returns 39. The count did not
+        # rise; it FELL, from 59 to 39, exactly as a new real outlet should make
+        # it fall. Only the frozen row count rose.
+        #
+        # So stop inferring the run's seed set from a date and state the property
+        # directly: the run seeds exactly the draft_signing identities that no
+        # real outlet owns. Measured on the live DB 2026-08-09 after the Natili
+        # repair: 137 rows, 38 eligible (= the returned count), 99 already tracked,
+        # 0 of the 99 without a real graded source.
+        from consensus import PLAYER_KEY_ALIASES
+        _SYN = "('draft_signing', 'performance_ingest', 'auto_detect')"
+
+        def _canon(k):
+            return (PLAYER_KEY_ALIASES.get(k) or {}).get("player_key") or k
+
+        with closing(sqlite3.connect(DB_PATH)) as con:
+            def _tracked(k):
+                return con.execute(
+                    f"SELECT 1 FROM snapshots WHERE player_key=? "
+                    f"AND source NOT IN {_SYN} "
+                    "AND interval_label NOT GLOB '20[0-9][0-9]draft' LIMIT 1",
+                    (_canon(k),)).fetchone() is not None
+
+            def _graded(k):
+                return con.execute(
+                    f"SELECT 1 FROM snapshots WHERE player_key=? AND fv IS NOT NULL "
+                    f"AND source NOT IN {_SYN} LIMIT 1",
+                    (_canon(k),)).fetchone() is not None
+
+            tracked = {r["player_key"] for r in rows if _tracked(r["player_key"])}
+            eligible = sorted({r["player_key"] for r in rows} - tracked)
+            # Every row this run did NOT re-stamp is harmless ONLY while a real
+            # outlet grades that player. A synthetic row that is somebody's ONLY
+            # anchor is a manufactured grade with nothing behind it.
+            orphans = sorted(k for k in tracked if not _graded(k))
+
+        self.assertEqual(len(eligible), first,
+                         "the run must seed exactly the identities no real outlet "
+                         f"owns; eligible={len(eligible)} returned={first} "
+                         f"sample={eligible[:5]}")
+        self.assertEqual(orphans, [],
+                         f"synthetic seed is the ONLY anchor for: {orphans[:5]}")
         this_year = str(date.today().year)
         for r in rows:
             # Only the current class is ever seeded.
@@ -253,30 +302,37 @@ class SeedSignedDraftees(unittest.TestCase):
             self.assertTrue(r["org"], f"org-less seed: {dict(r)}")
             self.assertIsNotNone(r["fv"], f"grade-less seed: {dict(r)}")
 
-        # THE INVARIANT THAT ACTUALLY MATTERS, and which the old size assertion
-        # was standing in for badly: a row left behind at an older stamp is
-        # harmless ONLY while a real outlet now grades that player. If a stale
-        # synthetic row is somebody's ONLY anchor, he is serving a manufactured
-        # grade with nothing behind it, which is a real defect rather than
-        # bookkeeping.
-        stale = [r["player_key"] for r in rows if r["snapshot_date"] != newest]
-        if stale:
-            with closing(sqlite3.connect(DB_PATH)) as con:
-                qs = ",".join("?" * len(stale))
-                graded = {x[0] for x in con.execute(
-                    f"SELECT DISTINCT player_key FROM snapshots "
-                    f"WHERE player_key IN ({qs}) AND fv IS NOT NULL "
-                    "AND source NOT IN ('draft_signing','performance_ingest',"
-                    "'auto_detect')", stale)}
-            orphans = sorted(set(stale) - graded)
-            self.assertEqual(orphans, [],
-                             f"stale synthetic seed is the ONLY anchor for: {orphans[:5]}")
-
     def test_never_seeds_an_already_tracked_identity(self):
         """A milb_key with ANY real MiLB snapshot (graduated pro, org-
         source-covered prospect, or name-collided incumbent like the
-        WSN Jake Bennett) must never receive a seed."""
+        WSN Jake Bennett) must never receive a seed.
+
+        ORDERED ON inserted_at, NOT snapshot_date. CORRECTED 2026-08-09: this
+        used `o.snapshot_date < s.snapshot_date`, which reads the board's AS-OF
+        date as if it were the ingest clock. It is not. The Baseball America
+        2026 midseason drop published as of 2026-08-01 and was ingested on
+        2026-08-09, so its rows landed BEHIND 20 seeds that had been written
+        earlier the same day, and a guard that had never been violated read as
+        20 violations. The seeds were correct; they simply predated the outlet.
+        `inserted_at` is the real write time and is never touched by the
+        insert_snapshots upsert (verified: rows re-stamped to 2026-08-09 still
+        carry their original 2026-07-15..2026-07-27 inserted_at), so it is the
+        only column here that orders cause before effect. Measured on the live
+        DB 2026-08-09: 20 violations by snapshot_date, 0 by inserted_at.
+
+        SECOND CHECK, added the same day. The query above can only see a
+        collision that shares a player_key, so it was blind to the collision
+        class this repo has actually been burned by: one human under two
+        SPELLINGS. `jack_natili` carried a synthetic FV 45 seed while every
+        real grade for the same human sat on `jackson_natili` (FanGraphs 45,
+        Baseball America 40). That is the identity that once reached the served
+        board twice at ranks 155 and 320 with his surplus double counted. So
+        the seed set is also checked against consensus.PLAYER_KEY_ALIASES: no
+        seed may sit on a spelling the alias table demotes, and the canonical
+        spelling must be untracked too.
+        """
         from contextlib import closing
+        from consensus import PLAYER_KEY_ALIASES
         with closing(sqlite3.connect(DB_PATH)) as con:
             con.row_factory = sqlite3.Row
             bad = con.execute(
@@ -287,11 +343,38 @@ class SeedSignedDraftees(unittest.TestCase):
                        WHERE o.player_key = s.player_key
                          AND o.source != 'draft_signing'
                          AND o.interval_label NOT GLOB '20[0-9][0-9]draft'
-                         AND o.snapshot_date < s.snapshot_date)
+                         AND o.inserted_at < s.inserted_at)
                    GROUP BY s.player_key LIMIT 5"""
             ).fetchall()
-        self.assertFalse([dict(r) for r in bad],
-                         "seed landed on an already-tracked identity")
+            self.assertFalse([dict(r) for r in bad],
+                             "seed landed on an already-tracked identity")
+
+            seeded = con.execute(
+                "SELECT player_key, inserted_at FROM snapshots "
+                "WHERE source='draft_signing'").fetchall()
+            demoted = sorted({r["player_key"] for r in seeded
+                              if r["player_key"] in PLAYER_KEY_ALIASES})
+            self.assertEqual(demoted, [],
+                             "seed sits on a spelling the alias table demotes; "
+                             f"these are one human counted twice: {demoted[:5]}")
+            # The same "already tracked when we wrote it" test as above, but
+            # asked about the CANONICAL spelling, which is the one the board
+            # serves. A no-op while `demoted` is empty; it is the check that
+            # would have caught the Natili seed the day it was written.
+            split = sorted({
+                r["player_key"] for r in seeded
+                if con.execute(
+                    "SELECT 1 FROM snapshots WHERE player_key=? "
+                    "AND source NOT IN ('draft_signing','performance_ingest',"
+                    "'auto_detect') "
+                    "AND interval_label NOT GLOB '20[0-9][0-9]draft' "
+                    "AND inserted_at < ? LIMIT 1",
+                    ((PLAYER_KEY_ALIASES.get(r["player_key"]) or {}).get("player_key")
+                     or r["player_key"], r["inserted_at"])
+                ).fetchone()})
+        self.assertEqual(split, [],
+                         "a real outlet already graded the canonical form of "
+                         f"these keys when the seed was written: {split[:5]}")
 
 
 if __name__ == "__main__":

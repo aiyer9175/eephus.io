@@ -2,7 +2,7 @@
   "_meta": {
     "source": "https://data-graph.mlb.com/graphql",
     "query": "getPlayerRankingsFromSelection(slug=sel-pr-YYYY-top100)",
-    "generated": "2026-08-06T10:58:57Z",
+    "generated": "2026-08-10T22:04:20Z",
     "years": [
       2015,
       2016,
@@ -9559,7 +9559,7 @@
         "mlbam": 701785,
         "name": "Kaelen Culpepper",
         "pos": "SS",
-        "eta": "2027"
+        "eta": "2026"
       },
       {
         "rank": 30,

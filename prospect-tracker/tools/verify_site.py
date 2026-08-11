@@ -37,6 +37,7 @@ ROUTES = [
     ("/glossary/",                     ".gl-app, .g-term, tbody tr"),
     ("/glossary/#view=methodology",    ".meth-table, .meth-chart"),
     ("/glossary/#view=models",         "tbody tr, .gl-model-row"),
+    ("/glossary/#view=source-accuracy", ".sacc-wrap .meth-find-card, .sacc-table"),
     ("/mlbstats/",                     "tbody tr, .mlb-card"),
     ("/diamond/",                      ".diamond-card, .card"),
     ("/parks/",                        "tbody tr, table"),

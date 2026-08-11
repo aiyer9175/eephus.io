@@ -51,14 +51,43 @@ import hashlib
 import json
 import logging
 import os
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from pathlib import Path
+
+import betting_settle
 
 log = logging.getLogger("betting_shadow")
 
 ROOT = Path(__file__).parent
 DATA_DIR = ROOT / "data"
-SHADOW_PATH = DATA_DIR / "betting_shadow.json"
+
+#: THE LEDGER LIVES OUTSIDE data/ FOR THE SAME REASON THE RECORD DOES
+#: (2026-08-09). data/betting_shadow.json was untracked AND not gitignored, which
+#: is the worst of the three states: `git checkout -- .` could not touch it
+#: today, and one `git add -A` would track it and arm exactly the defect that
+#: destroyed the public record - a row written at 21:00 reverted to the committed
+#: copy at 03:10 with no error anywhere. It also would not survive a box rebuild,
+#: because only `.cache/` is on the documented backup list.
+#:
+#: So `.cache/betting/shadow.json` is the SOURCE OF TRUTH (untracked via
+#: `.cache/`, inside the directory deploy/WEBMASTER.md tells the webmaster to
+#: back up) and `data/betting_shadow.json` is a DERIVED re-render, published by
+#: rsync because data_catalog advertises it, and safe to lose.
+#:
+#: IT IS A JSON ARRAY AND NOT A JSONL LOG, unlike the public record, and the
+#: difference is not laziness: settlement legitimately fills `result`,
+#: `profit_units` and the final scores in on rows already written (see
+#: SETTLEMENT_FIELDS), which a one-line-per-append log cannot express without an
+#: envelope-per-mutation format this ledger does not have. The append-or-settle
+#: rule is enforced in process by `check_append_or_settle` instead, and the
+#: durability the storage seam buys is the part that was missing.
+BETTING_CACHE_DIR = ROOT / ".cache" / "betting"
+SHADOW_CACHE_PATH = BETTING_CACHE_DIR / "shadow.json"
+SHADOW_DERIVED_PATH = DATA_DIR / "betting_shadow.json"
+
+#: The default every path-less call resolves to. Kept as a module constant
+#: because it is the name every reader already looks for.
+SHADOW_PATH = SHADOW_CACHE_PATH
 
 #: Flat stake, always, exactly as the public record does it. A varying stake
 #: would let a losing ledger be rescued by sizing after the fact.
@@ -89,6 +118,51 @@ MAX_PER_SLATE = 5
 SLOT_TAGS = {"pick_of_the_day": "potd_band", "longshot_of_the_day": "longshot"}
 DEFAULT_SLOT_TAG = "ev_rank"
 
+#: THE FOURTH TAG, added 2026-08-09. "every side on the board that cleared the
+#: floor", uncapped.
+#:
+#: WHY A FOURTH TAG AND NOT A BIGGER CAP. The three tags above are capped, and a
+#: cap is part of a selection rule: `ev_rank` means "the best three by EV that
+#: the two slots did not already take", so its ROI is a statement about the top
+#: of the board and not about the board. Raising MAX_PER_SLATE would silently
+#: rewrite what `ev_rank` means, and every row already on disk would be
+#: reinterpreted under a rule its writer never applied. So the uncapped
+#: population gets its own name instead, and the three existing tags keep the
+#: budgets they have always had. `board_all` is the ONE sweep that can
+#: legitimately set a threshold for a "best side on the board" rule, because it
+#: is the only tag whose membership is not truncated.
+#:
+#: MEASURED COST (tools/betting_floor_census.py, 2026-08-09, 4 cached snapshots,
+#: 7 (snapshot, slate) cells): a full slate carries 15 to 19 sides over the 6%
+#: floor, 8.6 per slate day averaged over the partial captures too. So board_all
+#: reaches 100 settled rows in roughly 7 to 12 slate days, while ev_rank at 3 a
+#: day needs 34 and each single-pick slot needs about 100.
+BOARD_ALL_TAG = "board_all"
+
+#: How many rows a slate may contribute PER TAG. None means uncapped.
+#:
+#: The three capped budgets sum to MAX_PER_SLATE and are exactly the split the
+#: shipped selector already applied (two slot picks, then the top three by EV),
+#: written down so it can be read instead of inferred from the loop below.
+MAX_PER_SLATE_BY_TAG = {
+    "potd_band": 1,
+    "longshot": 1,
+    DEFAULT_SLOT_TAG: 3,
+    BOARD_ALL_TAG: None,
+}
+
+#: Every tag a row may be a member of, plus the pre-tag era's bucket.
+KNOWN_TAGS = (*sorted(SLOT_TAGS.values()), DEFAULT_SLOT_TAG, BOARD_ALL_TAG)
+UNTAGGED = "untagged"
+
+#: The sweep's sample-size floor, per tag. Named here because the per-tag rule
+#: is what makes the number expensive: 100 settled rows POOLED is one clock, 100
+#: PER TAG is four clocks running at four different speeds, and the slowest of
+#: them is roughly 3x slower to open than the pooled number it replaces. That
+#: cost is accepted deliberately - a threshold fitted to a mixture of four
+#: selection rules is wrong for every one of them.
+MIN_BETS_FOR_SWEEP = 100
+
 
 class ShadowLedgerError(RuntimeError):
     """The ledger would have been mutated rather than appended to."""
@@ -106,8 +180,17 @@ def load(path: Path | None = None) -> list[dict]:
     """The ledger as a list. A missing file is an empty ledger. A file that will
     not parse RAISES, for the same reason the public record does: returning []
     there hands the caller a blank baseline and lets the next write erase a
-    history it could not read."""
-    p = Path(path or SHADOW_PATH)
+    history it could not read.
+
+    TWO BACKENDS, ONE ANSWER, exactly like `betting_export.load_record`. With no
+    explicit path the durable copy under `.cache/betting/` wins whenever it
+    exists; when it does not, the legacy `data/betting_shadow.json` is read, so
+    a box that already has rows there loses none of them and the first write
+    moves them across. An explicit `path` is honoured verbatim, which is what
+    every test in this module passes."""
+    if path is None:
+        path = SHADOW_CACHE_PATH if SHADOW_CACHE_PATH.exists() else SHADOW_DERIVED_PATH
+    p = Path(path)
     if not p.exists():
         return []
     try:
@@ -170,8 +253,8 @@ def check_append_or_settle(existing: list[dict], proposed: list[dict]) -> None:
         seen.add(sid)
 
 
-def _write(rows: list[dict], path: Path | None = None) -> None:
-    path = Path(path or SHADOW_PATH)
+def _write_one(rows: list[dict], path: Path) -> None:
+    path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + f".tmp{os.getpid()}")
     try:
@@ -191,11 +274,71 @@ def _write(rows: list[dict], path: Path | None = None) -> None:
             pass
 
 
+def _write(rows: list[dict], path: Path | None = None) -> None:
+    """Write the DURABLE copy, then re-render the derived one.
+
+    Durable first, and the order is load-bearing: a crash between the two leaves
+    the authoritative ledger correct and the published copy one write stale,
+    which the next build fixes. The other order would leave the published copy
+    claiming rows the ledger cannot prove."""
+    if path is not None:
+        _write_one(list(rows), Path(path))
+        return
+    _write_one(list(rows), SHADOW_CACHE_PATH)
+    try:
+        _write_one(list(rows), SHADOW_DERIVED_PATH)
+    except OSError:
+        log.warning("betting_shadow: could not re-render the derived %s; the "
+                    "durable ledger at %s is unaffected",
+                    SHADOW_DERIVED_PATH.name, SHADOW_CACHE_PATH)
+
+
 def write(rows: list[dict], *, path: Path | None = None) -> list[dict]:
     existing = load(path)
     check_append_or_settle(existing, list(rows))
     _write(list(rows), path)
     return list(rows)
+
+
+def ensure_ledger() -> dict:
+    """Make the DURABLE ledger exist, migrating whatever data/ already holds.
+
+    NOT A WRITE OF EVIDENCE and it cannot become one: it copies exactly the rows
+    the ledger already has. It exists because migration would otherwise only
+    happen on a night that actually logged something, and a slate on which
+    nothing cleared the floor is a normal outcome - so a box could sit for a week
+    with its only ledger in the undurable place while every night reported
+    success."""
+    if SHADOW_CACHE_PATH.exists():
+        return {"created": False, "migrated": 0, "path": str(SHADOW_CACHE_PATH)}
+    legacy = load(SHADOW_DERIVED_PATH)
+    _write_one(legacy, SHADOW_CACHE_PATH)
+    log.info("betting_shadow: created the durable ledger at %s (migrated %d row(s) "
+             "out of %s)", SHADOW_CACHE_PATH, len(legacy), SHADOW_DERIVED_PATH.name)
+    return {"created": True, "migrated": len(legacy), "path": str(SHADOW_CACHE_PATH)}
+
+
+def storage() -> dict:
+    """WHICH copy of the paper ledger is authoritative right now.
+
+    Reported by the nightly and by `summary()`, because "the evidence base for
+    gate 3 is stored somewhere a checkout or a box rebuild can delete" is a
+    finding, not a footnote."""
+    durable = SHADOW_CACHE_PATH.exists()
+    return {
+        "backend": "cache" if durable else "data_fallback",
+        "authoritative_path": str(SHADOW_CACHE_PATH if durable else SHADOW_DERIVED_PATH),
+        "derived_path": str(SHADOW_DERIVED_PATH),
+        "durable": durable,
+        "n_rows": len(load()),
+        "why": ("the ledger lives under .cache/betting/, which is gitignored (so no "
+                "`git add -A` can arm the reverted-by-checkout defect) and is on the "
+                "documented backup list in deploy/WEBMASTER.md"
+                if durable else
+                "no durable ledger exists yet; the rows are being read from "
+                "data/betting_shadow.json, which is not on the backup list. The next "
+                "write moves them to .cache/betting/shadow.json"),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -210,7 +353,8 @@ def _row_key(r: dict) -> tuple:
 
 def candidates_from_board(payload: dict, *, min_edge: float,
                           max_per_slate: int = MAX_PER_SLATE,
-                          slots: dict | None = None) -> list[dict]:
+                          slots: dict | None = None,
+                          include_board_all: bool = False) -> list[dict]:
     """The sides this slate would have bet: the published slots, then the rest
     by EV.
 
@@ -225,7 +369,19 @@ def candidates_from_board(payload: dict, *, min_edge: float,
     EV by construction: the headline slot selects on model probability inside a
     price band, and the whole point of the ledger is to make the published
     claims gradeable. Every other row still enters on EV and is tagged as such,
-    so the sweep can separate the two rules later."""
+    so the sweep can separate the two rules later.
+
+    `include_board_all` adds the UNCAPPED tag: every remaining side that cleared
+    the floor is returned too, tagged `board_all`, and the capped rows pick up
+    `board_all` as a second membership so the uncapped population is genuinely
+    every clearing side and not just the ones the cap rejected.
+
+    IT IS OFF BY DEFAULT AND THAT IS DELIBERATE. Turning it on triples the rows
+    a slate writes (measured: 8.6 clearing sides a slate day against a 5-row
+    budget), which is a volume policy and belongs at the call site where the
+    cost is visible, not in a default that changes what every existing caller
+    does. With it off nothing about this function's output changes, down to the
+    absence of the `tags` key."""
     slate = payload.get("slate_date")
     out: list[dict] = []
     for b in payload.get("team_bets") or []:
@@ -264,28 +420,43 @@ def candidates_from_board(payload: dict, *, min_edge: float,
         if not row or not tag:
             continue
         tagged.setdefault(_row_key(row), tag)
-    if not tagged:
-        return out[:max_per_slate]
 
-    picked, seen = [], set()
-    for cand in out:
-        k = _row_key(cand)
-        if k in tagged and k not in seen:
-            picked.append({**cand, "slot": tagged[k]})
+    if not tagged:
+        picked, seen = list(out[:max_per_slate]), {_row_key(c) for c in out[:max_per_slate]}
+    else:
+        picked, seen = [], set()
+        for cand in out:
+            k = _row_key(cand)
+            if k in tagged and k not in seen:
+                picked.append({**cand, "slot": tagged[k]})
+                seen.add(k)
+        for cand in out:
+            if len(picked) >= max_per_slate:
+                break
+            k = _row_key(cand)
+            if k in seen:
+                continue
+            picked.append(cand)
             seen.add(k)
+        picked = picked[:max_per_slate]
+        seen = {_row_key(c) for c in picked}
+
+    if not include_board_all:
+        return picked
+    # Every capped row is also on the board, so it is a board_all member too.
+    # `tags` is the membership list; `slot` stays the CAPPED rule that chose the
+    # row, so nothing about the existing three tags is widened.
+    out_rows = [{**c, "tags": sorted({c.get("slot") or DEFAULT_SLOT_TAG,
+                                      BOARD_ALL_TAG})} for c in picked]
     for cand in out:
-        if len(picked) >= max_per_slate:
-            break
-        k = _row_key(cand)
-        if k in seen:
+        if _row_key(cand) in seen:
             continue
-        picked.append(cand)
-        seen.add(k)
-    return picked[:max_per_slate]
+        out_rows.append({**cand, "slot": BOARD_ALL_TAG, "tags": [BOARD_ALL_TAG]})
+    return out_rows
 
 
 def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = None,
-                 slots: dict | None = None,
+                 slots: dict | None = None, include_board_all: bool = False,
                  path: Path | None = None, log_fn=None) -> dict:
     """Append this slate's shadow bets. Idempotent per (slate, game, market, side).
 
@@ -304,7 +475,8 @@ def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = No
 
     if slots is None:
         slots = {k: payload.get(k) for k in SLOT_TAGS}
-    cands = candidates_from_board(payload, min_edge=min_edge, slots=slots)
+    cands = candidates_from_board(payload, min_edge=min_edge, slots=slots,
+                                  include_board_all=include_board_all)
     if not cands:
         return {"written": 0, "slate_date": slate,
                 "reason": f"no side cleared the {min_edge:.1%} floor on this slate"}
@@ -354,56 +526,22 @@ def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = No
 # ---------------------------------------------------------------------------
 def _settle_one(row: dict, game: dict) -> dict | None:
     """Grade one shadow bet against a final score. None when the market is one
-    this function cannot grade, which is recorded rather than guessed."""
-    hr, ar = game.get("home_runs"), game.get("away_runs")
-    if hr is None or ar is None:
-        return None
-    hr, ar = int(hr), int(ar)
-    side, market = row.get("side"), row.get("market")
-    point = row.get("point")
+    this function cannot grade, which is recorded rather than guessed.
 
-    if market == "moneyline":
-        if hr == ar:
-            return {"result": "push"}
-        won = (hr > ar) if side == "home" else (ar > hr)
-        return {"result": "won" if won else "lost"}
-
-    if market == "runline":
-        if point is None:
-            return None
-        margin = (hr - ar) if side == "home" else (ar - hr)
-        adj = margin + float(point)
-        if abs(adj) < 1e-9:
-            return {"result": "push"}
-        return {"result": "won" if adj > 0 else "lost"}
-
-    if market == "total":
-        if point is None:
-            return None
-        tot = hr + ar
-        if abs(tot - float(point)) < 1e-9:
-            return {"result": "push"}
-        over = tot > float(point)
-        won = over if side == "over" else (not over)
-        return {"result": "won" if won else "lost"}
-
-    return None
+    THE GRADING ITSELF LIVES IN betting_settle (2026-08-09), because there are
+    now three ledgers over the same slate and they may never disagree about
+    whether a side covered. This wrapper keeps the dict-returning shape the rest
+    of this file and its tests were written against."""
+    res = betting_settle.grade_side(
+        market=row.get("market"), side=row.get("side"), point=row.get("point"),
+        home_runs=game.get("home_runs"), away_runs=game.get("away_runs"))
+    return {"result": res} if res else None
 
 
 def _profit(row: dict, result: str) -> float | None:
-    if result == "push":
-        return 0.0
-    stake = float(row.get("stake_units") or STAKE_UNITS)
-    dec = row.get("decimal")
-    if not dec:
-        try:
-            import betting_ingest as bi
-            dec = bi.american_to_decimal(row.get("odds_at_post"))
-        except Exception:                                     # noqa: BLE001
-            dec = None
-    if not dec:
-        return None
-    return round(stake * (float(dec) - 1.0), 4) if result == "won" else -stake
+    return betting_settle.profit_units(
+        result=result, decimal=row.get("decimal"), odds=row.get("odds_at_post"),
+        stake_units=float(row.get("stake_units") or STAKE_UNITS))
 
 
 def settle(*, games: list[dict] | None = None, path: Path | None = None,
@@ -465,9 +603,43 @@ def settle(*, games: list[dict] | None = None, path: Path | None = None,
 # ---------------------------------------------------------------------------
 # the shape betting_model.sweep_min_edge wants
 # ---------------------------------------------------------------------------
-def graded_bets(*, path: Path | None = None) -> list[dict]:
+def row_tags(row: dict) -> set:
+    """Which tag populations one row belongs to.
+
+    A row's memberships are the ones its writer STAMPED, never ones inferred
+    later. `tags` is the explicit list; a row with only `slot` belongs to that
+    one tag; a row with neither is from the pre-tag era and belongs to
+    `untagged` alone.
+
+    THE THING THIS REFUSES TO DO is fold the old five-a-slate rows into
+    `board_all` on the grounds that they cleared the floor too. They did, but
+    they were selected under a cap, so their population is censored at the top
+    of the EV ranking. Pooling a censored sample into an uncapped tag is the
+    same defect as pooling the tags, one level down."""
+    tags = row.get("tags")
+    if isinstance(tags, (list, tuple, set)) and tags:
+        return {str(t) for t in tags}
+    slot = row.get("slot")
+    return {slot} if slot else {UNTAGGED}
+
+
+def graded_bets(*, slot: str | None = None, path: Path | None = None) -> list[dict]:
     """Settled shadow bets as {edge, decimal, won} rows, which is exactly what
     `betting_model.sweep_min_edge` consumes.
+
+    `slot` NAMES THE TAG TO CONDITION ON, and passing one is what makes the
+    result a sweepable sample. docs/diamond-betting.md section 7a: "a pooled ROI
+    measures a mixture nobody bet". The four tags select on four different
+    quantities - model probability inside a price band, EV at a long price, EV
+    anywhere inside a cap, and every side over the floor - so a threshold fitted
+    to their union is wrong for each of them separately.
+
+    `slot=None` STILL RETURNS THE POOLED SET, unchanged, and that is not an
+    endorsement of it. It is the shape `betting_model._shadow_graded_bets` has
+    always called, and quietly redefining it here would change what an existing
+    caller measures without that caller's code moving. The fix belongs at the
+    gate: see `graded_bets_by_tag` and the patch it exists to serve. Anything
+    that SETS A THRESHOLD from the pooled set is a defect.
 
     Pushes are EXCLUDED rather than scored as losses. A push returns the stake,
     so counting it as a loss would understate every threshold's ROI and make the
@@ -475,6 +647,8 @@ def graded_bets(*, path: Path | None = None) -> list[dict]:
     out = []
     for r in load(path):
         if r.get("result") not in ("won", "lost"):
+            continue
+        if slot is not None and slot not in row_tags(r):
             continue
         dec = r.get("decimal")
         if not dec:
@@ -488,6 +662,28 @@ def graded_bets(*, path: Path | None = None) -> list[dict]:
         out.append({"edge": float(r["edge"]), "decimal": float(dec),
                     "won": r["result"] == "won"})
     return out
+
+
+def graded_bets_by_tag(*, path: Path | None = None) -> dict:
+    """{tag: sweepable rows} for every tag that has at least one settled row.
+
+    This is what gate 3 should sweep over: one threshold per tag, each opening
+    on its own evidence. A tag with 4 settled rows stays shut while another with
+    120 opens, which is the correct behaviour and the reason the pooled version
+    looked further along than it was."""
+    rows = load(path)
+    tags = sorted({t for r in rows for t in row_tags(r)})
+    return {t: graded_bets(slot=t, path=path) for t in tags}
+
+
+def sweep_readiness(*, path: Path | None = None) -> dict:
+    """Per tag: how many settled rows it has, how many it needs, and whether it
+    may be swept at all. No rates, no projections - this is a counter."""
+    by_tag = graded_bets_by_tag(path=path)
+    return {t: {"n": len(rws), "need": MIN_BETS_FOR_SWEEP,
+                "ready": len(rws) >= MIN_BETS_FOR_SWEEP,
+                "max_per_slate": MAX_PER_SLATE_BY_TAG.get(t, "n/a")}
+            for t, rws in sorted(by_tag.items())}
 
 
 def _tally(rows: list[dict]) -> dict:
@@ -532,7 +728,33 @@ def summary(*, path: Path | None = None) -> dict:
     for r in rows:
         buckets.setdefault(r.get("slot") or "untagged", []).append(r)
     out["by_slot"] = {k: _tally(v) for k, v in sorted(buckets.items())}
-    # The number the third gate is actually waiting on.
+
+    # BY TAG, which is not the same partition as `by_slot` and must not be read
+    # as one. `slot` is the single rule that CHOSE a row, so `by_slot` is a
+    # partition and its counts sum to n_rows. `by_tag` is MEMBERSHIP, and a row
+    # chosen by the EV cap is also a member of board_all, so these buckets
+    # OVERLAP and their counts do not sum to anything. That is the correct shape
+    # for the question gate 3 asks - "does this tag, on its own, have enough
+    # settled rows to sweep" - and the wrong shape for "how big is the ledger".
+    tag_buckets: dict[str, list[dict]] = {}
+    for r in rows:
+        for t in row_tags(r):
+            tag_buckets.setdefault(t, []).append(r)
+    out["by_tag"] = {k: _tally(v) for k, v in sorted(tag_buckets.items())}
+    out["by_tag_note"] = ("membership, not a partition: a capped row is also a "
+                          "board_all row, so these counts overlap by design")
+
+    # The number the third gate is actually waiting on, PER TAG. The pooled
+    # count is kept beside it because it is what the un-patched gate still
+    # reads, and seeing the two apart is how the difference gets noticed.
+    out["sweep_readiness"] = sweep_readiness(path=path)
     out["n_for_min_edge_sweep"] = len(graded_bets(path=path))
-    out["min_bets_for_sweep"] = 100
+    out["n_for_min_edge_sweep_pooled_is_not_sweepable"] = (
+        "the pooled count mixes four selection rules; a threshold fitted to it "
+        "is wrong for every tag it would be applied to")
+    out["min_bets_for_sweep"] = MIN_BETS_FOR_SWEEP
+    # WHERE THE EVIDENCE IS STORED, beside the counts it produced. A ledger that
+    # cannot survive a checkout is not evidence, however many rows it holds.
+    if path is None:
+        out["storage"] = storage()
     return out

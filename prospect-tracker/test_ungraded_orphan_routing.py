@@ -18,7 +18,10 @@ was a test saying so, which is this file. If a future change makes a player with
 scout grade fail BOTH predicates, they vanish from the product entirely and silently,
 and that is the failure these tests exist to catch.
 """
+
 from __future__ import annotations
+
+import pytest
 
 import efv_ungraded
 from consensus import compute_consensus_point
@@ -88,3 +91,26 @@ def test_a_fabricated_grade_moves_a_player_to_the_wrong_side_of_the_partition():
     without = {"player_key": "jacob_friend", "fv_raw": None}
     assert efv_ungraded.flagship_owns(with_fabrication) is True
     assert efv_ungraded.flagship_owns(without) is False
+
+
+# ---------------------------------------------------------------------------
+# CATALOG PIN. data_catalog.py names THIS file as the shape pin for
+# xfv_ungraded.json, and until now nothing here mentioned that artifact, so
+# /sources/ rendered the row with no receipt at all - a claimed citation the
+# page could not show. The fix the ratchet asks for is this test, not a
+# repointed pinned_by.
+def test_xfv_ungraded_json_carries_the_shape_the_catalog_promises():
+    """xfv_ungraded.json: provisional grades for players no public source has
+    graded, addressable by player_key and by mlbam id."""
+    import json
+    from pathlib import Path
+    p = Path(__file__).resolve().parent / "data" / "xfv_ungraded.json"
+    if not p.exists():
+        pytest.skip("xfv_ungraded.json not built in this tree")
+    d = json.loads(p.read_text(encoding="utf-8"))
+    assert set(d) >= {"meta", "by_player", "by_mlbam"}
+    assert isinstance(d["by_player"], dict) and isinstance(d["by_mlbam"], dict)
+    if d["by_player"]:
+        grade = next(iter(d["by_player"].values()))
+        # the row's whole promise is "still carries a number"
+        assert isinstance(grade, (int, float, dict)), type(grade)

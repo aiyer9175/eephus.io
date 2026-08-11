@@ -37,13 +37,39 @@
   // Section ids are the SHELL'S (build_site's betting page, data-bettingsection
   // attributes), not this file's preference. The shell is the contract; a
   // module that invents its own ids renders a page whose tabs do nothing.
-  var SECTIONS = ["potd", "teams", "props", "parlays", "calculators", "record", "mybets"];
+  var SECTIONS = ["potd", "teams", "props", "parlays", "calculators", "record",
+                  "validation", "mybets"];
   var SECTION_PAT = SECTIONS.join("|");
   var SECTION_LABELS = {
     potd: "Pick of the Day", teams: "Team Bets", props: "Player Props",
     parlays: "Parlays", calculators: "Calculators", record: "The Record",
-    mybets: "My Bets"
+    validation: "Validation", mybets: "My Bets"
   };
+
+  // ---- the three side artifacts --------------------------------------------
+  // /data/betting.json carries the board, the picks and the validation STATE.
+  // Three things the validation and record tabs need are published as their own
+  // files and are not folded into it:
+  //
+  //   learning  data/betting_learning.json - the two clocks with their MEASURED
+  //             arrival rates, the calibration bins and the per-market split.
+  //   evald     data/betting_model_eval.json - run_dispersion, including the
+  //             split-quantile sensitivity grid the verdict is taken from. The
+  //             payload's `model.backtest` allowlist does not carry it.
+  //   clv       data/betting_clv.json - per-pick closing-line value and, when
+  //             nothing graded, the reasons why.
+  //
+  // They are fetched LAZILY, on the first paint of a section that reads one, so
+  // the pick tab still costs exactly one request. Each lands as null on a 404
+  // and every reader below says which file is missing rather than printing a
+  // blank. State is "pending" / "ok" / "fail" and never re-requests.
+  var AUX_URL = {
+    learning: "/data/betting_learning.json",
+    evald: "/data/betting_model_eval.json",
+    clv: "/data/betting_clv.json"
+  };
+  var AUX = { learning: null, evald: null, clv: null };
+  var AUX_STATE = { learning: null, evald: null, clv: null };
 
   var S = { data: null, section: "potd", error: null, legs: [], bets: [], betsSource: "local" };
   var LINKS = null;
@@ -79,6 +105,42 @@
   }
   function gated() { return gatingOn() && !isDiamond(); }
   function dataUrl() { return gated() ? PREVIEW_URL : DATA_URL; }
+
+  // One request per artifact, ever. Returns the parsed file or null; a null
+  // means "not loaded", and `auxState` tells the callers whether that is
+  // "still in flight", "404" or "never asked", which are three different
+  // sentences on screen. The fetch re-paints the current section when it
+  // lands, and re-entry is safe because the state is set before the request.
+  function aux(key) {
+    if (AUX_STATE[key]) return AUX[key];
+    AUX_STATE[key] = "pending";
+    // The re-paint fires only for a request that settles AFTER this call has
+    // returned, which is every real one. A promise that resolves before the
+    // return (a stub, a synchronous cache) would otherwise re-render from
+    // inside the render that asked for it, and the outer paint would then
+    // overwrite the good markup with the empty state it had already built.
+    var returned = false;
+    function settle(d, ok) {
+      AUX[key] = ok ? (d || null) : null;
+      AUX_STATE[key] = (ok && d) ? "ok" : "fail";
+      if (returned) renderSection();
+    }
+    fetch(AUX_URL[key], { cache: "no-cache" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (d) { settle(d, true); }).catch(function () { settle(null, false); });
+    returned = true;
+    return AUX[key];
+  }
+  function auxState(key) { return AUX_STATE[key] || "idle"; }
+  // The one sentence a panel prints instead of a number it does not have.
+  function auxMissing(key) {
+    var st = auxState(key);
+    if (st === "pending") return "Loading " + AUX_URL[key] + ".";
+    return AUX_URL[key] + " did not load, so this panel has nothing to read. " +
+      "It is written by the nightly build; a missing file means the build has " +
+      "not run since the lane that writes it shipped.";
+  }
 
   // ---- helpers --------------------------------------------------------------
   function el(id) { return document.getElementById(id); }
@@ -178,7 +240,19 @@
     if (!sum) return null;
     return raw.map(function (q) { return q / sum; });
   }
-  function evPerUnit(p, dec) { return p * (dec - 1) - (1 - p); }
+  // THE PUSH IS PART OF THE BET, NOT PART OF THE ODDS. On a whole-number total
+  // the book returns the stake when the total lands exactly on the line, so a
+  // refund is not a loss. `p` is already CONDITIONAL on no push (that is what
+  // betting_model.total_side_probabilities returns), which makes the honest
+  // number the conditional EV scaled by the chance the bet resolves at all.
+  // betting_export._priced_side applies exactly this factor at the call site,
+  // and it moved published picks: the unadjusted number overstates a whole
+  // number by 1 / (1 - p_push), measured 1.140x to 1.163x on 2026-08-09.
+  // Omitting the third argument is the half-point case and changes nothing.
+  function evPerUnit(p, dec, pPush) {
+    var pp = (pPush > 0 && pPush < 1) ? Number(pPush) : 0;
+    return (1 - pp) * (p * (dec - 1) - (1 - p));
+  }
   function kelly(p, dec) {
     var b = dec - 1;
     if (b <= 0) return 0;
@@ -257,6 +331,62 @@
     s = String(s || "");
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
   }
+
+  // HOW FAR SHORT, in the gate's own unit. "closed" tells a reader nothing
+  // about whether he is waiting a week or a decade; 389 games does.
+  //
+  // THE THRESHOLD IS READ, NEVER ASSUMED. `vintage_sample` takes it from the
+  // served `min_graded_games_for_min_edge`; the other two take it out of the
+  // gate's OWN `need` string, which is the only place they publish it. No
+  // number in this function is written down in this file, so a gate that moves
+  // its bar server-side moves this column with it.
+  function gateNeedValue(g, v) {
+    var id = String((g || {}).id || ""), need = String((g || {}).need || ""), m;
+    if (id === "vintage_sample") {
+      return { n: ((v || {}).vintage || {}).min_graded_games_for_min_edge, unit: "games" };
+    }
+    if (id === "out_of_sample_skill") {
+      m = /t\s*>=\s*(-?[\d.]+)/.exec(need);
+      return { n: m ? Number(m[1]) : null, unit: "t" };
+    }
+    if (id === "graded_price_history") {
+      m = /at least (\d+)/.exec(need);
+      return { n: m ? Number(m[1]) : null, unit: "settled rows" };
+    }
+    m = /(-?\d+(?:\.\d+)?)/.exec(need);
+    return { n: m ? Number(m[1]) : null, unit: "" };
+  }
+  // THE `why` PARAGRAPH IS THE WIDEST THING IN THE GATE TABLE, and on a 390px
+  // phone a five-column table carrying it scrolls the whole document sideways.
+  // It ships as a disclosure that is OPEN on a wide viewport and CLOSED on a
+  // narrow one, so the desktop reader loses nothing and the phone reader gets a
+  // table that fits with the same words one tap away. The open state is decided
+  // at render time because CSS cannot open a <details> and hiding the paragraph
+  // outright would delete the reason rather than fold it.
+  function narrowView() {
+    try {
+      return !!(window.matchMedia && window.matchMedia("(max-width:640px)").matches);
+    } catch (e) { return false; }
+  }
+  function whyBlock(text, label) {
+    if (!text) return "";
+    return '<details class="bt-gate-more"' + (narrowView() ? "" : " open") +
+      '><summary class="bt-gate-sum">' + esc(label || "why this gate exists") +
+      '</summary><div class="bt-gate-why">' + esc(text) + "</div></details>";
+  }
+
+  function gateDistance(g, v) {
+    if (g && g.open) return { text: "open", short: false };
+    var have = (g || {}).have;
+    var nv = gateNeedValue(g, v);
+    if (typeof have !== "number" || nv.n == null) {
+      return { text: "not measurable", short: false };
+    }
+    var gap = nv.n - have;
+    if (gap <= 0) return { text: "at the bar", short: false };
+    var digits = (nv.unit === "t") ? 3 : 0;
+    return { text: num(gap, digits) + " " + nv.unit + " short", short: true };
+  }
   // The one sentence the pick section leads with. Built from the gate the
   // reader can actually count, so it reads "600 needed, 0 today" rather than
   // "the model is unvalidated" with no way to check the claim.
@@ -325,12 +455,13 @@
       rows.push('<div class="bt-panel-sub">The three gates on a published pick</div>');
       rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table"><thead><tr>' +
         '<th class="bt-l">Gate</th><th class="bt-l">What it needs</th><th>Have</th>' +
-        "<th>State</th></tr></thead><tbody>" +
+        "<th>Distance</th><th>State</th></tr></thead><tbody>" +
         gate.gates.map(function (g) {
+          var d = gateDistance(g, v);
           return '<tr><td class="bt-l">' + esc(g.id) + "</td>" +
-            '<td class="bt-l bt-gate-need">' + esc(g.need || "") +
-            (g.why ? '<div class="bt-gate-why">' + esc(g.why) + "</div>" : "") + "</td>" +
+            '<td class="bt-l bt-gate-need">' + esc(g.need || "") + whyBlock(g.why) + "</td>" +
             "<td>" + esc(haveText(g)) + "</td>" +
+            '<td class="' + (d.short ? "bt-neg" : "") + '">' + esc(d.text) + "</td>" +
             '<td><span class="bt-tag ' + (g.open ? "bt-tag-ok" : "bt-tag-warn") + '">' +
             (g.open ? "open" : "closed") + "</span></td></tr>";
         }).join("") + "</tbody></table></div>");
@@ -342,11 +473,11 @@
     rows.push("<p>One dated snapshot lands per night, and a completed game becomes gradable " +
       "only once a snapshot predates it. So the honest sample starts at games played on or " +
       "after " + (cov.earliest_gradable_game_date ? esc(cov.earliest_gradable_game_date) :
-        "the first night the snapshot runs") + ", and it grows by roughly a slate a day from " +
-      "there until it reaches " + (need == null ? "the threshold" : need) + ". " +
-      "There is no projected date on this page, because turning a game count into a calendar " +
-      "date needs a games-per-night rate this module does not measure, and a made-up date is " +
-      "the same sin as a made-up edge.</p>");
+        "the first night the snapshot runs") + ", and it grows until it reaches " +
+      (need == null ? "the threshold" : need) + ". The arrival rate behind that is " +
+      "MEASURED, not assumed off a schedule: Clock A on the Validation tab carries it " +
+      "with the window it was counted over. A projection off a measured rate is still " +
+      "a projection and is labelled as one there.</p>");
     if (v.generated_at) {
       rows.push('<div class="bt-asof">Backtest artifact generated ' + esc(v.generated_at) +
         (v.model_version ? " &middot; " + esc(v.model_version) : "") + "</div>");
@@ -354,8 +485,85 @@
     return '<div class="bt-panel">' + rows.join("") + "</div>";
   }
 
+  // ---- the feed-health strip ------------------------------------------------
+  // THE MODULE STATE IS "THE CLOSE HALF HAS NEVER RUN" AND NOTHING ON SCREEN
+  // SAID SO. Every price on this page comes from an OPEN snapshot. The CLOSE
+  // snapshot is a separate cron, it writes the only evidence CLV can ever be
+  // graded from, and it is unrecoverable after the fact: a slate whose close
+  // was never captured can never be graded, no matter what runs tomorrow.
+  //
+  // So this strip renders ABOVE THE TABS, on every section, on every load,
+  // including the load where the payload 404'd. `status.feed_health` is
+  // measured off .cache/odds/ by betting_export.snapshot_health, and its
+  // `diagnosis` names the REPAIR rather than the symptom; it rides here as the
+  // title so an operator gets it on hover without a second click.
+  function feedHealthHost() {
+    var host = el("betting-feedhealth");
+    if (host) return host;
+    // The shell ships the host. This is the skew fallback: a shell built
+    // before this lane still gets the strip, above the section content.
+    var sec = el("betting-section");
+    var nav = document.querySelector(".mlbstats-sectionnav");
+    host = document.createElement("div");
+    host.id = "betting-feedhealth";
+    if (nav && nav.parentNode) nav.parentNode.insertBefore(host, nav);
+    else if (sec) sec.insertBefore(host, sec.firstChild);
+    else return null;
+    return host;
+  }
+
+  function fhSeg(label, value, warn) {
+    return '<span class="bt-fh-seg' + (warn ? " bt-fh-warn" : "") + '">' +
+      '<span class="bt-fh-k">' + esc(label) + "</span>" +
+      '<span class="bt-fh-v">' + esc(value) + "</span></span>";
+  }
+
+  function renderFeedHealth() {
+    var host = feedHealthHost();
+    if (!host) return;
+    var d = S.data || null;
+    var st = (d && d.status) || {};
+    var fh = st.feed_health || null;
+    var segs = [];
+    if (!d) {
+      segs.push(fhSeg("odds", "payload not loaded", true));
+      segs.push(fhSeg("close", "unknown", true));
+      segs.push(fhSeg("board", "unknown", true));
+    } else {
+      // OPEN. The capture the board was actually priced from, which is the one
+      // that matters; `odds_kind` says which half of the day it is.
+      var cap = st.odds_captured_at ? String(st.odds_captured_at).slice(0, 10) : null;
+      segs.push(fhSeg("odds " + (st.odds_kind || "open"), cap || "none cached", !cap));
+      // CLOSE. Zero is the state this strip exists for, and it is stated in
+      // capitals because it is not a degraded reading of a working job, it is
+      // a job that has never run.
+      var nClose = fh ? fh.n_slates_with_close : null;
+      var nSlates = fh ? fh.n_slates : null;
+      var closeTxt, closeWarn;
+      if (!fh) { closeTxt = "not measured"; closeWarn = true; }
+      else if (!nClose) { closeTxt = "NEVER CAPTURED"; closeWarn = true; }
+      else if (nClose < nSlates) { closeTxt = nClose + " of " + nSlates + " slates"; closeWarn = true; }
+      else { closeTxt = "all " + nSlates + " slates"; closeWarn = false; }
+      segs.push(fhSeg("close", closeTxt, closeWarn));
+      segs.push(fhSeg("board", d.slate_date || "unknown", !d.slate_date));
+      segs.push(fhSeg("games", String(d.n_games == null ? 0 : d.n_games),
+                      !(d.n_games)));
+    }
+    var diag = (fh && fh.diagnosis) ? String(fh.diagnosis) : "";
+    host.className = "bt-fh" + (!fh || !fh.n_slates_with_close ? " bt-fh-red" : "");
+    host.setAttribute("role", "status");
+    host.innerHTML = '<div class="bt-fh-line"' +
+      (diag ? ' title="' + esc(diag) + '"' : "") + ">" +
+      '<span class="bt-fh-hd">FEED</span>' + segs.join("") +
+      (fh && !fh.n_slates_with_close
+        ? '<span class="bt-fh-note">no close snapshot exists, so no pick on this ' +
+          "page can ever be graded against the closing line</span>"
+        : "") + "</div>";
+  }
+
   // ---- model banner ---------------------------------------------------------
   function renderBanner() {
+    renderFeedHealth();
     var host = el("betting-banner");
     if (!host) return;
     if (!S.data) {
@@ -482,6 +690,41 @@
         : "");
   }
 
+  // A WHOLE-NUMBER TOTAL REFUNDS SOME OF THE TIME, and the page said nothing.
+  // `p_push` is the model's own mass exactly on the line, served on the row;
+  // the two sides beside it are already conditional on it not landing. The
+  // served EV carries the (1 - p_push) factor, so this line is what makes that
+  // number legible rather than a discount nobody can see the reason for.
+  function pushLine(p) {
+    if (!p || p.p_push == null || !(p.p_push > 0)) return "";
+    var pt = (p.point != null) ? p.point : null;
+    var whole = (pt != null && Math.abs(pt - Math.round(pt)) < 1e-9);
+    if (!whole) return "";
+    return "<p>" + esc(String(Math.round(pt))) + " is a push " + pct(p.p_push, 1) +
+      " of the time. A push returns the stake, so the expected value above is the " +
+      "conditional value scaled by the " + pct(1 - p.p_push, 1) +
+      " of the time the bet resolves at all.</p>";
+  }
+
+  // THE MARGIN MODEL, NAMED ON THE PICK. The Poisson difference is the wrong
+  // distribution for run scoring, a one-parameter correction was fitted and
+  // pre-registered against a held-out gate, and the gate's verdict decides
+  // whether the price a reader is looking at came from one or the other. The
+  // verdict is READ; nothing about it is written down in this file.
+  function dispersionLine(load) {
+    var dr = ((load ? aux("evald") : AUX.evald) || {}).run_dispersion || null;
+    if (!dr) return "";
+    var verdict = esc(String(dr.verdict || dr.status || "unknown"));
+    if (dr.served) {
+      return note("Margin model: the run-dispersion correction is SERVED at alpha " +
+        num(dr.served_alpha, 5) + ". Gate verdict " + verdict + ".");
+    }
+    return note("Margin model: a one-parameter dispersion correction was fitted at alpha " +
+      num(dr.alpha, 5) + " and its pre-registered gate returned <strong>" + verdict +
+      "</strong>, so it is NOT served. This price comes from the Poisson difference, " +
+      "which puts too little mass in the tails. The full grid is on the Validation tab.");
+  }
+
   function pickCard(slot) {
     var d = S.data;
     var p = d[slot.key];
@@ -500,19 +743,82 @@
         "clears, and it is never lowered to make a pick appear. An empty slot is " +
         "the honest answer to a slate with nothing on it.</p></div>";
     }
-    var caveat = p.caveat ? note(esc(p.caveat)) : "";
+    // THE REDACTED SLOT (D16). The preview slice keeps the whole trust surface
+    // (validation state, record, publish blockers) and withholds the SELECTION
+    // only: market and floor, no side, no price, no book, no numbers. That is
+    // the only shape in which a gate can exist without the free tier losing the
+    // ability to check the process, and it is why the redaction is a server
+    // rewrite rather than a client that hides fields it was sent.
+    if (p.redacted) {
+      return '<div class="bt-pick bt-pick-redacted">' + hd +
+        "<p class=\"bt-pick-lead\">" + esc(slot.lead) + "</p>" +
+        '<div class="bt-pick-sel bt-dim">Selection withheld</div>' +
+        '<div class="bt-pick-meta">' + esc(p.market || "market not stated") +
+        " &middot; cleared " + (p.min_edge_used == null ? "the floor"
+                                                        : pct(p.min_edge_used, 1)) +
+        "</div>" +
+        "<p>" + esc(p.redaction_note || ("This slot has a pick. The preview slice " +
+          "carries its market and the floor it cleared, and not the side, the price " +
+          "or the book.")) + "</p>" +
+        note("Everything needed to judge the pick is still on this page: the " +
+          "validation state, the two clocks, the gate table and the public record " +
+          "are never gated. What is behind the gate is the selection, not the " +
+          "evidence.") + "</div>";
+    }
+    // THE CAVEAT SLOT CARRIES BOTH LINES. The row's own caveat says the market
+    // is one of the two the margin model is worst at; the dispersion line says
+    // what was done about that and what the gate returned.
+    var shaped = (p.market === "runline" || p.market === "total");
+    var caveat = (p.caveat ? note(esc(p.caveat)) : "") + dispersionLine(shaped);
     return '<div class="bt-pick">' + hd +
       "<p class=\"bt-pick-lead\">" + esc(slot.lead) + "</p>" +
       '<div class="bt-pick-sel">' + esc(p.label || p.side || "") + " " +
       fmtOdds(p.odds) + "</div>" +
       '<div class="bt-pick-meta">' + esc(p.matchup || "") + " &middot; " +
       esc(p.market || "") + " &middot; " + esc(p.book || "") + "</div>" +
-      pickSentence(p) +
+      pickSentence(p) + pushLine(p) +
       '<div class="bt-pick-nums">' +
       chip("Model", pct(p.model_prob)) + chip("Market fair", pct(p.market_fair_prob)) +
       chip("Edge", signed(p.edge * 100, 1) + "%") +
       chip("EV / unit", signed(p.ev_per_unit, 3)) + "</div>" +
       caveat + unitLine(p, m) + "</div>";
+  }
+
+  // AN EMPTY BOARD IS A MEASUREMENT, NOT AN OUTAGE, and it has to read as one.
+  // The census counts what the selection rule actually saw: every side on the
+  // board with a real taken price, how many of those cleared the floor, and how
+  // many survived the price band. All three are counted off the SERVED rows
+  // with the same two conditions `_floor_clearing_sides` uses (an odds value
+  // and a book), so the count on screen is the count the server ranked.
+  function pricedSideCount(bets) {
+    var n = 0;
+    (bets || []).forEach(function (b) {
+      [b.moneyline, b.runline, (b.total || {}).sides].forEach(function (rows) {
+        (rows || []).forEach(function (r) {
+          if (r && r.odds != null && r.book) n += 1;
+        });
+      });
+    });
+    return n;
+  }
+
+  function pickCensus() {
+    var d = S.data || {};
+    var meta = d.pick_meta || {};
+    if (meta.blocked) {
+      return note("<strong>Nothing was ranked.</strong> " +
+        esc(meta.blocked_reason || "the selection rule never ran") + ".");
+    }
+    var n = pricedSideCount(d.team_bets);
+    var m = meta.n_floor_clearing_sides;
+    var band = ((meta.slots || {}).pick_of_the_day || {}).band || "the price band";
+    var floor = (meta.min_edge == null) ? "the floor" : pct(meta.min_edge, 1);
+    return note("<strong>Census.</strong> " + n + " sides priced across " +
+      (d.n_games || 0) + " games, " + (m == null ? "an unreported number of" : m) +
+      " cleared the " + esc(floor) + " floor, and none of those are inside " +
+      esc(band) + ". That is a measurement of tonight's board, not a failure to " +
+      "load one: the board above is priced and the floor was not lowered to fill " +
+      "a slot.");
   }
 
   function renderPick() {
@@ -525,6 +831,7 @@
     var any = SLOTS.some(function (s) { return !!d[s.key]; });
     out.push(SLOTS.map(pickCard).join(""));
 
+    if (!any) out.push(pickCensus());
     if (!any) {
       // EVERY blocker, not the first one. The payload used to carry a single
       // reason, so on a day with no odds feed the page said "no odds feed" and
@@ -585,10 +892,319 @@
     return note(s);
   }
 
+  // ===========================================================================
+  // SECTION: VALIDATION
+  // ===========================================================================
+  // Everything here used to be buried under a <details> on the pick tab or
+  // absent entirely. It is the trust surface, so it gets its own tab and it
+  // LEADS with the result rather than with the method.
+  //
+  // THE TWO CLOCKS ARE NEVER MERGED. One counts games the model was graded on
+  // out of sample; the other counts settled paper bets, per selection rule.
+  // They measure different things, they open different gates, and adding them
+  // is exactly the arithmetic that produced the "600 bets" question: nobody is
+  // waiting on 600 bets, and nobody is waiting on 100 games.
+
+  function vintageBlock(v) {
+    var bs = ((v || {}).graded_blocks) || [];
+    for (var i = 0; i < bs.length; i++) {
+      if (bs[i].key === "vintage" || bs[i].mode === "vintage") return bs[i];
+    }
+    return null;
+  }
+
+  // THE RESULT, UNSOFTENED. The verb comes from the sign of the served paired
+  // delta and from `beats_baseline_95`, so it can never flatter a number the
+  // artifact did not report. There is no adjective in this function.
+  function honestResult() {
+    var v = vstate();
+    var b = vintageBlock(v);
+    var n = b ? ((b.n_graded != null) ? b.n_graded : b.n) : null;
+    if (!b || !n) {
+      return '<div class="bt-headline bt-headline-warn">' +
+        '<div class="bt-headline-hd">The honest backtest has graded nothing yet</div>' +
+        "<p>The vintage mode is the only one that is out of sample, and it has " +
+        (b && b.status ? esc(b.status) : "no graded games") + ". Every Brier on this " +
+        "page is from a contaminated mode whose features contain the games it grades.</p></div>";
+    }
+    var sk = b.skill_vs_home_base || {};
+    var d = sk.delta;
+    var verb = (d == null) ? "has no measured margin against"
+      : (d < 0 ? "LOSES to"
+              : (sk.beats_baseline_95 ? "beats" : "does not significantly beat"));
+    return '<div class="bt-headline bt-headline-warn">' +
+      '<div class="bt-headline-hd">The honest backtest ' + verb +
+      " &quot;always take the home team&quot;</div>" +
+      "<p>Out of sample, on " + n + " vintage-graded games: model " +
+      gl("Brier", "brier_score") + " " + num(b.brier, 5) + " against a home-baseline " +
+      num(b.brier_home_base, 5) + ", accuracy " + pct(b.accuracy, 2) + ". Paired " +
+      "per-game skill " + signed(d, 6) + " at t = " + num(sk.t, 3) +
+      ", one-sided 95% bar 1.645.</p>" +
+      '<div class="bt-pick-nums">' +
+      chip("Games", n) + chip("Brier", num(b.brier, 5)) +
+      chip("Home base", num(b.brier_home_base, 5)) +
+      chip("Accuracy", pct(b.accuracy, 2)) +
+      chip("Skill", signed(d, 6)) + chip("t", num(sk.t, 3)) + "</div>" +
+      "<p>Lower Brier is better, so a model above its own baseline is worse than the " +
+      "baseline. This is the number that decides whether anything on this site may be " +
+      "published as a pick, and it is not close to deciding it yes.</p></div>";
+  }
+
+  function clockA() {
+    var L = ((aux("learning") || {}).latest) || {};
+    var c = (L.clocks || {}).vintage_sample || null;
+    var v = vstate();
+    var vin = (v || {}).vintage || {};
+    var have = c ? c.have : vin.n_graded;
+    var need = c ? c.need : vin.min_graded_games_for_min_edge;
+    var rate = (c || {}).rate || null;
+    var eta = (c || {}).eta || null;
+    var rows = ['<div class="bt-clock-hd">Clock A &middot; vintage-graded games</div>',
+      '<div class="bt-clock-q">Has the model been graded on enough games it could not see?</div>',
+      '<div class="bt-clock-n">' + (have == null ? "-" : have) +
+        ' <span class="bt-clock-need">of ' + (need == null ? "-" : need) + "</span></div>",
+      meter(have, need)];
+    rows.push('<div class="bt-kv">' +
+      kv("Measured arrivals per day", rate ? num(rate.per_day, 2) : "not measured") +
+      kv("Counted over", rate ? (rate.window_days + " days from " + esc(rate.window_from))
+                              : "-") +
+      kv("Short by", (have != null && need != null) ? (need - have) + " games" : "-") +
+      kv("Days at that rate", eta && eta.days != null ? eta.days : "not projected") +
+      "</div>");
+    if (eta && eta.is_projection) {
+      rows.push(note("That day count is a MEASURED rate applied forward, not a schedule. " +
+        esc(rate ? rate.basis : "")));
+    }
+    if (c && c.may_go_backwards) {
+      rows.push('<div class="bt-clock-fine">May go backwards: ' + esc(c.may_go_backwards) +
+        "</div>");
+    }
+    if (!c) rows.push(note(esc(auxMissing("learning")) +
+      " The count above is read from the payload; the arrival rate is not."));
+    return '<div class="bt-clock">' + rows.join("") + "</div>";
+  }
+
+  function clockB() {
+    var L = ((aux("learning") || {}).latest) || {};
+    var c = (L.clocks || {}).graded_price_history || null;
+    var rows = ['<div class="bt-clock-hd">Clock B &middot; settled paper bets, per tag</div>',
+      '<div class="bt-clock-q">Does any edge threshold clear an ROI lower bound of zero, ' +
+      "measured per selection rule?</div>"];
+    if (!c) {
+      rows.push(note(esc(auxMissing("learning"))));
+      return '<div class="bt-clock">' + rows.join("") + "</div>";
+    }
+    var tags = c.by_tag || {};
+    var keys = Object.keys(tags).sort();
+    rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
+      '<thead><tr><th class="bt-l">Tag</th><th>Settled</th><th>Need</th>' +
+      "<th>Per day</th><th>Days at that rate</th><th>State</th></tr></thead><tbody>" +
+      keys.map(function (k) {
+        var t = tags[k] || {};
+        var r = t.rate || {}, e = t.eta || {};
+        return '<tr><td class="bt-l">' + esc(k) + "</td><td>" +
+          (t.have == null ? "-" : t.have) + "</td><td>" +
+          (t.need == null ? (c.need_per_tag == null ? "-" : c.need_per_tag) : t.need) +
+          "</td><td>" + num(r.per_day, 3) + "</td><td>" +
+          (e.days == null ? "-" : e.days) + "</td><td>" +
+          '<span class="bt-tag ' + (t.ready ? "bt-tag-ok" : "bt-tag-warn") + '">' +
+          (t.ready ? "ready" : "short") + "</span></td></tr>";
+      }).join("") + "</tbody></table></div>");
+    rows.push(note(esc(c.why_per_tag || "")));
+    if (c.cost) rows.push('<div class="bt-clock-fine">' + esc(c.cost) + "</div>");
+    return '<div class="bt-clock">' + rows.join("") + "</div>";
+  }
+
+  // A bar, not a chart library. Width is a percentage of the served need, and
+  // it is clamped at 100 so an overshoot cannot render past its own box.
+  function meter(have, need) {
+    if (have == null || !need) return "";
+    var f = Math.max(0, Math.min(1, Number(have) / Number(need)));
+    return '<div class="bt-meter" role="img" aria-label="' +
+      esc(have + " of " + need) + '"><span class="bt-meter-fill" style="width:' +
+      (f * 100).toFixed(1) + '%"></span></div>' +
+      '<div class="bt-clock-fine">' + pct(f, 1) + " of the way there</div>";
+  }
+
+  function clocksPanel() {
+    return '<div class="bt-panel"><div class="bt-panel-hd">Two clocks, and they are not ' +
+      "the same clock</div>" +
+      "<p>One counts GAMES the model was graded on out of sample. The other counts " +
+      "SETTLED PAPER BETS, one row per selection rule. They open different gates and " +
+      "they may never be added together: nobody is waiting on 600 bets, and nobody is " +
+      "waiting on 100 games.</p>" +
+      '<div class="bt-clocks">' + clockA() + clockB() + "</div></div>";
+  }
+
+  function calibrationPanel() {
+    var L = ((aux("learning") || {}).latest) || {};
+    var cal = L.calibration || null;
+    var rows = ['<div class="bt-panel-hd">Calibration ledger</div>'];
+    if (!cal) {
+      return '<div class="bt-panel">' + rows.join("") + "<p>" +
+        esc(auxMissing("learning")) + "</p></div>";
+    }
+    rows.push('<div class="bt-kv">' +
+      kv("Rows", cal.n_rows == null ? "-" : cal.n_rows) +
+      kv("Settled", cal.n_settled == null ? "-" : cal.n_settled) +
+      kv("Open", cal.n_open == null ? "-" : cal.n_open) +
+      kv("Slate days", cal.n_slate_days == null ? "-" : cal.n_slate_days) +
+      kv("Brier", num(cal.brier, 6)) +
+      kv("Log loss", num(cal.log_loss, 6)) + "</div>");
+    rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
+      '<thead><tr><th class="bt-l">Bin</th><th>n</th><th>Predicted</th><th>Actual</th>' +
+      "<th>|pred - actual|</th></tr></thead><tbody>" +
+      (cal.bins || []).map(function (b) {
+        var gap = (b.pred == null || b.actual == null) ? null
+          : Math.abs(Number(b.pred) - Number(b.actual));
+        return '<tr><td class="bt-l">' + esc(b.bin) + "</td><td>" + (b.n || 0) +
+          "</td><td>" + num(b.pred, 4) + "</td><td>" + num(b.actual, 4) + "</td>" +
+          '<td class="' + (gap != null && gap >= 0.2 ? "bt-neg" : "") + '">' +
+          num(gap, 4) + "</td></tr>";
+      }).join("") + "</tbody></table></div>");
+    if (cal.not_gate_1) rows.push(note(esc(cal.not_gate_1)));
+
+    var bym = L.by_market || null;
+    if (bym) {
+      rows.push('<div class="bt-panel-sub">Per market, where the dispersion shows up</div>');
+      var mk = Object.keys(bym);
+      rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
+        '<thead><tr><th class="bt-l">Market</th><th>Rows</th><th>Settled</th><th>Brier</th>' +
+        "<th>Log loss</th><th>Hold %</th><th>Model p</th><th>Market fair p</th>" +
+        "<th>Hit rate</th><th>Bias</th></tr></thead><tbody>" +
+        mk.map(function (k) {
+          var m = bym[k] || {}, cs = m.canonical_side || {};
+          return '<tr><td class="bt-l">' + esc(k) + "</td><td>" +
+            (m.n_rows == null ? "-" : m.n_rows) + "</td><td>" +
+            (m.n_settled == null ? "-" : m.n_settled) + "</td><td>" +
+            num(m.brier, 6) + "</td><td>" + num(m.log_loss, 6) + "</td><td>" +
+            num(m.mean_hold_pct, 3) + "</td><td>" + num(cs.mean_model_prob, 4) +
+            "</td><td>" + num(cs.mean_market_fair_prob, 4) + "</td><td>" +
+            num(cs.hit_rate, 4) + "</td><td>" + num(cs.bias, 4) + "</td></tr>";
+        }).join("") + "</tbody></table></div>");
+      var any = mk.length ? (bym[mk[0]] || {}).canonical_side : null;
+      if (any && any.note) rows.push(note(esc(any.note) +
+        " Read the model column against the market column on the runline and the total: " +
+        "a Poisson margin puts too little mass in the tails, so those two are where a " +
+        "shape error is visible. n is " + (any.n == null ? "-" : any.n) +
+        " canonical rows per market, which is not enough to conclude anything from."));
+    }
+    return '<div class="bt-panel">' + rows.join("") + "</div>";
+  }
+
+  // The gate returned INDETERMINATE and it is rendered as INDETERMINATE.
+  // `verdict` GOVERNS: `passed` is one pre-registered split, the sweep is the
+  // ship decision, and the two genuinely disagree right now. Rendering the
+  // boolean would publish a pass the module refused to serve.
+  function dispersionPanel() {
+    var e = aux("evald") || {};
+    var dr = e.run_dispersion || null;
+    var rows = ['<div class="bt-panel-hd">Run dispersion: the margin model gate</div>'];
+    if (!dr) {
+      var L = ((AUX.learning || {}).latest) || {};
+      var d2 = L.dispersion || null;
+      rows.push("<p>" + esc(auxMissing("evald")) + "</p>");
+      if (d2) {
+        rows.push('<div class="bt-kv">' + kv("Status", esc(d2.status || "-")) +
+          kv("Alpha", num(d2.alpha, 5)) +
+          kv("Served", d2.served ? "yes" : "no") + "</div>");
+        rows.push(note("Read from data/betting_learning.json, which carries the single " +
+          "split and NOT the split-quantile sweep the verdict is taken from."));
+      }
+      return '<div class="bt-panel">' + rows.join("") + "</div>";
+    }
+    var sens = dr.sensitivity || {};
+    var verdict = String(dr.verdict || sens.verdict || "unknown");
+    var cls = verdict === "pass" ? "bt-tag-ok" : "bt-tag-warn";
+    rows.push("<p><strong>Verdict: " +
+      '<span class="bt-tag ' + cls + '">' + esc(verdict) + "</span></strong> " +
+      "Not a pass and not a failure. " + esc(dr.verdict_note || "") + "</p>");
+    rows.push('<div class="bt-kv">' +
+      kv("Fitted alpha (NB2)", num(dr.alpha, 5)) +
+      kv("Variance ratio", varianceRatioText(dr)) +
+      kv("Single pre-registered split", dr.passed ? "all four criteria pass" :
+                                                    "at least one criterion fails") +
+      kv("Served in prices", dr.served ? "yes" : "no") +
+      kv("Served alpha", dr.served_alpha == null ? "none, prices stay Poisson"
+                                                 : num(dr.served_alpha, 5)) +
+      kv("Held-out games", dr.n_eval_games == null ? "-" : dr.n_eval_games) + "</div>");
+
+    var grid = sens.grid || [];
+    if (grid.length) {
+      rows.push('<div class="bt-panel-sub">Criterion 2 by split point and by side</div>');
+      rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
+        '<thead><tr><th class="bt-l">Split q</th><th>Date</th><th>Eval games</th>' +
+        "<th>Home delta</th><th>Home t</th><th>Away delta</th><th>Away t</th>" +
+        "<th>Both delta</th><th>Both t</th><th>Gate</th></tr></thead><tbody>" +
+        grid.map(function (g) {
+          var bs = g.by_side || {}, h = bs.home || {}, a = bs.away || {}, b = bs.both || {};
+          var pass = (g.gate_by_side || {}).both;
+          return '<tr><td class="bt-l">' + num(g.split_q, 2) + "</td><td>" +
+            esc(g.split_date || "-") + "</td><td>" + (g.n_eval_games == null ? "-" : g.n_eval_games) +
+            '</td><td class="' + (h.delta < 0 ? "bt-neg" : "bt-pos") + '">' + signed(h.delta, 6) +
+            "</td><td>" + num(h.t, 3) +
+            '</td><td class="' + (a.delta < 0 ? "bt-neg" : "bt-pos") + '">' + signed(a.delta, 6) +
+            "</td><td>" + num(a.t, 3) +
+            '</td><td class="' + (b.delta < 0 ? "bt-neg" : "bt-pos") + '">' + signed(b.delta, 6) +
+            "</td><td>" + num(b.t, 3) + "</td><td>" +
+            '<span class="bt-tag ' + (pass ? "bt-tag-ok" : "bt-tag-warn") + '">' +
+            (pass ? "pass" : "fail") + "</span></td></tr>";
+        }).join("") + "</tbody></table></div>");
+      rows.push(note("<strong>Both honest readings are above.</strong> The amended " +
+        "criterion clears the bar at some split quantiles and misses it at others, and " +
+        "the home side alone misses it at every one. " + esc(sens.rule || "")));
+    }
+    if (dr.runline_side_note) {
+      rows.push('<div class="bt-clock-fine">' + esc(dr.runline_side_note) + "</div>");
+    }
+    if (dr.criteria) {
+      rows.push('<details class="bt-details"><summary class="bt-details-sum">' +
+        "The pre-registered criteria, as amended</summary>" +
+        '<div class="bt-details-body"><p>' + esc(dr.criteria) + "</p>" +
+        (dr.criteria_v1 ? "<p><strong>V1, superseded:</strong> " + esc(dr.criteria_v1) +
+          "</p>" : "") + "</div></details>");
+    }
+    return '<div class="bt-panel">' + rows.join("") + "</div>";
+  }
+
+  // The measured variance ratio is NOT in any served artifact: betting_model
+  // measures it at fit time (its own header carries 2.3748x on the margin) and
+  // publishes alpha alone. Deriving 1 + alpha*lambda here would be this page
+  // inventing a number, so it says which file would have to carry it instead.
+  function varianceRatioText(dr) {
+    var vr = (dr || {}).variance_ratio;
+    if (vr == null) return "not published by data/betting_model_eval.json";
+    if (typeof vr === "number") return num(vr, 4) + "x";
+    // The shaped form: the margin ratio is the one that decides a runline, and
+    // the per-side ratio is the mechanism behind it.
+    return num(vr.margin_ratio, 4) + "x on the margin, " +
+      num(vr.runs_var_over_mean, 4) + "x per scoring side";
+  }
+
+  function renderValidation() {
+    var v = vstate();
+    var out = [honestResult(), clocksPanel()];
+    out.push('<div class="bt-subhd">The three gates on a published pick</div>');
+    out.push(validationPanel());
+    out.push(calibrationPanel());
+    out.push(dispersionPanel());
+    if (v && v.generated_at) {
+      out.push('<div class="bt-asof">Validation state read from ' +
+        esc(v.artifact || "data/betting_model_eval.json") + ", generated " +
+        esc(v.generated_at) + ". The clocks and the calibration ledger are read from " +
+        esc(AUX_URL.learning) + ".</div>");
+    }
+    return out.join("");
+  }
+
   // ---- section: the record --------------------------------------------------
+  // THREE PANELS, and the validation accounting is no longer one of them: it
+  // moved to its own tab. What is here is the record itself, the closing-line
+  // grade on the positions in it, and the pre-registered list of conditions a
+  // pick has to clear before it may enter the record at all.
   function renderRecord() {
     var d = S.data;
-    return recordPanel(d ? d.record : null) + validationPanel() +
+    return recordPanel(d ? d.record : null) + clvPanel() + publishBlockerPanel() +
       '<div class="bt-panel"><div class="bt-panel-hd">How a pick gets graded</div>' +
       "<p>Every published pick carries the timestamp, the book, the price at post " +
       "and a flat one " + gl("unit", "betting_unit") + ". It settles won, lost or " +
@@ -730,10 +1346,148 @@
         "</div>";
     }
     var url = (S.data && S.data.record_url) || "/data/betting_record.json";
+    // THE JOIN, NAMED. `record` is not the record file: it is the record joined
+    // to the settlement sidecar and to the CLV sidecar on bet_id. Neither
+    // `beat_close` nor `clv_pct` can ever be a byte of a record row, because
+    // rows are immutable and CLV lands hours later, so a summary computed off
+    // the record alone reported "not graded yet" over a fully graded record.
+    var sha = (r || {}).chain_sha;
+    var chain = sha ? ('<div class="bt-clock-fine">Chain ' +
+      '<code class="bt-sha">' + esc(sha) + "</code>. " +
+      esc((r || {}).chain_note || "") + " Archive this value: a later record that " +
+      "still contains it as one of its prefix hashes is an append, and one that does " +
+      "not is a rewrite.</div>") : "";
     return '<div class="bt-panel"><div class="bt-panel-hd">The public record</div>' + body +
+      "<p>Joined across three files on bet_id: the append-only record, the settlement " +
+      "sidecar and the closing-line sidecar. Verification: recompute the chain by " +
+      "folding sha256 row by row over " + esc(url) + " and compare it to the hash " +
+      "below.</p>" + chain +
       "<p>" + esc((S.data && S.data.record_policy) ||
         "Append only. Rows are never edited or deleted; a correction is a new row.") + " " +
-      'The raw file is <a class="bt-link" href="' + esc(url) + '">' + esc(url) + "</a>.</p></div>";
+      'The raw file is <a class="bt-link" href="' + esc(url) + '">' + esc(url) + "</a>. " +
+      'The sidecars are <a class="bt-link" href="' +
+      esc((S.data && S.data.settlement_url) || "/data/betting_settlement.json") + '">' +
+      esc((S.data && S.data.settlement_url) || "/data/betting_settlement.json") + "</a> and " +
+      '<a class="bt-link" href="' + esc((S.data && S.data.clv_url) || AUX_URL.clv) + '">' +
+      esc((S.data && S.data.clv_url) || AUX_URL.clv) + "</a>.</p></div>";
+  }
+
+  // ---- CLV, and the reasons it graded nothing -------------------------------
+  // Beating the close is the only honest read on an unvalidated model's
+  // decisions, so an empty CLV panel has to say WHY it is empty. The sidecar
+  // publishes `ungraded_reasons` as a count per reason; when there is nothing
+  // to plot, that dictionary IS the content.
+  function clvDeciles(picks) {
+    var vals = (picks || []).map(function (p) {
+      return (p && p.graded && typeof p.clv_pct === "number") ? p.clv_pct : null;
+    }).filter(function (x) { return x != null; });
+    if (!vals.length) return null;
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var span = (hi - lo) || 1;
+    var bins = [], i;
+    for (i = 0; i < 10; i++) bins.push(0);
+    vals.forEach(function (x) {
+      var k = Math.floor(((x - lo) / span) * 10);
+      if (k > 9) k = 9;
+      if (k < 0) k = 0;
+      bins[k] += 1;
+    });
+    return { lo: lo, hi: hi, bins: bins, n: vals.length,
+             max: Math.max.apply(null, bins) };
+  }
+
+  function clvPanel() {
+    var r = (S.data && S.data.record) || {};
+    // THE SIDECAR IS ONLY FETCHED ONCE THERE IS SOMETHING FOR IT TO GRADE. It
+    // is derived from the record, so on an empty record it does not exist and
+    // asking for it would put a 404 in every reader's console (and fail
+    // tools/verify_site.py, which treats a console error as a broken route)
+    // to learn what the record already says.
+    var side = (r.n_rows ? aux("clv") : null);
+    var rows = ['<div class="bt-panel-hd">' + gl("Closing line value", "clv") + "</div>"];
+    rows.push('<div class="bt-kv">' +
+      kv("Graded against the close", r.n_clv_graded == null ? "-" : r.n_clv_graded) +
+      kv("Beat close", r.beat_close_rate == null ? "not graded yet" : pct(r.beat_close_rate)) +
+      kv("Mean CLV", r.avg_clv_pct == null ? "not graded yet" : signed(r.avg_clv_pct, 2) + "%") +
+      "</div>");
+    var h = side ? clvDeciles(side.picks) : null;
+    if (h) {
+      rows.push('<div class="bt-panel-sub">Distribution, ' + h.n + " graded picks in ten " +
+        "equal-width bins from " + signed(h.lo, 2) + "% to " + signed(h.hi, 2) + "%</div>");
+      rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
+        '<thead><tr><th class="bt-l">Bin</th><th class="bt-l">Count</th><th>n</th>' +
+        "</tr></thead><tbody>" +
+        h.bins.map(function (c, i) {
+          var lo = h.lo + (h.hi - h.lo) * (i / 10), hi2 = h.lo + (h.hi - h.lo) * ((i + 1) / 10);
+          var w = h.max ? (100 * c / h.max) : 0;
+          return '<tr><td class="bt-l">' + signed(lo, 2) + "% to " + signed(hi2, 2) +
+            '%</td><td class="bt-l"><span class="bt-bar" style="width:' + w.toFixed(1) +
+            '%"></span></td><td>' + c + "</td></tr>";
+        }).join("") + "</tbody></table></div>");
+    } else {
+      var reasons = (side && side.ungraded_reasons) || null;
+      if (reasons) {
+        var keys = Object.keys(reasons).sort();
+        rows.push("<p>Nothing has a closing-line grade. Every row the sidecar looked at, " +
+          "and why:</p>");
+        rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
+          '<thead><tr><th class="bt-l">Reason</th><th>Rows</th></tr></thead><tbody>' +
+          keys.map(function (k) {
+            return '<tr><td class="bt-l">' + esc(k) + "</td><td>" + reasons[k] + "</td></tr>";
+          }).join("") + "</tbody></table></div>");
+      } else if (!r.n_rows) {
+        rows.push("<p>No pick has been published, so there is no position to grade " +
+          "against a close. The sidecar is derived from the record and is not " +
+          "requested until the record has a row in it.</p>");
+      } else {
+        rows.push("<p>No closing-line grade exists. " + esc(auxMissing("clv")) + "</p>");
+      }
+      rows.push(note("CLV is unrecoverable after the fact. A slate whose close was never " +
+        "captured can never be graded, whatever runs tomorrow, which is why the feed strip " +
+        "at the top of this page leads with it."));
+    }
+    return '<div class="bt-panel">' + rows.join("") + "</div>";
+  }
+
+  // ---- what actually gates the first published row --------------------------
+  // Pre-registered and shipped whether it passes or not: the list is a claim
+  // about what this site refuses to publish, and a reader can only hold it to
+  // that if he can read it BEFORE the first row exists.
+  function publishBlockerPanel() {
+    var d = S.data || {};
+    var bl = d.record_publish_blockers || null;
+    var pub = d.record_publish || {};
+    var rows = ['<div class="bt-panel-hd">What gates the first published row</div>'];
+    if (!bl || !bl.length) {
+      rows.push("<p>This payload carries no publish-blocker list, which means it was " +
+        "built before that lane existed. The record above is the only evidence of what " +
+        "has been published.</p>");
+      return '<div class="bt-panel">' + rows.join("") + "</div>";
+    }
+    var nOpen = 0;
+    bl.forEach(function (b) { if (b.open) nOpen += 1; });
+    rows.push("<p>" + nOpen + " of " + bl.length + " are open. A pick is written to the " +
+      "public record only when every one of them is.</p>");
+    rows.push('<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
+      '<thead><tr><th class="bt-l">Blocker</th><th class="bt-l">What it needs</th>' +
+      '<th class="bt-l">Have</th><th>State</th></tr></thead><tbody>' +
+      bl.map(function (b) {
+        var have = b.have;
+        if (have && typeof have === "object") {
+          have = Object.keys(have).map(function (k) {
+            var x = have[k];
+            return k + " " + (x == null ? "none" : String(x).slice(0, 16));
+          }).join(", ");
+        }
+        return '<tr><td class="bt-l">' + esc(b.id) + '</td><td class="bt-l bt-gate-need">' +
+          esc(b.need || "") + whyBlock(b.reason, "why this blocker exists") +
+          '</td><td class="bt-l">' +
+          esc(have == null ? "-" : String(have)) + "</td><td>" +
+          '<span class="bt-tag ' + (b.open ? "bt-tag-ok" : "bt-tag-warn") + '">' +
+          (b.open ? "open" : "closed") + "</span></td></tr>";
+      }).join("") + "</tbody></table></div>");
+    if (pub.reason) rows.push(note("This build: " + esc(pub.reason) + "."));
+    return '<div class="bt-panel">' + rows.join("") + "</div>";
   }
 
   // ---- section: team bets ---------------------------------------------------
@@ -751,6 +1505,21 @@
     var head = hasMarket ? "" : note("No odds feed is configured, so these are model fair " +
       "prices with nothing to compare them against." +
       (reason ? " The build reports: " + esc(reason) + "." : ""));
+    // AN ABSENT ROW READS AS AN ABSENT GAME. Two filters can leave a scheduled
+    // game with no prices: the odds event was already under way (an in-game
+    // price is real, it is just not this bet), or no event started within the
+    // match window of first pitch (past that, a single candidate is a different
+    // game in the same series). Both counts ship on `status`; the games
+    // themselves stay on the board carrying the reason.
+    var st2 = d.status || {};
+    var nDrop = st2.n_events_dropped_in_progress, nMiss = st2.n_games_unpriced_time_mismatch;
+    if (hasMarket && (nDrop || nMiss)) {
+      head += note("<strong>" + ((nDrop || 0) + (nMiss || 0)) + " odds events did not " +
+        "price a game.</strong> " + (nDrop || 0) + " were already under way when the " +
+        "snapshot was taken, and " + (nMiss || 0) + " games had a candidate event too " +
+        "far from first pitch to be the same game. Those games are still on the board " +
+        "below, marked unpriced, because an absent row reads as an absent game.");
+    }
     var thr = pickFloor();
     if (hasMarket && thr != null) {
       head += note("A <strong>best value</strong> badge marks the single side in a " +
@@ -788,11 +1557,32 @@
     return best;
   }
 
+  // The match window, in minutes. MIRRORS betting_export.EVENT_MATCH_MAX_MINUTES
+  // and is read from the payload the moment `status` carries it; the literal is
+  // the fallback for a payload that does not, and it exists only so the reason
+  // on an unpriced row is a number rather than a shrug.
+  function matchWindowText(st) {
+    var mins = (st && st.event_match_max_minutes != null)
+      ? Number(st.event_match_max_minutes) : 180;
+    return (mins % 60 === 0) ? (mins / 60) + "h" : mins + " min";
+  }
+
   function gameCard(b) {
     var m = b.model || {};
+    var st = (S.data || {}).status || {};
     var best = bestValueSide(b, pickFloor());
     var badge = best ? ' <span class="bt-tag bt-tag-ok bt-bestval">best value ' +
       esc(best.label || best.side || "") + " " + fmtOdds(best.odds) + "</span>" : "";
+    // UNPRICED IS A STATE, NOT AN OMISSION. The board carries the game and says
+    // which filter left it without prices, because a game that vanished off the
+    // page reads as a game that is not being played.
+    if (st.odds_feed === "ok" && !b.odds_event_id && !b.market) {
+      badge += ' <span class="bt-tag bt-tag-warn bt-unpriced" title="' +
+        esc("betting_export.match_event refused the candidate event; see " +
+            "status.n_games_unpriced_time_mismatch and n_events_dropped_in_progress") +
+        '">unpriced: no pre-game odds event within ' + matchWindowText(st) +
+        " of first pitch</span>";
+    }
     var hd = '<div class="bt-game-hd">' +
       '<div class="bt-game-teams">' + teamLogo(b.away.org) + " " + esc(b.away.org) +
       ' <span class="bt-at">at</span> ' + teamLogo(b.home.org) + " " + esc(b.home.org) +
@@ -818,15 +1608,56 @@
       '<div class="bt-faironly">Model fair total ' + num(m.fair_total, 2) +
       ". No posted line to compare.</div></div>");
 
-    var hold = "";
-    if (b.market && (b.market.moneyline_hold_pct != null || b.market.total_hold_pct != null)) {
-      hold = '<div class="bt-hold">Book ' + gl("hold", "vig") + ": moneyline " +
-        num(b.market.moneyline_hold_pct, 2) + "%, total " + num(b.market.total_hold_pct, 2) +
-        "%. Fair probabilities " + gl("de-vigged", "devig") +
-        " by the proportional method.</div>";
-    }
     return '<div class="bt-game">' + hd + probs + sp +
-      '<div class="bt-markets">' + blocks.join("") + "</div>" + hold + "</div>";
+      '<div class="bt-markets">' + blocks.join("") + "</div>" + devigPanel(b) + "</div>";
+  }
+
+  // WHICH BOOK SET THE DENOMINATOR OF EVERY EDGE IN THIS GAME. One book's
+  // two-sided quote is de-vigged into the fair probability every edge on the
+  // row is measured against, so naming it is naming the measuring stick. The
+  // spread across the books that could have set it is the honest error bar on
+  // that choice: a market where five books hold between 1.6% and 4.6% has a
+  // fair line that moves with which one you pick.
+  var MARKET_ROWS = [
+    ["moneyline", "moneyline_fair_book", "moneyline_hold_pct", "moneyline_hold_range",
+     "moneyline_n_books_on_line"],
+    ["runline", "runline_fair_book", "runline_hold_pct", null, null],
+    ["total", "total_fair_book", "total_hold_pct", "total_hold_range",
+     "total_n_books_on_line"]
+  ];
+
+  function devigPanel(b) {
+    var mk = b.market || null;
+    if (!mk) return "";
+    var rej = mk.n_books_rejected || {};
+    var rows = MARKET_ROWS.map(function (spec) {
+      var name = spec[0];
+      var book = mk[spec[1]], hold = mk[spec[2]];
+      var range = spec[3] ? mk[spec[3]] : null;
+      var n = spec[4] ? mk[spec[4]] : ((rej[name] || {}).on_line);
+      if (book == null && hold == null && n == null) return "";
+      var r = rej[name] || {};
+      var refused = [];
+      if (r.hold) refused.push(r.hold + " hold");
+      if (r.stale) refused.push(r.stale + " stale");
+      if (r.consensus) refused.push(r.consensus + " off consensus");
+      return '<tr><td class="bt-l">' + esc(name) + '</td><td class="bt-l">' +
+        esc(book || "-") + "</td><td>" + num(hold, 2) + "%</td><td>" +
+        (range && range.length === 2 ? num(range[0], 2) + "% to " + num(range[1], 2) + "%"
+                                     : "-") +
+        "</td><td>" + (n == null ? "-" : n) + '</td><td class="bt-l">' +
+        (refused.length ? esc(refused.join(", ")) : "none") + "</td></tr>";
+    }).join("");
+    if (!rows) return "";
+    return '<div class="bt-scroll mlbstats-scroll"><table class="bt-table mlbstats-table">' +
+      '<thead><tr><th class="bt-l">Market</th><th class="bt-l">' +
+      gl("De-vig", "devig") + ' book</th><th>' + gl("Hold", "vig") +
+      "</th><th>Hold range</th><th>Books on line</th>" +
+      '<th class="bt-l">Refused</th></tr></thead><tbody>' + rows +
+      "</tbody></table></div>" +
+      '<div class="bt-hold">Fair probabilities are ' + gl("de-vigged", "devig") +
+      " by the proportional method from the named book only. Rule: " +
+      esc(mk.fair_book_rule || "min_hold") + ".</div>";
   }
 
   function spLine(sideObj, prev) {
@@ -1458,6 +2289,7 @@
       case "parlays": html = renderParlays(); break;
       case "calculators": html = renderCalc(); break;
       case "record": html = renderRecord(); break;
+      case "validation": html = renderValidation(); break;
       case "mybets": html = renderMyBets(); break;
       default: html = renderPick();
     }
@@ -1651,6 +2483,8 @@
     // the heading, and loses only the accent that says "here is a pick".
     ".bt-pick-empty{border-color:var(--border,#333)}",
     ".bt-pick-empty .bt-pick-hd{color:var(--text-tertiary)}",
+    ".bt-pick-redacted{border-color:var(--accent-lilac,#a8f)}",
+    ".bt-pick-redacted .bt-pick-hd{color:var(--accent-lilac,#a8f)}",
     ".bt-numchip-info{border-style:dashed}",
     // The collapsed accounting. The summary is a control, so it reads as one.
     ".bt-details{border:1px solid var(--border,#333);background:var(--bg-secondary);margin:10px 0}",
@@ -1697,6 +2531,9 @@
     // 0,1,1); unqualified they lost it the moment the shared class went on.
     ".bt-table td.bt-gate-need{max-width:46ch;white-space:normal}",
     ".bt-table .bt-gate-why{font-size:11.5px;color:var(--text-tertiary);margin-top:3px;white-space:normal}",
+    ".bt-gate-more{margin-top:3px}",
+    ".bt-gate-more > summary{display:none}",
+    ".bt-gate-more > summary::-webkit-details-marker{display:none}",
     ".bt-tag-block{color:var(--text-on-accent,#fff);background:var(--accent-red,#c55)}",
     ".bt-block{border:1px solid var(--accent-red,#c55);padding:10px;margin:8px 0;font-size:12.5px;color:var(--text-secondary);background:var(--bg-secondary)}",
     ".bt-block strong{color:var(--text-primary);display:block;margin-bottom:4px}",
@@ -1725,7 +2562,55 @@
     ".bt-btn-go{background:var(--accent-cyan,#2a7);color:var(--text-on-accent,#fff);border-color:transparent;margin-left:0}",
     ".bt-btn-x{color:var(--accent-red,#c55)}",
     ".bt-link{color:var(--accent-cyan,#2a7);text-decoration:none}.bt-link:hover{text-decoration:underline}",
-    "@media (max-width:720px){.bt-markets{grid-template-columns:minmax(0,1fr)}.bt-table{font-size:12px}.bt-table th,.bt-table td{padding:5px 4px}}"
+    // ---- the feed-health strip ---------------------------------------------
+    // It sits above the tabs and it is the first thing on the page after the
+    // legal card, so it is a rule and not a card: one line, monospace, and a
+    // gold left edge when the close half has never run.
+    ".bt-fh{margin:8px 0 4px;border-left:3px solid var(--border,#333);background:var(--bg-secondary);padding:6px 10px}",
+    ".bt-fh-red{border-left-color:var(--accent-gold,#a80)}",
+    ".bt-fh-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;font:600 11px/1.5 var(--font-retro-mono,var(--font-retro,monospace))}",
+    ".bt-fh-hd{color:var(--text-tertiary);letter-spacing:.08em}",
+    ".bt-fh-seg{display:inline-flex;gap:5px;align-items:baseline;white-space:nowrap}",
+    ".bt-fh-k{color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em}",
+    ".bt-fh-v{color:var(--text-primary)}",
+    ".bt-fh-warn .bt-fh-v{color:var(--text-primary);border-bottom:1.5px solid var(--accent-gold,#a80)}",
+    ".bt-fh-note{color:var(--text-secondary);font-weight:400;white-space:normal;flex:1 1 100%}",
+    // ---- the validation tab ------------------------------------------------
+    ".bt-headline{border:2px solid var(--accent-gold,#a80);background:var(--bg-secondary);padding:14px;margin:10px 0}",
+    ".bt-headline-hd{font:700 15px/1.25 var(--font-retro,monospace);color:var(--text-primary);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px}",
+    ".bt-headline p{font-size:12.5px;color:var(--text-secondary);margin:0 0 8px}",
+    ".bt-clocks{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:8px}",
+    ".bt-clock{border:1px solid var(--border,#333);padding:10px 12px;background:var(--bg-primary,transparent)}",
+    ".bt-clock-hd{font:700 12px/1 var(--font-retro,monospace);color:var(--text-primary);text-transform:uppercase;letter-spacing:.04em}",
+    ".bt-clock-q{font-size:11.5px;color:var(--text-tertiary);margin:4px 0 8px}",
+    ".bt-clock-n{font:700 26px/1 var(--font-retro,monospace);color:var(--text-primary)}",
+    ".bt-clock-need{font-size:13px;color:var(--text-tertiary);font-weight:400}",
+    ".bt-clock-fine{font-size:11px;color:var(--text-tertiary);margin-top:4px}",
+    ".bt-meter{height:8px;border:1px solid var(--border,#333);margin:8px 0 2px;background:var(--bg-secondary)}",
+    ".bt-meter-fill{display:block;height:100%;background:var(--accent-cyan,#2a7)}",
+    ".bt-bar{display:inline-block;height:9px;min-width:1px;background:var(--accent-cyan,#2a7)}",
+    ".bt-sha{font:600 10px/1 var(--font-retro-mono,var(--font-retro,monospace));color:var(--text-secondary);word-break:break-all}",
+    ".bt-unpriced{white-space:normal}",
+    // ---- <= 640px ----------------------------------------------------------
+    // A SEPARATE TIER, ADDED BELOW THE 720px RULE RATHER THAN REPLACING IT, so
+    // nothing between 641 and 720 moves. Everything here is about a 390px
+    // viewport: the feed strip wraps to two lines instead of scrolling the
+    // document sideways, the two clocks stack, and the gate table's need/why
+    // paragraph collapses into a disclosure so a five-column table fits.
+    "@media (max-width:720px){.bt-markets{grid-template-columns:minmax(0,1fr)}.bt-table{font-size:12px}.bt-table th,.bt-table td{padding:5px 4px}}",
+    "@media (max-width:640px){",
+    ".bt-fh-line{gap:2px 12px;font-size:10.5px}",
+    ".bt-fh-hd{flex:1 1 100%}",
+    ".bt-fh-seg{white-space:normal}",
+    ".bt-clocks{grid-template-columns:minmax(0,1fr)}",
+    ".bt-clock-n{font-size:22px}",
+    ".bt-headline-hd{font-size:13.5px}",
+    ".bt-kv{grid-template-columns:minmax(0,1fr)}",
+    ".bt-table td.bt-gate-need{max-width:24ch}",
+    ".bt-gate-more > summary{display:list-item;list-style:none}",
+    ".bt-gate-sum{font:600 10px/1.3 var(--font-retro,monospace);color:var(--accent-cyan,#2a7);cursor:pointer;text-transform:uppercase;letter-spacing:.04em;padding:3px 0}",
+    ".bt-pick-sel{font-size:17px}",
+    "}"
   ].join("");
   document.head.appendChild(css);
 })();

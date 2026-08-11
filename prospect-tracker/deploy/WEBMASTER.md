@@ -219,11 +219,52 @@ Data-sanity spot checks (confirms the site matches the intended local build):
   rebuild, so arm CI publish only during a real outage, then unset it.
 - Ongoing FanGraphs data: scp new CSVs to `data/fangraphs_imports/` on the box,
   then force one `EEPHUS_FULL=1 .../nightly-build.sh` to ingest them.
-- State worth backing up: `prospects.db` (cron above) and `.cache/`. Everything
+- State worth backing up: `prospects.db` (cron above), `.cache/` and, inside it
+  and named separately because it is the one directory that CANNOT be rebuilt,
+  **`.cache/betting/`** and **`.cache/odds/`**. Everything
   else rebuilds from the repo. Note that `data/scout_reports.json` on the webroot
   is a frozen fallback (it is publish-excluded but survives via rsync without
   `--delete-excluded`); its live content ships via the chunked
   `scout_reports_*.json` shards.
+- **Why those two betting directories are not "just cache".** `.cache/odds/` is
+  the immutable price evidence: a closing line that was not captured near first
+  pitch is gone, and every CLV grade on the public record is derived from it.
+  Inside `.cache/betting/` there are exactly three files that matter, and this
+  list is the one the code writes - an earlier revision of this runbook named a
+  `shadow.jsonl` that has never existed:
+
+  | file | what it is | rebuildable |
+  | --- | --- | --- |
+  | `record.jsonl` | the append-only PUBLIC BETTING RECORD itself, one chain-hashed envelope per line | no |
+  | `shadow.json` | the paper-bet ledger gate 3 of the min-edge sweep counts toward, tagged by selection rule | no |
+  | `published_chain.json` | the chain hash the last build published, which is the only thing that can tell an append apart from a rewrite | no |
+
+  `calibration.jsonl` also lives here (every priced side, no floor, for the
+  probability curve); losing it costs the calibration series but no claim.
+  `data/betting_record.json` and `data/betting_shadow.json` are DERIVED
+  re-renders written by every build and published by rsync. They are not backups
+  of anything.
+  A box rebuild that restores only `prospects.db` destroys the record, the paper
+  ledger and every price they were graded against, and none of it re-pulls: The
+  Odds API sells the current board, not last Tuesday's close.
+  They live under `.cache/` and not under `data/` for one reason:
+  `deploy/nightly-build.sh` runs `git checkout -- .` before every pipeline, and
+  `data/betting_record.json` was git-tracked, so a row appended there at 21:00
+  was reverted to the committed `[]` at 03:10 with no error anywhere. That file
+  was untracked on 2026-08-09 (`git rm --cached`) and is now gitignored, along
+  with `data/betting_shadow.json`, which had been untracked AND unignored - one
+  `git add -A` away from arming the identical defect on the evidence base.
+- **How to check the record is actually safe on this box**, in one command:
+
+  ```sh
+  cd ~/eephus/prospect-tracker && python -c "import betting_export as be, betting_shadow as bs, json; print(json.dumps({'record': be.record_storage(), 'anchor': be.read_published_chain(), 'shadow': bs.storage()}, indent=1))"
+  ```
+
+  `record.durable` and `shadow.durable` must both be `true`, and `anchor.source`
+  must end in `published_chain.json`. An `anchor.source` still naming
+  `data/betting.json` means no build has stamped the durable anchor yet, and
+  until one does the rewrite half of the `record_storage` publish blocker passes
+  by construction rather than by evidence.
 - **Disk / low-space.** The build does a disk preflight: if free space is under
   `EEPHUS_DISK_MIN_GB` (default 6) it prunes the refetchable game/player caches
   (`.cache/win_prob`, `statcast_metrics`, `zone_metrics`, `game_feeds`, Savant

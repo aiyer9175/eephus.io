@@ -34,7 +34,7 @@ happen inside the called module, so this file alone cannot split them).
 | 9e-pre0. Refresh team leaderboards (bullpen_leaderboards.json, | bullpen_leaderboards.json, hitter_leaderboards.json, starter_leaderboards.json |
 | 9e-pre. Leaderboard vintage snapshot (validation clock) | betting_model_eval.json |
 | 9e-pre1. Betting model refit (betting_model_eval.json) | betting_model_eval.json |
-| 9e. Betting odds snapshot + payload (betting.json) | betting.json, card_market.json, xfv.json |
+| 9e. Betting odds snapshot + payload (betting.json) | betting.json, betting_learning.json, betting_shadow.json, card_market.json, job_heartbeat.json, xfv.json |
 | 9f. Card comps ingest + market index (card_market.json) | card_market.json |
 | d10. FA signing-window refresh | mlb_projections.json |
 | d10b. FA re-export off fresh projections | - |
@@ -105,7 +105,7 @@ happen inside the called module, so this file alone cannot split them).
 | 6g. Card market index (card_market.json) | card_market.json |
 | 6c. Organization Tendencies (farm-detail Tendencies tab) (no _step wrapper) | - |
 | 6c / 6d: exported by the chained daily tail instead (no _step wrapper) | org_tendencies.json, trade_values.json |
-| post-export passes (best-effort: board/farm snapshots, source_backtest, consensus + draft weight A/B, eta_backtest, editorial_eval, model-registry freshness,... | debuts.json, draft_source_weights.json, draft_timeseries.json, editorial_eval.json, model_registry.json, photo_ctx.json, pipeline_steps_latest.json, source_backtest.json, star_label_view.json, star_odds_eval.json, trade_values.json |
+| post-export passes (best-effort: board/farm snapshots, source_backtest, consensus + draft weight A/B, eta_backtest, editorial_eval, model-registry freshness,... | debuts.json, draft_source_weights.json, draft_timeseries.json, editorial_eval.json, model_registry.json, photo_ctx.json, pipeline_steps_latest.json, source_backtest.json, source_cohort_accuracy.json, source_weights.json, star_label_view.json, star_odds_eval.json, trade_values.json |
 
 ## Rebuild-only hook (`run_monthly.rebuild_only`)
 

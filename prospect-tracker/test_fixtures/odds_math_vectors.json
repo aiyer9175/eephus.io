@@ -1,0 +1,689 @@
+{
+ "generated_by": "test_betting.py::test_odds_vectors_regenerate_from_python",
+ "what": "D13. assets/betting.js:152-186 reimplements betting_model / betting_ingest odds math in JS. These vectors are generated from the PYTHON side and asserted against both, so the two cannot drift.",
+ "n_vectors": 60,
+ "vectors": [
+  {
+   "id": "amToDec-01",
+   "fn": "amToDec",
+   "args": [
+    -110
+   ],
+   "expect": 1.9090909090909092,
+   "why": ""
+  },
+  {
+   "id": "amToDec-02",
+   "fn": "amToDec",
+   "args": [
+    100
+   ],
+   "expect": 2.0,
+   "why": ""
+  },
+  {
+   "id": "amToDec-03",
+   "fn": "amToDec",
+   "args": [
+    -100
+   ],
+   "expect": 2.0,
+   "why": ""
+  },
+  {
+   "id": "amToDec-04",
+   "fn": "amToDec",
+   "args": [
+    150
+   ],
+   "expect": 2.5,
+   "why": ""
+  },
+  {
+   "id": "amToDec-05",
+   "fn": "amToDec",
+   "args": [
+    -150
+   ],
+   "expect": 1.6666666666666665,
+   "why": ""
+  },
+  {
+   "id": "amToDec-06",
+   "fn": "amToDec",
+   "args": [
+    2500
+   ],
+   "expect": 26.0,
+   "why": ""
+  },
+  {
+   "id": "amToDec-07",
+   "fn": "amToDec",
+   "args": [
+    -2500
+   ],
+   "expect": 1.04,
+   "why": ""
+  },
+  {
+   "id": "amToDec-08",
+   "fn": "amToDec",
+   "args": [
+    101
+   ],
+   "expect": 2.01,
+   "why": ""
+  },
+  {
+   "id": "amToDec-09",
+   "fn": "amToDec",
+   "args": [
+    -101
+   ],
+   "expect": 1.99009900990099,
+   "why": ""
+  },
+  {
+   "id": "amToDec-10",
+   "fn": "amToDec",
+   "args": [
+    999
+   ],
+   "expect": 10.99,
+   "why": ""
+  },
+  {
+   "id": "amToDec-11",
+   "fn": "amToDec",
+   "args": [
+    -999
+   ],
+   "expect": 1.1001001001001,
+   "why": ""
+  },
+  {
+   "id": "amToDec-12",
+   "fn": "amToDec",
+   "args": [
+    120
+   ],
+   "expect": 2.2,
+   "why": ""
+  },
+  {
+   "id": "amToDec-13",
+   "fn": "amToDec",
+   "args": [
+    -120
+   ],
+   "expect": 1.8333333333333335,
+   "why": ""
+  },
+  {
+   "id": "amToDec-14",
+   "fn": "amToDec",
+   "args": [
+    105
+   ],
+   "expect": 2.05,
+   "why": ""
+  },
+  {
+   "id": "decToAm-01",
+   "fn": "decToAm",
+   "args": [
+    1.909
+   ],
+   "expect": -110,
+   "why": ""
+  },
+  {
+   "id": "decToAm-02",
+   "fn": "decToAm",
+   "args": [
+    2.0
+   ],
+   "expect": 100,
+   "why": ""
+  },
+  {
+   "id": "decToAm-03",
+   "fn": "decToAm",
+   "args": [
+    1.5
+   ],
+   "expect": -200,
+   "why": ""
+  },
+  {
+   "id": "decToAm-04",
+   "fn": "decToAm",
+   "args": [
+    3.5
+   ],
+   "expect": 250,
+   "why": ""
+  },
+  {
+   "id": "decToAm-05",
+   "fn": "decToAm",
+   "args": [
+    2.5
+   ],
+   "expect": 150,
+   "why": ""
+  },
+  {
+   "id": "decToAm-06",
+   "fn": "decToAm",
+   "args": [
+    1.01
+   ],
+   "expect": -10000,
+   "why": ""
+  },
+  {
+   "id": "decToAm-07",
+   "fn": "decToAm",
+   "args": [
+    26.0
+   ],
+   "expect": 2500,
+   "why": ""
+  },
+  {
+   "id": "decToAm-08",
+   "fn": "decToAm",
+   "args": [
+    1.9091
+   ],
+   "expect": -110,
+   "why": ""
+  },
+  {
+   "id": "decToAm-09",
+   "fn": "decToAm",
+   "args": [
+    2.16
+   ],
+   "expect": 116,
+   "why": ""
+  },
+  {
+   "id": "decToAm-10",
+   "fn": "decToAm",
+   "args": [
+    1.5556
+   ],
+   "expect": -180,
+   "why": ""
+  },
+  {
+   "id": "decToAm-11",
+   "fn": "decToAm",
+   "args": [
+    1.885
+   ],
+   "expect": -113,
+   "why": ""
+  },
+  {
+   "id": "decToAm-12",
+   "fn": "decToAm",
+   "args": [
+    2.02
+   ],
+   "expect": 102,
+   "why": ""
+  },
+  {
+   "id": "decToImplied-01",
+   "fn": "decToImplied",
+   "args": [
+    1.909
+   ],
+   "expect": 0.5238344683080146,
+   "why": ""
+  },
+  {
+   "id": "decToImplied-02",
+   "fn": "decToImplied",
+   "args": [
+    2.0
+   ],
+   "expect": 0.5,
+   "why": ""
+  },
+  {
+   "id": "decToImplied-03",
+   "fn": "decToImplied",
+   "args": [
+    2.5
+   ],
+   "expect": 0.4,
+   "why": ""
+  },
+  {
+   "id": "decToImplied-04",
+   "fn": "decToImplied",
+   "args": [
+    1.5
+   ],
+   "expect": 0.6666666666666666,
+   "why": ""
+  },
+  {
+   "id": "decToImplied-05",
+   "fn": "decToImplied",
+   "args": [
+    1.01
+   ],
+   "expect": 0.9900990099009901,
+   "why": ""
+  },
+  {
+   "id": "decToImplied-06",
+   "fn": "decToImplied",
+   "args": [
+    26.0
+   ],
+   "expect": 0.038461538461538464,
+   "why": ""
+  },
+  {
+   "id": "decToImplied-07",
+   "fn": "decToImplied",
+   "args": [
+    1.5291
+   ],
+   "expect": 0.6539794650447976,
+   "why": ""
+  },
+  {
+   "id": "decToImplied-08",
+   "fn": "decToImplied",
+   "args": [
+    2.65
+   ],
+   "expect": 0.37735849056603776,
+   "why": ""
+  },
+  {
+   "id": "devig-01",
+   "fn": "devig",
+   "args": [
+    [
+     1.909,
+     1.909
+    ]
+   ],
+   "expect": [
+    0.5,
+    0.5
+   ],
+   "why": ""
+  },
+  {
+   "id": "devig-02",
+   "fn": "devig",
+   "args": [
+    [
+     1.8065,
+     2.16
+    ]
+   ],
+   "expect": [
+    0.5445606958275557,
+    0.45543930417244416
+   ],
+   "why": ""
+  },
+  {
+   "id": "devig-03",
+   "fn": "devig",
+   "args": [
+    [
+     2.65,
+     1.5556
+    ]
+   ],
+   "expect": [
+    0.36988776868936657,
+    0.6301122313106334
+   ],
+   "why": ""
+  },
+  {
+   "id": "devig-04",
+   "fn": "devig",
+   "args": [
+    [
+     1.885,
+     2.02
+    ]
+   ],
+   "expect": [
+    0.5172855313700384,
+    0.48271446862996154
+   ],
+   "why": ""
+  },
+  {
+   "id": "devig-05",
+   "fn": "devig",
+   "args": [
+    [
+     1.5291,
+     2.55
+    ]
+   ],
+   "expect": [
+    0.6251378980657497,
+    0.3748621019342502
+   ],
+   "why": ""
+  },
+  {
+   "id": "devig-06",
+   "fn": "devig",
+   "args": [
+    [
+     1.2,
+     5.0
+    ]
+   ],
+   "expect": [
+    0.8064516129032258,
+    0.1935483870967742
+   ],
+   "why": ""
+  },
+  {
+   "id": "devig-07",
+   "fn": "devig",
+   "args": [
+    [
+     1.01,
+     26.0
+    ]
+   ],
+   "expect": [
+    0.9626064420584968,
+    0.03739355794150315
+   ],
+   "why": ""
+  },
+  {
+   "id": "devig-08",
+   "fn": "devig",
+   "args": [
+    [
+     2.9,
+     3.05,
+     2.95
+    ]
+   ],
+   "expect": [
+    0.3408466710862771,
+    0.32408372004924707,
+    0.33506960886447573
+   ],
+   "why": ""
+  },
+  {
+   "id": "evPerUnit-01",
+   "fn": "evPerUnit",
+   "args": [
+    0.55,
+    1.909,
+    null
+   ],
+   "expect": 0.049950000000000105,
+   "why": ""
+  },
+  {
+   "id": "evPerUnit-02",
+   "fn": "evPerUnit",
+   "args": [
+    0.5,
+    2.0,
+    null
+   ],
+   "expect": 0.0,
+   "why": ""
+  },
+  {
+   "id": "evPerUnit-03",
+   "fn": "evPerUnit",
+   "args": [
+    0.45,
+    2.16,
+    null
+   ],
+   "expect": -0.027999999999999914,
+   "why": ""
+  },
+  {
+   "id": "evPerUnit-04",
+   "fn": "evPerUnit",
+   "args": [
+    0.70963,
+    1.5291,
+    null
+   ],
+   "expect": 0.08509523299999988,
+   "why": ""
+  },
+  {
+   "id": "evPerUnit-05",
+   "fn": "evPerUnit",
+   "args": [
+    0.38,
+    3.05,
+    null
+   ],
+   "expect": 0.15899999999999992,
+   "why": ""
+  },
+  {
+   "id": "evPerUnit-06",
+   "fn": "evPerUnit",
+   "args": [
+    0.62,
+    1.5,
+    null
+   ],
+   "expect": -0.07,
+   "why": ""
+  },
+  {
+   "id": "evPerUnit-07",
+   "fn": "evPerUnit",
+   "args": [
+    0.51383,
+    1.8696,
+    0.11835
+   ],
+   "expect": -0.03468713682280001,
+   "why": "whole-number total: a push refunds the stake"
+  },
+  {
+   "id": "evPerUnit-08",
+   "fn": "evPerUnit",
+   "args": [
+    0.48617,
+    1.9524,
+    0.11835
+   ],
+   "expect": -0.04478931175180006,
+   "why": "whole-number total: a push refunds the stake"
+  },
+  {
+   "id": "evPerUnit-09",
+   "fn": "evPerUnit",
+   "args": [
+    0.55837,
+    2.02,
+    0.12508
+   ],
+   "expect": 0.11190874240800011,
+   "why": "whole-number total: a push refunds the stake"
+  },
+  {
+   "id": "evPerUnit-10",
+   "fn": "evPerUnit",
+   "args": [
+    0.44163,
+    1.885,
+    0.12508
+   ],
+   "expect": -0.14657311655400002,
+   "why": "whole-number total: a push refunds the stake"
+  },
+  {
+   "id": "kelly-01",
+   "fn": "kelly",
+   "args": [
+    0.55,
+    1.909
+   ],
+   "expect": 0.05495049504950506,
+   "why": ""
+  },
+  {
+   "id": "kelly-02",
+   "fn": "kelly",
+   "args": [
+    0.5,
+    2.0
+   ],
+   "expect": 0.0,
+   "why": ""
+  },
+  {
+   "id": "kelly-03",
+   "fn": "kelly",
+   "args": [
+    0.45,
+    2.16
+   ],
+   "expect": 0.0,
+   "why": ""
+  },
+  {
+   "id": "kelly-04",
+   "fn": "kelly",
+   "args": [
+    0.70963,
+    1.5291
+   ],
+   "expect": 0.160830151200151,
+   "why": ""
+  },
+  {
+   "id": "kelly-05",
+   "fn": "kelly",
+   "args": [
+    0.38,
+    3.05
+   ],
+   "expect": 0.07756097560975607,
+   "why": ""
+  },
+  {
+   "id": "kelly-06",
+   "fn": "kelly",
+   "args": [
+    0.62,
+    1.5
+   ],
+   "expect": 0.0,
+   "why": ""
+  },
+  {
+   "id": "kelly-07",
+   "fn": "kelly",
+   "args": [
+    0.3,
+    2.0
+   ],
+   "expect": 0.0,
+   "why": ""
+  },
+  {
+   "id": "kelly-08",
+   "fn": "kelly",
+   "args": [
+    0.9,
+    1.05
+   ],
+   "expect": 0.0,
+   "why": ""
+  }
+ ],
+ "js_only_guards": [
+  {
+   "fn": "amToDec",
+   "args": [
+    -1
+   ],
+   "js": null,
+   "py": 101.0
+  },
+  {
+   "fn": "amToDec",
+   "args": [
+    0
+   ],
+   "js": null,
+   "py": null
+  },
+  {
+   "fn": "amToDec",
+   "args": [
+    99
+   ],
+   "js": null,
+   "py": 1.99
+  },
+  {
+   "fn": "amToDec",
+   "args": [
+    -99
+   ],
+   "js": null,
+   "py": 2.0101010101010104
+  },
+  {
+   "fn": "amToDec",
+   "args": [
+    1
+   ],
+   "js": null,
+   "py": 1.01
+  }
+ ],
+ "known_divergences": [
+  {
+   "fn": "decToAm",
+   "args": [
+    2.045
+   ],
+   "raw": 104.5,
+   "js": 105,
+   "py": 104,
+   "same": false
+  },
+  {
+   "fn": "decToAm",
+   "args": [
+    2.635
+   ],
+   "raw": 163.49999999999997,
+   "js": 163,
+   "py": 163,
+   "same": true
+  }
+ ]
+}

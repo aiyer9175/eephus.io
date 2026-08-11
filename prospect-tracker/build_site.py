@@ -4179,7 +4179,15 @@ def build_betting() -> str:
     review. The record is append-only and graded against the closing line, so
     it can embarrass us; that is the point of publishing it.
 
-    Section keys: potd | teams | props | parlays | calculators | mybets."""
+    THE SECTION IDS ARE A THREE-FILE CONTRACT. The `data-bettingsection` values
+    below, `SECTIONS` in assets/betting.js and
+    test_betting.py::test_shell_section_ids_match_the_client move together, and
+    that test compares the two sets: a tab added here and nowhere else renders a
+    button that does nothing, and a section added in the client and not here is
+    unreachable except by hash.
+
+    Section keys: potd | teams | props | parlays | calculators | record |
+    validation | mybets."""
     body = (
         '<div class="fa-app mlbstats-app betting-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
@@ -4190,6 +4198,13 @@ def build_betting() -> str:
         'quietly deleted after it loses. Each pick is also graded against the closing line, because beating '
         'the close is the honest test of whether a model knows something.</span></div>'
         f'{BETTING_DISCLAIMER}'
+        # THE FEED-HEALTH STRIP, ABOVE THE TABS. betting.js paints it from
+        # status.feed_health on every load, including the load where the payload
+        # 404'd. It is above the nav rather than inside the section because the
+        # state it reports ("no close snapshot has ever been captured, so no
+        # pick on this page can ever be CLV-graded") is true on every tab, and a
+        # strip that lived inside the section would only be true on one of them.
+        '<div id="betting-feedhealth"></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="Sports Betting sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-bettingsection="potd" role="tab" aria-selected="true">Pick of the Day</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="teams" role="tab" aria-selected="false">Team Bets</button>'
@@ -4197,6 +4212,7 @@ def build_betting() -> str:
         '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="parlays" role="tab" aria-selected="false">Parlays</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="calculators" role="tab" aria-selected="false">Calculators</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="record" role="tab" aria-selected="false">The Record</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="validation" role="tab" aria-selected="false">Validation</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-bettingsection="mybets" role="tab" aria-selected="false">My Bets</button>'
         '</div>'
         '<div id="betting-section" class="mlbstats-section">'
@@ -4942,7 +4958,11 @@ def build_glossary() -> str:
         "shows a plain dash, never a guess.</p>"
         "<p>Model derivations and the interactive teaching widgets live under Methodology; the "
         "source-vs-source backtest under Source Comparison grades the site's own consensus "
-        "against its inputs - misses included.</p>"
+        "against its inputs - misses included. Source Accuracy goes one level finer and asks "
+        "which outlet grades which kind of prospect better; on 21 of 25 scored cohort cells "
+        "the honest answer is that the data cannot tell, and the view says so in every row "
+        "rather than crowning the larger of two statistically identical numbers. No blend "
+        "weight ships from it.</p>"
         "</div>"
     )
     body = (
@@ -4956,6 +4976,14 @@ def build_glossary() -> str:
         '<button class="chip" data-glossary-view="methodology">Methodology</button>'
         '<button class="chip" data-glossary-view="models">Models &amp; Proofs</button>'
         '<button class="chip" data-glossary-view="source-comparison">Source Comparison</button>'
+        # C-A4 (2026-08-10). FOUR registration points and a chip is only one of
+        # them: the view name must also be in the URL whitelist
+        # (assets/glossary.js syncFromURL), the view -> container id map, and
+        # the render() dispatch chain, or the chip renders as a dead button
+        # while the suite stays green. That is the 2026-06-10 Source Comparison
+        # lesson; test_glossary_page_loads.test_view_chips_match_whitelist now
+        # asserts all four agree.
+        '<button class="chip" data-glossary-view="source-accuracy">Source Accuracy</button>'
         '<button class="chip" data-glossary-view="library">Library</button>'
         # Outbound link (not a view toggle) to the full attribution page, so the
         # Data Sources & Attribution page is reachable from this section, not just
@@ -4971,6 +4999,7 @@ def build_glossary() -> str:
         '<div id="methodology-body" style="display:none;"></div>'
         '<div id="models-body" style="display:none;"></div>'
         '<div id="source-comparison-body" style="display:none;"></div>'
+        '<div id="source-accuracy-body" style="display:none;"></div>'
         '<div id="library-body" style="display:none;"></div>'
         '<div id="glossary-rows"></div>'
         '</div>'

@@ -115,6 +115,125 @@ def normalize_name(name: str) -> str:
         return re.sub(r"\s+", "_", s)
 
 
+# ---------------------------------------------------------------------------
+# C7 - one human, two keys: the name-variant class C1 cannot see
+# ---------------------------------------------------------------------------
+
+_NAME_SUFFIX_TOKENS = frozenset({"jr", "sr", "ii", "iii", "iv", "v"})
+
+
+def _variant_tokens(name: str) -> list[str]:
+    toks = normalize_name(name or "").split("_")
+    return [t for t in toks if t and t not in _NAME_SUFFIX_TOKENS]
+
+
+def _variant_names_match(a: str, b: str) -> bool:
+    """True when two printed names are plausibly one human's name in two
+    forms: identical after suffix/punctuation stripping (Wen Hui / Wen-Hui,
+    Bergolla / Bergolla Jr.), or same surname with one given name a short
+    form of the other (Zac/Zach, Cam/Cameron, Kam/Kamden)."""
+    ta, tb = _variant_tokens(a), _variant_tokens(b)
+    if not ta or not tb:
+        return False
+    if "".join(ta) == "".join(tb):
+        return True
+    if ta[-1] != tb[-1]:
+        return False
+    fa, fb = ta[0], tb[0]
+    if len(fa) > len(fb):
+        fa, fb = fb, fa
+    return len(fa) >= 3 and fb.startswith(fa)
+
+
+def find_name_variant_splits(players_rows, aliases=None,
+                             active_within_days: int = 400,
+                             as_of=None) -> list[dict]:
+    """One human under two keys, found WITHOUT relying on the slug.
+
+    C1 groups by name slug, so a spelling change that produces a DIFFERENT
+    slug (Zac/Zach, Cam/Cameron, a gained suffix, a hyphen) is invisible to
+    it by construction: that is how william_bergolla / william_bergolla_jr
+    sat live while the report said zero. This detector keys on what a
+    spelling change cannot alter, the stored (birth_date, org) pair, and
+    then requires the two printed names to be plausible forms of one name.
+
+    A pair already routed by consensus.PLAYER_KEY_ALIASES is reported with
+    resolved_by_alias=True and is NOT critical (the read path folds it).
+    A pair with no alias is the live defect this class exists to surface.
+    Pairs where neither key has a snapshot within `active_within_days` are
+    dropped: two long-dead cards colliding is archival noise, not a defect.
+    """
+    aliases = aliases or {}
+    alias_to = {k: (v or {}).get("player_key") for k, v in aliases.items()}
+    if as_of is None:
+        as_of = datetime.date.today()
+    cutoff = (as_of - datetime.timedelta(days=active_within_days)).isoformat()
+
+    by_dob_org: dict[tuple, list[dict]] = defaultdict(list)
+    for r in players_rows or []:
+        dob, org = r.get("birth_date"), r.get("org")
+        if not dob or not org or not r.get("player_key"):
+            continue
+        by_dob_org[(str(dob)[:10], org)].append(r)
+
+    out: list[dict] = []
+    for (dob, org), rows in sorted(by_dob_org.items()):
+        if len(rows) < 2:
+            continue
+        rows = sorted(rows, key=lambda r: r["player_key"])
+        for i in range(len(rows)):
+            for j in range(i + 1, len(rows)):
+                a, b = rows[i], rows[j]
+                # A namespaced interim key (slug__sa<id> from CollegeSavant,
+                # slug__noid from an unresolved ingest) sharing its own base
+                # slug is a DELIBERATE split with its own linkage mechanism
+                # (draft promotion / id resolution), not a spelling split.
+                # Flagging those buried the real findings 246-to-6 on the
+                # first run of this detector.
+                if (a["player_key"].split("__")[0]
+                        == b["player_key"].split("__")[0]):
+                    continue
+                if not _variant_names_match(a.get("player_name"),
+                                            b.get("player_name")):
+                    continue
+                dates = [d for d in (a.get("last_snapshot_date"),
+                                     b.get("last_snapshot_date")) if d]
+                if not dates or max(dates) < cutoff:
+                    continue
+                ka, kb = a["player_key"], b["player_key"]
+                # The bound MLBAM ids are the decisive disambiguator when
+                # both exist: two DIFFERENT ids is two humans (the King
+                # twins share a birthday, an org and a surname), and the
+                # SAME id on both keys is one human beyond argument
+                # (zach_root / zachary_root both bind 702539).
+                ma, mb = _as_int(a.get("mlbam_id")), _as_int(b.get("mlbam_id"))
+                if ma is not None and mb is not None and ma != mb:
+                    status = "two_humans_distinct_ids"
+                elif ma is not None and ma == mb:
+                    status = "one_human_shared_id"
+                else:
+                    status = "unadjudicated"
+                resolved = (alias_to.get(ka) == kb or alias_to.get(kb) == ka)
+                # The staler key is the one a repair would fold away; name it
+                # as the row's player_key so the critical list points at it.
+                stale = min(
+                    (a, b),
+                    key=lambda r: r.get("last_snapshot_date") or "")
+                out.append({
+                    "pair": [ka, kb],
+                    "player_key": stale["player_key"],
+                    "names": [a.get("player_name"), b.get("player_name")],
+                    "birth_date": dob,
+                    "org": org,
+                    "mlbam_ids": [ma, mb],
+                    "status": status,
+                    "last_snapshot_dates": [a.get("last_snapshot_date"),
+                                            b.get("last_snapshot_date")],
+                    "resolved_by_alias": resolved,
+                })
+    return out
+
+
 def _as_int(value):
     try:
         return int(value)
@@ -409,8 +528,11 @@ _C1_CRITICAL = frozenset({"shared_key", "unattributed"})
 
 
 def audit(board_rows, roster_rows, photo_bindings=None,
-          positions_played=None, snapshot_orgs=None, as_of=None) -> dict:
-    """Run all five detectors and return the report body."""
+          positions_played=None, snapshot_orgs=None, as_of=None,
+          players_rows=None, aliases=None) -> dict:
+    """Run all seven detectors and return the report body. `players_rows`
+    and `aliases` are optional so a caller exercising only C1-C6 (every
+    pre-2026-08-10 test) is byte-identical; C7 runs when they are given."""
     board_rows = list(board_rows or [])
     roster_rows = list(roster_rows or [])
     # One key can appear in more than one slice (a graduate still carries an
@@ -431,6 +553,12 @@ def audit(board_rows, roster_rows, photo_bindings=None,
     c4 = find_side_conflicts(board_rows, positions_played)
     c5 = find_birthdate_conflicts(board_rows, roster_rows, as_of=as_of)
     c6 = find_org_splits(board_rows, snapshot_orgs)
+    c7 = find_name_variant_splits(players_rows, aliases=aliases,
+                                  as_of=as_of) if players_rows else []
+    # Open = still needs a human: not routed by an alias, and not proven to
+    # be two distinct humans by two distinct bound MLBAM ids.
+    c7_open = [r for r in c7 if not r["resolved_by_alias"]
+               and r["status"] != "two_humans_distinct_ids"]
 
     c1_critical = [r for r in c1 if r["status"] in _C1_CRITICAL]
     c1_warning = [r for r in c1 if r["status"] == "shadowed"]
@@ -439,7 +567,7 @@ def audit(board_rows, roster_rows, photo_bindings=None,
     for row in c1_critical:
         if row.get("board_key"):
             critical_keys.add(row["board_key"])
-    for rows in (c2, c3, c4, c5, c6):
+    for rows in (c2, c3, c4, c5, c6, c7_open):
         critical_keys.update(r["player_key"] for r in rows if r.get("player_key"))
 
     # The composite fingerprint: an ACTIVE record that is simultaneously
@@ -483,6 +611,8 @@ def audit(board_rows, roster_rows, photo_bindings=None,
             "c4_side_conflicts": len(c4),
             "c5_birthdate_conflicts": len(c5),
             "c6_org_splits": len(c6),
+            "c7_name_variant_splits": len(c7),
+            "c7_name_variant_open": len(c7_open),
             "frankenstein_records": len(frankenstein),
             "unassigned_null_id_rows": null_id_no_level,
         },
@@ -501,6 +631,7 @@ def audit(board_rows, roster_rows, photo_bindings=None,
         "side_conflicts": c4,
         "birthdate_conflicts": c5,
         "org_splits": c6,
+        "name_variant_splits": c7,
     }
 
 
@@ -613,14 +744,35 @@ def load_snapshot_orgs() -> dict:
     return {key: org for key, org in rows}
 
 
+def load_players_rows() -> list[dict]:
+    """One row per players-table key, carrying the identity fields C7 keys on
+    plus the key's newest snapshot date (its activity witness)."""
+    rows = _query_db(
+        "SELECT p.player_key, p.player_name, p.org, p.birth_date, "
+        "       (SELECT MAX(s.snapshot_date) FROM snapshots s "
+        "        WHERE s.player_key = p.player_key), "
+        "       (SELECT ph.mlbam_id FROM player_photos ph "
+        "        WHERE ph.player_key = p.player_key) "
+        "FROM players p")
+    return [{"player_key": k, "player_name": n, "org": o, "birth_date": b,
+             "last_snapshot_date": d, "mlbam_id": m}
+            for k, n, o, b, d, m in rows]
+
+
 def build(write: bool = True, path: Path | None = None) -> dict:
     """Load the real artifacts, run the audit, write the report."""
+    try:
+        from consensus import PLAYER_KEY_ALIASES as _aliases
+    except Exception:  # pragma: no cover - standalone use without consensus
+        _aliases = {}
     report = audit(
         board_rows=load_board_rows(),
         roster_rows=load_roster_rows(),
         photo_bindings=load_photo_bindings(),
         positions_played=load_positions_played(),
         snapshot_orgs=load_snapshot_orgs(),
+        players_rows=load_players_rows(),
+        aliases=_aliases,
     )
     if write:
         target = Path(path) if path else REPORT_PATH

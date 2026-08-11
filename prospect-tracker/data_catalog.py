@@ -176,6 +176,35 @@ ARTIFACTS = (
         "cadence": "monthly", "stability": STABLE, "pinned_by": "test_overseas_regression.py",
         "note": "",
     },
+    {
+        "file": "source_cohort_accuracy.json", "group": "prospects",
+        "title": "Source accuracy by cohort",
+        "what": ("Is one prospect source more accurate than another for a given kind of player? "
+                 "FanGraphs minus MLB Pipeline rank correlation against realized WAR, per "
+                 "archetype, side, acquisition path, position group, FV tier and age at grading, "
+                 "each cell carrying its own 95 percent minimum detectable effect, plus the "
+                 "cohort-weight A/B, its permutation control and its oracle ceiling."),
+        "cadence": "monthly", "stability": EXPERIMENTAL,
+        "pinned_by": "test_source_cohort_accuracy.py",
+        "note": ("Read `mde95` before reading any `d_rho`: most cells cannot resolve a winner and "
+                 "say so in `answerable`. No source weight ships from this file."),
+    },
+    {
+        "file": "xfv_denoised_baseline_eval.json", "group": "prospects",
+        "title": "eFV vs a rebuilt consensus",
+        "what": ("The fairness control behind the head-to-head claim. eFV is normally compared "
+                 "against the consensus AS SERVED, so part of its lead could be eFV beating the "
+                 "blending rather than beating the scouts. This rebuilds the consensus from "
+                 "measured per-source precision and re-runs the comparison on identical rows, "
+                 "under both registered noise-floor estimators, with the decision rule fixed in "
+                 "advance and two adversarial reweighting controls."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_denoised_baseline_lab.py",
+        "note": ("`basis.vintage_disciplined` is FALSE by construction and the number must never "
+                 "be quoted as out of sample: per-source precision is estimable only for board "
+                 "years 2023-2026, so the baseline is defined using rows it also scores. Read "
+                 "`primary_corrected_amendment_2`, not `primary_as_registered`."),
+    },
     # ---- MLB -------------------------------------------------------------
     {
         "file": "mlb_projections.json", "group": "mlb",
@@ -289,6 +318,83 @@ ARTIFACTS = (
                  "with each pick's book, odds and closing line."),
         "cadence": "daily", "stability": STABLE, "pinned_by": "test_betting.py",
         "note": "Informational and for entertainment. 21+.",
+    },
+    {
+        "file": "betting_preview.json", "group": "diamond",
+        "title": "Betting board preview",
+        "what": ("The public slice of the board: the slate, the model's fair lines and the "
+                 "status block, without the priced sides behind the gate."),
+        "cadence": "daily", "stability": STABLE, "pinned_by": "test_betting.py",
+        "note": "The gating seam. Informational and for entertainment. 21+.",
+    },
+    {
+        "file": "betting_record.json", "group": "diamond",
+        "title": "Betting public record",
+        "what": ("Every pick the site has stood behind, append-only, with the book, the price "
+                 "taken, the closing line and the graded result."),
+        "cadence": "daily", "stability": STABLE, "pinned_by": "test_betting.py",
+        "note": ("Append-only by construction: a published row is never edited, and a "
+                 "correction is a new row. Two slots a day at most."),
+    },
+    {
+        "file": "betting_shadow.json", "group": "diamond",
+        "title": "Betting paper-bet ledger",
+        "what": ("Paper bets: what the model WOULD have bet, at the price actually on the "
+                 "board, tagged with the selection rule that chose each row and settled "
+                 "against the final score. No money and no recommendation."),
+        "cadence": "daily", "stability": EXPERIMENTAL, "pinned_by": "test_betting_shadow.py",
+        "note": ("Read the `slot` and `tags` fields before aggregating anything. The tags name "
+                 "four different selection rules and a pooled ROI across them measures a "
+                 "mixture nobody bet."),
+    },
+    {
+        "file": "betting_learning.json", "group": "diamond",
+        "title": "Betting learning series",
+        "what": ("What the betting module learned since yesterday: the two validation clocks "
+                 "with measured arrival rates, the gate table, the calibration bins, the "
+                 "closing-move block and the per-market split, plus a capped nightly history."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_betting_learning.py",
+        "note": ("Every days_to_need is a measured rate applied forward and says so. History "
+                 "rows for past dates are never rewritten, and any counter here may go "
+                 "backwards and is rendered going backwards."),
+    },
+    {
+        "file": "betting_clv.json", "group": "diamond",
+        "title": "Betting closing-line value",
+        "what": ("Per published pick: the price taken against the closing price at the same "
+                 "book, as a return percentage and as a probability move."),
+        "cadence": "daily", "stability": EXPERIMENTAL,
+        "pinned_by": "test_betting_clv_sidecar.py",
+        "note": ("Keyed by bet_id against the public record. This is CLV on positions the site "
+                 "took, and it is not the calibration ledger's market_move_pct."),
+    },
+    {
+        "file": "betting_status.json", "group": "diamond",
+        "title": "Betting job status",
+        "what": ("Whether the odds feed is configured, when the last snapshot was captured and "
+                 "of which kind, and the credit accounting behind it."),
+        "cadence": "daily", "stability": STABLE, "pinned_by": "test_betting.py",
+        "note": "Check this before reading a quiet board as a quiet slate.",
+    },
+    {
+        "file": "betting_model_eval.json", "group": "diamond",
+        "title": "Betting model eval",
+        "what": ("The run-scoring model graded in every mode it has - in-sample, forward split, "
+                 "and the vintage mode that is actually out of sample - with the three-gate "
+                 "table that decides whether a min-edge threshold may exist at all."),
+        "cadence": "daily", "stability": EXPERIMENTAL, "pinned_by": "test_betting.py",
+        "note": ("Only the `vintage` block is honest out of sample, and it says so in its own "
+                 "`honest` field. The other two leak and ship anyway, because hiding them "
+                 "would leave the flattering numbers unlabelled."),
+    },
+    {
+        "file": "betting_model_context.json", "group": "diamond",
+        "title": "Betting model context",
+        "what": ("The fitted run-scoring coefficients, the home-field adjustment, the shrink "
+                 "and the extra-inning rate the live board prices with."),
+        "cadence": "daily", "stability": EXPERIMENTAL, "pinned_by": "",
+        "note": "Model internals. No test pins this shape, so treat the field names as habit.",
     },
     {
         "file": "card_market.json", "group": "diamond",

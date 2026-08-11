@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-06T11:28:01Z",
+ "generated_at": "2026-08-10T22:39:46Z",
  "vintage_rule": "weights for board-year Y use base years <= Y - 3 only",
  "per_year": [
   {
@@ -7,16 +7,16 @@
    "n": 665,
    "weights_vintage_max_base": 2017,
    "weights": {
-    "fangraphs": 0.8333,
-    "mlb_pipeline": 1.1667
+    "fangraphs": 0.8317,
+    "mlb_pipeline": 1.1683
    },
    "equal": {
-    "spearman": 0.2524,
-    "auc": 0.7052
+    "spearman": 0.2551,
+    "auc": 0.7043
    },
    "weighted": {
-    "spearman": 0.2548,
-    "auc": 0.707
+    "spearman": 0.2574,
+    "auc": 0.7059
    }
   },
   {
@@ -24,16 +24,16 @@
    "n": 689,
    "weights_vintage_max_base": 2018,
    "weights": {
-    "fangraphs": 0.8595,
-    "mlb_pipeline": 1.1405
+    "fangraphs": 0.8589,
+    "mlb_pipeline": 1.1411
    },
    "equal": {
-    "spearman": 0.3155,
-    "auc": 0.7447
+    "spearman": 0.3139,
+    "auc": 0.745
    },
    "weighted": {
-    "spearman": 0.3161,
-    "auc": 0.7458
+    "spearman": 0.3145,
+    "auc": 0.7456
    }
   },
   {
@@ -41,56 +41,773 @@
    "n": 735,
    "weights_vintage_max_base": 2019,
    "weights": {
-    "fangraphs": 0.878,
-    "mlb_pipeline": 1.122
+    "fangraphs": 0.8781,
+    "mlb_pipeline": 1.1219
    },
    "equal": {
-    "spearman": 0.2965,
-    "auc": 0.7309
+    "spearman": 0.2917,
+    "auc": 0.7372
    },
    "weighted": {
-    "spearman": 0.3038,
-    "auc": 0.7349
+    "spearman": 0.2991,
+    "auc": 0.7413
    }
   },
   {
    "year": 2023,
-   "n": 793,
+   "n": 794,
    "weights_vintage_max_base": 2020,
    "weights": {
-    "fangraphs": 0.8982,
-    "mlb_pipeline": 1.1018
+    "fangraphs": 0.8992,
+    "mlb_pipeline": 1.1008
    },
    "equal": {
-    "spearman": 0.2628,
-    "auc": 0.7409
+    "spearman": 0.258,
+    "auc": 0.7444
    },
    "weighted": {
-    "spearman": 0.2532,
-    "auc": 0.7364
+    "spearman": 0.2487,
+    "auc": 0.74
    }
   }
  ],
  "pooled": {
-  "pooled_n": 2882,
+  "pooled_n": 2883,
   "equal": {
-   "spearman": 0.2775,
-   "auc": 0.731
+   "spearman": 0.2756,
+   "auc": 0.7331
   },
   "weighted": {
-   "spearman": 0.2778,
-   "auc": 0.7381
+   "spearman": 0.276,
+   "auc": 0.7397
   }
  },
  "ship": false,
  "live_weights": {
-  "fangraphs": 0.9418,
-  "mlb_pipeline": 1.0582
+  "fangraphs": 0.9398,
+  "mlb_pipeline": 1.0602
  },
  "live_weights_vintage_max_base": 2023,
  "notes": [
   "two-source A/B: only FanGraphs + MLB Pipeline have resolvable multi-year history; all other sources stay at weight 1.0 (equal) in the live blend \u2014 new sources are never punished for being new",
   "weights shrunk toward equal with k=150 pseudo-n, clamped (0.6, 1.5)",
-  "ship rule (hardened 2026-07-25): weighted must beat equal by more than the gate can RESOLVE on BOTH metrics (d_rho >= 0.0068 = the measured MDE95, d_auc >= 0.0052); anything smaller is inside the noise floor and equal-weight retains"
- ]
+  "ship rule (hardened 2026-07-25): weighted must beat equal by more than the gate can RESOLVE on BOTH metrics (d_rho >= 0.0068 = the measured MDE95, d_auc >= 0.0052); anything smaller is inside the noise floor and equal-weight retains",
+  "cohort_ab is APPENDED from data/source_cohort_accuracy.json, not refit here: it asks whether a PER-COHORT weight can do what one global weight cannot, and all of its arms are scored against these same two gate constants"
+ ],
+ "cohort_ab": {
+  "rows_n": 5182,
+  "vintage_rule": "weights for board year Y use base years <= Y - 3 only",
+  "gate": {
+   "min_d_rho": 0.0068,
+   "min_d_auc": 0.0052,
+   "source": "source_backtest.run_consensus_weight_ab incumbent constants"
+  },
+  "arms": {
+   "archetype_shrunk": {
+    "scored_years": [
+     2020,
+     2021,
+     2022,
+     2023
+    ],
+    "pooled_n": 2883,
+    "equal": {
+     "spearman": 0.2762,
+     "auc": 0.7353
+    },
+    "weighted": {
+     "spearman": 0.2708,
+     "auc": 0.7352
+    },
+    "d_rho": -0.00549,
+    "d_auc": -0.00017,
+    "gate": {
+     "min_d_rho": 0.0068,
+     "min_d_auc": 0.0052
+    },
+    "ship": false,
+    "per_year": [
+     {
+      "year": 2020,
+      "n": 665,
+      "weights_vintage_max_base": 2017,
+      "alpha_fg": {
+       "__global__": 0.4156,
+       "hs_arm": 0.4828,
+       "hs_bat": 0.4115
+      },
+      "equal": {
+       "spearman": 0.2563,
+       "auc": 0.7082
+      },
+      "weighted": {
+       "spearman": 0.2521,
+       "auc": 0.7111
+      }
+     },
+     {
+      "year": 2021,
+      "n": 689,
+      "weights_vintage_max_base": 2018,
+      "alpha_fg": {
+       "__global__": 0.4295,
+       "college_arm": 0.3997,
+       "college_bat": 0.5818,
+       "hs_arm": 0.4782,
+       "hs_bat": 0.4162,
+       "intl_arm": 0.4578,
+       "intl_bat": 0.4888
+      },
+      "equal": {
+       "spearman": 0.3146,
+       "auc": 0.7493
+      },
+      "weighted": {
+       "spearman": 0.303,
+       "auc": 0.7449
+      }
+     },
+     {
+      "year": 2022,
+      "n": 735,
+      "weights_vintage_max_base": 2019,
+      "alpha_fg": {
+       "__global__": 0.439,
+       "college_arm": 0.3443,
+       "college_bat": 0.5281,
+       "hs_arm": 0.4743,
+       "hs_bat": 0.4061,
+       "intl_arm": 0.4837,
+       "intl_bat": 0.4806
+      },
+      "equal": {
+       "spearman": 0.2912,
+       "auc": 0.7372
+      },
+      "weighted": {
+       "spearman": 0.2904,
+       "auc": 0.7379
+      }
+     },
+     {
+      "year": 2023,
+      "n": 794,
+      "weights_vintage_max_base": 2020,
+      "alpha_fg": {
+       "__global__": 0.4494,
+       "college_arm": 0.3447,
+       "college_bat": 0.52,
+       "hs_arm": 0.4757,
+       "hs_bat": 0.4398,
+       "intl_arm": 0.4784,
+       "intl_bat": 0.4765
+      },
+      "equal": {
+       "spearman": 0.2593,
+       "auc": 0.7444
+      },
+      "weighted": {
+       "spearman": 0.2451,
+       "auc": 0.7366
+      }
+     }
+    ]
+   },
+   "archetype_eb": {
+    "scored_years": [
+     2020,
+     2021,
+     2022,
+     2023
+    ],
+    "pooled_n": 2883,
+    "equal": {
+     "spearman": 0.2762,
+     "auc": 0.7353
+    },
+    "weighted": {
+     "spearman": 0.2751,
+     "auc": 0.7379
+    },
+    "d_rho": -0.0011,
+    "d_auc": 0.00256,
+    "gate": {
+     "min_d_rho": 0.0068,
+     "min_d_auc": 0.0052
+    },
+    "ship": false,
+    "per_year": [
+     {
+      "year": 2020,
+      "n": 665,
+      "weights_vintage_max_base": 2017,
+      "alpha_fg": {
+       "__global__": 0.4156,
+       "hs_arm": 0.4578,
+       "hs_bat": 0.4533
+      },
+      "equal": {
+       "spearman": 0.2563,
+       "auc": 0.7082
+      },
+      "weighted": {
+       "spearman": 0.2645,
+       "auc": 0.7121
+      }
+     },
+     {
+      "year": 2021,
+      "n": 689,
+      "weights_vintage_max_base": 2018,
+      "alpha_fg": {
+       "__global__": 0.4295,
+       "college_arm": 0.4729,
+       "college_bat": 0.4729,
+       "hs_arm": 0.4545,
+       "hs_bat": 0.4523,
+       "intl_arm": 0.4635,
+       "intl_bat": 0.4589
+      },
+      "equal": {
+       "spearman": 0.3146,
+       "auc": 0.7493
+      },
+      "weighted": {
+       "spearman": 0.3119,
+       "auc": 0.7483
+      }
+     },
+     {
+      "year": 2022,
+      "n": 735,
+      "weights_vintage_max_base": 2019,
+      "alpha_fg": {
+       "__global__": 0.439,
+       "college_arm": 0.4649,
+       "college_bat": 0.4657,
+       "hs_arm": 0.4555,
+       "hs_bat": 0.4542,
+       "intl_arm": 0.4607,
+       "intl_bat": 0.4577
+      },
+      "equal": {
+       "spearman": 0.2912,
+       "auc": 0.7372
+      },
+      "weighted": {
+       "spearman": 0.2909,
+       "auc": 0.7344
+      }
+     },
+     {
+      "year": 2023,
+      "n": 794,
+      "weights_vintage_max_base": 2020,
+      "alpha_fg": {
+       "__global__": 0.4494,
+       "college_arm": 0.4639,
+       "college_bat": 0.4658,
+       "hs_arm": 0.4608,
+       "hs_bat": 0.4598,
+       "intl_arm": 0.4638,
+       "intl_bat": 0.4611
+      },
+      "equal": {
+       "spearman": 0.2593,
+       "auc": 0.7444
+      },
+      "weighted": {
+       "spearman": 0.2445,
+       "auc": 0.735
+      }
+     }
+    ]
+   },
+   "archetype_recentre": {
+    "scored_years": [
+     2020,
+     2021,
+     2022,
+     2023
+    ],
+    "pooled_n": 2883,
+    "equal": {
+     "spearman": 0.2762,
+     "auc": 0.7353
+    },
+    "weighted": {
+     "spearman": 0.2724,
+     "auc": 0.7358
+    },
+    "d_rho": -0.00386,
+    "d_auc": 0.00046,
+    "gate": {
+     "min_d_rho": 0.0068,
+     "min_d_auc": 0.0052
+    },
+    "ship": false,
+    "per_year": [
+     {
+      "year": 2020,
+      "n": 665,
+      "weights_vintage_max_base": 2017,
+      "alpha_fg": {
+       "__global__": 0.4156,
+       "hs_arm": 0.4828,
+       "hs_bat": 0.4115
+      },
+      "equal": {
+       "spearman": 0.2563,
+       "auc": 0.7082
+      },
+      "weighted": {
+       "spearman": 0.2573,
+       "auc": 0.7119
+      }
+     },
+     {
+      "year": 2021,
+      "n": 689,
+      "weights_vintage_max_base": 2018,
+      "alpha_fg": {
+       "__global__": 0.4295,
+       "college_arm": 0.3997,
+       "college_bat": 0.5818,
+       "hs_arm": 0.4782,
+       "hs_bat": 0.4162,
+       "intl_arm": 0.4578,
+       "intl_bat": 0.4888
+      },
+      "equal": {
+       "spearman": 0.3146,
+       "auc": 0.7493
+      },
+      "weighted": {
+       "spearman": 0.3043,
+       "auc": 0.7476
+      }
+     },
+     {
+      "year": 2022,
+      "n": 735,
+      "weights_vintage_max_base": 2019,
+      "alpha_fg": {
+       "__global__": 0.439,
+       "college_arm": 0.3443,
+       "college_bat": 0.5281,
+       "hs_arm": 0.4743,
+       "hs_bat": 0.4061,
+       "intl_arm": 0.4837,
+       "intl_bat": 0.4806
+      },
+      "equal": {
+       "spearman": 0.2912,
+       "auc": 0.7372
+      },
+      "weighted": {
+       "spearman": 0.2959,
+       "auc": 0.7425
+      }
+     },
+     {
+      "year": 2023,
+      "n": 794,
+      "weights_vintage_max_base": 2020,
+      "alpha_fg": {
+       "__global__": 0.4494,
+       "college_arm": 0.3447,
+       "college_bat": 0.52,
+       "hs_arm": 0.4757,
+       "hs_bat": 0.4398,
+       "intl_arm": 0.4784,
+       "intl_bat": 0.4765
+      },
+      "equal": {
+       "spearman": 0.2593,
+       "auc": 0.7444
+      },
+      "weighted": {
+       "spearman": 0.2458,
+       "auc": 0.7386
+      }
+     }
+    ]
+   },
+   "archetype_eb_recentre": {
+    "scored_years": [
+     2020,
+     2021,
+     2022,
+     2023
+    ],
+    "pooled_n": 2883,
+    "equal": {
+     "spearman": 0.2762,
+     "auc": 0.7353
+    },
+    "weighted": {
+     "spearman": 0.276,
+     "auc": 0.7347
+    },
+    "d_rho": -0.00021,
+    "d_auc": -0.00066,
+    "gate": {
+     "min_d_rho": 0.0068,
+     "min_d_auc": 0.0052
+    },
+    "ship": false,
+    "per_year": [
+     {
+      "year": 2020,
+      "n": 665,
+      "weights_vintage_max_base": 2017,
+      "alpha_fg": {
+       "__global__": 0.4156,
+       "hs_arm": 0.4578,
+       "hs_bat": 0.4533
+      },
+      "equal": {
+       "spearman": 0.2563,
+       "auc": 0.7082
+      },
+      "weighted": {
+       "spearman": 0.2585,
+       "auc": 0.7107
+      }
+     },
+     {
+      "year": 2021,
+      "n": 689,
+      "weights_vintage_max_base": 2018,
+      "alpha_fg": {
+       "__global__": 0.4295,
+       "college_arm": 0.4729,
+       "college_bat": 0.4729,
+       "hs_arm": 0.4545,
+       "hs_bat": 0.4523,
+       "intl_arm": 0.4635,
+       "intl_bat": 0.4589
+      },
+      "equal": {
+       "spearman": 0.3146,
+       "auc": 0.7493
+      },
+      "weighted": {
+       "spearman": 0.3126,
+       "auc": 0.7462
+      }
+     },
+     {
+      "year": 2022,
+      "n": 735,
+      "weights_vintage_max_base": 2019,
+      "alpha_fg": {
+       "__global__": 0.439,
+       "college_arm": 0.4649,
+       "college_bat": 0.4657,
+       "hs_arm": 0.4555,
+       "hs_bat": 0.4542,
+       "intl_arm": 0.4607,
+       "intl_bat": 0.4577
+      },
+      "equal": {
+       "spearman": 0.2912,
+       "auc": 0.7372
+      },
+      "weighted": {
+       "spearman": 0.2948,
+       "auc": 0.7387
+      }
+     },
+     {
+      "year": 2023,
+      "n": 794,
+      "weights_vintage_max_base": 2020,
+      "alpha_fg": {
+       "__global__": 0.4494,
+       "college_arm": 0.4639,
+       "college_bat": 0.4658,
+       "hs_arm": 0.4608,
+       "hs_bat": 0.4598,
+       "intl_arm": 0.4638,
+       "intl_bat": 0.4611
+      },
+      "equal": {
+       "spearman": 0.2593,
+       "auc": 0.7444
+      },
+      "weighted": {
+       "spearman": 0.2492,
+       "auc": 0.7374
+      }
+     }
+    ]
+   },
+   "side_shrunk": {
+    "scored_years": [
+     2020,
+     2021,
+     2022,
+     2023
+    ],
+    "pooled_n": 2883,
+    "equal": {
+     "spearman": 0.2762,
+     "auc": 0.7353
+    },
+    "weighted": {
+     "spearman": 0.2758,
+     "auc": 0.7377
+    },
+    "d_rho": -0.00043,
+    "d_auc": 0.00234,
+    "gate": {
+     "min_d_rho": 0.0068,
+     "min_d_auc": 0.0052
+    },
+    "ship": false,
+    "per_year": [
+     {
+      "year": 2020,
+      "n": 665,
+      "weights_vintage_max_base": 2017,
+      "alpha_fg": {
+       "__global__": 0.4156,
+       "arm": 0.4258,
+       "bat": 0.4425
+      },
+      "equal": {
+       "spearman": 0.2563,
+       "auc": 0.7082
+      },
+      "weighted": {
+       "spearman": 0.2545,
+       "auc": 0.703
+      }
+     },
+     {
+      "year": 2021,
+      "n": 689,
+      "weights_vintage_max_base": 2018,
+      "alpha_fg": {
+       "__global__": 0.4295,
+       "arm": 0.4062,
+       "bat": 0.4593
+      },
+      "equal": {
+       "spearman": 0.3146,
+       "auc": 0.7493
+      },
+      "weighted": {
+       "spearman": 0.3132,
+       "auc": 0.7507
+      }
+     },
+     {
+      "year": 2022,
+      "n": 735,
+      "weights_vintage_max_base": 2019,
+      "alpha_fg": {
+       "__global__": 0.439,
+       "arm": 0.4291,
+       "bat": 0.4562
+      },
+      "equal": {
+       "spearman": 0.2912,
+       "auc": 0.7372
+      },
+      "weighted": {
+       "spearman": 0.2985,
+       "auc": 0.7419
+      }
+     },
+     {
+      "year": 2023,
+      "n": 794,
+      "weights_vintage_max_base": 2020,
+      "alpha_fg": {
+       "__global__": 0.4494,
+       "arm": 0.4346,
+       "bat": 0.4656
+      },
+      "equal": {
+       "spearman": 0.2593,
+       "auc": 0.7444
+      },
+      "weighted": {
+       "spearman": 0.2503,
+       "auc": 0.7392
+      }
+     }
+    ]
+   },
+   "side_recentre": {
+    "scored_years": [
+     2020,
+     2021,
+     2022,
+     2023
+    ],
+    "pooled_n": 2883,
+    "equal": {
+     "spearman": 0.2762,
+     "auc": 0.7353
+    },
+    "weighted": {
+     "spearman": 0.2745,
+     "auc": 0.7365
+    },
+    "d_rho": -0.00177,
+    "d_auc": 0.00119,
+    "gate": {
+     "min_d_rho": 0.0068,
+     "min_d_auc": 0.0052
+    },
+    "ship": false,
+    "per_year": [
+     {
+      "year": 2020,
+      "n": 665,
+      "weights_vintage_max_base": 2017,
+      "alpha_fg": {
+       "__global__": 0.4156,
+       "arm": 0.4258,
+       "bat": 0.4425
+      },
+      "equal": {
+       "spearman": 0.2563,
+       "auc": 0.7082
+      },
+      "weighted": {
+       "spearman": 0.2591,
+       "auc": 0.7179
+      }
+     },
+     {
+      "year": 2021,
+      "n": 689,
+      "weights_vintage_max_base": 2018,
+      "alpha_fg": {
+       "__global__": 0.4295,
+       "arm": 0.4062,
+       "bat": 0.4593
+      },
+      "equal": {
+       "spearman": 0.3146,
+       "auc": 0.7493
+      },
+      "weighted": {
+       "spearman": 0.311,
+       "auc": 0.7514
+      }
+     },
+     {
+      "year": 2022,
+      "n": 735,
+      "weights_vintage_max_base": 2019,
+      "alpha_fg": {
+       "__global__": 0.439,
+       "arm": 0.4291,
+       "bat": 0.4562
+      },
+      "equal": {
+       "spearman": 0.2912,
+       "auc": 0.7372
+      },
+      "weighted": {
+       "spearman": 0.2976,
+       "auc": 0.743
+      }
+     },
+     {
+      "year": 2023,
+      "n": 794,
+      "weights_vintage_max_base": 2020,
+      "alpha_fg": {
+       "__global__": 0.4494,
+       "arm": 0.4346,
+       "bat": 0.4656
+      },
+      "equal": {
+       "spearman": 0.2593,
+       "auc": 0.7444
+      },
+      "weighted": {
+       "spearman": 0.247,
+       "auc": 0.74
+      }
+     }
+    ]
+   }
+  },
+  "best_arm": "archetype_eb_recentre",
+  "ship": false,
+  "permutation_control": {
+   "target_arm": "archetype_eb_recentre",
+   "draws": 200,
+   "permuted": "cohort labels across rows, weights refit per draw",
+   "null_mean": -0.00047,
+   "null_sd": 0.00203,
+   "null_p95": 0.00282,
+   "observed_d_rho": -0.00021,
+   "p": 0.4378,
+   "reading": "p is the share of RANDOM cohort labelings that match or beat the real one. Above 0.5 means random labels do better."
+  },
+  "shrink_sensitivity": {
+   "arm": "archetype_eb_recentre",
+   "k_grid": [
+    {
+     "k": 0,
+     "d_rho": -0.00052,
+     "d_auc": -0.00016
+    },
+    {
+     "k": 25,
+     "d_rho": -0.00021,
+     "d_auc": -0.00014
+    },
+    {
+     "k": 50,
+     "d_rho": -0.00031,
+     "d_auc": -0.00032
+    },
+    {
+     "k": 150,
+     "d_rho": -0.00021,
+     "d_auc": -0.00066
+    },
+    {
+     "k": 400,
+     "d_rho": 0.00017,
+     "d_auc": -0.00097
+    },
+    {
+     "k": 1000,
+     "d_rho": 6e-05,
+     "d_auc": -0.00118
+    }
+   ],
+   "monotone_increasing_in_k_rho": false,
+   "monotone_increasing_in_k_auc": false,
+   "rank_corr_k_vs_d_rho": 0.8407,
+   "rank_corr_k_vs_d_auc": -0.9429,
+   "reading": "Improvement as k grows toward equal weight is the signature of zero signal: the best amount of the weight is none of it. The two estimands trend in OPPOSITE directions here, and the whole grid spans about 1e-3 against a 0.0068 gate, so neither trend is a result on its own."
+  },
+  "alpha_parameterisation": {
+   "definition": "alpha = w_fg / (w_fg + w_mp); a two-source blend depends only on this ratio",
+   "shipped_clamp": [
+    0.6,
+    1.5
+   ],
+   "implied_alpha_range": [
+    0.2857,
+    0.7143
+   ],
+   "note": "The clamp is stored in weight space and nowhere translated. In alpha space it is the interval recorded here, which is what actually bounds the blend."
+  },
+  "appended_from": "data/source_cohort_accuracy.json",
+  "produced_by": "source_cohort_accuracy.run_source_cohort_accuracy",
+  "produced_at": "2026-08-10T20:03:29Z",
+  "ships_a_weight": false
+ }
 }

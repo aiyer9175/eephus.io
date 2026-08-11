@@ -1,36 +1,50 @@
 {
- "generated_at": "2026-08-06T11:51:27Z",
+ "generated_at": "2026-08-11T00:03:16Z",
  "summary": {
-  "board_rows": 9660,
-  "active_board_rows": 4586,
-  "roster_rows": 10684,
+  "board_rows": 9705,
+  "active_board_rows": 4645,
+  "roster_rows": 10694,
   "colliding_slugs": 198,
-  "critical_player_keys": 10,
+  "critical_player_keys": 22,
   "critical_active_player_keys": 0,
   "c1_shared_key": 0,
   "c1_unattributed": 0,
-  "c1_shadowed": 154,
-  "c1_split": 7,
-  "c1_untracked": 37,
+  "c1_shadowed": 155,
+  "c1_split": 8,
+  "c1_untracked": 35,
   "c2_double_bound": 0,
   "c3_unresolved_active": 0,
   "c4_side_conflicts": 10,
   "c5_birthdate_conflicts": 0,
   "c6_org_splits": 0,
+  "c7_name_variant_splits": 23,
+  "c7_name_variant_open": 12,
   "frankenstein_records": 0,
-  "unassigned_null_id_rows": 25
+  "unassigned_null_id_rows": 24
  },
  "critical_player_keys": [
   "aaron_brown",
   "adrian_hernandez",
+  "alex_santos",
   "alexander_campos",
+  "ben_cowles",
+  "bj_murray_jr",
   "david_rodriguez",
+  "dennis_colleran",
+  "dennis_colleran__noid",
+  "dominic_keegan",
   "enmanuel_rodriguez",
+  "jared_jones__sa3034881",
+  "javi_vaz",
+  "jay_allen",
   "jose_gomez",
   "jose_rondon",
   "junior_garcia",
+  "leonardo_bernal__noid",
+  "lonnie_jr_white",
   "michael_perez",
-  "miguel_gomez"
+  "miguel_gomez",
+  "zach_thornton__noid"
  ],
  "critical_active_player_keys": [],
  "frankenstein_records": [],
@@ -493,7 +507,7 @@
   },
   {
    "slug": "garrett_wright",
-   "board_key": "garrett_wright",
+   "board_key": "garrett_wright_laa",
    "n_humans": 2,
    "mlbam_ids": [
     695057,
@@ -840,15 +854,6 @@
    ]
   },
   {
-   "slug": "jose_sanchez",
-   "board_key": "jose_sanchez",
-   "n_humans": 2,
-   "mlbam_ids": [
-    814262,
-    839998
-   ]
-  },
-  {
    "slug": "jose_serrano",
    "board_key": "jose_serrano",
    "n_humans": 2,
@@ -1146,10 +1151,11 @@
   {
    "slug": "luis_sanchez",
    "board_key": "luis_sanchez",
-   "n_humans": 2,
+   "n_humans": 3,
    "mlbam_ids": [
     800506,
-    829829
+    829829,
+    842424
    ]
   },
   {
@@ -1308,7 +1314,7 @@
   },
   {
    "slug": "rafael_gonzalez",
-   "board_key": "rafael_gonzalez",
+   "board_key": "rafael_gonzalez_835403",
    "n_humans": 2,
    "mlbam_ids": [
     808003,
@@ -1370,6 +1376,15 @@
    ]
   },
   {
+   "slug": "santiago_garcia",
+   "board_key": "santiago_garcia",
+   "n_humans": 2,
+   "mlbam_ids": [
+    828321,
+    837799
+   ]
+  },
+  {
    "slug": "santiago_martinez",
    "board_key": "santiago_martinez",
    "n_humans": 2,
@@ -1421,6 +1436,15 @@
    "mlbam_ids": [
     683609,
     835994
+   ]
+  },
+  {
+   "slug": "victor_garcia",
+   "board_key": "victor_garcia",
+   "n_humans": 2,
+   "mlbam_ids": [
+    806625,
+    829921
    ]
   },
   {
@@ -1585,5 +1609,536 @@
   }
  ],
  "birthdate_conflicts": [],
- "org_splits": []
+ "org_splits": [],
+ "name_variant_splits": [
+  {
+   "pair": [
+    "bj_murray",
+    "bj_murray_jr"
+   ],
+   "player_key": "bj_murray_jr",
+   "names": [
+    "BJ Murray",
+    "BJ Murray Jr."
+   ],
+   "birth_date": "2000-01-05",
+   "org": "CHC",
+   "mlbam_ids": [
+    681230,
+    null
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-08-10",
+    "2025-07-31"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "ben_cowles",
+    "benjamin_cowles"
+   ],
+   "player_key": "ben_cowles",
+   "names": [
+    "Ben Cowles",
+    "Benjamin Cowles"
+   ],
+   "birth_date": "2000-02-15",
+   "org": "CHC",
+   "mlbam_ids": [
+    null,
+    701496
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2025-01-22",
+    "2025-07-31"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "dom_keegan",
+    "dominic_keegan"
+   ],
+   "player_key": "dominic_keegan",
+   "names": [
+    "Dom Keegan",
+    "Dominic Keegan"
+   ],
+   "birth_date": "2000-08-01",
+   "org": "TBR",
+   "mlbam_ids": [
+    681371,
+    null
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-08-02",
+    "2026-02-15"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "javi_vaz",
+    "javier_vaz"
+   ],
+   "player_key": "javi_vaz",
+   "names": [
+    "Javi Vaz",
+    "Javier Vaz"
+   ],
+   "birth_date": "2000-09-22",
+   "org": "KCR",
+   "mlbam_ids": [
+    null,
+    805834
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2025-01-22",
+    "2025-07-31"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "edwin_jimenez",
+    "edwin_jimenez_683720"
+   ],
+   "player_key": "edwin_jimenez",
+   "names": [
+    "Edwin Jimenez",
+    "Edwin Jimenez"
+   ],
+   "birth_date": "2001-12-12",
+   "org": "MIL",
+   "mlbam_ids": [
+    664263,
+    683720
+   ],
+   "status": "two_humans_distinct_ids",
+   "last_snapshot_dates": [
+    "2022-08-02",
+    "2026-08-10"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "zac_thornton",
+    "zach_thornton"
+   ],
+   "player_key": "zach_thornton",
+   "names": [
+    "Zac Thornton",
+    "Zach Thornton"
+   ],
+   "birth_date": "2002-01-17",
+   "org": "NYM",
+   "mlbam_ids": [
+    804267,
+    null
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-08-10",
+    "2026-05-20"
+   ],
+   "resolved_by_alias": true
+  },
+  {
+   "pair": [
+    "zac_thornton",
+    "zach_thornton__noid"
+   ],
+   "player_key": "zach_thornton__noid",
+   "names": [
+    "Zac Thornton",
+    "Zach Thornton"
+   ],
+   "birth_date": "2002-01-17",
+   "org": "NYM",
+   "mlbam_ids": [
+    804267,
+    null
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-08-10",
+    "2023-08-01"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "alex_santos",
+    "alex_santos_ii"
+   ],
+   "player_key": "alex_santos",
+   "names": [
+    "Alex Santos",
+    "Alex Santos II"
+   ],
+   "birth_date": "2002-02-10",
+   "org": "HOU",
+   "mlbam_ids": [
+    null,
+    691012
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2021-07-30",
+    "2025-07-31"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "jay_allen",
+    "jay_allen_ii"
+   ],
+   "player_key": "jay_allen",
+   "names": [
+    "Jay Allen",
+    "Jay Allen II"
+   ],
+   "birth_date": "2002-11-22",
+   "org": "CIN",
+   "mlbam_ids": [
+    null,
+    695481
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2023-08-01",
+    "2026-08-10"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "lonnie_jr_white",
+    "lonnie_white_jr"
+   ],
+   "player_key": "lonnie_jr_white",
+   "names": [
+    "Lonnie, Jr. White",
+    "Lonnie White Jr."
+   ],
+   "birth_date": "2002-12-31",
+   "org": "PIT",
+   "mlbam_ids": [
+    null,
+    696145
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2022-08-02",
+    "2026-08-10"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "josh_kurodagrauer",
+    "joshua_kurodagrauer"
+   ],
+   "player_key": "josh_kurodagrauer",
+   "names": [
+    "Josh Kuroda-Grauer",
+    "Joshua Kuroda-Grauer"
+   ],
+   "birth_date": "2003-01-31",
+   "org": "ATH",
+   "mlbam_ids": [
+    null,
+    811965
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-02-12",
+    "2026-08-10"
+   ],
+   "resolved_by_alias": true
+  },
+  {
+   "pair": [
+    "cam_cauley",
+    "cameron_cauley"
+   ],
+   "player_key": "cameron_cauley",
+   "names": [
+    "Cam Cauley",
+    "Cameron Cauley"
+   ],
+   "birth_date": "2003-02-06",
+   "org": "TEX",
+   "mlbam_ids": [
+    null,
+    695508
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-08-10",
+    "2026-06-29"
+   ],
+   "resolved_by_alias": true
+  },
+  {
+   "pair": [
+    "jared_jones_702262",
+    "jared_jones__sa3034881"
+   ],
+   "player_key": "jared_jones__sa3034881",
+   "names": [
+    "Jared Jones",
+    "Jared Jones"
+   ],
+   "birth_date": "2003-08-01",
+   "org": "PIT",
+   "mlbam_ids": [
+    702262,
+    null
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-08-10",
+    "2025-07-31"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "dennis_colleran",
+    "dennis_colleran_jr"
+   ],
+   "player_key": "dennis_colleran",
+   "names": [
+    "Dennis Colleran",
+    "Dennis Colleran Jr."
+   ],
+   "birth_date": "2003-08-20",
+   "org": "KCR",
+   "mlbam_ids": [
+    null,
+    701207
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-02-15",
+    "2026-08-10"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "dennis_colleran__noid",
+    "dennis_colleran_jr"
+   ],
+   "player_key": "dennis_colleran__noid",
+   "names": [
+    "Dennis Colleran",
+    "Dennis Colleran Jr."
+   ],
+   "birth_date": "2003-08-20",
+   "org": "KCR",
+   "mlbam_ids": [
+    null,
+    701207
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2024-08-01",
+    "2026-08-10"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "zach_root",
+    "zachary_root"
+   ],
+   "player_key": "zachary_root",
+   "names": [
+    "Zach Root",
+    "Zachary Root"
+   ],
+   "birth_date": "2004-02-06",
+   "org": "LAD",
+   "mlbam_ids": [
+    null,
+    702539
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-08-10",
+    "2026-08-02"
+   ],
+   "resolved_by_alias": true
+  },
+  {
+   "pair": [
+    "leo_bernal",
+    "leonardo_bernal"
+   ],
+   "player_key": "leonardo_bernal",
+   "names": [
+    "Leo Bernal",
+    "Leonardo Bernal"
+   ],
+   "birth_date": "2004-02-13",
+   "org": "STL",
+   "mlbam_ids": [
+    699024,
+    null
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-08-10",
+    "2026-02-12"
+   ],
+   "resolved_by_alias": true
+  },
+  {
+   "pair": [
+    "leo_bernal",
+    "leonardo_bernal__noid"
+   ],
+   "player_key": "leonardo_bernal__noid",
+   "names": [
+    "Leo Bernal",
+    "Leonardo Bernal"
+   ],
+   "birth_date": "2004-02-13",
+   "org": "STL",
+   "mlbam_ids": [
+    699024,
+    null
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-08-10",
+    "2021-02-26"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "william_bergolla",
+    "william_bergolla_jr"
+   ],
+   "player_key": "william_bergolla",
+   "names": [
+    "William Bergolla",
+    "William Bergolla Jr."
+   ],
+   "birth_date": "2004-10-20",
+   "org": "CHW",
+   "mlbam_ids": [
+    703151,
+    null
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-08-02",
+    "2026-08-10"
+   ],
+   "resolved_by_alias": true
+  },
+  {
+   "pair": [
+    "jack_natili",
+    "jackson_natili"
+   ],
+   "player_key": "jack_natili",
+   "names": [
+    "Jack Natili",
+    "Jackson Natili"
+   ],
+   "birth_date": "2005-03-10",
+   "org": "COL",
+   "mlbam_ids": [
+    null,
+    814385
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    null,
+    "2026-08-10"
+   ],
+   "resolved_by_alias": true
+  },
+  {
+   "pair": [
+    "junior_garcia",
+    "junior_garcia_815010"
+   ],
+   "player_key": "junior_garcia",
+   "names": [
+    "Junior Garcia",
+    "Junior Garcia"
+   ],
+   "birth_date": "2005-07-13",
+   "org": "ATL",
+   "mlbam_ids": [
+    642371,
+    815010
+   ],
+   "status": "two_humans_distinct_ids",
+   "last_snapshot_dates": [
+    "2025-02-15",
+    "2026-08-10"
+   ],
+   "resolved_by_alias": false
+  },
+  {
+   "pair": [
+    "jaiden_lo_re",
+    "jaiden_lore"
+   ],
+   "player_key": "jaiden_lore",
+   "names": [
+    "Jaiden Lo Re",
+    "Jaiden LoRe"
+   ],
+   "birth_date": "2007-02-10",
+   "org": "BAL",
+   "mlbam_ids": [
+    828318,
+    null
+   ],
+   "status": "unadjudicated",
+   "last_snapshot_dates": [
+    "2026-08-10",
+    "2025-07-31"
+   ],
+   "resolved_by_alias": true
+  },
+  {
+   "pair": [
+    "luis_ramon_king",
+    "luis_steven_king"
+   ],
+   "player_key": "luis_ramon_king",
+   "names": [
+    "Luis Ramon King",
+    "Luis Steven King"
+   ],
+   "birth_date": "2007-12-04",
+   "org": "KCR",
+   "mlbam_ids": [
+    830428,
+    830443
+   ],
+   "status": "two_humans_distinct_ids",
+   "last_snapshot_dates": [
+    "2026-08-03",
+    "2026-08-10"
+   ],
+   "resolved_by_alias": false
+  }
+ ]
 }

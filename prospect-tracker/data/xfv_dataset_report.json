@@ -1,47 +1,47 @@
 {
- "generated_at": "2026-08-08",
+ "generated_at": "2026-08-10",
  "scope": "HITTERS; debut 2011-2024 + never-MLB bust pool",
  "target": "first-6-season summed bWAR; resolved<= 2025",
  "no_model": true,
  "accounting": {
-  "debuted_seen": 2694,
+  "debuted_seen": 2703,
   "debuted_hitter": 993,
   "debuted_no_pre_fv": 103,
   "debuted_no_war": 17,
   "debuted_kept": 845,
-  "bust_seen": 2379,
-  "bust_hitter": 1148,
-  "bust_no_fv": 62,
-  "bust_kept": 1072,
-  "bust_recent_flagged": 34,
+  "bust_seen": 2357,
+  "bust_hitter": 1133,
+  "bust_no_fv": 61,
+  "bust_kept": 1058,
+  "bust_recent_flagged": 32,
   "bust_mlb_exposure_rerouted": 0,
   "bust_mlb_exposure_dropped": 14,
   "debuted_veteran_dropped": 28,
   "debuted_terminal_resolved": 3
  },
  "counts": {
-  "rows_total": 1917,
+  "rows_total": 1903,
   "debuted": 845,
-  "busts": 1072,
+  "busts": 1058,
   "resolved_debuted": 463,
   "censored_debuted": 382,
-  "bust_recent_excluded_from_label": 34
+  "bust_recent_excluded_from_label": 32
  },
  "feature_coverage": {
-  "consensus_fv_raw": "1917/1917",
-  "fv_fangraphs": "1275/1917",
-  "fv_mlb_pipeline": "1580/1917",
-  "fv_stddev": "963/1917",
-  "tool_hit": "1702/1917",
-  "tool_game_pwr": "1702/1917",
-  "pick_overall": "767/1917",
-  "bonus_usd": "556/1917"
+  "consensus_fv_raw": "1903/1903",
+  "fv_fangraphs": "1266/1903",
+  "fv_mlb_pipeline": "1572/1903",
+  "fv_stddev": "977/1903",
+  "tool_hit": "1689/1903",
+  "tool_game_pwr": "1689/1903",
+  "pick_overall": "760/1903",
+  "bonus_usd": "545/1903"
  },
  "milb_feature_coverage": {
-  "level_rank": "1134/1917",
-  "age_rel_level": "1134/1917",
-  "k_rel": "1134/1917",
-  "iso_rel": "1134/1917"
+  "level_rank": "1123/1903",
+  "age_rel_level": "1123/1903",
+  "k_rel": "1123/1903",
+  "iso_rel": "1123/1903"
  },
  "war_distribution_resolved_debuted": {
   "n": 463,
@@ -58,16 +58,16 @@
    "spearman": 0.3881
   },
   "full_pool_resolved": {
-   "n": 1501,
-   "spearman": 0.2624
+   "n": 1489,
+   "spearman": 0.2634
   },
   "full_pool_km_censored": {
-   "n": 1883,
-   "spearman": 0.2763
+   "n": 1871,
+   "spearman": 0.2733
   },
   "debuted_km_censored": {
    "n": 845,
-   "spearman": 0.3782
+   "spearman": 0.3751
   }
  },
  "baseline_note": "THE bar. consensus_fv_raw rank vs realized first-6yr bWAR. debuted-only ~ the 0.38 Phase-1 sweep figure; full-pool dilutes with busts. Sensitivity = resolved vs KM-censored."

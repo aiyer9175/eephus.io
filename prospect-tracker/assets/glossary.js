@@ -30,6 +30,14 @@
   let _MODELS = null;          // cached model_registry.json payload (or {__error:true})
   let _MODELS_LOADING = false; // in-flight guard against a double fetch
   let _MODELS_FILTER = "all";  // active verdict filter for the Models & Proofs list
+  // Source Accuracy view state. Declared HERE, at module scope above every
+  // renderer, for the same reason _MODELS is: a `let` read from a hoisted
+  // function that runs before the declaration is a temporal-dead-zone throw,
+  // and a throw inside a fetch promise strands the view on "Loading" while
+  // the smoke test stays green (the _RATER_META lesson, 2026-06-10).
+  let _SACC = null;            // cached source_cohort_accuracy.json (or {__error:true})
+  let _SACC_LOADING = false;   // in-flight guard against a double fetch
+  let _SACC_TAB = "read-first"; // active sub-tab in the Source Accuracy view
 
   function escapeHtml(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -50,7 +58,7 @@
     const p = new URLSearchParams(location.hash.slice(1));
     if (p.has("view")) {
       const v = p.get("view");
-      if (["terms", "guide", "methodology", "source-comparison", "models", "library"].includes(v)) _S.view = v;
+      if (["terms", "guide", "methodology", "source-comparison", "source-accuracy", "models", "library"].includes(v)) _S.view = v;
     }
     if (p.has("cat")) _S.cat = p.get("cat");
     if (p.has("q")) _S.q = p.get("q");
@@ -205,6 +213,7 @@
   function render() {
     const ids = { terms: "glossary-rows", guide: "guide-body",
                   methodology: "methodology-body", "source-comparison": "source-comparison-body",
+                  "source-accuracy": "source-accuracy-body",
                   models: "models-body", library: "library-body" };
     document.querySelectorAll("[data-glossary-view]").forEach(b => {
       b.classList.toggle("active", b.dataset.glossaryView === _S.view);
@@ -218,6 +227,7 @@
     if (_S.view === "guide") renderGuide();
     else if (_S.view === "methodology") renderMethodology();
     else if (_S.view === "source-comparison") renderSourceComparison();
+    else if (_S.view === "source-accuracy") renderSourceAccuracy();
     else if (_S.view === "models") renderModels();
     else if (_S.view === "library") renderLibrary();
     else renderTerms();
@@ -873,20 +883,58 @@ function _methPerYearChart(bt) {
   </div>`;
 }
 
-// One-line consensus-vs-inputs verdict, computed from the artifact so it can
-// never drift: does blending the sources beat the best single source?
+// Consensus-vs-inputs verdict, computed from the artifact so it can never
+// drift: does blending the sources beat the best single source?
+//
+// C-A2 (2026-08-10) made this THREE-VALUED. The old rendering read
+// `consensus_wins` as a literal binary ("the blend wins" : "the best input
+// wins") and so reported a 0.0009 Spearman delta - against an MDE95 of
+// 0.0121 - as a loss for the blend. It is neither a win nor a loss; it is
+// below the floor this backtest can resolve. source_backtest.json now ships
+// per-leg delta / mde95 / resolvable / verdict, and the verdict STRING is
+// what renders. The two legs disagree on purpose: the AUC leg is a real win,
+// the Spearman leg is not resolvable, and the artifact's own `reading` field
+// is the defensible claim (blending buys discrimination, not ordering).
 function _methConsensusVsInputsNote(bt) {
   const cvi = bt.accuracy && bt.accuracy.consensus_vs_inputs;
   if (!cvi || typeof cvi !== "object") return "";
-  const f3 = v => (v == null ? "-" : Number(v).toFixed(3));
-  const bits = [];
-  const sp = cvi.spearman, au = cvi.auc;
-  if (sp && sp.consensus != null && sp.best_input != null)
-    bits.push(`ordering skill ${f3(sp.consensus)} against ${f3(sp.best_input)} for its best single input (${sp.consensus_wins ? "the blend wins" : "the best input wins"})`);
-  if (au && au.consensus != null && au.best_input != null)
-    bits.push(`contributor AUC ${f3(au.consensus)} against ${f3(au.best_input)} (${au.consensus_wins ? "the blend wins" : "the best input wins"})`);
-  if (!bits.length) return "";
-  return `<p class="meth-note">Blending the sources is itself worth something: the PROSPX consensus scores ${bits.join(", and ")}.</p>`;
+  const f4 = v => (v == null ? "-" : Number(v).toFixed(4));
+  const sgn4 = v => (v == null ? "-" : (Number(v) > 0 ? "+" : "") + Number(v).toFixed(4));
+  const leg = (l, name) => {
+    if (!l || l.consensus == null || l.best_input == null) return "";
+    // Three-valued: the artifact's verdict string when it ships one, and a
+    // resolvable-driven fallback otherwise. NEVER a bare boolean read.
+    const resolvable = l.resolvable === true;
+    const verdict = l.verdict != null && l.verdict !== ""
+      ? String(l.verdict)
+      : (resolvable ? (l.consensus_wins ? "the blend wins" : "the best input wins")
+                    : "not resolvable at this power");
+    const cls = resolvable ? "sacc-verdict-win" : "sacc-verdict-null";
+    const floor = (l.delta != null && l.mde95 != null)
+      ? `, delta ${sgn4(l.delta)} against an MDE95 of ${f4(l.mde95)}` : "";
+    return `<li><strong>${escapeHtml(name)}</strong> ${f4(l.consensus)} for the blend against ${f4(l.best_input)} for its best single input${floor} - <span class="${cls}">${escapeHtml(verdict)}</span></li>`;
+  };
+  const items = [leg(cvi.spearman, "Ordering skill (Spearman)"),
+                 leg(cvi.auc, "Contributor discrimination (AUC)")].filter(Boolean);
+  if (!items.length) return "";
+  return `<div class="sacc-legs">
+    <div class="meth-table-title">Does blending beat the best single input?</div>
+    <ul class="sacc-leg-list">${items.join("")}</ul>
+    ${cvi.reading ? `<p class="meth-note">${escapeHtml(cvi.reading)}</p>` : ""}
+    ${cvi.basis ? `<p class="meth-note sacc-basis-line">Basis: ${escapeHtml(cvi.basis)}</p>` : ""}
+  </div>`;
+}
+
+// Per-rater scoring-basis marker. Keyed off the artifact's `basis` FIELD, not
+// off a rater name: eFV is the out-of-sample leg today, but the field is what
+// says so, and a future rater that joins forward-chained must inherit the
+// marker without a code edit.
+function _basisTag(basis) {
+  if (basis === "forward_chained_oos")
+    return `<span class="sacc-basis sacc-basis-oos" title="forward-chained, scored out of sample">OOS</span>`;
+  if (basis === "in_sample_common_set")
+    return `<span class="sacc-basis sacc-basis-in" title="scored in sample on the common set">IN-SAMPLE</span>`;
+  return basis ? `<span class="sacc-basis">${escapeHtml(String(basis))}</span>` : "";
 }
 
 // Calibration cross-link tile: this view is the historical case; the live,
@@ -938,31 +986,52 @@ function _methTierTable(bt, rater) {
 }
 
 // Per-archetype accuracy - where each grader (and the blend) is strongest.
-// AUC = the grade discriminates "became a contributor" (0.50 = coin flip);
-// best in each row marked ★. Answers "who do I trust on THIS kind of player?"
+// AUC = the grade discriminates "became a contributor" (0.50 = coin flip).
+//
+// C-A2/C-A4 (2026-08-10): the row max used to render in var(--up) with a ★,
+// which paints a winner onto six cells whose spread is a few thousandths of
+// AUC and whose measured head-to-head does not clear its own noise floor in
+// five of six archetypes. The ★ now marks the row max in the neutral primary
+// colour (a pointer to the largest number, not a claim about it), and the
+// only claim on this table is the VERDICT column, read three-valued out of
+// data/source_cohort_accuracy.json. Column headers carry the scoring-basis
+// marker off each rater's own `basis` field.
 function _methArchetypeTable(bt) {
   const ba = bt.accuracy && bt.accuracy.by_archetype;
   if (!ba || !ba.length) return "";
   const raters = (bt.accuracy && bt.accuracy.head_to_head_raters) || bt.raters;
-  const head = raters.map(r => `<th>${escapeHtml(_raterMeta(r).label)}</th>`).join("");
+  // basis per rater, taken from the first row that carries one for it.
+  const basisOf = {};
+  raters.forEach(r => {
+    for (const a of ba) {
+      const b = (a.raters && a.raters[r] || {}).basis;
+      if (b) { basisOf[r] = b; break; }
+    }
+  });
+  const sacc = (_SACC && !_SACC.__error && _SACC.accuracy) ? _SACC.accuracy.by_archetype : null;
+  const head = raters.map(r =>
+    `<th>${escapeHtml(_raterMeta(r).label)}${_basisTag(basisOf[r])}</th>`).join("");
   const rows = ba.map(a => {
     const aucs = raters.map(r => (a.raters[r] || {}).auc).filter(v => v != null);
     const best = aucs.length ? Math.max(...aucs) : null;
     const cells = raters.map(r => {
       const v = (a.raters[r] || {}).auc;
       const isBest = v != null && v === best;
-      const style = isBest ? "font-weight:700;color:var(--up);"
-        : (r === "prospx_consensus" ? "color:var(--text-primary);" : "color:var(--text-secondary);");
-      return `<td style="${style}">${v != null ? v.toFixed(3) : " - "}${isBest ? " ★" : ""}</td>`;
+      const style = isBest ? "font-weight:700;color:var(--text-primary);"
+        : "color:var(--text-secondary);";
+      return `<td style="${style}">${v != null ? v.toFixed(4) : " - "}${isBest ? " ★" : ""}</td>`;
     }).join("");
-    return `<tr><td class="meth-td-tier">${escapeHtml(a.label)}</td><td>${a.n}</td>${cells}</tr>`;
+    const cell = sacc ? sacc[a.archetype] : null;
+    const verdict = cell ? _saccVerdictCell(cell) : `<td class="sacc-verdict"><span class="sacc-verdict-null">not measured</span></td>`;
+    return `<tr><td class="meth-td-tier">${escapeHtml(a.label)}</td><td>${a.n}</td>${cells}${verdict}</tr>`;
   }).join("");
   return `<div class="meth-table-wrap">
-    <div class="meth-table-title">Best grader by archetype <span class="meth-sub">AUC (grade predicts ‘became a contributor’) · winner ★</span></div>
-    <div class="table-scroll-x"><table class="meth-table">
-      <thead><tr><th>Archetype</th><th>n</th>${head}</tr></thead>
+    <div class="meth-table-title">Grader AUC by archetype <span class="meth-sub">AUC (grade predicts ‘became a contributor’) · ★ = row max, not a significance claim</span></div>
+    <div class="table-scroll-x"><table class="meth-table sacc-table">
+      <thead><tr><th>Archetype</th><th>n</th>${head}<th class="sacc-verdict">FanGraphs vs Pipeline</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
+    <p class="meth-note">The ★ marks the largest AUC in the row and nothing more. The verdict column is the one measured head-to-head on this cut: FanGraphs minus MLB Pipeline Spearman against that cell's own 95 percent minimum detectable effect, from <a href="#view=source-accuracy">Source Accuracy</a>. Five of the six archetypes cannot resolve a winner.</p>
     ${_methArchetypeNote(bt)}
   </div>`;
 }
@@ -1507,7 +1576,7 @@ function _methRegistryHTML() {
     body = `
       <p class="meth-note">Every predictive model on the platform, with its verdict and committed eval artifact. <strong>${counts.validated || 0} validated · ${counts.provisional || 0} provisional · ${counts.unvalidated || 0} unvalidated · ${counts.deprecated || 0} deprecated</strong>${reg.checked_at ? ` · last checked ${escapeHtml(reg.checked_at)}` : ""}. Unvalidated rows are listed precisely so they can't hide; losing challengers stay committed.</p>
       <div class="meth-registry-scroll"><table class="meth-table meth-registry-table">
-        <thead><tr><th>Model · surface</th><th>Champion</th><th>Baseline</th><th>Verdict</th><th>Eval artifact</th></tr></thead>
+        <thead><tr><th>Model · surface</th><th>Champion</th><th>Baseline</th><th class="sacc-verdict">Verdict</th><th>Eval artifact</th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>`;
   }
@@ -1689,6 +1758,62 @@ function _methValuationCurveHTML() {
 // Hero verdict banner: leads the source comparison with WHAT eFV is and the headline
 // result (it wins out of sample) before the detailed breakdown. Uses the live pooled
 // backtest numbers, so the claim can never drift from the measured data.
+// NO CLAIM WITHOUT ITS ESTIMATOR. The pooled head-to-head margin is a POINT
+// ESTIMATE and this repo publishes its noise floor beside it; on 2026-08-10 the
+// margin (0.0332) sat just UNDER the floor (MDE95 0.0352), so "it beats every
+// public source" was a claim the measurement did not support. This clause reads
+// the shipped verdict rather than restating it, so the copy tracks the artifact
+// the day the margin does clear.
+// WHY EACH UNSCORED SOURCE IS UNSCORED, and they are not all unscored for the
+// same reason. The old copy said "sources with too little history to score" and
+// listed insufficient_history, which stopped being true for Baseball America the
+// day its 30-club backfill landed: BA now clears the history condition outright
+// (749 resolvable rows in the 2023 preseason against a 100 floor) and is blocked
+// by the OTHER condition, common-set collapse - admitting it would recompute
+// every other source's published accuracy on 15.5% of the evidence against a 75%
+// gate. Telling a reader that is a history problem is simply wrong, and it is
+// the same stale-prose failure source_backtest's own block comment describes.
+//
+// So the reason is read per source from the computed classification, and the
+// year a blocked source becomes scoreable is published when the artifact knows
+// it. Falls back to the old list when an older artifact has no classification.
+function _excludedSourcesClause(bt) {
+  const cls = bt && Array.isArray(bt.source_classification) ? bt.source_classification : null;
+  if (!cls || !cls.length) {
+    const legacy = (bt && bt.insufficient_history) || [];
+    return legacy.length
+      ? `<strong>Sources with too little history to score</strong> (${escapeHtml(legacy.join(", "))}) are excluded, not guessed at.`
+      : "";
+  }
+  const thin = cls.filter(c => !c.scoreable_now && c.blocked_by === "insufficient_history");
+  const wide = cls.filter(c => !c.scoreable_now && c.blocked_by === "common_set_collapse");
+  const parts = [];
+  if (thin.length) {
+    parts.push(`<strong>Too little resolved history to score</strong>: ${escapeHtml(thin.map(c => _saccOutlet(c.source)).join(", "))}.`);
+  }
+  wide.forEach(c => {
+    const pct = c.common_set_retention == null ? null : (c.common_set_retention * 100).toFixed(1);
+    const when = c.scoreable_from_run_year ? ` It becomes scoreable in ${c.scoreable_from_run_year}, when its next vintage resolves.` : "";
+    parts.push(`<strong>${escapeHtml(_saccOutlet(c.source))} has the history but is still excluded</strong>: it grades ${Number(c.resolvable_rows_best_year || 0).toLocaleString()} resolvable rows, yet scoring it would shrink the shared population every other source is measured on to ${pct == null ? "a fraction" : pct + "%"} of its size, so every published number here would be recomputed on a small, differently-selected group.${when}`);
+  });
+  parts.push("Excluded, not guessed at.");
+  return parts.join(" ");
+}
+
+function _hhFloorClause(bt) {
+  const hh = bt && bt.accuracy && bt.accuracy.head_to_head_verdict;
+  if (!hh || hh.mde95 == null) return ".";
+  // f3 is declared `const` INSIDE four other functions and is NOT module-scope.
+  // Referencing it here threw ReferenceError, which took out _methHeroBanner and
+  // with it the whole source-comparison view - the page rendered nothing at all.
+  // A local formatter is the fix; do not reach for the outer ones.
+  const fmt = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(3));
+  const est = hh.estimator ? ` ${escapeHtml(hh.estimator)}` : "";
+  return hh.resolvable
+    ? `, clearing its${est} noise floor of ${fmt(hh.mde95)}.`
+    : ` that does NOT clear its${est} noise floor of ${fmt(hh.mde95)}. We report that as unresolved, not as a win.`;
+}
+
 function _methHeroBanner(bt) {
   const p = (bt.accuracy && bt.accuracy.pooled) || {};
   const x = p.xfv, c = p.prospx_consensus, fg = p.fangraphs, mlb = p.mlb_pipeline;
@@ -1706,8 +1831,8 @@ function _methHeroBanner(bt) {
   const tiles = tile("eFV", x.spearman, true) + pubs.map(pr => tile(pr[0], pr[1].spearman, false)).join("");
   return `<div class="source-comp-hero">
     <div class="source-comp-hero-kicker">A different kind of Future Value</div>
-    <h2 class="source-comp-hero-title">eFV grades prospects on what they actually <em>became</em> - and it out-ranks the scouting industry out of sample.</h2>
-    <p class="source-comp-hero-lede">Every public FV grade is an educated opinion about the future. eFV is a model trained on resolved outcomes and scored the honest way: leakage-free, forward-chained, on the same players and the same window as the sources it is measured against. On ordering skill - how well a preseason grade tracks the WAR a prospect went on to produce - it beats every one of them${(lead != null && bestPub) ? `, ${f3(x.spearman)} to ${f3(bestPub[1].spearman)} over the best public source (${escapeHtml(bestPub[0])}), a +${lead.toFixed(3)} edge` : ""}.</p>
+    <h2 class="source-comp-hero-title">eFV grades prospects on what they actually <em>became</em>, and out of sample it ranks ahead of every public source - by a margin we still cannot call a win.</h2>
+    <p class="source-comp-hero-lede">Every public FV grade is an educated opinion about the future. eFV is a model trained on resolved outcomes and scored the honest way: leakage-free, forward-chained, on the same players and the same window as the sources it is measured against. On ordering skill - how well a preseason grade tracks the WAR a prospect went on to produce - it grades ahead of every one of them${(lead != null && bestPub) ? `, ${f3(x.spearman)} to ${f3(bestPub[1].spearman)} over the best public source (${escapeHtml(bestPub[0])}), a +${lead.toFixed(3)} point estimate` : ""}${_hhFloorClause(bt)}</p>
     <div class="meth-findings source-comp-hero-tiles">${tiles}</div>
     <p class="source-comp-hero-foot">Ordering skill = Spearman correlation between the preseason grade and realized MLB WAR (higher is better). The full method, per-FV-tier and per-archetype breakdowns, and the honest limits are all below - nothing cherry-picked.</p>
   </div>`;
@@ -1736,6 +1861,72 @@ function _loadUpgrades() {
       .then(j => { _S.p1Eval = j || { __error: true }; rerender(); })
       .catch(() => { _S.p1Eval = { __error: true }; rerender(); });
   }
+  if (!_S.denoisedEval && !_S.denoisedLoading) {
+    _S.denoisedLoading = true;
+    fetch("/data/xfv_denoised_baseline_eval.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => { _S.denoisedEval = j || { __error: true }; rerender(); })
+      .catch(() => { _S.denoisedEval = { __error: true }; rerender(); });
+  }
+}
+
+// B-L6, the denoised-baseline fairness control. This panel exists because of a
+// PRE-COMMITMENT written before the control ran (docs/efv-2026-08-09/
+// DENOISED_BASELINE_GATE.md section 6): if eFV's edge failed to survive a
+// consensus rebuilt from measured per-source precision, the conviction copy had
+// to get harder to clear and the gap-closure share had to be PRINTED. The edge
+// did not survive, so this renders.
+//
+// It is deliberately the least flattering panel on the page, and it is also the
+// one that most supports the model: the control found the margin is NOT an
+// artifact of a badly built consensus. Both halves ship together or neither is
+// honest. Numbers are read from the artifact, never restated, so the copy tracks
+// the measurement the day it moves. Local formatters only - `f3` is declared
+// const INSIDE other functions here and is not module scope.
+function _methDenoisedControlHTML() {
+  const j = _S.denoisedEval;
+  if (!j || j.__error || typeof j !== "object") return "";
+  const cor = j.primary_corrected_amendment_2 || {};
+  const inc = j.incumbent_rederived_today || {};
+  const att = j.attribution || {};
+  const c2 = (j.controls || {}).C2_random_admissible_weights || {};
+  const arms = j.arms || {};
+  const s3 = arms.S3_global_centering || {};
+  if (cor.delta == null || inc.delta == null) return "";
+  const f3 = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(3));
+  const f4 = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(4));
+  const sgn = v => (Number(v) > 0 ? "+" : "") + f3(v);
+  // The share of the head-to-head gap that a precision-weighted consensus closes.
+  // The pre-commitment names this number specifically and requires it printed.
+  const closed = (att.moved_by_denoising != null && inc.delta)
+    ? Math.abs(Number(att.moved_by_denoising) / Number(inc.delta)) * 100 : null;
+  const tile = (stat, label, sub) => `<div class="meth-find-card">
+      <div class="meth-find-stat">${stat}</div>
+      <div class="meth-find-label">${label}</div>
+      <div class="meth-find-sub">${sub}</div>
+    </div>`;
+  // The artifact's verdict tokens are the formal ones and stay in the ledger. On a
+  // public page they read as jargon, so they are mapped to plain language here rather
+  // than the artifact being softened to suit the page.
+  const say = v => ({
+    "NULL": "does not clear it",
+    "COLLAPSES": "does not clear it",
+    "SURVIVES": "clears it",
+    "UNINFORMATIVE": "no answer",
+    "NO_OP": "no answer",
+    "REVERSAL": "reversed",
+  }[String(v || "")] || String(v || ""));
+  return `<div class="meth-table-wrap">
+    <div class="meth-table-title">B-L6 · denoised-baseline fairness control <span class="meth-sub">run ${escapeHtml(String(j.generated_at || "").slice(0, 10))} · pre-registered · did NOT clear</span></div>
+    <p class="meth-note">The head-to-head above compares eFV against the consensus <strong>as served</strong>. That consensus is itself a blend of noisy graders, so part of eFV's lead could have been eFV beating the <em>blending</em> rather than beating the scouts. This control rebuilt the consensus from measured per-source precision and re-ran the comparison on identical rows. Baseball America is what made it possible: with only two scored sources the precision of each is mathematically unidentifiable, and BA is the third instrument that identifies it.</p>
+    <div class="meth-findings">
+      ${tile(sgn(inc.delta), "eFV lead over the consensus as served", `floor ${f4(inc.MDE95_E_cond)} and ${f4(inc.MDE95_E_refit)} · ${escapeHtml(say(inc.verdict_E_cond))} under both estimators`)}
+      ${tile(sgn(cor.delta), "eFV lead over the precision-weighted consensus", `floor ${f4(cor.MDE95_E_cond)} · ${f3(cor.margin_over_E_cond)}x · ${escapeHtml(say(cor.verdict))}`)}
+      ${tile(closed == null ? "-" : closed.toFixed(1) + "%", "share of the gap a better-built consensus closes", `rebuilding the blend moved the lead by only ${sgn(att.moved_by_denoising)}`)}
+    </div>
+    <p class="meth-note"><strong>What this found, in both directions.</strong> Against us: eFV's lead over the served consensus is ${sgn(inc.delta)} and <strong>does not clear its detection floor under either registered estimator</strong> (${f3(inc.margin_over_E_cond)}x and ${f3(inc.margin_over_E_refit)}x). We report that as unresolved, not as a win, and the headline above says so. For us: rebuilding the consensus by measured precision bought only ${sgn(s3.delta_vs_published_baseline)} of ordering skill, so <strong>the lead is not an artifact of a badly built consensus</strong> - the thing eFV is ahead of is the scouts, not the arithmetic. ${c2.draws ? `And the blend we ship survived its own audit: <strong>0 of ${c2.draws}</strong> randomly reweighted consensus variants beat it.` : ""}</p>
+    <p class="meth-note">Honest limits, stated because they cut both ways. The precision estimate cannot be made vintage-clean before 2027, so the rebuilt baseline is <em>defined</em> using rows it also scores - an advantage handed to the baseline, not to eFV. And ${att.drift_share_of_total_move != null ? `${Math.round(Number(att.drift_share_of_total_move) * 100)}% of the drop from the previously published lead is not this control at all` : "part of the drop is not this control at all"}: it is our own Baseball America backfill and identity repairs changing which players the comparison covers. Gate ledger: <a href="/data/xfv_denoised_baseline_eval.json" target="_blank" rel="noopener">xfv_denoised_baseline_eval.json</a>.</p>
+  </div>`;
 }
 
 function _methUpgradeXlineHTML() {
@@ -1787,7 +1978,7 @@ function _methModelUpgrades() {
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Model upgrades · gate-checked ships, misses included</div>
     <h2 class="meth-h">What recently changed under the hood</h2>
     <p class="meth-note">Every upgrade ships through a pre-registered gate. The numbers below are read live from the committed eval artifacts, and the lanes that failed their gates are listed right next to the ones that passed.</p>
-    <div class="meth-tables">${_methUpgradeXlineHTML()}${_methUpgradeP1HTML()}</div>
+    <div class="meth-tables">${_methUpgradeXlineHTML()}${_methUpgradeP1HTML()}${_methDenoisedControlHTML()}</div>
     <p class="meth-note"><strong>What did not ship:</strong> the same 2026-07-23 program ran four more gated lanes - playing-time IL risk for projections, MiLB park neutralization, per-pitch-type stuff into PAL conversions, and college stuff into the college-to-pro translation - and none cleared its gate. Nothing from those lanes touches a served number. Every failure is ledgered with its committed eval artifact in <a href="#view=models">Models &amp; Proofs</a>; that ledger is the point.</p>
   </div>`;
 }
@@ -1992,6 +2183,10 @@ function renderSourceComparison() {
   // The calibration cross-link tile shows the live tripwire status when the
   // shared reliability artifact is available (same guard as Methodology).
   _loadReliability();
+  // Cohort-accuracy artifact: supplies the three-valued verdict column on the
+  // archetype table below. Same lazy idiom; the table degrades to "not
+  // measured" while it is in flight or absent.
+  _loadSourceAccuracy();
   // Model upgrades panel artifacts (same lazy idiom).
   _loadUpgrades();
   // Scoreboard artifact (same lazy idiom).
@@ -2020,7 +2215,7 @@ function renderSourceComparison() {
       ${_methHeroBanner(bt)}
       ${_scxGfxBarHTML()}
       <h2 class="meth-h">The full head-to-head</h2>
-      <p class="meth-window">eFV is the primary grade, our outcome-grounded model. The test: a leakage-free, forward-chained backtest of eFV against the public sources (FanGraphs, MLB Pipeline) and the PROSPX consensus, scored on how well each grade ordered what prospects became. ${escapeHtml(bt.window.note)} <strong>Sources with too little history to score</strong> (${(bt.insufficient_history || []).join(", ")}) are excluded, not guessed at.</p>
+      <p class="meth-window">eFV is the primary grade, our outcome-grounded model. The test: a leakage-free, forward-chained backtest of eFV against the public sources (FanGraphs, MLB Pipeline) and the PROSPX consensus, scored on how well each grade ordered what prospects became. ${escapeHtml(bt.window.note)} ${_excludedSourcesClause(bt)}</p>
       ${_methEfvFindings(bt)}
       ${_methPerYearChart(bt)}
       <h3 class="meth-h3">Head-to-head: ranking skill + contributor AUC</h3>
@@ -2029,7 +2224,14 @@ function renderSourceComparison() {
       ${_methEfvPanel(bt)}
       ${_methCalibCrossLink()}
       <h3 class="meth-h3">Where each grade wins, by prospect archetype</h3>
-      <p class="meth-note">eFV leads the field overall and on most archetypes; the few it trails (often HS arms / int'l bats, the youngest, lowest-track-record cohorts) are where the scouting consensus still reads projection best. The obvious adds (signing bonus, draft slot) are already priced into consensus FV, so out-of-sample they cost more than they returned.</p>
+      <!-- 2026-08-10 (C-A4): this caption used to read "eFV leads the field
+           overall and on most archetypes; the few it trails ...", which
+           CONTRADICTED the computed line under the table beside it. That line
+           reads the same artifact and says eFV posts the top AUC in 2 of 6
+           archetypes, so "most" and "the few" were both false the moment the
+           cohorts were re-scored. The count now comes only from the computed
+           note, which cannot drift. -->
+      <p class="meth-note">Per-archetype AUC below, with the measured FanGraphs-versus-Pipeline verdict beside it. Where eFV trails, it trails on the youngest, lowest-track-record cohorts, which is where the scouting consensus still reads projection best. The obvious adds (signing bonus, draft slot) are already priced into consensus FV, so out-of-sample they cost more than they returned.</p>
       ${_methArchetypeTable(bt)}
       <div class="meth-chart-grid">
         ${_methCaptureCurve(bt)}
@@ -2044,7 +2246,7 @@ function renderSourceComparison() {
           <li><strong>Short track record.</strong> Only ${bt.window.years.length} preseason base years (${bt.window.years.join(", ")}) are old enough to have resolved outcomes. The newer sources have <em>zero</em> resolved cohorts.</li>
           <li><strong>Thin top tiers.</strong> The 60+ tier is only n≈40-60 across all years - a handful of hits or misses moves its rates a lot.</li>
           <li><strong>Censoring.</strong> Outcomes are cumulative WAR as of ${escapeHtml(bt.as_of_date || "today")}; the 2023 cohort has had ~3 seasons, the 2021 cohort ~5. Rate metrics mitigate but don't erase this.</li>
-          <li><strong>eFV's edge is real but bounded.</strong> eFV leads pooled and on most archetypes, FV tiers, and eras, and the lead holds on recent cohorts (not just older, easier-to-beat scouting). It trails the consensus on a couple of young, low-track-record archetypes, and the margins are a few Spearman points: a calibrated grade that out-ranks the field by a steady, defensible amount, not a perfect predictor.</li>
+          <li><strong>eFV's edge is a point estimate, and the pooled one does not clear its floor.</strong> eFV leads the pooled ordering comparison, but by less than the noise floor of that comparison, so we report it as unresolved rather than as a win. Ordering and discrimination also disagree by archetype: eFV grades ahead on Spearman in every archetype and on AUC in only a minority of them, which is why the two tables below can look like different stories. The margins are a few Spearman points either way: a calibrated grade, not a perfect predictor.</li>
           <li><strong>eFV is in-the-loop, not infallible.</strong> Its grades come from production we have; for the youngest prospects (recent draftees, int'l signs with no pro reps) it leans on the consensus prior, and where richer data exists (Statcast, Stuff+) it is only a live overlay, not yet historical. The lead grows when the data does.</li>
         </ul>
       </div>`;
@@ -2062,6 +2264,555 @@ function renderSourceComparison() {
     const spec = _scxGfxSpec();
     if (spec && window.EEPHUS_GFX) window.EEPHUS_GFX.open(spec);
   };
+}
+
+// ---- Source Accuracy view (C-A4, 2026-08-10) --------------------------------
+// The owner question was "who grades WHICH cohort better - hitters vs
+// pitchers, draft vs international?". data/source_cohort_accuracy.json is the
+// measurement and the answer is mostly NO ANSWER: 4 of 25 scored cells clear
+// their own 95 percent minimum detectable effect, against 1.25 expected by
+// construction at alpha 0.05, and the global head-to-head is itself not
+// resolvable. ZERO WEIGHTS SHIP FROM THIS VIEW and the page says so on its
+// first tile. Every number here is read from the artifact at render time; none
+// is hardcoded, so the page cannot drift from the run that produced it.
+const _SACC_TABS = [
+  ["read-first", "Read this first"],
+  ["side", "By side and acquisition"],
+  ["archetype", "By archetype"],
+  ["cuts", "Position, tier and age"],
+  ["precision", "Precision (not accuracy)"],
+  ["coverage", "Coverage and exclusions"],
+];
+const _SACC_LABELS = {
+  bat: "Hitters", arm: "Pitchers",
+  draft_hs: "Draft - high school", draft_college: "Draft - college",
+  international: "International",
+  hs_bat: "HS bats", hs_arm: "HS arms", college_bat: "College bats",
+  college_arm: "College arms", intl_bat: "Int'l bats", intl_arm: "Int'l arms",
+  C: "Catcher", IF: "Infield", OF: "Outfield", SP: "SP (FanGraphs role tag)",
+  RP: "RP (FanGraphs role tag)", P_unspecified: "Pitcher, role unspecified",
+  other: "Other / unlisted",
+  "60+": "FV 60 and up", 55: "FV 55", 50: "FV 50", 45: "FV 45", "<45": "FV under 45",
+  "<=18": "18 and under", "19-20": "19 to 20", "21-22": "21 to 22",
+  "23-24": "23 to 24", ">=25": "25 and up",
+};
+function _saccLabel(k) { return _SACC_LABELS[k] || String(k); }
+// Display name for an outlet that is NOT in _RATER_META. _raterMeta carries a
+// colour and is the scored-rater palette; the outlets below are the ones with
+// no resolvable history, so they never plot and belong here instead.
+const _SACC_OUTLETS = { baseballamerica: "Baseball America", espn: "ESPN",
+  just_baseball: "Just Baseball", tjstats: "TJStats" };
+function _saccOutlet(s) { return _SACC_OUTLETS[s] || _raterMeta(s).label; }
+// rho / AUC / delta are not FV grades, so they round NEAREST at 4 dp.
+function _s4(v) { return v == null ? " - " : (Number(v) > 0 ? "+" : "") + Number(v).toFixed(4); }
+function _f4(v) { return v == null ? " - " : Number(v).toFixed(4); }
+function _f2(v) { return v == null ? " - " : Number(v).toFixed(2); }
+function _f3(v) { return v == null ? " - " : Number(v).toFixed(3); }
+function _saccN(v) { return v == null ? " - " : Number(v).toLocaleString("en-US"); }
+function _saccPct(v) { return v == null ? " - " : (Number(v) * 100).toFixed(1) + "%"; }
+
+function _loadSourceAccuracy() {
+  if (_SACC || _SACC_LOADING) return;
+  _SACC_LOADING = true;
+  const rerender = () => {
+    if (_S.view === "source-accuracy") renderSourceAccuracy();
+    else if (_S.view === "source-comparison") renderSourceComparison();
+  };
+  fetch("/data/source_cohort_accuracy.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _SACC = j || { __error: true }; _SACC_LOADING = false; rerender(); })
+    // A failed fetch, or a throw inside the re-render, must surface the
+    // retry state and never strand the loading placeholder.
+    .catch(() => { _SACC = { __error: true }; _SACC_LOADING = false; rerender(); });
+}
+
+// The one honest cell on every table: the winning source name ONLY when the
+// artifact says the cell is answerable, and the literal
+// "not resolvable at this power" otherwise. No green on an unanswerable row.
+// The CI rides along inside the cell so the mobile layout can drop its column
+// without dropping the number.
+function _saccVerdictCell(c) {
+  if (!c) return `<td class="sacc-verdict"><span class="sacc-verdict-null">not measured</span></td>`;
+  if (c.scored === false)
+    return `<td class="sacc-verdict"><span class="sacc-verdict-null">not scored</span></td>`;
+  const ok = c.answerable === true && c.winner && c.winner !== "not_resolvable";
+  const body = ok
+    ? `<span class="sacc-verdict-win">${escapeHtml(_raterMeta(c.winner).label)}</span>`
+    : `<span class="sacc-verdict-null">not resolvable at this power</span>`;
+  const holm = (ok && c.survives_holm === false)
+    ? `<span class="sacc-holm-off">does not survive Holm inside its family</span>` : "";
+  const ci = (Array.isArray(c.d_rho_ci) && c.d_rho_ci.length === 2)
+    ? `<span class="sacc-ci-inline">CI95 ${_s4(c.d_rho_ci[0])} to ${_s4(c.d_rho_ci[1])}</span>` : "";
+  return `<td class="sacc-verdict">${body}${holm}${ci}</td>`;
+}
+function _saccCiCell(c) {
+  const ci = (Array.isArray(c.d_rho_ci) && c.d_rho_ci.length === 2)
+    ? `${_s4(c.d_rho_ci[0])} to ${_s4(c.d_rho_ci[1])}` : " - ";
+  return `<td class="sacc-col-ci">${ci}</td>`;
+}
+// Basis marker for a partition's rater columns, read off whichever cell first
+// carries the field. Never keyed to a rater name.
+function _saccBasisOf(part, rater) {
+  for (const k of Object.keys(part || {})) {
+    const c = part[k];
+    const b = c && c.raters && c.raters[rater] && c.raters[rater].basis;
+    if (b) return b;
+  }
+  return "";
+}
+
+// Cohort | n | FG rho | Pipeline rho | consensus rho | difference | CI95 | verdict.
+function _saccRhoTable(part, title, sub, order) {
+  const keys = (order || Object.keys(part || {})).filter(k => part && part[k]);
+  if (!keys.length) return "";
+  const head = ["fangraphs", "mlb_pipeline", "prospx_consensus"].map(r =>
+    `<th>${escapeHtml(_raterMeta(r).label)}${_basisTag(_saccBasisOf(part, r))}</th>`).join("");
+  const rows = keys.map(k => {
+    const c = part[k];
+    if (c.scored === false) {
+      return `<tr class="sacc-row-unscored"><td class="meth-td-tier">${escapeHtml(_saccLabel(k))}</td>
+        <td>${_saccN(c.n)}</td>
+        <td colspan="6" class="sacc-unscored-note">${escapeHtml(c.note || "not scored")}</td></tr>`;
+    }
+    const g = r => ((c.raters || {})[r] && c.raters[r].spearman != null)
+      ? _f4(c.raters[r].spearman) : " - ";
+    return `<tr>
+      <td class="meth-td-tier">${escapeHtml(_saccLabel(k))}</td>
+      <td>${_saccN(c.n)}</td>
+      <td>${g("fangraphs")}</td>
+      <td>${g("mlb_pipeline")}</td>
+      <td>${g("prospx_consensus")}</td>
+      <td>${_s4(c.d_rho)}</td>
+      ${_saccCiCell(c)}
+      ${_saccVerdictCell(c)}
+    </tr>`;
+  }).join("");
+  return `<div class="meth-table-wrap">
+    <div class="meth-table-title">${escapeHtml(title)}${sub ? `<span class="meth-sub">${escapeHtml(sub)}</span>` : ""}</div>
+    <div class="table-scroll-x"><table class="meth-table sacc-table">
+      <thead><tr><th>Cohort</th><th>n</th>${head}<th>Difference</th><th class="sacc-col-ci">CI95</th><th class="sacc-verdict">Verdict</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+  </div>`;
+}
+
+// Archetype | n | d_rho | CI95 | MDE95 | verdict. The narrow form, used where
+// the difference and its floor are the whole story.
+function _saccEffectTable(part, title, sub, order) {
+  const keys = (order || Object.keys(part || {})).filter(k => part && part[k]);
+  if (!keys.length) return "";
+  const rows = keys.map(k => {
+    const c = part[k];
+    if (c.scored === false) {
+      return `<tr class="sacc-row-unscored"><td class="meth-td-tier">${escapeHtml(_saccLabel(k))}</td>
+        <td>${_saccN(c.n)}</td>
+        <td colspan="4" class="sacc-unscored-note">${escapeHtml(c.note || "not scored")}</td></tr>`;
+    }
+    return `<tr>
+      <td class="meth-td-tier">${escapeHtml(_saccLabel(k))}</td>
+      <td>${_saccN(c.n)}</td>
+      <td>${_s4(c.d_rho)}</td>
+      ${_saccCiCell(c)}
+      <td class="sacc-col-mde">${_f4(c.mde95)}</td>
+      ${_saccVerdictCell(c)}
+    </tr>`;
+  }).join("");
+  return `<div class="meth-table-wrap">
+    <div class="meth-table-title">${escapeHtml(title)}${sub ? `<span class="meth-sub">${escapeHtml(sub)}</span>` : ""}</div>
+    <div class="table-scroll-x"><table class="meth-table sacc-table">
+      <thead><tr><th>Cohort</th><th>n</th><th>Difference</th><th class="sacc-col-ci">CI95</th><th class="sacc-col-mde">MDE95</th><th class="sacc-verdict">Verdict</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function _saccTile(stat, label, sub) {
+  return `<div class="meth-find-card">
+    <div class="meth-find-stat">${stat}</div>
+    <div class="meth-find-label">${label}</div>
+    ${sub ? `<div class="meth-find-sub">${sub}</div>` : ""}
+  </div>`;
+}
+
+// ---- sub-tab 1: read this first --------------------------------------------
+function _saccReadFirst(d) {
+  const b = d.basis || {}, m = d.multiplicity || {}, rep = d.reproduction || {};
+  const bt = (_S.backtest && !_S.backtest.__error) ? _S.backtest : null;
+  const scored = bt && Array.isArray(bt.scored_sources) ? bt.scored_sources.length : null;
+  const blocked = bt && Array.isArray(bt.insufficient_history) ? bt.insufficient_history.length : null;
+  const outlets = (scored != null && blocked != null) ? scored + blocked : null;
+  const tiles = [
+    _saccTile(_saccN(b.deduped_players), "resolved players carry the measurement",
+      `one row per player, latest pre-debut read, from ${_saccN(b.pooled_common_rows)} pooled common rows`),
+    _saccTile(outlets != null ? `${scored} / ${outlets}` : " - ",
+      "outlets have a resolvable outcome history",
+      bt ? `scored: ${escapeHtml((bt.scored_sources || []).map(_saccOutlet).join(", "))} &middot; blocked: ${escapeHtml((bt.insufficient_history || []).map(_saccOutlet).join(", "))}` : ""),
+    _saccTile(`${_saccN(m.cells_flagged_answerable)} / ${_saccN(m.cells_tested)}`,
+      "scored cells clear their own noise floor",
+      `${_f2(m.expected_false_positives_at_alpha_05)} are expected by construction at alpha 0.05`),
+    _saccTile(d.ships_a_weight === false ? "0" : "?",
+      "weights ship from this measurement",
+      "the deliverable is the measurement and this page, not a weight"),
+  ].join("");
+  const holm = Array.isArray(m.holm_survivors) ? m.holm_survivors : [];
+  return `
+    <div class="meth-findings">${tiles}</div>
+    <p class="meth-note sacc-headline">${escapeHtml(d.headline || "")}</p>
+    <h3 class="meth-h3">What was measured</h3>
+    <div class="table-scroll-x"><table class="meth-table sacc-kv">
+      <tbody>
+        <tr><td class="meth-td-tier">Estimand</td><td>${escapeHtml(b.estimand || " - ")}</td></tr>
+        <tr><td class="meth-td-tier">Uncertainty</td><td>${escapeHtml(b.uncertainty || " - ")}</td></tr>
+        <tr><td class="meth-td-tier">Dedup rule</td><td>${escapeHtml(b.dedup_rule || " - ")}</td></tr>
+        <tr><td class="meth-td-tier">Base years</td><td>${escapeHtml((b.window_years || []).join(", "))} &middot; minimum development lag ${_saccN(b.min_lag_years)} years</td></tr>
+        <tr><td class="meth-td-tier">Pre-registered</td><td>${(b.pre_registration || []).map(p => `<code>${escapeHtml(p)}</code>`).join("<br>") || " - "}</td></tr>
+        <tr><td class="meth-td-tier">Reproduces</td><td>${escapeHtml(b.reproduces || " - ")}${rep.matches_source_backtest_code === true ? " &middot; matches the shipped source_backtest code and served artifact, max absolute rho difference " + _f4(b.rho_implementation_max_abs_diff) : ""}</td></tr>
+        <tr><td class="meth-td-tier">Run</td><td>${escapeHtml(d.produced_by || " - ")} &middot; as of ${escapeHtml(d.as_of_date || " - ")}</td></tr>
+      </tbody>
+    </table></div>
+    <h3 class="meth-h3">The four cells that cleared their floor</h3>
+    <p class="meth-note">${holm.length ? `After a Holm correction inside each partition, ${holm.length} survive: ${holm.map(h => `<code>${escapeHtml(h)}</code>`).join(", ")}. ` : ""}${escapeHtml(m.survivors_overlap_note || "")}</p>
+    <div class="meth-caveats">
+      <div class="meth-caveats-title">&#9888; Read this honestly</div>
+      <ul>
+        <li><strong>The global head-to-head does not resolve.</strong> Pooled difference ${_s4((d.accuracy || {}).pooled && d.accuracy.pooled.d_rho)} against a minimum detectable effect of ${_f4((d.accuracy || {}).pooled && d.accuracy.pooled.mde95)}, bootstrap two-sided p ${_f4((d.accuracy || {}).pooled && d.accuracy.pooled.boot_p_two_sided)}. Every cohort claim on the tabs below sits inside that.</li>
+        <li><strong>A survivor count is not a family test.</strong> ${_saccN(m.cells_tested)} cells at alpha 0.05 produce about ${_f2(m.expected_false_positives_at_alpha_05)} flags with no signal at all.</li>
+        <li><strong>Both public sources are scored in sample.</strong> They are graders, not models: there is no training set to hold out. That is why the numbers here are ordering skill on a common set and not an out-of-sample claim.</li>
+        <li><strong>No weight ships.</strong> Six cohort-weight arms were fit and all six lose to equal weight. The receipt is on the archetype tab.</li>
+      </ul>
+    </div>`;
+}
+
+// ---- sub-tab 2: by side and by acquisition ----------------------------------
+function _saccBySide(d) {
+  const a = d.accuracy || {};
+  const hs = (a.by_acquisition || {}).draft_hs || {};
+  return `<p class="meth-window">The two cuts the owner asked for. A positive difference means FanGraphs ordered that cohort better; negative means MLB Pipeline did. The verdict column is the whole point: a cell is called only when the measured difference clears that cell's own 95 percent minimum detectable effect, and every other cell reads <em>not resolvable at this power</em> rather than crowning the larger of two statistically identical numbers.</p>
+    ${_saccRhoTable(a.by_side, "Hitters vs pitchers", "Spearman rho, preseason grade against realized WAR", ["bat", "arm"])}
+    ${_saccRhoTable(a.by_acquisition, "Draft vs international", "Spearman rho, preseason grade against realized WAR", ["draft_hs", "draft_college", "international"])}
+    <p class="meth-note">Neither side resolves. On acquisition path, one cell does: high-school draftees, where the difference is ${_s4(hs.d_rho)} against a floor of ${_f4(hs.mde95)}, so MLB Pipeline orders that cohort better. It is one of the three cells that survive a Holm correction inside their own partition. College and international do not resolve.</p>`;
+}
+
+// ---- sub-tab 3: by archetype ------------------------------------------------
+function _saccByArchetype(d) {
+  const a = d.accuracy || {}, m = d.multiplicity || {}, h = m.archetype_heterogeneity || {};
+  const order = ["hs_bat", "hs_arm", "college_bat", "college_arm", "intl_bat", "intl_arm"];
+  const fam = [
+    _saccTile(_f4(h.chi2_p), `Cochran Q p (Q ${_f4(h.cochran_q)}, df ${_saccN(h.df)}, k ${_saccN(h.k)})`,
+      "one common difference across the six archetypes is not rejected"),
+    _saccTile(_f4(h.permutation_p_labels), `label-permutation p (${_saccN(h.permutation_draws)} draws)`,
+      "share of random archetype labelings that produce a spread this wide or wider"),
+    _saccTile(`${_f2(h.i2_percent)}%`, "I&sup2;, share of spread beyond sampling noise",
+      `tau ${_f4(h.tau)} on a weighted mean difference of ${_s4(h.weighted_mean_d_rho)}`),
+  ].join("");
+  const ab = d.cohort_ab || {}, arms = ab.arms || {}, gate = ab.gate || {};
+  const armRows = Object.keys(arms).map(k => {
+    const v = arms[k];
+    return `<tr${k === ab.best_arm ? ' class="sacc-row-best"' : ""}>
+      <td class="meth-td-tier">${escapeHtml(k)}${k === ab.best_arm ? " (best)" : ""}</td>
+      <td>${_saccN(v.pooled_n)}</td>
+      <td>${_f4((v.equal || {}).spearman)}</td>
+      <td>${_f4((v.weighted || {}).spearman)}</td>
+      <td>${_s4(v.d_rho)}</td>
+      <td>${_s4(v.d_auc)}</td>
+      <td class="sacc-verdict"><span class="${v.ship ? "sacc-verdict-win" : "sacc-verdict-null"}">${v.ship ? "ships" : "no ship"}</span></td>
+    </tr>`;
+  }).join("");
+  const pc = ab.permutation_control || {};
+  const ss = ab.shrink_sensitivity || {};
+  const oc = d.oracle_ceiling || {};
+  const ocRows = Object.keys(oc).map(k => {
+    const v = oc[k];
+    return `<tr>
+      <td class="meth-td-tier">${escapeHtml(v.basis || k)}</td>
+      <td>${_saccN(v.n)}</td>
+      <td>${_f4(v.equal_rho)}</td>
+      <td>${_f4(v.global_oracle_alpha)}</td>
+      <td>${_f4(v.global_oracle_rho)}</td>
+      <td>${_s4(v.global_oracle_gain)}</td>
+      <td class="sacc-verdict"><span class="${v.global_oracle_clears_ship_gate ? "sacc-verdict-win" : "sacc-verdict-null"}">${v.global_oracle_clears_ship_gate ? "clears the gate" : "below the gate"}</span></td>
+    </tr>`;
+  }).join("");
+  const bys = m.base_year_stability || {};
+  const byRows = (bys.per_year || []).map(y => `<tr>
+    <td class="meth-td-tier">${escapeHtml(String(y.year))}</td>
+    <td>${_saccN(y.n)}</td>
+    <td>${_f4(y.rho_fangraphs)}</td>
+    <td>${_f4(y.rho_mlb_pipeline)}</td>
+    <td>${_s4(y.d_rho)}</td>
+  </tr>`).join("");
+  return `<p class="meth-window">Six archetypes, the finest cut this data supports. This is the most valuable block on the page and it is a negative result: the spread across the six is inside the band that randomly shuffled archetype labels produce.</p>
+    ${_saccEffectTable(a.by_archetype, "FanGraphs minus MLB Pipeline, by archetype", "difference in Spearman rho against each cell's own floor", order)}
+    <h3 class="meth-h3">The family test</h3>
+    <div class="meth-findings">${fam}</div>
+    <div class="meth-find-card sacc-family-card">
+      <div class="meth-find-label">The archetype pattern is inside the noise band of randomly shuffled archetype labels.</div>
+      <div class="meth-find-sub">${escapeHtml(h.reading || "")}</div>
+    </div>
+    <h3 class="meth-h3">The six-arm A/B receipt</h3>
+    <p class="meth-note">Every arm refits the FanGraphs/Pipeline blend on cohort labels over ${_saccN(ab.rows_n)} rows and is scored forward-chained: ${escapeHtml(ab.vintage_rule || "")}. Gate: difference in Spearman at least ${_f4(gate.min_d_rho)} or difference in AUC at least ${_f4(gate.min_d_auc)}, taken from ${escapeHtml(gate.source || "the incumbent constants")}. Alpha, the only free parameter a two-source blend has, is ${escapeHtml((ab.alpha_parameterisation || {}).definition || "")}; the shipped clamp bounds it to ${((ab.alpha_parameterisation || {}).implied_alpha_range || []).map(v => _f4(v)).join(" to ") || " - "}.</p>
+    <div class="meth-table-wrap">
+      <div class="table-scroll-x"><table class="meth-table sacc-table">
+        <thead><tr><th>Arm</th><th>n</th><th>Equal-weight rho</th><th>Weighted rho</th><th>Difference rho</th><th>Difference AUC</th><th class="sacc-verdict">Verdict</th></tr></thead>
+        <tbody>${armRows}</tbody>
+      </table></div>
+    </div>
+    <div class="meth-findings">
+      ${_saccTile(_f4(pc.p), `permutation control p (${_saccN(pc.draws)} draws)`, escapeHtml(pc.reading || ""))}
+      ${_saccTile(_s4(pc.observed_d_rho), "observed difference for the best arm",
+        `null mean ${_s4(pc.null_mean)}, null sd ${_f4(pc.null_sd)}, null 95th percentile ${_s4(pc.null_p95)}`)}
+    </div>
+    <p class="meth-note"><strong>Shrinkage sensitivity.</strong> ${escapeHtml(ss.reading || "")} Rank correlation of k against the Spearman difference ${_f4(ss.rank_corr_k_vs_d_rho)}, against the AUC difference ${_f4(ss.rank_corr_k_vs_d_auc)}.</p>
+    <h3 class="meth-h3">The oracle ceiling</h3>
+    <p class="meth-note">The best blend weight chosen with hindsight, on the same rows. It bounds what any fitting procedure could have won, so it separates "we estimated it badly" from "there is nothing there".</p>
+    <div class="meth-table-wrap">
+      <div class="table-scroll-x"><table class="meth-table sacc-table">
+        <thead><tr><th>Basis</th><th>n</th><th>Equal-weight rho</th><th>Oracle alpha</th><th>Oracle rho</th><th>Gain</th><th class="sacc-verdict">Verdict</th></tr></thead>
+        <tbody>${ocRows}</tbody>
+      </table></div>
+    </div>
+    <p class="meth-note">${escapeHtml((oc.deduped_common || {}).geometry_note || "")} FanGraphs and Pipeline correlate ${_f4((oc.deduped_common || {}).corr_fg_mp_pearson)} on the deduped common set.</p>
+    <h3 class="meth-h3">Would a cohort weight even hold still?</h3>
+    <p class="meth-note">${escapeHtml(bys.note || "")} ${bys.sign_flips_across_adjacent_vintages != null ? `Sign flips across adjacent vintages: ${_saccN(bys.sign_flips_across_adjacent_vintages)}.` : ""}</p>
+    <div class="meth-table-wrap">
+      <div class="table-scroll-x"><table class="meth-table sacc-table">
+        <thead><tr><th>Base year</th><th>n</th><th>FanGraphs rho</th><th>Pipeline rho</th><th>Difference</th></tr></thead>
+        <tbody>${byRows}</tbody>
+      </table></div>
+    </div>`;
+}
+
+// ---- sub-tab 4: position, tier and age --------------------------------------
+function _saccCuts(d) {
+  const a = d.accuracy || {};
+  const lvl = a.level_at_grading || {};
+  return `<p class="meth-window">Three more cuts, stacked. Each carries the reason it is weaker than the two above, inline, because two of the three are weak by construction rather than by sample size.</p>
+    ${_saccRhoTable(a.by_position_group, "By position group", "Spearman rho against realized WAR",
+      ["C", "IF", "OF", "SP", "RP", "P_unspecified", "other"])}
+    <p class="meth-note sacc-warn">${escapeHtml(a.by_position_group_selection_caveat || "")}</p>
+    ${_saccRhoTable(a.by_fv_tier, "By consensus FV tier", "Spearman rho against realized WAR",
+      ["60+", "55", "50", "45", "<45"])}
+    <p class="meth-note sacc-warn">${escapeHtml(a.by_fv_tier_range_restriction_warning || "")}</p>
+    ${_saccRhoTable(a.by_age_at_grading, "By age at grading", "Spearman rho against realized WAR",
+      ["<=18", "19-20", "21-22", "23-24", ">=25"])}
+    <p class="meth-note sacc-warn">${escapeHtml(lvl.note || "")}${lvl.available === false ? ` Substitute in use: <code>${escapeHtml(lvl.substitute || "")}</code>.` : ""}</p>`;
+}
+
+// ---- sub-tab 5: precision (not accuracy) ------------------------------------
+// TWO BRANCHES, both live. precision_label_free.identified is FALSE today
+// because Baseball America, the third instrument, was purged 2026-08-10 for a
+// re-ingest, and TWO sources cannot identify a measurement-error model. The
+// unidentified branch renders the reason and the restore condition and NO
+// TABLE, NO SIGMA, NO ALPHA. Nothing on this page may assume the block is
+// populated.
+function _saccPrecision(d) {
+  const p = d.precision_label_free || {};
+  const wording = `<div class="sacc-wording">
+    <div class="sacc-wording-title">Precision is not accuracy</div>
+    <p>Precision is not accuracy. This block measures how tightly each outlet agrees with the latent consensus, with each outlet's own scale offset and slope removed. It says nothing about who is right. Where we can measure accuracy against outcomes we say so separately, and on the one cohort where accuracy is resolvable the two disagree.</p>
+  </div>`;
+  // BRANCH PREDICATE. source_cohort_accuracy._precision_label_free emits
+  // "identified": false ONLY on the unidentified early return; the populated
+  // return carries no such key at all. So the test is an explicit false OR a
+  // missing estimator, never a truthy read of `identified`.
+  const em = p.estimator_primary_em_fiml;
+  if (p.identified === false || !em || !Array.isArray(em.sources)) {
+    return `${wording}
+      <div class="sacc-empty">
+        <div class="sacc-empty-title">Not identified - nothing is rendered</div>
+        <p class="sacc-empty-reason">${escapeHtml(p.reason || "the measurement-error model is not identified on the sources present")}</p>
+        <div class="table-scroll-x"><table class="meth-table sacc-kv">
+          <tbody>
+            <tr><td class="meth-td-tier">Sources present</td><td>${(p.sources_present || []).map(s => escapeHtml(_saccOutlet(s))).join(", ") || " - "}</td></tr>
+            <tr><td class="meth-td-tier">Third instrument</td><td>${escapeHtml(_saccOutlet(p.third_instrument || ""))}, ${_saccN(p.n_third_instrument_rows)} usable rows against a floor of ${_saccN(p.min_rows_required)}</td></tr>
+            <tr><td class="meth-td-tier">Restores when</td><td>${escapeHtml(p.restores_when || " - ")}</td></tr>
+          </tbody>
+        </table></div>
+        <p class="meth-note">Two instruments cannot separate an outlet's noise from the latent grade: with two readings of one quantity, every split of the disagreement between them fits equally well. A third independent reading is what identifies the model, which is why nothing is estimated here rather than something being estimated badly.</p>
+      </div>`;
+  }
+  // Identified branch: the triad source table, the range-restriction chips,
+  // the vintage-availability table, and the precision-vs-accuracy row. Every
+  // field below is the schema _precision_label_free ships on its populated
+  // return; each is read defensively so a partial artifact drops a row rather
+  // than throwing inside the render.
+  const cc = p.estimator_robustness_complete_case || {};
+  const at = (arr, i) => (Array.isArray(arr) && arr[i] != null) ? arr[i] : null;
+  const srcRows = em.sources.map((s, i) => `<tr>
+    <td class="meth-td-tier">${escapeHtml(_raterMeta(s).label)}</td>
+    <td>${_f4(at(em.b, i))}</td>
+    <td>${_f4(at(em.sigma, i))}</td>
+    <td>${_f4(at(em.reliability, i))}</td>
+    <td>${_f4(at(em.gls_weight, i))}</td>
+    <td>${_f4(at(cc.sigma, i))}</td>
+  </tr>`).join("");
+  const rr = p.range_restricted_sources || {};
+  const rrChips = Object.keys(rr).map(k => {
+    const v = rr[k] || {};
+    const on = v.range_restricted === true;
+    return `<span class="${on ? "sacc-chip-warn" : "sacc-chip-ok"}" title="${escapeHtml(v.why_no_weight || "")}">${escapeHtml(_raterMeta(k).label)}: ${on ? "range restricted" : "full range"}, sd ratio ${_f4(v.sd_ratio_vs_fangraphs)} on ${_saccN(v.n)} rows, weight ${v.weight == null ? "none" : _f4(v.weight)}</span>`;
+  }).join("");
+  const vint = p.vintage_availability || {};
+  const byYear = vint.precision_estimable_by_board_year || {};
+  const vintRows = Object.keys(byYear).sort().map(y => {
+    const v = byYear[y] || {};
+    return `<tr>
+      <td class="meth-td-tier">${escapeHtml(y)}</td>
+      <td>${_saccN(v.complete_case_n)}</td>
+      <td class="sacc-verdict"><span class="${v.estimable ? "sacc-verdict-win" : "sacc-verdict-null"}">${v.estimable ? "estimable" : "not estimable"}</span></td>
+      <td>${v.alpha_fg == null ? " - " : _f4(v.alpha_fg)}</td>
+      <td>${escapeHtml(String(v.reason || (v.heywood ? "triad refuted on these rows" : " - ")))}</td>
+    </tr>`;
+  }).join("");
+  const pva = p.precision_vs_accuracy || {};
+  const cells = Array.isArray(pva.on_the_resolvable_cells) ? pva.on_the_resolvable_cells : [];
+  const pvaRows = cells.map(c => `<tr>
+    <td class="meth-td-tier">${escapeHtml(_saccLabel(c.archetype))}</td>
+    <td>${escapeHtml(_raterMeta(c.accuracy_winner).label)}</td>
+    <td>${_s4(c.accuracy_d_rho)}</td>
+    <td>${escapeHtml(_raterMeta(c.precision_prefers).label)}</td>
+    <td>${_f4(c.precision_alpha_fg)}</td>
+    <td class="sacc-verdict"><span class="${c.agree ? "sacc-verdict-win" : "sacc-verdict-null"}">${c.agree ? "agree" : "disagree"}</span></td>
+  </tr>`).join("");
+  return `${wording}
+    <div class="meth-table-wrap">
+      <div class="meth-table-title">Per-outlet precision <span class="meth-sub">EM/FIML on per-source, per-year centred grades; complete case as the robustness column</span></div>
+      <div class="table-scroll-x"><table class="meth-table sacc-table">
+        <thead><tr><th>Outlet</th><th>Loading b</th><th>Sigma</th><th>Reliability</th><th>GLS weight</th><th>Sigma, complete case</th></tr></thead>
+        <tbody>${srcRows}</tbody>
+      </table></div>
+    </div>
+    <p class="meth-note">alpha ${_f4(em.alpha_fg)}${Array.isArray(em.alpha_fg_ci95) ? `, CI95 ${_f4(em.alpha_fg_ci95[0])} to ${_f4(em.alpha_fg_ci95[1])}` : ""} on ${_saccN(em.n_rows_used)} rows. ${escapeHtml(p.gls_weight_form || "")}</p>
+    ${rrChips ? `<div class="sacc-chiprow">${rrChips}</div>` : ""}
+    <h3 class="meth-h3">Why this cannot be scored against outcomes yet</h3>
+    <div class="meth-table-wrap">
+      <div class="table-scroll-x"><table class="meth-table sacc-table">
+        <thead><tr><th>Board year</th><th>Complete case n</th><th class="sacc-verdict">Status</th><th>alpha</th><th>Note</th></tr></thead>
+        <tbody>${vintRows}</tbody>
+      </table></div>
+    </div>
+    <p class="meth-note sacc-warn">${escapeHtml(vint.structural_note || "")}</p>
+    <h3 class="meth-h3">Precision against accuracy, on the cells where accuracy resolves</h3>
+    ${pvaRows ? `<div class="meth-table-wrap"><div class="table-scroll-x"><table class="meth-table sacc-table">
+      <thead><tr><th>Archetype</th><th>Accuracy prefers</th><th>Difference</th><th>Precision prefers</th><th>alpha</th><th class="sacc-verdict">Verdict</th></tr></thead>
+      <tbody>${pvaRows}</tbody>
+    </table></div></div>` : `<p class="meth-note">No archetype has both a resolvable accuracy verdict and an estimable precision alpha.</p>`}
+    <p class="meth-note">Pearson r ${_f4(pva.pearson_r)}, exact permutation p ${_f4(pva.permutation_p_two_sided)}. ${escapeHtml(pva.reading || "")}</p>`;
+}
+
+// ---- sub-tab 6: coverage and what is excluded -------------------------------
+function _saccCoverage(d) {
+  const cs = (d.accuracy || {}).coverage_selection || {};
+  const per = cs.per_source || {};
+  const rows = Object.keys(per).map(k => {
+    const v = per[k] || {};
+    return `<tr>
+      <td class="meth-td-tier">${escapeHtml(_raterMeta(k).label)}</td>
+      <td>${_saccN(v.rows_own)}</td>
+      <td>${_saccN(v.rows_common)}</td>
+      <td>${_saccN(v.rows_cut)}</td>
+      <td>${_f4(v.rho_own)}</td>
+      <td>${_f4(v.rho_common)}</td>
+      <td>${_s4(v.delta_own_minus_common)}</td>
+      <td>${_f2(v.cut_mean_fv)} / ${_f2(v.kept_mean_fv)}</td>
+      <td>${_saccPct(v.cut_debut_rate)} / ${_saccPct(v.kept_debut_rate)}</td>
+    </tr>`;
+  }).join("");
+  const cd = d.calibration_drift || {};
+  const srcs = Object.keys(cd.sources || {});
+  const years = [...new Set(srcs.flatMap(s => Object.keys((cd.sources[s] || {}).per_year || {})))]
+    .sort();
+  const driftRows = years.map(y => `<tr>
+    <td class="meth-td-tier">${escapeHtml(y)}</td>
+    ${srcs.map(s => {
+      const e = ((cd.sources[s] || {}).per_year || {})[y];
+      return `<td>${e ? _f3(e.offset_fv) : " - "}</td>`;
+    }).join("")}
+  </tr>`).join("");
+  const bt = (_S.backtest && !_S.backtest.__error) ? _S.backtest : null;
+  const cls = bt && Array.isArray(bt.source_classification) ? bt.source_classification : [];
+  const clsRows = cls.map(c => `<tr>
+    <td class="meth-td-tier">${escapeHtml(_saccOutlet(c.source))}</td>
+    <td class="sacc-verdict"><span class="${c.scoreable_now ? "sacc-verdict-win" : "sacc-verdict-null"}">${c.scoreable_now ? "scoreable" : "not scoreable"}</span></td>
+    <td>${escapeHtml(String(c.blocked_by || " - "))}</td>
+    <td>${_saccN(c.resolvable_rows_total)}</td>
+    <td>${_saccPct(c.common_set_retention)}</td>
+  </tr>`).join("");
+  const clsRuleNote = (bt && bt.source_class_rules && bt.source_class_rules.note)
+    ? `<p class="meth-note">${escapeHtml(bt.source_class_rules.note)}</p>` : "";
+  const clsBlock = clsRows
+    ? `<div class="meth-table-wrap"><div class="table-scroll-x"><table class="meth-table sacc-table">
+        <thead><tr><th>Outlet</th><th class="sacc-verdict">Status</th><th>Blocked by</th><th>Resolvable rows</th><th>Common-set retention</th></tr></thead>
+        <tbody>${clsRows}</tbody>
+      </table></div></div>${clsRuleNote}`
+    : `<p class="meth-note">The source classification table is loading.</p>`;
+  return `<p class="meth-window">What the common set threw away, whether the scale itself moved under the measurement, and which outlets could not be scored at all. Naming the exclusion and publishing its size is the honest form of this evidence: the cut rows carry zero paired contrast, so no model recovers them.</p>
+    <div class="meth-table-wrap">
+      <div class="meth-table-title">Coverage and selection <span class="meth-sub">own rows against the two-source common set</span></div>
+      <div class="table-scroll-x"><table class="meth-table sacc-table">
+        <thead><tr><th>Outlet</th><th>Own rows</th><th>Common</th><th>Cut</th><th>rho own</th><th>rho common</th><th>Difference</th><th>Mean FV cut / kept</th><th>Debut rate cut / kept</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>
+    <p class="meth-note">Row retention ${_saccPct(cs.row_retention)}, player retention ${_saccPct(cs.player_retention)} of ${_saccN(cs.union_player_year_slots)} union player-year slots. Kept rows average FV ${_f2(cs.kept_pooled_mean_source_fv)} and debut at ${_saccPct(cs.kept_pooled_debut_rate)}; cut rows average FV ${_f2(cs.cut_pooled_mean_source_fv)} and debut at ${_saccPct(cs.cut_pooled_debut_rate)}.</p>
+    <p class="meth-note"><strong>No selection model was built, and that is a decision, not an omission.</strong> ${escapeHtml((cs.selection_model || {}).why_not || "")}</p>
+    <h3 class="meth-h3">Calibration drift against FanGraphs</h3>
+    <p class="meth-note">${escapeHtml(cd.note || "")} Flag threshold ${_f2(cd.flag_threshold_fv)} FV points year over year; currently flagged: ${(cd.flagged || []).length ? escapeHtml(cd.flagged.join(", ")) : "none"}.</p>
+    <div class="meth-table-wrap">
+      <div class="table-scroll-x"><table class="meth-table sacc-table">
+        <thead><tr><th>Year</th>${srcs.map(s => `<th>${escapeHtml(_saccOutlet(s))}</th>`).join("")}</tr></thead>
+        <tbody>${driftRows}</tbody>
+      </table></div>
+    </div>
+    <h3 class="meth-h3">Outlets that could not be scored</h3>
+    ${clsBlock}`;
+}
+
+function renderSourceAccuracy() {
+  const el = document.getElementById("source-accuracy-body");
+  if (!el) return;
+  _loadSourceAccuracy();
+  // source_backtest.json supplies the outlet counts on tab 1 and the
+  // source_classification table on tab 6. Same lazy guard the Source
+  // Comparison view uses; the two views share _S.backtest.
+  if (!_S.backtest && !_S.btLoading) {
+    _S.btLoading = true;
+    fetch("/data/source_backtest.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => { _S.backtest = j || { __error: true };
+        if (_S.view === "source-accuracy") renderSourceAccuracy(); })
+      .catch(() => { _S.backtest = { __error: true };
+        if (_S.view === "source-accuracy") renderSourceAccuracy(); });
+  }
+  const shell = inner => {
+    const chips = _SACC_TABS.map(([k, lbl]) =>
+      `<button class="chip${_SACC_TAB === k ? " active" : ""}" type="button" data-sacc-tab="${escapeHtml(k)}">${escapeHtml(lbl)}</button>`).join("");
+    return `<div class="source-comp-wrap sacc-wrap">
+      <div class="source-comp-eyebrow"><span class="scx-dot"></span>Source accuracy by cohort &middot; zero weights ship</div>
+      <h2 class="meth-h">Who is better on which kind of prospect?</h2>
+      <div class="filter-bar sacc-tabs"><span class="gl-microlabel">Section</span>${chips}</div>
+      ${inner}
+    </div>`;
+  };
+  const d = _SACC;
+  let inner;
+  if (!d) {
+    inner = `<div class="state-message">Loading the cohort accuracy measurement...</div>`;
+  } else if (d.__error || !d.accuracy) {
+    inner = `<div class="state-message">The cohort accuracy measurement could not be loaded.
+      <div style="margin-top:12px;"><button class="chip" type="button" id="gl-sacc-retry">Retry</button></div></div>`;
+  } else if (_SACC_TAB === "side") inner = _saccBySide(d);
+  else if (_SACC_TAB === "archetype") inner = _saccByArchetype(d);
+  else if (_SACC_TAB === "cuts") inner = _saccCuts(d);
+  else if (_SACC_TAB === "precision") inner = _saccPrecision(d);
+  else if (_SACC_TAB === "coverage") inner = _saccCoverage(d);
+  else inner = _saccReadFirst(d);
+  el.innerHTML = shell(inner);
+  document.querySelectorAll("[data-sacc-tab]").forEach(b => b.onclick = () => {
+    _SACC_TAB = b.dataset.saccTab; renderSourceAccuracy();
+  });
+  const rb = document.getElementById("gl-sacc-retry");
+  if (rb) rb.onclick = () => { _SACC = null; _SACC_LOADING = false; renderSourceAccuracy(); };
 }
 
 // ---- Models & Proofs view --------------------------------------------------

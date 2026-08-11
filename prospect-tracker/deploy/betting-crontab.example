@@ -1,10 +1,23 @@
 # eephus.io betting + card jobs. Install on the production box with `crontab -e`.
 #
 # Three jobs, and only one of them costs API credits (the card job spends only
-# marketplace requests, throttled to one per 5s). Times are the BOX's local
-# clock; the close job reasons in UTC internally, so the box timezone does not
-# have to match Eastern. Confirm what the box thinks the time is (`date`) before
-# trusting these windows.
+# marketplace requests, throttled to one per 5s).
+#
+# TZ=UTC BELOW IS LOAD-BEARING, AND ITS ABSENCE IS THE PRIME SUSPECT FOR THE
+# ZERO CLOSE SNAPSHOTS (2026-08-09 owner decision, binding). This file used to
+# ship the close job as `*/15 12-23 * * *` in the BOX's local clock and tell the
+# reader to confirm the box timezone by hand. Nobody did, the box timezone is
+# undocumented, and if the box runs UTC that window is 08:00 to 19:00 Eastern:
+# it shuts before a 7:05pm ET first pitch on most of the calendar and misses
+# every late slate outright. Measured on 2026-08-09 the odds cache held 4 open
+# snapshots and ZERO close snapshots, so CLV had never been gradeable for any
+# slate, and CLV is unrecoverable after the fact.
+#
+# The fix is not a better window. It is NO window: the job now runs every 15
+# minutes all day and `decide()` does every piece of clock reasoning against UTC
+# instants read off the schedule. That is correct under any box timezone. TZ=UTC
+# is set anyway so the log stamps and the job's own reasoning agree, and so a
+# reader of `crontab -l` can see which clock these lines are in.
 #
 # THE ENVIRONMENT IS THE PART PEOPLE GET WRONG. cron runs with almost no
 # environment: no PATH beyond /usr/bin:/bin, no shell profile, no virtualenv.
@@ -14,18 +27,27 @@
 # root-owned EnvironmentFile and source it in the wrapper.
 
 SHELL=/bin/bash
+TZ=UTC                                         # <- every line below is UTC
 PATH=/usr/local/bin:/usr/bin:/bin
 EEPHUS=/opt/eephus/prospect-tracker           # <- the checkout on this box
 PY=/opt/eephus/venv/bin/python                 # <- the interpreter with the deps
 
 # --- The close odds snapshot, for closing line value ------------------------
-# Runs every 15 minutes from noon to midnight and DECIDES each time. It exits
-# quietly on every invocation except the one inside the window (10 minutes
-# before the slate's earliest first pitch), so a fixed cron time is not needed
-# and doubleheaders, rain delays and schedule changes all handle themselves.
-# Refuses to fire twice for the same slate date, so this cadence cannot drain
-# the 500/month free tier: it spends 3 credits a day, once.
-*/15 12-23 * * *  cd $EEPHUS && . /etc/eephus.env && $PY tools/betting_close_job.py >> logs/betting-close.log 2>&1
+# Runs every 15 minutes, ALL DAY, and DECIDES each time. It exits quietly on
+# every invocation except the one inside the window (10 minutes before the
+# slate's earliest first pitch), so no cron window is needed and doubleheaders,
+# rain delays, schedule changes and a 10:10pm ET first pitch all handle
+# themselves.
+#
+# 96 invocations a day sounds expensive and costs nothing: `decide()` reads
+# artifacts, spends no credit, and the job refuses to fire twice for the same
+# slate date. The guard is a real lookup of today's close snapshot, not a
+# lockfile, so it holds across reboots. Spend stays 3 credits a day, once, out
+# of 500 a month.
+#
+# Check what it is doing without spending anything:
+#   $PY tools/betting_close_job.py --why
+*/15 * * * *  cd $EEPHUS && . /etc/eephus.env && $PY tools/betting_close_job.py >> logs/betting-close.log 2>&1
 
 # --- The leaderboard vintage snapshot, the validation clock -----------------
 # Offline, idempotent, about 25KB a night, costs no credits. This is the ONLY
@@ -63,6 +85,16 @@ PY=/opt/eephus/venv/bin/python                 # <- the interpreter with the dep
 
 # --- Checks you can run by hand --------------------------------------------
 #   $PY tools/betting_close_job.py --why      today's window, spends nothing
+#   $PY -c "import betting_export as be, json; print(json.dumps(
+#            be.snapshot_health(14), indent=1, default=str))"
+#                                             per-slate open/close coverage off
+#                                             .cache/odds/, hours since the last
+#                                             close, and a diagnosis that names
+#                                             the REPAIR. Read this before
+#                                             concluding the close job works: the
+#                                             capture, not the exit code, is the
+#                                             evidence, and the job exits 0 on
+#                                             every legitimate no-op.
 #   $PY betting_ingest.py --status            is a key configured (never prints it)
 #   $PY leaderboard_vintages.py --coverage    how many vintages exist
 #   $PY card_prices_ingest.py --stats         comps on file, cards, sale window

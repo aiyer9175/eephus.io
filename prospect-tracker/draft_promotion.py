@@ -54,6 +54,61 @@ def _milb_key_from_name(name: str) -> str:
     return normalize_key(name)
 
 
+def _canonical_identity(milb_key: str, name: str) -> tuple[str, str]:
+    """Resolve a name-derived MiLB key through `consensus.PLAYER_KEY_ALIASES`.
+
+    normalize_key is a SPELLING function, not an identity function. When two
+    outlets spell one human differently the two spellings are collapsed by the
+    alias table, which canonicalises at READ time
+    (`consensus._canonicalize_player_snapshot`). So the key this module writes
+    is NOT necessarily the key the board serves, and every identity decision
+    taken on the raw key is a decision about a spelling nobody serves.
+
+    ADDED 2026-08-09, after the Baseball America midseason drop made the gap
+    visible. The MLB draft API spells the Rockies' 2026 third-rounder (pick 76)
+    "Jack Natili"; FanGraphs, MLBAM and this database spell him "Jackson".
+    `jack_natili` -> `jackson_natili` has been in the alias table since
+    2026-08-04, put there because the split had already reached the SERVED
+    board twice, at ranks 155 and 320, with his surplus double counted at
+    $16.7M plus $3.8M.
+
+    seed_signed_draftees asks "does a real MiLB source already own this
+    identity?" by querying `snapshots` for the key. Asked about `jack_natili`
+    the answer was no, because all of his real rows sit on `jackson_natili`
+    (FanGraphs FV 45 on 2026-07-23 and 2026-08-02, Baseball America FV 40 on
+    2026-08-01). So the guard passed, a synthetic `draft_signing` FV 45 was
+    seeded onto the alias spelling, and consensus then folded it into
+    `jackson_natili` as a THIRD source vote dated today. Measured on the live
+    DB by rebuilding the timeseries both ways: consensus_fv_raw 44.8 with the
+    seed against 44.7 without, and one extra (2026-08-09) history point ahead
+    of the real 2026-08-02 FanGraphs read. The displayed consensus_fv is 45.0
+    either way, so the harm today is 0.1 FV and a phantom freshest-vote, not a
+    double count - the alias table is what stops the double count. It is the
+    guard that is wrong, and it would be wrong by more the next time a graded
+    prospect's spellings split.
+
+    Measured across the whole draft corpus 2026-08-09: of 7,491 draft_results
+    rows and 7,524 draft_canonical_keys rows, exactly ONE key changes under
+    this resolution, the Natili row. This is a targeted correction, not a
+    re-keying.
+
+    Import is lazy and failure is non-fatal: draft promotion must not become
+    unrunnable because the consensus module cannot load.
+    """
+    if not milb_key:
+        return milb_key, name
+    try:
+        from consensus import PLAYER_KEY_ALIASES
+    except Exception:                                     # noqa: BLE001
+        log.exception("alias table unavailable - falling back to the raw "
+                      "spelling for %r", milb_key)
+        return milb_key, name
+    alias = PLAYER_KEY_ALIASES.get(milb_key)
+    if not alias or not alias.get("player_key"):
+        return milb_key, name
+    return alias["player_key"], alias.get("player_name") or name
+
+
 def _better_draft_record(a: dict, b: dict) -> dict:
     """Pick the canonical draft record between two candidates for the
     same MiLB key.
@@ -153,6 +208,14 @@ def _harvest_known_mlbam_ids(pairs: Iterable[tuple[str, str]],
     'jack_natili', so an unguarded harvest would have moved that id onto the
     draft slug. Two spellings of one identity is a merge decision, not a
     seeding decision, so the candidate is dropped and logged.
+
+    That merge decision was subsequently taken, in the one sanctioned place:
+    `consensus.PLAYER_KEY_ALIASES` gained jack_natili -> jackson_natili on
+    2026-08-04, and `seed_signed_draftees` started resolving through it on
+    2026-08-09. The Natili candidate therefore arrives here already spelled
+    'jackson_natili', matches the durable binding, and the warning below stops
+    firing for him. The guard STAYS: it is what makes a merge a deliberate
+    edit to the alias table rather than a side effect of an ingest.
     """
     wanted = [(dk, mk) for dk, mk in pairs if dk and mk]
     if not wanted:
@@ -220,7 +283,7 @@ def promote_drafted_players(year: int | None = None) -> dict:
     # Pull draft_players for name + school lookups when results rows
     # don't carry them.
     by_key = load_draft_players(draft_year=year)
-    already_linked = set(load_draft_canonical_keys().keys())
+    already_linked = load_draft_canonical_keys()   # {draft_key: milb_key}
 
     acquisitions: dict[str, dict] = {}
     links: list[tuple[str, str]] = []
@@ -236,7 +299,15 @@ def promote_drafted_players(year: int | None = None) -> dict:
         milb_key = _milb_key_from_name(name)
         if not milb_key:
             continue
-        if draft_key not in already_linked:
+        milb_key, name = _canonical_identity(milb_key, name)
+        # Re-link on a MISMATCH, not merely on absence. A mapping written
+        # before the alias table learned about a spelling split still names
+        # the losing spelling, which puts `draft_canonical_keys` and
+        # `acquisitions` on two different identities for one human. Measured
+        # 2026-08-09: exactly one of 7,524 stored mappings is stale this way
+        # (draft_2026_jack_natili -> jack_natili, canonical jackson_natili).
+        # Still a no-op on the second pass, so `linked` stays 0 on a re-run.
+        if already_linked.get(draft_key) != milb_key:
             links.append((draft_key, milb_key))
 
         school = r.get("school") or (by_key.get(draft_key) or {}).get("school")
@@ -328,6 +399,10 @@ def seed_signed_draftees(year: int | None = None) -> int:
         tracked or graduated — a stale seed would resurrect them),
       * only signed picks with a known team,
       * only picks a draft board actually graded (no fabricated grades),
+      * resolve the milb_key through consensus.PLAYER_KEY_ALIASES FIRST, so
+        every guard below is asked about the identity the board actually
+        serves rather than the draft feed's spelling of it (2026-08-09; see
+        `_canonical_identity` for the measurement),
       * SKIP any milb_key that already has ANY real MiLB snapshot
         (leaked '<year>draft' board rows excepted) — that identity is
         either already surfaced by an org source or a name-collided
@@ -361,6 +436,7 @@ def seed_signed_draftees(year: int | None = None) -> int:
         if not r.get("signed"):
             continue
         mk = canon.get(r.get("player_key")) or _milb_key_from_name(r.get("player_name") or "")
+        mk, _ = _canonical_identity(mk, "")
         yr = r.get("draft_year") or 0
         if mk and (mk not in earliest_signed or yr < earliest_signed[mk]):
             earliest_signed[mk] = yr
@@ -389,6 +465,12 @@ def seed_signed_draftees(year: int | None = None) -> int:
             mk = canon.get(dk) or _milb_key_from_name(name)
             if not mk:
                 continue
+            # THE GUARDS BELOW MUST ASK ABOUT THE SERVED IDENTITY, NOT THE
+            # DRAFT FEED'S SPELLING. See _canonical_identity: `jack_natili`
+            # passed every guard here because his real grades live on
+            # `jackson_natili`, and the seed landed on a player two real
+            # outlets already grade.
+            mk, name = _canonical_identity(mk, name)
             if earliest_signed.get(mk, yr) < yr:
                 continue  # an earlier signed pick owns this key (collision)
             # interval_label GLOB filter: historical flat draft-board drops

@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-06",
+ "generated_at": "2026-08-10",
  "hit_rules": {
   "riser": {
    "fv_delta": 5.0,
@@ -18,9 +18,9 @@
   30,
   60
  ],
- "flags_logged": 4331,
+ "flags_logged": 4685,
  "flags_matured": 2397,
- "flags_pending": 1934,
+ "flags_pending": 2288,
  "by_flag_type": {
   "faller": {
    "matured_cohorts": 24,
@@ -41,19 +41,19 @@
      "clears_control": true
     },
     "h60": {
-     "n": 0,
-     "hit_rate": 0.0,
+     "n": 29,
+     "hit_rate": 0.2069,
      "ci": [
-      0.0,
-      1.0
+      0.0985,
+      0.3839
      ],
-     "control_n": 0,
-     "control_rate": 0.0,
+     "control_n": 145,
+     "control_rate": 0.0414,
      "control_ci": [
-      0.0,
-      1.0
+      0.0191,
+      0.0873
      ],
-     "clears_control": false
+     "clears_control": true
     }
    },
    "kill_rule": {
@@ -67,39 +67,39 @@
    "horizons": {
     "h30": {
      "n": 265,
-     "hit_rate": 0.034,
+     "hit_rate": 0.0491,
      "ci": [
-      0.018,
-      0.0633
+      0.0289,
+      0.0821
      ],
-     "control_n": 1284,
-     "control_rate": 0.021,
+     "control_n": 1260,
+     "control_rate": 0.023,
      "control_ci": [
-      0.0145,
-      0.0304
+      0.0161,
+      0.0329
      ],
-     "clears_control": false
+     "clears_control": true
     },
     "h60": {
-     "n": 0,
-     "hit_rate": 0.0,
+     "n": 9,
+     "hit_rate": 0.6667,
      "ci": [
-      0.0,
-      1.0
+      0.3542,
+      0.8794
      ],
-     "control_n": 0,
-     "control_rate": 0.0,
+     "control_n": 44,
+     "control_rate": 0.7045,
      "control_ci": [
-      0.0,
-      1.0
+      0.5578,
+      0.8184
      ],
      "clears_control": false
     }
    },
    "kill_rule": {
     "eligible": true,
-    "fails_to_clear": true,
-    "verdict_recommendation": "deprecated"
+    "fails_to_clear": false,
+    "verdict_recommendation": "keep-measuring"
    }
   },
   "riser": {
@@ -107,33 +107,33 @@
    "horizons": {
     "h30": {
      "n": 1488,
-     "hit_rate": 0.0565,
+     "hit_rate": 0.0934,
      "ci": [
-      0.0458,
-      0.0694
+      0.0797,
+      0.1093
      ],
-     "control_n": 7283,
-     "control_rate": 0.0342,
+     "control_n": 7211,
+     "control_rate": 0.0404,
      "control_ci": [
-      0.0303,
-      0.0386
+      0.0361,
+      0.0451
      ],
      "clears_control": true
     },
     "h60": {
-     "n": 0,
-     "hit_rate": 0.0,
+     "n": 64,
+     "hit_rate": 0.9219,
      "ci": [
-      0.0,
-      1.0
+      0.8298,
+      0.9662
      ],
-     "control_n": 0,
-     "control_rate": 0.0,
+     "control_n": 317,
+     "control_rate": 0.7413,
      "control_ci": [
-      0.0,
-      1.0
+      0.6904,
+      0.7864
      ],
-     "clears_control": false
+     "clears_control": true
     }
    },
    "kill_rule": {

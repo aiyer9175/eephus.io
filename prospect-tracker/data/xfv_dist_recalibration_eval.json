@@ -2510,5 +2510,1043 @@
   }
  },
  "verdict": "NO_SHIP",
- "elapsed_s": 89.5
+ "elapsed_s": 89.5,
+ "lane_b_l5_idr_easyuq": {
+  "generated_at": "2026-08-10T21:21:12Z",
+  "lane": "B-L5 (2026-08-10)",
+  "produced_by": "tools/efv_dist_recalibration_lab.py --idr",
+  "family": "IDR / EasyUQ: four PAVA fits on odds_grade -> 1{y >= k}, k = 1..4. Ordinality is STRUCTURAL because the four response vectors are pointwise ordered and PAVA is monotone in its response.",
+  "scope_note": "FITS and GATES. Ships nothing. Writes only this artifact. PATH A (the efv_score odds seam), strictly downstream of rank_war.",
+  "seed": 20260810,
+  "differs_from_prior_attempts": {
+   "C2_above": "parametric cumulative-logit Platt families only. NO_SHIP.",
+   "X_ISO_efv_isotonic_lab": "isotonic PER BUCKET on p_b vs 1{y == b} WITH simplex renormalization, which is not IDR and is not order preserving. FAIL on calibrated rank, Spearman -0.0165 against a -0.002 tolerance.",
+   "this_lane": "four PAVA fits on the THRESHOLD indicators, no renormalization needed, and the map is confined downstream of rank_war so a rank tolerance is not even the binding object."
+  },
+  "prereg": {
+   "min_train": 150,
+   "min_tier_train": 25,
+   "tier_edges": [
+    38.0,
+    43.0,
+    48.0,
+    53.0
+   ],
+   "holm_alpha": 0.05,
+   "arms": [
+    "incumbent",
+    "candidate_idr",
+    "clim_global",
+    "clim_tier"
+   ],
+   "thresholds": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "primary_metric": "mean RPS, sum of squared CDF errors over the 4 thresholds",
+   "decomposition": "CORP: score = MCB - DSC + UNC, per threshold and summed",
+   "estimators": [
+    "E_cond (fits fixed, rows resampled)",
+    "E_refit restricted (frame resampled, IDR chain refit; the upstream ridge is held fixed, so it is a LOWER BOUND)"
+   ],
+   "ship_clauses": [
+    "V0 validity: every arm sums to 1, no negatives, raw PAVA fits ordinal",
+    "V1 H1: train/test index disjointness asserted per fold",
+    "G1 mean RPS candidate < incumbent, Holm p < 0.05 under BOTH estimators",
+    "G2 candidate beats BOTH climatologies, Holm p < 0.05 under E_cond and point-better under E_refit",
+    "G3 DSC_candidate > DSC_incumbent AND MCB_candidate < MCB_incumbent",
+    "G4 do no harm: no threshold's Brier degrades past its own E_cond floor",
+    "G5 rank_feedback_audit clean",
+    "STOP log score materially worse than incumbent -> NO_SHIP regardless"
+   ]
+  },
+  "frame": {
+   "n_frame_rows": 2820,
+   "n_primary_scored": 1328,
+   "provisional_dropped_from_primary": 1142,
+   "folds": [
+    {
+     "side": "hit",
+     "year": 2019,
+     "n_train": 156,
+     "n_test": 119,
+     "raw_max_survivor_increase": 0.0,
+     "extended_max_survivor_increase": 0.0,
+     "n_above_train_max": 0,
+     "n_interior": 119,
+     "train_xmax": 80.0,
+     "train_marginal": [
+      0.22436,
+      0.16026,
+      0.05769,
+      0.01923
+     ]
+    },
+    {
+     "side": "hit",
+     "year": 2020,
+     "n_train": 275,
+     "n_test": 113,
+     "raw_max_survivor_increase": 0.0,
+     "extended_max_survivor_increase": 0.0,
+     "n_above_train_max": 0,
+     "n_interior": 113,
+     "train_xmax": 80.0,
+     "train_marginal": [
+      0.23636,
+      0.14545,
+      0.07273,
+      0.01091
+     ]
+    },
+    {
+     "side": "hit",
+     "year": 2021,
+     "n_train": 388,
+     "n_test": 102,
+     "raw_max_survivor_increase": 0.0,
+     "extended_max_survivor_increase": 0.0,
+     "n_above_train_max": 0,
+     "n_interior": 102,
+     "train_xmax": 80.0,
+     "train_marginal": [
+      0.23196,
+      0.12629,
+      0.06186,
+      0.00773
+     ]
+    },
+    {
+     "side": "hit",
+     "year": 2022,
+     "n_train": 490,
+     "n_test": 200,
+     "raw_max_survivor_increase": 0.0,
+     "extended_max_survivor_increase": 0.0,
+     "n_above_train_max": 0,
+     "n_interior": 200,
+     "train_xmax": 80.0,
+     "train_marginal": [
+      0.22857,
+      0.11429,
+      0.0551,
+      0.00612
+     ]
+    },
+    {
+     "side": "hit",
+     "year": 2023,
+     "n_train": 690,
+     "n_test": 206,
+     "raw_max_survivor_increase": 0.0,
+     "extended_max_survivor_increase": 0.0,
+     "n_above_train_max": 0,
+     "n_interior": 206,
+     "train_xmax": 80.0,
+     "train_marginal": [
+      0.22609,
+      0.10725,
+      0.05652,
+      0.01159
+     ]
+    },
+    {
+     "side": "pit",
+     "year": 2020,
+     "n_train": 194,
+     "n_test": 113,
+     "raw_max_survivor_increase": -0.006191037735849057,
+     "extended_max_survivor_increase": 0.0,
+     "n_above_train_max": 0,
+     "n_interior": 113,
+     "train_xmax": 71.4643,
+     "train_marginal": [
+      0.25773,
+      0.09278,
+      0.03608,
+      0.0
+     ]
+    },
+    {
+     "side": "pit",
+     "year": 2021,
+     "n_train": 307,
+     "n_test": 117,
+     "raw_max_survivor_increase": -0.002239717659834396,
+     "extended_max_survivor_increase": 0.0,
+     "n_above_train_max": 0,
+     "n_interior": 117,
+     "train_xmax": 71.4643,
+     "train_marginal": [
+      0.22801,
+      0.07166,
+      0.02932,
+      0.0
+     ]
+    },
+    {
+     "side": "pit",
+     "year": 2022,
+     "n_train": 424,
+     "n_test": 151,
+     "raw_max_survivor_increase": -0.006134969325153374,
+     "extended_max_survivor_increase": 0.0,
+     "n_above_train_max": 0,
+     "n_interior": 151,
+     "train_xmax": 71.4643,
+     "train_marginal": [
+      0.21934,
+      0.0684,
+      0.02358,
+      0.0
+     ]
+    },
+    {
+     "side": "pit",
+     "year": 2023,
+     "n_train": 575,
+     "n_test": 207,
+     "raw_max_survivor_increase": -0.0047169811320754715,
+     "extended_max_survivor_increase": 0.0,
+     "n_above_train_max": 0,
+     "n_interior": 207,
+     "train_xmax": 71.4643,
+     "train_marginal": [
+      0.21217,
+      0.06957,
+      0.01913,
+      0.0
+     ]
+    }
+   ],
+   "n_folds": 9,
+   "events_by_threshold": {
+    "y_ge_1": 258,
+    "y_ge_2": 92,
+    "y_ge_3": 43,
+    "y_ge_4": 5
+   },
+   "rows_by_tier": {
+    "35": 344,
+    "40": 624,
+    "45": 168,
+    "50": 118,
+    "55": 44,
+    "60": 22,
+    "65": 5,
+    "70": 2,
+    "75": 1
+   },
+   "note": "PRIMARY is the NON-PROVISIONAL evaluable frame. recalibrate_bucket is a hard no-op on provisional rows, so every arm would emit an identical vector there and their only effect is to dilute all four arms by the same factor.",
+   "matrix_mtimes": {
+    "hit": "2026-08-10T19:55:53Z",
+    "pit": "2026-08-10T19:56:17Z"
+   }
+  },
+  "ordinality": {
+   "claim": "STRUCTURAL. The four PAVA fits cannot cross because the response vectors are pointwise ordered.",
+   "raw_max_survivor_increase": 0.0,
+   "held_structurally": true,
+   "extension_max_survivor_increase": null,
+   "extension_held": true,
+   "reading": "a POSITIVE value means two fitted curves crossed, which under pointwise-ordered responses can only mean the fit is wrong"
+  },
+  "H2_extrapolation": {
+   "n_rows_above_train_max": 0,
+   "share_above_train_max": 0.0,
+   "how_smoothed": "carry the PAVA level at x_max, add the INCUMBENT curve's own log-odds increment from x_max to x. Exact at x_max, monotone in x, invents no shape the data cannot support."
+  },
+  "H1_out_of_fold": {
+   "asserted": true,
+   "how": "idr_folds asserts set(train) & set(test) is empty for every fold, and train is restricted to decision_year strictly less than the test year, so no row can calibrate itself and no cohort can calibrate itself"
+  },
+  "tier_climatology_fallbacks": 166,
+  "validity": {
+   "pass": true,
+   "detail": {
+    "incumbent": {
+     "max_abs_sum_err": 0.0,
+     "n_negative": 0,
+     "max_survivor_increase": -0.003852411719,
+     "pass": true
+    },
+    "candidate_idr": {
+     "max_abs_sum_err": 0.0,
+     "n_negative": 0,
+     "max_survivor_increase": -9.99998e-07,
+     "pass": true
+    },
+    "clim_global": {
+     "max_abs_sum_err": 0.0,
+     "n_negative": 0,
+     "max_survivor_increase": -0.019129434783,
+     "pass": true
+    },
+    "clim_tier": {
+     "max_abs_sum_err": 0.0,
+     "n_negative": 0,
+     "max_survivor_increase": -9.99998e-07,
+     "pass": true
+    }
+   }
+  },
+  "four_arm_table": {
+   "incumbent": {
+    "mean_rps": 0.212343,
+    "MCB": 0.024967,
+    "DSC": 0.068718,
+    "UNC": 0.256093,
+    "skill_score": 0.170838,
+    "corp_identity_residual": -0.0,
+    "logscore": 0.615146,
+    "brier5": 0.295951,
+    "per_threshold": {
+     "y_ge_1": {
+      "n_events": 258,
+      "base_rate": 0.194277,
+      "brier": 0.123073,
+      "MCB": 0.011677,
+      "DSC": 0.045137,
+      "UNC": 0.156534,
+      "skill": 0.213759
+     },
+     "y_ge_2": {
+      "n_events": 92,
+      "base_rate": 0.069277,
+      "brier": 0.057808,
+      "MCB": 0.008643,
+      "DSC": 0.015313,
+      "UNC": 0.064478,
+      "skill": 0.103444
+     },
+     "y_ge_3": {
+      "n_events": 43,
+      "base_rate": 0.03238,
+      "brier": 0.02708,
+      "MCB": 0.003534,
+      "DSC": 0.007785,
+      "UNC": 0.031331,
+      "skill": 0.135696
+     },
+     "y_ge_4": {
+      "n_events": 5,
+      "base_rate": 0.003765,
+      "brier": 0.004382,
+      "MCB": 0.001114,
+      "DSC": 0.000482,
+      "UNC": 0.003751,
+      "skill": -0.168298
+     }
+    },
+    "mean_p": {
+     "bust": 0.75538,
+     "bench": 0.10579,
+     "regular": 0.07407,
+     "good": 0.05236,
+     "star": 0.0124
+    }
+   },
+   "candidate_idr": {
+    "mean_rps": 0.200588,
+    "MCB": 0.00603,
+    "DSC": 0.061535,
+    "UNC": 0.256093,
+    "skill_score": 0.21674,
+    "corp_identity_residual": -0.0,
+    "logscore": 0.61883,
+    "brier5": 0.284582,
+    "per_threshold": {
+     "y_ge_1": {
+      "n_events": 258,
+      "base_rate": 0.194277,
+      "brier": 0.118561,
+      "MCB": 0.00343,
+      "DSC": 0.041403,
+      "UNC": 0.156534,
+      "skill": 0.242584
+     },
+     "y_ge_2": {
+      "n_events": 92,
+      "base_rate": 0.069277,
+      "brier": 0.051486,
+      "MCB": 0.001397,
+      "DSC": 0.014389,
+      "UNC": 0.064478,
+      "skill": 0.201499
+     },
+     "y_ge_3": {
+      "n_events": 43,
+      "base_rate": 0.03238,
+      "brier": 0.026524,
+      "MCB": 0.000824,
+      "DSC": 0.005631,
+      "UNC": 0.031331,
+      "skill": 0.153439
+     },
+     "y_ge_4": {
+      "n_events": 5,
+      "base_rate": 0.003765,
+      "brier": 0.004017,
+      "MCB": 0.000379,
+      "DSC": 0.000113,
+      "UNC": 0.003751,
+      "skill": -0.071038
+     }
+    },
+    "mean_p": {
+     "bust": 0.81217,
+     "bench": 0.11222,
+     "regular": 0.04573,
+     "good": 0.02781,
+     "star": 0.00208
+    }
+   },
+   "clim_global": {
+    "mean_rps": 0.257709,
+    "MCB": 0.003524,
+    "DSC": 0.001908,
+    "UNC": 0.256093,
+    "skill_score": -0.006309,
+    "corp_identity_residual": -0.0,
+    "logscore": 0.689655,
+    "brier5": 0.335792,
+    "per_threshold": {
+     "y_ge_1": {
+      "n_events": 258,
+      "base_rate": 0.194277,
+      "brier": 0.157496,
+      "MCB": 0.001863,
+      "DSC": 0.000901,
+      "UNC": 0.156534,
+      "skill": -0.006148
+     },
+     "y_ge_2": {
+      "n_events": 92,
+      "base_rate": 0.069277,
+      "brier": 0.065249,
+      "MCB": 0.001364,
+      "DSC": 0.000592,
+      "UNC": 0.064478,
+      "skill": -0.011966
+     },
+     "y_ge_3": {
+      "n_events": 43,
+      "base_rate": 0.03238,
+      "brier": 0.03117,
+      "MCB": 0.000243,
+      "DSC": 0.000404,
+      "UNC": 0.031331,
+      "skill": 0.00513
+     },
+     "y_ge_4": {
+      "n_events": 5,
+      "base_rate": 0.003765,
+      "brier": 0.003793,
+      "MCB": 5.4e-05,
+      "DSC": 1.1e-05,
+      "UNC": 0.003751,
+      "skill": -0.011311
+     }
+    },
+    "mean_p": {
+     "bust": 0.77244,
+     "bench": 0.12444,
+     "regular": 0.05862,
+     "good": 0.03853,
+     "star": 0.00597
+    }
+   },
+   "clim_tier": {
+    "mean_rps": 0.212845,
+    "MCB": 0.006127,
+    "DSC": 0.049375,
+    "UNC": 0.256093,
+    "skill_score": 0.168876,
+    "corp_identity_residual": -0.0,
+    "logscore": 0.660344,
+    "brier5": 0.294813,
+    "per_threshold": {
+     "y_ge_1": {
+      "n_events": 258,
+      "base_rate": 0.194277,
+      "brier": 0.126717,
+      "MCB": 0.003011,
+      "DSC": 0.032827,
+      "UNC": 0.156534,
+      "skill": 0.190479
+     },
+     "y_ge_2": {
+      "n_events": 92,
+      "base_rate": 0.069277,
+      "brier": 0.054658,
+      "MCB": 0.001951,
+      "DSC": 0.01177,
+      "UNC": 0.064478,
+      "skill": 0.152291
+     },
+     "y_ge_3": {
+      "n_events": 43,
+      "base_rate": 0.03238,
+      "brier": 0.027885,
+      "MCB": 0.000882,
+      "DSC": 0.004328,
+      "UNC": 0.031331,
+      "skill": 0.109987
+     },
+     "y_ge_4": {
+      "n_events": 5,
+      "base_rate": 0.003765,
+      "brier": 0.003585,
+      "MCB": 0.000284,
+      "DSC": 0.00045,
+      "UNC": 0.003751,
+      "skill": 0.044286
+     }
+    },
+    "mean_p": {
+     "bust": 0.8079,
+     "bench": 0.10629,
+     "regular": 0.04978,
+     "good": 0.03207,
+     "star": 0.00396
+    }
+   }
+  },
+  "four_arm_table_note": "ONE table, every time. A zero-information constant scores UNC exactly and gets skill 0 by construction; that is the structural fix for the ECE regime in which a constant reached 152.68 percent of the candidate gain.",
+  "point_deltas_rps_other_minus_candidate": {
+   "incumbent": 0.011755,
+   "clim_global": 0.057121,
+   "clim_tier": 0.012257
+  },
+  "E_cond": {
+   "instrument": "fits held FIXED, scored rows resampled i.i.d., B = 2000",
+   "vs": {
+    "incumbent": {
+     "B": 2000,
+     "sd": 0.003685,
+     "mde95_onesided": 0.006062,
+     "point_delta": 0.011755,
+     "margin_over_floor": 1.9392,
+     "clears": true,
+     "boot_mean": 0.011656,
+     "ci95": [
+      0.004429,
+      0.018685
+     ],
+     "p_onesided": 0.002
+    },
+    "clim_global": {
+     "B": 2000,
+     "sd": 0.006578,
+     "mde95_onesided": 0.010821,
+     "point_delta": 0.057121,
+     "margin_over_floor": 5.2789,
+     "clears": true,
+     "boot_mean": 0.057152,
+     "ci95": [
+      0.044626,
+      0.07017
+     ],
+     "p_onesided": 0.0
+    },
+    "clim_tier": {
+     "B": 2000,
+     "sd": 0.004224,
+     "mde95_onesided": 0.006949,
+     "point_delta": 0.012257,
+     "margin_over_floor": 1.7639,
+     "clears": true,
+     "boot_mean": 0.012266,
+     "ci95": [
+      0.003867,
+      0.020832
+     ],
+     "p_onesided": 0.001
+    }
+   },
+   "logscore_incumbent_minus_candidate": {
+    "B": 2000,
+    "sd": 0.025099,
+    "mde95_onesided": 0.041289,
+    "point_delta": -0.003684,
+    "margin_over_floor": -0.0892,
+    "clears": false,
+    "boot_mean": -0.003661,
+    "ci95": [
+     -0.056057,
+     0.042919
+    ]
+   },
+   "per_threshold_brier_incumbent_minus_candidate": {
+    "y_ge_1": {
+     "B": 2000,
+     "sd": 0.00208,
+     "mde95_onesided": 0.003422,
+     "point_delta": 0.004512,
+     "margin_over_floor": 1.3185,
+     "clears": true,
+     "boot_mean": 0.00449,
+     "ci95": [
+      0.000311,
+      0.008583
+     ]
+    },
+    "y_ge_2": {
+     "B": 2000,
+     "sd": 0.001426,
+     "mde95_onesided": 0.002346,
+     "point_delta": 0.006322,
+     "margin_over_floor": 2.6945,
+     "clears": true,
+     "boot_mean": 0.006299,
+     "ci95": [
+      0.003405,
+      0.008963
+     ]
+    },
+    "y_ge_3": {
+     "B": 2000,
+     "sd": 0.001437,
+     "mde95_onesided": 0.002365,
+     "point_delta": 0.000556,
+     "margin_over_floor": 0.2351,
+     "clears": false,
+     "boot_mean": 0.000517,
+     "ci95": [
+      -0.002401,
+      0.003107
+     ]
+    },
+    "y_ge_4": {
+     "B": 2000,
+     "sd": 0.000723,
+     "mde95_onesided": 0.00119,
+     "point_delta": 0.000365,
+     "margin_over_floor": 0.3065,
+     "clears": false,
+     "boot_mean": 0.000351,
+     "ci95": [
+      -0.001221,
+      0.001681
+     ]
+    }
+   },
+   "holm": {
+    "clim_global": {
+     "p_onesided": 0.0,
+     "p_holm": 0.0,
+     "reject_at_0.05": true
+    },
+    "clim_tier": {
+     "p_onesided": 0.001,
+     "p_holm": 0.002,
+     "reject_at_0.05": true
+    },
+    "incumbent": {
+     "p_onesided": 0.002,
+     "p_holm": 0.002,
+     "reject_at_0.05": true
+    }
+   }
+  },
+  "E_refit_restricted": {
+   "instrument": "frame resampled with replacement and the IDR chain REFIT per draw; the upstream ridge and its output calibration are INPUTS to this lane and are held fixed, so this is a LOWER BOUND on refit variance. B = 400",
+   "vs": {
+    "incumbent": {
+     "B": 400,
+     "sd": 0.004737,
+     "mde95_onesided": 0.007793,
+     "point_delta": 0.011755,
+     "margin_over_floor": 1.5084,
+     "clears": true,
+     "boot_mean": 0.00879,
+     "ci95": [
+      -0.000852,
+      0.017798
+     ],
+     "p_onesided": 0.0425
+    },
+    "clim_global": {
+     "B": 400,
+     "sd": 0.007543,
+     "mde95_onesided": 0.012408,
+     "point_delta": 0.057121,
+     "margin_over_floor": 4.6035,
+     "clears": true,
+     "boot_mean": 0.053635,
+     "ci95": [
+      0.038951,
+      0.068661
+     ],
+     "p_onesided": 0.0
+    },
+    "clim_tier": {
+     "B": 400,
+     "sd": 0.006258,
+     "mde95_onesided": 0.010294,
+     "point_delta": 0.012257,
+     "margin_over_floor": 1.1907,
+     "clears": true,
+     "boot_mean": 0.010559,
+     "ci95": [
+      -0.000389,
+      0.023877
+     ],
+     "p_onesided": 0.0275
+    }
+   },
+   "holm": {
+    "clim_global": {
+     "p_onesided": 0.0,
+     "p_holm": 0.0,
+     "reject_at_0.05": true
+    },
+    "clim_tier": {
+     "p_onesided": 0.0275,
+     "p_holm": 0.055,
+     "reject_at_0.05": false
+    },
+    "incumbent": {
+     "p_onesided": 0.0425,
+     "p_holm": 0.055,
+     "reject_at_0.05": false
+    }
+   }
+  },
+  "H3_venn_abers_star_cell": {
+   "FV60": {
+    "n_rows": 22,
+    "n_star_events": 0,
+    "realized_rate": 0.0,
+    "venn_abers_interval_mean": [
+     0.03121,
+     0.09797
+    ],
+    "venn_abers_interval_widest_row": [
+     0.0,
+     0.25
+    ],
+    "candidate_mean_p_star": 0.03232,
+    "incumbent_mean_p_star": 0.17061,
+    "incumbent_inside_interval": false,
+    "candidate_inside_interval": true
+   },
+   "FV55": {
+    "n_rows": 44,
+    "n_star_events": 1,
+    "realized_rate": 0.02273,
+    "venn_abers_interval_mean": [
+     0.01402,
+     0.05093
+    ],
+    "venn_abers_interval_widest_row": [
+     0.0,
+     0.08696
+    ],
+    "candidate_mean_p_star": 0.01446,
+    "incumbent_mean_p_star": 0.0614,
+    "incumbent_inside_interval": false,
+    "candidate_inside_interval": true
+   },
+   "FV60_plus": {
+    "n_rows": 30,
+    "n_star_events": 3,
+    "realized_rate": 0.1,
+    "venn_abers_interval_mean": [
+     0.0534,
+     0.14513
+    ],
+    "venn_abers_interval_widest_row": [
+     0.0,
+     0.6
+    ],
+    "candidate_mean_p_star": 0.05998,
+    "incumbent_mean_p_star": 0.23446,
+    "incumbent_inside_interval": false,
+    "candidate_inside_interval": true
+   },
+   "FV55_plus": {
+    "n_rows": 74,
+    "n_star_events": 4,
+    "realized_rate": 0.05405,
+    "venn_abers_interval_mean": [
+     0.02999,
+     0.08912
+    ],
+    "venn_abers_interval_widest_row": [
+     0.0,
+     0.6
+    ],
+    "candidate_mean_p_star": 0.03292,
+    "incumbent_mean_p_star": 0.13156,
+    "incumbent_inside_interval": false,
+    "candidate_inside_interval": true
+   },
+   "reading": "Vovk IVAP. p0 is the isotonic prediction with the test label forced to 0 and p1 with it forced to 1; the true probability is not a point and this interval is its honest width at this sample size."
+  },
+  "G5_rank_feedback_audit": {
+   "method": "AST assignment-graph closure over efv_score.py, both directions, on every function that assigns rank_war",
+   "functions_examined": [
+    {
+     "function": "run",
+     "lineno": 1432,
+     "rank_assign_line": 1455,
+     "recalibrate_bucket_line": 1498,
+     "seam_name_in_rank_dependency_closure": false,
+     "rank_assigned_before_seam": true,
+     "names_downstream_of_seam": [
+      "probs"
+     ],
+     "downstream_of_seam_intersects_rank_or_grade": [],
+     "rank_dependency_closure_size": 33
+    },
+    {
+     "function": "run_live",
+     "lineno": 1883,
+     "rank_assign_line": 1899,
+     "recalibrate_bucket_line": 2080,
+     "seam_name_in_rank_dependency_closure": false,
+     "rank_assigned_before_seam": true,
+     "names_downstream_of_seam": [
+      "probs"
+     ],
+     "downstream_of_seam_intersects_rank_or_grade": [],
+     "rank_dependency_closure_size": 33
+    },
+    {
+     "function": "run_backgrade",
+     "lineno": 2346,
+     "rank_assign_line": 2460,
+     "recalibrate_bucket_line": 2571,
+     "seam_name_in_rank_dependency_closure": false,
+     "rank_assigned_before_seam": true,
+     "names_downstream_of_seam": [
+      "probs"
+     ],
+     "downstream_of_seam_intersects_rank_or_grade": [],
+     "rank_dependency_closure_size": 50
+    }
+   ],
+   "n_functions": 3,
+   "seam_cannot_reach_rank": true,
+   "structural_argument": "PATH A lands on `probs` at efv_score's three odds seams. `rank_war` is assigned from (1 - lam) * cons_war + lam * xfv_war on the line BEFORE the first seam, and the display grade is a quantile map of the sorted rank_war pool. docs/EFV_GATE_STANDARD.md section 4 records that served eFV surplus is a function of rank ONLY with respect to rank_war, so a downstream-only recalibration is rank-invariant BY CONSTRUCTION.",
+   "dollar_argument": "vf.expected_surplus_usd prices through _pipeline_surplus_from_svs (value_framework.py:1371-1376), which calls p_bucket_given_fv ITSELF at the DISPLAY grade and takes no probability argument. No map applied at the odds seam can reach surplus_mm, band_p10_mm, band_p90_mm or dist.",
+   "consumers_of_the_recalibrated_vector": [
+    "data/xfv.json p_bucket (efv_score.py:1514) and p_bust (:1521)",
+    "efv_export.py:87,91 pass-through, and the :301 p_star_median tier display",
+    "efv_reliability.py, the calibration monitor",
+    "assets/trademachine.js:779,983 read p_bust for DISPLAY only"
+   ]
+  },
+  "clauses": {
+   "V0_validity_and_ordinality": {
+    "pass": true,
+    "arms_valid": true,
+    "ordinal": true
+   },
+   "V1_out_of_fold_asserted": {
+    "pass": true
+   },
+   "G1_beats_incumbent_both_estimators": {
+    "pass": false,
+    "point_delta_rps": 0.011755,
+    "e_cond_holm_p": 0.002,
+    "e_refit_holm_p": 0.055
+   },
+   "G2_beats_both_climatologies": {
+    "pass": true,
+    "vs_clim_global": 0.057121,
+    "vs_clim_tier": 0.012257,
+    "e_cond_holm_p": {
+     "clim_global": 0.0,
+     "clim_tier": 0.002
+    },
+    "e_refit_point_better": {
+     "clim_global": true,
+     "clim_tier": true
+    }
+   },
+   "G3_discrimination_and_calibration": {
+    "pass": false,
+    "DSC_candidate": 0.061535,
+    "DSC_incumbent": 0.068718,
+    "MCB_candidate": 0.00603,
+    "MCB_incumbent": 0.024967
+   },
+   "G4_do_no_harm_per_threshold": {
+    "pass": true,
+    "harmed": []
+   },
+   "G5_rank_invariance": {
+    "pass": true
+   },
+   "STOP_logscore_worse": {
+    "tripped": false,
+    "delta": -0.003684
+   }
+  },
+  "verdict": "NO_SHIP",
+  "posthoc_added_after_primary_run": {
+   "disclosure": "Written after the primary numbers were known and placed after the verdict. Changes no clause, no threshold, no verdict.",
+   "why_G3_failed_arithmetically": {
+    "delta_rps": 0.011755,
+    "delta_MCB_incumbent_minus_candidate": 0.018937,
+    "delta_DSC_incumbent_minus_candidate": 0.007183,
+    "identity": "delta_rps = delta_MCB - delta_DSC",
+    "reading": "the entire RPS gain, and MORE than all of it, is bought by removing miscalibration; the candidate PAYS discrimination for it. That is PAVA blocking: blocks are ties and ties are lost resolution. It is the same mechanism that killed X-ISO on rank, showing up here as a DSC debit rather than a Spearman debit.",
+    "E_cond_floor_delta_MCB": {
+     "B": 2000,
+     "sd": 0.002947,
+     "mde95_onesided": 0.004848,
+     "point_delta": 0.018937,
+     "margin_over_floor": 3.9065,
+     "clears": true,
+     "boot_mean": 0.019706,
+     "ci95": [
+      0.014154,
+      0.025564
+     ]
+    },
+    "E_cond_floor_delta_DSC": {
+     "B": 2000,
+     "sd": 0.002741,
+     "mde95_onesided": 0.004509,
+     "point_delta": 0.007183,
+     "margin_over_floor": 1.5929,
+     "clears": true,
+     "boot_mean": 0.007944,
+     "ci95": [
+      0.00279,
+      0.013438
+     ]
+    }
+   },
+   "pava_resolution_cost": {
+    "distinct_fitted_levels_per_fold": [
+     {
+      "side": "hit",
+      "year": 2019,
+      "n_train": 156,
+      "distinct_fitted_levels": [
+       8,
+       6,
+       5,
+       3
+      ]
+     },
+     {
+      "side": "hit",
+      "year": 2020,
+      "n_train": 275,
+      "distinct_fitted_levels": [
+       11,
+       7,
+       7,
+       3
+      ]
+     },
+     {
+      "side": "hit",
+      "year": 2021,
+      "n_train": 388,
+      "distinct_fitted_levels": [
+       12,
+       10,
+       8,
+       3
+      ]
+     },
+     {
+      "side": "hit",
+      "year": 2022,
+      "n_train": 490,
+      "distinct_fitted_levels": [
+       12,
+       9,
+       8,
+       3
+      ]
+     },
+     {
+      "side": "hit",
+      "year": 2023,
+      "n_train": 690,
+      "distinct_fitted_levels": [
+       13,
+       11,
+       10,
+       6
+      ]
+     },
+     {
+      "side": "pit",
+      "year": 2020,
+      "n_train": 194,
+      "distinct_fitted_levels": [
+       6,
+       6,
+       4,
+       1
+      ]
+     },
+     {
+      "side": "pit",
+      "year": 2021,
+      "n_train": 307,
+      "distinct_fitted_levels": [
+       9,
+       6,
+       6,
+       1
+      ]
+     },
+     {
+      "side": "pit",
+      "year": 2022,
+      "n_train": 424,
+      "distinct_fitted_levels": [
+       8,
+       6,
+       6,
+       1
+      ]
+     },
+     {
+      "side": "pit",
+      "year": 2023,
+      "n_train": 575,
+      "distinct_fitted_levels": [
+       8,
+       9,
+       5,
+       1
+      ]
+     }
+    ],
+    "reading": "one level per threshold means the fold's PAVA collapsed to a constant and contributed no discrimination at all"
+   },
+   "forbidden_wiring_counterfactual": {
+    "what": "Spearman of E[WAR] under each arm against the realized target. This is NOT wired and MUST NOT be: it is the measurement of what the banned feedback would cost, and it is here so the next reader can see the size of the trap rather than rediscover it.",
+    "spearman": {
+     "incumbent": 0.3194,
+     "candidate_idr": 0.2932,
+     "clim_global": 0.0355,
+     "clim_tier": 0.2196,
+     "odds_grade_itself": 0.3263
+    }
+   },
+   "top_of_board_bound": "the FV55+ cell is the first instrument in this program to BOUND the top-of-board over-prediction rather than point-estimate it; see H3_venn_abers_star_cell"
+  },
+  "if_it_ships": {
+   "this_lane_does_neither": true,
+   "owed_1": "epoch bump: the served p_bucket / p_bust vectors change on non-provisional rows, so the artifact epoch that stamps xfv.json must be incremented by whoever wires it",
+   "owed_2": "config/valuation_sets/prospx_current.yaml re-capture, because the capture records the served odds surface",
+   "owed_3": "regen tripwires in docs/EFV_REGEN_TRIPWIRES_2026-08-07.md re-stamped",
+   "note_on_prices": "MEASURED, not assumed: PATH A moves NO price. vf.expected_surplus_usd re-derives p_bucket_given_fv itself at the DISPLAY grade, so surplus_mm / band_p10_mm / band_p90_mm / dist are byte-identical under any odds-seam map. The lane brief premise 'if it ships it moves prices' is FALSE for PATH A."
+  },
+  "elapsed_s": 57.8
+ },
+ "multi_lane_note": "Two lanes write this artifact. The top-level keys are LANE C2 (2026-08-08), parametric cumulative-logit Platt, verdict NO_SHIP, on the frame of that day. `lane_b_l5_idr_easyuq` is LANE B-L5 (2026-08-10), IDR / EasyUQ at the four business thresholds, on a REBUILT frame. The two frames are different vintages and their absolute numbers are NOT comparable across blocks; each block carries its own incumbent arm."
 }

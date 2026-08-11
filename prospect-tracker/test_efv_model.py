@@ -8,16 +8,25 @@ Pins the pieces that silently break the flagship if they drift:
   2. the LEAN, shipped feature sets (exact keys + monotone directions) so a stray
      feature edit fails loudly instead of quietly re-ranking the board;
   3. _vec produces finite values for a minimal synthetic record (impute path).
+  4. NO CLAIM WITHOUT ITS ESTIMATOR: every published margin in this module carries
+     the name of the bootstrap that produced its floor, and no leg publishes a
+     bare inequality as a verdict. Asserted as a PROPERTY over the emitted
+     structure, not against a list of expected strings, so it keeps holding when
+     the vintage moves the numbers or a new leg is added.
 
 The lambda-hierarchy tests monkeypatch wag_calibration / rank_calibration and use a
 fresh cache so each branch is forced deterministically -- no dependence on the live
 data files for the branch logic.
 """
 import math
+import re
+from pathlib import Path
 
 import pytest
 
 import efv_model as em
+
+ROOT = Path(__file__).resolve().parent
 
 
 # --------------------------------------------------------------------------
@@ -238,3 +247,249 @@ def test_vec_finite_on_populated_record():
         assert all(math.isfinite(v) for v in vec.values())
         assert vec["milb_missing"] == 0.0    # a real production block -> not imputed
         assert vec["fv"] == 55.0
+
+
+# --------------------------------------------------------------------------
+# 4. NO CLAIM WITHOUT ITS ESTIMATOR
+#
+# B-L1 landed two floors per statistic (E_refit resamples the pool and refits the
+# chain per draw; E_cond holds the fit and resamples the scored unit). They return
+# OPPOSITE CALLS on live cells, so an unlabelled floor is not a claim anyone can
+# check. These assert the PROPERTY over whatever the module emits: any dict that
+# carries a floor must carry the estimator that produced it, and any verdict STRING
+# beside a floor must name it too, because the string is what a reader acts on.
+# --------------------------------------------------------------------------
+#: Keys that ARE a floor.
+_FLOOR_KEYS = ("mde95", "mde95_cond", "floor", "min_detectable")
+#: Keys that carry a published call. A dict holding one of these AND a floor is a
+#: verdict-bearing dict and owes an estimator sibling.
+_VERDICT_KEYS = ("verdict", "resolvable", "beats", "win", "detects")
+_ESTIMATOR_SIBLINGS = ("mde95_estimator", "estimator", "mde95_estimators")
+_ESTIMATOR_TOKENS = (em.E_REFIT, em.E_COND)
+#: Suffixes that mark a key as PROSE ABOUT a floor or a call rather than one:
+#: `*_floor_status` explains, `*_UNFLOORED` declares the absence of a floor, and
+#: `retired_key_*` documents a key that no longer ships.
+_DESCRIPTIVE = ("_status", "_source", "_note", "_estimator", "unfloored")
+
+
+def _descriptive(key: str) -> bool:
+    k = key.lower()
+    return k.startswith("retired_key") or k.endswith(_DESCRIPTIVE)
+
+
+def _is_floor(key: str) -> bool:
+    k = key.lower()
+    if _descriptive(k):
+        return False
+    return any(k == f or k.startswith(f + "_") or k.endswith("_" + f) for f in _FLOOR_KEYS)
+
+
+def _is_call(key: str) -> bool:
+    k = key.lower()
+    if _descriptive(k):
+        return False
+    return any(w in k for w in _VERDICT_KEYS)
+
+
+def _has_estimator(node: dict) -> bool:
+    return any(node.get(sib) for sib in _ESTIMATOR_SIBLINGS)
+
+
+def _unlabelled(node, path="$", out=None):
+    """Every violation of the property, as ``path`` strings.
+
+    A dict violates when it holds BOTH a floor with a real value AND a verdict-bearing
+    key, but names no estimator. A `verdict` string violates when it sits beside a
+    floor and does not contain an estimator token.
+    """
+    out = [] if out is None else out
+    if isinstance(node, dict):
+        floors = [k for k, v in node.items() if _is_floor(k) and v is not None]
+        calls = [k for k in node if _is_call(k)]
+        if floors and calls and not _has_estimator(node):
+            out.append(f"{path}: floors {floors} beside calls {calls}, no estimator named")
+        if floors and isinstance(node.get("verdict"), str) \
+                and not any(t in node["verdict"] for t in _ESTIMATOR_TOKENS):
+            out.append(f"{path}.verdict: '{node['verdict']}' names no estimator")
+        for k, v in node.items():
+            _unlabelled(v, f"{path}.{k}", out)
+    elif isinstance(node, list):
+        for i, v in enumerate(node):
+            _unlabelled(v, f"{path}[{i}]", out)
+    return out
+
+
+def test_floored_verdict_refuses_a_margin_with_no_estimator():
+    """The rule is enforced at the constructor, not by convention. A default would
+    silently pick a side of a disagreement the two estimators really have."""
+    for bad in (None, "", 0):
+        with pytest.raises(ValueError):
+            em.floored_verdict(0.05, 0.03, bad, source="x")
+    for bad_floor in (None, 0, -0.01):
+        with pytest.raises(ValueError):
+            em.floored_verdict(0.05, bad_floor, em.E_REFIT, source="x")
+
+
+def test_floored_verdict_stamps_the_estimator_into_the_string_not_only_a_field():
+    for est in (em.E_REFIT, em.E_COND):
+        v = em.floored_verdict(0.05, 0.03, est, source="x")
+        assert v["mde95_estimator"] == est
+        assert est in v["verdict"], "the sentence a reader acts on must carry it too"
+        assert not _unlabelled(v)
+
+
+def test_the_two_estimators_really_can_disagree():
+    """The reason the rule exists, read from the shipped artifact rather than
+    asserted. headtohead_common is the live cell where the same margin is a NULL
+    under one published floor and a win under the other."""
+    f = em.power_floors("headtohead_common")
+    if not f.get("E_refit") or not f.get("E_cond"):
+        pytest.skip("data/xfv_power_eval.json partb_floors not present")
+    delta = 0.03318      # the cell's own point_delta
+    a = em.floored_verdict(delta, f["E_refit"], em.E_REFIT, source=f["source"])
+    b = em.floored_verdict(delta, f["E_cond"], em.E_COND, source=f["source"])
+    assert a["resolvable"] is not b["resolvable"], \
+        "if these ever agree the test is stale, not the rule"
+
+
+def test_a_floor_is_never_borrowed_from_another_statistic():
+    """power_floors returns {} for an unpublished class instead of a near neighbour.
+    The refit share is 0.128 on headtohead_common and 0.795 on pooled_rho.hit.debuted_km
+    inside the SAME artifact, a 6.2x spread, so 'close enough' does not exist here."""
+    assert em.power_floors("pooled_rho.hit.debuted_resolved") == {}
+    assert em.power_floors("no_such_cell") == {}
+
+
+# ---- the demoted rank_win -------------------------------------------------
+def _scores(mae, rho, n=400):
+    return {"n": n, "mae": mae, "spearman": rho}
+
+
+def test_rank_win_and_its_bare_legs_are_gone():
+    """The retired keys must be ABSENT, not renamed-and-kept: a stale
+    `.get("rank_win")` has to return None (no verdict), never a confident bool."""
+    base = _scores(2.40, 0.3771)
+    v = em._leg_diagnostic("blend", _scores(2.44, 0.3883), base,
+                           em.power_floors("pooled_rho.hit.debuted_km"), "hit", "debuted_km")
+    for dead in ("rank_win", "beats_mae", "beats_spearman"):
+        assert dead not in v, f"{dead} is still published"
+    assert v.get("rank_win") is None
+    # and the reason is IN THE ARTIFACT, not only in a doc
+    assert "DIAGNOSTIC" in v["status"]
+    assert "REMOVED" in v["retired_key_rank_win"]
+
+
+def test_the_mae_leg_is_published_unfloored_and_says_why():
+    v = em._leg_diagnostic("blend", _scores(2.44, 0.3883), _scores(2.40, 0.3771),
+                           em.power_floors("pooled_rho.hit.debuted_km"), "hit", "debuted_km")
+    assert v["mae_floor"] is None
+    assert "NO MDE95 EXISTS FOR ANY MAE STATISTIC" in v["mae_floor_status"]
+    assert "EFV_GATE_STANDARD" in v["mae_floor_status"]
+    # the surviving inequality is suffixed so it cannot be read as a call
+    assert v["mae_lower_than_baseline_UNFLOORED"] is False
+    assert v["mae_delta_vs_baseline"] == 0.04
+
+
+def test_only_the_shipped_blend_leg_inherits_the_pooled_rho_floor():
+    """B-L1 measured the pooled_rho cells on the blend-minus-baseline delta. ridge /
+    lgbm / comps / ensemble are different statistics and must publish unfloored."""
+    floors = em.power_floors("pooled_rho.hit.debuted_km")
+    if not floors:
+        pytest.skip("partb_floors not present")
+    blend = em._leg_diagnostic("blend", _scores(2.44, 0.3883), _scores(2.40, 0.3771),
+                               floors, "hit", "debuted_km")
+    assert blend["spearman_call_E_refit"]["mde95_estimator"] == em.E_REFIT
+    assert blend["spearman_call_E_cond"]["mde95_estimator"] == em.E_COND
+    assert not _unlabelled(blend)
+    for other in ("ridge", "lgbm", "comps", "ensemble", "ridge_cal", "ensemble_cal"):
+        v = em._leg_diagnostic(other, _scores(2.44, 0.3883), _scores(2.40, 0.3771),
+                               floors, "hit", "debuted_km")
+        assert "spearman_call_E_refit" not in v
+        assert v["spearman_floor"] is None
+        assert "does not inherit" in v["spearman_floor_status"]
+        assert not _unlabelled(v)
+
+
+def test_a_cut_with_no_published_cell_publishes_unfloored():
+    v = em._leg_diagnostic("blend", _scores(2.44, 0.3883), _scores(2.40, 0.3771),
+                           em.power_floors("pooled_rho.hit.debuted_resolved"),
+                           "hit", "debuted_resolved")
+    assert "spearman_call_E_refit" not in v
+    assert v["spearman_floor"] is None
+    assert not _unlabelled(v)
+
+
+# ---- block-rho and the honest note ---------------------------------------
+def test_block_rho_report_names_the_estimator_on_every_call():
+    r = em._block_rho_report(0.3081, 0.3166, 0.0085, 1644, {"hit": 755, "pit": 889})
+    assert r["mde95_estimator"] == em.E_REFIT
+    assert em.E_REFIT in r["verdict"]
+    assert not _unlabelled(r), _unlabelled(r)
+    if "call_E_cond" in r:
+        assert em.E_COND in r["call_E_cond"]["verdict"]
+        # labels changed, floors did not: the shipped constant is still the gate
+        assert r["mde95"] == em.MDE95_BLOCK_RHO
+
+
+def _quotable_floors(side) -> set[str]:
+    """Every floor VALUE this side's note is able to print, read from the constants
+    and the artifact rather than typed here. Keyed off the values, not off phrasing:
+    a prose rewrite must not be able to slip a floor past the guard by dropping the
+    word 'MDE95'."""
+    vals = {em.MDE95_POOLED_RHO[side], em.MDE95_BLOCK_RHO}
+    for cell in (f"pooled_rho.{side}.debuted_km", f"pooled_rho.{side}.full_pool_km",
+                 "block_rho"):
+        f = em.power_floors(cell)
+        vals |= {v for v in (f.get("E_refit"), f.get("E_cond")) if v}
+    return {str(v) for v in vals}
+
+
+def _quotes_a_floor(sentence: str, floors: set[str]) -> bool:
+    # standalone number, so 0.044 does not match inside 0.0440 or 10.0445
+    return any(re.search(r"(?<![\d.])" + re.escape(f) + r"(?![\d])", sentence)
+               for f in floors)
+
+
+def test_the_honest_note_never_quotes_a_floor_without_its_estimator():
+    evals = {
+        "debuted_km": {
+            "pooled_oos": {"baseline": {"spearman": 0.3771}, "blend": {"spearman": 0.3883}},
+            "verdict_vs_consensus": {"blend": em._leg_diagnostic(
+                "blend", _scores(2.44, 0.3883), _scores(2.40, 0.3771),
+                em.power_floors("pooled_rho.hit.debuted_km"), "hit", "debuted_km")}},
+        "full_pool_km": {
+            "pooled_oos": {"baseline": {"spearman": 0.2954}, "blend": {"spearman": 0.2764}}},
+    }
+    block = em._block_rho_report(0.3081, 0.3166, 0.0085, 1644, {"hit": 755, "pit": 889})
+    note = em._honest_note(evals, {}, block, "hit")
+    floors = _quotable_floors("hit")
+    quoting = [s for s in re.split(r"(?<=\.)\s+", note) if _quotes_a_floor(s, floors)]
+    assert len(quoting) >= 3, (
+        f"the note stopped quoting floors; this test is now vacuous. note={note}")
+    for s in quoting:
+        assert any(t in s for t in _ESTIMATOR_TOKENS), f"unlabelled floor sentence: {s}"
+
+
+# ---- the served surface ---------------------------------------------------
+def test_the_diamond_verdict_sentence_names_its_estimator():
+    """assets/diamond.js prints head_to_head_verdict.mde95 on the pricing page. The
+    PROPERTY: every render of that floor is accompanied by a render of its estimator
+    label, in the same statement.
+
+    SIBLING SITE OWNED ELSEWHERE: assets/glossary.js:671-672 renders the SAME floor
+    (hh.mde95) in the Methodology tab and is not yet labelled. Add it to `surfaces`
+    below once that lane's patch lands; it is deliberately absent rather than
+    asserted-and-red."""
+    surfaces = [ROOT / "assets" / "diamond.js"]
+    for path in surfaces:
+        src = path.read_text(encoding="utf-8")
+        block = re.search(r"var verdictHTML = \"\";.*?\n    \}\n", src, re.S)
+        assert block, f"{path.name}: verdict block not found, test is stale"
+        body = block.group(0)
+        floors = len(re.findall(r"dec\(vv\.mde95\)", body))
+        assert floors >= 1, f"{path.name}: no floor rendered, test is now vacuous"
+        labels = len(re.findall(r"esc\(est\)", body))
+        assert labels >= floors, (
+            f"{path.name}: {floors} floor renders but only {labels} estimator labels")
+        assert "vv.mde95_estimator" in body, (
+            f"{path.name}: the label must come from the artifact when it carries one")

@@ -54,3 +54,19 @@ def test_attach_routes_matched_and_reports_unmatched(monkeypatch):
     assert captured[0].snapshot_date == "2025-01-15"
     # FV-less rows are skipped silently; graded-but-unknown rows report.
     assert [u["player_name"] for u in unmatched] == ["Nobody Signedyet"]
+
+
+# ---------------------------------------------------------------------------
+# CATALOG PIN for ifa_timeseries.json. data_catalog.py names this file, so the
+# artifact has to be named here or the /sources/ receipt renders empty.
+def test_ifa_timeseries_json_carries_the_shape_the_catalog_promises():
+    """ifa_timeseries.json: IFA signing classes with bonuses and the post-signing
+    grade path."""
+    import json
+    from pathlib import Path
+    p = Path(__file__).resolve().parent / "data" / "ifa_timeseries.json"
+    if not p.exists():
+        pytest.skip("ifa_timeseries.json not built in this tree")
+    d = json.loads(p.read_text(encoding="utf-8"))
+    assert "classes" in d, sorted(d)
+    assert isinstance(d["classes"], (list, dict))

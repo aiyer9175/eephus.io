@@ -9,10 +9,21 @@ or four hours between a getaway day and a night slate, so any fixed cron time is
 either too early (not a closing line) or too late (games already started).
 
 THE SHAPE. Rather than compute a cron time each morning and install it, this job
-is designed to be run OFTEN and act ONCE. Cron it every 15 minutes across the
-afternoon and evening; it exits quietly on every invocation except the one
-inside the firing window. That makes it robust to doubleheaders, rain delays,
-schedule changes and a box that was asleep, none of which a fixed cron survives.
+is designed to be run OFTEN and act ONCE. Cron it every 15 minutes ALL DAY under
+TZ=UTC; it exits quietly on every invocation except the one inside the firing
+window. That makes it robust to doubleheaders, rain delays, schedule changes and
+a box that was asleep, none of which a fixed cron survives.
+
+AND THE CRON WINDOW IS THE PRIME SUSPECT FOR ZERO CAPTURES (2026-08-09 owner
+decision, binding). deploy/betting-crontab.example shipped `*/15 12-23 * * *` in
+BOX-LOCAL time. The box timezone is undocumented, and if the box is UTC that
+window is 08:00 to 19:00 ET: it closes before a 7:05pm ET first pitch on most of
+the calendar and misses every late slate outright. Measured on 2026-08-09, the
+odds cache holds 4 open snapshots and ZERO close snapshots, so CLV has never
+been gradeable for any slate. The entry is now `*/15 * * * *` with `TZ=UTC`, and
+every window decision is made HERE, in `decide`, against UTC instants. That is
+correct under any box timezone, which is the only property worth having when
+nobody can say what the box timezone is.
 
 THE WINDOW HAS TWO ANCHORS, NOT ONE. The firing TARGET is read off the games
 that can still be bet, so a postponed early game cannot drag the capture hours
@@ -90,6 +101,27 @@ GRACE_MINUTES = 8
 # more thing that can be missing at 6am.
 SLATE_DAY_OFFSET_HOURS = 8
 
+# THE OTHER OFFSET, AND WHY THERE ARE TWO (2026-08-09).
+#
+# betting_ingest.slate_date_of shifts back 4 hours (US Eastern, which is what
+# MLB's officialDate follows) to answer "which slate does this FIRST PITCH
+# belong to". This file shifts back 8 (US Pacific) to answer "which slate could
+# still be live RIGHT NOW". Those are different questions and the two answers
+# legitimately differ for the four hours between 04:00Z and 08:00Z: at 2am ET a
+# west-coast game from yesterday's card may still be in extra innings, so
+# "which slate is live" is yesterday while "which date is it" is today.
+#
+# Reconciled by USING EACH ONE WHERE IT FAILS SAFE, rather than by picking one
+# and being wrong for four hours a night:
+#   * the STALE-SLATE guard (a slate too old to close) compares against the
+#     WESTERNMOST day, so a slate that could still be live is never called dead;
+#   * the FUTURE-SLATE skip (a slate not started yet) compares against the
+#     EASTERNMOST day, so a slate that has already begun somewhere is never
+#     called tomorrow.
+# Both guards therefore err toward staying awake, which costs one log line, and
+# never toward skipping a capture, which costs a slate's CLV permanently.
+SLATE_DAY_OFFSET_HOURS_EAST = 4
+
 
 def _parse_stamp(s: str) -> datetime | None:
     """The schedule block's ISO stamp, normalized to aware UTC."""
@@ -103,8 +135,17 @@ def _parse_stamp(s: str) -> datetime | None:
 
 
 def slate_day(now: datetime) -> str:
-    """The slate date a UTC instant belongs to. See SLATE_DAY_OFFSET_HOURS."""
+    """The WESTERNMOST slate date a UTC instant can still belong to, which is
+    the one the stale-slate guard compares against. See
+    SLATE_DAY_OFFSET_HOURS."""
     return (now - timedelta(hours=SLATE_DAY_OFFSET_HOURS)).date().isoformat()
+
+
+def slate_day_east(now: datetime) -> str:
+    """The EASTERNMOST slate date a UTC instant can belong to: the same anchor
+    betting_ingest.slate_date_of uses to stamp a capture. The future-slate skip
+    compares against this one. See SLATE_DAY_OFFSET_HOURS_EAST."""
+    return (now - timedelta(hours=SLATE_DAY_OFFSET_HOURS_EAST)).date().isoformat()
 
 
 def close_snapshot_state(day: str) -> tuple[str, str]:
@@ -122,13 +163,24 @@ def close_snapshot_state(day: str) -> tuple[str, str]:
     A close snapshot that reads back cleanly is the ONLY thing that counts as
     captured; anything unreadable for the date is treated as a hard stop, because
     an unparseable file in the odds cache is a real failure whichever kind it
-    turned out to be."""
+    turned out to be.
+
+    AND THE TWO HALVES ASKED DIFFERENT QUESTIONS (2026-08-09). The "captured"
+    half matches on the wrapper's `slate_date`, which betting_ingest computes in
+    US Eastern precisely because a capture can land under the neighbouring UTC
+    date. The "unreadable" half matched on `m["date"]`, the FILENAME date, which
+    is UTC. So a close capture that was truncated while being written past UTC
+    midnight - the 10:10pm ET first pitch, which is exactly when this job fires
+    on a late West Coast slate - landed under tomorrow's filename, the scan for
+    that day found nothing, and the fail-closed guard failed OPEN: the job
+    re-fired every fifteen minutes against a 500-credit monthly budget. Widened
+    by one day on each side, the same window `latest_snapshot` already uses."""
     import betting_ingest as bi
 
     if bi.closing_snapshot(day):
         return "captured", f"close snapshot already exists for {day}; a slate gets one"
     bad = [m["path"].name for m in bi.list_snapshots()
-           if m["date"] == day and bi.load_snapshot(m["path"]) is None]
+           if abs(bi._day_delta(m["date"], day)) <= 1 and bi.load_snapshot(m["path"]) is None]
     if bad:
         return "unreadable", (f"{len(bad)} odds snapshot file(s) for {day} exist but will "
                               f"not parse ({', '.join(sorted(bad)[:3])}); refusing to fire "
@@ -218,8 +270,11 @@ def decide(now: datetime | None = None) -> dict:
 
     day = min(g.get("date") or "" for g in games if g.get("date"))
     out["slate_date"] = day
+    # TWO ANCHORS, EACH USED WHERE IT FAILS SAFE. See SLATE_DAY_OFFSET_HOURS_EAST.
     today = slate_day(now)
+    today_east = slate_day_east(now)
     out["today"] = today
+    out["today_east"] = today_east
     if day < today:
         # THE STALE-SLATE GUARD. Without it a past slate reads as a slate whose
         # first pitch has passed, and the job exits 0 all day while the close
@@ -232,9 +287,14 @@ def decide(now: datetime | None = None) -> dict:
                          f"so there is no closing line to capture and every fire today "
                          f"would look like a normal 'first pitch has passed' no-op")
         return out
-    if day > today:
-        out["reason"] = (f"the next bettable slate is {day} and today is {today}; nothing "
-                         f"left to close tonight")
+    if day > today_east:
+        # Compared against the EASTERNMOST day on purpose. Against the western
+        # one this branch fired for the four hours between 04:00Z and 08:00Z on
+        # every slate, reporting "nothing left to close tonight" at 2am ET about
+        # a slate that starts in fifteen hours - harmless under the old
+        # afternoon-only cron and a real skip under the all-day one.
+        out["reason"] = (f"the next bettable slate is {day} and today is {today_east}; "
+                         f"nothing left to close tonight")
         return out
 
     snap_state, snap_detail = close_snapshot_state(day)

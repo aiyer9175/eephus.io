@@ -109,19 +109,43 @@
       root.innerHTML = note("The scoreboard artifact carries no comparable metrics yet.");
       return;
     }
-    // A LEAD IS NOT A RESULT UNTIL IT CLEARS THE FLOOR. These tiles used to print
-    // two numbers and let the bigger one win, which is the bare-inequality pattern
-    // the eFV verdict gating removed everywhere else. The artifact now carries the
-    // minimum gap this backtest can resolve at 95%, so a lead inside it is
-    // reported as the tie it is.
+    // A LEAD IS NOT A RESULT UNTIL IT CLEARS THE FLOOR, AND A FLOOR IS NOT CHECKABLE
+    // UNTIL IT NAMES ITS ESTIMATOR. These tiles used to print two numbers and let the
+    // bigger one win, which is the bare-inequality pattern the eFV verdict gating
+    // removed everywhere else. The artifact now carries the minimum gap this backtest
+    // can resolve at 95%, so a lead inside it is reported as the tie it is.
+    //
+    // WHICH FLOOR THIS IS (2026-08-10). vv.mde95 is source_backtest.XFV_HEADTOHEAD_MDE95,
+    // a cluster paired bootstrap that resamples players AND refits the forward chain on
+    // every draw. That is E_refit. B-L1 published a SECOND floor for this exact cell,
+    // E_cond, which holds the fit and resamples the scored clusters only, and the two
+    // return OPPOSITE CALLS here: 0.03318 is NULL against E_refit 0.0345 and a resolvable
+    // win against E_cond 0.0322. So the floor never prints without its estimator. The
+    // label comes from the artifact when it carries one; the fallback is E_refit because
+    // that is definitionally what XFV_HEADTOHEAD_MDE95 measures.
+    //
+    // "MORE RESOLVED COHORTS, NOT A BETTER MODEL" IS CORRECT ON THIS STATISTIC. A Phase 1
+    // proposal wanted to rewrite that clause around a 54.1 percent refit-variance figure,
+    // which would have been wrong twice. That number is measured on hit.full_pool_km
+    // pooled rho, a different statistic on a different pool, and it points the other way:
+    // there 50.4 percent of the variance is refit noise, only 29 percent of the floor is
+    // removable by test n, and the cell is permanently undecidable under E_refit. On
+    // headtohead_common the refit share is 0.128, 64.2 percent of the floor IS removable,
+    // and the floor falls 0.0345 to 0.0123 at infinite test n, which is well under the
+    // observed margin. Cohorts really are what settles this one. (The proposal also
+    // conflated a variance share with a floor share: sqrt(0.541) = 0.735, not 0.541.)
+    // Do not re-import that number here. Ledger: data/xfv_power_eval.json partb_floors.
     var vv = h2h.verdict_vs_consensus;
     var verdictHTML = "";
     if (vv && vv.delta != null && vv.mde95 != null) {
       var lead = (vv.delta >= 0 ? "+" : "") + dec(vv.delta);
+      var est = vv.mde95_estimator || "E_refit";
       verdictHTML = '<p class="dm-fine">On rank correlation the margin is ' + esc(lead) +
         " over " + esc(who) + ". " + (vv.resolvable
-          ? "That clears the " + esc(dec(vv.mde95)) + " this backtest can resolve at 95%, so it is a real lead."
-          : "That sits under the " + esc(dec(vv.mde95)) + " this backtest can resolve at 95%, so read it as a tie that leans " +
+          ? "That clears the " + esc(dec(vv.mde95)) + " this backtest can resolve at 95% under " +
+            esc(est) + ", so it is a real lead."
+          : "That sits under the " + esc(dec(vv.mde95)) + " this backtest can resolve at 95% under " +
+            esc(est) + ", so read it as a tie that leans " +
             gl("eFV", "xfv") + ", not a win. More resolved cohorts, not a better model, is what settles it.") +
         "</p>";
     }

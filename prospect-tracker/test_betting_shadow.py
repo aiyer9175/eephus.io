@@ -285,3 +285,24 @@ def test_the_gate_reads_the_ledger_when_no_rows_are_handed_in(monkeypatch):
     assert g3["have"] == 150, (
         "the gate must consult the shadow ledger; passing None used to mean "
         "zero evidence forever")
+
+
+# ---------------------------------------------------------------------------
+# CATALOG PIN for betting_shadow.json. data_catalog.py names this file, and
+# every test above builds its own ledger fixture, so the served artifact was
+# never named and the /sources/ receipt rendered empty.
+def test_betting_shadow_json_carries_the_shape_the_catalog_promises():
+    """betting_shadow.json: paper bets carrying the price actually on the board,
+    the selection rule that chose each row, and its settlement."""
+    import json
+    from pathlib import Path
+    p = Path(__file__).resolve().parent / "data" / "betting_shadow.json"
+    if not p.exists():
+        pytest.skip("betting_shadow.json not built in this tree")
+    rows = json.loads(p.read_text(encoding="utf-8"))
+    assert isinstance(rows, list)
+    if rows:
+        need = {"shadow_id", "posted_at", "stake_units", "min_edge_used",
+                "gate_state", "result", "slate_date"}
+        missing = need - set(rows[0])
+        assert not missing, f"betting_shadow.json rows lost {sorted(missing)}"

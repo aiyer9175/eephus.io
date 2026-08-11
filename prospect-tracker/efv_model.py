@@ -27,7 +27,14 @@ on rank per the Phase-1 verdict -- the flagship case rests on the distribution/s
              eFV-core = prior-anchored ridge (FV dominant, standardized, alpha tuned in-fold);
              challenger = monotone LightGBM; comps = distance-weighted k-NN (also the UI
              feature); ensemble = mean(ridge, lgbm).
-  GATE       a model beats consensus only if it wins BOTH pooled-OOS MAE and Spearman.
+  GATE       RETIRED 2026-08-10 (owner decision 7). This said "a model beats consensus
+             only if it wins BOTH pooled-OOS MAE and Spearman", which was a conjunction
+             of two BARE INEQUALITIES shipped as a gate. No MDE95 exists for any MAE
+             statistic, and docs/EFV_GATE_STANDARD.md section 4 measures that MAE cannot
+             arbitrate this label at all (a board with Spearman 0.023 against truth beats
+             the production board on MAE). The rank leg is floored, per cut, under BOTH
+             published estimators; the MAE leg is published as a labelled diagnostic and
+             decides nothing. See _run_eval's verdict block.
 
 Artifact: data/xfv_eval.json. Run: python efv_model.py
 """
@@ -92,10 +99,15 @@ SCORED_YEARS_LEGACY_4FOLD = (2020, 2021, 2022, 2023)
 # Feature keys + monotone direction (LightGBM; ridge ignores the sign, regularizes only).
 # LEAN, theory-motivated sets (Phase-1 verdict + an OOS feature search). The earlier
 # kitchen-sink set was DRAGGED DOWN by noisy features (milb_missing/n_sources/pick/etc.):
-# adding them made the model rank BELOW consensus. Stripping to the earned signals flips
-# it -- this lean model beats consensus FV on out-of-sample rank for BOTH cuts and BOTH
-# sides, and the edge holds (grows) on recent 2019-2023 cohorts (see data/xfv_eval.json
-# era_split). Power is DELIBERATELY absent for hitters (Phase-1: over-priced by scouts,
+# adding them made the model rank BELOW consensus. Stripping to the earned signals lifts
+# it, and the edge holds (grows) on recent 2019-2023 cohorts (see data/xfv_eval.json
+# era_split).
+#
+# THE OLD SENTENCE HERE WAS FALSE AND IS CORRECTED (2026-08-10). It read "this lean
+# model beats consensus FV on out-of-sample rank for BOTH cuts and BOTH sides". On the
+# 11-fold basis that ships, the hitter full_pool_km cut is rank-NEGATIVE (-0.0190) and
+# every cut is a NULL under both published estimators. honest_note in the same artifact
+# has said so since 2026-08-06; this comment had not caught up. Power is DELIBERATELY absent for hitters (Phase-1: over-priced by scouts,
 # anti-signal for incremental WAR) -- that omission IS eFV's power-overpricing correction.
 _FEATURES_HIT = [
     ("fv",             +1),   # consensus_fv_raw -- the dominant, regularized prior
@@ -1477,7 +1489,11 @@ def _lofo_calibrate(fold_map):
     return out
 
 
-def _run_eval(data, label, keys=None, mono=None, lam=None):
+def _run_eval(data, label, keys=None, mono=None, lam=None, side=None, cut=None):
+    """`side` ('hit'/'pit') and `cut` ('debuted_km'/'full_pool_km'/...) are carried
+    ONLY so the verdict block can look up the floor B-L1 published for THIS cell.
+    They never touch the fit. When either is absent the rho leg publishes as
+    unfloored rather than borrowing a neighbouring cell's number."""
     keys = keys or _KEYS
     mono = mono or _MONO
     pairs = {m: [] for m in ("baseline", "ridge", "blend", "lgbm", "comps", "ensemble")}
@@ -1543,16 +1559,96 @@ def _run_eval(data, label, keys=None, mono=None, lam=None):
     pooled["ridge_cal"] = _score(_lofo_calibrate(fold_map["ridge"])) if fold_map["ridge"] else {"n": 0}
     pooled["ensemble_cal"] = _score(_lofo_calibrate(fold_map["ensemble"])) if fold_map["ensemble"] else {"n": 0}
     base = pooled["baseline"]
+    # ------------------------------------------------------------------
+    # `rank_win` IS DEMOTED TO A DIAGNOSTIC (2026-08-10, owner decision 7).
+    #
+    # This block shipped `rank_win = (mae < base_mae) and (rho > base_rho)` into
+    # data/xfv_eval*.json as a CONJUNCTION OF TWO BARE INEQUALITIES, neither one
+    # floored, and the module docstring called it "the gate". Demoted rather than
+    # floored, for two reasons that are about the MAE leg specifically:
+    #
+    #   1. NO MAE FLOOR EXISTS TO APPLY. B-L1 published floors for the pooled-rho,
+    #      block-rho, head-to-head, feature-add and lambda-shift classes
+    #      (data/xfv_power_eval.json partb_floors) and for NO MAE statistic at all.
+    #      Flooring the leg with a rho floor would be the cross-statistic transfer
+    #      this program has already caught once; the cells differ 6.2x in refit
+    #      share inside that one artifact, so "close enough" is not available.
+    #   2. MAE CANNOT ARBITRATE THIS LABEL EVEN WITH A FLOOR.
+    #      docs/EFV_GATE_STANDARD.md section 4, measured: a near-zero-rank-information
+    #      board (Spearman 0.023 against truth) BEATS the production board on MAE on
+    #      the v6 frame, "so MAE alone cannot arbitrate a board". The mechanism is the
+    #      label: 86-90% of the bottom bins realize nothing, the conditional median is
+    #      zero, and MAE is minimized by the median. On top of that the bar is an
+    #      MSE-fit OLS being scored under an MAE criterion, so the leg is not a
+    #      like-for-like contest in the first place.
+    #
+    # So the old keys are GONE, not renamed-and-kept: `beats_mae`, `beats_spearman`
+    # and `rank_win` no longer exist, a stale `.get("rank_win")` now returns None
+    # (no verdict) instead of a confident bool, and the reason travels IN THE
+    # ARTIFACT under `status` / `why_not_a_verdict` so a reader of the JSON sees it
+    # without opening a doc.
+    #
+    # Where B-L1 DID publish a floor - the SHIPPED `blend` leg against the consensus
+    # baseline on `debuted_km` / `full_pool_km` - the floored call is attached beside
+    # the diagnostic under BOTH estimators. It is attached for `blend` ONLY: the
+    # pooled_rho cells were measured on the blend-minus-baseline delta, and ridge /
+    # lgbm / comps / ensemble are different statistics that do not inherit it.
+    # ------------------------------------------------------------------
     verdict = {}
+    floors = power_floors(f"pooled_rho.{side}.{cut}") if (side and cut) else {}
     for m in ("ridge", "blend", "lgbm", "comps", "ensemble", "ridge_cal", "ensemble_cal"):
         s = pooled[m]
-        if s.get("n", 0) > 80 and s.get("mae") is not None and base.get("mae") is not None:
-            beats_mae = s["mae"] < base["mae"]
-            beats_rho = (s.get("spearman") or -9) > (base.get("spearman") or -9)
-            verdict[m] = {"beats_mae": beats_mae, "beats_spearman": beats_rho,
-                          "rank_win": bool(beats_mae and beats_rho)}
+        if not (s.get("n", 0) > 80 and s.get("mae") is not None
+                and base.get("mae") is not None):
+            continue
+        verdict[m] = _leg_diagnostic(m, s, base, floors, side, cut)
     return {"label": label, "pooled_oos": pooled, "per_year": per_year,
             "verdict_vs_consensus": verdict}
+
+
+def _leg_diagnostic(m, s, base, floors, side, cut) -> dict:
+    """One row of `verdict_vs_consensus`. Split out of _run_eval so the demotion
+    contract above is testable on constructed scores, without paying for 11 folds of
+    ridge + LightGBM + k-NN refits to find out whether a key is labelled."""
+    d_mae = round(s["mae"] - base["mae"], 4)
+    d_rho = (None if s.get("spearman") is None or base.get("spearman") is None
+             else round(s["spearman"] - base["spearman"], 4))
+    v = {
+        "status": "DIAGNOSTIC, NOT A VERDICT - the legs below are unfloored inequalities",
+        "mae_delta_vs_baseline": d_mae,
+        "mae_lower_than_baseline_UNFLOORED": bool(s["mae"] < base["mae"]),
+        "mae_floor": None,
+        "mae_floor_status": (
+            "NO MDE95 EXISTS FOR ANY MAE STATISTIC (data/xfv_power_eval.json "
+            "partb_floors floors rank statistics only), and per "
+            "docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label "
+            "anyway: the conditional median is zero for most rows, MAE is minimized "
+            "by the median, and a board with Spearman 0.023 against truth beats the "
+            "production board on MAE. The bar is also an MSE-fit OLS scored under an "
+            "MAE criterion."),
+        "spearman_delta_vs_baseline": d_rho,
+        "spearman_higher_than_baseline_UNFLOORED": bool(d_rho is not None and d_rho > 0),
+        "retired_key_rank_win": (
+            "REMOVED 2026-08-10. It published (mae_lower AND spearman_higher) as a "
+            "gate with no floor on either leg. Read spearman_call_E_refit / "
+            "spearman_call_E_cond for the floored rank call where one exists; the MAE "
+            "leg has no verdict form."),
+    }
+    if m == "blend" and floors.get("E_refit") and floors.get("E_cond") and d_rho is not None:
+        v["spearman_call_E_refit"] = floored_verdict(
+            d_rho, floors["E_refit"], E_REFIT, source=floors["source"])
+        v["spearman_call_E_cond"] = floored_verdict(
+            d_rho, floors["E_cond"], E_COND, source=floors["source"])
+        v["both_estimators_agree"] = (v["spearman_call_E_refit"]["resolvable"]
+                                      == v["spearman_call_E_cond"]["resolvable"])
+    else:
+        v["spearman_floor"] = None
+        v["spearman_floor_status"] = (
+            f"UNFLOORED. B-L1 floored the SHIPPED blend-minus-baseline pooled rho on "
+            f"debuted_km and full_pool_km only; '{m}' on cut '{cut}' (side '{side}') "
+            f"is a different statistic on a different leg and does not inherit that "
+            f"floor. Read the delta, not a win.")
+    return v
 
 
 def _importances(data, keys=None, mono=None):
@@ -1602,6 +1698,88 @@ MDE95_POOLED_RHO = {"hit": 0.044, "pit": 0.044}
 #: either side's pooled rho because the (side x cohort-year) normalization removes the
 #: between-fold level differences that pooling otherwise counts as signal.
 MDE95_BLOCK_RHO = 0.0325
+
+# ---------------------------------------------------------------------------
+# NO CLAIM WITHOUT ITS ESTIMATOR (2026-08-10, owner decision 7)
+# ---------------------------------------------------------------------------
+#: B-L1 landed TWO floors for every scoreboard statistic
+#: (`data/xfv_power_eval.json` -> `partb_floors.cells`), and they are not
+#: interchangeable:
+#:
+#:   E_refit  resample the pool AND refit the whole forward chain on every draw.
+#:            The floor therefore includes the model's own refit variance, so it
+#:            answers "would a REBUILD of this model, on a resample of this pool,
+#:            still land on the right side".
+#:   E_cond   hold the fit and resample the scored unit only. It answers "does
+#:            THIS fitted model order a fresh sample better", which is the
+#:            question a served grade is actually making.
+#:
+#: They DISAGREE on live cells. `headtohead_common` reads point 0.03318 against
+#: E_refit 0.0345 (NULL, 0.963x) and E_cond 0.0322 (RESOLVABLE WIN, 1.031x). A
+#: margin quoted without its estimator is therefore not a claim a reader can
+#: check, which is why `floored_verdict` REFUSES to build one.
+#:
+#: Both module constants above (MDE95_POOLED_RHO, MDE95_BLOCK_RHO) are E_refit:
+#: `tools/efv_mde_lab.py mde` resamples train and test together and refits per
+#: draw. That is stated here once and repeated in every field they reach.
+E_REFIT = "E_refit"
+E_COND = "E_cond"
+
+POWER_EVAL_PATH = DATA_DIR / "xfv_power_eval.json"
+_POWER_FLOOR_CACHE: dict = {}
+
+
+def power_floors(cell: str) -> dict:
+    """B-L1's published floor pair for ONE statistic class, or {} if unpublished.
+
+    `cell` is a `partb_floors.cells` key, e.g. `pooled_rho.hit.debuted_km`,
+    `headtohead_common`, `block_rho`. Returns {} rather than a guess when the
+    class is absent: a floor measured on one statistic and one pool DOES NOT
+    TRANSFER to another (the lab says so verbatim at source_backtest.py:666-672,
+    and the numbers bear it out - refit variance is 12.8% of the head-to-head
+    bootstrap and 79.5% of the hit/debuted_km pooled-rho bootstrap, a 6.2x spread
+    across two cells of the SAME artifact). An unfloored leg is labelled
+    unfloored, never floored with a neighbour's number.
+    """
+    if not _POWER_FLOOR_CACHE:
+        _POWER_FLOOR_CACHE["cells"] = {}
+        try:
+            doc = json.loads(POWER_EVAL_PATH.read_text(encoding="utf-8"))
+            _POWER_FLOOR_CACHE["cells"] = (doc.get("partb_floors") or {}).get("cells") or {}
+        except (OSError, ValueError) as exc:
+            log.warning("power floors unavailable (%s); legs will publish as unfloored", exc)
+    c = (_POWER_FLOOR_CACHE.get("cells") or {}).get(cell) or {}
+    if not c:
+        return {}
+    return {"cell": cell,
+            "E_refit": c.get("MDE95"), "E_cond": c.get("MDE95_COND"),
+            "source": f"data/xfv_power_eval.json partb_floors.cells.{cell}"}
+
+
+def floored_verdict(delta, mde95, estimator, *, source,
+                    win="beats consensus", loss="loses to consensus",
+                    tie="not resolvable at this power") -> dict:
+    """One floored call. THE ESTIMATOR IS MANDATORY and it is stamped into the
+    verdict STRING as well as its own field.
+
+    Stamping the string is the point. A reader who acts on a verdict reads the
+    sentence, not the sibling key, and the two published floors for the same
+    statistic can return opposite calls (see the headtohead_common example
+    above). Raising on a missing estimator rather than defaulting to one is
+    deliberate: a default silently picks a side of that disagreement.
+    """
+    if not estimator:
+        raise ValueError("floored_verdict: a published margin must name its estimator")
+    if not mde95 or float(mde95) <= 0:
+        raise ValueError("floored_verdict: a published margin must carry a positive floor")
+    d, f = float(delta), float(mde95)
+    resolvable = abs(d) >= f
+    call = win if (d > 0 and resolvable) else loss if (d < 0 and resolvable) else tie
+    return {"delta": round(d, 4), "mde95": mde95, "mde95_estimator": estimator,
+            "mde95_source": source, "margin_over_floor": round(abs(d) / f, 3),
+            "resolvable": resolvable,
+            "verdict": f"{call} ({estimator}, MDE95 {mde95})"}
+
 
 _BLOCK_RHO_CACHE: dict = {}
 
@@ -1667,23 +1845,55 @@ def block_rho_eval() -> dict:
     c = _weighted_spearman(cons_all, tgt_all, wts_all)
     b = _weighted_spearman(blend_all, tgt_all, wts_all)
     delta = round((b or 0.0) - (c or 0.0), 4)
-    resolvable = abs(delta) >= MDE95_BLOCK_RHO
+    out = _block_rho_report(c, b, delta, len(tgt_all), per_side)
+    _BLOCK_RHO_CACHE["v"] = out
+    return out
+
+
+def _block_rho_report(c, b, delta, n, per_side) -> dict:
+    """Assemble the block-rho block. Split out of block_rho_eval so the ESTIMATOR
+    contract can be tested without paying for 22 forward-chained refits.
+
+    ESTIMATOR NAMING (2026-08-10, owner decision 7). This used to publish a bare
+    `verdict` string beside a bare `mde95`, with no statement of which bootstrap
+    produced the floor. Both legs are now named, in the field AND in the string.
+    """
+    floors = power_floors("block_rho")
+    call = floored_verdict(
+        delta, MDE95_BLOCK_RHO, E_REFIT,
+        source="tools/efv_mde_lab.py mde (data/xfv_mde_floor.json)")
     out = {
         "instrument": "block-rho: (side x cohort-year) percentile-normalized, both sides pooled",
         "registration": "docs/EFV_GATE_STANDARD.md section 3 (two-metric gate)",
-        "n": len(tgt_all), "n_by_side": per_side,
+        "n": n, "n_by_side": per_side,
         "weighting": "pair-weighted, same basis as the headline pooled rho",
         "consensus_block_rho": c, "blend_block_rho": b, "delta": delta,
+        # Shape kept for existing readers (source_backtest lifts this block into the
+        # Methodology payload), now with the estimator beside every one of them.
         "mde95": MDE95_BLOCK_RHO,
-        "mde95_source": "tools/efv_mde_lab.py mde (data/xfv_mde_floor.json)",
-        "resolvable": resolvable,
-        "verdict": ("beats consensus" if (delta > 0 and resolvable)
-                    else "loses to consensus" if (delta < 0 and resolvable)
-                    else "not resolvable at this power"),
+        "mde95_estimator": E_REFIT,
+        "mde95_source": call["mde95_source"],
+        "resolvable": call["resolvable"],
+        "verdict": call["verdict"],
+        "call_E_refit": call,
         "note": ("identical block on both side artifacts; the instrument is joint by "
                  "construction. Reported BESIDE the pooled rho, not instead of it."),
     }
-    _BLOCK_RHO_CACHE["v"] = out
+    if floors.get("E_cond"):
+        # The SECOND estimator, published by B-L1 for this exact class. It is the
+        # tighter of the two (0.0203 against 0.0317 on B-L1's own frame) and on this
+        # vintage it does NOT flip the call, which is worth saying out loud: the
+        # block-rho leg is a NULL under both estimators, unlike the head-to-head.
+        out["call_E_cond"] = floored_verdict(
+            delta, floors["E_cond"], E_COND, source=floors["source"])
+        out["both_estimators_agree"] = (
+            out["call_E_cond"]["resolvable"] == call["resolvable"])
+        out["estimator_note"] = (
+            f"MDE95_BLOCK_RHO {MDE95_BLOCK_RHO} is E_refit (train and test resampled, "
+            f"refit per draw). B-L1 re-measured the same class at "
+            f"{floors.get('E_refit')} E_refit / {floors['E_cond']} E_cond; the shipped "
+            f"constant is the more conservative of the two E_refit reads and is kept, "
+            f"so this lane changes labels and not floors.")
     return out
 
 
@@ -1696,6 +1906,12 @@ def _honest_note(evals, era, block, side) -> str:
     delta fell far under its MDE. A note that cannot be contradicted by its own
     artifact is the only kind worth shipping, so it is now assembled from
     verdict_vs_consensus, the era split, and the block-rho leg.
+
+    EVERY FLOOR IN THIS PARAGRAPH NAMES ITS ESTIMATOR (2026-08-10, owner decision 7).
+    The sentences used to quote a bare "MDE95 of 0.044" with no statement of which
+    bootstrap produced it. B-L1 published two floors per cut and they answer different
+    questions, so an unlabelled floor is not checkable. `MDE95_POOLED_RHO` is E_refit;
+    E_cond is read per cut from data/xfv_power_eval.json and quoted beside it.
     """
     parts = []
     cuts = []
@@ -1708,24 +1924,47 @@ def _honest_note(evals, era, block, side) -> str:
             continue
         cuts.append((cut, round(blend - base, 4)))
     if cuts:
+        # The GATING floor stays the shipped constant. This lane changes labels, not
+        # floors: swapping in B-L1's per-cut E_refit reads (hit 0.045 / 0.0295, pit
+        # 0.0431 / 0.0265) would be a floor change wearing a naming fix, and it moves
+        # no call on this vintage anyway.
         side_mde = MDE95_POOLED_RHO.get(side)
         wins = [c for c in cuts if c[1] > 0]
         resolved = [c for c in cuts if abs(c[1]) >= (side_mde or 9)]
         detail = ", ".join(f"{name} {d:+.4f}" for name, d in cuts)
         if resolved:
             parts.append(f"eFV's rank edge over consensus FV is measurable on {detail} "
-                         f"against an MDE95 of {side_mde}.")
+                         f"against an MDE95 of {side_mde} ({E_REFIT}).")
         elif len(wins) == len(cuts):
             parts.append(f"eFV ranks ahead of consensus FV on every out-of-sample cut "
                          f"({detail}), but no gap reaches the {side_mde} this eval can "
-                         f"resolve, so treat it as a tie, not a win.")
+                         f"resolve under {E_REFIT}, so treat it as a tie, not a win.")
         else:
             parts.append(f"eFV does not beat consensus FV on out-of-sample rank on every "
                          f"cut ({detail}), and no gap reaches the {side_mde} this eval can "
-                         f"resolve either way.")
+                         f"resolve either way under {E_REFIT}.")
+        # The SECOND estimator, per cut. Reported because on the head-to-head statistic
+        # the two disagree, so "which estimator" is a live question and not bookkeeping.
+        conds = [(name, d, (power_floors(f"pooled_rho.{side}.{name}") or {}).get("E_cond"))
+                 for name, d in cuts]
+        conds = [(n, d, f) for n, d, f in conds if f]
+        if conds:
+            cd = ", ".join(f"{n} {abs(d) / f:.2f}x of {f}" for n, d, f in conds)
+            hits = [n for n, d, f in conds if abs(d) >= f]
+            if hits:
+                parts.append(f"{E_COND}, which holds the fit and resamples the scored rows "
+                             f"only, is tighter ({cd}) and resolves {', '.join(hits)}, so the "
+                             f"call depends on which estimator is asked.")
+            else:
+                parts.append(f"{E_COND}, which holds the fit and resamples the scored rows "
+                             f"only, is tighter and does not change that ({cd}), so every cut "
+                             f"is a NULL under both estimators.")
     if block:
-        parts.append(f"The higher-SNR block-rho leg reads {block.get('delta'):+.4f} against "
-                     f"{block.get('mde95')}: {block.get('verdict')}.")
+        # block['verdict'] and call_E_cond['verdict'] each carry their own floor and
+        # estimator inside the string, so this line adds no unlabelled number.
+        line = f"The higher-SNR block-rho leg reads {block.get('delta'):+.4f}: {block.get('verdict')}"
+        cond = (block.get("call_E_cond") or {}).get("verdict")
+        parts.append(f"{line}, and {cond}." if cond else f"{line}.")
     recent = (era or {}).get("2022-2023") or {}
     old = (era or {}).get("<=2018") or {}
     if recent.get("consensus_spearman") is not None and old.get("consensus_spearman") is not None:
@@ -1734,10 +1973,18 @@ def _honest_note(evals, era, block, side) -> str:
         parts.append(f"By era the edge concentrates in recent cohorts ({d_new:+.4f} on "
                      f"2022-2023 vs {d_old:+.4f} on <=2018), so what edge exists is not "
                      f"an artifact of older, less accurate scouting.")
+    # The MAE line, RE-KEYED and RE-WORDED 2026-08-10. It read `beats_mae is False`,
+    # a bare inequality, and closed with "That loss is committed" - a resolved-result
+    # claim on the one leg this eval can never resolve. No MAE floor exists, and per
+    # docs/EFV_GATE_STANDARD.md section 4 MAE cannot arbitrate this label at all.
     mae = ((evals.get("debuted_km") or {}).get("verdict_vs_consensus") or {}).get("blend") or {}
-    if mae.get("beats_mae") is False:
-        parts.append("eFV still trails on MAE (it predicts more spread; consensus regresses "
-                     "to the mean). That loss is committed.")
+    if mae.get("mae_lower_than_baseline_UNFLOORED") is False:
+        parts.append(f"eFV also sits above consensus on MAE by "
+                     f"{mae.get('mae_delta_vs_baseline'):+.4f} WAR (it predicts more spread; "
+                     f"consensus regresses to the mean). That leg is UNFLOORED and stays a "
+                     f"diagnostic: no MDE95 exists for any MAE statistic here, and on a label "
+                     f"whose conditional median is zero MAE is minimized by predicting the "
+                     f"median, so it cannot arbitrate a board in either direction.")
     parts.append("The flagship case is the package: rank + calibrated distribution + "
                  "uncertainty + surplus + power-correction, not a resolved rank win.")
     return " ".join(parts)
@@ -2546,11 +2793,16 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     deb_km = _prep(deb, "target_censored", side)
     cohort_map = _cohort_map(full)   # covers debuted + busts so both AUC pools get real cohorts
     evals = {
-        "debuted_km": _run_eval(deb_km, "debuted, KM-censored target", keys, mono, lam),
+        # side/cut are passed so the rho leg can find the floor B-L1 published for
+        # THAT cell. `debuted_resolved` has no published cell and publishes unfloored.
+        "debuted_km": _run_eval(deb_km, "debuted, KM-censored target", keys, mono, lam,
+                                side=side, cut="debuted_km"),
         "debuted_resolved": _run_eval(_prep([r for r in deb if not r["censored"]],
-                                            "target_resolved", side), "debuted, resolved-only (sensitivity)", keys, mono, lam),
+                                            "target_resolved", side), "debuted, resolved-only (sensitivity)",
+                                      keys, mono, lam, side=side, cut="debuted_resolved"),
         "full_pool_km": _run_eval(_prep(full, "target_censored", side),
-                                  "full pool (debuted+busts), KM target [decision-year proxy]", keys, mono, lam),
+                                  "full pool (debuted+busts), KM target [decision-year proxy]",
+                                  keys, mono, lam, side=side, cut="full_pool_km"),
     }
     # M1 AUC instrumentation: per-cohort / per-era / per-FV-tier contributor + star AUC,
     # model (blend) vs consensus, on the same forward-chained debuted-KM folds.
@@ -2568,7 +2820,15 @@ def run(persist: bool = True, side: str = "hit") -> dict:
             "baseline": "within-fold OLS WAR ~ consensus_fv_raw (THE bar)",
             "shipped_model": f"'blend' = (1-{lam})*consensus_OLS + {lam}*lean-ridge; this is the "
                              "headline RANK driver. 'ridge' = the pure lean model.",
-            "rank_gate": "beat consensus FV on pooled-OOS Spearman (the flagship criterion)",
+            # NOT "beat consensus FV on pooled-OOS Spearman", which is what this said
+            # and is a bare inequality. The criterion is a FLOORED delta, and the floor
+            # is meaningless without the estimator that produced it.
+            "rank_gate": (f"beat consensus FV on pooled-OOS Spearman by at least the "
+                          f"published MDE95 for the cell, under a named estimator "
+                          f"({E_REFIT} = pool resampled and chain refit per draw; "
+                          f"{E_COND} = fit held, scored rows resampled). Floors: "
+                          f"MDE95_POOLED_RHO {MDE95_POOLED_RHO.get(side)} ({E_REFIT}) and "
+                          f"data/xfv_power_eval.json partb_floors per cut."),
             "features": keys,
         },
         "lambda_calibration": {

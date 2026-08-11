@@ -149,6 +149,55 @@ def test_missing_record_is_an_empty_record(tmp_path):
     assert be.load_record(tmp_path / "nope.json") == []
 
 
+# ---- the storage seam: which backend answers load_record() -----------------
+def test_load_record_reads_the_jsonl_and_not_the_git_tracked_json(tmp_path, monkeypatch):
+    """THE GO-LIVE FIX, pinned. The two backends are made to hold DIFFERENT
+    rows and the untracked JSONL must win.
+
+    Without this test the fix is revertible by accident and the suite stays
+    green: every other record test passes an explicit `path`, so nothing
+    exercised the no-path branch at all. The defect it protects against is the
+    one that destroyed the record - data/betting_record.json is git-tracked and
+    deploy/nightly-build.sh runs `git checkout -- .` before every pipeline, so
+    a row appended at 21:00 was reverted to the committed `[]` at 03:10 and
+    `check_append_only` then waved the same one-row proposal through as a legal
+    append. If load_record ever reads the JSON while a log exists, that returns
+    silently and nothing anywhere raises."""
+    jsonl = tmp_path / "record.jsonl"
+    legacy = tmp_path / "betting_record.json"
+    durable = _fixture_record()
+    # The JSON holds something a checkout could plausibly have restored: fewer
+    # rows, and the one it shares carries a DIFFERENT result.
+    reverted = [{**durable[0], "result": "lost"}]
+    legacy.write_text(json.dumps(reverted), encoding="utf-8")
+    monkeypatch.setattr(be, "RECORD_JSONL", jsonl)
+    monkeypatch.setattr(be, "RECORD_PATH", legacy)
+    be.write_record(durable, path=jsonl)
+
+    rows = be.load_record()
+    assert len(rows) == 2, "the JSONL has two rows; the reverted JSON has one"
+    assert rows[0]["result"] == "won", (
+        "load_record answered from the git-tracked JSON while an append-only "
+        "log existed; that is the reverted-by-checkout defect")
+    assert rows == durable
+    # And the module says so out loud, because the blocker reads this.
+    store = be.record_storage()
+    assert store["backend"] == "jsonl" and store["durable"] is True
+    assert store["authoritative_path"] == str(jsonl)
+    assert store["chain_sha"] == be.chain_sha(durable)
+
+
+def test_load_record_falls_back_to_the_json_only_when_no_log_exists(tmp_path, monkeypatch):
+    """The other half of the seam. A fresh box with rows in the committed JSON
+    and no log yet must read them rather than reporting an empty record."""
+    monkeypatch.setattr(be, "RECORD_JSONL", tmp_path / "record.jsonl")
+    legacy = tmp_path / "betting_record.json"
+    legacy.write_text(json.dumps(_fixture_record()), encoding="utf-8")
+    monkeypatch.setattr(be, "RECORD_PATH", legacy)
+    assert be.load_record() == _fixture_record()
+    assert be.record_storage()["durable"] is False
+
+
 # ---- record summary math ---------------------------------------------------
 def test_record_summary_on_the_fixture():
     r = be.record_summary(_fixture_record())
@@ -1044,7 +1093,8 @@ function __btn(sec) {
     addEventListener: function (t, cb) { if (t === 'click') hs.push(cb); },
     click: function () { hs.forEach(function (h) { h({}); }); } };
 }
-var __btns = ['potd','teams','props','parlays','calculators','record','mybets'].map(__btn);
+var __btns = ['potd','teams','props','parlays','calculators','record',
+              'validation','mybets'].map(__btn);
 function __show(sec) {
   for (var i = 0; i < __btns.length; i++) if (__btns[i].__sec === sec) __btns[i].click();
   return __html['betting-app-root'] || '';
@@ -1070,8 +1120,35 @@ var window = { location: location, document: document,
                EEPHUS_HUB: EEPHUS_HUB, addEventListener: function () {} };
 """
 
-OK_FETCH = "var fetch = function () { return FT({ ok: true, json: function () { return FT(%s); } }); };\n"
+# THE STUB ROUTES ON URL. betting.js fetches the board and then, lazily, the
+# three side artifacts the validation and record tabs read
+# (betting_learning.json, betting_model_eval.json, betting_clv.json). A stub
+# that answered every url with the board would hand each of those the wrong
+# file, and the tests would then assert against a shape production never
+# serves. An unrouted url 404s, which is the real behaviour on a checkout
+# where the nightly has not written that artifact yet.
+FETCH_ROUTER = """
+var __ROUTES = %s;
+var fetch = function (url) {
+  var d = __ROUTES[url];
+  if (d === undefined) return FR(new Error('HTTP 404'));
+  return FT({ ok: true, json: function () { return FT(d); } });
+};
+"""
 BAD_FETCH = "var fetch = function () { return FR(new Error('HTTP 404')); };\n"
+
+_ROUTE_NAMES = {"main": "/data/betting.json", "preview": "/data/betting_preview.json",
+                "learning": "/data/betting_learning.json",
+                "evald": "/data/betting_model_eval.json",
+                "clv": "/data/betting_clv.json"}
+
+
+def _fetch_js(**routes) -> str:
+    """{name: raw json text} -> the routing stub. Values are RAW JSON text so a
+    test can paste an artifact fragment verbatim."""
+    body = ",\n".join(f"  {json.dumps(_ROUTE_NAMES.get(k, k))}: {txt}"
+                      for k, txt in routes.items())
+    return FETCH_ROUTER % ("{\n" + body + "\n}")
 
 SMOKE_PAYLOAD = """{
  "slate_date": "2026-08-04", "n_games": 1,
@@ -1145,7 +1222,7 @@ def _visible_text(html: str) -> str:
 
 @pytest.fixture(scope="module")
 def ok_ctx():
-    return _ctx(OK_FETCH % SMOKE_PAYLOAD)
+    return _ctx(_fetch_js(main=SMOKE_PAYLOAD))
 
 
 def test_render_legal_block_is_present_on_a_good_load(ok_ctx):
@@ -1217,3 +1294,712 @@ def test_render_parlay_section_carries_the_block_rule(ok_ctx):
     html = ok_ctx.eval("__show('parlays')")
     assert "block" in html
     assert "no parlay of the day" in _visible_text(html).lower()
+
+
+# ===========================================================================
+# 7. THE VALIDATION TAB, THE FEED STRIP, AND THE THREE SIDE ARTIFACTS
+# ===========================================================================
+# The module state is "the close half has never run" and nothing on screen said
+# so. These fixtures are cut down from the real artifacts (their key names and
+# their nesting are verbatim), because the whole point of this lane is that the
+# page READS published numbers rather than carrying its own.
+
+FULL_STATUS = """
+ "status": {"odds_feed": "ok", "odds_note": "odds feed configured",
+            "odds_captured_at": "2026-08-09T18:22:49+00:00", "odds_kind": "open",
+            "model": "unvalidated", "model_mode": "contaminated",
+            "n_slate_games": 5, "stale_board": false, "empty_reasons": [],
+            "n_events_dropped_in_progress": 2,
+            "n_games_unpriced_time_mismatch": 1,
+            "feed_health": {"n_slates": 4, "n_slates_with_close": 0,
+                            "n_slates_missing_close": 4, "ever_captured_close": false,
+                            "hours_since_last_close": null, "window_days": 14,
+                            "red": true,
+                            "diagnosis": "no close snapshot has ever been captured, CLV is unrecoverable for every slate above, and the close cron is either not installed or is running in the wrong timezone window"}}"""
+
+VALIDATION_BLOCK = """
+  "validation": {"available": true, "artifact": "data/betting_model_eval.json",
+    "generated_at": "2026-08-09T20:54:18+00:00", "model_version": "betting_runs_v1",
+    "validated": false, "headline_mode": "contaminated",
+    "mode_meaning": {"contaminated": "features contain the graded games",
+                     "vintage": "priced on leaderboards dated strictly before each game"},
+    "graded_blocks": [
+      {"label": "in-sample", "mode": "contaminated", "honest": false, "n": 1766,
+       "brier": 0.24224, "brier_flat_500": 0.25, "brier_home_base": 0.24941,
+       "accuracy": 0.5623, "key": "in_sample"},
+      {"label": "vintage", "mode": "vintage", "honest": true, "key": "vintage",
+       "n": 221, "n_graded": 221, "brier": 0.25045, "brier_flat_500": 0.25,
+       "brier_home_base": 0.24885, "accuracy": 0.5068,
+       "skill_vs_home_base": {"delta": -0.001603, "sd": 0.0546, "t": -0.435,
+                              "beats_baseline_95": false, "n_for_95": null,
+                              "baseline": 0.545}}],
+    "vintage": {"status": "graded", "n_graded": 221, "n_gradable": 419,
+                "n_skipped_no_vintage": 1347, "min_graded_games_for_min_edge": 600,
+                "first_graded_date": "2026-07-06", "last_graded_date": "2026-08-09"},
+    "coverage": {"n_vintages": 15, "first": "2026-07-05", "last": "2026-08-09",
+                 "missing_dates": [], "earliest_gradable_game_date": "2026-07-06"},
+    "n_games_completed": 1766,
+    "gate": {"all_gates_open": false, "n_open": 0, "n_gates": 3,
+      "gates": [
+        {"id": "vintage_sample", "need": "600 vintage-graded games", "have": 221,
+         "open": false, "why": "600 is a floor and not a pass"},
+        {"id": "out_of_sample_skill",
+         "need": "paired Brier vs the home-field baseline, t >= 1.645", "have": -0.435,
+         "open": false, "why": "sample size is not evidence"},
+        {"id": "graded_price_history",
+         "need": "settled bets with a taken price, enough that some edge threshold clears an ROI lower bound of zero on at least 100 of them",
+         "have": 2, "open": false, "why": "an edge threshold is a claim about EV"}],
+      "policy": "min_edge stays null until all three gates are open."}}"""
+
+LEARNING_ARTIFACT = """{
+ "latest": {
+  "clocks": {
+   "vintage_sample": {"id": "vintage_sample", "have": 221, "need": 600, "pct": 0.3683,
+     "rate": {"per_day": 6.0286, "window_days": 28, "window_from": "2026-07-13",
+              "basis": "counted arrivals over the 28 calendar days since 2026-07-13"},
+     "eta": {"days": 63, "short_by": 379, "is_projection": true},
+     "may_go_backwards": "yes. A refit can change which games are eligible."},
+   "graded_price_history": {"id": "graded_price_history", "need_per_tag": 100,
+     "by_tag": {
+       "ev_rank": {"have": 1, "need": 100, "ready": false,
+                   "rate": {"per_day": 0.0357}, "eta": {"days": 2774}},
+       "potd_band": {"have": 1, "need": 100, "ready": false,
+                     "rate": {"per_day": 0.0357}, "eta": {"days": 2774}}},
+     "why_per_tag": "a pooled ROI measures a mixture nobody bet",
+     "cost": "100 settled rows PER TAG"}},
+  "calibration": {"n_rows": 30, "n_settled": 24, "n_open": 6, "n_push": 0,
+    "n_slate_days": 1, "brier": 0.297511, "log_loss": 0.793144,
+    "bins": [{"bin": "0.0-0.1", "n": 0, "pred": null, "actual": null},
+             {"bin": "0.1-0.2", "n": 0, "pred": null, "actual": null},
+             {"bin": "0.2-0.3", "n": 2, "pred": 0.29467, "actual": 1.0},
+             {"bin": "0.3-0.4", "n": 2, "pred": 0.36465, "actual": 0.0},
+             {"bin": "0.4-0.5", "n": 8, "pred": 0.461945, "actual": 0.75},
+             {"bin": "0.5-0.6", "n": 8, "pred": 0.538055, "actual": 0.25},
+             {"bin": "0.6-0.7", "n": 2, "pred": 0.63535, "actual": 1.0},
+             {"bin": "0.7-0.8", "n": 2, "pred": 0.70533, "actual": 0.0},
+             {"bin": "0.8-0.9", "n": 0, "pred": null, "actual": null},
+             {"bin": "0.9-1.0", "n": 0, "pred": null, "actual": null}],
+    "not_gate_1": "calibration is NOT the model's first validation gate."},
+  "by_market": {
+    "moneyline": {"n_rows": 10, "n_settled": 8, "brier": 0.282285,
+      "log_loss": 0.758113, "mean_hold_pct": 1.8292,
+      "canonical_side": {"n": 4, "mean_model_prob": 0.494993,
+        "mean_market_fair_prob": 0.485563, "hit_rate": 0.25, "bias": 0.245,
+        "note": "one side per market"}},
+    "runline": {"n_rows": 10, "n_settled": 8, "brier": 0.315327,
+      "log_loss": 0.8379, "mean_hold_pct": null,
+      "canonical_side": {"n": 4, "mean_model_prob": 0.596055,
+        "mean_market_fair_prob": 0.533543, "hit_rate": 0.25, "bias": 0.3461,
+        "note": "one side per market"}},
+    "total": {"n_rows": 10, "n_settled": 8, "brier": 0.294922,
+      "log_loss": 0.78342, "mean_hold_pct": 4.7824,
+      "canonical_side": {"n": 4, "mean_model_prob": 0.513397,
+        "mean_market_fair_prob": 0.496812, "hit_rate": 0.25, "bias": 0.2634,
+        "note": "one side per market"}}}}}"""
+
+EVAL_ARTIFACT = """{
+ "run_dispersion": {"status": "ran", "split_q": 0.7, "runline_side": "both",
+  "n_fit": 1223, "n_eval_games": 552, "passed": true, "alpha": 0.27704,
+  "verdict": "indeterminate", "served": false, "served_alpha": null,
+  "verdict_note": "`passed` is the pre-registered single split. `verdict` is the ship decision and comes from `sensitivity`.",
+  "runline_side_note": "criterion 2's estimand: home is the log loss on home margin >= 2.",
+  "criteria": "fit on the fit half of a 70% date split; all four must hold on the held-out half",
+  "criteria_v1": "V1 said only margin >= 2 and did not name a side",
+  "sensitivity": {"status": "ran", "quantiles": [0.6, 0.7, 0.8],
+   "verdict": "indeterminate", "ship": false,
+   "rule": "the amended criterion 2 must pass at EVERY split quantile",
+   "verdict_by_side": {"home": "fail", "away": "pass", "both": "indeterminate"},
+   "grid": [
+    {"split_q": 0.6, "split_date": "2026-06-14", "n_eval_games": 721, "alpha": 0.27404,
+     "other_three_pass": true,
+     "by_side": {"home": {"delta": -0.003628, "t": -0.972, "pass": false},
+                 "away": {"delta": 0.015004, "t": 3.86, "pass": true},
+                 "both": {"delta": 0.011376, "t": 3.069, "pass": true}},
+     "gate_by_side": {"home": false, "away": true, "both": true}},
+    {"split_q": 0.7, "split_date": "2026-06-27", "n_eval_games": 552, "alpha": 0.27704,
+     "other_three_pass": true,
+     "by_side": {"home": {"delta": -0.00328, "t": -0.769, "pass": false},
+                 "away": {"delta": 0.015018, "t": 3.367, "pass": true},
+                 "both": {"delta": 0.011738, "t": 2.799, "pass": true}},
+     "gate_by_side": {"home": false, "away": true, "both": true}},
+    {"split_q": 0.8, "split_date": "2026-07-11", "n_eval_games": 362, "alpha": 0.2779,
+     "other_three_pass": true,
+     "by_side": {"home": {"delta": -0.004701, "t": -0.886, "pass": false},
+                 "away": {"delta": 0.011155, "t": 2.034, "pass": true},
+                 "both": {"delta": 0.006454, "t": 1.224, "pass": false}},
+     "gate_by_side": {"home": false, "away": true, "both": false}}]}}}"""
+
+CLV_EMPTY = """{"n_rows": 3, "n_graded": 0, "n_ungraded": 3,
+ "beat_close_rate": null, "avg_clv_pct": null,
+ "ungraded_reasons": {"no closing snapshot": 3}, "picks": []}"""
+
+CLV_GRADED = """{"n_rows": 4, "n_graded": 4, "beat_close_rate": 0.75,
+ "avg_clv_pct": 2.117, "ungraded_reasons": {"graded": 4},
+ "picks": [{"bet_id": "a", "graded": true, "clv_pct": 8.929, "beat_close": true},
+           {"bet_id": "b", "graded": true, "clv_pct": -1.2, "beat_close": false},
+           {"bet_id": "c", "graded": true, "clv_pct": 0.4, "beat_close": true},
+           {"bet_id": "d", "graded": true, "clv_pct": 0.34, "beat_close": true}]}"""
+
+LIVE_PAYLOAD = ("""{
+ "slate_date": "2026-08-09", "n_games": 2,""" + FULL_STATUS + """, "model": {
+   "version": "betting_runs_v1", "validated": false, "stage": "Diamond preview",
+   "min_edge": null,""" + VALIDATION_BLOCK + """},
+ "disclaimer": {"age": "21+ only.", "purpose": "Informational only.",
+                "legality": "Not legal in all states.",
+                "help": "If gambling stops being fun, call 1-800-GAMBLER.",
+                "affiliates": "No affiliate money.", "staking": "Flat 1 unit."},
+ "pick_of_the_day": {"side": "under", "label": "Under 9.0", "market": "total",
+   "model_prob": 0.55837, "odds": 102, "decimal": 2.02, "implied_prob": 0.49505,
+   "market_fair_prob": 0.48045, "edge": 0.07792, "ev_per_unit": 0.11191,
+   "kelly_full": 0.12539, "kelly_quarter": 0.03135, "book": "lowvig",
+   "point": 9.0, "p_push": 0.12508, "ev_per_unit_if_no_push": 0.1279,
+   "matchup": "TBR at SEA", "game_pk": 823104, "provisional": true,
+   "stake_units": 1.0, "suggested_units": 1.0, "min_edge_used": 0.06,
+   "caveat": "this is a runline or total, and the margin model is a Poisson difference"},
+ "longshot_of_the_day": null,
+ "pick_reason": "nothing at +200 or longer cleared the floor",
+ "pick_meta": {"provisional": true, "min_edge": 0.06,
+   "basis": "provisional_policy_floor", "n_floor_clearing_sides": 6,
+   "slots": {"pick_of_the_day": {"band": "american odds from -199 to +199",
+                                 "provisional": true, "min_edge": 0.06},
+             "longshot_of_the_day": {"band": "american odds of +200 or longer",
+                                     "provisional": true, "min_edge": 0.06,
+                                     "reason": "6 side(s) cleared the floor and none of them are priced at american odds of +200 or longer"}}},
+ "pick_blockers": [{"id": "min_edge", "reason": "no measured threshold exists",
+                    "need": "600 vintage-graded games", "have": 221}],
+ "team_bets": [
+  {"game_pk": 1, "date": "2026-08-09", "venue": "T-Mobile Park",
+   "start": "2026-08-09T20:10:00Z",
+   "odds_event_id": "e1", "odds_commence_time": "2026-08-09T20:10:00Z",
+   "home": {"org": "SEA", "probable": {"mlbam": 1, "name": "Home Arm"}},
+   "away": {"org": "TBR", "probable": {"mlbam": 2, "name": "Away Arm"}},
+   "model": {"p_home": 0.55, "p_away": 0.45, "fair_total": 8.4, "park_index": 0.96,
+             "home_prevention": {"starter_plus": 110, "bullpen_plus": 103},
+             "away_prevention": {"starter_plus": 98, "bullpen_plus": 99}},
+   "moneyline": [{"side": "home", "label": "SEA", "model_prob": 0.55, "odds": -124,
+                  "book": "draftkings", "market_fair_prob": 0.5446, "edge": 0.0054,
+                  "ev_per_unit": 0.0063, "kelly_full": 0.0078, "p_push": null},
+                 {"side": "away", "label": "TBR", "model_prob": 0.45, "odds": 116,
+                  "book": "draftkings", "market_fair_prob": 0.4554, "edge": -0.0054,
+                  "ev_per_unit": -0.043, "kelly_full": 0.0, "p_push": null}],
+   "runline": null,
+   "total": {"line": 9.0, "p_push": 0.12508,
+     "sides": [{"side": "over", "label": "Over 9.0", "model_prob": 0.44163,
+                "odds": -113, "book": "betrivers", "market_fair_prob": 0.51955,
+                "edge": -0.07792, "ev_per_unit": -0.14657, "kelly_full": 0.0,
+                "p_push": 0.12508},
+               {"side": "under", "label": "Under 9.0", "model_prob": 0.55837,
+                "odds": 102, "book": "lowvig", "market_fair_prob": 0.48045,
+                "edge": 0.07792, "ev_per_unit": 0.11191, "kelly_full": 0.12539,
+                "p_push": 0.12508}]},
+   "market": {"moneyline_hold_pct": 1.653, "total_hold_pct": 4.587,
+              "moneyline_fair_book": "pinnacle", "moneyline_hold_range": [1.653, 4.902],
+              "moneyline_n_books_on_line": 5, "total_fair_book": "lowvig",
+              "total_hold_range": [4.587, 6.1], "total_n_books_on_line": 3,
+              "fair_book_rule": "min_hold",
+              "n_books_rejected": {"moneyline": {"hold": 1, "stale": 0,
+                                                 "consensus": 0, "on_line": 5}},
+              "devig_method": "proportional"}},
+  {"game_pk": 2, "date": "2026-08-09", "venue": "Yankee Stadium",
+   "start": "2026-08-09T23:05:00Z", "odds_event_id": null,
+   "home": {"org": "NYY", "probable": null}, "away": {"org": "BOS", "probable": null},
+   "model": {"p_home": 0.6, "p_away": 0.4, "fair_total": 9.2, "park_index": 1.04,
+             "home_prevention": {"starter_plus": 105, "bullpen_plus": 101},
+             "away_prevention": {"starter_plus": 97, "bullpen_plus": 100}},
+   "moneyline": [{"side": "home", "label": "NYY", "model_prob": 0.6, "fair_odds": -150},
+                 {"side": "away", "label": "BOS", "model_prob": 0.4, "fair_odds": 150}],
+   "runline": null, "total": {"line": null, "sides": null, "fair_total": 9.2},
+   "market": null}],
+ "props_fair_lines": {"model_only": true, "pitchers": [], "hitters": [],
+                      "no_book_comparison_reason": "free tier"},
+ "parlay_context": {"rules": [], "legs": [], "featured_parlay": null,
+                    "featured_reason": "no backtest supports one",
+                    "math_note": "independent legs multiply"},
+ "record": {"n_rows": 3, "n_settled": 2, "n_open": 1, "won": 1, "lost": 1, "push": 0,
+            "net_units": -0.09, "roi_pct": -4.5, "n_clv_graded": 0,
+            "beat_close_rate": null, "avg_clv_pct": null, "stake_policy": "flat 1 unit",
+            "chain_sha": "9f2c1a77bb0e4d5566aa889900112233445566778899aabbccddeeff00112233",
+            "chain_note": "sha256 folded row by row over the record"},
+ "record_url": "/data/betting_record.json",
+ "clv_url": "/data/betting_clv.json",
+ "settlement_url": "/data/betting_settlement.json",
+ "record_policy": "Append only.",
+ "record_publish": {"written": false, "reason": "2 of 5 blockers are closed"},
+ "record_publish_blockers": [
+   {"id": "close_snapshot", "open": false, "need": "a close odds snapshot for slate 2026-08-09",
+    "have": "0 of 4 slates in the last 14 days have one",
+    "reason": "no close snapshot for this slate, so the pick could never be CLV-graded"},
+   {"id": "odds_slate", "open": true, "need": "the board priced against its own slate",
+    "have": "matched", "reason": "the snapshot belongs to this slate"},
+   {"id": "dispersion_gate", "open": true,
+    "need": "betting_model's run-dispersion gate to have RUN (not to have passed)",
+    "have": "ran", "reason": "the dispersion gate ran on 552 held-out games"},
+   {"id": "record_storage", "open": false,
+    "need": "the append-only JSONL under .cache/betting/ to be authoritative",
+    "have": {"backend": "json", "chain_sha": "9f2c1a77bb0e", "chain_extends": true},
+    "reason": "the record is still the git-tracked JSON"},
+   {"id": "settlement_current", "open": true, "need": "every stale row settled",
+    "have": "0 stale", "reason": "nothing is past the settle window"}]
+}""")
+
+
+@pytest.fixture(scope="module")
+def live_ctx():
+    """The board wired to all three side artifacts, close never captured."""
+    return _ctx(_fetch_js(main=LIVE_PAYLOAD, learning=LEARNING_ARTIFACT,
+                          evald=EVAL_ARTIFACT, clv=CLV_EMPTY))
+
+
+# ---- 7a. the feed-health strip ---------------------------------------------
+def test_feed_strip_says_the_close_half_has_never_run(live_ctx):
+    """THE SINGLE MOST IMPORTANT NEW PIXEL. Every price on the page comes from
+    an OPEN snapshot; the CLOSE snapshot is a separate cron that has never
+    fired, and a slate whose close was missed can never be CLV-graded however
+    much runs tomorrow. Before this the page said nothing at all."""
+    strip = live_ctx.eval("__html['betting-feedhealth'] || ''")
+    text = _visible_text(strip)
+    assert "NEVER CAPTURED" in text
+    assert "2026-08-09" in text                    # the open capture date
+    assert "board" in text.lower()
+    # the diagnosis names the REPAIR, and it rides as the title
+    assert "close cron" in strip
+
+
+def test_feed_strip_renders_even_when_the_payload_never_arrived():
+    """The state it reports is worst exactly when the fetch failed, so it may
+    not depend on the fetch succeeding."""
+    c = _ctx(BAD_FETCH)
+    strip = c.eval("__html['betting-feedhealth'] || ''")
+    assert strip, "the strip vanished on a failed load"
+    assert "payload not loaded" in _visible_text(strip)
+
+
+def test_feed_strip_is_above_the_tabs_in_the_shell():
+    """It is true on every tab, so it may not live inside the section body."""
+    p = ROOT / "betting" / "index.html"
+    if not p.exists():
+        pytest.skip("/betting/ has not been built in this checkout")
+    html = p.read_text(encoding="utf-8")
+    assert 'id="betting-feedhealth"' in html
+    assert html.index('id="betting-feedhealth"') < html.index("mlbstats-sectionnav")
+
+
+# ---- 7b. the validation tab ------------------------------------------------
+def test_validation_tab_leads_with_the_result_and_does_not_soften_it(live_ctx):
+    """The honest backtest LOSES to "always take the home team" and the page
+    has to say so in the first block, with the numbers, and with no adjective
+    in front of them."""
+    html = live_ctx.eval("__show('validation')")
+    text = _visible_text(html)
+    assert "LOSES to" in text
+    assert "0.25045" in text and "0.24885" in text        # brier vs home baseline
+    assert "50.68%" in text                                # accuracy
+    assert "-0.001603" in text and "-0.435" in text        # paired skill and t
+    assert "221" in text
+    # the headline is the FIRST thing in the section, not below a fold
+    assert html.index("LOSES to") < html.index("Two clocks")
+
+
+def test_validation_tab_keeps_the_two_clocks_apart(live_ctx):
+    """Merging them is what produced the "600 bets" question. One counts games
+    the model was graded on; the other counts settled paper bets per tag."""
+    html = live_ctx.eval("__show('validation')")
+    text = _visible_text(html)
+    assert "Clock A" in text and "Clock B" in text
+    assert "may never be added together" in text
+    assert "221" in text and "600" in text                 # clock A
+    assert "ev_rank" in text and "potd_band" in text       # clock B, per tag
+    assert "6.03" in text                                  # the MEASURED per-day rate
+    assert text.index("Clock A") < text.index("Clock B")
+
+
+def test_validation_gate_table_carries_a_distance_column(live_ctx):
+    html = live_ctx.eval("__show('validation')")
+    text = _visible_text(html)
+    assert "Distance" in text
+    assert "379 games short" in text                       # 600 - 221
+    assert "2.080 t short" in text                         # 1.645 - (-0.435)
+    assert "98 settled rows short" in text                 # 100 - 2
+
+
+def test_validation_calibration_panel_has_ten_bins_and_the_gap(live_ctx):
+    html = live_ctx.eval("__show('validation')")
+    text = _visible_text(html)
+    assert "0.0-0.1" in text and "0.9-1.0" in text
+    assert "|pred - actual|" in text
+    assert "0.7053" in text                                # a bin's predicted value
+    assert "0.2947" in text
+    for market in ("moneyline", "runline", "total"):
+        assert market in text
+    assert "NOT the model's first validation gate" in text
+
+
+def test_validation_dispersion_is_indeterminate_not_a_pass_or_a_fail(live_ctx):
+    """`verdict` GOVERNS. The single pre-registered split has passed=true and
+    the sweep is indeterminate; rendering the boolean would publish a pass the
+    module refused to serve."""
+    html = live_ctx.eval("__show('validation')")
+    text = _visible_text(html)
+    assert "indeterminate" in text
+    assert "Not a pass and not a failure" in text
+    assert "0.27704" in text                               # the fitted alpha
+    # BOTH honest readings: the split that clears and the split that does not
+    assert "+0.011738" in text and "+0.006454" in text
+    assert "-0.003280" in text                             # the home side, every split
+    assert "3.069" in text and "1.224" in text
+    assert "none, prices stay Poisson" in text
+
+
+def test_validation_dispersion_says_the_variance_ratio_is_not_published(live_ctx):
+    """FINDING, pinned so it cannot be quietly papered over: betting_model
+    measures the variance ratio at fit time (its own header carries 2.3748x on
+    the margin and 2.3385x per scoring side) and publishes alpha alone, with
+    the ratios only inside a prose note. Deriving 1 + alpha*lambda in the
+    client would be the page inventing a number, so it says which file would
+    have to carry it."""
+    html = live_ctx.eval("__show('validation')")
+    assert "not published by data/betting_model_eval.json" in _visible_text(html)
+
+
+def test_validation_dispersion_renders_the_variance_ratio_the_day_it_ships():
+    """The reader is wired for the shaped form the REPORTED EDIT to
+    betting_model would publish, so the fix is a producer change with no client
+    change behind it."""
+    art = EVAL_ARTIFACT.replace(
+        '"alpha": 0.27704,',
+        '"alpha": 0.27704, "variance_ratio": {"runs_var_over_mean": 2.3385, '
+        '"margin_var": 21.3057, "margin_var_skellam_implied": 8.9714, '
+        '"margin_ratio": 2.3748, "n_scoring_rows": 3532},', 1)
+    c = _ctx(_fetch_js(main=LIVE_PAYLOAD, learning=LEARNING_ARTIFACT, evald=art))
+    text = _visible_text(c.eval("__show('validation')"))
+    assert "2.3748x on the margin, 2.3385x per scoring side" in text
+
+
+def test_validation_tab_degrades_when_the_side_artifacts_are_missing():
+    """learning / eval / clv are lazily fetched and may 404 on a checkout whose
+    nightly has not run. Every panel then names the file it is missing."""
+    c = _ctx(_fetch_js(main=LIVE_PAYLOAD))
+    html = c.eval("__show('validation')")
+    text = _visible_text(html)
+    assert "/data/betting_learning.json" in text
+    assert "/data/betting_model_eval.json" in text
+    # the payload half still renders: the headline result comes from the board
+    assert "LOSES to" in text
+
+
+# ---- 7c. the pick tab ------------------------------------------------------
+def test_pick_says_how_often_a_whole_number_total_pushes(live_ctx):
+    html = live_ctx.eval("__show('potd')")
+    text = _visible_text(html)
+    assert "9 is a push 12.5% of the time" in text
+    assert "returns the stake" in text
+
+
+def test_pick_carries_the_dispersion_line_in_the_caveat_slot(live_ctx):
+    html = live_ctx.eval("__show('potd')")
+    text = _visible_text(html)
+    assert "Margin model" in text
+    assert "indeterminate" in text
+    assert "NOT served" in text
+
+
+def test_an_empty_board_renders_the_census_not_an_outage():
+    """N sides priced, M cleared the floor, none in the band. Without it an
+    empty pick tab reads as a broken feed."""
+    payload = LIVE_PAYLOAD.replace('"pick_of_the_day": {"side": "under"',
+                                   '"pick_of_the_day": null, "unused_pick": {"side": "under"')
+    c = _ctx(_fetch_js(main=payload, learning=LEARNING_ARTIFACT, evald=EVAL_ARTIFACT))
+    text = _visible_text(c.eval("__show('potd')"))
+    assert "Census." in text
+    assert "4 sides priced" in text          # the served rows with a price and a book
+    assert "6 cleared the 6.0% floor" in text
+    assert "american odds from -199 to +199" in text
+    assert "not a failure to load one" in text
+
+
+# ---- 7d. the team board ----------------------------------------------------
+def test_team_board_publishes_the_devig_book_and_its_spread(live_ctx):
+    html = live_ctx.eval("__show('teams')")
+    text = _visible_text(html)
+    assert "pinnacle" in text and "lowvig" in text          # the de-vig book per market
+    assert "1.65%" in text                                  # its hold
+    assert "1.65% to 4.90%" in text                         # the spread across books
+    assert "Books on line" in text
+    assert "1 hold" in text                                 # refused for hold
+
+
+def test_an_unpriced_game_stays_on_the_board_and_says_why(live_ctx):
+    """An absent row reads as an absent game. Both filters that can strip a
+    game's prices are named, with the counts from status."""
+    html = live_ctx.eval("__show('teams')")
+    text = _visible_text(html)
+    assert "NYY" in text                                    # the game is still there
+    assert "unpriced: no pre-game odds event within 3h of first pitch" in text
+    assert "already under way" in text
+    assert "3 odds events did not price a game" in text     # 2 in progress + 1 mismatch
+
+
+# ---- 7e. the record tab ----------------------------------------------------
+def test_record_tab_is_three_panels_and_prints_the_chain(live_ctx):
+    html = live_ctx.eval("__show('record')")
+    text = _visible_text(html)
+    assert "The public record" in text
+    assert "Closing line value" in text
+    assert "What gates the first published row" in text
+    assert "9f2c1a77bb0e" in text                           # the chain hash
+    assert "Joined across three files on bet_id" in text
+    assert "recompute the chain by folding sha256" in text
+    # the validation accounting MOVED to its own tab
+    assert "Clock A" not in text
+
+
+def test_record_clv_panel_renders_the_sidecar_reasons_when_nothing_graded(live_ctx):
+    html = live_ctx.eval("__show('record')")
+    text = _visible_text(html)
+    assert "no closing snapshot" in text
+    assert "unrecoverable after the fact" in text
+
+
+def test_record_clv_panel_draws_a_decile_histogram_from_theme_tokens():
+    c = _ctx(_fetch_js(main=LIVE_PAYLOAD, learning=LEARNING_ARTIFACT,
+                       evald=EVAL_ARTIFACT, clv=CLV_GRADED))
+    html = c.eval("__show('record')")
+    assert "bt-bar" in html                                 # bars, no chart library
+    assert "4 graded picks in ten" in _visible_text(html)
+    assert "+8.93%" in _visible_text(html)
+
+
+def test_record_publish_blockers_are_listed_whether_or_not_they_pass(live_ctx):
+    html = live_ctx.eval("__show('record')")
+    text = _visible_text(html)
+    for bid in ("close_snapshot", "odds_slate", "dispersion_gate", "record_storage",
+                "settlement_current"):
+        assert bid in text, bid
+    assert "3 of 5 are open" in text
+
+
+# ---- 7f. the preview slice (D16) -------------------------------------------
+def test_client_renders_a_redacted_pick_without_inventing_a_selection():
+    """The preview keeps the whole trust surface and withholds the SELECTION.
+    A client handed a redacted slot renders the market and the floor, and no
+    side, no price and no book."""
+    redacted = """{"slot": "pick_of_the_day", "slot_label": "Pick of the Day",
+      "market": "total", "provisional": true, "min_edge_used": 0.06,
+      "redacted": true,
+      "redaction_note": "Preview slice: the market and the floor this pick cleared, not the selection."}"""
+    payload = LIVE_PAYLOAD.replace(
+        '"pick_of_the_day": {"side": "under"',
+        '"pick_of_the_day": ' + redacted + ', "unused_pick": {"side": "under"')
+    c = _ctx(_fetch_js(main=payload, learning=LEARNING_ARTIFACT, evald=EVAL_ARTIFACT))
+    text = _visible_text(c.eval("__show('potd')"))
+    assert "Selection withheld" in text
+    assert "total" in text and "6.0%" in text
+    assert "Under 9.0" not in text
+    assert "lowvig" not in text
+    assert "Census." not in text            # a redacted slot is a pick, not an empty one
+
+
+# ===========================================================================
+# 8. D13: THE CLIENT MATH IS PINNED TO THE PYTHON MATH
+# ===========================================================================
+# assets/betting.js reimplements six primitives betting_model and
+# betting_ingest already own. Nothing connected the two, so a fix on one side
+# was invisible on the other. THREE checks, in increasing strength:
+#
+#   1. the fixture is REGENERATED from Python and must match,
+#   2. the JS is EXECUTED on those vectors in py_mini_racer,
+#   3. the JS source expression is pinned to a string, so a rewrite that
+#      happens to agree on 60 vectors still has to be deliberate.
+#
+# NOTE ON (2): the lane brief said there is no JS runtime here. There is.
+# py_mini_racer is in requirements.txt and this file already drives the whole
+# client through it. Executing the vectors is strictly stronger than diffing
+# source, so both ship.
+VECTORS_PATH = ROOT / "test_fixtures" / "odds_math_vectors.json"
+VECTORS = json.loads(VECTORS_PATH.read_text(encoding="utf-8"))
+
+JS_MATH_FNS = ("amToDec", "decToAm", "decToImplied", "devig", "evPerUnit", "kelly")
+
+
+def _js_fn_source(name: str) -> str:
+    """One function, verbatim, as it appears in assets/betting.js."""
+    i = JS.index("function " + name + "(")
+    j = JS.index("\n  function ", i + 1)
+    return JS[i:j].rstrip()
+
+
+def _py_expect(fn: str, args: list):
+    """The PYTHON side of each primitive. This is the definition the fixture is
+    generated from, so a change in betting_model has to land here to stay
+    green."""
+    if fn == "amToDec":
+        return bi.american_to_decimal(args[0])
+    if fn == "decToAm":
+        return bi.decimal_to_american(args[0])
+    if fn == "decToImplied":
+        return 1.0 / args[0]
+    if fn == "devig":
+        fair = bm.devig({str(i): d for i, d in enumerate(args[0])})
+        return [fair[str(i)] for i in range(len(args[0]))]
+    if fn == "evPerUnit":
+        p, dec, pp = args[0], args[1], args[2]
+        ev = bm.ev_per_unit(p, dec)
+        return (1.0 - pp) * ev if pp else ev
+    if fn == "kelly":
+        return bm.kelly_fraction(args[0], args[1])
+    raise AssertionError(f"no python side for {fn}")
+
+
+def test_odds_vectors_regenerate_from_python():
+    """The fixture is a RECORD of the Python side, not an independent claim. If
+    betting_model's math moves this fails first, and the fixture is then
+    rewritten deliberately rather than the two drifting apart."""
+    rows = VECTORS["vectors"]
+    assert len(rows) == 60 and VECTORS["n_vectors"] == 60
+    assert {r["fn"] for r in rows} == set(JS_MATH_FNS)
+    for r in rows:
+        assert r["expect"] == _py_expect(r["fn"], r["args"]), r["id"]
+
+
+def test_odds_vectors_cover_a_whole_number_total():
+    """evPerUnit now carries the push adjustment the export applies at the call
+    site. Without a whole-number vector the third argument is untested and the
+    two implementations can differ by 1 / (1 - p_push) unnoticed."""
+    push = [r for r in VECTORS["vectors"] if r["fn"] == "evPerUnit" and r["args"][2]]
+    assert len(push) >= 3
+    for r in push:
+        p, dec, pp = r["args"]
+        assert abs(r["expect"] - (1.0 - pp) * bm.ev_per_unit(p, dec)) < 1e-15
+        assert abs(r["expect"]) < abs(bm.ev_per_unit(p, dec))     # the push discounts it
+
+
+def test_client_odds_math_matches_python_on_every_vector():
+    """THE STRONG CHECK: the shipped JS, executed."""
+    MiniRacer = pytest.importorskip("py_mini_racer").MiniRacer
+    c = MiniRacer()
+    c.eval("\n".join(_js_fn_source(n) for n in JS_MATH_FNS))
+    for r in VECTORS["vectors"]:
+        got = c.call(r["fn"], *r["args"])
+        exp = r["expect"]
+        if isinstance(exp, list):
+            assert got is not None and len(got) == len(exp), r["id"]
+            for a, b in zip(got, exp):
+                assert abs(a - b) <= 1e-15, r["id"]
+        else:
+            assert got is not None and abs(got - exp) <= 1e-15, (r["id"], got, exp)
+
+
+def test_client_floors_american_prices_below_100_where_python_does_not():
+    """A DELIBERATE DIVERGENCE, pinned. American odds run +100 / -100 outward
+    and there is nothing in the gap, so the client refuses a half-typed "-1"
+    rather than converting it to decimal 101 and printing "+10000". Python has
+    no such floor because it is never handed a typed string."""
+    MiniRacer = pytest.importorskip("py_mini_racer").MiniRacer
+    c = MiniRacer()
+    c.eval(_js_fn_source("amToDec"))
+    for g in VECTORS["js_only_guards"]:
+        assert c.call("amToDec", *g["args"]) is None, g["args"]
+        assert bi.american_to_decimal(g["args"][0]) == g["py"]
+
+
+def test_known_rounding_divergence_at_an_exact_half_price():
+    """FINDING, pinned rather than hidden: JS Math.round is round-half-UP and
+    Python round() is round-half-to-EVEN, so decimal 2.045 converts to +105 in
+    the browser and +104 in the export. The two disagree by one american point
+    on any price whose (decimal - 1) * 100 lands exactly on a half. The
+    reachable surface is the odds converter, where a reader types the decimal.
+    The fix belongs in betting_ingest.decimal_to_american, which this lane does
+    not own; when it lands this test fails and the fixture is regenerated."""
+    MiniRacer = pytest.importorskip("py_mini_racer").MiniRacer
+    c = MiniRacer()
+    c.eval(_js_fn_source("decToAm"))
+    for d in VECTORS["known_divergences"]:
+        assert c.call("decToAm", *d["args"]) == d["js"], d["args"]
+        assert bi.decimal_to_american(d["args"][0]) == d["py"], d["args"]
+    assert any(not d["same"] for d in VECTORS["known_divergences"]), \
+        "the divergence was fixed; regenerate test_fixtures/odds_math_vectors.json"
+
+
+# The pinned source. Whitespace-normalized so reindenting is not a failure, but
+# every operator, every guard and every constant is here: a rewrite that agrees
+# on 60 vectors still has to be a deliberate edit to this string.
+PINNED_JS_MATH = {
+    "amToDec": "function amToDec(a) { var n = Number(a); if (!isFinite(n) || "
+               "Math.abs(n) < 100) return null; return 1 + (n > 0 ? n / 100 : "
+               "100 / Math.abs(n)); }",
+    "decToAm": "function decToAm(d) { var n = Number(d); if (!isFinite(n) || n <= 1) "
+               "return null; return n >= 2 ? Math.round((n - 1) * 100) : "
+               "Math.round(-100 / (n - 1)); }",
+    "decToImplied": "function decToImplied(d) { var n = Number(d); return (!isFinite(n) "
+                    "|| n <= 1) ? null : 1 / n; }",
+    "devig": "function devig(decimals) { var raw = [], sum = 0, i; for (i = 0; i < "
+             "decimals.length; i++) { var q = decToImplied(decimals[i]); if (q == null) "
+             "return null; raw.push(q); sum += q; } if (!sum) return null; return "
+             "raw.map(function (q) { return q / sum; }); }",
+    "evPerUnit": "function evPerUnit(p, dec, pPush) { var pp = (pPush > 0 && pPush < 1) "
+                 "? Number(pPush) : 0; return (1 - pp) * (p * (dec - 1) - (1 - p)); }",
+    "kelly": "function kelly(p, dec) { var b = dec - 1; if (b <= 0) return 0; return "
+             "Math.max(0, (p * b - (1 - p)) / b); }",
+}
+
+
+def _norm_js(src: str) -> str:
+    """Comments stripped, whitespace collapsed. The expression survives; the
+    formatting does not."""
+    src = re.sub(r"^\s*//.*$", "", src, flags=re.MULTILINE)
+    return re.sub(r"\s+", " ", src).strip()
+
+
+def test_client_odds_math_source_is_pinned():
+    for name, pinned in PINNED_JS_MATH.items():
+        assert _norm_js(_js_fn_source(name)) == _norm_js(pinned), name
+
+
+def test_client_ev_carries_the_push_factor_the_export_applies():
+    """The one place the two implementations were structurally different: the
+    export scales EV by (1 - p_push) at the CALL SITE and the client had no
+    third argument at all, so a whole-number total recomputed in the browser
+    came out 1 / (1 - p_push) too generous."""
+    assert "pPush" in _js_fn_source("evPerUnit")
+    assert "p_push" in JS                      # the row key the page reads
+
+
+# ===========================================================================
+# 9. THE <= 640px TIER
+# ===========================================================================
+def test_mobile_tier_is_additive_and_does_not_move_the_720_rule():
+    """tools/verify_site.py fails any route that scrolls sideways at 390px. The
+    720px rule is left exactly where it was so nothing between 641 and 720
+    shifts, and the phone tier is a second block below it."""
+    css = JS.split("css.textContent = [", 1)[1].split('].join("");', 1)[0]
+    assert "@media (max-width:720px){.bt-markets{grid-template-columns:minmax(0,1fr)}" in css
+    assert "@media (max-width:640px){" in css
+    assert css.index("max-width:720px") < css.index("max-width:640px")
+    for rule in (".bt-clocks{grid-template-columns:minmax(0,1fr)}",
+                 ".bt-fh-seg{white-space:normal}",
+                 ".bt-kv{grid-template-columns:minmax(0,1fr)}"):
+        assert rule in css, rule
+    # mybets, calculators, props and parlays keep their layout
+    tier = css.split("@media (max-width:640px){", 1)[1]
+    for untouched in (".bt-calc", ".bt-betform", ".bt-legpick", ".bt-field"):
+        assert untouched not in tier, untouched
+
+
+def test_gate_why_collapses_into_a_details_rather_than_being_deleted(live_ctx):
+    """The `why` paragraph is the widest cell in the gate table. It folds into
+    a disclosure on a phone; it must not be display:none'd, which would delete
+    the reason instead of folding it."""
+    html = live_ctx.eval("__show('validation')")
+    assert "bt-gate-more" in html
+    assert "why this gate exists" in html
+    assert "600 is a floor and not a pass" in html          # still in the DOM
+    css = JS.split("css.textContent = [", 1)[1].split('].join("");', 1)[0]
+    assert ".bt-gate-why{display:none}" not in css
+
+
+def test_every_new_table_scrolls_inside_its_own_box():
+    """A wide table must scroll itself, not the document. Every table this lane
+    added carries the .bt-scroll wrapper the 720px rule already relies on."""
+    n_tables = JS.count('<table class="bt-table')
+    n_wraps = JS.count('bt-scroll mlbstats-scroll')
+    assert n_wraps >= n_tables, (n_wraps, n_tables)

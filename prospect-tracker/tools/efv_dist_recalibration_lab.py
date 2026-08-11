@@ -7,14 +7,24 @@ written in full before this file existed. Artifact: data/xfv_dist_recalibration_
 
 Run:  python tools/efv_dist_recalibration_lab.py
       python tools/efv_dist_recalibration_lab.py --quick   (small B, smoke test only)
+      python tools/efv_dist_recalibration_lab.py --idr     (LANE B-L5, see below)
 
 Writes ONLY data/xfv_dist_recalibration_eval.json. Touches no served artifact, no config,
 no test, and no module outside tools/.
+
+-------------------------------------------------------------------------------
+LANE B-L5 (2026-08-10) added the `--idr` entry point and the IDR / EasyUQ block.
+It MERGES `lane_b_l5_idr_easyuq` into the same artifact and rewrites no other key.
+Everything from the original C2 run is preserved byte-for-byte and is a RECORD of a
+DIFFERENT frame vintage; see `lane_b_l5_idr_easyuq.frame` for the B-L5 basis.
+-------------------------------------------------------------------------------
 """
 from __future__ import annotations
 
 import json
+import os
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -24,9 +34,12 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-SCRATCH = Path(r"C:\Users\noah\AppData\Local\Temp\claude"
-               r"\c--Users-noah-baseball-projects-BaseballR"
-               r"\51d4716c-ebca-464e-b136-f45585e28ab6\scratchpad")
+# Scratch. This used to be a hard-coded per-session agent scratchpad directory, which went
+# stale the moment that session ended and silently pointed the cache at a directory nobody
+# would ever look in again. Resolved from the environment with a stable temp fallback so it
+# cannot rot: set EFV_LAB_SCRATCH to override. Nothing here is a repo path (rule 7).
+SCRATCH = Path(os.environ.get("EFV_LAB_SCRATCH")
+               or (Path(tempfile.gettempdir()) / "efv_dist_recal_lab"))
 FRAME_CACHE = SCRATCH / "c2_frame.json"
 OUT = ROOT / "data" / "xfv_dist_recalibration_eval.json"
 
@@ -259,6 +272,25 @@ def tier_gap_weighted(P, y, fv, min_n: int = 15) -> float:
     num = sum(v["gap"] * v["n"] for v in tt.values())
     den = sum(v["n"] for v in tt.values())
     return float(num / den)
+
+
+def _floor(vals, point):
+    """Bootstrap floor on a delta. HOISTED to module level 2026-08-10 (it was nested inside
+    main); body unchanged, it closed over nothing but module constants. Lane B-L5 calls it
+    through _floor95 so both lanes share ONE floor implementation."""
+    v = np.asarray([x for x in vals if np.isfinite(x)], dtype=float)
+    sd = float(v.std(ddof=1))
+    return {"B": int(len(v)), "sd": round(sd, 6),
+            "mde95_onesided": round(Z95 * sd, 6),
+            "mde_bonferroni_k5": round(Z_BONF * sd, 6),
+            "point_delta": round(float(point), 6),
+            "margin_over_floor": round(float(point) / (Z95 * sd), 4) if sd > 0 else None,
+            "margin_over_bonferroni": round(float(point) / (Z_BONF * sd), 4) if sd > 0 else None,
+            "clears": bool(float(point) > Z95 * sd),
+            "clears_bonferroni": bool(float(point) > Z_BONF * sd),
+            "boot_mean": round(float(v.mean()), 6),
+            "ci95": [round(float(np.percentile(v, 2.5)), 6),
+                     round(float(np.percentile(v, 97.5)), 6)]}
 
 
 def logscore(P, y) -> float:
@@ -628,21 +660,6 @@ def main(quick: bool = False):
         dc["LS"].append(logscore(Qa, ys) - logscore(Qb, ys))
         for b in range(5):
             dc[f"ece_{b}"].append(bucket_ece(Qa, ys, b) - bucket_ece(Qb, ys, b))
-
-    def _floor(vals, point):
-        v = np.asarray([x for x in vals if np.isfinite(x)], dtype=float)
-        sd = float(v.std(ddof=1))
-        return {"B": int(len(v)), "sd": round(sd, 6),
-                "mde95_onesided": round(Z95 * sd, 6),
-                "mde_bonferroni_k5": round(Z_BONF * sd, 6),
-                "point_delta": round(float(point), 6),
-                "margin_over_floor": round(float(point) / (Z95 * sd), 4) if sd > 0 else None,
-                "margin_over_bonferroni": round(float(point) / (Z_BONF * sd), 4) if sd > 0 else None,
-                "clears": bool(float(point) > Z95 * sd),
-                "clears_bonferroni": bool(float(point) > Z_BONF * sd),
-                "boot_mean": round(float(v.mean()), 6),
-                "ci95": [round(float(np.percentile(v, 2.5)), 6),
-                         round(float(np.percentile(v, 97.5)), 6)]}
 
     rep["floors_E_cond"] = {
         "instrument": "E_cond (registered primary, data/xfv_power_eval.json): per-fold "
@@ -1222,6 +1239,822 @@ def dollar_impact(fits: dict) -> dict:
     }
 
 
+# #############################################################################
+# ############################## LANE B-L5 ####################################
+# IDR / EasyUQ recalibration cut at the four business thresholds.
+#
+# PRE-REGISTRATION. Everything from here to `run_idr` - the family, the four arms,
+# the metric, the decomposition, the estimators, the multiplicity correction and the
+# eight ship clauses - was written BEFORE any B-L5 number existed, in this file, in one
+# commit. The only things written after the run are inside `run_idr`'s
+# `posthoc_added_after_primary_run` block, which changes no clause.
+#
+# WHY THIS IS NOT THE TWO ATTEMPTS THAT ALREADY FAILED.
+#   tools/efv_dist_recalibration_lab.py (C2, above) fitted PARAMETRIC cumulative-logit
+#   Platt families. NO_SHIP. tools/efv_isotonic_lab.py (X-ISO) fitted isotonic PER BUCKET
+#   on p_b against 1{y == b} and RENORMALIZED onto the simplex; that is not IDR, the
+#   renormalization is not order preserving, and it failed on calibrated rank, dropping
+#   Spearman -0.0165 against a -0.002 tolerance.
+#   IDR cut at the four thresholds is FOUR PAVA FITS on score -> 1{y >= k}. The four
+#   response vectors are POINTWISE ORDERED (1{y>=1} >= 1{y>=2} >= 1{y>=3} >= 1{y>=4} for
+#   every single row), and PAVA is monotone in its response, so the four fitted curves
+#   CANNOT CROSS. Ordinality is therefore STRUCTURAL and no renormalization onto the
+#   simplex is needed. `IDR_ORDINALITY_STRUCTURAL` below records this as a claim that the
+#   run must CONFIRM, not assume: if the raw fits cross, the fit is wrong.
+#
+# THE BINDING DESIGN CONSTRAINT. PAVA makes blocks, blocks make ties, ties destroy rank.
+# The candidate lives strictly DOWNSTREAM of `rank_war` and must never feed back into it.
+# `rank_feedback_audit()` is the executable proof, run every time, and its failure is a
+# hard stop.
+#
+# HAZARDS, named before the run.
+#   H1  IDR is in-sample optimal BY CONSTRUCTION. Every candidate number here is produced
+#       by a forward-chained fit on strictly earlier cohorts (`idr_folds`), and the
+#       train/test index disjointness is ASSERTED per fold, not assumed.
+#   H2  IDR cannot extrapolate above the training maximum; `out_of_bounds="clip"` would
+#       flatten the published fan at the top of the board, which is exactly where the
+#       business cares. `_idr_extend` handles it: above x_max the candidate carries the
+#       PAVA level at x_max and adds the INCUMBENT curve's own log-odds increment from
+#       x_max to x. That is monotone in x because the incumbent is, it is exact at x_max
+#       by construction, and the number of rows it touches is reported.
+#   H3  The FV60 star cell is thin. It is reported as a VENN-ABERS interval (Vovk's IVAP:
+#       refit the isotonic twice per test point, with its label forced to 0 and to 1), and
+#       never as a point.
+#
+# THE GATE. Mean RPS primary, decomposed CORP-style into MCB / DSC / UNC. A
+# zero-information constant fails BY CONSTRUCTION: its PAVA recalibration is the marginal,
+# so DSC = 0 exactly and skill = -MCB/UNC <= 0. This is the structural fix for the ECE
+# regime above, in which a constant reached 152.68 percent of the candidate's gain.
+# #############################################################################
+
+IDR_THRESHOLDS = (1, 2, 3, 4)            # y >= k, k = bench+ / regular+ / good+ / star
+IDR_MIN_TRAIN = 150                      # same bar the C2 chain used
+IDR_MIN_TIER_TRAIN = 25                  # tier climatology falls back to global below this
+IDR_TIER_EDGES = (38.0, 43.0, 48.0, 53.0)   # consensus-FV climatology bins, fixed a priori
+IDR_HOLM_ALPHA = 0.05
+IDR_SEED = 20260810
+IDR_STAR_TIER = 60                       # the business cell H3 names
+IDR_ORDINALITY_STRUCTURAL = True         # claim the run must CONFIRM
+IDR_ARMS = ("incumbent", "candidate_idr", "clim_global", "clim_tier")
+
+
+def _q_from_surv(S):
+    """5-bucket vector from survivors S[:, k-1] = P(Y >= k). Ordinality projection is a
+    NO-OP on a structurally ordered S; it is here so a broken arm cannot emit a negative
+    probability and quietly score well."""
+    S = np.minimum.accumulate(np.clip(np.asarray(S, dtype=float), EPS, 1.0 - EPS), axis=1)
+    n = S.shape[0]
+    Q = np.empty((n, 5))
+    Q[:, 0] = 1.0 - S[:, 0]
+    Q[:, 1] = S[:, 0] - S[:, 1]
+    Q[:, 2] = S[:, 1] - S[:, 2]
+    Q[:, 3] = S[:, 2] - S[:, 3]
+    Q[:, 4] = S[:, 3]
+    Q = np.clip(Q, EPS, None)
+    return Q / Q.sum(axis=1, keepdims=True)
+
+
+_INC_CACHE: dict = {}
+
+
+def _incumbent_surv(side: str, xs):
+    """Survivors of the SHIPPED served distribution at odds grade x: p_bucket_given_fv
+    then recalibrate_bucket. Cached on 2dp of x."""
+    import value_framework as vf
+    import efv_odds_calibration as _oc
+    is_pit = side == "pit"
+    out = np.empty((len(xs), 4))
+    for i, x in enumerate(xs):
+        k = (side, round(float(x), 2))
+        v = _INC_CACHE.get(k)
+        if v is None:
+            p = vf.p_bucket_given_fv(k[1], is_pit)
+            p = _oc.recalibrate_bucket(list(p), is_pit, provisional=False)
+            v = _surv(np.asarray(p, dtype=float).reshape(1, 5))[0]
+            _INC_CACHE[k] = v
+        out[i] = v
+    return out
+
+
+def fit_idr(x, y):
+    """FOUR PAVA fits, one per business threshold, on the SAME covariate. Unweighted: the
+    evaluation is unweighted, so the fit is matched to the measure it is scored on."""
+    from sklearn.isotonic import IsotonicRegression
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=int)
+    isos = []
+    for k in IDR_THRESHOLDS:
+        iso = IsotonicRegression(y_min=0.0, y_max=1.0, increasing=True,
+                                 out_of_bounds="clip")
+        iso.fit(x, (y >= k).astype(float))
+        isos.append(iso)
+    return {"iso": isos, "xmin": float(x.min()), "xmax": float(x.max()), "n": int(len(x))}
+
+
+def _idr_extend(fit, x, S, side):
+    """H2. Above the training maximum the raw PAVA value is a flat clip. Carry the PAVA
+    level at x_max and add the INCUMBENT's log-odds increment from x_max to x. Exact at
+    x_max, monotone in x, and it does not invent a shape the lab has no data for."""
+    above = np.asarray(x, dtype=float) > fit["xmax"] + 1e-12
+    n_above = int(above.sum())
+    if n_above:
+        Sx = _incumbent_surv(side, np.asarray(x, dtype=float)[above])
+        Sm = _incumbent_surv(side, np.array([fit["xmax"]]))[0]
+        shift = _logit(np.clip(Sx, EPS, 1 - EPS)) - _logit(np.clip(Sm, EPS, 1 - EPS))[None, :]
+        S = S.copy()
+        S[above] = _sig(_logit(np.clip(S[above], EPS, 1 - EPS)) + shift)
+    return S, above, n_above
+
+
+def predict_idr(fit, x, side):
+    """Returns (S, diag). `diag.raw_max_survivor_increase` is the STRUCTURAL ordinality
+    check on the interpolation region, taken BEFORE any projection: it must be <= 0."""
+    x = np.asarray(x, dtype=float)
+    S = np.column_stack([fit["iso"][j].predict(x) for j in range(len(IDR_THRESHOLDS))])
+    S_ext, above, n_above = _idr_extend(fit, x, S, side)
+    interior = ~above
+    raw_inc = float(np.max(np.diff(S[interior], axis=1))) if int(interior.sum()) else 0.0
+    ext_inc = float(np.max(np.diff(S_ext[above], axis=1))) if n_above else 0.0
+    return S_ext, {"raw_max_survivor_increase": raw_inc,
+                   "extended_max_survivor_increase": ext_inc,
+                   "n_above_train_max": n_above, "n_interior": int(interior.sum()),
+                   "train_xmax": round(fit["xmax"], 4)}
+
+
+def _tier_bin(fv):
+    return np.digitize(np.asarray(fv, dtype=float), np.asarray(IDR_TIER_EDGES))
+
+
+def idr_folds(frame):
+    """Forward chain, per side. Train = NON-PROVISIONAL rows in strictly earlier decision
+    years. Test = NON-PROVISIONAL rows in the year. Provisional rows are dropped from the
+    primary frame entirely: `recalibrate_bucket` is a hard no-op on them, so every arm
+    would emit the identical vector and their only effect is to dilute every delta by the
+    same factor and inflate every arm's apparent skill together."""
+    yr = np.array([r["decision_year"] for r in frame])
+    sd = np.array([r["side"] for r in frame], dtype=object)
+    pv = np.array([bool(r["provisional"]) for r in frame])
+    out = []
+    for side in ("hit", "pit"):
+        sm = sd == side
+        for t in sorted({int(v) for v in yr[sm].tolist()}):
+            tr = np.where(sm & (yr < t) & ~pv)[0]
+            te = np.where(sm & (yr == t) & ~pv)[0]
+            if len(tr) < IDR_MIN_TRAIN or len(te) == 0:
+                continue
+            assert not (set(tr.tolist()) & set(te.tolist())), "H1: train/test overlap"
+            out.append((side, int(t), tr, te))
+    return out
+
+
+def idr_arms(frame, folds, *, collect_diag=False):
+    """All four arms on ONE index set. Returns (idx, {arm: Q}, diag)."""
+    x = np.array([r["odds_grade"] for r in frame], dtype=float)
+    y = np.array([r["y"] for r in frame], dtype=int)
+    fvv = np.array([r["fv"] for r in frame], dtype=float)
+    P_ship = np.array([r["p_ship"] for r in frame], dtype=float)
+    tb = _tier_bin(fvv)
+    idx_parts, parts = [], {a: [] for a in IDR_ARMS}
+    diag = {"folds": [], "raw_max_survivor_increase": -np.inf,
+            "extended_max_survivor_increase": -np.inf, "n_above_train_max": 0,
+            "n_scored": 0, "tier_fallbacks": 0}
+    for side, t, tr, te in folds:
+        fit = fit_idr(x[tr], y[tr])
+        S_cand, d = predict_idr(fit, x[te], side)
+        # global climatology: the train-fold marginal, one constant vector for the fold
+        g = np.array([float((y[tr] >= k).mean()) for k in IDR_THRESHOLDS])
+        S_g = np.tile(g, (len(te), 1))
+        # tier-marginal climatology: the train-fold marginal WITHIN the row's FV bin
+        S_t = np.empty((len(te), len(IDR_THRESHOLDS)))
+        for i, ti in enumerate(tb[te]):
+            m = tb[tr] == ti
+            if int(m.sum()) < IDR_MIN_TIER_TRAIN:
+                S_t[i] = g
+                diag["tier_fallbacks"] += 1
+            else:
+                S_t[i] = [float((y[tr][m] >= k).mean()) for k in IDR_THRESHOLDS]
+        idx_parts.append(te)
+        parts["candidate_idr"].append(_q_from_surv(S_cand))
+        parts["clim_global"].append(_q_from_surv(S_g))
+        parts["clim_tier"].append(_q_from_surv(S_t))
+        parts["incumbent"].append(P_ship[te])
+        diag["raw_max_survivor_increase"] = max(diag["raw_max_survivor_increase"],
+                                                d["raw_max_survivor_increase"])
+        diag["extended_max_survivor_increase"] = max(diag["extended_max_survivor_increase"],
+                                                     d["extended_max_survivor_increase"])
+        diag["n_above_train_max"] += d["n_above_train_max"]
+        diag["n_scored"] += len(te)
+        if collect_diag:
+            diag["folds"].append({"side": side, "year": t, "n_train": int(len(tr)),
+                                  "n_test": int(len(te)), **d,
+                                  "train_marginal": [round(float(v), 5) for v in g]})
+    if not idx_parts:
+        return np.array([], dtype=int), {a: np.zeros((0, 5)) for a in IDR_ARMS}, diag
+    idx = np.concatenate(idx_parts)
+    o = np.argsort(idx, kind="stable")
+    return idx[o], {a: np.vstack(parts[a])[o] for a in IDR_ARMS}, diag
+
+
+# --- metric: mean RPS, and its CORP decomposition ----------------------------
+def rps(Q, y) -> float:
+    """Mean ranked probability score, sum of squared CDF errors over the four business
+    thresholds. Lower is better."""
+    S = _surv(np.asarray(Q, dtype=float))
+    y = np.asarray(y, dtype=int)
+    Z = np.column_stack([(y >= k).astype(float) for k in IDR_THRESHOLDS])
+    return float(np.mean(np.sum((S - Z) ** 2, axis=1)))
+
+
+def corp(Q, y) -> dict:
+    """CORP decomposition. Per threshold the RPS term is a Brier score, and Brier =
+    MCB - DSC + UNC with the reference forecasts produced by an IN-SAMPLE PAVA
+    recalibration on the evaluation set (that is what makes it CORP: consistent,
+    optimally binned, reproducible). Summed over thresholds this decomposes mean RPS.
+
+    A CONSTANT arm gets DSC = 0 EXACTLY, because PAVA on a constant covariate returns the
+    marginal, so its recalibrated score equals the climatological score."""
+    from sklearn.isotonic import IsotonicRegression
+    S = _surv(np.asarray(Q, dtype=float))
+    y = np.asarray(y, dtype=int)
+    per, tot = {}, {"score": 0.0, "MCB": 0.0, "DSC": 0.0, "UNC": 0.0}
+    for j, k in enumerate(IDR_THRESHOLDS):
+        z = (y >= k).astype(float)
+        s = S[:, j]
+        sbar = float(np.mean((s - z) ** 2))
+        rc = IsotonicRegression(y_min=0.0, y_max=1.0,
+                                out_of_bounds="clip").fit_transform(s, z)
+        s_rc = float(np.mean((rc - z) ** 2))
+        zb = float(z.mean())
+        s_mg = float(zb * (1.0 - zb))
+        per[f"y_ge_{k}"] = {
+            "n_events": int(z.sum()), "base_rate": round(zb, 6),
+            "brier": round(sbar, 6), "MCB": round(sbar - s_rc, 6),
+            "DSC": round(s_mg - s_rc, 6), "UNC": round(s_mg, 6),
+            "skill": round((s_mg - sbar) / s_mg, 6) if s_mg > 0 else None}
+        tot["score"] += sbar
+        tot["MCB"] += sbar - s_rc
+        tot["DSC"] += s_mg - s_rc
+        tot["UNC"] += s_mg
+    res = tot["score"] - (tot["MCB"] - tot["DSC"] + tot["UNC"])
+    return {"per_threshold": per,
+            "total": {"mean_rps": round(tot["score"], 6), "MCB": round(tot["MCB"], 6),
+                      "DSC": round(tot["DSC"], 6), "UNC": round(tot["UNC"], 6),
+                      "skill_score": round((tot["DSC"] - tot["MCB"]) / tot["UNC"], 6)
+                      if tot["UNC"] > 0 else None,
+                      "identity_residual": round(res, 12)}}
+
+
+def thr_brier(Q, y, j) -> float:
+    S = _surv(np.asarray(Q, dtype=float))
+    z = (np.asarray(y, dtype=int) >= IDR_THRESHOLDS[j]).astype(float)
+    return float(np.mean((S[:, j] - z) ** 2))
+
+
+def holm(pvals: dict) -> dict:
+    """Holm-Bonferroni step-down. Returns {name: {"p", "p_holm", "reject"}}."""
+    items = sorted(pvals.items(), key=lambda kv: kv[1])
+    m = len(items)
+    out, running = {}, 0.0
+    for i, (name, p) in enumerate(items):
+        adj = min(1.0, max(running, (m - i) * float(p)))
+        running = adj
+        out[name] = {"p_onesided": round(float(p), 6), "p_holm": round(adj, 6),
+                     "reject_at_0.05": bool(adj < IDR_HOLM_ALPHA)}
+    return out
+
+
+def venn_abers(x_tr, z_tr, x_te):
+    """Vovk IVAP. For each test point, refit the isotonic twice with the test label forced
+    to 0 and to 1. [p0, p1] is the multiprobability interval; p0 <= p1 always."""
+    from sklearn.isotonic import IsotonicRegression
+    x_tr = np.asarray(x_tr, dtype=float)
+    z_tr = np.asarray(z_tr, dtype=float)
+    p0, p1 = [], []
+    for xv in np.asarray(x_te, dtype=float):
+        for lab, acc in ((0.0, p0), (1.0, p1)):
+            iso = IsotonicRegression(y_min=0.0, y_max=1.0, out_of_bounds="clip")
+            iso.fit(np.append(x_tr, xv), np.append(z_tr, lab))
+            acc.append(float(iso.predict([xv])[0]))
+    return np.asarray(p0), np.asarray(p1)
+
+
+# --- the rank-invariance proof ----------------------------------------------
+def rank_feedback_audit() -> dict:
+    """POSITIVE EVIDENCE that a recalibration at the odds seam cannot reach `rank_war`.
+
+    Not a grep. For every function in efv_score.py that assigns `rank_war`, the assignment
+    graph is walked in source order and the TRANSITIVE dependency closure of `rank_war` is
+    computed; `probs` (the recalibrated vector) must not be in it. The FORWARD closure of
+    `probs` is computed too, and must not intersect the rank/grade names. Both directions,
+    because one-directional reasoning is how the -0.0165 got shipped last time."""
+    import ast
+    src_text = (ROOT / "efv_score.py").read_text(encoding="utf-8")
+    tree = ast.parse(src_text)
+    rank_names = {"rank_war", "_rank_exact"}
+    grade_names = {"xfv_grade", "xfv_war", "cons_war", "cons_fv", "_odds_grade", "lam"}
+    seam_name = "probs"
+    fns = []
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        body = list(ast.walk(node))
+        if not any(isinstance(s, ast.Assign) and any(
+                isinstance(t, ast.Name) and t.id in rank_names for t in s.targets)
+                for s in body):
+            continue
+        deps: dict = {}
+        fwd: dict = {}
+        rank_line = seam_line = None
+        for s in body:
+            if not isinstance(s, ast.Assign):
+                continue
+            rhs = {n.id for n in ast.walk(s.value) if isinstance(n, ast.Name)}
+            closure = set(rhs)
+            for r in rhs:
+                closure |= deps.get(r, set())
+            for tgt in s.targets:
+                for nm in (n.id for n in ast.walk(tgt) if isinstance(n, ast.Name)):
+                    deps[nm] = set(closure)
+                    fwd[nm] = set(closure)
+                    if nm in rank_names and rank_line is None:
+                        rank_line = s.lineno
+            if "recalibrate_bucket" in ast.dump(s.value) and seam_line is None:
+                seam_line = s.lineno
+        rank_dep = set()
+        for nm in rank_names:
+            rank_dep |= deps.get(nm, set())
+        seam_reach = {nm for nm, c in fwd.items() if seam_name in c}
+        fns.append({
+            "function": node.name, "lineno": node.lineno,
+            "rank_assign_line": rank_line, "recalibrate_bucket_line": seam_line,
+            "seam_name_in_rank_dependency_closure": bool(seam_name in rank_dep),
+            "rank_assigned_before_seam": bool(seam_line is None or rank_line is None
+                                              or rank_line < seam_line),
+            "names_downstream_of_seam": sorted(seam_reach)[:24],
+            "downstream_of_seam_intersects_rank_or_grade":
+                sorted(seam_reach & (rank_names | grade_names)),
+            "rank_dependency_closure_size": len(rank_dep),
+        })
+    clean = all(not f["seam_name_in_rank_dependency_closure"]
+                and f["rank_assigned_before_seam"]
+                and not f["downstream_of_seam_intersects_rank_or_grade"] for f in fns)
+    return {
+        "method": ("AST assignment-graph closure over efv_score.py, both directions, on "
+                   "every function that assigns rank_war"),
+        "functions_examined": fns,
+        "n_functions": len(fns),
+        "seam_cannot_reach_rank": bool(clean),
+        "structural_argument": (
+            "PATH A lands on `probs` at efv_score's three odds seams. `rank_war` is "
+            "assigned from (1 - lam) * cons_war + lam * xfv_war on the line BEFORE the "
+            "first seam, and the display grade is a quantile map of the sorted rank_war "
+            "pool. docs/EFV_GATE_STANDARD.md section 4 records that served eFV surplus is "
+            "a function of rank ONLY with respect to rank_war, so a downstream-only "
+            "recalibration is rank-invariant BY CONSTRUCTION."),
+        "dollar_argument": (
+            "vf.expected_surplus_usd prices through _pipeline_surplus_from_svs "
+            "(value_framework.py:1371-1376), which calls p_bucket_given_fv ITSELF at the "
+            "DISPLAY grade and takes no probability argument. No map applied at the odds "
+            "seam can reach surplus_mm, band_p10_mm, band_p90_mm or dist."),
+        "consumers_of_the_recalibrated_vector": [
+            "data/xfv.json p_bucket (efv_score.py:1514) and p_bust (:1521)",
+            "efv_export.py:87,91 pass-through, and the :301 p_star_median tier display",
+            "efv_reliability.py, the calibration monitor",
+            "assets/trademachine.js:779,983 read p_bust for DISPLAY only",
+        ],
+    }
+
+
+# --- the B-L5 run ------------------------------------------------------------
+def _boot_p(deltas) -> float:
+    """One-sided bootstrap p for `candidate is better`, i.e. P(delta <= 0) where delta is
+    other_arm_score - candidate_score and lower score is better."""
+    v = np.asarray([d for d in deltas if np.isfinite(d)], dtype=float)
+    return float((v <= 0.0).mean()) if len(v) else 1.0
+
+
+def _floor95(vals, point) -> dict:
+    """The C2 floor helper above, REUSED verbatim, with its two Bonferroni-k5 fields
+    dropped: this lane corrects for multiplicity with Holm over a 3-contrast family, and
+    leaving a k=5 Bonferroni column beside a Holm p is an invitation to quote the wrong
+    one."""
+    out = _floor(list(vals), point)
+    out.pop("mde_bonferroni_k5", None)
+    out.pop("margin_over_bonferroni", None)
+    out.pop("clears_bonferroni", None)
+    return out
+
+
+def run_idr(quick: bool = False, persist: bool = True) -> dict:
+    t0 = time.time()
+    rng = np.random.default_rng(IDR_SEED)
+    frame = build_frame()
+    folds = idr_folds(frame)
+    idx, Q, diag = idr_arms(frame, folds, collect_diag=True)
+    y = np.array([frame[i]["y"] for i in idx], dtype=int)
+    fvv = np.array([frame[i]["fv"] for i in idx], dtype=float)
+    xg = np.array([frame[i]["odds_grade"] for i in idx], dtype=float)
+    tiers = np.rint(fvv / 5.0).astype(int) * 5
+
+    rep: dict = {
+        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "lane": "B-L5 (2026-08-10)",
+        "produced_by": "tools/efv_dist_recalibration_lab.py --idr",
+        "family": ("IDR / EasyUQ: four PAVA fits on odds_grade -> 1{y >= k}, k = 1..4. "
+                   "Ordinality is STRUCTURAL because the four response vectors are "
+                   "pointwise ordered and PAVA is monotone in its response."),
+        "scope_note": ("FITS and GATES. Ships nothing. Writes only this artifact. "
+                       "PATH A (the efv_score odds seam), strictly downstream of rank_war."),
+        "seed": IDR_SEED,
+        "differs_from_prior_attempts": {
+            "C2_above": "parametric cumulative-logit Platt families only. NO_SHIP.",
+            "X_ISO_efv_isotonic_lab": ("isotonic PER BUCKET on p_b vs 1{y == b} WITH "
+                                       "simplex renormalization, which is not IDR and is "
+                                       "not order preserving. FAIL on calibrated rank, "
+                                       "Spearman -0.0165 against a -0.002 tolerance."),
+            "this_lane": ("four PAVA fits on the THRESHOLD indicators, no renormalization "
+                          "needed, and the map is confined downstream of rank_war so a "
+                          "rank tolerance is not even the binding object."),
+        },
+        "prereg": {
+            "min_train": IDR_MIN_TRAIN, "min_tier_train": IDR_MIN_TIER_TRAIN,
+            "tier_edges": list(IDR_TIER_EDGES), "holm_alpha": IDR_HOLM_ALPHA,
+            "arms": list(IDR_ARMS), "thresholds": list(IDR_THRESHOLDS),
+            "primary_metric": "mean RPS, sum of squared CDF errors over the 4 thresholds",
+            "decomposition": "CORP: score = MCB - DSC + UNC, per threshold and summed",
+            "estimators": ["E_cond (fits fixed, rows resampled)",
+                           "E_refit restricted (frame resampled, IDR chain refit; the "
+                           "upstream ridge is held fixed, so it is a LOWER BOUND)"],
+            "ship_clauses": [
+                "V0 validity: every arm sums to 1, no negatives, raw PAVA fits ordinal",
+                "V1 H1: train/test index disjointness asserted per fold",
+                "G1 mean RPS candidate < incumbent, Holm p < 0.05 under BOTH estimators",
+                "G2 candidate beats BOTH climatologies, Holm p < 0.05 under E_cond and "
+                "point-better under E_refit",
+                "G3 DSC_candidate > DSC_incumbent AND MCB_candidate < MCB_incumbent",
+                "G4 do no harm: no threshold's Brier degrades past its own E_cond floor",
+                "G5 rank_feedback_audit clean",
+                "STOP log score materially worse than incumbent -> NO_SHIP regardless",
+            ],
+        },
+        "frame": {
+            "n_frame_rows": len(frame),
+            "n_primary_scored": int(len(idx)),
+            "provisional_dropped_from_primary": int(sum(1 for r in frame if r["provisional"])),
+            "folds": diag["folds"],
+            "n_folds": len(folds),
+            "events_by_threshold": {f"y_ge_{k}": int((y >= k).sum()) for k in IDR_THRESHOLDS},
+            "rows_by_tier": {str(int(t)): int((tiers == t).sum())
+                             for t in sorted(set(tiers.tolist()))},
+            "note": ("PRIMARY is the NON-PROVISIONAL evaluable frame. recalibrate_bucket "
+                     "is a hard no-op on provisional rows, so every arm would emit an "
+                     "identical vector there and their only effect is to dilute all four "
+                     "arms by the same factor."),
+            "matrix_mtimes": {s: time.strftime(
+                "%Y-%m-%dT%H:%M:%SZ", time.gmtime(_matrix_mtime(s))) for s in ("hit", "pit")},
+        },
+        "ordinality": {
+            "claim": ("STRUCTURAL. The four PAVA fits cannot cross because the response "
+                      "vectors are pointwise ordered."),
+            "raw_max_survivor_increase": round(diag["raw_max_survivor_increase"], 12),
+            "held_structurally": bool(diag["raw_max_survivor_increase"] <= 0.0),
+            "extension_max_survivor_increase": round(diag["extended_max_survivor_increase"], 12)
+            if diag["n_above_train_max"] else None,
+            "extension_held": bool(diag["n_above_train_max"] == 0
+                                   or diag["extended_max_survivor_increase"] <= 0.0),
+            "reading": ("a POSITIVE value means two fitted curves crossed, which under "
+                        "pointwise-ordered responses can only mean the fit is wrong"),
+        },
+        "H2_extrapolation": {
+            "n_rows_above_train_max": diag["n_above_train_max"],
+            "share_above_train_max": round(diag["n_above_train_max"] / max(1, len(idx)), 5),
+            "how_smoothed": ("carry the PAVA level at x_max, add the INCUMBENT curve's own "
+                             "log-odds increment from x_max to x. Exact at x_max, monotone "
+                             "in x, invents no shape the data cannot support."),
+        },
+        "H1_out_of_fold": {
+            "asserted": True,
+            "how": ("idr_folds asserts set(train) & set(test) is empty for every fold, and "
+                    "train is restricted to decision_year strictly less than the test year, "
+                    "so no row can calibrate itself and no cohort can calibrate itself"),
+        },
+        "tier_climatology_fallbacks": diag["tier_fallbacks"],
+    }
+
+    # --- validity ------------------------------------------------------------
+    val = {"pass": True, "detail": {}}
+    for a in IDR_ARMS:
+        Qa = Q[a]
+        S = _surv(Qa)
+        ok = (abs(Qa.sum(axis=1) - 1.0).max() < 1e-9 and int((Qa < -1e-12).sum()) == 0
+              and float(np.max(np.diff(S, axis=1))) <= 1e-9)
+        val["detail"][a] = {
+            "max_abs_sum_err": round(float(abs(Qa.sum(axis=1) - 1.0).max()), 12),
+            "n_negative": int((Qa < -1e-12).sum()),
+            "max_survivor_increase": round(float(np.max(np.diff(S, axis=1))), 12),
+            "pass": bool(ok)}
+        val["pass"] = val["pass"] and ok
+    rep["validity"] = val
+
+    # --- the four-arm table --------------------------------------------------
+    table = {}
+    for a in IDR_ARMS:
+        c = corp(Q[a], y)
+        table[a] = {
+            "mean_rps": c["total"]["mean_rps"], "MCB": c["total"]["MCB"],
+            "DSC": c["total"]["DSC"], "UNC": c["total"]["UNC"],
+            "skill_score": c["total"]["skill_score"],
+            "corp_identity_residual": c["total"]["identity_residual"],
+            "logscore": round(logscore(Q[a], y), 6),
+            "brier5": round(brier(Q[a], y), 6),
+            "per_threshold": c["per_threshold"],
+            "mean_p": {BUCKETS[b]: round(float(Q[a][:, b].mean()), 5) for b in range(5)},
+        }
+    rep["four_arm_table"] = table
+    rep["four_arm_table_note"] = (
+        "ONE table, every time. A zero-information constant scores UNC exactly and gets "
+        "skill 0 by construction; that is the structural fix for the ECE regime in which "
+        "a constant reached 152.68 percent of the candidate gain.")
+
+    d_point = {o: table[o]["mean_rps"] - table["candidate_idr"]["mean_rps"]
+               for o in ("incumbent", "clim_global", "clim_tier")}
+    rep["point_deltas_rps_other_minus_candidate"] = {k: round(v, 6) for k, v in d_point.items()}
+
+    # --- E_cond --------------------------------------------------------------
+    B_cond, B_refit = (200, 40) if quick else (2000, 400)
+    n = len(idx)
+    dc = {o: [] for o in d_point}
+    dls, dthr = [], {j: [] for j in range(4)}
+    for bi in range(B_cond):
+        if bi % 250 == 0:
+            print(f"  IDR E_cond {bi}/{B_cond}", flush=True)
+        s = rng.integers(0, n, n)
+        ys = y[s]
+        rc = rps(Q["candidate_idr"][s], ys)
+        for o in d_point:
+            dc[o].append(rps(Q[o][s], ys) - rc)
+        dls.append(logscore(Q["incumbent"][s], ys) - logscore(Q["candidate_idr"][s], ys))
+        for j in range(4):
+            dthr[j].append(thr_brier(Q["incumbent"][s], ys, j)
+                           - thr_brier(Q["candidate_idr"][s], ys, j))
+    rep["E_cond"] = {
+        "instrument": "fits held FIXED, scored rows resampled i.i.d., B = %d" % B_cond,
+        "vs": {o: dict(_floor95(dc[o], d_point[o]),
+                       p_onesided=round(_boot_p(dc[o]), 6)) for o in d_point},
+        "logscore_incumbent_minus_candidate": _floor95(
+            dls, table["incumbent"]["logscore"] - table["candidate_idr"]["logscore"]),
+        "per_threshold_brier_incumbent_minus_candidate": {
+            f"y_ge_{IDR_THRESHOLDS[j]}": _floor95(
+                dthr[j], thr_brier(Q["incumbent"], y, j) - thr_brier(Q["candidate_idr"], y, j))
+            for j in range(4)},
+    }
+    rep["E_cond"]["holm"] = holm({o: rep["E_cond"]["vs"][o]["p_onesided"] for o in d_point})
+
+    # --- E_refit (restricted) ------------------------------------------------
+    dr = {o: [] for o in d_point}
+    nfr = len(frame)
+    for bi in range(B_refit):
+        if bi % 50 == 0:
+            print(f"  IDR E_refit {bi}/{B_refit}", flush=True)
+        r = np.random.default_rng(IDR_SEED * 1000 + bi)
+        boot = [frame[j] for j in r.integers(0, nfr, nfr)]
+        try:
+            ib, Qb, _ = idr_arms(boot, idr_folds(boot))
+        except Exception:                                       # noqa: BLE001
+            continue
+        if len(ib) == 0:
+            continue
+        yb = np.array([boot[j]["y"] for j in ib], dtype=int)
+        rc = rps(Qb["candidate_idr"], yb)
+        for o in d_point:
+            dr[o].append(rps(Qb[o], yb) - rc)
+    rep["E_refit_restricted"] = {
+        "instrument": ("frame resampled with replacement and the IDR chain REFIT per draw; "
+                       "the upstream ridge and its output calibration are INPUTS to this "
+                       "lane and are held fixed, so this is a LOWER BOUND on refit "
+                       "variance. B = %d" % B_refit),
+        "vs": {o: dict(_floor95(dr[o], d_point[o]),
+                       p_onesided=round(_boot_p(dr[o]), 6)) for o in d_point},
+    }
+    rep["E_refit_restricted"]["holm"] = holm(
+        {o: rep["E_refit_restricted"]["vs"][o]["p_onesided"] for o in d_point})
+
+    # --- H3 Venn-Abers at the FV60 star cell ---------------------------------
+    rep["H3_venn_abers_star_cell"] = _venn_abers_cells(frame, folds, idx, y, tiers, Q)
+
+    # --- G5 rank invariance --------------------------------------------------
+    rep["G5_rank_feedback_audit"] = rank_feedback_audit()
+
+    # --- verdict -------------------------------------------------------------
+    ec, er = rep["E_cond"], rep["E_refit_restricted"]
+    g1 = bool(d_point["incumbent"] > 0
+              and ec["holm"]["incumbent"]["reject_at_0.05"]
+              and er["holm"]["incumbent"]["reject_at_0.05"])
+    g2 = bool(all(d_point[o] > 0 and ec["holm"][o]["reject_at_0.05"]
+                  for o in ("clim_global", "clim_tier"))
+              and all(d_point[o] > 0 for o in ("clim_global", "clim_tier")))
+    g3 = bool(table["candidate_idr"]["DSC"] > table["incumbent"]["DSC"]
+              and table["candidate_idr"]["MCB"] < table["incumbent"]["MCB"])
+    harmed = [k for k, v in ec["per_threshold_brier_incumbent_minus_candidate"].items()
+              if v["point_delta"] < -v["mde95_onesided"]]
+    g4 = not harmed
+    g5 = bool(rep["G5_rank_feedback_audit"]["seam_cannot_reach_rank"])
+    stop_ls = bool(ec["logscore_incumbent_minus_candidate"]["point_delta"]
+                   < -ec["logscore_incumbent_minus_candidate"]["mde95_onesided"])
+    ord_ok = bool(rep["ordinality"]["held_structurally"] and rep["ordinality"]["extension_held"])
+    clauses = {
+        "V0_validity_and_ordinality": {"pass": bool(val["pass"] and ord_ok),
+                                       "arms_valid": val["pass"], "ordinal": ord_ok},
+        "V1_out_of_fold_asserted": {"pass": True},
+        "G1_beats_incumbent_both_estimators": {
+            "pass": g1, "point_delta_rps": round(d_point["incumbent"], 6),
+            "e_cond_holm_p": ec["holm"]["incumbent"]["p_holm"],
+            "e_refit_holm_p": er["holm"]["incumbent"]["p_holm"]},
+        "G2_beats_both_climatologies": {
+            "pass": g2,
+            "vs_clim_global": round(d_point["clim_global"], 6),
+            "vs_clim_tier": round(d_point["clim_tier"], 6),
+            "e_cond_holm_p": {o: ec["holm"][o]["p_holm"]
+                              for o in ("clim_global", "clim_tier")},
+            "e_refit_point_better": {o: bool(d_point[o] > 0)
+                                     for o in ("clim_global", "clim_tier")}},
+        "G3_discrimination_and_calibration": {
+            "pass": g3,
+            "DSC_candidate": table["candidate_idr"]["DSC"],
+            "DSC_incumbent": table["incumbent"]["DSC"],
+            "MCB_candidate": table["candidate_idr"]["MCB"],
+            "MCB_incumbent": table["incumbent"]["MCB"]},
+        "G4_do_no_harm_per_threshold": {"pass": g4, "harmed": harmed},
+        "G5_rank_invariance": {"pass": g5},
+        "STOP_logscore_worse": {"tripped": stop_ls,
+                                "delta": ec["logscore_incumbent_minus_candidate"]["point_delta"]},
+    }
+    if not clauses["V0_validity_and_ordinality"]["pass"] or not g5 or stop_ls or not g1:
+        verdict = "NO_SHIP"
+    elif g2 and g3 and g4:
+        verdict = "SHIP_READY"
+    else:
+        verdict = "PARTIAL"
+    rep["clauses"] = clauses
+    rep["verdict"] = verdict
+
+    # =========================================================================
+    # POST-HOC. WRITTEN AFTER THE PRIMARY NUMBERS WERE KNOWN, PLACED AFTER THE
+    # VERDICT IS ALREADY COMPUTED, AND CHANGING NO CLAUSE AND NO THRESHOLD. It
+    # exists because a pre-registered clause failed and the reason is measurable.
+    # =========================================================================
+    d_mcb, d_dsc = [], []
+    for bi in range(B_cond):
+        s = rng.integers(0, n, n)
+        ys = y[s]
+        ci = corp(Q["incumbent"][s], ys)["total"]
+        cc = corp(Q["candidate_idr"][s], ys)["total"]
+        d_mcb.append(ci["MCB"] - cc["MCB"])
+        d_dsc.append(ci["DSC"] - cc["DSC"])
+    from sklearn.isotonic import IsotonicRegression                      # noqa: F401
+    blocks = []
+    for side, t, tr, te in folds:
+        fit = fit_idr(np.array([frame[i]["odds_grade"] for i in tr], dtype=float),
+                      np.array([frame[i]["y"] for i in tr], dtype=int))
+        blocks.append({"side": side, "year": t, "n_train": int(len(tr)),
+                       "distinct_fitted_levels": [
+                           int(len(np.unique(np.round(fit["iso"][j].y_thresholds_, 9))))
+                           for j in range(4)]})
+    mids = None
+    try:
+        import value_framework as vf
+        from prospect_path import _spearman
+        mids = {"hit": np.asarray(vf._calibrated_midpoints("hitter"), dtype=float),
+                "pit": np.asarray(vf._calibrated_midpoints("pitcher"), dtype=float)}
+        tgt = [float(frame[i]["target"]) for i in idx]
+        sides = [frame[i]["side"] for i in idx]
+        rho = {}
+        for a in IDR_ARMS:
+            ev = [float(np.dot(Q[a][i], mids[sides[i]])) for i in range(len(idx))]
+            rho[a] = round(float(_spearman(ev, tgt)), 5)
+        rho["odds_grade_itself"] = round(float(_spearman(xg.tolist(), tgt)), 5)
+    except Exception as exc:                                             # noqa: BLE001
+        rho = {"error": str(exc)}
+    rep["posthoc_added_after_primary_run"] = {
+        "disclosure": ("Written after the primary numbers were known and placed after the "
+                       "verdict. Changes no clause, no threshold, no verdict."),
+        "why_G3_failed_arithmetically": {
+            "delta_rps": round(d_point["incumbent"], 6),
+            "delta_MCB_incumbent_minus_candidate": round(
+                table["incumbent"]["MCB"] - table["candidate_idr"]["MCB"], 6),
+            "delta_DSC_incumbent_minus_candidate": round(
+                table["incumbent"]["DSC"] - table["candidate_idr"]["DSC"], 6),
+            "identity": "delta_rps = delta_MCB - delta_DSC",
+            "reading": ("the entire RPS gain, and MORE than all of it, is bought by "
+                        "removing miscalibration; the candidate PAYS discrimination for it. "
+                        "That is PAVA blocking: blocks are ties and ties are lost "
+                        "resolution. It is the same mechanism that killed X-ISO on rank, "
+                        "showing up here as a DSC debit rather than a Spearman debit."),
+            "E_cond_floor_delta_MCB": _floor95(
+                d_mcb, table["incumbent"]["MCB"] - table["candidate_idr"]["MCB"]),
+            "E_cond_floor_delta_DSC": _floor95(
+                d_dsc, table["incumbent"]["DSC"] - table["candidate_idr"]["DSC"]),
+        },
+        "pava_resolution_cost": {
+            "distinct_fitted_levels_per_fold": blocks,
+            "reading": ("one level per threshold means the fold's PAVA collapsed to a "
+                        "constant and contributed no discrimination at all"),
+        },
+        "forbidden_wiring_counterfactual": {
+            "what": ("Spearman of E[WAR] under each arm against the realized target. This "
+                     "is NOT wired and MUST NOT be: it is the measurement of what the "
+                     "banned feedback would cost, and it is here so the next reader can "
+                     "see the size of the trap rather than rediscover it."),
+            "spearman": rho,
+        },
+        "top_of_board_bound": (
+            "the FV55+ cell is the first instrument in this program to BOUND the "
+            "top-of-board over-prediction rather than point-estimate it; see "
+            "H3_venn_abers_star_cell"),
+    }
+    rep["if_it_ships"] = {
+        "this_lane_does_neither": True,
+        "owed_1": ("epoch bump: the served p_bucket / p_bust vectors change on "
+                   "non-provisional rows, so the artifact epoch that stamps xfv.json must "
+                   "be incremented by whoever wires it"),
+        "owed_2": ("config/valuation_sets/prospx_current.yaml re-capture, because the "
+                   "capture records the served odds surface"),
+        "owed_3": "regen tripwires in docs/EFV_REGEN_TRIPWIRES_2026-08-07.md re-stamped",
+        "note_on_prices": ("MEASURED, not assumed: PATH A moves NO price. "
+                           "vf.expected_surplus_usd re-derives p_bucket_given_fv itself at "
+                           "the DISPLAY grade, so surplus_mm / band_p10_mm / band_p90_mm / "
+                           "dist are byte-identical under any odds-seam map. The lane brief "
+                           "premise 'if it ships it moves prices' is FALSE for PATH A."),
+    }
+    rep["elapsed_s"] = round(time.time() - t0, 1)
+
+    if persist:
+        cur = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
+        cur["lane_b_l5_idr_easyuq"] = rep
+        cur["multi_lane_note"] = (
+            "Two lanes write this artifact. The top-level keys are LANE C2 (2026-08-08), "
+            "parametric cumulative-logit Platt, verdict NO_SHIP, on the frame of that day. "
+            "`lane_b_l5_idr_easyuq` is LANE B-L5 (2026-08-10), IDR / EasyUQ at the four "
+            "business thresholds, on a REBUILT frame. The two frames are different "
+            "vintages and their absolute numbers are NOT comparable across blocks; each "
+            "block carries its own incumbent arm.")
+        OUT.write_text(json.dumps(cur, indent=1), encoding="utf-8")
+    print(f"IDR verdict={verdict} n={len(idx)} dRPS_vs_inc={d_point['incumbent']:+.6f} "
+          f"elapsed={rep['elapsed_s']}s")
+    return rep
+
+
+def _matrix_mtime(side: str) -> float:
+    from efv_dataset import matrix_path
+    return matrix_path(side).stat().st_mtime
+
+
+def _venn_abers_cells(frame, folds, idx, y, tiers, Q) -> dict:
+    """H3. The FV60 star cell as an INTERVAL. Per test row, IVAP against its own fold's
+    train set on the star indicator; the cell is summarised by the mean of p0 and the mean
+    of p1, which is the interval a cell-level rate must be read inside."""
+    x = np.array([r["odds_grade"] for r in frame], dtype=float)
+    yf = np.array([r["y"] for r in frame], dtype=int)
+    pos = {int(v): i for i, v in enumerate(idx)}
+    out = {}
+    for tier_label, sel in (("FV60", lambda t: t == IDR_STAR_TIER),
+                            ("FV55", lambda t: t == 55),
+                            ("FV60_plus", lambda t: t >= IDR_STAR_TIER),
+                            ("FV55_plus", lambda t: t >= 55)):
+        p0s, p1s, cand, inc, rows, ev = [], [], [], [], 0, 0
+        for side, t, tr, te in folds:
+            keep = [i for i in te if i in pos and sel(int(round(frame[i]["fv"] / 5.0) * 5))]
+            if not keep:
+                continue
+            a0, a1 = venn_abers(x[tr], (yf[tr] >= 4).astype(float), x[keep])
+            p0s.extend(a0.tolist())
+            p1s.extend(a1.tolist())
+            for i in keep:
+                cand.append(float(Q["candidate_idr"][pos[i], 4]))
+                inc.append(float(Q["incumbent"][pos[i], 4]))
+                ev += int(yf[i] >= 4)
+                rows += 1
+        if not rows:
+            out[tier_label] = {"n_rows": 0}
+            continue
+        out[tier_label] = {
+            "n_rows": rows, "n_star_events": ev,
+            "realized_rate": round(ev / rows, 5),
+            "venn_abers_interval_mean": [round(float(np.mean(p0s)), 5),
+                                         round(float(np.mean(p1s)), 5)],
+            "venn_abers_interval_widest_row": [round(float(np.min(p0s)), 5),
+                                               round(float(np.max(p1s)), 5)],
+            "candidate_mean_p_star": round(float(np.mean(cand)), 5),
+            "incumbent_mean_p_star": round(float(np.mean(inc)), 5),
+            "incumbent_inside_interval": bool(np.mean(p0s) <= np.mean(inc) <= np.mean(p1s)),
+            "candidate_inside_interval": bool(np.mean(p0s) <= np.mean(cand) <= np.mean(p1s)),
+        }
+    out["reading"] = ("Vovk IVAP. p0 is the isotonic prediction with the test label forced "
+                      "to 0 and p1 with it forced to 1; the true probability is not a "
+                      "point and this interval is its honest width at this sample size.")
+    return out
+
+
 if __name__ == "__main__":
     _chunk = next((a for a in sys.argv[1:] if a.startswith("--refit-chunk=")), None)
     if _chunk:
@@ -1231,5 +2064,7 @@ if __name__ == "__main__":
         print(f"refit chunk {a}:{b} -> {len(todo)} draws to compute", flush=True)
         refit_chunk(fr, todo)
         print(f"have {len(_read_refit_draws())} draws", flush=True)
+    elif "--idr" in sys.argv:
+        run_idr(quick="--quick" in sys.argv, persist="--dry" not in sys.argv)
     else:
         main(quick="--quick" in sys.argv)

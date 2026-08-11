@@ -30,3 +30,8 @@ server.*.log
 xrv_models_vaa/
 xwoba_model_metrics.json
 ncaa_statsapi_2026_summary.json
+
+# Claude Code session scratch. `worktrees/` holds full nested copies of this
+# repo left behind by workflow runs (13,986 files in one), which must never be
+# committed into it.
+.claude/worktrees/
