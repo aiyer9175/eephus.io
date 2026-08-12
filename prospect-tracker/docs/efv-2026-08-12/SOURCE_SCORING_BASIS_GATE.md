@@ -98,6 +98,59 @@ fixed on the eFV hero banner three commits ago.
 - It may not describe a one-cohort result as a track record.
 - It does not re-open the consensus-weighting question. Weights stay `{}`.
 
-## Results
+## Results (2026-08-12, `data/source_backtest.json` -> `pairwise_head_to_head`)
 
-To be written by the implementation. Deliberately empty at commit time.
+**SHIPPED as an additional view. Baseball America is now scored, three years
+before the old basis could have scored it, and nothing was taken from anyone.**
+
+| pair | n | years | rho A | rho B | delta | CI95 | verdict |
+| --- | ---: | --- | ---: | ---: | ---: | --- | --- |
+| BA vs FanGraphs | 700 | 2023 | 0.1395 | 0.2401 | -0.1006 | [-0.1712, -0.0333] | **FanGraphs better, resolved** |
+| BA vs Pipeline | 696 | 2023 | 0.1541 | 0.2264 | -0.0722 | [-0.1339, -0.0101] | **Pipeline better, resolved** |
+| FanGraphs vs Pipeline | 4,299 | 2017-2023 | 0.2473 | 0.2810 | -0.0336 | [-0.0602, -0.0062] | regression control, no verdict |
+
+**Baseball America orders outcomes materially worse than either incumbent on the
+rows they share, and both comparisons resolve.** This agrees with the
+independent label-free precision estimate, which has BA as the noisiest of the
+three (sigma 4.80 against about 3.0), so two instruments that share no machinery
+point the same way.
+
+### Acceptance criteria
+
+1. **Regression control PASSES exactly.** The incumbent cell returns FanGraphs
+   0.2473 and Pipeline 0.2810 on n=4,299, which is byte-identical to
+   `accuracy.pooled`. Pinned by a test and mutation-proved.
+2. **No published verdict moved.** `SCORED_SOURCES` unchanged, and every key the
+   site reads is asserted still present.
+3. Cells whose interval spans zero read "not resolvable at this power".
+4. Non-comparability is structural: cells are never combined into a ranking.
+5. Same-year benchmark ships for every short-window pair.
+
+### The tension this surfaced, and how it is resolved
+
+The pre-registration's regression control did more than confirm the machinery:
+it exposed that **`source_cohort_accuracy` publishes this same incumbent pair as
+NOT RESOLVABLE** (n 1,520, d_rho -0.0293, CI [-0.0640, +0.0076]) while this
+basis resolves it (n 4,299, delta -0.0336, CI [-0.0602, -0.0062]). The
+difference is not the estimate, which agrees to about 0.004. It is the
+POPULATION: 4,299 rows against 1,520.
+
+Both are right on their own rows, and a reader handed two verdicts for one pair
+has been handed a contradiction rather than a measurement. **So the incumbent
+pair keeps its NUMBERS here, which is what makes it a regression control, and
+hands its VERDICT back to the artifact that owns the source-versus-source
+question.** Pinned by its own test.
+
+### Honest limits
+
+- **BA sits in exactly ONE resolvable base year (2023).** A single cohort cannot
+  separate rater skill from that cohort's idiosyncrasy. This is not a
+  formality: restricted to 2023 alone FanGraphs (0.2533) leads Pipeline (0.2137)
+  while pooled over seven years Pipeline leads. **One year flips the incumbent
+  ordering.** The same-year benchmark ships beside the BA cells for exactly this
+  reason, and it reads "not resolvable at this power" on n=828, which is the
+  honest yardstick for how much a single 2023 cohort can say.
+- The BA result is therefore a ONE-COHORT read and must never be described as a
+  track record. It gains a second year in 2027 and a third in 2028.
+- This does not promote BA into `SCORED_SOURCES`. That remains a separate owner
+  decision with its own restatement cost.

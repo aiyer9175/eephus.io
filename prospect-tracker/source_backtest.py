@@ -40,6 +40,7 @@ from __future__ import annotations
 
 import json
 import logging
+import random
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -830,6 +831,184 @@ def _xfv_vs_consensus_detail(common_rows: list[dict]) -> dict | None:
             "receipts": receipts, "xfv_right_share_on_disagreements": right_share}
 
 
+# --------------------------------------------------------------------------
+# D3 - PAIRWISE HEAD-TO-HEAD, an ADDITIONAL basis (2026-08-12)
+# --------------------------------------------------------------------------
+# Pre-registered at docs/efv-2026-08-12/SOURCE_SCORING_BASIS_GATE.md.
+#
+# THE PROBLEM THIS SOLVES. The common set admits a player only when EVERY scored
+# rater graded him, so adding a rater does not add a bar to the chart, it
+# redefines the population every other bar is computed on. Admitting Baseball
+# America costs 93% of the evidence and flips the incumbent ordering, so it
+# cannot be admitted. But that cost is a property of insisting on ONE GLOBAL
+# POPULATION, not a property of the evidence: BA carries 750 resolvable rows and
+# overlaps FanGraphs on 700 and Pipeline on 696, none of which need to come out
+# of the 4,402 the incumbents share.
+#
+# So a pair is scored on the rows THAT PAIR shares. Nothing is removed from
+# anyone else's comparison, and a rater with a short history is measurable the
+# day it has enough overlap rather than the day it covers everything.
+#
+# THIS IS ADDITIVE AND CHANGES NO PUBLISHED VERDICT. SCORED_SOURCES is
+# untouched, consensus_wins is untouched, the pooled bars are untouched. A cell
+# here may disagree with a published number; the published number does not move.
+#
+# TWO CELLS ARE TWO DIFFERENT COMPARISONS. They sit on different rows and often
+# on different YEARS, so they must never be combined into one ranking. That is
+# not a footnote: it is the cross-basis error this repo fixed on the eFV hero
+# banner, where a margin computed on one population was floored against another.
+#
+# WHICH IS WHY EVERY SHORT-WINDOW PAIR CARRIES A SAME-YEAR BENCHMARK. Restricted
+# to 2023 alone FanGraphs leads Pipeline; pooled over 2017-2023 Pipeline leads.
+# One year flips it. Without the benchmark a reader cannot tell a rater
+# difference from a year difference.
+_PAIRWISE_MIN_ROWS = 100
+_PAIRWISE_BOOT = 2000
+_PAIRWISE_SEED = 20260812
+
+
+def _pairwise_rows(universe: list[dict], years: list[int]) -> list[dict]:
+    """One row per (player, base year): every source's preseason FV plus the
+    outcome. Undebuted players carry WAR 0, so busts are IN and the read is not
+    survivor-biased."""
+    out = []
+    for p in universe:
+        war = _outcome(p)["war"]
+        in_window, _ = _all_source_grades_by_year(p)
+        for y, srcs in (in_window or {}).items():
+            if y not in years:
+                continue
+            g = {s: float(fv) for s, fv in (srcs or {}).items() if fv is not None}
+            if g:
+                out.append({"key": p.get("player_key"), "year": y, "war": war, "g": g})
+    return out
+
+
+def _pairwise_cell(rows: list[dict], a: str, b: str) -> dict | None:
+    """a vs b on the rows both graded, with a PLAYER-clustered bootstrap.
+
+    Clustered because a player can appear in several base years, and treating
+    those as independent would overstate the evidence."""
+    rs = [r for r in rows if a in r["g"] and b in r["g"]]
+    if len(rs) < _PAIRWISE_MIN_ROWS:
+        return None
+    wars = [r["war"] for r in rs]
+    ra = _spearman([r["g"][a] for r in rs], wars)
+    rb = _spearman([r["g"][b] for r in rs], wars)
+    if ra is None or rb is None:
+        return None
+    by_key: dict[str, list[dict]] = {}
+    for r in rs:
+        by_key.setdefault(r["key"], []).append(r)
+    keys = list(by_key)
+    rng = random.Random(_PAIRWISE_SEED)
+    diffs = []
+    for _ in range(_PAIRWISE_BOOT):
+        samp = [x for k in (keys[rng.randrange(len(keys))] for _ in keys)
+                for x in by_key[k]]
+        w = [x["war"] for x in samp]
+        xa = _spearman([x["g"][a] for x in samp], w)
+        xb = _spearman([x["g"][b] for x in samp], w)
+        if xa is not None and xb is not None:
+            diffs.append(xa - xb)
+    lo = hi = None
+    if diffs:
+        diffs.sort()
+        lo = round(diffs[int(0.025 * (len(diffs) - 1))], 4)
+        hi = round(diffs[int(0.975 * (len(diffs) - 1))], 4)
+    resolvable = bool(lo is not None and (lo > 0 or hi < 0))
+    ys = sorted({r["year"] for r in rs})
+    cell = {
+        "a": a, "b": b, "n": len(rs), "n_players": len(by_key), "years": ys,
+        "rho_a": round(ra, 4), "rho_b": round(rb, 4),
+        "delta_a_minus_b": round(ra - rb, 4),
+        "ci95": [lo, hi] if lo is not None else None,
+        "resolvable": resolvable,
+        "leader": (a if ra > rb else b) if resolvable else None,
+        "verdict": ((a if ra > rb else b) + " orders outcomes better on these rows"
+                    if resolvable else "not resolvable at this power"),
+    }
+    # A PAIR SOMEBODY ELSE ALREADY ADJUDICATES DOES NOT GET A SECOND VERDICT
+    # HERE, and this is not politeness, it is the whole point of the lane.
+    #
+    # source_cohort_accuracy owns the source-versus-source question and scores
+    # FanGraphs against MLB Pipeline on ITS population, publishing
+    # "not resolvable" there. This basis sees 4,299 rows where that one sees
+    # 1,520, so the same difference (about -0.03 either way) clears an interval
+    # here and does not there. Both readings are correct on their own rows, and
+    # a reader handed two verdicts for one pair has been handed a contradiction
+    # rather than a measurement.
+    #
+    # So the incumbent pair keeps its NUMBERS, which is what makes it a
+    # regression control (they reproduce accuracy.pooled exactly), and hands its
+    # VERDICT back to the artifact that owns it, quoting that artifact so the
+    # difference in population is visible instead of implied.
+    if {a, b} == set(SCORED_SOURCES):
+        cell["role"] = "regression_control"
+        cell["defers_verdict_to"] = "data/source_cohort_accuracy.json accuracy.pooled"
+        cell["verdict"] = ("no verdict from this basis: the incumbent pair is "
+                           "adjudicated by source_cohort_accuracy, which scores it "
+                           "on a smaller population. This cell exists to prove the "
+                           "machinery reproduces the served pooled numbers.")
+        cell["leader"] = None
+    return cell
+
+
+def pairwise_head_to_head(universe: list[dict], years: list[int]) -> dict:
+    """Every rater pair scored on the rows that pair shares. Additive."""
+    rows = _pairwise_rows(universe, years)
+    sources = sorted({s for r in rows for s in r["g"]} - _NON_RATER_SOURCES
+                     - {CONSENSUS_KEY})
+    cells, benchmarks = [], {}
+    for i, a in enumerate(sources):
+        for b in sources[i + 1:]:
+            c = _pairwise_cell(rows, a, b)
+            if not c:
+                continue
+            # SAME-YEAR BENCHMARK for any pair that does not span the window.
+            if len(c["years"]) < len(years):
+                sub = [r for r in rows if r["year"] in set(c["years"])]
+                bm = _pairwise_cell(sub, SCORED_SOURCES[0], SCORED_SOURCES[1])
+                if bm:
+                    key = ",".join(str(y) for y in c["years"])
+                    benchmarks[key] = bm
+                    c["same_year_benchmark"] = key
+            cells.append(c)
+    return {
+        "basis": "pairwise: each pair scored on the rows BOTH raters graded",
+        "is_additional_view": True,
+        "changes_no_published_verdict": True,
+        "min_rows": _PAIRWISE_MIN_ROWS,
+        "bootstrap_B": _PAIRWISE_BOOT, "seed": _PAIRWISE_SEED,
+        "clustered_by": "player",
+        "window_years": years,
+        "cells": cells,
+        "same_year_benchmarks": benchmarks,
+        "read_this": (
+            "Two cells are two different comparisons. They sit on different "
+            "players and often on different years, so they must never be read "
+            "as one ranking. A pair that does not span the whole window carries "
+            "a same-year benchmark: the incumbent pair restricted to those same "
+            "years, so a rater difference can be told apart from a year "
+            "difference. Restricted to 2023 alone FanGraphs leads MLB Pipeline "
+            "while pooled over the full window Pipeline leads, which is exactly "
+            "how much one year can move."),
+        "verdict_ownership": (
+            "The incumbent pair (FanGraphs vs MLB Pipeline) carries NO verdict "
+            "from this basis. source_cohort_accuracy owns that question and "
+            "scores it on a smaller population, so the same difference resolves "
+            "here and does not there. Its numbers are kept as a regression "
+            "control: they reproduce accuracy.pooled exactly, which is how you "
+            "know this basis is computing the same thing on more rows."),
+        "why_this_exists": (
+            "The common set admits a player only when every scored rater graded "
+            "him, so a rater with a short history cannot be added without "
+            "redefining the population every other number is computed on. "
+            "Scoring a pair on its own overlap measures the newcomer without "
+            "removing a row from anyone else."),
+    }
+
+
 def run_source_backtest(data_dir: Path = DATA_DIR,
                         write: bool = True) -> dict:
     """Compute the full source-vs-source backtest and (optionally) write
@@ -1174,6 +1353,8 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         },
         "cohorts": cohorts,
         "accuracy": accuracy,
+        # ADDITIVE (D3). Nothing above this line is computed from it.
+        "pairwise_head_to_head": pairwise_head_to_head(universe, years),
     }
 
     if write:
