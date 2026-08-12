@@ -91,18 +91,38 @@ CONSENSUS_KEY = "prospx_consensus"
 #   2. COMMON-SET RETENTION. `run_source_backtest` admits a player to the common
 #      set only when EVERY scored rater graded him, so a new rater does not add a
 #      bar to the chart, it redefines the population every other bar is computed
-#      on. Measured for BA on the 2026-08-08 export: admitting it takes the common
-#      set from 4,284 rows to 295 (6.9% retention; 36.2% even year-matched to 2023,
-#      the only year BA can contribute). On that shrunken population MLB Pipeline's
-#      pooled Spearman moves -0.0475, which is 7.0x the 0.0068 MDE95 this module
-#      already uses to gate the consensus-weight A/B (line ~908) and 1.35x
-#      XFV_HEADTOHEAD_MDE95; 4 of 6 incumbent cells move by more than 0.02; the
-#      rater ORDER flips (mlb_pipeline > fangraphs becomes fangraphs >
-#      mlb_pipeline); and `accuracy.consensus_vs_inputs` flips True -> False on
-#      BOTH metrics, negating the site's defence of blending at all. None of that
-#      requires a single grade to change. A source that costs 93% of the evidence
-#      has to be kept out for THAT reason, which is measured and does not expire,
-#      rather than for "insufficient history", which was neither.
+#      on. Re-measured 2026-08-12: admitting BA takes the common set from 4,299
+#      rows to 666, a retention of 0.1549. THAT is the reason it stays out, it is
+#      arithmetic, and it does not expire.
+#
+#      TWO CORRECTIONS TO WHAT THIS COMMENT USED TO SAY, both found by the D3
+#      basis re-derivation (docs/efv-2026-08-12/SOURCE_SCORING_BASIS_GATE.md).
+#
+#      (1) THE RATER-ORDER FLIP IS A YEAR EFFECT, NOT A BA EFFECT. This comment
+#      attributed the flip (mlb_pipeline > fangraphs becoming fangraphs >
+#      mlb_pipeline) to admitting BA. It is not: restricting the INCUMBENT pair
+#      to 2023 alone, with Baseball America absent entirely and not scored,
+#      already flips it. On the full window fangraphs 0.2473 trails
+#      mlb_pipeline 0.2810; on 2023 alone fangraphs 0.2533 leads mlb_pipeline
+#      0.2137, n=828. Admitting BA and restricting to the one year BA covers are
+#      two different things and the old wording ran them together. The published
+#      same-year benchmark in `pairwise_head_to_head` is exactly this number, so
+#      the correction is checkable rather than asserted.
+#
+#      (2) THE RETENTION GATE CANNOT BE PASSED BY A SHORT-HISTORY SOURCE, BY
+#      CONSTRUCTION. `retention` divides a source's coverage by the ALL-YEARS
+#      pooled common set, so BA's ceiling is 828/4299 = 0.1926 even if it graded
+#      every row of the only year it covers, against a 0.75 gate. That is not a
+#      defect: the quantity being measured is the COST OF ADMISSION under a
+#      global intersection, and that cost really is 85% of the evidence. It does
+#      mean the gate can never be the thing that lets BA in, and that scoring BA
+#      needed a different BASIS rather than a lower threshold. Year-matched, the
+#      same measurement reads 666/828 = 0.8043, which is why the pairwise view
+#      can score BA at all.
+#
+#      A source that costs 85% of the evidence has to be kept out for THAT
+#      reason, which is measured and does not expire, rather than for
+#      "insufficient history", which was neither.
 #
 # Promotion into SCORED_SOURCES stays an explicit edit, because it restates every
 # published accuracy number. What the code no longer does is assert the answer:
