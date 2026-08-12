@@ -611,3 +611,52 @@ def test_board_overflow_is_disclosed_not_silent():
     assert "layoutOverflow" in board, (
         "the overflow disclosure is gone; a board that does not fit its format "
         "will quietly hand back a PNG whose aspect the label lies about")
+
+
+# ---------------------------------------------------------------------------
+# TILES READ TOP TO BOTTOM (owner report 2026-08-12).
+#
+# A CSS grid fills ROW-major, so the Tiles layout ran #1 #2 #3 #4 across the top
+# and the reader had to zigzag to follow a ranking. The Rows layout has always
+# been column-major and says so in its own comment; tiles were the holdout.
+# ---------------------------------------------------------------------------
+def test_tiles_are_painted_column_major():
+    """Column 1 is #1-#10, column 2 is #11-#20, not #1 #2 #3 across the top."""
+    board = _fn_body("buildGfxBoard")
+    tile_block = board[board.index("useChips"):]
+    assert "fit.rows" in tile_block, (
+        "the tile grid no longer reads fit.rows, so it cannot know how tall a "
+        "column is and cannot be laying out column-major")
+    assert re.search(r"Math\.floor\(\s*i\s*/\s*tileRows\s*\)", tile_block), (
+        "the tile grid does not map item i to column floor(i / rows). Without "
+        "that permutation a CSS grid fills row-major and the ranking reads "
+        "across the top instead of down the column.")
+    assert re.search(r"r\s*\*\s*cols\s*\+\s*c", tile_block), (
+        "no row-major paint index is computed from (row, column), so the "
+        "permutation is not being applied to the emitted order")
+
+
+def test_tiles_keep_the_list_index_for_the_rank_fallback():
+    """The rank shown must be the position in the LIST, not on the canvas.
+
+    _gfxTileHtml falls back to i+1 when a row carries no rank of its own, so
+    handing it the paint index would renumber every tile after the first column.
+    """
+    board = _fn_body("buildGfxBoard")
+    tile_block = board[board.index("useChips"):]
+    assert "cell.i" in tile_block, (
+        "the tile renderer is not being handed the carried logical index "
+        "(cell.i); if it receives the paint position instead, a 100-tile board "
+        "renumbers itself the moment it has more than one column")
+
+
+def test_short_last_column_does_not_shift_later_tiles():
+    """Holes have to be emitted, or a ragged grid re-flows into row-major."""
+    board = _fn_body("buildGfxBoard")
+    tile_block = board[board.index("useChips"):]
+    assert re.search(r"cells\s*\.\s*map|cells\.map", tile_block), (
+        "tiles are no longer emitted from a fixed-size cell array")
+    assert "<div></div>" in tile_block, (
+        "empty grid cells are not emitted. A short last column leaves holes "
+        "mid-sequence, and without placeholders every tile after the first hole "
+        "slides one cell earlier and the columns stop being contiguous.")

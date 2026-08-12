@@ -36029,8 +36029,30 @@ function buildGfxBoard() {
     // _gfxRow is what turns a raw snapshot item into the {name, fv, rank, meta,
     // mlbam, org} shape every renderer reads; passing a raw item is the failure
     // _gfxWarnUnnormalized now catches (see its comment for the 2026-08-03 bug).
+    //
+    // COLUMN-MAJOR, like the Rows layout above and like every printed list this
+    // aesthetic borrows from. A CSS grid fills row-major, so #1 #2 #3 #4 ran
+    // ACROSS the top and the reader had to zigzag to follow the ranking. Now a
+    // column reads top to bottom: with 10 rows, column 1 is #1-#10 and column 2
+    // is #11-#20.
+    //
+    // Done by permuting the PAINT ORDER rather than by setting grid-column and
+    // grid-row per tile, which keeps _gfxTileHtml and the grid template exactly
+    // as the geometry search scored them. The logical index is carried
+    // alongside, because _gfxTileHtml falls back to i+1 for the rank on lists
+    // that carry none, and that has to stay the position in the LIST, not the
+    // position on the canvas. A short last column leaves holes mid-sequence, so
+    // empty cells are emitted to keep every later tile in its own column.
+    const tileRows = Math.max(1, fit.rows);
+    const cells = new Array(cols * tileRows).fill(null);
+    shown.forEach((it, i) => {
+      const c = Math.floor(i / tileRows), r = i % tileRows;
+      if (c < cols) cells[r * cols + c] = { it, i };
+    });
     grid = `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);grid-auto-rows:${cellH}px;gap:${GAP}px;align-content:start;">`
-      + shown.map((it, i) => _gfxTileHtml(_gfxRow(it, snap.kind, snap.meta), i, P, accent, geo)).join("") + `</div>`;
+      + cells.map(cell => cell
+          ? _gfxTileHtml(_gfxRow(cell.it, snap.kind, snap.meta), cell.i, P, accent, geo)
+          : `<div></div>`).join("") + `</div>`;
   } else {
   const ncol = _gfxColumnCount(cap);
   if (ncol <= 1) {
