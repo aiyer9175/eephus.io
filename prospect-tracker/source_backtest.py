@@ -98,16 +98,28 @@ CONSENSUS_KEY = "prospx_consensus"
 #      TWO CORRECTIONS TO WHAT THIS COMMENT USED TO SAY, both found by the D3
 #      basis re-derivation (docs/efv-2026-08-12/SOURCE_SCORING_BASIS_GATE.md).
 #
-#      (1) THE RATER-ORDER FLIP IS A YEAR EFFECT, NOT A BA EFFECT. This comment
-#      attributed the flip (mlb_pipeline > fangraphs becoming fangraphs >
-#      mlb_pipeline) to admitting BA. It is not: restricting the INCUMBENT pair
-#      to 2023 alone, with Baseball America absent entirely and not scored,
-#      already flips it. On the full window fangraphs 0.2473 trails
-#      mlb_pipeline 0.2810; on 2023 alone fangraphs 0.2533 leads mlb_pipeline
-#      0.2137, n=828. Admitting BA and restricting to the one year BA covers are
-#      two different things and the old wording ran them together. The published
-#      same-year benchmark in `pairwise_head_to_head` is exactly this number, so
-#      the correction is checkable rather than asserted.
+#      (1) THE DAMAGE IS THE YEAR RESTRICTION, NOT BASEBALL AMERICA. This comment
+#      attributed the rater-order flip (mlb_pipeline > fangraphs becoming
+#      fangraphs > mlb_pipeline) to admitting BA. Decomposed into its two steps,
+#      pooled(4,299) -> 2023-only with BA ABSENT(828) -> 2023 AND BA graded
+#      him(666), Spearman against realized WAR:
+#
+#                        pooled   2023 only   2023+BA   YEAR eff   BA eff
+#          fangraphs     0.2473      0.2533    0.2450    +0.0060   -0.0083
+#          mlb_pipeline  0.2810      0.2137    0.2266    -0.0673   +0.0129
+#          consensus     0.2809      0.2375    0.2328    -0.0434   -0.0047
+#
+#      The order flips at the FIRST step, with BA absent and unscored. Pipeline's
+#      year effect is -0.0673 while its BA effect is +0.0129, OPPOSITE IN SIGN
+#      and 19% the magnitude; the consensus year effect is 9.2x its BA effect.
+#      Admitting BA and restricting to the one year BA covers are two different
+#      things and the old wording ran them together. The 2023-only column is the
+#      same-year benchmark now published in `pairwise_head_to_head`, so this is
+#      checkable rather than asserted.
+#
+#      Note also that `consensus_vs_inputs` no longer has a Spearman flip to
+#      lose: pooled it already reads -0.0001 in the inputs' favour today, which
+#      is why the served `consensus_wins` is False on that leg.
 #
 #      (2) THE RETENTION GATE CANNOT BE PASSED BY A SHORT-HISTORY SOURCE, BY
 #      CONSTRUCTION. `retention` divides a source's coverage by the ALL-YEARS
