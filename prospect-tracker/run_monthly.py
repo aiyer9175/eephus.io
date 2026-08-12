@@ -2206,11 +2206,37 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     _hb.record("betting_odds_snapshot", ok=False, result=str(_e)[:120])
                 except Exception:
                     pass
+            # THE BOARD EXPORT WAS THE ONE TAP IN THIS STEP WITH NO HEARTBEAT,
+            # and its own handler could never fire: refresh_live catches
+            # Exception itself and returns {} (deliberately, so it never raises
+            # into the pipeline), so `except Exception` here is unreachable and
+            # log.exception below it has never printed. A night on which the
+            # board did not rebuild therefore reported fully green, and the two
+            # ledgers underneath then recorded against a STALE board, which is
+            # the empty-but-valid failure this codebase keeps getting bitten by.
+            #
+            # refresh_live's never-raise contract is left alone. What changes is
+            # that its RETURN VALUE is now read: an empty payload is the failure
+            # signal, it is stamped, and it is logged at error level.
             try:
                 from betting_export import refresh_live as _refresh_betting
-                _refresh_betting(log=log.info)
-            except Exception:
+                _bp = _refresh_betting(log=log.info) or {}
+                _bok = bool(_bp)
+                import job_heartbeat as _hb
+                _hb.record("betting_board_export", ok=_bok,
+                           result=(f"{_bp.get('n_games')} game(s)" if _bok
+                                   else "build returned nothing")[:120])
+                if not _bok:
+                    log.error("!!! BETTING RED: the board export produced no "
+                              "payload, so data/betting.json is STALE and every "
+                              "ledger below records against yesterday's board")
+            except Exception as _e:
                 log.exception("daily: betting export failed - continuing")
+                try:
+                    import job_heartbeat as _hb
+                    _hb.record("betting_board_export", ok=False, result=str(_e)[:120])
+                except Exception:
+                    pass
             # --- close-capture health, off the cache that survives the night ---
             # NOT a heartbeat. data/job_heartbeat.json is git-tracked and
             # `git checkout -- .` reverts it before this pipeline runs, so a
@@ -2326,15 +2352,28 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 # was the only betting job with no record that it ran. A shadow
                 # ledger that silently stops logging looks exactly like a slate
                 # on which nothing cleared the floor.
+                # READ THE REASON. betting_settle catches per-ledger and
+                # returns {'settled': 0, 'reason': 'failed: ...'}, so stamping
+                # ok=True unconditionally made a settlement CRASH indistinguishable
+                # from a night with nothing to settle. Both are "0 settled" and
+                # only one of them is fine.
+                def _settle_ok(res):
+                    return not str((res or {}).get("reason", "")).startswith("failed")
                 import job_heartbeat as _hb
-                _hb.record("betting_shadow_ledger", ok=True,
+                _hb.record("betting_shadow_ledger", ok=_settle_ok(_st),
                            result=(f"+{_rec.get('written')} logged, "
                                    f"{_st.get('settled')} settled, per-tag "
                                    f"{_per_tag} of "
-                                   f"{_sum.get('min_bets_for_sweep')}")[:120])
-                _hb.record("betting_calibration_ledger", ok=True,
+                                   f"{_sum.get('min_bets_for_sweep')}"
+                                   f"{'' if _settle_ok(_st) else ' | ' + str(_st.get('reason'))}")[:120])
+                _hb.record("betting_calibration_ledger", ok=_settle_ok(_cst),
                            result=(f"+{_cal.get('written')} priced side(s), "
-                                   f"{_cst.get('settled')} settled")[:120])
+                                   f"{_cst.get('settled')} settled"
+                                   f"{'' if _settle_ok(_cst) else ' | ' + str(_cst.get('reason'))}")[:120])
+                for _lbl, _res in (("shadow", _st), ("calibration", _cst)):
+                    if not _settle_ok(_res):
+                        log.error("!!! BETTING RED: the %s ledger did not settle: %s",
+                                  _lbl, _res.get("reason"))
             except Exception as _e:
                 log.exception("daily: betting ledgers failed - continuing")
                 try:
