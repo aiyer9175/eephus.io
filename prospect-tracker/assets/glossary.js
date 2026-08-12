@@ -776,7 +776,10 @@ function _methEfvPanel(bt) {
 // Findings-led callout strip: the headline numbers that make the eFV case, pulled live from
 // the backtest so they never drift from the artifact. Cards read stat -> what it means.
 function _methEfvFindings(bt) {
-  const p = (bt.accuracy && bt.accuracy.pooled) || {};
+  // Same-rows basis as the hero and the chart: these cards sit beside them on
+  // one page, so a card reading eFV on 3,234 rows against the boards on 4,299
+  // would put two different comparisons in one line of type.
+  const p = (bt.accuracy && (bt.accuracy.pooled_efv_common || bt.accuracy.pooled)) || {};
   const det = bt.accuracy && bt.accuracy.xfv_vs_consensus_detail;
   const x = p.xfv, c = p.prospx_consensus, fg = p.fangraphs, mlb = p.mlb_pipeline;
   if (!x || x.spearman == null) return "";
@@ -1815,7 +1818,19 @@ function _hhFloorClause(bt) {
 }
 
 function _methHeroBanner(bt) {
-  const p = (bt.accuracy && bt.accuracy.pooled) || {};
+  // SAME ROWS OR THE COMPARISON IS NOT ONE - the same rule the head-to-head
+  // chart below already follows (see the block at _methAccuracyChart).
+  // accuracy.pooled scores each rater on whatever it covers: eFV on its 3,234
+  // rows and the boards on all 4,299 of theirs. Reading it here printed a
+  // +0.067 lead and then attached _hhFloorClause's 0.035 floor, which is
+  // measured on IDENTICAL rows (accuracy.head_to_head_verdict, basis
+  // "pooled_efv_common"). So the hero was floor-checking a number 2.6x the one
+  // the floor belongs to, and it read as a 1.9x clearance in the same sentence
+  // that said it did not clear. On identical rows the lead is +0.026 against
+  // that same 0.035 floor, which is the honest "cannot call it a win" the
+  // headline claims. The chart below even warns about this exact number, so
+  // the page was contradicting itself top to bottom.
+  const p = (bt.accuracy && (bt.accuracy.pooled_efv_common || bt.accuracy.pooled)) || {};
   const x = p.xfv, c = p.prospx_consensus, fg = p.fangraphs, mlb = p.mlb_pipeline;
   if (!x || x.spearman == null) return "";
   const f3 = v => (v == null ? "-" : v.toFixed(3));
@@ -2007,12 +2022,32 @@ function _loadScoreboard() {
 // One matrix row: label, n, eFV value, consensus baseline, verdict mark.
 // A loss is the highlight - red value + cross - so the weak cells are the
 // most visible thing in the table, not the wins.
-function _sbRow(label, cell) {
+// THREE-VALUED, because `cell.win` is a bare inequality. tools/efv_scoreboard.py
+// sets it as `efv > cons` and the artifact's own basis.note says so in as many
+// words: "a win flag here is a raw inequality on identical rows, NOT a resolved
+// result. Check the margin against mde95_model_vs_consensus before quoting any
+// cell as a win." The page did not check it, so it painted 27 checks of which 17
+// sat inside the 0.044 floor - including the headline pooled-Spearman row for
+// hitters at +0.0074, which is 0.17x the floor. A margin inside the floor now
+// reads "not resolvable at this power", the same demotion rank_win got in
+// efv_model.py and the same language _saccVerdictCell uses.
+function _sbRow(label, cell, floor) {
   if (!cell || cell.efv == null || cell.consensus == null) return "";
+  const margin = Number(cell.efv) - Number(cell.consensus);
+  const hasFloor = typeof floor === "number" && isFinite(floor) && floor > 0;
+  const resolvable = !hasFloor || Math.abs(margin) >= floor;
   const win = cell.win === true;
-  const mark = win ? '<span style="color:var(--up);font-weight:700;">&#10003;</span>'
-    : '<span style="color:var(--down);font-weight:700;">&#10007;</span>';
-  const vStyle = win ? "font-weight:600;" : "font-weight:700;color:var(--down);";
+  let mark, vStyle;
+  if (!resolvable) {
+    mark = `<span class="sacc-verdict-null" title="margin ${margin >= 0 ? "+" : ""}${margin.toFixed(3)} against a ${floor.toFixed(3)} floor">not resolvable</span>`;
+    vStyle = "font-weight:600;color:var(--text-secondary);";
+  } else if (win) {
+    mark = '<span style="color:var(--up);font-weight:700;">&#10003;</span>';
+    vStyle = "font-weight:600;";
+  } else {
+    mark = '<span style="color:var(--down);font-weight:700;">&#10007;</span>';
+    vStyle = "font-weight:700;color:var(--down);";
+  }
   return `<tr><td class="meth-td-tier">${escapeHtml(label)}</td>
     <td>${cell.n != null ? cell.n : "-"}</td>
     <td style="${vStyle}">${Number(cell.efv).toFixed(3)}</td>
@@ -2020,26 +2055,26 @@ function _sbRow(label, cell) {
     <td>${mark}</td></tr>`;
 }
 
-function _sbSideTable(sideLabel, blk) {
+function _sbSideTable(sideLabel, blk, floor) {
   if (!blk || !blk.pooled) return "";
   const p = blk.pooled;
   let rows = "";
-  rows += _sbRow("Pooled ordering (Spearman)", p.spearman);
-  rows += _sbRow("Contributor AUC (WAR 3+)", p.auc_contributor);
-  rows += _sbRow("Star AUC (WAR 10+)", p.auc_star);
-  rows += _sbRow("Within-tier, FV 45 (t45)", blk.t45);
-  rows += _sbRow("Within-tier, weighted mean", blk.wm);
+  rows += _sbRow("Pooled ordering (Spearman)", p.spearman, floor);
+  rows += _sbRow("Contributor AUC (WAR 3+)", p.auc_contributor, floor);
+  rows += _sbRow("Star AUC (WAR 10+)", p.auc_star, floor);
+  rows += _sbRow("Within-tier, FV 45 (t45)", blk.t45, floor);
+  rows += _sbRow("Within-tier, weighted mean", blk.wm, floor);
   ["<=2018", "2019-2021", "2022-2023"].forEach(ek => {
     const c = blk.by_era && blk.by_era[ek];
-    if (c) rows += _sbRow(`Era ${ek}`, c.spearman);
+    if (c) rows += _sbRow(`Era ${ek}`, c.spearman, floor);
   });
   Object.keys(blk.by_fv_tier || {}).sort((a, b) => Number(a) - Number(b)).forEach(tk => {
-    rows += _sbRow(`FV tier ${tk}`, blk.by_fv_tier[tk]);
+    rows += _sbRow(`FV tier ${tk}`, blk.by_fv_tier[tk], floor);
   });
   const cohLabels = { ifa: "Int'l signs", college: "College draftees", hs: "HS draftees", draft: "Draft (age unknown)", other: "Other" };
   Object.keys(cohLabels).forEach(ck => {
     const c = blk.by_cohort && blk.by_cohort[ck];
-    if (c && c.efv != null) rows += _sbRow(cohLabels[ck], c);
+    if (c && c.efv != null) rows += _sbRow(cohLabels[ck], c, floor);
   });
   if (!rows) return "";
   return `<div class="meth-table-wrap">
@@ -2054,8 +2089,13 @@ function _sbSideTable(sideLabel, blk) {
 function _methScoreboardHTML() {
   const j = _S.scoreEval;
   if (!j || j.__error || !j.sides) return "";
-  const hit = _sbSideTable("Hitters", j.sides.hit);
-  const pit = _sbSideTable("Pitchers", j.sides.pit);
+  // The floor the artifact publishes for exactly this comparison. Read it
+  // rather than hardcoding: if the scoreboard is ever re-powered, the marks
+  // must move with it.
+  const floor = (j.basis && typeof j.basis.mde95_model_vs_consensus === "number")
+    ? j.basis.mde95_model_vs_consensus : null;
+  const hit = _sbSideTable("Hitters", j.sides.hit, floor);
+  const pit = _sbSideTable("Pitchers", j.sides.pit, floor);
   if (!hit && !pit) return "";
   const nWeak = Array.isArray(j.weak_cells) ? j.weak_cells.length : 0;
   const cap = j.top20_capture && j.top20_capture.top20;
@@ -2069,7 +2109,7 @@ function _methScoreboardHTML() {
   return `<div class="source-comp-wrap" id="efv-scoreboard">
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>eFV Scoreboard &middot; the record, cell by cell</div>
     <h2 class="meth-h">Where eFV wins, and where it does not</h2>
-    <p class="meth-note">Every cell is the same forward-chained out-of-sample read the evals use: eFV against the consensus baseline on identical players, era by era, FV tier by FV tier, cohort by cohort. A check is a win, a red cross is a loss, and the losses are left exactly as measured${nWeak ? ` (${nWeak} weak cells right now)` : ""}.</p>
+    <p class="meth-note">Every cell is the same forward-chained out-of-sample read the evals use: eFV against the consensus baseline on identical players, era by era, FV tier by FV tier, cohort by cohort. A check is a win and a red cross is a loss, and the losses are left exactly as measured${nWeak ? ` (${nWeak} weak cells right now)` : ""}.${floor != null ? ` Most cells are neither: this board resolves a margin of ${floor.toFixed(3)} at 95 percent, so any cell inside that reads <em>not resolvable</em> rather than being counted for either side. That is most of them, and saying so is the point of publishing the board.` : ""}</p>
     <div class="meth-tables">${hit}${pit}</div>
     ${extraLine}
     <p class="meth-note"><strong>The losses set the agenda:</strong> the weak cells on this board, not the wins, drive the registered experiment queue for the next eFV program.</p>
@@ -2309,6 +2349,15 @@ function _f4(v) { return v == null ? " - " : Number(v).toFixed(4); }
 function _f2(v) { return v == null ? " - " : Number(v).toFixed(2); }
 function _f3(v) { return v == null ? " - " : Number(v).toFixed(3); }
 function _saccN(v) { return v == null ? " - " : Number(v).toLocaleString("en-US"); }
+
+// How many cells survived Holm, read from the artifact. Was the literal word
+// "three" in the acquisition-path prose; the artifact moved to four on
+// 2026-08-11 and the sentence went quietly wrong. Anything that counts the
+// survivors must count THIS list.
+function _saccHolmCount(d) {
+  const h = d && d.multiplicity && d.multiplicity.holm_survivors;
+  return Array.isArray(h) ? h.length : " - ";
+}
 function _saccPct(v) { return v == null ? " - " : (Number(v) * 100).toFixed(1) + "%"; }
 
 function _loadSourceAccuracy() {
@@ -2470,7 +2519,7 @@ function _saccReadFirst(d) {
         <tr><td class="meth-td-tier">Run</td><td>${escapeHtml(d.produced_by || " - ")} &middot; as of ${escapeHtml(d.as_of_date || " - ")}</td></tr>
       </tbody>
     </table></div>
-    <h3 class="meth-h3">The four cells that cleared their floor</h3>
+    <h3 class="meth-h3">The ${_saccN(m.cells_flagged_answerable)} cells that cleared their floor</h3>
     <p class="meth-note">${holm.length ? `After a Holm correction inside each partition, ${holm.length} survive: ${holm.map(h => `<code>${escapeHtml(h)}</code>`).join(", ")}. ` : ""}${escapeHtml(m.survivors_overlap_note || "")}</p>
     <div class="meth-caveats">
       <div class="meth-caveats-title">&#9888; Read this honestly</div>
@@ -2490,7 +2539,7 @@ function _saccBySide(d) {
   return `<p class="meth-window">The two cuts the owner asked for. A positive difference means FanGraphs ordered that cohort better; negative means MLB Pipeline did. The verdict column is the whole point: a cell is called only when the measured difference clears that cell's own 95 percent minimum detectable effect, and every other cell reads <em>not resolvable at this power</em> rather than crowning the larger of two statistically identical numbers.</p>
     ${_saccRhoTable(a.by_side, "Hitters vs pitchers", "Spearman rho, preseason grade against realized WAR", ["bat", "arm"])}
     ${_saccRhoTable(a.by_acquisition, "Draft vs international", "Spearman rho, preseason grade against realized WAR", ["draft_hs", "draft_college", "international"])}
-    <p class="meth-note">Neither side resolves. On acquisition path, one cell does: high-school draftees, where the difference is ${_s4(hs.d_rho)} against a floor of ${_f4(hs.mde95)}, so MLB Pipeline orders that cohort better. It is one of the three cells that survive a Holm correction inside their own partition. College and international do not resolve.</p>`;
+    <p class="meth-note">Neither side resolves. On acquisition path, one cell does: high-school draftees, where the difference is ${_s4(hs.d_rho)} against a floor of ${_f4(hs.mde95)}, so MLB Pipeline orders that cohort better. It is one of the ${_saccHolmCount(d)} cells that survive a Holm correction inside their own partition. College and international do not resolve.</p>`;
 }
 
 // ---- sub-tab 3: by archetype ------------------------------------------------
@@ -2599,12 +2648,17 @@ function _saccCuts(d) {
 }
 
 // ---- sub-tab 5: precision (not accuracy) ------------------------------------
-// TWO BRANCHES, both live. precision_label_free.identified is FALSE today
-// because Baseball America, the third instrument, was purged 2026-08-10 for a
-// re-ingest, and TWO sources cannot identify a measurement-error model. The
-// unidentified branch renders the reason and the restore condition and NO
-// TABLE, NO SIGMA, NO ALPHA. Nothing on this page may assume the block is
-// populated.
+// TWO BRANCHES, and the IDENTIFIED one is what ships today: the Baseball
+// America backfill landed, so the triad is complete and
+// precision_label_free.identified is true on 6,287 rows. This comment used to
+// say the opposite - that BA had been purged and two sources cannot identify a
+// measurement-error model - which was true for a few hours on 2026-08-10 and
+// has been wrong in every artifact since, including at HEAD. The predicate
+// below is written defensively and routes correctly either way; only the
+// description was stale, and a stale description is what sends the next editor
+// to fix the wrong branch. The unidentified branch remains real: it renders the
+// reason and the restore condition and NO TABLE, NO SIGMA, NO ALPHA. Nothing on
+// this page may assume the block is populated.
 function _saccPrecision(d) {
   const p = d.precision_label_free || {};
   const wording = `<div class="sacc-wording">
@@ -2612,9 +2666,10 @@ function _saccPrecision(d) {
     <p>Precision is not accuracy. This block measures how tightly each outlet agrees with the latent consensus, with each outlet's own scale offset and slope removed. It says nothing about who is right. Where we can measure accuracy against outcomes we say so separately, and on the one cohort where accuracy is resolvable the two disagree.</p>
   </div>`;
   // BRANCH PREDICATE. source_cohort_accuracy._precision_label_free emits
-  // "identified": false ONLY on the unidentified early return; the populated
-  // return carries no such key at all. So the test is an explicit false OR a
-  // missing estimator, never a truthy read of `identified`.
+  // "identified": false on the unidentified early return, and the populated
+  // return carries identified: true. Testing for an explicit false OR a missing
+  // estimator (rather than a truthy read) keeps it correct under both shapes,
+  // including artifacts written before the key existed.
   const em = p.estimator_primary_em_fiml;
   if (p.identified === false || !em || !Array.isArray(em.sources)) {
     return `${wording}
@@ -2639,7 +2694,7 @@ function _saccPrecision(d) {
   const cc = p.estimator_robustness_complete_case || {};
   const at = (arr, i) => (Array.isArray(arr) && arr[i] != null) ? arr[i] : null;
   const srcRows = em.sources.map((s, i) => `<tr>
-    <td class="meth-td-tier">${escapeHtml(_raterMeta(s).label)}</td>
+    <td class="meth-td-tier">${escapeHtml(_saccOutlet(s))}</td>
     <td>${_f4(at(em.b, i))}</td>
     <td>${_f4(at(em.sigma, i))}</td>
     <td>${_f4(at(em.reliability, i))}</td>
@@ -2650,7 +2705,7 @@ function _saccPrecision(d) {
   const rrChips = Object.keys(rr).map(k => {
     const v = rr[k] || {};
     const on = v.range_restricted === true;
-    return `<span class="${on ? "sacc-chip-warn" : "sacc-chip-ok"}" title="${escapeHtml(v.why_no_weight || "")}">${escapeHtml(_raterMeta(k).label)}: ${on ? "range restricted" : "full range"}, sd ratio ${_f4(v.sd_ratio_vs_fangraphs)} on ${_saccN(v.n)} rows, weight ${v.weight == null ? "none" : _f4(v.weight)}</span>`;
+    return `<span class="${on ? "sacc-chip-warn" : "sacc-chip-ok"}" title="${escapeHtml(v.why_no_weight || "")}">${escapeHtml(_saccOutlet(k))}: ${on ? "range restricted" : "full range"}, sd ratio ${_f4(v.sd_ratio_vs_fangraphs)} on ${_saccN(v.n)} rows, weight ${v.weight == null ? "none" : _f4(v.weight)}</span>`;
   }).join("");
   const vint = p.vintage_availability || {};
   const byYear = vint.precision_estimable_by_board_year || {};
@@ -2707,7 +2762,7 @@ function _saccCoverage(d) {
   const rows = Object.keys(per).map(k => {
     const v = per[k] || {};
     return `<tr>
-      <td class="meth-td-tier">${escapeHtml(_raterMeta(k).label)}</td>
+      <td class="meth-td-tier">${escapeHtml(_saccOutlet(k))}</td>
       <td>${_saccN(v.rows_own)}</td>
       <td>${_saccN(v.rows_common)}</td>
       <td>${_saccN(v.rows_cut)}</td>

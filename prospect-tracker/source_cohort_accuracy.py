@@ -527,10 +527,18 @@ def _multiplicity(acc: dict, ded: list[dict], pooled_rows: list[dict]) -> dict:
         "expected_false_positives_at_alpha_05": _r(0.05 * total_cells, 2),
         "per_partition_holm": per_partition,
         "holm_survivors": survivors,
+        # DERIVED, not hardcoded. This note used to say "three partitions" and
+        # "Three survivors" in prose while the count beside it was interpolated
+        # from the artifact. On 2026-08-11 hs_arm became a fourth survivor and
+        # the page rendered "4 survive ... Three survivors is not three
+        # independent findings" in one paragraph. The claim being made is about
+        # OVERLAP, so it has to count the same list the page prints.
         "survivors_overlap_note": (
-            "The survivors are largely THE SAME PLAYERS seen through three partitions: a "
-            "high-school arm is a draft-HS row and sits in a young age bucket. Three "
-            "survivors is not three independent findings."),
+            "The survivors are largely THE SAME PLAYERS seen through "
+            f"{len({s.split(':', 1)[0] for s in survivors})} partitions: a "
+            "high-school arm is a draft-HS row and sits in a young age bucket. "
+            f"{len(survivors)} survivors is not {len(survivors)} independent "
+            "findings."),
         "archetype_heterogeneity": {
             "k": len(d), "df": df,
             "d_rho": {a: _r(c["d_rho"], 5) for a, c in arch},
