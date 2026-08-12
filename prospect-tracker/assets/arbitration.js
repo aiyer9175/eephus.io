@@ -103,9 +103,36 @@
     ".arb-app .arb-row dd{margin:0;font-size:12px;color:var(--text-primary)}",
     ".arb-app .arb-losses li{font-size:12px;line-height:1.6;color:var(--text-secondary);margin:0 0 8px}",
 
+    /* THE CLUB FILTER AND THE TWO STATE BUTTONS WERE THE ONLY UNSTYLED
+       CONTROLS ON THE PAGE (owner report 2026-08-12: the org button "isn't on
+       theme and looks very out of place").
+
+       A bare <select> renders in the platform UI font with the platform's own
+       chrome, so it sat beside pixel-font chips looking like a piece of the
+       browser rather than a piece of the site. Same for the two native
+       <button>s, which had no class at all and so picked up the UA's grey
+       bevel.
+
+       The fix joins the families that already exist rather than inventing a
+       parallel dialect: these declarations are copied from
+       `.mlbstats-bar input, .mlbstats-bar select` in site.css, which is the
+       select treatment every /mlbstats/ board already uses. The arb filter bar
+       is not inside a .mlbstats-bar, which is the only reason it did not
+       inherit them. Buttons become .chip and pick up `.fa-app button.chip`
+       from site.css, which is what the class chips beside them already are.
+       No colour literals, no radius (the global rule zeroes it anyway). */
+    ".arb-app .filter-bar select{font-family:var(--font-retro-mono);font-size:12px;padding:6px 9px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border)}",
+    ".arb-app .filter-bar select:focus-visible{outline:2px solid var(--accent-gold);outline-offset:1px}",
+
+    /* Club logos ride the board's Club cell and the Team View rows. The mark
+       is 17px and the cell is nowrap, so the row height does not move. */
+    ".arb-app .arb-club{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}",
+
     /* On a phone the question is "how many years, how much total". The
-       per-year dollar is deferred into title=, not deleted. */
-    "@media (max-width:640px){.arb-app .arb-step{width:44px}.arb-app .arb-step b{display:none}.arb-app .arb-ladder{gap:1px}.arb-app th small{display:none}}"
+       per-year dollar is deferred into title=, not deleted. Logos come out of
+       the Club column there: at 44px steps the ladder is already the widest
+       thing on screen and a 17px mark per row costs more than it tells. */
+    "@media (max-width:640px){.arb-app .arb-step{width:44px}.arb-app .arb-step b{display:none}.arb-app .arb-ladder{gap:1px}.arb-app th small{display:none}.arb-app .arb-club .eephus-teamlogo{display:none}}"
   ].join("");
   document.head.appendChild(css);
 
@@ -136,6 +163,20 @@
   }
 
   function el(id) { return document.getElementById(id); }
+
+  /* Club cell: the ESPN mark plus the code, via the shared hub helper that
+     /betting/, /mlbstats/ and /pal/ all use. build_arbitration already loads
+     eephus-hub.js on this page; it was simply never called, so the board
+     rendered bare three-letter codes while every sibling module showed a mark.
+     Degrades to the plain code when the hub is absent or the club is unknown,
+     and the <img> carries its own onerror removal. */
+  function club(code) {
+    var t = String(code == null ? "" : code).trim();
+    if (!t) return DASH;
+    var hub = window.EEPHUS_HUB;
+    var logo = (hub && typeof hub.teamLogo === "function") ? hub.teamLogo(t) : "";
+    return '<span class="arb-club">' + logo + esc(t) + "</span>";
+  }
 
   /* --------------------------------------------------------- caveat bar */
 
@@ -224,7 +265,7 @@
     if (boardErr) {
       root.innerHTML = '<div class="state-message is-error" role="alert">' +
         "Data failed to load. The nightly build may be mid-run." +
-        ' <button type="button" id="arb-retry">Retry</button></div>';
+        ' <button type="button" class="chip" id="arb-retry">Retry</button></div>';
       var b = el("arb-retry");
       if (b) b.onclick = function () { boardErr = false; load(); };
       return;
@@ -267,7 +308,7 @@
       '<th data-col="tot">Total remaining<small>sorted</small></th></tr>';
     var body = rows.map(function (r, i) {
       return '<tr><td class="mlbstats-col-rank">' + (i + 1) + "</td>" +
-        "<td>" + esc(r.n) + "</td><td>" + esc(r.t || DASH) + "</td>" +
+        "<td>" + esc(r.n) + "</td><td>" + club(r.t) + "</td>" +
         "<td>" + esc(classLabel(r)) + "</td><td>" + (r.yl == null ? DASH : r.yl) + "</td>" +
         '<td class="arb-laddercell">' + ladder(r) + "</td>" +
         "<td>" + money(r.tot) + "</td></tr>";
@@ -279,7 +320,7 @@
         ? '<div class="mlbstats-scroll"><table class="mlbstats-table arb-table"><thead>' +
           head + "</thead><tbody>" + body + "</tbody></table></div>"
         : '<div class="mlbstats-empty">No player matches these filters. ' +
-          '<button type="button" id="arb-clear">Clear filters</button></div>');
+          '<button type="button" class="chip" id="arb-clear">Clear filters</button></div>');
 
     root.querySelectorAll("[data-cls]").forEach(function (b) {
       b.onclick = function () { filters.cls = b.getAttribute("data-cls"); renderBoard(); };
@@ -375,7 +416,7 @@
     var rows = Object.keys(by).map(function (k) { return by[k]; });
     rows.sort(function (a, b) { return b.tot - a.tot; });
     var body = rows.map(function (t, i) {
-      return '<tr><td class="mlbstats-col-rank">' + (i + 1) + "</td><td>" + esc(t.t) +
+      return '<tr><td class="mlbstats-col-rank">' + (i + 1) + "</td><td>" + club(t.t) +
         "</td><td>" + t.n + "</td><td>" + money(t.next) + "</td><td>" + money(t.tot) + "</td></tr>";
     }).join("");
     root.innerHTML =
