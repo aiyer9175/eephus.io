@@ -2017,6 +2017,19 @@ function _loadScoreboard() {
       .then(j => { _S.scoreEval = j || { __error: true }; rerender(); })
       .catch(() => { _S.scoreEval = { __error: true }; rerender(); });
   }
+  // E2a, same lazy idiom: the panel renders nothing until this lands and
+  // nothing at all if it never does, so a missing artifact costs a section
+  // rather than the view.
+  if (!_S.sideCal && !_S.sideCalLoading) {
+    _S.sideCalLoading = true;
+    const rerender2 = () => {
+      if (_S.view === "source-comparison") renderSourceComparison();
+    };
+    fetch("/data/xfv_side_calibration_eval.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => { _S.sideCal = j || { __error: true }; rerender2(); })
+      .catch(() => { _S.sideCal = { __error: true }; rerender2(); });
+  }
 }
 
 // One matrix row: label, n, eFV value, consensus baseline, verdict mark.
@@ -2083,6 +2096,50 @@ function _sbSideTable(sideLabel, blk, floor) {
       <thead><tr><th>Cell</th><th>n</th><th>eFV</th><th>Consensus</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
+  </div>`;
+}
+
+// E2a: the per-side calibration audit. Answers the question people actually ask
+// about eFV ("why so few pitchers?") with outcomes rather than with a comparison
+// to another board, which is the constraint the whole lane was built around: a
+// source is not over-grading pitchers because it disagrees with us, only because
+// it disagrees with what those pitchers produced.
+//
+// Reads data/xfv_side_calibration_eval.json live. Renders nothing when the
+// artifact is absent, and nothing when no cell in it resolves, because the point
+// of the panel is the resolved finding and a panel of "not resolvable" rows
+// would read as a result.
+function _methSideCalibration() {
+  const j = _S.sideCal;
+  if (!j || j.__error || !j.m1_realized_war_by_band) return "";
+  const cons = ((j.m1_realized_war_by_band.consensus || {}).cells) || {};
+  const efv = ((j.m1_realized_war_by_band.efv || {}).cells) || {};
+  const f2 = v => (v == null ? "-" : Number(v).toFixed(2));
+  const rows = [];
+  const line = (label, band, c) => {
+    if (!c || !c.resolvable) return;
+    rows.push(`<tr><td class="meth-td-tier">${escapeHtml(label)} ${band}</td>
+      <td>${c.n_hit}</td><td>${f2(c.mean_war_hit)}</td>
+      <td>${c.n_pit}</td><td>${f2(c.mean_war_pit)}</td>
+      <td class="${c.gap_pit_minus_hit >= 0 ? "" : "meth-neg"}">${c.gap_pit_minus_hit >= 0 ? "+" : ""}${f2(c.gap_pit_minus_hit)}</td>
+      <td><span class="proj-dim">${f2(c.ci95 && c.ci95[0])} to ${f2(c.ci95 && c.ci95[1])}</span></td></tr>`);
+  };
+  Object.keys(cons).sort((a, b) => Number(b) - Number(a)).forEach(b => line("consensus FV", b, cons[b]));
+  Object.keys(efv).sort((a, b) => Number(b) - Number(a)).forEach(b => line("eFV", b, efv[b]));
+  if (!rows.length) return "";
+  const f = (j.m2_per_side_forecast || {});
+  const basis = j.basis || {};
+  return `<div class="source-comp-wrap" id="side-calibration">
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Pitchers and hitters &middot; graded against what they became</div>
+    <h2 class="meth-h">Does a grade mean the same thing for a pitcher as for a hitter?</h2>
+    <p class="meth-note">eFV carries far fewer pitchers near the top of its board than the public lists do. That is a real difference and it is worth asking who is right, so we asked the only question that can answer it: <strong>at the same grade, what did each side actually produce?</strong> Nothing here compares one source's grade to another's. The reference throughout is realized first-six-year WAR on ${_saccN(basis.n)} resolved prospects, with players who never reached the majors carried at zero so survivors are not the only thing being scored.</p>
+    <div class="table-scroll-x"><table class="meth-table">
+      <thead><tr><th>Grade band</th><th>Hitters n</th><th>Their WAR</th><th>Pitchers n</th><th>Their WAR</th><th>Gap</th><th>95% interval</th></tr></thead>
+      <tbody>${rows.join("")}</tbody>
+    </table></div>
+    <p class="meth-note">Only the bands that resolve are listed; every other cell sits inside its own noise and is published as unresolved in <a href="/data/xfv_side_calibration_eval.json" target="_blank" rel="noopener">the artifact</a>.</p>
+    <p class="meth-verdict">The consensus grades pitchers <strong>too high at the top</strong>, measured against outcomes: at consensus FV 55 the hitters produced ${f2((cons["55"] || {}).mean_war_hit)} WAR and the pitchers ${f2((cons["55"] || {}).mean_war_pit)}. That is not a bust-rate story, because almost every player in both cells reached the majors. So eFV carrying fewer top-end pitchers is the more accurate reading of value, not a blind spot. In the other direction, eFV's own FV 45 band <strong>under-grades</strong> pitchers by a measurable margin, and that is a real defect on our side of the ledger rather than the industry's.</p>
+    <p class="meth-note">The model's pitcher forecast itself is close to unbiased${(f.P && f.P.bias_pred_minus_real != null) ? ` (${f2(f.P.bias_pred_minus_real)} WAR against ${f2((f.H || {}).bias_pred_minus_real)} for hitters)` : ""}: it correctly expects pitchers to produce less, and one shared value curve then grades them lower. The low pitcher count is that curve spending a real difference, not a broken forecast. Method and the pre-registered decision rule: <code>docs/efv-2026-08-12/SIDE_CALIBRATION_GATE.md</code>.</p>
   </div>`;
 }
 
@@ -2262,6 +2319,7 @@ function renderSourceComparison() {
       ${_methAccuracyChart(bt)}
       ${_methConsensusVsInputsNote(bt)}
       ${_methEfvPanel(bt)}
+      ${_methSideCalibration()}
       ${_methCalibCrossLink()}
       <h3 class="meth-h3">Where each grade wins, by prospect archetype</h3>
       <!-- 2026-08-10 (C-A4): this caption used to read "eFV leads the field

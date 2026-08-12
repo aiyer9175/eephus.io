@@ -190,6 +190,24 @@ ARTIFACTS = (
                  "say so in `answerable`. No source weight ships from this file."),
     },
     {
+        "file": "xfv_side_calibration_eval.json", "group": "prospects",
+        "title": "Do pitchers and hitters mean the same thing at the same grade?",
+        "what": ("The audit behind the question people actually ask about eFV: why does it "
+                 "carry so few pitchers near the top? It answers with outcomes rather than "
+                 "with a comparison to another board, because a source is not over-grading "
+                 "pitchers by disagreeing with us, only by disagreeing with what those "
+                 "pitchers produced. Mean realized first-six-year WAR by side within each "
+                 "grade band, for the served eFV grade and for consensus FV, on the resolved "
+                 "pool with players who never reached the majors carried at zero."),
+        "cadence": "on change", "stability": EXPERIMENTAL,
+        "pinned_by": "test_side_calibration_lab.py",
+        "note": ("The served eFV grade is retrospective on this pool, so this measures the "
+                 "SHIPPED grade map against outcomes and is NOT an out-of-sample forecast. "
+                 "Cells under 30 rows a side are reported and not scored; the top pitcher "
+                 "cells are thin by construction and that emptiness is the finding rather "
+                 "than a cell to score."),
+    },
+    {
         "file": "xfv_denoised_baseline_eval.json", "group": "prospects",
         "title": "eFV vs a rebuilt consensus",
         "what": ("The fairness control behind the head-to-head claim. eFV is normally compared "

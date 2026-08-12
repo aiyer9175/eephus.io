@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-12T18:19:16+00:00",
+ "generated_at": "2026-08-12T19:18:08+00:00",
  "model_id": "xfv_side_calibration",
  "pre_registration": "docs/efv-2026-08-12/SIDE_CALIBRATION_GATE.md",
  "basis": {
@@ -42,8 +42,8 @@
      "n_hit": 129,
      "n_pit": 23,
      "mean_war_hit": 6.001,
-     "mean_war_pit": 6.417,
-     "gap_pit_minus_hit": 0.417,
+     "mean_war_pit": 6.409,
+     "gap_pit_minus_hit": 0.408,
      "ci95": null,
      "scored": false,
      "resolvable": false,
@@ -53,11 +53,11 @@
      "n_hit": 368,
      "n_pit": 372,
      "mean_war_hit": 2.715,
-     "mean_war_pit": 3.849,
-     "gap_pit_minus_hit": 1.133,
+     "mean_war_pit": 3.854,
+     "gap_pit_minus_hit": 1.139,
      "ci95": [
-      0.1864,
-      2.0385
+      0.1936,
+      2.0482
      ],
      "scored": true,
      "resolvable": true,
@@ -67,11 +67,11 @@
      "n_hit": 832,
      "n_pit": 1248,
      "mean_war_hit": 0.765,
-     "mean_war_pit": 0.743,
-     "gap_pit_minus_hit": -0.021,
+     "mean_war_pit": 0.744,
+     "gap_pit_minus_hit": -0.02,
      "ci95": [
-      -0.2975,
-      0.2339
+      -0.2961,
+      0.2344
      ],
      "scored": true,
      "resolvable": false,
@@ -81,11 +81,11 @@
      "n_hit": 161,
      "n_pit": 202,
      "mean_war_hit": 0.169,
-     "mean_war_pit": 0.274,
-     "gap_pit_minus_hit": 0.105,
+     "mean_war_pit": 0.27,
+     "gap_pit_minus_hit": 0.101,
      "ci95": [
-      -0.18,
-      0.3511
+      -0.1887,
+      0.3481
      ],
      "scored": true,
      "resolvable": false,
@@ -95,11 +95,11 @@
      "n_hit": 601,
      "n_pit": 517,
      "mean_war_hit": 0.155,
-     "mean_war_pit": 0.092,
-     "gap_pit_minus_hit": -0.063,
+     "mean_war_pit": 0.093,
+     "gap_pit_minus_hit": -0.061,
      "ci95": [
-      -0.2773,
-      0.072
+      -0.277,
+      0.0747
      ],
      "scored": true,
      "resolvable": false,
@@ -126,11 +126,11 @@
      "n_hit": 76,
      "n_pit": 48,
      "mean_war_hit": 13.414,
-     "mean_war_pit": 4.835,
-     "gap_pit_minus_hit": -8.579,
+     "mean_war_pit": 4.844,
+     "gap_pit_minus_hit": -8.571,
      "ci95": [
-      -12.6912,
-      -4.4576
+      -12.685,
+      -4.4471
      ],
      "scored": true,
      "resolvable": true,
@@ -140,11 +140,11 @@
      "n_hit": 130,
      "n_pit": 103,
      "mean_war_hit": 7.359,
-     "mean_war_pit": 5.724,
-     "gap_pit_minus_hit": -1.635,
+     "mean_war_pit": 5.728,
+     "gap_pit_minus_hit": -1.631,
      "ci95": [
-      -4.0291,
-      0.6385
+      -4.0232,
+      0.638
      ],
      "scored": true,
      "resolvable": false,
@@ -154,11 +154,11 @@
      "n_hit": 260,
      "n_pit": 218,
      "mean_war_hit": 3.956,
-     "mean_war_pit": 3.075,
-     "gap_pit_minus_hit": -0.881,
+     "mean_war_pit": 3.079,
+     "gap_pit_minus_hit": -0.877,
      "ci95": [
-      -2.1494,
-      0.3083
+      -2.1457,
+      0.3103
      ],
      "scored": true,
      "resolvable": false,
@@ -171,8 +171,8 @@
      "mean_war_pit": 0.839,
      "gap_pit_minus_hit": 0.08,
      "ci95": [
-      -0.2167,
-      0.3952
+      -0.2164,
+      0.3963
      ],
      "scored": true,
      "resolvable": false,
@@ -181,12 +181,12 @@
     "35": {
      "n_hit": 1006,
      "n_pit": 1213,
-     "mean_war_hit": 0.365,
-     "mean_war_pit": 0.351,
-     "gap_pit_minus_hit": -0.014,
+     "mean_war_hit": 0.364,
+     "mean_war_pit": 0.352,
+     "gap_pit_minus_hit": -0.012,
      "ci95": [
-      -0.1974,
-      0.1541
+      -0.1956,
+      0.1556
      ],
      "scored": true,
      "resolvable": false,
@@ -220,9 +220,9 @@
   "P": {
    "n": 2368,
    "mean_predicted_war": 1.163,
-   "mean_realized_war": 1.17,
-   "bias_pred_minus_real": -0.007,
-   "slope_real_on_pred": 1.1691,
+   "mean_realized_war": 1.171,
+   "bias_pred_minus_real": -0.008,
+   "slope_real_on_pred": 1.1699,
    "reading": "a slope under 1 means the forecast is too spread out, over 1 means too compressed; bias is its level error"
   }
  },
