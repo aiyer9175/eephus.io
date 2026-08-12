@@ -1,0 +1,126 @@
+{
+ "generated_at": "2026-08-12T19:46:51+00:00",
+ "model_id": "xfv_side_correction",
+ "pre_registration": "docs/efv-2026-08-12/PITCHER_BAND_CORRECTION_GATE.md",
+ "basis": {
+  "seed": 20260812,
+  "bootstrap_B": 2000,
+  "folds": "forward-chained on the year the scored grade was given",
+  "correction": "per-side isotonic (PAVA) of realized WAR on predicted WAR",
+  "mae_tolerance": 0.02
+ },
+ "verdict": "NO_SHIP",
+ "clauses": {
+  "c1_band_gap_shrinks": false,
+  "c2_overall_mae_not_worse": false,
+  "c3_tail_mae_not_worse": false
+ },
+ "band": {
+  "lo": 45.0,
+  "hi": 50.0,
+  "n_hit": 308,
+  "n_pit": 284,
+  "gap_before": 1.2663,
+  "gap_after": 0.0028,
+  "improvement_ci95": [
+   -0.6361,
+   1.4285
+  ]
+ },
+ "per_side_mae": {
+  "H": {
+   "n": 2085,
+   "mae_before": 2.4373,
+   "mae_after": 2.5571,
+   "delta": 0.1199
+  },
+  "P": {
+   "n": 2215,
+   "mae_before": 1.609,
+   "mae_after": 1.6442,
+   "delta": 0.0352
+  }
+ },
+ "tail_mae": {
+  "H": {
+   "n": 126,
+   "mae_before": 9.496,
+   "mae_after": 12.2249,
+   "delta": 2.7289
+  },
+  "P": {
+   "n": 3,
+   "mae_before": 20.95,
+   "mae_after": 23.6288,
+   "delta": 2.6788
+  }
+ },
+ "folds": [
+  {
+   "train_to": 2013,
+   "n_train": 334,
+   "n_eval": 163
+  },
+  {
+   "train_to": 2014,
+   "n_train": 497,
+   "n_eval": 266
+  },
+  {
+   "train_to": 2015,
+   "n_train": 763,
+   "n_eval": 213
+  },
+  {
+   "train_to": 2016,
+   "n_train": 976,
+   "n_eval": 369
+  },
+  {
+   "train_to": 2017,
+   "n_train": 1345,
+   "n_eval": 383
+  },
+  {
+   "train_to": 2018,
+   "n_train": 1728,
+   "n_eval": 396
+  },
+  {
+   "train_to": 2019,
+   "n_train": 2124,
+   "n_eval": 270
+  },
+  {
+   "train_to": 2020,
+   "n_train": 2394,
+   "n_eval": 457
+  },
+  {
+   "train_to": 2021,
+   "n_train": 2851,
+   "n_eval": 528
+  },
+  {
+   "train_to": 2022,
+   "n_train": 3379,
+   "n_eval": 524
+  },
+  {
+   "train_to": 2023,
+   "n_train": 3903,
+   "n_eval": 245
+  },
+  {
+   "train_to": 2024,
+   "n_train": 4148,
+   "n_eval": 222
+  },
+  {
+   "train_to": 2025,
+   "n_train": 4370,
+   "n_eval": 264
+  }
+ ],
+ "n_evaluated": 4300
+}

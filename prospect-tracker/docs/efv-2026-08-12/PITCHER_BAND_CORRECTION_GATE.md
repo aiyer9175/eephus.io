@@ -84,6 +84,57 @@ all three clauses hold, and if they hold the change is one coordinated epoch
 with the rookie-window unlock already on this branch, since both re-anchor
 served grades and neither should be regenerated twice.
 
-## Results
+## Results (2026-08-12, `data/xfv_side_correction_eval.json`)
 
-To be written by the lab. Deliberately empty at commit time.
+**VERDICT: NO_SHIP.** All three clauses fail. 13 forward-chained folds, 4,300
+rows evaluated by a model that never saw them.
+
+| clause | before | after | verdict |
+| --- | --- | --- | --- |
+| 1. FV 45 band gap | 1.2663 | 0.0028 | **FAIL** (improvement CI [-0.636, 1.429] includes zero) |
+| 2. overall MAE, hitters | 2.4373 | 2.5571 | **FAIL** (worse) |
+| 2. overall MAE, pitchers | 1.6090 | 1.6442 | **FAIL** (worse) |
+| 3. tail MAE, hitters (n=126) | 9.4960 | 12.2249 | **FAIL** (worse) |
+| 3. tail MAE, pitchers (n=3) | 20.9500 | 23.6288 | **FAIL** (worse) |
+
+### Clause 1 is the instructive one
+
+The correction very nearly ERASES the band gap out of sample, 1.27 to 0.003.
+Read alone that looks like a triumph. It is not: the bootstrap interval on the
+improvement is **[-0.636, 1.429]** and includes zero, so a gap that size shrinks
+to nothing about as often by chance on this sample. **A point estimate that
+lands on zero is not evidence that the thing was fixed.** This is the same
+demotion the rest of the site applies, and pre-registering the interval is what
+stopped the headline number from being reported as a win.
+
+### Clause 3 caught the exact failure it was written for
+
+The 2026-06-25 rejection killed a global linear recalibration because it worsened
+the FV55+ tail. Clause 3 existed because a correction that fixes the middle by
+breaking the top is that failure wearing new clothes, and **that is precisely
+what happened**: hitter tail error rises 9.50 to 12.22, a 29 percent
+degradation, while the middle improves. Per-side and isotonic did not save it.
+
+The mechanism is not mysterious. Fitting a monotone map on a pool where most
+mass sits near zero WAR pulls the sparse high end toward the crowd, and the tail
+is where the dollars and the board order live.
+
+### What this means for the owner decision
+
+The owner chose **narrow fix plus publish** after E2a. The publish half shipped
+and stands. **The fix half is now a measured loss and does not ship.** The FV 45
+under-grade is real in sample and is NOT recoverable by this correction family
+out of sample, which is the honest end of this lane rather than a reason to try
+a third family on the same cell.
+
+### Registered as closed
+
+`xfv_side_correction` is registered **deprecated** carrying this artifact as its
+loss ledger. It joins the banned ledger beside the 2026-06-25 tail fix: **do not
+re-attempt a WAR-recalibration correction for the FV 45 side gap.** The reopen
+burden is new DATA (more resolved cohorts, which arrive on their own clock), not
+a new functional form.
+
+The served grade map is unchanged. eFV's low pitcher share remains what E2a
+measured it to be: the more accurate reading of value at the top, with a real
+but unrecoverable under-grade in one middle band.
