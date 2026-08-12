@@ -306,3 +306,71 @@ def test_betting_shadow_json_carries_the_shape_the_catalog_promises():
                 "gate_state", "result", "slate_date"}
         missing = need - set(rows[0])
         assert not missing, f"betting_shadow.json rows lost {sorted(missing)}"
+
+
+# ---------------------------------------------------------------------------
+# 9. THE PER-TAG BUDGET IS A SELECTION RULE, so it has to be enforced and not
+#    merely declared. MAX_PER_SLATE_BY_TAG shipped from the start saying
+#    ev_rank: 3, with a comment claiming that was "exactly the split the
+#    shipped selector already applied". The selector never read the dict and
+#    filled to the GLOBAL cap instead, so on any slate where the two slots did
+#    not both pick, ev_rank quietly absorbed the difference. On the live ledger
+#    that put 4 ev_rank rows on 2026-08-09 and 5 on 2026-08-11 against a
+#    declared 3, and a quarter of that tag's sweepable evidence for gate 3 was
+#    chosen by a rule that did not exist.
+# ---------------------------------------------------------------------------
+def _wide_payload(n=8):
+    """A board with more clearing sides than any budget allows."""
+    sides = [{"side": "away", "label": f"S{i}", "edge": 0.20 - i * 0.005,
+              "odds": 150, "decimal": 2.5, "book": "draftkings",
+              "model_prob": 0.40, "market_fair_prob": 0.30,
+              "ev_per_unit": 0.5 - i * 0.01} for i in range(n)]
+    return {
+        "slate_date": "2026-08-06",
+        "status": {"odds_feed": "ok"},
+        "team_bets": [{"game_pk": 900 + i, "home": {"org": "PHI"},
+                       "away": {"org": "WSN"}, "moneyline": [s]}
+                      for i, s in enumerate(sides)],
+    }
+
+
+def test_ev_rank_never_exceeds_its_declared_budget(led):
+    """The cap in MAX_PER_SLATE_BY_TAG is the cap that ships."""
+    res = bs.record_slate(_wide_payload(), min_edge=0.05, path=led)
+    assert res["written"] > 0
+    rows = bs.load(led)
+    n_ev = sum(1 for r in rows if r.get("slot") == bs.DEFAULT_SLOT_TAG)
+    assert n_ev == bs.MAX_PER_SLATE_BY_TAG[bs.DEFAULT_SLOT_TAG], (
+        f"ev_rank took {n_ev} rows against a declared budget of "
+        f"{bs.MAX_PER_SLATE_BY_TAG[bs.DEFAULT_SLOT_TAG]}. The budget is part of "
+        "what the tag MEANS: its ROI is a claim about the top of the board only "
+        "if that is what it holds.")
+
+
+def test_a_second_pass_on_one_slate_cannot_buy_a_second_budget(led):
+    """The budget is per SLATE, not per call.
+
+    The pipeline runs more than once a day. Before this was enforced, each call
+    got a fresh full budget off whatever board was live at the time, so
+    "the top three by EV for this slate" became "the top three of build 1 plus
+    the top two of build 2", priced at two different capture times."""
+    bs.record_slate(_wide_payload(), min_edge=0.05, path=led)
+    first = len(bs.load(led))
+    # A LATER board on the SAME slate carrying DIFFERENT games, so shadow_id
+    # dedupe cannot be what stops it. That distinction is the whole test: with
+    # an identical board the dedupe hides the missing budget and the test
+    # passes against the defect (it did, until this was fixed).
+    later = _wide_payload()
+    for i, g in enumerate(later["team_bets"]):
+        g["game_pk"] = 5000 + i
+    again = bs.record_slate(later, min_edge=0.05, path=led)
+    rows = bs.load(led)
+    capped = [r for r in rows
+              if bs.MAX_PER_SLATE_BY_TAG.get(r.get("slot")) is not None]
+    assert len(rows) == first, "a second pass added capped rows to a spent slate"
+    assert len(capped) <= bs.MAX_PER_SLATE, (
+        f"{len(capped)} capped rows on one slate against MAX_PER_SLATE "
+        f"{bs.MAX_PER_SLATE}")
+    assert "already logged" in again["reason"], (
+        "a spent budget must not report as a board where nothing cleared: "
+        f"got {again['reason']!r}")

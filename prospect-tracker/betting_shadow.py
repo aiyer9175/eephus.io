@@ -354,7 +354,8 @@ def _row_key(r: dict) -> tuple:
 def candidates_from_board(payload: dict, *, min_edge: float,
                           max_per_slate: int = MAX_PER_SLATE,
                           slots: dict | None = None,
-                          include_board_all: bool = False) -> list[dict]:
+                          include_board_all: bool = False,
+                          budget_by_tag: dict | None = None) -> list[dict]:
     """The sides this slate would have bet: the published slots, then the rest
     by EV.
 
@@ -421,25 +422,46 @@ def candidates_from_board(payload: dict, *, min_edge: float,
             continue
         tagged.setdefault(_row_key(row), tag)
 
-    if not tagged:
-        picked, seen = list(out[:max_per_slate]), {_row_key(c) for c in out[:max_per_slate]}
-    else:
-        picked, seen = [], set()
-        for cand in out:
-            k = _row_key(cand)
-            if k in tagged and k not in seen:
-                picked.append({**cand, "slot": tagged[k]})
-                seen.add(k)
-        for cand in out:
-            if len(picked) >= max_per_slate:
-                break
-            k = _row_key(cand)
-            if k in seen:
-                continue
-            picked.append(cand)
+    # THE PER-TAG BUDGET IS ENFORCED HERE, and until 2026-08-12 it was not.
+    # MAX_PER_SLATE_BY_TAG has always declared ev_rank: 3 and the comment above
+    # it claims that is "exactly the split the shipped selector already
+    # applied". The selector never read the dict: it filled to the GLOBAL
+    # max_per_slate, so on any slate where the two slots did not both pick,
+    # ev_rank absorbed the difference. Measured on the live ledger, slate
+    # 2026-08-09 is potd_band 1 + ev_rank 4, and one of those four ev_rank rows
+    # is a quarter of that tag's entire sweepable evidence for gate 3.
+    #
+    # This is not cosmetic: a cap is part of a selection rule. `ev_rank` is
+    # defined two screens up as "the best three by EV that the two slots did not
+    # already take", and its ROI is only a statement about the top of the board
+    # if that is what it holds. Rows already on disk are NOT retagged - they
+    # were selected under the unenforced rule and rewriting them would reinterpret
+    # evidence under a rule its writer never applied, which is the exact hazard
+    # BOARD_ALL_TAG was introduced to avoid.
+    budget = dict(MAX_PER_SLATE_BY_TAG if budget_by_tag is None else budget_by_tag)
+
+    def _room(tag: str, taken: dict) -> bool:
+        cap = budget.get(tag, None)
+        return cap is None or taken.get(tag, 0) < cap
+
+    picked, seen, taken = [], set(), {}
+    for cand in out:
+        k = _row_key(cand)
+        if k in tagged and k not in seen and _room(tagged[k], taken):
+            picked.append({**cand, "slot": tagged[k]})
             seen.add(k)
-        picked = picked[:max_per_slate]
-        seen = {_row_key(c) for c in picked}
+            taken[tagged[k]] = taken.get(tagged[k], 0) + 1
+    for cand in out:
+        if len(picked) >= max_per_slate:
+            break
+        k = _row_key(cand)
+        if k in seen or not _room(DEFAULT_SLOT_TAG, taken):
+            continue
+        picked.append(cand)
+        seen.add(k)
+        taken[DEFAULT_SLOT_TAG] = taken.get(DEFAULT_SLOT_TAG, 0) + 1
+    picked = picked[:max_per_slate]
+    seen = {_row_key(c) for c in picked}
 
     if not include_board_all:
         return picked
@@ -475,13 +497,56 @@ def record_slate(payload: dict, *, min_edge: float, gate_state: dict | None = No
 
     if slots is None:
         slots = {k: payload.get(k) for k in SLOT_TAGS}
+
+    # THE BUDGET IS PER SLATE, NOT PER CALL. The ledger is loaded BEFORE the
+    # candidates are chosen so the slate's remaining room can be handed to the
+    # selector. It used to be loaded after, and each call got a fresh full
+    # budget: the pipeline runs more than once a day, and slate 2026-08-11 ended
+    # up with 7 capped rows against MAX_PER_SLATE 5 (ev_rank 5 against its 3),
+    # the second pass adding rows off a LATER board at a different capture time.
+    # "The top three by EV for this slate" then meant "the top three of build 1
+    # plus the top two of build 2", which is not a selection rule anyone
+    # registered. A second pass can still add board_all rows, which are uncapped
+    # by design and are the tag whose whole justification is that its membership
+    # is not truncated.
+    existing = load(path)
+    used: dict[str, int] = {}
+    for r in existing:
+        if r.get("slate_date") != slate:
+            continue
+        tag = r.get("slot") or DEFAULT_SLOT_TAG
+        used[tag] = used.get(tag, 0) + 1
+    remaining = {t: (None if MAX_PER_SLATE_BY_TAG.get(t) is None
+                     else max(0, MAX_PER_SLATE_BY_TAG[t] - used.get(t, 0)))
+                 for t in MAX_PER_SLATE_BY_TAG}
+    room = MAX_PER_SLATE - sum(
+        n for t, n in used.items() if MAX_PER_SLATE_BY_TAG.get(t) is not None)
+
     cands = candidates_from_board(payload, min_edge=min_edge, slots=slots,
-                                  include_board_all=include_board_all)
+                                  include_board_all=include_board_all,
+                                  max_per_slate=max(0, room),
+                                  budget_by_tag=remaining)
     if not cands:
+        # TWO different empty results, and they must not share a sentence. With
+        # a per-slate budget an empty candidate list no longer implies nothing
+        # cleared the floor: on a re-run the sides are all still there and the
+        # budget is simply spent. Reporting that as "no side cleared" would read
+        # as a dead board on exactly the nights the board was fine.
+        # Ask the board directly rather than inferring from the budget
+        # arithmetic: the global room can still be positive while the only tag
+        # with candidates is spent, which is exactly the re-run case.
+        cleared_ignoring_budget = candidates_from_board(
+            payload, min_edge=min_edge, slots=slots,
+            include_board_all=include_board_all,
+            budget_by_tag={t: None for t in MAX_PER_SLATE_BY_TAG})
+        if used and cleared_ignoring_budget:
+            return {"written": 0, "slate_date": slate,
+                    "reason": "every capped row for this slate is already "
+                              "logged and its per-tag budget is spent; a later "
+                              "pass may only add uncapped board_all rows"}
         return {"written": 0, "slate_date": slate,
                 "reason": f"no side cleared the {min_edge:.1%} floor on this slate"}
 
-    existing = load(path)
     seen = {r.get("shadow_id") for r in existing}
     posted = _now()
     new = []
