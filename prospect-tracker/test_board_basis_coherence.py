@@ -359,7 +359,13 @@ def test_fingerprint_names_the_routing_and_the_provisional_map():
     reason grademap= carries the outcome curve's."""
     fp = storage.board_basis_fingerprint()
     assert "|floorroute=" in fp, fp
-    term = fp.split("|floorroute=")[1]
+    # Parse by TERM, not by tail. This used to take everything after
+    # "|floorroute=" as the term, which silently absorbed any term appended
+    # after it: adding gradanchor= on 2026-08-12 made the hash read
+    # "on@ff60a349|gradanchor=rookie_window" and the length check failed for a
+    # reason that had nothing to do with the map.
+    terms = dict(t.split("=", 1) for t in fp.split("|") if "=" in t)
+    term = terms["floorroute"]
     state, _, map_hash = term.partition("@")
     assert state in ("on", "off"), fp
     assert len(map_hash) == 8, f"provisional map hash missing from {fp!r}"

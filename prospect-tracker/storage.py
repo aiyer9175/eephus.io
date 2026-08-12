@@ -4878,7 +4878,11 @@ _NO_BOARD_SORT_KEY = -1e9
 # to a post-epoch rank would report the one-time re-rank as real player movement.
 # Every reader of metric_snapshots.overall_rank filters on this date; rank
 # movement and the rank-trend arrow read empty until post-epoch history accrues.
-BOARD_RANK_BASIS_EPOCH = "2026-08-07"   # STRICTLY-AFTER gate: see load_rank_history.
+BOARD_RANK_BASIS_EPOCH = "2026-08-12"   # STRICTLY-AFTER gate: see load_rank_history.
+# Bumped 2026-08-12 with the rookie-window unlock, which re-anchors every
+# still-eligible graduate onto his latest board point. Rank history from
+# before this date is on the debut-anchored basis and must not be differenced
+# against history after it; the epoch is what makes that refusal automatic.
 # 2026-08-07 BUMP (omnibus-3 Lane F, the floor routing going live). TWO board inputs
 # moved in one commit and the epoch applies to both, which is the judgement the
 # 2026-08-04 note below deliberately declined to make for a declaration-only change.
@@ -5000,7 +5004,7 @@ BOARD_RANK_BASIS_EPOCH = "2026-08-07"   # STRICTLY-AFTER gate: see load_rank_his
 # 2026-07-29 incident.
 BOARD_BASIS_FINGERPRINT = ("xfv_grade|scale=off|grademap=outcome_pooled@6dbe8353f3bb"
                            "|roles=usage_both|feats=b747e1d3|stale=source"
-                           "|floorroute=on@ff60a349")
+                           "|floorroute=on@ff60a349|gradanchor=rookie_window")
 # floorroute off -> on 2026-08-07: efv_score.SERVE_PROVISIONAL_FOR_CONSTANT_COHORT was
 # flipped once the prospx dedupe and the two-scale disclosure landed. Ship record and
 # re-run gates: docs/efv-2026-08-07/BOARD_FLOOR_ROUTING_SHIP.md. The map hash is
