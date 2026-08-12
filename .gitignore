@@ -35,3 +35,4 @@ ncaa_statsapi_2026_summary.json
 # repo left behind by workflow runs (13,986 files in one), which must never be
 # committed into it.
 .claude/worktrees/
+.claude/settings.json
