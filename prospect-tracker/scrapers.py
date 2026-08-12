@@ -601,6 +601,20 @@ _SPLIT_KEYS: dict[tuple[str, int], str] = {
     # under the split key. Found by the 2026-08-09 BA-ingest adversarial
     # verification; repaired by tools/repair_garrett_wright_collision.py.
     ("garrett_wright", 835226): "garrett_wright_laa",
+    # The Boston DSL RHP Jesus Lopez (mlbam 838819, b. 2008-07-07, an
+    # international free agent signed 2026-02-13) collides with the Texas
+    # catcher Jesus Lopez (mlbam 805052, b. 2005-05-24) - FIVE humans share
+    # this slug in all (805052/806882/808362/821805/838819, of whom 808362
+    # already sits on its own key). The catcher is the incumbent: every board
+    # snapshot on the key is published at C and he is the only catcher among
+    # the five ids. The pitcher never appeared on a board at all; he reached
+    # the ACTIVE board through the roster and acquisition path alone, which is
+    # why this MLBAM pin is the whole fix and no board-ingest pin is needed.
+    # Found by test_identity_collisions on 2026-08-12, when a key that had been
+    # carried in KNOWN_MERGED_INACTIVE crossed onto the live board; repaired by
+    # tools/repair_jesus_lopez_collision.py. The tell was one players row
+    # holding the catcher's C/TEX with the pitcher's date of birth.
+    ("jesus_lopez", 838819): "jesus_lopez_bos",
 }
 
 
