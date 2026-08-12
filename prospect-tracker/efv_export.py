@@ -106,6 +106,22 @@ def _entry(s, side, kind):
         e["factors"] = s["factors"]
     if s.get("factors_more"):                            # groups the top-4 cut dropped
         e["factors_more"] = s["factors_more"]            # ({n, mag}); see efv_score._factors
+    # THE ROOKIE-WINDOW PAIR, and they are named here for the reason the block
+    # below this one exists: a field efv_score writes and this whitelist does not
+    # name never reaches data/xfv.json, which is the file storage reads.
+    #   xfv_grade_at_debut  the grade the player carried INTO the majors.
+    #                       storage pins the WAG baseline to THIS, never to the
+    #                       served grade, because wag_calibration regresses on
+    #                       that block and its regressand already sees the
+    #                       future. Dropping this field silently un-pins the
+    #                       leak rather than failing.
+    #   xfv_rookie_window   set only when the window actually moved the scored
+    #                       point off the debut anchor, so a surface can say
+    #                       which graduates are still being re-graded.
+    if s.get("xfv_grade_at_debut") is not None:
+        e["xfv_grade_at_debut"] = s["xfv_grade_at_debut"]
+    if s.get("xfv_rookie_window"):
+        e["xfv_rookie_window"] = s["xfv_rookie_window"]
     # ── THE WHITELIST GAP, closed 2026-08-07 (Lane F2) ─────────────────────────
     # This function is a field WHITELIST, so anything efv_score writes and this does not
     # name reaches data/xfv_scored_live_*.json and stops there. Both fields below were

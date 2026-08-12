@@ -5091,8 +5091,21 @@ def board_basis_fingerprint() -> str:
         floorroute = f"{_on}@{_mh}"
     except Exception:
         floorroute = "unavailable"
+    # GRADUATE ANCHOR RULE, added 2026-08-12 with the rookie-window unlock, and
+    # it closes the same class of hole the feature-set term closed in July. The
+    # device encoded the grade field, the scale, the map, the roles, the feature
+    # spec, the stale basis and the floor routing, and NONE of them sees which
+    # snapshot a graduate is scored at. Flipping that rule moves the served
+    # grade for every still-eligible graduate (920 of them) while the
+    # fingerprint stayed byte-identical to its pin, so the movement-suppression
+    # gate would have waved the transition run straight through.
+    try:
+        import efv_score as _es2
+        anchor = "rookie_window" if getattr(_es2, "GRADUATE_ROOKIE_WINDOW", True) else "at_debut"
+    except Exception:
+        anchor = "unavailable"
     return (f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}|roles={roles}"
-            f"|feats={feats}|stale={stale}|floorroute={floorroute}")
+            f"|feats={feats}|stale={stale}|floorroute={floorroute}|gradanchor={anchor}")
 
 
 # ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /
@@ -10283,9 +10296,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             latest_fv, _is_pitcher_vf, p.position,
             age=age, eta_years=_eta_yrs,
             fv_dispersion=(p.points[-1].fv_stddev if p.points else None))
-        # WAG baseline = the player's eFV grade (locked at debut for graduates) where
-        # available; None falls back to consensus inside _build_debuted_payload.
-        _wag_fv = (_xfv_by_key.get(p.player_key) or {}).get("xfv_grade")
+        # WAG baseline = the player's eFV grade AT DEBUT, and from 2026-08-12 that
+        # is literal rather than incidental.
+        #
+        # It used to read whatever xfv_grade the join happened to serve, which was
+        # the debut-anchored grade only because run_backgrade could not produce
+        # anything else. The rookie-window unlock lets a graduate's served grade
+        # move on new source grades, and WAG must NOT follow it: efv_model's
+        # wag_calibration regresses on this block, its regressand already sees the
+        # future, and the only thing containing that leak is the pinned lambdas.
+        # Letting the unlock feed it would put a moving target inside the one
+        # coupling nobody has re-derived.
+        #
+        # `xfv_grade_at_debut` is emitted by run_backgrade for exactly this; the
+        # served grade is the fallback for rows written before it existed (and for
+        # every non-graduate, where the two are the same number anyway).
+        _xrow = _xfv_by_key.get(p.player_key) or {}
+        _wag_fv = _xrow.get("xfv_grade_at_debut", _xrow.get("xfv_grade"))
         _debuted_value = (
             _build_debuted_payload(
                 latest_fv, _is_pitcher_vf, p.position, age=age,

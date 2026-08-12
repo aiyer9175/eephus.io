@@ -2343,6 +2343,17 @@ def backgrade_path():
     return DATA_DIR / "xfv_backgrade.json"
 
 
+#: THE GRADUATE ANCHOR RULE (owner decision 2026-08-12). True serves the ROOKIE
+#: WINDOW: a graduate who is still rookie-eligible is scored at his LATEST board
+#: point, so grades published after his debut still move his eFV. False restores
+#: the pre-2026-08-12 behaviour of freezing at the last snapshot strictly before
+#: the debut.
+#:
+#: A one-line revert on purpose, and it is READ BY
+#: storage.board_basis_fingerprint, so flipping it trips the movement
+#: coordination gate instead of silently re-grading 920 graduates.
+GRADUATE_ROOKIE_WINDOW = True
+
 def run_backgrade(persist: bool = True) -> dict:
     """Backgrade EVERY graded prospect so the WHOLE site carries an eFV, not just the active
     board (run_live) + the labeled-outcome matrix (run). For each universe player -- timeseries
@@ -2404,9 +2415,39 @@ def run_backgrade(persist: bool = True) -> dict:
         is_pit = side == "pit"
         ridge, a, b, ols, _keys = fit[side]
         debut_date = rec.get("debut_date") if kind == "debuted" else None
-        # as-of point: graduate -> last snapshot before debut; active -> latest snapshot
-        cand = [pt for pt in pts if (not debut_date or pt["snapshot_date"] < debut_date)] or pts
+        # THE ROOKIE WINDOW (owner decision 2026-08-12). The eFV used to freeze
+        # at the last snapshot STRICTLY BEFORE debut, which threw away every
+        # grade the boards published afterwards. Sources do not stop at the
+        # debut; they stop when a player stops being a prospect, and 920 of the
+        # 2,704 graduates on file are still rookie-eligible right now.
+        #
+        # THE ELIGIBILITY RULE IS NOT RE-IMPLEMENTED HERE. `rookie_exhausted`
+        # already exists on the record's own roster_status block, computed by
+        # stats.py from the AB, IP, active-day and options gates. A second copy
+        # of that rule living in the scorer is how two definitions drift apart.
+        #
+        # WHY THE BOOLEAN AND NOT A DATE. stats.py publishes WHETHER eligibility
+        # is exhausted, never WHEN, and nothing in this tree can date the
+        # crossing. So the window is applied the only way the data supports
+        # honestly: a player still rookie-eligible has every one of his points
+        # inside the window by definition, and they are all admitted; a player
+        # who has exhausted keeps the pre-debut anchor, because guessing his
+        # boundary would silently re-date settled grades. That is a stated
+        # limitation, not an oversight.
+        rookie_open = bool(GRADUATE_ROOKIE_WINDOW and kind == "debuted" and debut_date
+                           and not (rec.get("roster_status") or {}).get("rookie_exhausted"))
+        pre_debut = [p for p in pts if (not debut_date or p["snapshot_date"] < debut_date)]
+        cand = pts if rookie_open else (pre_debut or pts)
         pt = cand[-1]
+        # The point the drivers are explained from, which stays pre-debut even
+        # when the grade has moved past it.
+        anchor_pt = pre_debut[-1] if pre_debut else None
+        anchor_cons = _f(anchor_pt.get("consensus_fv_raw")) if anchor_pt is not None else None
+        # True only when the window actually moved the scored point off the
+        # debut anchor. Everywhere else the two grades are the same number and
+        # the second scoring is skipped.
+        window_moved = bool(rookie_open and anchor_pt is not None
+                            and anchor_pt is not pt and anchor_cons is not None)
         # AUDIT FIX 2026-07-14: when EVERY snapshot is post-debut the `or pts`
         # fallback anchors on a post-debut grade (187 graduates) - tag it so
         # realized-vs-grade readouts can exclude these from "the grade eFV
@@ -2442,8 +2483,32 @@ def run_backgrade(persist: bool = True) -> dict:
         cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else 0.0
         if row.get("milb"):
             xfv_war = max(-2.0, a + b * _predict(ridge, feats))
-            factors = _factors(ridge, feats, side=side)
+            # THE GRADE MOVES, THE DRIVERS DO NOT (owner, 2026-08-12): "eFV
+            # drivers should only factor in MiLB stats / metrics / measurements".
+            #
+            # The MiLB legs are already frozen: milb_yr is pinned to the debut
+            # year above, so no post-debut production can reach them. The leg
+            # that WOULD move is the consensus anchor, and the driver chips are
+            # computed from the same feature row as the grade, so admitting a
+            # post-debut point would silently re-narrate a graduate's card on
+            # every regen.
+            #
+            # So the chips are computed from the DEBUT-ANCHORED row while the
+            # grade is computed from the rookie-window row. The two rows differ
+            # only in the prior block, which is exactly the leg that must not
+            # drive the explanation.
+            fac_feats = feats
+            if window_moved:
+                row_anchor = {**row, "consensus_fv_raw": anchor_cons}
+                row_anchor.update(_prior_features(rec, anchor_pt, side))
+                fac_feats = _vec(row_anchor, side)
+            factors = _factors(ridge, fac_feats, side=side)
             factors = _relabel_pace_factor(factors, row.get("milb"))
+            # The grade the player carried INTO the majors, kept beside the
+            # served one so the WAG baseline can be pinned to it. Same map, same
+            # ridge, only the prior block differs.
+            xfv_war_at_debut = (max(-2.0, a + b * _predict(ridge, fac_feats))
+                                if fac_feats is not feats else xfv_war)
         else:
             # AUDIT FIX 2026-07-14: honor the docstring's prior-anchored
             # contract - a no-track-record row scored through the ridge eats
@@ -2457,6 +2522,16 @@ def run_backgrade(persist: bool = True) -> dict:
                 cons_war, row.get("pick_overall"), row.get("bonus_usd"),
                 cons_fv=cons_fv, is_pitcher=is_pit,
                 acq_year=a_sc.get("year"))
+            # Same pin on the prior-anchored path, where the grade is a function
+            # of the consensus and so moves with the window by construction.
+            if window_moved:
+                _acw = max(0.0, _pred_ols(ols, anchor_cons)) if ols else 0.0
+                xfv_war_at_debut, _ = _provisional_prior_war(
+                    _acw, row.get("pick_overall"), row.get("bonus_usd"),
+                    cons_fv=anchor_cons, is_pitcher=is_pit,
+                    acq_year=a_sc.get("year"))
+            else:
+                xfv_war_at_debut = xfv_war
         rank_war = (1 - lam[side]) * cons_war + lam[side] * xfv_war
         # ── LIVE-OVERLAY COVERAGE ON THIS PATH (B2, audited 2026-07-30) ──────────
         # This path used to apply _injury_factor and nothing else, which read as a
@@ -2578,6 +2653,13 @@ def run_backgrade(persist: bool = True) -> dict:
         entry = {
             "player_key": pk, "side": side, "kind": kind, "position": pos,
             **({"xfv_postdebut_anchor": True} if postdebut_anchor else {}),
+            # Rookie-window unlock (2026-08-12): the served grade may now sit
+            # past the debut, so the at-debut grade ships beside it. storage
+            # pins the WAG baseline to THIS one, never to the served grade.
+            **({"xfv_rookie_window": True} if window_moved else {}),
+            "xfv_grade_at_debut": round(
+                vf.outcome_implied_fv(xfv_war_at_debut,
+                                      exposure_seasons=TARGET_SEASONS), 1),
             "consensus_fv": round(cons_fv, 1),
             "xfv_grade": round(xfv_grade, 1),
             "xfv_grade_display": round(disp, 1),
