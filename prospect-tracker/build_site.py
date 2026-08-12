@@ -5908,6 +5908,12 @@ def build_positional_fit_payload() -> dict | None:
             "valuesDisplayBasis": "fielder_centred" if _vals_fc else "exposure_weighted",
             "ci95": ladder.get("ci95"),
             "folklore": ladder.get("folklore_ladder"),
+            # The basis the folklore column is quoted on, which is NOT ours.
+            # Forwarded so the page can show the like-for-like difference beside
+            # the raw one instead of silently subtracting per-162-game numbers
+            # from per-650-PA ones. Absent from artifacts generated before
+            # 2026-08-12; the consumer falls back to the raw column alone.
+            "folkloreBasis": ladder.get("folklore_basis"),
             "r2": ladder.get("r2"),
             "residSd": ladder.get("resid_sd"),
             "nPlayerSeasons": ladder.get("n_player_seasons"),

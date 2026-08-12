@@ -102,6 +102,11 @@ LADDER_EARLIEST_SEASON = 2000  # BRef runs_position goes back this far
 # The cost is paid in precision: about 2,000 fitted rows instead of 4,968, so
 # the CIs widen. The window sensitivities below (2000, 2012, 2018) are published
 # so a reader can price that trade rather than take it on faith.
+#: A full defensive season in innings: 162 games x 9. The denominator the
+#: folklore positional table is quoted against, and the one our runs-per-650-PA
+#: rungs are NOT quoted against. See `folklore_basis` in the ladder payload.
+FULL_SEASON_INNINGS = 162 * 9
+
 LADDER_WINDOW_SEASONS = 6
 # The window this replaced, kept as a NAME so the recency lab can reproduce the
 # champion it was scored against and so the published sensitivities can show
@@ -410,6 +415,42 @@ def fit_ladder(feeds: Feeds, first=None, last=None,
         "window_sensitivity": sens,
         "folklore_ladder": {"C": 12.5, "SS": 7.5, "CF": 2.5, "2B": 2.5, "3B": 2.5,
                             "RF": -7.5, "LF": -7.5, "1B": -12.5, "DH": -17.5},
+        # THE TWO LADDERS ARE NOT ON THE SAME BASIS, and until 2026-08-12
+        # everything that compared them subtracted one from the other anyway.
+        #
+        # Our rungs are runs per 650 PA of exposure. The folklore table is
+        # quoted per full defensive season, which is 162 games x 9 innings =
+        # 1,458 innings. At the fit's own inn_per_pa, 650 PA is only about
+        # 1,278 of those innings, so the folklore numbers are roughly 14 percent
+        # larger than a like-for-like comparison should use. The published
+        # "first base is about 4 runs wrong" reads 2.6 on the same basis, and
+        # catcher, which looked 1.6 runs off, lands within 0.1.
+        #
+        # BOTH COLUMNS SHIP AND NEITHER IS CALLED THE ANSWER. The scale below
+        # is derived, not assumed, but the underlying convention is genuinely
+        # ambiguous: the folklore table is quoted per 162 games in some sources
+        # and per 600-700 PA in others, and our fit inverts Baseball-Reference's
+        # constants while the folklore table is the FanGraphs/Tango one, so the
+        # comparison is cross-system before it is cross-basis. Publishing one
+        # rescaled number as the truth would replace a stated error with an
+        # unstated assumption.
+        "folklore_basis": {
+            "folklore_units": "runs per 162 defensive games (1,458 innings)",
+            "our_units": "runs per 650 PA of exposure",
+            "full_season_innings": FULL_SEASON_INNINGS,
+            "pa_equivalent_innings": round(650.0 * inn_per_pa, 1),
+            "scale_to_our_basis": round(650.0 * inn_per_pa / FULL_SEASON_INNINGS, 4),
+            "folklore_rescaled": {
+                p: round(v * 650.0 * inn_per_pa / FULL_SEASON_INNINGS, 2)
+                for p, v in {"C": 12.5, "SS": 7.5, "CF": 2.5, "2B": 2.5,
+                             "3B": 2.5, "RF": -7.5, "LF": -7.5, "1B": -12.5,
+                             "DH": -17.5}.items()},
+            "caveat": ("the folklore table is quoted per 162 games in some "
+                       "sources and per 600-700 PA in others, and it is the "
+                       "FanGraphs/Tango ladder while this fit inverts "
+                       "Baseball-Reference, so both columns are published and "
+                       "neither is presented as the answer"),
+        },
     }
 
 

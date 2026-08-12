@@ -1075,6 +1075,29 @@
       + "in all three held-out seasons). It is paid for in precision: fewer rows, wider intervals "
       + "in the column beside each rung.";
   }
+  // The two Difference columns, explained where they are read. This is a
+  // basis mismatch, not a scoring dispute, and the page used to print only the
+  // uncorrected one under the claim that it showed "where the folklore table is
+  // wrong".
+  function pfFolkloreNote(L) {
+    var b = L.folkloreBasis;
+    if (!b || !b.scale_to_our_basis) {
+      return " The difference column is where it disagrees with this fit.";
+    }
+    return " The two difference columns are the same subtraction on different"
+      + " bases. Our rungs are runs per 650 PA of exposure; the folklore table"
+      + " is quoted per full defensive season (162 games, " + fThou(b.full_season_innings)
+      + " innings), and 650 PA is about " + fThou(b.pa_equivalent_innings)
+      + " of those innings, so as quoted it runs about "
+      + f1((1 / b.scale_to_our_basis - 1) * 100) + "% large. <strong>Diff, same"
+      + " basis</strong> rescales it by " + f2(b.scale_to_our_basis)
+      + " first. Both are shown and neither is the answer: the folklore table is"
+      + " quoted per 162 games in some sources and per 600 to 700 PA in others,"
+      + " and it is the FanGraphs ladder while this fit inverts"
+      + " Baseball-Reference, so the comparison is cross-system before it is"
+      + " cross-basis.";
+  }
+
   function pfLadder() {
     var L = (PF && PF.ladder) || {};
     // WHICH COLUMN IS PRINTED. build_positional_fit_payload selects it: the
@@ -1090,6 +1113,23 @@
     var vals = L.valuesDisplay || model;
     var fielderCentred = (L.valuesDisplayBasis === "fielder_centred");
     var ci = L.ci95 || {}, folk = L.folklore || {};
+    // THE FOLKLORE COLUMN IS NOT ON OUR BASIS, and this table subtracted it
+    // from ours anyway. Our rungs are runs per 650 PA of exposure; the folklore
+    // table is quoted per full defensive season (162 games, 1,458 innings), and
+    // 650 PA is only about 1,278 of those innings. So every Difference cell
+    // overstated folklore by roughly 14 percent: first base read 4.1 runs wrong
+    // where a like-for-like read is 2.6, and catcher read 1.6 where it is
+    // within 0.1.
+    //
+    // Both readings now print, and NEITHER is called the answer. The scale is
+    // derived from the fit's own inn_per_pa, but the convention it corrects for
+    // is genuinely ambiguous (the folklore table is quoted per 162 games in
+    // some sources and per 600-700 PA in others), and it is the FanGraphs/Tango
+    // ladder while this fit inverts Baseball-Reference, so the comparison is
+    // cross-system before it is cross-basis. Replacing a stated error with an
+    // unstated assumption would not be an improvement.
+    var fbasis = L.folkloreBasis || null;
+    var folkRe = (fbasis && fbasis.folklore_rescaled) || null;
     // The interval is the model's own bootstrap band, carried onto the printed
     // line by the SAME constant that moved the point estimate, so it stays
     // centred on the printed number at its original width.
@@ -1113,7 +1153,7 @@
     // subtotal of THOSE PRINTED CELLS, then DH below the line and labelled out.
     // The subtotal parses the formatted cell rather than reading the payload, so
     // it can never disagree with the column it is a check on.
-    var sum8 = 0, sum8Folk = 0, sum8Diff = 0, nField8 = 0, nFolk8 = 0;
+    var sum8 = 0, sum8Folk = 0, sum8Diff = 0, sum8Re = 0, nField8 = 0, nFolk8 = 0;
     // One row formatter for both groups. DH below the subtotal is the same five
     // cells as a rung above it and must stay that way, so it is built here too,
     // with `collect` false and a tag that says why it is standing apart.
@@ -1137,11 +1177,15 @@
           nFolk8 += 1;
         }
       }
+      var dRe = (folkRe && folkRe[p] != null) ? vals[p] - folkRe[p] : null;
+      var reCell = (dRe == null) ? "-" : pfSigned(dRe, 2);
+      if (collect && dRe != null && isFinite(Number(reCell))) sum8Re += Number(reCell);
       return "<tr><td><strong>" + esc(p) + "</strong>" + (tag || "") + "</td>"
         + "<td>" + vCell + "</td>"
         + "<td>" + (c ? '<span class="proj-dim">' + pfSigned(c[0] + k, 2) + " to " + pfSigned(c[1] + k, 2) + "</span>" : "-") + "</td>"
         + "<td>" + fCell + "</td>"
-        + "<td>" + (d == null ? "-" : '<span class="' + (Math.abs(d) >= 1.5 ? "pal-hit" : "") + '">' + dCell + "</span>") + "</td></tr>";
+        + "<td>" + (d == null ? "-" : '<span class="proj-dim">' + dCell + "</span>") + "</td>"
+        + "<td>" + (dRe == null ? "-" : '<span class="' + (Math.abs(dRe) >= 1.5 ? "pal-hit" : "") + '">' + reCell + "</span>") + "</td></tr>";
     }
     // POS_ORDER is shared with the rest of this file and is NOT mutated: the
     // split below is a filter over a copy, so the display order of the rungs is
@@ -1181,6 +1225,7 @@
       + "<td" + subTd + '><span class="proj-dim">' + subNote + "</span></td>"
       + "<td" + subTd + ">" + (nFolk8 ? "<strong>" + pfSigned(sum8Folk, 1) + "</strong>" : "-") + "</td>"
       + "<td" + subTd + ">" + (nFolk8 ? "<strong>" + pfSigned(sum8Diff, 2) + "</strong>" : "-") + "</td>"
+      + "<td" + subTd + ">" + (nFolk8 && folkRe ? "<strong>" + pfSigned(sum8Re, 2) + "</strong>" : "-") + "</td>"
       + "</tr>";
     // DH stays on the page: the owner needs the number, and it is the rung that
     // decides whether a bat is worth carrying with no glove attached. It just
@@ -1195,8 +1240,8 @@
       + " to " + esc((L.seasons || [])[1]) + " at " + fInt(L.minPa) + "+ PA. R&sup2; " + (L.r2 == null ? "-" : f1(L.r2 * 100) + "%")
       + ", residual SD " + f2(L.residSd) + " runs. This is an INVERSION: it recovers the constants Baseball-Reference "
       + "themselves used, so a rung reads as what BRef prices that position at, not as an independent measure of how "
-      + "hard it is to play. The folklore column is the table everyone quotes; the difference column is "
-      + "where it is wrong." + pfWindowNote(L) + "</div>";
+      + "hard it is to play. The folklore column is the table everyone quotes." + pfFolkloreNote(L)
+      + pfWindowNote(L) + "</div>";
     // WHICH SUM IS ZERO, stated on the page rather than left to be
     // rediscovered. Only rendered when the artifact carries the identification
     // block (added 2026-07-31); older artifacts get the table with no claim
@@ -1248,7 +1293,8 @@
       }
     }
     return note + '<div class="mlbstats-scroll"><table class="mlbstats-table">'
-      + "<thead><tr><th>Pos</th><th>Fitted (runs/650)</th><th>95% CI</th><th>Folklore</th><th>Difference</th></tr></thead>"
+      + "<thead><tr><th>Pos</th><th>Fitted (runs/650)</th><th>95% CI</th><th>Folklore</th>"
+      + "<th>Diff, as quoted</th><th>Diff, same basis</th></tr></thead>"
       + "<tbody>" + rows + "</tbody></table></div>" + sums + pfMethod();
   }
 
