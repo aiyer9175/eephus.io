@@ -65,7 +65,9 @@ from __future__ import annotations
 
 import argparse
 import inspect
+import json
 import logging
+import os
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -75,6 +77,58 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 log = logging.getLogger("betting_close_job")
+
+#: PROOF OF LIFE, and it answers the one question the RED could not.
+#:
+#: snapshot_health measures close capture off .cache/odds/ and reports zero
+#: captures as "the close cron is either not installed or is running in the
+#: wrong timezone window". Those are different repairs and the artifact could
+#: not tell them apart, because a job that runs 96 times a day and correctly
+#: no-ops 95 of them leaves no trace at all until the night it fires. So every
+#: invocation stamps this file, including the refusals.
+#:
+#: UNDER .cache/ ON PURPOSE, exactly like the odds snapshots it reports on.
+#: data/job_heartbeat.json is git-tracked and deploy/nightly-build.sh runs
+#: `git checkout -- .` before the build, so a heartbeat written by the 19:00
+#: close job is reverted before the 03:10 pipeline could read it. That is not a
+#: hypothetical: it is why snapshot_health measures the cache in the first place.
+HEARTBEAT_PATH = ROOT / ".cache" / "betting" / "close_job_heartbeat.json"
+
+
+def write_heartbeat(d: dict, *, path: Path | None = None) -> None:
+    """Record that the job RAN, whatever it decided.
+
+    Best effort and silent on failure: telemetry must never be the reason a
+    close capture does not happen."""
+    p = path or HEARTBEAT_PATH
+    try:
+        p.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "last_run_utc": datetime.now(timezone.utc)
+                            .replace(microsecond=0).isoformat(),
+            "slate_date": d.get("slate_date"),
+            "fired": bool(d.get("fire")),
+            "error": bool(d.get("error")),
+            "reason": d.get("reason"),
+            "target_first_pitch": d.get("target_first_pitch"),
+            "fire_at": d.get("fire_at"),
+            "games": d.get("games"),
+        }
+        tmp = p.with_name(p.name + ".tmp")
+        tmp.write_text(json.dumps(payload, indent=1), encoding="utf-8")
+        os.replace(tmp, p)
+    except Exception:
+        log.warning("betting_close_job: could not write the heartbeat; the "
+                    "capture is unaffected", exc_info=True)
+
+
+def read_heartbeat(path: Path | None = None) -> dict | None:
+    """The last recorded invocation, or None when the job has never run here."""
+    p = path or HEARTBEAT_PATH
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return None
 
 # Fire this many minutes BEFORE the earliest first pitch. Far enough out that
 # the request completes while the market is still open, close enough that the
@@ -353,11 +407,37 @@ def main() -> int:
                     help="decide and report; never spends a credit")
     ap.add_argument("--why", action="store_true",
                     help="explain today's window and exit (same as --dry-run)")
+    ap.add_argument("--selfcheck", action="store_true",
+                    help="print the install state: whether this machine has "
+                         "ever run the job, when, and what it last decided")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args()
 
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING,
                         format="%(asctime)s %(levelname)s %(message)s")
+
+    if args.selfcheck:
+        # THE POST-INSTALL CHECK. `--why` answers "what would it do now", which
+        # a human can read on a machine where nothing is scheduled and mistake
+        # for a working install. This answers the different question: has the
+        # SCHEDULER ever reached this job on this machine.
+        hb = read_heartbeat()
+        import betting_ingest as _bi
+        print(f"close job     : {Path(__file__).resolve()}")
+        print(f"odds cache    : {_bi.CACHE_DIR}")
+        print(f"api key set   : {_bi.configured()}")
+        print(f"heartbeat     : {HEARTBEAT_PATH}")
+        if not hb:
+            print("scheduler     : NEVER RUN on this machine. Nothing has "
+                  "executed this job here, so no cron or task is reaching it.")
+            print("               Linux: install deploy/betting-crontab.example "
+                  "with `crontab -e`.")
+            print("               Windows: deploy/betting-close-task.ps1 -Register")
+            return 1
+        print(f"scheduler     : last ran {hb.get('last_run_utc')} UTC")
+        print(f"last decision : {hb.get('reason')}")
+        print(f"last slate    : {hb.get('slate_date')}  fired={hb.get('fired')}")
+        return 0
 
     try:
         d = decide()
@@ -372,7 +452,16 @@ def main() -> int:
         print(f"  {line}")
 
     if args.dry_run or args.why:
+        # No heartbeat on an inspection run. --why is documented as spending
+        # nothing, and a heartbeat written by a human at a terminal would report
+        # the CRON as alive on a box where it is not installed, which is the
+        # precise question the heartbeat exists to answer.
         return 0
+
+    # Stamped before the capture, so a run that dies inside betting_ingest still
+    # proves the scheduler reached the job.
+    write_heartbeat(d)
+
     if d.get("error"):
         # The two states a scheduler MUST hear about: a slate that is not today
         # (nothing will be captured and nobody would notice) and an unreadable
@@ -411,6 +500,32 @@ def main() -> int:
     except Exception:
         log.exception("betting_close_job: CLV grading failed; the close snapshot "
                       "IS captured and the grade can be rebuilt from it")
+
+    # Attach the closing price to the CALIBRATION ledger's open rows for this
+    # slate. This is the other half of the close capture and it had no
+    # production caller at all: append_close was reachable only from two tests,
+    # so no `phase: close` row was ever written, market_move_pct was permanently
+    # null, and data/betting_learning.json published a blocked_by describing a
+    # repair that would not have repaired it.
+    #
+    # Same posture as the CLV grade above: best effort, because the CAPTURE is
+    # the irreplaceable half and every derived number can be rebuilt from it.
+    try:
+        import betting_export as be
+        import tools.betting_calibration as bc
+        day = d.get("slate_date")
+        opens = [r for r in bc.rows()
+                 if r.get("slate_date") == day and r.get("phase") == bc.PHASE_OPEN
+                 and r.get("close_odds") is None]
+        ev = be.close_events_for_calibration(day, opens)
+        res = bc.append_close(ev)
+        print(f"  calibration: {res.get('closed', 0)} closing price(s) attached "
+              f"({res.get('n_no_close', 0)} without a close, "
+              f"{res.get('n_book_mismatch', 0)} book mismatch)")
+    except Exception:
+        log.exception("betting_close_job: attaching closing prices to the "
+                      "calibration ledger failed; the close snapshot IS "
+                      "captured and this can be rebuilt from it")
     return 0
 
 

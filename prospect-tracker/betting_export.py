@@ -876,6 +876,54 @@ def _close_price_for(row: dict, events: list[dict]):
     return None, f"{book} posted no closing {mk} price for {what!r}"
 
 
+def close_events_for_calibration(day: str, open_rows: list[dict]) -> dict:
+    """Build `tools.betting_calibration.append_close`'s `events_by_key` for one
+    slate, off that slate's CLOSE snapshot.
+
+    WHY THIS EXISTS. append_close shipped with no production caller at all: the
+    only invocations in the tree were two tests, so `phase: close` rows were
+    never written, `market_move_pct` was permanently null, and the learning
+    artifact published a blocked_by naming a repair that would not have
+    repaired it. The close job is the only moment the closing line is
+    guaranteed on disk, which is where this is called from.
+
+    Priced at the SAME BOOK the open row's best price came from, which
+    `_close_price_for` already enforces for the public record and which
+    append_close verifies again on the way in: a close taken at another book is
+    a different market, and the gap between two books is not a move.
+
+    Returns {} when the slate has no close snapshot, which is the ordinary
+    state for every slate before the cron was installed."""
+    snap = bi.closing_snapshot(day) if day else None
+    if not snap:
+        return {}
+    events = bi.parse_events(snap) or []
+    captured = snap.get("captured_at") if isinstance(snap, dict) else None
+    out: dict = {}
+    for r in open_rows or []:
+        if r.get("game_pk") is None:
+            continue
+        book = (r.get("best_book") or "").strip().lower()
+        if not book:
+            continue
+        # _close_price_for reads `book`; the calibration ledger names the same
+        # field best_book because it is the best price ACROSS books at open.
+        shim = {"market": r.get("market"), "book": book, "side": r.get("side"),
+                "point": r.get("point"), "selection": r.get("label"),
+                "game_pk": r.get("game_pk")}
+        price, _why = _close_price_for(shim, events)
+        if price is None:
+            continue
+        out[(r.get("game_pk"), r.get("market"), r.get("side"),
+             None if r.get("point") is None else float(r["point"]))] = {
+            "odds": price,
+            "decimal": bi.american_to_decimal(price),
+            "book": book,
+            "captured_at": captured,
+        }
+    return out
+
+
 def grade_record_clv(*, rows: list[dict] | None = None, write: bool = True,
                      path: Path | None = None) -> dict:
     """Grade every published pick against its slate's CLOSING snapshot, into a
@@ -1188,6 +1236,13 @@ def load_clv(path: Path | None = None) -> dict:
 #: slate that has already been played, and CLV for it is unrecoverable.
 CLOSE_STALE_HOURS = 36.0
 
+#: Written by tools/betting_close_job.py on EVERY invocation, refusals included.
+#: Read here so the RED can say whether the job is running at all, which is a
+#: different repair from the job running and never firing. Kept under .cache/
+#: for the same reason the snapshots are: deploy/nightly-build.sh runs
+#: `git checkout -- .`, so a tracked heartbeat cannot survive to be read.
+CLOSE_HEARTBEAT_PATH = ROOT / ".cache" / "betting" / "close_job_heartbeat.json"
+
 
 def _hours_between(a: datetime | None, b: datetime | None) -> float | None:
     if a is None or b is None:
@@ -1251,15 +1306,49 @@ def snapshot_health(days: int = 14, *, now: datetime | None = None) -> dict:
     hours_since_close = _hours_between(last_close, now)
     hours_since_open = _hours_between(last_open, now)
 
+    # THE HEARTBEAT SEPARATES TWO REPAIRS THAT USED TO SHARE ONE SENTENCE.
+    # "the close cron is either not installed or is running in the wrong
+    # timezone window" names two very different jobs of work, and nothing on
+    # disk could tell them apart: a job that runs 96 times a day and correctly
+    # no-ops 95 of them leaves no trace until the night it fires. So the job now
+    # stamps .cache/betting/close_job_heartbeat.json on every invocation, and
+    # this reads it. Absent means the scheduler is not reaching the job at all;
+    # present but never firing means the job runs and its window never opens,
+    # which is a different bug in a different file.
+    hb, hb_age_h = None, None
+    try:
+        hb = json.loads(CLOSE_HEARTBEAT_PATH.read_text(encoding="utf-8"))
+        hb_age_h = _hours_between(_stamp(hb.get("last_run_utc")), now)
+    except Exception:
+        hb = None
+
     if not rows:
         diagnosis = ("no odds snapshot of any kind is cached in the window, so the "
                      "open pull is not running either: check EEPHUS_ODDS_API_KEY is "
                      "visible to the pipeline and that run_monthly step 9e reached "
                      "betting_ingest.run")
+    elif n_with_close == 0 and hb is None:
+        diagnosis = ("no close snapshot has ever been captured AND the close job "
+                     "has never run on this machine (no heartbeat at "
+                     ".cache/betting/close_job_heartbeat.json), so the scheduler "
+                     "is not reaching it: install the entry from "
+                     "deploy/betting-crontab.example with `crontab -e` on the box, "
+                     "then confirm with `python tools/betting_close_job.py --why`. "
+                     "CLV is unrecoverable for every slate above")
+    elif n_with_close == 0 and hb_age_h is not None and hb_age_h > 24:
+        diagnosis = (f"no close snapshot has ever been captured and the close job "
+                     f"last ran {hb_age_h:.1f} hours ago, so its schedule has "
+                     f"stopped rather than never started: check the cron entry is "
+                     f"still installed and that the box has not been asleep. CLV is "
+                     f"unrecoverable for every slate above")
     elif n_with_close == 0:
-        diagnosis = ("no close snapshot has ever been captured, CLV is unrecoverable "
-                     "for every slate above, and the close cron is either not "
-                     "installed or is running in the wrong timezone window")
+        diagnosis = ("no close snapshot has ever been captured even though the close "
+                     "job IS running (last seen "
+                     f"{hb.get('last_run_utc')}, last decision: "
+                     f"{hb.get('reason')!r}), so this is not a scheduling problem: "
+                     "its firing window is never opening. Read that decision, then "
+                     "`python tools/betting_close_job.py --why` on the box. CLV is "
+                     "unrecoverable for every slate above")
     elif hours_since_close is not None and hours_since_close > CLOSE_STALE_HOURS:
         diagnosis = (f"the newest close snapshot is {hours_since_close:.1f} hours old and "
                      f"{n_missing} slate(s) in the window have none; CLV for those is "
@@ -1287,6 +1376,12 @@ def snapshot_health(days: int = 14, *, now: datetime | None = None) -> dict:
         "hours_since_last_close": hours_since_close,
         "hours_since_last_open": hours_since_open,
         "close_stale_hours": CLOSE_STALE_HOURS,
+        # Proof of life for the job itself, so a reader can tell "not scheduled"
+        # from "scheduled and never firing" without shelling onto the box.
+        "close_job_last_run": (hb or {}).get("last_run_utc"),
+        "close_job_last_reason": (hb or {}).get("reason"),
+        "close_job_hours_since_run": hb_age_h,
+        "close_job_ever_ran": hb is not None,
         "red": bool(n_with_close == 0 or n_missing or
                     (hours_since_close is not None and hours_since_close > CLOSE_STALE_HOURS)),
         "slates": rows,

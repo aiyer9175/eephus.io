@@ -47,6 +47,16 @@ PY=/opt/eephus/venv/bin/python                 # <- the interpreter with the dep
 #
 # Check what it is doing without spending anything:
 #   $PY tools/betting_close_job.py --why
+#
+# AND AFTER INSTALLING, RUN THIS, because --why does not answer the question
+# that was actually wrong for months:
+#   $PY tools/betting_close_job.py --selfcheck
+# --why says what the job WOULD do now, which reads the same on a box where
+# nothing is scheduled. --selfcheck says whether the SCHEDULER has ever reached
+# the job on this machine, by reading the heartbeat the job stamps on every
+# invocation including its refusals. Exit 1 and "NEVER RUN on this machine"
+# means this crontab entry is not installed or not firing; fix that before
+# concluding anything else about the betting module.
 */15 * * * *  cd $EEPHUS && . /etc/eephus.env && $PY tools/betting_close_job.py >> logs/betting-close.log 2>&1
 
 # --- The leaderboard vintage snapshot, the validation clock -----------------

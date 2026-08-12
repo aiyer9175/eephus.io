@@ -133,3 +133,60 @@ class TheGuards(_Slate):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------
+# THE HEARTBEAT, and why the RED needed one.
+#
+# snapshot_health could see that no close snapshot existed and had to guess
+# between two very different repairs: "the close cron is either not installed or
+# is running in the wrong timezone window". Nothing on disk could separate them,
+# because a job that runs 96 times a day and correctly no-ops 95 of them leaves
+# no trace at all until the night it fires. The job now stamps every invocation,
+# refusals included, and the diagnosis reads that stamp.
+# ---------------------------------------------------------------------------
+def test_the_heartbeat_records_a_refusal_not_just_a_capture(tmp_path):
+    """A no-op is the case the RED could not see, so it is the case pinned."""
+    hb = tmp_path / "close_job_heartbeat.json"
+    decision = {"fire": False, "reason": "too early: 240 min until the window opens",
+                "slate_date": "2026-08-12", "games": 11}
+    job.write_heartbeat(decision, path=hb)
+    got = job.read_heartbeat(hb)
+    assert got["fired"] is False
+    assert got["slate_date"] == "2026-08-12"
+    assert "too early" in got["reason"]
+    assert got["last_run_utc"], "a heartbeat with no timestamp cannot age"
+
+
+def test_the_heartbeat_never_breaks_the_capture(tmp_path):
+    """Telemetry must never be the reason a close capture does not happen."""
+    blocker = tmp_path / "not-a-dir"
+    blocker.write_text("i am a file", encoding="utf-8")
+    # mkdir under a regular file fails on every platform, unlike chmod, which
+    # does not restrict writes on Windows and would have made this vacuous here.
+    try:
+        job.write_heartbeat({"fire": True, "reason": "inside the closing window"},
+                            path=blocker / "sub" / "hb.json")
+    except Exception as exc:                      # pragma: no cover
+        raise AssertionError(f"write_heartbeat raised {exc!r}") from exc
+
+
+def test_the_diagnosis_separates_not_scheduled_from_never_firing(tmp_path, monkeypatch):
+    """The two states name two different repairs, so they get two messages."""
+    import betting_export as be
+    hb = tmp_path / "close_job_heartbeat.json"
+
+    monkeypatch.setattr(be, "CLOSE_HEARTBEAT_PATH", hb)
+    never = be.snapshot_health(14)
+    if never["n_slates_with_close"] == 0:
+        assert "never run on this machine" in never["diagnosis"], never["diagnosis"]
+        assert never["close_job_ever_ran"] is False
+
+    job.write_heartbeat({"fire": False, "reason": "too late: first pitch has passed",
+                         "slate_date": "2026-08-12"}, path=hb)
+    running = be.snapshot_health(14)
+    if running["n_slates_with_close"] == 0:
+        assert "never run on this machine" not in running["diagnosis"]
+        assert "firing window is never opening" in running["diagnosis"], \
+            running["diagnosis"]
+        assert running["close_job_ever_ran"] is True
