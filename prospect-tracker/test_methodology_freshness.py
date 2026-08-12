@@ -272,6 +272,8 @@ MODEL_GLOSSARY = {
     # A loss ledger with no surface; the finding it tested lives on
     # xfv_side_calibration, which is where the reader is sent.
     "xfv_side_correction": "internal",
+    # Measurement only, no served surface; the betting client reads none of it.
+    "betting_market_blend": "internal",
     "positional_ladder": ["pal_conversion", "def_home_chip"],
     # eFV board side scale (W-SIDESCALE) = the per-side affine that puts a hitter
     # grade and a pitcher grade of the same number on the same realized-outcome

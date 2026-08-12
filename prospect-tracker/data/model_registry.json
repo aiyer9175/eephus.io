@@ -3545,6 +3545,17 @@
    "eval_artifact": "data/xfv_side_correction_eval.json",
    "verdict": "deprecated",
    "notes": "E2b-narrow, pre-registered at docs/efv-2026-08-12/PITCHER_BAND_CORRECTION_GATE.md. NO_SHIP ON ALL THREE CLAUSES, 13 forward-chained folds, 4,300 out-of-sample rows. C1: the band gap does collapse 1.2663 -> 0.0028, but the improvement CI is [-0.636, 1.429] and includes zero, so a point estimate landing on zero is NOT evidence the gap was fixed. C2: overall MAE WORSE both sides (hit 2.4373 -> 2.5571, pit 1.6090 -> 1.6442). C3: TAIL MAE WORSE (hit 9.496 -> 12.225 on n=126, a 29% degradation) - which is EXACTLY the 2026-06-25 global-linear-recalibration failure repeating, and clause 3 was written to catch it. Mechanism: fitting a monotone map on a pool whose mass sits near zero WAR drags the sparse high end toward the crowd, and the tail is where the board order and the dollars live. DO NOT re-attempt a WAR-recalibration correction for the FV 45 side gap with a new functional form; the reopen burden is new resolved cohorts. The underlying finding stands and is published: see xfv_side_calibration."
+  },
+  {
+   "model_id": "betting_market_blend",
+   "surface": "NOTHING YET. Measurement only: it decides whether a market-anchored probability blend is worth building. No served probability reads it.",
+   "predicts": "whether blending the model's probability toward the de-vigged market price improves calibration, and at what weight",
+   "champion": "NONE. Underpowered; nothing fitted, nothing shipped.",
+   "baseline": "the model's own probability (w=0) against the market's (w=1)",
+   "metric": "Brier, with a GAME-clustered bootstrap on the model-minus-market difference",
+   "eval_artifact": "data/betting_market_blend_eval.json",
+   "verdict": "provisional",
+   "notes": "PROVISIONAL means MEASURED AND NOT ADOPTED. B1, the plan's highest-expected-value betting item. UNDERPOWERED: the calibration ledger is the only place model prob, market fair prob and a settled outcome share a row, and it holds 140 rows across just 20 GAMES on 2 slates. Market Brier 0.25718 vs model 0.27143 (delta +0.01424) but the game-clustered CI is [-0.00991, +0.03929] and INCLUDES ZERO, so the market's apparent edge is not resolvable at this n. THE STRUCTURAL FINDING IS MORE USEFUL THAN THE BRIER: the weight sweep is monotone to w=1.0, i.e. the optimum sits ON THE BOUNDARY, and w=1 sets the fair price equal to the market price so every edge is identically zero and NO BET CAN EVER BE PUBLISHED. An optimum there means the model contributes nothing on this sample, not that a good weight was found; a blend is only a product for w < 1. Direction is consistent with the honest backtest, where the model loses to always-take-the-home-team. CLOCK: revisit at 150+ distinct games in the ledger, which accrues only as slates are priced and settled. Do NOT fit a weight before then."
   }
  ],
  "problems": []

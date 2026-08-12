@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 90);
 stamped as of **2026-08-12**. `validate()` at generation time: **clean**.
 
-**245 models.** Verdicts: validated: 50, provisional: 86, unvalidated: 29, deprecated: 80.
+**246 models.** Verdicts: validated: 50, provisional: 87, unvalidated: 29, deprecated: 80.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -255,6 +255,7 @@ stamped as of **2026-08-12**. `validate()` at generation time: **clean**.
 | `efv_denoised_baseline_control` | glossary source-comparison, Model upgrades panel (B-L6 ca... | n/a - measurement: whether eFV's head-to-head lead over the consensus survives when the consensus is rebuilt from measured per-... | GLS precision-weighted consensus, w_s proportional to b_s/sigma_s^2 with a gl... | the consensus exactly as served (prospx_consensus), on the identical head-to-... | delta pooled Spearman against realized WAR on 3,234 identical rows, under BOT... | **provisional** | `data/xfv_denoised_baseline_eval.json` | 1 | no |
 | `xfv_side_calibration` | audit only. Nothing serves this: it measures the SHIPPED... | nothing. It is a calibration audit: mean realized first-six-year WAR by side within each grade band, for both the served eFV gr... | banded realized-WAR comparison on the resolved pool (kind in debuted/bust, bu... | the other side, within the same grade band and the same grader. The reference... | mean realized 6yr WAR gap (pitchers minus hitters) within band, with a 95% in... | **validated** | `data/xfv_side_calibration_eval.json` | 0 | no |
 | `xfv_side_correction` | NOTHING. This is a LOSS LEDGER. The correction was tested... | whether a per-side monotone (isotonic) recalibration of predicted 6yr WAR, fitted on earlier grade cohorts, removes the FV 45 p... | NONE ADOPTED. Candidate was per-side PAVA of realized WAR on predicted WAR, f... | the shipped grade map, uncorrected | three pre-registered clauses: FV45 band gap shrinks with a bootstrap interval... | **deprecated** | `data/xfv_side_correction_eval.json` | - | - |
+| `betting_market_blend` | NOTHING YET. Measurement only: it decides whether a marke... | whether blending the model's probability toward the de-vigged market price improves calibration, and at what weight | NONE. Underpowered; nothing fitted, nothing shipped. | the model's own probability (w=0) against the market's (w=1) | Brier, with a GAME-clustered bootstrap on the model-minus-market difference | **provisional** | `data/betting_market_blend_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 

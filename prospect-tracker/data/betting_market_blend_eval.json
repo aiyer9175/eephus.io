@@ -1,0 +1,42 @@
+{
+ "generated_at": "2026-08-12T20:37:31+00:00",
+ "model_id": "betting_market_blend",
+ "basis": {
+  "seed": 20260812,
+  "bootstrap_B": 4000,
+  "source": "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker\\.cache\\betting\\calibration.jsonl"
+ },
+ "verdict": "UNDERPOWERED",
+ "n_rows": 140,
+ "n_games": 20,
+ "slates": [
+  "2026-08-09",
+  "2026-08-11"
+ ],
+ "min_games_to_recommend": 150,
+ "brier_model_only": 0.27143,
+ "brier_market_only": 0.25718,
+ "model_minus_market": 0.01424,
+ "ci95_model_minus_market": [
+  -0.00991,
+  0.03929
+ ],
+ "resolvable": false,
+ "blend_sweep": {
+  "0.0": 0.27143,
+  "0.1": 0.26932,
+  "0.2": 0.26737,
+  "0.3": 0.26556,
+  "0.4": 0.26391,
+  "0.5": 0.26241,
+  "0.6": 0.26106,
+  "0.7": 0.25987,
+  "0.8": 0.25882,
+  "0.9": 0.25793,
+  "1.0": 0.25718
+ },
+ "best_weight_on_this_sample": 1.0,
+ "optimum_at_boundary": true,
+ "why_the_boundary_matters": "w = 1.0 sets the fair price equal to the market price, so every edge is identically zero and no bet can ever be published. An optimum there means the model contributes nothing on this sample, not that a good weight was found. A blend is only a product for w < 1.",
+ "clustering": "bootstrap resamples GAMES, not rows: the rows are about three markets per game and row resampling would treat one game as three independent observations"
+}
