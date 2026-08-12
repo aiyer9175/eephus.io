@@ -1,0 +1,246 @@
+{
+ "generated_at": "2026-08-12T18:19:16+00:00",
+ "model_id": "xfv_side_calibration",
+ "pre_registration": "docs/efv-2026-08-12/SIDE_CALIBRATION_GATE.md",
+ "basis": {
+  "frame": "resolved pool: kind in (debuted, bust), busts at realized 6yr WAR 0",
+  "n": 4634,
+  "n_hit": 2266,
+  "n_pit": 2368,
+  "bootstrap_B": 2000,
+  "seed": 20260812,
+  "min_cell": 30,
+  "reference": "realized 6-year WAR. No claim here is made by comparing one source's grade to another's",
+  "caveat": "the served eFV grade is retrospective on this pool, so this measures the SHIPPED grade map against outcomes, not an out-of-sample forecast"
+ },
+ "m1_realized_war_by_band": {
+  "efv": {
+   "cells": {
+    "60": {
+     "n_hit": 44,
+     "n_pit": 0,
+     "mean_war_hit": 16.47,
+     "mean_war_pit": null,
+     "gap_pit_minus_hit": null,
+     "ci95": null,
+     "scored": false,
+     "resolvable": false,
+     "verdict": "not scored, cell under the registered floor"
+    },
+    "55": {
+     "n_hit": 131,
+     "n_pit": 6,
+     "mean_war_hit": 12.209,
+     "mean_war_pit": 26.617,
+     "gap_pit_minus_hit": 14.408,
+     "ci95": null,
+     "scored": false,
+     "resolvable": false,
+     "verdict": "not scored, cell under the registered floor"
+    },
+    "50": {
+     "n_hit": 129,
+     "n_pit": 23,
+     "mean_war_hit": 6.001,
+     "mean_war_pit": 6.417,
+     "gap_pit_minus_hit": 0.417,
+     "ci95": null,
+     "scored": false,
+     "resolvable": false,
+     "verdict": "not scored, cell under the registered floor"
+    },
+    "45": {
+     "n_hit": 368,
+     "n_pit": 372,
+     "mean_war_hit": 2.715,
+     "mean_war_pit": 3.849,
+     "gap_pit_minus_hit": 1.133,
+     "ci95": [
+      0.1864,
+      2.0385
+     ],
+     "scored": true,
+     "resolvable": true,
+     "verdict": "pitchers realize more"
+    },
+    "40": {
+     "n_hit": 832,
+     "n_pit": 1248,
+     "mean_war_hit": 0.765,
+     "mean_war_pit": 0.743,
+     "gap_pit_minus_hit": -0.021,
+     "ci95": [
+      -0.2975,
+      0.2339
+     ],
+     "scored": true,
+     "resolvable": false,
+     "verdict": "not resolvable at this power"
+    },
+    "35": {
+     "n_hit": 161,
+     "n_pit": 202,
+     "mean_war_hit": 0.169,
+     "mean_war_pit": 0.274,
+     "gap_pit_minus_hit": 0.105,
+     "ci95": [
+      -0.18,
+      0.3511
+     ],
+     "scored": true,
+     "resolvable": false,
+     "verdict": "not resolvable at this power"
+    },
+    "30": {
+     "n_hit": 601,
+     "n_pit": 517,
+     "mean_war_hit": 0.155,
+     "mean_war_pit": 0.092,
+     "gap_pit_minus_hit": -0.063,
+     "ci95": [
+      -0.2773,
+      0.072
+     ],
+     "scored": true,
+     "resolvable": false,
+     "verdict": "not resolvable at this power"
+    }
+   },
+   "n_scored_cells": 4,
+   "n_resolvable": 1
+  },
+  "consensus": {
+   "cells": {
+    "60": {
+     "n_hit": 55,
+     "n_pit": 12,
+     "mean_war_hit": 16.956,
+     "mean_war_pit": 18.492,
+     "gap_pit_minus_hit": 1.535,
+     "ci95": null,
+     "scored": false,
+     "resolvable": false,
+     "verdict": "not scored, cell under the registered floor"
+    },
+    "55": {
+     "n_hit": 76,
+     "n_pit": 48,
+     "mean_war_hit": 13.414,
+     "mean_war_pit": 4.835,
+     "gap_pit_minus_hit": -8.579,
+     "ci95": [
+      -12.6912,
+      -4.4576
+     ],
+     "scored": true,
+     "resolvable": true,
+     "verdict": "pitchers realize less"
+    },
+    "50": {
+     "n_hit": 130,
+     "n_pit": 103,
+     "mean_war_hit": 7.359,
+     "mean_war_pit": 5.724,
+     "gap_pit_minus_hit": -1.635,
+     "ci95": [
+      -4.0291,
+      0.6385
+     ],
+     "scored": true,
+     "resolvable": false,
+     "verdict": "not resolvable at this power"
+    },
+    "45": {
+     "n_hit": 260,
+     "n_pit": 218,
+     "mean_war_hit": 3.956,
+     "mean_war_pit": 3.075,
+     "gap_pit_minus_hit": -0.881,
+     "ci95": [
+      -2.1494,
+      0.3083
+     ],
+     "scored": true,
+     "resolvable": false,
+     "verdict": "not resolvable at this power"
+    },
+    "40": {
+     "n_hit": 712,
+     "n_pit": 749,
+     "mean_war_hit": 0.759,
+     "mean_war_pit": 0.839,
+     "gap_pit_minus_hit": 0.08,
+     "ci95": [
+      -0.2167,
+      0.3952
+     ],
+     "scored": true,
+     "resolvable": false,
+     "verdict": "not resolvable at this power"
+    },
+    "35": {
+     "n_hit": 1006,
+     "n_pit": 1213,
+     "mean_war_hit": 0.365,
+     "mean_war_pit": 0.351,
+     "gap_pit_minus_hit": -0.014,
+     "ci95": [
+      -0.1974,
+      0.1541
+     ],
+     "scored": true,
+     "resolvable": false,
+     "verdict": "not resolvable at this power"
+    },
+    "30": {
+     "n_hit": 27,
+     "n_pit": 25,
+     "mean_war_hit": 0.363,
+     "mean_war_pit": 0.08,
+     "gap_pit_minus_hit": -0.283,
+     "ci95": null,
+     "scored": false,
+     "resolvable": false,
+     "verdict": "not scored, cell under the registered floor"
+    }
+   },
+   "n_scored_cells": 5,
+   "n_resolvable": 1
+  }
+ },
+ "m2_per_side_forecast": {
+  "H": {
+   "n": 2266,
+   "mean_predicted_war": 2.037,
+   "mean_realized_war": 2.142,
+   "bias_pred_minus_real": -0.105,
+   "slope_real_on_pred": 1.139,
+   "reading": "a slope under 1 means the forecast is too spread out, over 1 means too compressed; bias is its level error"
+  },
+  "P": {
+   "n": 2368,
+   "mean_predicted_war": 1.163,
+   "mean_realized_war": 1.17,
+   "bias_pred_minus_real": -0.007,
+   "slope_real_on_pred": 1.1691,
+   "reading": "a slope under 1 means the forecast is too spread out, over 1 means too compressed; bias is its level error"
+  }
+ },
+ "m3_share_conventions": {
+  "resolved_pool_top_n": 100,
+  "efv_as_served": 0,
+  "by_grade": {
+   "efv": {
+    "top_n": 100,
+    "pitchers_as_ranked": 0,
+    "pitchers_under_percentile_parity": 51
+   },
+   "consensus": {
+    "top_n": 100,
+    "pitchers_as_ranked": 23,
+    "pitchers_under_percentile_parity": 51
+   }
+  },
+  "note": "this is the RESOLVED pool, not the live board. It shows what each convention does to the mix, not what the board shows today"
+ }
+}

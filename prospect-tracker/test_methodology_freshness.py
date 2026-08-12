@@ -266,6 +266,9 @@ MODEL_GLOSSARY = {
     # pos_adj_prior and the eFV defensive prior rather than a surface of its own,
     # and it is rendered for the reader in the /pal/ Position Fit ladder view,
     # which is documented by the PAL conversion entry.
+    # E2a is an audit with no served surface: nothing on the site reads it,
+    # its output is a decision pack in its own gate doc.
+    "xfv_side_calibration": "internal",
     "positional_ladder": ["pal_conversion", "def_home_chip"],
     # eFV board side scale (W-SIDESCALE) = the per-side affine that puts a hitter
     # grade and a pitcher grade of the same number on the same realized-outcome

@@ -111,6 +111,76 @@ emptiness is itself the finding rather than a cell to be scored.
   every remedy in scope is a monotone per-side transform of the grade, which is
   rank-invariant within side by construction.
 
-## Results
+## Results (2026-08-12, `data/xfv_side_calibration_eval.json`)
 
-To be written by the lab. This section is deliberately empty at commit time.
+Pool 4,634 (2,266 hitters / 2,368 pitchers), busts at realized WAR 0,
+bootstrap B=2000 seed 20260812.
+
+### The headline answers the owner's question, and it is not the feared one
+
+**At equal CONSENSUS FV, pitchers massively underdeliver at the top.** In the
+consensus FV 55 band: hitters realize **13.41** first-six-year WAR, pitchers
+**4.84**, a gap of **-8.58 [-12.69, -4.46]**, resolvable. This is not a
+bust-rate artifact and that was checked: both cells are essentially all
+debuted (hitters 76 of 76, pitchers 47 of 48), so this is what happened to the
+players who actually reached the majors.
+
+Measured against outcomes, which is the only reference this lane accepts, **the
+industry's higher pitcher share at the top is not vindicated. It is
+over-grading.** eFV serving fewer top-100 pitchers than the consensus is the
+more accurate reading of value, not a defect.
+
+### But eFV genuinely under-grades pitchers in one band
+
+At **eFV 45**, pitchers realize **+1.13 [0.19, 2.04]** WAR more than hitters
+carrying the same eFV grade (n 368 hitters / 372 pitchers), resolvable. Decision
+rule 2 fires for this cell: on eFV's own value scale, pitchers in that band are
+undervalued. Part of it is a lower bust rate (15.9% against 23.9%).
+
+Every other scorable cell on both graders is **not resolvable at this power**.
+1 of 4 scored eFV cells and 1 of 4 scored consensus cells resolve, so this is a
+band-local finding, not a sweep.
+
+### The model's own WAR forecast is not the problem
+
+M2, and it rules out the simplest explanation: hitters bias **-0.105**, pitchers
+bias **-0.007**, slopes 1.139 and 1.169. The pitcher WAR forecast is close to
+unbiased and no worse calibrated than the hitter one. **eFV is not systemically
+under-forecasting pitcher WAR.** It correctly predicts that pitchers produce
+less (mean predicted 1.163 against 2.037; mean realized 1.170 against 2.142),
+and a single shared WAR-to-FV curve then necessarily grades them lower. The low
+share is the shared curve spending a real difference, not a broken forecast.
+
+### What each convention would do (M3, descriptive)
+
+On the resolved pool's top 100: as served, eFV puts **0** pitchers there;
+consensus as-ranked puts **23**; within-side percentile parity puts **51** on
+either grader.
+
+### Verdict against the registered decision rule
+
+Mixed, and the two halves point opposite ways, so neither alone decides:
+
+- **Rule 1 holds at the top.** eFV's value scale is doing its job there, and the
+  consensus is the one disagreeing with outcomes. A blanket parity ship would
+  promote precisely the cohort measured to underdeliver by 8.58 WAR, which is
+  rule 3: it may ship as a labelled convention but it makes the value scale less
+  accurate and the copy must say so.
+- **Rule 2 holds at FV 45.** A targeted per-side correction there is an accuracy
+  fix and may be described as one.
+
+So the evidence supports a **narrow** correction and contradicts a **blanket**
+one. That is a genuine conflict with the owner decision taken on 2026-08-12,
+which was recorded BEFORE this lane ran and selected cross-side parity outright.
+It is referred back rather than resolved here, per the standing rule that a
+pre-registration does not get to spend an owner decision the measurement has
+since undercut.
+
+### Limits, stated
+
+- The served eFV grade is retrospective on this pool: this measures the SHIPPED
+  grade map against outcomes, not an out-of-sample forecast.
+- Bands are coarse and the top pitcher cells are thin by construction (0 rows at
+  eFV 60, 6 at 55), which is itself the finding rather than a cell to score.
+- Nothing here re-opens the rank frontier. Every remedy in scope is a monotone
+  per-side transform and is rank-invariant within side.
