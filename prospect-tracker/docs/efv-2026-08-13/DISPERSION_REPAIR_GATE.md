@@ -246,6 +246,51 @@ is referred back with the three options above, because the owner's ship decision
 was taken on my statement that order and dollars could not move, and that
 statement was wrong for the field the correction has to touch.
 
+## OWNER DECISION 2026-08-13: THE NARROW PATH. This is what a shipping session executes.
+
+Taken after the lambda re-gate was quantified (see `SERVE_CHAIN_VERIFICATION.md`),
+which showed the full through-the-blend epoch drives the PITCHER effective lambda
+to 0.3583 against a clamp floor of 0.35. The earlier full-epoch choice was made
+before that number existed and is superseded by it.
+
+**Scope: correct the GRADE and the EXPORTED WAR. Leave the BLEND leg uncorrected.**
+
+    xfv_war_corrected = a_c + b_c * xfv_war        # grade and export only
+    xfv_grade         = vf.outcome_implied_fv(xfv_war_corrected)
+    xfv_war_6yr       = xfv_war_corrected
+    rank_war          = (1 - lam) * cons_war + lam * xfv_war      # UNCORRECTED
+
+Each property provable rather than hoped: lambda untouched, so no banned lane;
+`rank_war` unchanged, so every quantile position and therefore every dollar is
+unchanged; board order identical, since grade and `board_sort_key` are both
+strictly increasing in `xfv_war`. Grade VALUES move, which is the point and is
+why it remains an epoch.
+
+Accepted cost, stated so it is not rediscovered as a surprise: the grade and the
+blend read two different versions of the same quantity. The argument for that is
+that the blend is an ORDERING instrument whose weights were gated on the
+uncorrected scale, while the grade is a LEVEL statement to a reader, so
+correcting the level without disturbing the gated ordering is coherent. It only
+stays coherent if it is said out loud where a reader finds it.
+
+Checklist for the shipping session:
+
+1. Re-fit `a_c` and `b_c` on the PRODUCTION frame. The coefficients here are
+   fitted on the registered 2016-2020 folds for parity with the measurement.
+2. Apply at the grade and export seams only: `efv_score.py:1473` and the
+   `xfv_war_6yr` emissions at `:1512`, `:2116`, `:2668`. Leave `:1923` alone.
+3. Epoch bump plus a fingerprint term naming the correction. A fingerprint only
+   guards what it names, which this programme has learned three times.
+4. `prospx_current` re-capture INSIDE `with vf.valuation_set("prospx_current")`,
+   then a golden restamp.
+5. Pin board order unchanged as a regression test. It is provable here, so it
+   should be asserted rather than assumed.
+6. Verify the served surplus diff is zero rows. Cheap, and inheriting that claim
+   instead of checking it is what went wrong once already.
+7. Disclose the tail cost in the glossary: a star's projected WAR reads about
+   1.25 WAR (hit) and 0.90 (pit) below outcome over six years, in exchange for
+   the level being right everywhere else.
+
 ## Limits
 
 - The pitcher slope CI is wide, [0.0677, 1.1341]. It covers 1.0, which is the
