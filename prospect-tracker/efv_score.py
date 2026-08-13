@@ -168,6 +168,47 @@ def _outcome_floor_knot() -> float:
         return 20.0
 
 
+# DISPERSION CORRECTION (Defect A), shipped 2026-08-14 as a GRADE-BASIS EPOCH.
+# Pre-registration: docs/efv-2026-08-13/GRADE_BASIS_EPOCH_GATE.md.
+#
+# xfv_war_6yr was over-dispersed out of sample: the OLS slope of realized first-6yr
+# WAR on the OOS prediction was 0.67 (hit) and 0.55 (pit) against a calibrated 1.0,
+# because the served calibration is fitted IN SAMPLE on each fold's training rows and
+# does not transfer. So the published number was systematically too extreme in both
+# directions, and claimed that hundreds of prospects would produce negative six-year
+# WAR.
+#
+# Coefficients are fitted OUT OF FOLD on the PRODUCTION frame (efv_model.SCORED_YEARS,
+# 11 folds, n=1,779 hit / 1,878 pit), one global pair per side, by
+# tools/efv_dispersion_repair_lab.py's own _fit_affine on the pre-clamp column.
+# Leave-one-fold-out spread is the stability evidence and is NOT what serves:
+# hit b_c 0.607-0.737, pit b_c 0.506-0.738.
+#
+# CORRECT THEN CLAMP, deliberately. `a_c + b_c*max(-2,w)` and `max(-2, a_c + b_c*w)`
+# agree for every row iff a_c <= 2*b_c, which both sides satisfy with margin
+# (a_c - 2*b_c = -0.875 hit, -0.600 pit). Outside that regime the other order collapses
+# every sub-floor row onto one identical grade and can emit a served WAR below -2.0,
+# breaking the floor contract _apply_war_tilt and efv_export both assume.
+_DISPERSION_CORRECTION = {
+    #        a_c        b_c
+    "hit": (0.460179, 0.667655),
+    "pit": (0.494262, 0.546925),
+}
+
+
+def apply_dispersion_correction(war: float, is_pitcher: bool) -> float:
+    """The calibrated served WAR. Strictly increasing, so it cannot reorder on its own.
+
+    Applied at the GRADE seam, after the overlay tilts and the S-XLINE lean, so the
+    composition stays a single monotone transform of the served WAR. Deliberately NOT
+    applied to the blend leg: substituting it into
+    `(1-lam)*cons_war + lam*xfv_war` re-weights the model leg to `lam*b_c` against
+    `1-lam`, which is a BLEND-LAMBDA change (a banned lane) and lands the pitcher
+    effective lambda at 0.4203, outside the .65/.60/.51 the TOST covered."""
+    a_c, b_c = _DISPERSION_CORRECTION["pit" if is_pitcher else "hit"]
+    return max(-2.0, a_c + b_c * float(war))
+
+
 def route_floor_grade(player_key, flagship_grade, constant_only: bool):
     """The routed board grade, or None to keep the flagship grade.
 
@@ -1470,6 +1511,13 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         # end); the curve is DEFINED on the 6-season label, so the argument is now checked
         # rather than merely passed.
         _gm_age = _grade_map_age(age, 0.0)
+        # DISPERSION CORRECTION. The blend keeps reading the UNCORRECTED model leg
+        # (_war_model below): routing the correction through rank_war re-weights that
+        # leg to lam*b_c against 1-lam, which is a banned blend-lambda change. This
+        # pool carries no overlay tilts, so the correction lands on exactly the
+        # quantity it was fitted on.
+        _war_model = xfv_war
+        xfv_war = apply_dispersion_correction(xfv_war, is_pit)
         xfv_grade = vf.outcome_implied_fv(xfv_war, exposure_seasons=TARGET_SEASONS)
         # ODDS BASIS, deliberately NOT re-keyed. p_bucket / p_bust and the dollar seam stay
         # on the retired realized-implied grade: they are validated, ground-truthed
@@ -1482,8 +1530,8 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         cons_fv = src.get("consensus_fv_raw")
         if xfv_grade is None or _odds_grade is None or cons_fv is None:
             continue
-        cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else xfv_war
-        rank_war = (1 - lam) * cons_war + lam * xfv_war   # guarded blend -> headline rank
+        cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else _war_model
+        rank_war = (1 - lam) * cons_war + lam * _war_model  # guarded blend -> headline rank
         _rank_exact[pk] = rank_war                        # unrounded, for the display-map sort
         probs = vf.p_bucket_given_fv(_odds_grade, is_pit) or []
         # ODDS DISPERSION CALIBRATION, wired 2026-07-31 after the lane cleared its
@@ -2044,10 +2092,25 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         # names the curve hash. Nothing priced in dollars moves: surplus re-prices off
         # xfv_grade_display below, which reads rank_war and never this field.
         _gm_age = _grade_map_age(age, eta)
+        # THE ROUTING DECISION READS THE UNCORRECTED GRADE, and this is load bearing.
+        # route_floor_grade uses "the flagship grade sits exactly on the floor knot" as
+        # its proxy for "the model has no real prediction for this player". The
+        # dispersion correction adds a positive intercept, which lifts 1,065 rows across
+        # the 0-WAR knot without telling the model anything new. Deciding routing on the
+        # corrected value would have stripped the provisional grade from 950 of them and
+        # dropped each onto the part of the flagship curve the provisional map exists to
+        # avoid: diego_fernandez 40.1 -> 25.0 on a WAR move of -0.68 to +0.01. Routing is
+        # a question about the model, not about the calibration of its level, so it is
+        # answered before the level is corrected and the routed cohort is preserved
+        # exactly (measured: 0 rows lose a routed grade, 0 gain one).
+        _grade_uncorrected = vf.outcome_implied_fv(xfv_war, exposure_seasons=TARGET_SEASONS)
+        xfv_war = apply_dispersion_correction(xfv_war, is_pit)
+        if xfv_war_healthy is not None:                    # keep the counterfactual on one basis
+            xfv_war_healthy = apply_dispersion_correction(xfv_war_healthy, is_pit)
         xfv_grade = vf.outcome_implied_fv(xfv_war, exposure_seasons=TARGET_SEASONS)
         _odds_grade = vf.realized_implied_fv(xfv_war, is_pit, age=_gm_age, position=pos,
                                              exposure_seasons=TARGET_SEASONS)
-        if xfv_grade is None or _odds_grade is None:
+        if xfv_grade is None or _odds_grade is None or _grade_uncorrected is None:
             continue
         # Mirrors xfv_grade's basis exactly (same map, same exposure), so the
         # healthy figure is comparable to the badge it is displayed beside.
@@ -2062,7 +2125,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         # "how often does a player like this bust". Substituting one into the other
         # would silently re-base validated probabilities.
         _grade_basis = "outcome_pooled"
-        _routed = route_floor_grade(r["player_key"], xfv_grade,
+        _routed = route_floor_grade(r["player_key"], _grade_uncorrected,
                                     bool(r.get("anchor_constant_only")))
         if _routed is not None:
             xfv_grade = float(_routed)
@@ -2613,6 +2676,13 @@ def run_backgrade(persist: bool = True) -> dict:
         # graduates on the retired map would manufacture exactly the third-basis defect
         # (A2) that this same commit closes for the history series.
         _gm_age = _grade_map_age(age, 0.0 if kind == "debuted" else eta)
+        # DISPERSION CORRECTION, applied here so rank_war (finalised above, including
+        # the tilt rebuild) keeps its uncorrected model leg. xfv_war_at_debut is
+        # corrected with it, so the debut counterfactual stays on one basis with the
+        # grade it is displayed beside.
+        xfv_war = apply_dispersion_correction(xfv_war, is_pit)
+        if xfv_war_at_debut is not None:
+            xfv_war_at_debut = apply_dispersion_correction(xfv_war_at_debut, is_pit)
         xfv_grade = vf.outcome_implied_fv(xfv_war, exposure_seasons=TARGET_SEASONS)
         _odds_grade = vf.realized_implied_fv(xfv_war, is_pit, age=_gm_age, position=pos,
                                              exposure_seasons=TARGET_SEASONS)

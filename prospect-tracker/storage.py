@@ -4878,7 +4878,7 @@ _NO_BOARD_SORT_KEY = -1e9
 # to a post-epoch rank would report the one-time re-rank as real player movement.
 # Every reader of metric_snapshots.overall_rank filters on this date; rank
 # movement and the rank-trend arrow read empty until post-epoch history accrues.
-BOARD_RANK_BASIS_EPOCH = "2026-08-12"   # STRICTLY-AFTER gate: see load_rank_history.
+BOARD_RANK_BASIS_EPOCH = "2026-08-13"   # STRICTLY-AFTER gate: see load_rank_history.
 # Bumped 2026-08-12 with the rookie-window unlock, which re-anchors every
 # still-eligible graduate onto his latest board point. Rank history from
 # before this date is on the debut-anchored basis and must not be differenced
@@ -5108,8 +5108,22 @@ def board_basis_fingerprint() -> str:
         anchor = "rookie_window" if getattr(_es2, "GRADUATE_ROOKIE_WINDOW", True) else "at_debut"
     except Exception:
         anchor = "unavailable"
+    # DISPERSION CORRECTION, added 2026-08-14 with the grade-basis epoch, and it is the
+    # same hole again in a new place. Every term above identifies WHICH map produced the
+    # grade; none of them can see an affine level correction applied to that map's INPUT.
+    # Shipping it moves 4,585 of 4,664 served grades, and without this term the
+    # fingerprint would have stayed byte-identical to its pin while it happened, so the
+    # movement-suppression gate would have waved the transition run through and published
+    # a basis change as player movement. A fingerprint only guards what it names.
+    try:
+        import efv_score as _es3
+        disp = "|".join(f"{s}:{_a:.6f}/{_b:.6f}"
+                        for s, (_a, _b) in sorted(_es3._DISPERSION_CORRECTION.items()))
+    except Exception:
+        disp = "unavailable"
     return (f"{BOARD_GRADE_FIELD}|scale={scale}|grademap={grademap}|roles={roles}"
-            f"|feats={feats}|stale={stale}|floorroute={floorroute}|gradanchor={anchor}")
+            f"|feats={feats}|stale={stale}|floorroute={floorroute}|gradanchor={anchor}"
+            f"|disp={disp}")
 
 
 # ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /
