@@ -205,7 +205,48 @@ not apply to a rank-neutral and dollar-neutral change, the ship decision is
 referred to the owner with both halves stated, rather than being resolved by the
 lane in either direction.
 
-### Limits
+## SHIP BLOCKED: the gate measured a quantity production does not serve in isolation
+
+Found 2026-08-13 while implementing the owner's decision to ship, by tracing where
+the corrected value would actually go. **This corrects a claim made earlier in
+this same document and repeated to the owner**: that board order and dollars
+provably do not move. That is true of the statistic the gate measured. It is NOT
+true of the field the correction would have to be applied to.
+
+`xfv_war` is not an output. At `efv_score.py:1473` it is the input to the board
+grade, `xfv_grade = vf.outcome_implied_fv(xfv_war)`, and the module docstring
+states plainly that `xfv_grade` is monotone in `xfv_war`. At `:1923` it is also
+the model leg of the blend, `rank_war = (1 - lam) * cons_war + lam * xfv_war`.
+
+So there are three places to apply it and all three are blocked:
+
+1. **At source, to `xfv_war`.** Moves EVERY displayed board grade, because the
+   grade is a strictly increasing function of it. Worse, it silently re-weights
+   the blend: substituting `a_c + b_c * xfv_war` makes the model leg carry
+   `lam * b_c` against the consensus leg's `1 - lam`, and with b_c near 0.63 that
+   is a 37% de facto reduction in the blend lambda. **Blend-lambda shifts are a
+   banned lane** (TOST RULED OUT for 0.65 / 0.60 / 0.51). Shipping this would
+   re-open a closed lane by side effect and without a gate.
+2. **To the exported `xfv_war_6yr` only.** Leaves the grade derived from the
+   UNCORRECTED value, so the page would publish a projected WAR and a grade that
+   no longer correspond through the curve that is supposed to connect them. That
+   is a coherence defect of the same family as the three-grade-bases problem this
+   programme has been closing, and introducing a fourth disagreement to fix a
+   calibration one is a bad trade.
+3. **To both, coherently.** This is the correct fix and it is a GRADE-BASIS
+   EPOCH: every served grade moves, so it needs a coordinated epoch bump, a
+   fingerprint term, a `prospx_current` re-capture, a golden restamp, and a
+   re-read of every margin measured on the old basis. That is a far larger change
+   than this gate scoped or measured, and the surplus neutrality claimed above
+   would have to be re-verified rather than inherited, because the dollar path
+   prices off a rank-quantile of `rank_war` and `rank_war` moves under option 1.
+
+**Nothing is shipped.** The measurement stands and is registered; the application
+is referred back with the three options above, because the owner's ship decision
+was taken on my statement that order and dollars could not move, and that
+statement was wrong for the field the correction has to touch.
+
+## Limits
 
 - The pitcher slope CI is wide, [0.0677, 1.1341]. It covers 1.0, which is the
   clause, but it also covers 0.07, so the pitcher correction is imprecise even
