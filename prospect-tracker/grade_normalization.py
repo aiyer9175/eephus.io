@@ -197,10 +197,35 @@ def _paired_dists(source: str, role: str, year: int,
     pairs = _pairs(source, role, year, as_of_year)
     pooled = False
     if len(pairs) < _MIN_N:
+        # ERA FLOOR (2026-08-13, docs/efv-2026-08-13/C4_ERA_FLOOR_MEASUREMENT.md).
+        # A cell earlier than _REFERENCE_FIRST_YEAR has NO own-year pairs, because
+        # the reference scale does not exist before 2017-02-15, so it falls through
+        # to this pool and gets an offset estimated from cycles that are ENTIRELY
+        # LATER than the grade being normalized: mlb_pipeline hitter 2013 is built
+        # from 3,982 pairs, every one of them 2017 through 2026.
+        #
+        # Bounding the pool at the reference's FIRST year uses the closest era that
+        # can be measured at all, instead of importing a decade of later drift. The
+        # offset falls over time (+4.175 in 2017 to +3.269 in 2026, about 7.7 sigma),
+        # so the all-year pool systematically understates what a contemporaneous
+        # observer would have measured. Measured effect of the floor, 2026-08-13:
+        # mlb_pipeline hitter +4.0457 -> +4.2880 (309 pairs) and pitcher +3.7429 ->
+        # +4.0603 (282 pairs), both clearing _MIN_N. About a third of an FV on the
+        # 3,478 served pre-2017 units, which are all mlb_pipeline; no other source
+        # grades players that early, and none of them can form a 2017 cell at all.
+        #
+        # INERT UNTIL THE AS-OF CAP IS ON. Gated on `as_of_year is not None` so that
+        # with consensus.GRADE_NORM_AS_OF False, today's state, this reproduces the
+        # previous behaviour cell for cell. The flip is what turns it on, and the
+        # flip is a basis change on eFV's dominant feature that needs its own
+        # rebuild and margin re-read.
+        cap = as_of_year
+        if as_of_year is not None and year < _REFERENCE_FIRST_YEAR:
+            cap = min(as_of_year, _REFERENCE_FIRST_YEAR)
         allp: list = []
         for (r, y) in list(_all_latest().keys()):
-            if r == role and (as_of_year is None or y <= as_of_year):
-                allp.extend(_pairs(source, r, y, as_of_year))
+            if r == role and (cap is None or y <= cap):
+                allp.extend(_pairs(source, r, y, cap))
         if len(allp) >= _MIN_N:
             pairs, pooled = allp, True
     if not pairs:
