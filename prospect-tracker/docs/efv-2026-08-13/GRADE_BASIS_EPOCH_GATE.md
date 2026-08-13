@@ -51,12 +51,43 @@ below require the neutralities to be MEASURED and never argued.
     xfv_grade         = vf.outcome_implied_fv(xfv_war_corrected)
     _odds_grade       = vf.realized_implied_fv(xfv_war_corrected, ...)
     xfv_war_6yr       = xfv_war_corrected
-    rank_war          = (1 - lam) * cons_war + lam * xfv_war_corrected
+    rank_war          = (1 - lam) * cons_war + lam * xfv_war      # UNCORRECTED
 
-Everything downstream of the corrected WAR moves together. The narrow path's split
-basis (grade corrected, blend uncorrected) is abandoned: its only justification was
-the neutrality argument that has now been withdrawn, and a split basis whose
-motivation is gone is just an extra disagreement to explain.
+Every LEVEL statement moves onto the corrected scale together: the board grade, the
+odds grade, and therefore the bucket probabilities and the served dollars. That is
+the epoch.
+
+### The blend leg stays uncorrected, and this is not the narrow path returning
+
+The narrow path left the blend uncorrected on a NEUTRALITY argument, and that
+argument has been withdrawn. The blend leg is left uncorrected here for a different
+and independently recorded reason: correcting it is a BLEND-LAMBDA CHANGE, which is
+a banned lane, and the specific number has already been measured as a stop.
+
+Substituting `a_c + b_c * xfv_war` into `(1 - lam) * cons_war + lam * xfv_war` makes
+the model leg carry `lam * b_c` against the consensus leg's `1 - lam`. The
+equivalent pure lambda is `lam*b_c / ((1 - lam) + lam*b_c)`:
+
+| side | lam | mean b_c | lam_eff | against clamp floor 0.35 |
+| --- | --- | --- | --- | --- |
+| hit | 0.70 | 0.6212 | 0.5917 | +0.242 clear |
+| pit | 0.57 | 0.4213 | **0.3583** | **+0.008 clear** |
+
+The hitter figure sits beside 0.60, already TOST-ruled-out as a difference. The
+pitcher figure is eight thousandths above `_BLEND_LAMBDA_CLAMP` and far outside
+anything tested (TOST covered .65 / .60 / .51), and pitcher `b_c` is the least
+stable quantity in the lane (0.308 to 0.651 across folds). Routing the correction
+through the blend would spend the calibration fix as an unmeasured lambda cut to the
+clamp floor.
+
+So the split is deliberate and its cost is stated: the grade and the blend read two
+versions of one quantity. The argument is that the blend is an ORDERING instrument
+whose weights were gated on the uncorrected scale, while the grade and the odds are
+LEVEL statements to a reader. Correcting the level without disturbing the gated
+ordering is coherent, and it only stays coherent if it is said out loud where a
+reader finds it (condition 12).
+
+A separately gated pitcher lambda decision remains open and is NOT taken here.
 
 ### Two seam decisions, both load bearing
 
